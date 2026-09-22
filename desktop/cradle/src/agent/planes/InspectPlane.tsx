@@ -6,12 +6,12 @@ import {deliveriesOf,nowRefsOf,taskBasisWithoutNow,type EncounterSessionHandle} 
 import type {AgentSubject} from "../AgentLayer";
 import {panelInspectKey,type PanelInspectDetail} from "./panelInspect";
 
-export type InspectView="selected"|"subject"|"session"|"returned";
+export type InspectView="selected"|"subject"|"session"|"delivered";
 /** Which thing Inspect is showing. Held by the panel, not by this plane, so a
  * plane or mode change never loses the selection. */
 export interface InspectSelection {view:InspectView;handedKey?:string}
 
-const VIEWS:{id:InspectView;label:string}[]=[{id:"selected",label:"Selected"},{id:"subject",label:"Subject"},{id:"session",label:"Session"},{id:"returned",label:"Returned"}];
+const VIEWS:{id:InspectView;label:string}[]=[{id:"selected",label:"Selected"},{id:"subject",label:"Subject"},{id:"session",label:"Session"},{id:"delivered",label:"Delivered"}];
 
 /** Inspect / returned work: real room for the selected thing. The selector
  * offers only what exists — the things handed here (an Activity row, a centre
@@ -54,16 +54,16 @@ export function InspectPlane({full,selection,onSelection,handed,onDismiss,subjec
        <RawDisclosure reading={session.state.reading} status={session.state.status}/>
       </div>
     : <p className="oi-empty" data-state="no-session">No conversation is bound to the panel, so there is no session to inspect.</p>)}
-   {selection.view==="returned"&&(session
+   {selection.view==="delivered"&&(session
     ? <div className="agent-inspect-returned" key={session.state.key}>
        <header className="oi-panel-head"><h3 className="oi-panel-head-title">Delivery receipts</h3></header>
        <DeliveryRegistrations deliveries={deliveriesOf(session.state)}/>
        <header className="oi-panel-head"><h3 className="oi-panel-head-title">NOW records</h3></header>
        <NowRecords nowRefs={nowRefsOf(session.state)} taskBasisWithoutNow={taskBasisWithoutNow(session.state)}/>
        <header className="oi-panel-head"><h3 className="oi-panel-head-title">Reports, handoffs, verification</h3></header>
-       <p className="oi-note" data-fact="returns-listing-absent">No owner operation lists a session&apos;s reports, handoffs or verification results. What returned to this surface is exactly the delivery receipts and the NOW records above; document returns are reviewed beside their document.</p>
+       <p className="oi-note" data-fact="delivery-listing-absent">No owner operation lists a session&apos;s reports, handoffs or verification results. What this session delivered is exactly the delivery receipts and the NOW records above; document arrivals are reviewed beside their document.</p>
       </div>
-    : <p className="oi-empty" data-state="no-session">No conversation is bound to the panel, so nothing has returned here.</p>)}
+    : <p className="oi-empty" data-state="no-session">No conversation is bound to the panel, so nothing has been delivered here.</p>)}
   </div>
  </div>;
 }

@@ -4,13 +4,15 @@ import {receiving,type DocumentReading,type ReceivingPage,type ReceivingRequest,
 import {NowRelations} from "./NowRelations";
 import {Glyph} from "../workspace/Glyph";
 import "./receiving.css";
-/** Returns for the OPEN document, rendered beside it (Wave 6E cut 2). The
- * same native receiving field as the project tray, reviewed and included
- * through the same owner operations — placed where the human is reading.
- * Arrival never edits the document. Quietly absent when the bound owner does
- * not expose receiving or when nothing targets this source: the desktop never
- * advertises a capability its owner cannot do. */
-export function DocumentReturns({sourceRef,project}:{sourceRef:string;project:string|null}) {
+/** The OPEN document's receiving field (Wave 6E cut 2): the arrived material
+ * rendered beside it — the same native receiving field as the project tray,
+ * reviewed and included through the same owner operations, placed where the
+ * human is reading. Owner ruling 7 (DESKTOP-LANGUAGE.md, 2026-09-22): the
+ * surface is named by what it carries, never "returns". Arrival never edits
+ * the document. Quietly absent when the bound owner does not expose receiving
+ * or when nothing targets this source: the desktop never advertises a
+ * capability its owner cannot do. */
+export function DocumentReceiving({sourceRef,project}:{sourceRef:string;project:string|null}) {
  const kernel=useKernel();
  const [rows,setRows]=useState<ReturnRow[]>();
  const [unavailable,setUnavailable]=useState(false);
@@ -89,41 +91,41 @@ export function DocumentReturns({sourceRef,project}:{sourceRef:string;project:st
    binding_revision:typeof lineage.binding_revision==="number"?lineage.binding_revision:undefined,
    exchange_grant_ref:typeof lineage.exchange_grant_ref==="string"?lineage.exchange_grant_ref:undefined};
  };
- return <section className="document-returns" aria-label="Returns for this document">
-  <header><span>Returns for this document</span>{rows&&<small>{rows.length} in the receiving field</small>}<button className="returns-refresh" aria-label="Refresh this document's returns" disabled={pending} onClick={load}><Glyph name="refresh" size={12}/></button></header>
-  {rows?.map(row=><button key={row.return_ref} className={`project-return document-return ${open?.return_ref===row.return_ref?"return-open":""} ${row.now_ref?"return-has-now":""}`} data-now-ref={row.now_ref??undefined} aria-expanded={open?.return_ref===row.return_ref} onClick={()=>void expand(row)}>
-    <span className={`return-status return-${row.status}`}>{row.status}</span>
-    <span className="return-origin">{row.author.actor_kind==="human"?"H":"Agent"} · {row.document_id}{row.now_ref&&<span className="return-now-mark" data-now-ref={row.now_ref}> · now</span>}</span>
+ return <section className="document-receiving" aria-label="Receiving for this document">
+  <header><span>Receiving for this document</span>{rows&&<small>{rows.length} in the receiving field</small>}<button className="receiving-refresh" aria-label="Refresh this document's receiving" disabled={pending} onClick={load}><Glyph name="refresh" size={12}/></button></header>
+  {rows?.map(row=><button key={row.return_ref} className={`receiving-row document-receiving-row ${open?.return_ref===row.return_ref?"receiving-open":""} ${row.now_ref?"receiving-has-now":""}`} data-now-ref={row.now_ref??undefined} aria-expanded={open?.return_ref===row.return_ref} onClick={()=>void expand(row)}>
+    <span className={`receiving-status receiving-${row.status}`}>{row.status}</span>
+    <span className="receiving-origin">{row.author.actor_kind==="human"?"H":"Agent"} · {row.document_id}{row.now_ref&&<span className="receiving-now-mark" data-now-ref={row.now_ref}> · now</span>}</span>
   </button>)}
-  {open&&<div className="return-detail">
+  {open&&<div className="receiving-detail">
     <dl>
-      <dt>Return</dt><dd>{open.return_ref}</dd>
+      <dt>Arrival</dt><dd>{open.return_ref}</dd>
       <dt>Author</dt><dd>{open.record.author.actor_kind==="human"?"Human":"Agent"} — {open.record.author.principal_ref}</dd>
-      <dt>Proposed operation</dt><dd>{String((open.record.proposal as {operation?:string}).operation??open.record.proposal)}{anchor(open.record.proposal as {entry_id?:string;field_id?:string;reply_to?:string})&&<span className="return-anchor"> — {anchor(open.record.proposal as {entry_id?:string;field_id?:string;reply_to?:string})}</span>}</dd>
-      {"html" in open.record.proposal&&<><dt>Proposed content</dt><dd className="return-proposal">{String(open.record.proposal.html)}</dd></>}
+      <dt>Proposed operation</dt><dd>{String((open.record.proposal as {operation?:string}).operation??open.record.proposal)}{anchor(open.record.proposal as {entry_id?:string;field_id?:string;reply_to?:string})&&<span className="receiving-anchor"> — {anchor(open.record.proposal as {entry_id?:string;field_id?:string;reply_to?:string})}</span>}</dd>
+      {"html" in open.record.proposal&&<><dt>Proposed content</dt><dd className="receiving-proposal">{String(open.record.proposal.html)}</dd></>}
       <dt>Basis at arrival</dt><dd>{open.record.proposed_source_revision}{open.record.stale_at_arrival?" — already stale when it arrived":""}</dd>
-      {/* Late Returns keep their own times: when the work happened and when
+      {/* Late arrivals keep their own times: when the work happened and when
         the owner received it. Both are the owner's record, shown verbatim —
         arrival while the desktop was closed never rewrites either. */}
-      {open.record.occurred_at_unix_seconds!=null&&<><dt>Occurred</dt><dd className="return-occurred">{new Date(open.record.occurred_at_unix_seconds*1000).toISOString()}</dd></>}
-      <dt>Received</dt><dd className="return-received">{new Date(open.record.received_at_unix_seconds*1000).toISOString()}</dd>
+      {open.record.occurred_at_unix_seconds!=null&&<><dt>Occurred</dt><dd className="receiving-occurred">{new Date(open.record.occurred_at_unix_seconds*1000).toISOString()}</dd></>}
+      <dt>Received</dt><dd className="receiving-received">{new Date(open.record.received_at_unix_seconds*1000).toISOString()}</dd>
       {basis&&<><dt>Current document basis</dt><dd>{basis.revision.revision}{basis.unreviewed_external_revision?" — externally edited since":""}</dd></>}
       {open.record.review&&<><dt>Review</dt><dd>{open.record.review.disposition} by {open.record.review.reviewer_ref} on {open.record.review.source_revision}</dd></>}
-      {sharedFieldLineage(open.record.proposal)&&<><dt>Shared field</dt><dd className="return-shared-field" data-shared-field="true">admitted contribution — projection <code>{sharedFieldLineage(open.record.proposal)!.projection_ref}</code> rev {sharedFieldLineage(open.record.proposal)!.projection_revision}{sharedFieldLineage(open.record.proposal)!.withdrawn?" · withdrawn by the publisher, admitted material retained":""}{sharedFieldLineage(open.record.proposal)!.admission_ref?<> · admission <code>{sharedFieldLineage(open.record.proposal)!.admission_ref}</code></>:null}</dd></>}
-      {a2aLineage(open.record.proposal)&&<><dt>A2A exchange</dt><dd className="return-a2a" data-a2a="true">admitted contribution — exchange <code>{a2aLineage(open.record.proposal)!.exchange_ref}</code>{a2aLineage(open.record.proposal)!.transport_kind&&a2aLineage(open.record.proposal)!.transport_ref?<>{a2aLineage(open.record.proposal)!.transport_kind} <code>{a2aLineage(open.record.proposal)!.transport_ref}</code></>:null}{a2aLineage(open.record.proposal)!.binding_ref?<> · binding <code>{a2aLineage(open.record.proposal)!.binding_ref}</code> rev {a2aLineage(open.record.proposal)!.binding_revision}</>:null}</dd></>}
+      {sharedFieldLineage(open.record.proposal)&&<><dt>Shared field</dt><dd className="receiving-shared-field" data-shared-field="true">admitted contribution — projection <code>{sharedFieldLineage(open.record.proposal)!.projection_ref}</code> rev {sharedFieldLineage(open.record.proposal)!.projection_revision}{sharedFieldLineage(open.record.proposal)!.withdrawn?" · withdrawn by the publisher, admitted material retained":""}{sharedFieldLineage(open.record.proposal)!.admission_ref?<> · admission <code>{sharedFieldLineage(open.record.proposal)!.admission_ref}</code></>:null}</dd></>}
+      {a2aLineage(open.record.proposal)&&<><dt>A2A exchange</dt><dd className="receiving-a2a" data-a2a="true">admitted contribution — exchange <code>{a2aLineage(open.record.proposal)!.exchange_ref}</code>{a2aLineage(open.record.proposal)!.transport_kind&&a2aLineage(open.record.proposal)!.transport_ref?<>{a2aLineage(open.record.proposal)!.transport_kind} <code>{a2aLineage(open.record.proposal)!.transport_ref}</code></>:null}{a2aLineage(open.record.proposal)!.binding_ref?<> · binding <code>{a2aLineage(open.record.proposal)!.binding_ref}</code> rev {a2aLineage(open.record.proposal)!.binding_revision}</>:null}</dd></>}
       {open.record.applied_source_revision&&<><dt>Applied</dt><dd>{open.record.applied_source_revision}</dd></>}
       {open.record.now_ref&&<NowRelations nowRef={open.record.now_ref} project={project}/>}
     </dl>
-    {!open.included&&open.record.status!=="included"&&<div className="return-actions">
+    {!open.included&&open.record.status!=="included"&&<div className="receiving-actions">
       {(open.record.status==="pending"||open.record.status==="needs-review")&&<>
-        <button className="return-accept" disabled={pending||!basis} title={basis?undefined:"Read the document's current basis first"} onClick={()=>review(open,"accepted")}>Accept current basis</button>
-        <button className="return-reject" disabled={pending} onClick={()=>review(open,"rejected")}>Reject</button>
+        <button className="receiving-accept" disabled={pending||!basis} title={basis?undefined:"Read the document's current basis first"} onClick={()=>review(open,"accepted")}>Accept current basis</button>
+        <button className="receiving-reject" disabled={pending} onClick={()=>review(open,"rejected")}>Reject</button>
       </>}
-      {open.record.status==="accepted"&&<button className="return-accept" disabled={pending} onClick={()=>include(open)}>Include into the document</button>}
-      {(open.record.status==="including"||open.record.status==="uncertain")&&<button className="return-recover" disabled={pending} onClick={()=>recover(open)}>Recover inclusion</button>}
+      {open.record.status==="accepted"&&<button className="receiving-accept" disabled={pending} onClick={()=>include(open)}>Include into the document</button>}
+      {(open.record.status==="including"||open.record.status==="uncertain")&&<button className="receiving-recover" disabled={pending} onClick={()=>recover(open)}>Recover inclusion</button>}
     </div>}
-    {open.record.last_error&&<p className="return-last-error" role="status">The owner recorded: {open.record.last_error}</p>}
-    {open.included&&<p role="status" className="return-included">Included into the document.</p>}
+    {open.record.last_error&&<p className="receiving-last-error" role="status">The owner recorded: {open.record.last_error}</p>}
+    {open.included&&<p role="status" className="receiving-included">Included into the document.</p>}
   </div>}
   {error&&<p role="alert">{error}</p>}
  </section>;

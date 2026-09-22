@@ -92,12 +92,12 @@ export default async function run({page, baseUrl, check, shot, channel, log, pro
   if (!await nav.isVisible()) await page.keyboard.press("Meta+b");
   await nav.locator('[data-project-path="Work/Editor"]').click();
 
-  const tray = nav.locator(".project-returns").first();
+  const tray = nav.locator(".project-receiving").first();
   await tray.waitFor();
-  await page.waitForFunction(() => document.querySelector(".project-returns header small")?.textContent?.includes("2 in the receiving field"), null, {timeout: 20000});
-  const nowRow = tray.locator(".project-return.return-has-now");
+  await page.waitForFunction(() => document.querySelector(".project-receiving header small")?.textContent?.includes("2 in the receiving field"), null, {timeout: 20000});
+  const nowRow = tray.locator(".receiving-row.receiving-has-now");
   check(await nowRow.count() === 1 && (await nowRow.getAttribute("data-now-ref")) === p.now.record.now_ref, "Exactly one row marks the NOW it names, by the owner's ref");
-  check(await tray.locator(".project-return:not(.return-has-now)").count() === 1, "A record without a NOW renders no NOW marker");
+  check(await tray.locator(".receiving-row:not(.receiving-has-now)").count() === 1, "A record without a NOW renders no NOW marker");
 
   // Kernel contract, driven through the walk seam before the UI assertions:
   // the explicit-null project is the root register; the project register
@@ -115,7 +115,7 @@ export default async function run({page, baseUrl, check, shot, channel, log, pro
   // The record detail renders the OWNER'S relations verbatim — every value
   // asserted here is the owner's own reading, fetched in setup.
   await nowRow.click();
-  const detail = tray.locator(".return-detail");
+  const detail = tray.locator(".receiving-detail");
   // The panel's loading state matches .now-relations too — wait until the
   // owner's reading (or its refusal) has actually landed before asserting.
   await detail.locator(".now-relations[data-now-ref], .now-relations-refused").first().waitFor({timeout: 20000});
@@ -132,9 +132,9 @@ export default async function run({page, baseUrl, check, shot, channel, log, pro
   await shot("now-relations-rendered");
 
   // Absence stays honest: the second record's detail carries no NOW panel.
-  await tray.locator(".project-return:not(.return-has-now)").click();
-  await page.waitForFunction(() => document.querySelectorAll(".project-returns .return-detail").length === 1 && document.querySelector(".project-returns .return-detail")?.textContent?.includes("Return without any NOW"), null, {timeout: 20000});
-  check(await tray.locator(".return-detail .now-relations").count() === 0, "A record that names no NOW renders no NOW section at all");
+  await tray.locator(".receiving-row:not(.receiving-has-now)").click();
+  await page.waitForFunction(() => document.querySelectorAll(".project-receiving .receiving-detail").length === 1 && document.querySelector(".project-receiving .receiving-detail")?.textContent?.includes("Return without any NOW"), null, {timeout: 20000});
+  check(await tray.locator(".receiving-detail .now-relations").count() === 0, "A record that names no NOW renders no NOW section at all");
 
   // A NOW that has left the ground: the owner's refusal renders verbatim,
   // never a desktop-fabricated absence. (The scratch ground is the walk's
@@ -142,7 +142,7 @@ export default async function run({page, baseUrl, check, shot, channel, log, pro
   // fail through the owner rather than bypassing it.)
   rmSync(p.nowSourcePath, {force: false});
   await nowRow.click();
-  await page.waitForFunction(() => document.querySelector(".project-returns .return-detail .now-relations-refused")?.hasAttribute("data-owner-refusal"), null, {timeout: 20000});
+  await page.waitForFunction(() => document.querySelector(".project-receiving .receiving-detail .now-relations-refused")?.hasAttribute("data-owner-refusal"), null, {timeout: 20000});
   const refusal = await tray.locator(".now-relations-refused").getAttribute("data-owner-refusal");
   check(!!refusal && refusal.length > 0, `The owner's own refusal is carried verbatim (${String(refusal).slice(0, 60)}…)`);
   await shot("now-refusal-verbatim");

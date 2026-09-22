@@ -1,6 +1,6 @@
 import {EncounterList,type EncounterRow} from "../../encounter/EncounterList";
 import {RememberedList} from "../../context/RememberedList";
-import {ReturnsTray} from "../../receiving/ReturnsTray";
+import {ReceivingTray} from "../../receiving/ReceivingTray";
 import {UserFlowsList} from "../../flow/UserFlowsList";
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { useKernel } from "../../kernel/KernelProvider";
@@ -143,7 +143,7 @@ export function WorldNavigator({ onExplore, mode, onMode, onOpenEncounter, centr
               onExpansion={directories=>change({directories})}/>}
             {navigation.mode === "wiki" && <button className="project-wiki-link" disabled={!wiki} onClick={()=>openWiki(wiki!,`${project.name} wiki`,project.name)}><Glyph name="wiki" size={12}/><span>{wiki ? `${project.name} neighbourhood` : "No wiki declared"}</span></button>}
             {(navigation.mode??"chats") === "chats" && <><EncounterList project={project.name} onOpen={onOpenEncounter} activeRef={activeEncounterRef}/><RememberedList path={`Work/${project.name}/ProjectCentral/agents/remembered`} label={project.name}/></>}
-            <ReturnsTray project={project.name} refresh={fileRefresh}/>
+            <ReceivingTray project={project.name} refresh={fileRefresh}/>
           </ProjectBranch>;
         })}
       </ul></>

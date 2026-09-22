@@ -3,16 +3,16 @@
  *
  *   project space   the meta-project grounding of this mode — one picker for
  *                   the project, the agent activity recorded in it (its newest
- *                   agent returns), one quiet line for activity landing in
+ *                   agent arrivals), one quiet line for activity landing in
  *                   other projects since yesterday, and the provider the
  *                   accompanying conversation runs on;
  *   Desk            the mode's first entry: it takes the centre to the live
- *                   whole-Run board (desk.ts). What the old Inbox entry showed
- *                   stays here beneath it — the person's receiving: human
- *                   Returns awaiting review, live NOW records, remembered
- *                   notes — read through the owner, opened into the panel's
- *                   Inspect. Receiving is preserved, not relocated to a
- *                   registry of its own.
+ *                   whole-Run board (desk.ts). The person's receiving field
+ *                   renders where they work with it — beside the open document
+ *                   and on the Desk board's receiving strip, opened into the
+ *                   panel's Inspect on demand (owner ruling 7: no returns band
+ *                   in the navigator). This band carries live NOW records and
+ *                   remembered notes, read through the owner.
  *   Tasks           the sessions and chats the centre conversation passes
  *                   through — the same attached encounters, opened the same
  *                   way; choosing one takes the centre to Tasks.
@@ -21,7 +21,7 @@
  * register that exposes none of a kind renders that absence, never a stub.
  * Factory run notices from other projects need the developmental state path
  * the Factory surface asks for; until the owner discloses one durably, the
- * cross-project band reads the NOW fields, which is what a run returns into.
+ * cross-project band reads the NOW fields, which is what a run delivers into.
  */
 import {useEffect,useRef,useState} from "react";
 import {useKernel} from "../../kernel/KernelProvider";
@@ -31,7 +31,6 @@ import {Glyph} from "../../workspace/Glyph";
 import {EncounterList,type EncounterRow} from "../../encounter/EncounterList";
 import {useEncounterSession} from "../../encounter/session";
 import {RememberedList} from "../../context/RememberedList";
-import {receiving,type ReceivingPage,type ReturnRow} from "../../receiving/client";
 import {nowReading,type NowListing,type NowRow} from "../../receiving/now";
 import {handToPanelInspect} from "../../agent/planes/panelInspect";
 import {formatRelativeTime} from "../../shared/relativeTime";
@@ -82,10 +81,10 @@ export function FactoryNavigator({project,accompanying,onProjectChange,onOpenEnc
 // ---------------------------------------------------------------------------
 // project space: the meta-project grounding of the mode
 
-/** One agent return as recorded in a project's NOW field
+/** One agent arrival as recorded in a project's NOW field
  * (`ProjectCentral/now/agents/<slug>-<date>.json`, schema
  * central.project-now.handoff/v1) — the owner's own fields, verbatim. */
-interface AgentReturn {id:string;actor:string;kind:string;subject:string;status:string;recorded_at_unix_seconds:number;project:string}
+interface AgentArrival {id:string;actor:string;kind:string;subject:string;status:string;recorded_at_unix_seconds:number;project:string}
 const RETURN_DATE=/-(\d{4}-\d{2}-\d{2})\.json$/;
 const localDate=(offsetDays=0)=>{const d=new Date();d.setDate(d.getDate()-offsetDays);return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`;};
 async function listReturns(transport:KernelTransportStatus,project:string):Promise<{name:string;location:{ref:string;path:string}}[]> {
@@ -93,22 +92,22 @@ async function listReturns(transport:KernelTransportStatus,project:string):Promi
   if(result.error||result.outcome?.result!=="directory_read")throw new Error(result.error??"the listing did not serve");
   return result.outcome.directory.entries.filter(entry=>entry.kind==="file"&&entry.name.endsWith(".json")).map(entry=>({name:entry.name,location:entry.location as {ref:string;path:string}}));
 }
-async function readReturn(transport:KernelTransportStatus,project:string,entry:{name:string;location:{ref:string;path:string}}):Promise<AgentReturn|undefined> {
+async function readReturn(transport:KernelTransportStatus,project:string,entry:{name:string;location:{ref:string;path:string}}):Promise<AgentArrival|undefined> {
   const response=await kernelOp(transport,{op:"invoke_action",invocation:{action:"central.files.read",target_ref:entry.location.ref,input:{location:entry.location,encoding:"utf-8"}}});
   if(response.outcome?.result!=="action_dispatched")return undefined;
   const dispatch=response.outcome.dispatch as {state?:string;data?:{content?:string}};
   if(dispatch.state!=="invoked"||!dispatch.data?.content)return undefined;
-  try{const raw=JSON.parse(dispatch.data.content) as Partial<AgentReturn>;if(typeof raw.subject!=="string")return undefined;return {id:raw.id??entry.name,actor:raw.actor??"agent",kind:raw.kind??"return",subject:raw.subject,status:raw.status??"",recorded_at_unix_seconds:raw.recorded_at_unix_seconds??0,project};}
+  try{const raw=JSON.parse(dispatch.data.content) as Partial<AgentArrival>;if(typeof raw.subject!=="string")return undefined;return {id:raw.id??entry.name,actor:raw.actor??"agent",kind:raw.kind??"return",subject:raw.subject,status:raw.status??"",recorded_at_unix_seconds:raw.recorded_at_unix_seconds??0,project};}
   catch{return undefined;}
 }
 
 /** The project space: a picker for the project Factory works in, the agent
- * activity in that project (its newest agent returns), and a quiet line for
- * activity landing elsewhere today or yesterday — dated by the returns' own
+ * activity in that project (its newest agent arrivals), and a quiet line for
+ * activity landing elsewhere today or yesterday — dated by the arrivals' own
  * file names, so nothing is read for the projects not chosen. */
 function ProjectSpace({projects,current,pending,accompanying,onBrowse,onMessage,refresh}:{projects:WorldProject[];current?:WorldProject;pending:boolean;accompanying?:{ref:string;project:string;space:string};onBrowse:(name?:string)=>Promise<void>;onMessage?:(message:string)=>void;refresh:number}) {
   const kernel=useKernel();
-  const [activity,setActivity]=useState<AgentReturn[]>();
+  const [activity,setActivity]=useState<AgentArrival[]>();
   const [activityState,setActivityState]=useState<"reading"|"read"|"absent">("reading");
   const [elsewhere,setElsewhere]=useState<{project:string;recent:number}[]>([]);
   useEffect(()=>{
@@ -119,7 +118,7 @@ function ProjectSpace({projects,current,pending,accompanying,onBrowse,onMessage,
       try{
         const entries=await listReturns(kernel.transport,current.name);
         const newest=entries.sort((a,b)=>(RETURN_DATE.exec(b.name)?.[1]??"").localeCompare(RETURN_DATE.exec(a.name)?.[1]??"")).slice(0,8);
-        const read=(await Promise.all(newest.map(entry=>readReturn(kernel.transport,current.name,entry)))).filter((row):row is AgentReturn=>!!row).sort((a,b)=>b.recorded_at_unix_seconds-a.recorded_at_unix_seconds).slice(0,5);
+        const read=(await Promise.all(newest.map(entry=>readReturn(kernel.transport,current.name,entry)))).filter((row):row is AgentArrival=>!!row).sort((a,b)=>b.recorded_at_unix_seconds-a.recorded_at_unix_seconds).slice(0,5);
         if(alive){setActivity(read);setActivityState("read");}
       }catch{if(alive){setActivity(undefined);setActivityState("absent");}}
     })();
@@ -148,8 +147,8 @@ function ProjectSpace({projects,current,pending,accompanying,onBrowse,onMessage,
     </div>
     {current&&<div className="factory-activity" aria-label={`Agent activity in ${current.name}`} data-state={activityState}>
       {activityState==="reading"&&<p className="factory-activity-empty oi-note">Reading agent activity…</p>}
-      {activityState==="absent"&&<p className="factory-activity-empty oi-note">No agent returns recorded here yet.</p>}
-      {activityState==="read"&&!activity?.length&&<p className="factory-activity-empty oi-note">No agent returns recorded here yet.</p>}
+      {activityState==="absent"&&<p className="factory-activity-empty oi-note">No agent arrivals recorded here yet.</p>}
+      {activityState==="read"&&!activity?.length&&<p className="factory-activity-empty oi-note">No agent arrivals recorded here yet.</p>}
       {activity?.map(row=><button key={row.id} className="factory-activity-row" data-kind={row.kind} data-status={row.status} title={`${row.actor} · ${row.kind} · ${row.status}`} onClick={()=>handToPanelInspect({kind:"agent-return",ref:`${row.project}:${row.id}`,title:row.subject,payload:row,source:"Project space"})}>
         <span className="factory-activity-kind">{row.kind}</span>
         <span className="factory-activity-subject">{row.subject}</span>
@@ -158,7 +157,7 @@ function ProjectSpace({projects,current,pending,accompanying,onBrowse,onMessage,
     </div>}
     {elsewhere.length>0&&<p className="factory-elsewhere" aria-label="Agent activity elsewhere">
       <span className="factory-elsewhere-label">Elsewhere</span>
-      {elsewhere.map(row=><button key={row.project} className="factory-elsewhere-item" title={`${row.recent} agent return${row.recent===1?"":"s"} in ${row.project} since yesterday`} onClick={()=>void onBrowse(row.project)}>{row.project} <b>{row.recent}</b></button>)}
+      {elsewhere.map(row=><button key={row.project} className="factory-elsewhere-item" title={`${row.recent} agent arrival${row.recent===1?"":"s"} in ${row.project} since yesterday`} onClick={()=>void onBrowse(row.project)}>{row.project} <b>{row.recent}</b></button>)}
     </p>}
     <ProviderPick accompanying={accompanying} onMessage={onMessage}/>
   </section>;
@@ -197,32 +196,18 @@ function ProviderPick({accompanying,onMessage}:{accompanying?:{ref:string;projec
 
 function DeskReceiving({project,refresh}:{project:string;refresh:number}) {
   const kernel=useKernel();
+  // Owner ruling 7 (DESKTOP-LANGUAGE.md, 2026-09-22): no returns band in the
+  // navigator. The project's receiving field renders where the person works
+  // with it — beside the open document (DocumentReceiving), on the Desk
+  // board's own receiving strip, and on demand through the panel's Inspect
+  // hand-off — never as a navigator box of its own.
   return <div className="factory-inbox">
-    <ReturnsBand transport={kernel.transport} project={project} refresh={refresh}/>
     <NowBand transport={kernel.transport} project={project} refresh={refresh}/>
     <section className="factory-band" aria-label="Remembered"><header className="factory-band-head"><span className="oi-eyebrow">Remembered</span></header><RememberedList path={`Work/${project}/ProjectCentral/agents/remembered`} label={project}/></section>
   </div>;
 }
 
 const seconds=(value?:number|null)=>typeof value==="number"?formatRelativeTime(value*1000):"";
-
-function ReturnsBand({transport,project,refresh}:{transport:KernelTransportStatus;project:string;refresh:number}) {
-  const [page,setPage]=useState<ReceivingPage>();
-  const [state,setState]=useState<"reading"|"read"|"absent">("reading");
-  useEffect(()=>{let live=true;setState("reading");
-    receiving<ReceivingPage>(transport,project,{kind:"list",limit:30}).then(next=>{if(live){setPage(next);setState("read");}}).catch(()=>{if(live)setState("absent");});
-    return()=>{live=false;};},[transport,project,refresh]);
-  if(state==="absent")return null; // the bound owner exposes no receiving here — quiet absence
-  const rows=(page?.returns??[]).filter(row=>row.status!=="included"&&row.status!=="rejected");
-  const open=(row:ReturnRow)=>handToPanelInspect({kind:"return",ref:row.return_ref,title:row.document_id,payload:row,source:"Desk"});
-  return <section className="factory-band" aria-label="Returns awaiting review">
-    <header className="factory-band-head"><span className="oi-eyebrow">Returns</span><span className="oi-state">{state==="reading"?"reading…":rows.length?`${rows.length} to review`:"none waiting"}</span></header>
-    {rows.map(row=><button key={row.return_ref} className="factory-inbox-row" data-status={row.status} onClick={()=>open(row)} title={row.return_ref}>
-      <span className="factory-inbox-dot" aria-hidden="true"/>
-      <span className="factory-inbox-text"><span className="factory-inbox-title">{row.document_id}</span><small>{row.author.principal_ref} · {row.status}{row.received_at_unix_seconds?` · ${seconds(row.received_at_unix_seconds)}`:""}</small></span>
-    </button>)}
-  </section>;
-}
 
 function NowBand({transport,project,refresh}:{transport:KernelTransportStatus;project:string;refresh:number}) {
   const [rows,setRows]=useState<NowRow[]>();
