@@ -202,7 +202,55 @@ live acceptance + the receipt lint.
   reports in the 2026-09-22 session record,
   `ProjectCentral/now/agents/ui-convergence-review-seven-lanes-surveyed-2026-09-22.json`.
 
-## 6 · Proposed execution order (owner to rule)
+## 6 · Cross-suite test audit (six products, 2026-09-22)
+
+The cradle scour's mechanism lens applied across the suite. League table
+(below-bar share of assertions/tests): **cradle ~25–30% · Quaternal-Logic
+~10–15% · Workcell ~5% · Actuation ~2–6% (but its oracle corpus: 32% of 599
+rows are refusal-presence-only) · Central ~2–2.5% · ai-kit ~2.4% · Factory
+~1–2%.**
+
+The syndrome is **not suite-wide**. The Rust kernels are disciplined
+everywhere (exact-equality law tests, refusal arms asserted, tamper refusal,
+no-weakening flake policy). The misrepresentation concentrates in three
+organs:
+
+1. **Evidence plumbing, not test code** — Actuation's frozen oracle corpus
+   (refusals reduced to `{"ok":false}`; 9 stale rows "healed" by recapture
+   in commit b88fa2a; header still bound to the old revision), QL's citation
+   gates (G1/G4/G5/G6 pass on marker substrings; the ~362-test TS suite they
+   cite runs in **no CI**), cradle's receipt/evidence files.
+2. **Silent env-conditional tests** — ai-kit's tmux_real (14 tests empty-pass
+   on the Linux leg) and the only real-keychain proof; Workcell's six live
+   gates (docker/arrakis/ollama/llama.cpp/vllm) whose env vars are set
+   **nowhere**, so real lifecycle is never continuously proven.
+3. **Artifact-content tests** — Central asserting its skills fixtures and
+   SKILL.md phrase walls without executing the described code; herdr's 46
+   tests on recordings with the named real-process route never built.
+
+**The cure is mostly propagation of patterns that already exist in-suite:**
+Workcell's `WORKCELL_REQUIRE_LANDLOCK` + `*_EXECUTED` evidence-marker greps
+in caw-native.yml (the model for live gates); ai-kit's `AIKIT_REQUIRE_*_REAL`
+panic-gate (bkmr_real.rs:67 — 4 lines, kills silent skips); Factory's
+declared-and-executed `#[ignore]`s and "source material is not a successful
+test receipt" CI honesty; Central's declared environment skips and
+evidence-scoping docs; Actuation's unit-level exact refusal codes (the model
+to port up into its own gate's refusal reduction: `{"ok":false, reason:
+<stable slug>}` + a recapture ledger per moved corpus row).
+
+Per-product first fixes: cradle = Lane 1 above. Factory = three <5-line
+assertion tightenings. QL = run the TS suite in CI + make G1/G4/G5/G6
+consume its exit code; delete the `|| true` tautology; declared-skip the
+env-gated vak test. Actuation = refusal-slug extension + recapture ledger +
+read-model digest pins in verify.rs. ai-kit = propagate the REQUIRE gate to
+tmux/keychain/now_field/shells; build herdr_real; one gated native
+secret-CLI argv test per provider. Central = run native/*.py in verify.yml +
+add clippy to the gate; execute the audit fixtures through the real action;
+anchor the standing ladder where it's consumed. Workcell = enforce live gates
+(REQUIRE var + EXECUTED markers, Docker live in verify.yml); type-check the
+layering claim instead of greps; unwrap the any-Ok arms.
+
+## 7 · Proposed execution order (owner to rule)
 
 1. **Acceptance floor first** (kills the regression engine): negative-roster
    lints (receipt lint, probe exit paths, L5 no-raw-JSON walk check,
