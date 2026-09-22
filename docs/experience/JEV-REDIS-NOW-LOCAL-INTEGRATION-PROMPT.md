@@ -11,7 +11,7 @@ This is an execution handoff. Do not redesign the architecture or redo routine c
 
 Reconcile these exact remote revisions with whatever has advanced when this prompt is run:
 
-- AIKit candidate delivery PR #393: `545243eb51f1b8ff3e2d15d8bdb417b76407929c` (use the merged successor of PR #393 if the PR has merged).
+- AIKit candidate delivery PR #393: `13dcb7b6488a88f3e0143a1876af7021adbc37f7` (use the merged successor of PR #393 if the PR has merged).
 - Central main: `1d5cd52109bda59e440a66db29723fd5412b67d6`.
 - Workcell main: `063bc15a56851b921a34437e13daa1a0f5327921`; Redis NOW material service landed in PR #98 / `9d627ff4d90de2cddf237b14f9854a64e1b5819e`.
 - Factory main: `e2d16dbdfabec4157e47028d1bbe7a8cf7b8fc59`.
