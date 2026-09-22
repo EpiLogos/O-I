@@ -1,0 +1,11 @@
+{
+  "schema": "central.project-now.handoff/v1",
+  "id": "cradle-sidebars-designed-once-across-every-2026-09-22",
+  "provenance": "agent-authored-bounded-return",
+  "actor": "claude-code",
+  "kind": "handoff",
+  "recorded_at_unix_seconds": 1790106211,
+  "subject": "Cradle sidebars designed once, across every mode and state",
+  "result": "Design spec docs/cradle/10-SIDEBARS.md + interactive study docs/cradle/sidebars/sidebars-study.html in PR #479 (proposed; six decisions D1-D6 await owner Recognition). Technè wiki-map left body re-landed with register self-publication in PR #480 (tsc clean; walk against real kernel shows the map populated; apertures probe fails at its stale centre step, which #420 replaced). Findings: PR #462 UI v2 handover and #470 were closed as already-on-main but never landed; research screenshots dsh_session/sessions/settings are saved 404 pages; constellation rows show raw central:wiki refs as titles. Follow-up agent: read docs/cradle/10-SIDEBARS.md on PR #479 and execute its build order once the owner has ruled D1-D6.",
+  "status": "active"
+}

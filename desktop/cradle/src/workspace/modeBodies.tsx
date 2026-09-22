@@ -70,7 +70,7 @@ export function ContextPaneMount({opens}:{opens?:TaPaneOpens}) {
  * those its curation names, in the curation's order. `host` lends the real
  * app-level ways a Factory control reaches the rest of the shell; `opens`
  * lends the centre canvas's own pane openings to the Ta-Onta Context. */
-export function modeExtraPlanes(mode: WorkspaceMode, subject: PanelSubject, accompanying?: PanelAccompanying, onMessage?: (message: string) => void, host?: FactoryPanelHost, full?: boolean, opens?: TaPaneOpens): {id: string; label: string; body: ReactNode}[] {
+export function modeExtraPlanes(mode: WorkspaceMode, subject: PanelSubject, accompanying?: PanelAccompanying, onMessage?: (message: string) => void, host?: FactoryPanelHost, full?: boolean, opens?: TaPaneOpens, project?: string): {id: string; label: string; body: ReactNode}[] {
   // Central (owner direction 2026-09-19): the panel's core shape matches the
   // other modes — Run and Agents are the shared planes (the same run
   // log/track; the roster with the real project conversations, opened the
@@ -79,15 +79,15 @@ export function modeExtraPlanes(mode: WorkspaceMode, subject: PanelSubject, acco
   // here: it stays the panel's own doc-forward plane, curated in the mode.
   if (mode === "base") return [
     {id: "run", label: "Run", body: <Suspense fallback={null}><RunPlane subject={subject} accompanying={accompanying} onMessage={onMessage} full={full} withScenarioBar={false}/></Suspense>},
-    {id: "agents", label: "Agents", body: <Suspense fallback={null}><AgentsPlane subject={subject} accompanying={accompanying} onMessage={onMessage} withScenarioBar={false} host={host ? {onOpenEncounterRow: host.onOpenEncounterRow} : undefined}/></Suspense>},
+    {id: "agents", label: "Agents", body: <Suspense fallback={null}><AgentsPlane subject={subject} project={project} accompanying={accompanying} onMessage={onMessage} withScenarioBar={false} host={host ? {onOpenEncounterRow: host.onOpenEncounterRow} : undefined}/></Suspense>},
   ];
   if (mode === "factory") return [
     {id: "run", label: "Run", body: <Suspense fallback={null}><RunPlane subject={subject} accompanying={accompanying} onMessage={onMessage} host={host} full={full}/></Suspense>},
-    {id: "agents", label: "Agents", body: <Suspense fallback={null}><AgentsPlane subject={subject} accompanying={accompanying} onMessage={onMessage} host={host}/></Suspense>},
+    {id: "agents", label: "Agents", body: <Suspense fallback={null}><AgentsPlane subject={subject} project={project} accompanying={accompanying} onMessage={onMessage} host={host}/></Suspense>},
     // Owner direction 2026-09-20: the Context plane IS the canvas — the same
     // plane body the Ta-Onta modes mount, nothing mounted beneath it. The
     // former Needs-you/Sources/Produced stack under the canvas is unmounted.
-    {id: "factory-context", label: "Context", body: <Suspense fallback={null}><div className="desk-plane factory-side ta-context-plane" data-plane="factory-context"><ContextPaneMount opens={opens}/></div></Suspense>},
+    {id: "factory-context", label: "Context", body: <Suspense fallback={null}><div className="desk-plane oi-side-plane ta-context-plane" data-plane="factory-context"><ContextPaneMount opens={opens}/></div></Suspense>},
   ];
   // Nara/Anima is the personal encounter, Epii the deep inquiry — the same
   // companion components, curated to the Epi-Logos world.

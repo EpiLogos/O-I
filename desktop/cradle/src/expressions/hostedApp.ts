@@ -33,11 +33,15 @@ export function materialUrl(location: CentralLocation, relative = "", query = ""
   return `oi-material://localhost/${[encoded, ...segments].join("/")}${segments.length === 0 ? "/" : ""}${query}`;
 }
 
-/** The desktop shell's traffic-lights corner cutout as the HOST sees it
- * (shell.css [data-window-corner] geometry): width is the shell's window
- * reserve minus the left side region; height is the pane tab bar. Null when
- * the frame does not sit inside the desktop shell's corner. */
-export function shellCutout(from: HTMLElement): {width: number; height: number} | null {
+/** The desktop shell's window-corner cutout geometry as the HOST sees it
+ * (shell.css [data-window-corner-left] geometry): `width`/`height` are the
+ * traffic-lights corner (the shell's window reserve — which follows the live
+ * lights-visible condition — minus the left side region, over the pane tab
+ * bar); `right` is the far corner's open icon space (shell.css
+ * --window-cutout-right: the 52.5px icon reserve — keep in step with that
+ * rule — minus the right side region). Null when the frame does not sit
+ * inside the desktop shell's corner. */
+export function shellCutout(from: HTMLElement): {width: number; height: number; right: number} | null {
   const corner = from.closest("[data-window-corner]");
   if (!corner) return null;
   const shell = corner.closest(".desktop-shell") ?? corner;
@@ -47,15 +51,20 @@ export function shellCutout(from: HTMLElement): {width: number; height: number} 
   };
   const reserve = read(shell, "--shell-window-reserve", 42);
   const left = read(shell, "--desktop-left-width", 0);
-  return {width: Math.max(0, reserve - left), height: read(corner, "--oi-shell-tabbar", 32)};
+  const right = Math.max(0, 52.5 - read(shell, "--desktop-right-width", 0));
+  return {width: Math.max(0, reserve - left), height: read(corner, "--oi-shell-tabbar", 32), right};
 }
 
 /** Align a hosted application frame with the shell's corner cutout (owner
- * addendum 2026-09-19): post the live geometry whenever the shell moves
- * (side regions open and close, the window resizes, the frame reloads). The
- * application turns the message into its masthead height and first-icon
- * inset, so the shell's cut corner and the app's header row read as one
- * continuous aligned edge. */
+ * addendum 2026-09-19; right-side accommodation and the lights watcher
+ * 2026-09-20, gated by tests/window-lights-contract.test.mjs): post the live
+ * geometry whenever the shell moves — side regions open and close, the
+ * window resizes, the frame reloads, AND the lights-visible condition flips
+ * (fullscreen transitions change the window reserve; data-window-lights is
+ * the attribute that carries it). The application turns the message into its
+ * masthead height, its first-icon inset and its far-end inset, so the
+ * shell's cut corners and the app's header row read as one continuous
+ * aligned edge. */
 export function trackShellCutout(frame: HTMLIFrameElement): () => void {
   const post = () => {
     const cutout = shellCutout(frame);
@@ -65,7 +74,7 @@ export function trackShellCutout(frame: HTMLIFrameElement): () => void {
   window.addEventListener("resize", post);
   const shell = frame.closest(".desktop-shell");
   const observer = shell ? new MutationObserver(post) : null;
-  if (shell && observer) observer.observe(shell, {attributes: true, attributeFilter: ["style", "class", "data-native"]});
+  if (shell && observer) observer.observe(shell, {attributes: true, attributeFilter: ["style", "class", "data-native", "data-window-lights"]});
   post();
   return () => {
     frame.removeEventListener("load", post);

@@ -1,4 +1,6 @@
 {
+  "spec_ref": "docs/cradle/05-EXECUTION.md §3",
+  "grade": "C",
   "standing": "Actual provider entrypoints prepared; no session launched; entrypoint hashes are not whole-package provenance",
   "argv": [
     "/tmp/oi-p1-exact-bindings-20260908/acceptance-acp"

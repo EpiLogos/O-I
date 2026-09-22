@@ -72,7 +72,7 @@ export function AdoptionFlow({controller, chooseGround, onClose, onConfigure, on
     {state.step === "review" && state.plan && <section aria-label="Installation review">
       {state.plan.notices.map(notice => <p key={notice}>{notice}</p>)}
       <ol>{state.plan.steps.map((step, index) => <li key={index}><strong>{step.title}</strong>{step.effects.map(effect => <p key={effect}>{effect}</p>)}
-        {step.native_plan && <details><summary>Exact native effects and source</summary><pre>{JSON.stringify(step.native_plan, null, 2)}</pre></details>}
+        {step.native_plan && <details className="config-advanced"><summary>Advanced — exact native effects and source</summary><pre>{JSON.stringify(step.native_plan, null, 2)}</pre></details>}
       </li>)}</ol>
       {state.plan.blocked.map(error => <p role="alert" key={error}>{error}</p>)}
       {!controller.canApply() && !state.busy && !state.plan.blocked.length && <p>The review expired. Go back and make a fresh plan; nothing is silently reapplied.</p>}

@@ -1,4 +1,6 @@
 {
+  "spec_ref": "docs/cradle/05-EXECUTION.md §3",
+  "grade": "C",
   "standing": "verification only; native acceptance open",
   "owner_revision": "f3559dbf900b8409ff00b24a84b824c6cd6ec2c3",
   "owner_source": "git archive f3559db",

@@ -1,4 +1,6 @@
 {
+  "spec_ref": "docs/cradle/05-EXECUTION.md §3",
+  "grade": "C",
   "schema": "ql.k8-continuous-acceptance/v1",
   "worker_sha256": "ce04712469fc07eda27619f669efaba0d81fc27de0d6286b61e504eb6d386ee3",
   "m2_sha256": "6936ec8d75b5d15db2513495e07d7b3e44da4e47fe5edf567921c4ea67748a70",

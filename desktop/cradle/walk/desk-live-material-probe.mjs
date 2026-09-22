@@ -1,3 +1,16 @@
+// DEV-ONLY DIAGNOSTIC — NO ACCEPTANCE STANDING.
+//
+// This probe runs on the FIXTURE WORLD: the labelled dev scenario's
+// simulated arrival, fixture-labelled material and fixture Run detail. It is
+// excluded from the acceptance set (research dossier
+// docs/experience/HARNESS-SETTINGS-RESEARCH-2026-09-22.md §4, negative
+// roster item 5; DESKTOP-LANGUAGE.md ruling 8, 2026-09-22): acceptance for
+// the Desk's detail surfaces lives in
+// walk/scenarios/factory-development.mjs, restated over the real kernel legs
+// (the owner's build views and run readings for a real conformance state).
+// This file survives as a developer diagnostic for the fixture scenario's
+// own mechanics.
+//
 // Walk probe: the ported donor surfaces in the Desk (PR #292 lanes) —
 // live refresh acknowledge (FactoryLive machinery over the labelled fixture
 // scenario), the Produced material section (CandidateReading +

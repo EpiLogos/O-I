@@ -88,6 +88,16 @@ export function mintInstance(draft: string, now = new Date()): string {
   doc.meta.current = entry.id;
   return embedDocument(templateHtml, doc);
 }
+/** Mint a blank instance from the pristine template: EMPTY collections, its
+ * in-browser init creates the first entry on open. This is the "start
+ * writing" mint — the file exists before the first word, and the surface's
+ * own composer makes the first entry (owner direction, 2026-09-22). */
+export function mintBlankInstance(now = new Date()): string {
+  const doc = parseInstance(templateHtml);
+  doc.meta.documentId = crypto.randomUUID();
+  doc.meta.created = now.toISOString();
+  return embedDocument(templateHtml, doc);
+}
 /** Append one F entry to an existing instance — the template's own
  * `append-entry` contract. The document's revision advances by one; every
  * other byte of the document's state is preserved exactly. */

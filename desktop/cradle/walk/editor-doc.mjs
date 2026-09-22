@@ -80,7 +80,10 @@ export async function bindDefaultCentral(page, root) {
   const input = chooser.getByRole('textbox', { name: 'Existing Central path' });
   await input.fill(root);
   await chooser.getByRole('button', { name: 'Recognize', exact: true }).click();
-  await chooser.getByText('recognized', { exact: true }).waitFor();
+  // The recognition outcome renders twice in the DOM — the status line and
+  // the "What was recognised" facts list (closed details). Read the STATUS
+  // line, anchored to the outcome's start, not the bare text.
+  await chooser.getByRole('status').filter({ hasText: /^recognized/ }).first().waitFor();
   await chooser.getByRole('button', { name: 'Use as default Central' }).click();
   await chooser.getByText(/Default Central saved/).waitFor();
 }

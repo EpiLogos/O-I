@@ -46,8 +46,8 @@
 .product-action-note { flex-basis: 100%; color: var(--oi-muted-2); font-size: var(--oi-shell-type-ui); }
 .product-empty { color: var(--oi-muted-2); font-style: italic; }
 .product-version { color: var(--oi-muted-2); font-size: var(--oi-shell-type-ui); }
-.product-raw, .product-raw-inline { margin: 8px 0; font-size: var(--oi-shell-type-ui); }
-.product-raw pre, .product-raw-inline pre { white-space: pre-wrap; overflow-wrap: anywhere; }
+.product-advanced, .product-advanced-inline { margin: 8px 0; font-size: var(--oi-shell-type-ui); }
+.product-advanced pre, .product-advanced-inline pre { white-space: pre-wrap; overflow-wrap: anywhere; }
 
 .settings-view { padding: 8px 0 16px; }
 .settings-view h3 { font-size: var(--oi-shell-type-heading); font-weight: 500; margin: 8px 0; }

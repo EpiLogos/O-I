@@ -716,3 +716,33 @@ export function setRegistryMode(mode: "full" | "empty"): void {
 export function setOwnerAvailability(owner_ref: string, state: "available" | "unavailable"): void {
   if (world && owner_ref === "workcell") world.workcellAvailable = state === "available";
 }
+
+/** L6 descriptor-genericity proof (docs/cradle/06 §2, §7): the product
+ * ships a new descriptor revision — a section with one setting the cradle
+ * has never heard of — and the next reread must project it with zero
+ * product-specific code. This mutates only the in-memory fixture
+ * document; the projection under test is the generic one the page runs
+ * for every owner. */
+export function addFixtureSection(owner_ref: string): void {
+  if (!world) return;
+  const mount = world.mounts.find((candidate) => candidate.owner_ref === owner_ref);
+  if (!mount?.document) return;
+  if (mount.document.sections.some((section) => section.id === "walk-l6")) return; // idempotent
+  const setting: SettingSpec = {
+    setting_ref: `${owner_ref}:walk-l6:descriptor-genericity`,
+    section_ref: "walk-l6",
+    title: "Section shipped mid-walk",
+    description: "Added to the fixture descriptor by the walk (L6): the page changed with no cradle code change.",
+    value_schema: { type: "boolean" },
+    allowed_scopes: [{ scope_kind: "world", scope_ref: null }],
+    writable: false,
+    profileable: false,
+    sensitive: false,
+    default_semantics: "constant",
+    default: true,
+    effect: { kind: "none", summary: "descriptor-genericity proof — nothing applies", ref: null },
+    operations: { validate: true, plan: false, apply: false, reset: false },
+    native_ref: `${owner_ref}:walk-l6:descriptor-genericity`,
+  };
+  mount.document.sections.push({ id: "walk-l6", title: "L6 · shipped mid-walk", settings: [setting] });
+}

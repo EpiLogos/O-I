@@ -15,7 +15,7 @@ import {TextEditor,EditorCommands,type EditorHandle} from "../editor/lazy";
 import { useEffect, useRef, useState } from "react";
 import { readDraft, writeDraft } from "../workspace/drafts";
 import { SourceHistory } from "./SourceHistory";
-import { DocumentReturns } from "../receiving/DocumentReturns";
+import { DocumentReceiving } from "../receiving/DocumentReceiving";
 import { DocumentContributions } from "../receiving/DocumentContributions";
 import { SharedFieldMaterial } from "../receiving/SharedFieldMaterial";
 import { DayDieFace } from "../receiving/DayDieFace";
@@ -241,7 +241,7 @@ export function SourceSurface(props: SourceSurfaceProps) {
       </div>
       {/* The strips' register follows the owner's own ref grammar — the same
           `dayProject` routing the die face uses. */}
-      <DocumentReturns sourceRef={binding.ref} project={dayProject}/>
+      <DocumentReceiving sourceRef={binding.ref} project={dayProject}/>
       <DocumentContributions sourceRef={binding.ref} project={dayProject}/>
       <SharedFieldMaterial sourceRef={binding.ref}/>
 

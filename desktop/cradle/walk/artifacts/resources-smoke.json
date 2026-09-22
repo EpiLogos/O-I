@@ -1,4 +1,6 @@
 {
+  "spec_ref": "docs/cradle/05-EXECUTION.md §3",
+  "grade": "B",
   "schema": "oi.cradle.walk.resources/v1",
   "label": "baseline-during-shell-rebuild",
   "generated_at": "2026-09-08T04:05:08.570Z",

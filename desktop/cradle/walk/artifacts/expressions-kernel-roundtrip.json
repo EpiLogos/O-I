@@ -1,4 +1,6 @@
 {
+  "spec_ref": "docs/cradle/05-EXECUTION.md §3",
+  "grade": "B",
   "probe": "expressions-kernel-roundtrip",
   "desk": "http://localhost:1421/",
   "bridge": "http://127.0.0.1:4217",

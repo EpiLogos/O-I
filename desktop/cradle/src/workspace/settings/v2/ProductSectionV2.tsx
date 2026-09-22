@@ -38,6 +38,6 @@ export function ProductSection({model}:{model:ProductSectionModel}) {
       </ul>}
     </div>
     {model.version!=null&&<p className="product-version">Version {model.version}</p>}
-    <details className="product-raw"><summary>Developer record</summary><pre>{JSON.stringify(model.raw,null,2)}</pre></details>
+    <details className="product-advanced"><summary>Advanced — the raw record</summary><pre>{JSON.stringify(model.raw,null,2)}</pre></details>
   </details>;
 }

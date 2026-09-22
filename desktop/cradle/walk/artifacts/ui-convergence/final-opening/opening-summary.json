@@ -1,4 +1,6 @@
 {
+  "spec_ref": "docs/cradle/05-EXECUTION.md §3",
+  "grade": "C",
   "basis": {
     "head": "2a0c206b43f5cbfff872ee787fc7db5600bebe44",
     "native": "91db8428fc9dfba06cd258ec5a58e7dd9eef5313",

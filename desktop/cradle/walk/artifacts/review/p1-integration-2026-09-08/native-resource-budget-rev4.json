@@ -1,8 +1,10 @@
 {
+  "spec_ref": "docs/cradle/05-EXECUTION.md §3",
+  "grade": "C",
   "utc": "2026-09-08T19:38:57.073307+00:00",
   "revision": 4,
   "standing": "Predeclared before sampled cycles; not acceptance",
-  "baseline_median_kib": 120008.0,
+  "baseline_median_kib": 120008,
   "settled_noise_kib": 34032,
   "allowed_settled_growth_kib": 66800,
   "allowed_slope_upper_kib_per_cycle": 1024,

@@ -14,10 +14,14 @@
  *    copy action, not beside every title; the "In sync" state is silent —
  *    only settings needing attention carry a chip;
  *  - a pending-changes tray: held-but-unapplied edits gather in one place
- *    with one Apply, instead of a ceremony per row;
- *  - raw documents collapse into one developer view at the bottom.
+ *    with one Apply, instead of a ceremony per row.
+ *
+ * No raw documents render here at all (owner ruling 2026-09-22: no raw
+ * JSON in user surfaces, no developer surfaces in the shipping app) — the
+ * contribution documents live behind the product sections' Advanced
+ * disclosures on the System face, and nowhere else.
  */
-import {useEffect, useMemo, useState} from "react";
+import {useEffect, useMemo, useRef, useState} from "react";
 import type {
   ConfigResolution,
   ScopeAddress,
@@ -28,11 +32,13 @@ import type {RegistryComposition} from "../../../configuration/composition";
 import {settingsActionable} from "../../../configuration/composition";
 import type {ChangeRequest, ConfigPlaneSource, ContributionMount} from "../../../configuration/source";
 import {configPlaneSource, fixtureWorld} from "../../../configuration/sourceHost";
+import {systemDisclosureSource} from "../../../configuration/systemDisclosure";
+import type {SystemDisclosureReading, SystemDisclosureSource} from "../../../configuration/systemDisclosure";
 import {Loading} from "../../../shared/Loading";
 import {SettingControl} from "../../../configuration/SettingControl";
 import {PlanDrawer} from "../../../configuration/PlanDrawer";
 import {ProfilesView} from "../../../configuration/ProfilesView";
-import {ChatHarnessPanel} from "../../../configuration/ChatHarnessPanel";
+import {StatusPanel, HarnessesPanel, ModelsPanel, CredentialsPanel, SkillsPanel} from "./panels";
 import {NativeAxesDisplay, formatValue} from "./axisDisplay";
 import {GroundChooser} from "../../GroundChooser";
 import type {CompositionReading} from "../types";
@@ -59,7 +65,18 @@ interface SettingEntry {
   setting: SettingSpec;
 }
 
-type Panel = {kind: "all"} | {kind: "owner"; ownerRef: string} | {kind: "ground"} | {kind: "profiles"} | {kind: "chat"};
+/** The rebuilt suite sections (HARNESS-SETTINGS-RESEARCH 2026-09-22 §2),
+ * in the order a person reaches for them. */
+const SUITE_PANELS: {kind: "status" | "harnesses" | "models" | "credentials" | "skills"; label: string}[] = [
+  {kind: "status", label: "Status"},
+  {kind: "harnesses", label: "Harnesses"},
+  {kind: "models", label: "Models"},
+  {kind: "credentials", label: "Credentials"},
+  {kind: "skills", label: "Skills"},
+];
+
+type Panel = {kind: "all"} | {kind: "owner"; ownerRef: string} | {kind: "ground"} | {kind: "profiles"}
+  | {kind: "status"} | {kind: "harnesses"} | {kind: "models"} | {kind: "credentials"} | {kind: "skills"};
 
 export function SettingsHome({census,target}: {census?: CompositionReading;target?: {owner:string;topic:string;settingRef?:string}}) {
   const [source, setSource] = useState<ConfigPlaneSource | null>(null);
@@ -70,6 +87,10 @@ export function SettingsHome({census,target}: {census?: CompositionReading;targe
   const [scopeChoices, setScopeChoices] = useState<Record<string, ScopeChoice>>({});
   const [panel, setPanel] = useState<Panel>({kind: "all"});
   const [query, setQuery] = useState("");
+  /** The rebuilt sections' source (harness reads + the AIKit disclosure).
+   * Read once; the Re-read button refreshes it with the config plane. */
+  const [suite, setSuite] = useState<{source: SystemDisclosureSource; reading: SystemDisclosureReading} | null>(null);
+  const [suiteError, setSuiteError] = useState<string | null>(null);
   useEffect(()=>{
     if(!target)return;
     setPanel({kind:"owner",ownerRef:target.owner});
@@ -103,6 +124,7 @@ export function SettingsHome({census,target}: {census?: CompositionReading;targe
   const refresh = async (planeSource: ConfigPlaneSource) => {
     setRefreshing(true);
     setError(null);
+    void readSuite();
     try {
       const registry = await planeSource.readRegistry();
       setMounts(registry.mounts);
@@ -133,6 +155,28 @@ export function SettingsHome({census,target}: {census?: CompositionReading;targe
     if (source) void refresh(source);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [source]);
+
+  /** The rebuilt sections' read (Status / Harnesses / Models / Credentials
+   * / Skills). One source, read live in every build: these panels render
+   * this machine's truth through the kernel ops, or their honest absence.
+   * Hoisted so `refresh` can re-read it. */
+  const suiteSourceRef = useRef<SystemDisclosureSource | null>(null);
+  async function readSuite() {
+    try {
+      let disclosureSource = suiteSourceRef.current;
+      if (!disclosureSource) {
+        disclosureSource = await systemDisclosureSource();
+        suiteSourceRef.current = disclosureSource;
+      }
+      setSuite({source: disclosureSource, reading: await disclosureSource.read()});
+    } catch (cause) {
+      setSuiteError(String(cause));
+    }
+  }
+  useEffect(() => {
+    void readSuite();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const holdDesired = async (setting: SettingSpec, scope: ScopeAddress, next: {value?: unknown; secret_reference?: {ref: string} | null}) => {
     if (!source) return;
@@ -259,9 +303,17 @@ export function SettingsHome({census,target}: {census?: CompositionReading;targe
             {state !== "available" && <span className={`settings-toc-state is-${state}`}>{availabilityWord(state)}</span>}
           </button>;
         })}
-        <button type="button" aria-pressed={panel.kind === "chat"} onClick={() => setPanel({kind: "chat"})}>
-          <span>Chat &amp; harnesses</span>
-        </button>
+        {SUITE_PANELS.map((item) => (
+          <button key={item.kind} type="button"
+            aria-pressed={panel.kind === item.kind}
+            onClick={() => setPanel({kind: item.kind})}>
+            <span>{item.label}</span>
+            {item.kind === "credentials" && suite?.reading.disclosure.state === "ok" && suite.reading.disclosure.rows.credentials.length > 0
+              && <span className="settings-toc-count">{suite.reading.disclosure.rows.credentials.length}</span>}
+            {item.kind === "harnesses" && suite?.reading.harness.harnesses.state === "ok"
+              && <span className="settings-toc-count">{suite.reading.harness.harnesses.rows.length}</span>}
+          </button>
+        ))}
         <button type="button" aria-pressed={panel.kind === "ground"} onClick={() => setPanel({kind: "ground"})}>
           <span>Ground & suite</span>
         </button>
@@ -289,11 +341,20 @@ export function SettingsHome({census,target}: {census?: CompositionReading;targe
         {source.kind === "live" && <p className="settings-sourcenote" data-config-source="live">{source.label}</p>}
         {composition?.warnings.map((warning, index) => <p key={index} role="note" className="settings-note" data-config-warning>{warning}</p>)}
         {error && <p role="alert" className="settings-error">{error}</p>}
+        {suiteError && panel.kind !== "all" && panel.kind !== "owner" && <p role="alert" className="settings-error">{suiteError}</p>}
 
         {panel.kind === "profiles"
           ? <ProfilesView/>
-          : panel.kind === "chat"
-            ? <ChatHarnessPanel/>
+          : panel.kind === "status" || panel.kind === "harnesses" || panel.kind === "models" || panel.kind === "credentials" || panel.kind === "skills"
+            ? (suite
+                ? <>
+                    {panel.kind === "status" && <StatusPanel reading={suite.reading} census={census}/>}
+                    {panel.kind === "harnesses" && <HarnessesPanel reading={suite.reading}/>}
+                    {panel.kind === "models" && <ModelsPanel reading={suite.reading} source={suite.source} onChanged={() => suite && void readSuite()}/>}
+                    {panel.kind === "credentials" && <CredentialsPanel reading={suite.reading}/>}
+                    {panel.kind === "skills" && <SkillsPanel reading={suite.reading}/>}
+                  </>
+                : <Loading label="Reading the suite…"/>)
             : panel.kind === "ground"
             ? <div className="settings-groundpanel">
                 <GroundChooser/>
@@ -352,9 +413,8 @@ export function SettingsHome({census,target}: {census?: CompositionReading;targe
     </div>
 
     {source.kind === "fixture" && <FixtureConsole onMutate={() => void refresh(source)}/>}
-    <DevView mounts={mounts}/>
 
-    {pendingRequests.length > 0 && !drawerOpen && panel.kind !== "profiles" && panel.kind !== "chat" && (
+    {(panel.kind === "all" || panel.kind === "owner") && pendingRequests.length > 0 && !drawerOpen && (
       <div className="settings-tray" role="region" aria-label="Pending changes" data-settings-tray>
         <span>
           <strong>{pendingRequests.length}</strong> change{pendingRequests.length === 1 ? "" : "s"} waiting
@@ -568,23 +628,15 @@ function FixtureConsole({onMutate}: {onMutate: () => void}) {
     <button type="button" className="settings-mini" disabled={externallyEdited}
       onClick={() => void mutate(async (world) => {await world.simulateExternalNativeEdit("ai-kit:resolution:model.default", "opus"); setExternallyEdited(true);})}
     >Simulate external native edit: ai-kit:resolution:model.default → opus</button>
-    <button type="button" className="settings-mini"
+    <button type="button" className="settings-mini" data-config-registry-mode
       onClick={() => void mutate((world) => {world.setRegistryMode(empty ? "full" : "empty"); setEmpty(!empty);})}
     >{empty ? "Restore the full registry" : "Empty the registry (bootstrap world)"}</button>
     <button type="button" className="settings-mini" data-config-workcell-outage
       onClick={() => void mutate((world) => {world.setOwnerAvailability("workcell", workcellOut ? "available" : "unavailable"); setWorkcellOut(!workcellOut);})}
     >{workcellOut ? "Restore Workcell (simulated outage over)" : "Simulate Workcell going unavailable"}</button>
+    <button type="button" className="settings-mini" data-config-l6-section
+      onClick={() => void mutate((world) => {world.addFixtureSection("oi");})}
+    >Ship a new section in a fixture descriptor (L6 proof — fixture-backed)</button>
   </details>;
 }
 
-/** The one escape hatch: every raw contribution document, behind a single
- * explicit disclosure. Replaces the scattered JSON dumps. */
-function DevView({mounts}: {mounts: ContributionMount[]}) {
-  return <details className="settings-dev">
-    <summary>Developer view — the raw documents behind these settings</summary>
-    {mounts.map((mount) => <details key={mount.owner_ref} className="settings-dev-doc">
-      <summary>{productName(mount.owner_ref)}{mount.error ? ` — read failed: ${mount.error}` : ""}</summary>
-      <pre>{JSON.stringify(mount.document ?? {availability: mount.availability, error: mount.error}, null, 2)}</pre>
-    </details>)}
-  </details>;
-}

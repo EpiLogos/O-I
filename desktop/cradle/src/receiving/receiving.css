@@ -1,5 +1,5 @@
 /*
- * Receiving family (ReturnsTray, DocumentReturns, DocumentContributions,
+ * Receiving family (ReceivingTray, DocumentReceiving, DocumentContributions,
  * NowRelations, SharedFieldMaterial, DayDieFace): pending Returns, accepted
  * document contributions, NOW relations and Shared Field / A2A composition,
  * plus the Day die face. Unstyled before this pass — this file gives every
@@ -9,7 +9,7 @@
  * invents a colour.
  */
 
-.project-returns,.document-returns,.document-contributions,.shared-field-material,
+.project-receiving,.document-receiving,.document-contributions,.shared-field-material,
 .now-relations{
   display:flex;flex-direction:column;gap:6px;margin:0 0 var(--oi-space-4);
   font-size:var(--oi-shell-type-ui);color:var(--oi-foreground);
@@ -17,81 +17,81 @@
 
 /* Tinted band header, shared by every receiving section: eyebrow title left,
    a quiet caption / refresh tool right — the factory-band construction. */
-.project-returns>header,.document-returns>header,.document-contributions>header,
+.project-receiving>header,.document-receiving>header,.document-contributions>header,
 .shared-field-material>header{
   display:flex;align-items:center;gap:8px;min-height:30px;padding:0 10px;
   background:var(--oi-wash);border:var(--oi-shell-edge) solid var(--oi-hairline-soft);
   border-radius:6px 6px 0 0;
 }
-.project-returns>header>span,.document-returns>header>span,.document-contributions>header>span,
+.project-receiving>header>span,.document-receiving>header>span,.document-contributions>header>span,
 .shared-field-material>header>span{
   font-size:var(--oi-shell-type-eyebrow);font-weight:600;letter-spacing:var(--oi-shell-tracking);
   text-transform:uppercase;color:var(--oi-muted-2);
 }
-.project-returns>header>small,.document-returns>header>small,.document-contributions>header>small{
+.project-receiving>header>small,.document-receiving>header>small,.document-contributions>header>small{
   margin-left:auto;font-size:var(--oi-shell-type-meta);color:var(--oi-muted-2);
   font-variant-numeric:tabular-nums;white-space:nowrap;
 }
-.returns-refresh{
+.receiving-refresh{
   flex:none;width:var(--oi-shell-control,24px);height:var(--oi-shell-control,24px);
   display:inline-flex;align-items:center;justify-content:center;border-radius:var(--oi-radius-sm);
   color:var(--oi-muted);border:0;background:transparent;cursor:pointer;
   transition:background var(--oi-motion-ui) var(--oi-motion-ease-out),color var(--oi-motion-ui) var(--oi-motion-ease-out);
 }
-.returns-refresh:hover:not(:disabled),.returns-refresh:focus-visible{background:var(--oi-wash-strong,var(--oi-wash));color:var(--oi-accent-ink);}
-.returns-refresh:focus-visible{outline:var(--oi-focus-ring-width) solid var(--oi-accent);outline-offset:var(--oi-focus-ring-offset);}
-.returns-refresh:disabled{opacity:.4;cursor:default;}
+.receiving-refresh:hover:not(:disabled),.receiving-refresh:focus-visible{background:var(--oi-wash-strong,var(--oi-wash));color:var(--oi-accent-ink);}
+.receiving-refresh:focus-visible{outline:var(--oi-focus-ring-width) solid var(--oi-accent);outline-offset:var(--oi-focus-ring-offset);}
+.receiving-refresh:disabled{opacity:.4;cursor:default;}
 
 /* Registry rows: pending/accepted Returns as a dense bordered list, matching
    .factory-registry / .factory-journey. Selected/open row keeps an ink rule. */
-.project-return{
+.receiving-row{
   display:flex;align-items:center;gap:10px;width:100%;min-height:30px;padding:0 10px;
   border:var(--oi-shell-edge) solid var(--oi-hairline-soft);border-top:0;background:transparent;
   color:inherit;text-align:left;cursor:pointer;font:inherit;font-size:var(--oi-shell-type-ui);
   transition:background var(--oi-motion-ui) var(--oi-motion-ease-out);
 }
-.project-returns>.project-return:first-of-type,.document-returns>.project-return:first-of-type{border-top:var(--oi-shell-edge) solid var(--oi-hairline-soft);}
-.project-return:last-child{border-radius:0 0 6px 6px;}
-.project-return:hover,.project-return:focus-visible{background:var(--oi-wash);}
-.project-return:focus-visible{outline:var(--oi-focus-ring-width) solid var(--oi-accent);outline-offset:-2px;}
-.project-return[aria-expanded="true"]{box-shadow:inset 2px 0 0 var(--oi-accent);background:var(--oi-wash);}
-.return-status{
+.project-receiving>.receiving-row:first-of-type,.document-receiving>.receiving-row:first-of-type{border-top:var(--oi-shell-edge) solid var(--oi-hairline-soft);}
+.receiving-row:last-child{border-radius:0 0 6px 6px;}
+.receiving-row:hover,.receiving-row:focus-visible{background:var(--oi-wash);}
+.receiving-row:focus-visible{outline:var(--oi-focus-ring-width) solid var(--oi-accent);outline-offset:-2px;}
+.receiving-row[aria-expanded="true"]{box-shadow:inset 2px 0 0 var(--oi-accent);background:var(--oi-wash);}
+.receiving-status{
   /* innerText is a walk-checked exact status word ("pending", "accepted", …):
      no text-transform here, ever — see receive-include walk assertion. */
   flex:none;font-size:var(--oi-shell-type-meta);color:var(--oi-muted-2);min-width:9ch;
 }
-.return-status.return-accepted,.return-status.return-included{color:var(--oi-accent-ink);}
-.return-status.return-rejected{color:var(--oi-muted);}
-.return-origin{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--oi-muted);font-size:var(--oi-shell-type-meta);}
-.return-now-mark{color:var(--oi-gold);}
+.receiving-status.receiving-accepted,.receiving-status.receiving-included{color:var(--oi-accent-ink);}
+.receiving-status.receiving-rejected{color:var(--oi-muted);}
+.receiving-origin{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--oi-muted);font-size:var(--oi-shell-type-meta);}
+.receiving-now-mark{color:var(--oi-gold);}
 
 /* The open Return's detail — a bordered panel body under the registry. */
-.return-detail{
+.receiving-detail{
   padding:10px;border:var(--oi-shell-edge) solid var(--oi-hairline-soft);border-top:0;border-radius:0 0 6px 6px;
   display:flex;flex-direction:column;gap:8px;
 }
-.return-detail dl{margin:0;display:grid;grid-template-columns:max-content minmax(0,1fr);column-gap:var(--oi-space-3);row-gap:5px;}
-.return-detail dt{font-size:var(--oi-shell-type-eyebrow);letter-spacing:var(--oi-shell-tracking);text-transform:uppercase;color:var(--oi-muted-2);white-space:nowrap;}
-.return-detail dd{margin:0;overflow-wrap:anywhere;font-size:var(--oi-shell-type-ui);}
-.return-anchor{color:var(--oi-muted-2);}
-.return-proposal{padding:8px;border:var(--oi-shell-edge) solid var(--oi-hairline);border-radius:6px;background:var(--oi-composer-ground);font-size:var(--oi-shell-type-nav);white-space:pre-wrap;overflow-wrap:anywhere;max-height:220px;overflow:auto;}
-.return-shared-field code,.return-a2a code{font-family:var(--oi-font-mono);font-size:.92em;}
-.return-occurred,.return-received{font-variant-numeric:tabular-nums;}
+.receiving-detail dl{margin:0;display:grid;grid-template-columns:max-content minmax(0,1fr);column-gap:var(--oi-space-3);row-gap:5px;}
+.receiving-detail dt{font-size:var(--oi-shell-type-eyebrow);letter-spacing:var(--oi-shell-tracking);text-transform:uppercase;color:var(--oi-muted-2);white-space:nowrap;}
+.receiving-detail dd{margin:0;overflow-wrap:anywhere;font-size:var(--oi-shell-type-ui);}
+.receiving-anchor{color:var(--oi-muted-2);}
+.receiving-proposal{padding:8px;border:var(--oi-shell-edge) solid var(--oi-hairline);border-radius:6px;background:var(--oi-composer-ground);font-size:var(--oi-shell-type-nav);white-space:pre-wrap;overflow-wrap:anywhere;max-height:220px;overflow:auto;}
+.receiving-shared-field code,.receiving-a2a code{font-family:var(--oi-font-mono);font-size:.92em;}
+.receiving-occurred,.receiving-received{font-variant-numeric:tabular-nums;}
 
 /* Actions: real .oi-action buttons, laid out as a plain action group. */
-.return-actions{display:flex;flex-wrap:wrap;gap:6px;}
-.return-actions>button{
+.receiving-actions{display:flex;flex-wrap:wrap;gap:6px;}
+.receiving-actions>button{
   display:inline-flex;align-items:center;min-height:var(--oi-shell-control,26px);padding:0 12px;
   border:var(--oi-shell-edge) solid var(--oi-hairline);border-radius:var(--oi-radius-pill,999px);
   background:transparent;color:var(--oi-accent-ink);font:inherit;font-size:var(--oi-shell-type-ui);cursor:pointer;
   transition:background var(--oi-motion-ui) var(--oi-motion-ease-out),border-color var(--oi-motion-ui) var(--oi-motion-ease-out);
 }
-.return-actions>button:hover:not(:disabled),.return-actions>button:focus-visible{background:var(--oi-wash);border-color:var(--oi-accent-soft);}
-.return-actions>button:focus-visible{outline:var(--oi-focus-ring-width) solid var(--oi-accent);outline-offset:var(--oi-focus-ring-offset);}
-.return-actions>button:disabled{opacity:.4;cursor:default;}
-.return-accept{border-color:var(--oi-accent);}
-.return-last-error{margin:0;color:var(--oi-foreground);background:var(--oi-wash);border-left:2px solid var(--oi-gold);padding:6px 9px;font-size:var(--oi-shell-type-meta);}
-.return-included{margin:0;color:var(--oi-muted-2);font-size:var(--oi-shell-type-meta);}
+.receiving-actions>button:hover:not(:disabled),.receiving-actions>button:focus-visible{background:var(--oi-wash);border-color:var(--oi-accent-soft);}
+.receiving-actions>button:focus-visible{outline:var(--oi-focus-ring-width) solid var(--oi-accent);outline-offset:var(--oi-focus-ring-offset);}
+.receiving-actions>button:disabled{opacity:.4;cursor:default;}
+.receiving-accept{border-color:var(--oi-accent);}
+.receiving-last-error{margin:0;color:var(--oi-foreground);background:var(--oi-wash);border-left:2px solid var(--oi-gold);padding:6px 9px;font-size:var(--oi-shell-type-meta);}
+.receiving-included{margin:0;color:var(--oi-muted-2);font-size:var(--oi-shell-type-meta);}
 
 /* Accepted-into-document contributions: dense bordered rows, distinct from
    the pending registry above so the two registers stay legible. */
@@ -174,9 +174,9 @@
 .die-face-loading,.die-face-unavailable{margin:0;padding:var(--oi-space-4);color:var(--oi-muted-2);font-size:var(--oi-shell-type-ui);}
 
 @media (max-width:760px){
-  .return-detail dl,.now-relations dl,.shared-field-hosted-row{grid-template-columns:1fr;row-gap:2px;}
+  .receiving-detail dl,.now-relations dl,.shared-field-hosted-row{grid-template-columns:1fr;row-gap:2px;}
   .shared-field-fields>label,.shared-field-withdraw>label{grid-template-columns:1fr;}
 }
 @media (prefers-reduced-motion:reduce){
-  .project-return,.returns-refresh,.return-actions>button,.shared-field-actions>button,.shared-field-withdraw-send{transition:none;}
+  .receiving-row,.receiving-refresh,.receiving-actions>button,.shared-field-actions>button,.shared-field-withdraw-send{transition:none;}
 }

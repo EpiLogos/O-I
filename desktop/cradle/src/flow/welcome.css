@@ -6,8 +6,12 @@
 .welcome-prompt-roller{display:grid;justify-items:stretch;width:100%;min-height:3em;color:var(--oi-accent-ink);text-align:center}
 .welcome-prompt-roller>*{grid-area:1/1;min-width:0}
 .welcome-prompt-roller h2{margin:0;font:inherit;font-size:var(--oi-shell-type-title);line-height:1.5;overflow-wrap:anywhere}
-.welcome-prompt-roller .welcome-prompt-reserve{visibility:hidden;pointer-events:none;user-select:none;font:inherit;font-size:var(--oi-shell-type-title);line-height:1.5;overflow-wrap:anywhere}
-.welcome-prompt-roller .welcome-prompt-reserve span{display:block}
+.welcome-prompt-roller .welcome-prompt-reserve{visibility:hidden;pointer-events:none;user-select:none;font:inherit;font-size:var(--oi-shell-type-title);line-height:1.5;overflow-wrap:anywhere;display:grid}
+/* The reserve's phrases share ONE cell too: the reserve's height is the
+ * tallest phrase, never the stack of all of them (owner correction
+ * 2026-09-22 — the stacked reserve sized the whole stage to the sum of
+ * every eligible phrase and pushed the actions far down the page). */
+.welcome-prompt-roller .welcome-prompt-reserve span{display:block;grid-area:1/1}
 .welcome-prompt-roller[data-tone="quiet"] h2{color:var(--oi-muted)}
 .welcome-prompt-roller[data-tone="warm"] h2{color:var(--oi-accent-ink)}
 .welcome-prompt-roller[data-tone="playful"] h2{color:var(--oi-meta-relation)}

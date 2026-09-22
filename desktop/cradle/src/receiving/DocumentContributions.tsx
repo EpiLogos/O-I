@@ -32,7 +32,7 @@ export function DocumentContributions({sourceRef,project}:{sourceRef:string;proj
  useEffect(()=>{setReading(undefined);setKnown(false);load();},[sourceRef,project,kernel.transport]);
  if(!known)return null;
  return <section className="document-contributions" aria-label="Accepted into this document">
-  <header><span>Accepted into this document</span>{reading&&<small className="document-source-revision" data-revision={reading.revision.revision}>source revision {reading.revision.revision}</small>}<button className="returns-refresh" aria-label="Refresh this document's accepted revisions" disabled={pending} onClick={load}><Glyph name="refresh" size={12}/></button></header>
+  <header><span>Accepted into this document</span>{reading&&<small className="document-source-revision" data-revision={reading.revision.revision}>source revision {reading.revision.revision}</small>}<button className="receiving-refresh" aria-label="Refresh this document's accepted revisions" disabled={pending} onClick={load}><Glyph name="refresh" size={12}/></button></header>
   {reading&&reading.document.contributions.filter(c=>!c.removed).map(c=><div key={c.id} className="accepted-contribution" data-contribution-id={c.id}>
    <span className="accepted-contribution-author">{c.display_role==="H"?"Human":"Agent"} — {c.author_ref}</span>
    {c.entry_id&&<span className="accepted-contribution-anchor">entry {c.entry_id}</span>}

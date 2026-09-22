@@ -1,170 +1,142 @@
 /**
- * The configuration-plane walk (#299 §21, C6): the generic Configuration
- * and Profiles projections exercised against the frozen C0 fixtures via
- * the fixture-backed source (`src/configuration/fixtureSource.ts`).
+ * The configuration walk (#299 §21, C6), rebuilt for the acceptance floor
+ * (HARNESS-SETTINGS-RESEARCH-2026-09-22 §4: fixture-backed acceptance is
+ * banned where a real owner route exists — this walk's row-by-row truth
+ * moved LIVE; docs/cradle/06-SYSTEM-SETTINGS §7 L1/L2/L3, §8 P2 order).
  *
- * The System surface mounts through the real kernel bridge; the
- * CONFIGURATION DATA comes from the fixture world in dev/walk builds
- * (`__CRADLE_WALK__`) — exactly the lane's contract: the live KernelOp
- * data binding is the integrator's convergence work, documented in
- * `src/configuration/source.ts`.
+ * Two mounts, one scenario:
  *
- * Proven here, per the lane acceptance:
- *  - ordinary settings render/edit with zero product-specific branches
- *    (controls derive from value_schema kinds only);
- *  - desired and native axes stay legible, never one collapsed value;
- *  - all six frozen reconciliation statuses render;
- *  - plan/diff/apply uses the frozen ChangeSet shapes with owner authority
- *    and expected effect visible BEFORE apply;
- *  - partial failure is truthful (the fixture world's `oi` owner fails
- *    apply, mirroring changeset-partial-apply: one verified op + one
- *    failed op → partially_applied, no fake rollback);
- *  - an external native change appears on reread;
- *  - empty registry and unavailable-owner worlds are first-class;
- *  - profile switching is inspectable; native profiles stay references;
- *    secret entries stay presence/reference.
+ *  1. LIVE (`?config-source=live` binds the real engine in walk builds
+ *     through the same `liveSource` kernel binding production uses): per
+ *     owner group — oi (the composition layer), then Central, AIKit,
+ *     Workcell, Actuation, Quaternal Logic in the P2 disclosure order —
+ *     the rendered rows equal the live owner read (`oi config list`) by
+ *     title, with the counts the surface shows (rows and the table of
+ *     contents badge) matching; every row is named and owner-prefixed;
+ *     the kernel registry read behind the page carries owner refs +
+ *     disclosed-at + observed-at (L2); availability labels are the
+ *     owners' own disclosed states (L1). The shared implementation is
+ *     `walk/live-settings-acceptance.mjs` — the same checks
+ *     `verify-live-settings.mjs` runs against a production bundle.
+ *
+ *  2. FIXTURE (the walk bundle's labelled fixture world) — kept ONLY for
+ *     the generic-projection proofs that have no live route: the frozen
+ *     reconciliation vocabulary rendering, honest absence on demand
+ *     (owner outage, empty world), and the L6 descriptor-genericity row,
+ *     which is fixture-backed by design and says so in its label: adding
+ *     a section to a fixture descriptor changes the page with no cradle
+ *     code change.
  */
-export default async function run({page,baseUrl,check,shot}) {
+import { ALL_GROUPS, assertOwnerGroupLive, readLiveListing, readRegistryViaBridge } from "../live-settings-acceptance.mjs";
+import { assertNoRawJson } from "../lib/read-model.mjs";
+import {
+  assertStatusPanel,
+  assertHarnessesPanel,
+  assertModelsPanel,
+  assertCredentialsPanel,
+  assertSkillsPanel,
+} from "../lib/settings-sections.mjs";
+
+const oiBin = process.env.OI_BIN ?? "oi"; // the same resolution the walk bridge uses
+
+/** Open the settings surface. The shell remembers the settings mode per
+ * session — when the reload already restored it, the strip toggle is in
+ * its pressed state and must be left alone. */
+async function openSettings(page) {
+  await page.waitForSelector('.desktop-shell', {timeout: 30000});
+  try {
+    await page.waitForSelector('.settings-home', {timeout: 8000});
+  } catch {
+    await page.locator('.world-system-settings').first().click();
+    await page.waitForSelector('.settings-home', {timeout: 60000});
+  }
+}
+
+export default async function run({page,baseUrl,check,shot,bridgeUrl,log}) {
+  // --- 1 · LIVE: row-by-row acceptance against the real engine ------------
+  await page.goto(`${baseUrl}/?config-source=live`);
+  await openSettings(page);
+  await page.waitForSelector('[data-owner-group]', {timeout: 120000});
+  check((await page.locator('[data-config-source="fixture"]').count()) === 0,
+    'the live mount binds the LIVE source — the fixture banner never renders');
+  check((await page.locator('[data-config-source="live"]').count()) === 1,
+    'the live source note renders (read and driven through the oi configuration engine)');
+
+  // The live reads BEFORE the assertions: what the owners disclose is the
+  // expectation the rendered surface is held against (the round trip).
+  const listing = readLiveListing(oiBin);
+  const registry = await readRegistryViaBridge(bridgeUrl);
+
+  const verdicts = {};
+  for (const owner of ALL_GROUPS) {
+    verdicts[owner] = await assertOwnerGroupLive({page, owner, listing, registry, registryBridgeUrl: bridgeUrl, check});
+  }
+  await shot('live-groups');
+  log(`live per-group verdicts: ${Object.entries(verdicts).map(([owner, verdict]) => `${owner}=${verdict}`).join(", ")}`);
+
+  // --- 1b · The rebuilt sections (HARNESS-SETTINGS-RESEARCH §2), live -----
+  // In this live world the real `oi` serves the AIKit disclosure, so every
+  // section asserts its full row-by-row round trip; each panel is also held
+  // to the L5 law on its own.
+  const sectionLegs = [
+    ["Status", () => assertStatusPanel({page, check, disclosureAvailable: true})],
+    ["Harnesses", () => assertHarnessesPanel({page, check})],
+    ["Models", () => assertModelsPanel({page, check})],
+    ["Credentials", () => assertCredentialsPanel({page, check, disclosureAvailable: true})],
+    ["Skills", () => assertSkillsPanel({page, check, disclosureAvailable: true})],
+  ];
+  for (const [name, leg] of sectionLegs) {
+    const panel = await leg();
+    await assertNoRawJson({check}, panel, `${name}: the rebuilt section renders no raw JSON (L5)`);
+    await shot(`section-${name.toLowerCase()}`);
+  }
+  await page.locator('.settings-toc button', {hasText: 'All settings'}).first().click();
+
+  // --- 2 · FIXTURE: only the generic-projection proofs remain -------------
   await page.goto(baseUrl);
-  await page.getByRole('button',{name:'System',exact:true}).click();
-  const panel=page.getByRole('region',{name:'System composition'});
-  await panel.waitFor();
+  await openSettings(page);
+  await page.waitForSelector('[data-config-source="fixture"]', {timeout: 120000});
+  await page.waitForSelector('[data-owner]', {timeout: 30000});
 
-  // --- Configuration: the generic projection -------------------------------
-  await panel.getByRole('button',{name:'Configuration',exact:true}).click();
-  await panel.locator('[data-config-source="fixture"]').waitFor({timeout:30000});
-  await panel.locator('[data-owner]').first().waitFor({timeout:30000});
-
-  const ownerRefs=await Promise.all((await panel.locator('[data-owner]').all()).map(o=>o.getAttribute('data-owner')));
-  check(ownerRefs.length===4 && ownerRefs.includes('ai-kit') && ownerRefs.includes('oi')
+  const ownerRefs = await Promise.all((await page.locator('[data-owner-group]').all()).map(g => g.getAttribute('data-owner')));
+  check(ownerRefs.length === 4 && ownerRefs.includes('ai-kit') && ownerRefs.includes('oi')
     && ownerRefs.includes('workcell') && ownerRefs.includes('connector/factory-actuation'),
-    'The registry projects every mounted contribution generically (two products, the oi composition owner, a connector)',{ownerRefs});
+    'the fixture registry projects every mounted contribution generically (two products, the oi composition owner, a connector)', {ownerRefs});
 
-  const workcell=panel.locator('[data-owner="workcell"]');
-  check((await workcell.getAttribute('data-availability'))==='unavailable','The unavailable owner renders its disclosed availability');
-  check((await workcell.locator('[data-config-empty-owner]').count())===1,'The unavailable owner renders its honest absence — no fabricated settings, no fake controls');
+  // The frozen reconciliation vocabulary renders from the fixture world's
+  // disclosed states (the live world cannot be commanded into drift).
+  const statuses = await Promise.all((await page.locator('[data-setting-ref]').all()).map(row => row.getAttribute('data-reconciliation')));
+  check(['satisfied', 'drifted', 'pending', 'blocked'].every(s => statuses.includes(s)),
+    'the frozen reconciliation vocabulary renders — satisfied, drifted, pending and blocked (fixture world)', {statuses});
 
-  // --- Settings across the modes (composition lock §5, §7) -----------------
-  // The fixture world stands in the 0/1/2 operational core: AIKit in
-  // composition, Workcell absent by selection. The mode is disclosed once,
-  // and the absent owner renders as disclosure only — no settings, no
-  // controls — because recognising a product is an explicit owner
-  // operation, never a silent control.
-  check(/mode 0\/1\/2/.test(await panel.locator('[data-config-composition]').textContent()),
-    'The registry discloses the effective composition beside the data');
-  check((await panel.locator('[data-owner="workcell"]').getAttribute('data-standing'))==='absent',
-    'The absent owner carries its composition standing');
-  check((await panel.locator('[data-owner="workcell"] [data-config-absent-owner]').count())===1,
-    'The absent owner renders its disclosed absence — visible only as disclosure');
-  check((await panel.locator('[data-owner="workcell"] [data-setting-ref]').count())===0,
-    'No setting of an out-of-composition owner renders as an actionable row');
-  check((await panel.locator('[data-owner="ai-kit"]').getAttribute('data-standing'))==='in_composition',
-    'The present owner carries its in-composition standing');
+  // Honest absence on demand: an owner outage renders its named absence.
+  // (The console is a dev harness at the page's foot — drive it by event;
+  // what the legs assert is the rendered result, never the click.)
+  const consoleButton = (ref) => page.locator(`[data-config-fixture-console] [data-config-${ref}]`).dispatchEvent('click');
+  await consoleButton('workcell-outage');
+  const workcell = page.locator('[data-owner-group][data-owner="workcell"]');
+  await workcell.locator('[data-owner-availability="unavailable"]').waitFor({timeout: 30000});
+  const outageNote = (await workcell.locator('[data-owner-availability]').textContent()) ?? '';
+  check((await workcell.getAttribute('data-availability')) === 'unavailable' && /unavailable/i.test(outageNote ?? ''),
+    'the unavailable owner renders its named absence with the disclosed reason — no fabricated rows (L1/L3)', {outageNote});
+  await consoleButton('workcell-outage');
+  await page.waitForFunction(() => document.querySelector('[data-owner-group][data-owner="workcell"]')?.getAttribute('data-availability') === 'available', null, {timeout: 30000});
 
-  // Generic controls per value-schema kind — no product branch rendered any
-  // of these.
-  check((await panel.locator('[data-config-control="boolean"]').count())>=1,'boolean → switch');
-  check((await panel.locator('[data-config-control="enum"]').count())>=2,'enum → choice');
-  check((await panel.locator('[data-config-control="path"]').count())>=1,'path → path field');
-  check((await panel.locator('[data-config-control="table"]').count())>=1,'table → structured editor');
-  check((await panel.locator('[data-config-control="reference"]').count())>=1,'reference → reference field (native resolver)');
-  const secretRow=panel.locator('[data-setting-ref="ai-kit:providers:credentials.anthropic"]');
-  check((await secretRow.getByText('present',{exact:true}).count())===1,'secret → presence only');
-  check((await secretRow.getByText('aikit:credentials:anthropic-key').count())>=1,'secret → reference shown, never a value');
+  // Empty registry is first-class (§6.2's honest beginning).
+  await consoleButton('registry-mode');
+  await page.locator('[data-config-empty-registry]').waitFor({timeout: 30000});
+  check(true, 'an empty world renders the honest beginning — same system, no fabricated rows (fixture world)');
+  await consoleButton('registry-mode');
+  await page.locator('[data-owner-group]').first().waitFor({timeout: 30000});
 
-  // Four of the frozen reconciliation statuses render straight from the
-  // mounted world; `unknown` and `unsupported` are proven further below.
-  const statusesOf=async()=>Object.fromEntries(await Promise.all((await panel.locator('[data-setting-ref]').all()).map(async row=>[await row.getAttribute('data-setting-ref'), await row.getAttribute('data-reconciliation')])));
-  let statuses=await statusesOf();
-  const present=new Set(Object.values(statuses));
-  check(['satisfied','drifted','pending','blocked'].every(s=>present.has(s)),
-    'satisfied, drifted, pending and blocked render from the frozen vocabulary (§7.1)',{statuses});
-  await shot('configuration-registry');
-
-  // Desired and native stay two legible axes on the drifted setting.
-  const modelRow=panel.locator('[data-setting-ref="ai-kit:resolution:model.default"]');
-  check((await modelRow.getAttribute('data-reconciliation'))==='drifted','model.default is drifted (profile desired vs native)');
-  check((await modelRow.getByText('sonnet-current').count())>=1,'the native axis stays visible');
-  check((await modelRow.getByText('sonnet-next').count())>=1,'the desired axis stays visible beside it');
-
-  // --- Plan / apply: authority + expected effect BEFORE, ChangeSet after ---
-  await modelRow.getByRole('button',{name:'Plan apply…'}).click();
-  const drawer=panel.locator('[data-config-drawer]');
-  await drawer.getByText('session-restart-required').first().waitFor({timeout:15000});
-  check((await drawer.getByText(/Authority/).count())>=1,'owner authority is visible before apply');
-  check((await drawer.getByText('Expected effect').count())>=1,'expected effect is visible before apply');
-  await shot('configuration-plan');
-  await drawer.locator('[data-config-apply]').click();
-  await drawer.locator('[data-changeset-status="verified"]').waitFor({timeout:15000});
-  check((await drawer.locator('[data-op-status="verified"]').count())===1,'the ChangeSet records per-operation truth');
-  check((await drawer.getByText('satisfied').count())>=1,'re-read verification reconciles the applied setting');
-  await drawer.getByRole('button',{name:'close'}).click();
-  await page.waitForTimeout(600); // the parent re-read lands
-  check((await modelRow.getAttribute('data-reconciliation'))==='satisfied','after apply + reread the setting reconciles satisfied');
-
-  // --- Holding desired drifts before any owner is touched ------------------
-  const verifyRow=panel.locator('[data-setting-ref="oi:verify:verify.before-run"]');
-  await verifyRow.locator('[data-config-control="boolean"]').click(); // hold desired: off
-  await page.waitForTimeout(600);
-  check((await verifyRow.getAttribute('data-reconciliation'))==='drifted','holding desired drifts the setting before any owner is touched');
-
-  // --- An undisclosed setting with held desired is `unknown`, never guessed
-  const instanceRow=panel.locator('[data-setting-ref="ai-kit:session:provider-instance"]');
-  await instanceRow.locator('input[data-config-control="reference"]').fill('workcell:instance-7');
-  await instanceRow.locator('input[data-config-control="reference"]').press('Enter');
-  await page.waitForTimeout(600);
-  check((await instanceRow.getAttribute('data-reconciliation'))==='unknown','desired over an undisclosed subject is unknown — never guessed, never fabricated');
-  statuses=await statusesOf();
-  check(Object.values(statuses).includes('unknown'),'all five registry-renderable statuses have now rendered',{statuses});
-
-  // --- External native change appears on reread (§10) ----------------------
-  await panel.locator('[data-config-fixture-console] summary').click();
-  await panel.getByRole('button',{name:/Simulate external native edit/}).click();
-  await page.waitForTimeout(600);
-  check((await modelRow.getAttribute('data-reconciliation'))==='drifted','an external native edit appears on reread as drift, never silently rewritten');
-
-  // --- Partial failure is truthful: two owners, one fails (§8) -------------
-  await panel.locator('[data-config-plan-all]').click();
-  const batchDrawer=panel.locator('[data-config-drawer]');
-  await batchDrawer.locator('[data-config-apply]').waitFor({timeout:15000});
-  await batchDrawer.locator('[data-config-apply]').click();
-  await batchDrawer.locator('[data-changeset-status="partially_applied"]').waitFor({timeout:15000});
-  check((await batchDrawer.locator('[data-op-status="verified"]').count())===1,'the succeeded owner operation is recorded verified');
-  check((await batchDrawer.locator('[data-op-status="failed"]').count())===1,'the failed owner operation is recorded failed');
-  check((await batchDrawer.getByText('owner_unavailable').count())>=1,'the owner error renders verbatim — no fake rollback, no faked success');
-  await shot('configuration-partial');
-  await batchDrawer.getByRole('button',{name:'close'}).click();
-
-  // --- Empty registry is first-class ---------------------------------------
-  await panel.getByRole('button',{name:'Empty the registry (bootstrap world)'}).click();
-  await panel.locator('[data-config-empty-registry]').waitFor({timeout:15000});
-  check(true,'an empty World renders the honest beginning, same system, no fabricated rows');
-  await shot('configuration-empty');
-  await panel.getByRole('button',{name:'Restore the full registry'}).click();
-  await panel.locator('[data-owner]').first().waitFor({timeout:15000});
-
-  // --- Profiles -------------------------------------------------------------
-  await panel.getByRole('button',{name:'Profiles',exact:true}).click();
-  const devButton=panel.locator('[data-profile-ref="development"]');
-  await devButton.waitFor({timeout:15000});
-  check((await devButton.locator('.config-chip.is-active').count())===1,'the active profile is marked');
-  const staging=panel.locator('[data-profile-ref="staging"]');
-  await staging.click();
-  const unsupportedEntry=panel.locator('[data-profile-entry="workcell:placement:placement.policy"]');
-  await unsupportedEntry.waitFor({timeout:15000});
-  check((await unsupportedEntry.getAttribute('data-supported'))==='false','an entry no owner contributes renders unsupported — held honestly, never dropped (the sixth status)');
-  check((await panel.getByText('workcell → placement-default').count())>=1,'native profiles render as references, never expanded');
-  await panel.getByRole('button',{name:'Use…'}).click();
-  const usePlan=panel.locator('[data-profile-use-plan]');
-  await usePlan.waitFor({timeout:15000});
-  check((await usePlan.getByText('Nothing has moved yet').count())===1,'profile use shows the inspectable plan before anything moves');
-  await shot('profiles-use-plan');
-  await usePlan.getByRole('button',{name:'Make active'}).click();
-  await panel.locator('[data-profile-detail="staging"]').waitFor({timeout:15000});
-  await page.waitForTimeout(600);
-  check((await panel.locator('[data-profile-ref="staging"] .config-chip.is-active').count())===1,'the switch happened only after the plan was shown and accepted');
-  check((await panel.locator('[data-profile-ref="development"] .config-chip.is-active').count())===0,'the previous profile is no longer marked active');
-  const result=panel.locator('[aria-label="Profile use result"]');
-  check((await result.count())===1,'the switch result renders as a ChangeSet');
-  await result.getByRole('button',{name:'close'}).click();
+  // L6 (fixture-backed, labelled): the product ships a new descriptor
+  // section; the page changes with no cradle code change.
+  await consoleButton('l6-section');
+  const l6Row = page.locator('[data-owner-group][data-owner="oi"] [data-setting-ref="oi:walk-l6:descriptor-genericity"]');
+  await l6Row.waitFor({timeout: 30000});
+  const l6Group = page.locator('[data-owner-group][data-owner="oi"]');
+  check((await l6Group.getByText('L6 · shipped mid-walk').count()) >= 1
+    && ((await l6Row.locator('.settings-row-title strong').textContent()) ?? '').trim() === 'Section shipped mid-walk',
+    'L6 (fixture-backed): a new section in a fixture descriptor changes the page — generic projection, zero cradle code per section');
+  await shot('l6');
 }

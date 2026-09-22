@@ -24,13 +24,13 @@ export function ActiveContext({tabs,onActivate}:{tabs?:ActiveContextTab[];onActi
     .filter(lane=>lane.rows.length>0);
   return <div className="ta-active-context" data-populated={lanes.length>0||undefined}>
     {!lanes.length&&<p className="oi-empty">Nothing active yet — open a pane above.</p>}
-    {lanes.map(lane=><section key={lane.label} className="factory-side-group" aria-label={lane.label}>
+    {lanes.map(lane=><section key={lane.label} className="oi-side-section" aria-label={lane.label}>
       <h4><Glyph name={lane.icon} size={12}/>{lane.label}</h4>
-      <ul className="factory-side-rows">
+      <ul className="oi-side-rows">
         {lane.rows.map(tab=><li key={tab.id}>
-          <button className="factory-side-row" data-active={tab.active||undefined} data-canvas={tab.canvas} title={tab.canvas==="workspace"?"Held in the workspace's own panes — the mode stands full-page over them; the agent manages these.":undefined} onClick={()=>onActivate?.(tab.id)}>
-            <span className="factory-side-row-title">{tab.title}</span>
-            {tab.canvas==="workspace"&&<span className="factory-side-step-meta">workspace</span>}
+          <button className="oi-side-row" data-active={tab.active||undefined} data-canvas={tab.canvas} title={tab.canvas==="workspace"?"Held in the workspace's own panes — the mode stands full-page over them; the agent manages these.":undefined} onClick={()=>onActivate?.(tab.id)}>
+            <span className="oi-side-row-title">{tab.title}</span>
+            {tab.canvas==="workspace"&&<span className="oi-side-step-meta">workspace</span>}
           </button>
         </li>)}
       </ul>

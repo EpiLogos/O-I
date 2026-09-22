@@ -171,8 +171,8 @@ export default async function run({page,baseUrl,check,shot,channel,provision:p})
 
   // 3 — select a passage; the context tray offers the addressed destination.
   await selectRange(editor,start+1,start+1+passage.length);
-  await page.getByRole("button",{name:"Context mode",exact:true}).click();
-  await page.getByRole("button",{name:"Attach selection",exact:true}).click();
+  await page.getByRole("button",{name:"Pick component for context",exact:true}).click();
+  await page.getByRole("button",{name:"Add selected text to context",exact:true}).click();
   const dialog=page.getByRole("dialog",{name:"Include selected context"});await dialog.waitFor();
   check(await dialog.locator("pre").innerText()===passage,"The tray presents the exact selected passage from the real document");
   await shot("selection-in-tray");
@@ -220,20 +220,20 @@ export default async function run({page,baseUrl,check,shot,channel,provision:p})
 
   // 7 — the human reviews and includes that Return against the document.
   if(!await nav.isVisible())await page.keyboard.press("Meta+b");
-  const tray=nav.locator(".project-returns").first();
-  await tray.getByRole("button",{name:"Refresh returns"}).click();
-  await page.waitForFunction(()=>document.querySelector(".project-returns header small")?.textContent?.includes("1 in the receiving field"),null,{timeout:20000});
-  await tray.locator(".project-return").first().click();
-  const detail=tray.locator(".return-detail");await detail.waitFor();
-  check((await detail.innerText()).includes("Agent — agent:editor-walk"),"The Return's producer attribution names the addressed participant");
+  const tray=nav.locator(".project-receiving").first();
+  await tray.getByRole("button",{name:"Refresh receiving"}).click();
+  await page.waitForFunction(()=>document.querySelector(".project-receiving header small")?.textContent?.includes("1 in the receiving field"),null,{timeout:20000});
+  await tray.locator(".receiving-row").first().click();
+  const detail=tray.locator(".receiving-detail");await detail.waitFor();
+  check((await detail.innerText()).includes("Agent — agent:editor-walk"),"The arrival's producer attribution names the addressed participant");
   check((await detail.innerText()).includes("entry.add")&&(await detail.innerText()).includes(observed),"The exact proposed operation and the verbatim reply content are shown before any decision");
-  check((await detail.innerText()).includes(p.doc.revision.revision),"The Return shows the exact basis revision — the same revision the selection recorded");
+  check((await detail.innerText()).includes(p.doc.revision.revision),"The arrival shows the exact basis revision — the same revision the selection recorded");
   await shot("return-of-the-reply-before-review");
 
   await tray.getByRole("button",{name:"Accept current basis"}).click();
-  await page.waitForFunction(()=>document.querySelector(".project-returns .return-detail")?.textContent?.includes("accepted by"),null,{timeout:20000});
+  await page.waitForFunction(()=>document.querySelector(".project-receiving .receiving-detail")?.textContent?.includes("accepted by"),null,{timeout:20000});
   await tray.getByRole("button",{name:"Include into the document"}).click();
-  await page.waitForFunction(()=>document.querySelector(".project-return .return-status")?.textContent==="included",null,{timeout:20000});
+  await page.waitForFunction(()=>document.querySelector(".receiving-row .receiving-status")?.textContent==="included",null,{timeout:20000});
   check(true,"The human accepts the exact current basis and includes the reply through the owner's revision-checked operation");
   await shot("reply-included");
 

@@ -1,4 +1,6 @@
 {
+  "spec_ref": "docs/cradle/05-EXECUTION.md §3",
+  "grade": "C",
   "schema": "oi.native-csp-build-receipt/v1",
   "source_head": "f53f193357cfd6839825d28129e597fd07ccf1b8",
   "worktree": "/Users/admin/Central/Work/O-I/.aikit/tasks/ui-expression-convergence",

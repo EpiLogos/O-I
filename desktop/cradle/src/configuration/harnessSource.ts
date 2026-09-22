@@ -9,11 +9,12 @@
  *    `encounter` op's `providers` action — the resident is machine-level,
  *    so the panel reads it through the standing Central project), and the
  *    desktop-held chat default (`chat_default_*`, kernel `chat_defaults.rs`).
- *  - `harnessFixture.ts` (`createFixtureHarnessSource`, dev/walk chunk) —
- *    a small labelled fixture world for dev builds, clearly marked on
- *    screen; never production data.
  *  - `createUnboundHarnessSource` — the honest absence when no kernel
  *    transport is reachable.
+ *
+ * (The old dev-only fixture harness world is retired: the rebuilt settings
+ * sections bind THIS source directly through `systemDisclosure.ts` in every
+ * build — the machine's truth or the honest absence, never simulated data.)
  *
  * The shaping functions are pure and pinned by `tests/chat-settings.test.mjs`
  * against the real wire shapes observed on this machine (2026-09-21):

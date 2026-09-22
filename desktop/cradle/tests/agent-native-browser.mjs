@@ -15,7 +15,7 @@ try {
  const page=await browser.newPage({viewport:{width:1100,height:850}});
  const errors=[];page.on('pageerror',error=>errors.push(String(error)));
  await page.goto(`http://127.0.0.1:${address.port}/tests/agent-native-browser.html`);
- await page.getByRole('button',{name:'Model and session',exact:true}).click();
+ await page.locator('button[data-chip="harness"]').click();
  const selector=page.getByRole('combobox',{name:'Harness model',exact:true});
  await selector.waitFor();
  await page.waitForFunction(()=>document.querySelector('select[aria-label="Harness model"]')?.disabled===false);
