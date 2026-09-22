@@ -1,9 +1,34 @@
 {
   "purpose": "Source-mapped Vāk Expression craft under O-I#65, not a new campaign, runtime schema or capability registry.",
   "story_source": "docs/experience/EXPRESSION-FIELD.md",
+  "document_operations_source": "docs/experience/EPI-LOGOS-AGENT-MODE.md",
   "families": [],
   "standing": "owner-directed intended-experience clarification, 2026-09-19; Factory-owned TypeScript admission, optional Vāk projection, role loading and live tool support require execution evidence",
   "runtime_or_human_acceptance": false,
+  "epi_agent_mode": {
+    "standing": "owner-commissioned architecture and implementation/test assignment, 2026-09-22; not runtime configuration or executed acceptance",
+    "source": "docs/experience/EPI-LOGOS-AGENT-MODE.md",
+    "host_modes": ["Expressions", "Technē"],
+    "selection": "existing Epi-Logos mode button",
+    "default_composition": "Prime–QL agent/body with source-qualified operative and reflective faculties",
+    "native_profile_ref": null,
+    "profile_binding_status": "implementation-required; resolve actual source-owned native profile, do not invent an ID",
+    "containing_level": "#0/1",
+    "faculty_levels": ["#0", "#1", "#2", "#3", "#4", "#5"],
+    "ground_faculty": "full 109-node Anuttara/Bimba syntax, Jev classification and EBM basis with Ananda's own M1-2 reading",
+    "sprime_organs": {"S4′": "Anima", "S5′": "Aletheia"},
+    "domain_identities": {"M4/M4′": "Nara", "M5/M5′": "Epii"},
+    "initial_reference_candidate": "ql-twelve; proposed integration candidate, not a measured winner",
+    "comparison_arities": [4, 6, 8, 12],
+    "default_on_explicit_mode_selection": true,
+    "global_default_change": false,
+    "silent_generic_fallback": false,
+    "selected_is_effective": false,
+    "user_override_preserved": true,
+    "runtime_implemented_by_publication": false,
+    "execution_evidence": [],
+    "human_assessment": null
+  },
   "obligation_sources": {
     "vakcraft65": {
       "source_ref": "docs/experience/EXPRESSION-FIELD.md#9-vāk-authored-craft-real-participants-and-live-repertoire",
@@ -12,6 +37,11 @@
       "implementation_wayfinder_scope": "optional Vāk/domain projection and expressive proving, not generic Factory authoring ownership",
       "factory_authority": "https://github.com/EpiLogos/Factory/blob/main/docs/program/NATIVE-WORKFLOW-AUTHORING.md",
       "factory_issues": [195, 197, 198, 199, 143, 145],
+      "agent_mode_source": "docs/experience/EPI-LOGOS-AGENT-MODE.md",
+      "agent_body_source": "https://github.com/EpiLogos/Actuation/blob/main/docs/EPI-LOGOS-AGENT-ARCHITECTURE.md",
+      "agent_domain_source": "https://github.com/EpiLogos/QL-MEF/blob/main/docs/integrations/epi-logos/EPI-LOGOS-AGENT-ARCHITECTURE.md",
+      "agent_body_issue": "https://github.com/EpiLogos/Actuation/issues/107",
+      "agent_domain_issue": "https://github.com/EpiLogos/QL-MEF/issues/201",
       "policy": "Read complete EF stories and the source-owned S′/C′/role field. Base typed workflow authoring, compilation, first source stamp and source-to-SSSF/native-trace publication belong to Factory; QL/Vāk/Epi remain optional interpretations through it. The compact QL TypeScript specimen is not a generic SDK or the full Vāk registry. Preserve lean runtime instruction, typed undertaking, live faculties and development records as distinct."
     }
   },
@@ -51,7 +81,8 @@
         "Preserve exact CPF/CT/CP/CF/CFP/CS, source passages and full 109-entry access; no generic agent recipe or compact-card-as-full-language substitution.",
         "Move issue history, build/debug/readiness prose out of runtime instruction while retaining useful maintenance/formal-operation Skills in their proper office.",
         "Verify actual child source selection, projection, loading, trigger/near-miss and useful use; parent context and file existence prove neither.",
-        "A Method remains a Skill whose description begins METHOD:; a missing live tool is an owner dependency rather than more prompt text."
+        "A Method remains a Skill whose description begins METHOD:; a missing live tool is an owner dependency rather than more prompt text.",
+        "EPI-MODE/constitution: #0/1 is the containing Prime–QL loop and tooling, distinct from explicit #0 full Anuttara–Jev–EBM; retain #1–#5, S4′ Anima and S5′ Aletheia. Full 109-node computation is not replaced by C′/Ta-Onta or a relational prompt. Test actual selected/prompt/tool/faculty delivery while preserving independent 4/6/8/12 research conditions."
       ]
     },
     {
@@ -68,7 +99,8 @@
         "Restricted deterministic source admission: no ambient network, environment, clock, arbitrary eval or side effects while merely compiling.",
         "Preserve harmless-source versus semantic-change identity, invalid composition, missing role/capability, revision conflict and genuine stamped recomposition.",
         "Provider-neutral native source can project to Claude or other admitted bodies; the person may commission in natural language without writing TypeScript.",
-        "Public source → compiled unit → Run → actual attempt → native tool/log/evidence → source traversal works in both directions through SSSF/TUI/agent consumers; authored intention is not observed telemetry."
+        "Public source → compiled unit → Run → actual attempt → native tool/log/evidence → source traversal works in both directions through SSSF/TUI/agent consumers; authored intention is not observed telemetry.",
+        "EPI-MODE/basis: bind the actual Prime/profile/model/prompt/tool/QL/faculty and Expression/source revisions at entry; a later mode selection cannot silently retarget an in-flight attempt. Direct work has no manufactured Factory ancestry and user overrides stay attributable."
       ]
     },
     {
@@ -83,7 +115,8 @@
         "Each selected participant has native identity/source, delegation purpose, limited context, actual tools/Skills, effects, body requirement, return and stop bounds.",
         "Available field is not compulsory fan-out; verify actual plural work when required, exact predecessor material for chains and independent fusion/verification.",
         "Target-native delegation/nesting limits and lost providers are explicit; model change does not remint the semantic actor or hide a failed child.",
-        "Human can inspect purpose/result and interrupt without acting as the inter-agent relay."
+        "Human can inspect purpose/result and interrupt without acting as the inter-agent relay.",
+        "EPI-MODE/children: invoke real cheapest-eligible bounded Prime/native children; prove inherited faculties and scoped context, persistent assigned worktree, independently exercised extra-worktree denial, valid edit/test work, and fresh-worker continuation from a pithy native NOW handover. No role-play child, duplicate checkout or leaked parent/verifier/private context."
       ]
     },
     {
@@ -98,7 +131,8 @@
         "Actual full intended authoring coverage: objects/pins/forms, sources/layers, forces/material/topology/resonance, space/camera, entity/scene sequence, automation/manual takeover, capture/placement.",
         "Inspect scope, units, hard bounds, driver/blend, base/evaluated state, identity, currentness and unavailable controls from native metadata rather than stale Skill tables.",
         "Read/search, preview, edit, perform, save and publication remain different effects; invoke rechecks exact ref/revision and current authority.",
-        "Preserve batch atomicity, concurrent human edits, meaningful interruption and actual engine observation; accepted JSON or a debug-only route does not prove the public faculty."
+        "Preserve batch atomicity, concurrent human edits, meaningful interruption and actual engine observation; accepted JSON or a debug-only route does not prove the public faculty.",
+        "EPI-MODE/faculties: account for #0 full Anuttara/Jev/Ananda-related/EBM, #1 structural/TDA, #2 APOC/neosemantics/GDS/graph ML, #3 multimodal glyph/scene and process, #4 protected NLP/elemental-archetypal activity, and #5 Logos-cycle pedagogy/improvement. Preserve instrument standing, missing-input/unknown, source/algorithm versions, privacy, confidence versus weight and actual native effect; do not reduce the inventory to training methods or filesystem fixtures."
       ]
     },
     {
@@ -113,7 +147,8 @@
         "Named work remains ordinary authoring; proven praxis uses existing = name/Inbox/Skill/Method/proof/catalogue and source-owner decisions.",
         "Fresh agent resolves and performs on changed subject/parameters/placement, preserves original edition and creates a new occasion rather than replaying one canned answer.",
         "Test ambiguous/colliding names, stale source, unavailable faculty, near-miss and deliberate gesture binding; mood is expressive input, not a psychological diagnosis or universal physics mapping.",
-        "Repertoire stays source-bound and expandable; semantic search or familiarity never grants execution or publication authority."
+        "Repertoire stays source-bound and expandable; semantic search or familiarity never grants execution or publication authority.",
+        "EPI-MODE/selection: the existing Epi-Logos button selects the Prime–QL default option in both Expressions and Technē. Prove native resolution, delivered context and actual invocation, explicit user override, unavailable required body/faculty and no silent generic fallback. Selecting a theme or canned prompt is not activation."
       ]
     },
     {
@@ -129,7 +164,8 @@
         "Compose→perform→record→rehear→recompose is based on actual output and correction, with bounded iterations, not cosmetic music or automatic ungranted recursion.",
         "T/T′ keeps useful concise choices/differences and is consumed into native knowledge/practice, not twelve transcript buckets or hidden-reasoning disclosure.",
         "Preserve the original failing case; independent verifier rejects disconnected/stale operations; compare revised practice on held-out inputs and record overhead/rejected candidates.",
-        "No automatic human taste/policy/canonical source promotion and no premature human-ratification gate on construction."
+        "No automatic human taste/policy/canonical source promotion and no premature human-ratification gate on construction.",
+        "EPI-MODE/learning: M5-5 Logos T/C/T′/C′ is broader than etymological Atelier. Retain one warranted source/account/matrix/Wiki/Method improvement, then prove useful fresh-agent uptake on a new input and a near-miss. Compare full overhead and held-out outcomes without converting Jev confidence or EBM energy into universal closure, identity change or human Recognition."
       ]
     },
     {
@@ -145,7 +181,8 @@
         "Prove no-QL/no-DSH source-to-SSSF/portable-trace use. When DSH actually executes, retain its native SessionEvent/trajectory/fingerprint; thin targets disclose missing detail. Per-owner cursors, late events and historical source bases survive replay/reconnect.",
         "Keep canonical subject/scene/edition/session/occasion and private Nara state across deep/source/ambient/page/shared transitions; configuration restore is not exact GPU rewind.",
         "Omarchy isolated runs use feature-line worktrees shared by actors; sandboxes/disjoint output do not force duplicated worktrees. Preserve Mac/frontend and held QL kernel/install.",
-        "Consume finished carriers and live owner work without reopening K/AW/SF/EX; native/API, new-UI, material and personal assessment keep their real evidence scope."
+        "Consume finished carriers and live owner work without reopening K/AW/SF/EX; native/API, new-UI, material and personal assessment keep their real evidence scope.",
+        "EPI-MODE/lifecycle: prove both actual installed host modes, mode-off ordinary restoration, restart/re-entry, repeated-toggle idempotence, pending/late action refusal and stable subject/scene/Agent/Run. No automatic training, extra worktree, global harness takeover or state reset. This parallel mode-quality contribution may use the current lead/main feature tree; historical hold wording is checked against current explicit holds, not revived by this source."
       ]
     }
   ],
@@ -159,6 +196,11 @@
     "worktree_unit": "coherent-feature-line",
     "per_agent_worktree": false,
     "mathematical_kernel_change": false,
-    "live_machine_change_by_publication": false
+    "live_machine_change_by_publication": false,
+    "epi_mode_lane": "parallel-mode-quality within current single harmonisation; native construction alongside #388, joined use when actual dependencies are usable",
+    "may_use_existing_main_feature_tree": true,
+    "new_worktree_required": false,
+    "blocks_general_jev_redis_first_use": false,
+    "preserves_foundation_before_broad_fanout": true
   }
 }
