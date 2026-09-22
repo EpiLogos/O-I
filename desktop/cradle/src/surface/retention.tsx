@@ -52,6 +52,7 @@ import type {HostedAppState} from "../expressions/hostedApp";
 // The retained centre bodies are the same lazy chunks the workbench mounts;
 // a retained centre loads on first presentation, never at startup.
 const PointCloudHost = lazy(() => import("../expressions/PointCloudHost").then((module) => ({default: module.PointCloudHost})));
+const TechneSurfaceHost = lazy(() => import("../techne/TechneSurfaceHost").then((module) => ({default: module.TechneSurfaceHost})));
 
 const EpiLogosSurface = lazy(() => import("../epilogos/EpiLogosSurface").then((module) => ({default: module.EpiLogosSurface})));
 const SystemPanel = lazy(() => import("../workspace/SystemPanel").then((module) => ({default: module.SystemPanel})));
@@ -112,12 +113,20 @@ export function ModeCentreBody({binding, subject, factoryCentre, factoryTasks, o
   return <Suspense fallback={null}>{retainedBody(binding, subject, factoryCentre, factoryTasks, onHostedState)}</Suspense>;
 }
 
-function retainedBody(binding: SurfaceBinding, _subject?: WorkbenchSubject, factoryCentre?: ReactNode, factoryTasks?: FactoryCentreContext, onHostedState?: (state: HostedAppState) => void): ReactNode {
+function retainedBody(binding: SurfaceBinding, subject?: WorkbenchSubject, factoryCentre?: ReactNode, factoryTasks?: FactoryCentreContext, onHostedState?: (state: HostedAppState) => void): ReactNode {
   // The centre arms of the workbench's own SurfaceBody, mirrored here with
   // the props the shell itself holds. Factory's arm composes the frame-built
   // chat node the shell received — one body with it, never a second copy.
   if (binding.kind === "expressions") return <PointCloudHost mode="expressions" bindingId={binding.id} deepLink={binding.engine?.expressionRef} onHostedState={onHostedState}/>;
-  if (binding.kind === "techne") return <PointCloudHost mode="techne" bindingId={binding.id} deepLink={binding.engine?.expressionRef} onHostedState={onHostedState}/>;
+  // Technē mode: the Expressions app is the one field (physics, 3:3); the
+  // Technē HUD mounts the six existing M0′–M5′ instruments over it as the
+  // deep 4:2 apertures on the same live reading — not a second renderer.
+  if (binding.kind === "techne") return (
+    <div className="techne-centre">
+      <PointCloudHost mode="techne" bindingId={binding.id} deepLink={binding.engine?.expressionRef} onHostedState={onHostedState}/>
+      <TechneSurfaceHost binding={binding} subject={subject}/>
+    </div>
+  );
   if (binding.kind === "epi-logos") return <EpiLogosSurface binding={binding}/>;
   if (binding.kind === "system") return <SystemPanel binding={binding}/>;
   if (binding.kind === "factory") return <FactoryCentre chat={factoryCentre} project={factoryTasks?.project} accompanying={factoryTasks?.accompanying} onOpenTask={factoryTasks?.onOpenTask} onMessage={factoryTasks?.onMessage}/>;
