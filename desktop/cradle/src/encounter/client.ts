@@ -19,7 +19,7 @@ export type PermissionDecision={outcome:"selected";option_id:string}|{outcome:"c
 export interface NativePermission {native_request_id:string;native_session_id:string;tool_call_id?:string;tool_call:unknown;raw:unknown;choices:{option_id:string;label:string;kind?:string}[];provenance:string[]}
 export interface EncounterAction {ref:string;enabled:boolean;reason:string|null}
 export interface EncounterReading {prepared_context_receipts?:{cursor:number;digest:string;revision:number;items:{id:string;title:string;source_ref:string;source_revision?:string}[];standing:string}[];schema?:"aikit.encounter-view/v1";agent_session:string;blocks:{id:number;kind:string;text:string}[];more:boolean;draft:Draft;connection?:EncounterStatus;permissions?:NativePermission[];permission_authority?:"native-provider-consent";actions?:EncounterAction[]}
-export interface EncounterStatus {resident?:boolean;native_session_id?:string;state:string;error?:string|null;provider?:{id:string;label:string}}
+export interface EncounterStatus {resident?:boolean;native_session_id?:string;state:string;error?:string|null;provider?:{id:string;label:string;body_ref?:string|null;body_revision?:string|null}}
 /** The owner A2A floor's returned difference (shared-field/a2a.mjs), as the
  * agency panel renders it: pending admission on the receiving installation. */
 export interface A2aDifference {exchange_ref:string;binding_ref:string;binding_revision:number;agent_ref:string;initiator_participant_ref:string;transport_result:{kind:string;ref:string};transport_provenance?:{agent_card?:{name?:string;version?:string}};[field:string]:unknown}
@@ -44,12 +44,12 @@ export async function encounter<T>(transport:KernelTransportStatus,project:strin
  * refs, the owner's own project spelling and the default provider the kernel
  * opened. The transcript, draft and every later action stay the ordinary
  * encounter actions — provision creates the plumbing once, nothing else. */
-export interface EncounterProvisioning {project:string;space:string;agent_session:string;provider:string}
+export interface EncounterProvisioning {project:string;space:string;agent_session:string;provider:string;provider_default?:string;resolved_body?:{body_ref:string;body_revision:string;standing:string}|null}
 /** Ask the kernel to provision a new conversation for a project (create the
  * SessionSpace, bind the project context, attach a fresh agent session,
  * configure its agency binding and open the provider) and return the refs. */
-export async function encounterProvision(transport:KernelTransportStatus,project:string):Promise<EncounterProvisioning> {
-  const result=await kernelOp(transport,{op:"encounter_provision",project});
+export async function encounterProvision(transport:KernelTransportStatus,project:string,preferredBodyRef?:string):Promise<EncounterProvisioning> {
+  const result=await kernelOp(transport,{op:"encounter_provision",project,preferred_body_ref:preferredBodyRef});
   if(result.error || result.outcome?.result!=="encounter_provisioned")throw new Error(result.error??"AIKit did not provision a chat conversation");
   return result.outcome.data as EncounterProvisioning;
 }
