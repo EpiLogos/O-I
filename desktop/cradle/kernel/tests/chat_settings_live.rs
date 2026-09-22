@@ -68,7 +68,7 @@ fn settings_reads_and_a_prompt_free_provision_return_real_data() {
     //    held `pi` choice must win the provider precedence (rule
     //    `owner-choice`, beating the pi-row default it would otherwise be).
     let outcome = kernel
-        .apply(KernelOp::EncounterProvision { project: "Central".into() })
+        .apply(KernelOp::EncounterProvision { project: "Central".into(), preferred_body_ref: None })
         .expect("provision a fresh Central chat conversation");
     let KernelOpResult::EncounterProvisioned { data } = outcome.result else {
         panic!("provision returned the wrong result variant");
