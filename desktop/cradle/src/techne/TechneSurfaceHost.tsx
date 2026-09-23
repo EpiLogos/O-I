@@ -43,7 +43,7 @@ function ensureWikiProvider(transport: KernelTransportStatus): void {
   catch { /* another host bound it between the check and here — one provider stands */ }
 }
 
-export function TechneSurfaceHost({binding, subject, collapsed, onCollapsedChange}: {binding: SurfaceBinding; subject?: TechneSubject; collapsed: boolean; onCollapsedChange: (collapsed: boolean) => void}) {
+export function TechneSurfaceHost({binding, subject, collapsed, onCollapsedChange, summon}: {binding: SurfaceBinding; subject?: TechneSubject; collapsed: boolean; onCollapsedChange: (collapsed: boolean) => void; summon?: {instrument: TechneInstrumentId; nonce: number} | null}) {
   const kernel = useKernel();
   useEffect(() => { ensureWikiProvider(kernel.transport); }, [kernel.transport]);
 
@@ -66,6 +66,16 @@ export function TechneSurfaceHost({binding, subject, collapsed, onCollapsedChang
       setFallback(instrument);
     }
   };
+
+  // The application's own Lens Studio chooser arrives here as a summon (the
+  // host channel's instrument summon, owner direction 2026-09-23): it runs
+  // the SAME choose() the HUD chooser runs, so the one DisclosureSession —
+  // or the pre-session fallback — picks the instrument. Never a parallel
+  // state; the nonce makes repeated presses of the same lens re-deliver.
+  useEffect(() => {
+    if (summon) choose(summon.instrument);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [summon]);
 
   // The floating Studio slot the active lens parks its controls into.
   const [studioBody, setStudioBody] = useState<ReactNode>(null);

@@ -19,6 +19,12 @@
  * stand (§28 lens continuity). This is the current-app instrument surface; the
  * native operations behind the controls are proven separately by the native
  * composition/application walks.
+ *
+ * The chooser also SUMMONS the deep instruments (owner direction 2026-09-23):
+ * when hosted, a chooser press asks the hosting centre to open the ONE real
+ * instrument HUD (the registered M0′–M5′ lenses over the same field and
+ * reading) through the host channel — press the button, the instrument opens.
+ * Standalone there is no host and nothing is posted.
  */
 import {icon, esc} from './icons.js';
 import type {NativeSubject, ConstructionFacets} from './nativeWorkspace.js';
@@ -53,6 +59,9 @@ export interface LensStudioHost {
   /** The open construction's real facets (members, relations, Scenes) — the
    * disclosure each lens stands on. Null when no native work is open. */
   construction(): ConstructionFacets | null;
+  /** Ask the hosting centre to open the deep-instrument HUD on this lens over
+   * the same field (the host channel's instrument summon). Absent standalone. */
+  summonInstrument?(lens: LensId): void;
 }
 
 const shortRef = (ref: string) => {
@@ -187,7 +196,26 @@ export function installLensStudio(host: LensStudioHost): LensStudioApi {
     }
   };
 
+  const api: LensStudioApi = {
+    setMode(next) { mode = next; if (next === 'techne' && !built) buildChooser(); apply(); },
+    select(id) {
+      active = id; studioOpen = true;
+      if (built) markActive(); else buildChooser();
+      if (studio.hidden) studio.hidden = false;
+      renderStudio();
+      // One press opens the deep instrument: the hosting centre answers the
+      // summon by opening its HUD on this lens over the same field (§13's
+      // active lens chooser; standalone there is no host and this is a no-op).
+      host.summonInstrument?.(id);
+    },
+    closeStudio() { studioOpen = false; studio.hidden = true; },
+    refresh() { if (mode === 'techne') { if (!built) buildChooser(); else markActive(); if (studioOpen) renderStudio(); } },
+    active() { return active; },
+  };
+
   // Arrow-key roving across the tablist (§13 keyboard-reachable controls).
+  // The roving routes through the one select path, so keyboard lens changes
+  // summon the deep instrument exactly as a pointer press does.
   chooser.addEventListener('keydown', event => {
     const keys: Record<string, number> = {ArrowRight: 1, ArrowDown: 1, ArrowLeft: -1, ArrowUp: -1};
     const delta = keys[event.key];
@@ -195,17 +223,9 @@ export function installLensStudio(host: LensStudioHost): LensStudioApi {
     event.preventDefault();
     const at = LENSES.findIndex(lens => lens.id === active);
     const next = LENSES[(at + delta + LENSES.length) % LENSES.length];
-    active = next.id; studioOpen = true; markActive();
-    if (studio.hidden) studio.hidden = false;
-    renderStudio();
+    api.select(next.id);
     chooser.querySelector<HTMLButtonElement>(`.lens-choice[data-lens="${next.id}"]`)?.focus();
   });
 
-  return {
-    setMode(next) { mode = next; if (next === 'techne' && !built) buildChooser(); apply(); },
-    select(id) { active = id; studioOpen = true; if (built) markActive(); else buildChooser(); if (studio.hidden) studio.hidden = false; renderStudio(); },
-    closeStudio() { studioOpen = false; studio.hidden = true; },
-    refresh() { if (mode === 'techne') { if (!built) buildChooser(); else markActive(); if (studioOpen) renderStudio(); } },
-    active() { return active; },
-  };
+  return api;
 }

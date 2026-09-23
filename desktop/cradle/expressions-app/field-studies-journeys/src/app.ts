@@ -710,7 +710,7 @@ function renderRail(){
     ?DEEP_TOOLS.map(([a,i,l,extra])=>ib(a,i,l,extra??'')).join('<span class="toolbar-divider" aria-hidden="true"></span>')
     :livedRailHTML;
 }
-function hostRequest(payload:{request:string;mode?:string;detail?:{kind:string;subject?:NativeSubject}}){
+function hostRequest(payload:{request:string;mode?:string;detail?:{kind:string;lens?:string;subject?:NativeSubject}}){
  if(window.parent===window)return;
  try{window.parent.postMessage({v:1,kind:'host-request',...payload},'*');}catch{/* nothing sent rather than a wrong-channel throw */}
 }
@@ -781,7 +781,7 @@ function applyNativeView(view:KernelConversion,preservePosition=false){
 // The M0′–M5′ Lens Studio stands on the SAME native construction the native
 // workspace holds; refreshing it when the construction changes keeps the
 // Studio's basis exact without touching the field.
-const lensStudio=installLensStudio({subject:()=>nativeWorkspace?.nativeSubject()??null,construction:()=>nativeWorkspace?.construction()??null});
+const lensStudio=installLensStudio({subject:()=>nativeWorkspace?.nativeSubject()??null,construction:()=>nativeWorkspace?.construction()??null,summonInstrument:lens=>hostRequest({request:'summon',detail:{kind:'instrument',lens}})});
 nativeWorkspace=installNativeWorkspace({snapshot:()=>({journey:clone(store.document),sceneId:scene().id,entityId:selected[0]??null}),version:()=>store.revision,load:applyNativeView,toast,summon:(kind,subject)=>hostRequest({request:'summon',detail:{kind,subject}}),correspondence:(rows,selection)=>{nativeConnectionRows=rows;nativeSelectedRelation=selection;needsFrame=true;lensStudio.refresh();}});
 lensStudio.setMode(hostMode);
 (document.querySelector('#workspace-menu') as HTMLElement)?.insertAdjacentHTML('beforeend',ib('native-work','save','Native composition — save and reopen'));

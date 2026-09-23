@@ -225,11 +225,32 @@ export function relayKernelChannel(frame: HTMLIFrameElement, transport: KernelTr
 //     — the application's position announcement: current expression, scene
 //       (index/count/name/save state), selection names and the honest
 //       absence of anything it does not report.
+//
+//   frame → host  `{v:1, kind:"host-request", request:"summon",
+//                  detail:{kind:"instrument", lens}}`
+//     — the application's Lens Studio chooser summons the deep instruments
+//       (owner direction 2026-09-23): the hosting Technē centre answers by
+//       opening ITS OWN instrument HUD on that lens over the same field —
+//       the one registered M0′–M5′ lens set, the one DisclosureSession, no
+//       second renderer. Fire-and-forget like the other summons; a host
+//       without the centre consumes nothing. `lens` is one of the six deep
+//       instrument ids below; `expressions` is the conjugate 3:3 reading,
+//       never a deep instrument, and is refused here by never matching.
 
 /** The cut a hosting surface stands the application in. */
 export type HostedAppMode = "expressions" | "techne";
 
 const isHostedAppMode = (value: unknown): value is HostedAppMode => value === "expressions" || value === "techne";
+
+/** The six deep instruments the hosted Lens Studio may summon, as the wire
+ * carries them (the application's chooser vocabulary). This is the hostedApp
+ * wire union, deliberately local to the channel grammar — `expressions` (the
+ * conjugate 3:3 reading) is not summonable and `techneReading.ts`'s wider
+ * disclosure vocabulary stays the techne layer's own. */
+export type HostedTechneLens = "project" | "canvas" | "timeline" | "journey" | "place" | "palace";
+
+export const isHostedTechneLens = (value: unknown): value is HostedTechneLens =>
+  typeof value === "string" && (["project", "canvas", "timeline", "journey", "place", "palace"] as const).includes(value as HostedTechneLens);
 
 /** Carry one mode into a hosted frame: posted immediately and re-posted on
  * every frame load (the trackShellCutout law — the frame may boot after the
