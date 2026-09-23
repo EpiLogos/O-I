@@ -7,7 +7,7 @@
  * is staged — the pending strip and its one review sheet. Back to work (or
  * Escape with nothing pending) returns to the previous mode.
  */
-import {useEffect, useMemo, useRef, useState} from "react";
+import {lazy, Suspense, useEffect, useMemo, useRef, useState} from "react";
 import {ensureSettingsLoaded, refreshAll, useSettings} from "./settingsData";
 import {goTo, placeLabel, useSettingsNav} from "./settingsNav";
 import {stagedChanges} from "./changeModel";
@@ -23,10 +23,15 @@ import {PermissionsSection} from "./sections/PermissionsSection";
 import {ProductSection} from "./sections/ProductSection";
 import {VisualsView} from "./VisualsView";
 import {Reading, Unreadable} from "./rows";
-import {FixtureConsole} from "./FixtureConsole";
 import {AgentSetupReturn} from "../../agency/AgentSetupReturn";
 import {AGENT_SETUP_EVENT, agentSetupSnapshot} from "../../agency/agentSetup";
 import "./settings-page.css";
+
+declare const __CRADLE_WALK__: boolean;
+/** The fixture world's label and console exist only in walk builds (the
+ * gate bakes to false in production and the chunk is never emitted). */
+const FixtureConsole = __CRADLE_WALK__ ? lazy(() => import("./FixtureConsole").then((module) => ({default: module.FixtureConsole}))) : null;
+const FixtureLabel = __CRADLE_WALK__ ? lazy(() => import("./FixtureConsole").then((module) => ({default: module.FixtureLabel}))) : null;
 
 function backToWork() {
   window.dispatchEvent(new Event("oi:close-settings"));
@@ -140,7 +145,7 @@ export function SettingsPage() {
       </div>
     </header>
     <AgentSetupReturn/>
-    {data.registry.state === "ok" && data.registry.value.source === "fixture" && <p className="settings-muted" data-config-source="fixture">A worked example for development (the fixture world) — not this machine's settings.</p>}
+    {FixtureLabel && data.registry.state === "ok" && data.registry.value.source === "fixture" && <Suspense fallback={null}><FixtureLabel/></Suspense>}
     <div className="settings-page-body" ref={body}>
       {!anyRead ? <Reading/>
         : everythingFailed && data.suite.state === "failed" ? <Unreadable error={data.suite.error} onRetry={() => void refreshAll()}/>
@@ -154,7 +159,7 @@ export function SettingsPage() {
         : place.id === "permissions" ? <PermissionsSection data={data}/>
         : <div className="settings-appearance" data-appearance-panel><VisualsView/></div>}
     </div>
-    {data.registry.state === "ok" && data.registry.value.source === "fixture" && <FixtureConsole/>}
+    {FixtureConsole && data.registry.state === "ok" && data.registry.value.source === "fixture" && <Suspense fallback={null}><FixtureConsole/></Suspense>}
     <PendingStrip changes={changes} onReview={() => setReviewing(true)}/>
     {reviewing && <ReviewSheet changes={changes} onClose={() => setReviewing(false)}/>}
   </section>;

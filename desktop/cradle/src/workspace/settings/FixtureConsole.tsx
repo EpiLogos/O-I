@@ -28,3 +28,7 @@ export function FixtureConsole() {
     </div>
   </details>;
 }
+
+export function FixtureLabel() {
+  return <p className="settings-muted" data-config-source="fixture">A worked example for development (the fixture world) — not this machine's settings.</p>;
+}
