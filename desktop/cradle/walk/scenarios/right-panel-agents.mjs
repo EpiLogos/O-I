@@ -1,5 +1,5 @@
 import {setup as canvasSetup} from "./canvas-context.mjs";
-import {bindDefaultCentral} from "../editor-doc.mjs";
+import {bindDefaultCentral, openWorkspaceStrip} from "../editor-doc.mjs";
 import {openPanel, planeButton, recordCalls, restoreScope} from "../lane2-support.mjs";
 
 /** Agents and object pages (10-SIDEBARS §4.5, §4.7; P15 P17 P18): the roster
@@ -117,6 +117,26 @@ export default async function run({page, baseUrl, check, shot, channel, provisio
   await page.waitForSelector('[data-region="right"][data-depth="collapsed"]', {timeout: 5000});
   check(true, "P18: a second Escape closes the drawer");
   await page.setViewportSize({width: 1280, height: 820});
+
+  // --- Nara joins the avatar menu while the Epi-Logos lens is on (§4.1) -----
+  panel = await openPanel(page);
+  await panel.locator(".avatar-menu-open").click();
+  check(await panel.getByRole("menuitemradio", {name: "Nara"}).count() === 0, "Lens off: Nara is not in the avatar menu");
+  await page.keyboard.press("Escape");
+  await openWorkspaceStrip(page).catch(() => {});
+  await page.locator(".footer-epi").click();
+  await page.waitForFunction(() => document.querySelector(".footer-epi")?.getAttribute("aria-pressed") === "true", null, {timeout: 15000});
+  panel = await openPanel(page);
+  await panel.locator(".avatar-menu-open").click();
+  const nara = panel.getByRole("menuitemradio", {name: "Nara"});
+  await nara.waitFor({timeout: 10000}).catch(() => {});
+  check(await nara.count() === 1, "Lens on: Nara joins the avatar menu");
+  await shot("lens-nara");
+  await page.keyboard.press("Escape");
+  await openWorkspaceStrip(page).catch(() => {});
+  await page.locator(".footer-epi").click();
+  await page.waitForFunction(() => document.querySelector(".footer-epi")?.getAttribute("aria-pressed") === "false", null, {timeout: 15000});
+  await page.getByRole("radio", {name: "Central", exact: true}).first().click().catch(() => {});
 
   // --- P17 error: an unreadable roster says so, with Retry -----------------
   await restoreScope(page, "Other");

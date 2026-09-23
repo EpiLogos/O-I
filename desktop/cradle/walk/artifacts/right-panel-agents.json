@@ -4,7 +4,7 @@
   "spec_ref": "docs/cradle/10-SIDEBARS.md §4.5 §4.7 §5.3 P15 P17 P18; §4.1a A4",
   "grade": "B",
   "binding": null,
-  "generated_at": "2026-09-23T01:57:59.826Z",
+  "generated_at": "2026-09-23T07:25:00.867Z",
   "environment": {
     "base_url": "http://localhost:4373",
     "bridge_url": "http://127.0.0.1:4379",
@@ -12,21 +12,69 @@
     "browser_engine": "chromium",
     "bundle": "walk (WALK=1) served by vite preview",
     "build_input": {
-      "mode": "reused-dist",
-      "bundle_fingerprint": "1e390bda2ade707557b7097e0078bd49691609cbd50fe353901d0b3c8dafb83a"
+      "mode": "fresh-build",
+      "bundle_fingerprint": "5a5d4ebb024fa32998b2ccfd887883d37373ac9b6dd12ed0b591a30f292b7701"
     },
     "node": "v24.16.0",
     "platform": "darwin",
     "source": {
       "repository_root": "/Users/admin/Central/worktrees/ui-build/lane2-right",
-      "repository_head": "de4aedb9cba89800e0f080b4a81ae92510fee62f",
+      "repository_head": "85782ea95ed1bfb519625392a2eee2484e5ce1b2",
       "tracked_changes": [
-        "desktop/cradle/scripts/receipt-lint.mjs",
-        "desktop/cradle/src/agent/AgentLayer.tsx",
-        "desktop/cradle/src/workspace/DesktopShell.tsx",
-        "desktop/cradle/walk/run.mjs"
+        "desktop/cradle/src/agent/panel/panel.css",
+        "desktop/cradle/walk/artifacts/mode-gallery-agency-dark.png",
+        "desktop/cradle/walk/artifacts/mode-gallery-desk-run-dark.png",
+        "desktop/cradle/walk/artifacts/mode-gallery-epi-logos-dark.png",
+        "desktop/cradle/walk/artifacts/mode-gallery-epi-logos-light.png",
+        "desktop/cradle/walk/artifacts/mode-gallery-expressions-640-dark.png",
+        "desktop/cradle/walk/artifacts/mode-gallery-expressions-760-dark.png",
+        "desktop/cradle/walk/artifacts/mode-gallery-expressions-dark.png",
+        "desktop/cradle/walk/artifacts/mode-gallery-expressions-panel-chat-dark.png",
+        "desktop/cradle/walk/artifacts/mode-gallery-factory-760-light.png",
+        "desktop/cradle/walk/artifacts/mode-gallery-factory-dark.png",
+        "desktop/cradle/walk/artifacts/mode-gallery-library-dark.png",
+        "desktop/cradle/walk/artifacts/mode-gallery-techne-dark.png",
+        "desktop/cradle/walk/artifacts/mode-gallery.json",
+        "desktop/cradle/walk/artifacts/right-panel-agents-a4-in-place.png",
+        "desktop/cradle/walk/artifacts/right-panel-agents-avatar-menu-chosen.png",
+        "desktop/cradle/walk/artifacts/right-panel-agents-p15-agent-page.png",
+        "desktop/cradle/walk/artifacts/right-panel-agents-p17-empty.png",
+        "desktop/cradle/walk/artifacts/right-panel-agents-p17-error.png",
+        "desktop/cradle/walk/artifacts/right-panel-agents-p18-detail.png",
+        "desktop/cradle/walk/artifacts/right-panel-agents-roster.png",
+        "desktop/cradle/walk/artifacts/right-panel-agents.json",
+        "desktop/cradle/walk/artifacts/right-panel-context-file-inserted.png",
+        "desktop/cradle/walk/artifacts/right-panel-context-launcher.png",
+        "desktop/cradle/walk/artifacts/right-panel-context.json",
+        "desktop/cradle/walk/artifacts/right-panel-failures-p10-reconnecting.png",
+        "desktop/cradle/walk/artifacts/right-panel-failures-p11-unreachable.png",
+        "desktop/cradle/walk/artifacts/right-panel-failures-p12-switched.png",
+        "desktop/cradle/walk/artifacts/right-panel-failures-p8-not-sent.png",
+        "desktop/cradle/walk/artifacts/right-panel-failures.json",
+        "desktop/cradle/walk/artifacts/right-panel-frame-p1-closed.png",
+        "desktop/cradle/walk/artifacts/right-panel-frame-p13-full.png",
+        "desktop/cradle/walk/artifacts/right-panel-frame-p14-promoted.png",
+        "desktop/cradle/walk/artifacts/right-panel-frame-p18-overlay.png",
+        "desktop/cradle/walk/artifacts/right-panel-frame.json",
+        "desktop/cradle/walk/artifacts/right-panel-shots-dark-1000-agents.png",
+        "desktop/cradle/walk/artifacts/right-panel-shots-dark-1000-chat.png",
+        "desktop/cradle/walk/artifacts/right-panel-shots-dark-1000-context.png",
+        "desktop/cradle/walk/artifacts/right-panel-shots-dark-1440-activity.png",
+        "desktop/cradle/walk/artifacts/right-panel-shots-dark-1440-agents.png",
+        "desktop/cradle/walk/artifacts/right-panel-shots-dark-1440-chat.png",
+        "desktop/cradle/walk/artifacts/right-panel-shots-dark-1440-context.png",
+        "desktop/cradle/walk/artifacts/right-panel-shots-dark-760-agents.png",
+        "desktop/cradle/walk/artifacts/right-panel-shots-dark-760-chat.png",
+        "desktop/cradle/walk/artifacts/right-panel-shots-dark-760-context.png",
+        "desktop/cradle/walk/artifacts/right-panel-shots-light-1000-activity.png",
+        "desktop/cradle/walk/artifacts/right-panel-shots-light-1000-context.png",
+        "desktop/cradle/walk/artifacts/right-panel-shots-light-760-chat.png",
+        "desktop/cradle/walk/artifacts/right-panel-shots-light-760-context.png",
+        "desktop/cradle/walk/artifacts/right-panel-shots.json",
+        "desktop/cradle/walk/scenarios/agent-panel.mjs",
+        "desktop/cradle/walk/scenarios/right-panel-agents.mjs"
       ],
-      "dirty_digest": "913c1038de5d1472a29469b52cd90b2058b10d9d83da95ccb905d5ebdb0af3f4",
+      "dirty_digest": "5f8bc6587e45dd847a04d17e44316748760ec56fffe730a528bc7cb973ac1bf8",
       "engine_provenance_path": "/Users/admin/Central/worktrees/ui-build/lane2-right/packages/oi-design-system/expressions-engine/PROVENANCE.json",
       "engine_source": "EpiLogos/Point-Cloud-Demo",
       "engine_revision": "91db8428fc9dfba06cd258ec5a58e7dd9eef5313"
@@ -34,7 +82,7 @@
   },
   "passed": true,
   "error": null,
-  "duration_ms": 18308,
+  "duration_ms": 13359,
   "checks": [
     {
       "ok": true,
@@ -150,6 +198,14 @@
     },
     {
       "ok": true,
+      "label": "Lens off: Nara is not in the avatar menu"
+    },
+    {
+      "ok": true,
+      "label": "Lens on: Nara joins the avatar menu"
+    },
+    {
+      "ok": true,
       "label": "P17: a failed roster read says Couldn't load agents. with Retry — never an empty roster"
     },
     {
@@ -164,7 +220,7 @@
       "duration_ms": 0.1,
       "data": {
         "schema": "oi.cradle.walk/v1",
-        "mounted_at": "2026-09-23T01:58:00.093Z",
+        "mounted_at": "2026-09-23T07:25:00.946Z",
         "transport": {
           "kind": "bridge",
           "url": "http://127.0.0.1:4379"
@@ -175,7 +231,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 76,
+      "duration_ms": 26,
       "data": {
         "file": "right-panel-agents-p17-empty.png"
       }
@@ -183,7 +239,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 34,
+      "duration_ms": 18,
       "data": {
         "file": "right-panel-agents-roster.png"
       }
@@ -191,7 +247,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 77,
+      "duration_ms": 28,
       "data": {
         "file": "right-panel-agents-avatar-menu-chosen.png"
       }
@@ -199,7 +255,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 58,
+      "duration_ms": 30,
       "data": {
         "file": "right-panel-agents-p15-agent-page.png"
       }
@@ -207,7 +263,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 44,
+      "duration_ms": 22,
       "data": {
         "file": "right-panel-agents-a4-in-place.png"
       }
@@ -215,7 +271,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 79,
+      "duration_ms": 43,
       "data": {
         "file": "right-panel-agents-p18-detail.png"
       }
@@ -223,7 +279,15 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 48,
+      "duration_ms": 32,
+      "data": {
+        "file": "right-panel-agents-lens-nara.png"
+      }
+    },
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 31,
       "data": {
         "file": "right-panel-agents-p17-error.png"
       }
@@ -237,6 +301,7 @@
     "right-panel-agents-p15-agent-page.png",
     "right-panel-agents-a4-in-place.png",
     "right-panel-agents-p18-detail.png",
+    "right-panel-agents-lens-nara.png",
     "right-panel-agents-p17-error.png"
   ]
 }

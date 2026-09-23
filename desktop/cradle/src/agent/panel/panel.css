@@ -161,3 +161,5 @@
 .chat-composer-row{min-width:0}
 .chat-composer-row>.chat-chip-host,.chat-composer-chips{min-width:0;flex-shrink:1}
 .chat-unreachable{margin:auto;padding:24px 18px;text-align:center}
+/* The mode chip keeps its word ("Ask", "Bypass") at every width. */
+.chat-chip-host[data-chip-host="mode"]{flex:none}

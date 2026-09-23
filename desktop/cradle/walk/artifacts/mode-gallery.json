@@ -4,7 +4,7 @@
   "spec_ref": "docs/cradle/05-EXECUTION.md §3",
   "grade": "B",
   "binding": null,
-  "generated_at": "2026-09-23T02:25:39.553Z",
+  "generated_at": "2026-09-23T07:21:29.992Z",
   "environment": {
     "base_url": "http://localhost:4373",
     "bridge_url": "http://127.0.0.1:4379",
@@ -12,52 +12,16 @@
     "browser_engine": "chromium",
     "bundle": "walk (WALK=1) served by vite preview",
     "build_input": {
-      "mode": "reused-dist",
-      "bundle_fingerprint": "ed51a365fc3c29d4599014366259ab616673cb631dadff9db70b42562242f5b8"
+      "mode": "fresh-build",
+      "bundle_fingerprint": "86919a088524afc45c3f40a8008e874c4594c232aacf89cc9bca54831d7cb849"
     },
     "node": "v24.16.0",
     "platform": "darwin",
     "source": {
       "repository_root": "/Users/admin/Central/worktrees/ui-build/lane2-right",
-      "repository_head": "9bde79c2085da606b73f533a2b069489bb226b08",
-      "tracked_changes": [
-        "desktop/cradle/scripts/receipt-lint.mjs",
-        "desktop/cradle/src/agent/panel/ContextCanvas.tsx",
-        "desktop/cradle/src/agent/panel/panel.css",
-        "desktop/cradle/src/workspace/modeBodies.tsx",
-        "desktop/cradle/walk/artifacts/context-canvas-insert-after-send.png",
-        "desktop/cradle/walk/artifacts/context-canvas-insert-inserted.png",
-        "desktop/cradle/walk/artifacts/context-canvas-insert-sent.png",
-        "desktop/cradle/walk/artifacts/context-canvas-insert.json",
-        "desktop/cradle/walk/artifacts/mode-gallery-agency-light.png",
-        "desktop/cradle/walk/artifacts/mode-gallery-desk-agents-light.png",
-        "desktop/cradle/walk/artifacts/mode-gallery-desk-context-light.png",
-        "desktop/cradle/walk/artifacts/mode-gallery-desk-run-light.png",
-        "desktop/cradle/walk/artifacts/mode-gallery-epi-logos-light.png",
-        "desktop/cradle/walk/artifacts/mode-gallery-expressions-640-light.png",
-        "desktop/cradle/walk/artifacts/mode-gallery-expressions-760-light.png",
-        "desktop/cradle/walk/artifacts/mode-gallery-expressions-dark.png",
-        "desktop/cradle/walk/artifacts/mode-gallery-expressions-light.png",
-        "desktop/cradle/walk/artifacts/mode-gallery-expressions-panel-chat-dark.png",
-        "desktop/cradle/walk/artifacts/mode-gallery-expressions-panel-chat-light.png",
-        "desktop/cradle/walk/artifacts/mode-gallery-expressions-panel-context-dark.png",
-        "desktop/cradle/walk/artifacts/mode-gallery-expressions-panel-context-light.png",
-        "desktop/cradle/walk/artifacts/mode-gallery-expressions-panel-context-newtab-light.png",
-        "desktop/cradle/walk/artifacts/mode-gallery-expressions-panel-side-dark.png",
-        "desktop/cradle/walk/artifacts/mode-gallery-expressions-panel-side-light.png",
-        "desktop/cradle/walk/artifacts/mode-gallery-factory-760-light.png",
-        "desktop/cradle/walk/artifacts/mode-gallery-factory-dark.png",
-        "desktop/cradle/walk/artifacts/mode-gallery-factory-light.png",
-        "desktop/cradle/walk/artifacts/mode-gallery-failure.png",
-        "desktop/cradle/walk/artifacts/mode-gallery-library-light.png",
-        "desktop/cradle/walk/artifacts/mode-gallery-techne-light.png",
-        "desktop/cradle/walk/artifacts/mode-gallery.json",
-        "desktop/cradle/walk/run.mjs",
-        "desktop/cradle/walk/scenarios/mode-gallery.mjs",
-        "desktop/cradle/walk/scenarios/right-panel-frame.mjs",
-        "desktop/cradle/walk/scenarios/right-panel-turn.mjs"
-      ],
-      "dirty_digest": "4bbff07be971c106ef54f5645ce7f21493b6e324c3f3a0b4a6093a79a9327b2a",
+      "repository_head": "85782ea95ed1bfb519625392a2eee2484e5ce1b2",
+      "tracked_changes": [],
+      "dirty_digest": "6e340b9cffb37a989ca544e6bb780a2c78901d3fb33738768511a30617afa01d",
       "engine_provenance_path": "/Users/admin/Central/worktrees/ui-build/lane2-right/packages/oi-design-system/expressions-engine/PROVENANCE.json",
       "engine_source": "EpiLogos/Point-Cloud-Demo",
       "engine_revision": "91db8428fc9dfba06cd258ec5a58e7dd9eef5313"
@@ -65,7 +29,7 @@
   },
   "passed": true,
   "error": null,
-  "duration_ms": 131140,
+  "duration_ms": 113378,
   "checks": [
     {
       "ok": true,
@@ -160,10 +124,10 @@
     {
       "ok": true,
       "op": "info",
-      "duration_ms": 0,
+      "duration_ms": 0.1,
       "data": {
         "schema": "oi.cradle.walk/v1",
-        "mounted_at": "2026-09-23T02:25:39.673Z",
+        "mounted_at": "2026-09-23T07:21:30.117Z",
         "transport": {
           "kind": "bridge",
           "url": "http://127.0.0.1:4379"
@@ -177,7 +141,7 @@
       "duration_ms": 0,
       "data": {
         "schema": "oi.cradle.walk/v1",
-        "mounted_at": "2026-09-23T02:25:39.733Z",
+        "mounted_at": "2026-09-23T07:21:30.186Z",
         "transport": {
           "kind": "bridge",
           "url": "http://127.0.0.1:4379"
@@ -188,7 +152,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 27,
+      "duration_ms": 37,
       "data": {
         "file": "mode-gallery-factory-light.png"
       }
@@ -196,7 +160,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 19,
+      "duration_ms": 36,
       "data": {
         "file": "mode-gallery-expressions-light.png"
       }
@@ -204,7 +168,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 32,
+      "duration_ms": 23,
       "data": {
         "file": "mode-gallery-expressions-panel-chat-light.png"
       }
@@ -212,7 +176,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 12,
+      "duration_ms": 14,
       "data": {
         "file": "mode-gallery-expressions-panel-side-light.png"
       }
@@ -220,7 +184,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 12,
+      "duration_ms": 13,
       "data": {
         "file": "mode-gallery-expressions-panel-context-light.png"
       }
@@ -236,7 +200,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 44,
+      "duration_ms": 34,
       "data": {
         "file": "mode-gallery-expressions-760-light.png"
       }
@@ -244,7 +208,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 42,
+      "duration_ms": 27,
       "data": {
         "file": "mode-gallery-expressions-640-light.png"
       }
@@ -252,7 +216,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 31,
+      "duration_ms": 37,
       "data": {
         "file": "mode-gallery-techne-light.png"
       }
@@ -260,7 +224,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 57,
+      "duration_ms": 38,
       "data": {
         "file": "mode-gallery-epi-logos-light.png"
       }
@@ -268,7 +232,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 45,
+      "duration_ms": 26,
       "data": {
         "file": "mode-gallery-desk-run-light.png"
       }
@@ -276,7 +240,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 27,
+      "duration_ms": 28,
       "data": {
         "file": "mode-gallery-desk-agents-light.png"
       }
@@ -284,7 +248,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 28,
+      "duration_ms": 30,
       "data": {
         "file": "mode-gallery-desk-context-light.png"
       }
@@ -292,7 +256,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 32,
+      "duration_ms": 28,
       "data": {
         "file": "mode-gallery-agency-light.png"
       }
@@ -300,7 +264,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 44,
+      "duration_ms": 30,
       "data": {
         "file": "mode-gallery-library-light.png"
       }
@@ -308,7 +272,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 49,
+      "duration_ms": 51,
       "data": {
         "file": "mode-gallery-factory-760-light.png"
       }
@@ -319,7 +283,7 @@
       "duration_ms": 0,
       "data": {
         "schema": "oi.cradle.walk/v1",
-        "mounted_at": "2026-09-23T02:26:20.550Z",
+        "mounted_at": "2026-09-23T07:22:11.449Z",
         "transport": {
           "kind": "bridge",
           "url": "http://127.0.0.1:4379"
@@ -333,7 +297,7 @@
       "duration_ms": 0,
       "data": {
         "schema": "oi.cradle.walk/v1",
-        "mounted_at": "2026-09-23T02:26:20.617Z",
+        "mounted_at": "2026-09-23T07:22:11.524Z",
         "transport": {
           "kind": "bridge",
           "url": "http://127.0.0.1:4379"
@@ -344,7 +308,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 59,
+      "duration_ms": 57,
       "data": {
         "file": "mode-gallery-factory-dark.png"
       }
@@ -352,7 +316,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 60,
+      "duration_ms": 55,
       "data": {
         "file": "mode-gallery-expressions-dark.png"
       }
@@ -368,7 +332,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 41,
+      "duration_ms": 36,
       "data": {
         "file": "mode-gallery-expressions-panel-side-dark.png"
       }
@@ -376,7 +340,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 38,
+      "duration_ms": 36,
       "data": {
         "file": "mode-gallery-expressions-panel-context-dark.png"
       }
@@ -384,7 +348,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 36,
+      "duration_ms": 29,
       "data": {
         "file": "mode-gallery-expressions-panel-context-newtab-dark.png"
       }
@@ -392,7 +356,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 70,
+      "duration_ms": 48,
       "data": {
         "file": "mode-gallery-expressions-760-dark.png"
       }
@@ -400,7 +364,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 59,
+      "duration_ms": 45,
       "data": {
         "file": "mode-gallery-expressions-640-dark.png"
       }
@@ -408,7 +372,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 76,
+      "duration_ms": 43,
       "data": {
         "file": "mode-gallery-techne-dark.png"
       }
@@ -416,7 +380,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 57,
+      "duration_ms": 45,
       "data": {
         "file": "mode-gallery-epi-logos-dark.png"
       }
@@ -424,7 +388,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 71,
+      "duration_ms": 61,
       "data": {
         "file": "mode-gallery-desk-run-dark.png"
       }
@@ -432,7 +396,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 37,
+      "duration_ms": 30,
       "data": {
         "file": "mode-gallery-agency-dark.png"
       }
@@ -440,7 +404,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 43,
+      "duration_ms": 49,
       "data": {
         "file": "mode-gallery-library-dark.png"
       }
