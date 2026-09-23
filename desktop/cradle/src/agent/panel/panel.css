@@ -1,0 +1,165 @@
+/* The right panel (10-SIDEBARS §4): one top row — avatar menu, tabs, ⤢ ✕ —
+ * then the tab body. Desktop tokens only; no local scrollbar styling. */
+.panel-top{flex:none;display:flex;align-items:center;gap:4px;min-height:var(--oi-shell-bar,40px);box-sizing:border-box;padding:0 6px 0 10px;border-bottom:var(--oi-shell-edge) solid var(--oi-hairline-soft)}
+.panel-tabs{flex:1 1 auto;min-width:0;display:flex;align-items:stretch;gap:0;align-self:stretch;overflow:hidden}
+.desktop-shell .panel-tab{position:relative;display:inline-flex;align-items:center;gap:3px;padding:0 6px;border:0;background:transparent;color:var(--oi-muted-2);font:inherit;font-size:var(--oi-shell-type-nav);white-space:nowrap;cursor:pointer;min-height:var(--oi-desktop-hit-target,28px);flex:none}
+.desktop-shell .panel-tab::after{content:"";position:absolute;left:6px;right:6px;bottom:-1px;height:1.5px;border-radius:1px;background:transparent}
+.desktop-shell .panel-tab:hover{color:var(--oi-accent-ink)}
+.desktop-shell .panel-tab[aria-current="page"]{color:var(--oi-accent-ink)}
+.desktop-shell .panel-tab[aria-current="page"]::after{background:var(--oi-ink,var(--oi-foreground))}
+.desktop-shell .panel-tab:focus-visible{outline:var(--oi-focus-ring-width) solid var(--oi-focus);outline-offset:-2px;border-radius:4px}
+.panel-tab-dot{width:5px;height:5px;border-radius:50%;background:var(--oi-foreground)}
+.panel-tab-attention{display:inline-grid;place-items:center;min-width:13px;height:13px;padding:0 2px;border-radius:3px;background:var(--oi-wash-strong);color:var(--oi-foreground);font-size:10px;font-weight:700;line-height:1}
+.panel-controls{flex:none;display:flex;align-items:center;gap:2px}
+.panel-controls>.oi-tool{width:26px;height:26px}
+@container (max-width:360px){.desktop-shell .panel-tab{padding:0 4px}.desktop-shell .panel-tab::after{left:4px;right:4px}.panel-controls>.oi-tool{width:22px}.panel-top{padding-left:6px;gap:2px}.desktop-shell .avatar-menu-open{padding-right:0}}
+
+/* avatar + presence badge (A3) */
+.avatar-menu{position:relative;flex:none}
+.desktop-shell .avatar-menu-open{position:relative;display:inline-flex;align-items:center;gap:2px;height:28px;padding:0 3px 0 0;border:0;border-radius:var(--oi-shell-radius-control,5px);background:transparent;color:var(--oi-muted-2);cursor:pointer}
+.desktop-shell .avatar-menu-open:hover,.desktop-shell .avatar-menu-open[aria-expanded="true"]{background:var(--oi-wash)}
+.desktop-shell .avatar-menu-open:focus-visible{outline:var(--oi-focus-ring-width) solid var(--oi-focus);outline-offset:0}
+.panel-avatar{flex:none;display:inline-grid;place-items:center;width:22px;height:22px;border-radius:50%;background:var(--oi-wash-strong);color:var(--oi-accent-ink);font-size:9px;font-weight:600;letter-spacing:.01em;overflow:hidden}
+.panel-avatar[data-size="md"]{width:30px;height:30px;font-size:11px}
+.panel-avatar>img{width:100%;height:100%;object-fit:cover}
+.panel-presence{position:absolute;top:1px;left:15px;display:grid;place-items:center;width:9px;height:9px;border-radius:50%;box-sizing:border-box;border:1.5px solid var(--oi-agent-ground);background:var(--oi-agent-ground);font-size:8px;font-weight:800;line-height:1;color:var(--oi-foreground)}
+.panel-presence[data-presence="idle"]{background:var(--oi-agent-ground);box-shadow:inset 0 0 0 1px var(--oi-muted-2)}
+.panel-presence[data-presence="working"]{background:var(--oi-foreground);animation:panel-breathe 1.6s var(--oi-motion-ease) infinite}
+.panel-presence[data-presence="attention"]{width:11px;height:11px;top:0;left:14px;border-radius:3px;background:var(--oi-wash-strong)}
+.panel-presence[data-presence="unavailable"]{background:var(--oi-agent-ground);color:var(--oi-muted-2)}
+.agent-layer[data-presence="unavailable"] .panel-avatar{opacity:.7}
+.panel-shield{position:absolute;bottom:0;left:13px;display:grid;place-items:center;width:11px;height:11px;border-radius:50%;background:var(--oi-agent-ground);color:var(--oi-foreground)}
+@keyframes panel-breathe{0%,100%{opacity:1}50%{opacity:.35}}
+@media (prefers-reduced-motion:reduce){.panel-presence[data-presence="working"]{animation:none}}
+.avatar-menu-list{position:absolute;top:calc(100% + 4px);left:0;z-index:var(--oi-z-popover,30);min-width:230px;max-width:min(320px,calc(100vw - 24px));max-height:min(60vh,440px);overflow:auto;display:flex;flex-direction:column}
+.avatar-menu-section{margin:6px 8px 2px;font-size:var(--oi-shell-type-eyebrow);letter-spacing:var(--oi-shell-tracking);text-transform:uppercase;color:var(--oi-muted-2)}
+.desktop-shell .avatar-menu-row{display:flex;align-items:center;gap:8px;min-height:30px;padding:3px 8px;border:0;border-radius:var(--oi-shell-radius-row,5px);background:transparent;color:var(--oi-accent-ink);font:inherit;font-size:var(--oi-shell-type-nav);text-align:left;cursor:pointer}
+.desktop-shell .avatar-menu-row:hover,.desktop-shell .avatar-menu-row:focus-visible{background:var(--oi-wash);outline:none}
+.avatar-menu-name{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.avatar-menu-note{font-size:var(--oi-shell-type-meta);color:var(--oi-muted-2)}
+.avatar-menu-note-line{margin:4px 8px;font-size:var(--oi-shell-type-meta);color:var(--oi-muted-2)}
+.avatar-menu-rule{height:var(--oi-shell-edge);margin:4px 2px;background:var(--oi-hairline-soft)}
+
+/* one-line panel states under the top row (P10, P11, Bypass) */
+.panel-line{flex:none;margin:0;padding:6px 12px;border-bottom:var(--oi-shell-edge) solid var(--oi-hairline-soft);font-size:var(--oi-shell-type-meta);color:var(--oi-muted-2);line-height:1.5}
+.panel-bypass{margin:6px 12px 0;border:var(--oi-shell-edge) solid var(--oi-foreground);border-radius:7px;color:var(--oi-accent-ink)}
+.panel-promoted{margin:auto;padding:24px 16px;text-align:center;color:var(--oi-muted-2);font-size:var(--oi-shell-type-body)}
+.panel-detail{flex:1;min-height:0;display:flex;flex-direction:column;overflow:auto}
+.panel-detail>.object-page{padding:var(--oi-space-4)}
+
+/* Activity */
+.panel-activity{display:flex;flex-direction:column;padding-top:var(--oi-space-2)}
+
+/* Agents (§4.5) */
+.panel-agents{display:flex;flex-direction:column;gap:var(--oi-space-2);overflow:auto;padding:var(--oi-space-2) 0 var(--oi-space-4)}
+.agents-head{display:flex;align-items:center;justify-content:flex-end;gap:4px;padding:0 10px}
+.agents-search{flex:1;min-width:0;height:26px}
+.agents-create{position:relative}
+.agents-create-menu{position:absolute;top:calc(100% + 4px);right:0;z-index:var(--oi-z-popover,30);min-width:160px}
+.agents-section h3{margin:var(--oi-space-3) 14px var(--oi-space-1);font-size:var(--oi-shell-type-eyebrow);font-weight:600;letter-spacing:var(--oi-shell-tracking);text-transform:uppercase;color:var(--oi-muted-2)}
+.agents-section ul{list-style:none;margin:0;padding:0 6px}
+.agents-row{position:relative;display:flex;align-items:center;gap:4px;min-height:44px;border-radius:var(--oi-shell-radius-row,6px)}
+.agents-row:hover,.agents-row:focus-within{background:var(--oi-wash)}
+.desktop-shell .agents-row-open{flex:1;min-width:0;display:flex;align-items:center;gap:10px;padding:6px 8px;border:0;background:transparent;color:inherit;font:inherit;text-align:left;cursor:pointer}
+.desktop-shell .agents-row-open:focus-visible{outline:var(--oi-focus-ring-width) solid var(--oi-focus);outline-offset:-2px;border-radius:6px}
+.agents-row-text{flex:1;min-width:0;display:flex;flex-direction:column;gap:1px}
+.agents-row-name{font-size:var(--oi-shell-type-nav);font-weight:600;color:var(--oi-accent-ink)}
+.agents-row-purpose,.agents-row-assignment{font-size:var(--oi-shell-type-meta);color:var(--oi-muted-2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.agents-row-tools{display:flex;gap:1px;opacity:0;transition:opacity var(--oi-motion-ui) var(--oi-motion-ease-out)}
+.agents-row:hover .agents-row-tools,.agents-row:focus-within .agents-row-tools{opacity:1}
+@media (pointer:coarse){.agents-row-tools{opacity:1}}
+.agents-row-tools>.oi-tool{width:24px;height:24px}
+.agents-row-mark{flex:none;width:14px;margin-right:8px;text-align:center;font-size:11px;font-weight:700;color:var(--oi-muted-2)}
+.agents-row-mark[data-presence="idle"]::before{content:"";display:inline-block;width:7px;height:7px;border-radius:50%;box-sizing:border-box;border:1.2px solid var(--oi-muted-2)}
+.agents-row-mark[data-presence="working"]::before{content:"";display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--oi-foreground);animation:panel-breathe 1.6s var(--oi-motion-ease) infinite}
+.agents-row-mark[data-presence="attention"]{color:var(--oi-foreground)}
+.agents-empty{margin:var(--oi-space-4) 14px;font-size:var(--oi-shell-type-body);color:var(--oi-muted-2)}
+
+/* Context launcher (§4.6) */
+.context-canvas{display:flex;flex-direction:column;gap:var(--oi-space-2)}
+.context-launcher{display:flex;flex-direction:column;gap:var(--oi-space-2);padding:var(--oi-space-3) var(--oi-space-3) var(--oi-space-1)}
+.context-launcher-line{margin:0 0 2px;font-size:var(--oi-shell-type-meta);color:var(--oi-muted-2)}
+.desktop-shell .context-launch{display:flex;align-items:center;gap:10px;min-height:40px;padding:0 12px;border:var(--oi-shell-edge) solid var(--oi-hairline);border-radius:9px;background:var(--oi-canvas-ground);color:var(--oi-accent-ink);font:inherit;font-size:var(--oi-shell-type-nav);text-align:left;cursor:pointer}
+.desktop-shell .context-launch>span{flex:1}
+.desktop-shell .context-launch kbd{font-family:var(--oi-font-sans);font-size:var(--oi-shell-type-meta);color:var(--oi-muted-3)}
+.desktop-shell .context-launch:hover,.desktop-shell .context-launch:focus-visible,.desktop-shell .context-launch[aria-expanded="true"]{background:var(--oi-wash);outline:none}
+.context-file-picker{max-height:260px;overflow:auto;border:var(--oi-shell-edge) solid var(--oi-hairline-soft);border-radius:8px;padding:4px}
+
+/* composer chips, their menus, the mode chip's Bypass mark */
+.chat-chip-host{position:relative;display:inline-flex;flex:none}
+.chat-chip-menu{position:absolute;bottom:calc(100% + 6px);left:0;z-index:var(--oi-z-popover,30);min-width:210px;max-width:min(320px,calc(100vw - 24px));max-height:min(60vh,420px);overflow:auto;display:flex;flex-direction:column}
+.chat-composer-chips .chat-chip-menu{left:auto;right:0}
+.chat-composer-chip[data-marked="true"]{border-color:var(--oi-foreground);color:var(--oi-accent-ink);font-weight:600}
+.chat-mode-item,.chat-model-item{display:flex;flex-direction:column;align-items:stretch;gap:1px;text-align:left}
+.chat-model-item{flex-direction:row;justify-content:space-between;align-items:center}
+.chat-mode-name{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.chat-mode-description{font-size:var(--oi-shell-type-meta);color:var(--oi-muted-2);white-space:normal}
+.chat-chip-note{margin:4px 8px;font-size:var(--oi-shell-type-meta)}
+.chat-chip-badge{font-size:var(--oi-shell-type-eyebrow);color:var(--oi-muted-2)}
+.chat-bypass-confirm{display:flex;flex-direction:column;gap:8px;padding:8px;max-width:260px}
+.chat-bypass-confirm p{margin:0;font-size:var(--oi-shell-type-nav);line-height:1.5;color:var(--oi-accent-ink)}
+.harness-picker{display:flex;flex-direction:column;gap:2px;min-width:220px}
+.harness-group-name{margin:6px 8px 2px;font-size:var(--oi-shell-type-eyebrow);letter-spacing:var(--oi-shell-tracking);text-transform:uppercase;color:var(--oi-muted-2)}
+.desktop-shell .harness-row{display:flex;flex-direction:column;align-items:stretch;gap:1px;padding:5px 8px;border:0;border-radius:var(--oi-shell-radius-row,5px);background:transparent;color:var(--oi-accent-ink);font:inherit;text-align:left;cursor:pointer}
+.desktop-shell .harness-row:hover:not(:disabled){background:var(--oi-wash)}
+.desktop-shell .harness-row:disabled{cursor:default}
+.harness-row-main{display:flex;align-items:center;gap:6px;font-size:var(--oi-shell-type-nav)}
+.harness-variant{font-size:var(--oi-shell-type-eyebrow);padding:0 5px;border:var(--oi-shell-edge) solid var(--oi-hairline);border-radius:999px;color:var(--oi-muted-2)}
+.harness-row-label{font-size:var(--oi-shell-type-meta);color:var(--oi-muted-2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.harness-picker-empty{margin:6px 8px}
+
+/* status line (P4), permission card (P5), work marks (§4.3), send state */
+.desktop-shell .chat-status-line{flex:none;display:flex;align-items:center;gap:5px;margin:0 14px;padding:2px 2px;border:0;background:transparent;color:var(--oi-muted-2);font:inherit;font-size:var(--oi-shell-type-meta);text-align:left;cursor:pointer;min-height:22px}
+.desktop-shell .chat-status-line strong{color:var(--oi-accent-ink);font-weight:600}
+.desktop-shell .chat-status-line:hover .chat-status-doing{color:var(--oi-accent-ink)}
+.chat-status-dot{width:6px;height:6px;border-radius:50%;background:var(--oi-foreground);animation:panel-breathe 1.6s var(--oi-motion-ease) infinite}
+.chat-status-doing,.chat-status-time{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.chat-permission{display:flex;flex-direction:column;gap:8px;padding:12px 14px;border:var(--oi-shell-edge) solid var(--oi-hairline);border-radius:10px;background:var(--oi-canvas-ground)}
+.chat-permission-title{margin:0;font-size:var(--oi-shell-type-nav);color:var(--oi-accent-ink)}
+.chat-permission-target{margin:0;font-size:var(--oi-shell-type-nav);color:var(--oi-muted-2);overflow-wrap:anywhere}
+.chat-permission-target code{font-family:var(--oi-font-mono);font-size:.92em;padding:1px 5px;border-radius:4px;background:var(--oi-wash);color:var(--oi-accent-ink)}
+.chat-permission-scopes{display:flex;gap:5px;flex-wrap:wrap}
+.desktop-shell .chat-permission-scope{min-height:24px;padding:0 10px;border:var(--oi-shell-edge) solid var(--oi-hairline);border-radius:999px;background:transparent;color:var(--oi-muted-2);font:inherit;font-size:var(--oi-shell-type-meta);cursor:pointer}
+.desktop-shell .chat-permission-scope[aria-checked="true"]{border-color:var(--oi-foreground);color:var(--oi-accent-ink)}
+.chat-permission-actions{display:flex;gap:6px}
+.desktop-shell .chat-permission-allow{min-height:28px;padding:0 14px;border:0;border-radius:6px;background:var(--oi-accent);color:var(--oi-composer-ground);font:inherit;font-size:var(--oi-shell-type-nav);cursor:pointer}
+.desktop-shell .chat-permission-allow:disabled{opacity:.4;cursor:default}
+.chat-permission-raw summary{cursor:pointer;font-size:var(--oi-shell-type-meta);color:var(--oi-muted-3)}
+.chat-permission-raw pre{margin:4px 0 0;max-height:160px;overflow:auto;font-family:var(--oi-font-mono);font-size:10.5px;white-space:pre-wrap;overflow-wrap:anywhere;color:var(--oi-muted-2)}
+.chat-permission-answered{margin:0 0 0 34px;font-size:var(--oi-shell-type-meta)}
+.chat-work-marks{list-style:none;margin:-8px 0 0 34px;padding:0;display:flex;flex-direction:column;gap:2px}
+.desktop-shell .chat-work-mark{display:inline-flex;align-items:center;gap:6px;padding:1px 4px;margin-left:-4px;border:0;border-radius:4px;background:transparent;color:var(--oi-muted-2);font:inherit;font-size:var(--oi-shell-type-meta);text-align:left;cursor:pointer}
+.desktop-shell .chat-work-mark:hover,.desktop-shell .chat-work-mark:focus-visible{background:var(--oi-wash);color:var(--oi-accent-ink);outline:none}
+.desktop-shell .chat-work-mark[data-status="failed"]{color:var(--oi-accent-ink)}
+.chat-send-state{display:flex;align-items:center;gap:8px;margin:0;font-size:var(--oi-shell-type-meta);color:var(--oi-accent-ink)}
+.chat-working-raw summary{cursor:pointer;font-size:var(--oi-shell-type-meta);color:var(--oi-muted-3)}
+.chat-working-raw pre{margin:4px 0 0;max-height:200px;overflow:auto;font-family:var(--oi-font-mono);font-size:var(--oi-shell-type-eyebrow);white-space:pre-wrap;overflow-wrap:anywhere}
+.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+/* The prepared-selection tray keeps its one header line; its empty
+ * instructions do not repeat above the launcher (§4.6). */
+.context-canvas .prepared-context:not(:has(.prepared-context-item)):not(:has(.context-preview)) .oi-note:not([role="alert"]){display:none}
+/* P1 — the closed panel's corner companion mark: the mark only; it carries
+ * ● while a turn runs (breathing) and ! (ink on a wash chip) when the agent
+ * needs you. Its state line stays for assistive technology and the tooltip. */
+.desktop-shell .shell-agent-presence{padding:0 6px;gap:0}
+.desktop-shell .shell-agent-presence .shell-agent-presence-label{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap}
+.desktop-shell .shell-agent-presence .shell-agent-presence-dot{display:grid;place-items:center;width:8px;height:8px;background:transparent;box-shadow:inset 0 0 0 1.5px var(--oi-muted-2);font-size:10px;font-weight:800;line-height:1;color:var(--oi-foreground)}
+.desktop-shell .shell-agent-presence[data-presence-state="working"] .shell-agent-presence-dot{background:var(--oi-foreground);box-shadow:none;animation:panel-breathe 1.6s var(--oi-motion-ease) infinite}
+.desktop-shell .shell-agent-presence[data-presence-state="attention"] .shell-agent-presence-dot{width:13px;height:13px;border-radius:3px;background:var(--oi-wash-strong);box-shadow:none}
+/* Open in the centre (P14): a quiet control at the conversation's corner,
+ * outside the one top row so the tabs keep their room. */
+.agent-plane-host{position:relative}
+.agent-layer .panel-promote{position:absolute;top:6px;right:8px;z-index:2;width:24px;height:24px;opacity:.55}
+.agent-layer .panel-promote:hover,.agent-layer .panel-promote:focus-visible{opacity:1}
+/* Narrow panels: the composer's one row keeps Send / Stop in view. */
+@container (max-width:380px){
+ .chat-stop>span{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0)}
+ .desktop-shell .chat-stop{padding:0 8px}
+ .chat-composer-chip{padding:0 5px}
+ .chat-drop-hint{display:none}
+}
+.chat-composer-row{min-width:0}
+.chat-composer-row>.chat-chip-host,.chat-composer-chips{min-width:0;flex-shrink:1}
+.chat-unreachable{margin:auto;padding:24px 18px;text-align:center}
+/* The mode chip keeps its word ("Ask", "Bypass") at every width. */
+.chat-chip-host[data-chip-host="mode"]{flex:none}

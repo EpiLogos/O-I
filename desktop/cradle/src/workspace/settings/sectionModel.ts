@@ -267,7 +267,7 @@ export function briefValue(value: unknown): string {
  * whose setting names a permission mode). */
 export function permissionModeEntries(data: SettingsSnapshot): SettingEntry[] {
   if (data.registry.state !== "ok") return [];
-  return data.registry.value.entries.filter((entry) => /permission/i.test(entry.setting.setting_ref) && /mode/i.test(entry.setting.setting_ref) && entry.setting.value_schema.type === "enum");
+  return data.registry.value.entries.filter((entry) => /permission/i.test(entry.setting.setting_ref) && /mode/i.test(entry.setting.setting_ref) && (entry.setting.value_schema.type === "enum" || entry.setting.value_schema.type === "table"));
 }
 
 /** The harnesses' own trust and guardrail rows AIKit discloses. */

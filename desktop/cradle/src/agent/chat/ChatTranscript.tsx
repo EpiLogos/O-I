@@ -3,6 +3,16 @@ import type {EncounterReading,EncounterStatus} from "../../encounter/client";
 import {CONTEXT_MARK,parseContextItems} from "../../context/contextItems";
 import {Glyph} from "../../workspace/Glyph";
 import {parsePieces,useStreamedText,type Inline} from "./streamText";
+import type {WorkMark} from "../tape/model";
+import {operationsOf} from "../../encounter/operations";
+
+/** Work marks (§4.3): per conversation turn, counted from the newest turn
+ *  (0 = the latest), each linking to its exact event on the Activity tape. */
+export interface TranscriptMarks {forTurnFromEnd:(fromEnd:number)=>WorkMark[];onOpen:(rowId:string)=>void;
+ /** How the turn ended per the owner's record (a person's Stop = "cancelled"). */
+ stopFromEnd?:(fromEnd:number)=>string|undefined;
+ /** Files the turn edited (P6 artifact chips), and how to open one. */
+ artifactsForTurnFromEnd?:(fromEnd:number)=>string[];onArtifact?:(path:string)=>void}
 
 /**
  * The chat transcript: the owner's recorded blocks as turns. A user turn is
@@ -42,7 +52,7 @@ const contextBlockText=(meta:string,quote:string):string=>`${CONTEXT_MARK}${meta
 
 const copyText=(text:string)=>void navigator.clipboard?.writeText(text).catch(()=>{});
 
-export function ChatTranscript({reading,status,error,agentLabel,onEarlier,onLatest,paged,onEdit,children}:{reading?:EncounterReading;status?:EncounterStatus;error?:string;agentLabel:string;onEarlier:()=>void;onLatest:()=>void;paged:boolean;onEdit?:(text:string)=>void;children?:ReactNode}) {
+export function ChatTranscript({reading,status,error,agentLabel,onEarlier,onLatest,paged,onEdit,marks,children}:{reading?:EncounterReading;status?:EncounterStatus;error?:string;agentLabel:string;onEarlier:()=>void;onLatest:()=>void;paged:boolean;onEdit?:(text:string)=>void;marks?:TranscriptMarks;children?:ReactNode}) {
   const host=useRef<HTMLDivElement>(null);const following=useRef(true);
   /** Mirrors `following` for rendering: the jump control exists only while
    * the reader has scrolled away from the live edge. */
@@ -61,14 +71,36 @@ export function ChatTranscript({reading,status,error,agentLabel,onEarlier,onLate
     <div ref={host} className="chat-transcript oi-scroll" aria-label="Transcript" aria-live="polite" onScroll={onScroll}>
     {reading?.more&&<button className="chat-earlier oi-action" onClick={()=>{following.current=false;onEarlier();}}>Earlier messages</button>}
     {paged&&<p className="chat-paged oi-note" role="status">Showing an earlier page. <button className="oi-action" onClick={()=>{following.current=true;onLatest();}}>Return to latest</button></p>}
-    {turns.map(turn=>{
-      const first=turn.blocks[0];
-      if(turn.kind==="user")return <UserTurn key={first.id} block={first} onEdit={onEdit}/>;
-      if(turn.kind==="assistant")return <AssistantTurn key={first.id} block={first} label={agentLabel} live={inFlight&&first.id===lastAssistant}/>;
-      if(turn.kind==="error")return <div key={first.id} className="chat-turn chat-turn-error" data-kind="error"><span className="chat-avatar" aria-hidden="true"><Glyph name="warning" size={12}/></span><div><strong>Provider turn failed</strong><p>{first.text}</p></div></div>;
-      if(turn.kind==="cancelled")return <p key={first.id} className="chat-stopped oi-note" data-kind="cancelled"><Glyph name="stop" size={11}/> Stopped{first.text?` — ${first.text}`:""}</p>;
-      return <WorkingRow key={first.id} blocks={turn.blocks}/>;
-    })}
+    {(()=>{
+      // Conversation turns open at each user message; a turn's work marks
+      // close it (§4.3). Without a tape reading the working blocks fold into
+      // one quiet row instead.
+      const users=turns.filter(turn=>turn.kind==="user").length;
+      let segment=-1;
+      const out:ReactNode[]=[];
+      const flush=(key:string)=>{
+        if(!marks||segment<0)return;
+        const list=marks.forTurnFromEnd(users-1-segment);
+        if(list.length)out.push(<WorkMarks key={key} marks={list} onOpen={marks.onOpen}/>);
+        const files=marks.artifactsForTurnFromEnd?.(users-1-segment)??[];
+        if(files.length&&marks.onArtifact)out.push(<div key={`${key}-files`} className="chat-artifacts" aria-label="Files this turn changed">{files.map(path=><button key={path} type="button" className="oi-chip chat-artifact" title={path} onClick={()=>marks.onArtifact!(path)}><Glyph name="file" size={10}/><span>{path.split("/").pop()}</span></button>)}</div>);
+      };
+      for(const turn of turns){
+        const first=turn.blocks[0];
+        if(turn.kind==="user"){flush(`marks-${first.id}`);segment++;out.push(<UserTurn key={first.id} block={first} onEdit={onEdit}/>);continue;}
+        if(turn.kind==="assistant"){out.push(<AssistantTurn key={first.id} block={first} label={agentLabel} live={inFlight&&first.id===lastAssistant}/>);continue;}
+        if(turn.kind==="error"){
+          // A person's Stop can reach the provider as an abort: the owner's
+          // turn record says it was stopped (P7), so it reads as Stopped.
+          if(segment>=0&&marks?.stopFromEnd?.(users-1-segment)==="cancelled"){out.push(<p key={first.id} className="chat-stopped oi-note" data-kind="cancelled"><Glyph name="stop" size={11}/> Stopped.</p>);continue;}
+          out.push(<div key={first.id} className="chat-turn chat-turn-error" data-kind="error"><span className="chat-avatar" aria-hidden="true"><Glyph name="warning" size={12}/></span><div><strong>Provider turn failed</strong><p>{failureText(first.text)}</p></div></div>);continue;
+        }
+        if(turn.kind==="cancelled"){out.push(<p key={first.id} className="chat-stopped oi-note" data-kind="cancelled"><Glyph name="stop" size={11}/> Stopped.{first.text?` ${first.text}`:""}</p>);continue;}
+        if(!marks)out.push(<WorkingRow key={first.id} blocks={turn.blocks}/>);
+      }
+      flush("marks-last");
+      return out;
+    })()}
     {inFlight&&(!lastAssistant||blocks[blocks.length-1]?.kind!=="assistant")&&<div className="chat-turn chat-turn-assistant chat-turn-pending" data-kind="pending"><span className="chat-avatar" aria-hidden="true"><Glyph name="chat" size={12}/></span><div><strong>{agentLabel}</strong><p className="chat-caret" aria-label="Responding"><span/><span/><span/></p></div></div>}
     {!reading&&!error&&<p className="chat-reading oi-note" role="status">Reading the conversation…</p>}
     {!reading&&error&&<div className="chat-refused"><p className="oi-refusal" role="alert">{error}</p><p className="oi-note">The owner has not served this conversation; the read is retried while this chat stays open.</p></div>}
@@ -131,8 +163,22 @@ function WorkingRow({blocks}:{blocks:Block[]}) {
   const summary=[...counts].map(([kind,count])=>`${count} ${(LABEL[kind]??kind).toLowerCase()}${count===1?"":"s"}`).join(" · ");
   return <details className="chat-working" data-kind="working">
     <summary><Glyph name="activity" size={11}/><span>{summary}</span></summary>
-    <div className="chat-working-list">{blocks.map(block=><div key={block.id} className="chat-working-item" data-kind={block.kind}><span className="oi-eyebrow">{LABEL[block.kind]??block.kind}</span><pre>{block.text}</pre></div>)}</div>
+    <div className="chat-working-list">{operationsOf(blocks).reverse().map(operation=><div key={operation.id} className="chat-working-item" data-kind={operation.kind}><span className="oi-eyebrow">{LABEL[operation.kind]??operation.kind}</span><span>{operation.line}</span></div>)}<details className="chat-working-raw"><summary>Show raw</summary><pre>{blocks.map(block=>block.text).join("\n\n")}</pre></details></div>
   </details>;
 }
 
 const inline=(parts:Inline[])=>parts.map((part,index)=><Fragment key={index}>{part.kind==="code"?<code>{part.text}</code>:part.kind==="strong"?<strong>{part.text}</strong>:part.kind==="em"?<em>{part.text}</em>:part.text}</Fragment>);
+
+/** One line per tool row of the turn — `⟡ edited shell.css · 12s · 3 calls`
+ *  — each opening the Activity tape at that exact event. */
+function WorkMarks({marks,onOpen}:{marks:WorkMark[];onOpen:(rowId:string)=>void}) {
+  return <ul className="chat-work-marks" aria-label="Work in this turn">
+    {marks.map(mark=><li key={mark.rowId}><button type="button" className="chat-work-mark" data-row={mark.rowId} data-status={mark.status} onClick={()=>onOpen(mark.rowId)} title="Open this event in Activity"><span aria-hidden="true">⟡</span>{mark.line}</button></li>)}
+  </ul>;
+}
+
+/** The owner records a failure as {"Failed":{"reason":…}}; show its words. */
+function failureText(text:string):string {
+  try{const value=JSON.parse(text) as {Failed?:{reason?:unknown}};if(typeof value?.Failed?.reason==="string")return value.Failed.reason;}catch{/* plain text */}
+  return text;
+}

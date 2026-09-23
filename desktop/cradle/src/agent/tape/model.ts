@@ -17,6 +17,7 @@
  *   filterRows(rows, filter) → rows          TAPE_FILTERS: All · Edits · Commands · Tools · Waits
  *   rowsOfTurn(tape, turn) → rows            workMarksOf(tape, turn) → WorkMark[]
  *   inFlightRow(tape) → the newest running/waiting row of the open turn (status line)
+ *   editedPaths(tape, turn) → the files a turn's settled edit rows name (artifact chips)
  *   formatClock(ms) · formatDuration(ms)     VERB_LABEL
  *
  * Rows: time · verb · object · duration. Verbs are read / edit / run / tool
@@ -253,14 +254,19 @@ export function tapeFromJournal(events:readonly JournalEventLike[],options:TapeO
   }
   if(kind==="native-mode-configuration-confirmed"){
    const receipt=obj(event.receipt)?event.receipt:{};
-   newRow("note",`permission mode · ${str(receipt.current_mode_id)??str(event.mode_id)??"changed"}`,entry,at);
+   const now=obj(receipt.current)?receipt.current:obj(receipt.mode_observation)?receipt.mode_observation:{};
+   newRow("note",`permission mode · ${str(now.current_mode_id)??"changed"}`,entry,at);
    continue;
   }
   if(kind==="provider"){
    const ended=turnEndedOf(event);
    if(ended){
     const stop=obj(ended.stop)?ended.stop:str(ended.stop);
-    if(obj(stop)&&obj(stop.Completed))closeTurn("completed",str(stop.Completed.stop_reason));
+    const interruption=obj(ended.interruption)?ended.interruption:undefined;
+    // A stop the person asked for ends the turn as stopped, whatever the
+    // provider called it (Pi reports an abort as a failure).
+    if(interruption&&str(interruption.origin)==="Human")closeTurn("cancelled",str(interruption.reason));
+    else if(obj(stop)&&obj(stop.Completed))closeTurn("completed",str(stop.Completed.stop_reason));
     else if(stop==="Cancelled"||(obj(stop)&&"Cancelled" in stop))closeTurn("cancelled");
     else if(obj(stop)&&obj(stop.Failed))closeTurn("failed",str(stop.Failed.reason));
     else if(obj(stop)&&obj(stop.OperationalLimit))closeTurn("limit");
@@ -331,12 +337,18 @@ export function tapeFromJournal(events:readonly JournalEventLike[],options:TapeO
   if(kind)quiet++;else unknown++;
  }
  for(const row of rows){
-  if(row.startedAt!==undefined&&row.endedAt!==undefined&&row.status!=="running"&&row.status!=="waiting")row.durationMs=Math.max(0,row.endedAt-row.startedAt);
+  // A duration needs two observed ends: a single event (a note, a message) has none.
+  if(row.startedAt!==undefined&&row.endedAt!==undefined&&row.events.length>1&&row.status!=="running"&&row.status!=="waiting")row.durationMs=Math.max(0,row.endedAt-row.startedAt);
   row.cursors.sort((a,b)=>a-b);
  }
  return {turns,rows,lastCursor,quiet,unknown};
 }
 
+/** How a turn ended, counted from the newest conversation turn (0 = latest). */
+export function turnStopFromEnd(tape:Tape,fromEnd:number):TurnStop|undefined {
+ const turns=tape.turns.filter(turn=>turn.index>0&&(turn.rows[0]?.verb==="you"||turn.rows[0]?.verb==="message"));
+ return turns[turns.length-1-fromEnd]?.stop;
+}
 export const rowsOfTurn=(tape:Tape,turn:number)=>tape.turns.find(entry=>entry.index===turn)?.rows??[];
 /** The newest row still moving in the open turn — what the status line names. */
 export function inFlightRow(tape:Tape):TapeRow|undefined {
@@ -360,6 +372,14 @@ export function workMarksOf(tape:Tape,turn:number):WorkMark[] {
   if(row.status==="failed")parts.push("failed");
   return {rowId:row.id,line:parts.join(" · "),status:row.status};
  });
+}
+/** The files a turn's settled edits name, in order, once each — the chat's
+ *  artifact chips (§4.3, P6). Paths are the provider's own (maybe relative
+ *  to the session's working directory). */
+export function editedPaths(tape:Tape,turn:number):string[] {
+ const out:string[]=[];
+ for(const row of rowsOfTurn(tape,turn))if(row.verb==="edit"&&row.status==="done"&&row.detail&&!out.includes(row.detail))out.push(row.detail);
+ return out;
 }
 export const presentVerb=(verb:TapeVerb)=>PRESENT[verb]??verb;
 

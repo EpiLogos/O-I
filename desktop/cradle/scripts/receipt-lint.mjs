@@ -84,6 +84,14 @@ const SCENARIO_SPEC = {
   "left-lens": "docs/cradle/10-SIDEBARS.md §3.1 D2 A5 (Epi-Logos lens)",
   "left-forms": "docs/cradle/10-SIDEBARS.md §3.7 §6.1.6 D5 (forms create a copy; Goal and Vision in place; Factory INTENT)",
   "left-gallery": "docs/cradle/10-SIDEBARS.md §3 (the left frame in light and dark at 1440 / 1000 / 760)",
+  "context-canvas-insert": "docs/cradle/10-SIDEBARS.md §4.6 (Context canvas baseline)",
+  "right-panel-frame": "docs/cradle/10-SIDEBARS.md §4.1 §4.2 §5.3 P1 P2 P3 P13 P14 P18; §7 A3",
+  "right-panel-turn": "docs/cradle/10-SIDEBARS.md §4.3 §4.4 §5.3 P1 P4 P6 P7 P16",
+  "right-panel-agents": "docs/cradle/10-SIDEBARS.md §4.5 §4.7 §5.3 P15 P17 P18; §4.1a A4",
+  "right-panel-modes": "docs/cradle/10-SIDEBARS.md §7 A1/A2; §4.1 §4.3 §5.3 P5 P1",
+  "right-panel-failures": "docs/cradle/10-SIDEBARS.md §5.3 P8 P9 P10 P11 P12",
+  "right-panel-context": "docs/cradle/10-SIDEBARS.md §4.6 (Context launcher)",
+  "right-panel-shots": "docs/cradle/10-SIDEBARS.md §4.1 §5.3 (looking pass: light/dark, 1440/1000/760)",
 };
 const DEFAULT_SPEC_REF = "docs/cradle/05-EXECUTION.md §3";
 

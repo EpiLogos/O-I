@@ -1,0 +1,350 @@
+{
+  "schema": "oi.cradle.walk.scenario/v1",
+  "scenario": "right-panel-shots",
+  "spec_ref": "docs/cradle/10-SIDEBARS.md §4.1 §5.3 (looking pass: light/dark, 1440/1000/760)",
+  "grade": "B",
+  "binding": null,
+  "generated_at": "2026-09-23T12:22:17.734Z",
+  "environment": {
+    "base_url": "http://localhost:4473",
+    "bridge_url": "http://127.0.0.1:4479",
+    "viewport": "1280x820",
+    "browser_engine": "chromium",
+    "bundle": "walk (WALK=1) served by vite preview",
+    "build_input": {
+      "mode": "reused-dist",
+      "bundle_fingerprint": "87e10fb8f7da87d8ebb8897ac3babbab0e40902d27363e8fe8f7d12cc006ae8a"
+    },
+    "node": "v24.16.0",
+    "platform": "darwin",
+    "source": {
+      "repository_root": "/Users/admin/Central/worktrees/ui-build/lane2-right",
+      "repository_head": "bbcebf9264814a9ac83169f9c100c30159c0f608",
+      "tracked_changes": [
+        "desktop/cradle/walk/artifacts/canvas-context-native-resolve-on-prepared-selection.png",
+        "desktop/cradle/walk/artifacts/canvas-context-real-return-after-explicit-delivery.png",
+        "desktop/cradle/walk/artifacts/canvas-context-stale-source-refusal-retains-preparation.png",
+        "desktop/cradle/walk/artifacts/canvas-context.json",
+        "desktop/cradle/walk/artifacts/right-panel-context-expressions-launcher.png",
+        "desktop/cradle/walk/artifacts/right-panel-context-file-inserted.png",
+        "desktop/cradle/walk/artifacts/right-panel-context-launcher.png",
+        "desktop/cradle/walk/artifacts/right-panel-context.json",
+        "desktop/cradle/walk/artifacts/right-panel-failures-p10-reconnecting.png",
+        "desktop/cradle/walk/artifacts/right-panel-failures-p11-unreachable.png",
+        "desktop/cradle/walk/artifacts/right-panel-failures-p12-switched.png",
+        "desktop/cradle/walk/artifacts/right-panel-failures-p8-not-sent.png",
+        "desktop/cradle/walk/artifacts/right-panel-failures.json"
+      ],
+      "dirty_digest": "78e702b242ddfc231bf1115745f6cd950c04aaf2f1431ce239cd02c6f16e2ec0",
+      "engine_provenance_path": "/Users/admin/Central/worktrees/ui-build/lane2-right/packages/oi-design-system/expressions-engine/PROVENANCE.json",
+      "engine_source": "EpiLogos/Point-Cloud-Demo",
+      "engine_revision": "91db8428fc9dfba06cd258ec5a58e7dd9eef5313"
+    }
+  },
+  "passed": true,
+  "error": null,
+  "duration_ms": 22742,
+  "checks": [
+    {
+      "ok": true,
+      "label": "light 1440px: the top row is one row and no tab is clipped",
+      "data": {
+        "h": 35,
+        "spread": 0,
+        "clipped": false,
+        "width": 317,
+        "theme": "light"
+      }
+    },
+    {
+      "ok": true,
+      "label": "light 1000px: the top row is one row and no tab is clipped",
+      "data": {
+        "h": 35,
+        "spread": 0,
+        "clipped": false,
+        "width": 317,
+        "theme": "light"
+      }
+    },
+    {
+      "ok": true,
+      "label": "light 760px: the top row is one row and no tab is clipped",
+      "data": {
+        "h": 35,
+        "spread": 0,
+        "clipped": false,
+        "width": 317,
+        "theme": "light"
+      }
+    },
+    {
+      "ok": true,
+      "label": "dark 1440px: the top row is one row and no tab is clipped",
+      "data": {
+        "h": 35,
+        "spread": 0,
+        "clipped": false,
+        "width": 317,
+        "theme": "dark"
+      }
+    },
+    {
+      "ok": true,
+      "label": "dark 1000px: the top row is one row and no tab is clipped",
+      "data": {
+        "h": 35,
+        "spread": 0,
+        "clipped": false,
+        "width": 317,
+        "theme": "dark"
+      }
+    },
+    {
+      "ok": true,
+      "label": "dark 760px: the top row is one row and no tab is clipped",
+      "data": {
+        "h": 35,
+        "spread": 0,
+        "clipped": false,
+        "width": 317,
+        "theme": "dark"
+      }
+    }
+  ],
+  "ops": [
+    {
+      "ok": true,
+      "op": "info",
+      "duration_ms": 0,
+      "data": {
+        "schema": "oi.cradle.walk/v1",
+        "mounted_at": "2026-09-23T12:22:17.832Z",
+        "transport": {
+          "kind": "bridge",
+          "url": "http://127.0.0.1:4479"
+        },
+        "url": "http://localhost:4473/"
+      }
+    },
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 38,
+      "data": {
+        "file": "right-panel-shots-light-1440-chat.png"
+      }
+    },
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 34,
+      "data": {
+        "file": "right-panel-shots-light-1440-activity.png"
+      }
+    },
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 35,
+      "data": {
+        "file": "right-panel-shots-light-1440-agents.png"
+      }
+    },
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 38,
+      "data": {
+        "file": "right-panel-shots-light-1440-context.png"
+      }
+    },
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 30,
+      "data": {
+        "file": "right-panel-shots-light-1000-chat.png"
+      }
+    },
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 28,
+      "data": {
+        "file": "right-panel-shots-light-1000-activity.png"
+      }
+    },
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 28,
+      "data": {
+        "file": "right-panel-shots-light-1000-agents.png"
+      }
+    },
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 28,
+      "data": {
+        "file": "right-panel-shots-light-1000-context.png"
+      }
+    },
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 57,
+      "data": {
+        "file": "right-panel-shots-light-760-chat.png"
+      }
+    },
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 35,
+      "data": {
+        "file": "right-panel-shots-light-760-activity.png"
+      }
+    },
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 41,
+      "data": {
+        "file": "right-panel-shots-light-760-agents.png"
+      }
+    },
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 39,
+      "data": {
+        "file": "right-panel-shots-light-760-context.png"
+      }
+    },
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 73,
+      "data": {
+        "file": "right-panel-shots-dark-1440-chat.png"
+      }
+    },
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 57,
+      "data": {
+        "file": "right-panel-shots-dark-1440-activity.png"
+      }
+    },
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 63,
+      "data": {
+        "file": "right-panel-shots-dark-1440-agents.png"
+      }
+    },
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 49,
+      "data": {
+        "file": "right-panel-shots-dark-1440-context.png"
+      }
+    },
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 63,
+      "data": {
+        "file": "right-panel-shots-dark-1000-chat.png"
+      }
+    },
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 47,
+      "data": {
+        "file": "right-panel-shots-dark-1000-activity.png"
+      }
+    },
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 64,
+      "data": {
+        "file": "right-panel-shots-dark-1000-agents.png"
+      }
+    },
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 47,
+      "data": {
+        "file": "right-panel-shots-dark-1000-context.png"
+      }
+    },
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 67,
+      "data": {
+        "file": "right-panel-shots-dark-760-chat.png"
+      }
+    },
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 59,
+      "data": {
+        "file": "right-panel-shots-dark-760-activity.png"
+      }
+    },
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 60,
+      "data": {
+        "file": "right-panel-shots-dark-760-agents.png"
+      }
+    },
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 54,
+      "data": {
+        "file": "right-panel-shots-dark-760-context.png"
+      }
+    }
+  ],
+  "metrics": {},
+  "screenshots": [
+    "right-panel-shots-light-1440-chat.png",
+    "right-panel-shots-light-1440-activity.png",
+    "right-panel-shots-light-1440-agents.png",
+    "right-panel-shots-light-1440-context.png",
+    "right-panel-shots-light-1000-chat.png",
+    "right-panel-shots-light-1000-activity.png",
+    "right-panel-shots-light-1000-agents.png",
+    "right-panel-shots-light-1000-context.png",
+    "right-panel-shots-light-760-chat.png",
+    "right-panel-shots-light-760-activity.png",
+    "right-panel-shots-light-760-agents.png",
+    "right-panel-shots-light-760-context.png",
+    "right-panel-shots-dark-1440-chat.png",
+    "right-panel-shots-dark-1440-activity.png",
+    "right-panel-shots-dark-1440-agents.png",
+    "right-panel-shots-dark-1440-context.png",
+    "right-panel-shots-dark-1000-chat.png",
+    "right-panel-shots-dark-1000-activity.png",
+    "right-panel-shots-dark-1000-agents.png",
+    "right-panel-shots-dark-1000-context.png",
+    "right-panel-shots-dark-760-chat.png",
+    "right-panel-shots-dark-760-activity.png",
+    "right-panel-shots-dark-760-agents.png",
+    "right-panel-shots-dark-760-context.png"
+  ]
+}

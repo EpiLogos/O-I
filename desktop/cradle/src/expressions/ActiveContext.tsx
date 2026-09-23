@@ -23,7 +23,6 @@ export function ActiveContext({tabs,onActivate}:{tabs?:ActiveContextTab[];onActi
     .map(lane=>({...lane,rows:(tabs??[]).filter(tab=>lane.kinds.includes(tab.kind))}))
     .filter(lane=>lane.rows.length>0);
   return <div className="ta-active-context" data-populated={lanes.length>0||undefined}>
-    {!lanes.length&&<p className="oi-empty">Nothing active yet — open a pane above.</p>}
     {lanes.map(lane=><section key={lane.label} className="oi-side-section" aria-label={lane.label}>
       <h4><Glyph name={lane.icon} size={12}/>{lane.label}</h4>
       <ul className="oi-side-rows">

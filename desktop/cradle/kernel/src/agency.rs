@@ -159,6 +159,12 @@ pub enum EncounterRequest {
     Providers,
     ModelRead { agent_session:String },
     ModelSelect { agent_session:String, provider_model_id:String, #[serde(default,skip_serializing_if="Option::is_none")] provider_reasoning_effort:Option<String>, expected_native_session_id:String },
+    /// Read the permission modes the native session offers and its current
+    /// mode (A2). Absent modes are the owner's honest `mode_observation: null`.
+    ModeRead { agent_session:String },
+    /// Ask the native session for one of the modes it advertised; the owner
+    /// confirms it for the next action. Bound to the read's native session.
+    ModeSelect { agent_session:String, provider_mode_id:String, expected_native_session_id:String },
     Open { space:String, agent_session:String, provider:String },
     Read { agent_session:String, after:u64, limit:usize },
     View {agent_session:String,before:Option<u64>},
@@ -207,7 +213,7 @@ impl EncounterRequest {
         Self::Start|Self::Providers|Self::Health=>Vec::new(),
         Self::Context{agent_session,..}=>agent_session.iter().map(String::as_str).collect(),
         Self::PromptContext{agent_session,..}=>vec![agent_session],
-        Self::Permission{agent_session,..}|Self::View{agent_session,..}|Self::Open{agent_session,..}|Self::Read{agent_session,..}|Self::Draft{agent_session,..}|Self::Prompt{agent_session,..}|Self::Cancel{agent_session,..}|Self::Status{agent_session}|Self::ModelRead{agent_session}|Self::ModelSelect{agent_session,..}|Self::Send{agent_session,..}|Self::Delivery{agent_session,..}|Self::Reconnect{agent_session,..}=>vec![agent_session],
+        Self::Permission{agent_session,..}|Self::View{agent_session,..}|Self::Open{agent_session,..}|Self::Read{agent_session,..}|Self::Draft{agent_session,..}|Self::Prompt{agent_session,..}|Self::Cancel{agent_session,..}|Self::Status{agent_session}|Self::ModelRead{agent_session}|Self::ModelSelect{agent_session,..}|Self::ModeRead{agent_session}|Self::ModeSelect{agent_session,..}|Self::Send{agent_session,..}|Self::Delivery{agent_session,..}|Self::Reconnect{agent_session,..}=>vec![agent_session],
         // The attachment gate covers every named participant of a group: a
         // session outside this Project's SessionSpaces is refused here, before
         // the owner sees the turn.

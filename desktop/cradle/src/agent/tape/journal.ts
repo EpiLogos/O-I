@@ -33,6 +33,8 @@ export interface JournalReading {
  loading:boolean;
  error?:string;
  seenAt:(cursor:number)=>number|undefined;
+ /** Read again now (after an error, or on demand). */
+ retry:()=>void;
 }
 const PAGE=256;
 
@@ -42,7 +44,7 @@ class JournalReader {
  private after=0;private pulling=false;private again=false;
  state:JournalReading;
  constructor(private transport:KernelTransportStatus,private binding:JournalBinding){
-  this.state={events:[],complete:false,loading:false,seenAt:cursor=>this.seen.get(cursor)};
+  this.state={events:[],complete:false,loading:false,seenAt:cursor=>this.seen.get(cursor),retry:()=>void this.pull()};
  }
  subscribe=(listener:()=>void)=>{this.listeners.add(listener);return()=>{this.listeners.delete(listener);};};
  snapshot=()=>this.state;

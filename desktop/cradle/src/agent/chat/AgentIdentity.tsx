@@ -13,23 +13,31 @@ import {Glyph} from "../../workspace/Glyph";
  */
 export interface AgentIdentityReading {name:string;ref?:string;description?:string;image?:string;state:"read"|"none"|"reading"|"unavailable"}
 
+/** One `profile_list` read per window, shared by every presenter: each read
+ *  is an owner process through the one kernel seam, so the panel and the
+ *  chat never queue two of them (or several on remount) ahead of boot. */
+let identityRead:{transport:unknown;promise:Promise<Awaited<ReturnType<ReturnType<typeof useKernel>["apply"]>>>}|undefined;
 export function useAgentIdentity(fallbackName:string,read=true):AgentIdentityReading {
   const kernel=useKernel();
   const [reading,setReading]=useState<AgentIdentityReading>({name:fallbackName,state:read?"reading":"none"});
   const listed=useRef(false);
   useEffect(()=>{
-    if(!read||listed.current)return;
+    // Boot first: the window stays inert until the kernel's first state
+    // settles, so an owner read here must never queue ahead of it.
+    if(!read||listed.current||!kernel.stateSettled)return;
     listed.current=true;
     let live=true;
-    kernel.apply({op:"profile_list"}).then(outcome=>{
+    if(!identityRead||identityRead.transport!==kernel.transport)identityRead={transport:kernel.transport,promise:kernel.apply({op:"profile_list"})};
+    const pending=identityRead.promise;
+    pending.then(outcome=>{
       if(!live)return;
       if(outcome?.result!=="profile_listing"){setReading({name:fallbackName,state:"unavailable"});return;}
       const active=outcome.profiles.find(profile=>profile.profile_ref===outcome.active_profile_ref);
       if(!active){setReading({name:fallbackName,state:"none"});return;}
       setReading({name:active.title||active.profile_ref,ref:active.profile_ref,description:active.description??undefined,image:imageOf(active),state:"read"});
-    }).catch(()=>{if(live)setReading({name:fallbackName,state:"unavailable"});});
+    }).catch(()=>{if(identityRead?.promise===pending)identityRead=undefined;if(live)setReading({name:fallbackName,state:"unavailable"});});
     return()=>{live=false;};
-  },[kernel,fallbackName,read]);
+  },[kernel,kernel.stateSettled,fallbackName,read]);
   return reading;
 }
 

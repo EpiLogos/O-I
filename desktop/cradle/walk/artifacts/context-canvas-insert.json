@@ -1,0 +1,200 @@
+{
+  "schema": "oi.cradle.walk.scenario/v1",
+  "scenario": "context-canvas-insert",
+  "spec_ref": "docs/cradle/10-SIDEBARS.md §4.6 (Context canvas baseline)",
+  "grade": "B",
+  "binding": null,
+  "generated_at": "2026-09-23T12:22:43.613Z",
+  "environment": {
+    "base_url": "http://localhost:4473",
+    "bridge_url": "http://127.0.0.1:4479",
+    "viewport": "1280x820",
+    "browser_engine": "chromium",
+    "bundle": "walk (WALK=1) served by vite preview",
+    "build_input": {
+      "mode": "reused-dist",
+      "bundle_fingerprint": "87e10fb8f7da87d8ebb8897ac3babbab0e40902d27363e8fe8f7d12cc006ae8a"
+    },
+    "node": "v24.16.0",
+    "platform": "darwin",
+    "source": {
+      "repository_root": "/Users/admin/Central/worktrees/ui-build/lane2-right",
+      "repository_head": "bbcebf9264814a9ac83169f9c100c30159c0f608",
+      "tracked_changes": [
+        "desktop/cradle/walk/artifacts/canvas-context-native-resolve-on-prepared-selection.png",
+        "desktop/cradle/walk/artifacts/canvas-context-real-return-after-explicit-delivery.png",
+        "desktop/cradle/walk/artifacts/canvas-context-stale-source-refusal-retains-preparation.png",
+        "desktop/cradle/walk/artifacts/canvas-context.json",
+        "desktop/cradle/walk/artifacts/right-panel-context-expressions-launcher.png",
+        "desktop/cradle/walk/artifacts/right-panel-context-file-inserted.png",
+        "desktop/cradle/walk/artifacts/right-panel-context-launcher.png",
+        "desktop/cradle/walk/artifacts/right-panel-context.json",
+        "desktop/cradle/walk/artifacts/right-panel-failures-p10-reconnecting.png",
+        "desktop/cradle/walk/artifacts/right-panel-failures-p11-unreachable.png",
+        "desktop/cradle/walk/artifacts/right-panel-failures-p12-switched.png",
+        "desktop/cradle/walk/artifacts/right-panel-failures-p8-not-sent.png",
+        "desktop/cradle/walk/artifacts/right-panel-failures.json",
+        "desktop/cradle/walk/artifacts/right-panel-shots-dark-1000-activity.png",
+        "desktop/cradle/walk/artifacts/right-panel-shots-dark-1000-agents.png",
+        "desktop/cradle/walk/artifacts/right-panel-shots-dark-1000-chat.png",
+        "desktop/cradle/walk/artifacts/right-panel-shots-dark-1000-context.png",
+        "desktop/cradle/walk/artifacts/right-panel-shots-dark-1440-activity.png",
+        "desktop/cradle/walk/artifacts/right-panel-shots-dark-1440-agents.png",
+        "desktop/cradle/walk/artifacts/right-panel-shots-dark-1440-chat.png",
+        "desktop/cradle/walk/artifacts/right-panel-shots-dark-1440-context.png",
+        "desktop/cradle/walk/artifacts/right-panel-shots-dark-760-activity.png",
+        "desktop/cradle/walk/artifacts/right-panel-shots-dark-760-agents.png",
+        "desktop/cradle/walk/artifacts/right-panel-shots-dark-760-chat.png",
+        "desktop/cradle/walk/artifacts/right-panel-shots-dark-760-context.png",
+        "desktop/cradle/walk/artifacts/right-panel-shots-light-1000-activity.png",
+        "desktop/cradle/walk/artifacts/right-panel-shots-light-1000-agents.png",
+        "desktop/cradle/walk/artifacts/right-panel-shots-light-1000-chat.png",
+        "desktop/cradle/walk/artifacts/right-panel-shots-light-1000-context.png",
+        "desktop/cradle/walk/artifacts/right-panel-shots-light-1440-activity.png",
+        "desktop/cradle/walk/artifacts/right-panel-shots-light-1440-agents.png",
+        "desktop/cradle/walk/artifacts/right-panel-shots-light-1440-chat.png",
+        "desktop/cradle/walk/artifacts/right-panel-shots-light-1440-context.png",
+        "desktop/cradle/walk/artifacts/right-panel-shots-light-760-activity.png",
+        "desktop/cradle/walk/artifacts/right-panel-shots-light-760-agents.png",
+        "desktop/cradle/walk/artifacts/right-panel-shots-light-760-chat.png",
+        "desktop/cradle/walk/artifacts/right-panel-shots-light-760-context.png",
+        "desktop/cradle/walk/artifacts/right-panel-shots.json"
+      ],
+      "dirty_digest": "4458be214917482e3b07b4c40a52447b5be6b59c5de0c1651c64a03feee51b2e",
+      "engine_provenance_path": "/Users/admin/Central/worktrees/ui-build/lane2-right/packages/oi-design-system/expressions-engine/PROVENANCE.json",
+      "engine_source": "EpiLogos/Point-Cloud-Demo",
+      "engine_revision": "91db8428fc9dfba06cd258ec5a58e7dd9eef5313"
+    }
+  },
+  "passed": true,
+  "error": null,
+  "duration_ms": 14682,
+  "checks": [
+    {
+      "ok": true,
+      "label": "a terminal is inserted into the Context canvas as its own tab",
+      "data": [
+        "Terminal"
+      ]
+    },
+    {
+      "ok": true,
+      "label": "a browser page is inserted into the Context canvas as its own tab",
+      "data": [
+        "Terminal",
+        "Browser"
+      ]
+    },
+    {
+      "ok": true,
+      "label": "a writing document is inserted into the Context canvas and holds the typed text"
+    },
+    {
+      "ok": true,
+      "label": "the canvas holds exactly the three inserted tabs, in insertion order",
+      "data": [
+        "Terminal",
+        "Browser",
+        "Draft"
+      ]
+    },
+    {
+      "ok": true,
+      "label": "Active Context lists each inserted tab in its lane",
+      "data": [
+        "Terminal",
+        "Browser",
+        "Draft"
+      ]
+    },
+    {
+      "ok": true,
+      "label": "the send went through the real encounter prompt route exactly once",
+      "data": [
+        {
+          "op": "encounter",
+          "action": "prompt-context",
+          "result": "encounter_reading",
+          "error": null
+        }
+      ]
+    },
+    {
+      "ok": true,
+      "label": "the owner transcript records the sent message"
+    },
+    {
+      "ok": true,
+      "label": "a real provider reply arrived"
+    },
+    {
+      "ok": true,
+      "label": "after the send the canvas still holds the same three tabs",
+      "data": [
+        "Terminal",
+        "Browser",
+        "Draft"
+      ]
+    },
+    {
+      "ok": true,
+      "label": "after the send Active Context lists the same material",
+      "data": [
+        "Terminal",
+        "Browser",
+        "Draft"
+      ]
+    },
+    {
+      "ok": true,
+      "label": "the inserted writing keeps its exact text after the send",
+      "data": "Canvas baseline writing — kept across the send."
+    }
+  ],
+  "ops": [
+    {
+      "ok": true,
+      "op": "info",
+      "duration_ms": 0.1,
+      "data": {
+        "schema": "oi.cradle.walk/v1",
+        "mounted_at": "2026-09-23T12:22:43.723Z",
+        "transport": {
+          "kind": "bridge",
+          "url": "http://127.0.0.1:4479"
+        },
+        "url": "http://localhost:4473/"
+      }
+    },
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 42,
+      "data": {
+        "file": "context-canvas-insert-inserted.png"
+      }
+    },
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 26,
+      "data": {
+        "file": "context-canvas-insert-sent.png"
+      }
+    },
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 30,
+      "data": {
+        "file": "context-canvas-insert-after-send.png"
+      }
+    }
+  ],
+  "metrics": {},
+  "screenshots": [
+    "context-canvas-insert-inserted.png",
+    "context-canvas-insert-sent.png",
+    "context-canvas-insert-after-send.png"
+  ]
+}

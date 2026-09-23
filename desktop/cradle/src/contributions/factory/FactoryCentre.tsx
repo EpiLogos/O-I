@@ -1,4 +1,5 @@
 import {useEffect, useRef, useState, type ReactNode} from "react";
+import {FACTORY_OBJECT_KINDS} from "./objectKinds";
 import {FactoryDevelopmentSurface} from "./FactoryDevelopmentSurface";
 import type {EncounterRow} from "../../encounter/EncounterList";
 import {Desk} from "./desk/Desk";
@@ -36,7 +37,7 @@ export interface FactoryCentreProps {
 function heldRuns() {
   return Object.values(peekDeskReading()?.runs ?? {}).map(entry => ({runKey: entry.card.key, statePath: entry.card.source.statePath, runRef: entry.run.runRef, title: entry.card.title, project: entry.card.source.project}));
 }
-const FACTORY_KINDS = new Set(["factory-run", "factory-unit", "factory-attempt", "factory-check", "factory-now", "factory-agent", "tape-event"]);
+const FACTORY_KINDS = FACTORY_OBJECT_KINDS;
 
 /** Factory's centre (11-FACTORY §1): full-page, no pane tab bar. Desk is for
  * the work — the run board, then a run's own page replacing it with ← Desk,

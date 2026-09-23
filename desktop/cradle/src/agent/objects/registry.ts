@@ -66,8 +66,15 @@ export const objectKinds=()=>[...kinds.values()];
 export const OPEN_OBJECT_EVENT="oi:open-object";
 export interface OpenObjectDetail {object:ObjectRef;popOut?:boolean}
 export function openObject(object:ObjectRef,options:{popOut?:boolean}={}):void {
- window.dispatchEvent(new CustomEvent<OpenObjectDetail>(OPEN_OBJECT_EVENT,{detail:{object,popOut:options.popOut===true}}));
+ const detail={object,popOut:options.popOut===true};
+ // A narrow panel shows the page in place as a detail layer (P18); it
+ // answers first and the frame is not asked.
+ for(const intercept of [...interceptors].reverse())if(intercept(detail))return;
+ window.dispatchEvent(new CustomEvent<OpenObjectDetail>(OPEN_OBJECT_EVENT,{detail}));
 }
+const interceptors=new Set<(detail:OpenObjectDetail)=>boolean>();
+/** Answer object opens before the frame does (return true to take one). */
+export function interceptObjectOpens(intercept:(detail:OpenObjectDetail)=>boolean):()=>void {interceptors.add(intercept);return()=>{interceptors.delete(intercept);};}
 /** ⌥-click (Alt) is Pop out; a plain click opens in place. */
 export const openIntent=(event:{altKey:boolean})=>({popOut:event.altKey});
 export function isOpenObjectDetail(value:unknown):value is OpenObjectDetail {

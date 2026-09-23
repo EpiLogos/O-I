@@ -106,6 +106,8 @@ import type {
   SurfaceId,
 } from "./surface/types";
 import { createPortal, flushSync } from "react-dom";
+import {OPEN_OBJECT_EVENT,ObjectCentreLayer,encodeObjectRef,isOpenObjectDetail} from "./agent/objects";
+import {factoryCentreOwns} from "./contributions/factory/objectKinds";
 
 function snapshotOf(state: LayoutState): RestorePoint {
   return {
@@ -1118,6 +1120,24 @@ export function CradleFrame({onComposed}:{onComposed?:()=>void}) {
     return()=>{window.removeEventListener("oi:new-tab",create);window.removeEventListener("oi:fresh-choice",choose);};
   },[]);
 
+  // Inspect opens the object (10-SIDEBARS §4.7, D1): in Base a page is a tab
+  // in the focused pane (full-page modes answer in place first, through
+  // ObjectCentreLayer); Pop out gives it its own window with the same identity.
+  useEffect(()=>{
+    const open=(event:Event)=>{
+      const detail=(event as CustomEvent<unknown>).detail;
+      if(!isOpenObjectDetail(detail))return;
+      if(!detail.popOut&&factoryCentreOwns(stateRef.current.mode,detail.object.kind))return;
+      const ref=encodeObjectRef(detail.object);
+      const existing=Object.values(stateRef.current.surfaces).find(binding=>binding.kind==="object"&&binding.ref===ref);
+      const binding:SurfaceBinding=existing??{id:crypto.randomUUID(),kind:"object",ref,title:detail.object.title,project:detail.object.project};
+      if(detail.popOut&&kernel.transport.kind!=="tauri"){setWindowError("Pop out opens the page in its own window in the desktop app.");return;}
+      setState(s=>groupsOf(s.root).some(group=>group.tabs.includes(binding.id))?executeFrameAction(s,"surface.activate",{surfaceId:binding.id}):openBinding({...s,closedStack:s.closedStack.filter(id=>id!==binding.id)},binding));
+      if(detail.popOut)requestAnimationFrame(()=>void detach(binding.id));
+    };
+    window.addEventListener(OPEN_OBJECT_EVENT,open);return()=>window.removeEventListener(OPEN_OBJECT_EVENT,open);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  },[]);
   const openBrowser = async () => {
     const binding={id:crypto.randomUUID(),kind:"browser",title:"Browser",browser:{url:""}};
     const opened=await kernel.apply({op:"surface_open",surface_id:binding.id,kind:"browser",title:binding.title});
@@ -1262,6 +1282,8 @@ export function CradleFrame({onComposed}:{onComposed?:()=>void}) {
       const act = frameActionForKey(e, !!menuRef.current);
       if (!act) return;
       e.preventDefault(); e.stopPropagation();
+      // ⌘T inside the panel's Context canvas inserts a browser page there (10-SIDEBARS §4.6).
+      if (act.ref === "surface.open" && (e.target as HTMLElement | null)?.closest?.(".context-canvas")) { window.dispatchEvent(new CustomEvent("oi:context-insert", {detail: {kind: "browser"}})); return; }
       if (act.ref === "surface.open") { openFresh(); return; }
       if (act.ref === "surface.open-sources") { summonWorld(); return; }
       execute(act.ref, act.arg);
@@ -1595,6 +1617,7 @@ export function CradleFrame({onComposed}:{onComposed?:()=>void}) {
   const taPaneOpens:TaPaneOpens={
     sideTabs:(state.sidePane?.tabs??[]).map(id=>({id,title:state.surfaces[id]?.title??id,kind:state.surfaces[id]?.kind??"blank",active:state.sidePane?.active===id})),
     activateTab:(id)=>{if(state.sidePane?.tabs.includes(id))setState(s=>s.sidePane?{...s,sidePane:{...s.sidePane,active:id}}:s);},
+    insertFile:location=>openFile(location,{into:"side"}),
     sideHost:(()=>{const sideGroup=state.sidePane??{type:"group" as const,id:"side-panel",tabs:[],pinned:[],active:null};return (
       <GroupPane group={sideGroup} pane={sideGroup} state={state} menuOpen={!!menu} execute={sideExecute}
         kernelDirty={ref=>!!ref&&!!kernel.snapshot.buffers[ref]?.dirty} openBindingMenu={openBindingMenu} openFrameMenu={openFrameMenu}
@@ -1619,7 +1642,9 @@ export function CradleFrame({onComposed}:{onComposed?:()=>void}) {
     onOpenSubject={subject=>{if(subject.location){void openFile(subject.location).catch(report);return;}const held=Object.values(stateRef.current.surfaces).find(binding=>!!subject.ref&&binding.ref===subject.ref);if(held)execute("surface.activate",{surfaceId:held.id});}}
     resolveSurface={id=>stateRef.current.surfaces[id]??Object.assign({},...workspace.workspaces.map(w=>w.layout.surfaces))[id]}
     project={workspace.current.project} subject={{ref:subjectRef,kind:subjectBinding?.kind,title:subjectTitle,project:subjectBinding?.project ?? subjectBuffer?.project,location:subjectBinding?.location,dirty:subjectBuffer?.dirty,revision:subjectBuffer?.base_revision}} history={subjectHistory} historyAvailable={subjectHistoryAvailable} accompanying={state.accompanying} onAccompanying={value=>setState(s=>({...s,accompanying:value}))}
-    full={state.rightDepth==="full"} onFull={()=>setState(s=>({...s,rightDepth:s.rightDepth==="full"?"panel":"full"}))}/>;
+    full={state.rightDepth==="full"} onFull={()=>setState(s=>({...s,rightDepth:s.rightDepth==="full"?"panel":"full"}))}
+    onCollapse={()=>setState(s=>({...s,rightDepth:"collapsed"}))}
+    onBringBack={accompanying=>{for(const binding of Object.values(stateRef.current.surfaces))if(binding.kind==="encounter"&&binding.ref===accompanying.ref&&groupsOf(stateRef.current.root).some(group=>group.tabs.includes(binding.id)))execute("surface.close",{surfaceId:binding.id});}}/>;
   // The left frame's host (10-SIDEBARS §3, lane 1): the real routes its
   // head, foot and rows reach. Chats open in the right panel's Chat (D4) —
   // in Factory, the centre Tasks view (§3.5).
@@ -1738,6 +1763,7 @@ export function CradleFrame({onComposed}:{onComposed?:()=>void}) {
           />
         </div>
       ))}
+      <ObjectCentreLayer fullPage={modeSoloStage} yields={object=>factoryCentreOwns(mode,object.kind)}/>
       </DesktopShell>
       {WalkChannel&&<WalkChannel layout={state}/>}
       <ContextTray bindings={{...Object.assign({},...workspace.workspaces.map(w=>w.layout.surfaces)),...state.surfaces}} accompanying={state.accompanying}/>

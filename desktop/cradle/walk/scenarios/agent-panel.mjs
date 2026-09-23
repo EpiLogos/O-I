@@ -1,25 +1,25 @@
 // agent-panel: the one common accompanying panel (src/agent/AgentLayer.tsx),
 // walked against a real resident AIKit encounter and the controlled ACP
 // protocol fixture (D/C evidence, never model proof):
-//   - the planes are the mode's curation (workspace/mode.ts), not a fork;
-//   - Central takes the same core shape as the other modes (owner direction
-//     2026-09-19): Chat, Run, Agents, Context — Run carries the live
-//     trajectory, Context stays the panel's own doc-forward reading;
+//   - the tabs are the mode's curation (10-SIDEBARS §4.2): Base Chat · Activity
+//     · Agents · Context, Factory Run · Agents · Context;
 //   - choosing happens through the unbound composer's own chooser — the
 //     existing start/read pair binds the real session into the panel;
-//   - Context keeps SELECTED (context blocks in the shared draft) apart from
-//     CARRIED (context blocks in a recorded message) and says the participant's
-//     operative context is not disclosed;
-//   - trajectory rows are collapsed by default and expand into their detail;
-//   - Inspect stays an action: it receives the `oi:panel-inspect` hand-off as
-//     a visit and keeps its selection;
+//   - a selection is SELECTED in the composer and CARRIED in the recorded
+//     message, never both;
+//   - Activity is the tape over the owner journal: rows collapsed by default,
+//     expanding into their exact detail, raw only behind Show raw;
+//   - Inspect opens the object's own page (§4.7, ruling D1), and the
+//     `oi:panel-inspect` hand-off lands on a page, deduped by identity;
 //   - two presenters of one session (the panel and a centre tab) share ONE
-//     observer and ONE draft, and a mode change remounts neither.
+//     observer and ONE draft (P14: one composer), and a mode change remounts
+//     neither.
 import {execFileSync} from "node:child_process";
 import {chmodSync, writeFileSync} from "node:fs";
 import {dirname, join} from "node:path";
 import {fileURLToPath} from "node:url";
 import {setup as sourceSetup} from "./editor.mjs";
+import {openPanel,restoreScope} from "../lane2-support.mjs";
 
 const providerScript=join(dirname(fileURLToPath(import.meta.url)),"..","fixtures","activity-provider.py");
 const PROJECT="Editor";
@@ -60,6 +60,10 @@ export default async function run({page,baseUrl,check,shot,channel,provision:p})
     try{const op=request.postDataJSON();if(op?.op==="encounter"&&op.request?.action==="view"&&op.request?.agent_session===REF)views.push(Date.now());}catch{/* not a JSON op */}
   });
   await page.goto(baseUrl);await channel("info");
+  await page.waitForTimeout(600);
+  // The scope is chosen in one place (10-SIDEBARS §3.6); the walk stands in
+  // the Editor scope the way a restart restores it.
+  await restoreScope(page,PROJECT);
   const nav=page.getByRole("complementary",{name:"World navigator"});
   // A project row is a disclosure, not a register choice; the register
   // follows the work actually opened (owner ruling 2026-09-18). So: disclose
@@ -69,13 +73,7 @@ export default async function run({page,baseUrl,check,shot,channel,provision:p})
   await projectRow.waitFor({timeout:30000});
   await projectRow.click();
   await nav.getByRole("button",{name:TITLE,exact:true}).waitFor({timeout:30000});
-  await nav.getByRole("button",{name:TITLE,exact:true}).click();
-  await page.getByRole("button",{name:"Toggle right region",exact:true}).click();
-  const panel=page.getByRole("region",{name:"Accompanying agent"});
-  await panel.waitFor();
-  // The register follows the opened work — the panel head comes to name the
-  // project, and the composer chooser can then list its conversations.
-  await page.waitForFunction(()=>document.querySelector(".agent-head small")?.textContent==="Situated in Editor",null,{timeout:30000});
+  const panel=await openPanel(page);
   await page.waitForTimeout(400);
   // The row names the planes that fit at the panel's width; the rest are one
   // "More" menu away (the plane-nav overflow law). Reading a mode's planes
@@ -83,7 +81,7 @@ export default async function run({page,baseUrl,check,shot,channel,provision:p})
   // the row doesn't name it.
   const planesRow=()=>panel.getByRole("navigation",{name:"Right region planes"});
   const planes=async()=>{
-    const row=(await planesRow().getByRole("button").allInnerTexts()).filter(Boolean);
+    const row=(await planesRow().locator(".panel-tab > span:first-child").allInnerTexts()).map(text=>text.trim()).filter(Boolean);
     const more=planesRow().getByRole("button",{name:/More views \(/});
     if(!await more.isVisible().catch(()=>false))return row;
     await more.click();
@@ -106,8 +104,8 @@ export default async function run({page,baseUrl,check,shot,channel,provision:p})
   // --- planes are curated by the mode contract ------------------------------
   check(await panel.getAttribute("data-mode")==="base","The panel names the workspace mode it is curated for");
   const basePlanes=await planes();
-  check(JSON.stringify(basePlanes)===JSON.stringify(["Chat","Run","Agents","Context"]),"Base offers exactly the mode contract's planes, in its order",basePlanes);
-  check((await panel.locator(".agent-head strong").innerText())==="Agent","The head carries the mode's curated agent name");
+  check(JSON.stringify(basePlanes)===JSON.stringify(["Chat","Activity","Agents","Context"]),"Base offers exactly the mode contract's tabs, in its order",basePlanes);
+  check((await panel.locator(".avatar-menu-open").getAttribute("aria-label")).startsWith("Agent"),"The avatar carries the mode's curated agent name");
   check(await panel.locator('.chat-composer[data-connection="drafting"]').count()===1,"With no conversation bound the composer says so — it drafts, it invents no session");
   // --- choose: the existing start/read pair binds the real session ------------
   // The panel's fresh card carries the project's real attached conversations
@@ -128,10 +126,15 @@ export default async function run({page,baseUrl,check,shot,channel,provision:p})
   const message=panel.getByRole("textbox",{name:"Message",exact:true});
   await message.waitFor({timeout:30000});
   await page.waitForFunction(ref=>document.querySelector(".agent-layer")?.getAttribute("data-agent-session-ref")===ref,REF,{timeout:30000});
+  // The left row opened this conversation in the centre too (today's
+  // routing), so the panel reads "Open in the centre — Bring back" (P14):
+  // bring it back to walk the panel's own conversation.
+  const bringBack=panel.getByRole("button",{name:"Bring back",exact:true});
+  if(await bringBack.isVisible().catch(()=>false)||await bringBack.waitFor({timeout:3000}).then(()=>true).catch(()=>false)){await bringBack.click();await message.waitFor({timeout:15000});}
   check(await panel.locator('.chat-composer[data-connection="disconnected"]').count()===1,"The composer shows the owner's connection state before any provider is attached");
   await panel.locator('[data-state="empty-transcript"]').waitFor({timeout:15000});
   check(true,"An empty conversation is a named state with its next action, not a blank pane");
-  await panel.getByRole("button",{name:"Agent panel ACP",exact:true}).click();
+  await panel.locator('.chat-provider[data-provider="agent-panel-acp"]').click();
   await page.waitForFunction(()=>!document.querySelector('.agent-layer .chat-connect[data-fact="disconnected"]'),null,{timeout:60000});
   await page.waitForFunction(()=>document.querySelector(".agent-layer .chat-composer")?.getAttribute("data-connection")==="connected",null,{timeout:30000});
   check(true,"Connecting through the conversation updates the composer's live state from the owner");
@@ -143,8 +146,9 @@ export default async function run({page,baseUrl,check,shot,channel,provision:p})
   // controlled provider never advertises one, so no model chip may exist.
   const harnessChip=panel.locator('.chat-composer-chips [data-chip="harness"]');
   await harnessChip.waitFor({timeout:15000});
-  check((await harnessChip.innerText()).includes("Agent panel ACP"),
-    "The composer's harness chip names the connected harness by its real label");
+  const harnessName=(await harnessChip.innerText()).trim();
+  check(harnessName.length>0&&!harnessName.includes("Agent panel ACP"),
+    "The composer's harness chip names the harness from its launch, never the connection's label (A1)",harnessName);
   check(await panel.locator('.chat-composer-chips [data-chip="model"]').count()===0,
     "No model chip is invented when the owner advertises no model observation");
 
@@ -157,8 +161,12 @@ export default async function run({page,baseUrl,check,shot,channel,provision:p})
   const presenceChip=()=>page.locator(".shell-agent-presence");
   await page.getByRole("button",{name:"Toggle right region",exact:true}).click();
   await presenceChip().waitFor({timeout:15000});
-  check(await presenceChip().getAttribute("data-presence-state")==="idle",
-    "Collapsed frame: the status chip reads the owner's real resident state (idle) — no invented activity");
+  // "Reading…" / "Updating…" are the owner read and a local save in flight —
+  // real but transient; the resident state is what settles after them.
+  await page.waitForFunction(()=>!["reading","updating"].includes(document.querySelector(".shell-agent-presence")?.getAttribute("data-presence-state")??"reading"),null,{timeout:15000}).catch(()=>{});
+  const restingPresence=await presenceChip().getAttribute("data-presence-state");
+  check(restingPresence==="idle",
+    "Collapsed frame: the status chip reads the owner's real resident state (idle) — no invented activity",{presence:restingPresence});
   await presenceChip().click();
   await panel.waitFor({timeout:15000});
   check(await page.locator(".shell-agent-presence").count()===0 && await panel.isVisible(),
@@ -179,64 +187,47 @@ export default async function run({page,baseUrl,check,shot,channel,provision:p})
   await composerSettled();
   check(p.request("view").draft.text.startsWith(contextBlock),"The selection sits in the AIKit-owned shared draft");
   check(await panel.locator('.chat-composer .chat-attachments .oi-chip').count()===1,"The composer names the attached selection as selected — not sent");
-  await plane("Context");
-  // Scoped to the Context plane: the (concealed, still mounted) composer keeps its own "selected" ledger row.
-  const selected=panel.locator('.agent-section[data-context="selected"]'),carried=panel.locator('.agent-section[data-context="used"]');
-  await selected.locator(".agent-context-item").first().waitFor({timeout:15000});
-  check(await selected.locator('.oi-chip[data-state="selected"]').count()===1,"Context lists the draft's selection under Selected");
-  check(await carried.locator('[data-state="nothing-carried"]').count()===1&&await carried.locator(".agent-context-item").count()===0,"Nothing is shown as carried while it has only been selected");
-  check((await panel.locator('[data-fact="operative-context-absent"]').innerText()).includes("does not infer it"),"The participant's operative context is disclosed as un-inspectable — never inferred");
-  check(await panel.locator('[data-fact="pinned-context-absent"]').count()===1,"Pinned context has no owner operation and no fabricated control");
   await shot("panel-context-selected");
 
-  await plane("Chat");
   await panel.locator(".chat-send").click();
   await page.waitForFunction(()=>document.querySelector(".agent-layer .agent-chat")?.textContent?.includes("FIXTURE_REPLY"),null,{timeout:60000});
-  await plane("Context");
-  await carried.locator('.oi-chip[data-state="used"]').first().waitFor({timeout:15000});
-  check(await selected.locator('[data-state="nothing-selected"]').count()===1,"After sending, the selection is no longer selected");
-  check(await carried.locator(".agent-context-item").count()===1,"The recorded user message is the owner record that the selection was carried");
+  await panel.locator(".chat-turn-user .chat-attachment").first().waitFor({timeout:15000});
+  check(await panel.locator('.chat-composer .chat-attachments .oi-chip').count()===0,"After sending, the selection is no longer selected in the composer");
+  check((await panel.locator(".chat-turn-user .chat-attachment").first().innerText()).includes("Walk source"),"The recorded user message carries the selection — the owner record that it was sent");
   await shot("panel-context-carried");
 
-  // --- Run: the shared run plane — honest run head, live trajectory ----------
-  await plane("Run");
-  const runHead=panel.locator(".oi-side-run-head");
-  await runHead.waitFor({timeout:15000});
-  check(await panel.locator('.oi-side-run-head[data-state="none"]').count()===1,"With no Factory run selected, the Run head says exactly that — no invented run");
-  const tool=panel.locator('.oi-side-embed details.desk-row').filter({hasText:"fixture-tool-1"}).first();
-  await tool.waitFor({timeout:20000});
-  const labels=await panel.locator('.oi-side-embed details.desk-row .desk-row-label').allInnerTexts();
-  check(labels.length>0&&labels.every(label=>label.trim().length>0&&!label.includes("{")),"Trajectory rows read the block's own kind as their label, never raw JSON",labels);
-  check(await panel.locator('.oi-side-embed details.desk-row[open]').count()===0,"Trajectory rows are collapsed by default — never a log wall");
-  await tool.locator("summary").click();
-  check((await tool.locator(".desk-row-detail pre").innerText()).includes("fixture-tool-1"),"A trajectory row expands into the owner block's own detail");
-  await shot("panel-run-trajectory");
+  // --- Activity: the tape over the owner journal -----------------------------
+  await plane("Activity");
+  const toolRow=panel.locator('.tape-row[data-verb="read"]').filter({hasText:"Fixture read"}).first();
+  await toolRow.waitFor({timeout:20000});
+  const verbs=await panel.locator(".tape-row .tape-verb").allInnerTexts();
+  check(verbs.length>0&&verbs.every(verb=>verb.trim().length>0&&!verb.includes("{")),"Tape rows read a verb, never raw JSON",verbs);
+  check(await panel.locator('.tape-row[data-open="true"]').count()===0,"Tape rows are collapsed by default — never a log wall");
+  check(await toolRow.getAttribute("data-status")==="done","The tool call settles from its own update (joined by toolCallId)");
+  await toolRow.locator(".tape-row-line").click();
+  check((await toolRow.locator(".tape-kv").innerText()).includes("Fixture read"),"A tape row expands into the call's exact input");
+  await shot("panel-activity-tape");
 
-  // --- Inspect: the hand-off seam, still an action, never a tab ---------------
-  await tool.getByRole("button",{name:/^Inspect/}).click();
-  await page.waitForFunction(()=>document.querySelector(".agent-layer")?.getAttribute("data-plane")==="Inspect");
-  check((await panel.locator('[data-inspect-kind="trajectory-block"] .agent-inspect-read').innerText()).includes("fixture-tool-1"),"A trajectory row's Inspect hands that block to the Inspect plane, read as its own readable text");
-  await plane("Chat");
-  await page.evaluate(()=>window.dispatchEvent(new CustomEvent("oi:panel-inspect",{detail:{kind:"walk-centre-thing",ref:"walk:centre-thing",title:"Walk hand-off",payload:{handed:"from the centre"},source:"agent-panel walk"}})));
-  await page.waitForFunction(()=>document.querySelector(".agent-layer")?.getAttribute("data-plane")==="Inspect");
-  const handed=panel.locator('[data-inspect-ref="walk:centre-thing"]');
+  // --- Inspect opens the object's own page (D1), never a panel tab ------------
+  await toolRow.getByRole("button",{name:"Open",exact:true}).click();
+  const eventPage=page.locator('.object-page[data-object-kind="tape-event"]');
+  await eventPage.locator(".object-fields dt").first().waitFor({timeout:20000});
+  check((await eventPage.locator(".object-title").innerText()).includes("Fixture read"),"A tape row's Open shows that event's own page");
+  check(await panel.getAttribute("data-plane")==="Activity","The panel keeps its tab: Inspect is never a panel plane");
+  const handOff=()=>page.evaluate(()=>window.dispatchEvent(new CustomEvent("oi:panel-inspect",{detail:{kind:"walk-centre-thing",ref:"walk:centre-thing",title:"Walk hand-off",payload:{handed:"from the centre"},source:"agent-panel walk"}})));
+  await handOff();
+  const handed=page.locator('.object-page[data-object-kind="handed"]');
   await handed.waitFor({timeout:10000});
-  check((await handed.innerText()).includes("from the centre"),"An oi:panel-inspect event from the centre is received and shown as readable rows");
-  check(await panel.locator(".agent-inspect-rows li").count()===2,"Handed things are kept as a list, newest first");
-  await plane("Chat");
-  await page.evaluate(()=>window.dispatchEvent(new CustomEvent("oi:panel-inspect",{detail:{kind:"walk-centre-thing",ref:"walk:centre-thing",title:"Walk hand-off",payload:{handed:"from the centre"},source:"agent-panel walk"}})));
-  await page.waitForFunction(()=>document.querySelector(".agent-layer")?.getAttribute("data-plane")==="Inspect",null,{timeout:10000});
-  // The re-handed detail dedupes by key: the list still holds two entries —
-  // the walk hand-off and the earlier trajectory block — never a third.
-  await page.waitForFunction(()=>document.querySelectorAll(".agent-layer .agent-inspect-rows li").length===2,null,{timeout:10000});
-  check(true,"Leaving Inspect and returning keeps the handed list — deduped by key, selection intact");
+  await handed.locator("details.object-raw summary").click();
+  check((await handed.locator("details.object-raw pre").innerText()).includes("from the centre"),"An oi:panel-inspect hand-off lands on its own page; the material verbatim only behind Show raw");
+  await handOff();await page.waitForTimeout(400);
+  check(await page.locator(".tab-title",{hasText:"Walk hand-off"}).count()===1,"Handing the same thing again focuses its page — deduped by identity");
   await shot("panel-inspect-handoff");
 
   // --- one observer, one draft: the panel and a centre tab ---------------------
-  if(!(await nav.isVisible().catch(()=>false)))await page.keyboard.press("Meta+b");
-  const centreRow=nav.getByRole("button",{name:TITLE,exact:true});
-  await centreRow.waitFor({timeout:15000});
-  await centreRow.click();
+  // The panel's own control promotes the conversation to a centre tab (P14).
+  await plane("Chat");
+  await panel.getByRole("button",{name:"Open the conversation in the centre",exact:true}).click();
   const centre=page.locator('[data-region="centre"]');
   const centreMessage=centre.getByRole("textbox",{name:"Message",exact:true});
   await centreMessage.waitFor({timeout:30000});
@@ -252,8 +243,9 @@ export default async function run({page,baseUrl,check,shot,channel,provision:p})
   await centreMessage.fill("Shared draft one store");
   await composerSettled();
   await plane("Chat");
-  check(await message.inputValue()==="Shared draft one store","Typing in the centre is the panel's draft too — one canonical draft");
-  check(p.request("view").draft.text==="Shared draft one store","…and it is the AIKit-owned draft");
+  check(await panel.locator('[data-line="promoted"]').count()===1&&await page.locator('textarea[aria-label="Message"]').count()===1,"P14: with the conversation in the centre, the panel says so and the window holds one composer");
+  for(let reads=0;reads<20&&p.request("view").draft.text!=="Shared draft one store";reads++)await page.waitForTimeout(250);
+  check(p.request("view").draft.text==="Shared draft one store","The one draft is the AIKit-owned draft");
 
   // --- a mode change remounts neither the observer nor the draft ----------------
   await page.getByRole("radiogroup",{name:"Workspace mode"}).getByRole("radio",{name:"Factory",exact:true}).click();
@@ -263,7 +255,7 @@ export default async function run({page,baseUrl,check,shot,channel,provision:p})
   const factoryPlanes=(await planes()).map(name=>name.trim()).filter(Boolean);
   check(!factoryPlanes.includes("Conversation")&&JSON.stringify(factoryPlanes)===JSON.stringify(["Run","Agents","Context"]),"Factory offers no Conversation plane: Run, Agents and Context are the panel's views",factoryPlanes);
   check(await panel.locator(".chat-composer").count()===0,"The panel never holds a second composer in Factory");
-  check(await panel.locator('[data-fact="conversation-in-centre"]').count()===1,"The panel says where the conversation is");
+  check(!/conversation is in the centre|Situated in/i.test(await panel.innerText()),"No observer sentences in the panel (A3)");
   check(await panel.getAttribute("data-agent-session-ref")===REF,"The session identity rides through the mode change");
   await page.waitForTimeout(1600);
   const after=await census();
@@ -276,16 +268,18 @@ export default async function run({page,baseUrl,check,shot,channel,provision:p})
   // keyboard mode binding (⌘⌥1 = Base) is the way back from anywhere.
   await page.keyboard.press("Meta+Alt+1");
   await page.waitForFunction(()=>document.querySelector(".agent-layer")?.getAttribute("data-mode")==="base",null,{timeout:15000});
-  await plane("Chat");
-  check(await message.inputValue()==="Shared draft one store","Returning to Base brings the panel's conversation back with the draft intact");
   // Back in Base the centre tab is presented again: the same session, the
   // same AIKit-owned draft.
   await centreMessage.waitFor({timeout:15000});
   check(await centreMessage.inputValue()==="Shared draft one store","The centre tab shows the same draft once Base presents the centre again");
+  await plane("Chat");
+  await panel.getByRole("button",{name:"Bring back",exact:true}).click();
+  await message.waitFor({timeout:15000});
+  check(await message.inputValue()==="Shared draft one store","Bring back returns the conversation to the panel with the draft intact");
 
   // --- full presentation: Run and the visits read as an instrument, not a
   // sidebar stretched wide ---------------------------------------------------
-  await plane("Run");
+  await plane("Activity");
   // The panel carries no region chrome — the shell owns the region — so full
   // is reached through the real summon path (the Expression compose event),
   // which visits Composition even though it is not a Central tab.
@@ -295,9 +289,6 @@ export default async function run({page,baseUrl,check,shot,channel,provision:p})
   await page.waitForFunction(()=>{const el=document.querySelector(".agent-layer");return !!el&&el.getBoundingClientRect().width>window.innerWidth*0.6;},null,{timeout:10000});
   check(await page.evaluate(()=>document.documentElement.scrollHeight<=window.innerHeight&&document.documentElement.scrollWidth<=window.innerWidth),"Full presentation: the document does not scroll");
   await shot("panel-full-composition");
-  await page.evaluate(()=>window.dispatchEvent(new CustomEvent("oi:panel-inspect",{detail:{kind:"walk-full-thing",ref:"walk:full-thing",title:"Full hand-off",payload:{handed:"full"},source:"agent-panel walk"}})));
-  await page.waitForFunction(()=>document.querySelector(".agent-layer")?.getAttribute("data-plane")==="Inspect",null,{timeout:10000});
-  await shot("panel-full-inspect");
   await page.keyboard.press("Escape");
   await page.waitForFunction(()=>document.querySelector(".agent-layer")?.getAttribute("data-full")==="false",null,{timeout:10000});
 
@@ -335,15 +326,10 @@ export default async function run({page,baseUrl,check,shot,channel,provision:p})
     // The row's disclosure may persist across reload; only open it when
     // closed — the row is a toggle, never an unconditional open.
     if((await projectRow.getAttribute("aria-expanded"))!=="true")await projectRow.click();
+    // The conversation's left row opens it in the panel (§3.4 row grammar).
     const reloadRow=nav.getByRole("button",{name:TITLE,exact:true});
     await reloadRow.waitFor({timeout:30000});
     await reloadRow.click();
-    await page.waitForFunction(()=>document.querySelector(".agent-head small")?.textContent==="Situated in Editor",null,{timeout:30000});
-    await plane("Chat").catch(()=>{});
-    await openChooser();
-    const row=chooserRows.getByRole("button",{name:TITLE,exact:true});
-    await row.focus();
-    await row.press("Enter");
   }
   await page.waitForFunction(ref=>document.querySelector(".agent-layer")?.getAttribute("data-agent-session-ref")===ref,REF,{timeout:30000});
   // The resting plane can itself be a restored layout preference; land on
@@ -351,9 +337,9 @@ export default async function run({page,baseUrl,check,shot,channel,provision:p})
   await plane("Chat");
   await message.waitFor({timeout:30000});
   await shot("panel-dark-conversation");
-  await plane("Run");
+  await plane("Activity");
   await page.waitForTimeout(300);
-  await shot("panel-dark-run");
+  await shot("panel-dark-activity");
   await plane("Context");
   await shot("panel-dark-context");
 }

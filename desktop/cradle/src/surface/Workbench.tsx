@@ -1,3 +1,4 @@
+import {ObjectSurface} from "../agent/objects/ObjectSurface";
 import {EncounterSurface} from "../encounter/EncounterSurface";
 import {lazy,Suspense,type ReactNode} from "react";
 import type {ExploreSurfaceProps} from "../explore/ExploreSurface";
@@ -505,6 +506,7 @@ function SurfaceBodyImpl({
   if (binding.kind === "blank") return <FreshSurface binding={binding} />;
   if (binding.kind === "browser") return <BrowserSurface binding={binding} />;
   if (binding.kind === "file") return <FileSurface key={binding.id} binding={binding}/>;
+  if (binding.kind === "object") return <ObjectSurface key={binding.id} binding={binding}/>;
   // The Expressions centre IS the application (owner ruling 2026-09-19):
   // the Point-Cloud-Demo workspace hosted as-is, full-screen, its own UI and
   // Library — served through the owner's oi-material:// file seam under
