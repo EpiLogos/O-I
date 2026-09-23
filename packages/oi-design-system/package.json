@@ -16,7 +16,8 @@
     "src",
     "point-cloud",
     "themes/themes.css",
-    "themes/index.mjs"
+    "themes/index.mjs",
+    "scripts/convert.mjs"
   ],
   "exports": {
     "./search.css": "./search.css",
@@ -33,6 +34,7 @@
     "./techne-surface-lifecycle": "./src/techne-surface-lifecycle.mjs",
     "./themes/themes.css": "./themes/themes.css",
     "./themes/index": "./themes/index.mjs",
+    "./themes/convert": "./scripts/convert.mjs",
     "./point-cloud/config": "./point-cloud/config.mjs",
     "./point-cloud/presets": "./point-cloud/presets.mjs",
     "./expressions-engine/*": "./expressions-engine/*",

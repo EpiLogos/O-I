@@ -1,13 +1,14 @@
 /** Settings → Visuals: preferences only. The actual Expressions application
  * is entered through the workspace mode route; there is no second workbench,
  * preview stage, scene store, or renderer under Settings. */
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type ChangeEvent } from "react";
 import { useVisuals } from "../../visuals/ParticleExpression";
 import type { StagePresentation } from "../../stage/ExpressionStage";
 import { visuals, type SavedState, type ThemeChoice } from "../../visuals/store";
 import { PRESETS } from "@epilogos/oi-design-system/point-cloud/presets";
 import { CONTROL_SCHEMA, readPath, type PointCloudConfig, type PointCloudPatch } from "@epilogos/oi-design-system/point-cloud/config";
 import { THEMES } from "@epilogos/oi-design-system/themes/index";
+import { listCustomThemes, importTheme, removeCustomTheme } from "../../visuals/customThemes";
 import "./visuals.css";
 
 const QUICK_CHARS = ["✦", "✧", "★", "∞", "Ω", "∑", "∫", "⌘", "⌥", "§", "λ", "☯"];
@@ -16,8 +17,47 @@ const THEME_CHOICES: ReadonlyArray<{value: ThemeChoice; label: string; hint: str
   {value: "dark", label: "Dark", hint: "Use the dark appearance"},
   {value: "system", label: "System", hint: "Follow this device's appearance"},
 ];
+
+/** One picker card: a bundled corpus theme or an imported file. */
+interface LibraryEntry {
+  id: string;
+  name: string;
+  appearance: "light" | "dark";
+  preview: { ground: string; ink: string; accent: string; strip: string[] };
+  origin: string;
+  license: string;
+  custom: boolean;
+}
+
 export function VisualsView() {
   const {snapshot} = useVisuals();
+  const [customs, setCustoms] = useState(listCustomThemes);
+  const [importFailure, setImportFailure] = useState<string | null>(null);
+  const fileInput = useRef<HTMLInputElement>(null);
+  const library: LibraryEntry[] = [
+    ...THEMES.map((theme) => ({id: theme.id, name: theme.name, appearance: theme.appearance, preview: theme.preview, origin: theme.source.name, license: theme.source.license, custom: false})),
+    ...customs.map((theme) => ({id: theme.id, name: theme.name, appearance: theme.appearance, preview: theme.preview, origin: "Imported", license: "not recorded", custom: true})),
+  ];
+  const activeImport = customs.find((theme) => theme.id === snapshot.themeId) ?? null;
+  const importFile = async (event: ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    event.target.value = "";
+    if (!file) return;
+    try {
+      setImportFailure(null);
+      const theme = importTheme(await file.text(), file.name);
+      setCustoms(listCustomThemes());
+      visuals.setNamedTheme(theme);
+    } catch (cause) {
+      setImportFailure(cause instanceof Error ? cause.message : String(cause));
+    }
+  };
+  const removeActiveImport = () => {
+    if (!activeImport) return;
+    removeCustomTheme(activeImport.id);
+    setCustoms(listCustomThemes());
+    if (snapshot.themeId === activeImport.id) visuals.setTheme("system");
+  };
   return <div className="settings-view visuals-preferences" aria-label="Appearance preferences">
     <section aria-labelledby="appearance-heading">
       <h3 id="appearance-heading">Appearance</h3>
@@ -27,10 +67,10 @@ export function VisualsView() {
       </div>
       <p className="settings-note">Or pick a theme from the library: each recolours the shell, editors and terminal.</p>
       <div className="visuals-themes" role="group" aria-label="Theme library">
-        {THEMES.map(theme=>{
+        {library.map(theme=>{
           const active = snapshot.themeId === theme.id;
           return <button key={theme.id} type="button" className={active?"visuals-theme is-active":"visuals-theme"} aria-pressed={active}
-            title={`${theme.name} (${theme.appearance}) — ${theme.source.name} under ${theme.source.license}`}
+            title={`${theme.name} (${theme.appearance}) — ${theme.custom ? "imported file, license not recorded" : `${theme.origin} under ${theme.license}`}`}
             onClick={()=>visuals.setNamedTheme(theme)}>
             <span className="visuals-theme-swatch" style={{background: theme.preview.ground}}>
               <span className="visuals-theme-word" style={{color: theme.preview.ink}}>A</span>
@@ -39,10 +79,17 @@ export function VisualsView() {
               </span>
             </span>
             <span className="visuals-theme-name">{theme.name}</span>
-            <span className="visuals-theme-origin">{theme.source.name}</span>
+            <span className="visuals-theme-origin">{theme.origin}</span>
           </button>;
         })}
       </div>
+      <div className="visuals-import-row">
+        <input ref={fileInput} type="file" accept=".json,.jsonc,application/json" aria-label="Import a theme file" className="visuals-file-input" onChange={importFile}/>
+        <button type="button" className="oi-action" onClick={()=>fileInput.current?.click()}>Import a theme file…</button>
+        <p className="settings-note">Any VS Code color theme (.json) — converted into the app's roles and kept on this device.</p>
+      </div>
+      {importFailure && <p className="oi-refusal" role="alert">{importFailure}</p>}
+      {activeImport && <button type="button" className="settings-mini" onClick={removeActiveImport}>Remove “{activeImport.name}”</button>}
     </section>
     <section aria-labelledby="opening-heading">
       <h3 id="opening-heading">Opening</h3>
