@@ -137,21 +137,45 @@ fn dispatch_product_command(
 fn resolve_product_executable(
     product: &oi_cli::product_command::ProductCommandDescriptor,
 ) -> Result<std::path::PathBuf, String> {
-    if let Some(explicit) = explicit_product_override(product) {
-        return Ok(explicit);
+    resolve_product_executables(std::slice::from_ref(product))?
+        .remove(&product.id)
+        .ok_or_else(|| format!("No native executable resolved for {}", product.id))
+}
+
+/// One command snapshots executable authority once. Configuration visits all
+/// products; verifying the same complete suite once per product would repeat
+/// source-package hashing six times before every read or staged write.
+fn resolve_product_executables(
+    products: &[oi_cli::product_command::ProductCommandDescriptor],
+) -> Result<std::collections::BTreeMap<String, PathBuf>, String> {
+    let mut programs = std::collections::BTreeMap::new();
+    let mut unresolved = Vec::new();
+    for product in products {
+        if let Some(explicit) = explicit_product_override(product) {
+            programs.insert(product.id.clone(), explicit);
+        } else {
+            unresolved.push(product);
+        }
     }
-    if let Some(active) = active_suite_executable_s0(&product.id)? {
-        return Ok(active);
+    if unresolved.is_empty() { return Ok(programs); }
+    if let Some(receipt) = load_active_suite_receipt()? {
+        s0_check_active_suite_receipt(&receipt)?;
+        for product in unresolved {
+            let installed = receipt.products.get(&product.id)
+                .ok_or_else(|| format!("active suite {} has no product {}", receipt.receipt_ref, product.id))?;
+            let executable = installed.executable.as_deref().ok_or("active product has no executable")?;
+            programs.insert(product.id.clone(), PathBuf::from(executable));
+        }
+    } else {
+        let composition = load_composition()?;
+        for product in unresolved {
+            let registered = composition.modules.get(&product.id)
+                .and_then(|registration| registration.native_executable.as_deref())
+                .unwrap_or(product.executable.as_str());
+            programs.insert(product.id.clone(), PathBuf::from(registered));
+        }
     }
-    // Compatibility only while no S0 active receipt exists. Once a receipt
-    // exists, verify the whole immutable artifact, not merely its launcher.
-    let composition = load_composition()?;
-    let registered = composition
-        .modules
-        .get(&product.id)
-        .and_then(|registration| registration.native_executable.as_deref())
-        .unwrap_or(product.executable.as_str());
-    Ok(PathBuf::from(registered))
+    Ok(programs)
 }
 
 /// Run a product's native command as a child of this process, with the

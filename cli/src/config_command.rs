@@ -123,7 +123,11 @@ fn bind_config_surfaces() -> Result<BoundSurfaces, String> {
         );
         return Ok(surface.into_surfaces());
     }
-    let surface = Rc::new(oi_cli::kernel_surface::KernelSurface::open()?);
+    let catalogue = oi_cli::product_command::product_command_catalogue()?;
+    let mut programs = resolve_product_executables(&catalogue.products)?;
+    let surface = Rc::new(oi_cli::kernel_surface::KernelSurface::open_with_product_resolver(|product| {
+        programs.remove(&product.id).ok_or_else(|| format!("No native executable resolved for {}", product.id))
+    })?);
     let config: Rc<dyn ConfigSurface> = surface.clone();
     let profiles: Rc<dyn ProfileSurface> = surface;
     Ok((config, profiles))

@@ -47,18 +47,22 @@ pub const PRODUCT_POSITIONS: [&str; 7] = [
 /// names. Only a product with no resolvable registration falls back to the
 /// deployed catalogue executable.
 pub fn product_position_specs() -> Result<Vec<OwnerSpec>, String> {
-    let catalogue = crate::product_command::product_command_catalogue()?;
     let home = crate::configuration::kernel::oi_home().ok();
+    product_position_specs_with(|product| Ok(home.as_deref()
+        .and_then(|home| registered_program(home, &product.id))
+        .unwrap_or_else(|| PathBuf::from(product.executable.clone()))))
+}
+
+/// The CLI supplies its actual product dispatcher resolver so discovery,
+/// native reads, planning and writes honor exactly the same executable
+/// override and verified-suite authority as `oi <product>`.
+pub fn product_position_specs_with(
+    mut resolve: impl FnMut(&crate::product_command::ProductCommandDescriptor) -> Result<PathBuf, String>,
+) -> Result<Vec<OwnerSpec>, String> {
+    let catalogue = crate::product_command::product_command_catalogue()?;
     let mut specs = Vec::with_capacity(PRODUCT_POSITIONS.len());
     for product in &catalogue.products {
-        let program = home
-            .as_deref()
-            .and_then(|home| registered_program(home, &product.id))
-            .unwrap_or_else(|| PathBuf::from(product.executable.clone()));
-        specs.push(OwnerSpec {
-            owner_ref: product.id.clone(),
-            program,
-        });
+        specs.push(OwnerSpec { owner_ref: product.id.clone(), program: resolve(product)? });
     }
     let oi = std::env::current_exe()
         .map_err(|error| format!("cannot locate the running `oi` executable: {error}"))?;
