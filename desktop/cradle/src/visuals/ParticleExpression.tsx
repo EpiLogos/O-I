@@ -36,17 +36,21 @@ function resolveTheme(theme: VisualsSnapshot["theme"]): "light" | "dark" {
   return window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
 }
 
-function applyTheme(theme: VisualsSnapshot["theme"]) {
+function applyTheme(theme: VisualsSnapshot["theme"], themeId: string | null) {
   const resolved = resolveTheme(theme);
   if (resolved === "dark") document.body.dataset.theme = "dark";
   else delete document.body.dataset.theme;
+  // A named theme rides data-oi-theme: the house ground stays beneath it,
+  // the theme's variable block (themes.css) sits above.
+  if (themeId) document.body.dataset.oiTheme = themeId;
+  else delete document.body.dataset.oiTheme;
 }
 
 // The appearance is applied synchronously at module load as well as by the
 // pre-paint script in index.html: both resolve the same persisted choice,
 // so a window (primary or detached) whose HTML lacks the inline script
 // still lands on the right ground before the first React commit.
-if (typeof document !== "undefined") applyTheme(visuals.get().theme);
+if (typeof document !== "undefined") { const initial = visuals.get(); applyTheme(initial.theme, initial.themeId); }
 
 export function VisualsProvider({ children }: { children: ReactNode }) {
   const kernel = useKernel();
@@ -56,13 +60,13 @@ export function VisualsProvider({ children }: { children: ReactNode }) {
 
   // Theme: resolve the choice onto the body and follow the system when asked.
   useEffect(() => {
-    applyTheme(snapshot.theme);
+    applyTheme(snapshot.theme, snapshot.themeId);
     if (snapshot.theme !== "system") return;
     const media = window.matchMedia("(prefers-color-scheme: dark)");
-    const follow = () => applyTheme("system");
+    const follow = () => applyTheme("system", snapshot.themeId);
     media.addEventListener("change", follow);
     return () => media.removeEventListener("change", follow);
-  }, [snapshot.theme]);
+  }, [snapshot.theme, snapshot.themeId]);
 
   // Native broadcast seam: accepted writes reach the other windows through
   // the existing Tauri event channel (small configs, never particles).

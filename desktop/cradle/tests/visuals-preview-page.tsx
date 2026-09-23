@@ -7,6 +7,7 @@ import {visuals} from '../src/visuals/store';
 import {ExpressionStageProvider, useExpressionStage} from '../src/stage/ExpressionStage';
 import {VisualsView} from '../src/workspace/settings/VisualsView';
 import '@epilogos/oi-design-system/tokens.css';
+import '@epilogos/oi-design-system/themes/themes.css';
 
 function Settings() {
   const stage = useExpressionStage();

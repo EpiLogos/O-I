@@ -21,6 +21,9 @@
         } catch (e) {}
         var dark = theme === "dark" || (theme === "system" && matchMedia("(prefers-color-scheme: dark)").matches);
         if (dark) document.body.setAttribute("data-theme", "dark");
+        // A selected theme-library entry rides data-oi-theme; an unknown id
+        // matches no block in themes.css and harmlessly keeps the house ground.
+        if (saved && typeof saved.themeId === "string" && saved.themeId) document.body.setAttribute("data-oi-theme", saved.themeId);
         if (window.__TAURI_INTERNALS__ || navigator.userAgent.includes("Tauri")) document.documentElement.classList.add("tauri");
         var completed = false;
         try { completed = !!sessionStorage.getItem("oi-cradle.welcome.v1"); } catch (e) {}

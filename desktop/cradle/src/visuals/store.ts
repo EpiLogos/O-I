@@ -38,6 +38,11 @@ export interface VisualsSnapshot {
   enabled: boolean;
   welcomeEnabled: boolean;
   theme: ThemeChoice;
+  /** The selected theme-library entry, or null for the house appearances.
+   * When set, `theme` carries the entry's own appearance, so every existing
+   * consumer (native window sync, terminal, prepaint) keeps working; the
+   * entry's values ride `data-oi-theme` over the house ground. */
+  themeId: string | null;
   config: PointCloudConfig;
   savedStates: SavedState[];
 }
@@ -58,6 +63,7 @@ function defaults(): VisualsSnapshot {
     enabled: true,
     welcomeEnabled: true,
     theme: "system",
+    themeId: null,
     config: cloneConfig(mark.config),
     savedStates: [mark],
   };
@@ -73,6 +79,7 @@ function sanitize(raw: unknown): VisualsSnapshot {
   if (typeof record.enabled === "boolean") next.enabled = record.enabled;
   if (typeof record.welcomeEnabled === "boolean") next.welcomeEnabled = record.welcomeEnabled;
   if (record.theme === "light" || record.theme === "dark" || record.theme === "system") next.theme = record.theme;
+  if (typeof record.themeId === "string" && record.themeId) next.themeId = record.themeId;
   if (record.config && typeof record.config === "object") {
     try { next.config = hydrateConfig(record.config as PointCloudPatch); } catch { next.config = base.config; }
   }
@@ -192,7 +199,15 @@ class VisualsStore {
   }
 
   setTheme(theme: ThemeChoice) {
-    this.bump((snapshot) => ({ ...snapshot, theme }));
+    // The house appearances clear any named theme selection.
+    this.bump((snapshot) => ({ ...snapshot, theme, themeId: null }));
+  }
+
+  /** Select a theme-library entry: the entry's appearance becomes the
+   * resolved theme (dark ground, native material, prepaint) and its values
+   * ride data-oi-theme. */
+  setNamedTheme(entry: { id: string; appearance: "light" | "dark" }) {
+    this.bump((snapshot) => ({ ...snapshot, theme: entry.appearance, themeId: entry.id }));
   }
 
   resetConfig() {
