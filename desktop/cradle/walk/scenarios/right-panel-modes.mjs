@@ -8,12 +8,12 @@ import {openPanel, planeButton, recordCalls, restoreScope} from "../lane2-suppor
  *  amendments A1 and A2; P5): the real Hermes harness (hermes-acp, which
  *  advertises default / accept_edits / dont_ask) connected through the real
  *  kernel and the lane's AIKit build, in a disposable ground and isolated
- *  AIKIT_HOME. Its label is a deliberate campaign-style note — the chip must
+ *  AIKIT_HOME (OI_WALK_HERMES_BIN may name another Hermes ACP launcher). Its label is a deliberate campaign-style note — the chip must
  *  never show it. P5 uses one real Hermes turn that asks before editing. */
 const HERMES_LABEL = "Hermes ACP (modes walk campaign note)";
 export async function setup(options) {
   const provision = await canvasSetup(options);
-  provision.native("encounter-configure", "--provider-json", JSON.stringify({protocol: "acp", id: "modes-walk-hermes", label: HERMES_LABEL, argv: ["/Users/admin/.local/bin/hermes-acp"]}));
+  provision.native("encounter-configure", "--provider-json", JSON.stringify({protocol: "acp", id: "modes-walk-hermes", label: HERMES_LABEL, argv: [process.env.OI_WALK_HERMES_BIN ?? "/Users/admin/.local/bin/hermes-acp"]}));
   return provision;
 }
 

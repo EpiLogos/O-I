@@ -14,7 +14,9 @@ function App(){
  const [status,setStatus]=useState<any>({state:'Resident',native_session_id:'native-browser',provider:{id:'controlled',label:'Controlled test harness'}});
  const controller=useMemo(()=>new NativeModelController('agent-session/browser',async request=>{calls.push(request);if(request.action==='model-select'){model=request.provider_model_id;if(loseAck)throw Error('wire closed after write');return {...reading(),selected:true,inference_observed:false};}return reading();},setState),[]);
  const actions=useMemo(()=>({refresh:()=>controller.refresh(),select:(model:string,effort?:string)=>controller.select(model,effort)}),[controller]);
- React.useEffect(()=>controller.observe(status),[controller,status]);
+ // Observed before any presenter's own effects run — as the session store
+ // observes in its poll before a chip reads (encounter/session.ts).
+ React.useLayoutEffect(()=>controller.observe(status),[controller,status]);
  (window as any).controlled={calls,loseAck:()=>{loseAck=true;},readonly:async()=>{readonly=true;await controller.refresh();},disconnect:()=>setStatus({...status,state:'FutureUnknownState'}),modelState:()=>controller.snapshot()};
  return <ChatComposer reading={{permissions:[]} as any} draft={draft} onDraft={setDraft} pending={false} busy={false} editable promptAllowed={false} cancelAllowed={false} permissionAllowed={false} onSend={()=>{throw Error('No live model exists in this test');}} onCancel={()=>{}} onPermission={()=>{}} tools={{pickFiles:async()=>{}}} draftFailed={false} onRecover={()=>{}} paged={false} onLatest={()=>{}} connection={{status,providers:[{id:'controlled',label:'Controlled test harness'}],onProvider:()=>{},onReconnect:()=>{},openAllowed:false,model:state,modelActions:actions,onRefreshProviders:()=>calls.push({read:'providers'})}}/>;
 }

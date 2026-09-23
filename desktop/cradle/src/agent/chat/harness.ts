@@ -21,11 +21,12 @@ const KNOWN:[RegExp,string][]=[
  [/^claude(-code)?(-acp)?$|^claude-agent-acp$|claude-code-acp/i,"Claude Code"],
  [/codex/i,"Codex"],
  [/^gemini(-cli)?$/i,"Gemini CLI"],
- [/^hermes(-acp)?$/i,"Hermes"],
+ // A launcher named after its harness (hermes-acp, hermes-glm) is that harness.
+ [/^hermes([-_].+)?$/i,"Hermes"],
  [/^opencode$/i,"OpenCode"],
  [/^kimi(-cli)?$/i,"Kimi"],
  [/^goose$/i,"Goose"],
- [/^(pi|pi-acp|pi-coding-agent)$/i,"Pi"],
+ [/^pi([-_].+)?$/i,"Pi"],
 ];
 const strip=(name:string)=>name.replace(/\.(m?js|cjs|ts|py)$/i,"").replace(/^index$/,"");
 const RUNTIMES=/^(node|nodejs|bun|deno|python3?(\.\d+)?|uv|uvx|npx)$/i;

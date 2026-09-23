@@ -31,3 +31,8 @@ test("the session's own binding supplies the facts; the picker groups by harness
   assert.deepEqual(groups.map(g => [g.name, g.connections.map(c => c.id)]), [["Pi", ["a", "c"]], ["Hermes", ["b"]]]);
   assert.equal(H.harnessVariant({id: "c", label: "C", sandboxed: true}), "sandboxed");
 });
+
+test("a launcher named after its harness is that harness (walk wrappers, variants)", () => {
+  assert.equal(H.harnessChip({id: "h", label: "x", protocol: "acp", command: "hermes-glm"}), "Hermes");
+  assert.equal(H.harnessChip({id: "p", label: "x", protocol: "pi-rpc", command: "pi-glm"}), "Pi");
+});

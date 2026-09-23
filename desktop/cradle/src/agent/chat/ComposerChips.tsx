@@ -96,13 +96,15 @@ export function ModelChip({model,actions,disabled}:{model:NativeModelState;actio
  const writable=model.phase==="ready"&&model.reading?.model_controls?.model_selection===true&&!disabled;
  const pinned=model.reading?.pinned_model_id;
  return <div className="chat-chip-host" ref={host} data-chip-host="model">
-  <Chip chip="model" label={current?.name??observation.current_model_id} title={`Model — ${current?.name??observation.current_model_id}`} open={open} onToggle={()=>setOpen(value=>!value)}>
+  <Chip chip="model" label={current?.name??observation.current_model_id} title={`Model — ${current?.name??observation.current_model_id}${model.phase==="unknown"?" (change unconfirmed)":""}`} open={open} onToggle={()=>setOpen(value=>!value)} marked={model.phase==="unknown"}>
    {observation.available_models.map(option=><button key={option.modelId} type="button" role="menuitemradio" aria-checked={option.modelId===observation.current_model_id} className="oi-menu-item chat-model-item" disabled={!writable||(!!pinned&&option.modelId!==pinned)} title={option.description} onClick={()=>{setOpen(false);if(option.modelId!==observation.current_model_id)void actions.select(option.modelId);}}>
     <span>{option.name}</span>{option.modelId===observation.current_model_id&&<Glyph name="check" size={11}/>}
    </button>)}
    {!observation.available_models.length&&<p className="oi-note chat-chip-note">The harness lists no other models.</p>}
    {model.reading&&!model.reading.model_controls?.model_selection&&<p className="oi-note chat-chip-note">{model.reading.model_controls?.reason??"This harness does not let its model be changed here."}</p>}
    {model.error&&<p className="oi-refusal chat-chip-note" role="alert">{model.error}</p>}
+   {(model.phase==="unknown"||model.phase==="unavailable")&&<button type="button" role="menuitem" className="oi-menu-item" onClick={()=>void actions.refresh()}>Read the session again</button>}
+   {model.confirmed&&!model.error&&<p className="oi-note chat-chip-note" role="status">Set for this session. No model turn has run on it yet.</p>}
   </Chip>
  </div>;
 }
