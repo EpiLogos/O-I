@@ -168,7 +168,7 @@
 .settings-pending .settings-button { border-radius: var(--oi-radius-pill); }
 /* The sheet layer lives on the document body (rows.tsx Scrim), above both
    sidebars at every width; it carries the page's own type and ink. */
-.settings-layer { color: var(--oi-ink); font-size: var(--oi-shell-type-body); line-height: 1.45; }
+.settings-layer { font-family: var(--oi-font-sans); color: var(--oi-ink); font-size: var(--oi-shell-type-body); line-height: 1.45; }
 .settings-scrim[hidden] { display: none; }
 .settings-scrim { position: fixed; inset: 0; z-index: var(--oi-z-popover); display: grid; place-items: center; padding: 16px; background: color-mix(in srgb, var(--oi-ink) 18%, transparent); }
 .settings-sheet { box-sizing: border-box; width: min(560px, 100%); max-height: calc(100% - 32px); overflow: auto; display: grid; gap: 10px; padding: 18px; border: 1px solid var(--oi-hairline); border-radius: var(--oi-radius-lg); background: var(--oi-surface); box-shadow: var(--oi-shadow-overlay); outline: none; }
