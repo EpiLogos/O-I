@@ -1523,6 +1523,28 @@ mod update_flow_tests {
         let manifest = suite_manifest().unwrap();
         let selection = resolve_update_selection(&["ctrl".into(), "oi".into(), "kit".into()], &manifest).unwrap();
         assert_eq!(selection, vec!["central".to_owned(), "oi".to_owned(), "ai-kit".to_owned()]);
+        // Surface ids — the names `oi update --check` prints and the managed
+        // receipt keys by — must select the same targets (`oi update --apply
+        // ai-kit` was rejecting them).
+        let by_ids = resolve_update_selection(
+            &[
+                "central".into(),
+                "ai-kit".into(),
+                "software-factory".into(),
+                "quaternal-logic".into(),
+            ],
+            &manifest,
+        )
+        .unwrap();
+        assert_eq!(
+            by_ids,
+            vec![
+                "central".to_owned(),
+                "ai-kit".to_owned(),
+                "software-factory".to_owned(),
+                "quaternal-logic".to_owned(),
+            ]
+        );
         assert!(resolve_update_selection(&["nonsense".into()], &manifest).is_err());
         // Default selection is oi plus the six, with oi first so a stale
         // dispatcher is refreshed before the products that route through it.
