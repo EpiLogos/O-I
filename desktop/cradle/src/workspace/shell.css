@@ -7,7 +7,7 @@
  */
 
 .desktop-shell { height: 100%; display: flex; flex-direction: column; font: var(--oi-shell-type-ui) var(--oi-font-sans); background: linear-gradient(to right, var(--oi-sidebar-ground) 0 var(--desktop-left-width), var(--oi-shell-ground) var(--desktop-left-width) calc(100% - var(--desktop-right-width, 0px)), var(--oi-agent-ground) calc(100% - var(--desktop-right-width, 0px)) 100%); color: var(--oi-accent-ink); border-top-left-radius: var(--oi-shell-radius); }
-.shell-topbar { flex: none; display: flex; align-items: center; gap: var(--oi-space-2); height: 40px; padding: 0 var(--oi-space-2); border-bottom: var(--oi-shell-edge) solid var(--oi-hairline-soft); background: var(--oi-shell-ground); user-select: none; }
+.shell-topbar { flex: none; display: flex; align-items: center; gap: var(--oi-space-2); height: var(--oi-shell-tabbar); padding: 0 var(--oi-space-2); border-bottom: var(--oi-shell-edge) solid var(--oi-hairline-soft); background: var(--oi-shell-ground); user-select: none; }
 .desktop-shell[data-window-lights="true"] .shell-topbar { padding-left: 84px; }
 .shell-topbar button { display: inline-flex; align-items: center; justify-content: center; width: 30px; height: 30px; flex: none; border-radius: var(--oi-radius-sm); color: var(--oi-muted); }
 .shell-topbar button:hover, .shell-topbar button[aria-expanded="true"] { color: var(--oi-accent-ink); background: var(--oi-wash); }
@@ -73,7 +73,7 @@
    same 3px breath from the window edge the centre canvas keeps on its own
    edges — the space either side of the panel reads balanced, its right side
    subtly shorter instead of running flush into the corner. */
-.desktop-side.right > .desktop-side-content { padding-right: 3px; box-sizing: border-box; }
+.desktop-side.right > .desktop-side-content { padding-right: var(--oi-shell-gutter); box-sizing: border-box; }
 .desktop-side.left > .desktop-side-content { width: var(--desktop-left-target); min-width: var(--desktop-left-target); }
 .desktop-side.right.depth-panel > .desktop-side-content { width: var(--desktop-right-width); min-width: var(--desktop-right-width); }
 .desktop-side.right.depth-full > .desktop-side-content { width: 100%; }
@@ -157,7 +157,7 @@
 .desktop-regions[data-right-full="true"] > .left { z-index: calc(var(--oi-z-drawer) + 1); width: var(--desktop-left-width) !important; }
 .desktop-side.left { max-width: calc(100% - 440px); }
 
-.desktop-side .world-navigator { position: relative; inset: auto; width: 100%; flex: 1; min-height: 0; border: 0; z-index: auto; padding: 0 10px 0; }
+.desktop-side .world-navigator { position: relative; inset: auto; width: 100%; flex: 1; min-height: 0; border: 0; z-index: auto; }
 /* Finding 6 / item (h): an owner refusal (e.g. wiki-open failing with
  * "SemanticWiki provider is absent…") already lands in the DOM as a
  * `role="alert"` — it was just unstyled plain text that read like any other
@@ -440,11 +440,11 @@
 .desktop-shell{--shell-window-reserve:42px}.desktop-shell[data-window-lights="true"]{--shell-window-reserve:116px}
 /* Owner cleanup 2026-09-17: the canvas card sits on the footer edge — the
    2px bottom margins left a white hairline under the canvas at rest. */
-.desktop-centre{margin-left:3px;margin-right:3px;margin-bottom:0}
-.desktop-centre .surface-host{padding-left:3px;padding-right:3px;padding-bottom:0}
+.desktop-centre{margin:0}
+.desktop-centre .surface-host{padding-left:0;padding-right:0;padding-bottom:0}
 .central-heading{gap:12px;align-items:center}.central-heading>svg{align-self:center}.central-heading>div{min-width:0}
 .shell-topbar{padding-right:3px}.shell-agent-toggle{margin-left:5px}
-@media(min-width:760px) and (pointer:fine){.desktop-shell .desktop-centre:has(.tab-strip){margin-top:-24px}.desktop-shell .desktop-centre:has(.mode-stage){margin-top:-24px;position:relative;z-index:1}}
+@media(min-width:760px) and (pointer:fine){.desktop-shell .desktop-centre:has(.tab-strip){margin-top:0}.desktop-shell .desktop-centre:has(.mode-stage){margin-top:0;position:relative;z-index:1}}
 /* The window controls and region toggles occupy actual open corners, not an
    inset tab cell. Both corners are cut — left follows the window-control
    reserve (traffic lights when native, the navigator toggle otherwise),
@@ -479,7 +479,7 @@
 .shell-topbar .shell-region-toggle{transform:translateY(2px)}
 .desktop-regions[data-right-full="true"] .desktop-centre{visibility:hidden;pointer-events:none}
 @media(min-width:760px) and (pointer:fine){
- .desktop-shell .desktop-side.right.depth-full{top:-24px;padding-top:24px;box-sizing:border-box}
+ .desktop-shell .desktop-side.right.depth-full{top:0;padding-top:var(--oi-shell-tabbar);box-sizing:border-box}
 }
 .desktop-shell:has(.desktop-regions[data-right-full="true"]) .shell-topbar{z-index:calc(var(--oi-z-drawer) + 2)}
 
@@ -769,3 +769,13 @@ html.tauri .desktop-shell { background-color: transparent; }
 .mode-stage { transition: border-color var(--oi-motion-ui) var(--oi-motion-ease-out); }
 .desktop-shell:has(.desktop-side.left.depth-collapsed, .desktop-side.left.depth-strip) .mode-stage { border-left-color: transparent; }
 .desktop-shell:has(.desktop-side.right.depth-collapsed, .desktop-side.right.depth-strip) .mode-stage { border-right-color: transparent; }
+
+/* Full-height canvas: window controls and status reveal over it, never subtract a row. */
+.desktop-shell{position:relative}
+.desktop-shell>.shell-topbar{position:absolute;inset:0 0 auto;z-index:20;background:transparent;border:0;pointer-events:none}
+.shell-topbar button,.shell-topbar select{pointer-events:auto}
+.desktop-shell>.desktop-regions{height:100%}
+.desktop-shell .canvas-host{margin:0;min-width:0}
+.desktop-shell>.workspace-footer-edge{position:absolute;inset:auto 0 0;z-index:20}
+.desktop-side.left>.desktop-side-content{padding-top:var(--oi-shell-tabbar);box-sizing:border-box}
+.desktop-side.right .panel-top{padding-right:calc(var(--oi-shell-tabbar) + var(--oi-space-2))}

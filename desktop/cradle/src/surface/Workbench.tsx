@@ -681,6 +681,5 @@ export function ArrangementActions({state, execute, openFrameMenu, nativeWindows
         <button aria-label="Tile all surfaces" title="Tile all surfaces" disabled={groupsOf(state.root).flatMap(g => g.tabs).length < 2} onClick={() => props.execute("surface.tile")}><Glyph name="grid"/></button>
         {props.nativeWindows && <button aria-label="Detach active surface" disabled={!detachable} title="Detach into native window" onClick={()=>props.execute("surface.detach")}><Glyph name="detach"/></button>}
         <button aria-label={state.maximizedGroupId ? "Restore panes" : "Maximize active pane"} title="Maximize / restore (⌘⌥Enter)" disabled={!active} onClick={() => props.execute("surface.maximize")}><Glyph name={state.maximizedGroupId ? "restore" : "expand"}/></button>
-        <button aria-label="Window actions" title="Window actions" onClick={e => { const r = e.currentTarget.getBoundingClientRect(); props.openFrameMenu(r.left, r.bottom); }}><Glyph name="more"/></button>
   </>;
 }

@@ -26,7 +26,6 @@ const SettingsNavigator = lazy(() => import("./settings/SettingsNavigator").then
  * into Agents, claims/results into Run and Context (inspect stays an action). */
 export interface PanelAccompanying { ref: string; project: string; space: string }
 const FactoryRunTab = lazy(() => import("../contributions/factory/sidebar/FactoryRunTab").then(module => ({default: module.FactoryRunTab})));
-const FactoryAgentsTab = lazy(() => import("../contributions/factory/sidebar/FactoryAgentsTab").then(module => ({default: module.FactoryAgentsTab})));
 const FactoryContextSlice = lazy(() => import("../contributions/factory/sidebar/FactoryContextSlice").then(module => ({default: module.FactoryContextSlice})));
 
 /** The left body for a mode whose curation does not use the World navigator. */
@@ -53,7 +52,7 @@ export function ModeLeftBody({mode, project, onOpenExpressions, onOpenTechne, on
 /** The shared Context mount: the panel's own pane canvas plus the
  * persistent Active Context lanes — the same component in Factory,
  * Expressions and Technè. */
-export function ContextPaneMount({opens,dataPlane="factory-context",project,session}:{opens?:TaPaneOpens;dataPlane?:string;project?:string;session?:string}) {
+export function ContextPaneMount({opens,dataPlane="context",project,session}:{opens?:TaPaneOpens;dataPlane?:string;project?:string;session?:string}) {
   return <ContextCanvas opens={opens} dataPlane={dataPlane} project={project} session={session}/>;
 }
 
@@ -68,16 +67,15 @@ export function modeExtraPlanes(mode: WorkspaceMode, subject: PanelSubject, acco
   if (mode === "base" || mode === "epi-logos") return [context("context")];
   if (mode === "factory") return [
     {id: "run", label: "Run", body: <Suspense fallback={null}><FactoryRunTab accompanying={accompanying}/></Suspense>},
-    {id: "agents", label: "Agents", body: <Suspense fallback={null}><FactoryAgentsTab/></Suspense>},
     // Owner direction 2026-09-20: the Context plane IS the canvas — the same
     // plane body the Ta-Onta modes mount, nothing mounted beneath it. The
     // former Needs-you/Sources/Produced stack under the canvas is unmounted.
     // §5: Factory's Context is the preserved canvas; with nothing inserted its
     // empty state also offers Factory's slice (Intent, run material, NOW).
-    {id: "factory-context", label: "Context", body: <Suspense fallback={null}><ContextPaneMount opens={opens} dataPlane="factory-context" project={project ?? accompanying?.project} session={accompanying?.ref}/>{!opens?.sideTabs?.length && <FactoryContextSlice/>}</Suspense>},
+    {id: "context", label: "Context", body: <Suspense fallback={null}><ContextPaneMount opens={opens} dataPlane="context" project={project ?? accompanying?.project} session={accompanying?.ref}/>{!opens?.sideTabs?.length && <FactoryContextSlice/>}</Suspense>},
   ];
   // Expressions (Anima) and Technè (Aletheia): the same one panel; their
   // Context is the canvas under its Ta-Onta id.
-  if (mode === "expressions" || mode === "techne") return [context("ta-onta-context")];
+  if (mode === "expressions" || mode === "techne") return [context("context")];
   return [];
 }

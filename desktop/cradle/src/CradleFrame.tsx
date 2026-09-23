@@ -1,3 +1,5 @@
+import {ActiveEncounterContext} from "./workspace/activeEncounter";
+import {CanvasStage} from "./workspace/primitives/CanvasHost";
 import {ExpressionLayout} from "./shared/Expression";
 import {mintInstance,mintBlankInstance,parseInstance,instanceFileName} from "./flow/instance";
 import {userFlowsArea} from "./flow/instances";
@@ -1489,7 +1491,7 @@ export function CradleFrame({onComposed}:{onComposed?:()=>void}) {
   const factoryCentre=
     <AgentChat session={factoryChatSession} accompanying={state.accompanying??undefined}
       project={workspace.current.project??state.accompanying?.project}
-      agentName="Factory agent"
+
       situating={workspace.current.project?`Situated in ${workspace.current.project}`:"Situated in Central"}
       choosing={factoryChoosing}
       variant="centre"
@@ -1678,13 +1680,13 @@ export function CradleFrame({onComposed}:{onComposed?:()=>void}) {
   const planeOf=(pattern:RegExp)=>MODE_CURATION[mode].panel.planes.find(plane=>pattern.test(plane));
   const leftHost:LeftHost={
     onSearch:()=>setSearchOpen(true),
-    onNewChat:()=>{if(mode==="factory"){setState(s=>({...s,accompanying:undefined}));publishCentreView("tasks");return;}const chat=planeOf(/^chat$/i);setState(s=>({...s,accompanying:undefined,rightDepth:s.rightDepth==="full"?"full":"panel",panelPlanes:chat?{...s.panelPlanes,[mode]:chat}:s.panelPlanes}));},
+    onNewChat:()=>{if(curation.panel.conversationInCentre){setState(s=>({...s,accompanying:undefined}));publishCentreView("tasks");return;}const chat=planeOf(/^chat$/i);setState(s=>({...s,accompanying:undefined,rightDepth:s.rightDepth==="full"?"full":"panel",panelPlanes:chat?{...s.panelPlanes,[mode]:chat}:s.panelPlanes}));},
     onNewFlow:()=>void startWriting(),
     onNewExpression:()=>void createExpression(kernel.transport).catch(report),
     onNewAgent:()=>window.dispatchEvent(new CustomEvent("oi:open-agency",{detail:{project:workspace.current.project}})),
-    onOpenChat:row=>{const chat=planeOf(/^chat$/i);if(mode==="factory"||!chat)return factoryChoose(row);setState(s=>({...s,accompanying:{ref:row.ref,project:row.project,space:row.space},rightDepth:s.rightDepth==="full"?"full":"panel",panelPlanes:{...s.panelPlanes,[mode]:chat}}));},
+    onOpenChat:row=>{const chat=planeOf(/^chat$/i);if(curation.panel.conversationInCentre||!chat)return factoryChoose(row);setState(s=>({...s,accompanying:{ref:row.ref,project:row.project,space:row.space},rightDepth:s.rightDepth==="full"?"full":"panel",panelPlanes:{...s.panelPlanes,[mode]:chat}}));},
     openConversationRef:state.accompanying?.ref,
-    onOpenChatInCentre:row=>mode==="factory"?factoryChoose(row):openEncounter(row),
+    onOpenChatInCentre:row=>curation.panel.conversationInCentre?factoryChoose(row):openEncounter(row),
     onOpenFile:location=>openFile(location),
     onOpenBeside:async location=>{await openFile(location,{into:"side"});const context=planeOf(/context/i);setState(s=>({...s,rightDepth:s.rightDepth==="full"?"full":"panel",panelPlanes:context?{...s.panelPlanes,[mode]:context}:s.panelPlanes}));},
     onPopOut:kernel.transport.kind==="tauri"?async location=>{await openFile(location);requestAnimationFrame(()=>{const held=Object.values(stateRef.current.surfaces).find(binding=>binding.location?.ref===location.ref||binding.ref===location.ref);if(held)void detach(held.id);});}:undefined,
@@ -1697,7 +1699,7 @@ export function CradleFrame({onComposed}:{onComposed?:()=>void}) {
   return (
     <>
       <ExpressionLayout layout={state}/>
-      <DesktopShell left={leftHost} onLibrary={()=>setLibrary(value=>value==="open"?"held":"open")} world={workspace.current.context?.world} onLeaveWorld={leaveEpiWorld} returnTo={workspace.current.context?.trail?.slice(-1)[0]} onReturn={()=>window.dispatchEvent(new Event("oi:context-return"))} mode={mode} onMode={enterMode} windowLights={windowLights} onTabPresentation={presentation=>execute(`frame.tabs:${presentation}`)} onToggleNavigator={()=>navigatorRef.current ? dismissWorld() : summonWorld()} onCloseNavigator={dismissWorld} native={kernel.transport.kind==="tauri"} namingRequest={namingRequest} onNamingHandled={()=>setNamingRequest(null)}
+      <ActiveEncounterContext.Provider value={state.accompanying}><DesktopShell left={leftHost} onLibrary={()=>setLibrary(value=>value==="open"?"held":"open")} world={workspace.current.context?.world} onLeaveWorld={leaveEpiWorld} returnTo={workspace.current.context?.trail?.slice(-1)[0]} onReturn={()=>window.dispatchEvent(new Event("oi:context-return"))} mode={mode} onMode={enterMode} windowLights={windowLights} onTabPresentation={presentation=>execute(`frame.tabs:${presentation}`)} onToggleNavigator={()=>navigatorRef.current ? dismissWorld() : summonWorld()} onCloseNavigator={dismissWorld} native={kernel.transport.kind==="tauri"} namingRequest={namingRequest} onNamingHandled={()=>setNamingRequest(null)}
         arrangementActions={<ArrangementActions state={state} execute={execute} openFrameMenu={openFrameMenu} nativeWindows={kernel.transport.kind==="tauri"}/>}
         subject={{ref:subjectRef,title:subjectTitle,context:<><h2>{subjectTitle}</h2>{subjectBinding?.flow&&<p data-subject-flow-ref={subjectBinding.flow.flowRef}>Working through <code>{subjectBinding.flow.flowRef}</code></p>}{subjectBuffer ? <p>{subjectBuffer.project} · {subjectBuffer.dirty ? "Unsaved changes" : "Saved"}</p> : subjectBinding?.project ? <p>{subjectBinding.project}</p> : <p>Select a surface to inspect its context.</p>}</>,history:subjectHistory}}
         right={agentLayer}
@@ -1717,10 +1719,10 @@ export function CradleFrame({onComposed}:{onComposed?:()=>void}) {
       {stageCentres.map(({mode: stageMode, binding}) => {
         const presented = stageMode === mode && !!binding;
         return (
-          <div key={`mode-stage-${stageMode}`} className="mode-stage" data-mode={stageMode} data-mode-stage={stageMode} data-window-corner="true" data-window-corner-left="true" hidden={!presented || undefined}>
+          <CanvasStage key={`mode-stage-${stageMode}`} data-mode={stageMode} data-mode-stage={stageMode} data-window-corner="true" data-window-corner-left="true" hidden={!presented || undefined}>
             {binding && <StageCentreMark binding={binding} presented={presented}/>}
             {binding && <ModeCentreBody key={binding.id} binding={binding} subject={workspace.current.context?.subject} factoryCentre={factoryCentre} factoryTasks={factoryCentreProps} onHostedState={engineCallbackFor(binding.id)}/>}
-          </div>
+          </CanvasStage>
         );
       })}
       {/* The centre region renders as ONE stable sibling list — the rest
@@ -1791,7 +1793,7 @@ export function CradleFrame({onComposed}:{onComposed?:()=>void}) {
         </div>
       ))}
       <ObjectCentreLayer fullPage={modeSoloStage} yields={object=>factoryCentreOwns(mode,object.kind)}/>
-      </DesktopShell>
+      </DesktopShell></ActiveEncounterContext.Provider>
       {WalkChannel&&<WalkChannel layout={state}/>}
       <ContextTray bindings={{...Object.assign({},...workspace.workspaces.map(w=>w.layout.surfaces)),...state.surfaces}} accompanying={state.accompanying}/>
       {/* T2 summon seam: answers "oi:techne-summon" (library / verso / search)
