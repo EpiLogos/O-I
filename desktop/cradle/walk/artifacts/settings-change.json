@@ -4,29 +4,37 @@
   "spec_ref": "docs/cradle/12-SETTINGS.md §2 §4 S3 S4 S5 S6 S7 S8 S9",
   "grade": "B",
   "binding": null,
-  "generated_at": "2026-09-23T07:05:59.622Z",
+  "generated_at": "2026-09-23T07:14:39.608Z",
   "environment": {
-    "base_url": "http://localhost:4573",
-    "bridge_url": "http://127.0.0.1:4579",
+    "base_url": "http://localhost:4173",
+    "bridge_url": "http://127.0.0.1:4179",
     "viewport": "1280x820",
     "browser_engine": "chromium",
     "bundle": "walk (WALK=1) served by vite preview",
     "build_input": {
-      "mode": "fresh-build",
-      "bundle_fingerprint": "66cff9f1750ef7bb6e44c3127102ef22bb1ada9c1dd3609bbac6e32ef1a07c95"
+      "mode": "reused-dist",
+      "bundle_fingerprint": "a7a09418ce4322d8d78b92d5fbef3eadb3d2e486d66085f9c9578daa397bea66"
     },
     "node": "v24.16.0",
     "platform": "darwin",
     "source": {
       "repository_root": "/Users/admin/Central/worktrees/ui-build/lane4-settings",
-      "repository_head": "40a1cf81d706230cdeeeb270a018621c7298d4b1",
+      "repository_head": "f84fa70a5e2b462b9078c81cb69a429497e3037b",
       "tracked_changes": [
-        "desktop/cradle/walk/artifacts/configuration-l6.png",
-        "desktop/cradle/walk/artifacts/configuration.json",
-        "desktop/cradle/walk/artifacts/system-settings-failure.png",
-        "desktop/cradle/walk/artifacts/system-settings.json"
+        "desktop/cradle/src/workspace/settings/sections/CredentialsSection.tsx",
+        "desktop/cradle/walk/artifacts/settings-shell-credentials-dark-1000.png",
+        "desktop/cradle/walk/artifacts/settings-shell-credentials-dark-1440.png",
+        "desktop/cradle/walk/artifacts/settings-shell-credentials-dark-760.png",
+        "desktop/cradle/walk/artifacts/settings-shell-credentials-light-1000.png",
+        "desktop/cradle/walk/artifacts/settings-shell-credentials-light-1440.png",
+        "desktop/cradle/walk/artifacts/settings-shell-credentials-light-760.png",
+        "desktop/cradle/walk/artifacts/settings-shell-product-aikit-dark-1000.png",
+        "desktop/cradle/walk/artifacts/settings-shell-product-aikit-dark-1440.png",
+        "desktop/cradle/walk/artifacts/settings-shell-product-aikit-light-1000.png",
+        "desktop/cradle/walk/artifacts/settings-shell-product-aikit-light-1440.png",
+        "desktop/cradle/walk/artifacts/settings-shell.json"
       ],
-      "dirty_digest": "6de419009be92cd9f1456fb3a24bd4a2cd60ef4aa6108742ed6d30534d5998ca",
+      "dirty_digest": "026b384ed40f26c61c8bf487822c27f4a5e3d22cddd96613ea492ff579549926",
       "engine_provenance_path": "/Users/admin/Central/worktrees/ui-build/lane4-settings/packages/oi-design-system/expressions-engine/PROVENANCE.json",
       "engine_source": "EpiLogos/Point-Cloud-Demo",
       "engine_revision": "91db8428fc9dfba06cd258ec5a58e7dd9eef5313"
@@ -34,7 +42,7 @@
   },
   "passed": true,
   "error": null,
-  "duration_ms": 224830,
+  "duration_ms": 246905,
   "checks": [
     {
       "ok": true,
@@ -152,7 +160,7 @@
       "ok": true,
       "label": "S6 the receipt line reads \"Applied 2 changes · read back HH:MM\"",
       "data": {
-        "receipt": "Applied 2 changes · read back 08:07 AM"
+        "receipt": "Applied 2 changes · read back 08:15 AM"
       }
     },
     {
@@ -180,7 +188,7 @@
       "ok": true,
       "label": "S7 a refusal is not reported as success",
       "data": {
-        "refusedReceipt": "Applied 0 of 1 changes · read back 08:08 AM"
+        "refusedReceipt": "Applied 0 of 1 changes · read back 08:16 AM"
       }
     },
     {
@@ -201,7 +209,7 @@
       "ok": true,
       "label": "S7 a partial readback is not reported as success",
       "data": {
-        "partialReceipt": "Applied 0 of 1 changes · read back 08:09 AM"
+        "partialReceipt": "Applied 0 of 1 changes · read back 08:18 AM"
       }
     },
     {
@@ -237,7 +245,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 36,
+      "duration_ms": 42,
       "data": {
         "file": "settings-change-staged-light-1440.png"
       }
@@ -245,7 +253,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 23,
+      "duration_ms": 25,
       "data": {
         "file": "settings-change-staged-light-1000.png"
       }
@@ -253,7 +261,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 30,
+      "duration_ms": 31,
       "data": {
         "file": "settings-change-staged-light-760.png"
       }
@@ -261,7 +269,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 35,
+      "duration_ms": 34,
       "data": {
         "file": "settings-change-staged-dark-1440.png"
       }
@@ -269,7 +277,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 28,
+      "duration_ms": 29,
       "data": {
         "file": "settings-change-staged-dark-1000.png"
       }
@@ -277,7 +285,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 30,
+      "duration_ms": 34,
       "data": {
         "file": "settings-change-staged-dark-760.png"
       }
@@ -285,7 +293,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 40,
+      "duration_ms": 41,
       "data": {
         "file": "settings-change-review-light-1440.png"
       }
@@ -293,7 +301,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 26,
+      "duration_ms": 28,
       "data": {
         "file": "settings-change-review-light-1000.png"
       }
@@ -301,7 +309,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 32,
+      "duration_ms": 39,
       "data": {
         "file": "settings-change-review-light-760.png"
       }
@@ -309,7 +317,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 39,
+      "duration_ms": 32,
       "data": {
         "file": "settings-change-review-dark-1440.png"
       }
@@ -317,7 +325,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 26,
+      "duration_ms": 30,
       "data": {
         "file": "settings-change-review-dark-1000.png"
       }
@@ -325,7 +333,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 33,
+      "duration_ms": 65,
       "data": {
         "file": "settings-change-review-dark-760.png"
       }
@@ -333,7 +341,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 43,
+      "duration_ms": 40,
       "data": {
         "file": "settings-change-applied.png"
       }
@@ -349,7 +357,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 20,
+      "duration_ms": 34,
       "data": {
         "file": "settings-change-partial.png"
       }
@@ -357,7 +365,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 19,
+      "duration_ms": 46,
       "data": {
         "file": "settings-change-stale.png"
       }
@@ -365,7 +373,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 28,
+      "duration_ms": 21,
       "data": {
         "file": "settings-change-no-changes.png"
       }

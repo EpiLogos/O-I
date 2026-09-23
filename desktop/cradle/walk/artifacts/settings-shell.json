@@ -4,30 +4,26 @@
   "spec_ref": "docs/cradle/12-SETTINGS.md §1 §3 §4 S1 S3 S10 S11 S14 S15",
   "grade": "B",
   "binding": null,
-  "generated_at": "2026-09-23T07:03:58.949Z",
+  "generated_at": "2026-09-23T07:13:03.320Z",
   "environment": {
-    "base_url": "http://localhost:4573",
-    "bridge_url": "http://127.0.0.1:4579",
+    "base_url": "http://localhost:4173",
+    "bridge_url": "http://127.0.0.1:4179",
     "viewport": "1280x820",
     "browser_engine": "chromium",
     "bundle": "walk (WALK=1) served by vite preview",
     "build_input": {
       "mode": "fresh-build",
-      "bundle_fingerprint": "0e685e943dee8034f09936cc613564e9cd7b51c738ce1ee637de1d5ac38d9643"
+      "bundle_fingerprint": "a7a09418ce4322d8d78b92d5fbef3eadb3d2e486d66085f9c9578daa397bea66"
     },
     "node": "v24.16.0",
     "platform": "darwin",
     "source": {
       "repository_root": "/Users/admin/Central/worktrees/ui-build/lane4-settings",
-      "repository_head": "cd4be86e66524161d9be0d4a8d471740d44e8fd3",
+      "repository_head": "f84fa70a5e2b462b9078c81cb69a429497e3037b",
       "tracked_changes": [
-        "desktop/cradle/walk/artifacts/bootstrap.json",
-        "desktop/cradle/walk/artifacts/configuration-l6.png",
-        "desktop/cradle/walk/artifacts/configuration.json",
-        "desktop/cradle/walk/artifacts/system-settings-failure.png",
-        "desktop/cradle/walk/artifacts/system-settings.json"
+        "desktop/cradle/src/workspace/settings/sections/CredentialsSection.tsx"
       ],
-      "dirty_digest": "981a0f40951fbac1ac5680d90cc19ce9057853d3253ffb1ae0815ecc08f1478c",
+      "dirty_digest": "27463dcd33fc359496da78c587114e4b4808fcfacbaf5fc9cd4d2da42e42dc01",
       "engine_provenance_path": "/Users/admin/Central/worktrees/ui-build/lane4-settings/packages/oi-design-system/expressions-engine/PROVENANCE.json",
       "engine_source": "EpiLogos/Point-Cloud-Demo",
       "engine_revision": "91db8428fc9dfba06cd258ec5a58e7dd9eef5313"
@@ -35,7 +31,7 @@
   },
   "passed": true,
   "error": null,
-  "duration_ms": 80820,
+  "duration_ms": 90482,
   "checks": [
     {
       "ok": true,
@@ -312,7 +308,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 23,
+      "duration_ms": 30,
       "data": {
         "file": "settings-shell-status-light-1440.png"
       }
@@ -320,7 +316,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 28,
+      "duration_ms": 24,
       "data": {
         "file": "settings-shell-status-light-1000.png"
       }
@@ -336,7 +332,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 33,
+      "duration_ms": 34,
       "data": {
         "file": "settings-shell-status-dark-1440.png"
       }
@@ -344,7 +340,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 30,
+      "duration_ms": 26,
       "data": {
         "file": "settings-shell-status-dark-1000.png"
       }
@@ -352,7 +348,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 33,
+      "duration_ms": 35,
       "data": {
         "file": "settings-shell-status-dark-760.png"
       }
@@ -360,7 +356,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 42,
+      "duration_ms": 51,
       "data": {
         "file": "settings-shell-harnesses-light-1440.png"
       }
@@ -368,7 +364,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 37,
+      "duration_ms": 39,
       "data": {
         "file": "settings-shell-harnesses-light-1000.png"
       }
@@ -376,7 +372,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 31,
+      "duration_ms": 30,
       "data": {
         "file": "settings-shell-harnesses-light-760.png"
       }
@@ -384,7 +380,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 52,
+      "duration_ms": 54,
       "data": {
         "file": "settings-shell-harnesses-dark-1440.png"
       }
@@ -392,7 +388,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 47,
+      "duration_ms": 55,
       "data": {
         "file": "settings-shell-harnesses-dark-1000.png"
       }
@@ -400,7 +396,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 37,
+      "duration_ms": 38,
       "data": {
         "file": "settings-shell-harnesses-dark-760.png"
       }
@@ -408,7 +404,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 61,
+      "duration_ms": 67,
       "data": {
         "file": "settings-shell-model-picker.png"
       }
@@ -416,7 +412,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 29,
+      "duration_ms": 33,
       "data": {
         "file": "settings-shell-models-light-1440.png"
       }
@@ -424,7 +420,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 28,
+      "duration_ms": 23,
       "data": {
         "file": "settings-shell-models-light-1000.png"
       }
@@ -432,7 +428,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 29,
+      "duration_ms": 33,
       "data": {
         "file": "settings-shell-models-light-760.png"
       }
@@ -440,7 +436,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 34,
+      "duration_ms": 31,
       "data": {
         "file": "settings-shell-models-dark-1440.png"
       }
@@ -448,7 +444,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 31,
+      "duration_ms": 37,
       "data": {
         "file": "settings-shell-models-dark-1000.png"
       }
@@ -456,7 +452,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 32,
+      "duration_ms": 41,
       "data": {
         "file": "settings-shell-models-dark-760.png"
       }
@@ -464,7 +460,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 27,
+      "duration_ms": 41,
       "data": {
         "file": "settings-shell-permissions-light-1440.png"
       }
@@ -472,7 +468,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 27,
+      "duration_ms": 23,
       "data": {
         "file": "settings-shell-permissions-light-1000.png"
       }
@@ -488,7 +484,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 36,
+      "duration_ms": 40,
       "data": {
         "file": "settings-shell-permissions-dark-1440.png"
       }
@@ -496,7 +492,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 27,
+      "duration_ms": 33,
       "data": {
         "file": "settings-shell-permissions-dark-1000.png"
       }
@@ -504,7 +500,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 33,
+      "duration_ms": 65,
       "data": {
         "file": "settings-shell-permissions-dark-760.png"
       }
@@ -512,7 +508,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 26,
+      "duration_ms": 25,
       "data": {
         "file": "settings-shell-skills-light-1440.png"
       }
@@ -520,7 +516,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 28,
+      "duration_ms": 24,
       "data": {
         "file": "settings-shell-skills-light-1000.png"
       }
@@ -528,7 +524,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 25,
+      "duration_ms": 30,
       "data": {
         "file": "settings-shell-skills-light-760.png"
       }
@@ -536,7 +532,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 40,
+      "duration_ms": 39,
       "data": {
         "file": "settings-shell-skills-dark-1440.png"
       }
@@ -544,7 +540,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 28,
+      "duration_ms": 46,
       "data": {
         "file": "settings-shell-skills-dark-1000.png"
       }
@@ -552,7 +548,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 29,
+      "duration_ms": 45,
       "data": {
         "file": "settings-shell-skills-dark-760.png"
       }
@@ -568,7 +564,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 24,
+      "duration_ms": 26,
       "data": {
         "file": "settings-shell-credentials-light-1000.png"
       }
@@ -576,7 +572,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 32,
+      "duration_ms": 30,
       "data": {
         "file": "settings-shell-credentials-light-760.png"
       }
@@ -584,7 +580,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 34,
+      "duration_ms": 41,
       "data": {
         "file": "settings-shell-credentials-dark-1440.png"
       }
@@ -592,7 +588,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 62,
+      "duration_ms": 34,
       "data": {
         "file": "settings-shell-credentials-dark-1000.png"
       }
@@ -600,7 +596,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 50,
+      "duration_ms": 36,
       "data": {
         "file": "settings-shell-credentials-dark-760.png"
       }
@@ -608,7 +604,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 27,
+      "duration_ms": 29,
       "data": {
         "file": "settings-shell-profiles-light-1440.png"
       }
@@ -616,7 +612,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 26,
+      "duration_ms": 29,
       "data": {
         "file": "settings-shell-profiles-light-1000.png"
       }
@@ -624,7 +620,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 29,
+      "duration_ms": 21,
       "data": {
         "file": "settings-shell-profiles-light-760.png"
       }
@@ -632,7 +628,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 45,
+      "duration_ms": 34,
       "data": {
         "file": "settings-shell-profiles-dark-1440.png"
       }
@@ -640,7 +636,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 23,
+      "duration_ms": 47,
       "data": {
         "file": "settings-shell-profiles-dark-1000.png"
       }
@@ -648,7 +644,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 31,
+      "duration_ms": 53,
       "data": {
         "file": "settings-shell-profiles-dark-760.png"
       }
@@ -656,7 +652,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 32,
+      "duration_ms": 57,
       "data": {
         "file": "settings-shell-appearance-light-1440.png"
       }
@@ -664,7 +660,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 24,
+      "duration_ms": 27,
       "data": {
         "file": "settings-shell-appearance-light-1000.png"
       }
@@ -672,7 +668,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 31,
+      "duration_ms": 30,
       "data": {
         "file": "settings-shell-appearance-light-760.png"
       }
@@ -680,7 +676,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 45,
+      "duration_ms": 37,
       "data": {
         "file": "settings-shell-appearance-dark-1440.png"
       }
@@ -688,7 +684,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 24,
+      "duration_ms": 46,
       "data": {
         "file": "settings-shell-appearance-dark-1000.png"
       }
@@ -696,7 +692,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 30,
+      "duration_ms": 61,
       "data": {
         "file": "settings-shell-appearance-dark-760.png"
       }
@@ -704,7 +700,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 36,
+      "duration_ms": 45,
       "data": {
         "file": "settings-shell-product-aikit-light-1440.png"
       }
@@ -712,7 +708,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 37,
+      "duration_ms": 40,
       "data": {
         "file": "settings-shell-product-aikit-light-1000.png"
       }
@@ -720,7 +716,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 27,
+      "duration_ms": 41,
       "data": {
         "file": "settings-shell-product-aikit-light-760.png"
       }
@@ -728,7 +724,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 46,
+      "duration_ms": 47,
       "data": {
         "file": "settings-shell-product-aikit-dark-1440.png"
       }
@@ -736,7 +732,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 42,
+      "duration_ms": 34,
       "data": {
         "file": "settings-shell-product-aikit-dark-1000.png"
       }

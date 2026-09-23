@@ -14,30 +14,66 @@
     ],
     "claims_grade": "D"
   },
-  "generated_at": "2026-09-23T02:29:30.010Z",
+  "generated_at": "2026-09-23T07:26:49.657Z",
   "environment": {
-    "base_url": "http://localhost:4573",
-    "bridge_url": "http://127.0.0.1:4579",
+    "base_url": "http://localhost:4173",
+    "bridge_url": "http://127.0.0.1:4179",
     "viewport": "1280x820",
     "browser_engine": "chromium",
     "bundle": "walk (WALK=1) served by vite preview",
     "build_input": {
-      "mode": "fresh-build",
-      "bundle_fingerprint": "924c96d5858ad186a5a8e3c5116d22827dab787213bc99a24062ef10f2ef7625"
+      "mode": "reused-dist",
+      "bundle_fingerprint": "a7a09418ce4322d8d78b92d5fbef3eadb3d2e486d66085f9c9578daa397bea66"
     },
     "node": "v24.16.0",
     "platform": "darwin",
     "source": {
       "repository_root": "/Users/admin/Central/worktrees/ui-build/lane4-settings",
-      "repository_head": "1aadd958a7411e8ea85cdbe068b86a83c9949070",
+      "repository_head": "f84fa70a5e2b462b9078c81cb69a429497e3037b",
       "tracked_changes": [
-        "desktop/cradle/walk/artifacts/bootstrap.json",
-        "desktop/cradle/walk/artifacts/configuration-l6.png",
+        "desktop/cradle/src/workspace/settings/sections/CredentialsSection.tsx",
+        "desktop/cradle/walk/artifacts/canvas-context-failure.png",
+        "desktop/cradle/walk/artifacts/canvas-context-native-resolve-on-prepared-selection.png",
+        "desktop/cradle/walk/artifacts/canvas-context-stale-source-refusal-retains-preparation.png",
+        "desktop/cradle/walk/artifacts/canvas-context.json",
+        "desktop/cradle/walk/artifacts/configuration-live-product.png",
         "desktop/cradle/walk/artifacts/configuration.json",
-        "desktop/cradle/walk/artifacts/system-settings-failure.png",
+        "desktop/cradle/walk/artifacts/factory-desk-f1-reading.png",
+        "desktop/cradle/walk/artifacts/factory-desk-f2-empty.png",
+        "desktop/cradle/walk/artifacts/factory-desk-f3-partial.png",
+        "desktop/cradle/walk/artifacts/factory-desk.json",
+        "desktop/cradle/walk/artifacts/factory-run-factory-run-map-1440-light.png",
+        "desktop/cradle/walk/artifacts/factory-run.json",
+        "desktop/cradle/walk/artifacts/lane0-repairs-factory-task-in-centre.png",
+        "desktop/cradle/walk/artifacts/lane0-repairs-lens-on-no-surface.png",
+        "desktop/cradle/walk/artifacts/lane0-repairs.json",
+        "desktop/cradle/walk/artifacts/settings-change-applied.png",
+        "desktop/cradle/walk/artifacts/settings-change-partial.png",
+        "desktop/cradle/walk/artifacts/settings-change-refused.png",
+        "desktop/cradle/walk/artifacts/settings-change-stale.png",
+        "desktop/cradle/walk/artifacts/settings-change.json",
+        "desktop/cradle/walk/artifacts/settings-credentials-discovered.png",
+        "desktop/cradle/walk/artifacts/settings-credentials-key-entry.png",
+        "desktop/cradle/walk/artifacts/settings-credentials-verified.png",
+        "desktop/cradle/walk/artifacts/settings-credentials.json",
+        "desktop/cradle/walk/artifacts/settings-shell-credentials-dark-1000.png",
+        "desktop/cradle/walk/artifacts/settings-shell-credentials-dark-1440.png",
+        "desktop/cradle/walk/artifacts/settings-shell-credentials-dark-760.png",
+        "desktop/cradle/walk/artifacts/settings-shell-credentials-light-1000.png",
+        "desktop/cradle/walk/artifacts/settings-shell-credentials-light-1440.png",
+        "desktop/cradle/walk/artifacts/settings-shell-credentials-light-760.png",
+        "desktop/cradle/walk/artifacts/settings-shell-product-aikit-dark-1000.png",
+        "desktop/cradle/walk/artifacts/settings-shell-product-aikit-dark-1440.png",
+        "desktop/cradle/walk/artifacts/settings-shell-product-aikit-light-1000.png",
+        "desktop/cradle/walk/artifacts/settings-shell-product-aikit-light-1440.png",
+        "desktop/cradle/walk/artifacts/settings-shell.json",
+        "desktop/cradle/walk/artifacts/settings-unreadable-recovered.png",
+        "desktop/cradle/walk/artifacts/settings-unreadable.json",
+        "desktop/cradle/walk/artifacts/system-settings-drift-review.png",
+        "desktop/cradle/walk/artifacts/system-settings-empty-world-oi.png",
         "desktop/cradle/walk/artifacts/system-settings.json"
       ],
-      "dirty_digest": "a33ddb1d209e2072a1adbb75ecaa0921009923a004149e51210848ac4ef0ef4f",
+      "dirty_digest": "36f6a12b81190864e9953135b2be7776e5d3722354302a7ea79ad4ff34bb5f60",
       "engine_provenance_path": "/Users/admin/Central/worktrees/ui-build/lane4-settings/packages/oi-design-system/expressions-engine/PROVENANCE.json",
       "engine_source": "EpiLogos/Point-Cloud-Demo",
       "engine_revision": "91db8428fc9dfba06cd258ec5a58e7dd9eef5313"
@@ -45,7 +81,7 @@
   },
   "passed": true,
   "error": null,
-  "duration_ms": 315371,
+  "duration_ms": 389819,
   "checks": [
     {
       "ok": true,
@@ -92,8 +128,8 @@
       "ok": true,
       "label": "oi: the kernel registry read behind the page carries observed-at + owner disclosed-at, and every listed value names its owner (L2)",
       "data": {
-        "observed_at_unix_ms": 1790130580227,
-        "disclosed_at_unix_ms": 1790130581040,
+        "observed_at_unix_ms": 1790148426096,
+        "disclosed_at_unix_ms": 1790148427001,
         "mountedSettings": 7,
         "listingSettings": 7
       }
@@ -104,7 +140,7 @@
       "data": {
         "setting_ref": "oi:identity:suite-executable",
         "scope": "world",
-        "observed_at_unix_ms": 1790130603261,
+        "observed_at_unix_ms": 1790148466509,
         "status": "satisfied"
       }
     },
@@ -154,8 +190,8 @@
       "ok": true,
       "label": "central: the kernel registry read behind the page carries observed-at + owner disclosed-at, and every listed value names its owner (L2)",
       "data": {
-        "observed_at_unix_ms": 1790130580227,
-        "disclosed_at_unix_ms": 1790130581046,
+        "observed_at_unix_ms": 1790148426096,
+        "disclosed_at_unix_ms": 1790148427007,
         "mountedSettings": 8,
         "listingSettings": 8
       }
@@ -166,7 +202,7 @@
       "data": {
         "setting_ref": "central:skills:central.skills",
         "scope": "ground",
-        "observed_at_unix_ms": 1790130636757,
+        "observed_at_unix_ms": 1790148507735,
         "status": "satisfied"
       }
     },
@@ -217,8 +253,8 @@
       "ok": true,
       "label": "ai-kit: the kernel registry read behind the page carries observed-at + owner disclosed-at, and every listed value names its owner (L2)",
       "data": {
-        "observed_at_unix_ms": 1790130580227,
-        "disclosed_at_unix_ms": 1790130581098,
+        "observed_at_unix_ms": 1790148426096,
+        "disclosed_at_unix_ms": 1790148427063,
         "mountedSettings": 9,
         "listingSettings": 9
       }
@@ -229,7 +265,7 @@
       "data": {
         "setting_ref": "ai-kit:resolution:resolution.profiles",
         "scope": "machine",
-        "observed_at_unix_ms": 1790130689215,
+        "observed_at_unix_ms": 1790148570447,
         "status": "satisfied"
       }
     },
@@ -272,8 +308,8 @@
       "ok": true,
       "label": "workcell: the kernel registry read behind the page carries observed-at + owner disclosed-at, and every listed value names its owner (L2)",
       "data": {
-        "observed_at_unix_ms": 1790130580227,
-        "disclosed_at_unix_ms": 1790130581108,
+        "observed_at_unix_ms": 1790148426096,
+        "disclosed_at_unix_ms": 1790148427074,
         "mountedSettings": 1,
         "listingSettings": 1
       }
@@ -284,7 +320,7 @@
       "data": {
         "setting_ref": "workcell:processes-services:services.declared",
         "scope": "workcell:local",
-        "observed_at_unix_ms": 1790130726000,
+        "observed_at_unix_ms": 1790148616951,
         "status": "satisfied"
       }
     },
@@ -333,8 +369,8 @@
       "ok": true,
       "label": "actuation: the kernel registry read behind the page carries observed-at + owner disclosed-at, and every listed value names its owner (L2)",
       "data": {
-        "observed_at_unix_ms": 1790130580227,
-        "disclosed_at_unix_ms": 1790130581050,
+        "observed_at_unix_ms": 1790148426096,
+        "disclosed_at_unix_ms": 1790148427012,
         "mountedSettings": 7,
         "listingSettings": 7
       }
@@ -345,7 +381,7 @@
       "data": {
         "setting_ref": "actuation:agency:agency.determination.kinds",
         "scope": "machine",
-        "observed_at_unix_ms": 1790130796792,
+        "observed_at_unix_ms": 1790148693682,
         "status": "satisfied"
       }
     },
@@ -397,8 +433,8 @@
       "ok": true,
       "label": "quaternal-logic: the kernel registry read behind the page carries observed-at + owner disclosed-at, and every listed value names its owner (L2)",
       "data": {
-        "observed_at_unix_ms": 1790130580227,
-        "disclosed_at_unix_ms": 1790130581111,
+        "observed_at_unix_ms": 1790148426096,
+        "disclosed_at_unix_ms": 1790148427078,
         "mountedSettings": 10,
         "listingSettings": 10
       }
@@ -409,7 +445,7 @@
       "data": {
         "setting_ref": "quaternal-logic:kernel:kernel.version",
         "scope": "machine",
-        "observed_at_unix_ms": 1790130873469,
+        "observed_at_unix_ms": 1790148783883,
         "status": "satisfied"
       }
     },
@@ -474,7 +510,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 42,
+      "duration_ms": 70,
       "data": {
         "file": "configuration-live-product.png"
       }
@@ -482,7 +518,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 35,
+      "duration_ms": 42,
       "data": {
         "file": "configuration-empty.png"
       }
@@ -490,7 +526,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 35,
+      "duration_ms": 41,
       "data": {
         "file": "configuration-l6.png"
       }

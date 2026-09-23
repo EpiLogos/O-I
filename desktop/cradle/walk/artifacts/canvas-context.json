@@ -23,7 +23,7 @@
     ],
     "claims_grade": "D"
   },
-  "generated_at": "2026-09-23T01:49:24.283Z",
+  "generated_at": "2026-09-23T07:38:10.907Z",
   "environment": {
     "base_url": "http://localhost:4173",
     "bridge_url": "http://127.0.0.1:4179",
@@ -32,57 +32,64 @@
     "bundle": "walk (WALK=1) served by vite preview",
     "build_input": {
       "mode": "reused-dist",
-      "bundle_fingerprint": "7bd7215801275e69797d8252083f919b8d42faa52a225f0320db506377abfd10"
+      "bundle_fingerprint": "a7a09418ce4322d8d78b92d5fbef3eadb3d2e486d66085f9c9578daa397bea66"
     },
     "node": "v24.16.0",
     "platform": "darwin",
     "source": {
-      "repository_root": "/Users/admin/Central/worktrees/ui-build/lane3-factory",
-      "repository_head": "985f0de4141dd448107c0e5ba300a70f408a6540",
+      "repository_root": "/Users/admin/Central/worktrees/ui-build/lane4-settings",
+      "repository_head": "f84fa70a5e2b462b9078c81cb69a429497e3037b",
       "tracked_changes": [
-        "desktop/cradle/walk/artifacts/background-completion-failure.png",
-        "desktop/cradle/walk/artifacts/background-completion.json",
+        "desktop/cradle/src/workspace/settings/sections/CredentialsSection.tsx",
         "desktop/cradle/walk/artifacts/canvas-context-failure.png",
+        "desktop/cradle/walk/artifacts/canvas-context-native-resolve-on-prepared-selection.png",
+        "desktop/cradle/walk/artifacts/canvas-context-stale-source-refusal-retains-preparation.png",
         "desktop/cradle/walk/artifacts/canvas-context.json",
+        "desktop/cradle/walk/artifacts/configuration.json",
         "desktop/cradle/walk/artifacts/factory-desk-f1-reading.png",
         "desktop/cradle/walk/artifacts/factory-desk-f2-empty.png",
         "desktop/cradle/walk/artifacts/factory-desk-f3-partial.png",
         "desktop/cradle/walk/artifacts/factory-desk.json",
-        "desktop/cradle/walk/artifacts/factory-development-agents-tab.png",
-        "desktop/cradle/walk/artifacts/factory-development-context-tab.png",
-        "desktop/cradle/walk/artifacts/factory-development-failure.png",
-        "desktop/cradle/walk/artifacts/factory-development-run-tab.png",
-        "desktop/cradle/walk/artifacts/factory-development.json",
-        "desktop/cradle/walk/artifacts/factory-objects.json",
-        "desktop/cradle/walk/artifacts/factory-real-desk-real.png",
-        "desktop/cradle/walk/artifacts/factory-real-now-record-real.png",
-        "desktop/cradle/walk/artifacts/factory-real-run-real-map.png",
-        "desktop/cradle/walk/artifacts/factory-real.json",
-        "desktop/cradle/walk/artifacts/factory-run-f13-before.png",
         "desktop/cradle/walk/artifacts/factory-run-factory-run-map-1440-light.png",
         "desktop/cradle/walk/artifacts/factory-run.json",
-        "desktop/cradle/walk/artifacts/factory-tasks-f15-direct.png",
-        "desktop/cradle/walk/artifacts/factory-tasks-factory-tasks-joined-1000-dark.png",
-        "desktop/cradle/walk/artifacts/factory-tasks-factory-tasks-joined-1000-light.png",
-        "desktop/cradle/walk/artifacts/factory-tasks-factory-tasks-joined-1440-dark.png",
-        "desktop/cradle/walk/artifacts/factory-tasks-factory-tasks-joined-1440-light.png",
-        "desktop/cradle/walk/artifacts/factory-tasks-factory-tasks-joined-760-dark.png",
-        "desktop/cradle/walk/artifacts/factory-tasks-factory-tasks-joined-760-light.png",
-        "desktop/cradle/walk/artifacts/factory-tasks.json",
-        "desktop/cradle/walk/artifacts/factory-trajectory.json",
         "desktop/cradle/walk/artifacts/lane0-repairs-factory-task-in-centre.png",
         "desktop/cradle/walk/artifacts/lane0-repairs-lens-on-no-surface.png",
-        "desktop/cradle/walk/artifacts/lane0-repairs.json"
+        "desktop/cradle/walk/artifacts/lane0-repairs.json",
+        "desktop/cradle/walk/artifacts/settings-change-applied.png",
+        "desktop/cradle/walk/artifacts/settings-change-partial.png",
+        "desktop/cradle/walk/artifacts/settings-change-refused.png",
+        "desktop/cradle/walk/artifacts/settings-change-stale.png",
+        "desktop/cradle/walk/artifacts/settings-change.json",
+        "desktop/cradle/walk/artifacts/settings-credentials-discovered.png",
+        "desktop/cradle/walk/artifacts/settings-credentials-key-entry.png",
+        "desktop/cradle/walk/artifacts/settings-credentials-verified.png",
+        "desktop/cradle/walk/artifacts/settings-credentials.json",
+        "desktop/cradle/walk/artifacts/settings-shell-credentials-dark-1000.png",
+        "desktop/cradle/walk/artifacts/settings-shell-credentials-dark-1440.png",
+        "desktop/cradle/walk/artifacts/settings-shell-credentials-dark-760.png",
+        "desktop/cradle/walk/artifacts/settings-shell-credentials-light-1000.png",
+        "desktop/cradle/walk/artifacts/settings-shell-credentials-light-1440.png",
+        "desktop/cradle/walk/artifacts/settings-shell-credentials-light-760.png",
+        "desktop/cradle/walk/artifacts/settings-shell-product-aikit-dark-1000.png",
+        "desktop/cradle/walk/artifacts/settings-shell-product-aikit-dark-1440.png",
+        "desktop/cradle/walk/artifacts/settings-shell-product-aikit-light-1000.png",
+        "desktop/cradle/walk/artifacts/settings-shell-product-aikit-light-1440.png",
+        "desktop/cradle/walk/artifacts/settings-shell.json",
+        "desktop/cradle/walk/artifacts/settings-unreadable-recovered.png",
+        "desktop/cradle/walk/artifacts/settings-unreadable.json",
+        "desktop/cradle/walk/artifacts/system-settings-drift-review.png",
+        "desktop/cradle/walk/artifacts/system-settings-empty-world-oi.png",
+        "desktop/cradle/walk/artifacts/system-settings.json"
       ],
-      "dirty_digest": "980fe38e35bd233fa001831ea8e60516fe77f33f088f2bbd2194733feedd59ee",
-      "engine_provenance_path": "/Users/admin/Central/worktrees/ui-build/lane3-factory/packages/oi-design-system/expressions-engine/PROVENANCE.json",
+      "dirty_digest": "20ea73be5a3e703e6a9238d87dc84e1e57516d8559dd4b31e27af1b9572b555a",
+      "engine_provenance_path": "/Users/admin/Central/worktrees/ui-build/lane4-settings/packages/oi-design-system/expressions-engine/PROVENANCE.json",
       "engine_source": "EpiLogos/Point-Cloud-Demo",
       "engine_revision": "91db8428fc9dfba06cd258ec5a58e7dd9eef5313"
     }
   },
   "passed": true,
   "error": null,
-  "duration_ms": 105929,
+  "duration_ms": 64642,
   "checks": [
     {
       "ok": true,
@@ -204,7 +211,7 @@
       "duration_ms": 0,
       "data": {
         "schema": "oi.cradle.walk/v1",
-        "mounted_at": "2026-09-23T01:49:24.558Z",
+        "mounted_at": "2026-09-23T07:38:10.985Z",
         "transport": {
           "kind": "bridge",
           "url": "http://127.0.0.1:4179"
@@ -215,7 +222,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 90,
+      "duration_ms": 57,
       "data": {
         "file": "canvas-context-native-resolve-on-prepared-selection.png"
       }
@@ -223,7 +230,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 97,
+      "duration_ms": 50,
       "data": {
         "file": "canvas-context-stale-source-refusal-retains-preparation.png"
       }
@@ -231,7 +238,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 70,
+      "duration_ms": 61,
       "data": {
         "file": "canvas-context-real-return-after-explicit-delivery.png"
       }

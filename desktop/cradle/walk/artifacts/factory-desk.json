@@ -4,7 +4,7 @@
   "spec_ref": "docs/cradle/11-FACTORY.md §7 F1 F2 F3 F4 F5",
   "grade": "B",
   "binding": null,
-  "generated_at": "2026-09-23T01:45:09.590Z",
+  "generated_at": "2026-09-23T07:26:07.273Z",
   "environment": {
     "base_url": "http://localhost:4173",
     "bridge_url": "http://127.0.0.1:4179",
@@ -12,38 +12,60 @@
     "browser_engine": "chromium",
     "bundle": "walk (WALK=1) served by vite preview",
     "build_input": {
-      "mode": "fresh-build",
-      "bundle_fingerprint": "7bd7215801275e69797d8252083f919b8d42faa52a225f0320db506377abfd10"
+      "mode": "reused-dist",
+      "bundle_fingerprint": "a7a09418ce4322d8d78b92d5fbef3eadb3d2e486d66085f9c9578daa397bea66"
     },
     "node": "v24.16.0",
     "platform": "darwin",
     "source": {
-      "repository_root": "/Users/admin/Central/worktrees/ui-build/lane3-factory",
-      "repository_head": "985f0de4141dd448107c0e5ba300a70f408a6540",
+      "repository_root": "/Users/admin/Central/worktrees/ui-build/lane4-settings",
+      "repository_head": "f84fa70a5e2b462b9078c81cb69a429497e3037b",
       "tracked_changes": [
-        "desktop/cradle/walk/artifacts/background-completion-failure.png",
-        "desktop/cradle/walk/artifacts/background-completion.json",
+        "desktop/cradle/src/workspace/settings/sections/CredentialsSection.tsx",
         "desktop/cradle/walk/artifacts/canvas-context-failure.png",
+        "desktop/cradle/walk/artifacts/canvas-context-native-resolve-on-prepared-selection.png",
+        "desktop/cradle/walk/artifacts/canvas-context-stale-source-refusal-retains-preparation.png",
         "desktop/cradle/walk/artifacts/canvas-context.json",
-        "desktop/cradle/walk/artifacts/factory-desk.json",
-        "desktop/cradle/walk/artifacts/factory-development-failure.png",
-        "desktop/cradle/walk/artifacts/factory-development.json",
-        "desktop/cradle/walk/artifacts/factory-objects.json",
-        "desktop/cradle/walk/artifacts/factory-real.json",
-        "desktop/cradle/walk/artifacts/factory-run.json",
-        "desktop/cradle/walk/artifacts/factory-tasks.json",
-        "desktop/cradle/walk/artifacts/factory-trajectory.json",
-        "desktop/cradle/walk/artifacts/lane0-repairs.json"
+        "desktop/cradle/walk/artifacts/configuration-live-product.png",
+        "desktop/cradle/walk/artifacts/configuration.json",
+        "desktop/cradle/walk/artifacts/lane0-repairs-factory-task-in-centre.png",
+        "desktop/cradle/walk/artifacts/lane0-repairs-lens-on-no-surface.png",
+        "desktop/cradle/walk/artifacts/lane0-repairs.json",
+        "desktop/cradle/walk/artifacts/settings-change-applied.png",
+        "desktop/cradle/walk/artifacts/settings-change-partial.png",
+        "desktop/cradle/walk/artifacts/settings-change-refused.png",
+        "desktop/cradle/walk/artifacts/settings-change-stale.png",
+        "desktop/cradle/walk/artifacts/settings-change.json",
+        "desktop/cradle/walk/artifacts/settings-credentials-discovered.png",
+        "desktop/cradle/walk/artifacts/settings-credentials-key-entry.png",
+        "desktop/cradle/walk/artifacts/settings-credentials-verified.png",
+        "desktop/cradle/walk/artifacts/settings-credentials.json",
+        "desktop/cradle/walk/artifacts/settings-shell-credentials-dark-1000.png",
+        "desktop/cradle/walk/artifacts/settings-shell-credentials-dark-1440.png",
+        "desktop/cradle/walk/artifacts/settings-shell-credentials-dark-760.png",
+        "desktop/cradle/walk/artifacts/settings-shell-credentials-light-1000.png",
+        "desktop/cradle/walk/artifacts/settings-shell-credentials-light-1440.png",
+        "desktop/cradle/walk/artifacts/settings-shell-credentials-light-760.png",
+        "desktop/cradle/walk/artifacts/settings-shell-product-aikit-dark-1000.png",
+        "desktop/cradle/walk/artifacts/settings-shell-product-aikit-dark-1440.png",
+        "desktop/cradle/walk/artifacts/settings-shell-product-aikit-light-1000.png",
+        "desktop/cradle/walk/artifacts/settings-shell-product-aikit-light-1440.png",
+        "desktop/cradle/walk/artifacts/settings-shell.json",
+        "desktop/cradle/walk/artifacts/settings-unreadable-recovered.png",
+        "desktop/cradle/walk/artifacts/settings-unreadable.json",
+        "desktop/cradle/walk/artifacts/system-settings-drift-review.png",
+        "desktop/cradle/walk/artifacts/system-settings-empty-world-oi.png",
+        "desktop/cradle/walk/artifacts/system-settings.json"
       ],
-      "dirty_digest": "b6b2567a583a89225e8fc05ca355e82b3bb313f7496c8585fa8b88e79723946f",
-      "engine_provenance_path": "/Users/admin/Central/worktrees/ui-build/lane3-factory/packages/oi-design-system/expressions-engine/PROVENANCE.json",
+      "dirty_digest": "16386317cd33824fd670b5982b57fb10845075d73121c0f035d2f16a5c244f1c",
+      "engine_provenance_path": "/Users/admin/Central/worktrees/ui-build/lane4-settings/packages/oi-design-system/expressions-engine/PROVENANCE.json",
       "engine_source": "EpiLogos/Point-Cloud-Demo",
       "engine_revision": "91db8428fc9dfba06cd258ec5a58e7dd9eef5313"
     }
   },
   "passed": true,
   "error": null,
-  "duration_ms": 13047,
+  "duration_ms": 12137,
   "checks": [
     {
       "ok": true,
@@ -104,9 +126,9 @@
       "label": "Units: one segment per owner work unit (A 4, B 2, C 0) — never a percentage",
       "data": {
         "unitCounts": {
-          "run:01M35MPEF0B6A2YDPDN7BCS5Z6": 4,
-          "run:01M35N8RD0PKEXFDTF64S4ZGC9": 2,
-          "run:01M35NV2B0TPWY4WXWZZFWHTBN": 0
+          "run:01M3686TY0EDXDBRE2B591ZE71": 4,
+          "run:01M368S4W0BSXBHQBT9B9QD3AV": 2,
+          "run:01M369BET09SZAWFQ7EAG34895": 0
         }
       }
     },
@@ -224,10 +246,10 @@
     {
       "ok": true,
       "op": "info",
-      "duration_ms": 0,
+      "duration_ms": 0.1,
       "data": {
         "schema": "oi.cradle.walk/v1",
-        "mounted_at": "2026-09-23T01:45:09.808Z",
+        "mounted_at": "2026-09-23T07:26:07.463Z",
         "transport": {
           "kind": "bridge",
           "url": "http://127.0.0.1:4179"
@@ -238,10 +260,10 @@
     {
       "ok": true,
       "op": "info",
-      "duration_ms": 0.1,
+      "duration_ms": 0,
       "data": {
         "schema": "oi.cradle.walk/v1",
-        "mounted_at": "2026-09-23T01:45:10.355Z",
+        "mounted_at": "2026-09-23T07:26:08.015Z",
         "transport": {
           "kind": "bridge",
           "url": "http://127.0.0.1:4179"
@@ -252,7 +274,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 36,
+      "duration_ms": 32,
       "data": {
         "file": "factory-desk-f1-reading.png"
       }
@@ -260,7 +282,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 56,
+      "duration_ms": 48,
       "data": {
         "file": "factory-desk-f4-needs-you.png"
       }
@@ -268,7 +290,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 51,
+      "duration_ms": 45,
       "data": {
         "file": "factory-desk-factory-desk-1440-light.png"
       }
@@ -276,7 +298,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 32,
+      "duration_ms": 40,
       "data": {
         "file": "factory-desk-factory-desk-1000-light.png"
       }
@@ -284,7 +306,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 46,
+      "duration_ms": 37,
       "data": {
         "file": "factory-desk-factory-desk-760-light.png"
       }
@@ -292,7 +314,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 96,
+      "duration_ms": 75,
       "data": {
         "file": "factory-desk-factory-desk-1440-dark.png"
       }
@@ -300,7 +322,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 93,
+      "duration_ms": 66,
       "data": {
         "file": "factory-desk-factory-desk-1000-dark.png"
       }
@@ -308,7 +330,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 62,
+      "duration_ms": 55,
       "data": {
         "file": "factory-desk-factory-desk-760-dark.png"
       }
@@ -316,7 +338,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 30,
+      "duration_ms": 37,
       "data": {
         "file": "factory-desk-f2-empty.png"
       }
@@ -324,7 +346,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 43,
+      "duration_ms": 33,
       "data": {
         "file": "factory-desk-f3-partial.png"
       }

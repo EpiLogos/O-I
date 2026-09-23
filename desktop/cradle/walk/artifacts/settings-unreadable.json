@@ -4,30 +4,46 @@
   "spec_ref": "docs/cradle/12-SETTINGS.md §2 §4 S2",
   "grade": "B",
   "binding": null,
-  "generated_at": "2026-09-23T02:24:51.235Z",
+  "generated_at": "2026-09-23T07:19:45.264Z",
   "environment": {
-    "base_url": "http://localhost:4573",
-    "bridge_url": "http://127.0.0.1:4579",
+    "base_url": "http://localhost:4173",
+    "bridge_url": "http://127.0.0.1:4179",
     "viewport": "1280x820",
     "browser_engine": "chromium",
     "bundle": "walk (WALK=1) served by vite preview",
     "build_input": {
-      "mode": "fresh-build",
-      "bundle_fingerprint": "09e706825e6050519b2eb77d44695e4958a42ad0e9970e766434ee09128819c8"
+      "mode": "reused-dist",
+      "bundle_fingerprint": "a7a09418ce4322d8d78b92d5fbef3eadb3d2e486d66085f9c9578daa397bea66"
     },
     "node": "v24.16.0",
     "platform": "darwin",
     "source": {
       "repository_root": "/Users/admin/Central/worktrees/ui-build/lane4-settings",
-      "repository_head": "35af068b2d26cef3e1ee2d6f79c4a519d6cc4e1a",
+      "repository_head": "f84fa70a5e2b462b9078c81cb69a429497e3037b",
       "tracked_changes": [
-        "desktop/cradle/walk/artifacts/bootstrap.json",
-        "desktop/cradle/walk/artifacts/configuration-l6.png",
-        "desktop/cradle/walk/artifacts/configuration.json",
-        "desktop/cradle/walk/artifacts/system-settings-failure.png",
-        "desktop/cradle/walk/artifacts/system-settings.json"
+        "desktop/cradle/src/workspace/settings/sections/CredentialsSection.tsx",
+        "desktop/cradle/walk/artifacts/settings-change-applied.png",
+        "desktop/cradle/walk/artifacts/settings-change-partial.png",
+        "desktop/cradle/walk/artifacts/settings-change-refused.png",
+        "desktop/cradle/walk/artifacts/settings-change-stale.png",
+        "desktop/cradle/walk/artifacts/settings-change.json",
+        "desktop/cradle/walk/artifacts/settings-credentials-discovered.png",
+        "desktop/cradle/walk/artifacts/settings-credentials-key-entry.png",
+        "desktop/cradle/walk/artifacts/settings-credentials-verified.png",
+        "desktop/cradle/walk/artifacts/settings-credentials.json",
+        "desktop/cradle/walk/artifacts/settings-shell-credentials-dark-1000.png",
+        "desktop/cradle/walk/artifacts/settings-shell-credentials-dark-1440.png",
+        "desktop/cradle/walk/artifacts/settings-shell-credentials-dark-760.png",
+        "desktop/cradle/walk/artifacts/settings-shell-credentials-light-1000.png",
+        "desktop/cradle/walk/artifacts/settings-shell-credentials-light-1440.png",
+        "desktop/cradle/walk/artifacts/settings-shell-credentials-light-760.png",
+        "desktop/cradle/walk/artifacts/settings-shell-product-aikit-dark-1000.png",
+        "desktop/cradle/walk/artifacts/settings-shell-product-aikit-dark-1440.png",
+        "desktop/cradle/walk/artifacts/settings-shell-product-aikit-light-1000.png",
+        "desktop/cradle/walk/artifacts/settings-shell-product-aikit-light-1440.png",
+        "desktop/cradle/walk/artifacts/settings-shell.json"
       ],
-      "dirty_digest": "bc65ed1d45bec658b664ca56133324d67c9c8eab9ccf550adcf067cc062f56e8",
+      "dirty_digest": "a818d1da7ead78314dff4863197ff7a5d35aa5047dd7ae353d1efcb9734b75a6",
       "engine_provenance_path": "/Users/admin/Central/worktrees/ui-build/lane4-settings/packages/oi-design-system/expressions-engine/PROVENANCE.json",
       "engine_source": "EpiLogos/Point-Cloud-Demo",
       "engine_revision": "91db8428fc9dfba06cd258ec5a58e7dd9eef5313"
@@ -35,7 +51,7 @@
   },
   "passed": true,
   "error": null,
-  "duration_ms": 14658,
+  "duration_ms": 18246,
   "checks": [
     {
       "ok": true,
@@ -65,7 +81,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 31,
+      "duration_ms": 32,
       "data": {
         "file": "settings-unreadable-unreadable.png"
       }
@@ -73,7 +89,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 29,
+      "duration_ms": 30,
       "data": {
         "file": "settings-unreadable-recovered.png"
       }

@@ -23,29 +23,50 @@
     ],
     "claims_grade": "D"
   },
-  "generated_at": "2026-09-23T02:06:59.688Z",
+  "generated_at": "2026-09-23T07:21:14.470Z",
   "environment": {
-    "base_url": "http://localhost:4573",
-    "bridge_url": "http://127.0.0.1:4579",
+    "base_url": "http://localhost:4173",
+    "bridge_url": "http://127.0.0.1:4179",
     "viewport": "1280x820",
     "browser_engine": "chromium",
     "bundle": "walk (WALK=1) served by vite preview",
     "build_input": {
-      "mode": "fresh-build",
-      "bundle_fingerprint": "fc5c0e91ec58020988f2c0ae9780520e42a15a1cc145c8db16e967746c3ee587"
+      "mode": "reused-dist",
+      "bundle_fingerprint": "a7a09418ce4322d8d78b92d5fbef3eadb3d2e486d66085f9c9578daa397bea66"
     },
     "node": "v24.16.0",
     "platform": "darwin",
     "source": {
       "repository_root": "/Users/admin/Central/worktrees/ui-build/lane4-settings",
-      "repository_head": "0edfc5a47355e5c6986b0c7ee5d0a38511af00c3",
+      "repository_head": "f84fa70a5e2b462b9078c81cb69a429497e3037b",
       "tracked_changes": [
-        "desktop/cradle/walk/artifacts/configuration-l6.png",
+        "desktop/cradle/src/workspace/settings/sections/CredentialsSection.tsx",
+        "desktop/cradle/walk/artifacts/configuration-live-product.png",
         "desktop/cradle/walk/artifacts/configuration.json",
-        "desktop/cradle/walk/artifacts/system-settings-failure.png",
-        "desktop/cradle/walk/artifacts/system-settings.json"
+        "desktop/cradle/walk/artifacts/settings-change-applied.png",
+        "desktop/cradle/walk/artifacts/settings-change-partial.png",
+        "desktop/cradle/walk/artifacts/settings-change-refused.png",
+        "desktop/cradle/walk/artifacts/settings-change-stale.png",
+        "desktop/cradle/walk/artifacts/settings-change.json",
+        "desktop/cradle/walk/artifacts/settings-credentials-discovered.png",
+        "desktop/cradle/walk/artifacts/settings-credentials-key-entry.png",
+        "desktop/cradle/walk/artifacts/settings-credentials-verified.png",
+        "desktop/cradle/walk/artifacts/settings-credentials.json",
+        "desktop/cradle/walk/artifacts/settings-shell-credentials-dark-1000.png",
+        "desktop/cradle/walk/artifacts/settings-shell-credentials-dark-1440.png",
+        "desktop/cradle/walk/artifacts/settings-shell-credentials-dark-760.png",
+        "desktop/cradle/walk/artifacts/settings-shell-credentials-light-1000.png",
+        "desktop/cradle/walk/artifacts/settings-shell-credentials-light-1440.png",
+        "desktop/cradle/walk/artifacts/settings-shell-credentials-light-760.png",
+        "desktop/cradle/walk/artifacts/settings-shell-product-aikit-dark-1000.png",
+        "desktop/cradle/walk/artifacts/settings-shell-product-aikit-dark-1440.png",
+        "desktop/cradle/walk/artifacts/settings-shell-product-aikit-light-1000.png",
+        "desktop/cradle/walk/artifacts/settings-shell-product-aikit-light-1440.png",
+        "desktop/cradle/walk/artifacts/settings-shell.json",
+        "desktop/cradle/walk/artifacts/settings-unreadable-recovered.png",
+        "desktop/cradle/walk/artifacts/settings-unreadable.json"
       ],
-      "dirty_digest": "989810c337d1a4a7a07841b2346ad209215cfa7de9461766171d3bbaaad7810f",
+      "dirty_digest": "4741a71a99d373e13bad4ea794ba8e4dcf1da82e647f37d2291b926d3b1c48a6",
       "engine_provenance_path": "/Users/admin/Central/worktrees/ui-build/lane4-settings/packages/oi-design-system/expressions-engine/PROVENANCE.json",
       "engine_source": "EpiLogos/Point-Cloud-Demo",
       "engine_revision": "91db8428fc9dfba06cd258ec5a58e7dd9eef5313"
@@ -53,7 +74,7 @@
   },
   "passed": true,
   "error": null,
-  "duration_ms": 19182,
+  "duration_ms": 12318,
   "checks": [
     {
       "ok": true,
@@ -223,24 +244,24 @@
       "duration_ms": 0,
       "data": {
         "schema": "oi.cradle.walk/v1",
-        "mounted_at": "2026-09-23T02:07:00.023Z",
+        "mounted_at": "2026-09-23T07:21:14.667Z",
         "transport": {
           "kind": "bridge",
-          "url": "http://127.0.0.1:4579"
+          "url": "http://127.0.0.1:4179"
         },
-        "url": "http://localhost:4573/"
+        "url": "http://localhost:4173/"
       }
     },
     {
       "ok": true,
       "op": "read.focus",
-      "duration_ms": 6324.7,
+      "duration_ms": 2614.6,
       "data": {}
     },
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 78,
+      "duration_ms": 38,
       "data": {
         "file": "system-settings-empty-world-oi.png"
       }
@@ -248,7 +269,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 27,
+      "duration_ms": 24,
       "data": {
         "file": "system-settings-empty-world-credentials.png"
       }
@@ -256,7 +277,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 46,
+      "duration_ms": 23,
       "data": {
         "file": "system-settings-drift-review.png"
       }
@@ -264,7 +285,7 @@
     {
       "ok": true,
       "op": "read.focus",
-      "duration_ms": 3803.9,
+      "duration_ms": 1248.7,
       "data": {}
     }
   ],

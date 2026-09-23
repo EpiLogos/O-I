@@ -139,7 +139,7 @@ function ProviderCard({card, data, suggestion}: {card: CredentialCard; data: Set
     : binding?.last_verified_at_unix_seconds ? `Last checked ${formatRelativeTime(binding.last_verified_at_unix_seconds * 1000)}` : configured ? "Not checked yet" : null;
   return <section className={`settings-card settings-credential${form || rotating ? " is-wide" : ""}`} data-settings-row={`credential:${card.provider}`} data-credential-card={card.provider} data-configured={configured ? "true" : "false"}>
     <h3>{card.label}</h3>
-    <p data-credential-status>{status}{!configured && card.modelsNeeding > 0 ? ` · ${card.modelsNeeding} catalogued models use this key` : ""}</p>
+    <p data-credential-status>{status}{!configured && card.modelsNeeding > 0 ? ` · ${card.modelsNeeding} catalogued ${card.modelsNeeding===1?"model uses":"models use"} this key` : ""}</p>
     {checked && <p data-credential-checked data-verdict={verification?.verdict}>{checked}</p>}
     {suggestion && !configured && <p className="settings-card-note" data-credential-suggestion>Found {suggestion.name} in {suggestion.location}.{suggestion.location === "process environment"
       ? <> <button type="button" className="settings-link" disabled={busy !== null} onClick={() => void importEnv(suggestion.name)}>Import it</button></> : " AIKit can't import from there yet."}</p>}
