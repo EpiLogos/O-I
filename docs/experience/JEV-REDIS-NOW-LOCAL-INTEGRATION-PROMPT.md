@@ -262,7 +262,7 @@ The delivered provider configuration adds:
 Reconcile this with the existing provider JSON rather than replacing unrelated provider settings. Configure it through the owner-only route:
 
 ```sh
-aikit encounter-configure --provider-json '<provider-json>'
+aikit session-space encounter-configure --provider-json '<provider-json>'
 ```
 
 Use the exact current command spelling shown by `aikit --help` if the enclosing command namespace has advanced.
@@ -285,14 +285,18 @@ python3 scripts/jev-redis/joined_proof.py \
   --aikit '<resolved rebuilt aikit>' \
   --ctrl '<resolved rebuilt/current ctrl>' \
   --bkmr '<resolved bkmr>' \
+  --central-repo '<resolved current Central repository checkout>' \
   --factory '<resolved rebuilt/current factory>' \
   --factory-state '<disposable Factory fixture/state>' \
+  --actuation '<resolved rebuilt/current actuation>' \
   --redis-address '<disposable Redis host:port>' \
   --jev-mode controlled \
   --output '<evidence path>/joined-proof.json'
 ```
 
 Use disposable Redis material for this proof. The runner must cover real AIKit + Central + BKMR + Factory + Redis and controlled Jev transport.
+
+For the credentialed local Jev episode, run the **same** runner with `--jev-mode live`, add `--jev-credential-ref '<native-secret-ref>'`, set `--jev-model` to the concrete admitted model/version and set an explicit finite `--jev-budget-microusd`. Use `--agency-ref`, `--actuation-ref`, `--activity-ref`, `--actuation-stream-ref` and `--actuation-session-ref` when binding the proof to already-admitted local owner identities instead of the controlled defaults. Do not copy credentials into the request fixture or public evidence.
 
 Exercise and retain evidence for:
 
