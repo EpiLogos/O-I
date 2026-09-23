@@ -3,7 +3,10 @@ import {mintInstance,mintBlankInstance,parseInstance,instanceFileName} from "./f
 import {userFlowsArea} from "./flow/instances";
 import {fileOperation,listFiles,type FileMutation} from "./files/client";
 import {DRAFT_KEY} from "./flow/DraftSurface";
-import {DOCUMENT_FORMS,resolveDocumentForm} from "./flow/documentForms";
+import {DOCUMENT_FORMS} from "./flow/documentForms";
+import {createFormInPlace} from "./flow/createInPlace";
+import type {LeftHost} from "./workspace/left/host";
+import {createExpression} from "./workspace/left/createExpression";
 import {ContextTray} from "./context/ContextTray";
 import {addToActiveMaterialScene} from "./techne/material";
 import {FileHistory} from "./files/FileHistory";
@@ -1082,7 +1085,8 @@ export function CradleFrame({onComposed}:{onComposed?:()=>void}) {
     // chosen form replaces THIS fresh tab in place — wherever it lives, the
     // centre canvas or the sidebar's own pane canvas — never a second tab.
     const form=DOCUMENT_FORMS.find(candidate=>candidate.kind===kind);
-    if(form){await openFile(await resolveDocumentForm(kernel.transport,form,kernel.snapshot.navigator?.root?.work.projects),{replaceId:id});return;}
+    // Forms create a copy in place (10-SIDEBARS §3.7, 6.1.6) — never the template.
+    if(form){const created=await createFormInPlace(kernel.transport,form,{project,projects:kernel.snapshot.navigator?.root?.work.projects});await openFile(created.location,{replaceId:id});window.dispatchEvent(new CustomEvent("oi:form-created",{detail:{path:created.location.path}}));return;}
     let binding:SurfaceBinding={...current,project,kind,title:kind==="terminal"?"Terminal":"Browser"};
     if(kind==="flow"){
       // Writing, not minting: the fresh tab's Write opens the retained draft
@@ -1616,12 +1620,31 @@ export function CradleFrame({onComposed}:{onComposed?:()=>void}) {
     resolveSurface={id=>stateRef.current.surfaces[id]??Object.assign({},...workspace.workspaces.map(w=>w.layout.surfaces))[id]}
     project={workspace.current.project} subject={{ref:subjectRef,kind:subjectBinding?.kind,title:subjectTitle,project:subjectBinding?.project ?? subjectBuffer?.project,location:subjectBinding?.location,dirty:subjectBuffer?.dirty,revision:subjectBuffer?.base_revision}} history={subjectHistory} historyAvailable={subjectHistoryAvailable} accompanying={state.accompanying} onAccompanying={value=>setState(s=>({...s,accompanying:value}))}
     full={state.rightDepth==="full"} onFull={()=>setState(s=>({...s,rightDepth:s.rightDepth==="full"?"panel":"full"}))}/>;
+  // The left frame's host (10-SIDEBARS §3, lane 1): the real routes its
+  // head, foot and rows reach. Chats open in the right panel's Chat (D4) —
+  // in Factory, the centre Tasks view (§3.5).
+  const planeOf=(pattern:RegExp)=>MODE_CURATION[mode].panel.planes.find(plane=>pattern.test(plane));
+  const leftHost:LeftHost={
+    onSearch:()=>setSearchOpen(true),
+    onNewChat:()=>{if(mode==="factory"){setState(s=>({...s,accompanying:undefined}));publishCentreView("tasks");return;}const chat=planeOf(/^chat$/i);setState(s=>({...s,accompanying:undefined,rightDepth:s.rightDepth==="full"?"full":"panel",panelPlanes:chat?{...s.panelPlanes,[mode]:chat}:s.panelPlanes}));},
+    onNewFlow:()=>void startWriting(),
+    onNewExpression:()=>void createExpression(kernel.transport).catch(report),
+    onNewAgent:()=>window.dispatchEvent(new CustomEvent("oi:open-agency",{detail:{project:workspace.current.project}})),
+    onOpenChat:row=>{const chat=planeOf(/^chat$/i);if(mode==="factory"||!chat)return factoryChoose(row);setState(s=>({...s,accompanying:{ref:row.ref,project:row.project,space:row.space},rightDepth:s.rightDepth==="full"?"full":"panel",panelPlanes:{...s.panelPlanes,[mode]:chat}}));},
+    onOpenChatInCentre:row=>mode==="factory"?factoryChoose(row):openEncounter(row),
+    onOpenFile:location=>openFile(location),
+    onOpenBeside:async location=>{await openFile(location,{into:"side"});const context=planeOf(/context/i);setState(s=>({...s,rightDepth:s.rightDepth==="full"?"full":"panel",panelPlanes:context?{...s.panelPlanes,[mode]:context}:s.panelPlanes}));},
+    onPopOut:kernel.transport.kind==="tauri"?async location=>{await openFile(location);requestAnimationFrame(()=>{const held=Object.values(stateRef.current.surfaces).find(binding=>binding.location?.ref===location.ref||binding.ref===location.ref);if(held)void detach(held.id);});}:undefined,
+    onOpenInboxItem:material=>openSource({ref:material.ref,path:material.path,treatment:"projectcentral-user",agent_retrieval_allowed:true},material.project),
+    onCreateForm:async kind=>{const form=DOCUMENT_FORMS.find(candidate=>candidate.kind===kind);if(!form)throw new Error(`The ${kind} form is not offered by the document roster`);const created=await createFormInPlace(kernel.transport,form,{project:workspace.current.project,projects:kernel.snapshot.navigator?.root?.work.projects});await openFile(created.location);window.dispatchEvent(new CustomEvent("oi:form-created",{detail:{path:created.location.path}}));},
+    onMessage:message=>setWindowError(message),
+  };
   const worldNavigator=(workspaceSelector:ReactNode)=><WorldNavigator onAgent={summonAgent} onMessage={message=>setWindowError(message)} onExplore={()=>void openExplore().catch(e=>setWindowError(String(e)))} mode={mode} onMode={enterMode} onOpenEncounter={openEncounter} centralFiles={workspace.current.centralFiles??false} onCentralFilesChange={workspace.setCentralFiles} workspaceSelector={workspaceSelector} searchShortcut={leader.label} key={workspace.current.id} projectNavigation={workspace.current.projectNavigation ?? {}} onNavigationChange={(ref,change)=>workspace.setProjectNavigation(ref,change,workspace.current.id)} onOpenFile={openFile} onProjectChange={workspace.browse} onOpenToday={openToday} onOpenWiki={(ref,title,project)=>openKnowledge({kind:"wiki",value:ref},title,project)} onSearch={()=>setSearchOpen(true)} activeEncounterRef={activeEncounterRef} onOpenFlowInstance={row=>openFlowInstance(row)} onNewFlow={()=>startWriting()} />;
 
   return (
     <>
       <ExpressionLayout layout={state}/>
-      <DesktopShell onLibrary={()=>setLibrary(value=>value==="open"?"held":"open")} world={workspace.current.context?.world} onLeaveWorld={leaveEpiWorld} returnTo={workspace.current.context?.trail?.slice(-1)[0]} onReturn={()=>window.dispatchEvent(new Event("oi:context-return"))} mode={mode} onMode={enterMode} windowLights={windowLights} onTabPresentation={presentation=>execute(`frame.tabs:${presentation}`)} onToggleNavigator={()=>navigatorRef.current ? dismissWorld() : summonWorld()} onCloseNavigator={dismissWorld} native={kernel.transport.kind==="tauri"} namingRequest={namingRequest} onNamingHandled={()=>setNamingRequest(null)}
+      <DesktopShell left={leftHost} onLibrary={()=>setLibrary(value=>value==="open"?"held":"open")} world={workspace.current.context?.world} onLeaveWorld={leaveEpiWorld} returnTo={workspace.current.context?.trail?.slice(-1)[0]} onReturn={()=>window.dispatchEvent(new Event("oi:context-return"))} mode={mode} onMode={enterMode} windowLights={windowLights} onTabPresentation={presentation=>execute(`frame.tabs:${presentation}`)} onToggleNavigator={()=>navigatorRef.current ? dismissWorld() : summonWorld()} onCloseNavigator={dismissWorld} native={kernel.transport.kind==="tauri"} namingRequest={namingRequest} onNamingHandled={()=>setNamingRequest(null)}
         arrangementActions={<ArrangementActions state={state} execute={execute} openFrameMenu={openFrameMenu} nativeWindows={kernel.transport.kind==="tauri"}/>}
         subject={{ref:subjectRef,title:subjectTitle,context:<><h2>{subjectTitle}</h2>{subjectBinding?.flow&&<p data-subject-flow-ref={subjectBinding.flow.flowRef}>Working through <code>{subjectBinding.flow.flowRef}</code></p>}{subjectBuffer ? <p>{subjectBuffer.project} · {subjectBuffer.dirty ? "Unsaved changes" : "Saved"}</p> : subjectBinding?.project ? <p>{subjectBinding.project}</p> : <p>Select a surface to inspect its context.</p>}</>,history:subjectHistory}}
         right={agentLayer}
@@ -1675,7 +1698,7 @@ export function CradleFrame({onComposed}:{onComposed?:()=>void}) {
             onCard={async () => {
               const form=DOCUMENT_FORMS.find(candidate=>candidate.kind==="document-epi-card");
               if(!form)throw new Error("The Epi-Card form is not offered by the document roster");
-              await openFile(await resolveDocumentForm(kernel.transport,form,kernel.snapshot.navigator?.root?.work.projects));
+              await openFile((await createFormInPlace(kernel.transport,form,{project:workspace.current.project,projects:kernel.snapshot.navigator?.root?.work.projects})).location);
             }}
             onWiki={(() => {
             const reading=kernel.snapshot.navigator;
@@ -1724,7 +1747,7 @@ export function CradleFrame({onComposed}:{onComposed?:()=>void}) {
         <button className="library-scrim" aria-label="Close the Library" onClick={()=>setLibrary("held")}/>
         <div className="library-sheet"><LibraryBrowser mode={mode} onMessage={message=>setWindowError(message)} onOpen={(item,how)=>window.dispatchEvent(new CustomEvent("oi:library-open",{detail:{item,how}}))}/></div>
       </div></Suspense>}
-      {searchOpen && <SearchOverlay leader={leader.shift} onLeaderChange={leader.change} shortcutError={leader.error} project={workspace.current.project} onClose={()=>setSearchOpen(false)} onOpen={openKnowledge} />}
+      {searchOpen && <SearchOverlay typed={{registers:["",...(kernel.snapshot.navigator?.root?.work.projects??[]).map(entry=>entry.name)],onOpenChat:leftHost.onOpenChat,onOpenFlow:row=>openFlowInstance(row),onOpenAgents:leftHost.onNewAgent,actions:[{label:"New chat",hint:"Start a fresh conversation",run:leftHost.onNewChat!},{label:"New flow",hint:"Start writing",run:leftHost.onNewFlow!},...(["base","factory","expressions","techne","settings"] as const).map(id=>({label:`Go to ${id==="base"?"Base":MODE_CURATION[id].label}`,hint:"Mode",run:()=>enterMode(id)}))]}} leader={leader.shift} onLeaderChange={leader.change} shortcutError={leader.error} project={workspace.current.project} onClose={()=>setSearchOpen(false)} onOpen={openKnowledge} />}
       {Object.entries(surfaceErrors).map(([id, error]) => (
         <SurfaceErrorOverlay key={id} surfaceId={id} error={error} onRetry={() => retrySurfaceOpen(id)} />
       ))}
