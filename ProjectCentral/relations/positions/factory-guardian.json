@@ -1,0 +1,19 @@
+{
+  "schema": "central.world-position/v1",
+  "ref": "central:position:project:O-I:factory-guardian",
+  "revision": "r1",
+  "slug": "factory-guardian",
+  "label": "Software Factory Guardian",
+  "enclosing_world_ref": "project:O-I",
+  "enclosing_co_internality_ref": null,
+  "role_ref": "role:product-guardian",
+  "purpose": "Steward the Software Factory product: transformation.",
+  "purpose_ref": "central:source:control:root:Control/agents/expressions/factory-guardian/OFFICE.md",
+  "stewards_ref": "project:Factory",
+  "eligible_agent_refs": [
+    "agent/factory-guardian"
+  ],
+  "profile_ref": "profile/factory-guardian",
+  "continuity_ref": null,
+  "handle": "@factory-guardian"
+}

@@ -1,0 +1,19 @@
+{
+  "schema": "central.world-position/v1",
+  "ref": "central:position:project:O-I:aikit-guardian",
+  "revision": "r1",
+  "slug": "aikit-guardian",
+  "label": "AIKit Product Guardian",
+  "enclosing_world_ref": "project:O-I",
+  "enclosing_co_internality_ref": null,
+  "role_ref": "role:product-guardian",
+  "purpose": "Steward the AIKit product: potency.",
+  "purpose_ref": "central:source:control:root:Control/agents/expressions/aikit-guardian/OFFICE.md",
+  "stewards_ref": "project:ai-kit",
+  "eligible_agent_refs": [
+    "agent/aikit-guardian"
+  ],
+  "profile_ref": "profile/aikit-guardian",
+  "continuity_ref": null,
+  "handle": "@aikit-guardian"
+}

@@ -1,0 +1,17 @@
+{
+  "schema": "central.world-position/v1",
+  "ref": "central:position:project:O-I:aletheia-5",
+  "revision": "r1",
+  "slug": "aletheia-5",
+  "label": "Aletheia 5 (M5 Epii × S5′ Aletheia)",
+  "enclosing_world_ref": "project:O-I",
+  "enclosing_co_internality_ref": null,
+  "role_ref": "role:aletheia",
+  "purpose": "Disclosure and Technē: receive the M5 (Epii) domain's actual performance and Return through S5′ Aletheia. First proving instance of the six Aletheia_i positions.",
+  "purpose_ref": "central:source:project:Actuation:docs/EPI-LOGOS-AGENT-ARCHITECTURE.md",
+  "stewards_ref": null,
+  "eligible_agent_refs": [],
+  "profile_ref": null,
+  "continuity_ref": null,
+  "handle": "@aletheia-5"
+}

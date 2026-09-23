@@ -1,0 +1,19 @@
+{
+  "schema": "central.world-position/v1",
+  "ref": "central:position:project:O-I:ql-guardian",
+  "revision": "r1",
+  "slug": "ql-guardian",
+  "label": "Quaternal Logic Guardian",
+  "enclosing_world_ref": "project:O-I",
+  "enclosing_co_internality_ref": null,
+  "role_ref": "role:product-guardian",
+  "purpose": "Steward the Quaternal Logic product: transcendent relation.",
+  "purpose_ref": "central:source:control:root:Control/agents/expressions/ql-guardian/OFFICE.md",
+  "stewards_ref": "project:quaternal-logic",
+  "eligible_agent_refs": [
+    "agent/ql-guardian"
+  ],
+  "profile_ref": "profile/ql-guardian",
+  "continuity_ref": null,
+  "handle": "@ql-guardian"
+}
