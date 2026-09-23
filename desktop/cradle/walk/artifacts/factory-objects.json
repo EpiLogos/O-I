@@ -1,0 +1,267 @@
+{
+  "schema": "oi.cradle.walk.scenario/v1",
+  "scenario": "factory-objects",
+  "spec_ref": "docs/cradle/11-FACTORY.md §6 §7 F16",
+  "grade": "B",
+  "binding": null,
+  "generated_at": "2026-09-23T01:21:09.104Z",
+  "environment": {
+    "base_url": "http://localhost:4473",
+    "bridge_url": "http://127.0.0.1:4479",
+    "viewport": "1280x820",
+    "browser_engine": "chromium",
+    "bundle": "walk (WALK=1) served by vite preview",
+    "build_input": {
+      "mode": "fresh-build",
+      "bundle_fingerprint": "9e6df06a9ff3937cc0b42ac748f0648c021d6c32c4d7f92b80a9a2a066864cda"
+    },
+    "node": "v24.16.0",
+    "platform": "darwin",
+    "source": {
+      "repository_root": "/Users/admin/Central/worktrees/ui-build/lane3-factory",
+      "repository_head": "a7538d02394293bad3c32037bdbbb3de0a2b7a3d",
+      "tracked_changes": [
+        "desktop/cradle/walk/artifacts/background-completion.json",
+        "desktop/cradle/walk/artifacts/factory-desk-f1-reading.png",
+        "desktop/cradle/walk/artifacts/factory-desk-f2-empty.png",
+        "desktop/cradle/walk/artifacts/factory-desk-f3-partial.png",
+        "desktop/cradle/walk/artifacts/factory-desk-f4-needs-you.png",
+        "desktop/cradle/walk/artifacts/factory-desk-factory-desk-1000-dark.png",
+        "desktop/cradle/walk/artifacts/factory-desk-factory-desk-1000-light.png",
+        "desktop/cradle/walk/artifacts/factory-desk-factory-desk-1440-dark.png",
+        "desktop/cradle/walk/artifacts/factory-desk-factory-desk-1440-light.png",
+        "desktop/cradle/walk/artifacts/factory-desk-factory-desk-760-dark.png",
+        "desktop/cradle/walk/artifacts/factory-desk-factory-desk-760-light.png",
+        "desktop/cradle/walk/artifacts/factory-desk-failure.png",
+        "desktop/cradle/walk/artifacts/factory-desk.json",
+        "desktop/cradle/walk/artifacts/factory-development-failure.png",
+        "desktop/cradle/walk/artifacts/factory-development.json",
+        "desktop/cradle/walk/artifacts/factory-run-f12-handoff-empty.png",
+        "desktop/cradle/walk/artifacts/factory-run-f13-before.png",
+        "desktop/cradle/walk/artifacts/factory-run-f13-recognised.png",
+        "desktop/cradle/walk/artifacts/factory-run-f6-queued-live.png",
+        "desktop/cradle/walk/artifacts/factory-run-f8-no-units.png",
+        "desktop/cradle/walk/artifacts/factory-run-factory-run-map-1000-dark.png",
+        "desktop/cradle/walk/artifacts/factory-run-factory-run-map-1000-light.png",
+        "desktop/cradle/walk/artifacts/factory-run-factory-run-map-1440-dark.png",
+        "desktop/cradle/walk/artifacts/factory-run-factory-run-map-1440-light.png",
+        "desktop/cradle/walk/artifacts/factory-run-factory-run-map-760-dark.png",
+        "desktop/cradle/walk/artifacts/factory-run-factory-run-map-760-light.png",
+        "desktop/cradle/walk/artifacts/factory-run-live.png",
+        "desktop/cradle/walk/artifacts/factory-run-unit-page.png",
+        "desktop/cradle/walk/artifacts/factory-run.json",
+        "desktop/cradle/walk/artifacts/factory-tasks-f15-direct.png",
+        "desktop/cradle/walk/artifacts/factory-tasks-factory-tasks-joined-1000-dark.png",
+        "desktop/cradle/walk/artifacts/factory-tasks-factory-tasks-joined-1000-light.png",
+        "desktop/cradle/walk/artifacts/factory-tasks-factory-tasks-joined-1440-dark.png",
+        "desktop/cradle/walk/artifacts/factory-tasks-factory-tasks-joined-1440-light.png",
+        "desktop/cradle/walk/artifacts/factory-tasks-factory-tasks-joined-760-dark.png",
+        "desktop/cradle/walk/artifacts/factory-tasks-factory-tasks-joined-760-light.png",
+        "desktop/cradle/walk/artifacts/factory-tasks.json",
+        "desktop/cradle/walk/artifacts/factory-trajectory-f10-order.png",
+        "desktop/cradle/walk/artifacts/factory-trajectory-f11-paused.png",
+        "desktop/cradle/walk/artifacts/factory-trajectory-factory-trajectory-1000-dark.png",
+        "desktop/cradle/walk/artifacts/factory-trajectory-factory-trajectory-1000-light.png",
+        "desktop/cradle/walk/artifacts/factory-trajectory-factory-trajectory-1440-dark.png",
+        "desktop/cradle/walk/artifacts/factory-trajectory-factory-trajectory-1440-light.png",
+        "desktop/cradle/walk/artifacts/factory-trajectory-factory-trajectory-760-dark.png",
+        "desktop/cradle/walk/artifacts/factory-trajectory-factory-trajectory-760-light.png",
+        "desktop/cradle/walk/artifacts/factory-trajectory-failure.png",
+        "desktop/cradle/walk/artifacts/factory-trajectory.json"
+      ],
+      "dirty_digest": "01713b517bce6ec7bc35cc5128d354d6b36fe291ff6a22b94fa41c408fad9893",
+      "engine_provenance_path": "/Users/admin/Central/worktrees/ui-build/lane3-factory/packages/oi-design-system/expressions-engine/PROVENANCE.json",
+      "engine_source": "EpiLogos/Point-Cloud-Demo",
+      "engine_revision": "91db8428fc9dfba06cd258ec5a58e7dd9eef5313"
+    }
+  },
+  "passed": true,
+  "error": null,
+  "duration_ms": 51100,
+  "checks": [
+    {
+      "ok": true,
+      "label": "Work unit page: fields EQUAL the owner inspection (concern, must change, checks, attempts)",
+      "data": {
+        "title": "Release notes list their sections alphabetically, so readers meet Fixes before Breaking changes.",
+        "kind": "factory-unit",
+        "ref": "%2Fprivate%2Fvar%2Ffolders%2Fq0%2Fg_91z7355tb58425qwg3xcy80000gn%2FT%2Foi-cradle-editor-3NmDpa%2FWork%2FSpecimen%2F.factory%2Fdevelopment-state.json|run%3A01M35K50E0DFM95TCWTQB8ESQM|workflow-unit%3A34WCVBSXYDJ6KWYCZYTAN8EA9Y",
+        "fields": {
+          "Kind": "Work unit of Release notes section order",
+          "Standing": "Returned",
+          "Concern": "Release notes list their sections alphabetically, so readers meet Fixes before Breaking changes.",
+          "Must change": "An exact account of where the generator decides section order, citing file and line at the basis revision.",
+          "Hands back": "Return the cited decision point, the current test result and the section order the generator produces today.",
+          "Required checks": "3 of 3 passed",
+          "Depends on": "–",
+          "May": "execute: the existing release-notes tests; read: the Specimen repository at its basis revision",
+          "Stops when": "Stop on a changed basis revision, missing authority or any write outside the permitted paths; retain every partial outcome.",
+          "Escalates when": "Escalate when the section order is decided somewhere other than the release-notes generator, or when a test cannot be run.",
+          "Attempts": "1",
+          "Relations": "passedEvery cited file and line exists at the basis revision.passedThe account names the one function that orders sections.passedThe existing release-notes tests were run and their result is quoted.attempt 1Attempt 1 · returned"
+        }
+      }
+    },
+    {
+      "ok": true,
+      "label": "Verbatim material sits only behind Show raw (closed)"
+    },
+    {
+      "ok": true,
+      "label": "F16: Pop out asks the frame for the page's own window carrying the SAME identity (kind and ref)",
+      "data": {
+        "popped": {
+          "object": {
+            "project": "Specimen",
+            "kind": "factory-unit",
+            "ref": "%2Fprivate%2Fvar%2Ffolders%2Fq0%2Fg_91z7355tb58425qwg3xcy80000gn%2FT%2Foi-cradle-editor-3NmDpa%2FWork%2FSpecimen%2F.factory%2Fdevelopment-state.json|run%3A01M35K50E0DFM95TCWTQB8ESQM|workflow-unit%3A34WCVBSXYDJ6KWYCZYTAN8EA9Y",
+            "title": "Work unit"
+          },
+          "popOut": true
+        }
+      }
+    },
+    {
+      "ok": true,
+      "label": "F16: docking the same identity back shows the same page, field for field (re-read from the owner)",
+      "data": {
+        "docked": {
+          "title": "Release notes list their sections alphabetically, so readers meet Fixes before Breaking changes.",
+          "kind": "factory-unit",
+          "ref": "%2Fprivate%2Fvar%2Ffolders%2Fq0%2Fg_91z7355tb58425qwg3xcy80000gn%2FT%2Foi-cradle-editor-3NmDpa%2FWork%2FSpecimen%2F.factory%2Fdevelopment-state.json|run%3A01M35K50E0DFM95TCWTQB8ESQM|workflow-unit%3A34WCVBSXYDJ6KWYCZYTAN8EA9Y",
+          "fields": {
+            "Kind": "Work unit of Release notes section order",
+            "Standing": "Returned",
+            "Concern": "Release notes list their sections alphabetically, so readers meet Fixes before Breaking changes.",
+            "Must change": "An exact account of where the generator decides section order, citing file and line at the basis revision.",
+            "Hands back": "Return the cited decision point, the current test result and the section order the generator produces today.",
+            "Required checks": "3 of 3 passed",
+            "Depends on": "–",
+            "May": "execute: the existing release-notes tests; read: the Specimen repository at its basis revision",
+            "Stops when": "Stop on a changed basis revision, missing authority or any write outside the permitted paths; retain every partial outcome.",
+            "Escalates when": "Escalate when the section order is decided somewhere other than the release-notes generator, or when a test cannot be run.",
+            "Attempts": "1",
+            "Relations": "passedEvery cited file and line exists at the basis revision.passedThe account names the one function that orders sections.passedThe existing release-notes tests were run and their result is quoted.attempt 1Attempt 1 · returned"
+          }
+        }
+      }
+    },
+    {
+      "ok": true,
+      "label": "In place: one object page, no pane tab bar (A4)"
+    },
+    {
+      "ok": true,
+      "label": "Check page: the assertion and its result from the owner's verification receipt",
+      "data": {
+        "title": "Every cited file and line exists at the basis revision.",
+        "kind": "factory-check",
+        "ref": "%2Fprivate%2Fvar%2Ffolders%2Fq0%2Fg_91z7355tb58425qwg3xcy80000gn%2FT%2Foi-cradle-editor-3NmDpa%2FWork%2FSpecimen%2F.factory%2Fdevelopment-state.json|run%3A01M35K50E0DFM95TCWTQB8ESQM|workflow-unit%3A34WCVBSXYDJ6KWYCZYTAN8EA9Y|Every%20cited%20file%20and%20line%20exists%20at%20the%20basis%20revision.",
+        "fields": {
+          "Assertion": "Every cited file and line exists at the basis revision.",
+          "Basis": "Release notes list their sections alphabetically, so readers meet Fixes before Breaking changes.",
+          "Tested state": "specimen-fixture-r1",
+          "Result": "passed",
+          "What remains": "Nothing for this check."
+        }
+      }
+    },
+    {
+      "ok": true,
+      "label": "Attempt page: agent, harness, model and status EQUAL the owner's attempt",
+      "data": {
+        "title": "specimen-reviewer · The ordering rule needs an independent reading against the changelog before it is integrated.",
+        "kind": "factory-attempt",
+        "ref": "%2Fprivate%2Fvar%2Ffolders%2Fq0%2Fg_91z7355tb58425qwg3xcy80000gn%2FT%2Foi-cradle-editor-3NmDpa%2FWork%2FSpecimen%2F.factory%2Fdevelopment-state.json|run%3A01M35K50E0DFM95TCWTQB8ESQM|attempt%3Aspecimen-review-1",
+        "fields": {
+          "Agent": "specimen-reviewer",
+          "Harness": "specimen",
+          "Model": "text-model",
+          "Route": "none",
+          "Session": "recorded on the attempt",
+          "Status": "active",
+          "Verifications": "unknown at specime (1 checks)"
+        }
+      }
+    },
+    {
+      "ok": true,
+      "label": "Tool call page: the shared tape-event page, re-read from the owner journal",
+      "data": {
+        "title": "run ls",
+        "kind": "tape-event",
+        "ref": "agent-session/specimen-review#7,8,9,10",
+        "fields": {
+          "What": "run · ls",
+          "When": "Not recorded — the journal carries no time for this event.",
+          "Session": "agent-session/specimen-review",
+          "Provider call": "call_00_31n6MkmmZEcXgdwgdQye3796",
+          "Journal": "4 owner events · cursor 7–10"
+        }
+      }
+    },
+    {
+      "ok": true,
+      "label": "Agent page: opened in the centre from the Agents tab, identity from the roster row",
+      "data": {
+        "title": "Specimen reviewer",
+        "kind": "factory-agent",
+        "ref": "agent/specimen-reviewer",
+        "fields": {
+          "Identity": "agent/specimen-reviewer"
+        }
+      }
+    }
+  ],
+  "ops": [
+    {
+      "ok": true,
+      "op": "info",
+      "duration_ms": 0.1,
+      "data": {
+        "schema": "oi.cradle.walk/v1",
+        "mounted_at": "2026-09-23T01:21:09.262Z",
+        "transport": {
+          "kind": "bridge",
+          "url": "http://127.0.0.1:4479"
+        },
+        "url": "http://localhost:4473/"
+      }
+    },
+    {
+      "ok": true,
+      "op": "info",
+      "duration_ms": 0,
+      "data": {
+        "schema": "oi.cradle.walk/v1",
+        "mounted_at": "2026-09-23T01:21:11.369Z",
+        "transport": {
+          "kind": "bridge",
+          "url": "http://127.0.0.1:4479"
+        },
+        "url": "http://localhost:4473/"
+      }
+    },
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 43,
+      "data": {
+        "file": "factory-objects-unit-page.png"
+      }
+    },
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 70,
+      "data": {
+        "file": "factory-objects-agent-page.png"
+      }
+    }
+  ],
+  "metrics": {},
+  "screenshots": [
+    "factory-objects-unit-page.png",
+    "factory-objects-agent-page.png"
+  ]
+}

@@ -4,7 +4,7 @@
   "spec_ref": "docs/cradle/11-FACTORY.md §7 F6 F7 F8 F12 F13",
   "grade": "B",
   "binding": null,
-  "generated_at": "2026-09-23T00:41:28.510Z",
+  "generated_at": "2026-09-23T01:19:19.178Z",
   "environment": {
     "base_url": "http://localhost:4473",
     "bridge_url": "http://127.0.0.1:4479",
@@ -13,22 +13,63 @@
     "bundle": "walk (WALK=1) served by vite preview",
     "build_input": {
       "mode": "fresh-build",
-      "bundle_fingerprint": "c65e69a8dfaee9c0c644eb8179eae75bfc57dc52a5238a3d065141d7579c0737"
+      "bundle_fingerprint": "9e6df06a9ff3937cc0b42ac748f0648c021d6c32c4d7f92b80a9a2a066864cda"
     },
     "node": "v24.16.0",
     "platform": "darwin",
     "source": {
       "repository_root": "/Users/admin/Central/worktrees/ui-build/lane3-factory",
-      "repository_head": "1fbe77e522126ea066f19ded44c79395aa3c8798",
+      "repository_head": "a7538d02394293bad3c32037bdbbb3de0a2b7a3d",
       "tracked_changes": [
-        "desktop/cradle/scripts/receipt-lint.mjs",
-        "desktop/cradle/src/contributions/factory/desk/RunPage.tsx",
-        "desktop/cradle/src/contributions/factory/desk/RunTrajectory.tsx",
-        "desktop/cradle/src/contributions/factory/desk/runModel.ts",
-        "desktop/cradle/tests/factory-run-model.test.mjs",
-        "desktop/cradle/walk/run.mjs"
+        "desktop/cradle/walk/artifacts/background-completion.json",
+        "desktop/cradle/walk/artifacts/factory-desk-f1-reading.png",
+        "desktop/cradle/walk/artifacts/factory-desk-f2-empty.png",
+        "desktop/cradle/walk/artifacts/factory-desk-f3-partial.png",
+        "desktop/cradle/walk/artifacts/factory-desk-f4-needs-you.png",
+        "desktop/cradle/walk/artifacts/factory-desk-factory-desk-1000-dark.png",
+        "desktop/cradle/walk/artifacts/factory-desk-factory-desk-1000-light.png",
+        "desktop/cradle/walk/artifacts/factory-desk-factory-desk-1440-dark.png",
+        "desktop/cradle/walk/artifacts/factory-desk-factory-desk-1440-light.png",
+        "desktop/cradle/walk/artifacts/factory-desk-factory-desk-760-dark.png",
+        "desktop/cradle/walk/artifacts/factory-desk-factory-desk-760-light.png",
+        "desktop/cradle/walk/artifacts/factory-desk-failure.png",
+        "desktop/cradle/walk/artifacts/factory-desk.json",
+        "desktop/cradle/walk/artifacts/factory-development-failure.png",
+        "desktop/cradle/walk/artifacts/factory-development.json",
+        "desktop/cradle/walk/artifacts/factory-run-f12-handoff-empty.png",
+        "desktop/cradle/walk/artifacts/factory-run-f13-before.png",
+        "desktop/cradle/walk/artifacts/factory-run-f13-recognised.png",
+        "desktop/cradle/walk/artifacts/factory-run-f6-queued-live.png",
+        "desktop/cradle/walk/artifacts/factory-run-f8-no-units.png",
+        "desktop/cradle/walk/artifacts/factory-run-factory-run-map-1000-dark.png",
+        "desktop/cradle/walk/artifacts/factory-run-factory-run-map-1000-light.png",
+        "desktop/cradle/walk/artifacts/factory-run-factory-run-map-1440-dark.png",
+        "desktop/cradle/walk/artifacts/factory-run-factory-run-map-1440-light.png",
+        "desktop/cradle/walk/artifacts/factory-run-factory-run-map-760-dark.png",
+        "desktop/cradle/walk/artifacts/factory-run-factory-run-map-760-light.png",
+        "desktop/cradle/walk/artifacts/factory-run-live.png",
+        "desktop/cradle/walk/artifacts/factory-run-unit-page.png",
+        "desktop/cradle/walk/artifacts/factory-run.json",
+        "desktop/cradle/walk/artifacts/factory-tasks-f15-direct.png",
+        "desktop/cradle/walk/artifacts/factory-tasks-factory-tasks-joined-1000-dark.png",
+        "desktop/cradle/walk/artifacts/factory-tasks-factory-tasks-joined-1000-light.png",
+        "desktop/cradle/walk/artifacts/factory-tasks-factory-tasks-joined-1440-dark.png",
+        "desktop/cradle/walk/artifacts/factory-tasks-factory-tasks-joined-1440-light.png",
+        "desktop/cradle/walk/artifacts/factory-tasks-factory-tasks-joined-760-dark.png",
+        "desktop/cradle/walk/artifacts/factory-tasks-factory-tasks-joined-760-light.png",
+        "desktop/cradle/walk/artifacts/factory-tasks.json",
+        "desktop/cradle/walk/artifacts/factory-trajectory-f10-order.png",
+        "desktop/cradle/walk/artifacts/factory-trajectory-f11-paused.png",
+        "desktop/cradle/walk/artifacts/factory-trajectory-factory-trajectory-1000-dark.png",
+        "desktop/cradle/walk/artifacts/factory-trajectory-factory-trajectory-1000-light.png",
+        "desktop/cradle/walk/artifacts/factory-trajectory-factory-trajectory-1440-dark.png",
+        "desktop/cradle/walk/artifacts/factory-trajectory-factory-trajectory-1440-light.png",
+        "desktop/cradle/walk/artifacts/factory-trajectory-factory-trajectory-760-dark.png",
+        "desktop/cradle/walk/artifacts/factory-trajectory-factory-trajectory-760-light.png",
+        "desktop/cradle/walk/artifacts/factory-trajectory-failure.png",
+        "desktop/cradle/walk/artifacts/factory-trajectory.json"
       ],
-      "dirty_digest": "1f87d5569cfc007ef83da35ffbdf4ca46834e6f320d49fd978e27cd8002fd9f4",
+      "dirty_digest": "01713b517bce6ec7bc35cc5128d354d6b36fe291ff6a22b94fa41c408fad9893",
       "engine_provenance_path": "/Users/admin/Central/worktrees/ui-build/lane3-factory/packages/oi-design-system/expressions-engine/PROVENANCE.json",
       "engine_source": "EpiLogos/Point-Cloud-Demo",
       "engine_revision": "91db8428fc9dfba06cd258ec5a58e7dd9eef5313"
@@ -36,7 +77,7 @@
   },
   "passed": true,
   "error": null,
-  "duration_ms": 10870,
+  "duration_ms": 7954,
   "checks": [
     {
       "ok": true,
@@ -80,7 +121,7 @@
       "ok": true,
       "label": "Header facts: state · project · started · units · Git basis from the owner's telemetry",
       "data": {
-        "facts": "○ Queued · Specimen · started just now · 4 units · branch main (clean)",
+        "facts": "○ Queued · Specimen · started 3h ago · 4 units · branch main (clean)",
         "ownerGit": {
           "branch": "main",
           "clean": true
@@ -120,8 +161,8 @@
       "ok": true,
       "label": "F7: exactly one unit is outlined (2px ink) and it EQUALS the owner build view's frontier",
       "data": {
-        "frontierRef": "workflow-unit:5RS5YNSKF20MAH2Z2R94JXJBY3",
-        "ownerFrontier": "workflow-unit:5RS5YNSKF20MAH2Z2R94JXJBY3",
+        "frontierRef": "workflow-unit:7X7VNX59FRMDHTJFV2H25GM2ZP",
+        "ownerFrontier": "workflow-unit:7X7VNX59FRMDHTJFV2H25GM2ZP",
         "border": "2px"
       }
     },
@@ -138,21 +179,21 @@
       "label": "F7 geometry: the fork's units share a column (x equal ±0.5px) on different lanes, and the gate bar spans exactly their lanes (top/bottom equal ±0.5px)",
       "data": {
         "draft": {
-          "x": 1096,
-          "y": 348.59375,
-          "w": 196,
-          "h": 78
+          "x": 742,
+          "y": 352.59375,
+          "w": 172,
+          "h": 84
         },
         "review": {
-          "x": 1096,
-          "y": 452.59375,
-          "w": 196,
-          "h": 78
+          "x": 742,
+          "y": 460.59375,
+          "w": 172,
+          "h": 84
         },
         "gate": {
-          "x": 919,
-          "top": 348.59375,
-          "bottom": 530.59375
+          "x": 680,
+          "top": 352.59375,
+          "bottom": 544.59375
         }
       }
     },
@@ -161,12 +202,12 @@
       "label": "The lane geometry is stable across a viewport change (the map scrolls; it never reflows lanes)",
       "data": {
         "planeBefore": {
-          "w": 1312,
-          "h": 426
+          "w": 888,
+          "h": 444
         },
         "planeAfter": {
-          "w": 1312,
-          "h": 426
+          "w": 888,
+          "h": 444
         }
       }
     },
@@ -223,16 +264,16 @@
       "label": "Live: one row per unit, each leg status EQUALS the owner's",
       "data": {
         "legs": {
-          "workflow-unit:6Y8A49M0QWBPHE9BBW0YXMG0KE": "not-started",
-          "workflow-unit:6X11TZ0HNX4FBXMEJRZRHYSGAF": "not-started",
-          "workflow-unit:5RS5YNSKF20MAH2Z2R94JXJBY3": "active",
-          "workflow-unit:58ZW32JZACRTQ7WWAHWXQHKRNG": "returned"
+          "workflow-unit:7XE7KPK0B0QJDQTN9XDNDXGY96": "not-started",
+          "workflow-unit:7BV0QBDM0SMWKTJMT4BAMDFA4X": "not-started",
+          "workflow-unit:7X7VNX59FRMDHTJFV2H25GM2ZP": "active",
+          "workflow-unit:34WCVBSXYDJ6KWYCZYTAN8EA9Y": "returned"
         },
         "ownerLegs": {
-          "workflow-unit:58ZW32JZACRTQ7WWAHWXQHKRNG": "returned",
-          "workflow-unit:5RS5YNSKF20MAH2Z2R94JXJBY3": "active",
-          "workflow-unit:6X11TZ0HNX4FBXMEJRZRHYSGAF": "not-started",
-          "workflow-unit:6Y8A49M0QWBPHE9BBW0YXMG0KE": "not-started"
+          "workflow-unit:34WCVBSXYDJ6KWYCZYTAN8EA9Y": "returned",
+          "workflow-unit:7BV0QBDM0SMWKTJMT4BAMDFA4X": "not-started",
+          "workflow-unit:7X7VNX59FRMDHTJFV2H25GM2ZP": "active",
+          "workflow-unit:7XE7KPK0B0QJDQTN9XDNDXGY96": "not-started"
         }
       }
     },
@@ -266,7 +307,7 @@
         "requestEvidenceOnReturn": "Factory developmental provider error: Build(SubjectNotFound(\"return:specimen/survey-section-order-1\"))",
         "sections": [
           "OUTCOME",
-          "VERIFICATION · TESTED AT SPECIME",
+          "VERIFICATION · TESTED AT SPECIMEN-FIXTURE-R1",
           "OBSERVATIONS",
           "REMAINING WORK"
         ]
@@ -277,10 +318,10 @@
       "label": "F13: Recognise called the owner's native recognition — the owner's receipt shows, and the owner's journey now carries a Recognition of the Return",
       "data": {
         "recognition": {
-          "recognition_ref": "recognition:desk-18d7cc6237910e00-1289-0",
+          "recognition_ref": "recognition:desk-18d7ce723c0a19b0-68038-0",
           "subject_ref": "return:specimen/survey-section-order-1",
           "basis_refs": [
-            "recognition:desk-18d7cc6237910e00-1289-0",
+            "recognition:desk-18d7ce723c0a19b0-68038-0",
             "return:specimen/survey-section-order-1",
             "evidence:specimen/survey-citations",
             "evidence:specimen/survey-test-run",
@@ -308,7 +349,7 @@
       "duration_ms": 0.1,
       "data": {
         "schema": "oi.cradle.walk/v1",
-        "mounted_at": "2026-09-23T00:41:28.710Z",
+        "mounted_at": "2026-09-23T01:19:19.364Z",
         "transport": {
           "kind": "bridge",
           "url": "http://127.0.0.1:4479"
@@ -322,7 +363,7 @@
       "duration_ms": 0,
       "data": {
         "schema": "oi.cradle.walk/v1",
-        "mounted_at": "2026-09-23T00:41:30.052Z",
+        "mounted_at": "2026-09-23T01:19:20.691Z",
         "transport": {
           "kind": "bridge",
           "url": "http://127.0.0.1:4479"
@@ -333,7 +374,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 63,
+      "duration_ms": 54,
       "data": {
         "file": "factory-run-f6-queued-live.png"
       }
@@ -341,7 +382,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 54,
+      "duration_ms": 36,
       "data": {
         "file": "factory-run-f12-handoff-empty.png"
       }
@@ -349,7 +390,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 71,
+      "duration_ms": 43,
       "data": {
         "file": "factory-run-f8-no-units.png"
       }
@@ -357,7 +398,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 78,
+      "duration_ms": 100,
       "data": {
         "file": "factory-run-factory-run-map-1440-light.png"
       }
@@ -365,7 +406,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 89,
+      "duration_ms": 39,
       "data": {
         "file": "factory-run-factory-run-map-1000-light.png"
       }
@@ -373,7 +414,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 45,
+      "duration_ms": 35,
       "data": {
         "file": "factory-run-factory-run-map-760-light.png"
       }
@@ -381,7 +422,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 144,
+      "duration_ms": 98,
       "data": {
         "file": "factory-run-factory-run-map-1440-dark.png"
       }
@@ -389,7 +430,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 98,
+      "duration_ms": 78,
       "data": {
         "file": "factory-run-factory-run-map-1000-dark.png"
       }
@@ -397,7 +438,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 80,
+      "duration_ms": 52,
       "data": {
         "file": "factory-run-factory-run-map-760-dark.png"
       }
@@ -405,7 +446,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 114,
+      "duration_ms": 50,
       "data": {
         "file": "factory-run-unit-page.png"
       }
@@ -413,7 +454,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 82,
+      "duration_ms": 60,
       "data": {
         "file": "factory-run-live.png"
       }
@@ -429,7 +470,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 69,
+      "duration_ms": 67,
       "data": {
         "file": "factory-run-f13-recognised.png"
       }

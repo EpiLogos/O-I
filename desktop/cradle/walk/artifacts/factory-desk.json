@@ -4,7 +4,7 @@
   "spec_ref": "docs/cradle/11-FACTORY.md §7 F1 F2 F3 F4 F5",
   "grade": "B",
   "binding": null,
-  "generated_at": "2026-09-23T00:13:36.750Z",
+  "generated_at": "2026-09-23T01:18:59.891Z",
   "environment": {
     "base_url": "http://localhost:4473",
     "bridge_url": "http://127.0.0.1:4479",
@@ -13,21 +13,63 @@
     "bundle": "walk (WALK=1) served by vite preview",
     "build_input": {
       "mode": "fresh-build",
-      "bundle_fingerprint": "86e3e584d841a9a3e13b1b876ddb6fa6b2300e2381030005ae37ca433dc90bc5"
+      "bundle_fingerprint": "9e6df06a9ff3937cc0b42ac748f0648c021d6c32c4d7f92b80a9a2a066864cda"
     },
     "node": "v24.16.0",
     "platform": "darwin",
     "source": {
       "repository_root": "/Users/admin/Central/worktrees/ui-build/lane3-factory",
-      "repository_head": "de19fac61e7ce799a7d7ca0aa6ce81317e633c00",
+      "repository_head": "a7538d02394293bad3c32037bdbbb3de0a2b7a3d",
       "tracked_changes": [
-        "desktop/cradle/scripts/receipt-lint.mjs",
-        "desktop/cradle/src/CradleFrame.tsx",
-        "desktop/cradle/src/contributions/factory/FactoryCentre.tsx",
-        "desktop/cradle/src/surface/retention.tsx",
-        "desktop/cradle/walk/run.mjs"
+        "desktop/cradle/walk/artifacts/background-completion.json",
+        "desktop/cradle/walk/artifacts/factory-desk-f1-reading.png",
+        "desktop/cradle/walk/artifacts/factory-desk-f2-empty.png",
+        "desktop/cradle/walk/artifacts/factory-desk-f3-partial.png",
+        "desktop/cradle/walk/artifacts/factory-desk-f4-needs-you.png",
+        "desktop/cradle/walk/artifacts/factory-desk-factory-desk-1000-dark.png",
+        "desktop/cradle/walk/artifacts/factory-desk-factory-desk-1000-light.png",
+        "desktop/cradle/walk/artifacts/factory-desk-factory-desk-1440-dark.png",
+        "desktop/cradle/walk/artifacts/factory-desk-factory-desk-1440-light.png",
+        "desktop/cradle/walk/artifacts/factory-desk-factory-desk-760-dark.png",
+        "desktop/cradle/walk/artifacts/factory-desk-factory-desk-760-light.png",
+        "desktop/cradle/walk/artifacts/factory-desk-failure.png",
+        "desktop/cradle/walk/artifacts/factory-desk.json",
+        "desktop/cradle/walk/artifacts/factory-development-failure.png",
+        "desktop/cradle/walk/artifacts/factory-development.json",
+        "desktop/cradle/walk/artifacts/factory-run-f12-handoff-empty.png",
+        "desktop/cradle/walk/artifacts/factory-run-f13-before.png",
+        "desktop/cradle/walk/artifacts/factory-run-f13-recognised.png",
+        "desktop/cradle/walk/artifacts/factory-run-f6-queued-live.png",
+        "desktop/cradle/walk/artifacts/factory-run-f8-no-units.png",
+        "desktop/cradle/walk/artifacts/factory-run-factory-run-map-1000-dark.png",
+        "desktop/cradle/walk/artifacts/factory-run-factory-run-map-1000-light.png",
+        "desktop/cradle/walk/artifacts/factory-run-factory-run-map-1440-dark.png",
+        "desktop/cradle/walk/artifacts/factory-run-factory-run-map-1440-light.png",
+        "desktop/cradle/walk/artifacts/factory-run-factory-run-map-760-dark.png",
+        "desktop/cradle/walk/artifacts/factory-run-factory-run-map-760-light.png",
+        "desktop/cradle/walk/artifacts/factory-run-live.png",
+        "desktop/cradle/walk/artifacts/factory-run-unit-page.png",
+        "desktop/cradle/walk/artifacts/factory-run.json",
+        "desktop/cradle/walk/artifacts/factory-tasks-f15-direct.png",
+        "desktop/cradle/walk/artifacts/factory-tasks-factory-tasks-joined-1000-dark.png",
+        "desktop/cradle/walk/artifacts/factory-tasks-factory-tasks-joined-1000-light.png",
+        "desktop/cradle/walk/artifacts/factory-tasks-factory-tasks-joined-1440-dark.png",
+        "desktop/cradle/walk/artifacts/factory-tasks-factory-tasks-joined-1440-light.png",
+        "desktop/cradle/walk/artifacts/factory-tasks-factory-tasks-joined-760-dark.png",
+        "desktop/cradle/walk/artifacts/factory-tasks-factory-tasks-joined-760-light.png",
+        "desktop/cradle/walk/artifacts/factory-tasks.json",
+        "desktop/cradle/walk/artifacts/factory-trajectory-f10-order.png",
+        "desktop/cradle/walk/artifacts/factory-trajectory-f11-paused.png",
+        "desktop/cradle/walk/artifacts/factory-trajectory-factory-trajectory-1000-dark.png",
+        "desktop/cradle/walk/artifacts/factory-trajectory-factory-trajectory-1000-light.png",
+        "desktop/cradle/walk/artifacts/factory-trajectory-factory-trajectory-1440-dark.png",
+        "desktop/cradle/walk/artifacts/factory-trajectory-factory-trajectory-1440-light.png",
+        "desktop/cradle/walk/artifacts/factory-trajectory-factory-trajectory-760-dark.png",
+        "desktop/cradle/walk/artifacts/factory-trajectory-factory-trajectory-760-light.png",
+        "desktop/cradle/walk/artifacts/factory-trajectory-failure.png",
+        "desktop/cradle/walk/artifacts/factory-trajectory.json"
       ],
-      "dirty_digest": "13fc150ae2bd38ee7f8ad2ce4e9c7f1bc115fa93ba182dcb6a71454b1492b016",
+      "dirty_digest": "01713b517bce6ec7bc35cc5128d354d6b36fe291ff6a22b94fa41c408fad9893",
       "engine_provenance_path": "/Users/admin/Central/worktrees/ui-build/lane3-factory/packages/oi-design-system/expressions-engine/PROVENANCE.json",
       "engine_source": "EpiLogos/Point-Cloud-Demo",
       "engine_revision": "91db8428fc9dfba06cd258ec5a58e7dd9eef5313"
@@ -35,7 +77,7 @@
   },
   "passed": true,
   "error": null,
-  "duration_ms": 19389,
+  "duration_ms": 15514,
   "checks": [
     {
       "ok": true,
@@ -77,7 +119,7 @@
       "ok": true,
       "label": "F5: no card carries run:/project: ref text",
       "data": {
-        "sample": "!\nQueued\n1\nMake the Specimen release notes follow the changelog's declared section order, so readers meet breaking changes first\nNext: The ordering rule needs an independent reading against the changelog before it is integrated.\nSpecimen · now\nSr\nSs"
+        "sample": "!\nQueued\n1\nMake the Specimen release notes follow the changelog's declared section order, so readers meet breaking changes first\nNext: The ordering rule needs an independent reading against the changelog before it is integrated.\nSpecimen · 3h\nSr\nSs"
       }
     },
     {
@@ -85,9 +127,9 @@
       "label": "F5: each footer names the project (Specimen) from its key, never a ref",
       "data": {
         "footers": [
-          "Specimen · now",
-          "Specimen · now",
-          "Specimen · now"
+          "Specimen · 3h",
+          "Specimen · 3h",
+          "Specimen · 3h"
         ]
       }
     },
@@ -96,9 +138,9 @@
       "label": "Units: one segment per owner work unit (A 4, B 2, C 0) — never a percentage",
       "data": {
         "unitCounts": {
-          "run:01M36QWHM0PFG7ER4ANRHW3W25": 4,
-          "run:01M36REVJ09E5YXSSS0DTXXX3E": 2,
-          "run:01M36S15G0QNF0HBC8T6VMDK03": 0
+          "run:01M35K50E0DFM95TCWTQB8ESQM": 4,
+          "run:01M35KQAC0GP70Q3QH9HV7J5XW": 2,
+          "run:01M35M9MA0EEXZ87Y0ZDBK9W1E": 0
         }
       }
     },
@@ -158,7 +200,7 @@
       "ok": true,
       "label": "← Desk returns to the same scroll: scrollTop and the card's top equal before/after (±0.5px)",
       "data": {
-        "scrollable": 275,
+        "scrollable": 273,
         "before": 90,
         "after": 90,
         "beforeTop": 36,
@@ -219,7 +261,7 @@
       "duration_ms": 0,
       "data": {
         "schema": "oi.cradle.walk/v1",
-        "mounted_at": "2026-09-23T00:13:37.243Z",
+        "mounted_at": "2026-09-23T01:19:00.201Z",
         "transport": {
           "kind": "bridge",
           "url": "http://127.0.0.1:4479"
@@ -233,7 +275,7 @@
       "duration_ms": 0,
       "data": {
         "schema": "oi.cradle.walk/v1",
-        "mounted_at": "2026-09-23T00:13:39.292Z",
+        "mounted_at": "2026-09-23T01:19:00.921Z",
         "transport": {
           "kind": "bridge",
           "url": "http://127.0.0.1:4479"
@@ -244,7 +286,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 135,
+      "duration_ms": 51,
       "data": {
         "file": "factory-desk-f1-reading.png"
       }
@@ -252,7 +294,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 107,
+      "duration_ms": 49,
       "data": {
         "file": "factory-desk-f4-needs-you.png"
       }
@@ -260,7 +302,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 138,
+      "duration_ms": 82,
       "data": {
         "file": "factory-desk-factory-desk-1440-light.png"
       }
@@ -268,7 +310,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 103,
+      "duration_ms": 52,
       "data": {
         "file": "factory-desk-factory-desk-1000-light.png"
       }
@@ -276,7 +318,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 161,
+      "duration_ms": 73,
       "data": {
         "file": "factory-desk-factory-desk-760-light.png"
       }
@@ -284,7 +326,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 112,
+      "duration_ms": 110,
       "data": {
         "file": "factory-desk-factory-desk-1440-dark.png"
       }
@@ -292,7 +334,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 155,
+      "duration_ms": 101,
       "data": {
         "file": "factory-desk-factory-desk-1000-dark.png"
       }
@@ -300,7 +342,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 104,
+      "duration_ms": 88,
       "data": {
         "file": "factory-desk-factory-desk-760-dark.png"
       }
@@ -308,7 +350,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 69,
+      "duration_ms": 71,
       "data": {
         "file": "factory-desk-f2-empty.png"
       }
@@ -316,7 +358,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 111,
+      "duration_ms": 81,
       "data": {
         "file": "factory-desk-f3-partial.png"
       }

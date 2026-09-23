@@ -1,24 +1,10 @@
 {
   "schema": "oi.cradle.walk.scenario/v1",
-  "scenario": "background-completion",
-  "spec_ref": "docs/experience/FACTORY-AGENCY.md §1 + handoff §4",
+  "scenario": "factory-real",
+  "spec_ref": "docs/cradle/11-FACTORY.md §7 F5 F6 F7 F12 (real Central-root runs, read-only)",
   "grade": "B",
-  "binding": {
-    "serves": [
-      "factory289:arrangement"
-    ],
-    "branches": {
-      "factory289:arrangement": [
-        0
-      ]
-    },
-    "negatives": [
-      "missing",
-      "stale"
-    ],
-    "claims_grade": "D"
-  },
-  "generated_at": "2026-09-23T01:22:31.545Z",
+  "binding": null,
+  "generated_at": "2026-09-23T01:22:04.890Z",
   "environment": {
     "base_url": "http://localhost:4473",
     "bridge_url": "http://127.0.0.1:4479",
@@ -91,70 +77,92 @@
   },
   "passed": true,
   "error": null,
-  "duration_ms": 7653,
+  "duration_ms": 12876,
   "checks": [
     {
       "ok": true,
-      "label": "At rest: the run whose Return awaits Recognition sits in NEEDS YOU",
+      "label": "F5 (real): every Central-root card title EQUALS its journey's commission purpose (first sentence)",
       "data": {
-        "settled": {
-          "run:01M35K50E0DFM95TCWTQB8ESQM": "needs-you",
-          "run:01M35KQAC0GP70Q3QH9HV7J5XW": "queued",
-          "run:01M35M9MA0EEXZ87Y0ZDBK9W1E": "queued"
-        }
-      }
-    },
-    {
-      "ok": true,
-      "label": "The owner recorded the Recognition (its own receipt)",
-      "data": {
-        "status": "applied"
-      }
-    },
-    {
-      "ok": true,
-      "label": "No polling: the board does not move and sends no read until the person reads"
-    },
-    {
-      "ok": true,
-      "label": "On the person's read exactly the run that moved changes place (NEEDS YOU → QUEUED)",
-      "data": {
-        "moved": [
-          "run:01M35K50E0DFM95TCWTQB8ESQM"
+        "titles": [
+          "Implement and independently verify the native encounter Agent/Agency identity projection in the existing AIKit owner",
+          "Repair the live conversation native Agent/Agency identity join and independently verify its source-bound behavior",
+          "Repair the live conversation native Agent/Agency identity join and independently verify its source-bound behavior",
+          "Repair the live conversation native Agent/Agency identity join and independently verify its source-bound behavior"
         ]
       }
     },
     {
       "ok": true,
-      "label": "The scope and the open page did not move"
-    },
-    {
-      "ok": true,
-      "label": "The read cost the kernel log nothing — a Factory read emits no event",
+      "label": "F5 (real): no card carries a run:/project: ref; the footer names Central (control:root)",
       "data": {
-        "emitted": []
+        "footers": [
+          "Central · 5h",
+          "Central · 3h",
+          "Central · 2h",
+          "Central · 2h"
+        ]
       }
     },
     {
       "ok": true,
-      "label": "Adverse: the unreadable source is named in one line with the owner's words — never an empty healthy board",
+      "label": "F6 (real): the primary action EQUALS the owner's currently-applicable actions for the queued v3 run (none)",
       "data": {
-        "partial": "1 source couldn't be read — Specimen (factory: Factory developmental provider error: Io(Os { code: 2, kind: NotFound, message: \"No such file or directory\" })). Retry"
+        "applicable": []
       }
     },
     {
       "ok": true,
-      "label": "Retry after the owner can serve again brings the runs back"
+      "label": "F7 (real): the outlined unit EQUALS the owner build view's frontier",
+      "data": {
+        "frontier": "workflow-unit:0WDN6MGZWXTHY21FRSKNMVYYA4"
+      }
+    },
+    {
+      "ok": true,
+      "label": "F7 (real): the selected unit's checks EQUAL the owner inspection (all outstanding — no attempt has run)",
+      "data": {
+        "count": 5
+      }
+    },
+    {
+      "ok": true,
+      "label": "F6 (real): Live says \"Nothing is running.\""
+    },
+    {
+      "ok": true,
+      "label": "NOW (real): the Live NOW line names the record's purpose from Central's NOW reading",
+      "data": {
+        "lineText": "Continue O:I #65/#201 Factory self-inhabitation and joined proving in env-2"
+      }
+    },
+    {
+      "ok": true,
+      "label": "NOW record page (real): Purpose EQUALS central.now.read",
+      "data": {
+        "kind": "factory-now"
+      }
+    },
+    {
+      "ok": true,
+      "label": "F12 (real): nothing returned on the queued run"
+    },
+    {
+      "ok": true,
+      "label": "Read-only: no Factory mutation was sent"
+    },
+    {
+      "ok": true,
+      "label": "Read-only: the owner's Central-root Factory state is byte-identical after the walk"
     }
   ],
   "ops": [
     {
       "ok": true,
       "op": "info",
-      "duration_ms": 0,
+      "duration_ms": 0.1,
       "data": {
         "schema": "oi.cradle.walk/v1",
-        "mounted_at": "2026-09-23T01:22:31.763Z",
+        "mounted_at": "2026-09-23T01:22:05.116Z",
         "transport": {
           "kind": "bridge",
           "url": "http://127.0.0.1:4479"
@@ -168,7 +176,7 @@
       "duration_ms": 0,
       "data": {
         "schema": "oi.cradle.walk/v1",
-        "mounted_at": "2026-09-23T01:22:32.395Z",
+        "mounted_at": "2026-09-23T01:22:09.130Z",
         "transport": {
           "kind": "bridge",
           "url": "http://127.0.0.1:4479"
@@ -178,70 +186,33 @@
     },
     {
       "ok": true,
-      "op": "read.events",
-      "duration_ms": 0,
+      "op": "capture.screenshot",
+      "duration_ms": 103,
       "data": {
-        "receipts": [
-          {
-            "event": "world_changed",
-            "schema": "oi.kernel-event/v1",
-            "seq": 1,
-            "summary": "Central navigator reading changed",
-            "version": 1
-          },
-          {
-            "event": "surface_changed",
-            "schema": "oi.kernel-event/v1",
-            "seq": 2,
-            "summary": "Surface opened: Factory.",
-            "surface_id": "b0a6fbb6-200a-44fa-af51-e2fcb20889c2",
-            "version": 1
-          },
-          {
-            "event": "world_changed",
-            "schema": "oi.kernel-event/v1",
-            "seq": 3,
-            "summary": "Central navigator reading changed",
-            "version": 1
-          }
-        ],
-        "count": 3,
-        "first_seq": 1,
-        "last_seq": 3
-      }
-    },
-    {
-      "ok": true,
-      "op": "read.events",
-      "duration_ms": 0,
-      "data": {
-        "receipts": [],
-        "count": 0,
-        "first_seq": null,
-        "last_seq": null,
-        "since_seq": 3
+        "file": "factory-real-desk-real.png"
       }
     },
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 54,
+      "duration_ms": 56,
       "data": {
-        "file": "background-completion-after-background-recognition.png"
+        "file": "factory-real-run-real-map.png"
       }
     },
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 44,
+      "duration_ms": 51,
       "data": {
-        "file": "background-completion-source-unreadable.png"
+        "file": "factory-real-now-record-real.png"
       }
     }
   ],
   "metrics": {},
   "screenshots": [
-    "background-completion-after-background-recognition.png",
-    "background-completion-source-unreadable.png"
+    "factory-real-desk-real.png",
+    "factory-real-run-real-map.png",
+    "factory-real-now-record-real.png"
   ]
 }
