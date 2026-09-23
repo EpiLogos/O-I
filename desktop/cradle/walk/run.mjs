@@ -162,6 +162,7 @@ const SCENARIOS = {
   "left-head": {module:"scenarios/left-head.mjs",kernel:true,aliases:[]},
   "left-lens": {module:"scenarios/left-lens.mjs",kernel:true,aliases:[]},
   "left-forms": {module:"scenarios/left-forms.mjs",kernel:true,aliases:[]},
+  "left-gallery": {module:"scenarios/left-gallery.mjs",kernel:true,aliases:[]},
 };
 
 // Which design/spec row each scenario's receipt serves, and an optional grade
@@ -194,6 +195,7 @@ const SCENARIO_SPEC = {
   "left-head": { spec_ref: "docs/cradle/10-SIDEBARS.md §3.1 §3.6 D3 D6 (scope menu, workspace footer, create menu, Inbox, ⌘K typed tabs)" },
   "left-lens": { spec_ref: "docs/cradle/10-SIDEBARS.md §3.1 D2 A5 (Epi-Logos lens)" },
   "left-forms": { spec_ref: "docs/cradle/10-SIDEBARS.md §3.7 §6.1.6 D5 (forms create a copy; Goal and Vision in place; Factory INTENT)" },
+  "left-gallery": { spec_ref: "docs/cradle/10-SIDEBARS.md §3 (the left frame in light and dark at 1440 / 1000 / 760)" },
 };
 const DEFAULT_SPEC_REF = "docs/cradle/05-EXECUTION.md §3";
 

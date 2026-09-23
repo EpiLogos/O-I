@@ -74,6 +74,16 @@ function ScopeMenu({mode, workspace, workspaces, onActivateWorkspace, onNewWorks
   const {open, setOpen, root, trigger} = usePopover();
   const [switching, setSwitching] = useState(false);
   const [machines, setMachines] = useState<Machine[]>();
+  // The menu is wider than a narrow sidebar and the region clips its
+  // content, so it stands in the viewport, anchored under the trigger.
+  const [anchor, setAnchor] = useState<{top: number; left: number}>();
+  useEffect(() => {
+    if (!open) return;
+    const place = () => { const box = trigger.current?.getBoundingClientRect(); if (box) setAnchor({top: Math.round(box.bottom + 4), left: Math.max(8, Math.round(box.left - 2))}); };
+    place();
+    window.addEventListener("resize", place);
+    return () => window.removeEventListener("resize", place);
+  }, [open]);
   const menuId = useId();
   const reading = kernel.snapshot.navigator;
   const projects = reading?.root?.work.projects ?? [];
@@ -115,7 +125,7 @@ function ScopeMenu({mode, workspace, workspaces, onActivateWorkspace, onNewWorks
       <span>Epi-Logos</span>
       <button type="button" aria-label="Leave the Epi-Logos lens" title="Leave the Epi-Logos lens" onClick={() => setLens(false)}><Glyph name="close" size={9}/></button>
     </span>}
-    {open && <div id={menuId} className="left-scope-menu oi-menu oi-scroll-quiet" role="group" aria-label="Scope and workspace">
+    {open && <div id={menuId} className="left-scope-menu oi-menu oi-scroll-quiet" role="group" aria-label="Scope and workspace" style={anchor ? {position: "fixed", top: anchor.top, left: anchor.left} : undefined}>
       {focused && focused !== scopeProject && <div className="left-menu-switch">
         <span>Focused tab is in <b>{focused}</b></span>
         <button type="button" className="left-menu-link" onClick={() => choose({kind: "project", project: focused})}>Switch</button>

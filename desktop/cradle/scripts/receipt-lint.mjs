@@ -83,6 +83,7 @@ const SCENARIO_SPEC = {
   "left-head": "docs/cradle/10-SIDEBARS.md §3.1 §3.6 D3 D6 (scope menu, workspace footer, create menu, Inbox, ⌘K typed tabs)",
   "left-lens": "docs/cradle/10-SIDEBARS.md §3.1 D2 A5 (Epi-Logos lens)",
   "left-forms": "docs/cradle/10-SIDEBARS.md §3.7 §6.1.6 D5 (forms create a copy; Goal and Vision in place; Factory INTENT)",
+  "left-gallery": "docs/cradle/10-SIDEBARS.md §3 (the left frame in light and dark at 1440 / 1000 / 760)",
 };
 const DEFAULT_SPEC_REF = "docs/cradle/05-EXECUTION.md §3";
 

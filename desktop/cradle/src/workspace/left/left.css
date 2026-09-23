@@ -30,7 +30,7 @@
 
 /* menus hang from the head */
 .left-create { position: relative; }
-.left-scope-menu { position: absolute; top: calc(100% + 4px); left: -2px; width: min(270px, calc(100vw - 24px)); max-height: min(70vh, 560px); }
+.left-scope-menu { position: absolute; top: calc(100% + 4px); left: -2px; width: min(270px, calc(100vw - 24px)); max-height: min(70vh, 560px); z-index: var(--oi-z-popover); }
 .left-create-menu { position: absolute; top: calc(100% + 4px); right: 0; min-width: 210px; }
 .left-scope-menu hr, .left-create-menu hr { width: 100%; height: 0; margin: 4px 0; border: 0; border-top: var(--oi-shell-edge) solid var(--oi-hairline-soft); }
 .left-menu-eyebrow { display: block; padding: 8px 8px 3px; font-size: var(--oi-shell-type-eyebrow); font-weight: 600; letter-spacing: var(--oi-shell-tracking); text-transform: uppercase; color: var(--oi-muted-2); }

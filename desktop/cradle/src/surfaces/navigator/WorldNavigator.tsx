@@ -90,9 +90,12 @@ export function WorldNavigator({ onExplore, onOpenEncounter, centralFiles, onCen
     if (key) onNavigationChange(key,{mode,expanded:true,locationPath:path});
     if (!project) onCentralFilesChange(mode === "files");
   };
+  // The mode shown is written with the disclosure: the store's load path
+  // reads an absent mode as "files" while the body shows "chats", so an
+  // unwritten mode would reopen a project in a different view after reload.
   const disclose = (path:string, expanded:boolean) => {
     const key = keyFor(path);
-    if (key) onNavigationChange(key,{expanded,locationPath:path});
+    if (key) onNavigationChange(key,{expanded,locationPath:path,mode:projectNavigation[key]?.mode ?? (!path && centralFiles ? "files" : "chats")});
   };
   const projects = root?.work.projects ?? [];
   const focusedRef = kernel.snapshot.focus?.subject?.ref;
