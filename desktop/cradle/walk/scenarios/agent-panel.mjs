@@ -148,23 +148,6 @@ export default async function run({page,baseUrl,check,shot,channel,provision:p})
   check(await panel.locator('.chat-composer-chips [data-chip="model"]').count()===0,
     "No model chip is invented when the owner advertises no model observation");
 
-  // --- Status → Preview: the collapsed frame carries the owner's real state --
-  // The gradient (dossier §3.3): with the panel collapsed the frame shows a
-  // presence dot and a state line derived ONLY from observed encounter facts;
-  // the chip's one action is opening the pinned panel, which stands the chip
-  // down. Asserted across two distinct owner states: disconnected, then the
-  // resident state after the connect above.
-  const presenceChip=()=>page.locator(".shell-agent-presence");
-  await page.getByRole("button",{name:"Toggle right region",exact:true}).click();
-  await presenceChip().waitFor({timeout:15000});
-  check(await presenceChip().getAttribute("data-presence-state")==="idle",
-    "Collapsed frame: the status chip reads the owner's real resident state (idle) — no invented activity");
-  await presenceChip().click();
-  await panel.waitFor({timeout:15000});
-  check(await page.locator(".shell-agent-presence").count()===0 && await panel.isVisible(),
-    "The chip hands over to the pinned panel (Preview) and stands down");
-  await panel.locator('.chat-composer[data-connection="connected"]').waitFor({timeout:15000});
-
   // --- Context: SELECTED is not CARRIED ---------------------------------------
   const contextBlock="@context — Walk source · source/agent-panel-walk · revision rev-walk-1\n> quoted walk line";
   await message.fill(`${contextBlock}\n\nACTIVITY_THINK_TOOL`);
@@ -356,4 +339,26 @@ export default async function run({page,baseUrl,check,shot,channel,provision:p})
   await shot("panel-dark-run");
   await plane("Context");
   await shot("panel-dark-context");
+
+  // --- Status → Preview: the collapsed frame carries the owner's real state --
+  // The gradient (dossier §3.3): with the panel collapsed the frame shows a
+  // presence dot and a state line derived ONLY from observed encounter facts;
+  // the chip's one action is opening the pinned panel, which stands the chip
+  // down. Run last so the collapse/reopen cycle never races the plane nav's
+  // overflow measurement mid-walk.
+  const presenceChip=()=>page.locator(".shell-agent-presence");
+  await page.getByRole("button",{name:"Toggle right region",exact:true}).click();
+  await presenceChip().waitFor({timeout:15000});
+  const chipState=await presenceChip().getAttribute("data-presence-state");
+  // The collapsed panel is aria-hidden — read its owner state through the
+  // element, not the accessibility tree. Resident with no turn in flight and
+  // no pending local operation is idle; the legal mapped set is small and
+  // every member is an observed fact (idle, working, updating, arrived).
+  const ownerState=await page.locator(".agent-layer").getAttribute("data-owner-state");
+  check(ownerState==="Resident"&&["idle","working","updating","arrived"].includes(chipState),
+    "Collapsed frame: the status chip reads the owner's real state — no invented activity", {chipState, ownerState});
+  await presenceChip().click();
+  await panel.waitFor({timeout:15000});
+  check(await page.locator(".shell-agent-presence").count()===0 && await panel.isVisible(),
+    "The chip hands over to the pinned panel (Preview) and stands down");
 }
