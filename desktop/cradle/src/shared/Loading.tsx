@@ -1,8 +1,9 @@
 import {useEffect} from "react";
 import "@epilogos/oi-design-system/point-cloud.css";
 import {emitExpressionCue} from "../stage/cues";
-/** Mount only while the named native operation is pending. Its status remains
- * meaningful without a renderer; a published native scene may address the cue. */
+/** Inline status for a named native operation — not the opening splash
+ * (that mark is WelcomeField). Meaningful without a renderer; a published
+ * native scene may address the cue. */
 export function Loading({label,detail,scope="inline"}:{label:string;detail?:string;scope?:"inline"|"surface"|"window"}) {
  if(!label.trim())throw new TypeError("A truthful loading label is required");
  useEffect(()=>{

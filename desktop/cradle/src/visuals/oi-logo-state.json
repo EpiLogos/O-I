@@ -1,7 +1,7 @@
 {
   "version": 1,
   "name": "O:I Mark",
-  "description": "The app mark as a living point cloud — the shipped first saved state and the welcome frontstate recipe.",
+  "description": "The app mark as a living point cloud — the shipped first saved state for expression visuals. The opening splash uses the static derived mark.",
   "config": {
     "glyph": ["O", "I"],
     "particleCount": 120000,

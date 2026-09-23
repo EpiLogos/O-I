@@ -1,18 +1,35 @@
-/* The engine paints the complete scene below these controls. The inverse
- * CSS ground covers only import / first paint / failure; once ready, the
- * full native field is visible without a scrim or a separate exit fade. */
+/* Opening splash. The overlay owns the opposite ground and the mark.
+ * The document theme underneath is already the saved appearance.
+ * Colors move while the overlay is opaque; only then does opacity fade. */
 .oi-welcome {
+  --oi-welcome-flip: calc(var(--oi-motion-plane) * 3);
+  --oi-welcome-fade: var(--oi-motion-plane);
   position: fixed;
   inset: 0;
   z-index: calc(var(--oi-z-stage-frontstate) + 1);
-  background: var(--oi-inverse-canvas-ground);
+  background-color: var(--oi-inverse-canvas-ground);
   color: var(--oi-inverse-foreground);
+  opacity: 1;
+  transition:
+    background-color var(--oi-welcome-flip) var(--oi-motion-ease-out),
+    color var(--oi-welcome-flip) var(--oi-motion-ease-out);
 }
-.oi-welcome[data-field-ready="true"]:not([data-field-error="true"]) {
-  background: transparent;
+/* First paint, before this overlay mounts: the body matches the splash. */
+body.oi-desktop[data-oi-opening="true"] {
+  background-color: var(--oi-inverse-canvas-ground);
 }
-.oi-welcome[data-phase="entering"] {
+.oi-welcome[data-phase="flipping"],
+.oi-welcome[data-phase="revealing"] {
+  background-color: var(--oi-canvas-ground);
   color: var(--oi-foreground);
+}
+.oi-welcome[data-phase="revealing"] {
+  opacity: 0;
+  pointer-events: none;
+  transition:
+    background-color var(--oi-welcome-flip) var(--oi-motion-ease-out),
+    color var(--oi-welcome-flip) var(--oi-motion-ease-out),
+    opacity var(--oi-welcome-fade) var(--oi-motion-ease-out);
 }
 .oi-welcome-enter {
   position: absolute;
@@ -36,13 +53,35 @@
   outline: var(--oi-focus-ring-width) solid currentColor;
   outline-offset: calc(-1 * var(--oi-focus-ring-width));
 }
-.oi-welcome-mark {
-  font-size: var(--oi-shell-type-ui);
-  letter-spacing: var(--oi-shell-tracking);
-  text-transform: uppercase;
+.oi-welcome-logo {
+  position: absolute;
+  left: 50%;
+  top: 46%;
+  width: min(78vmin, 820px);
+  height: min(78vmin, 820px);
+  transform: translate(-50%, -54%);
+  background-color: var(--oi-inverse-foreground);
+  -webkit-mask-image: var(--oi-welcome-mask);
+  mask-image: var(--oi-welcome-mask);
+  -webkit-mask-repeat: no-repeat;
+  mask-repeat: no-repeat;
+  -webkit-mask-position: center;
+  mask-position: center;
+  -webkit-mask-size: contain;
+  mask-size: contain;
+  -webkit-mask-mode: alpha;
+  mask-mode: alpha;
+  transition: background-color var(--oi-welcome-flip) var(--oi-motion-ease-out);
+  pointer-events: none;
+}
+.oi-welcome[data-phase="flipping"] .oi-welcome-logo,
+.oi-welcome[data-phase="revealing"] .oi-welcome-logo {
+  background-color: var(--oi-foreground);
 }
 .oi-welcome-hint,
 .oi-welcome-detail {
+  position: relative;
+  z-index: 1;
   font-size: var(--oi-shell-type-nav);
 }
 .oi-welcome-error {
