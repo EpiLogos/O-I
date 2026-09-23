@@ -14,6 +14,12 @@ use std::path::Path;
 
 pub const DEV_WORLD_SETUP_SCHEMA: &str = "oi.dev-world-setup/v1";
 pub const MACHINE_CONFIG_RELATIVE: &str = "Control/machines/current/oi-development.toml";
+/// The directory that holds the per-machine config files, one `<name>.toml`
+/// each. `oi dev world` reads the fixed local file above; `oi dev project`
+/// selects any machine in this directory by name.
+pub const MACHINE_CONFIG_DIR_RELATIVE: &str = "Control/machines/current";
+/// The default machine name — the local host's config (`oi-development.toml`).
+pub const DEFAULT_MACHINE: &str = "oi-development";
 pub const CARRIER_SESSION_SPACE: &str = "dev-world/session-space.json";
 pub const CARRIER_SESSION_SPEC: &str = "dev-world/session.toml";
 
@@ -58,6 +64,13 @@ pub struct MachineConfig {
     pub schema: u32,
     #[serde(default)]
     pub host: String,
+    /// Optional ssh endpoint (`user@host`) for a REMOTE machine. Empty for a
+    /// local machine file. Additive with a serde default so existing local
+    /// files (which carry no `ssh` key) parse unchanged; a non-empty value
+    /// marks the machine remote, so its `[projects]` paths are the remote
+    /// host's and delegated commands run there over ssh.
+    #[serde(default)]
+    pub ssh: String,
     pub world: String,
     pub session_space: String,
     #[serde(default)]
@@ -112,12 +125,12 @@ pub struct DesktopDisclosure {
     pub dev_port: u16,
 }
 
-/// Resolve the machine-local carrier + committed carrier into a setup
-/// disclosure. Purely deterministic observation: reads three files, performs
-/// token substitution, returns the delegated next step.
-pub fn resolve_dev_world_setup(ground: &Path) -> Result<DevWorldSetup, String> {
-    let machine_path = ground.join(MACHINE_CONFIG_RELATIVE);
-    let machine_text = fs::read_to_string(&machine_path).map_err(|error| {
+/// Read, parse and schema-check a machine config file. Shared by the dev-world
+/// resolution and the worktree-projection resolution so both read the same
+/// machine facts through one code path. Deterministic: one file read, no
+/// mutation.
+pub fn read_machine_config(machine_path: &Path) -> Result<MachineConfig, String> {
+    let machine_text = fs::read_to_string(machine_path).map_err(|error| {
         format!(
             "cannot read machine config {}: {error}",
             machine_path.display()
@@ -136,6 +149,15 @@ pub fn resolve_dev_world_setup(ground: &Path) -> Result<DevWorldSetup, String> {
             machine_path.display()
         ));
     }
+    Ok(machine)
+}
+
+/// Resolve the machine-local carrier + committed carrier into a setup
+/// disclosure. Purely deterministic observation: reads three files, performs
+/// token substitution, returns the delegated next step.
+pub fn resolve_dev_world_setup(ground: &Path) -> Result<DevWorldSetup, String> {
+    let machine_path = ground.join(MACHINE_CONFIG_RELATIVE);
+    let machine = read_machine_config(&machine_path)?;
 
     let mut warnings = Vec::new();
     let oi_root = machine
@@ -247,6 +269,7 @@ mod tests {
         MachineConfig {
             schema: 1,
             host: "test-host".into(),
+            ssh: String::new(),
             world: "oi-development".into(),
             session_space: "session-space/oi-development".into(),
             parent_pi: ParentPiConfig {

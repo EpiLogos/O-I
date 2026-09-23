@@ -1,0 +1,1022 @@
+<meta charset="utf-8">
+<title>Cradle Sidebars</title>
+<meta name="description" content="Design study for the O:I cradle: the two sidebars, the Factory pages and Settings, in every state, rendered with the desktop's own tokens.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Mulish:wght@400;500;600;700&display=swap">
+<style>
+:root{
+  --paper:#f7f7f4; --ink:#1c1c1a; --muted:#6a6a66; --muted2:#8b8b86; --muted3:#adada8;
+  --rule:#dededa; --hair:#d8d8d3; --hair-soft:#e5e5e0; --shell:#e9e9e5; --side:#f3f3f0;
+  --canvas:#fbfbf9; --agent:#f1f1ee; --wash:#ecece8; --wash2:#e2e2dd; --accent:#2a2a27;
+  --composer:#ffffff; --msg:#e9e9e4; --gold:#a8873f; --tape:#ecece7; --menu:#ffffff;
+  --shadow:0 10px 40px rgba(0,0,0,.14),0 1px 2px rgba(0,0,0,.1);
+  --sans:'Avenir Next',Avenir,'Mulish','Helvetica Neue',Arial,sans-serif;
+  --mono:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    color-scheme:dark;
+    --paper:#121211; --ink:#eeeee8; --muted:#a2a29c; --muted2:#83837d; --muted3:#5b5b56;
+    --rule:#2b2b28; --hair:#2c2c29; --hair-soft:#242422; --shell:#0b0b0a; --side:#151514;
+    --canvas:#1a1a18; --agent:#141413; --wash:#1f1f1d; --wash2:#2a2a27; --accent:#dcdcd6;
+    --composer:#1c1c1a; --msg:#242421; --tape:#101010; --menu:#1d1d1b;
+    --shadow:0 10px 40px rgba(0,0,0,.5),0 1px 2px rgba(0,0,0,.4);
+  }
+}
+:root[data-theme="dark"]{
+  color-scheme:dark;
+  --paper:#121211; --ink:#eeeee8; --muted:#a2a29c; --muted2:#83837d; --muted3:#5b5b56;
+  --rule:#2b2b28; --hair:#2c2c29; --hair-soft:#242422; --shell:#0b0b0a; --side:#151514;
+  --canvas:#1a1a18; --agent:#141413; --wash:#1f1f1d; --wash2:#2a2a27; --accent:#dcdcd6;
+  --composer:#1c1c1a; --msg:#242421; --tape:#101010; --menu:#1d1d1b;
+  --shadow:0 10px 40px rgba(0,0,0,.5),0 1px 2px rgba(0,0,0,.4);
+}
+*{box-sizing:border-box}
+body{background:var(--paper);color:var(--ink);font-family:var(--sans);font-size:14px;line-height:1.55;padding-inline:20px;padding-block:0 64px}
+.page{max-width:1240px;margin:0 auto}
+a{color:inherit}
+header.top{padding-block:40px 20px;display:grid;gap:10px;max-width:780px}
+.eyebrow{font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted2);font-weight:600}
+h1{font-size:34px;line-height:1.1;margin:0;font-weight:600;letter-spacing:-.01em;text-wrap:balance}
+h2{font-size:21px;margin:0 0 6px;font-weight:600;text-wrap:balance}
+h3{font-size:15px;margin:18px 0 6px;font-weight:600}
+.lede{font-size:16px;color:var(--muted);margin:0;max-width:68ch}
+.standing{display:inline-flex;gap:8px;align-items:center;font-size:12px;color:var(--muted)}
+.standing i{width:7px;height:7px;border-radius:50%;background:var(--gold);display:inline-block}
+.questions{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:12px;margin-top:8px}
+.q{border-top:1px solid var(--hair);padding-top:10px}
+.q b{display:block;font-size:12px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted2);font-weight:600}
+.q span{font-size:17px}
+
+/* ---- controls ---- */
+.controls{display:flex;flex-wrap:wrap;gap:14px 22px;padding-block:14px;border-top:1px solid var(--hair);border-bottom:1px solid var(--hair);margin-top:18px;position:sticky;top:env(safe-area-inset-top,0px);background:var(--paper);z-index:5}
+.ctl{display:grid;gap:5px}
+.ctl>span{font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted2);font-weight:600}
+.seg{display:flex;flex-wrap:wrap;gap:2px;background:var(--wash);border-radius:7px;padding:2px}
+.seg button{font:inherit;font-size:12px;border:0;background:transparent;color:var(--muted);padding:4px 9px;border-radius:5px;cursor:pointer}
+.seg button[aria-pressed="true"]{background:var(--canvas);color:var(--ink);box-shadow:0 1px 2px rgba(0,0,0,.12)}
+.seg button:focus-visible,.m button:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
+.caption{display:flex;flex-wrap:wrap;gap:6px 14px;align-items:baseline;padding-block:12px 0;font-size:13px}
+.caption .ids{font-family:var(--mono);font-size:12px;color:var(--ink);background:var(--wash);padding:2px 7px;border-radius:4px}
+.caption .desc{color:var(--muted)}
+
+/* ---- stage ---- */
+.stage{margin-top:10px;overflow-x:auto;border-radius:12px}
+.stage-inner{position:relative}
+.m{width:1200px;height:740px;transform-origin:0 0;position:absolute;left:0;top:0;border-radius:11px;overflow:hidden;background:var(--shell);font-family:var(--sans);font-size:12px;color:var(--ink);box-shadow:0 0 0 1px var(--hair),0 30px 60px -30px rgba(0,0,0,.35);display:grid;grid-template-rows:30px 1fr;user-select:none}
+.m button{font:inherit;color:inherit;background:none;border:0;padding:0;cursor:pointer}
+.m svg{width:15px;height:15px;stroke:currentColor;fill:none;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round;flex:none}
+.bar{display:flex;align-items:center;padding:0 10px;gap:8px;position:relative}
+.lights{display:flex;gap:7px;margin-right:36px}.lights i{width:11px;height:11px;border-radius:50%;background:#ec6a5e;display:block}.lights i:nth-child(2){background:#f4bf4f}.lights i:nth-child(3){background:#61c554}
+.tgl{color:var(--muted);display:grid;place-items:center;width:26px;height:22px;border-radius:5px}
+.tgl:hover{background:var(--wash)}
+.bar .spacer{flex:1}
+.companion{position:relative}
+.companion .dot{position:absolute;right:2px;top:2px;width:7px;height:7px;border-radius:50%;background:var(--ink);box-shadow:0 0 0 2px var(--shell)}
+.body{display:grid;grid-template-columns:var(--lw,240px) 1fr var(--rw,320px);gap:4px;padding:0 4px 4px;min-height:0}
+.m[data-left="collapsed"] .body{--lw:0px}
+.m[data-right="closed"] .body{--rw:0px}
+.m[data-right="full"] .body{grid-template-columns:var(--lw,240px) 0 1fr}
+.m[data-left="collapsed"] .left{display:none}
+.m[data-right="closed"] .right{display:none}
+
+/* left */
+.left{background:var(--side);border-radius:6px;display:grid;grid-template-rows:auto 1fr auto;min-height:0;position:relative}
+.head{display:flex;align-items:center;gap:4px;padding:10px 8px 8px 10px}
+.scope{display:flex;align-items:center;gap:7px;flex:1;min-width:0;padding:5px 6px;border-radius:6px;text-align:left}
+.scope:hover,.scope[aria-expanded="true"]{background:var(--wash)}
+.scope .sg{width:20px;height:20px;border-radius:5px;background:var(--ink);color:var(--paper);display:grid;place-items:center;font-size:10px;font-weight:700;flex:none}
+.scope .nm{font-weight:600;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.scope .chev{position:relative;color:var(--muted2)}
+.scope .chev .dot{position:absolute;right:-3px;top:-1px;width:6px;height:6px;border-radius:50%;background:var(--ink)}
+.ib{width:28px;height:28px;display:grid;place-items:center;border-radius:6px;color:var(--muted)}
+.ib:hover,.ib[aria-expanded="true"]{background:var(--wash);color:var(--ink)}
+.lbody{overflow:hidden;padding:2px 6px 10px;min-height:0;scrollbar-width:none}
+.dest{display:flex;align-items:center;gap:9px;height:30px;padding:0 8px;border-radius:6px;color:var(--ink);width:100%;text-align:left;font-size:12.5px}
+.dest svg{color:var(--muted)}
+.dest:hover{background:var(--wash)}
+.dest[aria-current="true"]{background:var(--wash2);font-weight:600}
+.dest .badge{margin-left:auto;font-size:10.5px;color:var(--muted);font-variant-numeric:tabular-nums}
+.sec{margin-top:12px}
+.sech{display:flex;align-items:center;gap:6px;height:24px;padding:0 8px;color:var(--muted2);font-size:9.5px;letter-spacing:.14em;text-transform:uppercase;font-weight:600}
+.sech .n{letter-spacing:0;font-variant-numeric:tabular-nums}
+.sech .act{margin-left:auto;opacity:0;color:var(--muted)}
+.sec:hover .sech .act{opacity:1}
+.tree{display:flex;align-items:center;gap:7px;height:26px;padding:0 8px;border-radius:6px;font-size:12px;color:var(--ink)}
+.tree:hover{background:var(--wash)}
+.tree .tw{color:var(--muted3);width:10px;display:inline-grid;place-items:center}
+.tree svg{color:var(--muted);width:14px;height:14px}
+.proj{display:flex;align-items:center;gap:7px;height:32px;padding:0 8px;border-radius:6px;font-size:12.5px}
+.proj:hover{background:var(--wash)}
+.proj .marks{margin-left:auto;display:flex;gap:6px;align-items:center;font-size:10.5px;color:var(--muted);font-variant-numeric:tabular-nums}
+.mk{display:inline-flex;align-items:center;gap:3px}
+.mk .d{width:6px;height:6px;border-radius:50%;background:var(--ink)}
+.mk.need{background:var(--wash2);color:var(--ink);font-weight:700;border-radius:4px;padding:0 5px;height:16px}
+.child{margin-left:17px;border-left:1px solid var(--hair-soft);padding-left:4px}
+.chat{display:grid;grid-template-columns:12px 1fr auto;column-gap:6px;padding:6px 8px 7px;border-radius:6px;width:100%;text-align:left}
+.chat:hover{background:var(--wash)}
+.chat[aria-current="true"]{background:var(--wash2)}
+.chat .st{grid-row:1/3;padding-top:4px;display:grid;justify-items:center}
+.chat .meta{font-size:9.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted2)}
+.chat .tm{font-size:10.5px;color:var(--muted2);display:flex;align-items:center;gap:5px}
+.chat .ti{grid-column:2/4;font-size:12px;line-height:1.35;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.chat.unread .ti{font-weight:600}
+.u{width:5px;height:5px;border-radius:50%;background:var(--ink);display:inline-block}
+.sdot{width:7px;height:7px;border-radius:50%;background:var(--ink)}
+.sdot.breath{animation:breath 1.6s ease-in-out infinite}
+.sneed{font-size:10px;font-weight:800;line-height:1;background:var(--wash2);border-radius:3px;padding:1px 3px}
+.sfail{color:var(--muted2);font-size:11px;line-height:1}
+@keyframes breath{0%,100%{opacity:1}50%{opacity:.25}}
+@media (prefers-reduced-motion: reduce){.sdot.breath{animation:none}}
+.reading{font-size:11.5px;color:var(--muted);padding:6px 8px}
+.err{padding:10px 8px;font-size:12px;display:grid;gap:6px}
+.err b{font-weight:600}
+.err button{justify-self:start;border:1px solid var(--hair)!important;border-radius:5px;padding:3px 10px!important;font-size:11.5px}
+.foot{padding:6px 6px 8px;border-top:1px solid var(--hair-soft);display:grid;gap:4px}
+.modes{display:flex;align-items:center;gap:2px;padding:0 2px}
+.mode{width:30px;height:28px;display:grid;place-items:center;border-radius:6px;color:var(--muted)}
+.mode:hover{background:var(--wash);color:var(--ink)}
+.mode[aria-pressed="true"]{background:var(--wash2);color:var(--ink)}
+.modes .div{width:1px;height:16px;background:var(--hair);margin:0 4px}
+.seg-mini{display:flex;gap:2px;background:var(--wash);border-radius:6px;padding:2px;margin:4px 8px 6px}
+.seg-mini span{flex:1;text-align:center;font-size:10.5px;padding:2px 0;border-radius:4px;color:var(--muted)}
+.seg-mini span.on{background:var(--canvas);color:var(--ink);box-shadow:0 1px 1px rgba(0,0,0,.08)}
+.avail{font-size:10.5px;color:var(--muted);margin-left:auto}
+.place{display:grid;grid-template-columns:1fr auto;padding:6px 8px;border-radius:6px;gap:0 6px}
+.place:hover{background:var(--wash)}
+.place small{grid-column:1/3;color:var(--muted2);font-size:10.5px}
+
+/* menus */
+.menu{position:absolute;z-index:4;background:var(--menu);border-radius:9px;box-shadow:var(--shadow),0 0 0 1px var(--hair);padding:6px;width:246px;font-size:12px}
+.menu .mh{font-size:9.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted2);font-weight:600;padding:6px 8px 4px}
+.menu .mi{display:flex;align-items:center;gap:8px;height:30px;padding:0 8px;border-radius:6px}
+.menu .mi:hover{background:var(--wash)}
+.menu .mi .r{margin-left:auto;display:flex;gap:6px;color:var(--muted);font-size:10.5px}
+.menu hr{border:0;border-top:1px solid var(--hair-soft);margin:5px 4px}
+.menu kbd{font-family:var(--mono);font-size:10px;color:var(--muted2)}
+.gd{width:6px;height:6px;border-radius:50%;background:#5aa469}
+
+/* centre */
+.centre{background:var(--canvas);border-radius:6px;min-width:0;display:grid;grid-template-rows:32px 1fr;overflow:hidden;position:relative}
+.tabs{display:flex;align-items:flex-end;gap:0;padding:0 8px;background:var(--canvas);border-bottom:1px solid var(--hair-soft)}
+.ctab{height:28px;display:flex;align-items:center;gap:6px;padding:0 12px;font-size:11.5px;color:var(--muted);border-radius:6px 6px 0 0}
+.ctab.on{color:var(--ink);background:var(--canvas);box-shadow:inset 0 -1.5px 0 var(--accent)}
+.doc{padding:44px 64px;max-width:720px}
+.doc h4{font-size:20px;margin:0 0 4px;font-weight:600}
+.doc .sub{font-size:11px;color:var(--muted2);margin-bottom:20px}
+.ln{height:9px;border-radius:3px;background:var(--wash2);margin:10px 0}
+.ln.s{width:62%}.ln.m2{width:84%}
+.desk{padding:28px 36px;display:grid;grid-template-columns:1fr 1fr;gap:20px 28px;align-content:start}
+.desk .col h5{font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted2);margin:0 0 8px;font-weight:600}
+.card{border:1px solid var(--hair);border-radius:8px;padding:10px 12px;margin-bottom:8px;display:grid;gap:3px}
+.card small{color:var(--muted2);font-size:10.5px}
+.field{background:radial-gradient(circle at 30% 40%,var(--muted3) 0 1px,transparent 1.5px) 0 0/9px 9px,radial-gradient(circle at 70% 60%,var(--muted3) 0 1px,transparent 1.5px) 0 0/13px 13px;opacity:.55;position:absolute;inset:32px 0 0 0}
+.graph{position:absolute;inset:32px 0 0 0}
+.graph svg{width:100%;height:100%;stroke:var(--muted3);stroke-width:1}
+.graph circle{fill:var(--canvas);stroke:var(--ink);stroke-width:1.2}
+.graph text{fill:var(--muted);font-size:11px;stroke:none;font-family:var(--sans)}
+
+/* right */
+.right{background:var(--agent);border-radius:6px;display:grid;grid-template-rows:auto 1fr auto;min-height:0;position:relative;overflow:hidden}
+.id{display:flex;align-items:center;gap:6px;padding:10px 8px 4px 10px}
+.idbtn{display:flex;align-items:center;gap:8px;padding:4px 6px;border-radius:6px;min-width:0;flex:1;text-align:left}
+.idbtn:hover{background:var(--wash)}
+.av{width:24px;height:24px;border-radius:50%;background:var(--wash2);display:grid;place-items:center;font-size:10px;font-weight:700;flex:none;position:relative}
+.av.lg{width:32px;height:32px;font-size:11px}
+.idbtn .nm{font-weight:600;font-size:13px}
+.pres{width:8px;height:8px;border-radius:50%;flex:none}
+.pres.idle{border:1.5px solid var(--muted2)}
+.pres.work{background:var(--ink)}
+.pres.hollow{border:1.5px dashed var(--muted)}
+.pres.need{width:auto;height:auto;border-radius:3px;background:var(--wash2);font-weight:800;font-size:10px;padding:0 4px}
+.rtabs{display:flex;gap:16px;padding:4px 14px 0;border-bottom:1px solid var(--hair-soft)}
+.rtab{height:28px;font-size:12px;color:var(--muted);display:flex;align-items:center;gap:4px;position:relative}
+.rtab.on{color:var(--ink);box-shadow:inset 0 -1.5px 0 var(--accent)}
+.rtab .tm{width:5px;height:5px;border-radius:50%;background:var(--ink)}
+.rtab .tn{font-size:9.5px;font-weight:800;background:var(--wash2);padding:0 3px;border-radius:3px;color:var(--ink)}
+.rbody{overflow:hidden;min-height:0;padding:12px 14px;display:flex;flex-direction:column;gap:12px}
+.note{font-size:11px;color:var(--muted);padding:6px 14px;border-bottom:1px solid var(--hair-soft)}
+.msg-me{align-self:flex-end;background:var(--msg);border-radius:12px 12px 4px 12px;padding:8px 11px;max-width:85%;font-size:12px;line-height:1.45}
+.msg-ag{display:grid;grid-template-columns:24px 1fr;gap:8px;font-size:12px;line-height:1.5}
+.msg-ag .who{font-size:10.5px;color:var(--muted2);margin-bottom:1px}
+.msg-ag .who b{color:var(--ink);font-weight:600;margin-right:6px}
+.wm{font-size:11px;color:var(--muted);display:flex;align-items:center;gap:6px;margin-top:5px}
+.wm .g{font-family:var(--mono);color:var(--muted2)}
+.perm{border:1px solid var(--hair);border-radius:9px;background:var(--canvas);padding:10px 12px;display:grid;gap:7px;font-size:12px}
+.perm code{font-family:var(--mono);font-size:11px;background:var(--wash);padding:2px 5px;border-radius:4px}
+.perm .scope{display:flex;gap:4px}
+.perm .pill{font-size:10.5px;border:1px solid var(--hair);border-radius:99px;padding:2px 8px;color:var(--muted)}
+.perm .pill.on{border-color:var(--accent);color:var(--ink)}
+.perm .acts{display:flex;gap:8px}
+.btn{font-size:11.5px!important;border-radius:6px!important;padding:5px 12px!important}
+.btn.pri{background:var(--accent)!important;color:var(--paper)!important}
+.btn.q{border:1px solid var(--hair)!important}
+.chips{display:flex;gap:6px;flex-wrap:wrap;margin-top:6px}
+.chipa{display:inline-flex;gap:6px;align-items:center;border:1px solid var(--hair);border-radius:6px;padding:3px 8px;font-size:11px;background:var(--canvas)}
+.chipa small{color:var(--muted2);font-family:var(--mono);font-size:10px}
+.sugg{display:grid;gap:6px;margin-top:auto}
+.sugg span{border:1px solid var(--hair);border-radius:8px;padding:7px 10px;font-size:11.5px;color:var(--muted)}
+.statusl{display:flex;align-items:center;gap:7px;font-size:11px;color:var(--muted);padding:0 14px 6px}
+.statusl b{color:var(--ink);font-weight:600}
+.comp{margin:0 10px 10px;background:var(--composer);border:1px solid var(--hair);border-radius:12px;padding:8px 10px;display:grid;gap:6px}
+.to{display:flex;gap:6px;align-items:center;font-size:11px;color:var(--muted2)}
+.to .chip{background:var(--wash);color:var(--ink);border-radius:5px;padding:1px 7px;font-size:11px}
+.ph{font-size:12px;color:var(--muted3);min-height:30px}
+.crow{display:flex;align-items:center;gap:4px;color:var(--muted)}
+.crow .ib{width:24px;height:24px}
+.model{margin-left:auto;font-size:11px;color:var(--muted);display:flex;align-items:center;gap:3px;padding:2px 6px;border-radius:5px}
+.send{width:26px;height:26px;border-radius:50%;background:var(--accent);color:var(--paper);display:grid;place-items:center}
+.send svg{width:13px;height:13px}
+.recon{font-size:11px;color:var(--muted);padding:6px 14px;border-bottom:1px solid var(--hair-soft);display:flex;gap:6px;align-items:center}
+.tape{font-family:var(--mono);font-size:10.5px;background:var(--tape);border-radius:7px;padding:4px 0;display:grid}
+.tr{display:grid;grid-template-columns:52px 40px 1fr auto;gap:8px;padding:0 10px;min-height:24px;align-items:center;color:var(--muted)}
+.tr .v{color:var(--ink)}
+.tr.grp{color:var(--ink)}
+.tr.live{background:var(--wash)}
+.tfilt{display:flex;gap:4px;font-size:10.5px}
+.tfilt span{padding:2px 7px;border-radius:99px;color:var(--muted)}
+.tfilt span.on{background:var(--wash2);color:var(--ink)}
+.follow{white-space:nowrap;font-size:10.5px;color:var(--muted);display:flex;gap:6px;align-items:center;margin-left:auto}
+.resume{position:absolute;left:50%;bottom:120px;transform:translateX(-50%);background:var(--accent);color:var(--paper);font-size:11px;border-radius:99px;padding:4px 12px;box-shadow:var(--shadow)}
+.agrow{display:grid;grid-template-columns:32px 1fr auto;gap:10px;align-items:start;padding:7px 4px;border-radius:7px}
+.agrow:hover{background:var(--wash)}
+.agrow .p{font-size:11px;color:var(--muted)}
+.agrow .as{font-size:10.5px;color:var(--muted2);margin-top:2px}
+.agrow .st{display:flex;gap:6px;align-items:center;padding-top:4px;color:var(--muted)}
+.srch{display:flex;justify-content:flex-end;gap:2px;margin:-4px 0 -6px}
+.launch{display:grid;gap:6px}
+.launch .li{display:flex;align-items:center;gap:10px;border:1px solid var(--hair);border-radius:9px;padding:9px 11px;font-size:12px;background:var(--canvas)}
+.launch .li kbd{margin-left:auto;font-family:var(--mono);font-size:10px;color:var(--muted2)}
+.drawer{position:absolute;inset:0;background:var(--agent);z-index:3;display:grid;grid-template-rows:auto 1fr}
+.drawer .dh{display:flex;align-items:center;gap:8px;padding:11px 12px;border-bottom:1px solid var(--hair-soft);font-size:12.5px}
+.drawer .dh b{font-weight:600}
+.kv{display:grid;grid-template-columns:92px 1fr;gap:8px 10px;padding:14px;font-size:11.5px;align-content:start}
+.kv dt{color:var(--muted2)}
+.kv dd{margin:0}
+.kv .raw{grid-column:1/3;border-top:1px solid var(--hair-soft);padding-top:10px;color:var(--muted);display:flex;gap:6px;align-items:center}
+.runsum{display:grid;gap:4px;font-size:12px}
+.runsum .rt{font-weight:600;font-size:13px}
+.steps{display:flex;gap:3px;margin-top:4px}
+.steps i{height:4px;flex:1;border-radius:2px;background:var(--wash2)}
+.steps i.d{background:var(--ink)}
+.steps i.a{background:var(--muted)}
+.centre-chat{padding:24px 0;display:flex;flex-direction:column;gap:14px;max-width:620px;margin:0 auto;width:100%}
+.promoted{font-size:11.5px;color:var(--muted);padding:14px;display:flex;gap:8px;align-items:center}
+.promoted u{color:var(--ink);text-decoration:none;border-bottom:1px solid var(--hair)}
+
+/* ---- document sections ---- */
+section.s{padding-block:40px 8px;border-top:1px solid var(--hair);margin-top:36px}
+.cols{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:18px 36px}
+p{max-width:70ch}
+.laws{list-style:none;padding:0;margin:14px 0 0;display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:14px 32px}
+.laws li{display:grid;grid-template-columns:22px 1fr;gap:4px 8px}
+.laws li b{grid-column:2}
+.laws li span{grid-column:2;color:var(--muted);font-size:13.5px}
+.laws .n{grid-row:1/3;font-variant-numeric:tabular-nums;color:var(--muted2);font-size:12px;padding-top:2px}
+.tw{overflow-x:auto;margin-top:10px}
+table{border-collapse:collapse;width:100%;font-size:13px;min-width:640px}
+th{text-align:left;font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted2);font-weight:600;border-bottom:1px solid var(--hair);padding:8px 10px 6px 0}
+td{border-bottom:1px solid var(--hair-soft);padding:8px 12px 8px 0;vertical-align:top}
+td:first-child{font-family:var(--mono);font-size:12px;white-space:nowrap}
+td.muted{color:var(--muted)}
+code{font-family:var(--mono);font-size:.9em;background:var(--wash);padding:1px 5px;border-radius:4px}
+.dec{display:grid;gap:14px;margin-top:12px}
+.dec div{display:grid;grid-template-columns:44px 1fr;gap:2px 12px;border-top:1px solid var(--hair-soft);padding-top:12px}
+.dec b.k{grid-row:1/4;font-family:var(--mono);color:var(--gold);font-size:13px}
+.dec .rec{color:var(--ink);font-size:13px}
+.dec .rec::before{content:"Recommend — ";color:var(--muted2)}
+.dec .why{color:var(--muted);font-size:13px}
+ol.build{padding-left:20px;display:grid;gap:6px;max-width:80ch}
+.src{font-size:12.5px;color:var(--muted)}
+@media (max-width:640px){h1{font-size:27px}.controls{position:static}}
+
+/* ---- v2 additions: pages ---- */
+.ctl[hidden]{display:none}
+.m[data-footer="revealed"]{grid-template-rows:30px 1fr 26px}
+.m[data-footer="hidden"]{grid-template-rows:30px 1fr 4px}
+.wfoot{display:flex;align-items:center;gap:12px;padding:0 12px;font-size:10.5px;color:var(--muted);overflow:hidden}
+.m[data-footer="hidden"] .wfoot{padding:0;background:transparent}
+.m[data-footer="hidden"] .wfoot>*{display:none}
+.m[data-footer="hidden"] .wfoot::before{content:"";display:block;height:1px;width:100%;background:var(--hair);align-self:start}
+.wfoot .sp{flex:1}
+.wfoot .lens{width:22px;height:20px}
+.centre.full{grid-template-rows:1fr}
+.centre.full .field,.centre.full .graph,.centre.full .sheet{top:0}
+.rtop{display:flex;align-items:center;gap:2px;padding:6px 6px 0 8px;border-bottom:1px solid var(--hair-soft)}
+.rtop .rtabs{border:0;padding:0 0 0 6px;gap:14px;flex:1;min-width:0}
+.avbtn{position:relative;display:flex;align-items:center;gap:1px;padding:2px;border-radius:6px;color:var(--muted)}
+.avbtn:hover{background:var(--wash)}
+.avbtn .av{width:20px;height:20px;font-size:8.5px}
+.avbtn .badge2{position:absolute;left:15px;top:0;display:grid;place-items:center}
+.avbtn .badge2 .sdot,.avbtn .badge2 .pres{width:7px;height:7px;box-shadow:0 0 0 2px var(--agent)}
+.avbtn .badge2 .pres.need{width:auto;height:auto;font-size:8px;padding:0 2px}
+.avbtn .shield{position:absolute;left:14px;top:12px;font-size:8px;background:var(--ink);color:var(--paper);border-radius:3px;padding:0 2px;line-height:1.3}
+.pchip{font-size:10.5px;display:flex;align-items:center;gap:3px;padding:2px 6px;border-radius:5px;color:var(--muted);border:1px solid transparent}
+.pchip.byp{border-color:var(--ink);color:var(--ink);font-weight:600}
+.hchip{font-size:11px;color:var(--ink);display:flex;align-items:center;gap:3px;padding:2px 6px;border-radius:5px}
+.ow{display:flex;gap:1px;margin-left:auto;opacity:0}
+.tree:hover .ow,.tree.hov .ow{opacity:1}
+.tree.hov{background:var(--wash)}
+.ow span{width:18px;height:18px;display:grid;place-items:center;border-radius:4px;color:var(--muted)}
+.ow span:hover{background:var(--wash2);color:var(--ink)}
+.ow svg{width:12px!important;height:12px!important}
+.bypc{font-size:10.5px;color:var(--ink);border:1px solid var(--ink);border-radius:6px;padding:6px 9px;margin:0 10px 6px}
+.tree>span:not(.tw){white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0;flex:1}
+.chat .meta{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
+.lens{width:30px;height:28px;display:grid;place-items:center;border-radius:6px;color:var(--muted)}
+.lens[aria-pressed="true"]{color:var(--ink);box-shadow:inset 0 0 0 1px var(--accent)}
+.echip{display:inline-flex;align-items:center;gap:4px;font-size:10.5px;border:1px solid var(--hair);border-radius:99px;padding:1px 4px 1px 8px;color:var(--ink);white-space:nowrap}
+.echip b{font-weight:600}
+.menu .mf{border-top:1px solid var(--hair-soft);margin-top:5px;padding-top:5px}
+.menu .mi.hint{color:var(--muted);font-size:11px}
+.menu .mi.hint b{color:var(--ink);font-weight:600;margin-left:auto}
+.pg{overflow:hidden;padding:18px 26px;display:flex;flex-direction:column;gap:14px;min-height:0}
+.pgh{display:flex;align-items:center;gap:10px}
+.pgh h4{margin:0;font-size:17px;font-weight:600}
+.pgh .sp{flex:1}
+.tb{display:flex;align-items:center;gap:5px;font-size:11px;color:var(--muted);border:1px solid var(--hair);border-radius:6px;padding:4px 9px}
+.tb.pri{background:var(--accent);color:var(--paper);border-color:var(--accent)}
+.dcols{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;align-items:start}
+.dcol h5{margin:0 0 8px;font-size:9.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted2);font-weight:600}
+.rc{border:1px solid var(--hair);border-radius:9px;padding:10px 11px;display:grid;gap:5px;background:var(--canvas);margin-bottom:9px;font-size:11.5px}
+.rc.sel{box-shadow:0 0 0 1.5px var(--accent)}
+.rc .st{display:flex;align-items:center;gap:6px;font-size:10.5px;color:var(--muted)}
+.rc .ti{font-weight:600;font-size:12.5px;line-height:1.3}
+.rc .nx{color:var(--muted);font-size:11px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.rc .ft{display:flex;align-items:center;gap:6px;color:var(--muted2);font-size:10.5px}
+.units{display:flex;gap:2px}
+.units i{height:5px;width:16px;border-radius:2px;background:var(--wash2)}
+.units i.a{background:var(--muted)}.units i.r{background:var(--ink)}.units i.f{background:transparent;box-shadow:inset 0 0 0 1px var(--ink)}
+.avs{display:flex;margin-left:auto}.avs span{width:18px;height:18px;border-radius:50%;background:var(--wash2);font-size:8px;display:grid;place-items:center;font-weight:700;box-shadow:0 0 0 2px var(--canvas);margin-left:-4px}
+.partial{font-size:11px;color:var(--muted);border-bottom:1px solid var(--hair-soft);padding-bottom:8px}
+.partial u{color:var(--ink);text-decoration:none;border-bottom:1px solid var(--hair);margin-left:6px}
+.rh{display:grid;gap:4px}
+.rh .bk{font-size:11px;color:var(--muted)}
+.rh h4{margin:0;font-size:18px;font-weight:600}
+.rh .pu{font-size:12px;color:var(--muted);max-width:70ch}
+.rh .fx{font-size:11px;color:var(--muted);display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.vt{display:flex;gap:18px;border-bottom:1px solid var(--hair-soft);margin-top:4px}
+.vt span{font-size:12px;color:var(--muted);padding:6px 0}
+.vt span.on{color:var(--ink);box-shadow:inset 0 -1.5px 0 var(--accent)}
+.map{position:relative;height:190px;border:1px solid var(--hair-soft);border-radius:9px;background:var(--canvas)}
+.map svg.edges{position:absolute;inset:0;width:100%;height:100%}
+.map svg.edges path{stroke:var(--muted3);fill:none;stroke-width:1.3}
+.map .nd{position:absolute;border:1px solid var(--hair);border-radius:8px;background:var(--canvas);padding:7px 9px;font-size:11px;display:grid;gap:2px;width:170px}
+.map .nd b{font-weight:600;font-size:11.5px}
+.map .nd small{color:var(--muted);font-size:10px}
+.map .nd.front{box-shadow:0 0 0 1.5px var(--accent)}
+.map .nd.dest{width:auto;border-style:dashed;color:var(--muted)}
+.map .gate{position:absolute;width:4px;border-radius:2px;background:var(--ink)}
+.map .gl{position:absolute;font-size:9.5px;color:var(--muted);letter-spacing:.06em;text-transform:uppercase}
+.map .lane{position:absolute;left:0;right:0;border-top:1px dashed var(--hair-soft)}
+.map .ln{position:absolute;left:8px;font-size:9px;color:var(--muted3);letter-spacing:.1em;text-transform:uppercase}
+.band{border:1px solid var(--hair-soft);border-radius:9px;padding:12px 14px;display:grid;grid-template-columns:1.1fr 1fr;gap:6px 24px;font-size:11.5px}
+.band h6{margin:0 0 2px;font-size:12.5px;font-weight:600;grid-column:1/3}
+.band dl{margin:0;display:grid;grid-template-columns:110px 1fr;gap:5px 10px}
+.band dt{color:var(--muted2)}.band dd{margin:0}
+.chk{display:grid;gap:4px}
+.chk div{display:flex;gap:7px;align-items:baseline}
+.chk .o{width:9px;height:9px;border-radius:50%;border:1.3px solid var(--muted2);flex:none;transform:translateY(1px)}
+.chk .o.p{background:var(--ink);border-color:var(--ink)}
+.band .acts{grid-column:1/3;display:flex;gap:8px;margin-top:4px}
+.dsh{border:1px solid var(--hair-soft);border-radius:9px;overflow:hidden;display:grid;background:var(--canvas)}
+.dsh .top{display:flex;align-items:center;gap:12px;padding:6px 10px;font-size:11px;color:var(--muted);border-bottom:1px solid var(--hair-soft)}
+.dsh .top .on{color:var(--ink)}
+.dsh .top .srch{margin-left:auto;border:1px solid var(--hair);border-radius:5px;padding:2px 8px;display:flex;gap:4px;align-items:center}
+.strip{display:grid;grid-template-columns:44px 1fr;font-size:9px;color:var(--muted2);border-bottom:1px solid var(--hair-soft);background:var(--tape)}
+.strip .lb{display:grid;align-content:center;gap:3px;padding:4px 6px;text-align:right}
+.strip .tr2{position:relative;height:40px}
+.strip .tr2 i{position:absolute;height:6px;border-radius:2px}
+.strip .tr2 i.in{top:5px;background:var(--muted3)}.strip .tr2 i.mo{top:17px;background:var(--muted)}.strip .tr2 i.to{top:29px;background:var(--ink)}
+.rows{display:grid;font-size:11px}
+.rw{display:grid;grid-template-columns:74px 1fr auto;gap:10px;align-items:center;padding:0 10px;min-height:24px;border-bottom:1px solid var(--hair-soft)}
+.rw .tag{font-size:8.5px;letter-spacing:.1em;font-weight:700;text-align:right;color:var(--muted)}
+.rw .tag.tool{color:var(--ink)}.rw .tag.user{color:var(--ink)}
+.rw .tx{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.rw .tx code{font-family:var(--mono);font-size:10.5px;background:transparent;padding:0}
+.rw .mt{font-family:var(--mono);font-size:10px;color:var(--muted2)}
+.rw.turn{min-height:18px;background:var(--wash);font-size:9.5px;color:var(--muted2)}
+.rw.sel{background:var(--wash)}
+.rw.ex{display:block;padding:8px 10px 8px 94px;font-family:var(--mono);font-size:10px;color:var(--muted);background:var(--tape)}
+.dsh .foot2{display:flex;gap:14px;justify-content:center;padding:6px;font-size:10.5px;color:var(--muted);border-top:1px solid var(--hair-soft)}
+.wf{display:grid;grid-template-columns:110px 1fr;gap:4px 10px;font-size:10.5px;align-items:center}
+.wf .bar{position:relative;height:10px}
+.wf .bar i{position:absolute;top:0;height:10px;border-radius:3px;background:var(--muted)}
+.wf .bar i.sel{background:var(--ink)}
+.lv{display:grid;gap:0;border:1px solid var(--hair-soft);border-radius:9px;overflow:hidden}
+.lvr{display:grid;grid-template-columns:32px 1.1fr 1fr auto;gap:10px;align-items:center;padding:10px 12px;border-bottom:1px solid var(--hair-soft);font-size:11.5px}
+.lvr small{display:block;color:var(--muted);font-size:10.5px}
+.lvr .lk{display:flex;gap:10px;font-size:10.5px;color:var(--ink)}
+.lvr .lk span{border-bottom:1px solid var(--hair)}
+.nowl{font-size:11px;color:var(--muted);padding:8px 12px}
+.ho{display:grid;gap:14px;max-width:760px}
+.ho h6{margin:0 0 4px;font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted2);font-weight:600}
+.ho p{margin:0;font-size:12px;line-height:1.5}
+.diffs{font-family:var(--mono);font-size:10.5px;display:grid;gap:3px}
+.prompt{border:1px solid var(--hair);border-radius:7px;padding:7px 10px;font-size:11.5px;display:flex;gap:8px;align-items:center}
+.prompt span{margin-left:auto;font-size:10.5px;color:var(--muted)}
+.rec{display:flex;gap:8px;align-items:center;border:1px solid var(--hair);border-radius:9px;padding:10px 12px;font-size:12px}
+.rec .sp{flex:1}
+.objp{display:grid;grid-template-columns:120px 1fr;gap:8px 14px;font-size:12px;max-width:720px}
+.objp dt{color:var(--muted2)}.objp dd{margin:0}
+.poptag{font-size:10px;color:var(--muted);border:1px solid var(--hair);border-radius:4px;padding:1px 6px}
+.taskh{display:flex;align-items:center;gap:10px;padding:12px 0 10px;border-bottom:1px solid var(--hair-soft)}
+.taskh .rchip{font-size:10.5px;border:1px solid var(--hair);border-radius:99px;padding:2px 9px;display:inline-flex;gap:6px;align-items:center}
+.conn{display:flex;align-items:center;gap:4px;font-size:11px;color:var(--ink);border:1px solid var(--hair);border-radius:6px;padding:2px 7px;margin-left:auto}
+.picker{position:absolute;z-index:4;background:var(--menu);border-radius:10px;box-shadow:var(--shadow),0 0 0 1px var(--hair);padding:6px;width:300px;font-size:11.5px}
+.picker .mh{font-size:9.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted2);font-weight:600;padding:6px 8px 3px}
+.picker .pi{display:grid;grid-template-columns:1fr auto;padding:5px 8px;border-radius:6px}
+.picker .pi:hover,.picker .pi.on{background:var(--wash)}
+.picker .pi small{grid-column:1/3;color:var(--muted2);font-size:10px}
+.picker .pi .b{font-size:9.5px;color:var(--muted);border:1px solid var(--hair);border-radius:99px;padding:0 6px}
+/* settings */
+.snav .dest .badge{font-variant-numeric:tabular-nums}
+.srows{display:grid;border-top:1px solid var(--hair-soft);max-width:760px}
+.sr{display:grid;grid-template-columns:1fr auto;gap:4px 16px;align-items:center;padding:11px 0;border-bottom:1px solid var(--hair-soft);font-size:12px}
+.sr small{display:block;color:var(--muted);font-size:10.5px;margin-top:1px}
+.sr .ctlv{display:flex;align-items:center;gap:6px;font-size:11.5px}
+.sel2{border:1px solid var(--hair);border-radius:6px;padding:4px 8px;display:flex;align-items:center;gap:6px;background:var(--canvas)}
+.sr.chg{box-shadow:inset 3px 0 0 var(--ink);padding-left:10px}
+.sr .und{font-size:10.5px;color:var(--muted);border-bottom:1px solid var(--hair)}
+.lock{font-size:10.5px;color:var(--muted);display:flex;gap:6px;align-items:center}
+.lock u{text-decoration:none;color:var(--ink);border-bottom:1px solid var(--hair)}
+.miss{font-size:10.5px;color:var(--muted);grid-column:1/3}
+.tog{width:28px;height:16px;border-radius:99px;background:var(--wash2);position:relative;flex:none}
+.tog::after{content:"";position:absolute;top:2px;left:2px;width:12px;height:12px;border-radius:50%;background:var(--canvas);box-shadow:0 1px 2px rgba(0,0,0,.2)}
+.tog.on{background:var(--accent)}.tog.on::after{left:14px}
+.cards2{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:10px;max-width:860px}
+.sc{border:1px solid var(--hair);border-radius:10px;padding:11px 12px;display:grid;gap:5px;font-size:11.5px;background:var(--canvas)}
+.sc b{font-size:12.5px}
+.sc .k{color:var(--muted);font-size:10.5px}
+.sc .acts2{display:flex;gap:6px;flex-wrap:wrap;margin-top:3px}
+.sc .acts2 span{font-size:10.5px;border:1px solid var(--hair);border-radius:5px;padding:2px 8px}
+.sc .acts2 span.pri{background:var(--accent);color:var(--paper);border-color:var(--accent)}
+.grp{font-size:9.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted2);font-weight:600;margin-top:4px;display:flex;gap:6px;align-items:center}
+.keyf{display:flex;gap:6px;align-items:center}
+.keyf .inp{flex:1;border:1px solid var(--accent);border-radius:6px;padding:5px 8px;font-family:var(--mono);font-size:10.5px;color:var(--muted3);background:var(--composer)}
+.pend{position:absolute;left:50%;transform:translateX(-50%);bottom:14px;background:var(--menu);box-shadow:var(--shadow),0 0 0 1px var(--hair);border-radius:99px;padding:6px 8px 6px 14px;display:flex;gap:12px;align-items:center;font-size:11.5px;z-index:2}
+.pend .tb{border-radius:99px}
+.sheet{position:absolute;inset:32px 0 0 0;background:rgba(0,0,0,.18);display:grid;place-items:center;z-index:3}
+.sheet .card{background:var(--menu);border-radius:12px;box-shadow:var(--shadow);width:560px;padding:16px 18px;display:grid;gap:10px;border:0;margin:0}
+.sheet h5{margin:0;font-size:14px;font-weight:600}
+.chg2{display:grid;grid-template-columns:1fr auto;gap:2px 10px;padding:9px 0;border-top:1px solid var(--hair-soft);font-size:11.5px}
+.chg2 small{color:var(--muted);font-size:10.5px}
+.chg2 .ef{font-size:10.5px;color:var(--ink);align-self:start}
+.sheet .row{display:flex;gap:8px;justify-content:flex-end;align-items:center}
+.segx{display:flex;gap:2px;background:var(--wash);border-radius:6px;padding:2px;font-size:10.5px}
+.segx span{padding:2px 9px;border-radius:4px;color:var(--muted)}
+.segx span.on{background:var(--canvas);color:var(--ink)}
+.skr{display:grid;grid-template-columns:auto 1fr auto auto;gap:10px;align-items:center;padding:7px 0;border-bottom:1px solid var(--hair-soft);font-size:11.5px}
+.skr small{color:var(--muted2);font-size:10px}
+.dcl{font-size:9.5px;color:var(--muted);border:1px solid var(--hair);border-radius:99px;padding:0 6px}
+.more-l{font-size:11px;color:var(--muted);display:flex;gap:6px;align-items:center;padding:6px 0}
+</style>
+<div class="page">
+<header class="top">
+  <div class="eyebrow">O:I cradle · desktop design</div>
+  <h1>The two sidebars, Factory and Settings, in every state</h1>
+  <p class="lede">One design for the left and right sidebars across every mode, the Factory pages (Desk, Run, Tasks, and the object pages Inspect opens), and Settings. Built to be implemented once and tested against. The study renders each state with the desktop's own tokens, using real content from this machine where it exists. Everything is judged by one question: is this good to use?</p>
+  <span class="standing"><i></i>The UI lead · accepted 23 Sep 2026 with amendments A1–A6 · specs: <code>docs/cradle/10-SIDEBARS.md</code>, <code>11-FACTORY.md</code>, <code>12-SETTINGS.md</code></span>
+  <div class="questions">
+    <div class="q"><b>Left</b><span>Where is my work, and what is moving in it?</span></div>
+    <div class="q"><b>Right</b><span>Who am I working with, and what are they doing?</span></div>
+    <div class="q"><b>Centre</b><span>The work itself.</span></div>
+  </div>
+</header>
+
+<div class="controls" role="group" aria-label="Study controls">
+  <div class="ctl"><span>Mode</span><div class="seg" id="c-mode"></div></div>
+  <div class="ctl" id="w-page"><span>Page</span><div class="seg" id="c-page"></div></div>
+  <div class="ctl"><span>Left</span><div class="seg" id="c-left"></div></div>
+  <div class="ctl" id="w-right"><span>Right</span><div class="seg" id="c-right"></div></div>
+  <div class="ctl"><span>Window footer</span><div class="seg" id="c-footer"></div></div>
+  <div class="ctl"><span>Epi-Logos lens</span><div class="seg" id="c-epi"></div></div>
+  <div class="ctl"><span>Theme</span><div class="seg" id="c-theme"></div></div>
+</div>
+<div class="caption"><span class="ids" id="cap-ids"></span><span class="desc" id="cap-desc"></span></div>
+<div class="stage" id="stage"><div class="stage-inner" id="stage-inner"><div class="m" id="m"></div></div></div>
+<p class="src">Real content where it exists: the queued run <code>oi-65/native-conversation-identity-v3</code> and its two work units, the harness roster, the OpenRouter credential, skill counts, model policies and Pi's usage figures. Everything else is illustrative. Click inside the mock too: mode icons, the Epi-Logos lens, scope, <b>+</b>, right tabs, <b>⤢</b> and <b>✕</b> all respond.</p>
+
+<section class="s">
+  <h2>The seven laws</h2>
+  <ol class="laws">
+    <li><span class="n">1</span><b>One frame, changing body.</b><span>The left head (scope, search, create) and foot (Inbox, modes, Settings) never move. Only the body changes with the mode, and in Settings the body is the section list.</span></li>
+    <li><span class="n">2</span><b>One conversation, one place.</b><span>A session appears once, with one composer and one draft. Outside Factory a chat opens in the right panel; in Factory it opens in the centre Tasks view.</span></li>
+    <li><span class="n">3</span><b>State lives on the thing.</b><span>Working, needs-you, unread and failed are marks on the row, avatar or tab. No banners, no trays, and the layout never moves.</span></li>
+    <li><span class="n">4</span><b>Status → Preview → Takeover.</b><span>A dot, then the live tape, then full-screen chat (⌘⌥J). You choose the depth.</span></li>
+    <li><span class="n">5</span><b>Inspect opens the object.</b><span>Its own page: a canvas tab in Base, in place with ← back in the full-page modes, or popped out into a window. Never a drawer, never a right-panel tab.</span></li>
+    <li><span class="n">6</span><b>Headers only above real rows.</b><span>Empty sections take no space. A failed read says so; it never looks like "empty".</span></li>
+    <li><span class="n">7</span><b>Nothing reads like a log file.</b><span>No "returns", no refs or JSON outside <i>Show raw</i>, no scrollbars, no "Situated in…", no fake rosters.</span></li>
+  </ol>
+</section>
+
+<section class="s">
+  <h2>Your rulings, applied</h2>
+  <div class="dec">
+    <div><b class="k">D1</b><span>Inspect opens the object's own page, in the canvas or popped out.</span><span class="why">Factory objects with pages: run, work unit, attempt, tool call, candidate, check, agent, NOW record.</span><span class="why"></span></div>
+    <div><b class="k">D2</b><span>Epi-Logos is a minimal lens toggle in the hidden window footer.</span><span class="why">It re-roots the file trees on the corpus while you stay in your mode. The head shows a chip with × to leave; Nara joins the agent menu.</span><span class="why"></span></div>
+    <div><b class="k">D3</b><span>Inbox is universal.</span><span class="why">One queue in the foot of every mode. The scattered receiving and returns bands are gone.</span><span class="why"></span></div>
+    <div><b class="k">D4</b><span>Chat routing as specified.</span><span class="why">Right panel outside Factory; centre Tasks inside it.</span><span class="why"></span></div>
+    <div><b class="k">D5</b><span>Factory's files are the project's intent.</span><span class="why">Vision and goals open through the HTML template system; each mode shows its own slice of context sources.</span><span class="why"></span></div>
+    <div><b class="k">A1–A6</b><span>23 Sep amendments.</span><span class="why">Models list real model names only; harness and connection are their own chips. A permission-mode selector (including Bypass) sits on the composer and in Settings. The right panel has no title band, just an avatar menu in the tab row. Factory, Expressions, Technè and Settings are full-page centres with no tab bar. Epi-Logos lives in the hidden window footer. Left rows offer Open beside and Pop out.</span><span class="why"></span></div>
+    <div><b class="k">D6</b><span>One scope, one workspace model.</span><span class="why">Scope (what you're working on) changes only in the scope menu; workspaces (arrangements) live in that menu's footer and remember their scope.</span><span class="why"></span></div>
+  </div>
+</section>
+
+<section class="s">
+  <h2>Factory</h2>
+  <div class="cols">
+    <div>
+      <h3>Desk — the run board</h3>
+      <p>Four columns: Needs you, Active, Queued, Recent. A card shows the owner's state word, a title taken from the commission's purpose (never a <code>run:</code> ref), the next step, one segment per work unit (never a percentage), the agents carrying it, and the project <i>name</i>. Sources are discovered with <code>factory project locate</code>, not typed in. The Desk follows the one scope, where <b>All projects</b> is a scope-menu entry.</p>
+      <h3>Run — Map · Trajectory · Live · Handoff</h3>
+      <p><b>Map</b> is the meaning: one lane per work unit, forks, gates and convergence, with the frontier outlined and a detail band listing each required check. <b>Trajectory</b> is the DeepSeek-style run log: a lane strip, typed rows joined by call, turn markers and usage stats, all from the real journal. <b>Live</b> shows who carries each leg right now and where. <b>Handoff</b> is what came back, in the owner's order, with Recognise as the primary action.</p>
+    </div>
+    <div>
+      <h3>Tasks and the right panel</h3>
+      <p>Tasks is the conversation at full size. A Run chip appears only when the session really belongs to the run; the join now reads executions and attempts, not just trajectories. The composer's plain "Connect with…" list becomes a connection picker grouped by harness. On the right, <b>Run</b> shows the compact tape, <b>Agents</b> real roster rows (no pasted markdown), and <b>Context</b> the preserved insertion canvas with Factory's slice.</p>
+      <h3>What the real data carries</h3>
+      <p>Claims, candidates, trajectories and token totals in the build view are only written by tests and specimens today. So the pages stand on the run map, work-unit inspection, attempts, telemetry and the conversation journal. The journal carries timestamps, tokens, cache and cost for Pi sessions. Five fixes on the Factory side are listed in the spec.</p>
+    </div>
+  </div>
+  <div class="tw"><table>
+    <thead><tr><th>ID</th><th>State</th><th>What you see</th><th>Check</th></tr></thead>
+    <tbody>
+      <tr><td>F2</td><td>Desk empty</td><td>"No runs yet." + New run</td><td class="muted">Only when the read succeeded with zero runs</td></tr>
+      <tr><td>F3</td><td>Desk partial</td><td>One line naming unreadable sources + Retry</td><td class="muted">Distinct from empty</td></tr>
+      <tr><td>F5</td><td>Card title</td><td>Commission purpose</td><td class="muted">No <code>run:</code> / <code>project:</code> text on any card</td></tr>
+      <tr><td>F7</td><td>Map frontier</td><td>Outlined unit; detail band</td><td class="muted">Checks match the owner's inspection</td></tr>
+      <tr><td>F9/F10</td><td>Trajectory timing</td><td>Time axis and stats, or an "Order" axis without them</td><td class="muted">No invented durations</td></tr>
+      <tr><td>F13</td><td>Recognition</td><td>Recognise / Request changes / Request evidence</td><td class="muted">Each returns an owner receipt</td></tr>
+      <tr><td>F14/F15</td><td>Tasks joined / direct</td><td>Run chip, or "Direct conversation"</td><td class="muted">Joined by execution, attempt or journey session</td></tr>
+    </tbody></table></div>
+</section>
+
+<section class="s">
+  <h2>Settings</h2>
+  <div class="cols">
+    <div>
+      <p>The left body becomes the section list: Status, Harnesses, Models, Credentials, Skills, Profiles, Permissions, Appearance, then <b>Products</b> (one page per owner). The right panel stays collapsed, offering a help chat. Each change goes <b>stage → review → apply → read back</b>. A pending strip appears only while something is staged. One review sheet names each change's effect in plain words (<i>Restart Claude to apply</i>, <i>Next session only</i>). Apply reads the owner back before saying <i>Applied ✓</i>.</p>
+    </div>
+    <div>
+      <p><b>Harnesses</b> by name: 4 ready, 11 detected that still need an adapter, 3 not found. <b>Models</b> per harness, with each route marked Usable, Needs a key or Local; Auto keeps its name, and there are 8 ranking policies. <b>Credentials</b> as cards with Verify, Rotate and Revoke, plus a write-only key field that empties after saving. <b>Skills</b> as toggles grouped by source, per scope; these are writable today. Read-only settings show a lock and where they are owned. Missing operations are named in a sentence, never shown as disabled buttons.</p>
+    </div>
+  </div>
+  <div class="dec">
+    <div><b class="k">S1</b><span>Sections by task first, per-product pages below.</span><span class="why"><b>Accepted 23 Sep.</b></span><span class="why">Resolves the research brief (categories) against the 21 Sep spec (owner rail).</span></div>
+    <div><b class="k">S2</b><span>Enter keys through a write-only field.</span><span class="rec">yes: you see that a key is present and working, never the key.</span><span class="why">Ruling 6 says enter and see keys; the 21 Sep spec forbids masked token fields.</span></div>
+  </div>
+</section>
+
+<section class="s">
+  <h2>Build order</h2>
+  <ol class="build">
+    <li>Repairs: Technè wiki map (PR #480), Factory Tasks routing, Epi-Logos lens, forms that copy instead of editing the template, one scope.</li>
+    <li>Left frame: head, foot, scope menu (with workspaces), Inbox, lens.</li>
+    <li>Factory: Desk from real reads → Run header and Map → Live and Handoff → Trajectory from the journal → Tasks join and connection picker → object pages.</li>
+    <li>Settings: section list and stage/review/apply → Harnesses, Models, Credentials (new kernel operations) → Skills, Profiles, Permissions → Products.</li>
+    <li>Right panel identity, tabs, status line, composer chips; Agents roster from real identities.</li>
+    <li>One walk per state ID (L, R, P, F, S) against the real kernel; receipts cite the IDs.</li>
+  </ol>
+</section>
+</div>
+
+<script>
+(function(){
+const I={
+ search:'<svg viewBox="0 0 16 16"><circle cx="7" cy="7" r="4.5"/><path d="M10.5 10.5 14 14"/></svg>',
+ plus:'<svg viewBox="0 0 16 16"><path d="M8 3v10M3 8h10"/></svg>',
+ chev:'<svg viewBox="0 0 16 16" style="width:12px;height:12px"><path d="m4 6 4 4 4-4"/></svg>',
+ right:'<svg viewBox="0 0 16 16" style="width:10px;height:10px"><path d="m6 4 4 4-4 4"/></svg>',
+ down:'<svg viewBox="0 0 16 16" style="width:10px;height:10px"><path d="m4 6 4 4 4-4"/></svg>',
+ inbox:'<svg viewBox="0 0 16 16"><path d="M2.5 9.5 4 3.5h8l1.5 6v3h-11z"/><path d="M2.5 9.5h3.2l.8 1.5h3l.8-1.5h3.2"/></svg>',
+ gear:'<svg viewBox="0 0 16 16"><circle cx="8" cy="8" r="2.2"/><path d="M8 1.8v1.8M8 12.4v1.8M1.8 8h1.8M12.4 8h1.8M3.6 3.6l1.3 1.3M11.1 11.1l1.3 1.3M3.6 12.4l1.3-1.3M11.1 4.9l1.3-1.3"/></svg>',
+ base:'<svg viewBox="0 0 16 16"><path d="M4 2h5.5L12 4.5V14H4z"/><path d="M6 7h4M6 9.5h4"/></svg>',
+ factory:'<svg viewBox="0 0 16 16"><path d="M2.5 13.5h11M4 13V8M7 13V5M10 13V9M13 13V3"/></svg>',
+ expressions:'<svg viewBox="0 0 16 16"><path d="m8 2 5 3v6l-5 3-5-3V5z"/><path d="m3 5 5 3 5-3M8 8v6"/></svg>',
+ techne:'<svg viewBox="0 0 16 16"><path d="M8 2a4 4 0 0 0-2.3 7.3V11h4.6V9.3A4 4 0 0 0 8 2z"/><path d="M6.3 13.5h3.4"/></svg>',
+ epi:'<svg viewBox="0 0 16 16"><circle cx="8" cy="8" r="5.2"/><path d="M8 2v12"/></svg>',
+ central:'<svg viewBox="0 0 16 16"><path d="M2.5 7.5 8 3l5.5 4.5V13h-11z"/></svg>',
+ today:'<svg viewBox="0 0 16 16"><rect x="2.5" y="3.5" width="11" height="10" rx="1.5"/><path d="M2.5 6.5h11M5.5 2v3M10.5 2v3"/></svg>',
+ library:'<svg viewBox="0 0 16 16"><path d="M3 2.5v11M6 2.5v11M9 3l3.5 10"/></svg>',
+ explore:'<svg viewBox="0 0 16 16"><circle cx="8" cy="8" r="5.5"/><path d="m10.3 5.7-1.3 3.3-3.3 1.3 1.3-3.3z"/></svg>',
+ folder:'<svg viewBox="0 0 16 16"><path d="M2 4.5h4l1.2 1.3H14v7H2z"/></svg>',
+ file:'<svg viewBox="0 0 16 16"><path d="M4 2h5.5L12 4.5V14H4z"/></svg>',
+ flow:'<svg viewBox="0 0 16 16"><path d="M3 4.5h10M3 8h7M3 11.5h9"/></svg>',
+ desk:'<svg viewBox="0 0 16 16"><rect x="2.5" y="3" width="11" height="10" rx="1.5"/><path d="M2.5 7h11M7 7v6"/></svg>',
+ tasks:'<svg viewBox="0 0 16 16"><path d="M3 3.5h10v7H7l-3 2.5v-2.5H3z"/></svg>',
+ wiki:'<svg viewBox="0 0 16 16"><circle cx="4" cy="4.5" r="1.6"/><circle cx="12" cy="5" r="1.6"/><circle cx="8" cy="12" r="1.6"/><path d="M5.4 5.2 10.5 5M4.8 6 7.3 10.6M11.4 6.4l-2.6 4.2"/></svg>',
+ remember:'<svg viewBox="0 0 16 16"><path d="M4.5 2.5h7v11l-3.5-2.5-3.5 2.5z"/></svg>',
+ target:'<svg viewBox="0 0 16 16"><circle cx="8" cy="8" r="5.5"/><circle cx="8" cy="8" r="2.2"/></svg>',
+ sidebar:'<svg viewBox="0 0 16 16"><rect x="2" y="3" width="12" height="10" rx="1.5"/><path d="M6 3v10"/></svg>',
+ sidebarR:'<svg viewBox="0 0 16 16"><rect x="2" y="3" width="12" height="10" rx="1.5"/><path d="M10 3v10"/></svg>',
+ expand:'<svg viewBox="0 0 16 16"><path d="M9.5 2.5h4v4M6.5 13.5h-4v-4M13.5 2.5l-4.5 4.5M2.5 13.5 7 9"/></svg>',
+ close:'<svg viewBox="0 0 16 16"><path d="m4 4 8 8M12 4l-8 8"/></svg>',
+ mic:'<svg viewBox="0 0 16 16"><rect x="6" y="2" width="4" height="8" rx="2"/><path d="M3.5 8a4.5 4.5 0 0 0 9 0M8 12.5V14"/></svg>',
+ up:'<svg viewBox="0 0 16 16" style="stroke-width:2"><path d="M8 13V3M4 7l4-4 4 4"/></svg>',
+ stop:'<svg viewBox="0 0 16 16" style="fill:currentColor;stroke:none"><rect x="4.5" y="4.5" width="7" height="7" rx="1.2"/></svg>',
+ back:'<svg viewBox="0 0 16 16"><path d="M10 3 5 8l5 5"/></svg>',
+ term:'<svg viewBox="0 0 16 16"><rect x="2" y="3" width="12" height="10" rx="1.5"/><path d="m5 7 2 1.5L5 10M8.5 10.5h2.5"/></svg>',
+ globe:'<svg viewBox="0 0 16 16"><circle cx="8" cy="8" r="5.5"/><path d="M2.5 8h11M8 2.5c2 2 2 9 0 11M8 2.5c-2 2-2 9 0 11"/></svg>',
+ refresh:'<svg viewBox="0 0 16 16"><path d="M13 8a5 5 0 1 1-1.5-3.6M13 2.5v3h-3"/></svg>',
+ lockI:'<svg viewBox="0 0 16 16" style="width:11px;height:11px"><rect x="3.5" y="7" width="9" height="6.5" rx="1.2"/><path d="M5.5 7V5a2.5 2.5 0 0 1 5 0v2"/></svg>',
+ key:'<svg viewBox="0 0 16 16"><circle cx="5.5" cy="10.5" r="2.8"/><path d="m7.5 8.5 5.5-5.5M11 5l1.5 1.5"/></svg>',
+ beside:'<svg viewBox="0 0 16 16"><rect x="2" y="3" width="12" height="10" rx="1.5"/><path d="M9.5 3v10M11 6.5h1.5M11 9h1.5"/></svg>',
+ pop:'<svg viewBox="0 0 16 16"><path d="M9 3h4v4M13 3 7.5 8.5M11 9.5V13H3V5h3.5"/></svg>'
+};
+const MODES=[['base','Base'],['factory','Factory'],['expressions','Expressions'],['techne','Technè'],['settings','Settings']];
+const PAGES={
+ factory:[['desk','Desk'],['map','Run · Map'],['traj','Run · Trajectory'],['live','Run · Live'],['handoff','Run · Handoff'],['tasks','Tasks'],['tasks-needs','Tasks · needs you'],['tasks-picker','Tasks · connect'],['unit','Unit page (Inspect)']],
+ settings:[['status','Status'],['harness','Harnesses'],['models','Models'],['pending','Models · 2 staged'],['review','Review changes'],['cred','Credentials'],['cred-add','Credentials · add key'],['skills','Skills'],['profiles','Profiles'],['perms','Permissions'],['product','Product · AIKit']]
+};
+const LEFTS=[['rest','Rest'],['loading','Reading'],['error','Unreadable'],['scope','Scope menu'],['create','+ menu'],['collapsed','Collapsed']];
+const RIGHTS={
+ chat:[['fresh','Fresh'],['working','Working'],['bypass','Bypass on'],['needs','Needs you'],['done','Complete'],['reconnect','Reconnecting'],['activity','Activity'],['paused','Activity paused'],['agents','Agents'],['context','Context'],['inspect','Inspect → page'],['full','Full'],['closed','Closed']],
+ factory:[['run','Run'],['paused','Run paused'],['agents','Agents'],['context','Context'],['closed','Closed']],
+ settings:[['closed','Closed'],['help','Help chat']]
+};
+const DEF={base:{page:null,right:'working'},expressions:{page:null,right:'working'},techne:{page:null,right:'working'},factory:{page:'desk',right:'run'},settings:{page:'models',right:'closed'}};
+const S={mode:'base',page:null,left:'rest',right:'working',epi:'off',footer:'hidden',theme:'system'};
+const AG={base:['Ep','Epii'],factory:['Bu','Builder'],expressions:['An','Anima'],techne:['Al','Aletheia'],settings:['Ep','Epii']};
+const TABS={base:['Chat','Activity','Agents','Context'],factory:['Run','Agents','Context'],expressions:['Chat','Activity','Agents','Context'],techne:['Chat','Activity','Agents','Context'],settings:['Chat']};
+const rightSet=()=>S.mode==='factory'?RIGHTS.factory:S.mode==='settings'?RIGHTS.settings:RIGHTS.chat;
+const working=()=>['working','activity','paused','bypass'].includes(S.right);
+
+function seg(id,items,key){const el=document.getElementById(id);el.innerHTML=items.map(([v,l])=>`<button type="button" data-v="${v}" aria-pressed="${S[key]===v}">${l}</button>`).join('');el.onclick=e=>{const b=e.target.closest('button');if(!b)return;set(key,b.dataset.v)}}
+function set(key,v){S[key]=v;if(key==='mode'){S.page=DEF[v].page;S.right=DEF[v].right;if(S.left==='scope'||S.left==='create')S.left='rest'}if(key==='theme'){applyTheme();try{localStorage.setItem('sidebars-theme',S.theme)}catch(e){}}render()}
+function applyTheme(){const r=document.documentElement;try{if(S.theme==='system')r.removeAttribute('data-theme');else r.setAttribute('data-theme',S.theme)}catch(e){}}
+
+/* ---------- shared bits ---------- */
+function chatMark(){if(working())return'<span class="sdot breath" title="Working"></span>';if(S.right==='needs'||S.page==='tasks-needs')return'<span class="sneed" title="Needs you">!</span>';return''}
+function rowChat(meta,time,title,mark,opts={}){return`<button class="chat${opts.unread?' unread':''}" ${opts.cur?'aria-current="true"':''}><span class="st">${mark||''}</span><span class="meta">${meta}</span><span class="tm">${opts.unread?'<span class="u"></span>':''}${time}</span><span class="ti">${title}</span></button>`}
+function dest(ic,label,cur,badge,act){return`<button class="dest" ${cur?'aria-current="true"':''} ${act||''}>${I[ic]}<span>${label}</span>${badge!=null?`<span class="badge">${badge}</span>`:''}</button>`}
+function sec(label,inner,n,act){return`<div class="sec"><div class="sech">${I.down}<span>${label}</span>${n?`<span class="n">${n}</span>`:''}${act?`<span class="act">${I.plus}</span>`:''}</div>${inner}</div>`}
+function tree(ic,label,depth,open,extra,hov){const ow=(ic==='file'||ic==='flow')?`<span class="ow"><span title="Open beside">${I.beside}</span><span title="Pop out">${I.pop}</span></span>`:'';return`<div class="tree${hov?' hov':''}" style="padding-left:${8+depth*12}px"><span class="tw">${open===undefined?'':(open?I.down:I.right)}</span>${I[ic]}<span>${label}</span>${extra||''}${ow}</div>`}
+const projWork=()=>working()?'<span class="mk"><span class="d"></span>1</span>':'';
+const projNeed=()=>(S.right==='needs'||S.page==='tasks-needs')?'<span class="mk need">! 1</span>':'';
+
+/* ---------- left ---------- */
+function corpus(){return sec('Epi-Logos corpus',tree('folder','essays',0,true)+tree('file','Return of Zero',1)+tree('file','Antykathera',1)+tree('folder','bimba',0,false)+tree('folder','epii',0,false)+tree('folder','pedagogy',0,false))}
+function leftBody(){
+ const m=S.mode, epi=S.epi==='on';
+ if(m==='settings'){
+  const pg=S.page; const cur=k=>pg===k||(k==='models'&&(pg==='pending'||pg==='review'))||(k==='cred'&&pg==='cred-add');
+  return `<div class="snav">`+dest('target','Status',cur('status'))+dest('term','Harnesses',cur('harness'),'4')+dest('expressions','Models',cur('models'))+dest('key','Credentials',cur('cred'),'1')+dest('library','Skills',cur('skills'),'86')+dest('flow','Profiles',cur('profiles'))+dest('lockI','Permissions',cur('perms'))+dest('explore','Appearance',false)+`</div>`+
+   sec('Products',['Central','AIKit','Actuation','Factory','Workcell','Quaternal Logic','O:I'].map(p=>`<button class="dest" ${pg==='product'&&p==='AIKit'?'aria-current="true"':''}>${I.folder}<span>${p}</span></button>`).join(''));
+ }
+ if(S.left==='error')return base0(m)+`<div class="err"><b>Couldn't read ${m==='base'?'Central':'O-I'}.</b><span style="color:var(--muted)">The world mapping didn't answer. Everything already open still works.</span><button>Retry</button></div>`;
+ if(m==='base'){
+  const work=S.left==='loading'?'<div class="reading">Reading Central…</div>':
+   `<div class="proj">${I.folder}<span>O-I</span><span class="marks">${projWork()}${projNeed()}</span></div>
+    <div class="child">
+     ${rowChat('Chat · Epii','now','Fix agent UI regressions and settings usability',chatMark(),{cur:S.right!=='closed'})}
+     ${rowChat('Chat · Aletheia','1h','Restore the Technè wiki map sidebar','',{unread:true})}
+     ${rowChat('Chat · Epii','Tue','Harness settings research dossier','<span class="sfail" title="Refused: provider credential missing">×</span>')}
+     ${tree('file','Files',0,false)}${tree('wiki','Wiki',0,false)}${tree('remember','Remembered',0,false)}
+    </div>
+    <div class="proj">${I.folder}<span>ai-kit</span><span class="marks"><span class="mk"><span class="d"></span>1</span></span></div>
+    <div class="proj">${I.folder}<span>Factory</span></div>
+    <div class="proj">${I.folder}<span>Actuation</span></div>
+    <div class="proj">${I.folder}<span>Workcell</span></div>
+    <div class="proj">${I.folder}<span>Quaternal-Logic</span><span class="marks"><span class="mk" title="1 unread"><span class="u"></span></span></span></div>`;
+  if(epi)return base0(m)+corpus()+sec('Flows',tree('flow','Sidebar design · 22 Sep'),null,true);
+  return base0(m)+sec('Control',tree('folder','user',0,false)+tree('folder','agents',0,false)+tree('folder','machines',0,false))+sec('Flows',tree('flow','Sidebar design · 22 Sep',0,undefined,'',true)+tree('flow','Harness settings notes'),null,true)+sec('Work',work,'6');
+ }
+ if(m==='factory'){
+  const t=S.left==='loading'?'<div class="reading">Reading tasks…</div>':
+   rowChat('Task · Builder · Native conversation identity','now','Verify conversation identity: why the Agency name is lost',chatMark(),{cur:S.page&&S.page.startsWith('tasks')})+
+   rowChat('Task · Verifier · Native conversation identity','14m','Independent check of the repair plan','')+
+   rowChat('Direct · Epii','2h','Opening section of the run plan','',{unread:true})+
+   rowChat('Task · Builder · Retire the node oracle','Mon','Retire the node oracle','');
+  const intent=sec('Intent',tree('file','Vision — O:I product ground',0,undefined,'<span class="dcl" title="Agent-recovered; awaiting your review">review</span>',true)+`<div class="tree" style="padding-left:20px;color:var(--muted)">${I.target}<span>No goals yet · <u style="text-decoration:none;border-bottom:1px solid var(--hair);color:var(--ink)">Write one</u></span></div>`+tree('folder','Learnings',0,false,'<span class="avail">2</span>'));
+  return base0(m)+(epi?corpus():'')+sec('Tasks',t,'4')+intent;
+ }
+ if(m==='expressions'){
+  const t=S.left==='loading'?'<div class="reading">Reading scenes…</div>':tree('expressions','Return of Zero',0,true)+tree('flow','Opening field',1,true)+tree('file','The wedge',2)+tree('file','Point swarm',2)+tree('flow','Zero returns',1,false)+tree('flow','Colophon',1,false);
+  return (epi?corpus():'')+sec('Expression',t,null,true);
+ }
+ if(m==='techne'){
+  const t=S.left==='loading'?'<div class="reading">Reading the root wiki…</div>':`<div class="seg-mini"><span>List</span><span class="on">Tree</span><span>Graph</span></div>`+tree('wiki','Central',0,true,'<span class="avail">projected</span>')+tree('file','Central',1)+tree('file','Harness profile',1,false)+tree('file','Day and NOW field',1)+tree('wiki','O-I',0,false)+tree('wiki','Actuation',0,false);
+  return (epi?corpus():'')+sec('Wiki map',t);
+ }
+}
+function base0(m){
+ if(m==='base')return dest('central','Central',true)+dest('today','Today')+dest('library','Library')+dest('explore','Explore');
+ if(m==='factory'){const t=S.page&&S.page.startsWith('tasks');return dest('desk','Desk',!t,null,'data-page="desk"')+dest('tasks','Tasks',t,null,'data-page="tasks"')}
+ return'';
+}
+function scopeName(){return S.mode==='base'?['C','Central']:S.mode==='settings'?['C','Central']:['O','O-I']}
+function leftHTML(){
+ const [g,n]=scopeName();
+ let menu='';
+ if(S.left==='scope')menu=`<div class="menu" style="left:10px;top:44px;width:262px">
+  ${S.mode==='base'?`<div class="mi hint">Focused tab is in ai-kit<b>Switch</b></div><hr>`:''}
+  <div class="mh">Scope</div>
+  <div class="mi"><span class="sg" style="width:16px;height:16px;border-radius:4px;background:var(--ink);color:var(--paper);display:grid;place-items:center;font-size:9px;font-weight:700">C</span>Central<span class="r">${n==='Central'?'✓':''}</span></div>
+  ${S.mode==='factory'?`<div class="mi">${I.desk}All projects<span class="r">Desk only</span></div>`:''}
+  <div class="mh">Work</div>
+  <div class="mi">${I.folder}O-I<span class="r">${projWork()}${projNeed()}${n==='O-I'?'✓':''}</span></div>
+  <div class="mi">${I.folder}ai-kit<span class="r"><span class="mk"><span class="d"></span>1</span></span></div>
+  <div class="mi">${I.folder}Factory<span class="r"></span></div>
+  <div class="mi">${I.folder}Quaternal-Logic<span class="r"><span class="u"></span></span></div>
+  <div class="mh">Machines</div>
+  <div class="mi">${I.term}Omarchy<span class="r"><span class="gd"></span>reachable</span></div>
+  <div class="mf"><div class="mh">Workspace</div><div class="mi">${I.desk}Main<span class="r">Switch…</span></div><div class="mi" style="color:var(--muted)">New · Rename · Recover arrangement</div></div></div>`;
+ if(S.left==='create'){const extra={factory:'New run…',expressions:'New Expression',techne:'New wiki note'}[S.mode];
+  menu=`<div class="menu" style="left:150px;top:44px"><div class="mi">${I.tasks}New chat</div><div class="mi">${I.flow}New flow</div>${S.mode==='factory'?`<div class="mi">${I.target}New goal</div>`:''}${extra?`<div class="mi">${I.plus}${extra}</div>`:''}<hr><div class="mi">${I.central}New agent…</div></div>`}
+ const chip=S.epi==='on'?`<span class="echip"><b>Epi-Logos</b><button class="ib" data-act="epiOff" style="width:16px;height:16px">${I.close}</button></span>`:'';
+ return`<aside class="left"><div class="head">
+   <button class="scope" data-act="scope" aria-expanded="${S.left==='scope'}"><span class="sg">${g}</span><span class="nm">${n}</span><span class="chev">${I.chev}<span class="dot"></span></span></button>${chip}
+   <button class="ib" title="Search ⌘K">${I.search}</button><button class="ib" data-act="create" aria-expanded="${S.left==='create'}" title="Create">${I.plus}</button></div>
+  <div class="lbody">${leftBody()}</div>
+  <div class="foot"><button class="dest">${I.inbox}<span>Inbox</span><span class="badge">3</span></button>
+   <div class="modes">${MODES.filter(x=>x[0]!=='settings').map(([v,l])=>`<button class="mode" data-mode="${v}" title="${l}" aria-pressed="${S.mode===v}">${I[v]}</button>`).join('')}<span class="div"></span><button class="mode" data-mode="settings" title="Settings" aria-pressed="${S.mode==='settings'}">${I.gear}</button></div></div>
+  ${menu}</aside>`;
+}
+
+/* ---------- Factory centre ---------- */
+const RUN={title:'Native conversation identity v3',purpose:'The real Agency-bound Oh-I conversation appears as a generic Conversation because the provider label is taken from the session space, not the Agency.'};
+function runHeader(view){
+ return`<div class="rh"><span class="bk">← Desk</span><div class="pgh"><h4>${RUN.title}</h4><span class="sp"></span><span class="tb pri">Start run</span><span class="tb">⋯</span></div>
+ <div class="pu">${RUN.purpose}</div>
+ <div class="fx"><span class="sdot" style="background:transparent;border:1.3px solid var(--muted2)"></span>Queued · Central · started 3h ago · 2 units · branch agent/oi-65 (clean)</div></div>
+ <div class="vt">${[['map','Map'],['traj','Trajectory'],['live','Live'],['handoff','Handoff']].map(([k,l])=>`<span class="${view===k?'on':''}" data-page="${k}">${l}</span>`).join('')}</div>`;
+}
+function desk(){
+ const card=(st,g,t,nx,u,f,sel,av)=>`<div class="rc${sel?' sel':''}" data-page="map"><div class="st">${g} ${st}</div><div class="ti">${t}</div>${nx?`<div class="nx">Next: ${nx}</div>`:''}<div class="units">${u.map(c=>`<i class="${c}"></i>`).join('')}</div><div class="ft">${f}${av?`<span class="avs">${av.map(a=>`<span>${a}</span>`).join('')}</span>`:''}</div></div>`;
+ return`<div class="pg"><div class="pgh"><h4>Desk</h4><span class="sp"></span><span class="tb">${I.search}Search runs</span><span class="tb">${I.refresh}read 2m ago</span><span class="tb">${I.plus}Add to Desk</span></div>
+ <div class="partial">1 source couldn't be read — Factory on Omarchy (not reachable).<u>Retry</u></div>
+ <div class="dcols">
+  <div class="dcol"><h5>Needs you · 1</h5>${card('Blocked','<span class="sneed">!</span>','Harness adapter fan-out','Builder asks to run <code style="font-size:10px">cargo test -p aikit-adapters</code>',['r','r','a','',''],'ai-kit · 40m',0,['Bu','Ve'])}</div>
+  <div class="dcol"><h5>Active · 1</h5>${card('Running','<span class="sdot breath"></span>','Wire the Trajectory to the conversation journal','Join tool call and result by call id',['r','a',''],'O-I · 1h',0,['Bu'])}</div>
+  <div class="dcol"><h5>Queued · 1</h5>${card('Queued','<span class="sdot" style="background:transparent;border:1.3px solid var(--muted2)"></span>',RUN.title,'The real Agency-bound Oh-I conversation appears as a generic Conversation…',['',''],'Central · 3h',1)}</div>
+  <div class="dcol"><h5>Recent · 2</h5>${card('Succeeded','✓','Retire the node oracle','',['r','r'],'Actuation · Mon')}${card('Succeeded','✓','Telemetry watch and compare','',['r','r','r'],'Factory · 18 Sep')}</div>
+ </div></div>`;
+}
+function map(){
+ return`<div class="pg">${runHeader('map')}
+ <div class="map">
+  <div class="lane" style="top:62px"></div><div class="lane" style="top:128px"></div>
+  <span class="ln" style="top:40px">lane 1</span><span class="ln" style="top:106px">lane 2</span>
+  <svg class="edges" viewBox="0 0 860 190" preserveAspectRatio="none"><path d="M96 95 C130 95 130 60 160 60"/><path d="M330 60 C370 60 370 128 400 128"/><path d="M570 128 L640 128"/><path d="M652 128 L700 128"/></svg>
+  <div class="nd dest" style="left:14px;top:80px"><b>Destination</b><small>identity is the Agency's</small></div>
+  <div class="nd front" style="left:160px;top:34px"><b>Verify conversation identity</b><small>ready · 0 / 5 checks</small><small>needs: Builder (Pi)</small></div>
+  <div class="gl" style="left:340px;top:78px">requires</div>
+  <div class="nd" style="left:400px;top:100px"><b>Repair Agency binding</b><small>planned · 0 / 5 checks</small><small>needs: Builder</small></div>
+  <div class="gate" style="left:640px;top:96px;height:64px"></div><div class="gl" style="left:612px;top:164px">gate · reviewed</div>
+  <div class="nd dest" style="left:700px;top:112px"><b>Candidate</b><small>none yet</small></div>
+ </div>
+ <div class="band"><h6>Verify conversation identity <span class="dcl">frontier</span></h6>
+  <dl><dt>Concern</dt><dd>Why the Agency-bound conversation shows as a generic Conversation</dd><dt>Must change</dt><dd>The conversation names its Agency wherever it is shown</dd><dt>Returns</dt><dd>A readable return to Tasks, with a verification receipt</dd><dt>Attempts</dt><dd>None yet</dd></dl>
+  <div class="chk"><div><span class="o"></span>Left sidebar row names the Agency</div><div><span class="o"></span>Chat header names the Agency</div><div><span class="o"></span>Survives restart</div><div><span class="o"></span>Survives provider reconnect</div><div><span class="o"></span>No generic "Conversation" label remains</div></div>
+  <div class="acts"><span class="tb">Message</span><span class="tb">Open activity</span><span class="tb">${I.pop}Open page</span></div></div>
+ </div>`;
+}
+function dshRows(compact){
+ const r=(tag,tx,mt,cls)=>`<div class="rw ${cls||''}"><span class="tag ${tag.toLowerCase()}">${tag}</span><span class="tx">${tx}</span><span class="mt">${mt||''}</span></div>`;
+ let h=r('CONTEXT','Prepared context · 3 items (collaboration projection, NOW record, binding.rs)','')+
+ r('ASSISTANT',"I'll read the encounter adapter and the Agency binding first.",'')+
+ r('TOOL','<code>read</code> crates/agency/src/binding.rs','0.2s ✓')+
+ r('TOOL','<code>grep</code> "space.label" crates/','0.4s ✓','sel')+
+ (compact?'':`<div class="rw ex">input  {"pattern":"space.label","path":"crates/"}<br>output crates/agency/src/binding.rs:88  label: space.label.clone(),<br>       <span style="color:var(--ink)">Copy · Show raw</span></div>`)+
+ r('THINK','The provider label is taken from the space, not the Agency…','')+
+ r('TOOL','<code>bash</code> cargo test -p agency binding','14.1s ✓')+
+ `<div class="rw turn"><span class="tag">TURN 2</span><span></span><span></span></div>`+
+ r('USER','why does it still say Conversation?','')+
+ r('ASSISTANT','Because the chat header reads the session title. Two places, one fix.','')+
+ r('TOOL','<code>edit</code> desktop/cradle/src/encounter/EncounterList.tsx','0.1s ✓');
+ return h;
+}
+function traj(){
+ const marks=(y,cls,xs)=>xs.map(([a,w])=>`<i class="${cls}" style="left:${a}%;width:${w}%"></i>`).join('');
+ return`<div class="pg">${runHeader('traj')}
+ <div class="wf"><span style="color:var(--muted)">Builder</span><div class="bar"><i class="sel" style="left:0;width:62%"></i></div><span style="color:var(--muted)">Verifier</span><div class="bar"><i style="left:48%;width:30%"></i></div></div>
+ <div class="dsh"><div class="top"><span class="sel2">Builder · Verify conversation identity · attempt 1 ${I.chev}</span><span class="on">Duration</span><span>Turns</span><span>Calls</span><span class="srch">${I.search}Search</span></div>
+  <div class="strip"><div class="lb"><span>Input</span><span>Model</span><span>Tools</span></div><div class="tr2">${marks(0,'in',[[1,6],[38,3],[70,3]])}${marks(0,'mo',[[8,6],[18,5],[28,6],[42,6],[55,5],[74,6],[86,5]])}${marks(0,'to',[[15,2],[25,2],[35,3],[49,2],[61,6],[81,2]])}</div></div>
+  <div class="rows">${dshRows(false)}</div>
+  <div class="foot2"><span>3 turns · 13 steps</span><span>62 tok/s</span><span>181K tok · cache hit 94%</span><span>$0.026</span></div></div>
+ </div>`;
+}
+function live(){
+ return`<div class="pg">${runHeader('live')}
+ <div class="lv">
+  <div class="lvr"><span class="av lg">Bu</span><div><b>Builder</b><small>Verify conversation identity</small></div><div>Pi · deepseek-v4-pro<small>this Mac · branch agent/oi-65 (clean)</small></div><div style="display:grid;gap:4px;justify-items:end"><span style="display:flex;gap:6px;align-items:center"><span class="sdot breath"></span>running 12m</span><span class="lk"><span>Open conversation</span><span>Open terminal</span><span>Open activity</span></span></div></div>
+  <div class="lvr"><span class="av lg">Ve</span><div><b>Verifier</b><small>Repair Agency binding</small></div><div>—<small>waiting on Verify</small></div><div style="color:var(--muted)">○ not started</div></div>
+  <div class="nowl">NOW · root: <b style="color:var(--ink);font-weight:500">Cradle sidebars designed once</b> · child: verify conversation identity</div>
+ </div></div>`;
+}
+function handoff(){
+ return`<div class="pg">${runHeader('handoff')}
+ <div class="rec"><b>Ready for your recognition</b><span style="color:var(--muted)">Builder returned the Verify unit.</span><span class="sp"></span><span class="tb pri">Recognise</span><span class="tb">Request changes</span><span class="tb">Request evidence</span></div>
+ <div class="ho">
+  <div><h6>Outcome</h6><p>The Agency name is lost because the list reads the session space's label. Both the sidebar row and the chat header now read the Agency's name; restarts and reconnects keep it.</p></div>
+  <div><h6>What changed · working tree</h6><div class="diffs"><span>M  crates/agency/src/binding.rs  +12 −3</span><span>M  desktop/cradle/src/encounter/EncounterList.tsx  +6 −2</span></div></div>
+  <div><h6>Verification · tested at a41c9e2</h6><div class="chk"><div><span class="o p"></span>Left sidebar row names the Agency</div><div><span class="o p"></span>Chat header names the Agency</div><div><span class="o p"></span>Survives restart</div><div><span class="o"></span>Survives provider reconnect — outstanding</div></div></div>
+  <div><h6>Observations</h6><p style="color:var(--muted)">14m · Pi · deepseek-v4-pro · 181K tokens · $0.026</p></div>
+  <div><h6>Continue with</h6><div style="display:grid;gap:6px"><div class="prompt">Prove the reconnect leg against a real provider restart<span>Copy · Start conversation</span></div></div></div>
+  <div class="more-l">${I.right}Provenance</div>
+ </div></div>`;
+}
+function unitPage(){
+ return`<div class="pg"><span class="bk" style="font-size:11px;color:var(--muted)" data-page="map">← Native conversation identity v3</span><div class="pgh"><h4>Verify conversation identity</h4><span class="poptag">work unit</span><span class="sp"></span><span class="tb">${I.pop}Pop out</span></div>
+ <dl class="objp"><dt>Kind</dt><dd>Work unit · frontier of <u style="text-decoration:none;border-bottom:1px solid var(--hair)">${RUN.title}</u></dd><dt>Standing</dt><dd>Ready · not started</dd><dt>Concern</dt><dd>Why the Agency-bound conversation shows as a generic Conversation</dd><dt>Must change</dt><dd>The conversation names its Agency wherever it is shown</dd><dt>Required checks</dt><dd>0 of 5 passed</dd><dt>Depends on</dt><dd>—</dd><dt>Held by</dt><dd>gate · reviewed</dd><dt>May</dt><dd>Edit files in O-I and ai-kit; run tests</dd><dt>Stops when</dt><dd>A check needs a human decision</dd><dt>Attempts</dt><dd>None yet</dd></dl>
+ <div class="more-l">${I.right}Show raw</div></div>`;
+}
+function tasks(){
+ const needs=S.page==='tasks-needs';
+ const body=`<div class="msg-me">why does it still say Conversation in the sidebar?</div>
+  <div class="msg-ag"><span class="av">Bu</span><div><div class="who"><b>Builder</b>4m</div>The sidebar row and the chat header both read the session space's label. The Agency's name never reaches them.<div class="wm"><span class="g">⟡</span>read binding.rs, EncounterList.tsx · 3s · 2 calls</div></div></div>
+  ${needs?`<div class="perm"><div><b>Builder wants to run a command</b></div><div><code>cargo test -p agency binding</code> <span style="color:var(--muted)">in Work/ai-kit</span></div><div class="scope"><span class="pill on">This time</span><span class="pill">This session</span></div><div class="acts"><button class="btn pri">Allow</button><button class="btn q">Refuse</button></div></div>`:`<div class="msg-ag"><span class="av" style="visibility:hidden"></span><div><div class="wm"><span class="g">⟡</span>editing EncounterList.tsx · running</div></div></div>`}`;
+ const picker=S.page==='tasks-picker'?`<div class="picker" style="right:120px;bottom:96px"><div class="mh">Harness</div>
+  <div class="pi on"><span>Pi</span><span class="b">sandboxed</span><small>connection: AG campaign confined provider</small></div>
+  <div class="pi"><span>Pi</span><span class="b">OpenRouter route</span><small>connection: AG65 Alpha</small></div>
+  <div class="pi"><span>Pi</span><span></span><small>connection: programme verification</small></div>
+  <div class="pi"><span>Hermes</span><span class="b">ACP</span><small>connection: AG campaign second harness</small></div>
+  <div class="pi"><span>Gemini CLI</span><span class="b">ACP</span><small>connection: AG65 campaign test body</small></div>
+  <div class="mh">Models live in the model chip</div></div>`:'';
+ return`<div class="pg" style="padding-top:6px;position:relative"><div class="taskh"><span class="av lg">Bu</span><div><b style="font-size:13px">Verify conversation identity: why the Agency name is lost</b><div style="font-size:10.5px;color:var(--muted)">Builder</div></div><span class="rchip" data-page="map">${I.desk}Run · ${RUN.title}</span><span class="sp" style="flex:1"></span><span class="tb">⋯</span></div>
+ <div style="display:flex;flex-direction:column;gap:14px;max-width:640px;width:100%;margin:0 auto;flex:1">${body}</div>
+ ${working()||S.right==='run'?`<div class="statusl" style="max-width:640px;margin:0 auto;width:100%"><span class="sdot breath"></span><b>Builder</b> · editing EncounterList.tsx · 1m 12s</div>`:''}
+ <div class="comp" style="max-width:640px;margin:0 auto 4px;width:100%"><div class="to">To:<span class="chip">Builder</span></div><div class="ph">Message…</div><div class="crow"><button class="ib" title="Insert context">${I.plus}</button><button class="ib" title="Dictate">${I.mic}</button>${pchip()}<span class="hchip" style="margin-left:auto">Pi <span class="dcl">sandboxed</span> ${I.chev}</span><span class="hchip" style="color:var(--muted)">deepseek-v4-pro ${I.chev}</span><button class="send">${I.stop}</button></div></div>${picker}</div>`;
+}
+/* ---------- Settings centre ---------- */
+function sHead(t,extra){return`<div class="pgh"><h4>${t}</h4><span class="sp"></span>${extra||''}<span class="tb">${I.search}Search settings</span><span class="tb">Back to work</span></div>`}
+function sr(label,sub,ctl,cls){return`<div class="sr ${cls||''}"><div>${label}${sub?`<small>${sub}</small>`:''}</div><div class="ctlv">${ctl}</div></div>`}
+const sel=t=>`<span class="sel2">${t} ${I.chev}</span>`;
+const lock=(t,where)=>`<span class="lock">${I.lockI}${t} · <u>${where}</u></span>`;
+function settings(){
+ const p=S.page;
+ if(p==='status')return`<div class="pg">${sHead('Status')}<div class="cards2">
+  <div class="sc"><b>Suite</b><span class="k">O:I 0.1.0 · up to date</span></div>
+  <div class="sc"><b>Harnesses</b><span class="k">4 ready · 11 detected without an adapter</span><div class="acts2"><span>Open</span></div></div>
+  <div class="sc"><b>Credentials</b><span class="k">OpenRouter · verified 3h ago</span><div class="acts2"><span>Open</span></div></div>
+  <div class="sc"><b>Secret stores</b><span class="k">Keychain, 1Password, varlock, pass available</span></div>
+  <div class="sc"><b>Skills</b><span class="k">86 active of 212</span><div class="acts2"><span>Open</span></div></div>
+  <div class="sc"><b>Capability changes</b><span class="k">No capability changes.</span></div></div>
+  <div class="grp">Drift</div><div style="font-size:11.5px;color:var(--muted)">Nothing has drifted: every product's declared and effective settings agree.</div></div>`;
+ if(p==='harness'){const hc=(n,st,it,ef,acts)=>`<div class="sc"><b>${n}</b><span class="k">${st}</span><span class="k">${it}</span><span class="k" style="color:var(--ink)">${ef}</span><div class="acts2">${acts}</div></div>`;
+  return`<div class="pg">${sHead('Harnesses')}<div class="grp">Ready · 4</div><div class="cards2">
+  ${hc('Claude Code','Installed · detected','81 skills projected','Restart Claude to apply','<span>Set as default</span><span>Open folder</span>')}
+  ${hc('Codex','Installed · detected','Skills brokered','Takes effect in new sessions','<span>Set as default</span><span>Open folder</span>')}
+  ${hc('ZCode','Installed · detected','Skills brokered via ~/.agents/skills','Takes effect in new sessions','<span>Set as default</span>')}
+  ${hc('Pi','Detected · not installed','81 skills ready to project','Next session only','<span class="pri">Install</span>')}</div>
+  <div class="grp">${I.right}Detected, adapter needed · 11</div><div style="font-size:11px;color:var(--muted)">Gemini CLI, Gemini Antigravity, Hermes, Hermes ACP, Grok Bot, Ollama, OpenClaw, Kimi, OpenCode, Cursor CLI, DeepSeek Harness</div>
+  <div class="grp">${I.right}Not found · 3</div></div>`;}
+ if(p==='models'||p==='pending'){const pend=p==='pending';
+  const picker=p==='models'?`<div class="picker" style="right:40px;top:150px;width:330px"><div class="mh">Anthropic</div><div class="pi on"><span>Auto · Balanced</span><span class="b">policy</span><small>Picks per task under the Balanced policy</small></div><div class="pi"><span>claude-sonnet-5</span><span class="b">Usable</span><small>via OpenRouter · or add an Anthropic key for the native route</small></div><div class="pi"><span>claude-opus-5</span><span class="b">Usable</span><small>via OpenRouter</small></div><div class="mh">DeepSeek</div><div class="pi"><span>deepseek-v3.2</span><span class="b">Usable</span><small>via OpenRouter</small></div><div class="mh">Local</div><div class="pi"><span>qwen2.5-coder</span><span class="b">Local</span><small>Ollama · no key needed</small></div></div>`:'';
+  return`<div class="pg" style="position:relative">${sHead('Models')}<div class="srows">
+  ${sr('Default connection for new chats','Which harness a new conversation starts with. A connection, not a model',pend?sel('Hermes · ACP')+'<span class="und">Undo</span>':sel('Pi · sandboxed'),pend?'chg':'')}
+  ${sr('Claude Code','Model for this harness',sel('Auto · Balanced'))}
+  <div class="sr"><div class="miss">Choosing a model per harness needs an AIKit setting that doesn't exist yet; the current choice is shown read-only.</div></div>
+  ${sr('Codex','Set in Codex\'s own config',lock('From its config','Open file'))}
+  ${sr('Ranking policy','How Auto chooses: Balanced, Cheapest that fits, Best for the task, Best for the role, Best for the profile, Best quality under budget, Independent reviewer, Local and inspectable',sel('Balanced'))}
+  ${sr('Catalogue','345 models from OpenRouter and your own catalogue','<span class="tb">Browse…</span><span class="tb">'+I.refresh+'Refresh</span>')}
+  </div>${picker}${pend?`<div class="pend"><b>2 changes pending</b><span class="tb pri" data-page="review">Review changes</span><span class="tb">Discard</span></div>`:''}</div>`;}
+ if(p==='review')return`<div class="pg" style="position:relative">${sHead('Models')}<div class="srows">${sr('Default connection for new chats','',sel('Hermes · ACP'),'chg')}</div>
+  <div class="sheet"><div class="card"><h5>Review 2 changes</h5>
+   <div class="chg2"><span>Default connection for new chats</span><span class="ef">New chats only</span><small>This machine · Pi · sandboxed → Hermes · ACP</small></div>
+   <div class="chg2"><span>Skill · Knowledge route steering</span><span class="ef">Next session only</span><small>This project (O-I) · on → off</small></div>
+   <div class="row"><span style="color:var(--muted);font-size:11px;margin-right:auto">Nothing is written until you apply. Each change is read back after.</span><span class="tb">Keep editing</span><span class="tb pri">Apply changes</span></div></div></div></div>`;
+ if(p==='cred'||p==='cred-add'){const add=p==='cred-add';
+  return`<div class="pg">${sHead('Credentials','<span class="tb">Look for keys on this machine</span>')}<div class="cards2">
+  <div class="sc"><b>OpenRouter</b><span class="k">Configured · Keychain</span><span class="k">Verified 3h ago · working</span><div class="acts2"><span>Verify</span><span>Rotate</span><span>Revoke</span></div></div>
+  <div class="sc" ${add?'style="grid-column:span 2"':''}><b>Anthropic</b><span class="k">Not configured · Claude models use OpenRouter until you add a key</span>${add?`<div class="keyf"><span class="inp">Paste your Anthropic API key</span><span class="tb pri">Save</span></div><span class="k">Saved to the keychain. The field empties and the key is never shown again.</span><span class="k" style="color:var(--ink)">Or use a stored secret: keychain:// · op:// · varlock:// · pass://</span>`:`<div class="acts2"><span class="pri">Add key</span><span>Use a stored secret</span></div>`}</div>
+  <div class="sc"><b>OpenAI</b><span class="k">Not configured · needed for speech models</span><div class="acts2"><span>Add key</span><span>Use a stored secret</span></div></div>
+  <div class="sc"><b>DeepSeek</b><span class="k">Not configured</span><div class="acts2"><span>Add key</span></div></div>
+  <div class="sc"><b>Z.ai</b><span class="k">Not configured</span><div class="acts2"><span>Add key</span></div></div></div>
+  <div class="grp">Stored in</div><div style="font-size:11px;color:var(--muted)">Keychain, 1Password, varlock and pass are available. Importing keys from the environment is closed.</div></div>`;}
+ if(p==='skills'){const sk=(on,n,src,k)=>`<div class="skr"><span class="tog ${on?'on':''}"></span><span>${n}<br><small>${src}</small></span><span class="dcl">${k}</span><span style="color:var(--muted2);font-size:10px">›</span></div>`;
+  return`<div class="pg">${sHead('Skills','<span class="segx"><span>This machine</span><span class="on">This project</span><span>This session</span></span>')}
+  <div style="font-size:11px;color:var(--muted)">86 of 212 active for O-I. Changes apply to the next session.</div>
+  <div class="grp">${I.down}aikit · 17</div>${sk(1,'Knowledge route steering','hook/aikit/knowledge-route','hook')}${sk(1,'Living project collaboration','guidance/aikit','guidance')}${sk(1,'Wiki inhabitation','skill/aikit/wiki-inhabitation','skill')}
+  <div class="grp">${I.down}central · 8</div>${sk(0,'Connector authoring','skill/central/connector-authoring','skill')}${sk(1,'Session strap','skill/central/session-strap','skill')}
+  <div class="grp">${I.right}personal · 62</div><div class="grp">${I.right}mattpocock · 41</div><div class="grp">${I.right}nara-skills · 33</div>
+  <div class="grp">Skill sets</div><div style="display:flex;gap:6px;flex-wrap:wrap">${['central-engineering','central-lifecycle','docs-methodology','nara','oi-guardian','suite-foundations'].map((n,i)=>`<span class="dcl" style="font-size:10.5px;padding:2px 8px;${i%2?'':'color:var(--ink);border-color:var(--accent)'}">${n}</span>`).join('')}</div></div>`;}
+ if(p==='profiles')return`<div class="pg">${sHead('Profiles')}<div style="font-size:12px">No profiles yet.</div><div style="font-size:11.5px;color:var(--muted);max-width:60ch">A profile is a named set of settings you can switch to, like "demo" or "offline". Using one stages its changes for review; nothing applies on its own.</div><div style="display:flex;gap:8px"><span class="tb pri">New profile from current settings</span><span class="tb">Import…</span></div></div>`;
+ if(p==='perms')return`<div class="pg">${sHead('Permissions')}<div class="grp">Default permission mode</div><div class="srows">${sr('Claude Code','Ask before acting · Accept edits · Plan only · Bypass permissions',sel('Ask before acting'))}${sr('Codex','Offered by Codex',sel('Accept edits'))}${sr('Hermes','ACP session modes',sel('Bypass permissions')+'<span class="und">Undo</span>','chg')}<div class="sr"><div class="miss">Bypass lets Hermes act without asking, in every new session. Confirm to stage it; the composer can still switch a single session back to Ask.</div></div>${sr('Pi','',`<span class="lock">Pi offers no permission modes</span>`)}</div><div class="grp">Trust and guardrails</div><div class="srows">
+  ${sr('Codex trusts this project','',lock('Trusted','Open Codex config'))}
+  ${sr('Codex trusts your home folder','',lock('No','Open Codex config'))}
+  ${sr('Claude Code file guardrail','Blocks writes outside the project',lock('On','Open Claude settings'))}
+  ${sr('Import keys from the environment','',lock('Closed','Security posture'))}
+  ${sr('Trust keys','157 trusted · 3 reviewed · 65 superseded','<span class="tb">Review…</span>')}</div></div>`;
+ if(p==='product')return`<div class="pg">${sHead('AIKit')}<div style="font-size:12px;display:flex;gap:8px;align-items:center"><span class="gd"></span>Available · 1 degradation<span class="more-l" style="padding:0">${I.right}details</span></div>
+  <div class="srows">${sr('Profiles in use','Which AIKit profiles apply',sel('None'))}${sr('Default skill sets','This machine',sel('6 sets'))}${sr('Capabilities','86 active of 212','<span class="tb">Open Skills</span>')}${sr('Model candidates','',lock('None declared','AIKit config'))}</div>
+  <div class="grp">Actions</div><div style="display:flex;gap:6px;flex-wrap:wrap">${['Status','Explain','History','Diff','Compose','Doctor'].map(a=>`<span class="tb">${a}</span>`).join('')}</div>
+  <div style="font-size:11px;color:var(--muted)">Starting, attaching and stopping sessions, applying and rolling back have no native operation yet.</div>
+  <div class="more-l">${I.right}Known gaps</div><div class="more-l" style="padding-top:0">${I.right}Show raw</div></div>`;
+ return'';
+}
+/* ---------- centre ---------- */
+function centreHTML(){
+ const m=S.mode;
+ if(S.right==='full'&&m!=='factory'&&m!=='settings')return`<main class="centre" style="display:none"></main>`;
+ if(m==='factory'){const p=S.page;
+  const tab=p==='desk'?`${I.desk}Desk`:p.startsWith('tasks')?`${I.tasks}Tasks`:p==='unit'?`${I.target}Verify conversation identity`:`${I.factory}${RUN.title}`;
+  const body={desk,map,traj,live,handoff,unit:unitPage}[p]||tasks;
+  return`<main class="centre full">${body()}</main>`;
+ }
+ if(m==='settings')return`<main class="centre full">${settings()}</main>`;
+ if(S.right==='inspect'&&m==='base')return`<main class="centre"><div class="tabs"><div class="ctab">${I.flow}Sidebar design · 22 Sep</div><div class="ctab on">${I.file}mode.ts</div></div><div class="pg"><div class="pgh"><h4>mode.ts</h4><span class="sp"></span><span class="tb">${I.pop}Pop out</span></div><dl class="objp"><dt>Source</dt><dd>desktop/cradle/src/workspace/mode.ts</dd><dt>Revision</dt><dd>9 · saved 2m ago</dd><dt>Owner</dt><dd>O-I repository</dd><dt>Changed by</dt><dd>Epii, in this conversation</dd><dt>Relations</dt><dd>Used by DesktopShell, modeBodies</dd></dl><div class="more-l">${I.right}Show raw</div><div class="ln"></div><div class="ln m2"></div><div class="ln s"></div></div></main>`;
+ if(m==='base')return`<main class="centre"><div class="tabs"><div class="ctab on">${I.flow}Sidebar design · 22 Sep</div><div class="ctab">${I.file}mode.ts</div></div><div class="doc"><h4>Sidebar design</h4><div class="sub">Flow · Central · edited just now</div><div class="ln"></div><div class="ln m2"></div><div class="ln s"></div><div class="ln"></div><div class="ln m2"></div><br><div class="ln s"></div><div class="ln"></div></div></main>`;
+ if(m==='expressions')return`<main class="centre full"><div class="field"></div></main>`;
+ return`<main class="centre full"><div class="graph"><svg viewBox="0 0 600 500"><path d="M300 240 180 140M300 240 440 150M300 240 200 360M300 240 420 350M440 150 520 250"/><circle cx="300" cy="240" r="16"/><circle cx="180" cy="140" r="10"/><circle cx="440" cy="150" r="10"/><circle cx="200" cy="360" r="10"/><circle cx="420" cy="350" r="10"/><circle cx="520" cy="250" r="7"/><text x="322" y="244">Central</text><text x="120" y="120">Harness profile</text><text x="455" y="135">Day and NOW</text><text x="130" y="385">Cradle shell</text><text x="432" y="378">Expression field</text></svg></div></main>`;
+}
+/* ---------- right ---------- */
+function agName(){return AG[S.mode][1]}
+function chatBody(){
+ const n=agName(),a=AG[S.mode][0];
+ if(S.right==='fresh'||S.right==='help')return`<div style="color:var(--muted);font-size:11.5px">${S.right==='help'?'Ask about any setting. This chat can read settings but never changes them.':`Start a conversation with ${n}.`}</div><div class="sugg"><span>${S.right==='help'?'Why is Pi not installed?':'Read Context with me and tell me what stands out.'}</span><span>${S.right==='help'?'Which models can I use without a new key?':'Help me think through what to do next.'}</span></div>`;
+ const me=`<div class="msg-me">Can you make the left sidebar's head and foot stay fixed across modes?</div>`;
+ const first=`<div class="msg-ag"><span class="av">${a}</span><div><div class="who"><b>${n}</b>2m</div>Reading the shell and the mode table first, then I'll move the scope selector and mode switcher out of the mode bodies.<div class="wm"><span class="g">⟡</span>read DesktopShell.tsx, mode.ts · 2s · 2 calls</div></div></div>`;
+ let tail='';
+ if(S.right==='working'||S.right==='reconnect'||S.right==='inspect'||S.right==='bypass')tail=`<div class="msg-ag"><span class="av" style="visibility:hidden"></span><div><div class="wm"><span class="g">⟡</span>editing shell.css · running</div></div></div>`;
+ if(S.right==='needs')tail=`<div class="perm"><div><b>${n} wants to run a command</b></div><div><code>npm run build</code> <span style="color:var(--muted)">in desktop/cradle</span></div><div class="scope"><span class="pill on">This time</span><span class="pill">This session</span></div><div class="acts"><button class="btn pri">Allow</button><button class="btn q">Refuse</button></div></div>`;
+ if(S.right==='done')tail=`<div class="msg-ag"><span class="av" style="visibility:hidden"></span><div>Head and foot are fixed; only the body changes with the mode.<div class="chips"><span class="chipa">${I.file}shell.css <small>rev 15</small></span><span class="chipa">${I.file}mode.ts <small>rev 9</small></span></div></div></div>`;
+ return me+first+tail;
+}
+function statusLine(){return`<div class="statusl"><span class="sdot breath"></span><b>${agName()}</b> · editing shell.css · 1m 12s</div>`}
+function composer(){const run=['working','inspect','bypass'].includes(S.right);return`<div class="comp"><div class="to">To:<span class="chip">${agName()}</span></div><div class="ph">${S.right==='reconnect'?'Keep writing — your draft is kept':'Message…'}</div><div class="crow"><button class="ib" title="Insert context">${I.plus}</button><button class="ib" title="Dictate">${I.mic}</button>${pchip()}<span class="model" style="margin-left:auto"></span><span class="hchip" title="Harness">${S.mode==='expressions'||S.mode==='techne'?'Claude Code':'Pi'} ${I.chev}</span><span class="hchip" title="Model" style="color:var(--muted)">${S.mode==='expressions'||S.mode==='techne'?'claude-sonnet-5':'glm-5.3'} ${I.chev}</span><button class="send" title="${run?'Stop current response':'Send message'}">${run?I.stop:I.up}</button></div></div>`}
+function pchip(){return S.right==='bypass'?`<span class="pchip byp" title="Permission mode">Bypass ${I.chev}</span>`:`<span class="pchip" title="Permission mode">Ask ${I.chev}</span>`}
+function tapeCompact(paused){
+ return`<div style="display:flex;align-items:center;gap:6px"><div class="tfilt"><span class="on">All</span><span>Tools</span><span>Errors</span></div><span class="follow">${paused?'Paused':'<span class="sdot breath"></span>Following live'}</span></div><div class="dsh" style="font-size:10.5px"><div class="rows">${dshRows(true)}</div></div>${paused?'<button class="resume">Resume live · 4 new</button>':''}`;
+}
+function roster(){
+ const n=agName(),a=AG[S.mode][0];
+ const g=(ab,nm,p)=>`<div class="agrow"><span class="av lg">${ab}</span><div><b>${nm}</b><div class="p">${p}</div></div><span class="st"><span class="pres idle"></span></span></div>`;
+ return`<div class="srch"><button class="ib" title="Search agents">${I.search}</button><button class="ib" title="Create agent or team">${I.plus}</button></div>
+  <div class="sech" style="padding:0">Working with you</div>
+  <div class="agrow"><span class="av lg">${a}</span><div><b>${n}</b><div class="p">${S.mode==='factory'?'Carries the Verify unit':'Develops the O:I desktop across its repos'}</div><div class="as">${S.mode==='factory'?'Verify conversation identity':'Fixing sidebar regressions'}</div></div><span class="st"><span class="sdot breath"></span></span></div>
+  ${S.mode==='factory'?`<div class="agrow"><span class="av lg">Ve</span><div><b>Verifier</b><div class="p">Checks claims against running software</div><div class="as">Waiting on Verify</div></div><span class="st"><span class="pres idle"></span></span></div>`:''}
+  <div class="sech" style="padding:0;margin-top:6px">Guardians</div>
+  ${g('CG','Central Guardian','Continuity of the personal ground')}${g('AG','Actuation Guardian','Living articulation')}${g('AI','AIKit Guardian','Potency')}${S.mode==='factory'?g('FG','Factory Guardian','Transformation'):''}<div class="agrow"><span class="av lg">WG</span><div><b>Workcell Guardian</b><div class="p">Situation: where work runs</div></div><span class="st" title="Unavailable">×</span></div>`;
+}
+function contextBody(){
+ const slice=S.mode==='factory'?`<div class="sech" style="padding:0">Factory's slice</div><div class="launch"><div class="li">${I.file}Vision — O:I product ground<kbd>intent</kbd></div><div class="li">${I.target}Goals<kbd>none yet</kbd></div><div class="li">${I.remember}NOW · Cradle sidebars designed once<kbd>root</kbd></div></div>`:'';
+ return`<div style="font-size:11.5px;color:var(--muted)">Bring material into this conversation's context.</div><div class="launch"><div class="li">${I.file}File<kbd>⌘P</kbd></div><div class="li">${I.term}Terminal<kbd>⌃\`</kbd></div><div class="li">${I.globe}Browser page<kbd>⌘T</kbd></div></div>${slice}<div style="font-size:10.5px;color:var(--muted2)">Empty state only. Once something is inserted, the existing Context canvas is kept exactly as it works today.</div>`;
+}
+function rightHTML(){
+ const m=S.mode, st=S.right, [a,n]=AG[m];
+ const tabs=TABS[m];
+ let cur;
+ if(m==='factory')cur={run:'Run',paused:'Run',agents:'Agents',context:'Context'}[st]||'Run';
+ else if(m==='settings')cur='Chat';
+ else cur={activity:'Activity',paused:'Activity',agents:'Agents',context:'Context'}[st]||'Chat';
+ const busy=working()||st==='run'||(m==='factory');
+ const pres=st==='needs'||S.page==='tasks-needs'?'<span class="pres need" title="Needs you">!</span>':st==='reconnect'?'<span class="pres hollow" title="Reconnecting"></span>':(busy&&m!=='settings'?'<span class="pres work sdot breath" title="Working"></span>':'<span class="pres idle" title="Idle"></span>');
+ const tabHTML=tabs.map(t=>{let mk='';if(t==='Chat'&&st==='needs')mk='<span class="tn">!</span>';if(t==='Run'&&S.page==='tasks-needs')mk='<span class="tn">!</span>';if(t==='Activity'&&st==='working')mk='<span class="tm"></span>';return`<button class="rtab${t===cur?' on':''}" data-tab="${t}">${t}${mk}</button>`}).join('');
+ let body='',foot='',extra='';
+ if(cur==='Run'){body=`<div class="runsum"><span class="rt">${RUN.title}</span><span style="color:var(--muted);font-size:11px">Queued · next: Verify conversation identity</span><div class="steps"><i></i><i></i></div></div>`+tapeCompact(st==='paused')}
+ else if(cur==='Chat'){body=chatBody();if(st==='working'||st==='bypass')foot=statusLine();foot+=composer();if(st==='reconnect')extra=`<div class="recon"><span class="pres hollow"></span>Reconnecting — last seen 40s ago. Your draft is kept.</div>`}
+ else if(cur==='Activity')body=tapeCompact(st==='paused');
+ else if(cur==='Agents')body=roster();
+ else if(cur==='Context')body=contextBody();
+ const nm=m==='settings'?'Settings help':n;
+ return`<aside class="right"><div class="rtop"><button class="avbtn" title="${nm} — switch agent"><span class="av">${a}</span><span class="badge2">${pres}</span>${st==='bypass'?'<span class="shield">⛨</span>':''}${I.chev}</button><nav class="rtabs">${tabHTML}</nav><button class="ib" data-act="full" title="Full screen ⌘⌥J">${I.expand}</button><button class="ib" data-act="closeR" title="Collapse ⌘⇧B">${I.close}</button></div>
+  <div style="display:grid;grid-template-rows:auto 1fr;min-height:0">${extra}<div class="rbody">${body}</div></div>
+  <div>${st==='bypass'?'<div class="bypc">Bypass permissions is on for this session: Epii acts without asking. <u style="text-decoration:none;border-bottom:1px solid var(--hair)">Back to Ask</u></div>':''}${foot}</div></aside>`;
+}
+/* ---------- captions ---------- */
+const CAP={
+ left:{rest:['L1','Head and foot fixed; the body is the mode\'s own'],loading:['L6 · R8','Reading: one quiet line where rows will be'],error:['L7','Unreadable: says what could not be read; modes still switch'],scope:['D6','Scope menu: project picker with activity marks; workspaces in its footer'],create:['+ menu','One create menu; the mode adds its own entries'],collapsed:['L2','Collapsed: the corner toggle stays']},
+ right:{fresh:['P2','Fresh: suggestions fill the draft'],working:['P4 · R2','Turn in flight: status line, Stop in the send slot, dot on the row; the right top is one row with the avatar menu'],bypass:['A2','Bypass permissions on: the chip is marked, the avatar carries a shield, one line says what it allows'],needs:['P5 · R3','Needs you: inline permission; ! on tab, name, row, project'],done:['P6','Complete: one line plus artifacts'],reconnect:['P10','Reconnecting: hollow dot, draft kept'],activity:['P16','Activity: the run-log tape, following live'],paused:['P16 · F11','Paused: the view holds; Resume live counts new events'],agents:['§4.5','Agents: real identities; the agent\'s page opens in the canvas'],context:['§4.6','Context: the existing insert routes plus the mode\'s slice'],inspect:['P15 · D1','Inspect opens the object\'s page as a canvas tab; Pop out gives it a window'],full:['P13','Full: the conversation takes the centre'],closed:['P1','Closed: the corner mark carries the agent\'s state'],run:['§5 Run','Run tab: compact header and the tape for the selected run'],help:['§1','Help chat: reads settings, never changes them']},
+ page:{desk:['F1–F5','Desk: four columns; titles from the commission purpose; unit segments, never percentages; one partial-source line'],map:['F7','Map: one lane per work unit, requires edge, gate, frontier outlined; detail band with the 5 required checks'],traj:['F9','Trajectory: execution waterfall, session selector, lane strip, typed rows joined by call, turn markers, stats from Pi\'s journal'],live:['§3.4','Live: who carries each leg, harness and model, where, Git basis, real actions only'],handoff:['F13','Handoff: recognition first, then outcome, changes, verification, observations, continuation'],tasks:['F14','Tasks: full-size conversation; Run chip only when truly joined'],'tasks-needs':['P5 · F4','Needs you: permission inline; ! on the Run tab and the task row'],'tasks-picker':['A1','Harness picker: harness names, connection variants as badges and second lines; models live only in the model chip'],unit:['D1 · A4','Inspect in a full-page mode: the unit\'s page replaces the Run in place, ← back returns; Pop out gives it a window'],status:['S3','Status: cards that link to sections; drift first'],harness:['§3.2','Harnesses by name: ready, adapter needed, not found'],models:['S14','Model picker: Auto keeps its name; each route Usable, Needs a key, or Local'],pending:['S4','Staged: row marked with Undo; pending strip only now'],review:['S5','Review: one sheet, each effect in plain words; Apply changes'],cred:['S13','Credentials: configured cards with Verify, Rotate, Revoke'],'cred-add':['S12','Write-only key field; empties after Save; never shown again'],skills:['§3.5','Skills as toggles by source, per scope; writable today'],profiles:['§3.6','Profiles: none yet; using one stages its changes'],perms:['A2 · S11','Default permission mode per harness (Bypass staged with a confirmation); read-only rows show a lock'],product:['§3.9 · S15','Product page: health, settings, actions; missing operations named once']}
+};
+function render(){
+ seg('c-mode',MODES,'mode');
+ const pages=PAGES[S.mode];document.getElementById('w-page').hidden=!pages;if(pages)seg('c-page',pages,'page');
+ seg('c-left',LEFTS,'left');seg('c-right',rightSet(),'right');seg('c-epi',[['off','Off'],['on','On']],'epi');seg('c-footer',[['hidden','Hidden'],['revealed','Revealed']],'footer');seg('c-theme',[['system','System'],['light','Light'],['dark','Dark']],'theme');
+ const m=document.getElementById('m');
+ m.dataset.left=S.left==='collapsed'?'collapsed':'open';m.dataset.footer=S.footer;m.dataset.right=S.right;
+ const compDot=S.right==='closed'&&S.mode!=='settings'?'<span class="dot"></span>':'';
+ m.innerHTML=`<div class="bar"><span class="lights"><i></i><i></i><i></i></span><button class="tgl" data-act="toggleL" title="Toggle left ⌘B">${I.sidebar}</button><span class="spacer"></span><button class="tgl companion" data-act="toggleR" title="Toggle right ⌘⇧B">${I.sidebarR}${compDot}</button></div>
+  <div class="body">${leftHTML()}${centreHTML()}${rightHTML()}</div><div class="wfoot"><span>Main</span><span>All products read 2m ago</span><span class="sp"></span><span>⋯</span><button class="lens" data-act="epi" title="Epi-Logos lens: focus the corpus" aria-pressed="${S.epi==='on'}">${I.epi}</button></div>`;
+ const b=m.querySelector('.body');
+ if(S.right==='full'&&S.mode!=='factory'&&S.mode!=='settings')b.style.gridTemplateColumns=(S.left==='collapsed'?'0px':'240px')+' 0px 1fr';
+ else if(S.mode==='factory'&&S.right!=='closed')b.style.gridTemplateColumns=(S.left==='collapsed'?'0px':'240px')+' 1fr 300px';
+ const c1=CAP.left[S.left],c2=(S.page&&CAP.page[S.page])||CAP.right[S.right],c3=S.page?CAP.right[S.right]:null;
+ document.getElementById('cap-ids').textContent=`${c1[0]} + ${c2[0]}`+(S.epi==='on'?' + D2':'');
+ document.getElementById('cap-desc').textContent=`${c2[1]}.`+(S.left!=='rest'?` ${c1[1]}.`:'')+(S.epi==='on'?' Epi-Logos lens on: the corpus is laid over this mode\'s tree; × in the head leaves.':'');
+ fit();
+}
+document.getElementById('m').addEventListener('click',e=>{
+ const b=e.target.closest('[data-mode],[data-act],[data-tab],[data-page]');if(!b)return;
+ if(b.dataset.mode){set('mode',b.dataset.mode);return}
+ if(b.dataset.page&&PAGES[S.mode]){S.page=b.dataset.page==='tasks'?'tasks':b.dataset.page;render();return}
+ const a=b.dataset.act;
+ if(a==='scope')S.left=S.left==='scope'?'rest':'scope';
+ if(a==='create')S.left=S.left==='create'?'rest':'create';
+ if(a==='toggleL')S.left=S.left==='collapsed'?'rest':'collapsed';
+ if(a==='toggleR')S.right=S.right==='closed'?DEF[S.mode].right==='closed'?'help':DEF[S.mode].right:'closed';
+ if(a==='closeR')S.right='closed';
+ if(a==='full'&&S.mode!=='factory')S.right=S.right==='full'?'working':'full';
+ if(a==='epi'){S.epi=S.epi==='on'?'off':'on';S.footer='revealed'}
+ if(a==='epiOff')S.epi='off';
+ if(b.dataset.tab){const t=b.dataset.tab;S.right=S.mode==='factory'?{Run:'run',Agents:'agents',Context:'context'}[t]:S.mode==='settings'?'help':{Chat:'working',Activity:'activity',Agents:'agents',Context:'context'}[t]}
+ render();
+});
+function fit(){const st=document.getElementById('stage'),inner=document.getElementById('stage-inner'),m=document.getElementById('m');const w=st.clientWidth;const s=Math.max(.5,Math.min(1,w/1200));m.style.transform=`scale(${s})`;inner.style.width=(1200*s)+'px';inner.style.height=(740*s)+'px'}
+window.addEventListener('resize',fit);
+try{const t=localStorage.getItem('sidebars-theme');if(t)S.theme=t}catch(e){}
+applyTheme();render();
+})();
+</script>

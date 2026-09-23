@@ -16,6 +16,7 @@ export interface PanelSubject { ref?: string; kind?: string; title: string; proj
 
 const ExpressionGraphNavigator = lazy(() => import("../expressions/ExpressionGraphNavigator").then(module => ({default: module.ExpressionGraphNavigator})));
 const MaterialNavigator = lazy(() => import("../techne/MaterialNavigator").then(module => ({default: module.MaterialNavigator})));
+const WikiMapNavigator = lazy(() => import("../techne/WikiMapNavigator").then(module => ({default: module.WikiMapNavigator})));
 const EpiPlacesNavigator = lazy(() => import("../epilogos/EpiPlacesNavigator").then(module => ({default: module.EpiPlacesNavigator})));
 const AnimaPlane = lazy(() => import("../expressions/AnimaPlanes").then(module => ({default: module.AnimaPlane})));
 const EpiiPlane = lazy(() => import("../techne/EpiiPlane").then(module => ({default: module.EpiiPlane})));
@@ -36,20 +37,21 @@ const RunPlane = lazy(() => import("../contributions/factory/sidebar/RunPlane").
 const AgentsPlane = lazy(() => import("../contributions/factory/sidebar/AgentsPlane").then(module => ({default: module.AgentsPlane})));
 
 /** The left body for a mode whose curation does not use the World navigator. */
-export function ModeLeftBody({mode, project, onOpenExpressions, onOpenTechne, onOpenPlace, onOpenFile, onMessage}: {
+export function ModeLeftBody({mode, project, onOpenExpressions, onOpenTechne, onOpenPlace, onOpenFile, onOpenWiki, onMessage}: {
   mode: WorkspaceMode;
   project?: string;
   onOpenExpressions: (expressionRef?: string) => void;
   onOpenTechne?: () => void;
   onOpenPlace: (place: {family: string; ref: string; title: string}) => void;
   onOpenFile: (location: CentralLocation) => Promise<void> | void;
+  onOpenWiki: (ref: string, title: string, project?: string) => void;
   onMessage: (message: string) => void;
 }) {
   return <Suspense fallback={null}>
     {mode === "expressions"
       ? <ExpressionGraphNavigator onOpenExpressions={onOpenExpressions} onOpenTechne={onOpenTechne} onMessage={onMessage}/>
       : mode === "epi-logos" ? <EpiPlacesNavigator onOpenPlace={onOpenPlace} onMessage={onMessage}/>
-      : mode === "techne" ? <ExpressionGraphNavigator onOpenExpressions={onOpenExpressions} onOpenTechne={onOpenTechne} onMessage={onMessage}/>
+      : mode === "techne" ? <WikiMapNavigator project={project} onOpenWiki={onOpenWiki} onMessage={onMessage}/>
       : <MaterialNavigator project={project} onOpenFile={onOpenFile} onMessage={onMessage}/>}
   </Suspense>;
 }

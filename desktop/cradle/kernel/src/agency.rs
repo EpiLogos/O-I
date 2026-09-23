@@ -1,6 +1,8 @@
 //! Read canonical AIKit SessionSpace attachment intent. Terminal topology and
 //! filesystem isolation are not evidence of an AgentSession or live encounter.
 use serde_json::Value;
+
+pub const EPI_PRIME_QL_BODY_REF: &str = "agent-body/epi-prime-ql";
 use std::{
     path::{Path, PathBuf},
     process::Command,
@@ -295,7 +297,7 @@ impl Client {
     ///
     /// The existing attachment gate stays intact for every other action;
     /// provision is the one path allowed to CREATE the attachment it needs.
-    pub fn provision(&self,cwd:&Path,project_ref:&str)->Result<Value,String> {
+    pub fn provision(&self,cwd:&Path,project_ref:&str,preferred_body_ref:Option<&str>)->Result<Value,String> {
         let context=self.session_space(cwd,&["project-context"])?;
         let binding:Value=serde_json::from_str(&context)
             .map_err(|error|format!("Unreadable AIKit project-context reading: {error}"))?;
@@ -347,13 +349,43 @@ impl Client {
         // conversation later.
         let rows=self.encounter(cwd,project_ref,&EncounterRequest::Providers)?;
         let configured=rows.as_array().map(Vec::as_slice).unwrap_or_default();
-        let (provider,provider_default)=default_provider_choice(configured,crate::chat_defaults::held_provider().as_deref())
-            .ok_or("No ACP provider is configured; connect one in System → Sources, then send again")?;
+        let held=crate::chat_defaults::held_provider();
+        let (provider,provider_default,resolved_body)=match preferred_body_ref.map(str::trim).filter(|value|!value.is_empty()) {
+            Some(body_ref)=>{
+                let (provider,row,rule)=preferred_body_provider_choice(configured,held.as_deref(),body_ref)
+                    .ok_or_else(||format!(
+                        "The selected mode requires acting body {body_ref}, but no configured AIKit encounter provider discloses that exact body. Configure the Prime-RPC provider first; a generic provider will not be relabelled Prime–QL."
+                    ))?;
+                let resolved_body=if row["body_ref"].as_str()==Some(body_ref) {
+                    let revision=row["body_revision"].as_str().ok_or_else(||format!(
+                        "Provider {provider} names body {body_ref} without an attributable body_revision"
+                    ))?;
+                    Some(serde_json::json!({
+                        "body_ref":body_ref,
+                        "body_revision":revision,
+                        "standing":if rule=="owner-choice" {"explicit-provider-override-resolves-same-body"} else {"mode-selected-default; provider readback required"}
+                    }))
+                } else {
+                    None
+                };
+                (provider,rule,resolved_body)
+            }
+            None=>{
+                let (provider,rule)=default_provider_choice(configured,held.as_deref())
+                    .ok_or("No encounter provider is configured; connect one in System → Sources, then send again")?;
+                (provider,rule,None)
+            }
+        };
 
         // The ordinary open — and the ordinary gate: discover runs again and
         // must now see the new space carrying this Project and this session.
         let opened=self.encounter(cwd,project_ref,&EncounterRequest::Open{
             space:space.clone(),agent_session:agent_session.clone(),provider:provider.clone()})?;
+        if let Some(expected)=resolved_body.as_ref() {
+            if opened["body_ref"]!=expected["body_ref"] || opened["body_revision"]!=expected["body_revision"] {
+                return Err("AIKit opened a provider whose resolved acting body does not match the mode-selected Prime–QL body; keep the session inspectable and repair provider configuration".into());
+            }
+        }
         Ok(serde_json::json!({
             "project":project,
             "space":space,
@@ -362,6 +394,8 @@ impl Client {
             "agency":agency,
             "provider":provider,
             "provider_default":provider_default,
+            "preferred_body_ref":preferred_body_ref,
+            "resolved_body":resolved_body,
             "open":opened,
         }))
     }
@@ -484,6 +518,29 @@ impl Client {
 /// row), the row literally named `pi`, else the first configured row.
 /// `None` = nothing is configured. A held choice that no longer names a
 /// configured row falls through honestly — it is never invented back.
+/// A mode-selected acting body narrows the eligible provider set before the
+/// ordinary provider preference is considered. A configured generic provider
+/// is never substituted for the required body.
+pub fn preferred_body_provider_choice<'a>(
+    rows:&'a [Value],
+    owner_choice:Option<&str>,
+    body_ref:&str,
+)->Option<(String,&'a Value,&'static str)> {
+    if let Some(choice)=owner_choice.map(str::trim).filter(|choice|!choice.is_empty()) {
+        if let Some(row)=rows.iter().find(|row|row["id"].as_str()==Some(choice)) {
+            return Some((choice.to_owned(),row,"owner-choice"));
+        }
+    }
+    let eligible=rows.iter().filter(|row|
+        row["id"].as_str().is_some()
+        && row["body_ref"].as_str()==Some(body_ref)
+        && row["body_revision"].as_str().is_some_and(|revision|!revision.trim().is_empty())
+    ).collect::<Vec<_>>();
+    if eligible.is_empty(){return None;}
+    let row=eligible[0];
+    Some((row["id"].as_str()?.to_owned(),row,"mode-body"))
+}
+
 pub fn default_provider_choice(rows:&[Value],owner_choice:Option<&str>)->Option<(String,&'static str)> {
     let ids:Vec<&str>=rows.iter().filter_map(|row|row["id"].as_str()).collect();
     if ids.is_empty() {return None;}
@@ -605,6 +662,28 @@ mod tests {
         let body=serde_json::to_value(&request).unwrap();
         assert_eq!(body["action"],serde_json::json!("draft"));
         assert_eq!(body["text"],serde_json::json!("/model"));
+    }
+
+    #[test]
+    fn mode_body_is_default_but_explicit_provider_override_stays_explicit() {
+        let rows=&[
+            serde_json::json!({"id":"pi","label":"Pi"}),
+            serde_json::json!({"id":"prime","label":"Prime","body_ref":EPI_PRIME_QL_BODY_REF,"body_revision":"actuation/110"}),
+            serde_json::json!({"id":"prime-alt","label":"Prime Alt","body_ref":EPI_PRIME_QL_BODY_REF,"body_revision":"actuation/111"}),
+        ];
+        let (provider,row,rule)=preferred_body_provider_choice(rows,None,EPI_PRIME_QL_BODY_REF).unwrap();
+        assert_eq!(provider,"prime");
+        assert_eq!(row["body_revision"],serde_json::json!("actuation/110"));
+        assert_eq!(rule,"mode-body");
+        let (provider,_,rule)=preferred_body_provider_choice(rows,Some("prime-alt"),EPI_PRIME_QL_BODY_REF).unwrap();
+        assert_eq!(provider,"prime-alt");
+        assert_eq!(rule,"owner-choice");
+        let (provider,row,rule)=preferred_body_provider_choice(rows,Some("pi"),EPI_PRIME_QL_BODY_REF).unwrap();
+        assert_eq!(provider,"pi");
+        assert_eq!(row["body_ref"],serde_json::Value::Null);
+        assert_eq!(rule,"owner-choice","an explicit provider override wins without being relabelled Prime–QL");
+        assert!(preferred_body_provider_choice(&rows[..1],None,EPI_PRIME_QL_BODY_REF).is_none(),
+            "without an explicit override a generic provider never substitutes for the required mode body");
     }
 
     #[test]
