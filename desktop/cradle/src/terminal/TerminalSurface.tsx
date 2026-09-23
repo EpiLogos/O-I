@@ -8,10 +8,23 @@ import type {SurfaceBinding} from "../surface/types";
 import "@xterm/xterm/css/xterm.css";
 import "./terminal.css";
 /* The xterm theme is read from the host body's computed `--oi-*` roles (tokens.css `.oi-desktop` /
- * `[data-theme="dark"]`), never a literal palette, and re-read when the host flips `data-theme`.
- * xterm lends an opaque selection colour its own 0.3 alpha, so the role is passed as-is. */
+ * `[data-theme="dark"]`, plus a theme-library entry's `[data-oi-theme]` block), never a literal
+ * palette, and re-read when the host flips either attribute. A theme entry may carry the ANSI
+ * 16 (`--oi-terminal-ansi-*`); the house appearances leave them unset and xterm keeps its own. */
 const token=(name:string)=>getComputedStyle(document.body).getPropertyValue(name).trim();
-const terminalTheme=()=>({background:token("--oi-canvas-ground"),foreground:token("--oi-foreground"),cursor:token("--oi-foreground"),selectionBackground:token("--oi-accent-soft")});
+const camel=(role:string)=>role.split("-").map((part,index)=>index?part[0].toUpperCase()+part.slice(1):part).join("");
+const ANSI_ROLES=["black","red","green","yellow","blue","magenta","cyan","white","bright-black","bright-red","bright-green","bright-yellow","bright-blue","bright-magenta","bright-cyan","bright-white"];
+const terminalTheme=()=>{
+  const theme:Record<string,string>={
+    background:token("--oi-canvas-ground"),
+    foreground:token("--oi-foreground"),
+    cursor:token("--oi-terminal-cursor")||token("--oi-foreground"),
+    selectionBackground:token("--oi-terminal-selection")||token("--oi-accent-soft"),
+  };
+  const ansi=ANSI_ROLES.map(role=>token(`--oi-terminal-ansi-${role}`));
+  ansi.forEach((color,index)=>{if(color)theme[camel(ANSI_ROLES[index])]=color;});
+  return theme;
+};
 export function TerminalSurface({binding}:{binding:SurfaceBinding}){
  const kernel=useKernel();const host=useRef<HTMLDivElement>(null);const emulator=useRef<Terminal>();const [error,setError]=useState<string>();const [cwd,setCwd]=useState(binding.terminal?.cwd??"");const [exited,setExited]=useState(false);
  useEffect(()=>{
@@ -22,7 +35,7 @@ export function TerminalSurface({binding}:{binding:SurfaceBinding}){
   const checkpoint=()=>lease?invoke("terminal_checkpoint",{id:binding.id,lease,seq,snapshot:serial.serialize()}):Promise.resolve();
   const resize=()=>{if(disposed||!host.current?.getClientRects().length)return;fit.fit();if(lease)void invoke("terminal_resize",{id:binding.id,lease,dimensions:{cols:term.cols,rows:term.rows}}).catch(reason=>setError(String(reason)));};
   const observer=new ResizeObserver(resize);observer.observe(host.current!);
-  const themeObserver=new MutationObserver(()=>{if(!disposed)term.options.theme=terminalTheme();});themeObserver.observe(document.body,{attributes:true,attributeFilter:["data-theme"]});
+  const themeObserver=new MutationObserver(()=>{if(!disposed)term.options.theme=terminalTheme();});themeObserver.observe(document.body,{attributes:true,attributeFilter:["data-theme","data-oi-theme"]});
   let input=Promise.resolve();const data=term.onData(data=>{input=input.then(()=>invoke<void>("terminal_input",{id:binding.id,lease,data})).catch(reason=>setError(String(reason)));});
   const poll=async()=>{
    if(disposed)return;

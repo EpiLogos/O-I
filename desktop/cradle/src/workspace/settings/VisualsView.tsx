@@ -7,6 +7,7 @@ import type { StagePresentation } from "../../stage/ExpressionStage";
 import { visuals, type SavedState, type ThemeChoice } from "../../visuals/store";
 import { PRESETS } from "@epilogos/oi-design-system/point-cloud/presets";
 import { CONTROL_SCHEMA, readPath, type PointCloudConfig, type PointCloudPatch } from "@epilogos/oi-design-system/point-cloud/config";
+import { THEMES } from "@epilogos/oi-design-system/themes/index";
 import "./visuals.css";
 
 const QUICK_CHARS = ["✦", "✧", "★", "∞", "Ω", "∑", "∫", "⌘", "⌥", "§", "λ", "☯"];
@@ -22,7 +23,25 @@ export function VisualsView() {
       <h3 id="appearance-heading">Appearance</h3>
       <p className="settings-note">The same appearance follows your workspace, tools and document controls.</p>
       <div className="oi-segment" role="group" aria-label="Appearance">
-        {THEME_CHOICES.map(option=><button key={option.value} type="button" aria-pressed={snapshot.theme === option.value} title={option.hint} onClick={()=>visuals.setTheme(option.value)}>{option.label}</button>)}
+        {THEME_CHOICES.map(option=><button key={option.value} type="button" aria-pressed={snapshot.themeId === null && snapshot.theme === option.value} title={option.hint} onClick={()=>visuals.setTheme(option.value)}>{option.label}</button>)}
+      </div>
+      <p className="settings-note">Or pick a theme from the library: each recolours the shell, editors and terminal.</p>
+      <div className="visuals-themes" role="group" aria-label="Theme library">
+        {THEMES.map(theme=>{
+          const active = snapshot.themeId === theme.id;
+          return <button key={theme.id} type="button" className={active?"visuals-theme is-active":"visuals-theme"} aria-pressed={active}
+            title={`${theme.name} (${theme.appearance}) — ${theme.source.name} under ${theme.source.license}`}
+            onClick={()=>visuals.setNamedTheme(theme)}>
+            <span className="visuals-theme-swatch" style={{background: theme.preview.ground}}>
+              <span className="visuals-theme-word" style={{color: theme.preview.ink}}>A</span>
+              <span className="visuals-theme-strip">
+                {theme.preview.strip.map((color, at)=><i key={at} style={{background: color}} />)}
+              </span>
+            </span>
+            <span className="visuals-theme-name">{theme.name}</span>
+            <span className="visuals-theme-origin">{theme.source.name}</span>
+          </button>;
+        })}
       </div>
     </section>
     <section aria-labelledby="opening-heading">

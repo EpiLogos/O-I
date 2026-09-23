@@ -134,3 +134,56 @@
 .visuals-import { inline-size: 100%; box-sizing: border-box; font-family: var(--oi-font-mono); resize: vertical; }
 
 @media (prefers-reduced-motion: reduce) { .visuals-state-actions { transition: none; } }
+
+/* Theme library — Settings → Visuals. Each card renders its theme's preview
+ * colours from the generated index (a real control, never a raw dump);
+ * selection flips data-oi-theme, the shell follows the variables. */
+.visuals-themes {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(124px, 1fr));
+  gap: var(--oi-desktop-gap-xs);
+  margin-top: var(--oi-desktop-gap-sm);
+}
+.visuals-theme {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 3px;
+  padding: 5px;
+  border: 1px solid transparent;
+  border-radius: var(--oi-shell-radius-row);
+  background: none;
+  cursor: pointer;
+  text-align: left;
+}
+.visuals-theme:hover { background: var(--oi-wash); }
+.visuals-theme.is-active { border-color: var(--oi-accent); }
+.visuals-theme-swatch {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  block-size: 44px;
+  padding: 6px 7px;
+  border-radius: var(--oi-shell-radius-row);
+}
+.visuals-theme-word {
+  font-size: var(--oi-shell-type-title);
+  line-height: 1;
+  font-weight: 600;
+}
+.visuals-theme-strip { display: flex; gap: 3px; }
+.visuals-theme-strip i {
+  display: block;
+  block-size: 9px;
+  inline-size: 9px;
+  border-radius: 2px;
+}
+.visuals-theme-name {
+  margin-top: 2px;
+  font-size: var(--oi-shell-type-nav);
+  color: var(--oi-foreground);
+}
+.visuals-theme-origin {
+  font-size: var(--oi-shell-type-meta);
+  color: var(--oi-muted-2);
+}
