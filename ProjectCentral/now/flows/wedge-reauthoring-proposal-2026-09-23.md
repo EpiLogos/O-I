@@ -36,6 +36,24 @@ Current reserve: 42px when the traffic lights are absent, 116px while they
 show (`data-window-lights`, committed 2026-09-22 as b7f9bfd8). Both corners
 cut with rectangular notches today.
 
+**What the 09-22 window-lights restore settled, and what it left open.** The
+2026-09-22 restore lane (its report: "restored, and this time it's gated by
+a test") recovered the lights SIGNAL and the corner architecture —
+CradleFrame's derived-baseline `windowLights`, the hosted seam posting both
+wedges, and the seven-check contract gate — after the signal was
+merge-dropped a third time. That lane landed on this branch as b7f9bfd8
+(its first act of this programme) and the gate runs green at HEAD. It
+restored the *regime*: a left cut that derives from the reserve and stays
+flush with the canvas edge. It did not contain a wedge GEOMETRY — the
+clip-path still cuts the square notch, and the gate's corner-left link pins
+that current polygon by name
+(`tests/window-lights-contract.test.mjs`, check 4). That is precisely the
+open question this proposal returns to the owner: the shape the regime
+carries. Consequence for any option below: it lands in the same commit as
+an amendment to that gate link (and the hosted check if the posted numbers
+change), so the gate keeps failing loudly on regressions instead of being
+edited silently.
+
 ## The three options
 
 Each option is drawn only inside the existing clip-path polygon; z-order,
