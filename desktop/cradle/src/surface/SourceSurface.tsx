@@ -22,6 +22,7 @@ import { DayDieFace } from "../receiving/DayDieFace";
 import { useKernel } from "../kernel/KernelProvider";
 import type { SurfaceBinding } from "./types";
 import {EditorFrame} from "../editor/EditorChrome";
+import {sourceBreadcrumb,nativeDaySource,sourceSaveLabel} from "../central/sourceContext";
 
 export interface SourceSurfaceProps {
   binding: SurfaceBinding;
@@ -125,6 +126,10 @@ export function SourceSurface(props: SourceSurfaceProps) {
   const onSave = () => {
     // Always queue an explicit save after preceding edits. The renderer's
     // dirty flag can still be one response behind a fast Cmd+S.
+    if (dayDocument) {
+      setDraftError("This native Day has protected source ownership. Use Save Daily Die to native source in Rendered view; the original form’s Save HTML copy remains a separate export.");
+      return;
+    }
     if (binding.ref) void kernel.saveSource(binding.ref);
   };
   const updateCaret=()=>{const el=textareaRef.current;if(!el)return;const before=el.value.slice(0,el.selectionStart);const lines=before.split("\n");setCaret({line:lines.length,column:(lines[lines.length-1]?.length??0)+1,selected:el.selectionStart!==el.selectionEnd});retainView();};
@@ -163,12 +168,9 @@ export function SourceSurface(props: SourceSurfaceProps) {
    * die shell projected with the CANONICAL payload — the owner's bytes, never
    * the local dirty layer. Detection is total: anything that does not parse
    * as a Day document is simply the ordinary source surface. */
-  const dayDocument = (()=>{
-    try{
-      const parsed=JSON.parse(buffer.content) as {schema?:string;kind?:string;template_payload?:unknown;document_id?:string;fields?:{id:string;label?:string;template_pointer?:string}[]};
-      return parsed.schema==="central.contribution-document/v1"&&parsed.kind==="day"&&parsed.template_payload&&typeof parsed.template_payload==="object"?parsed:null;
-    }catch{return null;}
-  })();
+  // Presentation follows canonical bytes, never a dirty raw-source proposal.
+  const dayDocument = nativeDaySource(buffer.saved_content);
+  const breadcrumb = sourceBreadcrumb(buffer);
   const dieView = dayDocument!==null && view==="rendered";
   /** Register routing follows the owner's ref grammar (same law as the
    * strips below): a `central:source:control:root:` source is the ROOT
@@ -178,18 +180,18 @@ export function SourceSurface(props: SourceSurfaceProps) {
     <EditorFrame
       className={`source-editor${buffer.dirty ? " dirty" : ""}${saveFailed ? " conflicted" : ""}`}
       label={`Editor ${binding.title}`}
-      toolbar={<>{dayDocument&&<span className="source-view-toggle oi-segment" role="group" aria-label="Document view"><button type="button" role="tab" aria-selected={dieView} onClick={()=>setView("rendered")}>Rendered</button><button type="button" role="tab" aria-selected={!dieView} onClick={()=>setView("source")}>Source</button></span>}{buffer.root_register&&<button type="button" className="source-reread-day" data-action="source.day-reread" onClick={()=>void kernel.rereadSource(binding.ref!)}>Re-read canonical</button>}<EditorCommands editor={textareaRef} markdown={markdown}/></>}
-      footer={<><span className="editor-path source-revision" data-revision={buffer.base_revision} title={`Central / Work / ${buffer.project} / ${buffer.path}`}>Central / Work / {buffer.project} / {buffer.path}</span><span>Ln {caret.line}, Col {caret.column}</span><span className={buffer.dirty?"source-dirty-marker":"source-clean-marker"}>{buffer.dirty?"Unsaved":"Saved"}</span><button type="button" aria-expanded={historyOpen} onClick={()=>setHistoryOpen(open=>!open)}>History</button><button type="button" onClick={onSave} disabled={!buffer.dirty}>Save · ⌘S</button></>}
+      toolbar={<>{dayDocument&&<span className="source-view-toggle oi-segment" role="group" aria-label="Document view"><button type="button" role="tab" aria-selected={dieView} onClick={()=>setView("rendered")}>Rendered</button><button type="button" role="tab" aria-selected={!dieView} onClick={()=>setView("source")}>Source</button></span>}{buffer.root_register&&<button type="button" className="source-reread-day" data-action="source.day-reread" onClick={()=>void kernel.rereadSource(binding.ref!)}>Re-read canonical</button>}<EditorCommands editor={textareaRef} markdown={markdown} readOnly={!!dayDocument}/></>}
+      footer={<><span className="editor-path source-revision" data-revision={buffer.base_revision} title={breadcrumb}>{breadcrumb}</span><span>Ln {caret.line}, Col {caret.column}</span><span className={buffer.dirty?"source-dirty-marker":"source-clean-marker"}>{sourceSaveLabel(buffer.dirty,!!dayDocument)}</span><button type="button" aria-expanded={historyOpen} onClick={()=>setHistoryOpen(open=>!open)}>History</button><button type="button" onClick={onSave} disabled={!buffer.dirty||!!dayDocument}>Save · ⌘S</button></>}
       data={{kind:"source",ref:binding.ref,dirty:buffer.dirty,conflicted:saveFailed}}
     >
       {draftError && <p role="alert">{draftError}</p>}
       {error && <p className="source-note" role="alert">{error}</p>}
-      {dieView&&dayDocument&&<DayDieFace payload={dayDocument.template_payload} revision={buffer.base_revision} sourceRef={binding.ref} documentId={dayDocument.document_id??""} fields={dayDocument.fields??[]} project={dayProject}/>}
+      {dayDocument&&<div hidden={!dieView} style={{height:"100%",minHeight:0}}><DayDieFace payload={dayDocument.template_payload} revision={buffer.base_revision} sourceRef={binding.ref} documentId={dayDocument.document_id??""} fields={dayDocument.fields??[]} project={dayProject}/></div>}
+      {historyOpen && <SourceHistory sourceRef={binding.ref} revision={buffer.conflict?.current_revision ?? buffer.base_revision} />}
       <div className="source-editor-scroll" ref={scrollRef} onScroll={retainView} onKeyDown={onKeyDown} hidden={dieView}>
         <div className="source-editor-body">
-          <TextEditor ref={textareaRef} binding={binding} filename={buffer.path} aria-label={`Editing ${binding.title}`} value={text} onChange={onEdit} onSelect={updateCaret} onSave={onSave}/>
+          <TextEditor ref={textareaRef} binding={binding} filename={buffer.path} aria-label={`Editing ${binding.title}`} value={text} onChange={onEdit} onSelect={updateCaret} onSave={onSave} readOnly={!!dayDocument}/>
         </div>
-        {historyOpen && <SourceHistory sourceRef={binding.ref} revision={buffer.conflict?.current_revision ?? buffer.base_revision} />}
         {conflict ? (
         <div className="source-conflict" role="alert" data-conflict-kind="revision-conflict">
           <p className="source-conflict-title">

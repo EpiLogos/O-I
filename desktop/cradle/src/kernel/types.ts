@@ -260,6 +260,7 @@ export type KernelOp =
   | {op:"settings_reveal";path:string}
   /** Settings · staged changes (12-SETTINGS §2): `oi config diff --json` in one call. */
   | {op:"config_diff"}
+  | {op:"central";project:string|null;request:import("../central/client").CentralRequest}
   | {op:"day_read";day_ref?:string}
   | {op:"day_source_open";day_ref?:string}
   | { op: "knowledge"; project?: string; request: KnowledgeRequest; fresh?: boolean }
@@ -350,6 +351,7 @@ export type KernelOpResult =
   | { result:"settings_revealed";data:unknown }
   | { result:"config_diff_reading";resolutions:unknown[] }
   | { result:"day_reading";data:unknown }
+  | { result:"central_reading";data:unknown }
   | { result: "agency_reading"; project_ref: string; spaces: unknown[]; observed_at_unix_ms: number }
   | { result: "knowledge"; data: unknown }
   | { result: "state"; snapshot: KernelSnapshotState }
