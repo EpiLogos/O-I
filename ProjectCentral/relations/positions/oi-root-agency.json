@@ -1,0 +1,19 @@
+{
+  "schema": "central.world-position/v1",
+  "ref": "central:position:project:O-I:oi-root-agency",
+  "revision": "r1",
+  "slug": "oi-root-agency",
+  "label": "O:I Root Agency",
+  "enclosing_world_ref": "project:O-I",
+  "enclosing_co_internality_ref": null,
+  "role_ref": "role:root-agency",
+  "purpose": "Hold the whole {O:I} field — World and Life, sixfold reading, suite harmonisation — and see that each product guardian knows how to know its product.",
+  "purpose_ref": "central:source:control:root:Control/agents/expressions/oi-guardian/intent.md",
+  "stewards_ref": "project:O-I",
+  "eligible_agent_refs": [
+    "agent/oi-field-guardian"
+  ],
+  "profile_ref": "profile/oi-field-guardian",
+  "continuity_ref": null,
+  "handle": "@oi"
+}

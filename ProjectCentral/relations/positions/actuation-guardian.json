@@ -1,0 +1,19 @@
+{
+  "schema": "central.world-position/v1",
+  "ref": "central:position:project:O-I:actuation-guardian",
+  "revision": "r1",
+  "slug": "actuation-guardian",
+  "label": "Actuation Product Guardian",
+  "enclosing_world_ref": "project:O-I",
+  "enclosing_co_internality_ref": null,
+  "role_ref": "role:product-guardian",
+  "purpose": "Steward the Actuation product: living articulation.",
+  "purpose_ref": "central:source:control:root:Control/agents/expressions/actuation-guardian/OFFICE.md",
+  "stewards_ref": "project:Actuation",
+  "eligible_agent_refs": [
+    "agent/actuation-guardian"
+  ],
+  "profile_ref": "profile/actuation-guardian",
+  "continuity_ref": null,
+  "handle": "@actuation-guardian"
+}

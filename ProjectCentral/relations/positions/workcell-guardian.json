@@ -1,0 +1,19 @@
+{
+  "schema": "central.world-position/v1",
+  "ref": "central:position:project:O-I:workcell-guardian",
+  "revision": "r1",
+  "slug": "workcell-guardian",
+  "label": "Workcell Product Guardian",
+  "enclosing_world_ref": "project:O-I",
+  "enclosing_co_internality_ref": null,
+  "role_ref": "role:product-guardian",
+  "purpose": "Steward the Workcell product: situation.",
+  "purpose_ref": "central:source:control:root:Control/agents/expressions/workcell-guardian/OFFICE.md",
+  "stewards_ref": "project:Workcell",
+  "eligible_agent_refs": [
+    "agent/workcell-guardian"
+  ],
+  "profile_ref": "profile/workcell-guardian",
+  "continuity_ref": null,
+  "handle": "@workcell-guardian"
+}
