@@ -126,14 +126,14 @@ export function WorldNavigator({ onExplore, onOpenEncounter, centralFiles, onCen
     {worldState && <Section id="control" label="Control" state={worldState}/>}
     {root && lens.on && <Section id="epi-corpus" label="Epi-Logos corpus" state={{ kind: "ready", rows: 1 }}>
       <div className="left-corpus" data-corpus-root={`Work/${lens.corpusProject}`}>
-        <FileTree path={`Work/${lens.corpusProject}`} onOpen={onOpenFile} refresh={fileRefresh} onRootRef={()=>{}} expanded={projectNavigation[`corpus:${lens.corpusProject}`]?.directories ?? []} onExpansion={directories=>onNavigationChange(`corpus:${lens.corpusProject}`,{directories,locationPath:`Work/${lens.corpusProject}`})}/>
+        <FileTree path={`Work/${lens.corpusProject}`} onOpen={onOpenFile} refresh={fileRefresh} onRootRef={()=>{}} expanded={projectNavigation[`corpus:${lens.corpusProject}`]?.directories ?? []} onExpansion={directories=>onNavigationChange(`corpus:${lens.corpusProject}`,{directories,locationPath:`lens:Work/${lens.corpusProject}`})}/>
       </div>
     </Section>}
     {/* CONTROL and WORK stay mounted under the lens (hidden), so turning it
       * off restores them exactly — same rows, same expansion. */}
     {root && <div className="left-lens-hold" hidden={lens.on || undefined} data-lens-hold="true">
       <Section id="control" label="Control" state={{ kind: "ready", rows: 1 }}>
-        <ControlTree refresh={fileRefresh} onOpen={onOpenFile}/>
+        <ControlTree refresh={fileRefresh} onOpen={onOpenFile} expanded={projectNavigation["control:Control"]?.directories ?? []} onExpansion={directories=>onNavigationChange("control:Control",{directories,locationPath:"tree:Control"})}/>
       </Section>
     </div>}
     {root && <FlowRows onOpen={row=>onOpenFlowInstance ? onOpenFlowInstance(row) : Promise.resolve()}/>}
@@ -200,9 +200,10 @@ export function WorldModeStrip({mode,onMode}:{mode:WorkspaceMode;onMode:(mode:Wo
 
 /** The Control tree: one space whose regions (user, agents, machines…) are
  * reached by expanding — read through Central on demand. */
-function ControlTree({refresh,onOpen}:{refresh:number;onOpen:(location:CentralLocation)=>Promise<void>}) {
-  const [expanded,setExpanded]=useState<string[]>([]);
+function ControlTree({refresh,onOpen,expanded,onExpansion}:{refresh:number;onOpen:(location:CentralLocation)=>Promise<void>;expanded:string[];onExpansion:(directories:string[])=>void}) {
+  // The expansion is the workspace's (persisted with the projects'), so a
+  // mode switch, a remount or the lens never loses it.
   return <div className="central-root-space left-control-tree">
-    <FileTree path="Control" refresh={refresh} onOpen={onOpen} expanded={expanded} onExpansion={setExpanded} onRootRef={()=>{}}/>
+    <FileTree path="Control" refresh={refresh} onOpen={onOpen} expanded={expanded} onExpansion={onExpansion} onRootRef={()=>{}}/>
   </div>;
 }

@@ -190,3 +190,10 @@ button.left-row:hover, .left-row:has(> .left-row-main:hover), .left-row:focus-wi
 .left-corpus { margin: 0 0 2px; }
 .left-section-retry { flex: none; margin-right: 6px; font-size: var(--oi-shell-type-meta); }
 .left-error > p.left-error-detail { font-weight: 400; color: var(--oi-muted-2); }
+/* With the lens chip beside it the scope name keeps its words; the chip
+ * yields first (ellipsis) on a narrow head. */
+.left-scope-trigger { flex: 0 1 auto; }
+.left-scope-name { min-width: 3.4em; }
+.left-lens-chip { flex: 0 1 auto; min-width: 0; overflow: hidden; }
+.left-lens-chip > span { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+.left-lens-chip > button { flex: none; }
