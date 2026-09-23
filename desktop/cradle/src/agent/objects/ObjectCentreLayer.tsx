@@ -1,4 +1,4 @@
-import {useEffect,useState} from "react";
+import {useEffect,useRef,useState} from "react";
 import {ObjectPage} from "./ObjectPage";
 import {interceptObjectOpens,type ObjectRef} from "./registry";
 import "./kinds";
@@ -10,12 +10,16 @@ import "./kinds";
  * to where you were; it never adds a tab bar. The composition root mounts
  * this layer over the centre; in Base it stands down and the frame opens the
  * page as a tab in the focused pane. Pop out always goes to the frame.
+ * `yields` names opens a mode's own centre answers in place itself (Factory's
+ * Desk opens its run/unit/attempt pages with its own ← Back); the layer lets
+ * those through untouched.
  */
-export function ObjectCentreLayer({fullPage}:{fullPage:boolean}) {
+export function ObjectCentreLayer({fullPage,yields}:{fullPage:boolean;yields?:(object:ObjectRef)=>boolean}) {
+ const yieldsRef=useRef(yields);yieldsRef.current=yields;
  const [stack,setStack]=useState<ObjectRef[]>([]);
  useEffect(()=>{if(!fullPage)setStack([]);},[fullPage]);
  useEffect(()=>interceptObjectOpens(detail=>{
-  if(!fullPage||detail.popOut)return false;
+  if(!fullPage||detail.popOut||yieldsRef.current?.(detail.object))return false;
   setStack(held=>[...held.filter(entry=>!(entry.kind===detail.object.kind&&entry.ref===detail.object.ref)),detail.object]);
   return true;
  }),[fullPage]);
