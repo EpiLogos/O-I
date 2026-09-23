@@ -197,3 +197,4 @@ button.left-row:hover, .left-row:has(> .left-row-main:hover), .left-row:focus-wi
 .left-lens-chip { flex: 0 1 auto; min-width: 0; overflow: hidden; }
 .left-lens-chip > span { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
 .left-lens-chip > button { flex: none; }
+.left-refusal { margin: 2px 0 6px; padding: 0 8px 0 29px; font-size: var(--oi-shell-type-ui); line-height: 1.45; color: var(--oi-accent-ink); overflow-wrap: anywhere; }

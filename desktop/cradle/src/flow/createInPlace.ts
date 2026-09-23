@@ -1,29 +1,37 @@
 /**
  * CREATE IN PLACE — one step for every document form (10-SIDEBARS §3.7,
  * regression 6.1.6). Choosing a form never opens the template itself; it
- * creates a COPY at the form's home in the scope's human ground and hands
- * back that copy's location, which the caller opens as an ordinary file.
+ * creates a COPY and hands back that copy's location, which the caller opens
+ * as an ordinary file. This generalises Flow's mint (instance.ts
+ * mintBlankInstance + the frame's openMintedFlow): the same Central file
+ * write — `central.files.write` with an empty expected revision, which
+ * creates and never overwrites — for every form.
  *
- * This generalises Flow's mint (instance.ts mintBlankInstance + the frame's
- * openMintedFlow): the same Central file write — `central.files.write` with
- * an empty expected revision, which creates and never overwrites — for
- * every form, with the destination chosen per form:
+ * Where a copy may be created is Central's law, not the desktop's
+ * (Work/Central ctrl/src/file_mutation.rs, ordinary_policy): Control and
+ * every ProjectCentral are protected ground, and the ONE door that admits a
+ * first save is Central's user-section flows area, Control/user/flows/. So:
  *
- *   Flow      <human ground>/flows/flow-<stamp>.html
- *   Goal      <human ground>/telos/goal-<stamp>/goal.html
- *   Vision    <project human ground>/<project>.html   (a project's only;
- *             refused where the project already has a vision page)
- *   others    <human ground>/documents/<form>-<stamp>.html
+ *   Flow, Day, Beings, Things, Epi-Card
+ *             Control/user/flows/<form>-<stamp>.html — the owner's dated,
+ *             self-contained documents, filed into their day when it closes
+ *   Goal      <human ground>/telos/goal-<stamp>.html (without a telos
+ *             folder, <human ground>/goal-<stamp>.html)
+ *   Vision    Work/<project>/ProjectCentral/user/<project>.html — refused
+ *             where the project already has a vision page
  *
- * <human ground> is Control/user for Central and
- * Work/<project>/ProjectCentral/user inside a project (its human_source).
+ * Goal and Vision are asked for IN PLACE, in the scope's human ground
+ * (Control/user or Work/<project>/ProjectCentral/user) — and Central refuses
+ * that today: its protected ground has no native authored operation for a
+ * new document, and no Action creates a folder (so a goal cannot yet be a
+ * telos/<goal>/ folder of its own). The refusal is surfaced in plain words
+ * with the owner's own reason; nothing is written elsewhere instead.
  *
  * The template bytes are read through Central's own file route from the
- * O-I documents directory (resolveDocumentForm) — never from a bundle copy
- * and never written back. The copy keeps every byte of the template except
- * its embedded document identity (the `ql-doc` JSON's documentId / uuid and
- * created, and a Day's date), which a fresh document must not share with
- * the template. A form without an embedded identity is copied verbatim.
+ * O-I documents directory (resolveDocumentForm) — never written back. The
+ * copy keeps every byte of the template except its embedded identity (the
+ * `ql-doc` JSON's documentId / uuid and created, and a Day's date). A form
+ * without an embedded identity is copied verbatim.
  */
 import {fileOperation, listFiles, readFile, type FileMutation} from "../files/client";
 import type {CentralLocation, KernelTransportStatus} from "../kernel/types";
@@ -52,15 +60,16 @@ const slug = (value: string) => value.toLowerCase().replace(/[^a-z0-9]+/g, "-").
 
 /** Where a form's copy lives, relative to the human ground. `attempt`
  * resolves a same-minute collision with a numeric suffix. */
-export function placementFor(form: Pick<DocumentForm, "kind" | "label">, ground: Pick<HumanGround, "project">, stamp: string, attempt = 0): string {
+export function placementFor(form: Pick<DocumentForm, "kind" | "label">, ground: Pick<HumanGround, "project"> & {telos?: boolean}, stamp: string, attempt = 0): string {
   const suffix = attempt ? `-${attempt + 1}` : "";
   switch (form.kind) {
     case "document-01": return `flows/${instanceFileName(stamp, attempt)}`;
-    case "document-goal": return `telos/goal-${stamp}${suffix}/goal.html`;
+    case "document-goal": return `${ground.telos ? "telos/" : ""}goal-${stamp}${suffix}.html`;
+    // Everything else rides Central's one first-save door (the flows area).
     case "document-vision":
       if (!ground.project) throw new Error("A vision page belongs to a project — choose a project scope first.");
       return `${ground.project.toLowerCase().replace(/[^a-z0-9]/g, "")}.html`;
-    default: return `documents/${slug(form.label)}-${stamp}${suffix}.html`;
+    default: return `flows/${slug(form.label)}-${stamp}${suffix}.html`;
   }
 }
 
@@ -90,13 +99,18 @@ export interface CreatedCopy {location: CentralLocation; html: string; form: Doc
 /** Create one copy of `form` in place and return its location. */
 export async function createFormInPlace(transport: KernelTransportStatus, form: DocumentForm, options: {project?: string; projects?: readonly {name?: string; path?: string}[]; now?: Date}): Promise<CreatedCopy> {
   const now = options.now ?? new Date();
-  const ground = await humanGround(transport, form.kind === "document-01" ? undefined : options.project);
+  // Only Goal and Vision are asked for in the scope's own human ground; every
+  // other form lands at Central's first-save door (Control/user/flows).
+  const inPlace = form.kind === "document-goal" || form.kind === "document-vision";
+  const ground = await humanGround(transport, inPlace ? options.project : undefined);
   // The Flow keeps its ratified mint (the bundled 0/1 carrier's blank
   // instance); every other form's template is read through Central's file
   // route, exactly as the owner holds it.
+  const top = inPlace ? (await listFiles(transport, ground.basePath, true)).entries : [];
+  const telos = top.some(entry => entry.kind === "directory" && entry.name === "telos");
   if (form.kind === "document-vision") {
     // One vision page per project, whatever its file name (ql.html, aikit.html…).
-    const existing = (await listFiles(transport, ground.basePath, true)).entries.find(entry => entry.kind === "file" && /\.html$/i.test(entry.name));
+    const existing = top.find(entry => entry.kind === "file" && /\.html$/i.test(entry.name) && !/^[a-z0-9-]+-\d{4}-\d{2}-\d{2}-\d{4}/i.test(entry.name));
     if (existing) throw new Error(`${ground.project} already has a vision page at ${existing.location.path}; open it instead.`);
   }
   let template: string;
@@ -105,7 +119,7 @@ export async function createFormInPlace(transport: KernelTransportStatus, form: 
   const stamp = localStamp(now);
   let lastError: unknown;
   for (let attempt = 0; attempt < 8; attempt++) {
-    const relative = placementFor(form, ground, stamp, attempt);
+    const relative = placementFor(form, {...ground, telos}, stamp, attempt);
     const location: CentralLocation = {schema: "central.path-ref/v1", ref: `${ground.baseRef}/${relative}`, root: ground.root, path: `${ground.basePath}/${relative}`};
     const html = form.kind === "document-01" ? template : stampCopy(template, now);
     try {
@@ -114,7 +128,11 @@ export async function createFormInPlace(transport: KernelTransportStatus, form: 
       return {location, html, form, ground};
     } catch (reason) {
       lastError = reason;
-      const collided = /already exists|conflict/i.test(String(reason));
+      const words = String(reason instanceof Error ? reason.message : reason);
+      if (inPlace && /Protected ground|native authored operation|No such file or directory/i.test(words)) {
+        throw new Error(`Central doesn't yet let the desktop create a ${form.label} in ${ground.project ?? "Central"}'s human ground (${location.path}) — it is protected ground with no native operation for a new document. Nothing was written. (Central: ${words})`);
+      }
+      const collided = /already exists|conflict/i.test(words);
       if (form.kind === "document-vision" && collided) throw new Error(`${ground.project} already has a vision page at ${location.path}; open it instead.`);
       if (!collided) throw reason;
     }

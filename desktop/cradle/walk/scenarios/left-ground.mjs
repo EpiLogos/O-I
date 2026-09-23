@@ -5,7 +5,8 @@
  *
  *   Central root   Control/user/flows/flow-<walk>.html  (one flow)
  *   Work/Alpha     a project with conversations, a vision page that says it
- *                  is an agent-recovered candidate, learnings, no goals
+ *                  is an agent-recovered candidate, learnings, a stamped telos
+ *                  folder with no goals yet
  *   Work/Beta      a second project (its own conversation)
  *   Work/O-I       the O-I ground holding the document form templates, copied
  *                  byte-exact from this checkout's desktop/cradle/documents
@@ -62,6 +63,10 @@ export async function setup({cradleRoot}) {
     mkdirSync(join(alphaUser, "learnings"), {recursive: true});
     writeFileSync(join(alphaUser, "alpha.html"), `<!doctype html><html><head><meta charset="utf-8"><title>Alpha — product ground</title></head><body><h1>Alpha</h1><p class="hero-meta"><span>Agent-recovered candidate seed · human review pending</span></p><p>What Alpha is for.</p></body></html>\n`);
     writeFileSync(join(alphaUser, "learnings/2026-09-20-first-learning.md"), "# First learning\n\nThe left frame holds still across modes.\n");
+    // Alpha's telos ground as the ProjectCentral stamp lays it (README only:
+    // no goals yet) — the shape Actuation and Workcell carry today.
+    mkdirSync(join(alphaUser, "telos"), {recursive: true});
+    writeFileSync(join(alphaUser, "telos/README.md"), "# Telos — open intent\n\n**Status:** distributed default — becomes human source on adoption\n");
     // Alpha's remembered notes and a project file to open beside.
     mkdirSync(join(root, "Work/Alpha/ProjectCentral/agents/remembered"), {recursive: true});
     writeFileSync(join(root, "Work/Alpha/ProjectCentral/agents/remembered/scope-note.md"), "Scope changes only in the scope menu.\n");
