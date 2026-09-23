@@ -151,7 +151,7 @@ button.left-row:hover, .left-row:has(> .left-row-main:hover), .left-row:focus-wi
 .left-remembered { margin: 2px 0 0; }
 
 /* ── foot ─────────────────────────────────────────────────────────── */
-.left-foot { flex: none; padding: 4px 8px 6px; border-top: var(--oi-shell-edge) solid var(--oi-side-divider, var(--oi-hairline-soft)); }
+.left-foot { flex: none; padding: 4px 8px 6px; border-top: var(--oi-shell-edge) solid var(--oi-hairline-soft); }
 .left-inbox-row { margin: 0 0 4px; }
 .left-inbox-row .left-row-badge { color: var(--oi-accent-ink); font-weight: 600; }
 .desktop-side .left-foot .left-mode-row { justify-content: flex-start; margin: 0; padding: 2px 0 0; border-top: 0; background: transparent; }
