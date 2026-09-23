@@ -181,7 +181,7 @@ export function SharedFieldMaterial({sourceRef}:{sourceRef:string}) {
     initiator_participant_ref:"participant:desktop-operator",
     message:{message_id:messageId,text:a2aText,purpose:"desktop-a2a-exchange"},
    }});
-   if(routed.error||routed.outcome?.result!=="a2a_exchange")throw new Error(routed.error??"The A2A exchange could not be routed through the kernel.");
+   if(routed.error||routed.outcome?.result!=="a2a_exchange_difference")throw new Error(routed.error??"The A2A exchange could not be routed through the kernel.");
    const difference=routed.outcome.data as unknown as Record<string,unknown>&{exchange_ref:string;transport_result:{kind:string;ref:string};transport_provenance?:{agent_card?:{name?:string;version?:string}}};
    setA2aDifference(difference);setError(undefined);
   }catch(err){setError(String(err));}
