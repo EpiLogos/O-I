@@ -93,8 +93,10 @@ export function ProductSection({id, data}: {id: string; data: SettingsSnapshot})
   if (data.owners.state === "failed") return <Unreadable error={data.owners.error} onRetry={() => void refreshAll()}/>;
   const mount: OwnerMount | undefined = data.owners.value[id];
   const descriptor = mount?.descriptor;
-  const entries = data.registry.state === "ok" ? data.registry.value.entries.filter((entry) => entry.owner.owner_ref === (CONTRIBUTION_OWNER[id] ?? id)) : [];
   const contribution = data.registry.state === "ok" ? data.registry.value.mounts.find((candidate) => candidate.owner_ref === id) : undefined;
+  // An owner that is not answering has no settings to show: its rows would be
+  // a stale picture, so only its named absence renders.
+  const entries = data.registry.state === "ok" && contribution?.availability.state !== "unavailable" ? data.registry.value.entries.filter((entry) => entry.owner.owner_ref === (CONTRIBUTION_OWNER[id] ?? id)) : [];
   const availability = descriptor?.availability.state ?? mount?.availability ?? "unknown";
   const degradations = descriptor?.degradations ?? [];
   const skills = data.suite.state === "ok" ? skillCounts(data.suite.value) : null;

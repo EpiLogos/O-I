@@ -65,6 +65,9 @@ export interface RegistryState {
   index: Record<string, SettingEntry>;
   /** "fixture" only in a walk build asked for `?fixtures=1`. */
   source: "live" | "fixture";
+  /** The plane's own scope-ref hints (the fixture world discloses where its
+   * scoped settings live); empty for the live plane. */
+  hints: Partial<Record<string, string>>;
 }
 
 export interface SettingsSnapshot {
@@ -236,7 +239,7 @@ export async function loadRegistry(): Promise<void> {
         for (const setting of section.settings) entries.push({owner: mount, sectionTitle: section.title, setting});
       }
     }
-    return {mounts: registry.mounts, entries, index: Object.fromEntries(entries.map((entry) => [entry.setting.setting_ref, entry])), source: source.kind === "fixture" ? "fixture" : "live"};
+    return {mounts: registry.mounts, entries, index: Object.fromEntries(entries.map((entry) => [entry.setting.setting_ref, entry])), source: source.kind === "fixture" ? "fixture" : "live", hints: Object.fromEntries((["project", "session-space", "connector-relation", "workcell"] as const).flatMap((kind) => { const hint = source.scopeRefHint?.(kind); return hint ? [[kind, hint]] : []; }))};
   });
   await loadResolutions();
 }
