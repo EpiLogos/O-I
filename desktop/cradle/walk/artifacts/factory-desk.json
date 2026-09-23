@@ -1,0 +1,338 @@
+{
+  "schema": "oi.cradle.walk.scenario/v1",
+  "scenario": "factory-desk",
+  "spec_ref": "docs/cradle/11-FACTORY.md §7 F1 F2 F3 F4 F5",
+  "grade": "B",
+  "binding": null,
+  "generated_at": "2026-09-23T00:13:36.750Z",
+  "environment": {
+    "base_url": "http://localhost:4473",
+    "bridge_url": "http://127.0.0.1:4479",
+    "viewport": "1280x820",
+    "browser_engine": "chromium",
+    "bundle": "walk (WALK=1) served by vite preview",
+    "build_input": {
+      "mode": "fresh-build",
+      "bundle_fingerprint": "86e3e584d841a9a3e13b1b876ddb6fa6b2300e2381030005ae37ca433dc90bc5"
+    },
+    "node": "v24.16.0",
+    "platform": "darwin",
+    "source": {
+      "repository_root": "/Users/admin/Central/worktrees/ui-build/lane3-factory",
+      "repository_head": "de19fac61e7ce799a7d7ca0aa6ce81317e633c00",
+      "tracked_changes": [
+        "desktop/cradle/scripts/receipt-lint.mjs",
+        "desktop/cradle/src/CradleFrame.tsx",
+        "desktop/cradle/src/contributions/factory/FactoryCentre.tsx",
+        "desktop/cradle/src/surface/retention.tsx",
+        "desktop/cradle/walk/run.mjs"
+      ],
+      "dirty_digest": "13fc150ae2bd38ee7f8ad2ce4e9c7f1bc115fa93ba182dcb6a71454b1492b016",
+      "engine_provenance_path": "/Users/admin/Central/worktrees/ui-build/lane3-factory/packages/oi-design-system/expressions-engine/PROVENANCE.json",
+      "engine_source": "EpiLogos/Point-Cloud-Demo",
+      "engine_revision": "91db8428fc9dfba06cd258ec5a58e7dd9eef5313"
+    }
+  },
+  "passed": true,
+  "error": null,
+  "duration_ms": 19389,
+  "checks": [
+    {
+      "ok": true,
+      "label": "F1: while the discovery read is in flight the Desk shows skeleton columns and \"Reading runs…\"",
+      "data": {
+        "readingText": "Reading runs…",
+        "skeletonHeads": [
+          "NEEDS YOU",
+          "ACTIVE",
+          "QUEUED",
+          "RECENT"
+        ]
+      }
+    },
+    {
+      "ok": true,
+      "label": "F1: no card is invented while reading (0 cards, 2 skeletons per column)",
+      "data": {
+        "cardsWhileReading": 0
+      }
+    },
+    {
+      "ok": true,
+      "label": "F5: every card title EQUALS the owner's commission purpose (first sentence) — no card invented, none missing",
+      "data": {
+        "titles": [
+          "Decide whether the release notes should also carry a migration guide",
+          "Lint the changelog for headings the release-notes generator does not declare",
+          "Make the Specimen release notes follow the changelog's declared section order, so readers meet breaking changes first"
+        ],
+        "expectedTitles": [
+          "Decide whether the release notes should also carry a migration guide",
+          "Lint the changelog for headings the release-notes generator does not declare",
+          "Make the Specimen release notes follow the changelog's declared section order, so readers meet breaking changes first"
+        ]
+      }
+    },
+    {
+      "ok": true,
+      "label": "F5: no card carries run:/project: ref text",
+      "data": {
+        "sample": "!\nQueued\n1\nMake the Specimen release notes follow the changelog's declared section order, so readers meet breaking changes first\nNext: The ordering rule needs an independent reading against the changelog before it is integrated.\nSpecimen · now\nSr\nSs"
+      }
+    },
+    {
+      "ok": true,
+      "label": "F5: each footer names the project (Specimen) from its key, never a ref",
+      "data": {
+        "footers": [
+          "Specimen · now",
+          "Specimen · now",
+          "Specimen · now"
+        ]
+      }
+    },
+    {
+      "ok": true,
+      "label": "Units: one segment per owner work unit (A 4, B 2, C 0) — never a percentage",
+      "data": {
+        "unitCounts": {
+          "run:01M36QWHM0PFG7ER4ANRHW3W25": 4,
+          "run:01M36REVJ09E5YXSSS0DTXXX3E": 2,
+          "run:01M36S15G0QNF0HBC8T6VMDK03": 0
+        }
+      }
+    },
+    {
+      "ok": true,
+      "label": "No card shows a percentage"
+    },
+    {
+      "ok": true,
+      "label": "Run A's segments shade by leg standing (a returned survey, an active review)",
+      "data": {
+        "runAStanding": [
+          "not-started",
+          "not-started",
+          "active",
+          "returned"
+        ]
+      }
+    },
+    {
+      "ok": true,
+      "label": "F4: the run whose Return awaits Recognition sits in NEEDS YOU with ! and a count of 1",
+      "data": {
+        "needsCount": "1",
+        "glyph": "!"
+      }
+    },
+    {
+      "ok": true,
+      "label": "F4: the NEEDS YOU column counts exactly one run"
+    },
+    {
+      "ok": true,
+      "label": "Search keeps only runs whose words match",
+      "data": {
+        "found": [
+          "Lint the changelog for headings the release-notes generator does not declare"
+        ]
+      }
+    },
+    {
+      "ok": true,
+      "label": "Search-empty says so, with Clear",
+      "data": {
+        "searchEmpty": "No runs match “zzqq”."
+      }
+    },
+    {
+      "ok": true,
+      "label": "Clear restores the board"
+    },
+    {
+      "ok": true,
+      "label": "Opening a run replaces the Desk with the Run page (no stacking)"
+    },
+    {
+      "ok": true,
+      "label": "← Desk returns to the same scroll: scrollTop and the card's top equal before/after (±0.5px)",
+      "data": {
+        "scrollable": 275,
+        "before": 90,
+        "after": 90,
+        "beforeTop": 36,
+        "afterTop": 36
+      }
+    },
+    {
+      "ok": true,
+      "label": "No polling: an idle board sends no Factory read",
+      "data": {
+        "idleFactory": []
+      }
+    },
+    {
+      "ok": true,
+      "label": "F4: Recognise ran the owner's native recognition and returned its receipt"
+    },
+    {
+      "ok": true,
+      "label": "F4: after Recognition and an explicit ⟳ the run has left NEEDS YOU for QUEUED (the owner's lifecycle word)"
+    },
+    {
+      "ok": true,
+      "label": "The ⟳ label says when the Desk was last read",
+      "data": {
+        "readLabel": "read just now"
+      }
+    },
+    {
+      "ok": true,
+      "label": "F2: a successful read with zero runs shows \"No runs yet.\" + New run, and no partial line",
+      "data": {
+        "emptyText": "No runs yet.",
+        "otherLocate": {
+          "op": "factory_owner",
+          "kind": "locate",
+          "result": "factory_development_reading"
+        }
+      }
+    },
+    {
+      "ok": true,
+      "label": "F3: one line names the unreadable source with the owner's own words + Retry",
+      "data": {
+        "partial": "1 source couldn't be read — Broken (factory: Factory developmental provider error: Json(Error(\"control character (\\\\u0000-\\\\u001F) found while parsing a string\", line: 2, column: 0))). Retry",
+        "ownerWords": "Factory developmental provider error: Json(Error(\"control"
+      }
+    },
+    {
+      "ok": true,
+      "label": "F3 is distinct from F2: never an empty healthy board"
+    }
+  ],
+  "ops": [
+    {
+      "ok": true,
+      "op": "info",
+      "duration_ms": 0,
+      "data": {
+        "schema": "oi.cradle.walk/v1",
+        "mounted_at": "2026-09-23T00:13:37.243Z",
+        "transport": {
+          "kind": "bridge",
+          "url": "http://127.0.0.1:4479"
+        },
+        "url": "http://localhost:4473/"
+      }
+    },
+    {
+      "ok": true,
+      "op": "info",
+      "duration_ms": 0,
+      "data": {
+        "schema": "oi.cradle.walk/v1",
+        "mounted_at": "2026-09-23T00:13:39.292Z",
+        "transport": {
+          "kind": "bridge",
+          "url": "http://127.0.0.1:4479"
+        },
+        "url": "http://localhost:4473/"
+      }
+    },
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 135,
+      "data": {
+        "file": "factory-desk-f1-reading.png"
+      }
+    },
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 107,
+      "data": {
+        "file": "factory-desk-f4-needs-you.png"
+      }
+    },
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 138,
+      "data": {
+        "file": "factory-desk-factory-desk-1440-light.png"
+      }
+    },
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 103,
+      "data": {
+        "file": "factory-desk-factory-desk-1000-light.png"
+      }
+    },
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 161,
+      "data": {
+        "file": "factory-desk-factory-desk-760-light.png"
+      }
+    },
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 112,
+      "data": {
+        "file": "factory-desk-factory-desk-1440-dark.png"
+      }
+    },
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 155,
+      "data": {
+        "file": "factory-desk-factory-desk-1000-dark.png"
+      }
+    },
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 104,
+      "data": {
+        "file": "factory-desk-factory-desk-760-dark.png"
+      }
+    },
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 69,
+      "data": {
+        "file": "factory-desk-f2-empty.png"
+      }
+    },
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 111,
+      "data": {
+        "file": "factory-desk-f3-partial.png"
+      }
+    }
+  ],
+  "metrics": {},
+  "screenshots": [
+    "factory-desk-f1-reading.png",
+    "factory-desk-f4-needs-you.png",
+    "factory-desk-factory-desk-1440-light.png",
+    "factory-desk-factory-desk-1000-light.png",
+    "factory-desk-factory-desk-760-light.png",
+    "factory-desk-factory-desk-1440-dark.png",
+    "factory-desk-factory-desk-1000-dark.png",
+    "factory-desk-factory-desk-760-dark.png",
+    "factory-desk-f2-empty.png",
+    "factory-desk-f3-partial.png"
+  ]
+}
