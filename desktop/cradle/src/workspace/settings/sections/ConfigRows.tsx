@@ -76,7 +76,7 @@ export function ConfigSettingRow({entry, data, scope, title}: {entry: SettingEnt
   </>;
   const status = resolution?.reconciliation.status;
   return <Row id={settingRowId(setting.setting_ref)} title={title ?? setting.title} description={description} changed={!!change} onUndo={change ? () => void undoChange(change) : undefined} reconciliation={status}>
-    {status && status !== "satisfied" && !change && <span className={`settings-chip is-${status}`} data-reconciliation-word title={resolution?.reconciliation.reason ?? undefined}>{reconciliationWord(status)}</span>}
+    {status && status !== "satisfied" && !(change && status === "drifted") && <span className={`settings-chip is-${status}`} data-reconciliation-word title={resolution?.reconciliation.reason ?? undefined}>{reconciliationWord(status)}</span>}
     {setting.value_schema.type === "secret"
       ? <><span className="settings-value">{resolution ? valueWords(setting, native ?? resolution.native.declared?.value) : "Reading…"}</span><button type="button" className="settings-button" onClick={() => goTo({kind: "section", id: "credentials"})}>Open Credentials</button></>
       : writable
