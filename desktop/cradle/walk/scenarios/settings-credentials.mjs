@@ -51,8 +51,9 @@ export default async function run({page, baseUrl, bridgeUrl, check, shot, provis
   const listing = world.aikit("credential", "list");
   const bound = (listing.data?.bindings ?? []).some((binding) => /anthropic/.test(binding.credential_ref));
   log(`save outcome: ${message}`);
-  check(bound ? message.startsWith("Saved") : (message.startsWith("This key wasn't saved.") && /--stdin/.test(message)),
-    "S12 Save reports the owner's truth: saved when AIKit bound it, else \"This key wasn't saved.\" naming the missing STDIN operation", {message, bound});
+  const missingSentence = (await card("anthropic").locator("[data-settings-missing]").textContent().catch(() => "")) ?? "";
+  check(bound ? message.startsWith("Saved") : (message.startsWith("This key wasn't saved.") && /--stdin/.test(missingSentence)),
+    "S12 Save reports the owner's truth: saved when AIKit bound it, else \"This key wasn't saved.\" with the missing STDIN operation named in one sentence", {message, missingSentence, bound});
   check((await field.inputValue().catch(() => "")) === "", "S12 the field is empty after Save");
   const html = await page.content();
   const inputs = await page.evaluate(() => [...document.querySelectorAll("input,textarea")].map((element) => element.value));
@@ -84,7 +85,7 @@ export default async function run({page, baseUrl, bridgeUrl, check, shot, provis
   const owner = world.aikit("credential", "verify", "credential:deepseek").data?.verdict;
   check(["working", "refused", "unreachable"].includes(shown.verdict) && shown.verdict === owner,
     `S13 the card's verdict is the owner's own (${owner})`, {shown, owner});
-  check(new RegExp(`${shown.verdict} \\(\\d{1,2}:\\d{2}\\)$`).test(shown.text ?? "") && /(Checked|Verified) (just now|\d+s ago)/.test(shown.text ?? ""),
+  check(new RegExp(`${shown.verdict} \\(\\d{1,2}:\\d{2}( ?[AP]M)?\\)$`).test(shown.text ?? "") && /(Checked|Verified) (just now|\d+s ago)/.test(shown.text ?? ""),
     "S13 the verdict is shown in words with the time it was checked", {text: shown.text});
   const recorded = (world.aikit("credential", "list").data?.bindings ?? []).find((binding) => binding.credential_ref === "credential:deepseek");
   check(owner === "unreachable" || typeof recorded?.last_verified_at_unix_seconds === "number", "S13 a definitive verdict is recorded by the owner");

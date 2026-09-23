@@ -41,7 +41,8 @@ function KeyEntry({card, verb, materialMissing, onDone}: {card: CredentialCard; 
       await Promise.all([loadCredentials(), loadSuite()]);
       onDone(`Saved. The key is never shown again.`, true);
     } catch (cause) {
-      onDone(`This key wasn't saved. ${plain(cause)}`, false);
+      const reason = plain(cause);
+      onDone(`This key wasn't saved. ${materialMissing && reason.includes("--stdin") ? "AIKit can't take a pasted key from the app yet (see above)." : reason}`, false);
     } finally {
       setBusy(false);
     }
@@ -55,7 +56,7 @@ function KeyEntry({card, verb, materialMissing, onDone}: {card: CredentialCard; 
       <button type="submit" className="settings-button is-primary" disabled={busy} data-credential-save>{busy ? "Saving…" : "Save"}</button>
     </form>
     <p className="settings-muted">Saved through AIKit to the keychain. The field empties and the key is never shown again.</p>
-    {materialMissing && <Missing>This AIKit can't take a pasted key from the app yet — it only reads one typed into a terminal (`aikit credential setup {card.credential}`). A stored secret works today.</Missing>}
+    {materialMissing && <Missing>This AIKit can't take a pasted key from the app yet: `aikit credential setup` reads a key only from a terminal, and the app needs its `--stdin` form. A stored secret works today.</Missing>}
   </div>;
 }
 

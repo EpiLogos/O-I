@@ -103,7 +103,14 @@ export default async function run({page, baseUrl, check, shot, provision: world,
   const needing = clients.filter((row) => row.detection === "detected" && row.capability !== "descriptor").length;
   const shownReady = await page.locator(".settings-harness[data-harness-card]").evaluateAll((nodes) => nodes.map((node) => node.getAttribute("data-harness-card")));
   check(JSON.stringify(shownReady) === JSON.stringify(ready), "Harnesses: the Ready cards are the owner's harnesses with an adapter, in its order", {shownReady, ready});
-  check(!(await page.locator("[data-harness-panel]").innerText()).toLowerCase().includes("broker"), "Harnesses: the broker (AIKit itself) is not listed");
+  const collapsedNames = await page.locator('[data-harness-names="adapter-needed"]').textContent();
+  check((collapsedNames ?? "").split(", ").length === clients.filter((row) => row.detection === "detected" && row.capability !== "descriptor").length,
+    "Harnesses: the collapsed group still names every harness that needs an adapter, on one line");
+  for (const group of ["adapter-needed", "not-found"]) await page.locator(`[data-settings-group="${group}"] .settings-eyebrow-toggle`).click();
+  const brokerClients = clients.filter((row) => row.detection === "self" || row.dispatch === "self").map((row) => row.client);
+  const listedClients = await page.locator("[data-harness-panel] [data-harness-card]").evaluateAll((nodes) => nodes.map((node) => node.getAttribute("data-harness-card")));
+  check(brokerClients.length > 0 && brokerClients.every((client) => !listedClients.includes(client)) && listedClients.length === clients.length - brokerClients.length,
+    "Harnesses: the broker (AIKit itself) is not listed — every other client is", {brokerClients, listed: listedClients.length});
   check(((await page.locator('[data-settings-group="adapter-needed"] .settings-eyebrow').textContent()) ?? "").endsWith(`· ${needing}`), `Harnesses: "Detected, adapter needed" counts the owner's ${needing}`);
   await shotMatrix({page, shot}, "harnesses");
 

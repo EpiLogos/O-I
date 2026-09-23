@@ -198,3 +198,13 @@
 @media (prefers-reduced-motion: reduce) {
   .settings-caret, .settings-nav-caret, :is(.settings-page, .settings-nav) .settings-switch, :is(.settings-page, .settings-nav) .settings-switch span { transition: none; }
 }
+
+/* ---- the adoption flow on the O:I page uses the review sheet's frame (§3.9) ---- */
+.settings-adoption [data-adoption-entry] h3 { margin: 0 0 4px; font-size: var(--oi-shell-type-body); font-weight: 600; }
+.settings-adoption [data-adoption-entry] > p { color: var(--oi-muted); font-size: var(--oi-shell-type-ui); max-width: 62ch; }
+.settings-adoption .config-drawer { inset: 8vh 0 auto; width: min(640px, calc(100% - 32px)); max-height: 84vh; border-radius: var(--oi-radius-lg); padding: 18px; z-index: var(--oi-z-popover); gap: 10px; }
+.settings-adoption .config-drawer ol { list-style: none; margin: 0; padding: 0; display: grid; }
+.settings-adoption .config-drawer ol > li { padding: 12px 0; border-top: 1px solid var(--oi-hairline-soft); }
+.settings-adoption .config-drawer p { margin: 2px 0; color: var(--oi-muted); font-size: var(--oi-shell-type-ui); }
+.settings-adoption .config-drawer button { display: inline-flex; align-items: center; min-height: 26px; padding: 3px 10px; border: 1px solid var(--oi-hairline); border-radius: var(--oi-radius-xs); background: var(--oi-surface); color: var(--oi-ink); font-size: var(--oi-shell-type-ui); }
+.settings-adoption .config-drawer button:disabled { opacity: .55; }
