@@ -1280,6 +1280,8 @@ export function CradleFrame({onComposed}:{onComposed?:()=>void}) {
       const act = frameActionForKey(e, !!menuRef.current);
       if (!act) return;
       e.preventDefault(); e.stopPropagation();
+      // ⌘T inside the panel's Context canvas inserts a browser page there (10-SIDEBARS §4.6).
+      if (act.ref === "surface.open" && (e.target as HTMLElement | null)?.closest?.(".context-canvas")) { window.dispatchEvent(new CustomEvent("oi:context-insert", {detail: {kind: "browser"}})); return; }
       if (act.ref === "surface.open") { openFresh(); return; }
       if (act.ref === "surface.open-sources") { summonWorld(); return; }
       execute(act.ref, act.arg);

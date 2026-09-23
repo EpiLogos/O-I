@@ -66,7 +66,7 @@ export function ContextPaneMount({opens,dataPlane="factory-context",project,sess
 export function modeExtraPlanes(mode: WorkspaceMode, subject: PanelSubject, accompanying?: PanelAccompanying, onMessage?: (message: string) => void, host?: FactoryPanelHost, full?: boolean, opens?: TaPaneOpens, project?: string): {id: string; label: string; body: ReactNode}[] {
   // 10-SIDEBARS §4.2/§4.6: Chat · Activity · Agents are the panel's own; the
   // mode supplies only its Context — the preserved canvas and its launcher.
-  const context = (id: string) => ({id, label: "Context", body: <ContextPaneMount opens={opens} dataPlane={id} project={project ?? accompanying?.project} session={accompanying?.ref}/>});
+  const context = (id: string) => ({id, label: "Context", body: <ContextPaneMount opens={opens} dataPlane={id} project={project ?? accompanying?.project ?? subject.project} session={accompanying?.ref}/>});
   if (mode === "base" || mode === "epi-logos") return [context("context")];
   if (mode === "factory") return [
     {id: "run", label: "Run", body: <Suspense fallback={null}><FactoryRunTab accompanying={accompanying}/></Suspense>},
