@@ -11,20 +11,20 @@ This is an execution handoff. Do not redesign the architecture or redo routine c
 
 Reconcile these exact remote revisions with whatever has advanced when this prompt is run:
 
-- AIKit candidate delivery PR #393: `13dcb7b6488a88f3e0143a1876af7021adbc37f7` (use the merged successor of PR #393 if the PR has merged).
-- Central main: `1d5cd52109bda59e440a66db29723fd5412b67d6`.
+- AIKit PR #393 merged to main as `ca946f76c6a2f8b6073f62e5f09497012eaeb9f6`; the accepted cloud proof ran against branch head `ef1b00698293c2d96d9c770c96c2799dfb9eb850` immediately before that merge.
+- Central main and joined-proof basis: `ff2662bbdd9fc0b735a7a9815c05273c69561b76`.
 - Workcell main: `063bc15a56851b921a34437e13daa1a0f5327921`; Redis NOW material service landed in PR #98 / `9d627ff4d90de2cddf237b14f9854a64e1b5819e`.
-- Factory main: `e2d16dbdfabec4157e47028d1bbe7a8cf7b8fc59`.
+- Factory main and joined-proof basis: `7a01958e91cfd4228d77e7123c1611077e3a601e`.
 - Actuation main: `161b869740c54dc325ad1d6aef765dbf32920073`.
 - QL-MEF main: `89ca4088ea47fe626c23c2b11efe2d38bdfcd1f7`.
-- O:I handoff basis: `6bd649761185d4fcf48249eea94599e05a9b33fe`.
+- O:I handoff publication is PR #481; reconcile it with current O:I main `f00205f91bc90b1b11101fea0e6d01b5c54ba151` before installed-world execution.
 
 Dependency order for the local cut is:
 
 ```
 Central + Factory + Actuation + Workcell current owner contracts
         ↓
-AIKit PR #393 Jev / Redis NOW consumer + encounter delivery
+AIKit merged `ca946f76c6a2f8b6073f62e5f09497012eaeb9f6` Jev / Redis NOW consumer + encounter delivery
         ↓
 O:I #65 local installed-world and live-provider episode
 ```
