@@ -35,8 +35,8 @@ export function PermissionCard({request,agentName,disabled,onAnswer}:{request:Na
  const [scope,setScope]=useState(allows[0]?.option_id);
  const described=describePermission(request);
  const chosen=allows.find(choice=>choice.option_id===scope)??allows[0];
- return <section className="chat-permission" aria-label={`${agentName} ${described.wants}`} data-request={request.native_request_id}>
-  <p className="chat-permission-title"><strong>{agentName} {described.wants}</strong></p>
+ return <section className="chat-permission" aria-label="Provider consent" aria-describedby={`consent-${request.native_request_id}`} data-request={request.native_request_id}>
+  <p className="chat-permission-title" id={`consent-${request.native_request_id}`}><strong>{agentName} {described.wants}</strong></p>
   {described.target&&<p className="chat-permission-target" title={described.full}><code>{described.target}</code>{described.where&&<span> in {described.where}</span>}</p>}
   {allows.length>1&&<div className="chat-permission-scopes" role="radiogroup" aria-label="For how long">
    {allows.map(choice=><button key={choice.option_id} type="button" role="radio" aria-checked={choice.option_id===chosen?.option_id} className="chat-permission-scope" title={choice.label} onClick={()=>setScope(choice.option_id)}>{choice.kind&&SCOPE[choice.kind]?SCOPE[choice.kind]:choice.label}</button>)}

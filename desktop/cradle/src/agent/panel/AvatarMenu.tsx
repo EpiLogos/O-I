@@ -50,7 +50,7 @@ export function AvatarMenu({agent,presence,bypass,roster,lens,onChoose,chosenRef
  </button>;
  return <div className="avatar-menu" ref={host}>
   <button type="button" className="avatar-menu-open" data-presence={presence} data-bypass={bypass?"true":undefined} aria-haspopup="menu" aria-expanded={open}
-   aria-label={`${agent.name} — ${presenceWords[presence]}${bypass?", Bypass permissions on":""}. Agents`} title={`${agent.name} · ${presenceWords[presence]}`} onClick={()=>{if(!open)onOpen?.();setOpen(value=>!value);}}>
+   aria-label={`${agent.name} — ${presenceWords[presence]}${bypass?", Bypass permissions on":""}. Choose the accompanying agent`} title={`${agent.name} · ${presenceWords[presence]}`} onClick={()=>{if(!open)onOpen?.();setOpen(value=>!value);}}>
    <Avatar agent={agent}/>
    <span className="panel-presence" data-presence={presence} aria-hidden="true">{presence==="attention"?"!":presence==="unavailable"?"×":""}</span>
    {bypass&&<span className="panel-shield" aria-hidden="true"><ShieldMark size={9}/></span>}
