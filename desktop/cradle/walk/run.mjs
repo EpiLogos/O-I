@@ -98,6 +98,7 @@ const SCENARIOS = {
   configuration: {module:"scenarios/configuration.mjs",kernel:true,aliases:["c6"]},
   permission: {module:"scenarios/permission.mjs",kernel:true,aliases:[]},
   encounter: {module:"scenarios/encounter.mjs",kernel:true,aliases:[]},
+  "epi-prime-body": {module:"scenarios/epi-prime-body.mjs",kernel:true,aliases:["epi-body"]},
   "agent-dictation": {module:"scenarios/agent-dictation.mjs",kernel:true,aliases:["dictation"]},
   "context-draft": {module:"scenarios/context-draft.mjs",kernel:true,aliases:[]},
   "canvas-context": {module:"scenarios/canvas-context.mjs",kernel:true,aliases:["canvas"]},
