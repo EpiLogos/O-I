@@ -160,7 +160,8 @@ export function DesktopShell(p: Props) {
   // room to the panel, never the panel over the working UI.
   const canvasCentre = p.mode === "expressions" || p.mode === "techne";
   const availableRight = width - (leftVisible ? leftWidth : 0) - (canvasCentre ? 452 : 8);
-  const overlayRight = (tier === "drawer" || availableRight < 240) && canvasCentre;
+  // 10-SIDEBARS P18: at ≤760px the panel is an overlay drawer in every mode.
+  const overlayRight = tier === "drawer" || (availableRight < 240 && canvasCentre);
   const rightRoom = overlayRight ? Infinity : Math.max(availableRight, 240);
   const rightDefault = l.rightWidth ?? (tier === "wide" ? 320 : 260);
   const rightWidth = overlayRight ? Math.min(rightDefault, Math.max(240, width - 40)) : Math.min(rightDefault, Math.max(240, rightRoom));
