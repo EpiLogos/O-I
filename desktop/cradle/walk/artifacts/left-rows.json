@@ -1,24 +1,10 @@
 {
   "schema": "oi.cradle.walk.scenario/v1",
-  "scenario": "receive-include",
-  "spec_ref": "docs/cradle/05-EXECUTION.md §3",
+  "scenario": "left-rows",
+  "spec_ref": "docs/cradle/10-SIDEBARS.md §5.2 R6 R7 R12 · §3.4 A6",
   "grade": "B",
-  "binding": {
-    "serves": [
-      "oi97:human-return",
-      "wc65:WC08"
-    ],
-    "branches": {
-      "wc65:WC08": [
-        1
-      ]
-    },
-    "negatives": [
-      "stale"
-    ],
-    "claims_grade": "D"
-  },
-  "generated_at": "2026-09-23T01:58:00.435Z",
+  "binding": null,
+  "generated_at": "2026-09-23T01:55:21.814Z",
   "environment": {
     "base_url": "http://localhost:4273",
     "bridge_url": "http://127.0.0.1:4279",
@@ -49,51 +35,86 @@
   },
   "passed": true,
   "error": null,
-  "duration_ms": 2261,
+  "duration_ms": 22926,
   "checks": [
     {
       "ok": true,
-      "label": "A pending Return is visible in the project's receiving field before any human act"
+      "label": "R7: a conversation row's height is identical at rest and on hover (±0.5px); its '…' appears only on hover",
+      "data": {
+        "rest": {
+          "height": 62,
+          "more": "hidden"
+        },
+        "hover": {
+          "height": 62,
+          "more": "visible",
+          "wash": "rgb(233, 234, 226)"
+        }
+      }
     },
     {
       "ok": true,
-      "label": "The return presents its real producer attribution"
+      "label": "R7 / §3.4: the '…' holds only real actions (Open in centre)",
+      "data": {
+        "moreItems": [
+          "Open in centre"
+        ]
+      }
     },
     {
       "ok": true,
-      "label": "The exact proposed operation and content are shown before any decision"
+      "label": "R6: with a conversation open in the panel, exactly one of Alpha's conversation rows is selected — that one",
+      "data": {
+        "selectedChats": 1,
+        "selectedRef": "agent-session/left-idle"
+      }
     },
     {
       "ok": true,
-      "label": "The return shows the exact basis revision it was proposed against"
+      "label": "R6 (before): no file row is current while no file is open"
     },
     {
       "ok": true,
-      "label": "Explicit acceptance records the human reviewer and the exact reviewed basis"
+      "label": "R6 / §3.4: the file open in the focused pane is the one current file row",
+      "data": {
+        "currentFiles": [
+          "Work/Alpha/notes.md"
+        ],
+        "openTab": "notes.md"
+      }
     },
     {
       "ok": true,
-      "label": "Inclusion completes through the owner's revision-checked operation"
+      "label": "R12: dropping the file row into the composer inserts it as context — a notes.md chip in the composer and its quote in the owner's shared draft",
+      "data": {
+        "chips": "notes.md",
+        "draftRevision": 1
+      }
     },
     {
       "ok": true,
-      "label": "The document holds exactly the reviewed contribution"
+      "label": "R12: the drop never sends — the owner's transcript has no new message",
+      "data": {
+        "before": 0,
+        "after": 0
+      }
     },
     {
       "ok": true,
-      "label": "Producer attribution and human review are carried as distinct native facts"
+      "label": "A6: Open beside puts the vision page in the right panel's Context canvas, with Context selected",
+      "data": {
+        "sideTabs": [
+          "alpha.html"
+        ],
+        "contextSelected": 1
+      }
     },
     {
       "ok": true,
-      "label": "The document source revision advanced through inclusion"
-    },
-    {
-      "ok": true,
-      "label": "Accepting a stale basis is refused by the owner's exact revision check"
-    },
-    {
-      "ok": true,
-      "label": "A refused acceptance changes no document bytes"
+      "label": "A6: Pop out is offered only where the native window route exists (this walk runs the browser transport; the native detach route is not lent here)",
+      "data": {
+        "popOuts": 0
+      }
     }
   ],
   "ops": [
@@ -103,7 +124,7 @@
       "duration_ms": 0,
       "data": {
         "schema": "oi.cradle.walk/v1",
-        "mounted_at": "2026-09-23T01:58:00.704Z",
+        "mounted_at": "2026-09-23T01:55:21.987Z",
         "transport": {
           "kind": "bridge",
           "url": "http://127.0.0.1:4279"
@@ -116,39 +137,30 @@
       "op": "capture.screenshot",
       "duration_ms": 69,
       "data": {
-        "file": "receive-include-return-expanded-before-review.png"
+        "file": "left-rows-R6-selected.png"
       }
     },
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 59,
+      "duration_ms": 44,
       "data": {
-        "file": "receive-include-accepted-on-current-basis.png"
+        "file": "left-rows-R12-dropped-context.png"
       }
     },
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 57,
+      "duration_ms": 55,
       "data": {
-        "file": "receive-include-included-with-attribution.png"
-      }
-    },
-    {
-      "ok": true,
-      "op": "capture.screenshot",
-      "duration_ms": 88,
-      "data": {
-        "file": "receive-include-stale-basis-refusal.png"
+        "file": "left-rows-A6-open-beside.png"
       }
     }
   ],
   "metrics": {},
   "screenshots": [
-    "receive-include-return-expanded-before-review.png",
-    "receive-include-accepted-on-current-basis.png",
-    "receive-include-included-with-attribution.png",
-    "receive-include-stale-basis-refusal.png"
+    "left-rows-R6-selected.png",
+    "left-rows-R12-dropped-context.png",
+    "left-rows-A6-open-beside.png"
   ]
 }

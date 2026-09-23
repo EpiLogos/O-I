@@ -1,0 +1,341 @@
+{
+  "schema": "oi.cradle.walk.scenario/v1",
+  "scenario": "left-head",
+  "spec_ref": "docs/cradle/10-SIDEBARS.md §3.1 §3.6 D3 D6 (scope menu, workspace footer, create menu, Inbox, ⌘K typed tabs)",
+  "grade": "B",
+  "binding": null,
+  "generated_at": "2026-09-23T01:55:48.282Z",
+  "environment": {
+    "base_url": "http://localhost:4273",
+    "bridge_url": "http://127.0.0.1:4279",
+    "viewport": "1280x820",
+    "browser_engine": "chromium",
+    "bundle": "walk (WALK=1) served by vite preview",
+    "build_input": {
+      "mode": "fresh-build",
+      "bundle_fingerprint": "95f0517f2b97bd79ad8e2e8e77ec71338b0eebb0055fac39add587767c62db70"
+    },
+    "node": "v24.16.0",
+    "platform": "darwin",
+    "source": {
+      "repository_root": "/Users/admin/Central/worktrees/ui-build/lane1-left",
+      "repository_head": "ccf74737c365220a36ac20e7498aec26796096ca",
+      "tracked_changes": [
+        "desktop/cradle/walk/artifacts/receive-include-accepted-on-current-basis.png",
+        "desktop/cradle/walk/artifacts/receive-include-included-with-attribution.png",
+        "desktop/cradle/walk/artifacts/receive-include-return-expanded-before-review.png",
+        "desktop/cradle/walk/artifacts/receive-include-stale-basis-refusal.png",
+        "desktop/cradle/walk/artifacts/receive-include.json"
+      ],
+      "dirty_digest": "5959de60920c5dbc277786712750f3aebdf264952f51d469e9b92116fb87da0c",
+      "engine_provenance_path": "/Users/admin/Central/worktrees/ui-build/lane1-left/packages/oi-design-system/expressions-engine/PROVENANCE.json",
+      "engine_source": "EpiLogos/Point-Cloud-Demo",
+      "engine_revision": "91db8428fc9dfba06cd258ec5a58e7dd9eef5313"
+    }
+  },
+  "passed": true,
+  "error": null,
+  "duration_ms": 39956,
+  "checks": [
+    {
+      "ok": true,
+      "label": "Scope menu: Central is checked and WORK lists exactly the owner's projects; All projects is not offered outside Factory",
+      "data": {
+        "census": {
+          "eyebrows": [
+            "Scope",
+            "Work",
+            "Workspace"
+          ],
+          "central": "true",
+          "projects": [
+            "Alpha",
+            "Beta",
+            "O-I",
+            "epi"
+          ],
+          "all": false
+        },
+        "ownerProjects": [
+          "Alpha",
+          "Beta",
+          "O-I",
+          "epi"
+        ]
+      }
+    },
+    {
+      "ok": true,
+      "label": "Scope menu: with no remote machine recorded by Workcell the MACHINES section is absent (never invented)",
+      "data": {
+        "eyebrows": [
+          "Scope",
+          "Work",
+          "Workspace"
+        ]
+      }
+    },
+    {
+      "ok": true,
+      "label": "Scope menu footer: the workspace, Switch…, New · Rename · Recover arrangement"
+    },
+    {
+      "ok": true,
+      "label": "Choosing Alpha in the scope menu makes Alpha the scope"
+    },
+    {
+      "ok": true,
+      "label": "The scope is the workspace's: it survives a reload"
+    },
+    {
+      "ok": true,
+      "label": "Focusing a tab from Beta does not change the scope by itself (still Alpha)"
+    },
+    {
+      "ok": true,
+      "label": "The scope menu's first row offers 'Focused tab is in Beta · Switch'",
+      "data": {
+        "switchText": "Focused tab is in Beta Switch"
+      }
+    },
+    {
+      "ok": true,
+      "label": "Switch makes Beta the scope"
+    },
+    {
+      "ok": true,
+      "label": "New creates a workspace and Switch… lists both",
+      "data": {
+        "current": "Walk second\nSwitch…",
+        "books": [
+          "Central",
+          "Walk second"
+        ]
+      }
+    },
+    {
+      "ok": true,
+      "label": "Switching workspace restores its arrangement and its scope together (Walk second is Central; back to the first: Beta with its tab)",
+      "data": {
+        "secondScope": "Central",
+        "firstTabs": [
+          "project.json"
+        ]
+      }
+    },
+    {
+      "ok": true,
+      "label": "Rename renames the current workspace"
+    },
+    {
+      "ok": true,
+      "label": "Recover arrangement answers with the store's own words (no retained record on this device)",
+      "data": {
+        "recoverWords": "There is no retained workspace recovery record on this device."
+      }
+    },
+    {
+      "ok": true,
+      "label": "The window footer keeps status only: no workspace select, no New/Rename/Recover, no mode radios; the Epi-Logos lens toggle is its last control",
+      "data": {
+        "buttons": [
+          "Split active surface right",
+          "Split active surface down",
+          "Tile all surfaces",
+          "Maximize active pane",
+          "Window actions",
+          "Tab presentation",
+          "Pin tabs horizontally",
+          "Pin tabs vertically",
+          "Unpin tabs",
+          "Workspace messages. 1 standing: There is no retained workspace recovery record on this device.",
+          "Dismiss message",
+          "Pin workspace footer",
+          "Epi-Logos lens"
+        ],
+        "last": "Epi-Logos lens",
+        "menuText": "TabsPin tabs horizontallyPin tabs verticallyUnpin tabs"
+      }
+    },
+    {
+      "ok": true,
+      "label": "+ in Base: New chat, New flow, New agent…",
+      "data": {
+        "baseEntries": [
+          "New chat",
+          "New flow",
+          "New agent…"
+        ]
+      }
+    },
+    {
+      "ok": true,
+      "label": "New flow opens writing in a Draft tab and mints nothing (the navigator's New flow law)"
+    },
+    {
+      "ok": true,
+      "label": "New chat opens the right panel's Chat on a fresh conversation",
+      "data": {
+        "fact": "new-chat"
+      }
+    },
+    {
+      "ok": true,
+      "label": "+ is mode-dependent: Expressions adds New Expression; Factory offers no New run… because no run-creation route is lent (omitted, not faked)",
+      "data": {
+        "expressionEntries": [
+          "New chat",
+          "New flow",
+          "New Expression",
+          "New agent…"
+        ],
+        "factoryEntries": [
+          "New chat",
+          "New flow",
+          "New agent…"
+        ]
+      }
+    },
+    {
+      "ok": true,
+      "label": "In Factory the scope menu offers All projects"
+    },
+    {
+      "ok": true,
+      "label": "All projects becomes the Factory scope"
+    },
+    {
+      "ok": true,
+      "label": "Inbox: the badge is the native count of material waiting (1, read through central.receiving.list)",
+      "data": {
+        "nativeWaiting": 1
+      }
+    },
+    {
+      "ok": true,
+      "label": "Inbox: opening the item opens its document in a pane and keeps its review controls beside it",
+      "data": {
+        "tab": "Draft"
+      }
+    },
+    {
+      "ok": true,
+      "label": "Inbox: once included nothing waits — the badge is absent and the row stays"
+    },
+    {
+      "ok": true,
+      "label": "⌘K: typed tabs All · Chats · Agents · Files · Flows · Actions",
+      "data": {
+        "tabs": [
+          "All",
+          "Chats",
+          "Agents",
+          "Files",
+          "Flows",
+          "Actions"
+        ]
+      }
+    },
+    {
+      "ok": true,
+      "label": "⌘K Chats lists exactly the owner's five attached conversations across projects",
+      "data": {
+        "chats": [
+          "Ask before writing the consent-walk file",
+          "A conversation whose provider refuses every send",
+          "Plan the left sidebar's scope menu and its census of projects",
+          "Write the Inbox acceptance notes for the left frame",
+          "Review the Beta project's goals"
+        ]
+      }
+    },
+    {
+      "ok": true,
+      "label": "⌘K Chats: typing filters to the one matching conversation and Enter opens it — Beta's conversation is the one open in the panel"
+    },
+    {
+      "ok": true,
+      "label": "⌘K Flows lists the ground's flow; Actions lists the app's real verbs",
+      "data": {
+        "flows": [
+          "flow-2026-09-23-0900"
+        ],
+        "actions": [
+          "New chat",
+          "New flow",
+          "Go to Base",
+          "Go to Factory",
+          "Go to Expressions",
+          "Go to Technè"
+        ]
+      }
+    },
+    {
+      "ok": true,
+      "label": "⌘K Agents answers from the native roster (rows, or its honest absence / refusal — never a fixture)",
+      "data": {
+        "agents": "No agents here yet."
+      }
+    }
+  ],
+  "ops": [
+    {
+      "ok": true,
+      "op": "info",
+      "duration_ms": 0.1,
+      "data": {
+        "schema": "oi.cradle.walk/v1",
+        "mounted_at": "2026-09-23T01:55:48.491Z",
+        "transport": {
+          "kind": "bridge",
+          "url": "http://127.0.0.1:4279"
+        },
+        "url": "http://localhost:4273/"
+      }
+    },
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 69,
+      "data": {
+        "file": "left-head-scope-menu.png"
+      }
+    },
+    {
+      "ok": true,
+      "op": "info",
+      "duration_ms": 0.1,
+      "data": {
+        "schema": "oi.cradle.walk/v1",
+        "mounted_at": "2026-09-23T01:55:52.422Z",
+        "transport": {
+          "kind": "bridge",
+          "url": "http://127.0.0.1:4279"
+        },
+        "url": "http://localhost:4273/"
+      }
+    },
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 47,
+      "data": {
+        "file": "left-head-inbox-open-item.png"
+      }
+    },
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 73,
+      "data": {
+        "file": "left-head-palette-agents.png"
+      }
+    }
+  ],
+  "metrics": {},
+  "screenshots": [
+    "left-head-scope-menu.png",
+    "left-head-inbox-open-item.png",
+    "left-head-palette-agents.png"
+  ]
+}

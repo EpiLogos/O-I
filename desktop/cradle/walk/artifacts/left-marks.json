@@ -1,0 +1,207 @@
+{
+  "schema": "oi.cradle.walk.scenario/v1",
+  "scenario": "left-marks",
+  "spec_ref": "docs/cradle/10-SIDEBARS.md §5.2 R1 R2 R3 R4 R5 · §3.3 · §3.5",
+  "grade": "B",
+  "binding": null,
+  "generated_at": "2026-09-23T01:54:26.812Z",
+  "environment": {
+    "base_url": "http://localhost:4273",
+    "bridge_url": "http://127.0.0.1:4279",
+    "viewport": "1280x820",
+    "browser_engine": "chromium",
+    "bundle": "walk (WALK=1) served by vite preview",
+    "build_input": {
+      "mode": "fresh-build",
+      "bundle_fingerprint": "95f0517f2b97bd79ad8e2e8e77ec71338b0eebb0055fac39add587767c62db70"
+    },
+    "node": "v24.16.0",
+    "platform": "darwin",
+    "source": {
+      "repository_root": "/Users/admin/Central/worktrees/ui-build/lane1-left",
+      "repository_head": "ccf74737c365220a36ac20e7498aec26796096ca",
+      "tracked_changes": [
+        "desktop/cradle/walk/artifacts/receive-include-accepted-on-current-basis.png",
+        "desktop/cradle/walk/artifacts/receive-include-included-with-attribution.png",
+        "desktop/cradle/walk/artifacts/receive-include-return-expanded-before-review.png",
+        "desktop/cradle/walk/artifacts/receive-include-stale-basis-refusal.png",
+        "desktop/cradle/walk/artifacts/receive-include.json"
+      ],
+      "dirty_digest": "5959de60920c5dbc277786712750f3aebdf264952f51d469e9b92116fb87da0c",
+      "engine_provenance_path": "/Users/admin/Central/worktrees/ui-build/lane1-left/packages/oi-design-system/expressions-engine/PROVENANCE.json",
+      "engine_source": "EpiLogos/Point-Cloud-Demo",
+      "engine_revision": "91db8428fc9dfba06cd258ec5a58e7dd9eef5313"
+    }
+  },
+  "passed": true,
+  "error": null,
+  "duration_ms": 51745,
+  "checks": [
+    {
+      "ok": true,
+      "label": "R1: with no turn, request or refusal in the owner's view, every row carries no mark",
+      "data": {
+        "idle": {
+          "mark": "idle",
+          "glyph": "",
+          "owner": "Disconnected"
+        },
+        "failing": {
+          "mark": "idle",
+          "glyph": "",
+          "owner": "Disconnected"
+        },
+        "working": {
+          "mark": "idle",
+          "glyph": "",
+          "owner": "Disconnected"
+        },
+        "consent": {
+          "mark": "idle",
+          "glyph": "",
+          "owner": "Disconnected"
+        }
+      }
+    },
+    {
+      "ok": true,
+      "label": "R1: the idle project row carries no aggregate mark"
+    },
+    {
+      "ok": true,
+      "label": "R2: while the owner reports TurnInFlight the row shows the breathing ● and its name says Working",
+      "data": {
+        "working": {
+          "mark": "working",
+          "dot": true,
+          "animation": "left-breathe",
+          "label": "Write the Inbox acceptance notes for the left frame — Working"
+        },
+        "ownerDuring": "TurnInFlight"
+      }
+    },
+    {
+      "ok": true,
+      "label": "R2 / §3.3: the project row carries the aggregate (1 working)",
+      "data": {
+        "aggregate": "1 working"
+      }
+    },
+    {
+      "ok": true,
+      "label": "R2: the turn ends in the owner's view and the working mark stops",
+      "data": {
+        "state": "Resident"
+      }
+    },
+    {
+      "ok": true,
+      "label": "R4: the completed turn that arrived while the row was not open marks it unread — a dot before the time and a semibold title",
+      "data": {
+        "mark": "unread",
+        "dot": true,
+        "weight": "600"
+      }
+    },
+    {
+      "ok": true,
+      "label": "§3.5 D4: the row opens in the right panel's Chat (its real transcript), is selected there, and adds no centre tab",
+      "data": {
+        "rightVisible": true,
+        "chat": 1,
+        "transcript": true,
+        "selected": "true",
+        "centreEncounterTabs": 0
+      }
+    },
+    {
+      "ok": true,
+      "label": "R4: opening it clears unread"
+    },
+    {
+      "ok": true,
+      "label": "R3: the owner's one native permission request shows ! on the row and ! on its project row",
+      "data": {
+        "ownerPermissions": 1,
+        "needs": {
+          "glyph": "!",
+          "project": "1 needs you",
+          "chip": "!"
+        }
+      }
+    },
+    {
+      "ok": true,
+      "label": "R3: answering the request through the desktop's consent card (Reject) clears both marks; the owner holds no pending request",
+      "data": {
+        "answered": 0,
+        "mark": "idle"
+      }
+    },
+    {
+      "ok": true,
+      "label": "R5: the refused connection shows × with the owner's reason in the tooltip",
+      "data": {
+        "glyph": "×",
+        "tooltip": "Error: target `/usr/bin/false` closed stdout [agent_session_host.transport_closed]",
+        "title": "A conversation whose provider refuses every send\nError: target `/usr/bin/false` closed stdout [agent_session_host.transport_closed]",
+        "label": "A conversation whose provider refuses every send — Failed: Error: target `/usr/bin/false` closed stdout [agent_session_host.transport_closed]"
+      }
+    }
+  ],
+  "ops": [
+    {
+      "ok": true,
+      "op": "info",
+      "duration_ms": 0.1,
+      "data": {
+        "schema": "oi.cradle.walk/v1",
+        "mounted_at": "2026-09-23T01:54:26.947Z",
+        "transport": {
+          "kind": "bridge",
+          "url": "http://127.0.0.1:4279"
+        },
+        "url": "http://localhost:4273/"
+      }
+    },
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 43,
+      "data": {
+        "file": "left-marks-R2-working.png"
+      }
+    },
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 47,
+      "data": {
+        "file": "left-marks-R4-unread.png"
+      }
+    },
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 82,
+      "data": {
+        "file": "left-marks-R3-needs-you.png"
+      }
+    },
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 59,
+      "data": {
+        "file": "left-marks-R5-failed.png"
+      }
+    }
+  ],
+  "metrics": {},
+  "screenshots": [
+    "left-marks-R2-working.png",
+    "left-marks-R4-unread.png",
+    "left-marks-R3-needs-you.png",
+    "left-marks-R5-failed.png"
+  ]
+}
