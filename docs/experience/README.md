@@ -8,6 +8,11 @@ Continue the already-running UI refinement with [FACTORY-UI-INTEGRATION-HANDOFF.
 
 The existing [factory-agency.json](factory-agency.json) retains all fourteen obligation IDs, original stories/requirements/evidence grades and adds the detailed new branches. Its existing `document_operations_source` includes the full handoff in the compiler's source/digest reading. Source integration is not runtime or human acceptance. #220 supplies native joins; #289/#292/#375 supplies UI; #201–#205 proves the joined path. The [campaign Skill](../../skills/experience-campaign/SKILL.md) retains the Day/NOW foundation-first requirement for the broad fan-out while this bounded UI/native work continues.
 
+
+## Jev + Redis NOW operative context — 2026-09-23
+
+The bounded #65/#220 implementation is now carried by [JEV-REDIS-NOW-INTEGRATION.md](JEV-REDIS-NOW-INTEGRATION.md), AIKit #388 and merged Workcell #98. It uses Central/BKMR and the existing Wiki/Knowledge field for source resolution, Factory's native developmental relations for undertaking context, participant-specific Redis-backed prepared NOW, general Jev typed decisions, and automatic pre-turn delivery through AIKit's encounter path. The copy-paste installed-world/live-provider handoff is [JEV-REDIS-NOW-LOCAL-INTEGRATION-PROMPT.md](JEV-REDIS-NOW-LOCAL-INTEGRATION-PROMPT.md). This is a concrete implementation/source link inside the existing campaign, not a new story family or replacement for C0–C5.
+
 ## 0 — Why this campaign exists
 
 **One campaign owner: [O:I #65](https://github.com/EpiLogos/O-I/issues/65).** This is its current mainline Wayfinder, not a replacement for native product implementation maps or evidence stores. It gathers the original #97 developer/physical proving, #65 A–I, CAW, terminal/desktop, gateway, knowledge, document, SDK and complete QL obligations.
