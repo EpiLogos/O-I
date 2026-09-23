@@ -231,14 +231,18 @@ export function AgentLayer({project:projectProp, subject, accompanying, onAccomp
   },[]);
 
   // --- who: the roster, the chosen agent, the presence ----------------------
-  const roster=useAgentRoster(project);
-  // The roster is read again whenever the Agents tab is chosen: new agents
-  // created elsewhere (Agency, another window) appear without a restart.
-  const reread=roster.retry;
-  useEffect(()=>{if(plane==="Agents")reread();},[plane,reread]);
   const scopeKey=project??"";
   const [chosenRefs,setChosenRefs]=useState<Record<string,string>>(readChosen);
   const chosenRef=chosenRefs[scopeKey];
+  // Read the roster only once it is needed: the Agents tab, the avatar menu,
+  // or a chosen agent to name.
+  const [rosterWanted,setRosterWanted]=useState(false);
+  useEffect(()=>{if(plane==="Agents"||chosenRef)setRosterWanted(true);},[plane,chosenRef]);
+  const roster=useAgentRoster(project,rosterWanted);
+  // The roster is read again whenever the Agents tab is chosen: new agents
+  // created elsewhere (Agency, another window) appear without a restart.
+  const reread=roster.retry;
+  useEffect(()=>{if(plane==="Agents"&&rosterWanted)reread();},[plane,reread,rosterWanted]);
   const chooseAgent=(agent:RosterAgent)=>setChosenRefs(held=>{const next={...held,[scopeKey]:agent.ref};try{localStorage.setItem(CHOSEN_KEY,JSON.stringify(next));}catch{/* per-viewer convenience */}return next;});
   const chosen=roster.agents.find(agent=>agent.ref===chosenRef);
   const naraChosen=lens.on&&(preferredBodyRef===EPI_PRIME_QL_BODY_REF);
@@ -265,7 +269,7 @@ export function AgentLayer({project:projectProp, subject, accompanying, onAccomp
   const lastSeen=sessionState?.reconnecting?.lastSeenAt;
   return <section ref={host} className="agent-layer" aria-label="Accompanying agent" data-full={full} data-mode={mode} data-plane={plane} data-presence={presence} data-agent-session-ref={expression.agentSessionRef} data-owner-state={expression.state} data-owner-activity-block={expression.latestOwnerActivity?.blockId}>
     <PanelTop tabs={nav} current={plane} onSelect={id=>{setDetail(undefined);if(id==="Activity"&&plane!=="Activity")setFollowToken(token=>token+1);select(id);}} full={full} onFull={onFull} onCollapse={onCollapse}
-      avatar={<AvatarMenu agent={agent} presence={presence} bypass={bypass} roster={roster} lens={lens.on} chosenRef={chosenRef} onChoose={chooseAgent} naraChosen={naraChosen}
+      avatar={<AvatarMenu onOpen={()=>setRosterWanted(true)} agent={agent} presence={presence} bypass={bypass} roster={roster} lens={lens.on} chosenRef={chosenRef} onChoose={chooseAgent} naraChosen={naraChosen}
         onChooseNara={lens.on?()=>setChosenRefs(held=>{const next={...held};delete next[scopeKey];try{localStorage.setItem(CHOSEN_KEY,JSON.stringify(next));}catch{/* convenience */}return next;}):undefined}/>}/>
     {lastSeen!==undefined&&<p className="panel-line" role="status" data-line="reconnecting">Reconnecting — last seen {Math.max(1,Math.round((Date.now()-lastSeen)/1000))}s ago. Your draft is kept.</p>}
     {sessionState?.unreachable&&<p className="panel-line" role="status" data-line="unreachable">Agents aren&apos;t reachable here right now. Your files, flows and this draft still work here.</p>}

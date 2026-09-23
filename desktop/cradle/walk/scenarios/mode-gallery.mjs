@@ -12,6 +12,9 @@ export default async function run({page,baseUrl,check,shot,channel}) {
     await page.goto(baseUrl); await channel('info');
     await page.evaluate(s=>{try{const k='oi-cradle.visuals.v1';const v=JSON.parse(localStorage.getItem(k)??'{}');localStorage.setItem(k,JSON.stringify({...v,theme:s,revision:(v.revision??0)+1}));}catch{}},scheme);
     await page.reload(); await channel('info');
+    // BOOT-00: the window is inert until the kernel's first state settles;
+    // on a busy machine the owner reads queued ahead of it can take minutes.
+    await page.waitForFunction(()=>!document.getElementById('root')?.hasAttribute('inert'),null,{timeout:240000});
     const nav=page.getByRole('complementary',{name:'World navigator'});
     await nav.locator('[data-project-path="Work/Editor"]').click().catch(()=>{});
     for(const [key,name] of [['2','factory'],['3','expressions'],['4','techne'],['5','epi-logos']]){

@@ -83,7 +83,10 @@ interface Held {agents:RosterAgent[];state:"reading"|"ready"|"error";error?:stri
 const held=new Map<string,Held>();
 function entry(key:string):Held {let value=held.get(key);if(!value){value={agents:[],state:"reading",listeners:new Set()};held.set(key,value);}return value;}
 
-export function useAgentRoster(project?:string):RosterReading {
+/** `enabled` false defers the read (the panel reads only once its Agents tab
+ *  or avatar menu is used — every read is an owner process through the one
+ *  kernel seam, and boot must not queue behind it). */
+export function useAgentRoster(project?:string,enabled=true):RosterReading {
  const kernel=useKernel();
  const key=`${kernel.transport.kind}:${project??""}`;
  const current=entry(key);
@@ -98,6 +101,6 @@ export function useAgentRoster(project?:string):RosterReading {
    .catch(error=>{current.state="error";current.error=error instanceof Error?error.message:String(error);})
    .finally(()=>{current.inflight=undefined;for(const listener of [...current.listeners])listener();force(value=>value+1);});
  },[current,kernel.transport,project]);
- useEffect(()=>{load();},[load]);
+ useEffect(()=>{if(enabled)load();},[load,enabled]);
  return {state:current.state,agents:current.agents,error:current.error,retry:load};
 }

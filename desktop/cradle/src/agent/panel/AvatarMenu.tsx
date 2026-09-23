@@ -24,12 +24,14 @@ export function Avatar({agent,size="sm"}:{agent:{name:string;image?:string};size
  return <span className="panel-avatar" data-size={size} aria-hidden="true">{agent.image?<img src={agent.image} alt=""/>:monogramOf(agent.name)}</span>;
 }
 
-export function AvatarMenu({agent,presence,bypass,roster,lens,onChoose,chosenRef,naraChosen,onChooseNara}:{
+export function AvatarMenu({agent,presence,bypass,roster,lens,onChoose,chosenRef,naraChosen,onChooseNara,onOpen}:{
  agent:PanelAgent;presence:PanelPresence;bypass?:boolean;roster:RosterReading;
  /** The Epi-Logos lens is on: Nara joins the menu. */
  lens:boolean;
  onChoose:(agent:RosterAgent)=>void;chosenRef?:string;
  naraChosen?:boolean;onChooseNara?:()=>void;
+ /** The menu opened: the roster is wanted now. */
+ onOpen?:()=>void;
 }) {
  const [open,setOpen]=useState(false);
  const host=useRef<HTMLDivElement>(null);
@@ -48,7 +50,7 @@ export function AvatarMenu({agent,presence,bypass,roster,lens,onChoose,chosenRef
  </button>;
  return <div className="avatar-menu" ref={host}>
   <button type="button" className="avatar-menu-open" data-presence={presence} data-bypass={bypass?"true":undefined} aria-haspopup="menu" aria-expanded={open}
-   aria-label={`${agent.name} — ${presenceWords[presence]}${bypass?", Bypass permissions on":""}. Agents`} title={`${agent.name} · ${presenceWords[presence]}`} onClick={()=>setOpen(value=>!value)}>
+   aria-label={`${agent.name} — ${presenceWords[presence]}${bypass?", Bypass permissions on":""}. Agents`} title={`${agent.name} · ${presenceWords[presence]}`} onClick={()=>{if(!open)onOpen?.();setOpen(value=>!value);}}>
    <Avatar agent={agent}/>
    <span className="panel-presence" data-presence={presence} aria-hidden="true">{presence==="attention"?"!":presence==="unavailable"?"×":""}</span>
    {bypass&&<span className="panel-shield" aria-hidden="true"><ShieldMark size={9}/></span>}
