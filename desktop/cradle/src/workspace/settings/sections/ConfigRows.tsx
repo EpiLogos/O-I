@@ -7,6 +7,7 @@
  * when they disagree.
  */
 import {useEffect} from "react";
+import {scopeProject, useScope} from "../../scope";
 import type {ScopeAddress, SettingSpec} from "../../../configuration/contracts";
 import {SettingControl} from "../../../configuration/SettingControl";
 import {settingsActionable} from "../../../configuration/composition";
@@ -33,6 +34,17 @@ export function ownerPlace(entry: SettingEntry): string {
   return `Set by ${productName(entry.owner.owner_ref)}${section ? ` · ${section}` : ""}`;
 }
 
+/** Where a row reads and stages: the owner's first allowed scope, with the
+ * chosen project (the one scope, 10-SIDEBARS §3.6) or this machine's
+ * workcell standing in when the owner names only the kind. */
+export function addressFor(setting: SettingSpec, project: string | undefined): ScopeAddress {
+  const scope = defaultScope(setting);
+  if (scope.scope_ref || ["world", "ground", "machine"].includes(scope.scope_kind)) return scope;
+  if (scope.scope_kind === "project") return {...scope, scope_ref: (project ?? "central").toLowerCase()};
+  if (scope.scope_kind === "workcell") return {...scope, scope_ref: "local"};
+  return scope;
+}
+
 export function valueWords(setting: SettingSpec, value: unknown): string {
   if (setting.value_schema.type === "secret") return value === undefined ? "not set" : "set";
   if (setting.value_schema.type === "boolean" && typeof value === "boolean") return value ? "Yes" : "No";
@@ -42,7 +54,8 @@ export function valueWords(setting: SettingSpec, value: unknown): string {
 
 export function ConfigSettingRow({entry, data, scope, title}: {entry: SettingEntry; data: SettingsSnapshot; scope?: ScopeAddress; title?: string}) {
   const {setting} = entry;
-  const address = scope ?? defaultScope(setting);
+  const worldProject = scopeProject(useScope());
+  const address = scope ?? addressFor(setting, worldProject);
   const key = resolutionKey(setting.setting_ref, address);
   const addressable = !!address.scope_ref || ["world", "ground", "machine"].includes(address.scope_kind);
   useEffect(() => { if (addressable) void watchPair(setting.setting_ref, address); }, [key]); // eslint-disable-line react-hooks/exhaustive-deps
