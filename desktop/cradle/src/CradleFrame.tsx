@@ -107,6 +107,7 @@ import type {
 } from "./surface/types";
 import { createPortal, flushSync } from "react-dom";
 import {OPEN_OBJECT_EVENT,ObjectCentreLayer,encodeObjectRef,isOpenObjectDetail} from "./agent/objects";
+import {factoryCentreOwns} from "./contributions/factory/objectKinds";
 
 function snapshotOf(state: LayoutState): RestorePoint {
   return {
@@ -1126,6 +1127,7 @@ export function CradleFrame({onComposed}:{onComposed?:()=>void}) {
     const open=(event:Event)=>{
       const detail=(event as CustomEvent<unknown>).detail;
       if(!isOpenObjectDetail(detail))return;
+      if(!detail.popOut&&factoryCentreOwns(stateRef.current.mode,detail.object.kind))return;
       const ref=encodeObjectRef(detail.object);
       const existing=Object.values(stateRef.current.surfaces).find(binding=>binding.kind==="object"&&binding.ref===ref);
       const binding:SurfaceBinding=existing??{id:crypto.randomUUID(),kind:"object",ref,title:detail.object.title,project:detail.object.project};
@@ -1761,7 +1763,7 @@ export function CradleFrame({onComposed}:{onComposed?:()=>void}) {
           />
         </div>
       ))}
-      <ObjectCentreLayer fullPage={modeSoloStage}/>
+      <ObjectCentreLayer fullPage={modeSoloStage} yields={object=>factoryCentreOwns(mode,object.kind)}/>
       </DesktopShell>
       {WalkChannel&&<WalkChannel layout={state}/>}
       <ContextTray bindings={{...Object.assign({},...workspace.workspaces.map(w=>w.layout.surfaces)),...state.surfaces}} accompanying={state.accompanying}/>
