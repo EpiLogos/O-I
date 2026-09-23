@@ -41,6 +41,7 @@ const KnowledgeSurface=lazy(()=>import("../knowledge/KnowledgeSurface").then((mo
 // in place, and a mode switch shelves this whole tree hidden instead of
 // moving anything).
 import {ModeCentreBody, isRetainedCentreKind} from "./retention";
+import {PANE_PRESENTED_EDITOR} from "./presented";
 const AgencySurface=lazy(()=>import("../agency/AgencySurface").then((module)=>({default:module.AgencySurface})));
 import type { ActionArg, LayoutState, Pane, SurfaceId } from "./types";
 import { TAB_LIST_WIDTH_MAX, TAB_LIST_WIDTH_MIN, MODE_CURATION } from "../workspace/mode";
@@ -154,7 +155,7 @@ export function Workbench(props: WorkbenchProps) {
         return;
       }
       if (active && active !== document.body && active.isConnected && (!activePane || activePane.dataset.groupId === g.id)) return;
-      const editor = el.closest(".pane.group")?.querySelector<HTMLElement>(".cm-content");
+      const editor = el.closest(".pane.group")?.querySelector<HTMLElement>(PANE_PRESENTED_EDITOR);
       (editor ?? el).focus();
     });
     return () => cancelAnimationFrame(frame);

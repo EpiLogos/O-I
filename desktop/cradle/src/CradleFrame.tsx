@@ -30,6 +30,7 @@ import type {FactoryPanelHost} from "./contributions/factory/sidebar/sidebarMode
 import {publishCentreView} from "./contributions/factory/desk/deskModel";
 import {GroupPane} from "./surface/Workbench";
 import {centreBindingOf, ModeCentreBody, StageCentreMark, warmWorkspaceTrees} from "./surface/retention";
+import {PRESENTED_EDITOR} from "./surface/presented";
 import type {HostedAppState} from "./expressions/hostedApp";
 import {FactoryNavigator} from "./surfaces/navigator/FactoryNavigator";
 /**
@@ -255,7 +256,7 @@ export function CradleFrame({onComposed}:{onComposed?:()=>void}) {
     if (active && active !== document.body && active.closest(".workspace-canvas,.pane") && !active.closest(".ctx-menu,.world-navigator")) {
       returnFocus.current = active;
     } else if (!returnFocus.current?.isConnected) {
-      returnFocus.current = document.querySelector<HTMLElement>(".pane.focused .cm-content");
+      returnFocus.current = document.querySelector<HTMLElement>(PRESENTED_EDITOR);
     }
   };
   const summonWorld = () => {
@@ -265,7 +266,7 @@ export function CradleFrame({onComposed}:{onComposed?:()=>void}) {
   const dismissWorld = () => {
     setNavigatorOpen(false);
     requestAnimationFrame(() => {
-      const target = returnFocus.current?.isConnected ? returnFocus.current : document.querySelector<HTMLElement>(".pane.focused .cm-content");
+      const target = returnFocus.current?.isConnected ? returnFocus.current : document.querySelector<HTMLElement>(PRESENTED_EDITOR);
       target?.focus();
     });
   };
@@ -901,7 +902,7 @@ export function CradleFrame({onComposed}:{onComposed?:()=>void}) {
     const closeSettings=()=>{
       if ((stateRef.current.mode ?? "base") !== "settings") return;
       enterModeRef.current(stateRef.current.settingsReturnMode ?? "base");
-      requestAnimationFrame(() => document.querySelector<HTMLElement>('.warm-tree-host:not([hidden]) .pane.focused .cm-content, .warm-tree-host:not([hidden]) .pane.focused [role="tab"][aria-selected="true"]')?.focus());
+      requestAnimationFrame(() => document.querySelector<HTMLElement>(`${PRESENTED_EDITOR}, .warm-tree-host:not([hidden]) .pane.focused [role="tab"][aria-selected="true"]`)?.focus());
     };
     const agentSetupReturn=()=>{if(agentSetupReturnMode!==undefined){const mode=agentSetupReturnMode;agentSetupReturnMode=undefined;enterModeRef.current(mode);}};
     // Results' "Open in centre": the subject's own tab if it is open here, else its file.
