@@ -1,0 +1,94 @@
+name: Central desktop source walk
+on:
+  push:
+    branches: [agent/w2-central-day-source-20260920]
+    paths: ['desktop/cradle/**', 'docs/OI-DESKTOP-CONTINUOUS-WORK-WAYFINDER.md', '.github/workflows/central-desktop-source-walk.yml']
+  pull_request:
+    paths: ['desktop/cradle/**', 'docs/OI-DESKTOP-CONTINUOUS-WORK-WAYFINDER.md', '.github/workflows/central-desktop-source-walk.yml']
+permissions:
+  contents: read
+defaults:
+  run:
+    shell: bash
+jobs:
+  joined:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      PLAYWRIGHT_BROWSERS_PATH: /tmp/oi-w2-browser-engines
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/checkout@v4
+        with:
+          repository: EpiLogos/Central
+          ref: c4bb3605d233426600bdb462832e8ed55ac712b4
+          path: native-central
+          persist-credentials: false
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Retain exact source and machine facts
+        run: |
+          mkdir -p "$RUNNER_TEMP/w2-proof"
+          git rev-parse HEAD > "$RUNNER_TEMP/w2-proof/oi-revision.txt"
+          git -C native-central rev-parse HEAD > "$RUNNER_TEMP/w2-proof/central-revision.txt"
+          uname -a > "$RUNNER_TEMP/w2-proof/machine.txt"
+          rustc --version >> "$RUNNER_TEMP/w2-proof/machine.txt"
+          node --version >> "$RUNNER_TEMP/w2-proof/machine.txt"
+      - name: Compile real native owners and existing desktop bridge
+        id: native
+        run: |
+          cargo build --manifest-path native-central/Cargo.toml --locked -p ctrl 2>&1 | tee "$RUNNER_TEMP/w2-proof/central-build.log"
+          cargo build --manifest-path cli/Cargo.toml --locked --bin oi 2>&1 | tee "$RUNNER_TEMP/w2-proof/oi-build.log"
+          cargo build --manifest-path desktop/cradle/kernel/Cargo.toml --locked --bin walk-bridge 2>&1 | tee "$RUNNER_TEMP/w2-proof/bridge-build.log"
+          cp native-central/target/debug/ctrl "$RUNNER_TEMP/w2-proof/ctrl"
+          cp cli/target/debug/oi "$RUNNER_TEMP/w2-proof/oi"
+          cp desktop/cradle/kernel/target/debug/walk-bridge "$RUNNER_TEMP/w2-proof/walk-bridge"
+          sha256sum "$RUNNER_TEMP/w2-proof/ctrl" "$RUNNER_TEMP/w2-proof/oi" "$RUNNER_TEMP/w2-proof/walk-bridge" > "$RUNNER_TEMP/w2-proof/binaries.txt"
+      - name: All desktop kernel regressions
+        if: always()
+        run: cargo test --manifest-path desktop/cradle/kernel/Cargo.toml --locked -- --nocapture 2>&1 | tee "$RUNNER_TEMP/w2-proof/kernel-tests.log"
+      - name: Desktop dependencies
+        id: deps
+        if: always()
+        working-directory: desktop/cradle
+        run: npm ci
+      - name: Production TypeScript and Vite build
+        if: always() && steps.deps.outcome == 'success'
+        working-directory: desktop/cradle
+        run: npm run build 2>&1 | tee "$RUNNER_TEMP/w2-proof/desktop-build.log"
+      - name: Targeted Central behavioural regressions
+        if: always() && steps.deps.outcome == 'success'
+        working-directory: desktop/cradle
+        run: node --experimental-strip-types --import ./tests/ts-register.mjs --test tests/central-ground.test.mjs 2>&1 | tee "$RUNNER_TEMP/w2-proof/central-node.log"
+      - name: Existing repository Node regressions
+        if: always() && steps.deps.outcome == 'success'
+        working-directory: desktop/cradle
+        run: node --experimental-strip-types --import ./tests/ts-register.mjs --test tests/*.test.mjs 2>&1 | tee "$RUNNER_TEMP/w2-proof/all-node.log"
+      - name: Install real browser engines
+        id: browsers
+        if: always() && steps.deps.outcome == 'success'
+        working-directory: desktop/cradle
+        run: npx playwright install --with-deps chromium webkit
+      - name: Native source-backed walk (no provider doubles)
+        if: always() && steps.native.outcome == 'success'
+        run: python3 desktop/cradle/tests/central-native-walk.py --ctrl "$RUNNER_TEMP/w2-proof/ctrl" --oi "$RUNNER_TEMP/w2-proof/oi" --bridge "$RUNNER_TEMP/w2-proof/walk-bridge" --output "$RUNNER_TEMP/w2-proof/native-walk" 2>&1 | tee "$RUNNER_TEMP/w2-proof/native-walk.log"
+      - name: Original form and native Save in Chromium and WebKit
+        if: always() && steps.native.outcome == 'success' && steps.browsers.outcome == 'success'
+        env:
+          CENTRAL_BROWSER_ENGINES: chromium,webkit
+        run: python3 desktop/cradle/tests/central-native-walk.py --ctrl "$RUNNER_TEMP/w2-proof/ctrl" --oi "$RUNNER_TEMP/w2-proof/oi" --bridge "$RUNNER_TEMP/w2-proof/walk-bridge" --browser --output "$RUNNER_TEMP/w2-proof/browser-walk" 2>&1 | tee "$RUNNER_TEMP/w2-proof/browser-walk.log"
+      - name: Executable local packet syntax
+        if: always()
+        run: |
+          python3 -m py_compile desktop/cradle/tests/central-native-walk.py desktop/cradle/walk/central-local-acceptance.py
+          python3 desktop/cradle/walk/central-local-acceptance.py --help > "$RUNNER_TEMP/w2-proof/local-packet-help.txt"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: central-desktop-proof-${{ github.sha }}
+          path: ${{ runner.temp }}/w2-proof
+          retention-days: 7

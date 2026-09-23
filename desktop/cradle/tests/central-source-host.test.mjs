@@ -1,0 +1,10 @@
+import {test} from 'node:test';
+import assert from 'node:assert/strict';
+import {sourceBreadcrumb,nativeDaySource,sourceSaveLabel} from '../src/central/sourceContext.ts';
+test('root display does not manufacture a child Project',()=>{assert.equal(sourceBreadcrumb({root_register:true,project:'',path:'Control/user/intent.md'}),'Central / Control/user/intent.md');});
+test('Project display retains actual Work member',()=>{assert.equal(sourceBreadcrumb({root_register:false,project:'alpha',path:'notes.md'}),'Central / Work / alpha / notes.md');});
+test('native Day save label never calls an unobserved form Saved',()=>{assert.equal(sourceSaveLabel(false,true),'Day form has its own native Save');assert.match(sourceSaveLabel(true,true),/draft retained/);assert.equal(sourceSaveLabel(false,false),'Saved');assert.equal(sourceSaveLabel(true,false),'Unsaved');});
+const day={schema:'central.contribution-document/v1',kind:'day',document_id:'native:day',template_payload:{fields:{key:'original'}},fields:[{id:'native:field',template_pointer:'/fields/key'}]};
+test('canonical native Day is projected without altering payload or fields',()=>{assert.deepEqual(nativeDaySource(JSON.stringify(day)),day);});
+for(const bad of ['text','{}',JSON.stringify({...day,kind:'flow'}),JSON.stringify({...day,document_id:''}),JSON.stringify({...day,fields:[{id:'x',template_pointer:3}]}),JSON.stringify({...day,template_payload:[]})])test('damaged or other source is not a native Day '+bad.slice(0,30),()=>{assert.equal(nativeDaySource(bad),null);});
+test('missing register does not invent a child or silently claim root',()=>{assert.equal(sourceBreadcrumb({project:'',path:'unknown.md'}),'Central / [scope unavailable] / unknown.md');});

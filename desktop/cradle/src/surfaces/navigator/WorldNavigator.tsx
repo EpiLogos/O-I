@@ -1,4 +1,5 @@
 import type {EncounterRow} from "../../encounter/EncounterList";
+import {CentralGround} from "../../central/CentralGround";
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { useKernel } from "../../kernel/KernelProvider";
 import type { CentralLocation } from "../../kernel/types";
@@ -126,6 +127,10 @@ export function WorldNavigator({ onExplore, onOpenEncounter, centralFiles, onCen
       {host.onLibrary && <DestinationRow glyph="wiki" label="Library" ariaLabel="Library" onClick={host.onLibrary}/>}
       {onExplore && <DestinationRow glyph="explore" label="Explore" ariaLabel="Open Explore" className="explore-open" onClick={onExplore}/>}
     </nav>
+    {root && <details className="left-central-ground" open>
+      <summary>Daily ground</summary>
+      <CentralGround project={null} onOpenFile={onOpenFile}/>
+    </details>}
     {worldState && <Section id="control" label="Control" state={worldState}/>}
     {root && lens.on && <Section id="epi-corpus" label="Epi-Logos corpus" state={{ kind: "ready", rows: 1 }}>
       <div className="left-corpus" data-corpus-root={`Work/${lens.corpusProject}`}>

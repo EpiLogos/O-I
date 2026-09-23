@@ -55,9 +55,16 @@ impl OwnerCallError {
 impl std::fmt::Display for OwnerCallError {
     fn fmt(&self, formatter: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            Self::Unavailable { detail } => write!(formatter, "Central owner CLI unavailable: {detail}"),
-            Self::Refused { message } => write!(formatter, "Central owner Action refused: {message}"),
-            Self::Malformed { detail } => write!(formatter, "Central owner Action returned an unparseable answer: {detail}"),
+            Self::Unavailable { detail } => {
+                write!(formatter, "Central owner CLI unavailable: {detail}")
+            }
+            Self::Refused { message } => {
+                write!(formatter, "Central owner Action refused: {message}")
+            }
+            Self::Malformed { detail } => write!(
+                formatter,
+                "Central owner Action returned an unparseable answer: {detail}"
+            ),
         }
     }
 }
@@ -66,8 +73,15 @@ impl std::error::Error for OwnerCallError {}
 
 #[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
 pub enum ReceivingRequest {
-    List { #[serde(default)] after: Option<u64>, #[serde(default)] limit: Option<u64> },
-    Read { return_ref: String },
+    List {
+        #[serde(default)]
+        after: Option<u64>,
+        #[serde(default)]
+        limit: Option<u64>,
+    },
+    Read {
+        return_ref: String,
+    },
     /// An attributable external difference enters through Central's native
     /// proposal doorway. Central owns validation, authority and CAS arrival.
     Submit {
@@ -76,24 +90,36 @@ pub enum ReceivingRequest {
         document_id: String,
         expected_source_revision: String,
         occurred_at_unix_seconds: u64,
-        #[serde(default)] task_ref: Option<String>,
+        #[serde(default)]
+        task_ref: Option<String>,
         proposal: Value,
     },
     /// The document's current native basis (the exact source revision the
     /// human would accept) — `central.document.read`.
-    Document { source_ref: String, document_id: String },
+    Document {
+        source_ref: String,
+        document_id: String,
+    },
     Review {
         return_ref: String,
         expected_return_revision: String,
         disposition: String,
         /// Required for `accepted`: the exact current source revision the
         /// human actually reviewed. Omitted for `rejected`.
-        #[serde(default)] expected_source_revision: Option<String>,
+        #[serde(default)]
+        expected_source_revision: Option<String>,
     },
-    Include { return_ref: String, expected_return_revision: String, expected_source_revision: String },
+    Include {
+        return_ref: String,
+        expected_return_revision: String,
+        expected_source_revision: String,
+    },
     /// Resume an interrupted inclusion from its recorded native intent
     /// (`central.receiving.recover`); only the owner decides what may replay.
-    Recover { return_ref: String, expected_return_revision: String },
+    Recover {
+        return_ref: String,
+        expected_return_revision: String,
+    },
     /// One human authored-field edit (`central.document.mutate` `field.set`):
     /// the owner refuses non-human authors by its own law, CAS-checks
     /// `expected_revision`, and deduplicates on `request_id` — a replayed
@@ -114,8 +140,13 @@ pub enum ReceivingRequest {
 #[derive(Clone, Debug, serde::Deserialize, Eq, PartialEq, serde::Serialize)]
 #[serde(tag = "kind", rename_all = "kebab-case")]
 pub enum NowRequest {
-    List { #[serde(default)] participant_refs: Option<Vec<String>> },
-    Read { now_ref: String },
+    List {
+        #[serde(default)]
+        participant_refs: Option<Vec<String>>,
+    },
+    Read {
+        now_ref: String,
+    },
 }
 
 /// Client for the Central owner Actions the kernel reads and writes
@@ -190,15 +221,13 @@ impl CentralClient {
         &self.project_query
     }
 
-    fn project_of(&self, project: Option<&str>) -> String {
-        project.unwrap_or(&self.project_query).to_owned()
-    }
-
     /// Run one owner Action, ported envelope law: `--json` global flag,
     /// optional `--root`, `action run <action> <input-json>`; `ok` must be
     /// true; the `data` payload is returned. Spawn failures are
     /// `Unavailable`; `ok:false` is `Refused` with the owner's message.
-    pub fn run(&self, action: &str, mut input: Value) -> Result<Value, OwnerCallError> {
+    /// Preserve native failure status/code for Central-facing readers. Existing
+    /// callers still use `run`, which returns the same refusal as before.
+    pub fn run_envelope(&self, action: &str, mut input: Value) -> Result<Value, OwnerCallError> {
         if let Some(object) = input.as_object_mut() {
             // An absent project takes the configured co-reference; an explicit
             // null names the Central root register and is carried as absence,
@@ -227,27 +256,80 @@ impl CentralClient {
         if let Some(root) = &self.central_root {
             command.arg("--root").arg(root);
         }
-        command
-            .arg("action")
-            .arg("run")
-            .arg(action)
-            .arg(serde_json::to_string(&input).map_err(|error| OwnerCallError::Malformed {
-                detail: format!("encode {action} input: {error}"),
-            })?);
-        let output = command.output().map_err(|error| OwnerCallError::Unavailable {
-            detail: format!("launch {} for {action}: {error}", self.executable.display()),
+        let encoded = serde_json::to_vec(&input).map_err(|error| OwnerCallError::Malformed {
+            detail: format!("encode {action} input: {error}"),
         })?;
-        let stdout = String::from_utf8(output.stdout).map_err(|error| {
-            OwnerCallError::Malformed {
+        if encoded.len() > 16 * 1024 * 1024 {
+            return Err(OwnerCallError::Malformed {
+                detail: "Central action input exceeds 16 MiB".into(),
+            });
+        }
+        command.args(["action", "run", action]);
+        // Original forms and large native edits exceed OS argv limits. The
+        // explicit native stdin transport retains the same owner validation.
+        let output = if encoded.len() > 64 * 1024 {
+            use std::io::Write;
+            use std::process::Stdio;
+            let mut child = command
+                .arg("-")
+                .stdin(Stdio::piped())
+                .stdout(Stdio::piped())
+                .stderr(Stdio::piped())
+                .spawn()
+                .map_err(|error| OwnerCallError::Unavailable {
+                    detail: format!("launch {} for {action}: {error}", self.executable.display()),
+                })?;
+            let mut stdin = child.stdin.take().expect("piped stdin");
+            let writer = std::thread::spawn(move || stdin.write_all(&encoded));
+            let output = child
+                .wait_with_output()
+                .map_err(|error| OwnerCallError::Unavailable {
+                    detail: format!("wait for {action}: {error}"),
+                })?;
+            let written = writer.join().map_err(|_| OwnerCallError::Malformed {
+                detail: "Central input writer failed".into(),
+            })?;
+            if output.status.success() {
+                written.map_err(|error| OwnerCallError::Malformed {
+                    detail: format!("incomplete {action} input: {error}"),
+                })?;
+            }
+            output
+        } else {
+            command
+                .arg(String::from_utf8(encoded).expect("JSON is UTF-8"))
+                .output()
+                .map_err(|error| OwnerCallError::Unavailable {
+                    detail: format!("launch {} for {action}: {error}", self.executable.display()),
+                })?
+        };
+        let stdout =
+            String::from_utf8(output.stdout).map_err(|error| OwnerCallError::Malformed {
                 detail: format!("{action} returned non-UTF8 output: {error}"),
-            }
-        })?;
-        let value: Value = serde_json::from_str(stdout.trim()).map_err(|error| {
-            OwnerCallError::Malformed {
+            })?;
+        let value: Value =
+            serde_json::from_str(stdout.trim()).map_err(|error| OwnerCallError::Malformed {
                 detail: format!("{action} returned invalid structured output: {error}"),
-            }
-        })?;
-        if value.get("ok").and_then(Value::as_bool) != Some(true) {
+            })?;
+        if !value.is_object() || value.get("ok").and_then(Value::as_bool).is_none() {
+            return Err(OwnerCallError::Malformed {
+                detail: format!("{action} returned no native ActionResult"),
+            });
+        }
+        if !output.status.success() && value["ok"] == true {
+            return Err(OwnerCallError::Malformed {
+                detail: format!(
+                    "{action} returned success JSON with process status {}",
+                    output.status
+                ),
+            });
+        }
+        Ok(value)
+    }
+
+    pub fn run(&self, action: &str, input: Value) -> Result<Value, OwnerCallError> {
+        let value = self.run_envelope(action, input)?;
+        if value["ok"] != true {
             return Err(OwnerCallError::Refused {
                 message: value
                     .pointer("/error/message")
@@ -257,12 +339,12 @@ impl CentralClient {
                     .to_owned(),
             });
         }
-        if !output.status.success() {
-            return Err(OwnerCallError::Malformed {
-                detail: format!("{action} returned success JSON with process status {}", output.status),
-            });
-        }
-        Ok(value.get("data").cloned().unwrap_or(Value::Null))
+        value
+            .get("data")
+            .cloned()
+            .ok_or_else(|| OwnerCallError::Malformed {
+                detail: format!("{action} returned success without native data"),
+            })
     }
 
     // -----------------------------------------------------------------------
@@ -273,41 +355,79 @@ impl CentralClient {
     /// perform one human review/include. Every input is owner-validated; the
     /// response payload is carried verbatim. `None` project omits the input
     /// entirely — Central resolves the ROOT register's receiving field.
-    pub fn receiving(&self, project: Option<&str>, request: &ReceivingRequest) -> Result<Value, OwnerCallError> {
+    pub fn receiving(
+        &self,
+        project: Option<&str>,
+        request: &ReceivingRequest,
+    ) -> Result<Value, OwnerCallError> {
         let mut input = serde_json::Map::new();
         // None names the ROOT register: an explicit null is the run-level
         // convention that carries as absence — omitting the key would let
         // the configured project co-reference back-fill and silently query
         // the wrong register's field.
-        input.insert("project".to_owned(), project.map(|p| json!(p)).unwrap_or(Value::Null));
+        input.insert(
+            "project".to_owned(),
+            project.map(|p| json!(p)).unwrap_or(Value::Null),
+        );
         let action: &str = match request {
             ReceivingRequest::List { after, limit } => {
-                if let Some(after) = after { input.insert("after".to_owned(), json!(after)); }
-                if let Some(limit) = limit { input.insert("limit".to_owned(), json!(limit)); }
+                if let Some(after) = after {
+                    input.insert("after".to_owned(), json!(after));
+                }
+                if let Some(limit) = limit {
+                    input.insert("limit".to_owned(), json!(limit));
+                }
                 "central.receiving.list"
             }
             ReceivingRequest::Read { return_ref } => {
                 input.insert("return_ref".to_owned(), json!(return_ref));
                 "central.receiving.read"
             }
-            ReceivingRequest::Submit { producer_key, source_ref, document_id, expected_source_revision, occurred_at_unix_seconds, task_ref, proposal } => {
+            ReceivingRequest::Submit {
+                producer_key,
+                source_ref,
+                document_id,
+                expected_source_revision,
+                occurred_at_unix_seconds,
+                task_ref,
+                proposal,
+            } => {
                 input.insert("producer_key".to_owned(), json!(producer_key));
                 input.insert("source_ref".to_owned(), json!(source_ref));
                 input.insert("document_id".to_owned(), json!(document_id));
-                input.insert("expected_source_revision".to_owned(), json!(expected_source_revision));
-                input.insert("occurred_at_unix_seconds".to_owned(), json!(occurred_at_unix_seconds));
-                if let Some(task_ref) = task_ref { input.insert("task_ref".to_owned(), json!(task_ref)); }
+                input.insert(
+                    "expected_source_revision".to_owned(),
+                    json!(expected_source_revision),
+                );
+                input.insert(
+                    "occurred_at_unix_seconds".to_owned(),
+                    json!(occurred_at_unix_seconds),
+                );
+                if let Some(task_ref) = task_ref {
+                    input.insert("task_ref".to_owned(), json!(task_ref));
+                }
                 input.insert("proposal".to_owned(), proposal.clone());
                 "central.receiving.submit"
             }
-            ReceivingRequest::Document { source_ref, document_id } => {
+            ReceivingRequest::Document {
+                source_ref,
+                document_id,
+            } => {
                 input.insert("source_ref".to_owned(), json!(source_ref));
                 input.insert("document_id".to_owned(), json!(document_id));
                 "central.document.read"
             }
-            ReceivingRequest::Review { return_ref, expected_return_revision, disposition, expected_source_revision } => {
+            ReceivingRequest::Review {
+                return_ref,
+                expected_return_revision,
+                disposition,
+                expected_source_revision,
+            } => {
                 input.insert("return_ref".to_owned(), json!(return_ref));
-                input.insert("expected_return_revision".to_owned(), json!(expected_return_revision));
+                input.insert(
+                    "expected_return_revision".to_owned(),
+                    json!(expected_return_revision),
+                );
                 input.insert("disposition".to_owned(), json!(disposition));
                 // `accepted` requires the exact reviewed source revision; a
                 // rejected review carries no source basis at all.
@@ -316,18 +436,41 @@ impl CentralClient {
                 }
                 "central.receiving.review"
             }
-            ReceivingRequest::Include { return_ref, expected_return_revision, expected_source_revision } => {
+            ReceivingRequest::Include {
+                return_ref,
+                expected_return_revision,
+                expected_source_revision,
+            } => {
                 input.insert("return_ref".to_owned(), json!(return_ref));
-                input.insert("expected_return_revision".to_owned(), json!(expected_return_revision));
-                input.insert("expected_source_revision".to_owned(), json!(expected_source_revision));
+                input.insert(
+                    "expected_return_revision".to_owned(),
+                    json!(expected_return_revision),
+                );
+                input.insert(
+                    "expected_source_revision".to_owned(),
+                    json!(expected_source_revision),
+                );
                 "central.receiving.include"
             }
-            ReceivingRequest::Recover { return_ref, expected_return_revision } => {
+            ReceivingRequest::Recover {
+                return_ref,
+                expected_return_revision,
+            } => {
                 input.insert("return_ref".to_owned(), json!(return_ref));
-                input.insert("expected_return_revision".to_owned(), json!(expected_return_revision));
+                input.insert(
+                    "expected_return_revision".to_owned(),
+                    json!(expected_return_revision),
+                );
                 "central.receiving.recover"
             }
-            ReceivingRequest::MutateField { source_ref, document_id, expected_revision, request_id, field_id, value } => {
+            ReceivingRequest::MutateField {
+                source_ref,
+                document_id,
+                expected_revision,
+                request_id,
+                field_id,
+                value,
+            } => {
                 input.insert("source_ref".to_owned(), json!(source_ref));
                 input.insert("document_id".to_owned(), json!(document_id));
                 input.insert("expected_revision".to_owned(), json!(expected_revision));
@@ -349,12 +492,21 @@ impl CentralClient {
     /// `None` project names the ROOT register with an explicit null — the same
     /// run-level convention as `receiving`: omitting the key would let the
     /// configured project co-reference silently query the wrong register.
-    pub fn now(&self, project: Option<&str>, request: &NowRequest) -> Result<Value, OwnerCallError> {
+    pub fn now(
+        &self,
+        project: Option<&str>,
+        request: &NowRequest,
+    ) -> Result<Value, OwnerCallError> {
         let mut input = serde_json::Map::new();
-        input.insert("project".to_owned(), project.map(|p| json!(p)).unwrap_or(Value::Null));
+        input.insert(
+            "project".to_owned(),
+            project.map(|p| json!(p)).unwrap_or(Value::Null),
+        );
         let action: &str = match request {
             NowRequest::List { participant_refs } => {
-                if let Some(refs) = participant_refs { input.insert("participant_refs".to_owned(), json!(refs)); }
+                if let Some(refs) = participant_refs {
+                    input.insert("participant_refs".to_owned(), json!(refs));
+                }
                 "central.now.list"
             }
             NowRequest::Read { now_ref } => {
@@ -379,19 +531,27 @@ impl CentralClient {
         project: Option<&str>,
         source_ref: &str,
     ) -> Result<SourceReading, OwnerCallError> {
-        let project = self.project_of(project);
         let data = self.run(
             "projectcentral.source.read",
             json!({ "project": project, "source_ref": source_ref }),
         )?;
-        let reading: SourceReading = serde_json::from_value(data).map_err(|error| {
-            OwnerCallError::Malformed {
+        let reading: SourceReading =
+            serde_json::from_value(data).map_err(|error| OwnerCallError::Malformed {
                 detail: format!("decode Central source reading: {error}"),
-            }
-        })?;
+            })?;
+        if reading.source.source_ref != source_ref
+            || (project.is_none() && reading.world_ref != "control:root")
+        {
+            return Err(OwnerCallError::Malformed {
+                detail: "Central redirected the requested source/scope".into(),
+            });
+        }
         if reading.schema != SOURCE_READING_SCHEMA {
             return Err(OwnerCallError::Malformed {
-                detail: format!("unsupported Central source reading schema `{}`", reading.schema),
+                detail: format!(
+                    "unsupported Central source reading schema `{}`",
+                    reading.schema
+                ),
             });
         }
         if reading.automatic_agent_or_model_invocation {
@@ -416,7 +576,6 @@ impl CentralClient {
         actor: &str,
         actor_kind: &str,
     ) -> Result<SourceWriteReceipt, OwnerCallError> {
-        let project = self.project_of(project);
         let data = self.run(
             "projectcentral.source.write",
             json!({
@@ -428,12 +587,11 @@ impl CentralClient {
                 "actor_kind": actor_kind,
             }),
         )?;
-        let receipt: SourceWriteReceipt = serde_json::from_value(
-            data.get("receipt").cloned().unwrap_or_else(|| data.clone()),
-        )
-        .map_err(|error| OwnerCallError::Malformed {
-            detail: format!("decode Central source write receipt: {error}"),
-        })?;
+        let receipt: SourceWriteReceipt =
+            serde_json::from_value(data.get("receipt").cloned().unwrap_or_else(|| data.clone()))
+                .map_err(|error| OwnerCallError::Malformed {
+                    detail: format!("decode Central source write receipt: {error}"),
+                })?;
         if receipt.schema != SOURCE_WRITE_RECEIPT_SCHEMA {
             return Err(OwnerCallError::Malformed {
                 detail: format!(
@@ -566,7 +724,8 @@ impl CentralClient {
                 "accepted_by_ref": accepted_by_ref,
             }),
         )?;
-        let result: SourceReturnMutation = decode_owner("projectcentral.source.return_accept", data)?;
+        let result: SourceReturnMutation =
+            decode_owner("projectcentral.source.return_accept", data)?;
         ensure_schema(
             "projectcentral.source.return_accept",
             &result.proposal.schema,
@@ -585,7 +744,8 @@ impl CentralClient {
             "projectcentral.source.return_reject",
             json!({ "project": project, "return_ref": return_ref }),
         )?;
-        let result: SourceReturnReading = decode_owner("projectcentral.source.return_reject", data)?;
+        let result: SourceReturnReading =
+            decode_owner("projectcentral.source.return_reject", data)?;
         ensure_schema(
             "projectcentral.source.return_reject",
             &result.schema,
@@ -605,7 +765,9 @@ fn ensure_schema(action: &str, actual: &str, expected: &str) -> Result<(), Owner
         Ok(())
     } else {
         Err(OwnerCallError::Malformed {
-            detail: format!("{action} returned unsupported schema `{actual}` (expected `{expected}`)"),
+            detail: format!(
+                "{action} returned unsupported schema `{actual}` (expected `{expected}`)"
+            ),
         })
     }
 }
@@ -639,8 +801,6 @@ fn decode_owner<T: for<'de> Deserialize<'de>>(
     ensure_no_background(action, &data)?;
     decode_value(action, data)
 }
-
-
 
 // ---------------------------------------------------------------------------
 // Owner contracts (decoded exactly as the owner serves them)
@@ -713,17 +873,6 @@ pub const FLOW_READING_SCHEMA: &str = "central.project-flow-reading/v1";
 pub const FLOW_RETURN_SCHEMA: &str = "central.source-return/v1";
 pub const FLOW_RETURN_READING_SCHEMA: &str = "central.source-return-reading/v1";
 pub const FLOW_RETURNS_SCHEMA: &str = "central.source-returns/v1";
-
-
-
-
-
-
-
-
-
-
-
 
 #[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
 pub struct SourceReturnProposal {
@@ -815,15 +964,9 @@ pub enum SourceWriteFailure {
     },
     /// The owner refused or could not serve for a reason that is not a
     /// revision move. Returned as it stands; never retried around.
-    OwnerRefused {
-        source_ref: String,
-        message: String,
-    },
+    OwnerRefused { source_ref: String, message: String },
     /// The owner executable is unavailable. Honest absence, not an error.
-    Unavailable {
-        source_ref: String,
-        detail: String,
-    },
+    Unavailable { source_ref: String, detail: String },
 }
 
 impl SourceWriteFailure {
@@ -924,8 +1067,12 @@ mod tests {
             serde_json::json!({"MutateField":{"source_ref":"source:1","document_id":"doc:1","expected_revision":"r1","request_id":"request:1","field_id":"field:1","value":"value"}}),
         ];
         for value in values {
-            serde_json::from_value::<ReceivingRequest>(value).expect("desktop wire must deserialize as the native owner request");
+            serde_json::from_value::<ReceivingRequest>(value)
+                .expect("desktop wire must deserialize as the native owner request");
         }
-        assert!(serde_json::from_value::<ReceivingRequest>(serde_json::json!({"kind":"document","source_ref":"source:1","document_id":"doc:1"})).is_err());
+        assert!(serde_json::from_value::<ReceivingRequest>(
+            serde_json::json!({"kind":"document","source_ref":"source:1","document_id":"doc:1"})
+        )
+        .is_err());
     }
 }

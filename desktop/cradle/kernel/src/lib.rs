@@ -45,6 +45,7 @@ pub mod expression_trigger;
 pub mod factory;
 pub mod files;
 pub mod flow;
+pub mod central;
 pub mod flow_cognition;
 pub mod focus;
 pub mod graph;
@@ -339,6 +340,8 @@ pub enum KernelOp {
         #[serde(default)]
         day_ref: Option<String>,
     },
+    /// Finite Central root/project navigation and native Day operations.
+    Central { #[serde(default)] project: Option<String>, request: central::Request },
     /// Open the Day document's source buffer through the owner's Day route.
     /// There is no project-scoped source read for a root-register source:
     /// the buffer is built from `central.day.read`'s own disclosure.
@@ -787,6 +790,9 @@ pub enum KernelOpResult {
     /// Day's source identity is the owner's disclosure, never a ref the
     /// desktop derives from a path.
     DayReading {
+        data: serde_json::Value,
+    },
+    CentralReading {
         data: serde_json::Value,
     },
     FileOperation {
@@ -1648,6 +1654,10 @@ impl Kernel {
                     result: KernelOpResult::DayReading { data },
                 })
             }
+            KernelOp::Central {project, request} => {
+                let data=central::operate(&self.client, project.as_deref(), &request)?;
+                Ok(KernelOpOutcome {receipts:Vec::new(),result:KernelOpResult::CentralReading {data}})
+            }
             KernelOp::DaySourceOpen { day_ref } => {
                 // The owner's Day route is the only reader of a
                 // root-register Day source: the buffer is built from
@@ -2385,12 +2395,12 @@ impl Kernel {
         // The cradle holds unsaved work: opening the same ref again reveals
         // the existing buffer — it never clobbers a dirty layer.
         let held = self.buffers.get(source_ref).cloned();
+        let route = held.as_ref().map(|b| b.project.clone()).unwrap_or_else(|| project.unwrap_or("").to_owned());
+        let project = if route.is_empty() { None } else { Some(route.as_str()) };
         if let Some(buffer) = &held {
-            // A root-register buffer (the Day, opened through the owner's Day
-            // route) is also served from its held state: its re-read route
-            // (`projectcentral.source.read`) is project-scoped by
-            // registration and cannot serve this ref.
-            if buffer.dirty || buffer.root_register {
+            // Reopening preserves unsaved work. A clean root buffer is read
+            // from its exact native SourceRef just like a child source.
+            if buffer.dirty {
                 return Ok(KernelOpOutcome {
                     receipts: Vec::new(),
                     result: KernelOpResult::SourceOpened {
@@ -2408,9 +2418,16 @@ impl Kernel {
             .as_ref()
             .map(|buffer| buffer.base_revision != reading.revision.revision)
             .unwrap_or(true);
-        let route = project
-            .unwrap_or(self.client.configured_project())
-            .to_owned();
+        // A root-register reading (the Day) routes as the root itself: the
+        // configured project query is a co-reference fallback for child
+        // sources only, never for the owner's own register.
+        let route = if reading.world_ref == "control:root" {
+            String::new()
+        } else {
+            project
+                .unwrap_or(self.client.configured_project())
+                .to_owned()
+        };
         let buffer = self.sync_buffer_from_reading(&reading, true, &route);
         let receipt = changed.then(|| {
             self.log.record(KernelEvent::SourceOpened {
@@ -2470,7 +2487,7 @@ impl Kernel {
             dirty,
             conflict: None,
             path: Some(reading.source.path.clone()),
-            root_register: false,
+            root_register: reading.world_ref == "control:root",
         };
         self.buffers.insert(source_ref, buffer.clone());
         buffer
@@ -2519,13 +2536,16 @@ impl Kernel {
                 "no open buffer for `{source_ref}`; nothing to save"
             ));
         };
-        let route = if buffer.project.is_empty() {
-            project.unwrap_or(self.client.configured_project())
+        // A root-register buffer saves through the owner's root route: an
+        // empty/None project is the root register, never the configured
+        // project (which would redirect the owner's own source).
+        let project = if buffer.root_register {
+            None
+        } else if buffer.project.is_empty() {
+            Some(project.unwrap_or(self.client.configured_project()))
         } else {
-            &buffer.project
-        }
-        .to_owned();
-        let project = Some(route.as_str());
+            Some(buffer.project.as_str())
+        };
         let expected = buffer.base_revision.clone();
         let content = buffer.content.clone();
         match self.client.source_write(

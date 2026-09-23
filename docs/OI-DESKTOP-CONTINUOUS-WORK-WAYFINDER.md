@@ -342,3 +342,99 @@ p5_synthesis, p5_quintessence, p5_teleological_aim
 ```
 
 Retain body-only fixtures and other payload collections too. The example media in the supplied Day file is a presentation fixture, not observed daily activity. Literal intake does not imply all native save, concurrency, authority or round-trip tests have passed. Template defects found during integration are recorded and repaired explicitly rather than treated as permission to weaken the functional specification.
+
+## 11. W2 Central/root, Control and native Day consumer continuation — 20 September 2026
+
+**Published basis and ownership.** This bounded consumer continues O:I
+`a222c8bdf46a7b2146084770b704dfbe83ce5027`, recovered after #410. The later
+`060f0165a8ecbdc2fb3bece48c7c4d48d05e2610` UI line was inspected rather than
+wholesale-merged; its shared-shell/body/corpus changes are not replaced. The
+new local reconciliation receipt was not established by this remote work.
+W1/A retains shared geometry, CradleFrame and workspace state; the editor lane
+retains SourceSurface. W2 consumes the existing `onOpenFile(CentralLocation)`
+callback and native SourceSurface. Factory #421/#422 retain actual Run production.
+
+**Native dependency:** Central #201, based on `12ee31313e710378845baae190efc1a4b3e7ebdb`
+(including #195/#197/#199), supplies root source/horizon/CAS, root file-source
+bindings, exact native Day/document relation and large Action input over stdin.
+Use its current tested head, not an older binary whose descriptors mandate a
+child Project. Central remains the root meta-project and durable authored ground.
+No Control contents, temporal truth, Recognition, or source authority moved into
+an application store. The narrow ordinary Flow-instance file door remains intact.
+
+### Operative path
+
+The navigator's Central destination exposes actual root context, native civil
+policy/current Day, independently read source/NOW/receiving results and the
+existing Control filesystem tree. Project disclosures have their own scoped
+Day/NOW aperture. Human/user source, agent material and generated projections
+keep the native binding's provenance, standing, treatment and disclosure gate.
+Editing does not adopt a proposal or recognise governance.
+
+Today resolves native civil time and current Day, validates its declared native
+document/source/revision, and opens the returned source location through the
+existing document host. It never searches for a filename or mistakes the temporal
+artifact for the original form. Missing/stale Day offers explicit native ensure;
+uninitialised Day offers human selection of an existing original HTML under exact
+revision and native policy/credential checks. Non-empty writing is never implicitly
+converted. The supplied original stays untouched and is retained by native file
+locator/revision in the document payload. No O-I child Project is needed.
+
+The original Daily Die editor, all seventeen original field keys and its typed
+lists/body/notes/media/session rows remain supplied material. New native documents
+retain both original field mappings and explicit aggregate mappings to preserve
+typed payloads through native `field.set`. Older documents lacking these mappings
+visibly report unsaved regions; they are not called lossless. The template's own
+Save HTML copy is distinct from native Save. Passive viewing/typing/navigation
+and iframe messages do not authorise native writes. Only a trusted host Save asks
+for a nonce-bound snapshot, validates identity/mappings, writes native CAS operations
+and verifies acknowledged source/document/revision/value. Unknown or partial outcomes
+retain the draft and halt replay. Explicit source review shows differences; rebase
+preserves untouched concurrent object members. Imported scripts remain opaque-origin,
+network-blocked material with no privileged bridge.
+
+Exact held SourceRef and scope govern reread/save/restart, never the current
+navigation selection or a newly advanced Today pointer. NOW v2 work lanes and
+native composed Returns preserve source/day/task/run/session refs, nulls and history.
+Absent old-reader Returns is not an empty current reading. Failed, malformed, stale,
+denied or unavailable results remain visible and cannot become empty-success panels.
+A controlled Return with test run refs is not real Factory self-inhabitation.
+
+### Executable checks and local packet
+
+From `desktop/cradle`, after its locked dependencies:
+
+```sh
+node --experimental-strip-types --import ./tests/ts-register.mjs --test tests/central-ground.test.mjs
+npm run build
+python3 tests/central-native-walk.py --ctrl /exact/ctrl --oi /exact/oi \
+  --bridge /exact/walk-bridge --output /new/disposable-proof --browser
+```
+
+The source walk creates only its own test root and starts the existing dev bridge
+on an OS-assigned loopback port. It exercises real `ctrl`, the real `oi central`
+route, the production Kernel, actual navigator/SourceSurface and supplied HTML.
+Its optional Chromium/WebKit path types, preserves unsaved state across back/return,
+saves, independently rereads and reloads. Native tests cover root without child,
+Control source editing, revision conflict, missing/denied sources, initialization,
+Return correlation, civil rollover, held old Day and process restart. CI retains
+original failures, exact source/binary hashes, native responses and browser captures.
+These are controlled source-backed observations, not installed Mac/provider evidence.
+
+For the installed candidate, the local lead first records its reconciled
+source/build/install/running cut. Run `walk/central-local-acceptance.py --help`.
+Its default performs only native Day read and machine/binary facts, returning
+**pending (exit 2)** for unperformed obligations. Explicit `--bindings FILE --execute`
+may run locally reviewed, bounded argv drivers for the existing source/candidate,
+Mac edit/save/reopen/back, rollover/restart, real provider/Factory Return and
+microphone/audio episodes. Each driver must emit an actual observation receipt;
+missing proof never passes. No private source body or credential enters its
+portable receipt. A model response is not native source persistence, a browser
+walk is not native macOS input, and captured audio is not established audibility.
+Do not run multiple focus drivers or change candidates beneath an active test.
+
+Original HTML copies, private authority adoption, actual live Factory work,
+provider/model identity, microphone permission/playback and independent human
+acceptance retain their separate obligations. Both installable self-inhabiting
+technology and the complete native published corpus remain required; this increment
+closes neither whole-programme outcome by test count.
