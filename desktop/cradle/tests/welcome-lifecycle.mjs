@@ -81,8 +81,14 @@ try {
       const logo = document.querySelector('.oi-welcome-logo');
       return !!logo && Number(getComputedStyle(logo).opacity) > 0.98;
     });
-    const intro = await page.evaluate(() => getComputedStyle(document.querySelector('.oi-welcome-logo')).animationDuration);
-    assert.ok(['0.12s', '120ms'].includes(intro), `the opening mark fades in quickly, got ${intro}`);
+    const intro = await page.evaluate(() => {
+      const style = getComputedStyle(document.querySelector('.oi-welcome-logo'));
+      const properties = style.transitionProperty.split(',').map(item => item.trim());
+      const durations = style.transitionDuration.split(',').map(item => item.trim());
+      return durations[properties.indexOf('opacity')];
+    });
+    assert.ok(['0.6s', '600ms'].includes(intro), `the opening mark fades in over about 600ms, got ${intro}`);
+    assert.equal(await page.locator('.oi-welcome').getAttribute('data-mark'), 'in', 'the fade starts only after the mark can paint');
     const openingIsLight = theme === 'dark';
     const pixels = await renderedBounds(page, {screenshot: () => page.locator('.oi-welcome-logo').screenshot()});
     const ground = openingIsLight ? [251, 251, 249] : [18, 18, 17];

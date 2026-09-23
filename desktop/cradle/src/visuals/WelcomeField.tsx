@@ -3,7 +3,7 @@
  * time (prepaint and VisualsProvider own `data-theme`). This overlay owns
  * the opposite ground, the static mark, and the enter handoff:
  *
- *   rest     — opposite of the saved theme; the mark fades in quickly
+ *   rest     — opposite of the saved theme; the mark fades in once it can paint
  *   entering — ground and mark ink move to the saved theme. Logo opacity
  *              starts about 0.2s later and eases out across that move.
  *              `data-oi-opening` is cleared as the gesture starts, while
@@ -47,6 +47,7 @@ export function WelcomeField({ onEntered, onFieldReady, appReady = true }: {
   const [markReady, setMarkReady] = useState(false);
   const [markError, setMarkError] = useState<string | null>(null);
   const [maskUrl, setMaskUrl] = useState<string | null>(null);
+  const [markIn, setMarkIn] = useState(false);
   const rootRef = useRef<HTMLDivElement>(null);
   const entering = useRef(false);
   const finished = useRef(false);
@@ -114,6 +115,24 @@ export function WelcomeField({ onEntered, onFieldReady, appReady = true }: {
 
   useEffect(() => () => { if (maskUrl) URL.revokeObjectURL(maskUrl); }, [maskUrl]);
 
+  // The mask blob is not paintable on the frame it is created. Starting the
+  // fade then lets the image pop in at full opacity and the animation replay
+  // from zero. Hold the mark invisible until it has decoded and painted once.
+  useEffect(() => {
+    if (!maskUrl) return;
+    let live = true;
+    const image = new Image();
+    image.src = maskUrl;
+    const reveal = () => {
+      if (!live) return;
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => { if (live) setMarkIn(true); });
+      });
+    };
+    image.decode().then(reveal, reveal);
+    return () => { live = false; };
+  }, [maskUrl]);
+
   const completeEnter = useCallback(() => finish(true), [finish]);
 
   useEffect(() => {
@@ -177,6 +196,7 @@ export function WelcomeField({ onEntered, onFieldReady, appReady = true }: {
       ref={rootRef}
       className="oi-welcome"
       data-phase={phase}
+      data-mark={markIn ? "in" : "hold"}
       data-field-ready={markReady}
       data-field-error={!!markError}
     >

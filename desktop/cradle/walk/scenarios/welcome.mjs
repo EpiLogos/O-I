@@ -65,6 +65,10 @@ export default async function run({page, baseUrl, check, shot, metric}) {
     await chooseTheme(page, theme);
     await page.reload();
     await page.locator(READY).waitFor({timeout: 30000});
+    await page.waitForFunction(() => {
+      const logo = document.querySelector('.oi-welcome-logo');
+      return !!logo && Number(getComputedStyle(logo).opacity) > 0.98;
+    });
     const pixels = await markPixels(page), inverseLight = theme === 'dark';
     const ground = inverseLight ? [251, 251, 249] : [18, 18, 17];
     const host = theme === 'dark' ? 'rgb(18, 18, 17)' : 'rgb(251, 251, 249)';

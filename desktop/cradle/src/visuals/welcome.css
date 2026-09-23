@@ -1,12 +1,14 @@
 /* Opening splash. The overlay owns the opposite ground and the mark.
- * The mark fades in quickly once it is ready. Enter is one gesture: ground
- * and ink move to the saved theme, and the logo opacity starts about 0.2s
- * later, then eases out across the rest of that move. The fade ease stays
- * near opaque at the start (so colour can settle underneath a cover) and
- * spends the long middle letting the mark ghost out. Reduced motion
- * collapses these through the motion tokens. */
+ * The mark stays invisible until its mask can paint, then fades in over
+ * about 600ms. Enter is one gesture: ground and ink move to the saved
+ * theme, and the logo opacity starts about 0.2s later, then eases out
+ * across the rest of that move. The fade ease stays near opaque at the
+ * start (so colour can settle underneath a cover) and spends the long
+ * middle letting the mark ghost out. Reduced motion collapses these
+ * through the motion tokens. */
 .oi-welcome {
-  --oi-welcome-in: var(--oi-motion-ui);
+  --oi-welcome-in: calc(var(--oi-motion-plane) * 3);
+  --oi-welcome-in-ease: cubic-bezier(0.42, 0, 0.58, 1);
   --oi-welcome-flip: calc(var(--oi-motion-plane) * 3.5);
   --oi-welcome-fade-delay: var(--oi-motion-plane);
   --oi-welcome-fade: calc(var(--oi-motion-plane) * 8);
@@ -75,13 +77,13 @@ body.oi-desktop[data-oi-opening="true"] {
   -webkit-mask-mode: alpha;
   mask-mode: alpha;
   opacity: 0;
-  animation: oi-welcome-mark-in var(--oi-welcome-in) var(--oi-motion-ease-out) forwards;
-  transition: background-color var(--oi-welcome-flip) var(--oi-motion-ease-out);
+  transition:
+    background-color var(--oi-welcome-flip) var(--oi-motion-ease-out),
+    opacity var(--oi-welcome-in) var(--oi-welcome-in-ease);
   pointer-events: none;
 }
-@keyframes oi-welcome-mark-in {
-  from { opacity: 0; }
-  to { opacity: 1; }
+.oi-welcome[data-mark="in"] .oi-welcome-logo {
+  opacity: 1;
 }
 .oi-welcome[data-phase="entering"] .oi-welcome-logo {
   background-color: var(--oi-foreground);
