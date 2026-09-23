@@ -35,7 +35,7 @@ import {docText, waitForDoc} from '../editor-doc.mjs';
 import { setup as groundSetup } from "./ground.mjs";
 import { enterApp } from "../editor-doc.mjs";
 import { spawn } from "node:child_process";
-import { existsSync, mkdirSync, rmSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, readdirSync, rmSync, writeFileSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -89,13 +89,21 @@ export default async function run(ctx) {
   check(true, "BOOT-02: an unrecognised ground shows the chooser first in the empty-workspace region, with the honest reason line");
   await shotTo(page, artifactsDir, "ground-unrecognised");
 
-  // Local writing is still reachable beside the chooser (no fake gate).
-  await page.getByRole("button", { name: /Start writing|Resume writing/ }).click();
-  const unrecognised = page.locator(".draft-surface .cm-content");
+  // Writing is still reachable beside the chooser (no fake gate). The kernel
+  // reaches this ground even before it is bound as the default, so the rest
+  // page's Start writing opens a real flow file minted in Control/user/flows
+  // (owner direction, 2026-09-22) — the device draft is only the no-ground
+  // fallback, walked above as BOOT-00.
+  await page.getByRole("button", { name: "Start writing", exact: true }).click();
+  const WRITING = ".flow-surface:not(.draft-surface) .cm-content";
+  const unrecognised = page.locator(WRITING);
   await unrecognised.waitFor({ timeout: 15_000 });
   await unrecognised.fill("Writing survives an unrecognised ground.");
-  await waitForDoc(page, "Writing survives an unrecognised ground.", ".draft-surface .cm-content", 15_000);
-  check(true, "BOOT-02: writing stays reachable while ground is unrecognised");
+  await waitForDoc(page, "Writing survives an unrecognised ground.", WRITING, 15_000);
+  const flowRef = (await page.locator(".flow-surface:not(.draft-surface)").getAttribute("data-source-ref")) ?? "";
+  const minted = existsSync(join(p.root, "Control/user/flows")) ? readdirSync(join(p.root, "Control/user/flows")).filter((name) => flowRef.endsWith(`/flows/${name}`)) : [];
+  check(minted.length === 1 && (await docText(page, WRITING)) === "Writing survives an unrecognised ground.",
+    "BOOT-02: writing stays reachable while ground is unrecognised — it opens in a real flow file in the reachable ground", { flowRef, minted });
   await page.keyboard.press("Meta+w");
 
   // Recognise + bind the real root (same owner operations GroundChooser

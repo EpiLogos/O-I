@@ -1027,7 +1027,10 @@ export function CradleFrame({onComposed}:{onComposed?:()=>void}) {
         const opened=await kernel.apply({op:"surface_open",surface_id:surfaceId,kind:"flow",title,source_ref:location.ref});
         if(opened?.result!=="surface_opened")throw new Error("Central created the flow document but the surface could not be opened.");
         await kernel.apply({op:"surface_focus",surface_id:surfaceId});
-        setState(s=>({...s,surfaces:{...s.surfaces,[surfaceId]:binding}}));
+        // A draft being placed already holds its tab: the binding yields in
+        // place. A freshly minted surface (the rest page's Start writing) has
+        // no placement yet and opens as a tab like any other open.
+        setState(s=>s.surfaces[surfaceId]?{...s,surfaces:{...s.surfaces,[surfaceId]:binding}}:openBinding(s,binding));
         return;
       }catch(reason){
         lastError=reason;
