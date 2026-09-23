@@ -13,6 +13,9 @@
   --oi-welcome-fade-delay: var(--oi-motion-plane);
   --oi-welcome-fade: calc(var(--oi-motion-plane) * 8);
   --oi-welcome-fade-ease: cubic-bezier(0.45, 0.02, 0.55, 1);
+  /* The decoded stipple mask is set inline on .oi-welcome-logo once it can
+   * paint; the logo span only renders with that inline value present. */
+  --oi-welcome-mask: none;
   position: fixed;
   inset: 0;
   z-index: calc(var(--oi-z-stage-frontstate) + 1);
