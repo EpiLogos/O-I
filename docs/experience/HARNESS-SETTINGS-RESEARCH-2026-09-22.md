@@ -103,16 +103,6 @@ and the Credentials provider cards (DeepSeek pattern, §3.6) each get one
 auth state per provider as already specced. Ships with the next ai-kit
 install.
 
-Landed (cradle, 2026-09-23): the face reads live per harness
-(`harness_auth_describe` kernel op over `aikit harness auth <slug> --json`);
-a runnable entry renders "Log in with <program>" plus the exact command and
-a copy affordance, and hands the declared argv to a real Cradle terminal
-(the PTY runs the login in place of the login shell — the handover leaves
-the Settings page so the person can actually type to it). A note-only entry
-renders the note verbatim and never a button; a failed read fails that
-harness's own affordance alone. Walked by `settings-auth` (live two-sided
-read against the owner's CLI).
-
 ## 3 · Sidebar / UI grammar from Buzz, Grok Bot, DeepSeek (screenshots preserved)
 
 Buzz (Block, Nostr collab platform — Tauri/React like Cradle; harness is its

@@ -1,0 +1,135 @@
+{
+  "fetched_utc": "2026-09-23T07:33:51.147Z",
+  "themes": [
+    {
+      "id": "dracula-dark",
+      "name": "Dracula",
+      "appearance": "dark",
+      "file": "dracula-dark.color-theme.json",
+      "source": {
+        "format": "vscode-color-theme",
+        "name": "Dracula",
+        "repo": "dracula/visual-studio-code",
+        "revision": "a08a206f2c8420ba3c05f0e8d01d43b2f933fdf8",
+        "license": "MIT",
+        "url": "https://github.com/dracula/visual-studio-code/releases/latest/download/dracula.vsix"
+      }
+    },
+    {
+      "id": "nord-dark",
+      "name": "Nord",
+      "appearance": "dark",
+      "file": "nord-dark.color-theme.json",
+      "source": {
+        "format": "vscode-color-theme",
+        "name": "Nord",
+        "repo": "arcticicestudio/nord-visual-studio-code",
+        "revision": "8ead09822c02d0d49d0f764104505e5a34d3689f",
+        "license": "MIT",
+        "url": "https://raw.githubusercontent.com/arcticicestudio/nord-visual-studio-code/8ead09822c02d0d49d0f764104505e5a34d3689f/themes/nord-color-theme.json"
+      }
+    },
+    {
+      "id": "tokyo-night-dark",
+      "name": "Tokyo Night",
+      "appearance": "dark",
+      "file": "tokyo-night-dark.color-theme.json",
+      "source": {
+        "format": "vscode-color-theme",
+        "name": "Tokyo Night",
+        "repo": "tokyo-night/tokyo-night-vscode-theme",
+        "revision": "7c0f11eaef322f293621ca7befe462214b7ea468",
+        "license": "MIT",
+        "url": "https://raw.githubusercontent.com/tokyo-night/tokyo-night-vscode-theme/7c0f11eaef322f293621ca7befe462214b7ea468/themes/tokyo-night-color-theme.json"
+      }
+    },
+    {
+      "id": "one-dark-pro",
+      "name": "One Dark Pro",
+      "appearance": "dark",
+      "file": "one-dark-pro.color-theme.json",
+      "source": {
+        "format": "vscode-color-theme",
+        "name": "One Dark Pro",
+        "repo": "Binaryify/OneDark-Pro",
+        "revision": "54c3280b29f2c2ed9751e5ca4e071380b7b42205",
+        "license": "MIT",
+        "url": "https://raw.githubusercontent.com/Binaryify/OneDark-Pro/54c3280b29f2c2ed9751e5ca4e071380b7b42205/themes/OneDark-Pro.json"
+      }
+    },
+    {
+      "id": "catppuccin-mocha",
+      "name": "Catppuccin Mocha",
+      "appearance": "dark",
+      "file": "catppuccin-mocha.color-theme.json",
+      "source": {
+        "format": "vscode-color-theme",
+        "name": "Catppuccin Mocha",
+        "repo": "catppuccin/vscode",
+        "revision": "befc9e6fc41980f4241408f7049755d47c06ff45",
+        "license": "MIT",
+        "url": "https://github.com/catppuccin/vscode/releases/download/catppuccin-vsc-v3.19.0/catppuccin-vsc-3.19.0.vsix"
+      }
+    },
+    {
+      "id": "night-owl-dark",
+      "name": "Night Owl",
+      "appearance": "dark",
+      "file": "night-owl-dark.color-theme.json",
+      "source": {
+        "format": "vscode-color-theme",
+        "name": "Night Owl",
+        "repo": "sdras/night-owl-vscode-theme",
+        "revision": "cc291eba7976b20d7c66bde6883c27b902196b07",
+        "license": "MIT",
+        "url": "https://raw.githubusercontent.com/sdras/night-owl-vscode-theme/cc291eba7976b20d7c66bde6883c27b902196b07/themes/Night%20Owl-color-theme.json"
+      }
+    },
+    {
+      "id": "quiet-light",
+      "name": "Quiet Light",
+      "appearance": "light",
+      "file": "quiet-light.color-theme.json",
+      "source": {
+        "format": "vscode-color-theme",
+        "name": "Quiet Light",
+        "repo": "microsoft/vscode",
+        "revision": "dd35b1a25b6a4096e50ca2af18d9f82b41925b5a",
+        "license": "MIT",
+        "url": "https://raw.githubusercontent.com/microsoft/vscode/dd35b1a25b6a4096e50ca2af18d9f82b41925b5a/extensions/theme-quietlight/themes/quietlight-color-theme.json"
+      }
+    },
+    {
+      "id": "solarized-light",
+      "name": "Solarized Light",
+      "appearance": "light",
+      "file": "solarized-light.color-theme.json",
+      "source": {
+        "format": "vscode-color-theme",
+        "name": "Solarized Light",
+        "repo": "microsoft/vscode",
+        "revision": "dd35b1a25b6a4096e50ca2af18d9f82b41925b5a",
+        "license": "MIT",
+        "url": "https://raw.githubusercontent.com/microsoft/vscode/dd35b1a25b6a4096e50ca2af18d9f82b41925b5a/extensions/theme-solarized-light/themes/solarized-light-color-theme.json"
+      }
+    },
+    {
+      "id": "light-plus",
+      "name": "Light Plus",
+      "appearance": "light",
+      "file": "light-plus.color-theme.json",
+      "source": {
+        "format": "vscode-color-theme",
+        "name": "Light Plus",
+        "repo": "microsoft/vscode",
+        "revision": "dd35b1a25b6a4096e50ca2af18d9f82b41925b5a",
+        "license": "MIT",
+        "url": "https://raw.githubusercontent.com/microsoft/vscode/dd35b1a25b6a4096e50ca2af18d9f82b41925b5a/extensions/theme-defaults/themes/light_plus.json"
+      },
+      "include": {
+        "path": "extensions/theme-defaults/themes/./light_vs.json",
+        "url": "https://raw.githubusercontent.com/microsoft/vscode/dd35b1a25b6a4096e50ca2af18d9f82b41925b5a/extensions/theme-defaults/themes/./light_vs.json"
+      }
+    }
+  ]
+}

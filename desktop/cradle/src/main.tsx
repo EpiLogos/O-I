@@ -2,6 +2,9 @@ import React from "react";
 import ReactDOM from "react-dom/client";
 import "@epilogos/oi-design-system/tokens.css";
 import "@epilogos/oi-design-system/desktop.css";
+// The theme library rides after the house tokens: same specificity, later
+// order, so a selected theme's overrides win the cascade.
+import "@epilogos/oi-design-system/themes/themes.css";
 import "./rest.css";
 import "./cradle.css";
 import { initNativeThemeSync } from "./workspace/nativeTheme";

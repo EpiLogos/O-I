@@ -48,7 +48,7 @@
         "connect-src": "ipc: http://ipc.localhost http://127.0.0.1:* http://localhost:*",
         "img-src": "'self' oi-material: data: blob:",
         "style-src": "'self' 'unsafe-inline'",
-        "script-src": "'self' 'sha256-nUug3uH8Wg2Ec27Vn6CJHqHSoYlW8W0zfhIAcxC0yHg='",
+        "script-src": "'self' 'sha256-RywYEEDK4ZogMMGvjXhnwHECLY8KJs2CPXnnUdB4Iw8='",
         "object-src": "'none'",
         "frame-src": "oi-material:",
         "base-uri": "'none'"

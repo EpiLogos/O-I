@@ -40,6 +40,11 @@ const cases = [
   {label: 'disabled Expression keeps the selected ground', saved: '{"theme":"dark","enabled":false}', system: 'light', dark: true, opening: false},
   {label: 'disabled welcome keeps the selected ground', saved: '{"theme":"light","welcomeEnabled":false}', system: 'dark', dark: false, opening: false},
   {label: 'detached window skips the opening ground', saved: '{"theme":"dark"}', system: 'light', dark: true, detached: true, opening: false},
+  // Theme library: a selected entry lands data-oi-theme before first paint,
+  // alongside the appearance its own kind resolved.
+  {label: 'named dark theme lands both attributes', saved: '{"theme":"dark","themeId":"dracula-dark"}', system: 'light', dark: true, themeId: 'dracula-dark'},
+  {label: 'named light theme lands its id on a light ground', saved: '{"theme":"light","themeId":"quiet-light"}', system: 'dark', dark: false, themeId: 'quiet-light'},
+  {label: 'house appearance clears any named theme', saved: '{"theme":"system","themeId":null}', system: 'dark', dark: true, themeId: null},
 ];
 let passed = 0;
 try {
@@ -60,8 +65,9 @@ try {
         }, entry);
         const page = await context.newPage();
         await page.goto(`http://127.0.0.1:${server.address().port}/?built=${Number(document.startsWith('dist/'))}`);
-        const actual = await page.evaluate(() => ({dark: document.body.dataset.theme === 'dark', opening: document.body.dataset.oiOpening === 'true', saved: localStorage.getItem('oi-cradle.visuals.v1'), violations: window.__prepaintPolicyViolations}));
+        const actual = await page.evaluate(() => ({dark: document.body.dataset.theme === 'dark', themeId: document.body.dataset.oiTheme ?? null, opening: document.body.dataset.oiOpening === 'true', saved: localStorage.getItem('oi-cradle.visuals.v1'), violations: window.__prepaintPolicyViolations}));
         assert.equal(actual.dark, entry.dark, `${document}: ${entry.label}`);
+        assert.equal(actual.themeId, entry.themeId ?? null, `${document}: ${entry.label} — data-oi-theme must match the persisted entry`);
         assert.equal(actual.opening, entry.opening ?? true, `${document}: opening ground must match the real welcome admission gate`);
         assert.equal(actual.saved, entry.saved, `${document}: opening must not rewrite the saved appearance`);
         assert.deepEqual(actual.violations, [], `${document}: configured native CSP must permit the unchanged bootstrap`);
