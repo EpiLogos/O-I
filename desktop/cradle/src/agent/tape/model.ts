@@ -374,3 +374,80 @@ export function formatClock(ms:number):string {
  const date=new Date(ms);
  return `${String(date.getHours()).padStart(2,"0")}:${String(date.getMinutes()).padStart(2,"0")}:${String(date.getSeconds()).padStart(2,"0")}`;
 }
+
+// ── usage and timing (lane 3: Factory Trajectory footer and lane strip) ──
+/** Usage the owner journal itself carries. Today only Pi sessions stamp it:
+ *  each assistant `message_end` status carries `message.usage` (input,
+ *  output, cacheRead, cacheWrite, totalTokens, cost.total) and
+ *  `message.timestamp` (ms). `turn_end` repeats the same usage and is NOT
+ *  counted again. Absent = undefined, never 0. */
+export interface JournalUsage {
+ /** Assistant model steps that reported usage. */
+ steps:number;
+ turns:number;
+ input?:number;output?:number;cacheRead?:number;cacheWrite?:number;totalTokens?:number;cost?:number;
+ /** cacheRead / (input + cacheRead), when both are reported. */
+ cacheHit?:number;
+ /** Timestamps observed on the journal (owner-stamped), ms. */
+ firstAt?:number;lastAt?:number;
+}
+export type LaneKind="input"|"model"|"tools";
+/** One mark on the lane strip: a message or a call, at its owner time when
+ *  the journal stamps one (tools inherit the time of the model step that
+ *  issued them — the step's own stamp, never an invented duration). */
+export interface LaneMark {lane:LaneKind;cursor:number;turn:number;at?:number;rowId?:string}
+
+function piStatus(event:Obj):Obj|undefined {
+ const signal=signalOf(event);
+ if(!signal||signal.kind!=="status")return undefined;
+ const message=str(signal.body.message);
+ if(!message||!message.startsWith("{"))return undefined;
+ try{const parsed=JSON.parse(message);return obj(parsed)?parsed:undefined;}catch{return undefined;}
+}
+
+export function journalUsage(events:JournalEventLike[],tape?:Tape):JournalUsage {
+ const sums:Record<string,number|undefined>={};
+ let steps=0,firstAt:number|undefined,lastAt:number|undefined;
+ const add=(key:string,value:number|undefined)=>{if(value===undefined)return;sums[key]=(sums[key]??0)+value;};
+ for(const {event} of events){
+  if(!obj(event))continue;
+  const status=piStatus(event);
+  if(!status||status.type!=="message_end"||!obj(status.message))continue;
+  const message=status.message as Obj;
+  const at=num(message.timestamp);
+  if(at!==undefined){firstAt=firstAt===undefined?at:Math.min(firstAt,at);lastAt=lastAt===undefined?at:Math.max(lastAt,at);}
+  if(message.role!=="assistant"||!obj(message.usage))continue;
+  const usage=message.usage as Obj;
+  steps++;
+  add("input",num(usage.input));add("output",num(usage.output));add("cacheRead",num(usage.cacheRead));add("cacheWrite",num(usage.cacheWrite));
+  add("totalTokens",num(usage.totalTokens));
+  add("cost",obj(usage.cost)?num((usage.cost as Obj).total):num(usage.cost));
+ }
+ const turns=tape?tape.turns.filter(turn=>turn.index>0).length:0;
+ const cacheHit=sums.input!==undefined&&sums.cacheRead!==undefined&&sums.input+sums.cacheRead>0?sums.cacheRead/(sums.input+sums.cacheRead):undefined;
+ return {steps,turns,input:sums.input,output:sums.output,cacheRead:sums.cacheRead,cacheWrite:sums.cacheWrite,totalTokens:sums.totalTokens,cost:sums.cost,cacheHit,firstAt,lastAt};
+}
+
+/** Lane-strip marks in journal order: the person's messages (input), each
+ *  model step (model) and each tool call (tools), mapped to their tape row. */
+export function laneMarks(events:JournalEventLike[],tape:Tape):LaneMark[] {
+ const rows=[...tape.rows].sort((a,b)=>(a.cursors[0]??0)-(b.cursors[0]??0));
+ const rowFor=(cursor:number)=>rows.find(row=>row.cursors.includes(cursor))??[...rows].reverse().find(row=>(row.cursors[0]??Infinity)<=cursor);
+ const turnOf=(cursor:number)=>[...tape.turns].reverse().find(turn=>turn.firstCursor<=cursor)?.index??0;
+ const marks:LaneMark[]=[];
+ let stepAt:number|undefined;
+ for(const {cursor,event} of events){
+  if(!obj(event))continue;
+  if(event.kind==="user-message"){const row=rowFor(cursor);marks.push({lane:"input",cursor,turn:turnOf(cursor),rowId:row?.id});continue;}
+  const status=piStatus(event);
+  if(status&&status.type==="message_end"&&obj(status.message)){
+   const message=status.message as Obj;const at=num(message.timestamp);
+   if(message.role==="assistant"){stepAt=at??stepAt;const row=rowFor(cursor);marks.push({lane:"model",cursor,turn:turnOf(cursor),at,rowId:row?.id});}
+   else if(message.role==="user"&&at!==undefined){const input=[...marks].reverse().find(mark=>mark.lane==="input"&&mark.at===undefined);if(input)input.at=at;}
+   continue;
+  }
+  const signal=signalOf(event);
+  if(signal&&(signal.kind==="tool-call"||signal.kind==="tool_call")){const row=rowFor(cursor);marks.push({lane:"tools",cursor,turn:turnOf(cursor),at:stepAt,rowId:row?.id});}
+ }
+ return marks;
+}
