@@ -42,16 +42,18 @@ test('the harness face reads `aikit --json client status` live and carries every
   for (const name of names) assert.ok(name.length > 0, 'no live client row has an empty name');
   assert.equal(new Set(names).size, names.length, 'live client names are distinct');
 
-  // Round trip: the shaped face carries exactly the live rows, in live order.
+  // Round trip (12-SETTINGS §3.2): the shaped face carries exactly the live
+  // harness rows, in live order — the broker (AIKit itself) is not a harness.
+  const harnesses = clients.filter((row) => row.detection !== 'self' && row.dispatch !== 'self' && row.client !== 'broker');
   const rows = shapeHarnessClients(live.data);
-  assert.equal(rows.length, clients.length, 'shaping keeps every live row');
-  assert.deepEqual(rows.map((row) => row.client), names, 'shaped names are the live names, in live order');
+  assert.equal(rows.length, harnesses.length, 'shaping keeps every live harness row and drops the broker');
+  assert.deepEqual(rows.map((row) => row.client), harnesses.map((row) => row.client), 'shaped names are the live names, in live order');
 
   // Typed wire contract: every row carries the face's fields, well typed.
   for (const row of rows) {
     assert.deepEqual(
       Object.keys(row).sort(),
-      ['client', 'config_dir', 'detected', 'detection', 'detection_reason', 'dispatch', 'harness', 'installed'],
+      ['adapter_gap', 'capability', 'client', 'config_dir', 'detected', 'detection', 'detection_reason', 'dispatch', 'effect', 'harness', 'installed', 'items'],
       'a harness row carries exactly the face contract fields',
     );
     assert.equal(typeof row.detected, 'boolean');
@@ -60,16 +62,9 @@ test('the harness face reads `aikit --json client status` live and carries every
   }
 
   // `detected` is derived from the live detection, not asserted in the abstract.
-  for (let i = 0; i < clients.length; i++) {
-    const expected = clients[i].detection === 'detected' || clients[i].detection === 'self';
-    assert.equal(rows[i].detected, expected, `\`${names[i]}\` detection "${clients[i].detection}" renders as detected=${expected}`);
-  }
-  // A live row without a harness (the resident's own client) renders under
-  // its client name — checked against whatever the live read carries.
-  for (let i = 0; i < clients.length; i++) {
-    if (clients[i].harness == null) {
-      assert.equal(rows[i].harness, clients[i].client, 'the resident row (no harness) renders under its client name');
-    }
+  for (let i = 0; i < harnesses.length; i++) {
+    const expected = harnesses[i].detection === 'detected';
+    assert.equal(rows[i].detected, expected, `\`${harnesses[i].client}\` detection "${harnesses[i].detection}" renders as detected=${expected}`);
   }
 
   // Tolerance contracts (synthetic): absent readings are honest empties.
@@ -101,14 +96,19 @@ test('the catalogue face reads `aikit model-catalogue show --json` live and deri
   assert.equal(catalogue.entries.length, data.entries.length, 'shaping keeps every live entry');
   if (data.entries.length > 0) {
     const first = data.entries[0];
-    assert.deepEqual(catalogue.entries[0], {model: first.model, name: first.name, source: first.source},
+    assert.deepEqual({model: catalogue.entries[0].model, name: catalogue.entries[0].name, source: catalogue.entries[0].source}, {model: first.model, name: first.name, source: first.source},
       'the first shaped entry is the live first entry');
+    // 12-SETTINGS §3.3 (S14): the routes the availability join reads are the
+    // owner's own declared routes, with their own credential condition.
+    assert.deepEqual(catalogue.entries[0].routes, (first.declared_routes ?? []).map((route) => ({kind: route.kind, provider: route.provider, credential_required: route.credential_required !== false})),
+      'the first shaped entry carries its declared routes verbatim');
   }
 
-  // Typed wire contract: every entry carries exactly the three display fields.
+  // Typed wire contract: every entry carries the display fields and its routes.
   for (const entry of catalogue.entries) {
-    assert.deepEqual(Object.keys(entry).sort(), ['model', 'name', 'source'], 'a catalogue entry carries exactly the face contract fields');
+    assert.deepEqual(Object.keys(entry).sort(), ['model', 'name', 'routes', 'source'], 'a catalogue entry carries exactly the face contract fields');
     assert.equal(typeof entry.source, 'string');
+    assert.ok(Array.isArray(entry.routes));
   }
 
   // Count law (synthetic): the declared count wins over the page size; an
