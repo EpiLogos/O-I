@@ -22,6 +22,14 @@
  *
  * Run: node tests/techne-lens-summon-browser.mjs   (Chromium via Playwright,
  * swiftshader; the walk bridge binary must exist or cargo must build it)
+ *
+ * GROUND-BOUND proof: the hosted frame is served through the walk bridge, whose
+ * file routes resolve against the real Central ground (the `oi` owner seam) —
+ * this walk therefore runs where the ground lives, on the owner's machine, the
+ * same class as walk/expressions-app-vendored-probe.mjs. It is deliberately
+ * NOT in CI: a CI runner carries no personal ground, and a fabricated one
+ * would make this a fixture proving itself (the exact failure this walk
+ * exists to replace).
  */
 import assert from 'node:assert/strict';
 import {spawn} from 'node:child_process';
