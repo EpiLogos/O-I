@@ -1,0 +1,811 @@
+{
+  "schema": "oi.cradle.walk.scenario/v1",
+  "scenario": "settings-shell",
+  "spec_ref": "docs/cradle/12-SETTINGS.md §1 §3 §4 S1 S3 S10 S11 S14 S15",
+  "grade": "B",
+  "binding": null,
+  "generated_at": "2026-09-23T07:03:58.949Z",
+  "environment": {
+    "base_url": "http://localhost:4573",
+    "bridge_url": "http://127.0.0.1:4579",
+    "viewport": "1280x820",
+    "browser_engine": "chromium",
+    "bundle": "walk (WALK=1) served by vite preview",
+    "build_input": {
+      "mode": "fresh-build",
+      "bundle_fingerprint": "0e685e943dee8034f09936cc613564e9cd7b51c738ce1ee637de1d5ac38d9643"
+    },
+    "node": "v24.16.0",
+    "platform": "darwin",
+    "source": {
+      "repository_root": "/Users/admin/Central/worktrees/ui-build/lane4-settings",
+      "repository_head": "cd4be86e66524161d9be0d4a8d471740d44e8fd3",
+      "tracked_changes": [
+        "desktop/cradle/walk/artifacts/bootstrap.json",
+        "desktop/cradle/walk/artifacts/configuration-l6.png",
+        "desktop/cradle/walk/artifacts/configuration.json",
+        "desktop/cradle/walk/artifacts/system-settings-failure.png",
+        "desktop/cradle/walk/artifacts/system-settings.json"
+      ],
+      "dirty_digest": "981a0f40951fbac1ac5680d90cc19ce9057853d3253ffb1ae0815ecc08f1478c",
+      "engine_provenance_path": "/Users/admin/Central/worktrees/ui-build/lane4-settings/packages/oi-design-system/expressions-engine/PROVENANCE.json",
+      "engine_source": "EpiLogos/Point-Cloud-Demo",
+      "engine_revision": "91db8428fc9dfba06cd258ec5a58e7dd9eef5313"
+    }
+  },
+  "passed": true,
+  "error": null,
+  "duration_ms": 80820,
+  "checks": [
+    {
+      "ok": true,
+      "label": "S1 first paint reads \"Reading settings…\" and the navigator shows no invented counts",
+      "data": {
+        "reading": 1,
+        "earlyCounts": 0
+      }
+    },
+    {
+      "ok": true,
+      "label": "§1 the left stays open and its body is the section list"
+    },
+    {
+      "ok": true,
+      "label": "§1 entering Settings keeps the left frame's width (two-sided, ±0.5px)",
+      "data": {
+        "before": 240,
+        "after": 240
+      }
+    },
+    {
+      "ok": true,
+      "label": "§1 the right panel is collapsed in Settings",
+      "data": {
+        "width": 0
+      }
+    },
+    {
+      "ok": true,
+      "label": "§1 the sections are the tasks, in order",
+      "data": {
+        "sections": [
+          "Status",
+          "Harnesses",
+          "Models",
+          "Credentials",
+          "Skills",
+          "Profiles",
+          "Permissions",
+          "Appearance"
+        ]
+      }
+    },
+    {
+      "ok": true,
+      "label": "§1 PRODUCTS below the tasks, one per product",
+      "data": {
+        "products": [
+          "Central",
+          "AIKit",
+          "Actuation",
+          "Factory",
+          "Workcell",
+          "Quaternal Logic",
+          "O:I"
+        ]
+      }
+    },
+    {
+      "ok": true,
+      "label": "S3 at rest there is no pending strip in the DOM"
+    },
+    {
+      "ok": true,
+      "label": "S10 Status lists exactly the settings the owners report as drifted",
+      "data": {
+        "shownDrift": [
+          "actuation:availability.harness.catalog"
+        ],
+        "drifted": [
+          "actuation:availability.harness.catalog"
+        ]
+      }
+    },
+    {
+      "ok": true,
+      "label": "S10 each drift shows both sides and the owner's remedy in words",
+      "data": {
+        "sides": [
+          "catalog revision 12 · descriptor count 18 · 18 slugs",
+          "15 detected · 3 not installed · 18 states · 0 unavailable"
+        ]
+      }
+    },
+    {
+      "ok": true,
+      "label": "S10 nothing on the drift rewrites it — only a way to the product's page"
+    },
+    {
+      "ok": true,
+      "label": "Harnesses: the Ready cards are the owner's harnesses with an adapter, in its order",
+      "data": {
+        "shownReady": [
+          "claude",
+          "codex",
+          "pi",
+          "zcode"
+        ],
+        "ready": [
+          "claude",
+          "codex",
+          "pi",
+          "zcode"
+        ]
+      }
+    },
+    {
+      "ok": true,
+      "label": "Harnesses: the collapsed group still names every harness that needs an adapter, on one line"
+    },
+    {
+      "ok": true,
+      "label": "Harnesses: the broker (AIKit itself) is not listed — every other client is",
+      "data": {
+        "brokerClients": [
+          "broker"
+        ],
+        "listed": 18
+      }
+    },
+    {
+      "ok": true,
+      "label": "Harnesses: \"Detected, adapter needed\" counts the owner's 11"
+    },
+    {
+      "ok": true,
+      "label": "Harnesses: Install runs the owner's client install — the card and the owner both read Installed (into the walk's own project)"
+    },
+    {
+      "ok": true,
+      "label": "Models: the new-chat default is labelled a connection, never a model (A1)"
+    },
+    {
+      "ok": true,
+      "label": "S14 every catalogued model's chip is its routes joined with the bound keys (11 models)",
+      "data": {
+        "mismatches": []
+      }
+    },
+    {
+      "ok": true,
+      "label": "S14 a model whose routes all still say a key is required reads Usable because the OpenRouter key is bound",
+      "data": {}
+    },
+    {
+      "ok": true,
+      "label": "S14 unreachable models name the key they need"
+    },
+    {
+      "ok": true,
+      "label": "S14 Auto keeps its identity and names its policy"
+    },
+    {
+      "ok": true,
+      "label": "S15 with no permission-mode setting in AIKit, one plain sentence names it — no control",
+      "data": {
+        "sentence": "Choosing a default permission mode for Claude Code, Codex, Pi, ZCode needs an AIKit setting that the installed AIKit doesn't have yet."
+      }
+    },
+    {
+      "ok": true,
+      "label": "S11 a read-only setting shows its value, a lock, the owning place and Open file (~/.claude/settings.json)"
+    },
+    {
+      "ok": true,
+      "label": "S11 the read-only value is the owner's own",
+      "data": {
+        "shownTrust": "not set"
+      }
+    },
+    {
+      "ok": true,
+      "label": "S11 no disabled control stands in for a read-only setting"
+    },
+    {
+      "ok": true,
+      "label": "S15 This session is one sentence naming what is missing, and no switch pretends otherwise"
+    },
+    {
+      "ok": true,
+      "label": "credentials: no raw JSON outside Show raw"
+    },
+    {
+      "ok": true,
+      "label": "profiles: no raw JSON outside Show raw"
+    },
+    {
+      "ok": true,
+      "label": "appearance: no raw JSON outside Show raw"
+    },
+    {
+      "ok": true,
+      "label": "status: no raw JSON outside Show raw"
+    },
+    {
+      "ok": true,
+      "label": "harnesses: no raw JSON outside Show raw"
+    },
+    {
+      "ok": true,
+      "label": "models: no raw JSON outside Show raw"
+    },
+    {
+      "ok": true,
+      "label": "permissions: no raw JSON outside Show raw"
+    },
+    {
+      "ok": true,
+      "label": "skills: no raw JSON outside Show raw"
+    },
+    {
+      "ok": true,
+      "label": "S15 at rest no disabled control appears anywhere on the page"
+    },
+    {
+      "ok": true,
+      "label": "Products: the disclosed actions are buttons",
+      "data": {
+        "buttons": [
+          "aikit.status",
+          "aikit.diff",
+          "aikit.compose",
+          "aikit.doctor",
+          "aikit.model-catalogue",
+          "aikit.method",
+          "aikit.credential.list"
+        ],
+        "runnable": [
+          "aikit.status",
+          "aikit.diff",
+          "aikit.compose",
+          "aikit.doctor",
+          "aikit.model-catalogue",
+          "aikit.method",
+          "aikit.credential.list"
+        ]
+      }
+    },
+    {
+      "ok": true,
+      "label": "Products: missing actions are one sentence"
+    },
+    {
+      "ok": true,
+      "label": "Products: Show raw is last, collapsed, and the only place JSON appears"
+    },
+    {
+      "ok": true,
+      "label": "Products: Show raw is the last thing on the page"
+    },
+    {
+      "ok": true,
+      "label": "Products: an action runs the owner's own command and reports it"
+    },
+    {
+      "ok": true,
+      "label": "Search: \"catalogue\" lands on the Models page, on the Catalogue row"
+    },
+    {
+      "ok": true,
+      "label": "Search: a skill lands on its exact row"
+    },
+    {
+      "ok": true,
+      "label": "§1 Back to work returns to the previous mode"
+    },
+    {
+      "ok": true,
+      "label": "§1 Escape with nothing pending returns to the previous mode"
+    }
+  ],
+  "ops": [
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 23,
+      "data": {
+        "file": "settings-shell-status-light-1440.png"
+      }
+    },
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 28,
+      "data": {
+        "file": "settings-shell-status-light-1000.png"
+      }
+    },
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 28,
+      "data": {
+        "file": "settings-shell-status-light-760.png"
+      }
+    },
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 33,
+      "data": {
+        "file": "settings-shell-status-dark-1440.png"
+      }
+    },
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 30,
+      "data": {
+        "file": "settings-shell-status-dark-1000.png"
+      }
+    },
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 33,
+      "data": {
+        "file": "settings-shell-status-dark-760.png"
+      }
+    },
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 42,
+      "data": {
+        "file": "settings-shell-harnesses-light-1440.png"
+      }
+    },
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 37,
+      "data": {
+        "file": "settings-shell-harnesses-light-1000.png"
+      }
+    },
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 31,
+      "data": {
+        "file": "settings-shell-harnesses-light-760.png"
+      }
+    },
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 52,
+      "data": {
+        "file": "settings-shell-harnesses-dark-1440.png"
+      }
+    },
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 47,
+      "data": {
+        "file": "settings-shell-harnesses-dark-1000.png"
+      }
+    },
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 37,
+      "data": {
+        "file": "settings-shell-harnesses-dark-760.png"
+      }
+    },
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 61,
+      "data": {
+        "file": "settings-shell-model-picker.png"
+      }
+    },
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 29,
+      "data": {
+        "file": "settings-shell-models-light-1440.png"
+      }
+    },
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 28,
+      "data": {
+        "file": "settings-shell-models-light-1000.png"
+      }
+    },
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 29,
+      "data": {
+        "file": "settings-shell-models-light-760.png"
+      }
+    },
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 34,
+      "data": {
+        "file": "settings-shell-models-dark-1440.png"
+      }
+    },
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 31,
+      "data": {
+        "file": "settings-shell-models-dark-1000.png"
+      }
+    },
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 32,
+      "data": {
+        "file": "settings-shell-models-dark-760.png"
+      }
+    },
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 27,
+      "data": {
+        "file": "settings-shell-permissions-light-1440.png"
+      }
+    },
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 27,
+      "data": {
+        "file": "settings-shell-permissions-light-1000.png"
+      }
+    },
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 31,
+      "data": {
+        "file": "settings-shell-permissions-light-760.png"
+      }
+    },
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 36,
+      "data": {
+        "file": "settings-shell-permissions-dark-1440.png"
+      }
+    },
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 27,
+      "data": {
+        "file": "settings-shell-permissions-dark-1000.png"
+      }
+    },
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 33,
+      "data": {
+        "file": "settings-shell-permissions-dark-760.png"
+      }
+    },
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 26,
+      "data": {
+        "file": "settings-shell-skills-light-1440.png"
+      }
+    },
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 28,
+      "data": {
+        "file": "settings-shell-skills-light-1000.png"
+      }
+    },
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 25,
+      "data": {
+        "file": "settings-shell-skills-light-760.png"
+      }
+    },
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 40,
+      "data": {
+        "file": "settings-shell-skills-dark-1440.png"
+      }
+    },
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 28,
+      "data": {
+        "file": "settings-shell-skills-dark-1000.png"
+      }
+    },
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 29,
+      "data": {
+        "file": "settings-shell-skills-dark-760.png"
+      }
+    },
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 33,
+      "data": {
+        "file": "settings-shell-credentials-light-1440.png"
+      }
+    },
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 24,
+      "data": {
+        "file": "settings-shell-credentials-light-1000.png"
+      }
+    },
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 32,
+      "data": {
+        "file": "settings-shell-credentials-light-760.png"
+      }
+    },
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 34,
+      "data": {
+        "file": "settings-shell-credentials-dark-1440.png"
+      }
+    },
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 62,
+      "data": {
+        "file": "settings-shell-credentials-dark-1000.png"
+      }
+    },
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 50,
+      "data": {
+        "file": "settings-shell-credentials-dark-760.png"
+      }
+    },
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 27,
+      "data": {
+        "file": "settings-shell-profiles-light-1440.png"
+      }
+    },
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 26,
+      "data": {
+        "file": "settings-shell-profiles-light-1000.png"
+      }
+    },
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 29,
+      "data": {
+        "file": "settings-shell-profiles-light-760.png"
+      }
+    },
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 45,
+      "data": {
+        "file": "settings-shell-profiles-dark-1440.png"
+      }
+    },
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 23,
+      "data": {
+        "file": "settings-shell-profiles-dark-1000.png"
+      }
+    },
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 31,
+      "data": {
+        "file": "settings-shell-profiles-dark-760.png"
+      }
+    },
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 32,
+      "data": {
+        "file": "settings-shell-appearance-light-1440.png"
+      }
+    },
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 24,
+      "data": {
+        "file": "settings-shell-appearance-light-1000.png"
+      }
+    },
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 31,
+      "data": {
+        "file": "settings-shell-appearance-light-760.png"
+      }
+    },
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 45,
+      "data": {
+        "file": "settings-shell-appearance-dark-1440.png"
+      }
+    },
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 24,
+      "data": {
+        "file": "settings-shell-appearance-dark-1000.png"
+      }
+    },
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 30,
+      "data": {
+        "file": "settings-shell-appearance-dark-760.png"
+      }
+    },
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 36,
+      "data": {
+        "file": "settings-shell-product-aikit-light-1440.png"
+      }
+    },
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 37,
+      "data": {
+        "file": "settings-shell-product-aikit-light-1000.png"
+      }
+    },
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 27,
+      "data": {
+        "file": "settings-shell-product-aikit-light-760.png"
+      }
+    },
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 46,
+      "data": {
+        "file": "settings-shell-product-aikit-dark-1440.png"
+      }
+    },
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 42,
+      "data": {
+        "file": "settings-shell-product-aikit-dark-1000.png"
+      }
+    },
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 43,
+      "data": {
+        "file": "settings-shell-product-aikit-dark-760.png"
+      }
+    }
+  ],
+  "metrics": {},
+  "screenshots": [
+    "settings-shell-status-light-1440.png",
+    "settings-shell-status-light-1000.png",
+    "settings-shell-status-light-760.png",
+    "settings-shell-status-dark-1440.png",
+    "settings-shell-status-dark-1000.png",
+    "settings-shell-status-dark-760.png",
+    "settings-shell-harnesses-light-1440.png",
+    "settings-shell-harnesses-light-1000.png",
+    "settings-shell-harnesses-light-760.png",
+    "settings-shell-harnesses-dark-1440.png",
+    "settings-shell-harnesses-dark-1000.png",
+    "settings-shell-harnesses-dark-760.png",
+    "settings-shell-model-picker.png",
+    "settings-shell-models-light-1440.png",
+    "settings-shell-models-light-1000.png",
+    "settings-shell-models-light-760.png",
+    "settings-shell-models-dark-1440.png",
+    "settings-shell-models-dark-1000.png",
+    "settings-shell-models-dark-760.png",
+    "settings-shell-permissions-light-1440.png",
+    "settings-shell-permissions-light-1000.png",
+    "settings-shell-permissions-light-760.png",
+    "settings-shell-permissions-dark-1440.png",
+    "settings-shell-permissions-dark-1000.png",
+    "settings-shell-permissions-dark-760.png",
+    "settings-shell-skills-light-1440.png",
+    "settings-shell-skills-light-1000.png",
+    "settings-shell-skills-light-760.png",
+    "settings-shell-skills-dark-1440.png",
+    "settings-shell-skills-dark-1000.png",
+    "settings-shell-skills-dark-760.png",
+    "settings-shell-credentials-light-1440.png",
+    "settings-shell-credentials-light-1000.png",
+    "settings-shell-credentials-light-760.png",
+    "settings-shell-credentials-dark-1440.png",
+    "settings-shell-credentials-dark-1000.png",
+    "settings-shell-credentials-dark-760.png",
+    "settings-shell-profiles-light-1440.png",
+    "settings-shell-profiles-light-1000.png",
+    "settings-shell-profiles-light-760.png",
+    "settings-shell-profiles-dark-1440.png",
+    "settings-shell-profiles-dark-1000.png",
+    "settings-shell-profiles-dark-760.png",
+    "settings-shell-appearance-light-1440.png",
+    "settings-shell-appearance-light-1000.png",
+    "settings-shell-appearance-light-760.png",
+    "settings-shell-appearance-dark-1440.png",
+    "settings-shell-appearance-dark-1000.png",
+    "settings-shell-appearance-dark-760.png",
+    "settings-shell-product-aikit-light-1440.png",
+    "settings-shell-product-aikit-light-1000.png",
+    "settings-shell-product-aikit-light-760.png",
+    "settings-shell-product-aikit-dark-1440.png",
+    "settings-shell-product-aikit-dark-1000.png",
+    "settings-shell-product-aikit-dark-760.png"
+  ]
+}

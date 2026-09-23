@@ -1,0 +1,87 @@
+{
+  "schema": "oi.cradle.walk.scenario/v1",
+  "scenario": "settings-unreadable",
+  "spec_ref": "docs/cradle/12-SETTINGS.md §2 §4 S2",
+  "grade": "B",
+  "binding": null,
+  "generated_at": "2026-09-23T02:24:51.235Z",
+  "environment": {
+    "base_url": "http://localhost:4573",
+    "bridge_url": "http://127.0.0.1:4579",
+    "viewport": "1280x820",
+    "browser_engine": "chromium",
+    "bundle": "walk (WALK=1) served by vite preview",
+    "build_input": {
+      "mode": "fresh-build",
+      "bundle_fingerprint": "09e706825e6050519b2eb77d44695e4958a42ad0e9970e766434ee09128819c8"
+    },
+    "node": "v24.16.0",
+    "platform": "darwin",
+    "source": {
+      "repository_root": "/Users/admin/Central/worktrees/ui-build/lane4-settings",
+      "repository_head": "35af068b2d26cef3e1ee2d6f79c4a519d6cc4e1a",
+      "tracked_changes": [
+        "desktop/cradle/walk/artifacts/bootstrap.json",
+        "desktop/cradle/walk/artifacts/configuration-l6.png",
+        "desktop/cradle/walk/artifacts/configuration.json",
+        "desktop/cradle/walk/artifacts/system-settings-failure.png",
+        "desktop/cradle/walk/artifacts/system-settings.json"
+      ],
+      "dirty_digest": "bc65ed1d45bec658b664ca56133324d67c9c8eab9ccf550adcf067cc062f56e8",
+      "engine_provenance_path": "/Users/admin/Central/worktrees/ui-build/lane4-settings/packages/oi-design-system/expressions-engine/PROVENANCE.json",
+      "engine_source": "EpiLogos/Point-Cloud-Demo",
+      "engine_revision": "91db8428fc9dfba06cd258ec5a58e7dd9eef5313"
+    }
+  },
+  "passed": true,
+  "error": null,
+  "duration_ms": 14658,
+  "checks": [
+    {
+      "ok": true,
+      "label": "S2 a failed read says \"Couldn't load these settings.\" with the reason and Retry",
+      "data": {
+        "text": "Couldn't load these settings. the suite is unreachable from this walk\n\nRetry"
+      }
+    },
+    {
+      "ok": true,
+      "label": "S2 unreadable is never shown as empty (no \"Not configured\" cards)"
+    },
+    {
+      "ok": true,
+      "label": "S2 an unreadable harness census renders no cards, not an empty group"
+    },
+    {
+      "ok": true,
+      "label": "S2 Retry reads the owners again and their real answers replace the unreadable state"
+    },
+    {
+      "ok": true,
+      "label": "S2 after Retry the credentials read lands too"
+    }
+  ],
+  "ops": [
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 31,
+      "data": {
+        "file": "settings-unreadable-unreadable.png"
+      }
+    },
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 29,
+      "data": {
+        "file": "settings-unreadable-recovered.png"
+      }
+    }
+  ],
+  "metrics": {},
+  "screenshots": [
+    "settings-unreadable-unreadable.png",
+    "settings-unreadable-recovered.png"
+  ]
+}

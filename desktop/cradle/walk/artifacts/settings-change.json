@@ -1,0 +1,394 @@
+{
+  "schema": "oi.cradle.walk.scenario/v1",
+  "scenario": "settings-change",
+  "spec_ref": "docs/cradle/12-SETTINGS.md §2 §4 S3 S4 S5 S6 S7 S8 S9",
+  "grade": "B",
+  "binding": null,
+  "generated_at": "2026-09-23T07:05:59.622Z",
+  "environment": {
+    "base_url": "http://localhost:4573",
+    "bridge_url": "http://127.0.0.1:4579",
+    "viewport": "1280x820",
+    "browser_engine": "chromium",
+    "bundle": "walk (WALK=1) served by vite preview",
+    "build_input": {
+      "mode": "fresh-build",
+      "bundle_fingerprint": "66cff9f1750ef7bb6e44c3127102ef22bb1ada9c1dd3609bbac6e32ef1a07c95"
+    },
+    "node": "v24.16.0",
+    "platform": "darwin",
+    "source": {
+      "repository_root": "/Users/admin/Central/worktrees/ui-build/lane4-settings",
+      "repository_head": "40a1cf81d706230cdeeeb270a018621c7298d4b1",
+      "tracked_changes": [
+        "desktop/cradle/walk/artifacts/configuration-l6.png",
+        "desktop/cradle/walk/artifacts/configuration.json",
+        "desktop/cradle/walk/artifacts/system-settings-failure.png",
+        "desktop/cradle/walk/artifacts/system-settings.json"
+      ],
+      "dirty_digest": "6de419009be92cd9f1456fb3a24bd4a2cd60ef4aa6108742ed6d30534d5998ca",
+      "engine_provenance_path": "/Users/admin/Central/worktrees/ui-build/lane4-settings/packages/oi-design-system/expressions-engine/PROVENANCE.json",
+      "engine_source": "EpiLogos/Point-Cloud-Demo",
+      "engine_revision": "91db8428fc9dfba06cd258ec5a58e7dd9eef5313"
+    }
+  },
+  "passed": true,
+  "error": null,
+  "duration_ms": 224830,
+  "checks": [
+    {
+      "ok": true,
+      "label": "S3 at rest the pending strip is absent from the DOM (not hidden — absent)"
+    },
+    {
+      "ok": true,
+      "label": "the world starts with walk-alpha on and walk-beta off (read from AIKit)"
+    },
+    {
+      "ok": true,
+      "label": "S4 the switched skill shows its staged value, marked changed, with Undo on the row"
+    },
+    {
+      "ok": true,
+      "label": "S4 nothing is written before Apply — AIKit still reports walk-beta off"
+    },
+    {
+      "ok": true,
+      "label": "S4 the strip reads \"2 changes pending · Review changes · Discard\""
+    },
+    {
+      "ok": true,
+      "label": "S4 the connection is staged only — the desktop's state file is untouched before Apply"
+    },
+    {
+      "ok": true,
+      "label": "S4 the connection row is marked changed"
+    },
+    {
+      "ok": true,
+      "label": "S5 one sheet lists both staged changes",
+      "data": {
+        "rows": [
+          {
+            "key": "chat-default",
+            "text": "Default connection for new chats\nThis machine · Hermes · walk → Pi · walk\nNew chats only",
+            "effect": "new-chats",
+            "words": "New chats only"
+          },
+          {
+            "key": "ai-kit:skills:skills.capabilities|machine#skill/walkskills/walk-beta",
+            "text": "Skill · walk-beta\nThis machine · off → on\nNext session only",
+            "effect": "session-restart-required",
+            "words": "Next session only"
+          }
+        ]
+      }
+    },
+    {
+      "ok": true,
+      "label": "S5 each change shows its scope and from → to",
+      "data": {
+        "skillRow": {
+          "key": "ai-kit:skills:skills.capabilities|machine#skill/walkskills/walk-beta",
+          "text": "Skill · walk-beta\nThis machine · off → on\nNext session only",
+          "effect": "session-restart-required",
+          "words": "Next session only"
+        },
+        "connectionRow": {
+          "key": "chat-default",
+          "text": "Default connection for new chats\nThis machine · Hermes · walk → Pi · walk\nNew chats only",
+          "effect": "new-chats",
+          "words": "New chats only"
+        }
+      }
+    },
+    {
+      "ok": true,
+      "label": "S5 the skill's effect is the owner's effect kind (session-restart-required) in plain words (\"Next session only\")",
+      "data": {
+        "skillRow": {
+          "key": "ai-kit:skills:skills.capabilities|machine#skill/walkskills/walk-beta",
+          "text": "Skill · walk-beta\nThis machine · off → on\nNext session only",
+          "effect": "session-restart-required",
+          "words": "Next session only"
+        }
+      }
+    },
+    {
+      "ok": true,
+      "label": "S5 the connection's effect reads \"New chats only\""
+    },
+    {
+      "ok": true,
+      "label": "S5 reviewing writes nothing"
+    },
+    {
+      "ok": true,
+      "label": "S6 every row reads \"Applied ✓\"",
+      "data": {
+        "results": [
+          {
+            "key": "chat-default",
+            "result": "applied",
+            "text": "Applied ✓"
+          },
+          {
+            "key": "ai-kit:skills:skills.capabilities|machine#skill/walkskills/walk-beta",
+            "result": "applied",
+            "text": "Applied ✓"
+          }
+        ]
+      }
+    },
+    {
+      "ok": true,
+      "label": "S6 the readback is true: AIKit now reports walk-beta active"
+    },
+    {
+      "ok": true,
+      "label": "S6 the readback is true: the desktop holds walk-pi for new chats"
+    },
+    {
+      "ok": true,
+      "label": "S6 the receipt line reads \"Applied 2 changes · read back HH:MM\"",
+      "data": {
+        "receipt": "Applied 2 changes · read back 08:07 AM"
+      }
+    },
+    {
+      "ok": true,
+      "label": "S3 after a verified apply the strip leaves the DOM again"
+    },
+    {
+      "ok": true,
+      "label": "S7 the review shows the owner's refusal in its own words before anything moves",
+      "data": {
+        "refusalBefore": "The owner refuses this change: unknown_capability: skill/walkskills/not-in-catalogue is not in the catalogue"
+      }
+    },
+    {
+      "ok": true,
+      "label": "S7 the refused change reads \"This change wasn't applied.\" with the owner's reason",
+      "data": {
+        "refused": {
+          "result": "refused",
+          "text": "This change wasn't applied. unknown_capability: skill/walkskills/not-in-catalogue is not in the catalogue"
+        }
+      }
+    },
+    {
+      "ok": true,
+      "label": "S7 a refusal is not reported as success",
+      "data": {
+        "refusedReceipt": "Applied 0 of 1 changes · read back 08:08 AM"
+      }
+    },
+    {
+      "ok": true,
+      "label": "S7 the overridden change reads \"Partly applied\" with the reason",
+      "data": {
+        "alpha": {
+          "result": "partial",
+          "text": "Partly applied — AIKit still reports it on — another scope decides for this skill."
+        }
+      }
+    },
+    {
+      "ok": true,
+      "label": "S7 the owner still reports walk-alpha on — the page did not claim otherwise"
+    },
+    {
+      "ok": true,
+      "label": "S7 a partial readback is not reported as success",
+      "data": {
+        "partialReceipt": "Applied 0 of 1 changes · read back 08:09 AM"
+      }
+    },
+    {
+      "ok": true,
+      "label": "S8 the stale plan reads \"These settings changed. Review the plan again.\""
+    },
+    {
+      "ok": true,
+      "label": "S8 Apply was refused: nothing moved in AIKit"
+    },
+    {
+      "ok": true,
+      "label": "S8 Apply is withdrawn until the plan is reviewed again"
+    },
+    {
+      "ok": true,
+      "label": "S8 the fresh review shows what is staged now (two toggles)"
+    },
+    {
+      "ok": true,
+      "label": "S9 an empty plan reads \"No capability changes.\" — and only after the plan was read"
+    },
+    {
+      "ok": true,
+      "label": "S9 Status says \"No capability changes.\" once the owners' diff read is empty"
+    },
+    {
+      "ok": true,
+      "label": "S3 with nothing staged the strip is absent again"
+    }
+  ],
+  "ops": [
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 36,
+      "data": {
+        "file": "settings-change-staged-light-1440.png"
+      }
+    },
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 23,
+      "data": {
+        "file": "settings-change-staged-light-1000.png"
+      }
+    },
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 30,
+      "data": {
+        "file": "settings-change-staged-light-760.png"
+      }
+    },
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 35,
+      "data": {
+        "file": "settings-change-staged-dark-1440.png"
+      }
+    },
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 28,
+      "data": {
+        "file": "settings-change-staged-dark-1000.png"
+      }
+    },
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 30,
+      "data": {
+        "file": "settings-change-staged-dark-760.png"
+      }
+    },
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 40,
+      "data": {
+        "file": "settings-change-review-light-1440.png"
+      }
+    },
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 26,
+      "data": {
+        "file": "settings-change-review-light-1000.png"
+      }
+    },
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 32,
+      "data": {
+        "file": "settings-change-review-light-760.png"
+      }
+    },
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 39,
+      "data": {
+        "file": "settings-change-review-dark-1440.png"
+      }
+    },
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 26,
+      "data": {
+        "file": "settings-change-review-dark-1000.png"
+      }
+    },
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 33,
+      "data": {
+        "file": "settings-change-review-dark-760.png"
+      }
+    },
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 43,
+      "data": {
+        "file": "settings-change-applied.png"
+      }
+    },
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 27,
+      "data": {
+        "file": "settings-change-refused.png"
+      }
+    },
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 20,
+      "data": {
+        "file": "settings-change-partial.png"
+      }
+    },
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 19,
+      "data": {
+        "file": "settings-change-stale.png"
+      }
+    },
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 28,
+      "data": {
+        "file": "settings-change-no-changes.png"
+      }
+    }
+  ],
+  "metrics": {},
+  "screenshots": [
+    "settings-change-staged-light-1440.png",
+    "settings-change-staged-light-1000.png",
+    "settings-change-staged-light-760.png",
+    "settings-change-staged-dark-1440.png",
+    "settings-change-staged-dark-1000.png",
+    "settings-change-staged-dark-760.png",
+    "settings-change-review-light-1440.png",
+    "settings-change-review-light-1000.png",
+    "settings-change-review-light-760.png",
+    "settings-change-review-dark-1440.png",
+    "settings-change-review-dark-1000.png",
+    "settings-change-review-dark-760.png",
+    "settings-change-applied.png",
+    "settings-change-refused.png",
+    "settings-change-partial.png",
+    "settings-change-stale.png",
+    "settings-change-no-changes.png"
+  ]
+}
