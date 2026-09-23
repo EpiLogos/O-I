@@ -253,7 +253,8 @@ export function tapeFromJournal(events:readonly JournalEventLike[],options:TapeO
   }
   if(kind==="native-mode-configuration-confirmed"){
    const receipt=obj(event.receipt)?event.receipt:{};
-   newRow("note",`permission mode · ${str(receipt.current_mode_id)??str(event.mode_id)??"changed"}`,entry,at);
+   const now=obj(receipt.current)?receipt.current:obj(receipt.mode_observation)?receipt.mode_observation:{};
+   newRow("note",`permission mode · ${str(now.current_mode_id)??"changed"}`,entry,at);
    continue;
   }
   if(kind==="provider"){

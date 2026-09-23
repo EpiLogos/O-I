@@ -26,6 +26,7 @@ import {unknownDispatch,settledPhase,mayStartDispatch} from "./deliveryOutcome";
  * never drops typing the owner has not accepted yet.
  */
 import {NativeModelController,connectionLabel,type NativeModelState} from "./nativeModel";
+import {NativeModeController,type NativeModeState} from "./nativeMode";
 import {useEffect,useMemo,useSyncExternalStore} from "react";
 import {useKernel} from "../kernel/KernelProvider";
 import {kernelOp} from "../kernel/bridge";
@@ -48,8 +49,12 @@ export interface EncounterServiceState {running:boolean;pid?:number;detail?:stri
 export interface EncounterSessionState {
  key:string;project:string;agentSession:string;space?:string;
  reading?:EncounterReading;status?:EncounterStatus;
- providers:{id:string;label:string}[];
+ /** The owner's connections with their launch facts (A1: the harness is
+  *  named from protocol + command, never the label). */
+ providers:{id:string;label:string;protocol?:string|null;command?:string|null;entry?:string|null;sandboxed?:boolean|null}[];
  model:NativeModelState;
+ /** The native session's permission modes (A2): null observation = none offered. */
+ mode:NativeModeState;
  /** The composer text: the canonical draft, or the person's unsaved typing. */
  draft:string;
  /** An owner operation this window started is in flight. */
@@ -70,16 +75,28 @@ export interface EncounterSessionState {
  resume?:{provider:string};
  reconnected?:string;
  a2a:EncounterA2aState;
+ /** The last Send's outcome as the person sees it (10-SIDEBARS P8/P9):
+  *  "checking" while an uncertain delivery is reconciled against the owner's
+  *  record, "failed" when it was not sent (the draft is kept). */
+ send?:{phase:"checking"|"failed";error?:string};
+ /** Reads are failing: the owner was last seen at this time (P10). */
+ reconnecting?:{lastSeenAt:number};
+ /** The encounter owner could not be reached at all (P11). */
+ unreachable?:string;
 }
 
 export interface EncounterSessionActions {
  allowed(name:string):boolean;
  change(text:string):void;
  send():Promise<void>;
+ /** Retry a Send the owner confirmed was not sent (P8). */
+ retrySend():Promise<void>;
  /** After a failed save: re-read the canonical draft and apply the held typing to it. */
  recover():Promise<void>;
  readModel():Promise<void>;
  selectModel(model:string,effort?:string):Promise<void>;
+ readMode():Promise<void>;
+ selectMode(mode:string):Promise<void>;
  refreshProviders():Promise<void>;
  connect(provider:string):Promise<void>;
  reconnect(provider:string):Promise<void>;
@@ -101,6 +118,7 @@ const hidden=()=>document.visibilityState!=="visible";
 class EncounterSession implements EncounterSessionActions {
  private state:EncounterSessionState;
  private models:NativeModelController;
+ private modes:NativeModeController;
  private listeners=new Set<()=>void>();
  private subscribers=0;
  private stopTimer?:ReturnType<typeof setTimeout>;
@@ -118,10 +136,12 @@ class EncounterSession implements EncounterSessionActions {
  private lastFingerprint="";
  /** Census for the single-observer law (dev/walk only reads it). */
  polls=0;
+ private failures=0;private lastSeenAt=0;
 
  constructor(private transport:KernelTransportStatus,binding:EncounterSessionBinding) {
-  this.state={key:encounterSessionKey(binding),project:binding.project,agentSession:binding.ref,space:binding.space,providers:[],model:{phase:"unread"},draft:"",pending:false,busy:false,draftFailed:false,dispatch:{kind:"idle"},deliveries:[],a2a:{busy:false}};
+  this.state={key:encounterSessionKey(binding),project:binding.project,agentSession:binding.ref,space:binding.space,providers:[],model:{phase:"unread"},mode:{phase:"unread"},draft:"",pending:false,busy:false,draftFailed:false,dispatch:{kind:"idle"},deliveries:[],a2a:{busy:false}};
   this.models=new NativeModelController(binding.ref,request=>this.call(request),model=>this.set({model}));
+  this.modes=new NativeModeController(binding.ref,request=>this.call(request),mode=>this.set({mode}));
  }
  // --- store plumbing ---------------------------------------------------
  subscribe=(listener:()=>void)=>{this.listeners.add(listener);return()=>{this.listeners.delete(listener);};};
@@ -155,9 +175,10 @@ class EncounterSession implements EncounterSessionActions {
   document.addEventListener("visibilitychange",this.onVisible);
   void this.call({action:"start"}).then(()=>{
    if(run!==this.run)return;
+   if(this.state.unreachable)this.set({unreachable:undefined});
    void this.call<{id:string;label:string}[]>({action:"providers"}).then(rows=>{if(run===this.run)this.set({providers:rows});}).catch(error=>{if(run===this.run)this.set({error:String(error)});});
    this.restartChain();
-  }).catch(error=>{if(run===this.run)this.set({error:String(error)});});
+  }).catch(error=>{if(run===this.run)this.set({error:String(error),unreachable:String(error)});});
   // The session's actual task, if the owner bound one. Read once per
   // observing run through the owner's own `encounter-task-read`; null is
   // honest absence. The last observed task stays visible while a later run
@@ -187,11 +208,18 @@ class EncounterSession implements EncounterSessionActions {
    if(!this.dirty&&!this.saving&&!this.sending&&next.draft.revision>=this.canonical.revision){this.canonical=next.draft;this.input=next.draft.text;patch.draft=next.draft.text;}
    this.set(patch);
    const current=next.connection ?? await this.call<EncounterStatus>({action:"status",agent_session:this.state.agentSession}).catch(()=>undefined);
-   if(chain===this.chain){this.models.observe(current);this.set({status:current});}
+   if(chain===this.chain){this.models.observe(current);this.modes.observe(current);this.failures=0;this.lastSeenAt=Date.now();this.set({status:current,reconnecting:undefined,unreachable:undefined});}
    const fingerprint=JSON.stringify([next,current]);
    this.quietReads=fingerprint===this.lastFingerprint?this.quietReads+1:0;
    this.lastFingerprint=fingerprint;
-  }catch(error){if(chain===this.chain)this.set({error:String(error)});}
+  }catch(error){
+   if(chain===this.chain){
+    this.failures++;
+    // Two failed reads in a row: the owner is out of reach for now. The
+    // draft and the last reading stay; the loop keeps trying (P10).
+    this.set({error:String(error),...(this.failures>=2&&this.lastSeenAt?{reconnecting:{lastSeenAt:this.lastSeenAt}}:{})});
+   }
+  }
   // A running provider turn is read at a streaming cadence so the transcript
   // grows in small steps. A resting session relaxes stepwise — 750 ms while
   // it last moved, then 1.5 s and 3 s once the reading stops changing; a
@@ -216,7 +244,7 @@ class EncounterSession implements EncounterSessionActions {
  change=(text:string)=>{if(!this.allowed("draft"))return;this.input=text;this.dirty=true;this.set({draft:text});void this.save();};
  send=async()=>{
   if(this.operations>0||!this.allowed("prompt")||this.dirty||this.saving||this.sending||this.failed)return;
-  this.sending=true;const submitted=this.input;this.begin();this.set({error:undefined});
+  this.sending=true;const submitted=this.input;const basis=this.canonical.revision;this.begin();this.set({error:undefined,send:undefined});
   try{
    const supportsContext=this.state.reading?.actions?.some(action=>action.ref==="aikit.encounter.context"&&action.enabled);
    const context=supportsContext?await reviewedContext(this.transport,this.state.project,this.state.agentSession):undefined;
@@ -226,9 +254,31 @@ class EncounterSession implements EncounterSessionActions {
    this.canonical=response.draft;
    if(this.input===submitted){this.input=response.draft.text;this.set({draft:response.draft.text});}else{this.dirty=true;}
    this.set({status:await this.call<EncounterStatus>({action:"status",agent_session:this.state.agentSession})});
-  }catch(error){this.set({error:String(error)});}
+  }catch(error){
+   const message=String(error);
+   // An owner refusal carries its code ("… [encounter.x]"): the message was
+   // not sent. Anything else (the transport broke mid-call) is uncertain:
+   // the owner's own record says whether it went — never a second send.
+   if(/\[[a-z0-9_.-]+\]\s*$/i.test(message))this.set({error:message,send:{phase:"failed",error:message}});
+   else{this.set({send:{phase:"checking"}});await this.reconcileSend(submitted,basis,message);}
+  }
   finally{this.sending=false;this.end();void this.save();}
  };
+ /** P9: read the owner's record to learn whether an uncertain Send landed. */
+ private async reconcileSend(submitted:string,basis:number,cause:string){
+  for(let attempt=0;attempt<4;attempt++){
+   try{
+    const next=await this.read();
+    const landed=next.draft.revision>basis&&next.blocks.some(block=>block.kind==="user"&&block.text.trim()===submitted.trim());
+    if(landed){this.canonical=next.draft;if(this.input===submitted){this.input=next.draft.text;}this.set({reading:next,draft:this.input,send:undefined,error:undefined});return;}
+    if(next.draft.revision<=basis){this.set({send:{phase:"failed",error:cause},error:cause});return;}
+   }catch{/* still unreachable — try again shortly */}
+   await new Promise(resolve=>setTimeout(resolve,1200));
+  }
+  this.set({send:{phase:"failed",error:cause},error:cause});
+ }
+ /** P8 Retry: send the kept draft again, only after a confirmed failure. */
+ retrySend=async()=>{if(this.state.send?.phase!=="failed")return;this.set({send:undefined});await this.send();};
  recover=async()=>{
   try{const next=await this.read();this.canonical=next.draft;this.failed=false;this.dirty=this.input!==next.draft.text;this.set({error:undefined});await this.save();}
   catch(error){this.set({error:String(error)});}
@@ -237,6 +287,8 @@ class EncounterSession implements EncounterSessionActions {
  // --- connection, consent, stop ----------------------------------------
  readModel=()=>this.models.refresh();
  selectModel=async(model:string,effort?:string)=>{this.begin();try{await this.models.select(model,effort);}finally{this.end();}};
+ readMode=()=>this.modes.refresh();
+ selectMode=async(mode:string)=>{this.begin();try{await this.modes.select(mode);}finally{this.end();}};
  refreshProviders=async()=>{
   try{const providers=await this.call<{id:string;label:string}[]>({action:"providers"});this.set({providers,error:undefined});}
   catch(error){this.set({error:String(error)});}

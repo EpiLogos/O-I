@@ -26,6 +26,9 @@ export interface TaPaneOpens {
    * workspace-held while the mode's dedicated stage stands. */
   sideTabs?:{id:string;title:string;kind:string;active:boolean;canvas?:"panel"|"workspace"}[];
   activateTab?:(id:string)=>void;
+  /** Open a file into THIS canvas (the frame's openFile with into:"side") —
+   *  the Context launcher's File entry (10-SIDEBARS §4.6). */
+  insertFile?:(location:import("../kernel/types").CentralLocation)=>Promise<void>;
 }
 
 /** The panel's Ta-Onta AGENTS plane: the offices as the roster, the mode's

@@ -84,14 +84,15 @@ const fixtureSession=(reading:EncounterReading,status:EncounterStatus,draft:stri
     key:"fixture:agent-session/fixture",project:"Fixture",agentSession:"agent-session/fixture",
     reading,status,providers:[{id:"fixture-acp",label:"Fixture ACP"}],
     model:{phase:"unavailable",error:"This dev preview has no native model owner."},
+    mode:{phase:"unavailable",error:"This dev preview has no native mode owner."},
     draft,pending:false,busy:false,draftFailed:false,
     dispatch:{kind:"idle"},deliveries:[],a2a:{busy:false},
   };
   const actions={
     allowed:(name:string)=>reading.actions?.some(action=>action.ref===`aikit.encounter.${name}`&&action.enabled)===true,
     change:(text:string)=>setFixtureDraft(text),
-    readModel:async()=>{},selectModel:async()=>{throw new Error("No native selector exists in this dev preview");},refreshProviders:async()=>{},
-    send:async()=>{},recover:async()=>{},connect:async()=>{},reconnect:async()=>{},cancel:()=>{},
+    readModel:async()=>{},selectModel:async()=>{throw new Error("No native selector exists in this dev preview");},readMode:async()=>{},selectMode:async()=>{throw new Error("No native mode selector exists in this dev preview");},refreshProviders:async()=>{},
+    send:async()=>{},retrySend:async()=>{},recover:async()=>{},connect:async()=>{},reconnect:async()=>{},cancel:()=>{},
     permission:async()=>{},earlier:()=>{},latest:()=>{},
     readJournal:async(after:number)=>({agent_session:"agent-session/fixture",events:[],next_cursor:after,more:false}),
     reconcileAddressed:async()=>{},sendAddressed:async()=>{},sendGroup:async()=>{},seedA2a:()=>{},sendA2a:async()=>{},

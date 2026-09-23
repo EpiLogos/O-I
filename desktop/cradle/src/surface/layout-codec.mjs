@@ -21,7 +21,7 @@
 // centre surfaces (workspace/mode.ts): singleton, owner-less presentation
 // bindings like `system`/`explore` — their state lives with their own owners
 // and per-viewer stores, never in the binding.
-const SURFACE_KINDS = ['source', 'sources', 'knowledge', 'file', 'encounter', 'system', 'browser', 'terminal', 'flow', 'draft', 'blank', 'instrument', 'explore', 'presentation', 'factory', 'expressions', 'techne', 'epi-logos', 'agency'];
+const SURFACE_KINDS = ['source', 'sources', 'knowledge', 'file', 'encounter', 'system', 'browser', 'terminal', 'flow', 'draft', 'blank', 'instrument', 'explore', 'presentation', 'factory', 'expressions', 'techne', 'epi-logos', 'agency', 'object'];
 const ENCOUNTER_PLANES = ['Conversation', 'Activity', 'Context', 'Inspect'];
 const KNOWLEDGE_PLANES = ['graph', 'page'];
 
@@ -37,6 +37,8 @@ export function validBinding(raw) {
   if (!SURFACE_KINDS.includes(o.kind)) return null;
   if (o.ref !== undefined && typeof o.ref !== 'string') return null;
   if (o.kind === 'instrument' && (typeof o.ref !== 'string' || !o.ref.trim())) return null;
+  // An object page (10-SIDEBARS §4.7) is identity only: its ref names the object.
+  if (o.kind === 'object' && (typeof o.ref !== 'string' || !o.ref.startsWith('oi-object:'))) return null;
   if (o.project !== undefined && typeof o.project !== 'string') return null;
   const address = o.address;
   if (o.kind === 'knowledge' && (!address || !['wiki', 'source', 'project-map'].includes(address.kind) || typeof address.value !== 'string' || address.value !== o.ref)) return null;

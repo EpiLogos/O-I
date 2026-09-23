@@ -13,6 +13,10 @@ import {ChatComposer} from "./ChatComposer";
 import {chatProvisionTarget} from "./firstSend";
 import {appendBlock,contextBlockForLocation,contextBlockForOsFile,contextBlockForSurface,type ContextBlock} from "./attach";
 import {CHAT_PREVIEW_EVENT} from "./previewGate";
+import {PermissionCard} from "./PermissionCard";
+import {StatusLine} from "./StatusLine";
+import type {ConnectionFacts} from "./harness";
+import {inFlightRow,workMarksOf,type Tape} from "../tape/model";
 import "./chat.css";
 
 /**
@@ -55,13 +59,13 @@ const writeDraft=(text:string)=>{try{if(text)localStorage.setItem(DRAFT_KEY,text
  * opener. */
 const suggestionsOf=(project?:string,subject?:{title:string;location?:CentralLocation}):string[]=>{
   const out:string[]=[];
-  if(subject?.title)out.push(`Read ${subject.title} with me and tell me what stands out.`);
+  if(subject?.location&&subject.title)out.push(`Read ${subject.title} with me and tell me what stands out.`);
   if(project)out.push(`What is the current state of ${project}, and what would you look at next?`);
   out.push("Help me think through what to do next.");
   return out.slice(0,3);
 };
 
-export function AgentChat({session,accompanying,project,agentName,situating,sessionTitle,choosing,subject,resolveSurface,onMessage,onNewChat,onChoose,onProvision,identity:identityOverride,fixture,variant}:{
+export function AgentChat({session,accompanying,project,agentName,situating,sessionTitle,choosing,subject,resolveSurface,onMessage,onNewChat,onChoose,onProvision,identity:identityOverride,fixture,variant,tape,onOpenActivity,connectionFacts}:{
   session?:EncounterSessionHandle;
   accompanying?:{ref:string;project:string;space:string};
   project?:string;
@@ -94,6 +98,12 @@ export function AgentChat({session,accompanying,project,agentName,situating,sess
    * is a centre workspace (the Factory Tasks chat) and carries its own
    * head keeps only the conversation's own controls (new chat, history). */
   variant?:"plane"|"centre";
+  /** The session's activity tape (agent/tape): work marks and the status line read it. */
+  tape?:Tape;
+  /** Open the Activity tab, at one tape row when given (status line, work marks). */
+  onOpenActivity?:(rowId?:string)=>void;
+  /** The connected harness's facts from the session's own binding (A1). */
+  connectionFacts?:Partial<ConnectionFacts>;
 }) {
   const centre=variant==="centre";
   const kernel=useKernel();
@@ -190,6 +200,18 @@ export function AgentChat({session,accompanying,project,agentName,situating,sess
   },[historyOpen]);
 
   const status=state?.status;
+  /** Answered requests collapse to one line until their turn ends (P5). */
+  const [answered,setAnswered]=useState<{id:string;line:string}[]>([]);
+  useEffect(()=>{if(status?.state!=="TurnInFlight"&&status?.state!=="InterruptRequested")setAnswered([]);},[status?.state]);
+  const answer=(id:string,decision:import("../../encounter/client").PermissionDecision,line:string)=>{if(!actions)return;setAnswered(list=>[...list,{id,line}]);void actions.permission(id,decision);};
+  const inFlight=status?.state==="TurnInFlight"||status?.state==="InterruptRequested";
+  const moving=tape&&inFlight?inFlightRow(tape):undefined;
+  const openTurn=tape?[...tape.turns].reverse().find(turn=>turn.open):undefined;
+  const turnStart=openTurn?.rows[0]?.startedAt;
+  const [flightSeen,setFlightSeen]=useState<number>();
+  useEffect(()=>{if(inFlight)setFlightSeen(seen=>seen??Date.now());else setFlightSeen(undefined);},[inFlight]);
+  const tapeTurns=tape?tape.turns.filter(turn=>turn.index>0&&(turn.rows[0]?.verb==="you"||turn.rows[0]?.verb==="message")):[];
+  const marks=tape&&onOpenActivity?{forTurnFromEnd:(fromEnd:number)=>{const turn=tapeTurns[tapeTurns.length-1-fromEnd];return turn?workMarksOf(tape,turn.index):[];},onOpen:(rowId:string)=>onOpenActivity(rowId)}:undefined;
   const stateLabel=!accompanying?undefined:!state?.reading&&!status?"Reading…":sessionStateLabel(status);
   const agentLabel=status?.provider?.label??identity.name;
   const bound=!!(session&&state&&actions);
@@ -226,12 +248,15 @@ export function AgentChat({session,accompanying,project,agentName,situating,sess
     </div>}
     {bound
       ?<>
-        <ChatTranscript reading={state.reading} status={status} error={state.error} agentLabel={agentLabel} onEarlier={actions.earlier} onLatest={actions.latest} paged={state.before!==undefined} onEdit={editTurn}/>
-        <ChatComposer reading={state.reading} draft={state.draft} pending={state.pending} busy={state.busy&&!state.pending} error={state.error} editable={!!state.reading&&allowed("draft")}
-          promptAllowed={allowed("prompt")} promptReason={action("prompt")?.reason??undefined} cancelAllowed={allowed("cancel")}
-          onDraft={actions.change} onSend={send} onCancel={actions.cancel}
-          onPermission={(id,decision)=>void actions.permission(id,decision)} permissionAllowed={allowed("permission")}
-          connection={{onSetup:()=>openAgentSetup({project:state.project||undefined,destination:{owner:"ai-kit",topic:"harness"},reason:state.error??"Harness, model or credential setup",refresh:()=>actions.refreshProviders()}),status,model:state.model,modelActions:{refresh:actions.readModel,select:actions.selectModel},onRefreshProviders:()=>void actions.refreshProviders(),providers:state.providers,resume:state.resume,onProvider:provider=>void actions.connect(provider),onReconnect:provider=>void actions.reconnect(provider),openAllowed:allowed("open"),openReason:action("open")?.reason??undefined}}
+        <ChatTranscript reading={state.reading} status={status} error={state.error} agentLabel={agentLabel} onEarlier={actions.earlier} onLatest={actions.latest} paged={state.before!==undefined} onEdit={editTurn} marks={marks}>
+          {answered.map(entry=><p key={entry.id} className="chat-permission-answered oi-note" data-request={entry.id}>{entry.line}</p>)}
+          {state.reading?.permissions?.filter(request=>!answered.some(entry=>entry.id===request.native_request_id)).map(request=><PermissionCard key={request.native_request_id} request={request} agentName={agentName} disabled={state.pending||!allowed("permission")} onAnswer={(decision,line)=>answer(request.native_request_id,decision,line)}/>)}
+        </ChatTranscript>
+        {inFlight&&<StatusLine agentName={agentName} row={moving} startedAt={turnStart??flightSeen} stopping={status?.state==="InterruptRequested"} onOpen={rowId=>onOpenActivity?.(rowId)}/>}
+        <ChatComposer reading={state.reading} draft={state.draft} pending={state.pending} busy={state.busy&&!state.pending} error={state.send?undefined:state.error} editable={!!state.reading&&allowed("draft")}
+          promptAllowed={allowed("prompt")&&state.send?.phase!=="checking"} promptReason={action("prompt")?.reason??undefined} cancelAllowed={allowed("cancel")}
+          onDraft={actions.change} onSend={send} onCancel={actions.cancel} agentName={agentName} sendState={state.send} onRetry={()=>void actions.retrySend()}
+          connection={{onSetup:()=>openAgentSetup({project:state.project||undefined,destination:{owner:"ai-kit",topic:"harness"},reason:state.error??"Harness, model or credential setup",refresh:()=>actions.refreshProviders()}),status,model:state.model,modelActions:{refresh:actions.readModel,select:actions.selectModel},mode:state.mode,onMode:id=>void actions.selectMode(id),currentFacts:connectionFacts,onRefreshProviders:()=>void actions.refreshProviders(),providers:state.providers,resume:state.resume,onProvider:provider=>void actions.connect(provider),onReconnect:provider=>void actions.reconnect(provider),openAllowed:allowed("open"),openReason:action("open")?.reason??undefined}}
           tools={{subject:subject.location?{title:subject.title,attach:()=>attachLocation(subject.location!)}:undefined,pickFiles:attachFiles}}
           draftFailed={state.draftFailed} onRecover={()=>void actions.recover()} paged={state.before!==undefined} onLatest={actions.latest} focusToken={composerFocusToken}/>
       </>
@@ -256,8 +281,7 @@ export function AgentChat({session,accompanying,project,agentName,situating,sess
         </div>}
         <ChatComposer reading={undefined} draft={localDraft} pending={false} busy={choosing||provisioning} error={undefined} editable={!choosing&&!provisioning}
           promptAllowed={!choosing&&!provisioning} cancelAllowed={false}
-          onDraft={setLocal} onSend={send} onCancel={()=>{}}
-          onPermission={()=>{}} permissionAllowed={false}
+          onDraft={setLocal} onSend={send} onCancel={()=>{}} agentName={agentName}
           connection={{status:undefined,providers:[],resume:undefined,onProvider:()=>{},onReconnect:()=>{},openAllowed:false,openReason:undefined}}
           tools={{pickFiles:attachFiles}} drafting provisionProject={provisionProject}
           draftFailed={false} onRecover={()=>{}} paged={false} onLatest={()=>{}} focusToken={composerFocusToken}/>

@@ -60,3 +60,14 @@ fn reconnect_must_match_the_attached_session_space_before_spawning_encounter() {
 fn new_model_write_requires_an_observed_native_identity_at_deserialization() {
  assert!(serde_json::from_value::<EncounterRequest>(json!({"action":"model-select","agent_session":"agent-session/allowed","provider_model_id":"native/advertised"})).is_err());
 }
+#[test]
+fn permission_mode_controls_are_carried_verbatim_only_for_an_attached_session() {
+ let rig=Rig::new();
+ rig.call(EncounterRequest::ModeRead{agent_session:"agent-session/allowed".into()}).unwrap();
+ rig.call(EncounterRequest::ModeSelect{agent_session:"agent-session/allowed".into(),provider_mode_id:"accept_edits".into(),expected_native_session_id:"native-exact".into()}).unwrap();
+ assert!(rig.call(EncounterRequest::ModeSelect{agent_session:"agent-session/other".into(),provider_mode_id:"accept_edits".into(),expected_native_session_id:"native-exact".into()}).is_err());
+ let requests=rig.requests();assert_eq!(requests.len(),2);
+ assert_eq!(requests[0],json!({"action":"mode-read","agent_session":"agent-session/allowed"}));
+ assert_eq!(requests[1],json!({"action":"mode-select","agent_session":"agent-session/allowed","provider_mode_id":"accept_edits","expected_native_session_id":"native-exact"}));
+ assert!(serde_json::from_value::<EncounterRequest>(json!({"action":"mode-select","agent_session":"agent-session/allowed","provider_mode_id":"plan"})).is_err(),"a mode write names the native session it read");
+}

@@ -5,3 +5,4 @@ export * from "./registry";
 export {ObjectPage} from "./ObjectPage";
 export {ObjectSurface} from "./ObjectSurface";
 export {tapeEventObject} from "./kinds";
+export {ObjectCentreLayer} from "./ObjectCentreLayer";

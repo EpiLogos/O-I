@@ -4,9 +4,9 @@
 .tape{display:flex;flex-direction:column;min-height:0;flex:1 1 auto;position:relative;gap:var(--oi-space-2)}
 .tape-head{display:flex;align-items:center;justify-content:space-between;gap:var(--oi-space-2);padding:0 var(--oi-space-3);min-height:var(--oi-shell-row)}
 .tape-filters{display:flex;gap:2px;flex-wrap:wrap}
-.tape-filter{border:0;background:transparent;color:var(--oi-muted);font:inherit;font-size:var(--oi-shell-type-meta);padding:3px 8px;border-radius:var(--oi-radius-pill);cursor:pointer;min-height:24px}
-.tape-filter:hover{color:var(--oi-foreground);background:var(--oi-wash)}
-.tape-filter[aria-checked="true"]{color:var(--oi-foreground);background:var(--oi-wash-strong)}
+.tape .tape-filter{border:0;background:transparent;color:var(--oi-muted);font:inherit;font-size:var(--oi-shell-type-meta);padding:3px 8px;border-radius:var(--oi-radius-pill);cursor:pointer;min-height:24px}
+.tape .tape-filter:hover{color:var(--oi-foreground);background:var(--oi-wash)}
+.tape .tape-filter[aria-checked="true"]{color:var(--oi-foreground);background:var(--oi-wash-strong)}
 .tape-follow{display:inline-flex;align-items:center;gap:6px;font-size:var(--oi-shell-type-meta);color:var(--oi-muted);white-space:nowrap}
 .tape-live-dot{width:6px;height:6px;border-radius:50%;background:var(--oi-foreground);animation:tape-breathe 1.6s var(--oi-motion-ease) infinite}
 @keyframes tape-breathe{0%,100%{opacity:1}50%{opacity:.35}}
@@ -19,12 +19,12 @@
 .tape-turn-stop{text-transform:none;letter-spacing:0}
 .tape-row{border-bottom:1px solid var(--oi-hairline-soft)}
 .tape-row:last-child{border-bottom:0}
-.tape-row-line{display:grid;grid-template-columns:auto 52px minmax(0,1fr) auto 12px;align-items:center;gap:8px;width:100%;min-height:28px;padding:0 10px;border:0;background:transparent;color:var(--oi-foreground);font:inherit;text-align:left;cursor:pointer}
-.tape-row-line:hover,.tape-row[data-open="true"]>.tape-row-line{background:var(--oi-wash)}
-.tape-row-line:focus-visible{outline:var(--oi-focus-ring-width) solid var(--oi-focus);outline-offset:-2px}
+.tape .tape-row-line{display:grid;grid-template-columns:auto 52px minmax(0,1fr) auto 12px;align-items:center;gap:8px;width:100%;min-height:28px;padding:0 10px;border:0;background:transparent;color:var(--oi-foreground);font:inherit;text-align:left;cursor:pointer}
+.tape .tape-row-line:hover,.tape-row[data-open="true"]>.tape-row-line{background:var(--oi-wash)}
+.tape .tape-row-line:focus-visible{outline:var(--oi-focus-ring-width) solid var(--oi-focus);outline-offset:-2px}
 .tape-time{color:var(--oi-muted-2);font-size:11px;font-variant-numeric:tabular-nums}
 .tape-time:empty{display:none}
-.tape-row-line:has(.tape-time:empty){grid-template-columns:52px minmax(0,1fr) auto 12px}
+.tape .tape-row-line:has(.tape-time:empty){grid-template-columns:52px minmax(0,1fr) auto 12px}
 .tape-verb{font-family:var(--oi-font-sans);font-size:10px;font-weight:600;letter-spacing:var(--oi-shell-tracking);text-transform:uppercase;color:var(--oi-muted);text-align:right}
 .tape-object{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-family:var(--oi-font-sans);font-size:12px}
 .tape-object[data-mono="true"]{font-family:var(--oi-font-mono)}
@@ -45,5 +45,5 @@
 .tape-raw summary{cursor:pointer;color:var(--oi-muted);font-size:11px;list-style:none;padding:3px 0}
 .tape-raw summary::-webkit-details-marker{display:none}
 .tape-raw pre{margin:4px 0 0;max-height:280px;overflow:auto;font-size:10.5px;white-space:pre-wrap;overflow-wrap:anywhere;color:var(--oi-muted)}
-.tape-resume{position:absolute;left:50%;bottom:var(--oi-space-4);transform:translateX(-50%);border:1px solid var(--oi-hairline);border-radius:var(--oi-radius-pill);background:var(--oi-paper);color:var(--oi-foreground);font:inherit;font-size:var(--oi-shell-type-meta);padding:5px 12px;box-shadow:var(--oi-shadow-menu);cursor:pointer}
-.tape-resume:hover{background:var(--oi-wash-strong)}
+.tape .tape-resume{position:absolute;left:50%;bottom:var(--oi-space-4);transform:translateX(-50%);border:1px solid var(--oi-hairline);border-radius:var(--oi-radius-pill);background:var(--oi-paper);color:var(--oi-foreground);font:inherit;font-size:var(--oi-shell-type-meta);padding:5px 12px;box-shadow:var(--oi-shadow-menu);cursor:pointer}
+.tape .tape-resume:hover{background:var(--oi-wash-strong)}
