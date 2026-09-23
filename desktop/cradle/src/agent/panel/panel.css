@@ -12,7 +12,7 @@
 .panel-tab-attention{display:inline-grid;place-items:center;min-width:13px;height:13px;padding:0 2px;border-radius:3px;background:var(--oi-wash-strong);color:var(--oi-foreground);font-size:10px;font-weight:700;line-height:1}
 .panel-controls{flex:none;display:flex;align-items:center;gap:2px}
 .panel-controls>.oi-tool{width:26px;height:26px}
-@container (max-width:360px){.desktop-shell .panel-tab{padding:0 4px}.desktop-shell .panel-tab::after{left:4px;right:4px}.panel-controls>.oi-tool{width:24px}}
+@container (max-width:360px){.desktop-shell .panel-tab{padding:0 4px}.desktop-shell .panel-tab::after{left:4px;right:4px}.panel-controls>.oi-tool{width:22px}.panel-top{padding-left:6px;gap:2px}.desktop-shell .avatar-menu-open{padding-right:0}}
 
 /* avatar + presence badge (A3) */
 .avatar-menu{position:relative;flex:none}
@@ -139,3 +139,16 @@
 /* The prepared-selection tray keeps its one header line; its empty
  * instructions do not repeat above the launcher (§4.6). */
 .context-canvas .prepared-context:not(:has(.prepared-context-item)):not(:has(.context-preview)) .oi-note:not([role="alert"]){display:none}
+/* P1 — the closed panel's corner companion mark: the mark only; it carries
+ * ● while a turn runs (breathing) and ! (ink on a wash chip) when the agent
+ * needs you. Its state line stays for assistive technology and the tooltip. */
+.desktop-shell .shell-agent-presence{padding:0 6px;gap:0}
+.desktop-shell .shell-agent-presence .shell-agent-presence-label{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap}
+.desktop-shell .shell-agent-presence .shell-agent-presence-dot{display:grid;place-items:center;width:8px;height:8px;background:transparent;box-shadow:inset 0 0 0 1.5px var(--oi-muted-2);font-size:10px;font-weight:800;line-height:1;color:var(--oi-foreground)}
+.desktop-shell .shell-agent-presence[data-presence-state="working"] .shell-agent-presence-dot{background:var(--oi-foreground);box-shadow:none;animation:panel-breathe 1.6s var(--oi-motion-ease) infinite}
+.desktop-shell .shell-agent-presence[data-presence-state="attention"] .shell-agent-presence-dot{width:13px;height:13px;border-radius:3px;background:var(--oi-wash-strong);box-shadow:none}
+/* Open in the centre (P14): a quiet control at the conversation's corner,
+ * outside the one top row so the tabs keep their room. */
+.agent-plane-host{position:relative}
+.agent-layer .panel-promote{position:absolute;top:6px;right:8px;z-index:2;width:24px;height:24px;opacity:.55}
+.agent-layer .panel-promote:hover,.agent-layer .panel-promote:focus-visible{opacity:1}

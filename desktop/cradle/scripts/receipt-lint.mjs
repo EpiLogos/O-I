@@ -85,6 +85,8 @@ const SCENARIO_SPEC = {
   "left-forms": "docs/cradle/10-SIDEBARS.md §3.7 §6.1.6 D5 (forms create a copy; Goal and Vision in place; Factory INTENT)",
   "left-gallery": "docs/cradle/10-SIDEBARS.md §3 (the left frame in light and dark at 1440 / 1000 / 760)",
   "context-canvas-insert": "docs/cradle/10-SIDEBARS.md §4.6 (Context canvas baseline)",
+  "right-panel-frame": "docs/cradle/10-SIDEBARS.md §4.1 §4.2 §5.3 P1 P2 P3 P13 P14 P18; §7 A3",
+  "right-panel-turn": "docs/cradle/10-SIDEBARS.md §4.3 §4.4 §5.3 P1 P4 P6 P7 P16",
 };
 const DEFAULT_SPEC_REF = "docs/cradle/05-EXECUTION.md §3";
 

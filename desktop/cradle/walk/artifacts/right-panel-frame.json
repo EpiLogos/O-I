@@ -1,0 +1,354 @@
+{
+  "schema": "oi.cradle.walk.scenario/v1",
+  "scenario": "right-panel-frame",
+  "spec_ref": "docs/cradle/05-EXECUTION.md §3",
+  "grade": "B",
+  "binding": null,
+  "generated_at": "2026-09-23T01:49:39.751Z",
+  "environment": {
+    "base_url": "http://localhost:4373",
+    "bridge_url": "http://127.0.0.1:4379",
+    "viewport": "1280x820",
+    "browser_engine": "chromium",
+    "bundle": "walk (WALK=1) served by vite preview",
+    "build_input": {
+      "mode": "fresh-build",
+      "bundle_fingerprint": "987fab6b031e14c65448d79cb36121da59142481dc57c8c66eba77b87a64ddbc"
+    },
+    "node": "v24.16.0",
+    "platform": "darwin",
+    "source": {
+      "repository_root": "/Users/admin/Central/worktrees/ui-build/lane2-right",
+      "repository_head": "d9a08038d5d0d1fb56adae16865603ed71e9e104",
+      "tracked_changes": [
+        "desktop/cradle/src/agent/AgentLayer.tsx",
+        "desktop/cradle/src/agent/chat/AgentChat.tsx",
+        "desktop/cradle/src/agent/chat/ChatComposer.tsx",
+        "desktop/cradle/src/agent/chat/ChatTranscript.tsx",
+        "desktop/cradle/src/agent/panel/ActivityTab.tsx",
+        "desktop/cradle/src/agent/panel/PanelTop.tsx",
+        "desktop/cradle/src/agent/panel/panel.css",
+        "desktop/cradle/src/agent/tape/Tape.tsx",
+        "desktop/cradle/src/agent/tape/model.ts",
+        "desktop/cradle/src/workspace/DesktopShell.tsx",
+        "desktop/cradle/tests/tape-model.test.mjs",
+        "desktop/cradle/walk/lane2-support.mjs",
+        "desktop/cradle/walk/run.mjs"
+      ],
+      "dirty_digest": "f38ae4da248d224ab67d91166b63d76ed5a4a05eeef9b5a70095787d2f86ff01",
+      "engine_provenance_path": "/Users/admin/Central/worktrees/ui-build/lane2-right/packages/oi-design-system/expressions-engine/PROVENANCE.json",
+      "engine_source": "EpiLogos/Point-Cloud-Demo",
+      "engine_revision": "91db8428fc9dfba06cd258ec5a58e7dd9eef5313"
+    }
+  },
+  "passed": true,
+  "error": null,
+  "duration_ms": 41130,
+  "checks": [
+    {
+      "ok": true,
+      "label": "Base: the tabs are Chat · Activity · Agents · Context",
+      "data": [
+        "Chat",
+        "Activity",
+        "Agents",
+        "Context"
+      ]
+    },
+    {
+      "ok": true,
+      "label": "avatar, tabs, ⤢ and ✕ share one row (centres within 1px)",
+      "data": [
+        51,
+        51,
+        51,
+        51,
+        51,
+        51,
+        51
+      ]
+    },
+    {
+      "ok": true,
+      "label": "left to right: avatar, then tabs, then ⤢ and ✕ (no overlap)",
+      "data": {
+        "top": {
+          "x": 960,
+          "y": 34,
+          "w": 317,
+          "h": 35,
+          "cy": 51.5
+        },
+        "avatar": {
+          "x": 966,
+          "y": 37,
+          "w": 43,
+          "h": 28,
+          "cy": 51
+        },
+        "tabs": [
+          {
+            "x": 1011,
+            "y": 34,
+            "w": 35.875,
+            "h": 34,
+            "cy": 51
+          },
+          {
+            "x": 1046.875,
+            "y": 34,
+            "w": 51.03125,
+            "h": 34,
+            "cy": 51
+          },
+          {
+            "x": 1097.90625,
+            "y": 34,
+            "w": 50.203125,
+            "h": 34,
+            "cy": 51
+          },
+          {
+            "x": 1148.109375,
+            "y": 34,
+            "w": 54.59375,
+            "h": 34,
+            "cy": 51
+          }
+        ],
+        "full": {
+          "x": 1213,
+          "y": 37,
+          "w": 28,
+          "h": 28,
+          "cy": 51
+        },
+        "collapse": {
+          "x": 1243,
+          "y": 37,
+          "w": 28,
+          "h": 28,
+          "cy": 51
+        },
+        "firstChild": "avatar-menu"
+      }
+    },
+    {
+      "ok": true,
+      "label": "the top is one row: no title band above the tabs",
+      "data": {
+        "x": 960,
+        "y": 34,
+        "w": 317,
+        "h": 35,
+        "cy": 51.5
+      }
+    },
+    {
+      "ok": true,
+      "label": "no observer sentences (no \"Situated in …\", no \"conversation is in the centre\")"
+    },
+    {
+      "ok": true,
+      "label": "no More overflow among the tabs"
+    },
+    {
+      "ok": true,
+      "label": "P2: at most three starting suggestions",
+      "data": [
+        "What is the current state of Editor, and what would you look at next?",
+        "Help me think through what to do next."
+      ]
+    },
+    {
+      "ok": true,
+      "label": "P2: a suggestion fills the draft with its exact words",
+      "data": "What is the current state of Editor, and what would you look at next?"
+    },
+    {
+      "ok": true,
+      "label": "P2: nothing is dispatched by a suggestion",
+      "data": []
+    },
+    {
+      "ok": true,
+      "label": "P3: switching tab keeps the draft byte-identical"
+    },
+    {
+      "ok": true,
+      "label": "P3: switching mode keeps the draft byte-identical"
+    },
+    {
+      "ok": true,
+      "label": "P3: a restart keeps the draft byte-identical"
+    },
+    {
+      "ok": true,
+      "label": "the bound conversation's draft is the owner's (AIKit shared draft)"
+    },
+    {
+      "ok": true,
+      "label": "P13: ⤢ gives the conversation the width of the window",
+      "data": {
+        "x": 244,
+        "y": 62,
+        "width": 1029,
+        "height": 751
+      }
+    },
+    {
+      "ok": true,
+      "label": "P13: the composer is the same element in full (no remount)"
+    },
+    {
+      "ok": true,
+      "label": "P13: ⌘⌥J returns to the panel with the same composer element"
+    },
+    {
+      "ok": true,
+      "label": "P13: the draft is kept across the takeover round trip"
+    },
+    {
+      "ok": true,
+      "label": "P14: the panel's Chat reads one line: Open in the centre — Bring back"
+    },
+    {
+      "ok": true,
+      "label": "P14: exactly one composer in the DOM while promoted",
+      "data": 1
+    },
+    {
+      "ok": true,
+      "label": "P14: Bring back closes the centre copy; one composer, back in the panel"
+    },
+    {
+      "ok": true,
+      "label": "P1: with the panel closed the corner mark carries the agent's observed state",
+      "data": {
+        "owner": "Disconnected",
+        "markState": "disconnected"
+      }
+    },
+    {
+      "ok": true,
+      "label": "P1: not working, not needing you: the mark carries neither ● nor !"
+    },
+    {
+      "ok": true,
+      "label": "Expressions: the tabs are Chat · Activity · Agents · Context",
+      "data": [
+        "Chat",
+        "Activity",
+        "Agents",
+        "Context"
+      ]
+    },
+    {
+      "ok": true,
+      "label": "Expressions: Nara·Anima and Epii are not tabs"
+    },
+    {
+      "ok": true,
+      "label": "Technè: the tabs are Chat · Activity · Agents · Context",
+      "data": [
+        "Chat",
+        "Activity",
+        "Agents",
+        "Context"
+      ]
+    },
+    {
+      "ok": true,
+      "label": "Technè: Nara·Anima and Epii are not tabs"
+    },
+    {
+      "ok": true,
+      "label": "Factory: the tabs are Run · Agents · Context",
+      "data": [
+        "Run",
+        "Agents",
+        "Context"
+      ]
+    },
+    {
+      "ok": true,
+      "label": "Factory: Nara·Anima and Epii are not tabs"
+    },
+    {
+      "ok": true,
+      "label": "P18: at 760px the panel is an overlay drawer over an inert centre"
+    },
+    {
+      "ok": true,
+      "label": "P18: Escape closes the drawer (one layer)"
+    },
+    {
+      "ok": true,
+      "label": "the centre is interactive again at full width"
+    }
+  ],
+  "ops": [
+    {
+      "ok": true,
+      "op": "info",
+      "duration_ms": 0.1,
+      "data": {
+        "schema": "oi.cradle.walk/v1",
+        "mounted_at": "2026-09-23T01:49:40.182Z",
+        "transport": {
+          "kind": "bridge",
+          "url": "http://127.0.0.1:4379"
+        },
+        "url": "http://localhost:4373/"
+      }
+    },
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 70,
+      "data": {
+        "file": "right-panel-frame-a3-top-row.png"
+      }
+    },
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 85,
+      "data": {
+        "file": "right-panel-frame-p13-full.png"
+      }
+    },
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 79,
+      "data": {
+        "file": "right-panel-frame-p14-promoted.png"
+      }
+    },
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 77,
+      "data": {
+        "file": "right-panel-frame-p1-closed.png"
+      }
+    },
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 98,
+      "data": {
+        "file": "right-panel-frame-p18-overlay.png"
+      }
+    }
+  ],
+  "metrics": {},
+  "screenshots": [
+    "right-panel-frame-a3-top-row.png",
+    "right-panel-frame-p13-full.png",
+    "right-panel-frame-p14-promoted.png",
+    "right-panel-frame-p1-closed.png",
+    "right-panel-frame-p18-overlay.png"
+  ]
+}

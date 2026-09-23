@@ -20,6 +20,7 @@ import "./tape.css";
  *     carries ⌥ for Pop out; the caller routes it.
  *   - filter / onFilter: controlled filter (uncontrolled when omitted).
  *   - head: extra head content (Factory's run summary sits above the tape).
+ *   - followToken: bumping it resumes following (the tab was chosen afresh).
  *
  * Tail-follow is on by default. Scrolling up pauses it and shows one
  * "Resume live · n new" pill; an event arriving while paused never moves the
@@ -40,11 +41,12 @@ export interface TapeProps {
  empty?:ReactNode;
  head?:ReactNode;
  label?:string;
+ followToken?:number;
 }
 
 const FOLLOW_SLACK=24;
 
-export function Tape({tape,live,focus,filter:controlled,onFilter,onInspect,loading,error,onRetry,empty,head,label="Activity"}:TapeProps) {
+export function Tape({tape,live,focus,filter:controlled,onFilter,onInspect,loading,error,onRetry,empty,head,label="Activity",followToken}:TapeProps) {
  const [ownFilter,setOwnFilter]=useState<TapeFilter>("all");
  const filter=controlled??ownFilter;
  const chooseFilter=(next:TapeFilter)=>{setOwnFilter(next);onFilter?.(next);};
@@ -71,6 +73,9 @@ export function Tape({tape,live,focus,filter:controlled,onFilter,onInspect,loadi
   else if(atBottom&&!following)setFollowing(true);
  };
  const resume=()=>{setFollowing(true);toBottom();};
+ useEffect(()=>{if(followToken)resume();
+ // eslint-disable-next-line react-hooks/exhaustive-deps
+ },[followToken]);
  // Open the tape at one row: expand it, scroll it into view, pause following.
  useEffect(()=>{
   if(!focus)return;

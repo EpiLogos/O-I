@@ -144,3 +144,14 @@ test("unknown shapes are counted, never guessed at", () => {
   assert.equal(tape.unknown, 2);
   assert.equal(tape.rows.length, 0);
 });
+
+test("a stop the person asked for closes the turn as stopped even when the provider reports an abort as a failure", () => {
+  const tape = T.tapeFromJournal([
+    user(1, "sleep"), acpCall(2, "a", "execute", "terminal: sleep 40", null),
+    signal(3, "failed", {reason: "This operation was aborted"}),
+    {cursor: 4, event: {kind: "provider", event: {TurnEnded: {stop: {Failed: {reason: "This operation was aborted"}}, interruption: {origin: "Human", reason: "User stopped the encounter", commands: ["abort"]}}}}},
+  ]);
+  assert.equal(tape.turns[0].stop, "cancelled");
+  assert.equal(T.turnStopFromEnd(tape, 0), "cancelled");
+  assert.equal(tape.rows.find(r => r.verb === "run").status, "failed", "what the abort cut short keeps its own ending");
+});

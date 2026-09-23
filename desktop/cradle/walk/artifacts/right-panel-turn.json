@@ -1,0 +1,305 @@
+{
+  "schema": "oi.cradle.walk.scenario/v1",
+  "scenario": "right-panel-turn",
+  "spec_ref": "docs/cradle/05-EXECUTION.md §3",
+  "grade": "B",
+  "binding": null,
+  "generated_at": "2026-09-23T01:48:22.058Z",
+  "environment": {
+    "base_url": "http://localhost:4373",
+    "bridge_url": "http://127.0.0.1:4379",
+    "viewport": "1280x820",
+    "browser_engine": "chromium",
+    "bundle": "walk (WALK=1) served by vite preview",
+    "build_input": {
+      "mode": "fresh-build",
+      "bundle_fingerprint": "987fab6b031e14c65448d79cb36121da59142481dc57c8c66eba77b87a64ddbc"
+    },
+    "node": "v24.16.0",
+    "platform": "darwin",
+    "source": {
+      "repository_root": "/Users/admin/Central/worktrees/ui-build/lane2-right",
+      "repository_head": "d9a08038d5d0d1fb56adae16865603ed71e9e104",
+      "tracked_changes": [
+        "desktop/cradle/src/agent/AgentLayer.tsx",
+        "desktop/cradle/src/agent/chat/AgentChat.tsx",
+        "desktop/cradle/src/agent/chat/ChatComposer.tsx",
+        "desktop/cradle/src/agent/chat/ChatTranscript.tsx",
+        "desktop/cradle/src/agent/panel/ActivityTab.tsx",
+        "desktop/cradle/src/agent/panel/PanelTop.tsx",
+        "desktop/cradle/src/agent/panel/panel.css",
+        "desktop/cradle/src/agent/tape/Tape.tsx",
+        "desktop/cradle/src/agent/tape/model.ts",
+        "desktop/cradle/src/workspace/DesktopShell.tsx",
+        "desktop/cradle/tests/tape-model.test.mjs",
+        "desktop/cradle/walk/lane2-support.mjs",
+        "desktop/cradle/walk/run.mjs"
+      ],
+      "dirty_digest": "f38ae4da248d224ab67d91166b63d76ed5a4a05eeef9b5a70095787d2f86ff01",
+      "engine_provenance_path": "/Users/admin/Central/worktrees/ui-build/lane2-right/packages/oi-design-system/expressions-engine/PROVENANCE.json",
+      "engine_source": "EpiLogos/Point-Cloud-Demo",
+      "engine_revision": "91db8428fc9dfba06cd258ec5a58e7dd9eef5313"
+    }
+  },
+  "passed": true,
+  "error": null,
+  "duration_ms": 74090,
+  "checks": [
+    {
+      "ok": true,
+      "label": "P4: Send becomes Stop in the same slot (right edge and centre ±0.5px)",
+      "data": {
+        "sendSlot": {
+          "x": 1232,
+          "y": 772,
+          "w": 28,
+          "h": 28,
+          "right": 1260,
+          "cy": 786
+        },
+        "stopSlot": {
+          "x": 1213.546875,
+          "y": 772,
+          "w": 46.453125,
+          "h": 28,
+          "right": 1260,
+          "cy": 786
+        }
+      }
+    },
+    {
+      "ok": true,
+      "label": "P4: the status line names the agent and what it is doing while the turn runs",
+      "data": "Agent\n· working\n· 3s"
+    },
+    {
+      "ok": true,
+      "label": "P1: while the turn runs the closed panel's mark is ● working",
+      "data": {
+        "owner": "Resident",
+        "markState": "working"
+      }
+    },
+    {
+      "ok": true,
+      "label": "P4: work marks stream into the conversation"
+    },
+    {
+      "ok": true,
+      "label": "P6: once the turn completes the status line is gone"
+    },
+    {
+      "ok": true,
+      "label": "P6: the result line — a real reply — is in the conversation"
+    },
+    {
+      "ok": true,
+      "label": "the turn's work marks name the command and the file it touched",
+      "data": [
+        "⟡\nran ls -1 · 0.2s",
+        "⟡\nedited turn-note.md · 0.1s"
+      ]
+    },
+    {
+      "ok": true,
+      "label": "the provider really wrote turn-note.md in the project",
+      "data": "tape walk"
+    },
+    {
+      "ok": true,
+      "label": "P6: an artifact chip names the file the turn changed"
+    },
+    {
+      "ok": true,
+      "label": "P6: the chip opens the file exactly as the turn left it",
+      "data": {
+        "doc": "tape walk",
+        "noteOnDisk": "tape walk"
+      }
+    },
+    {
+      "ok": true,
+      "label": "a work mark opens Activity at that exact event, expanded",
+      "data": {
+        "rowId": "c8",
+        "verb": "edit"
+      }
+    },
+    {
+      "ok": true,
+      "label": "the tape reads the journal: you → run → edit → reply, each settled",
+      "data": [
+        "note:done",
+        "you:done",
+        "run:done",
+        "edit:done",
+        "reply:done"
+      ]
+    },
+    {
+      "ok": true,
+      "label": "rows carry the owner's observed time (hh:mm:ss)",
+      "data": [
+        "02:48:38",
+        "02:48:45",
+        "02:48:47",
+        "02:48:48",
+        "02:48:49"
+      ]
+    },
+    {
+      "ok": true,
+      "label": "no raw JSON in the tape outside Show raw"
+    },
+    {
+      "ok": true,
+      "label": "Inspect opens the event's own page: labelled fields first",
+      "data": [
+        "What",
+        "When",
+        "Session",
+        "Provider call",
+        "Journal"
+      ]
+    },
+    {
+      "ok": true,
+      "label": "the event page shows verbatim material only behind Show raw"
+    },
+    {
+      "ok": true,
+      "label": "the page opens as a tab in the focused pane (Base)"
+    },
+    {
+      "ok": true,
+      "label": "P16: the tape follows live by default"
+    },
+    {
+      "ok": true,
+      "label": "P16: an event arriving while paused does not scroll the view",
+      "data": {
+        "pausedTop": 0,
+        "afterTop": 0
+      }
+    },
+    {
+      "ok": true,
+      "label": "P16: one Resume live pill counts what arrived",
+      "data": "Resume live · 1 new"
+    },
+    {
+      "ok": true,
+      "label": "P16: Resume live returns to the newest event and follows again"
+    },
+    {
+      "ok": true,
+      "label": "P4: Stop is a request — the button reads Stopping… until the owner answers",
+      "data": "Stopping…"
+    },
+    {
+      "ok": true,
+      "label": "P7: the Stop went to the owner as a cancel request",
+      "data": [
+        "encounter:cancel"
+      ]
+    },
+    {
+      "ok": true,
+      "label": "P7: the conversation reads Stopped.",
+      "data": "Stopped."
+    },
+    {
+      "ok": true,
+      "label": "P7: the stop comes from the native reply — the owner's turn record says it was stopped",
+      "data": {
+        "stop": "Cancelled",
+        "interruption": {
+          "origin": "Human",
+          "reason": "User stopped the encounter"
+        }
+      }
+    },
+    {
+      "ok": true,
+      "label": "P7: what was already done stays visible (its work mark)"
+    },
+    {
+      "ok": true,
+      "label": "P7: the tape's turn closes as stopped",
+      "data": "cancelled"
+    }
+  ],
+  "ops": [
+    {
+      "ok": true,
+      "op": "info",
+      "duration_ms": 0,
+      "data": {
+        "schema": "oi.cradle.walk/v1",
+        "mounted_at": "2026-09-23T01:48:22.271Z",
+        "transport": {
+          "kind": "bridge",
+          "url": "http://127.0.0.1:4379"
+        },
+        "url": "http://localhost:4373/"
+      }
+    },
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 66,
+      "data": {
+        "file": "right-panel-turn-p1-working-mark.png"
+      }
+    },
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 55,
+      "data": {
+        "file": "right-panel-turn-p4-in-flight.png"
+      }
+    },
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 72,
+      "data": {
+        "file": "right-panel-turn-p6-complete.png"
+      }
+    },
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 39,
+      "data": {
+        "file": "right-panel-turn-tape-event-page.png"
+      }
+    },
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 101,
+      "data": {
+        "file": "right-panel-turn-p16-paused.png"
+      }
+    },
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 67,
+      "data": {
+        "file": "right-panel-turn-p7-stopped.png"
+      }
+    }
+  ],
+  "metrics": {},
+  "screenshots": [
+    "right-panel-turn-p1-working-mark.png",
+    "right-panel-turn-p4-in-flight.png",
+    "right-panel-turn-p6-complete.png",
+    "right-panel-turn-tape-event-page.png",
+    "right-panel-turn-p16-paused.png",
+    "right-panel-turn-p7-stopped.png"
+  ]
+}

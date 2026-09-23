@@ -3,7 +3,7 @@ import {connectionLabel,type NativeModelState} from "../../encounter/nativeModel
 import type {NativeModeState} from "../../encounter/nativeMode";
 import {HarnessChip,ModeChip,ModelChip} from "./ComposerChips";
 import {harnessChip,type ConnectionFacts} from "./harness";
-import {useLayoutEffect,useMemo,useRef,type ClipboardEvent} from "react";
+import {useEffect,useLayoutEffect,useMemo,useRef,useState,type ClipboardEvent} from "react";
 import type {EncounterReading,EncounterStatus} from "../../encounter/client";
 import {parseContextItems,removeContextItem,type ContextItem} from "../../context/contextItems";
 import {Glyph} from "../../workspace/Glyph";
@@ -93,7 +93,11 @@ export function ChatComposer({reading,draft,pending,busy,error,editable,promptAl
   /** Files pasted straight into the message field attach like dropped ones. */
   const onPaste=(event:ClipboardEvent)=>{const files=event.clipboardData?.files;if(files?.length&&editable){event.preventDefault();void tools.pickFiles(files);}};
   const current=status?.provider;
-  const stopping=status?.state==="InterruptRequested";
+  // Stop is a request (P4): "Stopping…" from the click until the owner's
+  // own state says how the turn ended.
+  const [stopAsked,setStopAsked]=useState(false);
+  useEffect(()=>{if(!running)setStopAsked(false);},[running]);
+  const stopping=status?.state==="InterruptRequested"||stopAsked;
   const currentFacts:ConnectionFacts|undefined=current?{...connection.providers.find(provider=>provider.id===current.id),...connection.currentFacts,...(current as Partial<ConnectionFacts>),id:current.id,label:current.label}:undefined;
   return <div className="chat-composer" data-connection={drafting?"drafting":connected?running?"running":"connected":"disconnected"}>
     {(error||status?.error)&&reading&&<p className="chat-composer-error oi-refusal" role="alert">{error||status?.error}</p>}
@@ -133,7 +137,7 @@ export function ChatComposer({reading,draft,pending,busy,error,editable,promptAl
         {connection.model&&connection.modelActions&&<ModelChip model={connection.model} actions={connection.modelActions} disabled={pending||running}/>}
       </div>}
       {running
-        ?<button className="chat-stop" disabled={pending||stopping||!cancelAllowed} aria-label={stopping?"Stopping":"Stop"} title="Stop the provider turn" onClick={onCancel}><Glyph name="stop" size={12}/><span>{stopping?"Stopping…":"Stop"}</span></button>
+        ?<button className="chat-stop" disabled={pending||stopping||!cancelAllowed} aria-label={stopping?"Stopping":"Stop"} title="Stop the provider turn" onClick={()=>{setStopAsked(true);onCancel();}}><Glyph name="stop" size={12}/><span>{stopping?"Stopping…":"Stop"}</span></button>
         :<button className="chat-send" disabled={!canSend} aria-label="Send" title={drafting?"Send — opens a new conversation":promptReason??"Send (Enter)"} onClick={onSend}><Glyph name="arrow" size={13}/><span className="sr-only">Send</span></button>}
     </div>
   </div>;

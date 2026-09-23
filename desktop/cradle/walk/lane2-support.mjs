@@ -30,15 +30,22 @@ export async function restoreScope(page, project) {
   await page.reload();
 }
 
-/** Record every kernel op the page issues (op, encounter action, result). */
+/** Record every kernel op the page issues (op, encounter action, result),
+ *  in request order; the result fills in when the response lands. */
 export function recordCalls(page) {
   const calls = [];
-  page.on("response", async response => {
-    if (!response.url().endsWith("/op")) return;
+  const pending = new Map();
+  page.on("request", request => {
+    if (!request.url().endsWith("/op")) return;
     let body;
-    try { body = await response.request().postDataJSON(); } catch { return; }
+    try { body = request.postDataJSON(); } catch { return; }
     const entry = {op: body?.op, action: body?.request?.action, result: null, error: null};
-    calls.push(entry);
+    calls.push(entry); pending.set(request, entry);
+  });
+  page.on("response", async response => {
+    const entry = pending.get(response.request());
+    if (!entry) return;
+    pending.delete(response.request());
     try { const reply = await response.json(); entry.result = reply.outcome?.result ?? null; entry.error = reply.error ?? null; } catch { /* consumed */ }
   });
   return calls;
@@ -48,10 +55,32 @@ export function recordCalls(page) {
  *  clicks when it is actually closed). Returns the panel region. */
 export async function openPanel(page) {
   const panel = page.getByRole("region", {name: "Accompanying agent"});
+  const settled = async () => {
+    // The region animates open: wait until its width holds still.
+    let last = -1;
+    for (let i = 0; i < 40; i++) {
+      const width = (await panel.boundingBox())?.width ?? 0;
+      if (width > 0 && Math.abs(width - last) < 0.5) return;
+      last = width; await page.waitForTimeout(60);
+    }
+  };
   for (let attempt = 0; attempt < 3; attempt++) {
-    try { await panel.waitFor({state: "visible", timeout: 2500}); return panel; } catch { /* closed */ }
+    try { await panel.waitFor({state: "visible", timeout: 2500}); await settled(); return panel; } catch { /* closed */ }
     await page.getByRole("button", {name: "Toggle right region", exact: true}).click();
   }
   await panel.waitFor({state: "visible", timeout: 10000});
+  await settled();
   return panel;
 }
+
+/** The panel's tab row (a nav of plain buttons). */
+export const planeButton = (panel, name) => panel.getByRole("navigation", {name: "Right region planes"}).getByRole("button", {name, exact: true});
+export async function planeLabels(panel) {
+  return (await panel.getByRole("navigation", {name: "Right region planes"}).locator(".panel-tab > span:first-child").allInnerTexts()).map(text => text.trim());
+}
+/** How many message composers the whole window holds. */
+export const textareaCount = page => page.locator('textarea[aria-label="Message"]').count();
+/** The centre region is not inert (usable). */
+export const sameCentre = page => page.evaluate(() => document.querySelector(".desktop-centre")?.inert !== true);
+/** The aikit binary under test: this lane's ai-kit branch build when present. */
+export const LANE_AIKIT = "/Users/admin/Central/worktrees/ui-build/target-aikit/debug/aikit";

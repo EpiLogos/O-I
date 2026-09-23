@@ -16,7 +16,7 @@ import {CHAT_PREVIEW_EVENT} from "./previewGate";
 import {PermissionCard} from "./PermissionCard";
 import {StatusLine} from "./StatusLine";
 import type {ConnectionFacts} from "./harness";
-import {inFlightRow,workMarksOf,type Tape} from "../tape/model";
+import {editedPaths,inFlightRow,turnStopFromEnd,workMarksOf,type Tape} from "../tape/model";
 import "./chat.css";
 
 /**
@@ -65,7 +65,7 @@ const suggestionsOf=(project?:string,subject?:{title:string;location?:CentralLoc
   return out.slice(0,3);
 };
 
-export function AgentChat({session,accompanying,project,agentName,situating,sessionTitle,choosing,subject,resolveSurface,onMessage,onNewChat,onChoose,onProvision,identity:identityOverride,fixture,variant,tape,onOpenActivity,connectionFacts}:{
+export function AgentChat({session,accompanying,project,agentName,situating,sessionTitle,choosing,subject,resolveSurface,onMessage,onNewChat,onChoose,onProvision,identity:identityOverride,fixture,variant,tape,onOpenActivity,connectionFacts,onArtifact}:{
   session?:EncounterSessionHandle;
   accompanying?:{ref:string;project:string;space:string};
   project?:string;
@@ -104,6 +104,8 @@ export function AgentChat({session,accompanying,project,agentName,situating,sess
   onOpenActivity?:(rowId?:string)=>void;
   /** The connected harness's facts from the session's own binding (A1). */
   connectionFacts?:Partial<ConnectionFacts>;
+  /** Open a file the conversation changed (artifact chips, P6). */
+  onArtifact?:(path:string)=>void;
 }) {
   const centre=variant==="centre";
   const kernel=useKernel();
@@ -211,7 +213,10 @@ export function AgentChat({session,accompanying,project,agentName,situating,sess
   const [flightSeen,setFlightSeen]=useState<number>();
   useEffect(()=>{if(inFlight)setFlightSeen(seen=>seen??Date.now());else setFlightSeen(undefined);},[inFlight]);
   const tapeTurns=tape?tape.turns.filter(turn=>turn.index>0&&(turn.rows[0]?.verb==="you"||turn.rows[0]?.verb==="message")):[];
-  const marks=tape&&onOpenActivity?{forTurnFromEnd:(fromEnd:number)=>{const turn=tapeTurns[tapeTurns.length-1-fromEnd];return turn?workMarksOf(tape,turn.index):[];},onOpen:(rowId:string)=>onOpenActivity(rowId)}:undefined;
+  const turnAt=(fromEnd:number)=>tapeTurns[tapeTurns.length-1-fromEnd];
+  const marks=tape&&onOpenActivity?{forTurnFromEnd:(fromEnd:number)=>{const turn=turnAt(fromEnd);return turn?workMarksOf(tape,turn.index):[];},onOpen:(rowId:string)=>onOpenActivity(rowId),
+    stopFromEnd:(fromEnd:number)=>turnStopFromEnd(tape,fromEnd),
+    artifactsForTurnFromEnd:(fromEnd:number)=>{const turn=turnAt(fromEnd);return turn&&!turn.open?editedPaths(tape,turn.index):[];},onArtifact}:undefined;
   const stateLabel=!accompanying?undefined:!state?.reading&&!status?"Reading…":sessionStateLabel(status);
   const agentLabel=status?.provider?.label??identity.name;
   const bound=!!(session&&state&&actions);

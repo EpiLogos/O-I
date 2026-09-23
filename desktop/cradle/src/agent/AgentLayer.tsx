@@ -17,6 +17,7 @@ import {expressionReadingOf,useEncounterSession} from "../encounter/session";
 import {modeClass} from "../encounter/nativeMode";
 import {EXPRESSION_COMPOSE_EVENT} from "../expression/summon";
 import {encounter,encounterProvision} from "../encounter/client";
+import {listFiles} from "../files/client";
 import type {SurfaceBinding} from "../surface/types";
 import type {CentralLocation} from "../kernel/types";
 import {PANEL_INSPECT_EVENT,isPanelInspectDetail,panelInspectKey} from "./planes/panelInspect";
@@ -102,7 +103,7 @@ const KEPT_PLANES=["Chat","Activity","Agents"] as const;
 const CHOSEN_KEY="oi-panel-agent.v1";
 const readChosen=():Record<string,string>=>{try{return JSON.parse(localStorage.getItem(CHOSEN_KEY)??"{}") as Record<string,string>;}catch{return {};}};
 
-export function AgentLayer({project:projectProp, subject, accompanying, onAccompanying, full, onFull, onCollapse, mode="base", extraPlanes, preferredBodyRef, plane: controlledPlane, onPlane, onError, onOpenConversation, onBringBack, resolveSurface}: AgentLayerProps) {
+export function AgentLayer({project:projectProp, subject, accompanying, onAccompanying, full, onFull, onCollapse, mode="base", extraPlanes, preferredBodyRef, plane: controlledPlane, onPlane, onError, onOpenConversation, onBringBack, onOpenSubject, resolveSurface}: AgentLayerProps) {
   const kernel = useKernel();
   const curation = MODE_CURATION[mode].panel;
   const scope = useScope();
@@ -143,7 +144,26 @@ export function AgentLayer({project:projectProp, subject, accompanying, onAccomp
   const {tape,reading:journal}=useTape(accompanying?{project:accompanying.project,ref:accompanying.ref}:undefined,sessionState?.reading);
   const binding=useMemo(()=>{const events=journal?.events??[];for(let index=events.length-1;index>=0;index--){const event=events[index].event as {kind?:string};if(event?.kind==="binding")return event as {protocol?:unknown;effective_launch_argv?:unknown};}return undefined;},[journal?.events]);
   const connectionFacts=useMemo(()=>factsFromBinding(binding),[binding]);
+  /** An artifact chip opens the file the turn changed: the provider's path,
+   *  resolved against the session's working directory, located in Central. */
+  const openArtifact=useCallback(async(path:string)=>{
+    try{
+      const cwd=typeof (binding as {cwd?:unknown}|undefined)?.cwd==="string"?(binding as {cwd:string}).cwd:undefined;
+      const absolute=path.startsWith("/")?path:cwd?`${cwd.replace(/\/+$/,"")}/${path}`:path;
+      const bare=(value:string)=>value.replace(/^\/private(?=\/)/,"");
+      const root=kernel.snapshot.navigator?.root?.root;
+      if(!root||!bare(absolute).startsWith(`${bare(root).replace(/\/+$/,"")}/`))throw new Error(`${path} is outside this Central, so it cannot be opened here.`);
+      const relative=bare(absolute).slice(bare(root).replace(/\/+$/,"").length+1);
+      const slash=relative.lastIndexOf("/");
+      const directory=await listFiles(kernel.transport,slash<0?"":relative.slice(0,slash));
+      const entry=directory.entries.find(candidate=>candidate.kind==="file"&&candidate.name===relative.slice(slash+1));
+      if(!entry)throw new Error(`Central lists no ${relative} any more.`);
+      onOpenSubject?.({title:entry.name,location:entry.location as CentralLocation});
+    }catch(error){onError?.(error instanceof Error?error.message:String(error));}
+  },[binding,kernel.snapshot.navigator,kernel.transport,onOpenSubject,onError]);
   const [focus,setFocus]=useState<TapeFocus>();
+  /** Choosing the Activity tab afresh resumes following the newest event. */
+  const [followToken,setFollowToken]=useState(0);
   const openActivity=useCallback((rowId?:string)=>{if(rowId)setFocus(held=>({rowId,token:(held?.token??0)+1}));show("Activity");},[show]);
   // Activity carries a dot for rows that arrived while it was not in view.
   const [seenRows,setSeenRows]=useState(0);
@@ -240,10 +260,9 @@ export function AgentLayer({project:projectProp, subject, accompanying, onAccomp
 
   const lastSeen=sessionState?.reconnecting?.lastSeenAt;
   return <section ref={host} className="agent-layer" aria-label="Accompanying agent" data-full={full} data-mode={mode} data-plane={plane} data-presence={presence} data-agent-session-ref={expression.agentSessionRef} data-owner-state={expression.state} data-owner-activity-block={expression.latestOwnerActivity?.blockId}>
-    <PanelTop tabs={nav} current={plane} onSelect={id=>{setDetail(undefined);select(id);}} full={full} onFull={onFull} onCollapse={onCollapse}
+    <PanelTop tabs={nav} current={plane} onSelect={id=>{setDetail(undefined);if(id==="Activity"&&plane!=="Activity")setFollowToken(token=>token+1);select(id);}} full={full} onFull={onFull} onCollapse={onCollapse}
       avatar={<AvatarMenu agent={agent} presence={presence} bypass={bypass} roster={roster} lens={lens.on} chosenRef={chosenRef} onChoose={chooseAgent} naraChosen={naraChosen}
-        onChooseNara={lens.on?()=>setChosenRefs(held=>{const next={...held};delete next[scopeKey];try{localStorage.setItem(CHOSEN_KEY,JSON.stringify(next));}catch{/* convenience */}return next;}):undefined}/>}
-      extra={accompanying&&!curation.conversationInCentre&&onOpenConversation&&!promoted?<button type="button" className="oi-tool panel-promote" aria-label="Open the conversation in the centre" title="Open in the centre" onClick={()=>onOpenConversation(accompanying)}><Glyph name="detach" size={13}/></button>:undefined}/>
+        onChooseNara={lens.on?()=>setChosenRefs(held=>{const next={...held};delete next[scopeKey];try{localStorage.setItem(CHOSEN_KEY,JSON.stringify(next));}catch{/* convenience */}return next;}):undefined}/>}/>
     {lastSeen!==undefined&&<p className="panel-line" role="status" data-line="reconnecting">Reconnecting — last seen {Math.max(1,Math.round((Date.now()-lastSeen)/1000))}s ago. Your draft is kept.</p>}
     {sessionState?.unreachable&&<p className="panel-line" role="status" data-line="unreachable">Agents aren&apos;t reachable here right now. Your files, flows and this draft still work here.</p>}
     {bypass&&plane==="Chat"&&!promoted&&<p className="panel-line panel-bypass" role="status" data-line="bypass">Bypass permissions is on for this session: {agent.name} acts without asking. <button type="button" className="oi-action" onClick={()=>{const ask=sessionState?.mode.reading?.mode_observation?.available_modes.find(option=>modeClass(option.id)==="ask");if(ask&&session)void session.actions.selectMode(ask.id);}}>Back to Ask</button></p>}
@@ -253,11 +272,12 @@ export function AgentLayer({project:projectProp, subject, accompanying, onAccomp
         if(!visited.current.has(name)||(name!==plane&&!offered.some(entry=>entry.id===name)))return null;
         const hidden=plane!==name||!!detail;
         return <div key={name} className="agent-plane-host" hidden={hidden} style={hidden?{display:"none"}:undefined}>
+          {name==="Chat"&&accompanying&&!promoted&&!curation.conversationInCentre&&onOpenConversation&&<button type="button" className="oi-tool panel-promote" aria-label="Open the conversation in the centre" title="Open in the centre" onClick={()=>onOpenConversation(accompanying)}><Glyph name="detach" size={13}/></button>}
           {name==="Chat"&&(promoted&&accompanying
             ?<p className="panel-promoted" data-line="promoted"><span>Open in the centre</span> — <button type="button" className="oi-action" onClick={()=>onBringBack?.(accompanying)}>Bring back</button></p>
             :<AgentChat variant="plane" session={session} accompanying={accompanying} project={project??accompanying?.project} agentName={agent.name} situating="" sessionTitle={accompanying?titles[accompanying.ref]:undefined} choosing={choosing}
             subject={{title:subject.title,location:subject.location}} resolveSurface={resolveSurface} onMessage={onError??(message=>console.error(message))}
-            tape={tape} onOpenActivity={offered.some(entry=>entry.id==="Activity")?openActivity:undefined} connectionFacts={connectionFacts}
+            tape={tape} onOpenActivity={offered.some(entry=>entry.id==="Activity")?openActivity:undefined} connectionFacts={connectionFacts} onArtifact={path=>void openArtifact(path)}
             onNewChat={()=>onAccompanying(undefined)} onChoose={choose}
             onProvision={async provisionProject=>{
               const provisioned=await encounterProvision(kernel.transport,provisionProject,preferredBodyRef);
@@ -266,7 +286,7 @@ export function AgentLayer({project:projectProp, subject, accompanying, onAccomp
               onAccompanying(value);
               if(offered.some(entry=>entry.id==="Chat"))select("Chat");
             }}/>)}
-          {name==="Activity"&&<ActivityTab key={accompanying?.ref??"none"} session={session} tape={tape} reading={journal} focus={focus} onChat={offered.some(entry=>entry.id==="Chat")?()=>select("Chat"):undefined}/>}
+          {name==="Activity"&&<ActivityTab key={accompanying?.ref??"none"} session={session} tape={tape} reading={journal} focus={focus} followToken={followToken} onChat={offered.some(entry=>entry.id==="Chat")?()=>select("Chat"):undefined}/>}
           {name==="Agents"&&<AgentsTab roster={roster} boundRef={chosen?.ref} boundPresence={accompanying?presence:undefined} onMessage={agentChosen=>{chooseAgent(agentChosen);select(offered.some(entry=>entry.id==="Chat")?"Chat":plane);}}/>}
         </div>;
       })}

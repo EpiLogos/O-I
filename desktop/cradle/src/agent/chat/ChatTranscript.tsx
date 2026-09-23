@@ -8,7 +8,11 @@ import {operationsOf} from "../../encounter/operations";
 
 /** Work marks (§4.3): per conversation turn, counted from the newest turn
  *  (0 = the latest), each linking to its exact event on the Activity tape. */
-export interface TranscriptMarks {forTurnFromEnd:(fromEnd:number)=>WorkMark[];onOpen:(rowId:string)=>void}
+export interface TranscriptMarks {forTurnFromEnd:(fromEnd:number)=>WorkMark[];onOpen:(rowId:string)=>void;
+ /** How the turn ended per the owner's record (a person's Stop = "cancelled"). */
+ stopFromEnd?:(fromEnd:number)=>string|undefined;
+ /** Files the turn edited (P6 artifact chips), and how to open one. */
+ artifactsForTurnFromEnd?:(fromEnd:number)=>string[];onArtifact?:(path:string)=>void}
 
 /**
  * The chat transcript: the owner's recorded blocks as turns. A user turn is
@@ -74,12 +78,23 @@ export function ChatTranscript({reading,status,error,agentLabel,onEarlier,onLate
       const users=turns.filter(turn=>turn.kind==="user").length;
       let segment=-1;
       const out:ReactNode[]=[];
-      const flush=(key:string)=>{if(!marks||segment<0)return;const list=marks.forTurnFromEnd(users-1-segment);if(list.length)out.push(<WorkMarks key={key} marks={list} onOpen={marks.onOpen}/>);};
+      const flush=(key:string)=>{
+        if(!marks||segment<0)return;
+        const list=marks.forTurnFromEnd(users-1-segment);
+        if(list.length)out.push(<WorkMarks key={key} marks={list} onOpen={marks.onOpen}/>);
+        const files=marks.artifactsForTurnFromEnd?.(users-1-segment)??[];
+        if(files.length&&marks.onArtifact)out.push(<div key={`${key}-files`} className="chat-artifacts" aria-label="Files this turn changed">{files.map(path=><button key={path} type="button" className="oi-chip chat-artifact" title={path} onClick={()=>marks.onArtifact!(path)}><Glyph name="file" size={10}/><span>{path.split("/").pop()}</span></button>)}</div>);
+      };
       for(const turn of turns){
         const first=turn.blocks[0];
         if(turn.kind==="user"){flush(`marks-${first.id}`);segment++;out.push(<UserTurn key={first.id} block={first} onEdit={onEdit}/>);continue;}
         if(turn.kind==="assistant"){out.push(<AssistantTurn key={first.id} block={first} label={agentLabel} live={inFlight&&first.id===lastAssistant}/>);continue;}
-        if(turn.kind==="error"){out.push(<div key={first.id} className="chat-turn chat-turn-error" data-kind="error"><span className="chat-avatar" aria-hidden="true"><Glyph name="warning" size={12}/></span><div><strong>Provider turn failed</strong><p>{first.text}</p></div></div>);continue;}
+        if(turn.kind==="error"){
+          // A person's Stop can reach the provider as an abort: the owner's
+          // turn record says it was stopped (P7), so it reads as Stopped.
+          if(segment>=0&&marks?.stopFromEnd?.(users-1-segment)==="cancelled"){out.push(<p key={first.id} className="chat-stopped oi-note" data-kind="cancelled"><Glyph name="stop" size={11}/> Stopped.</p>);continue;}
+          out.push(<div key={first.id} className="chat-turn chat-turn-error" data-kind="error"><span className="chat-avatar" aria-hidden="true"><Glyph name="warning" size={12}/></span><div><strong>Provider turn failed</strong><p>{failureText(first.text)}</p></div></div>);continue;
+        }
         if(turn.kind==="cancelled"){out.push(<p key={first.id} className="chat-stopped oi-note" data-kind="cancelled"><Glyph name="stop" size={11}/> Stopped.{first.text?` ${first.text}`:""}</p>);continue;}
         if(!marks)out.push(<WorkingRow key={first.id} blocks={turn.blocks}/>);
       }
@@ -160,4 +175,10 @@ function WorkMarks({marks,onOpen}:{marks:WorkMark[];onOpen:(rowId:string)=>void}
   return <ul className="chat-work-marks" aria-label="Work in this turn">
     {marks.map(mark=><li key={mark.rowId}><button type="button" className="chat-work-mark" data-row={mark.rowId} data-status={mark.status} onClick={()=>onOpen(mark.rowId)} title="Open this event in Activity"><span aria-hidden="true">⟡</span>{mark.line}</button></li>)}
   </ul>;
+}
+
+/** The owner records a failure as {"Failed":{"reason":…}}; show its words. */
+function failureText(text:string):string {
+  try{const value=JSON.parse(text) as {Failed?:{reason?:unknown}};if(typeof value?.Failed?.reason==="string")return value.Failed.reason;}catch{/* plain text */}
+  return text;
 }
