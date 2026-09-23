@@ -93,24 +93,32 @@ try {
     await watchReveal(page);
     if (theme === 'light') await page.keyboard.press('Enter');
     else await page.getByRole('button', {name: 'O:I is ready. Open the app.', exact: true}).click();
-    await page.locator('.oi-welcome[data-phase="flipping"]').waitFor();
+    await page.locator('.oi-welcome[data-phase="entering"]').waitFor();
+    await page.waitForFunction(() => {
+      const node = document.querySelector('.oi-welcome');
+      if (!node) return false;
+      const opacity = Number(getComputedStyle(node).opacity);
+      return opacity < 0.82 && opacity > 0.4;
+    }, null, {timeout: 5000});
     await page.screenshot({path: `/tmp/welcome-${theme}-flip.png`});
-    assert.equal(await page.evaluate(() => sessionStorage.getItem('oi-cradle.welcome.v1')), null, 'starting the flip is not a completed opening');
+    assert.equal(await page.evaluate(() => sessionStorage.getItem('oi-cradle.welcome.v1')), null, 'starting the gesture is not a completed opening');
     await entered(page);
     const samples = await page.evaluate(() => window.welcomeSamples);
     const host = HOST[theme];
     const inverse = HOST[theme === 'dark' ? 'light' : 'dark'];
     const fading = samples.filter(sample => sample.opacity !== null && Number(sample.opacity) < 0.98);
-    assert.ok(fading.length > 0, 'the settled splash fades');
+    assert.ok(fading.length >= 24, 'the opacity fade is long enough to read, not a cut');
+    assert.ok(Number(fading[0].opacity) > 0.7, 'opacity leaves from nearly opaque instead of dropping');
+    assert.ok(Number(fading.at(-1).opacity) < 0.25, 'opacity eases out');
     for (const sample of fading) {
-      assert.equal(sample.phase, 'revealing', 'fade happens only in the reveal phase');
-      assert.equal(sample.opening, null, 'the inverse body ground is gone before the fade');
-      assert.equal(sample.bg, host, 'the splash has settled on the saved ground before it fades');
+      assert.equal(sample.phase, 'entering', 'colour and fade are one gesture');
+      assert.equal(sample.opening, null, 'the inverse body ground is gone before the splash is transparent');
       assert.equal(sample.body, SHELL[theme], 'the revealed document is the saved shell, not the opening ground');
       assert.notEqual(sample.body, inverse);
     }
-    assert.ok(samples.some(sample => sample.phase === 'flipping' && Number(sample.opacity) === 1), 'the theme flip is visible while the splash still covers the app');
-    assert.ok(samples.filter(sample => sample.phase === 'rest' || sample.phase === 'flipping').every(sample => Number(sample.opacity) === 1));
+    const late = fading.filter(sample => Number(sample.opacity) < 0.35);
+    assert.ok(late.length > 0 && late.every(sample => sample.bg === host), 'the splash is on the saved ground before it is mostly gone');
+    assert.ok(samples.some(sample => sample.phase === 'entering' && Number(sample.opacity) > 0.97), 'the colour move begins while the splash still covers the app');
     await page.screenshot({path: `/tmp/welcome-${theme}-entered.png`});
     const completion = await page.evaluate(() => ({
       marker: sessionStorage.getItem('oi-cradle.welcome.v1'),
@@ -129,7 +137,7 @@ try {
     assert.equal(await page.evaluate(() => welcomeTest.leakedKeys.length), 0, 'entry keys are owned by the opening');
     await page.keyboard.press('Escape');
     assert.equal(await page.evaluate(() => welcomeTest.leakedKeys.length), 1, 'the capture handler is removed when the app becomes interactive');
-    results.push({theme, inverseMark: pixels, fadeSamples: fading.length, flipSamples: samples.filter(sample => sample.phase === 'flipping').length});
+    results.push({theme, inverseMark: pixels, fadeSamples: fading.length, firstFadeOpacity: Number(fading[0].opacity), lastFadeOpacity: Number(fading.at(-1).opacity)});
     await page.reload();
     await entered(page);
     assert.equal(await page.locator('.oi-welcome').count(), 0, 'the completed opening is skipped in the same session');
@@ -174,7 +182,7 @@ try {
     await entered(page);
     const samples = await page.evaluate(() => window.welcomeSamples);
     const fading = samples.filter(sample => sample.opacity !== null && Number(sample.opacity) < 0.98);
-    assert.ok(fading.every(sample => sample.opening === null && sample.bg === HOST.light), 'reduced motion still settles the ground before the fade');
+    assert.ok(fading.every(sample => sample.opening === null && sample.body === SHELL.light), 'reduced motion still reveals the saved shell, not the opening ground');
     results.push({reducedMotion: {samples: samples.length, fading: fading.length}});
     await reduced.close();
   }

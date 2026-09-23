@@ -1,6 +1,6 @@
 /** First open is a static splash, not the live expression field. Entry waits
- * for the mark and the workspace, then flips the opposite ground onto the
- * saved theme before the splash fades. */
+ * for the mark and the workspace, then moves ground and ink onto the saved
+ * theme while opacity eases out across that move. */
 import {renderedBounds} from '../knowledge-projection-geometry.mjs';
 
 const READY = '.oi-welcome-enter[aria-label="O:I is ready. Open the app."]';
@@ -74,14 +74,16 @@ export default async function run({page, baseUrl, check, shot, metric}) {
     await shot(`welcome-${theme}-rest`);
     await watchReveal(page);
     await page.locator(READY).click();
-    await page.locator('.oi-welcome[data-phase="flipping"]').waitFor({timeout: 5000}).catch(() => {});
-    check(await page.evaluate(() => sessionStorage.getItem('oi-cradle.welcome.v1') === null), 'Starting the flip is not a completed opening');
+    await page.locator('.oi-welcome[data-phase="entering"]').waitFor({timeout: 5000});
+    check(await page.evaluate(() => sessionStorage.getItem('oi-cradle.welcome.v1') === null), 'Starting the gesture is not a completed opening');
     await shot(`welcome-${theme}-flip`);
     await welcome.waitFor({state: 'detached', timeout: 30000});
     const samples = await page.evaluate(() => window.welcomeSamples);
     const fading = samples.filter(sample => sample.opacity !== null && Number(sample.opacity) < 0.98);
-    check(fading.length > 0 && fading.every(sample => sample.phase === 'revealing' && sample.opening === null && sample.bg === host), `${theme} fade starts only after the splash has settled on the saved ground`, fading.slice(0, 3));
-    check(samples.filter(sample => sample.phase === 'rest' || sample.phase === 'flipping').every(sample => Number(sample.opacity) === 1), `${theme} theme flip stays opaque`);
+    const late = fading.filter(sample => Number(sample.opacity) < 0.35);
+    check(fading.length > 8 && fading.every(sample => sample.phase === 'entering' && sample.opening === null), `${theme} fade is part of the enter gesture and the opening ground is already gone`, fading.slice(0, 3));
+    check(late.length > 0 && late.every(sample => sample.bg === host), `${theme} splash is on the saved ground before it is mostly gone`, late.slice(0, 2));
+    check(samples.some(sample => sample.phase === 'entering' && Number(sample.opacity) > 0.9), `${theme} colour move begins while the splash still covers the app`);
     check(await page.evaluate(theme => JSON.parse(localStorage.getItem('oi-cradle.visuals.v1')).theme === theme, theme), 'The opening preserves the saved app appearance');
     await shot(`welcome-${theme}-entered`);
   }
