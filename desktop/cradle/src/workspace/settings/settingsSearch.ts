@@ -4,11 +4,10 @@
  * snapshot the sections render, so a result never names a row that isn't
  * there.
  */
-import {credentialCards, harnessName, readyHarnesses, adapterNeeded, skillParts, titleCase} from "./sectionModel";
+import {credentialCards, harnessName, readyHarnesses, adapterNeeded, skillParts, titleCase, permissionModeEntries, trustEntries} from "./sectionModel";
 import type {SettingsSnapshot} from "./settingsData";
 import {DEFAULT_CONNECTION_ROW, settingRowId, skillRowId} from "./changeModel";
 import {PRODUCTS, type SettingsPlace} from "./settingsNav";
-import {permissionModeEntries, trustEntries} from "./sections/PermissionsSection";
 
 export interface SearchEntry {
   label: string;

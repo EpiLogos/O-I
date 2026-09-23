@@ -13,10 +13,12 @@
 import {chromium} from 'playwright';
 import {spawn} from 'node:child_process';
 import {existsSync} from 'node:fs';
+import {dirname, resolve} from 'node:path';
+import {fileURLToPath} from 'node:url';
 import {ALL_GROUPS, assertOwnerGroupLive, readLiveListing, readRegistryViaBridge} from './live-settings-acceptance.mjs';
 
-const cradleRoot = '/Users/admin/Central/Work/O-I/desktop/cradle';
-const oiBin = process.env.OI_BIN ?? '/Users/admin/Central/Work/O-I/cli/target/debug/oi';
+const cradleRoot = resolve(dirname(fileURLToPath(import.meta.url)), '..');
+const oiBin = process.env.OI_BIN ?? resolve(cradleRoot, '../../cli/target/debug/oi');
 const url = process.env.DESK_URL ?? 'http://localhost:4173/';
 const bridgePort = 4197;
 const bridgeUrl = `http://127.0.0.1:${bridgePort}`;
@@ -55,31 +57,16 @@ await page.goto(url);
 await page.waitForSelector('.desktop-shell', {timeout: 30000});
 await page.waitForSelector('.world-system-settings', {timeout: 30000});
 await page.locator('.world-system-settings').first().click();
-await page.waitForSelector('.settings-home', {timeout: 60000});
-await page.waitForSelector('[data-owner-group]', {timeout: 60000});
+await page.waitForSelector('[data-settings-page]', {timeout: 60000});
+await page.waitForSelector('[data-settings-navigator]', {timeout: 60000});
 
-const fixtureBanner = await page.locator('[data-config-source="fixture"]').count();
-if (fixtureBanner) fail('live source', 'the fixture banner rendered in a production bundle');
-else ok('the production bundle binds the LIVE source (no fixture world)');
-
-const liveNote = await page.locator('[data-config-source="live"]').count();
-if (liveNote) ok('the live source note renders');
-else fail('live source note', 'the live source note did not render');
-
-// Wait until the resolution reads land (rows carry their reconciliations
-// only after the second engine pass) — the group count settling is the
-// signal the registry read is fully projected.
-let groupCount = -1;
-for (let stable = 0, seen = 0; seen < 90;) {
-  const count = await page.locator('[data-owner-group]').count();
-  stable = count === groupCount ? stable + 1 : 0;
-  groupCount = count;
-  if (stable >= 8) break; // ~4s without a mount flip: the read has settled
-  await page.waitForTimeout(500); seen++;
-}
+// 12-SETTINGS §5: a production bundle has no fixture world at all.
+const fixtureLabel = await page.locator('[data-config-source="fixture"]').count();
+if (fixtureLabel) fail('live source', 'the fixture label rendered in a production bundle');
+else ok('the production bundle binds the LIVE plane (no fixture world)');
 
 const registry = await readRegistryViaBridge(bridgeUrl);
-console.log('owner groups rendered:', (await page.locator('[data-owner-group]').evaluateAll(nodes => nodes.map(n => n.getAttribute('data-owner')))).join(', '));
+console.log('product pages listed:', (await page.locator('[data-settings-product]').evaluateAll(nodes => nodes.map(n => n.getAttribute('data-settings-product')))).join(', '));
 
 const verdicts = {};
 for (const owner of ALL_GROUPS) {

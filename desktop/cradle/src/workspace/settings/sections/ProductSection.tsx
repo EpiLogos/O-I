@@ -34,7 +34,7 @@ function actionLabel(action: DisclosedAction): string {
 }
 
 function runnable(action: DisclosedAction & {native_path?: string}): boolean {
-  return action.availability === "disclosed" && action.exposure?.ui !== false && !/[<[]/.test(action.native_path ?? "");
+  return action.availability === "disclosed" && action.exposure?.ui !== false && !!action.native_path && !/[<[]/.test(action.native_path);
 }
 
 function Actions({product, actions}: {product: string; actions: (DisclosedAction & {native_path?: string})[]}) {
@@ -52,7 +52,8 @@ function Actions({product, actions}: {product: string; actions: (DisclosedAction
     }
   };
   const buttons = actions.filter(runnable);
-  const needsSubject = actions.filter((action) => action.availability === "disclosed" && !runnable(action));
+  const needsSubject = actions.filter((action) => action.availability === "disclosed" && !runnable(action) && !!action.native_path);
+  const cliOnly = actions.filter((action) => action.availability === "disclosed" && !action.native_path);
   const missing = missingSentence(actions);
   const ranAction = ran ? actions.find((action) => action.action_ref === ran.ref) : null;
   return <>
@@ -62,6 +63,7 @@ function Actions({product, actions}: {product: string; actions: (DisclosedAction
       {buttons.map((action) => <button key={action.action_ref} type="button" className="settings-button" title={action.title} disabled={busy !== null} data-product-action={action.action_ref} onClick={() => void run(action)}>{busy === action.action_ref ? "Running…" : actionLabel(action)}</button>)}
     </div>}
     {needsSubject.length > 0 && <p className="settings-muted">{needsSubject.map((action) => action.title).join(" · ")} — these act on a chosen subject, so they run from where that subject is.</p>}
+    {cliOnly.length > 0 && <p className="settings-muted" data-product-cli-only>Through the product's own command line: {cliOnly.map((action) => action.title).join(" · ")}.</p>}
     {missing && <p className="settings-missing" data-settings-missing>{missing}</p>}
     {ran && <div className="settings-action-result" role="status" data-product-action-result={ran.ref}>
       <p>{ranAction?.title ?? ran.ref}: {ran.error ? `didn't run — ${ran.error}` : ran.ok ? "ran" : "the product reported a problem"} · {new Date(ran.at).toLocaleTimeString([], {hour: "2-digit", minute: "2-digit"})}</p>

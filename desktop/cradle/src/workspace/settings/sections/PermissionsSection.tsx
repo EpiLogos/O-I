@@ -13,7 +13,8 @@
 import {useEffect, useState} from "react";
 import type {EnumOption, ScopeAddress} from "../../../configuration/contracts";
 import {useScope, scopeProject} from "../../scope";
-import {harnessName, readyHarnesses, titleCase} from "../sectionModel";
+import {harnessName, permissionModeEntries, readyHarnesses, titleCase, trustEntries} from "../sectionModel";
+export {permissionModeEntries, trustEntries};
 import {defaultScope, refreshAll, resolutionKey, watchPair, type SettingEntry, type SettingsSnapshot} from "../settingsData";
 import {settingRowId, stageSetting, stagedChanges, undoChange} from "../changeModel";
 import {ConfigSettingRow} from "./ConfigRows";
@@ -32,10 +33,6 @@ const isBypass = (value: string) => /bypass/i.test(value);
 
 /** Permission-mode settings in AIKit's contribution (any harness section
  * whose setting names a permission mode). */
-export function permissionModeEntries(data: SettingsSnapshot): SettingEntry[] {
-  if (data.registry.state !== "ok") return [];
-  return data.registry.value.entries.filter((entry) => /permission/i.test(entry.setting.setting_ref) && /mode/i.test(entry.setting.setting_ref) && entry.setting.value_schema.type === "enum");
-}
 
 function ModeRow({entry, data}: {entry: SettingEntry; data: SettingsSnapshot}) {
   const {setting} = entry;
@@ -76,11 +73,6 @@ const TRUST_TITLES: Record<string, string> = {
   "ai-kit:zcode:hooks.fs-guardrail": "ZCode file guardrail",
 };
 
-export function trustEntries(data: SettingsSnapshot): SettingEntry[] {
-  if (data.registry.state !== "ok") return [];
-  const harnessSections = new Set(["claude-code", "codex", "zcode", "pi", "gemini", "hermes"]);
-  return data.registry.value.entries.filter((entry) => entry.owner.owner_ref === "ai-kit" && harnessSections.has(entry.setting.setting_ref.split(":")[1] ?? "") && !/permission.*mode/i.test(entry.setting.setting_ref));
-}
 
 function TrustKeys({counts}: {counts: {keys: number; states: Record<string, number>}}) {
   const [open, setOpen] = useState(false);

@@ -195,7 +195,7 @@ export default async function run({page, baseUrl, check, shot, provision: world,
   await page.locator('[data-product-page="ai-kit"] [data-product-health]').waitFor({timeout: 240000});
   const system = aikitJson("system");
   const buttons = await page.locator("[data-product-action]").evaluateAll((nodes) => nodes.map((node) => node.getAttribute("data-product-action")));
-  const runnable = system.actions.filter((action) => action.availability === "disclosed" && !/[<[]/.test(action.native_path ?? "")).map((action) => action.action_ref);
+  const runnable = system.actions.filter((action) => action.availability === "disclosed" && action.exposure?.ui !== false && action.native_path && !/[<[]/.test(action.native_path)).map((action) => action.action_ref);
   check(JSON.stringify(buttons) === JSON.stringify(runnable), "Products: the disclosed actions are buttons", {buttons, runnable});
   const missing = system.actions.filter((action) => action.availability !== "disclosed");
   check(missing.length === 0 || /have no native operation here yet\.$|has no native operation here yet\.$/.test((await page.locator('[data-product-page="ai-kit"] [data-settings-missing]').textContent()) ?? ""),

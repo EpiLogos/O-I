@@ -7,7 +7,7 @@
  */
 import type {CatalogueEntry, HarnessRow} from "../../configuration/harnessSource";
 import type {SystemDisclosureReading} from "../../configuration/systemDisclosure";
-import type {CredentialBinding, SettingsSnapshot} from "./settingsData";
+import type {CredentialBinding, SettingEntry, SettingsSnapshot} from "./settingsData";
 
 // ---------------------------------------------------------------------------
 // names
@@ -258,4 +258,21 @@ export function briefValue(value: unknown): string {
     return keys.length === 0 ? "none" : `${keys.length} ${keys.length === 1 ? "entry" : "entries"}`;
   }
   return String(value);
+}
+
+// ---------------------------------------------------------------------------
+// permissions (§3.7)
+
+/** Permission-mode settings in AIKit's contribution (any harness section
+ * whose setting names a permission mode). */
+export function permissionModeEntries(data: SettingsSnapshot): SettingEntry[] {
+  if (data.registry.state !== "ok") return [];
+  return data.registry.value.entries.filter((entry) => /permission/i.test(entry.setting.setting_ref) && /mode/i.test(entry.setting.setting_ref) && entry.setting.value_schema.type === "enum");
+}
+
+/** The harnesses' own trust and guardrail rows AIKit discloses. */
+export function trustEntries(data: SettingsSnapshot): SettingEntry[] {
+  if (data.registry.state !== "ok") return [];
+  const harnessSections = new Set(["claude-code", "codex", "zcode", "pi", "gemini", "hermes"]);
+  return data.registry.value.entries.filter((entry) => entry.owner.owner_ref === "ai-kit" && harnessSections.has(entry.setting.setting_ref.split(":")[1] ?? "") && !/permission.*mode/i.test(entry.setting.setting_ref));
 }

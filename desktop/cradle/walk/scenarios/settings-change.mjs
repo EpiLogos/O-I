@@ -106,42 +106,52 @@ export default async function run({page, baseUrl, check, shot, provision: world,
   await strip.waitFor({state: "detached", timeout: 60000});
   check(await strip.count() === 0, "S3 after a verified apply the strip leaves the DOM again");
 
-  // --- S7 · refused and partly applied ----------------------------------------
-  // Refused: a capability the owner does not know, held from the CLI.
+  // --- S7 · refused, then partly applied -------------------------------------
+  // Refused: a capability the owner does not know, held from the CLI (its own
+  // request, so the owner's refusal is about exactly this change).
   world.oi("config", "hold", "ai-kit:skills:skills.capabilities", JSON.stringify({"skill/walkskills/not-in-catalogue": true}), "machine", "--json");
-  // Partly applied: walk-alpha is also enabled at the project scope, so
-  // turning it off for the machine cannot take it off.
-  world.aikit("enable", "skill/walkskills/walk-alpha", "--scope", "project", "--apply");
-  await openSection(page, "skills");
   await page.reload();
   await page.locator("[data-settings-page]").waitFor({timeout: 60000});
   await openSection(page, "skills");
   await settled(page);
-  await skill("walk-alpha").locator("[role=switch]").waitFor({timeout: 240000});
   await strip.waitFor({timeout: 240000});
-  log(`strip before alpha: ${await strip.innerText()}`);
-  await skill("walk-alpha").locator("[role=switch]").click();
-  await page.waitForFunction(() => document.querySelector('[data-skill="skill/walkskills/walk-alpha"]')?.getAttribute("data-changed") === "true", null, {timeout: 240000});
   await strip.getByRole("button", {name: "Review changes"}).click();
   await page.waitForFunction(() => document.querySelector("[data-settings-review-sheet]")?.getAttribute("data-phase") === "ready", null, {timeout: 240000});
   const refusalBefore = (await sheet.locator('[data-review-row*="not-in-catalogue"] [data-review-refusal]').textContent().catch(() => "")) ?? "";
   check(/not in the catalogue/.test(refusalBefore), "S7 the review shows the owner's refusal in its own words before anything moves", {refusalBefore});
   await sheet.getByRole("button", {name: "Apply changes"}).click();
   await page.waitForFunction(() => document.querySelector("[data-settings-review-sheet]")?.getAttribute("data-phase") === "done", null, {timeout: 300000});
-  const partial = await sheet.locator("[data-review-row]").evaluateAll((nodes) => nodes.map((node) => ({key: node.getAttribute("data-review-row"), result: node.querySelector("[data-review-result]")?.getAttribute("data-review-result"), text: node.querySelector("[data-review-result]")?.textContent ?? ""})));
-  const refused = partial.find((row) => row.key.includes("not-in-catalogue"));
-  const alpha = partial.find((row) => row.key.includes("walk-alpha"));
-  check(refused?.result === "refused" && refused.text.startsWith("This change wasn't applied.") && /not in the catalogue/.test(refused.text),
+  const refused = await sheet.locator('[data-review-row*="not-in-catalogue"] [data-review-result]').evaluate((node) => ({result: node.getAttribute("data-review-result"), text: node.textContent ?? ""}));
+  check(refused.result === "refused" && refused.text.startsWith("This change wasn't applied.") && /not in the catalogue/.test(refused.text),
     "S7 the refused change reads \"This change wasn't applied.\" with the owner's reason", {refused});
-  check(alpha?.result === "partial" && alpha.text.startsWith("Partly applied") && /another scope/.test(alpha.text),
-    "S7 the overridden change reads \"Partly applied\" with the reason", {alpha});
-  check(active().has("skill/walkskills/walk-alpha"), "S7 the owner still reports walk-alpha on — the page did not claim otherwise");
-  const partialReceipt = (await sheet.locator("[data-review-receipt]").textContent()) ?? "";
-  check(!/^Applied \d+ changes? ·/.test(partialReceipt.trim()) || /of/.test(partialReceipt), "S7 the receipt does not report success for all rows", {partialReceipt});
-  await shot("refused-partial");
+  const refusedReceipt = ((await sheet.locator("[data-review-receipt]").textContent()) ?? "").trim();
+  check(/^Applied 0 of 1 changes ·/.test(refusedReceipt), "S7 a refusal is not reported as success", {refusedReceipt});
+  await shot("refused");
   await sheet.getByRole("button", {name: "Done"}).click();
   await strip.getByRole("button", {name: "Discard"}).click();
   await strip.waitFor({state: "detached", timeout: 240000});
+
+  // Partly applied: walk-alpha is also enabled at the project scope, so
+  // turning it off for the machine cannot take it off.
+  world.aikit("enable", "skill/walkskills/walk-alpha", "--scope", "project", "--apply");
+  await skill("walk-alpha").locator("[role=switch]").click();
+  await page.waitForFunction(() => document.querySelector('[data-skill="skill/walkskills/walk-alpha"]')?.getAttribute("data-changed") === "true", null, {timeout: 240000});
+  await strip.getByRole("button", {name: "Review changes"}).click();
+  await page.waitForFunction(() => document.querySelector("[data-settings-review-sheet]")?.getAttribute("data-phase") === "ready", null, {timeout: 240000});
+  await sheet.getByRole("button", {name: "Apply changes"}).click();
+  await page.waitForFunction(() => document.querySelector("[data-settings-review-sheet]")?.getAttribute("data-phase") === "done", null, {timeout: 300000});
+  const alpha = await sheet.locator('[data-review-row*="walk-alpha"] [data-review-result]').evaluate((node) => ({result: node.getAttribute("data-review-result"), text: node.textContent ?? ""}));
+  check(alpha.result === "partial" && alpha.text.startsWith("Partly applied") && /another scope/.test(alpha.text),
+    "S7 the overridden change reads \"Partly applied\" with the reason", {alpha});
+  check(active().has("skill/walkskills/walk-alpha"), "S7 the owner still reports walk-alpha on — the page did not claim otherwise");
+  const partialReceipt = ((await sheet.locator("[data-review-receipt]").textContent()) ?? "").trim();
+  check(/^Applied 0 of 1 changes ·/.test(partialReceipt), "S7 a partial readback is not reported as success", {partialReceipt});
+  await shot("partial");
+  await sheet.getByRole("button", {name: "Done"}).click();
+  if (await strip.count()) {
+    await strip.getByRole("button", {name: "Discard"}).click();
+    await strip.waitFor({state: "detached", timeout: 240000});
+  }
 
   // --- S8 · stale plan ------------------------------------------------------------
   await skill("walk-gamma").locator("[role=switch]").click();

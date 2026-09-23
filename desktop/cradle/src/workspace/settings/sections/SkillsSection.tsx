@@ -81,7 +81,7 @@ export function SkillsSection({data}: {data: SettingsSnapshot}) {
   if (data.suite.state === "reading") return <Reading/>;
   if (data.suite.state === "failed") return <Unreadable error={data.suite.error} onRetry={() => void refreshAll()}/>;
   const facts = data.suite.value.disclosure.state === "ok" ? data.suite.value.disclosure.rows : null;
-  if (!facts) return <Missing>Skills aren't disclosed here: {data.suite.value.disclosure.state === "absent" ? data.suite.value.disclosure.reason : ""}</Missing>;
+  if (!facts) return <Unreadable error={data.suite.value.disclosure.state === "absent" ? data.suite.value.disclosure.reason : "AIKit's settings disclosure didn't answer."} onRetry={() => void refreshAll()}/>;
   const resolution = address ? data.resolutions[resolutionKey(CAPABILITIES_REF, address)] : undefined;
   const held = resolution && isStaged(resolution) && resolution.desired?.value && typeof resolution.desired.value === "object" && !Array.isArray(resolution.desired.value) ? resolution.desired.value as Record<string, boolean> : {};
   const writable = data.registry.state === "ok" && !!data.registry.value.index[CAPABILITIES_REF]?.setting.writable;

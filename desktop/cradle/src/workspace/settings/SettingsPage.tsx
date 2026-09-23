@@ -24,6 +24,8 @@ import {ProductSection} from "./sections/ProductSection";
 import {VisualsView} from "./VisualsView";
 import {Reading, Unreadable} from "./rows";
 import {FixtureConsole} from "./FixtureConsole";
+import {AgentSetupReturn} from "../../agency/AgentSetupReturn";
+import {AGENT_SETUP_EVENT, agentSetupSnapshot} from "../../agency/agentSetup";
 import "./settings-page.css";
 
 function backToWork() {
@@ -77,6 +79,19 @@ export function SettingsPage() {
   const [discovery, setDiscovery] = useState<Discovery>({state: "idle", findings: []});
   const body = useRef<HTMLDivElement>(null);
   useEffect(() => ensureSettingsLoaded(), []);
+  // An Agent-setup excursion (agency/agentSetup.ts) lands on the section
+  // that repairs it; its return control rides in the header.
+  useEffect(() => {
+    const land = () => {
+      const destination = agentSetupSnapshot()?.destination;
+      if (!destination) return;
+      const section = ({credentials: "credentials", skills: "skills", harness: "harnesses"} as const)[destination.topic as "credentials" | "skills" | "harness"];
+      goTo(section ? {kind: "section", id: section} : {kind: "product", id: destination.owner}, destination.settingRef ? `setting:${destination.settingRef}` : null);
+    };
+    land();
+    window.addEventListener(AGENT_SETUP_EVENT, land);
+    return () => window.removeEventListener(AGENT_SETUP_EVENT, land);
+  }, []);
   const changes = stagedChanges(data);
   const pendingRef = useRef(changes.length);
   pendingRef.current = changes.length;
@@ -124,6 +139,7 @@ export function SettingsPage() {
         <button type="button" className="settings-button" data-settings-back onClick={backToWork}>Back to work</button>
       </div>
     </header>
+    <AgentSetupReturn/>
     {data.registry.state === "ok" && data.registry.value.source === "fixture" && <p className="settings-muted" data-config-source="fixture">A worked example for development (the fixture world) — not this machine's settings.</p>}
     <div className="settings-page-body" ref={body}>
       {!anyRead ? <Reading/>
