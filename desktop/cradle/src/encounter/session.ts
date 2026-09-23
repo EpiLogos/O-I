@@ -1,5 +1,5 @@
 import {reviewedContext,nativeContext,announceContext,clearSnapshotApprovals} from "../context/nativeContext";
-import {unknownDispatch,settledPhase,mayStartDispatch} from "./deliveryOutcome";
+import {unknownDispatch,failedDispatch,admissionRefusal,settledPhase,mayStartDispatch} from "./deliveryOutcome";
 /**
  * One observer per encounter session.
  *
@@ -368,7 +368,7 @@ class EncounterSession implements EncounterSessionActions {
    if(settledPhase(record.phase)){this.settle({ref,record,duplicate:receipt.duplicate,packet:turn.packet});return;}
    this.set({dispatch:{kind:"running",ref,phase:record.phase}});
    await this.track(ref,turn.packet);
-  }catch(error){this.set({dispatch:unknownDispatch(ref,error)});void this.probe();}
+  }catch(error){this.set({dispatch:failedDispatch(ref,error)});void this.probe();}
  };
  // Explicitly reconcile existing native delivery identities. No send is
  // called here; absence, refusal and unreadable results stay unknown.
@@ -419,7 +419,7 @@ class EncounterSession implements EncounterSessionActions {
    const rows=recipients.map(recipient=>{
     const entry=bySession.get(recipient.agent_session);
     if(!entry)return {agentSession:recipient.agent_session,phase:"unknown",error:"Missing recipient acknowledgement; inspect without replay"};
-    if(entry.error)return {agentSession:recipient.agent_session,error:`${entry.error.message} [${entry.error.code}]`};
+    if(entry.error){const error=`${entry.error.message} [${entry.error.code}]`;return admissionRefusal(error)?{agentSession:recipient.agent_session,error}:{agentSession:recipient.agent_session,phase:"unknown",error};}
     return {agentSession:recipient.agent_session,phase:entry.result!.delivery.phase,duplicate:entry.result!.duplicate};
    });
    this.set({group:{ref,rows}});
@@ -433,7 +433,7 @@ class EncounterSession implements EncounterSessionActions {
      if(current)this.set({group:{...current,rows:current.rows.map((existing,existingIndex)=>existingIndex===index?{...existing,...row}:existing)}});
     });
    }));
-  }catch(error){this.set({group:{ref,rows:recipients.map(recipient=>({agentSession:recipient.agent_session,phase:"unknown",error:String(error)}))}});void this.probe();}
+  }catch(error){const refused=admissionRefusal(error);this.set({group:{ref,rows:recipients.map(recipient=>refused?{agentSession:recipient.agent_session,error:String(error)}:{agentSession:recipient.agent_session,phase:"unknown",error:String(error)})}});void this.probe();}
  };
 
  // --- A2A exchange: the resident's own reply is the bounded passage.
@@ -476,7 +476,7 @@ class EncounterSession implements EncounterSessionActions {
     initiator_participant_ref:"participant:desktop-operator",
     message:{message_id:`a2a-agency-${Date.now().toString(36)}`,text:seed,purpose:"agency-panel-a2a-exchange"},
    }});
-   if(routed.error||routed.outcome?.result!=="a2a_exchange")throw new Error(routed.error??"The A2A exchange could not be routed through the kernel.");
+   if(routed.error||routed.outcome?.result!=="a2a_exchange_difference")throw new Error(routed.error??"The A2A exchange could not be routed through the kernel.");
    const difference=routed.outcome.data as unknown as A2aDifference;
    this.set({a2a:{seed,busy:false,difference}});
   }catch(err){this.set({a2a:{seed,busy:false,error:String(err)}});}

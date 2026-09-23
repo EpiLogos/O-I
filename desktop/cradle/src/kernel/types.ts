@@ -335,7 +335,7 @@ export type KernelOpResult =
   | { result:"encounter_task_reading";data:unknown }
   | { result:"encounter_joined";reading:unknown }
   | { result:"native_owner_reading";owner:string;data:unknown;failure:unknown }
-  | { result:"a2a_exchange";data:unknown }
+  | { result:"a2a_exchange_difference";data:unknown }
   | { result:"factory_development_reading";data:unknown }
   | { result:"factory_attempt_reading";data:unknown }
   | { result:"factory_attempt_task_list_reading";data:unknown }
