@@ -1,5 +1,5 @@
 import {ActiveEncounterContext} from "./workspace/activeEncounter";
-import {CanvasStage} from "./workspace/primitives/CanvasHost";
+import {CanvasStage,CanvasHUD} from "./workspace/primitives/CanvasHost";
 import {ExpressionLayout} from "./shared/Expression";
 import {mintInstance,mintBlankInstance,parseInstance,instanceFileName} from "./flow/instance";
 import {userFlowsArea} from "./flow/instances";
@@ -1822,7 +1822,7 @@ export function CradleFrame({onComposed}:{onComposed?:()=>void}) {
 function RestPane({ children }: { children: ReactNode }) {
   return <div className="workbench"><main className="surface-host" aria-label="Canvas">
     <section className="pane group focused" data-pane="group" data-window-corner="true" data-window-corner-left="true" aria-label="Surface group">
-      <div className="tab-strip" aria-hidden="true"><div className="tab-scroll"/></div>
+      <CanvasHUD aria-hidden="true"/>
       <div className="surface-body">{children}</div>
       <footer className="pane-status pane-footer" aria-label="Pane status"/>
     </section>

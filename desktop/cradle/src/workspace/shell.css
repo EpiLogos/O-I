@@ -443,7 +443,7 @@
 .desktop-centre{margin:0}
 .desktop-centre .surface-host{padding-left:0;padding-right:0;padding-bottom:0}
 .central-heading{gap:12px;align-items:center}.central-heading>svg{align-self:center}.central-heading>div{min-width:0}
-.shell-topbar{padding-right:3px}.shell-agent-toggle{margin-left:5px}
+.shell-topbar{padding-right:var(--oi-shell-gutter)}.shell-agent-toggle{margin-left:5px}
 @media(min-width:760px) and (pointer:fine){.desktop-shell .desktop-centre:has(.tab-strip){margin-top:0}.desktop-shell .desktop-centre:has(.mode-stage){margin-top:0;position:relative;z-index:1}}
 /* The window controls and region toggles occupy actual open corners, not an
    inset tab cell. Both corners are cut — left follows the window-control
@@ -541,24 +541,6 @@ html, body, #root, .desktop-shell { overflow: clip; }
 .world-navigator .project-modes button[aria-pressed="true"]:hover,
 .pane-tools button[aria-pressed="true"] { background: var(--oi-active-ground); color: var(--oi-active-ink); }
 .world-mode-strip button, .world-system-settings { border-radius: 7px; }
-
-/* ===== Mode centres share the window row with the corner cutouts =====
- * The base Workbench pads its first tab row past the two cut corners
- * (--window-cutout / --window-cutout-right, declared on the same
- * [data-window-corner] element above). Every mode stage stands on the same
- * corner element, so each mode surface's first row takes the same reserve:
- * its own padding, or the cutout plus a small breath, whichever is larger.
- * Nothing moves when both side regions are open (both cutouts read 0). */
-@media(min-width:760px) and (pointer:fine){
- .desktop-shell .mode-stage[data-window-corner="true"] .factory-development-top,
- .desktop-shell .mode-stage[data-window-corner="true"] .xp-surface > .xp-menubar,
- .desktop-shell .mode-stage[data-window-corner="true"] .tn-surface > .tn-instruments,
- .desktop-shell .mode-stage[data-window-corner="true"] .epi-surface > .epi-threshold,
- .desktop-shell .mode-stage[data-window-corner="true"] .epi-surface :is(.epi-family-entrances,.epi-reading) > :first-child,
- .desktop-shell .mode-stage[data-window-corner="true"] .system-panel > .settings-world-header{padding-left:max(14px,calc(var(--window-cutout) + 10px));padding-right:max(14px,calc(var(--window-cutout-right) + 10px))}
-}
-
-
 
 /* ——— One glass (2026-09-18, second pass) ———
    The left sidebar IS the background, not a panel on it: the material

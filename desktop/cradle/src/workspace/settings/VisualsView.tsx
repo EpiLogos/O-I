@@ -2,6 +2,7 @@
  * is entered through the workspace mode route; there is no second workbench,
  * preview stage, scene store, or renderer under Settings. */
 import { useCallback, useEffect, useMemo, useRef, useState, type ChangeEvent } from "react";
+import {IconChoiceStrip} from "../primitives/IconTabStrip";
 import { useVisuals } from "../../visuals/ParticleExpression";
 import type { StagePresentation } from "../../stage/ExpressionStage";
 import { visuals, type SavedState, type ThemeChoice } from "../../visuals/store";
@@ -62,9 +63,9 @@ export function VisualsView() {
     <section aria-labelledby="appearance-heading">
       <h3 id="appearance-heading">Appearance</h3>
       <p className="settings-note">The same appearance follows your workspace, tools and document controls.</p>
-      <div className="oi-segment" role="group" aria-label="Appearance">
-        {THEME_CHOICES.map(option=><button key={option.value} type="button" aria-pressed={snapshot.themeId === null && snapshot.theme === option.value} title={option.hint} onClick={()=>visuals.setTheme(option.value)}>{option.label}</button>)}
-      </div>
+      <IconChoiceStrip aria-label="Appearance" current={snapshot.themeId===null?snapshot.theme:undefined} onSelect={value=>visuals.setTheme(value as ThemeChoice)}
+        items={THEME_CHOICES.map(option=>({id:option.value,label:option.label,description:option.hint,icon:"settings"}))}/>
+
       <p className="settings-note">Or pick a theme from the library: each recolours the shell, editors and terminal.</p>
       <div className="visuals-themes" role="group" aria-label="Theme library">
         {library.map(theme=>{
@@ -478,13 +479,8 @@ function ToggleRow({ label, value, options, onPick }: {
   return (
     <div className="visuals-row">
       <span className="visuals-slider-label">{label}</span>
-      <div className="oi-segment" role="group" aria-label={label}>
-        {options.map(([option, optionLabel]) => (
-          <button key={option} type="button" aria-pressed={value === option} onClick={() => onPick(option)}>
-            {optionLabel}
-          </button>
-        ))}
-      </div>
+      <IconChoiceStrip aria-label={label} current={value} onSelect={onPick} items={options.map(([id,optionLabel])=>({id,label:optionLabel,icon:"dot"}))}/>
+
     </div>
   );
 }

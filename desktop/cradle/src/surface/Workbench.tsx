@@ -1,3 +1,5 @@
+import {IconTabStrip,IconTab} from "../workspace/primitives/IconTabStrip";
+import {CanvasHUD} from "../workspace/primitives/CanvasHost";
 import {ObjectSurface} from "../agent/objects/ObjectSurface";
 import {EncounterSurface} from "../encounter/EncounterSurface";
 import {lazy,Suspense,type ReactNode} from "react";
@@ -244,7 +246,6 @@ export function GroupPane(props: PaneProps & { group: Extract<Pane, { type: "gro
   const pinOrientation = group.tabPinOrientation ?? "horizontal";
   const unpinned = tabPresentation === "unpinned";
   const verticalTabs = tabPresentation === "pinned-vertical" || (unpinned && pinOrientation === "vertical");
-  const presentationTitle = {unpinned: "unpinned — tabs hide until you reveal them", "pinned-horizontal": "pinned horizontally", "pinned-vertical": "pinned vertically"} as const;
   const tabListWidth = state.tabListWidth;
 
   return (
@@ -281,7 +282,7 @@ export function GroupPane(props: PaneProps & { group: Extract<Pane, { type: "gro
         * top edge with extra depth over the pane tools (horizontal), the
         * bottom of the strip region (vertical). */}
       {unpinned && <div className="tab-reveal-zone" aria-hidden="true" data-orientation={pinOrientation} />}
-      <div
+      <CanvasHUD
         className="tab-strip"
         onContextMenu={(e) => {
           if ((e.target as HTMLElement).closest(".tab")) return;
@@ -300,7 +301,7 @@ export function GroupPane(props: PaneProps & { group: Extract<Pane, { type: "gro
           if (id) execute("surface.drop", { surfaceId: id, groupId: group.id });
         }}
       >
-        <div className="tab-scroll" role="tablist" aria-label="Open surfaces" aria-orientation={verticalTabs?"vertical":"horizontal"}>
+        <IconTabStrip className="tab-scroll" aria-label="Open surfaces" orientation={verticalTabs?"vertical":"horizontal"}>
         {tabs.map((id) => (
           <Tab
             key={id}
@@ -316,27 +317,9 @@ export function GroupPane(props: PaneProps & { group: Extract<Pane, { type: "gro
             openBindingMenu={openBindingMenu}
           />
         ))}
-        </div>
+        </IconTabStrip>
         <div className="pane-tools">
           {group.emptySlot && <button type="button" className="pane-tool-menu" aria-label="Close empty pane" title="Close empty pane (⌘W)" onClick={() => execute("surface.close-empty-pane", { groupId: group.id })}><Glyph name="close" size={13} /></button>}
-          {/* Owner ruling 2026-09-17: the pin only pins or unpins the current
-           * orientation; orientation is the neighbouring control's job. The
-           * pane size toggle left the strip — panes present at their larger
-           * size, and maximize stays with the arrangement actions (⌘⌥Enter). */}
-          <button type="button" className="pane-tool-menu pane-tool-orient"
-            aria-label={verticalTabs ? "Show tabs horizontally" : "Show tabs vertically"}
-            title={verticalTabs ? "Tabs are vertical — show horizontally" : "Tabs are horizontal — show vertically"}
-            onClick={() => execute("frame.tabs-orient", { groupId: group.id })}>
-            <Glyph name={verticalTabs ? "rows" : "columns"} size={13} />
-          </button>
-          <button type="button" className="pane-tool-menu pane-tool-pin"
-            aria-label={unpinned ? "Pin tabs" : "Unpin tabs"}
-            title={`Tabs are ${presentationTitle[tabPresentation]} — ${unpinned ? "Pin tabs" : "Unpin tabs"} (⌘⌥\\)`}
-            data-pin-target={unpinned ? `pinned-${pinOrientation}` : "unpinned"}
-            data-tab-presentation={tabPresentation}
-            onClick={() => execute("frame.tabs-pin", { groupId: group.id })}>
-            <Glyph name="pin" size={13} />
-          </button>
           <button
             type="button"
             className="strip-open"
@@ -349,21 +332,9 @@ export function GroupPane(props: PaneProps & { group: Extract<Pane, { type: "gro
           >
             <Glyph name="plus" size={13} />
           </button>
-          <button
-            type="button"
-            className="pane-tool-menu"
-            aria-label="Window menu"
-            title="Window menu"
-            onClick={(e) => {
-              const r = e.currentTarget.getBoundingClientRect();
-              if (active) openBindingMenu(active, r.left, r.bottom + 2);
-              else openFrameMenu(r.left, r.bottom + 2);
-            }}
-          >
-            <Glyph name="more" size={13} />
-          </button>
+
         </div>
-      </div>
+      </CanvasHUD>
       {/* The pinned-vertical list's width: a separator on the strip's inner
         * edge, drag or arrow-key resizable (the .region-resizer grammar),
         * persisted as LayoutState.tabListWidth through frame.tabs-width. */}
@@ -567,9 +538,10 @@ const KIND_GLYPH: Record<string, import("../workspace/Glyph").GlyphName> = {
 function Tab({ id, title, kind, active, pinned, dirty, groupId, vertical, execute, openBindingMenu }: TabProps) {
   return (
     <div className="tab-entry" role="presentation">
-    <button
-      type="button"
-      role="tab"
+    <IconTab
+      label={title}
+      icon={KIND_GLYPH[kind] ?? "file"}
+      selected={active}
       id={`surface-tab-${id}`}
       aria-controls={`surface-panel-${groupId}`}
       aria-selected={active}
@@ -641,7 +613,6 @@ function Tab({ id, title, kind, active, pinned, dirty, groupId, vertical, execut
           });
       }}
     >
-      <Glyph name={KIND_GLYPH[kind] ?? "file"} size={12} />
       <span className="tab-title">{title}</span>
       {dirty ? (
         <span className="tab-dirty" aria-hidden="true" title="Unsaved buffer">
@@ -653,7 +624,7 @@ function Tab({ id, title, kind, active, pinned, dirty, groupId, vertical, execut
           ◈
         </span>
       ) : null}
-    </button>
+    </IconTab>
       <button
         type="button"
         className="tab-close"

@@ -1,11 +1,4 @@
-/* The ⌘K palette's typed tabs (10-SIDEBARS §3.1): All · Chats · Agents ·
- * Files · Flows · Actions — plain text tabs with an ink underline for the
- * selected one, the same register as the right panel's tabs. Tokens only. */
-.search-tabs { display: flex; align-items: center; gap: 14px; padding: 0 16px; border-bottom: var(--oi-shell-edge) solid var(--oi-hairline-soft); }
-.search-tabs > button { position: relative; height: 30px; padding: 0; border: 0; background: transparent; color: var(--oi-muted-2); font: inherit; font-size: var(--oi-shell-type-nav); cursor: pointer; }
-.search-tabs > button:hover, .search-tabs > button:focus-visible { color: var(--oi-accent-ink); outline: none; }
-.search-tabs > button[aria-selected="true"] { color: var(--oi-accent-ink); font-weight: 600; }
-.search-tabs > button[aria-selected="true"]::after { content: ""; position: absolute; left: 0; right: 0; bottom: -1px; height: 1.5px; background: var(--oi-accent-ink); }
+
 .search-typed ul { list-style: none; margin: 0; padding: 6px 8px; }
 .search-typed li[data-selected="true"] > .search-result { background: var(--oi-wash); }
 .search-scroll[hidden] { display: none; }

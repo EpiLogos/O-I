@@ -1,3 +1,4 @@
+import {IconTabStrip,IconTab} from "../workspace/primitives/IconTabStrip";
 import { useEffect, useRef, useState } from "react";
 import { useKernel } from "../kernel/KernelProvider";
 import type { KnowledgeAddress, KnowledgeHit, KnowledgeRequest } from "../kernel/types";
@@ -285,9 +286,9 @@ export function SearchOverlay({ project, onClose, onOpen, leader, onLeaderChange
         placeholder={`Search ${project ?? "Central"}`} />
       <button type="button" className="search-dismiss" aria-label="Close search" onClick={onClose}><kbd>esc</kbd></button>
     </form>
-    <nav className="search-tabs" role="tablist" aria-label="Result kinds">
-      {tabs.map(entry => <button key={entry.id} type="button" role="tab" aria-selected={tab === entry.id} data-palette-tab={entry.id} onClick={() => setTab(entry.id)}>{entry.label}</button>)}
-    </nav>
+    <IconTabStrip aria-label="Result kinds">
+      {tabs.map(entry => <IconTab key={entry.id} label={entry.label} icon="search" selected={tab === entry.id} data-palette-tab={entry.id} onClick={() => setTab(entry.id)}/>)}
+    </IconTabStrip>
     {tab !== "all" && <div className="search-scroll search-typed" role="tabpanel" aria-label={tabs.find(entry => entry.id === tab)?.label}>
       {error && <p role="alert">{error}</p>}
       {typedState && !typedItems.length ? <p className="search-empty" role="status">{typedState}</p>

@@ -1,3 +1,5 @@
+import {IconTabStrip} from "../../workspace/primitives/IconTabStrip";
+import {CanvasHUD} from "../../workspace/primitives/CanvasHost";
 import {useEffect,useRef,useState,type ReactNode} from "react";
 import {scrollWithin} from "../../shared/scrollWithin";
 import {useKernel} from "../../kernel/KernelProvider";
@@ -135,16 +137,14 @@ export function FactoryDevelopmentSurface({project:projectProp,onOpenEncounter}:
  const journeys=(project as {journeys?:unknown[]}|undefined)?.journeys;
  const section_=(id:SectionId)=>(element:HTMLElement|null)=>{sections.current[id]=element;};
  return <main className="factory-development" aria-label="Factory development" data-busy={busy?"true":undefined}>
-  <div className="factory-development-top">
+  <CanvasHUD className="factory-development-top">
    <header className="factory-development-header oi-context-head">
     <div className="oi-context-head-title"><h2>Factory development</h2>
     <small>Agent conversations and the owner&apos;s developmental reads. Dev builds open onto the seeded testing specimen; production names its own developmental state path.</small></div>
     {busy&&<span className="oi-state" role="status">Reading…</span>}
    </header>
-   <nav className="factory-development-nav oi-segment" role="group" aria-label="Factory sections">
-    {SECTIONS.map(entry=><button key={entry.id} aria-pressed={section===entry.id} onClick={()=>jump(entry.id)}>{entry.label}</button>)}
-   </nav>
-  </div>
+   <IconTabStrip aria-label="Factory sections" items={SECTIONS.map(entry=>({id:entry.id,label:entry.label,icon:"factory"}))} current={section} onSelect={id=>jump(id as SectionId)}/>
+  </CanvasHUD>
 
   <section ref={section_("build")} data-section="build" className="factory-section factory-development-build" aria-label="Build view">
    <header className="oi-panel-head factory-band"><h3 className="oi-panel-head-title">Build view</h3>

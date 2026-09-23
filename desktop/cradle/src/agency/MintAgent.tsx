@@ -10,6 +10,7 @@ import {NativeAgentLauncher} from "./NativeAgentLauncher";
  * cleared by a reading refresh.
  */
 import { Fragment, useEffect, useRef, useState } from "react";
+import {IconChoiceStrip} from "../workspace/primitives/IconTabStrip";
 import { Glyph } from "../workspace/Glyph";
 import { useKernel } from "../kernel/KernelProvider";
 import { kernelOp } from "../kernel/bridge";
@@ -41,7 +42,7 @@ const DURABILITY_OPTIONS: { value: AgentDurability; label: string; detail: strin
 
 export function MintAgent(props: { project?: string; onMessage?: (message: string) => void }) {
   const [kind,setKind]=useState<"durable"|"other">("durable");
-  return <><div className="oi-segment" aria-label="Agent identity or temporary formation"><button onClick={()=>setKind("durable")} aria-pressed={kind==="durable"}>Reusable native Agent</button><button onClick={()=>setKind("other")} aria-pressed={kind==="other"}>Temporary help / team composition</button></div>{kind==="durable"?<NativeAgentLauncher project={props.project}/>:<FormationDraft {...props}/>}</>;
+  return <><IconChoiceStrip aria-label="Agent identity or temporary formation" current={kind} onSelect={value=>setKind(value as "durable"|"other")} items={[{id:"durable",label:"Reusable native Agent",icon:"agent"},{id:"other",label:"Temporary help / team composition",icon:"graph"}]}/>{kind==="durable"?<NativeAgentLauncher project={props.project}/>:<FormationDraft {...props}/>}</>;
 }
 function FormationDraft({ project, onMessage }: { project?: string; onMessage?: (message: string) => void }) {
   const kernel = useKernel();
@@ -123,13 +124,9 @@ function FormationDraft({ project, onMessage }: { project?: string; onMessage?: 
       </div>
       <div className="oi-field">
         <span className="oi-eyebrow">Durability</span>
-        <div className="oi-segment" role="radiogroup" aria-label="Durability">
-          {DURABILITY_OPTIONS.map((option) => (
-            <button key={option.value} type="button" role="radio" aria-checked={draft.durability === option.value} onClick={() => setDraft({ durability: option.value })} title={option.detail}>
-              {option.label}
-            </button>
-          ))}
-        </div>
+        <IconChoiceStrip aria-label="Durability" current={draft.durability} onSelect={value=>setDraft({durability:value as AgentDurability})}
+          items={DURABILITY_OPTIONS.map(option=>({id:option.value,label:option.label,description:option.detail,icon:option.value==="team"?"graph":option.value==="durable"?"agent":"history"}))}/>
+
       </div>
     </section>
 

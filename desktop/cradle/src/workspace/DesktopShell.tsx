@@ -1,12 +1,11 @@
 import {WindowFunctionsMenu} from "./primitives/WindowFunctionsMenu";
 import {PanelShell} from "./primitives/PanelShell";
-import {CanvasHost} from "./primitives/CanvasHost";
+import {CanvasHost,CanvasHUD} from "./primitives/CanvasHost";
 import {useShellGeometry} from "./geometry";
 import { useEffect, useLayoutEffect, useRef, useState, type ReactNode, type Dispatch, type SetStateAction } from "react";
 import type { AgencyDepth, LayoutState } from "../surface/types";
 import type { Workspace } from "./store";
 import "./shell.css";
-import "./sidebar-presentation.css";
 import { Glyph } from "./Glyph";
 import { focusGroup, groupsOf } from "../surface/engine";
 import { type TabPresentation, type WorkspaceMode } from "./mode";
@@ -301,6 +300,26 @@ export function DesktopShell(p: Props) {
   // as a broken counter, not a state. Name it, matching the reference
   // vocabulary's "1 group" / "Focused view" register.
   const groupCount = groupsOf(l.root).length;
+  const canvasFunctions = <WindowFunctionsMenu label="Canvas window functions" attention={!!p.error || !!p.recovery}>
+            {p.arrangementActions}
+            {/* Modes live only in the left foot's strip (the duplicate mode
+              * radios are removed, 10-SIDEBARS §3.1); the pane tab
+              * presentation stays reachable here. */}
+            <span className="oi-eyebrow">Tabs</span>
+            {([["pinned-horizontal","Pin tabs horizontally"],["pinned-vertical","Pin tabs vertically"],["unpinned","Unpin tabs"]] as const).map(([id,label])=><button key={id} className="oi-menu-item" role="menuitemradio" aria-checked={(groupsOf(l.root).find(g=>g.id===l.focusedGroupId)?.tabPresentation??"pinned-horizontal")===id} onClick={()=>p.onTabPresentation(id)}>{label}</button>)}
+          {/* Owner ruling 2026-09-17: ALL workspace messaging — errors and
+           * the recovery state alike — lives hidden here, in the status
+           * disclosure at the row's right end. Nothing renders above the
+           * app; a standing message only marks the arrow. */}
+              {p.recovery && <>
+                <p className="footer-status-message" role="alert">{p.recovery.reason}</p>
+                <button className="oi-menu-item" disabled={!p.recovery.key} onClick={p.onRecoverAvailable}>Recover available workspaces</button>
+                <button className="oi-menu-item" onClick={p.onStartFresh}>Start a fresh arrangement</button>
+              </>}
+              {p.error
+                ? <div className="footer-status-message" role="alert"><span>{p.error}</span><button className="footer-status-dismiss" aria-label="Dismiss message" onClick={p.onErrorDismiss}><Glyph name="close" size={10}/></button></div>
+                : !p.recovery && <p className="footer-status-message" role="status">No workspace messages.</p>}
+          </WindowFunctionsMenu>;
   return <div ref={host} className="desktop-shell" data-native={p.native} data-window-lights={p.windowLights ? "true" : undefined} data-mode={p.mode} data-workspace-id={p.workspace.id} style={{"--desktop-left-target":`${leftWidth}px`,"--desktop-right-target":`${rightWidth}px`} as React.CSSProperties}>
     <header className="shell-topbar" aria-label="Window and focused pane" data-tauri-drag-region>
       <button className="shell-region-toggle oi-tool" aria-label="Toggle left region" aria-expanded={left === "panel" || left === "full"} onClick={summonNavigator} title="Show / hide Central (⌘B)"><Glyph name="sidebar"/></button>
@@ -335,6 +354,7 @@ export function DesktopShell(p: Props) {
         </>}
       </aside>
       <CanvasHost>
+      <CanvasHUD className="canvas-window-functions">{canvasFunctions}</CanvasHUD>
 
       {/* The centre region renders as one stable sibling list owned by the
         * frame (CradleFrame): the per-mode stage slots, the rest host and
@@ -369,26 +389,7 @@ export function DesktopShell(p: Props) {
             * button` is this row's own styling for them. Declared-but-never-
             * rendered since the shell landed; rendered now, deliberately. */}
           <span className="canvas-arrangement-spacer"/>
-          <WindowFunctionsMenu label="Canvas window functions" attention={!!p.error || !!p.recovery}>
-            {p.arrangementActions}
-            {/* Modes live only in the left foot's strip (the duplicate mode
-              * radios are removed, 10-SIDEBARS §3.1); the pane tab
-              * presentation stays reachable here. */}
-            <span className="oi-eyebrow">Tabs</span>
-            {([["pinned-horizontal","Pin tabs horizontally"],["pinned-vertical","Pin tabs vertically"],["unpinned","Unpin tabs"]] as const).map(([id,label])=><button key={id} className="oi-menu-item" role="menuitemradio" aria-checked={(groupsOf(l.root).find(g=>g.id===l.focusedGroupId)?.tabPresentation??"pinned-horizontal")===id} onClick={()=>p.onTabPresentation(id)}>{label}</button>)}
-          {/* Owner ruling 2026-09-17: ALL workspace messaging — errors and
-           * the recovery state alike — lives hidden here, in the status
-           * disclosure at the row's right end. Nothing renders above the
-           * app; a standing message only marks the arrow. */}
-              {p.recovery && <>
-                <p className="footer-status-message" role="alert">{p.recovery.reason}</p>
-                <button className="oi-menu-item" disabled={!p.recovery.key} onClick={p.onRecoverAvailable}>Recover available workspaces</button>
-                <button className="oi-menu-item" onClick={p.onStartFresh}>Start a fresh arrangement</button>
-              </>}
-              {p.error
-                ? <div className="footer-status-message" role="alert"><span>{p.error}</span><button className="footer-status-dismiss" aria-label="Dismiss message" onClick={p.onErrorDismiss}><Glyph name="close" size={10}/></button></div>
-                : !p.recovery && <p className="footer-status-message" role="status">No workspace messages.</p>}
-          </WindowFunctionsMenu>
+
           <button className="footer-pin oi-tool" aria-label={footerPinned?"Unpin workspace footer":"Pin workspace footer"} aria-pressed={footerPinned} onClick={()=>{const next=!footerPinned;setFooterPinned(next);try{localStorage.setItem(FOOTER_KEY,next?"pinned":"revealed");}catch{}}}><Glyph name="pin"/></button>
           {/* A5: the Epi-Logos LENS toggle, minimal, at the end of the hidden
             * window footer. It re-roots the file trees on the corpus; it

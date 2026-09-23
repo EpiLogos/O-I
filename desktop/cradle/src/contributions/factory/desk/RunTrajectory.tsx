@@ -20,6 +20,7 @@
  */
 import {useEffect, useMemo, useState} from "react";
 import {useKernel} from "../../../kernel/KernelProvider";
+import {IconChoiceStrip} from "../../../workspace/primitives/IconTabStrip";
 import {Glyph} from "../../../workspace/Glyph";
 import {useEncounterSession} from "../../../encounter/session";
 import {useTape} from "../../../agent/tape/journal";
@@ -139,9 +140,10 @@ function SessionTrajectory({entry, session, sessions, onChoose}: {entry: RunEntr
           </select>
         </label>
         {timed
-          ? <span className="oi-segment" role="radiogroup" aria-label="Axis">
-            {(["duration", "turns", "calls"] as Axis[]).map(value => <button key={value} type="button" role="radio" aria-checked={axis === value} onClick={() => setAxis(value)}>{value === "duration" ? "Duration" : value === "turns" ? "Turns" : "Calls"}</button>)}
-          </span>
+          ? <IconChoiceStrip aria-label="Axis" current={axis} onSelect={value=>setAxis(value as Axis)} items={[
+            {id:"duration",label:"Duration",icon:"history"},{id:"turns",label:"Turns",icon:"chat"},{id:"calls",label:"Calls",icon:"terminal"},
+          ]}/>
+
           : <span className="ftraj-axis" data-axis="order">Order</span>}
         <form className="fdesk-search ftraj-search" role="search" onSubmit={event => { event.preventDefault(); find(); }}>
           <Glyph name="search" size={13}/>

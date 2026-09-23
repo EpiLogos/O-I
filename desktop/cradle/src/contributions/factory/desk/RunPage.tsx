@@ -1,3 +1,4 @@
+import {IconTabStrip} from "../../../workspace/primitives/IconTabStrip";
 /**
  * The Run page (11-FACTORY §3): understand the current developmental question
  * before any tool log; then watch it, steer it, and recognise what returned.
@@ -131,9 +132,7 @@ export function RunPage({runKey, onBack, host}: {runKey: string; onBack: () => v
         <MenuButton ariaLabel="More run actions" className="oi-action frun-more" label={<Glyph name="more" size={14}/>} rows={menu}/>
       </div>
     </header>
-    <nav className="frun-tabs" role="tablist" aria-label="Run views">
-      {TABS.map(entryTab => <button key={entryTab.key} type="button" role="tab" aria-selected={tab === entryTab.key} className="frun-tab" onClick={() => setTab(entryTab.key)}>{entryTab.label}</button>)}
-    </nav>
+    <IconTabStrip aria-label="Run views" items={TABS.map(entry=>({id:entry.key,label:entry.label,icon:entry.key==="map"?"graph":entry.key==="trajectory"?"history":entry.key==="live"?"factory":"file"}))} current={tab} onSelect={id=>setTab(id as typeof tab)}/>
     {reading === "reading" && !entry.inspection && !entry.inspectionError && <p className="frun-note" role="status">Reading this run…</p>}
     {reading === "refused" && <p className="frun-note" role="alert">Couldn't read this run: {error}</p>}
     <section className="frun-body" role="tabpanel" aria-label={TABS.find(entryTab => entryTab.key === tab)!.label}>

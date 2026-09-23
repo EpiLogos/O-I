@@ -1,3 +1,5 @@
+import {IconTabStrip} from "../workspace/primitives/IconTabStrip";
+import {planeIcon} from "../workspace/planeRegistry";
 import {PermissionCard} from "../agent/chat/PermissionCard";
 import {useLayoutEffect,useMemo,useRef,useState,type ReactNode} from "react";
 import type {A2aDifference,A2aPeerFields,EncounterReading,EncounterStatus,JournalPage,PermissionDecision} from "./client";
@@ -115,7 +117,7 @@ export function EncounterView({title,plane,onPlane,reading,status,draft,pending,
   const latest=()=>{following.current=true;onLatest();const element=transcript.current;if(element)element.scrollTop=element.scrollHeight;};
   return <section hidden={concealed} style={concealed?{display:"none"}:undefined} className="encounter" data-presentation={presentation} data-connection={connected?running?"running":"connected":"disconnected"} aria-label="Encounter">
     {tab && <header className="encounter-heading"><span className="encounter-mark" aria-hidden="true">◌</span><div><h2>{title}</h2><small>{status?.provider?.label??(connected?"Native encounter":"Choose a provider")}</small></div><span className="encounter-state" role="status">{sessionStateLabel(status)}</span></header>}
-    {tab && <nav className="encounter-planes" aria-label="Encounter planes">{(["Conversation","Activity","Context","Inspect"] as const).map(name=><button key={name} aria-pressed={plane===name} onClick={()=>onPlane(name)}>{name}</button>)}</nav>}
+    {tab && <IconTabStrip aria-label="Encounter planes" items={(["Conversation","Activity","Context","Inspect"] as const).map(name=>({id:name,label:name,icon:planeIcon(name==="Conversation"?"Chat":name)}))} current={plane} onSelect={id=>onPlane(id as "Conversation"|"Activity"|"Context"|"Inspect")}/>}
     <div ref={transcript} className="encounter-transcript oi-scroll" aria-label={plane==="Conversation"?"Transcript":`Encounter ${plane}`} onScroll={()=>{const element=transcript.current;if(element)following.current=element.scrollHeight-element.clientHeight-element.scrollTop<48;}}>
       {plane==="Context"?<div className="encounter-context">
         <ContextFacts status={status}/>

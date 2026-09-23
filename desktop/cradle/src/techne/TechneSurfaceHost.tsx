@@ -17,7 +17,8 @@
  */
 import {useEffect, useMemo, useState, useSyncExternalStore, type ReactNode} from "react";
 import {useKernel} from "../kernel/KernelProvider";
-import {Glyph} from "../workspace/Glyph";
+import {IconTabStrip,IconTab} from "../workspace/primitives/IconTabStrip";
+import {CanvasHUD} from "../workspace/primitives/CanvasHost";
 import type {SurfaceBinding} from "../surface/types";
 import "./instrumentLenses"; // side effect: registers the six M′ lenses
 import {subscribeTechneLenses, techneLenses, type TechneLensStudio} from "./lensMount";
@@ -91,54 +92,45 @@ export function TechneSurfaceHost({binding, subject, collapsed, onCollapsedChang
     // live field: choosing one opens the HUD onto it (and suspends the field).
     return (
       <div className="techne-hud techne-hud--collapsed">
-        <nav className="techne-hud-rail" aria-label="Technē instruments">
+        <CanvasHUD><IconTabStrip aria-label="Technē instruments">
           {lenses.map(lens => {
             const standing = lens.standing(disclosure);
             return (
-              <button
+              <IconTab
                 key={lens.instrument}
-                type="button"
-                className="techne-hud-rail-lens"
+                label={lens.label} icon={lens.glyph} selected={lens.instrument===active}
                 data-current={lens.instrument === active}
                 data-available={standing.available}
                 title={standing.available ? `${lens.label} · M${lens.mPrime}′` : `${lens.label} — ${standing.reason}`}
                 onClick={() => { choose(lens.instrument); onCollapsedChange(false); }}
-              >
-                <Glyph name={lens.glyph}/>
-                <span className="techne-hud-sr">{lens.label}</span>
-              </button>
+              />
             );
           })}
-        </nav>
+        </IconTabStrip></CanvasHUD>
       </div>
     );
   }
 
   return (
     <div className="techne-hud" role="group" aria-label="Technē instruments">
-      <nav className="techne-hud-chooser" aria-label="Instrument chooser">
+      <CanvasHUD><IconTabStrip aria-label="Instrument chooser">
         {lenses.map(lens => {
           const standing = lens.standing(disclosure);
           const current = lens.instrument === active;
           return (
-            <button
+            <IconTab
               key={lens.instrument}
-              type="button"
-              className="techne-hud-lens"
+              label={lens.label} icon={lens.glyph} selected={current}
               data-current={current}
               data-available={standing.available}
               aria-pressed={current}
               title={standing.available ? `${lens.label} · M${lens.mPrime}′` : `${lens.label} — ${standing.reason}`}
               onClick={() => choose(lens.instrument)}
-            >
-              <Glyph name={lens.glyph}/>
-              <span className="techne-hud-lens-label">{lens.label}</span>
-              {!standing.available && <span className="techne-hud-lens-off" aria-hidden="true">·</span>}
-            </button>
+            />
           );
         })}
-        <button type="button" className="techne-hud-collapse" onClick={() => onCollapsedChange(true)} title="Hide the instruments and return to the field">–</button>
-      </nav>
+        </IconTabStrip><button type="button" className="techne-hud-collapse" onClick={() => onCollapsedChange(true)} title="Hide the instruments and return to the field">–</button>
+      </CanvasHUD>
       {studioTools && <div className="techne-hud-tools">{studioTools}</div>}
       <section className="techne-hud-pane" aria-label={`${activeLens?.label ?? "instrument"} instrument`}>
         {Body

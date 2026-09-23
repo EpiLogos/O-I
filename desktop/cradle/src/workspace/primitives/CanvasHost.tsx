@@ -7,6 +7,6 @@ export function CanvasHost({className = '', ...props}: HTMLAttributes<HTMLElemen
 export function CanvasStage({className = '', ...props}: HTMLAttributes<HTMLDivElement>) {
   return <div {...props} className={`canvas-stage mode-stage ${className}`} data-window-corner="true" data-window-corner-left="true"/>;
 }
-export function CanvasHUD({children, className = '', ...props}: HTMLAttributes<HTMLDivElement> & {children: ReactNode}) {
+export function CanvasHUD({children, className = '', ...props}: HTMLAttributes<HTMLDivElement> & {children?: ReactNode}) {
   return <div {...props} className={`canvas-hud ${className}`}>{children}</div>;
 }
