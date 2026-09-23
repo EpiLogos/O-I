@@ -14,6 +14,7 @@ import {useRef, useState} from "react";
 import {credentialCards, providerName, storedIn, type CredentialCard} from "../sectionModel";
 import {expect, loadCredentials, loadSuite, plain, recordVerification, refreshAll, type SettingsSnapshot, type VerifyResult} from "../settingsData";
 import {Missing, Reading, Unreadable} from "../rows";
+import {ProviderLogins} from "../AuthLogin";
 import {formatRelativeTime} from "../../../shared/relativeTime";
 
 const VERDICT_WORD: Record<VerifyResult["verdict"], string> = {working: "working", refused: "refused", unreachable: "unreachable"};
@@ -168,6 +169,10 @@ function ProviderCard({card, data, suggestion}: {card: CredentialCard; data: Set
       <ReferenceEntry card={card} verb={binding ? "rotate" : "setup"} onDone={done}/>
       <button type="button" className="settings-button" onClick={() => setForm(null)}>Cancel</button>
     </>}
+    {/* The login option beside the key (HARNESS-SETTINGS-RESEARCH §2a):
+      * the harness's own declared sign-in for this provider, runnable
+      * entries only, live-read. */}
+    <ProviderLogins provider={card.provider}/>
     {message && <p className={message.ok ? "settings-card-note" : "settings-inline-error"} role={message.ok ? "status" : "alert"} data-credential-message>{message.text}</p>}
   </section>;
 }

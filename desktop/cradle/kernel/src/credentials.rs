@@ -294,6 +294,24 @@ impl Client {
         }
         self.run(cwd, &["client", "install", client, "--json"], Material::None)
     }
+
+    /// A harness's declared auth options (`aikit harness auth <slug>
+    /// --json`, docs/experience/HARNESS-SETTINGS-RESEARCH-2026-09-22.md
+    /// §2a): the env-var names and own-login entries a settings face renders
+    /// beside the API-key input. Nothing is executed here — describe mode
+    /// reads the harness's profile only, and the login itself is a terminal
+    /// act, never a kernel op.
+    pub fn harness_auth(&self, cwd: &Path, harness: &str) -> Result<Value, String> {
+        let harness = harness.trim();
+        if harness.is_empty() || !harness.chars().all(|c| c.is_ascii_alphanumeric() || c == '-' || c == '_') {
+            return Err("A harness's auth options are read by its name (letters, digits and dashes)".into());
+        }
+        let data = self.run(cwd, &["harness", "auth", harness, "--json"], Material::None)?;
+        if data.get("slug").and_then(Value::as_str).is_none() {
+            return Err("AIKit's auth answer carried no harness slug".into());
+        }
+        Ok(data)
+    }
 }
 
 /// The process-wide suite binding (its STDIN capability answer is asked
@@ -315,6 +333,7 @@ pub fn apply(cwd: &Path, op: crate::KernelOp) -> Result<crate::KernelOpResult, S
         KernelOp::CredentialVerify { credential } => KernelOpResult::CredentialVerified { data: client.verify(cwd, &credential)? },
         KernelOp::CredentialRevoke { credential } => KernelOpResult::CredentialChanged { data: client.revoke(cwd, &credential)? },
         KernelOp::ClientInstall { client: name } => KernelOpResult::ClientInstalled { data: client.client_install(cwd, &name)? },
+        KernelOp::HarnessAuthDescribe { harness } => KernelOpResult::HarnessAuthReading { data: client.harness_auth(cwd, &harness)? },
         _ => return Err("not a credential operation".into()),
     })
 }
@@ -498,5 +517,17 @@ mod tests {
         let error = scene.client().verify(&scene.dir, "credential:zai").unwrap_err();
         assert_eq!(error, "no binding exists for credential:zai");
         assert!(credential_ref("bad name").is_err());
+    }
+
+    #[test]
+    fn harness_auth_describes_without_executing_and_refuses_bad_names() {
+        let scene = Scene::with(r#"printf '%s' '{"ok":true,"schema":1,"data":{"slug":"codex","env_var":[{"provider_ref":"provider:openai","env_var":"OPENAI_API_KEY"}],"own_login":[{"provider_ref":"provider:openai","runnable":true,"argv":["codex","login"],"note":"the ChatGPT OAuth flow"}]}}'"#);
+        let face = scene.client().harness_auth(&scene.dir, "codex").unwrap();
+        assert_eq!(face["slug"], "codex");
+        assert_eq!(face["own_login"][0]["argv"][0], "codex");
+        assert!(scene.read("argv.log").contains("harness auth codex --json"), "the owner verb runs describe mode only: {}", scene.read("argv.log"));
+        assert!(scene.client().harness_auth(&scene.dir, "codex; rm -rf /").is_err());
+        let no_slug = Scene::with(OK);
+        assert!(no_slug.client().harness_auth(&no_slug.dir, "codex").is_err());
     }
 }

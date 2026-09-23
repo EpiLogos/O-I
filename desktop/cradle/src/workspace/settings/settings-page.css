@@ -215,3 +215,10 @@
 .settings-note { margin: 6px 0; max-width: 760px; color: var(--oi-muted); font-size: var(--oi-shell-type-ui); line-height: 1.45; }
 .settings-sheet.settings-review { width: min(600px, 100%); }
 .settings-sheet-foot .settings-muted { flex: 1 1 220px; }
+
+/* ---- the login option beside the key (HARNESS-SETTINGS-RESEARCH §2a) ---- */
+.settings-auth { display: grid; gap: 8px; margin-top: 8px; max-width: 560px; }
+.settings-line-value .settings-auth { max-width: 100%; }
+.settings-auth-option { display: grid; gap: 3px; }
+.settings-auth-login { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.settings-auth-command { padding: 2px 7px; border: 1px solid var(--oi-hairline-soft); border-radius: var(--oi-radius-xs); background: var(--oi-surface); font-family: var(--oi-font-mono, monospace); font-size: var(--oi-shell-type-ui); }

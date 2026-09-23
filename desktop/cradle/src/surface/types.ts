@@ -54,7 +54,10 @@ export interface SurfaceBinding {
   address?: import("../kernel/types").KnowledgeAddress;
   encounter?: {space:string};
   browser?: {url:string};
-  terminal?: {cwd?:string};
+  /** A terminal's working directory, and — for a login handover (Settings
+   * auth login, HARNESS-SETTINGS-RESEARCH §2a) — the declared command argv
+   * the session runs instead of the login shell. */
+  terminal?: {cwd?:string;command?:string[]};
   flow?: {flowRef:string;path:string};
   view?: {graphOrigin?:string;knowledgePlane?: "graph"|"page";encounterPlane?: "Conversation"|"Activity"|"Context"|"Inspect"};
   /** The hosted engine's checkpoint (MODE-ENGINE-STATE-PERSISTENCE §7.2):

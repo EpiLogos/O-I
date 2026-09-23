@@ -26,6 +26,12 @@ import {settingsWorld} from "../lib/settings-world.mjs";
 import {enterSettings, openSection, settled, shotMatrix} from "../lib/settings-walk.mjs";
 import {readFileSync, existsSync} from "node:fs";
 
+/** An apply plans, executes and reads back through the owners' real CLIs;
+ * on a loaded machine riding slower (debug-build) owner binaries this
+ * legitimately takes minutes — the wait is generous, the assertions after
+ * it are not. */
+const APPLY_TIMEOUT = 600000;
+
 export async function setup() {
   return settingsWorld();
 }
@@ -94,7 +100,7 @@ export default async function run({page, baseUrl, check, shot, provision: world,
 
   // --- S6 · apply and read back ----------------------------------------------------
   await sheet.getByRole("button", {name: "Apply changes"}).click();
-  await page.waitForFunction(() => document.querySelector("[data-settings-review-sheet]")?.getAttribute("data-phase") === "done", null, {timeout: 300000});
+  await page.waitForFunction(() => document.querySelector("[data-settings-review-sheet]")?.getAttribute("data-phase") === "done", null, APPLY_TIMEOUT);
   const results = await sheet.locator("[data-review-row]").evaluateAll((nodes) => nodes.map((node) => ({key: node.getAttribute("data-review-row"), result: node.querySelector("[data-review-result]")?.getAttribute("data-review-result"), text: node.querySelector("[data-review-result]")?.textContent})));
   const receipt = (await sheet.locator("[data-review-receipt]").textContent()) ?? "";
   check(results.every((row) => row.result === "applied" && row.text === "Applied ✓"), "S6 every row reads \"Applied ✓\"", {results});
@@ -120,7 +126,7 @@ export default async function run({page, baseUrl, check, shot, provision: world,
   const refusalBefore = (await sheet.locator('[data-review-row*="not-in-catalogue"] [data-review-refusal]').textContent().catch(() => "")) ?? "";
   check(/not in the catalogue/.test(refusalBefore), "S7 the review shows the owner's refusal in its own words before anything moves", {refusalBefore});
   await sheet.getByRole("button", {name: "Apply changes"}).click();
-  await page.waitForFunction(() => document.querySelector("[data-settings-review-sheet]")?.getAttribute("data-phase") === "done", null, {timeout: 300000});
+  await page.waitForFunction(() => document.querySelector("[data-settings-review-sheet]")?.getAttribute("data-phase") === "done", null, APPLY_TIMEOUT);
   const refused = await sheet.locator('[data-review-row*="not-in-catalogue"] [data-review-result]').evaluate((node) => ({result: node.getAttribute("data-review-result"), text: node.textContent ?? ""}));
   check(refused.result === "refused" && refused.text.startsWith("This change wasn't applied.") && /not in the catalogue/.test(refused.text),
     "S7 the refused change reads \"This change wasn't applied.\" with the owner's reason", {refused});
@@ -139,7 +145,7 @@ export default async function run({page, baseUrl, check, shot, provision: world,
   await strip.getByRole("button", {name: "Review changes"}).click();
   await page.waitForFunction(() => document.querySelector("[data-settings-review-sheet]")?.getAttribute("data-phase") === "ready", null, {timeout: 240000});
   await sheet.getByRole("button", {name: "Apply changes"}).click();
-  await page.waitForFunction(() => document.querySelector("[data-settings-review-sheet]")?.getAttribute("data-phase") === "done", null, {timeout: 300000});
+  await page.waitForFunction(() => document.querySelector("[data-settings-review-sheet]")?.getAttribute("data-phase") === "done", null, APPLY_TIMEOUT);
   const alpha = await sheet.locator('[data-review-row*="walk-alpha"] [data-review-result]').evaluate((node) => ({result: node.getAttribute("data-review-result"), text: node.textContent ?? ""}));
   check(alpha.result === "partial" && alpha.text.startsWith("Partly applied") && /another scope/.test(alpha.text),
     "S7 the overridden change reads \"Partly applied\" with the reason", {alpha});
@@ -162,7 +168,7 @@ export default async function run({page, baseUrl, check, shot, provision: world,
   // the CLI holds a different value for the same setting).
   world.oi("config", "hold", "ai-kit:skills:skills.capabilities", JSON.stringify({"skill/walkskills/walk-gamma": true, "skill/walkskills/walk-beta": false}), "machine", "--json");
   await sheet.getByRole("button", {name: "Apply changes"}).click();
-  await sheet.locator("[data-review-stale]").waitFor({timeout: 300000});
+  await sheet.locator("[data-review-stale]").waitFor(APPLY_TIMEOUT);
   check(((await sheet.locator("[data-review-stale]").textContent()) ?? "") === "These settings changed. Review the plan again.",
     "S8 the stale plan reads \"These settings changed. Review the plan again.\"");
   check(!active().has("skill/walkskills/walk-gamma") && active().has("skill/walkskills/walk-beta"), "S8 Apply was refused: nothing moved in AIKit");

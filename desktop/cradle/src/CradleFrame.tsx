@@ -1152,6 +1152,33 @@ export function CradleFrame({onComposed}:{onComposed?:()=>void}) {
     const binding:SurfaceBinding={id,kind:"terminal",title:"Terminal",project:scope,terminal:{cwd:terminalCwd(scope)}};
     setState(s=>openBinding(s,binding));
   };
+  /** A login handover from anywhere in the frame (Settings auth login, docs/
+   * experience/HARNESS-SETTINGS-RESEARCH-2026-09-22.md §2a): one terminal
+   * surface whose session runs the declared login argv in a real PTY, so the
+   * harness's browser flow or TUI owns the terminal exactly as it would in
+   * front of the person. The same registration and docking the shell's own
+   * terminal open uses. */
+  useEffect(()=>{
+    const open=(event:Event)=>{
+      const d=(event as CustomEvent<{command:string[];title?:string;cwd?:string}>).detail;
+      if(!d?.command?.length)return;
+      // A login is interactive: the person must see and type to the terminal
+      // it opens. A handover from a full-page plane (the Settings page)
+      // returns to the frame's ordinary mode FIRST — the same successor the
+      // settings close uses — because a layout binding opens into the
+      // CURRENT mode's tree, and the settings tree mounts hidden.
+      if((stateRef.current.mode??"base")==="settings")enterModeRef.current(stateRef.current.settingsReturnMode??"base");
+      const id=crypto.randomUUID();
+      const scope=workspaceRef.current.current.project??undefined;
+      const binding:SurfaceBinding={id,kind:"terminal",title:d.title??"Log in",project:scope,terminal:{cwd:d.cwd??terminalCwd(scope),command:d.command}};
+      void kernel.apply({op:"surface_open",surface_id:id,kind:"terminal",title:binding.title}).then(opened=>{
+        if(opened?.result!=="surface_opened")throw new Error("The login terminal could not be opened");
+        setState(s=>openBinding(s,binding));
+      }).catch(report);
+    };
+    window.addEventListener("oi:open-terminal",open);
+    return()=>window.removeEventListener("oi:open-terminal",open);
+  },[]);
   /** The right panel's own pane (the Context plane hosts it): a REAL
    * TabGroupPane from the existing pane logic — the same tab strip, +,
    * surfaces and chrome the centre panes use — never tiled. Opening gates

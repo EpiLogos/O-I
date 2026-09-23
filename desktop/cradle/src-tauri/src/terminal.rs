@@ -109,7 +109,36 @@ fn reap_after_eof(row: &Arc<Session>) {
         std::thread::sleep(std::time::Duration::from_millis(25));
     }
 }
-fn start(cwd: String, dimensions: PtySize) -> Result<Arc<Session>, String> {
+/// The largest command a trusted surface may run in its own PTY: the
+/// declared login argv of one harness (for example `codex login`), never an
+/// arbitrary script.
+const MAX_COMMAND_LEN: usize = 16;
+const MAX_TOKEN_LEN: usize = 256;
+
+/// Shape checks for a carried command: bounded count and length, non-empty
+/// tokens without control characters, and a program named first. Authority
+/// is not the boundary here — the caller is the bundled shell, which already
+/// holds the user's full authority through the ordinary shell session; these
+/// checks only keep a malformed handover from spawning something senseless.
+fn validated_command(command: &[String]) -> Result<(), String> {
+    if command.is_empty() || command.len() > MAX_COMMAND_LEN {
+        return Err("A terminal command is one program and its arguments".into());
+    }
+    if command[0].is_empty() || command[0].starts_with('-') {
+        return Err("A terminal command names its program first".into());
+    }
+    for token in command {
+        if token.is_empty() || token.len() > MAX_TOKEN_LEN || token.chars().any(char::is_control) {
+            return Err("A terminal command token is short, plain text".into());
+        }
+    }
+    Ok(())
+}
+fn start(
+    cwd: String,
+    dimensions: PtySize,
+    command: Option<Vec<String>>,
+) -> Result<Arc<Session>, String> {
     let cwd = std::fs::canonicalize(cwd).map_err(|e| e.to_string())?;
     if !cwd.is_dir() {
         return Err("Terminal directory is not a folder".into());
@@ -117,15 +146,38 @@ fn start(cwd: String, dimensions: PtySize) -> Result<Arc<Session>, String> {
     let pair = native_pty_system()
         .openpty(dimensions)
         .map_err(|e| e.to_string())?;
-    let shell = std::env::var("SHELL").unwrap_or_else(|_| "/bin/sh".into());
-    let mut command = CommandBuilder::new(shell);
-    command.arg("-l");
-    command.cwd(&cwd);
-    command.env("TERM", "xterm-256color");
-    command.env("COLORTERM", "truecolor");
+    // The ordinary terminal is the user's login shell. A carried command —
+    // today a harness's own declared login argv, handed over from the
+    // Settings auth-login affordance — runs in the same real PTY instead:
+    // the child owns this terminal exactly as it would in front of the
+    // person, so browser-flow and TUI logins behave as their harness built
+    // them.
+    // An explicitly carried command is validated as given — including the
+    // empty one, which is malformed, never a silent fall back to the shell.
+    if let Some(argv) = &command {
+        validated_command(argv)?;
+    }
+    let carried = command;
+    let mut command_builder = match &carried {
+        Some(argv) => {
+            let (program, args) = argv.split_first().expect("checked non-empty above");
+            let mut builder = CommandBuilder::new(program);
+            builder.args(args);
+            builder
+        }
+        None => {
+            let shell = std::env::var("SHELL").unwrap_or_else(|_| "/bin/sh".into());
+            let mut builder = CommandBuilder::new(shell);
+            builder.arg("-l");
+            builder
+        }
+    };
+    command_builder.cwd(&cwd);
+    command_builder.env("TERM", "xterm-256color");
+    command_builder.env("COLORTERM", "truecolor");
     let child = pair
         .slave
-        .spawn_command(command)
+        .spawn_command(command_builder)
         .map_err(|e| e.to_string())?;
     drop(pair.slave);
     let mut reader = pair.master.try_clone_reader().map_err(|e| e.to_string())?;
@@ -311,15 +363,22 @@ fn close_session(row: &Arc<Session>) -> Result<(), String> {
     Ok(())
 }
 #[tauri::command]
+/// A command to run instead of the login shell, only when this surface's
+/// first attach creates its session (Settings auth login: the harness's
+/// declared login argv). A reattach to a live session ignores it.
 pub async fn terminal_attach(
     app: AppHandle,
     webview: Webview,
     id: String,
     cwd: Option<String>,
+    command: Option<Vec<String>>,
     dimensions: Size,
 ) -> Result<Attachment, String> {
     trusted(&webview)?;
     let dimensions = size(dimensions)?;
+    if let Some(argv) = &command {
+        validated_command(argv)?;
+    }
     if !app
         .state::<crate::KernelHost>()
         .0
@@ -342,7 +401,7 @@ pub async fn terminal_attach(
                 .or_else(|| std::env::var("OI_CENTRAL_ROOT").ok())
                 .or_else(|| std::env::var("HOME").ok())
                 .ok_or("Choose a terminal directory")?;
-            let row = start(cwd, dimensions)?;
+            let row = start(cwd, dimensions, command)?;
             rows.insert(id, row.clone());
             row
         }
