@@ -235,20 +235,25 @@ export default async function run({page,baseUrl,check,shot,channel}) {
   // fixture-oi world ---------------------------------------------------------
   // OI_BIN here is the EMPTY fixture world, so the AIKit disclosure does
   // not mount: Status/Credentials/Skills must render that absence by name
-  // (L3) while the aikit-driven reads (harness status, model catalogue)
-  // stay real and assert their live round trips. The aikit binary is NOT
-  // fixture-scoped: these are the machine's own harnesses and catalogue.
+  // (L3). The harness and catalogue reads ride the SAME dispatcher — the
+  // kernel routes them through OI_BIN — so in this world they refuse by
+  // name, and Harnesses/Models must render that refusal as their distinct
+  // failed state (failed ≠ loading ≠ absent). The LIVE equalities for
+  // these panels live in the configuration walk's live stance.
   await panel.getByRole('button',{name:'Settings',exact:true}).click();
   await panel.locator('[data-settings-home]').waitFor({timeout:30000});
   await assertStatusPanel({page, check, disclosureAvailable:false});
   await shot('section-status-absent-disclosure');
-  await assertHarnessesPanel({page, check});
-  await assertModelsPanel({page, check});
+  await assertHarnessesPanel({page, check, stance:'fixture'});
+  await assertModelsPanel({page, check, stance:'fixture'});
   await assertCredentialsPanel({page, check, disclosureAvailable:false});
   await assertSkillsPanel({page, check, disclosureAvailable:false});
-  // The section panels keep the L5 law too.
+  // The section panels keep the L5 law too (each is selected in turn —
+  // only the selected panel is mounted).
   for (const name of ['status','harnesses','models','credentials','skills']) {
+    await page.locator('.settings-toc button', {hasText: name}).first().click();
     const sectionPanel = page.locator(`[data-${name==='harnesses'?'harness':name}-panel]`);
+    await sectionPanel.waitFor({timeout:30000});
     await assertNoRawJson({check}, sectionPanel, `${name}: the rebuilt section renders no raw JSON (L5, fixture world)`);
   }
   await page.locator('.settings-toc button', {hasText:'All settings'}).first().click();

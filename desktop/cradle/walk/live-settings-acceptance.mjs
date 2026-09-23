@@ -56,14 +56,51 @@ export function readLiveListing(oiBin) {
   return JSON.parse(raw);
 }
 
+/** One bridge op from the scenario process. `connection: close` because the
+ * walk's page work between fetches outlives the bridge's keepalive window —
+ * a pooled socket reused minutes later dies with `fetch failed` (observed
+ * twice on 2026-09-22) — and one retry because a network-level failure here
+ * is transport, never a verdict. */
+export async function bridgeOp(bridgeUrl, op) {
+  const call = () => fetch(`${bridgeUrl}/op`, {
+    method: "POST",
+    headers: { "content-type": "application/json", "connection": "close" },
+    body: JSON.stringify(op),
+  });
+  let response;
+  try {
+    response = await call();
+  } catch (cause) {
+    response = await call();
+  }
+  return response;
+}
+
+/** The page's OWN disclosure read, from the same seam and the same kernel
+ * context: `system_composition_read` over the walk bridge, the AIKit owner's
+ * mounted descriptor. The ambient `aikit system --json` CLI read resolves a
+ * DIFFERENT project context than the kernel's working directory — observed
+ * 2026-09-22: the skills active axis differs between the two (ground-scoped
+ * guidance skills are active from the personal ground, not from a project
+ * checkout). The page is held against what the page actually reads. */
+export async function readDisclosureViaBridge(bridgeUrl) {
+  const response = await bridgeOp(bridgeUrl, { op: "system_composition_read" });
+  if (!response.ok) throw new Error(`system_composition_read over the bridge answered HTTP ${response.status}`);
+  const payload = await response.json();
+  if (!payload.ok || payload.outcome?.result !== "system_composition_reading") {
+    throw new Error(`system_composition_read answered ${payload.outcome?.result ?? JSON.stringify(payload).slice(0, 200)}`);
+  }
+  const mount = (payload.outcome.reading?.owners ?? []).find((row) => row.product_id === "ai-kit");
+  if (!mount?.descriptor) {
+    throw new Error(`the AIKit disclosure did not mount over the bridge: ${mount?.error ?? mount?.reason ?? "no descriptor"}`);
+  }
+  return mount.descriptor;
+}
+
 /** The kernel registry read the page itself consumed — one bridge op,
  * no second authority path. */
 export async function readRegistryViaBridge(bridgeUrl) {
-  const response = await fetch(`${bridgeUrl}/op`, {
-    method: "POST",
-    headers: { "content-type": "application/json" },
-    body: JSON.stringify({ op: "config_registry_read" }),
-  });
+  const response = await bridgeOp(bridgeUrl, { op: "config_registry_read" });
   if (!response.ok) throw new Error(`config_registry_read over the bridge answered HTTP ${response.status}`);
   const payload = await response.json();
   if (!payload.ok || payload.outcome?.result !== "config_registry_reading") {
@@ -185,13 +222,9 @@ export async function assertOwnerGroupLive({ page, owner, listing, registry, reg
     liveRows.find((row) => SINGULAR_SCOPES.has(row.allowed_scopes?.[0]?.scope_kind)) ?? liveRows[0];
   const scope = representative.allowed_scopes?.[0] ?? { scope_kind: "world", scope_ref: null };
   const readResolution = async (scopeRef) => {
-    const response = await fetch(`${registryBridgeUrl}/op`, {
-      method: "POST",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify({
-        op: "config_resolutions_read",
-        pairs: [{ setting_ref: representative.setting_ref, scope: { scope_kind: scope.scope_kind, scope_ref: scopeRef } }],
-      }),
+    const response = await bridgeOp(registryBridgeUrl, {
+      op: "config_resolutions_read",
+      pairs: [{ setting_ref: representative.setting_ref, scope: { scope_kind: scope.scope_kind, scope_ref: scopeRef } }],
     });
     const payload = await response.json();
     return payload?.outcome?.resolutions?.[0] ?? null;

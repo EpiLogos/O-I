@@ -124,7 +124,12 @@ export function SettingsHome({census,target}: {census?: CompositionReading;targe
   const refresh = async (planeSource: ConfigPlaneSource) => {
     setRefreshing(true);
     setError(null);
-    void readSuite();
+    // The suite read rides along only when a suite panel is the visible
+    // region: an unasked suite scan on every plane refresh piles CLI-heavy
+    // kernel ops behind the resolutions batch, and the page's own starved
+    // transports die waiting (observed: "Failed to fetch" on the disclosure
+    // read). Reads stay bounded to what the person asked to see.
+    if (isSuitePanel) void readSuite();
     try {
       const registry = await planeSource.readRegistry();
       setMounts(registry.mounts);
@@ -173,10 +178,16 @@ export function SettingsHome({census,target}: {census?: CompositionReading;targe
       setSuiteError(String(cause));
     }
   }
-  useEffect(() => {
-    void readSuite();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  /** The suite read is LAZY: it fires when a suite panel is first opened
+   * (or on an explicit Re-read), never on mount. Mounting the settings face
+   * must not schedule a burst of CLI-heavy kernel ops — the kernel serves
+   * operations behind one lock, and an unasked suite scan stalls every
+   * other read on the surface (the settings-kernel-starvation law: bound
+   * the reads to what the person asked to see). */
+  function openSuitePanel(kind: Extract<Panel, {kind: "status" | "harnesses" | "models" | "credentials" | "skills"}>["kind"]) {
+    setPanel({kind});
+    if (!suite && !suiteSourceRef.current) void readSuite();
+  }
 
   const holdDesired = async (setting: SettingSpec, scope: ScopeAddress, next: {value?: unknown; secret_reference?: {ref: string} | null}) => {
     if (!source) return;
@@ -272,8 +283,57 @@ export function SettingsHome({census,target}: {census?: CompositionReading;targe
       };
     });
 
-  if (sourceError) return <p role="alert">{sourceError}</p>;
-  if (!source || mounts == null) return <Loading label="Reading your settings…"/>;
+  /** The rebuilt sections' shared content: the panels once the suite read
+   * settles, a distinct reading state until it does — the frames never
+   * depend on a read to exist. */
+  const suitePanels = suite
+    ? <>
+        {panel.kind === "status" && <StatusPanel reading={suite.reading} census={census}/>}
+        {panel.kind === "harnesses" && <HarnessesPanel reading={suite.reading}/>}
+        {panel.kind === "models" && <ModelsPanel reading={suite.reading} source={suite.source} onChanged={() => suite && void readSuite()}/>}
+        {panel.kind === "credentials" && <CredentialsPanel reading={suite.reading}/>}
+        {panel.kind === "skills" && <SkillsPanel reading={suite.reading}/>}
+      </>
+    : <Loading label="Reading the suite…"/>;
+  const isSuitePanel = panel.kind === "status" || panel.kind === "harnesses"
+    || panel.kind === "models" || panel.kind === "credentials" || panel.kind === "skills";
+
+  if (sourceError) return <div className="settings-home" data-settings-home><p role="alert" className="settings-error">{sourceError}</p></div>;
+  // The face renders before the plane reads settle: the TOC and the panel
+  // frames are the page, and each region shows its own distinct state until
+  // its read lands — a slow read never holds the whole face hostage, and
+  // loading is never dressed up as absence or failure.
+  if (!source || mounts == null) return <div className="settings-home" data-settings-home>
+    <div className="settings-layout">
+      <nav className="settings-toc" aria-label="Setting groups">
+        <button type="button" aria-pressed={panel.kind === "all"} onClick={() => setPanel({kind: "all"})}>
+          <span>All settings</span>
+        </button>
+        {SUITE_PANELS.map((item) => (
+          <button key={item.kind} type="button"
+            aria-pressed={panel.kind === item.kind}
+            onClick={() => openSuitePanel(item.kind)}>
+            <span>{item.label}</span>
+          </button>
+        ))}
+        <button type="button" aria-pressed={panel.kind === "ground"} onClick={() => setPanel({kind: "ground"})}>
+          <span>Ground & suite</span>
+        </button>
+        <button type="button" aria-pressed={panel.kind === "profiles"} onClick={() => setPanel({kind: "profiles"})}>
+          <span>Profiles</span>
+        </button>
+      </nav>
+      <div className="settings-main">
+        {isSuitePanel
+          ? suitePanels
+          : panel.kind === "profiles"
+            ? <ProfilesView/>
+            : panel.kind === "ground"
+              ? <div className="settings-groundpanel"><GroundChooser/></div>
+              : <Loading label="Reading your settings…"/>}
+      </div>
+    </div>
+  </div>;
   if (source.kind === "unbound") {
     return <div className="settings-home" data-settings-home>
       <p className="settings-empty" data-config-unbound>Settings are not connected in this build: {source.label}. The desktop reads and applies settings through the installed suite; without it there is nothing to show — and nothing is faked.</p>
@@ -306,7 +366,7 @@ export function SettingsHome({census,target}: {census?: CompositionReading;targe
         {SUITE_PANELS.map((item) => (
           <button key={item.kind} type="button"
             aria-pressed={panel.kind === item.kind}
-            onClick={() => setPanel({kind: item.kind})}>
+            onClick={() => openSuitePanel(item.kind)}>
             <span>{item.label}</span>
             {item.kind === "credentials" && suite?.reading.disclosure.state === "ok" && suite.reading.disclosure.rows.credentials.length > 0
               && <span className="settings-toc-count">{suite.reading.disclosure.rows.credentials.length}</span>}
@@ -345,16 +405,8 @@ export function SettingsHome({census,target}: {census?: CompositionReading;targe
 
         {panel.kind === "profiles"
           ? <ProfilesView/>
-          : panel.kind === "status" || panel.kind === "harnesses" || panel.kind === "models" || panel.kind === "credentials" || panel.kind === "skills"
-            ? (suite
-                ? <>
-                    {panel.kind === "status" && <StatusPanel reading={suite.reading} census={census}/>}
-                    {panel.kind === "harnesses" && <HarnessesPanel reading={suite.reading}/>}
-                    {panel.kind === "models" && <ModelsPanel reading={suite.reading} source={suite.source} onChanged={() => suite && void readSuite()}/>}
-                    {panel.kind === "credentials" && <CredentialsPanel reading={suite.reading}/>}
-                    {panel.kind === "skills" && <SkillsPanel reading={suite.reading}/>}
-                  </>
-                : <Loading label="Reading the suite…"/>)
+          : isSuitePanel
+            ? suitePanels
             : panel.kind === "ground"
             ? <div className="settings-groundpanel">
                 <GroundChooser/>

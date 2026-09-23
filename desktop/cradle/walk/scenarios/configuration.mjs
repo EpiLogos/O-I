@@ -27,7 +27,7 @@
  *     a section to a fixture descriptor changes the page with no cradle
  *     code change.
  */
-import { ALL_GROUPS, assertOwnerGroupLive, readLiveListing, readRegistryViaBridge } from "../live-settings-acceptance.mjs";
+import { ALL_GROUPS, assertOwnerGroupLive, readDisclosureViaBridge, readLiveListing, readRegistryViaBridge } from "../live-settings-acceptance.mjs";
 import { assertNoRawJson } from "../lib/read-model.mjs";
 import {
   assertStatusPanel,
@@ -35,6 +35,7 @@ import {
   assertModelsPanel,
   assertCredentialsPanel,
   assertSkillsPanel,
+  liveDisclosureFacts,
 } from "../lib/settings-sections.mjs";
 
 const oiBin = process.env.OI_BIN ?? "oi"; // the same resolution the walk bridge uses
@@ -66,6 +67,11 @@ export default async function run({page,baseUrl,check,shot,bridgeUrl,log}) {
   // expectation the rendered surface is held against (the round trip).
   const listing = readLiveListing(oiBin);
   const registry = await readRegistryViaBridge(bridgeUrl);
+  // The disclosure facts come from the SAME seam the page reads — the
+  // bridge's system_composition_read, in the kernel's own project context.
+  // The ambient aikit CLI resolves a different context (the skills active
+  // axis differs across the two — observed 2026-09-22).
+  const disclosureFacts = liveDisclosureFacts(await readDisclosureViaBridge(bridgeUrl));
 
   const verdicts = {};
   for (const owner of ALL_GROUPS) {
@@ -79,11 +85,11 @@ export default async function run({page,baseUrl,check,shot,bridgeUrl,log}) {
   // section asserts its full row-by-row round trip; each panel is also held
   // to the L5 law on its own.
   const sectionLegs = [
-    ["Status", () => assertStatusPanel({page, check, disclosureAvailable: true})],
-    ["Harnesses", () => assertHarnessesPanel({page, check})],
-    ["Models", () => assertModelsPanel({page, check})],
-    ["Credentials", () => assertCredentialsPanel({page, check, disclosureAvailable: true})],
-    ["Skills", () => assertSkillsPanel({page, check, disclosureAvailable: true})],
+    ["Status", () => assertStatusPanel({page, check, disclosureAvailable: true, facts: disclosureFacts})],
+    ["Harnesses", () => assertHarnessesPanel({page, check, stance: "live"})],
+    ["Models", () => assertModelsPanel({page, check, stance: "live"})],
+    ["Credentials", () => assertCredentialsPanel({page, check, disclosureAvailable: true, facts: disclosureFacts})],
+    ["Skills", () => assertSkillsPanel({page, check, disclosureAvailable: true, facts: disclosureFacts})],
   ];
   for (const [name, leg] of sectionLegs) {
     const panel = await leg();
