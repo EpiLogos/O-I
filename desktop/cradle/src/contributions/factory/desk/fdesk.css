@@ -2,7 +2,7 @@
    Shell tokens only (packages/oi-design-system/tokens.css); no local
    scrollbar styling. State hues follow the host scheme. */
 
-.factory-centre{
+.factory-centre, .frtab, .fagents, .fslice{
   --fd-ink: var(--oi-ink, var(--oi-foreground));
   --fd-muted: var(--oi-muted-2);
   --fd-faint: var(--oi-muted-3, var(--oi-muted-2));
@@ -162,6 +162,45 @@
 .ftraj{ display: flex; flex-direction: column; gap: 10px; }
 .ftraj-bar{ display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
 .ftraj-session select{ min-height: var(--oi-shell-control, 28px); padding: 0 8px; border: var(--oi-shell-edge, 1px) solid var(--fd-rule); border-radius: var(--oi-shell-radius-control, 7px); background: var(--fd-card); color: var(--fd-ink); font: inherit; font-size: var(--oi-shell-type-ui); max-width: 100%; }
+
+.ftraj-card{ display: flex; flex-direction: column; border: var(--oi-shell-edge, 1px) solid var(--fd-rule); border-radius: var(--fd-radius); background: var(--fd-card); overflow: hidden; }
+.ftraj-card > .ftraj-bar{ padding: 10px 12px; border-bottom: var(--oi-shell-edge, 1px) solid var(--fd-rule); }
+.ftraj-search{ margin-left: auto; }
+.ftraj-search input{ width: 90px; }
+.ftraj-axis{ color: var(--fd-muted); font-size: var(--oi-shell-type-ui); }
+.ftraj-strip{ display: block; width: 100%; height: 66px; background: var(--oi-wash); border-bottom: var(--oi-shell-edge, 1px) solid var(--fd-rule); }
+.ftraj-lane-label{ fill: var(--fd-muted); font-size: 9.5px; }
+.ftraj-mark{ fill: color-mix(in srgb, var(--fd-ink) 45%, transparent); cursor: pointer; }
+.ftraj-mark[data-lane-kind="tools"]{ fill: var(--fd-ink); }
+.ftraj-mark[data-lane-kind="input"]{ fill: color-mix(in srgb, var(--fd-ink) 25%, transparent); }
+.ftraj-foot{ margin: 0; padding: 9px 12px; border-top: var(--oi-shell-edge, 1px) solid var(--fd-rule); color: var(--fd-muted); font-size: var(--oi-shell-type-ui); text-align: center; }
+.ftraj-waterfall{ display: flex; flex-direction: column; gap: 6px; }
+.factory-centre .ftraj-fall-row{ display: grid; grid-template-columns: 110px 1fr; gap: 10px; align-items: center; padding: 0; border: 0; background: none; color: var(--fd-muted); font: inherit; font-size: var(--oi-shell-type-ui); text-align: left; cursor: pointer; }
+.factory-centre .ftraj-fall-row[aria-pressed="true"]{ color: var(--fd-ink); }
+.ftraj-fall-track{ position: relative; height: 10px; }
+.ftraj-fall-bar{ position: absolute; top: 2px; height: 6px; border-radius: 3px; background: color-mix(in srgb, var(--fd-ink) 40%, transparent); }
+.ftraj-fall-row[aria-pressed="true"] .ftraj-fall-bar{ background: var(--fd-ink); }
+
+/* Right panel: Run tab, Agents tab, Context slice (no .factory-centre scope) */
+.frtab{ display: flex; flex-direction: column; gap: 10px; padding: 12px 14px; min-height: 0; }
+.frtab-head{ display: flex; flex-direction: column; gap: 4px; }
+.frtab-head strong{ font-size: var(--oi-shell-type-body); color: var(--oi-foreground); }
+.frtab-head > span{ color: var(--oi-muted-2); font-size: var(--oi-shell-type-ui); }
+.frtab-units{ display: flex; gap: 3px; margin-top: 4px; }
+.frtab-units .fdesk-unit{ flex: 1 1 0; height: 4px; border-radius: 2px; background: color-mix(in srgb, var(--oi-foreground) 16%, transparent); }
+.frtab-units .fdesk-unit[data-standing="active"]{ background: color-mix(in srgb, var(--oi-foreground) 55%, transparent); }
+.frtab-units .fdesk-unit[data-standing="returned"]{ background: var(--oi-foreground); }
+.frtab-empty, .frtab-direct{ margin: 0; color: var(--oi-muted-2); font-size: var(--oi-shell-type-ui); }
+.fagents, .fslice{ display: flex; flex-direction: column; gap: 6px; padding: 12px 14px; }
+.fagents-head{ margin: 8px 0 4px; font-size: var(--oi-shell-type-eyebrow, 11px); font-weight: 600; letter-spacing: var(--oi-tracking-label, .08em); text-transform: uppercase; color: var(--oi-muted-2); }
+.desktop-shell .fagent-row, .desktop-shell .fslice-row{ display: flex; align-items: center; gap: 10px; width: 100%; padding: 6px 6px; border: 0; border-radius: var(--oi-shell-radius-row, 6px); background: transparent; color: var(--oi-foreground); font: inherit; font-size: var(--oi-shell-type-ui); text-align: left; cursor: pointer; }
+.desktop-shell .fagent-row:hover, .desktop-shell .fslice-row:hover{ background: var(--oi-wash); }
+.fagent-avatar{ width: 26px; height: 26px; margin: 0; font-size: 10px; flex: none; }
+.fagent-text{ display: flex; flex-direction: column; min-width: 0; }
+.fagent-text small{ color: var(--oi-muted-2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.fagents-search{ width: 100%; box-sizing: border-box; }
+.fagents-search input{ width: 100%; }
+.fslice-note{ margin: 0; color: var(--oi-muted-2); font-size: var(--oi-shell-type-ui); }
 
 /* Object pages */
 .fobject-head{ display: flex; align-items: center; gap: 4px; }
