@@ -404,13 +404,9 @@ export default async function run({ page, baseUrl, bridgeUrl, check, metric, sho
   const centralBook = await book();
   const centralTabIds = tabsOf(centralBook.workspaces.find((w) => w.id === centralBook.active));
   const readsBeforeRelease = fileReads();
-  const { openWorkspaceStrip } = await import('../editor-doc.mjs');
+  const helpers = await import('../editor-doc.mjs');
   const newWorkspace = async (name) => {
-    await openWorkspaceStrip(page);
-    await page.getByLabel('Workspace actions', { exact: true }).click();
-    await page.getByRole('button', { name: 'New workspace' }).click();
-    await page.getByRole('textbox', { name: 'Workspace name' }).fill(name);
-    await page.getByRole('button', { name: 'Create workspace' }).click();
+    await helpers.newWorkspace(page, name);
     await page.waitForFunction((want) => {
       const parsed = JSON.parse(localStorage.getItem('oi-cradle.workspaces.v1') ?? 'null');
       const target = parsed?.workspaces?.find((w) => w.name === want);
@@ -426,8 +422,7 @@ export default async function run({ page, baseUrl, bridgeUrl, check, metric, sho
   // two most recent) holds Sideways and Midway and Central's tree is forced
   // out of it entirely.
   const visit = async (name) => {
-    await openWorkspaceStrip(page);
-    await page.getByLabel('Workspace', { exact: true }).selectOption({ label: name });
+    await helpers.switchWorkspace(page, { label: name });
     await page.waitForFunction((want) => {
       const parsed = JSON.parse(localStorage.getItem('oi-cradle.workspaces.v1') ?? 'null');
       const target = parsed?.workspaces?.find((w) => w.name === want);

@@ -1,0 +1,339 @@
+{
+  "schema": "oi.cradle.walk.scenario/v1",
+  "scenario": "left-gallery",
+  "spec_ref": "docs/cradle/10-SIDEBARS.md §3 (the left frame in light and dark at 1440 / 1000 / 760)",
+  "grade": "B",
+  "binding": null,
+  "generated_at": "2026-09-23T08:28:03.756Z",
+  "environment": {
+    "base_url": "http://localhost:4173",
+    "bridge_url": "http://127.0.0.1:4179",
+    "viewport": "1280x820",
+    "browser_engine": "chromium",
+    "bundle": "walk (WALK=1) served by vite preview",
+    "build_input": {
+      "mode": "reused-dist",
+      "bundle_fingerprint": "a13718589b0a01d3d42d329634cddf7aeb6a877f7eccc823430c7ba73803f14a"
+    },
+    "node": "v24.16.0",
+    "platform": "darwin",
+    "source": {
+      "repository_root": "/Users/admin/Central/worktrees/ui-build/lane1-left",
+      "repository_head": "b30209f9bddb65b6a535ffeca2b482fa403a3f26",
+      "tracked_changes": [
+        "desktop/cradle/walk/artifacts/left-forms-day-copy.png",
+        "desktop/cradle/walk/artifacts/left-forms-intent-goal-refused.png",
+        "desktop/cradle/walk/artifacts/left-forms.json",
+        "desktop/cradle/walk/artifacts/left-frame-L1-rest-1440.png",
+        "desktop/cradle/walk/artifacts/left-frame-L3-compact-1000.png",
+        "desktop/cradle/walk/artifacts/left-frame-L4-overlay-600.png",
+        "desktop/cradle/walk/artifacts/left-frame-L6-reading.png",
+        "desktop/cradle/walk/artifacts/left-frame.json",
+        "desktop/cradle/walk/artifacts/left-head-inbox-open-item.png",
+        "desktop/cradle/walk/artifacts/left-head-palette-agents.png",
+        "desktop/cradle/walk/artifacts/left-head-scope-menu.png",
+        "desktop/cradle/walk/artifacts/left-head.json",
+        "desktop/cradle/walk/artifacts/left-lens-lens-off.png",
+        "desktop/cradle/walk/artifacts/left-lens-lens-on.png",
+        "desktop/cradle/walk/artifacts/left-lens.json",
+        "desktop/cradle/walk/artifacts/left-marks-R2-working.png",
+        "desktop/cradle/walk/artifacts/left-marks-R3-needs-you.png",
+        "desktop/cradle/walk/artifacts/left-marks-R4-unread.png",
+        "desktop/cradle/walk/artifacts/left-marks-R5-failed.png",
+        "desktop/cradle/walk/artifacts/left-marks.json",
+        "desktop/cradle/walk/artifacts/left-rows-A6-open-beside.png",
+        "desktop/cradle/walk/artifacts/left-rows-R12-dropped-context.png",
+        "desktop/cradle/walk/artifacts/left-rows-R6-selected.png",
+        "desktop/cradle/walk/artifacts/left-rows.json",
+        "desktop/cradle/walk/artifacts/left-unreadable-L7-unreadable.png",
+        "desktop/cradle/walk/artifacts/left-unreadable-R11-stale-header.png",
+        "desktop/cradle/walk/artifacts/left-unreadable-R8-branch-reading.png",
+        "desktop/cradle/walk/artifacts/left-unreadable.json"
+      ],
+      "dirty_digest": "7e7d0def3025a0e5b08b8fc171b0df6b81e4b0a6206176084e3436614648ec76",
+      "engine_provenance_path": "/Users/admin/Central/worktrees/ui-build/lane1-left/packages/oi-design-system/expressions-engine/PROVENANCE.json",
+      "engine_source": "EpiLogos/Point-Cloud-Demo",
+      "engine_revision": "91db8428fc9dfba06cd258ec5a58e7dd9eef5313"
+    }
+  },
+  "passed": true,
+  "error": null,
+  "duration_ms": 48479,
+  "checks": [
+    {
+      "ok": true,
+      "label": "light 1440: head present (40px), foot pinned to the region's bottom, no sideways scroll in the body",
+      "data": {
+        "sideways": 0,
+        "head": 40,
+        "footBottom": 897,
+        "height": 897
+      }
+    },
+    {
+      "ok": true,
+      "label": "light: the scope menu is whole — its right edge is not clipped by the narrow sidebar",
+      "data": {
+        "right": 278,
+        "inside": true
+      }
+    },
+    {
+      "ok": true,
+      "label": "light 1000: head present (40px), foot pinned to the region's bottom, no sideways scroll in the body",
+      "data": {
+        "sideways": 0,
+        "head": 40,
+        "footBottom": 897,
+        "height": 897
+      }
+    },
+    {
+      "ok": true,
+      "label": "light 760: head present (40px), foot pinned to the region's bottom, no sideways scroll in the body",
+      "data": {
+        "sideways": 0,
+        "head": 40,
+        "footBottom": 897,
+        "height": 897
+      }
+    },
+    {
+      "ok": true,
+      "label": "dark 1440: head present (40px), foot pinned to the region's bottom, no sideways scroll in the body",
+      "data": {
+        "sideways": 0,
+        "head": 40,
+        "footBottom": 897,
+        "height": 897
+      }
+    },
+    {
+      "ok": true,
+      "label": "dark: the scope menu is whole — its right edge is not clipped by the narrow sidebar",
+      "data": {
+        "right": 278,
+        "inside": true
+      }
+    },
+    {
+      "ok": true,
+      "label": "dark 1000: head present (40px), foot pinned to the region's bottom, no sideways scroll in the body",
+      "data": {
+        "sideways": 0,
+        "head": 40,
+        "footBottom": 897,
+        "height": 897
+      }
+    },
+    {
+      "ok": true,
+      "label": "dark 760: head present (40px), foot pinned to the region's bottom, no sideways scroll in the body",
+      "data": {
+        "sideways": 0,
+        "head": 40,
+        "footBottom": 897,
+        "height": 897
+      }
+    },
+    {
+      "ok": true,
+      "label": "The appearance changes the ground and the ink (light vs dark)",
+      "data": {
+        "light": "rgb(233, 233, 229)|rgb(28, 28, 26)",
+        "dark": "rgb(11, 11, 10)|rgb(240, 240, 235)"
+      }
+    }
+  ],
+  "ops": [
+    {
+      "ok": true,
+      "op": "info",
+      "duration_ms": 0.1,
+      "data": {
+        "schema": "oi.cradle.walk/v1",
+        "mounted_at": "2026-09-23T08:28:04.056Z",
+        "transport": {
+          "kind": "bridge",
+          "url": "http://127.0.0.1:4179"
+        },
+        "url": "http://localhost:4173/"
+      }
+    },
+    {
+      "ok": true,
+      "op": "info",
+      "duration_ms": 0,
+      "data": {
+        "schema": "oi.cradle.walk/v1",
+        "mounted_at": "2026-09-23T08:28:09.270Z",
+        "transport": {
+          "kind": "bridge",
+          "url": "http://127.0.0.1:4179"
+        },
+        "url": "http://localhost:4173/"
+      }
+    },
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 65,
+      "data": {
+        "file": "left-gallery-base-light-1440.png"
+      }
+    },
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 62,
+      "data": {
+        "file": "left-gallery-scope-menu-light-1440.png"
+      }
+    },
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 69,
+      "data": {
+        "file": "left-gallery-inbox-light-1440.png"
+      }
+    },
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 63,
+      "data": {
+        "file": "left-gallery-factory-light-1440.png"
+      }
+    },
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 53,
+      "data": {
+        "file": "left-gallery-base-light-1000.png"
+      }
+    },
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 65,
+      "data": {
+        "file": "left-gallery-factory-light-1000.png"
+      }
+    },
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 56,
+      "data": {
+        "file": "left-gallery-base-light-760.png"
+      }
+    },
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 48,
+      "data": {
+        "file": "left-gallery-factory-light-760.png"
+      }
+    },
+    {
+      "ok": true,
+      "op": "info",
+      "duration_ms": 0,
+      "data": {
+        "schema": "oi.cradle.walk/v1",
+        "mounted_at": "2026-09-23T08:28:31.195Z",
+        "transport": {
+          "kind": "bridge",
+          "url": "http://127.0.0.1:4179"
+        },
+        "url": "http://localhost:4173/"
+      }
+    },
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 63,
+      "data": {
+        "file": "left-gallery-base-dark-1440.png"
+      }
+    },
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 79,
+      "data": {
+        "file": "left-gallery-scope-menu-dark-1440.png"
+      }
+    },
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 62,
+      "data": {
+        "file": "left-gallery-inbox-dark-1440.png"
+      }
+    },
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 79,
+      "data": {
+        "file": "left-gallery-factory-dark-1440.png"
+      }
+    },
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 56,
+      "data": {
+        "file": "left-gallery-base-dark-1000.png"
+      }
+    },
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 75,
+      "data": {
+        "file": "left-gallery-factory-dark-1000.png"
+      }
+    },
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 37,
+      "data": {
+        "file": "left-gallery-base-dark-760.png"
+      }
+    },
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 59,
+      "data": {
+        "file": "left-gallery-factory-dark-760.png"
+      }
+    }
+  ],
+  "metrics": {},
+  "screenshots": [
+    "left-gallery-base-light-1440.png",
+    "left-gallery-scope-menu-light-1440.png",
+    "left-gallery-inbox-light-1440.png",
+    "left-gallery-factory-light-1440.png",
+    "left-gallery-base-light-1000.png",
+    "left-gallery-factory-light-1000.png",
+    "left-gallery-base-light-760.png",
+    "left-gallery-factory-light-760.png",
+    "left-gallery-base-dark-1440.png",
+    "left-gallery-scope-menu-dark-1440.png",
+    "left-gallery-inbox-dark-1440.png",
+    "left-gallery-factory-dark-1440.png",
+    "left-gallery-base-dark-1000.png",
+    "left-gallery-factory-dark-1000.png",
+    "left-gallery-base-dark-760.png",
+    "left-gallery-factory-dark-760.png"
+  ]
+}

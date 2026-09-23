@@ -1,3 +1,4 @@
+import {openConversationInCentre} from "../editor-doc.mjs";
 // agency-planes (6C cell 1): the Activity plane of the agency panel leads
 // through the actual resident session — the provider's real working material
 // (thinking, tool calls, a REAL consent round-trip answered through the
@@ -84,7 +85,7 @@ export default async function run({page,baseUrl,check,shot,channel,provision:p})
   const nav=page.getByRole("complementary",{name:"World navigator"});
   await nav.locator('[data-project-path="Work/Editor"]').click();
   await nav.getByRole("button",{name:"Editor: chats and tasks",exact:true}).click();
-  await page.getByRole("button",{name:"Agency planes acceptance",exact:true}).click();
+  await openConversationInCentre(page,"Agency planes acceptance");
   await page.getByRole("textbox",{name:"Message",exact:true}).waitFor();
   const planeButtons=page.locator(".encounter-planes");
   const toActivity=()=>planeButtons.getByRole("button",{name:"Activity"}).click();

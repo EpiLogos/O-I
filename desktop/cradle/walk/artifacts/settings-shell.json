@@ -4,7 +4,7 @@
   "spec_ref": "docs/cradle/12-SETTINGS.md §1 §3 §4 S1 S3 S10 S11 S14 S15",
   "grade": "B",
   "binding": null,
-  "generated_at": "2026-09-23T07:13:03.320Z",
+  "generated_at": "2026-09-23T08:29:12.142Z",
   "environment": {
     "base_url": "http://localhost:4173",
     "bridge_url": "http://127.0.0.1:4179",
@@ -12,26 +12,72 @@
     "browser_engine": "chromium",
     "bundle": "walk (WALK=1) served by vite preview",
     "build_input": {
-      "mode": "fresh-build",
-      "bundle_fingerprint": "a7a09418ce4322d8d78b92d5fbef3eadb3d2e486d66085f9c9578daa397bea66"
+      "mode": "reused-dist",
+      "bundle_fingerprint": "a13718589b0a01d3d42d329634cddf7aeb6a877f7eccc823430c7ba73803f14a"
     },
     "node": "v24.16.0",
     "platform": "darwin",
     "source": {
-      "repository_root": "/Users/admin/Central/worktrees/ui-build/lane4-settings",
-      "repository_head": "f84fa70a5e2b462b9078c81cb69a429497e3037b",
+      "repository_root": "/Users/admin/Central/worktrees/ui-build/lane1-left",
+      "repository_head": "b30209f9bddb65b6a535ffeca2b482fa403a3f26",
       "tracked_changes": [
-        "desktop/cradle/src/workspace/settings/sections/CredentialsSection.tsx"
+        "desktop/cradle/walk/artifacts/left-forms-day-copy.png",
+        "desktop/cradle/walk/artifacts/left-forms-intent-goal-refused.png",
+        "desktop/cradle/walk/artifacts/left-forms.json",
+        "desktop/cradle/walk/artifacts/left-frame-L1-rest-1440.png",
+        "desktop/cradle/walk/artifacts/left-frame-L3-compact-1000.png",
+        "desktop/cradle/walk/artifacts/left-frame-L4-overlay-600.png",
+        "desktop/cradle/walk/artifacts/left-frame-L6-reading.png",
+        "desktop/cradle/walk/artifacts/left-frame.json",
+        "desktop/cradle/walk/artifacts/left-gallery-base-dark-1000.png",
+        "desktop/cradle/walk/artifacts/left-gallery-base-dark-760.png",
+        "desktop/cradle/walk/artifacts/left-gallery-base-light-1000.png",
+        "desktop/cradle/walk/artifacts/left-gallery-base-light-760.png",
+        "desktop/cradle/walk/artifacts/left-gallery-factory-dark-1000.png",
+        "desktop/cradle/walk/artifacts/left-gallery-factory-dark-1440.png",
+        "desktop/cradle/walk/artifacts/left-gallery-factory-dark-760.png",
+        "desktop/cradle/walk/artifacts/left-gallery-factory-light-1000.png",
+        "desktop/cradle/walk/artifacts/left-gallery-factory-light-1440.png",
+        "desktop/cradle/walk/artifacts/left-gallery-factory-light-760.png",
+        "desktop/cradle/walk/artifacts/left-gallery-inbox-dark-1440.png",
+        "desktop/cradle/walk/artifacts/left-gallery-inbox-light-1440.png",
+        "desktop/cradle/walk/artifacts/left-gallery-scope-menu-light-1440.png",
+        "desktop/cradle/walk/artifacts/left-gallery.json",
+        "desktop/cradle/walk/artifacts/left-head-inbox-open-item.png",
+        "desktop/cradle/walk/artifacts/left-head-palette-agents.png",
+        "desktop/cradle/walk/artifacts/left-head-scope-menu.png",
+        "desktop/cradle/walk/artifacts/left-head.json",
+        "desktop/cradle/walk/artifacts/left-lens-lens-off.png",
+        "desktop/cradle/walk/artifacts/left-lens-lens-on.png",
+        "desktop/cradle/walk/artifacts/left-lens.json",
+        "desktop/cradle/walk/artifacts/left-marks-R2-working.png",
+        "desktop/cradle/walk/artifacts/left-marks-R3-needs-you.png",
+        "desktop/cradle/walk/artifacts/left-marks-R4-unread.png",
+        "desktop/cradle/walk/artifacts/left-marks-R5-failed.png",
+        "desktop/cradle/walk/artifacts/left-marks.json",
+        "desktop/cradle/walk/artifacts/left-rows-A6-open-beside.png",
+        "desktop/cradle/walk/artifacts/left-rows-R12-dropped-context.png",
+        "desktop/cradle/walk/artifacts/left-rows-R6-selected.png",
+        "desktop/cradle/walk/artifacts/left-rows.json",
+        "desktop/cradle/walk/artifacts/left-unreadable-L7-unreadable.png",
+        "desktop/cradle/walk/artifacts/left-unreadable-R11-stale-header.png",
+        "desktop/cradle/walk/artifacts/left-unreadable-R8-branch-reading.png",
+        "desktop/cradle/walk/artifacts/left-unreadable.json",
+        "desktop/cradle/walk/artifacts/receive-include-accepted-on-current-basis.png",
+        "desktop/cradle/walk/artifacts/receive-include-included-with-attribution.png",
+        "desktop/cradle/walk/artifacts/receive-include-return-expanded-before-review.png",
+        "desktop/cradle/walk/artifacts/receive-include-stale-basis-refusal.png",
+        "desktop/cradle/walk/artifacts/receive-include.json"
       ],
-      "dirty_digest": "27463dcd33fc359496da78c587114e4b4808fcfacbaf5fc9cd4d2da42e42dc01",
-      "engine_provenance_path": "/Users/admin/Central/worktrees/ui-build/lane4-settings/packages/oi-design-system/expressions-engine/PROVENANCE.json",
+      "dirty_digest": "89fb204514f455340cacc83bb8989ab059ab7ddb648fb68d979ce2870c90d06f",
+      "engine_provenance_path": "/Users/admin/Central/worktrees/ui-build/lane1-left/packages/oi-design-system/expressions-engine/PROVENANCE.json",
       "engine_source": "EpiLogos/Point-Cloud-Demo",
       "engine_revision": "91db8428fc9dfba06cd258ec5a58e7dd9eef5313"
     }
   },
   "passed": true,
   "error": null,
-  "duration_ms": 90482,
+  "duration_ms": 183095,
   "checks": [
     {
       "ok": true,
@@ -150,7 +196,7 @@
         "brokerClients": [
           "broker"
         ],
-        "listed": 18
+        "listed": 24
       }
     },
     {
@@ -308,7 +354,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 30,
+      "duration_ms": 63,
       "data": {
         "file": "settings-shell-status-light-1440.png"
       }
@@ -316,7 +362,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 24,
+      "duration_ms": 54,
       "data": {
         "file": "settings-shell-status-light-1000.png"
       }
@@ -324,7 +370,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 28,
+      "duration_ms": 69,
       "data": {
         "file": "settings-shell-status-light-760.png"
       }
@@ -332,7 +378,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 34,
+      "duration_ms": 75,
       "data": {
         "file": "settings-shell-status-dark-1440.png"
       }
@@ -340,7 +386,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 26,
+      "duration_ms": 75,
       "data": {
         "file": "settings-shell-status-dark-1000.png"
       }
@@ -348,7 +394,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 35,
+      "duration_ms": 63,
       "data": {
         "file": "settings-shell-status-dark-760.png"
       }
@@ -356,7 +402,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 51,
+      "duration_ms": 75,
       "data": {
         "file": "settings-shell-harnesses-light-1440.png"
       }
@@ -364,7 +410,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 39,
+      "duration_ms": 98,
       "data": {
         "file": "settings-shell-harnesses-light-1000.png"
       }
@@ -372,7 +418,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 30,
+      "duration_ms": 34,
       "data": {
         "file": "settings-shell-harnesses-light-760.png"
       }
@@ -380,7 +426,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 54,
+      "duration_ms": 70,
       "data": {
         "file": "settings-shell-harnesses-dark-1440.png"
       }
@@ -388,7 +434,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 55,
+      "duration_ms": 67,
       "data": {
         "file": "settings-shell-harnesses-dark-1000.png"
       }
@@ -396,7 +442,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 38,
+      "duration_ms": 70,
       "data": {
         "file": "settings-shell-harnesses-dark-760.png"
       }
@@ -404,7 +450,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 67,
+      "duration_ms": 66,
       "data": {
         "file": "settings-shell-model-picker.png"
       }
@@ -412,7 +458,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 33,
+      "duration_ms": 61,
       "data": {
         "file": "settings-shell-models-light-1440.png"
       }
@@ -420,7 +466,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 23,
+      "duration_ms": 44,
       "data": {
         "file": "settings-shell-models-light-1000.png"
       }
@@ -428,7 +474,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 33,
+      "duration_ms": 52,
       "data": {
         "file": "settings-shell-models-light-760.png"
       }
@@ -436,7 +482,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 31,
+      "duration_ms": 89,
       "data": {
         "file": "settings-shell-models-dark-1440.png"
       }
@@ -444,7 +490,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 37,
+      "duration_ms": 52,
       "data": {
         "file": "settings-shell-models-dark-1000.png"
       }
@@ -452,7 +498,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 41,
+      "duration_ms": 102,
       "data": {
         "file": "settings-shell-models-dark-760.png"
       }
@@ -460,7 +506,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 41,
+      "duration_ms": 88,
       "data": {
         "file": "settings-shell-permissions-light-1440.png"
       }
@@ -468,7 +514,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 23,
+      "duration_ms": 89,
       "data": {
         "file": "settings-shell-permissions-light-1000.png"
       }
@@ -476,7 +522,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 31,
+      "duration_ms": 77,
       "data": {
         "file": "settings-shell-permissions-light-760.png"
       }
@@ -484,7 +530,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 40,
+      "duration_ms": 72,
       "data": {
         "file": "settings-shell-permissions-dark-1440.png"
       }
@@ -492,7 +538,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 33,
+      "duration_ms": 61,
       "data": {
         "file": "settings-shell-permissions-dark-1000.png"
       }
@@ -500,7 +546,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 65,
+      "duration_ms": 80,
       "data": {
         "file": "settings-shell-permissions-dark-760.png"
       }
@@ -508,7 +554,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 25,
+      "duration_ms": 77,
       "data": {
         "file": "settings-shell-skills-light-1440.png"
       }
@@ -516,7 +562,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 24,
+      "duration_ms": 45,
       "data": {
         "file": "settings-shell-skills-light-1000.png"
       }
@@ -524,7 +570,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 30,
+      "duration_ms": 60,
       "data": {
         "file": "settings-shell-skills-light-760.png"
       }
@@ -532,7 +578,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 39,
+      "duration_ms": 157,
       "data": {
         "file": "settings-shell-skills-dark-1440.png"
       }
@@ -540,7 +586,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 46,
+      "duration_ms": 81,
       "data": {
         "file": "settings-shell-skills-dark-1000.png"
       }
@@ -548,7 +594,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 45,
+      "duration_ms": 106,
       "data": {
         "file": "settings-shell-skills-dark-760.png"
       }
@@ -556,7 +602,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 33,
+      "duration_ms": 86,
       "data": {
         "file": "settings-shell-credentials-light-1440.png"
       }
@@ -564,7 +610,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 26,
+      "duration_ms": 58,
       "data": {
         "file": "settings-shell-credentials-light-1000.png"
       }
@@ -572,7 +618,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 30,
+      "duration_ms": 72,
       "data": {
         "file": "settings-shell-credentials-light-760.png"
       }
@@ -580,7 +626,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 41,
+      "duration_ms": 93,
       "data": {
         "file": "settings-shell-credentials-dark-1440.png"
       }
@@ -588,7 +634,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 34,
+      "duration_ms": 70,
       "data": {
         "file": "settings-shell-credentials-dark-1000.png"
       }
@@ -596,7 +642,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 36,
+      "duration_ms": 95,
       "data": {
         "file": "settings-shell-credentials-dark-760.png"
       }
@@ -604,7 +650,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 29,
+      "duration_ms": 72,
       "data": {
         "file": "settings-shell-profiles-light-1440.png"
       }
@@ -612,7 +658,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 29,
+      "duration_ms": 33,
       "data": {
         "file": "settings-shell-profiles-light-1000.png"
       }
@@ -620,7 +666,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 21,
+      "duration_ms": 82,
       "data": {
         "file": "settings-shell-profiles-light-760.png"
       }
@@ -628,7 +674,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 34,
+      "duration_ms": 127,
       "data": {
         "file": "settings-shell-profiles-dark-1440.png"
       }
@@ -636,7 +682,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 47,
+      "duration_ms": 137,
       "data": {
         "file": "settings-shell-profiles-dark-1000.png"
       }
@@ -644,7 +690,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 53,
+      "duration_ms": 89,
       "data": {
         "file": "settings-shell-profiles-dark-760.png"
       }
@@ -652,7 +698,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 57,
+      "duration_ms": 116,
       "data": {
         "file": "settings-shell-appearance-light-1440.png"
       }
@@ -660,7 +706,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 27,
+      "duration_ms": 104,
       "data": {
         "file": "settings-shell-appearance-light-1000.png"
       }
@@ -668,7 +714,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 30,
+      "duration_ms": 114,
       "data": {
         "file": "settings-shell-appearance-light-760.png"
       }
@@ -676,7 +722,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 37,
+      "duration_ms": 145,
       "data": {
         "file": "settings-shell-appearance-dark-1440.png"
       }
@@ -684,7 +730,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 46,
+      "duration_ms": 86,
       "data": {
         "file": "settings-shell-appearance-dark-1000.png"
       }
@@ -692,7 +738,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 61,
+      "duration_ms": 87,
       "data": {
         "file": "settings-shell-appearance-dark-760.png"
       }
@@ -700,7 +746,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 45,
+      "duration_ms": 72,
       "data": {
         "file": "settings-shell-product-aikit-light-1440.png"
       }
@@ -708,7 +754,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 40,
+      "duration_ms": 52,
       "data": {
         "file": "settings-shell-product-aikit-light-1000.png"
       }
@@ -716,7 +762,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 41,
+      "duration_ms": 65,
       "data": {
         "file": "settings-shell-product-aikit-light-760.png"
       }
@@ -724,7 +770,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 47,
+      "duration_ms": 81,
       "data": {
         "file": "settings-shell-product-aikit-dark-1440.png"
       }
@@ -732,7 +778,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 34,
+      "duration_ms": 88,
       "data": {
         "file": "settings-shell-product-aikit-dark-1000.png"
       }
@@ -740,7 +786,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 43,
+      "duration_ms": 79,
       "data": {
         "file": "settings-shell-product-aikit-dark-760.png"
       }

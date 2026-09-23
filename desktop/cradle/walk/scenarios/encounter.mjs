@@ -1,3 +1,4 @@
+import {openConversationInCentre} from "../editor-doc.mjs";
 import {setup as sourceSetup} from './editor.mjs';
 import {execFileSync} from 'node:child_process';
 import {join} from 'node:path';
@@ -16,7 +17,7 @@ export async function setup(args,argv=process.env.AIKIT_ACP_NATIVE_ARGV) {
 export default async function run({page,baseUrl,check,shot,channel,provision:p}) {
  await page.goto(baseUrl);await channel('info');
  await page.locator('[data-project-path="Work/Editor"]').click();
- await page.getByRole('button',{name:'Native encounter acceptance',exact:true}).click();
+ await openConversationInCentre(page,'Native encounter acceptance');
  const message=page.getByRole('textbox',{name:'Message',exact:true});await message.waitFor();
  await page.getByRole('button',{name:'Acceptance ACP',exact:true}).click();
  await page.waitForFunction(()=>!document.querySelector('.encounter-connect'),null,{timeout:60000});

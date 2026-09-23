@@ -131,6 +131,15 @@ export default async function run({page,baseUrl,check,shot,channel,provision:p})
   check((await strip.locator(".receiving-detail").innerText()).includes("The owner recorded:"),"An inclusion the filesystem refuses lands `uncertain` with the owner's own record shown");
   await shot("inclusion-uncertain");
   check(readFileSync(docPath,"utf8")===bytesBeforeInclude,"The uncertain inclusion changed no document bytes");
+  // The Inbox (10-SIDEBARS §3.1, D3) reads the same receiving field: the
+  // uncertain arrival still waits for a human act, so it stands there too.
+  const inboxButton=page.locator('[data-left-foot]').getByRole("button",{name:/^Inbox/});
+  await inboxButton.click();
+  const inbox=page.getByRole("region",{name:"Inbox"});
+  await inbox.getByRole("button",{name:"Refresh receiving"}).click();
+  await page.waitForFunction(()=>document.querySelector(".left-inbox header small")?.textContent==="1 waiting",null,{timeout:20000});
+  check((await inbox.locator(".receiving-row .receiving-status").allInnerTexts()).join("|")==="uncertain","The Inbox shows the same uncertain arrival as the one thing waiting (the rejected one waits for nothing)");
+  await inboxButton.click();
 
   chmodSync(docPath,0o644);
   await strip.getByRole("button",{name:"Recover inclusion"}).click();
@@ -144,10 +153,13 @@ export default async function run({page,baseUrl,check,shot,channel,provision:p})
   check(contributions[0].author_ref==="agent:walk"&&contributions[0].display_role==="Agent"&&contributions[0].reviewed_by==="human:walk","Producer attribution and human review remain distinct native facts through recovery");
   check(finalDoc.revision.revision!==p.doc.revision.revision,"The document revision advanced through the recovered inclusion");
 
-  // The project tray agrees — one receiving field, two registers, same facts.
+  // The Inbox agrees — one receiving field, two places, same facts: the
+  // owner lists both arrivals (rejected, included) and nothing waits.
   if(!await nav.isVisible())await page.keyboard.press("Meta+b");
-  const tray=nav.locator(".project-receiving").first();
-  await tray.getByRole("button",{name:"Refresh receiving"}).click();
-  await page.waitForFunction(()=>document.querySelector(".project-receiving header small")?.textContent?.includes("2 in the receiving field"),null,{timeout:20000});
-  check(await tray.locator(".receiving-row").count()===2,"The project tray shows the same receiving field beside the navigator branch");
+  const native=p.human("central.receiving.list",{project:"Editor",limit:20});
+  const statuses=(native.returns??[]).map(row=>row.status).sort().join("|");
+  await inboxButton.click();
+  await inbox.getByRole("button",{name:"Refresh receiving"}).click();
+  await page.waitForFunction(()=>document.querySelector(".left-inbox header small")?.textContent==="Nothing waiting",null,{timeout:20000});
+  check(statuses==="included|rejected"&&await inbox.locator(".receiving-row").count()===0&&await page.locator("[data-inbox-badge]").count()===0,"The Inbox agrees with the owner's list (one rejected, one included): nothing waits, no badge",{statuses});
 }

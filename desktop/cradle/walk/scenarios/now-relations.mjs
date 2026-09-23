@@ -92,9 +92,12 @@ export default async function run({page, baseUrl, check, shot, channel, log, pro
   if (!await nav.isVisible()) await page.keyboard.press("Meta+b");
   await nav.locator('[data-project-path="Work/Editor"]').click();
 
-  const tray = nav.locator(".project-receiving").first();
+  // The receiving field is the Inbox (10-SIDEBARS §3.1, D3): the one queue in
+  // the left foot, across Central and every project.
+  await page.locator('[data-left-foot]').getByRole("button", {name: /^Inbox/}).click();
+  const tray = page.getByRole("region", {name: "Inbox"});
   await tray.waitFor();
-  await page.waitForFunction(() => document.querySelector(".project-receiving header small")?.textContent?.includes("2 in the receiving field"), null, {timeout: 20000});
+  await page.waitForFunction(() => document.querySelector(".left-inbox header small")?.textContent === "2 waiting", null, {timeout: 20000});
   const nowRow = tray.locator(".receiving-row.receiving-has-now");
   check(await nowRow.count() === 1 && (await nowRow.getAttribute("data-now-ref")) === p.now.record.now_ref, "Exactly one row marks the NOW it names, by the owner's ref");
   check(await tray.locator(".receiving-row:not(.receiving-has-now)").count() === 1, "A record without a NOW renders no NOW marker");
@@ -133,7 +136,7 @@ export default async function run({page, baseUrl, check, shot, channel, log, pro
 
   // Absence stays honest: the second record's detail carries no NOW panel.
   await tray.locator(".receiving-row:not(.receiving-has-now)").click();
-  await page.waitForFunction(() => document.querySelectorAll(".project-receiving .receiving-detail").length === 1 && document.querySelector(".project-receiving .receiving-detail")?.textContent?.includes("Return without any NOW"), null, {timeout: 20000});
+  await page.waitForFunction(() => document.querySelectorAll(".left-inbox .receiving-detail").length === 1 && document.querySelector(".left-inbox .receiving-detail")?.textContent?.includes("Return without any NOW"), null, {timeout: 20000});
   check(await tray.locator(".receiving-detail .now-relations").count() === 0, "A record that names no NOW renders no NOW section at all");
 
   // A NOW that has left the ground: the owner's refusal renders verbatim,
@@ -142,7 +145,7 @@ export default async function run({page, baseUrl, check, shot, channel, log, pro
   // fail through the owner rather than bypassing it.)
   rmSync(p.nowSourcePath, {force: false});
   await nowRow.click();
-  await page.waitForFunction(() => document.querySelector(".project-receiving .receiving-detail .now-relations-refused")?.hasAttribute("data-owner-refusal"), null, {timeout: 20000});
+  await page.waitForFunction(() => document.querySelector(".left-inbox .receiving-detail .now-relations-refused")?.hasAttribute("data-owner-refusal"), null, {timeout: 20000});
   const refusal = await tray.locator(".now-relations-refused").getAttribute("data-owner-refusal");
   check(!!refusal && refusal.length > 0, `The owner's own refusal is carried verbatim (${String(refusal).slice(0, 60)}…)`);
   await shot("now-refusal-verbatim");

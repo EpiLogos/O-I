@@ -1,0 +1,170 @@
+{
+  "schema": "oi.cradle.walk.scenario/v1",
+  "scenario": "left-rows",
+  "spec_ref": "docs/cradle/10-SIDEBARS.md §5.2 R6 R7 R12 · §3.4 A6",
+  "grade": "B",
+  "binding": null,
+  "generated_at": "2026-09-23T08:25:19.723Z",
+  "environment": {
+    "base_url": "http://localhost:4173",
+    "bridge_url": "http://127.0.0.1:4179",
+    "viewport": "1280x820",
+    "browser_engine": "chromium",
+    "bundle": "walk (WALK=1) served by vite preview",
+    "build_input": {
+      "mode": "reused-dist",
+      "bundle_fingerprint": "a13718589b0a01d3d42d329634cddf7aeb6a877f7eccc823430c7ba73803f14a"
+    },
+    "node": "v24.16.0",
+    "platform": "darwin",
+    "source": {
+      "repository_root": "/Users/admin/Central/worktrees/ui-build/lane1-left",
+      "repository_head": "b30209f9bddb65b6a535ffeca2b482fa403a3f26",
+      "tracked_changes": [
+        "desktop/cradle/walk/artifacts/left-frame-L1-rest-1440.png",
+        "desktop/cradle/walk/artifacts/left-frame-L3-compact-1000.png",
+        "desktop/cradle/walk/artifacts/left-frame-L4-overlay-600.png",
+        "desktop/cradle/walk/artifacts/left-frame-L6-reading.png",
+        "desktop/cradle/walk/artifacts/left-frame.json",
+        "desktop/cradle/walk/artifacts/left-head-inbox-open-item.png",
+        "desktop/cradle/walk/artifacts/left-head-palette-agents.png",
+        "desktop/cradle/walk/artifacts/left-head-scope-menu.png",
+        "desktop/cradle/walk/artifacts/left-head.json"
+      ],
+      "dirty_digest": "1a53108ddccd90fb71e0096c3b8a89e2a54b77e5e823dfc3e2608f14868d2c19",
+      "engine_provenance_path": "/Users/admin/Central/worktrees/ui-build/lane1-left/packages/oi-design-system/expressions-engine/PROVENANCE.json",
+      "engine_source": "EpiLogos/Point-Cloud-Demo",
+      "engine_revision": "91db8428fc9dfba06cd258ec5a58e7dd9eef5313"
+    }
+  },
+  "passed": true,
+  "error": null,
+  "duration_ms": 15533,
+  "checks": [
+    {
+      "ok": true,
+      "label": "R7: a conversation row's height is identical at rest and on hover (±0.5px); its '…' appears only on hover",
+      "data": {
+        "rest": {
+          "height": 62,
+          "more": "hidden"
+        },
+        "hover": {
+          "height": 62,
+          "more": "visible",
+          "wash": "rgb(233, 234, 226)"
+        }
+      }
+    },
+    {
+      "ok": true,
+      "label": "R7 / §3.4: the '…' holds only real actions (Open in centre)",
+      "data": {
+        "moreItems": [
+          "Open in centre"
+        ]
+      }
+    },
+    {
+      "ok": true,
+      "label": "R6: with a conversation open in the panel, exactly one of Alpha's conversation rows is selected — that one",
+      "data": {
+        "selectedChats": 1,
+        "selectedRef": "agent-session/left-idle"
+      }
+    },
+    {
+      "ok": true,
+      "label": "R6 (before): no file row is current while no file is open"
+    },
+    {
+      "ok": true,
+      "label": "R6 / §3.4: the file open in the focused pane is the one current file row",
+      "data": {
+        "currentFiles": [
+          "Work/Alpha/notes.md"
+        ],
+        "openTab": "notes.md"
+      }
+    },
+    {
+      "ok": true,
+      "label": "R12: dropping the file row into the composer inserts it as context — a notes.md chip in the composer and its quote in the owner's shared draft",
+      "data": {
+        "chips": "notes.md",
+        "draftRevision": 1
+      }
+    },
+    {
+      "ok": true,
+      "label": "R12: the drop never sends — the owner's transcript has no new message",
+      "data": {
+        "before": 0,
+        "after": 0
+      }
+    },
+    {
+      "ok": true,
+      "label": "A6: Open beside puts the vision page in the right panel's Context canvas, with Context selected",
+      "data": {
+        "sideTabs": [
+          "alpha.html"
+        ],
+        "contextSelected": 1
+      }
+    },
+    {
+      "ok": true,
+      "label": "A6: Pop out is offered only where the native window route exists (this walk runs the browser transport; the native detach route is not lent here)",
+      "data": {
+        "popOuts": 0
+      }
+    }
+  ],
+  "ops": [
+    {
+      "ok": true,
+      "op": "info",
+      "duration_ms": 0,
+      "data": {
+        "schema": "oi.cradle.walk/v1",
+        "mounted_at": "2026-09-23T08:25:19.890Z",
+        "transport": {
+          "kind": "bridge",
+          "url": "http://127.0.0.1:4179"
+        },
+        "url": "http://localhost:4173/"
+      }
+    },
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 56,
+      "data": {
+        "file": "left-rows-R6-selected.png"
+      }
+    },
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 49,
+      "data": {
+        "file": "left-rows-R12-dropped-context.png"
+      }
+    },
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 50,
+      "data": {
+        "file": "left-rows-A6-open-beside.png"
+      }
+    }
+  ],
+  "metrics": {},
+  "screenshots": [
+    "left-rows-R6-selected.png",
+    "left-rows-R12-dropped-context.png",
+    "left-rows-A6-open-beside.png"
+  ]
+}

@@ -25,7 +25,8 @@
 // deliberately self-contained: the hosting target is absent, and its absence
 // must stay honest — which is exactly the degradation clause of the lane.
 import {setup} from "./knowledge.mjs";
-import {bindDefaultCentral, openWorkspaceStrip} from "../editor-doc.mjs";
+import {bindDefaultCentral, openWorkspaceStrip, newWorkspace, switchWorkspace} from "../editor-doc.mjs";
+import {chooseProject} from "../lib/factory-ground.mjs";
 export {setup};
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
@@ -75,16 +76,21 @@ export default async function run({page, baseUrl, check, shot, channel, log, pro
   const showNav = async () => { if (!await nav.isVisible()) await page.keyboard.press("Meta+b"); };
 
   // ---- Project work: context, a source tab ----
+  // The scope is chosen in the scope menu (10-SIDEBARS §3.6) — the one route;
+  // the kernel's project context follows it.
   await showNav();
+  await chooseProject(page, "Editor");
   await nav.locator('[data-project-path="Work/Editor"]').click();
+  await nav.locator('[data-project-path="Work/Editor"]').hover();
   await nav.getByRole("button", {name: "Editor: files", exact: true}).click();
   const source = p.sources[0];
   await nav.locator(`[data-file-path="Work/Editor/${source.binding.path}"]`).click();
   await page.locator(`.cm-content[data-source-ref="${source.binding.ref}"]`).waitFor({timeout: 15000});
-  check(await kernelProject(page, channel) === "Editor", "The kernel's project context is the local project", {project: await kernelProject(page, channel)});
+  check(await kernelProjectSettles(page, channel, "Editor"), "The kernel's project context is the scoped project", {project: await kernelProject(page, channel)});
 
   // ---- the Wiki: graph, then a node focused as a page bound to its origin ----
   await showNav();
+  await nav.locator('[data-project-path="Work/Editor"]').hover();
   await nav.getByRole("button", {name: "Editor: wiki", exact: true}).click();
   await nav.getByRole("button", {name: "Editor neighbourhood", exact: true}).click();
   await page.getByRole("region", {name: "Knowledge surface"}).waitFor({timeout: 15000});
@@ -102,6 +108,9 @@ export default async function run({page, baseUrl, check, shot, channel, log, pro
   }, null, {timeout: 15000});
   await page.getByRole("button", {name: /Open in tab/}).click();
   await page.getByRole("article", {name: "Selected node content"}).waitFor({timeout: 15000});
+  // The workspace book is written on the store's save cadence: wait for the
+  // page binding to be durable rather than sampling it once.
+  await page.waitForFunction(() => {const b = JSON.parse(localStorage.getItem("oi-cradle.workspaces.v1") ?? "null");const w = b?.workspaces?.find((x) => x.id === b.active);return Object.values(w?.layout?.surfaces ?? {}).some((x) => x.kind === "knowledge" && x.view?.knowledgePlane === "page");}, null, {timeout: 10000}).catch(() => {});
   let book = await workspaces(page);
   const pageBinding = Object.values(book.workspaces.find((w) => w.id === book.active).layout.surfaces).find((b) => b.kind === "knowledge" && b.view?.knowledgePlane === "page");
   check(Boolean(pageBinding) && pageBinding.view.graphOrigin, "The wiki node opened as a page binding carrying its plane and origin graph", {binding: pageBinding ?? null});
@@ -168,17 +177,15 @@ export default async function run({page, baseUrl, check, shot, channel, log, pro
   // ---- workspace switching restores exactly (D19) ----
   await page.locator(`.tab[data-surface-id="${base.tabs[0].id}"]`).click();
   await page.locator(`.cm-content[data-source-ref="${source.binding.ref}"]`).waitFor({timeout: 15000});
-  await openWorkspaceStrip(page);
-  await page.getByLabel("Workspace actions", {exact: true}).click();
-  await page.getByRole("button", {name: "New workspace"}).click();
-  await page.getByRole("textbox", {name: "Workspace name"}).fill("Second");
-  await page.getByRole("button", {name: "Create workspace"}).click();
+  // The workspace verbs live in the scope menu's footer (10-SIDEBARS §3.6).
+  await newWorkspace(page, "Second");
   await page.waitForFunction(() => {const book = JSON.parse(localStorage.getItem("oi-cradle.workspaces.v1") ?? "null");return book?.workspaces?.some((w) => w.name === "Second") && book.active === book.workspaces.find((w) => w.name === "Second")?.id;}, null, {timeout: 10000});
   check(await kernelProjectSettles(page, channel, null), "The fresh workspace holds no project context; the kernel followed it", {project: await kernelProject(page, channel)});
-  await openWorkspaceStrip(page);
-  await page.getByLabel("Workspace", {exact: true}).selectOption("root");
+  await switchWorkspace(page, "root");
+  await page.waitForFunction(() => JSON.parse(localStorage.getItem("oi-cradle.workspaces.v1") ?? "null")?.active === "root", null, {timeout: 10000});
   await page.locator(`.cm-content[data-source-ref="${source.binding.ref}"]`).waitFor({timeout: 15000});
-  check(sameConstellation(beforeReload, await constellation(page)), "Switching back to the first workspace restores its exact constellation", {});
+  const switchedBack = await constellation(page);
+  check(sameConstellation(beforeReload, switchedBack), "Switching back to the first workspace restores its exact constellation", {before: beforeReload, after: switchedBack});
   check(await kernelProjectSettles(page, channel, "Editor"), "The kernel's project context returns with the workspace (re-browsed by ref, not reminted)", {});
   await shot("switched-back");
 

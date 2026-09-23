@@ -201,11 +201,8 @@ export default async function run({ page, baseUrl, check, metric, shot, log }) {
   await shot('mode-return');
 
   // ---- workspace switch away and back ---------------------------------------
-  const { openWorkspaceStrip } = await import('../editor-doc.mjs');
-  await openWorkspaceStrip(page);
-  await page.getByLabel('Workspace actions', { exact: true }).click();
-  await page.getByRole('button', { name: 'New workspace' }).click();
-  await page.getByRole('textbox', { name: 'Workspace name' }).fill('Elsewhere');
+  const { newWorkspace, switchWorkspace } = await import('../editor-doc.mjs');
+  await newWorkspace(page, 'Elsewhere');
   await page.getByRole('button', { name: 'Create workspace' }).click();
   await page.waitForFunction(() => {
     const book = JSON.parse(localStorage.getItem('oi-cradle.workspaces.v1') ?? 'null');
@@ -213,8 +210,7 @@ export default async function run({ page, baseUrl, check, metric, shot, log }) {
     return elsewere && book.active === elsewere.id;
   }, null, { timeout: 10000 });
   await page.waitForTimeout(500);
-  await openWorkspaceStrip(page);
-  await page.getByLabel('Workspace', { exact: true }).selectOption(/.+/); // back by selecting the remaining workspace
+  await switchWorkspace(page, { index: 0 }); // back to the first workspace
   await page.locator('.tab[data-title="continuity.html"]').waitFor({ timeout: 15000 });
   await page.locator('.tab[data-title="continuity.html"]').click();
   const afterWorkspace = await identityOf('Continuity specimen');
@@ -237,8 +233,7 @@ export default async function run({ page, baseUrl, check, metric, shot, log }) {
     .then(() => check(true, 'The pending open acknowledges its tab before the owner read resolves', {}))
     .catch(() => check(false, 'The pending open acknowledges its tab before the owner read resolves', { note: 'no tab appeared within 2.5s of the click' }));
   // Switch away while the read is in flight.
-  await openWorkspaceStrip(page);
-  await page.getByLabel('Workspace', { exact: true }).selectOption(/.+/);
+  await switchWorkspace(page, { index: 0 });
   await page.waitForFunction(() => {
     const book = JSON.parse(localStorage.getItem('oi-cradle.workspaces.v1') ?? 'null');
     return book?.workspaces?.find((w) => w.name === 'Elsewhere') && book.active === book.workspaces.find((w) => w.name === 'Elsewhere')?.id;
@@ -250,8 +245,7 @@ export default async function run({ page, baseUrl, check, metric, shot, log }) {
   const originGotIt = JSON.stringify(origin.layout.surfaces ?? {}).includes('readme.txt');
   const otherGotIt = JSON.stringify(other.layout.surfaces ?? {}).includes('readme.txt');
   check(originGotIt && !otherGotIt, 'C04/origin: the late open landed in its originating workspace, never in the one switched to', { origin: originGotIt, elsewhere: otherGotIt });
-  await openWorkspaceStrip(page);
-  await page.getByLabel('Workspace', { exact: true }).selectOption(/.+/);
+  await switchWorkspace(page, { index: 0 });
   await page.locator('.tab[data-title="continuity.html"]').click();
 
   // ---- restart with the tree still stalled ---------------------------------

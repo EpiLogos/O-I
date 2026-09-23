@@ -1,3 +1,4 @@
+import {openConversationInCentre} from "../editor-doc.mjs";
 // task-basis (queue cell 2): a real Central task is allocated through the
 // owner's encounter-task chain (`encounter-task-configure` — real ctrl
 // placement + Workcell boundary preparation), the composer renders the
@@ -156,7 +157,7 @@ export default async function run({page,baseUrl,check,shot,channel,log,provision
   const nav=page.getByRole("complementary",{name:"World navigator"});
   await nav.locator('[data-project-path="Work/Editor"]').click();
   await nav.getByRole("button",{name:"Editor: chats and tasks",exact:true}).click();
-  await page.getByRole("button",{name:"Task basis acceptance",exact:true}).click();
+  await openConversationInCentre(page,"Task basis acceptance");
   await page.getByRole("textbox",{name:"Message",exact:true}).waitFor();
 
   // The kernel's task read: the owner's record, verbatim; the plain session

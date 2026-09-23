@@ -1,0 +1,224 @@
+{
+  "schema": "oi.cradle.walk.scenario/v1",
+  "scenario": "left-unreadable",
+  "spec_ref": "docs/cradle/10-SIDEBARS.md §5.1 L7 · §5.2 R8 R9 R10 R11",
+  "grade": "B",
+  "binding": null,
+  "generated_at": "2026-09-23T08:26:13.858Z",
+  "environment": {
+    "base_url": "http://localhost:4173",
+    "bridge_url": "http://127.0.0.1:4179",
+    "viewport": "1280x820",
+    "browser_engine": "chromium",
+    "bundle": "walk (WALK=1) served by vite preview",
+    "build_input": {
+      "mode": "reused-dist",
+      "bundle_fingerprint": "a13718589b0a01d3d42d329634cddf7aeb6a877f7eccc823430c7ba73803f14a"
+    },
+    "node": "v24.16.0",
+    "platform": "darwin",
+    "source": {
+      "repository_root": "/Users/admin/Central/worktrees/ui-build/lane1-left",
+      "repository_head": "b30209f9bddb65b6a535ffeca2b482fa403a3f26",
+      "tracked_changes": [
+        "desktop/cradle/walk/artifacts/left-forms-day-copy.png",
+        "desktop/cradle/walk/artifacts/left-forms-intent-goal-refused.png",
+        "desktop/cradle/walk/artifacts/left-forms.json",
+        "desktop/cradle/walk/artifacts/left-frame-L1-rest-1440.png",
+        "desktop/cradle/walk/artifacts/left-frame-L3-compact-1000.png",
+        "desktop/cradle/walk/artifacts/left-frame-L4-overlay-600.png",
+        "desktop/cradle/walk/artifacts/left-frame-L6-reading.png",
+        "desktop/cradle/walk/artifacts/left-frame.json",
+        "desktop/cradle/walk/artifacts/left-head-inbox-open-item.png",
+        "desktop/cradle/walk/artifacts/left-head-palette-agents.png",
+        "desktop/cradle/walk/artifacts/left-head-scope-menu.png",
+        "desktop/cradle/walk/artifacts/left-head.json",
+        "desktop/cradle/walk/artifacts/left-lens-lens-off.png",
+        "desktop/cradle/walk/artifacts/left-lens-lens-on.png",
+        "desktop/cradle/walk/artifacts/left-lens.json",
+        "desktop/cradle/walk/artifacts/left-rows-A6-open-beside.png",
+        "desktop/cradle/walk/artifacts/left-rows-R12-dropped-context.png",
+        "desktop/cradle/walk/artifacts/left-rows-R6-selected.png",
+        "desktop/cradle/walk/artifacts/left-rows.json"
+      ],
+      "dirty_digest": "eb1e30f4218ca37d3238bf7f02e0dd44bad2313520af7677714a328c481f6ff5",
+      "engine_provenance_path": "/Users/admin/Central/worktrees/ui-build/lane1-left/packages/oi-design-system/expressions-engine/PROVENANCE.json",
+      "engine_source": "EpiLogos/Point-Cloud-Demo",
+      "engine_revision": "91db8428fc9dfba06cd258ec5a58e7dd9eef5313"
+    }
+  },
+  "passed": true,
+  "error": null,
+  "duration_ms": 19170,
+  "checks": [
+    {
+      "ok": true,
+      "label": "R8: exactly one 'Reading Alpha…' line stands in place of Alpha's rows; CONTROL and FLOWS keep their rows (no whole-sidebar spinner)",
+      "data": {
+        "readingLines": [
+          "Reading Alpha…"
+        ],
+        "controlRows": 4,
+        "flowRows": 1,
+        "busy": false
+      }
+    },
+    {
+      "ok": true,
+      "label": "R8: when the reading lands the line is replaced by the owner's four conversations",
+      "data": {
+        "alphaRows": 4
+      }
+    },
+    {
+      "ok": true,
+      "label": "R11: after a failed refresh the four last-known rows stay and the branch says 'As of … — couldn't refresh' with Retry",
+      "data": {
+        "keptRows": 4,
+        "staleText": "As of just now — couldn't refresh. Retry"
+      }
+    },
+    {
+      "ok": true,
+      "label": "R11: Factory's TASKS header reads 'as of …' with Retry over its four kept rows (said once, in the header)",
+      "data": {
+        "header": "TASKS 4 as of just now Retry"
+      }
+    },
+    {
+      "ok": true,
+      "label": "R11: Retry re-reads and the header's 'as of' leaves"
+    },
+    {
+      "ok": true,
+      "label": "R10: a refused read shows 'Couldn't load this project.' + Retry under its header",
+      "data": {
+        "errorText": "Couldn't load this project. Retry"
+      }
+    },
+    {
+      "ok": true,
+      "label": "R10: Retry reads Beta's real conversation"
+    },
+    {
+      "ok": true,
+      "label": "R9 (before): FLOWS holds the ground's one flow"
+    },
+    {
+      "ok": true,
+      "label": "R9: with no flows the FLOWS section is absent — no header text, zero height",
+      "data": {
+        "section": 0,
+        "header": [
+          "Control",
+          "Work"
+        ]
+      }
+    },
+    {
+      "ok": true,
+      "label": "R9 vs R10: empty is absence; a failed read is words and Retry — the two are distinguishable"
+    },
+    {
+      "ok": true,
+      "label": "L7: with the transport cut the body says 'Couldn't read Central.' (and that what is open still works) with Retry, and invents no project"
+    },
+    {
+      "ok": true,
+      "label": "L7: the foot still switches modes (Factory and back) while Central is unreadable",
+      "data": {
+        "modes": [
+          "factory",
+          "base"
+        ]
+      }
+    },
+    {
+      "ok": true,
+      "label": "L7: Retry reads Central once the transport answers again"
+    }
+  ],
+  "ops": [
+    {
+      "ok": true,
+      "op": "info",
+      "duration_ms": 0,
+      "data": {
+        "schema": "oi.cradle.walk/v1",
+        "mounted_at": "2026-09-23T08:26:14.006Z",
+        "transport": {
+          "kind": "bridge",
+          "url": "http://127.0.0.1:4179"
+        },
+        "url": "http://localhost:4173/"
+      }
+    },
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 51,
+      "data": {
+        "file": "left-unreadable-R8-branch-reading.png"
+      }
+    },
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 57,
+      "data": {
+        "file": "left-unreadable-R11-stale-header.png"
+      }
+    },
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 33,
+      "data": {
+        "file": "left-unreadable-R10-couldnt-load.png"
+      }
+    },
+    {
+      "ok": true,
+      "op": "info",
+      "duration_ms": 0.1,
+      "data": {
+        "schema": "oi.cradle.walk/v1",
+        "mounted_at": "2026-09-23T08:26:28.942Z",
+        "transport": {
+          "kind": "bridge",
+          "url": "http://127.0.0.1:4179"
+        },
+        "url": "http://localhost:4173/"
+      }
+    },
+    {
+      "ok": true,
+      "op": "info",
+      "duration_ms": 0,
+      "data": {
+        "schema": "oi.cradle.walk/v1",
+        "mounted_at": "2026-09-23T08:26:30.960Z",
+        "transport": {
+          "kind": "bridge",
+          "url": "http://127.0.0.1:4179"
+        },
+        "url": "http://localhost:4173/"
+      }
+    },
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 58,
+      "data": {
+        "file": "left-unreadable-L7-unreadable.png"
+      }
+    }
+  ],
+  "metrics": {},
+  "screenshots": [
+    "left-unreadable-R8-branch-reading.png",
+    "left-unreadable-R11-stale-header.png",
+    "left-unreadable-R10-couldnt-load.png",
+    "left-unreadable-L7-unreadable.png"
+  ]
+}

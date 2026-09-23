@@ -1,6 +1,8 @@
 import { useLayoutEffect, useRef, type ReactNode } from "react";
 import type { ProjectMode, ProjectNavigation } from "../../workspace/store";
 import { Glyph } from "../../workspace/Glyph";
+import { ProjectMarkBadges } from "../../workspace/left/rows";
+import type { ProjectMarks } from "../../workspace/left/sessionMarks";
 
 /** How long after a wheel/key/touch gesture the scroll events it produces
  * still count as the owner's. Momentum and repeated ticks renew it. */
@@ -23,8 +25,10 @@ export function ProjectModes({name, mode, current, onMode}: {name:string; mode:P
  * The row click is a pure disclosure toggle — one click opens, one click
  * closes, never an owner call in between; the workspace's project context
  * follows the work the reader actually opens, not the disclosure itself. */
-export function ProjectBranch({name,path,selected,navigation,onDisclosure,onMode,onScroll,children}: {
+export function ProjectBranch({name,path,selected,navigation,marks,onDisclosure,onMode,onScroll,children}: {
   name:string; path:string; selected:boolean; navigation:ProjectNavigation;
+  /** §3.3: the aggregate of the project's conversations — ● working, ! needs you. */
+  marks?: ProjectMarks;
   onDisclosure:(expanded:boolean)=>void;
   onMode:(mode:ProjectMode)=>void; onScroll:(scroll:number)=>void; children:ReactNode;
 }) {
@@ -71,9 +75,11 @@ export function ProjectBranch({name,path,selected,navigation,onDisclosure,onMode
     mutated.observe(element,{childList:true,subtree:true,attributes:true});
     return()=>{resized.disconnect();mutated.disconnect();};
   },[path,navigation.expanded,navigation.mode]);
-  return <li data-navigation-path={path}>
-    <button data-project-path={path} aria-current={selected ? "true" : undefined} aria-expanded={navigation.expanded} onClick={()=>onDisclosure(!navigation.expanded)} title={name}>
-      <span className="project-mark" aria-hidden="true"/><span className="project-name">{name}</span>
+  const markWords=marks?[marks.working?`${marks.working} working`:"",marks.needsYou?`${marks.needsYou} need${marks.needsYou===1?"s":""} you`:""].filter(Boolean).join(", "):"";
+  return <li data-navigation-path={path} data-marks={marks&&(marks.working||marks.needsYou)?"true":undefined}>
+    <button data-project-path={path} aria-current={selected ? "true" : undefined} aria-expanded={navigation.expanded} onClick={()=>onDisclosure(!navigation.expanded)} title={name} aria-label={markWords?`${name} — ${markWords}`:name}>
+      <Glyph name="folder" size={13}/><span className="project-name">{name}</span>
+      {marks&&<ProjectMarkBadges working={marks.working} needsYou={marks.needsYou}/>}
     </button>
     <ProjectModes name={name} mode={navigation.mode??"chats"} current={selected} onMode={onMode}/>
     {navigation.expanded && <section ref={body} className="project-files" aria-label={`${name} navigation`}

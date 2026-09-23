@@ -1,0 +1,198 @@
+{
+  "schema": "oi.cradle.walk.scenario/v1",
+  "scenario": "left-forms",
+  "spec_ref": "docs/cradle/10-SIDEBARS.md §3.7 §6.1.6 D5 (forms create a copy; Goal and Vision in place; Factory INTENT)",
+  "grade": "B",
+  "binding": null,
+  "generated_at": "2026-09-23T08:25:51.481Z",
+  "environment": {
+    "base_url": "http://localhost:4173",
+    "bridge_url": "http://127.0.0.1:4179",
+    "viewport": "1280x820",
+    "browser_engine": "chromium",
+    "bundle": "walk (WALK=1) served by vite preview",
+    "build_input": {
+      "mode": "reused-dist",
+      "bundle_fingerprint": "a13718589b0a01d3d42d329634cddf7aeb6a877f7eccc823430c7ba73803f14a"
+    },
+    "node": "v24.16.0",
+    "platform": "darwin",
+    "source": {
+      "repository_root": "/Users/admin/Central/worktrees/ui-build/lane1-left",
+      "repository_head": "b30209f9bddb65b6a535ffeca2b482fa403a3f26",
+      "tracked_changes": [
+        "desktop/cradle/walk/artifacts/left-frame-L1-rest-1440.png",
+        "desktop/cradle/walk/artifacts/left-frame-L3-compact-1000.png",
+        "desktop/cradle/walk/artifacts/left-frame-L4-overlay-600.png",
+        "desktop/cradle/walk/artifacts/left-frame-L6-reading.png",
+        "desktop/cradle/walk/artifacts/left-frame.json",
+        "desktop/cradle/walk/artifacts/left-head-inbox-open-item.png",
+        "desktop/cradle/walk/artifacts/left-head-palette-agents.png",
+        "desktop/cradle/walk/artifacts/left-head-scope-menu.png",
+        "desktop/cradle/walk/artifacts/left-head.json",
+        "desktop/cradle/walk/artifacts/left-lens-lens-off.png",
+        "desktop/cradle/walk/artifacts/left-lens-lens-on.png",
+        "desktop/cradle/walk/artifacts/left-lens.json",
+        "desktop/cradle/walk/artifacts/left-rows-A6-open-beside.png",
+        "desktop/cradle/walk/artifacts/left-rows-R12-dropped-context.png",
+        "desktop/cradle/walk/artifacts/left-rows-R6-selected.png",
+        "desktop/cradle/walk/artifacts/left-rows.json"
+      ],
+      "dirty_digest": "19c09fe1baf8c5a87c816da2085790a2303fca8103d36109f261e40a21ec219f",
+      "engine_provenance_path": "/Users/admin/Central/worktrees/ui-build/lane1-left/packages/oi-design-system/expressions-engine/PROVENANCE.json",
+      "engine_source": "EpiLogos/Point-Cloud-Demo",
+      "engine_revision": "91db8428fc9dfba06cd258ec5a58e7dd9eef5313"
+    }
+  },
+  "passed": true,
+  "error": null,
+  "duration_ms": 17856,
+  "checks": [
+    {
+      "ok": true,
+      "label": "§6.1.6: choosing Day from a new tab mints one copy at Central's first-save door (Control/user/flows/day-<stamp>.html) and leaves the template's bytes unchanged",
+      "data": {
+        "dayCopies": [
+          "day-2026-09-23-0925.html"
+        ]
+      }
+    },
+    {
+      "ok": true,
+      "label": "§3.7: the copy differs from the template only in its embedded identity (a fresh uuid, today's civil date)",
+      "data": {
+        "uuid": "0b6f07c5-8002-4e0a-b15e-09016e6636c4",
+        "date": "2026-09-23"
+      }
+    },
+    {
+      "ok": true,
+      "label": "The new tab became the COPY (its own file name) — never the repo template",
+      "data": {
+        "tabNames": [
+          "flow-2026-09-23-0900.html",
+          "day-2026-09-23-0925.html",
+          "Rendered",
+          "Split",
+          "Source"
+        ]
+      }
+    },
+    {
+      "ok": true,
+      "label": "Beings: a copy with its own documentId; the reference carrier is untouched",
+      "data": {
+        "beings": [
+          "beings-2026-09-23-0925.html"
+        ]
+      }
+    },
+    {
+      "ok": true,
+      "label": "Rest → Card mints a copy of the Epi-Card carrier (byte-equal: it has no embedded identity) and never opens the template",
+      "data": {
+        "cards": [
+          "epi-card-2026-09-23-0925.html"
+        ]
+      }
+    },
+    {
+      "ok": true,
+      "label": "D5: INTENT shows Alpha's vision marked 'review' (the page says it is agent-recovered), 'No goals yet — Write one', and Learnings (1)",
+      "data": {
+        "learnings": "Learnings 1"
+      }
+    },
+    {
+      "ok": true,
+      "label": "D5: Write one asks Central to create the goal IN PLACE (ProjectCentral/user/telos/goal-<stamp>.html) and shows Central's refusal beside the row in plain words",
+      "data": {
+        "goalAsk": "Work/Alpha/ProjectCentral/user/telos/goal-2026-09-23-0926.html",
+        "refusalText": "Central doesn't yet let the desktop create a Goal in Alpha's human ground (Work/Alpha/ProjectCentral/user/telos/goal-2026-09-23-0926.html) — it is protected ground with no native operation for a new document. Nothing was written."
+      }
+    },
+    {
+      "ok": true,
+      "label": "D5: nothing was written instead — telos holds what it held, INTENT still says No goals yet, the Goal template is untouched"
+    },
+    {
+      "ok": true,
+      "label": "Native gap: Central itself refuses a first save into ProjectCentral/user (only Control/user/flows/ admits one)",
+      "data": {
+        "native": {
+          "code": "invalid_input",
+          "message": "No such file or directory (os error 2)",
+          "details": {
+            "outcome": "error"
+          }
+        }
+      }
+    },
+    {
+      "ok": true,
+      "label": "D5: Write it asks for Beta's vision IN PLACE (ProjectCentral/user/beta.html); Central refuses, nothing is written, the Vision template is untouched",
+      "data": {
+        "visionAsk": "Work/Beta/ProjectCentral/user/beta.html"
+      }
+    },
+    {
+      "ok": true,
+      "label": "No template in Work/O-I/desktop/cradle/documents changed across the walk (sha-256 of every carrier)"
+    }
+  ],
+  "ops": [
+    {
+      "ok": true,
+      "op": "info",
+      "duration_ms": 0,
+      "data": {
+        "schema": "oi.cradle.walk/v1",
+        "mounted_at": "2026-09-23T08:25:51.616Z",
+        "transport": {
+          "kind": "bridge",
+          "url": "http://127.0.0.1:4179"
+        },
+        "url": "http://localhost:4173/"
+      }
+    },
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 38,
+      "data": {
+        "file": "left-forms-day-copy.png"
+      }
+    },
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 43,
+      "data": {
+        "file": "left-forms-intent-before.png"
+      }
+    },
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 36,
+      "data": {
+        "file": "left-forms-intent-goal-refused.png"
+      }
+    },
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 37,
+      "data": {
+        "file": "left-forms-intent-vision-refused.png"
+      }
+    }
+  ],
+  "metrics": {},
+  "screenshots": [
+    "left-forms-day-copy.png",
+    "left-forms-intent-before.png",
+    "left-forms-intent-goal-refused.png",
+    "left-forms-intent-vision-refused.png"
+  ]
+}

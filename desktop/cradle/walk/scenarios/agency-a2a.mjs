@@ -1,3 +1,4 @@
+import {openConversationInCentre} from "../editor-doc.mjs";
 // agency-a2a (wave 7 → the agency panel): the A2A v1 exchange moves into the
 // agency-panel surfaces. The resident's own reply is the bounded passage: the
 // human seeds the exchange from the assistant turn, composes the owner floor's
@@ -56,7 +57,7 @@ export default async function run({page,baseUrl,check,shot,channel,provision:p})
   const nav=page.getByRole("complementary",{name:"World navigator"});
   await nav.locator('[data-project-path="Work/Editor"]').click();
   await nav.getByRole("button",{name:"Editor: chats and tasks",exact:true}).click();
-  await page.getByRole("button",{name:"Agency planes acceptance",exact:true}).click();
+  await openConversationInCentre(page,"Agency planes acceptance");
   const message=page.getByRole("textbox",{name:"Message",exact:true});
   await message.waitFor();
 

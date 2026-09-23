@@ -1,0 +1,407 @@
+{
+  "schema": "oi.cradle.walk.scenario/v1",
+  "scenario": "left-frame",
+  "spec_ref": "docs/cradle/10-SIDEBARS.md §5.1 L1 L2 L3 L4 L5 L6 L8",
+  "grade": "B",
+  "binding": null,
+  "generated_at": "2026-09-23T08:24:05.189Z",
+  "environment": {
+    "base_url": "http://localhost:4173",
+    "bridge_url": "http://127.0.0.1:4179",
+    "viewport": "1280x820",
+    "browser_engine": "chromium",
+    "bundle": "walk (WALK=1) served by vite preview",
+    "build_input": {
+      "mode": "fresh-build",
+      "bundle_fingerprint": "a13718589b0a01d3d42d329634cddf7aeb6a877f7eccc823430c7ba73803f14a"
+    },
+    "node": "v24.16.0",
+    "platform": "darwin",
+    "source": {
+      "repository_root": "/Users/admin/Central/worktrees/ui-build/lane1-left",
+      "repository_head": "b30209f9bddb65b6a535ffeca2b482fa403a3f26",
+      "tracked_changes": [],
+      "dirty_digest": "6e340b9cffb37a989ca544e6bb780a2c78901d3fb33738768511a30617afa01d",
+      "engine_provenance_path": "/Users/admin/Central/worktrees/ui-build/lane1-left/packages/oi-design-system/expressions-engine/PROVENANCE.json",
+      "engine_source": "EpiLogos/Point-Cloud-Demo",
+      "engine_revision": "91db8428fc9dfba06cd258ec5a58e7dd9eef5313"
+    }
+  },
+  "passed": true,
+  "error": null,
+  "duration_ms": 16243,
+  "checks": [
+    {
+      "ok": true,
+      "label": "L1: the left rests at the --oi-sidebar-width token (240px)",
+      "data": {
+        "x": 0,
+        "y": 4,
+        "width": 240,
+        "height": 813
+      }
+    },
+    {
+      "ok": true,
+      "label": "L1: the head names the scope (Central) and carries search and + create",
+      "data": "C Central"
+    },
+    {
+      "ok": true,
+      "label": "L1: the foot is Inbox, then Base · Factory · Expressions · Technè, then Settings (one label)",
+      "data": {
+        "footText": "Inbox 1",
+        "modeNames": [
+          "Base",
+          "Factory",
+          "Expressions",
+          "Technè"
+        ]
+      }
+    },
+    {
+      "ok": true,
+      "label": "L1: the hardcoded 'My O:I / Personal ground' heading and the 'System' label are gone"
+    },
+    {
+      "ok": true,
+      "label": "L1: the body scrolls while the head and foot stay pinned (two-sided ±0.5px)",
+      "data": {
+        "scrollable": true,
+        "scrolled": 373,
+        "headBefore": {
+          "x": 0,
+          "y": 34,
+          "width": 240,
+          "height": 40
+        },
+        "headAfter": {
+          "x": 0,
+          "y": 34,
+          "width": 240,
+          "height": 40
+        },
+        "footBefore": {
+          "x": 0,
+          "y": 440,
+          "width": 240,
+          "height": 77
+        },
+        "footAfter": {
+          "x": 0,
+          "y": 440,
+          "width": 240,
+          "height": 77
+        }
+      }
+    },
+    {
+      "ok": true,
+      "label": "L1: no scrollbar pixels in the body (offsetWidth − clientWidth = 0, scrollbar-width none)",
+      "data": {
+        "offset": 0,
+        "css": "none"
+      }
+    },
+    {
+      "ok": true,
+      "label": "L5: the separator declares the token clamp 200–330 (not the old 600)",
+      "data": {
+        "valueMin": "200",
+        "valueMax": "330"
+      }
+    },
+    {
+      "ok": true,
+      "label": "L5: dragging far right clamps at 330px, with the live px badge reading 330",
+      "data": {
+        "badge": "330",
+        "width": 330
+      }
+    },
+    {
+      "ok": true,
+      "label": "L5: the keyboard clamps at 200px",
+      "data": {
+        "width": 200
+      }
+    },
+    {
+      "ok": true,
+      "label": "L5: Home returns the width to the 240px token",
+      "data": {
+        "width": 240
+      }
+    },
+    {
+      "ok": true,
+      "label": "L2: collapsed, the region is gone, the corner toggle stays and the scope name moves into the topbar",
+      "data": {
+        "collapsedBox": {
+          "x": 0,
+          "y": 28,
+          "width": 0,
+          "height": 489
+        },
+        "topScope": "Central",
+        "corner": true
+      }
+    },
+    {
+      "ok": true,
+      "label": "L2: ⌘B round-trip restores the width and the body's scroll position; the topbar scope leaves",
+      "data": {
+        "widthBefore": 240,
+        "widthAfter": 240,
+        "scrollBefore": 60,
+        "scrollAfter": 60
+      }
+    },
+    {
+      "ok": true,
+      "label": "L3: at 1440 the row shows its time; at 1000px the time yields and the title text is intact",
+      "data": {
+        "wideRow": {
+          "time": "27s",
+          "timeShown": true,
+          "origin": "Agent · doc:left-inbox",
+          "originWidth": 126.9375
+        },
+        "compactRow": {
+          "time": "27s",
+          "timeShown": false,
+          "origin": "Agent · doc:left-inbox",
+          "originWidth": 130.59375
+        }
+      }
+    },
+    {
+      "ok": true,
+      "label": "L3: at 1000px a conversation's full native title is present (clamped visually, whole in its accessible name)",
+      "data": {
+        "titleVisible": true,
+        "titleText": "Ask before writing the consent-walk file",
+        "accessible": "Ask before writing the consent-walk file"
+      }
+    },
+    {
+      "ok": true,
+      "label": "L4: below 640px the left opens as an overlay over the centre",
+      "data": {
+        "overlay": {
+          "x": 0,
+          "y": 4,
+          "width": 91.5,
+          "height": 813
+        },
+        "centre": {
+          "x": 0,
+          "y": 28,
+          "width": 600,
+          "height": 789
+        }
+      }
+    },
+    {
+      "ok": true,
+      "label": "L4: focus is trapped inside the overlay (40 Tab presses stay inside)",
+      "data": {
+        "stayed": 40
+      }
+    },
+    {
+      "ok": true,
+      "label": "L4: Escape closes the overlay and focus returns to the invoker",
+      "data": {
+        "closed": 0,
+        "refocused": "Toggle left region"
+      }
+    },
+    {
+      "ok": true,
+      "label": "L6: while Central is being read, the head keeps the last known scope, 'Reading Central…' stands under the body's first section, and no project is invented",
+      "data": {
+        "pendingHead": "Central",
+        "inventedProjects": 0,
+        "firstSection": "control"
+      }
+    },
+    {
+      "ok": true,
+      "label": "L6: the reading line leaves when the reading lands"
+    },
+    {
+      "ok": true,
+      "label": "L8: across Base → Factory → Expressions → Technè → Settings → Base the head and foot bounding boxes are identical (±0.5px) and the head's text is unchanged",
+      "data": [
+        {
+          "mode": "factory",
+          "head": true,
+          "foot": true,
+          "h1": {
+            "x": 0,
+            "y": 34,
+            "width": 260,
+            "height": 40
+          },
+          "f1": {
+            "x": 0,
+            "y": 740,
+            "width": 260,
+            "height": 77
+          },
+          "scope": true
+        },
+        {
+          "mode": "expressions",
+          "head": true,
+          "foot": true,
+          "h1": {
+            "x": 0,
+            "y": 34,
+            "width": 260,
+            "height": 40
+          },
+          "f1": {
+            "x": 0,
+            "y": 740,
+            "width": 260,
+            "height": 77
+          },
+          "scope": true
+        },
+        {
+          "mode": "techne",
+          "head": true,
+          "foot": true,
+          "h1": {
+            "x": 0,
+            "y": 34,
+            "width": 260,
+            "height": 40
+          },
+          "f1": {
+            "x": 0,
+            "y": 740,
+            "width": 260,
+            "height": 77
+          },
+          "scope": true
+        },
+        {
+          "mode": "settings",
+          "head": true,
+          "foot": true,
+          "h1": {
+            "x": 0,
+            "y": 34,
+            "width": 260,
+            "height": 40
+          },
+          "f1": {
+            "x": 0,
+            "y": 740,
+            "width": 260,
+            "height": 77
+          },
+          "scope": true
+        },
+        {
+          "mode": "base",
+          "head": true,
+          "foot": true,
+          "h1": {
+            "x": 0,
+            "y": 34,
+            "width": 260,
+            "height": 40
+          },
+          "f1": {
+            "x": 0,
+            "y": 740,
+            "width": 260,
+            "height": 77
+          },
+          "scope": true
+        }
+      ]
+    },
+    {
+      "ok": true,
+      "label": "L8: only the body cross-fades, for at most 160ms; the head does not animate",
+      "data": {
+        "bodyAnimations": [],
+        "headAnimations": 0
+      }
+    }
+  ],
+  "ops": [
+    {
+      "ok": true,
+      "op": "info",
+      "duration_ms": 0.1,
+      "data": {
+        "schema": "oi.cradle.walk/v1",
+        "mounted_at": "2026-09-23T08:24:05.394Z",
+        "transport": {
+          "kind": "bridge",
+          "url": "http://127.0.0.1:4179"
+        },
+        "url": "http://localhost:4173/"
+      }
+    },
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 55,
+      "data": {
+        "file": "left-frame-L1-rest-1440.png"
+      }
+    },
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 42,
+      "data": {
+        "file": "left-frame-L3-compact-1000.png"
+      }
+    },
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 47,
+      "data": {
+        "file": "left-frame-L4-overlay-600.png"
+      }
+    },
+    {
+      "ok": true,
+      "op": "info",
+      "duration_ms": 0,
+      "data": {
+        "schema": "oi.cradle.walk/v1",
+        "mounted_at": "2026-09-23T08:24:15.974Z",
+        "transport": {
+          "kind": "bridge",
+          "url": "http://127.0.0.1:4179"
+        },
+        "url": "http://localhost:4173/"
+      }
+    },
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 62,
+      "data": {
+        "file": "left-frame-L6-reading.png"
+      }
+    }
+  ],
+  "metrics": {},
+  "screenshots": [
+    "left-frame-L1-rest-1440.png",
+    "left-frame-L3-compact-1000.png",
+    "left-frame-L4-overlay-600.png",
+    "left-frame-L6-reading.png"
+  ]
+}

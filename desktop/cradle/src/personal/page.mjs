@@ -8,6 +8,18 @@ import {validateExpressionPresentation} from '../../../../shared-field/expressio
  */
 export const PAGE_PROFILE = "oi.page/v1";
 export const CATEGORIES = Object.freeze(["C1", "C2", "C3", "C4"]);
+/** The page families this one template system renders. Beings and Things are
+ * the reference carriers; Goal and Vision are a project's intent documents
+ * (10-SIDEBARS §3.7, ruling D5), created in place under its human ground.
+ * Their preset sections are the questions the document answers — the same
+ * shape as ProjectCentral/user/telos/<goal>/goal.md (why, done-when,
+ * non-goals, tracks) and a project's vision page. */
+export const FAMILIES = Object.freeze({
+  beings: {label: "Beings", eyebrow: "A presence and its world", placeholder: "An opening into a world.", layout: "portrait", sections: [""]},
+  things: {label: "Things", eyebrow: "A subject and its relations", placeholder: "Give a thing its place.", layout: "editorial", sections: [""]},
+  goal: {label: "Goal", eyebrow: "An open intent", placeholder: "Name the goal.", layout: "editorial", sections: ["Why", "Done when", "Not this", "Tracks"]},
+  vision: {label: "Vision", eyebrow: "What this project is for", placeholder: "Say what this project is.", layout: "editorial", sections: ["Purpose", "Who it serves", "How it should feel", "What it is not"]},
+});
 const escape = value => String(value).replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"})[c]);
 const jsonText = value => JSON.stringify(value).replace(/</g, "\\u003c").replace(/\u2028/g, "\\u2028").replace(/\u2029/g, "\\u2029");
 const record = value => value !== null && typeof value === "object" && !Array.isArray(value);
@@ -21,7 +33,7 @@ export function allowedLink(value) {
 }
 export function validatePage(doc) {
   if (!record(doc) || doc.profile !== PAGE_PROFILE) fail("unsupported page profile; no lossy conversion performed");
-  if (!record(doc.meta) || !["beings", "things"].includes(doc.meta.family)) fail("unsupported reference family");
+  if (!record(doc.meta) || !Object.hasOwn(FAMILIES, doc.meta.family)) fail("unsupported reference family");
   for (const key of ["title", "template", "templateVersion"]) string(doc.meta[key], `meta.${key}`);
   if (!Number.isSafeInteger(doc.meta.revision) || doc.meta.revision < 0) fail("invalid document revision");
   for (const key of ["documentId", "created"]) if (doc.meta[key] !== null && typeof doc.meta[key] !== "string") fail(`invalid ${key}`);
@@ -48,11 +60,12 @@ export function validatePage(doc) {
   return doc;
 }
 export function blankPage(family) {
-  if (!["beings", "things"].includes(family)) fail("unknown reference family");
+  if (!Object.hasOwn(FAMILIES, family)) fail("unknown reference family");
+  const shape = FAMILIES[family];
   return {profile:PAGE_PROFILE, meta:{documentId:null,created:null,title:"",revision:0,family,template:`oi.template/${family}`,templateVersion:"0.1.0",sourceMode:"authored"},
     bindings:{worldRef:null,subjectRef:null,categories:["C2"],expressionRef:null,sources:[]},
-    appearance:{layout:family === "beings" ? "portrait" : "editorial",tone:"paper"},
-    page:{subtitle:"",introduction:"",sections:[{id:"section-1",heading:"",text:""}],links:[],expression:null},notes:[],extensions:{}};
+    appearance:{layout:shape.layout,tone:"paper"},
+    page:{subtitle:"",introduction:"",sections:shape.sections.map((heading,index)=>({id:`section-${index+1}`,heading,text:""})),links:[],expression:null},notes:[],extensions:{}};
 }
 /** Reads JSON, not scraped prose. Unknown extension data is retained intact. */
 export function readPage(html) {
@@ -135,7 +148,8 @@ function pageRuntime() {
 }
 export function renderPage(doc) {
   validatePage(doc);
-  const family=doc.meta.family === "beings"?"Beings":"Things";
+  const shape=FAMILIES[doc.meta.family];
+  const family=shape.label;
   const sections=doc.page.sections.map((s,i)=>`<article class="section"><span class="ordinal">${String(i+1).padStart(2,"0")}</span><div><h2 data-field="heading" data-section="${escape(s.id)}" data-placeholder="Section title">${escape(s.heading)}</h2><p class="body" data-field="text" data-section="${escape(s.id)}" data-placeholder="Write here…">${escape(s.text)}</p></div></article>`).join("");
   const links=doc.page.links.map(link=>`<div class="relation" data-link-id="${escape(link.id)}"><small>${escape(link.relation)}</small><a href="${escape(link.href)}" rel="noopener noreferrer">${escape(link.label)}</a></div>`).join("");
   const expression=doc.page.expression?renderExpressionFallback(doc.page.expression,doc.meta.title):"";
@@ -143,7 +157,7 @@ export function renderPage(doc) {
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="ql-template" content="${escape(doc.meta.template)} ${escape(doc.meta.templateVersion)}"><title>${escape(doc.meta.title||family)}</title><style id="oi-page-style">${CSS}</style></head>
 <body data-layout="${doc.appearance.layout}" data-tone="${doc.appearance.tone}" data-editing="false"><div class="doc">
 <header class="bar"><span class="brand">O:I / ${family}</span><nav class="controls" aria-label="Page controls"><button id="edit-page" aria-pressed="false">Edit</button><button id="save-copy">Save HTML copy</button></nav></header>
-<main><header class="mast"><div class="intro"><p class="eyebrow">${family === "Beings"?"A presence and its world":"A subject and its relations"}</p><h1 data-field="title" data-placeholder="${family === "Beings"?"An opening into a world.":"Give a thing its place."}">${escape(doc.meta.title)}</h1><p class="subtitle" data-field="subtitle" data-placeholder="A line of introduction.">${escape(doc.page.subtitle)}</p><p class="opening" data-field="introduction" data-placeholder="Begin with what matters here.">${escape(doc.page.introduction)}</p></div><svg class="mark" viewBox="0 0 120 120" aria-hidden="true"><circle cx="47" cy="60" r="35"/><circle cx="73" cy="60" r="35"/></svg></header>${expression}
+<main><header class="mast"><div class="intro"><p class="eyebrow">${shape.eyebrow}</p><h1 data-field="title" data-placeholder="${shape.placeholder}">${escape(doc.meta.title)}</h1><p class="subtitle" data-field="subtitle" data-placeholder="A line of introduction.">${escape(doc.page.subtitle)}</p><p class="opening" data-field="introduction" data-placeholder="Begin with what matters here.">${escape(doc.page.introduction)}</p></div><svg class="mark" viewBox="0 0 120 120" aria-hidden="true"><circle cx="47" cy="60" r="35"/><circle cx="73" cy="60" r="35"/></svg></header>${expression}
 <div class="contents"><section id="page-sections" class="sections" aria-label="Page content">${sections}</section><aside class="rail"><h2>In relation</h2>${links||'<p class="empty">Links to the wider world can live here.</p>'}<details class="provenance"><summary>Source &amp; form</summary><pre>${escape(JSON.stringify({template:doc.meta.template,sourceMode:doc.meta.sourceMode,...doc.bindings},null,2))}</pre></details><div class="author-tools" hidden><p><label>Composition <select id="page-layout"><option value="portrait">Portrait</option><option value="editorial">Editorial</option></select></label></p><p><label>Ground <select id="page-tone"><option value="paper">Paper</option><option value="ink">Ink</option></select></label></p><button id="add-section">Add section</button></div></aside></div></main>
 <footer class="footer"><span class="status" id="page-status" role="status">Portable document. Editing does not save back to its source automatically.</span><span>${family} / 0.1</span></footer><noscript>This page remains readable. Editing and HTML-copy export require JavaScript; native source editing remains separate.</noscript></div>
 <script type="application/json" id="ql-doc">${jsonText(doc)}</script><script>(${pageRuntime.toString()})();</script></body></html>\n`;

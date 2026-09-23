@@ -76,6 +76,14 @@ const SCENARIO_SPEC = {
   "factory-tasks": "docs/cradle/11-FACTORY.md §7 F14 F15",
   "factory-objects": "docs/cradle/11-FACTORY.md §6 §7 F16",
   "factory-real": "docs/cradle/11-FACTORY.md §7 F5 F6 F7 F12 (real Central-root runs, read-only)",
+  "left-frame": "docs/cradle/10-SIDEBARS.md §5.1 L1 L2 L3 L4 L5 L6 L8",
+  "left-unreadable": "docs/cradle/10-SIDEBARS.md §5.1 L7 · §5.2 R8 R9 R10 R11",
+  "left-marks": "docs/cradle/10-SIDEBARS.md §5.2 R1 R2 R3 R4 R5 · §3.3 · §3.5",
+  "left-rows": "docs/cradle/10-SIDEBARS.md §5.2 R6 R7 R12 · §3.4 A6",
+  "left-head": "docs/cradle/10-SIDEBARS.md §3.1 §3.6 D3 D6 (scope menu, workspace footer, create menu, Inbox, ⌘K typed tabs)",
+  "left-lens": "docs/cradle/10-SIDEBARS.md §3.1 D2 A5 (Epi-Logos lens)",
+  "left-forms": "docs/cradle/10-SIDEBARS.md §3.7 §6.1.6 D5 (forms create a copy; Goal and Vision in place; Factory INTENT)",
+  "left-gallery": "docs/cradle/10-SIDEBARS.md §3 (the left frame in light and dark at 1440 / 1000 / 760)",
 };
 const DEFAULT_SPEC_REF = "docs/cradle/05-EXECUTION.md §3";
 

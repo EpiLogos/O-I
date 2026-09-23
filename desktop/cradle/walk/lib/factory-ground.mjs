@@ -45,11 +45,22 @@ export async function enterFactory(page, {channel, bindDefaultCentral, root, pro
   if (project) await chooseProject(page, project);
 }
 
+/** The scope is chosen in exactly one place: the scope menu at the top of
+ * the left sidebar (10-SIDEBARS §3.6). The Factory body no longer carries a
+ * project picker of its own. */
 export async function chooseProject(page, project) {
-  const picker = page.locator('nav.factory-navigator select[aria-label="Project"]');
-  await picker.waitFor({timeout: 30000});
-  await page.waitForFunction(name => [...document.querySelectorAll('nav.factory-navigator select[aria-label="Project"] option')].some(option => option.value === name), project, {timeout: 30000});
-  await picker.selectOption(project);
+  const trigger = page.locator('[data-left-head] .left-scope-trigger');
+  await trigger.waitFor({timeout: 30000});
+  await trigger.click();
+  const item = page.getByRole("group", {name: "Scope and workspace"}).locator(`[data-scope-project="${project}"]`);
+  await item.waitFor({timeout: 30000});
+  await item.click();
+  await page.waitForFunction(name => document.querySelector("[data-left-head] .left-scope-name")?.textContent === name, project, {timeout: 30000});
+}
+
+/** The scope the head names (the one scope every surface reads). */
+export async function currentScope(page) {
+  return (await page.locator("[data-left-head] .left-scope-name").innerText()).trim();
 }
 
 /** Every op the page sends to the bridge, with its result — for asserting

@@ -87,7 +87,10 @@ export function decodeLayoutProgressive(raw: unknown, workspaceId: string): Prog
       }
       const pinned = (Array.isArray(o.pinned) ? o.pinned : []).filter((p): p is string => typeof p === "string" && tabs.includes(p));
       const active = typeof o.active === "string" && tabs.includes(o.active) ? o.active : null;
-      return { type: "group", id: typeof o.id === "string" ? o.id : `${workspaceId}:group`, tabs, pinned, active };
+      // The pane's own pin state rides through (the layout codec validates
+      // it next); dropping it here reset every restored pane to pinned
+      // horizontal on reload.
+      return { type: "group", id: typeof o.id === "string" ? o.id : `${workspaceId}:group`, tabs, pinned, active, tabPresentation: o.tabPresentation, tabPinOrientation: o.tabPinOrientation };
     }
     if (o.type === "split") {
       // A split without a real children array is one lost pane; children

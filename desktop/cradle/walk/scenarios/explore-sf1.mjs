@@ -26,7 +26,7 @@
 import {execFileSync, spawn} from "node:child_process";
 import {join, resolve} from "node:path";
 import {setup as sourceSetup} from "./editor.mjs";
-import {bindDefaultCentral, openWorkspaceStrip} from "../editor-doc.mjs";
+import {bindDefaultCentral, openWorkspaceStrip, newWorkspace, switchWorkspace} from "../editor-doc.mjs";
 
 const OWNER_OPERATION = "shared-field.projection";
 const SENTINELS = ["PRIVATE_SENTINEL_SCENE", "PRIVATE_SENTINEL_ENTITY", "PRIVATE_SENTINEL_READING", "PRIVATE_SENTINEL_ACTION", "PRIVATE_SENTINEL_WITHHELD"];
@@ -87,18 +87,13 @@ export default async function run({page, baseUrl, check, metric, shot, channel, 
   await nav.getByRole("button", {name: "Editor: files", exact: true}).click();
   await nav.locator(`[data-file-path="Work/Editor/${source.binding.path}"]`).click();
   await page.locator(`.cm-content[data-source-ref="${source.binding.ref}"]`).waitFor({timeout: 15000});
-  await openWorkspaceStrip(page);
-  await page.getByLabel("Workspace actions", {exact: true}).click();
-  await page.getByRole("button", {name: "New workspace"}).click();
-  await page.getByRole("textbox", {name: "Workspace name"}).fill("Personal");
-  await page.getByRole("button", {name: "Create workspace"}).click();
+  await newWorkspace(page, "Personal");
   await page.getByRole("button", {name: "Start writing", exact: true}).click();
   await page.locator(".draft-surface, .flow-surface").first().waitFor({timeout: 15000});
   let book = await workspaces(page);
   const personalId = book.workspaces.find((w) => w.name === "Personal")?.id;
   check(Boolean(personalId) && localTabs(book, personalId).some((t) => t.kind === "draft"), "A second local arrangement (Personal) holds unsaved writing", {personal: localTabs(book, personalId)});
-  await openWorkspaceStrip(page);
-  await page.getByRole("combobox", {name: "Workspace"}).selectOption("root");
+  await switchWorkspace(page, "root");
   await page.locator(`.cm-content[data-source-ref="${source.binding.ref}"]`).waitFor({timeout: 15000});
   book = await workspaces(page);
   const centralBefore = localTabs(book, "root");

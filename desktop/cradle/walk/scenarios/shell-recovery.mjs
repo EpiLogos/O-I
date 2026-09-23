@@ -55,8 +55,8 @@ export default async function run({page,baseUrl,channel,check,shot,provision:p})
   check(JSON.stringify((await channel('read.layout')).data.layout.root)===JSON.stringify(before.root),'Responsive transitions preserve the pane tree');
   check((await channel('read.layout')).data.layout.agencyDepth===before.agencyDepth,'Overlay preserves intended sidebar depth');
   await page.getByRole('button',{name:'Settings',exact:true}).click();
-  await page.getByRole('region',{name:'System composition'}).waitFor();
-  await page.waitForFunction(()=>document.querySelector('.system-panel')?.getAttribute('aria-busy')==='false');
+  await page.getByRole('region',{name:'Settings',exact:true}).waitFor();
+  await page.waitForFunction(()=>!!document.querySelector('[data-settings-page]')&&!document.querySelector('[data-settings-reading]'),null,{timeout:120000});
   await shot('system-1280');
   await page.setViewportSize({width:900,height:760});await shot('system-900');
   await page.emulateMedia({reducedMotion:'reduce'});

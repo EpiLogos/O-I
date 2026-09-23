@@ -1,0 +1,208 @@
+/* The left frame (10-SIDEBARS §3): fixed head, one scrolling body, fixed foot.
+ *
+ * Tokens only (packages/oi-design-system/tokens.css, desktop.css); nothing
+ * here styles a scrollbar — every scrolling element opts into the design
+ * system's quiet scroller (.oi-scroll-quiet), so no bar is ever drawn. Selection is a quiet wash, never gold,
+ * never inverted. Hover never changes a row's height (R7): trailing actions
+ * sit in space every row reserves at rest. */
+
+.left-frame { flex: 1; min-height: 0; display: flex; flex-direction: column; font-family: var(--oi-font-sans); color: var(--oi-accent-ink); }
+
+/* ── head ─────────────────────────────────────────────────────────── */
+.left-head { flex: none; position: relative; display: flex; align-items: center; gap: 4px; height: 40px; padding: 6px 8px 6px 10px; box-sizing: border-box; z-index: var(--oi-z-popover); }
+.left-scope { position: relative; display: flex; align-items: center; gap: 6px; min-width: 0; flex: 1; }
+.left-scope-trigger { display: inline-flex; align-items: center; gap: 8px; min-width: 0; max-width: 100%; height: var(--oi-shell-hit); padding: 0 6px 0 2px; border: 0; border-radius: var(--oi-shell-radius-row); background: transparent; color: var(--oi-accent-ink); font: inherit; cursor: pointer; transition: background var(--oi-motion-ui) var(--oi-motion-ease-out); }
+.left-scope-trigger:hover, .left-scope-trigger[aria-expanded="true"] { background: var(--oi-wash); }
+.left-scope-trigger:focus-visible { outline: var(--oi-focus-ring-width) solid var(--oi-accent); outline-offset: calc(0px - var(--oi-focus-ring-width)); }
+.left-scope-tile { flex: none; display: inline-flex; align-items: center; justify-content: center; width: 20px; height: 20px; border-radius: 5px; background: var(--oi-active-ground); color: var(--oi-active-ink); font-size: var(--oi-shell-type-ui); font-weight: 700; line-height: 1; }
+.left-scope-tile.small { width: 16px; height: 16px; border-radius: 4px; font-size: var(--oi-shell-type-meta); }
+.left-scope-name { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: var(--oi-shell-type-heading); font-weight: 600; letter-spacing: -0.2px; }
+.left-scope-chevron { position: relative; flex: none; display: inline-flex; color: var(--oi-muted-2); }
+.left-news-dot { position: absolute; top: -3px; right: -5px; width: 5px; height: 5px; border-radius: 50%; background: var(--oi-accent-ink); }
+.left-lens-chip { flex: none; display: inline-flex; align-items: center; gap: 3px; height: 20px; padding: 0 3px 0 8px; border: var(--oi-shell-edge) solid var(--oi-hairline); border-radius: 10px; font-size: var(--oi-shell-type-ui); font-weight: 600; color: var(--oi-accent-ink); background: var(--oi-sidebar-ground); white-space: nowrap; }
+.left-lens-chip button { display: inline-flex; align-items: center; justify-content: center; width: 16px; height: 16px; padding: 0; border: 0; border-radius: 50%; background: transparent; color: var(--oi-muted-2); cursor: pointer; }
+.left-lens-chip button:hover, .left-lens-chip button:focus-visible { background: var(--oi-wash-strong); color: var(--oi-accent-ink); }
+.left-head-tools { flex: none; display: inline-flex; align-items: center; gap: 2px; margin-left: auto; }
+.left-icon { display: inline-flex; align-items: center; justify-content: center; flex: none; width: var(--oi-shell-control); height: var(--oi-shell-control); padding: 0; border: 0; border-radius: var(--oi-shell-radius-row); background: transparent; color: var(--oi-muted-2); cursor: pointer; transition: background var(--oi-motion-ui) var(--oi-motion-ease-out), color var(--oi-motion-ui) var(--oi-motion-ease-out); }
+.left-icon:hover, .left-icon:focus-visible, .left-icon[aria-expanded="true"] { background: var(--oi-wash); color: var(--oi-accent-ink); outline: none; }
+.left-head-tool { width: var(--oi-shell-hit); height: var(--oi-shell-hit); color: var(--oi-accent-ink); }
+.desktop-side.left .left-head svg, .desktop-side.left .left-foot svg { width: auto; height: auto; }
+
+/* menus hang from the head */
+.left-create { position: relative; }
+.left-scope-menu { position: absolute; top: calc(100% + 4px); left: -2px; width: min(270px, calc(100vw - 24px)); max-height: min(70vh, 560px); z-index: var(--oi-z-popover); }
+.left-create-menu { position: absolute; top: calc(100% + 4px); right: 0; min-width: 210px; }
+.left-scope-menu hr, .left-create-menu hr { width: 100%; height: 0; margin: 4px 0; border: 0; border-top: var(--oi-shell-edge) solid var(--oi-hairline-soft); }
+.left-menu-eyebrow { display: block; padding: 8px 8px 3px; font-size: var(--oi-shell-type-eyebrow); font-weight: 600; letter-spacing: var(--oi-shell-tracking); text-transform: uppercase; color: var(--oi-muted-2); }
+.left-menu-label { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; text-align: left; }
+.left-menu-marks { display: inline-flex; align-items: center; gap: 6px; }
+.left-menu-switch { display: flex; align-items: center; gap: 8px; padding: 6px 8px 8px; margin-bottom: 2px; border-bottom: var(--oi-shell-edge) solid var(--oi-hairline-soft); font-size: var(--oi-shell-type-ui); color: var(--oi-muted-2); }
+.left-menu-switch b { color: var(--oi-accent-ink); font-weight: 600; }
+.left-menu-switch .left-menu-link { margin-left: auto; font-weight: 600; }
+.left-menu-link { padding: 0 2px; border: 0; background: transparent; color: var(--oi-accent-ink); font: inherit; font-size: var(--oi-shell-type-ui); cursor: pointer; border-radius: 3px; }
+.left-menu-link:hover, .left-menu-link:focus-visible { text-decoration: underline; text-underline-offset: 2px; outline: none; }
+.left-menu-workspace, .left-menu-machine { display: flex; align-items: center; gap: 8px; min-height: var(--oi-shell-menu-row); padding: 0 8px; font-size: var(--oi-shell-type-nav); }
+.left-menu-workspace > svg, .left-menu-machine > svg { color: var(--oi-muted-2); flex: none; }
+.left-menu-workspaces { display: grid; padding-left: 20px; }
+.left-menu-actions { display: flex; align-items: center; gap: 4px; padding: 4px 8px 6px; color: var(--oi-muted-2); font-size: var(--oi-shell-type-ui); }
+.left-machine-state { display: inline-flex; align-items: center; gap: 4px; font-size: var(--oi-shell-type-meta); color: var(--oi-muted-2); }
+.left-machine-state[data-reachable="false"] .left-dot { background: transparent; box-shadow: inset 0 0 0 1px var(--oi-muted-2); }
+
+.left-return { flex: none; display: flex; align-items: center; gap: 6px; margin: 0 10px 4px; min-height: 24px; padding: 0 8px; border: 0; border-radius: var(--oi-shell-radius-row); background: transparent; color: var(--oi-accent-ink); font: inherit; font-size: var(--oi-shell-type-ui); text-align: left; cursor: pointer; }
+.left-return:hover, .left-return:focus-visible { background: var(--oi-wash); outline: none; }
+.left-return > span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+/* ── body ─────────────────────────────────────────────────────────── */
+/* The one scrolling region: it opts into the design system's quiet
+ * scroller (.oi-scroll-quiet on the element) — no bar is ever drawn. */
+.left-body { flex: 1; min-height: 0; padding: 2px 0 8px; }
+.left-body > .world-navigator, .left-body > nav, .left-body > aside, .left-body > div { flex: none; }
+.desktop-side .left-body .world-navigator { overflow: visible; min-height: auto; flex: none; padding: 0 8px; display: block; }
+.left-body .world-scroll { overflow: visible; min-height: auto; }
+.left-inbox-body { padding: 0 8px; }
+
+/* sections */
+.left-section { margin: 10px 0 0; }
+.left-section-head { display: flex; align-items: center; gap: 2px; height: 24px; padding: 0 2px 0 0; }
+.left-section-toggle { flex: 1; min-width: 0; display: flex; align-items: center; gap: 6px; height: 24px; padding: 0 8px 0 4px; border: 0; border-radius: var(--oi-shell-radius-row); background: transparent; color: var(--oi-muted-2); font: inherit; cursor: pointer; text-align: left; }
+.left-section-toggle:hover, .left-section-toggle:focus-visible { color: var(--oi-accent-ink); outline: none; }
+.left-section-toggle:focus-visible { box-shadow: inset 0 0 0 var(--oi-focus-ring-width) var(--oi-accent); }
+.left-chevron { display: inline-flex; flex: none; width: 10px; justify-content: center; transition: transform var(--oi-motion-ui) var(--oi-motion-ease-out); }
+.left-section-toggle[aria-expanded="false"] .left-chevron { transform: rotate(-90deg); }
+.left-eyebrow, .left-subhead { font-size: var(--oi-shell-type-eyebrow); font-weight: 600; letter-spacing: var(--oi-shell-tracking); text-transform: uppercase; }
+.left-subhead { display: block; padding: 6px 8px 2px; color: var(--oi-muted-2); }
+.left-section-count { font-size: var(--oi-shell-type-eyebrow); font-weight: 600; letter-spacing: var(--oi-shell-tracking); font-variant-numeric: tabular-nums; }
+.left-section-stale { margin-left: auto; font-size: var(--oi-shell-type-meta); color: var(--oi-muted-2); white-space: nowrap; }
+.left-section-tool { width: 22px; height: 22px; }
+.left-section-body[hidden] { display: none; }
+.left-reading { margin: 0; padding: 5px 8px 5px 26px; font-size: var(--oi-shell-type-ui); color: var(--oi-muted-2); }
+.left-error { padding: 6px 8px 8px 26px; font-size: var(--oi-shell-type-ui); }
+.left-error > p { margin: 0 0 6px; color: var(--oi-accent-ink); font-weight: 600; }
+.left-error > button { font-size: var(--oi-shell-type-ui); }
+.left-stale-line { margin: 0; padding: 3px 8px 3px 26px; font-size: var(--oi-shell-type-meta); color: var(--oi-muted-2); }
+.left-link { padding: 0; border: 0; background: transparent; color: var(--oi-accent-ink); font: inherit; text-decoration: underline; text-underline-offset: 2px; cursor: pointer; }
+
+/* rows — one grammar */
+.left-row { position: relative; display: flex; align-items: center; gap: 8px; width: 100%; min-width: 0; min-height: var(--oi-shell-row-dense); box-sizing: border-box; margin: 0 0 1px; padding: 0 8px; border: 0; border-radius: var(--oi-shell-radius-row); background: transparent; color: var(--oi-muted); font: inherit; font-size: var(--oi-shell-type-nav); text-align: left; cursor: pointer; transition: background var(--oi-motion-ui) var(--oi-motion-ease-out), color var(--oi-motion-ui) var(--oi-motion-ease-out); }
+button.left-row:hover, .left-row:has(> .left-row-main:hover), .left-row:focus-within { background: var(--oi-wash); color: var(--oi-accent-ink); }
+.left-row[aria-current="true"], .left-row[aria-pressed="true"] { background: var(--oi-wash-strong); color: var(--oi-accent-ink); }
+.left-row > svg, .left-row-main > svg { flex: none; color: var(--oi-muted-2); }
+.left-row:is(:hover, [aria-current="true"], [aria-pressed="true"]) > svg, .left-row:is(:hover, [aria-current="true"]) .left-row-main > svg { color: var(--oi-accent-ink); }
+.left-row:focus-visible, .left-row-main:focus-visible { outline: var(--oi-focus-ring-width) solid var(--oi-accent); outline-offset: calc(0px - var(--oi-focus-ring-width)); }
+.left-row-label { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.left-row-badge { flex: none; margin-left: auto; font-size: var(--oi-shell-type-meta); font-variant-numeric: tabular-nums; color: var(--oi-muted-2); }
+.left-destinations { display: grid; gap: 1px; padding: 0 0 2px; }
+
+.left-destinations .central-mode-row { position: relative; display: flex; align-items: center; margin: 0; }
+.left-destinations .central-mode-row > .left-row { flex: 1; margin: 0; padding-right: 78px; }
+.left-destinations .central-mode-row > .project-modes { position: absolute; right: 3px; top: 0; bottom: 0; }
+.left-central-root { margin: 1px 0 4px 14px; }
+
+/* a row whose main body is a button and whose trailing tools sit beside it */
+.left-row.left-material, .left-row.left-conversation { padding: 0; }
+.left-row-main { flex: 1; min-width: 0; display: flex; align-items: center; gap: 8px; min-height: var(--oi-shell-row-dense); padding: 0 56px 0 8px; border: 0; border-radius: inherit; background: transparent; color: inherit; font: inherit; text-align: left; cursor: pointer; }
+.left-material .left-row-main { padding-right: 56px; }
+/* A6: Open beside / Pop out, subtle, in the reserved trailing space. */
+.left-open-where { position: absolute; right: 4px; top: 50%; transform: translateY(-50%); display: inline-flex; gap: 1px; opacity: 0; visibility: hidden; transition: opacity var(--oi-motion-ui) var(--oi-motion-ease-out), visibility 0s linear var(--oi-motion-ui); }
+.left-row:is(:hover, :focus-within) > .left-open-where, li:is(:hover, :focus-within) > .left-open-where { opacity: 1; visibility: visible; transition: opacity var(--oi-motion-ui) var(--oi-motion-ease-out); }
+@media (pointer: coarse) { .left-open-where { opacity: 1; visibility: visible; } }
+.left-open-where .left-icon { width: 22px; height: 22px; }
+/* file rows in the shared tree carry the same trailing pair */
+.left-frame .native-directory li { position: relative; }
+.left-frame .native-directory li > .left-open-where { right: 2px; top: 13px; }
+.left-frame .native-directory li:not(:hover):not(:focus-within) > .left-open-where { opacity: 0; visibility: hidden; }
+.left-frame .native-directory button[data-file-path]:not([aria-expanded]) { padding-right: 52px; }
+
+/* conversation rows (v2 §2) */
+.left-conversation { align-items: flex-start; }
+.left-conversation .left-row-main { display: grid; grid-template-columns: 12px minmax(0, 1fr) auto; grid-template-rows: auto auto; column-gap: 6px; row-gap: 1px; align-items: start; padding: 5px 34px 6px 8px; }
+.left-conversation .left-mark { grid-row: 1; grid-column: 1; margin-top: 2px; }
+.left-conversation-meta { grid-row: 1; grid-column: 2 / 4; display: flex; align-items: center; gap: 6px; min-width: 0; font-size: var(--oi-shell-type-meta); letter-spacing: var(--oi-shell-tracking); text-transform: uppercase; color: var(--oi-muted-2); }
+.left-conversation-kind { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.left-conversation-meta time { flex: none; margin-left: auto; font-variant-numeric: tabular-nums; letter-spacing: 0; text-transform: none; }
+.left-conversation-title { grid-row: 2; grid-column: 2 / 4; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; overflow-wrap: anywhere; font-size: var(--oi-shell-type-nav); line-height: 1.35; color: var(--oi-accent-ink); }
+.left-conversation[data-mark="unread"] .left-conversation-title { font-weight: 600; }
+.left-row-more { position: absolute; right: 4px; top: 4px; opacity: 0; visibility: hidden; transition: opacity var(--oi-motion-ui) var(--oi-motion-ease-out), visibility 0s linear var(--oi-motion-ui); }
+.left-row:is(:hover, :focus-within) > .left-row-more { opacity: 1; visibility: visible; transition: opacity var(--oi-motion-ui) var(--oi-motion-ease-out); }
+@media (pointer: coarse) { .left-row-more { opacity: 1; visibility: visible; } }
+.left-row-more .left-icon { width: 22px; height: 22px; }
+.left-row-menu { position: absolute; top: 24px; right: 0; min-width: 160px; }
+
+/* marks — state lives on the thing (law 3); no layout moves */
+.left-mark { flex: none; display: inline-flex; align-items: center; justify-content: center; width: 12px; height: 12px; font-size: var(--oi-shell-type-meta); font-weight: 700; line-height: 1; color: var(--oi-accent-ink); }
+.left-mark[data-mark="working"]::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: var(--oi-accent-ink); animation: left-breathe 1.6s ease-in-out infinite; }
+.left-mark[data-mark="needs-you"] { width: 14px; height: 14px; border-radius: 3px; background: var(--oi-wash-strong); }
+.left-mark[data-mark="failed"] { color: var(--oi-muted-2); font-weight: 400; font-size: var(--oi-shell-type-ui); }
+@keyframes left-breathe { 0%, 100% { opacity: 1; } 50% { opacity: 0.35; } }
+@media (prefers-reduced-motion: reduce) { .left-mark[data-mark="working"]::before { animation: none; } }
+.left-dot { display: inline-block; width: 5px; height: 5px; border-radius: 50%; background: var(--oi-accent-ink); flex: none; }
+.left-unread-dot { margin-left: auto; }
+.left-unread-dot + time { margin-left: 4px; }
+.left-project-marks { flex: none; display: inline-flex; align-items: center; gap: 6px; margin-left: auto; }
+.left-mark-chip { display: inline-flex; align-items: center; height: 14px; padding: 0 4px; border-radius: 3px; background: var(--oi-wash-strong); color: var(--oi-accent-ink); font-size: var(--oi-shell-type-meta); font-weight: 700; font-variant-numeric: tabular-nums; }
+.left-mark-inline { display: inline-flex; align-items: center; gap: 4px; font-size: var(--oi-shell-type-meta); font-variant-numeric: tabular-nums; color: var(--oi-accent-ink); }
+
+/* project rows: glyph, name, marks right; mode icons on hover over the marks */
+.left-frame .world-projects > li > button:first-child { gap: 8px; padding-right: 8px; }
+.left-frame .world-projects > li > button:first-child > svg { flex: none; color: var(--oi-muted-2); }
+.left-frame .world-projects > li:is(:hover, :focus-within) > button:first-child > .left-project-marks { visibility: hidden; }
+.left-frame .world-projects > li:is(:hover, :focus-within) > button:first-child { padding-right: 78px; }
+
+.left-remembered { margin: 2px 0 0; }
+
+/* ── foot ─────────────────────────────────────────────────────────── */
+.left-foot { flex: none; padding: 4px 8px 6px; border-top: var(--oi-shell-edge) solid var(--oi-hairline-soft); }
+.left-inbox-row { margin: 0 0 4px; }
+.left-inbox-row .left-row-badge { color: var(--oi-accent-ink); font-weight: 600; }
+.desktop-side .left-foot .left-mode-row { justify-content: flex-start; margin: 0; padding: 2px 0 0; border-top: 0; background: transparent; }
+.left-foot .world-mode-strip { display: flex; align-items: center; gap: 3px; }
+.left-foot .world-mode-strip button, .left-foot .world-system-settings { display: inline-flex; align-items: center; justify-content: center; flex: none; width: var(--oi-shell-hit); height: var(--oi-shell-hit); padding: 0; border: 0; border-radius: 7px; background: transparent; color: var(--oi-muted-2); cursor: pointer; transition: background var(--oi-motion-ui) var(--oi-motion-ease-out), color var(--oi-motion-ui) var(--oi-motion-ease-out); }
+.left-foot .world-mode-strip button:hover, .left-foot .world-system-settings:hover { background: var(--oi-wash); color: var(--oi-accent-ink); }
+.left-foot .world-mode-strip button[aria-checked="true"], .left-foot .world-system-settings[aria-pressed="true"] { background: var(--oi-wash-strong); color: var(--oi-accent-ink); }
+.left-foot .world-mode-separator { margin: 0 4px; }
+
+/* the Inbox body */
+.left-inbox .receiving-when { margin-left: auto; font-size: var(--oi-shell-type-meta); color: var(--oi-muted-2); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.left-inbox .receiving-origin { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.left-inbox .receiving-raw { margin-top: 6px; font-size: var(--oi-shell-type-ui); }
+.left-inbox .receiving-raw pre { max-height: 200px; white-space: pre-wrap; overflow-wrap: anywhere; font-family: var(--oi-font-mono); font-size: var(--oi-shell-type-meta); }
+
+/* L3 compact (≤1000px): times yield before titles */
+@media (max-width: 1000px) {
+  .left-conversation-meta time, .left-inbox .receiving-when { display: none; }
+}
+
+/* L2: the scope name in the topbar while the left is collapsed */
+.shell-scope-name { display: inline-flex; align-items: center; min-width: 0; max-width: 220px; margin-left: 6px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: var(--oi-shell-type-nav); font-weight: 600; color: var(--oi-accent-ink); }
+.shell-scope-lens { font-weight: 400; color: var(--oi-muted-2); }
+
+/* Factory's body inside the frame: the section grammar, no bands. */
+.left-body .factory-navigator { display: block; flex: none; min-height: auto; overflow: visible; padding: 0 8px; }
+.left-body .factory-views { display: grid; gap: 1px; margin: 0; padding: 0 0 2px; border: 0; background: transparent; }
+.left-body .factory-views > .left-row { width: 100%; height: auto; }
+.left-register { margin: 2px 0 6px; }
+.left-intent-empty { cursor: default; color: var(--oi-muted-2); }
+.left-intent-empty .left-link { flex: none; margin-left: auto; font-size: var(--oi-shell-type-ui); }
+.left-review-badge { flex: none; margin-left: 6px; padding: 0 6px; border: var(--oi-shell-edge) solid var(--oi-hairline); border-radius: 8px; font-size: var(--oi-shell-type-meta); color: var(--oi-muted-2); }
+.left-learnings .left-chevron { margin-left: -2px; }
+.left-learnings[aria-expanded="false"] .left-chevron { transform: rotate(-90deg); }
+.left-learnings-tree { margin: 1px 0 4px 14px; }
+.left-corpus { margin: 0 0 2px; }
+.left-section-retry { flex: none; margin-right: 6px; font-size: var(--oi-shell-type-meta); }
+.left-error > p.left-error-detail { font-weight: 400; color: var(--oi-muted-2); }
+/* With the lens chip beside it the scope name keeps its words; the chip
+ * yields first (ellipsis) on a narrow head. */
+.left-scope-trigger { flex: 0 1 auto; }
+.left-scope-name { min-width: 3.4em; }
+.left-lens-chip { flex: 0 1 auto; min-width: 0; overflow: hidden; }
+.left-lens-chip > span { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+.left-lens-chip > button { flex: none; }
+.left-refusal { margin: 2px 0 6px; padding: 0 8px 0 29px; font-size: var(--oi-shell-type-ui); line-height: 1.45; color: var(--oi-accent-ink); overflow-wrap: anywhere; }
+
+/* Destinations carry their state in their ink: the current one reads in
+ * accent ink on the quiet wash, the others rest muted; the glyph inherits
+ * the row's ink so the icon never disagrees with its label. */
+/* Two classes: `.desktop-shell button` (shell.css) outranks a single class. */
+.left-row.left-destination { color: var(--oi-muted); }
+.left-row.left-destination > svg, .left-row.left-destination:is(:hover, [aria-current="true"], [aria-pressed="true"]) > svg { color: inherit; }
+.left-row.left-destination:is(:hover, [aria-current="true"], [aria-pressed="true"], [aria-checked="true"]) { color: var(--oi-accent-ink); }

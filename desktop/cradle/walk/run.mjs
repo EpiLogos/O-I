@@ -155,6 +155,14 @@ const SCENARIOS = {
   "factory-tasks": {module:"scenarios/factory-tasks.mjs",kernel:true,aliases:["f14","f15"]},
   "factory-objects": {module:"scenarios/factory-objects.mjs",kernel:true,aliases:["f16"]},
   "factory-real": {module:"scenarios/factory-real.mjs",kernel:true,aliases:[]},
+  "left-frame": {module:"scenarios/left-frame.mjs",kernel:true,aliases:[]},
+  "left-unreadable": {module:"scenarios/left-unreadable.mjs",kernel:true,aliases:[]},
+  "left-marks": {module:"scenarios/left-marks.mjs",kernel:true,aliases:[]},
+  "left-rows": {module:"scenarios/left-rows.mjs",kernel:true,aliases:[]},
+  "left-head": {module:"scenarios/left-head.mjs",kernel:true,aliases:[]},
+  "left-lens": {module:"scenarios/left-lens.mjs",kernel:true,aliases:[]},
+  "left-forms": {module:"scenarios/left-forms.mjs",kernel:true,aliases:[]},
+  "left-gallery": {module:"scenarios/left-gallery.mjs",kernel:true,aliases:[]},
 };
 
 // Which design/spec row each scenario's receipt serves, and an optional grade
@@ -180,6 +188,14 @@ const SCENARIO_SPEC = {
   "factory-tasks": { spec_ref: "docs/cradle/11-FACTORY.md §7 F14 F15" },
   "factory-objects": { spec_ref: "docs/cradle/11-FACTORY.md §6 §7 F16" },
   "factory-real": { spec_ref: "docs/cradle/11-FACTORY.md §7 F5 F6 F7 F12 (real Central-root runs, read-only)" },
+  "left-frame": { spec_ref: "docs/cradle/10-SIDEBARS.md §5.1 L1 L2 L3 L4 L5 L6 L8" },
+  "left-unreadable": { spec_ref: "docs/cradle/10-SIDEBARS.md §5.1 L7 · §5.2 R8 R9 R10 R11" },
+  "left-marks": { spec_ref: "docs/cradle/10-SIDEBARS.md §5.2 R1 R2 R3 R4 R5 · §3.3 · §3.5" },
+  "left-rows": { spec_ref: "docs/cradle/10-SIDEBARS.md §5.2 R6 R7 R12 · §3.4 A6" },
+  "left-head": { spec_ref: "docs/cradle/10-SIDEBARS.md §3.1 §3.6 D3 D6 (scope menu, workspace footer, create menu, Inbox, ⌘K typed tabs)" },
+  "left-lens": { spec_ref: "docs/cradle/10-SIDEBARS.md §3.1 D2 A5 (Epi-Logos lens)" },
+  "left-forms": { spec_ref: "docs/cradle/10-SIDEBARS.md §3.7 §6.1.6 D5 (forms create a copy; Goal and Vision in place; Factory INTENT)" },
+  "left-gallery": { spec_ref: "docs/cradle/10-SIDEBARS.md §3 (the left frame in light and dark at 1440 / 1000 / 760)" },
 };
 const DEFAULT_SPEC_REF = "docs/cradle/05-EXECUTION.md §3";
 
