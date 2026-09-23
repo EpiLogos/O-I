@@ -7,6 +7,18 @@ export type FieldWriter=(input:{source_ref:string;document_id:string;expected_re
 export const isObject=(v:unknown):v is Record<string,unknown>=>!!v&&typeof v==="object"&&!Array.isArray(v);
 const clone=<T,>(v:T):T=>v===undefined?v:JSON.parse(JSON.stringify(v)) as T;
 const equal=(a:unknown,b:unknown):boolean=>JSON.stringify(a)===JSON.stringify(b);
+/** Deep equality over JSON values: object key order is not semantic (the
+ * native owner re-encodes payloads in its own canonical order); array order
+ * is. Verifies the owner stored what was sent without byte-shape prejudice. */
+const equalSemantic=(a:unknown,b:unknown):boolean=>{
+ if(a===b)return true;
+ if(Array.isArray(a)&&Array.isArray(b))return a.length===b.length&&a.every((v,i)=>equalSemantic(v,b[i]));
+ if(isObject(a)&&isObject(b)){
+  const ka=Object.keys(a),kb=Object.keys(b);
+  return ka.length===kb.length&&ka.every(k=>Object.prototype.hasOwnProperty.call(b,k)&&equalSemantic(a[k],b[k]));
+ }
+ return false;
+};
 export function pointerValue(payload:unknown,pointer:string):unknown {
  if(!pointer.startsWith("/"))throw new Error("Native field needs a non-root template pointer");
  let current:unknown=payload;
@@ -121,7 +133,9 @@ export class DayFormSession {
     const response=await write({source_ref:this.basis.sourceRef,document_id:this.basis.documentId,expected_revision:expected,request_id:`req/desktop-${crypto.randomUUID()}`,field_id:edit.id,value:clone(edit.value)});
     const next=validateDocumentBasis(response,this.basis.sourceRef,this.basis.documentId);
     const receipt=isObject(response)?response.operation_receipt:undefined;
-    if(!isObject(receipt)||receipt.status!=="committed"||receipt.previous_revision!==expected||receipt.revision!==next.revision||!equal(pointerValue(next.payload,edit.pointer),edit.value))throw new Error("Missing or contradictory native save acknowledgement; the effect is unknown");
+    if(!isObject(receipt)||receipt.status!=="committed"||receipt.previous_revision!==expected||receipt.revision!==next.revision||!equalSemantic(pointerValue(next.payload,edit.pointer),edit.value)){
+     throw new Error("Missing or contradictory native save acknowledgement; the effect is unknown");}
+
     this.basis=next;this.saved++;
    }
    // An edit arriving while a save is pending remains a new unsaved draft.

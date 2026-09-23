@@ -127,7 +127,7 @@ export function WorldNavigator({ onExplore, onOpenEncounter, centralFiles, onCen
       {host.onLibrary && <DestinationRow glyph="wiki" label="Library" ariaLabel="Library" onClick={host.onLibrary}/>}
       {onExplore && <DestinationRow glyph="explore" label="Explore" ariaLabel="Open Explore" className="explore-open" onClick={onExplore}/>}
     </nav>
-    {root && <details className="left-central-ground">
+    {root && <details className="left-central-ground" open>
       <summary>Daily ground</summary>
       <CentralGround project={null} onOpenFile={onOpenFile}/>
     </details>}

@@ -22,7 +22,7 @@ try{
   try{
    const context=await browser.newContext({viewport:{width:1440,height:1100}});
    page=await context.newPage();page.on('pageerror',error=>errors.push(String(error)));
-   await page.goto(url);await page.getByRole('button',{name:'Open current Daily Die',exact:true}).waitFor();
+      await page.goto(url);await page.getByRole('button',{name:'Open current Daily Die',exact:true}).waitFor();
    check(name+': root working ground rendered from actual native reads');
    await page.getByRole('button',{name:'Open today',exact:true}).click();
    const face=page.frameLocator('iframe[title^="Day die"]');

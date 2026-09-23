@@ -5,6 +5,7 @@ import {KernelProvider,useKernel} from '../src/kernel/KernelProvider';
 import {WorldNavigator} from '../src/surfaces/navigator/WorldNavigator';
 import {SourceSurface} from '../src/surface/SourceSurface';
 import {readFile} from '../src/files/client';
+import {openDay} from '../src/central/client';
 import type {CentralLocation} from '../src/kernel/types';
 import type {SurfaceBinding} from '../src/surface/types';
 import type {ProjectNavigation} from '../src/workspace/store';
@@ -19,6 +20,10 @@ function Page(){
  const [error,setError]=useState('');const [files,setFiles]=useState(false);
  const [navigation,setNavigation]=useState<Record<string,ProjectNavigation>>({});
  const [front,setFront]=useState<'ground'|'source'>('ground');
+ async function openToday(){
+  const opened=await openDay(kernel.transport,null);
+  await openFile(opened.location);
+ }
  async function openFile(location:CentralLocation){
   const reading=await readFile(kernel.transport,location);
   if(!reading.source)throw new Error('This test requires a native source, not a replacement document');
@@ -27,7 +32,7 @@ function Page(){
   setSource({id:reading.source.ref,kind:'source',ref:reading.source.ref,title:reading.location.path,project:reading.project?.name});setFront('source');
  }
  return <><p>Controlled ground, real source operations; not installed Mac acceptance.</p><div style={{display:'grid',gridTemplateColumns:'360px minmax(0,1fr)',height:'94vh'}}>
- <div className="desktop-side" style={{position:'relative',minHeight:0}}><WorldNavigator mode="base" onMode={()=>{}} onOpenEncounter={async()=>{throw new Error('No test models')}} centralFiles={files} onCentralFilesChange={setFiles} workspaceSelector={null} projectNavigation={navigation} onNavigationChange={(ref,change)=>setNavigation(n=>({...n,[ref]:{...n[ref],...change}}))} onOpenFile={openFile} onOpenWiki={async()=>{throw new Error('Not a Wiki fixture')}} onMessage={setError}/></div>
+ <div className="desktop-side" style={{position:'relative',minHeight:0}}><WorldNavigator mode="base" onMode={()=>{}} onOpenEncounter={async()=>{throw new Error('No test models')}} centralFiles={files} onCentralFilesChange={setFiles} workspaceSelector={null} projectNavigation={navigation} onNavigationChange={(ref,change)=>setNavigation(n=>({...n,[ref]:{...n[ref],...change}}))} onOpenFile={openFile} onOpenWiki={async()=>{throw new Error('Not a Wiki fixture')}} onMessage={setError} onOpenToday={openToday}/></div>
  <main style={{minWidth:0,minHeight:0,overflow:'auto'}}><button onClick={()=>setFront('ground')}>Back to Central ground</button><button disabled={!source} onClick={()=>setFront('source')}>Return to exact open source</button>{error&&<p role="alert">{error}</p>}
  <section hidden={front!=='ground'}><h1>Central native source walk</h1><p>Navigation leaves the existing source host mounted.</p></section>
  {source&&<section hidden={front!=='source'} style={{height:'90%'}}><SourceSurface key={source.ref} binding={source}/></section>}

@@ -2418,9 +2418,16 @@ impl Kernel {
             .as_ref()
             .map(|buffer| buffer.base_revision != reading.revision.revision)
             .unwrap_or(true);
-        let route = project
-            .unwrap_or(self.client.configured_project())
-            .to_owned();
+        // A root-register reading (the Day) routes as the root itself: the
+        // configured project query is a co-reference fallback for child
+        // sources only, never for the owner's own register.
+        let route = if reading.world_ref == "control:root" {
+            String::new()
+        } else {
+            project
+                .unwrap_or(self.client.configured_project())
+                .to_owned()
+        };
         let buffer = self.sync_buffer_from_reading(&reading, true, &route);
         let receipt = changed.then(|| {
             self.log.record(KernelEvent::SourceOpened {
@@ -2529,13 +2536,16 @@ impl Kernel {
                 "no open buffer for `{source_ref}`; nothing to save"
             ));
         };
-        let route = if buffer.project.is_empty() {
-            project.unwrap_or(self.client.configured_project())
+        // A root-register buffer saves through the owner's root route: an
+        // empty/None project is the root register, never the configured
+        // project (which would redirect the owner's own source).
+        let project = if buffer.root_register {
+            None
+        } else if buffer.project.is_empty() {
+            Some(project.unwrap_or(self.client.configured_project()))
         } else {
-            &buffer.project
-        }
-        .to_owned();
-        let project = Some(route.as_str());
+            Some(buffer.project.as_str())
+        };
         let expected = buffer.base_revision.clone();
         let content = buffer.content.clone();
         match self.client.source_write(
