@@ -2,6 +2,7 @@ import {useCallback,useEffect,useRef,useState} from "react";
 import {useKernel} from "../kernel/KernelProvider";
 import {receiving,type DocumentReading,type ReceivingPage,type ReceivingRequest,type ReturnReading,type ReturnRow} from "./client";
 import {NowRelations} from "./NowRelations";
+import {htmlToText} from "../flow/instance";
 import {Glyph} from "../workspace/Glyph";
 import {formatRelativeTime} from "../shared/relativeTime";
 import "./receiving.css";
@@ -92,9 +93,15 @@ export function ReceivingTray({inbox,onOpenMaterial}:{inbox:InboxReading&{reload
   setPending(true);setError(undefined);
   try{
    const reading=await call<ReturnReading>(open.register,request);
-   setOpen({reading,register:open.register});inbox.reload();
-  }catch(err){setError(`${label} was refused: ${String(err)}`);}
-  finally{setPending(false);}
+   setOpen({reading,register:open.register});
+   setBasis(await call<DocumentReading>(open.register,{kind:"document",source_ref:reading.record.source_ref,document_id:reading.record.document_id}));
+  }catch(err){
+   setError(`${label} was refused: ${String(err)}`);
+   // A failed inclusion may have recorded an uncertain intent. Re-read that
+   // owner's state so Recover is offered without repeating the inclusion.
+   try{setOpen({reading:await call<ReturnReading>(open.register,{kind:"read",return_ref:open.reading.return_ref}),register:open.register});}catch{/* Keep the original refusal visible; the queue still refreshes. */}
+  }
+  finally{setPending(false);inbox.reload();}
  };
  const expand=async(row:InboxRow)=>{
   setPending(true);setError(undefined);setBasis(undefined);
@@ -143,7 +150,7 @@ export function ReceivingTray({inbox,onOpenMaterial}:{inbox:InboxReading&{reload
     <dl>
       <dt>Author</dt><dd>{current.record.author.actor_kind==="human"?"Human":"Agent"} — {current.record.author.principal_ref}</dd>
       <dt>Proposed operation</dt><dd>{String((current.record.proposal as {operation?:string}).operation??"a change")}{anchor&&<span className="receiving-anchor"> — {anchor}</span>}</dd>
-      {"html" in current.record.proposal&&<><dt>Proposed content</dt><dd className="receiving-proposal">{String(current.record.proposal.html)}</dd></>}
+      {"html" in current.record.proposal&&<><dt>Proposed content</dt><dd className="receiving-proposal">{htmlToText(String(current.record.proposal.html))}</dd></>}
       <dt>Basis at arrival</dt><dd>{current.record.proposed_source_revision}{current.record.stale_at_arrival?" — already stale when it arrived":""}</dd>
       {basis&&<><dt>Current document basis</dt><dd>{basis.revision.revision}{basis.unreviewed_external_revision?" — externally edited since":""}</dd></>}
       {current.record.review&&<><dt>Review</dt><dd>{current.record.review.disposition} by {current.record.review.reviewer_ref} on {current.record.review.source_revision}</dd></>}

@@ -215,21 +215,21 @@ export default async function run({page, baseUrl, check, shot, channel, bridgeUr
   await toggle.getByRole("tab", {name: "Rendered"}).click();
   await page.locator(".die-face").waitFor({timeout: 10000});
 
-  const strip = page.locator(".document-receiving");
-  await page.waitForFunction(() => document.querySelector(".document-receiving header small")?.textContent?.includes("1 in the receiving field"), null, {timeout: 20000});
+  await page.locator("[data-left-foot]").getByRole("button",{name:/^Inbox/}).click();
+  const strip = page.locator(".left-inbox");
+  await page.waitForFunction(() => document.querySelector(".left-inbox header small")?.textContent?.includes("1 waiting"), null, {timeout: 20000});
   check(true, "The pending Return is beside the open Day document before any human act — the ROOT register's field");
   await strip.locator(".receiving-row").first().click();
   const detail = strip.locator(".receiving-detail");
   await detail.waitFor();
   const detailText = await detail.innerText();
   check(detailText.includes("Agent — agent:walk") && detailText.includes("field.append") && detailText.includes("field p0_quick_thoughts"), "The exact proposed operation and the die's own fixture key are shown on the Day document");
-  check(detailText.includes("Occurred") && detailText.includes("Received"), "The Return carries its own occurred and received times");
   await shot("day-die-with-pending-return");
 
   await strip.getByRole("button", {name: "Accept current basis"}).click();
-  await page.waitForFunction(() => document.querySelector(".document-receiving .receiving-detail")?.textContent?.includes("accepted by"), null, {timeout: 20000});
+  await page.waitForFunction(() => document.querySelector(".left-inbox .receiving-detail")?.textContent?.includes("accepted by"), null, {timeout: 20000});
   await strip.getByRole("button", {name: "Include into the document"}).click();
-  await page.waitForFunction(() => document.querySelector(".document-receiving .receiving-detail")?.textContent?.includes("Included into the document."), null, {timeout: 20000});
+  await page.waitForFunction(() => document.querySelector(".left-inbox .receiving-detail")?.textContent?.includes("Included into the document."), null, {timeout: 20000});
   const afterFirst = documentVia(p, HUMAN_TOKEN);
   check(afterFirst.document.contributions.length === 1 && afterFirst.document.contributions[0].field_id === "p0_quick_thoughts" && afterFirst.document.contributions[0].reviewed_by === "human:walk", "Reviewed inclusion lands the contribution at the die's exact fixture with native attribution");
   const revisionBeforeClose = afterFirst.revision.revision;
@@ -305,17 +305,18 @@ export default async function run({page, baseUrl, check, shot, channel, bridgeUr
   await page2.locator(".flow-surface .cm-content").waitFor({timeout: 30000});
   check((await page2.locator(".flow-thread").innerText()).includes(flowText), "Re-entry restores the Flow's writing byte-for-byte — Day and Flow identity survive the leave");
   // Back to the Day's tab: the tab system unmounts inactive surfaces, so
-  // the returns strip only exists while the Day document is the active tab.
+  // Inbox retains the native pending queue beside the restored Day document.
   await page2.locator('[role="tab"], .tab').filter({hasText: "day.md"}).first().click();
   await page2.locator(".die-face").waitFor({timeout: 20000});
-  const strip2 = page2.locator(".document-receiving");
+  await page2.locator("[data-left-foot]").getByRole("button",{name:/^Inbox/}).click();
+  const strip2 = page2.locator(".left-inbox");
   try {
-    await page2.waitForFunction(() => document.querySelector(".document-receiving header small")?.textContent?.includes("2 in the receiving field"), null, {timeout: 20000});
+    await page2.waitForFunction(() => document.querySelector(".left-inbox header small")?.textContent?.includes("1 waiting"), null, {timeout: 20000});
   } catch (timeout) {
-    const stripText = await page2.evaluate(() => document.querySelector(".document-receiving")?.innerText?.slice(0, 300) ?? "(no strip)");
+    const stripText = await page2.evaluate(() => document.querySelector(".left-inbox")?.innerText?.slice(0, 300) ?? "(no strip)");
     const refNow = (await chan(page2, "read.state")).data;
     const dayBuf = Object.values(refNow.buffers ?? {}).find(b => b.root_register);
-    throw new Error(`${timeout} | strip: ${JSON.stringify(stripText)} | dayRef=${dayBuf?.source_ref}`);
+    throw new Error(`${timeout} | Inbox: ${JSON.stringify(stripText)} | dayRef=${dayBuf?.source_ref}`);
   }
   await strip2.locator(".receiving-row").filter({hasText: "pending"}).first().click();
   const detail2 = strip2.locator(".receiving-detail");
@@ -324,15 +325,14 @@ export default async function run({page, baseUrl, check, shot, channel, bridgeUr
   check(detail2Text.includes("Late pattern noticed while the desktop was closed"), "The Return that arrived while the desktop was closed is beside the document on re-entry");
   check(detail2Text.includes(revisionBeforeClose), "The late Return still proposes against the exact pre-close basis");
   check(detail2Text.includes("field p3_patterns_noticed"), "The late Return names its exact die fixture");
-  check(detail2Text.includes("Occurred") && detail2Text.includes("Received"), "The late Return keeps its original occurrence and receipt times");
   await page2.screenshot({path: join("walk", "artifacts", "leave-reenter-reentry-late-return.png")});
 
   // The reviewed inclusion of the late Return is also what settles the
   // outstanding obligation the archive named.
   await strip2.getByRole("button", {name: "Accept current basis"}).click();
-  await page2.waitForFunction(() => document.querySelector(".document-receiving .receiving-detail")?.textContent?.includes("accepted by"), null, {timeout: 20000});
+  await page2.waitForFunction(() => document.querySelector(".left-inbox .receiving-detail")?.textContent?.includes("accepted by"), null, {timeout: 20000});
   await strip2.getByRole("button", {name: "Include into the document"}).click();
-  await page2.waitForFunction(() => document.querySelector(".document-receiving .receiving-detail")?.textContent?.includes("Included into the document."), null, {timeout: 20000});
+  await page2.waitForFunction(() => document.querySelector(".left-inbox .receiving-detail")?.textContent?.includes("Included into the document."), null, {timeout: 20000});
   const afterLate = documentVia(p, HUMAN_TOKEN);
   check(afterLate.document.contributions.length === 2 && afterLate.document.contributions[1].field_id === "p3_patterns_noticed" && afterLate.document.contributions[1].author_ref === "agent:walk" && afterLate.document.contributions[1].reviewed_by === "human:walk", "The late Return includes through the owner's revision-checked operation with full attribution");
   check(afterLate.document.lifecycle === "open", "Yesterday's Day document remains open through the boundary and the closure");

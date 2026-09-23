@@ -10,8 +10,7 @@ import {constrainDetail,resizeDetail,type ResizeHandle,type DetailRect,type Exte
 
 export type OpenKnowledge=(address:KnowledgeAddress,title:string,project?:string,placement?:"tab"|"page"|"window",graphOrigin?:string)=>Promise<void>;
 
-/** Render only owner fields we can recognise, keeping the complete body one
- * disclosure away. Unknown bodies remain exact text, never summarised by a model. */
+/** Render recognised written content. Transport records are not document footers. */
 export function ReadingBody({reading,...options}:ComponentProps<typeof WikiReader>) {
   if(reading.document)return <WikiReader reading={reading} {...options}/>;
   let document:Record<string,unknown>|undefined;
@@ -22,7 +21,6 @@ export function ReadingBody({reading,...options}:ComponentProps<typeof WikiReade
     {paragraphs.map((text,i)=><div className="knowledge-prose" key={i}>{text}</div>)}
     {!paragraphs.length&&<p className="knowledge-muted">This owner record has no written description.</p>}
     {typeof document.revision==="number"&&<p className="knowledge-revision">Revision {document.revision}</p>}
-    <details className="knowledge-raw oi-disclosure"><summary>Full owner record</summary><pre>{reading.content}</pre></details>
   </>;
 }
 /** A hosted ref's Projection reading, as the Shared Field client read it:
@@ -32,13 +30,12 @@ export function ReadingBody({reading,...options}:ComponentProps<typeof WikiReade
 export function HostedReadingBody({reading}:{reading:SharedFieldReading}) {
   if(reading.state==="unavailable")return <p role="status" data-hosted-state="unavailable">{reading.owner_operation} is unavailable — {reading.detail}</p>;
   if(reading.state==="absent")return <p role="status" data-hosted-state="absent">The hosted field at {reading.target.uri}/{reading.target.database} holds no entry for this ref.</p>;
-  const {entry,projections,relations,contributions,neighbourhood}=reading;
+  const {entry,projections,relations}=reading;
   return <div data-hosted-state="hosted" data-hosted-ref={entry.ref}>
     {entry.summary?<div className="knowledge-prose">{entry.summary}</div>:<p className="knowledge-muted">This hosted entry carries no summary.</p>}
     <p className="knowledge-revision">{entry.kind} · world {entry.world_ref}{entry.revision?` · entry revision ${entry.revision}`:""}</p>
     <details className="knowledge-provenance oi-disclosure" open><summary>Projections · {projections.length}</summary><ul>{projections.map(p=><li key={`${p.projection_ref}@${p.projection_revision}`} data-projection-ref={p.projection_ref} data-projection-revision={p.projection_revision} data-source-revision={p.source.revision}><code>{p.projection_ref}</code> · projection revision {p.projection_revision} · source revision <code>{p.source.revision}</code> · {p.state} · published by {p.publisher_participant_ref}</li>)}</ul>{!projections.length&&<p>No Projection names this entry or its world.</p>}</details>
     <details className="knowledge-related oi-disclosure"><summary>Hosted relations · {relations.length}</summary><ul>{relations.map((r,i)=><li key={i}><span>{r.from===entry.ref?r.to:r.from}</span><small>{r.relation} · {r.origin}</small></li>)}</ul></details>
-    <details className="knowledge-raw oi-disclosure"><summary>Neighbourhood, contributions ({contributions.length}) and the full hosted reading</summary><pre>{JSON.stringify({entry,projections,relations,contributions,neighbourhood},null,2)}</pre></details>
   </div>;
 }
 export function NodeDetails({node,reading,hosted,error,project,onClose,onPromote,onOpen,native,rect,extent,onGeometry,storageError,disclosures,related,onRelated,transport,onActionDispatched,readingProps}:{readingProps?:Omit<ComponentProps<typeof WikiReader>,"reading">;disclosures:GraphNode[];related:{edge:GraphEdge;node?:GraphNode}[];onRelated:(node:GraphNode)=>void;node:GraphNode;reading?:KnowledgeReading;hosted?:SharedFieldReading;error?:string;project?:string;onClose:()=>void;onPromote:()=>void;onOpen:OpenKnowledge;native:boolean;rect:DetailRect;extent:Extent;onGeometry:(rect:DetailRect)=>void;storageError?:string;transport:KernelTransportStatus;onActionDispatched:()=>void}) {
@@ -61,11 +58,11 @@ export function NodeDetails({node,reading,hosted,error,project,onClose,onPromote
     <article className="knowledge-detail-body oi-sidecar" aria-busy={!reading&&!hosted&&!error}>
       <h1>{node.label}</h1>
       <p className="knowledge-owner">{node.native_owner} · {node.kind.replaceAll("-"," ")}</p>
+      {disclosures.map((disclosure,i)=><OwnerActions key={i} node={disclosure} transport={transport} project={project} onDispatched={onActionDispatched}/>)}
       {error?<p role="alert">{error}</p>:hosted?<HostedReadingBody reading={hosted}/>:reading?<ReadingBody reading={reading} {...readingProps}/>:<p role="status">{isHosted?"Reading the hosted field…":"Reading content…"}</p>}
       {failure&&<p role="alert">{failure}</p>}{storageError&&<p role="status">{storageError}</p>}
       <details className="knowledge-provenance oi-disclosure" open={isHosted}><summary>Provenance & identity</summary><dl className="oi-kv"><dt>Reference</dt><dd>{node.ref}</dd><dt>Source</dt><dd>{node.provenance.source}</dd>{isHosted?<>{hostedTarget&&<><dt>Hosted at</dt><dd data-hosted-target={hostedTarget}>{hostedTarget}</dd></>}{node.provenance.revision&&<><dt>Projection revision</dt><dd data-projection-revision={node.provenance.revision}>{node.provenance.revision}</dd></>}{node.provenance.detail?.[1]&&<><dt>Entry revision</dt><dd data-entry-revision={node.provenance.detail[1]}>{node.provenance.detail[1]}</dd></>}</>:node.provenance.revision&&<><dt>Revision</dt><dd>{node.provenance.revision}</dd></>}</dl>{!isHosted&&node.provenance.detail?.map((text,i)=><p key={i}>{text}</p>)}</details>
       <details className="knowledge-related oi-disclosure"><summary>Related subjects · {relatedSubjects.size}</summary><ul>{[...relatedSubjects].map(([ref,{node:other,relations}])=><li key={ref}>{other?<button className="oi-action" onClick={()=>onRelated(other)}>{other.label}</button>:<span>{ref} · not in this reading</span>}<small>{relations.join(" · ")}</small></li>)}</ul>{!relatedSubjects.size&&<p>No relations disclosed for this subject.</p>}</details>
-      <details className="knowledge-provenance oi-disclosure"><summary>Owner disclosures · {disclosures.length}</summary>{disclosures.map((disclosure,i)=><section key={i}><p>{disclosure.native_owner} · {disclosure.kind} · {disclosure.label}</p><pre>{JSON.stringify(disclosure.provenance,null,2)}</pre><OwnerActions node={disclosure} transport={transport} project={project} onDispatched={onActionDispatched}/></section>)}</details>
     </article>
     <footer className="knowledge-detail-footer oi-action-group"><button className="oi-action" disabled={pending||!reading||isHosted} title={isHosted?noLocalAddress:undefined} onClick={()=>void promote("page")}>Open in tab <span aria-hidden="true">↗</span></button><button className="oi-action" disabled={pending||!reading||!native||isHosted} title={isHosted?noLocalAddress:native?"Open this same subject in a native window":"Native popout is available in the desktop app"} onClick={()=>void promote("window")}>Pop out <span aria-hidden="true">↗</span></button></footer>
     {(["nw","n","ne","e","se","s","sw","w"] as ResizeHandle[]).map(handle=><button key={handle} className={`knowledge-detail-edge knowledge-detail-edge-${handle}`} aria-label={`Resize node details ${handle}`} title="Drag to resize · arrow keys to adjust" onPointerDown={e=>begin(e,handle)} onPointerMove={move} onPointerUp={finish} onPointerCancel={finish} onLostPointerCapture={()=>{gesture.current=undefined;}} onKeyDown={e=>key(e,handle)}/>)}

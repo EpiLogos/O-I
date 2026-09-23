@@ -1,6 +1,6 @@
 // receive-recover (6E, cut 2): Returns reviewed, rejected, recovered — beside
 // the OPEN document. The desktop renders the project's receiving field at the
-// reading site (a strip under the open document), shows each proposal's exact
+// reading site (Inbox beside the open document), shows each proposal's exact
 // document anchor, rejects a return through the owner's review operation,
 // refuses to resurrect it, lands an inclusion that the filesystem refuses
 // mid-flight (status `uncertain`, honestly recorded), and recovers it through
@@ -85,9 +85,10 @@ export default async function run({page,baseUrl,check,shot,channel,provision:p})
   await page.locator(`.cm-content[data-source-ref="${p.doc.source.ref}"]`).waitFor({timeout:15000});
 
   // Returns render beside the OPEN document, with the exact document anchor.
-  const strip=page.locator(".document-receiving");
+  await page.locator("[data-left-foot]").getByRole("button",{name:/^Inbox/}).click();
+  const strip=page.locator(".left-inbox");
   await strip.waitFor();
-  await page.waitForFunction(()=>document.querySelector(".document-receiving header small")?.textContent?.includes("1 in the receiving field"),null,{timeout:20000});
+  await page.waitForFunction(()=>document.querySelector(".left-inbox header small")?.textContent?.includes("1 waiting"),null,{timeout:20000});
   check(true,"The document's receiving field renders beside it, at the reading site");
   await strip.locator(".receiving-row").first().click();
   const detail=strip.locator(".receiving-detail");await detail.waitFor();
@@ -99,7 +100,7 @@ export default async function run({page,baseUrl,check,shot,channel,provision:p})
   // Rejection beside the document: the owner records the human reviewer; the
   // document holds nothing; the rejected return cannot be included.
   await strip.getByRole("button",{name:"Reject"}).click();
-  await page.waitForFunction(()=>document.querySelector(".document-receiving .receiving-status")?.textContent==="rejected",null,{timeout:20000});
+  await page.waitForFunction(()=>document.querySelector(".left-inbox .receiving-status")?.textContent==="rejected",null,{timeout:20000});
   check((await strip.locator(".receiving-detail").innerText()).includes("rejected by human:walk"),"The rejection records the human reviewer beside the document");
   const afterReject=documentVia(p,HUMAN_TOKEN);
   check(afterReject.document.contributions.length===0,"A rejected return contributes nothing to the document");
@@ -116,34 +117,32 @@ export default async function run({page,baseUrl,check,shot,channel,provision:p})
   // intent once the environment allows it.
   const second=p.agent("central.receiving.submit",{project:"Editor",producer_key:"producer:recover-walk-2",source_ref:p.doc.source.ref,document_id:p.doc.document_id,expected_source_revision:afterReject.revision.revision,occurred_at_unix_seconds:43,proposal:{operation:"entry.add",entry_id:"entry:recover",contribution_id:"part:recovered",html:"<p>Contribution that recovers</p>"}});
   if(second.record.status!=="pending")throw new Error(`second return arrived ${second.record.status}`);
-  await strip.getByRole("button",{name:"Refresh this document's receiving"}).click();
-  await page.waitForFunction(()=>document.querySelector(".document-receiving header small")?.textContent?.includes("2 in the receiving field"),null,{timeout:20000});
+  await strip.getByRole("button",{name:"Refresh receiving"}).click();
+  await page.waitForFunction(()=>document.querySelector(".left-inbox header small")?.textContent?.includes("1 waiting"),null,{timeout:20000});
   await strip.locator(".receiving-row").filter({hasText:"pending"}).first().click();
-  await page.waitForFunction(()=>document.querySelector(".document-receiving .receiving-detail")?.textContent?.includes("entry:recover"),null,{timeout:20000});
+  await page.waitForFunction(()=>document.querySelector(".left-inbox .receiving-detail")?.textContent?.includes("entry:recover"),null,{timeout:20000});
   check((await strip.locator(".receiving-detail").innerText()).includes("entry.add — entry entry:recover"),"The second return shows its exact entry anchor");
   await strip.getByRole("button",{name:"Accept current basis"}).click();
-  await page.waitForFunction(()=>document.querySelector(".document-receiving .receiving-detail")?.textContent?.includes("accepted by"),null,{timeout:20000});
+  await page.waitForFunction(()=>document.querySelector(".left-inbox .receiving-detail")?.textContent?.includes("accepted by"),null,{timeout:20000});
 
   chmodSync(docPath,0o444);
   const bytesBeforeInclude=readFileSync(docPath,"utf8");
   await strip.getByRole("button",{name:"Include into the document"}).click();
-  await page.waitForFunction(()=>document.querySelector(".document-receiving .receiving-status.receiving-uncertain")!==null,null,{timeout:20000});
+  await page.waitForFunction(()=>document.querySelector(".left-inbox .receiving-status.receiving-uncertain")!==null,null,{timeout:20000});
   check((await strip.locator(".receiving-detail").innerText()).includes("The owner recorded:"),"An inclusion the filesystem refuses lands `uncertain` with the owner's own record shown");
   await shot("inclusion-uncertain");
   check(readFileSync(docPath,"utf8")===bytesBeforeInclude,"The uncertain inclusion changed no document bytes");
   // The Inbox (10-SIDEBARS §3.1, D3) reads the same receiving field: the
   // uncertain arrival still waits for a human act, so it stands there too.
   const inboxButton=page.locator('[data-left-foot]').getByRole("button",{name:/^Inbox/});
-  await inboxButton.click();
   const inbox=page.getByRole("region",{name:"Inbox"});
   await inbox.getByRole("button",{name:"Refresh receiving"}).click();
   await page.waitForFunction(()=>document.querySelector(".left-inbox header small")?.textContent==="1 waiting",null,{timeout:20000});
   check((await inbox.locator(".receiving-row .receiving-status").allInnerTexts()).join("|")==="uncertain","The Inbox shows the same uncertain arrival as the one thing waiting (the rejected one waits for nothing)");
-  await inboxButton.click();
 
   chmodSync(docPath,0o644);
   await strip.getByRole("button",{name:"Recover inclusion"}).click();
-  await page.waitForFunction(()=>document.querySelector(".document-receiving .receiving-status.receiving-included")!==null,null,{timeout:20000});
+  await page.waitForFunction(()=>document.querySelector(".left-inbox .receiving-status.receiving-included")!==null,null,{timeout:20000});
   check(true,"Recovery replays the owner's recorded inclusion intent once the environment allows it");
   await shot("inclusion-recovered");
 
@@ -155,9 +154,9 @@ export default async function run({page,baseUrl,check,shot,channel,provision:p})
 
   // The Inbox agrees — one receiving field, two places, same facts: the
   // owner lists both arrivals (rejected, included) and nothing waits.
-  if(!await nav.isVisible())await page.keyboard.press("Meta+b");
   const native=p.human("central.receiving.list",{project:"Editor",limit:20});
   const statuses=(native.returns??[]).map(row=>row.status).sort().join("|");
+  await inboxButton.click();
   await inboxButton.click();
   await inbox.getByRole("button",{name:"Refresh receiving"}).click();
   await page.waitForFunction(()=>document.querySelector(".left-inbox header small")?.textContent==="Nothing waiting",null,{timeout:20000});
