@@ -104,9 +104,10 @@ present, resolves to an AgentProfile in the world's ancestry. Optional fields ma
 `null`/absent. Unknown keys are refused (a silently dropped key alters the address).
 
 Actions: `central.position.list {project?}` → `central.position-listing/v1`
-`{world_ref, positions[], inherited[] (ancestor positions), invalid[{path, error}]}`
-(uncapped); `central.position.read {position_ref}` → the record plus
-`source {ref, revision}`; refusals `central.position_not_found`, `central.position_invalid`.
+`{world_ref, positions[{record, source}], inherited[{record, source}] (ancestor positions),
+invalid[{path, error}]}` (uncapped); `central.position.read {position_ref}` →
+`central.position-reading/v1 {record, source {path, ref, revision}}`; refusals
+`central.position_not_found`, `central.position_invalid`. A handle is `@` + the slug grammar.
 
 ### NOW horizon: Workcell root NOW and child NOWs
 
@@ -116,8 +117,9 @@ existing records). `central.now.workcell-root {workcell_ref}` idempotently ensur
 one root NOW for that Workcell in the root register. `central.now.allocate` accepts
 `parent_now_ref` (same scope or the root scope) and `workcell_ref`.
 `central.now.children {now_ref}` lists every child (uncapped). Day rollover never
-closes, completes or archives a clearing: live children carry; quiescent children are
-reported as released from the live horizon and remain retained.
+closes, completes or archives a clearing: `central.day.ensure` and
+`projectcentral.now.rollover` return `now_horizon`, listing active clearings as carried and
+quiescent ones as released from the live horizon (still retained).
 
 ## 2. Actuation — occupancy and tenure
 
@@ -141,7 +143,13 @@ other shape is an explicit ambiguity refusal, never newest-wins.
 Tenure record: `{position_ref, generation_ref, generation_ordinal, kind, agent_ref,
 agency_ref, agent_session_ref?, session_space_ref?, harness_composition_ref?, model_ref?,
 workcell_ref?, gateway_address?, began_at_unix_ms, reason, predecessor_generation_ref?,
-ended_at_unix_ms?, end_kind?: released|superseded}`. The predecessor's history stays
+ended_at_unix_ms?, end_kind?: released|superseded, end_reason?}`. With no `--kind`, a claim
+is `initial` on an empty ledger, `fresh` on a vacant Position with history and `handover`
+when superseding; a contradictory kind is refused. `list` returns
+`actuation.position-occupancy-listing/v1 {positions[], invalid[]}`. Refusals exit 2 with
+`{ok:false, error:{code, fact, consequence, action}}`; codes `occupancy.occupied`,
+`stale_expectation`, `superseded`, `unknown_generation`, `kind_inconsistent`, `ambiguous`,
+`corrupt`, `store_unavailable`, `outcome_unknown`. The predecessor's history stays
 readable as testimony; it grants the successor no authority.
 
 Launch stamps `OI_POSITION_REF` and `OI_OCCUPANT_GENERATION` into the body's
