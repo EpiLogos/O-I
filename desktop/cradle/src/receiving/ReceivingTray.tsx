@@ -138,6 +138,7 @@ export function ReceivingTray({inbox,onOpenMaterial}:{inbox:InboxReading&{reload
     <span className="receiving-origin">{row.author.actor_kind==="human"?"Human":"Agent"} · {row.document_id}{multi?<span className="receiving-register"> · {row.register.label}</span>:null}{row.now_ref&&<span className="receiving-now-mark" data-now-ref={row.now_ref}> · now</span>}</span>
     <time className="receiving-when">{formatRelativeTime(row.received_at_unix_seconds*1000).replace(/ ago$/,"")}</time>
    </button>)}
+  {pending&&!current&&<p className="left-reading" role="status">Opening…</p>}
   {current&&<div className="receiving-detail">
     <dl>
       <dt>Author</dt><dd>{current.record.author.actor_kind==="human"?"Human":"Agent"} — {current.record.author.principal_ref}</dd>
