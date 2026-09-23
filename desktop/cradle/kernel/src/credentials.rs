@@ -104,6 +104,10 @@ pub struct Client {
 enum Material<'a> {
     None,
     Reference(&'a str),
+    /// The owner's explicit environment import (`--from-env --env-var NAME`):
+    /// the person chose a discovered variable; the material moves inside
+    /// AIKit only and never crosses the kernel.
+    Environment(&'a str),
     Stdin(&'a SecretMaterial),
 }
 
@@ -138,6 +142,9 @@ impl Client {
         command.args(args);
         if let Material::Reference(reference) = material {
             command.arg("--ref").arg(reference);
+        }
+        if let Material::Environment(name) = material {
+            command.arg("--from-env").arg("--env-var").arg(name);
         }
         if matches!(material, Material::Stdin(_)) {
             command.arg("--stdin");
@@ -224,6 +231,19 @@ impl Client {
         match (reference, material) {
             (Some(_), Some(_)) => Err("Give either a key or a stored-secret reference, not both; nothing was saved".into()),
             (None, None) => Err("Paste a key or name a stored secret; nothing was saved".into()),
+            (Some(reference), None) if reference.starts_with("env://") => {
+                let name = &reference["env://".len()..];
+                let valid = !name.is_empty() && !name.starts_with(|c: char| c.is_ascii_digit()) && name.chars().all(|c| c.is_ascii_alphanumeric() || c == '_');
+                if !valid {
+                    return Err("An environment import names one variable (for example env://OPENROUTER_API_KEY)".into());
+                }
+                let mut args = vec!["credential", verb, credential.as_str()];
+                if verb == "setup" {
+                    args.push("--headless");
+                }
+                args.push("--json");
+                self.run(cwd, &args, Material::Environment(name))
+            }
             (Some(reference), None) => {
                 let reference = secret_reference(reference)?;
                 let mut args = vec!["credential", verb, credential.as_str()];
@@ -436,8 +456,11 @@ mod tests {
         scene.client().setup(&scene.dir, "credential:deepseek", Some(" varlock:///tmp/v/.env/KEY "), None).unwrap();
         let argv = scene.read("argv.log");
         assert!(argv.contains("credential setup credential:deepseek --headless --json --ref varlock:///tmp/v/.env/KEY"), "{argv}");
-        let refused = scene.client().setup(&scene.dir, "credential:deepseek", Some("env://KEY"), None).unwrap_err();
+        let refused = scene.client().setup(&scene.dir, "credential:deepseek", Some("file:///KEY"), None).unwrap_err();
         assert!(refused.contains("keychain://"), "{refused}");
+        scene.client().setup(&scene.dir, "credential:deepseek", Some("env://DEEPSEEK_API_KEY"), None).unwrap();
+        assert!(scene.read("argv.log").contains("credential setup credential:deepseek --headless --json --from-env --env-var DEEPSEEK_API_KEY"));
+        assert!(scene.client().setup(&scene.dir, "credential:deepseek", Some("env://BAD NAME"), None).is_err());
         let both = scene.client().setup(&scene.dir, "x", Some("pass://a"), Some(&SecretMaterial::new("k"))).unwrap_err();
         assert!(both.contains("not both"));
     }

@@ -520,7 +520,10 @@ async function runScenario(name, { baseUrl }) {
           "--",
           `127.0.0.1:${BRIDGE_PORT}`,
         ],
-        { env: { ...process.env, ...provision?.env } },
+        // A scenario may stand the bridge in its own disposable ground
+        // (`provision.bridgeCwd`): owner CLIs the kernel spawns then resolve
+        // that ground, never this checkout's own project files.
+        { env: { ...process.env, ...provision?.env }, ...(provision?.bridgeCwd ? { cwd: provision.bridgeCwd } : {}) },
       );
       // A fresh bridge per kernel scenario: stop just the bridge (the preview
       // keeps serving) so the next scenario's log starts at seq 1.
