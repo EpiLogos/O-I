@@ -454,6 +454,9 @@ pub enum KernelOp {
     ProductActionRun { product_id: String, action_ref: String },
     /// Settings · read-only rows (12 §2, S11): reveal the owner's own file.
     SettingsReveal { path: String },
+    /// Settings · the staged changes (12 §2): every held desired entry with
+    /// its resolution in one engine call (`oi config diff --json`).
+    ConfigDiff,
     /// The configuration-plane binding (#299 C6 live leg,
     /// `configuration.rs`): every operation routes through the INSTALLED
     /// `oi` executable — the same engine `oi config` / `oi profile` drive —
@@ -715,6 +718,7 @@ pub enum KernelOpResult {
     ClientInstalled {data:serde_json::Value},
     ProductActionRan {data:serde_json::Value},
     SettingsRevealed {data:serde_json::Value},
+    ConfigDiffReading {resolutions:Vec<serde_json::Value>},
     /// The configuration registry reading (`configuration.rs`): the seven
     /// canonical positions, each honestly mounted or degraded by name.
     ConfigRegistryReading {
@@ -1176,6 +1180,11 @@ impl Kernel {
                 Ok(KernelOpOutcome{receipts:Vec::new(),result:KernelOpResult::ProductActionRan{data}})
             }
             KernelOp::SettingsReveal{path} => Ok(KernelOpOutcome{receipts:Vec::new(),result:KernelOpResult::SettingsRevealed{data:system_composition::reveal(&path)?}}),
+            KernelOp::ConfigDiff => {
+                let root=self.world_map(false).ok();
+                let cwd=root.as_ref().and_then(|value|value["root"].as_str()).map(std::path::PathBuf::from).unwrap_or(std::env::current_dir().map_err(|e|e.to_string())?);
+                Ok(KernelOpOutcome{receipts:Vec::new(),result:KernelOpResult::ConfigDiffReading{resolutions:configuration::Client::discover().diff(&cwd)?}})
+            }
             KernelOp::Ground{request} => {
                 // A ground change re-bases every path the cache holds.
                 self.reads.clear();
