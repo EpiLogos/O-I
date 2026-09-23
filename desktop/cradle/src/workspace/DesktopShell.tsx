@@ -1,6 +1,5 @@
 import {useShellGeometry} from "./geometry";
-import { lazy, Suspense, useEffect, useLayoutEffect, useRef, useState, type ReactNode, type Dispatch, type SetStateAction } from "react";
-const SystemPanel=lazy(()=>import("./SystemPanel").then((module)=>({default:module.SystemPanel})));
+import { useEffect, useLayoutEffect, useRef, useState, type ReactNode, type Dispatch, type SetStateAction } from "react";
 import type { AgencyDepth, LayoutState } from "../surface/types";
 import type { Workspace } from "./store";
 import "./shell.css";
@@ -110,9 +109,6 @@ export function DesktopShell(p: Props) {
     });
     return () => played.forEach(animation => animation.cancel());
   }, [p.mode]);
-  const subjectKey = p.subject.ref ?? "none";
-  const plane = p.layout.subjectPlanes?.[subjectKey] ?? "context";
-  const setPlane = (value: "context" | "history" | "system") => p.setLayout(held=>({...held,subjectPlanes:{...held.subjectPlanes,[subjectKey]:value}}));
   useEffect(() => {
     if (!p.namingRequest) return;
     setName(p.namingRequest === "rename" ? p.workspace.name : "");
@@ -309,7 +305,7 @@ export function DesktopShell(p: Props) {
         * agent's observed state as a dot and a state line; opening it is the
         * one action, so the chip IS the way to the pinned panel. */}
       {!rightOpen && p.agentPresence && <button type="button" className="shell-agent-presence" data-presence-state={p.agentPresence.state} aria-label={`Accompanying agent: ${p.agentPresence.label} — show the panel`} title={`Accompanying agent: ${p.agentPresence.label}`} onClick={() => toggle("right")}>
-        <span className="shell-agent-presence-dot" aria-hidden="true"/><span className="shell-agent-presence-label">{p.agentPresence.label}</span>
+        <span className="shell-agent-presence-dot" aria-hidden="true">{p.agentPresence.state==="attention"?"!":""}</span><span className="shell-agent-presence-label">{p.agentPresence.label}</span>
       </button>}
       <button className="shell-region-toggle shell-agent-toggle oi-tool" aria-label="Toggle right region" aria-expanded={right === "panel" || right === "full"} onClick={() => toggle("right")} title="Show / hide accompanying agent (⌘⇧B)"><Glyph name="sidebar"/></button>
     </header>
@@ -349,19 +345,9 @@ export function DesktopShell(p: Props) {
         {<>
           {right === "panel" && separator("right")}
           <div className="desktop-side-content">
-          {/* Finding 3: the agent layer (FND-02) owns its own head, plane
-           * nav and body edge-to-edge — it must mount as a direct child of
-           * this aside, never inside the legacy `.inspector-body` wrapper
-           * (25/20px padding, 13px body type), which stays only for the
-           * honest Context/History/System fallback that renders before the
-           * agent layer replaces it. */}
-          {p.right ?? <>
-            <div className="region-tools oi-tool-row"><span className="oi-tool-row-title">{p.subject.title}</span><button className="oi-tool" aria-label="Full right region" onClick={() => toggleFull("right")}><Glyph name={right === "full" ? "restore" : "expand"}/></button><button className="oi-tool" aria-label="Collapse right region" onClick={() => setDepth("right", "collapsed")}><Glyph name="close"/></button></div>
-            <nav className="inspector-planes oi-plane-nav" aria-label="Right region planes">{(["context", "history", "system"] as const).map(v => <button key={v} aria-pressed={plane === v} onClick={() => v === "system" ? p.onMode("settings") : setPlane(v)}>{v === "history" ? "History" : v === "system" ? "System" : "Context"}</button>)}</nav>
-            <div className="inspector-body oi-sidecar">
-              {plane === "system" ? <Suspense fallback={null}><SystemPanel/></Suspense> : plane === "history" ? p.subject.history ?? <p>No history operation is available for this subject.</p> : p.subject.context}
-            </div>
-          </>}</div>
+          {/* The right panel (10-SIDEBARS §4) owns its one top row and body
+           * edge-to-edge; there is no legacy fallback body. */}
+          {p.right}</div>
         </>}
       </aside>
     </div>

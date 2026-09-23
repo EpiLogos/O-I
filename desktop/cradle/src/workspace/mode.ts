@@ -54,7 +54,7 @@ export const upgradeTabPresentation = (value: unknown): TabPresentation | undefi
  * itself owns (`AgentLayer`). A curation's `planes` may interleave these with
  * composition-root ids; anything outside this set must be listed in `extra`
  * to render at all. */
-export type PanelPlane = "Chat" | "Activity" | "Context" | "Inspect" | "Composition";
+export type PanelPlane = "Chat" | "Activity" | "Agents" | "Context" | "Inspect" | "Composition";
 /** `factory`: Factory's left body — a project-rooted navigator with the same
  * two-way split the World navigator gives a project (Files | Tasks): the
  * chosen project's folder tree, and its tasks — the sessions and chats the
@@ -107,7 +107,8 @@ export const MODE_CURATION: Record<WorkspaceMode, ModeCuration> = {
     // same consolidation Factory made); Inspect stays an action
     // (oi:panel-inspect) and the Expression summon visits Composition —
     // neither is a tab.
-    panel: {agent: "Agent", planes: ["Chat", "run", "agents", "Context"], extra: ["run", "agents"]},
+    // 10-SIDEBARS §4.2: Chat · Activity · Agents · Context (the canvas).
+    panel: {agent: "Agent", planes: ["Chat", "Activity", "Agents", "context"], extra: ["context"]},
   },
   factory: {
     id: "factory", label: "Factory", hint: "Desk for whole Runs, Tasks for conversations", glyph: "factory", left: "factory", centreKind: "factory",
@@ -131,20 +132,21 @@ export const MODE_CURATION: Record<WorkspaceMode, ModeCuration> = {
     // whose content is the Ta-Onta specifics of the Anima mode (S4').
     // Anima, Aletheia and the project guardians read in Agents; Run passes
     // through the same run log/track as Factory; Context holds real panes.
-    panel: {agent: "Anima", planes: ["Chat", "ta-run", "ta-onta-agents", "ta-onta-context"], extra: ["ta-run", "ta-onta-agents", "ta-onta-context"]},
+    panel: {agent: "Anima", planes: ["Chat", "Activity", "Agents", "ta-onta-context"], extra: ["ta-onta-context"]},
   },
   techne: {
     // Owner direction 2026-09-18: the left body is the wiki map — the web
     // as its project's own regions, not a file listing. The panel follows
     // the same three views as Expressions, for the Aletheia mode (S5').
     id: "techne", label: "Technè", hint: "The same living field, the deep cut — with Epii", glyph: "instrument", left: "wiki-map", centreKind: "techne",
-    panel: {agent: "Aletheia", planes: ["Chat", "ta-run", "ta-onta-agents", "ta-onta-context"], extra: ["ta-run", "ta-onta-agents", "ta-onta-context"]},
+    panel: {agent: "Aletheia", planes: ["Chat", "Activity", "Agents", "ta-onta-context"], extra: ["ta-onta-context"]},
   },
   "epi-logos": {
     id: "epi-logos", label: "Epi-Logos", hint: "The authored world: the essay, Bimba, the Epii material, the products", glyph: "wiki", left: "epi-places", centreKind: "epi-logos",
     // Nara/Anima is the personal encounter, Epii the deep inquiry — the same
     // companion components, curated to this world.
-    panel: {agent: "Nara · Epii", planes: ["Chat", "Context", "Inspect", "anima", "epii"], extra: ["anima", "epii"]},
+    // Nara and Epii are agents in the avatar menu, not tabs (§4.2).
+    panel: {agent: "Nara", planes: ["Chat", "Activity", "Agents", "context"], extra: ["context"]},
   },
   settings: {
     // 12-SETTINGS §1: the left stays open with the section list as its body;
