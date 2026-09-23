@@ -3128,32 +3128,14 @@ else:
             std::fs::write(
                 &wrapper,
                 format!(
-                    "#!/bin/sh\n[ \"$1\" = \"--settle\" ] && exit 0\nFAKE_OWNER_LOG={} exec python3 {} \"$@\"\n",
+                    "#!/bin/sh\nFAKE_OWNER_LOG={} exec python3 {} \"$@\"\n",
                     log.display(),
                     script.display()
                 ),
             )
             .unwrap();
             std::fs::set_permissions(&wrapper, std::fs::Permissions::from_mode(0o755)).unwrap();
-            // Linux CI: a script written microseconds ago can answer ETXTBSY
-            // on exec while a parallel test's fork still holds the write fd
-            // (the close-to-exec race). Settle it with throwaway executions
-            // that exit before the counter, retrying only on that busy error
-            // (the same settle configuration.rs's stubs use).
-            for _ in 0..50 {
-                match std::process::Command::new(&wrapper)
-                    .arg("--settle")
-                    .stdin(std::process::Stdio::null())
-                    .stdout(std::process::Stdio::null())
-                    .stderr(std::process::Stdio::null())
-                    .status()
-                {
-                    Err(error) if error.kind() == std::io::ErrorKind::ExecutableFileBusy => {
-                        std::thread::sleep(std::time::Duration::from_millis(2));
-                    }
-                    _ => break,
-                }
-            }
+            crate::test_stub::settle_stub(&wrapper);
             let _ = std::fs::remove_file(&log);
             Self {
                 executable: wrapper,
@@ -3327,5 +3309,24 @@ else:
             2,
             "the explicit refresh re-asks the owner"
         );
+    }
+}
+
+#[cfg(all(test, unix))]
+pub(crate) mod test_stub {
+    /// Linux ETXTBSY guard for a freshly written test stub. A parallel test's
+    /// fork can inherit this process's write handle on the stub for an instant,
+    /// and exec then answers "Text file busy". Re-materialise the stub through a
+    /// child: `cp` writes a new inode this process never opened, `mv` renames it
+    /// over the path, so no inherited handle can pin what the kernel executes.
+    pub(crate) fn settle_stub(path: &std::path::Path) {
+        let status = std::process::Command::new("/bin/sh")
+            .arg("-c")
+            .arg(r#"cp "$1" "$1.settle" && mv "$1.settle" "$1""#)
+            .arg("settle")
+            .arg(path)
+            .status()
+            .expect("settle a test stub");
+        assert!(status.success(), "could not settle test stub {}", path.display());
     }
 }

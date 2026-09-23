@@ -1,5 +1,7 @@
 //! Test-only subprocess peer exercising the production desktop/native attachment gate.
 #![cfg(unix)]
+#[path = "support/stub.rs"]
+mod stub;
 use oi_cradle_kernel::agency::{Client, EncounterRequest};
 use serde_json::{json, Value};
 use std::sync::atomic::{AtomicU32, Ordering};
@@ -29,6 +31,7 @@ else:
  print('unexpected native operation',file=sys.stderr);sys.exit(2)
 "#).unwrap();
   fs::set_permissions(&staged,fs::Permissions::from_mode(0o700)).unwrap();
+  stub::settle_stub(&staged);
   fs::rename(&staged,&executable).unwrap();
   Self{root,executable}
  }

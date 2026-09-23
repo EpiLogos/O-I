@@ -1,6 +1,8 @@
 //! Real QL C/Rust/C++ owner through the production manager. Only Central's file
 //! disclosure is controlled; the domain engine and process lifetime are real.
 #![cfg(unix)]
+#[path = "support/stub.rs"]
+mod stub;
 use oi_cradle_kernel::{native_expression::{Manager, Request}, CentralClient};
 use serde_json::{json, Value};
 use std::{fs, path::{Path, PathBuf}, time::{Instant, SystemTime, UNIX_EPOCH}};
@@ -51,6 +53,7 @@ else:raise RuntimeError('Unexpected Central action '+action)
 print(json.dumps({'ok':True,'data':data}))
 "#).unwrap();
     fs::set_permissions(&script,fs::Permissions::from_mode(0o700)).unwrap();
+    stub::settle_stub(&script);
     let client=CentralClient::with(script,Some(scratch.0.clone()),String::new());
     let mut manager=Manager::default();
     let open=||Request::Open{path:"binding.json".into(),expected_revision:"controlled:r1".into()};

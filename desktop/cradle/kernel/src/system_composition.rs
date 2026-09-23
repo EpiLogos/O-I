@@ -722,6 +722,7 @@ esac
         {
             use std::os::unix::fs::PermissionsExt;
             std::fs::set_permissions(&script, std::fs::Permissions::from_mode(0o755)).unwrap();
+            crate::test_stub::settle_stub(&script);
         }
         let client = Client::with(script);
         let reading = client.read(&dir);
@@ -752,6 +753,7 @@ esac
         {
             use std::os::unix::fs::PermissionsExt;
             std::fs::set_permissions(&script, std::fs::Permissions::from_mode(0o755)).unwrap();
+            crate::test_stub::settle_stub(&script);
         }
         script
     }
