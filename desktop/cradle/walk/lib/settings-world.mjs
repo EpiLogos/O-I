@@ -13,10 +13,13 @@
  *                credential walks (the owner's keychain is never touched)
  *
  * The owners themselves are the installed suite (`oi`, `aikit` on PATH);
- * only their state is isolated.
+ * only their state is isolated. When the walk names an AIKit build
+ * (OI_AIKIT_BIN), the world's PATH leads with it as `aikit`, so the app's
+ * configuration reads (oi → aikit) and the walk's own `oi config` reads
+ * answer from the same AIKit.
  */
 import {execFileSync} from "node:child_process";
-import {mkdtempSync, mkdirSync, rmSync, writeFileSync} from "node:fs";
+import {mkdtempSync, mkdirSync, rmSync, symlinkSync, writeFileSync} from "node:fs";
 import {tmpdir} from "node:os";
 import {join} from "node:path";
 
@@ -58,6 +61,12 @@ export function settingsWorld() {
       AIKIT_HOME: aikitHome,
       OI_CRADLE_STATE: join(scratch, "chat-defaults.json"),
     };
+    if (process.env.OI_AIKIT_BIN) {
+      const bin = join(scratch, "bin");
+      mkdirSync(bin);
+      symlinkSync(process.env.OI_AIKIT_BIN, join(bin, "aikit"));
+      env.PATH = `${bin}:${process.env.PATH ?? ""}`;
+    }
     const aikitBin = process.env.OI_AIKIT_BIN ?? "aikit";
     const aikit = (...args) => JSON.parse(execFileSync(aikitBin, ["--json", "-C", root, ...args], {encoding: "utf8", env: {...process.env, ...env}}));
     const oi = (...args) => execFileSync(process.env.OI_BIN ?? "oi", args, {encoding: "utf8", cwd: root, env: {...process.env, ...env}});
