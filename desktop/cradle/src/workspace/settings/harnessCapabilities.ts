@@ -8,5 +8,18 @@ export function connectionVerification(status:EncounterStatus):{connected:boolea
  return {connected:false,summary:status.state==="Disconnected"||status.resident===false?"Disconnected. This conversation has no resident harness connection.":"The owner did not confirm a live native connection."};
 }
 
-/** The owner currently exposes a session selector, not a future-chat default. */
-export const DEFAULT_MODEL_UNAVAILABLE="AIKit does not expose a default-model setting for this harness. New chats use the harness launch configuration; the current-chat model control applies only to that chat.";
+export const MODEL_DEFAULT_SETTING="ai-kit:models:models.default";
+export interface HarnessModelDefault {model_id:string;model_name?:string;native_provider?:string}
+export function modelDefaults(value:unknown):Record<string,HarnessModelDefault> {
+ if(!value||typeof value!=="object"||Array.isArray(value))return {};
+ return Object.fromEntries(Object.entries(value).filter((entry):entry is [string,HarnessModelDefault]=>{
+  const v=entry[1];return !!v&&typeof v==="object"&&typeof v.model_id==="string"&&!!v.model_id&&
+   (v.model_name===undefined||typeof v.model_name==="string")&&(v.native_provider===undefined||typeof v.native_provider==="string");
+ }));
+}
+/** A default can only be staged from a harness's actual advertisement. */
+export function modelDefaultChoice(observation:import("../../encounter/nativeModel").NativeModelObservation|undefined|null,id:string):HarnessModelDefault|undefined {
+ const choice=observation?.available_models.find(model=>model.modelId===id);
+ if(!choice)return undefined;
+ return {model_id:choice.modelId,model_name:choice.name,...(observation?.native_provider?{native_provider:observation.native_provider}:{})};
+}

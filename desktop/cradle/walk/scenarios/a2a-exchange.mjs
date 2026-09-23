@@ -163,7 +163,7 @@ export default async function run({page,baseUrl,check,shot,channel,provision:p})
   const reviewed=p.human("central.receiving.read",{project:"Editor",return_ref:submitted.return_ref});
   check(reviewed.record.review?.disposition==="accepted"&&reviewed.record.review.reviewer_ref==="human:walk"&&reviewed.record.review.source_revision===p.doc.revision.revision,"Native review retains the exact human reviewer and accepted source revision");
   await returns.getByRole("button",{name:"Include into the document"}).click();
-  await page.waitForFunction(()=>document.querySelector(".left-inbox .receiving-included")!==null,null,{timeout:20000});
+  await page.waitForFunction(()=>document.querySelector(".left-inbox p.receiving-included")!==null,null,{timeout:20000});
   check(true,"Inclusion lands through the owner's revision-checked operation on the exact reviewed basis");
   await shot("a2a-return-included");
 

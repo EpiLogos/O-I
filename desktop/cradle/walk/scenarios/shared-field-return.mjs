@@ -210,7 +210,7 @@ export default async function run({page,baseUrl,check,shot,channel,provision:p})
   const reviewed=p.human("central.receiving.read",{project:"Editor",return_ref:submitted.return_ref});
   check(reviewed.record.review?.disposition==="accepted"&&reviewed.record.review.reviewer_ref==="human:walk"&&reviewed.record.review.source_revision===p.doc.revision.revision,"Native review retains the exact human reviewer and accepted source revision");
   await returns.getByRole("button",{name:"Include into the document"}).click();
-  await page.waitForFunction(()=>document.querySelector(".left-inbox .receiving-included")!==null,null,{timeout:20000});
+  await page.waitForFunction(()=>document.querySelector(".left-inbox p.receiving-included")!==null,null,{timeout:20000});
   check(true,"Inclusion lands through the owner's revision-checked operation on the exact reviewed basis");
 
   // 8 — Inbox keeps the reviewed result beside the source. Accepted
@@ -221,7 +221,7 @@ export default async function run({page,baseUrl,check,shot,channel,provision:p})
   check(includedText.includes("Included into the document.")&&!includedText.includes("human:walk")&&!includedText.includes("entry:shared"),"Inbox confirms inclusion without reviewer or entry identifiers");
   check(await page.locator(".cm-content[data-source-ref]").count()===1
     &&await page.locator(".shared-field-published[data-projection-state='withdrawn']").count()===1
-    &&await returns.locator(".receiving-included").count()===1,"Source, withdrawn projection and the admitted contribution remain visible beside the Inbox's inclusion confirmation");
+    &&await returns.locator("p.receiving-included").count()===1,"Source, withdrawn projection and the admitted contribution remain visible beside the Inbox's inclusion confirmation");
   await shot("included-contribution-inbox");
 
   // 9 — navigation preserves the withdrawn projection presentation.

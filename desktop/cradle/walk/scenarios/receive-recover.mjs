@@ -104,7 +104,7 @@ export default async function run({page,baseUrl,check,shot,channel,provision:p})
   // Rejection beside the document: the owner records the human reviewer; the
   // document holds nothing; the rejected return cannot be included.
   await strip.getByRole("button",{name:"Reject"}).click();
-  await detail.locator(".receiving-review").getByText("Rejected",{exact:true}).waitFor({timeout:20000});
+  await page.waitForFunction(()=>document.querySelector(".left-inbox .receiving-review")?.textContent==="Rejected",null,{timeout:20000});
   check(true,"Inbox shows the rejected review status beside the document");
   const afterReject=documentVia(p,HUMAN_TOKEN);
   check(afterReject.document.contributions.length===0,"A rejected return contributes nothing to the document");
