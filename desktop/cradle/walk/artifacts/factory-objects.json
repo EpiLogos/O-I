@@ -4,51 +4,37 @@
   "spec_ref": "docs/cradle/11-FACTORY.md §6 §7 F16",
   "grade": "B",
   "binding": null,
-  "generated_at": "2026-09-23T01:21:09.104Z",
+  "generated_at": "2026-09-23T01:47:27.741Z",
   "environment": {
-    "base_url": "http://localhost:4473",
-    "bridge_url": "http://127.0.0.1:4479",
+    "base_url": "http://localhost:4173",
+    "bridge_url": "http://127.0.0.1:4179",
     "viewport": "1280x820",
     "browser_engine": "chromium",
     "bundle": "walk (WALK=1) served by vite preview",
     "build_input": {
-      "mode": "fresh-build",
-      "bundle_fingerprint": "9e6df06a9ff3937cc0b42ac748f0648c021d6c32c4d7f92b80a9a2a066864cda"
+      "mode": "reused-dist",
+      "bundle_fingerprint": "7bd7215801275e69797d8252083f919b8d42faa52a225f0320db506377abfd10"
     },
     "node": "v24.16.0",
     "platform": "darwin",
     "source": {
       "repository_root": "/Users/admin/Central/worktrees/ui-build/lane3-factory",
-      "repository_head": "a7538d02394293bad3c32037bdbbb3de0a2b7a3d",
+      "repository_head": "985f0de4141dd448107c0e5ba300a70f408a6540",
       "tracked_changes": [
+        "desktop/cradle/walk/artifacts/background-completion-failure.png",
         "desktop/cradle/walk/artifacts/background-completion.json",
+        "desktop/cradle/walk/artifacts/canvas-context-failure.png",
+        "desktop/cradle/walk/artifacts/canvas-context.json",
         "desktop/cradle/walk/artifacts/factory-desk-f1-reading.png",
         "desktop/cradle/walk/artifacts/factory-desk-f2-empty.png",
         "desktop/cradle/walk/artifacts/factory-desk-f3-partial.png",
-        "desktop/cradle/walk/artifacts/factory-desk-f4-needs-you.png",
-        "desktop/cradle/walk/artifacts/factory-desk-factory-desk-1000-dark.png",
-        "desktop/cradle/walk/artifacts/factory-desk-factory-desk-1000-light.png",
-        "desktop/cradle/walk/artifacts/factory-desk-factory-desk-1440-dark.png",
-        "desktop/cradle/walk/artifacts/factory-desk-factory-desk-1440-light.png",
-        "desktop/cradle/walk/artifacts/factory-desk-factory-desk-760-dark.png",
-        "desktop/cradle/walk/artifacts/factory-desk-factory-desk-760-light.png",
-        "desktop/cradle/walk/artifacts/factory-desk-failure.png",
         "desktop/cradle/walk/artifacts/factory-desk.json",
         "desktop/cradle/walk/artifacts/factory-development-failure.png",
         "desktop/cradle/walk/artifacts/factory-development.json",
-        "desktop/cradle/walk/artifacts/factory-run-f12-handoff-empty.png",
+        "desktop/cradle/walk/artifacts/factory-objects.json",
+        "desktop/cradle/walk/artifacts/factory-real.json",
         "desktop/cradle/walk/artifacts/factory-run-f13-before.png",
-        "desktop/cradle/walk/artifacts/factory-run-f13-recognised.png",
-        "desktop/cradle/walk/artifacts/factory-run-f6-queued-live.png",
-        "desktop/cradle/walk/artifacts/factory-run-f8-no-units.png",
-        "desktop/cradle/walk/artifacts/factory-run-factory-run-map-1000-dark.png",
-        "desktop/cradle/walk/artifacts/factory-run-factory-run-map-1000-light.png",
-        "desktop/cradle/walk/artifacts/factory-run-factory-run-map-1440-dark.png",
         "desktop/cradle/walk/artifacts/factory-run-factory-run-map-1440-light.png",
-        "desktop/cradle/walk/artifacts/factory-run-factory-run-map-760-dark.png",
-        "desktop/cradle/walk/artifacts/factory-run-factory-run-map-760-light.png",
-        "desktop/cradle/walk/artifacts/factory-run-live.png",
-        "desktop/cradle/walk/artifacts/factory-run-unit-page.png",
         "desktop/cradle/walk/artifacts/factory-run.json",
         "desktop/cradle/walk/artifacts/factory-tasks-f15-direct.png",
         "desktop/cradle/walk/artifacts/factory-tasks-factory-tasks-joined-1000-dark.png",
@@ -58,18 +44,10 @@
         "desktop/cradle/walk/artifacts/factory-tasks-factory-tasks-joined-760-dark.png",
         "desktop/cradle/walk/artifacts/factory-tasks-factory-tasks-joined-760-light.png",
         "desktop/cradle/walk/artifacts/factory-tasks.json",
-        "desktop/cradle/walk/artifacts/factory-trajectory-f10-order.png",
-        "desktop/cradle/walk/artifacts/factory-trajectory-f11-paused.png",
-        "desktop/cradle/walk/artifacts/factory-trajectory-factory-trajectory-1000-dark.png",
-        "desktop/cradle/walk/artifacts/factory-trajectory-factory-trajectory-1000-light.png",
-        "desktop/cradle/walk/artifacts/factory-trajectory-factory-trajectory-1440-dark.png",
-        "desktop/cradle/walk/artifacts/factory-trajectory-factory-trajectory-1440-light.png",
-        "desktop/cradle/walk/artifacts/factory-trajectory-factory-trajectory-760-dark.png",
-        "desktop/cradle/walk/artifacts/factory-trajectory-factory-trajectory-760-light.png",
-        "desktop/cradle/walk/artifacts/factory-trajectory-failure.png",
-        "desktop/cradle/walk/artifacts/factory-trajectory.json"
+        "desktop/cradle/walk/artifacts/factory-trajectory.json",
+        "desktop/cradle/walk/artifacts/lane0-repairs.json"
       ],
-      "dirty_digest": "01713b517bce6ec7bc35cc5128d354d6b36fe291ff6a22b94fa41c408fad9893",
+      "dirty_digest": "9262307ece4e8155440313027a70e1076316628130a2c1391a302129b3b745d3",
       "engine_provenance_path": "/Users/admin/Central/worktrees/ui-build/lane3-factory/packages/oi-design-system/expressions-engine/PROVENANCE.json",
       "engine_source": "EpiLogos/Point-Cloud-Demo",
       "engine_revision": "91db8428fc9dfba06cd258ec5a58e7dd9eef5313"
@@ -77,7 +55,7 @@
   },
   "passed": true,
   "error": null,
-  "duration_ms": 51100,
+  "duration_ms": 59353,
   "checks": [
     {
       "ok": true,
@@ -85,7 +63,7 @@
       "data": {
         "title": "Release notes list their sections alphabetically, so readers meet Fixes before Breaking changes.",
         "kind": "factory-unit",
-        "ref": "%2Fprivate%2Fvar%2Ffolders%2Fq0%2Fg_91z7355tb58425qwg3xcy80000gn%2FT%2Foi-cradle-editor-3NmDpa%2FWork%2FSpecimen%2F.factory%2Fdevelopment-state.json|run%3A01M35K50E0DFM95TCWTQB8ESQM|workflow-unit%3A34WCVBSXYDJ6KWYCZYTAN8EA9Y",
+        "ref": "%2Fprivate%2Fvar%2Ffolders%2Fq0%2Fg_91z7355tb58425qwg3xcy80000gn%2FT%2Foi-cradle-editor-S9TaGZ%2FWork%2FSpecimen%2F.factory%2Fdevelopment-state.json|run%3A01M35MT3N0G0FQT0N885ES17E5|workflow-unit%3A02B2AG25B08KMKM0QGM1TC84VJ",
         "fields": {
           "Kind": "Work unit of Release notes section order",
           "Standing": "Returned",
@@ -114,7 +92,7 @@
           "object": {
             "project": "Specimen",
             "kind": "factory-unit",
-            "ref": "%2Fprivate%2Fvar%2Ffolders%2Fq0%2Fg_91z7355tb58425qwg3xcy80000gn%2FT%2Foi-cradle-editor-3NmDpa%2FWork%2FSpecimen%2F.factory%2Fdevelopment-state.json|run%3A01M35K50E0DFM95TCWTQB8ESQM|workflow-unit%3A34WCVBSXYDJ6KWYCZYTAN8EA9Y",
+            "ref": "%2Fprivate%2Fvar%2Ffolders%2Fq0%2Fg_91z7355tb58425qwg3xcy80000gn%2FT%2Foi-cradle-editor-S9TaGZ%2FWork%2FSpecimen%2F.factory%2Fdevelopment-state.json|run%3A01M35MT3N0G0FQT0N885ES17E5|workflow-unit%3A02B2AG25B08KMKM0QGM1TC84VJ",
             "title": "Work unit"
           },
           "popOut": true
@@ -128,7 +106,7 @@
         "docked": {
           "title": "Release notes list their sections alphabetically, so readers meet Fixes before Breaking changes.",
           "kind": "factory-unit",
-          "ref": "%2Fprivate%2Fvar%2Ffolders%2Fq0%2Fg_91z7355tb58425qwg3xcy80000gn%2FT%2Foi-cradle-editor-3NmDpa%2FWork%2FSpecimen%2F.factory%2Fdevelopment-state.json|run%3A01M35K50E0DFM95TCWTQB8ESQM|workflow-unit%3A34WCVBSXYDJ6KWYCZYTAN8EA9Y",
+          "ref": "%2Fprivate%2Fvar%2Ffolders%2Fq0%2Fg_91z7355tb58425qwg3xcy80000gn%2FT%2Foi-cradle-editor-S9TaGZ%2FWork%2FSpecimen%2F.factory%2Fdevelopment-state.json|run%3A01M35MT3N0G0FQT0N885ES17E5|workflow-unit%3A02B2AG25B08KMKM0QGM1TC84VJ",
           "fields": {
             "Kind": "Work unit of Release notes section order",
             "Standing": "Returned",
@@ -156,7 +134,7 @@
       "data": {
         "title": "Every cited file and line exists at the basis revision.",
         "kind": "factory-check",
-        "ref": "%2Fprivate%2Fvar%2Ffolders%2Fq0%2Fg_91z7355tb58425qwg3xcy80000gn%2FT%2Foi-cradle-editor-3NmDpa%2FWork%2FSpecimen%2F.factory%2Fdevelopment-state.json|run%3A01M35K50E0DFM95TCWTQB8ESQM|workflow-unit%3A34WCVBSXYDJ6KWYCZYTAN8EA9Y|Every%20cited%20file%20and%20line%20exists%20at%20the%20basis%20revision.",
+        "ref": "%2Fprivate%2Fvar%2Ffolders%2Fq0%2Fg_91z7355tb58425qwg3xcy80000gn%2FT%2Foi-cradle-editor-S9TaGZ%2FWork%2FSpecimen%2F.factory%2Fdevelopment-state.json|run%3A01M35MT3N0G0FQT0N885ES17E5|workflow-unit%3A02B2AG25B08KMKM0QGM1TC84VJ|Every%20cited%20file%20and%20line%20exists%20at%20the%20basis%20revision.",
         "fields": {
           "Assertion": "Every cited file and line exists at the basis revision.",
           "Basis": "Release notes list their sections alphabetically, so readers meet Fixes before Breaking changes.",
@@ -172,7 +150,7 @@
       "data": {
         "title": "specimen-reviewer · The ordering rule needs an independent reading against the changelog before it is integrated.",
         "kind": "factory-attempt",
-        "ref": "%2Fprivate%2Fvar%2Ffolders%2Fq0%2Fg_91z7355tb58425qwg3xcy80000gn%2FT%2Foi-cradle-editor-3NmDpa%2FWork%2FSpecimen%2F.factory%2Fdevelopment-state.json|run%3A01M35K50E0DFM95TCWTQB8ESQM|attempt%3Aspecimen-review-1",
+        "ref": "%2Fprivate%2Fvar%2Ffolders%2Fq0%2Fg_91z7355tb58425qwg3xcy80000gn%2FT%2Foi-cradle-editor-S9TaGZ%2FWork%2FSpecimen%2F.factory%2Fdevelopment-state.json|run%3A01M35MT3N0G0FQT0N885ES17E5|attempt%3Aspecimen-review-1",
         "fields": {
           "Agent": "specimen-reviewer",
           "Harness": "specimen",
@@ -195,7 +173,7 @@
           "What": "run · ls",
           "When": "Not recorded — the journal carries no time for this event.",
           "Session": "agent-session/specimen-review",
-          "Provider call": "call_00_31n6MkmmZEcXgdwgdQye3796",
+          "Provider call": "call_00_ET_gKpCKtiJ4zVdwPonsCic3884",
           "Journal": "4 owner events · cursor 7–10"
         }
       }
@@ -220,12 +198,12 @@
       "duration_ms": 0.1,
       "data": {
         "schema": "oi.cradle.walk/v1",
-        "mounted_at": "2026-09-23T01:21:09.262Z",
+        "mounted_at": "2026-09-23T01:47:27.934Z",
         "transport": {
           "kind": "bridge",
-          "url": "http://127.0.0.1:4479"
+          "url": "http://127.0.0.1:4179"
         },
-        "url": "http://localhost:4473/"
+        "url": "http://localhost:4173/"
       }
     },
     {
@@ -234,18 +212,18 @@
       "duration_ms": 0,
       "data": {
         "schema": "oi.cradle.walk/v1",
-        "mounted_at": "2026-09-23T01:21:11.369Z",
+        "mounted_at": "2026-09-23T01:47:29.965Z",
         "transport": {
           "kind": "bridge",
-          "url": "http://127.0.0.1:4479"
+          "url": "http://127.0.0.1:4179"
         },
-        "url": "http://localhost:4473/"
+        "url": "http://localhost:4173/"
       }
     },
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 43,
+      "duration_ms": 57,
       "data": {
         "file": "factory-objects-unit-page.png"
       }
@@ -253,7 +231,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 70,
+      "duration_ms": 38,
       "data": {
         "file": "factory-objects-agent-page.png"
       }
