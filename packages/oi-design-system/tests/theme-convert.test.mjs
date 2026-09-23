@@ -11,6 +11,7 @@ import { fileURLToPath } from 'node:url';
 import {
   parseJsonc, normalizeColor, mix, flattenTokenColors, resolveSyntaxColors,
   resolveTerminalColors, mergeInclude, convertTheme, themeVariables, emitCss, emitIndexModule,
+  uniqueThemeId, guessAppearance,
 } from '../scripts/convert.mjs';
 
 const HERE = fileURLToPath(new URL('../', import.meta.url));
@@ -135,9 +136,25 @@ test('emission: css blocks select data-oi-theme and carry terminal roles; index 
   assert.match(withTerminal, /--oi-terminal-ansi-black: #000000;/);
   const index = emitIndexModule([doc]);
   assert.match(index, /export const THEMES/);
-  const entry = JSON.parse(index.slice(index.indexOf('['), index.lastIndexOf(']') + 1));
-  assert.equal(entry[0].preview.ground, '#282a36');
-  assert.equal(entry[0].tokens, undefined);
+  const payload = index.slice(index.indexOf('=', index.indexOf('THEMES')) + 1).trim().replace(/;$/, '');
+  const entry = JSON.parse(payload)[0];
+  assert.equal(entry.preview.ground, '#282a36');
+  assert.equal(entry.tokens, undefined);
+});
+
+test('imported themes get a stable CSS-safe id, deduped against taken ids', () => {
+  const taken = new Set(['dracula-dark']);
+  assert.equal(uniqueThemeId('My Cool Theme!', taken), 'my-cool-theme');
+  assert.equal(uniqueThemeId('dracula-dark', taken), 'dracula-dark-2');
+  assert.equal(uniqueThemeId('dracula-dark', new Set(['dracula-dark', 'dracula-dark-2'])), 'dracula-dark-3');
+  assert.equal(uniqueThemeId('///', taken), 'theme');
+});
+
+test('appearance guesses from the declared type, else the ground lightness', () => {
+  assert.equal(guessAppearance({ type: 'hcLight' }), 'light');
+  assert.equal(guessAppearance({ colors: { 'editor.background': '#1e1e2e' } }), 'dark');
+  assert.equal(guessAppearance({ colors: { 'editor.background': '#F5F5F5' } }), 'light');
+  assert.equal(guessAppearance({}), 'dark');
 });
 
 /* ---- integration: the downloaded corpus converts end to end --------------- */

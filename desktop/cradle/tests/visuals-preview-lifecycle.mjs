@@ -53,6 +53,39 @@ try{
  await page.getByRole('button',{name:'System',exact:true}).click();
  await page.waitForFunction(()=>!document.body.dataset.oiTheme);
  check(await page.evaluate(()=>previewTest.visuals.get().themeId)===null,'returning to a house appearance clears the named theme');
+ // Import from disk: a VS Code theme file (JSONC, as themes really ship)
+ // converts at runtime, joins the grid, applies, persists and can be removed.
+ const themeFile={name:'verdant-dusk.color-theme.json',mimeType:'application/json',buffer:Buffer.from(`{
+   // a real-world theme shape: comments, a declared type, scoped colours
+   "name": "Verdant Dusk",
+   "type": "dark",
+   "colors": { "editor.background": "#1b2a23", "editor.foreground": "#e8f3ea", "sideBar.background": "#16221d" },
+   "tokenColors": [
+     { "scope": "keyword", "settings": { "foreground": "#9ece6a" } },
+     { "scope": "string", "settings": { "foreground": "#e0af68" } }
+   ]
+ }`)};
+ const badFile={name:'broken.json',mimeType:'application/json',buffer:Buffer.from('{"name": "Broken", ')};
+ const importInput=page.locator('input[type=file]');
+ const cardCount=()=>library.locator('button').count();
+ const before=await cardCount();
+ await importInput.setInputFiles(badFile);
+ check(await page.locator('.oi-refusal').textContent()!=='','a malformed file refuses in plain words');
+ check(await cardCount()===before,'a refused file adds no card');
+ check(await page.evaluate(()=>!document.body.dataset.oiTheme),'a refused file selects nothing');
+ await importInput.setInputFiles(themeFile);
+ await page.waitForFunction(()=>document.body.dataset.oiTheme==='verdant-dusk');
+ check(await cardCount()===before+1,'the imported theme joins the grid');
+ check(await page.evaluate(()=>previewTest.visuals.get().themeId)==='verdant-dusk','import selects itself through the preference owner');
+ check(await page.evaluate(()=>getComputedStyle(document.body).getPropertyValue('--oi-canvas-ground').trim())==='#1b2a23','the imported ground colours the shell');
+ check(await page.evaluate(()=>getComputedStyle(document.body).getPropertyValue('--oi-sidebar-ground').trim())==='#16221d','imported workbench keys map to their roles');
+ check((await page.locator('.visuals-theme-origin',{hasText:'Imported'}).count())>=1,'the imported card discloses its imported standing');
+ await page.reload();await page.getByLabel('Appearance preferences').waitFor();
+ check(await page.evaluate(()=>document.body.dataset.oiTheme)==='verdant-dusk','the imported theme survives restart');
+ await page.getByRole('button',{name:'Remove “Verdant Dusk”'}).click();
+ await page.waitForFunction(()=>!document.body.dataset.oiTheme);
+ check(await page.evaluate(()=>previewTest.visuals.get().themeId)===null,'removing the active import returns to a house appearance');
+ check(await cardCount()===before,'removal takes the card with it');
  await page.getByLabel('Enable the shared visual layer',{exact:true}).check();
  await page.waitForFunction(()=>previewTest.stage.inspect().engine!==null);
  await noPresentation();

@@ -293,6 +293,8 @@ export function convertTheme(theme, { id, name, appearance, source }) {
   const resolved = { ...colors, 'editor.background': groundRaw, 'editor.foreground': inkRaw };
   const ground = normalizeColor(groundRaw);
   const ink = normalizeColor(inkRaw, ground);
+  if (!ground) throw new Error(`${name}: editor.background is not a recognizable hex colour (${String(groundRaw)})`);
+  if (!ink) throw new Error(`${name}: editor.foreground is not a recognizable hex colour (${String(inkRaw)})`);
 
   const tokens = {};
   for (const [key, roles] of Object.entries(CHROME_KEYS)) {
@@ -341,6 +343,35 @@ export function convertTheme(theme, { id, name, appearance, source }) {
     terminal,
     preview,
   };
+}
+
+/** A stable CSS-safe theme id for an imported file, deduped against ids
+ * already taken (bundled or previously imported). */
+export function uniqueThemeId(rawName, taken) {
+  const slug = String(rawName ?? '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '') || 'theme';
+  if (!taken.has(slug)) return slug;
+  let n = 2;
+  while (taken.has(`${slug}-${n}`)) n += 1;
+  return `${slug}-${n}`;
+}
+
+/** The appearance a theme implies when its file does not say: the declared
+ * type wins; otherwise the perceived lightness of the editor background.
+ * @returns {"light" | "dark"} */
+export function guessAppearance(theme) {
+  const declared = typeof theme?.type === 'string' ? theme.type : '';
+  if (declared === 'dark' || declared === 'hcBlack') return 'dark';
+  if (declared === 'light' || declared === 'hcLight') return 'light';
+  const background = theme?.colors?.['editor.background'];
+  if (typeof background === 'string') {
+    try {
+      const [r, g, b] = hexToRgb(background);
+      return (0.2126 * r + 0.7152 * g + 0.0722 * b) / 255 < 0.5 ? 'dark' : 'light';
+    } catch {
+      // not a usable colour — fall through to the dark default
+    }
+  }
+  return 'dark';
 }
 
 function withAlpha(hex, alpha) {

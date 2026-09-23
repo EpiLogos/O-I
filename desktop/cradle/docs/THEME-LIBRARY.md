@@ -92,13 +92,36 @@ themes/index.mjs         THEMES: [{id, name, appearance, preview, source}]
 - Refuse (loudly, with the file name) a theme without a usable
   `editor.background`/`editor.foreground` pair.
 
+## Import from disk
+
+Settings → Visuals also accepts any VS Code color-theme file at runtime:
+the same converter runs in the renderer (`@epilogos/oi-design-system/themes/convert`),
+the converted theme persists in its own localStorage record
+(`oi-cradle.custom-themes.v1`), joins the grid marked "Imported", and its
+variable blocks ride in one mounted `<style>` element (the CSP allows inline
+styles). Rules:
+
+- the id slugs from the theme's name and is deduped against bundled and
+  previously imported ids; the appearance comes from the file's `type`, or
+  the ground's perceived lightness when absent;
+- only validated values reach the cascade — normalized hex colours, rgba()
+  built from them, and the house's fixed shadow strings; malformed files
+  refuse in plain words and select nothing;
+- removal takes the active selection back to a house appearance;
+- the style element re-mounts at module load, so a restart restores an
+  imported theme before the first React commit (the pre-paint script only
+  carries the bundled blocks).
+
 ## Acceptance
 
 1. `packages/oi-design-system`: `node --test` — JSONC parsing (comments,
    trailing commas), mapping tables, derivation fallbacks, emission shape,
-   and every downloaded upstream file converts.
+   imported-id dedupe and appearance guessing, and every downloaded upstream
+   file converts.
 2. `desktop/cradle`: `theme-prepaint-csp.mjs` extended — a persisted
    `themeId` lands `data-oi-theme` on the body before paint, CSP intact.
 3. `npm run build` green (tsc strict).
 4. Settings → Visuals shows the theme grid; picking a card flips the shell,
    editors and terminal; System/Light/Dark restore the house appearances.
+5. `visuals-preview-lifecycle.mjs`: import → apply → persist across
+   restart → remove, plus the plain-words refusal of a malformed file.

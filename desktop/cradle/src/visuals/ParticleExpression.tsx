@@ -19,6 +19,7 @@ import {
 } from "react";
 import "@epilogos/oi-design-system/point-cloud.css";
 import { visuals, BROADCAST, type VisualsSnapshot } from "./store";
+import { ensureCustomThemeStyles } from "./customThemes";
 import { useKernel } from "../kernel/KernelProvider";
 
 interface VisualsContextValue {
@@ -49,8 +50,13 @@ function applyTheme(theme: VisualsSnapshot["theme"], themeId: string | null) {
 // The appearance is applied synchronously at module load as well as by the
 // pre-paint script in index.html: both resolve the same persisted choice,
 // so a window (primary or detached) whose HTML lacks the inline script
-// still lands on the right ground before the first React commit.
-if (typeof document !== "undefined") { const initial = visuals.get(); applyTheme(initial.theme, initial.themeId); }
+// still lands on the right ground before the first React commit. Imported
+// themes re-mount their variable blocks here for the same reason.
+if (typeof document !== "undefined") {
+  ensureCustomThemeStyles();
+  const initial = visuals.get();
+  applyTheme(initial.theme, initial.themeId);
+}
 
 export function VisualsProvider({ children }: { children: ReactNode }) {
   const kernel = useKernel();
