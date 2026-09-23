@@ -112,8 +112,12 @@ from my settings work except by location: `VisualsView` sits under
 design (dossier §2 row 7), so the two can coexist; just don't let a
 settings refactor orphan it.
 
-## The one open owner decision
+## The corner: closed
 
-The wedge shape (A/B/C above) — proposal + screenshots await the ruling;
-no code landed. Everything else in my lanes is landed, verified by
-operation, and waiting on nothing.
+Ruled 2026-09-23: the wedge is the restored component gated by
+`tests/window-lights-contract.test.mjs` — no shape decision exists or is
+owed. The re-authoring options in
+`wedge-reauthoring-proposal-2026-09-23.md` are withdrawn; that file remains
+only as the geometry record and the laws future corner work answers to.
+The branch comes into main after the parallel UI work lands; nothing else
+is pending from the shell-law programme.

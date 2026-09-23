@@ -1,12 +1,14 @@
-# The left corner wedge — a re-authoring proposal for the owner's eye
+# The left corner wedge — CLOSED, no decision owed
 
-*Flow: ui/shell-law programme, 2026-09-23. Status: PROPOSAL — nothing landed.
-Owner ruling 5 (DESKTOP-LANGUAGE.md, 2026-09-22): the corner treatment is
-never silently removed or reshaped; its precise geometry returns to the owner
-for recognition. This document is that return. No wedge code exists to
-restore — the refinement died twice uncommitted (09-20, 09-22 resets) and was
-never written to the branch; verified across the working tree, the stash list
-and the reflog before this proposal was drafted.*
+*Ruling 2026-09-23, in conversation: the wedge question is closed. The
+component restored on 2026-09-22 and gated by
+`tests/window-lights-contract.test.mjs` (7/7) IS the wedge — the corner
+regime now on the branch (reserve-derived left cutout, flush depth, hosted
+alignment, carried by the mode stages and panes) is the accepted shape.
+The re-authoring options below are withdrawn as moot; nothing landed from
+them. This file stays as the geometry record and the laws any future corner
+work answers to. Per the owner: the branch comes into main after the
+parallel UI work lands.*
 
 ## The three laws any wedge must satisfy
 
