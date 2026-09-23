@@ -148,6 +148,10 @@ export function useOpenRun(): string | undefined { return useSyncExternalStore(s
  * opened from the Desk (a held selection — never an auto-choice). */
 export function useSelectedRun(): string | undefined { return useSyncExternalStore(subscribeOpen, () => selectedKey, () => selectedKey); }
 export function selectRun(key: string | undefined) { if (selectedKey === key) return; selectedKey = key; emitOpen(); }
+let deskQuery = "";
+/** The board's search survives leaving for a Run page or Tasks and back. */
+export function rememberDeskQuery(query: string) { deskQuery = query; }
+export function heldDeskQuery(): string { return deskQuery; }
 export function rememberDeskScroll(top: number) { deskScroll = top; }
 export function deskScrollTop(): number { return deskScroll; }
 

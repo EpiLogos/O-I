@@ -20,7 +20,7 @@ import {formatRelativeTime} from "../../../shared/relativeTime";
 import {useScope} from "../../../workspace/scope";
 import {MenuButton} from "./MenuButton";
 import {readDeskSources, writeDeskSources, type DeskSource} from "./deskModel";
-import {deskScrollTop, openRunPage, readDesk, rememberDeskScroll, scopeKeyOf, useDeskReading, useSelectedRun} from "./deskStore";
+import {deskScrollTop, heldDeskQuery, openRunPage, readDesk, rememberDeskQuery, rememberDeskScroll, scopeKeyOf, useDeskReading, useSelectedRun} from "./deskStore";
 import {DESK_COLUMNS, RUN_STATE_GLYPH, RUN_STATE_WORD, cardMatches, deskColumn, initials, type DeskCard, type DeskColumn} from "./runModel";
 import "./fdesk.css";
 
@@ -52,7 +52,8 @@ export function Desk({onNewRun, onAddObject}: DeskProps) {
   const scope = useScope();
   const reading = useDeskReading();
   const selected = useSelectedRun();
-  const [query, setQuery] = useState("");
+  const [query, setQueryState] = useState(heldDeskQuery);
+  const setQuery = (next: string) => { rememberDeskQuery(next); setQueryState(next); };
   const [, tick] = useState(0);
   const scroller = useRef<HTMLDivElement>(null);
   const scopeKey = scopeKeyOf(scope);
@@ -67,7 +68,12 @@ export function Desk({onNewRun, onAddObject}: DeskProps) {
   // The "read Xm ago" label ages in place — a label re-render, not a read.
   useEffect(() => { const id = window.setInterval(() => tick(value => value + 1), 30_000); return () => window.clearInterval(id); }, []);
   // Going back from a Run page restores the board's scroll.
-  useLayoutEffect(() => { if (scroller.current) scroller.current.scrollTop = deskScrollTop(); }, []);
+  useLayoutEffect(() => {
+    const node = scroller.current;
+    if (node) node.scrollTop = deskScrollTop();
+    // Leaving for Tasks (or anywhere) keeps where the board was.
+    return () => { if (node) rememberDeskScroll(node.scrollTop); };
+  }, []);
 
   const refresh = () => void readDesk(kernel.transport, scope);
   const allCards = useMemo(() => Object.values(current?.runs ?? {}).map(entry => entry.card).sort((a, b) => a.key.localeCompare(b.key)), [current?.runs]);

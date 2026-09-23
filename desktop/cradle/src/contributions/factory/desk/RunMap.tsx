@@ -134,7 +134,7 @@ function UnitBand({cell, entry, runKey, host}: {cell: MapCell; entry: RunEntry; 
   const fields: [string, string | undefined][] = [
     ["Concern", unit?.developmentalConcern ?? cell.node.label],
     ["Must change", unit?.requiredDifference],
-    ["Returns", unit?.requiredReturn?.contract],
+    ["Hands back", unit?.requiredReturn?.contract],
     ["May", unit?.permittedEffects?.join("; ")],
     ["Stops when", unit?.stopConditions],
     ["Attempts", attempts.length ? attempts.map((attempt, index) => `attempt ${index + 1}${attempt.status ? ` · ${attempt.status}` : ""}`).join(", ") : "None yet"],

@@ -46,7 +46,11 @@
 .fdesk-state p{ margin: 0; }
 .fdesk-state > p:first-child{ color: var(--fd-ink); font-size: var(--oi-shell-type-body); }
 .fdesk-state-why{ font-size: var(--oi-shell-type-ui); max-width: 60ch; }
-.fdesk-columns{ position: relative; display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 14px; align-items: start; }
+/* Four columns always side by side (a wrapped RECENT column would fall out
+   of sight below the board); two per row only when the centre is narrow. */
+.fdesk{ container-type: inline-size; }
+.fdesk-columns{ position: relative; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; align-items: start; }
+@container (max-width: 560px){ .fdesk-columns{ grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 .fdesk-column{ display: flex; flex-direction: column; gap: 10px; min-width: 0; }
 .fdesk-column-head{ margin: 0; font-size: var(--oi-shell-type-eyebrow, 11px); font-weight: 600; letter-spacing: var(--oi-tracking-label, .08em); text-transform: uppercase; color: var(--fd-muted); }
 .fdesk-skeleton{ height: 118px; border-radius: var(--fd-radius); background: var(--oi-wash); }

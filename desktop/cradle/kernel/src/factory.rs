@@ -354,10 +354,12 @@ pub fn owner(request: OwnerRequest, world: Option<&Value>) -> Result<Value, Erro
                                 row["location"] = location;
                             }
                             Err(error) => {
-                                // The owner's own words for a root with no
-                                // Factory state set up (os error 2) mean
-                                // "not a Factory source", not a failed read.
-                                let absent = error.message.contains("No such file or directory");
+                                // A root with no `.factory` directory is
+                                // simply not a Factory source; one that has
+                                // it but cannot be located is a refusal the
+                                // Desk must name (never an empty board).
+                                let absent = !root.join(".factory").exists()
+                                    && error.message.contains("No such file or directory");
                                 row["state"] = if absent { "absent" } else { "refused" }.into();
                                 row["error"] = error.message.into();
                             }

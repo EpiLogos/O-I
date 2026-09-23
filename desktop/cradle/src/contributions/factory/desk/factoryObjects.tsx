@@ -67,11 +67,13 @@ registerObjectKind({kind: "factory-unit", label: "Work unit", glyph: "factory", 
   const leg = inspection?.legs?.[unitRef];
   const frontier = frontierNode(run);
   const barriers = (inspection?.barriers ?? []).filter(barrier => barrier.waitsFor?.includes(unitRef) || barrier.releases?.includes(unitRef));
-  const standing = node ? `${node.state ? node.state[0].toUpperCase() + node.state.slice(1) + " · " : ""}${legStanding(node, leg).replace("-", " ")}` : undefined;
+  const legWords = node ? legStanding(node, leg).replace("-", " ") : undefined;
+  const mapWords = node?.state ?? undefined;
+  const standing = node ? [mapWords, legWords].filter((word, index, all) => word && all.indexOf(word) === index).map((word, index) => index === 0 ? word![0].toUpperCase() + word!.slice(1) : word).join(" · ") : undefined;
   return {kindLabel: "Work unit", title: unit?.developmentalConcern ?? node!.label, state: standing,
     fields: pick([
       ["Kind", `Work unit${frontier?.semanticRef === unitRef ? " · frontier" : ""} of ${runWords(run)}`],
-      ["Standing", standing], ["Concern", unit?.developmentalConcern], ["Must change", unit?.requiredDifference], ["Returns", unit?.requiredReturn?.contract],
+      ["Standing", standing], ["Concern", unit?.developmentalConcern], ["Must change", unit?.requiredDifference], ["Hands back", unit?.requiredReturn?.contract],
       ["Required checks", checks.length ? `${checks.filter(check => check.state === "passed").length} of ${checks.length} passed` : undefined],
       ["Depends on", (unit?.dependencies ?? []).map(ref => unitOf(inspection, ref)?.developmentalConcern ?? refTail(ref)).join("; ") || "–"],
       ["Held by", barriers.length ? barriers.map(barrier => `gate · ${barrier.key.replace(/-/g, " ")}${barrier.complete ? " (passed)" : " (held)"}`).join("; ") : undefined],

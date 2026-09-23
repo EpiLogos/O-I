@@ -149,6 +149,8 @@ const SCENARIOS = {
   "factory-run": {module:"scenarios/factory-run.mjs",kernel:true,aliases:["f6","f7","f8","f12","f13"]},
   "factory-trajectory": {module:"scenarios/factory-trajectory.mjs",kernel:true,aliases:["f9","f10","f11"]},
   "factory-tasks": {module:"scenarios/factory-tasks.mjs",kernel:true,aliases:["f14","f15"]},
+  "factory-objects": {module:"scenarios/factory-objects.mjs",kernel:true,aliases:["f16"]},
+  "factory-real": {module:"scenarios/factory-real.mjs",kernel:true,aliases:[]},
 };
 
 // Which design/spec row each scenario's receipt serves, and an optional grade
@@ -168,6 +170,8 @@ const SCENARIO_SPEC = {
   "factory-run": { spec_ref: "docs/cradle/11-FACTORY.md §7 F6 F7 F8 F12 F13" },
   "factory-trajectory": { spec_ref: "docs/cradle/11-FACTORY.md §7 F9 F10 F11" },
   "factory-tasks": { spec_ref: "docs/cradle/11-FACTORY.md §7 F14 F15" },
+  "factory-objects": { spec_ref: "docs/cradle/11-FACTORY.md §6 §7 F16" },
+  "factory-real": { spec_ref: "docs/cradle/11-FACTORY.md §7 F5 F6 F7 F12 (real Central-root runs, read-only)" },
 };
 const DEFAULT_SPEC_REF = "docs/cradle/05-EXECUTION.md §3";
 
