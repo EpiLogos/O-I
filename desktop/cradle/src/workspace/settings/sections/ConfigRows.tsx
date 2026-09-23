@@ -16,6 +16,7 @@ import {briefValue} from "../sectionModel";
 import {defaultScope, resolutionKey, watchPair, type SettingEntry, type SettingsSnapshot} from "../settingsData";
 import {settingRowId, stageSetting, stagedChanges, undoChange} from "../changeModel";
 import {ReadOnly, Row} from "../rows";
+import {goTo} from "../settingsNav";
 
 /** The owner's file a native ref points at, when it is one (`~/.codex/config.toml [projects…]`). */
 export function ownerFile(nativeRef: string | undefined): string | null {
@@ -76,7 +77,9 @@ export function ConfigSettingRow({entry, data, scope, title}: {entry: SettingEnt
   const status = resolution?.reconciliation.status;
   return <Row id={settingRowId(setting.setting_ref)} title={title ?? setting.title} description={description} changed={!!change} onUndo={change ? () => void undoChange(change) : undefined} reconciliation={status}>
     {status && status !== "satisfied" && !change && <span className={`settings-chip is-${status}`} data-reconciliation-word title={resolution?.reconciliation.reason ?? undefined}>{reconciliationWord(status)}</span>}
-    {writable
+    {setting.value_schema.type === "secret"
+      ? <><span className="settings-value">{resolution ? valueWords(setting, native ?? resolution.native.declared?.value) : "Reading…"}</span><button type="button" className="settings-button" onClick={() => goTo({kind: "section", id: "credentials"})}>Open Credentials</button></>
+      : writable
       ? <SettingControl schema={setting.value_schema} value={desired?.value !== undefined ? desired.value : native} hint={null}
           onCommit={(next) => void stageSetting({setting_ref: setting.setting_ref, scope: address, value: next.value, secret_reference: null})}/>
       : <ReadOnly value={resolution || !addressable ? valueWords(setting, native) : "Reading…"} place={ownerPlace(entry)} path={ownerFile(setting.native_ref)}/>}

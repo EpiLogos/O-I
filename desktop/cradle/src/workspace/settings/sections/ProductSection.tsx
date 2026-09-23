@@ -118,11 +118,7 @@ export function ProductSection({id, data}: {id: string; data: SettingsSnapshot})
         ? <Row key={entry.setting.setting_ref} id={`setting:${entry.setting.setting_ref}`} title={entry.setting.title} description={skills ? `${skills.active} active of ${skills.total}` : undefined}>
             <button type="button" className="settings-button" onClick={() => goTo({kind: "section", id: "skills"})}>Open Skills</button>
           </Row>
-        : entry.setting.value_schema.type === "secret"
-          ? <Row key={entry.setting.setting_ref} id={`setting:${entry.setting.setting_ref}`} title={entry.setting.title} description={entry.setting.description}>
-              <button type="button" className="settings-button" onClick={() => goTo({kind: "section", id: "credentials"})}>Open Credentials</button>
-            </Row>
-          : <ConfigSettingRow key={entry.setting.setting_ref} entry={entry} data={data}/>)}
+        : <ConfigSettingRow key={entry.setting.setting_ref} entry={entry} data={data}/>)}
     </div>}
     {entries.length === 0 && descriptor && <div className="settings-lines" data-product-settings>
       {descriptor.sections.flatMap((section) => section.settings).slice(0, 40).map((setting) => <DisclosedRow key={setting.key} product={id} setting={setting}/>)}
