@@ -36,7 +36,9 @@ export function statusRank(status: Status): number {
     case 'running': return 4
     case 'queued': return 3
     case 'cancelled': return 2
+    case 'returned': return 2
     case 'success': return 1
+    case 'contract-fixture': return 0
   }
 }
 
