@@ -413,7 +413,7 @@ class EncounterSession implements EncounterSessionActions {
     initiator_participant_ref:"participant:desktop-operator",
     message:{message_id:`a2a-agency-${Date.now().toString(36)}`,text:seed,purpose:"agency-panel-a2a-exchange"},
    }});
-   if(routed.error||routed.outcome?.result!=="a2a_exchange")throw new Error(routed.error??"The A2A exchange could not be routed through the kernel.");
+   if(routed.error||routed.outcome?.result!=="a2a_exchange_difference")throw new Error(routed.error??"The A2A exchange could not be routed through the kernel.");
    const difference=routed.outcome.data as unknown as A2aDifference;
    this.set({a2a:{seed,busy:false,difference}});
   }catch(err){this.set({a2a:{seed,busy:false,error:String(err)}});}
