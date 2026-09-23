@@ -277,6 +277,9 @@ export function useWorkspaces() {
   // successful save clears only its own error; the quarantine note stands
   // until dismissed or a reload re-evaluates the book.
   const [saveError, setSaveError] = useState<string | null>(null);
+  /** A standing answer to an explicit request (Recover arrangement with no
+   * record): unlike saveError, the next successful save never clears it. */
+  const [notice, setNotice] = useState<string | null>(null);
   const [quarantine, setQuarantine] = useState<string | null>(null);
   const [recovery,setRecovery]=useState<{reason:string;key?:string}|null>(null);
   const [book, setBook] = useState<WorkspaceBook>(() => {
@@ -435,7 +438,7 @@ export function useWorkspaces() {
       setBook(book=>stampActiveVisited({version:2,active:restored[0].id,workspaces:[...book.workspaces.filter(workspace=>workspace.id!=="recovery"||!!workspace.writing),...restored]}));setRecovery(null);
     }catch{setSaveError("The retained data is not readable as workspace records. It remains preserved for recovery.");}
   };
-  const showRecovery=()=>{const saved=latestRecovery();if(saved)setRecovery({reason:saved.reason,key:saved.key});else setSaveError("There is no retained workspace recovery record on this device.");};
-  const error=[quarantine,saveError].filter(Boolean).join(" ")||null;
-  return { switchMode, setContext, replaceSurface, surfaceView, surfaceEngine, showRecovery,recovery,reload,startFresh,recoverAvailable, setCentralFiles, setProjectNavigation, browseAll, windowBounds, redock, current, setWritingMode, workspaces: book.workspaces, setLayout, setWriting, activate, browse, create, rename, error, dismissError: () => { setQuarantine(null); setSaveError(null); } };
+  const showRecovery=()=>{const saved=latestRecovery();if(saved)setRecovery({reason:saved.reason,key:saved.key});else setNotice("There is no retained workspace recovery record on this device.");};
+  const error=[quarantine,saveError,notice].filter(Boolean).join(" ")||null;
+  return { switchMode, setContext, replaceSurface, surfaceView, surfaceEngine, showRecovery,recovery,reload,startFresh,recoverAvailable, setCentralFiles, setProjectNavigation, browseAll, windowBounds, redock, current, setWritingMode, workspaces: book.workspaces, setLayout, setWriting, activate, browse, create, rename, error, dismissError: () => { setQuarantine(null); setSaveError(null); setNotice(null); } };
 }
