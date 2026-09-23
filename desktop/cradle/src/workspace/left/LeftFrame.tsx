@@ -11,6 +11,7 @@
  * (how the screen is arranged) lives in the same menu's footer.
  */
 import {useEffect, useId, useRef, useState, type ReactNode} from "react";
+import {createPortal} from "react-dom";
 import {Glyph} from "../Glyph";
 import {WorldModeStrip} from "../../surfaces/navigator/WorldNavigator";
 import type {WorkspaceMode} from "../mode";
@@ -45,19 +46,21 @@ export interface LeftFrameProps {
 }
 
 /** Close a popover on outside pointer, Escape (returning focus) or blur. */
-function usePopover(): {open: boolean; setOpen: (value: boolean) => void; root: React.RefObject<HTMLDivElement>; trigger: React.RefObject<HTMLButtonElement>} {
+function usePopover(): {open: boolean; setOpen: (value: boolean) => void; root: React.RefObject<HTMLDivElement>; trigger: React.RefObject<HTMLButtonElement>; layer: React.RefObject<HTMLDivElement>} {
   const [open, setOpen] = useState(false);
   const root = useRef<HTMLDivElement>(null);
   const trigger = useRef<HTMLButtonElement>(null);
+  /** A menu portalled out of the region (the scope menu) is still inside. */
+  const layer = useRef<HTMLDivElement>(null);
   useEffect(() => {
     if (!open) return;
-    const outside = (event: PointerEvent) => { if (!root.current?.contains(event.target as Node)) setOpen(false); };
+    const outside = (event: PointerEvent) => { const target = event.target as Node; if (!root.current?.contains(target) && !layer.current?.contains(target)) setOpen(false); };
     const key = (event: KeyboardEvent) => { if (event.key === "Escape") { event.preventDefault(); event.stopPropagation(); setOpen(false); trigger.current?.focus(); } };
     window.addEventListener("pointerdown", outside, true);
     window.addEventListener("keydown", key, true);
     return () => { window.removeEventListener("pointerdown", outside, true); window.removeEventListener("keydown", key, true); };
   }, [open]);
-  return {open, setOpen, root, trigger};
+  return {open, setOpen, root, trigger, layer};
 }
 
 const initial = (label: string) => (label.replace(/[^A-Za-z0-9]/g, "")[0] ?? "·").toUpperCase();
@@ -71,11 +74,12 @@ function ScopeMenu({mode, workspace, workspaces, onActivateWorkspace, onNewWorks
   const focused = useFocusedProject();
   const lens = useEpiLens();
   const marks = useProjectMarks();
-  const {open, setOpen, root, trigger} = usePopover();
+  const {open, setOpen, root, trigger, layer} = usePopover();
   const [switching, setSwitching] = useState(false);
   const [machines, setMachines] = useState<Machine[]>();
   // The menu is wider than a narrow sidebar and the region clips its
-  // content, so it stands in the viewport, anchored under the trigger.
+  // content, so it is portalled to the document and stands in the viewport,
+  // anchored under the trigger (no ancestor can clip or re-anchor it).
   const [anchor, setAnchor] = useState<{top: number; left: number}>();
   useEffect(() => {
     if (!open) return;
@@ -125,7 +129,7 @@ function ScopeMenu({mode, workspace, workspaces, onActivateWorkspace, onNewWorks
       <span>Epi-Logos</span>
       <button type="button" aria-label="Leave the Epi-Logos lens" title="Leave the Epi-Logos lens" onClick={() => setLens(false)}><Glyph name="close" size={9}/></button>
     </span>}
-    {open && <div id={menuId} className="left-scope-menu oi-menu oi-scroll-quiet" role="group" aria-label="Scope and workspace" style={anchor ? {position: "fixed", top: anchor.top, left: anchor.left} : undefined}>
+    {open && createPortal(<div ref={layer} id={menuId} className="left-scope-menu oi-menu oi-scroll-quiet" data-left-menu="scope" role="group" aria-label="Scope and workspace" style={{position: "fixed", top: anchor?.top ?? 0, left: anchor?.left ?? 0, visibility: anchor ? undefined : "hidden"}}>
       {focused && focused !== scopeProject && <div className="left-menu-switch">
         <span>Focused tab is in <b>{focused}</b></span>
         <button type="button" className="left-menu-link" onClick={() => choose({kind: "project", project: focused})}>Switch</button>
@@ -167,7 +171,7 @@ function ScopeMenu({mode, workspace, workspaces, onActivateWorkspace, onNewWorks
         <button type="button" className="left-menu-link" onClick={() => { setOpen(false); onRenameWorkspace(); }}>Rename</button><span aria-hidden="true">·</span>
         <button type="button" className="left-menu-link" onClick={() => { setOpen(false); onRecoverArrangement(); }}>Recover arrangement</button>
       </div>
-    </div>}
+    </div>, document.body)}
   </div>;
 }
 

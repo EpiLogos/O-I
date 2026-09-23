@@ -119,7 +119,7 @@ export function WorldNavigator({ onExplore, onOpenEncounter, centralFiles, onCen
       </div>
       {centralOpen && root && <div className="project-reading left-central-root">
         {centralMode === "files" && <FileTree path="" onOpen={onOpenFile} refresh={fileRefresh} onRootRef={ref=>setDirectoryRefs(held=>({...held,"":ref}))} expanded={centralNavigation?.directories??[]} onExpansion={directories=>{if(centralKey)onNavigationChange(centralKey,{directories,locationPath:""});}}/>}
-        {centralMode === "wiki" && <button className="project-wiki-link" disabled={!root.control.agent_wiki.wiki.space_ref} onClick={()=>openWiki(root.control.agent_wiki.wiki.space_ref!,"Central wiki")}><Glyph name="wiki" size={12}/><span>Central wiki</span></button>}
+        {centralMode === "wiki" && <button className="project-wiki-link" disabled={!root.control.agent_wiki.wiki.space_ref} onClick={()=>openWiki(root.control.agent_wiki.wiki.space_ref!,"Central wiki")}><Glyph name="wiki" size={12}/><span>Central neighbourhood</span></button>}
         {centralMode === "chats" && <ChatRows project="" label="Central" state={centralChats.state} retry={centralChats.retry} activeRef={activeEncounterRef} onOpen={row => { void Promise.resolve((host.onOpenChat ?? onOpenEncounter)({...row, project: row.project})).catch(reason => setError(String(reason))); }}/>}
       </div>}
       {onOpenToday && <DestinationRow glyph="today" label="Today" ariaLabel="Open today" className="today-open" onClick={() => void onOpenToday().catch(reason => setError(String(reason)))}/>}
@@ -157,7 +157,7 @@ export function WorldNavigator({ onExplore, onOpenEncounter, centralFiles, onCen
                 onRootRef={ref=>{setDirectoryRefs(held=>({...held,[project.path]:ref}));const ownerKey=key??ref;if(projectNavigation[ownerKey]?.locationPath!==project.path)onNavigationChange(ownerKey,{locationPath:project.path});}}
                 expanded={navigation.directories??[`${project.path}/ProjectCentral`,`${project.path}/ProjectCentral/user`]}
                 onExpansion={directories=>change({directories})}/>}
-              {navigation.mode === "wiki" && <button className="project-wiki-link" disabled={!wiki} onClick={()=>openWiki(wiki!,`${project.name} wiki`,project.name)}><Glyph name="wiki" size={12}/><span>{wiki ? `${project.name} wiki` : "No wiki declared"}</span></button>}
+              {navigation.mode === "wiki" && <button className="project-wiki-link" disabled={!wiki} onClick={()=>openWiki(wiki!,`${project.name} wiki`,project.name)}><Glyph name="wiki" size={12}/><span>{wiki ? `${project.name} neighbourhood` : "No wiki declared"}</span></button>}
               {(navigation.mode??"chats") === "chats" && <ProjectChats project={project.name} refresh={fileRefresh} activeRef={activeEncounterRef} onOpen={row => { void Promise.resolve((host.onOpenChat ?? onOpenEncounter)(row)).catch(reason => setError(String(reason))); }}/>}
             </ProjectBranch>;
           })}

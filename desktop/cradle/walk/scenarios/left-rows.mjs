@@ -83,7 +83,7 @@ export default async function run({page, baseUrl, check, shot, channel, provisio
 
   // ---- A6: Open beside / Pop out on a material row (Factory INTENT's vision)
   await left.locator("[data-left-head] .left-scope-trigger").click();
-  await left.locator('[data-scope-project="Alpha"]').click();
+  await page.locator('[data-scope-project="Alpha"]').click();
   await left.locator('.world-mode-strip [data-mode="factory"]').click();
   await page.locator('.desktop-shell[data-mode="factory"]').waitFor();
   const vision = left.locator('[data-section="intent"] div[data-file-path="Work/Alpha/ProjectCentral/user/alpha.html"]');

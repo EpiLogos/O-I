@@ -103,7 +103,7 @@ export default async function run({page, baseUrl, check, shot, channel, provisio
 
   // ---- Factory INTENT: vision review mark; Write a goal in place
   await left.locator("[data-left-head] .left-scope-trigger").click();
-  await left.locator('[data-scope-project="Alpha"]').click();
+  await page.locator('[data-scope-project="Alpha"]').click();
   await left.locator('.world-mode-strip [data-mode="factory"]').click();
   await page.locator('.desktop-shell[data-mode="factory"]').waitFor();
   const intent = left.locator('[data-section="intent"]');
@@ -129,7 +129,7 @@ export default async function run({page, baseUrl, check, shot, channel, provisio
   check(native.ok === false && /Protected ground|No such file/i.test(native.error?.message ?? ""), "Native gap: Central itself refuses a first save into ProjectCentral/user (only Control/user/flows/ admits one)", {native: native.error});
   // Beta has no vision page: Write it asks for Beta's vision in place.
   await left.locator("[data-left-head] .left-scope-trigger").click();
-  await left.locator('[data-scope-project="Beta"]').click();
+  await page.locator('[data-scope-project="Beta"]').click();
   const write = intent.getByRole("button", {name: "Write it"});
   await write.waitFor({timeout: 30000});
   await write.click();

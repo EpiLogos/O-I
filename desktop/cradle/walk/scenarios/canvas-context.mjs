@@ -142,8 +142,14 @@ export default async function run({page, baseUrl, check, shot, channel, provisio
   try {await conversation.waitFor({timeout: 15000});} catch {
     throw new Error(`Conversation was not disclosed. Buttons: ${JSON.stringify(await nav.locator("button").allTextContents())}`);
   }
-  await conversation.click();
-  await page.getByRole("textbox", {name: "Message", exact: true}).waitFor();
+  // A left conversation row opens in the right panel's Chat (10-SIDEBARS
+  // §3.5, D4); this walk works the conversation in the centre, so it takes
+  // the row's own "Open in centre" action — the route the row offers.
+  const row = nav.locator(".left-conversation").filter({has: conversation});
+  await row.hover();
+  await row.getByRole("button", {name: "Actions for Canvas editor and prepared context acceptance", exact: true}).click();
+  await row.getByRole("menuitem", {name: "Open in centre", exact: true}).click();
+  await page.locator('[data-region="centre"]').getByRole("textbox", {name: "Message", exact: true}).waitFor();
   // The prepared-context read model mounts in the right region's Context
   // plane, keyed to the accompanying conversation's project/session.
   await page.getByRole("button", {name: "Toggle right region", exact: true}).click();

@@ -1,3 +1,4 @@
+import {openConversationInCentre} from "../editor-doc.mjs";
 // agent-dictation: the agent chat's LOCAL dictation input aid, end to end
 // against the real AIKit encounter owner — with a walk-served STT fixture,
 // so CI needs no live speech service.
@@ -141,7 +142,7 @@ export default async function run({baseUrl, bridgeUrl, artifactsDir, check, log,
     await nav.getByRole("button", {name: "Editor: chats and tasks", exact: true}).click();
     const conversation = page.getByRole("button", {name: "Agent dictation acceptance", exact: true});
     try { await conversation.waitFor({timeout: 10000}); } catch { throw new Error(`Conversation was not disclosed. Buttons: ${JSON.stringify(await nav.locator("button").allTextContents())}`); }
-    await conversation.click();
+    await openConversationInCentre(page, "Agent dictation acceptance");
     const message = page.getByRole("textbox", {name: "Message", exact: true});
     await message.waitFor();
 

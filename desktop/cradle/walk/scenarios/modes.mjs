@@ -16,23 +16,30 @@ export default async function run({page,baseUrl,check,shot,channel,provision:p})
   await page.goto(baseUrl); await channel('info');
   const nav=page.getByRole('complementary',{name:'World navigator'});
   await nav.locator('[data-project-path="Work/Editor"]').click();
+  await nav.locator('[data-project-path="Work/Editor"]').hover();
   if(await page.getByRole('button',{name:'Editor: files',exact:true}).getAttribute('aria-pressed') !== 'true') await page.getByRole('button',{name:'Editor: files',exact:true}).click();
   const sources=p.sources.slice(0,3);
   const title=s=>s.binding.path.split('/').pop();
-  const open=async s=>{await nav.locator(`[data-file-path="Work/Editor/${s.binding.path}"]`).click();await page.waitForFunction(ref=>document.querySelector('.pane.focused .cm-content')?.dataset.sourceRef===ref,s.binding.ref);};
+  const EDITOR='.warm-tree-host:not([hidden]) .pane.focused .surface-retained:not([hidden]) .cm-content';
+  const open=async s=>{await nav.locator(`[data-file-path="Work/Editor/${s.binding.path}"]`).click();await page.waitForFunction(([ref,sel])=>document.querySelector(sel)?.dataset.sourceRef===ref,[s.binding.ref,EDITOR]);};
+  // The focused pane keeps its other tabs' editors mounted-concealed (the
+  // retention law): the presented editor is the one in the unconcealed slot.
   for(const s of sources) await open(s);
-  await page.locator('.pane.focused .cm-content').fill('Writing that must ride through every mode.\n');
+  await page.locator(EDITOR).fill('Writing that must ride through every mode.\n');
   const layout=async()=> (await channel('read.layout')).data.layout;
+  // The warm trees stay mounted-concealed across modes (surface/retention.tsx):
+  // only what is PRESENTED counts as chrome or as an editor on screen.
+  const presented=selector=>page.locator(selector).evaluateAll(nodes=>nodes.filter(node=>node.getClientRects().length>0).length);
   const stage=mode=>page.locator(`.mode-stage[data-mode="${mode}"]`);
 
-  // --- the strip (the World navigator's bottom row) --------------------------
+  // --- the strip (the left frame's foot, fixed in every mode) -----------------
   const group=page.getByRole('radiogroup',{name:'Workspace mode',exact:true});
   const radio=name=>group.getByRole('radio',{name,exact:true});
   check(await group.getByRole('radio').count()===4,'The sidebar\'s bottom strip carries one mode radiogroup: the four work modes — Base, Factory, Expressions, Technè (⌘⌥1-4)');
   check(await radio('Settings').count()===0&&await radio('Epi-Logos').count()===0,'Settings and Epi-Logos are not in the strip');
   const systemButton=page.locator('.world-system-settings');
   check(await systemButton.getAttribute('aria-label')==='Settings'&&await systemButton.getAttribute('aria-pressed')==='false','Settings is the separate terminal button beside the strip, aria-pressed when active');
-  check(await page.locator('.footer-epi').getAttribute('aria-pressed')==='false','Epi-Logos is the footer\'s whole-app world state, not a mode: aria-pressed on the footer button');
+  check(await page.locator('.footer-epi').getAttribute('aria-pressed')==='false'&&await page.locator('.footer-epi').getAttribute('aria-label')==='Epi-Logos lens','Epi-Logos is not a mode but the lens toggle in the window footer (A5): aria-pressed on the footer button');
   check(await radio('Base').getAttribute('aria-checked')==='true','A workspace with no recorded mode is in Base');
   check((await layout()).mode===undefined,'Base is the absent mode — an arrangement saved before modes existed is unchanged');
   const switchBox=await group.boundingBox();
@@ -42,18 +49,18 @@ export default async function run({page,baseUrl,check,shot,channel,provision:p})
   // --- Factory ----------------------------------------------------------------
   await radio('Factory').click();
   await stage('factory').waitFor();
-  await stage('factory').locator('main.factory-development').waitFor();
+  await stage('factory').locator('main.factory-centre').waitFor();
   check(await radio('Factory').getAttribute('aria-checked')==='true'&&(await layout()).mode==='factory','Factory mode is recorded on the workspace layout');
-  check(await stage('factory').locator('main.factory-development').count()===1&&await page.locator('.tab').count()===0&&await page.locator('.tab-strip').count()===0,'Factory dedicates its view: the mode\'s own surface stands in its stage, no tab strip, no pane chrome');
-  check(await page.locator('.cm-content').count()===0,'Base\'s editors are unmounted while Factory stands; the base tree waits in the store');
+  check(await stage('factory').locator('main.factory-centre').count()===1&&await presented('.tab')===0&&await presented('.tab-strip')===0,'Factory dedicates its view: the mode\'s own surface stands in its stage, no tab strip, no pane chrome');
+  check(await presented('.cm-content')===0&&await page.locator('.warm-tree-host[hidden] .cm-content').count()===3,'Base\'s three editors are concealed while Factory stands — the base tree waits, retained, never presented');
   check(await page.locator('[data-region="left"]').evaluate(el=>(el.textContent??'').trim().length>10),'Factory keeps a project/files left body (its desk shape belongs to the Factory lane to evolve)');
   await shot('factory-1280');
 
   // --- Expressions ------------------------------------------------------------
   await radio('Expressions').click();
   await stage('expressions').waitFor();
-  await stage('expressions').locator('section.xp-surface').waitFor();
-  check(await stage('expressions').locator('section.xp-surface').count()===1&&await page.locator('.tab').count()===0&&await page.locator('.tab-strip').count()===0,'Expressions dedicates its view: its own surface full screen in the stage, no tab chrome');
+  await stage('expressions').locator('.pcd-host').waitFor();
+  check(await stage('expressions').locator('.pcd-host').count()===1&&await presented('.tab')===0&&await presented('.tab-strip')===0,'Expressions dedicates its view: its own surface full screen in the stage, no tab chrome');
   check(await page.getByRole('complementary',{name:'World navigator'}).count()===0,'Expressions replaces the World navigator with its own left body');
   check(await page.locator('canvas').count()<=1,'Expressions adds no second canvas: at most the window\'s one field');
   await shot('expressions-1280');
@@ -64,17 +71,15 @@ export default async function run({page,baseUrl,check,shot,channel,provision:p})
   // --- Technè -------------------------------------------------------------------
   await page.keyboard.press('Meta+Alt+4');
   await stage('techne').waitFor();
-  await stage('techne').locator('section.tn-surface').waitFor();
-  // The strip lives in the World navigator, which Technè's own left body
-  // replaces; the footer's workspace-actions menu carries the same entries.
-  check(await page.getByRole('menuitemradio',{name:'Technè',includeHidden:true}).getAttribute('aria-checked')==='true','⌘⌥4 enters Technè from the keyboard');
-  check(await stage('techne').locator('section.tn-surface').count()===1&&await page.locator('.tab-strip').count()===0,'Technè dedicates its view: the material surface in its stage, no pane chrome');
+  await stage('techne').locator('.techne-centre').waitFor();
+  // The strip stays in the left frame's foot whatever the body (L8): Technè
+  // replaces only the body, and its radio marks the mode ⌘⌥4 entered.
+  check(await radio('Technè').getAttribute('aria-checked')==='true'&&await radio('Technè').isVisible(),'⌘⌥4 enters Technè from the keyboard; the foot strip marks it');
+  check(await stage('techne').locator('.techne-centre').count()===1&&await presented('.tab-strip')===0,'Technè dedicates its view: the material surface in its stage, no pane chrome');
   check(await page.locator('aside[data-region="right"]').getAttribute('data-depth')==='panel','Technè opens with its own regions, not the ones Expressions was left with');
   await shot('techne-1280');
 
   // --- back: remembered regions, retained work ----------------------------------
-  // From a mode whose left body replaces the World navigator, the footer's
-  // workspace-actions menu is the mode fallback (same entries, same handler).
   // The duplicate mode radios left the footer (10-SIDEBARS §3.1): the left
   // foot's strip is the one mode switch, fixed in every mode.
   const menuMode=async name=>{await page.locator('[data-left-foot] .world-mode-strip').getByRole('radio',{name,exact:true}).click();};
@@ -87,10 +92,10 @@ export default async function run({page,baseUrl,check,shot,channel,provision:p})
   await radio('Factory').focus(); await page.keyboard.press('ArrowLeft');
   check(await radio('Base').getAttribute('aria-checked')==='true','Arrow keys move and select within the radiogroup');
   check((await layout()).mode===undefined,'Base clears the recorded mode');
-  await page.waitForFunction(()=>document.querySelectorAll('.tab').length===3);
-  check(await page.locator('.tab').count()===3,'Base\'s own three tabs are exactly as they were left — the workbench remounted');
-  await page.locator('.tab').filter({hasText:title(sources[2])}).click();
-  check(await docText(page,'.pane.focused .cm-content')==='Writing that must ride through every mode.\n','Unsaved writing rode through every mode switch');
+  await page.waitForFunction(()=>[...document.querySelectorAll('.tab')].filter(node=>node.getClientRects().length>0).length===3);
+  check(await presented('.tab')===3,'Base\'s own three tabs are exactly as they were left — the workbench remounted');
+  await page.locator('.warm-tree-host:not([hidden]) .tab').filter({hasText:title(sources[2])}).click();
+  check(await docText(page,EDITOR)==='Writing that must ride through every mode.\n','Unsaved writing rode through every mode switch');
 
   // --- Settings: the terminal button beside the strip enters its mode ----------
   const settingsButton=page.locator('.world-system-settings');
@@ -102,17 +107,17 @@ export default async function run({page,baseUrl,check,shot,channel,provision:p})
   check(await settingsButton.getAttribute('aria-pressed')==='true','The Settings button marks itself active (aria-pressed) while its mode stands');
   check((await layout()).mode==='settings','Settings is recorded as the workspace mode');
   await stage('settings').locator('.system-panel').waitFor();
-  check(await stage('settings').locator('.system-panel').count()===1&&await page.locator('.tab').count()===0&&await page.locator('.tab-strip').count()===0,'Settings\' centre is the System panel inside its stage, with no tab chrome');
+  check(await stage('settings').locator('.system-panel').count()===1&&await presented('.tab')===0&&await presented('.tab-strip')===0,'Settings\' centre is the System panel inside its stage, with no tab chrome');
   check(await page.getByRole('complementary',{name:'World navigator'}).count()===1&&await group.getByRole('radio').count()===4,'Settings keeps the World navigator, whose strip still carries only the four work modes');
   check(await page.evaluate(()=>{const shell=document.querySelector('.desktop-shell');return !!shell&&shell.getBoundingClientRect().top===0;}),'Nothing renders above the shell in Settings mode');
   await shot('settings-1280');
   await radio('Base').click();
-  await page.waitForFunction(()=>document.querySelectorAll('.tab').length===3);
+  await page.waitForFunction(()=>[...document.querySelectorAll('.tab')].filter(node=>node.getClientRects().length>0).length===3);
   check(await page.evaluate(()=>{const shell=document.querySelector('.desktop-shell');return !!shell&&shell.getBoundingClientRect().top===0&&![...document.body.children].some(node=>node!==shell.closest('#root')&&node.getBoundingClientRect().height>0&&node.getBoundingClientRect().bottom<=shell.getBoundingClientRect().top+1&&getComputedStyle(node).position!=='fixed');}),'Nothing renders above the shell in any mode');
   check(await page.evaluate(()=>document.documentElement.scrollHeight<=window.innerHeight&&document.body.scrollHeight<=window.innerHeight),'The document still does not scroll');
 
   // --- tab presentation: the pin model ---------------------------------------------
-  const pane=page.locator('.pane.group.focused');
+  const pane=page.locator('.warm-tree-host:not([hidden]) .pane.group.focused');
   const pin=()=>pane.locator('.pane-tool-pin');
   const stripBox=()=>pane.locator('.tab-strip').boundingBox();
   const bodyBox=()=>pane.locator('.surface-body').boundingBox();
@@ -142,15 +147,15 @@ export default async function run({page,baseUrl,check,shot,channel,provision:p})
   await pin().click();
   check(await pane.getAttribute('data-tab-presentation')==='unpinned','The pin control unpins the tabs');
   check(await pane.getAttribute('data-tab-orientation')==='vertical','Unpinning from the list keeps the vertical geometry for the reveal');
-  await pane.locator('.cm-content').click(); await page.mouse.move(640,500);
+  await pane.locator('.surface-retained:not([hidden]) .cm-content').click(); await page.mouse.move(640,500);
   await page.waitForTimeout(600);
-  await page.waitForFunction(()=>document.querySelector('.pane.group.focused > .tab-strip').getBoundingClientRect().width<12);
+  await page.waitForFunction(()=>document.querySelector('.warm-tree-host:not([hidden]) .pane.group.focused > .tab-strip').getBoundingClientRect().width<12);
   const foldedBody=await bodyBox();
   check(foldedBody.x-paneBox.x<12,'Unpinned tabs fold to a slim edge and give the pane their band in flow');
   const zone=await pane.locator('.tab-reveal-zone').boundingBox();
   check(zone.height>=28&&Math.abs(zone.y+zone.height-(paneBox.y+paneBox.height))<4,'The vertical reveal zone covers the bottom of the strip region');
   await page.mouse.move(zone.x+zone.width/2,zone.y+zone.height/2);
-  await page.waitForFunction(()=>document.querySelector('.pane.group.focused > .tab-strip').getBoundingClientRect().width>120);
+  await page.waitForFunction(()=>document.querySelector('.warm-tree-host:not([hidden]) .pane.group.focused > .tab-strip').getBoundingClientRect().width>120);
   const openedBody=await bodyBox();
   check(openedBody.x>foldedBody.x+100&&openedBody.width<foldedBody.width,'The list opens in flow — the surface gives room, nothing overlays');
   check(await pane.locator('.tab').count()===3,'Unpinned still presents the same tabs');
@@ -171,23 +176,23 @@ export default async function run({page,baseUrl,check,shot,channel,provision:p})
   await page.getByRole('menuitemradio',{name:'Unpin tabs'}).click();
   await page.keyboard.press('Escape');
   check(await pane.getAttribute('data-tab-presentation')==='unpinned'&&await pane.getAttribute('data-tab-orientation')==='horizontal','Unpinning from the strip keeps the horizontal geometry for the reveal');
-  await pane.locator('.cm-content').click(); await page.mouse.move(640,500);
-  await page.waitForFunction(()=>document.querySelector('.pane.group.focused > .tab-strip').getBoundingClientRect().height<8);
+  await pane.locator('.surface-retained:not([hidden]) .cm-content').click(); await page.mouse.move(640,500);
+  await page.waitForFunction(()=>document.querySelector('.warm-tree-host:not([hidden]) .pane.group.focused > .tab-strip').getBoundingClientRect().height<8);
   const hiddenBody=await bodyBox();
   check(hiddenBody.y-paneBox.y<8,'Unpinned tabs give their band to the surface in flow');
   const edge=await pane.locator('.tab-reveal-zone').boundingBox();
   check(edge.width>=paneBox.width-2,'The horizontal reveal zone spans the full top edge');
-  check(await page.evaluate(()=>parseFloat(getComputedStyle(document.querySelector('.pane.group.focused > .tab-reveal-zone'),'::after').height)>=28),'The zone is deepest over the pane-tool icons at the right');
+  check(await page.evaluate(()=>parseFloat(getComputedStyle(document.querySelector('.warm-tree-host:not([hidden]) .pane.group.focused > .tab-reveal-zone'),'::after').height)>=28),'The zone is deepest over the pane-tool icons at the right');
   await page.mouse.move(edge.x+edge.width-40,edge.y+10);
-  await page.waitForFunction(()=>document.querySelector('.pane.group.focused > .tab-strip').getBoundingClientRect().height>=30);
+  await page.waitForFunction(()=>document.querySelector('.warm-tree-host:not([hidden]) .pane.group.focused > .tab-strip').getBoundingClientRect().height>=30);
   const after=await bodyBox();
   check(after.y>hiddenBody.y+20&&after.height<hiddenBody.height,'Hovering the edge opens the bar in flow, pushing the surface down');
   await shot('tabs-unpinned-horizontal-1280');
-  await pane.locator('.cm-content').click(); await page.mouse.move(640,500);
-  await page.waitForFunction(()=>document.querySelector('.pane.group.focused > .tab-strip').getBoundingClientRect().height<8);
+  await pane.locator('.surface-retained:not([hidden]) .cm-content').click(); await page.mouse.move(640,500);
+  await page.waitForFunction(()=>document.querySelector('.warm-tree-host:not([hidden]) .pane.group.focused > .tab-strip').getBoundingClientRect().height<8);
   await pane.locator('.tab[data-active="true"]').focus();
-  await page.waitForFunction(()=>document.querySelector('.pane.group.focused > .tab-strip').getBoundingClientRect().height>=30);
-  check(await page.evaluate(()=>document.querySelector('.pane.group.focused > .tab-strip').getBoundingClientRect().height>=30),'Focusing into the folded strip reveals it — a keyboard user never loses their place');
+  await page.waitForFunction(()=>document.querySelector('.warm-tree-host:not([hidden]) .pane.group.focused > .tab-strip').getBoundingClientRect().height>=30);
+  check(await page.evaluate(()=>document.querySelector('.warm-tree-host:not([hidden]) .pane.group.focused > .tab-strip').getBoundingClientRect().height>=30),'Focusing into the folded strip reveals it — a keyboard user never loses their place');
   await page.keyboard.press('Meta+1');
   check(await pane.locator('.tab').first().getAttribute('data-active')==='true','The keyboard tab map still works while tabs are unpinned');
 
@@ -195,9 +200,10 @@ export default async function run({page,baseUrl,check,shot,channel,provision:p})
   // Tab-pin state belongs to the mode's tree that set it, so the reload is
   // read in Base, where it was set.
   await page.reload(); await channel('info');
-  await page.waitForFunction(()=>document.querySelectorAll('.tab').length===3);
+  await page.waitForFunction(()=>[...document.querySelectorAll('.tab')].filter(node=>node.getClientRects().length>0).length===3);
   const restored=await layout();
-  check(restored.mode===undefined&&await pane.getAttribute('data-tab-presentation')==='unpinned','Mode and tab presentation restore with the workspace');
+  const beforeReloadBook=await page.evaluate(()=>localStorage.getItem('oi-cradle.workspaces.v1'));
+  check(restored.mode===undefined&&await pane.getAttribute('data-tab-presentation')==='unpinned','Mode and tab presentation restore with the workspace',{mode:restored.mode,presentation:await pane.getAttribute('data-tab-presentation'),panes:await page.locator('.pane.group').evaluateAll(n=>n.map(x=>[x.closest('[hidden]')?'hidden':'shown',x.getAttribute('data-tab-presentation'),x.className]))});
   check(restored.tabListWidth===304,'The tab list width restores with the workspace');
   check(await page.locator('.desktop-menu.footer-status').getAttribute('data-attention')!=='true','Restoring a workspace with every mode surface open raises no recovery or error');
   const waiting=await page.evaluate(()=>JSON.parse(localStorage.getItem('oi-cradle.workspaces.v1')).workspaces[0].modeLayouts);

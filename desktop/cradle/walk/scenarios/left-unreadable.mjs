@@ -71,7 +71,7 @@ export default async function run({page, baseUrl, check, shot, channel, provisio
   // The same law in a section header (Factory's TASKS, scope Alpha).
   faults.refuse.delete("agency_read:Alpha");
   await left.locator("[data-left-head] .left-scope-trigger").click();
-  await left.locator('[data-scope-project="Alpha"]').click();
+  await page.locator('[data-scope-project="Alpha"]').click();
   await strip.locator('[data-mode="factory"]').click();
   await page.locator('.desktop-shell[data-mode="factory"]').waitFor();
   const tasks = left.locator('[data-section="tasks"]');
@@ -90,7 +90,7 @@ export default async function run({page, baseUrl, check, shot, channel, provisio
   // ---- R10: a refused read — distinct from empty
   faults.refuse.add("agency_read:Beta");
   await left.locator("[data-left-head] .left-scope-trigger").click();
-  await left.locator('[data-scope-project="Beta"]').click();
+  await page.locator('[data-scope-project="Beta"]').click();
   const error = tasks.getByRole("alert");
   await error.waitFor({timeout: 15000});
   const errorText = (await error.innerText()).replace(/\s+/g, " ").trim();

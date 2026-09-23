@@ -152,3 +152,16 @@ export async function recoverArrangement(page) {
   const menu = await scopeMenu(page);
   await menu.getByRole('button', { name: 'Recover arrangement' }).click();
 }
+
+/** A left conversation row opens in the right panel's Chat (10-SIDEBARS
+ *  §3.5, D4). A walk that works the conversation in the centre's encounter
+ *  view takes the row's own "Open in centre" action — the route the row
+ *  offers — instead of the plain click. */
+export async function openConversationInCentre(page, title) {
+  const row = page.locator('[data-region="left"] .left-conversation')
+    .filter({ has: page.locator('.left-conversation-title', { hasText: new RegExp(`^${title.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}$`) }) }).first();
+  await row.waitFor({ timeout: 30000 });
+  await row.hover();
+  await row.getByRole('button', { name: `Actions for ${title}`, exact: true }).click();
+  await row.getByRole('menuitem', { name: 'Open in centre', exact: true }).click();
+}

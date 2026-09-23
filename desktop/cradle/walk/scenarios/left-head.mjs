@@ -33,7 +33,7 @@ export default async function run({page, baseUrl, check, shot, channel, provisio
   const head = left.locator("[data-left-head]");
   const foot = left.locator("[data-left-foot]");
   const scopeName = () => head.locator(".left-scope-name").innerText();
-  const openScope = async () => { await head.locator(".left-scope-trigger").click(); await left.getByRole("group", {name: "Scope and workspace"}).waitFor(); return left.getByRole("group", {name: "Scope and workspace"}); };
+  const openScope = async () => { await head.locator(".left-scope-trigger").click(); await page.getByRole("group", {name: "Scope and workspace"}).waitFor(); return page.getByRole("group", {name: "Scope and workspace"}); };
   await page.locator('[data-project-path="Work/Alpha"]').waitFor({timeout: 30000});
 
   // ---- scope menu: the real census

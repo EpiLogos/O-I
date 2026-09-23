@@ -8,7 +8,7 @@
 // never an empty healthy board; restoring it and Retry brings the runs back.
 import {renameSync} from "node:fs";
 import {bindDefaultCentral} from "../editor-doc.mjs";
-import {enterFactory, factoryGround, recordOps} from "../lib/factory-ground.mjs";
+import {currentScope, enterFactory, factoryGround, recordOps} from "../lib/factory-ground.mjs";
 import {recognise} from "../lib/factory-specimen.mjs";
 
 export async function setup(args) { return factoryGround(args); }
@@ -44,7 +44,7 @@ export default async function run({page, baseUrl, check, shot, channel, log, pro
   const after = await placement();
   const moved = Object.keys(after).filter(ref => after[ref] !== settled[ref]);
   check(JSON.stringify(moved) === JSON.stringify([A.runRef]) && after[A.runRef] === "queued", "On the person's read exactly the run that moved changes place (NEEDS YOU → QUEUED)", {moved});
-  check(await page.locator('nav.factory-navigator select[aria-label="Project"]').inputValue() === "Specimen" && await page.locator("main.factory-centre [data-run-page]").count() === 0,
+  check(await currentScope(page) === "Specimen" && await page.locator("main.factory-centre [data-run-page]").count() === 0,
     "The scope and the open page did not move");
   await page.waitForTimeout(800);
   const events = (await channel("read.events", [seqSettled])).data.receipts ?? [];

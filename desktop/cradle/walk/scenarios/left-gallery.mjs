@@ -37,7 +37,7 @@ export default async function run({page, baseUrl, check, shot, channel, provisio
       await shot(`base-${theme}-${width}`);
       if (width === 1440) {
         await left.locator("[data-left-head] .left-scope-trigger").click();
-        const menu = left.getByRole("group", {name: "Scope and workspace"});
+        const menu = page.getByRole("group", {name: "Scope and workspace"});
         await menu.waitFor();
         const clipped = await menu.evaluate(node => { const box = node.getBoundingClientRect(); const hit = document.elementFromPoint(box.right - 6, box.top + 30); return {right: Math.round(box.right), inside: !!hit && node.contains(hit)}; });
         check(clipped.inside, `${theme}: the scope menu is whole — its right edge is not clipped by the narrow sidebar`, clipped);

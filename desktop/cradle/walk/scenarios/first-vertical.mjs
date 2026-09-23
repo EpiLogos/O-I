@@ -1,3 +1,4 @@
+import {openConversationInCentre} from "../editor-doc.mjs";
 // first-vertical (wave 6, one joined walk on the installed frozen cut): a real Central
 // document opens, a passage is selected, the selection composes an addressed
 // request to the resident agent (installed ai-kit frozen cut 62a238b — real
@@ -147,7 +148,7 @@ export default async function run({page,baseUrl,check,shot,channel,provision:p})
   // 1 — the resident agent conversation opens over the real AIKit encounter.
   await nav.locator('[data-project-path="Work/Editor"]').click();
   await nav.getByRole("button",{name:"Editor: chats and tasks",exact:true}).click();
-  await page.getByRole("button",{name:"First vertical acceptance",exact:true}).click();
+  await openConversationInCentre(page,"First vertical acceptance");
   await page.getByRole("textbox",{name:"Message",exact:true}).waitFor();
   await page.getByRole("button",{name:"First vertical ACP",exact:true}).click();
   await page.waitForFunction(()=>!document.querySelector(".encounter-connect"),null,{timeout:60000});
@@ -159,6 +160,8 @@ export default async function run({page,baseUrl,check,shot,channel,provision:p})
   // (owner fact: `agents/now/flows/<key>.json` below ProjectCentral), which the
   // navigator expands by default.
   if(!await nav.isVisible())await page.keyboard.press("Meta+b");
+  // The project row's view icons are revealed on hover (owner ruling 2026-09-18).
+  await nav.locator('[data-project-path="Work/Editor"]').hover();
   await nav.getByRole("button",{name:"Editor: files",exact:true}).click();
   for(const folder of ["ProjectCentral/agents","ProjectCentral/agents/now","ProjectCentral/agents/now/flows"]) {
     await nav.locator(`[data-file-path="Work/Editor/${folder}"]`).click();
@@ -220,9 +223,11 @@ export default async function run({page,baseUrl,check,shot,channel,provision:p})
 
   // 7 — the human reviews and includes that Return against the document.
   if(!await nav.isVisible())await page.keyboard.press("Meta+b");
-  const tray=nav.locator(".project-receiving").first();
+  // The reply arrives in the Inbox (10-SIDEBARS §3.1, D3): the one queue.
+  await page.locator('[data-left-foot]').getByRole("button",{name:/^Inbox/}).click();
+  const tray=page.getByRole("region",{name:"Inbox"});
   await tray.getByRole("button",{name:"Refresh receiving"}).click();
-  await page.waitForFunction(()=>document.querySelector(".project-receiving header small")?.textContent?.includes("1 in the receiving field"),null,{timeout:20000});
+  await page.waitForFunction(()=>document.querySelector(".left-inbox header small")?.textContent==="1 waiting",null,{timeout:20000});
   await tray.locator(".receiving-row").first().click();
   const detail=tray.locator(".receiving-detail");await detail.waitFor();
   check((await detail.innerText()).includes("Agent — agent:editor-walk"),"The arrival's producer attribution names the addressed participant");
@@ -231,9 +236,9 @@ export default async function run({page,baseUrl,check,shot,channel,provision:p})
   await shot("return-of-the-reply-before-review");
 
   await tray.getByRole("button",{name:"Accept current basis"}).click();
-  await page.waitForFunction(()=>document.querySelector(".project-receiving .receiving-detail")?.textContent?.includes("accepted by"),null,{timeout:20000});
+  await page.waitForFunction(()=>document.querySelector(".left-inbox .receiving-detail")?.textContent?.includes("accepted by"),null,{timeout:20000});
   await tray.getByRole("button",{name:"Include into the document"}).click();
-  await page.waitForFunction(()=>document.querySelector(".receiving-row .receiving-status")?.textContent==="included",null,{timeout:20000});
+  await page.waitForFunction(()=>document.querySelector(".left-inbox .receiving-row .receiving-status")?.textContent==="included",null,{timeout:20000});
   check(true,"The human accepts the exact current basis and includes the reply through the owner's revision-checked operation");
   await shot("reply-included");
 

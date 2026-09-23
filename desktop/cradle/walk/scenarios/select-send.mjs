@@ -1,3 +1,4 @@
+import {openConversationInCentre} from "../editor-doc.mjs";
 // select-send (6B, cut 1): the desktop dispatches an explicit addressed turn to a
 // real resident agent session through the installed ai-kit frozen cut (main 62a238b),
 // with a real Actuation owner admitting the selected Agency, and a controlled
@@ -86,7 +87,7 @@ export default async function run({page,baseUrl,check,shot,channel,provision:p})
   const nav=page.getByRole("complementary",{name:"World navigator"});
   await nav.locator('[data-project-path="Work/Editor"]').click();
   await nav.getByRole("button",{name:"Editor: chats and tasks",exact:true}).click();
-  await page.getByRole("button",{name:"Addressed dispatch acceptance",exact:true}).click();
+  await openConversationInCentre(page,"Addressed dispatch acceptance");
   await page.getByRole("textbox",{name:"Message",exact:true}).waitFor();
   await page.getByRole("button",{name:"Addressed acceptance ACP",exact:true}).click();
   await page.waitForFunction(()=>!document.querySelector(".encounter-connect"),null,{timeout:60000});

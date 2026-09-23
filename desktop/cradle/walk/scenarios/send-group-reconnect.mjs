@@ -1,3 +1,4 @@
+import {openConversationInCentre} from "../editor-doc.mjs";
 // send-group-reconnect (6B, cut 2): the desktop dispatches one addressed packet
 // to a group of explicitly named residents through the installed ai-kit frozen
 // cut (main 62a238b) — the owner admits the whole group before the first
@@ -95,14 +96,14 @@ export default async function run({page,baseUrl,check,shot,channel,provision:p})
   const [a,b]=RECIPIENTS;
   await nav.locator('[data-project-path="Work/Editor"]').click();
   await nav.getByRole("button",{name:"Editor: chats and tasks",exact:true}).click();
-  await page.getByRole("button",{name:"Group dispatch acceptance A",exact:true}).click();
+  await openConversationInCentre(page,"Group dispatch acceptance A");
   await page.getByRole("textbox",{name:"Message",exact:true}).waitFor();
   await page.getByRole("button",{name:"Group walk A (a)",exact:true}).click();
   await page.waitForFunction(()=>!document.querySelector(".encounter-connect"),null,{timeout:60000});
   await page.waitForFunction(()=>document.querySelector(".encounter-addressed-service")?.getAttribute("data-service")==="running",null,{timeout:30000});
   // Both recipients need a live resident native session before a group can be
   // admitted — an unopened participant refuses the whole group owner-side.
-  await nav.getByRole("button",{name:"Group dispatch acceptance B",exact:true}).click();
+  await openConversationInCentre(page,"Group dispatch acceptance B");
   await page.getByRole("textbox",{name:"Message",exact:true}).waitFor();
   await page.getByRole("button",{name:"Group walk B (b)",exact:true}).click();
   await page.waitForFunction(()=>!document.querySelector(".encounter-connect"),null,{timeout:60000});
