@@ -1,21 +1,22 @@
 /**
- * GuardianRepertoire — the six EXISTING Product Guardians (Central,
- * Actuation, AIKit, Software Factory, Workcell, Quaternal Logic) are
- * RESOLVED here, never minted (COMMON-BRIEF §handoff 2). `agency_read`
- * carries no field that marks a session as a Guardian, so absent a
- * registered GuardianSource every product renders the named receiving
- * row — never a guess from a name match.
+ * GuardianRepertoire — the Guardians are the identities Central's roster
+ * names with a guardian role, RESOLVED here, never minted and never listed
+ * from a hardcoded table (10-SIDEBARS §4.5). A registered GuardianSource adds
+ * each one's repertoire.
  */
 import { useEffect, useState } from "react";
 import { Loading } from "../shared/Loading";
 import { getGuardianSource, subscribeGuardianSource } from "./agencySources";
-import { GUARDIAN_PRODUCTS } from "./agencyTypes";
-import type { GuardianProduct, GuardianRecord } from "./agencyTypes";
+import type { GuardianRecord } from "./agencyTypes";
+import { isGuardian, useAgentRoster } from "./roster";
 
 export function GuardianRepertoire({ project }: { project?: string }) {
+  // The guardians are real identities: Central's agent-profile roster, by
+  // role (agency/roster.ts). A registered GuardianSource adds their
+  // repertoires; without one, a guardian still shows as the identity it is.
+  const roster = useAgentRoster(project);
   const [bound, setBound] = useState(() => getGuardianSource() !== undefined);
   useEffect(() => subscribeGuardianSource(() => setBound(getGuardianSource() !== undefined)), []);
-
   const [guardians, setGuardians] = useState<GuardianRecord[]>();
   const [error, setError] = useState<string>();
   useEffect(() => {
@@ -26,34 +27,30 @@ export function GuardianRepertoire({ project }: { project?: string }) {
     source.list(project).then((list) => { if (live) setGuardians(list); }).catch((cause) => { if (live) setError(String(cause)); });
     return () => { live = false; };
   }, [project, bound]);
+  const byRef = new Map<string, GuardianRecord>();
+  for (const guardian of guardians ?? []) byRef.set(guardian.agentRef, guardian);
+  const identities = roster.agents.filter(isGuardian);
 
-  const byProduct = new Map<GuardianProduct, GuardianRecord>();
-  for (const guardian of guardians ?? []) byProduct.set(guardian.product, guardian);
-
-  return <div className="agency-guardians" aria-label="Product Guardians">
+  return <div className="agency-guardians" aria-label="Guardians">
     <p className="oi-note">
-      Skill bodies stay with their native product owners; composition and projection stay with AIKit. A Guardian is the stewardship and accumulation locus, never an exclusive tool owner or a six-copies manual.
+      Skill bodies stay with their native product owners; composition and projection stay with AIKit. A Guardian is the stewardship and accumulation locus, never an exclusive tool owner.
     </p>
-    {!bound && <p className="oi-refusal" data-agency-guardians-unresolved>
-      No GuardianSource is registered — the six existing Guardians are not recognisable in the current `agency_read` reading (it carries no field marking a session as a Guardian). Recognition of the six durable Agent/Agency identities lands with O:I issue 220; nothing here mints a replacement.
-    </p>}
-    {bound && !guardians && !error && <Loading label="Reading Guardian repertoires…" scope="surface"/>}
+    {roster.state === "reading" && !identities.length && <Loading label="Reading guardians…" scope="surface"/>}
+    {roster.state === "error" && <p className="oi-refusal" role="alert">Couldn&apos;t load guardians. <button type="button" className="oi-action" onClick={roster.retry}>Retry</button></p>}
+    {roster.state === "ready" && !identities.length && <p className="oi-note">No guardians are defined in this scope.</p>}
+    {bound && !guardians && !error && identities.length > 0 && <Loading label="Reading Guardian repertoires…" scope="surface"/>}
     {error && <p className="oi-refusal" role="alert">{error}</p>}
     <ul className="agency-guardian-list">
-      {GUARDIAN_PRODUCTS.map((product) => {
-        const guardian = byProduct.get(product);
-        return <li key={product} className="agency-guardian-row oi-row">
-          {guardian ? <ResolvedGuardian guardian={guardian}/> : <UnresolvedGuardian product={product}/>}
+      {identities.map((identity) => {
+        const guardian = byRef.get(identity.ref);
+        return <li key={identity.ref} className="agency-guardian-row oi-row">
+          {guardian ? <ResolvedGuardian guardian={guardian}/> : <div className="agency-guardian-body">
+            <div className="oi-ref-row"><strong>{identity.name}</strong><span className="oi-state">{identity.accepted ? "Accepted" : "Not accepted yet"}</span></div>
+            {identity.purpose && <p className="oi-note">{identity.purpose}</p>}
+          </div>}
         </li>;
       })}
     </ul>
-  </div>;
-}
-
-function UnresolvedGuardian({ product }: { product: GuardianProduct }) {
-  return <div className="agency-guardian-body">
-    <div className="oi-ref-row"><strong>{product}</strong><span className="oi-state">Unknown</span></div>
-    <p className="oi-note">Guardian identity not resolved — no owner reading discloses it yet (O:I issue 220).</p>
   </div>;
 }
 

@@ -1,3 +1,4 @@
+import {PermissionCard} from "../agent/chat/PermissionCard";
 import {useLayoutEffect,useMemo,useRef,useState,type ReactNode} from "react";
 import type {A2aDifference,A2aPeerFields,EncounterReading,EncounterStatus,JournalPage,PermissionDecision} from "./client";
 import {Glyph} from "../workspace/Glyph";
@@ -170,7 +171,10 @@ export function EncounterView({title,plane,onPlane,reading,status,draft,pending,
         * resident idempotently without starting a new transport. The honest
         * disclosure is the held seat and the fault, not a recovery promise. */}
       {status?.error&&status?.native_session_id&&<p className="encounter-fault-held" role="status">The owner still holds the recorded session&apos;s seat ({status.native_session_id}); no operation on the bound owner replaces a faulted transport — recovery is the owner&apos;s service restart.</p>}
-      {reading?.permissions?.map(request=><section className="encounter-permission" key={request.native_request_id} aria-label="Provider consent"><strong>Provider consent requested</strong><pre>{typeof request.tool_call==="string"?request.tool_call:JSON.stringify(request.tool_call,null,2)}</pre><p>This answers the provider. Execution remains subject to its native authority.</p><div>{request.choices.map(choice=><button key={choice.option_id} disabled={pending||!allowed("permission",false)} onClick={()=>onPermission(request.native_request_id,{outcome:"selected",option_id:choice.option_id})}>{choice.label}</button>)}<button disabled={pending||!allowed("permission",false)} onClick={()=>onPermission(request.native_request_id,{outcome:"cancelled"})}>Cancel request</button></div></section>)}
+      {/* The same inline card as the panel's chat (10-SIDEBARS §4.3, P5):
+        * what the agent wants in words, its own scope choices, Allow /
+        * Refuse; the verbatim request only behind Show raw. */}
+      {reading?.permissions?.map(request=><PermissionCard key={request.native_request_id} request={request} agentName={status?.provider?.id?"The agent":"The agent"} disabled={pending||!allowed("permission",false)} onAnswer={decision=>onPermission(request.native_request_id,decision)}/>)}
       {!connected&&<div className="encounter-connect"><span>Connect a native provider</span>{providers.map(provider=><button key={provider.id} disabled={pending||!allowed("open",true)} title={action("open")?.reason??undefined} onClick={()=>onProvider(provider.id)}>{provider.label}</button>)}{!providers.length&&<p>No ACP provider configured in AIKit.</p>}{resume&&<div className="encounter-resume"><p>The owner holds a recorded native session for this conversation, so a fresh open is refused. Reconnecting resumes that exact recorded identity — nothing is replaced or silently created.</p><button disabled={pending} aria-label="Reconnect recorded session" onClick={()=>onReconnect(resume.provider)}>Reconnect recorded session ({resume.provider})</button></div>}</div>}
       <ContextLedger draft={draft} reading={reading} editable={!!reading&&allowed("draft",true)} onDraft={onDraft}/>
       <textarea ref={composerInput} disabled={!reading||!allowed("draft",true)} aria-label="Message" value={draft} onChange={event=>onDraft(event.target.value)} rows={3}/>

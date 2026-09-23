@@ -13,14 +13,19 @@ export default async function run({page,baseUrl,check,shot,channel,provision:p})
  await message.fill('Use a shell tool to write exactly OI_APPROVED_TOOL_WRITE into consent-output.txt in the current directory. This is an explicitly authorized isolated acceptance file. Request native permission before writing, then read the file and respond with its exact contents.');
  await page.waitForFunction(()=>Array.from(document.querySelectorAll('.encounter button')).some(button=>button.textContent==='Send'&&!button.disabled));
  await page.getByRole('button',{name:'Send',exact:true}).click();
- const consent=page.getByRole('region',{name:'Provider consent',exact:true});await consent.waitFor({timeout:150000});
+ // The inline permission card (10-SIDEBARS §4.3, P5): words first, the
+ // harness's own allow options as scopes, the verbatim request behind Show raw.
+ const consent=page.locator('.chat-permission');await consent.waitFor({timeout:150000});
  const result=p.native('encounter','--request-json',JSON.stringify({action:'view',agent_session:p.ref}));if(!result.ok)throw new Error(JSON.stringify(result));
  const request=result.data.permissions[0];
- check(await consent.locator('pre').innerText()===JSON.stringify(request.tool_call,null,2),'Consent displays exact native tool request content');
- for(const choice of request.choices)check(await consent.getByRole('button',{name:choice.label,exact:true}).count()===1,`Native consent choice preserved: ${choice.label}`);
+ await consent.locator('details.chat-permission-raw summary').click();
+ check(JSON.parse(await consent.locator('details.chat-permission-raw pre').innerText()).tool_call!==undefined&&JSON.stringify(JSON.parse(await consent.locator('details.chat-permission-raw pre').innerText()).tool_call)===JSON.stringify(request.tool_call),'Consent keeps the exact native tool request behind Show raw');
+ const allows=request.choices.filter(choice=>(choice.kind??'').startsWith('allow'));
+ check(allows.length<2||await consent.locator('.chat-permission-scope').count()===allows.length,'Native allow options are the card\'s scope choices, none invented');
  const once=request.choices.find(choice=>choice.kind==='allow_once');if(!once)throw new Error('Actual native request did not offer allow_once');
- await consent.getByRole('button',{name:once.label,exact:true}).click();
- await page.waitForFunction(()=>!document.querySelector('.encounter-composer .encounter-permission'),null,{timeout:30000});
+ if(allows.length>1)await consent.locator('.chat-permission-scope',{hasText:'This time'}).click();
+ await consent.getByRole('button',{name:'Allow',exact:true}).click();
+ await page.waitForFunction(()=>!document.querySelector('.encounter-composer .chat-permission'),null,{timeout:30000});
  await page.waitForFunction(()=>Array.from(document.querySelectorAll('.encounter-assistant')).some(node=>node.textContent.includes('OI_APPROVED_TOOL_WRITE')),null,{timeout:150000});
  check(readFileSync(join(p.projectRoot,'consent-output.txt'),'utf8')==='OI_APPROVED_TOOL_WRITE','UI native consent completes the real isolated tool write/read');
  await page.getByRole('button',{name:'Activity',exact:true}).click();
