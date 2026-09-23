@@ -83,11 +83,12 @@ export default async function run({page,baseUrl,check,shot,channel,provision:p})
   // A. Enter the Epi-Logos world (the whole-app world state in the footer),
   // then its Expressions face.
   await page.locator(".workspace-footer-edge").hover().catch(()=>{});
-  await page.waitForTimeout(400);
-  const epiToggle=page.locator('[data-mode="epi-logos"], [aria-label*="Epi-Logos" i]').first();
-  await epiToggle.click({force:true}).catch(()=>{});
-  await page.waitForTimeout(800);
-  check(await page.locator('.desktop-shell[data-world="epi-logos"], [data-epi-logos="true"]').count()>0 || await epiToggle.getAttribute("aria-pressed")==="true","the Epi-Logos world is active");
+  await page.waitForTimeout(500);
+  const epiToggle=page.locator(".footer-epi").first();
+  await epiToggle.waitFor({timeout:15000});
+  await epiToggle.click();
+  await page.waitForFunction(()=>document.querySelector(".world-context-world")!==null||document.querySelector(".footer-epi")?.getAttribute("aria-pressed")==="true",null,{timeout:15000});
+  check(true,"the Epi-Logos world is active (Within Epi-Logos disclosed)");
   await page.locator('.world-mode-strip [data-mode="expressions"]').click();
   await page.waitForTimeout(900);
   check(await page.locator('.desktop-shell[data-mode="expressions"]').count()>0,"Expressions opens inside the Epi-Logos world");
@@ -173,9 +174,9 @@ export default async function run({page,baseUrl,check,shot,channel,provision:p})
   check(await page.locator('.desktop-shell').count()>0,"leaving the world keeps the shell usable");
   // Re-enter: readiness is re-resolved, not trusted from a stale flag.
   await page.locator(".workspace-footer-edge").hover().catch(()=>{});
-  await page.waitForTimeout(300);
-  await epiToggle.click({force:true}).catch(()=>{});
-  await page.waitForTimeout(700);
+  await page.waitForTimeout(500);
+  await page.locator(".footer-epi").first().click();
+  await page.waitForFunction(()=>document.querySelector(".world-context-world")!==null||document.querySelector(".footer-epi")?.getAttribute("aria-pressed")==="true",null,{timeout:15000});
   const reentered=statusOf(keptRef);
   check(reentered.provider?.body_ref===BODY,"re-entry re-resolves the body readback truthfully");
   check(reentered.native_session_id===statusOf(keptRef).native_session_id,"the resident identity stays stable across re-entry");
