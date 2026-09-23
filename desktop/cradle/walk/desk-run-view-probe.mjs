@@ -1,13 +1,17 @@
 import {chromium} from 'playwright';
 import {mkdirSync} from 'fs';
-// Acceptance probe — the Desk's full SSSF Run view (UI-FUNCTION-LANDING F1:
-// "all four depths, fixture + refused map"; DeskRunView: depths
-// Trajectory/Reading/Live/Map, one read per entry, honest refused states).
-// Drives the dev scenario's labelled fixture Run ("Sidebar slice — render
-// lane"), so the expected content is knowable and every check is content or
-// geometry, never presence alone. Failures accumulate and the probe exits 1
-// when any check fails (HARNESS-SETTINGS-RESEARCH-2026-09-22 §4 negative
-// roster 7 + owner ruling 8).
+// DEV-ONLY DIAGNOSTIC — NO ACCEPTANCE STANDING. This probe drives the dev
+// scenario's invented fixture Run ("Sidebar slice — render lane"), not any
+// real owner leg; the Factory/Desk acceptance lives in
+// walk/scenarios/factory-development.mjs (real kernel legs, content-equal
+// to the owner's own reads). It retains value as a developer diagnostic of
+// the Desk's full SSSF Run view (UI-FUNCTION-LANDING F1: all four depths,
+// fixture + refused map; DeskRunView: Trajectory/Reading/Live/Map, one read
+// per entry, honest refused states): expected content is knowable against
+// the labelled fixture and every check is content or geometry, never
+// presence alone. Failures accumulate and the probe exits 1 when any check
+// fails (HARNESS-SETTINGS-RESEARCH-2026-09-22 §4 negative roster 7 + owner
+// ruling 8).
 //
 // It reads the standing dev server (PROBE_URL overrides) — the dev scenario
 // select exists only in a dev build.
