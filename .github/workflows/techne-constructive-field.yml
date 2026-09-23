@@ -80,6 +80,14 @@ jobs:
           node tests/techne-lens-studio-browser.mjs
           node tests/techne-hud-browser.mjs
           node tests/techne-walk-sweep-browser.mjs
+      - uses: dtolnay/rust-toolchain@1.98.0
+      - name: Prove the application chooser summons the deep instruments end to end
+        working-directory: desktop/cradle
+        env:
+          TECHNE_EVIDENCE_DIR: ${{ runner.temp }}/techne-evidence/browser
+        run: |
+          cargo build --locked --manifest-path kernel/Cargo.toml --bin walk-bridge
+          node tests/techne-lens-summon-browser.mjs
       - name: Retain exact sources, dependency graph and execution receipts
         if: always()
         uses: actions/upload-artifact@v4
