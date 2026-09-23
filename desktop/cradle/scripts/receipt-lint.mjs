@@ -77,6 +77,7 @@ const SCENARIO_SPEC = {
   "factory-tasks": "docs/cradle/11-FACTORY.md §7 F14 F15",
   "factory-objects": "docs/cradle/11-FACTORY.md §6 §7 F16",
   "factory-real": "docs/cradle/11-FACTORY.md §7 F5 F6 F7 F12 (real Central-root runs, read-only)",
+  "factory-inhabitation": "docs/contracts/WORLD-INHABITATION-V1.md §3 §4; docs/research/openrig-c8fca9d/CROSSWALK.md §8 §15; docs/cradle/11-FACTORY.md §3.4 §5",
   "left-frame": "docs/cradle/10-SIDEBARS.md §5.1 L1 L2 L3 L4 L5 L6 L8",
   "left-unreadable": "docs/cradle/10-SIDEBARS.md §5.1 L7 · §5.2 R8 R9 R10 R11",
   "left-marks": "docs/cradle/10-SIDEBARS.md §5.2 R1 R2 R3 R4 R5 · §3.3 · §3.5",

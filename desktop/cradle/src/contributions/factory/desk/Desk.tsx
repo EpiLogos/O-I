@@ -12,6 +12,12 @@
  * States (§2, F1–F5): reading (skeleton columns, "Reading runs…"), empty
  * ("No runs yet." + New run), partial (one line naming unreadable sources +
  * Retry), error ("Couldn't read the Desk." + Retry), search-empty.
+ *
+ * Who owns it (WORLD-INHABITATION-V1 §3): a card names the Positions holding
+ * the run from Factory's inhabitation reading, and an owner-stated ambiguity
+ * (two holders of one work, a Position's current work ambiguous) marks the
+ * card `?` and puts it in Needs you. When that reading cannot be had, one
+ * line above the board says so — cards never guess an owner.
  */
 import {useEffect, useLayoutEffect, useMemo, useRef, useState} from "react";
 import {useKernel} from "../../../kernel/KernelProvider";
@@ -86,6 +92,8 @@ export function Desk({onNewRun, onAddObject}: DeskProps) {
 
   const firstRead = !current || (current.status === "reading" && !current.readAt);
   const unreadable = [...(current?.discovery?.unreadable ?? []), ...(current?.refused ?? [])];
+  // Factory's inhabitation reading, per source: distinct reasons it failed.
+  const ownersUnread = [...new Set(Object.values(current?.inhabitation ?? {}).flatMap(read => read.state === "unavailable" ? [read.reason] : []))];
   const aggregate = scope.kind === "all";
   const open = (card: DeskCard) => {
     rememberDeskScroll(scroller.current?.scrollTop ?? 0);
@@ -123,6 +131,9 @@ export function Desk({onNewRun, onAddObject}: DeskProps) {
           {unreadable.length} source{unreadable.length === 1 ? "" : "s"} couldn't be read — {unreadable.map(entry => `${entry.label} (${entry.error})`).join("; ")}.{" "}
           <button type="button" className="fdesk-link" onClick={refresh}>Retry</button>
         </p>}
+        {!firstRead && ownersUnread.length > 0 && <p className="fdesk-partial" role="status" data-desk-owners="unavailable">
+          Owner Positions couldn't be read — {ownersUnread.join("; ")} (factory development inhabitation).
+        </p>}
         {firstRead
           ? <div className="fdesk-columns" aria-busy="true">
             {DESK_COLUMNS.map(column => <section key={column.key} className="fdesk-column" aria-label={column.label}>
@@ -158,14 +169,18 @@ function RunCard({card, aggregate, selected, onOpen}: {card: DeskCard; aggregate
   const footer = [card.projectName, age].filter(Boolean).join(" · ");
   void aggregate;
   return <button type="button" className="fdesk-card" data-state={card.state} data-selected={selected ? "true" : undefined} data-run-card={card.runRef}
-    onClick={() => onOpen(card)} aria-label={`${RUN_STATE_WORD[card.state]} — ${card.title}`}>
+    onClick={() => onOpen(card)} aria-label={`${RUN_STATE_WORD[card.state]} — ${card.title}${card.ambiguities.length ? " — ambiguous" : ""}`}>
     <span className="fdesk-card-state" data-state={card.state}>
-      <span className="fdesk-glyph" aria-hidden="true">{card.needsYou > 0 || card.blocked ? "!" : RUN_STATE_GLYPH[card.state]}</span>
+      <span className="fdesk-glyph" aria-hidden="true">{card.needsYou > 0 || card.blocked ? "!" : card.ambiguities.length ? "?" : RUN_STATE_GLYPH[card.state]}</span>
       {RUN_STATE_WORD[card.state]}
       {card.needsYou > 0 && <span className="fdesk-needs" data-needs-you={card.needsYou}>{card.needsYou}</span>}
     </span>
     <strong className="fdesk-card-title" data-card-title>{card.title}</strong>
     {card.next && <span className="fdesk-card-next" data-card-next>Next: {card.next}</span>}
+    {card.owners.length > 0 && <span className="fdesk-card-owner" data-card-owner>Held by {card.owners.join(", ")}</span>}
+    {card.ambiguities.length > 0 && <span className="fdesk-card-ambiguous" data-card-ambiguous={card.ambiguities.length} title={card.ambiguities.join("\n")}>
+      <span aria-hidden="true">? </span>{card.ambiguities.length === 1 ? card.ambiguities[0] : `${card.ambiguities.length} ambiguities — ${card.ambiguities[0]}`}
+    </span>}
     {card.units.length > 0 && <span className="fdesk-units" role="img" aria-label={`${card.units.length} unit${card.units.length === 1 ? "" : "s"}: ${card.units.map(unit => unit.standing.replace("-", " ")).join(", ")}`}>
       {card.units.map(unit => <span key={unit.id} className="fdesk-unit" data-standing={unit.standing} title={unit.label}/>)}
     </span>}

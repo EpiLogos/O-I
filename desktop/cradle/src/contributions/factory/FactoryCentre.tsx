@@ -8,7 +8,7 @@ import {ObjectPage} from "../../agent/objects";
 import {OPEN_OBJECT_EVENT, isOpenObjectDetail} from "../../agent/objects/registry";
 import {factoryObject} from "./desk/factoryObjects";
 import {publishCentreView, useCentreView} from "./desk/deskModel";
-import {closeRunPage, openRunPage, peekDeskReading, runEntry, runForSession, selectRun, useDeskReading, useOpenRun} from "./desk/deskStore";
+import {closeRunPage, openRunPage, peekDeskReading, runEntry, runsForSession, selectRun, useDeskReading, useOpenRun} from "./desk/deskStore";
 import {RUN_STATE_WORD} from "./desk/runModel";
 import {clearObjectPages, closeObjectPage, openObjectPage, useObjectPage} from "./desk/objectNav";
 import "./desk/desk.css";
@@ -51,7 +51,11 @@ export function FactoryCentre({chat,accompanying,onOpenTask,onNewTask,onOpenActi
   useDeskReading();
   const [debugOpen,setDebugOpen]=useState(false);
   const centre=useRef<HTMLElement>(null);
-  const joined=view==="tasks"&&accompanying?runForSession(accompanying.ref):undefined;
+  // F14/F15 + ambiguity: a conversation joins a run only when exactly one
+  // read run carried its session; several is shown as such, never the first.
+  const join=view==="tasks"&&accompanying?runsForSession(accompanying.ref):undefined;
+  const joined=join?.outcome==="one"?join.entries[0]:undefined;
+  const ambiguousRuns=join?.outcome==="ambiguous"?join.entries:[];
 
   // The right panel answers about the selected run: in Tasks, the joined run
   // (a Direct conversation clears it); on the Desk, the run held open.
@@ -91,16 +95,23 @@ export function FactoryCentre({chat,accompanying,onOpenTask,onNewTask,onOpenActi
     onMessage,
   };
 
-  const openRunFromTask=()=>{ if(!joined)return; openRunPage(joined.card.key); publishCentreView("desk"); };
+  const openRunFromTask=(key=joined?.card.key)=>{ if(!key)return; openRunPage(key); publishCentreView("desk"); };
 
   return <main ref={centre} className={"factory-centre"+(view==="tasks"?" factory-tasks":"")} aria-label="Factory" data-centre-view={view}>
     {view==="tasks"
       ? <section className="factory-chat-full" aria-label="Task conversation">
         <header className="factory-chat-context ftasks-head">
           {joined
-            ? <button type="button" className="ftasks-runchip" data-run-chip={joined.run.runRef} title={`${RUN_STATE_WORD[joined.card.state]} · ${joined.card.title}`} onClick={openRunFromTask}>
+            ? <button type="button" className="ftasks-runchip" data-run-chip={joined.run.runRef} title={`${RUN_STATE_WORD[joined.card.state]} · ${joined.card.title}`} onClick={()=>openRunFromTask()}>
               <span className="ftasks-runchip-kind">Run</span><span>{joined.card.title}</span>
             </button>
+            : ambiguousRuns.length
+              ? <span className="ftasks-ambiguous" data-run-join="ambiguous" role="status">
+                <span>This conversation carried {ambiguousRuns.length} runs — choose one:</span>
+                {ambiguousRuns.map(entry=><button key={entry.card.key} type="button" className="ftasks-runchip" data-run-chip={entry.run.runRef} title={`${RUN_STATE_WORD[entry.card.state]} · ${entry.card.title}`} onClick={()=>openRunFromTask(entry.card.key)}>
+                  <span className="ftasks-runchip-kind">Run</span><span>{entry.card.title}</span>
+                </button>)}
+              </span>
             : accompanying
               ? <span className="factory-chat-context-direct" data-direct-conversation>Direct conversation</span>
               : <span className="factory-chat-context-direct">New conversation</span>}

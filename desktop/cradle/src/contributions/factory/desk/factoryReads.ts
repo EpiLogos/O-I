@@ -10,7 +10,9 @@ import {kernelOp} from "../../../kernel/bridge";
 import type {KernelTransportStatus} from "../../../kernel/types";
 import {developmentRead, ownerRefusalText} from "../development";
 import type {Scope} from "../../../workspace/scope";
-import type {DeskSourceRef, JourneyReading, ProjectLocation, ProjectReading, RunReading, WorkflowInspection} from "./runModel";
+import type {DeskSourceRef, JourneyReading, ProjectLocation, ProjectReading, RunReading} from "./runModel";
+import {followInspection, type InspectionPage, type WholeInspection} from "./inspectionPages";
+import {ownerReadFailure, snakeKeys, type FactoryCurrentWork, type FactoryInhabitationReading, type OwnerRead} from "../inhabitation/model";
 
 export type FactoryOwnerRequest =
   | {kind: "locate"; project?: string; all?: boolean}
@@ -20,7 +22,9 @@ export type FactoryOwnerRequest =
   | {kind: "attempt-return"; state_path: string; run_ref: string; attempt_ref: string}
   | {kind: "action-list"; state_path: string; project_ref: string; run_ref: string}
   | {kind: "action-invoke"; state_path: string; project_ref: string; run_ref: string; request: unknown}
-  | {kind: "recognise"; state_path: string; journey_ref: string; subject_ref: string; basis_refs?: string[]};
+  | {kind: "recognise"; state_path: string; journey_ref: string; subject_ref: string; basis_refs?: string[]}
+  | {kind: "inhabitation"; state_path: string; run_ref?: string; position_ref?: string}
+  | {kind: "current-work"; state_path: string; position_ref: string};
 
 export async function factoryOwner<T = unknown>(transport: KernelTransportStatus, request: FactoryOwnerRequest): Promise<T> {
   const result = await kernelOp(transport, {op: "factory_owner", request});
@@ -73,8 +77,31 @@ export const readJourney = (transport: KernelTransportStatus, statePath: string,
   developmentRead<JourneyReading>(transport, statePath, "journey", journeyRef);
 export const readRun = (transport: KernelTransportStatus, statePath: string, runRef: string) =>
   developmentRead<RunReading>(transport, statePath, "run", runRef);
-export const inspectWorkflow = (transport: KernelTransportStatus, statePath: string, runRef: string, limit = 100) =>
-  factoryOwner<WorkflowInspection>(transport, {kind: "workflow-inspect", state_path: statePath, run_ref: runRef, limit});
+/** The run's WHOLE workflow inspection: pages of the owner's maximum size,
+ * the cursor followed to completion; `partial` names what could not be read
+ * (inspectionPages.ts). */
+export const inspectWorkflow = (transport: KernelTransportStatus, statePath: string, runRef: string, limit = 100): Promise<WholeInspection> =>
+  followInspection(cursor => factoryOwner<InspectionPage>(transport, {kind: "workflow-inspect", state_path: statePath, run_ref: runRef, limit, ...(cursor != null ? {cursor} : {})}));
+
+/** Factory's inhabitation reading for a source (every run) or one run
+ * (WORLD-INHABITATION-V1 §3). Never throws: a failed read is a named absence. */
+export async function readFactoryInhabitation(transport: KernelTransportStatus, statePath: string, runRef?: string): Promise<OwnerRead<FactoryInhabitationReading>> {
+  const source = "factory development inhabitation";
+  try {
+    const data = await factoryOwner(transport, {kind: "inhabitation", state_path: statePath, ...(runRef ? {run_ref: runRef} : {})});
+    return {state: "read", data: snakeKeys<FactoryInhabitationReading>(data), source};
+  } catch (error) { return ownerReadFailure(error, source); }
+}
+
+/** Factory's current-work derivation for one Position — none, one or
+ * ambiguous, over every in-progress custody (never a display page). */
+export async function readCurrentWork(transport: KernelTransportStatus, statePath: string, positionRef: string): Promise<OwnerRead<FactoryCurrentWork>> {
+  const source = "factory development current-work";
+  try {
+    const data = await factoryOwner(transport, {kind: "current-work", state_path: statePath, position_ref: positionRef});
+    return {state: "read", data: snakeKeys<FactoryCurrentWork>(data), source};
+  } catch (error) { return ownerReadFailure(error, source); }
+}
 
 export interface TelemetryInspection {
   contract?: string;

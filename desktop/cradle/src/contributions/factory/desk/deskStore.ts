@@ -15,10 +15,18 @@ import {useSyncExternalStore} from "react";
 import type {KernelTransportStatus} from "../../../kernel/types";
 import type {Scope} from "../../../workspace/scope";
 import {readDeskSources} from "./deskModel";
-import {discoverSources, inspectWorkflow, readJourney, readProject, readRun, type Discovery} from "./factoryReads";
+import {discoverSources, inspectWorkflow, readFactoryInhabitation, readJourney, readProject, readRun, type Discovery} from "./factoryReads";
 import {cardKey, deskCard, type DeskCard, type DeskSourceRef, type JourneyReading, type RunReading, type WorkflowInspection} from "./runModel";
+import {joinBySession, runInhabitationView, runOwners, type FactoryInhabitationReading, type Join, type OwnerRead, type RunInhabitationView} from "../inhabitation/model";
 
-export interface RunEntry { card: DeskCard; run: RunReading; journey?: JourneyReading; inspection?: WorkflowInspection; inspectionError?: string }
+export interface RunEntry {
+  card: DeskCard; run: RunReading; journey?: JourneyReading;
+  inspection?: WorkflowInspection; inspectionError?: string;
+  /** Set when the whole inspection could not be read (inspectionPages.ts). */
+  inspectionPartial?: string;
+  /** The run's Positions from Factory's inhabitation reading (absent until read). */
+  inhabitation?: RunInhabitationView;
+}
 export interface DeskReading {
   scopeKey: string;
   status: "reading" | "read" | "error";
@@ -28,6 +36,8 @@ export interface DeskReading {
   /** Sources whose project/journey/run reads refused, in the owner's words. */
   refused: {label: string; error: string}[];
   runs: Record<string, RunEntry>;
+  /** Factory's inhabitation reading per source (state path), or its absence. */
+  inhabitation?: Record<string, OwnerRead<FactoryInhabitationReading>>;
 }
 
 export const scopeKeyOf = (scope: Scope) => scope.kind === "project" ? `project:${scope.project}` : scope.kind;
@@ -49,13 +59,30 @@ export function runEntry(key: string | undefined): RunEntry | undefined {
   return key ? reading?.runs[key] : undefined;
 }
 
-/** Read one source: project → journeys → runs. Refusals are collected, never
- * thrown past the source. */
-async function readSource(transport: KernelTransportStatus, source: DeskSourceRef, runs: Record<string, RunEntry>, refused: DeskReading["refused"]) {
+/** A run's title as the Desk names it — for the Positions' current-work
+ * words ("Working on …"); a run the Desk has not read has no title here. */
+export function titleOfRun(runRef: string, runs: Record<string, RunEntry> | undefined = reading?.runs): string | undefined {
+  for (const entry of Object.values(runs ?? {})) if (entry.run.runRef === runRef) return entry.card.title;
+  return undefined;
+}
+
+/** Join a run to its source's inhabitation reading: the Positions view and
+ * the card's owner line and ambiguity signal. */
+function withInhabitation(entry: RunEntry, read: OwnerRead<FactoryInhabitationReading> | undefined, runs?: Record<string, RunEntry>): RunEntry {
+  const view = runInhabitationView(read, entry.run.runRef, runRef => titleOfRun(runRef, runs)) ?? entry.inhabitation;
+  const card = deskCard(entry.card.source, entry.run, entry.journey, entry.inspection, {owners: runOwners(view), ambiguities: view?.ambiguities ?? []});
+  return {...entry, card, ...(view ? {inhabitation: view} : {})};
+}
+
+/** Read one source: project → journeys → runs, and Factory's inhabitation
+ * reading for the source beside them. Refusals are collected, never thrown
+ * past the source. */
+async function readSource(transport: KernelTransportStatus, source: DeskSourceRef, runs: Record<string, RunEntry>, refused: DeskReading["refused"], inhabitation: Record<string, OwnerRead<FactoryInhabitationReading>>) {
   const label = source.project ?? "Central";
+  const positions = readFactoryInhabitation(transport, source.statePath).then(read => { inhabitation[source.statePath] = read; });
   let project;
   try { project = await readProject(transport, source); }
-  catch (error) { refused.push({label, error: errorWords(error)}); return; }
+  catch (error) { refused.push({label, error: errorWords(error)}); await positions; return; }
   for (const summary of project.journeys ?? []) {
     let journey: JourneyReading | undefined;
     try { journey = await readJourney(transport, source.statePath, summary.journeyRef); }
@@ -67,6 +94,7 @@ async function readSource(transport: KernelTransportStatus, source: DeskSourceRe
       } catch (error) { refused.push({label, error: errorWords(error)}); }
     }
   }
+  await positions;
 }
 
 export function errorWords(error: unknown): string {
@@ -97,14 +125,16 @@ export async function readDesk(transport: KernelTransportStatus, scope: Scope): 
   }
   const runs: Record<string, RunEntry> = {};
   const refused: DeskReading["refused"] = [];
-  await Promise.all(discovery.sources.map(source => readSource(transport, source, runs, refused)));
+  const inhabitation: Record<string, OwnerRead<FactoryInhabitationReading>> = {};
+  await Promise.all(discovery.sources.map(source => readSource(transport, source, runs, refused, inhabitation)));
   if (gen !== generation) return;
-  // Inspections already held for a run survive the refresh until reread.
   for (const [key, entry] of Object.entries(runs)) {
+    // Inspections already held for a run survive the refresh until reread.
     const held = previous?.runs[key];
-    if (held?.inspection) { entry.inspection = held.inspection; entry.card = deskCard(entry.card.source, entry.run, entry.journey, held.inspection); }
+    if (held?.inspection) { entry.inspection = held.inspection; entry.inspectionPartial = held.inspectionPartial; }
+    runs[key] = withInhabitation(entry, inhabitation[entry.card.source.statePath], runs);
   }
-  reading = {scopeKey, status: "read", readAt: Date.now(), discovery, refused, runs};
+  reading = {scopeKey, status: "read", readAt: Date.now(), discovery, refused, runs, inhabitation};
   emit();
 }
 
@@ -120,9 +150,12 @@ export async function readRunEntry(transport: KernelTransportStatus, key: string
   ]);
   let inspection: WorkflowInspection | undefined;
   let inspectionError: string | undefined;
-  try { inspection = await inspectWorkflow(transport, source.statePath, entry.run.runRef); }
+  let inspectionPartial: string | undefined;
+  const positions = readFactoryInhabitation(transport, source.statePath, entry.run.runRef);
+  try { const whole = await inspectWorkflow(transport, source.statePath, entry.run.runRef); inspection = whole.inspection; inspectionPartial = whole.partial; }
   catch (error) { inspectionError = errorWords(error); }
-  const next: RunEntry = {card: deskCard(source, run, journey, inspection), run, journey, inspection, inspectionError};
+  const base: RunEntry = {card: deskCard(source, run, journey, inspection), run, journey, inspection, inspectionError, ...(inspectionPartial ? {inspectionPartial} : {})};
+  const next = withInhabitation(base, await positions);
   if (reading?.runs[key]) {
     reading = {...reading, runs: {...reading.runs, [key]: next}};
     emit();
@@ -169,12 +202,11 @@ export function runSessions(entry: RunEntry): Set<string> {
   return refs;
 }
 
-/** The run a conversation belongs to, if the Desk has read one that carried
- * its session. */
-export function runForSession(sessionRef: string | undefined): RunEntry | undefined {
-  if (!sessionRef || !reading) return undefined;
-  for (const entry of Object.values(reading.runs)) if (runSessions(entry).has(sessionRef)) return entry;
-  return undefined;
+/** The runs a conversation belongs to: every run the Desk has read whose
+ * sessions carry it. One is a join; more than one is an ambiguity shown to
+ * the person — never the first match. */
+export function runsForSession(sessionRef: string | undefined): Join<RunEntry> {
+  return joinBySession(Object.values(reading?.runs ?? {}), runSessions, sessionRef);
 }
 
 // ---------------------------------------------------------------------------
