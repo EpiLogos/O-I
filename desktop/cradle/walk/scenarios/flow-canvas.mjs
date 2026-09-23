@@ -69,12 +69,17 @@ export default async function run({page,baseUrl,check,shot,channel,provision:p})
   const nav=page.getByRole("complementary",{name:"World navigator"});
   await nav.locator('[data-project-path="Work/Editor"]').click();
 
-  // 1 — the user-section flows list is wired to the ground: an absent flows
-  // directory renders honest absence, and both the fresh tab's Write and the
-  // navigator's New flow open writing that MINTS NOTHING.
-  const flowsList=nav.locator("[data-user-flows]");
-  await flowsList.waitFor({timeout:20000});
-  check(await flowsList.locator("[data-flows-absent]").count()===1,"An absent flows directory renders honest absence rather than inventing a register");
+  // 1 — the flows face follows the left-frame grammar (§3.4 R9: no header
+  // without rows): an absent flows directory takes zero height — absence is
+  // the section's absence, never an invented register — and writing enters
+  // through the frame's real Create menu. Both entries MINT NOTHING.
+  const flowsSection=nav.locator('[data-section="flows"]');
+  await nav.waitFor({timeout:20000});
+  // The first read settles (R8's loading line) before R9 applies: with no
+  // rows the section renders NOTHING, so absence is the section's absence.
+  await nav.locator('[data-section="flows"][data-state="loading"]')
+    .waitFor({state:"detached",timeout:10000}).catch(()=>{});
+  check(await nav.locator('[data-section="flows"]:visible').count()===0,"An absent flows directory takes no height — no header without rows");
   await page.keyboard.press("Meta+t");
   // The fresh tab's writing choice is labelled "Start writing" (same word as
   // the rest page's entry; it opens the same mint-nothing draft).
@@ -84,7 +89,9 @@ export default async function run({page,baseUrl,check,shot,channel,provision:p})
   check(p.flowFiles().length===0,"The fresh tab's Write mints nothing — no flow file exists");
   check(p.gitClean(),"The fresh tab's Write adds nothing to the ground");
   await page.keyboard.press("Meta+w");
-  await nav.locator("[data-user-flows]").getByRole("button",{name:"New flow",exact:true}).click();
+  // The left frame's "+" Create menu is the New flow entry (§3.1).
+  await page.getByRole("button",{name:"Create",exact:true}).click();
+  await page.getByRole("menuitem",{name:"New flow"}).click();
   const draftEditor=page.locator(".draft-surface .cm-content");
   await draftEditor.waitFor({timeout:20000});
   check(p.gitClean(),"New flow mints nothing: the ground is untouched");
