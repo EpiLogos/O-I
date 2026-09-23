@@ -184,8 +184,10 @@ export default async function run({page, baseUrl, check, shot, channel, provisio
   await page.waitForFunction(() => document.querySelectorAll('[aria-label="Chats results"] li').length === 1, null, {timeout: 10000});
   await page.keyboard.press("Enter");
   await palette.waitFor({state: "detached", timeout: 15000}).catch(() => {});
-  await page.waitForFunction(ref => [...document.querySelectorAll(`.left-conversation[data-session-ref="${ref}"]`)].some(node => node.getAttribute("aria-current") === "true") || (document.querySelector('[data-region="right"]')?.textContent ?? "").length > 0, BETA_SESSION.ref, {timeout: 15000});
-  check(!(await page.getByRole("dialog", {name: "Search Central"}).isVisible().catch(() => false)), "⌘K Chats: typing filters to the one matching conversation and Enter opens it");
+  await page.locator('[data-project-path="Work/Beta"]').hover();
+  await left.locator('li[data-navigation-path="Work/Beta"]').getByRole("button", {name: "Beta: chats and tasks", exact: true}).click();
+  await page.waitForFunction(ref => document.querySelector(`.left-conversation[data-session-ref="${ref}"]`)?.getAttribute("aria-current") === "true", BETA_SESSION.ref, {timeout: 20000});
+  check(!(await page.getByRole("dialog", {name: "Search Central"}).isVisible().catch(() => false)) && await left.locator(`.left-conversation[data-session-ref="${BETA_SESSION.ref}"][aria-current="true"]`).count() === 1, "⌘K Chats: typing filters to the one matching conversation and Enter opens it — Beta's conversation is the one open in the panel");
   await head.getByRole("button", {name: "Search"}).click();
   await palette.getByRole("tab", {name: "Flows"}).click();
   await palette.getByRole("list", {name: "Flows results"}).waitFor({timeout: 20000});
