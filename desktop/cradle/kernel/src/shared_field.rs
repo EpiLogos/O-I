@@ -246,6 +246,7 @@ mod a2a_tests {
         {
             use std::os::unix::fs::PermissionsExt;
             std::fs::set_permissions(&fake, std::fs::Permissions::from_mode(0o755)).unwrap();
+            crate::test_stub::settle_stub(&fake);
         }
 
         let prior_node = std::env::var_os("OI_NODE");
@@ -272,6 +273,7 @@ mod a2a_tests {
         // A reply that is not a difference document is refused, never carried.
         std::fs::write(&fake, "#!/bin/sh\ncat > /dev/null\necho '{\"unexpected\":true}'\n").unwrap();
         std::fs::set_permissions(&fake, std::fs::Permissions::from_mode(0o755)).unwrap();
+        crate::test_stub::settle_stub(&fake);
         assert!(a2a_exchange(&request).is_err(), "a non-contract reply is refused");
 
         match prior_node {

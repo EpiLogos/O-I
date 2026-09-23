@@ -5,6 +5,8 @@
 //! refuses an unexpected contract, surfaces the workflow family's stdout
 //! diagnostic in the owner's own words, and sends the person's Recognition as
 //! the owner's `record-owner-recognition` developmental mutation document.
+#[path = "support/stub.rs"]
+mod stub;
 use oi_cradle_kernel::{CentralClient, Kernel, KernelOp, KernelOpResult};
 use oi_cradle_kernel::factory::OwnerRequest;
 use serde_json::{json, Value};
@@ -30,6 +32,7 @@ fn write_fake(dir: &std::path::Path) -> PathBuf {
     let path = dir.join("fake-factory.sh");
     fs::write(&path, script).unwrap();
     fs::set_permissions(&path, fs::Permissions::from_mode(0o755)).unwrap();
+    stub::settle_stub(&path);
     path
 }
 

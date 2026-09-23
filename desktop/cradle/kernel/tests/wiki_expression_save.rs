@@ -1,6 +1,8 @@
 //! Strict destination-owner boundary. The final joined browser test separately
 //! executes actual Central; this process fixture detects injected scope fields.
 #![cfg(unix)]
+#[path = "support/stub.rs"]
+mod stub;
 use oi_cradle_kernel::{
     expression::{Application, Request},
     CentralClient,
@@ -49,6 +51,7 @@ else:
  raise AssertionError(name)
 "#).unwrap();
         fs::set_permissions(root.join("owner"), fs::Permissions::from_mode(0o700)).unwrap();
+        stub::settle_stub(&root.join("owner"));
         Self(root)
     }
 }

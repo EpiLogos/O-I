@@ -267,6 +267,7 @@ print(json.dumps({'schema':'ql.field-host-receipt/v1','status':'ready','availabl
 for line in sys.stdin: time.sleep(60)
 "#).unwrap();
         fs::set_permissions(&script, fs::Permissions::from_mode(0o700)).unwrap();
+        crate::test_stub::settle_stub(&script);
         let old_host = std::env::var_os("OI_QL_FIELD_HOST_BIN");
         let old_worker = std::env::var_os("OI_QL_FIELD_WORKER_BIN");
         std::env::set_var("OI_QL_FIELD_HOST_BIN", &script);

@@ -1,6 +1,8 @@
 //! Controlled subprocess owners exercise the production Agent definition bridge.
 //! No fixtures enter production; these checks do not assert live-provider use.
 #![cfg(unix)]
+#[path = "support/stub.rs"]
+mod stub;
 use oi_cradle_kernel::{
     agency::Client,
     agent_definition::{self, Request},
@@ -53,6 +55,7 @@ else:
  print(json.dumps(value))
 "#).unwrap();
         fs::set_permissions(&staged, fs::Permissions::from_mode(0o700)).unwrap();
+        stub::settle_stub(&staged);
         fs::rename(&staged, &executable).unwrap();
         Self { root, executable }
     }
