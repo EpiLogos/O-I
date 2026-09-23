@@ -221,10 +221,6 @@ impl CentralClient {
         &self.project_query
     }
 
-    fn project_of(&self, project: Option<&str>) -> String {
-        project.unwrap_or(&self.project_query).to_owned()
-    }
-
     /// Run one owner Action, ported envelope law: `--json` global flag,
     /// optional `--root`, `action run <action> <input-json>`; `ok` must be
     /// true; the `data` payload is returned. Spawn failures are
