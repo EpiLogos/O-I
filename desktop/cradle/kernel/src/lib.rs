@@ -397,6 +397,10 @@ pub enum KernelOp {
     /// telemetry correlations and the readable Return. Limit and cursor are the
     /// owner's grammar, passed through; stale-cursor refusal stays the owner's.
     FactoryAttemptTaskRead { state_path: ::std::path::PathBuf, run_ref: String, task_ref: String, #[serde(default)] limit: Option<u32>, #[serde(default)] cursor: Option<serde_json::Value> },
+    /// 11-FACTORY §2/§3: Factory source discovery, workflow inspection,
+    /// telemetry, the attempt Return, the action projection and the person's
+    /// Recognition — one owner request family (factory::OwnerRequest).
+    FactoryOwner { request: factory::OwnerRequest },
     /// Workcell's own placement/status reading (`workcell status --json`),
     /// beside the Factory reads — placement is Workcell's, never the desktop's.
     WorkcellStatusRead,
@@ -1055,6 +1059,7 @@ impl Kernel {
                     result: KernelOpResult::FactoryAttemptReading { data },
                 })
             }
+            KernelOp::FactoryOwner {request} => {let world=if request.needs_world(){Some(self.world_map(false)?)}else{None}; let data=factory::owner(request,world.as_ref()).map_err(|e|serde_json::to_string(&e).unwrap_or_else(|_|"factory owner request failed".into()))?; Ok(KernelOpOutcome{receipts:Vec::new(),result:KernelOpResult::FactoryDevelopmentReading{data}})}
             KernelOp::FactoryAttemptTaskListRead {state_path,run_ref} => {
                 let direct=std::env::var_os("OI_FACTORY_BIN").map(std::path::PathBuf::from);
                 let (executable,suite_route)=match direct {Some(path)=>(path,false),None=>(std::env::var_os("OI_BIN").map(std::path::PathBuf::from).unwrap_or_else(||std::path::PathBuf::from("oi")),true)};

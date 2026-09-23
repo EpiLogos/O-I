@@ -1425,10 +1425,12 @@ export function CradleFrame({onComposed}:{onComposed?:()=>void}) {
     }catch(error){setWindowError(String(error));}
     finally{setFactoryChoosing(false);}
   };
-  const factoryCentreProps:{project?:string;accompanying?:{ref:string;project:string;space:string};onOpenTask:(row:EncounterRow)=>Promise<void>;onMessage:(message:string)=>void}={
+  const factoryCentreProps:{project?:string;accompanying?:{ref:string;project:string;space:string};onOpenTask:(row:EncounterRow)=>Promise<void>;onNewTask:()=>void;onOpenActivity:()=>void;onMessage:(message:string)=>void}={
     project:workspace.current.project??state.accompanying?.project,
     accompanying:state.accompanying??undefined,
     onOpenTask:row=>factoryChoose(row),
+    onNewTask:()=>setState(s=>({...s,accompanying:undefined})),
+    onOpenActivity:()=>setState(s=>({...s,rightDepth:s.rightDepth==="collapsed"?"panel":s.rightDepth,panelPlanes:{...s.panelPlanes,factory:"run"}})),
     onMessage:message=>setWindowError(message),
   };
   const factoryCentre=

@@ -9,7 +9,7 @@ export interface TraceWaterfallProps {
 }
 
 const glyph: Record<Status, string> = {
-  queued: '○', running: '●', success: '✓', fail: '✕', blocked: '◇', cancelled: '–',
+  queued: '○', running: '●', returned: '↩', success: '✓', fail: '✕', blocked: '◇', cancelled: '–', 'contract-fixture': '▫',
 }
 
 function msLabel(value: number): string {

@@ -226,6 +226,7 @@ export type KernelOp =
   | {op:"factory_attempt_read";state_path:string;run_ref:string}
   | {op:"factory_attempt_task_list_read";state_path:string;run_ref:string}
   | {op:"factory_attempt_task_read";state_path:string;run_ref:string;task_ref:string;limit?:number;cursor?:unknown}
+  | {op:"factory_owner";request:{kind:string;[field:string]:unknown}}
   | {op:"workcell_status_read"}
   | {op:"wiki_projection_read";root:string;path:string}
   | {op:"wiki_projection_sources"}

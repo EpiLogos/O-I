@@ -66,6 +66,12 @@ const SCENARIO_SPEC = {
   "factory-development": "docs/experience/FACTORY-AGENCY.md §4/§5/§8/§12",
   "background-completion": "docs/experience/FACTORY-AGENCY.md §1 + handoff §4",
   "lane0-repairs": "docs/cradle/10-SIDEBARS.md §6.1 (2,3,7) §3.6 rule 1; 11-FACTORY.md §4",
+  "factory-desk": "docs/cradle/11-FACTORY.md §7 F1 F2 F3 F4 F5",
+  "factory-run": "docs/cradle/11-FACTORY.md §7 F6 F7 F8 F12 F13",
+  "factory-trajectory": "docs/cradle/11-FACTORY.md §7 F9 F10 F11",
+  "factory-tasks": "docs/cradle/11-FACTORY.md §7 F14 F15",
+  "factory-objects": "docs/cradle/11-FACTORY.md §6 §7 F16",
+  "factory-real": "docs/cradle/11-FACTORY.md §7 F5 F6 F7 F12 (real Central-root runs, read-only)",
 };
 const DEFAULT_SPEC_REF = "docs/cradle/05-EXECUTION.md §3";
 

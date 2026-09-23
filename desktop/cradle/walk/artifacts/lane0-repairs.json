@@ -4,7 +4,7 @@
   "spec_ref": "docs/cradle/10-SIDEBARS.md §6.1 (2,3,7) §3.6 rule 1; 11-FACTORY.md §4",
   "grade": "B",
   "binding": null,
-  "generated_at": "2026-09-22T23:46:08.875Z",
+  "generated_at": "2026-09-23T01:49:05.358Z",
   "environment": {
     "base_url": "http://localhost:4173",
     "bridge_url": "http://127.0.0.1:4179",
@@ -12,29 +12,56 @@
     "browser_engine": "chromium",
     "bundle": "walk (WALK=1) served by vite preview",
     "build_input": {
-      "mode": "fresh-build",
-      "bundle_fingerprint": "0e50c76857d8fc093ad9513b0352166bcc9c7e20c4f9db50df3e12e8742449aa"
+      "mode": "reused-dist",
+      "bundle_fingerprint": "7bd7215801275e69797d8252083f919b8d42faa52a225f0320db506377abfd10"
     },
     "node": "v24.16.0",
     "platform": "darwin",
     "source": {
-      "repository_root": "/Users/admin/Central/worktrees/ui-build/lane0-repairs",
-      "repository_head": "5b1b7522631109f219d3387d908c5966c8a6cac6",
+      "repository_root": "/Users/admin/Central/worktrees/ui-build/lane3-factory",
+      "repository_head": "985f0de4141dd448107c0e5ba300a70f408a6540",
       "tracked_changes": [
-        "desktop/cradle/scripts/receipt-lint.mjs",
-        "desktop/cradle/src/CradleFrame.tsx",
-        "desktop/cradle/walk/run.mjs",
-        "desktop/cradle/walk/scenarios/lane0-repairs.mjs"
+        "desktop/cradle/walk/artifacts/background-completion-failure.png",
+        "desktop/cradle/walk/artifacts/background-completion.json",
+        "desktop/cradle/walk/artifacts/canvas-context-failure.png",
+        "desktop/cradle/walk/artifacts/canvas-context.json",
+        "desktop/cradle/walk/artifacts/factory-desk-f1-reading.png",
+        "desktop/cradle/walk/artifacts/factory-desk-f2-empty.png",
+        "desktop/cradle/walk/artifacts/factory-desk-f3-partial.png",
+        "desktop/cradle/walk/artifacts/factory-desk.json",
+        "desktop/cradle/walk/artifacts/factory-development-agents-tab.png",
+        "desktop/cradle/walk/artifacts/factory-development-context-tab.png",
+        "desktop/cradle/walk/artifacts/factory-development-failure.png",
+        "desktop/cradle/walk/artifacts/factory-development-run-tab.png",
+        "desktop/cradle/walk/artifacts/factory-development.json",
+        "desktop/cradle/walk/artifacts/factory-objects.json",
+        "desktop/cradle/walk/artifacts/factory-real-desk-real.png",
+        "desktop/cradle/walk/artifacts/factory-real-now-record-real.png",
+        "desktop/cradle/walk/artifacts/factory-real-run-real-map.png",
+        "desktop/cradle/walk/artifacts/factory-real.json",
+        "desktop/cradle/walk/artifacts/factory-run-f13-before.png",
+        "desktop/cradle/walk/artifacts/factory-run-factory-run-map-1440-light.png",
+        "desktop/cradle/walk/artifacts/factory-run.json",
+        "desktop/cradle/walk/artifacts/factory-tasks-f15-direct.png",
+        "desktop/cradle/walk/artifacts/factory-tasks-factory-tasks-joined-1000-dark.png",
+        "desktop/cradle/walk/artifacts/factory-tasks-factory-tasks-joined-1000-light.png",
+        "desktop/cradle/walk/artifacts/factory-tasks-factory-tasks-joined-1440-dark.png",
+        "desktop/cradle/walk/artifacts/factory-tasks-factory-tasks-joined-1440-light.png",
+        "desktop/cradle/walk/artifacts/factory-tasks-factory-tasks-joined-760-dark.png",
+        "desktop/cradle/walk/artifacts/factory-tasks-factory-tasks-joined-760-light.png",
+        "desktop/cradle/walk/artifacts/factory-tasks.json",
+        "desktop/cradle/walk/artifacts/factory-trajectory.json",
+        "desktop/cradle/walk/artifacts/lane0-repairs.json"
       ],
-      "dirty_digest": "4e631ac833e132d64e471e767caf1d5ae3a2550c40b30eeddfd792be56c442c4",
-      "engine_provenance_path": "/Users/admin/Central/worktrees/ui-build/lane0-repairs/packages/oi-design-system/expressions-engine/PROVENANCE.json",
+      "dirty_digest": "0206f9c462e28c2cf2cb46534fb53cefcbe4e023b4412a09a7b0ba92f8600da5",
+      "engine_provenance_path": "/Users/admin/Central/worktrees/ui-build/lane3-factory/packages/oi-design-system/expressions-engine/PROVENANCE.json",
       "engine_source": "EpiLogos/Point-Cloud-Demo",
       "engine_revision": "91db8428fc9dfba06cd258ec5a58e7dd9eef5313"
     }
   },
   "passed": true,
   "error": null,
-  "duration_ms": 11113,
+  "duration_ms": 13417,
   "checks": [
     {
       "ok": true,
@@ -129,7 +156,7 @@
       "duration_ms": 0,
       "data": {
         "schema": "oi.cradle.walk/v1",
-        "mounted_at": "2026-09-22T23:46:09.018Z",
+        "mounted_at": "2026-09-23T01:49:05.596Z",
         "transport": {
           "kind": "bridge",
           "url": "http://127.0.0.1:4179"
@@ -140,7 +167,7 @@
     {
       "ok": true,
       "op": "read.state",
-      "duration_ms": 160.4,
+      "duration_ms": 222.9,
       "data": {
         "buffers": {
           "central:source:project:editor-walk:ProjectCentral/user/00%2001-DESIGN.md": {
@@ -243,7 +270,7 @@
               "detected": false,
               "signals": []
             },
-            "root": "/var/folders/q0/g_91z7355tb58425qwg3xcy80000gn/T/oi-cradle-editor-cuydw8",
+            "root": "/var/folders/q0/g_91z7355tb58425qwg3xcy80000gn/T/oi-cradle-editor-3xYsdR",
             "root_state": "directory",
             "schema": "central.world-map/v1",
             "valid": true,
@@ -375,10 +402,10 @@
           "sources": null
         },
         "surfaces": {
-          "5830a07d-ecc6-45a1-941c-dc14520685dd": {
+          "afc313ad-2b09-426d-947e-21265c75efef": {
             "kind": "source",
             "source_ref": "central:source:project:editor-walk:ProjectCentral/user/00%2001-DESIGN.md",
-            "surface_id": "5830a07d-ecc6-45a1-941c-dc14520685dd",
+            "surface_id": "afc313ad-2b09-426d-947e-21265c75efef",
             "title": "00 01-DESIGN.md"
           }
         }
@@ -387,7 +414,7 @@
     {
       "ok": true,
       "op": "read.state",
-      "duration_ms": 4.9,
+      "duration_ms": 3.7,
       "data": {
         "buffers": {
           "central:source:project:editor-walk:ProjectCentral/user/00%2001-DESIGN.md": {
@@ -490,7 +517,7 @@
               "detected": false,
               "signals": []
             },
-            "root": "/var/folders/q0/g_91z7355tb58425qwg3xcy80000gn/T/oi-cradle-editor-cuydw8",
+            "root": "/var/folders/q0/g_91z7355tb58425qwg3xcy80000gn/T/oi-cradle-editor-3xYsdR",
             "root_state": "directory",
             "schema": "central.world-map/v1",
             "valid": true,
@@ -622,10 +649,10 @@
           "sources": null
         },
         "surfaces": {
-          "5830a07d-ecc6-45a1-941c-dc14520685dd": {
+          "afc313ad-2b09-426d-947e-21265c75efef": {
             "kind": "source",
             "source_ref": "central:source:project:editor-walk:ProjectCentral/user/00%2001-DESIGN.md",
-            "surface_id": "5830a07d-ecc6-45a1-941c-dc14520685dd",
+            "surface_id": "afc313ad-2b09-426d-947e-21265c75efef",
             "title": "00 01-DESIGN.md"
           }
         }
@@ -634,7 +661,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 60,
+      "duration_ms": 68,
       "data": {
         "file": "lane0-repairs-scope-held-on-tab-focus.png"
       }
@@ -649,14 +676,14 @@
             "type": "group",
             "id": "g1",
             "tabs": [
-              "b85f5c34-161c-4057-8dad-bb84429fff60"
+              "824f13ec-5eb9-4850-843b-8bcd378cb8b0"
             ],
             "pinned": [],
-            "active": "b85f5c34-161c-4057-8dad-bb84429fff60"
+            "active": "824f13ec-5eb9-4850-843b-8bcd378cb8b0"
           },
           "surfaces": {
-            "b85f5c34-161c-4057-8dad-bb84429fff60": {
-              "id": "b85f5c34-161c-4057-8dad-bb84429fff60",
+            "824f13ec-5eb9-4850-843b-8bcd378cb8b0": {
+              "id": "824f13ec-5eb9-4850-843b-8bcd378cb8b0",
               "kind": "factory",
               "title": "Factory"
             }
@@ -668,163 +695,6 @@
           "leftWidth": 240,
           "rightWidth": 320,
           "mode": "factory"
-        }
-      }
-    },
-    {
-      "ok": true,
-      "op": "read.layout",
-      "duration_ms": 0.1,
-      "data": {
-        "layout": {
-          "root": {
-            "type": "group",
-            "id": "g1",
-            "tabs": [
-              "b85f5c34-161c-4057-8dad-bb84429fff60"
-            ],
-            "pinned": [],
-            "active": "b85f5c34-161c-4057-8dad-bb84429fff60"
-          },
-          "surfaces": {
-            "b85f5c34-161c-4057-8dad-bb84429fff60": {
-              "id": "b85f5c34-161c-4057-8dad-bb84429fff60",
-              "kind": "factory",
-              "title": "Factory"
-            }
-          },
-          "closedStack": [],
-          "focusedGroupId": "g1",
-          "agencyDepth": "panel",
-          "rightDepth": "panel",
-          "leftWidth": 240,
-          "rightWidth": 320,
-          "accompanying": {
-            "ref": "agent-session/canvas-context-walk",
-            "project": "Editor",
-            "space": "session-space/canvas-context-walk"
-          },
-          "mode": "factory"
-        }
-      }
-    },
-    {
-      "ok": true,
-      "op": "capture.screenshot",
-      "duration_ms": 53,
-      "data": {
-        "file": "lane0-repairs-factory-task-in-centre.png"
-      }
-    },
-    {
-      "ok": true,
-      "op": "read.layout",
-      "duration_ms": 0.1,
-      "data": {
-        "layout": {
-          "root": {
-            "type": "group",
-            "id": "g1",
-            "tabs": [
-              "b85f5c34-161c-4057-8dad-bb84429fff60"
-            ],
-            "pinned": [],
-            "active": "b85f5c34-161c-4057-8dad-bb84429fff60"
-          },
-          "surfaces": {
-            "b85f5c34-161c-4057-8dad-bb84429fff60": {
-              "id": "b85f5c34-161c-4057-8dad-bb84429fff60",
-              "kind": "factory",
-              "title": "Factory"
-            }
-          },
-          "closedStack": [],
-          "focusedGroupId": "g1",
-          "agencyDepth": "panel",
-          "rightDepth": "panel",
-          "leftWidth": 240,
-          "rightWidth": 320,
-          "accompanying": {
-            "ref": "agent-session/canvas-context-walk",
-            "project": "Editor",
-            "space": "session-space/canvas-context-walk"
-          },
-          "mode": "factory"
-        }
-      }
-    },
-    {
-      "ok": true,
-      "op": "read.layout",
-      "duration_ms": 0.1,
-      "data": {
-        "layout": {
-          "root": {
-            "type": "group",
-            "id": "g1",
-            "tabs": [
-              "b85f5c34-161c-4057-8dad-bb84429fff60"
-            ],
-            "pinned": [],
-            "active": "b85f5c34-161c-4057-8dad-bb84429fff60"
-          },
-          "surfaces": {
-            "b85f5c34-161c-4057-8dad-bb84429fff60": {
-              "id": "b85f5c34-161c-4057-8dad-bb84429fff60",
-              "kind": "factory",
-              "title": "Factory"
-            }
-          },
-          "closedStack": [],
-          "focusedGroupId": "g1",
-          "agencyDepth": "panel",
-          "rightDepth": "panel",
-          "leftWidth": 240,
-          "rightWidth": 320,
-          "accompanying": {
-            "ref": "agent-session/canvas-context-walk",
-            "project": "Editor",
-            "space": "session-space/canvas-context-walk"
-          },
-          "mode": "factory"
-        }
-      }
-    },
-    {
-      "ok": true,
-      "op": "read.layout",
-      "duration_ms": 0.2,
-      "data": {
-        "layout": {
-          "root": {
-            "type": "group",
-            "id": "g1",
-            "tabs": [
-              "b85f5c34-161c-4057-8dad-bb84429fff60"
-            ],
-            "pinned": [],
-            "active": "b85f5c34-161c-4057-8dad-bb84429fff60"
-          },
-          "surfaces": {
-            "b85f5c34-161c-4057-8dad-bb84429fff60": {
-              "id": "b85f5c34-161c-4057-8dad-bb84429fff60",
-              "kind": "factory",
-              "title": "Factory"
-            }
-          },
-          "closedStack": [],
-          "focusedGroupId": "g1",
-          "agencyDepth": "panel",
-          "rightDepth": "panel",
-          "leftWidth": 240,
-          "rightWidth": 320,
-          "accompanying": {
-            "ref": "agent-session/canvas-context-walk",
-            "project": "Editor",
-            "space": "session-space/canvas-context-walk"
-          },
-          "mode": "factory",
-          "epiLogos": true
         }
       }
     },
@@ -838,14 +708,171 @@
             "type": "group",
             "id": "g1",
             "tabs": [
-              "b85f5c34-161c-4057-8dad-bb84429fff60"
+              "824f13ec-5eb9-4850-843b-8bcd378cb8b0"
             ],
             "pinned": [],
-            "active": "b85f5c34-161c-4057-8dad-bb84429fff60"
+            "active": "824f13ec-5eb9-4850-843b-8bcd378cb8b0"
           },
           "surfaces": {
-            "b85f5c34-161c-4057-8dad-bb84429fff60": {
-              "id": "b85f5c34-161c-4057-8dad-bb84429fff60",
+            "824f13ec-5eb9-4850-843b-8bcd378cb8b0": {
+              "id": "824f13ec-5eb9-4850-843b-8bcd378cb8b0",
+              "kind": "factory",
+              "title": "Factory"
+            }
+          },
+          "closedStack": [],
+          "focusedGroupId": "g1",
+          "agencyDepth": "panel",
+          "rightDepth": "panel",
+          "leftWidth": 240,
+          "rightWidth": 320,
+          "accompanying": {
+            "ref": "agent-session/canvas-context-walk",
+            "project": "Editor",
+            "space": "session-space/canvas-context-walk"
+          },
+          "mode": "factory"
+        }
+      }
+    },
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 48,
+      "data": {
+        "file": "lane0-repairs-factory-task-in-centre.png"
+      }
+    },
+    {
+      "ok": true,
+      "op": "read.layout",
+      "duration_ms": 0,
+      "data": {
+        "layout": {
+          "root": {
+            "type": "group",
+            "id": "g1",
+            "tabs": [
+              "824f13ec-5eb9-4850-843b-8bcd378cb8b0"
+            ],
+            "pinned": [],
+            "active": "824f13ec-5eb9-4850-843b-8bcd378cb8b0"
+          },
+          "surfaces": {
+            "824f13ec-5eb9-4850-843b-8bcd378cb8b0": {
+              "id": "824f13ec-5eb9-4850-843b-8bcd378cb8b0",
+              "kind": "factory",
+              "title": "Factory"
+            }
+          },
+          "closedStack": [],
+          "focusedGroupId": "g1",
+          "agencyDepth": "panel",
+          "rightDepth": "panel",
+          "leftWidth": 240,
+          "rightWidth": 320,
+          "accompanying": {
+            "ref": "agent-session/canvas-context-walk",
+            "project": "Editor",
+            "space": "session-space/canvas-context-walk"
+          },
+          "mode": "factory"
+        }
+      }
+    },
+    {
+      "ok": true,
+      "op": "read.layout",
+      "duration_ms": 0,
+      "data": {
+        "layout": {
+          "root": {
+            "type": "group",
+            "id": "g1",
+            "tabs": [
+              "824f13ec-5eb9-4850-843b-8bcd378cb8b0"
+            ],
+            "pinned": [],
+            "active": "824f13ec-5eb9-4850-843b-8bcd378cb8b0"
+          },
+          "surfaces": {
+            "824f13ec-5eb9-4850-843b-8bcd378cb8b0": {
+              "id": "824f13ec-5eb9-4850-843b-8bcd378cb8b0",
+              "kind": "factory",
+              "title": "Factory"
+            }
+          },
+          "closedStack": [],
+          "focusedGroupId": "g1",
+          "agencyDepth": "panel",
+          "rightDepth": "panel",
+          "leftWidth": 240,
+          "rightWidth": 320,
+          "accompanying": {
+            "ref": "agent-session/canvas-context-walk",
+            "project": "Editor",
+            "space": "session-space/canvas-context-walk"
+          },
+          "mode": "factory"
+        }
+      }
+    },
+    {
+      "ok": true,
+      "op": "read.layout",
+      "duration_ms": 0,
+      "data": {
+        "layout": {
+          "root": {
+            "type": "group",
+            "id": "g1",
+            "tabs": [
+              "824f13ec-5eb9-4850-843b-8bcd378cb8b0"
+            ],
+            "pinned": [],
+            "active": "824f13ec-5eb9-4850-843b-8bcd378cb8b0"
+          },
+          "surfaces": {
+            "824f13ec-5eb9-4850-843b-8bcd378cb8b0": {
+              "id": "824f13ec-5eb9-4850-843b-8bcd378cb8b0",
+              "kind": "factory",
+              "title": "Factory"
+            }
+          },
+          "closedStack": [],
+          "focusedGroupId": "g1",
+          "agencyDepth": "panel",
+          "rightDepth": "panel",
+          "leftWidth": 240,
+          "rightWidth": 320,
+          "accompanying": {
+            "ref": "agent-session/canvas-context-walk",
+            "project": "Editor",
+            "space": "session-space/canvas-context-walk"
+          },
+          "mode": "factory",
+          "epiLogos": true
+        }
+      }
+    },
+    {
+      "ok": true,
+      "op": "read.layout",
+      "duration_ms": 0.1,
+      "data": {
+        "layout": {
+          "root": {
+            "type": "group",
+            "id": "g1",
+            "tabs": [
+              "824f13ec-5eb9-4850-843b-8bcd378cb8b0"
+            ],
+            "pinned": [],
+            "active": "824f13ec-5eb9-4850-843b-8bcd378cb8b0"
+          },
+          "surfaces": {
+            "824f13ec-5eb9-4850-843b-8bcd378cb8b0": {
+              "id": "824f13ec-5eb9-4850-843b-8bcd378cb8b0",
               "kind": "factory",
               "title": "Factory"
             }
@@ -869,7 +896,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 46,
+      "duration_ms": 55,
       "data": {
         "file": "lane0-repairs-lens-on-no-surface.png"
       }
@@ -884,14 +911,14 @@
             "type": "group",
             "id": "g1",
             "tabs": [
-              "b85f5c34-161c-4057-8dad-bb84429fff60"
+              "824f13ec-5eb9-4850-843b-8bcd378cb8b0"
             ],
             "pinned": [],
-            "active": "b85f5c34-161c-4057-8dad-bb84429fff60"
+            "active": "824f13ec-5eb9-4850-843b-8bcd378cb8b0"
           },
           "surfaces": {
-            "b85f5c34-161c-4057-8dad-bb84429fff60": {
-              "id": "b85f5c34-161c-4057-8dad-bb84429fff60",
+            "824f13ec-5eb9-4850-843b-8bcd378cb8b0": {
+              "id": "824f13ec-5eb9-4850-843b-8bcd378cb8b0",
               "kind": "factory",
               "title": "Factory"
             }
@@ -914,21 +941,21 @@
     {
       "ok": true,
       "op": "read.layout",
-      "duration_ms": 0.1,
+      "duration_ms": 0,
       "data": {
         "layout": {
           "root": {
             "type": "group",
             "id": "g1",
             "tabs": [
-              "b85f5c34-161c-4057-8dad-bb84429fff60"
+              "824f13ec-5eb9-4850-843b-8bcd378cb8b0"
             ],
             "pinned": [],
-            "active": "b85f5c34-161c-4057-8dad-bb84429fff60"
+            "active": "824f13ec-5eb9-4850-843b-8bcd378cb8b0"
           },
           "surfaces": {
-            "b85f5c34-161c-4057-8dad-bb84429fff60": {
-              "id": "b85f5c34-161c-4057-8dad-bb84429fff60",
+            "824f13ec-5eb9-4850-843b-8bcd378cb8b0": {
+              "id": "824f13ec-5eb9-4850-843b-8bcd378cb8b0",
               "kind": "factory",
               "title": "Factory"
             }

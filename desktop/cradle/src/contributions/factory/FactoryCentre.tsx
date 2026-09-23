@@ -1,94 +1,117 @@
-import {useEffect, useState, type ReactNode} from "react";
+import {useEffect, useRef, useState, type ReactNode} from "react";
 import {FactoryDevelopmentSurface} from "./FactoryDevelopmentSurface";
 import type {EncounterRow} from "../../encounter/EncounterList";
-import {DeskBoard} from "./desk/DeskBoard";
-import {DeskRunDetail} from "./desk/DeskRunDetail";
-import {FactoryLiveProvider} from "./FactoryLive";
-import {
-  closeDeskDetail, deskRowForSession, openDeskDetail, peekDeskRow, publishCentreView,
-  setLastDeskRun, useCentreView, useDeskDetail, useLastDeskRun,
-} from "./desk/deskModel";
-import {publishFactorySelection, releaseFactorySelection} from "./sidebar/sidebarModel";
+import {Desk} from "./desk/Desk";
+import {RunPage, type FactoryObjectRef, type RunPageHost} from "./desk/RunPage";
+import {ObjectPage} from "../../agent/objects";
+import {OPEN_OBJECT_EVENT, isOpenObjectDetail} from "../../agent/objects/registry";
+import {factoryObject} from "./desk/factoryObjects";
+import {publishCentreView, useCentreView} from "./desk/deskModel";
+import {closeRunPage, openRunPage, peekDeskReading, runEntry, runForSession, selectRun, useDeskReading, useOpenRun} from "./desk/deskStore";
+import {RUN_STATE_WORD} from "./desk/runModel";
+import {clearObjectPages, closeObjectPage, openObjectPage, useObjectPage} from "./desk/objectNav";
 import "./desk/desk.css";
+import "./desk/fdesk.css";
 
 export interface FactoryCentreProps {
   /** The centre Chat: the SAME AgentChat the base-mode panel mounts, bound
    * to the mode's accompanying conversation — never a second chat
    * implementation, never a second composer. */
   chat?:ReactNode;
-  /** The Central project the mode is browsing — the Desk's receiving scope
-   * and the Run detail's conversation list. */
+  /** The Central project in scope (the one scope). */
   project?:string;
-  /** The bound conversation, for the Tasks presentation's context and its
-   * Run binding. */
+  /** The bound conversation, for the Tasks header's Run join. */
   accompanying?:{ref:string;project:string;space:string};
   /** Open a task conversation as the working chat: bind it and move to
    * Tasks — the frame's ordinary start/read pair, never a second one. */
   onOpenTask?:(row:EncounterRow)=>void|Promise<void>;
+  /** A fresh conversation in Tasks (New run…). */
+  onNewTask?:()=>void;
+  /** Open the right panel's Run tape (Open activity). */
+  onOpenActivity?:()=>void;
   onMessage?:(message:string)=>void;
 }
 
-/** Factory's centre, in the owner's 2026-09-18 spatial model: Desk is
- * whole-Run-first (the live board, then the full SSSF view of the selected
- * Run); Tasks is chat-first (the full-size working chat over the shared
- * conversation primitives). The left navigator's two entries choose between
- * them; switching changes the working view, never execution. With no
- * conversation bound, Tasks is the genuine new-conversation state — identity,
- * welcome and the full composer, usable by default: first Send provisions a
- * fresh conversation (kernel `encounter_provision`); existing conversations
- * are chosen from the sidebar, the history menu, the Desk or the navigator.
- * The imported development console survives only as a dev-only
- * debugging disclosure, never the normal experience. */
-export function FactoryCentre({chat,project,accompanying,onOpenTask,onMessage}:FactoryCentreProps) {
+/** Every run the Desk holds, as the registry identities need them. */
+function heldRuns() {
+  return Object.values(peekDeskReading()?.runs ?? {}).map(entry => ({runKey: entry.card.key, statePath: entry.card.source.statePath, runRef: entry.run.runRef, title: entry.card.title, project: entry.card.source.project}));
+}
+const FACTORY_KINDS = new Set(["factory-run", "factory-unit", "factory-attempt", "factory-check", "factory-now", "factory-agent", "tape-event"]);
+
+/** Factory's centre (11-FACTORY §1): full-page, no pane tab bar. Desk is for
+ * the work — the run board, then a run's own page replacing it with ← Desk,
+ * then object pages in place with ← back; Tasks is for talking about it — the
+ * selected conversation at full size, with a Run chip only when its session
+ * truly carried the run (F14), else "Direct conversation" once (F15). */
+export function FactoryCentre({chat,accompanying,onOpenTask,onNewTask,onOpenActivity,onMessage}:FactoryCentreProps) {
   const view=useCentreView();
-  const detail=useDeskDetail();
-  const lastRun=useLastDeskRun();
+  const openKey=useOpenRun();
+  const object=useObjectPage();
+  useDeskReading();
   const [debugOpen,setDebugOpen]=useState(false);
+  const centre=useRef<HTMLElement>(null);
+  const joined=view==="tasks"&&accompanying?runForSession(accompanying.ref):undefined;
 
-  // The right sidebar's Run subject follows where the person actually is:
-  // in Tasks, the task's own bound Run (an exact agent-session match with
-  // what the Desk has read) — and a Direct conversation clears the subject
-  // instead of inheriting an unrelated Run; back on the Desk, the held Run
-  // (the opened detail, else the last Run the desk chose) is re-established.
+  // The right panel answers about the selected run: in Tasks, the joined run
+  // (a Direct conversation clears it); on the Desk, the run held open.
+  useEffect(()=>{ if(view==="tasks")selectRun(joined?.card.key); },[view,joined?.card.key]);
+  // A run opened (or closed) starts a fresh object stack.
+  useEffect(()=>{ clearObjectPages(); },[openKey]);
+  // Object pages open IN PLACE in this full-page centre (§4.1a): a Factory
+  // kind (or a tape event) asked for without Pop out lands on the stack.
+  // Pop out is the frame's (its own window, the same identity).
   useEffect(()=>{
-    if(view==="tasks"){
-      const row=accompanying?deskRowForSession(accompanying.ref):undefined;
-      if(row?.view)publishFactorySelection({statePath:row.locator.statePath,projectRef:row.locator.projectRef,runRef:row.locator.runRef,view:row.view,observedAtUnixMs:Date.now(),origin:"task"});
-      else releaseFactorySelection("any");
-      return;
-    }
-    if(detail)return; // the detail publishes its own selection
-    const held=lastRun?peekDeskRow(`${lastRun.statePath}\u0000${lastRun.projectRef}\u0000${lastRun.runRef}`):undefined;
-    if(held?.view)publishFactorySelection({statePath:held.locator.statePath,projectRef:held.locator.projectRef,runRef:held.locator.runRef,view:held.view,observedAtUnixMs:Date.now(),origin:"desk"});
-    else releaseFactorySelection("any");
-  },[view,accompanying?.ref,detail,lastRun]);
+    const onOpen=(event:Event)=>{
+      const detail=(event as CustomEvent).detail;
+      // Only while this centre is the one presented (a retained, hidden
+      // Factory centre never takes another mode's opens).
+      if(!centre.current||centre.current.offsetParent===null)return;
+      if(!isOpenObjectDetail(detail)||detail.popOut||!FACTORY_KINDS.has(detail.object.kind))return;
+      publishCentreView("desk");
+      openObjectPage(detail.object);
+    };
+    window.addEventListener(OPEN_OBJECT_EVENT,onOpen);
+    return()=>window.removeEventListener(OPEN_OBJECT_EVENT,onOpen);
+  },[]);
 
-  const runLink=view==="tasks"&&accompanying?deskRowForSession(accompanying.ref):undefined;
-  const openRunFromTask=()=>{
-    if(!runLink)return;
-    setLastDeskRun(runLink.locator);
-    openDeskDetail(runLink.locator);
-    publishCentreView("desk");
+  const openConversation=(sessionRef:string,spaceRef?:string,runProject?:string)=>{
+    const row:EncounterRow={ref:sessionRef,space:spaceRef??"",title:"Conversation",project:runProject??""};
+    void onOpenTask?.(row);
+  };
+  const host:RunPageHost={
+    onOpenConversation:onOpenTask?(sessionRef=>{
+      const entry=runEntry(openKey);
+      const attempt=entry?.inspection?.attempts?.find(item=>item.body?.agentSessionRef===sessionRef);
+      openConversation(sessionRef,attempt?.body?.sessionSpaceRef,entry?.card.source.project);
+    }):undefined,
+    onStartConversation:onNewTask?(()=>{onNewTask();publishCentreView("tasks");}):undefined,
+    onOpenActivity:onOpenActivity?(()=>onOpenActivity()):undefined,
+    onOpenObject:(ref:FactoryObjectRef)=>openObjectPage(factoryObject(ref,heldRuns())),
+    onMessage,
   };
 
-  return <main className={"factory-centre"+(view==="tasks"?" factory-tasks":"")} aria-label="Factory" data-centre-view={view}>
+  const openRunFromTask=()=>{ if(!joined)return; openRunPage(joined.card.key); publishCentreView("desk"); };
+
+  return <main ref={centre} className={"factory-centre"+(view==="tasks"?" factory-tasks":"")} aria-label="Factory" data-centre-view={view}>
     {view==="tasks"
       ? <section className="factory-chat-full" aria-label="Task conversation">
-        <header className="factory-chat-context">
-          <span className="factory-chat-context-project"><span className="factory-chat-context-mark" aria-hidden="true"/>{project??"Central"}</span>
-          {runLink
-            ? <button className="oi-action" onClick={openRunFromTask}>Run · {runLink.view?.run.label}</button>
-            : <span className="factory-chat-context-direct">{accompanying?"Direct conversation — no Run carries this work":"New conversation"}</span>}
+        <header className="factory-chat-context ftasks-head">
+          {joined
+            ? <button type="button" className="ftasks-runchip" data-run-chip={joined.run.runRef} title={`${RUN_STATE_WORD[joined.card.state]} · ${joined.card.title}`} onClick={openRunFromTask}>
+              <span className="ftasks-runchip-kind">Run</span><span>{joined.card.title}</span>
+            </button>
+            : accompanying
+              ? <span className="factory-chat-context-direct" data-direct-conversation>Direct conversation</span>
+              : <span className="factory-chat-context-direct">New conversation</span>}
         </header>
         <div className="factory-chat-host">{chat}</div>
       </section>
-      : <FactoryLiveProvider>{/* one live observation field per visible Factory centre surface — no poll inside (see FactoryLive.tsx) */}
-        {detail
-          ? <DeskRunDetail locator={detail} project={project} onBack={closeDeskDetail}
-              onOpenTask={row=>void onOpenTask?.(row)}/>
-          : <DeskBoard project={project} onMessage={onMessage}/>}
-      </FactoryLiveProvider>}
-    {import.meta.env.DEV&&view==="desk"&&!detail&&<details className="factory-centre-debug" onToggle={event=>setDebugOpen((event.target as HTMLDetailsElement).open)}>
+      : object
+        ? <div className="frun fobject" data-object-page={object.kind}><ObjectPage key={`${object.kind}|${object.ref}`} object={object} onBack={closeObjectPage}/></div>
+        : openKey
+          ? <RunPage runKey={openKey} onBack={closeRunPage} host={host}/>
+          : <Desk onNewRun={onNewTask?()=>{onNewTask();publishCentreView("tasks");}:undefined}/>}
+    {import.meta.env.DEV&&view==="desk"&&!openKey&&!object&&<details className="factory-centre-debug" onToggle={event=>setDebugOpen((event.target as HTMLDetailsElement).open)}>
       <summary>Debug: development console</summary>
       {debugOpen&&<FactoryDevelopmentSurface/>}
     </details>}

@@ -144,6 +144,13 @@ const SCENARIOS = {
   "document-entry": { module: "scenarios/document-entry.mjs", kernel: true, aliases: ["6a"] },
   "background-completion": {module:"scenarios/background-completion.mjs",kernel:true,aliases:[]},
   "lane0-repairs": {module:"scenarios/lane0-repairs.mjs",kernel:true,aliases:[]},
+  // 11-FACTORY (lane 3): one walk per Factory state group, grade B.
+  "factory-desk": {module:"scenarios/factory-desk.mjs",kernel:true,aliases:["f1","f2","f3","f4","f5"]},
+  "factory-run": {module:"scenarios/factory-run.mjs",kernel:true,aliases:["f6","f7","f8","f12","f13"]},
+  "factory-trajectory": {module:"scenarios/factory-trajectory.mjs",kernel:true,aliases:["f9","f10","f11"]},
+  "factory-tasks": {module:"scenarios/factory-tasks.mjs",kernel:true,aliases:["f14","f15"]},
+  "factory-objects": {module:"scenarios/factory-objects.mjs",kernel:true,aliases:["f16"]},
+  "factory-real": {module:"scenarios/factory-real.mjs",kernel:true,aliases:[]},
 };
 
 // Which design/spec row each scenario's receipt serves, and an optional grade
@@ -159,6 +166,12 @@ const SCENARIO_SPEC = {
   "factory-development": { spec_ref: "docs/experience/FACTORY-AGENCY.md §4/§5/§8/§12" },
   "background-completion": { spec_ref: "docs/experience/FACTORY-AGENCY.md §1 + handoff §4" },
   "lane0-repairs": { spec_ref: "docs/cradle/10-SIDEBARS.md §6.1 (2,3,7) §3.6 rule 1; 11-FACTORY.md §4" },
+  "factory-desk": { spec_ref: "docs/cradle/11-FACTORY.md §7 F1 F2 F3 F4 F5" },
+  "factory-run": { spec_ref: "docs/cradle/11-FACTORY.md §7 F6 F7 F8 F12 F13" },
+  "factory-trajectory": { spec_ref: "docs/cradle/11-FACTORY.md §7 F9 F10 F11" },
+  "factory-tasks": { spec_ref: "docs/cradle/11-FACTORY.md §7 F14 F15" },
+  "factory-objects": { spec_ref: "docs/cradle/11-FACTORY.md §6 §7 F16" },
+  "factory-real": { spec_ref: "docs/cradle/11-FACTORY.md §7 F5 F6 F7 F12 (real Central-root runs, read-only)" },
 };
 const DEFAULT_SPEC_REF = "docs/cradle/05-EXECUTION.md §3";
 

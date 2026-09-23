@@ -33,6 +33,9 @@ const TaOntaContextPlane = lazy(() => import("../expressions/TaOntaSide").then(m
  * moved into the three top-level tabs: trajectory into Run, skills & tools
  * into Agents, claims/results into Run and Context (inspect stays an action). */
 export interface PanelAccompanying { ref: string; project: string; space: string }
+const FactoryRunTab = lazy(() => import("../contributions/factory/sidebar/FactoryRunTab").then(module => ({default: module.FactoryRunTab})));
+const FactoryAgentsTab = lazy(() => import("../contributions/factory/sidebar/FactoryAgentsTab").then(module => ({default: module.FactoryAgentsTab})));
+const FactoryContextSlice = lazy(() => import("../contributions/factory/sidebar/FactoryContextSlice").then(module => ({default: module.FactoryContextSlice})));
 const RunPlane = lazy(() => import("../contributions/factory/sidebar/RunPlane").then(module => ({default: module.RunPlane})));
 const AgentsPlane = lazy(() => import("../contributions/factory/sidebar/AgentsPlane").then(module => ({default: module.AgentsPlane})));
 
@@ -82,12 +85,12 @@ export function modeExtraPlanes(mode: WorkspaceMode, subject: PanelSubject, acco
     {id: "agents", label: "Agents", body: <Suspense fallback={null}><AgentsPlane subject={subject} project={project} accompanying={accompanying} onMessage={onMessage} withScenarioBar={false} host={host ? {onOpenEncounterRow: host.onOpenEncounterRow} : undefined}/></Suspense>},
   ];
   if (mode === "factory") return [
-    {id: "run", label: "Run", body: <Suspense fallback={null}><RunPlane subject={subject} accompanying={accompanying} onMessage={onMessage} host={host} full={full}/></Suspense>},
-    {id: "agents", label: "Agents", body: <Suspense fallback={null}><AgentsPlane subject={subject} project={project} accompanying={accompanying} onMessage={onMessage} host={host}/></Suspense>},
+    {id: "run", label: "Run", body: <Suspense fallback={null}><FactoryRunTab accompanying={accompanying}/></Suspense>},
+    {id: "agents", label: "Agents", body: <Suspense fallback={null}><FactoryAgentsTab/></Suspense>},
     // Owner direction 2026-09-20: the Context plane IS the canvas — the same
     // plane body the Ta-Onta modes mount, nothing mounted beneath it. The
     // former Needs-you/Sources/Produced stack under the canvas is unmounted.
-    {id: "factory-context", label: "Context", body: <Suspense fallback={null}><div className="desk-plane oi-side-plane ta-context-plane" data-plane="factory-context"><ContextPaneMount opens={opens}/></div></Suspense>},
+    {id: "factory-context", label: "Context", body: <Suspense fallback={null}><div className="desk-plane oi-side-plane ta-context-plane" data-plane="factory-context"><ContextPaneMount opens={opens}/>{!opens?.sideTabs?.length && <FactoryContextSlice/>}</div></Suspense>},
   ];
   // Nara/Anima is the personal encounter, Epii the deep inquiry — the same
   // companion components, curated to the Epi-Logos world.

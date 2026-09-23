@@ -70,6 +70,8 @@ export interface FactoryCentreContext {
   project?: string;
   accompanying?: {ref: string; project: string; space: string};
   onOpenTask?: (row: import("../encounter/EncounterList").EncounterRow) => void | Promise<void>;
+  onNewTask?: () => void;
+  onOpenActivity?: () => void;
   onMessage?: (message: string) => void;
 }
 
@@ -125,7 +127,7 @@ function retainedBody(binding: SurfaceBinding, subject?: WorkbenchSubject, facto
   if (binding.kind === "techne") return <TechneCentre binding={binding} subject={subject} deepLink={binding.engine?.expressionRef} onHostedState={onHostedState}/>;
   if (binding.kind === "epi-logos") return <EpiLogosSurface binding={binding}/>;
   if (binding.kind === "system") return <SystemPanel binding={binding}/>;
-  if (binding.kind === "factory") return <FactoryCentre chat={factoryCentre} project={factoryTasks?.project} accompanying={factoryTasks?.accompanying} onOpenTask={factoryTasks?.onOpenTask} onMessage={factoryTasks?.onMessage}/>;
+  if (binding.kind === "factory") return <FactoryCentre chat={factoryCentre} project={factoryTasks?.project} accompanying={factoryTasks?.accompanying} onOpenTask={factoryTasks?.onOpenTask} onNewTask={factoryTasks?.onNewTask} onOpenActivity={factoryTasks?.onOpenActivity} onMessage={factoryTasks?.onMessage}/>;
   return null;
 }
 
