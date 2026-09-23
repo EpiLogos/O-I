@@ -16,7 +16,7 @@ import {availabilityWords, boundProviders, harnessName, modelAvailability, model
 import {loadSuite, refreshAll, stageDefaultConnection, type SettingsSnapshot} from "../settingsData";
 import {currentConnection, DEFAULT_CONNECTION_ROW, stagedChanges, undoChange} from "../changeModel";
 import {goTo} from "../settingsNav";
-import {Missing, ReadOnly, Reading, Row, Unreadable} from "../rows";
+import {Missing, ReadOnly, Reading, Row, Scrim, Unreadable} from "../rows";
 
 const AUTO_POLICY = RANKING_POLICIES[0];
 
@@ -84,13 +84,13 @@ function CatalogueDialog({entries, data, onClose}: {entries: CatalogueEntry[]; d
     window.addEventListener("keydown", key, true);
     return () => window.removeEventListener("keydown", key, true);
   }, [onClose]);
-  return <div className="settings-scrim" onPointerDown={(event) => { if (event.target === event.currentTarget) onClose(); }}>
-    <div className="settings-sheet settings-catalogue" role="dialog" aria-modal="true" aria-label="Model catalogue" data-catalogue-dialog>
+  return <Scrim onDismiss={onClose}>
+    <div className="settings-sheet settings-catalogue oi-scroll-quiet" role="dialog" aria-modal="true" aria-label="Model catalogue" data-catalogue-dialog>
       <header className="settings-sheet-head"><h2>Model catalogue</h2><button type="button" className="settings-button" onClick={onClose}>Close</button></header>
       <input className="settings-input" type="search" placeholder={`Search ${entries.length} models`} aria-label="Search the model catalogue" data-catalogue-search autoFocus value={query} onChange={(event) => setQuery(event.target.value)}/>
       <div className="settings-sheet-body"><ModelList entries={entries} data={data} query={query}/></div>
     </div>
-  </div>;
+  </Scrim>;
 }
 
 export function ModelsSection({data}: {data: SettingsSnapshot}) {

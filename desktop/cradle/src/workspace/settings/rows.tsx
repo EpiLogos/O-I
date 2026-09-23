@@ -6,8 +6,35 @@
  * operation, the section states (Reading / Couldn't load + Retry), and cards.
  */
 import type {ReactNode} from "react";
+import {createPortal} from "react-dom";
 import {expect, plain} from "./settingsData";
-import {useState} from "react";
+import {useEffect, useRef, useState} from "react";
+
+/**
+ * The layer a Settings sheet sits on. It is portalled to the document body
+ * so it covers the whole window — the sidebars included — at every width,
+ * rather than living inside the centre's stacking context. An in-place
+ * anchor keeps it honest: when the Settings page is hidden (another mode is
+ * showing, the page kept alive by retention) the layer hides with it.
+ */
+export function Scrim({children, onDismiss, ...rest}: {children: ReactNode; onDismiss?: () => void} & Record<`data-${string}`, string | boolean | undefined>) {
+  const anchor = useRef<HTMLSpanElement>(null);
+  const [shown, setShown] = useState(true);
+  useEffect(() => {
+    const page = anchor.current?.closest<HTMLElement>(".settings-page") ?? anchor.current?.parentElement;
+    if (!page) return;
+    const check = () => setShown(page.isConnected && page.getClientRects().length > 0);
+    check();
+    const observer = new ResizeObserver(check);
+    observer.observe(page);
+    return () => observer.disconnect();
+  }, []);
+  return <>
+    <span ref={anchor} hidden/>
+    {createPortal(<div className="settings-layer settings-scrim" hidden={!shown} {...rest}
+      onPointerDown={onDismiss ? (event) => { if (event.target === event.currentTarget) onDismiss(); } : undefined}>{children}</div>, document.body)}
+  </>;
+}
 
 export function Row({id, title, description, changed, onUndo, children, className, reconciliation}: {
   id?: string;

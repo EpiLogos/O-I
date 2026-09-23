@@ -13,7 +13,7 @@ import {useScope, scopeProject, scopeLabel as scopeWord} from "../../scope";
 import {groupSkills, skillParts, titleCase, type SkillItem} from "../sectionModel";
 import {refreshAll, resolutionKey, watchSkillScope, type SettingsSnapshot} from "../settingsData";
 import {CAPABILITIES_REF, isStaged, skillRowId, stageSkill, stagedChanges, undoChange} from "../changeModel";
-import {Missing, Reading, Unreadable} from "../rows";
+import {Missing, Reading, Scrim, Unreadable} from "../rows";
 
 export type SkillScope = "machine" | "project" | "session";
 let skillScope: SkillScope = "machine";
@@ -52,8 +52,8 @@ function DetailSheet({item, onClose}: {item: SkillItem; onClose: () => void}) {
     window.addEventListener("keydown", key, true);
     return () => window.removeEventListener("keydown", key, true);
   }, [onClose]);
-  return <div className="settings-scrim" onPointerDown={(event) => { if (event.target === event.currentTarget) onClose(); }}>
-    <div className="settings-sheet" role="dialog" aria-modal="true" aria-label={item.name} data-skill-detail={item.id}>
+  return <Scrim onDismiss={onClose}>
+    <div className="settings-sheet oi-scroll-quiet" role="dialog" aria-modal="true" aria-label={item.name} data-skill-detail={item.id}>
       <header className="settings-sheet-head"><h2>{item.name}</h2><button type="button" className="settings-button" onClick={onClose}>Close</button></header>
       <div className="settings-sheet-body">
         <p>{item.description ?? "The skill discloses no description."}</p>
@@ -66,7 +66,7 @@ function DetailSheet({item, onClose}: {item: SkillItem; onClose: () => void}) {
         <p className="settings-muted">This skill declares no settings of its own.</p>
       </div>
     </div>
-  </div>;
+  </Scrim>;
 }
 
 export function SkillsSection({data}: {data: SettingsSnapshot}) {

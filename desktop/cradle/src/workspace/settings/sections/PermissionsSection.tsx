@@ -18,7 +18,7 @@ export {permissionModeEntries, trustEntries};
 import {defaultScope, refreshAll, resolutionKey, watchPair, type SettingEntry, type SettingsSnapshot} from "../settingsData";
 import {settingRowId, stageSetting, stagedChanges, undoChange} from "../changeModel";
 import {ConfigSettingRow} from "./ConfigRows";
-import {Missing, ReadOnly, Reading, Row, Unreadable} from "../rows";
+import {Missing, ReadOnly, Reading, Row, Scrim, Unreadable} from "../rows";
 
 const MODE_WORDS: Record<string, string> = {
   default: "Ask before acting", ask: "Ask before acting", "ask-before-acting": "Ask before acting",
@@ -87,8 +87,8 @@ function TrustKeys({counts}: {counts: {keys: number; states: Record<string, numb
     <Row id="permissions:trust-keys" title="Trust keys" description={line}>
       <button type="button" className="settings-button" data-trust-review onClick={() => setOpen(true)}>Review…</button>
     </Row>
-    {open && <div className="settings-scrim" onPointerDown={(event) => { if (event.target === event.currentTarget) setOpen(false); }}>
-      <div className="settings-sheet" role="dialog" aria-modal="true" aria-label="Trust keys" data-trust-dialog>
+    {open && <Scrim onDismiss={() => setOpen(false)}>
+      <div className="settings-sheet oi-scroll-quiet" role="dialog" aria-modal="true" aria-label="Trust keys" data-trust-dialog>
         <header className="settings-sheet-head"><h2>Trust keys</h2><button type="button" className="settings-button" onClick={() => setOpen(false)}>Close</button></header>
         <div className="settings-sheet-body">
           <p>AIKit records a review decision for each skill revision it has seen: {counts.keys} in all.</p>
@@ -96,7 +96,7 @@ function TrustKeys({counts}: {counts: {keys: number; states: Record<string, numb
           <p className="settings-muted">Decisions are recorded with `aikit trust`; the app shows them read-only.</p>
         </div>
       </div>
-    </div>}
+    </Scrim>}
   </>;
 }
 

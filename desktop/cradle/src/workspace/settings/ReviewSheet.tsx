@@ -13,6 +13,7 @@ import {useEffect, useRef, useState} from "react";
 import {applyReviewed, discardAll, review, type ApplyOutcome, type ReviewedPlan, type StagedChange} from "./changeModel";
 import {plain} from "./settingsData";
 import {goTo} from "./settingsNav";
+import {Scrim} from "./rows";
 
 export function PendingStrip({changes, onReview}: {changes: StagedChange[]; onReview: () => void}) {
   const [busy, setBusy] = useState(false);
@@ -61,8 +62,8 @@ export function ReviewSheet({changes, onClose}: {changes: StagedChange[]; onClos
   const rows = reviewed?.changes ?? changes;
   const results = outcome?.kind === "applied" ? outcome.rows : null;
   const nothing = phase !== "planning" && rows.length === 0;
-  return <div className="settings-scrim" data-settings-scrim>
-    <div ref={sheet} tabIndex={-1} className="settings-sheet settings-review" role="dialog" aria-modal="true" aria-labelledby="settings-review-title" data-settings-review-sheet data-phase={phase}>
+  return <Scrim data-settings-scrim>
+    <div ref={sheet} tabIndex={-1} className="settings-sheet settings-review oi-scroll-quiet" role="dialog" aria-modal="true" aria-labelledby="settings-review-title" data-settings-review-sheet data-phase={phase}>
       <header className="settings-sheet-head"><h2 id="settings-review-title">{nothing ? "Review changes" : `Review ${rows.length} ${rows.length === 1 ? "change" : "changes"}`}</h2></header>
       {nothing && <p data-review-empty>No capability changes.</p>}
       {error && <p className="settings-inline-error" role="alert" data-review-error>Couldn't load these settings. {error}</p>}
@@ -98,5 +99,5 @@ export function ReviewSheet({changes, onClose}: {changes: StagedChange[]; onClos
                 <button type="button" className="settings-button is-primary" data-review-apply disabled={phase !== "ready" || !reviewed} onClick={() => void apply()}>{phase === "applying" ? "Applying…" : phase === "planning" ? "Reading plans…" : "Apply changes"}</button></>}
       </footer>
     </div>
-  </div>;
+  </Scrim>;
 }
