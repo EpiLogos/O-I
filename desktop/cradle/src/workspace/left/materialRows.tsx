@@ -30,7 +30,7 @@ export function FlowRows({onOpen}: {onOpen: (row: FlowInstanceRow) => Promise<vo
   }, [kernel.transport, attempt]);
   const retry = useCallback(() => setAttempt(value => value + 1), []);
   const focused = kernel.snapshot.focus?.subject?.ref;
-  const state: SectionState = error ? {kind: "error", message: "Couldn't read your flows.", onRetry: retry}
+  const state: SectionState = error ? {kind: "error", message: "Couldn't read your flows.", onRetry: retry, reason: error}
     : !rows ? {kind: "loading", what: "Reading flows…"}
     : {kind: "ready", rows: rows.length};
   return <Section id="flows" label="Flows" state={state}>
@@ -63,7 +63,7 @@ export function RememberedRows({path, label}: {path: string; label: string}) {
     return () => { live = false; };
   }, [kernel.transport, path, attempt]);
   const focused = kernel.snapshot.focus?.subject?.ref;
-  if (error) return <div className="left-error" role="alert" data-error-for={`${label} remembered`}><p>Couldn't read what {label} remembers.</p><button type="button" className="oi-action" onClick={() => setAttempt(value => value + 1)}>Retry</button></div>;
+  if (error) return <div className="left-error" role="alert" data-error-for={`${label} remembered`} title={error}><p>Couldn't read what {label} remembers.</p><button type="button" className="oi-action" onClick={() => setAttempt(value => value + 1)}>Retry</button></div>;
   if (!entries?.length) return null;
   return <div className="left-remembered" data-remembered-list={label}>
     <span className="left-subhead">Remembered</span>

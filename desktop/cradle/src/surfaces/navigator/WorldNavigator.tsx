@@ -102,7 +102,7 @@ export function WorldNavigator({ onExplore, onOpenEncounter, centralFiles, onCen
   // L6/L7: while Central's reading is pending the body's first section says
   // so; a failed read says what failed and offers Retry — the foot still works.
   const worldState: SectionState | undefined = root ? undefined
-    : readFailure || reading?.error ? { kind: "error", message: "Couldn't read Central.", onRetry: () => void load(true) }
+    : readFailure || reading?.error ? { kind: "error", message: "Couldn't read Central.", detail: "The world mapping didn't answer. Everything already open still works.", onRetry: () => void load(true), reason: readFailure ?? reading?.error ?? undefined }
     : { kind: "loading", what: "Reading Central…" };
   const refresh = () => { setFileRefresh(n=>n+1); void load(true); };
   const centralChats = useConversations(centralOpen && centralMode === "chats" && root ? "" : undefined, fileRefresh);

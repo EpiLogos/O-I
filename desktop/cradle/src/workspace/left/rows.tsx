@@ -44,7 +44,7 @@ function useCollapsed(id: string): [boolean, (value: boolean) => void] {
 export type SectionState =
   | {kind: "ready"; rows: number}
   | {kind: "loading"; what: string}
-  | {kind: "error"; message: string; onRetry: () => void}
+  | {kind: "error"; message: string; onRetry: () => void; reason?: string; detail?: string}
   /** Last-known rows kept after a failed refresh. */
   | {kind: "stale"; rows: number; since: number; onRetry?: () => void};
 
@@ -62,11 +62,12 @@ export function Section({id, label, state, count, tools, children}: {id: string;
         {count !== undefined && count > 0 && <span className="left-section-count">{count}</span>}
         {state.kind === "stale" && <span className="left-section-stale" title="The last refresh failed; these are the last rows read.">as of {formatRelativeTime(state.since).replace(/ ago$/, "")}</span>}
       </button>
+      {state.kind === "stale" && state.onRetry && <button type="button" className="left-link left-section-retry" onClick={state.onRetry}>Retry</button>}
       {tools}
     </header>
     <div id={bodyId} className="left-section-body" hidden={collapsed || undefined}>
       {state.kind === "loading" ? <p className="left-reading" role="status">{state.what}</p>
-        : state.kind === "error" ? <div className="left-error" role="alert"><p>{state.message}</p><button type="button" className="oi-action" onClick={state.onRetry}>Retry</button></div>
+        : state.kind === "error" ? <div className="left-error" role="alert" title={state.reason}><p>{state.message}</p>{state.detail && <p className="left-error-detail">{state.detail}</p>}<button type="button" className="oi-action" onClick={state.onRetry}>Retry</button></div>
         : children}
     </div>
   </section>;

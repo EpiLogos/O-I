@@ -188,3 +188,5 @@ button.left-row:hover, .left-row:has(> .left-row-main:hover), .left-row:focus-wi
 .left-learnings[aria-expanded="false"] .left-chevron { transform: rotate(-90deg); }
 .left-learnings-tree { margin: 1px 0 4px 14px; }
 .left-corpus { margin: 0 0 2px; }
+.left-section-retry { flex: none; margin-right: 6px; font-size: var(--oi-shell-type-meta); }
+.left-error > p.left-error-detail { font-weight: 400; color: var(--oi-muted-2); }

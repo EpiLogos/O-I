@@ -72,7 +72,7 @@ function SingleTasks({register, activeRef, onOpen}: {register: {project: string;
     : state.kind === "stale" ? {kind: "stale", rows: state.rows.length, since: state.since, onRetry: retry}
     : {kind: "ready", rows: state.rows.length};
   return <Section id="tasks" label="Tasks" count={state.kind === "ready" || state.kind === "stale" ? state.rows.length : undefined} state={section}>
-    <ChatRows project={register.project} label={register.label} state={state} retry={retry} activeRef={activeRef} kind="Task" onOpen={onOpen}/>
+    <ChatRows project={register.project} label={register.label} state={state} retry={retry} activeRef={activeRef} kind="Task" onOpen={onOpen} staleInHeader/>
   </Section>;
 }
 

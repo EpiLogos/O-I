@@ -14,6 +14,7 @@ import {kernelOp} from "../../kernel/bridge";
 import type {KernelTransportStatus} from "../../kernel/types";
 import type {EncounterRow} from "../../encounter/EncounterList";
 import {ConversationRow} from "./rows";
+import {formatRelativeTime} from "../../shared/relativeTime";
 
 export async function readConversations(transport: KernelTransportStatus, project: string): Promise<EncounterRow[]> {
   const result = await kernelOp(transport, {op: "agency_read", project});
@@ -53,17 +54,27 @@ export function useConversations(project: string | undefined, refresh = 0): {sta
     });
     return () => { live = false; };
   }, [kernel.transport, project, refresh, attempt]);
+  // The rows stay live: re-read when the window regains focus and on a
+  // quiet cadence while visible (a new conversation may have been attached
+  // elsewhere). A failed re-read keeps the last-known rows (R11).
+  useEffect(() => {
+    if (project === undefined) return;
+    const again = () => { if (document.visibilityState === "visible") setAttempt(value => value + 1); };
+    const timer = setInterval(again, 90_000);
+    window.addEventListener("focus", again);
+    return () => { clearInterval(timer); window.removeEventListener("focus", again); };
+  }, [project]);
   const retry = useCallback(() => setAttempt(value => value + 1), []);
   return {state, retry};
 }
 
 /** The rows themselves, for a branch or a TASKS section. */
-export function ChatRows({project, state, retry, activeRef, kind, onOpen, label}: {project: string; state: ConversationsState; retry: () => void; activeRef?: string; kind?: string; onOpen?: (row: EncounterRow) => void; label?: string}) {
+export function ChatRows({project, state, retry, activeRef, kind, onOpen, label, staleInHeader}: {project: string; state: ConversationsState; retry: () => void; activeRef?: string; kind?: string; onOpen?: (row: EncounterRow) => void; label?: string; /** The section header already says "as of" (R11). */ staleInHeader?: boolean}) {
   if (state.kind === "loading") return <p className="left-reading" role="status">Reading {label ?? project}…</p>;
-  if (state.kind === "error") return <div className="left-error" role="alert" data-error-for={project}><p>Couldn't load this project.</p><button type="button" className="oi-action" onClick={retry}>Retry</button></div>;
+  if (state.kind === "error") return <div className="left-error" role="alert" data-error-for={project} title={state.message}><p>Couldn't load this project.</p><button type="button" className="oi-action" onClick={retry}>Retry</button></div>;
   const rows = state.rows;
   return <div className="left-conversations" data-project={project}>
-    {state.kind === "stale" && <p className="left-stale-line" title={state.message}>Couldn't refresh — showing what was read before. <button type="button" className="left-link" onClick={retry}>Retry</button></p>}
+    {state.kind === "stale" && !staleInHeader && <p className="left-stale-line" title={state.message} data-stale-since={state.since}>As of {formatRelativeTime(state.since)} — couldn't refresh. <button type="button" className="left-link" onClick={retry}>Retry</button></p>}
     {rows.map(row => <ConversationRow key={`${row.space}:${row.ref}`} row={row} kind={kind} current={row.ref === activeRef} onOpen={onOpen}/>)}
   </div>;
 }
