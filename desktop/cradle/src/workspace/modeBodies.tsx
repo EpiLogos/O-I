@@ -28,8 +28,6 @@ export interface PanelAccompanying { ref: string; project: string; space: string
 const FactoryRunTab = lazy(() => import("../contributions/factory/sidebar/FactoryRunTab").then(module => ({default: module.FactoryRunTab})));
 const FactoryAgentsTab = lazy(() => import("../contributions/factory/sidebar/FactoryAgentsTab").then(module => ({default: module.FactoryAgentsTab})));
 const FactoryContextSlice = lazy(() => import("../contributions/factory/sidebar/FactoryContextSlice").then(module => ({default: module.FactoryContextSlice})));
-const RunPlane = lazy(() => import("../contributions/factory/sidebar/RunPlane").then(module => ({default: module.RunPlane})));
-const AgentsPlane = lazy(() => import("../contributions/factory/sidebar/AgentsPlane").then(module => ({default: module.AgentsPlane})));
 
 /** The left body for a mode whose curation does not use the World navigator. */
 export function ModeLeftBody({mode, project, onOpenExpressions, onOpenTechne, onOpenPlace, onOpenFile, onOpenWiki, onMessage}: {
@@ -63,7 +61,7 @@ export function ContextPaneMount({opens,dataPlane="factory-context",project,sess
  * those its curation names, in the curation's order. `host` lends the real
  * app-level ways a Factory control reaches the rest of the shell; `opens`
  * lends the centre canvas's own pane openings to the Ta-Onta Context. */
-export function modeExtraPlanes(mode: WorkspaceMode, subject: PanelSubject, accompanying?: PanelAccompanying, onMessage?: (message: string) => void, host?: FactoryPanelHost, full?: boolean, opens?: TaPaneOpens, project?: string): {id: string; label: string; body: ReactNode}[] {
+export function modeExtraPlanes(mode: WorkspaceMode, subject: PanelSubject, accompanying?: PanelAccompanying, _onMessage?: (message: string) => void, _host?: FactoryPanelHost, _full?: boolean, opens?: TaPaneOpens, project?: string): {id: string; label: string; body: ReactNode}[] {
   // 10-SIDEBARS §4.2/§4.6: Chat · Activity · Agents are the panel's own; the
   // mode supplies only its Context — the preserved canvas and its launcher.
   const context = (id: string) => ({id, label: "Context", body: <ContextPaneMount opens={opens} dataPlane={id} project={project ?? accompanying?.project ?? subject.project} session={accompanying?.ref}/>});
