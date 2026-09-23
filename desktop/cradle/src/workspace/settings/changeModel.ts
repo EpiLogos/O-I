@@ -16,6 +16,9 @@ import {compactScope} from "../../configuration/contracts";
 import type {ChangeRequest} from "../../configuration/source";
 import {effectiveChatDefault} from "../../configuration/harnessSource";
 import {briefValue, effectInWords, onOff} from "./sectionModel";
+import {harnessName} from "../../agent/chat/harness";
+import {modelDisplayName} from "../../agent/chat/modelPresentation";
+import {MODEL_DEFAULT_SETTING, modelDefaults} from "./harnessCapabilities";
 import {
   expect, invalidateComposition, invalidateResolutions, loadResolutions, loadSuite, plain, plane, refreshResolution, resolutionKey, settingsSnapshot, stageDefaultConnection, watchPairsQuietly,
   type SettingsSnapshot,
@@ -68,6 +71,28 @@ export const DEFAULT_CONNECTION_ROW = "setting:default-connection";
 function providerLabel(data: SettingsSnapshot, id: string): string {
   const rows = data.suite.state === "ok" && data.suite.value.harness.providers.state === "ok" ? data.suite.value.harness.providers.rows : [];
   return rows.find((row) => row.id === id)?.label ?? id;
+}
+
+/** Review the actual native choice, not the number of entries in its table. */
+function modelDefaultsInWords(data: SettingsSnapshot, value: unknown): string {
+  const rows = data.suite.state === "ok" && data.suite.value.harness.providers.state === "ok" ? data.suite.value.harness.providers.rows : [];
+  const baseName = (row: typeof rows[number]): string => harnessName(row)
+    ?? (row.label !== row.id ? modelDisplayName(row.label) : undefined)
+    ?? "Configured harness";
+  const names = Object.entries(modelDefaults(value)).map(([id, model]) => {
+    const row = rows.find((candidate) => candidate.id === id);
+    let name = row ? baseName(row) : "Configured harness";
+    if (row) {
+      const peers = rows.filter((candidate) => baseName(candidate) === name);
+      if (peers.length > 1) {
+        const label = row.label !== row.id ? modelDisplayName(row.label) : undefined;
+        name = label && label !== name && peers.filter((candidate) => candidate.label === label).length === 1
+          ? `${name} · ${label}` : `${name} · connection ${peers.indexOf(row) + 1}`;
+      }
+    }
+    return `${name} · ${modelDisplayName(model.model_name) ?? "Saved model"}`;
+  });
+  return names.length ? names.sort((a, b) => a.localeCompare(b)).join("; ") : "Harness default";
 }
 
 /** The connection a new chat opens with right now (the owner rows' law). */
@@ -137,8 +162,10 @@ export function stagedChanges(data: SettingsSnapshot): StagedChange[] {
     changes.push({
       key: requestKey, requestKey, kind: "config",
       title: setting?.title ?? resolution.setting_ref, scopeLabel: scopeLabel(resolution.scope),
-      from: secret ? "a stored secret" : briefValue(resolution.native.effective?.value ?? resolution.native.declared?.value),
-      to: secret ? "a stored secret" : briefValue(desired.value),
+      from: secret ? "a stored secret" : resolution.setting_ref === MODEL_DEFAULT_SETTING
+        ? modelDefaultsInWords(data, resolution.native.effective?.value ?? resolution.native.declared?.value)
+        : briefValue(resolution.native.effective?.value ?? resolution.native.declared?.value),
+      to: secret ? "a stored secret" : resolution.setting_ref === MODEL_DEFAULT_SETTING ? modelDefaultsInWords(data, desired.value) : briefValue(desired.value),
       effectKind, effect: effectInWords(effectKind), rowId: settingRowId(resolution.setting_ref),
       place: {kind: "product", id: entry?.owner.owner_ref ?? "oi"}, request,
     });
@@ -323,7 +350,11 @@ export async function applyReviewed(reviewed: ReviewedPlan): Promise<ApplyOutcom
     watchPairsQuietly(uniqueRequests(reviewed.changes).map(([, request]) => ({setting_ref: request.setting_ref, scope: request.scope})));
     invalidateComposition();
     invalidateResolutions();
-    await Promise.all([loadSuite(), loadResolutions()]);
+    // Model defaults render and confirm from native resolutions. Other settings
+    // can change suite facts (including skill activation), and new-chat defaults
+    // need heldDefault. Avoid that full disclosure only for model-default Apply.
+    const needsSuite = reviewed.changes.some((change) => change.kind === "chat-default" || change.request?.setting_ref !== MODEL_DEFAULT_SETTING);
+    await Promise.all([loadResolutions(), ...(needsSuite ? [loadSuite()] : [])]);
     const after = settingsSnapshot();
     const rows: Record<string, RowResult> = {};
     for (const change of reviewed.changes) {
