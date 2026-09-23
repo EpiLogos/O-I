@@ -18,6 +18,7 @@ const ExpressionGraphNavigator = lazy(() => import("../expressions/ExpressionGra
 const MaterialNavigator = lazy(() => import("../techne/MaterialNavigator").then(module => ({default: module.MaterialNavigator})));
 const WikiMapNavigator = lazy(() => import("../techne/WikiMapNavigator").then(module => ({default: module.WikiMapNavigator})));
 const EpiPlacesNavigator = lazy(() => import("../epilogos/EpiPlacesNavigator").then(module => ({default: module.EpiPlacesNavigator})));
+const SettingsNavigator = lazy(() => import("./settings/SettingsNavigator").then(module => ({default: module.SettingsNavigator})));
 const AnimaPlane = lazy(() => import("../expressions/AnimaPlanes").then(module => ({default: module.AnimaPlane})));
 const EpiiPlane = lazy(() => import("../techne/EpiiPlane").then(module => ({default: module.EpiiPlane})));
 /** The Ta-Onta side planes (owner direction 2026-09-18, second pass): the
@@ -55,6 +56,7 @@ export function ModeLeftBody({mode, project, onOpenExpressions, onOpenTechne, on
       ? <ExpressionGraphNavigator onOpenExpressions={onOpenExpressions} onOpenTechne={onOpenTechne} onMessage={onMessage}/>
       : mode === "epi-logos" ? <EpiPlacesNavigator onOpenPlace={onOpenPlace} onMessage={onMessage}/>
       : mode === "techne" ? <WikiMapNavigator project={project} onOpenWiki={onOpenWiki} onMessage={onMessage}/>
+      : mode === "settings" ? <SettingsNavigator/>
       : <MaterialNavigator project={project} onOpenFile={onOpenFile} onMessage={onMessage}/>}
   </Suspense>;
 }

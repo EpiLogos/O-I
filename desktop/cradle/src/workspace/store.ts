@@ -96,7 +96,7 @@ export function switchWorkspaceMode(workspace: Workspace, next: WorkspaceMode): 
   const layout: LayoutState = { ...base, ...sharedAcrossModes(workspace.layout), mode: next === "base" ? undefined : next, modeRegions: undefined,
     // System/Settings uses the whole workspace on entry. The previous tree,
     // focus and side-region depths remain exactly where they were saved.
-    ...(next === "settings" ? { agencyDepth: "collapsed", rightDepth: "collapsed", settingsReturnMode: from as Exclude<WorkspaceMode, "settings"> } : {}) };
+    ...(next === "settings" ? { agencyDepth: "panel", rightDepth: "collapsed", settingsReturnMode: from as Exclude<WorkspaceMode, "settings"> } : {}) };
   const context: WorldContext | undefined = next === "epi-logos" ? { ...workspace.context, world: "epi-logos" } : workspace.context;
   return { ...workspace, layout, modeLayouts: rest, context };
 }
