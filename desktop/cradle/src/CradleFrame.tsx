@@ -1631,6 +1631,7 @@ export function CradleFrame({onComposed}:{onComposed?:()=>void}) {
     onNewExpression:()=>void createExpression(kernel.transport).catch(report),
     onNewAgent:()=>window.dispatchEvent(new CustomEvent("oi:open-agency",{detail:{project:workspace.current.project}})),
     onOpenChat:row=>{const chat=planeOf(/^chat$/i);if(mode==="factory"||!chat)return factoryChoose(row);setState(s=>({...s,accompanying:{ref:row.ref,project:row.project,space:row.space},rightDepth:s.rightDepth==="full"?"full":"panel",panelPlanes:{...s.panelPlanes,[mode]:chat}}));},
+    openConversationRef:state.accompanying?.ref,
     onOpenChatInCentre:row=>mode==="factory"?factoryChoose(row):openEncounter(row),
     onOpenFile:location=>openFile(location),
     onOpenBeside:async location=>{await openFile(location,{into:"side"});const context=planeOf(/context/i);setState(s=>({...s,rightDepth:s.rightDepth==="full"?"full":"panel",panelPlanes:context?{...s.panelPlanes,[mode]:context}:s.panelPlanes}));},
