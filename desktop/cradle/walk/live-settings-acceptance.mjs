@@ -81,73 +81,61 @@ export async function assertOwnerGroupLive({ page, owner, listing, registry, reg
   const liveOwner = (listing.owners ?? []).find((row) => row.owner_ref === owner) ?? null;
   const liveRows = (listing.settings ?? []).filter((row) => row.owner_ref === owner);
   const state = liveOwner?.state ?? "unavailable";
-  const group = page.locator(`[data-owner-group][data-owner="${owner}"]`);
+  // 12-SETTINGS §3.9: each owner is one product page, opened from the
+  // left body's PRODUCTS list; its settings are the page's friendly rows.
+  const entry = page.locator(`[data-settings-product="${owner}"]`);
+  check((await entry.count()) === 1 && ((await entry.textContent()) ?? "").trim() === productName,
+    `${owner}: the left body lists the product page under its own name (${productName})`);
+  await entry.click();
+  const group = page.locator(`[data-product-page="${owner}"]`);
+  await group.waitFor({ timeout: 240000 });
+  const rows = group.locator(`[data-settings-row^="setting:${owner}:"]`);
+  await page.waitForFunction((sel) => ![...document.querySelectorAll(sel)].some((node) => node.textContent?.includes("Reading…")), `[data-product-page="${owner}"] [data-settings-row]`, { timeout: 300000 }).catch(() => {});
   const groupCount = await group.count();
 
   // --- the honest-absence branch (L3): named absence, zero fabricated rows
   if (state !== "available" || liveRows.length === 0) {
     const honestlyEmpty = state === "available" && liveRows.length === 0;
-    check(groupCount === 1, `${owner}: the group renders (${state})`, { groupCount, state });
-    if (groupCount !== 1) return "missing";
-    const availability = await group.getAttribute("data-availability");
-    const noteCount = await group.locator(honestlyEmpty ? ".settings-empty" : "[data-owner-availability]").count();
-    const renderedRows = await group.locator("[data-setting-ref]").count();
-    const ok = honestlyEmpty
-      ? renderedRows === 0 && noteCount >= 1
-      : availability === state && noteCount === 1 && renderedRows === 0;
-    check(
-      ok,
+    const renderedRows = await rows.count();
+    const health = await group.locator("[data-product-health]").getAttribute("data-product-health");
+    check(renderedRows === 0 && (honestlyEmpty || health !== "available"),
       honestlyEmpty
-        ? `${owner}: an available owner with no disclosed settings renders its honest emptiness — nothing fabricated (L3)`
+        ? `${owner}: an available owner with no contributed settings renders no rows — nothing fabricated (L3)`
         : `${owner}: the unavailable owner renders its named absence — ${state}, no fabricated rows (L3)`,
-      { availability, noteCount, renderedRows, liveState: state, reason: liveOwner?.reason ?? null },
-    );
+      { renderedRows, health, liveState: state, reason: liveOwner?.reason ?? null });
     return honestlyEmpty ? "live-empty" : "unavailable-named";
   }
 
   // --- the live branch: rendered rows equal the live read, by title, with counts
   if (groupCount !== 1) {
-    check(false, `${owner}: the live owner group renders`, { groupCount, liveState: state });
+    check(false, `${owner}: the live product page renders`, { groupCount, liveState: state });
     return "missing";
   }
-  const availability = await group.getAttribute("data-availability");
-  check(
-    availability === state,
-    `${owner}: the group's availability label is the owner's own disclosed state (L1 — no fabricated readiness)`,
-    { availability, liveState: state },
-  );
-
-  const renderedRefs = await group.locator("[data-setting-ref]").evaluateAll((nodes) =>
-    nodes.map((node) => node.getAttribute("data-setting-ref")),
-  );
+  const renderedRefs = (await rows.evaluateAll((nodes) => nodes.map((node) => node.getAttribute("data-settings-row")))).map((ref) => ref?.replace(/^setting:/, ""));
   check(
     renderedRefs.length === liveRows.length,
     `${owner}: the rows rendered equal the live owner read's named rows — ${renderedRefs.length} rendered / ${liveRows.length} live`,
     { rendered: renderedRefs.length, live: liveRows.length },
   );
-
-  // The count the surface shows beside the group (the table of contents).
-  const tocBadge = page.locator(".settings-toc button", { hasText: productName }).locator(".settings-toc-count");
-  const tocText = (await tocBadge.count()) === 1 ? await tocBadge.first().textContent() : null;
-  check(
-    tocText !== null && Number(tocText) === liveRows.length,
-    `${owner}: the count the surface shows (table of contents) matches the live read`,
-    { shown: tocText, live: liveRows.length },
-  );
-
-  // Distinguishable rows: non-empty titles, equal to the live read's by
-  // title; every ref carries the owner prefix (the owner-ref half of L2,
-  // visible on the row itself).
-  const renderedTitles = await group.locator("[data-setting-ref] .settings-row-title strong").allTextContents();
+  const renderedTitles = await rows.locator(".settings-line-title").allTextContents();
   const liveTitles = liveRows.map((row) => row.title);
   const emptyTitles = renderedTitles.filter((title) => !title || !title.trim());
   const ownerPrefixed = renderedRefs.every((ref) => ref?.startsWith(`${owner}:`));
-  const byTitle = [...renderedTitles].sort().join("\u0000") === [...liveTitles].sort().join("\u0000");
+  const byTitle = [...renderedTitles].map((title) => title.trim()).sort().join("\u0000") === [...liveTitles].sort().join("\u0000");
   check(
     renderedTitles.length === liveRows.length && emptyTitles.length === 0 && ownerPrefixed && byTitle,
     `${owner}: every rendered row is a named, distinguishable row — titles equal the live read, refs carry the owner ref (L2)`,
     { emptyTitles, ownerPrefixed, byTitle, renderedTitles },
   );
+  // L1: read-only rows never carry a control; writable rows the owner lets
+  // the plane change carry one (never a disabled stand-in).
+  const readOnlyRefs = liveRows.filter((row) => !row.writable).map((row) => row.setting_ref);
+  const readOnlyWithControls = [];
+  for (const ref of readOnlyRefs) {
+    const row = group.locator(`[data-settings-row="setting:${ref}"]`);
+    if (await row.locator("select, input, [role=switch]").count()) readOnlyWithControls.push(ref);
+  }
+  check(readOnlyWithControls.length === 0, `${owner}: read-only settings show a value and their owning place — no control (L1/S11)`, { readOnlyWithControls });
 
   // L2 observed-at: the registry read behind the page stamps its reading,
   // the owner's disclosure carries its disclosed-at, the mounted value set

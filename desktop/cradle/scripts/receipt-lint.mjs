@@ -62,6 +62,10 @@ const GRADES = ["A", "B", "C", "D"];
 // basis: walks are the acceptance (05-EXECUTION §3).
 const SCENARIO_SPEC = {
   "system-settings": "docs/cradle/06-SYSTEM-SETTINGS.md §7",
+  "settings-shell": "docs/cradle/12-SETTINGS.md §1 §3 §4 S1 S3 S10 S11 S14 S15",
+  "settings-change": "docs/cradle/12-SETTINGS.md §2 §4 S3 S4 S5 S6 S7 S8 S9",
+  "settings-credentials": "docs/cradle/12-SETTINGS.md §3.4 §4 S12 S13",
+  "settings-unreadable": "docs/cradle/12-SETTINGS.md §2 §4 S2",
   configuration: "docs/cradle/09-CONFIGURATION-PLANE.md",
   "factory-development": "docs/experience/FACTORY-AGENCY.md §4/§5/§8/§12",
   "background-completion": "docs/experience/FACTORY-AGENCY.md §1 + handoff §4",

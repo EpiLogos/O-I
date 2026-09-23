@@ -23,6 +23,7 @@ import {PermissionsSection} from "./sections/PermissionsSection";
 import {ProductSection} from "./sections/ProductSection";
 import {VisualsView} from "./VisualsView";
 import {Reading, Unreadable} from "./rows";
+import {FixtureConsole} from "./FixtureConsole";
 import "./settings-page.css";
 
 function backToWork() {
@@ -123,6 +124,7 @@ export function SettingsPage() {
         <button type="button" className="settings-button" data-settings-back onClick={backToWork}>Back to work</button>
       </div>
     </header>
+    {data.registry.state === "ok" && data.registry.value.source === "fixture" && <p className="settings-muted" data-config-source="fixture">A worked example for development (the fixture world) — not this machine's settings.</p>}
     <div className="settings-page-body" ref={body}>
       {!anyRead ? <Reading/>
         : everythingFailed && data.suite.state === "failed" ? <Unreadable error={data.suite.error} onRetry={() => void refreshAll()}/>
@@ -136,6 +138,7 @@ export function SettingsPage() {
         : place.id === "permissions" ? <PermissionsSection data={data}/>
         : <div className="settings-appearance" data-appearance-panel><VisualsView/></div>}
     </div>
+    {data.registry.state === "ok" && data.registry.value.source === "fixture" && <FixtureConsole/>}
     <PendingStrip changes={changes} onReview={() => setReviewing(true)}/>
     {reviewing && <ReviewSheet changes={changes} onClose={() => setReviewing(false)}/>}
   </section>;

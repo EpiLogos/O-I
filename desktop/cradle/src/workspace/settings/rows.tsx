@@ -9,7 +9,7 @@ import type {ReactNode} from "react";
 import {expect, plain} from "./settingsData";
 import {useState} from "react";
 
-export function Row({id, title, description, changed, onUndo, children, className}: {
+export function Row({id, title, description, changed, onUndo, children, className, reconciliation}: {
   id?: string;
   title: ReactNode;
   description?: ReactNode;
@@ -17,8 +17,10 @@ export function Row({id, title, description, changed, onUndo, children, classNam
   onUndo?: () => void;
   children?: ReactNode;
   className?: string;
+  /** The owner's reconciliation status for this row (its visible word is in the title). */
+  reconciliation?: string;
 }) {
-  return <div className={`settings-line${changed ? " is-changed" : ""}${className ? ` ${className}` : ""}`} data-settings-row={id} data-changed={changed ? "true" : undefined}>
+  return <div className={`settings-line${changed ? " is-changed" : ""}${className ? ` ${className}` : ""}`} data-settings-row={id} data-changed={changed ? "true" : undefined} data-reconciliation={reconciliation}>
     <div className="settings-line-text">
       <div className="settings-line-title">{title}</div>
       {description && <div className="settings-line-desc">{description}</div>}

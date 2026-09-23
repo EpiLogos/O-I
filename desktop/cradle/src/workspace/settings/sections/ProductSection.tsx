@@ -103,9 +103,13 @@ export function ProductSection({id, data}: {id: string; data: SettingsSnapshot})
     </p>
     {details && <ul className="settings-degradations">{degradations.map((degradation, index) => <li key={index}>{degradation.subject_ref ? `${degradation.subject_ref}: ` : ""}{degradation.state}{degradation.reason ? ` — ${degradation.reason}` : ""}</li>)}</ul>}
     {descriptor?.about && <p className="settings-muted settings-prose">{descriptor.about}</p>}
+    {data.registry.state === "ok" && data.registry.value.mounts.length === 0 && <p className="settings-muted" data-config-empty-registry>Nothing installed to configure yet.</p>}
+    {contribution && contribution.availability.state !== "available" && <p className="settings-muted" data-owner-availability={contribution.availability.state}>
+      Its settings can't be read here: {availabilityWord(contribution.availability.state).toLowerCase()}{contribution.availability.reason ? ` — ${contribution.availability.reason}` : ""}.
+    </p>}
     {entries.length > 0 && <div className="settings-lines" data-product-settings>
       {entries.map((entry) => entry.setting.setting_ref === CAPABILITIES_REF
-        ? <Row key={entry.setting.setting_ref} id={`setting:${entry.setting.setting_ref}`} title="Capabilities" description={skills ? `${skills.active} active of ${skills.total}` : undefined}>
+        ? <Row key={entry.setting.setting_ref} id={`setting:${entry.setting.setting_ref}`} title={entry.setting.title} description={skills ? `${skills.active} active of ${skills.total}` : undefined}>
             <button type="button" className="settings-button" onClick={() => goTo({kind: "section", id: "skills"})}>Open Skills</button>
           </Row>
         : entry.setting.value_schema.type === "secret"

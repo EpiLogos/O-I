@@ -40,6 +40,7 @@ export function permissionModeEntries(data: SettingsSnapshot): SettingEntry[] {
 function ModeRow({entry, data}: {entry: SettingEntry; data: SettingsSnapshot}) {
   const {setting} = entry;
   const scope = defaultScope(setting);
+  useEffect(() => { void watchPair(setting.setting_ref, scope); }, [setting.setting_ref]); // eslint-disable-line react-hooks/exhaustive-deps
   const resolution = data.resolutions[resolutionKey(setting.setting_ref, scope)];
   const current = (resolution?.desired?.value ?? resolution?.native.effective?.value ?? resolution?.native.declared?.value) as string | undefined;
   const options = setting.value_schema.type === "enum" ? setting.value_schema.options : [];
@@ -111,12 +112,6 @@ export function PermissionsSection({data}: {data: SettingsSnapshot}) {
   const scope = useScope();
   const project = (scopeProject(scope) ?? "central").toLowerCase();
   const trust = trustEntries(data);
-  useEffect(() => {
-    for (const entry of trust) {
-      const first = entry.setting.allowed_scopes[0];
-      if (first?.scope_kind === "project" && !first.scope_ref) void watchPair(entry.setting.setting_ref, {scope_kind: "project", scope_ref: project});
-    }
-  }, [trust.length, project]); // eslint-disable-line react-hooks/exhaustive-deps
   if (data.registry.state === "reading") return <Reading/>;
   if (data.registry.state === "failed") return <Unreadable error={data.registry.error} onRetry={() => void refreshAll()}/>;
   const modes = permissionModeEntries(data);

@@ -12,7 +12,7 @@ import type {ScopeAddress} from "../../../configuration/contracts";
 import {useScope, scopeProject, scopeLabel as scopeWord} from "../../scope";
 import {groupSkills, skillParts, titleCase, type SkillItem} from "../sectionModel";
 import {refreshAll, resolutionKey, watchSkillScope, type SettingsSnapshot} from "../settingsData";
-import {CAPABILITIES_REF, skillRowId, stageSkill, stagedChanges, undoChange} from "../changeModel";
+import {CAPABILITIES_REF, isStaged, skillRowId, stageSkill, stagedChanges, undoChange} from "../changeModel";
 import {Missing, Reading, Unreadable} from "../rows";
 
 export type SkillScope = "machine" | "project" | "session";
@@ -83,7 +83,7 @@ export function SkillsSection({data}: {data: SettingsSnapshot}) {
   const facts = data.suite.value.disclosure.state === "ok" ? data.suite.value.disclosure.rows : null;
   if (!facts) return <Missing>Skills aren't disclosed here: {data.suite.value.disclosure.state === "absent" ? data.suite.value.disclosure.reason : ""}</Missing>;
   const resolution = address ? data.resolutions[resolutionKey(CAPABILITIES_REF, address)] : undefined;
-  const held = resolution?.desired?.value && typeof resolution.desired.value === "object" && !Array.isArray(resolution.desired.value) ? resolution.desired.value as Record<string, boolean> : {};
+  const held = resolution && isStaged(resolution) && resolution.desired?.value && typeof resolution.desired.value === "object" && !Array.isArray(resolution.desired.value) ? resolution.desired.value as Record<string, boolean> : {};
   const writable = data.registry.state === "ok" && !!data.registry.value.index[CAPABILITIES_REF]?.setting.writable;
   const refused = resolution && ["blocked", "unsupported"].includes(resolution.reconciliation.status) ? resolution.reconciliation.reason : null;
   const items: SkillItem[] = facts.skills.map((skill) => {

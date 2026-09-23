@@ -6,7 +6,8 @@
  */
 import type {DisclosedSetting} from "../types";
 import {adapterNeeded, readyHarnesses, skillCounts, credentialCards, storedIn, providerName} from "../sectionModel";
-import {refreshAll, type SettingsSnapshot} from "../settingsData";
+import {useEffect} from "react";
+import {refreshAll, watchPair, type SettingsSnapshot} from "../settingsData";
 import {goTo, PRODUCTS} from "../settingsNav";
 import {stagedChanges} from "../changeModel";
 import {Card, Reading, Unreadable} from "../rows";
@@ -62,6 +63,7 @@ export function driftRows(data: SettingsSnapshot): DriftRow[] {
 const AXIS_WORD: Record<string, string> = {declared: "Declared", effective: "In effect", active: "Running", staged: "Staged"};
 
 export function StatusSection({data}: {data: SettingsSnapshot}) {
+  useEffect(() => { void watchPair("oi:update:state", {scope_kind: "world", scope_ref: null}); }, []);
   if (data.suite.state === "reading" && data.census.state === "reading") return <Reading/>;
   const drift = driftRows(data);
   const pending = stagedChanges(data);
@@ -88,10 +90,10 @@ export function StatusSection({data}: {data: SettingsSnapshot}) {
         <button type="button" className="settings-button" onClick={() => goTo({kind: "section", id: "credentials"})}>Open</button>
       </Card>
       <Card title="Secret stores" id="secret-stores">
-        <p data-status-stores>{suite?.disclosure.state === "ok" ? (stores.length ? `${stores.map((store) => store.store === "OS secure store" ? "Keychain" : store.store).join(", ")} available` : "None available") : "Not disclosed here"}</p>
+        <p data-status-stores>{data.suite.state === "reading" ? "Reading…" : suite?.disclosure.state === "ok" ? (stores.length ? `${stores.map((store) => store.store === "OS secure store" ? "Keychain" : store.store).join(", ")} available` : "None available") : "Not disclosed here"}</p>
       </Card>
       <Card title="Skills" id="skills">
-        <p data-status-skills>{skills ? `${skills.active} active of ${skills.total}` : "Not disclosed here"}</p>
+        <p data-status-skills>{data.suite.state === "reading" ? "Reading…" : skills ? `${skills.active} active of ${skills.total}` : "Not disclosed here"}</p>
         <button type="button" className="settings-button" onClick={() => goTo({kind: "section", id: "skills"})}>Open</button>
       </Card>
       <Card title="Capability changes" id="changes">

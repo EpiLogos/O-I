@@ -17,7 +17,7 @@ import type {ChangeRequest} from "../../configuration/source";
 import {effectiveChatDefault} from "../../configuration/harnessSource";
 import {briefValue, effectInWords, onOff} from "./sectionModel";
 import {
-  expect, loadResolutions, loadSuite, plain, plane, resolutionKey, settingsSnapshot, stageDefaultConnection,
+  expect, loadResolutions, loadSuite, plain, plane, resolutionKey, settingsSnapshot, stageDefaultConnection, watchPairsQuietly,
   type SettingsSnapshot,
 } from "./settingsData";
 import type {SettingsPlace} from "./settingsNav";
@@ -82,6 +82,17 @@ function activeIds(resolution: ConfigResolution | undefined): Set<string> {
   return new Set(Array.isArray(value) ? value.filter((id): id is string => typeof id === "string") : []);
 }
 
+/** Staged = desired intent held here and not yet applied. The engine keeps
+ * an APPLIED ChangeSet's request as the setting's desired state too (its
+ * `source_ref` names the ChangeSet, `cs-…`); that is history, not a pending
+ * change, even while an owner that discloses no declared axis for it keeps
+ * the engine reading "drifted". */
+export function isStaged(resolution: ConfigResolution): boolean {
+  const desired = resolution.desired;
+  if (!desired || resolution.reconciliation.status === "satisfied") return false;
+  return !(typeof desired.source_ref === "string" && desired.source_ref.startsWith("cs-"));
+}
+
 /** Every staged change, as review lines. */
 export function stagedChanges(data: SettingsSnapshot): StagedChange[] {
   const changes: StagedChange[] = [];
@@ -98,7 +109,7 @@ export function stagedChanges(data: SettingsSnapshot): StagedChange[] {
   }
   for (const resolution of Object.values(data.resolutions)) {
     const desired = resolution.desired;
-    if (!desired || resolution.reconciliation.status === "satisfied") continue;
+    if (!isStaged(resolution) || !desired) continue;
     const entry = registry?.index[resolution.setting_ref];
     const setting = entry?.setting;
     const secret = setting?.value_schema.type === "secret";
@@ -152,7 +163,7 @@ async function discard(setting_ref: string, scope: ScopeAddress): Promise<void> 
 export async function stageSkill(scope: ScopeAddress, id: string, enabled: boolean): Promise<void> {
   const data = settingsSnapshot();
   const resolution = data.resolutions[resolutionKey(CAPABILITIES_REF, scope)];
-  const held = (resolution?.desired?.value && typeof resolution.desired.value === "object" && !Array.isArray(resolution.desired.value))
+  const held = (resolution && isStaged(resolution) && resolution.desired?.value && typeof resolution.desired.value === "object" && !Array.isArray(resolution.desired.value))
     ? {...(resolution.desired.value as Record<string, boolean>)} : {};
   if (activeIds(resolution).has(id) === enabled) delete held[id];
   else held[id] = enabled;
@@ -296,7 +307,8 @@ export async function applyReviewed(reviewed: ReviewedPlan): Promise<ApplyOutcom
         connectionError = plain(cause);
       }
     }
-    // 4 · read back from the owners.
+    // 4 · read back from the owners (every applied pair is read, staged or not).
+    watchPairsQuietly(uniqueRequests(reviewed.changes).map(([, request]) => ({setting_ref: request.setting_ref, scope: request.scope})));
     await Promise.all([loadSuite(), loadResolutions()]);
     const after = settingsSnapshot();
     const rows: Record<string, RowResult> = {};

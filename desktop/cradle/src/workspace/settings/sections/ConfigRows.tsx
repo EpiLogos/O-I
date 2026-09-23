@@ -6,12 +6,13 @@
  * (S11); it never gets a disabled control. The owner's axes appear only
  * when they disagree.
  */
+import {useEffect} from "react";
 import type {ScopeAddress, SettingSpec} from "../../../configuration/contracts";
 import {SettingControl} from "../../../configuration/SettingControl";
 import {settingsActionable} from "../../../configuration/composition";
-import {productName} from "../v2/vocabulary";
+import {productName, reconciliationWord} from "../v2/vocabulary";
 import {briefValue} from "../sectionModel";
-import {defaultScope, resolutionKey, type SettingEntry, type SettingsSnapshot} from "../settingsData";
+import {defaultScope, resolutionKey, watchPair, type SettingEntry, type SettingsSnapshot} from "../settingsData";
 import {settingRowId, stageSetting, stagedChanges, undoChange} from "../changeModel";
 import {ReadOnly, Row} from "../rows";
 
@@ -42,7 +43,10 @@ export function valueWords(setting: SettingSpec, value: unknown): string {
 export function ConfigSettingRow({entry, data, scope, title}: {entry: SettingEntry; data: SettingsSnapshot; scope?: ScopeAddress; title?: string}) {
   const {setting} = entry;
   const address = scope ?? defaultScope(setting);
-  const resolution = data.resolutions[resolutionKey(setting.setting_ref, address)];
+  const key = resolutionKey(setting.setting_ref, address);
+  const addressable = !!address.scope_ref || ["world", "ground", "machine"].includes(address.scope_kind);
+  useEffect(() => { if (addressable) void watchPair(setting.setting_ref, address); }, [key]); // eslint-disable-line react-hooks/exhaustive-deps
+  const resolution = data.resolutions[key];
   const native = resolution?.native.effective?.value ?? resolution?.native.declared?.value;
   const desired = resolution?.desired ?? null;
   const change = stagedChanges(data).find((candidate) => candidate.request?.setting_ref === setting.setting_ref && candidate.requestKey === resolutionKey(setting.setting_ref, address));
@@ -55,10 +59,12 @@ export function ConfigSettingRow({entry, data, scope, title}: {entry: SettingEnt
     {axes && <span className="settings-axes"> Declared {briefValue(resolution!.native.declared!.value)} · in effect {briefValue(resolution!.native.effective!.value)}.</span>}
     {resolution && ["blocked", "unsupported", "unknown"].includes(resolution.reconciliation.status) && resolution.reconciliation.reason && <span className="settings-axes"> {resolution.reconciliation.reason}</span>}
   </>;
-  return <Row id={settingRowId(setting.setting_ref)} title={title ?? setting.title} description={description} changed={!!change} onUndo={change ? () => void undoChange(change) : undefined}>
+  const status = resolution?.reconciliation.status;
+  return <Row id={settingRowId(setting.setting_ref)} title={title ?? setting.title} description={description} changed={!!change} onUndo={change ? () => void undoChange(change) : undefined} reconciliation={status}>
+    {status && status !== "satisfied" && !change && <span className={`settings-chip is-${status}`} data-reconciliation-word title={resolution?.reconciliation.reason ?? undefined}>{reconciliationWord(status)}</span>}
     {writable
       ? <SettingControl schema={setting.value_schema} value={desired?.value !== undefined ? desired.value : native} hint={null}
           onCommit={(next) => void stageSetting({setting_ref: setting.setting_ref, scope: address, value: next.value, secret_reference: null})}/>
-      : <ReadOnly value={valueWords(setting, native)} place={ownerPlace(entry)} path={ownerFile(setting.native_ref)}/>}
+      : <ReadOnly value={resolution || !addressable ? valueWords(setting, native) : "Reading…"} place={ownerPlace(entry)} path={ownerFile(setting.native_ref)}/>}
   </Row>;
 }

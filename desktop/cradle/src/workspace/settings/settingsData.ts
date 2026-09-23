@@ -63,6 +63,8 @@ export interface RegistryState {
   mounts: ContributionMount[];
   entries: SettingEntry[];
   index: Record<string, SettingEntry>;
+  /** "fixture" only in a walk build asked for `?fixtures=1`. */
+  source: "live" | "fixture";
 }
 
 export interface SettingsSnapshot {
@@ -234,22 +236,35 @@ export async function loadRegistry(): Promise<void> {
         for (const setting of section.settings) entries.push({owner: mount, sectionTitle: section.title, setting});
       }
     }
-    return {mounts: registry.mounts, entries, index: Object.fromEntries(entries.map((entry) => [entry.setting.setting_ref, entry]))};
+    return {mounts: registry.mounts, entries, index: Object.fromEntries(entries.map((entry) => [entry.setting.setting_ref, entry])), source: source.kind === "fixture" ? "fixture" : "live"};
   });
   await loadResolutions();
 }
 
-/** Every registered setting at its default scope, plus the skill scopes the
- * page is showing. One engine read. */
-export async function loadResolutions(): Promise<void> {
+/** What is staged (every held desired entry, one `oi config diff`) plus the
+ * (setting, scope) pairs the open sections watch. Each owner resolution is
+ * a slow read, so only what a section shows is read; concurrent calls
+ * coalesce into one more round. */
+let resolutionsRound: Promise<void> | null = null;
+let resolutionsAgain = false;
+export function loadResolutions(): Promise<void> {
+  if (resolutionsRound) {
+    resolutionsAgain = true;
+    return resolutionsRound;
+  }
+  resolutionsRound = (async () => {
+    do {
+      resolutionsAgain = false;
+      await readResolutionsOnce();
+    } while (resolutionsAgain);
+  })().finally(() => { resolutionsRound = null; });
+  return resolutionsRound;
+}
+
+async function readResolutionsOnce(): Promise<void> {
   const registry = snapshot.registry;
   if (registry.state !== "ok") return;
   const pairs = new Map<string, {setting_ref: string; scope: ScopeAddress}>();
-  for (const entry of registry.value.entries) {
-    const scope = defaultScope(entry.setting);
-    if (!SINGULAR_SCOPE_KINDS.has(scope.scope_kind) && !scope.scope_ref) continue;
-    pairs.set(resolutionKey(entry.setting.setting_ref, scope), {setting_ref: entry.setting.setting_ref, scope});
-  }
   for (const pair of snapshot.extraPairs) {
     if (registry.value.index[pair.setting_ref]) pairs.set(resolutionKey(pair.setting_ref, pair.scope), pair);
   }
@@ -259,10 +274,13 @@ export async function loadResolutions(): Promise<void> {
   }
   try {
     const source = await plane();
-    const results = await source.readResolutions([...pairs.values()]);
+    const staged = source.kind === "live"
+      ? ((await expect<{resolutions: ConfigResolution[]}>({op: "config_diff"}, "config_diff_reading")).resolutions ?? [])
+      : [];
+    const watched = pairs.size ? await source.readResolutions([...pairs.values()]) : [];
     const keyed: Record<string, ConfigResolution> = {};
-    for (const resolution of results) keyed[resolutionKey(resolution.setting_ref, resolution.scope)] = resolution;
-    set({resolutions: keyed, resolutionsState: {state: "ok", value: results.length, at: Date.now()}});
+    for (const resolution of [...watched, ...staged]) keyed[resolutionKey(resolution.setting_ref, resolution.scope)] = resolution;
+    set({resolutions: keyed, resolutionsState: {state: "ok", value: Object.keys(keyed).length, at: Date.now()}});
   } catch (cause) {
     set({resolutionsState: {state: "failed", error: plain(cause)}});
   }
@@ -313,10 +331,15 @@ export async function watchSkillScope(scope: ScopeAddress): Promise<void> {
 
 /** Ask for one more (setting, scope) pair (e.g. a project-scoped trust row). */
 export async function watchPair(setting_ref: string, scope: ScopeAddress): Promise<void> {
-  const key = resolutionKey(setting_ref, scope);
-  if (snapshot.extraPairs.some((pair) => resolutionKey(pair.setting_ref, pair.scope) === key)) return;
-  set({extraPairs: [...snapshot.extraPairs, {setting_ref, scope}]});
-  await loadResolutions();
+  if (watchPairsQuietly([{setting_ref, scope}])) await loadResolutions();
+}
+
+/** Add pairs to the watched set without reading; true when any was new. */
+export function watchPairsQuietly(pairs: {setting_ref: string; scope: ScopeAddress}[]): boolean {
+  const known = new Set(snapshot.extraPairs.map((pair) => resolutionKey(pair.setting_ref, pair.scope)));
+  const fresh = pairs.filter((pair) => !known.has(resolutionKey(pair.setting_ref, pair.scope)));
+  if (fresh.length) set({extraPairs: [...snapshot.extraPairs, ...fresh]});
+  return fresh.length > 0;
 }
 
 // ---------------------------------------------------------------------------

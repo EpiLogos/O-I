@@ -173,14 +173,34 @@ impl Client {
         // canonical order. Always seven entries.
         let mut owners = Vec::with_capacity(7);
         owners.push(self.oi_owner(&census, observed));
-        for (index, product_id) in PRODUCT_IDS.iter().enumerate() {
-            let namespace = namespace_for(&census, index, product_id);
-            let reading_command: Vec<String> = std::iter::once(namespace)
-                .chain(SYSTEM_VERB.iter().map(|s| s.to_string()))
+        // The six owner reads are independent (each its own process): they
+        // run side by side and mount in canonical order.
+        let mounted: Vec<OwnerMount> = std::thread::scope(|scope| {
+            let handles: Vec<_> = PRODUCT_IDS
+                .iter()
+                .enumerate()
+                .map(|(index, product_id)| {
+                    let namespace = namespace_for(&census, index, product_id);
+                    scope.spawn(move || {
+                        let reading_command: Vec<String> = std::iter::once(namespace)
+                            .chain(SYSTEM_VERB.iter().map(|s| s.to_string()))
+                            .collect();
+                        let outcome = self.invoke(cwd, &reading_command);
+                        mount_owner(product_id, &reading_command, outcome, observed)
+                    })
+                })
                 .collect();
-            let outcome = self.invoke(cwd, &reading_command);
-            owners.push(mount_owner(product_id, &reading_command, outcome, observed));
-        }
+            handles
+                .into_iter()
+                .zip(PRODUCT_IDS.iter())
+                .map(|(handle, product_id)| {
+                    handle.join().unwrap_or_else(|_| {
+                        mount_owner(product_id, &[], InvokeOutcome::SpawnFailed("the owner read stopped unexpectedly".into()), observed)
+                    })
+                })
+                .collect()
+        });
+        owners.extend(mounted);
 
         let mut obligations = census.integration_obligations.clone();
         obligations.push(ENGAGEMENT_OBLIGATION.to_owned());

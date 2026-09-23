@@ -95,6 +95,10 @@ const SCENARIOS = {
   "kernel-cas": { module: "scenarios/kernel-cas.mjs", kernel: true, aliases: ["u0.4"] },
   system: {module:"scenarios/system.mjs",kernel:true,aliases:[]},
   "system-settings": {module:"scenarios/system-settings.mjs",kernel:true,aliases:[]},
+  "settings-shell": {module:"scenarios/settings-shell.mjs",kernel:true,aliases:["s-shell"]},
+  "settings-change": {module:"scenarios/settings-change.mjs",kernel:true,aliases:["s-change"]},
+  "settings-credentials": {module:"scenarios/settings-credentials.mjs",kernel:true,aliases:["s-credentials"]},
+  "settings-unreadable": {module:"scenarios/settings-unreadable.mjs",kernel:true,aliases:["s-unreadable"]},
   configuration: {module:"scenarios/configuration.mjs",kernel:true,aliases:["c6"]},
   permission: {module:"scenarios/permission.mjs",kernel:true,aliases:[]},
   encounter: {module:"scenarios/encounter.mjs",kernel:true,aliases:[]},
@@ -162,6 +166,10 @@ const SCENARIOS = {
 // the constitutional basis: walks are the acceptance (05-EXECUTION §3).
 const SCENARIO_SPEC = {
   "system-settings": { spec_ref: "docs/cradle/06-SYSTEM-SETTINGS.md §7" },
+  "settings-shell": { spec_ref: "docs/cradle/12-SETTINGS.md §1 §3 §4 S1 S3 S10 S11 S14 S15" },
+  "settings-change": { spec_ref: "docs/cradle/12-SETTINGS.md §2 §4 S3 S4 S5 S6 S7 S8 S9" },
+  "settings-credentials": { spec_ref: "docs/cradle/12-SETTINGS.md §3.4 §4 S12 S13" },
+  "settings-unreadable": { spec_ref: "docs/cradle/12-SETTINGS.md §2 §4 S2" },
   configuration: { spec_ref: "docs/cradle/09-CONFIGURATION-PLANE.md" },
   "factory-development": { spec_ref: "docs/experience/FACTORY-AGENCY.md §4/§5/§8/§12" },
   "background-completion": { spec_ref: "docs/experience/FACTORY-AGENCY.md §1 + handoff §4" },
@@ -336,6 +344,9 @@ function makeHarness({ scenario, page, baseUrl, bridgeUrl, kernelScenario }) {
     bridgeUrl: kernelScenario ? bridgeUrl : null,
     artifactsDir,
     log: (message) => console.log(`  ${message}`),
+    /** Everything the running services (the walk bridge, the preview)
+     * have printed so far — for checks that something never reached a log. */
+    serviceOutput: () => services.map((service) => service.output()).join("\n"),
 
     check(ok, label, data) {
       const entry = { ok: !!ok, label };

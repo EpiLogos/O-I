@@ -82,5 +82,5 @@ export function samePlace(a: SettingsPlace, b: SettingsPlace): boolean {
 export function placeLabel(place: SettingsPlace): string {
   return place.kind === "section"
     ? SECTIONS.find((section) => section.id === place.id)?.label ?? "Settings"
-    : PRODUCTS.find((product) => product.id === place.id)?.label ?? "Product";
+    : PRODUCTS.find((product) => product.id === place.id)?.label ?? place.id.split("/").pop()!.replace(/[-_]+/g, " ").replace(/^./, (first) => first.toUpperCase());
 }

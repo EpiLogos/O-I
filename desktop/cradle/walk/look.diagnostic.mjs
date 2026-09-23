@@ -17,7 +17,8 @@ for (const place of places.length ? places : ["status"]) {
   const [kind, id] = place.includes(":") ? place.split(":") : ["section", place];
   const target = kind === "product" ? `[data-settings-product="${id}"]` : `[data-settings-section="${id}"]`;
   await page.locator(target).first().click().catch((error) => logs.push(`click ${place}: ${error}`));
-  await page.waitForTimeout(6000);
+  await page.waitForFunction(() => !document.querySelector("[data-settings-reading]"), null, {timeout: 180000}).catch(() => logs.push(`still reading at ${place}`));
+  await page.waitForTimeout(1500);
   await page.screenshot({path: `${out}/${place.replace(":", "-")}.png`});
 }
 console.log(logs.filter((line) => !line.startsWith("debug")).slice(-30).join("\n"));
