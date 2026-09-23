@@ -4,160 +4,110 @@
   "spec_ref": "docs/cradle/10-SIDEBARS.md §6.1 (2,3,7) §3.6 rule 1; 11-FACTORY.md §4",
   "grade": "B",
   "binding": null,
-  "generated_at": "2026-09-23T08:45:35.863Z",
+  "generated_at": "2026-09-23T12:24:48.679Z",
   "environment": {
-    "base_url": "http://localhost:4173",
-    "bridge_url": "http://127.0.0.1:4179",
+    "base_url": "http://localhost:4473",
+    "bridge_url": "http://127.0.0.1:4479",
     "viewport": "1280x820",
     "browser_engine": "chromium",
     "bundle": "walk (WALK=1) served by vite preview",
     "build_input": {
       "mode": "reused-dist",
-      "bundle_fingerprint": "a13718589b0a01d3d42d329634cddf7aeb6a877f7eccc823430c7ba73803f14a"
+      "bundle_fingerprint": "87e10fb8f7da87d8ebb8897ac3babbab0e40902d27363e8fe8f7d12cc006ae8a"
     },
     "node": "v24.16.0",
     "platform": "darwin",
     "source": {
-      "repository_root": "/Users/admin/Central/worktrees/ui-build/lane1-left",
-      "repository_head": "b30209f9bddb65b6a535ffeca2b482fa403a3f26",
+      "repository_root": "/Users/admin/Central/worktrees/ui-build/lane2-right",
+      "repository_head": "bbcebf9264814a9ac83169f9c100c30159c0f608",
       "tracked_changes": [
-        "desktop/cradle/walk/artifacts/left-forms-day-copy.png",
-        "desktop/cradle/walk/artifacts/left-forms-intent-goal-refused.png",
-        "desktop/cradle/walk/artifacts/left-forms.json",
+        "desktop/cradle/walk/artifacts/canvas-context-native-resolve-on-prepared-selection.png",
+        "desktop/cradle/walk/artifacts/canvas-context-real-return-after-explicit-delivery.png",
+        "desktop/cradle/walk/artifacts/canvas-context-stale-source-refusal-retains-preparation.png",
+        "desktop/cradle/walk/artifacts/canvas-context.json",
+        "desktop/cradle/walk/artifacts/context-canvas-insert-after-send.png",
+        "desktop/cradle/walk/artifacts/context-canvas-insert-inserted.png",
+        "desktop/cradle/walk/artifacts/context-canvas-insert-sent.png",
+        "desktop/cradle/walk/artifacts/context-canvas-insert.json",
         "desktop/cradle/walk/artifacts/left-frame-L1-rest-1440.png",
         "desktop/cradle/walk/artifacts/left-frame-L3-compact-1000.png",
         "desktop/cradle/walk/artifacts/left-frame-L4-overlay-600.png",
         "desktop/cradle/walk/artifacts/left-frame-L6-reading.png",
         "desktop/cradle/walk/artifacts/left-frame.json",
-        "desktop/cradle/walk/artifacts/left-gallery-base-dark-1000.png",
-        "desktop/cradle/walk/artifacts/left-gallery-base-dark-760.png",
-        "desktop/cradle/walk/artifacts/left-gallery-base-light-1000.png",
-        "desktop/cradle/walk/artifacts/left-gallery-base-light-760.png",
-        "desktop/cradle/walk/artifacts/left-gallery-factory-dark-1000.png",
-        "desktop/cradle/walk/artifacts/left-gallery-factory-dark-1440.png",
-        "desktop/cradle/walk/artifacts/left-gallery-factory-dark-760.png",
-        "desktop/cradle/walk/artifacts/left-gallery-factory-light-1000.png",
-        "desktop/cradle/walk/artifacts/left-gallery-factory-light-1440.png",
-        "desktop/cradle/walk/artifacts/left-gallery-factory-light-760.png",
-        "desktop/cradle/walk/artifacts/left-gallery-inbox-dark-1440.png",
-        "desktop/cradle/walk/artifacts/left-gallery-inbox-light-1440.png",
-        "desktop/cradle/walk/artifacts/left-gallery-scope-menu-light-1440.png",
-        "desktop/cradle/walk/artifacts/left-gallery.json",
-        "desktop/cradle/walk/artifacts/left-head-inbox-open-item.png",
-        "desktop/cradle/walk/artifacts/left-head-palette-agents.png",
-        "desktop/cradle/walk/artifacts/left-head-scope-menu.png",
-        "desktop/cradle/walk/artifacts/left-head.json",
-        "desktop/cradle/walk/artifacts/left-lens-lens-off.png",
-        "desktop/cradle/walk/artifacts/left-lens-lens-on.png",
-        "desktop/cradle/walk/artifacts/left-lens.json",
-        "desktop/cradle/walk/artifacts/left-marks-R2-working.png",
-        "desktop/cradle/walk/artifacts/left-marks-R3-needs-you.png",
-        "desktop/cradle/walk/artifacts/left-marks-R4-unread.png",
-        "desktop/cradle/walk/artifacts/left-marks-R5-failed.png",
-        "desktop/cradle/walk/artifacts/left-marks.json",
-        "desktop/cradle/walk/artifacts/left-rows-A6-open-beside.png",
-        "desktop/cradle/walk/artifacts/left-rows-R12-dropped-context.png",
-        "desktop/cradle/walk/artifacts/left-rows-R6-selected.png",
-        "desktop/cradle/walk/artifacts/left-rows.json",
-        "desktop/cradle/walk/artifacts/left-unreadable-L7-unreadable.png",
-        "desktop/cradle/walk/artifacts/left-unreadable-R11-stale-header.png",
-        "desktop/cradle/walk/artifacts/left-unreadable-R8-branch-reading.png",
-        "desktop/cradle/walk/artifacts/left-unreadable.json",
-        "desktop/cradle/walk/artifacts/modes-base-1280.png",
-        "desktop/cradle/walk/artifacts/modes-expressions-1280.png",
-        "desktop/cradle/walk/artifacts/modes-factory-1280.png",
-        "desktop/cradle/walk/artifacts/modes-failure.png",
-        "desktop/cradle/walk/artifacts/modes-techne-1280.png",
-        "desktop/cradle/walk/artifacts/modes.json",
-        "desktop/cradle/walk/artifacts/receive-include-accepted-on-current-basis.png",
-        "desktop/cradle/walk/artifacts/receive-include-included-with-attribution.png",
-        "desktop/cradle/walk/artifacts/receive-include-return-expanded-before-review.png",
-        "desktop/cradle/walk/artifacts/receive-include-stale-basis-refusal.png",
-        "desktop/cradle/walk/artifacts/receive-include.json",
-        "desktop/cradle/walk/artifacts/settings-change-applied.png",
-        "desktop/cradle/walk/artifacts/settings-change-no-changes.png",
-        "desktop/cradle/walk/artifacts/settings-change-partial.png",
-        "desktop/cradle/walk/artifacts/settings-change-refused.png",
-        "desktop/cradle/walk/artifacts/settings-change-review-dark-1000.png",
-        "desktop/cradle/walk/artifacts/settings-change-review-dark-1440.png",
-        "desktop/cradle/walk/artifacts/settings-change-review-dark-760.png",
-        "desktop/cradle/walk/artifacts/settings-change-review-light-1000.png",
-        "desktop/cradle/walk/artifacts/settings-change-review-light-1440.png",
-        "desktop/cradle/walk/artifacts/settings-change-review-light-760.png",
-        "desktop/cradle/walk/artifacts/settings-change-staged-dark-1000.png",
-        "desktop/cradle/walk/artifacts/settings-change-staged-dark-1440.png",
-        "desktop/cradle/walk/artifacts/settings-change-staged-dark-760.png",
-        "desktop/cradle/walk/artifacts/settings-change-staged-light-1000.png",
-        "desktop/cradle/walk/artifacts/settings-change-staged-light-1440.png",
-        "desktop/cradle/walk/artifacts/settings-change-staged-light-760.png",
-        "desktop/cradle/walk/artifacts/settings-change-stale.png",
-        "desktop/cradle/walk/artifacts/settings-change.json",
-        "desktop/cradle/walk/artifacts/settings-shell-appearance-dark-1000.png",
-        "desktop/cradle/walk/artifacts/settings-shell-appearance-dark-1440.png",
-        "desktop/cradle/walk/artifacts/settings-shell-appearance-dark-760.png",
-        "desktop/cradle/walk/artifacts/settings-shell-appearance-light-1000.png",
-        "desktop/cradle/walk/artifacts/settings-shell-appearance-light-1440.png",
-        "desktop/cradle/walk/artifacts/settings-shell-appearance-light-760.png",
-        "desktop/cradle/walk/artifacts/settings-shell-credentials-dark-1000.png",
-        "desktop/cradle/walk/artifacts/settings-shell-credentials-dark-1440.png",
-        "desktop/cradle/walk/artifacts/settings-shell-credentials-dark-760.png",
-        "desktop/cradle/walk/artifacts/settings-shell-credentials-light-1000.png",
-        "desktop/cradle/walk/artifacts/settings-shell-credentials-light-1440.png",
-        "desktop/cradle/walk/artifacts/settings-shell-credentials-light-760.png",
-        "desktop/cradle/walk/artifacts/settings-shell-harnesses-dark-1000.png",
-        "desktop/cradle/walk/artifacts/settings-shell-harnesses-dark-1440.png",
-        "desktop/cradle/walk/artifacts/settings-shell-harnesses-dark-760.png",
-        "desktop/cradle/walk/artifacts/settings-shell-harnesses-light-1000.png",
-        "desktop/cradle/walk/artifacts/settings-shell-harnesses-light-1440.png",
-        "desktop/cradle/walk/artifacts/settings-shell-harnesses-light-760.png",
-        "desktop/cradle/walk/artifacts/settings-shell-model-picker.png",
-        "desktop/cradle/walk/artifacts/settings-shell-models-dark-1000.png",
-        "desktop/cradle/walk/artifacts/settings-shell-models-dark-1440.png",
-        "desktop/cradle/walk/artifacts/settings-shell-models-dark-760.png",
-        "desktop/cradle/walk/artifacts/settings-shell-models-light-1000.png",
-        "desktop/cradle/walk/artifacts/settings-shell-models-light-1440.png",
-        "desktop/cradle/walk/artifacts/settings-shell-models-light-760.png",
-        "desktop/cradle/walk/artifacts/settings-shell-permissions-dark-1000.png",
-        "desktop/cradle/walk/artifacts/settings-shell-permissions-dark-1440.png",
-        "desktop/cradle/walk/artifacts/settings-shell-permissions-dark-760.png",
-        "desktop/cradle/walk/artifacts/settings-shell-permissions-light-1000.png",
-        "desktop/cradle/walk/artifacts/settings-shell-permissions-light-1440.png",
-        "desktop/cradle/walk/artifacts/settings-shell-permissions-light-760.png",
-        "desktop/cradle/walk/artifacts/settings-shell-product-aikit-dark-1000.png",
-        "desktop/cradle/walk/artifacts/settings-shell-product-aikit-dark-1440.png",
-        "desktop/cradle/walk/artifacts/settings-shell-product-aikit-dark-760.png",
-        "desktop/cradle/walk/artifacts/settings-shell-product-aikit-light-1000.png",
-        "desktop/cradle/walk/artifacts/settings-shell-product-aikit-light-1440.png",
-        "desktop/cradle/walk/artifacts/settings-shell-product-aikit-light-760.png",
-        "desktop/cradle/walk/artifacts/settings-shell-profiles-dark-1000.png",
-        "desktop/cradle/walk/artifacts/settings-shell-profiles-dark-1440.png",
-        "desktop/cradle/walk/artifacts/settings-shell-profiles-dark-760.png",
-        "desktop/cradle/walk/artifacts/settings-shell-profiles-light-1000.png",
-        "desktop/cradle/walk/artifacts/settings-shell-profiles-light-1440.png",
-        "desktop/cradle/walk/artifacts/settings-shell-profiles-light-760.png",
-        "desktop/cradle/walk/artifacts/settings-shell-skills-dark-1000.png",
-        "desktop/cradle/walk/artifacts/settings-shell-skills-dark-1440.png",
-        "desktop/cradle/walk/artifacts/settings-shell-skills-dark-760.png",
-        "desktop/cradle/walk/artifacts/settings-shell-skills-light-1000.png",
-        "desktop/cradle/walk/artifacts/settings-shell-skills-light-1440.png",
-        "desktop/cradle/walk/artifacts/settings-shell-skills-light-760.png",
-        "desktop/cradle/walk/artifacts/settings-shell-status-dark-1000.png",
-        "desktop/cradle/walk/artifacts/settings-shell-status-dark-1440.png",
-        "desktop/cradle/walk/artifacts/settings-shell-status-dark-760.png",
-        "desktop/cradle/walk/artifacts/settings-shell-status-light-1000.png",
-        "desktop/cradle/walk/artifacts/settings-shell-status-light-1440.png",
-        "desktop/cradle/walk/artifacts/settings-shell-status-light-760.png",
-        "desktop/cradle/walk/artifacts/settings-shell.json"
+        "desktop/cradle/walk/artifacts/mode-gallery-agency-dark.png",
+        "desktop/cradle/walk/artifacts/mode-gallery-agency-light.png",
+        "desktop/cradle/walk/artifacts/mode-gallery-desk-agents-light.png",
+        "desktop/cradle/walk/artifacts/mode-gallery-desk-context-light.png",
+        "desktop/cradle/walk/artifacts/mode-gallery-desk-run-dark.png",
+        "desktop/cradle/walk/artifacts/mode-gallery-desk-run-light.png",
+        "desktop/cradle/walk/artifacts/mode-gallery-epi-logos-dark.png",
+        "desktop/cradle/walk/artifacts/mode-gallery-epi-logos-light.png",
+        "desktop/cradle/walk/artifacts/mode-gallery-expressions-640-dark.png",
+        "desktop/cradle/walk/artifacts/mode-gallery-expressions-640-light.png",
+        "desktop/cradle/walk/artifacts/mode-gallery-expressions-760-dark.png",
+        "desktop/cradle/walk/artifacts/mode-gallery-expressions-760-light.png",
+        "desktop/cradle/walk/artifacts/mode-gallery-expressions-dark.png",
+        "desktop/cradle/walk/artifacts/mode-gallery-expressions-light.png",
+        "desktop/cradle/walk/artifacts/mode-gallery-expressions-panel-chat-dark.png",
+        "desktop/cradle/walk/artifacts/mode-gallery-expressions-panel-chat-light.png",
+        "desktop/cradle/walk/artifacts/mode-gallery-expressions-panel-context-dark.png",
+        "desktop/cradle/walk/artifacts/mode-gallery-expressions-panel-context-light.png",
+        "desktop/cradle/walk/artifacts/mode-gallery-expressions-panel-context-newtab-dark.png",
+        "desktop/cradle/walk/artifacts/mode-gallery-expressions-panel-context-newtab-light.png",
+        "desktop/cradle/walk/artifacts/mode-gallery-expressions-panel-side-dark.png",
+        "desktop/cradle/walk/artifacts/mode-gallery-expressions-panel-side-light.png",
+        "desktop/cradle/walk/artifacts/mode-gallery-factory-760-light.png",
+        "desktop/cradle/walk/artifacts/mode-gallery-factory-dark.png",
+        "desktop/cradle/walk/artifacts/mode-gallery-factory-light.png",
+        "desktop/cradle/walk/artifacts/mode-gallery-library-dark.png",
+        "desktop/cradle/walk/artifacts/mode-gallery-library-light.png",
+        "desktop/cradle/walk/artifacts/mode-gallery-techne-dark.png",
+        "desktop/cradle/walk/artifacts/mode-gallery-techne-light.png",
+        "desktop/cradle/walk/artifacts/mode-gallery.json",
+        "desktop/cradle/walk/artifacts/right-panel-context-expressions-launcher.png",
+        "desktop/cradle/walk/artifacts/right-panel-context-file-inserted.png",
+        "desktop/cradle/walk/artifacts/right-panel-context-launcher.png",
+        "desktop/cradle/walk/artifacts/right-panel-context.json",
+        "desktop/cradle/walk/artifacts/right-panel-failures-p10-reconnecting.png",
+        "desktop/cradle/walk/artifacts/right-panel-failures-p11-unreachable.png",
+        "desktop/cradle/walk/artifacts/right-panel-failures-p12-switched.png",
+        "desktop/cradle/walk/artifacts/right-panel-failures-p8-not-sent.png",
+        "desktop/cradle/walk/artifacts/right-panel-failures.json",
+        "desktop/cradle/walk/artifacts/right-panel-shots-dark-1000-activity.png",
+        "desktop/cradle/walk/artifacts/right-panel-shots-dark-1000-agents.png",
+        "desktop/cradle/walk/artifacts/right-panel-shots-dark-1000-chat.png",
+        "desktop/cradle/walk/artifacts/right-panel-shots-dark-1000-context.png",
+        "desktop/cradle/walk/artifacts/right-panel-shots-dark-1440-activity.png",
+        "desktop/cradle/walk/artifacts/right-panel-shots-dark-1440-agents.png",
+        "desktop/cradle/walk/artifacts/right-panel-shots-dark-1440-chat.png",
+        "desktop/cradle/walk/artifacts/right-panel-shots-dark-1440-context.png",
+        "desktop/cradle/walk/artifacts/right-panel-shots-dark-760-activity.png",
+        "desktop/cradle/walk/artifacts/right-panel-shots-dark-760-agents.png",
+        "desktop/cradle/walk/artifacts/right-panel-shots-dark-760-chat.png",
+        "desktop/cradle/walk/artifacts/right-panel-shots-dark-760-context.png",
+        "desktop/cradle/walk/artifacts/right-panel-shots-light-1000-activity.png",
+        "desktop/cradle/walk/artifacts/right-panel-shots-light-1000-agents.png",
+        "desktop/cradle/walk/artifacts/right-panel-shots-light-1000-chat.png",
+        "desktop/cradle/walk/artifacts/right-panel-shots-light-1000-context.png",
+        "desktop/cradle/walk/artifacts/right-panel-shots-light-1440-activity.png",
+        "desktop/cradle/walk/artifacts/right-panel-shots-light-1440-agents.png",
+        "desktop/cradle/walk/artifacts/right-panel-shots-light-1440-chat.png",
+        "desktop/cradle/walk/artifacts/right-panel-shots-light-1440-context.png",
+        "desktop/cradle/walk/artifacts/right-panel-shots-light-760-activity.png",
+        "desktop/cradle/walk/artifacts/right-panel-shots-light-760-agents.png",
+        "desktop/cradle/walk/artifacts/right-panel-shots-light-760-chat.png",
+        "desktop/cradle/walk/artifacts/right-panel-shots-light-760-context.png",
+        "desktop/cradle/walk/artifacts/right-panel-shots.json"
       ],
-      "dirty_digest": "05abe2d8e58f9fdf932bc0b4100007cac00c909de641dcdeca240918aad6fe39",
-      "engine_provenance_path": "/Users/admin/Central/worktrees/ui-build/lane1-left/packages/oi-design-system/expressions-engine/PROVENANCE.json",
+      "dirty_digest": "a9d09c0e849b7f4c7c0ac829ec9c3265ba99baefb6acaa20679b9e77be48a26d",
+      "engine_provenance_path": "/Users/admin/Central/worktrees/ui-build/lane2-right/packages/oi-design-system/expressions-engine/PROVENANCE.json",
       "engine_source": "EpiLogos/Point-Cloud-Demo",
       "engine_revision": "91db8428fc9dfba06cd258ec5a58e7dd9eef5313"
     }
   },
   "passed": true,
   "error": null,
-  "duration_ms": 18567,
+  "duration_ms": 9714,
   "checks": [
     {
       "ok": true,
@@ -259,18 +209,18 @@
       "duration_ms": 0,
       "data": {
         "schema": "oi.cradle.walk/v1",
-        "mounted_at": "2026-09-23T08:45:36.077Z",
+        "mounted_at": "2026-09-23T12:24:48.797Z",
         "transport": {
           "kind": "bridge",
-          "url": "http://127.0.0.1:4179"
+          "url": "http://127.0.0.1:4479"
         },
-        "url": "http://localhost:4173/"
+        "url": "http://localhost:4473/"
       }
     },
     {
       "ok": true,
       "op": "read.state",
-      "duration_ms": 1339.5,
+      "duration_ms": 347.5,
       "data": {
         "buffers": {
           "central:source:project:editor-walk:ProjectCentral/user/00%2001-DESIGN.md": {
@@ -373,7 +323,7 @@
               "detected": false,
               "signals": []
             },
-            "root": "/var/folders/q0/g_91z7355tb58425qwg3xcy80000gn/T/oi-cradle-editor-FsHyLH",
+            "root": "/var/folders/q0/g_91z7355tb58425qwg3xcy80000gn/T/oi-cradle-editor-G1cfE4",
             "root_state": "directory",
             "schema": "central.world-map/v1",
             "valid": true,
@@ -505,10 +455,10 @@
           "sources": null
         },
         "surfaces": {
-          "53b0e374-c757-4b8c-9ef6-fcbb4676d4a1": {
+          "a6f6cf91-7db3-4629-a42a-d9004107cae9": {
             "kind": "source",
             "source_ref": "central:source:project:editor-walk:ProjectCentral/user/00%2001-DESIGN.md",
-            "surface_id": "53b0e374-c757-4b8c-9ef6-fcbb4676d4a1",
+            "surface_id": "a6f6cf91-7db3-4629-a42a-d9004107cae9",
             "title": "00 01-DESIGN.md"
           }
         }
@@ -517,7 +467,7 @@
     {
       "ok": true,
       "op": "read.state",
-      "duration_ms": 5.4,
+      "duration_ms": 2.8,
       "data": {
         "buffers": {
           "central:source:project:editor-walk:ProjectCentral/user/00%2001-DESIGN.md": {
@@ -620,7 +570,7 @@
               "detected": false,
               "signals": []
             },
-            "root": "/var/folders/q0/g_91z7355tb58425qwg3xcy80000gn/T/oi-cradle-editor-FsHyLH",
+            "root": "/var/folders/q0/g_91z7355tb58425qwg3xcy80000gn/T/oi-cradle-editor-G1cfE4",
             "root_state": "directory",
             "schema": "central.world-map/v1",
             "valid": true,
@@ -752,10 +702,10 @@
           "sources": null
         },
         "surfaces": {
-          "53b0e374-c757-4b8c-9ef6-fcbb4676d4a1": {
+          "a6f6cf91-7db3-4629-a42a-d9004107cae9": {
             "kind": "source",
             "source_ref": "central:source:project:editor-walk:ProjectCentral/user/00%2001-DESIGN.md",
-            "surface_id": "53b0e374-c757-4b8c-9ef6-fcbb4676d4a1",
+            "surface_id": "a6f6cf91-7db3-4629-a42a-d9004107cae9",
             "title": "00 01-DESIGN.md"
           }
         }
@@ -764,7 +714,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 79,
+      "duration_ms": 57,
       "data": {
         "file": "lane0-repairs-scope-held-on-tab-focus.png"
       }
@@ -772,21 +722,21 @@
     {
       "ok": true,
       "op": "read.layout",
-      "duration_ms": 0.7,
+      "duration_ms": 0,
       "data": {
         "layout": {
           "root": {
             "type": "group",
             "id": "g1",
             "tabs": [
-              "e9eddd06-7093-4093-80bf-1b483a545033"
+              "b7b47d8b-fa0e-4bcb-bedb-e6533882bff5"
             ],
             "pinned": [],
-            "active": "e9eddd06-7093-4093-80bf-1b483a545033"
+            "active": "b7b47d8b-fa0e-4bcb-bedb-e6533882bff5"
           },
           "surfaces": {
-            "e9eddd06-7093-4093-80bf-1b483a545033": {
-              "id": "e9eddd06-7093-4093-80bf-1b483a545033",
+            "b7b47d8b-fa0e-4bcb-bedb-e6533882bff5": {
+              "id": "b7b47d8b-fa0e-4bcb-bedb-e6533882bff5",
               "kind": "factory",
               "title": "Factory"
             }
@@ -811,14 +761,14 @@
             "type": "group",
             "id": "g1",
             "tabs": [
-              "e9eddd06-7093-4093-80bf-1b483a545033"
+              "b7b47d8b-fa0e-4bcb-bedb-e6533882bff5"
             ],
             "pinned": [],
-            "active": "e9eddd06-7093-4093-80bf-1b483a545033"
+            "active": "b7b47d8b-fa0e-4bcb-bedb-e6533882bff5"
           },
           "surfaces": {
-            "e9eddd06-7093-4093-80bf-1b483a545033": {
-              "id": "e9eddd06-7093-4093-80bf-1b483a545033",
+            "b7b47d8b-fa0e-4bcb-bedb-e6533882bff5": {
+              "id": "b7b47d8b-fa0e-4bcb-bedb-e6533882bff5",
               "kind": "factory",
               "title": "Factory"
             }
@@ -841,7 +791,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 40,
+      "duration_ms": 44,
       "data": {
         "file": "lane0-repairs-factory-task-in-centre.png"
       }
@@ -856,14 +806,14 @@
             "type": "group",
             "id": "g1",
             "tabs": [
-              "e9eddd06-7093-4093-80bf-1b483a545033"
+              "b7b47d8b-fa0e-4bcb-bedb-e6533882bff5"
             ],
             "pinned": [],
-            "active": "e9eddd06-7093-4093-80bf-1b483a545033"
+            "active": "b7b47d8b-fa0e-4bcb-bedb-e6533882bff5"
           },
           "surfaces": {
-            "e9eddd06-7093-4093-80bf-1b483a545033": {
-              "id": "e9eddd06-7093-4093-80bf-1b483a545033",
+            "b7b47d8b-fa0e-4bcb-bedb-e6533882bff5": {
+              "id": "b7b47d8b-fa0e-4bcb-bedb-e6533882bff5",
               "kind": "factory",
               "title": "Factory"
             }
@@ -893,14 +843,14 @@
             "type": "group",
             "id": "g1",
             "tabs": [
-              "e9eddd06-7093-4093-80bf-1b483a545033"
+              "b7b47d8b-fa0e-4bcb-bedb-e6533882bff5"
             ],
             "pinned": [],
-            "active": "e9eddd06-7093-4093-80bf-1b483a545033"
+            "active": "b7b47d8b-fa0e-4bcb-bedb-e6533882bff5"
           },
           "surfaces": {
-            "e9eddd06-7093-4093-80bf-1b483a545033": {
-              "id": "e9eddd06-7093-4093-80bf-1b483a545033",
+            "b7b47d8b-fa0e-4bcb-bedb-e6533882bff5": {
+              "id": "b7b47d8b-fa0e-4bcb-bedb-e6533882bff5",
               "kind": "factory",
               "title": "Factory"
             }
@@ -923,21 +873,21 @@
     {
       "ok": true,
       "op": "read.layout",
-      "duration_ms": 0.1,
+      "duration_ms": 0,
       "data": {
         "layout": {
           "root": {
             "type": "group",
             "id": "g1",
             "tabs": [
-              "e9eddd06-7093-4093-80bf-1b483a545033"
+              "b7b47d8b-fa0e-4bcb-bedb-e6533882bff5"
             ],
             "pinned": [],
-            "active": "e9eddd06-7093-4093-80bf-1b483a545033"
+            "active": "b7b47d8b-fa0e-4bcb-bedb-e6533882bff5"
           },
           "surfaces": {
-            "e9eddd06-7093-4093-80bf-1b483a545033": {
-              "id": "e9eddd06-7093-4093-80bf-1b483a545033",
+            "b7b47d8b-fa0e-4bcb-bedb-e6533882bff5": {
+              "id": "b7b47d8b-fa0e-4bcb-bedb-e6533882bff5",
               "kind": "factory",
               "title": "Factory"
             }
@@ -968,14 +918,14 @@
             "type": "group",
             "id": "g1",
             "tabs": [
-              "e9eddd06-7093-4093-80bf-1b483a545033"
+              "b7b47d8b-fa0e-4bcb-bedb-e6533882bff5"
             ],
             "pinned": [],
-            "active": "e9eddd06-7093-4093-80bf-1b483a545033"
+            "active": "b7b47d8b-fa0e-4bcb-bedb-e6533882bff5"
           },
           "surfaces": {
-            "e9eddd06-7093-4093-80bf-1b483a545033": {
-              "id": "e9eddd06-7093-4093-80bf-1b483a545033",
+            "b7b47d8b-fa0e-4bcb-bedb-e6533882bff5": {
+              "id": "b7b47d8b-fa0e-4bcb-bedb-e6533882bff5",
               "kind": "factory",
               "title": "Factory"
             }
@@ -999,7 +949,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 41,
+      "duration_ms": 44,
       "data": {
         "file": "lane0-repairs-lens-on-no-surface.png"
       }
@@ -1014,14 +964,14 @@
             "type": "group",
             "id": "g1",
             "tabs": [
-              "e9eddd06-7093-4093-80bf-1b483a545033"
+              "b7b47d8b-fa0e-4bcb-bedb-e6533882bff5"
             ],
             "pinned": [],
-            "active": "e9eddd06-7093-4093-80bf-1b483a545033"
+            "active": "b7b47d8b-fa0e-4bcb-bedb-e6533882bff5"
           },
           "surfaces": {
-            "e9eddd06-7093-4093-80bf-1b483a545033": {
-              "id": "e9eddd06-7093-4093-80bf-1b483a545033",
+            "b7b47d8b-fa0e-4bcb-bedb-e6533882bff5": {
+              "id": "b7b47d8b-fa0e-4bcb-bedb-e6533882bff5",
               "kind": "factory",
               "title": "Factory"
             }
@@ -1044,21 +994,21 @@
     {
       "ok": true,
       "op": "read.layout",
-      "duration_ms": 0.1,
+      "duration_ms": 0,
       "data": {
         "layout": {
           "root": {
             "type": "group",
             "id": "g1",
             "tabs": [
-              "e9eddd06-7093-4093-80bf-1b483a545033"
+              "b7b47d8b-fa0e-4bcb-bedb-e6533882bff5"
             ],
             "pinned": [],
-            "active": "e9eddd06-7093-4093-80bf-1b483a545033"
+            "active": "b7b47d8b-fa0e-4bcb-bedb-e6533882bff5"
           },
           "surfaces": {
-            "e9eddd06-7093-4093-80bf-1b483a545033": {
-              "id": "e9eddd06-7093-4093-80bf-1b483a545033",
+            "b7b47d8b-fa0e-4bcb-bedb-e6533882bff5": {
+              "id": "b7b47d8b-fa0e-4bcb-bedb-e6533882bff5",
               "kind": "factory",
               "title": "Factory"
             }

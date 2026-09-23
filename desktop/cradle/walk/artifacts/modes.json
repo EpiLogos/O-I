@@ -15,71 +15,60 @@
     "negatives": [],
     "claims_grade": "D"
   },
-  "generated_at": "2026-09-23T08:58:17.550Z",
+  "generated_at": "2026-09-23T12:29:43.983Z",
   "environment": {
-    "base_url": "http://localhost:4173",
-    "bridge_url": "http://127.0.0.1:4179",
+    "base_url": "http://localhost:4473",
+    "bridge_url": "http://127.0.0.1:4479",
     "viewport": "1280x820",
     "browser_engine": "chromium",
     "bundle": "walk (WALK=1) served by vite preview",
     "build_input": {
       "mode": "reused-dist",
-      "bundle_fingerprint": "adbb79e513d9b981e3dd0755d20c9e4d7389afacd36793a2b1b0bd15397340ad"
+      "bundle_fingerprint": "87e10fb8f7da87d8ebb8897ac3babbab0e40902d27363e8fe8f7d12cc006ae8a"
     },
     "node": "v24.16.0",
     "platform": "darwin",
     "source": {
-      "repository_root": "/Users/admin/Central/worktrees/ui-build/lane1-left",
-      "repository_head": "b30209f9bddb65b6a535ffeca2b482fa403a3f26",
+      "repository_root": "/Users/admin/Central/worktrees/ui-build/lane2-right",
+      "repository_head": "bbcebf9264814a9ac83169f9c100c30159c0f608",
       "tracked_changes": [
-        "desktop/cradle/src/contributions/factory/desk/RunPage.tsx",
+        "desktop/cradle/walk/artifacts/agent-panel-panel-activity-tape.png",
+        "desktop/cradle/walk/artifacts/agent-panel-panel-base-no-session.png",
+        "desktop/cradle/walk/artifacts/agent-panel-panel-context-carried.png",
+        "desktop/cradle/walk/artifacts/agent-panel-panel-context-selected.png",
+        "desktop/cradle/walk/artifacts/agent-panel-panel-dark-activity.png",
+        "desktop/cradle/walk/artifacts/agent-panel-panel-dark-context.png",
+        "desktop/cradle/walk/artifacts/agent-panel-panel-dark-conversation.png",
+        "desktop/cradle/walk/artifacts/agent-panel-panel-factory-conversation-in-centre.png",
+        "desktop/cradle/walk/artifacts/agent-panel-panel-full-composition.png",
+        "desktop/cradle/walk/artifacts/agent-panel-panel-inspect-handoff.png",
+        "desktop/cradle/walk/artifacts/agent-panel-panel-narrow-1000.png",
+        "desktop/cradle/walk/artifacts/agent-panel-panel-narrow-1280.png",
+        "desktop/cradle/walk/artifacts/agent-panel-panel-narrow-640.png",
+        "desktop/cradle/walk/artifacts/agent-panel-panel-narrow-760.png",
+        "desktop/cradle/walk/artifacts/agent-panel.json",
         "desktop/cradle/walk/artifacts/canvas-context-native-resolve-on-prepared-selection.png",
         "desktop/cradle/walk/artifacts/canvas-context-real-return-after-explicit-delivery.png",
         "desktop/cradle/walk/artifacts/canvas-context-stale-source-refusal-retains-preparation.png",
         "desktop/cradle/walk/artifacts/canvas-context.json",
-        "desktop/cradle/walk/artifacts/factory-desk-f1-reading.png",
-        "desktop/cradle/walk/artifacts/factory-desk-f2-empty.png",
-        "desktop/cradle/walk/artifacts/factory-desk-f3-partial.png",
-        "desktop/cradle/walk/artifacts/factory-desk-f4-needs-you.png",
-        "desktop/cradle/walk/artifacts/factory-desk-factory-desk-1000-dark.png",
-        "desktop/cradle/walk/artifacts/factory-desk-factory-desk-1000-light.png",
-        "desktop/cradle/walk/artifacts/factory-desk-factory-desk-1440-dark.png",
-        "desktop/cradle/walk/artifacts/factory-desk-factory-desk-1440-light.png",
-        "desktop/cradle/walk/artifacts/factory-desk-factory-desk-760-dark.png",
-        "desktop/cradle/walk/artifacts/factory-desk-factory-desk-760-light.png",
+        "desktop/cradle/walk/artifacts/context-canvas-insert-after-send.png",
+        "desktop/cradle/walk/artifacts/context-canvas-insert-inserted.png",
+        "desktop/cradle/walk/artifacts/context-canvas-insert-sent.png",
+        "desktop/cradle/walk/artifacts/context-canvas-insert.json",
         "desktop/cradle/walk/artifacts/factory-desk.json",
+        "desktop/cradle/walk/artifacts/factory-objects.json",
+        "desktop/cradle/walk/artifacts/factory-run.json",
+        "desktop/cradle/walk/artifacts/factory-tasks.json",
+        "desktop/cradle/walk/artifacts/factory-trajectory.json",
         "desktop/cradle/walk/artifacts/lane0-repairs-factory-task-in-centre.png",
         "desktop/cradle/walk/artifacts/lane0-repairs-lens-on-no-surface.png",
+        "desktop/cradle/walk/artifacts/lane0-repairs-scope-held-on-tab-focus.png",
         "desktop/cradle/walk/artifacts/lane0-repairs.json",
-        "desktop/cradle/walk/artifacts/left-forms-day-copy.png",
-        "desktop/cradle/walk/artifacts/left-forms-intent-goal-refused.png",
-        "desktop/cradle/walk/artifacts/left-forms.json",
         "desktop/cradle/walk/artifacts/left-frame-L1-rest-1440.png",
         "desktop/cradle/walk/artifacts/left-frame-L3-compact-1000.png",
         "desktop/cradle/walk/artifacts/left-frame-L4-overlay-600.png",
         "desktop/cradle/walk/artifacts/left-frame-L6-reading.png",
         "desktop/cradle/walk/artifacts/left-frame.json",
-        "desktop/cradle/walk/artifacts/left-gallery-base-dark-1000.png",
-        "desktop/cradle/walk/artifacts/left-gallery-base-dark-760.png",
-        "desktop/cradle/walk/artifacts/left-gallery-base-light-1000.png",
-        "desktop/cradle/walk/artifacts/left-gallery-base-light-760.png",
-        "desktop/cradle/walk/artifacts/left-gallery-factory-dark-1000.png",
-        "desktop/cradle/walk/artifacts/left-gallery-factory-dark-1440.png",
-        "desktop/cradle/walk/artifacts/left-gallery-factory-dark-760.png",
-        "desktop/cradle/walk/artifacts/left-gallery-factory-light-1000.png",
-        "desktop/cradle/walk/artifacts/left-gallery-factory-light-1440.png",
-        "desktop/cradle/walk/artifacts/left-gallery-factory-light-760.png",
-        "desktop/cradle/walk/artifacts/left-gallery-inbox-dark-1440.png",
-        "desktop/cradle/walk/artifacts/left-gallery-inbox-light-1440.png",
-        "desktop/cradle/walk/artifacts/left-gallery-scope-menu-light-1440.png",
-        "desktop/cradle/walk/artifacts/left-gallery.json",
-        "desktop/cradle/walk/artifacts/left-head-inbox-open-item.png",
-        "desktop/cradle/walk/artifacts/left-head-palette-agents.png",
-        "desktop/cradle/walk/artifacts/left-head-scope-menu.png",
-        "desktop/cradle/walk/artifacts/left-head.json",
-        "desktop/cradle/walk/artifacts/left-lens-lens-off.png",
-        "desktop/cradle/walk/artifacts/left-lens-lens-on.png",
-        "desktop/cradle/walk/artifacts/left-lens.json",
         "desktop/cradle/walk/artifacts/left-marks-R2-working.png",
         "desktop/cradle/walk/artifacts/left-marks-R3-needs-you.png",
         "desktop/cradle/walk/artifacts/left-marks-R4-unread.png",
@@ -89,45 +78,80 @@
         "desktop/cradle/walk/artifacts/left-rows-R12-dropped-context.png",
         "desktop/cradle/walk/artifacts/left-rows-R6-selected.png",
         "desktop/cradle/walk/artifacts/left-rows.json",
-        "desktop/cradle/walk/artifacts/left-unreadable-L7-unreadable.png",
-        "desktop/cradle/walk/artifacts/left-unreadable-R11-stale-header.png",
-        "desktop/cradle/walk/artifacts/left-unreadable-R8-branch-reading.png",
-        "desktop/cradle/walk/artifacts/left-unreadable.json",
-        "desktop/cradle/walk/artifacts/mode-workspaces-failure.png",
-        "desktop/cradle/walk/artifacts/mode-workspaces.json",
-        "desktop/cradle/walk/artifacts/modes-base-1280.png",
-        "desktop/cradle/walk/artifacts/modes-expressions-1280.png",
-        "desktop/cradle/walk/artifacts/modes-factory-1280.png",
-        "desktop/cradle/walk/artifacts/modes-failure.png",
-        "desktop/cradle/walk/artifacts/modes-settings-1280.png",
-        "desktop/cradle/walk/artifacts/modes-tabs-list-1280.png",
-        "desktop/cradle/walk/artifacts/modes-tabs-unpinned-1280.png",
-        "desktop/cradle/walk/artifacts/modes-tabs-unpinned-horizontal-1280.png",
-        "desktop/cradle/walk/artifacts/modes-techne-1280.png",
-        "desktop/cradle/walk/artifacts/modes.json",
-        "desktop/cradle/walk/artifacts/receive-include-accepted-on-current-basis.png",
-        "desktop/cradle/walk/artifacts/receive-include-included-with-attribution.png",
-        "desktop/cradle/walk/artifacts/receive-include-return-expanded-before-review.png",
-        "desktop/cradle/walk/artifacts/receive-include-stale-basis-refusal.png",
-        "desktop/cradle/walk/artifacts/receive-include.json",
-        "desktop/cradle/walk/artifacts/settings-change-applied.png",
-        "desktop/cradle/walk/artifacts/settings-change-no-changes.png",
-        "desktop/cradle/walk/artifacts/settings-change-partial.png",
-        "desktop/cradle/walk/artifacts/settings-change-refused.png",
-        "desktop/cradle/walk/artifacts/settings-change-review-dark-1000.png",
-        "desktop/cradle/walk/artifacts/settings-change-review-dark-1440.png",
-        "desktop/cradle/walk/artifacts/settings-change-review-dark-760.png",
-        "desktop/cradle/walk/artifacts/settings-change-review-light-1000.png",
-        "desktop/cradle/walk/artifacts/settings-change-review-light-1440.png",
-        "desktop/cradle/walk/artifacts/settings-change-review-light-760.png",
-        "desktop/cradle/walk/artifacts/settings-change-staged-dark-1000.png",
-        "desktop/cradle/walk/artifacts/settings-change-staged-dark-1440.png",
-        "desktop/cradle/walk/artifacts/settings-change-staged-dark-760.png",
-        "desktop/cradle/walk/artifacts/settings-change-staged-light-1000.png",
-        "desktop/cradle/walk/artifacts/settings-change-staged-light-1440.png",
-        "desktop/cradle/walk/artifacts/settings-change-staged-light-760.png",
-        "desktop/cradle/walk/artifacts/settings-change-stale.png",
-        "desktop/cradle/walk/artifacts/settings-change.json",
+        "desktop/cradle/walk/artifacts/mode-gallery-agency-dark.png",
+        "desktop/cradle/walk/artifacts/mode-gallery-agency-light.png",
+        "desktop/cradle/walk/artifacts/mode-gallery-desk-agents-light.png",
+        "desktop/cradle/walk/artifacts/mode-gallery-desk-context-light.png",
+        "desktop/cradle/walk/artifacts/mode-gallery-desk-run-dark.png",
+        "desktop/cradle/walk/artifacts/mode-gallery-desk-run-light.png",
+        "desktop/cradle/walk/artifacts/mode-gallery-epi-logos-dark.png",
+        "desktop/cradle/walk/artifacts/mode-gallery-epi-logos-light.png",
+        "desktop/cradle/walk/artifacts/mode-gallery-expressions-640-dark.png",
+        "desktop/cradle/walk/artifacts/mode-gallery-expressions-640-light.png",
+        "desktop/cradle/walk/artifacts/mode-gallery-expressions-760-dark.png",
+        "desktop/cradle/walk/artifacts/mode-gallery-expressions-760-light.png",
+        "desktop/cradle/walk/artifacts/mode-gallery-expressions-dark.png",
+        "desktop/cradle/walk/artifacts/mode-gallery-expressions-light.png",
+        "desktop/cradle/walk/artifacts/mode-gallery-expressions-panel-chat-dark.png",
+        "desktop/cradle/walk/artifacts/mode-gallery-expressions-panel-chat-light.png",
+        "desktop/cradle/walk/artifacts/mode-gallery-expressions-panel-context-dark.png",
+        "desktop/cradle/walk/artifacts/mode-gallery-expressions-panel-context-light.png",
+        "desktop/cradle/walk/artifacts/mode-gallery-expressions-panel-context-newtab-dark.png",
+        "desktop/cradle/walk/artifacts/mode-gallery-expressions-panel-context-newtab-light.png",
+        "desktop/cradle/walk/artifacts/mode-gallery-expressions-panel-side-dark.png",
+        "desktop/cradle/walk/artifacts/mode-gallery-expressions-panel-side-light.png",
+        "desktop/cradle/walk/artifacts/mode-gallery-factory-760-light.png",
+        "desktop/cradle/walk/artifacts/mode-gallery-factory-dark.png",
+        "desktop/cradle/walk/artifacts/mode-gallery-factory-light.png",
+        "desktop/cradle/walk/artifacts/mode-gallery-library-dark.png",
+        "desktop/cradle/walk/artifacts/mode-gallery-library-light.png",
+        "desktop/cradle/walk/artifacts/mode-gallery-techne-dark.png",
+        "desktop/cradle/walk/artifacts/mode-gallery-techne-light.png",
+        "desktop/cradle/walk/artifacts/mode-gallery.json",
+        "desktop/cradle/walk/artifacts/permission.json",
+        "desktop/cradle/walk/artifacts/right-panel-agents-a4-in-place.png",
+        "desktop/cradle/walk/artifacts/right-panel-agents-avatar-menu-chosen.png",
+        "desktop/cradle/walk/artifacts/right-panel-agents-lens-nara.png",
+        "desktop/cradle/walk/artifacts/right-panel-agents-p15-agent-page.png",
+        "desktop/cradle/walk/artifacts/right-panel-agents-p17-empty.png",
+        "desktop/cradle/walk/artifacts/right-panel-agents-p17-error.png",
+        "desktop/cradle/walk/artifacts/right-panel-agents-p18-detail.png",
+        "desktop/cradle/walk/artifacts/right-panel-agents-roster.png",
+        "desktop/cradle/walk/artifacts/right-panel-agents.json",
+        "desktop/cradle/walk/artifacts/right-panel-context-expressions-launcher.png",
+        "desktop/cradle/walk/artifacts/right-panel-context-file-inserted.png",
+        "desktop/cradle/walk/artifacts/right-panel-context-launcher.png",
+        "desktop/cradle/walk/artifacts/right-panel-context.json",
+        "desktop/cradle/walk/artifacts/right-panel-failures-p10-reconnecting.png",
+        "desktop/cradle/walk/artifacts/right-panel-failures-p11-unreachable.png",
+        "desktop/cradle/walk/artifacts/right-panel-failures-p12-switched.png",
+        "desktop/cradle/walk/artifacts/right-panel-failures-p8-not-sent.png",
+        "desktop/cradle/walk/artifacts/right-panel-failures.json",
+        "desktop/cradle/walk/artifacts/right-panel-shots-dark-1000-activity.png",
+        "desktop/cradle/walk/artifacts/right-panel-shots-dark-1000-agents.png",
+        "desktop/cradle/walk/artifacts/right-panel-shots-dark-1000-chat.png",
+        "desktop/cradle/walk/artifacts/right-panel-shots-dark-1000-context.png",
+        "desktop/cradle/walk/artifacts/right-panel-shots-dark-1440-activity.png",
+        "desktop/cradle/walk/artifacts/right-panel-shots-dark-1440-agents.png",
+        "desktop/cradle/walk/artifacts/right-panel-shots-dark-1440-chat.png",
+        "desktop/cradle/walk/artifacts/right-panel-shots-dark-1440-context.png",
+        "desktop/cradle/walk/artifacts/right-panel-shots-dark-760-activity.png",
+        "desktop/cradle/walk/artifacts/right-panel-shots-dark-760-agents.png",
+        "desktop/cradle/walk/artifacts/right-panel-shots-dark-760-chat.png",
+        "desktop/cradle/walk/artifacts/right-panel-shots-dark-760-context.png",
+        "desktop/cradle/walk/artifacts/right-panel-shots-light-1000-activity.png",
+        "desktop/cradle/walk/artifacts/right-panel-shots-light-1000-agents.png",
+        "desktop/cradle/walk/artifacts/right-panel-shots-light-1000-chat.png",
+        "desktop/cradle/walk/artifacts/right-panel-shots-light-1000-context.png",
+        "desktop/cradle/walk/artifacts/right-panel-shots-light-1440-activity.png",
+        "desktop/cradle/walk/artifacts/right-panel-shots-light-1440-agents.png",
+        "desktop/cradle/walk/artifacts/right-panel-shots-light-1440-chat.png",
+        "desktop/cradle/walk/artifacts/right-panel-shots-light-1440-context.png",
+        "desktop/cradle/walk/artifacts/right-panel-shots-light-760-activity.png",
+        "desktop/cradle/walk/artifacts/right-panel-shots-light-760-agents.png",
+        "desktop/cradle/walk/artifacts/right-panel-shots-light-760-chat.png",
+        "desktop/cradle/walk/artifacts/right-panel-shots-light-760-context.png",
+        "desktop/cradle/walk/artifacts/right-panel-shots.json",
         "desktop/cradle/walk/artifacts/settings-shell-appearance-dark-1000.png",
         "desktop/cradle/walk/artifacts/settings-shell-appearance-dark-1440.png",
         "desktop/cradle/walk/artifacts/settings-shell-appearance-dark-760.png",
@@ -183,29 +207,17 @@
         "desktop/cradle/walk/artifacts/settings-shell-status-light-1000.png",
         "desktop/cradle/walk/artifacts/settings-shell-status-light-1440.png",
         "desktop/cradle/walk/artifacts/settings-shell-status-light-760.png",
-        "desktop/cradle/walk/artifacts/settings-shell.json",
-        "desktop/cradle/walk/artifacts/shell-recovery-1280.png",
-        "desktop/cradle/walk/artifacts/shell-recovery-390.png",
-        "desktop/cradle/walk/artifacts/shell-recovery-639.png",
-        "desktop/cradle/walk/artifacts/shell-recovery-760.png",
-        "desktop/cradle/walk/artifacts/shell-recovery-900.png",
-        "desktop/cradle/walk/artifacts/shell-recovery-system-1280.png",
-        "desktop/cradle/walk/artifacts/shell-recovery-system-900.png",
-        "desktop/cradle/walk/artifacts/shell-recovery.json",
-        "desktop/cradle/walk/scenarios/left-marks.mjs",
-        "desktop/cradle/walk/scenarios/mode-workspaces.mjs",
-        "desktop/cradle/walk/scenarios/modes.mjs",
-        "desktop/cradle/walk/scenarios/shell-recovery.mjs"
+        "desktop/cradle/walk/artifacts/settings-shell.json"
       ],
-      "dirty_digest": "6a301dc7599c5d2dd9afb06c6e2481d5b5f31c9ed88a4f680d530d05b35fc98d",
-      "engine_provenance_path": "/Users/admin/Central/worktrees/ui-build/lane1-left/packages/oi-design-system/expressions-engine/PROVENANCE.json",
+      "dirty_digest": "b29a93ef7e17bd2b6c6859e2bd0a8d8ac2c2e881b11e181a1ede5c87a8ea9745",
+      "engine_provenance_path": "/Users/admin/Central/worktrees/ui-build/lane2-right/packages/oi-design-system/expressions-engine/PROVENANCE.json",
       "engine_source": "EpiLogos/Point-Cloud-Demo",
       "engine_revision": "91db8428fc9dfba06cd258ec5a58e7dd9eef5313"
     }
   },
   "passed": true,
   "error": null,
-  "duration_ms": 31148,
+  "duration_ms": 22499,
   "checks": [
     {
       "ok": true,
@@ -299,7 +311,7 @@
       "ok": true,
       "label": "The terminal Settings button enters its mode instantly — the shell switches now, no awaited roundtrip gates it",
       "data": {
-        "entered_ms": 82
+        "entered_ms": 51
       }
     },
     {
@@ -502,51 +514,51 @@
     {
       "ok": true,
       "op": "info",
-      "duration_ms": 0.1,
+      "duration_ms": 0,
       "data": {
         "schema": "oi.cradle.walk/v1",
-        "mounted_at": "2026-09-23T08:58:17.758Z",
+        "mounted_at": "2026-09-23T12:29:44.112Z",
         "transport": {
           "kind": "bridge",
-          "url": "http://127.0.0.1:4179"
+          "url": "http://127.0.0.1:4479"
         },
-        "url": "http://localhost:4173/"
+        "url": "http://localhost:4473/"
       }
     },
     {
       "ok": true,
       "op": "read.layout",
-      "duration_ms": 0.2,
+      "duration_ms": 0.1,
       "data": {
         "layout": {
           "root": {
             "type": "group",
             "id": "g1",
             "tabs": [
-              "66c1ef0e-78e5-446c-bd0a-78c0c9fc2d99",
-              "5a5a81db-dfbe-403d-991c-ccd37d8a9b8d",
-              "9c920d75-c698-40cb-bb35-199da2a4f9ae"
+              "b955e674-eb9c-4482-9b0e-2bb470f90d1d",
+              "2350b755-7ae2-4df8-9c1f-598ec198e17a",
+              "2e17965b-58ce-4ec0-9a83-5ed7b63c039c"
             ],
             "pinned": [],
-            "active": "9c920d75-c698-40cb-bb35-199da2a4f9ae"
+            "active": "2e17965b-58ce-4ec0-9a83-5ed7b63c039c"
           },
           "surfaces": {
-            "66c1ef0e-78e5-446c-bd0a-78c0c9fc2d99": {
-              "id": "66c1ef0e-78e5-446c-bd0a-78c0c9fc2d99",
+            "b955e674-eb9c-4482-9b0e-2bb470f90d1d": {
+              "id": "b955e674-eb9c-4482-9b0e-2bb470f90d1d",
               "kind": "source",
               "ref": "central:source:project:editor-walk:ProjectCentral/user/00%2001-DESIGN.md",
               "title": "00 01-DESIGN.md",
               "project": "Editor"
             },
-            "5a5a81db-dfbe-403d-991c-ccd37d8a9b8d": {
-              "id": "5a5a81db-dfbe-403d-991c-ccd37d8a9b8d",
+            "2350b755-7ae2-4df8-9c1f-598ec198e17a": {
+              "id": "2350b755-7ae2-4df8-9c1f-598ec198e17a",
               "kind": "source",
               "ref": "central:source:project:editor-walk:ProjectCentral/user/01%2002-ARCHITECTURE.md",
               "title": "01 02-ARCHITECTURE.md",
               "project": "Editor"
             },
-            "9c920d75-c698-40cb-bb35-199da2a4f9ae": {
-              "id": "9c920d75-c698-40cb-bb35-199da2a4f9ae",
+            "2e17965b-58ce-4ec0-9a83-5ed7b63c039c": {
+              "id": "2e17965b-58ce-4ec0-9a83-5ed7b63c039c",
               "kind": "source",
               "ref": "central:source:project:editor-walk:ProjectCentral/user/02%2003-UX-STATES.md",
               "title": "02 03-UX-STATES.md",
@@ -565,7 +577,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 65,
+      "duration_ms": 66,
       "data": {
         "file": "modes-base-1280.png"
       }
@@ -573,21 +585,21 @@
     {
       "ok": true,
       "op": "read.layout",
-      "duration_ms": 0.1,
+      "duration_ms": 0,
       "data": {
         "layout": {
           "root": {
             "type": "group",
             "id": "g1",
             "tabs": [
-              "c273a091-8419-4b9c-990a-b95dbb3f4533"
+              "882336c6-be0f-4dbf-8772-ba17cbba9ff2"
             ],
             "pinned": [],
-            "active": "c273a091-8419-4b9c-990a-b95dbb3f4533"
+            "active": "882336c6-be0f-4dbf-8772-ba17cbba9ff2"
           },
           "surfaces": {
-            "c273a091-8419-4b9c-990a-b95dbb3f4533": {
-              "id": "c273a091-8419-4b9c-990a-b95dbb3f4533",
+            "882336c6-be0f-4dbf-8772-ba17cbba9ff2": {
+              "id": "882336c6-be0f-4dbf-8772-ba17cbba9ff2",
               "kind": "factory",
               "title": "Factory"
             }
@@ -605,7 +617,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 46,
+      "duration_ms": 26,
       "data": {
         "file": "modes-factory-1280.png"
       }
@@ -613,7 +625,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 44,
+      "duration_ms": 47,
       "data": {
         "file": "modes-expressions-1280.png"
       }
@@ -621,7 +633,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 49,
+      "duration_ms": 46,
       "data": {
         "file": "modes-techne-1280.png"
       }
@@ -636,30 +648,30 @@
             "type": "group",
             "id": "g1",
             "tabs": [
-              "66c1ef0e-78e5-446c-bd0a-78c0c9fc2d99",
-              "5a5a81db-dfbe-403d-991c-ccd37d8a9b8d",
-              "9c920d75-c698-40cb-bb35-199da2a4f9ae"
+              "b955e674-eb9c-4482-9b0e-2bb470f90d1d",
+              "2350b755-7ae2-4df8-9c1f-598ec198e17a",
+              "2e17965b-58ce-4ec0-9a83-5ed7b63c039c"
             ],
             "pinned": [],
-            "active": "9c920d75-c698-40cb-bb35-199da2a4f9ae"
+            "active": "2e17965b-58ce-4ec0-9a83-5ed7b63c039c"
           },
           "surfaces": {
-            "66c1ef0e-78e5-446c-bd0a-78c0c9fc2d99": {
-              "id": "66c1ef0e-78e5-446c-bd0a-78c0c9fc2d99",
+            "b955e674-eb9c-4482-9b0e-2bb470f90d1d": {
+              "id": "b955e674-eb9c-4482-9b0e-2bb470f90d1d",
               "kind": "source",
               "ref": "central:source:project:editor-walk:ProjectCentral/user/00%2001-DESIGN.md",
               "title": "00 01-DESIGN.md",
               "project": "Editor"
             },
-            "5a5a81db-dfbe-403d-991c-ccd37d8a9b8d": {
-              "id": "5a5a81db-dfbe-403d-991c-ccd37d8a9b8d",
+            "2350b755-7ae2-4df8-9c1f-598ec198e17a": {
+              "id": "2350b755-7ae2-4df8-9c1f-598ec198e17a",
               "kind": "source",
               "ref": "central:source:project:editor-walk:ProjectCentral/user/01%2002-ARCHITECTURE.md",
               "title": "01 02-ARCHITECTURE.md",
               "project": "Editor"
             },
-            "9c920d75-c698-40cb-bb35-199da2a4f9ae": {
-              "id": "9c920d75-c698-40cb-bb35-199da2a4f9ae",
+            "2e17965b-58ce-4ec0-9a83-5ed7b63c039c": {
+              "id": "2e17965b-58ce-4ec0-9a83-5ed7b63c039c",
               "kind": "source",
               "ref": "central:source:project:editor-walk:ProjectCentral/user/02%2003-UX-STATES.md",
               "title": "02 03-UX-STATES.md",
@@ -685,14 +697,14 @@
             "type": "group",
             "id": "g1",
             "tabs": [
-              "c347aad2-656d-45b1-ac8d-18cf34ed9bf1"
+              "d6b343c3-88b1-407e-a3c8-a61c2266426b"
             ],
             "pinned": [],
-            "active": "c347aad2-656d-45b1-ac8d-18cf34ed9bf1"
+            "active": "d6b343c3-88b1-407e-a3c8-a61c2266426b"
           },
           "surfaces": {
-            "c347aad2-656d-45b1-ac8d-18cf34ed9bf1": {
-              "id": "c347aad2-656d-45b1-ac8d-18cf34ed9bf1",
+            "d6b343c3-88b1-407e-a3c8-a61c2266426b": {
+              "id": "d6b343c3-88b1-407e-a3c8-a61c2266426b",
               "kind": "system",
               "title": "Settings"
             }
@@ -711,7 +723,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 48,
+      "duration_ms": 58,
       "data": {
         "file": "modes-settings-1280.png"
       }
@@ -726,32 +738,32 @@
             "type": "group",
             "id": "g1",
             "tabs": [
-              "66c1ef0e-78e5-446c-bd0a-78c0c9fc2d99",
-              "5a5a81db-dfbe-403d-991c-ccd37d8a9b8d",
-              "9c920d75-c698-40cb-bb35-199da2a4f9ae"
+              "b955e674-eb9c-4482-9b0e-2bb470f90d1d",
+              "2350b755-7ae2-4df8-9c1f-598ec198e17a",
+              "2e17965b-58ce-4ec0-9a83-5ed7b63c039c"
             ],
             "pinned": [],
-            "active": "5a5a81db-dfbe-403d-991c-ccd37d8a9b8d",
+            "active": "2350b755-7ae2-4df8-9c1f-598ec198e17a",
             "tabPresentation": "pinned-vertical",
             "tabPinOrientation": "vertical"
           },
           "surfaces": {
-            "66c1ef0e-78e5-446c-bd0a-78c0c9fc2d99": {
-              "id": "66c1ef0e-78e5-446c-bd0a-78c0c9fc2d99",
+            "b955e674-eb9c-4482-9b0e-2bb470f90d1d": {
+              "id": "b955e674-eb9c-4482-9b0e-2bb470f90d1d",
               "kind": "source",
               "ref": "central:source:project:editor-walk:ProjectCentral/user/00%2001-DESIGN.md",
               "title": "00 01-DESIGN.md",
               "project": "Editor"
             },
-            "5a5a81db-dfbe-403d-991c-ccd37d8a9b8d": {
-              "id": "5a5a81db-dfbe-403d-991c-ccd37d8a9b8d",
+            "2350b755-7ae2-4df8-9c1f-598ec198e17a": {
+              "id": "2350b755-7ae2-4df8-9c1f-598ec198e17a",
               "kind": "source",
               "ref": "central:source:project:editor-walk:ProjectCentral/user/01%2002-ARCHITECTURE.md",
               "title": "01 02-ARCHITECTURE.md",
               "project": "Editor"
             },
-            "9c920d75-c698-40cb-bb35-199da2a4f9ae": {
-              "id": "9c920d75-c698-40cb-bb35-199da2a4f9ae",
+            "2e17965b-58ce-4ec0-9a83-5ed7b63c039c": {
+              "id": "2e17965b-58ce-4ec0-9a83-5ed7b63c039c",
               "kind": "source",
               "ref": "central:source:project:editor-walk:ProjectCentral/user/02%2003-UX-STATES.md",
               "title": "02 03-UX-STATES.md",
@@ -778,32 +790,32 @@
             "type": "group",
             "id": "g1",
             "tabs": [
-              "66c1ef0e-78e5-446c-bd0a-78c0c9fc2d99",
-              "5a5a81db-dfbe-403d-991c-ccd37d8a9b8d",
-              "9c920d75-c698-40cb-bb35-199da2a4f9ae"
+              "b955e674-eb9c-4482-9b0e-2bb470f90d1d",
+              "2350b755-7ae2-4df8-9c1f-598ec198e17a",
+              "2e17965b-58ce-4ec0-9a83-5ed7b63c039c"
             ],
             "pinned": [],
-            "active": "5a5a81db-dfbe-403d-991c-ccd37d8a9b8d",
+            "active": "2350b755-7ae2-4df8-9c1f-598ec198e17a",
             "tabPresentation": "pinned-vertical",
             "tabPinOrientation": "vertical"
           },
           "surfaces": {
-            "66c1ef0e-78e5-446c-bd0a-78c0c9fc2d99": {
-              "id": "66c1ef0e-78e5-446c-bd0a-78c0c9fc2d99",
+            "b955e674-eb9c-4482-9b0e-2bb470f90d1d": {
+              "id": "b955e674-eb9c-4482-9b0e-2bb470f90d1d",
               "kind": "source",
               "ref": "central:source:project:editor-walk:ProjectCentral/user/00%2001-DESIGN.md",
               "title": "00 01-DESIGN.md",
               "project": "Editor"
             },
-            "5a5a81db-dfbe-403d-991c-ccd37d8a9b8d": {
-              "id": "5a5a81db-dfbe-403d-991c-ccd37d8a9b8d",
+            "2350b755-7ae2-4df8-9c1f-598ec198e17a": {
+              "id": "2350b755-7ae2-4df8-9c1f-598ec198e17a",
               "kind": "source",
               "ref": "central:source:project:editor-walk:ProjectCentral/user/01%2002-ARCHITECTURE.md",
               "title": "01 02-ARCHITECTURE.md",
               "project": "Editor"
             },
-            "9c920d75-c698-40cb-bb35-199da2a4f9ae": {
-              "id": "9c920d75-c698-40cb-bb35-199da2a4f9ae",
+            "2e17965b-58ce-4ec0-9a83-5ed7b63c039c": {
+              "id": "2e17965b-58ce-4ec0-9a83-5ed7b63c039c",
               "kind": "source",
               "ref": "central:source:project:editor-walk:ProjectCentral/user/02%2003-UX-STATES.md",
               "title": "02 03-UX-STATES.md",
@@ -823,7 +835,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 77,
+      "duration_ms": 79,
       "data": {
         "file": "modes-tabs-list-1280.png"
       }
@@ -831,7 +843,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 76,
+      "duration_ms": 51,
       "data": {
         "file": "modes-tabs-unpinned-1280.png"
       }
@@ -839,7 +851,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 145,
+      "duration_ms": 123,
       "data": {
         "file": "modes-tabs-unpinned-horizontal-1280.png"
       }
@@ -850,18 +862,18 @@
       "duration_ms": 0,
       "data": {
         "schema": "oi.cradle.walk/v1",
-        "mounted_at": "2026-09-23T08:58:23.794Z",
+        "mounted_at": "2026-09-23T12:29:48.861Z",
         "transport": {
           "kind": "bridge",
-          "url": "http://127.0.0.1:4179"
+          "url": "http://127.0.0.1:4479"
         },
-        "url": "http://localhost:4173/"
+        "url": "http://localhost:4473/"
       }
     },
     {
       "ok": true,
       "op": "read.layout",
-      "duration_ms": 0.1,
+      "duration_ms": 0,
       "data": {
         "layout": {
           "subjectPlanes": {},
@@ -871,32 +883,32 @@
             "type": "group",
             "id": "g1",
             "tabs": [
-              "66c1ef0e-78e5-446c-bd0a-78c0c9fc2d99",
-              "5a5a81db-dfbe-403d-991c-ccd37d8a9b8d",
-              "9c920d75-c698-40cb-bb35-199da2a4f9ae"
+              "b955e674-eb9c-4482-9b0e-2bb470f90d1d",
+              "2350b755-7ae2-4df8-9c1f-598ec198e17a",
+              "2e17965b-58ce-4ec0-9a83-5ed7b63c039c"
             ],
             "pinned": [],
-            "active": "66c1ef0e-78e5-446c-bd0a-78c0c9fc2d99",
+            "active": "b955e674-eb9c-4482-9b0e-2bb470f90d1d",
             "tabPresentation": "unpinned"
           },
           "surfaces": {
-            "66c1ef0e-78e5-446c-bd0a-78c0c9fc2d99": {
+            "b955e674-eb9c-4482-9b0e-2bb470f90d1d": {
               "project": "Editor",
-              "id": "66c1ef0e-78e5-446c-bd0a-78c0c9fc2d99",
+              "id": "b955e674-eb9c-4482-9b0e-2bb470f90d1d",
               "kind": "source",
               "ref": "central:source:project:editor-walk:ProjectCentral/user/00%2001-DESIGN.md",
               "title": "00 01-DESIGN.md"
             },
-            "5a5a81db-dfbe-403d-991c-ccd37d8a9b8d": {
+            "2350b755-7ae2-4df8-9c1f-598ec198e17a": {
               "project": "Editor",
-              "id": "5a5a81db-dfbe-403d-991c-ccd37d8a9b8d",
+              "id": "2350b755-7ae2-4df8-9c1f-598ec198e17a",
               "kind": "source",
               "ref": "central:source:project:editor-walk:ProjectCentral/user/01%2002-ARCHITECTURE.md",
               "title": "01 02-ARCHITECTURE.md"
             },
-            "9c920d75-c698-40cb-bb35-199da2a4f9ae": {
+            "2e17965b-58ce-4ec0-9a83-5ed7b63c039c": {
               "project": "Editor",
-              "id": "9c920d75-c698-40cb-bb35-199da2a4f9ae",
+              "id": "2e17965b-58ce-4ec0-9a83-5ed7b63c039c",
               "kind": "source",
               "ref": "central:source:project:editor-walk:ProjectCentral/user/02%2003-UX-STATES.md",
               "title": "02 03-UX-STATES.md"
@@ -915,7 +927,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 204,
+      "duration_ms": 60,
       "data": {
         "file": "modes-base-1000.png"
       }
@@ -923,7 +935,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 383,
+      "duration_ms": 32,
       "data": {
         "file": "modes-base-760.png"
       }
@@ -931,7 +943,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 283,
+      "duration_ms": 31,
       "data": {
         "file": "modes-base-640.png"
       }
