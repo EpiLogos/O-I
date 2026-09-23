@@ -27,6 +27,8 @@ import {unknownDispatch,settledPhase,mayStartDispatch} from "./deliveryOutcome";
  */
 import {NativeModelController,connectionLabel,type NativeModelState} from "./nativeModel";
 import {NativeModeController,type NativeModeState} from "./nativeMode";
+import {recordAdvertisedModes} from "./advertisedModes";
+import {harnessName} from "../agent/chat/harness";
 import {useEffect,useMemo,useSyncExternalStore} from "react";
 import {useKernel} from "../kernel/KernelProvider";
 import {kernelOp} from "../kernel/bridge";
@@ -141,7 +143,7 @@ class EncounterSession implements EncounterSessionActions {
  constructor(private transport:KernelTransportStatus,binding:EncounterSessionBinding) {
   this.state={key:encounterSessionKey(binding),project:binding.project,agentSession:binding.ref,space:binding.space,providers:[],model:{phase:"unread"},mode:{phase:"unread"},draft:"",pending:false,busy:false,draftFailed:false,dispatch:{kind:"idle"},deliveries:[],a2a:{busy:false}};
   this.models=new NativeModelController(binding.ref,request=>this.call(request),model=>this.set({model}));
-  this.modes=new NativeModeController(binding.ref,request=>this.call(request),mode=>this.set({mode}));
+  this.modes=new NativeModeController(binding.ref,request=>this.call(request),mode=>{this.set({mode});this.rememberModes(mode);});
  }
  // --- store plumbing ---------------------------------------------------
  subscribe=(listener:()=>void)=>{this.listeners.add(listener);return()=>{this.listeners.delete(listener);};};
@@ -288,6 +290,15 @@ class EncounterSession implements EncounterSessionActions {
  readModel=()=>this.models.refresh();
  selectModel=async(model:string,effort?:string)=>{this.begin();try{await this.models.select(model,effort);}finally{this.end();}};
  readMode=()=>this.modes.refresh();
+ /** What the connected harness advertised feeds Settings' default-mode
+  *  choices (A2): only a read that carries the owner's connection identity. */
+ private rememberModes(mode:NativeModeState){
+  const provider=this.state.status?.provider;
+  if(mode.phase!=="ready"||!provider?.id||!mode.reading)return;
+  const facts=this.state.providers.find(row=>row.id===provider.id);
+  const label=(facts&&harnessName({...facts}))??provider.label??provider.id;
+  recordAdvertisedModes(provider.id,label,mode.reading.mode_observation?.available_modes??[]);
+ }
  selectMode=async(mode:string)=>{this.begin();try{await this.modes.select(mode);}finally{this.end();}};
  refreshProviders=async()=>{
   try{const providers=await this.call<{id:string;label:string}[]>({action:"providers"});this.set({providers,error:undefined});}
