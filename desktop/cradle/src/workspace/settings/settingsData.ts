@@ -53,6 +53,26 @@ export interface VerifyResult {
   recorded: boolean;
 }
 
+/** One own-login entry as the harness's profile declares it
+ * (`aikit harness auth <slug> --json`, HARNESS-SETTINGS-RESEARCH-2026-09-22
+ * §2a). Runnable carries the declared login argv verbatim — a public command,
+ * never a secret; a note-only entry is the instruction, not an omission. */
+export interface AuthLoginOption {
+  provider_ref: string;
+  runnable: boolean;
+  argv: string[] | null;
+  note: string;
+}
+
+/** The harness's declared auth options: what renders beside the API-key
+ * input. Read live per harness; nothing here executes a login. */
+export interface AuthFace {
+  slug: string;
+  env_var: {provider_ref: string; env_var: string}[];
+  own_login: AuthLoginOption[];
+  note: string | null;
+}
+
 export interface SettingEntry {
   owner: ContributionMount;
   sectionTitle: string;
@@ -84,6 +104,9 @@ export interface SettingsSnapshot {
   stagedDefault: string | null;
   /** Verify outcomes this session saw, per credential. */
   verifications: Record<string, VerifyResult>;
+  /** Declared auth options per harness slug/client, read live when a section
+   * first renders the harness (Models rows, Credentials cards). */
+  authFaces: Record<string, Load<AuthFace>>;
   /** Which scopes of `skills.capabilities` the page has asked about. */
   skillScopes: ScopeAddress[];
   /** Further (setting, scope) pairs a section asked to read. */
@@ -101,6 +124,7 @@ const initial: SettingsSnapshot = {
   profiles: {state: "reading"},
   stagedDefault: readStagedDefault(),
   verifications: {},
+  authFaces: {},
   skillScopes: [{scope_kind: "machine", scope_ref: null}],
   extraPairs: [],
 };
@@ -375,4 +399,51 @@ export function stageDefaultConnection(provider: string | null): void {
 
 export function recordVerification(credential: string, result: VerifyResult): void {
   set({verifications: {...snapshot.verifications, [credential]: result}});
+}
+
+// ---------------------------------------------------------------------------
+// declared auth options (harness auth --json, §2a)
+
+function shapeAuthFace(data: unknown): AuthFace {
+  const record = (data ?? {}) as Record<string, unknown>;
+  const string = (value: unknown, fallback = "") => (typeof value === "string" ? value : fallback);
+  const envVar = Array.isArray(record.env_var) ? record.env_var : [];
+  const ownLogin = Array.isArray(record.own_login) ? record.own_login : [];
+  return {
+    slug: string(record.slug),
+    env_var: envVar.map((row) => {
+      const entry = (row ?? {}) as Record<string, unknown>;
+      return {provider_ref: string(entry.provider_ref), env_var: string(entry.env_var)};
+    }),
+    own_login: ownLogin.map((row) => {
+      const entry = (row ?? {}) as Record<string, unknown>;
+      return {
+        provider_ref: string(entry.provider_ref),
+        runnable: entry.runnable === true,
+        argv: Array.isArray(entry.argv) ? entry.argv.filter((item): item is string => typeof item === "string") : null,
+        note: string(entry.note),
+      };
+    }),
+    note: typeof record.note === "string" ? record.note : null,
+  };
+}
+
+/** Read one harness's declared auth options live. A failed read fails that
+ * harness's own affordance alone, in the owner's words. */
+export async function loadAuthFace(harness: string): Promise<void> {
+  if (snapshot.authFaces[harness]?.state === "reading") return;
+  set({authFaces: {...snapshot.authFaces, [harness]: {state: "reading"}}});
+  try {
+    const outcome = await expect<{data: unknown}>({op: "harness_auth_describe", harness}, "harness_auth_reading");
+    set({authFaces: {...snapshot.authFaces, [harness]: {state: "ok", value: shapeAuthFace(outcome.data), at: Date.now()}}});
+  } catch (cause) {
+    set({authFaces: {...snapshot.authFaces, [harness]: {state: "failed", error: plain(cause)}}});
+  }
+}
+
+/** Make sure every named harness has a face (or its own failed read). */
+export function ensureAuthFaces(harnesses: string[]): void {
+  for (const harness of harnesses) {
+    if (!snapshot.authFaces[harness]) void loadAuthFace(harness);
+  }
 }

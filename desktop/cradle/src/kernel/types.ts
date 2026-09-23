@@ -252,6 +252,11 @@ export type KernelOp =
   | {op:"credential_rotate";credential:string;reference?:string;material?:string}
   | {op:"credential_verify";credential:string}
   | {op:"credential_revoke";credential:string}
+  /** Settings · auth login (HARNESS-SETTINGS-RESEARCH §2a): the harness's
+   * declared auth options (`aikit harness auth <slug> --json`): env-var
+   * names and own-login entries, nothing executed. The login itself is a
+   * terminal act — the declared argv runs in a real terminal surface. */
+  | {op:"harness_auth_describe";harness:string}
   /** Settings · Harnesses (12-SETTINGS §3.2): `aikit client install <client>`. */
   | {op:"client_install";client:string}
   /** Settings · product pages (12-SETTINGS §3.9): run one owner-disclosed action. */
@@ -345,6 +350,7 @@ export type KernelOpResult =
   | { result:"credential_reading";data:unknown }
   | { result:"credential_changed";data:unknown }
   | { result:"credential_verified";data:unknown }
+  | { result:"harness_auth_reading";data:unknown }
   | { result:"client_installed";data:unknown }
   | { result:"product_action_ran";data:unknown }
   | { result:"settings_revealed";data:unknown }

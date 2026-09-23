@@ -17,6 +17,7 @@ import {loadSuite, refreshAll, stageDefaultConnection, type SettingsSnapshot} fr
 import {currentConnection, DEFAULT_CONNECTION_ROW, stagedChanges, undoChange} from "../changeModel";
 import {goTo} from "../settingsNav";
 import {Missing, ReadOnly, Reading, Row, Scrim, Unreadable} from "../rows";
+import {HarnessAuth} from "../AuthLogin";
 
 const AUTO_POLICY = RANKING_POLICIES[0];
 
@@ -120,7 +121,12 @@ export function ModelsSection({data}: {data: SettingsSnapshot}) {
             </select>}
     </Row>
     {ready.map((row) => <Row key={row.client} id={`model:${row.client}`} title={harnessName(row.harness)} description="Model for this harness">
-      {catalogue.state === "ok" ? <Picker label={harnessName(row.harness)} entries={entries} data={data}/> : <ReadOnly value={`Auto · ${AUTO_POLICY.label}`} place="AIKit's roster"/>}
+      <>
+        {catalogue.state === "ok" ? <Picker label={harnessName(row.harness)} entries={entries} data={data}/> : <ReadOnly value={`Auto · ${AUTO_POLICY.label}`} place="AIKit's roster"/>}
+        {/* The login option beside the key (HARNESS-SETTINGS-RESEARCH
+          * §2a): the harness's own declared sign-in, live-read. */}
+        <HarnessAuth harness={row.client}/>
+      </>
     </Row>)}
     <Missing>Choosing a model or a ranking policy per harness needs an AIKit setting that doesn't exist yet; the current choice is shown read-only.</Missing>
     <Row id="model:ranking-policy" title="Ranking policy" description={`How Auto chooses: ${RANKING_POLICIES.map((policy) => policy.label).join(", ")}`}>

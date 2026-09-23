@@ -65,6 +65,7 @@ const SCENARIO_SPEC = {
   "settings-shell": "docs/cradle/12-SETTINGS.md §1 §3 §4 S1 S3 S10 S11 S14 S15",
   "settings-change": "docs/cradle/12-SETTINGS.md §2 §4 S3 S4 S5 S6 S7 S8 S9",
   "settings-credentials": "docs/cradle/12-SETTINGS.md §3.4 §4 S12 S13",
+  "settings-auth": "docs/cradle/12-SETTINGS.md §3.3 §3.4; docs/experience/HARNESS-SETTINGS-RESEARCH-2026-09-22.md §2a",
   "settings-unreadable": "docs/cradle/12-SETTINGS.md §2 §4 S2",
   configuration: "docs/cradle/09-CONFIGURATION-PLANE.md",
   "factory-development": "docs/experience/FACTORY-AGENCY.md §4/§5/§8/§12",

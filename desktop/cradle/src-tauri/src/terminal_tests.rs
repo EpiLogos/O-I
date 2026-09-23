@@ -17,8 +17,68 @@ fn test_session() -> Arc<Session> {
     start(
         std::env::temp_dir().to_string_lossy().into_owned(),
         dimensions(80, 24),
+        None,
     )
     .unwrap()
+}
+
+/// A carried command runs in the real PTY with stdin writable to the child —
+/// the Settings auth-login handover: the child owns the terminal, the person
+/// types to it, and its exit reaps the session like any shell.
+#[test]
+fn a_carried_command_owns_the_pty_and_receives_input() {
+    let row = start(
+        std::env::temp_dir().to_string_lossy().into_owned(),
+        dimensions(80, 24),
+        Some(vec![
+            "/bin/sh".into(),
+            "-c".into(),
+            "printf '__LOGIN_PROMPT__\\n'; head -c 1 >/dev/null; printf '__LOGIN_SAW_STDIN__\\n'"
+                .into(),
+        ]),
+    )
+    .unwrap();
+    let attachment = attach_session(&row, "main", dimensions(80, 24)).unwrap();
+    let mut cursor = attachment.seq;
+    read_until(
+        &row,
+        "main",
+        attachment.lease,
+        &mut cursor,
+        "__LOGIN_PROMPT__",
+    );
+    // The PTY line discipline is canonical: the child's read returns per
+    // line, so the proof types a line — a person presses Enter.
+    input_session(&row, "main", attachment.lease, "x\n").unwrap();
+    let seen = read_until(
+        &row,
+        "main",
+        attachment.lease,
+        &mut cursor,
+        "__LOGIN_SAW_STDIN__",
+    );
+    assert!(
+        seen.contains("__LOGIN_SAW_STDIN__"),
+        "child never answered: {seen:?}"
+    );
+    close_session(&row).unwrap();
+}
+
+#[test]
+fn a_malformed_carried_command_is_refused_before_any_spawn() {
+    let cwd = std::env::temp_dir().to_string_lossy().into_owned();
+    let dims = dimensions(80, 24);
+    for bad in [
+        vec![],
+        vec!["-ls".into()],
+        vec!["sh".into(), String::from("a\0b")],
+        vec!["sh".into(), String::from(" ".repeat(300))],
+    ] {
+        assert!(
+            start(cwd.clone(), dims, Some(bad)).is_err(),
+            "a malformed command must be refused"
+        );
+    }
 }
 
 fn read_until(

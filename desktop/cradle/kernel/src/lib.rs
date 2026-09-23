@@ -450,6 +450,12 @@ pub enum KernelOp {
     CredentialRevoke { credential: String },
     /// Settings · Harnesses (12 §3.2): `aikit client install <client>`.
     ClientInstall { client: String },
+    /// Settings · auth login (HARNESS-SETTINGS-RESEARCH-2026-09-22 §2a):
+    /// `aikit harness auth <slug> --json` — the harness's declared auth
+    /// options (env-var names, own-login entries with runnable + argv or
+    /// note) verbatim. Describe only: the login itself is a terminal act,
+    /// never a kernel op — nothing here spawns a login.
+    HarnessAuthDescribe { harness: String },
     /// Settings · product pages (12 §3.9): run one owner-disclosed action.
     ProductActionRun { product_id: String, action_ref: String },
     /// Settings · read-only rows (12 §2, S11): reveal the owner's own file.
@@ -716,6 +722,9 @@ pub enum KernelOpResult {
     CredentialChanged {data:serde_json::Value},
     CredentialVerified {data:serde_json::Value},
     ClientInstalled {data:serde_json::Value},
+    /// The harness's declared auth options (`harness auth --json`), verbatim
+    /// `data` — names and notes only; a login never runs through this seam.
+    HarnessAuthReading {data:serde_json::Value},
     ProductActionRan {data:serde_json::Value},
     SettingsRevealed {data:serde_json::Value},
     ConfigDiffReading {resolutions:Vec<serde_json::Value>},
@@ -1167,7 +1176,7 @@ impl Kernel {
                 let document=chat_defaults::discard()?;
                 Ok(KernelOpOutcome{receipts:Vec::new(),result:KernelOpResult::ChatDefaultDiscarded{document}})
             }
-            KernelOp::CredentialList|KernelOp::CredentialDiscover|KernelOp::CredentialSetup{..}|KernelOp::CredentialRotate{..}|KernelOp::CredentialVerify{..}|KernelOp::CredentialRevoke{..}|KernelOp::ClientInstall{..} => {
+            KernelOp::CredentialList|KernelOp::CredentialDiscover|KernelOp::CredentialSetup{..}|KernelOp::CredentialRotate{..}|KernelOp::CredentialVerify{..}|KernelOp::CredentialRevoke{..}|KernelOp::ClientInstall{..}|KernelOp::HarnessAuthDescribe{..} => {
                 let root=self.world_map(false).ok();
                 let cwd=root.as_ref().and_then(|value|value["root"].as_str()).map(std::path::PathBuf::from).unwrap_or(std::env::current_dir().map_err(|e|e.to_string())?);
                 let result=credentials::apply(&cwd,op)?;

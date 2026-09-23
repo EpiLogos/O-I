@@ -1,0 +1,249 @@
+{
+  "schema": "oi.cradle.walk.scenario/v1",
+  "scenario": "settings-auth",
+  "spec_ref": "docs/cradle/12-SETTINGS.md §3.3 §3.4; docs/experience/HARNESS-SETTINGS-RESEARCH-2026-09-22.md §2a",
+  "grade": "B",
+  "binding": null,
+  "generated_at": "2026-09-23T11:08:59.424Z",
+  "environment": {
+    "base_url": "http://localhost:4273",
+    "bridge_url": "http://127.0.0.1:4279",
+    "viewport": "1280x820",
+    "browser_engine": "chromium",
+    "bundle": "walk (WALK=1) served by vite preview",
+    "build_input": {
+      "mode": "fresh-build",
+      "bundle_fingerprint": "6bb8e7703ae9a285ab5e915f89d09b51b052c9edbefb0603db49d712a9291676"
+    },
+    "node": "v24.16.0",
+    "platform": "darwin",
+    "source": {
+      "repository_root": "/private/tmp/oi-settings-auth",
+      "repository_head": "ad5ef0300cd506c2e04f2550c3d82816a2f07e2a",
+      "tracked_changes": [
+        "desktop/cradle/kernel/src/credentials.rs",
+        "desktop/cradle/kernel/src/lib.rs",
+        "desktop/cradle/scripts/receipt-lint.mjs",
+        "desktop/cradle/src-tauri/src/terminal.rs",
+        "desktop/cradle/src-tauri/src/terminal_tests.rs",
+        "desktop/cradle/src/CradleFrame.tsx",
+        "desktop/cradle/src/kernel/types.ts",
+        "desktop/cradle/src/surface/types.ts",
+        "desktop/cradle/src/terminal/TerminalSurface.tsx",
+        "desktop/cradle/src/workspace/settings/sections/CredentialsSection.tsx",
+        "desktop/cradle/src/workspace/settings/sections/ModelsSection.tsx",
+        "desktop/cradle/src/workspace/settings/settings-page.css",
+        "desktop/cradle/src/workspace/settings/settingsData.ts",
+        "desktop/cradle/walk/artifacts/settings-change-applied.png",
+        "desktop/cradle/walk/artifacts/settings-change-no-changes.png",
+        "desktop/cradle/walk/artifacts/settings-change-partial.png",
+        "desktop/cradle/walk/artifacts/settings-change-refused.png",
+        "desktop/cradle/walk/artifacts/settings-change-review-dark-1000.png",
+        "desktop/cradle/walk/artifacts/settings-change-review-dark-1440.png",
+        "desktop/cradle/walk/artifacts/settings-change-review-dark-760.png",
+        "desktop/cradle/walk/artifacts/settings-change-review-light-1000.png",
+        "desktop/cradle/walk/artifacts/settings-change-review-light-1440.png",
+        "desktop/cradle/walk/artifacts/settings-change-review-light-760.png",
+        "desktop/cradle/walk/artifacts/settings-change-staged-dark-1000.png",
+        "desktop/cradle/walk/artifacts/settings-change-staged-dark-1440.png",
+        "desktop/cradle/walk/artifacts/settings-change-staged-dark-760.png",
+        "desktop/cradle/walk/artifacts/settings-change-staged-light-1000.png",
+        "desktop/cradle/walk/artifacts/settings-change-staged-light-1440.png",
+        "desktop/cradle/walk/artifacts/settings-change-staged-light-760.png",
+        "desktop/cradle/walk/artifacts/settings-change-stale.png",
+        "desktop/cradle/walk/artifacts/settings-change.json",
+        "desktop/cradle/walk/artifacts/settings-credentials-discovered.png",
+        "desktop/cradle/walk/artifacts/settings-credentials-key-entry.png",
+        "desktop/cradle/walk/artifacts/settings-credentials-verified.png",
+        "desktop/cradle/walk/artifacts/settings-credentials.json",
+        "desktop/cradle/walk/run.mjs",
+        "docs/experience/HARNESS-SETTINGS-RESEARCH-2026-09-22.md"
+      ],
+      "dirty_digest": "f22337057c38a8b200482bab1450cfbe92c7fc90cb45bb2a62af1500507d0d09",
+      "engine_provenance_path": "/private/tmp/oi-settings-auth/packages/oi-design-system/expressions-engine/PROVENANCE.json",
+      "engine_source": "EpiLogos/Point-Cloud-Demo",
+      "engine_revision": "91db8428fc9dfba06cd258ec5a58e7dd9eef5313"
+    }
+  },
+  "passed": true,
+  "error": null,
+  "duration_ms": 114639,
+  "checks": [
+    {
+      "ok": true,
+      "label": "A1 the Models section shows at least one ready harness's auth options (live read)",
+      "data": {
+        "rows": [
+          "claude",
+          "codex",
+          "prime"
+        ]
+      }
+    },
+    {
+      "ok": true,
+      "label": "A1 claude: a note-only login offers no button — the note is the instruction"
+    },
+    {
+      "ok": true,
+      "label": "A1 claude: the note shows visibly, verbatim from the live read",
+      "data": {
+        "shown": "claude login keeps OAuth material in its own credential store (~/.claude/.credentials.json); the API key delivers only when credential:anthropic is bound",
+        "note": "claude login keeps OAuth material in its own credential store (~/.claude/.credentials.json); the API key delivers only when credential:anthropic is bound"
+      }
+    },
+    {
+      "ok": true,
+      "label": "A1 codex: the runnable login renders a \"Log in with codex\" button",
+      "data": {
+        "buttonText": "Log in with codex",
+        "declared": "codex login"
+      }
+    },
+    {
+      "ok": true,
+      "label": "A1 codex: the command shown is the declared argv verbatim, from the live read",
+      "data": {
+        "commandText": "codex login",
+        "declared": "codex login"
+      }
+    },
+    {
+      "ok": true,
+      "label": "A1 codex: one login button per runnable entry, never more",
+      "data": {
+        "buttons": 1,
+        "runnable": 1
+      }
+    },
+    {
+      "ok": true,
+      "label": "A1 prime: a note-only login offers no button — the note is the instruction"
+    },
+    {
+      "ok": true,
+      "label": "A1 prime: the note shows visibly, verbatim from the live read",
+      "data": {
+        "shown": "prime resolves the Moonshot coding-plan key (KIMI_API_KEY/MOONSHOT_API_KEY) through its own auth surface (~/.prime/agent/auth.json) or its process environment",
+        "note": "prime resolves the Moonshot coding-plan key (KIMI_API_KEY/MOONSHOT_API_KEY) through its own auth surface (~/.prime/agent/auth.json) or its process environment"
+      }
+    },
+    {
+      "ok": true,
+      "label": "A1 every rendered row matched its live `harness auth --json` reading",
+      "data": {
+        "sawRunnable": true,
+        "sawNoteOnly": true
+      }
+    },
+    {
+      "ok": true,
+      "label": "A2 the login opens a terminal surface that names the declared command it will run",
+      "data": {
+        "status": "codex loginLogin command",
+        "declared": "codex login"
+      }
+    },
+    {
+      "ok": true,
+      "label": "A2 the terminal surface's binding carries the declared argv, nothing else",
+      "data": {
+        "binding": "codex login",
+        "declared": "codex login"
+      }
+    },
+    {
+      "ok": true,
+      "label": "A2 no silent pretend-run: without the app's PTY host the surface says so instead of faking a login",
+      "data": {
+        "body": "Clear screenAttach selection @Open the desktop app to use its terminal.codex loginLogin command"
+      }
+    },
+    {
+      "ok": true,
+      "label": "A3 openrouter: the card's Log in action follows the live declared faces exactly (no runnable login declared)",
+      "data": {
+        "provider": "openrouter",
+        "implied": [],
+        "rendered": 0
+      }
+    },
+    {
+      "ok": true,
+      "label": "A3 anthropic: the card's Log in action follows the live declared faces exactly (no runnable login declared)",
+      "data": {
+        "provider": "anthropic",
+        "implied": [],
+        "rendered": 0
+      }
+    },
+    {
+      "ok": true,
+      "label": "A3 openai: the card's Log in action follows the live declared faces exactly (runnable via codex)",
+      "data": {
+        "provider": "openai",
+        "implied": [
+          "codex"
+        ],
+        "rendered": 1
+      }
+    },
+    {
+      "ok": true,
+      "label": "A3 deepseek: the card's Log in action follows the live declared faces exactly (no runnable login declared)",
+      "data": {
+        "provider": "deepseek",
+        "implied": [],
+        "rendered": 0
+      }
+    },
+    {
+      "ok": true,
+      "label": "A3 zai: the card's Log in action follows the live declared faces exactly (no runnable login declared)",
+      "data": {
+        "provider": "zai",
+        "implied": [],
+        "rendered": 0
+      }
+    },
+    {
+      "ok": true,
+      "label": "A4 the owner verb refuses a note-only login (harness_auth.no_login_declared) with the same note the page shows as the instruction",
+      "data": {
+        "slug": "claude",
+        "text": "\naikit: no declared one-shot login for claude-code; claude login keeps OAuth material in its own credential store (~/.claude/.credentials.json); the API key delivers only when credential:anthropic is bound (harness=claude-code)\n"
+      }
+    },
+    {
+      "ok": true,
+      "label": "A4 the visible note on the page is exactly the instruction the refusal prints",
+      "data": {
+        "shown": "claude login keeps OAuth material in its own credential store (~/.claude/.credentials.json); the API key delivers only when credential:anthropic is bound",
+        "note": "claude login keeps OAuth material in its own credential store (~/.claude/.credentials.json); the API key delivers only when credential:anthropic is bound"
+      }
+    }
+  ],
+  "ops": [
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 43,
+      "data": {
+        "file": "settings-auth-settings-auth-light.png"
+      }
+    },
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 43,
+      "data": {
+        "file": "settings-auth-settings-auth-dark.png"
+      }
+    }
+  ],
+  "metrics": {},
+  "screenshots": [
+    "settings-auth-settings-auth-light.png",
+    "settings-auth-settings-auth-dark.png"
+  ]
+}
