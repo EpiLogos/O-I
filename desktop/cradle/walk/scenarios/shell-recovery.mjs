@@ -9,10 +9,13 @@ export default async function run({page,baseUrl,channel,check,shot,provision:p})
   await page.locator('.cm-content').focus();
   await page.keyboard.press('Meta+d');
   await page.getByRole('button',{name:'Close empty pane',exact:true}).waitFor();
-  check(await page.locator('.pane.group').count()===2,'One-tab Split creates a usable empty sibling');
+  // Count PRESENTED panes: the rest frame and other modes' warm trees stay
+  // mounted-hidden beside the active tree (CradleFrame's stable sibling list).
+  const panes=()=>page.locator('.warm-tree-host:not([hidden]) .pane.group').count();
+  check(await panes()===2,'One-tab Split creates a usable empty sibling');
   await page.reload();await channel('info');
   await page.getByRole('button',{name:'Close empty pane',exact:true}).waitFor();
-  check(await page.locator('.pane.group').count()===2,'Empty split survives relaunch of the renderer');
+  check(await panes()===2,'Empty split survives relaunch of the renderer');
   await page.locator(`[data-file-path="Work/Editor/${p.sources[1].binding.path}"]`).click();
   await page.waitForFunction(()=>document.querySelectorAll('.cm-content').length===2);
   check(await page.getByRole('button',{name:'Close empty pane',exact:true}).count()===0,'Opening another source fills the focused empty pane');
