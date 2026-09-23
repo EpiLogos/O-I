@@ -1,0 +1,242 @@
+{
+  "schema": "oi.cradle.walk.scenario/v1",
+  "scenario": "right-panel-agents",
+  "spec_ref": "docs/cradle/10-SIDEBARS.md §4.5 §4.7 §5.3 P15 P17 P18; §4.1a A4",
+  "grade": "B",
+  "binding": null,
+  "generated_at": "2026-09-23T01:57:59.826Z",
+  "environment": {
+    "base_url": "http://localhost:4373",
+    "bridge_url": "http://127.0.0.1:4379",
+    "viewport": "1280x820",
+    "browser_engine": "chromium",
+    "bundle": "walk (WALK=1) served by vite preview",
+    "build_input": {
+      "mode": "reused-dist",
+      "bundle_fingerprint": "1e390bda2ade707557b7097e0078bd49691609cbd50fe353901d0b3c8dafb83a"
+    },
+    "node": "v24.16.0",
+    "platform": "darwin",
+    "source": {
+      "repository_root": "/Users/admin/Central/worktrees/ui-build/lane2-right",
+      "repository_head": "de4aedb9cba89800e0f080b4a81ae92510fee62f",
+      "tracked_changes": [
+        "desktop/cradle/scripts/receipt-lint.mjs",
+        "desktop/cradle/src/agent/AgentLayer.tsx",
+        "desktop/cradle/src/workspace/DesktopShell.tsx",
+        "desktop/cradle/walk/run.mjs"
+      ],
+      "dirty_digest": "913c1038de5d1472a29469b52cd90b2058b10d9d83da95ccb905d5ebdb0af3f4",
+      "engine_provenance_path": "/Users/admin/Central/worktrees/ui-build/lane2-right/packages/oi-design-system/expressions-engine/PROVENANCE.json",
+      "engine_source": "EpiLogos/Point-Cloud-Demo",
+      "engine_revision": "91db8428fc9dfba06cd258ec5a58e7dd9eef5313"
+    }
+  },
+  "passed": true,
+  "error": null,
+  "duration_ms": 18308,
+  "checks": [
+    {
+      "ok": true,
+      "label": "P17: an empty roster reads Create an agent to work with."
+    },
+    {
+      "ok": true,
+      "label": "P17: no invented rows (no hardcoded Guardians or offices)"
+    },
+    {
+      "ok": true,
+      "label": "WORKING WITH YOU and GUARDIANS come from Central's roster, by role",
+      "data": {
+        "working": [
+          "Walk reviewer"
+        ],
+        "guardians": [
+          "Walk Guardian"
+        ]
+      }
+    },
+    {
+      "ok": true,
+      "label": "a row shows the agent's own purpose line",
+      "data": "Reviews the walk's drafts before they are shared."
+    },
+    {
+      "ok": true,
+      "label": "a not-yet-accepted agent carries the unavailable mark with its reason",
+      "data": "Not accepted yet — it cannot start work until you accept it"
+    },
+    {
+      "ok": true,
+      "label": "P17: a search with no match reads No agents match “zzz”.",
+      "data": "No agents match “zzz”. Clear"
+    },
+    {
+      "ok": true,
+      "label": "P17: Clear brings the roster back"
+    },
+    {
+      "ok": true,
+      "label": "search narrows by name and purpose"
+    },
+    {
+      "ok": true,
+      "label": "the avatar menu lists the agents available in this scope",
+      "data": [
+        "Walk reviewer",
+        "Walk Guardian"
+      ]
+    },
+    {
+      "ok": true,
+      "label": "choosing an agent puts it on the avatar",
+      "data": "Walk reviewer — idle. Agents"
+    },
+    {
+      "ok": true,
+      "label": "P15: the agent's page leads with labelled fields",
+      "data": [
+        "Purpose",
+        "Role",
+        "Identity",
+        "Profile",
+        "Scope"
+      ]
+    },
+    {
+      "ok": true,
+      "label": "P15: it opens as a canvas tab in the focused pane"
+    },
+    {
+      "ok": true,
+      "label": "P15: no JSON text outside Show raw on the page"
+    },
+    {
+      "ok": true,
+      "label": "P15: opening it again focuses the same page (one identity, one tab)"
+    },
+    {
+      "ok": true,
+      "label": "P15: ⌥-click asks for its own window; the browser build says honestly that only the desktop app pops out"
+    },
+    {
+      "ok": true,
+      "label": "P15: a pop-out request never duplicates the page"
+    },
+    {
+      "ok": true,
+      "label": "A4: in a full-page mode the page opens in place (no tab bar), as a Guardian"
+    },
+    {
+      "ok": true,
+      "label": "A4: ← Back returns to where you were"
+    },
+    {
+      "ok": true,
+      "label": "P18: the page replaces the panel body as a detail layer",
+      "data": {}
+    },
+    {
+      "ok": true,
+      "label": "P18: the detail layer has Back"
+    },
+    {
+      "ok": true,
+      "label": "P18: Escape steps one layer — the detail closes, the drawer stays"
+    },
+    {
+      "ok": true,
+      "label": "P18: a second Escape closes the drawer"
+    },
+    {
+      "ok": true,
+      "label": "P17: a failed roster read says Couldn't load agents. with Retry — never an empty roster"
+    },
+    {
+      "ok": true,
+      "label": "P17: the error is distinct from the empty state"
+    }
+  ],
+  "ops": [
+    {
+      "ok": true,
+      "op": "info",
+      "duration_ms": 0.1,
+      "data": {
+        "schema": "oi.cradle.walk/v1",
+        "mounted_at": "2026-09-23T01:58:00.093Z",
+        "transport": {
+          "kind": "bridge",
+          "url": "http://127.0.0.1:4379"
+        },
+        "url": "http://localhost:4373/"
+      }
+    },
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 76,
+      "data": {
+        "file": "right-panel-agents-p17-empty.png"
+      }
+    },
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 34,
+      "data": {
+        "file": "right-panel-agents-roster.png"
+      }
+    },
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 77,
+      "data": {
+        "file": "right-panel-agents-avatar-menu-chosen.png"
+      }
+    },
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 58,
+      "data": {
+        "file": "right-panel-agents-p15-agent-page.png"
+      }
+    },
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 44,
+      "data": {
+        "file": "right-panel-agents-a4-in-place.png"
+      }
+    },
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 79,
+      "data": {
+        "file": "right-panel-agents-p18-detail.png"
+      }
+    },
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 48,
+      "data": {
+        "file": "right-panel-agents-p17-error.png"
+      }
+    }
+  ],
+  "metrics": {},
+  "screenshots": [
+    "right-panel-agents-p17-empty.png",
+    "right-panel-agents-roster.png",
+    "right-panel-agents-avatar-menu-chosen.png",
+    "right-panel-agents-p15-agent-page.png",
+    "right-panel-agents-a4-in-place.png",
+    "right-panel-agents-p18-detail.png",
+    "right-panel-agents-p17-error.png"
+  ]
+}

@@ -108,6 +108,7 @@ const SCENARIOS = {
   "context-canvas-insert": {module:"scenarios/context-canvas-insert.mjs",kernel:true,aliases:[]},
   "right-panel-frame": {module:"scenarios/right-panel-frame.mjs",kernel:true,aliases:[]},
   "right-panel-turn": {module:"scenarios/right-panel-turn.mjs",kernel:true,aliases:[]},
+  "right-panel-agents": {module:"scenarios/right-panel-agents.mjs",kernel:true,aliases:[]},
   "remember": {module:"scenarios/remember.mjs",kernel:true,aliases:["u3.3"]},
   "contemplate": {module:"scenarios/contemplate.mjs",kernel:true,aliases:["w14"]},
   "select-send": {module:"scenarios/select-send.mjs",kernel:true,aliases:["6b"]},
@@ -202,6 +203,7 @@ const SCENARIO_SPEC = {
   "context-canvas-insert": { spec_ref: "docs/cradle/10-SIDEBARS.md §4.6 (Context canvas baseline)" },
   "right-panel-frame": { spec_ref: "docs/cradle/10-SIDEBARS.md §4.1 §4.2 §5.3 P1 P2 P3 P13 P14 P18; §7 A3" },
   "right-panel-turn": { spec_ref: "docs/cradle/10-SIDEBARS.md §4.3 §4.4 §5.3 P1 P4 P6 P7 P16" },
+  "right-panel-agents": { spec_ref: "docs/cradle/10-SIDEBARS.md §4.5 §4.7 §5.3 P15 P17 P18; §4.1a A4" },
 };
 const DEFAULT_SPEC_REF = "docs/cradle/05-EXECUTION.md §3";
 

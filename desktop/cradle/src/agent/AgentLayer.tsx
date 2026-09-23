@@ -232,6 +232,10 @@ export function AgentLayer({project:projectProp, subject, accompanying, onAccomp
 
   // --- who: the roster, the chosen agent, the presence ----------------------
   const roster=useAgentRoster(project);
+  // The roster is read again whenever the Agents tab is chosen: new agents
+  // created elsewhere (Agency, another window) appear without a restart.
+  const reread=roster.retry;
+  useEffect(()=>{if(plane==="Agents")reread();},[plane,reread]);
   const scopeKey=project??"";
   const [chosenRefs,setChosenRefs]=useState<Record<string,string>>(readChosen);
   const chosenRef=chosenRefs[scopeKey];
@@ -267,7 +271,7 @@ export function AgentLayer({project:projectProp, subject, accompanying, onAccomp
     {sessionState?.unreachable&&<p className="panel-line" role="status" data-line="unreachable">Agents aren&apos;t reachable here right now. Your files, flows and this draft still work here.</p>}
     {bypass&&plane==="Chat"&&!promoted&&<p className="panel-line panel-bypass" role="status" data-line="bypass">Bypass permissions is on for this session: {agent.name} acts without asking. <button type="button" className="oi-action" onClick={()=>{const ask=sessionState?.mode.reading?.mode_observation?.available_modes.find(option=>modeClass(option.id)==="ask");if(ask&&session)void session.actions.selectMode(ask.id);}}>Back to Ask</button></p>}
     <div className="agent-body">
-      {detail&&<div className="panel-detail" data-detail-kind={detail.kind}><ObjectPage object={detail} onBack={()=>setDetail(undefined)}/></div>}
+      {detail&&<div className="panel-detail" data-detail-kind={detail.kind} data-escape-layer="true"><ObjectPage object={detail} onBack={()=>setDetail(undefined)}/></div>}
       {KEPT_PLANES.map(name=>{
         if(!visited.current.has(name)||(name!==plane&&!offered.some(entry=>entry.id===name)))return null;
         const hidden=plane!==name||!!detail;
