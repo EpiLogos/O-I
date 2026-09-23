@@ -130,7 +130,7 @@ fn suite_v2_main() -> Option<ExitCode> {
         "update" => Some(command_suite_v2_update(args.get(1..).unwrap_or_default())),
         "doctor" => Some(command_suite_v2_doctor(args.get(1..).unwrap_or_default())),
         "status" => Some(command_suite_v2_status(args.get(1..).unwrap_or_default())),
-        "cleanup" if args.get(1).and_then(|v| v.to_str()) == Some("--managed") => {
+        "cleanup" if args.len() >= 2 => {
             Some(command_suite_v2_cleanup(args.get(1..).unwrap_or_default()))
         }
         "dev" => Some(command_suite_v2_dev(args.get(1..).unwrap_or_default())),
@@ -174,7 +174,8 @@ fn print_suite_v2_help() -> Result<(), String> {
     println!("  oi verify [--all] [--json]");
     println!("  oi manifest [--json]");
     println!("  oi snapshot [--select SURFACE=REVISION] [--json]");
-    println!("  oi cleanup --managed");
+    println!("  oi cleanup --managed [--force]");
+    println!("                                clean unreferenced managed product revisions; referenced ones stay (receipts always); --force removes referenced generations too and names every pointer it breaks");
     println!();
     println!("Verification asks whether the requested composition is installed and usable:");
     println!("a recorded install mode scopes it to that mode's products, the installation");
@@ -614,6 +615,10 @@ fn command_suite_v2_status(args: &[OsString]) -> Result<i32, String> {
     let composition = load_composition()?;
     let data_root = oi_data_root()?;
     let receipt = load_installed_receipt(&data_root, &manifest.suite_version)?;
+    // Managed-update standing: the active receipt's products reconciled
+    // against the disk. A binary that is gone is the named state below,
+    // never a silent gap (2026-09-23 cleanup incident).
+    let managed_updates = managed_update_standing(&data_root)?;
     let rows = status_rows(&catalog, &composition);
     if json_mode {
         println!("{}", serde_json::to_string_pretty(&json!({
@@ -622,6 +627,7 @@ fn command_suite_v2_status(args: &[OsString]) -> Result<i32, String> {
             "managed_root": data_root,
             "personal_ground": composition.personal_ground,
             "installed": receipt,
+            "managed_updates": managed_updates,
             "surfaces": rows,
             "physical_acceptance": false
         })).map_err(|e| e.to_string())?);
@@ -634,6 +640,16 @@ fn command_suite_v2_status(args: &[OsString]) -> Result<i32, String> {
             Some(installed) if installed.revision == product.revision => println!("  {:<18} recorded  {}", product.public_name, product.revision),
             Some(installed) => println!("  {:<18} drift     {} (recorded {})", product.public_name, installed.revision, product.revision),
             None => println!("  {:<18} missing   recorded {}", product.public_name, product.revision),
+        }
+    }
+    if let Some(entries) = managed_updates.filter(|entries| !entries.is_empty()) {
+        println!("Managed updates (active receipt):");
+        for entry in entries {
+            match (entry.present, entry.detail) {
+                (true, _) => println!("  {:<18} ok        revision {}", entry.id, short_rev(&entry.revision)),
+                (false, Some(detail)) => println!("  {:<18} MISSING   {detail}", entry.id),
+                (false, None) => println!("  {:<18} MISSING   installed revision {} is gone", entry.id, short_rev(&entry.revision)),
+            }
         }
     }
     println!("Physical acceptance: not run");
@@ -837,6 +853,36 @@ fn command_suite_v2_doctor(args: &[OsString]) -> Result<i32, String> {
     let catalogue = catalogue_freshness();
     if catalogue.is_err() { ok = false; }
     checks.push(json!({"product": "surface-catalogue", "ok": catalogue.is_ok(), "detail": catalogue.err()}));
+    // Managed-update standing: the active receipt is the machine's own
+    // record of what the update flow last installed. A receipt whose binary
+    // is gone is a named degradation, never a silent gap (2026-09-23
+    // incident: cleanup removed product generations the receipts still
+    // named). When a live registered surface is in step, the same
+    // developer-path downgrade as the suite checks applies: disclosed, not
+    // failed.
+    match managed_update_standing(&data_root)? {
+        None => {}
+        Some(entries) => {
+            for entry in entries {
+                let mut entry_ok = entry.present;
+                let mut detail = entry.detail.clone().unwrap_or_else(|| {
+                    format!("managed chain resolves (revision {})", short_rev(&entry.revision))
+                });
+                if !entry_ok && surface_in_step(&entry.id) {
+                    entry_ok = true;
+                    detail.push_str("; the live registered surface is in step (developer-path install), so this is disclosed, not failed");
+                }
+                if !entry_ok { ok = false; }
+                checks.push(json!({
+                    "product": entry.id,
+                    "ok": entry_ok,
+                    "detail": detail,
+                    "selected": true,
+                    "scope_state": "managed-update-receipt",
+                }));
+            }
+        }
+    }
     // Registered source surfaces: the managed-release checks above see only
     // recorded receipts. What this machine actually runs also includes
     // registered checkouts and whatever PATH resolves first. Found 2026-09-05:
@@ -1006,22 +1052,394 @@ fn catalogue_freshness() -> Result<(), String> {
         .map_or(Ok(()), Err)
 }
 
+// ---- Managed cleanup ----
+//
+// 2026-09-23 incident: `oi cleanup --managed` removed every
+// content-addressed product beneath the managed root while the activation
+// symlinks in ~/.local/bin still resolved through bin/ into them, and took
+// the receipts tree with it — the only record of what was installed. Every
+// harness binary dangled, including oi itself. The managed install has
+// referential integrity now:
+//
+//   bin/ symlinks, the managed-update receipts (active and previous), the
+//   installed-suite receipt and managed composition registrations are live
+//   pointers. The product generations they name are excluded from cleanup
+//   and the run prints what was kept and which pointer keeps it.
+//   Unreferenced generations still go.
+//
+//   The receipts tree is never removed: a receipt whose binary is gone is
+//   a named degradation (`oi status` / `oi doctor` report "installed
+//   revision X is no longer present on disk"), not a silent gap.
+//
+//   Removing a referenced generation is opt-in (`--force`) and names every
+//   pointer it breaks before anything is removed.
+
+/// One live pointer into the content-addressed product store, with the
+/// plain-words origin a cleanup report can name.
+#[derive(Debug, Clone)]
+struct ManagedReference {
+    origin: String,
+    /// The generation directory the pointer names:
+    /// `<root>/products/<id>/<generation>`.
+    product_dir: PathBuf,
+}
+
+/// What cleanup would do on this machine, decided before anything is removed.
+#[derive(Debug, Default)]
+struct ManagedCleanupPlan {
+    /// Generation directories live pointers name, with the pointers.
+    referenced: BTreeMap<PathBuf, Vec<String>>,
+    /// Generation directories nothing names: the default run removes these.
+    unreferenced: Vec<PathBuf>,
+    /// `bin/` entries that are symlinks whose target is already absent.
+    broken_bin_links: Vec<(PathBuf, PathBuf)>,
+    /// Cache entries the installed-suite receipt still names (the doctor's
+    /// verification chain reads them).
+    referenced_cache: Vec<PathBuf>,
+}
+
+/// Resolve `.` and `..` textually. Reference matching is lexical on
+/// purpose: recorded paths and symlink targets are matched against each
+/// other without touching the filesystem, so a dangling pointer is still a
+/// pointer, and macOS `/tmp` symlink aliasing cannot hide a match.
+fn lexically_normalized(path: &Path) -> PathBuf {
+    let mut out = PathBuf::new();
+    for component in path.components() {
+        match component {
+            std::path::Component::CurDir => {}
+            std::path::Component::ParentDir => { out.pop(); }
+            other => out.push(other.as_os_str()),
+        }
+    }
+    out
+}
+
+/// The content-addressed generation directory a managed path names —
+/// `<root>/products/<id>/<generation>` — when the path lives inside this
+/// root's product store at generation depth. Lexical only.
+fn product_generation_dir(root: &Path, path: &Path) -> Option<PathBuf> {
+    let root = lexically_normalized(root);
+    let path = lexically_normalized(path);
+    let relative = path.strip_prefix(&root).ok()?;
+    let mut components = relative.components();
+    if components.next()?.as_os_str() != "products" { return None; }
+    let id = components.next()?;
+    let generation = components.next()?;
+    Some(root.join("products").join(id).join(generation))
+}
+
+fn record_reference(references: &mut BTreeMap<PathBuf, Vec<String>>, reference: ManagedReference) {
+    references.entry(reference.product_dir).or_default().push(reference.origin);
+}
+
+fn reference_from_product_path(root: &Path, origin: String, path: &Path) -> Option<ManagedReference> {
+    product_generation_dir(root, path).map(|product_dir| ManagedReference { origin, product_dir })
+}
+
+/// The product map of one managed-update receipt, keyed by product id.
+type ReceiptProducts = BTreeMap<String, ManagedProduct>;
+
+/// The update-flow receipts that name product generations. A corrupt or
+/// foreign-schema receipt is an error, not a skip: cleanup refuses rather
+/// than decide what a record it cannot read was protecting.
+fn load_generation_receipts(root: &Path) -> Result<Vec<(String, ReceiptProducts)>, String> {
+    let mut receipts = Vec::new();
+    for (name, path) in [
+        ("receipts/updates/active.json", active_update_receipt_path(root)),
+        ("receipts/updates/previous.json", previous_update_receipt_path(root)),
+    ] {
+        if let Some(receipt) = load_update_receipt(&path)? {
+            receipts.push((name.to_owned(), receipt.products));
+        }
+    }
+    Ok(receipts)
+}
+
+/// Every live pointer this machine's managed install currently carries:
+/// bin/ symlinks, the active and previous managed-update receipts, the
+/// installed-suite receipt, and managed composition registrations.
+fn collect_managed_references(root: &Path, composition: &Composition) -> Result<BTreeMap<PathBuf, Vec<String>>, String> {
+    let mut references: BTreeMap<PathBuf, Vec<String>> = BTreeMap::new();
+
+    // bin/ symlinks: the live command pointers, both this machine's
+    // `bin/<exe>` and, through them, every activation link in ~/.local/bin.
+    let bin_dir = root.join("bin");
+    if bin_dir.is_dir() {
+        for entry in fs::read_dir(&bin_dir).map_err(|error| format!("cannot inspect {}: {error}", bin_dir.display()))? {
+            let entry = entry.map_err(|error| format!("cannot inspect {}: {error}", bin_dir.display()))?;
+            let Ok(target) = fs::read_link(entry.path()) else { continue };
+            let resolved = lexically_normalized(&bin_dir.join(&target));
+            let origin = format!("bin symlink '{}' -> {}", entry.file_name().to_string_lossy(), target.display());
+            if let Some(reference) = reference_from_product_path(root, origin, &resolved) {
+                record_reference(&mut references, reference);
+            }
+        }
+    }
+
+    // Managed-update receipts: what the last update/rollback still names.
+    for (name, products) in load_generation_receipts(root)? {
+        for (id, product) in products {
+            let origin = format!("{} ({}, revision {})", name, id, short_rev(&product.revision));
+            if let Some(reference) = reference_from_product_path(root, origin, Path::new(&product.managed)) {
+                record_reference(&mut references, reference);
+            }
+        }
+    }
+
+    // Installed-suite receipt: the release-artifact install record. Its
+    // product roots are generation directories; its recorded executable
+    // (a copy under bin/) pins the same generation.
+    let installed = load_installed_receipt(root, "")?;
+    for (id, product) in &installed.products {
+        let origin = format!("receipts/installed-suite.json ({}, revision {})", id, product.revision);
+        if let Some(reference) = reference_from_product_path(root, origin.clone(), Path::new(&product.root)) {
+            record_reference(&mut references, reference);
+        }
+        if let Some(executable) = product.executable.as_deref() {
+            if let Some(reference) = reference_from_product_path(root, origin, Path::new(executable)) {
+                record_reference(&mut references, reference);
+            }
+        }
+    }
+
+    // Managed composition registrations: what `oi status` resolves through.
+    for (id, registration) in &composition.modules {
+        if !registration_is_managed(registration, root) { continue; }
+        let origin = format!("composition registration '{id}'");
+        for path in [registration.native_executable.as_deref(), registration.root.as_deref()].into_iter().flatten() {
+            if let Some(reference) = reference_from_product_path(root, origin.clone(), Path::new(path)) {
+                record_reference(&mut references, reference);
+            }
+        }
+    }
+
+    Ok(references)
+}
+
+fn plan_managed_cleanup(root: &Path, composition: &Composition) -> Result<ManagedCleanupPlan, String> {
+    let referenced = collect_managed_references(root, composition)?;
+    let mut plan = ManagedCleanupPlan { referenced, ..Default::default() };
+
+    let products_dir = root.join("products");
+    if products_dir.is_dir() {
+        for id_entry in fs::read_dir(&products_dir).map_err(|error| format!("cannot inspect {}: {error}", products_dir.display()))? {
+            let id_entry = id_entry.map_err(|error| format!("cannot inspect {}: {error}", products_dir.display()))?;
+            let id_dir = id_entry.path();
+            if !id_dir.is_dir() { continue; }
+            for generation_entry in fs::read_dir(&id_dir).map_err(|error| format!("cannot inspect {}: {error}", id_dir.display()))? {
+                let generation_entry = generation_entry.map_err(|error| format!("cannot inspect {}: {error}", id_dir.display()))?;
+                let generation = generation_entry.path();
+                if !generation.is_dir() { continue; }
+                if plan.referenced.contains_key(&generation) { continue; }
+                plan.unreferenced.push(generation);
+            }
+        }
+    }
+
+    // Cache: the installed-suite receipt's verification chain reads
+    // cache/<id>/<revision>/<asset>; those entries stay by default.
+    let installed = load_installed_receipt(root, "")?;
+    for (id, product) in &installed.products {
+        let entry = root.join("cache").join(id).join(&product.revision);
+        if entry.is_dir() { plan.referenced_cache.push(entry); }
+    }
+
+    // Broken bin links: symlinks whose target is already absent. Removing
+    // one removes nothing a pointer still reaches.
+    let bin_dir = root.join("bin");
+    if bin_dir.is_dir() {
+        for entry in fs::read_dir(&bin_dir).map_err(|error| format!("cannot inspect {}: {error}", bin_dir.display()))? {
+            let entry = entry.map_err(|error| format!("cannot inspect {}: {error}", bin_dir.display()))?;
+            let Ok(target) = fs::read_link(entry.path()) else { continue };
+            let resolved = bin_dir.join(&target);
+            if fs::symlink_metadata(&resolved).is_err() {
+                plan.broken_bin_links.push((entry.path(), target));
+            }
+        }
+    }
+
+    Ok(plan)
+}
+
+/// What `--force` will break, named before anything is removed. This is the
+/// disclosure that makes forced removal opt-in rather than accidental.
+fn force_removal_disclosure(root: &Path, plan: &ManagedCleanupPlan, activation_dir: Option<&Path>) -> Vec<String> {
+    let mut lines = Vec::new();
+    for (generation, origins) in &plan.referenced {
+        lines.push(format!(
+            "WILL BREAK: removing referenced {} — live pointers name it: {}",
+            generation.display(),
+            origins.join("; "),
+        ));
+    }
+    if let Some(activation) = activation_dir {
+        if activation.is_dir() {
+            for entry in fs::read_dir(activation).into_iter().flatten().flatten() {
+                let Ok(target) = fs::read_link(entry.path()) else { continue };
+                if lexically_normalized(&target).starts_with(lexically_normalized(&root.join("bin"))) {
+                    lines.push(format!(
+                        "WILL BREAK: activation symlink {} -> {} dangles once bin/ is removed",
+                        entry.path().display(), target.display(),
+                    ));
+                }
+            }
+        }
+    }
+    if !plan.broken_bin_links.is_empty() {
+        lines.push(format!("removing {} already-broken bin link(s) as well", plan.broken_bin_links.len()));
+    }
+    lines.push("receipts/ is retained: oi status and oi doctor will report the removed revisions as no longer present on disk".to_owned());
+    lines
+}
+
+/// The composition registrations whose managed anchor is removed by this
+/// run. A registration anchored under bin/ survives the default run (bin/
+/// stays); under `--force` every managed registration goes.
+fn removed_managed_registrations(composition: &Composition, root: &Path, removed_generations: &HashSet<PathBuf>, removing_bin: bool) -> Vec<String> {
+    let mut removed = Vec::new();
+    for (id, registration) in &composition.modules {
+        if !registration_is_managed(registration, root) { continue; }
+        let mut anchored = false;
+        let mut anchors_removed = false;
+        for path in [registration.native_executable.as_deref(), registration.root.as_deref()].into_iter().flatten() {
+            match product_generation_dir(root, Path::new(path)) {
+                Some(generation) => {
+                    anchored = true;
+                    if removed_generations.contains(&generation) { anchors_removed = true; }
+                }
+                None => {
+                    // Inside the managed root but not a product generation
+                    // (e.g. bin/<exe>): gone only when bin/ itself goes.
+                    if lexically_normalized(Path::new(path)).starts_with(lexically_normalized(&root.join("bin"))) {
+                        anchored = true;
+                        if removing_bin { anchors_removed = true; }
+                    }
+                }
+            }
+        }
+        if anchored && anchors_removed { removed.push(id.clone()); }
+    }
+    removed
+}
+
+/// Run the planned cleanup and return the plain-words account of what
+/// happened. `force` removes referenced generations too, naming every
+/// pointer it breaks; the default run excludes them. The receipts tree
+/// survives both.
+fn execute_managed_cleanup(
+    root: &Path,
+    composition: &mut Composition,
+    force: bool,
+    activation_dir: Option<&Path>,
+) -> Result<Vec<String>, String> {
+    let plan = plan_managed_cleanup(root, composition)?;
+    let mut lines = Vec::new();
+
+    if force {
+        lines.extend(force_removal_disclosure(root, &plan, activation_dir));
+        for child in ["products", "cache", "bin"] {
+            let path = root.join(child);
+            if path.exists() {
+                fs::remove_dir_all(&path).map_err(|error| format!("cannot remove {}: {error}", path.display()))?;
+            }
+        }
+        let removed = removed_managed_registrations(composition, root, &plan.referenced.keys().cloned().collect(), true);
+        if !removed.is_empty() {
+            composition.modules.retain(|id, _| !removed.contains(id));
+            save_composition(composition)?;
+        }
+        lines.push(format!("Removed O:I-managed products, cache and bin beneath {}.", root.display()));
+        lines.push("Receipts were kept: the removed revisions are reported as no longer present on disk, not silently forgotten.".to_owned());
+        lines.push("Central Control/ and Work/ were not cleanup targets.".to_owned());
+        return Ok(lines);
+    }
+
+    // Default run: remove only what no live pointer names.
+    let mut removed_generations: HashSet<PathBuf> = HashSet::new();
+    for generation in &plan.unreferenced {
+        fs::remove_dir_all(generation).map_err(|error| format!("cannot remove {}: {error}", generation.display()))?;
+        removed_generations.insert(generation.clone());
+        lines.push(format!("removed unreferenced {}", generation.display()));
+    }
+    // Product ids left with no generation at all lose their empty directory.
+    let products_dir = root.join("products");
+    if products_dir.is_dir() {
+        for id_entry in fs::read_dir(&products_dir).map_err(|error| format!("cannot inspect {}: {error}", products_dir.display()))? {
+            let id_dir = id_entry.map_err(|error| format!("cannot inspect {}: {error}", products_dir.display()))?.path();
+            if id_dir.is_dir() && fs::read_dir(&id_dir).map(|mut entries| entries.next().is_none()).unwrap_or(false) {
+                fs::remove_dir(&id_dir).map_err(|error| format!("cannot remove {}: {error}", id_dir.display()))?;
+            }
+        }
+    }
+    for (link, target) in &plan.broken_bin_links {
+        fs::remove_file(link).map_err(|error| format!("cannot remove {}: {error}", link.display()))?;
+        lines.push(format!("removed broken bin link {} -> {} (target absent)", link.display(), target.display()));
+    }
+    let referenced_cache: HashSet<PathBuf> = plan.referenced_cache.iter().cloned().collect();
+    let cache_dir = root.join("cache");
+    if cache_dir.is_dir() {
+        for entry in fs::read_dir(&cache_dir).map_err(|error| format!("cannot inspect {}: {error}", cache_dir.display()))? {
+            let entry = entry.map_err(|error| format!("cannot inspect {}: {error}", cache_dir.display()))?.path();
+            if !entry.is_dir() { continue; }
+            if referenced_cache.contains(&entry) {
+                lines.push(format!("kept {} — named by receipts/installed-suite.json", entry.display()));
+            } else {
+                fs::remove_dir_all(&entry).map_err(|error| format!("cannot remove {}: {error}", entry.display()))?;
+                lines.push(format!("removed unreferenced cache {}", entry.display()));
+            }
+        }
+    }
+    for (generation, origins) in &plan.referenced {
+        if generation.is_dir() {
+            lines.push(format!("kept {} — referenced by {}", generation.display(), origins.join("; ")));
+        }
+    }
+    lines.push(format!("receipts/ kept in full — the record of what was installed; cleanup never removes it ({} receipt(s) still name their binaries)", plan.referenced.len()));
+    if plan.unreferenced.is_empty() && plan.broken_bin_links.is_empty() {
+        lines.push("Nothing unreferenced to clean: every product generation on disk is still named by a live pointer.".to_owned());
+    }
+
+    // Registrations whose managed anchor was removed are unregistered; the
+    // rest stay so `oi status` keeps resolving the kept install.
+    let removed = removed_managed_registrations(composition, root, &removed_generations, false);
+    if !removed.is_empty() {
+        composition.modules.retain(|id, _| !removed.contains(id));
+        for id in &removed {
+            lines.push(format!("unregistered composition registration '{id}' (its managed files were removed)"));
+        }
+        save_composition(composition)?;
+    }
+
+    lines.push("Central Control/ and Work/ were not cleanup targets.".to_owned());
+    Ok(lines)
+}
+
+/// `oi cleanup --managed [--force]`. `--force` is the only route that
+/// removes a product generation a live pointer still names.
+fn parse_cleanup_args(args: &[OsString]) -> Result<bool, String> {
+    let mut force = false;
+    let mut saw_managed = false;
+    for argument in args {
+        match argument.to_str() {
+            Some("--managed") => saw_managed = true,
+            Some("--force") => force = true,
+            _ => return Err("usage: oi cleanup --managed [--force]".to_owned()),
+        }
+    }
+    if !saw_managed {
+        return Err("usage: oi cleanup --managed [--force]".to_owned());
+    }
+    Ok(force)
+}
+
 fn command_suite_v2_cleanup(args: &[OsString]) -> Result<i32, String> {
-    if args.len() != 1 || args[0].to_str() != Some("--managed") { return Err("usage: oi cleanup --managed".to_owned()); }
+    let force = parse_cleanup_args(args)?;
     let root = oi_data_root()?;
     let mut composition = load_composition()?;
-    composition.modules.retain(|_, registration| {
-        let managed_exe = registration.native_executable.as_deref().map(Path::new).map(|p| p.starts_with(&root)).unwrap_or(false);
-        let managed_root = registration.root.as_deref().map(Path::new).map(|p| p.starts_with(&root)).unwrap_or(false);
-        !(managed_exe || managed_root)
-    });
-    save_composition(&composition)?;
-    for child in ["bin", "products", "receipts", "cache"] {
-        let path = root.join(child);
-        if path.exists() { fs::remove_dir_all(&path).map_err(|error| format!("cannot remove {}: {error}", path.display()))?; }
+    let lines = execute_managed_cleanup(&root, &mut composition, force, activation_dir().ok().as_deref())?;
+    for line in lines {
+        println!("{line}");
     }
-    println!("Removed O:I-managed artifacts beneath {}.", root.display());
-    println!("Central Control/ and Work/ were not cleanup targets.");
     Ok(0)
 }
 
@@ -2339,5 +2757,207 @@ mod tests {
         let path = write_removal_receipt(data.path(), &manifest, &[stub_outcome("workcell")], &composition).unwrap();
         let value: serde_json::Value = serde_json::from_slice(&fs::read(&path).unwrap()).unwrap();
         assert!(value["requested_mode"].is_null());
+    }
+
+    // ---- Managed cleanup referential integrity (2026-09-23 incident) ----
+    //
+    // The incident: cleanup removed every content-addressed product while
+    // ~/.local/bin activation links resolved through bin/ into them, and
+    // removed the receipts tree — the only record of what was installed.
+    // These tests pin the contract: live pointers protect the generations
+    // they name, receipts always survive, and forced removal is opt-in and
+    // named.
+
+    fn digest(tag: char) -> String { std::iter::repeat_n(tag, 64).collect() }
+
+    /// Cleanup persists composition changes through `save_composition`,
+    /// which resolves OI_HOME/HOME: isolate the state path for the whole
+    /// set → operate → restore window, serialised across tests (same
+    /// pattern as existing_world's isolation helper).
+    fn with_isolated_oi_home<T>(root: &Path, operation: impl FnOnce() -> T) -> T {
+        let _guard = crate::test_support::env_lock();
+        let previous = env::var_os("OI_HOME");
+        env::set_var("OI_HOME", root.join("oi-state"));
+        let result = operation();
+        match previous {
+            Some(value) => env::set_var("OI_HOME", value),
+            None => env::remove_var("OI_HOME"),
+        }
+        result
+    }
+
+    /// A managed root with two `tool` generations (bin symlink -> the newer)
+    /// and an active managed-update receipt naming the newer one.
+    fn two_generation_root() -> (TempDir, String, String) {
+        let temp = TempDir::new().unwrap();
+        let root = temp.path();
+        let new_sha = digest('a');
+        let old_sha = digest('b');
+        for sha in [&new_sha, &old_sha] {
+            let bin_dir = root.join("products/tool").join(sha).join("bin");
+            fs::create_dir_all(&bin_dir).unwrap();
+            fs::write(bin_dir.join("tool"), "#!/bin/sh\nexit 0\n").unwrap();
+        }
+        fs::create_dir_all(root.join("bin")).unwrap();
+        #[cfg(unix)]
+        std::os::unix::fs::symlink(
+            format!("../products/tool/{new_sha}/bin/tool"),
+            root.join("bin/tool"),
+        ).unwrap();
+        let home = temp.path().join("home");
+        atomic_json(&active_update_receipt_path(root), &UpdateReceipt {
+            schema: "oi.managed-update/v1".to_owned(),
+            channel: "source".to_owned(),
+            modality: "developer-source".to_owned(),
+            updated_at_unix_seconds: 1,
+            products: BTreeMap::from([("tool".to_owned(), ManagedProduct {
+                exe: "tool".to_owned(),
+                revision: "1b2d3e4f5a6b7c8d9e0f1a2b3c4d5e6f7a8b9c0d".to_owned(),
+                tree: "1b2d3e4f5a6b7c8d9e0f1a2b3c4d5e6f7a8b9c0d".to_owned(),
+                branch: Some("main".to_owned()),
+                channel: Some("source".to_owned()),
+                source_dirty: false,
+                source_path: "/ground/Work/tool".to_owned(),
+                sha256: new_sha.clone(),
+                managed: managed_artifact_path(root, "tool", &new_sha, "tool").display().to_string(),
+                bin: root.join("bin/tool").display().to_string(),
+                activation: home.join(".local/bin/tool").display().to_string(),
+                provenance: "built".to_owned(),
+                build_command: vec!["cargo".to_owned(), "build".to_owned()],
+                gate: String::new(),
+                installed_at_unix_seconds: 1,
+            })]),
+        }).unwrap();
+        (temp, new_sha, old_sha)
+    }
+
+    #[test]
+    fn cleanup_keeps_the_bin_referenced_generation_and_removes_the_stale_one() {
+        let (temp, new_sha, old_sha) = two_generation_root();
+        let root = temp.path();
+        let mut composition = Composition::default();
+        let lines = with_isolated_oi_home(root, || {
+            execute_managed_cleanup(root, &mut composition, false, None)
+        }).unwrap();
+
+        assert!(!root.join("products/tool").join(&old_sha).exists(),
+            "the unreferenced older generation is cleaned");
+        assert!(root.join("products/tool").join(&new_sha).exists(),
+            "the generation the bin symlink names survives");
+        assert!(root.join("bin/tool").exists(), "the live bin symlink survives");
+        assert!(root.join("receipts/updates/active.json").exists(),
+            "the active receipt survives");
+        let kept = lines.iter().find(|line| line.contains("kept") && line.contains(&new_sha))
+            .expect("the run names what was kept");
+        assert!(kept.contains("bin symlink"), "the kept line names the pointer that keeps it: {kept}");
+    }
+
+    #[test]
+    fn cleanup_never_removes_the_receipts_tree() {
+        let (temp, _new_sha, _old_sha) = two_generation_root();
+        let root = temp.path();
+        // previous.json and an installed-suite receipt are part of the tree.
+        atomic_json(&previous_update_receipt_path(root), &empty_update_receipt()).unwrap();
+        fs::create_dir_all(root.join("cache/tool/deadbeef")).unwrap();
+        let active_before = fs::read(active_update_receipt_path(root)).unwrap();
+        let previous_before = fs::read(previous_update_receipt_path(root)).unwrap();
+
+        let mut composition = Composition::default();
+        with_isolated_oi_home(root, || execute_managed_cleanup(root, &mut composition, false, None)).unwrap();
+        assert_eq!(fs::read(active_update_receipt_path(root)).unwrap(), active_before,
+            "the default run leaves the active receipt byte-identical");
+        assert_eq!(fs::read(previous_update_receipt_path(root)).unwrap(), previous_before,
+            "the default run leaves the rollback receipt byte-identical");
+
+        with_isolated_oi_home(root, || execute_managed_cleanup(root, &mut composition, true, None)).unwrap();
+        assert_eq!(fs::read(active_update_receipt_path(root)).unwrap(), active_before,
+            "even --force leaves the active receipt byte-identical");
+        assert_eq!(fs::read(previous_update_receipt_path(root)).unwrap(), previous_before,
+            "even --force leaves the rollback receipt byte-identical");
+        assert!(!root.join("products").exists(), "--force removes the product store");
+        assert!(!root.join("bin").exists(), "--force removes the bin links");
+        assert!(!root.join("cache").exists(), "--force removes the cache");
+    }
+
+    #[test]
+    fn cleanup_force_is_opt_in_and_names_what_breaks() {
+        let (temp, new_sha, _old_sha) = two_generation_root();
+        let root = temp.path();
+        let mut composition = Composition::default();
+        let plan = plan_managed_cleanup(root, &composition).unwrap();
+        let disclosure = force_removal_disclosure(root, &plan, None);
+        let named = disclosure.join("\n");
+        assert!(named.contains("WILL BREAK"), "forced removal names what breaks: {named}");
+        assert!(named.contains("bin symlink"), "the bin pointer is named: {named}");
+        assert!(named.contains("active.json"), "the receipt pointer is named: {named}");
+        assert!(named.contains("receipts/ is retained"), "the disclosure states the receipts survive");
+
+        assert!(!parse_cleanup_args(&[OsString::from("--managed")]).unwrap(),
+            "the default run is not force");
+        assert!(parse_cleanup_args(&[OsString::from("--managed"), OsString::from("--force")]).unwrap(),
+            "--force is the explicit override");
+        assert!(parse_cleanup_args(&[OsString::from("--force")]).is_err(),
+            "--force without --managed is a usage error, not an override");
+        assert!(parse_cleanup_args(&[OsString::from("--managed"), OsString::from("--force"), OsString::from("--x")]).is_err());
+
+        with_isolated_oi_home(root, || execute_managed_cleanup(root, &mut composition, true, None)).unwrap();
+        assert!(!root.join("products/tool").join(&new_sha).exists(),
+            "the forced run removes the referenced generation");
+        assert!(!root.join("bin/tool").exists(),
+            "the forced run removes the bin link that named it");
+    }
+
+    #[test]
+    fn cleanup_keeps_composition_registrations_whose_generation_survives() {
+        // A managed composition registration is itself a live pointer: the
+        // generation it names survives the default run and stays registered,
+        // and a forced run is what unregisters it with everything else.
+        let (temp, new_sha, old_sha) = two_generation_root();
+        let root = temp.path();
+        let mut composition = Composition::default();
+        composition.modules.insert("tool".to_owned(), Registration {
+            id: "tool".to_owned(),
+            public_name: "Tool".to_owned(),
+            native_executable: Some(managed_artifact_path(root, "tool", &new_sha, "tool").display().to_string()),
+            alias: None,
+            version: None,
+            docs: String::new(),
+            skill: None,
+            root: None,
+            modality: InstallModality::FreshGround,
+            install_source: None,
+        });
+        composition.modules.insert("stale".to_owned(), Registration {
+            id: "stale".to_owned(),
+            public_name: "Stale".to_owned(),
+            native_executable: Some(managed_artifact_path(root, "tool", &old_sha, "tool").display().to_string()),
+            alias: None,
+            version: None,
+            docs: String::new(),
+            skill: None,
+            root: None,
+            modality: InstallModality::FreshGround,
+            install_source: None,
+        });
+        let lines = with_isolated_oi_home(temp.path(), || {
+            execute_managed_cleanup(root, &mut composition, false, None)
+        }).unwrap();
+        assert!(composition.modules.contains_key("tool"),
+            "a registration into the kept generation stays registered: {}", lines.join("\n"));
+        assert!(composition.modules.contains_key("stale"),
+            "the stale registration is a live pointer too: it kept its generation: {}", lines.join("\n"));
+        assert!(root.join("products/tool").join(&old_sha).exists(),
+            "the generation the stale registration names was protected, not silently removed");
+        assert!(lines.iter().any(|line| line.contains("kept") && line.contains(&old_sha) && line.contains("composition registration")),
+            "the account names the registration that kept it: {}", lines.join("\n"));
+
+        // The forced run is the explicit route: referenced generations go
+        // and every managed registration is unregistered with them.
+        with_isolated_oi_home(temp.path(), || {
+            execute_managed_cleanup(root, &mut composition, true, None)
+        }).unwrap();
+        assert!(!root.join("products").exists(), "the forced run removes the product store");
+        assert!(!composition.modules.contains_key("tool"), "forced run unregisters managed registrations");
+        assert!(!composition.modules.contains_key("stale"));
     }
 }

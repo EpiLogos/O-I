@@ -188,6 +188,58 @@ fn load_active_update_receipt(data_root: &Path) -> Result<Option<UpdateReceipt>,
     load_update_receipt(&active_update_receipt_path(data_root))
 }
 
+/// One product's standing from the active managed-update receipt: does the
+/// recorded managed chain still resolve on disk? Presence only — digest
+/// drift is `oi update --check`'s finding; this is the named degradation
+/// surface for a binary that is gone.
+#[derive(Debug, Clone, Serialize)]
+struct ManagedUpdateStanding {
+    id: String,
+    exe: String,
+    revision: String,
+    managed: String,
+    present: bool,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    detail: Option<String>,
+}
+
+/// Read the active managed-update receipt and reconcile each recorded
+/// product against the disk. `Ok(None)` when no active receipt exists —
+/// machines on the release-install path without the update flow have no
+/// block to report. A receipt whose binary was removed (by an old cleanup,
+/// by hand, by a forced run) is reported as the named state "installed
+/// revision X is no longer present on disk", never as a silent gap.
+fn managed_update_standing(data_root: &Path) -> Result<Option<Vec<ManagedUpdateStanding>>, String> {
+    let Some(receipt) = load_active_update_receipt(data_root)? else { return Ok(None) };
+    let mut entries = Vec::new();
+    for (id, product) in &receipt.products {
+        let managed = PathBuf::from(&product.managed);
+        let bin = PathBuf::from(&product.bin);
+        let activation = PathBuf::from(&product.activation);
+        let missing = if !is_executable(&managed) {
+            Some(managed)
+        } else if !is_executable(&bin) {
+            Some(bin)
+        } else if !is_executable(&activation) {
+            Some(activation)
+        } else {
+            None
+        };
+        let detail = missing.as_ref().map(|path| {
+            format!("installed revision {} is no longer present on disk ({})", short_rev(&product.revision), path.display())
+        });
+        entries.push(ManagedUpdateStanding {
+            id: id.clone(),
+            exe: product.exe.clone(),
+            revision: product.revision.clone(),
+            managed: product.managed.clone(),
+            present: missing.is_none(),
+            detail,
+        });
+    }
+    Ok(Some(entries))
+}
+
 fn unix_seconds_now() -> u64 {
     SystemTime::now().duration_since(UNIX_EPOCH).map(|d| d.as_secs()).unwrap_or(0)
 }
@@ -1599,5 +1651,60 @@ mod update_flow_tests {
         fs::write(active_update_receipt_path(&data_root), legacy).unwrap();
         let receipt = load_active_update_receipt(&data_root).unwrap().expect("legacy receipt loads");
         assert!(receipt.products["tool"].channel.is_none(), "the channel field is optional and absent on legacy entries");
+    }
+
+    #[test]
+    fn managed_update_standing_names_a_removed_binary_as_not_present() {
+        let temp = tempfile::tempdir().unwrap();
+        let data_root = temp.path().join("data");
+        let home = temp.path().join("home");
+        let digest = "a".repeat(64);
+        let revision = "b".repeat(40);
+
+        // No active receipt: machines without the update flow have no
+        // standing block to report.
+        assert!(managed_update_standing(&data_root).unwrap().is_none());
+
+        // A full healthy chain reads present, with no finding.
+        fs::create_dir_all(updates_receipts_dir(&data_root)).unwrap();
+        atomic_json(&active_update_receipt_path(&data_root), &UpdateReceipt {
+            schema: "oi.managed-update/v1".to_owned(),
+            channel: "source".to_owned(),
+            modality: "developer-source".to_owned(),
+            updated_at_unix_seconds: 1,
+            products: BTreeMap::from([("tool".to_owned(), receipt_entry(&data_root, &home, &revision, &digest))]),
+        }).unwrap();
+        // The receipt's managed artifact itself: staged into the
+        // content-addressed store the way the flow does.
+        let managed = managed_artifact_path(&data_root, "tool", &digest, "tool");
+        fs::create_dir_all(managed.parent().unwrap()).unwrap();
+        fs::copy(data_root.join("bin/tool"), &managed).unwrap();
+        let entries = managed_update_standing(&data_root).unwrap().expect("a receipt yields standing");
+        assert!(entries[0].present, "the receipted chain resolves when every leg exists");
+        assert!(entries[0].detail.is_none());
+
+        // Remove the managed artifact: the named degradation, not a gap.
+        fs::remove_file(Path::new(&entries[0].managed)).unwrap();
+        let entries = managed_update_standing(&data_root).unwrap().unwrap();
+        assert!(!entries[0].present);
+        let detail = entries[0].detail.clone().expect("the missing binary is named");
+        assert!(detail.contains("no longer present on disk"), "{detail}");
+        assert!(detail.contains(&revision[..12]), "the named state carries the revision: {detail}");
+
+        // The bin leg and the activation leg are named too: a receipt whose
+        // managed artifact never existed reads as not present.
+        atomic_json(&active_update_receipt_path(&data_root), &UpdateReceipt {
+            schema: "oi.managed-update/v1".to_owned(),
+            channel: "source".to_owned(),
+            modality: "developer-source".to_owned(),
+            updated_at_unix_seconds: 2,
+            products: BTreeMap::from([("tool".to_owned(), ManagedProduct {
+                managed: managed_artifact_path(&data_root, "tool", &"f".repeat(64), "tool").display().to_string(),
+                ..receipt_entry(&data_root, &home, &revision, &digest)
+            })]),
+        }).unwrap();
+        let entries = managed_update_standing(&data_root).unwrap().unwrap();
+        assert!(!entries[0].present, "a receipt whose managed artifact never existed is not present");
+        assert!(entries[0].detail.clone().expect("named").contains("no longer present on disk"));
     }
 }
