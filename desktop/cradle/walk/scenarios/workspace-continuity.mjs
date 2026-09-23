@@ -25,7 +25,7 @@
 // deliberately self-contained: the hosting target is absent, and its absence
 // must stay honest — which is exactly the degradation clause of the lane.
 import {setup} from "./knowledge.mjs";
-import {bindDefaultCentral, openWorkspaceStrip} from "../editor-doc.mjs";
+import {bindDefaultCentral, openWorkspaceStrip, newWorkspace, switchWorkspace} from "../editor-doc.mjs";
 export {setup};
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
@@ -168,15 +168,11 @@ export default async function run({page, baseUrl, check, shot, channel, log, pro
   // ---- workspace switching restores exactly (D19) ----
   await page.locator(`.tab[data-surface-id="${base.tabs[0].id}"]`).click();
   await page.locator(`.cm-content[data-source-ref="${source.binding.ref}"]`).waitFor({timeout: 15000});
-  await openWorkspaceStrip(page);
-  await page.getByLabel("Workspace actions", {exact: true}).click();
-  await page.getByRole("button", {name: "New workspace"}).click();
-  await page.getByRole("textbox", {name: "Workspace name"}).fill("Second");
-  await page.getByRole("button", {name: "Create workspace"}).click();
+  // The workspace verbs live in the scope menu's footer (10-SIDEBARS §3.6).
+  await newWorkspace(page, "Second");
   await page.waitForFunction(() => {const book = JSON.parse(localStorage.getItem("oi-cradle.workspaces.v1") ?? "null");return book?.workspaces?.some((w) => w.name === "Second") && book.active === book.workspaces.find((w) => w.name === "Second")?.id;}, null, {timeout: 10000});
   check(await kernelProjectSettles(page, channel, null), "The fresh workspace holds no project context; the kernel followed it", {project: await kernelProject(page, channel)});
-  await openWorkspaceStrip(page);
-  await page.getByLabel("Workspace", {exact: true}).selectOption("root");
+  await switchWorkspace(page, "root");
   await page.locator(`.cm-content[data-source-ref="${source.binding.ref}"]`).waitFor({timeout: 15000});
   check(sameConstellation(beforeReload, await constellation(page)), "Switching back to the first workspace restores its exact constellation", {});
   check(await kernelProjectSettles(page, channel, "Editor"), "The kernel's project context returns with the workspace (re-browsed by ref, not reminted)", {});

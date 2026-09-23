@@ -103,7 +103,7 @@ class MarkStore {
     this.transport = transport;
     const key = keyOf(binding);
     const held = this.watches.get(key);
-    if (held) held.count++; else this.watches.set(key, {binding, count: 1});
+    if (held) held.count++; else { this.watches.set(key, {binding, count: 1}); this.due.set(key, 0); }
     this.schedule(0);
     return () => {
       const current = this.watches.get(key);
@@ -160,27 +160,43 @@ class MarkStore {
     this.timer = setTimeout(() => void this.tick(), delay);
   }
 
+  /** When each watched session is next due. Every read is an owner process
+   * behind the one kernel seam, so the cadence follows the session: a turn
+   * in flight is read often, a session that just changed soon, a resting
+   * one rarely — never the whole list at the fastest pace. */
+  private due = new Map<string, number>();
+  private cadence(key: string): number {
+    const mark = this.marks.get(key);
+    if (!mark) return 0;
+    if (mark.mark === "working" || mark.mark === "needs-you") return 900;
+    if (mark.changedAt && Date.now() - mark.changedAt < 20_000) return 2_000;
+    return 6_000;
+  }
+
   private async tick() {
     if (!this.watches.size || !this.transport) return;
     if (document.visibilityState !== "visible") { this.timer = setTimeout(() => void this.tick(), 1500); return; }
     this.running = true;
     const transport = this.transport;
-    const batch = [...this.watches.values()];
-    // Bounded concurrency: every read is an owner process through the shared
-    // kernel seam; the sidebar never floods it.
-    for (let index = 0; index < batch.length; index += 3) {
-      await Promise.all(batch.slice(index, index + 3).map(async ({binding}) => {
+    const now = Date.now();
+    const batch = [...this.watches.entries()].filter(([key]) => (this.due.get(key) ?? 0) <= now).map(([, watch]) => watch);
+    // Bounded concurrency: the sidebar never floods the kernel seam.
+    for (let index = 0; index < batch.length; index += 2) {
+      await Promise.all(batch.slice(index, index + 2).map(async ({binding}) => {
+        const key = keyOf(binding);
         try {
           const reading = await encounter<EncounterReading>(transport, binding.project, {action: "view", agent_session: binding.ref});
-          this.apply(keyOf(binding), reading, reading.connection);
+          this.apply(key, reading, reading.connection);
         } catch {
           // An unreadable session carries no mark — never a fabricated state.
         }
+        this.due.set(key, Date.now() + Math.max(900, this.cadence(key)));
       }));
     }
     this.running = false;
-    const inFlight = batch.some(({binding}) => this.marks.get(keyOf(binding))?.mark === "working");
-    if (this.watches.size) this.timer = setTimeout(() => void this.tick(), inFlight ? 700 : 1500);
+    if (!this.watches.size) return;
+    const next = Math.min(...[...this.watches.keys()].map(key => this.due.get(key) ?? 0));
+    this.timer = setTimeout(() => void this.tick(), Math.max(250, next - Date.now()));
   }
 }
 
@@ -190,8 +206,9 @@ export const sessionMarks = new MarkStore();
 export function useSessionMark(transport: KernelTransportStatus, binding: SessionKey | undefined, open = false): SessionMark | undefined {
   useSyncExternalStore(sessionMarks.subscribe, sessionMarks.snapshot, sessionMarks.snapshot);
   const project = binding?.project, ref = binding?.ref;
-  useEffect(() => (project && ref ? sessionMarks.watch(transport, {project, ref}) : undefined), [transport, project, ref]);
-  useEffect(() => (project && ref && open ? sessionMarks.holdOpen({project, ref}) : undefined), [project, ref, open]);
+  // Central's root register is the empty project name — a real register.
+  useEffect(() => (project !== undefined && ref ? sessionMarks.watch(transport, {project, ref}) : undefined), [transport, project, ref]);
+  useEffect(() => (project !== undefined && ref && open ? sessionMarks.holdOpen({project, ref}) : undefined), [project, ref, open]);
   return binding ? sessionMarks.get(binding) : undefined;
 }
 

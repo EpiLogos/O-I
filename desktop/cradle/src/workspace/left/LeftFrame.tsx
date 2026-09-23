@@ -156,11 +156,11 @@ function ScopeMenu({mode, workspace, workspaces, onActivateWorkspace, onNewWorks
       <hr/>
       <span className="left-menu-eyebrow">Workspace</span>
       <div className="left-menu-workspace">
-        <Glyph name="columns" size={13}/><span className="left-menu-label">{workspace.name}</span>
+        <Glyph name="columns" size={13}/><span className="left-menu-label" data-current-workspace={workspace.id}>{workspace.name}</span>
         <button type="button" className="left-menu-link" aria-expanded={switching} onClick={() => setSwitching(value => !value)}>Switch…</button>
       </div>
       {switching && <div className="left-menu-workspaces" role="group" aria-label="Workspaces">
-        {workspaces.map(entry => <button key={entry.id} type="button" className="oi-menu-item" role="menuitemradio" aria-checked={entry.id === workspace.id} onClick={() => { onActivateWorkspace(entry.id); setOpen(false); }}>{entry.name}</button>)}
+        {workspaces.map(entry => <button key={entry.id} type="button" className="oi-menu-item" role="menuitemradio" data-workspace-id={entry.id} aria-checked={entry.id === workspace.id} onClick={() => { onActivateWorkspace(entry.id); setOpen(false); }}>{entry.name}</button>)}
       </div>}
       <div className="left-menu-actions">
         <button type="button" className="left-menu-link" onClick={() => { setOpen(false); onNewWorkspace(); }}>New</button><span aria-hidden="true">·</span>

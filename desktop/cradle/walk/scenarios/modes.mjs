@@ -75,9 +75,9 @@ export default async function run({page,baseUrl,check,shot,channel,provision:p})
   // --- back: remembered regions, retained work ----------------------------------
   // From a mode whose left body replaces the World navigator, the footer's
   // workspace-actions menu is the mode fallback (same entries, same handler).
-  const menuMode=async name=>{
-  await page.locator('.workspace-footer-edge').hover();await page.waitForTimeout(300);
-  await page.getByLabel('Workspace actions',{exact:true}).click();await page.getByRole('menuitemradio',{name}).click();await page.keyboard.press('Escape');};
+  // The duplicate mode radios left the footer (10-SIDEBARS §3.1): the left
+  // foot's strip is the one mode switch, fixed in every mode.
+  const menuMode=async name=>{await page.locator('[data-left-foot] .world-mode-strip').getByRole('radio',{name,exact:true}).click();};
   await menuMode('Expressions');
   await stage('expressions').waitFor();
   check(await page.locator('aside[data-region="right"]').getAttribute('data-depth')!=='panel','Returning to Expressions returns to the regions it was left with');
@@ -162,12 +162,12 @@ export default async function run({page,baseUrl,check,shot,channel,provision:p})
   // The footer actions move between geometries; unpinning from the horizontal
   // strip keeps the horizontal geometry for the reveal.
   await page.locator('.workspace-footer-edge').hover();await page.waitForTimeout(300);
-  await page.getByLabel('Workspace actions',{exact:true}).click();
+  await page.getByLabel('Tab presentation',{exact:true}).click();
   await page.getByRole('menuitemradio',{name:'Pin tabs horizontally'}).click();
   await page.keyboard.press('Escape');
   check(await pane.getAttribute('data-tab-presentation')==='pinned-horizontal','The footer actions pin horizontally');
   await page.locator('.workspace-footer-edge').hover();await page.waitForTimeout(300);
-  await page.getByLabel('Workspace actions',{exact:true}).click();
+  await page.getByLabel('Tab presentation',{exact:true}).click();
   await page.getByRole('menuitemradio',{name:'Unpin tabs'}).click();
   await page.keyboard.press('Escape');
   check(await pane.getAttribute('data-tab-presentation')==='unpinned'&&await pane.getAttribute('data-tab-orientation')==='horizontal','Unpinning from the strip keeps the horizontal geometry for the reveal');

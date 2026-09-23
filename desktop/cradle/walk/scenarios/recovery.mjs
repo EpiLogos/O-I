@@ -1,4 +1,4 @@
-import {docText, waitForDoc, openWorkspaceStrip} from '../editor-doc.mjs';
+import {docText, waitForDoc, openWorkspaceStrip, recoverArrangement} from '../editor-doc.mjs';
 export default async function run({page,baseUrl,check,channel,shot}) {
  await page.goto(baseUrl);await channel('info');
  const raw=JSON.stringify({version:99,active:'held',workspaces:[{id:'held',name:'Held arrangement',writing:'Original writing survives recovery',layout:{root:null,surfaces:{},closedStack:[],focusedGroupId:null,agencyDepth:'panel'}}]});
@@ -23,7 +23,7 @@ export default async function run({page,baseUrl,check,channel,shot}) {
  const backup=await page.evaluate(()=>{const key=localStorage.getItem('oi-cradle.recovery.latest');return JSON.parse(localStorage.getItem(key));});
  check(backup.raw===raw,'Corrupt/unsupported presentation is retained byte for byte before recovery');
  await openWorkspaceStrip(page);
-  await page.getByLabel('Workspace actions',{exact:true}).click();await page.getByRole('button',{name:'Recover saved arrangement',exact:true}).click();
+  await recoverArrangement(page);
  await openMessages();
  await page.getByRole('button',{name:'Recover available workspaces',exact:true}).click();
  await page.locator('.draft-surface .cm-content').waitFor({timeout:15000});

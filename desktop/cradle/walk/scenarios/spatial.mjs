@@ -1,4 +1,4 @@
-import {docText, waitForDoc, openWorkspaceStrip, bindDefaultCentral} from '../editor-doc.mjs';
+import {docText, waitForDoc, openWorkspaceStrip, bindDefaultCentral, renameWorkspace, currentWorkspaceName} from '../editor-doc.mjs';
 export { setup } from './editor.mjs';
 export default async function run({ page, baseUrl, check, shot, channel, provision:p }) {
   await page.goto(baseUrl); await channel('info');
@@ -8,16 +8,10 @@ export default async function run({ page, baseUrl, check, shot, channel, provisi
   const nav = page.getByRole('complementary', {name:'World navigator'});
   await nav.locator('[data-project-path="Work/Editor"]').click();
   if(await page.getByRole('button',{name:'Editor: files',exact:true}).getAttribute('aria-pressed') !== 'true') await page.getByRole('button',{name:'Editor: files',exact:true}).click();
-  await openWorkspaceStrip(page);
-  await page.locator('.desktop-menu > summary').click();
-  await page.getByRole('button',{name:'Rename workspace'}).click();
-  await openWorkspaceStrip(page);
-  await page.locator('.desktop-menu > summary').click();
-  await page.getByRole('textbox',{name:'Workspace name'}).fill('Writing desk');
-  await page.getByRole('button',{name:'Save name',exact:true}).click();
+  await renameWorkspace(page, 'Writing desk');
   const open = async source => { if (!await nav.isVisible()) await page.getByRole('button',{name:'Toggle left region',exact:true}).click(); await nav.locator(`[data-file-path="Work/Editor/${source.binding.path}"]`).click(); await page.waitForFunction(ref => document.querySelector('.cm-content')?.getAttribute('data-source-ref')===ref,source.binding.ref); };
   await open(p.sources[0]);
-  check(await page.getByLabel('Workspace',{exact:true}).locator('option:checked').innerText()==='Writing desk', 'Canvas arrangement is named for the workspace, independently of the opened project');
+  check(await currentWorkspaceName(page)==='Writing desk', 'Canvas arrangement is named for the workspace, independently of the opened project');
   await page.waitForFunction(ref => document.querySelector('[data-region="right"]')?.getAttribute('data-focus-ref') === ref,p.sources[0].binding.ref);
   check(await page.locator('[data-region]').count()===3,'Desktop has three explicit host regions');
   check(await page.locator('[data-region="left"]').getAttribute('data-depth')==='panel','World occupies a real left panel');

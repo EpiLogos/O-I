@@ -98,3 +98,57 @@ export async function enterApp(page) {
     await enter.waitFor({ state: "detached", timeout: 15_000 }).catch(() => {});
   }
 }
+
+
+/** The workspace lives in the scope menu's footer (10-SIDEBARS §3.6 rule 5):
+ *  open the menu from the left head (showing the left region first). */
+export async function scopeMenu(page) {
+  const trigger = page.locator('[data-left-head] .left-scope-trigger');
+  if (!await trigger.isVisible().catch(() => false)) await page.keyboard.press('Meta+b');
+  await trigger.click();
+  const menu = page.getByRole('group', { name: 'Scope and workspace' });
+  await menu.waitFor();
+  return menu;
+}
+
+/** New workspace (scope menu footer → New), named and created. */
+export async function newWorkspace(page, name) {
+  const menu = await scopeMenu(page);
+  await menu.getByRole('button', { name: 'New', exact: true }).click();
+  await page.getByRole('textbox', { name: 'Workspace name' }).fill(name);
+  await page.getByRole('button', { name: 'Create workspace' }).click();
+}
+
+/** Rename the current workspace (scope menu footer → Rename). */
+export async function renameWorkspace(page, name) {
+  const menu = await scopeMenu(page);
+  await menu.getByRole('button', { name: 'Rename', exact: true }).click();
+  await page.getByRole('textbox', { name: 'Workspace name' }).fill(name);
+  await page.getByRole('button', { name: 'Save name', exact: true }).click();
+}
+
+/** Switch workspace (scope menu footer → Switch…): by id, by {label}, or
+ *  {index} in the book's order. */
+export async function switchWorkspace(page, which) {
+  const menu = await scopeMenu(page);
+  await menu.getByRole('button', { name: 'Switch…' }).click();
+  const list = menu.getByRole('group', { name: 'Workspaces' });
+  const target = typeof which === 'string' ? list.locator(`[data-workspace-id="${which}"]`)
+    : which.label !== undefined ? list.getByRole('menuitemradio', { name: which.label, exact: true })
+    : list.getByRole('menuitemradio').nth(which.index ?? 0);
+  await target.click();
+}
+
+/** The current workspace's name, as the scope menu names it. */
+export async function currentWorkspaceName(page) {
+  const menu = await scopeMenu(page);
+  const name = (await menu.locator('[data-current-workspace]').innerText()).trim();
+  await page.keyboard.press('Escape');
+  return name;
+}
+
+/** Recover arrangement (scope menu footer). */
+export async function recoverArrangement(page) {
+  const menu = await scopeMenu(page);
+  await menu.getByRole('button', { name: 'Recover arrangement' }).click();
+}
