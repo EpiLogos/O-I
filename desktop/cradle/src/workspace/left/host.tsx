@@ -34,6 +34,8 @@ export interface LeftHost {
   /** A conversation row's plain click: Base/Expressions/Technè open it in the
    * right panel's Chat (D4); Factory in the centre Tasks view. */
   onOpenChat?: (row: EncounterRow) => Promise<void> | void;
+  /** The conversation open in the right panel's Chat — "open here" (R6). */
+  openConversationRef?: string;
   /** The row's "…" → Open in centre. */
   onOpenChatInCentre?: (row: EncounterRow) => Promise<void> | void;
   /** A1-A6: Open beside — into the right panel's Context canvas. */

@@ -21,6 +21,7 @@ import {formatRelativeTime} from "../../shared/relativeTime";
 import {useLeftHost} from "./host";
 import {useSessionMark, type RowMark, type SessionMark} from "./sessionMarks";
 import type {EncounterRow} from "../../encounter/EncounterList";
+import {useEncounterSession} from "../../encounter/session";
 
 /** The mode whose body is showing — collapse state is remembered per mode. */
 export const LeftModeContext = createContext<string>("base");
@@ -135,15 +136,22 @@ export function ProjectMarkBadges({working, needsYou}: {working: number; needsYo
 export function ConversationRow({row, kind = "Chat", current, onOpen}: {row: EncounterRow; kind?: string; current?: boolean; onOpen?: (row: EncounterRow) => void}) {
   const host = useLeftHost();
   const kernel = useKernel();
-  const mark: SessionMark | undefined = useSessionMark(kernel.transport, {project: row.project, ref: row.ref}, !!current);
+  const open_ = !!current || host.openConversationRef === row.ref;
+  const observed: SessionMark | undefined = useSessionMark(kernel.transport, {project: row.project, ref: row.ref}, open_);
+  // The conversation open here is also held by the chat's one shared
+  // observer (never a second poll loop): an owner refusal it received — a
+  // refused send or connection — is the row's failure, in the owner's words.
+  const shared = useEncounterSession(open_ ? {project: row.project, ref: row.ref, space: row.space} : undefined);
+  const refusal = shared?.state.error;
+  const mark: SessionMark | undefined = refusal && (!observed || observed.mark === "idle" || observed.mark === "unread") ? {...(observed ?? {permissions: 0, observedAt: Date.now()}), mark: "failed", reason: refusal} : observed;
   const state = mark?.mark ?? "idle";
   const [menu, setMenu] = useState(false);
   const open = onOpen ?? ((value: EncounterRow) => { void Promise.resolve(host.onOpenChat?.(value)).catch(error => host.onMessage?.(String(error))); });
   const stateWords = MARK_LABEL[state];
   const accessible = `${row.title}${stateWords ? ` — ${stateWords}` : ""}${state === "failed" && mark?.reason ? `: ${mark.reason}` : ""}`;
   const when = mark?.changedAt ? formatRelativeTime(mark.changedAt).replace(/ ago$/, "") : undefined;
-  return <div className="left-row left-conversation" data-mark={state} data-session-ref={row.ref} aria-current={current ? "true" : undefined}>
-    <button type="button" className="left-row-main" aria-label={accessible} title={state === "failed" && mark?.reason ? `${row.title}\n${mark.reason}` : row.title} aria-current={current ? "true" : undefined}
+  return <div className="left-row left-conversation" data-mark={state} data-session-ref={row.ref} aria-current={open_ ? "true" : undefined}>
+    <button type="button" className="left-row-main" aria-label={accessible} title={state === "failed" && mark?.reason ? `${row.title}\n${mark.reason}` : row.title} aria-current={open_ ? "true" : undefined}
       draggable onDragStart={event => { event.dataTransfer.setData("application/x-oi-encounter", JSON.stringify(row)); event.dataTransfer.setData("text/plain", row.title); event.dataTransfer.effectAllowed = "copyLink"; }}
       onClick={() => open(row)}>
       <MarkGlyph mark={state} reason={mark?.reason}/>
