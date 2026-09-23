@@ -91,6 +91,10 @@ const providerPrompts=log=>readFileSync(log,"utf8").split("\n").filter(Boolean).
 const providerRequests=(log,method)=>readFileSync(log,"utf8").split("\n").filter(Boolean).map(line=>JSON.parse(line)).filter(m=>m.method===method);
 
 export default async function run({page,baseUrl,check,shot,channel,provision:p}) {
+  // Pane-tier retention (Workbench.tsx): A's and B's tab bodies both stay
+  // mounted, the inactive one concealed — every raw selector is scoped to the
+  // PRESENTED surface, the conversation the person is actually looking at.
+  const V=".warm-tree-host:not([hidden]) .pane.focused .surface-retained:not([hidden])";
   await page.goto(baseUrl);await channel("info");
   const nav=page.getByRole("complementary",{name:"World navigator"});
   const [a,b]=RECIPIENTS;
@@ -99,33 +103,33 @@ export default async function run({page,baseUrl,check,shot,channel,provision:p})
   await openConversationInCentre(page,"Group dispatch acceptance A");
   await page.getByRole("textbox",{name:"Message",exact:true}).waitFor();
   await page.getByRole("button",{name:"Group walk A (a)",exact:true}).click();
-  await page.waitForFunction(()=>!document.querySelector(".encounter-connect"),null,{timeout:60000});
-  await page.waitForFunction(()=>document.querySelector(".encounter-addressed-service")?.getAttribute("data-service")==="running",null,{timeout:30000});
+  await page.waitForFunction(v=>!document.querySelector(`${v} .encounter-connect`),V,{timeout:60000});
+  await page.waitForFunction(v=>document.querySelector(`${v} .encounter-addressed-service`)?.getAttribute("data-service")==="running",V,{timeout:30000});
   // Both recipients need a live resident native session before a group can be
   // admitted — an unopened participant refuses the whole group owner-side.
   await openConversationInCentre(page,"Group dispatch acceptance B");
   await page.getByRole("textbox",{name:"Message",exact:true}).waitFor();
   await page.getByRole("button",{name:"Group walk B (b)",exact:true}).click();
-  await page.waitForFunction(()=>!document.querySelector(".encounter-connect"),null,{timeout:60000});
+  await page.waitForFunction(v=>!document.querySelector(`${v} .encounter-connect`),V,{timeout:60000});
   await page.locator(".tab").filter({hasText:"Group dispatch acceptance A"}).click();
   await page.getByRole("textbox",{name:"Message",exact:true}).waitFor();
   check(true,"Both participants are connected with the native dispatch service disclosed");
 
   // Group composition: explicit per-recipient bases, explicit audience; the
   // shared packet fields are the same card's sender/source-refs/text.
-  await page.locator(".encounter-addressed-group summary").click();
+  await page.locator(`${V} .encounter-addressed-group summary`).click();
   await page.getByRole("textbox",{name:"Sender identity",exact:true}).fill("agent:sender");
   await page.getByRole("textbox",{name:"Group recipients",exact:true}).fill(`${a.session} ${a.basis}\n${b.session} ${b.basis}`);
   await page.getByRole("textbox",{name:"Group audience",exact:true}).fill("agent:group-a, agent:group-b");
   await page.getByRole("textbox",{name:"Shared source refs",exact:true}).fill("source/shared");
   const packet="Return the exact token OI_DESKTOP_GROUP_OK. Do not use tools.";
   await page.getByRole("textbox",{name:"Addressed request text",exact:true}).fill(packet);
-  check((await page.locator(".encounter-addressed-group .encounter-addressed-group-preview").innerText()).includes("2 recipients"),"The group composer previews the explicit recipients before any dispatch");
+  check((await page.locator(`${V} .encounter-addressed-group .encounter-addressed-group-preview`).innerText()).includes("2 recipients"),"The group composer previews the explicit recipients before any dispatch");
   await shot("group-composed");
 
-  await page.locator(".encounter-addressed-group-send").click();
-  await page.waitForFunction(()=>[...document.querySelectorAll(".encounter-addressed-group-row")].length===2&&[...document.querySelectorAll(".encounter-addressed-group-row")].every(row=>row.getAttribute("data-phase")==="returned"),null,{timeout:30000});
-  const groupRef=await page.locator(".encounter-addressed-group-state").getAttribute("data-ref");
+  await page.locator(`${V} .encounter-addressed-group-send`).click();
+  await page.waitForFunction(v=>[...document.querySelectorAll(`${v} .encounter-addressed-group-row`)].length===2&&[...document.querySelectorAll(`${v} .encounter-addressed-group-row`)].every(row=>row.getAttribute("data-phase")==="returned"),V,{timeout:30000});
+  const groupRef=await page.locator(`${V} .encounter-addressed-group-state`).getAttribute("data-ref");
   check(true,"Every recipient settles on its own durable delivery result under one group delivery identity");
   const promptsA=providerPrompts(p.providerLogs[a.id]),promptsB=providerPrompts(p.providerLogs[b.id]);
   check(promptsA.length===1&&promptsB.length===1,"Each recipient's controlled provider received exactly one addressed prompt");
@@ -137,17 +141,17 @@ export default async function run({page,baseUrl,check,shot,channel,provision:p})
   // disagrees with the admitted recipient set as a whole is the group's own
   // refusal. Both happen before any transport effect.
   await page.getByRole("textbox",{name:"Group audience",exact:true}).fill("agent:group-a");
-  await page.locator(".encounter-addressed-group-send").click();
-  await page.waitForFunction(()=>[...document.querySelectorAll(".encounter-addressed-group-row")].some(row=>row.getAttribute("data-phase")==="refused"),null,{timeout:30000});
-  const audienceRefusal=await page.locator(".encounter-addressed-group-state").innerText();
+  await page.locator(`${V} .encounter-addressed-group-send`).click();
+  await page.waitForFunction(v=>[...document.querySelectorAll(`${v} .encounter-addressed-group-row`)].some(row=>row.getAttribute("data-phase")==="refused"),V,{timeout:30000});
+  const audienceRefusal=await page.locator(`${V} .encounter-addressed-group-state`).innerText();
   check(audienceRefusal.includes("encounter.disclosure_denied"),"An audience that omits a recipient is refused by that participant's own disclosure law, shown verbatim");
   check(providerPrompts(p.providerLogs[a.id]).length===1&&providerPrompts(p.providerLogs[b.id]).length===1,"A refused group dispatch produces no provider effect on any recipient");
 
   // An audience with a ref outside the admitted recipient set fails the
   // whole-group agreement check — still zero transport effect.
   await page.getByRole("textbox",{name:"Group audience",exact:true}).fill("agent:group-a, agent:group-b, agent:elsewhere");
-  await page.locator(".encounter-addressed-group-send").click();
-  await page.waitForFunction(()=>document.querySelector(".encounter-addressed-group-state")?.textContent?.includes("encounter.group_audience"),null,{timeout:30000});
+  await page.locator(`${V} .encounter-addressed-group-send`).click();
+  await page.waitForFunction(v=>document.querySelector(`${v} .encounter-addressed-group-state`)?.textContent?.includes("encounter.group_audience"),V,{timeout:30000});
   check(true,"An audience beyond the explicit recipient set is refused with the owner's group-agreement code");
   check(providerPrompts(p.providerLogs[a.id]).length===1&&providerPrompts(p.providerLogs[b.id]).length===1,"Still no provider effect from the refused group");
 
@@ -155,9 +159,9 @@ export default async function run({page,baseUrl,check,shot,channel,provision:p})
   // recipient is touched so another recipient's delivery cannot be inferred.
   await page.getByRole("textbox",{name:"Group audience",exact:true}).fill("agent:group-a, agent:group-b");
   await page.getByRole("textbox",{name:"Shared source refs",exact:true}).fill("source/undisclosed");
-  await page.locator(".encounter-addressed-group-send").click();
-  await page.waitForFunction(()=>[...document.querySelectorAll(".encounter-addressed-group-row")].some(row=>row.getAttribute("data-phase")==="refused"),null,{timeout:30000});
-  check((await page.locator(".encounter-addressed-group-state").innerText()).includes("encounter.disclosure_denied"),"An undisclosed packet source refuses the whole group before the first transport effect");
+  await page.locator(`${V} .encounter-addressed-group-send`).click();
+  await page.waitForFunction(v=>[...document.querySelectorAll(`${v} .encounter-addressed-group-row`)].some(row=>row.getAttribute("data-phase")==="refused"),V,{timeout:30000});
+  check((await page.locator(`${V} .encounter-addressed-group-state`).innerText()).includes("encounter.disclosure_denied"),"An undisclosed packet source refuses the whole group before the first transport effect");
   check(providerPrompts(p.providerLogs[a.id]).length===1&&providerPrompts(p.providerLogs[b.id]).length===1,"Still no provider effect from the refused group");
   await shot("group-refusals");
 
@@ -171,17 +175,29 @@ export default async function run({page,baseUrl,check,shot,channel,provision:p})
   // reconnect; the durable receipts survive the restart.
   p.restartOwner();
   await page.getByRole("button",{name:"Group walk A (a)",exact:true}).click();
-  const alert=page.locator(".encounter-composer [role='alert']");
+  const alert=page.locator(`${V} .encounter-composer [role='alert']`);
   await alert.waitFor({timeout:30000});
   check((await alert.innerText()).includes("encounter.resume_required"),"After the owner restart a fresh open is refused — the recorded session's existence is disclosed by the owner's own code");
   const resumeButton=page.getByRole("button",{name:"Reconnect recorded session"});
   await resumeButton.waitFor();
   await resumeButton.click();
-  await page.waitForFunction(()=>!!document.querySelector(".encounter-reconnected"),null,{timeout:60000});
-  const nativeSession=await page.locator(".encounter-reconnected code").innerText();
+  await page.waitForFunction(v=>!!document.querySelector(`${v} .encounter-reconnected`),V,{timeout:60000});
+  const nativeSession=await page.locator(`${V} .encounter-reconnected code`).innerText();
   check(nativeSession==="fixture-native-stable","Reconnect resumes the actually recorded native session identity");
-  await page.waitForFunction(()=>document.querySelector(".encounter-transcript")?.textContent?.includes("FIXTURE_REPLAY_BEFORE_LOAD"),null,{timeout:60000});
-  check(true,"The reconnected transcript carries the loaded native session's own replayed material, not a fresh session");
+  // The owner (ai-kit #311) keeps a native load's replayed history OUT of the
+  // live transcript — ACP v1 replay carries no provider history-item id — and
+  // retains it verbatim as `provider-history-replay` evidence on its own journal
+  // cursor. The loaded session's own replayed material is read there, through
+  // the Activity plane's owner journal.
+  await page.locator(`${V} .encounter-planes`).getByRole("button",{name:"Activity",exact:true}).click();
+  const journal=page.locator(`${V} .encounter-journal`),rows=journal.locator(".encounter-journal-list li"),more=journal.getByRole("button",{name:/^Load after cursor/});
+  await journal.locator("summary").first().click();
+  await journal.getByRole("button",{name:"Load journal"}).click();
+  await rows.first().waitFor({timeout:20000});
+  const replayRow=rows.filter({has:page.locator(".encounter-journal-kind",{hasText:/^provider-history-replay$/})});
+  for(let guard=0;guard<50&&!(await replayRow.count())&&await more.count();guard++){const before=await rows.count();await more.click();await page.waitForFunction(([v,n])=>document.querySelectorAll(`${v} .encounter-journal-list li`).length>n,[V,before],{timeout:20000});}
+  const replayed=await replayRow.first().textContent({timeout:5000});
+  check(replayed.includes("FIXTURE_REPLAY_BEFORE_LOAD")&&replayed.includes("fixture-native-stable"),"The reconnected session carries the loaded native session's own replayed material — on the owner's journal as history-replay evidence of that exact native session, not a fresh session");
   check(providerRequests(p.providerLogs[a.id],"session/load").length===1,"The provider log shows the explicit native load of the recorded session");
   await shot("reconnected-recorded-session");
 
