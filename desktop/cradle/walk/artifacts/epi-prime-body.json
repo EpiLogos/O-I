@@ -1,0 +1,79 @@
+{
+  "schema": "oi.cradle.walk.scenario/v1",
+  "scenario": "epi-prime-body",
+  "spec_ref": "docs/cradle/05-EXECUTION.md §3",
+  "grade": "B",
+  "binding": null,
+  "generated_at": "2026-09-23T13:16:41.743Z",
+  "environment": {
+    "base_url": "http://localhost:4176",
+    "bridge_url": "http://127.0.0.1:4183",
+    "viewport": "1280x820",
+    "browser_engine": "chromium",
+    "bundle": "walk (WALK=1) served by vite preview",
+    "build_input": {
+      "mode": "reused-dist",
+      "bundle_fingerprint": "1b15c28f6b12426cbe73603ca04c3d005bf8ac1ec9dc1893799428aa204b1f24"
+    },
+    "node": "v24.16.0",
+    "platform": "darwin",
+    "source": {
+      "repository_root": "/Users/admin/Central/Work/O-I",
+      "repository_head": "4b3a2348ace9bc74b43bdeea2286894c26efc441",
+      "tracked_changes": [
+        "desktop/cradle/src-tauri/icons/128x128.png",
+        "desktop/cradle/src-tauri/icons/32x32.png",
+        "desktop/cradle/walk/artifacts/bootstrap.json",
+        "desktop/cradle/walk/artifacts/fnd/s5-ground-unrecognised.png",
+        "desktop/cradle/walk/scenarios/epi-prime-body.mjs",
+        "docs/experience/HARNESS-SETTINGS-RESEARCH-2026-09-22.md"
+      ],
+      "dirty_digest": "39246656d9a4775fd36bff6614eb8a85f3560ddddae9937998be605e6fcf00b7",
+      "engine_provenance_path": "/Users/admin/Central/Work/O-I/packages/oi-design-system/expressions-engine/PROVENANCE.json",
+      "engine_source": "EpiLogos/Point-Cloud-Demo",
+      "engine_revision": "91db8428fc9dfba06cd258ec5a58e7dd9eef5313"
+    }
+  },
+  "passed": false,
+  "error": "page.waitForFunction: Timeout 90000ms exceeded.\n    at Module.run (/Users/admin/Central/Work/O-I/desktop/cradle/walk/scenarios/epi-prime-body.mjs:110:14)\n    at async runScenario (/Users/admin/Central/Work/O-I/desktop/cradle/walk/run.mjs:557:7)\n    at async file:///Users/admin/Central/Work/O-I/desktop/cradle/walk/run.mjs:640:18",
+  "duration_ms": 122425,
+  "checks": [
+    {
+      "ok": true,
+      "label": "the Epi-Logos world is active (Within Epi-Logos disclosed)"
+    },
+    {
+      "ok": true,
+      "label": "Expressions opens inside the Epi-Logos world"
+    }
+  ],
+  "ops": [
+    {
+      "ok": true,
+      "op": "info",
+      "duration_ms": 0.1,
+      "data": {
+        "schema": "oi.cradle.walk/v1",
+        "mounted_at": "2026-09-23T13:16:41.882Z",
+        "transport": {
+          "kind": "bridge",
+          "url": "http://127.0.0.1:4183"
+        },
+        "url": "http://localhost:4176/"
+      }
+    },
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 34,
+      "data": {
+        "file": "epi-prime-body-epi-expressions-entered.png"
+      }
+    }
+  ],
+  "metrics": {},
+  "screenshots": [
+    "epi-prime-body-epi-expressions-entered.png"
+  ],
+  "failure_stage": "application"
+}

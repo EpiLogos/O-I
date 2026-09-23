@@ -77,6 +77,32 @@ Advanced material lives under an "Advanced" disclosure, never the primary
 view (spec L5: primary view contains no raw JSON — the walk check for L5 is
 still unimplemented; see §4).
 
+### 2a · Auth both-ways backend (landed in ai-kit 2026-09-23)
+
+Owner direction: auth is part of model setup — next to the API key input,
+the login option (pi and most harnesses already offer both). The backend now
+exists; the settings face can render both options as data:
+
+- Each harness profile's models layer declares both: `env-var` key delivery
+  (existing) and `own-login` entries that now carry an optional runnable
+  `login` argv — verified per harness (codex `codex login`, opencode
+  `opencode auth login`, hermes `hermes auth add`, cline `cline auth`,
+  qoder `qoder login`, cursor `agent login`); all other harnesses are
+  honestly note-only (their login is in-TUI or first-launch).
+- `aikit harness auth <slug> --json` is the render payload: env-var names +
+  own-login entries with `runnable` true/false and the note. Nothing
+  executes. The default mode runs the declared login interactively in the
+  user's terminal; note-only harnesses refuse with the note as the
+  instruction (code `harness_auth.no_login_declared`).
+- Disclosure carries `ModelAuthDisclosure` on the models layer (binary +
+  arg-count redaction posture; full argv never in JSON).
+
+Placement per this dossier's grammar: the Models section's per-harness row
+and the Credentials provider cards (DeepSeek pattern, §3.6) each get one
+"Log in" action where `runnable` is true, beside the key field; Status shows
+auth state per provider as already specced. Ships with the next ai-kit
+install.
+
 ## 3 · Sidebar / UI grammar from Buzz, Grok Bot, DeepSeek (screenshots preserved)
 
 Buzz (Block, Nostr collab platform — Tauri/React like Cradle; harness is its

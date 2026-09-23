@@ -42,13 +42,15 @@ import {
   trackHostedAppState,
   postHostMode,
   postOpenExpression,
+  isHostedTechneLens,
   type HostedAppMode,
   type HostedAppState,
+  type HostedTechneLens,
 } from "./hostedApp";
 import {consumeTechneFieldOpen, peekTechneFieldOpen, subscribeTechneFieldOpen} from "./fieldOpen";
 import "./point-cloud-host.css";
 
-export function PointCloudHost({mode = "expressions", deepLink, bindingId, onHostedState}: {mode?: HostedAppMode; deepLink?: string; bindingId?: string; onHostedState?: (state: HostedAppState) => void}) {
+export function PointCloudHost({mode = "expressions", deepLink, bindingId, onHostedState, onLensSummon}: {mode?: HostedAppMode; deepLink?: string; bindingId?: string; onHostedState?: (state: HostedAppState) => void; onLensSummon?: (lens: HostedTechneLens) => void}) {
   const kernel = useKernel();
   const [entry, setEntry] = useState<NativeFileEntry | undefined>();
   const [state, setState] = useState<"reading" | "ready" | "refused">("reading");
@@ -149,15 +151,26 @@ export function PointCloudHost({mode = "expressions", deepLink, bindingId, onHos
 
   // The deep cut's requests ride back through the host: a workspace-mode
   // switch goes to the shell's own mode pipeline (enterMode); a summon asks
-  // for the verso account overlay. Nothing here opens a second UI — the
-  // events land in the seams that already exist.
+  // for the verso account overlay; an instrument summon asks for the ONE
+  // deep-instrument HUD. Nothing here opens a second UI — the events land in
+  // the seams that already exist.
   useEffect(() => {
     const handler = (event: MessageEvent) => {
-      const data = event.data as {v?: number; kind?: string; request?: string; mode?: string; kind2?: string; detail?: {kind?: string; subject?: unknown}} | null;
+      const data = event.data as {v?: number; kind?: string; request?: string; mode?: string; kind2?: string; detail?: {kind?: string; lens?: string; subject?: unknown}} | null;
       if (!data || data.v !== 1 || data.kind !== "host-request") return;
       if (event.source !== frame.current?.contentWindow) return;
       if (data.request === "workspace-mode" && (data.mode === "expressions" || data.mode === "techne")) {
         window.dispatchEvent(new CustomEvent("oi:host-workspace-mode", {detail: {mode: data.mode}}));
+      }
+      if (data.request === "summon" && data.detail?.kind === "instrument") {
+        // The application's Lens Studio chooser summons the deep instruments.
+        // Answered by THIS centre instance — the presented Technē centre opens
+        // its own HUD on that lens over this same field — never a global
+        // listener and never a second renderer. A host whose centre passed no
+        // answerer (the Expressions cut, where the chooser never stands)
+        // consumes nothing, exactly like any other unanswered summon.
+        if (isHostedTechneLens(data.detail.lens)) onLensSummon?.(data.detail.lens);
+        return;
       }
       if (data.request === "summon" && data.detail?.kind) {
         // The application may carry the exact native work it is standing on
@@ -168,7 +181,7 @@ export function PointCloudHost({mode = "expressions", deepLink, bindingId, onHos
     };
     window.addEventListener("message", handler);
     return () => window.removeEventListener("message", handler);
-  }, []);
+  }, [onLensSummon]);
 
   return <div className="pcd-host" aria-label="O:I Expressions application" data-state={state}>
     {state === "reading" && <p className="oi-note" role="status">Opening the Expressions application…</p>}
