@@ -4,7 +4,7 @@
   "spec_ref": "docs/cradle/10-SIDEBARS.md §4.6 (Context canvas baseline)",
   "grade": "B",
   "binding": null,
-  "generated_at": "2026-09-22T23:53:14.429Z",
+  "generated_at": "2026-09-23T02:23:45.222Z",
   "environment": {
     "base_url": "http://localhost:4373",
     "bridge_url": "http://127.0.0.1:4379",
@@ -12,19 +12,48 @@
     "browser_engine": "chromium",
     "bundle": "walk (WALK=1) served by vite preview",
     "build_input": {
-      "mode": "reused-dist",
-      "bundle_fingerprint": "76dbb191743019be56ea58e8d33f6a5b19afbf284f73940045954336faa29976"
+      "mode": "fresh-build",
+      "bundle_fingerprint": "ed51a365fc3c29d4599014366259ab616673cb631dadff9db70b42562242f5b8"
     },
     "node": "v24.16.0",
     "platform": "darwin",
     "source": {
       "repository_root": "/Users/admin/Central/worktrees/ui-build/lane2-right",
-      "repository_head": "8ab0ac8a6b9955d3f7523439b77215ddf7ac762d",
+      "repository_head": "9bde79c2085da606b73f533a2b069489bb226b08",
       "tracked_changes": [
         "desktop/cradle/scripts/receipt-lint.mjs",
-        "desktop/cradle/walk/run.mjs"
+        "desktop/cradle/src/agent/panel/ContextCanvas.tsx",
+        "desktop/cradle/src/agent/panel/panel.css",
+        "desktop/cradle/src/workspace/modeBodies.tsx",
+        "desktop/cradle/walk/artifacts/context-canvas-insert.json",
+        "desktop/cradle/walk/artifacts/mode-gallery-agency-light.png",
+        "desktop/cradle/walk/artifacts/mode-gallery-desk-agents-light.png",
+        "desktop/cradle/walk/artifacts/mode-gallery-desk-context-light.png",
+        "desktop/cradle/walk/artifacts/mode-gallery-desk-run-light.png",
+        "desktop/cradle/walk/artifacts/mode-gallery-epi-logos-light.png",
+        "desktop/cradle/walk/artifacts/mode-gallery-expressions-640-light.png",
+        "desktop/cradle/walk/artifacts/mode-gallery-expressions-760-light.png",
+        "desktop/cradle/walk/artifacts/mode-gallery-expressions-dark.png",
+        "desktop/cradle/walk/artifacts/mode-gallery-expressions-light.png",
+        "desktop/cradle/walk/artifacts/mode-gallery-expressions-panel-chat-dark.png",
+        "desktop/cradle/walk/artifacts/mode-gallery-expressions-panel-chat-light.png",
+        "desktop/cradle/walk/artifacts/mode-gallery-expressions-panel-context-dark.png",
+        "desktop/cradle/walk/artifacts/mode-gallery-expressions-panel-context-light.png",
+        "desktop/cradle/walk/artifacts/mode-gallery-expressions-panel-context-newtab-light.png",
+        "desktop/cradle/walk/artifacts/mode-gallery-expressions-panel-side-dark.png",
+        "desktop/cradle/walk/artifacts/mode-gallery-expressions-panel-side-light.png",
+        "desktop/cradle/walk/artifacts/mode-gallery-factory-760-light.png",
+        "desktop/cradle/walk/artifacts/mode-gallery-factory-dark.png",
+        "desktop/cradle/walk/artifacts/mode-gallery-factory-light.png",
+        "desktop/cradle/walk/artifacts/mode-gallery-failure.png",
+        "desktop/cradle/walk/artifacts/mode-gallery-library-light.png",
+        "desktop/cradle/walk/artifacts/mode-gallery-techne-light.png",
+        "desktop/cradle/walk/artifacts/mode-gallery.json",
+        "desktop/cradle/walk/run.mjs",
+        "desktop/cradle/walk/scenarios/right-panel-frame.mjs",
+        "desktop/cradle/walk/scenarios/right-panel-turn.mjs"
       ],
-      "dirty_digest": "f287c45c6bc10f3d989ec34af136a0f037d0371c76e3564f4653a6ac14178dc1",
+      "dirty_digest": "2e7964ba70a907c243553fb1c25174a4b0891ab0d4623ba57e95504655b6c714",
       "engine_provenance_path": "/Users/admin/Central/worktrees/ui-build/lane2-right/packages/oi-design-system/expressions-engine/PROVENANCE.json",
       "engine_source": "EpiLogos/Point-Cloud-Demo",
       "engine_revision": "91db8428fc9dfba06cd258ec5a58e7dd9eef5313"
@@ -32,7 +61,7 @@
   },
   "passed": true,
   "error": null,
-  "duration_ms": 15141,
+  "duration_ms": 16623,
   "checks": [
     {
       "ok": true,
@@ -122,7 +151,7 @@
       "duration_ms": 0,
       "data": {
         "schema": "oi.cradle.walk/v1",
-        "mounted_at": "2026-09-22T23:53:14.642Z",
+        "mounted_at": "2026-09-23T02:23:45.347Z",
         "transport": {
           "kind": "bridge",
           "url": "http://127.0.0.1:4379"
@@ -133,7 +162,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 53,
+      "duration_ms": 28,
       "data": {
         "file": "context-canvas-insert-inserted.png"
       }
@@ -141,7 +170,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 40,
+      "duration_ms": 48,
       "data": {
         "file": "context-canvas-insert-sent.png"
       }
@@ -149,7 +178,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 35,
+      "duration_ms": 32,
       "data": {
         "file": "context-canvas-insert-after-send.png"
       }

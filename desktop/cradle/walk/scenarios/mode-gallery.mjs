@@ -46,10 +46,10 @@ export default async function run({page,baseUrl,check,shot,channel}) {
         await shot(`expressions-panel-context-${scheme}`);
         // The pane host is the real pane: its own New-tab affordance opens a
         // surface INTO the sidebar.
-        await page.getByRole('region',{name:'Accompanying agent'}).getByRole('button',{name:'New tab',exact:true}).click();
+        await page.getByRole('region',{name:'Accompanying agent'}).locator('.strip-open').first().click();
         await page.waitForTimeout(400);
         await shot(`expressions-panel-context-newtab-${scheme}`);
-        await page.getByRole('button',{name:'Close tab',exact:true}).click().catch(()=>{});
+        await page.getByRole('region',{name:'Accompanying agent'}).getByRole('button',{name:'Close tab',exact:true}).first().click().catch(()=>{});
         await page.waitForTimeout(200);
         await planeRow.getByRole('button',{name:'Chat',exact:true}).click();
         await page.waitForTimeout(200);

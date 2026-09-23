@@ -122,6 +122,16 @@ export default async function run({page, baseUrl, check, shot, channel, provisio
     check(!(await panel.innerText()).includes("Nara · Anima") && !seen.includes("Epii"), `${label}: Nara·Anima and Epii are not tabs`);
   }
   await page.getByRole("radio", {name: "Central", exact: true}).first().click();
+  // Settings: the panel rests collapsed; opened, it is a Chat-only help panel.
+  await page.locator(".world-system-settings").first().click();
+  await page.waitForSelector('[data-region="right"][data-depth="collapsed"]', {timeout: 10000});
+  check(true, "Settings: the right panel rests collapsed");
+  panel = await openPanel(page);
+  check(JSON.stringify(await planeLabels(panel)) === JSON.stringify(["Chat"]), "Settings: opened, the panel offers Chat only", await planeLabels(panel));
+  await page.getByRole("button", {name: "Collapse the panel"}).click();
+  await page.keyboard.press("Escape");
+  await page.locator(".world-system-settings").first().click().catch(() => {});
+  await page.getByRole("radio", {name: "Central", exact: true}).first().click().catch(() => {});
 
   // --- P18: narrow — the panel is an overlay drawer -------------------------
   await page.setViewportSize({width: 760, height: 820});

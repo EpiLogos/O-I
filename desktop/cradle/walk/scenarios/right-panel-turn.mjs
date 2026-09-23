@@ -30,6 +30,9 @@ export default async function run({page, baseUrl, check, shot, channel, provisio
   await panel.locator('.chat-composer[data-connection="connected"]').waitFor({timeout: 90000});
   const message = panel.getByRole("textbox", {name: "Message", exact: true});
   const sendSlot = await box(panel.getByRole("button", {name: "Send", exact: true}));
+  await page.waitForTimeout(2500);
+  let piModes; try { piModes = p.request("mode-read"); } catch (error) { piModes = {error: String(error)}; }
+  check(await panel.locator('[data-chip="mode"]').count() === 0 && !piModes.mode_observation, "A2: Pi offers no permission modes, so the mode chip is absent (not disabled)", piModes.mode_controls ?? piModes.error);
 
   // --- turn 1: P4 in flight, P1 working, then P6 complete ------------------
   await message.fill(TURN_1);

@@ -1,0 +1,195 @@
+{
+  "schema": "oi.cradle.walk.scenario/v1",
+  "scenario": "right-panel-context",
+  "spec_ref": "docs/cradle/10-SIDEBARS.md §4.6 (Context launcher)",
+  "grade": "B",
+  "binding": null,
+  "generated_at": "2026-09-23T07:01:09.279Z",
+  "environment": {
+    "base_url": "http://localhost:4373",
+    "bridge_url": "http://127.0.0.1:4379",
+    "viewport": "1280x820",
+    "browser_engine": "chromium",
+    "bundle": "walk (WALK=1) served by vite preview",
+    "build_input": {
+      "mode": "fresh-build",
+      "bundle_fingerprint": "86919a088524afc45c3f40a8008e874c4594c232aacf89cc9bca54831d7cb849"
+    },
+    "node": "v24.16.0",
+    "platform": "darwin",
+    "source": {
+      "repository_root": "/Users/admin/Central/worktrees/ui-build/lane2-right",
+      "repository_head": "9bde79c2085da606b73f533a2b069489bb226b08",
+      "tracked_changes": [
+        "desktop/cradle/scripts/receipt-lint.mjs",
+        "desktop/cradle/src/CradleFrame.tsx",
+        "desktop/cradle/src/agent/panel/ContextCanvas.tsx",
+        "desktop/cradle/src/agent/panel/panel.css",
+        "desktop/cradle/src/workspace/modeBodies.tsx",
+        "desktop/cradle/walk/artifacts/canvas-context-native-resolve-on-prepared-selection.png",
+        "desktop/cradle/walk/artifacts/canvas-context-real-return-after-explicit-delivery.png",
+        "desktop/cradle/walk/artifacts/canvas-context-stale-source-refusal-retains-preparation.png",
+        "desktop/cradle/walk/artifacts/canvas-context.json",
+        "desktop/cradle/walk/artifacts/context-canvas-insert-after-send.png",
+        "desktop/cradle/walk/artifacts/context-canvas-insert-inserted.png",
+        "desktop/cradle/walk/artifacts/context-canvas-insert-sent.png",
+        "desktop/cradle/walk/artifacts/context-canvas-insert.json",
+        "desktop/cradle/walk/artifacts/mode-gallery-agency-dark.png",
+        "desktop/cradle/walk/artifacts/mode-gallery-agency-light.png",
+        "desktop/cradle/walk/artifacts/mode-gallery-desk-agents-light.png",
+        "desktop/cradle/walk/artifacts/mode-gallery-desk-context-light.png",
+        "desktop/cradle/walk/artifacts/mode-gallery-desk-run-dark.png",
+        "desktop/cradle/walk/artifacts/mode-gallery-desk-run-light.png",
+        "desktop/cradle/walk/artifacts/mode-gallery-epi-logos-dark.png",
+        "desktop/cradle/walk/artifacts/mode-gallery-epi-logos-light.png",
+        "desktop/cradle/walk/artifacts/mode-gallery-expressions-640-dark.png",
+        "desktop/cradle/walk/artifacts/mode-gallery-expressions-640-light.png",
+        "desktop/cradle/walk/artifacts/mode-gallery-expressions-760-dark.png",
+        "desktop/cradle/walk/artifacts/mode-gallery-expressions-760-light.png",
+        "desktop/cradle/walk/artifacts/mode-gallery-expressions-dark.png",
+        "desktop/cradle/walk/artifacts/mode-gallery-expressions-light.png",
+        "desktop/cradle/walk/artifacts/mode-gallery-expressions-panel-chat-dark.png",
+        "desktop/cradle/walk/artifacts/mode-gallery-expressions-panel-chat-light.png",
+        "desktop/cradle/walk/artifacts/mode-gallery-expressions-panel-context-dark.png",
+        "desktop/cradle/walk/artifacts/mode-gallery-expressions-panel-context-light.png",
+        "desktop/cradle/walk/artifacts/mode-gallery-expressions-panel-context-newtab-dark.png",
+        "desktop/cradle/walk/artifacts/mode-gallery-expressions-panel-context-newtab-light.png",
+        "desktop/cradle/walk/artifacts/mode-gallery-expressions-panel-side-dark.png",
+        "desktop/cradle/walk/artifacts/mode-gallery-expressions-panel-side-light.png",
+        "desktop/cradle/walk/artifacts/mode-gallery-factory-760-light.png",
+        "desktop/cradle/walk/artifacts/mode-gallery-factory-dark.png",
+        "desktop/cradle/walk/artifacts/mode-gallery-factory-light.png",
+        "desktop/cradle/walk/artifacts/mode-gallery-failure.png",
+        "desktop/cradle/walk/artifacts/mode-gallery-library-dark.png",
+        "desktop/cradle/walk/artifacts/mode-gallery-library-light.png",
+        "desktop/cradle/walk/artifacts/mode-gallery-techne-dark.png",
+        "desktop/cradle/walk/artifacts/mode-gallery-techne-light.png",
+        "desktop/cradle/walk/artifacts/mode-gallery.json",
+        "desktop/cradle/walk/artifacts/right-panel-frame-a3-top-row.png",
+        "desktop/cradle/walk/artifacts/right-panel-frame-p1-closed.png",
+        "desktop/cradle/walk/artifacts/right-panel-frame-p13-full.png",
+        "desktop/cradle/walk/artifacts/right-panel-frame-p14-promoted.png",
+        "desktop/cradle/walk/artifacts/right-panel-frame-p18-overlay.png",
+        "desktop/cradle/walk/artifacts/right-panel-frame.json",
+        "desktop/cradle/walk/run.mjs",
+        "desktop/cradle/walk/scenarios/mode-gallery.mjs",
+        "desktop/cradle/walk/scenarios/right-panel-frame.mjs",
+        "desktop/cradle/walk/scenarios/right-panel-turn.mjs"
+      ],
+      "dirty_digest": "d45b65116454d3ee52b121fe2ce142440b39c505ff4433efb23277599dffbe8d",
+      "engine_provenance_path": "/Users/admin/Central/worktrees/ui-build/lane2-right/packages/oi-design-system/expressions-engine/PROVENANCE.json",
+      "engine_source": "EpiLogos/Point-Cloud-Demo",
+      "engine_revision": "91db8428fc9dfba06cd258ec5a58e7dd9eef5313"
+    }
+  },
+  "passed": true,
+  "error": null,
+  "duration_ms": 5993,
+  "checks": [
+    {
+      "ok": true,
+      "label": "Base: the empty Context is the three-entry launcher",
+      "data": [
+        "File ⌘P",
+        "Terminal ⌃`",
+        "Browser page ⌘T"
+      ]
+    },
+    {
+      "ok": true,
+      "label": "no repeated empty instructions, no \"returns\" wording",
+      "data": "Context\nLoading…\n\nBring material into this conversation's context.\n\nFile\n⌘P\nTerminal\n⌃`\nBrowser page\n⌘T\n\nMove a tab here, or open a source or wiki with +."
+    },
+    {
+      "ok": true,
+      "label": "⌘P in the Context tab opens the file chooser"
+    },
+    {
+      "ok": true,
+      "label": "File opens the chosen file as a file surface in the canvas",
+      "data": [
+        "file"
+      ]
+    },
+    {
+      "ok": true,
+      "label": "the file lands in the panel canvas, not the centre"
+    },
+    {
+      "ok": true,
+      "label": "once something is inserted the launcher gives way to the canvas as it works today"
+    },
+    {
+      "ok": true,
+      "label": "Terminal inserts one terminal tab"
+    },
+    {
+      "ok": true,
+      "label": "⌘T in the Context tab inserts a browser page",
+      "data": [
+        "Browser"
+      ]
+    },
+    {
+      "ok": true,
+      "label": "⌘T here never opens a centre tab"
+    },
+    {
+      "ok": true,
+      "label": "Active Context lists what the canvas holds",
+      "data": [
+        "Browser"
+      ]
+    },
+    {
+      "ok": true,
+      "label": "Expressions: the same launcher in its Context tab"
+    }
+  ],
+  "ops": [
+    {
+      "ok": true,
+      "op": "info",
+      "duration_ms": 0.1,
+      "data": {
+        "schema": "oi.cradle.walk/v1",
+        "mounted_at": "2026-09-23T07:01:09.381Z",
+        "transport": {
+          "kind": "bridge",
+          "url": "http://127.0.0.1:4379"
+        },
+        "url": "http://localhost:4373/"
+      }
+    },
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 30,
+      "data": {
+        "file": "right-panel-context-launcher.png"
+      }
+    },
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 27,
+      "data": {
+        "file": "right-panel-context-file-inserted.png"
+      }
+    },
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 24,
+      "data": {
+        "file": "right-panel-context-expressions-launcher.png"
+      }
+    }
+  ],
+  "metrics": {},
+  "screenshots": [
+    "right-panel-context-launcher.png",
+    "right-panel-context-file-inserted.png",
+    "right-panel-context-expressions-launcher.png"
+  ]
+}

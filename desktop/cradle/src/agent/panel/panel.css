@@ -84,7 +84,6 @@
 .desktop-shell .context-launch kbd{font-family:var(--oi-font-sans);font-size:var(--oi-shell-type-meta);color:var(--oi-muted-3)}
 .desktop-shell .context-launch:hover,.desktop-shell .context-launch:focus-visible,.desktop-shell .context-launch[aria-expanded="true"]{background:var(--oi-wash);outline:none}
 .context-file-picker{max-height:260px;overflow:auto;border:var(--oi-shell-edge) solid var(--oi-hairline-soft);border-radius:8px;padding:4px}
-.context-canvas[data-empty="true"] .surface-body>.source-note{display:none}
 
 /* composer chips, their menus, the mode chip's Bypass mark */
 .chat-chip-host{position:relative;display:inline-flex;flex:none}

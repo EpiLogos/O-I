@@ -111,6 +111,8 @@ const SCENARIOS = {
   "right-panel-agents": {module:"scenarios/right-panel-agents.mjs",kernel:true,aliases:[]},
   "right-panel-modes": {module:"scenarios/right-panel-modes.mjs",kernel:true,aliases:[]},
   "right-panel-failures": {module:"scenarios/right-panel-failures.mjs",kernel:true,aliases:[]},
+  "right-panel-context": {module:"scenarios/right-panel-context.mjs",kernel:true,aliases:[]},
+  "right-panel-shots": {module:"scenarios/right-panel-shots.mjs",kernel:true,aliases:[]},
   "remember": {module:"scenarios/remember.mjs",kernel:true,aliases:["u3.3"]},
   "contemplate": {module:"scenarios/contemplate.mjs",kernel:true,aliases:["w14"]},
   "select-send": {module:"scenarios/select-send.mjs",kernel:true,aliases:["6b"]},
@@ -208,6 +210,8 @@ const SCENARIO_SPEC = {
   "right-panel-agents": { spec_ref: "docs/cradle/10-SIDEBARS.md §4.5 §4.7 §5.3 P15 P17 P18; §4.1a A4" },
   "right-panel-modes": { spec_ref: "docs/cradle/10-SIDEBARS.md §7 A1/A2; §4.1 §4.3 §5.3 P5 P1" },
   "right-panel-failures": { spec_ref: "docs/cradle/10-SIDEBARS.md §5.3 P8 P9 P10 P11 P12" },
+  "right-panel-context": { spec_ref: "docs/cradle/10-SIDEBARS.md §4.6 (Context launcher)" },
+  "right-panel-shots": { spec_ref: "docs/cradle/10-SIDEBARS.md §4.1 §5.3 (looking pass: light/dark, 1440/1000/760)" },
 };
 const DEFAULT_SPEC_REF = "docs/cradle/05-EXECUTION.md §3";
 

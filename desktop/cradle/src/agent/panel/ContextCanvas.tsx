@@ -5,6 +5,9 @@ import {PreparedContextView} from "../../context/PreparedContextView";
 import {ActiveContext} from "../../expressions/ActiveContext";
 import type {TaPaneOpens} from "../../expressions/TaOntaSide";
 import type {CentralLocation} from "../../kernel/types";
+// The canvas's own layout (pane room, Active Context strip) — loaded with the
+// plane exactly as before, when the Ta-Onta side module carried it.
+import "../../contributions/factory/sidebar/sidebar.css";
 
 /**
  * The Context tab (10-SIDEBARS §4.6). PRESERVED: the panel's own pane canvas
@@ -41,6 +44,12 @@ export function ContextCanvas({opens,dataPlane,project,session,onOpenSubject}:{o
   if(!opens?.insertFile){setError("Opening a file into this panel is not wired in this mode yet.");return;}
   try{await opens.insertFile(location);setPicking(false);}catch(reason){setError(String(reason instanceof Error?reason.message:reason));}
  };
+ const host=useRef<HTMLDivElement>(null);
+ // ⌘T is the frame's own key; inside this canvas the frame hands it here.
+ useEffect(()=>{
+  const take=(event:Event)=>{if(!host.current?.contains(document.activeElement))return;if((event as CustomEvent<{kind?:string}>).detail?.kind==="browser")insert("browser");};
+  window.addEventListener("oi:context-insert",take);return()=>window.removeEventListener("oi:context-insert",take);
+ });
  const keys=(event:KeyboardEvent)=>{
   const mod=event.metaKey||event.ctrlKey;
   if(mod&&!event.shiftKey&&!event.altKey&&event.key.toLowerCase()==="p"){event.preventDefault();setPicking(value=>!value);}
@@ -48,7 +57,7 @@ export function ContextCanvas({opens,dataPlane,project,session,onOpenSubject}:{o
   else if(mod&&!event.shiftKey&&event.key.toLowerCase()==="t"){event.preventDefault();event.stopPropagation();insert("browser");}
   else if(event.key==="Escape"&&picking){event.preventDefault();setPicking(false);}
  };
- return <div className="desk-plane oi-side-plane ta-context-plane context-canvas" data-plane={dataPlane} data-empty={empty?"true":undefined} onKeyDown={keys}>
+ return <div ref={host} className="desk-plane oi-side-plane ta-context-plane context-canvas" data-plane={dataPlane} data-empty={empty?"true":undefined} onKeyDown={keys}>
   {project&&<PreparedContextView project={project} session={session} onOpenSubject={onOpenSubject}/>}
   {empty&&<div className="context-launcher" aria-label="Insert into context">
    <p className="context-launcher-line">Bring material into this conversation&apos;s context.</p>
