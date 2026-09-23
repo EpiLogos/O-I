@@ -535,7 +535,7 @@ const KIND_GLYPH: Record<string, import("../workspace/Glyph").GlyphName> = {
   instrument: "instrument",
 };
 
-function Tab({ id, title, kind, active, pinned, dirty, groupId, vertical, execute, openBindingMenu }: TabProps) {
+function Tab({ id, title, kind, active, pinned, dirty, groupId, execute, openBindingMenu }: TabProps) {
   return (
     <div className="tab-entry" role="presentation">
     <IconTab
@@ -569,24 +569,9 @@ function Tab({ id, title, kind, active, pinned, dirty, groupId, vertical, execut
           const r = e.currentTarget.getBoundingClientRect();
           openBindingMenu(id, r.left, r.bottom + 2);
         }
-        // Plain arrows switch tabs within the strip; modified arrows belong
-        // to the frame keymap (⌥ arrows move focus, ⌘⌥ arrows move the
-        // surface) and must not race it.
         if (e.altKey || e.metaKey || e.ctrlKey) return;
-        if (e.key === "Home" || e.key === "End") {
-          e.preventDefault();
-          const siblings = e.currentTarget.closest('[role="tablist"]')?.querySelectorAll<HTMLElement>('[role="tab"]');
-          const target = siblings?.[e.key === "Home" ? 0 : siblings.length - 1]?.dataset.surfaceId;
-          if (target) execute("surface.activate", { surfaceId: target });
-        } else if (e.key === "Delete" || e.key === "Backspace") {
-          e.preventDefault();
-          execute("surface.close", { surfaceId: id });
-        } else if (e.key === (vertical ? "ArrowUp" : "ArrowLeft")) {
-          e.preventDefault();
-          execute("surface.tab-prev");
-        } else if (e.key === (vertical ? "ArrowDown" : "ArrowRight")) {
-          e.preventDefault();
-          execute("surface.tab-next");
+        if (e.key === "Delete" || e.key === "Backspace") {
+          e.preventDefault(); execute("surface.close", {surfaceId:id});
         }
       }}
       onDragStart={(e) => {

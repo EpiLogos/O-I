@@ -659,10 +659,6 @@ html, body, #root, .desktop-shell { overflow: clip; }
 .desktop-shell[data-mode="techne"] .desktop-side.right {
   position: absolute; inset: 0 0 0 auto; width: var(--desktop-right-width) !important; z-index: var(--oi-z-drawer);
 }
-/* The row spacer reserves the centre's room only under that floating canvas
-   panel; the in-flow component-mode panel takes its room itself. */
-.desktop-shell[data-mode="expressions"] .desktop-regions::after,
-.desktop-shell[data-mode="techne"] .desktop-regions::after { width: var(--desktop-right-space, 0px); }
 .desktop-shell .desktop-side.right[data-overlay="true"] {
   position: absolute; inset: 0 0 0 auto; width: var(--desktop-right-width) !important; z-index: var(--oi-z-drawer);
 }
@@ -702,24 +698,13 @@ html, body, #root, .desktop-shell { overflow: clip; }
 /* The surface host carried horizontal padding that inset the canvas — removed. */
 .desktop-shell .desktop-centre .surface-host { padding-left: 0; padding-right: 0; }
 .shell-topbar { position: relative; z-index: calc(var(--oi-z-drawer) + 1); }
-/* The sidebar PLANE tucks under the window chrome (same -24px the centre
-   uses), and the content fills the plane exactly — the content div's box
-   matches the full-height sidebar, no nested mismatched dimensions. */
-.desktop-shell .desktop-side.left.depth-panel,
-.desktop-shell .desktop-side.left.depth-full,
-.desktop-shell .desktop-side.right.depth-panel,
-.desktop-shell .desktop-side.right.depth-full { margin-top: -24px; }
-.desktop-shell .desktop-side > .desktop-side-content { margin-top: 0; padding-top: 30px; height: 100%; background: transparent; }
+/* Regions start at the window edge; only the left content reserves native controls. */
+.desktop-shell .desktop-side > .desktop-side-content { margin-top: 0; padding-top: 0; height: 100%; background: transparent; }
 /* Native macOS vibrancy (tauri windowEffects sidebar): the document is
    transparent inside Tauri so the real frosted material behind the window
    shows through; outside Tauri the shell ground stays as fallback. */
 html.tauri, html.tauri body { background: transparent; }
 html.tauri .desktop-shell { background-color: transparent; }
-/* The agent plane reaches full height exactly like the centre card. */
-.desktop-shell .desktop-side.right.depth-panel,
-.desktop-shell .desktop-side.right.depth-full { margin-top: -24px; }
-.desktop-shell[data-mode="expressions"] .desktop-side.right,
-.desktop-shell[data-mode="techne"] .desktop-side.right { inset: -24px 0 0 auto; }
 /* The two region toggles: slightly smaller bubbles. */
 .shell-topbar .shell-region-toggle { width: 21px; height: 21px; min-width: 21px; min-height: 21px; padding: 0; }
 

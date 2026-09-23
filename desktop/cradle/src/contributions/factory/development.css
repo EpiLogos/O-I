@@ -21,8 +21,8 @@
 .factory-development-header{padding:0;min-height:56px}
 .factory-development-header h2{margin:0;font-size:var(--oi-shell-type-body);font-weight:550}
 .factory-development-header small{white-space:normal;line-height:1.45;max-width:78ch;color:var(--oi-muted-2)}
-.factory-development-nav{display:inline-flex;max-width:100%;overflow-x:auto;scrollbar-width:none}
-.factory-development-nav::-webkit-scrollbar{display:none}
+.factory-development-nav{display:inline-flex;max-width:100%;overflow-x:auto;}
+
 
 /* A titled band: tinted head strip, uppercase eyebrow title left, a status
  * caption right — the same construction every section head repeats. */

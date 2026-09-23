@@ -5,6 +5,7 @@ import {ExpressionVerso} from "./ExpressionVerso";
 import {ShareProjection} from "../explore/ShareProjection";
 import {EXPRESSION_EDITOR_ACTOR as ACTOR,exportExpressionCopy,useExpressionApplication} from "./useExpressionApplication";
 import {ExpressionEntityInspector,ExpressionPedagogy,ExpressionRefinementReview,ExpressionReviewedDecisions} from "./parts";
+import {IconTab, IconTabStrip} from "../workspace/primitives/IconTabStrip";
 import "./expression.css";
 
 /** The Expression composer (Settings → Compose; the agent panel's Composition
@@ -68,7 +69,7 @@ export function ExpressionView({initialExpressionRef}:{initialExpressionRef?:str
    {presenting&&face==="verso"&&<ExpressionVerso document={document}
      onInvokeAction={(entityRef,actionRef)=>void run({operation:"invoke",expression_ref:document.expression_ref,expected_revision:document.revision,entity_ref:entityRef,action_ref:actionRef,input:null,project:null})}
      onOpenRef={entityRef=>{void edit([{change:"focus",scene_ref:document.selection.scene_ref,entity_ref:entityRef}]);setFace("front");}}/>}
-   <nav className="expression-scenes oi-plane-nav" aria-label="Expression scenes">{document.scenes.map(s=><button key={s.scene_ref} aria-pressed={s.scene_ref===document.selection.scene_ref} onClick={()=>void edit([{change:"focus",scene_ref:s.scene_ref,entity_ref:null}])}>{s.title}</button>)}<button className="oi-tool expression-add" aria-label="Add scene" title="Add scene" disabled={pending} onClick={()=>void edit([{change:"scene_create",scene_ref:`${document.expression_ref}:scene:${crypto.randomUUID()}`,title:`Scene ${document.scenes.length+1}`}])}>+</button></nav>
+   <IconTabStrip className="expression-scenes" aria-label="Expression scenes">{document.scenes.map(scene=><IconTab key={scene.scene_ref} label={scene.title} icon="field" selected={scene.scene_ref===document.selection.scene_ref} onClick={()=>void edit([{change:"focus",scene_ref:scene.scene_ref,entity_ref:null}])}/>)}<button className="oi-tool expression-add" aria-label="Add scene" title="Add scene" disabled={pending} onClick={()=>void edit([{change:"scene_create",scene_ref:`${document.expression_ref}:scene:${crypto.randomUUID()}`,title:`Scene ${document.scenes.length+1}`}])}>+</button></IconTabStrip>
    <div className="expression-entities" role="group" aria-label="Expression entities">
     {sceneEntities.map(ref=>{const e=document.entities[ref];return <button key={ref} className="expression-entity" aria-pressed={selected?.entity_ref===ref} onClick={()=>void edit([{change:"focus",scene_ref:document.selection.scene_ref,entity_ref:ref}])}>{e.title}{e.subject?<span className="oi-state">{e.subject.presentation_role} · {e.subject.native_owner}</span>:null}</button>;})}
     <button className="oi-action expression-add" disabled={pending} onClick={()=>void edit([{change:"entity_add",scene_ref:document.selection.scene_ref,entity_ref:`${document.expression_ref}:entity:${crypto.randomUUID()}`,title:`Thing ${Object.keys(document.entities).length+1}`}])}>Add Thing</button>

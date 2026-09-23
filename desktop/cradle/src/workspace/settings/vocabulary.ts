@@ -13,7 +13,7 @@
  * an identifier reach the page.
  */
 
-import type {EffectKind, ReconciliationStatus, ScopeKind} from "../../../configuration/contracts";
+import type {EffectKind, ReconciliationStatus, ScopeKind} from "../../configuration/contracts";
 
 // ---------------------------------------------------------------------------
 // names

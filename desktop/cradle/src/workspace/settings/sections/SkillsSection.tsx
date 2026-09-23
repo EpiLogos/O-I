@@ -7,7 +7,7 @@
  * scope); the effect is "Next session only". A scope the owner will not
  * address from here says so in one sentence, in the owner's words.
  */
-import {useEffect, useState, useSyncExternalStore} from "react";
+import {useEffect, useRef, useState, useSyncExternalStore} from "react";
 import type {ScopeAddress} from "../../../configuration/contracts";
 import {useScope, scopeProject, scopeLabel as scopeWord} from "../../scope";
 import {groupSkills, skillParts, titleCase, type SkillItem} from "../sectionModel";
@@ -77,6 +77,8 @@ export function SkillsSection({data}: {data: SettingsSnapshot}) {
   const [detail, setDetail] = useState<SkillItem | null>(null);
   const [open, setOpen] = useState<Record<string, boolean>>({});
   const [error, setError] = useState<string | null>(null);
+  const [pending, setPending] = useState<Record<string, boolean>>({});
+  const pendingVersions = useRef<Record<string, number>>({});
   useEffect(() => { if (address) void watchSkillScope(address); }, [address?.scope_kind, address?.scope_ref]); // eslint-disable-line react-hooks/exhaustive-deps
   if (data.suite.state === "reading") return <Reading/>;
   if (data.suite.state === "failed") return <Unreadable error={data.suite.error} onRetry={() => void refreshAll()}/>;
@@ -96,8 +98,17 @@ export function SkillsSection({data}: {data: SettingsSnapshot}) {
   const canToggle = !!address && writable && !refused && !!resolution;
   const toggle = (item: SkillItem, next: boolean) => {
     if (!address) return;
+    const key = `${resolutionKey(CAPABILITIES_REF, address)}|${item.id}`;
+    const version = (pendingVersions.current[key] ?? 0) + 1;
+    pendingVersions.current[key] = version;
     setError(null);
-    void stageSkill(address, item.id, next).catch((cause) => setError(String(cause instanceof Error ? cause.message : cause)));
+    setPending((held) => ({...held, [key]: next}));
+    void stageSkill(address, item.id, next)
+      .catch((cause) => { if (pendingVersions.current[key] === version) setError(String(cause instanceof Error ? cause.message : cause)); })
+      .finally(() => {
+        if (pendingVersions.current[key] !== version) return;
+        setPending((held) => { const remaining = {...held}; delete remaining[key]; return remaining; });
+      });
   };
   return <div className="settings-skills" data-skills-panel data-skill-scope-current={scope}>
     <p className="settings-muted" data-skills-summary>{active} of {items.length} active{project ? ` for ${scopeWord(worldScope)}` : ""}. Changes apply to the next session.</p>
@@ -114,7 +125,8 @@ export function SkillsSection({data}: {data: SettingsSnapshot}) {
         </button>
         {isOpen && list.map((item) => {
           const staged = Object.prototype.hasOwnProperty.call(held, item.id);
-          const on = staged ? held[item.id] === true : item.active;
+          const pendingKey = address ? `${resolutionKey(CAPABILITIES_REF, address)}|${item.id}` : "";
+          const on = pending[pendingKey] ?? (staged ? held[item.id] === true : item.active);
           const change = changes.find((candidate) => candidate.capability?.id === item.id);
           const rowId = address ? skillRowId(address, item.id) : `skill:${item.id}`;
           return <div key={item.id} className={`settings-skill${staged ? " is-changed" : ""}`} data-settings-row={rowId} data-skill-row data-skill={item.id} data-active={item.active ? "true" : "false"} data-changed={staged ? "true" : undefined}>

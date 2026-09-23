@@ -10,7 +10,7 @@ import {openObject} from "../objects/registry";
  * idle ○, working ● (breathing only while a turn is actually in flight),
  * needs you !, unavailable × — and, while Bypass permissions is on, a small
  * shield. Its menu lists the agents available in the current scope from the
- * real roster (agency/roster.ts), Nara while the Epi-Logos lens is on, then
+ * real roster (agency/roster.ts), then
  * Agent details and New agent… (the Agency surface's own creation route).
  */
 export type PanelPresence="idle"|"working"|"attention"|"unavailable";
@@ -24,12 +24,9 @@ export function Avatar({agent,size="sm"}:{agent:{name:string;image?:string};size
  return <span className="panel-avatar" data-size={size} aria-hidden="true">{agent.image?<img src={agent.image} alt=""/>:monogramOf(agent.name)}</span>;
 }
 
-export function AvatarMenu({agent,presence,bypass,roster,lens,onChoose,chosenRef,naraChosen,onChooseNara,onOpen}:{
+export function AvatarMenu({agent,presence,bypass,roster,onChoose,chosenRef,onOpen}:{
  agent:PanelAgent;presence:PanelPresence;bypass?:boolean;roster:RosterReading;
- /** The Epi-Logos lens is on: Nara joins the menu. */
- lens:boolean;
  onChoose:(agent:RosterAgent)=>void;chosenRef?:string;
- naraChosen?:boolean;onChooseNara?:()=>void;
  /** The menu opened: the roster is wanted now. */
  onOpen?:()=>void;
 }) {
@@ -57,7 +54,6 @@ export function AvatarMenu({agent,presence,bypass,roster,lens,onChoose,chosenRef
    <Glyph name="down" size={9}/>
   </button>
   {open&&<div className="oi-menu avatar-menu-list" role="menu" aria-label="Agents in this scope">
-   {lens&&onChooseNara&&<><p className="avatar-menu-section">Epi-Logos</p><button type="button" role="menuitemradio" aria-checked={!!naraChosen} className="avatar-menu-row" title="Nara — the Epi-Logos body new conversations open with while the lens is on" onClick={()=>{setOpen(false);onChooseNara();}}><Avatar agent={{name:"Nara"}}/><span className="avatar-menu-name">Nara</span>{naraChosen&&<Glyph name="check" size={11}/>}</button></>}
    {roster.state==="reading"&&!roster.agents.length&&<p className="avatar-menu-note-line" role="status">Reading agents…</p>}
    {roster.state==="error"&&<p className="avatar-menu-note-line" role="alert">Couldn&apos;t load agents. <button type="button" className="oi-action" onClick={roster.retry}>Retry</button></p>}
    {working.length>0&&<><p className="avatar-menu-section">Working with you</p>{working.map(row)}</>}

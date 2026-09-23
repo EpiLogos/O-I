@@ -15,7 +15,7 @@
  * standing document and selection live in `wikiProjectionStore.ts` — the
  * one relation/selection state. This body is the only kernel actor (open,
  * focus, drift handling) and writes every result back to the store; the
- * Technè left body's LIST/TREE/GRAPH apertures and the Expressions graph
+ * Technè left body's tree and the Expressions graph
  * navigator render the SAME state and ask for selection through it, and
  * this body's selection is theirs (the bidirectional law): a sidebar click
  * consumes as a kernel focus edit here, and a focus here highlights the
@@ -46,6 +46,7 @@
  * default and the projection is one deliberate step in.
  */
 import {useCallback, useEffect, useMemo, useRef, useState} from "react";
+import {IconTab, IconTabStrip} from "../workspace/primitives/IconTabStrip";
 import type {SurfaceBinding} from "../surface/types";
 import {useKernel} from "../kernel/KernelProvider";
 import {kernelOp} from "../kernel/bridge";
@@ -490,17 +491,15 @@ function WikiTransport({document, projection, onFocus, onOpenKnowledge, onRelati
   const scheme = selectedConstellation?.scheme;
 
   return <div className="wx-transport">
-    <nav className="wx-scenes oi-plane-nav" aria-label="The local whole's scenes">
+    <IconTabStrip className="wx-scenes" aria-label="The local whole's scenes">
       {document.scenes.map(scene => {
         const entry = constellationByScene.get(scene.scene_ref);
-        return <button key={scene.scene_ref} type="button" aria-pressed={scene.scene_ref === document.selection.scene_ref}
+        return <IconTab key={scene.scene_ref} label={scene.title} icon="field" selected={scene.scene_ref === document.selection.scene_ref}
             data-scene-ref={scene.scene_ref} data-scheme={entry?.scheme}
             title={entry ? `${entry.title} — ${entry.scheme === "ql-constellation" ? "QL constellation layout, warranted by the wiki's own positions" : "radial presentation — the wiki declares no positional warrant"}` : scene.title}
-            onClick={() => onFocus(scene.scene_ref, null)}>
-          {scene.title}
-        </button>;
+            onClick={() => onFocus(scene.scene_ref, null)}/>;
       })}
-    </nav>
+    </IconTabStrip>
     <div className="wx-entities" role="group" aria-label="This scene's entities">
       {(selectedScene?.entity_refs ?? []).map(ref => {
         const entity = document.entities[ref];

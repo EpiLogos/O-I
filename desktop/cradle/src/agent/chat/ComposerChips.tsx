@@ -2,6 +2,7 @@ import {useEffect,useRef,useState,type ReactNode} from "react";
 import {Glyph} from "../../workspace/Glyph";
 import type {NativeModelActions} from "../../encounter/NativeModelControls";
 import type {NativeModelState} from "../../encounter/nativeModel";
+import {modelChoices,modelSelectionReason} from "./modelPresentation";
 import {modeChipLabel,modeClass,modeLabel,orderedModes,type NativeModeState} from "../../encounter/nativeMode";
 import {HarnessPicker,type HarnessPickerProps} from "./HarnessPicker";
 import {harnessChip,harnessVariant,type ConnectionFacts} from "./harness";
@@ -53,7 +54,7 @@ export function ModeChip({mode,agentName,onSelect,disabled,turnRunning}:{mode:Na
   setOpen(false);setConfirming(undefined);if(id!==current?.id)onSelect(id);
  };
  return <div className="chat-chip-host" ref={host} data-chip-host="mode">
-  <Chip chip="mode" label={current?modeChipLabel(current):observation.current_mode_id} title={`Permission mode — ${current?modeLabel(current):observation.current_mode_id}${mode.phase==="selecting"?" (changing…)":""}`} open={open} onToggle={()=>{setConfirming(undefined);setOpen(value=>!value);}} marked={bypass} icon={bypass?<ShieldMark/>:undefined}>
+  <Chip chip="mode" label={current?modeChipLabel(current):"Permission mode"} title={`Permission mode — ${current?modeLabel(current):"Not disclosed"}${mode.phase==="selecting"?" (changing…)":""}`} open={open} onToggle={()=>{setConfirming(undefined);setOpen(value=>!value);}} marked={bypass} icon={bypass?<ShieldMark/>:undefined}>
    {confirming
     ?<div className="chat-bypass-confirm" role="alertdialog" aria-label="Turn on Bypass permissions">
       <p>Bypass permissions lets {agentName} edit files and run commands without asking you first, from its next action.</p>
@@ -91,17 +92,19 @@ export function ModelChip({model,actions,disabled}:{model:NativeModelState;actio
  const {open,setOpen,host}=useMenu();
  useEffect(()=>{if(model.phase==="unread")void actions.refresh();},[actions,model.phase]);
  const observation=model.reading?.model_observation;
- if(!observation?.current_model_id)return null;
- const current=observation.available_models.find(option=>option.modelId===observation.current_model_id);
+ const options=modelChoices(observation?.available_models??[]);
+ const current=options.find(option=>option.modelId===observation?.current_model_id);
+ const reason=modelSelectionReason(model,disabled);
+ const label=current?.name??"Model unavailable";
  const writable=model.phase==="ready"&&model.reading?.model_controls?.model_selection===true&&!disabled;
  const pinned=model.reading?.pinned_model_id;
  return <div className="chat-chip-host" ref={host} data-chip-host="model">
-  <Chip chip="model" label={current?.name??observation.current_model_id} title={`Model — ${current?.name??observation.current_model_id}${model.phase==="unknown"?" (change unconfirmed)":""}`} open={open} onToggle={()=>setOpen(value=>!value)} marked={model.phase==="unknown"}>
-   {observation.available_models.map(option=><button key={option.modelId} type="button" role="menuitemradio" aria-checked={option.modelId===observation.current_model_id} className="oi-menu-item chat-model-item" disabled={!writable||(!!pinned&&option.modelId!==pinned)} title={option.description} onClick={()=>{setOpen(false);if(option.modelId!==observation.current_model_id)void actions.select(option.modelId);}}>
-    <span>{option.name}</span>{option.modelId===observation.current_model_id&&<Glyph name="check" size={11}/>}
+  <Chip chip="model" label={label} title={`Model — ${label}${reason?` · ${reason}`:""}${model.phase==="unknown"?" (change unconfirmed)":""}`} open={open} onToggle={()=>setOpen(value=>!value)} marked={model.phase==="unknown"}>
+   {options.map(option=><button key={option.modelId} type="button" role="menuitemradio" aria-checked={option.modelId===observation?.current_model_id} className="oi-menu-item chat-model-item" disabled={!writable||(!!pinned&&option.modelId!==pinned)} title={option.description} onClick={()=>{setOpen(false);if(option.modelId!==observation?.current_model_id)void actions.select(option.modelId);}}>
+    <span>{option.name}</span>{option.modelId===observation?.current_model_id&&<Glyph name="check" size={11}/>}
    </button>)}
-   {!observation.available_models.length&&<p className="oi-note chat-chip-note">The harness lists no other models.</p>}
-   {model.reading&&!model.reading.model_controls?.model_selection&&<p className="oi-note chat-chip-note">{model.reading.model_controls?.reason??"This harness does not let its model be changed here."}</p>}
+   {!options.length&&<p className="oi-note chat-chip-note">The harness lists no other models.</p>}
+   {reason&&<p className="oi-note chat-chip-note">{reason}</p>}
    {model.error&&<p className="oi-refusal chat-chip-note" role="alert">{model.error}</p>}
    {(model.phase==="unknown"||model.phase==="unavailable")&&<button type="button" role="menuitem" className="oi-menu-item" onClick={()=>void actions.refresh()}>Read the session again</button>}
    {model.confirmed&&!model.error&&<p className="oi-note chat-chip-note" role="status">Set for this session. No model turn has run on it yet.</p>}

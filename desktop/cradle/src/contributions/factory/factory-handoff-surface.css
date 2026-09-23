@@ -4,7 +4,7 @@
 .desk-handoff-surface{ display: flex; flex-direction: column; gap: 10px; }
 .desk-handoff-toolbar button{ min-height: 27px; padding: 4px 9px; color: var(--oi-foreground); background: transparent; border: var(--oi-shell-edge) solid var(--oi-hairline-soft); border-radius: 6px; font: inherit; font-size: var(--oi-shell-type-nav); cursor: pointer; }
 .desk-handoff-toolbar button:disabled{ opacity: .55; cursor: default; }
-.desk-handoff-error{ margin: 0; color: var(--desk-error, #a3352b); font-size: var(--oi-shell-type-nav); line-height: 1.5; }
+.desk-handoff-error{ margin: 0; color: var(--oi-status-error); font-size: var(--oi-shell-type-nav); line-height: 1.5; }
 .desk-handoff-unavailable{ display: grid; gap: 6px; padding: 10px 12px; border: var(--oi-shell-edge) dashed var(--oi-hairline-soft); border-radius: 10px; }
 .desk-handoff-unavailable p{ margin: 0; color: var(--oi-muted-2); font-size: var(--oi-shell-type-nav); line-height: 1.5; }
 .desk-handoff-standing{ color: var(--oi-muted-2); font-size: var(--oi-shell-type-nav); line-height: 1.5; }
@@ -22,7 +22,7 @@
 .desk-handoff-missing{ margin: 0; color: var(--oi-muted-2); font-size: var(--oi-shell-type-nav); }
 .desk-handoff-evidence{ display: grid; gap: 7px; margin: 0; padding: 0; list-style: none; }
 .desk-handoff-evidence li{ display: grid; gap: 4px; padding: 9px 10px; border: var(--oi-shell-edge) solid var(--oi-hairline-soft); border-radius: 8px; }
-.desk-handoff-evidence li[data-standing="failed"]{ border-color: color-mix(in srgb, var(--desk-error, #a3352b) 45%, transparent); }
+.desk-handoff-evidence li[data-standing="failed"]{ border-color: color-mix(in srgb, var(--oi-status-error) 45%, transparent); }
 .desk-handoff-evidence strong{ font-size: var(--oi-shell-type-nav); font-weight: 550; }
 .desk-handoff-evidence span{ font-size: var(--oi-shell-type-ui); color: var(--oi-muted-2); }
 .desk-handoff-evidence p{ margin: 0; color: var(--oi-muted-2); font-size: var(--oi-shell-type-nav); line-height: 1.5; }

@@ -736,6 +736,10 @@ impl ConfigSurface for KernelSurface {
         self.build_resolution(setting_ref, scope, held.as_ref())
     }
 
+    fn resolve_many(&self, pairs: &[(String, Scope)]) -> Vec<SurfaceResult<Resolution>> {
+        self.transport.with_reading_batch(|| pairs.iter().map(|(setting, scope)| self.resolve(setting, scope)).collect())
+    }
+
     fn resolve_entry(&self, entry: &DesiredEntry) -> SurfaceResult<Resolution> {
         let held = HeldDesired {
             entry: entry.clone(),
@@ -753,12 +757,11 @@ impl ConfigSurface for KernelSurface {
     }
 
     fn diff(&self) -> SurfaceResult<Vec<Resolution>> {
-        self.composed_desired()?
-            .iter()
-            .map(|held| {
+        self.transport.with_reading_batch(|| {
+            self.composed_desired()?.iter().map(|held| {
                 self.build_resolution(&held.entry.setting_ref, &held.entry.scope, Some(held))
-            })
-            .collect()
+            }).collect()
+        })
     }
 
     fn assemble(

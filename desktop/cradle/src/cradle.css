@@ -857,17 +857,6 @@
 .source-view-toggle {
   margin-right: 8px;
 }
-.editor-frame .editor-command-line .source-view-toggle > button {
-  height: calc(var(--oi-shell-segment) - 6px);
-  padding: 0 8px;
-  border-radius: var(--oi-shell-radius-row);
-  font-size: var(--oi-shell-type-ui);
-}
-.editor-frame .editor-command-line .source-view-toggle > button[aria-selected="true"] {
-  color: var(--oi-accent-ink);
-  background: var(--oi-wash);
-  box-shadow: inset 0 0 0 1px var(--oi-hairline);
-}
 
 .die-face-unavailable,
 .die-face-loading {

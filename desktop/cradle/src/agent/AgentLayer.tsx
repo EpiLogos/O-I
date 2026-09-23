@@ -1,3 +1,4 @@
+import {useChosenAgent} from "../agency/selection";
 import {canonicalPlane} from "../workspace/planeRegistry";
 import {lazy,Suspense,useCallback,useEffect,useMemo,useRef,useState, type ReactNode} from "react";
 // The Expression composer reaches the engine projection; it loads with the Composition plane, not with the agent layer.
@@ -10,8 +11,6 @@ const ChatPreviewDev=import.meta.env.DEV
 import {useKernel} from "../kernel/KernelProvider";
 import {MODE_CURATION,type WorkspaceMode} from "../workspace/mode";
 import {useScope,scopeProject} from "../workspace/scope";
-import {useEpiLens} from "../workspace/lens";
-import {EPI_PRIME_QL_BODY_REF} from "../workspace/agentBody";
 import type {EncounterRow} from "../encounter/EncounterList";
 import {expressionReadingOf,useEncounterSession} from "../encounter/session";
 import {modeClass} from "../encounter/nativeMode";
@@ -100,14 +99,11 @@ export interface AgentLayerProps {
 /** Built-in planes whose bodies the panel owns; stay mounted once visited. */
 const BUILT_IN:Record<string,string>={Chat:"Chat",Activity:"Activity",Agents:"Agents"};
 const KEPT_PLANES=["Chat","Activity","Agents"] as const;
-const CHOSEN_KEY="oi-panel-agent.v1";
-const readChosen=():Record<string,string>=>{try{return JSON.parse(localStorage.getItem(CHOSEN_KEY)??"{}") as Record<string,string>;}catch{return {};}};
 
 export function AgentLayer({project:projectProp, subject, accompanying, onAccompanying, full, onFull, mode="base", extraPlanes, preferredBodyRef, plane: controlledPlane, onPlane, onError, onOpenConversation, onBringBack, onOpenSubject, resolveSurface}: AgentLayerProps) {
   const kernel = useKernel();
   const curation = MODE_CURATION[mode].panel;
   const scope = useScope();
-  const lens = useEpiLens();
   const project = projectProp ?? scopeProject(scope);
   // --- developer preview ----------------------------------------------------
   const [preview,setPreview]=useState(false);
@@ -231,9 +227,7 @@ export function AgentLayer({project:projectProp, subject, accompanying, onAccomp
   },[]);
 
   // --- who: the roster, the chosen agent, the presence ----------------------
-  const scopeKey=project??"";
-  const [chosenRefs,setChosenRefs]=useState<Record<string,string>>(readChosen);
-  const chosenRef=chosenRefs[scopeKey];
+  const [chosenRef,setChosenRef]=useChosenAgent(project);
   // Read the roster only once it is needed: the Agents tab, the avatar menu,
   // or a chosen agent to name.
   const [rosterWanted,setRosterWanted]=useState(false);
@@ -243,9 +237,8 @@ export function AgentLayer({project:projectProp, subject, accompanying, onAccomp
   // created elsewhere (Agency, another window) appear without a restart.
   const reread=roster.retry;
   useEffect(()=>{if(plane==="Agents"&&rosterWanted)reread();},[plane,reread,rosterWanted]);
-  const chooseAgent=(agent:RosterAgent)=>setChosenRefs(held=>{const next={...held,[scopeKey]:agent.ref};try{localStorage.setItem(CHOSEN_KEY,JSON.stringify(next));}catch{/* per-viewer convenience */}return next;});
+  const chooseAgent=(agent:RosterAgent)=>setChosenRef(agent.ref);
   const chosen=roster.agents.find(agent=>agent.ref===chosenRef);
-  const naraChosen=lens.on&&(preferredBodyRef===EPI_PRIME_QL_BODY_REF);
   const identity=useAgentIdentity("World",!chosen);
   const agent:PanelAgent=chosen?{name:chosen.name,ref:chosen.ref,purpose:chosen.purpose}:{name:identity.state==="read"?identity.name:"World",image:identity.image,ref:undefined};
   const status=sessionState?.status;
@@ -269,8 +262,7 @@ export function AgentLayer({project:projectProp, subject, accompanying, onAccomp
   const lastSeen=sessionState?.reconnecting?.lastSeenAt;
   return <section ref={host} className="agent-layer" aria-label="Accompanying agent" data-full={full} data-mode={mode} data-plane={plane} data-presence={presence} data-agent-session-ref={expression.agentSessionRef} data-owner-state={expression.state} data-owner-activity-block={expression.latestOwnerActivity?.blockId}>
     <PanelTop tabs={nav} current={plane} onSelect={id=>{setDetail(undefined);if(id==="Activity"&&plane!=="Activity")setFollowToken(token=>token+1);select(id);}} full={full} onFull={onFull} onPromote={accompanying&&!promoted&&!curation.conversationInCentre&&onOpenConversation?()=>onOpenConversation(accompanying):undefined}
-      avatar={<AvatarMenu onOpen={()=>setRosterWanted(true)} agent={agent} presence={presence} bypass={bypass} roster={roster} lens={lens.on} chosenRef={chosenRef} onChoose={chooseAgent} naraChosen={naraChosen}
-        onChooseNara={lens.on?()=>setChosenRefs(held=>{const next={...held};delete next[scopeKey];try{localStorage.setItem(CHOSEN_KEY,JSON.stringify(next));}catch{/* convenience */}return next;}):undefined}/>}/>
+      avatar={<AvatarMenu onOpen={()=>setRosterWanted(true)} agent={agent} presence={presence} bypass={bypass} roster={roster} chosenRef={chosenRef} onChoose={chooseAgent}/>}/>
     {lastSeen!==undefined&&<span className="panel-reconnect" role="status" aria-label="Reconnecting — draft kept" title="Reconnecting — draft kept"/>}
     {sessionState?.unreachable&&<p className="panel-line" role="status" data-line="unreachable">Agents aren&apos;t reachable here right now. Your files, flows and this draft still work here.</p>}
     {bypass&&plane==="Chat"&&!promoted&&<p className="panel-line panel-bypass" role="status" data-line="bypass">Bypass permissions is on for this session: {agent.name} acts without asking. <button type="button" className="oi-action" onClick={()=>{const ask=sessionState?.mode.reading?.mode_observation?.available_modes.find(option=>modeClass(option.id)==="ask");if(ask&&session)void session.actions.selectMode(ask.id);}}>Back to Ask</button></p>}
@@ -282,7 +274,7 @@ export function AgentLayer({project:projectProp, subject, accompanying, onAccomp
         return <div key={name} className="agent-plane-host" hidden={hidden} style={hidden?{display:"none"}:undefined}>
           {name==="Chat"&&(promoted&&accompanying
             ?<p className="panel-promoted" data-line="promoted"><span>Open in the centre</span> — <button type="button" className="oi-action" onClick={()=>onBringBack?.(accompanying)}>Bring back</button></p>
-            :<AgentChat variant="plane" session={session} accompanying={accompanying} project={project??accompanying?.project} agentName={agent.name} situating="" sessionTitle={accompanying?titles[accompanying.ref]:undefined} choosing={choosing}
+            :<AgentChat variant="plane" session={session} accompanying={accompanying} project={project??accompanying?.project} agentName={agent.name} identity={chosen?{name:chosen.name,ref:chosen.ref,description:chosen.purpose,state:"read"}:undefined} situating="" sessionTitle={accompanying?titles[accompanying.ref]:undefined} choosing={choosing}
             subject={{title:subject.title,location:subject.location}} resolveSurface={resolveSurface} onMessage={onError??(message=>console.error(message))}
             tape={tape} onOpenActivity={offered.some(entry=>entry.id==="Activity")?openActivity:undefined} connectionFacts={connectionFacts} onArtifact={path=>void openArtifact(path)}
             onNewChat={()=>onAccompanying(undefined)} onChoose={choose}

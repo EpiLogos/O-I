@@ -16,7 +16,7 @@ use std::sync::Mutex;
 
 use oi_cradle_kernel::events::{KernelEventReceipt, KERNEL_EVENT_TOPIC};
 use oi_cradle_kernel::{Kernel, KernelOp, KernelOpOutcome};
-use tauri::{AppHandle, Emitter, Manager, State};
+use tauri::{AppHandle, Emitter, Manager};
 
 pub(crate) struct KernelHost(pub(crate) Mutex<Kernel>);
 
@@ -47,9 +47,15 @@ async fn kernel_op(app: AppHandle, op: KernelOp) -> Result<KernelOpOutcome, Stri
 /// command the renderer bootstraps from and re-syncs through; the topic
 /// event is the push that says "look again".
 #[tauri::command]
-fn kernel_event_log(host: State<KernelHost>, since_seq: u64) -> Vec<KernelEventReceipt> {
-    let kernel = host.0.lock().expect("kernel mutex");
-    kernel.event_log().since(since_seq.max(1)).to_vec()
+async fn kernel_event_log(app: AppHandle, since_seq: u64) -> Result<Vec<KernelEventReceipt>, String> {
+    // An owner read can hold this mutex for seconds. Waiting on the main
+    // thread freezes WebKit and native window interaction, even though
+    // kernel_op itself correctly runs on the blocking pool.
+    tauri::async_runtime::spawn_blocking(move || {
+        let host = app.state::<KernelHost>();
+        let kernel = host.0.lock().map_err(|_| "kernel lock unavailable".to_owned())?;
+        Ok(kernel.event_log().since(since_seq.max(1)).to_vec())
+    }).await.map_err(|error| error.to_string())?
 }
 
 fn main() {

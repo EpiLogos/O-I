@@ -13,6 +13,8 @@
 .expression-verso__identity dt { min-width: 0; color: var(--oi-muted-2); font-size: var(--oi-shell-type-nav); }
 .expression-verso__identity dd { margin: 0; overflow-wrap: anywhere; }
 
+/* Scene breakdown apertures — the wiki map's tab grammar. */
+
 .expression-verso__scene-list, .expression-verso__scene-tree { margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 4px; font-size: var(--oi-shell-type-ui); }
 .expression-verso__scene-list li, .expression-verso__scene-branch { display: flex; gap: 8px; align-items: baseline; }
 .expression-verso__scene-list li { flex-wrap: wrap; overflow-wrap: anywhere; }

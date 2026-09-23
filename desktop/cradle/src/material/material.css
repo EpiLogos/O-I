@@ -44,8 +44,16 @@
   color: var(--oi-muted-2);
 }
 
+/* Finding 16: a proper segmented control. It now speaks the shared segment
+ * language (desktop.css `.oi-segment`): a hairline body at
+ * --oi-shell-segment, the selected segment in wash + ink with an inset
+ * edge — the same control as the Source surface's Rendered / Source pair. */
+
 /* `.material-chrome` scoping (two classes) is needed to beat
- * `.desktop-shell button, select, input { color: var(--oi-accent-ink) }
+ * `.desktop-shell button, select, input { color: var(--oi-accent-ink) }`
+ * (shell.css) — a bare `.material-toggle button` ties with it on
+ * specificity and loses on source order, so the unselected segment read
+ * as accent-ink instead of muted. */
 
 .material-body {
   flex: 1;

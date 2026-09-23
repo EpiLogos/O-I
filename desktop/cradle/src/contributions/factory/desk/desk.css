@@ -13,10 +13,10 @@
 
 /* status hues: the same scheme-following pairs the build surface pins */
 .factory-centre{
-  --desk-ok: light-dark(#256b42, #69c489);
-  --desk-error: light-dark(#a3352b, #ef8179);
-  --desk-running: light-dark(#28619b, #79b8f3);
-  --desk-warn: light-dark(#745814, #d7b66a);
+  --desk-ok: var(--oi-status-success);
+  --desk-error: var(--oi-status-error);
+  --desk-running: var(--oi-status-running);
+  --desk-warn: var(--oi-status-warning);
 }
 
 /* ===========================================================================

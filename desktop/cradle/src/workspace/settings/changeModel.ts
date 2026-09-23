@@ -17,7 +17,7 @@ import type {ChangeRequest} from "../../configuration/source";
 import {effectiveChatDefault} from "../../configuration/harnessSource";
 import {briefValue, effectInWords, onOff} from "./sectionModel";
 import {
-  expect, loadResolutions, loadSuite, plain, plane, resolutionKey, settingsSnapshot, stageDefaultConnection, watchPairsQuietly,
+  expect, invalidateComposition, invalidateResolutions, loadResolutions, loadSuite, plain, plane, refreshResolution, resolutionKey, settingsSnapshot, stageDefaultConnection, watchPairsQuietly,
   type SettingsSnapshot,
 } from "./settingsData";
 import type {SettingsPlace} from "./settingsNav";
@@ -152,15 +152,27 @@ export function stagedChanges(data: SettingsSnapshot): StagedChange[] {
 async function hold(request: ChangeRequest): Promise<void> {
   const source = await plane();
   await source.holdDesired(request);
+  invalidateResolutions(request.setting_ref, request.scope);
 }
 async function discard(setting_ref: string, scope: ScopeAddress): Promise<void> {
   const source = await plane();
   await source.discardDesired(setting_ref, scope);
+  invalidateResolutions(setting_ref, scope);
 }
 
 /** Stage one skill on/off at a scope: the scope's held toggle map gains (or,
  * when it returns to what the owner already has, loses) this capability. */
-export async function stageSkill(scope: ScopeAddress, id: string, enabled: boolean): Promise<void> {
+const skillWrites = new Map<string, Promise<void>>();
+export function stageSkill(scope: ScopeAddress, id: string, enabled: boolean): Promise<void> {
+  const key = resolutionKey(CAPABILITIES_REF, scope);
+  const previous = skillWrites.get(key) ?? Promise.resolve();
+  const next = previous.catch(() => {}).then(() => stageSkillOnce(scope, id, enabled));
+  skillWrites.set(key, next);
+  void next.finally(() => { if (skillWrites.get(key) === next) skillWrites.delete(key); }).catch(() => {});
+  return next;
+}
+
+async function stageSkillOnce(scope: ScopeAddress, id: string, enabled: boolean): Promise<void> {
   const data = settingsSnapshot();
   const resolution = data.resolutions[resolutionKey(CAPABILITIES_REF, scope)];
   const held = (resolution && isStaged(resolution) && resolution.desired?.value && typeof resolution.desired.value === "object" && !Array.isArray(resolution.desired.value))
@@ -172,7 +184,7 @@ export async function stageSkill(scope: ScopeAddress, id: string, enabled: boole
   } else {
     await hold({setting_ref: CAPABILITIES_REF, scope, value: held, secret_reference: null});
   }
-  await loadResolutions();
+  await refreshResolution(CAPABILITIES_REF, scope);
 }
 
 /** Stage any ordinary owner setting (product pages). */
@@ -309,6 +321,8 @@ export async function applyReviewed(reviewed: ReviewedPlan): Promise<ApplyOutcom
     }
     // 4 · read back from the owners (every applied pair is read, staged or not).
     watchPairsQuietly(uniqueRequests(reviewed.changes).map(([, request]) => ({setting_ref: request.setting_ref, scope: request.scope})));
+    invalidateComposition();
+    invalidateResolutions();
     await Promise.all([loadSuite(), loadResolutions()]);
     const after = settingsSnapshot();
     const rows: Record<string, RowResult> = {};

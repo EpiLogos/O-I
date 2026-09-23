@@ -110,7 +110,7 @@ export function WorldNavigator({ onExplore, onOpenEncounter, centralFiles, onCen
     : { kind: "loading", what: "Reading Central…" };
   const refresh = () => { setFileRefresh(n=>n+1); void load(true); };
   const centralChats = useConversations(centralOpen && centralMode === "chats" && root ? "" : undefined, fileRefresh);
-  return <aside className="world-navigator left-world-body" aria-label="World navigator" aria-busy={pending} data-lens={lens.on || undefined}>
+  return <aside className="world-navigator left-world-body oi-scroll" aria-label="World navigator" aria-busy={pending} data-lens={lens.on || undefined}>
     <div className="world-scroll">
     <FileRowDecor.Provider value={decor}>
     <nav className="left-destinations" aria-label="Destinations">

@@ -182,7 +182,7 @@
  * right-aligned subtitle; entries are title-first with the type revealed on
  * hover; content hangs from one hairline rule. No message paragraphs. */
 
-.wiki-map { flex: 1 1 0; min-height: 0; min-width: 0; overflow-y: auto; padding: 2px 6px 12px; font-size: var(--oi-shell-type-nav); color: var(--oi-foreground); }
+.wiki-map { min-width: 0; padding: 2px var(--oi-shell-gutter) 12px; font-size: var(--oi-shell-type-nav); color: var(--oi-foreground); }
 
 .wiki-region-register > summary {
   display: flex; align-items: center; gap: 7px; padding: 6px 6px; border-radius: var(--oi-shell-radius-row);
@@ -198,7 +198,7 @@
 .wiki-region-register > summary:hover { background: var(--oi-wash); }
 
 .wiki-map-name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.wiki-map-count { flex: none; color: var(--oi-muted-2); font-weight: 400; font-size: 10.5px; letter-spacing: .01em; }
+.wiki-map-count { flex: none; color: var(--oi-muted-2); font-weight: 400; font-size: var(--oi-shell-type-meta); letter-spacing: .01em; }
 
 .wiki-open-web {
   flex: none; display: flex; align-items: center; justify-content: center; width: 20px; height: 20px;
@@ -209,31 +209,25 @@
 summary:hover > .wiki-open-web, summary:focus-within > .wiki-open-web, .wiki-space-head:hover > .wiki-open-web { opacity: 1; }
 .wiki-open-web:hover { background: var(--oi-wash-strong); color: var(--oi-accent-ink); }
 
-.wiki-region-body { margin: 1px 0 8px 13px; padding-left: 8px; border-left: 1px solid var(--oi-hairline-soft); }
+.wiki-region-body { margin: 1px 0 8px var(--oi-shell-gutter); padding-left: 0; border-left: 1px solid var(--oi-hairline-soft); }
 
 .wiki-space { margin-top: 6px; }
 .wiki-space:first-child { margin-top: 2px; }
 .wiki-space-head {
   display: flex; align-items: center; gap: 6px; padding: 2px 6px 3px;
-  color: var(--oi-muted-2); font-size: 10.5px; letter-spacing: .05em; text-transform: uppercase;
+  color: var(--oi-muted-2); font-size: var(--oi-shell-type-meta); letter-spacing: .05em; text-transform: uppercase;
 }
 .wiki-space-name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
-.wiki-node-row {
-  display: flex; align-items: center; gap: 6px; width: 100%; padding: 3px 6px; border-radius: var(--oi-shell-radius-row);
-  text-align: left; color: inherit;
-}
-.wiki-node-row:hover { background: var(--oi-wash); color: var(--oi-accent-ink); }
 .wiki-node-title { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .wiki-node-type {
-  flex: none; color: var(--oi-muted-2); font-size: 10px; letter-spacing: .02em;
+  flex: none; color: var(--oi-muted-2); font-size: var(--oi-shell-type-meta); letter-spacing: .02em;
   opacity: 0; transition: opacity var(--oi-motion-ui) var(--oi-motion-ease-out);
 }
 .wiki-node-row:hover .wiki-node-type, .wiki-node-row:focus-visible .wiki-node-type { opacity: 1; }
 
-.wiki-constellation { padding-left: 4px; }
+.wiki-constellation { padding-left: var(--oi-shell-gutter); }
 
-.wiki-map-note { margin: 4px 6px 2px 20px; color: var(--oi-muted-2); font-size: 11px; }
 
 @media (prefers-reduced-motion: reduce) { .wiki-map * { transition: none; } }
 
@@ -265,7 +259,6 @@ summary:hover > .wiki-open-web, summary:focus-within > .wiki-open-web, .wiki-spa
 .wx-stage-host { position: relative; flex: 1; min-inline-size: 0; min-block-size: 0; }
 .wx-stage-off { flex: 1; display: flex; flex-direction: column; align-items: flex-start; justify-content: center; gap: 8px; max-inline-size: 420px; margin: auto; padding: 24px; box-sizing: border-box; }
 .wx-transport { display: flex; flex-direction: column; gap: 6px; padding: 8px 14px 10px; border-block-start: var(--oi-shell-edge) solid var(--oi-hairline-soft); }
-.wx-scenes { display: flex; gap: 4px; flex-wrap: wrap; }
 .wx-entities { display: flex; gap: 4px; flex-wrap: wrap; align-items: center; }
 .wx-entity { display: inline-flex; align-items: baseline; gap: 6px; padding: 3px 8px; border: var(--oi-shell-edge) solid var(--oi-hairline-soft); border-radius: 999px; background: transparent; font: inherit; font-size: var(--oi-shell-type-nav); cursor: pointer; }
 .wx-entity[aria-pressed="true"] { border-color: var(--oi-foreground); }
@@ -290,18 +283,7 @@ summary:hover > .wiki-open-web, summary:focus-within > .wiki-open-web, .wiki-spa
 .tn-m0-material > .tn-material-scene, .tn-m0-material > div { flex: 1; min-block-size: 0; overflow-y: auto; }
 .tn-m0[data-material="none"] { display: block; }
 
-/* ---- The wiki map as an aperture of the ONE Wiki→Expression projection ----
-   (QL-MEF #213: LIST ↔ TREE ↔ GRAPH over one relation/selection state; the
-   selected row is the centre's selection — the #366 bidirectional law.) */
-.wiki-map-apertures {
-  display: flex; align-items: center; gap: 2px; padding: 2px 4px 6px;
-}
-.wiki-map-apertures [role="tab"] {
-  padding: 2px 8px; border-radius: var(--oi-shell-radius-row); color: var(--oi-muted-2);
-  font-size: 10.5px; letter-spacing: .04em; text-transform: uppercase; font-weight: 550;
-}
-.wiki-map-apertures [role="tab"]:hover { background: var(--oi-wash); color: var(--oi-accent-ink); }
-.wiki-map-apertures [role="tab"][aria-selected="true"] { background: var(--oi-wash-strong); color: var(--oi-foreground); }
+/* Shared tree selection follows the centre projection. */
 .wiki-map-here { flex: none; color: var(--oi-accent-ink); font-weight: 700; }
 .wiki-project-register {
   flex: none; display: flex; align-items: center; justify-content: center; width: 20px; height: 20px;
@@ -310,27 +292,9 @@ summary:hover > .wiki-open-web, summary:focus-within > .wiki-open-web, .wiki-spa
 }
 summary:hover > .wiki-project-register, summary:focus-within > .wiki-project-register { opacity: 1; }
 .wiki-project-register:hover { background: var(--oi-wash-strong); color: var(--oi-accent-ink); }
-.wiki-node-row[aria-selected="true"] { background: var(--oi-wash-strong); color: var(--oi-accent-ink); }
 .wiki-node-row[aria-selected="true"] .wiki-node-type { opacity: 1; }
 .wiki-node-whole .wiki-node-title { font-weight: 550; }
-.wiki-space-flat { margin-top: 2px; }
 .wiki-region-register > summary .wiki-project-register[data-register-focus] { opacity: 1; }
-
-/* The GRAPH aperture: the projection's own drawing, small. Same positions,
-   same bound relations — presentation of the document, never a new layout. */
-.wiki-graph { margin: 2px 0 4px; }
-.wiki-graph svg {
-  display: block; width: 100%; aspect-ratio: 1 / 1; border-radius: var(--oi-shell-radius-row);
-  background: var(--oi-wash); border: 1px solid var(--oi-hairline-soft);
-}
-.wiki-graph-relation { stroke: var(--oi-hairline); stroke-width: 0.006; fill: none; }
-.wiki-graph-node { cursor: pointer; }
-.wiki-graph-node circle { fill: var(--oi-wash-strong); stroke: var(--oi-muted-2); stroke-width: 0.008; }
-.wiki-graph-node:hover circle { stroke: var(--oi-accent-ink); }
-.wiki-graph-node[data-selected] circle { fill: var(--oi-accent-ink); stroke: var(--oi-accent-ink); }
-.wiki-graph-node[data-selected] text { fill: var(--oi-active-ink); }
-.wiki-graph-node text { font-size: 0.07px; fill: var(--oi-foreground); pointer-events: none; }
-.wiki-graph figcaption { margin-top: 3px; }
 
 /* ===== the dual-mode surface (owner wayfinder 2026-09-19, PR #387 §11–13)
  * ONE Expressions system, two full-screen operating cuts around the SAME

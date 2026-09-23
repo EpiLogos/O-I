@@ -68,7 +68,7 @@
  *                      track, ink thumb.
  *   .oi-scroll         region scroller: thin thumb that appears on hover /
  *                      focus-within; scrolling never chains.
- *   .oi-scroll-quiet   region scroller with no scrollbar at all (sidebar law).
+ *   .oi-scroll-quiet   compatibility name for the same house scrollbar.
  *   .oi-kbd            right-aligned mono keyboard hint.
  *   .oi-status         one-line panel-foot strip; `data-attention="true"` is
  *                      the ink register; `data-mono="true"` / code for mono.
@@ -301,17 +301,17 @@
 }
 
 /* A dense list row: leading glyph, title, trailing meta/state. */
-.oi-row {
+:is(.oi-row, .left-row, .oi-side-row, .settings-nav-row, .wiki-node-row) {
   position: relative;
   display: flex;
   align-items: center;
-  gap: 7px;
+  gap: var(--oi-row-gap);
   width: 100%;
   min-width: 0;
-  height: var(--oi-shell-row-dense);
+  height: auto;
   min-height: var(--oi-shell-row-dense);
   box-sizing: border-box;
-  padding: 0 8px;
+  padding: 0 var(--oi-row-inset);
   border: 0;
   border-radius: var(--oi-shell-radius-row);
   background: transparent;
@@ -323,9 +323,9 @@
   cursor: pointer;
   transition: background var(--oi-motion-ui) var(--oi-motion-ease-out), color var(--oi-motion-ui) var(--oi-motion-ease-out), box-shadow var(--oi-motion-ui) var(--oi-motion-ease-out);
 }
-.oi-row > svg { flex: none; color: var(--oi-muted-2); transition: color var(--oi-motion-ui) var(--oi-motion-ease-out); }
-.oi-row > .oi-row-title { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.oi-row > .oi-row-meta, .oi-row > small, .oi-row > .oi-state {
+:is(.oi-row, .left-row, .oi-side-row, .settings-nav-row, .wiki-node-row) > svg { flex: none; color: var(--oi-muted-2); transition: color var(--oi-motion-ui) var(--oi-motion-ease-out); }
+:is(.oi-row, .left-row, .oi-side-row, .settings-nav-row, .wiki-node-row) > .oi-row-title { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+:is(.oi-row, .left-row, .oi-side-row, .settings-nav-row, .wiki-node-row) > .oi-row-meta, :is(.oi-row, .left-row, .oi-side-row, .settings-nav-row, .wiki-node-row) > small, :is(.oi-row, .left-row, .oi-side-row, .settings-nav-row, .wiki-node-row) > .oi-state {
   flex: none;
   margin-left: auto;
   font-size: var(--oi-shell-type-meta);
@@ -333,21 +333,22 @@
   color: var(--oi-muted-2);
   white-space: nowrap;
 }
-.oi-row:hover { background: var(--oi-wash); }
-.oi-row:hover > svg { color: var(--oi-accent-ink); }
-.oi-row:active { background: var(--oi-wash-strong); }
-.oi-row[aria-selected="true"],
-.oi-row[aria-current]:not([aria-current="false"]) {
+:is(.oi-row, .left-row, .oi-side-row, .settings-nav-row, .wiki-node-row):hover { background: var(--oi-wash); }
+:is(.oi-row, .left-row, .oi-side-row, .settings-nav-row, .wiki-node-row):hover > svg { color: var(--oi-accent-ink); }
+:is(.oi-row, .left-row, .oi-side-row, .settings-nav-row, .wiki-node-row):active { background: var(--oi-wash-strong); }
+:is(.oi-row, .left-row, .oi-side-row, .settings-nav-row, .wiki-node-row)[aria-selected="true"],
+:is(.oi-row, .left-row, .oi-side-row, .settings-nav-row, .wiki-node-row)[aria-current]:not([aria-current="false"]),
+:is(.oi-row, .left-row, .oi-side-row, .settings-nav-row, .wiki-node-row)[aria-pressed="true"] {
   background: var(--oi-wash);
   box-shadow: inset 2px 0 0 var(--oi-accent);
 }
-.oi-row[aria-selected="true"] > svg,
-.oi-row[aria-current]:not([aria-current="false"]) > svg { color: var(--oi-accent-ink); }
-.oi-row:focus-visible { outline: var(--oi-focus-ring-width) solid var(--oi-accent); outline-offset: calc(0px - var(--oi-focus-ring-width)); }
-.oi-row:disabled, .oi-row[aria-disabled="true"] { color: var(--oi-muted-2); background: transparent; box-shadow: none; cursor: default; opacity: 0.55; }
+:is(.oi-row, .left-row, .oi-side-row, .settings-nav-row, .wiki-node-row)[aria-selected="true"] > svg,
+:is(.oi-row, .left-row, .oi-side-row, .settings-nav-row, .wiki-node-row)[aria-current]:not([aria-current="false"]) > svg { color: var(--oi-accent-ink); }
+:is(.oi-row, .left-row, .oi-side-row, .settings-nav-row, .wiki-node-row):focus-visible { outline: var(--oi-focus-ring-width) solid var(--oi-accent); outline-offset: calc(0px - var(--oi-focus-ring-width)); }
+:is(.oi-row, .left-row, .oi-side-row, .settings-nav-row, .wiki-node-row):disabled, :is(.oi-row, .left-row, .oi-side-row, .settings-nav-row, .wiki-node-row)[aria-disabled="true"] { color: var(--oi-muted-2); background: transparent; box-shadow: none; cursor: default; opacity: 0.55; }
 /* Quiet loading: the content dims, the (static) state label stays legible. */
-.oi-row[data-busy="true"] { cursor: progress; }
-.oi-row[data-busy="true"] > :not(.oi-state):not(.oi-row-meta) { opacity: 0.5; }
+:is(.oi-row, .left-row, .oi-side-row, .settings-nav-row, .wiki-node-row)[data-busy="true"] { cursor: progress; }
+:is(.oi-row, .left-row, .oi-side-row, .settings-nav-row, .wiki-node-row)[data-busy="true"] > :not(.oi-state):not(.oi-row-meta) { opacity: 0.5; }
 
 /* ===== 3. planes and selection ========================================== */
 
@@ -633,24 +634,24 @@
 .oi-sidecar h2 { margin: 0 0 18px; font-size: var(--oi-shell-type-title); font-weight: 500; }
 .oi-sidecar p { overflow-wrap: anywhere; }
 
-/* A region that owns its scrolling: a thin thumb that appears while the
- * region is hovered or holds focus, and scrolling that never chains into
- * the plane behind it. (WebKit/Chromium draw the 4px bar from the
- * ::-webkit-scrollbar rules; the standard properties are only given to
- * engines without them, because setting both disables the thin bar.) */
-.oi-scroll { overflow: auto; overscroll-behavior: contain; }
-.oi-scroll::-webkit-scrollbar { width: var(--oi-scrollbar-size); height: var(--oi-scrollbar-size); }
-.oi-scroll::-webkit-scrollbar-track, .oi-scroll::-webkit-scrollbar-corner { background: transparent; }
-.oi-scroll::-webkit-scrollbar-thumb { border-radius: var(--oi-scrollbar-size); background: transparent; }
-.oi-scroll:is(:hover, :focus-within)::-webkit-scrollbar-thumb { background: var(--oi-scrollbar-thumb); }
-.oi-scroll::-webkit-scrollbar-thumb:hover, .oi-scroll::-webkit-scrollbar-thumb:active { background: var(--oi-scrollbar-thumb-strong); }
+/* One scroll law. Every desktop descendant inherits the same thin bar,
+ * including native overflow containers without an explicit utility class.
+ * The class declares scroll ownership; it never changes the visual law. */
+.oi-scroll, .oi-scroll-quiet { overflow: auto; overscroll-behavior: contain; }
+:where(.oi-desktop, .oi-desktop *, .oi-scroll, .oi-scroll-quiet, .oi-techne-scroll)::-webkit-scrollbar { width: var(--oi-scrollbar-size); height: var(--oi-scrollbar-size); }
+:where(.oi-desktop, .oi-desktop *, .oi-scroll, .oi-scroll-quiet, .oi-techne-scroll)::-webkit-scrollbar-track,
+:where(.oi-desktop, .oi-desktop *, .oi-scroll, .oi-scroll-quiet, .oi-techne-scroll)::-webkit-scrollbar-corner { background: transparent; }
+:where(.oi-desktop, .oi-desktop *, .oi-scroll, .oi-scroll-quiet, .oi-techne-scroll)::-webkit-scrollbar-thumb { border-radius: var(--oi-scrollbar-size); background: transparent; }
+:where(.oi-desktop, .oi-desktop *, .oi-scroll, .oi-scroll-quiet, .oi-techne-scroll):is(:hover, :focus-within)::-webkit-scrollbar-thumb { background: var(--oi-scrollbar-thumb); }
+:where(.oi-desktop, .oi-desktop *, .oi-scroll, .oi-scroll-quiet, .oi-techne-scroll)::-webkit-scrollbar-thumb:hover,
+:where(.oi-desktop, .oi-desktop *, .oi-scroll, .oi-scroll-quiet, .oi-techne-scroll)::-webkit-scrollbar-thumb:active { background: var(--oi-scrollbar-thumb-strong); }
 @supports not selector(::-webkit-scrollbar) {
-  .oi-scroll { scrollbar-width: thin; scrollbar-color: transparent transparent; }
-  .oi-scroll:is(:hover, :focus-within) { scrollbar-color: var(--oi-scrollbar-thumb) transparent; }
+  :where(.oi-desktop, .oi-desktop *, .oi-scroll, .oi-scroll-quiet, .oi-techne-scroll) { scrollbar-width: thin; scrollbar-color: transparent transparent; }
+  :where(.oi-desktop, .oi-desktop *, .oi-scroll, .oi-scroll-quiet, .oi-techne-scroll):is(:hover, :focus-within) { scrollbar-color: var(--oi-scrollbar-thumb) transparent; }
 }
-/* The quiet scroller: the wheel and trackpad scroll it, no bar is drawn. */
-.oi-scroll-quiet { overflow: auto; overscroll-behavior: contain; scrollbar-width: none; }
-.oi-scroll-quiet::-webkit-scrollbar { display: none; width: 0; height: 0; }
+@media (forced-colors: active) {
+  :where(.oi-desktop, .oi-desktop *, .oi-scroll, .oi-scroll-quiet, .oi-techne-scroll) { scrollbar-color: auto; }
+}
 
 /* A one-line status strip for a panel foot. */
 .oi-status {
@@ -774,9 +775,9 @@
   transition: background var(--oi-motion-ui) var(--oi-motion-ease-out);
 }
 .oi-card:hover, .oi-card:focus-within { background: var(--oi-card-solid, var(--oi-sidebar-ground)); }
-.oi-panel-head { padding: 0 8px 0 14px; min-height: 42px; border-bottom: var(--oi-shell-edge) solid var(--oi-hairline); }
-.oi-panel-head > .oi-panel-head-title { font-size: 13px; font-weight: 500; letter-spacing: 0; text-transform: none; color: var(--oi-accent-ink); }
-.oi-input { padding: 6px 7px; border-radius: 4px; font-size: 12px; font-variant-numeric: tabular-nums; }
+.oi-panel-head { padding: 0 8px 0 14px; min-height: var(--oi-panel-head-height); border-bottom: var(--oi-shell-edge) solid var(--oi-hairline); }
+.oi-panel-head > .oi-panel-head-title { font-size: var(--oi-shell-type-nav); font-weight: 500; letter-spacing: 0; text-transform: none; color: var(--oi-accent-ink); }
+.oi-input { padding: 6px 7px; border-radius: 4px; font-size: var(--oi-shell-type-ui); font-variant-numeric: tabular-nums; }
 .oi-input[type="number"] { text-align: right; }
 .oi-menu { border-radius: 8px; }
 .oi-range::-webkit-slider-runnable-track { opacity: 0.28; }

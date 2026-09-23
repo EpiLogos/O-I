@@ -1,3 +1,5 @@
+import {useChosenAgent} from "./agency/selection";
+import {useAgentRoster} from "./agency/roster";
 import {ActiveEncounterContext} from "./workspace/activeEncounter";
 import {CanvasStage,CanvasHUD} from "./workspace/primitives/CanvasHost";
 import {ExpressionLayout} from "./shared/Expression";
@@ -17,7 +19,6 @@ import {useEncounterSession} from "./encounter/session";
 import {AgentChat} from "./agent/chat/AgentChat";
 import type {EncounterRow} from "./encounter/EncounterList";
 import {AgentLayer} from "./agent/AgentLayer";
-import {useAgentPresence} from "./agent/presence";
 import {navigateExplore,type PresentationMeta} from "./explore/navigate";
 import {MODE_CURATION,isWorkspaceMode,WORKSPACE_MODES,type WorkspaceMode} from "./workspace/mode";
 import {modeDefaultAgentBody} from "./workspace/agentBody";
@@ -1488,10 +1489,14 @@ export function CradleFrame({onComposed}:{onComposed?:()=>void}) {
     onOpenActivity:()=>setState(s=>({...s,rightDepth:s.rightDepth==="collapsed"?"panel":s.rightDepth,panelPlanes:{...s.panelPlanes,factory:"run"}})),
     onMessage:message=>setWindowError(message),
   };
+  const [chosenAgentRef]=useChosenAgent(workspace.current.project);
+  const centreRoster=useAgentRoster(workspace.current.project,!!chosenAgentRef);
+  const centreAgent=centreRoster.agents.find(agent=>agent.ref===chosenAgentRef);
   const factoryCentre=
     <AgentChat session={factoryChatSession} accompanying={state.accompanying??undefined}
       project={workspace.current.project??state.accompanying?.project}
-
+      agentName={centreAgent?.name}
+      identity={centreAgent?{name:centreAgent.name,ref:centreAgent.ref,description:centreAgent.purpose,state:"read"}:undefined}
       situating={workspace.current.project?`Situated in ${workspace.current.project}`:"Situated in Central"}
       choosing={factoryChoosing}
       variant="centre"
@@ -1665,7 +1670,7 @@ export function CradleFrame({onComposed}:{onComposed?:()=>void}) {
     * Takeover): the observed encounter state, carried in the frame while the
     * panel is collapsed. One more subscriber on the SAME shared observer —
     * never a second poll loop. */
-  const agentPresence=useAgentPresence(state.accompanying?{project:state.accompanying.project,ref:state.accompanying.ref,space:state.accompanying.space}:undefined,state.rightDepth!=="collapsed");
+
   const agentLayer=<AgentLayer mode={mode} preferredBodyRef={epiPrimeBodyDefault} plane={state.panelPlanes?.[mode]} onPlane={plane=>setState(s=>s.panelPlanes?.[mode]===plane?s:{...s,panelPlanes:{...s.panelPlanes,[mode]:plane}})} extraPlanes={modeExtraPlanes(mode,panelSubject,state.accompanying,message=>setWindowError(message),factoryPanelHost,state.rightDepth==="full",taPaneOpens,workspace.current.project)} onError={report}
     onOpenConversation={accompanying=>void openConversationInCentre(accompanying).catch(report)}
     onOpenSubject={subject=>{if(subject.location){void openFile(subject.location).catch(report);return;}const held=Object.values(stateRef.current.surfaces).find(binding=>!!subject.ref&&binding.ref===subject.ref);if(held)execute("surface.activate",{surfaceId:held.id});}}
@@ -1703,7 +1708,6 @@ export function CradleFrame({onComposed}:{onComposed?:()=>void}) {
         arrangementActions={<ArrangementActions state={state} execute={execute} openFrameMenu={openFrameMenu} nativeWindows={kernel.transport.kind==="tauri"}/>}
         subject={{ref:subjectRef,title:subjectTitle,context:<><h2>{subjectTitle}</h2>{subjectBinding?.flow&&<p data-subject-flow-ref={subjectBinding.flow.flowRef}>Working through <code>{subjectBinding.flow.flowRef}</code></p>}{subjectBuffer ? <p>{subjectBuffer.project} · {subjectBuffer.dirty ? "Unsaved changes" : "Saved"}</p> : subjectBinding?.project ? <p>{subjectBinding.project}</p> : <p>Select a surface to inspect its context.</p>}</>,history:subjectHistory}}
         right={agentLayer}
-        agentPresence={agentPresence}
         layout={state} setLayout={setState} workspace={workspace.current} workspaces={workspace.workspaces} activate={workspace.activate} create={workspace.create} rename={workspace.rename} onRecover={workspace.showRecovery} error={workspace.error ?? windowError ?? kernel.opError ?? null} onErrorDismiss={()=>{setWindowError(undefined); workspace.dismissError(); kernel.dismissOpError();}}
         epiLogos={state.epiLogos===true} onEpiLogosToggle={()=>{epiWorldActive()?leaveEpiWorld():enterEpiWorld();}}
         recovery={workspace.recovery} onRecoverAvailable={workspace.recoverAvailable} onStartFresh={workspace.startFresh} onReload={()=>workspace.reload()}

@@ -8,7 +8,7 @@ import {useEffect, useState, type ReactNode} from "react";
 import {ensureSettingsLoaded, useSettings, type SettingsSnapshot} from "./settingsData";
 import {goTo, PRODUCTS, samePlace, SECTIONS, useSettingsNav, type SectionId} from "./settingsNav";
 import {readyHarnesses, skillCounts, credentialCards} from "./sectionModel";
-import {productName} from "./v2/vocabulary";
+import {productName} from "./vocabulary";
 import "./settings-page.css";
 
 const ICON: Record<SectionId | "product", ReactNode> = {

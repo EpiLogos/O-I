@@ -1,15 +1,11 @@
 /* The Settings page and its left navigator (docs/cradle/12-SETTINGS.md).
    Tokens only (--oi-*); no scrollbar styling — the page scrolls inside the
-   shell's .surface-body / .mode-stage kills, the navigator inside the side
+   shell's scroll containers, the navigator inside the side
    region's. Composition follows the study; values are the desktop's. */
 
 /* ---- left navigator (the body of the left frame in Settings mode) ---- */
 .settings-nav { display: flex; flex-direction: column; gap: 2px; padding: 4px 6px 12px; font-size: var(--oi-shell-type-nav); color: var(--oi-ink); }
 .settings-nav-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 1px; }
-:is(.settings-page, .settings-nav, .settings-layer) .settings-nav-row { width: 100%; display: flex; align-items: center; gap: 9px; min-height: var(--oi-shell-row, 30px); padding: 0 8px; border: 0; border-radius: var(--oi-shell-radius-row, 6px); background: none; color: var(--oi-ink); font: inherit; text-align: left; cursor: pointer; }
-:is(.settings-page, .settings-nav, .settings-layer) .settings-nav-row:hover { background: var(--oi-wash); }
-:is(.settings-page, .settings-nav, .settings-layer) .settings-nav-row[aria-current="page"] { background: var(--oi-wash-strong); font-weight: 600; }
-:is(.settings-page, .settings-nav, .settings-layer) .settings-nav-row:focus-visible { outline: var(--oi-focus-ring-width, 2px) solid var(--oi-focus); outline-offset: -2px; }
 .settings-nav-icon { flex: none; color: var(--oi-muted); }
 .settings-nav-label { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .settings-nav-count { flex: none; font-size: var(--oi-shell-type-meta); color: var(--oi-muted-2); font-variant-numeric: tabular-nums; }

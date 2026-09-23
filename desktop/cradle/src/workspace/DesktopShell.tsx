@@ -259,7 +259,7 @@ export function DesktopShell(p: Props) {
 
       host.current?.style.setProperty(side === "left" ? "--desktop-left-width" : "--desktop-right-width", `${value}px`);
       host.current?.style.setProperty(side === "left" ? "--desktop-left-target" : "--desktop-right-target", `${value}px`);
-      if(side==="right"&&!overlayRight)host.current?.style.setProperty("--desktop-right-space",`${value}px`);
+      if(side==="right"&&!overlayRight&&!canvasCentre)host.current?.style.setProperty("--desktop-right-space",`${value}px`);
       e.currentTarget.setAttribute("aria-valuenow", String(Math.round(value)));
       setResizeFeedback({side, width: Math.round(value)});
     }}
@@ -278,7 +278,7 @@ export function DesktopShell(p: Props) {
   const left = depth("left"), right = depth("right");
   const leftOpen=left==="panel"||left==="full";
   const rightOpen=right==="panel"||right==="full";
-  const stopGeometry=useShellGeometry(host,[leftOpen?leftWidth:0,rightOpen?(right==="full"?Math.max(240,width-(leftOpen?leftWidth:0)):rightWidth):0,rightOpen&&!overlayRight?rightWidth:0]);
+  const stopGeometry=useShellGeometry(host,[leftOpen?leftWidth:0,rightOpen?(right==="full"?Math.max(240,width-(leftOpen?leftWidth:0)):rightWidth):0,rightOpen&&!overlayRight&&!canvasCentre?rightWidth:0]);
   useLayoutEffect(()=>{for(const side of ["left","right"] as const){const node=host.current?.querySelector<HTMLElement>(`[data-region="${side}"]`);if(node)node.inert=side==="left"?!leftOpen:!rightOpen;}},[leftOpen,rightOpen]);
   useEffect(() => {
     const centre=host.current?.querySelector<HTMLElement>('[data-region="centre"]');
@@ -400,4 +400,3 @@ export function DesktopShell(p: Props) {
         </footer></div>
   </div>;
 }
-

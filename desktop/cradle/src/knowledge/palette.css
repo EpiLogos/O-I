@@ -1,4 +1,6 @@
-
+/* The ⌘K palette's typed tabs (10-SIDEBARS §3.1): All · Chats · Agents ·
+ * Files · Flows · Actions — plain text tabs with an ink underline for the
+ * selected one, the same register as the right panel's tabs. Tokens only. */
 .search-typed ul { list-style: none; margin: 0; padding: 6px 8px; }
 .search-typed li[data-selected="true"] > .search-result { background: var(--oi-wash); }
 .search-scroll[hidden] { display: none; }

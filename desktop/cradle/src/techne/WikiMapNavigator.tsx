@@ -8,46 +8,17 @@ import {
   setWikiProjectionRegister,
   setWikiProjectionRegisters,
   useWikiProjectionState,
-  wikiDocumentOf,
   wikiProjectionOf,
   wikiStandingSubtitle,
   type RegisterStanding,
 } from "./wikiProjectionStore";
-import type {ExpressionDocument} from "../expression/types";
 import {wikiRegistersFrom, type ProjectedConstellation} from "./wikiExpression";
 import "./techne.css";
 
-/**
- * The Technè left body — the wiki map (owner direction 2026-09-18, unified
- * 2026-09-19): the whole web as the ONE Wiki→Expression projection
- * discloses it (`wikiProjectionStore.ts`). This is an APERTURE of that one
- * state, never a second reading of wiki.json and never a parallel
- * navigator law (QL-MEF #213: LIST ↔ TREE ↔ GRAPH over one relation/
- * selection state; O-I #366: the bidirectional law):
- *
- *   LIST   the flat typographic index — every constellation whole and its
- *          members in disclosed order, plus entries the projection does not
- *          place (page-open rows, named "not projected");
- *   TREE   the same objects nested — constellation → members;
- *   GRAPH  the register's current scene drawn from the SAME document —
- *          entities at their own positions, bound typed relations as
- *          lines, no invented edge.
- *
- * A row click asks the ONE state to focus that canonical ref; Instrument
- * 0's centre performs the kernel focus edit, and its selection is this
- * map's selection (the selected row reads as selected here — the same act
- * from either side).
- *
- * Presentation law (owner pass 2026-09-18, kept): the map is a quiet
- * typographic index; state is a right-aligned subtitle on the region head;
- * entry types are quiet words revealed on hover, not tags on every row.
- * The head's hover affordances: project this register in Instrument 0,
- * and open the register's wiki web page.
- */
-
-type Aperture = "list" | "tree" | "graph";
-const APERTURE_STORAGE = "oi-cradle.techne.wiki-map-aperture.v1";
-const APERTURE_LABEL: Record<Aperture, string> = {list: "List", tree: "Tree", graph: "Graph"};
+/** The wiki tree projects the shared Wiki→Expression state. Row selection
+ * and centre focus remain one act; this navigator owns no second reading or
+ * layout. The frame owns scrolling. Registers expose their actual state and
+ * keep the existing project/open actions. */
 
 interface FocusAsk {
   sceneRef: string;
@@ -70,24 +41,8 @@ export function WikiMapNavigator({project, onOpenWiki, onMessage}: {
   useEffect(() => {
     setWikiProjectionRegisters(wikiRegistersFrom((kernel.snapshot.navigator?.root?.work.projects ?? []).map(row => ({name: row.name, path: row.path}))));
   }, [kernel.snapshot.navigator?.root?.work.projects]);
-  const [aperture, setAperture] = useState<Aperture>(() => {
-    const remembered = typeof window !== "undefined" ? window.localStorage.getItem(APERTURE_STORAGE) as Aperture | null : null;
-    return remembered === "list" || remembered === "tree" || remembered === "graph" ? remembered : "tree";
-  });
-  useEffect(() => { try { window.localStorage.setItem(APERTURE_STORAGE, aperture); } catch { /* per-viewer convenience only */ } }, [aperture]);
-
-  return <div className="wiki-map" aria-label="Wiki map" data-aperture={aperture}>
-    <div className="wiki-map-apertures" role="tablist" aria-label="The map's aperture over the one projection">
-      {(["list", "tree", "graph"] as const).map(choice => <button key={choice} type="button" role="tab"
-        aria-selected={aperture === choice} data-aperture-choice={choice}
-        title={choice === "list" ? "Flat index of the whole"
-          : choice === "tree" ? "Constellations and their members, nested"
-          : "The current scene drawn from the projection itself — same objects, same positions, same relations"}
-        onClick={() => setAperture(choice)}>
-        {APERTURE_LABEL[choice]}
-      </button>)}
-    </div>
-    {store.registers.map(register => <WikiRegion key={register.key} register={register} aperture={aperture}
+  return <div className="wiki-map" aria-label="Wiki map" data-aperture="tree">
+    {store.registers.map(register => <WikiRegion key={register.key} register={register}
       defaultOpen={project ? register.key === project : register.key === "central"}
       activeRegister={store.registerKey === register.key}
       onOpenWiki={onOpenWiki} onMessage={onMessage}/>)}
@@ -97,9 +52,8 @@ export function WikiMapNavigator({project, onOpenWiki, onMessage}: {
 
 /** One register's region: head with a state subtitle, the projection's own
  * entries beneath — read once per register through the ONE state. */
-function WikiRegion({register, aperture, defaultOpen, activeRegister, onOpenWiki, onMessage}: {
+function WikiRegion({register, defaultOpen, activeRegister, onOpenWiki, onMessage}: {
   register: {key: string; title: string; project?: string; projectPath?: string};
-  aperture: Aperture;
   defaultOpen: boolean;
   activeRegister: boolean;
   onOpenWiki: (ref: string, title: string, project?: string) => void;
@@ -148,10 +102,10 @@ function WikiRegion({register, aperture, defaultOpen, activeRegister, onOpenWiki
   // have come from the stage, the transport or another aperture).
   const bodyRef = useRef<HTMLDivElement | null>(null);
   useEffect(() => {
-    if (!selectionMatches || aperture === "graph") return;
+    if (!selectionMatches) return;
     const selected = bodyRef.current?.querySelector("[aria-selected='true']");
     if (selected) scrollWithin(selected as HTMLElement);
-  }, [selectionMatches, aperture, selection.entityRef, selection.sceneRef]);
+  }, [selectionMatches, selection.entityRef, selection.sceneRef]);
 
   return <details className="wiki-region wiki-region-register" open={opened} data-register={register.key} data-active-register={activeRegister || undefined}
     onToggle={event => { setOpened((event.target as HTMLDetailsElement).open); }}>
@@ -171,23 +125,15 @@ function WikiRegion({register, aperture, defaultOpen, activeRegister, onOpenWiki
     </summary>
     {standing.phase === "unavailable" && <p className="wiki-map-note" role="status">{standing.reason}</p>}
     {opened && projection && <div ref={bodyRef} className="wiki-region-body">
-      {aperture === "graph"
-        ? <RegionGraph standing={standing} rowSelected={rowSelected} onFocus={focusRow}/>
-        : (projection.constellations ?? []).map(constellation => aperture === "tree"
-          ? <section key={constellation.sceneRef} className="wiki-space">
-              <WholeRow constellation={constellation} selected={rowSelected({sceneRef: constellation.sceneRef, entityRef: null})} onFocus={focusRow}/>
-              <div className="wiki-constellation">
-                {constellation.members.map(member => <MemberRow key={member.entityRef} member={member} sceneRef={constellation.sceneRef}
-                  selected={rowSelected({sceneRef: constellation.sceneRef, entityRef: member.entityRef})} onFocus={focusRow}/>)}
-                {constellation.members.length === 0 && <p className="wiki-map-note">No members in this scene yet.</p>}
-              </div>
-            </section>
-          : <div key={constellation.sceneRef} className="wiki-space wiki-space-flat">
-              <WholeRow constellation={constellation} selected={rowSelected({sceneRef: constellation.sceneRef, entityRef: null})} onFocus={focusRow}/>
-              {constellation.members.map(member => <MemberRow key={member.entityRef} member={member} sceneRef={constellation.sceneRef}
-                selected={rowSelected({sceneRef: constellation.sceneRef, entityRef: member.entityRef})} onFocus={focusRow}/>)}
-            </div>)}
-      {aperture !== "graph" && elsewhere.length > 0 && <>
+      {(projection.constellations ?? []).map(constellation => <section key={constellation.sceneRef} className="wiki-space">
+        <WholeRow constellation={constellation} selected={rowSelected({sceneRef: constellation.sceneRef, entityRef: null})} onFocus={focusRow}/>
+        <div className="wiki-constellation">
+          {constellation.members.map(member => <MemberRow key={member.entityRef} member={member} sceneRef={constellation.sceneRef}
+            selected={rowSelected({sceneRef: constellation.sceneRef, entityRef: member.entityRef})} onFocus={focusRow}/>)}
+          {constellation.members.length === 0 && <p className="wiki-map-note">No members in this scene yet.</p>}
+        </div>
+      </section>)}
+      {elsewhere.length > 0 && <>
         <header className="wiki-space-head"><span className="wiki-space-name">not projected</span></header>
         {elsewhere.map(node => <button key={node.ref} className="wiki-node-row" data-row-kind="elsewhere"
           title={`${node.title}${node.type ? ` (${node.type})` : ""} — in the wiki reading, with no scene membership; opens as a page`}
@@ -231,58 +177,6 @@ function MemberRow({member, sceneRef, selected, onFocus}: {
     <span className="wiki-node-title">{member.title}</span>
     {member.position !== null && <span className="wiki-node-type">{`p${member.position}`}</span>}
   </button>;
-}
-
-/** The GRAPH aperture: the register's current scene drawn from the SAME
- * document the stage presents — entity positions and bound typed relations
- * verbatim, no invented edge, no second layout law. */
-function RegionGraph({standing, rowSelected, onFocus}: {
-  standing: RegisterStanding;
-  rowSelected(row: {sceneRef: string; entityRef: string | null}): boolean;
-  onFocus(row: FocusAsk): void;
-}) {
-  const selection = useWikiProjectionState().selection;
-  const document = wikiDocumentOf(standing);
-  const sceneRef = selection.sceneRef && document?.scenes.some(scene => scene.scene_ref === selection.sceneRef)
-    ? selection.sceneRef
-    : document?.scenes[0]?.scene_ref;
-  const scene = document?.scenes.find(entry => entry.scene_ref === sceneRef);
-  if (!document || !scene) return <p className="wiki-map-note" role="status">The projection's drawing opens with its scene.</p>;
-  const placed = scene.entity_refs
-    .map((ref): ExpressionDocument["entities"][string] | undefined => document.entities[ref])
-    .filter((entity): entity is ExpressionDocument["entities"][string] => !!entity);
-  const at = (entity: ExpressionDocument["entities"][string]) => ({
-    x: Number(entity.parameters?.x?.value ?? 0),
-    y: Number(entity.parameters?.y?.value ?? 0),
-  });
-  const relations = Object.values(document.relations).filter(relation =>
-    scene.entity_refs.includes(relation.from_entity_ref) && scene.entity_refs.includes(relation.to_entity_ref));
-  return <figure className="wiki-graph" data-scene-ref={scene.scene_ref}>
-    <svg viewBox="-0.62 -0.62 1.24 1.24" role="img" aria-label={`${scene.title} — the projection's own drawing`}>
-      {relations.map(relation => {
-        const from = at(document.entities[relation.from_entity_ref]), to = at(document.entities[relation.to_entity_ref]);
-        return <line key={relation.binding_ref} className="wiki-graph-relation" x1={from.x} y1={from.y} x2={to.x} y2={to.y}/>;
-      })}
-      {placed.map(entity => {
-        const subjectRef = entity.subject?.subject_ref ?? null;
-        const position = at(entity);
-        const selected = rowSelected({sceneRef: scene.scene_ref, entityRef: entity.entity_ref});
-        const ask: FocusAsk = {sceneRef: scene.scene_ref, entityRef: entity.entity_ref, subjectRef, title: entity.title};
-        return <g key={entity.entity_ref} className="wiki-graph-node" data-entity-ref={entity.entity_ref}
-          data-subject-ref={subjectRef ?? undefined} data-selected={selected || undefined}
-          role="button" tabIndex={0} aria-label={`Focus ${entity.title} in Instrument 0`}
-          onClick={() => onFocus(ask)}
-          onKeyDown={event => { if (event.key === "Enter" || event.key === " ") { event.preventDefault(); onFocus(ask); } }}>
-          <title>{entity.title}{subjectRef ? ` — ${subjectRef}` : ""}</title>
-          <circle cx={position.x} cy={position.y} r={selected ? 0.062 : 0.05}/>
-          <text x={position.x} y={position.y + 0.022} textAnchor="middle">{String(entity.parameters?.glyph?.value ?? "·")}</text>
-        </g>;
-      })}
-    </svg>
-    <figcaption className="wiki-map-note">
-      {scene.title} — the projection's own positions and bound relations
-    </figcaption>
-  </figure>;
 }
 
 /** Nodes the reading holds that no constellation places: page-open rows,

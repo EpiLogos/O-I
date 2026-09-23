@@ -82,32 +82,6 @@
   flex: 0 0 auto;
 }
 
-.techne-hud-lens {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 6px 10px;
-  border: 1px solid transparent;
-  border-radius: 8px;
-  background: transparent;
-  color: inherit;
-  font: inherit;
-  font-size: 12px;
-  white-space: nowrap;
-  cursor: pointer;
-  opacity: 0.72;
-}
-
-.techne-hud-lens:hover { opacity: 1; background: var(--oi-accent-soft); }
-.techne-hud-lens[data-current="true"] {
-  opacity: 1;
-  border-color: var(--oi-accent);
-  background: var(--oi-accent-soft);
-}
-.techne-hud-lens[data-available="false"] { opacity: 0.5; }
-.techne-hud-lens[data-available="false"][data-current="true"] { opacity: 0.85; }
-.techne-hud-lens-off { color: var(--oi-muted-2); font-weight: 700; }
-
 .techne-hud-collapse {
   margin-left: auto;
   min-width: 28px;
