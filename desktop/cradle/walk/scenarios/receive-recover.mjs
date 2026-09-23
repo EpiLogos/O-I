@@ -84,7 +84,7 @@ export default async function run({page,baseUrl,check,shot,channel,provision:p})
   await nav.locator(`[data-file-path="Work/Editor/${p.doc.source.path}"]`).click();
   await page.locator(`.cm-content[data-source-ref="${p.doc.source.ref}"]`).waitFor({timeout:15000});
 
-  // Returns render beside the OPEN document, with the exact document anchor.
+  // The Inbox presents readable material; exact target identity is verified natively.
   await page.locator("[data-left-foot]").getByRole("button",{name:/^Inbox/}).click();
   const strip=page.locator(".left-inbox");
   await strip.waitFor();
@@ -92,20 +92,25 @@ export default async function run({page,baseUrl,check,shot,channel,provision:p})
   check(true,"The document's receiving field renders beside it, at the reading site");
   await strip.locator(".receiving-row").first().click();
   const detail=strip.locator(".receiving-detail");await detail.waitFor();
+  await page.waitForFunction(()=>{const button=document.querySelector(".left-inbox .receiving-accept");return button&&!button.disabled;},null,{timeout:20000});
   const detailText=await detail.innerText();
-  check(detailText.includes("field.append")&&detailText.includes("field walk-field"),"The proposal shows its exact document anchor — the field it targets");
-  check(detailText.includes("Agent — agent:walk")&&detailText.includes("Contribution the human will reject"),"The return presents its real producer attribution and exact content");
+  const proposed=p.human("central.receiving.read",{project:"Editor",return_ref:p.first.return_ref});
+  check(proposed.record.proposal.operation==="field.append"&&proposed.record.proposal.field_id==="walk-field","The native proposal retains the exact document field anchor");
+  check(proposed.record.author.principal_ref==="agent:walk"&&proposed.record.author.actor_kind==="agent","The native receiving record retains the exact producer attribution");
+  check(detailText.includes("Agent contribution")&&detailText.includes("Contribution the human will reject")&&detailText.includes("Walk field"),"Inbox presents readable attribution, contribution text and the native field label");
+  check(!detailText.includes("agent:walk")&&!detailText.includes("field.append")&&!detailText.includes("walk-field"),"Inbox does not turn native identifiers into ordinary metadata rows");
   await shot("return-beside-open-document");
 
   // Rejection beside the document: the owner records the human reviewer; the
   // document holds nothing; the rejected return cannot be included.
   await strip.getByRole("button",{name:"Reject"}).click();
-  await page.waitForFunction(()=>document.querySelector(".left-inbox .receiving-status")?.textContent==="rejected",null,{timeout:20000});
-  check((await strip.locator(".receiving-detail").innerText()).includes("rejected by human:walk"),"The rejection records the human reviewer beside the document");
+  await detail.locator(".receiving-review").getByText("Rejected",{exact:true}).waitFor({timeout:20000});
+  check(true,"Inbox shows the rejected review status beside the document");
   const afterReject=documentVia(p,HUMAN_TOKEN);
   check(afterReject.document.contributions.length===0,"A rejected return contributes nothing to the document");
   let resurrectRefused="";
   const rejectedReading=p.human("central.receiving.read",{project:"Editor",return_ref:p.first.return_ref});
+  check(rejectedReading.record.review?.disposition==="rejected"&&rejectedReading.record.review.reviewer_ref==="human:walk","The native rejection preserves the exact human reviewer");
   try {p.human("central.receiving.include",{project:"Editor",return_ref:p.first.return_ref,expected_return_revision:rejectedReading.revision,expected_source_revision:afterReject.revision.revision});}
   catch(error){resurrectRefused=String(error);}
   check(resurrectRefused.includes("inclusion requires the authenticated accepting reviewer")||resurrectRefused.includes("unreviewed Return cannot be included"),"The owner refuses to include a rejected return — the desktop's own attempt is not the guard, the owner is",{error:resurrectRefused});
@@ -119,11 +124,14 @@ export default async function run({page,baseUrl,check,shot,channel,provision:p})
   if(second.record.status!=="pending")throw new Error(`second return arrived ${second.record.status}`);
   await strip.getByRole("button",{name:"Refresh receiving"}).click();
   await page.waitForFunction(()=>document.querySelector(".left-inbox header small")?.textContent?.includes("1 waiting"),null,{timeout:20000});
-  await strip.locator(".receiving-row").filter({hasText:"pending"}).first().click();
-  await page.waitForFunction(()=>document.querySelector(".left-inbox .receiving-detail")?.textContent?.includes("entry:recover"),null,{timeout:20000});
-  check((await strip.locator(".receiving-detail").innerText()).includes("entry.add — entry entry:recover"),"The second return shows its exact entry anchor");
+  await strip.locator(".receiving-row").filter({has:page.locator(".receiving-pending")}).first().click();
+  await detail.getByText("Contribution that recovers",{exact:true}).waitFor({timeout:20000});
+  const secondReading=p.human("central.receiving.read",{project:"Editor",return_ref:second.return_ref});
+  check(secondReading.record.proposal.operation==="entry.add"&&secondReading.record.proposal.entry_id==="entry:recover","The second native return retains its exact entry anchor");
   await strip.getByRole("button",{name:"Accept current basis"}).click();
-  await page.waitForFunction(()=>document.querySelector(".left-inbox .receiving-detail")?.textContent?.includes("accepted by"),null,{timeout:20000});
+  await strip.getByRole("button",{name:"Include into the document"}).waitFor({state:"visible",timeout:20000});
+  const secondReview=p.human("central.receiving.read",{project:"Editor",return_ref:second.return_ref});
+  check(secondReview.record.review?.disposition==="accepted"&&secondReview.record.review.reviewer_ref==="human:walk"&&secondReview.record.review.source_revision===afterReject.revision.revision,"The second review retains the human reviewer and exact current document basis");
 
   chmodSync(docPath,0o444);
   const bytesBeforeInclude=readFileSync(docPath,"utf8");
@@ -138,7 +146,7 @@ export default async function run({page,baseUrl,check,shot,channel,provision:p})
   const inbox=page.getByRole("region",{name:"Inbox"});
   await inbox.getByRole("button",{name:"Refresh receiving"}).click();
   await page.waitForFunction(()=>document.querySelector(".left-inbox header small")?.textContent==="1 waiting",null,{timeout:20000});
-  check((await inbox.locator(".receiving-row .receiving-status").allInnerTexts()).join("|")==="uncertain","The Inbox shows the same uncertain arrival as the one thing waiting (the rejected one waits for nothing)");
+  check(await inbox.locator(".receiving-row .receiving-uncertain").count()===1,"The Inbox shows the same uncertain arrival as the one thing waiting (the rejected one waits for nothing)");
 
   chmodSync(docPath,0o644);
   await strip.getByRole("button",{name:"Recover inclusion"}).click();

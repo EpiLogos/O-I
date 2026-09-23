@@ -152,13 +152,18 @@ export default async function run({page,baseUrl,check,shot,channel,provision:p})
   await page.waitForFunction(()=>document.querySelector(".left-inbox header small")?.textContent?.includes("1 waiting"),null,{timeout:20000});
   await returns.locator(".receiving-row").first().click();
   const detail=returns.locator(".receiving-detail");await detail.waitFor();
+  await page.waitForFunction(()=>{const button=document.querySelector(".left-inbox .receiving-accept");return button&&!button.disabled;},null,{timeout:20000});
   const detailText=await detail.innerText();
-  check(detailText.includes("Agent — agent:reader-walk"),"The A2A return's producer is the receiving participant");
+  const proposed=p.human("central.receiving.read",{project:"Editor",return_ref:submitted.return_ref});
+  check(proposed.record.author.principal_ref==="agent:reader-walk"&&proposed.record.author.actor_kind==="agent","The native receiving record identifies the exact receiving participant as producer");
+  check(detailText.includes("Agent contribution")&&!detailText.includes("agent:reader-walk"),"Inbox shows Agent attribution without a principal identifier dump");
   check(detailText.includes(reply),"The exact peer reply is shown before any decision");
   await returns.getByRole("button",{name:"Accept current basis"}).click();
-  await page.waitForFunction(()=>document.querySelector(".left-inbox .receiving-detail")?.textContent?.includes("accepted by"),null,{timeout:20000});
+  await returns.getByRole("button",{name:"Include into the document"}).waitFor({state:"visible",timeout:20000});
+  const reviewed=p.human("central.receiving.read",{project:"Editor",return_ref:submitted.return_ref});
+  check(reviewed.record.review?.disposition==="accepted"&&reviewed.record.review.reviewer_ref==="human:walk"&&reviewed.record.review.source_revision===p.doc.revision.revision,"Native review retains the exact human reviewer and accepted source revision");
   await returns.getByRole("button",{name:"Include into the document"}).click();
-  await page.waitForFunction(()=>document.querySelector(".left-inbox .receiving-status")?.textContent==="included",null,{timeout:20000});
+  await page.waitForFunction(()=>document.querySelector(".left-inbox .receiving-included")!==null,null,{timeout:20000});
   check(true,"Inclusion lands through the owner's revision-checked operation on the exact reviewed basis");
   await shot("a2a-return-included");
 

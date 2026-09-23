@@ -113,7 +113,7 @@ export async function setup(args) {
   const first = agent("central.receiving.submit", {producer_key: "producer:leave-walk-1", source_ref: doc.source.ref, document_id: doc.document_id, expected_source_revision: doc.revision.revision, occurred_at_unix_seconds: 1000, now_ref: allocated.now_ref, task_ref: "task:leave-reenter", day_ref: day1.day_ref, proposal: {operation: "field.append", field_id: "p0_quick_thoughts", contribution_id: "part:leave-1", html: "<p>Early capture from the leave-reenter producer</p>"}});
   if (first.record.status !== "pending") throw new Error(`first return arrived ${first.record.status}`);
 
-  return {...source, env: {...source.env, CENTRAL_NATIVE_TOKEN: HUMAN_TOKEN}, doc, day1, diePayload, dieKeys, nowRef: allocated.now_ref, dayA, human, agent, rootCall, writePolicy, cleanup: process.env.LEAVE_KEEP ? ()=>{} : source.cleanup};
+  return {...source, env: {...source.env, CENTRAL_NATIVE_TOKEN: HUMAN_TOKEN}, doc, first, day1, diePayload, dieKeys, nowRef: allocated.now_ref, dayA, human, agent, rootCall, writePolicy, cleanup: process.env.LEAVE_KEEP ? ()=>{} : source.cleanup};
 }
 
 const ctrlRun=(p,token,action,input)=>{
@@ -222,12 +222,17 @@ export default async function run({page, baseUrl, check, shot, channel, bridgeUr
   await strip.locator(".receiving-row").first().click();
   const detail = strip.locator(".receiving-detail");
   await detail.waitFor();
+  await page.waitForFunction(()=>{const button=document.querySelector(".left-inbox .receiving-accept");return button&&!button.disabled;},null,{timeout:20000});
   const detailText = await detail.innerText();
-  check(detailText.includes("Agent — agent:walk") && detailText.includes("field.append") && detailText.includes("field p0_quick_thoughts"), "The exact proposed operation and the die's own fixture key are shown on the Day document");
+  const firstReading=p.human("central.receiving.read",{return_ref:p.first.return_ref});
+  check(firstReading.record.author.principal_ref==="agent:walk"&&firstReading.record.proposal.operation==="field.append"&&firstReading.record.proposal.field_id==="p0_quick_thoughts","The native receiving record retains the producer, proposed operation and exact die field");
+  check(detailText.includes("Agent contribution")&&detailText.includes("Early capture from the leave-reenter producer")&&!detailText.includes("agent:walk"),"Inbox presents readable contribution text and attribution without identifiers");
   await shot("day-die-with-pending-return");
 
   await strip.getByRole("button", {name: "Accept current basis"}).click();
-  await page.waitForFunction(() => document.querySelector(".left-inbox .receiving-detail")?.textContent?.includes("accepted by"), null, {timeout: 20000});
+  await strip.getByRole("button",{name:"Include into the document"}).waitFor({state:"visible",timeout:20000});
+  const firstReview=p.human("central.receiving.read",{return_ref:p.first.return_ref});
+  check(firstReview.record.review?.reviewer_ref==="human:walk"&&firstReview.record.review.source_revision===p.doc.revision.revision,"The first native review retains the exact human reviewer and document basis");
   await strip.getByRole("button", {name: "Include into the document"}).click();
   await page.waitForFunction(() => document.querySelector(".left-inbox .receiving-detail")?.textContent?.includes("Included into the document."), null, {timeout: 20000});
   const afterFirst = documentVia(p, HUMAN_TOKEN);
@@ -318,19 +323,24 @@ export default async function run({page, baseUrl, check, shot, channel, bridgeUr
     const dayBuf = Object.values(refNow.buffers ?? {}).find(b => b.root_register);
     throw new Error(`${timeout} | Inbox: ${JSON.stringify(stripText)} | dayRef=${dayBuf?.source_ref}`);
   }
-  await strip2.locator(".receiving-row").filter({hasText: "pending"}).first().click();
+  await strip2.locator(".receiving-row").filter({has:page2.locator(".receiving-pending")}).first().click();
   const detail2 = strip2.locator(".receiving-detail");
   await detail2.waitFor();
+  await page2.waitForFunction(()=>{const button=document.querySelector(".left-inbox .receiving-accept");return button&&!button.disabled;},null,{timeout:20000});
   const detail2Text = await detail2.innerText();
   check(detail2Text.includes("Late pattern noticed while the desktop was closed"), "The Return that arrived while the desktop was closed is beside the document on re-entry");
-  check(detail2Text.includes(revisionBeforeClose), "The late Return still proposes against the exact pre-close basis");
-  check(detail2Text.includes("field p3_patterns_noticed"), "The late Return names its exact die fixture");
+  const lateReading=p.human("central.receiving.read",{return_ref:late.return_ref});
+  check(lateReading.record.proposed_source_revision===revisionBeforeClose, "The late native Return still proposes against the exact pre-close basis");
+  check(lateReading.record.proposal.field_id==="p3_patterns_noticed", "The late native Return retains its exact die fixture");
+  check(!detail2Text.includes(revisionBeforeClose)&&!detail2Text.includes("p3_patterns_noticed"),"The Inbox keeps revision hashes and raw field identifiers out of ordinary content");
   await page2.screenshot({path: join("walk", "artifacts", "leave-reenter-reentry-late-return.png")});
 
   // The reviewed inclusion of the late Return is also what settles the
   // outstanding obligation the archive named.
   await strip2.getByRole("button", {name: "Accept current basis"}).click();
-  await page2.waitForFunction(() => document.querySelector(".left-inbox .receiving-detail")?.textContent?.includes("accepted by"), null, {timeout: 20000});
+  await strip2.getByRole("button",{name:"Include into the document"}).waitFor({state:"visible",timeout:20000});
+  const lateReview=p.human("central.receiving.read",{return_ref:late.return_ref});
+  check(lateReview.record.review?.reviewer_ref==="human:walk"&&lateReview.record.review.source_revision===revisionBeforeClose,"The late review retains the human reviewer and exact pre-close basis natively");
   await strip2.getByRole("button", {name: "Include into the document"}).click();
   await page2.waitForFunction(() => document.querySelector(".left-inbox .receiving-detail")?.textContent?.includes("Included into the document."), null, {timeout: 20000});
   const afterLate = documentVia(p, HUMAN_TOKEN);

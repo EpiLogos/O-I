@@ -197,21 +197,28 @@ export default async function run({page,baseUrl,check,shot,channel,provision:p})
   await page.waitForFunction(()=>document.querySelector(".left-inbox header small")?.textContent?.includes("1 waiting"),null,{timeout:20000});
   await returns.locator(".receiving-row").first().click();
   const detail=returns.locator(".receiving-detail");await detail.waitFor();
+  await page.waitForFunction(()=>{const button=document.querySelector(".left-inbox .receiving-accept");return button&&!button.disabled;},null,{timeout:20000});
   const detailText=await detail.innerText();
-  check(detailText.includes("Agent — agent:reader-walk"),"The Return's producer is the receiving participant");
+  const proposed=p.human("central.receiving.read",{project:"Editor",return_ref:submitted.return_ref});
+  check(proposed.record.author.principal_ref==="agent:reader-walk"&&proposed.record.author.actor_kind==="agent","The native receiving record identifies the exact receiving participant as producer");
+  check(detailText.includes("Agent contribution")&&!detailText.includes("agent:reader-walk"),"Inbox shows Agent attribution without a principal identifier dump");
   check(detailText.includes(passage),"The exact admitted material is shown before any decision");
   await shot("inbox-proposed-content");
 
   await returns.getByRole("button",{name:"Accept current basis"}).click();
-  await page.waitForFunction(()=>document.querySelector(".left-inbox .receiving-detail")?.textContent?.includes("accepted by"),null,{timeout:20000});
+  await returns.getByRole("button",{name:"Include into the document"}).waitFor({state:"visible",timeout:20000});
+  const reviewed=p.human("central.receiving.read",{project:"Editor",return_ref:submitted.return_ref});
+  check(reviewed.record.review?.disposition==="accepted"&&reviewed.record.review.reviewer_ref==="human:walk"&&reviewed.record.review.source_revision===p.doc.revision.revision,"Native review retains the exact human reviewer and accepted source revision");
   await returns.getByRole("button",{name:"Include into the document"}).click();
-  await page.waitForFunction(()=>document.querySelector(".left-inbox .receiving-status")?.textContent==="included",null,{timeout:20000});
+  await page.waitForFunction(()=>document.querySelector(".left-inbox .receiving-included")!==null,null,{timeout:20000});
   check(true,"Inclusion lands through the owner's revision-checked operation on the exact reviewed basis");
 
   // 8 — Inbox keeps the reviewed result beside the source. Accepted
   // contribution facts live in the owner's document, not a second footer.
   const includedText=await detail.innerText();
-  check(includedText.includes("accepted by human:walk")&&includedText.includes("entry entry:shared")&&includedText.includes("Included into the document."),"Inbox confirms the human review, exact entry anchor and completed inclusion");
+  const completed=p.human("central.receiving.read",{project:"Editor",return_ref:submitted.return_ref});
+  check(completed.record.review?.reviewer_ref==="human:walk"&&completed.record.proposal.entry_id==="entry:shared"&&completed.included,"Native readback confirms the human review, exact entry anchor and completed inclusion");
+  check(includedText.includes("Included into the document.")&&!includedText.includes("human:walk")&&!includedText.includes("entry:shared"),"Inbox confirms inclusion without reviewer or entry identifiers");
   check(await page.locator(".cm-content[data-source-ref]").count()===1
     &&await page.locator(".shared-field-published[data-projection-state='withdrawn']").count()===1
     &&await returns.locator(".receiving-included").count()===1,"Source, withdrawn projection and the admitted contribution remain visible beside the Inbox's inclusion confirmation");
