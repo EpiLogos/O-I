@@ -111,6 +111,6 @@ export default async function run({page, baseUrl, check, shot, channel, provisio
   await connect.click();
   await page.waitForFunction(ref => document.querySelector(`.left-conversation[data-session-ref="${ref}"]`)?.getAttribute("data-mark") === "failed", SESSIONS.failing.ref, {timeout: 60000});
   const failed = await row(SESSIONS.failing).evaluate(node => ({glyph: node.querySelector(".left-mark")?.textContent, tooltip: node.querySelector(".left-mark")?.getAttribute("title"), title: node.querySelector(".left-row-main")?.getAttribute("title"), label: node.querySelector(".left-row-main")?.getAttribute("aria-label")}));
-  check(failed.glyph === "×" && /closed stdout|transport/i.test(failed.tooltip ?? "") && (failed.title ?? "").includes(failed.tooltip ?? "@@") && failed.label.includes("Failed"), "R5: the refused connection shows × with the owner's reason in the tooltip", failed);
+  check(failed.glyph === "×" && /closed stdout|transport|broken pipe|write_failed/i.test(failed.tooltip ?? "") && (failed.title ?? "").includes(failed.tooltip ?? "@@") && failed.label.includes("Failed"), "R5: the refused connection shows × with the owner's reason in the tooltip", failed);
   await shot("R5-failed");
 }

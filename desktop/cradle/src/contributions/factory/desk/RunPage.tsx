@@ -9,7 +9,7 @@
  * in ⋯ with Copy run reference and Show raw. No refs in the header.
  * Tabs Map · Trajectory · Live · Handoff — nothing stacked below.
  */
-import {useEffect, useState, type ReactNode} from "react";
+import {useEffect, useState, type ReactNode, useRef} from "react";
 import {useKernel} from "../../../kernel/KernelProvider";
 import {Glyph} from "../../../workspace/Glyph";
 import {formatRelativeTime} from "../../../shared/relativeTime";
@@ -68,15 +68,23 @@ export function RunPage({runKey, onBack, host}: {runKey: string; onBack: () => v
   const [raw, setRaw] = useState(false);
   const [acting, setActing] = useState<string>();
 
+  // A page that has closed stops its read chain: leaving the Run page before
+  // the run read answers must not send the telemetry read afterwards.
+  const alive = useRef(true);
+  useEffect(() => { alive.current = true; return () => { alive.current = false; }; }, []);
   const reread = async () => {
     setReading("reading");
     try {
       const next = await readRunEntry(kernel.transport, runKey);
+      if (!alive.current) return;
       setReading(next ? "read" : "refused");
       if (!next) setError("This run is no longer in the Desk's reading.");
       const telemetryRef = next?.inspection?.telemetry?.[0]?.telemetryRef;
-      if (next && telemetryRef) setTelemetry(await inspectTelemetry(kernel.transport, next.card.source.statePath, telemetryRef).catch(() => undefined));
-    } catch (reason) { setReading("refused"); setError(errorWords(reason)); }
+      if (next && telemetryRef) {
+        const reading = await inspectTelemetry(kernel.transport, next.card.source.statePath, telemetryRef).catch(() => undefined);
+        if (alive.current) setTelemetry(reading);
+      }
+    } catch (reason) { if (alive.current) { setReading("refused"); setError(errorWords(reason)); } }
   };
   useEffect(() => { void reread(); /* the page's own read on open */ // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [runKey]);

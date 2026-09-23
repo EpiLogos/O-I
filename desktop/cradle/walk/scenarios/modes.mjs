@@ -106,9 +106,9 @@ export default async function run({page,baseUrl,check,shot,channel,provision:p})
   check(entered<2000,'The terminal Settings button enters its mode instantly — the shell switches now, no awaited roundtrip gates it',{entered_ms:entered});
   check(await settingsButton.getAttribute('aria-pressed')==='true','The Settings button marks itself active (aria-pressed) while its mode stands');
   check((await layout()).mode==='settings','Settings is recorded as the workspace mode');
-  await stage('settings').locator('.system-panel').waitFor();
-  check(await stage('settings').locator('.system-panel').count()===1&&await presented('.tab')===0&&await presented('.tab-strip')===0,'Settings\' centre is the System panel inside its stage, with no tab chrome');
-  check(await page.getByRole('complementary',{name:'World navigator'}).count()===1&&await group.getByRole('radio').count()===4,'Settings keeps the World navigator, whose strip still carries only the four work modes');
+  await stage('settings').locator('[data-settings-page]').waitFor();
+  check(await stage('settings').locator('[data-settings-page]').count()===1&&await presented('.tab')===0&&await presented('.tab-strip')===0,'Settings\' centre is the settings page inside its stage, with no tab chrome');
+  check(await page.getByRole('navigation',{name:'Settings sections'}).count()===1&&await group.getByRole('radio').count()===4,'Settings keeps the left frame: its body is the section list (12-SETTINGS §1) and the foot\'s strip still carries only the four work modes');
   check(await page.evaluate(()=>{const shell=document.querySelector('.desktop-shell');return !!shell&&shell.getBoundingClientRect().top===0;}),'Nothing renders above the shell in Settings mode');
   await shot('settings-1280');
   await radio('Base').click();

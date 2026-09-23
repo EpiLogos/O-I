@@ -71,8 +71,8 @@ export default async function run({page,baseUrl,check,shot,channel,provision:p})
   const entered=Date.now()-t0;
   check(entered<2000,'The terminal Settings button enters its mode instantly — no awaited owner call gates the switch',{entered_ms:entered});
   check(await settingsButton.getAttribute('aria-pressed')==='true'&&await settingsButton.getAttribute('aria-label')==='Settings','The terminal button marks itself active (aria-pressed) while Settings stands');
-  await stage('settings').locator('.system-panel').waitFor();
-  check(await stage('settings').locator('.system-panel').count()===1&&await page.locator('.tab').count()===0,'Settings dedicates the view: the System panel inside its stage, no tab chrome');
+  await stage('settings').locator('[data-settings-page]').waitFor();
+  check(await stage('settings').locator('[data-settings-page]').count()===1&&await page.locator('.tab').count()===0,'Settings dedicates the view: the System panel inside its stage, no tab chrome');
   check((await book()).workspaces[0].layout.mode==='settings','Settings is recorded as the workspace mode, its own tree in the book');
 
   // --- back to Base: tree and writing restored --------------------------------
