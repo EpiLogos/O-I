@@ -1,0 +1,454 @@
+{
+  "schema": "oi.cradle.walk.scenario/v1",
+  "scenario": "factory-run",
+  "spec_ref": "docs/cradle/11-FACTORY.md §7 F6 F7 F8 F12 F13",
+  "grade": "B",
+  "binding": null,
+  "generated_at": "2026-09-23T00:41:28.510Z",
+  "environment": {
+    "base_url": "http://localhost:4473",
+    "bridge_url": "http://127.0.0.1:4479",
+    "viewport": "1280x820",
+    "browser_engine": "chromium",
+    "bundle": "walk (WALK=1) served by vite preview",
+    "build_input": {
+      "mode": "fresh-build",
+      "bundle_fingerprint": "c65e69a8dfaee9c0c644eb8179eae75bfc57dc52a5238a3d065141d7579c0737"
+    },
+    "node": "v24.16.0",
+    "platform": "darwin",
+    "source": {
+      "repository_root": "/Users/admin/Central/worktrees/ui-build/lane3-factory",
+      "repository_head": "1fbe77e522126ea066f19ded44c79395aa3c8798",
+      "tracked_changes": [
+        "desktop/cradle/scripts/receipt-lint.mjs",
+        "desktop/cradle/src/contributions/factory/desk/RunPage.tsx",
+        "desktop/cradle/src/contributions/factory/desk/RunTrajectory.tsx",
+        "desktop/cradle/src/contributions/factory/desk/runModel.ts",
+        "desktop/cradle/tests/factory-run-model.test.mjs",
+        "desktop/cradle/walk/run.mjs"
+      ],
+      "dirty_digest": "1f87d5569cfc007ef83da35ffbdf4ca46834e6f320d49fd978e27cd8002fd9f4",
+      "engine_provenance_path": "/Users/admin/Central/worktrees/ui-build/lane3-factory/packages/oi-design-system/expressions-engine/PROVENANCE.json",
+      "engine_source": "EpiLogos/Point-Cloud-Demo",
+      "engine_revision": "91db8428fc9dfba06cd258ec5a58e7dd9eef5313"
+    }
+  },
+  "passed": true,
+  "error": null,
+  "duration_ms": 10870,
+  "checks": [
+    {
+      "ok": true,
+      "label": "F6: the primary action EQUALS the owner's first currently-applicable native action — the owner offers none for a queued run on this cut, so none is invented",
+      "data": {
+        "ownerApplicable": [],
+        "rendered": 0,
+        "gap": "no native Start run action is projected (factory action list); starting is the attempt lifecycle's start-serial, which needs a situated participant and body the desktop cannot supply"
+      }
+    },
+    {
+      "ok": true,
+      "label": "F6: Live on a queued run says \"Nothing is running.\"",
+      "data": {
+        "liveEmpty": "Nothing is running."
+      }
+    },
+    {
+      "ok": true,
+      "label": "F12: Handoff with nothing returned says \"Nothing has come back yet.\" and renders no empty sections",
+      "data": {
+        "handoffEmpty": "Nothing has come back yet."
+      }
+    },
+    {
+      "ok": true,
+      "label": "F8: a run whose owner map has no work units says so — distinct from a read error (no alert)",
+      "data": {
+        "noUnits": "This run has no work units yet.",
+        "ownerCUnits": 0
+      }
+    },
+    {
+      "ok": true,
+      "label": "Header: title = the purpose's first sentence, subtitle = the owner's purpose",
+      "data": {
+        "title": "Make the Specimen release notes follow the changelog's declared section order, so readers meet breaking changes first"
+      }
+    },
+    {
+      "ok": true,
+      "label": "Header facts: state · project · started · units · Git basis from the owner's telemetry",
+      "data": {
+        "facts": "○ Queued · Specimen · started just now · 4 units · branch main (clean)",
+        "ownerGit": {
+          "branch": "main",
+          "clean": true
+        }
+      }
+    },
+    {
+      "ok": true,
+      "label": "No refs in the header",
+      "data": {
+        "sample": "Make the Specimen release notes follow the changelog's declared section order, so readers meet breaking changes first\n\nM"
+      }
+    },
+    {
+      "ok": true,
+      "label": "Raw readings are not shown until asked"
+    },
+    {
+      "ok": true,
+      "label": "⋯ holds Copy run reference and Show raw",
+      "data": {
+        "menuItems": [
+          "Copy run reference",
+          "Show raw"
+        ]
+      }
+    },
+    {
+      "ok": true,
+      "label": "Show raw discloses the owner's readings verbatim (only after asking)"
+    },
+    {
+      "ok": true,
+      "label": "Tabs are Map · Trajectory · Live · Handoff; nothing stacked below"
+    },
+    {
+      "ok": true,
+      "label": "F7: exactly one unit is outlined (2px ink) and it EQUALS the owner build view's frontier",
+      "data": {
+        "frontierRef": "workflow-unit:5RS5YNSKF20MAH2Z2R94JXJBY3",
+        "ownerFrontier": "workflow-unit:5RS5YNSKF20MAH2Z2R94JXJBY3",
+        "border": "2px"
+      }
+    },
+    {
+      "ok": true,
+      "label": "Map: one lane card per owner work unit",
+      "data": {
+        "unitCount": 4,
+        "owner": 4
+      }
+    },
+    {
+      "ok": true,
+      "label": "F7 geometry: the fork's units share a column (x equal ±0.5px) on different lanes, and the gate bar spans exactly their lanes (top/bottom equal ±0.5px)",
+      "data": {
+        "draft": {
+          "x": 1096,
+          "y": 348.59375,
+          "w": 196,
+          "h": 78
+        },
+        "review": {
+          "x": 1096,
+          "y": 452.59375,
+          "w": 196,
+          "h": 78
+        },
+        "gate": {
+          "x": 919,
+          "top": 348.59375,
+          "bottom": 530.59375
+        }
+      }
+    },
+    {
+      "ok": true,
+      "label": "The lane geometry is stable across a viewport change (the map scrolls; it never reflows lanes)",
+      "data": {
+        "planeBefore": {
+          "w": 1312,
+          "h": 426
+        },
+        "planeAfter": {
+          "w": 1312,
+          "h": 426
+        }
+      }
+    },
+    {
+      "ok": true,
+      "label": "F7: the selected unit's checks EQUAL the owner inspection (text and state from its verification receipts)",
+      "data": {
+        "bandChecks": [
+          {
+            "text": "At least two counter-examples were tried against the declared order.",
+            "state": "outstanding"
+          },
+          {
+            "text": "The judgement cites the changelog, not the draft.",
+            "state": "outstanding"
+          }
+        ],
+        "ownerChecks": [
+          {
+            "text": "At least two counter-examples were tried against the declared order.",
+            "state": "outstanding"
+          },
+          {
+            "text": "The judgement cites the changelog, not the draft.",
+            "state": "outstanding"
+          }
+        ]
+      }
+    },
+    {
+      "ok": true,
+      "label": "The detail band carries the owner's required difference and required return"
+    },
+    {
+      "ok": true,
+      "label": "A returned unit's checks read passed from the owner's complete verification receipt",
+      "data": {
+        "surveyStates": [
+          "passed",
+          "passed",
+          "passed"
+        ]
+      }
+    },
+    {
+      "ok": true,
+      "label": "Open page: the unit's own page opens in place with its concern as title",
+      "data": {
+        "objectTitle": "Release notes list their sections alphabetically, so readers meet Fixes before Breaking changes."
+      }
+    },
+    {
+      "ok": true,
+      "label": "Live: one row per unit, each leg status EQUALS the owner's",
+      "data": {
+        "legs": {
+          "workflow-unit:6Y8A49M0QWBPHE9BBW0YXMG0KE": "not-started",
+          "workflow-unit:6X11TZ0HNX4FBXMEJRZRHYSGAF": "not-started",
+          "workflow-unit:5RS5YNSKF20MAH2Z2R94JXJBY3": "active",
+          "workflow-unit:58ZW32JZACRTQ7WWAHWXQHKRNG": "returned"
+        },
+        "ownerLegs": {
+          "workflow-unit:58ZW32JZACRTQ7WWAHWXQHKRNG": "returned",
+          "workflow-unit:5RS5YNSKF20MAH2Z2R94JXJBY3": "active",
+          "workflow-unit:6X11TZ0HNX4FBXMEJRZRHYSGAF": "not-started",
+          "workflow-unit:6Y8A49M0QWBPHE9BBW0YXMG0KE": "not-started"
+        }
+      }
+    },
+    {
+      "ok": true,
+      "label": "Live: harness · model come from the attempt body",
+      "data": {
+        "reviewRow": "specimen · text-model"
+      }
+    },
+    {
+      "ok": true,
+      "label": "Handoff: Outcome is the owner's readable Return",
+      "data": {
+        "outcome": "Section order is decided in one place: the generator sorts headings alphabetical"
+      }
+    },
+    {
+      "ok": true,
+      "label": "F13: Request changes / Request evidence are not offered — no native operation applies (recorded gap)",
+      "data": {
+        "gap": {
+          "requestChanges": "No native request-changes operation exists: no Action, attempt operation or developmental mutation carries it. The only projected Action is request-more-evidence.",
+          "requestEvidenceSubjects": "request-more-evidence (action:01ARZ3NDEKTSV4RRFFQ69G5FAP) applies only to subject kind `candidate`; no owner operation can create a Candidate in a commissioned developmental state, so on this specimen it is listed but never applicable and invoking it is refused (subject not found).",
+          "openHumanRequest": "No owner operation opens a human request on a Run. Build-view humanRequests are created only as a side effect of request-more-evidence on a Candidate (human-request/request-evidence/<candidate>).",
+          "answerHumanRequest": "No owner operation answers, resolves or withdraws a human request.",
+          "partialVerificationPass": "A `passed` verification receipt must cover every verification obligation of the attempt (VerificationIncomplete otherwise), and Return requires the latest verification to be a complete pass. Per-obligation passes are therefore not native: partial progress is recorded as an `unknown` receipt naming the checked obligations.",
+          "runLifecycle": "No owner operation advances a Run's lifecycle past `seeded`: attempt Actions move legs and the run map, not the Run. So the build view reports every specimen Run as status `queued`, including run A with a returned and a running attempt; the live state is in the run map node states, the attempt legs and the build frontier.",
+          "centralTemporal": "A disposable ground from central.init has no recognised work or civil-time policy, so no Central NOW or day ref exists to correlate: temporal.childNowRef/dayRefs stay empty and telemetry names that gap."
+        },
+        "requestEvidenceOnReturn": "Factory developmental provider error: Build(SubjectNotFound(\"return:specimen/survey-section-order-1\"))",
+        "sections": [
+          "OUTCOME",
+          "VERIFICATION · TESTED AT SPECIME",
+          "OBSERVATIONS",
+          "REMAINING WORK"
+        ]
+      }
+    },
+    {
+      "ok": true,
+      "label": "F13: Recognise called the owner's native recognition — the owner's receipt shows, and the owner's journey now carries a Recognition of the Return",
+      "data": {
+        "recognition": {
+          "recognition_ref": "recognition:desk-18d7cc6237910e00-1289-0",
+          "subject_ref": "return:specimen/survey-section-order-1",
+          "basis_refs": [
+            "recognition:desk-18d7cc6237910e00-1289-0",
+            "return:specimen/survey-section-order-1",
+            "evidence:specimen/survey-citations",
+            "evidence:specimen/survey-test-run",
+            "evidence:specimen/survey-ordering-function"
+          ]
+        }
+      }
+    },
+    {
+      "ok": true,
+      "label": "Agent completion, human recognition and Git integration read as three different states",
+      "data": {
+        "states": [
+          "Agent returned",
+          "Recognised",
+          "Git integration not recorded"
+        ]
+      }
+    }
+  ],
+  "ops": [
+    {
+      "ok": true,
+      "op": "info",
+      "duration_ms": 0.1,
+      "data": {
+        "schema": "oi.cradle.walk/v1",
+        "mounted_at": "2026-09-23T00:41:28.710Z",
+        "transport": {
+          "kind": "bridge",
+          "url": "http://127.0.0.1:4479"
+        },
+        "url": "http://localhost:4473/"
+      }
+    },
+    {
+      "ok": true,
+      "op": "info",
+      "duration_ms": 0,
+      "data": {
+        "schema": "oi.cradle.walk/v1",
+        "mounted_at": "2026-09-23T00:41:30.052Z",
+        "transport": {
+          "kind": "bridge",
+          "url": "http://127.0.0.1:4479"
+        },
+        "url": "http://localhost:4473/"
+      }
+    },
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 63,
+      "data": {
+        "file": "factory-run-f6-queued-live.png"
+      }
+    },
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 54,
+      "data": {
+        "file": "factory-run-f12-handoff-empty.png"
+      }
+    },
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 71,
+      "data": {
+        "file": "factory-run-f8-no-units.png"
+      }
+    },
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 78,
+      "data": {
+        "file": "factory-run-factory-run-map-1440-light.png"
+      }
+    },
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 89,
+      "data": {
+        "file": "factory-run-factory-run-map-1000-light.png"
+      }
+    },
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 45,
+      "data": {
+        "file": "factory-run-factory-run-map-760-light.png"
+      }
+    },
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 144,
+      "data": {
+        "file": "factory-run-factory-run-map-1440-dark.png"
+      }
+    },
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 98,
+      "data": {
+        "file": "factory-run-factory-run-map-1000-dark.png"
+      }
+    },
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 80,
+      "data": {
+        "file": "factory-run-factory-run-map-760-dark.png"
+      }
+    },
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 114,
+      "data": {
+        "file": "factory-run-unit-page.png"
+      }
+    },
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 82,
+      "data": {
+        "file": "factory-run-live.png"
+      }
+    },
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 57,
+      "data": {
+        "file": "factory-run-f13-before.png"
+      }
+    },
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 69,
+      "data": {
+        "file": "factory-run-f13-recognised.png"
+      }
+    }
+  ],
+  "metrics": {},
+  "screenshots": [
+    "factory-run-f6-queued-live.png",
+    "factory-run-f12-handoff-empty.png",
+    "factory-run-f8-no-units.png",
+    "factory-run-factory-run-map-1440-light.png",
+    "factory-run-factory-run-map-1000-light.png",
+    "factory-run-factory-run-map-760-light.png",
+    "factory-run-factory-run-map-1440-dark.png",
+    "factory-run-factory-run-map-1000-dark.png",
+    "factory-run-factory-run-map-760-dark.png",
+    "factory-run-unit-page.png",
+    "factory-run-live.png",
+    "factory-run-f13-before.png",
+    "factory-run-f13-recognised.png"
+  ]
+}

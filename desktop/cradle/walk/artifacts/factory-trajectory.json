@@ -1,0 +1,254 @@
+{
+  "schema": "oi.cradle.walk.scenario/v1",
+  "scenario": "factory-trajectory",
+  "spec_ref": "docs/cradle/11-FACTORY.md §7 F9 F10 F11",
+  "grade": "B",
+  "binding": null,
+  "generated_at": "2026-09-23T01:00:13.752Z",
+  "environment": {
+    "base_url": "http://localhost:4473",
+    "bridge_url": "http://127.0.0.1:4479",
+    "viewport": "1280x820",
+    "browser_engine": "chromium",
+    "bundle": "walk (WALK=1) served by vite preview",
+    "build_input": {
+      "mode": "fresh-build",
+      "bundle_fingerprint": "9d3e836f018c30029776ca68a7dd0c3c3f867a7c6bc67ff839845e7872683779"
+    },
+    "node": "v24.16.0",
+    "platform": "darwin",
+    "source": {
+      "repository_root": "/Users/admin/Central/worktrees/ui-build/lane3-factory",
+      "repository_head": "1fbe77e522126ea066f19ded44c79395aa3c8798",
+      "tracked_changes": [
+        "desktop/cradle/scripts/receipt-lint.mjs",
+        "desktop/cradle/src/contributions/factory/desk/RunHandoff.tsx",
+        "desktop/cradle/src/contributions/factory/desk/RunMap.tsx",
+        "desktop/cradle/src/contributions/factory/desk/RunPage.tsx",
+        "desktop/cradle/src/contributions/factory/desk/RunTrajectory.tsx",
+        "desktop/cradle/src/contributions/factory/desk/fdesk.css",
+        "desktop/cradle/src/contributions/factory/desk/runModel.ts",
+        "desktop/cradle/tests/factory-run-model.test.mjs",
+        "desktop/cradle/walk/lib/factory-specimen.mjs",
+        "desktop/cradle/walk/run.mjs"
+      ],
+      "dirty_digest": "7956a7f109c00f353f2ce2d9d661969c252f86bc901feeddf91c045197d37078",
+      "engine_provenance_path": "/Users/admin/Central/worktrees/ui-build/lane3-factory/packages/oi-design-system/expressions-engine/PROVENANCE.json",
+      "engine_source": "EpiLogos/Point-Cloud-Demo",
+      "engine_revision": "91db8428fc9dfba06cd258ec5a58e7dd9eef5313"
+    }
+  },
+  "passed": true,
+  "error": null,
+  "duration_ms": 58488,
+  "checks": [
+    {
+      "ok": true,
+      "label": "Session selector: one entry per attempt the owner names, as agent · unit · attempt n",
+      "data": {
+        "options": [
+          "Reviewer · review section order · attempt 1",
+          "Surveyor · survey section order · attempt 1"
+        ]
+      }
+    },
+    {
+      "ok": true,
+      "label": "Execution waterfall: one bar per execution at the owner's telemetry start; the earliest starts at the track's left edge and the running one reaches its right edge (±0.5px)",
+      "data": {
+        "bars": [
+          {
+            "start": 1790115300000,
+            "running": true,
+            "left": 42.484375,
+            "right": 0.015625
+          },
+          {
+            "start": 1790114460000,
+            "running": false,
+            "left": 0,
+            "right": 508.078125
+          }
+        ],
+        "ownerStarts": [
+          1790114460000,
+          1790115300000
+        ]
+      }
+    },
+    {
+      "ok": true,
+      "label": "F9: footer stats EQUAL the owner journal's own usage sums (turns · steps · tokens · cache hit · cost)",
+      "data": {
+        "footText": "1 turn · 2 steps · 20K tok · cache hit 94% · $0.003",
+        "expected": "1 turn · 2 steps · 20K tok · cache hit 94% · $0.003",
+        "usage": {
+          "steps": 2,
+          "input": 1186,
+          "output": 168,
+          "cacheRead": 19072,
+          "cacheWrite": 0,
+          "totalTokens": 20426,
+          "cost": 0.003069968,
+          "any": true
+        }
+      }
+    },
+    {
+      "ok": true,
+      "label": "F9: the lane strip is on a time axis with Duration · Turns · Calls"
+    },
+    {
+      "ok": true,
+      "label": "F9: one Model mark per model step, one Tools mark per call",
+      "data": {
+        "modelMarks": 2,
+        "toolMarks": 6
+      }
+    },
+    {
+      "ok": true,
+      "label": "Toggling Calls changes the x-axis (marks move)"
+    },
+    {
+      "ok": true,
+      "label": "F10: without owner timestamps the axis says Order and the Duration/Turns/Calls toggles are absent"
+    },
+    {
+      "ok": true,
+      "label": "F10: the footer shows only turns and steps — no tokens, cost or tok/s invented",
+      "data": {
+        "orderFoot": "1 turn · 2 steps"
+      }
+    },
+    {
+      "ok": true,
+      "label": "F10: no invented durations on the rows",
+      "data": {
+        "durations": [
+          "",
+          "",
+          ""
+        ]
+      }
+    },
+    {
+      "ok": true,
+      "label": "F11: while paused, real arrivals show \"Resume live · n new\" and the view does not scroll (scrollTop equal ±0.5px)",
+      "data": {
+        "pillText": "Resume live · 1 new",
+        "pausedTop": 0,
+        "afterTop": 0
+      }
+    },
+    {
+      "ok": true,
+      "label": "F11: Resume live follows to the newest row again"
+    }
+  ],
+  "ops": [
+    {
+      "ok": true,
+      "op": "info",
+      "duration_ms": 0.1,
+      "data": {
+        "schema": "oi.cradle.walk/v1",
+        "mounted_at": "2026-09-23T01:00:14.141Z",
+        "transport": {
+          "kind": "bridge",
+          "url": "http://127.0.0.1:4479"
+        },
+        "url": "http://localhost:4473/"
+      }
+    },
+    {
+      "ok": true,
+      "op": "info",
+      "duration_ms": 0,
+      "data": {
+        "schema": "oi.cradle.walk/v1",
+        "mounted_at": "2026-09-23T01:00:18.054Z",
+        "transport": {
+          "kind": "bridge",
+          "url": "http://127.0.0.1:4479"
+        },
+        "url": "http://localhost:4473/"
+      }
+    },
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 128,
+      "data": {
+        "file": "factory-trajectory-factory-trajectory-1440-light.png"
+      }
+    },
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 62,
+      "data": {
+        "file": "factory-trajectory-factory-trajectory-1000-light.png"
+      }
+    },
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 41,
+      "data": {
+        "file": "factory-trajectory-factory-trajectory-760-light.png"
+      }
+    },
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 167,
+      "data": {
+        "file": "factory-trajectory-factory-trajectory-1440-dark.png"
+      }
+    },
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 112,
+      "data": {
+        "file": "factory-trajectory-factory-trajectory-1000-dark.png"
+      }
+    },
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 118,
+      "data": {
+        "file": "factory-trajectory-factory-trajectory-760-dark.png"
+      }
+    },
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 55,
+      "data": {
+        "file": "factory-trajectory-f10-order.png"
+      }
+    },
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 49,
+      "data": {
+        "file": "factory-trajectory-f11-paused.png"
+      }
+    }
+  ],
+  "metrics": {},
+  "screenshots": [
+    "factory-trajectory-factory-trajectory-1440-light.png",
+    "factory-trajectory-factory-trajectory-1000-light.png",
+    "factory-trajectory-factory-trajectory-760-light.png",
+    "factory-trajectory-factory-trajectory-1440-dark.png",
+    "factory-trajectory-factory-trajectory-1000-dark.png",
+    "factory-trajectory-factory-trajectory-760-dark.png",
+    "factory-trajectory-f10-order.png",
+    "factory-trajectory-f11-paused.png"
+  ]
+}

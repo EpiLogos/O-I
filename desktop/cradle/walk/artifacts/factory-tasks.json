@@ -1,0 +1,173 @@
+{
+  "schema": "oi.cradle.walk.scenario/v1",
+  "scenario": "factory-tasks",
+  "spec_ref": "docs/cradle/11-FACTORY.md §7 F14 F15",
+  "grade": "B",
+  "binding": null,
+  "generated_at": "2026-09-23T01:01:27.502Z",
+  "environment": {
+    "base_url": "http://localhost:4473",
+    "bridge_url": "http://127.0.0.1:4479",
+    "viewport": "1280x820",
+    "browser_engine": "chromium",
+    "bundle": "walk (WALK=1) served by vite preview",
+    "build_input": {
+      "mode": "fresh-build",
+      "bundle_fingerprint": "9d3e836f018c30029776ca68a7dd0c3c3f867a7c6bc67ff839845e7872683779"
+    },
+    "node": "v24.16.0",
+    "platform": "darwin",
+    "source": {
+      "repository_root": "/Users/admin/Central/worktrees/ui-build/lane3-factory",
+      "repository_head": "1fbe77e522126ea066f19ded44c79395aa3c8798",
+      "tracked_changes": [
+        "desktop/cradle/scripts/receipt-lint.mjs",
+        "desktop/cradle/src/contributions/factory/desk/RunHandoff.tsx",
+        "desktop/cradle/src/contributions/factory/desk/RunMap.tsx",
+        "desktop/cradle/src/contributions/factory/desk/RunPage.tsx",
+        "desktop/cradle/src/contributions/factory/desk/RunTrajectory.tsx",
+        "desktop/cradle/src/contributions/factory/desk/fdesk.css",
+        "desktop/cradle/src/contributions/factory/desk/runModel.ts",
+        "desktop/cradle/tests/factory-run-model.test.mjs",
+        "desktop/cradle/walk/lib/factory-specimen.mjs",
+        "desktop/cradle/walk/run.mjs"
+      ],
+      "dirty_digest": "7956a7f109c00f353f2ce2d9d661969c252f86bc901feeddf91c045197d37078",
+      "engine_provenance_path": "/Users/admin/Central/worktrees/ui-build/lane3-factory/packages/oi-design-system/expressions-engine/PROVENANCE.json",
+      "engine_source": "EpiLogos/Point-Cloud-Demo",
+      "engine_revision": "91db8428fc9dfba06cd258ec5a58e7dd9eef5313"
+    }
+  },
+  "passed": true,
+  "error": null,
+  "duration_ms": 56850,
+  "checks": [
+    {
+      "ok": true,
+      "label": "F14: the conversation whose session carried the review attempt shows a Run chip for exactly that run (join by attempt session)",
+      "data": {
+        "chipTitle": "Run Make the Specimen release notes follow the changelog's declared section order, so readers meet breaking changes first",
+        "attemptSession": "agent-session/specimen-review"
+      }
+    },
+    {
+      "ok": true,
+      "label": "F14: hovering the Run chip shows the run's state",
+      "data": {
+        "chipHover": "Queued · Make the Specimen release notes follow the changelog's declared section order, so readers meet breaking changes first"
+      }
+    },
+    {
+      "ok": true,
+      "label": "F14: opening the conversation used the frame's ordinary encounter start/read pair"
+    },
+    {
+      "ok": true,
+      "label": "F14: the Run chip opens the Run page"
+    },
+    {
+      "ok": true,
+      "label": "F15: a conversation no run carries says \"Direct conversation\" exactly once and shows no Run chip (no invented ancestry)",
+      "data": {
+        "direct": "Direct conversation",
+        "headerText": "Direct conversation"
+      }
+    }
+  ],
+  "ops": [
+    {
+      "ok": true,
+      "op": "info",
+      "duration_ms": 0.1,
+      "data": {
+        "schema": "oi.cradle.walk/v1",
+        "mounted_at": "2026-09-23T01:01:27.783Z",
+        "transport": {
+          "kind": "bridge",
+          "url": "http://127.0.0.1:4479"
+        },
+        "url": "http://localhost:4473/"
+      }
+    },
+    {
+      "ok": true,
+      "op": "info",
+      "duration_ms": 0,
+      "data": {
+        "schema": "oi.cradle.walk/v1",
+        "mounted_at": "2026-09-23T01:01:32.210Z",
+        "transport": {
+          "kind": "bridge",
+          "url": "http://127.0.0.1:4479"
+        },
+        "url": "http://localhost:4473/"
+      }
+    },
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 107,
+      "data": {
+        "file": "factory-tasks-factory-tasks-joined-1440-light.png"
+      }
+    },
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 81,
+      "data": {
+        "file": "factory-tasks-factory-tasks-joined-1000-light.png"
+      }
+    },
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 53,
+      "data": {
+        "file": "factory-tasks-factory-tasks-joined-760-light.png"
+      }
+    },
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 96,
+      "data": {
+        "file": "factory-tasks-factory-tasks-joined-1440-dark.png"
+      }
+    },
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 134,
+      "data": {
+        "file": "factory-tasks-factory-tasks-joined-1000-dark.png"
+      }
+    },
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 63,
+      "data": {
+        "file": "factory-tasks-factory-tasks-joined-760-dark.png"
+      }
+    },
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 116,
+      "data": {
+        "file": "factory-tasks-f15-direct.png"
+      }
+    }
+  ],
+  "metrics": {},
+  "screenshots": [
+    "factory-tasks-factory-tasks-joined-1440-light.png",
+    "factory-tasks-factory-tasks-joined-1000-light.png",
+    "factory-tasks-factory-tasks-joined-760-light.png",
+    "factory-tasks-factory-tasks-joined-1440-dark.png",
+    "factory-tasks-factory-tasks-joined-1000-dark.png",
+    "factory-tasks-factory-tasks-joined-760-dark.png",
+    "factory-tasks-f15-direct.png"
+  ]
+}
