@@ -33,6 +33,12 @@ class DeveloperFieldTests(unittest.TestCase):
                     if not target.exists():
                         target.parent.mkdir(parents=True, exist_ok=True)
                         shutil.copy2(em.source_path(ROOT, relative), target)
+        # The declared executable-test relation is a source dependency too.
+        bindings = config.get("executable_test_bindings") or {}
+        if bindings.get("path"):
+            target = self.root / bindings["path"]
+            target.parent.mkdir(parents=True, exist_ok=True)
+            shutil.copy2(em.source_path(ROOT, bindings["path"]), target)
         self.module_path = self.root / "docs/experience/developer-field.json"
 
     def tearDown(self):

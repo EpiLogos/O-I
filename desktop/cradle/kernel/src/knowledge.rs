@@ -279,6 +279,7 @@ mod tests {
         // This transport witness observes argv; it never evaluates the query.
         fs::write(&executable, "#!/usr/bin/env python3\nimport json, sys\nprint(json.dumps({'ok': True, 'data': sys.argv[1:]}))\n").unwrap();
         fs::set_permissions(&executable, fs::Permissions::from_mode(0o700)).unwrap();
+        crate::test_stub::settle_stub(&executable);
         for cwd in [
             scratch.0.join("Central"),
             scratch.0.join("Central/Work/My Project"),

@@ -25,7 +25,7 @@ import { mkdirSync, writeFileSync, readFileSync, realpathSync } from "node:fs";
 import { createRequire } from "node:module";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
-import { chromium } from "playwright";
+import { chromium, webkit } from "playwright";
 import { normalizeRegistry, resolveScenarioNames, classifyFailure, DisposerStack, dirtyTreeDigest, buildInputIdentity } from "./run-support.mjs";
 
 const here = dirname(fileURLToPath(import.meta.url));
@@ -41,7 +41,10 @@ if (loadedEngineProvenance !== expectedEngineProvenance) {
   throw new Error(`The walk's engine dependency resolves outside its checkout: ${loadedEngineProvenance}. Run npm ci inside this checkout's desktop/cradle; do not borrow another checkout's node_modules.`);
 }
 const engineProvenance = JSON.parse(readFileSync(loadedEngineProvenance, "utf8"));
-const runGit = (args) => execFileSync("git", args, {cwd:repositoryRoot, encoding:"utf8"});
+// The dirty-tree digest reads the whole repo's diff; a tree carrying parallel
+// receipt restamps exceeds execFileSync's 1 MB default buffer, so widen it —
+// the digest hashes whatever the diff is, it does not parse it.
+const runGit = (args) => execFileSync("git", args, {cwd:repositoryRoot, encoding:"utf8", maxBuffer:64*1024*1024});
 const sourceContext = {
   repository_root: repositoryRoot,
   repository_head: runGit(["rev-parse", "HEAD"]).trim(),
@@ -139,7 +142,69 @@ const SCENARIOS = {
   study: { module: "scenarios/study.mjs", kernel: false, aliases: ["ui-study"] },
   native: { module: "scenarios/native.mjs", kernel: false, aliases: ["package"] },
   "document-entry": { module: "scenarios/document-entry.mjs", kernel: true, aliases: ["6a"] },
+  "background-completion": {module:"scenarios/background-completion.mjs",kernel:true,aliases:[]},
+  "lane0-repairs": {module:"scenarios/lane0-repairs.mjs",kernel:true,aliases:[]},
+  // 11-FACTORY (lane 3): one walk per Factory state group, grade B.
+  "factory-desk": {module:"scenarios/factory-desk.mjs",kernel:true,aliases:["f1","f2","f3","f4","f5"]},
+  "factory-run": {module:"scenarios/factory-run.mjs",kernel:true,aliases:["f6","f7","f8","f12","f13"]},
+  "factory-trajectory": {module:"scenarios/factory-trajectory.mjs",kernel:true,aliases:["f9","f10","f11"]},
+  "factory-tasks": {module:"scenarios/factory-tasks.mjs",kernel:true,aliases:["f14","f15"]},
+  "factory-objects": {module:"scenarios/factory-objects.mjs",kernel:true,aliases:["f16"]},
+  "factory-real": {module:"scenarios/factory-real.mjs",kernel:true,aliases:[]},
 };
+
+// Which design/spec row each scenario's receipt serves, and an optional grade
+// override (DESKTOP-LANGUAGE.md ruling 8: every receipt carries spec_ref +
+// grade; A = live/installed/native, B = real-kernel walk-bridge, C =
+// contract/static, D = controlled/fixture). Without an override the grade is
+// B for kernel:true scenarios and C for kernel:false. Keep the spec table in
+// sync with scripts/receipt-lint.mjs SCENARIO_SPEC; anything unnamed serves
+// the constitutional basis: walks are the acceptance (05-EXECUTION §3).
+const SCENARIO_SPEC = {
+  "system-settings": { spec_ref: "docs/cradle/06-SYSTEM-SETTINGS.md §7" },
+  configuration: { spec_ref: "docs/cradle/09-CONFIGURATION-PLANE.md" },
+  "factory-development": { spec_ref: "docs/experience/FACTORY-AGENCY.md §4/§5/§8/§12" },
+  "background-completion": { spec_ref: "docs/experience/FACTORY-AGENCY.md §1 + handoff §4" },
+  "lane0-repairs": { spec_ref: "docs/cradle/10-SIDEBARS.md §6.1 (2,3,7) §3.6 rule 1; 11-FACTORY.md §4" },
+  "factory-desk": { spec_ref: "docs/cradle/11-FACTORY.md §7 F1 F2 F3 F4 F5" },
+  "factory-run": { spec_ref: "docs/cradle/11-FACTORY.md §7 F6 F7 F8 F12 F13" },
+  "factory-trajectory": { spec_ref: "docs/cradle/11-FACTORY.md §7 F9 F10 F11" },
+  "factory-tasks": { spec_ref: "docs/cradle/11-FACTORY.md §7 F14 F15" },
+  "factory-objects": { spec_ref: "docs/cradle/11-FACTORY.md §6 §7 F16" },
+  "factory-real": { spec_ref: "docs/cradle/11-FACTORY.md §7 F5 F6 F7 F12 (real Central-root runs, read-only)" },
+};
+const DEFAULT_SPEC_REF = "docs/cradle/05-EXECUTION.md §3";
+
+// Declared source relations (walk/scenario-bindings.json): which #65
+// obligations/stories a scenario serves, which required branches and
+// source-defined negative classes its checks exercise. The compiler
+// (scripts/experience_map.py --coverage) validates these against the
+// obligation field and joins receipts as latest performed evidence; the
+// receipt carries the declaration so executed evidence keeps its relation.
+let DECLARED_BINDINGS = {};
+try {
+  DECLARED_BINDINGS = JSON.parse(readFileSync(join(here, "scenario-bindings.json"), "utf8")).tests ?? {};
+} catch (error) {
+  if (error.code !== "ENOENT") throw error;
+}
+const declaredBinding = (name) => {
+  const binding = DECLARED_BINDINGS[name];
+  return binding ? {
+    serves: binding.serves,
+    branches: binding.branches ?? {},
+    negatives: binding.negatives ?? [],
+    claims_grade: binding.claims_grade ?? "D",
+  } : null;
+};
+
+function receiptStanding(name, kernelScenario) {
+  const declared = SCENARIO_SPEC[name];
+  return {
+    spec_ref: declared?.spec_ref ?? DEFAULT_SPEC_REF,
+    grade: declared?.grade ?? (kernelScenario ? "B" : "C"),
+    binding: declaredBinding(name),
+  };
+}
 
 // Every entry must name a module and carry an alias list before any name or
 // alias is resolved — a malformed runner is rejected here, not surfaced later
@@ -242,11 +307,13 @@ function makeHarness({ scenario, page, baseUrl, bridgeUrl, kernelScenario }) {
   const receipt = {
     schema: "oi.cradle.walk.scenario/v1",
     scenario,
+    ...receiptStanding(scenario, kernelScenario),
     generated_at: new Date().toISOString(),
     environment: {
       base_url: baseUrl,
       bridge_url: kernelScenario ? bridgeUrl : null,
       viewport: "1280x820",
+      browser_engine: process.env.WALK_ENGINE === "webkit" ? "webkit" : "chromium",
       bundle: "walk (WALK=1) served by vite preview",
       build_input: buildInput,
       node: process.version,
@@ -389,11 +456,13 @@ function failedReceipt({ name, kernelScenario, baseUrl, startedAt, failure, clea
   return {
     schema: "oi.cradle.walk.scenario/v1",
     scenario: name,
+    ...receiptStanding(name, kernelScenario),
     generated_at: new Date().toISOString(),
     environment: {
       base_url: baseUrl,
       bridge_url: kernelScenario ? BRIDGE_URL : null,
       viewport: "1280x820",
+      browser_engine: process.env.WALK_ENGINE === "webkit" ? "webkit" : "chromium",
       bundle: "walk (WALK=1) served by vite preview",
       build_input: buildInput,
       node: process.version,
@@ -462,7 +531,12 @@ async function runScenario(name, { baseUrl }) {
     }
 
     stage = "browser";
-    const browser = await chromium.launch(process.env.OI_CHROMIUM ? {executablePath:process.env.OI_CHROMIUM} : {});
+    // WALK_ENGINE selects the browser engine (chromium default; webkit for
+    // conditions whose receiving semantics materially differ across engines).
+    // The engine is recorded in every receipt's environment.
+    const engineName = process.env.WALK_ENGINE === "webkit" ? "webkit" : "chromium";
+    const browser = await (engineName === "webkit" ? webkit : chromium).launch(
+      engineName === "chromium" && process.env.OI_CHROMIUM ? {executablePath:process.env.OI_CHROMIUM} : {});
     disposers.push("browser", () => browser.close());
 
     stage = "page";

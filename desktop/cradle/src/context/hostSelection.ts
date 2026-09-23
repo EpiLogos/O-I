@@ -11,7 +11,7 @@ export function useHostSelection(root:RefObject<HTMLElement>):()=>boolean {
  useEffect(()=>{
   const element=root.current;if(!element)return;
   const documentId=crypto.randomUUID();const owned=new Set<string>();let frame=0;
-  const excluded=".cm-editor,input,textarea,select,.editor-command-line,.editor-footer,.document-returns,.shared-field-material,.document-contributions,.source-history,.source-conflict";
+  const excluded=".cm-editor,input,textarea,select,.editor-command-line,.editor-footer,.document-receiving,.shared-field-material,.document-contributions,.source-history,.source-conflict";
   const clear=()=>{if(chosen.current){chosen.current=undefined;element.dispatchEvent(new CustomEvent("oi:selection-anchor",{detail:{selected:false}}));window.dispatchEvent(new CustomEvent("oi:selection-preview",{detail:undefined}));}};
   const read=()=>{
    const selected=window.getSelection();

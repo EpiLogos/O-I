@@ -239,8 +239,18 @@ export function AgentChat({session,accompanying,project,agentName,situating,sess
         <div className="chat-welcome">
           <p className="chat-welcome-title">{choosing?"Opening the conversation…":provisioning?"Opening a new conversation…":"New conversation"}</p>
           <p className="chat-welcome-line oi-note">{choosing?"The conversation binds through the owner's own start and read."
-            :`Write below — your first message opens a new conversation in ${provisionProject}, ready to send. Older conversations wait in the sidebar.`}</p>
+            :`Write below — your first message opens a new conversation in ${provisionProject}, ready to send.`}</p>
         </div>
+        {/* The plane's own chooser over the project's real attached
+          * conversations (the same start/read pair the centre head uses):
+          * the first-Send composer stays the default, and the older
+          * conversations stay one open away, here as well as the sidebar. */}
+        {!centre&&!choosing&&!provisioning&&onChoose&&project&&<div className="chat-history chat-history-plane" ref={historyRef}>
+          <button className="oi-action chat-history-open" aria-label="History" aria-haspopup="true" aria-expanded={menuOpen} title="History — the project's attached conversations" onClick={()=>setHistoryOpen(value=>!value)}><Glyph name="history" size={12}/><span>Choose an older conversation</span></button>
+          {menuOpen&&<div className="chat-history-menu oi-menu" role="group" aria-label="Conversations">
+            <div className="chat-history-rows oi-scroll"><EncounterList project={project} variant="panel" activeRef={accompanying?.ref} onOpen={chooseRow}/></div>
+          </div>}
+        </div>}
         {!choosing&&!provisioning&&suggestions.length>0&&<div className="chat-suggestions" aria-label="Starting suggestions">
           {suggestions.map(suggestion=><button key={suggestion} className="chat-suggestion" onClick={()=>{setLocal(suggestion);setComposerFocusToken(token=>token+1);}}>{suggestion}</button>)}
         </div>}

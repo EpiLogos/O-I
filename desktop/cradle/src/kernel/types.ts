@@ -214,7 +214,7 @@ export type KernelOp =
   | {op:"encounter";project:string;request:import("../encounter/client").EncounterRequest}
   /** Provision one fresh chat conversation (new-chat first Send): the kernel
    * replays the owner's own SessionSpace CLI sequence and opens the result. */
-  | {op:"encounter_provision";project:string}
+  | {op:"encounter_provision";project:string;preferred_body_ref?:string}
   | { op: "encounter_join"; session: string; request_ref: string; reply?: { answer: "grant" } | { answer: "refuse"; reason: string } | null }
   | { op: "material_read"; target: { receipt: string; state_root: string; endpoint?: string | null; expected_world_ref?: string | null } }
   | { op: "a2a_exchange"; request: Record<string, unknown> }
@@ -226,6 +226,7 @@ export type KernelOp =
   | {op:"factory_attempt_read";state_path:string;run_ref:string}
   | {op:"factory_attempt_task_list_read";state_path:string;run_ref:string}
   | {op:"factory_attempt_task_read";state_path:string;run_ref:string;task_ref:string;limit?:number;cursor?:unknown}
+  | {op:"factory_owner";request:{kind:string;[field:string]:unknown}}
   | {op:"workcell_status_read"}
   | {op:"wiki_projection_read";root:string;path:string}
   | {op:"wiki_projection_sources"}

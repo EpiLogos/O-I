@@ -5,13 +5,14 @@ import {DeliveryRegistrations,NowRecords,OwnerActions,RawDisclosure,SessionFacts
 import {deliveriesOf,nowRefsOf,taskBasisWithoutNow,type EncounterSessionHandle} from "../../encounter/session";
 import type {AgentSubject} from "../AgentLayer";
 import {panelInspectKey,type PanelInspectDetail} from "./panelInspect";
+import {inspectReaderOf,UnknownMaterial} from "./inspectReaders";
 
-export type InspectView="selected"|"subject"|"session"|"returned";
+export type InspectView="selected"|"subject"|"session"|"delivered";
 /** Which thing Inspect is showing. Held by the panel, not by this plane, so a
  * plane or mode change never loses the selection. */
 export interface InspectSelection {view:InspectView;handedKey?:string}
 
-const VIEWS:{id:InspectView;label:string}[]=[{id:"selected",label:"Selected"},{id:"subject",label:"Subject"},{id:"session",label:"Session"},{id:"returned",label:"Returned"}];
+const VIEWS:{id:InspectView;label:string}[]=[{id:"selected",label:"Selected"},{id:"subject",label:"Subject"},{id:"session",label:"Session"},{id:"delivered",label:"Delivered"}];
 
 /** Inspect / returned work: real room for the selected thing. The selector
  * offers only what exists — the things handed here (an Activity row, a centre
@@ -54,30 +55,38 @@ export function InspectPlane({full,selection,onSelection,handed,onDismiss,subjec
        <RawDisclosure reading={session.state.reading} status={session.state.status}/>
       </div>
     : <p className="oi-empty" data-state="no-session">No conversation is bound to the panel, so there is no session to inspect.</p>)}
-   {selection.view==="returned"&&(session
+   {selection.view==="delivered"&&(session
     ? <div className="agent-inspect-returned" key={session.state.key}>
        <header className="oi-panel-head"><h3 className="oi-panel-head-title">Delivery receipts</h3></header>
        <DeliveryRegistrations deliveries={deliveriesOf(session.state)}/>
        <header className="oi-panel-head"><h3 className="oi-panel-head-title">NOW records</h3></header>
        <NowRecords nowRefs={nowRefsOf(session.state)} taskBasisWithoutNow={taskBasisWithoutNow(session.state)}/>
        <header className="oi-panel-head"><h3 className="oi-panel-head-title">Reports, handoffs, verification</h3></header>
-       <p className="oi-note" data-fact="returns-listing-absent">No owner operation lists a session&apos;s reports, handoffs or verification results. What returned to this surface is exactly the delivery receipts and the NOW records above; document returns are reviewed beside their document.</p>
+       <p className="oi-note" data-fact="delivery-listing-absent">No owner operation lists a session&apos;s reports, handoffs or verification results. What this session delivered is exactly the delivery receipts and the NOW records above; document arrivals are reviewed beside their document.</p>
       </div>
-    : <p className="oi-empty" data-state="no-session">No conversation is bound to the panel, so nothing has returned here.</p>)}
+    : <p className="oi-empty" data-state="no-session">No conversation is bound to the panel, so nothing has been delivered here.</p>)}
   </div>
  </div>;
 }
 
 function HandedMaterial({item}:{item:PanelInspectDetail}) {
- const text=typeof item.payload==="string"?item.payload:item.payload===undefined?undefined:JSON.stringify(item.payload,null,1);
+ // Owner ruling 2 (DESKTOP-LANGUAGE.md, 2026-09-22): no raw JSON where a
+ // person reads — and the reader registry (planes/inspectReaders.tsx, dossier
+ // §3.5): known payload kinds render as real readable components; unknown
+ // kinds degrade to readable text. The verbatim record always sits behind a
+ // collapsed disclosure — the same <details>-grade pattern the session's Raw
+ // disclosure uses — so the primary view stays the readable facts above it.
+ const reader=inspectReaderOf(item.kind);
+ const raw=item.payload!==undefined?JSON.stringify(item.payload,null,1):undefined;
  return <article className="agent-inspect-handed" data-inspect-kind={item.kind} data-inspect-ref={item.ref}>
   <header className="oi-panel-head"><h3 className="oi-panel-head-title">{item.title}</h3></header>
   <dl className="oi-kv">
-   <dt>Kind</dt><dd>{item.kind}</dd>
+   <dt>Kind</dt><dd>{reader?.label??item.kind}</dd>
    <dt>Ref</dt><dd className="oi-ref">{item.ref}</dd>
    {item.source&&<><dt>Handed by</dt><dd>{item.source}</dd></>}
   </dl>
-  {text!==undefined?<pre className="agent-inspect-payload">{text}</pre>:<p className="oi-note">This selection carried no material of its own.</p>}
+  {reader?reader.read(item):item.payload!==undefined?<UnknownMaterial payload={item.payload}/>:<p className="oi-note">This selection carried no material of its own.</p>}
+  {raw!==undefined&&<details className="oi-disclosure"><summary>Raw record</summary><pre className="agent-inspect-payload">{raw}</pre></details>}
  </article>;
 }
 

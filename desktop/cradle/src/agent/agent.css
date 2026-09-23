@@ -17,6 +17,9 @@
  * agent minimum (finding 5). A mode with more planes than fit scrolls the nav
  * itself, quietly — the panel never widens and the document never scrolls. */
 .agent-layer .agent-planes{gap:10px;overflow-x:auto;overflow-y:hidden;scrollbar-width:none}
+/* Leading plane glyphs: icon + label on one baseline (aria-hidden svg — the
+   accessible name stays the label). */
+.agent-layer .agent-planes>button,.agent-layer .agent-planes .oi-menu-item{display:inline-flex;align-items:center;gap:5px}
 .agent-layer .agent-planes::-webkit-scrollbar{display:none}
 .agent-head-glyph{width:var(--oi-shell-control);height:28px;flex:none;border:var(--oi-shell-edge) solid var(--oi-hairline);border-radius:7px;display:grid;place-items:center;background:var(--oi-canvas-ground);color:var(--oi-accent-ink)}
 
@@ -125,6 +128,10 @@
 .agent-inspect-material .oi-kv{margin:0 0 10px}
 .agent-inspect-material :is(.oi-note,.oi-empty){line-height:1.55;padding-left:0;padding-right:0}
 .agent-layer .agent-inspect-material pre.agent-inspect-payload{max-height:none}
+/* The reader registry's readable body (planes/inspectReaders.tsx): prose with
+   whitespace kept — never a pre in the primary view (ruling 2, spec L5). */
+.agent-inspect-read{white-space:pre-wrap;overflow-wrap:anywhere;line-height:1.55;font-size:var(--oi-shell-type-ui);max-height:320px;overflow-y:auto;scrollbar-width:none}
+.agent-inspect-read::-webkit-scrollbar,.agent-inspect-read *::-webkit-scrollbar{display:none;width:0;height:0}
 .agent-inspect-material .encounter-session-facts{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.2fr);gap:8px 12px;margin:0 0 10px}
 .agent-inspect-material .encounter-session-facts dt{color:var(--oi-muted-2)}
 .agent-inspect-material .encounter-session-facts dd{margin:0;overflow-wrap:anywhere}

@@ -1,4 +1,6 @@
 {
+  "spec_ref": "docs/cradle/05-EXECUTION.md §3",
+  "grade": "C",
   "schema": "oi.webkit-attribution-preparation/v1",
   "utc": "2026-09-08T18:57:59.879733+00:00",
   "target_pid": 19773,
@@ -137,9 +139,9 @@
   ],
   "attribution": {
     "19773": "exact bundle path and identifier from LaunchServices; start Sep8 19:50:58 2026",
+    "19808": "LaunchServices registered name O-I P1 Acceptance Graphics and Media; start19:50:59; no explicit parentASN or unique store path obtained",
     "19809": "unique bundle/store open file paths; LaunchServices name O-I P1 Acceptance Networking; start19:50:59",
-    "19810": "explicit LaunchServices parentASN points to19809, reciprocal childASN; name O-I P1 Acceptance Web Content; start19:50:59",
-    "19808": "LaunchServices registered name O-I P1 Acceptance Graphics and Media; start19:50:59; no explicit parentASN or unique store path obtained"
+    "19810": "explicit LaunchServices parentASN points to19809, reciprocal childASN; name O-I P1 Acceptance Web Content; start19:50:59"
   },
   "uncertainty": [
     "GPU attribution is OS registered unique application display-name attribution, not kernel responsibility-chain proof. Record it separately if strict responsibility proof is required.",

@@ -1,4 +1,6 @@
 {
+  "spec_ref": "docs/cradle/05-EXECUTION.md §3",
+  "grade": "C",
   "standing": "root integrated source review; native gate pending",
   "reviewed": [
     "Expression overlay bounds/lease/visibility/theme/disposal",

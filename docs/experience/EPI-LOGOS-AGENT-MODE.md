@@ -102,3 +102,43 @@ The mode-specific source tests must detect a disconnected note, loss of the expl
 **Execution trigger:** #220's current lead claims this bounded mode-quality contribution in the existing tree and consumes Actuation #107 / QL-MEF #201 plus #388's available contracts. Implement and integrate the missing native composition/default/receiving joins, then perform the two-mode episode as soon as their real dependencies are usable. Do not start another harmonisation/reset, force every research pipeline to completion before any useful mode trial, or declare the whole lane complete from one small demonstration.
 
 Return through the existing #65 round and owner tickets: exact source/profile/tool/model/runtime basis; requested/resolved/delivered/used state; mode/default/override/off/re-entry behaviour; actual #0–#5 coverage; child/worktree/handover evidence; failures and repairs; fresh use of warranted Return; remaining exact gaps and human assessment. No private transcript, credentials or machine configuration is published in public evidence.
+
+## 7. Implemented default route — 2026-09-22
+
+The receiving implementation is published in [#477](https://github.com/EpiLogos/O-I/pull/477), consuming AIKit [#391](https://github.com/EpiLogos/ai-kit/pull/391), Actuation [#110](https://github.com/EpiLogos/Actuation/pull/110) and QL-MEF [#241](https://github.com/EpiLogos/QL-MEF/pull/241).
+
+There is one mode law: while the current World is `epi-logos`, the Epi-Logos, Expressions and Technē apertures supply `agent-body/epi-prime-ql` as the default **for a new conversation**. Merely selecting or navigating the mode starts no process, acquires no credential and does not replace an existing encounter. The ordinary first-Send path creates the existing SessionSpace/AgentSession/Agency relation, asks AIKit for the body, opens the ordinary Encounter provider and requires the open receipt to read back the same body revision.
+
+Provider precedence stays explicit. A person's held provider choice wins even if it is not Prime-QL, and is never relabelled as the mode body. Without such an override, absence of an exact Prime body is an actionable unavailable state rather than a hidden generic fallback. Ordinary Expressions/Technē outside the Epi world do not acquire the body. Existing encounter retention, draft, cancellation, prepared-context and Run/Agents/Context surfaces are reused unchanged.
+
+The branch's complete triggered desktop/kernel suite is green, including Agent-session-native, O:I desktop, Technē constructive field, Native Expression backcheck, Canvas/context, shell recovery, adoption, Wiki integration and O:I Verify. That proves the receiving application and state law on the cloud cut; it does not assert installation on the owner's machines, a live Prime/Jev/EBM turn or human acceptance.
+
+The general Jev/Redis/NOW implementation remains owned by AIKit #388. This mode consumes the same Encounter prepared-context seam; until #388 publishes its runtime provider, Jev preparation is a dependency standing, not a fixture renamed as live context.
+
+
+### Native continuation follow-up
+
+The descendant continuation mechanism now uses Central's existing
+`projectcentral.now.return` owner rather than a chat transcript or an
+Actuation-local handoff file. When the installed Prime provider is configured
+with the optional Central `ctrl` binary/root/project inputs, the inherited
+`ql-relational` Skill can write a pithy
+`central.project-now.handoff/v1` record carrying the actual session,
+source/evidence/preserve refs and repo/branch/optional-worktree lane claim. A
+fresh cheapest-eligible Prime child re-reads that exact Central record through
+NOW inspection and continues from its refs; the parent does not reconstruct the
+investigation.
+
+The installed acceptance runner in AIKit exercises this branch when its Central
+and lane inputs are supplied. It separately retains cancellation/same-session
+continuation and child-owned QL faculty receipt checks.
+
+One material branch is still deliberately not called complete: Prime Agent
+0.9.4 owns `rlm.run` child creation and exposes no per-child supervisor hook
+through which Workcell's write boundary can be applied before exec. Workcell
+does have a real Linux Landlock process-tree boundary, but wrapping the whole
+Prime body would not prove independently assigned child worktrees, and a
+writable worker directory alone cannot prove that an editable full-tree copy
+was impossible. Until Prime exposes that host seam (or a Workcell-owned worker
+session replaces the child launch), the installed verifier names
+OS/worktree-confinement as unproved rather than using a command-name filter.

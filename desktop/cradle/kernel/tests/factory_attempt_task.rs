@@ -6,6 +6,8 @@
 //! on the suite route and not at all on the direct route, carries the payload
 //! verbatim, and refuses an incompatible contract — no comment is trusted for
 //! the routing.
+#[path = "support/stub.rs"]
+mod stub;
 use oi_cradle_kernel::{CentralClient, Kernel, KernelOp, KernelOpResult};
 use serde_json::json;
 use std::fs;
@@ -25,6 +27,7 @@ fn write_fake(dir: &std::path::Path, args_file: &std::path::Path) -> PathBuf {
     let path = dir.join("fake-factory.sh");
     fs::write(&path, script).unwrap();
     fs::set_permissions(&path, fs::Permissions::from_mode(0o755)).unwrap();
+    stub::settle_stub(&path);
     path
 }
 

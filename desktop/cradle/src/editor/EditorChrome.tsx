@@ -59,7 +59,7 @@ export function EditorFrame({children,className="",toolbar,footer,label,data,pre
   // revisions) are interactive surface tooling, not document material: the
   // context-mode component picker must never arm on them or swallow their
   // clicks — a click there means the affordance it names, nothing else.
-  const toolRegion=(node:Element|null|undefined)=>!!node?.closest(".document-returns,.shared-field-material,.document-contributions,.source-history,.source-conflict");
+  const toolRegion=(node:Element|null|undefined)=>!!node?.closest(".document-receiving,.shared-field-material,.document-contributions,.source-history,.source-conflict");
   const pick=(event:React.PointerEvent)=>{if(mode!=="context")return;if(toolRegion(event.target as Element)){setHover(null);return;}const node=(event.target as Element).closest('.cm-line,p,h1,h2,h3,li,button,img,svg,pre,table,[data-context-component]');if(node&&root.current?.contains(node)&&!node.closest('.editor-command-line,.editor-collapse'))setHover({node,box:node.getBoundingClientRect()});else setHover(null);};
   return <EditorMode.Provider value={mode}><section ref={root} className={`editor-frame ${className}`} data-editor-focused={focused} data-toolbar-collapsed={collapsed} data-editor-mode={mode} data-context-scope={mode==="context"?"components":"off"} aria-label={label} {...dataAttributes}>
     <header className="editor-command-line"><div className="editor-command-tools" role="toolbar" aria-label={`${label} modes`}>

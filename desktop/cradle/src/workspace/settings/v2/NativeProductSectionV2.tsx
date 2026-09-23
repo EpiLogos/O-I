@@ -278,8 +278,8 @@ export function NativeProductSection({mount, name}: {mount: OwnerMount; name: st
           {descriptor.obligations.map((obligation, index) => <p key={index}>{obligation}</p>)}
         </details>
       )}
-      <details className="product-raw">
-        <summary>Developer record</summary>
+      <details className="product-advanced">
+        <summary>Advanced — the raw record</summary>
         <pre>{JSON.stringify(descriptor, null, 2)}</pre>
       </details>
     </details>

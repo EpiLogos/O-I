@@ -17,6 +17,13 @@ class PersonalWebTests(unittest.TestCase):
             root = Path(tmp)
             shutil.copytree(ROOT / "docs/experience", root / "docs/experience")
             shutil.copytree(ROOT / "docs/cradle", root / "docs/cradle")
+            # The declared executable-test relation is a source dependency too.
+            config = json.loads((ROOT / "docs/experience/campaign.json").read_text())
+            bindings = config.get("executable_test_bindings") or {}
+            if bindings.get("path"):
+                target = root / bindings["path"]
+                target.parent.mkdir(parents=True, exist_ok=True)
+                shutil.copy2(ROOT / bindings["path"], target)
             current = em.load_sources(root)
             config_path = root / "docs/experience/campaign.json"
             config = json.loads(config_path.read_text())

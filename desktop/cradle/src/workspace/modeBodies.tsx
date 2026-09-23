@@ -16,6 +16,7 @@ export interface PanelSubject { ref?: string; kind?: string; title: string; proj
 
 const ExpressionGraphNavigator = lazy(() => import("../expressions/ExpressionGraphNavigator").then(module => ({default: module.ExpressionGraphNavigator})));
 const MaterialNavigator = lazy(() => import("../techne/MaterialNavigator").then(module => ({default: module.MaterialNavigator})));
+const WikiMapNavigator = lazy(() => import("../techne/WikiMapNavigator").then(module => ({default: module.WikiMapNavigator})));
 const EpiPlacesNavigator = lazy(() => import("../epilogos/EpiPlacesNavigator").then(module => ({default: module.EpiPlacesNavigator})));
 const AnimaPlane = lazy(() => import("../expressions/AnimaPlanes").then(module => ({default: module.AnimaPlane})));
 const EpiiPlane = lazy(() => import("../techne/EpiiPlane").then(module => ({default: module.EpiiPlane})));
@@ -32,24 +33,28 @@ const TaOntaContextPlane = lazy(() => import("../expressions/TaOntaSide").then(m
  * moved into the three top-level tabs: trajectory into Run, skills & tools
  * into Agents, claims/results into Run and Context (inspect stays an action). */
 export interface PanelAccompanying { ref: string; project: string; space: string }
+const FactoryRunTab = lazy(() => import("../contributions/factory/sidebar/FactoryRunTab").then(module => ({default: module.FactoryRunTab})));
+const FactoryAgentsTab = lazy(() => import("../contributions/factory/sidebar/FactoryAgentsTab").then(module => ({default: module.FactoryAgentsTab})));
+const FactoryContextSlice = lazy(() => import("../contributions/factory/sidebar/FactoryContextSlice").then(module => ({default: module.FactoryContextSlice})));
 const RunPlane = lazy(() => import("../contributions/factory/sidebar/RunPlane").then(module => ({default: module.RunPlane})));
 const AgentsPlane = lazy(() => import("../contributions/factory/sidebar/AgentsPlane").then(module => ({default: module.AgentsPlane})));
 
 /** The left body for a mode whose curation does not use the World navigator. */
-export function ModeLeftBody({mode, project, onOpenExpressions, onOpenTechne, onOpenPlace, onOpenFile, onMessage}: {
+export function ModeLeftBody({mode, project, onOpenExpressions, onOpenTechne, onOpenPlace, onOpenFile, onOpenWiki, onMessage}: {
   mode: WorkspaceMode;
   project?: string;
   onOpenExpressions: (expressionRef?: string) => void;
   onOpenTechne?: () => void;
   onOpenPlace: (place: {family: string; ref: string; title: string}) => void;
   onOpenFile: (location: CentralLocation) => Promise<void> | void;
+  onOpenWiki: (ref: string, title: string, project?: string) => void;
   onMessage: (message: string) => void;
 }) {
   return <Suspense fallback={null}>
     {mode === "expressions"
       ? <ExpressionGraphNavigator onOpenExpressions={onOpenExpressions} onOpenTechne={onOpenTechne} onMessage={onMessage}/>
       : mode === "epi-logos" ? <EpiPlacesNavigator onOpenPlace={onOpenPlace} onMessage={onMessage}/>
-      : mode === "techne" ? <ExpressionGraphNavigator onOpenExpressions={onOpenExpressions} onOpenTechne={onOpenTechne} onMessage={onMessage}/>
+      : mode === "techne" ? <WikiMapNavigator project={project} onOpenWiki={onOpenWiki} onMessage={onMessage}/>
       : <MaterialNavigator project={project} onOpenFile={onOpenFile} onMessage={onMessage}/>}
   </Suspense>;
 }
@@ -68,7 +73,7 @@ export function ContextPaneMount({opens}:{opens?:TaPaneOpens}) {
  * those its curation names, in the curation's order. `host` lends the real
  * app-level ways a Factory control reaches the rest of the shell; `opens`
  * lends the centre canvas's own pane openings to the Ta-Onta Context. */
-export function modeExtraPlanes(mode: WorkspaceMode, subject: PanelSubject, accompanying?: PanelAccompanying, onMessage?: (message: string) => void, host?: FactoryPanelHost, full?: boolean, opens?: TaPaneOpens): {id: string; label: string; body: ReactNode}[] {
+export function modeExtraPlanes(mode: WorkspaceMode, subject: PanelSubject, accompanying?: PanelAccompanying, onMessage?: (message: string) => void, host?: FactoryPanelHost, full?: boolean, opens?: TaPaneOpens, project?: string): {id: string; label: string; body: ReactNode}[] {
   // Central (owner direction 2026-09-19): the panel's core shape matches the
   // other modes — Run and Agents are the shared planes (the same run
   // log/track; the roster with the real project conversations, opened the
@@ -77,15 +82,15 @@ export function modeExtraPlanes(mode: WorkspaceMode, subject: PanelSubject, acco
   // here: it stays the panel's own doc-forward plane, curated in the mode.
   if (mode === "base") return [
     {id: "run", label: "Run", body: <Suspense fallback={null}><RunPlane subject={subject} accompanying={accompanying} onMessage={onMessage} full={full} withScenarioBar={false}/></Suspense>},
-    {id: "agents", label: "Agents", body: <Suspense fallback={null}><AgentsPlane subject={subject} accompanying={accompanying} onMessage={onMessage} withScenarioBar={false} host={host ? {onOpenEncounterRow: host.onOpenEncounterRow} : undefined}/></Suspense>},
+    {id: "agents", label: "Agents", body: <Suspense fallback={null}><AgentsPlane subject={subject} project={project} accompanying={accompanying} onMessage={onMessage} withScenarioBar={false} host={host ? {onOpenEncounterRow: host.onOpenEncounterRow} : undefined}/></Suspense>},
   ];
   if (mode === "factory") return [
-    {id: "run", label: "Run", body: <Suspense fallback={null}><RunPlane subject={subject} accompanying={accompanying} onMessage={onMessage} host={host} full={full}/></Suspense>},
-    {id: "agents", label: "Agents", body: <Suspense fallback={null}><AgentsPlane subject={subject} accompanying={accompanying} onMessage={onMessage} host={host}/></Suspense>},
+    {id: "run", label: "Run", body: <Suspense fallback={null}><FactoryRunTab accompanying={accompanying}/></Suspense>},
+    {id: "agents", label: "Agents", body: <Suspense fallback={null}><FactoryAgentsTab/></Suspense>},
     // Owner direction 2026-09-20: the Context plane IS the canvas — the same
     // plane body the Ta-Onta modes mount, nothing mounted beneath it. The
     // former Needs-you/Sources/Produced stack under the canvas is unmounted.
-    {id: "factory-context", label: "Context", body: <Suspense fallback={null}><div className="desk-plane factory-side ta-context-plane" data-plane="factory-context"><ContextPaneMount opens={opens}/></div></Suspense>},
+    {id: "factory-context", label: "Context", body: <Suspense fallback={null}><div className="desk-plane oi-side-plane ta-context-plane" data-plane="factory-context"><ContextPaneMount opens={opens}/>{!opens?.sideTabs?.length && <FactoryContextSlice/>}</div></Suspense>},
   ];
   // Nara/Anima is the personal encounter, Epii the deep inquiry — the same
   // companion components, curated to the Epi-Logos world.

@@ -24,7 +24,7 @@ export default async function run({page,baseUrl,check,channel,provision:p,shot})
  await chooser.getByText('unrecognized',{exact:true}).waitFor();
  check(await chooser.getByRole('button',{name:'Use as default Central'}).isDisabled(),'An ordinary project cannot be selected as a recognized Central');
  await input.fill(p.root);await chooser.getByRole('button',{name:'Recognize',exact:true}).click();
- await chooser.getByText('recognized',{exact:true}).waitFor();
+ await chooser.getByRole("status").filter({ hasText: /^recognized/ }).first().waitFor();
  check(await chooser.getByRole('button',{name:'Use as default Central'}).isEnabled(),'Actual native recognition enables explicit binding');
  await chooser.getByRole('button',{name:'Use as default Central'}).click();
  await chooser.getByText(/Default Central saved/).waitFor();

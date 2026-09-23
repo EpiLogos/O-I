@@ -1,5 +1,17 @@
 import {useLayoutEffect,useRef,useState} from "react";
-import {Glyph} from "../../workspace/Glyph";
+import {Glyph,type GlyphName} from "../../workspace/Glyph";
+
+/** One leading glyph per plane — the sidebar reads as a glyph column and a
+ * text column (navigator glyph law). Glyphs are aria-hidden SVGs, so every
+ * button's accessible name stays exactly its label. */
+const PLANE_GLYPH:Record<string,GlyphName>={
+  Chat:"chat",Conversation:"chat",
+  run:"activity",Run:"activity","ta-run":"activity",
+  agents:"agent",Agents:"agent","ta-onta-agents":"agent",
+  Context:"context","factory-context":"context","ta-onta-context":"context",
+  Inspect:"inspect",Composition:"field",
+};
+const glyphOf=(id:string):GlyphName|undefined=>PLANE_GLYPH[id]??(id==="Activity"?"activity":undefined);
 
 /** The panel's plane navigation with a measured overflow. A mode may offer
  * more views than a 240–320px panel can name in one row (Factory's desk:
@@ -39,10 +51,10 @@ export function PlaneNav({entries,current,onSelect}:{entries:{id:string;label:st
   if(at>=fit&&at>=0)visible[visible.length-1]=entries[at];
   const hidden=entries.filter(entry=>!visible.includes(entry));
   return <nav ref={host} className="agent-planes oi-plane-nav" aria-label="Right region planes">
-    {visible.map(entry=><button key={entry.id} aria-pressed={current===entry.id} onClick={()=>onSelect(entry.id)}>{entry.label}</button>)}
+    {visible.map(entry=><button key={entry.id} aria-pressed={current===entry.id} onClick={()=>onSelect(entry.id)}>{glyphOf(entry.id)&&<Glyph name={glyphOf(entry.id)!} size={12}/>}<span>{entry.label}</span></button>)}
     {hidden.length>0&&<div className="agent-planes-more">
       <button className="oi-tool" aria-label={`More views (${hidden.length})`} aria-haspopup="true" aria-expanded={open} title="More views" onClick={()=>setOpen(value=>!value)}><Glyph name="more" size={13}/></button>
-      {open&&<div className="oi-menu" role="group" aria-label="More views">{hidden.map(entry=><button key={entry.id} className="oi-menu-item" onClick={()=>{setOpen(false);onSelect(entry.id);}}>{entry.label}</button>)}</div>}
+      {open&&<div className="oi-menu" role="group" aria-label="More views">{hidden.map(entry=><button key={entry.id} className="oi-menu-item" onClick={()=>{setOpen(false);onSelect(entry.id);}}>{glyphOf(entry.id)&&<Glyph name={glyphOf(entry.id)!} size={12}/>}<span>{entry.label}</span></button>)}</div>}
     </div>}
     <div ref={measure} className="agent-planes-ruler" aria-hidden="true">{entries.map(entry=><button key={entry.id} tabIndex={-1}>{entry.label}</button>)}</div>
   </nav>;

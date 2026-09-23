@@ -1,0 +1,23 @@
+/* Object pages (10-SIDEBARS §4.7): labelled fields first, content after,
+ * verbatim only behind Show raw. Desktop tokens only. */
+.object-page{display:flex;flex-direction:column;gap:var(--oi-space-4);max-width:var(--oi-reading-width,760px);margin:0 auto;padding:var(--oi-space-5) var(--oi-space-5) var(--oi-space-6);color:var(--oi-foreground);font-family:var(--oi-font-sans);overflow:auto;height:100%;box-sizing:border-box;width:100%}
+.object-head{display:flex;align-items:flex-start;gap:var(--oi-space-3)}
+.object-heading{flex:1 1 auto;min-width:0}
+.object-kind{margin:0 0 2px;font-size:var(--oi-shell-type-eyebrow,10px);letter-spacing:var(--oi-shell-tracking);text-transform:uppercase;color:var(--oi-muted)}
+.object-title{margin:0;font-size:var(--oi-shell-type-title,20px);font-weight:600;line-height:1.25;overflow-wrap:anywhere}
+.object-state{margin:4px 0 0;color:var(--oi-muted);font-size:var(--oi-shell-type-body)}
+.object-back,.object-popout{flex:none}
+.object-fields{display:grid;grid-template-columns:minmax(96px,max-content) minmax(0,1fr);gap:8px var(--oi-space-5);margin:0;font-size:var(--oi-shell-type-body)}
+.object-fields dt{color:var(--oi-muted)}
+.object-fields dd{margin:0;overflow-wrap:anywhere}
+.object-relations{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:4px}
+.object-relation-label{color:var(--oi-muted);margin-right:8px}
+.object-link{border:0;background:transparent;padding:0;font:inherit;color:var(--oi-foreground);text-decoration:underline;text-decoration-color:var(--oi-hairline);text-underline-offset:3px;cursor:pointer}
+.object-link:hover{text-decoration-color:currentColor}
+.object-note,.object-error{margin:0;color:var(--oi-muted);font-size:var(--oi-shell-type-body)}
+.object-error{color:var(--oi-foreground)}
+.object-raw summary{cursor:pointer;color:var(--oi-muted);font-size:var(--oi-shell-type-meta)}
+.object-raw pre{margin:var(--oi-space-2) 0 0;padding:var(--oi-space-3);border:1px solid var(--oi-hairline);border-radius:var(--oi-radius-md);background:var(--oi-wash);font-family:var(--oi-font-mono);font-size:11px;white-space:pre-wrap;overflow-wrap:anywhere;max-height:420px;overflow:auto}
+.object-content{font-size:var(--oi-shell-type-prose,14px);line-height:1.55}
+.object-content .object-text{white-space:pre-wrap;overflow-wrap:anywhere;margin:0}
+.object-content h2{font-size:var(--oi-shell-type-eyebrow,10px);letter-spacing:var(--oi-shell-tracking);text-transform:uppercase;color:var(--oi-muted);font-weight:600;margin:var(--oi-space-4) 0 var(--oi-space-2)}

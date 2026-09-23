@@ -1,4 +1,6 @@
 {
+  "spec_ref": "docs/cradle/05-EXECUTION.md §3",
+  "grade": "B",
   "schema": "oi.cradle.walk.walk/v1",
   "walk": "techne-convergence-walk",
   "when": "2026-09-19T19:09:36.733Z",

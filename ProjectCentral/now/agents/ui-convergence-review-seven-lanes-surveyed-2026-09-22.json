@@ -1,0 +1,17 @@
+{
+  "schema": "central.project-now.handoff/v1",
+  "id": "ui-convergence-review-seven-lanes-surveyed-2026-09-22",
+  "provenance": "agent-authored-bounded-return",
+  "actor": "agent:harness-session",
+  "kind": "handoff",
+  "recorded_at_unix_seconds": 1790091811,
+  "subject": "UI convergence review: seven lanes surveyed, shell-law fixes landed on ui/shell-law-2026-09-22",
+  "result": "Owner convergence review (2026-09-22) triaged into immediate fixes and chat-over items. LANDED on branch ui/shell-law-2026-09-22 (4 commits, main untouched): (1) scrollbar law restored everywhere — 32450cff had reintroduced visible bars in agency.css/desk.css; .mode-stage now kills descendants too; (2) rest page fixed — welcome reserve heights to tallest phrase not sum (the huge quote-button gap from 7cbbf9fc), Day button on the canonical day_source_open route with honest refusal, Start writing mints+opens a dated flow instance in Control/user/flows (draft only as no-ground fallback); navigator New flow keeps the ratified 09-13 mint-nothing law; (3) RESTORED UserFlowsList to WorldNavigator — 32450cff dropped it as collateral, leaving flow-canvas walk red since 09-19; scenario updated to current shell (Start writing label, hover-reveal mode strip, presented-surface identity): flow-canvas 26/26 against the real bridge, rest 18/18; (4) owner shell-behavior rulings authored into packages/oi-design-system/DESKTOP-LANGUAGE.md. EVIDENCE: npm run build green; regenerated walk receipts in desktop/cradle/walk/artifacts/. PRE-EXISTING REDS verified on clean main, not introduced by this work: navigator walk (projectcentral.flow.list refused), modes walk (timeout at open), flow-canvas was 0/0 since 32450cff. CHAT-OVER: settings redesign (needs backend credential-entry + harness-to-models mapping; DevView ships raw JSON in production today); wedge re-authoring (no wedge code exists in any commit — remembered refinements were uncommitted, destroyed by resets 09-20/09-22); sidebar componentization (InspectPlane JSON sink, returns-box family, PlaneNav icons); visual acceptance layer on walk screenshots (zero pixel assertions anywhere); Card button has no backend. KEY FINDING: owner diagnosis of the test system confirmed — 41 files take screenshots, zero assert pixels; chat-settings tests lock census-verbatim rendering; panelInspect contract documents verbatim-JSON as the seam. Follow-up agent: read DESKTOP-LANGUAGE.md 2026-09-22 section and branch ui/shell-law-2026-09-22, then execute from the chat-over list once the owner rules on it.",
+  "status": "active",
+  "source_refs": [
+    "central:source:control:root:Work/O-I/docs/experience/UI-FUNCTION-LANDING.md"
+  ],
+  "evidence_refs": [
+    "central:source:control:root:Work/O-I/desktop/cradle/walk/artifacts/flow-canvas.json"
+  ]
+}

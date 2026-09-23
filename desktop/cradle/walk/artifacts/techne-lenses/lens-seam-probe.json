@@ -1,4 +1,6 @@
 {
+  "spec_ref": "docs/cradle/05-EXECUTION.md §3",
+  "grade": "C",
   "probe": "walk/techne-lenses-probe.mjs",
   "date": "2026-09-19T19:10:00.466Z",
   "pass": true,

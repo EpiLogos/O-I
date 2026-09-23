@@ -6,7 +6,7 @@ export async function setup(args) {
   const p=await sourceSetup(args);
   p.call('central.world-relations.save',{scope:'root',record:{schema:'central.world-relations/v1',ref:'editor-walk',revision:'walk-1',sources:[]}});
   const wiki=JSON.parse(readFileSync(join(p.projectRoot,'ProjectCentral/agents/wiki/wiki.json'),'utf8')).objects.find(o=>o.object==='space');
-  const env={...process.env,...p.env,AIKIT_HOME:join(p.root,'.aikit-home'),OI_AIKIT_BIN:process.env.OI_AIKIT_BIN??'/Users/admin/.cargo/bin/aikit'};
+  const env={...process.env,...p.env,AIKIT_HOME:join(p.root,'.aikit-home'),OI_AIKIT_BIN:process.env.OI_AIKIT_BIN??'aikit'};
   const bound=JSON.parse(execFileSync(env.OI_AIKIT_BIN,['--json','-C',p.projectRoot,'project','bind','editor-walk','--directory',p.projectRoot,'--no-default-skill-sets'],{encoding:'utf8',env}));
   if(!bound.ok)throw new Error(JSON.stringify(bound));
   const status=JSON.parse(execFileSync(env.OI_AIKIT_BIN,['--json','-C',p.projectRoot,'knowledge','status'],{encoding:'utf8',env}));

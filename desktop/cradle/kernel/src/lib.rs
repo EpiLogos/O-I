@@ -350,7 +350,11 @@ pub enum KernelOp {
     /// → encounter open) and returns the minted refs plus the open result.
     /// Every other encounter action keeps its attachment gate; this is the one
     /// path allowed to create the attachment it needs.
-    EncounterProvision {project:String},
+    EncounterProvision {
+        project:String,
+        #[serde(default, skip_serializing_if="Option::is_none")]
+        preferred_body_ref:Option<String>,
+    },
     MaterialRead {target:material::Target},
     /// The re-pinned build view (queue cell B): the owner CLI reads it as
     /// `factory build snapshot <state> <project-ref> <run-ref>` — the old
@@ -393,6 +397,10 @@ pub enum KernelOp {
     /// telemetry correlations and the readable Return. Limit and cursor are the
     /// owner's grammar, passed through; stale-cursor refusal stays the owner's.
     FactoryAttemptTaskRead { state_path: ::std::path::PathBuf, run_ref: String, task_ref: String, #[serde(default)] limit: Option<u32>, #[serde(default)] cursor: Option<serde_json::Value> },
+    /// 11-FACTORY §2/§3: Factory source discovery, workflow inspection,
+    /// telemetry, the attempt Return, the action projection and the person's
+    /// Recognition — one owner request family (factory::OwnerRequest).
+    FactoryOwner { request: factory::OwnerRequest },
     /// Workcell's own placement/status reading (`workcell status --json`),
     /// beside the Factory reads — placement is Workcell's, never the desktop's.
     WorkcellStatusRead,
@@ -1051,6 +1059,7 @@ impl Kernel {
                     result: KernelOpResult::FactoryAttemptReading { data },
                 })
             }
+            KernelOp::FactoryOwner {request} => {let world=if request.needs_world(){Some(self.world_map(false)?)}else{None}; let data=factory::owner(request,world.as_ref()).map_err(|e|serde_json::to_string(&e).unwrap_or_else(|_|"factory owner request failed".into()))?; Ok(KernelOpOutcome{receipts:Vec::new(),result:KernelOpResult::FactoryDevelopmentReading{data}})}
             KernelOp::FactoryAttemptTaskListRead {state_path,run_ref} => {
                 let direct=std::env::var_os("OI_FACTORY_BIN").map(std::path::PathBuf::from);
                 let (executable,suite_route)=match direct {Some(path)=>(path,false),None=>(std::env::var_os("OI_BIN").map(std::path::PathBuf::from).unwrap_or_else(||std::path::PathBuf::from("oi")),true)};
@@ -1462,12 +1471,12 @@ impl Kernel {
                     result: KernelOpResult::EncounterReading { data },
                 })
             }
-            KernelOp::EncounterProvision {project} => {
+            KernelOp::EncounterProvision {project,preferred_body_ref} => {
                 // The same disclosure gate as every project-scoped op: the
                 // project must be inside Central's disclosed ground, and the
                 // canonical ProjectRef is Central's own, never the caller's.
                 let (cwd,project_ref)=self.project_ground(&project)?;
-                let data=self.agency.provision(&cwd,&project_ref)?;
+                let data=self.agency.provision(&cwd,&project_ref,preferred_body_ref.as_deref())?;
                 Ok(KernelOpOutcome {receipts:Vec::new(),result:KernelOpResult::EncounterProvisioned {data}})
             }
             KernelOp::BeingEncounter {request} => Ok(KernelOpOutcome {receipts:Vec::new(),result:KernelOpResult::BeingEncounter {data:being::apply(request)}}),
@@ -3126,6 +3135,7 @@ else:
             )
             .unwrap();
             std::fs::set_permissions(&wrapper, std::fs::Permissions::from_mode(0o755)).unwrap();
+            crate::test_stub::settle_stub(&wrapper);
             let _ = std::fs::remove_file(&log);
             Self {
                 executable: wrapper,
@@ -3299,5 +3309,24 @@ else:
             2,
             "the explicit refresh re-asks the owner"
         );
+    }
+}
+
+#[cfg(all(test, unix))]
+pub(crate) mod test_stub {
+    /// Linux ETXTBSY guard for a freshly written test stub. A parallel test's
+    /// fork can inherit this process's write handle on the stub for an instant,
+    /// and exec then answers "Text file busy". Re-materialise the stub through a
+    /// child: `cp` writes a new inode this process never opened, `mv` renames it
+    /// over the path, so no inherited handle can pin what the kernel executes.
+    pub(crate) fn settle_stub(path: &std::path::Path) {
+        let status = std::process::Command::new("/bin/sh")
+            .arg("-c")
+            .arg(r#"cp "$1" "$1.settle" && mv "$1.settle" "$1""#)
+            .arg("settle")
+            .arg(path)
+            .status()
+            .expect("settle a test stub");
+        assert!(status.success(), "could not settle test stub {}", path.display());
     }
 }

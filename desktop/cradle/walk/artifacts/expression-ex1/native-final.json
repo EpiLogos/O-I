@@ -1,4 +1,6 @@
 {
+  "spec_ref": "docs/cradle/05-EXECUTION.md §3",
+  "grade": "A",
   "standing": "native app and real Central operations observed",
   "open_file": {
     "ok": true,
@@ -21,7 +23,7 @@
                     "rate_hz": 0.2,
                     "waveform": "sine"
                   },
-                  "value": 1.0
+                  "value": 1
                 },
                 "x": {
                   "automation": null,
@@ -105,7 +107,7 @@
                 },
                 "scale": {
                   "automation": null,
-                  "value": 1.0
+                  "value": 1
                 },
                 "x": {
                   "automation": null,
@@ -260,7 +262,7 @@
                 },
                 "scale": {
                   "automation": null,
-                  "value": 1.0
+                  "value": 1
                 },
                 "x": {
                   "automation": null,

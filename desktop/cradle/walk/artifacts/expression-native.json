@@ -1,4 +1,6 @@
 {
+  "spec_ref": "docs/cradle/05-EXECUTION.md §3",
+  "grade": "A",
   "schema": "oi.cradle.expression-native-review/v1",
   "observed_at": "2026-09-15T04:05:15.589750+00:00",
   "status": "passed: native refinement, exact page admission and Wiki popout/return",

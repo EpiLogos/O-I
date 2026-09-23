@@ -1,4 +1,6 @@
 {
+  "spec_ref": "docs/cradle/05-EXECUTION.md §3",
+  "grade": "A",
   "standing": "bounded native observations; complete gate pending",
   "system_ground": "Isolated canonical root visibly disclosed after corrected OI_HOME launch",
   "suite": "/tmp/oi-p1-exact-bindings-20260908/oi",
@@ -23,6 +25,6 @@
       "height": 1606,
       "width": 2118
     },
-    "scale_factor": 2.0
+    "scale_factor": 2
   }
 }

@@ -1,4 +1,6 @@
 {
+  "spec_ref": "docs/cradle/05-EXECUTION.md §3",
+  "grade": "C",
   "scope": "BrowserSurface attachment-generation lifecycle repair",
   "candidate": {
     "file": "desktop/cradle/src/browser/BrowserSurface.tsx",

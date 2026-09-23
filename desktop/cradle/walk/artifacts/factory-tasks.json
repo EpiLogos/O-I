@@ -1,0 +1,181 @@
+{
+  "schema": "oi.cradle.walk.scenario/v1",
+  "scenario": "factory-tasks",
+  "spec_ref": "docs/cradle/11-FACTORY.md §7 F14 F15",
+  "grade": "B",
+  "binding": null,
+  "generated_at": "2026-09-23T01:46:45.623Z",
+  "environment": {
+    "base_url": "http://localhost:4173",
+    "bridge_url": "http://127.0.0.1:4179",
+    "viewport": "1280x820",
+    "browser_engine": "chromium",
+    "bundle": "walk (WALK=1) served by vite preview",
+    "build_input": {
+      "mode": "reused-dist",
+      "bundle_fingerprint": "7bd7215801275e69797d8252083f919b8d42faa52a225f0320db506377abfd10"
+    },
+    "node": "v24.16.0",
+    "platform": "darwin",
+    "source": {
+      "repository_root": "/Users/admin/Central/worktrees/ui-build/lane3-factory",
+      "repository_head": "985f0de4141dd448107c0e5ba300a70f408a6540",
+      "tracked_changes": [
+        "desktop/cradle/walk/artifacts/background-completion-failure.png",
+        "desktop/cradle/walk/artifacts/background-completion.json",
+        "desktop/cradle/walk/artifacts/canvas-context-failure.png",
+        "desktop/cradle/walk/artifacts/canvas-context.json",
+        "desktop/cradle/walk/artifacts/factory-desk-f1-reading.png",
+        "desktop/cradle/walk/artifacts/factory-desk-f2-empty.png",
+        "desktop/cradle/walk/artifacts/factory-desk-f3-partial.png",
+        "desktop/cradle/walk/artifacts/factory-desk.json",
+        "desktop/cradle/walk/artifacts/factory-development-failure.png",
+        "desktop/cradle/walk/artifacts/factory-development.json",
+        "desktop/cradle/walk/artifacts/factory-objects.json",
+        "desktop/cradle/walk/artifacts/factory-real.json",
+        "desktop/cradle/walk/artifacts/factory-run-f13-before.png",
+        "desktop/cradle/walk/artifacts/factory-run-factory-run-map-1440-light.png",
+        "desktop/cradle/walk/artifacts/factory-run.json",
+        "desktop/cradle/walk/artifacts/factory-tasks.json",
+        "desktop/cradle/walk/artifacts/factory-trajectory.json",
+        "desktop/cradle/walk/artifacts/lane0-repairs.json"
+      ],
+      "dirty_digest": "db6a75b016fcd4b55b918c7acd62fb9c4f2f19c9bd4719e0d48957f1724dee97",
+      "engine_provenance_path": "/Users/admin/Central/worktrees/ui-build/lane3-factory/packages/oi-design-system/expressions-engine/PROVENANCE.json",
+      "engine_source": "EpiLogos/Point-Cloud-Demo",
+      "engine_revision": "91db8428fc9dfba06cd258ec5a58e7dd9eef5313"
+    }
+  },
+  "passed": true,
+  "error": null,
+  "duration_ms": 30103,
+  "checks": [
+    {
+      "ok": true,
+      "label": "F14: the conversation whose session carried the review attempt shows a Run chip for exactly that run (join by attempt session)",
+      "data": {
+        "chipTitle": "Run Make the Specimen release notes follow the changelog's declared section order, so readers meet breaking changes first",
+        "attemptSession": "agent-session/specimen-review"
+      }
+    },
+    {
+      "ok": true,
+      "label": "F14: hovering the Run chip shows the run's state",
+      "data": {
+        "chipHover": "Queued · Make the Specimen release notes follow the changelog's declared section order, so readers meet breaking changes first"
+      }
+    },
+    {
+      "ok": true,
+      "label": "F14: opening the conversation used the frame's ordinary encounter start/read pair"
+    },
+    {
+      "ok": true,
+      "label": "F14: the Run chip opens the Run page"
+    },
+    {
+      "ok": true,
+      "label": "F15: a conversation no run carries says \"Direct conversation\" exactly once and shows no Run chip (no invented ancestry)",
+      "data": {
+        "direct": "Direct conversation",
+        "headerText": "Direct conversation"
+      }
+    }
+  ],
+  "ops": [
+    {
+      "ok": true,
+      "op": "info",
+      "duration_ms": 0.1,
+      "data": {
+        "schema": "oi.cradle.walk/v1",
+        "mounted_at": "2026-09-23T01:46:45.808Z",
+        "transport": {
+          "kind": "bridge",
+          "url": "http://127.0.0.1:4179"
+        },
+        "url": "http://localhost:4173/"
+      }
+    },
+    {
+      "ok": true,
+      "op": "info",
+      "duration_ms": 0,
+      "data": {
+        "schema": "oi.cradle.walk/v1",
+        "mounted_at": "2026-09-23T01:46:47.791Z",
+        "transport": {
+          "kind": "bridge",
+          "url": "http://127.0.0.1:4179"
+        },
+        "url": "http://localhost:4173/"
+      }
+    },
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 70,
+      "data": {
+        "file": "factory-tasks-factory-tasks-joined-1440-light.png"
+      }
+    },
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 42,
+      "data": {
+        "file": "factory-tasks-factory-tasks-joined-1000-light.png"
+      }
+    },
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 46,
+      "data": {
+        "file": "factory-tasks-factory-tasks-joined-760-light.png"
+      }
+    },
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 138,
+      "data": {
+        "file": "factory-tasks-factory-tasks-joined-1440-dark.png"
+      }
+    },
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 103,
+      "data": {
+        "file": "factory-tasks-factory-tasks-joined-1000-dark.png"
+      }
+    },
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 54,
+      "data": {
+        "file": "factory-tasks-factory-tasks-joined-760-dark.png"
+      }
+    },
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 61,
+      "data": {
+        "file": "factory-tasks-f15-direct.png"
+      }
+    }
+  ],
+  "metrics": {},
+  "screenshots": [
+    "factory-tasks-factory-tasks-joined-1440-light.png",
+    "factory-tasks-factory-tasks-joined-1000-light.png",
+    "factory-tasks-factory-tasks-joined-760-light.png",
+    "factory-tasks-factory-tasks-joined-1440-dark.png",
+    "factory-tasks-factory-tasks-joined-1000-dark.png",
+    "factory-tasks-factory-tasks-joined-760-dark.png",
+    "factory-tasks-f15-direct.png"
+  ]
+}

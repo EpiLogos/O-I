@@ -1,4 +1,7 @@
-export type Status = 'queued' | 'running' | 'success' | 'fail' | 'blocked' | 'cancelled'
+/** Factory's shared execution status vocabulary (Factory build-view schema,
+ * contracts/factory/build-view.schema.json, ui/factory-desk-fixes b4c0ed0):
+ * run statuses plus the execution-only 'returned' and 'contract-fixture'. */
+export type Status = 'queued' | 'running' | 'blocked' | 'returned' | 'success' | 'fail' | 'cancelled' | 'contract-fixture'
 export type ViewDepth = 'semantic' | 'live' | 'trajectory'
 
 export type TraceEventKind =

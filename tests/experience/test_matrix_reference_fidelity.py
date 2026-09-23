@@ -54,7 +54,9 @@ class NativeReferenceFidelity(unittest.TestCase):
                 em.source_path(root, "../private.txt")
             with self.assertRaisesRegex(ValueError, "escapes"):
                 em.source_path(root, str(Path(directory) / "absolute.txt"))
-            self.assertEqual(em.source_path(root, "docs/source.md"), root / "docs/source.md")
+            # source_path resolves its basis (the guard is against escape, not
+            # against symlinked parents such as macOS /tmp -> /private/tmp).
+            self.assertEqual(em.source_path(root, "docs/source.md"), (root / "docs/source.md").resolve())
 
 
 if __name__ == "__main__":

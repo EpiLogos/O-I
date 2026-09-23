@@ -1,4 +1,6 @@
 {
+  "spec_ref": "docs/cradle/05-EXECUTION.md §3",
+  "grade": "A",
   "schema": "oi.cradle.native-walk/v1",
   "unit": "U1.1",
   "observed_at": "2026-09-05T23:03:28.305809+00:00",
@@ -9,9 +11,9 @@
   "central_executable": "/tmp/oi-cradle-pins/832f2e5508cec43fed2b7599ddab2b4bd29b7653/target/release/ctrl",
   "operations": [
     "write in native canvas",
-    "right-click Agency field \u2192 World",
-    "pointer close \u2192 type without corrective click",
-    "Cmd+B \u2192 filter O-I \u2192 Tab/Tab/Enter",
+    "right-click Agency field → World",
+    "pointer close → type without corrective click",
+    "Cmd+B → filter O-I → Tab/Tab/Enter",
     "expand Project wiki and Root wiki"
   ],
   "observed": {

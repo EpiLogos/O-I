@@ -109,22 +109,20 @@ export default async function run({page,baseUrl,check,shot,channel,provision:p})
   check(JSON.stringify(basePlanes)===JSON.stringify(["Chat","Run","Agents","Context"]),"Base offers exactly the mode contract's planes, in its order",basePlanes);
   check((await panel.locator(".agent-head strong").innerText())==="Agent","The head carries the mode's curated agent name");
   check(await panel.locator('.chat-composer[data-connection="drafting"]').count()===1,"With no conversation bound the composer says so — it drafts, it invents no session");
-  // Choosing happens through the unbound composer's own chooser: the panel
-  // offers the project's real attached conversations there.
+  // --- choose: the existing start/read pair binds the real session ------------
+  // The panel's fresh card carries the project's real attached conversations
+  // (the same start/read pair the centre head uses). The row is activated by
+  // keyboard (focus + Enter): a real activation path through the chooser.
   const chooserRows=panel.locator(".chat-history-rows");
   const openChooser=async()=>{
     if(await chooserRows.isVisible().catch(()=>false))return;
-    await panel.getByRole("button",{name:"Choose",exact:true}).click();
+    await panel.getByRole("button",{name:"History",exact:true}).click();
     await chooserRows.waitFor({timeout:10000});
   };
   await openChooser();
-  await chooserRows.getByRole("button",{name:TITLE,exact:true}).waitFor({timeout:30000});
   await shot("panel-base-no-session");
-
-  // --- choose: the existing start/read pair binds the real session ------------
-  // The row is activated by keyboard (focus + Enter): a real activation path
-  // through the composer's picker.
   const titleRow=chooserRows.getByRole("button",{name:TITLE,exact:true});
+  await titleRow.waitFor({timeout:30000});
   await titleRow.focus();
   await titleRow.press("Enter");
   const message=panel.getByRole("textbox",{name:"Message",exact:true});
@@ -137,6 +135,35 @@ export default async function run({page,baseUrl,check,shot,channel,provision:p})
   await page.waitForFunction(()=>!document.querySelector('.agent-layer .chat-connect[data-fact="disconnected"]'),null,{timeout:60000});
   await page.waitForFunction(()=>document.querySelector(".agent-layer .chat-composer")?.getAttribute("data-connection")==="connected",null,{timeout:30000});
   check(true,"Connecting through the conversation updates the composer's live state from the owner");
+
+  // --- composer chips: harness named, model only what the owner advertises ---
+  // The composer grammar (dossier §3.4): harness/model picker chips live on
+  // the composer. The harness chip names the real connected harness; the
+  // model chip renders only the owner's own model observation — the
+  // controlled provider never advertises one, so no model chip may exist.
+  const harnessChip=panel.locator('.chat-composer-chips [data-chip="harness"]');
+  await harnessChip.waitFor({timeout:15000});
+  check((await harnessChip.innerText()).includes("Agent panel ACP"),
+    "The composer's harness chip names the connected harness by its real label");
+  check(await panel.locator('.chat-composer-chips [data-chip="model"]').count()===0,
+    "No model chip is invented when the owner advertises no model observation");
+
+  // --- Status → Preview: the collapsed frame carries the owner's real state --
+  // The gradient (dossier §3.3): with the panel collapsed the frame shows a
+  // presence dot and a state line derived ONLY from observed encounter facts;
+  // the chip's one action is opening the pinned panel, which stands the chip
+  // down. Asserted across two distinct owner states: disconnected, then the
+  // resident state after the connect above.
+  const presenceChip=()=>page.locator(".shell-agent-presence");
+  await page.getByRole("button",{name:"Toggle right region",exact:true}).click();
+  await presenceChip().waitFor({timeout:15000});
+  check(await presenceChip().getAttribute("data-presence-state")==="idle",
+    "Collapsed frame: the status chip reads the owner's real resident state (idle) — no invented activity");
+  await presenceChip().click();
+  await panel.waitFor({timeout:15000});
+  check(await page.locator(".shell-agent-presence").count()===0 && await panel.isVisible(),
+    "The chip hands over to the pinned panel (Preview) and stands down");
+  await panel.locator('.chat-composer[data-connection="connected"]').waitFor({timeout:15000});
 
   // --- Context: SELECTED is not CARRIED ---------------------------------------
   const contextBlock="@context — Walk source · source/agent-panel-walk · revision rev-walk-1\n> quoted walk line";
@@ -173,14 +200,14 @@ export default async function run({page,baseUrl,check,shot,channel,provision:p})
 
   // --- Run: the shared run plane — honest run head, live trajectory ----------
   await plane("Run");
-  const runHead=panel.locator(".factory-side-run-head");
+  const runHead=panel.locator(".oi-side-run-head");
   await runHead.waitFor({timeout:15000});
-  check(await panel.locator('.factory-side-run-head[data-state="none"]').count()===1,"With no Factory run selected, the Run head says exactly that — no invented run");
-  const tool=panel.locator('.factory-side-embed details.desk-row').filter({hasText:"fixture-tool-1"}).first();
+  check(await panel.locator('.oi-side-run-head[data-state="none"]').count()===1,"With no Factory run selected, the Run head says exactly that — no invented run");
+  const tool=panel.locator('.oi-side-embed details.desk-row').filter({hasText:"fixture-tool-1"}).first();
   await tool.waitFor({timeout:20000});
-  const labels=await panel.locator('.factory-side-embed details.desk-row .desk-row-label').allInnerTexts();
+  const labels=await panel.locator('.oi-side-embed details.desk-row .desk-row-label').allInnerTexts();
   check(labels.length>0&&labels.every(label=>label.trim().length>0&&!label.includes("{")),"Trajectory rows read the block's own kind as their label, never raw JSON",labels);
-  check(await panel.locator('.factory-side-embed details.desk-row[open]').count()===0,"Trajectory rows are collapsed by default — never a log wall");
+  check(await panel.locator('.oi-side-embed details.desk-row[open]').count()===0,"Trajectory rows are collapsed by default — never a log wall");
   await tool.locator("summary").click();
   check((await tool.locator(".desk-row-detail pre").innerText()).includes("fixture-tool-1"),"A trajectory row expands into the owner block's own detail");
   await shot("panel-run-trajectory");
@@ -188,13 +215,13 @@ export default async function run({page,baseUrl,check,shot,channel,provision:p})
   // --- Inspect: the hand-off seam, still an action, never a tab ---------------
   await tool.getByRole("button",{name:/^Inspect/}).click();
   await page.waitForFunction(()=>document.querySelector(".agent-layer")?.getAttribute("data-plane")==="Inspect");
-  check((await panel.locator('[data-inspect-kind="trajectory-block"] pre').innerText()).includes("fixture-tool-1"),"A trajectory row's Inspect hands that block to the Inspect plane");
+  check((await panel.locator('[data-inspect-kind="trajectory-block"] .agent-inspect-read').innerText()).includes("fixture-tool-1"),"A trajectory row's Inspect hands that block to the Inspect plane, read as its own readable text");
   await plane("Chat");
   await page.evaluate(()=>window.dispatchEvent(new CustomEvent("oi:panel-inspect",{detail:{kind:"walk-centre-thing",ref:"walk:centre-thing",title:"Walk hand-off",payload:{handed:"from the centre"},source:"agent-panel walk"}})));
   await page.waitForFunction(()=>document.querySelector(".agent-layer")?.getAttribute("data-plane")==="Inspect");
   const handed=panel.locator('[data-inspect-ref="walk:centre-thing"]');
   await handed.waitFor({timeout:10000});
-  check((await handed.locator("pre").innerText()).includes("from the centre"),"An oi:panel-inspect event from the centre is received and shown verbatim");
+  check((await handed.innerText()).includes("from the centre"),"An oi:panel-inspect event from the centre is received and shown as readable rows");
   check(await panel.locator(".agent-inspect-rows li").count()===2,"Handed things are kept as a list, newest first");
   await plane("Chat");
   await page.evaluate(()=>window.dispatchEvent(new CustomEvent("oi:panel-inspect",{detail:{kind:"walk-centre-thing",ref:"walk:centre-thing",title:"Walk hand-off",payload:{handed:"from the centre"},source:"agent-panel walk"}})));
@@ -299,7 +326,7 @@ export default async function run({page,baseUrl,check,shot,channel,provision:p})
   // re-establish the register and re-choose if it truly comes back unbound.
   await Promise.race([
     page.waitForFunction(ref=>document.querySelector(".agent-layer")?.getAttribute("data-agent-session-ref")===ref,REF,{timeout:8000}),
-    panel.getByRole("button",{name:"Choose",exact:true}).waitFor({timeout:8000}),
+    panel.getByRole("button",{name:"History",exact:true}).waitFor({timeout:8000}),
   ]).catch(()=>{});
   if(await panel.getAttribute("data-agent-session-ref")!==REF){
     if(!(await nav.isVisible().catch(()=>false)))await page.keyboard.press("Meta+b");

@@ -1,4 +1,6 @@
 {
+  "spec_ref": "docs/cradle/05-EXECUTION.md §3",
+  "grade": "C",
   "utc": "2026-09-08T19:23:20.145333+00:00",
   "standing": "Native failure; FND06 open; rev3 not accepted",
   "candidate_sha256": "4a5ca098f2c6d2ecdc85c67c5fc54dbb506e3d64117a8121470586d8bef30f6a",

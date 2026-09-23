@@ -1,0 +1,428 @@
+<!doctype html>
+<!--
+  oi-epi-card.html — the Epi-Card document form (oi.template/epi-card).
+
+  DERIVATION (byte-derived from the card's own sources; nothing invented):
+    · Spec:    Antykathera-Essay-Work/submission-package/epi-card-system-v1/
+               SPEC.md — §3.1 (the twelve canonical addresses, units,
+               questions, structural roles, quoted verbatim), §3.2 (traversal
+               and the P5′→P0⁺ enriched return), §3.4 (threshold 0/1 and
+               return), §3.5 (occupancy: the mapper must not create
+               unsupported content merely to make the display look complete),
+               §20 (digital card faces, hexagon, drawer, return seam,
+               accessibility), §21 (printed card).
+    · Types:   same package, ui/epi-card.d.ts (EpiCardData v1.0.0 field
+               names, QLAddress P0…P5/P0′…P5′, the closed occupancy set,
+               pair/drawer and return views).
+    · Component: the real <epi-card> web component — the only implementation
+               on disk — recovered from the recovery bundle
+               Antykathera-Essay-Work/working/recovery-checkpoints/
+               epi-card-local-branches-2026-09-10.bundle, branch
+               codex/epi-card-card-contract, commit
+               2c53bb817b649c377739201a83388645d8ebae09:
+               epi-card/packages/card/src/epi-card.ts (faces, mast, kink,
+               hex edges, pair drawer, the unavailable-position sentence,
+               return panel, print card), state-reducer.ts (the face/phase/
+               activePosition/roving-edge transitions mirrored below),
+               projection.ts (canonical addressing guards and the closed
+               occupancy vocabulary). The embedded document is written in the
+               EpiCardData v1.0.0 field names and validates against the same
+               canonical-addressing guards the component enforces.
+
+  WHAT REMAINS BEHIND THE LIVE COMPONENT (named, not hidden): this form
+  frame carries the card's document contract and canonical frame with every
+  local articulation honestly empty (occupancy "unknown"). The live
+  <epi-card> additionally provides, and this static carrier does not:
+    · fetch of a public card document and SHA-256 asset verification
+      (asset-verifier.ts) — the component refuses any asset whose bytes do
+      not match its declared digest, so no stand-in media is fabricated here
+      (front.poster/front.symbol and the position symbol/audio states are
+      null for the same reason);
+    · film, scene and audio playback, captions and transcript;
+    · QR generation for the public rendition URL and the print QR;
+    · nested inner forms (openDepth/backDepth fetch another full frame);
+    · host event emission (epi-card-ready, epi-view-change,
+      epi-position-change, epi-play-state, epi-action-request,
+      epi-relation-follow, epi-asset-error) and the "Request the next
+      engagement" return.deposit intent;
+    · the public-disclosure gate: the live component renders only
+      disclosure:"public" documents; this unengaged frame is "private";
+    · localStorage view persistence (the desktop serves this carrier in an
+      opaque-origin sandbox where storage is refused) — the view state here
+      lives in memory for the visit.
+-->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#173f32">
+<title>Epi-Card — form frame</title>
+<style>
+  :root {
+    color-scheme: dark;
+    font-family: "Avenir Next", Avenir, "Segoe UI", sans-serif;
+    --card-ground: #102b22; --card-panel: #142f26; --card-line: #274438;
+    --card-ink: #e8ece9; --card-muted: #9fb3aa; --card-gold: #c9a86a;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; min-height: 100dvh; background: var(--card-ground); color: var(--card-ink); }
+  main { display: grid; justify-items: center; gap: 14px; padding: clamp(0.8rem, 3vw, 2rem); }
+  .shell { width: min(420px, 94vw); background: var(--card-panel); border: 1px solid var(--card-line); border-radius: 14px; overflow: hidden; }
+  .mast { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; padding: 14px 16px 10px; border-bottom: 1px solid var(--card-line); }
+  .mast h2 { margin: 0; font-size: 17px; letter-spacing: 0.02em; }
+  .mast p { margin: 0; color: var(--card-muted); font-size: 11.5px; }
+  .front[hidden], .back[hidden] { display: none; }
+  .media-surface { margin: 14px 16px 0; border: 1px dashed var(--card-line); border-radius: 10px; padding: 22px 16px; text-align: center; color: var(--card-muted); font-size: 12.5px; }
+  .media-surface strong { display: block; color: var(--card-ink); font-size: 13px; margin-bottom: 6px; }
+  .front-copy { padding: 12px 16px; color: var(--card-muted); font-size: 12.5px; line-height: 1.5; }
+  .kink { display: flex; flex-direction: column; align-items: center; gap: 6px; width: 100%; padding: 12px 0 14px; background: none; border: 0; border-top: 1px solid var(--card-line); color: var(--card-ink); font: inherit; font-size: 12.5px; cursor: pointer; }
+  .kink-line { display: flex; gap: 5px; } .kink-line i { width: 16px; height: 1px; background: var(--card-gold); }
+  .kink:hover .kink-label { text-decoration: underline; }
+  /* The conjugate hexagon: a regular hexagon, edges numbered 0…5 clockwise
+     (SPEC §20.2); each edge is one focusable Pn↔Pn′ control. */
+  .hex { position: relative; width: min(320px, 84vw); aspect-ratio: 1; margin: 18px auto 8px; }
+  .hex-outline { position: absolute; inset: 12%; clip-path: polygon(50% 0, 100% 25%, 100% 75%, 50% 100%, 0 75%, 0 25%); background: rgba(39, 68, 56, 0.55); }
+  .edge { position: absolute; left: 50%; top: 50%; translate: -50% -50%; min-width: 86px; padding: 7px 9px; border: 1px solid var(--card-line); border-radius: 999px; background: var(--card-panel); color: var(--card-ink); font: inherit; font-size: 12px; cursor: pointer; }
+  .edge:hover { border-color: var(--card-gold); }
+  .edge[data-active="true"] { border-color: var(--card-gold); box-shadow: 0 0 0 1px var(--card-gold); }
+  .orientation { position: absolute; left: 50%; top: 50%; translate: -50% -50%; width: 118px; min-height: 118px; border-radius: 50%; border: 1px solid var(--card-line); background: var(--card-panel); color: var(--card-ink); font: inherit; cursor: pointer; }
+  .orientation strong { font-size: 12.5px; } .orientation small { display: block; margin-top: 5px; color: var(--card-muted); font-size: 10.5px; }
+  .return-seam { display: block; margin: 2px auto 12px; padding: 6px 14px; border: 1px solid var(--card-gold); border-radius: 999px; background: none; color: var(--card-gold); font: inherit; font-size: 12px; cursor: pointer; }
+  .film-return { display: block; width: 100%; padding: 11px 0 13px; border: 0; border-top: 1px solid var(--card-line); background: none; color: var(--card-muted); font: inherit; font-size: 12px; cursor: pointer; }
+  .film-return:hover, .traverse:hover { color: var(--card-ink); }
+  .traverse { padding: 0 16px 12px; color: var(--card-muted); font-size: 10.5px; letter-spacing: 0.02em; text-align: center; }
+  .pair-drawer { margin: 4px 16px 14px; border: 1px solid var(--card-line); border-radius: 10px; padding: 12px 14px; }
+  .drawer-head { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; }
+  .drawer-head .address { color: var(--card-gold); font-size: 12px; letter-spacing: 0.03em; }
+  .drawer-head h3 { margin: 4px 0 0; font-size: 14.5px; }
+  .close-button { border: 1px solid var(--card-line); border-radius: 8px; background: none; color: var(--card-muted); font: inherit; font-size: 11.5px; padding: 4px 10px; cursor: pointer; }
+  .close-button:hover { color: var(--card-ink); border-color: var(--card-muted); }
+  .pair-grid { display: grid; gap: 10px; margin-top: 10px; }
+  .position { border: 1px solid var(--card-line); border-radius: 8px; padding: 10px 12px; }
+  .position .address { color: var(--card-muted); font-size: 11px; }
+  .position h4 { margin: 3px 0 4px; font-size: 13.5px; }
+  .position p { margin: 3px 0; font-size: 12px; line-height: 1.45; color: var(--card-muted); }
+  .position .question strong { color: var(--card-ink); }
+  .position .occupancy strong { color: var(--card-gold); }
+  .position .withheld { color: var(--card-muted); font-style: italic; }
+  .return-panel { margin: 4px 16px 14px; border: 1px solid var(--card-gold); border-radius: 10px; padding: 12px 14px; }
+  .return-panel h3 { margin: 0 0 6px; font-size: 13.5px; color: var(--card-gold); }
+  .return-panel p { margin: 4px 0; font-size: 12px; line-height: 1.45; color: var(--card-muted); }
+  .return-panel p strong { color: var(--card-ink); }
+  [hidden] { display: none !important; }
+  :focus-visible { outline: 2px solid var(--card-gold); outline-offset: 2px; }
+  /* The printed form: poster frame and symbol on the front, the static
+     conjugate hexagon with the six pair names, the return seam and the
+     return line on the back (SPEC §21) — the QR and approved artwork arrive
+     with a real rendition. */
+  .print-card { display: none; }
+  @media print {
+    body { background: #fff; color: #000; }
+    main { display: block; } .shell { display: none; }
+    .print-card { display: block; border: 1px solid #000; padding: 8mm; }
+    .print-card h1, .print-card h2 { margin: 0 0 2mm; }
+    .print-card p { font-size: 10pt; }
+    .print-hexagon { border: 1px solid #000; padding: 4mm; margin: 4mm 0; }
+  }
+</style>
+</head>
+<body>
+<main>
+  <!-- The card's document, in the EpiCardData v1.0.0 field names
+     (ui/epi-card.d.ts). The canonical unit/question/role content is SPEC.md
+     §3.1 verbatim; every local articulation is absent and the occupancy
+     states say so (SPEC §3.5) — the frame is structure, not content. -->
+  <script type="application/json" id="epi-card-doc">{
+    "version": "1.0.0",
+    "engagementId": "oi-epi-card-form-v1",
+    "slug": "epi-card-form",
+    "title": "Epi-Card",
+    "edition": "Form frame — no engagement yet",
+    "disclosure": "private",
+    "front": {
+      "poster": null, "video": null, "loopVideo": null, "audio": null,
+      "symbol": null, "symbolRole": "overlay", "titleOutline": null, "captions": null,
+      "description": "No film is attached. A realised card's film face carries its generated plate, the exact symbol, bespoke lettering and the QL drone; this form frame carries the structure and awaits an approved rendition."
+    },
+    "back": {
+      "symbol": null,
+      "pairs": [
+        {
+          "index": 0,
+          "reciprocalStatement": "Truth ↔ Play",
+          "bimba": { "id": "oi-epi-card-form-v1:P0", "address": "P0", "phase": "bimba", "index": 0, "canonicalUnit": "Truth", "canonicalQuestion": "Why?", "structuralRole": "Ground / source / ever-present origin", "occupancy": "unknown", "occupancyReason": "No engagement has been mapped into this frame — the canonical unit and question stand; every local articulation is absent.", "salience": 0, "sourceLinks": [], "claims": [] },
+          "pratibimba": { "id": "oi-epi-card-form-v1:P0′", "address": "P0′", "phase": "pratibimba", "index": 0, "canonicalUnit": "Play", "canonicalQuestion": "Why, through groundlessness?", "structuralRole": "Abyss, freedom, ungrounded source condition", "occupancy": "unknown", "occupancyReason": "No engagement has been mapped into this frame — the canonical unit and question stand; every local articulation is absent.", "salience": 0, "sourceLinks": [], "claims": [] }
+        },
+        {
+          "index": 1,
+          "reciprocalStatement": "Mind ↔ Need",
+          "bimba": { "id": "oi-epi-card-form-v1:P1", "address": "P1", "phase": "bimba", "index": 1, "canonicalUnit": "Mind", "canonicalQuestion": "What?", "structuralRole": "First definition / material articulation", "occupancy": "unknown", "occupancyReason": "No engagement has been mapped into this frame — the canonical unit and question stand; every local articulation is absent.", "salience": 0, "sourceLinks": [], "claims": [] },
+          "pratibimba": { "id": "oi-epi-card-form-v1:P1′", "address": "P1′", "phase": "pratibimba", "index": 1, "canonicalUnit": "Need", "canonicalQuestion": "What hidden form or trace remains?", "structuralRole": "Residue, evidence, demand, concealed definition", "occupancy": "unknown", "occupancyReason": "No engagement has been mapped into this frame — the canonical unit and question stand; every local articulation is absent.", "salience": 0, "sourceLinks": [], "claims": [] }
+        },
+        {
+          "index": 2,
+          "reciprocalStatement": "Word ↔ Sacrifice",
+          "bimba": { "id": "oi-epi-card-form-v1:P2", "address": "P2", "phase": "bimba", "index": 2, "canonicalUnit": "Word", "canonicalQuestion": "How?", "structuralRole": "Dynamis / operation / energetic expression", "occupancy": "unknown", "occupancyReason": "No engagement has been mapped into this frame — the canonical unit and question stand; every local articulation is absent.", "salience": 0, "sourceLinks": [], "claims": [] },
+          "pratibimba": { "id": "oi-epi-card-form-v1:P2′", "address": "P2′", "phase": "pratibimba", "index": 2, "canonicalUnit": "Sacrifice", "canonicalQuestion": "How does operation meet obstruction and cost?", "structuralRole": "Resistance, shadow, exchange, necessary loss", "occupancy": "unknown", "occupancyReason": "No engagement has been mapped into this frame — the canonical unit and question stand; every local articulation is absent.", "salience": 0, "sourceLinks": [], "claims": [] }
+        },
+        {
+          "index": 3,
+          "reciprocalStatement": "Logos ↔ Decision",
+          "bimba": { "id": "oi-epi-card-form-v1:P3", "address": "P3", "phase": "bimba", "index": 3, "canonicalUnit": "Logos", "canonicalQuestion": "Who? Which? Whereby?", "structuralRole": "Pattern / identity / ordering relation", "occupancy": "unknown", "occupancyReason": "No engagement has been mapped into this frame — the canonical unit and question stand; every local articulation is absent.", "salience": 0, "sourceLinks": [], "claims": [] },
+          "pratibimba": { "id": "oi-epi-card-form-v1:P3′", "address": "P3′", "phase": "pratibimba", "index": 3, "canonicalUnit": "Decision", "canonicalQuestion": "Which pattern operates beneath the recognised pattern?", "structuralRole": "Cut, counter-pattern, recurrence, governing choice", "occupancy": "unknown", "occupancyReason": "No engagement has been mapped into this frame — the canonical unit and question stand; every local articulation is absent.", "salience": 0, "sourceLinks": [], "claims": [] }
+        },
+        {
+          "index": 4,
+          "reciprocalStatement": "Son ↔ Love",
+          "bimba": { "id": "oi-epi-card-form-v1:P4", "address": "P4", "phase": "bimba", "index": 4, "canonicalUnit": "Son", "canonicalQuestion": "Where? When? Whither?", "structuralRole": "Context / horizon / situated embodiment", "occupancy": "unknown", "occupancyReason": "No engagement has been mapped into this frame — the canonical unit and question stand; every local articulation is absent.", "salience": 0, "sourceLinks": [], "claims": [] },
+          "pratibimba": { "id": "oi-epi-card-form-v1:P4′", "address": "P4′", "phase": "pratibimba", "index": 4, "canonicalUnit": "Love", "canonicalQuestion": "Which sources and missed contexts reopen the horizon?", "structuralRole": "Context examining itself, care, embrace, reframing", "occupancy": "unknown", "occupancyReason": "No engagement has been mapped into this frame — the canonical unit and question stand; every local articulation is absent.", "salience": 0, "sourceLinks": [], "claims": [] }
+        },
+        {
+          "index": 5,
+          "reciprocalStatement": "Image ↔ Work",
+          "bimba": { "id": "oi-epi-card-form-v1:P5", "address": "P5", "phase": "bimba", "index": 5, "canonicalUnit": "Image", "canonicalQuestion": "Why-for? Why-not?", "structuralRole": "Synthesis / integration / manifested whole", "occupancy": "unknown", "occupancyReason": "No engagement has been mapped into this frame — the canonical unit and question stand; every local articulation is absent.", "salience": 0, "sourceLinks": [], "claims": [] },
+          "pratibimba": { "id": "oi-epi-card-form-v1:P5′", "address": "P5′", "phase": "pratibimba", "index": 5, "canonicalUnit": "Work", "canonicalQuestion": "What crystallises from the conjugate passage?", "structuralRole": "Verified expression, public work, completed recognition", "occupancy": "unknown", "occupancyReason": "No engagement has been mapped into this frame — the canonical unit and question stand; every local articulation is absent.", "salience": 0, "sourceLinks": [], "claims": [] }
+        }
+      ],
+      "return": {
+        "selfImplication": "The return is empty: no passage has crystallised through the twelve positions yet.",
+        "remainder": "Everything remains: nothing has been spent, and no claim has been carried.",
+        "nextGround": "The next ground is this frame's first engagement.",
+        "semanticDelta": { "publicSummary": "No semantic delta — the frame is unengaged." },
+        "mediaDelta": { "publicSummary": "No media delta — nothing has been rendered." }
+      }
+    },
+    "links": { "self": "oi.template/epi-card" }
+  }</script>
+
+  <article class="shell" data-role="interactive-card" aria-label="Epi-Card">
+    <section class="front" aria-label="Film face">
+      <header class="mast"><div class="identity"><h2>Epi-Card</h2><p>Form frame — no engagement yet · six conjugate edges</p></div></header>
+      <div class="media-surface" data-role="media-surface" role="status">
+        <strong>No rendition is attached</strong>
+        The film face of a realised card presents its approved plate and canonical symbol. This frame holds the card's document contract with occupancy honestly unknown — no stand-in media is fabricated.
+      </div>
+      <p class="front-copy" data-role="front-description"></p>
+      <button class="kink" data-role="kink-affordance" aria-label="Turn card to the six conjugate pairs">
+        <span class="kink-line" aria-hidden="true"><i></i><i></i><i></i></span>
+        <span class="kink-label">Open the relation</span>
+      </button>
+    </section>
+
+    <section class="back" aria-label="Six-edge conjugate face" hidden>
+      <header class="mast"><div class="identity"><h2>Epi-Card</h2><p>Form frame — no engagement yet · six conjugate edges</p></div></header>
+      <div class="hex" role="group" aria-label="Six conjugate edge controls">
+        <div class="hex-outline" aria-hidden="true"></div>
+        <!-- the six edge controls render here from the document -->
+        <button class="orientation centre-symbol" data-role="centre-symbol" aria-label="Show Pratibimba first" title="The centre symbol of a realised card stands here; the phase control is real.">
+          <strong>Paired</strong>
+          <small>Day and Night held together</small>
+        </button>
+      </div>
+      <button class="return-seam" data-role="return-seam" aria-expanded="false">P5′→P0+</button>
+      <aside class="return-panel" data-role="return-panel" role="dialog" aria-labelledby="return-title" hidden></aside>
+      <p class="traverse" aria-label="The canonical traversal">P0→P1→P2→P3→P4→P5→P0′→P1′→P2′→P3′→P4′→P5′→P0⁺</p>
+      <button class="film-return" data-role="film-return" aria-label="Return to film face">Film face</button>
+    </section>
+  </article>
+
+  <article class="print-card" data-role="print-card" aria-label="Complete printable Epi-Card">
+    <section class="print-front" data-role="print-front">
+      <h1>Epi-Card</h1>
+      <p>Form frame — no engagement yet</p>
+      <p>The approved poster frame and canonical symbol print here with a realised rendition.</p>
+    </section>
+    <section class="print-back" data-role="print-back">
+      <h2>Epi-Card</h2>
+      <div class="print-hexagon" data-role="print-hexagon">
+        <!-- the six printed pair names render here from the document -->
+        <strong class="print-return-seam" data-role="print-return-seam">P5′→P0+</strong>
+      </div>
+      <p data-role="print-return-line"></p>
+      <p>The QR to the public digital twin prints with a published rendition.</p>
+    </section>
+  </article>
+</main>
+
+<script>
+"use strict";
+// The card's own state machine (state-reducer.ts), mirrored: face,
+// phase (bimba | pratibimba | paired), activePosition, rovingEdge.
+const initial = Object.freeze({ face: "front", phase: "paired", activePosition: null, rovingEdge: 0, returnOpen: false });
+let state = initial;
+const PHASE_LABEL = { bimba: "Day first", pratibimba: "Night first", paired: "Paired" };
+const PHASE_NEXT = { paired: "pratibimba", pratibimba: "bimba", bimba: "pratibimba" };
+const PHASE_ORIENTATION = { paired: "Show Pratibimba first", pratibimba: "Show Bimba first", bimba: "Show Pratibimba first" };
+
+const documentElement = document.getElementById("epi-card-doc");
+const doc = JSON.parse(documentElement.textContent);
+// Canonical addressing guard (projection.ts): version 1.0.0, exactly six
+// pairs, each index preserved, bimba Pn / pratibimba Pn′, occupancy from the
+// closed vocabulary — the carrier refuses a torn document rather than
+// rendering one.
+if (doc.version !== "1.0.0") throw new Error("Only an Epi-Card document of version 1.0.0 renders here.");
+if (!Array.isArray(doc.back.pairs) || doc.back.pairs.length !== 6) throw new Error("An Epi-Card back requires exactly six conjugate pairs.");
+const OCCUPANCIES = new Set(["present", "latent", "missing", "unknown", "withheld", "conflicted", "overdetermined"]);
+doc.back.pairs.forEach((pair, index) => {
+  if (pair.index !== index) throw new Error(`back.pairs[${index}] does not preserve canonical order.`);
+  for (const position of [pair.bimba, pair.pratibimba]) {
+    const wanted = position.index === index
+      && position.address === (position.phase === "bimba" ? `P${index}` : `P${index}′`)
+      && position.phase === (position.phase === "bimba" ? "bimba" : "pratibimba");
+    if (!wanted || !OCCUPANCIES.has(position.occupancy)) throw new Error(`Position at pair ${index} does not preserve canonical addressing.`);
+  }
+});
+
+const shell = document.querySelector(".shell");
+const frontFace = shell.querySelector(".front");
+const backFace = shell.querySelector(".back");
+const hex = backFace.querySelector(".hex");
+const centre = backFace.querySelector(".centre-symbol");
+const returnSeam = backFace.querySelector(".return-seam");
+const returnPanel = backFace.querySelector(".return-panel");
+
+// The film face's own description comes from the document, as the component
+// renders data.front.description.
+shell.querySelector("[data-role=front-description]").textContent = doc.front.description;
+// The return panel and the printed return line render from the document
+// (renderReturn): self-implication, remainder, next ground.
+returnPanel.innerHTML = `<h3 id="return-title">Return · P5′→P0+</h3>
+  <p></p><p></p>${doc.back.return.achievedWork ? "<p></p>" : ""}<p><strong></strong></p>`;
+{
+  const paragraphs = returnPanel.querySelectorAll("p");
+  paragraphs[0].textContent = doc.back.return.selfImplication;
+  paragraphs[1].textContent = doc.back.return.remainder;
+  paragraphs[paragraphs.length - 1].textContent = doc.back.return.nextGround;
+  if (doc.back.return.achievedWork) paragraphs[2].textContent = doc.back.return.achievedWork;
+  document.querySelector("[data-role=print-return-line]").textContent = `${doc.back.return.selfImplication} ${doc.back.return.nextGround}`;
+}
+
+// The unavailable-position sentence is the component's own
+// (epi-card.ts renderPosition), byte-quoted.
+function positionView(position) {
+  const unavailable = ["missing", "unknown", "withheld"].includes(position.occupancy);
+  return `<section class="position" data-occupancy="${position.occupancy}" aria-label="${position.address}: ${position.canonicalUnit}">
+    <span class="address">${position.address} · ${position.phase}</span>
+    <h4>${position.canonicalUnit}</h4>
+    <p class="question"><strong>${position.canonicalQuestion}</strong></p>
+    <p class="structural">${position.structuralRole}</p>
+    <p class="occupancy"><strong>${position.occupancy}</strong>${position.occupancyReason ? ` — ${position.occupancyReason}` : ""}</p>
+    ${unavailable ? `<p class="withheld">This position is ${position.occupancy}. Its absence is retained without an invented substitute.</p>` : ""}
+  </section>`;
+}
+
+// The six edges, in canonical clockwise order (SPEC §20.2), each carrying
+// the component's own label grammar.
+doc.back.pairs.forEach((pair, index) => {
+  const edge = document.createElement("button");
+  edge.className = "edge";
+  edge.dataset.role = "hex-edge";
+  edge.dataset.index = String(index);
+  edge.dataset.active = "false";
+  // Angled around the hexagon, clockwise from the top edge.
+  const angle = (index * 60 - 90) * Math.PI / 180;
+  edge.style.left = `${50 + 44 * Math.cos(angle)}%`;
+  edge.style.top = `${50 + 44 * Math.sin(angle)}%`;
+  edge.textContent = `${pair.bimba.address}↔${pair.pratibimba.address}`;
+  edge.setAttribute("aria-label", `Open ${pair.bimba.address} ${pair.bimba.canonicalUnit} and ${pair.pratibimba.address} ${pair.pratibimba.canonicalUnit}`);
+  edge.setAttribute("aria-expanded", "false");
+  edge.tabIndex = index === state.rovingEdge ? 0 : -1;
+  edge.addEventListener("focus", () => { state = { ...state, rovingEdge: index }; syncRoving(); });
+  edge.addEventListener("click", () => openPair(index));
+  edge.addEventListener("keydown", edgeKeyDown);
+  hex.appendChild(edge);
+});
+
+// The printed pair names, positioned by edge (SPEC §21.3).
+const printHex = document.querySelector("[data-role=print-hexagon]");
+doc.back.pairs.forEach(pair => {
+  const row = document.createElement("p");
+  row.dataset.role = "print-pair";
+  row.textContent = `${pair.bimba.address}↔${pair.pratibimba.address} — ${pair.bimba.canonicalUnit} / ${pair.pratibimba.canonicalUnit}`;
+  printHex.insertBefore(row, printHex.querySelector(".print-return-seam"));
+});
+
+function syncRoving() {
+  hex.querySelectorAll(".edge").forEach(edge => { edge.tabIndex = Number(edge.dataset.index) === state.rovingEdge ? 0 : -1; });
+}
+function edgeKeyDown(event) {
+  const direction = event.key === "ArrowRight" || event.key === "ArrowDown" ? "next"
+    : event.key === "ArrowLeft" || event.key === "ArrowUp" ? "previous"
+    : event.key === "Home" ? "home" : event.key === "End" ? "end" : null;
+  if (!direction) return;
+  event.preventDefault();
+  const index = direction === "home" ? 0 : direction === "end" ? 5
+    : direction === "next" ? (state.rovingEdge + 1) % 6 : (state.rovingEdge + 5) % 6;
+  state = { ...state, rovingEdge: index };
+  syncRoving();
+  hex.querySelector(`.edge[data-index="${index}"]`).focus();
+}
+function pairDrawer(pair) {
+  // The drawer orders its positions by the phase (renderPairDrawer):
+  // Night first shows the pratibimba position first.
+  const ordered = state.phase === "pratibimba" ? [pair.pratibimba, pair.bimba] : [pair.bimba, pair.pratibimba];
+  const aside = document.createElement("aside");
+  aside.className = "pair-drawer";
+  aside.dataset.role = "pair-drawer";
+  aside.setAttribute("role", "dialog");
+  aside.setAttribute("aria-modal", "false");
+  aside.setAttribute("aria-labelledby", "pair-drawer-title");
+  aside.tabIndex = -1;
+  aside.innerHTML = `<div class="drawer-head"><div><span class="address">${pair.bimba.address} ↔ ${pair.pratibimba.address}</span>
+      <h3 id="pair-drawer-title"></h3></div>
+      <button class="close-button" aria-label="Close conjugate pair">Close</button></div>
+    <div class="pair-grid">${ordered.map(positionView).join("")}`;
+  aside.querySelector("h3").textContent = pair.reciprocalStatement;
+  aside.querySelector(".close-button").addEventListener("click", () => closePair());
+  return aside;
+}
+function renderDrawer() {
+  const existing = backFace.querySelector(".pair-drawer");
+  if (existing) existing.remove();
+  hex.querySelectorAll(".edge").forEach(edge => {
+    const active = Number(edge.dataset.index) === state.activePosition;
+    edge.dataset.active = String(active);
+    edge.setAttribute("aria-expanded", String(active));
+  });
+  if (state.activePosition === null) return;
+  const drawer = pairDrawer(doc.back.pairs[state.activePosition]);
+  backFace.insertBefore(drawer, returnSeam);
+  drawer.focus();
+}
+function renderPhase() {
+  centre.querySelector("strong").textContent = PHASE_LABEL[state.phase];
+  centre.setAttribute("aria-label", PHASE_ORIENTATION[state.phase]);
+  renderDrawer();
+}
+function flip(face) {
+  if (face === state.face) return;
+  state = { ...state, face };
+  frontFace.hidden = face !== "front";
+  backFace.hidden = face !== "back";
+  (face === "front" ? frontFace.querySelector(".kink") : hex.querySelector(".edge")).focus();
+}
+function openPair(index) {
+  state = { ...state, face: "back", activePosition: index, rovingEdge: index };
+  frontFace.hidden = true; backFace.hidden = false;
+  syncRoving(); renderDrawer();
+}
+function closePair() {
+  if (state.activePosition === null) return;
+  state = { ...state, activePosition: null };
+  renderDrawer();
+  hex.querySelector(`.edge[data-index="${state.rovingEdge}"]`).focus();
+}
+shell.querySelector(".kink").addEventListener("click", () => flip("back"));
+backFace.querySelector(".film-return").addEventListener("click", () => flip("front"));
+centre.addEventListener("click", () => { state = { ...state, phase: PHASE_NEXT[state.phase] }; renderPhase(); });
+returnSeam.addEventListener("click", () => {
+  state = { ...state, returnOpen: !state.returnOpen };
+  returnPanel.hidden = !state.returnOpen;
+  returnSeam.setAttribute("aria-expanded", String(state.returnOpen));
+});
+shell.addEventListener("keydown", event => {
+  if (event.key === "Escape" && state.activePosition !== null) { event.preventDefault(); event.stopPropagation(); closePair(); }
+});
+</script>
+</body>
+</html>

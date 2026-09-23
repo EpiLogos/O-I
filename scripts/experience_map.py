@@ -79,6 +79,9 @@ def load_sources(root: Path) -> dict[str, Any]:
     for key in ("profile", "operator_source", "document_operations_source"):
         if config.get(key):
             read(config[key])
+    declared_bindings = config.get("executable_test_bindings") or {}
+    if declared_bindings.get("path"):
+        read(declared_bindings["path"])
     modules = []
     module_paths = config.get("source_modules", [])
     if len(module_paths) != len(set(module_paths)):
@@ -296,6 +299,240 @@ def apply_bindings(result: dict[str, Any], bindings: list[dict[str, Any]]) -> No
                 req["binding_status"] = "partial-source-links-require-episode-review"
 
 
+NEGATIVE_CLASSES = {
+    "missing", "withheld", "denied", "stale", "conflicting", "interrupted",
+    "duplicate", "late", "provider-unavailable", "reconnect", "changed-source",
+    "unsupported-capability", "partial-return",
+}
+# #201 grade law: D deterministic, C cross-product conformance, P real
+# provider/harness, M physical/material, H human UX/Recognition. A passed
+# deterministic walk always earns at most D; C requires the receipt itself to
+# carry live/native or real-kernel-bridge standing (receipt grade A/B).
+AUTOMATION_GRADES = {"D", "C"}
+CLAIMS_TO_RECEIPT_FLOOR = {"C": {"A", "B"}}
+
+
+def load_coverage(result: dict[str, Any], root: Path) -> None:
+    """Join declared executable-test bindings and committed walk receipts into
+    the obligation field. Declared relations are validated against the source;
+    receipts are read as latest performed evidence and never upgrade a grade:
+    no automation earns P, M or H."""
+    declared = result["config"].get("executable_test_bindings")
+    if not declared:
+        return
+    bindings_path = source_path(root, declared["path"])
+    root = root.resolve()  # /tmp is a symlink on some hosts; keep one resolved basis
+    bindings_bytes = bindings_path.read_bytes()
+    document = json.loads(bindings_bytes)
+    if document.get("schema") != "oi.cradle.walk.bindings/v1":
+        raise ValueError("executable_test_bindings: unknown schema")
+    tests = document.get("tests", {})
+    if not isinstance(tests, dict):
+        raise ValueError("executable_test_bindings: tests must be an object")
+    base = bindings_path.parent
+    artifacts = base / "artifacts"
+
+    obligation_ids = {o["id"] for o in result["inherited_obligations"]}
+    story_ids = {s["id"] for s in result["stories"]}
+    vocabulary = set(document.get("negative_vocabulary", []))
+    if vocabulary - NEGATIVE_CLASSES:
+        raise ValueError(f"unknown negative classes declared: {sorted(vocabulary - NEGATIVE_CLASSES)}")
+
+    parsed = {}
+    for name, entry in tests.items():
+        kind = entry.get("kind", "walk")
+        if kind == "walk":
+            test_file = base / "scenarios" / f"{name}.mjs"
+        elif kind == "node-test":
+            test_file = source_path(root, entry["path"])
+        else:
+            raise ValueError(f"binding {name}: unknown kind {kind}")
+        if not test_file.exists():
+            raise ValueError(f"binding {name}: test file not found: {test_file}")
+        serves = entry.get("serves", [])
+        if not serves or len(serves) != len(set(serves)):
+            raise ValueError(f"binding {name}: serves must be a non-empty list of distinct refs")
+        unknown = [ref for ref in serves if ref not in obligation_ids and ref not in story_ids]
+        if unknown:
+            raise ValueError(f"binding {name}: serves unknown obligation/story refs: {unknown}")
+        branches = entry.get("branches", {})
+        for ref, indices in branches.items():
+            if ref not in serves:
+                raise ValueError(f"binding {name}: branch key {ref} is not in serves")
+            if ref not in obligation_ids:
+                raise ValueError(f"binding {name}: branches only attach to obligations, not {ref}")
+            obligation = next(o for o in result["inherited_obligations"] if o["id"] == ref)
+            required = obligation.get("required_branches", [])
+            if any(not isinstance(i, int) or i < 0 or i >= len(required) for i in indices):
+                raise ValueError(f"binding {name}: branch index out of range for {ref}")
+        negatives = entry.get("negatives", [])
+        if set(negatives) - vocabulary:
+            raise ValueError(f"binding {name}: negative outside declared vocabulary: {sorted(set(negatives) - vocabulary)}")
+        claims = entry.get("claims_grade", "D")
+        if claims not in AUTOMATION_GRADES:
+            raise ValueError(f"binding {name}: claims_grade {claims} outside what automation may earn ({sorted(AUTOMATION_GRADES)})")
+        parsed[name] = {
+            "test": name, "kind": kind,
+            "file": str(test_file.relative_to(root)),
+            "digest": digest(test_file.read_bytes()),
+            "serves": list(serves),
+            "branches": {ref: sorted(set(idx)) for ref, idx in branches.items()},
+            "negatives": list(dict.fromkeys(negatives)),
+            "claims_grade": claims,
+            "note": entry.get("note", ""),
+        }
+
+    # Latest performed evidence: the committed receipt for a walk test. A
+    # receipt binds its own recorded cut (head + dirty digest); the reading
+    # reports that context rather than claiming currency.
+    performed: dict[str, dict[str, Any]] = {}
+    for name, binding in parsed.items():
+        receipt_file = artifacts / f"{name}.json"
+        if binding["kind"] != "walk" or not receipt_file.exists():
+            continue
+        receipt = json.loads(receipt_file.read_text())
+        checks = receipt.get("checks", [])
+        source = receipt.get("environment", {}).get("source", {})
+        performed[name] = {
+            "receipt": f"{declared['receipts']}{name}.json",
+            "receipt_grade": receipt.get("grade"),
+            "passed": receipt.get("passed") is True,
+            "generated_at": receipt.get("generated_at"),
+            "checks_passed": sum(1 for c in checks if c.get("ok")),
+            "checks_total": len(checks),
+            "recorded_head": source.get("repository_head"),
+            "recorded_dirty_digest": source.get("dirty_digest"),
+        }
+        grade = receipt.get("grade")
+        if performed[name]["passed"] and binding["claims_grade"] == "C":
+            if grade not in CLAIMS_TO_RECEIPT_FLOOR["C"]:
+                raise ValueError(
+                    f"binding {name}: claims cross-product conformance (C) but its receipt grade is {grade}; "
+                    "C requires native/real-kernel receipt standing (A/B)")
+
+    for obligation in result["inherited_obligations"]:
+        key = obligation["id"]
+        bound = [b for b in parsed.values() if key in b["serves"]]
+        receipts = [performed[b["test"]] for b in bound if b["test"] in performed]
+        earned = set()
+        for b in bound:
+            record = performed.get(b["test"])
+            if record and record["passed"]:
+                earned.add(b["claims_grade"])
+        covered = sorted({i for b in bound for i in b["branches"].get(key, []) if performed.get(b["test"], {}).get("passed")})
+        required = list(obligation["required_evidence"])
+        branches = obligation.get("required_branches", [])
+        obligation["executable_coverage"] = {
+            "tests": bound,
+            "performed": receipts,
+            "earned_grades": sorted(earned),
+            "remaining_grades": [g for g in required if g not in earned],
+            "covered_branches": covered,
+            "unproved_branches": [t for i, t in enumerate(branches) if i not in covered],
+            "negatives_exercised": sorted({n for b in bound for n in b["negatives"]}),
+        }
+    for story in result["stories"]:
+        story["extensions"]["executable_tests"] = [
+            b for b in parsed.values() if story["id"] in b["serves"]]
+
+    result["executable_bindings"] = {
+        "declared_path": declared["path"],
+        "bindings_digest": digest(bindings_bytes),
+        "tests": parsed,
+        "performed": performed,
+        "negative_vocabulary": sorted(vocabulary),
+    }
+
+
+def coverage_reading(result: dict[str, Any]) -> dict[str, Any]:
+    """The one generated reading: which obligations have executable D/C
+    coverage, which grades and branches remain, which walks prove what, and
+    where the authoritative source lives. Not acceptance; source retains
+    authority over product meaning."""
+    bindings = result.get("executable_bindings")
+    if not bindings:
+        raise ValueError("coverage reading requested but no executable_test_bindings are declared")
+    obligations = []
+    for obligation in result["inherited_obligations"]:
+        coverage = obligation["executable_coverage"]
+        latest = max(coverage["performed"], key=lambda p: p["generated_at"] or "", default=None)
+        obligations.append({
+            "id": obligation["id"], "module": obligation["source_module"],
+            "source_ref": obligation["source_basis"]["source_ref"],
+            "native_locator": obligation["native_locator"],
+            "requirement": obligation["requirement"],
+            "story_ids": obligation["story_ids"],
+            "required_evidence": obligation["required_evidence"],
+            "branches_total": len(obligation.get("required_branches", [])),
+            "earned_grades": coverage["earned_grades"],
+            "remaining_grades": coverage["remaining_grades"],
+            "covered_branches": coverage["covered_branches"],
+            "unproved_branches": coverage["unproved_branches"],
+            "tests": [{"test": b["test"], "kind": b["kind"], "file": b["file"],
+                       "claims_grade": b["claims_grade"], "note": b["note"]} for b in coverage["tests"]],
+            "latest_performed": latest,
+            "negatives_exercised": coverage["negatives_exercised"],
+        })
+    negative = {name: sorted({b["test"] for b in bindings["tests"].values() if name in b["negatives"]})
+                for name in bindings["negative_vocabulary"]}
+    bound_ids = {o["id"] for o in obligations if o["tests"]}
+    return {
+        "schema": "oi.experience.coverage-reading/v1",
+        "standing": "generated reading from declared source and committed receipts; planning-only; the source retains authority and no verdict is conferred",
+        "grade_law": {
+            "D": "deterministic (autonomous/CI)",
+            "C": "cross-product conformance",
+            "P": "real provider/harness — never earned by automation here",
+            "M": "physical/material — never earned by automation here",
+            "H": "human UX/Recognition — never earned by automation here",
+        },
+        "generated_from": {
+            "reading_digest": result["reading_digest"],
+            "source_basis": result["source_basis"],
+            "bindings_path": bindings["declared_path"],
+            "bindings_digest": bindings["bindings_digest"],
+        },
+        "summary": {
+            "obligations_total": len(result["inherited_obligations"]),
+            "obligations_with_executable_test": len(bound_ids),
+            "obligations_with_passing_receipt": len({o["id"] for o in result["inherited_obligations"]
+                                                     if any(p["passed"] for p in o["executable_coverage"]["performed"])}),
+            "branches_total": sum(o["branches_total"] for o in obligations),
+            "branches_covered_by_passing_receipt": sum(len(o["covered_branches"]) for o in obligations),
+            "p_m_h_grades_remaining": sum(
+                1 for o in result["inherited_obligations"]
+                for g in o["executable_coverage"]["remaining_grades"] if g in {"P", "M", "H"}),
+            "stories_with_executable_test": sum(1 for s in result["stories"] if s["extensions"]["executable_tests"]),
+        },
+        "unbound_obligations": sorted({o["id"] for o in obligations} - bound_ids),
+        "negative_coverage": negative,
+        "obligations": obligations,
+    }
+
+
+def write_coverage_reading(reading: dict[str, Any], prefix: Path) -> None:
+    prefix.parent.mkdir(parents=True, exist_ok=True)
+    prefix.with_suffix(".json").write_text(json.dumps(reading, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+    lines = [
+        "# Executable frontend coverage reading (generated)",
+        "",
+        f"Generated from declared source and committed walk receipts — planning-only, not acceptance.",
+        f"Bindings: `{reading['generated_from']['bindings_path']}` · reading digest `{reading['generated_from']['reading_digest'][:16]}…`",
+        "",
+        "| obligation | grades required | earned (automation) | remaining | branches covered | executable tests | latest receipt |",
+        "|---|---|---|---|---|---|---|",
+    ]
+    for o in reading["obligations"]:
+        latest = o["latest_performed"]
+        tests = ", ".join(t["test"] for t in o["tests"]) or "—"
+        when = f"{latest['passed'] and 'PASS' or 'FAIL'} {latest['generated_at'][:10]} ({latest['receipt_grade']})" if latest else "—"
+        lines.append(
+            f"| {o['id']} | {'/'.join(o['required_evidence'])} | {'/'.join(o['earned_grades']) or '—'} "
+            f"| {'/'.join(o['remaining_grades']) or '—'} | {len(o['covered_branches'])}/{o['branches_total']} | {tests} | {when} |")
+    lines += ["", "P (real provider/harness), M (physical/material) and H (human UX/Recognition) are never earned by deterministic frontend automation; they remain with their owning proving rounds (#201–#205).", ""]
+    prefix.with_suffix(".md").write_text("\n".join(lines), encoding="utf-8")
+
+
 def relation_projection(result: dict[str, Any]) -> tuple[dict[str, Any], list[dict[str, str]]]:
     practices = result["practices"]
     story_axis = {"id": "stories", "label": "Intended activities", "members": [
@@ -370,11 +607,13 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--ql-root", type=Path, help="Read the complete current QL trace and publication standing")
     parser.add_argument("--matrix", action="append", default=[], metavar="OWNER=PATH", help="Read native capability CSV; repeat for real owner inventories")
     parser.add_argument("--bindings", type=Path, help="Explicit reviewed source-qualified coverage links; not test results")
+    parser.add_argument("--coverage-out", type=Path, help="Write the generated executable-coverage reading as PREFIX.json and PREFIX.md")
     args = parser.parse_args(argv)
     try:
         result = load_sources(args.root)
         if args.ql_root:
             include_ql(result, args.ql_root)
+        load_coverage(result, args.root)
         for item in args.matrix:
             owner, sep, path = item.partition("=")
             if not sep or not owner or not path:
@@ -383,6 +622,8 @@ def main(argv: list[str] | None = None) -> int:
         if args.bindings:
             apply_bindings(result, read_json(args.bindings))
         manifest, rows = relation_projection(result)
+        if args.coverage_out:
+            write_coverage_reading(coverage_reading(result), args.coverage_out)
         if args.output_dir:
             args.output_dir.mkdir(mode=0o700, parents=True, exist_ok=False)
             for name, value in [("ux-reading.json", result), ("matrix.json", manifest)]:
@@ -399,6 +640,10 @@ def main(argv: list[str] | None = None) -> int:
             "ql": result["external_ql"]["binding_status"],
             "native_capabilities_read": len(result["capability_inventory"]),
             "uncovered_native_capabilities": sum(r["coverage_disposition"] == "uncovered" for r in result["capability_inventory"]),
+            "executable_test_bindings": len(result.get("executable_bindings", {}).get("tests", {})),
+            "obligations_with_passing_receipt": sum(
+                1 for o in result["inherited_obligations"]
+                if any(p["passed"] for p in o.get("executable_coverage", {}).get("performed", []))),
             "feature_verdict": None, "runtime_readiness": "not-assessed"}))
         return 0
     except (OSError, ValueError, KeyError, TypeError, csv.Error) as error:

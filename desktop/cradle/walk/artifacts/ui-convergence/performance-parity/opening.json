@@ -1,4 +1,6 @@
 {
+  "spec_ref": "docs/cradle/05-EXECUTION.md §3",
+  "grade": "B",
   "url": "http://127.0.0.1:4321",
   "bridge": "http://127.0.0.1:4330",
   "home": "/tmp/oi-opening-kernel-19cIJJ",

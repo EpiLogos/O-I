@@ -43,7 +43,10 @@ export async function resolveDocumentForm(
   const dir = `${oiProjectPath(projects) ?? "Work/O-I"}/${DOCUMENT_FORM_DIR}`;
   let directory;
   try {
-    directory = await listFiles(transport, dir);
+    // Fresh, not short-horizon-cached: choosing a form is an explicit open
+    // act, and the resolver must see the ground as it stands — a cached
+    // listing resurrects files the owner has removed behind the kernel.
+    directory = await listFiles(transport, dir, true);
   } catch (reason) {
     throw new Error(`The ${form.label} document form could not be opened: ${dir} is not readable now (${String(reason)})`);
   }

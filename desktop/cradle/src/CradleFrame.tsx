@@ -1,5 +1,5 @@
 import {ExpressionLayout} from "./shared/Expression";
-import {mintInstance,parseInstance,instanceFileName} from "./flow/instance";
+import {mintInstance,mintBlankInstance,parseInstance,instanceFileName} from "./flow/instance";
 import {userFlowsArea} from "./flow/instances";
 import {fileOperation,listFiles,type FileMutation} from "./files/client";
 import {DRAFT_KEY} from "./flow/DraftSurface";
@@ -12,8 +12,12 @@ import {useEncounterSession} from "./encounter/session";
 import {AgentChat} from "./agent/chat/AgentChat";
 import type {EncounterRow} from "./encounter/EncounterList";
 import {AgentLayer} from "./agent/AgentLayer";
+import {useAgentPresence} from "./agent/presence";
 import {navigateExplore,type PresentationMeta} from "./explore/navigate";
 import {MODE_CURATION,isWorkspaceMode,WORKSPACE_MODES,type WorkspaceMode} from "./workspace/mode";
+import {modeDefaultAgentBody} from "./workspace/agentBody";
+import {bindScopeWriter,publishScope,publishFocusedProject,scopeFromWorkspace,scopeProject} from "./workspace/scope";
+import {bindLensWriter,publishLens} from "./workspace/lens";
 import {EXPRESSION_COMPOSE_EVENT,summonExpression} from "./expression/summon";
 import {requestTechneFieldOpen,resetTechneFieldOpen} from "./expressions/fieldOpen";
 import {techneFieldOpenRequest} from "./surface/techneSummonRecord";
@@ -123,6 +127,12 @@ declare const __CRADLE_WALK__: boolean;
  * engine and in-memory state survive every round trip. */
 const STAGE_MODES:readonly WorkspaceMode[] = WORKSPACE_MODES.filter(mode => !!MODE_CURATION[mode].centreKind);
 
+/** macOS runs the traffic lights whose presence earns the window-controls
+ * reserve (CradleFrame's windowLights signal, gated by
+ * tests/window-lights-contract.test.mjs). One platform read, module level —
+ * navigator.platform is fixed for the process's lifetime. */
+const MAC_PLATFORM = /Mac|iPhone|iPad/.test(navigator.platform);
+
 export function CradleFrame({onComposed}:{onComposed?:()=>void}) {
   const [WalkChannel, setWalkChannel] = useState<ComponentType<{layout:LayoutState}> | null>(null);
   useEffect(() => {
@@ -132,6 +142,38 @@ export function CradleFrame({onComposed}:{onComposed?:()=>void}) {
   const kernel = useKernel();
   const leader = useSearchLeader();
   const [searchOpen,setSearchOpen] = useState(false);
+  // The macOS traffic lights are the ONLY thing that earns the window-controls
+  // reserve (its corner cutouts and the header's left offset): Tauri on a Mac,
+  // and not fullscreen — the system hides the lights there, and the reserve
+  // then gives the corner's space back. "Is Tauri" alone reserved phantom
+  // lights on Linux. SHAPE OF THE SIGNAL (gated by
+  // tests/window-lights-contract.test.mjs — this block has been merge-dropped
+  // three times): lights-present is the DERIVED BASELINE — it never depends
+  // on a native query succeeding; only a CONFIRMED isFullscreen() true
+  // suppresses it, because fullscreen transitions race (a resize event
+  // mid-transition can still report fullscreen) and one stale sample with no
+  // later resize would strand the wedge off. Each resize re-asks on a short
+  // settle ladder to land after the transition instead of inside it.
+  const [fullscreen,setFullscreen]=useState(false);
+  const windowLights = kernel.transport.kind==="tauri" && MAC_PLATFORM && !fullscreen;
+  useEffect(() => {
+    if (kernel.transport.kind !== "tauri" || !MAC_PLATFORM) { setFullscreen(false); return; }
+    let disposed = false; let cleanup: (() => void) | undefined; const timers: number[] = [];
+    void import("@tauri-apps/api/window").then(async ({ getCurrentWindow }) => {
+      const appWindow = getCurrentWindow();
+      const sync = () => {
+        if (disposed) return;
+        for (const delay of [0, 150, 450, 900]) timers.push(window.setTimeout(() => {
+          if (disposed) return;
+          void appWindow.isFullscreen().then(full => { if (!disposed) setFullscreen(!!full); }).catch(() => {});
+        }, delay));
+      };
+      const unlisten = await appWindow.onResized(sync);
+      sync();
+      if (disposed) unlisten(); else cleanup = unlisten;
+    }).catch(() => {});
+    return () => { disposed = true; timers.forEach(t => window.clearTimeout(t)); cleanup?.(); };
+  }, [kernel.transport.kind]);
   // The ONE Library (library/): O:I Web is the connective field, not a mode —
   // so the Library is summoned over whatever mode you are in and scoped by
   // it. Once opened it stays mounted (hidden) so a return lands on the same
@@ -243,7 +285,7 @@ export function CradleFrame({onComposed}:{onComposed?:()=>void}) {
     if (project) {
       if (kernel.snapshot.navigator?.project?.project.name !== project) void kernel.apply({ op: "project_browse", project });
     } else if (kernel.snapshot.navigator?.project) void kernel.apply({ op: "world_browse" });
-  }, [workspace.current.id, workspace.current.layout.mode]);
+  }, [workspace.current.id, workspace.current.layout.mode, workspace.current.project]);
 
 
   // -------------------------------------------------------------------------
@@ -363,17 +405,14 @@ export function CradleFrame({onComposed}:{onComposed?:()=>void}) {
   // moves with the frame's active surface — and only when it actually
   // moves (the kernel emits nothing for a re-focus of the same ref).
   const activeId = activeBindingId(state);
-  const revealedSurface = useRef<string | null>(null);
+  // Scope changes only when the person changes it (10-SIDEBARS §3.6 rule 1):
+  // focusing a tab from another project no longer moves the scope. The tab's
+  // project is published instead, so the scope menu can offer "Switch to …".
   useEffect(() => {
     const binding=activeId ? state.surfaces[activeId] : undefined;
     const project=binding?.project ?? (binding?.ref ? kernel.snapshot.buffers[binding.ref]?.project : undefined);
-    const key=activeId && project ? `${workspace.current.id}:${activeId}:${project}` : null;
-    if (!key) {revealedSurface.current=null;return;}
-    if (revealedSurface.current===key || !project) return;
-    revealedSurface.current=key;
-    workspace.browse(project);
-    if(kernel.snapshot.navigator?.project?.project.name!==project) void kernel.apply({op:"project_browse",project});
-  },[activeId,activeId ? state.surfaces[activeId]?.project : undefined,workspace.current.id,kernel.snapshot.buffers]);
+    publishFocusedProject(project && project!==workspace.current.project ? project : undefined);
+  },[activeId,activeId ? state.surfaces[activeId]?.project : undefined,workspace.current.id,workspace.current.project,kernel.snapshot.buffers]);
   useEffect(() => {
     if (!activeId) return;
     if (lastFocusedSurface.current === activeId) return;
@@ -941,44 +980,50 @@ export function CradleFrame({onComposed}:{onComposed?:()=>void}) {
   const localStamp=()=>{const d=new Date(),p=(n:number)=>String(n).padStart(2,"0");
     return `${d.getFullYear()}-${p(d.getMonth()+1)}-${p(d.getDate())}-${p(d.getHours())}${p(d.getMinutes())}`;};
   /** Writing opens on this device and never mints a placeholder: no Flow, no
-   *  file, no Day, no NOW allocation as a side effect of opening. The ground
-   *  is written only when the human explicitly saves real content
-   *  (placeDraft): one dated 0/1 instance in Control/user/flows/ — the
-   *  ratified carrier. */
+   *  file, no Day, no NOW allocation as a side effect of opening (ratified
+   *  2026-09-13, #267). The ground is written only when the human explicitly
+   *  saves real content (placeDraft). The navigator's New flow keeps this
+   *  law; the rest page's Start writing is the exception (startFlowWriting). */
   const startWriting=async()=>{
     setState(s=>openBinding(s,{id:crypto.randomUUID(),kind:"draft",title:"Draft"}));
   };
-  /** Save unsaved writing: one dated 0/1 instance created in the user
-   *  section's flows area through Central's own file operation, replacing
-   *  the surface in place. Only real content reaches the ground — an empty
-   *  draft has nothing to place, and no blank placeholder is ever minted in
-   *  its name. The local copy is released only once the owner holds it. */
-  const placeDraft=async(bindingId:string,content:string)=>{
-    if(!content.trim())throw new Error("Nothing to place yet — write first, then save.");
+  /** The rest page's "Start writing" (owner direction, 2026-09-22): writing
+   *  starts in a real flow file — one dated 0/1 instance minted in the user
+   *  section's flows area through Central's own file operation and opened at
+   *  once as a document surface. Only when no owner ground is reachable does
+   *  it fall back to the device draft, which placeDraft later carries to the
+   *  same home on explicit save. */
+  const startFlowWriting=async()=>{
     let area:import("./flow/instances").UserFlowsArea|undefined;
     try{area=await userFlowsArea(kernel.transport);}catch{area=undefined;}
-    if(!area)throw new Error("No Central ground is reachable; the writing is still kept on this device.");
+    if(!area){setState(s=>openBinding(s,{id:crypto.randomUUID(),kind:"draft",title:"Draft"}));return;}
+    await openMintedFlow(area,()=>mintBlankInstance(),crypto.randomUUID());
+  };
+  /** Mint one dated 0/1 instance in the user flows area (Central's own file
+   *  operation) and open it as a flow document surface. `surfaceId` may be
+   *  an existing draft binding, which this replaces in place. A name
+   *  collision retries with the next suffix; any other refusal propagates. */
+  const openMintedFlow=async(area:import("./flow/instances").UserFlowsArea,mint:()=>string,surfaceId:string)=>{
     const stamp=localStamp();
     let lastError:unknown;
     for(let n=0;n<8;n++){
       const name=instanceFileName(stamp,n);
       const location={schema:"central.path-ref/v1" as const,ref:`${area.baseRef}/flows/${name}`,root:area.root,path:`${area.basePath}/flows/${name}`};
       try{
-        const html=mintInstance(content);
+        const html=mint();
         const result=await fileOperation<FileMutation>(kernel.transport,location,{action:"write",expected_revision:"",content:html});
         if(result.outcome!=="created")throw new Error(`Central did not create the flow instance (${result.outcome}).`);
         const doc=parseInstance(html);
         const documentId=doc.meta.documentId??name;
         const title=name;
-        const binding:SurfaceBinding={id:bindingId,kind:"flow",title,ref:location.ref,location,flow:{flowRef:documentId,path:location.path}};
+        const binding:SurfaceBinding={id:surfaceId,kind:"flow",title,ref:location.ref,location,flow:{flowRef:documentId,path:location.path}};
         // The owner-mediated read registers the file ref for the surface-open
         // gate and hands back the live central revision.
         await readFile(kernel.transport,location);
-        const opened=await kernel.apply({op:"surface_open",surface_id:bindingId,kind:"flow",title,source_ref:location.ref});
-        if(opened?.result!=="surface_opened")throw new Error("Central created the flow document but the surface could not be opened; your writing is still kept on this device.");
-        await kernel.apply({op:"surface_focus",surface_id:bindingId});
-        setState(s=>({...s,surfaces:{...s.surfaces,[bindingId]:binding}}));
-        try{localStorage.removeItem(DRAFT_KEY(bindingId));}catch{/* The owner holds it now. */}
+        const opened=await kernel.apply({op:"surface_open",surface_id:surfaceId,kind:"flow",title,source_ref:location.ref});
+        if(opened?.result!=="surface_opened")throw new Error("Central created the flow document but the surface could not be opened.");
+        await kernel.apply({op:"surface_focus",surface_id:surfaceId});
+        setState(s=>({...s,surfaces:{...s.surfaces,[surfaceId]:binding}}));
         return;
       }catch(reason){
         lastError=reason;
@@ -986,6 +1031,19 @@ export function CradleFrame({onComposed}:{onComposed?:()=>void}) {
       }
     }
     throw new Error(`Central would not accept a new flow instance this minute: ${String(lastError)}`);
+  };
+  /** Save unsaved writing: one dated 0/1 instance created in the user
+   *  section's flows area through Central's own file operation, replacing
+   *  the surface in place. Only real content reaches the ground — an empty
+   *  draft has nothing to place. The local copy is released only once the
+   *  owner holds it. */
+  const placeDraft=async(bindingId:string,content:string)=>{
+    if(!content.trim())throw new Error("Nothing to place yet — write first, then save.");
+    let area:import("./flow/instances").UserFlowsArea|undefined;
+    try{area=await userFlowsArea(kernel.transport);}catch{area=undefined;}
+    if(!area)throw new Error("No Central ground is reachable; the writing is still kept on this device.");
+    await openMintedFlow(area,()=>mintInstance(content),bindingId);
+    try{localStorage.removeItem(DRAFT_KEY(bindingId));}catch{/* The owner holds it now. */}
   };
   const placeDraftRef=useRef(placeDraft);placeDraftRef.current=placeDraft;
   useEffect(()=>{
@@ -1367,10 +1425,12 @@ export function CradleFrame({onComposed}:{onComposed?:()=>void}) {
     }catch(error){setWindowError(String(error));}
     finally{setFactoryChoosing(false);}
   };
-  const factoryCentreProps:{project?:string;accompanying?:{ref:string;project:string;space:string};onOpenTask:(row:EncounterRow)=>Promise<void>;onMessage:(message:string)=>void}={
+  const factoryCentreProps:{project?:string;accompanying?:{ref:string;project:string;space:string};onOpenTask:(row:EncounterRow)=>Promise<void>;onNewTask:()=>void;onOpenActivity:()=>void;onMessage:(message:string)=>void}={
     project:workspace.current.project??state.accompanying?.project,
     accompanying:state.accompanying??undefined,
     onOpenTask:row=>factoryChoose(row),
+    onNewTask:()=>setState(s=>({...s,accompanying:undefined})),
+    onOpenActivity:()=>setState(s=>({...s,rightDepth:s.rightDepth==="collapsed"?"panel":s.rightDepth,panelPlanes:{...s.panelPlanes,factory:"run"}})),
     onMessage:message=>setWindowError(message),
   };
   const factoryCentre=
@@ -1397,6 +1457,7 @@ export function CradleFrame({onComposed}:{onComposed?:()=>void}) {
   const activeEncounterRef=subjectBinding?.kind==="encounter" ? subjectBinding.ref : undefined;
   const summonAgent=()=>setState(s=>({...s,rightDepth:"panel"}));
   const mode:WorkspaceMode=state.mode??"base";
+  const epiPrimeBodyDefault=modeDefaultAgentBody(workspace.current.context?.world,mode);
   // The retention warm set (WF4): the warm trees of the active workspace and
   // the recently visited ones, rendered whole and hidden at stable positions —
   // a mode swap or a workspace swap flips visibility, it never unmounts a
@@ -1498,19 +1559,28 @@ export function CradleFrame({onComposed}:{onComposed?:()=>void}) {
   // the mode centre; leaving is the explicit act that clears it. The footer
   // state follows the world context, so the two can never disagree.
   const epiWorldActive=()=>workspaceRef.current.current.context?.world==="epi-logos";
+  // The Epi-Logos LENS (ruling D2, A5): it re-roots the file trees on the
+  // corpus and opens no surface; mode and scope stay where they are.
   const enterEpiWorld=()=>{
     workspaceRef.current.setContext(context=>({...context,world:"epi-logos"}));
     setState(s=>({...s,epiLogos:true}));
-    void openModeSurface("epi-logos").catch(report);
   };
   const leaveEpiWorld=()=>{
     workspaceRef.current.setContext(context=>({...context,world:undefined}));
     setState(s=>({...s,epiLogos:undefined}));
   };
+  // The one scope and the lens (scope.ts, lens.ts): the workspace is their
+  // only writer; every surface reads what the frame publishes here.
+  useEffect(()=>bindScopeWriter(scope=>{if(scope.kind==="all")workspaceRef.current.browseAll();else workspaceRef.current.browse(scopeProject(scope));}),[]);
+  useEffect(()=>{publishScope(scopeFromWorkspace(workspace.current.project,workspace.current.allProjects));},[workspace.current.id,workspace.current.project,workspace.current.allProjects]);
+  useEffect(()=>bindLensWriter(on=>{on?enterEpiWorld():leaveEpiWorld();}),[]);
+  useEffect(()=>{publishLens(workspace.current.context?.world==="epi-logos");},[workspace.current.id,workspace.current.context?.world]);
   const factoryPanelHost:FactoryPanelHost={onOpenFullRun:()=>{setState(s=>{const plane=s.panelPlanes?.factory==="run"?s:{...s,panelPlanes:{...s.panelPlanes,factory:"run"}};return s.rightDepth==="full"?plane:{...plane,rightDepth:"full"};});},
     onExpandPanel:()=>setState(s=>s.rightDepth==="full"?s:{...s,rightDepth:"full"}),
     onOpenPlane:plane=>setState(s=>s.panelPlanes?.factory===plane?s:{...s,panelPlanes:{...s.panelPlanes,factory:plane}}),
-    onOpenEncounterRow:(row:EncounterRow)=>void openEncounter(row).catch(report)};
+    // Factory conversations open in the centre Tasks view (10-SIDEBARS §3.5,
+    // §6.1.2) — never into the side tab group.
+    onOpenEncounterRow:(row:EncounterRow)=>void factoryChoose(row)};
   // The centre canvas's own pane openings, lent to the Ta-Onta Context plane
   // (expressions / techne / factory): hold the open file in the panel, or
   // open a file, a browser or a terminal in the centre exactly as the shell
@@ -1535,7 +1605,12 @@ export function CradleFrame({onComposed}:{onComposed?:()=>void}) {
         nativeWindows={kernel.transport.kind==="tauri"}
         workspaceName={workspace.current.name}/>);})(),
   };
-  const agentLayer=<AgentLayer mode={mode} plane={state.panelPlanes?.[mode]} onPlane={plane=>setState(s=>s.panelPlanes?.[mode]===plane?s:{...s,panelPlanes:{...s.panelPlanes,[mode]:plane}})} extraPlanes={modeExtraPlanes(mode,panelSubject,state.accompanying,message=>setWindowError(message),factoryPanelHost,state.rightDepth==="full",taPaneOpens)} onError={report}
+  /** The Status face of the agent-work gradient (Status → Preview →
+    * Takeover): the observed encounter state, carried in the frame while the
+    * panel is collapsed. One more subscriber on the SAME shared observer —
+    * never a second poll loop. */
+  const agentPresence=useAgentPresence(state.accompanying?{project:state.accompanying.project,ref:state.accompanying.ref,space:state.accompanying.space}:undefined,state.rightDepth!=="collapsed");
+  const agentLayer=<AgentLayer mode={mode} preferredBodyRef={epiPrimeBodyDefault} plane={state.panelPlanes?.[mode]} onPlane={plane=>setState(s=>s.panelPlanes?.[mode]===plane?s:{...s,panelPlanes:{...s.panelPlanes,[mode]:plane}})} extraPlanes={modeExtraPlanes(mode,panelSubject,state.accompanying,message=>setWindowError(message),factoryPanelHost,state.rightDepth==="full",taPaneOpens,workspace.current.project)} onError={report}
     onOpenConversation={accompanying=>void openConversationInCentre(accompanying).catch(report)}
     onOpenSubject={subject=>{if(subject.location){void openFile(subject.location).catch(report);return;}const held=Object.values(stateRef.current.surfaces).find(binding=>!!subject.ref&&binding.ref===subject.ref);if(held)execute("surface.activate",{surfaceId:held.id});}}
     resolveSurface={id=>stateRef.current.surfaces[id]??Object.assign({},...workspace.workspaces.map(w=>w.layout.surfaces))[id]}
@@ -1546,14 +1621,15 @@ export function CradleFrame({onComposed}:{onComposed?:()=>void}) {
   return (
     <>
       <ExpressionLayout layout={state}/>
-      <DesktopShell onLibrary={()=>setLibrary(value=>value==="open"?"held":"open")} world={workspace.current.context?.world} onLeaveWorld={leaveEpiWorld} returnTo={workspace.current.context?.trail?.slice(-1)[0]} onReturn={()=>window.dispatchEvent(new Event("oi:context-return"))} mode={mode} onMode={enterMode} onTabPresentation={presentation=>execute(`frame.tabs:${presentation}`)} onToggleNavigator={()=>navigatorRef.current ? dismissWorld() : summonWorld()} onCloseNavigator={dismissWorld} native={kernel.transport.kind==="tauri"} namingRequest={namingRequest} onNamingHandled={()=>setNamingRequest(null)}
+      <DesktopShell onLibrary={()=>setLibrary(value=>value==="open"?"held":"open")} world={workspace.current.context?.world} onLeaveWorld={leaveEpiWorld} returnTo={workspace.current.context?.trail?.slice(-1)[0]} onReturn={()=>window.dispatchEvent(new Event("oi:context-return"))} mode={mode} onMode={enterMode} windowLights={windowLights} onTabPresentation={presentation=>execute(`frame.tabs:${presentation}`)} onToggleNavigator={()=>navigatorRef.current ? dismissWorld() : summonWorld()} onCloseNavigator={dismissWorld} native={kernel.transport.kind==="tauri"} namingRequest={namingRequest} onNamingHandled={()=>setNamingRequest(null)}
         arrangementActions={<ArrangementActions state={state} execute={execute} openFrameMenu={openFrameMenu} nativeWindows={kernel.transport.kind==="tauri"}/>}
         subject={{ref:subjectRef,title:subjectTitle,context:<><h2>{subjectTitle}</h2>{subjectBinding?.flow&&<p data-subject-flow-ref={subjectBinding.flow.flowRef}>Working through <code>{subjectBinding.flow.flowRef}</code></p>}{subjectBuffer ? <p>{subjectBuffer.project} · {subjectBuffer.dirty ? "Unsaved changes" : "Saved"}</p> : subjectBinding?.project ? <p>{subjectBinding.project}</p> : <p>Select a surface to inspect its context.</p>}</>,history:subjectHistory}}
         right={agentLayer}
+        agentPresence={agentPresence}
         layout={state} setLayout={setState} workspace={workspace.current} workspaces={workspace.workspaces} activate={workspace.activate} create={workspace.create} rename={workspace.rename} onRecover={workspace.showRecovery} error={workspace.error ?? windowError ?? kernel.opError ?? null} onErrorDismiss={()=>{setWindowError(undefined); workspace.dismissError(); kernel.dismissOpError();}}
         epiLogos={state.epiLogos===true} onEpiLogosToggle={()=>{epiWorldActive()?leaveEpiWorld():enterEpiWorld();}}
         recovery={workspace.recovery} onRecoverAvailable={workspace.recoverAvailable} onStartFresh={workspace.startFresh} onReload={()=>workspace.reload()}
-        navigator={workspaceSelector => curation.left==="factory" ? <FactoryNavigator project={workspace.current.project} accompanying={state.accompanying} onProjectChange={workspace.browse} onOpenEncounter={openEncounter} activeEncounterRef={activeEncounterRef} onMessage={message=>setWindowError(message)}/> : curation.left!=="world" ? <ModeLeftBody mode={mode} onOpenPlace={()=>void openModeSurface("epi-logos").catch(report)} project={workspace.current.project} onOpenExpressions={()=>void openModeSurface("expressions").catch(report)} onOpenTechne={()=>enterMode("techne")} onOpenFile={openFile} onMessage={message=>setWindowError(message)}/> : worldNavigator(workspaceSelector)}>
+        navigator={workspaceSelector => curation.left==="factory" ? <FactoryNavigator project={workspace.current.project} accompanying={state.accompanying} onProjectChange={workspace.browse} onOpenEncounter={row=>factoryChoose(row)} activeEncounterRef={state.accompanying?.ref??activeEncounterRef} onMessage={message=>setWindowError(message)}/> : curation.left!=="world" ? <ModeLeftBody mode={mode} onOpenPlace={()=>void openModeSurface("epi-logos").catch(report)} project={workspace.current.project} onOpenExpressions={()=>void openModeSurface("expressions").catch(report)} onOpenTechne={()=>enterMode("techne")} onOpenFile={openFile} onOpenWiki={(ref,title,project)=>void openKnowledge({kind:"wiki",value:ref},title,project).catch(report)} onMessage={message=>setWindowError(message)}/> : worldNavigator(workspaceSelector)}>
       {/* The modes' dedicated stages (surface/retention.tsx, stage law
         * 2026-09-20): one ALWAYS-PRESENT keyed slot per centre mode. Each
         * slot presents the centre binding living in its OWN mode's tree,
@@ -1583,7 +1659,25 @@ export function CradleFrame({onComposed}:{onComposed?:()=>void}) {
         * law as always — with no active root nothing in them is presented. */}
       <div className="rest-host" hidden={!!state.root || undefined}>
         <RestPane>
-          <Rest project={workspace.current.project} onWrite={startWriting} title={workspace.current.name} onSearch={()=>setSearchOpen(true)} onExplore={()=>setLibrary("open")} onWiki={(() => {
+          {/* "Graph" enters Technè (owner ruling 4, 2026-09-22: the rest page
+            * carries Day / Card / Graph) — the same summon the shell's own
+            * mode entries use, so the aperture the mode stands is the real
+            * one and names its own state when no ground is reachable. No
+            * silent fallback to another surface.
+            *
+            * "Card" opens the Epi-Card form through the document-forms route:
+            * the roster's real carrier resolved through Central's own file
+            * route — the same resolveDocumentForm → openFile path the blank
+            * tab's form buttons use (freshChoice). With no readable ground
+            * the resolver's own precise refusal surfaces on this page. */}
+          <Rest project={workspace.current.project} onWrite={startFlowWriting} onDay={()=>openToday()} title={workspace.current.name} onSearch={()=>setSearchOpen(true)} onExplore={()=>setLibrary("open")}
+            onGraph={()=>enterMode("techne")}
+            onCard={async () => {
+              const form=DOCUMENT_FORMS.find(candidate=>candidate.kind==="document-epi-card");
+              if(!form)throw new Error("The Epi-Card form is not offered by the document roster");
+              await openFile(await resolveDocumentForm(kernel.transport,form,kernel.snapshot.navigator?.root?.work.projects));
+            }}
+            onWiki={(() => {
             const reading=kernel.snapshot.navigator;
             const project=reading?.project?.project;
             const ref=project ? project.projectcentral.agent_wiki.wiki.space_ref : reading?.root?.control.agent_wiki.wiki.space_ref;

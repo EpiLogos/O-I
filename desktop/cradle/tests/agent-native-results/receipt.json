@@ -1,0 +1,9 @@
+{
+  "kind": "controlled-browser-not-live-model",
+  "checks": [
+    "The actual composer renders native choices, confirms configuration and preserves its draft.",
+    "Lost native acknowledgement becomes unknown; no automatic replay is sent.",
+    "A harness-native read-only selector remains disabled without inventing a universal model roster.",
+    "Unknown connection states never become a green connected badge; draft survives the fault."
+  ]
+}

@@ -1,31 +1,88 @@
 {
   "schema": "oi.cradle.walk.scenario/v1",
   "scenario": "canvas-context",
-  "generated_at": "2026-09-20T21:24:00.626Z",
+  "spec_ref": "docs/cradle/05-EXECUTION.md §3",
+  "grade": "B",
+  "binding": {
+    "serves": [
+      "grounding220:composition",
+      "factory289:praxis-context"
+    ],
+    "branches": {
+      "grounding220:composition": [
+        1,
+        5
+      ],
+      "factory289:praxis-context": [
+        1
+      ]
+    },
+    "negatives": [
+      "changed-source",
+      "stale"
+    ],
+    "claims_grade": "D"
+  },
+  "generated_at": "2026-09-23T01:49:24.283Z",
   "environment": {
-    "base_url": "http://localhost:4573",
-    "bridge_url": "http://127.0.0.1:4579",
+    "base_url": "http://localhost:4173",
+    "bridge_url": "http://127.0.0.1:4179",
     "viewport": "1280x820",
+    "browser_engine": "chromium",
     "bundle": "walk (WALK=1) served by vite preview",
+    "build_input": {
+      "mode": "reused-dist",
+      "bundle_fingerprint": "7bd7215801275e69797d8252083f919b8d42faa52a225f0320db506377abfd10"
+    },
     "node": "v24.16.0",
     "platform": "darwin",
     "source": {
-      "repository_root": "/private/tmp/oi-canvas-integration",
-      "repository_head": "346af0e558456ecca318fae2bb41260be6aa9b77",
+      "repository_root": "/Users/admin/Central/worktrees/ui-build/lane3-factory",
+      "repository_head": "985f0de4141dd448107c0e5ba300a70f408a6540",
       "tracked_changes": [
-        "desktop/cradle/walk/artifacts/flow-canvas-failure.png",
-        "desktop/cradle/walk/artifacts/flow-canvas.json",
-        "desktop/cradle/walk/run.mjs",
-        "docs/OI-DESKTOP-CRADLE-REBUILD-WAYFINDER.md"
+        "desktop/cradle/walk/artifacts/background-completion-failure.png",
+        "desktop/cradle/walk/artifacts/background-completion.json",
+        "desktop/cradle/walk/artifacts/canvas-context-failure.png",
+        "desktop/cradle/walk/artifacts/canvas-context.json",
+        "desktop/cradle/walk/artifacts/factory-desk-f1-reading.png",
+        "desktop/cradle/walk/artifacts/factory-desk-f2-empty.png",
+        "desktop/cradle/walk/artifacts/factory-desk-f3-partial.png",
+        "desktop/cradle/walk/artifacts/factory-desk.json",
+        "desktop/cradle/walk/artifacts/factory-development-agents-tab.png",
+        "desktop/cradle/walk/artifacts/factory-development-context-tab.png",
+        "desktop/cradle/walk/artifacts/factory-development-failure.png",
+        "desktop/cradle/walk/artifacts/factory-development-run-tab.png",
+        "desktop/cradle/walk/artifacts/factory-development.json",
+        "desktop/cradle/walk/artifacts/factory-objects.json",
+        "desktop/cradle/walk/artifacts/factory-real-desk-real.png",
+        "desktop/cradle/walk/artifacts/factory-real-now-record-real.png",
+        "desktop/cradle/walk/artifacts/factory-real-run-real-map.png",
+        "desktop/cradle/walk/artifacts/factory-real.json",
+        "desktop/cradle/walk/artifacts/factory-run-f13-before.png",
+        "desktop/cradle/walk/artifacts/factory-run-factory-run-map-1440-light.png",
+        "desktop/cradle/walk/artifacts/factory-run.json",
+        "desktop/cradle/walk/artifacts/factory-tasks-f15-direct.png",
+        "desktop/cradle/walk/artifacts/factory-tasks-factory-tasks-joined-1000-dark.png",
+        "desktop/cradle/walk/artifacts/factory-tasks-factory-tasks-joined-1000-light.png",
+        "desktop/cradle/walk/artifacts/factory-tasks-factory-tasks-joined-1440-dark.png",
+        "desktop/cradle/walk/artifacts/factory-tasks-factory-tasks-joined-1440-light.png",
+        "desktop/cradle/walk/artifacts/factory-tasks-factory-tasks-joined-760-dark.png",
+        "desktop/cradle/walk/artifacts/factory-tasks-factory-tasks-joined-760-light.png",
+        "desktop/cradle/walk/artifacts/factory-tasks.json",
+        "desktop/cradle/walk/artifacts/factory-trajectory.json",
+        "desktop/cradle/walk/artifacts/lane0-repairs-factory-task-in-centre.png",
+        "desktop/cradle/walk/artifacts/lane0-repairs-lens-on-no-surface.png",
+        "desktop/cradle/walk/artifacts/lane0-repairs.json"
       ],
-      "engine_provenance_path": "/private/tmp/oi-canvas-integration/packages/oi-design-system/expressions-engine/PROVENANCE.json",
+      "dirty_digest": "980fe38e35bd233fa001831ea8e60516fe77f33f088f2bbd2194733feedd59ee",
+      "engine_provenance_path": "/Users/admin/Central/worktrees/ui-build/lane3-factory/packages/oi-design-system/expressions-engine/PROVENANCE.json",
       "engine_source": "EpiLogos/Point-Cloud-Demo",
       "engine_revision": "91db8428fc9dfba06cd258ec5a58e7dd9eef5313"
     }
   },
   "passed": true,
   "error": null,
-  "duration_ms": 32262,
+  "duration_ms": 105929,
   "checks": [
     {
       "ok": true,
@@ -147,18 +204,18 @@
       "duration_ms": 0,
       "data": {
         "schema": "oi.cradle.walk/v1",
-        "mounted_at": "2026-09-20T21:24:00.756Z",
+        "mounted_at": "2026-09-23T01:49:24.558Z",
         "transport": {
           "kind": "bridge",
-          "url": "http://127.0.0.1:4579"
+          "url": "http://127.0.0.1:4179"
         },
-        "url": "http://localhost:4573/"
+        "url": "http://localhost:4173/"
       }
     },
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 40,
+      "duration_ms": 90,
       "data": {
         "file": "canvas-context-native-resolve-on-prepared-selection.png"
       }
@@ -166,7 +223,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 31,
+      "duration_ms": 97,
       "data": {
         "file": "canvas-context-stale-source-refusal-retains-preparation.png"
       }
@@ -174,7 +231,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 39,
+      "duration_ms": 70,
       "data": {
         "file": "canvas-context-real-return-after-explicit-delivery.png"
       }

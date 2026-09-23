@@ -5,6 +5,8 @@
 //! projection verb and every attribution flag), carries the replacement body
 //! on stdin verbatim, and refuses an incompatible reading — the routing is
 //! proven, not commented.
+#[path = "support/stub.rs"]
+mod stub;
 use oi_cradle_kernel::{CentralClient, Kernel, KernelOp, KernelOpResult};
 use std::fs;
 use std::os::unix::fs::PermissionsExt;
@@ -21,6 +23,7 @@ fn write_fake(dir: &std::path::Path, args_file: &std::path::Path) -> PathBuf {
     let path = dir.join("fake-aikit.sh");
     fs::write(&path, script).unwrap();
     fs::set_permissions(&path, fs::Permissions::from_mode(0o755)).unwrap();
+    stub::settle_stub(&path);
     path
 }
 

@@ -1,4 +1,6 @@
 {
+  "spec_ref": "docs/cradle/05-EXECUTION.md §3",
+  "grade": "C",
   "schema": "ql.focused-instrument/v1",
   "available": true,
   "event": {
@@ -870,7 +872,7 @@
         "m1": {
           "basis_ref": "0",
           "source_ref": "installed:m1:3",
-          "value": 1.0
+          "value": 1
         },
         "m2": {
           "basis_ref": "fixture:m2-source",
@@ -1026,8 +1028,8 @@
         "spinor": [
           0.258819043636322,
           -0.9659258127212524,
-          0.0,
-          0.0
+          0,
+          0
         ]
       },
       "reflection": {
@@ -1905,7 +1907,7 @@
           "unit_length": {
             "source_ref": "controlled:square-definition",
             "unit": "m",
-            "value": 1.0
+            "value": 1
           }
         },
         "material_ref": "controlled:linear-medium",
@@ -1919,13 +1921,13 @@
             "carrier_weights": [
               {
                 "carrier": 0,
-                "weight": 1.0
+                "weight": 1
               }
             ],
             "damping_per_second": 0.25,
             "excitation": [
               0.001,
-              0.0
+              0
             ],
             "frequency_hz": 1814.8165283203125,
             "material_fibre": "earth",
@@ -1942,13 +1944,13 @@
             "carrier_weights": [
               {
                 "carrier": 1,
-                "weight": 1.0
+                "weight": 1
               }
             ],
             "damping_per_second": 0.25,
             "excitation": [
               0.001,
-              0.0
+              0
             ],
             "frequency_hz": 1860.3033447265625,
             "material_fibre": "earth",
@@ -1965,13 +1967,13 @@
             "carrier_weights": [
               {
                 "carrier": 2,
-                "weight": 1.0
+                "weight": 1
               }
             ],
             "damping_per_second": 0.25,
             "excitation": [
               0.001,
-              0.0
+              0
             ],
             "frequency_hz": 2122.867431640625,
             "material_fibre": "earth",
@@ -1988,13 +1990,13 @@
             "carrier_weights": [
               {
                 "carrier": 3,
-                "weight": 1.0
+                "weight": 1
               }
             ],
             "damping_per_second": 0.25,
             "excitation": [
               0.001,
-              0.0
+              0
             ],
             "frequency_hz": 2422.48876953125,
             "material_fibre": "earth",
@@ -2011,13 +2013,13 @@
             "carrier_weights": [
               {
                 "carrier": 4,
-                "weight": 1.0
+                "weight": 1
               }
             ],
             "damping_per_second": 0.25,
             "excitation": [
               0.001,
-              0.0
+              0
             ],
             "frequency_hz": 1938.6624755859375,
             "material_fibre": "earth",
@@ -2034,13 +2036,13 @@
             "carrier_weights": [
               {
                 "carrier": 5,
-                "weight": 1.0
+                "weight": 1
               }
             ],
             "damping_per_second": 0.25,
             "excitation": [
               0.001,
-              0.0
+              0
             ],
             "frequency_hz": 2212.2861328125,
             "material_fibre": "earth",
@@ -2057,13 +2059,13 @@
             "carrier_weights": [
               {
                 "carrier": 6,
-                "weight": 1.0
+                "weight": 1
               }
             ],
             "damping_per_second": 0.25,
             "excitation": [
               0.001,
-              0.0
+              0
             ],
             "frequency_hz": 2524.52880859375,
             "material_fibre": "earth",
@@ -2080,13 +2082,13 @@
             "carrier_weights": [
               {
                 "carrier": 7,
-                "weight": 1.0
+                "weight": 1
               }
             ],
             "damping_per_second": 0.25,
             "excitation": [
               0.001,
-              0.0
+              0
             ],
             "frequency_hz": 2880.842041015625,
             "material_fibre": "earth",

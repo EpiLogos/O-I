@@ -86,8 +86,8 @@ export default async function run({page,baseUrl,check,shot,channel,provision:p})
 
   // 2 — select a passage; the tray seeds the A2A exchange form with it.
   await selectRange(editor,start+1,start+1+passage.length);
-  await page.getByRole("button",{name:"Context mode",exact:true}).click();
-  await page.getByRole("button",{name:"Attach selection",exact:true}).click();
+  await page.getByRole("button",{name:"Pick component for context",exact:true}).click();
+  await page.getByRole("button",{name:"Add selected text to context",exact:true}).click();
   const dialog=page.getByRole("dialog",{name:"Include selected context"});await dialog.waitFor();
   await dialog.getByRole("button",{name:"Exchange over A2A"}).click();
   await dialog.waitFor({state:"detached"});
@@ -146,19 +146,19 @@ export default async function run({page,baseUrl,check,shot,channel,provision:p})
   // 8 — the human reviews beside the document: the return discloses its A2A
   // lineage, the exact peer reply, then lands through the owner's
   // revision-checked include.
-  const returns=page.locator(".document-returns");
-  await returns.getByRole("button",{name:"Refresh this document's returns"}).click();
-  await page.waitForFunction(()=>document.querySelector(".document-returns header small")?.textContent?.includes("1 in the receiving field"),null,{timeout:20000});
-  await returns.locator(".document-return").first().click();
-  const detail=returns.locator(".return-detail");await detail.waitFor();
+  const returns=page.locator(".document-receiving");
+  await returns.getByRole("button",{name:"Refresh this document's receiving"}).click();
+  await page.waitForFunction(()=>document.querySelector(".document-receiving header small")?.textContent?.includes("1 in the receiving field"),null,{timeout:20000});
+  await returns.locator(".receiving-row").first().click();
+  const detail=returns.locator(".receiving-detail");await detail.waitFor();
   const detailText=await detail.innerText();
   check(detailText.includes("Agent — agent:reader-walk"),"The A2A return's producer is the receiving participant");
   check(detailText.includes("A2A exchange")&&detailText.includes(difference.exchange_ref)&&detailText.includes("a2a-task:peer-1"),"The return discloses its A2A lineage — the exchange and the task it came back as");
   check(detailText.includes(reply),"The exact peer reply is shown before any decision");
   await returns.getByRole("button",{name:"Accept current basis"}).click();
-  await page.waitForFunction(()=>document.querySelector(".document-returns .return-detail")?.textContent?.includes("accepted by"),null,{timeout:20000});
+  await page.waitForFunction(()=>document.querySelector(".document-receiving .receiving-detail")?.textContent?.includes("accepted by"),null,{timeout:20000});
   await returns.getByRole("button",{name:"Include into the document"}).click();
-  await page.waitForFunction(()=>document.querySelector(".document-returns .return-status")?.textContent==="included",null,{timeout:20000});
+  await page.waitForFunction(()=>document.querySelector(".document-receiving .receiving-status")?.textContent==="included",null,{timeout:20000});
   check(true,"Inclusion lands through the owner's revision-checked operation on the exact reviewed basis");
   await shot("a2a-return-included");
 

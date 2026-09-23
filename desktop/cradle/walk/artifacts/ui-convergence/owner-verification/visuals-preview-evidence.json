@@ -1,4 +1,6 @@
 {
+  "spec_ref": "docs/cradle/05-EXECUTION.md §3",
+  "grade": "C",
   "commit": "c5418ac0d3829afcd28e7d4d7141a6387fb8dc06",
   "priorCommit": "aa14aa3d1d67a45cb04f18ba5246a26c983c0604",
   "branch": "aikit/ui-expression-convergence",

@@ -20,18 +20,41 @@
  */
 import type {ConfigPlaneSource} from "./source";
 import {createUnboundConfigPlaneSource} from "./source";
-import type {HarnessSource} from "./harnessSource";
-import {createUnboundHarnessSource} from "./harnessSource";
 import {detectTransport, kernelOp} from "../kernel/bridge";
 
 declare const __CRADLE_WALK__: boolean;
 
 let cached: Promise<ConfigPlaneSource> | null = null;
 
+/** The live binding for walk builds that ask for it (`?config-source=live`):
+ * the same source production binds, or null when no kernel transport is
+ * reachable so the caller can fall back to the labelled fixture world. */
+function bindLivePlaneSource(): Promise<ConfigPlaneSource | null> {
+  const transport = detectTransport();
+  if (transport.kind === "unavailable") return Promise.resolve(null);
+  return import("./liveSource").then((module) =>
+    module.createLiveConfigPlaneSource((op) => kernelOp(transport, op)),
+  );
+}
+
 export function configPlaneSource(): Promise<ConfigPlaneSource> {
   if (!cached) {
     if (__CRADLE_WALK__) {
-      cached = import("./fixtureSource").then((module) => module.createFixtureConfigPlaneSource());
+      // Walk builds may bind the LIVE plane explicitly (`?config-source=live`)
+      // when a kernel transport is reachable — the acceptance floor's live
+      // legs (HARNESS-SETTINGS-RESEARCH-2026-09-22 §4) then drive the same
+      // engine production drives, through the same `liveSource` binding.
+      // Without the parameter (or without a transport) the walk keeps the
+      // clearly-labelled fixture world for the L6 descriptor-genericity
+      // legs. A plain production build never reaches this branch.
+      const wantsLive =
+        typeof window !== "undefined" &&
+        new URLSearchParams(window.location.search).get("config-source") === "live";
+      cached = (wantsLive ? bindLivePlaneSource() : Promise.resolve(null)).then(
+        (live) =>
+          live ??
+          import("./fixtureSource").then((module) => module.createFixtureConfigPlaneSource()),
+      );
     } else {
       const transport = detectTransport();
       if (transport.kind === "unavailable") {
@@ -49,11 +72,13 @@ export function configPlaneSource(): Promise<ConfigPlaneSource> {
 }
 
 /** The dev-only fixture-world simulation surface (external native edits,
- * registry emptying, one owner's outage). Null in a production build. */
+ * registry emptying, one owner's outage, the L6 descriptor-genericity
+ * section). Null in a production build. */
 export interface FixtureWorldActions {
   simulateExternalNativeEdit(setting_ref: string, value: unknown): Promise<void>;
   setRegistryMode(mode: "full" | "empty"): void;
   setOwnerAvailability(owner_ref: string, state: "available" | "unavailable"): void;
+  addFixtureSection(owner_ref: string): void;
 }
 
 export function fixtureWorld(): Promise<FixtureWorldActions | null> {
@@ -65,36 +90,14 @@ export function fixtureWorld(): Promise<FixtureWorldActions | null> {
       },
       setRegistryMode: module.setRegistryMode,
       setOwnerAvailability: module.setOwnerAvailability,
+      addFixtureSection: module.addFixtureSection,
     }));
   }
   return Promise.resolve(null);
 }
 
 // ---------------------------------------------------------------------------
-// the harness/chat face's source (same gate, same honest absence)
-
-let harnessCached: Promise<HarnessSource> | null = null;
-
-/** Which `HarnessSource` this build renders the "Chat & harnesses" panel
- * from — the same walk/production gate as `configPlaneSource`: fixture in
- * dev/walk builds (labelled on screen), the live kernel binding in
- * production, and the honest absence where no kernel transport exists. */
-export function harnessPlaneSource(): Promise<HarnessSource> {
-  if (!harnessCached) {
-    if (__CRADLE_WALK__) {
-      harnessCached = import("./harnessFixture").then((module) => module.createFixtureHarnessSource());
-    } else {
-      const transport = detectTransport();
-      if (transport.kind === "unavailable") {
-        harnessCached = Promise.resolve(createUnboundHarnessSource(
-          `no kernel transport is reachable (${transport.reason}); the harness face needs the Tauri host`,
-        ));
-      } else {
-        harnessCached = import("./harnessSource").then((module) =>
-          module.createLiveHarnessSource((op) => kernelOp(transport, op)),
-        );
-      }
-    }
-  }
-  return harnessCached;
-}
+// (The harness/chat face's fixture source is retired: the rebuilt settings
+// sections read the machine's truth through the kernel ops —
+// `systemDisclosure.systemDisclosureSource()` — or render their honest
+// absence. No fixture variant exists for them.)

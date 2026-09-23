@@ -76,6 +76,9 @@ export interface AgentLayerProps {
   mode?: WorkspaceMode;
   /** Shown when their id is in MODE_CURATION[mode].panel.extra, in that order, after the mode's own planes. */
   extraPlanes?: AgentExtraPlane[];
+  /** Optional mode/world default acting body for a NEW conversation. Existing
+   * sessions and explicit provider choices are never rewritten by this hint. */
+  preferredBodyRef?: string;
   /** Controlled resting plane; uncontrolled fallback is the mode's first plane. */
   plane?: string;
   onPlane?: (plane: string) => void;
@@ -96,7 +99,7 @@ export interface AgentLayerProps {
 const KEPT_PLANES=["Chat","Activity","Context","Inspect"] as const;
 const HANDED_LIMIT=12;
 
-export function AgentLayer({project, subject, history, historyAvailable, accompanying, onAccompanying, full, onFull, mode="base", extraPlanes, plane: controlledPlane, onPlane, onError, onOpenConversation, onOpenSubject, resolveSurface}: AgentLayerProps) {
+export function AgentLayer({project, subject, history, historyAvailable, accompanying, onAccompanying, full, onFull, mode="base", extraPlanes, preferredBodyRef, plane: controlledPlane, onPlane, onError, onOpenConversation, onOpenSubject, resolveSurface}: AgentLayerProps) {
   const kernel = useKernel();
   const curation = MODE_CURATION[mode].panel;
   // --- developer preview: the same components over fixture state -----------
@@ -237,7 +240,7 @@ export function AgentLayer({project, subject, history, historyAvailable, accompa
             onProvision={async provisionProject=>{
               // New-chat first Send: provision through the kernel, then bind —
               // the same one binding the chooser sets, no chooser on the way.
-              const provisioned=await encounterProvision(kernel.transport,provisionProject);
+              const provisioned=await encounterProvision(kernel.transport,provisionProject,preferredBodyRef);
               const value={ref:provisioned.agent_session,project:provisionProject,space:provisioned.space};
               learnTitles([{ref:provisioned.agent_session,project:provisionProject,space:provisioned.space,title:provisioned.space}]);
               onAccompanying(value);

@@ -1,4 +1,6 @@
 {
+  "spec_ref": "docs/cradle/05-EXECUTION.md §3",
+  "grade": "B",
   "when": "2026-09-19T15:47:06.820Z",
   "desk_url": "http://localhost:1432/",
   "bridge": "http://127.0.0.1:4233",

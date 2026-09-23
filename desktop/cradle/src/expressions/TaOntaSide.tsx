@@ -31,31 +31,31 @@ export interface TaPaneOpens {
 /** The panel's Ta-Onta AGENTS plane: the offices as the roster, the mode's
  * companion, and the project guardians. */
 export function TaOntaAgentsPlane({subject,agent}:{subject:PanelSubject;agent?:string}) {
-  return <div className="desk-plane factory-side" data-plane="ta-onta-agents">
-    <section className="factory-side-group" aria-label="Ta-Onta roster">
+  return <div className="desk-plane oi-side-plane" data-plane="ta-onta-agents">
+    <section className="oi-side-section" aria-label="Ta-Onta roster">
       <h4><Glyph name="agent" size={12}/> Ta-Onta · the offices, in execution order</h4>
-      <ul className="factory-side-rows">
+      <ul className="oi-side-rows">
         {TA_ONTA_OFFICES.map((office, index) => <li key={office}>
-          <button className="factory-side-row" onClick={() => handToPanelInspect({
+          <button className="oi-side-row" onClick={() => handToPanelInspect({
             kind: "ta-onta-office", ref: `ta-onta/office/${office.toLowerCase()}`,
             title: `Ta-Onta · ${office}`,
             payload: {office, order: index + 1, of: TA_ONTA_OFFICES.length, standing: NO_OPERATION, authored: ORIENTATION_DOC},
             source: "Agents",
           })}>
-            <span className="factory-side-row-title">{office}</span>
-            <span className="factory-side-step-meta">{index + 1} of {TA_ONTA_OFFICES.length}</span>
+            <span className="oi-side-row-title">{office}</span>
+            <span className="oi-side-step-meta">{index + 1} of {TA_ONTA_OFFICES.length}</span>
           </button>
         </li>)}
       </ul>
       <p className="oi-note">The roster is the authored order, not a live one: no roster read reaches the desktop seam yet. Each office's meaning is authored in <span className="oi-ref">{ORIENTATION_DOC}</span>; a row opens in Inspect.</p>
     </section>
-    <section className="factory-side-group" aria-label="This panel's companion">
+    <section className="oi-side-section" aria-label="This panel's companion">
       <h4>Companion</h4>
-      <p className="factory-side-purpose">{agent&&<strong>{agent} · </strong>}{subject.title}{subject.ref ? <> · <span className="oi-ref">{subject.ref}</span></> : null} — the conversation on the other side of this panel.</p>
+      <p className="oi-side-purpose">{agent&&<strong>{agent} · </strong>}{subject.title}{subject.ref ? <> · <span className="oi-ref">{subject.ref}</span></> : null} — the conversation on the other side of this panel.</p>
     </section>
-    <section className="factory-side-group" aria-label="Guardians">
+    <section className="oi-side-section" aria-label="Guardians">
       <h4><Glyph name="graph" size={12}/> Guardians · the world's systems</h4>
-      <ul className="factory-side-guardians">{RELATED_SYSTEMS.map(name=><li key={name}><Glyph name="factory" size={11}/>{name}</li>)}</ul>
+      <ul className="oi-side-guardians">{RELATED_SYSTEMS.map(name=><li key={name}><Glyph name="factory" size={11}/>{name}</li>)}</ul>
       <p className="oi-note">A relations read is not exposed at the desktop seam yet, so none is invented.</p>
     </section>
   </div>;
@@ -65,7 +65,7 @@ export function TaOntaAgentsPlane({subject,agent}:{subject:PanelSubject;agent?:s
  * pane component, embedded. Tab strip, +, any surface, pop-out: the existing
  * logic, never tiled. */
 export function TaOntaContextPlane({opens}:{subject:PanelSubject;opens?:TaPaneOpens}) {
-  return <div className="desk-plane factory-side ta-context-plane" data-plane="ta-onta-context">
+  return <div className="desk-plane oi-side-plane ta-context-plane" data-plane="ta-onta-context">
     {opens?.sideHost??<p className="oi-empty">The pane host is not wired for this mode yet.</p>}
     <ActiveContext tabs={opens?.sideTabs} onActivate={opens?.activateTab}/>
   </div>;

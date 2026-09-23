@@ -119,7 +119,19 @@ export function ChatComposer({reading,draft,pending,busy,error,editable,promptAl
       {tools.subject&&<button className="oi-tool" aria-label={`Attach ${tools.subject.title}`} title={`Attach ${tools.subject.title} (the open subject)`} disabled={!editable||drafting} onClick={()=>void tools.subject!.attach()}><Glyph name="file" size={14}/></button>}
       <button type="button" className="oi-tool chat-voice" aria-pressed={voice.listening} aria-label={voice.listening?"Stop voice input":"Voice input"} title={voice.supported?(voice.listening?"Stop dictation":"Dictate into the message"):(voice.error??"Voice input is not available in this webview yet")} data-listening={voice.listening||undefined} disabled={!editable&&!voice.listening} onClick={voice.toggle}><Glyph name="mic" size={14}/></button>
       {connected&&current&&<div className="chat-provider-menu">
-        <button className="oi-tool chat-provider-config" aria-label="Model and session" aria-haspopup="true" aria-expanded={providerOpen} title={`${current.label} — model and session`} onClick={()=>setProviderOpen(value=>!value)}><span className="chat-provider-config-label">{current.label}</span><Glyph name="down" size={10}/></button>
+        {/* Harness/model picker chips — the composer grammar (dossier §3.4):
+            the harness chip names the connected harness; the model chip
+            names this session's native model choice, read from the owner
+            (never a desktop model store). Both open the same session menu,
+            whose model select is the owner's own native selector. */}
+        {(() => {
+          const modelId=connection.model?.reading?.model_observation?.current_model_id;
+          const chipProps={type:"button" as const,"aria-haspopup":"true" as const,"aria-expanded":providerOpen,onClick:()=>setProviderOpen(value=>!value)};
+          return <div className="chat-composer-chips" role="group" aria-label="Harness and model">
+            <button className="oi-chip chat-composer-chip" data-chip="harness" title={`${current.label} — harness, model and session`} {...chipProps}><Glyph name="terminal" size={10}/><span className="chat-composer-chip-label">{current.label}</span><Glyph name="down" size={9}/></button>
+            {modelId&&<button className="oi-chip chat-composer-chip" data-chip="model" title={`Model — ${modelId} (this session's native choice)`} {...chipProps}><Glyph name="lens" size={10}/><span className="chat-composer-chip-label">{modelId}</span><Glyph name="down" size={9}/></button>}
+          </div>;
+        })()}
         {providerOpen&&<div className="oi-menu" role="group" aria-label="Model and session">
           {connection.model&&connection.modelActions&&<NativeModelControls state={connection.model} actions={connection.modelActions} disabled={pending||running}/>}
           <span className="oi-eyebrow">Harness</span>

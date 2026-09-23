@@ -1,0 +1,824 @@
+{
+ "source": "real owner journal excerpts (aikit encounter read), long strings and chunk runs trimmed",
+ "pi": [
+  {
+   "cursor": 37,
+   "event": {
+    "continuation": "new-native-session",
+    "cwd": "/private/tmp",
+    "effective_launch_argv": [
+     "/Users/admin/.local/bin/pi",
+     "--mode",
+     "rpc",
+     "-e",
+     "/Users/admin/Central/Work/epi/bimba-portable/pi-mcp-bridge/mcp-bridge.ts"
+    ],
+    "kind": "binding",
+    "model_observation": null,
+    "model_selection": null,
+    "native_session_id": "01a0ab15-25d1-70eb-8133-7cd00fe5ae66",
+    "protocol": "pi-rpc",
+    "provider": "pi",
+    "provider_argv_digest": "ca9ad6ca7f226391e6fadba462e977708bd993be1edcc70da4a78d9399ce8624",
+    "space": "session-space/bimba-mcp-test"
+   }
+  },
+  {
+   "cursor": 38,
+   "event": {
+    "draft_revision": 1,
+    "kind": "user-message",
+    "text": "Use the bimba_list_coordinates tool with limit 5, then reply with only the coordinate names you received."
+   }
+  },
+  {
+   "cursor": 39,
+   "event": {
+    "connection_generation": "01M2NHA9852HPZV0SF89Z198ZC",
+    "event": {
+     "Signal": {
+      "kind": {
+       "kind": "status",
+       "message": "{\"type\":\"agent_start\"}"
+      },
+      "native_session_id": "01a0ab15-25d1-70eb-8133-7cd00fe5ae66",
+      "provenance": [
+       "native encounter provider pi"
+      ],
+      "sequence": 3
+     }
+    },
+    "kind": "provider"
+   }
+  },
+  {
+   "cursor": 43,
+   "event": {
+    "connection_generation": "01M2NHA9852HPZV0SF89Z198ZC",
+    "event": {
+     "Signal": {
+      "kind": {
+       "kind": "tool-call",
+       "payload": {
+        "args": {
+         "limit": 5
+        },
+        "toolCallId": "call_00_ET_gtx8ngz7nkKdMbabxDVT1213",
+        "toolName": "bimba_list_coordinates",
+        "type": "tool_execution_start"
+       }
+      },
+      "native_session_id": "01a0ab15-25d1-70eb-8133-7cd00fe5ae66",
+      "provenance": [
+       "native encounter provider pi"
+      ],
+      "sequence": 7
+     }
+    },
+    "kind": "provider"
+   }
+  },
+  {
+   "cursor": 44,
+   "event": {
+    "connection_generation": "01M2NHA9852HPZV0SF89Z198ZC",
+    "event": {
+     "Signal": {
+      "kind": {
+       "kind": "tool-result",
+       "payload": {
+        "isError": false,
+        "result": {
+         "content": [
+          {
+           "text": "{\"data\":{\"coordinates\":[{\"coordinate\":\"M2-5-9\",\"title\":\"Pluto\",\"type\":\"M\",\"properties\":{\"c_3_dataset_branch\":\"low-detail/parashakti-stragglers\",\"coordinate\":\"M2-5-9\",\"c_1_name\":\"Pluto\",\"c_3_source_dataset\":\"bimba\",\"c_4_family\":\"M\",\"c_2_uuid\":\"c2a35053-5bbd-5eed-95f7-e9e9ffd84384\",\"c_4_layer\":\"COORDI\u2026[trimmed]",
+           "type": "text"
+          }
+         ],
+         "details": {
+          "isError": false,
+          "server": "bimba"
+         }
+        },
+        "toolCallId": "call_00_ET_gtx8ngz7nkKdMbabxDVT1213",
+        "toolName": "bimba_list_coordinates",
+        "type": "tool_execution_end"
+       }
+      },
+      "native_session_id": "01a0ab15-25d1-70eb-8133-7cd00fe5ae66",
+      "provenance": [
+       "native encounter provider pi"
+      ],
+      "sequence": 8
+     }
+    },
+    "kind": "provider"
+   }
+  },
+  {
+   "cursor": 45,
+   "event": {
+    "connection_generation": "01M2NHA9852HPZV0SF89Z198ZC",
+    "event": {
+     "Signal": {
+      "kind": {
+       "kind": "status",
+       "message": "{\"message\":{\"content\":[{\"text\":\"{\\\"data\\\":{\\\"coordinates\\\":[{\\\"coordinate\\\":\\\"M2-5-9\\\",\\\"title\\\":\\\"Pluto\\\",\\\"type\\\":\\\"M\\\",\\\"properties\\\":{\\\"c_3_dataset_branch\\\":\\\"low-detail/parashakti-stragglers\\\",\\\"coordinate\\\":\\\"M2-5-9\\\",\\\"c_1_name\\\":\\\"Pluto\\\",\\\"c_3_source_dataset\\\":\\\"bimba\\\",\\\"c_4_family\\\":\\\"M\\\"\u2026[trimmed]"
+      },
+      "native_session_id": "01a0ab15-25d1-70eb-8133-7cd00fe5ae66",
+      "provenance": [
+       "native encounter provider pi"
+      ],
+      "sequence": 9
+     }
+    },
+    "kind": "provider"
+   }
+  },
+  {
+   "cursor": 48,
+   "event": {
+    "connection_generation": "01M2NHA9852HPZV0SF89Z198ZC",
+    "event": {
+     "Signal": {
+      "kind": {
+       "kind": "agent-message-chunk",
+       "text": "M"
+      },
+      "native_session_id": "01a0ab15-25d1-70eb-8133-7cd00fe5ae66",
+      "provenance": [
+       "native encounter provider pi"
+      ],
+      "sequence": 12
+     }
+    },
+    "kind": "provider"
+   }
+  },
+  {
+   "cursor": 49,
+   "event": {
+    "connection_generation": "01M2NHA9852HPZV0SF89Z198ZC",
+    "event": {
+     "Signal": {
+      "kind": {
+       "kind": "agent-message-chunk",
+       "text": "2"
+      },
+      "native_session_id": "01a0ab15-25d1-70eb-8133-7cd00fe5ae66",
+      "provenance": [
+       "native encounter provider pi"
+      ],
+      "sequence": 13
+     }
+    },
+    "kind": "provider"
+   }
+  },
+  {
+   "cursor": 50,
+   "event": {
+    "connection_generation": "01M2NHA9852HPZV0SF89Z198ZC",
+    "event": {
+     "Signal": {
+      "kind": {
+       "kind": "agent-message-chunk",
+       "text": "-"
+      },
+      "native_session_id": "01a0ab15-25d1-70eb-8133-7cd00fe5ae66",
+      "provenance": [
+       "native encounter provider pi"
+      ],
+      "sequence": 14
+     }
+    },
+    "kind": "provider"
+   }
+  },
+  {
+   "cursor": 67,
+   "event": {
+    "connection_generation": "01M2NHA9852HPZV0SF89Z198ZC",
+    "event": {
+     "Signal": {
+      "kind": {
+       "kind": "status",
+       "message": "{\"message\":{\"api\":\"openai-completions\",\"content\":[{\"text\":\"M2-5-9, C0, C0', C1, C1'\",\"type\":\"text\"}],\"model\":\"deepseek-v4-pro\",\"provider\":\"deepseek\",\"rawStopReason\":\"stop\",\"responseId\":\"5fd9956c-b085-479b-9117-091c1d81180f\",\"role\":\"assistant\",\"stopReason\":\"stop\",\"timestamp\":1789576712708,\"usage\":{\"c\u2026[trimmed]"
+      },
+      "native_session_id": "01a0ab15-25d1-70eb-8133-7cd00fe5ae66",
+      "provenance": [
+       "native encounter provider pi"
+      ],
+      "sequence": 31
+     }
+    },
+    "kind": "provider"
+   }
+  },
+  {
+   "cursor": 70,
+   "event": {
+    "connection_generation": "01M2NHA9852HPZV0SF89Z198ZC",
+    "event": {
+     "Signal": {
+      "kind": {
+       "kind": "completed",
+       "stop_reason": "stop"
+      },
+      "native_session_id": "01a0ab15-25d1-70eb-8133-7cd00fe5ae66",
+      "provenance": [
+       "native encounter provider pi"
+      ],
+      "sequence": 34
+     }
+    },
+    "kind": "provider"
+   }
+  },
+  {
+   "cursor": 71,
+   "event": {
+    "connection_generation": "01M2NHA9852HPZV0SF89Z198ZC",
+    "event": {
+     "TurnEnded": {
+      "agent_session": "agent-session/bimba-mcp-verification",
+      "binding": {
+       "agent_session": "agent-session/bimba-mcp-verification",
+       "native_session_id": "01a0ab15-25d1-70eb-8133-7cd00fe5ae66",
+       "opened_as": "attach",
+       "provenance": [
+        "native encounter provider pi"
+       ]
+      },
+      "first_sequence": 3,
+      "interruption": null,
+      "last_sequence": 34,
+      "signals": 32,
+      "stop": {
+       "Completed": {
+        "stop_reason": "stop"
+       }
+      }
+     }
+    },
+    "kind": "provider"
+   }
+  }
+ ],
+ "acp": [
+  {
+   "cursor": 720,
+   "event": {
+    "continuation": "new-native-session",
+    "cwd": "/private/tmp/ag-lifecycle-2026-09-20/corpus",
+    "effective_launch_argv": [
+     "/Users/admin/.local/bin/hermes-acp"
+    ],
+    "kind": "binding",
+    "model_observation": {
+     "available_models": [
+      {
+       "description": "Provider: OpenRouter",
+       "modelId": "openrouter:anthropic/claude-fable-5.1",
+       "name": "OpenRouter \u00b7 anthropic/claude-fable-5.1"
+      },
+      {
+       "description": "Provider: OpenRouter",
+       "modelId": "openrouter:anthropic/claude-fable-5",
+       "name": "OpenRouter \u00b7 anthropic/claude-fable-5"
+      },
+      {
+       "description": "Provider: OpenRouter",
+       "modelId": "openrouter:anthropic/claude-opus-5",
+       "name": "OpenRouter \u00b7 anthropic/claude-opus-5"
+      },
+      {
+       "description": "Provider: OpenRouter",
+       "modelId": "openrouter:anthropic/claude-opus-4.8",
+       "name": "OpenRouter \u00b7 anthropic/claude-opus-4.8"
+      },
+      {
+       "description": "Provider: OpenRouter",
+       "modelId": "openrouter:anthropic/claude-sonnet-5",
+       "name": "OpenRouter \u00b7 anthropic/claude-sonnet-5"
+      },
+      {
+       "description": "Provider: OpenRouter",
+       "modelId": "openrouter:anthropic/claude-haiku-4.5",
+       "name": "OpenRouter \u00b7 anthropic/claude-haiku-4.5"
+      },
+      {
+       "description": "Provider: OpenRouter",
+       "modelId": "openrouter:openai/gpt-6-astra",
+       "name": "OpenRouter \u00b7 openai/gpt-6-astra"
+      },
+      {
+       "description": "Provider: OpenRouter",
+       "modelId": "openrouter:openai/gpt-6-astra-pro",
+       "name": "OpenRouter \u00b7 openai/gpt-6-astra-pro"
+      }
+     ],
+     "current_model_id": "deepseek:deepseek-v4.1-flash-expires-on-0910",
+     "standing": "provider-reported-configuration-not-independent-selection-or-inference-proof"
+    },
+    "model_selection": null,
+    "native_session_id": "711f76b1-20b9-4cae-bd55-1d14bf77ffa2",
+    "protocol": "acp",
+    "provider": "hermes-acp-tycho",
+    "provider_argv_digest": "76085037c3c68c04830f565f3ee6a6c12b021879f4a0480a73a00ce4c0d033b9",
+    "space": "session-space/ag-lifecycle-campaign"
+   }
+  },
+  {
+   "cursor": 721,
+   "event": {
+    "connection_generation": "01M2YFRFZRS2DSRXQGW2062QDX",
+    "event": {
+     "Signal": {
+      "kind": {
+       "kind": "status",
+       "message": "ACP session update: available_commands_update"
+      },
+      "native_session_id": "711f76b1-20b9-4cae-bd55-1d14bf77ffa2",
+      "provenance": [
+       "native encounter provider hermes-acp-tycho"
+      ],
+      "sequence": 3
+     }
+    },
+    "kind": "provider"
+   }
+  },
+  {
+   "cursor": 723,
+   "event": {
+    "delivery_ref": "delivery/ag06-rehydrate-001",
+    "kind": "agent-message",
+    "request": {
+     "connection_generation": "01M2YFRFZRS2DSRXQGW2062QDX",
+     "submission": {
+      "agency_ref": "agency:essay:tycho",
+      "agent_ref": "agent/tycho-essay-assistant",
+      "turn": {
+       "delivery_ref": "delivery/ag06-rehydrate-001",
+       "expected_binding_revision": "rev/b1",
+       "packet": {
+        "audience": [
+         "agent/tycho-essay-assistant"
+        ],
+        "source_refs": [
+         "file:///private/tmp/ag-lifecycle-2026-09-20/corpus/essay-brief.md",
+         "file:///private/tmp/ag-lifecycle-2026-09-20/corpus/quadrant-mural.md"
+        ],
+        "text": "You are continuing work as agent/tycho-essay-assistant. (1) State what subject you are working on and what your admitted context contains. (2) Do you have any previous conversation turns with the owner about this essay \u2014 yes or no, and if yes, quote the first question you answered. Answer plainly."
+       },
+       "sender": "human:owner"
+      },
+      "world_binding_ref": "binding:essay:tycho"
+     }
+    },
+    "sender": "human:owner",
+    "standing": "machine-request-not-human-authorship"
+   }
+  },
+  {
+   "cursor": 724,
+   "event": {
+    "connection_generation": "01M2YFRFZRS2DSRXQGW2062QDX",
+    "delivery_ref": "delivery/ag06-rehydrate-001",
+    "event": {
+     "Signal": {
+      "kind": {
+       "kind": "status",
+       "message": "ACP session update: session_info_update"
+      },
+      "native_session_id": "711f76b1-20b9-4cae-bd55-1d14bf77ffa2",
+      "provenance": [
+       "native encounter provider hermes-acp-tycho"
+      ],
+      "sequence": 5
+     }
+    },
+    "kind": "provider"
+   }
+  },
+  {
+   "cursor": 725,
+   "event": {
+    "connection_generation": "01M2YFRFZRS2DSRXQGW2062QDX",
+    "delivery_ref": "delivery/ag06-rehydrate-001",
+    "event": {
+     "Signal": {
+      "kind": {
+       "content": {
+        "content": {
+         "text": "The",
+         "type": "text"
+        },
+        "sessionUpdate": "agent_thought_chunk"
+       },
+       "kind": "agent-thought-chunk",
+       "text": "The"
+      },
+      "native_session_id": "711f76b1-20b9-4cae-bd55-1d14bf77ffa2",
+      "provenance": [
+       "native encounter provider hermes-acp-tycho"
+      ],
+      "sequence": 6
+     }
+    },
+    "kind": "provider"
+   }
+  },
+  {
+   "cursor": 726,
+   "event": {
+    "connection_generation": "01M2YFRFZRS2DSRXQGW2062QDX",
+    "delivery_ref": "delivery/ag06-rehydrate-001",
+    "event": {
+     "Signal": {
+      "kind": {
+       "content": {
+        "content": {
+         "text": " user",
+         "type": "text"
+        },
+        "sessionUpdate": "agent_thought_chunk"
+       },
+       "kind": "agent-thought-chunk",
+       "text": " user"
+      },
+      "native_session_id": "711f76b1-20b9-4cae-bd55-1d14bf77ffa2",
+      "provenance": [
+       "native encounter provider hermes-acp-tycho"
+      ],
+      "sequence": 7
+     }
+    },
+    "kind": "provider"
+   }
+  },
+  {
+   "cursor": 1110,
+   "event": {
+    "connection_generation": "01M2YFRFZRS2DSRXQGW2062QDX",
+    "delivery_ref": "delivery/ag06-rehydrate-001",
+    "event": {
+     "Signal": {
+      "kind": {
+       "kind": "tool-call",
+       "payload": {
+        "content": [
+         {
+          "content": {
+           "text": "Searching for '*' (files) in /private/tmp/ag-lifecycle-2026-09-20/corpus",
+           "type": "text"
+          },
+          "type": "content"
+         }
+        ],
+        "kind": "search",
+        "locations": [
+         {
+          "path": "/private/tmp/ag-lifecycle-2026-09-20/corpus"
+         }
+        ],
+        "sessionUpdate": "tool_call",
+        "title": "search: *",
+        "toolCallId": "tc-b6bf70ebed13"
+       }
+      },
+      "native_session_id": "711f76b1-20b9-4cae-bd55-1d14bf77ffa2",
+      "provenance": [
+       "native encounter provider hermes-acp-tycho"
+      ],
+      "sequence": 391
+     }
+    },
+    "kind": "provider"
+   }
+  },
+  {
+   "cursor": 1111,
+   "event": {
+    "connection_generation": "01M2YFRFZRS2DSRXQGW2062QDX",
+    "delivery_ref": "delivery/ag06-rehydrate-001",
+    "event": {
+     "Signal": {
+      "kind": {
+       "kind": "tool-call",
+       "payload": {
+        "content": [
+         {
+          "content": {
+           "text": "$ ls -la /private/tmp/ag-lifecycle-2026-09-20/corpus && echo \"---\" && find /private/tmp/ag-lifecycle-2026-09-20 -type f | head -50",
+           "type": "text"
+          },
+          "type": "content"
+         }
+        ],
+        "kind": "execute",
+        "locations": [],
+        "sessionUpdate": "tool_call",
+        "title": "terminal: ls -la /private/tmp/ag-lifecycle-2026-09-20/corpus && echo \"---\" && find /pri...",
+        "toolCallId": "tc-1f62e02c1623"
+       }
+      },
+      "native_session_id": "711f76b1-20b9-4cae-bd55-1d14bf77ffa2",
+      "provenance": [
+       "native encounter provider hermes-acp-tycho"
+      ],
+      "sequence": 392
+     }
+    },
+    "kind": "provider"
+   }
+  },
+  {
+   "cursor": 1112,
+   "event": {
+    "connection_generation": "01M2YFRFZRS2DSRXQGW2062QDX",
+    "delivery_ref": "delivery/ag06-rehydrate-001",
+    "event": {
+     "Signal": {
+      "kind": {
+       "kind": "tool-call",
+       "payload": {
+        "content": [
+         {
+          "content": {
+           "text": "File search results\nFound 3 files; showing 3.\n\n- /private/tmp/ag-lifecycle-2026-09-20/corpus/armillary-sphere.md\n- /private/tmp/ag-lifecycle-2026-09-20/corpus/quadrant-mural.md\n- /private/tmp/ag-lifecycle-2026-09-20/corpus/essay-brief.md",
+           "type": "text"
+          },
+          "type": "content"
+         }
+        ],
+        "kind": "search",
+        "sessionUpdate": "tool_call_update",
+        "status": "completed",
+        "toolCallId": "tc-b6bf70ebed13"
+       }
+      },
+      "native_session_id": "711f76b1-20b9-4cae-bd55-1d14bf77ffa2",
+      "provenance": [
+       "native encounter provider hermes-acp-tycho"
+      ],
+      "sequence": 393
+     }
+    },
+    "kind": "provider"
+   }
+  },
+  {
+   "cursor": 1113,
+   "event": {
+    "connection_generation": "01M2YFRFZRS2DSRXQGW2062QDX",
+    "delivery_ref": "delivery/ag06-rehydrate-001",
+    "event": {
+     "Signal": {
+      "kind": {
+       "kind": "tool-call",
+       "payload": {
+        "content": [
+         {
+          "content": {
+           "text": "terminal result\n- **output:** total 24\ndrwxr-xr-x@  5 admin  wheel  160 Sep 20 04:35 .\ndrwxr-xr-x@ 16 admin  wheel  512 Sep 20 05:03 ..\n-rw-r--r--@  1 admin  wheel  639 Sep 20 04:35 armillary-sphere.md\n-rw-r--r--@  1 admin  wheel  550 Sep 20 04:35 essay-brief.md\n-rw-r--r--@  1 admin  wheel  668 Sep \u2026[trimmed]",
+           "type": "text"
+          },
+          "type": "content"
+         }
+        ],
+        "kind": "execute",
+        "sessionUpdate": "tool_call_update",
+        "status": "completed",
+        "toolCallId": "tc-1f62e02c1623"
+       }
+      },
+      "native_session_id": "711f76b1-20b9-4cae-bd55-1d14bf77ffa2",
+      "provenance": [
+       "native encounter provider hermes-acp-tycho"
+      ],
+      "sequence": 394
+     }
+    },
+    "kind": "provider"
+   }
+  },
+  {
+   "cursor": 1114,
+   "event": {
+    "connection_generation": "01M2YFRFZRS2DSRXQGW2062QDX",
+    "delivery_ref": "delivery/ag06-rehydrate-001",
+    "event": {
+     "Signal": {
+      "kind": {
+       "content": {
+        "content": {
+         "text": "The",
+         "type": "text"
+        },
+        "sessionUpdate": "agent_thought_chunk"
+       },
+       "kind": "agent-thought-chunk",
+       "text": "The"
+      },
+      "native_session_id": "711f76b1-20b9-4cae-bd55-1d14bf77ffa2",
+      "provenance": [
+       "native encounter provider hermes-acp-tycho"
+      ],
+      "sequence": 395
+     }
+    },
+    "kind": "provider"
+   }
+  },
+  {
+   "cursor": 1115,
+   "event": {
+    "connection_generation": "01M2YFRFZRS2DSRXQGW2062QDX",
+    "delivery_ref": "delivery/ag06-rehydrate-001",
+    "event": {
+     "Signal": {
+      "kind": {
+       "content": {
+        "content": {
+         "text": " message",
+         "type": "text"
+        },
+        "sessionUpdate": "agent_thought_chunk"
+       },
+       "kind": "agent-thought-chunk",
+       "text": " message"
+      },
+      "native_session_id": "711f76b1-20b9-4cae-bd55-1d14bf77ffa2",
+      "provenance": [
+       "native encounter provider hermes-acp-tycho"
+      ],
+      "sequence": 396
+     }
+    },
+    "kind": "provider"
+   }
+  },
+  {
+   "cursor": 1560,
+   "event": {
+    "connection_generation": "01M2YFRFZRS2DSRXQGW2062QDX",
+    "delivery_ref": "delivery/ag06-rehydrate-001",
+    "event": {
+     "Signal": {
+      "kind": {
+       "kind": "agent-message-chunk",
+       "text": "\n\n**"
+      },
+      "native_session_id": "711f76b1-20b9-4cae-bd55-1d14bf77ffa2",
+      "provenance": [
+       "native encounter provider hermes-acp-tycho"
+      ],
+      "sequence": 841
+     }
+    },
+    "kind": "provider"
+   }
+  },
+  {
+   "cursor": 1561,
+   "event": {
+    "connection_generation": "01M2YFRFZRS2DSRXQGW2062QDX",
+    "delivery_ref": "delivery/ag06-rehydrate-001",
+    "event": {
+     "Signal": {
+      "kind": {
+       "kind": "agent-message-chunk",
+       "text": "1"
+      },
+      "native_session_id": "711f76b1-20b9-4cae-bd55-1d14bf77ffa2",
+      "provenance": [
+       "native encounter provider hermes-acp-tycho"
+      ],
+      "sequence": 842
+     }
+    },
+    "kind": "provider"
+   }
+  },
+  {
+   "cursor": 1978,
+   "event": {
+    "connection_generation": "01M2YFRFZRS2DSRXQGW2062QDX",
+    "delivery_ref": "delivery/ag06-rehydrate-001",
+    "event": {
+     "Signal": {
+      "kind": {
+       "kind": "status",
+       "message": "ACP session update: usage_update"
+      },
+      "native_session_id": "711f76b1-20b9-4cae-bd55-1d14bf77ffa2",
+      "provenance": [
+       "native encounter provider hermes-acp-tycho"
+      ],
+      "sequence": 1259
+     }
+    },
+    "kind": "provider"
+   }
+  },
+  {
+   "cursor": 1979,
+   "event": {
+    "connection_generation": "01M2YFRFZRS2DSRXQGW2062QDX",
+    "delivery_ref": "delivery/ag06-rehydrate-001",
+    "event": {
+     "Signal": {
+      "kind": {
+       "kind": "completed",
+       "stop_reason": "end_turn"
+      },
+      "native_session_id": "711f76b1-20b9-4cae-bd55-1d14bf77ffa2",
+      "provenance": [
+       "native encounter provider hermes-acp-tycho"
+      ],
+      "sequence": 1260
+     }
+    },
+    "kind": "provider"
+   }
+  },
+  {
+   "cursor": 1980,
+   "event": {
+    "connection_generation": "01M2YFRFZRS2DSRXQGW2062QDX",
+    "delivery_ref": "delivery/ag06-rehydrate-001",
+    "event": {
+     "TurnEnded": {
+      "agent_session": "agent-session/tycho-essay-assistant-b",
+      "binding": {
+       "agent_session": "agent-session/tycho-essay-assistant-b",
+       "model_observation": {
+        "available_models": [
+         {
+          "description": "Provider: OpenRouter",
+          "modelId": "openrouter:anthropic/claude-fable-5.1",
+          "name": "OpenRouter \u00b7 anthropic/claude-fable-5.1"
+         },
+         {
+          "description": "Provider: OpenRouter",
+          "modelId": "openrouter:anthropic/claude-fable-5",
+          "name": "OpenRouter \u00b7 anthropic/claude-fable-5"
+         },
+         {
+          "description": "Provider: OpenRouter",
+          "modelId": "openrouter:anthropic/claude-opus-5",
+          "name": "OpenRouter \u00b7 anthropic/claude-opus-5"
+         },
+         {
+          "description": "Provider: OpenRouter",
+          "modelId": "openrouter:anthropic/claude-opus-4.8",
+          "name": "OpenRouter \u00b7 anthropic/claude-opus-4.8"
+         },
+         {
+          "description": "Provider: OpenRouter",
+          "modelId": "openrouter:anthropic/claude-sonnet-5",
+          "name": "OpenRouter \u00b7 anthropic/claude-sonnet-5"
+         },
+         {
+          "description": "Provider: OpenRouter",
+          "modelId": "openrouter:anthropic/claude-haiku-4.5",
+          "name": "OpenRouter \u00b7 anthropic/claude-haiku-4.5"
+         },
+         {
+          "description": "Provider: OpenRouter",
+          "modelId": "openrouter:openai/gpt-6-astra",
+          "name": "OpenRouter \u00b7 openai/gpt-6-astra"
+         },
+         {
+          "description": "Provider: OpenRouter",
+          "modelId": "openrouter:openai/gpt-6-astra-pro",
+          "name": "OpenRouter \u00b7 openai/gpt-6-astra-pro"
+         }
+        ],
+        "current_model_id": "deepseek:deepseek-v4.1-flash-expires-on-0910",
+        "standing": "provider-reported-configuration-not-independent-selection-or-inference-proof"
+       },
+       "native_session_id": "711f76b1-20b9-4cae-bd55-1d14bf77ffa2",
+       "opened_as": "create",
+       "provenance": [
+        "native encounter provider hermes-acp-tycho"
+       ]
+      },
+      "first_sequence": 5,
+      "interruption": null,
+      "last_sequence": 1260,
+      "signals": 1256,
+      "stop": {
+       "Completed": {
+        "stop_reason": "end_turn"
+       }
+      }
+     }
+    },
+    "kind": "provider"
+   }
+  }
+ ]
+}

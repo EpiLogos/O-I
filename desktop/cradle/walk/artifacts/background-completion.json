@@ -1,0 +1,231 @@
+{
+  "schema": "oi.cradle.walk.scenario/v1",
+  "scenario": "background-completion",
+  "spec_ref": "docs/experience/FACTORY-AGENCY.md §1 + handoff §4",
+  "grade": "B",
+  "binding": {
+    "serves": [
+      "factory289:arrangement"
+    ],
+    "branches": {
+      "factory289:arrangement": [
+        0
+      ]
+    },
+    "negatives": [
+      "missing",
+      "stale"
+    ],
+    "claims_grade": "D"
+  },
+  "generated_at": "2026-09-23T01:48:54.242Z",
+  "environment": {
+    "base_url": "http://localhost:4173",
+    "bridge_url": "http://127.0.0.1:4179",
+    "viewport": "1280x820",
+    "browser_engine": "chromium",
+    "bundle": "walk (WALK=1) served by vite preview",
+    "build_input": {
+      "mode": "reused-dist",
+      "bundle_fingerprint": "7bd7215801275e69797d8252083f919b8d42faa52a225f0320db506377abfd10"
+    },
+    "node": "v24.16.0",
+    "platform": "darwin",
+    "source": {
+      "repository_root": "/Users/admin/Central/worktrees/ui-build/lane3-factory",
+      "repository_head": "985f0de4141dd448107c0e5ba300a70f408a6540",
+      "tracked_changes": [
+        "desktop/cradle/walk/artifacts/background-completion-failure.png",
+        "desktop/cradle/walk/artifacts/background-completion.json",
+        "desktop/cradle/walk/artifacts/canvas-context-failure.png",
+        "desktop/cradle/walk/artifacts/canvas-context.json",
+        "desktop/cradle/walk/artifacts/factory-desk-f1-reading.png",
+        "desktop/cradle/walk/artifacts/factory-desk-f2-empty.png",
+        "desktop/cradle/walk/artifacts/factory-desk-f3-partial.png",
+        "desktop/cradle/walk/artifacts/factory-desk.json",
+        "desktop/cradle/walk/artifacts/factory-development-agents-tab.png",
+        "desktop/cradle/walk/artifacts/factory-development-context-tab.png",
+        "desktop/cradle/walk/artifacts/factory-development-failure.png",
+        "desktop/cradle/walk/artifacts/factory-development-run-tab.png",
+        "desktop/cradle/walk/artifacts/factory-development.json",
+        "desktop/cradle/walk/artifacts/factory-objects.json",
+        "desktop/cradle/walk/artifacts/factory-real-desk-real.png",
+        "desktop/cradle/walk/artifacts/factory-real-now-record-real.png",
+        "desktop/cradle/walk/artifacts/factory-real-run-real-map.png",
+        "desktop/cradle/walk/artifacts/factory-real.json",
+        "desktop/cradle/walk/artifacts/factory-run-f13-before.png",
+        "desktop/cradle/walk/artifacts/factory-run-factory-run-map-1440-light.png",
+        "desktop/cradle/walk/artifacts/factory-run.json",
+        "desktop/cradle/walk/artifacts/factory-tasks-f15-direct.png",
+        "desktop/cradle/walk/artifacts/factory-tasks-factory-tasks-joined-1000-dark.png",
+        "desktop/cradle/walk/artifacts/factory-tasks-factory-tasks-joined-1000-light.png",
+        "desktop/cradle/walk/artifacts/factory-tasks-factory-tasks-joined-1440-dark.png",
+        "desktop/cradle/walk/artifacts/factory-tasks-factory-tasks-joined-1440-light.png",
+        "desktop/cradle/walk/artifacts/factory-tasks-factory-tasks-joined-760-dark.png",
+        "desktop/cradle/walk/artifacts/factory-tasks-factory-tasks-joined-760-light.png",
+        "desktop/cradle/walk/artifacts/factory-tasks.json",
+        "desktop/cradle/walk/artifacts/factory-trajectory.json",
+        "desktop/cradle/walk/artifacts/lane0-repairs.json"
+      ],
+      "dirty_digest": "61ff2546fd224b02475018cf38fadbbb6bf17943de1674d108ef25043fb6d02f",
+      "engine_provenance_path": "/Users/admin/Central/worktrees/ui-build/lane3-factory/packages/oi-design-system/expressions-engine/PROVENANCE.json",
+      "engine_source": "EpiLogos/Point-Cloud-Demo",
+      "engine_revision": "91db8428fc9dfba06cd258ec5a58e7dd9eef5313"
+    }
+  },
+  "passed": true,
+  "error": null,
+  "duration_ms": 7116,
+  "checks": [
+    {
+      "ok": true,
+      "label": "At rest: the run whose Return awaits Recognition sits in NEEDS YOU",
+      "data": {
+        "settled": {
+          "run:01M35MVY805G21PT7MJGA92QMF": "needs-you",
+          "run:01M35NE860E24B0FP3H60NYHWV": "queued",
+          "run:01M35P0J40CMEWS707XCFTZKCT": "queued"
+        }
+      }
+    },
+    {
+      "ok": true,
+      "label": "The owner recorded the Recognition (its own receipt)",
+      "data": {
+        "status": "applied"
+      }
+    },
+    {
+      "ok": true,
+      "label": "No polling: the board does not move and sends no read until the person reads"
+    },
+    {
+      "ok": true,
+      "label": "On the person's read exactly the run that moved changes place (NEEDS YOU → QUEUED)",
+      "data": {
+        "moved": [
+          "run:01M35MVY805G21PT7MJGA92QMF"
+        ]
+      }
+    },
+    {
+      "ok": true,
+      "label": "The scope and the open page did not move"
+    },
+    {
+      "ok": true,
+      "label": "The read cost the kernel log nothing — a Factory read emits no event",
+      "data": {
+        "emitted": []
+      }
+    },
+    {
+      "ok": true,
+      "label": "Adverse: the unreadable source is named in one line with the owner's words — never an empty healthy board",
+      "data": {
+        "partial": "1 source couldn't be read — Specimen (factory: Factory developmental provider error: Io(Os { code: 2, kind: NotFound, message: \"No such file or directory\" })). Retry"
+      }
+    },
+    {
+      "ok": true,
+      "label": "Retry after the owner can serve again brings the runs back"
+    }
+  ],
+  "ops": [
+    {
+      "ok": true,
+      "op": "info",
+      "duration_ms": 0,
+      "data": {
+        "schema": "oi.cradle.walk/v1",
+        "mounted_at": "2026-09-23T01:48:54.457Z",
+        "transport": {
+          "kind": "bridge",
+          "url": "http://127.0.0.1:4179"
+        },
+        "url": "http://localhost:4173/"
+      }
+    },
+    {
+      "ok": true,
+      "op": "info",
+      "duration_ms": 0,
+      "data": {
+        "schema": "oi.cradle.walk/v1",
+        "mounted_at": "2026-09-23T01:48:55.084Z",
+        "transport": {
+          "kind": "bridge",
+          "url": "http://127.0.0.1:4179"
+        },
+        "url": "http://localhost:4173/"
+      }
+    },
+    {
+      "ok": true,
+      "op": "read.events",
+      "duration_ms": 0,
+      "data": {
+        "receipts": [
+          {
+            "event": "world_changed",
+            "schema": "oi.kernel-event/v1",
+            "seq": 1,
+            "summary": "Central navigator reading changed",
+            "version": 1
+          },
+          {
+            "event": "surface_changed",
+            "schema": "oi.kernel-event/v1",
+            "seq": 2,
+            "summary": "Surface opened: Factory.",
+            "surface_id": "ce844767-4253-43cd-aae8-e40e40ac1063",
+            "version": 1
+          },
+          {
+            "event": "world_changed",
+            "schema": "oi.kernel-event/v1",
+            "seq": 3,
+            "summary": "Central navigator reading changed",
+            "version": 1
+          }
+        ],
+        "count": 3,
+        "first_seq": 1,
+        "last_seq": 3
+      }
+    },
+    {
+      "ok": true,
+      "op": "read.events",
+      "duration_ms": 0,
+      "data": {
+        "receipts": [],
+        "count": 0,
+        "first_seq": null,
+        "last_seq": null,
+        "since_seq": 3
+      }
+    },
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 46,
+      "data": {
+        "file": "background-completion-after-background-recognition.png"
+      }
+    },
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 36,
+      "data": {
+        "file": "background-completion-source-unreadable.png"
+      }
+    }
+  ],
+  "metrics": {},
+  "screenshots": [
+    "background-completion-after-background-recognition.png",
+    "background-completion-source-unreadable.png"
+  ]
+}

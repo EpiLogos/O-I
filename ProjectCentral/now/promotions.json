@@ -1,4 +1,13 @@
 {
   "schema": "central.project-now.promotions/v1",
-  "entries": []
+  "entries": [
+    {
+      "source": "ProjectCentral/now/agents/oi-65-settings-kernel-starvation-2026-09-22.json",
+      "target": "agent-wiki",
+      "destination": "ProjectCentral/agents/wiki/returns/oi-65-settings-kernel-starvation-2026-09-22.json",
+      "acceptance": "agent-return",
+      "recorded_at_unix_seconds": 1790107650,
+      "source_preserved": true
+    }
+  ]
 }
