@@ -8,12 +8,35 @@ import { searchLeaderLabel } from "./leader";
 import "./knowledge.css";
 import "@epilogos/oi-design-system/search.css";
 import "./search.css";
+import "./palette.css";
 import {Glyph} from "../workspace/Glyph";
 
 import {progressiveSearch, searchKeys, preserveSearchSelection, type ResolutionRow} from "./searchProgress";
+import type {EncounterRow} from "../encounter/EncounterList";
+import type {FlowInstanceRow} from "../flow/instances";
+import {listFlowInstances} from "../flow/instances";
+import {readConversations} from "../workspace/left/ChatRows";
+import {nativeAgentOwner} from "../agency/nativeAgentClient";
 export {normalizeResolution} from "./searchProgress";
 
+/** The palette's typed tabs (10-SIDEBARS §3.1): All · Chats · Agents · Files
+ * · Flows · Actions. Each tab filters one REAL source; a tab whose source or
+ * open route the frame does not lend is omitted, never faked. */
+export interface PaletteSources {
+  /** The registers whose conversations Chats lists ("" = Central's root). */
+  registers?: string[];
+  onOpenChat?: (row: EncounterRow) => Promise<void> | void;
+  onOpenFlow?: (row: FlowInstanceRow) => Promise<void>;
+  /** The agent roster's home (the Agency surface). */
+  onOpenAgents?: () => void;
+  /** The app's own verbs (New chat, New flow, a mode…), each a real route. */
+  actions?: {label: string; hint?: string; run: () => void}[];
+}
+type PaletteTab = "all" | "chats" | "agents" | "files" | "flows" | "actions";
+interface TypedItem {key: string; label: string; detail: string; open: () => Promise<void> | void}
+
 type Props = {
+  typed?: PaletteSources;
   leader: boolean;
   onLeaderChange: (shift: boolean) => void;
   shortcutError?: string;
@@ -23,7 +46,7 @@ type Props = {
 };
 const message = (error: unknown) => error instanceof Error ? error.message : String(error);
 
-export function SearchOverlay({ project, onClose, onOpen, leader, onLeaderChange, shortcutError }: Props) {
+export function SearchOverlay({ project, onClose, onOpen, leader, onLeaderChange, shortcutError, typed }: Props) {
   const { transport } = useKernel();
   const dialog = useRef<HTMLDialogElement>(null);
   const epoch = useRef(0);
@@ -46,6 +69,71 @@ export function SearchOverlay({ project, onClose, onOpen, leader, onLeaderChange
   const [optionsOpen, setOptionsOpen] = useState(false);
   const [generation, setGeneration] = useState(0);
   const count = hits.length + rows.length;
+  // ---- typed tabs -------------------------------------------------------
+  const [tab, setTab] = useState<PaletteTab>("all");
+  const [typedSelected, setTypedSelected] = useState(0);
+  const [chats, setChats] = useState<{rows?: EncounterRow[]; error?: string}>({});
+  const [agents, setAgents] = useState<{rows?: {ref: string; name: string; purpose: string}[]; error?: string}>({});
+  const [flows, setFlows] = useState<{rows?: FlowInstanceRow[]; error?: string}>({});
+  const tabs: {id: PaletteTab; label: string}[] = [
+    {id: "all", label: "All"},
+    ...(typed?.onOpenChat ? [{id: "chats" as const, label: "Chats"}] : []),
+    ...(typed?.onOpenAgents ? [{id: "agents" as const, label: "Agents"}] : []),
+    {id: "files", label: "Files"},
+    ...(typed?.onOpenFlow ? [{id: "flows" as const, label: "Flows"}] : []),
+    {id: "actions", label: "Actions"},
+  ];
+  const registersKey = (typed?.registers ?? []).join("|");
+  useEffect(() => {
+    if (tab !== "chats" || chats.rows || chats.error) return;
+    let live = true;
+    void Promise.allSettled((typed?.registers ?? [project ?? ""]).map(register => readConversations(transport, register))).then(results => {
+      if (!live) return;
+      const rows = results.flatMap(result => result.status === "fulfilled" ? result.value : []);
+      const failed = results.filter(result => result.status === "rejected").length;
+      setChats({rows, error: failed && !rows.length ? "Couldn't read the conversations." : undefined});
+    });
+    return () => { live = false; };
+  }, [tab, registersKey, transport]);
+  useEffect(() => {
+    if (tab !== "agents" || agents.rows || agents.error) return;
+    let live = true;
+    void nativeAgentOwner(transport, project)({action: "roster"}).then(value => {
+      const roster = value as {profiles?: {profile?: {ref?: string; name?: string; purpose?: string; agent_ref?: string}}[]};
+      if (live) setAgents({rows: (roster.profiles ?? []).map(entry => ({ref: entry.profile?.ref ?? entry.profile?.agent_ref ?? "", name: entry.profile?.name ?? entry.profile?.agent_ref ?? "Agent", purpose: entry.profile?.purpose ?? ""})).filter(row => row.ref)});
+    }).catch(failure => { if (live) setAgents({error: `Couldn't read the agent roster: ${message(failure)}`}); });
+    return () => { live = false; };
+  }, [tab, transport, project]);
+  useEffect(() => {
+    if (tab !== "flows" || flows.rows || flows.error) return;
+    let live = true;
+    void listFlowInstances(transport).then(rows => { if (live) setFlows({rows}); }).catch(failure => { if (live) setFlows({error: `Couldn't read your flows: ${message(failure)}`}); });
+    return () => { live = false; };
+  }, [tab, transport]);
+  useEffect(() => setTypedSelected(0), [tab, query]);
+  const needle = query.trim().toLowerCase();
+  const matches = (...values: string[]) => !needle || values.some(value => value.toLowerCase().includes(needle));
+  const isFileHit = (hit: KnowledgeHit) => hit.address.kind === "source" || /file|source|document/i.test(hit.kind);
+  const typedItems: TypedItem[] = tab === "chats" ? (chats.rows ?? []).filter(row => matches(row.title, row.project)).map(row => ({key: `${row.project}:${row.ref}`, label: row.title, detail: `Chat · ${row.project || "Central"}`, open: () => typed?.onOpenChat?.(row)}))
+    : tab === "agents" ? (agents.rows ?? []).filter(row => matches(row.name, row.purpose)).map(row => ({key: row.ref, label: row.name, detail: row.purpose || "Agent", open: () => typed?.onOpenAgents?.()}))
+    : tab === "files" ? hits.filter(isFileHit).map(hit => ({key: searchKeys([hit], [])[0], label: hit.label, detail: `${hit.kind} · ${hit.snippet}`, open: () => onOpen(hit.address, hit.label, project)}))
+    : tab === "flows" ? (flows.rows ?? []).filter(row => matches(row.name)).map(row => ({key: row.location.ref, label: row.name.replace(/\.html$/i, ""), detail: `Flow · ${row.location.path}`, open: () => typed?.onOpenFlow?.(row)}))
+    : tab === "actions" ? [
+        ...(typed?.actions ?? []).filter(action => matches(action.label, action.hint ?? "")).map(action => ({key: `app:${action.label}`, label: action.label, detail: action.hint ?? "Action", open: () => action.run()})),
+        ...rows.filter(row => row.actions.length > 0).map((row, index) => ({key: `${row.reference}:${index}`, label: row.label, detail: `${row.kind} · ${row.owner}`, open: () => openRow(row)})),
+      ]
+    : [];
+  const typedState = tab === "chats" ? (chats.error ?? (!chats.rows ? "Reading conversations…" : undefined))
+    : tab === "agents" ? (agents.error ?? (!agents.rows ? "Reading the agent roster…" : undefined))
+    : tab === "flows" ? (flows.error ?? (!flows.rows ? "Reading your flows…" : undefined))
+    : (tab === "files" || tab === "actions") && busy ? "Searching…" : undefined;
+  const openTyped = async (item: TypedItem | undefined) => {
+    if (!item || opening.current) return;
+    opening.current = true; setIsOpening(true); setError(undefined);
+    try { await item.open(); onClose(); }
+    catch (failure) { setError(message(failure)); }
+    finally { opening.current = false; setIsOpening(false); }
+  };
 
   useEffect(() => {
     const previous = document.activeElement as HTMLElement | null;
@@ -179,12 +267,13 @@ export function SearchOverlay({ project, onClose, onOpen, leader, onLeaderChange
       }
       if ((event.key === "ArrowDown" || event.key === "ArrowUp") && event.target instanceof HTMLInputElement) {
         event.preventDefault();
-        navigate(event.key === "ArrowDown" ? 1 : -1);
+        if (tab !== "all") { const length = typedItems.length; if (length) setTypedSelected(value => (value + (event.key === "ArrowDown" ? 1 : -1) + length) % length); }
+        else navigate(event.key === "ArrowDown" ? 1 : -1);
       }
       if (event.key === "Escape") { event.preventDefault(); event.stopPropagation(); onClose(); }
     }}
     onCancel={event => { event.preventDefault(); if (!composition.current) onClose(); }}>
-    <form className="search-query" onSubmit={event => { event.preventDefault(); accept(); }}>
+    <form className="search-query" onSubmit={event => { event.preventDefault(); if (tab !== "all") void openTyped(typedItems[typedSelected]); else accept(); }}>
       <span className="search-symbol" aria-hidden="true"><Glyph name="search" size={16}/></span>
       <input spellCheck={false} autoComplete="off" autoCorrect="off" autoCapitalize="off" autoFocus
         aria-label="Search or resolve" type="search" disabled={isOpening}
@@ -196,7 +285,20 @@ export function SearchOverlay({ project, onClose, onOpen, leader, onLeaderChange
         placeholder={`Search ${project ?? "Central"}`} />
       <button type="button" className="search-dismiss" aria-label="Close search" onClick={onClose}><kbd>esc</kbd></button>
     </form>
-    <div className="search-scroll">
+    <nav className="search-tabs" role="tablist" aria-label="Result kinds">
+      {tabs.map(entry => <button key={entry.id} type="button" role="tab" aria-selected={tab === entry.id} data-palette-tab={entry.id} onClick={() => setTab(entry.id)}>{entry.label}</button>)}
+    </nav>
+    {tab !== "all" && <div className="search-scroll search-typed" role="tabpanel" aria-label={tabs.find(entry => entry.id === tab)?.label}>
+      {error && <p role="alert">{error}</p>}
+      {typedState && !typedItems.length ? <p className="search-empty" role="status">{typedState}</p>
+        : !typedItems.length ? <p className="search-empty">{needle ? `No ${tabs.find(entry => entry.id === tab)?.label.toLowerCase()} match "${query.trim()}".` : `No ${tabs.find(entry => entry.id === tab)?.label.toLowerCase()} here yet.`}</p>
+        : <ul aria-label={`${tabs.find(entry => entry.id === tab)?.label} results`}>{typedItems.map((item, index) => <li key={item.key} data-selected={typedSelected === index}>
+            <button className="search-result" aria-current={typedSelected === index ? "true" : undefined} onFocus={() => setTypedSelected(index)} onPointerMove={() => setTypedSelected(index)} onClick={() => void openTyped(item)}>
+              <span className="search-result-kind" aria-hidden="true">↗</span><span className="search-result-copy"><strong>{item.label}</strong><small>{item.detail}</small></span>
+            </button>
+          </li>)}</ul>}
+    </div>}
+    <div className="search-scroll" hidden={tab !== "all" || undefined}>
       <header className="search-context"><span title={project ?? "Central"}>{project ?? "Central"}</span><span role="status" aria-live="polite">{isOpening ? "Opening…" : composing ? "Composing…" : busy ? `${count ? `${count} results · ` : ""}${pendingProviders.length} ${pendingProviders.length === 1 ? "source" : "sources"} loading…` : `${count} ${count === 1 ? "result" : "results"}`}</span></header>
       {shortcutError && <p role="alert">{shortcutError}</p>}
       {error && <p role="alert">{error}</p>}

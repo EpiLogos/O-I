@@ -1,9 +1,15 @@
-import {useEffect,useRef,useState} from "react";
+import {createContext,useContext,useEffect,useRef,useState,type ReactNode} from "react";
 import {useKernel} from "../kernel/KernelProvider";
 import type {CentralLocation,NativeFileEntry} from "../kernel/types";
 import {Glyph} from "../workspace/Glyph";
 import {useListing,useListingInvalidation,useListingLoading} from "./listingHooks";
 import {LOCATION_DRAG_TYPE} from "./drag";
+
+/** Optional row decoration a host lends the tree (10-SIDEBARS §3.4): the
+ * file open in the focused pane carries aria-current, and a file row can
+ * show trailing affordances (A6 Open beside / Pop out). Absent = the tree
+ * renders exactly as before. */
+export const FileRowDecor=createContext<{currentRef?:string;trailing?:(location:CentralLocation,label:string)=>ReactNode}>({});
 
 /** The file tree over the listing store (the retention law's cache tier,
  * 2026-09-19): listings are workspace-keyed and receipt-invalidated, a
@@ -36,6 +42,7 @@ export function FileTree({path,onOpen,refresh,expanded,onExpansion,onRootRef}:{o
 }
 function Directory({path,onOpen,refresh,expanded,toggle,onReading}:{onReading?:(ref:string)=>void;path:string;onOpen:(location:CentralLocation)=>Promise<void>;refresh:number;expanded:string[];toggle:(path:string,value:boolean)=>void}) {
   const {transport}=useKernel();
+  const decor=useContext(FileRowDecor);
   const listing=useListing(transport,path,refresh);
   const reading=listing.reading;
   // Report the listing's ref once per distinct ref — the caller's callback
@@ -49,7 +56,7 @@ function Directory({path,onOpen,refresh,expanded,toggle,onReading}:{onReading?:(
   return <ul className="native-directory">
     {reading.entries.map((entry:NativeFileEntry)=>{const folder=entry.kind==="directory",open=expanded.includes(entry.location.path),usable=entry.retrieval_allowed&&(folder||entry.kind==="file");
       return <li key={entry.location.ref}>
-        <button data-file-path={entry.location.path} title={usable?entry.location.path:entry.kind==="symlink"?"Symbolic link — not followed":"Unavailable through Central's retrieval policy"} aria-label={folder?`${open?"Collapse":"Expand"} folder ${entry.name}`:entry.name} aria-expanded={folder?open:undefined} disabled={!usable}
+        <button data-file-path={entry.location.path} aria-current={!folder&&decor.currentRef===entry.location.ref?"true":undefined} title={usable?entry.location.path:entry.kind==="symlink"?"Symbolic link — not followed":"Unavailable through Central's retrieval policy"} aria-label={folder?`${open?"Collapse":"Expand"} folder ${entry.name}`:entry.name} aria-expanded={folder?open:undefined} disabled={!usable}
           // A file row carries its Central location, so it can be dropped
           // onto the agent chat (quoted into the draft) or a Technè scene —
           // the same payload Material rows carry (files/drag.ts).
@@ -64,6 +71,7 @@ function Directory({path,onOpen,refresh,expanded,toggle,onReading}:{onReading?:(
               keeps both kinds in one aligned column. */}
           <Glyph name={folder?"folder":"file"}/><span>{entry.name}</span>
         </button>
+        {!folder&&usable&&decor.trailing?.(entry.location,entry.name)}
         {folder&&<FolderChildren path={entry.location.path} open={open} onOpen={onOpen} refresh={refresh} expanded={expanded} toggle={toggle}/>}
       </li>;
     })}

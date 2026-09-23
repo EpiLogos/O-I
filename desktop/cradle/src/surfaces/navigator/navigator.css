@@ -184,7 +184,7 @@ aside.world-navigator button:focus-visible { outline-offset: calc(0px - var(--oi
 
 /* Project disclosure content (chats / files / wiki) hangs from a guide line
  * dropped from the centre of the project mark. */
-.project-files { position: relative; margin: 1px 0 6px 14px; border-left: 1px solid var(--oi-hairline-soft); padding-left: 4px; max-height: min(48vh, 420px); overflow-y: auto; overscroll-behavior: contain; scrollbar-width: thin; }
+.project-files { position: relative; margin: 1px 0 6px 14px; border-left: 1px solid var(--oi-hairline-soft); padding-left: 4px; max-height: min(48vh, 420px); overflow-y: auto; overscroll-behavior: contain; }
 /* Finding 18: scoped under two classes instead of `!important` — beats
  * `.world-navigator button`'s one-class rule on specificity alone. */
 .world-navigator .project-wiki-link {
