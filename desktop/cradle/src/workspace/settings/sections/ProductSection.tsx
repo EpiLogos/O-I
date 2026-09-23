@@ -62,8 +62,8 @@ function Actions({product, actions}: {product: string; actions: (DisclosedAction
     {buttons.length > 0 && <div className="settings-card-actions" data-product-actions>
       {buttons.map((action) => <button key={action.action_ref} type="button" className="settings-button" title={action.title} disabled={busy !== null} data-product-action={action.action_ref} onClick={() => void run(action)}>{busy === action.action_ref ? "Running…" : actionLabel(action)}</button>)}
     </div>}
-    {needsSubject.length > 0 && <p className="settings-muted">{needsSubject.map((action) => action.title).join(" · ")} — these act on a chosen subject, so they run from where that subject is.</p>}
-    {cliOnly.length > 0 && <p className="settings-muted" data-product-cli-only>Through the product's own command line: {cliOnly.map((action) => action.title).join(" · ")}.</p>}
+    {needsSubject.length > 0 && <p className="settings-note">{needsSubject.map((action) => action.title).join(" · ")} — these act on a chosen subject, so they run from where that subject is.</p>}
+    {cliOnly.length > 0 && <p className="settings-note" data-product-cli-only>Through the product's own command line: {cliOnly.map((action) => action.title).join(" · ")}.</p>}
     {missing && <p className="settings-missing" data-settings-missing>{missing}</p>}
     {ran && <div className="settings-action-result" role="status" data-product-action-result={ran.ref}>
       <p>{ranAction?.title ?? ran.ref}: {ran.error ? `didn't run — ${ran.error}` : ran.ok ? "ran" : "the product reported a problem"} · {new Date(ran.at).toLocaleTimeString([], {hour: "2-digit", minute: "2-digit"})}</p>
@@ -87,7 +87,9 @@ function DisclosedRow({product, setting}: {product: string; setting: DisclosedSe
 
 export function ProductSection({id, data}: {id: string; data: SettingsSnapshot}) {
   const [details, setDetails] = useState(false);
-  if (data.owners.state === "reading") return <Reading/>;
+  // Both the owner's descriptor and its contributed settings decide what
+  // this page shows; until both have answered it only says it is reading.
+  if (data.owners.state === "reading" || data.registry.state === "reading") return <Reading/>;
   if (data.owners.state === "failed") return <Unreadable error={data.owners.error} onRetry={() => void refreshAll()}/>;
   const mount: OwnerMount | undefined = data.owners.value[id];
   const descriptor = mount?.descriptor;

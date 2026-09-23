@@ -23,7 +23,7 @@
  *       and Status says the same.
  */
 import {settingsWorld} from "../lib/settings-world.mjs";
-import {enterSettings, openSection, settled} from "../lib/settings-walk.mjs";
+import {enterSettings, openSection, settled, shotMatrix} from "../lib/settings-walk.mjs";
 import {readFileSync, existsSync} from "node:fs";
 
 export async function setup() {
@@ -74,7 +74,7 @@ export default async function run({page, baseUrl, check, shot, provision: world,
     "S4 the strip reads \"2 changes pending · Review changes · Discard\"");
   check(heldConnection() === null, "S4 the connection is staged only — the desktop's state file is untouched before Apply");
   check((await page.locator('[data-settings-row="setting:default-connection"]').getAttribute("data-changed")) === "true", "S4 the connection row is marked changed");
-  await shot("staged");
+  await shotMatrix({page, shot}, "staged");
 
   // --- S5 · review -------------------------------------------------------------
   await strip.getByRole("button", {name: "Review changes"}).click();
@@ -90,7 +90,7 @@ export default async function run({page, baseUrl, check, shot, provision: world,
     `S5 the skill's effect is the owner's effect kind (${capabilities.effect.kind}) in plain words ("${WORDS[capabilities.effect.kind]}")`, {skillRow});
   check(connectionRow?.words === "New chats only", "S5 the connection's effect reads \"New chats only\"");
   check(!active().has("skill/walkskills/walk-beta") && heldConnection() === null, "S5 reviewing writes nothing");
-  await shot("review");
+  await shotMatrix({page, shot}, "review");
 
   // --- S6 · apply and read back ----------------------------------------------------
   await sheet.getByRole("button", {name: "Apply changes"}).click();

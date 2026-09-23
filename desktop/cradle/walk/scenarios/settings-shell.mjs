@@ -112,6 +112,19 @@ export default async function run({page, baseUrl, check, shot, provision: world,
   check(brokerClients.length > 0 && brokerClients.every((client) => !listedClients.includes(client)) && listedClients.length === clients.length - brokerClients.length,
     "Harnesses: the broker (AIKit itself) is not listed — every other client is", {brokerClients, listed: listedClients.length});
   check(((await page.locator('[data-settings-group="adapter-needed"] .settings-eyebrow').textContent()) ?? "").endsWith(`· ${needing}`), `Harnesses: "Detected, adapter needed" counts the owner's ${needing}`);
+  // Install runs the owner's `aikit client install`. Codex installs into the
+  // project it is working in — here the disposable ground — so the walk
+  // exercises it for real without touching any real harness config.
+  const codex = clients.find((row) => row.client === "codex");
+  if (codex && !codex.installed && String(codex.config_dir ?? "").includes(world.root.split("/").pop())) {
+    await page.locator('[data-harness-card="codex"] [data-harness-install]').click();
+    await page.waitForFunction(() => document.querySelector('.settings-harness[data-harness-card="codex"]')?.getAttribute("data-installed") === "true", null, {timeout: 300000});
+    const after = aikitJson("client", "status").data.clients.find((row) => row.client === "codex");
+    const {existsSync} = await import("node:fs");
+    check(after?.installed === true && existsSync(`${world.root}/.codex/hooks.json`), "Harnesses: Install runs the owner's client install — the card and the owner both read Installed (into the walk's own project)");
+  } else {
+    log(`Install not walked: codex is ${codex?.installed ? "already installed" : `configured outside the disposable ground (${codex?.config_dir})`}`);
+  }
   await shotMatrix({page, shot}, "harnesses");
 
   // --- Models · S14 ---------------------------------------------------------------

@@ -274,9 +274,12 @@ async function readResolutionsOnce(): Promise<void> {
   }
   try {
     const source = await plane();
+    // What is staged: the engine's one-call diff; the in-memory fixture
+    // world (walk builds with ?fixtures=1) answers every setting instead.
     const staged = source.kind === "live"
       ? ((await expect<{resolutions: ConfigResolution[]}>({op: "config_diff"}, "config_diff_reading")).resolutions ?? [])
-      : [];
+      : (await source.readResolutions(registry.value.entries.map((entry) => ({setting_ref: entry.setting.setting_ref, scope: defaultScope(entry.setting)}))))
+          .filter((resolution) => resolution.desired);
     const watched = pairs.size ? await source.readResolutions([...pairs.values()]) : [];
     const keyed: Record<string, ConfigResolution> = {};
     for (const resolution of [...watched, ...staged]) keyed[resolutionKey(resolution.setting_ref, resolution.scope)] = resolution;

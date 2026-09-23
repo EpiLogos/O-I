@@ -208,3 +208,4 @@
 .settings-adoption .config-drawer p { margin: 2px 0; color: var(--oi-muted); font-size: var(--oi-shell-type-ui); }
 .settings-adoption .config-drawer button { display: inline-flex; align-items: center; min-height: 26px; padding: 3px 10px; border: 1px solid var(--oi-hairline); border-radius: var(--oi-radius-xs); background: var(--oi-surface); color: var(--oi-ink); font-size: var(--oi-shell-type-ui); }
 .settings-adoption .config-drawer button:disabled { opacity: .55; }
+.settings-note { margin: 6px 0; max-width: 760px; color: var(--oi-muted); font-size: var(--oi-shell-type-ui); line-height: 1.45; }
