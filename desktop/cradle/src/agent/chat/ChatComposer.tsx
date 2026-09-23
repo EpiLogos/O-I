@@ -51,7 +51,7 @@ export interface ComposerConnection {
   onSetup?:()=>void;onRefreshProviders?:()=>void;
 }
 
-export function ChatComposer({reading,draft,pending,busy,error,editable,promptAllowed,promptReason,cancelAllowed,onDraft,onSend,onCancel,connection,tools,draftFailed,onRecover,paged,onLatest,focusToken,drafting,provisionProject,agentName="Agent",sendState,onRetry}:{
+export function ChatComposer({reading,draft,pending,busy,error,editable,promptAllowed,promptReason,cancelAllowed,onDraft,onSend,onCancel,connection,tools,draftFailed,onRecover,paged,onLatest,focusToken,drafting,provisionProject,agentName="Agent",sendState,onRetry,unreachable}:{
   reading?:EncounterReading;draft:string;pending:boolean;busy:boolean;error?:string;
   editable:boolean;promptAllowed:boolean;promptReason?:string;cancelAllowed:boolean;
   onDraft:(text:string)=>void;onSend:()=>void;onCancel:()=>void;
@@ -69,6 +69,9 @@ export function ChatComposer({reading,draft,pending,busy,error,editable,promptAl
   /** The last Send's outcome (P8 not sent · P9 checking). */
   sendState?:{phase:"checking"|"failed";error?:string};
   onRetry?:()=>void;
+  /** The encounter owner is out of reach (P11): the panel says so once; the
+   *  composer neither offers connections nor claims none are configured. */
+  unreachable?:boolean;
   }) {
   const input=useRef<HTMLTextAreaElement>(null);
   const picker=useRef<HTMLInputElement>(null);
@@ -110,7 +113,7 @@ export function ChatComposer({reading,draft,pending,busy,error,editable,promptAl
         <span className="chat-connect-label"><Glyph name="link" size={11}/> New conversation</span>
         {provisionProject&&<span className="oi-note">First send opens it in {provisionProject}.</span>}
       </div>
-      :!connected&&<div className="chat-connect" data-fact="disconnected">
+      :!connected&&!unreachable&&<div className="chat-connect" data-fact="disconnected">
       {status&&status.state!=="Disconnected"&&<span className="oi-note" role="status">{connectionLabel(status)}</span>}
       <span className="chat-connect-label"><Glyph name="link" size={11}/> Connect with</span>
       {connection.providers.map(provider=><button key={provider.id} className="chat-provider oi-chip" data-provider={provider.id} disabled={pending||!connection.openAllowed} title={connection.openReason??provider.label} aria-label={`${harnessChip(provider)} — ${provider.label}`} onClick={()=>connection.onProvider(provider.id)}>{harnessChip(provider)}</button>)}
@@ -119,7 +122,7 @@ export function ChatComposer({reading,draft,pending,busy,error,editable,promptAl
       {connection.resume&&<button className="chat-provider oi-chip" data-resume="true" disabled={pending} title="The owner holds a recorded native session for this conversation; reconnecting resumes that exact identity." onClick={()=>connection.onReconnect(connection.resume!.provider)}><Glyph name="refresh" size={10}/>Reconnect {connection.resume.provider}</button>}
     </div>}
     {selected.length>0&&<div className="chat-attachments" aria-label="Attached context">{selected.map(chip)}</div>}
-    <textarea ref={input} disabled={!editable} aria-label="Message" placeholder={drafting?"Write the first message…":!reading?"Reading…":connected?"Message the agent…":"Connect a provider, then write…"} value={message} rows={3}
+    <textarea ref={input} disabled={!editable} aria-label="Message" placeholder={drafting?"Write the first message…":unreachable?"Agents are out of reach for now":!reading?"Reading…":connected?"Message the agent…":"Connect a provider, then write…"} value={message} rows={3}
       onChange={event=>setMessage(event.target.value)} onPaste={onPaste}
       onKeyDown={event=>{if(event.key==="Enter"&&!event.shiftKey&&!event.nativeEvent.isComposing){event.preventDefault();if(canSend)onSend();}}}/>
     <div className="chat-composer-row">

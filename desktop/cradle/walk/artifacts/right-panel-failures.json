@@ -1,0 +1,182 @@
+{
+  "schema": "oi.cradle.walk.scenario/v1",
+  "scenario": "right-panel-failures",
+  "spec_ref": "docs/cradle/10-SIDEBARS.md §5.3 P8 P9 P10 P11 P12",
+  "grade": "B",
+  "binding": null,
+  "generated_at": "2026-09-23T02:10:40.359Z",
+  "environment": {
+    "base_url": "http://localhost:4373",
+    "bridge_url": "http://127.0.0.1:4379",
+    "viewport": "1280x820",
+    "browser_engine": "chromium",
+    "bundle": "walk (WALK=1) served by vite preview",
+    "build_input": {
+      "mode": "fresh-build",
+      "bundle_fingerprint": "094faed33ad0f30305dd2a3af5c47d854e7bb03030d5bcf67dfc4fdfd7f3de24"
+    },
+    "node": "v24.16.0",
+    "platform": "darwin",
+    "source": {
+      "repository_root": "/Users/admin/Central/worktrees/ui-build/lane2-right",
+      "repository_head": "2f87f49840d23f98e6f4679d255b388ba745cf07",
+      "tracked_changes": [
+        "desktop/cradle/scripts/receipt-lint.mjs",
+        "desktop/cradle/src/agent/chat/AgentChat.tsx",
+        "desktop/cradle/src/agent/chat/ChatComposer.tsx",
+        "desktop/cradle/src/agent/panel/panel.css",
+        "desktop/cradle/walk/run.mjs"
+      ],
+      "dirty_digest": "b549b4d75683da5935344cdd71bc07c4be16cff3dc35417057e6895352034cd5",
+      "engine_provenance_path": "/Users/admin/Central/worktrees/ui-build/lane2-right/packages/oi-design-system/expressions-engine/PROVENANCE.json",
+      "engine_source": "EpiLogos/Point-Cloud-Demo",
+      "engine_revision": "91db8428fc9dfba06cd258ec5a58e7dd9eef5313"
+    }
+  },
+  "passed": true,
+  "error": null,
+  "duration_ms": 67219,
+  "checks": [
+    {
+      "ok": true,
+      "label": "P10: one line under the tabs — Reconnecting, last seen, draft kept",
+      "data": "Reconnecting — last seen 8s ago. Your draft is kept."
+    },
+    {
+      "ok": true,
+      "label": "P10: the draft stays in the composer"
+    },
+    {
+      "ok": true,
+      "label": "P10: on reconnect the transcript replays from its cursor with no duplicate messages",
+      "data": {
+        "usersBefore": 0,
+        "usersAfter": 0
+      }
+    },
+    {
+      "ok": true,
+      "label": "P8: Message not sent. with Retry beside the kept draft"
+    },
+    {
+      "ok": true,
+      "label": "P8: the draft is retained, in the composer and at the owner"
+    },
+    {
+      "ok": true,
+      "label": "P8: nothing was sent"
+    },
+    {
+      "ok": true,
+      "label": "P8: Retry sends it once"
+    },
+    {
+      "ok": true,
+      "label": "P9: Checking whether your message was sent… while reconciling",
+      "data": "Checking whether your message was sent…"
+    },
+    {
+      "ok": true,
+      "label": "P9: the owner's record shows it was sent — exactly once",
+      "data": 1
+    },
+    {
+      "ok": true,
+      "label": "P9: no second send was made"
+    },
+    {
+      "ok": true,
+      "label": "P9: a landed message is never shown as not sent"
+    },
+    {
+      "ok": true,
+      "label": "P12 (before): the first conversation's activity is on the tape",
+      "data": 5
+    },
+    {
+      "ok": true,
+      "label": "P12: a newly bound conversation shows nothing of the previous one in Chat"
+    },
+    {
+      "ok": true,
+      "label": "P12: the Activity tape is the new conversation's own",
+      "data": 0
+    },
+    {
+      "ok": true,
+      "label": "P12: the previous conversation is kept (its owner record is untouched)"
+    },
+    {
+      "ok": true,
+      "label": "P11: Agents aren't reachable here right now — plus what still works",
+      "data": "Agents aren't reachable here right now. Your files, flows and this draft still work here."
+    },
+    {
+      "ok": true,
+      "label": "P11: the avatar carries × (unavailable)"
+    },
+    {
+      "ok": true,
+      "label": "P11: no perpetual loading"
+    },
+    {
+      "ok": true,
+      "label": "P11: local work stays usable — a file opens while agents are out of reach"
+    }
+  ],
+  "ops": [
+    {
+      "ok": true,
+      "op": "info",
+      "duration_ms": 0,
+      "data": {
+        "schema": "oi.cradle.walk/v1",
+        "mounted_at": "2026-09-23T02:10:40.559Z",
+        "transport": {
+          "kind": "bridge",
+          "url": "http://127.0.0.1:4379"
+        },
+        "url": "http://localhost:4373/"
+      }
+    },
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 79,
+      "data": {
+        "file": "right-panel-failures-p10-reconnecting.png"
+      }
+    },
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 44,
+      "data": {
+        "file": "right-panel-failures-p8-not-sent.png"
+      }
+    },
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 38,
+      "data": {
+        "file": "right-panel-failures-p12-switched.png"
+      }
+    },
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 67,
+      "data": {
+        "file": "right-panel-failures-p11-unreachable.png"
+      }
+    }
+  ],
+  "metrics": {},
+  "screenshots": [
+    "right-panel-failures-p10-reconnecting.png",
+    "right-panel-failures-p8-not-sent.png",
+    "right-panel-failures-p12-switched.png",
+    "right-panel-failures-p11-unreachable.png"
+  ]
+}

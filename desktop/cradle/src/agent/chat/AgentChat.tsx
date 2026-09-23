@@ -254,14 +254,16 @@ export function AgentChat({session,accompanying,project,agentName,situating,sess
     </div>}
     {bound
       ?<>
-        <ChatTranscript reading={state.reading} status={status} error={state.error} agentLabel={agentLabel} onEarlier={actions.earlier} onLatest={actions.latest} paged={state.before!==undefined} onEdit={editTurn} marks={marks}>
+        {state.unreachable&&!state.reading
+          ?<div className="chat-transcript-host"><p className="chat-unreachable oi-note" data-state="unreachable">The conversation shows here again when agents are reachable.</p></div>
+          :<ChatTranscript reading={state.reading} status={status} error={state.error} agentLabel={agentLabel} onEarlier={actions.earlier} onLatest={actions.latest} paged={state.before!==undefined} onEdit={editTurn} marks={marks}>
           {answered.map(entry=><p key={entry.id} className="chat-permission-answered oi-note" data-request={entry.id}>{entry.line}</p>)}
           {state.reading?.permissions?.filter(request=>!answered.some(entry=>entry.id===request.native_request_id)).map(request=><PermissionCard key={request.native_request_id} request={request} agentName={agentName} disabled={state.pending||!allowed("permission")} onAnswer={(decision,line)=>answer(request.native_request_id,decision,line)}/>)}
-        </ChatTranscript>
+        </ChatTranscript>}
         {inFlight&&<StatusLine agentName={agentName} row={moving} startedAt={turnStart??flightSeen} stopping={status?.state==="InterruptRequested"} onOpen={rowId=>onOpenActivity?.(rowId)}/>}
         <ChatComposer reading={state.reading} draft={state.draft} pending={state.pending} busy={state.busy&&!state.pending} error={state.send?undefined:state.error} editable={!!state.reading&&allowed("draft")}
           promptAllowed={allowed("prompt")&&state.send?.phase!=="checking"} promptReason={action("prompt")?.reason??undefined} cancelAllowed={allowed("cancel")}
-          onDraft={actions.change} onSend={send} onCancel={actions.cancel} agentName={agentName} sendState={state.send} onRetry={()=>void actions.retrySend()}
+          onDraft={actions.change} onSend={send} onCancel={actions.cancel} agentName={agentName} sendState={state.send} onRetry={()=>void actions.retrySend()} unreachable={!!state.unreachable}
           connection={{onSetup:()=>openAgentSetup({project:state.project||undefined,destination:{owner:"ai-kit",topic:"harness"},reason:state.error??"Harness, model or credential setup",refresh:()=>actions.refreshProviders()}),status,model:state.model,modelActions:{refresh:actions.readModel,select:actions.selectModel},mode:state.mode,onMode:id=>void actions.selectMode(id),currentFacts:connectionFacts,onRefreshProviders:()=>void actions.refreshProviders(),providers:state.providers,resume:state.resume,onProvider:provider=>void actions.connect(provider),onReconnect:provider=>void actions.reconnect(provider),openAllowed:allowed("open"),openReason:action("open")?.reason??undefined}}
           tools={{subject:subject.location?{title:subject.title,attach:()=>attachLocation(subject.location!)}:undefined,pickFiles:attachFiles}}
           draftFailed={state.draftFailed} onRecover={()=>void actions.recover()} paged={state.before!==undefined} onLatest={actions.latest} focusToken={composerFocusToken}/>
