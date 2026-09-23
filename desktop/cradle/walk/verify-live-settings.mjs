@@ -20,7 +20,7 @@ import {ALL_GROUPS, assertOwnerGroupLive, readLiveListing, readRegistryViaBridge
 const cradleRoot = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const oiBin = process.env.OI_BIN ?? resolve(cradleRoot, '../../cli/target/debug/oi');
 const url = process.env.DESK_URL ?? 'http://localhost:4173/';
-const bridgePort = 4197;
+const bridgePort = Number(process.env.WALK_BRIDGE_PORT ?? 4197);
 const bridgeUrl = `http://127.0.0.1:${bridgePort}`;
 
 if (!existsSync(oiBin)) {
