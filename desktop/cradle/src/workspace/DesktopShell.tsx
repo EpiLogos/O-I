@@ -288,7 +288,9 @@ export function DesktopShell(p: Props) {
     if (!overlayRight || right !== "panel") return;
     const prior=document.activeElement as HTMLElement;
     host.current?.querySelector<HTMLElement>('[data-region="right"] button')?.focus();
-    const escape=(e:KeyboardEvent)=>{if(e.key==="Escape"){e.preventDefault();e.stopImmediatePropagation();setDepth("right","collapsed");}};
+    // Escape steps one layer (P18): an open detail layer inside the drawer
+    // (data-escape-layer) closes first, the drawer on the next Escape.
+    const escape=(e:KeyboardEvent)=>{if(e.key==="Escape"){if(host.current?.querySelector('[data-region="right"] [data-escape-layer]'))return;e.preventDefault();e.stopImmediatePropagation();setDepth("right","collapsed");}};
     window.addEventListener("keydown",escape,true);
     return()=>{window.removeEventListener("keydown",escape,true);if(prior?.isConnected)prior.focus();};
   }, [overlayRight, right]);
