@@ -31,3 +31,4 @@ jobs:
             ${{ runner.temp }}/experience-tests.log
             ${{ runner.temp }}/experience-map.log
           retention-days: 14
+# rerun after campaign binding reconciliation
