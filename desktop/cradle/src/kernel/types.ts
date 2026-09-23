@@ -345,7 +345,7 @@ export type KernelOpResult =
   | { result:"factory_attempt_task_list_reading";data:unknown }
   | { result:"factory_attempt_task_reading";data:unknown }
   | { result:"workcell_status_reading";data:unknown }
-  | { result:"inhabitation_reading";data:unknown }
+  | { result:"inhabitation_reading";data:unknown;warnings?:unknown[] }
   | { result:"wiki_projection_reading";data:unknown }
   | { result:"wiki_projection_sources_reading";data:unknown }
   | { result:"harness_status_reading";data:unknown }

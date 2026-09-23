@@ -20,6 +20,7 @@ import {runEntry, useDeskReading, useSelectedRun} from "../desk/deskStore";
 import {firstSentence} from "../desk/runModel";
 import {useNowRecord} from "../desk/nowRecord";
 import {PreparedBasis} from "./PreparedBasis";
+import "../desk/fdesk.css";
 
 const INTENT_FILE = /(vision|goal|intent|telos)/i;
 

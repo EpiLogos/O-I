@@ -35,7 +35,7 @@
     ],
     "claims_grade": "D"
   },
-  "generated_at": "2026-09-23T22:07:45.690Z",
+  "generated_at": "2026-09-23T23:47:25.379Z",
   "environment": {
     "base_url": "http://localhost:4273",
     "bridge_url": "http://127.0.0.1:4279",
@@ -44,34 +44,36 @@
     "bundle": "walk (WALK=1) served by vite preview",
     "build_input": {
       "mode": "fresh-build",
-      "bundle_fingerprint": "0f970482b414e03e9ce70e703ff0ff796f14e20fbf917d2b2ddf1e6ba2c85825"
+      "bundle_fingerprint": "43f96dfdd390ca85738f1076682484aeb2dffb950b3a970500df9e9e53571cef"
     },
     "node": "v24.16.0",
     "platform": "darwin",
     "source": {
       "repository_root": "/private/tmp/claude-501/-Users-admin-Central/bd077907-24fc-4a07-9d7e-541f7e0b4f77/scratchpad/wt/O-I-cradle",
-      "repository_head": "feed5c925092eeef1a54d4e808727142633e6e03",
+      "repository_head": "2a4d092c6f1c9dd9de9e71d3605377da74e736e5",
       "tracked_changes": [
-        ".github/workflows/desktop.yml",
-        "desktop/cradle/kernel/src/factory.rs",
+        ".superpowers/sdd/cradle-rebuild/progress.md",
+        "desktop/cradle/kernel/src/inhabitation.rs",
         "desktop/cradle/kernel/src/lib.rs",
+        "desktop/cradle/kernel/tests/inhabitation_reads.rs",
         "desktop/cradle/scripts/receipt-lint.mjs",
-        "desktop/cradle/src/contributions/factory/FactoryCentre.tsx",
-        "desktop/cradle/src/contributions/factory/desk/Desk.tsx",
         "desktop/cradle/src/contributions/factory/desk/RunLive.tsx",
-        "desktop/cradle/src/contributions/factory/desk/RunPage.tsx",
+        "desktop/cradle/src/contributions/factory/desk/RunPositions.tsx",
         "desktop/cradle/src/contributions/factory/desk/deskStore.ts",
         "desktop/cradle/src/contributions/factory/desk/factoryObjects.tsx",
-        "desktop/cradle/src/contributions/factory/desk/factoryReads.ts",
         "desktop/cradle/src/contributions/factory/desk/fdesk.css",
-        "desktop/cradle/src/contributions/factory/desk/runModel.ts",
-        "desktop/cradle/src/contributions/factory/objectKinds.ts",
+        "desktop/cradle/src/contributions/factory/fixtures/inhabitation.ts",
+        "desktop/cradle/src/contributions/factory/inhabitation/model.ts",
+        "desktop/cradle/src/contributions/factory/inhabitation/reads.ts",
         "desktop/cradle/src/contributions/factory/sidebar/FactoryAgentsTab.tsx",
         "desktop/cradle/src/contributions/factory/sidebar/FactoryContextSlice.tsx",
-        "desktop/cradle/src/contributions/factory/sidebar/FactoryRunTab.tsx",
+        "desktop/cradle/src/contributions/factory/sidebar/PreparedBasis.tsx",
         "desktop/cradle/src/kernel/types.ts",
+        "desktop/cradle/src/workspace/modeBodies.tsx",
+        "desktop/cradle/tests/factory-inhabitation-model.test.mjs",
         "desktop/cradle/walk/artifacts/factory-desk-f1-reading.png",
         "desktop/cradle/walk/artifacts/factory-desk-f2-empty.png",
+        "desktop/cradle/walk/artifacts/factory-desk-f3-partial.png",
         "desktop/cradle/walk/artifacts/factory-desk-f4-needs-you.png",
         "desktop/cradle/walk/artifacts/factory-desk-factory-desk-1000-dark.png",
         "desktop/cradle/walk/artifacts/factory-desk-factory-desk-1000-light.png",
@@ -84,18 +86,28 @@
         "desktop/cradle/walk/artifacts/factory-development-context-tab.png",
         "desktop/cradle/walk/artifacts/factory-development-run-tab.png",
         "desktop/cradle/walk/artifacts/factory-development.json",
-        "desktop/cradle/walk/artifacts/factory-run-f12-handoff-empty.png",
+        "desktop/cradle/walk/artifacts/factory-inhabitation-fixture-agents.png",
+        "desktop/cradle/walk/artifacts/factory-inhabitation-fixture-context.png",
+        "desktop/cradle/walk/artifacts/factory-inhabitation-fixture-desk.png",
+        "desktop/cradle/walk/artifacts/factory-inhabitation-fixture-position-page.png",
+        "desktop/cradle/walk/artifacts/factory-inhabitation-fixture-run-live.png",
+        "desktop/cradle/walk/artifacts/factory-inhabitation-live-agents.png",
+        "desktop/cradle/walk/artifacts/factory-inhabitation-live-context.png",
+        "desktop/cradle/walk/artifacts/factory-inhabitation-live-desk.png",
+        "desktop/cradle/walk/artifacts/factory-inhabitation-live-run-live.png",
+        "desktop/cradle/walk/artifacts/factory-inhabitation.json",
         "desktop/cradle/walk/artifacts/factory-run-f13-before.png",
         "desktop/cradle/walk/artifacts/factory-run-f6-queued-live.png",
-        "desktop/cradle/walk/artifacts/factory-run-f8-no-units.png",
-        "desktop/cradle/walk/artifacts/factory-run-factory-run-map-1000-dark.png",
+        "desktop/cradle/walk/artifacts/factory-run-factory-run-map-1440-dark.png",
         "desktop/cradle/walk/artifacts/factory-run-live.png",
+        "desktop/cradle/walk/artifacts/factory-run-unit-page.png",
         "desktop/cradle/walk/artifacts/factory-run.json",
         "desktop/cradle/walk/run.mjs",
-        "desktop/cradle/walk/scenarios/factory-development.mjs",
-        "desktop/cradle/walk/scenarios/factory-objects.mjs"
+        "desktop/cradle/walk/scenarios/factory-inhabitation.mjs",
+        "docs/cradle/10-SIDEBARS.md",
+        "docs/cradle/11-FACTORY.md"
       ],
-      "dirty_digest": "1fef696af17bf7b0bd77572f14ad7d95efb5ce53c069bddbb7d3ff1a0b808662",
+      "dirty_digest": "685bef40af02987048c37db4c235b7df2b5267de921f5cf4a27ff852ef9e3017",
       "engine_provenance_path": "/private/tmp/claude-501/-Users-admin-Central/bd077907-24fc-4a07-9d7e-541f7e0b4f77/scratchpad/wt/O-I-cradle/packages/oi-design-system/expressions-engine/PROVENANCE.json",
       "engine_source": "EpiLogos/Point-Cloud-Demo",
       "engine_revision": "91db8428fc9dfba06cd258ec5a58e7dd9eef5313"
@@ -103,7 +115,7 @@
   },
   "passed": true,
   "error": null,
-  "duration_ms": 5349,
+  "duration_ms": 31779,
   "checks": [
     {
       "ok": true,
@@ -154,9 +166,9 @@
       "ok": true,
       "label": "Agents: Positions come only from the owner's population reading — an unreadable reading is named in the owner's words, never an empty or invented roster",
       "data": {
-        "population": "unavailable",
+        "population": "read",
         "positionRows": 0,
-        "absence": "Couldn't read who is here — error: unrecognized subcommand 'who' (aikit gateway who). Retry"
+        "absence": ""
       }
     },
     {
@@ -174,7 +186,7 @@
       "ok": true,
       "label": "Context offers Factory's slice: the selected run's returned material, in the owner's words",
       "data": {
-        "slice": "PREPARED CONTEXT\n\nPositions on this run couldn't be read — factory: unknown development operation `inhabitation` (factory development inhabitation)\n\nRUN MATERIAL\n\nSection order is decided in one place"
+        "slice": "PREPARED CONTEXT\n\nFactory names no Position on this run.\n\nRUN MATERIAL\n\nSection order is decided in one place: the generator sorts headings alphabetically in src/release_notes.txt line 1, so Breaking "
       }
     },
     {
@@ -206,7 +218,7 @@
       "duration_ms": 0,
       "data": {
         "schema": "oi.cradle.walk/v1",
-        "mounted_at": "2026-09-23T22:07:45.890Z",
+        "mounted_at": "2026-09-23T23:47:25.454Z",
         "transport": {
           "kind": "bridge",
           "url": "http://127.0.0.1:4279"
@@ -220,7 +232,7 @@
       "duration_ms": 0,
       "data": {
         "schema": "oi.cradle.walk/v1",
-        "mounted_at": "2026-09-23T22:07:47.011Z",
+        "mounted_at": "2026-09-23T23:47:25.880Z",
         "transport": {
           "kind": "bridge",
           "url": "http://127.0.0.1:4279"
@@ -231,7 +243,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 60,
+      "duration_ms": 29,
       "data": {
         "file": "factory-development-run-tab.png"
       }
@@ -239,7 +251,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 46,
+      "duration_ms": 36,
       "data": {
         "file": "factory-development-agents-tab.png"
       }
@@ -247,7 +259,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 49,
+      "duration_ms": 33,
       "data": {
         "file": "factory-development-context-tab.png"
       }

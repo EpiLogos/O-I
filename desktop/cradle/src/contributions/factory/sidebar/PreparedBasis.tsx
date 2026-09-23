@@ -2,8 +2,9 @@
  * Context → Prepared context (WORLD-INHABITATION-V1 §4): the nested basis the
  * occupant of the run's Position is prepared from — AIKit's Refocus chain
  * (current operation ← workflow unit ← attempt/Run ← Journey/Commission ←
- * Project intent ← ProjectCentral ground) and the joined reading's prepared
- * context with its root and child NOW. The Position is the one Factory names
+ * Project intent ← ProjectCentral ground; each hop a ref or a gap in the
+ * owner's words) and the joined reading's prepared context with its root
+ * and child NOW (`value.now_ref`). The Position is the one Factory names
  * on the selected run; several are a choice the person makes, never the
  * first; none (or an unreadable Factory reading) is said. Each owner read
  * that fails is one named line — the basis is never assembled from intent
@@ -58,7 +59,7 @@ function PositionBasis({positionRef, name, project}: {positionRef: string; name:
     {refocus?.state === "read" && (chain.length
       ? <ol className="fprep-chain" data-refocus-chain={chain.length}>
         {chain.map(row => <li key={row.depth} style={{paddingInlineStart: `calc(${row.depth} * var(--oi-space-2, 8px))`}} data-link-state={row.state}>
-          <small>{row.level}</small> <span>{row.words}</span>
+          <small>{row.level}</small> <span>{row.state === "gap" ? `gap — ${row.words}` : row.words}</span>
         </li>)}
       </ol>
       : <p className="fslice-note" data-prepared-absence="chain">The Refocus reading carried no chain.</p>)}
@@ -68,7 +69,7 @@ function PositionBasis({positionRef, name, project}: {positionRef: string; name:
       <dt>Prepared context</dt><dd data-prepared-context>{basis.preparedContext}</dd>
       <dt>Root NOW</dt><dd>{basis.rootNow ? <NowRow nowRef={basis.rootNow}/> : basis.rootNowWords}</dd>
       <dt>Child NOW</dt><dd>{basis.childNow ? <NowRow nowRef={basis.childNow}/> : basis.childNowWords}</dd>
-      <dt>Return</dt><dd>{basis.returnDestination}</dd>
+      <dt>Return</dt><dd>{basis.returnNow ? <NowRow nowRef={basis.returnNow}/> : basis.returnWords}</dd>
     </dl>}
   </div>;
 }

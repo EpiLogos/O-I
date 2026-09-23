@@ -4,7 +4,7 @@
   "spec_ref": "docs/cradle/11-FACTORY.md §7 F1 F2 F3 F4 F5",
   "grade": "B",
   "binding": null,
-  "generated_at": "2026-09-23T22:08:28.670Z",
+  "generated_at": "2026-09-23T23:48:06.320Z",
   "environment": {
     "base_url": "http://localhost:4273",
     "bridge_url": "http://127.0.0.1:4279",
@@ -13,34 +13,36 @@
     "bundle": "walk (WALK=1) served by vite preview",
     "build_input": {
       "mode": "fresh-build",
-      "bundle_fingerprint": "0f970482b414e03e9ce70e703ff0ff796f14e20fbf917d2b2ddf1e6ba2c85825"
+      "bundle_fingerprint": "43f96dfdd390ca85738f1076682484aeb2dffb950b3a970500df9e9e53571cef"
     },
     "node": "v24.16.0",
     "platform": "darwin",
     "source": {
       "repository_root": "/private/tmp/claude-501/-Users-admin-Central/bd077907-24fc-4a07-9d7e-541f7e0b4f77/scratchpad/wt/O-I-cradle",
-      "repository_head": "feed5c925092eeef1a54d4e808727142633e6e03",
+      "repository_head": "2a4d092c6f1c9dd9de9e71d3605377da74e736e5",
       "tracked_changes": [
-        ".github/workflows/desktop.yml",
-        "desktop/cradle/kernel/src/factory.rs",
+        ".superpowers/sdd/cradle-rebuild/progress.md",
+        "desktop/cradle/kernel/src/inhabitation.rs",
         "desktop/cradle/kernel/src/lib.rs",
+        "desktop/cradle/kernel/tests/inhabitation_reads.rs",
         "desktop/cradle/scripts/receipt-lint.mjs",
-        "desktop/cradle/src/contributions/factory/FactoryCentre.tsx",
-        "desktop/cradle/src/contributions/factory/desk/Desk.tsx",
         "desktop/cradle/src/contributions/factory/desk/RunLive.tsx",
-        "desktop/cradle/src/contributions/factory/desk/RunPage.tsx",
+        "desktop/cradle/src/contributions/factory/desk/RunPositions.tsx",
         "desktop/cradle/src/contributions/factory/desk/deskStore.ts",
         "desktop/cradle/src/contributions/factory/desk/factoryObjects.tsx",
-        "desktop/cradle/src/contributions/factory/desk/factoryReads.ts",
         "desktop/cradle/src/contributions/factory/desk/fdesk.css",
-        "desktop/cradle/src/contributions/factory/desk/runModel.ts",
-        "desktop/cradle/src/contributions/factory/objectKinds.ts",
+        "desktop/cradle/src/contributions/factory/fixtures/inhabitation.ts",
+        "desktop/cradle/src/contributions/factory/inhabitation/model.ts",
+        "desktop/cradle/src/contributions/factory/inhabitation/reads.ts",
         "desktop/cradle/src/contributions/factory/sidebar/FactoryAgentsTab.tsx",
         "desktop/cradle/src/contributions/factory/sidebar/FactoryContextSlice.tsx",
-        "desktop/cradle/src/contributions/factory/sidebar/FactoryRunTab.tsx",
+        "desktop/cradle/src/contributions/factory/sidebar/PreparedBasis.tsx",
         "desktop/cradle/src/kernel/types.ts",
+        "desktop/cradle/src/workspace/modeBodies.tsx",
+        "desktop/cradle/tests/factory-inhabitation-model.test.mjs",
         "desktop/cradle/walk/artifacts/factory-desk-f1-reading.png",
         "desktop/cradle/walk/artifacts/factory-desk-f2-empty.png",
+        "desktop/cradle/walk/artifacts/factory-desk-f3-partial.png",
         "desktop/cradle/walk/artifacts/factory-desk-f4-needs-you.png",
         "desktop/cradle/walk/artifacts/factory-desk-factory-desk-1000-dark.png",
         "desktop/cradle/walk/artifacts/factory-desk-factory-desk-1000-light.png",
@@ -53,18 +55,28 @@
         "desktop/cradle/walk/artifacts/factory-development-context-tab.png",
         "desktop/cradle/walk/artifacts/factory-development-run-tab.png",
         "desktop/cradle/walk/artifacts/factory-development.json",
-        "desktop/cradle/walk/artifacts/factory-run-f12-handoff-empty.png",
+        "desktop/cradle/walk/artifacts/factory-inhabitation-fixture-agents.png",
+        "desktop/cradle/walk/artifacts/factory-inhabitation-fixture-context.png",
+        "desktop/cradle/walk/artifacts/factory-inhabitation-fixture-desk.png",
+        "desktop/cradle/walk/artifacts/factory-inhabitation-fixture-position-page.png",
+        "desktop/cradle/walk/artifacts/factory-inhabitation-fixture-run-live.png",
+        "desktop/cradle/walk/artifacts/factory-inhabitation-live-agents.png",
+        "desktop/cradle/walk/artifacts/factory-inhabitation-live-context.png",
+        "desktop/cradle/walk/artifacts/factory-inhabitation-live-desk.png",
+        "desktop/cradle/walk/artifacts/factory-inhabitation-live-run-live.png",
+        "desktop/cradle/walk/artifacts/factory-inhabitation.json",
         "desktop/cradle/walk/artifacts/factory-run-f13-before.png",
         "desktop/cradle/walk/artifacts/factory-run-f6-queued-live.png",
-        "desktop/cradle/walk/artifacts/factory-run-f8-no-units.png",
-        "desktop/cradle/walk/artifacts/factory-run-factory-run-map-1000-dark.png",
+        "desktop/cradle/walk/artifacts/factory-run-factory-run-map-1440-dark.png",
         "desktop/cradle/walk/artifacts/factory-run-live.png",
+        "desktop/cradle/walk/artifacts/factory-run-unit-page.png",
         "desktop/cradle/walk/artifacts/factory-run.json",
         "desktop/cradle/walk/run.mjs",
-        "desktop/cradle/walk/scenarios/factory-development.mjs",
-        "desktop/cradle/walk/scenarios/factory-objects.mjs"
+        "desktop/cradle/walk/scenarios/factory-inhabitation.mjs",
+        "docs/cradle/10-SIDEBARS.md",
+        "docs/cradle/11-FACTORY.md"
       ],
-      "dirty_digest": "1fef696af17bf7b0bd77572f14ad7d95efb5ce53c069bddbb7d3ff1a0b808662",
+      "dirty_digest": "685bef40af02987048c37db4c235b7df2b5267de921f5cf4a27ff852ef9e3017",
       "engine_provenance_path": "/private/tmp/claude-501/-Users-admin-Central/bd077907-24fc-4a07-9d7e-541f7e0b4f77/scratchpad/wt/O-I-cradle/packages/oi-design-system/expressions-engine/PROVENANCE.json",
       "engine_source": "EpiLogos/Point-Cloud-Demo",
       "engine_revision": "91db8428fc9dfba06cd258ec5a58e7dd9eef5313"
@@ -72,7 +84,7 @@
   },
   "passed": true,
   "error": null,
-  "duration_ms": 27588,
+  "duration_ms": 12678,
   "checks": [
     {
       "ok": true,
@@ -133,9 +145,9 @@
       "label": "Units: one segment per owner work unit (A 4, B 2, C 0) — never a percentage",
       "data": {
         "unitCounts": {
-          "run:01M37TJ5E0B3XA3DKDS8YJQVWE": 4,
-          "run:01M37V4FC0HN2KVGVW88PE1335": 2,
-          "run:01M37VPSA07PKPF4P0007XTFRN": 0
+          "run:01M380B3D0PA5YZPHKC3Z0SGRS": 4,
+          "run:01M380XDB0FZRYTNB1S5XBWAS2": 2,
+          "run:01M381FQ90RZQSJYSQMVGDT442": 0
         }
       }
     },
@@ -195,11 +207,11 @@
       "ok": true,
       "label": "← Desk returns to the same scroll: scrollTop and the card's top equal before/after (±0.5px)",
       "data": {
-        "scrollable": 315,
+        "scrollable": 273,
         "before": 90,
         "after": 90,
-        "beforeTop": 78,
-        "afterTop": 78
+        "beforeTop": 36,
+        "afterTop": 36
       }
     },
     {
@@ -256,7 +268,7 @@
       "duration_ms": 0,
       "data": {
         "schema": "oi.cradle.walk/v1",
-        "mounted_at": "2026-09-23T22:08:28.939Z",
+        "mounted_at": "2026-09-23T23:48:06.402Z",
         "transport": {
           "kind": "bridge",
           "url": "http://127.0.0.1:4279"
@@ -267,10 +279,10 @@
     {
       "ok": true,
       "op": "info",
-      "duration_ms": 0,
+      "duration_ms": 0.1,
       "data": {
         "schema": "oi.cradle.walk/v1",
-        "mounted_at": "2026-09-23T22:08:30.787Z",
+        "mounted_at": "2026-09-23T23:48:06.832Z",
         "transport": {
           "kind": "bridge",
           "url": "http://127.0.0.1:4279"
@@ -281,7 +293,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 59,
+      "duration_ms": 26,
       "data": {
         "file": "factory-desk-f1-reading.png"
       }
@@ -289,7 +301,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 118,
+      "duration_ms": 17,
       "data": {
         "file": "factory-desk-f4-needs-you.png"
       }
@@ -297,7 +309,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 82,
+      "duration_ms": 42,
       "data": {
         "file": "factory-desk-factory-desk-1440-light.png"
       }
@@ -305,7 +317,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 71,
+      "duration_ms": 35,
       "data": {
         "file": "factory-desk-factory-desk-1000-light.png"
       }
@@ -313,7 +325,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 94,
+      "duration_ms": 54,
       "data": {
         "file": "factory-desk-factory-desk-760-light.png"
       }
@@ -321,7 +333,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 90,
+      "duration_ms": 47,
       "data": {
         "file": "factory-desk-factory-desk-1440-dark.png"
       }
@@ -329,7 +341,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 93,
+      "duration_ms": 58,
       "data": {
         "file": "factory-desk-factory-desk-1000-dark.png"
       }
@@ -337,7 +349,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 135,
+      "duration_ms": 37,
       "data": {
         "file": "factory-desk-factory-desk-760-dark.png"
       }
@@ -345,7 +357,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 38,
+      "duration_ms": 27,
       "data": {
         "file": "factory-desk-f2-empty.png"
       }
@@ -353,7 +365,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 61,
+      "duration_ms": 29,
       "data": {
         "file": "factory-desk-f3-partial.png"
       }

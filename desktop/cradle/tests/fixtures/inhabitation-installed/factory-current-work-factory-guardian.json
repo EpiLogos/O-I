@@ -1,0 +1,34 @@
+{
+  "schema": "factory.current-work/v1",
+  "position_ref": "central:position:project:O-I:factory-guardian",
+  "project_ref": "project:0000000000Q6BNNKVZJ9ZDRZES",
+  "outcome": "one",
+  "current": {
+    "node_ref": "github:EpiLogos/Factory#261",
+    "kind": "work",
+    "work_refs": [
+      "github:EpiLogos/Factory#261"
+    ],
+    "journey_refs": [
+      "journey:01M38BNMZ0YVZ3DQ9VSDKYEZKY"
+    ],
+    "custody_refs": [
+      "factory:custody:01a0d080-9f04-7ae7-b985-b20a1bb61206"
+    ],
+    "attempt_refs": []
+  },
+  "candidates": [
+    {
+      "source": "custody",
+      "source_ref": "factory:custody:01a0d080-9f04-7ae7-b985-b20a1bb61206",
+      "resolution": "resolved",
+      "node_ref": "github:EpiLogos/Factory#261",
+      "work_ref": "github:EpiLogos/Factory#261",
+      "run_ref": "run:01M38BNMZ05K9HV7TJZ5QEW5JZ",
+      "journey_ref": "journey:01M38BNMZ0YVZ3DQ9VSDKYEZKY",
+      "status": "in-progress"
+    }
+  ],
+  "considered": 1,
+  "basis": "one in-progress work node github:EpiLogos/Factory#261 from 1 relation(s): 1 custody, 0 running attempt(s)"
+}

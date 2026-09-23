@@ -25,7 +25,8 @@ async function inhabitationRead<T>(transport: KernelTransportStatus, request: In
   const source = SOURCE[request.kind];
   const result = await kernelOp(transport, {op: "inhabitation_read", request});
   if (result.error || result.outcome?.result !== "inhabitation_reading") return ownerReadFailure(result.error ?? "the kernel gave no inhabitation reading", source);
-  return {state: "read", data: snakeKeys<T>(result.outcome.data), source};
+  const warnings = result.outcome.warnings ?? [];
+  return {state: "read", data: snakeKeys<T>(result.outcome.data), source, ...(warnings.length ? {warnings} : {})};
 }
 
 export const readPopulation = (transport: KernelTransportStatus, project?: string) =>

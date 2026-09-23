@@ -273,3 +273,8 @@
 .fprep-basis dd{ margin: 0; min-width: 0; overflow-wrap: anywhere; }
 .factory-centre .ftasks-ambiguous{ display: inline-flex; flex-wrap: wrap; align-items: center; gap: 6px; color: var(--fd-muted); font-size: var(--oi-shell-type-ui); }
 @media (max-width: 760px){ .fpos-row{ grid-template-columns: 30px 1fr; } .fpos-occupants{ grid-column: 2; } }
+
+/* Factory's Context plane: the canvas and the slice stack; the canvas sizes
+   to its content inside the stack so the slice is never drawn over it. */
+.factory-context-stack{ display: flex; flex-direction: column; min-height: 100%; }
+.factory-context-stack > .ta-context-plane{ height: auto; flex: 1 0 auto; }

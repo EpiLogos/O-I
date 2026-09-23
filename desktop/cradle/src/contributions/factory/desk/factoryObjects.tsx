@@ -15,7 +15,7 @@ import {peekDeskReading, titleOfRun} from "./deskStore";
 import {nowProjectOf} from "./nowRecord";
 import {agentName, isGuardian, readRoster} from "../sidebar/FactoryAgentsTab";
 import {peekPopulation, readWhoami} from "../inhabitation/reads";
-import {currentWorkWords, facetOf, facetWords, occupancyView, positionName, workView, WHOAMI_FACETS} from "../inhabitation/model";
+import {currentWorkWords, facetNowRef, facetOf, facetWords, occupancyView, positionName, warningWords, workView, WHOAMI_FACETS} from "../inhabitation/model";
 import type {FactoryObjectRef} from "./RunPage";
 import {attemptsFor, firstSentence, frontierNode, legStanding, refTail, runState, RUN_STATE_WORD, runTitle, unitChecks, unitOf, type RunReading, type WorkflowInspection} from "./runModel";
 
@@ -166,31 +166,38 @@ registerObjectKind({kind: "factory-position", label: "Position", glyph: "agent",
   if (joined.state === "unavailable") {
     const occupancy = occupancyView(row?.occupancy);
     return {kindLabel: "Position", title: row ? positionName(row) : object.title, state: `joined reading unavailable — ${joined.reason}`,
-      fields: [...pick([["Handle", row?.handle], ["Role", refTail(row?.role_ref)], ["Occupancy", row ? occupancy.words : undefined], ["Current work", row ? workView(row.current_work).words : undefined],
+      fields: [...pick([["Handle", row?.handle ?? undefined], ["Role", refTail(row?.role_ref ?? undefined)], ["Occupancy", row ? occupancy.words : undefined], ["Current work", row ? workView(row.current_work, runRef => titleOfRun(runRef)).words : undefined],
         ["Joined reading", `unavailable — ${joined.reason} (${joined.source})`]]), ...factoryWork],
       raw: row} satisfies ObjectReading;
   }
   const reading = joined.data;
-  const position = facetOf(reading, "position");
-  const agentRef = typeof facetOf(reading, "agent")?.ref === "string" ? facetOf(reading, "agent")!.ref! : undefined;
-  const profileRef = typeof position?.profile_ref === "string" ? position.profile_ref : undefined;
-  const eligible = Array.isArray(position?.eligible_agent_refs) ? (position!.eligible_agent_refs as unknown[]).filter((ref): ref is string => typeof ref === "string") : [];
-  const nowRelation = (name: "root_now" | "child_now", label: string) => {
-    const facet = facetOf(reading, name);
-    return facet?.state === "present" && typeof facet.ref === "string" ? [{label, object: {kind: "factory-now", ref: facet.ref, title: label}}] : [];
+  const titleOf = (runRef: string) => titleOfRun(runRef);
+  // The owner's value objects, read where their shapes are the owners':
+  // the Position record (central.world-position/v1) and the occupancy
+  // (actuation.position-occupancy/v1).
+  const positionValue = facetOf(reading, "position")?.value as {record?: {label?: string; handle?: string; purpose?: string; profile_ref?: string | null; eligible_agent_refs?: string[]}} | undefined;
+  const record = positionValue?.record;
+  const occupancyValue = facetOf(reading, "occupancy")?.value as {current?: {agent_ref?: string | null}} | undefined;
+  const occupantAgent = occupancyValue?.current?.agent_ref ?? undefined;
+  const eligible = (record?.eligible_agent_refs ?? []).filter((ref): ref is string => typeof ref === "string");
+  const nowRelation = (name: string, label: string) => {
+    const ref = facetNowRef(facetOf(reading, name));
+    return ref ? [{label, object: {kind: "factory-now", ref, title: label}}] : [];
   };
-  const profileAgent = agentRef ?? eligible[0];
-  return {kindLabel: "Position", title: typeof position?.label === "string" ? position.label : row ? positionName(row) : object.title,
-    state: facetWords(facetOf(reading, "occupancy")),
+  const profileAgent = occupantAgent ?? eligible[0];
+  const warnings = (joined.warnings ?? []).map(warningWords);
+  return {kindLabel: "Position", title: record?.label ?? (row ? positionName(row) : object.title),
+    state: facetWords("occupancy", facetOf(reading, "occupancy")),
     fields: [
-      ...pick([["Handle", typeof position?.handle === "string" ? position.handle : row?.handle], ["Purpose", typeof position?.purpose === "string" ? position.purpose : undefined]]),
-      ...WHOAMI_FACETS.map(([name, label]) => ({label, value: facetWords(facetOf(reading, name))})),
+      ...pick([["Handle", record?.handle ?? row?.handle ?? undefined], ["Purpose", record?.purpose]]),
+      ...WHOAMI_FACETS.map(([name, label]) => ({label, value: facetWords(name, facetOf(reading, name), titleOf)})),
       ...factoryWork,
-      ...pick([["Profile", profileRef ? refTail(profileRef) : undefined], ["Eligible agents", eligible.length ? eligible.map(refTail).join(", ") : undefined]]),
+      ...pick([["Profile", record?.profile_ref ? refTail(record.profile_ref) : undefined], ["Eligible agents", eligible.length ? eligible.map(refTail).join(", ") : undefined],
+        ["Owner warnings", warnings.length ? warnings.join("; ") : undefined]]),
     ],
     relations: [
-      ...nowRelation("root_now", "Root NOW"), ...nowRelation("child_now", "Child NOW"),
-      ...(profileAgent ? [{label: agentRef ? "occupant's agent profile" : "eligible agent profile", object: {kind: "factory-agent", ref: profileAgent, title: refTail(profileAgent) ?? "Agent", ...(object.project ? {project: object.project} : {})}}] : []),
+      ...nowRelation("root_now", "Root NOW"), ...nowRelation("child_now", "Child NOW"), ...nowRelation("return_destination", "Return destination"),
+      ...(profileAgent ? [{label: occupantAgent ? "occupant's agent profile" : "eligible agent profile", object: {kind: "factory-agent", ref: profileAgent, title: refTail(profileAgent) ?? "Agent", ...(object.project ? {project: object.project} : {})}}] : []),
     ],
     raw: reading} satisfies ObjectReading;
 }});

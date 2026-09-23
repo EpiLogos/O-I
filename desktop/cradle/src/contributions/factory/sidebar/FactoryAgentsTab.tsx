@@ -72,8 +72,9 @@ export function FactoryAgentsTab() {
       <strong>{position.name}{position.handle && position.handle !== position.name ? <small className="fpos-handle"> {position.handle}</small> : null}</strong>
       <small data-occupancy-words><span className="fpos-mark" data-mark={position.occupancy.mark} aria-hidden="true">{position.occupancy.mark}</span> {position.occupancy.words}{position.occupancy.agent ? ` · ${position.occupancy.agent}` : ""}{position.occupancy.workcell ? ` · ${position.occupancy.workcell}` : ""}</small>
       <small data-work-words data-attention={position.work.attention ? "true" : undefined}>{position.work.attention ? "? " : ""}{position.work.words}</small>
+      {position.definition !== "present" && <small data-definition={position.definition}>? Position definition {position.definition}</small>}
     </span>
-    {position.undelivered > 0 && <span className="fdesk-needs" data-undelivered={position.undelivered} title={`${position.undelivered} undelivered message${position.undelivered === 1 ? "" : "s"}`}>{position.undelivered}</span>}
+    {position.undelivered !== null && position.undelivered > 0 && <span className="fdesk-needs" data-undelivered={position.undelivered} title={`${position.undelivered} undelivered message${position.undelivered === 1 ? "" : "s"}`}>{position.undelivered}</span>}
   </button>;
   const section = (label: string, rows: PositionRow[]) => rows.length > 0 && <section aria-label={label}><h3 className="fagents-head">{label}</h3>{rows.map(row)}</section>;
 
@@ -89,6 +90,9 @@ export function FactoryAgentsTab() {
     {section("Inherited", inherited)}
     {!reading && aperture.state === "read" && total === 0 && <p className="frtab-empty" data-population-empty>No Positions in this world yet.</p>}
     {query && total > 0 && !onRun.length && !world.length && !inherited.length && <p className="frtab-empty">No Positions match “{query}”. <button type="button" className="fdesk-link" onClick={() => setQuery("")}>Clear</button></p>}
+    {aperture.warnings.length > 0 && <section aria-label="Owner warnings" data-population-warnings>
+      {aperture.warnings.map((warning, index) => <p key={index} className="fslice-note">{warning}</p>)}
+    </section>}
     {aperture.absences.length > 0 && <section aria-label="Not read" data-population-absences>
       {aperture.absences.map((absence, index) => <p key={index} className="fslice-note">{absence.facet ? `${absence.facet.replace(/_/g, " ")}: ` : ""}{absence.reason ?? "not read"}{absence.source ? ` (${absence.source})` : ""}</p>)}
     </section>}

@@ -1,16 +1,20 @@
 /**
  * Live → Positions (11-FACTORY §3.4 "who is carrying it right now", with the
  * World-inhabitation amendment, WORLD-INHABITATION-V1 §3): the Positions
- * Factory holds in custody for this run and the occupant relations Factory
- * already records — attempt participant, execution body, session, Workcell —
- * and the run's root and child NOW. Every line is Factory's inhabitation
- * reading (`factory development inhabitation --run R`); a failed read is one
- * named line, and a read that names no Position says so. Nothing is inferred
- * from agent names, pane titles or the last attempt.
+ * Factory holds in custody for this run, Factory's current work for each, and
+ * the occupant relations Factory records per attempt — participant agent,
+ * body (session, Workcell, harness · model), placement NOW and return
+ * address. Every line is Factory's inhabitation reading (`factory development
+ * inhabitation --run R`), with Positions named from Central's population by
+ * ref. Factory holds no root/child NOW split: the NOW here is each attempt's
+ * placement NOW; the Position's root and child NOW are the joined reading's
+ * (Context → Prepared context). A failed read is one named line; a read that
+ * names no Position says so. Nothing is inferred from agent names, pane
+ * titles or the last attempt.
  */
-import type {RunInhabitationView} from "../inhabitation/model";
+import type {OccupantView, RunInhabitationView} from "../inhabitation/model";
 import type {RunPageHost} from "./RunPage";
-import {firstSentence, initials} from "./runModel";
+import {firstSentence, initials, refTail} from "./runModel";
 import {useNowRecord} from "./nowRecord";
 
 export function RunPositions({view, host}: {view: RunInhabitationView | undefined; host: RunPageHost}) {
@@ -33,18 +37,26 @@ export function RunPositions({view, host}: {view: RunInhabitationView | undefine
         </div>
         <div className="fpos-occupants">
           {position.occupants.length === 0
-            ? <small data-position-occupants="none">No occupant relation recorded by Factory.</small>
-            : position.occupants.map((occupant, index) => <div key={index} className="fpos-occupant" data-occupant-relation={occupant.relation}>
-              <span>{[occupant.relation, occupant.agent, occupant.harnessModel, occupant.workcell ? `workcell ${occupant.workcell}` : undefined].filter(Boolean).join(" · ")}</span>
-              {occupant.state && <small>{occupant.state}{occupant.reason ? ` — ${occupant.reason}` : ""}</small>}
-              {occupant.session && host.onOpenConversation && <button type="button" className="fdesk-link" onClick={() => host.onOpenConversation?.(occupant.session!)}>Open conversation</button>}
-            </div>)}
+            ? <small data-position-occupants="none">No attempt on this run names this Position.</small>
+            : position.occupants.map(occupant => <Occupant key={occupant.attemptRef} occupant={occupant} host={host}/>)}
         </div>
       </div>)}
-    {(view.rootNow || view.childNow) && <p className="flive-now" data-positions-now>
-      NOW{view.rootNow && <> · root: <NowWords address={view.rootNow} host={host}/></>}{view.childNow && <> · child: <NowWords address={view.childNow} host={host}/></>}
-    </p>}
+    {view.unplaced.length > 0 && <div className="fpos-row" data-position="none">
+      <span className="fdesk-avatar flive-avatar" aria-hidden="true">?</span>
+      <div className="fpos-who"><strong>No Position</strong><small>attempts whose participant names no Position this run lists</small></div>
+      <div className="fpos-occupants">{view.unplaced.map(occupant => <Occupant key={occupant.attemptRef} occupant={occupant} host={host}/>)}</div>
+    </div>}
   </section>;
+}
+
+function Occupant({occupant, host}: {occupant: OccupantView; host: RunPageHost}) {
+  return <div className="fpos-occupant" data-occupant-attempt={occupant.attemptRef} data-occupant-current={occupant.current ? "true" : "false"}>
+    <span>{[occupant.current ? "current attempt" : "attempt", occupant.legStatus?.replace(/_/g, " "), occupant.agent, occupant.harnessModel, occupant.workcell ? `workcell ${occupant.workcell}` : undefined].filter(Boolean).join(" · ")}</span>
+    {occupant.placementNow && <small>placement NOW · <NowWords address={occupant.placementNow} host={host}/></small>}
+    {occupant.returnAddress && <small>returns to {occupant.returnAddress.startsWith("central:now:") ? <NowWords address={occupant.returnAddress} host={host}/> : refTail(occupant.returnAddress)}</small>}
+    {occupant.notes.map(note => <small key={note}>{note}</small>)}
+    {occupant.session && host.onOpenConversation && <button type="button" className="fdesk-link" onClick={() => host.onOpenConversation?.(occupant.session!)}>Open conversation</button>}
+  </div>;
 }
 
 function NowWords({address, host}: {address: string; host: RunPageHost}) {

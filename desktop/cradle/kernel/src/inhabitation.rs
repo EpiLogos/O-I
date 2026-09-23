@@ -118,13 +118,36 @@ pub fn aikit_args(request: &Request, project_world_ref: Option<&str>, suite_rout
     args
 }
 
+/// AIKit's `--json` envelope (`{ok, schema, context, data, warnings}`) →
+/// the reading and the envelope's warnings. `ok: false` is the owner's
+/// refusal, in its own words, whatever the exit status. A document without
+/// the envelope is the reading itself (no warnings).
+pub fn unwrap_envelope(document: Value, source: &str) -> Result<(Value, Vec<Value>), Error> {
+    let enveloped = document.get("ok").is_some_and(Value::is_boolean) && document.get("data").is_some();
+    if !enveloped {
+        return Ok((document, Vec::new()));
+    }
+    if document.get("ok") != Some(&Value::Bool(true)) {
+        let stdout = serde_json::to_vec(&document).unwrap_or_default();
+        return Err(Error { kind: "owner-refused-or-failed".into(), message: refusal_words(&stdout, b""), operation_may_have_run: false });
+    }
+    let warnings = document.get("warnings").and_then(Value::as_array).cloned().unwrap_or_default();
+    let data = document.get("data").cloned().unwrap_or(Value::Null);
+    if data.is_null() {
+        return Err(Error { kind: "incompatible".into(), message: format!("{source} answered ok without a reading"), operation_may_have_run: false });
+    }
+    Ok((data, warnings))
+}
+
 /// Serve one read. `ground` is the working directory and canonical Project
 /// World ref Central disclosed for the scope (`None` when Central's world
 /// could not be read for a root-scope read: AIKit then resolves its own).
-pub fn read(request: &Request, ground: Option<(&Path, Option<&str>)>) -> Result<Value, Error> {
+/// Returns the reading (the envelope's `data`, verbatim) and its warnings.
+pub fn read(request: &Request, ground: Option<(&Path, Option<&str>)>) -> Result<(Value, Vec<Value>), Error> {
     let (executable, suite_route) = aikit_executable();
     let args = aikit_args(request, ground.and_then(|(_, world)| world), suite_route);
-    let data = run_bounded(&executable, &args, ground.map(|(cwd, _)| cwd), crate::factory::inhabitation_read_timeout(), request.source())?;
+    let document = run_bounded(&executable, &args, ground.map(|(cwd, _)| cwd), crate::factory::inhabitation_read_timeout(), request.source())?;
+    let (data, warnings) = unwrap_envelope(document, request.source())?;
     let schema = data.get("schema").or_else(|| data.get("contract")).and_then(Value::as_str).unwrap_or_default();
     if schema != request.schema() {
         return Err(Error {
@@ -133,7 +156,7 @@ pub fn read(request: &Request, ground: Option<(&Path, Option<&str>)>) -> Result<
             operation_may_have_run: false,
         });
     }
-    Ok(data)
+    Ok((data, warnings))
 }
 
 /// Drain a stream keeping at most 8 MiB, so a producer never blocks on a full
@@ -257,6 +280,21 @@ mod tests {
             "the parser's usage trailer is not the refusal"
         );
         assert_eq!(refusal_words(br#"{"error":{"message":"refused"}}"#, b""), "refused");
+    }
+
+    #[test]
+    fn the_aikit_envelope_is_unwrapped_and_its_refusal_named() {
+        let ok = serde_json::json!({"ok": true, "schema": 1, "context": {}, "data": {"schema": "aikit.population-reading/v1", "positions": []}, "warnings": [{"code": "w", "message": "stale"}]});
+        let (data, warnings) = unwrap_envelope(ok, "aikit gateway who").unwrap();
+        assert_eq!(data["schema"], "aikit.population-reading/v1");
+        assert_eq!(warnings.len(), 1);
+        let refused = serde_json::json!({"ok": false, "schema": 1, "data": null, "error": {"code": "x", "fact": "No World here.", "consequence": "Nothing was read.", "action": "Run ctrl central.world."}});
+        let error = unwrap_envelope(refused, "aikit whoami").unwrap_err();
+        assert_eq!(error.kind, "owner-refused-or-failed");
+        assert_eq!(error.message, "No World here. Nothing was read. Run ctrl central.world.");
+        let bare = serde_json::json!({"schema": "aikit.refocus-reading/v1"});
+        assert_eq!(unwrap_envelope(bare.clone(), "aikit refocus").unwrap(), (bare, Vec::new()), "a bare reading passes as itself");
+        assert_eq!(unwrap_envelope(serde_json::json!({"ok": true, "data": null}), "aikit refocus").unwrap_err().kind, "incompatible");
     }
 
     #[test]

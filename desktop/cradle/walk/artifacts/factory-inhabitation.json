@@ -1,10 +1,10 @@
 {
   "schema": "oi.cradle.walk.scenario/v1",
   "scenario": "factory-inhabitation",
-  "spec_ref": "docs/contracts/WORLD-INHABITATION-V1.md §3 §4; docs/research/openrig-c8fca9d/CROSSWALK.md §8 §15; docs/cradle/11-FACTORY.md §3.4 §5",
+  "spec_ref": "docs/contracts/WORLD-INHABITATION-V1.md §3 §4; docs/research/openrig-c8fca9d/CROSSWALK.md §8 §15; docs/cradle/11-FACTORY.md §3.4 §5; 10-SIDEBARS.md §4.5 (live, real Central, read-only)",
   "grade": "B",
   "binding": null,
-  "generated_at": "2026-09-23T22:06:48.848Z",
+  "generated_at": "2026-09-23T23:47:05.674Z",
   "environment": {
     "base_url": "http://localhost:4273",
     "bridge_url": "http://127.0.0.1:4279",
@@ -13,34 +13,36 @@
     "bundle": "walk (WALK=1) served by vite preview",
     "build_input": {
       "mode": "fresh-build",
-      "bundle_fingerprint": "0f970482b414e03e9ce70e703ff0ff796f14e20fbf917d2b2ddf1e6ba2c85825"
+      "bundle_fingerprint": "43f96dfdd390ca85738f1076682484aeb2dffb950b3a970500df9e9e53571cef"
     },
     "node": "v24.16.0",
     "platform": "darwin",
     "source": {
       "repository_root": "/private/tmp/claude-501/-Users-admin-Central/bd077907-24fc-4a07-9d7e-541f7e0b4f77/scratchpad/wt/O-I-cradle",
-      "repository_head": "feed5c925092eeef1a54d4e808727142633e6e03",
+      "repository_head": "2a4d092c6f1c9dd9de9e71d3605377da74e736e5",
       "tracked_changes": [
-        ".github/workflows/desktop.yml",
-        "desktop/cradle/kernel/src/factory.rs",
+        ".superpowers/sdd/cradle-rebuild/progress.md",
+        "desktop/cradle/kernel/src/inhabitation.rs",
         "desktop/cradle/kernel/src/lib.rs",
+        "desktop/cradle/kernel/tests/inhabitation_reads.rs",
         "desktop/cradle/scripts/receipt-lint.mjs",
-        "desktop/cradle/src/contributions/factory/FactoryCentre.tsx",
-        "desktop/cradle/src/contributions/factory/desk/Desk.tsx",
         "desktop/cradle/src/contributions/factory/desk/RunLive.tsx",
-        "desktop/cradle/src/contributions/factory/desk/RunPage.tsx",
+        "desktop/cradle/src/contributions/factory/desk/RunPositions.tsx",
         "desktop/cradle/src/contributions/factory/desk/deskStore.ts",
         "desktop/cradle/src/contributions/factory/desk/factoryObjects.tsx",
-        "desktop/cradle/src/contributions/factory/desk/factoryReads.ts",
         "desktop/cradle/src/contributions/factory/desk/fdesk.css",
-        "desktop/cradle/src/contributions/factory/desk/runModel.ts",
-        "desktop/cradle/src/contributions/factory/objectKinds.ts",
+        "desktop/cradle/src/contributions/factory/fixtures/inhabitation.ts",
+        "desktop/cradle/src/contributions/factory/inhabitation/model.ts",
+        "desktop/cradle/src/contributions/factory/inhabitation/reads.ts",
         "desktop/cradle/src/contributions/factory/sidebar/FactoryAgentsTab.tsx",
         "desktop/cradle/src/contributions/factory/sidebar/FactoryContextSlice.tsx",
-        "desktop/cradle/src/contributions/factory/sidebar/FactoryRunTab.tsx",
+        "desktop/cradle/src/contributions/factory/sidebar/PreparedBasis.tsx",
         "desktop/cradle/src/kernel/types.ts",
+        "desktop/cradle/src/workspace/modeBodies.tsx",
+        "desktop/cradle/tests/factory-inhabitation-model.test.mjs",
         "desktop/cradle/walk/artifacts/factory-desk-f1-reading.png",
         "desktop/cradle/walk/artifacts/factory-desk-f2-empty.png",
+        "desktop/cradle/walk/artifacts/factory-desk-f3-partial.png",
         "desktop/cradle/walk/artifacts/factory-desk-f4-needs-you.png",
         "desktop/cradle/walk/artifacts/factory-desk-factory-desk-1000-dark.png",
         "desktop/cradle/walk/artifacts/factory-desk-factory-desk-1000-light.png",
@@ -53,18 +55,28 @@
         "desktop/cradle/walk/artifacts/factory-development-context-tab.png",
         "desktop/cradle/walk/artifacts/factory-development-run-tab.png",
         "desktop/cradle/walk/artifacts/factory-development.json",
-        "desktop/cradle/walk/artifacts/factory-run-f12-handoff-empty.png",
+        "desktop/cradle/walk/artifacts/factory-inhabitation-fixture-agents.png",
+        "desktop/cradle/walk/artifacts/factory-inhabitation-fixture-context.png",
+        "desktop/cradle/walk/artifacts/factory-inhabitation-fixture-desk.png",
+        "desktop/cradle/walk/artifacts/factory-inhabitation-fixture-position-page.png",
+        "desktop/cradle/walk/artifacts/factory-inhabitation-fixture-run-live.png",
+        "desktop/cradle/walk/artifacts/factory-inhabitation-live-agents.png",
+        "desktop/cradle/walk/artifacts/factory-inhabitation-live-context.png",
+        "desktop/cradle/walk/artifacts/factory-inhabitation-live-desk.png",
+        "desktop/cradle/walk/artifacts/factory-inhabitation-live-run-live.png",
+        "desktop/cradle/walk/artifacts/factory-inhabitation.json",
         "desktop/cradle/walk/artifacts/factory-run-f13-before.png",
         "desktop/cradle/walk/artifacts/factory-run-f6-queued-live.png",
-        "desktop/cradle/walk/artifacts/factory-run-f8-no-units.png",
-        "desktop/cradle/walk/artifacts/factory-run-factory-run-map-1000-dark.png",
+        "desktop/cradle/walk/artifacts/factory-run-factory-run-map-1440-dark.png",
         "desktop/cradle/walk/artifacts/factory-run-live.png",
+        "desktop/cradle/walk/artifacts/factory-run-unit-page.png",
         "desktop/cradle/walk/artifacts/factory-run.json",
         "desktop/cradle/walk/run.mjs",
-        "desktop/cradle/walk/scenarios/factory-development.mjs",
-        "desktop/cradle/walk/scenarios/factory-objects.mjs"
+        "desktop/cradle/walk/scenarios/factory-inhabitation.mjs",
+        "docs/cradle/10-SIDEBARS.md",
+        "docs/cradle/11-FACTORY.md"
       ],
-      "dirty_digest": "1fef696af17bf7b0bd77572f14ad7d95efb5ce53c069bddbb7d3ff1a0b808662",
+      "dirty_digest": "685bef40af02987048c37db4c235b7df2b5267de921f5cf4a27ff852ef9e3017",
       "engine_provenance_path": "/private/tmp/claude-501/-Users-admin-Central/bd077907-24fc-4a07-9d7e-541f7e0b4f77/scratchpad/wt/O-I-cradle/packages/oi-design-system/expressions-engine/PROVENANCE.json",
       "engine_source": "EpiLogos/Point-Cloud-Demo",
       "engine_revision": "91db8428fc9dfba06cd258ec5a58e7dd9eef5313"
@@ -72,134 +84,107 @@
   },
   "passed": true,
   "error": null,
-  "duration_ms": 37437,
+  "duration_ms": 11780,
   "checks": [
     {
       "ok": true,
-      "label": "LIVE Desk: the unpublished Factory inhabitation read is named once above the board, in the owner's own words",
+      "label": "LIVE Desk: the card is held by the handle Central defines for the Position Factory holds in custody",
       "data": {
-        "ownersWords": "Owner Positions couldn't be read — factory: unknown development operation `inhabitation` (factory development inhabitation)."
+        "heldBy": "Held by @factory-guardian",
+        "custodyPosition": "central:position:project:O-I:factory-guardian",
+        "handle": "@factory-guardian",
+        "title": "Disclose the World inhabitation reads (custody list, current-work, inhabitation) in factory system --json, per EpiLogos/Factory#261",
+        "expectedTitle": "Disclose the World inhabitation reads (custody list, current-work, inhabitation) in factory system --json, per EpiLogos/Factory#261"
       }
     },
     {
       "ok": true,
-      "label": "LIVE Desk: no card claims an owner Position or an ambiguity it was not given"
+      "label": "LIVE Desk: the card title EQUALS the Journey's commission purpose",
+      "data": {
+        "title": "Disclose the World inhabitation reads (custody list, current-work, inhabitation) in factory system --json, per EpiLogos/Factory#261",
+        "expectedTitle": "Disclose the World inhabitation reads (custody list, current-work, inhabitation) in factory system --json, per EpiLogos/Factory#261"
+      }
     },
     {
       "ok": true,
-      "label": "LIVE Desk: the read went to the owner through the kernel and came back as a named error, never a reading",
+      "label": "LIVE Desk: the ambiguity mark EQUALS Factory's current-work outcome for the Position in custody",
       "data": {
-        "inhabitationOps": [
-          {
-            "op": "factory_owner",
-            "kind": "inhabitation",
-            "error": "{\"kind\":\"owner-refused-or-failed\",\"message\":\"factory: unknown development operation `inhabitation`\",\"operation_may_have_run\":false}"
-          }
+        "outcome": "one",
+        "ambiguous": 0
+      }
+    },
+    {
+      "ok": true,
+      "label": "LIVE Desk: the owners answered — no \"couldn't be read\" line"
+    },
+    {
+      "ok": true,
+      "label": "LIVE Desk: Factory's inhabitation and current-work reads went to the installed owner through the kernel and returned readings",
+      "data": {
+        "ops": [
+          "inhabitation:factory_development_reading",
+          "inhabitation:factory_development_reading",
+          "current-work:factory_development_reading"
         ]
       }
     },
     {
       "ok": true,
-      "label": "LIVE Agents: the unpublished population read is named in AIKit's own words, with Retry — never an empty roster",
+      "label": "LIVE Agents: one row per Position of the owner's population reading — no more, no fewer",
       "data": {
-        "absence": "Couldn't read who is here — error: unrecognized subcommand 'who' (aikit gateway who). Retry"
+        "rows": [
+          "central:position:project:O-I:factory-guardian",
+          "central:position:project:O-I:actuation-guardian",
+          "central:position:project:O-I:aikit-guardian",
+          "central:position:project:O-I:aletheia-5",
+          "central:position:project:O-I:anima-4",
+          "central:position:project:O-I:central-guardian",
+          "central:position:project:O-I:oi-root-agency",
+          "central:position:project:O-I:ql-guardian",
+          "central:position:project:O-I:workcell-guardian"
+        ]
       }
     },
     {
       "ok": true,
-      "label": "LIVE Agents: no Position row is invented (OpenRig: an unknown is never drawn as present)"
-    },
-    {
-      "ok": true,
-      "label": "LIVE Agents: the selected run's Positions are named unreadable, not empty",
-      "data": {
-        "runAbsence": "Positions on this run couldn't be read — factory: unknown development operation `inhabitation`"
-      }
-    },
-    {
-      "ok": true,
-      "label": "LIVE Agents: the profile roster stays reachable as secondary detail"
-    },
-    {
-      "ok": true,
-      "label": "LIVE Run → Live: Positions on this run are named unreadable with the owner's words",
-      "data": {
-        "text": "Positions on this run couldn't be read — factory: unknown development operation `inhabitation` (factory development inhabitation)"
-      }
-    },
-    {
-      "ok": true,
-      "label": "LIVE Run → Live: a leg offers an attempt only where the owner marks one current — never the last attempt standing in",
-      "data": {
-        "openAttempt": {
-          "workflow-unit:56GVT845T4DSJRBARH01VMHXWJ": false,
-          "workflow-unit:1EH2KFP5N2QSA75S9PW08Q3VVZ": false,
-          "workflow-unit:6KQSADTA97EVS2HVMVXNYBSVK1": true,
-          "workflow-unit:7CH382Y05GZEX45BQ6NT1RRRF7": true
-        },
-        "ownerCurrent": {
-          "workflow-unit:6KQSADTA97EVS2HVMVXNYBSVK1": "attempt:specimen-review-1",
-          "workflow-unit:7CH382Y05GZEX45BQ6NT1RRRF7": "attempt:specimen-survey-1"
-        }
-      }
-    },
-    {
-      "ok": true,
-      "label": "LIVE Context: the prepared-context basis says the run's Positions couldn't be read — it is not assembled from files",
-      "data": {
-        "text": "PREPARED CONTEXT\n\nPositions on this run couldn't be read — factory: unknown development operation `inhabitation` (factory development inhabitation)"
-      }
-    },
-    {
-      "ok": true,
-      "label": "[fixture] Desk: the card names the Positions holding the run, from Factory's inhabitation reading",
-      "data": {
-        "owner": "Held by @factory-guardian, @workcell-guardian"
-      }
-    },
-    {
-      "ok": true,
-      "label": "[fixture] Desk: an owner-stated ambiguity marks the card and puts it in Needs you",
-      "data": {
-        "ambiguous": "? @factory-guardian carries more than one current work (2 candidates)",
-        "column": "needs-you"
-      }
-    },
-    {
-      "ok": true,
-      "label": "[fixture] Desk: a run Factory names no Position for carries no owner line; the absence line is gone once the owner answers"
-    },
-    {
-      "ok": true,
-      "label": "[fixture] Agents: the Positions Factory holds on the selected run lead, in Factory's order — including one the population does not list",
+      "label": "LIVE Agents: each row's name and occupancy EQUAL the owner's",
       "data": {
         "rows": [
           {
             "ref": "central:position:project:O-I:factory-guardian",
             "occupancy": "occupied",
-            "work": "ambiguous",
-            "section": "On this run",
-            "mark": "◐",
-            "words": "◐ Occupied · idle · factory-guardian · local",
-            "undelivered": null
-          },
-          {
-            "ref": "central:position:project:O-I:workcell-guardian",
-            "occupancy": "unknown",
-            "work": "unavailable",
-            "section": "On this run",
-            "mark": "?",
-            "words": "? Occupancy unknown — not in the population reading",
-            "undelivered": null
-          },
-          {
-            "ref": "central:position:project:O-I:oi-root-agency",
-            "occupancy": "occupied",
             "work": "one",
+            "section": "On this run",
+            "mark": "○",
+            "name": "Software Factory Guardian",
+            "workWords": "Working on Disclose the World inhabitation reads (custody list, current-work, inhabitation) in factory system --json, per EpiLogos/Factory#261"
+          },
+          {
+            "ref": "central:position:project:O-I:actuation-guardian",
+            "occupancy": "vacant",
+            "work": "none",
             "section": "In this world",
-            "mark": "●",
-            "words": "● Occupied · active · oi-field-guardian · local",
-            "undelivered": "2"
+            "mark": "○",
+            "name": "Actuation Product Guardian",
+            "workWords": "No current work"
+          },
+          {
+            "ref": "central:position:project:O-I:aikit-guardian",
+            "occupancy": "vacant",
+            "work": "none",
+            "section": "In this world",
+            "mark": "○",
+            "name": "AIKit Product Guardian",
+            "workWords": "No current work"
+          },
+          {
+            "ref": "central:position:project:O-I:aletheia-5",
+            "occupancy": "vacant",
+            "work": "none",
+            "section": "In this world",
+            "mark": "○",
+            "name": "Aletheia 5 (M5 Epii × S5′ Aletheia)",
+            "workWords": "No current work"
           },
           {
             "ref": "central:position:project:O-I:anima-4",
@@ -207,214 +192,372 @@
             "work": "none",
             "section": "In this world",
             "mark": "○",
-            "words": "○ Vacant",
-            "undelivered": null
+            "name": "Anima 4 (M4 Nara × S4′ Anima)",
+            "workWords": "No current work"
           },
           {
-            "ref": "central:position:project:O-I:aikit-guardian",
-            "occupancy": "unavailable",
-            "work": "unavailable",
-            "section": "In this world",
-            "mark": "?",
-            "words": "? Occupancy unavailable — the occupancy ledger could not be read",
-            "undelivered": null
-          },
-          {
-            "ref": "central:position:control:root:central-guardian",
-            "occupancy": "occupied",
+            "ref": "central:position:project:O-I:central-guardian",
+            "occupancy": "vacant",
             "work": "none",
-            "section": "Inherited",
+            "section": "In this world",
             "mark": "○",
-            "words": "○ Occupied · presence not reported · central-guardian",
-            "undelivered": null
-          }
-        ]
-      }
-    },
-    {
-      "ok": true,
-      "label": "[fixture] Agents: a Position only Factory names has unknown occupancy, drawn `?` — not vacant, not present",
-      "data": {
-        "ref": "central:position:project:O-I:workcell-guardian",
-        "occupancy": "unknown",
-        "work": "unavailable",
-        "section": "On this run",
-        "mark": "?",
-        "words": "? Occupancy unknown — not in the population reading",
-        "undelivered": null
-      }
-    },
-    {
-      "ok": true,
-      "label": "[fixture] Agents: an occupied, active Position is `●` with its undelivered count",
-      "data": {
-        "ref": "central:position:project:O-I:oi-root-agency",
-        "occupancy": "occupied",
-        "work": "one",
-        "section": "In this world",
-        "mark": "●",
-        "words": "● Occupied · active · oi-field-guardian · local",
-        "undelivered": "2"
-      }
-    },
-    {
-      "ok": true,
-      "label": "[fixture] Agents: a vacant Position is `○ Vacant`",
-      "data": {
-        "ref": "central:position:project:O-I:anima-4",
-        "occupancy": "vacant",
-        "work": "none",
-        "section": "In this world",
-        "mark": "○",
-        "words": "○ Vacant",
-        "undelivered": null
-      }
-    },
-    {
-      "ok": true,
-      "label": "[fixture] Agents: an unavailable occupancy is `?` with its reason",
-      "data": {
-        "ref": "central:position:project:O-I:aikit-guardian",
-        "occupancy": "unavailable",
-        "work": "unavailable",
-        "section": "In this world",
-        "mark": "?",
-        "words": "? Occupancy unavailable — the occupancy ledger could not be read",
-        "undelivered": null
-      }
-    },
-    {
-      "ok": true,
-      "label": "[fixture] Agents: an inherited root Position sits in its own section; occupied with no stated presence is never drawn present",
-      "data": {
-        "ref": "central:position:control:root:central-guardian",
-        "occupancy": "occupied",
-        "work": "none",
-        "section": "Inherited",
-        "mark": "○",
-        "words": "○ Occupied · presence not reported · central-guardian",
-        "undelivered": null
-      }
-    },
-    {
-      "ok": true,
-      "label": "[fixture] Agents: an ambiguous current work is carried as ambiguous, never one",
-      "data": {
-        "ref": "central:position:project:O-I:factory-guardian",
-        "occupancy": "occupied",
-        "work": "ambiguous",
-        "section": "On this run",
-        "mark": "◐",
-        "words": "◐ Occupied · idle · factory-guardian · local",
-        "undelivered": null
-      }
-    },
-    {
-      "ok": true,
-      "label": "[fixture] Agents: a facet the owner could not read is named, not dropped"
-    },
-    {
-      "ok": true,
-      "label": "[fixture] Position page: every facet of the joined reading with its standing and reason",
-      "data": {
-        "Handle": "@factory-guardian",
-        "Purpose": "Steward the Software Factory product: transformation.",
-        "Local World": "root",
-        "Project World": "specimen-walk",
-        "Position": "Software Factory Guardian",
-        "Occupancy": "generation 1 · initial",
-        "Agent": "factory-guardian",
-        "Agency": "factory",
-        "Session": "absent — the occupant has no live AgentSession",
-        "Session space": "not-attempted — no AgentSession to resolve a SessionSpace from",
-        "Body": "absent — no launched body",
-        "Workcell": "local",
-        "Root NOW": "absent — no Workcell root NOW",
-        "Child NOW": "absent — no child NOW",
-        "Current work": "ambiguous — two in-progress custodies name different work",
-        "Peers": "5 Positions",
-        "Prepared context": "prepared NOW context · revision r7",
-        "Authority": "unavailable — the authority reading timed out",
-        "Working surface": "absent — no persisted working surface",
-        "Return destination": "the run's child NOW",
-        "Factory current work": "ambiguous — Make the Specimen release notes follow the changelog's declared section order, so readers meet breaking changes first; Lint the changelog for headings the release-notes generator does not declare (two in-progress custodies name different runs)",
-        "Profile": "factory-guardian",
-        "Eligible agents": "factory-guardian",
-        "Relations": "occupant's agent profilefactory-guardian"
-      }
-    },
-    {
-      "ok": true,
-      "label": "[fixture] Position page: Factory's current-work candidates are all listed, never collapsed to one",
-      "data": {
-        "factoryCurrentWork": "ambiguous — Make the Specimen release notes follow the changelog's declared section order, so readers meet breaking changes first; Lint the changelog for headings the release-notes generator does not declare (two in-progress custodies name different runs)"
-      }
-    },
-    {
-      "ok": true,
-      "label": "[fixture] Position page: the occupant's agent profile is reachable as a relation (secondary detail)"
-    },
-    {
-      "ok": true,
-      "label": "[fixture] Run → Live: Positions with their custody and Factory's occupant relations",
-      "data": {
-        "livePos": [
+            "name": "Central Product Guardian",
+            "workWords": "No current work"
+          },
           {
-            "ref": "central:position:project:O-I:factory-guardian",
-            "custody": "custody: in progress",
-            "occupants": [
-              "attempt participant · factory-guardian · pi · deepseek-v4-pro · workcell localOpen conversation"
-            ]
+            "ref": "central:position:project:O-I:oi-root-agency",
+            "occupancy": "vacant",
+            "work": "none",
+            "section": "In this world",
+            "mark": "○",
+            "name": "O:I Root Agency",
+            "workWords": "No current work"
+          },
+          {
+            "ref": "central:position:project:O-I:ql-guardian",
+            "occupancy": "vacant",
+            "work": "none",
+            "section": "In this world",
+            "mark": "○",
+            "name": "Quaternal Logic Guardian",
+            "workWords": "No current work"
           },
           {
             "ref": "central:position:project:O-I:workcell-guardian",
-            "custody": "custody: blocked",
-            "occupants": []
+            "occupancy": "vacant",
+            "work": "none",
+            "section": "In this world",
+            "mark": "○",
+            "name": "Workcell Product Guardian",
+            "workWords": "No current work"
           }
         ]
       }
     },
     {
       "ok": true,
-      "label": "[fixture] Run → Live: the ambiguity is said on the run page too"
+      "label": "LIVE Agents: a Position is drawn present (●) exactly when the owner states an occupied, active occupant",
+      "data": {
+        "present": [
+          {
+            "ref": "central:position:project:O-I:factory-guardian",
+            "drawn": false,
+            "owner": false
+          },
+          {
+            "ref": "central:position:project:O-I:actuation-guardian",
+            "drawn": false,
+            "owner": false
+          },
+          {
+            "ref": "central:position:project:O-I:aikit-guardian",
+            "drawn": false,
+            "owner": false
+          },
+          {
+            "ref": "central:position:project:O-I:aletheia-5",
+            "drawn": false,
+            "owner": false
+          },
+          {
+            "ref": "central:position:project:O-I:anima-4",
+            "drawn": false,
+            "owner": false
+          },
+          {
+            "ref": "central:position:project:O-I:central-guardian",
+            "drawn": false,
+            "owner": false
+          },
+          {
+            "ref": "central:position:project:O-I:oi-root-agency",
+            "drawn": false,
+            "owner": false
+          },
+          {
+            "ref": "central:position:project:O-I:ql-guardian",
+            "drawn": false,
+            "owner": false
+          },
+          {
+            "ref": "central:position:project:O-I:workcell-guardian",
+            "drawn": false,
+            "owner": false
+          }
+        ]
+      }
     },
     {
       "ok": true,
-      "label": "[fixture] Context: two Positions hold the run — the person chooses whose context; none is picked for them"
+      "label": "LIVE Agents: the Positions Factory holds on the selected run lead \"On this run\"",
+      "data": {
+        "custodyRow": {
+          "ref": "central:position:project:O-I:factory-guardian",
+          "occupancy": "occupied",
+          "work": "one",
+          "section": "On this run",
+          "mark": "○",
+          "name": "Software Factory Guardian",
+          "workWords": "Working on Disclose the World inhabitation reads (custody list, current-work, inhabitation) in factory system --json, per EpiLogos/Factory#261"
+        }
+      }
     },
     {
       "ok": true,
-      "label": "[fixture] Context: the Refocus chain, nested from the current operation out to the ProjectCentral ground, absences said",
+      "label": "LIVE Agents: the Position's current work EQUALS the population reading (its run by title, else its work ref as given)",
+      "data": {
+        "workWords": "Working on Disclose the World inhabitation reads (custody list, current-work, inhabitation) in factory system --json, per EpiLogos/Factory#261",
+        "expectedWork": "Working on Disclose the World inhabitation reads (custody list, current-work, inhabitation) in factory system --json, per EpiLogos/Factory#261",
+        "owner": {
+          "candidates": 1,
+          "custody_ref": "factory:custody:01a0d080-9f04-7ae7-b985-b20a1bb61206",
+          "outcome": "one",
+          "run_ref": "run:01M38BNMZ05K9HV7TJZ5QEW5JZ",
+          "work_ref": "github:EpiLogos/Factory#261"
+        }
+      }
+    },
+    {
+      "ok": true,
+      "label": "LIVE Position page: handle and purpose EQUAL the Position record in the joined reading",
+      "data": {
+        "handle": "@factory-guardian",
+        "purpose": "Steward the Software Factory product: transformation."
+      }
+    },
+    {
+      "ok": true,
+      "label": "LIVE Position page: occupancy is the facet's standing and reason",
+      "data": {
+        "occupancy": "occupied · generation 2 · fresh · factory-guardian",
+        "facet": {
+          "source": "actuation occupancy",
+          "state": "present",
+          "summary": "occupied by generation #2 actuation:generation:270ca6e2-275a-40b0-bda6-7298da0385b4 (the current occupant; this body carries no occupant generation, so it is not proven to hold the Position)",
+          "value": {
+            "current": {
+              "agency_ref": "agency:factory-guardian@project:O-I",
+              "agent_ref": "agent/factory-guardian",
+              "agent_session_ref": "claude-code:session:18a1d321-f73b-4dd3-8a56-b06cc1c84cdb",
+              "began_at_unix_ms": 1790206587012,
+              "generation_ordinal": 2,
+              "generation_ref": "actuation:generation:270ca6e2-275a-40b0-bda6-7298da0385b4",
+              "harness_composition_ref": "harness:claude-code",
+              "kind": "fresh",
+              "model_ref": "model:zai/glm-5.3-flash",
+              "position_ref": "central:position:project:O-I:factory-guardian",
+              "reason": "fresh occupancy: hostile World-inhabitation vertical, first body",
+              "schema": "actuation.position-tenure/v1",
+              "workcell_ref": "workcell:local"
+            },
+            "generations": [
+              {
+                "agency_ref": "agency:factory-guardian@project:O-I",
+                "agent_ref": "agent/factory-guardian",
+                "agent_session_ref": "claude-code:session:d20dc9bd-c55b-4e1c-b508-e303da537015",
+                "began_at_unix_ms": 1790206566200,
+                "end_kind": "released",
+                "end_reason": "body never started: Claude Code refused a nested launch (inherited CLAUDECODE); releasing before a fresh launch",
+                "ended_at_unix_ms": 1790206583100,
+                "generation_ordinal": 1,
+                "generation_ref": "actuation:generation:3de75752-b28b-427e-a2ca-d7ae18b9f304",
+                "harness_composition_ref": "harness:claude-code",
+                "kind": "initial",
+                "model_ref": "model:zai/glm-5.3-flash",
+                "position_ref": "central:position:project:O-I:factory-guardian",
+                "reason": "fresh occupancy: hostile World-inhabitation vertical, first body",
+                "schema": "actuation.position-tenure/v1",
+                "workcell_ref": "workcell:local"
+              },
+              {
+                "agency_ref": "agency:factory-guardian@project:O-I",
+                "agent_ref": "agent/factory-guardian",
+                "agent_session_ref": "claude-code:session:18a1d321-f73b-4dd3-8a56-b06cc1c84cdb",
+                "began_at_unix_ms": 1790206587012,
+                "generation_ordinal": 2,
+                "generation_ref": "actuation:generation:270ca6e2-275a-40b0-bda6-7298da0385b4",
+                "harness_composition_ref": "harness:claude-code",
+                "kind": "fresh",
+                "model_ref": "model:zai/glm-5.3-flash",
+                "position_ref": "central:position:project:O-I:factory-guardian",
+                "reason": "fresh occupancy: hostile World-inhabitation vertical, first body",
+                "schema": "actuation.position-tenure/v1",
+                "workcell_ref": "workcell:local"
+              }
+            ],
+            "position_ref": "central:position:project:O-I:factory-guardian",
+            "predecessor": {
+              "agency_ref": "agency:factory-guardian@project:O-I",
+              "agent_ref": "agent/factory-guardian",
+              "agent_session_ref": "claude-code:session:d20dc9bd-c55b-4e1c-b508-e303da537015",
+              "began_at_unix_ms": 1790206566200,
+              "end_kind": "released",
+              "end_reason": "body never started: Claude Code refused a nested launch (inherited CLAUDECODE); releasing before a fresh launch",
+              "ended_at_unix_ms": 1790206583100,
+              "generation_ordinal": 1,
+              "generation_ref": "actuation:generation:3de75752-b28b-427e-a2ca-d7ae18b9f304",
+              "harness_composition_ref": "harness:claude-code",
+              "kind": "initial",
+              "model_ref": "model:zai/glm-5.3-flash",
+              "position_ref": "central:position:project:O-I:factory-guardian",
+              "reason": "fresh occupancy: hostile World-inhabitation vertical, first body",
+              "schema": "actuation.position-tenure/v1",
+              "workcell_ref": "workcell:local"
+            },
+            "schema": "actuation.position-occupancy/v1",
+            "state": "occupied"
+          }
+        }
+      }
+    },
+    {
+      "ok": true,
+      "label": "LIVE Position page: prepared context as the owner states it",
+      "data": {
+        "prepared": "not-attempted — no Redis NOW material configured (--redis-config or AIKIT_WORLD_REDIS_CONFIG)"
+      }
+    },
+    {
+      "ok": true,
+      "label": "LIVE Position page: current work read from the facet's value object (Factory's reading), not the summary text",
+      "data": {
+        "workField": "one: Factory#261 (run: Disclose the World inhabitation reads (custody list, current-work, inhabitation) in factory system --json, per EpiLogos/Factory#261) — one in-progress work node github:EpiLogos/Factory#261 from 1 relation(s): 1 custody, 0 running attempt(s)",
+        "summary": "github:EpiLogos/Factory#261 [in-progress] run run:01M38BNMZ05K9HV7TJZ5QEW5JZ"
+      }
+    },
+    {
+      "ok": true,
+      "label": "LIVE Position page: Factory's own current-work reading, with its basis",
+      "data": {
+        "factory": "one: Factory#261 (run: Disclose the World inhabitation reads (custody list, current-work, inhabitation) in factory system --json, per EpiLogos/Factory#261) — one in-progress work node github:EpiLogos/Factory#261 from 1 relation(s): 1 custody, 0 running attempt(s)"
+      }
+    },
+    {
+      "ok": true,
+      "label": "LIVE Position page: the root NOW relation exists exactly when the facet is present"
+    },
+    {
+      "ok": true,
+      "label": "LIVE Run → Live: the Positions and custody EQUAL Factory's inhabitation reading",
+      "data": {
+        "liveRows": [
+          {
+            "ref": "central:position:project:O-I:factory-guardian",
+            "custody": "custody: in progress · Factory#261",
+            "occupants": "none"
+          }
+        ],
+        "custodyWords": "custody: in progress · Factory#261"
+      }
+    },
+    {
+      "ok": true,
+      "label": "LIVE Run → Live: no occupant relation is drawn where Factory records no attempt",
+      "data": {
+        "occupants": 0
+      }
+    },
+    {
+      "ok": true,
+      "label": "LIVE Context: the Refocus trace hop by hop, the owner's gaps in its own words",
       "data": {
         "links": [
-          "Current operation Review the section order",
-          "Workflow unit Challenge section order under hostile inputs",
-          "Run Survey then review the specimen",
-          "Journey absent — the run names no Journey",
-          "Project intent O:I vision and goals",
-          "ProjectCentral ground O-I ProjectCentral"
+          {
+            "state": "present",
+            "text": "Current operation work github:EpiLogos/Factory#261 [in-progress]"
+          },
+          {
+            "state": "gap",
+            "text": "Workflow unit gap — the current work names no workflow unit"
+          },
+          {
+            "state": "present",
+            "text": "Run seeded: factory-261/system-discloses-inhabitation-reads"
+          },
+          {
+            "state": "present",
+            "text": "Journey commission commission-request:factory-261-system-discloses-inhabitation-reads: Disclose the World inhabitation reads (custody list, current-work, inhabitation) in factory system --json, per EpiLogos/Factory#261"
+          },
+          {
+            "state": "present",
+            "text": "Project intent 1 telos source(s)"
+          },
+          {
+            "state": "present",
+            "text": "ProjectCentral ground project.json"
+          }
+        ],
+        "hops": [
+          {
+            "detail": "work github:EpiLogos/Factory#261 [in-progress]",
+            "hop": "operation",
+            "ref": "factory:custody:01a0d080-9f04-7ae7-b985-b20a1bb61206",
+            "revision": "blake3:3a34898ee25c4ec69e90fe4764e4246998c4bfc4ef316aeb2bbab71631623912",
+            "source": "factory development current-work"
+          },
+          {
+            "gap": "the current work names no workflow unit",
+            "hop": "workflow-unit",
+            "source": "factory development workflow-unit"
+          },
+          {
+            "detail": "seeded: factory-261/system-discloses-inhabitation-reads",
+            "hop": "run",
+            "ref": "run:01M38BNMZ05K9HV7TJZ5QEW5JZ",
+            "revision": "1",
+            "source": "factory development run"
+          },
+          {
+            "detail": "commission commission-request:factory-261-system-discloses-inhabitation-reads: Disclose the World inhabitation reads (custody list, current-work, inhabitation) in factory system --json, per EpiLogos/Factory#261",
+            "hop": "journey",
+            "ref": "journey:01M38BNMZ0YVZ3DQ9VSDKYEZKY",
+            "revision": "3",
+            "source": "factory development journey"
+          },
+          {
+            "detail": "1 telos source(s)",
+            "hop": "intent",
+            "ref": "central:source:project:O-I:ProjectCentral/user/telos",
+            "revision": "blake3:3bd8061b634f8c9e758dbbb6bc11f01fe2bf4264f72f732b02107cfad6a15968",
+            "source": "ProjectCentral/user/telos"
+          },
+          {
+            "hop": "ground",
+            "ref": "central:source:project:O-I:ProjectCentral/project.json",
+            "revision": "blake3:58287bfc49772ad07da758adbad1076f747b808631dbdba561860e710f9875f8",
+            "source": "ProjectCentral/project.json"
+          }
         ]
       }
     },
     {
       "ok": true,
-      "label": "[fixture] Context: the joined reading's prepared context with its revision"
-    },
-    {
-      "ok": true,
-      "label": "[fixture] every controlled read reached its owner executable through the kernel (none was answered in the renderer)",
+      "label": "LIVE Context: prepared context and child NOW as the owner states them",
       "data": {
-        "served": [
-          "development inhabitation ",
-          "gateway who ",
-          "development inhabitation ",
-          "whoami --position factory-guardian",
-          "development current-work factory-guardian",
-          "development inhabitation ",
-          "refocus --position factory-guardian",
-          "whoami --position factory-guardian"
+        "basis": {
+          "Prepared context": "not-attempted — no Redis NOW material configured (--redis-config or AIKIT_WORLD_REDIS_CONFIG)",
+          "Root NOW": "Reading…",
+          "Child NOW": "Reading…",
+          "Return": "Reading…"
+        }
+      }
+    },
+    {
+      "ok": true,
+      "label": "LIVE: every AIKit inhabitation read answered through the kernel",
+      "data": {
+        "ops": [
+          "inhabitation_reading",
+          "inhabitation_reading",
+          "inhabitation_reading",
+          "inhabitation_reading",
+          "inhabitation_reading"
         ]
       }
+    },
+    {
+      "ok": true,
+      "label": "LIVE: read-only — the O-I Factory state is byte-identical after the walk"
     }
   ],
   "ops": [
@@ -424,7 +567,7 @@
       "duration_ms": 0,
       "data": {
         "schema": "oi.cradle.walk/v1",
-        "mounted_at": "2026-09-23T22:06:49.104Z",
+        "mounted_at": "2026-09-23T23:47:05.781Z",
         "transport": {
           "kind": "bridge",
           "url": "http://127.0.0.1:4279"
@@ -435,10 +578,10 @@
     {
       "ok": true,
       "op": "info",
-      "duration_ms": 0.1,
+      "duration_ms": 0,
       "data": {
         "schema": "oi.cradle.walk/v1",
-        "mounted_at": "2026-09-23T22:06:50.284Z",
+        "mounted_at": "2026-09-23T23:47:07.024Z",
         "transport": {
           "kind": "bridge",
           "url": "http://127.0.0.1:4279"
@@ -449,65 +592,17 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 49,
+      "duration_ms": 22,
       "data": {
-        "file": "factory-inhabitation-live-desk.png"
+        "file": "factory-inhabitation-desk.png"
       }
     },
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 45,
+      "duration_ms": 56,
       "data": {
-        "file": "factory-inhabitation-live-agents.png"
-      }
-    },
-    {
-      "ok": true,
-      "op": "capture.screenshot",
-      "duration_ms": 44,
-      "data": {
-        "file": "factory-inhabitation-live-run-live.png"
-      }
-    },
-    {
-      "ok": true,
-      "op": "capture.screenshot",
-      "duration_ms": 50,
-      "data": {
-        "file": "factory-inhabitation-live-context.png"
-      }
-    },
-    {
-      "ok": true,
-      "op": "capture.screenshot",
-      "duration_ms": 34,
-      "data": {
-        "file": "factory-inhabitation-fixture-desk.png"
-      }
-    },
-    {
-      "ok": true,
-      "op": "capture.screenshot",
-      "duration_ms": 66,
-      "data": {
-        "file": "factory-inhabitation-fixture-agents.png"
-      }
-    },
-    {
-      "ok": true,
-      "op": "capture.screenshot",
-      "duration_ms": 64,
-      "data": {
-        "file": "factory-inhabitation-fixture-position-page.png"
-      }
-    },
-    {
-      "ok": true,
-      "op": "capture.screenshot",
-      "duration_ms": 71,
-      "data": {
-        "file": "factory-inhabitation-fixture-run-live.png"
+        "file": "factory-inhabitation-agents.png"
       }
     },
     {
@@ -515,20 +610,32 @@
       "op": "capture.screenshot",
       "duration_ms": 43,
       "data": {
-        "file": "factory-inhabitation-fixture-context.png"
+        "file": "factory-inhabitation-position-page.png"
+      }
+    },
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 32,
+      "data": {
+        "file": "factory-inhabitation-run-live.png"
+      }
+    },
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 40,
+      "data": {
+        "file": "factory-inhabitation-context.png"
       }
     }
   ],
   "metrics": {},
   "screenshots": [
-    "factory-inhabitation-live-desk.png",
-    "factory-inhabitation-live-agents.png",
-    "factory-inhabitation-live-run-live.png",
-    "factory-inhabitation-live-context.png",
-    "factory-inhabitation-fixture-desk.png",
-    "factory-inhabitation-fixture-agents.png",
-    "factory-inhabitation-fixture-position-page.png",
-    "factory-inhabitation-fixture-run-live.png",
-    "factory-inhabitation-fixture-context.png"
+    "factory-inhabitation-desk.png",
+    "factory-inhabitation-agents.png",
+    "factory-inhabitation-position-page.png",
+    "factory-inhabitation-run-live.png",
+    "factory-inhabitation-context.png"
   ]
 }

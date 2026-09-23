@@ -3,23 +3,24 @@
  * WORLD-INHABITATION-V1.md) — pure functions over the owners' readings, no
  * kernel, no React.
  *
- * Readings consumed (each the owner's own document, carried verbatim):
- *   aikit.population-reading/v1   `aikit gateway who --json`        the Agents aperture
- *   aikit.inhabitation-reading/v1 `aikit whoami --position P --full` the Position page, Context
- *   aikit.refocus-reading/v1      `aikit refocus --position P`       the Context basis chain
+ * Readings consumed (each the owner's own document; AIKit's `--json`
+ * envelope is unwrapped in the kernel, its warnings carried beside):
+ *   aikit.population-reading/v1     `aikit gateway who [--project-world W]`   Agents aperture, names
+ *   aikit.inhabitation-reading/v1   `aikit whoami --position P --full`         Position page, Context
+ *   aikit.refocus-reading/v1        `aikit refocus --position P`               Context basis chain
  *   factory.inhabitation-reading/v1 `factory development inhabitation <state> [--run R]`
- *                                                                    Desk owner line, Run → Live
- *   factory.current-work/v1       `factory development current-work <state> --position P`
+ *                                                                              Desk owner line, Run → Live
+ *   factory.current-work/v1         `factory development current-work <state> --position P`
+ *                                                                              ambiguity, Position page
  *
- * The contract pins the population and current-work shapes; for the joined,
- * Refocus and Factory inhabitation readings it pins the facets and their
- * standing, and the field names consumed below are this consumer's reading of
- * that contract (snake_case, as the contract writes them; a camelCase owner
- * spelling is normalised once at ingestion by `snakeKeys`). A field the owner
- * does not write stays absent — the renderer omits the line or names the
- * absence. Nothing here infers topology: no Position, occupant or work fact
- * exists unless an owner reading states it, and an unknown is never drawn as
- * present (OpenRig TUI rule, CROSSWALK §15).
+ * The shapes below are the installed owners' (aikit 71a9972c, factory
+ * f0f4d7c3), read from their actual output. Joins are by ref identity only
+ * (a Factory Position is named by the population row with the same ref). A
+ * field the owner does not write stays absent — the renderer omits the line
+ * or names the absence. Nothing here infers topology, and an unknown is never
+ * drawn as present (OpenRig TUI rule, CROSSWALK §15). Where an owner reading
+ * is itself wrong (a summary naming `?`, a null run ref) the view shows the
+ * owner's value as given: defects are reported to the owner, not patched here.
  */
 import {firstSentence, refTail} from "../desk/runModel";
 
@@ -31,11 +32,12 @@ export type FacetState = "present" | "absent" | "ambiguous" | "unavailable" | "n
 export const FACET_STATES: readonly FacetState[] = ["present", "absent", "ambiguous", "unavailable", "not-attempted"];
 export interface Absence { facet?: string; reason?: string; source?: string }
 
-/** One owner read as the desktop holds it: the document, or a named absence
- * (the owner could not be reached, refused, stalled, or answered another
- * schema). Never an empty reading standing in for a failure. */
+/** One owner read as the desktop holds it: the document (with the AIKit
+ * envelope's warnings, when any), or a named absence (the owner could not be
+ * reached, refused, stalled, or answered another schema). Never an empty
+ * reading standing in for a failure. */
 export type OwnerRead<T> =
-  | {state: "read"; data: T; source: string}
+  | {state: "read"; data: T; source: string; warnings?: unknown[]}
   | {state: "unavailable"; reason: string; source: string; kind?: string};
 
 /** The kernel's error envelope (`{kind, message}`) → a named absence. */
@@ -50,8 +52,16 @@ export function ownerReadFailure(error: unknown, source: string): {state: "unava
   return {state: "unavailable", reason: text || "the owner gave no reason", source};
 }
 
+/** An envelope warning in words (`message`, else the value itself). */
+export function warningWords(warning: unknown): string {
+  if (typeof warning === "string") return warning;
+  if (warning && typeof warning === "object" && typeof (warning as {message?: unknown}).message === "string") return (warning as {message: string}).message;
+  return JSON.stringify(warning);
+}
+
 /** camelCase keys → snake_case, recursively; keys that are refs (anything
- * with `:`, `/`, `-` or a leading capital) are left exactly as written. */
+ * with `:`, `/`, `-` or a leading capital) are left exactly as written. The
+ * installed owners already write snake_case; this only guards the boundary. */
 export function snakeKeys<T = unknown>(value: unknown): T {
   if (Array.isArray(value)) return value.map(item => snakeKeys(item)) as T;
   if (!value || typeof value !== "object") return value as T;
@@ -63,66 +73,100 @@ export function snakeKeys<T = unknown>(value: unknown): T {
   return out as T;
 }
 
+const isRecord = (value: unknown): value is Record<string, unknown> => !!value && typeof value === "object" && !Array.isArray(value);
+const text = (value: unknown): string | undefined => typeof value === "string" && value.trim() ? value : undefined;
+
 // ---------------------------------------------------------------------------
-// Owner reading shapes (only the fields this consumer reads)
+// Owner reading shapes (the fields this consumer reads)
 // ---------------------------------------------------------------------------
 
 export interface PopulationOccupancy {
-  state?: string; generation_ref?: string; generation_ordinal?: number; kind?: string;
-  agent_ref?: string; agency_ref?: string; agent_session_ref?: string; workcell_ref?: string;
-  since_unix_ms?: number; presence?: string; attention?: string; reason?: string;
+  state?: string; generation_ref?: string | null; generation_ordinal?: number | null; kind?: string | null;
+  agent_ref?: string | null; agency_ref?: string | null; agent_session_ref?: string | null; workcell_ref?: string | null;
+  since_unix_ms?: number | null; presence?: string | null; attention?: string | null;
 }
-export interface PopulationCurrentWork { outcome?: string; work_ref?: string; run_ref?: string; candidates?: number; reason?: string }
+export interface PopulationCurrentWork { outcome?: string; work_ref?: string | null; run_ref?: string | null; custody_ref?: string | null; candidates?: number | null }
 export interface PopulationPosition {
-  position_ref: string; handle?: string; label?: string; role_ref?: string; inherited?: boolean;
-  occupancy?: PopulationOccupancy; current_work?: PopulationCurrentWork; communiques?: {undelivered?: number};
+  position_ref: string; handle?: string | null; label?: string | null; role_ref?: string | null; inherited?: boolean;
+  /** Whether Central defines this Position: present | absent | unavailable. */
+  definition?: string;
+  occupancy?: PopulationOccupancy; current_work?: PopulationCurrentWork;
+  /** `undelivered: null` = the Gateway journal could not be read (see absences). */
+  communiques?: {undelivered?: number | null};
 }
 export interface PopulationReading {
   schema: "aikit.population-reading/v1"; project_world_ref?: string | null; local_world_ref?: string;
   positions?: PopulationPosition[]; absences?: Absence[];
 }
 
-export interface Facet { state?: string; reason?: string; source?: string; ref?: string | null; revision?: string | null; label?: string; handle?: string; [field: string]: unknown }
-export interface InhabitationReading { schema: "aikit.inhabitation-reading/v1"; facets?: Record<string, Facet>; [facet: string]: unknown }
+/** One facet of the joined reading: `{state, reason?, source, summary?,
+ * next?, value?}`. */
+export interface Facet { state?: string; reason?: string; source?: string; summary?: string; next?: string; value?: unknown }
+export interface InhabitationReading {
+  schema: "aikit.inhabitation-reading/v1"; position_ref?: string | null; resolved_by?: string; depth?: string;
+  facets?: Record<string, Facet>; identity?: Record<string, unknown>;
+}
 
-export interface RefocusLink { level?: string; ref?: string | null; label?: string | null; state?: string; reason?: string; source?: string; revision?: string | null }
+/** One hop of the Refocus trace: a ref (with revision and detail) or a gap. */
+export interface RefocusHop { hop?: string; ref?: string | null; revision?: string | null; detail?: string | null; gap?: string | null; source?: string }
 export interface RefocusReading {
-  schema: "aikit.refocus-reading/v1"; position_ref?: string | null;
-  chain?: RefocusLink[]; now?: {root_now_ref?: string | null; child_now_ref?: string | null} | null;
-  return_target?: string | {ref?: string | null} | null; changed_sources?: {ref?: string; revision?: string}[];
-  nearby_work?: unknown[]; absences?: Absence[];
+  schema: "aikit.refocus-reading/v1"; chain?: RefocusHop[]; position?: string | null; root_now?: string | null;
+  return_target?: string | null; nearby?: unknown[]; trigger?: string; why?: string; text?: string;
 }
 
-export interface FactoryCustody { custody_ref?: string; position_ref?: string; work_ref?: string; run_ref?: string; workflow_unit_ref?: string; state?: string; reason?: string }
-export interface FactoryOccupantRelation {
-  relation?: string; state?: string; reason?: string;
-  attempt_ref?: string; execution_ref?: string; agent_ref?: string; agency_ref?: string;
-  agent_session_ref?: string; session_space_ref?: string; workcell_ref?: string; harness_ref?: string; model_ref?: string;
-  generation_ref?: string; placement_now_ref?: string; return_address?: string;
-}
-export interface FactoryRunPosition {
-  position_ref: string; handle?: string; label?: string; state?: string; reason?: string;
-  custody?: FactoryCustody[]; current_work?: {outcome?: string; candidates?: number | unknown[]; basis?: string};
-  occupants?: FactoryOccupantRelation[];
+/** Factory's facet: `{state, value?, reason?, source}` (value is a string). */
+export interface FactoryFacet { state?: string; value?: string | null; reason?: string; source?: string }
+export interface FactoryCustodySummary { custody_ref?: string; state?: string; work_ref?: string; workflow_unit_ref?: string | null }
+export interface FactoryPositionInRun { position_ref: string; in_custody?: boolean; custody?: FactoryCustodySummary[]; attempt_refs?: string[]; current_attempt_refs?: string[] }
+export interface FactoryOccupant {
+  attempt_ref: string; task_ref?: string; workflow_unit_ref?: string; execution_ref?: string;
+  current_attempt?: boolean; leg_status?: string | null;
+  participant?: Record<string, FactoryFacet | undefined>;
+  body?: Record<string, FactoryFacet | undefined>;
+  placement?: {now_ref?: FactoryFacet};
+  return_address?: FactoryFacet;
 }
 export interface FactoryRunInhabitation {
-  run_ref: string; positions?: FactoryRunPosition[];
-  now?: {root_now_ref?: string | null; child_now_ref?: string | null} | null;
-  root_now_ref?: string | null; child_now_ref?: string | null; return_address?: string | null; absences?: Absence[];
+  run_ref: string; lifecycle?: string; journey_refs?: string[];
+  positions?: FactoryPositionInRun[]; custody?: Record<string, unknown>[]; occupants?: FactoryOccupant[];
 }
-export interface FactoryInhabitationReading { schema?: string; contract?: string; project_ref?: string; runs?: FactoryRunInhabitation[]; absences?: Absence[] }
-export interface FactoryCurrentWork { schema?: string; position_ref?: string; outcome?: string; current?: Record<string, unknown> | null; candidates?: unknown[]; considered?: number; basis?: string }
+export interface FactoryInhabitationReading {
+  schema?: string; project_ref?: string; central_project_ref?: FactoryFacet;
+  filter?: {run_ref?: string | null; position_ref?: string | null};
+  runs?: FactoryRunInhabitation[]; custody_outside_runs?: Record<string, unknown>[];
+}
+export interface FactoryWorkCandidate { source?: string; source_ref?: string; resolution?: string; node_ref?: string; work_ref?: string | null; run_ref?: string | null; journey_ref?: string | null; status?: string }
+export interface FactoryCurrentWork {
+  schema?: string; position_ref?: string; project_ref?: string; outcome?: string;
+  current?: {node_ref?: string; kind?: string; work_refs?: string[]; journey_refs?: string[]; custody_refs?: string[]; attempt_refs?: string[]} | null;
+  candidates?: FactoryWorkCandidate[]; considered?: number; basis?: string;
+}
+
+/** A Position's names as Central defines them (from the population). */
+export interface PositionNames { handle?: string; label?: string }
+export type NameLookup = (positionRef: string) => PositionNames | undefined;
+export type TitleLookup = (runRef: string) => string | undefined;
+
+/** Every Position's names in a population reading, by ref. */
+export function namesOf(population: PopulationReading | undefined): Record<string, PositionNames> {
+  const out: Record<string, PositionNames> = {};
+  for (const row of population?.positions ?? []) {
+    if (typeof row?.position_ref !== "string") continue;
+    out[row.position_ref] = {...(text(row.handle) ? {handle: row.handle!} : {}), ...(text(row.label) ? {label: row.label!} : {})};
+  }
+  return out;
+}
 
 // ---------------------------------------------------------------------------
 // Words
 // ---------------------------------------------------------------------------
 
-/** A Position's readable name: its label, else its handle, else the slug. */
+/** A Position's readable name: its label, else its handle, else the ref's
+ * last segment (said as the ref's own words — never turned into a handle). */
 export function positionName(row: {label?: string | null; handle?: string | null; position_ref?: string}): string {
   if (row.label?.trim()) return row.label.trim();
   if (row.handle?.trim()) return row.handle.trim();
-  const slug = refTail(row.position_ref) ?? "Position";
-  return slug.charAt(0).toUpperCase() + slug.slice(1).replace(/-/g, " ");
+  return refTail(row.position_ref) ?? "Position";
 }
 
 export type OccupancyMark = "●" | "◐" | "○" | "?";
@@ -136,74 +180,117 @@ export interface OccupancyView {
  * and a missing or unreadable occupancy is `?` with its reason. */
 export function occupancyView(occupancy: PopulationOccupancy | undefined, missingReason?: string): OccupancyView {
   if (!occupancy?.state) return {state: "unknown", mark: "?", words: missingReason ? `Occupancy unknown — ${missingReason}` : "Occupancy not reported"};
-  const agent = refTail(occupancy.agent_ref), workcell = refTail(occupancy.workcell_ref);
+  const agent = refTail(occupancy.agent_ref ?? undefined), workcell = refTail(occupancy.workcell_ref ?? undefined);
   const extra = {...(agent ? {agent} : {}), ...(occupancy.agent_session_ref ? {session: occupancy.agent_session_ref} : {}), ...(workcell ? {workcell} : {}), ...(occupancy.attention ? {attention: occupancy.attention} : {})};
   switch (occupancy.state) {
     case "occupied": {
-      const presence = occupancy.presence;
+      const presence = occupancy.presence ?? undefined;
       const mark: OccupancyMark = presence === "active" ? "●" : presence === "idle" ? "◐" : "○";
       return {state: "occupied", mark, words: presence ? `Occupied · ${presence}` : "Occupied · presence not reported", ...extra};
     }
     case "vacant": return {state: "vacant", mark: "○", words: "Vacant"};
-    case "unavailable": return {state: "unavailable", mark: "?", words: occupancy.reason ? `Occupancy unavailable — ${occupancy.reason}` : "Occupancy unavailable"};
+    case "unavailable": return {state: "unavailable", mark: "?", words: "Occupancy unavailable"};
     default: return {state: "unknown", mark: "?", words: `Occupancy “${occupancy.state}” is not a state this view knows`};
   }
 }
 
 export interface WorkView { outcome: "none" | "one" | "ambiguous" | "unavailable"; words: string; runRef?: string; attention: boolean }
-/** Current work in words. `titleOf` names a run the Desk has read; a run it
- * has not read is named by its reference tail, never guessed. */
-export function workView(work: PopulationCurrentWork | FactoryRunPosition["current_work"] | undefined, titleOf?: (runRef: string) => string | undefined): WorkView {
+/** The population's current-work summary in words. The work is named by the
+ * run's title when the owner gives a run the Desk has read, else by the work
+ * ref's own last segment — as given, never guessed. */
+export function workView(work: PopulationCurrentWork | undefined, titleOf?: TitleLookup, absenceReason?: string): WorkView {
   const outcome = work?.outcome;
-  const candidates = Array.isArray(work?.candidates) ? work.candidates.length : typeof work?.candidates === "number" ? work.candidates : undefined;
   if (outcome === "one") {
-    const runRef = (work as PopulationCurrentWork).run_ref ?? undefined;
-    const workRef = (work as PopulationCurrentWork).work_ref ?? undefined;
+    const runRef = work?.run_ref ?? undefined;
     const title = runRef ? titleOf?.(runRef) : undefined;
-    return {outcome: "one", words: `Working on ${title ?? refTail(workRef ?? runRef) ?? "one work item"}`, ...(runRef ? {runRef} : {}), attention: false};
+    return {outcome: "one", words: `Working on ${title ?? refTail(work?.work_ref ?? runRef ?? undefined) ?? "one work item"}`, ...(runRef ? {runRef} : {}), attention: false};
   }
   if (outcome === "none") return {outcome: "none", words: "No current work", attention: false};
-  if (outcome === "ambiguous") return {outcome: "ambiguous", words: `Current work is ambiguous${candidates !== undefined ? ` — ${candidates} candidates` : ""}`, attention: true};
-  const reason = (work as {reason?: string} | undefined)?.reason;
-  return {outcome: "unavailable", words: reason ? `Current work unavailable — ${reason}` : "Current work not reported", attention: false};
-}
-
-/** A facet in one line: a present facet's own words, else its standing and
- * reason. An unrecognised or missing standing is said as such. */
-export function facetWords(facet: Facet | undefined): string {
-  if (!facet) return "not reported";
-  const state = facet.state ?? "";
-  if (state === "present") {
-    const words = facet.label ?? facet.handle ?? (typeof facet.value === "string" ? facet.value : undefined) ?? refTail(facet.ref ?? undefined);
-    return [words ?? "present", facet.revision ? `revision ${facet.revision}` : undefined].filter(Boolean).join(" · ");
+  if (outcome === "ambiguous") {
+    const n = typeof work?.candidates === "number" ? work.candidates : undefined;
+    return {outcome: "ambiguous", words: `Current work is ambiguous${n !== undefined ? ` — ${n} candidates` : ""}`, attention: true};
   }
-  if ((FACET_STATES as readonly string[]).includes(state)) return facet.reason ? `${state} — ${facet.reason}` : state;
-  return state ? `“${state}” (not a standing this view knows)` : "not reported";
+  return {outcome: "unavailable", words: absenceReason ? `Current work unavailable — ${absenceReason}` : outcome ? `Current work ${outcome}` : "Current work not reported", attention: false};
 }
 
-/** A facet of the joined reading, whether the owner writes the facets at the
- * top level or under `facets`. */
-export function facetOf(reading: InhabitationReading | undefined, name: string): Facet | undefined {
-  if (!reading) return undefined;
-  const value = reading.facets?.[name] ?? reading[name];
-  return value && typeof value === "object" && !Array.isArray(value) ? value as Facet : undefined;
+/** Factory's own current-work reading as a WorkView (the authority for
+ * custody; used on the Desk and in Live). */
+export function factoryWorkView(reading: FactoryCurrentWork | undefined, titleOf?: TitleLookup): WorkView | undefined {
+  if (!reading?.outcome) return undefined;
+  if (reading.outcome === "none") return {outcome: "none", words: "No current work", attention: false};
+  if (reading.outcome === "one") {
+    const runRef = (reading.candidates ?? []).map(candidate => candidate.run_ref).find((ref): ref is string => !!ref);
+    const title = runRef ? titleOf?.(runRef) : undefined;
+    return {outcome: "one", words: `Working on ${title ?? refTail(reading.current?.node_ref) ?? "one work item"}`, ...(runRef ? {runRef} : {}), attention: false};
+  }
+  if (reading.outcome === "ambiguous") return {outcome: "ambiguous", words: `Current work is ambiguous — ${(reading.candidates ?? []).length} candidates`, attention: true};
+  return {outcome: "unavailable", words: `Current work “${reading.outcome}” (not an outcome this view knows)`, attention: false};
 }
 
-/** Factory's current-work reading in one line: the outcome, and every
- * candidate when it is ambiguous (named by run title when the Desk has read
- * the run, else by reference tail) with the owner's basis. */
-export function currentWorkWords(reading: FactoryCurrentWork, titleOf?: (runRef: string) => string | undefined): string {
-  const name = (candidate: unknown) => {
-    const row = (candidate && typeof candidate === "object" ? candidate : {}) as {run_ref?: string; work_ref?: string; workflow_unit_ref?: string};
-    return (row.run_ref ? titleOf?.(row.run_ref) : undefined) ?? refTail(row.work_ref ?? row.workflow_unit_ref ?? row.run_ref) ?? "a candidate";
+/** Factory's current-work reading in one line: the outcome, the node and the
+ * runs its candidates name (by title when the Desk has read them), and every
+ * candidate of an ambiguity with the owner's basis — never collapsed to one. */
+export function currentWorkWords(reading: FactoryCurrentWork, titleOf?: TitleLookup): string {
+  const run = (ref: string | null | undefined) => ref ? titleOf?.(ref) ?? refTail(ref) : undefined;
+  const candidate = (row: FactoryWorkCandidate) => {
+    const node = refTail(row.node_ref ?? row.work_ref ?? undefined) ?? "a candidate";
+    const runWords = run(row.run_ref);
+    return `${node}${runWords ? ` (run: ${runWords})` : ""}${row.status ? ` [${row.status}]` : ""}`;
   };
-  const basis = reading.basis ? ` (${reading.basis})` : "";
+  const basis = reading.basis ? ` — ${reading.basis}` : "";
   switch (reading.outcome) {
-    case "one": return `one — ${name(reading.current)}${basis}`;
-    case "none": return `none${typeof reading.considered === "number" ? ` of ${reading.considered} considered` : ""}${basis}`;
-    case "ambiguous": return `ambiguous — ${(reading.candidates ?? []).map(name).join("; ") || "candidates not listed"}${basis}`;
+    case "one": {
+      const runs = [...new Set((reading.candidates ?? []).map(row => run(row.run_ref)).filter(Boolean))];
+      return `one: ${refTail(reading.current?.node_ref) ?? "one work node"}${runs.length ? ` (run: ${runs.join("; ")})` : ""}${basis}`;
+    }
+    case "none": return `none${typeof reading.considered === "number" ? ` (${reading.considered} considered)` : ""}${basis}`;
+    case "ambiguous": return `ambiguous: ${(reading.candidates ?? []).map(candidate).join("; ") || "candidates not listed"}${basis}`;
     default: return reading.outcome ? `“${reading.outcome}” (not an outcome this view knows)` : "not reported";
   }
+}
+
+/** A facet of the joined reading, whether the owner writes the facets under
+ * `facets` (the installed owner) or at the top level. */
+export function facetOf(reading: InhabitationReading | undefined, name: string): Facet | undefined {
+  if (!reading) return undefined;
+  const value = reading.facets?.[name] ?? (reading as unknown as Record<string, unknown>)[name];
+  return isRecord(value) ? value as Facet : undefined;
+}
+
+/** A facet's NOW ref, when its value names one (`value.now_ref`). */
+export function facetNowRef(facet: Facet | undefined): string | undefined {
+  return facet?.state === "present" && isRecord(facet.value) ? text(facet.value.now_ref) : undefined;
+}
+
+/** A facet in one line. A facet that is not present says its standing and
+ * reason. A present facet is read from its value object where this view
+ * knows the value's shape (current work, Position, occupancy, NOW); else the
+ * owner's summary as written. An unrecognised standing is said as such. */
+export function facetWords(name: string, facet: Facet | undefined, titleOf?: TitleLookup): string {
+  if (!facet) return "not reported";
+  const state = facet.state ?? "";
+  const value = isRecord(facet.value) ? facet.value : undefined;
+  if (name === "current_work" && value && typeof value.outcome === "string") {
+    const words = currentWorkWords(value as FactoryCurrentWork, titleOf);
+    return state === "present" ? words : `${state} — ${words}`;
+  }
+  if (state !== "present") {
+    if (!(FACET_STATES as readonly string[]).includes(state)) return state ? `“${state}” (not a standing this view knows)` : "not reported";
+    return facet.reason ? `${state} — ${facet.reason}` : state;
+  }
+  if (name === "position" && isRecord(value?.record)) {
+    const record = value.record;
+    return [text(record.label), text(record.handle), text(record.revision) ? `r${String(record.revision).replace(/^r/, "")}` : undefined].filter(Boolean).join(" · ") || facet.summary || "present";
+  }
+  if (name === "occupancy" && value) {
+    const current = isRecord(value.current) ? value.current : undefined;
+    const presence = isRecord(value.presence) ? text(value.presence.presence) : undefined;
+    return [text(value.state) ?? "present", current?.generation_ordinal != null ? `generation ${current.generation_ordinal}` : undefined, text(current?.kind), refTail(text(current?.agent_ref)), presence].filter(Boolean).join(" · ");
+  }
+  if ((name === "root_now" || name === "child_now" || name === "return_destination") && value && text(value.now_ref)) {
+    return [text(value.horizon) ? `${value.horizon} NOW` : "NOW record", text(value.lifecycle)].filter(Boolean).join(" · ");
+  }
+  return facet.summary ?? "present";
 }
 
 // ---------------------------------------------------------------------------
@@ -212,7 +299,11 @@ export function currentWorkWords(reading: FactoryCurrentWork, titleOf?: (runRef:
 
 export interface PositionRow {
   positionRef: string; name: string; handle?: string; role?: string; inherited: boolean;
-  occupancy: OccupancyView; work: WorkView; undelivered: number;
+  /** Central's definition standing: "present", or why the row has no definition. */
+  definition: string;
+  occupancy: OccupancyView; work: WorkView;
+  /** null = the Gateway journal was not read (the absence is named). */
+  undelivered: number | null;
   /** Set when the row stands on Factory's reading alone (population unread). */
   basis: "population" | "factory";
 }
@@ -226,27 +317,32 @@ export interface PopulationAperture {
   world: PositionRow[];
   inherited: PositionRow[];
   absences: Absence[];
+  warnings: string[];
 }
 
-function rowOf(position: PopulationPosition, titleOf?: (runRef: string) => string | undefined): PositionRow {
+function rowOf(position: PopulationPosition, absences: Absence[], titleOf?: TitleLookup): PositionRow {
+  const workAbsence = absences.find(absence => absence.facet === `current_work:${position.position_ref}`)?.reason;
+  const undelivered = position.communiques?.undelivered;
   return {
     positionRef: position.position_ref, name: positionName(position),
-    ...(position.handle ? {handle: position.handle} : {}), ...(position.role_ref ? {role: refTail(position.role_ref)} : {}),
+    ...(text(position.handle) ? {handle: position.handle!} : {}), ...(text(position.role_ref) ? {role: refTail(position.role_ref!)} : {}),
     inherited: position.inherited === true,
+    definition: position.definition ?? "not reported",
     occupancy: occupancyView(position.occupancy),
-    work: workView(position.current_work, titleOf),
-    undelivered: Math.max(0, Number(position.communiques?.undelivered ?? 0) || 0),
+    work: workView(position.current_work, titleOf, workAbsence),
+    undelivered: typeof undelivered === "number" ? undelivered : null,
     basis: "population",
   };
 }
 
 /** The population aperture: every Position the owner reports, never a
- * profile list. `runPositions` is the selected run's Factory reading (when a
- * run is selected); its Positions lead, matched to the population by ref. */
-export function populationAperture(read: OwnerRead<PopulationReading> | undefined, run?: RunInhabitationView, titleOf?: (runRef: string) => string | undefined): PopulationAperture {
+ * profile list. `run` is the selected run's Factory reading (when a run is
+ * selected); its Positions lead, matched to the population by ref. */
+export function populationAperture(read: OwnerRead<PopulationReading> | undefined, run?: RunInhabitationView, titleOf?: TitleLookup): PopulationAperture {
   const source = read?.source ?? "aikit gateway who";
   const population = read?.state === "read" ? read.data : undefined;
-  const rows = (population?.positions ?? []).filter(position => typeof position?.position_ref === "string").map(position => rowOf(position, titleOf));
+  const absences = (population?.absences ?? []).filter(absence => absence && (absence.reason || absence.facet));
+  const rows = (population?.positions ?? []).filter(position => typeof position?.position_ref === "string").map(position => rowOf(position, absences, titleOf));
   const byRef = new Map(rows.map(row => [row.positionRef, row]));
   const onRun: PositionRow[] = [];
   let runAbsence: string | undefined;
@@ -257,8 +353,9 @@ export function populationAperture(read: OwnerRead<PopulationReading> | undefine
       const known = byRef.get(position.positionRef);
       onRun.push(known ?? {
         positionRef: position.positionRef, name: position.name, ...(position.handle ? {handle: position.handle} : {}), inherited: false,
+        definition: read?.state === "read" ? "not in the population reading" : "not read",
         occupancy: occupancyView(undefined, read?.state === "unavailable" ? "who is here couldn't be read" : "not in the population reading"),
-        work: position.work ?? workView(undefined), undelivered: 0, basis: "factory",
+        work: position.work ?? workView(undefined), undelivered: null, basis: "factory",
       });
     }
   }
@@ -269,7 +366,8 @@ export function populationAperture(read: OwnerRead<PopulationReading> | undefine
     source, onRun, ...(runAbsence ? {runAbsence} : {}),
     world: rows.filter(row => !row.inherited && !held.has(row.positionRef)),
     inherited: rows.filter(row => row.inherited && !held.has(row.positionRef)),
-    absences: (population?.absences ?? []).filter(absence => absence && (absence.reason || absence.facet)),
+    absences,
+    warnings: read?.state === "read" ? (read.warnings ?? []).map(warningWords) : [],
   };
 }
 
@@ -284,77 +382,111 @@ export function rowMatches(row: PositionRow, query: string): boolean {
 // A run's inhabitation (Factory): Desk owner line, Run → Live, Context
 // ---------------------------------------------------------------------------
 
-export interface OccupantView { relation: string; agent?: string; session?: string; space?: string; workcell?: string; harnessModel?: string; attemptRef?: string; state?: string; reason?: string }
+export interface OccupantView {
+  attemptRef: string; current: boolean; legStatus?: string;
+  agent?: string; session?: string; space?: string; workcell?: string; harnessModel?: string;
+  placementNow?: string; returnAddress?: string;
+  /** The facets Factory reports as not present, in its words. */
+  notes: string[];
+}
 export interface RunPositionView {
   positionRef: string; name: string; handle?: string;
-  custody: {state: string; unitRef?: string}[]; custodyWords?: string;
+  inCustody: boolean;
+  custody: {state: string; work?: string; unitRef?: string}[]; custodyWords?: string;
   occupants: OccupantView[]; work?: WorkView; ambiguity?: string;
 }
 export interface RunInhabitationView {
   state: "read" | "unavailable";
   reason?: string; source: string;
+  lifecycle?: string;
   positions: RunPositionView[];
-  rootNow?: string; childNow?: string; returnAddress?: string;
+  /** Attempts whose participant names no Position this run's reading lists. */
+  unplaced: OccupantView[];
   /** Owner-stated ambiguities, in words (an attention signal). */
   ambiguities: string[];
-  absences: Absence[];
 }
 
-const RELATION_WORD: Record<string, string> = {"attempt-participant": "attempt participant", "execution-body": "execution body", "placement": "placement", "return": "return"};
 const CUSTODY_ORDER = ["in-progress", "blocked", "handed-off", "released", "completed"];
+function indexOr(order: string[], value: string): number { const at = order.indexOf(value); return at < 0 ? order.length : at; }
+const facetValue = (facet: FactoryFacet | undefined) => facet?.state === "present" ? text(facet.value) : undefined;
+
+function occupantView(occupant: FactoryOccupant): OccupantView {
+  const body = occupant.body ?? {}, participant = occupant.participant ?? {};
+  const harnessModel = [refTail(facetValue(body.harness_ref)), refTail(facetValue(body.model_ref))].filter(Boolean).join(" · ");
+  const notes: string[] = [];
+  for (const [label, facet] of [["placement NOW", occupant.placement?.now_ref], ["workcell", body.workcell_ref], ["Position", participant.position_ref]] as [string, FactoryFacet | undefined][]) {
+    if (facet && facet.state !== "present") notes.push(`${label}: ${facet.state}${facet.reason ? ` — ${facet.reason}` : ""}`);
+  }
+  const agent = refTail(facetValue(participant.agent_ref)), workcell = refTail(facetValue(body.workcell_ref));
+  return {
+    attemptRef: occupant.attempt_ref, current: occupant.current_attempt === true,
+    ...(occupant.leg_status ? {legStatus: occupant.leg_status} : {}),
+    ...(agent ? {agent} : {}), ...(facetValue(body.agent_session_ref) ? {session: facetValue(body.agent_session_ref)} : {}),
+    ...(facetValue(body.session_space_ref) ? {space: facetValue(body.session_space_ref)} : {}), ...(workcell ? {workcell} : {}),
+    ...(harnessModel ? {harnessModel} : {}),
+    ...(facetValue(occupant.placement?.now_ref) ? {placementNow: facetValue(occupant.placement?.now_ref)} : {}),
+    ...(facetValue(occupant.return_address) ? {returnAddress: facetValue(occupant.return_address)} : {}),
+    notes,
+  };
+}
+
+function ambiguousFacets(occupant: FactoryOccupant): string[] {
+  const groups: Record<string, FactoryFacet | undefined>[] = [occupant.participant ?? {}, occupant.body ?? {}, {now_ref: occupant.placement?.now_ref, return_address: occupant.return_address}];
+  return groups.flatMap(group => Object.entries(group).filter(([, facet]) => facet?.state === "ambiguous").map(([name, facet]) => `${name.replace(/_/g, " ")}: ${facet?.reason ?? "ambiguous"}`));
+}
 
 /** The run's Positions from Factory's inhabitation reading (read for the
  * source, or for the run alone). A read that failed is `unavailable` with its
- * reason; a read that names no Position for the run is read-and-empty. */
-export function runInhabitationView(read: OwnerRead<FactoryInhabitationReading> | undefined, runRef: string, titleOf?: (runRef: string) => string | undefined): RunInhabitationView | undefined {
+ * reason; a read that names no Position for the run is read-and-empty.
+ * `names` joins Central's names by ref; `work` is Factory's current-work
+ * reading per Position (when read). */
+export function runInhabitationView(read: OwnerRead<FactoryInhabitationReading> | undefined, runRef: string, options: {names?: NameLookup; titleOf?: TitleLookup; work?: (positionRef: string) => FactoryCurrentWork | undefined} = {}): RunInhabitationView | undefined {
   if (!read) return undefined;
-  if (read.state === "unavailable") return {state: "unavailable", reason: read.reason, source: read.source, positions: [], ambiguities: [], absences: []};
+  if (read.state === "unavailable") return {state: "unavailable", reason: read.reason, source: read.source, positions: [], unplaced: [], ambiguities: []};
   const run = (read.data.runs ?? []).find(entry => entry?.run_ref === runRef);
+  const occupants = (run?.occupants ?? []).filter(occupant => typeof occupant?.attempt_ref === "string");
+  const placed = new Set<string>();
   const positions: RunPositionView[] = (run?.positions ?? []).filter(position => typeof position?.position_ref === "string").map(position => {
-    const custody = (position.custody ?? []).map(entry => ({state: entry.state ?? "unknown", ...(entry.workflow_unit_ref ? {unitRef: entry.workflow_unit_ref} : {})}))
+    const names = options.names?.(position.position_ref);
+    const custody = (position.custody ?? []).map(entry => ({state: entry.state ?? "unknown", ...(entry.work_ref ? {work: refTail(entry.work_ref)} : {}), ...(entry.workflow_unit_ref ? {unitRef: entry.workflow_unit_ref} : {})}))
       .sort((a, b) => indexOr(CUSTODY_ORDER, a.state) - indexOr(CUSTODY_ORDER, b.state));
-    const counts = new Map<string, number>();
-    for (const entry of custody) counts.set(entry.state, (counts.get(entry.state) ?? 0) + 1);
-    const custodyWords = custody.length ? [...counts].map(([state, n]) => `${n > 1 ? `${n} ` : ""}${state.replace(/-/g, " ")}`).join(", ") : undefined;
-    const occupants: OccupantView[] = (position.occupants ?? []).map(occupant => {
-      const harnessModel = [refTail(occupant.harness_ref), refTail(occupant.model_ref)].filter(Boolean).join(" · ");
-      const agent = refTail(occupant.agent_ref), workcell = refTail(occupant.workcell_ref);
-      return {
-        relation: RELATION_WORD[occupant.relation ?? ""] ?? (occupant.relation ?? "relation").replace(/[-_]/g, " "),
-        ...(agent ? {agent} : {}), ...(occupant.agent_session_ref ? {session: occupant.agent_session_ref} : {}),
-        ...(occupant.session_space_ref ? {space: occupant.session_space_ref} : {}), ...(workcell ? {workcell} : {}),
-        ...(harnessModel ? {harnessModel} : {}), ...(occupant.attempt_ref ? {attemptRef: occupant.attempt_ref} : {}),
-        ...(occupant.state && occupant.state !== "present" ? {state: occupant.state} : {}), ...(occupant.reason ? {reason: occupant.reason} : {}),
-      };
-    });
-    const work = position.current_work ? workView(position.current_work, titleOf) : undefined;
-    const handle = position.handle ?? undefined;
-    const who = handle ?? positionName(position);
-    const ambiguity = position.state === "ambiguous"
-      ? `${who}: ${position.reason ?? "the owner reports this Position as ambiguous"}`
-      : work?.outcome === "ambiguous" ? `${who} carries more than one current work${work.words.includes("—") ? ` (${work.words.split("— ")[1]})` : ""}`
-      : (position.occupants ?? []).some(occupant => occupant.state === "ambiguous") ? `${who}: ${(position.occupants ?? []).find(occupant => occupant.state === "ambiguous")?.reason ?? "an occupant relation is ambiguous"}`
-      : undefined;
-    return {positionRef: position.position_ref, name: positionName(position), ...(handle ? {handle} : {}), custody, ...(custodyWords ? {custodyWords} : {}), occupants, ...(work ? {work} : {}), ...(ambiguity ? {ambiguity} : {})};
+    const custodyWords = custody.length ? custody.map(entry => `${entry.state.replace(/-/g, " ")}${entry.work ? ` · ${entry.work}` : ""}`).join("; ") : undefined;
+    const mine = occupants.filter(occupant => facetValue(occupant.participant?.position_ref) === position.position_ref || (position.attempt_refs ?? []).includes(occupant.attempt_ref));
+    for (const occupant of mine) placed.add(occupant.attempt_ref);
+    const handle = names?.handle;
+    const name = names?.label ?? handle ?? positionName(position);
+    const work = factoryWorkView(options.work?.(position.position_ref), options.titleOf);
+    const facetAmbiguity = mine.flatMap(ambiguousFacets);
+    const who = handle ?? name;
+    const ambiguity = work?.outcome === "ambiguous" ? `${who} carries more than one current work (${work.words.split("— ")[1] ?? "candidates"})`
+      : facetAmbiguity.length ? `${who}: ${facetAmbiguity.join("; ")}` : undefined;
+    return {positionRef: position.position_ref, name, ...(handle ? {handle} : {}), inCustody: position.in_custody === true,
+      custody, ...(custodyWords ? {custodyWords} : {}), occupants: mine.map(occupantView), ...(work ? {work} : {}), ...(ambiguity ? {ambiguity} : {})};
   });
-  const rootNow = run?.now?.root_now_ref ?? run?.root_now_ref ?? undefined;
-  const childNow = run?.now?.child_now_ref ?? run?.child_now_ref ?? undefined;
+  const unplaced = occupants.filter(occupant => !placed.has(occupant.attempt_ref));
+  const unplacedAmbiguity = unplaced.flatMap(ambiguousFacets);
   return {
-    state: "read", source: read.source, positions,
-    ...(rootNow ? {rootNow} : {}), ...(childNow ? {childNow} : {}), ...(run?.return_address ? {returnAddress: run.return_address} : {}),
-    ambiguities: positions.map(position => position.ambiguity).filter((words): words is string => !!words),
-    absences: [...(run?.absences ?? []), ...(read.data.absences ?? [])].filter(absence => absence && (absence.reason || absence.facet)),
+    state: "read", source: read.source, ...(run?.lifecycle ? {lifecycle: run.lifecycle} : {}), positions,
+    unplaced: unplaced.map(occupantView),
+    ambiguities: [...positions.map(position => position.ambiguity).filter((words): words is string => !!words), ...unplacedAmbiguity],
   };
 }
-function indexOr(order: string[], value: string): number { const at = order.indexOf(value); return at < 0 ? order.length : at; }
 
 /** The Positions that hold a run, as the Desk card names them: those with
- * live custody first (in progress, blocked), else every Position Factory
- * names on the run. Handles when the owner gives one. */
+ * open custody first (in progress, blocked), else every Position Factory
+ * names on the run. Handles when Central gives them. */
 export function runOwners(view: RunInhabitationView | undefined): string[] {
   if (!view || view.state !== "read") return [];
-  const live = view.positions.filter(position => position.custody.some(entry => entry.state === "in-progress" || entry.state === "blocked"));
+  const live = view.positions.filter(position => position.inCustody);
   return (live.length ? live : view.positions).map(position => position.handle ?? position.name);
+}
+
+/** The Positions whose custody is open anywhere in a Factory reading — the
+ * ones whose current work Factory is asked to derive. */
+export function positionsInCustody(reading: FactoryInhabitationReading | undefined): string[] {
+  const refs = new Set<string>();
+  for (const run of reading?.runs ?? []) for (const position of run.positions ?? []) if (position.in_custody && position.position_ref) refs.add(position.position_ref);
+  return [...refs];
 }
 
 // ---------------------------------------------------------------------------
@@ -396,37 +528,34 @@ export function currentAttemptOf<A extends {currentAttempt?: boolean}>(attempts:
 // The prepared-context basis (Context)
 // ---------------------------------------------------------------------------
 
-const LEVEL_WORD: Record<string, string> = {
-  operation: "Current operation", "current-operation": "Current operation", "workflow-unit": "Workflow unit", unit: "Workflow unit",
-  attempt: "Attempt", run: "Run", journey: "Journey", commission: "Commission", "project-intent": "Project intent",
-  "projectcentral-ground": "ProjectCentral ground", ground: "ProjectCentral ground",
+const HOP_WORD: Record<string, string> = {
+  operation: "Current operation", "workflow-unit": "Workflow unit", attempt: "Attempt", run: "Run", journey: "Journey",
+  commission: "Commission", intent: "Project intent", ground: "ProjectCentral ground",
 };
-export interface ChainRow { level: string; words: string; state: string; ref?: string; depth: number }
-/** The Refocus chain, nested from the current operation outward to the
- * ProjectCentral ground, in the owner's order. */
+export interface ChainRow { level: string; words: string; state: "present" | "gap"; ref?: string; revision?: string; depth: number }
+/** The Refocus trace, nested from the current operation outward to the
+ * ProjectCentral ground, in the owner's order: each hop is a ref (with its
+ * detail) or a gap in the owner's words. */
 export function refocusChain(reading: RefocusReading | undefined): ChainRow[] {
-  return (reading?.chain ?? []).filter(link => link && typeof link === "object").map((link, depth) => {
-    const level = LEVEL_WORD[link.level ?? ""] ?? (link.level ? link.level.replace(/[-_]/g, " ").replace(/^./, c => c.toUpperCase()) : "Link");
-    const state = link.state ?? (link.ref || link.label ? "present" : "not reported");
-    const words = state === "present" || !(FACET_STATES as readonly string[]).includes(state)
-      ? (link.label ? firstSentence(link.label) : refTail(link.ref ?? undefined) ?? "present")
-      : link.reason ? `${state} — ${link.reason}` : state;
-    return {level, words, state, ...(link.ref ? {ref: link.ref} : {}), depth};
+  return (reading?.chain ?? []).filter((hop): hop is RefocusHop => isRecord(hop)).map((hop, depth) => {
+    const level = HOP_WORD[hop.hop ?? ""] ?? (hop.hop ? hop.hop.replace(/[-_]/g, " ").replace(/^./, c => c.toUpperCase()) : "Hop");
+    const ref = text(hop.ref);
+    if (!ref && text(hop.gap)) return {level, words: hop.gap!, state: "gap", depth};
+    const words = text(hop.detail) ?? refTail(ref) ?? (text(hop.gap) ?? "no answer");
+    return {level, words: firstSentence(words), state: ref || text(hop.detail) ? "present" : "gap", ...(ref ? {ref} : {}), ...(text(hop.revision) ? {revision: hop.revision!} : {}), depth};
   });
 }
 
-export interface PreparedBasis { preparedContext: string; rootNow?: string; childNow?: string; rootNowWords: string; childNowWords: string; returnDestination: string }
+export interface PreparedBasis { preparedContext: string; rootNow?: string; childNow?: string; returnNow?: string; rootNowWords: string; childNowWords: string; returnWords: string }
 /** whoami's prepared-context basis: the prepared-context facet and the root
- * and child NOW refs the occupant stands in. */
+ * and child NOW refs (`value.now_ref`) the Position stands in. */
 export function preparedBasis(reading: InhabitationReading | undefined): PreparedBasis {
-  const root = facetOf(reading, "root_now"), child = facetOf(reading, "child_now");
-  const rootNow = root?.state === "present" && typeof root.ref === "string" ? root.ref : undefined;
-  const childNow = child?.state === "present" && typeof child.ref === "string" ? child.ref : undefined;
+  const root = facetOf(reading, "root_now"), child = facetOf(reading, "child_now"), ret = facetOf(reading, "return_destination");
+  const rootNow = facetNowRef(root), childNow = facetNowRef(child), returnNow = facetNowRef(ret);
   return {
-    preparedContext: facetWords(facetOf(reading, "prepared_context")),
-    ...(rootNow ? {rootNow} : {}), ...(childNow ? {childNow} : {}),
-    rootNowWords: facetWords(root), childNowWords: facetWords(child),
-    returnDestination: facetWords(facetOf(reading, "return_destination")),
+    preparedContext: facetWords("prepared_context", facetOf(reading, "prepared_context")),
+    ...(rootNow ? {rootNow} : {}), ...(childNow ? {childNow} : {}), ...(returnNow ? {returnNow} : {}),
+    rootNowWords: facetWords("root_now", root), childNowWords: facetWords("child_now", child), returnWords: facetWords("return_destination", ret),
   };
 }
 

@@ -714,7 +714,9 @@ pub enum KernelOpResult {
     FactoryAttemptTaskListReading {data:serde_json::Value},
     FactoryAttemptTaskReading {data:serde_json::Value},
     WorkcellStatusReading {data:serde_json::Value},
-    InhabitationReading {data:serde_json::Value},
+    /// An AIKit inhabitation reading (the envelope's `data`, verbatim) and the
+    /// envelope's own warnings, carried so the renderer can name them.
+    InhabitationReading {data:serde_json::Value, #[serde(default, skip_serializing_if = "Vec::is_empty")] warnings: Vec<serde_json::Value>},
     WikiProjectionReading {data:serde_json::Value},
     WikiProjectionSourcesReading {data:serde_json::Value},
     /// The harness status rows, verbatim from the owner's `client status`.
@@ -1150,9 +1152,9 @@ impl Kernel {
                         .and_then(|world| world["root"].as_str().map(std::path::PathBuf::from))
                         .map(|root| (root, None)),
                 };
-                let data = inhabitation::read(&request, ground.as_ref().map(|(cwd, world)| (cwd.as_path(), world.as_deref())))
+                let (data, warnings) = inhabitation::read(&request, ground.as_ref().map(|(cwd, world)| (cwd.as_path(), world.as_deref())))
                     .map_err(|e| serde_json::to_string(&e).unwrap_or_else(|_| "inhabitation read failed".into()))?;
-                Ok(KernelOpOutcome { receipts: Vec::new(), result: KernelOpResult::InhabitationReading { data } })
+                Ok(KernelOpOutcome { receipts: Vec::new(), result: KernelOpResult::InhabitationReading { data, warnings } })
             }
             KernelOp::WorkcellStatusRead => {
                 let workcell = std::env::var_os("OI_WORKCELL_BIN").map(std::path::PathBuf::from);

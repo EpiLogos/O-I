@@ -7,8 +7,9 @@
  * only real routes: Open conversation (Tasks), Open activity. Interrupt,
  * cancel and retry appear only where the owner exposes them — this cut
  * exposes them only through the attempt lifecycle's authority-bearing
- * requests, so they are not offered here. NOW: the run's root and child NOW
- * from Factory's inhabitation reading, else its return address.
+ * requests, so they are not offered here. NOW: the unit's required return
+ * address (as before); each attempt's placement NOW is shown with its
+ * Position (RunPositions — Factory holds no root/child NOW split).
  * Empty: "Nothing is running." (+ the primary action when one applies).
  *
  * Positions (WORLD-INHABITATION-V1 §3) lead the tab: who holds the run, from
@@ -42,10 +43,7 @@ export function RunLive({entry, runKey, host, primary, onPrimary, telemetry}: {e
     return {node, unitRef, unit, current, ambiguousCurrent: marked.outcome === "ambiguous" ? marked.entries.length : 0, pastAttempts: marked.outcome === "none" ? attempts.length : 0, leg, standing: legStanding(node, leg)};
   });
   const carried = rows.filter(row => row.current || row.ambiguousCurrent || row.leg?.status);
-  // The run's NOW is Factory's placement NOW when its inhabitation reading
-  // names one; the unit's return address otherwise (both owner fields).
-  const placementNow = entry.inhabitation?.state === "read" && (entry.inhabitation.rootNow || entry.inhabitation.childNow);
-  const returnAddress = placementNow ? undefined : rows.map(row => row.unit?.requiredReturn?.address).find(address => address?.startsWith("central:now:"));
+  const returnAddress = rows.map(row => row.unit?.requiredReturn?.address).find(address => address?.startsWith("central:now:"));
   const positions = <RunPositions view={entry.inhabitation} host={host}/>;
 
   if (!carried.length) {
