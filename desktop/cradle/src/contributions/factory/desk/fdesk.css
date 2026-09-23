@@ -173,6 +173,12 @@
 .ftraj-mark{ fill: color-mix(in srgb, var(--fd-ink) 45%, transparent); cursor: pointer; }
 .ftraj-mark[data-lane-kind="tools"]{ fill: var(--fd-ink); }
 .ftraj-mark[data-lane-kind="input"]{ fill: color-mix(in srgb, var(--fd-ink) 25%, transparent); }
+.ftraj-card .tape{ padding-top: 8px; }
+/* The shell's blanket button reset flattens the shared tape's filter chips;
+   restored at matching weight where Factory hosts the tape. */
+.factory-centre .tape-filter, .frtab .tape-filter{ padding: 3px 8px; }
+.ftraj-card .tape-body{ max-height: 380px; }
+.frtab .tape-body{ max-height: calc(100vh - 260px); }
 .ftraj-foot{ margin: 0; padding: 9px 12px; border-top: var(--oi-shell-edge, 1px) solid var(--fd-rule); color: var(--fd-muted); font-size: var(--oi-shell-type-ui); text-align: center; }
 .ftraj-waterfall{ display: flex; flex-direction: column; gap: 6px; }
 .factory-centre .ftraj-fall-row{ display: grid; grid-template-columns: 110px 1fr; gap: 10px; align-items: center; padding: 0; border: 0; background: none; color: var(--fd-muted); font: inherit; font-size: var(--oi-shell-type-ui); text-align: left; cursor: pointer; }

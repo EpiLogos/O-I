@@ -90,6 +90,10 @@ export function RunTrajectory({entry}: {entry: RunEntry; host?: RunPageHost}) {
   const sessions = useMemo(() => trajectorySessions(entry), [entry]);
   const [chosen, setChosen] = useState<string>();
   const session = sessions.find(item => item.sessionRef === chosen) ?? sessions[0];
+  // The attempts (and so the sessions' names) come from the workflow
+  // inspection the Run page reads on open; wait for it rather than show a
+  // provisional list that changes under the pointer.
+  if (!entry.inspection && !entry.inspectionError) return <p className="frun-note" role="status">Reading this run's sessions…</p>;
   if (!session) return <div className="frun-empty" data-trajectory-empty><p>No session has carried this run yet.</p></div>;
   return <div className="ftraj">
     <Waterfall entry={entry} sessions={sessions} current={session.sessionRef} onPick={setChosen}/>
@@ -166,7 +170,7 @@ function SessionTrajectory({entry, session, sessions, onChoose}: {entry: RunEntr
  * update while running). Only shown when two or more executions carry times. */
 function Waterfall({entry, sessions, current, onPick}: {entry: RunEntry; sessions: TrajectorySession[]; current: string; onPick: (ref: string) => void}) {
   const kernel = useKernel();
-  const [spans, setSpans] = useState<{session: TrajectorySession; start: number; end: number}[]>([]);
+  const [spans, setSpans] = useState<{session: TrajectorySession; start: number; end: number; running: boolean}[]>([]);
   useEffect(() => {
     let live = true;
     const telemetry = entry.inspection?.telemetry ?? [];
@@ -174,12 +178,17 @@ function Waterfall({entry, sessions, current, onPick}: {entry: RunEntry; session
       const ref = telemetry.find(item => item.executionRef && item.executionRef === session.executionRef)?.telemetryRef;
       if (!ref) return undefined;
       const reading = await inspectTelemetry(kernel.transport, entry.card.source.statePath, ref).catch(() => undefined) as Record<string, unknown> | undefined;
-      const temporal = ((reading?.temporal ?? (reading?.correlation as Record<string, unknown> | undefined)?.temporal) ?? {}) as Record<string, {at?: string; observedAt?: string} | undefined>;
-      const time = (fact?: {at?: string; observedAt?: string}) => { const value = Date.parse(fact?.at ?? fact?.observedAt ?? ""); return Number.isFinite(value) ? value : undefined; };
+      // `factory telemetry inspect`: {reading: {temporal: {started: {value}, …}}}
+      // (or {correlation: …} while owner records are pending).
+      const record = ((reading?.reading ?? reading?.correlation ?? reading) ?? {}) as Record<string, unknown>;
+      const temporal = (record.temporal ?? {}) as Record<string, {value?: string} | undefined>;
+      const time = (fact?: {value?: string}) => { const value = Date.parse(fact?.value ?? ""); return Number.isFinite(value) ? value : undefined; };
       const start = time(temporal.started);
-      const end = time(temporal.completed) ?? time(temporal.updated);
-      return start !== undefined && end !== undefined ? {session, start, end} : undefined;
-    })).then(rows => { if (live) setSpans(rows.filter((row): row is {session: TrajectorySession; start: number; end: number} => !!row)); });
+      // A still-running execution's bar is open-ended: it reaches now.
+      const running = entry.inspection?.attempts?.some(attempt => attempt.attemptRef === session.attemptRef && attempt.status === "active");
+      const end = time(temporal.completed) ?? time(temporal.updated) ?? (running ? Date.now() : undefined);
+      return start !== undefined && end !== undefined ? {session, start, end, running: !!running && !time(temporal.completed)} : undefined;
+    })).then(rows => { if (live) setSpans(rows.filter((row): row is {session: TrajectorySession; start: number; end: number; running: boolean} => !!row)); });
     return () => { live = false; };
   }, [entry.inspection?.telemetry, entry.card.source.statePath, kernel.transport, sessions]);
   if (spans.length < 2) return null;
@@ -188,7 +197,7 @@ function Waterfall({entry, sessions, current, onPick}: {entry: RunEntry; session
   return <div className="ftraj-waterfall" aria-label="Executions">
     {spans.map(span => <button key={span.session.sessionRef} type="button" className="ftraj-fall-row" aria-pressed={span.session.sessionRef === current} onClick={() => onPick(span.session.sessionRef)}>
       <span className="ftraj-fall-label">{span.session.agent?.replace(/^specimen-/, "") ?? span.session.label}</span>
-      <span className="ftraj-fall-track"><span className="ftraj-fall-bar" style={{left: `${((span.start - min) / width) * 100}%`, width: `${Math.max(1, ((span.end - span.start) / width) * 100)}%`}}/></span>
+      <span className="ftraj-fall-track"><span className="ftraj-fall-bar" data-running={span.running ? "true" : undefined} data-start={span.start} data-end={span.running ? undefined : span.end} style={{left: `${((span.start - min) / width) * 100}%`, width: `${Math.max(1, ((span.end - span.start) / width) * 100)}%`}}/></span>
     </button>)}
   </div>;
 }

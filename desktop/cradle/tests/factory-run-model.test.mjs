@@ -63,8 +63,9 @@ test("the lane layout: one lane per work unit, fork, gate spanning its lanes", (
   assert.equal(cell("work-inspect-source").column, 4);
   assert.equal(cell("work-inspect-source").frontier, true);
   const gate = layout.gates[0];
-  assert.equal(gate.laneFrom, 0);
-  assert.equal(gate.laneTo, 2, "the gate spans the lanes it holds");
+  const held = [cell("work-implement-compiler").lane, cell("work-review-adversarially").lane];
+  assert.equal(gate.laneFrom, Math.min(...held));
+  assert.equal(gate.laneTo, Math.max(...held), "the gate spans exactly the lanes of the units it holds (its requires edges)");
   assert.equal(layout.edges.length, 6);
 });
 

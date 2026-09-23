@@ -17,6 +17,7 @@ import {useKernel} from "../../../kernel/KernelProvider";
 import {errorWords, type RunEntry} from "./deskStore";
 import {recognise} from "./factoryReads";
 import type {RunPageHost} from "./RunPage";
+import {revisionWords} from "./RunMap";
 import {attemptsFor, frontierNode, pendingRecognitions, refTail, unitChecks, unitOf, type InspectionAttempt} from "./runModel";
 
 export function RunHandoff({entry, host, onRecognised}: {entry: RunEntry; host: RunPageHost; onRecognised: () => void}) {
@@ -75,7 +76,7 @@ export function RunHandoff({entry, host, onRecognised}: {entry: RunEntry; host: 
 
     {outcome && <section className="fhandoff-section"><h3>Outcome</h3><p data-handoff-outcome>{outcome}</p></section>}
 
-    {checks.length > 0 && <section className="fhandoff-section"><h3>Verification{testedAt ? ` · tested at ${testedAt.slice(0, 7)}` : ""}</h3>
+    {checks.length > 0 && <section className="fhandoff-section"><h3>Verification{testedAt ? ` · tested at ${revisionWords(testedAt)}` : ""}</h3>
       <ul className="fmap-checks">{checks.map(check => <li key={check.text} data-check-state={check.state}><span className="fcheck" data-state={check.state} aria-label={check.state}/>{check.text}{check.state === "passed" ? "" : ` — ${check.state}`}</li>)}</ul>
     </section>}
 

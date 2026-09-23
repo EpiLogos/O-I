@@ -17,14 +17,28 @@ import {openRunPage, peekDeskReading, type RunEntry} from "./deskStore";
 import {EDGE_WORD, attemptsFor, layoutRunMap, legStanding, refTail, unitChecks, unitOf, type MapCell, type WorkflowUnit} from "./runModel";
 import type {RunPageHost} from "./RunPage";
 
-const CELL_W = 196, CELL_H = 78, GAP_X = 74, LANE_H = 104, PAD = 18, DEST_W = 132, GATE_W = 10;
+const CELL_W = 172, CELL_H = 84, GAP_X = 52, LANE_H = 108, PAD = 18, DEST_W = 118, GATE_W = 10;
 const STANDING_WORD: Record<string, string> = {"not-started": "not started", active: "active", returned: "returned", failed: "failed"};
+/** A revision as a person reads it: a Git SHA shortened, anything else whole. */
+export const revisionWords = (revision: string) => /^[0-9a-f]{12,}$/i.test(revision) ? revision.slice(0, 7) : revision;
 
-function cellBox(cell: MapCell) {
-  const x = PAD + cell.column * (CELL_W + GAP_X);
+const widthOf = (cell: MapCell) => cell.node.kind === "destination" ? DEST_W : cell.node.kind === "gate" ? GATE_W : CELL_W;
+/** Column x offsets from each column's widest cell — a gate or the
+ * destination never costs a full unit column. */
+function columnOffsets(cells: MapCell[], columns: number): number[] {
+  const widths = Array.from({length: columns}, (_, column) => Math.max(GATE_W, ...cells.filter(cell => cell.column === column).map(widthOf)));
+  const offsets: number[] = [];
+  let x = PAD;
+  for (const width of widths) { offsets.push(x); x += width + GAP_X; }
+  offsets.push(x - GAP_X + PAD);
+  return offsets;
+}
+
+function cellBox(cell: MapCell, offsets: number[]) {
+  const x = offsets[cell.column];
   const y = PAD + cell.lane * LANE_H;
-  if (cell.node.kind === "destination") return {x: x + CELL_W - DEST_W, y: y + 10, w: DEST_W, h: CELL_H - 20};
-  if (cell.node.kind === "gate") return {x: x + CELL_W / 2 - GATE_W / 2, y, w: GATE_W, h: CELL_H};
+  if (cell.node.kind === "destination") return {x, y: y + 12, w: DEST_W, h: CELL_H - 24};
+  if (cell.node.kind === "gate") return {x, y, w: GATE_W, h: CELL_H};
   return {x, y, w: CELL_W, h: CELL_H};
 }
 
@@ -36,11 +50,12 @@ export function RunMap({entry, runKey, host}: {entry: RunEntry; runKey: string; 
   if (layout.workUnits === 0) {
     return <div className="frun-empty" data-map-empty="no-units"><p>This run has no work units yet.</p></div>;
   }
-  const width = PAD * 2 + layout.columns * CELL_W + (layout.columns - 1) * GAP_X;
+  const offsets = columnOffsets(layout.cells, layout.columns);
+  const width = offsets[offsets.length - 1];
   const gateSpan = new Map(layout.gates.map(gate => [gate.cell.id, gate]));
   const height = PAD * 2 + (layout.lanes - 1) * LANE_H + CELL_H;
   const boxes = new Map(layout.cells.map(cell => {
-    const box = cellBox(cell);
+    const box = cellBox(cell, offsets);
     const gate = gateSpan.get(cell.id);
     if (gate) { box.y = PAD + gate.laneFrom * LANE_H; box.h = (gate.laneTo - gate.laneFrom) * LANE_H + CELL_H; }
     return [cell.id, box];
@@ -131,7 +146,7 @@ function UnitBand({cell, entry, runKey, host}: {cell: MapCell; entry: RunEntry; 
         {fields.filter(([, value]) => value).map(([label, value]) => <div key={label}><dt>{label}</dt><dd>{value}</dd></div>)}
       </dl>
       {checks.length > 0 && <ul className="fmap-checks" aria-label="Required checks">
-        {checks.map(check => <li key={check.text} data-check-state={check.state}><span className="fcheck" data-state={check.state} aria-label={check.state}/>{check.text}{check.state === "outstanding" ? "" : check.revision ? <small> · {check.state} at {check.revision.slice(0, 7)}</small> : <small> · {check.state}</small>}</li>)}
+        {checks.map(check => <li key={check.text} data-check-state={check.state}><span className="fcheck" data-state={check.state} aria-label={check.state}/>{check.text}{check.state === "outstanding" ? "" : check.revision ? <small> · {check.state} at {revisionWords(check.revision)}</small> : <small> · {check.state}</small>}</li>)}
       </ul>}
     </div>
     <div className="fmap-band-actions">

@@ -326,8 +326,12 @@ export function layoutRunMap(run: RunReading): MapLayout {
   }
   const cells: MapCell[] = ids.map(id => ({id, node: nodes[id], column: depth[id] ?? 0, lane: lanes.get(id) ?? 0, frontier: frontier?.id === id}));
   const byId = new Map(cells.map(cell => [cell.id, cell]));
+  // A gate holds the units it requires (its outgoing `requires` edges); its
+  // bar spans exactly their lanes (falling back to every neighbour).
   const gates = cells.filter(cell => cell.node.kind === "gate").map(cell => {
-    const touching = neighbourLanes(cell.id).concat(cell.lane);
+    const held = edges.filter(edge => edge.from === cell.id && edge.relation === "requires").map(edge => lanes.get(edge.to)).filter((lane): lane is number => lane !== undefined);
+    const touching = held.length ? held : neighbourLanes(cell.id).concat(cell.lane);
+    cell.lane = Math.min(...touching);
     return {cell, laneFrom: Math.min(...touching), laneTo: Math.max(...touching)};
   });
   return {

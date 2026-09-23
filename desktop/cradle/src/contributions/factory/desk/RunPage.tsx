@@ -28,8 +28,11 @@ const tabMemory = new Map<string, RunTab>();
 
 /** The Git basis a telemetry reading carries, in its owner's field names. */
 export function gitBasisOf(telemetry: TelemetryInspection | undefined): {branch?: string; clean?: boolean; head?: string; repository?: string} | undefined {
-  const record = telemetry as Record<string, unknown> | undefined;
-  const basis = (record?.gitBasis ?? (record?.correlation as Record<string, unknown> | undefined)?.gitBasis) as Record<string, unknown> | undefined | null;
+  // `factory telemetry inspect` nests the execution reading under `reading`;
+  // a correlation whose owner records are pending carries it at `correlation`.
+  const outer = telemetry as Record<string, unknown> | undefined;
+  const record = (outer?.reading ?? outer?.correlation ?? outer) as Record<string, unknown> | undefined;
+  const basis = (record?.gitBasis ?? outer?.gitBasis) as Record<string, unknown> | undefined | null;
   if (!basis) return undefined;
   return {branch: typeof basis.branch === "string" ? basis.branch : undefined, clean: typeof basis.worktreeClean === "boolean" ? basis.worktreeClean : undefined,
     head: typeof basis.baseHead === "string" ? basis.baseHead : undefined, repository: typeof basis.repository === "string" ? basis.repository : undefined};

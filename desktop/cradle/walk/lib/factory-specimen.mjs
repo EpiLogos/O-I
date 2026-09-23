@@ -44,18 +44,24 @@ const FIXTURES = join(dirname(fileURLToPath(import.meta.url)), "..", "fixtures",
 
 /** Fixed specimen clock: every timestamp the specimen supplies is one of
  * these, so two builds from scratch produce the same refs and readings. */
+// The specimen's clock: fixed offsets from a base three hours before this
+// process started (minute-aligned), so the story reads in the past — a
+// returned survey, a review running since — and every build within one walk
+// shares it. (A fixed calendar date would sit in the future on some days.)
+const CLOCK_BASE = Math.floor((Date.now() - 3 * 3600_000) / 60_000) * 60_000;
+const at = minutes => new Date(CLOCK_BASE + minutes * 60_000).toISOString().replace(/\.\d{3}Z$/, "Z");
 export const SPECIMEN_CLOCK = Object.freeze({
-  gitCommit: "2026-09-23T08:00:00Z",
-  commissionA: "2026-09-23T09:00:00Z",
-  commissionB: "2026-09-23T09:10:00Z",
-  commissionC: "2026-09-23T09:20:00Z",
-  surveyDecided: "2026-09-23T09:01:00Z",
-  surveyStarted: "2026-09-23T09:02:00Z",
-  surveyReturned: "2026-09-23T09:14:30Z",
-  reviewDecided: "2026-09-23T09:15:00Z",
-  reviewStarted: "2026-09-23T09:16:00Z",
-  ownerReturn: "2026-09-23T09:17:00Z",
-  recognition: "2026-09-23T09:30:00Z",
+  gitCommit: at(-60),
+  commissionA: at(0),
+  commissionB: at(10),
+  commissionC: at(20),
+  surveyDecided: at(1),
+  surveyStarted: at(2),
+  surveyReturned: at(14.5),
+  reviewDecided: at(15),
+  reviewStarted: at(16),
+  ownerReturn: at(17),
+  recognition: at(30),
 });
 
 /** Deterministic Crockford ULID refs under the `01M3SPEC` specimen prefix. */
