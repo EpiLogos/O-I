@@ -102,12 +102,17 @@ export function Desk({onNewRun, onAddObject}: DeskProps) {
         </label>
         <MenuButton ariaLabel="Refresh the Desk" label={<><Glyph name="refresh" size={13}/><span data-desk-read-label>{current?.status === "reading" ? "reading…" : current?.readAt ? `read ${formatRelativeTime(current.readAt)}` : "read"}</span></>}
           content={close => <RefreshMenu onRefresh={() => { close(); refresh(); }} onAdded={() => { close(); refresh(); }}/>}/>
-        <MenuButton ariaLabel="Add to Desk" label={<><Glyph name="plus" size={13}/><span>Add to Desk</span></>} rows={[
-          {label: "New run…", hint: "commission it with the Factory agent", onSelect: onNewRun, disabled: !onNewRun},
-          {label: "Agent…", onSelect: () => onAddObject?.("agent"), disabled: !onAddObject, separatorBefore: true},
-          {label: "Team…", onSelect: () => onAddObject?.("team"), disabled: !onAddObject},
-          {label: "Skill…", onSelect: () => onAddObject?.("skill"), disabled: !onAddObject},
-        ]}/>
+        {/* Rows are real routes only: a row whose route is absent is not
+            rendered (Agent… / Team… / Skill… appear once their creation
+            pages are wired through onAddObject). */}
+        {(onNewRun || onAddObject) && <MenuButton ariaLabel="Add to Desk" label={<><Glyph name="plus" size={13}/><span>Add to Desk</span></>} rows={[
+          ...(onNewRun ? [{label: "New run…", hint: "commission it with the Factory agent in Tasks", onSelect: onNewRun}] : []),
+          ...(onAddObject ? [
+            {label: "Agent…", onSelect: () => onAddObject("agent"), separatorBefore: !!onNewRun},
+            {label: "Team…", onSelect: () => onAddObject("team")},
+            {label: "Skill…", onSelect: () => onAddObject("skill")},
+          ] : []),
+        ]}/>}
       </div>
     </header>
 
