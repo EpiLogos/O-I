@@ -13,15 +13,18 @@ const obj=(value:unknown):value is Obj=>!!value&&typeof value==="object"&&!Array
 const str=(value:unknown)=>typeof value==="string"&&value.trim()?value:undefined;
 const WANTS:Record<string,string>={execute:"wants to run a command",edit:"wants to edit a file",delete:"wants to delete a file",move:"wants to move a file",read:"wants to read a file",search:"wants to search",fetch:"wants to fetch a page",think:"wants to think it through"};
 
-export function describePermission(request:NativePermission):{wants:string;target?:string;where?:string} {
+export function describePermission(request:NativePermission):{wants:string;target?:string;where?:string;full?:string} {
  const call=obj(request.tool_call)?request.tool_call:{};
  const kind=str(call.kind)??"";
  const input=obj(call.rawInput)?call.rawInput:obj(call.input)?call.input:{};
  const locations=Array.isArray(call.locations)?call.locations:[];
  const path=str((locations[0] as Obj|undefined)?.path)??str(input.path)??str(input.file_path);
  const command=str(input.command)??(kind==="execute"?str(call.title)?.replace(/^[a-z_ -]+:\s*/i,""):undefined);
- const target=command??path??str(call.title)??(typeof request.tool_call==="string"?request.tool_call:undefined);
- return {wants:WANTS[kind]??"wants permission",target,where:str(input.cwd)};
+ const title=str(call.title)?.replace(/^[A-Za-z][\w -]{0,30}:\s*/,"");
+ const titledPath=!path&&title?.startsWith("/")?title:undefined;
+ const shownPath=path??titledPath;
+ const target=command??(shownPath?shownPath.split("/").pop():undefined)??title??(typeof request.tool_call==="string"?request.tool_call:undefined);
+ return {wants:WANTS[kind]??"wants permission",target,where:str(input.cwd)??(shownPath&&shownPath.includes("/")?shownPath.slice(0,shownPath.lastIndexOf("/")).split("/").slice(-2).join("/"):undefined),full:shownPath};
 }
 /** Scope choices: the harness's allow options, labelled by their ACP kind. */
 const SCOPE:Record<string,string>={allow_once:"This time",allow_always:"Always"};
@@ -34,7 +37,7 @@ export function PermissionCard({request,agentName,disabled,onAnswer}:{request:Na
  const chosen=allows.find(choice=>choice.option_id===scope)??allows[0];
  return <section className="chat-permission" aria-label={`${agentName} ${described.wants}`} data-request={request.native_request_id}>
   <p className="chat-permission-title"><strong>{agentName} {described.wants}</strong></p>
-  {described.target&&<p className="chat-permission-target"><code>{described.target}</code>{described.where&&<span> in {described.where}</span>}</p>}
+  {described.target&&<p className="chat-permission-target" title={described.full}><code>{described.target}</code>{described.where&&<span> in {described.where}</span>}</p>}
   {allows.length>1&&<div className="chat-permission-scopes" role="radiogroup" aria-label="For how long">
    {allows.map(choice=><button key={choice.option_id} type="button" role="radio" aria-checked={choice.option_id===chosen?.option_id} className="chat-permission-scope" title={choice.label} onClick={()=>setScope(choice.option_id)}>{choice.kind&&SCOPE[choice.kind]?SCOPE[choice.kind]:choice.label}</button>)}
   </div>}

@@ -2,9 +2,9 @@
  * slightly darker monospace body; 28px minimum row height. Desktop tokens
  * only; no local scrollbar styling (the shell's invisible-scrollbar law). */
 .tape{display:flex;flex-direction:column;min-height:0;flex:1 1 auto;position:relative;gap:var(--oi-space-2)}
-.tape-head{display:flex;align-items:center;justify-content:space-between;gap:var(--oi-space-2);padding:0 var(--oi-space-3);min-height:var(--oi-shell-row)}
-.tape-filters{display:flex;gap:2px;flex-wrap:wrap}
-.tape .tape-filter{border:0;background:transparent;color:var(--oi-muted);font:inherit;font-size:var(--oi-shell-type-meta);padding:3px 8px;border-radius:var(--oi-radius-pill);cursor:pointer;min-height:24px}
+.tape-head{display:flex;align-items:center;justify-content:space-between;gap:var(--oi-space-1);padding:0 var(--oi-space-3);min-height:var(--oi-shell-row);flex-wrap:wrap}
+.tape-filters{display:flex;gap:0;flex-wrap:wrap}
+.tape .tape-filter{border:0;background:transparent;color:var(--oi-muted);font:inherit;font-size:var(--oi-shell-type-meta);padding:3px 6px;border-radius:var(--oi-radius-pill);cursor:pointer;min-height:24px}
 .tape .tape-filter:hover{color:var(--oi-foreground);background:var(--oi-wash)}
 .tape .tape-filter[aria-checked="true"]{color:var(--oi-foreground);background:var(--oi-wash-strong)}
 .tape-follow{display:inline-flex;align-items:center;gap:6px;font-size:var(--oi-shell-type-meta);color:var(--oi-muted);white-space:nowrap}

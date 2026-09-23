@@ -88,6 +88,7 @@ const SCENARIO_SPEC = {
   "right-panel-frame": "docs/cradle/10-SIDEBARS.md §4.1 §4.2 §5.3 P1 P2 P3 P13 P14 P18; §7 A3",
   "right-panel-turn": "docs/cradle/10-SIDEBARS.md §4.3 §4.4 §5.3 P1 P4 P6 P7 P16",
   "right-panel-agents": "docs/cradle/10-SIDEBARS.md §4.5 §4.7 §5.3 P15 P17 P18; §4.1a A4",
+  "right-panel-modes": "docs/cradle/10-SIDEBARS.md §7 A1/A2; §4.1 §4.3 §5.3 P5 P1",
 };
 const DEFAULT_SPEC_REF = "docs/cradle/05-EXECUTION.md §3";
 

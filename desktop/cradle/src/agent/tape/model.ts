@@ -337,7 +337,8 @@ export function tapeFromJournal(events:readonly JournalEventLike[],options:TapeO
   if(kind)quiet++;else unknown++;
  }
  for(const row of rows){
-  if(row.startedAt!==undefined&&row.endedAt!==undefined&&row.status!=="running"&&row.status!=="waiting")row.durationMs=Math.max(0,row.endedAt-row.startedAt);
+  // A duration needs two observed ends: a single event (a note, a message) has none.
+  if(row.startedAt!==undefined&&row.endedAt!==undefined&&row.events.length>1&&row.status!=="running"&&row.status!=="waiting")row.durationMs=Math.max(0,row.endedAt-row.startedAt);
   row.cursors.sort((a,b)=>a-b);
  }
  return {turns,rows,lastCursor,quiet,unknown};

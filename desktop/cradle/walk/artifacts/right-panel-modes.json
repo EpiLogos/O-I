@@ -1,0 +1,225 @@
+{
+  "schema": "oi.cradle.walk.scenario/v1",
+  "scenario": "right-panel-modes",
+  "spec_ref": "docs/cradle/10-SIDEBARS.md §7 A1/A2; §4.1 §4.3 §5.3 P5 P1",
+  "grade": "B",
+  "binding": null,
+  "generated_at": "2026-09-23T02:01:41.764Z",
+  "environment": {
+    "base_url": "http://localhost:4373",
+    "bridge_url": "http://127.0.0.1:4379",
+    "viewport": "1280x820",
+    "browser_engine": "chromium",
+    "bundle": "walk (WALK=1) served by vite preview",
+    "build_input": {
+      "mode": "fresh-build",
+      "bundle_fingerprint": "a32ecc0475ecb13bc3b16e64f6c75e3f2629f2bbf7d0ada915eca87f782143cf"
+    },
+    "node": "v24.16.0",
+    "platform": "darwin",
+    "source": {
+      "repository_root": "/Users/admin/Central/worktrees/ui-build/lane2-right",
+      "repository_head": "c98570bd0fec1d36d21c10eae4b9a18bf29db443",
+      "tracked_changes": [
+        "desktop/cradle/scripts/receipt-lint.mjs",
+        "desktop/cradle/src/agent/chat/chat.css",
+        "desktop/cradle/walk/run.mjs"
+      ],
+      "dirty_digest": "d70933f88c1a2687309e940c88f5c764464e59d37b0bff5c4a38709bd5396fd9",
+      "engine_provenance_path": "/Users/admin/Central/worktrees/ui-build/lane2-right/packages/oi-design-system/expressions-engine/PROVENANCE.json",
+      "engine_source": "EpiLogos/Point-Cloud-Demo",
+      "engine_revision": "91db8428fc9dfba06cd258ec5a58e7dd9eef5313"
+    }
+  },
+  "passed": true,
+  "error": null,
+  "duration_ms": 57613,
+  "checks": [
+    {
+      "ok": true,
+      "label": "A1: connections are offered by harness name, never by their free-text label",
+      "data": [
+        "Pi",
+        "Hermes",
+        "False"
+      ]
+    },
+    {
+      "ok": true,
+      "label": "A1: the harness chip shows the harness name (Hermes), derived from protocol and command",
+      "data": "Hermes"
+    },
+    {
+      "ok": true,
+      "label": "A1: the picker groups connections by harness name",
+      "data": [
+        "Pi",
+        "Hermes",
+        "False"
+      ]
+    },
+    {
+      "ok": true,
+      "label": "A1: the connection's own label is a second line inside the picker",
+      "data": [
+        "Canvas walk Pi (existing provider)",
+        "Hermes ACP (modes walk campaign note)",
+        "Canvas walk failing provider"
+      ]
+    },
+    {
+      "ok": true,
+      "label": "A1: the model chip shows the session's current model (model-read current_model_id)",
+      "data": {
+        "chip": "DeepSeek · deepseek-v4.1-flash-expires-on-0910",
+        "current": "deepseek:deepseek-v4.1-flash-expires-on-0910"
+      }
+    },
+    {
+      "ok": true,
+      "label": "A1: the model menu lists exactly the harness's available_models",
+      "data": {
+        "items": 94,
+        "models": 94
+      }
+    },
+    {
+      "ok": true,
+      "label": "A2: the chip shows the session's mode at a glance (default → Ask)",
+      "data": {
+        "chip": "Ask",
+        "owner": "default"
+      }
+    },
+    {
+      "ok": true,
+      "label": "A2: the menu offers exactly the harness's modes, named in the design's words where they match",
+      "data": [
+        "Ask before acting",
+        "Accept edits",
+        "Don't Ask"
+      ]
+    },
+    {
+      "ok": true,
+      "label": "A2: modes the harness does not support are not offered"
+    },
+    {
+      "ok": true,
+      "label": "A2: choosing Accept edits sets the native session's mode (owner mode-read)",
+      "data": "accept_edits"
+    },
+    {
+      "ok": true,
+      "label": "A2: the change is the owner's confirmed, time-stamped record"
+    },
+    {
+      "ok": true,
+      "label": "A2: the tape shows the mode change where it happened"
+    },
+    {
+      "ok": true,
+      "label": "A2: back to Ask before acting"
+    },
+    {
+      "ok": true,
+      "label": "P5: the harness is waiting on exactly one native permission request",
+      "data": 1
+    },
+    {
+      "ok": true,
+      "label": "P5: an inline card says what the agent wants, with Allow and Refuse",
+      "data": "Agent wants to edit a file\n\nApprove edit: /private/var/folders/q0/g_91z7355tb58425qwg3xcy80000gn/T/oi-cradle-editor-eRjm2C/Work/Editor/mode-walk.txt\n\nAllow\nRefuse\nShow raw"
+    },
+    {
+      "ok": true,
+      "label": "P5: the scope choices are the harness's own allow options, none invented",
+      "data": {
+        "scopes": 0,
+        "choices": [
+          "allow_once",
+          "deny"
+        ]
+      }
+    },
+    {
+      "ok": true,
+      "label": "P5: the request's verbatim form is only behind Show raw"
+    },
+    {
+      "ok": true,
+      "label": "P5: ! on the Chat tab"
+    },
+    {
+      "ok": true,
+      "label": "P5: ! on the avatar"
+    },
+    {
+      "ok": true,
+      "label": "P1: the closed panel's mark carries ! while the agent needs you"
+    },
+    {
+      "ok": true,
+      "label": "P5: the card collapses to one line once answered"
+    },
+    {
+      "ok": true,
+      "label": "P5: one activation answers one native request"
+    },
+    {
+      "ok": true,
+      "label": "P5: allowed, the harness really made the edit",
+      "data": "ok"
+    },
+    {
+      "ok": true,
+      "label": "P5: answering clears the ! and the owner's pending request"
+    }
+  ],
+  "ops": [
+    {
+      "ok": true,
+      "op": "info",
+      "duration_ms": 0,
+      "data": {
+        "schema": "oi.cradle.walk/v1",
+        "mounted_at": "2026-09-23T02:01:42.010Z",
+        "transport": {
+          "kind": "bridge",
+          "url": "http://127.0.0.1:4379"
+        },
+        "url": "http://localhost:4373/"
+      }
+    },
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 75,
+      "data": {
+        "file": "right-panel-modes-a2-accept-edits.png"
+      }
+    },
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 89,
+      "data": {
+        "file": "right-panel-modes-p5-needs-you.png"
+      }
+    },
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 55,
+      "data": {
+        "file": "right-panel-modes-p5-answered.png"
+      }
+    }
+  ],
+  "metrics": {},
+  "screenshots": [
+    "right-panel-modes-a2-accept-edits.png",
+    "right-panel-modes-p5-needs-you.png",
+    "right-panel-modes-p5-answered.png"
+  ]
+}

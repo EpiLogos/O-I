@@ -218,7 +218,8 @@ export function AgentChat({session,accompanying,project,agentName,situating,sess
     stopFromEnd:(fromEnd:number)=>turnStopFromEnd(tape,fromEnd),
     artifactsForTurnFromEnd:(fromEnd:number)=>{const turn=turnAt(fromEnd);return turn&&!turn.open?editedPaths(tape,turn.index):[];},onArtifact}:undefined;
   const stateLabel=!accompanying?undefined:!state?.reading&&!status?"Reading…":sessionStateLabel(status);
-  const agentLabel=status?.provider?.label??identity.name;
+  // The speaker is the agent, never the connection's free-text label (A1).
+  const agentLabel=agentName||identity.name;
   const bound=!!(session&&state&&actions);
   const suggestions=suggestionsOf(project,subject);
   // The history menu is the head's own control; the sidebar is the other way
