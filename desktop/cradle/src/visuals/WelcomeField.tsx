@@ -3,11 +3,12 @@
  * time (prepaint and VisualsProvider own `data-theme`). This overlay owns
  * the opposite ground, the static mark, and the enter handoff:
  *
- *   rest     — fully opaque, opposite of the saved theme
- *   entering — ground and mark ink move to the saved theme while opacity
- *              eases out across the end of that move. `data-oi-opening`
- *              is cleared as the gesture starts, while the splash still
- *              covers the window, so the app underneath is already final
+ *   rest     — opposite of the saved theme; the mark fades in quickly
+ *   entering — ground and mark ink move to the saved theme. Logo opacity
+ *              starts about 0.2s later and eases out across that move.
+ *              `data-oi-opening` is cleared as the gesture starts, while
+ *              the splash still covers the window, so the app underneath
+ *              is already final
  *
  * The expression stage is not used here. Inline loading status is Loading.
  */

@@ -77,6 +77,12 @@ try {
     assert.equal(await page.evaluate(() => welcomeTest.fieldReadyEvents.length), 1, 'StrictMode reports the splash once');
     await appReady(page);
     await page.getByRole('button', {name: 'O:I is ready. Open the app.', exact: true}).waitFor();
+    await page.waitForFunction(() => {
+      const logo = document.querySelector('.oi-welcome-logo');
+      return !!logo && Number(getComputedStyle(logo).opacity) > 0.98;
+    });
+    const intro = await page.evaluate(() => getComputedStyle(document.querySelector('.oi-welcome-logo')).animationDuration);
+    assert.ok(['0.12s', '120ms'].includes(intro), `the opening mark fades in quickly, got ${intro}`);
     const openingIsLight = theme === 'dark';
     const pixels = await renderedBounds(page, {screenshot: () => page.locator('.oi-welcome-logo').screenshot()});
     const ground = openingIsLight ? [251, 251, 249] : [18, 18, 17];
@@ -94,6 +100,13 @@ try {
     if (theme === 'light') await page.keyboard.press('Enter');
     else await page.getByRole('button', {name: 'O:I is ready. Open the app.', exact: true}).click();
     await page.locator('.oi-welcome[data-phase="entering"]').waitFor();
+    const fadeDelay = await page.evaluate(() => {
+      const style = getComputedStyle(document.querySelector('.oi-welcome'));
+      const properties = style.transitionProperty.split(',').map(item => item.trim());
+      const delays = style.transitionDelay.split(',').map(item => item.trim());
+      return delays[properties.indexOf('opacity')];
+    });
+    assert.ok(['0.2s', '200ms'].includes(fadeDelay), `logo fade-out starts after about 0.2s, got ${fadeDelay}`);
     await page.waitForFunction(() => {
       const node = document.querySelector('.oi-welcome');
       if (!node) return false;
