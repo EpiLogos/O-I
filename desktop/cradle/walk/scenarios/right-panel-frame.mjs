@@ -59,7 +59,7 @@ export default async function run({page, baseUrl, check, shot, channel, provisio
   panel = await openPanel(page);
   await planeButton(panel, "Chat").click();
   check(await panel.getByRole("textbox", {name: "Message", exact: true}).inputValue() === DRAFT, "P3: switching mode keeps the draft byte-identical");
-  await page.getByRole("radio", {name: "Central", exact: true}).first().click();
+  await page.getByRole("radio", {name: "Base", exact: true}).first().click();
   await page.reload();
   panel = await openPanel(page);
   await planeButton(panel, "Chat").click();
@@ -121,7 +121,7 @@ export default async function run({page, baseUrl, check, shot, channel, provisio
     check(JSON.stringify(seen) === JSON.stringify(tabs), `${label}: the tabs are ${tabs.join(" · ")}`, seen);
     check(!(await panel.innerText()).includes("Nara · Anima") && !seen.includes("Epii"), `${label}: Nara·Anima and Epii are not tabs`);
   }
-  await page.getByRole("radio", {name: "Central", exact: true}).first().click();
+  await page.getByRole("radio", {name: "Base", exact: true}).first().click();
   // Settings: the panel rests collapsed; opened, it is a Chat-only help panel.
   await page.locator(".world-system-settings").first().click();
   await page.waitForSelector('[data-region="right"][data-depth="collapsed"]', {timeout: 10000});
@@ -131,7 +131,7 @@ export default async function run({page, baseUrl, check, shot, channel, provisio
   await page.getByRole("button", {name: "Collapse the panel"}).click();
   await page.keyboard.press("Escape");
   await page.locator(".world-system-settings").first().click().catch(() => {});
-  await page.getByRole("radio", {name: "Central", exact: true}).first().click().catch(() => {});
+  await page.getByRole("radio", {name: "Base", exact: true}).first().click().catch(() => {});
 
   // --- P18: narrow — the panel is an overlay drawer -------------------------
   await page.setViewportSize({width: 760, height: 820});

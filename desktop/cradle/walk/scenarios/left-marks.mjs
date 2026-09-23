@@ -97,16 +97,18 @@ export default async function run({page, baseUrl, check, shot, channel, provisio
   await row(SESSIONS.consent).locator(".left-row-main").click();
   const consent = right.getByRole("region", {name: "Provider consent"});
   await consent.waitFor({timeout: 30000});
-  await consent.getByRole("button", {name: "Reject", exact: true}).click();
+  // The inline card (10-SIDEBARS §4.3): Refuse answers with the harness's own reject option.
+  await consent.getByRole("button", {name: "Refuse", exact: true}).click();
   await page.waitForFunction(ref => document.querySelector(`.left-conversation[data-session-ref="${ref}"]`)?.getAttribute("data-mark") !== "needs-you", SESSIONS.consent.ref, {timeout: 60000});
   await page.waitForFunction(() => !document.querySelector('[data-project-path="Work/Alpha"] .left-mark-chip[data-mark="needs-you"]'), null, {timeout: 15000});
   const answered = view(SESSIONS.consent).permissions?.length ?? 0;
-  check(answered === 0 && await markOf(SESSIONS.consent) !== "needs-you" && await alphaRow.locator('.left-mark-chip[data-mark="needs-you"]').count() === 0, "R3: answering the request through the desktop's consent card (Reject) clears both marks; the owner holds no pending request", {answered, mark: await markOf(SESSIONS.consent)});
+  check(answered === 0 && await markOf(SESSIONS.consent) !== "needs-you" && await alphaRow.locator('.left-mark-chip[data-mark="needs-you"]').count() === 0, "R3: answering the request through the desktop's consent card (Refuse) clears both marks; the owner holds no pending request", {answered, mark: await markOf(SESSIONS.consent)});
   try { p.request("cancel", {agent_session: SESSIONS.consent.ref, reason: "walk done"}); } catch { /* the rejected turn already ended */ }
 
   // ---- R5 failed: the owner refuses the failing provider
   await row(SESSIONS.failing).locator(".left-row-main").click();
-  const connect = right.getByRole("button", {name: "Walk failing provider", exact: true});
+  // Connections are offered by harness name; the connection's label rides in the accessible name (A1).
+  const connect = right.getByRole("button", {name: /Walk failing provider$/});
   await connect.waitFor({timeout: 30000});
   await connect.click();
   await page.waitForFunction(ref => document.querySelector(`.left-conversation[data-session-ref="${ref}"]`)?.getAttribute("data-mark") === "failed", SESSIONS.failing.ref, {timeout: 60000});

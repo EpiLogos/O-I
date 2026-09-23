@@ -98,7 +98,7 @@ export default async function run({page, baseUrl, check, shot, channel, provisio
   await shot("a4-in-place");
   await layer.getByRole("button", {name: "Back"}).click();
   check(await page.locator(".object-centre-layer").count() === 0, "A4: ← Back returns to where you were");
-  await page.getByRole("radio", {name: "Central", exact: true}).first().click();
+  await page.getByRole("radio", {name: "Base", exact: true}).first().click();
 
   // --- P18: narrow — a detail drawer replaces the body with Back ------------
   await page.setViewportSize({width: 760, height: 820});
@@ -136,7 +136,7 @@ export default async function run({page, baseUrl, check, shot, channel, provisio
   await openWorkspaceStrip(page).catch(() => {});
   await page.locator(".footer-epi").click();
   await page.waitForFunction(() => document.querySelector(".footer-epi")?.getAttribute("aria-pressed") === "false", null, {timeout: 15000});
-  await page.getByRole("radio", {name: "Central", exact: true}).first().click().catch(() => {});
+  await page.getByRole("radio", {name: "Base", exact: true}).first().click().catch(() => {});
 
   // --- P17 error: an unreadable roster says so, with Retry -----------------
   await restoreScope(page, "Other");

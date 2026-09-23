@@ -19,7 +19,7 @@ import {chmodSync, writeFileSync} from "node:fs";
 import {dirname, join} from "node:path";
 import {fileURLToPath} from "node:url";
 import {setup as sourceSetup} from "./editor.mjs";
-import {restoreScope} from "../lane2-support.mjs";
+import {openPanel,restoreScope} from "../lane2-support.mjs";
 
 const providerScript=join(dirname(fileURLToPath(import.meta.url)),"..","fixtures","activity-provider.py");
 const PROJECT="Editor";
@@ -73,10 +73,7 @@ export default async function run({page,baseUrl,check,shot,channel,provision:p})
   await projectRow.waitFor({timeout:30000});
   await projectRow.click();
   await nav.getByRole("button",{name:TITLE,exact:true}).waitFor({timeout:30000});
-  await nav.getByRole("button",{name:TITLE,exact:true}).click();
-  await page.getByRole("button",{name:"Toggle right region",exact:true}).click();
-  const panel=page.getByRole("region",{name:"Accompanying agent"});
-  await panel.waitFor();
+  const panel=await openPanel(page);
   await page.waitForTimeout(400);
   // The row names the planes that fit at the panel's width; the rest are one
   // "More" menu away (the plane-nav overflow law). Reading a mode's planes
@@ -164,8 +161,12 @@ export default async function run({page,baseUrl,check,shot,channel,provision:p})
   const presenceChip=()=>page.locator(".shell-agent-presence");
   await page.getByRole("button",{name:"Toggle right region",exact:true}).click();
   await presenceChip().waitFor({timeout:15000});
-  check(await presenceChip().getAttribute("data-presence-state")==="idle",
-    "Collapsed frame: the status chip reads the owner's real resident state (idle) — no invented activity");
+  // "Reading…" / "Updating…" are the owner read and a local save in flight —
+  // real but transient; the resident state is what settles after them.
+  await page.waitForFunction(()=>!["reading","updating"].includes(document.querySelector(".shell-agent-presence")?.getAttribute("data-presence-state")??"reading"),null,{timeout:15000}).catch(()=>{});
+  const restingPresence=await presenceChip().getAttribute("data-presence-state");
+  check(restingPresence==="idle",
+    "Collapsed frame: the status chip reads the owner's real resident state (idle) — no invented activity",{presence:restingPresence});
   await presenceChip().click();
   await panel.waitFor({timeout:15000});
   check(await page.locator(".shell-agent-presence").count()===0 && await panel.isVisible(),
@@ -224,10 +225,9 @@ export default async function run({page,baseUrl,check,shot,channel,provision:p})
   await shot("panel-inspect-handoff");
 
   // --- one observer, one draft: the panel and a centre tab ---------------------
-  if(!(await nav.isVisible().catch(()=>false)))await page.keyboard.press("Meta+b");
-  const centreRow=nav.getByRole("button",{name:TITLE,exact:true});
-  await centreRow.waitFor({timeout:15000});
-  await centreRow.click();
+  // The panel's own control promotes the conversation to a centre tab (P14).
+  await plane("Chat");
+  await panel.getByRole("button",{name:"Open the conversation in the centre",exact:true}).click();
   const centre=page.locator('[data-region="centre"]');
   const centreMessage=centre.getByRole("textbox",{name:"Message",exact:true});
   await centreMessage.waitFor({timeout:30000});
@@ -326,14 +326,10 @@ export default async function run({page,baseUrl,check,shot,channel,provision:p})
     // The row's disclosure may persist across reload; only open it when
     // closed — the row is a toggle, never an unconditional open.
     if((await projectRow.getAttribute("aria-expanded"))!=="true")await projectRow.click();
+    // The conversation's left row opens it in the panel (§3.4 row grammar).
     const reloadRow=nav.getByRole("button",{name:TITLE,exact:true});
     await reloadRow.waitFor({timeout:30000});
     await reloadRow.click();
-    await plane("Chat").catch(()=>{});
-    await openChooser();
-    const row=chooserRows.getByRole("button",{name:TITLE,exact:true});
-    await row.focus();
-    await row.press("Enter");
   }
   await page.waitForFunction(ref=>document.querySelector(".agent-layer")?.getAttribute("data-agent-session-ref")===ref,REF,{timeout:30000});
   // The resting plane can itself be a restored layout preference; land on

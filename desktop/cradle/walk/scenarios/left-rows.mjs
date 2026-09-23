@@ -98,7 +98,7 @@ export default async function run({page, baseUrl, check, shot, channel, provisio
     return tabs.some(text => text.includes("alpha.html"));
   }, null, {timeout: 30000});
   const sideTabs = await right.locator('[role="tab"]').allInnerTexts();
-  const contextSelected = await right.locator('[aria-pressed="true"], [aria-selected="true"]').filter({hasText: "Context"}).count();
+  const contextSelected = await right.locator('[aria-pressed="true"], [aria-selected="true"], [aria-current="page"]').filter({hasText: "Context"}).count();
   check(visible && sideTabs.some(text => text.includes("alpha.html")) && contextSelected >= 1, "A6: Open beside puts the vision page in the right panel's Context canvas, with Context selected", {sideTabs, contextSelected});
   check(popOuts === 0, "A6: Pop out is offered only where the native window route exists (this walk runs the browser transport; the native detach route is not lent here)", {popOuts});
   await shot("A6-open-beside");
