@@ -74,8 +74,11 @@ case "${OS}/${ARCH}" in
      fi ;;
 esac
 
-APPIMAGE_GLOB="${TAURI_DIR}/target/release/bundle/appimage/*.AppImage"
-MACOS_APP_PATH="${TAURI_DIR}/target/release/bundle/macos/O-I.app"
+# Cargo writes where CARGO_TARGET_DIR points when it is set (per-worktree
+# targets); otherwise under the Tauri crate.
+TARGET_ROOT="${CARGO_TARGET_DIR:-${TAURI_DIR}/target}"
+APPIMAGE_GLOB="${TARGET_ROOT}/release/bundle/appimage/*.AppImage"
+MACOS_APP_PATH="${TARGET_ROOT}/release/bundle/macos/O-I.app"
 
 if [ "${DRY_RUN}" -eq 1 ]; then
   log "dry-run plan:"
