@@ -4,80 +4,152 @@
   "spec_ref": "docs/cradle/12-SETTINGS.md §1 §3 §4 S1 S3 S10 S11 S14 S15",
   "grade": "B",
   "binding": null,
-  "generated_at": "2026-09-23T08:29:12.142Z",
+  "generated_at": "2026-09-23T12:24:26.944Z",
   "environment": {
-    "base_url": "http://localhost:4173",
-    "bridge_url": "http://127.0.0.1:4179",
+    "base_url": "http://localhost:5700",
+    "bridge_url": "http://127.0.0.1:5705",
     "viewport": "1280x820",
     "browser_engine": "chromium",
     "bundle": "walk (WALK=1) served by vite preview",
     "build_input": {
       "mode": "reused-dist",
-      "bundle_fingerprint": "a13718589b0a01d3d42d329634cddf7aeb6a877f7eccc823430c7ba73803f14a"
+      "bundle_fingerprint": "b2fe65e7f19bed59467483ff326534aed073be7f7adad7ef00157990ac5a9f27"
     },
     "node": "v24.16.0",
     "platform": "darwin",
     "source": {
-      "repository_root": "/Users/admin/Central/worktrees/ui-build/lane1-left",
-      "repository_head": "b30209f9bddb65b6a535ffeca2b482fa403a3f26",
+      "repository_root": "/Users/admin/Central/worktrees/walk-reds/o-i",
+      "repository_head": "6d4a040240c27a57a39dfde5fbd4000c48e85017",
       "tracked_changes": [
-        "desktop/cradle/walk/artifacts/left-forms-day-copy.png",
-        "desktop/cradle/walk/artifacts/left-forms-intent-goal-refused.png",
-        "desktop/cradle/walk/artifacts/left-forms.json",
-        "desktop/cradle/walk/artifacts/left-frame-L1-rest-1440.png",
-        "desktop/cradle/walk/artifacts/left-frame-L3-compact-1000.png",
-        "desktop/cradle/walk/artifacts/left-frame-L4-overlay-600.png",
-        "desktop/cradle/walk/artifacts/left-frame-L6-reading.png",
-        "desktop/cradle/walk/artifacts/left-frame.json",
-        "desktop/cradle/walk/artifacts/left-gallery-base-dark-1000.png",
-        "desktop/cradle/walk/artifacts/left-gallery-base-dark-760.png",
-        "desktop/cradle/walk/artifacts/left-gallery-base-light-1000.png",
-        "desktop/cradle/walk/artifacts/left-gallery-base-light-760.png",
-        "desktop/cradle/walk/artifacts/left-gallery-factory-dark-1000.png",
-        "desktop/cradle/walk/artifacts/left-gallery-factory-dark-1440.png",
-        "desktop/cradle/walk/artifacts/left-gallery-factory-dark-760.png",
-        "desktop/cradle/walk/artifacts/left-gallery-factory-light-1000.png",
-        "desktop/cradle/walk/artifacts/left-gallery-factory-light-1440.png",
-        "desktop/cradle/walk/artifacts/left-gallery-factory-light-760.png",
-        "desktop/cradle/walk/artifacts/left-gallery-inbox-dark-1440.png",
-        "desktop/cradle/walk/artifacts/left-gallery-inbox-light-1440.png",
-        "desktop/cradle/walk/artifacts/left-gallery-scope-menu-light-1440.png",
-        "desktop/cradle/walk/artifacts/left-gallery.json",
-        "desktop/cradle/walk/artifacts/left-head-inbox-open-item.png",
-        "desktop/cradle/walk/artifacts/left-head-palette-agents.png",
-        "desktop/cradle/walk/artifacts/left-head-scope-menu.png",
-        "desktop/cradle/walk/artifacts/left-head.json",
-        "desktop/cradle/walk/artifacts/left-lens-lens-off.png",
-        "desktop/cradle/walk/artifacts/left-lens-lens-on.png",
-        "desktop/cradle/walk/artifacts/left-lens.json",
-        "desktop/cradle/walk/artifacts/left-marks-R2-working.png",
-        "desktop/cradle/walk/artifacts/left-marks-R3-needs-you.png",
-        "desktop/cradle/walk/artifacts/left-marks-R4-unread.png",
-        "desktop/cradle/walk/artifacts/left-marks-R5-failed.png",
-        "desktop/cradle/walk/artifacts/left-marks.json",
-        "desktop/cradle/walk/artifacts/left-rows-A6-open-beside.png",
-        "desktop/cradle/walk/artifacts/left-rows-R12-dropped-context.png",
-        "desktop/cradle/walk/artifacts/left-rows-R6-selected.png",
-        "desktop/cradle/walk/artifacts/left-rows.json",
-        "desktop/cradle/walk/artifacts/left-unreadable-L7-unreadable.png",
-        "desktop/cradle/walk/artifacts/left-unreadable-R11-stale-header.png",
-        "desktop/cradle/walk/artifacts/left-unreadable-R8-branch-reading.png",
-        "desktop/cradle/walk/artifacts/left-unreadable.json",
-        "desktop/cradle/walk/artifacts/receive-include-accepted-on-current-basis.png",
-        "desktop/cradle/walk/artifacts/receive-include-included-with-attribution.png",
-        "desktop/cradle/walk/artifacts/receive-include-return-expanded-before-review.png",
-        "desktop/cradle/walk/artifacts/receive-include-stale-basis-refusal.png",
-        "desktop/cradle/walk/artifacts/receive-include.json"
+        "desktop/cradle/walk/artifacts/factory-desk-f1-reading.png",
+        "desktop/cradle/walk/artifacts/factory-desk-f2-empty.png",
+        "desktop/cradle/walk/artifacts/factory-desk-f3-partial.png",
+        "desktop/cradle/walk/artifacts/factory-desk-f4-needs-you.png",
+        "desktop/cradle/walk/artifacts/factory-desk-factory-desk-1000-dark.png",
+        "desktop/cradle/walk/artifacts/factory-desk-factory-desk-1000-light.png",
+        "desktop/cradle/walk/artifacts/factory-desk-factory-desk-1440-dark.png",
+        "desktop/cradle/walk/artifacts/factory-desk-factory-desk-1440-light.png",
+        "desktop/cradle/walk/artifacts/factory-desk-factory-desk-760-dark.png",
+        "desktop/cradle/walk/artifacts/factory-desk-factory-desk-760-light.png",
+        "desktop/cradle/walk/artifacts/factory-desk.json",
+        "desktop/cradle/walk/artifacts/mode-workspaces-factory-own-tree.png",
+        "desktop/cradle/walk/artifacts/mode-workspaces.json",
+        "desktop/cradle/walk/artifacts/modes-base-1000.png",
+        "desktop/cradle/walk/artifacts/modes-base-1280.png",
+        "desktop/cradle/walk/artifacts/modes-base-640.png",
+        "desktop/cradle/walk/artifacts/modes-base-760.png",
+        "desktop/cradle/walk/artifacts/modes-expressions-1280.png",
+        "desktop/cradle/walk/artifacts/modes-factory-1280.png",
+        "desktop/cradle/walk/artifacts/modes-failure.png",
+        "desktop/cradle/walk/artifacts/modes-settings-1280.png",
+        "desktop/cradle/walk/artifacts/modes-tabs-list-1280.png",
+        "desktop/cradle/walk/artifacts/modes-tabs-unpinned-1280.png",
+        "desktop/cradle/walk/artifacts/modes-tabs-unpinned-horizontal-1280.png",
+        "desktop/cradle/walk/artifacts/modes-techne-1280.png",
+        "desktop/cradle/walk/artifacts/modes.json",
+        "desktop/cradle/walk/artifacts/recovery-failure.png",
+        "desktop/cradle/walk/artifacts/recovery-recovery-footer-status-disclosure.png",
+        "desktop/cradle/walk/artifacts/recovery.json",
+        "desktop/cradle/walk/artifacts/settings-change-applied.png",
+        "desktop/cradle/walk/artifacts/settings-change-failure.png",
+        "desktop/cradle/walk/artifacts/settings-change-review-dark-1000.png",
+        "desktop/cradle/walk/artifacts/settings-change-review-dark-1440.png",
+        "desktop/cradle/walk/artifacts/settings-change-review-dark-760.png",
+        "desktop/cradle/walk/artifacts/settings-change-review-light-1000.png",
+        "desktop/cradle/walk/artifacts/settings-change-review-light-1440.png",
+        "desktop/cradle/walk/artifacts/settings-change-review-light-760.png",
+        "desktop/cradle/walk/artifacts/settings-change-staged-dark-1000.png",
+        "desktop/cradle/walk/artifacts/settings-change-staged-dark-1440.png",
+        "desktop/cradle/walk/artifacts/settings-change-staged-dark-760.png",
+        "desktop/cradle/walk/artifacts/settings-change-staged-light-1000.png",
+        "desktop/cradle/walk/artifacts/settings-change-staged-light-1440.png",
+        "desktop/cradle/walk/artifacts/settings-change-staged-light-760.png",
+        "desktop/cradle/walk/artifacts/settings-change.json",
+        "desktop/cradle/walk/artifacts/settings-credentials-discovered.png",
+        "desktop/cradle/walk/artifacts/settings-credentials-key-entry.png",
+        "desktop/cradle/walk/artifacts/settings-credentials-verified.png",
+        "desktop/cradle/walk/artifacts/settings-credentials.json",
+        "desktop/cradle/walk/artifacts/settings-shell-appearance-dark-1000.png",
+        "desktop/cradle/walk/artifacts/settings-shell-appearance-dark-1440.png",
+        "desktop/cradle/walk/artifacts/settings-shell-appearance-dark-760.png",
+        "desktop/cradle/walk/artifacts/settings-shell-appearance-light-1000.png",
+        "desktop/cradle/walk/artifacts/settings-shell-appearance-light-1440.png",
+        "desktop/cradle/walk/artifacts/settings-shell-appearance-light-760.png",
+        "desktop/cradle/walk/artifacts/settings-shell-credentials-dark-1000.png",
+        "desktop/cradle/walk/artifacts/settings-shell-credentials-dark-1440.png",
+        "desktop/cradle/walk/artifacts/settings-shell-credentials-dark-760.png",
+        "desktop/cradle/walk/artifacts/settings-shell-credentials-light-1000.png",
+        "desktop/cradle/walk/artifacts/settings-shell-credentials-light-1440.png",
+        "desktop/cradle/walk/artifacts/settings-shell-credentials-light-760.png",
+        "desktop/cradle/walk/artifacts/settings-shell-harnesses-dark-1000.png",
+        "desktop/cradle/walk/artifacts/settings-shell-harnesses-dark-1440.png",
+        "desktop/cradle/walk/artifacts/settings-shell-harnesses-dark-760.png",
+        "desktop/cradle/walk/artifacts/settings-shell-harnesses-light-1000.png",
+        "desktop/cradle/walk/artifacts/settings-shell-harnesses-light-1440.png",
+        "desktop/cradle/walk/artifacts/settings-shell-harnesses-light-760.png",
+        "desktop/cradle/walk/artifacts/settings-shell-model-picker.png",
+        "desktop/cradle/walk/artifacts/settings-shell-models-dark-1000.png",
+        "desktop/cradle/walk/artifacts/settings-shell-models-dark-1440.png",
+        "desktop/cradle/walk/artifacts/settings-shell-models-dark-760.png",
+        "desktop/cradle/walk/artifacts/settings-shell-models-light-1000.png",
+        "desktop/cradle/walk/artifacts/settings-shell-models-light-1440.png",
+        "desktop/cradle/walk/artifacts/settings-shell-models-light-760.png",
+        "desktop/cradle/walk/artifacts/settings-shell-permissions-dark-1000.png",
+        "desktop/cradle/walk/artifacts/settings-shell-permissions-dark-1440.png",
+        "desktop/cradle/walk/artifacts/settings-shell-permissions-dark-760.png",
+        "desktop/cradle/walk/artifacts/settings-shell-permissions-light-1000.png",
+        "desktop/cradle/walk/artifacts/settings-shell-permissions-light-1440.png",
+        "desktop/cradle/walk/artifacts/settings-shell-permissions-light-760.png",
+        "desktop/cradle/walk/artifacts/settings-shell-product-aikit-dark-1000.png",
+        "desktop/cradle/walk/artifacts/settings-shell-product-aikit-dark-1440.png",
+        "desktop/cradle/walk/artifacts/settings-shell-product-aikit-dark-760.png",
+        "desktop/cradle/walk/artifacts/settings-shell-product-aikit-light-1000.png",
+        "desktop/cradle/walk/artifacts/settings-shell-product-aikit-light-1440.png",
+        "desktop/cradle/walk/artifacts/settings-shell-product-aikit-light-760.png",
+        "desktop/cradle/walk/artifacts/settings-shell-profiles-dark-1000.png",
+        "desktop/cradle/walk/artifacts/settings-shell-profiles-dark-1440.png",
+        "desktop/cradle/walk/artifacts/settings-shell-profiles-dark-760.png",
+        "desktop/cradle/walk/artifacts/settings-shell-profiles-light-1000.png",
+        "desktop/cradle/walk/artifacts/settings-shell-profiles-light-1440.png",
+        "desktop/cradle/walk/artifacts/settings-shell-profiles-light-760.png",
+        "desktop/cradle/walk/artifacts/settings-shell-skills-dark-1000.png",
+        "desktop/cradle/walk/artifacts/settings-shell-skills-dark-1440.png",
+        "desktop/cradle/walk/artifacts/settings-shell-skills-dark-760.png",
+        "desktop/cradle/walk/artifacts/settings-shell-skills-light-1000.png",
+        "desktop/cradle/walk/artifacts/settings-shell-skills-light-1440.png",
+        "desktop/cradle/walk/artifacts/settings-shell-skills-light-760.png",
+        "desktop/cradle/walk/artifacts/settings-shell-status-dark-1000.png",
+        "desktop/cradle/walk/artifacts/settings-shell-status-dark-1440.png",
+        "desktop/cradle/walk/artifacts/settings-shell-status-dark-760.png",
+        "desktop/cradle/walk/artifacts/settings-shell-status-light-1000.png",
+        "desktop/cradle/walk/artifacts/settings-shell-status-light-1440.png",
+        "desktop/cradle/walk/artifacts/settings-shell-status-light-760.png",
+        "desktop/cradle/walk/artifacts/settings-shell.json",
+        "desktop/cradle/walk/artifacts/settings-unreadable-recovered.png",
+        "desktop/cradle/walk/artifacts/settings-unreadable-unreadable.png",
+        "desktop/cradle/walk/artifacts/settings-unreadable.json",
+        "desktop/cradle/walk/artifacts/shell-recovery-1280.png",
+        "desktop/cradle/walk/artifacts/shell-recovery-390.png",
+        "desktop/cradle/walk/artifacts/shell-recovery-639.png",
+        "desktop/cradle/walk/artifacts/shell-recovery-760.png",
+        "desktop/cradle/walk/artifacts/shell-recovery-900.png",
+        "desktop/cradle/walk/artifacts/shell-recovery-system-1280.png",
+        "desktop/cradle/walk/artifacts/shell-recovery-system-900.png",
+        "desktop/cradle/walk/artifacts/shell-recovery.json",
+        "desktop/cradle/walk/artifacts/system-settings-drift-review.png",
+        "desktop/cradle/walk/artifacts/system-settings-empty-world-credentials.png",
+        "desktop/cradle/walk/artifacts/system-settings-empty-world-oi.png",
+        "desktop/cradle/walk/artifacts/system-settings.json"
       ],
-      "dirty_digest": "89fb204514f455340cacc83bb8989ab059ab7ddb648fb68d979ce2870c90d06f",
-      "engine_provenance_path": "/Users/admin/Central/worktrees/ui-build/lane1-left/packages/oi-design-system/expressions-engine/PROVENANCE.json",
+      "dirty_digest": "a6d190e722eb8656a68a5f44b7c4a8b580f5c9fc4dfca738edcf0e9156f253e8",
+      "engine_provenance_path": "/Users/admin/Central/worktrees/walk-reds/o-i/packages/oi-design-system/expressions-engine/PROVENANCE.json",
       "engine_source": "EpiLogos/Point-Cloud-Demo",
       "engine_revision": "91db8428fc9dfba06cd258ec5a58e7dd9eef5313"
     }
   },
-  "passed": true,
+  "passed": false,
   "error": null,
-  "duration_ms": 183095,
+  "duration_ms": 102291,
   "checks": [
     {
       "ok": true,
@@ -158,7 +230,7 @@
       "label": "S10 each drift shows both sides and the owner's remedy in words",
       "data": {
         "sides": [
-          "catalog revision 12 · descriptor count 18 · 18 slugs",
+          "catalog revision 16 · descriptor count 18 · 18 slugs",
           "15 detected · 3 not installed · 18 states · 0 unavailable"
         ]
       }
@@ -174,12 +246,14 @@
         "shownReady": [
           "claude",
           "codex",
+          "gemini-cli",
           "pi",
           "zcode"
         ],
         "ready": [
           "claude",
           "codex",
+          "gemini-cli",
           "pi",
           "zcode"
         ]
@@ -196,15 +270,15 @@
         "brokerClients": [
           "broker"
         ],
-        "listed": 24
+        "listed": 18
       }
     },
     {
       "ok": true,
-      "label": "Harnesses: \"Detected, adapter needed\" counts the owner's 11"
+      "label": "Harnesses: \"Detected, adapter needed\" counts the owner's 10"
     },
     {
-      "ok": true,
+      "ok": false,
       "label": "Harnesses: Install runs the owner's client install — the card and the owner both read Installed (into the walk's own project)"
     },
     {
@@ -232,11 +306,8 @@
       "label": "S14 Auto keeps its identity and names its policy"
     },
     {
-      "ok": true,
-      "label": "S15 with no permission-mode setting in AIKit, one plain sentence names it — no control",
-      "data": {
-        "sentence": "Choosing a default permission mode for Claude Code, Codex, Pi, ZCode needs an AIKit setting that the installed AIKit doesn't have yet."
-      }
+      "ok": false,
+      "label": "the permission modes render from AIKit's own settings"
     },
     {
       "ok": true,
@@ -354,7 +425,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 63,
+      "duration_ms": 44,
       "data": {
         "file": "settings-shell-status-light-1440.png"
       }
@@ -362,7 +433,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 54,
+      "duration_ms": 22,
       "data": {
         "file": "settings-shell-status-light-1000.png"
       }
@@ -370,7 +441,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 69,
+      "duration_ms": 29,
       "data": {
         "file": "settings-shell-status-light-760.png"
       }
@@ -378,7 +449,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 75,
+      "duration_ms": 45,
       "data": {
         "file": "settings-shell-status-dark-1440.png"
       }
@@ -386,7 +457,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 75,
+      "duration_ms": 52,
       "data": {
         "file": "settings-shell-status-dark-1000.png"
       }
@@ -394,7 +465,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 63,
+      "duration_ms": 33,
       "data": {
         "file": "settings-shell-status-dark-760.png"
       }
@@ -402,7 +473,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 75,
+      "duration_ms": 52,
       "data": {
         "file": "settings-shell-harnesses-light-1440.png"
       }
@@ -410,7 +481,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 98,
+      "duration_ms": 37,
       "data": {
         "file": "settings-shell-harnesses-light-1000.png"
       }
@@ -418,7 +489,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 34,
+      "duration_ms": 35,
       "data": {
         "file": "settings-shell-harnesses-light-760.png"
       }
@@ -426,7 +497,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 70,
+      "duration_ms": 49,
       "data": {
         "file": "settings-shell-harnesses-dark-1440.png"
       }
@@ -434,7 +505,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 67,
+      "duration_ms": 41,
       "data": {
         "file": "settings-shell-harnesses-dark-1000.png"
       }
@@ -442,7 +513,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 70,
+      "duration_ms": 36,
       "data": {
         "file": "settings-shell-harnesses-dark-760.png"
       }
@@ -450,7 +521,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 66,
+      "duration_ms": 59,
       "data": {
         "file": "settings-shell-model-picker.png"
       }
@@ -458,7 +529,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 61,
+      "duration_ms": 43,
       "data": {
         "file": "settings-shell-models-light-1440.png"
       }
@@ -466,7 +537,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 44,
+      "duration_ms": 37,
       "data": {
         "file": "settings-shell-models-light-1000.png"
       }
@@ -474,7 +545,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 52,
+      "duration_ms": 26,
       "data": {
         "file": "settings-shell-models-light-760.png"
       }
@@ -482,7 +553,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 89,
+      "duration_ms": 38,
       "data": {
         "file": "settings-shell-models-dark-1440.png"
       }
@@ -490,7 +561,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 52,
+      "duration_ms": 49,
       "data": {
         "file": "settings-shell-models-dark-1000.png"
       }
@@ -498,7 +569,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 102,
+      "duration_ms": 46,
       "data": {
         "file": "settings-shell-models-dark-760.png"
       }
@@ -506,7 +577,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 88,
+      "duration_ms": 36,
       "data": {
         "file": "settings-shell-permissions-light-1440.png"
       }
@@ -514,7 +585,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 89,
+      "duration_ms": 43,
       "data": {
         "file": "settings-shell-permissions-light-1000.png"
       }
@@ -522,7 +593,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 77,
+      "duration_ms": 58,
       "data": {
         "file": "settings-shell-permissions-light-760.png"
       }
@@ -530,7 +601,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 72,
+      "duration_ms": 41,
       "data": {
         "file": "settings-shell-permissions-dark-1440.png"
       }
@@ -538,7 +609,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 61,
+      "duration_ms": 39,
       "data": {
         "file": "settings-shell-permissions-dark-1000.png"
       }
@@ -546,7 +617,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 80,
+      "duration_ms": 51,
       "data": {
         "file": "settings-shell-permissions-dark-760.png"
       }
@@ -554,7 +625,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 77,
+      "duration_ms": 50,
       "data": {
         "file": "settings-shell-skills-light-1440.png"
       }
@@ -562,7 +633,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 45,
+      "duration_ms": 57,
       "data": {
         "file": "settings-shell-skills-light-1000.png"
       }
@@ -570,7 +641,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 60,
+      "duration_ms": 93,
       "data": {
         "file": "settings-shell-skills-light-760.png"
       }
@@ -578,7 +649,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 157,
+      "duration_ms": 49,
       "data": {
         "file": "settings-shell-skills-dark-1440.png"
       }
@@ -586,7 +657,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 81,
+      "duration_ms": 45,
       "data": {
         "file": "settings-shell-skills-dark-1000.png"
       }
@@ -594,7 +665,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 106,
+      "duration_ms": 94,
       "data": {
         "file": "settings-shell-skills-dark-760.png"
       }
@@ -602,7 +673,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 86,
+      "duration_ms": 67,
       "data": {
         "file": "settings-shell-credentials-light-1440.png"
       }
@@ -610,7 +681,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 58,
+      "duration_ms": 30,
       "data": {
         "file": "settings-shell-credentials-light-1000.png"
       }
@@ -618,7 +689,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 72,
+      "duration_ms": 65,
       "data": {
         "file": "settings-shell-credentials-light-760.png"
       }
@@ -626,7 +697,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 93,
+      "duration_ms": 69,
       "data": {
         "file": "settings-shell-credentials-dark-1440.png"
       }
@@ -634,7 +705,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 70,
+      "duration_ms": 52,
       "data": {
         "file": "settings-shell-credentials-dark-1000.png"
       }
@@ -642,7 +713,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 95,
+      "duration_ms": 53,
       "data": {
         "file": "settings-shell-credentials-dark-760.png"
       }
@@ -650,7 +721,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 72,
+      "duration_ms": 50,
       "data": {
         "file": "settings-shell-profiles-light-1440.png"
       }
@@ -658,7 +729,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 33,
+      "duration_ms": 22,
       "data": {
         "file": "settings-shell-profiles-light-1000.png"
       }
@@ -666,7 +737,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 82,
+      "duration_ms": 26,
       "data": {
         "file": "settings-shell-profiles-light-760.png"
       }
@@ -674,7 +745,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 127,
+      "duration_ms": 50,
       "data": {
         "file": "settings-shell-profiles-dark-1440.png"
       }
@@ -682,7 +753,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 137,
+      "duration_ms": 41,
       "data": {
         "file": "settings-shell-profiles-dark-1000.png"
       }
@@ -690,7 +761,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 89,
+      "duration_ms": 37,
       "data": {
         "file": "settings-shell-profiles-dark-760.png"
       }
@@ -698,7 +769,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 116,
+      "duration_ms": 34,
       "data": {
         "file": "settings-shell-appearance-light-1440.png"
       }
@@ -706,7 +777,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 104,
+      "duration_ms": 49,
       "data": {
         "file": "settings-shell-appearance-light-1000.png"
       }
@@ -714,7 +785,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 114,
+      "duration_ms": 35,
       "data": {
         "file": "settings-shell-appearance-light-760.png"
       }
@@ -722,7 +793,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 145,
+      "duration_ms": 42,
       "data": {
         "file": "settings-shell-appearance-dark-1440.png"
       }
@@ -730,7 +801,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 86,
+      "duration_ms": 65,
       "data": {
         "file": "settings-shell-appearance-dark-1000.png"
       }
@@ -738,7 +809,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 87,
+      "duration_ms": 42,
       "data": {
         "file": "settings-shell-appearance-dark-760.png"
       }
@@ -746,7 +817,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 72,
+      "duration_ms": 59,
       "data": {
         "file": "settings-shell-product-aikit-light-1440.png"
       }
@@ -754,7 +825,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 52,
+      "duration_ms": 32,
       "data": {
         "file": "settings-shell-product-aikit-light-1000.png"
       }
@@ -762,7 +833,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 65,
+      "duration_ms": 61,
       "data": {
         "file": "settings-shell-product-aikit-light-760.png"
       }
@@ -770,7 +841,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 81,
+      "duration_ms": 64,
       "data": {
         "file": "settings-shell-product-aikit-dark-1440.png"
       }
@@ -778,7 +849,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 88,
+      "duration_ms": 56,
       "data": {
         "file": "settings-shell-product-aikit-dark-1000.png"
       }
@@ -786,7 +857,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 79,
+      "duration_ms": 48,
       "data": {
         "file": "settings-shell-product-aikit-dark-760.png"
       }

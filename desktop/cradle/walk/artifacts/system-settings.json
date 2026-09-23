@@ -23,58 +23,65 @@
     ],
     "claims_grade": "D"
   },
-  "generated_at": "2026-09-23T07:21:14.470Z",
+  "generated_at": "2026-09-23T10:28:40.933Z",
   "environment": {
-    "base_url": "http://localhost:4173",
-    "bridge_url": "http://127.0.0.1:4179",
+    "base_url": "http://localhost:5650",
+    "bridge_url": "http://127.0.0.1:5655",
     "viewport": "1280x820",
     "browser_engine": "chromium",
     "bundle": "walk (WALK=1) served by vite preview",
     "build_input": {
       "mode": "reused-dist",
-      "bundle_fingerprint": "a7a09418ce4322d8d78b92d5fbef3eadb3d2e486d66085f9c9578daa397bea66"
+      "bundle_fingerprint": "519b0195a0d4bb8c0793922f80fc94895c7602c8e50e565a28a26f5c6bbf560d"
     },
     "node": "v24.16.0",
     "platform": "darwin",
     "source": {
-      "repository_root": "/Users/admin/Central/worktrees/ui-build/lane4-settings",
-      "repository_head": "f84fa70a5e2b462b9078c81cb69a429497e3037b",
+      "repository_root": "/Users/admin/Central/worktrees/walk-reds/o-i",
+      "repository_head": "6d769d1f75f7a6c30ae7e5db0eff0c8e3647477f",
       "tracked_changes": [
-        "desktop/cradle/src/workspace/settings/sections/CredentialsSection.tsx",
-        "desktop/cradle/walk/artifacts/configuration-live-product.png",
-        "desktop/cradle/walk/artifacts/configuration.json",
-        "desktop/cradle/walk/artifacts/settings-change-applied.png",
-        "desktop/cradle/walk/artifacts/settings-change-partial.png",
-        "desktop/cradle/walk/artifacts/settings-change-refused.png",
-        "desktop/cradle/walk/artifacts/settings-change-stale.png",
-        "desktop/cradle/walk/artifacts/settings-change.json",
-        "desktop/cradle/walk/artifacts/settings-credentials-discovered.png",
-        "desktop/cradle/walk/artifacts/settings-credentials-key-entry.png",
-        "desktop/cradle/walk/artifacts/settings-credentials-verified.png",
-        "desktop/cradle/walk/artifacts/settings-credentials.json",
-        "desktop/cradle/walk/artifacts/settings-shell-credentials-dark-1000.png",
-        "desktop/cradle/walk/artifacts/settings-shell-credentials-dark-1440.png",
-        "desktop/cradle/walk/artifacts/settings-shell-credentials-dark-760.png",
-        "desktop/cradle/walk/artifacts/settings-shell-credentials-light-1000.png",
-        "desktop/cradle/walk/artifacts/settings-shell-credentials-light-1440.png",
-        "desktop/cradle/walk/artifacts/settings-shell-credentials-light-760.png",
-        "desktop/cradle/walk/artifacts/settings-shell-product-aikit-dark-1000.png",
-        "desktop/cradle/walk/artifacts/settings-shell-product-aikit-dark-1440.png",
-        "desktop/cradle/walk/artifacts/settings-shell-product-aikit-light-1000.png",
-        "desktop/cradle/walk/artifacts/settings-shell-product-aikit-light-1440.png",
-        "desktop/cradle/walk/artifacts/settings-shell.json",
-        "desktop/cradle/walk/artifacts/settings-unreadable-recovered.png",
-        "desktop/cradle/walk/artifacts/settings-unreadable.json"
+        "desktop/cradle/src/Cradle.tsx",
+        "desktop/cradle/src/CradleFrame.tsx",
+        "desktop/cradle/src/surface/Workbench.tsx",
+        "desktop/cradle/src/workspace/settings/SettingsPage.tsx",
+        "desktop/cradle/walk/artifacts/factory-desk-f1-reading.png",
+        "desktop/cradle/walk/artifacts/factory-desk-f2-empty.png",
+        "desktop/cradle/walk/artifacts/factory-desk-f3-partial.png",
+        "desktop/cradle/walk/artifacts/factory-desk-f4-needs-you.png",
+        "desktop/cradle/walk/artifacts/factory-desk-factory-desk-1000-dark.png",
+        "desktop/cradle/walk/artifacts/factory-desk-factory-desk-1000-light.png",
+        "desktop/cradle/walk/artifacts/factory-desk-factory-desk-1440-dark.png",
+        "desktop/cradle/walk/artifacts/factory-desk-factory-desk-1440-light.png",
+        "desktop/cradle/walk/artifacts/factory-desk-factory-desk-760-dark.png",
+        "desktop/cradle/walk/artifacts/factory-desk-factory-desk-760-light.png",
+        "desktop/cradle/walk/artifacts/factory-desk.json",
+        "desktop/cradle/walk/artifacts/mode-workspaces-factory-own-tree.png",
+        "desktop/cradle/walk/artifacts/mode-workspaces.json",
+        "desktop/cradle/walk/artifacts/recovery-failure.png",
+        "desktop/cradle/walk/artifacts/recovery-recovery-footer-status-disclosure.png",
+        "desktop/cradle/walk/artifacts/recovery.json",
+        "desktop/cradle/walk/artifacts/shell-recovery-1280.png",
+        "desktop/cradle/walk/artifacts/shell-recovery-390.png",
+        "desktop/cradle/walk/artifacts/shell-recovery-639.png",
+        "desktop/cradle/walk/artifacts/shell-recovery-760.png",
+        "desktop/cradle/walk/artifacts/shell-recovery-900.png",
+        "desktop/cradle/walk/artifacts/shell-recovery-system-1280.png",
+        "desktop/cradle/walk/artifacts/shell-recovery-system-900.png",
+        "desktop/cradle/walk/artifacts/shell-recovery.json",
+        "desktop/cradle/walk/scenarios/factory-desk.mjs",
+        "desktop/cradle/walk/scenarios/mode-workspaces.mjs",
+        "desktop/cradle/walk/scenarios/recovery.mjs",
+        "desktop/cradle/walk/scenarios/shell-recovery.mjs"
       ],
-      "dirty_digest": "4741a71a99d373e13bad4ea794ba8e4dcf1da82e647f37d2291b926d3b1c48a6",
-      "engine_provenance_path": "/Users/admin/Central/worktrees/ui-build/lane4-settings/packages/oi-design-system/expressions-engine/PROVENANCE.json",
+      "dirty_digest": "926d79d0fb0d72307e2e03b3dd5bddf138c558d930646da03a7626a8cc2d4776",
+      "engine_provenance_path": "/Users/admin/Central/worktrees/walk-reds/o-i/packages/oi-design-system/expressions-engine/PROVENANCE.json",
       "engine_source": "EpiLogos/Point-Cloud-Demo",
       "engine_revision": "91db8428fc9dfba06cd258ec5a58e7dd9eef5313"
     }
   },
   "passed": true,
   "error": null,
-  "duration_ms": 12318,
+  "duration_ms": 37077,
   "checks": [
     {
       "ok": true,
@@ -244,24 +251,24 @@
       "duration_ms": 0,
       "data": {
         "schema": "oi.cradle.walk/v1",
-        "mounted_at": "2026-09-23T07:21:14.667Z",
+        "mounted_at": "2026-09-23T10:28:41.317Z",
         "transport": {
           "kind": "bridge",
-          "url": "http://127.0.0.1:4179"
+          "url": "http://127.0.0.1:5655"
         },
-        "url": "http://localhost:4173/"
+        "url": "http://localhost:5650/"
       }
     },
     {
       "ok": true,
       "op": "read.focus",
-      "duration_ms": 2614.6,
+      "duration_ms": 15800.1,
       "data": {}
     },
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 38,
+      "duration_ms": 70,
       "data": {
         "file": "system-settings-empty-world-oi.png"
       }
@@ -269,7 +276,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 24,
+      "duration_ms": 50,
       "data": {
         "file": "system-settings-empty-world-credentials.png"
       }
@@ -277,7 +284,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 23,
+      "duration_ms": 63,
       "data": {
         "file": "system-settings-drift-review.png"
       }
@@ -285,7 +292,7 @@
     {
       "ok": true,
       "op": "read.focus",
-      "duration_ms": 1248.7,
+      "duration_ms": 11198.2,
       "data": {}
     }
   ],
