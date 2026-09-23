@@ -1,10 +1,10 @@
 {
   "schema": "oi.cradle.walk.scenario/v1",
   "scenario": "right-panel-turn",
-  "spec_ref": "docs/cradle/05-EXECUTION.md §3",
+  "spec_ref": "docs/cradle/10-SIDEBARS.md §4.3 §4.4 §5.3 P1 P4 P6 P7 P16",
   "grade": "B",
   "binding": null,
-  "generated_at": "2026-09-23T01:48:22.058Z",
+  "generated_at": "2026-09-23T08:57:10.182Z",
   "environment": {
     "base_url": "http://localhost:4373",
     "bridge_url": "http://127.0.0.1:4379",
@@ -12,30 +12,116 @@
     "browser_engine": "chromium",
     "bundle": "walk (WALK=1) served by vite preview",
     "build_input": {
-      "mode": "fresh-build",
-      "bundle_fingerprint": "987fab6b031e14c65448d79cb36121da59142481dc57c8c66eba77b87a64ddbc"
+      "mode": "reused-dist",
+      "bundle_fingerprint": "4c5ad0044ebc05d9c047b3c87b1c2bee7e4d0f6f0bbf69da0389129296d4fd5a"
     },
     "node": "v24.16.0",
     "platform": "darwin",
     "source": {
       "repository_root": "/Users/admin/Central/worktrees/ui-build/lane2-right",
-      "repository_head": "d9a08038d5d0d1fb56adae16865603ed71e9e104",
+      "repository_head": "1b8d80ca1ca977157f3c9665b9bc6c42cc1ad054",
       "tracked_changes": [
-        "desktop/cradle/src/agent/AgentLayer.tsx",
-        "desktop/cradle/src/agent/chat/AgentChat.tsx",
-        "desktop/cradle/src/agent/chat/ChatComposer.tsx",
-        "desktop/cradle/src/agent/chat/ChatTranscript.tsx",
-        "desktop/cradle/src/agent/panel/ActivityTab.tsx",
-        "desktop/cradle/src/agent/panel/PanelTop.tsx",
-        "desktop/cradle/src/agent/panel/panel.css",
-        "desktop/cradle/src/agent/tape/Tape.tsx",
-        "desktop/cradle/src/agent/tape/model.ts",
-        "desktop/cradle/src/workspace/DesktopShell.tsx",
-        "desktop/cradle/tests/tape-model.test.mjs",
-        "desktop/cradle/walk/lane2-support.mjs",
-        "desktop/cradle/walk/run.mjs"
+        "desktop/cradle/walk/artifacts/agent-panel-panel-activity-tape.png",
+        "desktop/cradle/walk/artifacts/agent-panel-panel-base-no-session.png",
+        "desktop/cradle/walk/artifacts/agent-panel-panel-context-carried.png",
+        "desktop/cradle/walk/artifacts/agent-panel-panel-context-selected.png",
+        "desktop/cradle/walk/artifacts/agent-panel-panel-dark-activity.png",
+        "desktop/cradle/walk/artifacts/agent-panel-panel-dark-context.png",
+        "desktop/cradle/walk/artifacts/agent-panel-panel-dark-conversation.png",
+        "desktop/cradle/walk/artifacts/agent-panel-panel-factory-conversation-in-centre.png",
+        "desktop/cradle/walk/artifacts/agent-panel-panel-full-composition.png",
+        "desktop/cradle/walk/artifacts/agent-panel-panel-inspect-handoff.png",
+        "desktop/cradle/walk/artifacts/agent-panel-panel-narrow-1000.png",
+        "desktop/cradle/walk/artifacts/agent-panel-panel-narrow-1280.png",
+        "desktop/cradle/walk/artifacts/agent-panel-panel-narrow-640.png",
+        "desktop/cradle/walk/artifacts/agent-panel-panel-narrow-760.png",
+        "desktop/cradle/walk/artifacts/agent-panel.json",
+        "desktop/cradle/walk/artifacts/canvas-context-native-resolve-on-prepared-selection.png",
+        "desktop/cradle/walk/artifacts/canvas-context-real-return-after-explicit-delivery.png",
+        "desktop/cradle/walk/artifacts/canvas-context-stale-source-refusal-retains-preparation.png",
+        "desktop/cradle/walk/artifacts/canvas-context.json",
+        "desktop/cradle/walk/artifacts/context-canvas-insert-after-send.png",
+        "desktop/cradle/walk/artifacts/context-canvas-insert-inserted.png",
+        "desktop/cradle/walk/artifacts/context-canvas-insert-sent.png",
+        "desktop/cradle/walk/artifacts/context-canvas-insert.json",
+        "desktop/cradle/walk/artifacts/mode-gallery-agency-dark.png",
+        "desktop/cradle/walk/artifacts/mode-gallery-desk-run-dark.png",
+        "desktop/cradle/walk/artifacts/mode-gallery-epi-logos-dark.png",
+        "desktop/cradle/walk/artifacts/mode-gallery-epi-logos-light.png",
+        "desktop/cradle/walk/artifacts/mode-gallery-expressions-640-dark.png",
+        "desktop/cradle/walk/artifacts/mode-gallery-expressions-760-dark.png",
+        "desktop/cradle/walk/artifacts/mode-gallery-expressions-760-light.png",
+        "desktop/cradle/walk/artifacts/mode-gallery-expressions-dark.png",
+        "desktop/cradle/walk/artifacts/mode-gallery-expressions-panel-chat-dark.png",
+        "desktop/cradle/walk/artifacts/mode-gallery-expressions-panel-chat-light.png",
+        "desktop/cradle/walk/artifacts/mode-gallery-expressions-panel-context-dark.png",
+        "desktop/cradle/walk/artifacts/mode-gallery-expressions-panel-context-light.png",
+        "desktop/cradle/walk/artifacts/mode-gallery-expressions-panel-context-newtab-dark.png",
+        "desktop/cradle/walk/artifacts/mode-gallery-expressions-panel-context-newtab-light.png",
+        "desktop/cradle/walk/artifacts/mode-gallery-expressions-panel-side-dark.png",
+        "desktop/cradle/walk/artifacts/mode-gallery-expressions-panel-side-light.png",
+        "desktop/cradle/walk/artifacts/mode-gallery-factory-760-light.png",
+        "desktop/cradle/walk/artifacts/mode-gallery-factory-dark.png",
+        "desktop/cradle/walk/artifacts/mode-gallery-library-dark.png",
+        "desktop/cradle/walk/artifacts/mode-gallery-techne-dark.png",
+        "desktop/cradle/walk/artifacts/mode-gallery-techne-light.png",
+        "desktop/cradle/walk/artifacts/mode-gallery.json",
+        "desktop/cradle/walk/artifacts/right-panel-agents-a4-in-place.png",
+        "desktop/cradle/walk/artifacts/right-panel-agents-avatar-menu-chosen.png",
+        "desktop/cradle/walk/artifacts/right-panel-agents-lens-nara.png",
+        "desktop/cradle/walk/artifacts/right-panel-agents-p15-agent-page.png",
+        "desktop/cradle/walk/artifacts/right-panel-agents-p17-empty.png",
+        "desktop/cradle/walk/artifacts/right-panel-agents-p17-error.png",
+        "desktop/cradle/walk/artifacts/right-panel-agents-roster.png",
+        "desktop/cradle/walk/artifacts/right-panel-agents.json",
+        "desktop/cradle/walk/artifacts/right-panel-context-expressions-launcher.png",
+        "desktop/cradle/walk/artifacts/right-panel-context-file-inserted.png",
+        "desktop/cradle/walk/artifacts/right-panel-context-launcher.png",
+        "desktop/cradle/walk/artifacts/right-panel-context.json",
+        "desktop/cradle/walk/artifacts/right-panel-failures-p10-reconnecting.png",
+        "desktop/cradle/walk/artifacts/right-panel-failures-p12-switched.png",
+        "desktop/cradle/walk/artifacts/right-panel-failures-p8-not-sent.png",
+        "desktop/cradle/walk/artifacts/right-panel-failures.json",
+        "desktop/cradle/walk/artifacts/right-panel-frame-p1-closed.png",
+        "desktop/cradle/walk/artifacts/right-panel-frame-p13-full.png",
+        "desktop/cradle/walk/artifacts/right-panel-frame-p14-promoted.png",
+        "desktop/cradle/walk/artifacts/right-panel-frame-p18-overlay.png",
+        "desktop/cradle/walk/artifacts/right-panel-frame.json",
+        "desktop/cradle/walk/artifacts/right-panel-modes-a2-accept-edits.png",
+        "desktop/cradle/walk/artifacts/right-panel-modes-p5-answered.png",
+        "desktop/cradle/walk/artifacts/right-panel-modes-p5-needs-you.png",
+        "desktop/cradle/walk/artifacts/right-panel-modes.json",
+        "desktop/cradle/walk/artifacts/right-panel-shots-dark-1000-activity.png",
+        "desktop/cradle/walk/artifacts/right-panel-shots-dark-1000-agents.png",
+        "desktop/cradle/walk/artifacts/right-panel-shots-dark-1000-chat.png",
+        "desktop/cradle/walk/artifacts/right-panel-shots-dark-1000-context.png",
+        "desktop/cradle/walk/artifacts/right-panel-shots-dark-1440-activity.png",
+        "desktop/cradle/walk/artifacts/right-panel-shots-dark-1440-agents.png",
+        "desktop/cradle/walk/artifacts/right-panel-shots-dark-1440-chat.png",
+        "desktop/cradle/walk/artifacts/right-panel-shots-dark-1440-context.png",
+        "desktop/cradle/walk/artifacts/right-panel-shots-dark-760-activity.png",
+        "desktop/cradle/walk/artifacts/right-panel-shots-dark-760-agents.png",
+        "desktop/cradle/walk/artifacts/right-panel-shots-dark-760-chat.png",
+        "desktop/cradle/walk/artifacts/right-panel-shots-dark-760-context.png",
+        "desktop/cradle/walk/artifacts/right-panel-shots-light-1000-activity.png",
+        "desktop/cradle/walk/artifacts/right-panel-shots-light-1000-agents.png",
+        "desktop/cradle/walk/artifacts/right-panel-shots-light-1000-chat.png",
+        "desktop/cradle/walk/artifacts/right-panel-shots-light-1000-context.png",
+        "desktop/cradle/walk/artifacts/right-panel-shots-light-1440-chat.png",
+        "desktop/cradle/walk/artifacts/right-panel-shots-light-760-activity.png",
+        "desktop/cradle/walk/artifacts/right-panel-shots-light-760-agents.png",
+        "desktop/cradle/walk/artifacts/right-panel-shots-light-760-chat.png",
+        "desktop/cradle/walk/artifacts/right-panel-shots-light-760-context.png",
+        "desktop/cradle/walk/artifacts/right-panel-shots.json",
+        "desktop/cradle/walk/artifacts/right-panel-turn-p1-working-mark.png",
+        "desktop/cradle/walk/artifacts/right-panel-turn-p16-paused.png",
+        "desktop/cradle/walk/artifacts/right-panel-turn-p4-in-flight.png",
+        "desktop/cradle/walk/artifacts/right-panel-turn-p6-complete.png",
+        "desktop/cradle/walk/artifacts/right-panel-turn-p7-stopped.png",
+        "desktop/cradle/walk/artifacts/right-panel-turn-tape-event-page.png",
+        "desktop/cradle/walk/artifacts/right-panel-turn.json"
       ],
-      "dirty_digest": "f38ae4da248d224ab67d91166b63d76ed5a4a05eeef9b5a70095787d2f86ff01",
+      "dirty_digest": "70a05cd174eb6c5276bdb39021a59a5e40bdd32ddb9975862492a151cff36ec7",
       "engine_provenance_path": "/Users/admin/Central/worktrees/ui-build/lane2-right/packages/oi-design-system/expressions-engine/PROVENANCE.json",
       "engine_source": "EpiLogos/Point-Cloud-Demo",
       "engine_revision": "91db8428fc9dfba06cd258ec5a58e7dd9eef5313"
@@ -43,8 +129,16 @@
   },
   "passed": true,
   "error": null,
-  "duration_ms": 74090,
+  "duration_ms": 75327,
   "checks": [
+    {
+      "ok": true,
+      "label": "A2: Pi offers no permission modes, so the mode chip is absent (not disabled)",
+      "data": {
+        "mode_selection": false,
+        "reason": "Pi RPC publishes no in-session permission modes (no tool-permission gate to switch)"
+      }
+    },
     {
       "ok": true,
       "label": "P4: Send becomes Stop in the same slot (right edge and centre ±0.5px)",
@@ -58,9 +152,9 @@
           "cy": 786
         },
         "stopSlot": {
-          "x": 1213.546875,
+          "x": 1228,
           "y": 772,
-          "w": 46.453125,
+          "w": 32,
           "h": 28,
           "right": 1260,
           "cy": 786
@@ -70,13 +164,13 @@
     {
       "ok": true,
       "label": "P4: the status line names the agent and what it is doing while the turn runs",
-      "data": "Agent\n· working\n· 3s"
+      "data": "Agent\n· working\n· 2s"
     },
     {
       "ok": true,
       "label": "P1: while the turn runs the closed panel's mark is ● working",
       "data": {
-        "owner": "Resident",
+        "owner": "TurnInFlight",
         "markState": "working"
       }
     },
@@ -103,7 +197,7 @@
     {
       "ok": true,
       "label": "the provider really wrote turn-note.md in the project",
-      "data": "tape walk"
+      "data": "tape walk\n"
     },
     {
       "ok": true,
@@ -113,8 +207,8 @@
       "ok": true,
       "label": "P6: the chip opens the file exactly as the turn left it",
       "data": {
-        "doc": "tape walk",
-        "noteOnDisk": "tape walk"
+        "doc": "tape walk\n",
+        "noteOnDisk": "tape walk\n"
       }
     },
     {
@@ -140,11 +234,11 @@
       "ok": true,
       "label": "rows carry the owner's observed time (hh:mm:ss)",
       "data": [
-        "02:48:38",
-        "02:48:45",
-        "02:48:47",
-        "02:48:48",
-        "02:48:49"
+        "09:57:22",
+        "09:57:30",
+        "09:57:34",
+        "09:57:34",
+        "09:57:37"
       ]
     },
     {
@@ -236,7 +330,7 @@
       "duration_ms": 0,
       "data": {
         "schema": "oi.cradle.walk/v1",
-        "mounted_at": "2026-09-23T01:48:22.271Z",
+        "mounted_at": "2026-09-23T08:57:10.379Z",
         "transport": {
           "kind": "bridge",
           "url": "http://127.0.0.1:4379"
@@ -247,7 +341,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 66,
+      "duration_ms": 53,
       "data": {
         "file": "right-panel-turn-p1-working-mark.png"
       }
@@ -255,7 +349,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 55,
+      "duration_ms": 51,
       "data": {
         "file": "right-panel-turn-p4-in-flight.png"
       }
@@ -263,7 +357,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 72,
+      "duration_ms": 78,
       "data": {
         "file": "right-panel-turn-p6-complete.png"
       }
@@ -271,7 +365,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 39,
+      "duration_ms": 52,
       "data": {
         "file": "right-panel-turn-tape-event-page.png"
       }
@@ -279,7 +373,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 101,
+      "duration_ms": 56,
       "data": {
         "file": "right-panel-turn-p16-paused.png"
       }
@@ -287,7 +381,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 67,
+      "duration_ms": 59,
       "data": {
         "file": "right-panel-turn-p7-stopped.png"
       }

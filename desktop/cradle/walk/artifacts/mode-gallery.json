@@ -4,7 +4,7 @@
   "spec_ref": "docs/cradle/05-EXECUTION.md §3",
   "grade": "B",
   "binding": null,
-  "generated_at": "2026-09-23T07:21:29.992Z",
+  "generated_at": "2026-09-23T09:03:32.306Z",
   "environment": {
     "base_url": "http://localhost:4373",
     "bridge_url": "http://127.0.0.1:4379",
@@ -12,16 +12,105 @@
     "browser_engine": "chromium",
     "bundle": "walk (WALK=1) served by vite preview",
     "build_input": {
-      "mode": "fresh-build",
-      "bundle_fingerprint": "86919a088524afc45c3f40a8008e874c4594c232aacf89cc9bca54831d7cb849"
+      "mode": "reused-dist",
+      "bundle_fingerprint": "4c5ad0044ebc05d9c047b3c87b1c2bee7e4d0f6f0bbf69da0389129296d4fd5a"
     },
     "node": "v24.16.0",
     "platform": "darwin",
     "source": {
       "repository_root": "/Users/admin/Central/worktrees/ui-build/lane2-right",
-      "repository_head": "85782ea95ed1bfb519625392a2eee2484e5ce1b2",
-      "tracked_changes": [],
-      "dirty_digest": "6e340b9cffb37a989ca544e6bb780a2c78901d3fb33738768511a30617afa01d",
+      "repository_head": "1b8d80ca1ca977157f3c9665b9bc6c42cc1ad054",
+      "tracked_changes": [
+        "desktop/cradle/walk/artifacts/agent-panel-panel-activity-tape.png",
+        "desktop/cradle/walk/artifacts/agent-panel-panel-base-no-session.png",
+        "desktop/cradle/walk/artifacts/agent-panel-panel-context-carried.png",
+        "desktop/cradle/walk/artifacts/agent-panel-panel-context-selected.png",
+        "desktop/cradle/walk/artifacts/agent-panel-panel-dark-activity.png",
+        "desktop/cradle/walk/artifacts/agent-panel-panel-dark-context.png",
+        "desktop/cradle/walk/artifacts/agent-panel-panel-dark-conversation.png",
+        "desktop/cradle/walk/artifacts/agent-panel-panel-factory-conversation-in-centre.png",
+        "desktop/cradle/walk/artifacts/agent-panel-panel-full-composition.png",
+        "desktop/cradle/walk/artifacts/agent-panel-panel-inspect-handoff.png",
+        "desktop/cradle/walk/artifacts/agent-panel-panel-narrow-1000.png",
+        "desktop/cradle/walk/artifacts/agent-panel-panel-narrow-1280.png",
+        "desktop/cradle/walk/artifacts/agent-panel-panel-narrow-760.png",
+        "desktop/cradle/walk/artifacts/agent-panel.json",
+        "desktop/cradle/walk/artifacts/canvas-context-native-resolve-on-prepared-selection.png",
+        "desktop/cradle/walk/artifacts/canvas-context-real-return-after-explicit-delivery.png",
+        "desktop/cradle/walk/artifacts/canvas-context-stale-source-refusal-retains-preparation.png",
+        "desktop/cradle/walk/artifacts/canvas-context.json",
+        "desktop/cradle/walk/artifacts/context-canvas-insert-after-send.png",
+        "desktop/cradle/walk/artifacts/context-canvas-insert-inserted.png",
+        "desktop/cradle/walk/artifacts/context-canvas-insert-sent.png",
+        "desktop/cradle/walk/artifacts/context-canvas-insert.json",
+        "desktop/cradle/walk/artifacts/mode-gallery-agency-dark.png",
+        "desktop/cradle/walk/artifacts/mode-gallery-desk-run-dark.png",
+        "desktop/cradle/walk/artifacts/mode-gallery-epi-logos-dark.png",
+        "desktop/cradle/walk/artifacts/mode-gallery-epi-logos-light.png",
+        "desktop/cradle/walk/artifacts/mode-gallery-expressions-640-dark.png",
+        "desktop/cradle/walk/artifacts/mode-gallery-expressions-760-dark.png",
+        "desktop/cradle/walk/artifacts/mode-gallery-expressions-760-light.png",
+        "desktop/cradle/walk/artifacts/mode-gallery-expressions-dark.png",
+        "desktop/cradle/walk/artifacts/mode-gallery-expressions-panel-chat-dark.png",
+        "desktop/cradle/walk/artifacts/mode-gallery-expressions-panel-chat-light.png",
+        "desktop/cradle/walk/artifacts/mode-gallery-expressions-panel-context-dark.png",
+        "desktop/cradle/walk/artifacts/mode-gallery-expressions-panel-context-light.png",
+        "desktop/cradle/walk/artifacts/mode-gallery-expressions-panel-context-newtab-dark.png",
+        "desktop/cradle/walk/artifacts/mode-gallery-expressions-panel-context-newtab-light.png",
+        "desktop/cradle/walk/artifacts/mode-gallery-expressions-panel-side-dark.png",
+        "desktop/cradle/walk/artifacts/mode-gallery-expressions-panel-side-light.png",
+        "desktop/cradle/walk/artifacts/mode-gallery-factory-760-light.png",
+        "desktop/cradle/walk/artifacts/mode-gallery-factory-dark.png",
+        "desktop/cradle/walk/artifacts/mode-gallery-library-dark.png",
+        "desktop/cradle/walk/artifacts/mode-gallery-techne-dark.png",
+        "desktop/cradle/walk/artifacts/mode-gallery-techne-light.png",
+        "desktop/cradle/walk/artifacts/mode-gallery.json",
+        "desktop/cradle/walk/artifacts/right-panel-agents-a4-in-place.png",
+        "desktop/cradle/walk/artifacts/right-panel-agents-avatar-menu-chosen.png",
+        "desktop/cradle/walk/artifacts/right-panel-agents-lens-nara.png",
+        "desktop/cradle/walk/artifacts/right-panel-agents-p15-agent-page.png",
+        "desktop/cradle/walk/artifacts/right-panel-agents-p17-empty.png",
+        "desktop/cradle/walk/artifacts/right-panel-agents-p17-error.png",
+        "desktop/cradle/walk/artifacts/right-panel-agents-p18-detail.png",
+        "desktop/cradle/walk/artifacts/right-panel-agents-roster.png",
+        "desktop/cradle/walk/artifacts/right-panel-agents.json",
+        "desktop/cradle/walk/artifacts/right-panel-context.json",
+        "desktop/cradle/walk/artifacts/right-panel-failures-p10-reconnecting.png",
+        "desktop/cradle/walk/artifacts/right-panel-failures-p12-switched.png",
+        "desktop/cradle/walk/artifacts/right-panel-failures-p8-not-sent.png",
+        "desktop/cradle/walk/artifacts/right-panel-failures.json",
+        "desktop/cradle/walk/artifacts/right-panel-frame-p1-closed.png",
+        "desktop/cradle/walk/artifacts/right-panel-frame-p13-full.png",
+        "desktop/cradle/walk/artifacts/right-panel-frame-p14-promoted.png",
+        "desktop/cradle/walk/artifacts/right-panel-frame-p18-overlay.png",
+        "desktop/cradle/walk/artifacts/right-panel-frame.json",
+        "desktop/cradle/walk/artifacts/right-panel-modes-a2-accept-edits.png",
+        "desktop/cradle/walk/artifacts/right-panel-modes-p5-answered.png",
+        "desktop/cradle/walk/artifacts/right-panel-modes-p5-needs-you.png",
+        "desktop/cradle/walk/artifacts/right-panel-modes.json",
+        "desktop/cradle/walk/artifacts/right-panel-shots-dark-1000-context.png",
+        "desktop/cradle/walk/artifacts/right-panel-shots-dark-1440-activity.png",
+        "desktop/cradle/walk/artifacts/right-panel-shots-dark-1440-agents.png",
+        "desktop/cradle/walk/artifacts/right-panel-shots-dark-1440-chat.png",
+        "desktop/cradle/walk/artifacts/right-panel-shots-dark-760-activity.png",
+        "desktop/cradle/walk/artifacts/right-panel-shots-dark-760-chat.png",
+        "desktop/cradle/walk/artifacts/right-panel-shots-dark-760-context.png",
+        "desktop/cradle/walk/artifacts/right-panel-shots-light-1000-agents.png",
+        "desktop/cradle/walk/artifacts/right-panel-shots-light-1000-chat.png",
+        "desktop/cradle/walk/artifacts/right-panel-shots-light-1000-context.png",
+        "desktop/cradle/walk/artifacts/right-panel-shots-light-1440-agents.png",
+        "desktop/cradle/walk/artifacts/right-panel-shots-light-760-chat.png",
+        "desktop/cradle/walk/artifacts/right-panel-shots-light-760-context.png",
+        "desktop/cradle/walk/artifacts/right-panel-shots.json",
+        "desktop/cradle/walk/artifacts/right-panel-turn-p1-working-mark.png",
+        "desktop/cradle/walk/artifacts/right-panel-turn-p16-paused.png",
+        "desktop/cradle/walk/artifacts/right-panel-turn-p4-in-flight.png",
+        "desktop/cradle/walk/artifacts/right-panel-turn-p6-complete.png",
+        "desktop/cradle/walk/artifacts/right-panel-turn-p7-stopped.png",
+        "desktop/cradle/walk/artifacts/right-panel-turn-tape-event-page.png",
+        "desktop/cradle/walk/artifacts/right-panel-turn.json"
+      ],
+      "dirty_digest": "f0488cd59cca5cd50a9224cc141a9c1f318f3fea51e0afb33d88aa7caf93e0b9",
       "engine_provenance_path": "/Users/admin/Central/worktrees/ui-build/lane2-right/packages/oi-design-system/expressions-engine/PROVENANCE.json",
       "engine_source": "EpiLogos/Point-Cloud-Demo",
       "engine_revision": "91db8428fc9dfba06cd258ec5a58e7dd9eef5313"
@@ -29,7 +118,7 @@
   },
   "passed": true,
   "error": null,
-  "duration_ms": 113378,
+  "duration_ms": 157264,
   "checks": [
     {
       "ok": true,
@@ -124,10 +213,10 @@
     {
       "ok": true,
       "op": "info",
-      "duration_ms": 0.1,
+      "duration_ms": 0,
       "data": {
         "schema": "oi.cradle.walk/v1",
-        "mounted_at": "2026-09-23T07:21:30.117Z",
+        "mounted_at": "2026-09-23T09:03:32.445Z",
         "transport": {
           "kind": "bridge",
           "url": "http://127.0.0.1:4379"
@@ -141,7 +230,7 @@
       "duration_ms": 0,
       "data": {
         "schema": "oi.cradle.walk/v1",
-        "mounted_at": "2026-09-23T07:21:30.186Z",
+        "mounted_at": "2026-09-23T09:03:32.525Z",
         "transport": {
           "kind": "bridge",
           "url": "http://127.0.0.1:4379"
@@ -152,7 +241,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 37,
+      "duration_ms": 40,
       "data": {
         "file": "mode-gallery-factory-light.png"
       }
@@ -160,7 +249,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 36,
+      "duration_ms": 28,
       "data": {
         "file": "mode-gallery-expressions-light.png"
       }
@@ -176,7 +265,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 14,
+      "duration_ms": 28,
       "data": {
         "file": "mode-gallery-expressions-panel-side-light.png"
       }
@@ -184,7 +273,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 13,
+      "duration_ms": 25,
       "data": {
         "file": "mode-gallery-expressions-panel-context-light.png"
       }
@@ -192,7 +281,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 18,
+      "duration_ms": 28,
       "data": {
         "file": "mode-gallery-expressions-panel-context-newtab-light.png"
       }
@@ -200,7 +289,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 34,
+      "duration_ms": 46,
       "data": {
         "file": "mode-gallery-expressions-760-light.png"
       }
@@ -208,7 +297,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 27,
+      "duration_ms": 44,
       "data": {
         "file": "mode-gallery-expressions-640-light.png"
       }
@@ -216,7 +305,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 37,
+      "duration_ms": 47,
       "data": {
         "file": "mode-gallery-techne-light.png"
       }
@@ -224,7 +313,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 38,
+      "duration_ms": 48,
       "data": {
         "file": "mode-gallery-epi-logos-light.png"
       }
@@ -232,7 +321,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 26,
+      "duration_ms": 32,
       "data": {
         "file": "mode-gallery-desk-run-light.png"
       }
@@ -240,7 +329,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 28,
+      "duration_ms": 33,
       "data": {
         "file": "mode-gallery-desk-agents-light.png"
       }
@@ -248,7 +337,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 30,
+      "duration_ms": 31,
       "data": {
         "file": "mode-gallery-desk-context-light.png"
       }
@@ -256,7 +345,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 28,
+      "duration_ms": 32,
       "data": {
         "file": "mode-gallery-agency-light.png"
       }
@@ -264,7 +353,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 30,
+      "duration_ms": 47,
       "data": {
         "file": "mode-gallery-library-light.png"
       }
@@ -272,7 +361,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 51,
+      "duration_ms": 67,
       "data": {
         "file": "mode-gallery-factory-760-light.png"
       }
@@ -283,7 +372,7 @@
       "duration_ms": 0,
       "data": {
         "schema": "oi.cradle.walk/v1",
-        "mounted_at": "2026-09-23T07:22:11.449Z",
+        "mounted_at": "2026-09-23T09:04:13.662Z",
         "transport": {
           "kind": "bridge",
           "url": "http://127.0.0.1:4379"
@@ -297,7 +386,7 @@
       "duration_ms": 0,
       "data": {
         "schema": "oi.cradle.walk/v1",
-        "mounted_at": "2026-09-23T07:22:11.524Z",
+        "mounted_at": "2026-09-23T09:04:13.731Z",
         "transport": {
           "kind": "bridge",
           "url": "http://127.0.0.1:4379"
@@ -308,7 +397,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 57,
+      "duration_ms": 63,
       "data": {
         "file": "mode-gallery-factory-dark.png"
       }
@@ -316,7 +405,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 55,
+      "duration_ms": 83,
       "data": {
         "file": "mode-gallery-expressions-dark.png"
       }
@@ -332,7 +421,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 36,
+      "duration_ms": 56,
       "data": {
         "file": "mode-gallery-expressions-panel-side-dark.png"
       }
@@ -340,7 +429,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 36,
+      "duration_ms": 46,
       "data": {
         "file": "mode-gallery-expressions-panel-context-dark.png"
       }
@@ -348,7 +437,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 29,
+      "duration_ms": 47,
       "data": {
         "file": "mode-gallery-expressions-panel-context-newtab-dark.png"
       }
@@ -356,7 +445,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 48,
+      "duration_ms": 55,
       "data": {
         "file": "mode-gallery-expressions-760-dark.png"
       }
@@ -364,7 +453,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 45,
+      "duration_ms": 59,
       "data": {
         "file": "mode-gallery-expressions-640-dark.png"
       }
@@ -372,7 +461,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 43,
+      "duration_ms": 67,
       "data": {
         "file": "mode-gallery-techne-dark.png"
       }
@@ -380,7 +469,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 45,
+      "duration_ms": 58,
       "data": {
         "file": "mode-gallery-epi-logos-dark.png"
       }
@@ -388,7 +477,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 61,
+      "duration_ms": 80,
       "data": {
         "file": "mode-gallery-desk-run-dark.png"
       }
@@ -396,7 +485,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 30,
+      "duration_ms": 41,
       "data": {
         "file": "mode-gallery-agency-dark.png"
       }
@@ -404,7 +493,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 49,
+      "duration_ms": 62,
       "data": {
         "file": "mode-gallery-library-dark.png"
       }
