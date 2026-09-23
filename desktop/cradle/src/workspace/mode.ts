@@ -60,7 +60,7 @@ export type PanelPlane = "Chat" | "Activity" | "Context" | "Inspect" | "Composit
  * chosen project's folder tree, and its tasks — the sessions and chats the
  * conversation in the centre passes through. Owner direction 2026-09-18:
  * Factory centralises the chat; the left stays focused on one project. */
-export type LeftBody = "world" | "expression-graph" | "material" | "epi-places" | "factory" | "wiki-map";
+export type LeftBody = "world" | "expression-graph" | "material" | "epi-places" | "factory" | "wiki-map" | "settings";
 
 export interface ModeCuration {
   id: WorkspaceMode;
@@ -147,8 +147,10 @@ export const MODE_CURATION: Record<WorkspaceMode, ModeCuration> = {
     panel: {agent: "Nara · Epii", planes: ["Chat", "Context", "Inspect", "anima", "epii"], extra: ["anima", "epii"]},
   },
   settings: {
-    id: "settings", label: "Settings", hint: "System: sources, providers, projection, telemetry, search, history", glyph: "settings", left: "world", centreKind: "system",
-    panel: {agent: "Agent", planes: ["Chat", "Context", "Inspect"], extra: []},
+    // 12-SETTINGS §1: the left stays open with the section list as its body;
+    // the right panel is collapsed and, opened, is a help chat only.
+    id: "settings", label: "Settings", hint: "Harnesses, models, keys, skills and each product's settings", glyph: "settings", left: "settings", centreKind: "system",
+    panel: {agent: "Settings help", planes: ["Chat"], extra: []},
   },
 };
 

@@ -83,11 +83,14 @@ test('a detached window keeps its reserved slot and returns to the same source b
  s=engine.detachBinding(s,'doc');s=engine.reconcileLayout(s);assert.equal(s.root.id,'g');assert.equal(s.root.active,null);assert.equal(s.detached.length,1);assert.equal(engine.openSurfaceCount(s),0);
  s=engine.redockBinding(s,'doc');invariant(s);assert.equal(s.root.id,'g');assert.equal(s.surfaces.doc,doc);assert.equal(engine.activeBindingId(s),'doc');assert.equal(s.detached.length,0);
 });
-test('Settings takes the full workspace and returns its exact preceding layout/documents/session',()=>{
+// 12-SETTINGS §1: in Settings the left stays OPEN (its body is the section
+// list) and the right is collapsed; leaving returns the exact preceding
+// layout, documents and session.
+test('Settings keeps the left open, collapses the right, and returns its exact preceding layout/documents/session',()=>{
  for(const mode of ['base','factory','expressions','techne']){
   const layout={...state(split('h','h',group('a'),group('b'))),mode:mode==='base'?undefined:mode,agencyDepth:'panel',rightDepth:'panel',leftWidth:244,rightWidth:350,accompanying:{ref:'existing-session',project:'P',space:'existing-space'},maximizedGroupId:'b'};
   const w={id:'w',name:'Central',writing:'',layout};const settings=switchWorkspaceMode(w,'settings');
-  assert.equal(settings.layout.agencyDepth,'collapsed');assert.equal(settings.layout.rightDepth,'collapsed');assert.equal(settings.layout.settingsReturnMode,mode);assert.equal(settings.modeLayouts[mode].root,layout.root);assert.equal(settings.layout.accompanying,layout.accompanying);
+  assert.equal(settings.layout.agencyDepth,'panel');assert.equal(settings.layout.rightDepth,'collapsed');assert.equal(settings.layout.settingsReturnMode,mode);assert.equal(settings.modeLayouts[mode].root,layout.root);assert.equal(settings.layout.accompanying,layout.accompanying);
   assert.equal(decodeLayout(JSON.parse(JSON.stringify(settings.layout))).settingsReturnMode,mode);
   const back=switchWorkspaceMode(settings,settings.layout.settingsReturnMode);
   assert.equal(back.layout.root,layout.root);assert.equal(back.layout.surfaces,layout.surfaces);assert.equal(back.layout.accompanying,layout.accompanying);assert.equal(back.layout.agencyDepth,'panel');assert.equal(back.layout.rightDepth,'panel');assert.equal(back.layout.maximizedGroupId,'b');

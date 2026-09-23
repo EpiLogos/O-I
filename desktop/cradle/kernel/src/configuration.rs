@@ -441,8 +441,44 @@ impl Client {
     /// back as a resolution whose reconciliation names the refusal —
     /// unsupported pairings are data (the source contract: never omitted).
     pub fn resolutions_read(&self, cwd: &Path, pairs: &[ConfigPair]) -> Vec<Value> {
-        pairs
-            .iter()
+        // Each pair is one `oi config show`, and each of those reads its
+        // owner's whole disclosure — independent, slow reads. They run side
+        // by side (a bounded handful at a time) and return in request order.
+        const PARALLEL: usize = 6;
+        let mut out = Vec::with_capacity(pairs.len());
+        for chunk in pairs.chunks(PARALLEL) {
+            let answers: Vec<Value> = std::thread::scope(|scope| {
+                let handles: Vec<_> = chunk
+                    .iter()
+                    .map(|pair| scope.spawn(move || self.resolution_one(cwd, pair)))
+                    .collect();
+                handles
+                    .into_iter()
+                    .zip(chunk)
+                    .map(|(handle, pair)| {
+                        handle.join().unwrap_or_else(|_| {
+                            degraded_resolution(pair, "unknown", "the resolution read stopped unexpectedly")
+                        })
+                    })
+                    .collect()
+            });
+            out.extend(answers);
+        }
+        out
+    }
+
+    /// Every held desired entry with its resolution, in ONE engine call
+    /// (`oi config diff --json`): what Settings shows as staged.
+    pub fn diff(&self, cwd: &Path) -> Result<Vec<Value>, String> {
+        let args = vec!["config".to_owned(), "diff".to_owned(), "--json".to_owned()];
+        let document = self
+            .answer(cwd, &args, None)
+            .map_err(|error| error["message"].as_str().unwrap_or("the engine could not diff the held settings").to_owned())?;
+        Ok(document["resolutions"].as_array().cloned().unwrap_or_default())
+    }
+
+    fn resolution_one(&self, cwd: &Path, pair: &ConfigPair) -> Value {
+        std::iter::once(pair)
             .map(|pair| {
                 let args = vec![
                     "config".to_owned(),
@@ -489,7 +525,8 @@ impl Client {
                     }
                 }
             })
-            .collect()
+            .next()
+            .expect("one pair yields one resolution")
     }
 
     // -----------------------------------------------------------------------

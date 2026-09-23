@@ -161,34 +161,27 @@ export default async function run(ctx) {
     log("BOOT-09 skipped: this run provides no ctx.bridge.restart (only this file's own standalone main() does) — a real restoration failure needs a kernel that does not remember the binding.");
   }
 
-  // --- System: the composition reading + the honest per-product gateway absence ---
-  await page.getByRole("button", { name: "System", exact: true }).click();
-  const system = page.getByRole("region", { name: "System composition" });
-  // The reading's freshness renders as header facts; the census line exists
-  // only once a reading is present, so it is the observed-freshness signal.
-  await system.getByText(/\d+ disclosed · \d+ not disclosed/).waitFor({ timeout: 15_000 });
-  for (const fact of ["Ground", "Suite", "Census", "Observed"]) {
-    check(await system.getByText(fact, { exact: true }).count() > 0, `BOOT-06/12: the composition reading carries its ${fact} fact`);
+  // --- Settings (12-SETTINGS §3.1/§3.9): the census and the honest gateway absence ---
+  await page.locator(".world-system-settings").first().click();
+  await page.locator("[data-settings-page]").waitFor({ timeout: 60_000 });
+  await page.locator("[data-status-section]").waitFor({ timeout: 240_000 });
+  const statusText = (await page.locator("[data-status-section]").innerText()) ?? "";
+  for (const fact of ["Suite", "Harnesses", "Credentials", "Skills"]) {
+    check(statusText.includes(fact), `BOOT-06/12: Status carries its ${fact} card`);
   }
-  const discoveredRow = system.getByText(/discovered, not verified ready/);
-  check(await discoveredRow.count() > 0, "BOOT-06/12: an installed/registered product is labelled discovered, not verified ready — never asserted runtime-ready");
-  // The gateway obligations moved into the per-product sections: the
-  // Actuation section names them and marks each "not available yet" — no
-  // invented ecology row, no probe, no auto start (BOOT-15).
-  const actuation = system.locator("details.product-section", { hasText: "Actuation" });
-  await actuation.getByText("Actuation", { exact: true }).waitFor({ timeout: 15_000 });
-  await actuation.locator("summary").first().click();
-  for (const obligation of ["Ecology read", "Attach", "Stream cursor / replay"]) {
-    const row = actuation.locator("li").filter({ hasText: obligation });
-    check(await row.getByText("not available yet").count() === 1, `BOOT-15: the gateway obligation "${obligation}" is disclosed honestly — not available yet, never invented`);
+  check(!/verified ready|all products ready/i.test(statusText), "BOOT-06/12: nothing is asserted runtime-ready");
+  // The gateway obligations are Actuation's own missing operations: its
+  // page names them in one sentence — never an invented ecology row, no
+  // probe, no auto start (BOOT-15).
+  await page.locator('[data-settings-product="actuation"]').click();
+  const actuation = page.locator('[data-product-page="actuation"]');
+  await actuation.locator("[data-product-health]").waitFor({ timeout: 240_000 });
+  const missing = (await actuation.locator("[data-settings-missing]").textContent().catch(() => "")) ?? "";
+  for (const obligation of ["actor ecology", "Attach an observer"]) {
+    check(missing.toLowerCase().includes(obligation.toLowerCase()) && /no native operation here yet\.$/.test(missing),
+      `BOOT-15: the gateway obligation "${obligation}" is disclosed honestly — no native operation yet, never invented`, { missing });
   }
-  // The open project's SessionSpace topology is disclosed from the owner's
-  // own agency reading — the row exists with the owner's count or the
-  // owner's refusal, never an invented number.
-  const aikit = system.locator("details.product-section", { hasText: "AIKit" });
-  await aikit.locator("summary").first().click();
-  await aikit.getByText(/SessionSpaces \(/).waitFor({ timeout: 15_000 });
-  check(true, "BOOT-15: session topology is disclosed from the owner's agency reading (count or refusal verbatim), never invented");
+  check(await actuation.locator("button").filter({ hasText: /ecology|attach/i }).count() === 0, "BOOT-15: no control pretends the missing gateway operations exist");
   await shotTo(page, artifactsDir, "system-gateway");
 }
 

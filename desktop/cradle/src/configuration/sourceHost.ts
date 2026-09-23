@@ -2,9 +2,9 @@
  * Which `ConfigPlaneSource` this build renders from.
  *
  * - dev / walk builds (`__CRADLE_WALK__`, baked by vite.config.ts): the
- *   fixture-backed world of `fixtureSource.ts`, clearly labelled on
- *   screen. This is where the configuration walk scenario proves the §21
- *   acceptance against the frozen fixtures.
+ *   LIVE binding, exactly as production — the fixture-backed world of
+ *   `fixtureSource.ts` binds only with `?fixtures=1` (12-SETTINGS §5),
+ *   clearly labelled on screen, for the generic-projection proofs.
  * - production: the LIVE binding (`liveSource.ts`) — the typed
  *   configuration `KernelOp`s routed to the same engine `oi config` /
  *   `oi profile` drive. Where no kernel transport exists at all (a plain
@@ -47,14 +47,17 @@ export function configPlaneSource(): Promise<ConfigPlaneSource> {
       // Without the parameter (or without a transport) the walk keeps the
       // clearly-labelled fixture world for the L6 descriptor-genericity
       // legs. A plain production build never reaches this branch.
-      const wantsLive =
+      // 12-SETTINGS §5 (the v2 rule): live by default in walk builds too —
+      // the fixture world binds ONLY when asked for (`?fixtures=1`). Without
+      // a kernel transport the plane renders its honest absence.
+      const wantsFixtures =
         typeof window !== "undefined" &&
-        new URLSearchParams(window.location.search).get("config-source") === "live";
-      cached = (wantsLive ? bindLivePlaneSource() : Promise.resolve(null)).then(
-        (live) =>
-          live ??
-          import("./fixtureSource").then((module) => module.createFixtureConfigPlaneSource()),
-      );
+        new URLSearchParams(window.location.search).get("fixtures") === "1";
+      cached = wantsFixtures
+        ? import("./fixtureSource").then((module) => module.createFixtureConfigPlaneSource())
+        : bindLivePlaneSource().then((live) => live ?? createUnboundConfigPlaneSource(
+            "no kernel transport is reachable; the configuration plane needs the Tauri host or a walk bridge",
+          ));
     } else {
       const transport = detectTransport();
       if (transport.kind === "unavailable") {

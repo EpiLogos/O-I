@@ -178,6 +178,51 @@ export function shapeGeneration(value: unknown): GenerationFacts | null {
   };
 }
 
+/** One capability's own description and source, from `horizon.capabilities`. */
+export interface CapabilityDetail {
+  description: string | null;
+  source: string | null;
+  kind: string | null;
+}
+
+export function shapeCapabilityDetails(value: unknown): Record<string, CapabilityDetail> {
+  if (!Array.isArray(value)) return {};
+  const details: Record<string, CapabilityDetail> = {};
+  for (const row of value) {
+    const record = (row ?? {}) as Record<string, unknown>;
+    const id = typeof record.resource === "string" ? record.resource : "";
+    if (!id) continue;
+    const annotations = (record.annotations ?? {}) as Record<string, unknown>;
+    const sources = ((record.intent as {sources?: unknown} | undefined)?.sources ?? []) as {source?: unknown}[];
+    details[id] = {
+      description: typeof record.description === "string" ? record.description : null,
+      source: Array.isArray(sources) && typeof sources[0]?.source === "string" ? sources[0].source as string : null,
+      kind: typeof annotations["capsule-kind"] === "string" ? annotations["capsule-kind"] as string : null,
+    };
+  }
+  return details;
+}
+
+/** The security posture facts (`security.posture`): the environment import
+ * gate and the trust-key tallies. */
+export interface PostureFacts {
+  environmentImport: string | null;
+  trust: {keys: number; states: Record<string, number>} | null;
+}
+
+export function shapePosture(value: unknown): PostureFacts {
+  const record = (value ?? {}) as Record<string, unknown>;
+  const gate = (record.environment_import_gate ?? {}) as Record<string, unknown>;
+  const trust = (record.trust ?? null) as Record<string, unknown> | null;
+  const states = (trust?.states ?? {}) as Record<string, unknown>;
+  return {
+    environmentImport: typeof gate.state === "string" ? gate.state : null,
+    trust: trust && typeof trust.keys === "number"
+      ? {keys: trust.keys, states: Object.fromEntries(Object.entries(states).filter(([, count]) => typeof count === "number")) as Record<string, number>}
+      : null,
+  };
+}
+
 /** The disclosure facts the rebuilt sections render, all cut from the
  * owner's own mounted descriptor. */
 export interface DisclosureFacts {
@@ -191,6 +236,8 @@ export interface DisclosureFacts {
   secretStores: SecretStoreRow[];
   skills: SkillRow[];
   generation: GenerationFacts | null;
+  capabilities: Record<string, CapabilityDetail>;
+  posture: PostureFacts;
 }
 
 function sectionOf(descriptor: ProductDisclosureV2, id: string) {
@@ -219,6 +266,8 @@ export function shapeDisclosureFacts(descriptor: ProductDisclosureV2): Disclosur
       capabilitySetting?.axes.active?.value,
     ),
     generation: shapeGeneration(axisValue(descriptor, "generation", "generation.current", "effective")),
+    capabilities: shapeCapabilityDetails(axisValue(descriptor, "resource-actions", "horizon.capabilities", "effective")),
+    posture: shapePosture(axisValue(descriptor, "security", "security.posture", "effective")),
   };
 }
 

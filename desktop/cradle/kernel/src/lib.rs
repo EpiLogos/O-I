@@ -56,6 +56,7 @@ pub mod shared_field;
 pub mod setup;
 pub mod agent_definition;
 pub mod chat_defaults;
+pub mod credentials;
 pub mod system_composition;
 pub mod material;
 /// Short-horizon read-through cache for the owner readings the UI re-reads
@@ -438,6 +439,24 @@ pub enum KernelOp {
     /// Withdraw the held default — an explicit operation; the discard
     /// document carries the observed `removed` fact.
     ChatDefaultDiscard,
+    /// Settings · Credentials (docs/cradle/12-SETTINGS.md §3.4, S12/S13):
+    /// the owner's own `aikit credential …` verbs (`credentials.rs`). A
+    /// pasted key crosses to AIKit on STDIN only and never comes back out.
+    CredentialList,
+    CredentialDiscover,
+    CredentialSetup { credential: String, #[serde(default)] reference: Option<String>, #[serde(default)] material: Option<credentials::SecretMaterial> },
+    CredentialRotate { credential: String, #[serde(default)] reference: Option<String>, #[serde(default)] material: Option<credentials::SecretMaterial> },
+    CredentialVerify { credential: String },
+    CredentialRevoke { credential: String },
+    /// Settings · Harnesses (12 §3.2): `aikit client install <client>`.
+    ClientInstall { client: String },
+    /// Settings · product pages (12 §3.9): run one owner-disclosed action.
+    ProductActionRun { product_id: String, action_ref: String },
+    /// Settings · read-only rows (12 §2, S11): reveal the owner's own file.
+    SettingsReveal { path: String },
+    /// Settings · the staged changes (12 §2): every held desired entry with
+    /// its resolution in one engine call (`oi config diff --json`).
+    ConfigDiff,
     /// The configuration-plane binding (#299 C6 live leg,
     /// `configuration.rs`): every operation routes through the INSTALLED
     /// `oi` executable — the same engine `oi config` / `oi profile` drive —
@@ -691,6 +710,15 @@ pub enum KernelOpResult {
     ChatDefaultReading {document:Option<serde_json::Value>},
     ChatDefaultHeld {document:serde_json::Value},
     ChatDefaultDiscarded {document:serde_json::Value},
+    /// The owner's credential readings/changes (`credentials.rs`), verbatim
+    /// `data` — binding metadata and verdicts only, never material.
+    CredentialReading {data:serde_json::Value},
+    CredentialChanged {data:serde_json::Value},
+    CredentialVerified {data:serde_json::Value},
+    ClientInstalled {data:serde_json::Value},
+    ProductActionRan {data:serde_json::Value},
+    SettingsRevealed {data:serde_json::Value},
+    ConfigDiffReading {resolutions:Vec<serde_json::Value>},
     /// The configuration registry reading (`configuration.rs`): the seven
     /// canonical positions, each honestly mounted or degraded by name.
     ConfigRegistryReading {
@@ -1138,6 +1166,24 @@ impl Kernel {
             KernelOp::ChatDefaultDiscard => {
                 let document=chat_defaults::discard()?;
                 Ok(KernelOpOutcome{receipts:Vec::new(),result:KernelOpResult::ChatDefaultDiscarded{document}})
+            }
+            KernelOp::CredentialList|KernelOp::CredentialDiscover|KernelOp::CredentialSetup{..}|KernelOp::CredentialRotate{..}|KernelOp::CredentialVerify{..}|KernelOp::CredentialRevoke{..}|KernelOp::ClientInstall{..} => {
+                let root=self.world_map(false).ok();
+                let cwd=root.as_ref().and_then(|value|value["root"].as_str()).map(std::path::PathBuf::from).unwrap_or(std::env::current_dir().map_err(|e|e.to_string())?);
+                let result=credentials::apply(&cwd,op)?;
+                Ok(KernelOpOutcome{receipts:Vec::new(),result})
+            }
+            KernelOp::ProductActionRun{product_id,action_ref} => {
+                let root=self.world_map(false).ok();
+                let cwd=root.as_ref().and_then(|value|value["root"].as_str()).map(std::path::PathBuf::from).unwrap_or(std::env::current_dir().map_err(|e|e.to_string())?);
+                let data=system_composition::Client::discover().run_action(&cwd,&product_id,&action_ref)?;
+                Ok(KernelOpOutcome{receipts:Vec::new(),result:KernelOpResult::ProductActionRan{data}})
+            }
+            KernelOp::SettingsReveal{path} => Ok(KernelOpOutcome{receipts:Vec::new(),result:KernelOpResult::SettingsRevealed{data:system_composition::reveal(&path)?}}),
+            KernelOp::ConfigDiff => {
+                let root=self.world_map(false).ok();
+                let cwd=root.as_ref().and_then(|value|value["root"].as_str()).map(std::path::PathBuf::from).unwrap_or(std::env::current_dir().map_err(|e|e.to_string())?);
+                Ok(KernelOpOutcome{receipts:Vec::new(),result:KernelOpResult::ConfigDiffReading{resolutions:configuration::Client::discover().diff(&cwd)?}})
             }
             KernelOp::Ground{request} => {
                 // A ground change re-bases every path the cache holds.

@@ -46,11 +46,24 @@ export interface HarnessRow {
   installed: boolean;
   config_dir: string | null;
   dispatch: string;
+  /** "descriptor" when an AIKit adapter exists for it; "unavailable" when
+   * the harness is detected but no adapter is authored yet. */
+  capability: string;
+  /** The owner's own effect text ("restart Claude", "next session only …"). */
+  effect: string | null;
+  /** How many skills AIKit projects into it (null: not disclosed). */
+  items: number | null;
+  /** The owner's missing-adapter record, when it names one. */
+  adapter_gap: {authoring_skill_ref: string | null; missing_contract: string | null} | null;
 }
 
 export interface ProviderRow {id: string; label: string}
 
-export interface CatalogueEntry {model: string; name: string; source: string}
+/** One declared route of a catalogued model (the owner's own words: a
+ * route is a way to reach the model, and it names whether a key is needed). */
+export interface CatalogueRoute {kind: string; provider: string; credential_required: boolean}
+
+export interface CatalogueEntry {model: string; name: string; source: string; routes: CatalogueRoute[]}
 
 /** The rule that picks a new chat's default provider, in precedence order. */
 export type ChatDefaultRule = "owner-choice" | "pi-row" | "first-configured";
@@ -75,9 +88,9 @@ export interface HarnessReading {
 // shaping (pure, pinned by tests against the real wire shapes)
 
 /** `aikit --json client status` rows → the face's harness rows. Tolerant of
- * absent fields: the owner's census varies per client (a row without a
- * harness — the resident's own `broker` client — renders under its client
- * name). */
+ * absent fields: the owner's census varies per client. The broker (AIKit's
+ * own resident, `detection: self`) is AIKit itself, not a harness, and is
+ * never listed (12-SETTINGS §3.2). */
 export function shapeHarnessClients(data: unknown): HarnessRow[] {
   const clients = (data as {clients?: unknown})?.clients;
   if (!Array.isArray(clients)) return [];
@@ -86,17 +99,24 @@ export function shapeHarnessClients(data: unknown): HarnessRow[] {
     const harness = typeof record.harness === "string" ? record.harness : "";
     const client = typeof record.client === "string" ? record.client : "";
     const detection = typeof record.detection === "string" ? record.detection : "";
+    const gap = (record.gap ?? null) as Record<string, unknown> | null;
     return {
       harness: harness || client,
       client,
       detection,
-      detected: detection === "detected" || detection === "self",
+      detected: detection === "detected",
       detection_reason: typeof record.detection_reason === "string" ? record.detection_reason : null,
       installed: record.installed === true,
       config_dir: typeof record.config_dir === "string" ? record.config_dir : null,
       dispatch: typeof record.dispatch === "string" ? record.dispatch : "",
+      capability: typeof record.capability === "string" ? record.capability : "",
+      effect: typeof record.effect === "string" ? record.effect : null,
+      items: typeof record.items === "number" ? record.items : null,
+      adapter_gap: gap && typeof gap === "object"
+        ? {authoring_skill_ref: typeof gap.authoring_skill_ref === "string" ? gap.authoring_skill_ref : null, missing_contract: typeof gap.missing_contract === "string" ? gap.missing_contract : null}
+        : null,
     };
-  });
+  }).filter((row) => row.detection !== "self" && row.dispatch !== "self" && row.client !== "broker");
 }
 
 /** The resident's `providers` action rows → `{id,label}` pairs, in the
@@ -120,6 +140,14 @@ export function shapeCatalogue(data: unknown): {count: number; entries: Catalogu
       model: typeof row.model === "string" ? row.model : "",
       name: typeof row.name === "string" ? row.name : "",
       source: typeof row.source === "string" ? row.source : "",
+      routes: (Array.isArray(row.declared_routes) ? row.declared_routes : [])
+        .map((route) => (route ?? {}) as Record<string, unknown>)
+        .map((route) => ({
+          kind: typeof route.kind === "string" ? route.kind : "",
+          provider: typeof route.provider === "string" ? route.provider : "",
+          credential_required: route.credential_required !== false,
+        }))
+        .filter((route) => route.provider !== ""),
     }));
   const declared = (data as {catalogued?: unknown})?.catalogued;
   const count = typeof declared === "number" ? declared : shaped.length;

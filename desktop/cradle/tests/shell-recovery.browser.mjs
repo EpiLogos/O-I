@@ -101,13 +101,13 @@ try{
    await scenario(`${engineName}/${scheme}: full-workspace Settings, narrow preferences, real return and themes`,async()=>{
     const {context,page}=await seed(browser,scheme);try{
      const editor=page.locator(visible+' [data-group-id="left"] .cm-content');if(!reference){await editor.waitFor();await editor.evaluate(el=>{window.retainedEditor=el;});}
-     await page.keyboard.press('Control+Alt+5');await page.getByRole('region',{name:'Settings and system'}).waitFor();
-     if(!reference){const s=await page.evaluate(()=>JSON.parse(localStorage.getItem('oi-cradle.workspaces.v1')).workspaces[0].layout);assert.equal(s.agencyDepth,'collapsed');assert.equal(s.rightDepth,'collapsed');}
-     await page.getByRole('navigation',{name:'Settings surfaces'}).getByRole('button',{name:'Visuals',exact:true}).click();
+     await page.keyboard.press('Control+Alt+5');await page.getByRole('region',{name:'Settings',exact:true}).waitFor();
+     if(!reference){await page.waitForFunction(()=>JSON.parse(localStorage.getItem('oi-cradle.workspaces.v1')).workspaces[0].layout.mode==='settings');const s=await page.evaluate(()=>JSON.parse(localStorage.getItem('oi-cradle.workspaces.v1')).workspaces[0].layout);assert.equal(s.agencyDepth,'panel','12-SETTINGS §1: the left stays open as the section list');assert.equal(s.rightDepth,'collapsed','the right panel rests collapsed');}
+     await page.getByRole('navigation',{name:'Settings sections'}).locator('[data-settings-section="appearance"]').click();await page.locator('.visuals-preferences').waitFor();
      await page.screenshot({path:`${out}/${engineName}-${scheme}-visuals-wide.png`});
      for(const width of [760,430,360]){
       await page.setViewportSize({width,height:900});await page.screenshot({path:`${out}/${engineName}-${scheme}-visuals-${width}.png`});
-      if(!reference){assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),'page has no horizontal overflow');assert.ok(await page.locator('.system-panel:visible').evaluate(el=>el.scrollWidth<=el.clientWidth+1),'settings has no clipped horizontal content');}
+      if(!reference){assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),'page has no horizontal overflow');assert.ok(await page.locator('[data-settings-page]:visible').evaluate(el=>el.scrollWidth<=el.clientWidth+1),'settings has no clipped horizontal content');}
      }
      if(reference)return;
      const appearance=page.getByRole('group',{name:'Appearance',exact:true});
@@ -117,7 +117,7 @@ try{
      await page.getByRole('button',{name:'Back to work',exact:true}).click();await editor.waitFor();assert.equal(await editor.evaluate(el=>el===window.retainedEditor),true,'the same editor DOM returns, not a remount');await page.screenshot({path:`${out}/${engineName}-${scheme}-return-360.png`});await corner(page,'left');
      for(const width of [639,640,760,1440,360,640,1440]){await page.setViewportSize({width,height:900});await page.waitForFunction(width=>innerWidth===width,width);await corner(page,width<640?'left':'upper-right');}
      await page.screenshot({path:`${out}/${engineName}-${scheme}-return-wide.png`});
-     await page.keyboard.press('Control+Alt+5');await page.getByRole('navigation',{name:'Settings surfaces'}).getByRole('button',{name:'Visuals',exact:true}).click();
+     await page.keyboard.press('Control+Alt+5');await page.getByRole('navigation',{name:'Settings sections'}).locator('[data-settings-section="appearance"]').click();await page.locator('.visuals-preferences').waitFor();
      await page.getByRole('button',{name:'Open Expressions',exact:true}).click();
      const stage=page.locator('.mode-stage[data-mode-stage="expressions"]:not([hidden])');
      await stage.locator('.pcd-host').waitFor();
@@ -127,7 +127,7 @@ try{
      // disclose that refusal; it must not manufacture a working app/renderer.
      await stage.locator('.pcd-host[data-state="refused"] [role="alert"]').waitFor();
      const host=stage.locator('.pcd-host');await host.evaluate(el=>{window.retainedExpressionHost=el;});
-     await page.keyboard.press('Control+Alt+5');await page.getByRole('region',{name:'Settings and system'}).waitFor();
+     await page.keyboard.press('Control+Alt+5');await page.getByRole('region',{name:'Settings',exact:true}).waitFor();
      await page.getByRole('button',{name:'Back to work',exact:true}).click();await host.waitFor();
      assert.equal(await host.evaluate(el=>el===window.retainedExpressionHost),true,'the mode-specific host stays mounted on Settings round trips');
      await page.screenshot({path:`${out}/${engineName}-${scheme}-expressions-route.png`});

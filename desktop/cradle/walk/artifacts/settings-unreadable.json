@@ -1,0 +1,103 @@
+{
+  "schema": "oi.cradle.walk.scenario/v1",
+  "scenario": "settings-unreadable",
+  "spec_ref": "docs/cradle/12-SETTINGS.md §2 §4 S2",
+  "grade": "B",
+  "binding": null,
+  "generated_at": "2026-09-23T07:19:45.264Z",
+  "environment": {
+    "base_url": "http://localhost:4173",
+    "bridge_url": "http://127.0.0.1:4179",
+    "viewport": "1280x820",
+    "browser_engine": "chromium",
+    "bundle": "walk (WALK=1) served by vite preview",
+    "build_input": {
+      "mode": "reused-dist",
+      "bundle_fingerprint": "a7a09418ce4322d8d78b92d5fbef3eadb3d2e486d66085f9c9578daa397bea66"
+    },
+    "node": "v24.16.0",
+    "platform": "darwin",
+    "source": {
+      "repository_root": "/Users/admin/Central/worktrees/ui-build/lane4-settings",
+      "repository_head": "f84fa70a5e2b462b9078c81cb69a429497e3037b",
+      "tracked_changes": [
+        "desktop/cradle/src/workspace/settings/sections/CredentialsSection.tsx",
+        "desktop/cradle/walk/artifacts/settings-change-applied.png",
+        "desktop/cradle/walk/artifacts/settings-change-partial.png",
+        "desktop/cradle/walk/artifacts/settings-change-refused.png",
+        "desktop/cradle/walk/artifacts/settings-change-stale.png",
+        "desktop/cradle/walk/artifacts/settings-change.json",
+        "desktop/cradle/walk/artifacts/settings-credentials-discovered.png",
+        "desktop/cradle/walk/artifacts/settings-credentials-key-entry.png",
+        "desktop/cradle/walk/artifacts/settings-credentials-verified.png",
+        "desktop/cradle/walk/artifacts/settings-credentials.json",
+        "desktop/cradle/walk/artifacts/settings-shell-credentials-dark-1000.png",
+        "desktop/cradle/walk/artifacts/settings-shell-credentials-dark-1440.png",
+        "desktop/cradle/walk/artifacts/settings-shell-credentials-dark-760.png",
+        "desktop/cradle/walk/artifacts/settings-shell-credentials-light-1000.png",
+        "desktop/cradle/walk/artifacts/settings-shell-credentials-light-1440.png",
+        "desktop/cradle/walk/artifacts/settings-shell-credentials-light-760.png",
+        "desktop/cradle/walk/artifacts/settings-shell-product-aikit-dark-1000.png",
+        "desktop/cradle/walk/artifacts/settings-shell-product-aikit-dark-1440.png",
+        "desktop/cradle/walk/artifacts/settings-shell-product-aikit-light-1000.png",
+        "desktop/cradle/walk/artifacts/settings-shell-product-aikit-light-1440.png",
+        "desktop/cradle/walk/artifacts/settings-shell.json"
+      ],
+      "dirty_digest": "a818d1da7ead78314dff4863197ff7a5d35aa5047dd7ae353d1efcb9734b75a6",
+      "engine_provenance_path": "/Users/admin/Central/worktrees/ui-build/lane4-settings/packages/oi-design-system/expressions-engine/PROVENANCE.json",
+      "engine_source": "EpiLogos/Point-Cloud-Demo",
+      "engine_revision": "91db8428fc9dfba06cd258ec5a58e7dd9eef5313"
+    }
+  },
+  "passed": true,
+  "error": null,
+  "duration_ms": 18246,
+  "checks": [
+    {
+      "ok": true,
+      "label": "S2 a failed read says \"Couldn't load these settings.\" with the reason and Retry",
+      "data": {
+        "text": "Couldn't load these settings. the suite is unreachable from this walk\n\nRetry"
+      }
+    },
+    {
+      "ok": true,
+      "label": "S2 unreadable is never shown as empty (no \"Not configured\" cards)"
+    },
+    {
+      "ok": true,
+      "label": "S2 an unreadable harness census renders no cards, not an empty group"
+    },
+    {
+      "ok": true,
+      "label": "S2 Retry reads the owners again and their real answers replace the unreadable state"
+    },
+    {
+      "ok": true,
+      "label": "S2 after Retry the credentials read lands too"
+    }
+  ],
+  "ops": [
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 32,
+      "data": {
+        "file": "settings-unreadable-unreadable.png"
+      }
+    },
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 30,
+      "data": {
+        "file": "settings-unreadable-recovered.png"
+      }
+    }
+  ],
+  "metrics": {},
+  "screenshots": [
+    "settings-unreadable-unreadable.png",
+    "settings-unreadable-recovered.png"
+  ]
+}

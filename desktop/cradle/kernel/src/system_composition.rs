@@ -173,14 +173,34 @@ impl Client {
         // canonical order. Always seven entries.
         let mut owners = Vec::with_capacity(7);
         owners.push(self.oi_owner(&census, observed));
-        for (index, product_id) in PRODUCT_IDS.iter().enumerate() {
-            let namespace = namespace_for(&census, index, product_id);
-            let reading_command: Vec<String> = std::iter::once(namespace)
-                .chain(SYSTEM_VERB.iter().map(|s| s.to_string()))
+        // The six owner reads are independent (each its own process): they
+        // run side by side and mount in canonical order.
+        let mounted: Vec<OwnerMount> = std::thread::scope(|scope| {
+            let handles: Vec<_> = PRODUCT_IDS
+                .iter()
+                .enumerate()
+                .map(|(index, product_id)| {
+                    let namespace = namespace_for(&census, index, product_id);
+                    scope.spawn(move || {
+                        let reading_command: Vec<String> = std::iter::once(namespace)
+                            .chain(SYSTEM_VERB.iter().map(|s| s.to_string()))
+                            .collect();
+                        let outcome = self.invoke(cwd, &reading_command);
+                        mount_owner(product_id, &reading_command, outcome, observed)
+                    })
+                })
                 .collect();
-            let outcome = self.invoke(cwd, &reading_command);
-            owners.push(mount_owner(product_id, &reading_command, outcome, observed));
-        }
+            handles
+                .into_iter()
+                .zip(PRODUCT_IDS.iter())
+                .map(|(handle, product_id)| {
+                    handle.join().unwrap_or_else(|_| {
+                        mount_owner(product_id, &[], InvokeOutcome::SpawnFailed("the owner read stopped unexpectedly".into()), observed)
+                    })
+                })
+                .collect()
+        });
+        owners.extend(mounted);
 
         let mut obligations = census.integration_obligations.clone();
         obligations.push(ENGAGEMENT_OBLIGATION.to_owned());
@@ -585,6 +605,85 @@ fn managed_root() -> String {
             .into_owned();
     }
     "(unset)".to_owned()
+}
+
+// ---------------------------------------------------------------------------
+// Settings product pages (docs/cradle/12-SETTINGS.md §3.9, §2 S11)
+// ---------------------------------------------------------------------------
+
+impl Client {
+    /// Run ONE owner-disclosed action of one product: the owner's own
+    /// `native_path` through the suite route (`oi <namespace> …`). Only an
+    /// action the owner discloses as available, exposes to a UI and needs no
+    /// argument runs; anything else is refused in plain words. The owner's
+    /// answer returns verbatim (it renders only behind "Show raw").
+    pub fn run_action(&self, cwd: &Path, product_id: &str, action_ref: &str) -> Result<Value, String> {
+        let index = PRODUCT_IDS.iter().position(|id| *id == product_id)
+            .ok_or("Actions run only for the six suite products")?;
+        let census = composition::Client::with(self.executable.clone()).read(cwd);
+        let namespace = namespace_for(&census, index, product_id);
+        let reading: Vec<String> = std::iter::once(namespace.clone()).chain(SYSTEM_VERB.iter().map(|s| s.to_string())).collect();
+        let descriptor = match self.invoke(cwd, &reading) {
+            InvokeOutcome::Completed { exit_code: 0, stdout, .. } => serde_json::from_str::<Value>(&stdout).map_err(|_| "The product's settings disclosure is unreadable")?,
+            InvokeOutcome::Completed { stderr, .. } => return Err(format!("The product's settings disclosure could not be read: {}", stderr.trim())),
+            InvokeOutcome::SpawnFailed(error) => return Err(format!("The suite is unavailable: {error}")),
+        };
+        let action = descriptor["actions"].as_array().and_then(|rows| rows.iter().find(|row| row["action_ref"] == action_ref))
+            .ok_or("The product does not disclose that action")?;
+        if action["availability"] != "disclosed" {
+            return Err(action["unavailable_reason"].as_str().unwrap_or("The product has no native operation for this action yet").to_owned());
+        }
+        if action["exposure"]["ui"] == false {
+            return Err("The product does not offer this action to the app".into());
+        }
+        let native = action["native_path"].as_str().ok_or("The action names no native command")?;
+        let mut words = native.split_whitespace();
+        let _owner = words.next().ok_or("The action names no native command")?;
+        let args: Vec<String> = words.map(str::to_owned).collect();
+        if args.iter().any(|word| word.starts_with('<') || word.starts_with('[')) {
+            return Err("This action needs something to act on, which the settings page does not choose".into());
+        }
+        let command: Vec<String> = std::iter::once(namespace).chain(args).collect();
+        match self.invoke(cwd, &command) {
+            InvokeOutcome::Completed { exit_code, stdout, stderr } => {
+                let output = serde_json::from_str::<Value>(&stdout).unwrap_or(Value::String(stdout));
+                Ok(serde_json::json!({
+                    "action_ref": action_ref,
+                    "ok": exit_code == 0,
+                    "exit_code": exit_code,
+                    "output": output,
+                    "stderr": stderr.trim(),
+                    "ran_at_unix_ms": now_ms(),
+                }))
+            }
+            InvokeOutcome::SpawnFailed(error) => Err(format!("The suite is unavailable: {error}")),
+        }
+    }
+}
+
+/// Reveal an owner's own file (a harness config the page shows read-only)
+/// in the system file manager. Only a path under the person's home that
+/// exists; nothing is read or written.
+pub fn reveal(path: &str) -> Result<Value, String> {
+    let home = std::env::var_os("HOME").map(PathBuf::from).ok_or("No home directory is resolvable")?;
+    let expanded = match path.strip_prefix("~/") {
+        Some(rest) => home.join(rest),
+        None => PathBuf::from(path),
+    };
+    let target = expanded.canonicalize().map_err(|_| format!("{path} doesn't exist on this machine"))?;
+    if !target.starts_with(home.canonicalize().unwrap_or(home)) {
+        return Err("Only files in your home folder are opened from Settings".into());
+    }
+    let status = if cfg!(target_os = "macos") {
+        Command::new("open").arg("-R").arg(&target).status()
+    } else {
+        Command::new("xdg-open").arg(target.parent().unwrap_or(&target)).status()
+    };
+    match status {
+        Ok(status) if status.success() => Ok(serde_json::json!({"revealed": target.display().to_string()})),
+        Ok(status) => Err(format!("The file manager refused to open it ({status})")),
+        Err(error) => Err(format!("No file manager is available: {error}")),
+    }
 }
 
 #[cfg(test)]

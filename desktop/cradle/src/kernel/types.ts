@@ -243,6 +243,23 @@ export type KernelOp =
   | {op:"chat_default_read"}
   | {op:"chat_default_hold";provider:string}
   | {op:"chat_default_discard"}
+  /** Settings · Credentials (12-SETTINGS §3.4): the owner's `aikit credential`
+   * verbs. `material` is a pasted key: it crosses to the kernel once and is
+   * handed to AIKit on STDIN; nothing ever returns it. */
+  | {op:"credential_list"}
+  | {op:"credential_discover"}
+  | {op:"credential_setup";credential:string;reference?:string;material?:string}
+  | {op:"credential_rotate";credential:string;reference?:string;material?:string}
+  | {op:"credential_verify";credential:string}
+  | {op:"credential_revoke";credential:string}
+  /** Settings · Harnesses (12-SETTINGS §3.2): `aikit client install <client>`. */
+  | {op:"client_install";client:string}
+  /** Settings · product pages (12-SETTINGS §3.9): run one owner-disclosed action. */
+  | {op:"product_action_run";product_id:string;action_ref:string}
+  /** Settings · read-only rows (12-SETTINGS §2, S11): reveal the owner's own file. */
+  | {op:"settings_reveal";path:string}
+  /** Settings · staged changes (12-SETTINGS §2): `oi config diff --json` in one call. */
+  | {op:"config_diff"}
   | {op:"day_read";day_ref?:string}
   | {op:"day_source_open";day_ref?:string}
   | { op: "knowledge"; project?: string; request: KnowledgeRequest; fresh?: boolean }
@@ -325,6 +342,13 @@ export type KernelOpResult =
   | { result:"chat_default_reading";document:unknown }
   | { result:"chat_default_held";document:unknown }
   | { result:"chat_default_discarded";document:unknown }
+  | { result:"credential_reading";data:unknown }
+  | { result:"credential_changed";data:unknown }
+  | { result:"credential_verified";data:unknown }
+  | { result:"client_installed";data:unknown }
+  | { result:"product_action_ran";data:unknown }
+  | { result:"settings_revealed";data:unknown }
+  | { result:"config_diff_reading";resolutions:unknown[] }
   | { result:"day_reading";data:unknown }
   | { result: "agency_reading"; project_ref: string; spaces: unknown[]; observed_at_unix_ms: number }
   | { result: "knowledge"; data: unknown }
