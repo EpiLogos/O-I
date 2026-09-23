@@ -147,7 +147,9 @@ export function SettingsPage() {
     <AgentSetupReturn/>
     {FixtureLabel && data.registry.state === "ok" && data.registry.value.source === "fixture" && <Suspense fallback={null}><FixtureLabel/></Suspense>}
     <div className="settings-page-body" ref={body}>
-      {!anyRead ? <Reading/>
+      {/* Appearance is this device's own preference (the Visuals view): it never waits on an owner read. */}
+      {place.kind === "section" && place.id === "appearance" ? <div className="settings-appearance" data-appearance-panel><VisualsView/></div>
+        : !anyRead ? <Reading/>
         : everythingFailed && data.suite.state === "failed" ? <Unreadable error={data.suite.error} onRetry={() => void refreshAll()}/>
         : place.kind === "product" ? <ProductSection key={place.id} id={place.id} data={data}/>
         : place.id === "status" ? <StatusSection data={data}/>

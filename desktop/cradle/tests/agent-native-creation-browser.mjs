@@ -6,7 +6,7 @@ const out=new URL('./agent-native-results/',import.meta.url);await mkdir(out,{re
 const server=await createServer({server:{host:'127.0.0.1',port:0}});let browser;const checks=[];
 try{
  await server.listen();browser=await chromium.launch({headless:true});const page=await browser.newPage({viewport:{width:900,height:1000}});const errors=[];page.on('pageerror',e=>errors.push(String(e)));
- await page.goto(`http://127.0.0.1:${server.httpServer.address().port}/tests/agent-native-creation-browser.html`);
+ await page.goto(`http://127.0.0.1:${server.httpServer.address().port}/tests/agent-native-creation-browser.html?fixtures=1`);
  await page.getByRole('textbox',{name:'Agent name',exact:true}).fill('Reading colleague');
  await page.getByRole('textbox',{name:'Human purpose',exact:true}).fill('Read the permitted source.');
  const checkbox=page.getByRole('checkbox',{name:/I choose the disclosed native scope/});await checkbox.check();
