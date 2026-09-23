@@ -180,7 +180,7 @@ class MarkStore {
     }
     this.running = false;
     const inFlight = batch.some(({binding}) => this.marks.get(keyOf(binding))?.mark === "working");
-    if (this.watches.size) this.timer = setTimeout(() => void this.tick(), inFlight ? 900 : 2500);
+    if (this.watches.size) this.timer = setTimeout(() => void this.tick(), inFlight ? 700 : 1500);
   }
 }
 
