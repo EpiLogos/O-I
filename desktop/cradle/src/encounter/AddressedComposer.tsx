@@ -18,8 +18,9 @@ export type DispatchState =
  * shared source refs and audience) — kept beside the owner's receipt so the
  * panel's Context plane can name what an addressed turn actually carried. */
 export interface DeliveryHistoryEntry {ref:string;record:DeliveryRecord;duplicate:boolean;packet?:AddressedPacket}
-/** Per-recipient line of a group dispatch. `error` is the owner's own refusal
- * verbatim; phases are the owner's durable delivery phases. */
+/** Per-recipient line of a group dispatch. `error` with no phase is the owner's
+ * own admission refusal verbatim; `unknown` with an error is an unevidenced
+ * outcome; other phases are the owner's durable delivery phases. */
 export interface GroupRow {agentSession:string;phase?:string;error?:string;duplicate?:boolean}
 export interface GroupState {ref:string;rows:GroupRow[]}
 export const ACTIVE_PHASES=["dispatching","submitted","uncertain"];
@@ -116,7 +117,7 @@ export function AddressedComposer({disabled,dispatch,history,service,agentSessio
         <button className="encounter-addressed-group-send" disabled={!groupReady()||!onGroupSend} onClick={submitGroup}>Dispatch to the group</button>
       </div>
       {group&&<div className="encounter-addressed-group-state" data-ref={group.ref}>
-        {group.rows.map(row=><p key={row.agentSession} className="encounter-addressed-group-row" data-phase={row.error?"refused":row.phase}><code>{row.agentSession}</code> — {row.error??(row.duplicate?"already held by the owner — durable receipt, nothing resent":`phase: ${row.phase}`)}</p>)}
+        {group.rows.map(row=><p key={row.agentSession} className="encounter-addressed-group-row" data-phase={row.phase??(row.error?"refused":undefined)}><code>{row.agentSession}</code> — {row.error??(row.duplicate?"already held by the owner — durable receipt, nothing resent":`phase: ${row.phase}`)}</p>)}
         <p>Group delivery <code>{group.ref}</code> — individually durable dispatch; no automatic replay of uncertain recipients.</p>
       </div>}
     </details>
