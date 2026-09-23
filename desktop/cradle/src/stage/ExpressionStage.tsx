@@ -14,10 +14,10 @@
  *                 content planes, never above dialogs or menus.
  *   overlay     — semantic native cues over ordinary chrome
  *                 (--oi-z-stage-overlay), still under popovers.
- *   frontstate  — the opening/welcome ground (--oi-z-stage-frontstate).
- *                 While a frontstate presentation stands, the engine
- *                 surface canvas is raised with it — at boot nothing else
- *                 is painted, and popovers and consent stay above.
+ *   frontstate  — a full-window ground (--oi-z-stage-frontstate). While a
+ *                 frontstate presentation stands, the engine surface canvas
+ *                 is raised with it. The opening splash does not use this
+ *                 plane; popovers and consent stay above it.
  *
  * Cues: application layers emit facts (app.opening, surface.loading,
  * source.saved, …) through the cue bus; they never name parameters. In

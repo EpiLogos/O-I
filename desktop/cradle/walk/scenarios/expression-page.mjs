@@ -41,25 +41,25 @@ export default async function run({page,baseUrl,check,metric,shot,channel,provis
  await page.frameLocator("iframe.material-frame").locator('.page-expression img[src="./capture.png"]').waitFor();await page.locator('.page-expression-host').getByText("Live renderer not admitted",{exact:false}).waitFor();check(await page.locator('.page-expression-host canvas').count()===0,"Unavailable live renderer releases the stage and the page uses its explicit capture fallback");check(await page.locator('.page-expression-host>figure').count()===0,"A page-basis change revokes the prior page-local capture instead of relabelling it");await shot("captured-fallback-page");
  writeFileSync(join(provision.projectRoot,"ada.html"),renderPage(pageDocument(nextRevision)));await openChrome(page,".material-surface");await page.getByRole("button",{name:"Reload preview"}).click();const reentered=page.locator('.page-expression-host');await reentered.locator('.page-expression-canvas canvas').waitFor();check(await reentered.getAttribute("data-expression-ref")==="expression:page-ada"&&await reentered.getAttribute("data-expression-revision")===String(nextRevision),"A newly read exact page revision re-enters the same native Expression identity");await shot("live-reentry");
 
- // Restore this actual owner-backed page through a fresh first-open frontstate.
- // The native document, file and workspace already exist from the actions above.
+ // Restore this actual owner-backed page under a fresh opening splash.
+ // The splash does not claim the production field, so the page may admit
+ // its live canvas while the mark still covers the workspace.
  await page.evaluate(()=>sessionStorage.removeItem('oi-cradle.welcome.v1'));
  await page.goto(`${baseUrl}?frontstate`);
  const opening=page.locator('.oi-welcome');
  await opening.locator('.oi-welcome-enter[aria-label="O:I is ready. Open the app."]').waitFor({timeout:30000});
  await reentered.waitFor({state:'attached'});
- await reentered.locator('.page-expression-canvas').waitFor({state:'attached'});
+ await reentered.locator('.page-expression-canvas canvas').waitFor({timeout:30000});
  const restoredFallback=page.frameLocator('iframe.material-frame').locator('.page-expression');
- await restoredFallback.waitFor({state:'attached'});
+ await restoredFallback.waitFor({state:'hidden'});
  const pending=await page.evaluate(()=>{
-  const host=document.querySelector('.page-expression-host'),canvas=document.querySelector('canvas[data-oi-stage="engine"]');
+  const host=document.querySelector('.page-expression-host'),canvas=host.querySelector('canvas[data-oi-stage="engine"]');
   const context=canvas?.getContext('webgl2');
   window.__pageOpeningField={canvas,context};
-  return {canvasCount:document.querySelectorAll('canvas[data-oi-stage="engine"]').length,inlineCanvas:host.querySelectorAll('canvas').length,alerts:host.querySelectorAll('[role="alert"]').length,disabled:[...host.querySelectorAll('button')].every(button=>button.disabled),covered:!!host.closest('.oi-workspace-mount[inert][aria-hidden="true"]'),liveContext:!!context&&!context.isContextLost()};
+  return {canvasCount:document.querySelectorAll('canvas[data-oi-stage="engine"]').length,inlineCanvas:host.querySelectorAll('canvas').length,alerts:host.querySelectorAll('[role="alert"]').length,covered:!!host.closest('.oi-workspace-mount[inert][aria-hidden="true"]'),splash:!!document.querySelector('.oi-welcome-logo'),liveContext:!!context&&!context.isContextLost()};
  });
- check(pending.canvasCount===1&&pending.inlineCanvas===0&&pending.liveContext,"Restored page waits for the opening's one healthy production field without allocating an inline renderer");
- check(pending.covered&&pending.disabled&&pending.alerts===0,"Temporary frontstate ownership keeps the real page host mounted, covered and disabled without a sticky error",pending);
- check(await restoredFallback.isVisible(),"The restored iframe retains its honest fallback until the native page presentation is actually ready");
+ check(pending.canvasCount===1&&pending.inlineCanvas===1&&pending.liveContext&&pending.splash,"The static splash covers the restored page while its one live field is already admitted");
+ check(pending.covered&&pending.alerts===0,"The covered page stays mounted under the splash without a sticky admission error",pending);
  await opening.locator('.oi-welcome-enter').click();
  await opening.waitFor({state:'detached',timeout:30000});
  await reentered.locator('.page-expression-canvas canvas').waitFor({timeout:20000});
@@ -75,7 +75,7 @@ export default async function run({page,baseUrl,check,metric,shot,channel,provis
  check(restored.alerts===0&&restored.expressionRef==='expression:page-ada'&&restored.expressionRevision===String(nextRevision)&&restored.subjectRef==='central:being:ada',"The restored live page keeps its exact Expression revision and subject without an admission error");
  await reentered.getByRole('button',{name:'Focus Expression'}).click();
  await page.getByRole('dialog',{name:'Focused Expression'}).waitFor();
- check(await page.evaluate(()=>document.querySelector('.page-expression-focus canvas')===window.__pageOpeningField.canvas),"The restored page can focus the same field after frontstate release");
+ check(await page.evaluate(()=>document.querySelector('.page-expression-focus canvas')===window.__pageOpeningField.canvas),"The restored page can focus the same field after the splash releases");
  await page.keyboard.press('Escape');
  await page.getByRole('dialog',{name:'Focused Expression'}).waitFor({state:'detached'});
  check(await page.evaluate(()=>document.querySelector('.page-expression-canvas canvas')===window.__pageOpeningField.canvas),"Leaving restored-page focus returns the same field inline");

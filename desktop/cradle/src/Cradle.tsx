@@ -5,9 +5,10 @@ import {ExpressionStageProvider} from "./stage/ExpressionStage";
 import {ExpressionProvider} from "./shared/Expression";
 import {WelcomeField} from "./visuals/WelcomeField";
 
-// The production field gets its first frame before the workspace's heavy
-// component graph is requested. Native state/ground reads start immediately
-// through KernelProvider; the workspace then composes beneath that same field.
+// The static opening splash paints before the workspace's heavy component
+// graph is requested. It does not take the expression stage. Native
+// state/ground reads start immediately through KernelProvider; the
+// workspace then composes beneath the splash.
 const Frame = lazy(() => import("./CradleFrame").then(module => ({default: module.CradleFrame})));
 const DetachedFrame = lazy(() => import("./workspace/DetachedFrame").then(module => ({default: module.DetachedFrame})));
 
@@ -50,6 +51,8 @@ function Opening() {
   const [welcomeUp, setWelcomeUp] = useState(!detached);
   const startFrame = useCallback(() => startTransition(() => setFrameStarted(true)), []);
   const composed = useCallback(() => setAppReady(true), []);
+  // The splash clears the opening ground before it fades. Removing it again
+  // here is the final release as the overlay unmounts.
   const entered = useCallback(() => { document.body.removeAttribute("data-oi-opening"); setWelcomeUp(false); startFrame(); }, [startFrame]);
   useEffect(() => {
     if (welcomeUp || detached) return;

@@ -961,10 +961,9 @@
 .source-reread-day {
   margin-right: 8px;
 }
-/* The opening gates interaction without changing the workspace's layout. */
+/* The opening gates interaction without changing the workspace's layout.
+ * The inverse ground itself belongs to the splash (visuals/welcome.css). */
 .oi-workspace-mount { display: contents; }
-/* Match the opening before its JavaScript or native field can paint. */
-body.oi-desktop[data-oi-opening="true"] { background: var(--oi-inverse-canvas-ground); }
 
 /* ---------------------------------------------------------------------------
  * Tab presentation — the pin model (LayoutState.tabPresentation,

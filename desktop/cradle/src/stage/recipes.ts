@@ -50,7 +50,8 @@ const FOCUSED_INSTRUMENT_CONFIG: NativeConfig = (() => {
   return nativeExport(scene).config;
 })();
 
-/** The opening flight: the mark first goes relational
+/** Stage material for a mark flight. The desktop opening splash does not
+ * play this sequence. The mark first goes relational
  * (attractors on, orbits up) and swirls while still tethered; chaos then
  * takes over and the tether cuts — the cloud flies apart and keeps moving
  * for the whole flight. The release only opens the drift; it never fades

@@ -9,6 +9,7 @@ import {visuals} from '../src/visuals/store';
 import {ExpressionStageProvider, useExpressionStage} from '../src/stage/ExpressionStage';
 import {WelcomeField} from '../src/visuals/WelcomeField';
 import '@epilogos/oi-design-system/tokens.css';
+import '../src/rest.css';
 
 window.welcomeTest = {fieldReadyEvents: [], entered: 0, visuals, leakedKeys: [], capturedByUnderlay: [], restoredAttempts: 0};
 // Observe real event propagation. The opening's capture handler must prevent
