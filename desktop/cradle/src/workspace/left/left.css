@@ -92,7 +92,7 @@ button.left-row:hover, .left-row:has(> .left-row-main:hover), .left-row:focus-wi
 .left-row-label { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .left-row-badge { flex: none; margin-left: auto; font-size: var(--oi-shell-type-meta); font-variant-numeric: tabular-nums; color: var(--oi-muted-2); }
 .left-destinations { display: grid; gap: 1px; padding: 0 0 2px; }
-.left-destination { color: var(--oi-accent-ink); }
+
 .left-destinations .central-mode-row { position: relative; display: flex; align-items: center; margin: 0; }
 .left-destinations .central-mode-row > .left-row { flex: 1; margin: 0; padding-right: 78px; }
 .left-destinations .central-mode-row > .project-modes { position: absolute; right: 3px; top: 0; bottom: 0; }
@@ -198,3 +198,11 @@ button.left-row:hover, .left-row:has(> .left-row-main:hover), .left-row:focus-wi
 .left-lens-chip > span { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
 .left-lens-chip > button { flex: none; }
 .left-refusal { margin: 2px 0 6px; padding: 0 8px 0 29px; font-size: var(--oi-shell-type-ui); line-height: 1.45; color: var(--oi-accent-ink); overflow-wrap: anywhere; }
+
+/* Destinations carry their state in their ink: the current one reads in
+ * accent ink on the quiet wash, the others rest muted; the glyph inherits
+ * the row's ink so the icon never disagrees with its label. */
+/* Two classes: `.desktop-shell button` (shell.css) outranks a single class. */
+.left-row.left-destination { color: var(--oi-muted); }
+.left-row.left-destination > svg, .left-row.left-destination:is(:hover, [aria-current="true"], [aria-pressed="true"]) > svg { color: inherit; }
+.left-row.left-destination:is(:hover, [aria-current="true"], [aria-pressed="true"], [aria-checked="true"]) { color: var(--oi-accent-ink); }
