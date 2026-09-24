@@ -75,7 +75,11 @@ try{
  // Explicit TEST geometry correspondence; never inserted into production.
  const binding={schema:'oi.native-expression-binding/v1',host:{instance_ref:'controlled:joined-browser',basis:input.basis,field:input.field},presentation:{units_per_metre:400,slots_a:Array.from({length:count},(_,i)=>i%samples),slots_b:Array.from({length:count},(_,i)=>(i+1)%samples)}};
  await writeFile(join(temp,'binding.json'),JSON.stringify(binding));
- await frame.locator('.native-field-panel>summary').click({force:true});await frame.locator('[name="native-path"]').fill('binding.json');await frame.locator('[data-native="source"]').click({force:true});await frame.locator('[data-native="connect"]').click({force:true});
+ await frame.locator('.native-field-panel>summary').click({force:true});
+ await frame.locator('[name="native-path"]').fill('binding.json');
+ await frame.locator('[data-native="source"]').click({force:true});
+ await frame.waitForFunction(()=>!document.querySelector('[data-native="connect"]')?.disabled,null,{timeout:10000});
+ await frame.locator('[data-native="connect"]').click({force:true});
  await frame.waitForFunction(()=>['following','held','unavailable'].includes(window.__FIELD_STUDIES__.native().status),null,{timeout:20000});
  assert.equal(await frame.evaluate(()=>window.__FIELD_STUDIES__.native().status),'following',await frame.locator('[data-native-status]').textContent());
  await frame.waitForFunction(()=>Number(window.__FIELD_STUDIES__.native().native?.presented.samples_elapsed)>0,null,{timeout:15000});
