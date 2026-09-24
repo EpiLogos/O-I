@@ -4,13 +4,13 @@
    region's. Composition follows the study; values are the desktop's. */
 
 /* ---- left navigator (the body of the left frame in Settings mode) ---- */
-.settings-nav { display: flex; flex-direction: column; gap: 2px; padding: 4px 6px 12px; font-size: var(--oi-shell-type-nav); color: var(--oi-ink); }
+.settings-nav { display: flex; flex-direction: column; gap: 2px; padding: var(--oi-shell-gutter) var(--oi-shell-gutter) calc(3 * var(--oi-shell-gutter)); font-size: var(--oi-shell-type-nav); color: var(--oi-ink); }
 .settings-nav-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 1px; }
 .settings-nav-icon { flex: none; color: var(--oi-muted); }
 .settings-nav-label { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .settings-nav-count { flex: none; font-size: var(--oi-shell-type-meta); color: var(--oi-muted-2); font-variant-numeric: tabular-nums; }
-:is(.settings-page, .settings-nav, .settings-layer) .settings-nav-group { display: flex; align-items: center; gap: 6px; margin: 16px 0 4px; padding: 0 8px; border: 0; background: none; font: inherit; font-size: var(--oi-shell-type-eyebrow); letter-spacing: .12em; text-transform: uppercase; font-weight: 600; color: var(--oi-muted-2); cursor: pointer; }
-.settings-nav-caret { display: inline-block; transition: transform var(--oi-motion-fast, 120ms) var(--oi-motion-ease, ease); }
+:is(.settings-page, .settings-nav, .settings-layer) .settings-nav-group { display: flex; align-items: center; gap: var(--oi-row-gap); margin: 16px 0 4px; padding: 0 var(--oi-row-inset); border: 0; background: none; font: inherit; font-size: var(--oi-shell-type-eyebrow); letter-spacing: .12em; text-transform: uppercase; font-weight: 600; color: var(--oi-muted-2); cursor: pointer; }
+.settings-nav-caret { display: inline-block; flex: none; width: 15px; text-align: center; transition: transform var(--oi-motion-fast, 120ms) var(--oi-motion-ease, ease); }
 :is(.settings-page, .settings-nav, .settings-layer) .settings-nav-group[aria-expanded="true"] .settings-nav-caret { transform: rotate(90deg); }
 
 /* ---- the page ---- */
@@ -30,9 +30,7 @@
 :is(.settings-page, .settings-nav, .settings-layer) .settings-link:hover { text-decoration-color: var(--oi-ink); }
 :is(.settings-page, .settings-nav, .settings-layer) .settings-undo { border: 0; padding: 0 0 1px; background: none; color: var(--oi-muted); font: inherit; font-size: var(--oi-shell-type-ui); border-bottom: 1px solid var(--oi-hairline); cursor: pointer; }
 :is(.settings-page, .settings-nav, .settings-layer) .settings-undo:hover { color: var(--oi-ink); }
-:is(.settings-page, .settings-nav, .settings-layer) .settings-select, :is(.settings-page, .settings-nav, .settings-layer) .settings-select-button { font: inherit; font-size: var(--oi-shell-type-ui); color: var(--oi-ink); background: var(--oi-surface); border: 1px solid var(--oi-hairline); border-radius: var(--oi-radius-xs); padding: 4px 8px; min-height: 28px; max-width: 280px; }
-:is(.settings-page, .settings-nav, .settings-layer) .settings-select-button { display: inline-flex; align-items: center; gap: 8px; cursor: pointer; }
-:is(.settings-page, .settings-nav, .settings-layer) .settings-select-caret { color: var(--oi-muted); }
+:is(.settings-page, .settings-nav, .settings-layer) .settings-select { font: inherit; font-size: var(--oi-shell-type-ui); color: var(--oi-ink); background: var(--oi-surface); border: 1px solid var(--oi-hairline); border-radius: var(--oi-radius-xs); padding: 4px 8px; min-height: 28px; max-width: 280px; }
 :is(.settings-page, .settings-nav, .settings-layer) .settings-input { box-sizing: border-box; flex: 1; min-width: 0; font: inherit; font-size: var(--oi-shell-type-body); color: var(--oi-ink); background: var(--oi-surface); border: 1px solid var(--oi-hairline); border-radius: var(--oi-radius-xs); padding: 5px 9px; min-height: 30px; }
 :is(.settings-page, .settings-nav, .settings-layer) .settings-input::placeholder { color: var(--oi-muted-2); }
 .settings-secret { font-family: var(--oi-font-mono); }
@@ -95,13 +93,11 @@
 .settings-drift .settings-link { justify-self: start; font-size: var(--oi-shell-type-ui); }
 
 /* ---- models ---- */
-.settings-picker { position: relative; }
 .settings-popover { position: absolute; z-index: var(--oi-z-popover); right: 0; top: calc(100% + 6px); width: min(360px, 80vw); max-height: 380px; overflow: auto; padding: 8px; border: 1px solid var(--oi-hairline); border-radius: var(--oi-radius-md); background: var(--oi-surface); box-shadow: var(--oi-shadow-menu); display: grid; gap: 6px; }
-.settings-popover-note { margin: 0; color: var(--oi-muted); font-size: var(--oi-shell-type-meta); }
 .settings-model-list { display: grid; gap: 2px; }
 .settings-model-group h4 { margin: 10px 6px 4px; }
 .settings-model-item { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 6px 8px; border-radius: var(--oi-radius-xs); }
-.settings-model-item:hover, .settings-model-item.is-auto { background: var(--oi-wash); }
+.settings-model-item:hover { background: var(--oi-wash); }
 .settings-model-item > div { display: grid; gap: 2px; min-width: 0; }
 .settings-model-item strong { font-weight: 500; font-size: var(--oi-shell-type-ui); overflow-wrap: anywhere; }
 .settings-model-item span { color: var(--oi-muted); font-size: var(--oi-shell-type-meta); }

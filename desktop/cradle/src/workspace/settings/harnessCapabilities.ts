@@ -1,4 +1,22 @@
 import type {EncounterStatus} from "../../encounter/client";
+import type {ProviderRow} from "../../configuration/harnessSource";
+import {harnessName, type ConnectionFacts} from "../../agent/chat/harness";
+
+/** Prefer launch facts; a missing display name never becomes a transport id. */
+export function providerName(provider:ConnectionFacts):string {
+ return harnessName(provider)??(provider.label&&provider.label!==provider.id&&!/^(?:\S+:\/\/|provider[/:])/.test(provider.label)?provider.label:"Configured harness");
+}
+
+/** The navigator, search and capability cards name the same native connections. */
+export function connectionNames(providers:ProviderRow[]):Map<string,string> {
+ const names=new Map<string,string>();
+ for(const provider of providers){
+  const base=providerName(provider),peers=providers.filter(row=>providerName(row)===base);
+  const label=provider.label?.trim();
+  names.set(provider.id,peers.length===1?base:label&&label!==base&&label!==provider.id&&peers.filter(row=>row.label?.trim()===label).length===1?`${base} · ${label}`:`${base} · connection ${peers.indexOf(provider)+1}`);
+ }
+ return names;
+}
 
 /** An explicit native status read proves liveness, never successful inference. */
 export function connectionVerification(status:EncounterStatus):{connected:boolean;summary:string} {

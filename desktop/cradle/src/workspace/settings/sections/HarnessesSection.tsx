@@ -2,7 +2,6 @@
 import {useEffect,useState} from "react";
 import type {HarnessRow,ProviderRow} from "../../../configuration/harnessSource";
 import {ModelChip} from "../../../agent/chat/ComposerChips";
-import {harnessName as connectionHarnessName,type ConnectionFacts} from "../../../agent/chat/harness";
 import {encounter,encounterProvision,type EncounterStatus} from "../../../encounter/client";
 import {useEncounterSession,type EncounterSessionHandle} from "../../../encounter/session";
 import {connectionLabel} from "../../../encounter/nativeModel";
@@ -13,9 +12,12 @@ import {modelChoices} from "../../../agent/chat/modelPresentation";
 import {useActiveEncounter} from "../../activeEncounter";
 import {adapterNeeded,harnessEffect,harnessItems,harnessName,notFound,readyHarnesses} from "../sectionModel";
 import {expect,loadSuite,plain,refreshAll,stageDefaultConnection,defaultScope,resolutionKey,watchPair,type SettingsSnapshot} from "../settingsData";
-import {currentConnection,stageSetting,stagedChanges,undoChange} from "../changeModel";
-import {connectionVerification,MODEL_DEFAULT_SETTING,modelDefaults,modelDefaultChoice} from "../harnessCapabilities";
+import {currentConnection,DEFAULT_CONNECTION_ROW,settingRowId,stageSetting,stagedChanges,undoChange} from "../changeModel";
+import {connectionVerification,connectionNames,providerName,MODEL_DEFAULT_SETTING,modelDefaults,modelDefaultChoice} from "../harnessCapabilities";
 import {Group,Missing,Reading,Row,Unreadable} from "../rows";
+import {HarnessAuth} from "../AuthLogin";
+import {ModelCatalogue} from "./ModelCatalogue";
+import {useSettingsNav} from "../settingsNav";
 
 export function folderOf(row:HarnessRow):string|null {
  const first=row.config_dir?.split(" (")[0]?.split(" and ")[0]?.trim();
@@ -27,22 +29,6 @@ export function connectionFor(data:SettingsSnapshot,row:HarnessRow):string|null 
  return providers.find(provider=>names.includes(provider.id))?.id??providers.find(provider=>names.some(name=>provider.id.startsWith(`${name}-`)))?.id??null;
 }
 
-/** Prefer launch facts; a missing display name never becomes a transport id. */
-function providerName(provider:ConnectionFacts):string {
- return connectionHarnessName(provider)??(provider.label&&provider.label!==provider.id&&!/^(?:\S+:\/\/|provider[/:])/.test(provider.label)?provider.label:"Configured harness");
-}
-
-/** Colliding native harness names remain distinct without putting transport IDs in headings. */
-function connectionNames(providers:ProviderRow[]):Map<string,string> {
- const names=new Map<string,string>();
- for(const provider of providers){
-  const base=providerName(provider),peers=providers.filter(row=>providerName(row)===base);
-  const label=provider.label?.trim();
-  names.set(provider.id,peers.length===1?base:label&&label!==base&&label!==provider.id&&peers.filter(row=>row.label?.trim()===label).length===1?`${base} · ${label}`:`${base} · connection ${peers.indexOf(provider)+1}`);
- }
- return names;
-}
-
 function DetectionCard({row}:{row:HarnessRow}) {
  const [busy,setBusy]=useState(false),[note,setNote]=useState<string|null>(null);
  const folder=folderOf(row);
@@ -51,7 +37,7 @@ function DetectionCard({row}:{row:HarnessRow}) {
   try{await expect({op:"client_install",client:row.client},"client_installed");await loadSuite();setNote("Installed. "+(harnessEffect(row)??""));}
   catch(cause){setNote(`Not installed: ${plain(cause)}`);}finally{setBusy(false);}
  };
- return <section className="settings-card settings-harness" data-harness-card={row.client} data-installed={row.installed?"true":"false"}>
+ return <section className="settings-card settings-harness" data-settings-row={`harness-install:${row.client}`} data-harness-card={row.client} data-installed={row.installed?"true":"false"}>
   <h3>{harnessName(row.harness)}</h3>
   <p>{row.installed?"Installed · detected":"Detected · not installed"}</p>
   {harnessItems(row)&&<p>{harnessItems(row)}</p>}
@@ -61,6 +47,7 @@ function DetectionCard({row}:{row:HarnessRow}) {
    {folder&&<button type="button" className="settings-button" onClick={()=>void expect({op:"settings_reveal",path:folder},"settings_revealed").catch(cause=>setNote(plain(cause)))}>Open folder</button>}
   </div>
   {note&&<p className="settings-card-note" role="status">{note}</p>}
+  <HarnessAuth harness={row.client}/>
  </section>;
 }
 
@@ -88,7 +75,7 @@ function CurrentChat({session}:{session:EncounterSessionHandle|undefined}) {
     {state?.resume&&<button type="button" className="settings-button" disabled={state.pending} onClick={()=>void session.actions.reconnect(state.resume!.provider)}>Resume this chat</button>}
    </div>
    {verification&&<p className="settings-card-note" role="status" data-connection-verified={verification.connected}>{verification.summary} Checked {new Date(verification.at).toLocaleTimeString()}. No model turn was sent.</p>}
-   <Row title="Model for this chat" description="Changes this session only; the harness confirms the selection.">
+   <Row id="model:current" title="Model for this chat" description="Changes this session only; the harness confirms the selection.">
     <ModelChip model={session.state.model} actions={{refresh:session.actions.readModel,select:session.actions.selectModel}} disabled={session.state.pending||status?.state==="TurnInFlight"||status?.state==="InterruptRequested"}/>
    </Row>
    {state?.error&&<p className="settings-inline-error" role="alert">{state.error}</p>}
@@ -138,13 +125,13 @@ function DefaultModels({data,session,providers}:{data:SettingsSnapshot;session?:
  };
  if(data.registry.state==="reading"||entry&&!resolution)return <Reading/>;
  if(!entry)return <Missing>The installed AIKit does not expose launch-model defaults. Update AIKit to configure the model for future chats here.</Missing>;
- return <div role="group" aria-label="Default models for new chats" data-default-models>
+ return <div role="group" aria-label="Default models for new chats" data-default-models data-settings-row={settingRowId(MODEL_DEFAULT_SETTING)}>
   <p className="settings-muted">Choose from models the connected harness advertises. Review and apply below; new chats use the saved choice. Explicit model policies take precedence.</p>
   {providers.map(provider=>{
    const saved=table[provider.id],options=selected===provider.id?modelChoices(observation?.available_models??[]):[];
    const rpc=provider.protocol==="pi-rpc"||provider.protocol==="prime-rpc";
    const available=options.length>0&&(!rpc||!!observation?.native_provider);
-   return <Row key={provider.id} title={`${names.get(provider.id)} default model`} changed={!!change} onUndo={change?()=>void undoChange(change):undefined} description={available?"Confirmed by the harness when each new chat opens.":"Connect a chat to this harness on this page to read its models."}>
+   return <Row key={provider.id} id={`model:${provider.id}`} title={`${names.get(provider.id)} default model`} changed={!!change} onUndo={change?()=>void undoChange(change):undefined} description={available?"Confirmed by the harness when each new chat opens.":"Connect a chat to this harness on this page to read its models."}>
     <select className="settings-select" aria-label={`Default model for ${names.get(provider.id)}`} value={saved?.model_id??""} disabled={!entry.setting.writable||(!available&&!saved)} onChange={event=>stage(provider.id,event.target.value)}>
      <option value="">Harness default</option>
      {saved&&!options.some(option=>option.modelId===saved.model_id)&&<option value={saved.model_id}>{saved.model_name??"Saved model"}</option>}
@@ -159,6 +146,7 @@ function DefaultModels({data,session,providers}:{data:SettingsSnapshot;session?:
 
 export function HarnessesSection({data}:{data:SettingsSnapshot}) {
  const kernel=useKernel(),scope=useScope();
+ const nav=useSettingsNav();
  const active=useActiveEncounter();
  const [prepared,setPrepared]=useState<typeof active>(),[starting,setStarting]=useState(false),[startError,setStartError]=useState<string>();
  const session=useEncounterSession(prepared??active);
@@ -177,24 +165,27 @@ export function HarnessesSection({data}:{data:SettingsSnapshot}) {
  const reading=data.suite.value,providers=reading.harness.providers;
  const ready=readyHarnesses(reading),needing=adapterNeeded(reading),missing=notFound(reading);
  const current=currentConnection(data);
+ const defaultChange=stagedChanges(data).find(change=>change.kind==="chat-default");
  const names=connectionNames(providers.state==="ok"?providers.rows:[]);
  const defaultProvider=providers.state==="ok"?providers.rows.find(provider=>provider.id===current):undefined;
  return <div className="settings-harnesses" data-harness-panel>
   <CurrentChat key={`${session?.state.key??"none"}:${session?.state.status?.native_session_id??"none"}`} session={session}/>
   <Group title="New chats" id="new-chats">
-   <p className="settings-muted">{defaultProvider?`New chats currently start with ${names.get(defaultProvider.id)}.`:"No default harness is available."} Existing chats keep their own harness.</p>
-   {data.stagedDefault&&<p className="settings-card-note" role="status">The default change is staged. Review and apply it below to confirm.</p>}
+   <Row id={DEFAULT_CONNECTION_ROW} title="Default harness for new chats" description="Existing chats keep their own harness. Review and apply a change below." changed={!!defaultChange} onUndo={defaultChange?()=>void undoChange(defaultChange):undefined}>
+    <span>{data.stagedDefault?`${names.get(data.stagedDefault)??"Configured harness"} · ready to review`:defaultProvider?names.get(defaultProvider.id):"No default harness is available"}</span>
+   </Row>
    {providers.state==="failed"?<Unreadable error={providers.error} onRetry={()=>void loadSuite()}/>:providers.rows.length?<div className="settings-cards">{providers.rows.map(provider=><CapabilityCard key={provider.id} name={names.get(provider.id)!} provider={provider} data={data} session={session}/>)}</div>:<p className="settings-muted">No encounter harness is configured.</p>}
    <DefaultModels data={data} session={session} providers={providers.state==="ok"?providers.rows:[]}/>
    <button type="button" className="settings-button" disabled={starting||!!data.stagedDefault||stagedChanges(data).some(row=>row.requestKey.startsWith(MODEL_DEFAULT_SETTING))} onClick={()=>void start()}>{starting?"Starting chat…":session?"Start a new chat to verify defaults":"Start a chat to read models"}</button>
    <p className="settings-muted">Opens the default harness without sending a message. Apply pending changes first.</p>
    {startError&&<p role="alert">{startError}</p>}
   </Group>
-  <Group title="Installation and detection" count={ready.length+needing.length+missing.length} collapsible defaultOpen={false} id="detection">
+  <ModelCatalogue data={data}/>
+  <Group title="Sign-in, installation and detection" count={ready.length+needing.length+missing.length} collapsible defaultOpen={false} reveal={nav.focusRow?.startsWith("harness-install:")?nav.focusSeq:undefined} id="detection">
    {reading.harness.harnesses.state==="failed"?<Unreadable error={reading.harness.harnesses.error} onRetry={()=>void loadSuite()}/>:<>
     <div className="settings-cards">{ready.map(row=><DetectionCard key={row.client} row={row}/>)}</div>
-    <ul className="settings-name-list" data-harness-adapter-needed>{needing.map(row=><li key={row.client}><strong>{harnessName(row.harness)}</strong> <span className="settings-muted">Detected · adapter needed</span></li>)}</ul>
-    <ul className="settings-name-list" data-harness-not-found>{missing.map(row=><li key={row.client}><strong>{harnessName(row.harness)}</strong> <span className="settings-muted">Not on this machine</span></li>)}</ul>
+    <ul className="settings-name-list" data-harness-adapter-needed>{needing.map(row=><li key={row.client} data-harness-client={row.client}><strong>{harnessName(row.harness)}</strong> <span className="settings-muted">Detected · adapter needed</span></li>)}</ul>
+    <ul className="settings-name-list" data-harness-not-found>{missing.map(row=><li key={row.client} data-harness-client={row.client}><strong>{harnessName(row.harness)}</strong> <span className="settings-muted">Not on this machine</span></li>)}</ul>
    </>}
   </Group>
  </div>;

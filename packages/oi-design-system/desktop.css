@@ -300,8 +300,10 @@
   color: var(--oi-muted-2);
 }
 
-/* A dense list row: leading glyph, title, trailing meta/state. */
-:is(.oi-row, .left-row, .oi-side-row, .settings-nav-row, .wiki-node-row) {
+/* A dense list row: leading glyph, title, trailing meta/state. The desktop
+ * scope outranks the shell's generic button reset, independent of load order. */
+:is(.oi-row, .left-row, .oi-side-row, .settings-nav-row, .wiki-node-row),
+.oi-desktop :is(.oi-row, .left-row, .oi-side-row, .settings-nav-row, .wiki-node-row) {
   position: relative;
   display: flex;
   align-items: center;
@@ -339,8 +341,8 @@
 :is(.oi-row, .left-row, .oi-side-row, .settings-nav-row, .wiki-node-row)[aria-selected="true"],
 :is(.oi-row, .left-row, .oi-side-row, .settings-nav-row, .wiki-node-row)[aria-current]:not([aria-current="false"]),
 :is(.oi-row, .left-row, .oi-side-row, .settings-nav-row, .wiki-node-row)[aria-pressed="true"] {
-  background: var(--oi-wash);
-  box-shadow: inset 2px 0 0 var(--oi-accent);
+  background: var(--oi-wash-strong);
+  font-weight: 500;
 }
 :is(.oi-row, .left-row, .oi-side-row, .settings-nav-row, .wiki-node-row)[aria-selected="true"] > svg,
 :is(.oi-row, .left-row, .oi-side-row, .settings-nav-row, .wiki-node-row)[aria-current]:not([aria-current="false"]) > svg { color: var(--oi-accent-ink); }
@@ -742,7 +744,8 @@
 }
 /* Forced colours erase washes: selection keeps a system edge instead. */
 @media (forced-colors: active) {
-  .oi-row[aria-selected="true"], .oi-row[aria-current]:not([aria-current="false"]),
+  :is(.oi-row, .left-row, .oi-side-row, .settings-nav-row, .wiki-node-row)[aria-selected="true"],
+  :is(.oi-row, .left-row, .oi-side-row, .settings-nav-row, .wiki-node-row)[aria-current]:not([aria-current="false"]),
   .oi-segment > button:is([aria-pressed="true"], [aria-checked="true"], [aria-selected="true"]),
   .oi-tool[aria-pressed="true"], .oi-menu-item[aria-checked="true"],
   .oi-chip[data-state="selected"] { outline: 1px solid Highlight; outline-offset: -1px; }

@@ -66,7 +66,7 @@ export default async function run({page, baseUrl, check, shot, provision: world,
   check((await right.getAttribute("data-depth")) === "collapsed" && (!rightAfter || rightAfter.width <= 0.5 || (await right.getAttribute("aria-hidden")) === "true"),
     "§1 the right panel is collapsed in Settings", {width: rightAfter?.width});
   const sections = await page.locator("[data-settings-section]").evaluateAll((nodes) => nodes.map((node) => node.textContent?.trim()));
-  check(JSON.stringify(sections.map((text) => text.replace(/\d+$/, ""))) === JSON.stringify(["Status", "Harnesses", "Models", "Credentials", "Skills", "Profiles", "Permissions", "Appearance"]),
+  check(JSON.stringify(sections.map((text) => text.replace(/\d+$/, ""))) === JSON.stringify(["Status", "Harnesses", "Credentials", "Skills", "Profiles", "Permissions", "Appearance"]),
     "§1 the sections are the tasks, in order", {sections});
   const products = await page.locator("[data-settings-product]").evaluateAll((nodes) => nodes.map((node) => node.textContent?.trim()));
   check(JSON.stringify(products) === JSON.stringify(["Central", "AIKit", "Actuation", "Factory", "Workcell", "Quaternal Logic", "O:I"]), "§1 PRODUCTS below the tasks, one per product", {products});
@@ -101,17 +101,20 @@ export default async function run({page, baseUrl, check, shot, provision: world,
   const clients = aikitJson("client", "status").data.clients;
   const ready = clients.filter((row) => row.detection === "detected" && row.capability === "descriptor").map((row) => row.client);
   const needing = clients.filter((row) => row.detection === "detected" && row.capability !== "descriptor").length;
+  const detection = page.locator('[data-settings-group="detection"] .settings-eyebrow-toggle');
+  check(await detection.getAttribute("aria-expanded") === "false", "Harnesses: installation and detection start secondary and collapsed");
+  await detection.click();
   const shownReady = await page.locator(".settings-harness[data-harness-card]").evaluateAll((nodes) => nodes.map((node) => node.getAttribute("data-harness-card")));
   check(JSON.stringify(shownReady) === JSON.stringify(ready), "Harnesses: the Ready cards are the owner's harnesses with an adapter, in its order", {shownReady, ready});
-  const collapsedNames = await page.locator('[data-harness-names="adapter-needed"]').textContent();
-  check((collapsedNames ?? "").split(", ").length === clients.filter((row) => row.detection === "detected" && row.capability !== "descriptor").length,
-    "Harnesses: the collapsed group still names every harness that needs an adapter, on one line");
-  for (const group of ["adapter-needed", "not-found"]) await page.locator(`[data-settings-group="${group}"] .settings-eyebrow-toggle`).click();
+  const shownNeeding = await page.locator("[data-harness-adapter-needed] [data-harness-client]").evaluateAll(nodes => nodes.map(node => node.getAttribute("data-harness-client")));
+  const expectedNeeding = clients.filter(row => row.detection === "detected" && row.capability !== "descriptor").map(row => row.client);
+  check(JSON.stringify(shownNeeding) === JSON.stringify(expectedNeeding), "Harnesses: detection names every owner-reported client that needs an adapter", {shownNeeding, expectedNeeding});
   const brokerClients = clients.filter((row) => row.detection === "self" || row.dispatch === "self").map((row) => row.client);
-  const listedClients = await page.locator("[data-harness-panel] [data-harness-card]").evaluateAll((nodes) => nodes.map((node) => node.getAttribute("data-harness-card")));
-  check(brokerClients.length > 0 && brokerClients.every((client) => !listedClients.includes(client)) && listedClients.length === clients.length - brokerClients.length,
-    "Harnesses: the broker (AIKit itself) is not listed — every other client is", {brokerClients, listed: listedClients.length});
-  check(((await page.locator('[data-settings-group="adapter-needed"] .settings-eyebrow').textContent()) ?? "").endsWith(`· ${needing}`), `Harnesses: "Detected, adapter needed" counts the owner's ${needing}`);
+  const listedClients = await page.locator("[data-harness-panel] [data-harness-card], [data-harness-panel] [data-harness-client]").evaluateAll((nodes) => nodes.map((node) => node.getAttribute("data-harness-card") ?? node.getAttribute("data-harness-client")));
+  const expectedClients = clients.filter(row => !brokerClients.includes(row.client)).map(row => row.client).sort();
+  check(brokerClients.every(client => !listedClients.includes(client)) && JSON.stringify([...listedClients].sort()) === JSON.stringify(expectedClients),
+    "Harnesses: the broker is not listed and every other native client remains available", {brokerClients, listedClients, expectedClients});
+  check(shownNeeding.length === needing, `Harnesses: adapter-needed count matches the owner's ${needing}`);
   // Install runs the owner's `aikit client install`. Codex installs into the
   // project it is working in — here the disposable ground — so the walk
   // exercises it for real without touching any real harness config.
@@ -128,11 +131,11 @@ export default async function run({page, baseUrl, check, shot, provision: world,
   await shotMatrix({page, shot}, "harnesses");
 
   // --- Models · S14 ---------------------------------------------------------------
-  await openSection(page, "models");
-  await page.locator("[data-models-panel]").waitFor({timeout: 240000});
-  const modelsText = await page.locator("[data-models-panel]").innerText();
-  check(modelsText.includes("Default connection for new chats") && modelsText.includes("A connection, not a model") && !/Model for new chats|Default provider/.test(modelsText),
-    "Models: the new-chat default is labelled a connection, never a model (A1)");
+  await openSection(page, "harnesses");
+  await page.locator("[data-harness-panel]").waitFor({timeout: 240000});
+  const modelsText = await page.locator("[data-harness-panel]").innerText();
+  check(modelsText.includes("Default harness for new chats") && !/Choosing a model or a ranking policy per harness needs an AIKit setting/.test(modelsText),
+    "Harnesses: the default harness remains distinct from model selection and no obsolete missing-operation claim remains");
   const catalogue = aikitJson("model-catalogue", "show").data.entries;
   const bindings = aikitJson("credential", "list").data.bindings.filter((binding) => !binding.revoked).map((binding) => binding.credential_ref.replace(/^credential:/, ""));
   const expectFor = (entry) => {
@@ -144,19 +147,19 @@ export default async function run({page, baseUrl, check, shot, provision: world,
     if (ordered.some((route) => route.credential_required === false || bindings.includes(id(route.provider)))) return "usable";
     return routes.length ? "needs-key" : "unrouted";
   };
-  await page.locator("[data-model-picker]").first().click();
-  await page.locator("[data-model-popover]").waitFor();
-  const shownModels = await page.locator("[data-model-popover] [data-model][data-availability]").evaluateAll((nodes) => nodes.map((node) => ({model: node.getAttribute("data-model"), state: node.getAttribute("data-availability"), chip: node.querySelector("[data-availability-chip]")?.textContent})));
+  await page.locator("[data-catalogue-browse]").click();
+  await page.locator("[data-catalogue-dialog]").waitFor();
+  const shownModels = await page.locator("[data-catalogue-dialog] [data-model][data-availability]").evaluateAll((nodes) => nodes.map((node) => ({model: node.getAttribute("data-model"), state: node.getAttribute("data-availability"), chip: node.querySelector("[data-availability-chip]")?.textContent})));
   const mismatches = shownModels.filter((row) => expectFor(catalogue.find((entry) => entry.model === row.model) ?? {}) !== row.state);
   check(shownModels.length === catalogue.length && mismatches.length === 0, `S14 every catalogued model's chip is its routes joined with the bound keys (${shownModels.length} models)`, {mismatches: mismatches.slice(0, 5)});
   const joined = catalogue.filter((entry) => (entry.declared_routes ?? []).every((route) => route.credential_required) && expectFor(entry) === "usable");
   check(joined.length === 0 || shownModels.some((row) => row.model === joined[0].model && row.chip === "Usable"),
     "S14 a model whose routes all still say a key is required reads Usable because the OpenRouter key is bound", {example: joined[0]?.model});
   check(shownModels.filter((row) => row.state === "needs-key").every((row) => /^Needs an? .+ key$/.test(row.chip ?? "")), "S14 unreachable models name the key they need");
-  check(((await page.locator('[data-model="auto"]').textContent()) ?? "").startsWith("Auto · Balanced"), "S14 Auto keeps its identity and names its policy");
-  await shot("model-picker");
+  check(await page.locator('[data-catalogue-dialog] [data-model="auto"]').count() === 0, "Catalogue does not invent an active Auto policy or substitute a policy for a real model");
+  await shot("model-catalogue");
   await page.keyboard.press("Escape");
-  await shotMatrix({page, shot}, "models");
+  await shotMatrix({page, shot}, "harness-models");
 
   // --- Permissions · S11 / S15 --------------------------------------------------
   await openSection(page, "permissions");
@@ -203,7 +206,7 @@ export default async function run({page, baseUrl, check, shot, provision: world,
     check((await rawJsonOutsideShowRaw(page)).length === 0, `${id}: no raw JSON outside Show raw`);
     await shotMatrix({page, shot}, id);
   }
-  for (const id of ["status", "harnesses", "models", "permissions", "skills"]) {
+  for (const id of ["status", "harnesses", "permissions", "skills"]) {
     await openSection(page, id);
     await settled(page);
     check((await rawJsonOutsideShowRaw(page)).length === 0, `${id}: no raw JSON outside Show raw`);
@@ -236,7 +239,7 @@ export default async function run({page, baseUrl, check, shot, provision: world,
   await page.locator("[data-settings-search-results] [data-search-hit]").first().waitFor();
   await page.keyboard.press("Enter");
   await page.waitForFunction(() => document.querySelector('[data-settings-row="model:catalogue"]')?.getAttribute("data-landed") === "true", null, {timeout: 60000});
-  check((await page.locator("[data-settings-page]").getAttribute("data-settings-place")) === "section:models", "Search: \"catalogue\" lands on the Models page, on the Catalogue row");
+  check((await page.locator("[data-settings-page]").getAttribute("data-settings-place")) === "section:harnesses", "Search: \"catalogue\" lands on the Harnesses page, on the Catalogue row");
   await page.locator("[data-settings-search-open]").click();
   await page.getByRole("searchbox", {name: "Search settings"}).fill("walk-gamma");
   await page.locator("[data-settings-search-results] [data-search-hit]").first().click();

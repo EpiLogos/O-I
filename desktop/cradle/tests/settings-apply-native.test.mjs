@@ -78,6 +78,8 @@ test("native model-default Apply confirms and releases intent without a suite di
     await changes.stageSetting({setting_ref: ref, scope, value});
     const reviewed = await changes.review();
     assert.equal(reviewed.changes.length, 1);
+    assert.deepEqual(reviewed.changes[0].place, {kind: "section", id: "harnesses"}, "the real owner model-default review returns to the capability page");
+    assert.equal(reviewed.changes[0].rowId, `setting:${ref}`);
     assert.deepEqual(reviewed.refusals, {});
     const started = performance.now();
     const result = await changes.applyReviewed(reviewed);

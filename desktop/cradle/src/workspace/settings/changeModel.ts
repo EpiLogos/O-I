@@ -129,7 +129,7 @@ export function stagedChanges(data: SettingsSnapshot): StagedChange[] {
       title: "Default connection for new chats", scopeLabel: "This machine",
       from: from ? providerLabel(data, from) : "the suite's default", to: providerLabel(data, data.stagedDefault),
       effectKind: "new-chats", effect: effectInWords("new-chats"), rowId: DEFAULT_CONNECTION_ROW,
-      place: {kind: "section", id: "models"}, provider: data.stagedDefault,
+      place: {kind: "section", id: "harnesses"}, provider: data.stagedDefault,
     });
   }
   for (const resolution of Object.values(data.resolutions)) {
@@ -167,7 +167,7 @@ export function stagedChanges(data: SettingsSnapshot): StagedChange[] {
         : briefValue(resolution.native.effective?.value ?? resolution.native.declared?.value),
       to: secret ? "a stored secret" : resolution.setting_ref === MODEL_DEFAULT_SETTING ? modelDefaultsInWords(data, desired.value) : briefValue(desired.value),
       effectKind, effect: effectInWords(effectKind), rowId: settingRowId(resolution.setting_ref),
-      place: {kind: "product", id: entry?.owner.owner_ref ?? "oi"}, request,
+      place: resolution.setting_ref === MODEL_DEFAULT_SETTING ? {kind: "section", id: "harnesses"} : {kind: "product", id: entry?.owner.owner_ref ?? "oi"}, request,
     });
   }
   return changes;

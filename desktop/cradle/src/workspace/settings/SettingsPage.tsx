@@ -16,7 +16,6 @@ import {PendingStrip, ReviewSheet} from "./ReviewSheet";
 import {searchIndex, searchSettings} from "./settingsSearch";
 import {StatusSection} from "./sections/StatusSection";
 import {HarnessesSection} from "./sections/HarnessesSection";
-import {ModelsSection} from "./sections/ModelsSection";
 import {CredentialsSection, discoverKeys, type Discovery} from "./sections/CredentialsSection";
 import {SkillScopeSwitch, SkillsSection} from "./sections/SkillsSection";
 import {ProfilesSection} from "./sections/ProfilesSection";
@@ -155,7 +154,6 @@ export function SettingsPage() {
         : place.kind === "product" ? <ProductSection key={place.id} id={place.id} data={data}/>
         : place.id === "status" ? <StatusSection data={data}/>
         : place.id === "harnesses" ? <HarnessesSection data={data}/>
-        : place.id === "models" ? <ModelsSection data={data}/>
         : place.id === "credentials" ? <CredentialsSection data={data} discovery={discovery}/>
         : place.id === "skills" ? <SkillsSection data={data}/>
         : place.id === "profiles" ? <ProfilesSection data={data}/>

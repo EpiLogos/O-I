@@ -8,6 +8,7 @@ import {credentialCards, harnessName, readyHarnesses, adapterNeeded, skillParts,
 import type {SettingsSnapshot} from "./settingsData";
 import {DEFAULT_CONNECTION_ROW, settingRowId, skillRowId} from "./changeModel";
 import {PRODUCTS, type SettingsPlace} from "./settingsNav";
+import {connectionNames, MODEL_DEFAULT_SETTING} from "./harnessCapabilities";
 
 export interface SearchEntry {
   label: string;
@@ -22,16 +23,22 @@ export function searchIndex(data: SettingsSnapshot): SearchEntry[] {
   const add = (label: string, where: string, place: SettingsPlace, row: string | null, extra = "") =>
     out.push({label, where, place, row, terms: `${label} ${where} ${extra}`.toLowerCase()});
   const section = (id: Extract<SettingsPlace, {kind: "section"}>["id"]): SettingsPlace => ({kind: "section", id});
+  const hasModelDefaults = data.registry.state === "ok" && !!data.registry.value.index[MODEL_DEFAULT_SETTING];
   for (const [label, row] of [["Suite version", "card:suite"], ["Secret stores", "card:secret-stores"], ["Capability changes", "card:changes"], ["Drift", null]] as const) add(label, "Status", section("status"), row);
-  add("Default connection for new chats", "Models", section("models"), DEFAULT_CONNECTION_ROW, "harness provider new chat connection default");
-  add("Ranking policy", "Models", section("models"), "model:ranking-policy", "auto balanced cheapest");
-  add("Catalogue", "Models", section("models"), "model:catalogue", "models browse refresh");
+  add("Default harness for new chats", "Harnesses", section("harnesses"), DEFAULT_CONNECTION_ROW, "provider new chat connection default");
+  if (hasModelDefaults) add("Default models for new chats", "Harnesses", section("harnesses"), settingRowId(MODEL_DEFAULT_SETTING), "model choice new chat");
+  add("About model policies", "Harnesses", section("harnesses"), "model:ranking-policy", "ranking auto balanced cheapest");
+  add("Catalogue", "Harnesses", section("harnesses"), "model:catalogue", "models browse refresh");
   add("Theme and opening", "Appearance", section("appearance"), null, "light dark system visuals");
   add("Default permission mode", "Permissions", section("permissions"), null, "ask accept plan bypass");
   if (data.suite.state === "ok") {
+    const providers = data.suite.value.harness.providers;
+    for (const [id, name] of connectionNames(providers.state === "ok" ? providers.rows : [])) {
+      add(name, "Harnesses", section("harnesses"), `harness:${id}`, "connection");
+      if (hasModelDefaults) add(`Default model for ${name}`, "Harnesses", section("harnesses"), `model:${id}`);
+    }
     for (const row of readyHarnesses(data.suite.value)) {
-      add(harnessName(row.harness), "Harnesses", section("harnesses"), `harness:${row.client}`, row.client);
-      add(`Model for ${harnessName(row.harness)}`, "Models", section("models"), `model:${row.client}`);
+      add(`${harnessName(row.harness)} setup`, "Harnesses", section("harnesses"), `harness-install:${row.client}`, `${row.client} sign in login install`);
     }
     for (const row of adapterNeeded(data.suite.value)) add(harnessName(row.harness), "Harnesses · adapter needed", section("harnesses"), null, row.client);
     if (data.suite.value.disclosure.state === "ok") {
@@ -46,6 +53,7 @@ export function searchIndex(data: SettingsSnapshot): SearchEntry[] {
     const special = new Set([...permissionModeEntries(data), ...trustEntries(data)].map((entry) => entry.setting.setting_ref));
     for (const entry of data.registry.value.entries) {
       const product = PRODUCTS.find((candidate) => candidate.id === entry.owner.owner_ref);
+      if (entry.setting.setting_ref === MODEL_DEFAULT_SETTING) continue; // the capability row above owns this setting
       if (special.has(entry.setting.setting_ref)) add(entry.setting.title, "Permissions", section("permissions"), settingRowId(entry.setting.setting_ref), entry.setting.description ?? "");
       else if (product) add(entry.setting.title, product.label, {kind: "product", id: product.id}, settingRowId(entry.setting.setting_ref), entry.setting.description ?? "");
     }

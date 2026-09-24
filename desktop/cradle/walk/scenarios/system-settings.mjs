@@ -77,7 +77,7 @@ export default async function run({page,baseUrl,check,shot,channel,provision}) {
   await shot('empty-world-oi');
 
   // --- L4 · missing operations are sentences ------------------------------
-  for(const id of ['harnesses','credentials','models','skills','permissions']){
+  for(const id of ['harnesses','credentials','skills','permissions']){
     await openSection(page,id);
     await page.waitForTimeout(1500);
     check((await rawJsonOutsideShowRaw(page)).length===0,`L5 ${id}: no raw JSON outside Show raw (empty world)`);

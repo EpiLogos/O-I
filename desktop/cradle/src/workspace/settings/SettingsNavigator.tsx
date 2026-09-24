@@ -14,7 +14,6 @@ import "./settings-page.css";
 const ICON: Record<SectionId | "product", ReactNode> = {
   status: <><circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="3"/></>,
   harnesses: <><rect x="3.5" y="5" width="17" height="14" rx="2"/><path d="M7.5 10l3 2.5-3 2.5M13 15h3.5"/></>,
-  models: <><path d="M12 3.5l7.5 4.2v8.6L12 20.5l-7.5-4.2V7.7z"/><path d="M4.8 7.9L12 12l7.2-4.1M12 12v8.3"/></>,
   credentials: <><circle cx="8" cy="15" r="3.5"/><path d="M10.5 12.5l8-8M15.5 7.5l2 2"/></>,
   skills: <><path d="M5 4.5v15M9 4.5v15M13.5 5l4.5 14"/></>,
   profiles: <><path d="M5 7h14M5 12h14M5 17h9"/></>,
