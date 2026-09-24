@@ -226,7 +226,12 @@ export function buildSituationFrame({workspace, snapshot, restorePoint}: {
   const places = [...merged.values()];
   const focusedPlace = focus ? presentPlaces.find(place => place.mode === focus.mode && !!place.ref && place.ref === focus.ref)
     ?? presentPlaces.find(place => place.title === focus.title && place.mode === focus.mode) : undefined;
-  const currentPlace = focusedPlace ?? navigationPlaces[0] ?? places.find(place => place.presence === "recent");
+  const recentMatch = focusedPlace && !focusedPlace.location
+    ? (workspace.recentPlaces ?? []).find(place => place.location && (place.path === focusedPlace.path || place.ref === focusedPlace.ref))
+    : undefined;
+  const currentPlace = focusedPlace
+    ? {...focusedPlace, ...(recentMatch?.location ? {location: recentMatch.location} : {})}
+    : navigationPlaces[0] ?? places.find(place => place.presence === "recent");
 
   const menu = {state: workspace.layout, snapshot: restorePoint ?? {
     root: workspace.layout.root,
