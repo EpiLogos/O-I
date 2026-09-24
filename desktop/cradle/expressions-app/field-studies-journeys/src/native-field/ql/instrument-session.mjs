@@ -145,6 +145,19 @@ export class InstrumentSession {
   }
 
   #enqueue(frame) {
+    try {
+      return this.#admit(frame);
+    } catch (error) {
+      // Device clock can outrun the lead on a stalled main thread after an
+      // already-acknowledged advance. Rebase to that cursor once and retry;
+      // a second refusal still holds for explicit recovery.
+      if (!/late native audio|allocation missed the audio deadline/.test(String(error))) throw error;
+      this.#audio.rebase(withoutAudio(frame), 'late-native-audio-rebase');
+      return this.#admit(frame);
+    }
+  }
+
+  #admit(frame) {
     const presentation = withoutAudio(frame), bytes = JSON.stringify(presentation).length * 2;
     need(this.#queue.length < this.#maxBlocks && this.#bytes + bytes <= this.#maxBytes, 'bounded target queue full');
     const receipt = this.#audio.apply(frame);
