@@ -221,8 +221,19 @@ export class NativeAudioBinding {
     // Full validation precedes dropping anything already scheduled.
     this.hold(reason);
     this.#source = packet; this.#origin = packet.end; this.#originTime = this.#newOriginTime();
-    this.#lastAudio = null; this.#held = false; this.#epoch++; this.#scheduled = 0;
+    this.#lastAudio = null; this.#held = false; this.#reason = null; this.#epoch++; this.#scheduled = 0;
     return this.#receipt('rebased-with-explicit-discontinuity', null);
+  }
+  /** Keep the admitted native cursor and open a fresh device epoch around it.
+   * Used when PCM for the next contiguous interval arrived after the previous
+   * origin was already past — never advances or rewinds native samples.
+   */
+  realignClock(reason) {
+    need(!this.#closed, 'audio receiver disposed'); reference(reason);
+    this.hold(reason);
+    this.#origin = this.#source.end; this.#originTime = this.#newOriginTime();
+    this.#lastAudio = null; this.#held = false; this.#reason = null; this.#epoch++; this.#scheduled = 0;
+    return this.#receipt('realigned-device-clock', null);
   }
   dispose() {
     if (this.#closed) return;

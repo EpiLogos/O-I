@@ -152,7 +152,7 @@ export class InstrumentSession {
       // already-acknowledged advance. Rebase to that cursor once and retry;
       // a second refusal still holds for explicit recovery.
       if (!/late native audio|allocation missed the audio deadline/.test(String(error))) throw error;
-      this.#audio.rebase(withoutAudio(frame), 'late-native-audio-rebase');
+      this.#audio.realignClock('late-native-audio-realign');
       return this.#admit(frame);
     }
   }
