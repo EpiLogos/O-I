@@ -1,7 +1,7 @@
 {
   "schema": "central.world-position/v1",
   "ref": "central:position:project:O-I:anima-4",
-  "revision": "r1",
+  "revision": "r2",
   "slug": "anima-4",
   "label": "Anima 4 (M4 Nara × S4′ Anima)",
   "enclosing_world_ref": "project:O-I",
@@ -10,8 +10,10 @@
   "purpose": "Expressive participation: compose the M4 (Nara) domain's participation through S4′ Anima. First proving instance of the six Anima_i positions.",
   "purpose_ref": "central:source:project:Actuation:docs/EPI-LOGOS-AGENT-ARCHITECTURE.md",
   "stewards_ref": null,
-  "eligible_agent_refs": [],
-  "profile_ref": null,
+  "eligible_agent_refs": [
+    "agent/anima"
+  ],
+  "profile_ref": "profile/anima",
   "continuity_ref": null,
   "handle": "@anima-4"
 }
