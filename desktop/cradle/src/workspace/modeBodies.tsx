@@ -11,6 +11,7 @@ import type {FactoryPanelHost} from "../contributions/factory/sidebar/sidebarMod
 import type {TaPaneOpens} from "../expressions/TaOntaSide";
 import {ContextCanvas} from "../agent/panel/ContextCanvas";
 import {PreparedContextView} from "../context/PreparedContextView";
+import {SituationView} from "../context/SituationView";
 
 /** What a mode plane is told about the active centre subject. */
 export interface PanelSubject { ref?: string; kind?: string; title: string; project?: string; location?: CentralLocation }
@@ -57,11 +58,11 @@ export function ContextPaneMount({opens,dataPlane="context",project,session}:{op
   return <ContextCanvas opens={opens} dataPlane={dataPlane} project={project} session={session}/>;
 }
 
-/** Central mode's Context: the native prepared-context system the centre
- * canvas already uses for highlighting and saving selections — not a second
- * pane-insertion surface that belongs in the middle workspace. */
+/** Central mode's Context: present situation, then the native prepared-context
+ * system the centre canvas already uses for highlighting and saving
+ * selections — not a second pane-insertion surface. */
 export function PreparedContextMount({project,session}:{project?:string;session?:string}) {
-  return <PreparedContextView project={project} session={session}/>;
+  return <><SituationView/><PreparedContextView project={project} session={session}/></>;
 }
 
 /** The extra planes a mode contributes to the common panel. The panel shows
