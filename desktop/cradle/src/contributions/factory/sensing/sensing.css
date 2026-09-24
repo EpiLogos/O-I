@@ -1,0 +1,47 @@
+/* Source-qualified sensing inside the existing Factory Desk. Shell tokens only. */
+.fsense{display:flex;flex-direction:column;gap:12px;padding:14px 0 17px;border-top:var(--oi-shell-edge,1px) solid var(--fd-rule);border-bottom:var(--oi-shell-edge,1px) solid var(--fd-rule)}
+.fsense-head{display:flex;justify-content:space-between;align-items:end;gap:12px;flex-wrap:wrap}
+.fsense-head h2{margin:0;color:var(--fd-ink);font-size:var(--oi-shell-type-title,18px);font-weight:650}
+.fsense-head p,.fsense-eyebrow{margin:0;color:var(--fd-muted);font-size:var(--oi-shell-type-ui)}
+.fsense .fsense-eyebrow{font-size:var(--oi-shell-type-eyebrow,11px);text-transform:uppercase;letter-spacing:var(--oi-tracking-label,.08em)}
+.fsense-source{display:flex;flex-direction:column;gap:10px;padding:12px;border:var(--oi-shell-edge,1px) solid var(--fd-rule);border-radius:var(--fd-radius);background:var(--fd-card);min-width:0}
+.fsense-source-head{display:flex;justify-content:space-between;align-items:baseline;gap:8px;flex-wrap:wrap}
+.fsense-source-head strong{font-size:var(--oi-shell-type-body);color:var(--fd-ink)}
+.fsense-source-head small{font-size:var(--oi-shell-type-meta,11px);color:var(--fd-muted)}
+.fsense-source-head button{border:var(--oi-shell-edge,1px) solid var(--fd-rule);border-radius:var(--oi-shell-radius-control,7px);background:var(--oi-canvas-ground);color:var(--fd-ink);font:inherit;font-size:var(--oi-shell-type-meta,11px);padding:3px 7px;cursor:pointer}
+.fsense-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}
+.fsense-group{min-width:0;padding:10px;border:var(--oi-shell-edge,1px) solid var(--fd-rule);border-radius:var(--fd-radius);background:var(--oi-canvas-ground)}
+.fsense-group h3{display:flex;gap:6px;align-items:baseline;margin:0 0 9px;font-size:var(--oi-shell-type-eyebrow,11px);font-weight:650;letter-spacing:var(--oi-tracking-label,.08em);text-transform:uppercase;color:var(--fd-muted)}
+.fsense-group h3 span{font-weight:500}
+.fsense-note,.fsense-absence{margin:5px 0;color:var(--fd-muted);font-size:var(--oi-shell-type-ui);line-height:1.4;overflow-wrap:anywhere}
+.fsense-absence{color:var(--fd-warn)}
+.fsense-list,.fsense-coverage{display:flex;flex-direction:column;gap:6px;list-style:none;margin:0;padding:0}
+.fsense-signal,.fsense-decision{display:flex;flex-direction:column;gap:3px;width:100%;padding:7px 8px;border:var(--oi-shell-edge,1px) solid var(--fd-rule);border-radius:var(--oi-shell-radius-row,6px);background:var(--fd-card);color:var(--fd-ink);font:inherit;text-align:left;cursor:pointer}
+.fsense-signal:hover,.fsense-decision:hover{border-color:var(--fd-ink)}
+.fsense-signal:focus-visible,.fsense-decision:focus-visible,.fsense button:focus-visible{outline:var(--oi-focus-ring-width,2px) solid var(--oi-focus,var(--fd-ink));outline-offset:1px}
+.fsense-signal strong,.fsense-decision strong{font-size:var(--oi-shell-type-ui);line-height:1.35;overflow-wrap:anywhere}
+.fsense-signal span,.fsense-decision span{font-size:var(--oi-shell-type-meta,11px);color:var(--fd-muted);line-height:1.3}
+.fsense-coverage li{display:flex;flex-direction:column;gap:2px;padding:5px 0;border-top:var(--oi-shell-edge,1px) solid var(--fd-rule);font-size:var(--oi-shell-type-ui)}
+.fsense-coverage li:first-child{border:0}
+.fsense-coverage strong{font-size:var(--oi-shell-type-meta,11px);text-transform:uppercase;letter-spacing:var(--oi-tracking-label,.08em);color:var(--fd-ok)}
+.fsense-coverage li[data-coverage-state="unavailable"] strong,.fsense-coverage li[data-coverage-state="truncated"] strong{color:var(--fd-warn)}
+.fsense-coverage small,.fsense-ref{color:var(--fd-muted);font-size:var(--oi-shell-type-meta,11px);overflow-wrap:anywhere}
+.fsense-history-controls{display:flex;align-items:end;gap:5px;flex-wrap:wrap}
+.fsense-history-controls label{display:flex;flex-direction:column;gap:2px;font-size:var(--oi-shell-type-meta,11px);color:var(--fd-muted)}
+.fsense-history-controls input,.fsense-history-controls button,.fsense-inspection button,.fsense-work button{min-height:25px;border:var(--oi-shell-edge,1px) solid var(--fd-rule);border-radius:var(--oi-shell-radius-control,7px);background:var(--fd-card);color:var(--fd-ink);font:inherit;font-size:var(--oi-shell-type-ui);padding:3px 7px;cursor:pointer}
+.fsense-history-controls button:disabled{opacity:.5;cursor:default}
+.fsense-history-row{display:flex;flex-direction:column;gap:3px;font-size:var(--oi-shell-type-ui);overflow-wrap:anywhere}
+.fsense-ref-button{display:inline;margin:0 5px 3px 0;padding:1px 3px;border:0;border-bottom:1px solid currentColor;background:none;color:var(--fd-ink);font:inherit;font-family:var(--oi-font-mono);font-size:var(--oi-shell-type-meta,11px);text-align:left;cursor:pointer;overflow-wrap:anywhere}
+.fsense-inspection{padding:11px 12px;border:var(--oi-shell-edge,1px) solid var(--fd-rule);border-radius:var(--fd-radius);background:var(--oi-canvas-ground);font-size:var(--oi-shell-type-ui);overflow-wrap:anywhere}
+.fsense-inspection-head{display:flex;justify-content:space-between;align-items:start;gap:10px}
+.fsense-inspection h3{margin:0;font-size:var(--oi-shell-type-body)}
+.fsense-inspection dl,.fsense-observation dl{display:grid;grid-template-columns:minmax(90px,110px) minmax(0,1fr);gap:4px 12px;margin:8px 0}
+.fsense-inspection dt{color:var(--fd-muted)}
+.fsense-inspection dd{margin:0;overflow-wrap:anywhere}
+.fsense-inspection code{font-family:var(--oi-font-mono);font-size:var(--oi-shell-type-meta,11px)}
+.fsense-work{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:9px 0}
+.fsense-native-source{margin-top:7px}
+.fsense-observation{border-top:var(--oi-shell-edge,1px) solid var(--fd-rule);padding-top:8px}
+.fsense-observation p{margin:5px 0}
+.fsense a{color:var(--fd-ink);text-decoration:underline;text-underline-offset:2px}
+@container (max-width: 650px){.fsense-grid{grid-template-columns:1fr}}

@@ -21,6 +21,7 @@ import {RunMap} from "./RunMap";
 import {RunLive} from "./RunLive";
 import {RunHandoff} from "./RunHandoff";
 import {RunTrajectory} from "./RunTrajectory";
+import {RunSignalLink} from "../sensing/RunSignalLink";
 
 export type RunTab = "map" | "trajectory" | "live" | "handoff";
 const TABS: {key: RunTab; label: string}[] = [{key: "map", label: "Map"}, {key: "trajectory", label: "Trajectory"}, {key: "live", label: "Live"}, {key: "handoff", label: "Handoff"}];
@@ -132,6 +133,7 @@ export function RunPage({runKey, onBack, host}: {runKey: string; onBack: () => v
         <MenuButton ariaLabel="More run actions" className="oi-action frun-more" label={<Glyph name="more" size={14}/>} rows={menu}/>
       </div>
     </header>
+    <RunSignalLink runKey={runKey} entry={entry} onBack={onBack}/>
     <nav className="frun-tabs" role="tablist" aria-label="Run views">
       {TABS.map(entryTab => <button key={entryTab.key} type="button" role="tab" aria-selected={tab === entryTab.key} className="frun-tab" onClick={() => setTab(entryTab.key)}>{entryTab.label}</button>)}
     </nav>

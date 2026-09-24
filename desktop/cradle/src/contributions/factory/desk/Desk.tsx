@@ -28,6 +28,7 @@ import {MenuButton} from "./MenuButton";
 import {readDeskSources, writeDeskSources, type DeskSource} from "./deskModel";
 import {deskScrollTop, heldDeskQuery, openRunPage, readDesk, rememberDeskQuery, rememberDeskScroll, scopeKeyOf, useDeskReading, useSelectedRun} from "./deskStore";
 import {DESK_COLUMNS, RUN_STATE_GLYPH, RUN_STATE_WORD, cardMatches, deskColumn, initials, type DeskCard, type DeskColumn} from "./runModel";
+import {SignalsPanel} from "../sensing/SignalsPanel";
 import "./fdesk.css";
 
 /** A short age for a card footer: "now", "40m", "3h", "Mon", "18 Sep". */
@@ -134,6 +135,7 @@ export function Desk({onNewRun, onAddObject}: DeskProps) {
         {!firstRead && ownersUnread.length > 0 && <p className="fdesk-partial" role="status" data-desk-owners="unavailable">
           Owner Positions couldn't be read — {ownersUnread.join("; ")} (factory development inhabitation).
         </p>}
+        {current?.status === "read" && <SignalsPanel desk={current}/>}
         {firstRead
           ? <div className="fdesk-columns" aria-busy="true">
             {DESK_COLUMNS.map(column => <section key={column.key} className="fdesk-column" aria-label={column.label}>

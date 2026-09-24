@@ -198,6 +198,38 @@ pub enum OwnerRequest {
     TelemetryStatus { state_path: PathBuf },
     /// `factory telemetry inspect <state> <telemetry-ref>`.
     TelemetryInspect { state_path: PathBuf, telemetry_ref: String },
+    /// Owner-native current sensing projection. No collection is triggered.
+    TelemetryField { state_path: PathBuf },
+    /// Try AIKit's bounded hot projection for this exact ProjectWorld, then
+    /// read the Factory owner when it is missing, stale or unavailable.
+    TelemetryCurrent { state_path: PathBuf, project_world_ref: String },
+    /// One source-qualified signal and its original observation.
+    TelemetrySignal {
+        state_path: PathBuf,
+        signal_ref: String,
+    },
+    /// Read-only human decisions; this does not accept an Action.
+    TelemetryDigest { state_path: PathBuf },
+    /// Bounded recurrence reading over Central civil Days.
+    TelemetryLookback {
+        state_path: PathBuf,
+        #[serde(default)]
+        day: Option<String>,
+        #[serde(default)]
+        from_day: Option<String>,
+        #[serde(default)]
+        through_day: Option<String>,
+    },
+    /// One Day or named Day range from Factory's owner-native history.
+    TelemetryDay {
+        state_path: PathBuf,
+        #[serde(default)]
+        day: Option<String>,
+        #[serde(default)]
+        from_day: Option<String>,
+        #[serde(default)]
+        through_day: Option<String>,
+    },
     /// `factory attempt return <state> <run-ref> <attempt-ref>` — the readable Return.
     AttemptReturn { state_path: PathBuf, run_ref: String, attempt_ref: String },
     /// `factory action list <state> <project-ref> <run-ref>`.
@@ -349,12 +381,129 @@ fn path_arg(path: &Path) -> std::ffi::OsString {
 }
 
 fn expect_contract(data: Value, accepted: &[&str]) -> Result<Value, Error> {
-    let contract = data.get("contract").and_then(Value::as_str).unwrap_or_default();
+    let contract = reading_contract(&data);
     if accepted.contains(&contract) {
         Ok(data)
     } else {
         Err(incompatible(format!("Factory answered an unexpected contract ({contract})")))
     }
+}
+
+fn telemetry_args(
+    read: &str,
+    state_path: &Path,
+    signal_ref: Option<&str>,
+    day: Option<&str>,
+    from_day: Option<&str>,
+    through_day: Option<&str>,
+) -> Result<Vec<std::ffi::OsString>, Error> {
+    if day.is_some() && (from_day.is_some() || through_day.is_some()) {
+        return Err(incompatible("Choose one Day or a named Day range"));
+    }
+    if from_day.is_some() != through_day.is_some() {
+        return Err(incompatible("A Day range needs both endpoints"));
+    }
+    let mut args: Vec<std::ffi::OsString> =
+        vec!["telemetry".into(), read.into(), path_arg(state_path)];
+    if let Some(reference) = signal_ref {
+        args.push(reference.into());
+    }
+    if let Some(day) = day {
+        args.extend(["--day".into(), day.into()]);
+    }
+    if let (Some(from), Some(through)) = (from_day, through_day) {
+        args.extend([
+            "--from-day".into(),
+            from.into(),
+            "--through-day".into(),
+            through.into(),
+        ]);
+    }
+    args.push("--json".into());
+    Ok(args)
+}
+
+fn native_sensing_field(state_path: &Path) -> Result<Value, Error> {
+    let mut args = telemetry_args("field", state_path, None, None, None, None)?;
+    // A Project policy is source, never authority. Pass the canonical JSON
+    // carrier when this Factory state is inside a recognised Central root.
+    if let Some(root) = state_path.parent().and_then(Path::parent) {
+        let project = root.join("ProjectCentral/user/factory-policy.json");
+        let control = root.join("Control/user/factory-policy.json");
+        if let Some(policy) = [project, control].into_iter().find(|path| path.is_file()) {
+            args.splice(args.len()-1..args.len()-1, ["--policy".into(), path_arg(&policy)]);
+        }
+    }
+    expect_contract(owner_call(&args, None)?, &["factory.telemetry-field/v1"])
+}
+
+// Bind a hot read to the Factory state the caller actually selected. This is
+// the owner's persisted source, not a World scan or a second field projection.
+// Older states without a sensing scope fall through to the native read below.
+fn state_sensing_world(state_path: &Path) -> Result<Option<String>, Error> {
+    let bytes = std::fs::read(state_path).map_err(|error| incompatible(format!("Factory state unavailable for sensing scope: {error}")))?;
+    let state: Value = serde_json::from_slice(&bytes).map_err(|error| incompatible(format!("Factory state unreadable for sensing scope: {error}")))?;
+    if state["schema"] != "factory.developmental-local-provider/v1" {
+        return Ok(None);
+    }
+    Ok(state["state"]["sensing"]["project_world_ref"].as_str().map(str::to_owned))
+}
+
+fn current_sensing_field(state_path: &Path, project_world_ref: &str) -> Result<Value, Error> {
+    if project_world_ref != "control:root" && !project_world_ref.starts_with("project:") {
+        return Err(incompatible("A ProjectWorld ref is required for the current sensing read"));
+    }
+    let bound_world = state_sensing_world(state_path)?;
+    if bound_world.as_deref().is_some_and(|world| world != project_world_ref) {
+        return Err(incompatible("Factory state belongs to another ProjectWorld"));
+    }
+    let config = std::env::var_os("OI_REDIS_NOW_CONFIG_FILE").map(PathBuf::from)
+        .or_else(|| std::env::var_os("HOME").map(|home| PathBuf::from(home).join(".aikit/redis-now.json")));
+    let mut hot_absence = "AIKit Redis NOW config is not installed".to_owned();
+    if let Some(config) = config.filter(|path| path.is_file()) {
+        let (executable, suite_route) = crate::inhabitation::aikit_executable();
+        let mut args: Vec<std::ffi::OsString> = Vec::new();
+        if suite_route { args.push("aikit".into()); }
+        args.extend(["now-context".into(), "factory-sensing".into(), "--config-file".into(), path_arg(&config), "--project-world-ref".into(), project_world_ref.into(), "--json".into()]);
+        let hot = crate::inhabitation::run_bounded(&executable, &args, None, std::time::Duration::from_secs(5), "aikit now-context factory-sensing")
+            .and_then(|document| crate::inhabitation::unwrap_envelope(document, "aikit now-context factory-sensing").map(|(data, _)| data));
+        match hot {
+            Ok(data) if data["schema"] == "aikit.factory-sensing-reading/v1" && data["project_world_ref"] == project_world_ref => {
+                if data["available"] == true {
+                    let projection = &data["projection"];
+                    let field = &projection["field"];
+                    let now_ms = std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).map(|t| t.as_millis() as u64).unwrap_or(0);
+                    let published = projection["published_at_unix_ms"].as_u64().unwrap_or(0);
+                    let observed = field["observed_at_unix_ms"].as_u64().unwrap_or(0);
+                    if projection["schema"] == "aikit.factory-sensing-projection/v1"
+                        && projection["project_world_ref"] == project_world_ref
+                        && field["schema"] == "factory.telemetry-field/v1"
+                        && field["project_world_ref"] == project_world_ref
+                        && projection["source_revision"] == field["source_revision"]
+                        && published <= now_ms.saturating_add(30_000)
+                        && observed <= published.saturating_add(30_000)
+                        // The saved field Routine runs every five minutes.
+                        // One minute of scheduling grace still caps both the
+                        // publication and the owner's actual observation age.
+                        && now_ms.saturating_sub(published) <= 360_000
+                        && now_ms.saturating_sub(observed) <= 360_000
+                        && bound_world.as_deref() == Some(project_world_ref) {
+                        return Ok(serde_json::json!({"schema":"oi.factory-sensing-current/v1","basis":"aikit-hot","field":field,"published_at_unix_ms":published,"projection_version":projection["version"]}));
+                    }
+                    hot_absence = "AIKit hot Factory field was stale or incompatible".into();
+                } else {
+                    hot_absence = "AIKit has no hot Factory field for this ProjectWorld".into();
+                }
+            }
+            Ok(_) => hot_absence = "AIKit returned an incompatible hot Factory reading".into(),
+            Err(error) => hot_absence = error.message,
+        }
+    }
+    let field = native_sensing_field(state_path)?;
+    if field["project_world_ref"] != project_world_ref {
+        return Err(incompatible("Factory fallback belongs to another ProjectWorld"));
+    }
+    Ok(serde_json::json!({"schema":"oi.factory-sensing-current/v1","basis":"factory-native","field":field,"hot_absence":hot_absence}))
 }
 
 /// RFC 3339 UTC for "now", without a date crate (civil-from-days).
@@ -492,6 +641,63 @@ pub fn owner(request: OwnerRequest, world: Option<&Value>) -> Result<Value, Erro
                 Err(incompatible("Factory answered an unexpected telemetry contract"))
             }
         }
+        OwnerRequest::TelemetryField { state_path } => native_sensing_field(&state_path),
+        OwnerRequest::TelemetryCurrent { state_path, project_world_ref } => current_sensing_field(&state_path, &project_world_ref),
+        OwnerRequest::TelemetrySignal {
+            state_path,
+            signal_ref,
+        } => expect_contract(
+            owner_call(
+                &telemetry_args("signal", &state_path, Some(&signal_ref), None, None, None)?,
+                None,
+            )?,
+            &["factory.signal-reading/v1"],
+        ),
+        OwnerRequest::TelemetryDigest { state_path } => expect_contract(
+            owner_call(
+                &telemetry_args("digest", &state_path, None, None, None, None)?,
+                None,
+            )?,
+            &["factory.telemetry-digest/v1"],
+        ),
+        OwnerRequest::TelemetryLookback {
+            state_path,
+            day,
+            from_day,
+            through_day,
+        } => expect_contract(
+            owner_call(
+                &telemetry_args(
+                    "lookback",
+                    &state_path,
+                    None,
+                    day.as_deref(),
+                    from_day.as_deref(),
+                    through_day.as_deref(),
+                )?,
+                None,
+            )?,
+            &["factory.telemetry-lookback/v1"],
+        ),
+        OwnerRequest::TelemetryDay {
+            state_path,
+            day,
+            from_day,
+            through_day,
+        } => expect_contract(
+            owner_call(
+                &telemetry_args(
+                    "day",
+                    &state_path,
+                    None,
+                    day.as_deref(),
+                    from_day.as_deref(),
+                    through_day.as_deref(),
+                )?,
+                None,
+            )?,
+            &["factory.telemetry-day/v1"],
+        ),
         OwnerRequest::AttemptReturn { state_path, run_ref, attempt_ref } => {
             let args: Vec<std::ffi::OsString> = vec!["attempt".into(), "return".into(), path_arg(&state_path), run_ref.into(), attempt_ref.into(), "--json".into()];
             let data = owner_call(&args, None)?;
