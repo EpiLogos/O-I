@@ -53,9 +53,43 @@ fn rolling_check(root: &Path, command: &[String], envs: &BTreeMap<String, String
     let (program, args) = command.split_first().ok_or("owner did not declare this operation")?;
     let stdout = fs::File::create(log).map_err(|e| e.to_string())?;
     let stderr = stdout.try_clone().map_err(|e| e.to_string())?;
-    let status = Command::new(program).args(args).current_dir(root).envs(envs)
-        .stdout(stdout).stderr(stderr).status().map_err(|e| e.to_string())?;
+    let status = match Command::new(program).args(args).current_dir(root).envs(envs).stdout(stdout).stderr(stderr).status() {
+        Ok(status) => status,
+        Err(error) => {
+            // The program never ran, so the log would otherwise stay empty:
+            // the explanation is the evidence.
+            let refusal = spawn_refusal(program, envs, &error);
+            let _ = fs::write(log, format!("{refusal}\n"));
+            return Err(refusal);
+        }
+    };
     if status.success() { Ok(()) } else { Err(format!("{program} exited {status}; evidence {}", log.display())) }
+}
+
+/// A command that could not be started, in three parts: which program, the
+/// PATH it was looked up on and the OS error (fact); that nothing ran
+/// (consequence); and the next step (action). A bare "No such file or
+/// directory (os error 2)" names none of these — typically `cargo` missing
+/// from a non-interactive SSH shell, whose PATH lacks ~/.cargo/bin.
+fn spawn_refusal(program: &str, envs: &BTreeMap<String, String>, error: &std::io::Error) -> String {
+    let explicit = Path::new(program).components().count() > 1;
+    let lookup = if explicit {
+        format!("the path {program} was used as given")
+    } else {
+        let path = envs.get("PATH").map(OsString::from).or_else(|| env::var_os("PATH")).unwrap_or_default();
+        let searched: Vec<String> = env::split_paths(&path).map(|dir| dir.display().to_string()).filter(|dir| !dir.is_empty()).collect();
+        if searched.is_empty() { "PATH is empty or unset".to_owned() } else { format!("PATH searched: {}", searched.join(":")) }
+    };
+    let action = match error.kind() {
+        std::io::ErrorKind::NotFound if !explicit && matches!(program, "cargo" | "rustc" | "rustup") => {
+            "add ~/.cargo/bin to PATH for non-interactive shells (e.g. `export PATH=\"$HOME/.cargo/bin:$PATH\"` in ~/.zshenv, or in ~/.profile/~/.bashrc above any interactive-only guard — a non-interactive SSH command does not read ~/.zshrc), or run it as `PATH=\"$HOME/.cargo/bin:$PATH\" oi update --apply`".to_owned()
+        }
+        std::io::ErrorKind::NotFound if !explicit => format!("install `{program}` or add the directory that holds it to PATH for this shell, then run it again"),
+        std::io::ErrorKind::NotFound => format!("{program} does not exist; point the operation at an existing executable, then run it again"),
+        std::io::ErrorKind::PermissionDenied => format!("make `{program}` executable (chmod +x) or put an executable copy first on PATH, then run it again"),
+        _ => format!("check that `{program}` can be started from this shell, then run it again"),
+    };
+    format!("could not start `{program}`: {error} ({lookup}). Nothing ran, so nothing was built or checked and nothing was installed. Next: {action}")
 }
 
 fn capture_rolling_consumer(source: &Path, destination: &Path) -> Result<BTreeMap<String, String>, String> {
@@ -308,6 +342,33 @@ mod rolling_dev_tests {
         assert_eq!(fs::read_to_string(captured.join("lib.rs")).unwrap(), "candidate source");
         assert_eq!(hashes["lib.rs"], sha256_file(&captured.join("lib.rs")).unwrap());
         assert_eq!(rolling_lock_hashes(&captured).unwrap().len(), 1);
+    }
+    #[test]
+    fn a_program_that_cannot_start_names_itself_the_path_searched_and_the_next_step() {
+        // `oi update --apply` over a non-interactive SSH shell: cargo is not on
+        // PATH, and the build used to fail with only "No such file or
+        // directory (os error 2)".
+        let dir = tempfile::tempdir().unwrap();
+        let log = dir.path().join("build.log");
+        let bare = dir.path().join("bin-without-cargo");
+        fs::create_dir(&bare).unwrap();
+        let envs = BTreeMap::from([("PATH".to_owned(), bare.display().to_string())]);
+        let command = vec!["cargo".to_owned(), "build".to_owned(), "--release".to_owned()];
+        let error = rolling_check(dir.path(), &command, &envs, &log).unwrap_err();
+        assert!(error.starts_with("could not start `cargo`: "), "fact names the program: {error}");
+        assert!(error.contains("os error 2"), "the OS error is kept: {error}");
+        assert!(error.contains(&format!("PATH searched: {}", bare.display())), "fact names the PATH searched: {error}");
+        assert!(error.contains("Nothing ran, so nothing was built or checked and nothing was installed."), "consequence: {error}");
+        assert!(error.contains("Next: add ~/.cargo/bin to PATH"), "action: {error}");
+        assert_eq!(fs::read_to_string(&log).unwrap(), format!("{error}\n"), "the log carries the explanation instead of staying empty");
+
+        // Any other missing program gets the same three parts, with its own action.
+        let other = rolling_check(dir.path(), &["no-such-owner-tool".to_owned()], &envs, &log).unwrap_err();
+        assert!(other.starts_with("could not start `no-such-owner-tool`: "), "{other}");
+        assert!(other.contains("Next: install `no-such-owner-tool` or add the directory that holds it to PATH"), "{other}");
+        let explicit = dir.path().join("missing/cargo").display().to_string();
+        let named = rolling_check(dir.path(), std::slice::from_ref(&explicit), &envs, &log).unwrap_err();
+        assert!(named.contains(&format!("the path {explicit} was used as given")), "{named}");
     }
     #[test]
     fn real_failed_command_retains_diagnostic_and_is_not_success() {

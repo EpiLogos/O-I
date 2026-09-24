@@ -1368,8 +1368,21 @@ mod update_flow_tests {
         // Dropping the guard stands in for holder death: the diagnostic file
         // may remain, but the operating system no longer holds the lock.
         drop(first);
-        let second = acquire_update_lock(data.path())
-            .expect("a released advisory lock must not become a permanent recovery barrier");
+        // Other tests in this binary spawn subprocesses in parallel. A child
+        // forked between our open and drop holds a copy of the descriptor —
+        // and so the advisory lock — until its exec closes it (O_CLOEXEC).
+        // That is transient; the property under test is that a released
+        // lock never stays a barrier, so a bounded wait covers the race.
+        let deadline = std::time::Instant::now() + std::time::Duration::from_secs(5);
+        let second = loop {
+            match acquire_update_lock(data.path()) {
+                Ok(guard) => break guard,
+                Err(error) if std::time::Instant::now() < deadline && error.contains("another managed update holds") => {
+                    std::thread::sleep(std::time::Duration::from_millis(20));
+                }
+                Err(error) => panic!("a released advisory lock must not become a permanent recovery barrier: {error:?}"),
+            }
+        };
         assert_eq!(second.path(), lock_path.as_path());
     }
 
