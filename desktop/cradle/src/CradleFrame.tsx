@@ -1,3 +1,4 @@
+import {hostedSurfaceFor, withHostedDescriptor} from "./contributions/registry";
 import {useChosenAgent} from "./agency/selection";
 import {useAgentRoster} from "./agency/roster";
 import {ActiveEncounterContext} from "./workspace/activeEncounter";
@@ -7,6 +8,7 @@ import {mintInstance,mintBlankInstance,parseInstance,instanceFileName} from "./f
 import {userFlowsArea} from "./flow/instances";
 import {fileOperation,listFiles,type FileMutation} from "./files/client";
 import {DRAFT_KEY} from "./flow/DraftSurface";
+import {readUnplacedDraft} from "./flow/unplacedDrafts";
 import {DOCUMENT_FORMS} from "./flow/documentForms";
 import {createFormInPlace} from "./flow/createInPlace";
 import type {LeftHost} from "./workspace/left/host";
@@ -111,6 +113,7 @@ import type {
 import { createPortal, flushSync } from "react-dom";
 import {OPEN_OBJECT_EVENT,ObjectCentreLayer,encodeObjectRef,isOpenObjectDetail} from "./agent/objects";
 import {factoryCentreOwns} from "./contributions/factory/objectKinds";
+import {OPEN_AUTOMATIONS_EVENT, openAutomations} from "./contributions/automations/open";
 
 function snapshotOf(state: LayoutState): RestorePoint {
   return {
@@ -818,10 +821,10 @@ export function CradleFrame({onComposed}:{onComposed?:()=>void}) {
     // layout binding: an awaited owner call here could resolve after a further
     // switch and land this mode's surface in another mode's tree. The kernel
     // learns of the binding through the ordinary mount reconciliation.
-    const title={factory:"Factory",expressions:"Expressions",techne:"Technè","epi-logos":"Epi-Logos",system:"Settings"}[centre];
+    const title=hostedSurfaceFor({kind:centre})?.descriptor.title??centre;
     setState(s=>{
       const existing=Object.values(s.surfaces).find(binding=>binding.kind===centre);
-      const binding=existing??{id:crypto.randomUUID(),kind:centre,title};
+      const binding=existing??withHostedDescriptor({id:crypto.randomUUID(),kind:centre,title});
       return groupsOf(s.root).some(group=>group.tabs.includes(binding.id))?executeFrameAction(s,"surface.activate",{surfaceId:binding.id}):openBinding({...s,closedStack:s.closedStack.filter(id=>id!==binding.id)},binding);
     });
     // Factory's centre is Desk/Tasks (handoff §11): the mode surface mounts
@@ -897,6 +900,16 @@ export function CradleFrame({onComposed}:{onComposed?:()=>void}) {
         setState(s=>groupsOf(s.root).some(g=>g.tabs.includes(binding.id))?executeFrameAction(s,"surface.activate",{surfaceId:binding.id}):openBinding({...s,closedStack:s.closedStack.filter(id=>id!==binding.id)},binding));
       }).catch(fail);
     };
+    const automationsOpen=(event:Event)=>{
+      const request=detail<{project?:string}>(event);
+      const project=request?request.project:workspaceRef.current.current.project??undefined;
+      const existing=Object.values(stateRef.current.surfaces).find(binding=>binding.kind==="automations"&&binding.project===project);
+      const binding:SurfaceBinding=existing??{id:crypto.randomUUID(),kind:"automations",title:"Automations",project};
+      void kernel.apply({op:"surface_open",surface_id:binding.id,kind:"automations",title:binding.title}).then(opened=>{
+        if(opened?.result!=="surface_opened")throw new Error("The Automations surface could not be opened");
+        setState(s=>groupsOf(s.root).some(g=>g.tabs.includes(binding.id))?executeFrameAction(s,"surface.activate",{surfaceId:binding.id}):openBinding({...s,closedStack:s.closedStack.filter(id=>id!==binding.id)},binding));
+      }).catch(fail);
+    };
     const message=(event:Event)=>{const text=detail<{message?:string}>(event)?.message;if(text)setWindowError(text);};
     // The agent setup flow records the mode it left so its own return event
     // can restore it; the general settings close still uses the frame's
@@ -912,6 +925,7 @@ export function CradleFrame({onComposed}:{onComposed?:()=>void}) {
     // Results' "Open in centre": the subject's own tab if it is open here, else its file.
     const openSubject=(event:Event)=>{const subject=detail<{subject?:{ref?:string;location?:CentralLocation}}>(event)?.subject;if(!subject)return;if(subject.location){void openFileRef.current(subject.location).catch(fail);return;}const held=Object.values(stateRef.current.surfaces).find(binding=>!!subject.ref&&binding.ref===subject.ref);if(held)setState(s=>executeFrameAction(s,"surface.activate",{surfaceId:held.id}));};
     const pairs:[string,(event:Event)=>void][]=[["oi:open-agency",agencyOpen],["oi:panel-open-subject",openSubject],["oi:workspace-message",message],["oi:open-settings",settings],["oi:close-settings",closeSettings],["oi:agent-setup-return",agentSetupReturn],["oi:library-open",libraryOpen],["oi:epi-open-expression",expression],["oi:epi-examine",examine],["oi:epi-open-source",source],["oi:epi-open-knowledge",knowledgeOpen],["oi:context-return",back]];
+    pairs.push([OPEN_AUTOMATIONS_EVENT,automationsOpen]);
     for(const [name,handler] of pairs)window.addEventListener(name,handler);
     return()=>{for(const [name,handler] of pairs)window.removeEventListener(name,handler);};
   },[]);
@@ -992,6 +1006,20 @@ export function CradleFrame({onComposed}:{onComposed?:()=>void}) {
    *  2026-09-13, #267). The ground is written only when the human explicitly
    *  saves real content (placeDraft). The navigator's New flow keeps this
    *  law; the rest page's Start writing is the exception (startFlowWriting). */
+  // An acknowledged device recovery opens a local draft only. No caller
+  // detail can supply source identity, Project or native write authority.
+  useEffect(()=>{
+    const recover=(event:Event)=>{
+      const detail=(event as CustomEvent<unknown>).detail;
+      if(!detail||typeof detail!=="object")return;
+      const {id,title}=detail as {id?:unknown;title?:unknown};
+      if(typeof id!=="string"||!/^device-recovery:[0-9a-f-]{36}$/.test(id)||typeof title!=="string"||title.length>80||/[\u0000-\u001f]/.test(title))return;
+      if(readUnplacedDraft(id)?.unverified_recovery!==true)return;
+      setState(state=>openBinding(state,{id,kind:"draft",title}));
+    };
+    window.addEventListener("oi:recover-device-copy",recover);
+    return()=>window.removeEventListener("oi:recover-device-copy",recover);
+  },[]);
   const startWriting=async()=>{
     setState(s=>openBinding(s,{id:crypto.randomUUID(),kind:"draft",title:"Draft"}));
   };
@@ -1758,13 +1786,7 @@ export function CradleFrame({onComposed}:{onComposed?:()=>void}) {
               const form=DOCUMENT_FORMS.find(candidate=>candidate.kind==="document-epi-card");
               if(!form)throw new Error("The Epi-Card form is not offered by the document roster");
               await openFile((await createFormInPlace(kernel.transport,form,{project:workspace.current.project,projects:kernel.snapshot.navigator?.root?.work.projects})).location);
-            }}
-            onWiki={(() => {
-            const reading=kernel.snapshot.navigator;
-            const project=reading?.project?.project;
-            const ref=project ? project.projectcentral.agent_wiki.wiki.space_ref : reading?.root?.control.agent_wiki.wiki.space_ref;
-            return ref ? () => { void openKnowledge({kind:"wiki",value:ref},project ? `${project.name} wiki` : "Central wiki",project?.name).catch(e=>setWindowError(String(e))); } : undefined;
-          })()} />
+            }} />
         </RestPane>
       </div>
       {/* The warm trees (surface/retention.tsx): every tree of the warm set
@@ -1807,7 +1829,7 @@ export function CradleFrame({onComposed}:{onComposed?:()=>void}) {
         <button className="library-scrim" aria-label="Close the Library" onClick={()=>setLibrary("held")}/>
         <div className="library-sheet"><LibraryBrowser mode={mode} onMessage={message=>setWindowError(message)} onOpen={(item,how)=>window.dispatchEvent(new CustomEvent("oi:library-open",{detail:{item,how}}))}/></div>
       </div></Suspense>}
-      {searchOpen && <SearchOverlay typed={{registers:["",...(kernel.snapshot.navigator?.root?.work.projects??[]).map(entry=>entry.name)],onOpenChat:leftHost.onOpenChat,onOpenFlow:row=>openFlowInstance(row),onOpenAgents:leftHost.onNewAgent,actions:[{label:"New chat",hint:"Start a fresh conversation",run:leftHost.onNewChat!},{label:"New flow",hint:"Start writing",run:leftHost.onNewFlow!},...(["base","factory","expressions","techne","settings"] as const).map(id=>({label:`Go to ${id==="base"?"Base":MODE_CURATION[id].label}`,hint:"Mode",run:()=>enterMode(id)}))]}} leader={leader.shift} onLeaderChange={leader.change} shortcutError={leader.error} project={workspace.current.project} onClose={()=>setSearchOpen(false)} onOpen={openKnowledge} />}
+      {searchOpen && <SearchOverlay typed={{registers:["",...(kernel.snapshot.navigator?.root?.work.projects??[]).map(entry=>entry.name)],onOpenChat:leftHost.onOpenChat,onOpenFlow:row=>openFlowInstance(row),onOpenAgents:leftHost.onNewAgent,actions:[{label:"Automations",hint:"Routines, Methods and harness timers",run:()=>openAutomations(workspace.current.project)},{label:"New chat",hint:"Start a fresh conversation",run:leftHost.onNewChat!},{label:"New flow",hint:"Start writing",run:leftHost.onNewFlow!},...(["base","factory","expressions","techne","settings"] as const).map(id=>({label:`Go to ${id==="base"?"Base":MODE_CURATION[id].label}`,hint:"Mode",run:()=>enterMode(id)}))]}} leader={leader.shift} onLeaderChange={leader.change} shortcutError={leader.error} project={workspace.current.project} onClose={()=>setSearchOpen(false)} onOpen={openKnowledge} />}
       {Object.entries(surfaceErrors).map(([id, error]) => (
         <SurfaceErrorOverlay key={id} surfaceId={id} error={error} onRetry={() => retrySurfaceOpen(id)} />
       ))}

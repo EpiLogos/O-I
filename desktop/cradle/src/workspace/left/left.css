@@ -14,8 +14,6 @@
 .left-scope-trigger { display: inline-flex; align-items: center; gap: 8px; min-width: 0; max-width: 100%; height: var(--oi-shell-hit); padding: 0 6px 0 2px; border: 0; border-radius: var(--oi-shell-radius-row); background: transparent; color: var(--oi-accent-ink); font: inherit; cursor: pointer; transition: background var(--oi-motion-ui) var(--oi-motion-ease-out); }
 .left-scope-trigger:hover, .left-scope-trigger[aria-expanded="true"] { background: var(--oi-wash); }
 .left-scope-trigger:focus-visible { outline: var(--oi-focus-ring-width) solid var(--oi-accent); outline-offset: calc(0px - var(--oi-focus-ring-width)); }
-.left-scope-tile { flex: none; display: inline-flex; align-items: center; justify-content: center; width: 20px; height: 20px; border-radius: 5px; background: var(--oi-active-ground); color: var(--oi-active-ink); font-size: var(--oi-shell-type-ui); font-weight: 700; line-height: 1; }
-.left-scope-tile.small { width: 16px; height: 16px; border-radius: 4px; font-size: var(--oi-shell-type-meta); }
 .left-scope-name { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: var(--oi-shell-type-heading); font-weight: 600; letter-spacing: -0.2px; }
 .left-scope-chevron { position: relative; flex: none; display: inline-flex; color: var(--oi-muted-2); }
 .left-news-dot { position: absolute; top: -3px; right: -5px; width: 5px; height: 5px; border-radius: 50%; background: var(--oi-accent-ink); }

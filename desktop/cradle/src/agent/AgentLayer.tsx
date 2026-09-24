@@ -31,7 +31,7 @@ import {holdHanded,interceptObjectOpens,openObject,type ObjectRef} from "./objec
 import {ObjectPage} from "./objects/ObjectPage";
 import "./objects/kinds";
 import {PanelTop,type PanelTab} from "./panel/PanelTop";
-import {AvatarMenu,type PanelAgent,type PanelPresence} from "./panel/AvatarMenu";
+import {AvatarPresence,type PanelAgent,type PanelPresence} from "./panel/AvatarMenu";
 import {ActivityTab} from "./panel/ActivityTab";
 import {AgentsTab} from "./panel/AgentsTab";
 import "./agent.css";
@@ -41,12 +41,12 @@ import "./panel/panel.css";
  * THE RIGHT PANEL (10-SIDEBARS §4): who am I working with, and what are they
  * doing? One panel, curated per workspace mode (`MODE_CURATION[mode].panel`):
  *
- *   one top row — avatar menu · tabs · ⤢ · ✕ (A3; no title band)
+ *   one top row — presence face · tabs · ⤢ · ✕ (A3; no title band)
  *   Chat     — the conversation (v2 spec), permission cards, work marks,
  *              the status line and the composer's mode / harness / model chips
- *   Activity — the tape over the owner's journal (§4.4)
- *   Agents   — the roster of real identities (§4.5)
- *   Context  — the preserved canvas insertion with its launcher (§4.6),
+ *   Activity — the tape over the owner's journal (§4.4); Automations live here
+ *   Agents   — the roster of real identities (§4.5); the only agent picker
+ *   Context  — prepared selections in Central; pane canvas in Ta-Onta modes,
  *              supplied by the composition root with the frame's pane host
  *
  * Inspect opens the object's own page (§4.7) — never a tab here. The session
@@ -262,7 +262,7 @@ export function AgentLayer({project:projectProp, subject, accompanying, onAccomp
   const lastSeen=sessionState?.reconnecting?.lastSeenAt;
   return <section ref={host} className="agent-layer" aria-label="Accompanying agent" data-full={full} data-mode={mode} data-plane={plane} data-presence={presence} data-agent-session-ref={expression.agentSessionRef} data-owner-state={expression.state} data-owner-activity-block={expression.latestOwnerActivity?.blockId}>
     <PanelTop tabs={nav} current={plane} onSelect={id=>{setDetail(undefined);if(id==="Activity"&&plane!=="Activity")setFollowToken(token=>token+1);select(id);}} full={full} onFull={onFull} onPromote={accompanying&&!promoted&&!curation.conversationInCentre&&onOpenConversation?()=>onOpenConversation(accompanying):undefined}
-      avatar={<AvatarMenu onOpen={()=>setRosterWanted(true)} agent={agent} presence={presence} bypass={bypass} roster={roster} chosenRef={chosenRef} onChoose={chooseAgent}/>}/>
+      avatar={<AvatarPresence agent={agent} presence={presence} bypass={bypass} onOpenAgents={()=>{setRosterWanted(true);select(offered.some(entry=>entry.id==="Agents")?"Agents":plane);}}/>}/>
     {lastSeen!==undefined&&<span className="panel-reconnect" role="status" aria-label="Reconnecting — draft kept" title="Reconnecting — draft kept"/>}
     {sessionState?.unreachable&&<p className="panel-line" role="status" data-line="unreachable">Agents aren&apos;t reachable here right now. Your files, flows and this draft still work here.</p>}
     {bypass&&plane==="Chat"&&!promoted&&<p className="panel-line panel-bypass" role="status" data-line="bypass">Bypass permissions is on for this session: {agent.name} acts without asking. <button type="button" className="oi-action" onClick={()=>{const ask=sessionState?.mode.reading?.mode_observation?.available_modes.find(option=>modeClass(option.id)==="ask");if(ask&&session)void session.actions.selectMode(ask.id);}}>Back to Ask</button></p>}

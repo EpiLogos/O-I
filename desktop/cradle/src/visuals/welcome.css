@@ -18,7 +18,7 @@
   --oi-welcome-mask: none;
   position: fixed;
   inset: 0;
-  z-index: calc(var(--oi-z-stage-frontstate) + 1);
+  z-index: calc(var(--oi-z-popover) + 1);
   background-color: var(--oi-inverse-canvas-ground);
   color: var(--oi-inverse-foreground);
   opacity: 1;

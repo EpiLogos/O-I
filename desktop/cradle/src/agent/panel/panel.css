@@ -32,7 +32,9 @@
 .panel-detail>.object-page{padding:var(--oi-space-4)}
 
 /* Activity */
-.panel-activity{display:flex;flex-direction:column;padding-top:var(--oi-space-2)}
+.panel-activity{display:flex;flex-direction:column;padding-top:var(--oi-space-2);min-height:0;flex:1}
+.panel-activity-tools{display:flex;align-items:center;gap:8px;padding:0 var(--oi-space-3) var(--oi-space-2);flex:none}
+.panel-activity-tools .oi-action{display:inline-flex;align-items:center;gap:6px}
 
 /* Agents (§4.5) */
 .panel-agents{display:flex;flex-direction:column;gap:var(--oi-space-2);overflow:auto;padding:var(--oi-space-2) 0 var(--oi-space-4)}

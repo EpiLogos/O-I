@@ -10,6 +10,7 @@ import type {WorkspaceMode} from "./mode";
 import type {FactoryPanelHost} from "../contributions/factory/sidebar/sidebarModel";
 import type {TaPaneOpens} from "../expressions/TaOntaSide";
 import {ContextCanvas} from "../agent/panel/ContextCanvas";
+import {PreparedContextView} from "../context/PreparedContextView";
 
 /** What a mode plane is told about the active centre subject. */
 export interface PanelSubject { ref?: string; kind?: string; title: string; project?: string; location?: CentralLocation }
@@ -51,9 +52,16 @@ export function ModeLeftBody({mode, project, onOpenExpressions, onOpenTechne, on
 
 /** The shared Context mount: the panel's own pane canvas plus the
  * persistent Active Context lanes — the same component in Factory,
- * Expressions and Technè. */
+ * Expressions and Technè. Central (base) uses prepared context alone. */
 export function ContextPaneMount({opens,dataPlane="context",project,session}:{opens?:TaPaneOpens;dataPlane?:string;project?:string;session?:string}) {
   return <ContextCanvas opens={opens} dataPlane={dataPlane} project={project} session={session}/>;
+}
+
+/** Central mode's Context: the native prepared-context system the centre
+ * canvas already uses for highlighting and saving selections — not a second
+ * pane-insertion surface that belongs in the middle workspace. */
+export function PreparedContextMount({project,session}:{project?:string;session?:string}) {
+  return <PreparedContextView project={project} session={session}/>;
 }
 
 /** The extra planes a mode contributes to the common panel. The panel shows
@@ -62,9 +70,13 @@ export function ContextPaneMount({opens,dataPlane="context",project,session}:{op
  * lends the centre canvas's own pane openings to the Ta-Onta Context. */
 export function modeExtraPlanes(mode: WorkspaceMode, subject: PanelSubject, accompanying?: PanelAccompanying, _onMessage?: (message: string) => void, _host?: FactoryPanelHost, _full?: boolean, opens?: TaPaneOpens, project?: string): {id: string; label: string; body: ReactNode}[] {
   // 10-SIDEBARS §4.2/§4.6: Chat · Activity · Agents are the panel's own; the
-  // mode supplies only its Context — the preserved canvas and its launcher.
-  const context = (id: string) => ({id, label: "Context", body: <ContextPaneMount opens={opens} dataPlane={id} project={project ?? accompanying?.project ?? subject.project} session={accompanying?.ref}/>});
-  if (mode === "base" || mode === "epi-logos") return [context("context")];
+  // mode supplies only its Context.
+  const scopeProject = project ?? accompanying?.project ?? subject.project;
+  const session = accompanying?.ref;
+  if (mode === "base" || mode === "epi-logos") {
+    return [{id: "context", label: "Context", body: <PreparedContextMount project={scopeProject} session={session}/>}];
+  }
+  const context = (id: string) => ({id, label: "Context", body: <ContextPaneMount opens={opens} dataPlane={id} project={scopeProject} session={session}/>});
   if (mode === "factory") return [
     {id: "run", label: "Run", body: <Suspense fallback={null}><FactoryRunTab accompanying={accompanying}/></Suspense>},
     // Owner direction 2026-09-20: the Context plane IS the canvas — the same
@@ -74,7 +86,7 @@ export function modeExtraPlanes(mode: WorkspaceMode, subject: PanelSubject, acco
     // empty state also offers Factory's slice (Intent, run material, NOW).
     // The canvas and Factory's slice stack in one column: the canvas grows
     // with what it holds and the slice follows it (never drawn over it).
-    {id: "context", label: "Context", body: <Suspense fallback={null}><div className="factory-context-stack"><ContextPaneMount opens={opens} dataPlane="context" project={project ?? accompanying?.project} session={accompanying?.ref}/>{!opens?.sideTabs?.length && <FactoryContextSlice/>}</div></Suspense>},
+    {id: "context", label: "Context", body: <Suspense fallback={null}><div className="factory-context-stack"><ContextPaneMount opens={opens} dataPlane="context" project={scopeProject} session={session}/>{!opens?.sideTabs?.length && <FactoryContextSlice/>}</div></Suspense>},
   ];
   // Expressions (Anima) and Technè (Aletheia): the same one panel; their
   // Context is the canvas under its Ta-Onta id.

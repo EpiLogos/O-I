@@ -19,7 +19,8 @@ import "./flow/flow.css";
  * entries use (enterMode). That mode's left body IS the graph aperture over
  * the wiki/expressions projection, so the entry routes to the real thing
  * and lets it name its own state when no ground is reachable (owner
- * ruling 4, 2026-09-22: the rest page carries Day / Card / Graph).
+ * ruling 4, 2026-09-22: the rest page carries Day / Card / Graph). A separate
+ * "Open wiki" control is not offered — Graph and wiki are the same feature.
  *
  * "Card" opens the Epi-Card document form through the document-forms route
  * — the roster's real carrier file resolved through Central's own file
@@ -37,11 +38,11 @@ import "./flow/flow.css";
  * the empty-workspace region hosts the existing `GroundChooser` first, with
  * the honest reason line, above the ordinary start-working composition.
  */
-export function Rest({ project, onWrite, onDay, onWiki, onSearch, onExplore, onGraph, onCard }: {
+export function Rest({ project, onWrite, onDay, onSearch, onExplore, onGraph, onCard }: {
   project?: string;
   onWrite: (project?: string) => Promise<void>;
   onDay?: () => Promise<void>;
-  onWiki?: () => void; onSearch: () => void; title: string;
+  onSearch: () => void; title: string;
   /** SF1: the stable global entrance to the open/shared field. */
   onExplore?: () => void;
   /** Owner ruling 4 (2026-09-22): the rest page carries Day / Card / Graph.
@@ -77,14 +78,13 @@ export function Rest({ project, onWrite, onDay, onWiki, onSearch, onExplore, onG
           <p role="status" className="rest-ground-status">{boot.phase === "ground-unrecognised" ? "Choose the Central workspace that holds your files" : (boot.detail ?? "The default Central ground is not accessible")}</p>
         </div>
         <GroundChooser />
-      </> : <header className="welcome-prompt"><WelcomePrompt placement="returning"/><p>Start a draft, find a source, or open your library.</p></header>}
+      </> : <header className="welcome-prompt"><WelcomePrompt placement="returning"/></header>}
       {/* Writing never waits for a ground either: the chooser asks for one,
           and the entry to write stays reachable beside it. */}
       <nav className="rest-actions" aria-label="Start working">
         {onDay && <button disabled={pending} onClick={() => void openDay()}><Glyph name="today" size={13} /><span>Day</span></button>}
         {onCard && <button disabled={pending} onClick={() => void openCard()} title="Open the Epi-Card form — the symbolic, visual and sonic rendition document"><Glyph name="material" size={13} /><span>Card</span></button>}
         {onGraph && <button onClick={onGraph} title="Enter the graph — the Technè mode's aperture over the wiki and Expressions"><Glyph name="graph" size={13} /><span>Graph</span></button>}
-        {onWiki && <button onClick={onWiki}><Glyph name="wiki" size={13} /><span>Open wiki</span></button>}
         <button onClick={onSearch}><Glyph name="search" size={13} /><span>Search</span><kbd>⌘K</kbd></button>
         {onExplore && <button className="rest-explore" onClick={onExplore}><Glyph name="field" size={13} /><span>Browse library</span></button>}
         <button className="rest-action-primary" disabled={pending} onClick={() => void write()}><Glyph name="file" size={13} /><span>{pending ? "Opening…" : "Start writing"}</span></button>
