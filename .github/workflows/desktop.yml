@@ -64,6 +64,9 @@ jobs:
             node --check "$f" || { echo "::error::syntax error in $f"; exit 1; }
           done
           node --test tests/walk-runner.test.mjs
+      - name: Enforce desktop architecture conformance and bounded debt
+        working-directory: desktop/cradle
+        run: node --test tests/conformance/*.test.mjs
       - name: Prove Expression projection through the declared native engine
         working-directory: desktop/cradle
         run: node tests/expression-engine.mjs
