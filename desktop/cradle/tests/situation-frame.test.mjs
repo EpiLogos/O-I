@@ -6,7 +6,7 @@ const source={id:"source-1",kind:"source",ref:"source:o-i/context",title:"contex
 const terminal={id:"terminal-1",kind:"terminal",title:"Terminal",project:"O-I",terminal:{cwd:"/Central/Work/o-i"}};
 const factory={id:"factory-1",kind:"factory",title:"Factory",project:"O-I",ref:"project:o-i"};
 const layout={
-  root:{type:"group",id:"g1",tabs:[source.id,terminal.id],pinned:[],active:source.id},
+  root:{type:"group",id:"g1",tabs:[source.id],pinned:[],active:source.id},
   surfaces:{[source.id]:source,[terminal.id]:terminal},
   closedStack:[],focusedGroupId:"g1",agencyDepth:"panel",
   detached:[{surfaceId:terminal.id,groupId:"g1",index:1,pinned:false}],
