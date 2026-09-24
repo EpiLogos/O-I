@@ -38,10 +38,7 @@ impl Client {
         read: &str,
         subject: Option<&str>,
     ) -> Result<Value, Error> {
-        if !matches!(
-            read,
-            "project" | "journey" | "run" | "build" | "workflow-units" | "workflow-unit" | "execution-telemetry" | "commission-read"
-        ) {
+        if !is_development_read(read) {
             return Err(incompatible("Unsupported Factory development read"));
         }
         let mut args: Vec<std::ffi::OsString> = vec![
@@ -107,6 +104,32 @@ impl Client {
         Ok(data)
     }
 
+}
+
+/// The `factory development <read>` verbs the desktop may issue — one list,
+/// checked by every path that builds a development read (the dispatch arm,
+/// the client and the inhabitation owner requests), so no path bypasses it.
+/// `inhabitation` and `current-work` are the World-inhabitation reads
+/// (WORLD-INHABITATION-V1 §3); they take typed flags and go through
+/// [`OwnerRequest::Inhabitation`] / [`OwnerRequest::CurrentWork`].
+pub const DEVELOPMENT_READS: &[&str] = &[
+    "project", "journey", "run", "build", "workflow-units", "workflow-unit", "execution-telemetry", "commission-read",
+    "inhabitation", "current-work",
+];
+/// Whether `read` is a development read the desktop may issue.
+pub fn is_development_read(read: &str) -> bool {
+    DEVELOPMENT_READS.contains(&read)
+}
+
+/// How long one inhabitation read may take before the desktop stops waiting
+/// and names it `unavailable` (a read never hangs a panel). Tests shorten it
+/// with `OI_INHABITATION_READ_TIMEOUT_MS`.
+pub fn inhabitation_read_timeout() -> std::time::Duration {
+    std::env::var("OI_INHABITATION_READ_TIMEOUT_MS")
+        .ok()
+        .and_then(|ms| ms.parse::<u64>().ok())
+        .map(std::time::Duration::from_millis)
+        .unwrap_or(std::time::Duration::from_secs(20))
 }
 
 /// The owner CLI's own argument grammar for one development read — built
@@ -182,6 +205,21 @@ pub enum OwnerRequest {
     /// `factory action invoke <state> <project-ref> <run-ref> -` with the
     /// owner's own `factory.action-projection/v1` request document.
     ActionInvoke { state_path: PathBuf, project_ref: String, run_ref: String, request: Value },
+    /// `factory development inhabitation <state> [--run R] [--position P]`
+    /// → `factory.inhabitation-reading/v1` (WORLD-INHABITATION-V1 §3): per
+    /// Run, the Positions in custody and the occupant relations Factory
+    /// holds. A projection, not a registry; foreign refs carried verbatim.
+    Inhabitation {
+        state_path: PathBuf,
+        #[serde(default)]
+        run_ref: Option<String>,
+        #[serde(default)]
+        position_ref: Option<String>,
+    },
+    /// `factory development current-work <state> --position P` →
+    /// `factory.current-work/v1`: none | one | ambiguous, derived by the owner
+    /// over every in-progress custody — never a display page.
+    CurrentWork { state_path: PathBuf, position_ref: String },
     /// The person's Recognition of a returned subject, recorded through the
     /// owner's own developmental mutation (`factory development mutate`,
     /// `record-owner-recognition`). The owner's receipt is the result.
@@ -224,6 +262,17 @@ fn owner_call(args: &[std::ffi::OsString], input: Option<&[u8]>) -> Result<Value
         argv.push("factory".into());
     }
     argv.extend(args.iter().cloned());
+    if input.is_none() && is_inhabitation_read(args) {
+        // The inhabitation reads are bounded: a stalled owner is named
+        // `unavailable`, never a hung panel.
+        return crate::inhabitation::run_bounded(
+            &executable,
+            &argv,
+            None,
+            inhabitation_read_timeout(),
+            &format!("factory development {}", args[1].to_string_lossy()),
+        );
+    }
     let mut child = std::process::Command::new(&executable)
         .args(&argv)
         .stdin(if input.is_some() { std::process::Stdio::piped() } else { std::process::Stdio::null() })
@@ -255,6 +304,44 @@ fn owner_call(args: &[std::ffi::OsString], input: Option<&[u8]>) -> Result<Value
         });
     }
     parsed.ok_or_else(|| incompatible("The owner answered without a JSON document"))
+}
+
+fn is_inhabitation_read(args: &[std::ffi::OsString]) -> bool {
+    args.first().is_some_and(|verb| verb == "development")
+        && args.get(1).is_some_and(|read| read == "inhabitation" || read == "current-work")
+}
+
+/// The owner's grammar for the two inhabitation reads (the state path first,
+/// as every `factory development` read takes it; typed flags after).
+pub fn inhabitation_args(request: &OwnerRequest) -> Option<Vec<std::ffi::OsString>> {
+    let (read, state_path, flags): (&str, &Path, Vec<(&str, &str)>) = match request {
+        OwnerRequest::Inhabitation { state_path, run_ref, position_ref } => {
+            let mut flags = Vec::new();
+            if let Some(run) = run_ref {
+                flags.push(("--run", run.as_str()));
+            }
+            if let Some(position) = position_ref {
+                flags.push(("--position", position.as_str()));
+            }
+            ("inhabitation", state_path, flags)
+        }
+        OwnerRequest::CurrentWork { state_path, position_ref } => ("current-work", state_path, vec![("--position", position_ref.as_str())]),
+        _ => return None,
+    };
+    debug_assert!(is_development_read(read));
+    let mut args: Vec<std::ffi::OsString> = vec!["development".into(), read.into(), path_arg(state_path)];
+    for (flag, value) in flags {
+        args.push(flag.into());
+        args.push(value.into());
+    }
+    args.push("--json".into());
+    Some(args)
+}
+
+/// A reading's contract id, whether the owner names it `schema` (the
+/// inhabitation contract's spelling) or `contract` (Factory's existing one).
+fn reading_contract(data: &Value) -> &str {
+    data.get("schema").or_else(|| data.get("contract")).and_then(Value::as_str).unwrap_or_default()
 }
 
 fn path_arg(path: &Path) -> std::ffi::OsString {
@@ -424,6 +511,21 @@ pub fn owner(request: OwnerRequest, world: Option<&Value>) -> Result<Value, Erro
             let body = serde_json::to_vec(&request).map_err(|e| incompatible(e.to_string()))?;
             owner_call(&args, Some(&body))
         }
+        OwnerRequest::Inhabitation { .. } | OwnerRequest::CurrentWork { .. } => {
+            let expected = if matches!(request, OwnerRequest::Inhabitation { .. }) {
+                "factory.inhabitation-reading/v1"
+            } else {
+                "factory.current-work/v1"
+            };
+            let args = inhabitation_args(&request).expect("an inhabitation request builds its grammar");
+            let data = owner_call(&args, None)?;
+            let contract = reading_contract(&data);
+            if contract == expected {
+                Ok(data)
+            } else {
+                Err(incompatible(format!("Factory answered an unexpected reading ({contract}) where {expected} was asked for")))
+            }
+        }
         OwnerRequest::Recognise { state_path, journey_ref, subject_ref, basis_refs } => {
             let suffix = act_suffix();
             let recognition_ref = format!("recognition:desk-{suffix}");
@@ -472,6 +574,23 @@ mod owner_tests {
         assert_eq!(locate_roots(&world, Some("A"), false).unwrap(), vec![(Some("A".into()), PathBuf::from("/ground/Work/A"))]);
         assert_eq!(locate_roots(&world, None, false).unwrap(), vec![(None, PathBuf::from("/ground"))]);
         assert!(locate_roots(&world, Some("Z"), false).is_err(), "a project outside the ground is refused");
+    }
+
+    #[test]
+    fn inhabitation_reads_follow_the_owner_grammar_and_the_allowlist() {
+        let request = OwnerRequest::Inhabitation { state_path: "/s.json".into(), run_ref: Some("run:1".into()), position_ref: None };
+        let args: Vec<String> = inhabitation_args(&request).unwrap().into_iter().map(|a| a.to_string_lossy().into_owned()).collect();
+        assert_eq!(args, ["development", "inhabitation", "/s.json", "--run", "run:1", "--json"]);
+        let request = OwnerRequest::CurrentWork { state_path: "/s.json".into(), position_ref: "central:position:project:O-I:oi-root-agency".into() };
+        let args: Vec<String> = inhabitation_args(&request).unwrap().into_iter().map(|a| a.to_string_lossy().into_owned()).collect();
+        assert_eq!(args, ["development", "current-work", "/s.json", "--position", "central:position:project:O-I:oi-root-agency", "--json"]);
+        assert!(inhabitation_args(&OwnerRequest::TelemetryStatus { state_path: "/s.json".into() }).is_none());
+        assert!(is_development_read("inhabitation") && is_development_read("current-work") && is_development_read("run"));
+        assert!(!is_development_read("mutate") && !is_development_read("custody"), "a mutation or an unlisted verb is never a read");
+        let wire: OwnerRequest = serde_json::from_value(serde_json::json!({"kind": "current-work", "state_path": "/s.json", "position_ref": "p"})).unwrap();
+        assert!(matches!(wire, OwnerRequest::CurrentWork { .. }));
+        assert_eq!(reading_contract(&serde_json::json!({"schema": "factory.current-work/v1"})), "factory.current-work/v1");
+        assert_eq!(reading_contract(&serde_json::json!({"contract": "factory.inhabitation-reading/v1"})), "factory.inhabitation-reading/v1");
     }
 
     #[test]

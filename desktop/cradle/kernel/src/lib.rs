@@ -43,6 +43,7 @@ pub mod expression_profile;
 pub mod expression_transport;
 pub mod expression_trigger;
 pub mod factory;
+pub mod inhabitation;
 pub mod files;
 pub mod flow;
 pub mod central;
@@ -405,6 +406,11 @@ pub enum KernelOp {
     /// telemetry, the attempt Return, the action projection and the person's
     /// Recognition — one owner request family (factory::OwnerRequest).
     FactoryOwner { request: factory::OwnerRequest },
+    /// World inhabitation (WORLD-INHABITATION-V1 §4): AIKit's population,
+    /// joined whoami and Refocus readings, carried verbatim after the schema
+    /// check, each bounded by a timeout. A failed read is an error the
+    /// renderer names as an absence (inhabitation::Request).
+    InhabitationRead { request: inhabitation::Request },
     /// Workcell's own placement/status reading (`workcell status --json`),
     /// beside the Factory reads — placement is Workcell's, never the desktop's.
     WorkcellStatusRead,
@@ -708,6 +714,9 @@ pub enum KernelOpResult {
     FactoryAttemptTaskListReading {data:serde_json::Value},
     FactoryAttemptTaskReading {data:serde_json::Value},
     WorkcellStatusReading {data:serde_json::Value},
+    /// An AIKit inhabitation reading (the envelope's `data`, verbatim) and the
+    /// envelope's own warnings, carried so the renderer can name them.
+    InhabitationReading {data:serde_json::Value, #[serde(default, skip_serializing_if = "Vec::is_empty")] warnings: Vec<serde_json::Value>},
     WikiProjectionReading {data:serde_json::Value},
     WikiProjectionSourcesReading {data:serde_json::Value},
     /// The harness status rows, verbatim from the owner's `client status`.
@@ -1038,6 +1047,12 @@ impl Kernel {
                         })
                         .ok_or("Project is outside Central's disclosed ground")?;
                 }
+                // The allowlist holds on this path too: the dispatch arm builds
+                // the owner grammar itself, so it must not bypass the list the
+                // client enforces.
+                if !factory::is_development_read(&read) {
+                    return Err(format!("Unsupported Factory development read ({read})"));
+                }
                 let direct = std::env::var_os("OI_FACTORY_BIN").map(std::path::PathBuf::from);
                 let (executable, suite_route) = match direct {
                     Some(path) => (path, false),
@@ -1120,6 +1135,26 @@ impl Kernel {
                 let data=material::invoke(&executable,&args,None).map_err(|e|serde_json::to_string(&e).unwrap_or_else(|_|"factory attempt task failed".into()))?;
                 if data.get("contract").and_then(serde_json::Value::as_str)!=Some("factory.attempt-task-reading/v1"){return Err("Factory returned incompatible attempt-task reading".into());}
                 Ok(KernelOpOutcome{receipts:Vec::new(),result:KernelOpResult::FactoryAttemptTaskReading{data}})
+            }
+            KernelOp::InhabitationRead { request } => {
+                // The scope's ground comes from Central's own disclosure: a
+                // project's working directory and canonical ProjectRef, or the
+                // Central root for a root-scope read (best effort — AIKit
+                // resolves its own root when Central's world is unreadable).
+                let ground: Option<(std::path::PathBuf, Option<String>)> = match request.project() {
+                    Some(project) => {
+                        let (cwd, project_id) = self.project_ground(project)?;
+                        Some((cwd, Some(format!("project:{project_id}"))))
+                    }
+                    None => self
+                        .world_map(false)
+                        .ok()
+                        .and_then(|world| world["root"].as_str().map(std::path::PathBuf::from))
+                        .map(|root| (root, None)),
+                };
+                let (data, warnings) = inhabitation::read(&request, ground.as_ref().map(|(cwd, world)| (cwd.as_path(), world.as_deref())))
+                    .map_err(|e| serde_json::to_string(&e).unwrap_or_else(|_| "inhabitation read failed".into()))?;
+                Ok(KernelOpOutcome { receipts: Vec::new(), result: KernelOpResult::InhabitationReading { data, warnings } })
             }
             KernelOp::WorkcellStatusRead => {
                 let workcell = std::env::var_os("OI_WORKCELL_BIN").map(std::path::PathBuf::from);

@@ -1,0 +1,62 @@
+{
+  "schema": "factory.inhabitation-reading/v1",
+  "project_ref": "project:0000000000Q6BNNKVZJ9ZDRZES",
+  "central_project_ref": {
+    "state": "present",
+    "value": "O-I",
+    "source": "factory.developmental-local-provider/v1:centralProjectLinks"
+  },
+  "filter": {
+    "run_ref": null,
+    "position_ref": null
+  },
+  "runs": [
+    {
+      "run_ref": "run:01M38BNMZ05K9HV7TJZ5QEW5JZ",
+      "lifecycle": "seeded",
+      "journey_refs": [
+        "journey:01M38BNMZ0YVZ3DQ9VSDKYEZKY"
+      ],
+      "positions": [
+        {
+          "position_ref": "central:position:project:O-I:factory-guardian",
+          "in_custody": true,
+          "custody": [
+            {
+              "custody_ref": "factory:custody:01a0d080-9f04-7ae7-b985-b20a1bb61206",
+              "state": "in-progress",
+              "work_ref": "github:EpiLogos/Factory#261"
+            }
+          ],
+          "attempt_refs": [],
+          "current_attempt_refs": []
+        }
+      ],
+      "custody": [
+        {
+          "schema": "factory.work-custody/v1",
+          "custody_ref": "factory:custody:01a0d080-9f04-7ae7-b985-b20a1bb61206",
+          "position_ref": "central:position:project:O-I:factory-guardian",
+          "work_ref": "github:EpiLogos/Factory#261",
+          "run_ref": "run:01M38BNMZ05K9HV7TJZ5QEW5JZ",
+          "journey_ref": "journey:01M38BNMZ0YVZ3DQ9VSDKYEZKY",
+          "state": "in-progress",
+          "assigned_at_unix_ms": 1790204485379,
+          "reason": "Commissioned for the Factory Guardian Position: disclose the World inhabitation reads in factory system --json (EpiLogos/Factory#261)",
+          "revision": 1,
+          "updated_at_unix_ms": 1790204485379,
+          "transitions": [
+            {
+              "revision": 1,
+              "to": "in-progress",
+              "reason": "Commissioned for the Factory Guardian Position: disclose the World inhabitation reads in factory system --json (EpiLogos/Factory#261)",
+              "at_unix_ms": 1790204485379
+            }
+          ]
+        }
+      ],
+      "occupants": []
+    }
+  ],
+  "custody_outside_runs": []
+}

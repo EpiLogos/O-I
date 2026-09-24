@@ -7,14 +7,22 @@
  * only real routes: Open conversation (Tasks), Open activity. Interrupt,
  * cancel and retry appear only where the owner exposes them — this cut
  * exposes them only through the attempt lifecycle's authority-bearing
- * requests, so they are not offered here. NOW: the run's return address.
+ * requests, so they are not offered here. NOW: the unit's required return
+ * address (as before); each attempt's placement NOW is shown with its
+ * Position (RunPositions — Factory holds no root/child NOW split).
  * Empty: "Nothing is running." (+ the primary action when one applies).
+ *
+ * Positions (WORLD-INHABITATION-V1 §3) lead the tab: who holds the run, from
+ * Factory's inhabitation reading. A leg's attempt is only the one the owner
+ * marks current — never "the last one" — and two marked current are said.
  */
 import type {RunEntry} from "./deskStore";
 import type {TelemetryInspection} from "./factoryReads";
 import {gitBasisOf, type FactoryObjectRef, type RunPageHost} from "./RunPage";
 import {attemptsFor, firstSentence, initials, legStanding, refTail, unitOf, type RunAction, type RunMapNode} from "./runModel";
 import {useNowRecord} from "./nowRecord";
+import {currentAttemptOf} from "../inhabitation/model";
+import {RunPositions} from "./RunPositions";
 
 const LEG_WORD: Record<string, string> = {
   active: "running", detached: "detached", cancel_requested: "cancel requested", cancellation_accepted: "cancelling",
@@ -29,21 +37,28 @@ export function RunLive({entry, runKey, host, primary, onPrimary, telemetry}: {e
     const unitRef = node.semanticRef ?? undefined;
     const unit = unitOf(inspection, unitRef);
     const attempts = attemptsFor(inspection, unitRef);
-    const current = attempts.find(attempt => attempt.currentAttempt) ?? attempts[attempts.length - 1];
+    const marked = currentAttemptOf(attempts);
+    const current = marked.outcome === "one" ? marked.entries[0] : undefined;
     const leg = unitRef ? inspection?.legs?.[unitRef] : undefined;
-    return {node, unitRef, unit, current, leg, standing: legStanding(node, leg)};
+    return {node, unitRef, unit, current, ambiguousCurrent: marked.outcome === "ambiguous" ? marked.entries.length : 0, pastAttempts: marked.outcome === "none" ? attempts.length : 0, leg, standing: legStanding(node, leg)};
   });
-  const carried = rows.filter(row => row.current || row.leg?.status);
+  const carried = rows.filter(row => row.current || row.ambiguousCurrent || row.leg?.status);
   const returnAddress = rows.map(row => row.unit?.requiredReturn?.address).find(address => address?.startsWith("central:now:"));
+  const positions = <RunPositions view={entry.inhabitation} host={host}/>;
 
   if (!carried.length) {
-    return <div className="frun-empty" data-live-empty>
-      <p>Nothing is running.</p>
-      {primary && onPrimary && <button type="button" className="oi-action oi-action-primary" onClick={onPrimary}>{primary.label}</button>}
-      {returnAddress && <NowLine address={returnAddress} host={host}/>}
+    return <div className="flive-stack">
+      {positions}
+      <div className="frun-empty" data-live-empty>
+        <p>Nothing is running.</p>
+        {primary && onPrimary && <button type="button" className="oi-action oi-action-primary" onClick={onPrimary}>{primary.label}</button>}
+        {returnAddress && <NowLine address={returnAddress} host={host}/>}
+      </div>
     </div>;
   }
-  return <div className="flive">
+  return <div className="flive-stack">
+    {positions}
+    <div className="flive">
     <div className="flive-rows">
       {rows.map(row => {
         const body = row.current?.body;
@@ -62,7 +77,8 @@ export function RunLive({entry, runKey, host, primary, onPrimary, telemetry}: {e
           <div className="flive-body">
             <span>{harnessModel || "–"}</span>
             {(where || basis?.branch) && <small>{[where, basis?.branch ? `branch ${basis.branch}${basis.clean === undefined ? "" : basis.clean ? " (clean)" : " (dirty)"}` : undefined].filter(Boolean).join(" · ")}</small>}
-            {!row.current && <small>{row.standing === "not-started" ? "waiting" : ""}</small>}
+            {!row.current && row.ambiguousCurrent > 0 && <small data-current-ambiguous={row.ambiguousCurrent}>{row.ambiguousCurrent} attempts are marked current</small>}
+            {!row.current && !row.ambiguousCurrent && <small data-current="none">{row.standing === "not-started" ? "waiting" : row.pastAttempts ? "no current attempt" : ""}</small>}
           </div>
           <div className="flive-state">
             <span data-status={status ?? "not-started"}><span aria-hidden="true">{status === "active" ? "● " : status === "returned" ? "✓ " : status === "failed" ? "× " : "○ "}</span>{status ? LEG_WORD[status] ?? status.replace(/_/g, " ") : "not started"}</span>
@@ -76,6 +92,7 @@ export function RunLive({entry, runKey, host, primary, onPrimary, telemetry}: {e
       })}
     </div>
     {returnAddress && <NowLine address={returnAddress} host={host}/>}
+    </div>
   </div>;
 }
 

@@ -10,7 +10,8 @@
 //     on the Desk the search and the board are as they were;
 //   - the right panel answers about the selected run: the Run tab's header
 //     EQUALS the run's title and its unit segments the owner's units; the
-//     Agents tab lists real identities only (no hardcoded Guardians list, no
+//     Agents tab is the Position aperture over the owner's population reading
+//     (a named absence where the owner is unpublished; profiles secondary; no
 //     markdown dump); the Context tab keeps the canvas and offers Factory's
 //     slice with no raw record in the primary view;
 //   - ruling 7: no visible text says "returns".
@@ -66,17 +67,24 @@ export default async function run({page, baseUrl, check, shot, channel, log, pro
   check(tabTitle === firstSentence(A.purpose) && segments === S.readings.inspect.units.length, "Run tab: the compact header EQUALS the selected run's title, one segment per owner unit", {tabTitle, segments});
   await shot("run-tab");
 
-  // Agents: real identities only.
+  // Agents: the Position population aperture (WORLD-INHABITATION-V1 §4) —
+  // rows only from the owner's population reading (`aikit gateway who`).
+  // Where the installed owner does not publish it yet, the absence is named
+  // in the owner's own words and nothing is invented; agent profiles stay
+  // reachable as secondary detail.
   await page.getByRole("button", {name: "Agents", exact: true}).click().catch(() => page.getByRole("tab", {name: "Agents"}).click());
   const agents = page.locator("[data-agents-tab]");
   await agents.waitFor({timeout: 30000});
-  const ownerAgents = new Set([...S.readings.inspect.attempts.map(attempt => attempt.participant?.agentRef), ...S.readings.inspect.units.flatMap(unit => unit.agentRequirements?.agentRefs ?? []), ...(S.readings.runReading.agencies ?? []).map(agency => agency.agentRef)].filter(Boolean));
-  // The run's inspection lands after the Run page's own read; the roster
-  // grows to it (never shrinks, never invents).
-  await page.waitForFunction(count => document.querySelectorAll("[data-agents-tab] .fagent-row").length >= count, ownerAgents.size, {timeout: 60000}).catch(() => {});
-  const rows = await agents.locator(".fagent-row").evaluateAll(nodes => nodes.map(node => node.getAttribute("data-agent")));
-  check(rows.length > 0 && rows.every(ref => ownerAgents.has(ref) || /-guardian$/.test(ref)) && [...ownerAgents].every(ref => rows.includes(ref)),
-    "Agents: the run's own agents (from the owner's attempts and unit requirements) first, then Guardians from the roster — no hardcoded list", {rows, ownerAgents: [...ownerAgents]});
+  await page.waitForFunction(() => document.querySelector("[data-agents-tab]")?.getAttribute("data-population-state") !== "reading", null, {timeout: 60000});
+  const population = await agents.getAttribute("data-population-state");
+  const positionRows = await agents.locator(".fagent-row[data-position]").count();
+  const absence = (await agents.locator("[data-population-absence]").innerText().catch(() => "")).trim();
+  check(population === "read" || (population === "unavailable" && positionRows === 0 && /^Couldn't read who is here — .+\(aikit gateway who\)/.test(absence)),
+    "Agents: Positions come only from the owner's population reading — an unreadable reading is named in the owner's words, never an empty or invented roster", {population, positionRows, absence});
+  await agents.locator("[data-agent-profiles] > summary").click();
+  await page.waitForFunction(() => !document.querySelector("[data-agent-profiles] [role=status]"), null, {timeout: 30000}).catch(() => {});
+  const profileState = (await agents.locator("[data-agent-profiles]").innerText()).trim();
+  check(/agent profiles/i.test(profileState) && !/Reading agent profiles/.test(profileState), "Agents: the agent profile roster stays reachable as secondary detail, read when opened", {profileState: profileState.slice(0, 200)});
   check(await agents.locator("pre, .guardian-markdown").count() === 0, "Agents: no Guardian markdown is dumped into the panel");
   await shot("agents-tab");
 
@@ -84,8 +92,12 @@ export default async function run({page, baseUrl, check, shot, channel, log, pro
   await page.getByRole("button", {name: "Context", exact: true}).click().catch(() => page.getByRole("tab", {name: "Context"}).click());
   const contextPlane = page.locator('div[data-plane="factory-context"]');
   await contextPlane.waitFor();
-  await contextPlane.locator(".fslice").waitFor({timeout: 30000}).catch(() => {});
-  const slice = await contextPlane.locator(".fslice").innerText().catch(() => "");
+  // Factory's slice is the canvas's sibling in the Context plane (since the
+  // #492 panel rework the canvas div carries data-plane, the slice sits
+  // beside it), so it is found by its own name, not inside the canvas.
+  const factorySlice = page.locator('.fslice[aria-label="Factory context"]');
+  await factorySlice.waitFor({timeout: 30000}).catch(() => {});
+  const slice = await factorySlice.innerText().catch(() => "");
   const returnFirst = (/^(.+?[.!?])(?=\s+[A-Z0-9"“(])/.exec(A.returnSummary.trim().replace(/\s+/g, " "))?.[1] ?? A.returnSummary).replace(/[.]$/, "");
   check(/run material/i.test(slice) && slice.includes(returnFirst), "Context offers Factory's slice: the selected run's returned material, in the owner's words", {slice: slice.slice(0, 200)});
   await assertNoRawJson({check}, contextPlane, "L5 · the Context plane renders readable material only — no raw record in the primary view");

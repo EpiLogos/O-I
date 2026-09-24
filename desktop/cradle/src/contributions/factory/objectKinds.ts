@@ -2,7 +2,7 @@
  * in Factory mode these pages replace the Desk with ← Back inside
  * FactoryCentre, so the frame's generic object layer and tab opener stand
  * down for them. One list, read by both sides. */
-export const FACTORY_OBJECT_KINDS: ReadonlySet<string> = new Set(["factory-run", "factory-unit", "factory-attempt", "factory-check", "factory-now", "factory-agent", "tape-event"]);
+export const FACTORY_OBJECT_KINDS: ReadonlySet<string> = new Set(["factory-run", "factory-unit", "factory-attempt", "factory-check", "factory-now", "factory-agent", "factory-position", "tape-event"]);
 
 /** True when an open of this kind belongs to Factory's own centre. */
 export function factoryCentreOwns(mode: string | undefined, kind: string): boolean {

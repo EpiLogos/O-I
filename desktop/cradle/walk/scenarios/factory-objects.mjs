@@ -9,7 +9,8 @@
 //   Attempt    — from Live's Open attempt: agent, harness, model, status.
 //   Tool call  — from a Trajectory tape row's Open: the shared tape-event page
 //                re-read from the owner journal.
-//   Agent      — from the right panel's Agents tab (Central's roster).
+//   Agent      — from the attempt page's participant relation (the Agents
+//                tab is the Position aperture).
 //   F16        — Pop out asks the frame for the page's own window with the
 //                SAME identity: the open event carries popOut and the page's
 //                kind/ref/project; the encoded surface identity round-trips
@@ -117,13 +118,16 @@ export default async function run({page, baseUrl, check, shot, channel, log, pro
   check(tool.kind === "tape-event" && tool.title.startsWith("run ") && (tool.fields.Session ?? "") === SESSIONS.review, "Tool call page: the shared tape-event page, re-read from the owner journal", tool);
   await centre.getByRole("button", {name: "Back"}).click();
 
-  // Agent (right panel Agents tab → the agent's page in the centre)
-  await page.getByRole("tab", {name: "Agents"}).click().catch(async () => { await page.getByRole("button", {name: "Agents"}).click(); });
-  const agentRow = page.locator("[data-agents-tab] .fagent-row").first();
-  await agentRow.waitFor({timeout: 30000});
-  const agentRef = await agentRow.getAttribute("data-agent");
-  await agentRow.click();
+  // Agent (the attempt's participant → the agent's page in the centre). The
+  // right panel's Agents tab is the Position aperture (WORLD-INHABITATION-V1
+  // §4); an agent's profile page is reached from where the owner names the
+  // agent — the attempt — or from a Position's page, never from a name list.
+  await runPage.getByRole("tab", {name: "Live", exact: true}).click();
+  await runPage.locator(`.flive-row[data-leg="${reviewAttempt.workflowUnitRef}"]`).getByRole("button", {name: "Open attempt"}).click();
+  await fields(page);
+  const agentLink = centre.locator(".object-relations li", {hasText: "agent"}).locator(".object-link").first();
+  await agentLink.click();
   const agent = await fields(page);
-  check(agent.kind === "factory-agent" && agent.fields.Identity === agentRef, "Agent page: opened in the centre from the Agents tab, identity from the roster row", agent);
+  check(agent.kind === "factory-agent" && agent.fields.Identity === reviewAttempt.participant.agentRef, "Agent page: opened in the centre from the attempt's participant, identity EQUALS the owner's attempt", agent);
   await shot("agent-page");
 }

@@ -228,6 +228,10 @@ export type KernelOp =
   | {op:"factory_attempt_task_read";state_path:string;run_ref:string;task_ref:string;limit?:number;cursor?:unknown}
   | {op:"factory_owner";request:{kind:string;[field:string]:unknown}}
   | {op:"workcell_status_read"}
+  /** World inhabitation (WORLD-INHABITATION-V1 §4): AIKit's population,
+   * joined whoami and Refocus readings, schema-checked and bounded by a
+   * timeout in the kernel; a failure is an error the renderer names. */
+  | {op:"inhabitation_read";request:import("../contributions/factory/inhabitation/reads").InhabitationWireRequest}
   | {op:"wiki_projection_read";root:string;path:string}
   | {op:"wiki_projection_sources"}
   /** The installed harnesses' real status (`aikit --json client status`,
@@ -341,6 +345,7 @@ export type KernelOpResult =
   | { result:"factory_attempt_task_list_reading";data:unknown }
   | { result:"factory_attempt_task_reading";data:unknown }
   | { result:"workcell_status_reading";data:unknown }
+  | { result:"inhabitation_reading";data:unknown;warnings?:unknown[] }
   | { result:"wiki_projection_reading";data:unknown }
   | { result:"wiki_projection_sources_reading";data:unknown }
   | { result:"harness_status_reading";data:unknown }

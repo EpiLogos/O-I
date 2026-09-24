@@ -1,6 +1,6 @@
 ---
 Register: episteme
-Standing: design-commitment — owner-accepted as the UI lead, 2026-09-23 (rulings D1–D6 of 22 Sep and amendments A1–A6 of 23 Sep recorded in §7)
+Standing: design-commitment — owner-accepted as the UI lead, 2026-09-23 (rulings D1–D6 of 22 Sep, amendments A1–A6 of 23 Sep and A7 of the World-rooted inhabitation amendment recorded in §7)
 ---
 
 # 10 — The two sidebars
@@ -241,9 +241,19 @@ This follows the DeepSeek Harness run-log reference. It is a turn-aware event ta
 - Filters: All · Edits · Commands · Tools · Waits.
 - In Factory Run, the tape sits under the run's summary (steps, checks, tokens) and **Expand** promotes it to the centre.
 
-### 4.5 Agents
+### 4.5 Agents — who is here *(Amendment A7)*
 
-The v2 roster, kept: a search icon and one `+` (*New agent… / New team…*). Rows show avatar, name and one purpose line, the current assignment only when real, and a state mark. **Message** and `…` reveal on hover. Clicking a row opens the agent's page in the canvas (§4.7) with **Skills · Setup · Activity**. Sections: WORKING WITH YOU, GUARDIANS, both from real identities only. The hardcoded Guardians and Ta-Onta lists are removed. If discovery fails, it says so; it is never an empty roster.
+The Agents tab answers *who is here*: the **Positions** of the World in scope, and who occupies each one. A Position is a stable address (for example `@factory-guardian`). It stays in place when the agent, session, model or Workcell that fills it changes, so the tab lists addresses and their occupancy, not agent profiles ([WORLD-INHABITATION-V1](../contracts/WORLD-INHABITATION-V1.md) §4; O-I #220, Factory #195).
+
+- **Source.** The rows come from the owner's population reading (`aikit gateway who`) and nothing else. There is no desktop roster and no name heuristic. A Position that Factory names on the selected run but that the population reading lacks is still shown, with its occupancy unknown.
+- **Sections.** ON THIS RUN (the Positions Factory holds on the selected run, in Factory's order), IN THIS WORLD, INHERITED (root Positions). A header appears only above real rows.
+- **Row.** Avatar, the Position's label and handle, then two lines:
+  - **Occupancy as the owner states it:** `●` occupied and active, `◐` idle, `○` away, offline or vacant, `?` unknown or unavailable, with the owner's reason. An unknown is never drawn as present, and an occupied Position with no stated presence is not `●`.
+  - **Current work:** *Working on …*, *No current work*, or *Current work is ambiguous — n candidates*. Ambiguity is marked as needing attention.
+  - Undelivered messages show as a count only when the Gateway reports one. An unread journal is never shown as zero.
+- **Opening a row.** Clicking a row opens the **Position's page** in the canvas (§4.7): each facet of the joined reading (`aikit whoami`) with its standing and reason, the owner's current-work candidates, and links to its NOW records. The occupant's agent profile is a relation on that page.
+- **Agent profiles** stay reachable as secondary detail: a collapsed *Agent profiles* section under the Positions, and the agent relation on attempt and Position pages. They are no longer the primary list.
+- **Failure.** If the population cannot be read, the tab says so in the owner's words, with Retry. It is never an empty roster. The owner's warnings and absences (for example an unreadable Gateway journal) are listed under the rows.
 
 ### 4.6 Context
 
@@ -309,7 +319,7 @@ Each state has an ID, what the person sees, and the check that proves it. The ch
 | P14 | Promoted to centre | The right Chat shows one line: "Open in the centre — Bring back" | Exactly one composer in the DOM |
 | P15 | Inspect | The object's page opens as a canvas tab; ⌥-click pops it out | Same object identity docked and popped out; no JSON text outside *Show raw* |
 | P16 | Activity live / paused | Tail-follow on; after scrolling, the **Resume live** pill | An event arriving while paused does not scroll |
-| P17 | Agents: empty / error / search-empty | "Create an agent to work with." / "Couldn't load agents." + Retry / "No agents match "x"." + Clear | The three copies are distinct and reachable |
+| P17 | Agents: empty / error / search-empty | "No Positions in this world yet." / "Couldn't read who is here — ‹owner's words› (aikit gateway who)." + Retry / "No Positions match "x"." + Clear | The three copies are distinct and reachable; an error never shows as an empty list |
 | P18 | Narrow (≤760px) | Right becomes an overlay drawer; a detail drawer replaces the body with Back | Focus trap; Escape steps one layer |
 
 ## 6. What changes from today
@@ -369,6 +379,10 @@ Paths are relative to `desktop/cradle/src`.
 - **A5 — Epi-Logos lives in the hidden window footer**, not the mode bar.
 - **A6 — Open beside / Pop out** on every left-sidebar row that opens material.
 - **S1 accepted:** Settings with the left-sidebar section list, as shown in the study.
+
+### Amendment A7 — World-rooted inhabitation (O-I #220, Factory #195)
+
+- **A7 — The Agents tab is who is here.** Its rows are World Positions and their occupancy, from the owners' readings (§4.5; [WORLD-INHABITATION-V1](../contracts/WORLD-INHABITATION-V1.md)), not the agent profile roster. Profiles stay reachable as secondary detail. This replaces the WORKING WITH YOU / GUARDIANS sections of 22 Sep.
 
 ## 8. Build order
 

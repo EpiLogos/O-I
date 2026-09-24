@@ -10,9 +10,12 @@
  */
 import {registerObjectKind, type ObjectReading, type ObjectRef} from "../../../agent/objects/registry";
 import {nowReading, type NowReading} from "../../../receiving/now";
-import {inspectWorkflow, readJourney, readRun} from "./factoryReads";
+import {inspectWorkflow, readCurrentWork, readJourney, readRun} from "./factoryReads";
+import {peekDeskReading, titleOfRun} from "./deskStore";
 import {nowProjectOf} from "./nowRecord";
 import {agentName, isGuardian, readRoster} from "../sidebar/FactoryAgentsTab";
+import {peekPopulation, readWhoami} from "../inhabitation/reads";
+import {currentWorkWords, facetNowRef, facetOf, facetWords, occupancyView, positionName, warningWords, workView, WHOAMI_FACETS} from "../inhabitation/model";
 import type {FactoryObjectRef} from "./RunPage";
 import {attemptsFor, firstSentence, frontierNode, legStanding, refTail, runState, RUN_STATE_WORD, runTitle, unitChecks, unitOf, type RunReading, type WorkflowInspection} from "./runModel";
 
@@ -24,6 +27,7 @@ const dec = (ref: string) => ref.split(SEP).map(part => { try { return decodeURI
 export function factoryObject(object: FactoryObjectRef, runs: {runKey: string; statePath: string; runRef: string; title: string; project?: string}[], title?: string): ObjectRef {
   if (object.kind === "now-record") return {kind: "factory-now", ref: object.ref, title: title ?? "NOW record"};
   if (object.kind === "agent") return {kind: "factory-agent", ref: object.ref, title: object.label ?? refTail(object.ref) ?? "Agent"};
+  if (object.kind === "position") return {kind: "factory-position", ref: object.ref, title: object.label ?? refTail(object.ref) ?? "Position"};
   const run = runs.find(entry => entry.runKey === object.runKey);
   const statePath = run?.statePath ?? "", runRef = run?.runRef ?? "";
   const base = {project: run?.project};
@@ -35,24 +39,24 @@ export function factoryRunObject(statePath: string, runRef: string, title: strin
   return {kind: "factory-run", ref: enc(statePath, runRef), title, ...(project ? {project} : {})};
 }
 
-async function runAndInspection(transport: Parameters<typeof readRun>[0], statePath: string, runRef: string): Promise<{run: RunReading; inspection?: WorkflowInspection}> {
+async function runAndInspection(transport: Parameters<typeof readRun>[0], statePath: string, runRef: string): Promise<{run: RunReading; inspection?: WorkflowInspection; partial?: string}> {
   const run = await readRun(transport, statePath, runRef);
-  const inspection = await inspectWorkflow(transport, statePath, runRef).catch(() => undefined);
-  return {run, inspection};
+  const whole = await inspectWorkflow(transport, statePath, runRef).catch(() => undefined);
+  return {run, inspection: whole?.inspection, ...(whole?.partial ? {partial: whole.partial} : {})};
 }
 const runWords = (run: RunReading) => runTitle(undefined, run.destination, run.runRef);
 const pick = (fields: [string, unknown][]) => fields.filter(([, value]) => value !== undefined && value !== null && value !== "").map(([label, value]) => ({label, value: value as string}));
 
 registerObjectKind({kind: "factory-run", label: "Run", glyph: "factory", read: async (object, {transport}) => {
   const [statePath, runRef] = dec(object.ref);
-  const {run, inspection} = await runAndInspection(transport, statePath, runRef);
+  const {run, inspection, partial} = await runAndInspection(transport, statePath, runRef);
   const journey = run.owningJourneyRefs?.[0] ? await readJourney(transport, statePath, run.owningJourneyRefs[0]).catch(() => undefined) : undefined;
   const state = runState(run.lifecycle);
   const frontier = frontierNode(run);
   return {kindLabel: "Run", title: runTitle(journey?.commission?.purpose, run.destination, run.runRef), state: RUN_STATE_WORD[state],
     fields: pick([["Purpose", journey?.commission?.purpose], ["Next", frontier?.kind === "destination" ? undefined : frontier?.label],
       ["Units", inspection?.totalUnits !== undefined ? String(inspection.totalUnits) : undefined], ["Attempts", inspection?.totalAttempts !== undefined ? String(inspection.totalAttempts) : undefined],
-      ["Destination", run.destination]]),
+      ["Destination", run.destination], ["Inspection", partial]]),
     raw: {run, journey}} satisfies ObjectReading;
 }});
 
@@ -101,6 +105,9 @@ registerObjectKind({kind: "factory-attempt", label: "Attempt", glyph: "activity"
       ["Status", attempt.status ?? undefined],
       ["Verifications", attempt.verification?.length ? attempt.verification.map(receipt => `${receipt.outcome ?? "unknown"}${receipt.sourceRevision ? ` at ${receipt.sourceRevision.slice(0, 7)}` : ""} (${receipt.obligations?.length ?? 0} checks)`).join("; ") : undefined],
     ]),
+    // The participant's agent page — where the profile detail the Agents
+    // aperture no longer lists (it lists Positions) stays reachable.
+    relations: attempt.participant?.agentRef ? [{label: "agent", object: {kind: "factory-agent", ref: attempt.participant.agentRef, title: agentName(undefined, attempt.participant.agentRef), ...(object.project ? {project: object.project} : {})}}] : undefined,
     content: attempt.return?.summary ? <p className="object-text">{attempt.return.summary}</p> : undefined,
     raw: attempt} satisfies ObjectReading;
 }});
@@ -134,4 +141,63 @@ registerObjectKind({kind: "factory-agent", label: "Agent", glyph: "agent", read:
       ["Skills", profile?.skillRefs.length ? profile.skillRefs.map(refTail).join(", ") : undefined],
       ["Setup", profile ? (profile.accepted ? "Accepted definition in Central's roster" : "A proposed definition awaiting acceptance") : undefined]]),
     raw: profile} satisfies ObjectReading;
+}});
+
+/** A Position (WORLD-INHABITATION-V1): the joined `aikit whoami --position P
+ * --full` reading, every facet with its standing, in the contract's order.
+ * When the joined reading cannot be had, the page says so and shows only what
+ * the population reading already stated for this Position — never a guess.
+ * The occupant's agent profile is a relation (secondary detail). */
+/** Factory's own current-work derivation for the Position, per Desk source
+ * in scope (`factory development current-work`): the candidates behind an
+ * ambiguity, so it can be resolved — never collapsed to one. */
+async function factoryCurrentWork(transport: Parameters<typeof readRun>[0], positionRef: string): Promise<{label: string; value: string}[]> {
+  const sources = peekDeskReading()?.discovery?.sources ?? [];
+  if (!sources.length) return [{label: "Factory current work", value: "not read — no Factory source is in the Desk's reading"}];
+  const reads = await Promise.all(sources.map(source => readCurrentWork(transport, source.statePath, positionRef).then(read => ({source, read}))));
+  return reads.map(({source, read}) => ({label: sources.length > 1 ? `Factory current work · ${source.project ?? "Central"}` : "Factory current work",
+    value: read.state === "read" ? currentWorkWords(read.data, runRef => titleOfRun(runRef)) : `unavailable — ${read.reason} (${read.source})`}));
+}
+
+registerObjectKind({kind: "factory-position", label: "Position", glyph: "agent", read: async (object, {transport}) => {
+  const [joined, factoryWork] = await Promise.all([readWhoami(transport, object.ref, object.project), factoryCurrentWork(transport, object.ref)]);
+  const held = peekPopulation(object.project)?.read;
+  const row = held?.state === "read" ? held.data.positions?.find(position => position.position_ref === object.ref) : undefined;
+  if (joined.state === "unavailable") {
+    const occupancy = occupancyView(row?.occupancy);
+    return {kindLabel: "Position", title: row ? positionName(row) : object.title, state: `joined reading unavailable — ${joined.reason}`,
+      fields: [...pick([["Handle", row?.handle ?? undefined], ["Role", refTail(row?.role_ref ?? undefined)], ["Occupancy", row ? occupancy.words : undefined], ["Current work", row ? workView(row.current_work, runRef => titleOfRun(runRef)).words : undefined],
+        ["Joined reading", `unavailable — ${joined.reason} (${joined.source})`]]), ...factoryWork],
+      raw: row} satisfies ObjectReading;
+  }
+  const reading = joined.data;
+  const titleOf = (runRef: string) => titleOfRun(runRef);
+  // The owner's value objects, read where their shapes are the owners':
+  // the Position record (central.world-position/v1) and the occupancy
+  // (actuation.position-occupancy/v1).
+  const positionValue = facetOf(reading, "position")?.value as {record?: {label?: string; handle?: string; purpose?: string; profile_ref?: string | null; eligible_agent_refs?: string[]}} | undefined;
+  const record = positionValue?.record;
+  const occupancyValue = facetOf(reading, "occupancy")?.value as {current?: {agent_ref?: string | null}} | undefined;
+  const occupantAgent = occupancyValue?.current?.agent_ref ?? undefined;
+  const eligible = (record?.eligible_agent_refs ?? []).filter((ref): ref is string => typeof ref === "string");
+  const nowRelation = (name: string, label: string) => {
+    const ref = facetNowRef(facetOf(reading, name));
+    return ref ? [{label, object: {kind: "factory-now", ref, title: label}}] : [];
+  };
+  const profileAgent = occupantAgent ?? eligible[0];
+  const warnings = (joined.warnings ?? []).map(warningWords);
+  return {kindLabel: "Position", title: record?.label ?? (row ? positionName(row) : object.title),
+    state: facetWords("occupancy", facetOf(reading, "occupancy")),
+    fields: [
+      ...pick([["Handle", record?.handle ?? row?.handle ?? undefined], ["Purpose", record?.purpose]]),
+      ...WHOAMI_FACETS.map(([name, label]) => ({label, value: facetWords(name, facetOf(reading, name), titleOf)})),
+      ...factoryWork,
+      ...pick([["Profile", record?.profile_ref ? refTail(record.profile_ref) : undefined], ["Eligible agents", eligible.length ? eligible.map(refTail).join(", ") : undefined],
+        ["Owner warnings", warnings.length ? warnings.join("; ") : undefined]]),
+    ],
+    relations: [
+      ...nowRelation("root_now", "Root NOW"), ...nowRelation("child_now", "Child NOW"), ...nowRelation("return_destination", "Return destination"),
+      ...(profileAgent ? [{label: occupantAgent ? "occupant's agent profile" : "eligible agent profile", object: {kind: "factory-agent", ref: profileAgent, title: refTail(profileAgent) ?? "Agent", ...(object.project ? {project: object.project} : {})}}] : []),
+    ],
+    raw: reading} satisfies ObjectReading;
 }});
