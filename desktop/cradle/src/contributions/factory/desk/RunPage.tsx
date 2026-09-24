@@ -134,6 +134,7 @@ export function RunPage({runKey, onBack, host}: {runKey: string; onBack: () => v
         <MenuButton ariaLabel="More run actions" className="oi-action frun-more" label={<Glyph name="more" size={14}/>} rows={menu}/>
       </div>
     </header>
+    <RunSignalLink runKey={runKey} entry={entry} onBack={onBack}/>
     <IconTabStrip aria-label="Run views" items={TABS.map(entry=>({id:entry.key,label:entry.label,icon:entry.key==="map"?"graph":entry.key==="trajectory"?"history":entry.key==="live"?"factory":"file"}))} current={tab} onSelect={id=>setTab(id as typeof tab)}/>
     {reading === "reading" && !entry.inspection && !entry.inspectionError && <p className="frun-note" role="status">Reading this run…</p>}
     {reading === "refused" && <p className="frun-note" role="alert">Couldn't read this run: {error}</p>}
