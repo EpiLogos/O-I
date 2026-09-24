@@ -486,3 +486,18 @@ body.presentation #physis-panel,body.library-open #physis-panel{display:none}
 .lens-facet{border:1px dashed var(--line);border-radius:9px;padding:12px 13px}
 .lens-facet-purpose{font-size:11.5px;line-height:1.5;margin:0 0 8px}
 .lens-facet-standing{font-size:10px;line-height:1.6;color:var(--muted);margin:0}
+
+/* Creation-first entry gate — New / Continue / Open */
+.entry-gate{position:fixed;inset:0;z-index:90;display:grid;place-items:center;background:color-mix(in srgb,var(--paper,#f4f2eb) 88%,transparent);backdrop-filter:blur(8px);padding:24px}
+.entry-gate[hidden]{display:none!important}
+.entry-gate-card{width:min(440px,100%);background:var(--panel,#f9f8f3);border:1px solid var(--line,rgba(43,45,36,.16));border-radius:14px;padding:28px 26px;box-shadow:0 18px 60px #20271718}
+.entry-gate-card h1{font:28px/1.15 var(--serif,Georgia,serif);font-weight:400;margin:4px 0 12px;letter-spacing:-.03em}
+.entry-gate-lede{font-size:12px;line-height:1.7;color:var(--muted,#74766b);margin-bottom:18px}
+.entry-gate-actions{display:grid;gap:8px;margin-bottom:16px}
+.entry-gate-actions .primary{width:100%}
+.entry-gate-actions button:not(.primary){border:1px solid var(--line,rgba(43,45,36,.16));border-radius:6px;padding:10px 14px;font-size:12px;background:transparent}
+.entry-gate-standing{font-size:10px;line-height:1.6;color:var(--muted,#74766b);margin:0 0 16px}
+.entry-gate-starters{border-top:1px solid var(--line,rgba(43,45,36,.16));padding-top:14px}
+.entry-gate-starters p{font-size:10px;color:var(--muted,#74766b);margin:0 0 10px}
+.entry-gate-starters button{display:block;width:100%;text-align:left;padding:8px 0;font-size:12px;color:var(--accent,#8b5844)}
+.modes-standing{font-size:10px;color:var(--muted,#74766b);padding:0 20px 8px;margin:0}

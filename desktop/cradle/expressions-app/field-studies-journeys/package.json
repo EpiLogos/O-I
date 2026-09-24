@@ -7,7 +7,7 @@
   "scripts": {
     "build": "node scripts/build.mjs",
     "dev": "node scripts/serve.mjs",
-    "test": "npm run build && node --test tests/model.test.mjs",
+    "test": "npm run build && node --test tests/model.test.mjs tests/entry-gate.test.mjs",
     "test:browser": "python tests/native_browser.py",
     "typecheck": "tsc --noEmit",
     "test:gpu": "python tests/native_gpu.py"

@@ -39,6 +39,10 @@ export function installNativeField(engine:FieldEngineAdapter,onResumeApplication
  <label>Native operation JSON<textarea name="native-command" spellcheck="false" rows="5"></textarea></label>
  <button type="button" data-native="operate">Apply native operation</button><button type="button" data-native="inspect">Inspect complete native sources</button>
  <pre data-native-sources></pre></details>
+ <details><summary>Causal trace</summary>
+ <p>Source → producer → target → actuator → observable. Disconnect removes the physical consumer.</p>
+ <pre data-native-causal></pre>
+ <pre data-native-actuators></pre></details>
  <details><summary>Recovery</summary><p>A checkpoint covers this live GPU at an unchanged native cursor, not process restart or exact historical rewind.</p>
  <button type="button" data-native="checkpoint">Hold and checkpoint</button><button type="button" data-native="restore">Restore held checkpoint</button></details>
  <output role="status" aria-live="polite" data-native-status>Native owner unavailable until an explicit binding is connected.</output>
@@ -67,7 +71,14 @@ export function installNativeField(engine:FieldEngineAdapter,onResumeApplication
    query<HTMLSelectElement>('[name="native-rna"]').value=String(reading.domain.m3.rna);
   }
   query('output[data-native-status]').textContent=reading.reason??`${reading.status} · ${reading.presentation_mode} · ${reading.native?.acknowledged?.generation??'—'} / ${reading.native?.acknowledged?.samples_elapsed??'—'}`;
-  if(panel.open)query('pre[data-native-reading]').textContent=JSON.stringify(reading,null,2);
+  if(panel.open){
+   query('pre[data-native-reading]').textContent=JSON.stringify(reading,null,2);
+   query('pre[data-native-causal]').textContent=JSON.stringify(reading.causal_trace??{status:'unavailable'},null,2);
+   query('pre[data-native-actuators]').textContent=JSON.stringify({
+    physical_form_actuator:(reading as any).physical_form_actuator??{applied:false,reason:'unavailable'},
+    actuator_standing:(reading as any).actuator_standing??{connected:false},
+   },null,2);
+  }
   query<HTMLButtonElement>('[data-native="connect"]').disabled=busy||!source||!['manual','unavailable'].includes(reading.status)||!!reading.lease;
   for(const command of ['resume','mute','scale','follow','operate','inspect','checkpoint','restore','row','tick','transcription','damping','axis'])query<HTMLButtonElement>(`[data-native="${command}"]`).disabled=busy||!reading.lease||reading.status==='unavailable';
  };

@@ -6,7 +6,8 @@ export interface NativeDomainReading {
   basis_generation: string;
   m1: {revision:string; coordinate:string;row12:number;tick12:number; quadrature:number[]; opposite_quadrature:number[]; standing:unknown};
   m2: {generation:number; modes:Array<{ref:string;frequency_hz:number;damping_per_second:number}>; standing:unknown};
-  m3: {generation:number; codon_ref:string; sequence:string; rna:boolean; angles_deg10:number[]; standing:unknown};
+  m3: {generation:number; codon_ref:string; sequence:string; rna:boolean; angles_deg10:number[]; standing:unknown;
+    physical_form?:{schema:string;target_kind:string;constituent_ref:string;pose_ordinal:number;state_count:number;address:number;standing:string}|null};
 }
 const object = (v:unknown):v is Record<string,any> => !!v && typeof v==='object' && !Array.isArray(v);
 const requireValue = (ok:unknown,reason:string):void => {if(!ok)throw new Error(`native source admission: ${reason}`);};
@@ -25,6 +26,16 @@ export function projectNativeSources(sources:any,identity:{event_ref:string;subj
   requireValue(Number.isSafeInteger(m3.identity.profile_generation)&&m3.identity.profile_generation>=0,'M3 generation missing');
   requireValue(typeof m3.transcription?.rna==='boolean'&&typeof m3.transcription?.sequence==='string'&&/^[ACGTU]{3}$/.test(m3.transcription.sequence),'native transcription unavailable');
   requireValue(text(m3.form?.codon?.ref)&&vector(m3.form?.angles_deg10,3),'native form source/angles unavailable');
+  const physical=m3.form?.physical_form;
+  let physical_form:NativeDomainReading['m3']['physical_form']=null;
+  if(physical!=null){
+    requireValue(physical.schema==='ql.m3-physical-form-target/v1','M3 physical_form schema mismatch');
+    requireValue(physical.target_kind==='fold-pose'&&text(physical.constituent_ref)&&text(physical.standing),'M3 physical_form incomplete');
+    requireValue(Number.isInteger(physical.pose_ordinal)&&physical.pose_ordinal>=0&&Number.isInteger(physical.state_count)&&physical.state_count>0,'M3 physical_form pose/state unavailable');
+    requireValue(Number.isInteger(physical.address)&&physical.address>=0,'M3 physical_form address unavailable');
+    requireValue(typeof physical.standing==='string'&&physical.standing.includes('not orientation_seed'),'M3 physical_form must not collapse into orientation_seed');
+    physical_form={schema:physical.schema,target_kind:physical.target_kind,constituent_ref:physical.constituent_ref,pose_ordinal:physical.pose_ordinal,state_count:physical.state_count,address:physical.address,standing:physical.standing};
+  }
   const modes=m2.resonator?.modes;
   requireValue(Array.isArray(modes)&&modes.length>0&&modes.length<=4096,'native material mode set unavailable');
   const refs=new Set<string>();
@@ -33,7 +44,7 @@ export function projectNativeSources(sources:any,identity:{event_ref:string;subj
     event_ref:identity.event_ref,subject_ref:identity.subject_ref,basis_generation:identity.generation,
     m1:{revision:m1.config.revision,coordinate:m1.config.selected_coordinate,row12:m1.config.row12,tick12:m1.config.tick12,quadrature:[...m1.carrier.quadrature],opposite_quadrature:[...m1.carrier.opposite_quadrature],standing:m1.standing},
     m2:{generation:m2.identity.profile_generation,modes:modes.map((mode:any)=>({ref:mode.mode_ref,frequency_hz:mode.frequency_hz,damping_per_second:mode.damping_per_second})),standing:current.derivation?.material_standing??m2.continuous_standing},
-    m3:{generation:m3.identity.profile_generation,codon_ref:m3.form.codon.ref,sequence:m3.transcription.sequence,rna:m3.transcription.rna,angles_deg10:[...m3.form.angles_deg10],standing:m3.form.orientation_standing},
+    m3:{generation:m3.identity.profile_generation,codon_ref:m3.form.codon.ref,sequence:m3.transcription.sequence,rna:m3.transcription.rna,angles_deg10:[...m3.form.angles_deg10],standing:m3.form.orientation_standing,physical_form},
   };
 }
 export type NativeBasisEdit = {kind:'harmonic-row';row12:number}|{kind:'carrier-tick';tick12:number}|{kind:'transcription';rna:boolean}|{kind:'damping';mode_ref:string;per_second:number};

@@ -44,6 +44,8 @@ import {mountShell,iconButton as ib} from './shell.js';
 import {OrbitControl} from './orbitControl.js';
 import {RailItem,railPressed} from './rail.js';
 import {featuredExpressions,startingPoints,nativeSeven,forkExpression,libraryHTML,modesHTML,compositionCover} from './expressions.js';
+import {entryGateHTML} from './entryGate.js';
+import {AUTHORED_CHAKRA_STARTER,STANDING_LABEL} from './centreStanding.js';
 import {installKernelExpressions,kernelExpressionsAvailable} from './kernelExpressions.js';
 import {installNativeWorkspace,type NativeSubject} from './nativeWorkspace.js';
 import {installLensStudio,type LensId} from './lensStudio.js';
@@ -439,7 +441,13 @@ async function action(name:string,el:HTMLElement,event?:Event){const s=scene(),s
  case 'add-built-in':{const added=clone(preset(el.dataset.value!).scenes[0].entities);ensureCapacity(added);for(const x of added)x.id=uid('entity');changed(()=>{s.entities.push(...added);selected=added.map(x=>x.id);});closeDialogs();edit(true,'objects');break;}
  case 'import-legacy':{const raw=localStorage.getItem('typographic_pointcloud_saved_states');if(raw){const result=importDocuments(JSON.parse(raw));collectImported(result.journeys);toast(`${result.journeys.length} previous native scenes imported. Original browser key unchanged. ${result.errors.map(e=>e.message).join(' · ')}`,9000);openLibrary();}break;}
  case 'load-saved':{const j=store.document.id===el.dataset.id?store.document:sessionExpressions.get(el.dataset.id!)??readLibrary().find(j=>j.id===el.dataset.id);if(j)loadJourney(j);break;}
- case 'new-journey':loadJourney(blankJourney());edit(true,'scene');break;
+ case 'new-journey':loadJourney(blankJourney());edit(true,'scene');closeEntryGate();break;
+ case 'entry-new':loadJourney(blankJourney());edit(true,'scene');closeEntryGate();toast('Blank Expression — place a glyph or formation to begin.');break;
+ case 'entry-continue':closeEntryGate();toast(store.document.name?'Continued '+store.document.name:'Continued last work');break;
+ case 'entry-open':closeEntryGate();openLibrary();break;
+ case 'entry-open-native':closeEntryGate();nativeWorkspace?.toggle();break;
+ case 'entry-starter-mark':loadJourney(forkExpression(oiMark()));edit(true,'scene');closeEntryGate();break;
+ case 'entry-dismiss':closeEntryGate();break;
  case 'new-scene':changed(()=>{store.document.scenes.splice(sceneIndex+1,0,blankScene());sceneIndex++;selected=[];textId=scene().text[0]?.id??null;sceneElapsed=0;journeyPlaying=false;});edit(true,'scene');timelineOpen=true;renderAll();break;
  case 'duplicate-scene':{const idx=Number(el.dataset.index??sceneIndex);changed(()=>{const n=clone(store.document.scenes[idx]);n.id=uid('scene');n.name+=' / variation';store.document.scenes.splice(idx+1,0,n);sceneIndex=idx+1;sceneElapsed=0;journeyPlaying=false;});break;}
  case 'delete-scene':{if(store.document.scenes.length===1){toast('Keep at least one scene in the expression.');break;}const idx=Number(el.dataset.index);confirmChange('Remove this scene?',`“${store.document.scenes[idx].name}” will be removed from this expression. Undo can restore it.`,()=>changed(()=>{delete store.document.savedScenes?.[store.document.scenes[idx].id];store.document.scenes.splice(idx,1);if(sceneIndex>=idx)sceneIndex=Math.max(0,sceneIndex-1);sceneElapsed=0;}));break;}
@@ -457,7 +465,7 @@ async function action(name:string,el:HTMLElement,event?:Event){const s=scene(),s
  case 'semantic-remove-modulation':{const entityId=el.dataset.entityId,binding=entityId?semanticBindingFor(s,entityId):undefined,index=Number(el.dataset.index);if(binding&&Number.isInteger(index))changed(()=>{binding.modulations?.splice(index,1);});break;}
  case 'duplicate-entity':duplicateEntity();break;case 'delete-entity':deleteEntities();break;
  case 'arrange':{const targets=s.entities.filter(e=>!e.locked&&selected.includes(e.id));if(!targets.length){toast('Select at least one unlocked centre.');break;}changed(()=>{arrange(targets,el.dataset.value!,s.composition.plane);s.composition.layout=el.dataset.value!;});break;}
- case 'chakra-add':{const source=starters.find(p=>p.id==='composition-chakra_body')?.expression.scenes[0];if(!source)throw new Error('Semantic Chakra Body starter is unavailable.');let added:Entity[]=[];changed(()=>{added=mergeSemanticStarter(s,source);selected=added.map(e=>e.id);});toast('Seven ordinary centres added with explicit semantic bindings. No hidden chakra mode was enabled.');break;}
+ case 'chakra-add':{const source=starters.find(p=>p.id==='composition-chakra_body')?.expression.scenes[0];if(!source)throw new Error('Semantic Chakra Body starter is unavailable.');let added:Entity[]=[];changed(()=>{added=mergeSemanticStarter(s,source);selected=added.map(e=>e.id);});toast(STANDING_LABEL[AUTHORED_CHAKRA_STARTER]+'. No hidden chakra mode was enabled.');break;}
  case 'add-palette':if(s.field.palette.length<8)changed(()=>{s.engine.paletteSource='custom';s.field.palette.push('#a4876c');});break;
  case 'remove-palette':if(s.field.palette.length>2)changed(()=>{s.engine.paletteSource='custom';s.field.palette.pop();});break;
  case 'fold-state':{if(!e)break;const destinations=store.document.scenes.slice(0,sceneIndex).flatMap(sc=>sc.entities.filter(v=>v.kind==='formation'&&!v.locked&&v.sequence.steps.length<32).map(v=>({scene:sc,entity:v})));if(!destinations.length){toast('An earlier scene needs an unlocked formation with room for another state.');break;}$('confirm-dialog').innerHTML=`${modalCloseButton()}<h2>Add object state</h2><p class="intro">Copy ${esc(e.name)} into an earlier formation’s sequence. Its source, shape, position, size, colour and force become one state. Scene physics and automation stay in their scenes.</p><label class="control"><span>Destination scene / formation</span><select id="fold-target">${destinations.map(d=>`<option value="${esc(d.scene.id)}|${esc(d.entity.id)}">${esc(d.scene.name)} / ${esc(d.entity.name)}</option>`).join('')}</select></label><label class="control"><span>Play these states with</span><select id="fold-mode"><option value="seconds">Seconds · hold and transition</option><option value="morph">Morph cycles</option><option value="manual">Manual blend</option></select></label><label class="toggle-row"><span>Remove this working scene after adding<small>Undo restores it. The earlier scene’s named snapshot stays intact.</small></span><input type="checkbox" id="fold-remove"><i></i></label><button class="primary" data-action="confirm-fold">Add to sequence</button>`;$('confirm-dialog').dataset.sourceEntity=e.id;$('confirm-dialog').dataset.sourceScene=s.id;$('confirm-dialog').dataset.sourceStep=String(stepIndex);$<HTMLDialogElement>('confirm-dialog').showModal();break;}
@@ -798,7 +806,8 @@ if(qs.get('journey')==='seven')store.document=initialiseSceneSaves(initialiseBel
 if(window.__START_PRESENTATION__||qs.has('present')){presenting=true;fieldPaused=false;scenePlaying=true;journeyPlaying=store.document.scenes.length>1;}
 async function startWorkspace(){
  let recovered:SessionState|undefined;
- if(!window.__JOURNEY__&&!qs.has('journey')&&!qsExpression){try{for(const draft of await readDrafts())sessionExpressions.set(draft.id,draft);const id=localStorage.getItem('oi.field-studies.last'),draft=id?await readDraft(id):undefined;if(draft&&(!initial.updatedAt||draft.id!==initial.id||draft.updatedAt>=initial.updatedAt)){store.document=initialiseSceneSaves(initialiseBelts(draft));store.touch();}recovered=validateSession(JSON.parse(localStorage.getItem(SESSION_KEY)??'null'),store.document);}catch(e){console.warn('Draft recovery unavailable',e);}}
+ let showEntry=false;
+ if(!window.__JOURNEY__&&!qs.has('journey')&&!qsExpression){try{for(const draft of await readDrafts())sessionExpressions.set(draft.id,draft);const id=localStorage.getItem('oi.field-studies.last'),draft=id?await readDraft(id):undefined;if(draft&&(!initial.updatedAt||draft.id!==initial.id||draft.updatedAt>=initial.updatedAt)){store.document=initialiseSceneSaves(initialiseBelts(draft));store.touch();}recovered=validateSession(JSON.parse(localStorage.getItem(SESSION_KEY)??'null'),store.document);showEntry=!startsInTechne;}catch(e){console.warn('Draft recovery unavailable',e);showEntry=!startsInTechne;}}
  if(recovered&&!qs.has('scene')){sceneIndex=store.document.scenes.findIndex(s=>s.id===recovered!.sceneId);selected=recovered.selected;stepIndex=recovered.stepIndex;sceneElapsed=recovered.sceneElapsed;simTime=recovered.simTime;scenePlaying=recovered.scenePlaying??recovered.playing;journeyPlaying=recovered.journeyPlaying;if(recovered.fieldPaused!==undefined)fieldPaused=recovered.fieldPaused;if(qs.has('still'))fieldPaused=true;camera=recovered.camera;}else applySceneView();
  document.body.classList.toggle('oi-host-techne',hostMode==='techne');renderRail();
  await nativeWorkspace?.changed(store.document);
@@ -807,9 +816,14 @@ async function startWorkspace(){
 if(startupError)toast(startupError,7000);else if(workspaceStorageError)toast('Saved toolbelt could not be read. Starter controls are available for this session.',7000);
 if(fieldPaused&&!recovered&&!qs.has('still'))toast('A still field, following your reduced-motion preference. Play a scene, or lift “Pause physics” in the studio, to set it in motion.',6000);
 if(qs.has('edit'))edit(true,(['scene','objects','field','motion'].includes(qs.get('edit')!)?qs.get('edit'):'scene')as InspectorContext['tab']);
+if(showEntry)openEntryGate(!!recovered||!!localStorage.getItem('oi.field-studies.last'),store.document.name);
 
 if(qsExpression?.startsWith('expression:')){const open=()=>void nativeWorkspace?.open(qsExpression);if(kernelExpressionsAvailable())open();else window.addEventListener('message',function ready(event){if(event.source===window.parent&&event.data?.v===1&&event.data?.kind==='oi-kernel-channel'){window.removeEventListener('message',ready);open();}});}
 setInterval(()=>{saveSession();if(propertyTake&&propertyTake.elapsed>0)void flushDraft();},1000);}
+function openEntryGate(hasContinue:boolean,continueLabel?:string){
+ const gate=$('entry-gate');gate.hidden=false;gate.innerHTML=entryGateHTML({hasContinue,continueLabel:continueLabel?`Continue “${continueLabel}”`:undefined,hasNative:kernelExpressionsAvailable()});
+}
+function closeEntryGate(){const gate=$('entry-gate');gate.hidden=true;gate.innerHTML='';}
 window.addEventListener('physis-quality',(ev=>{const s=(ev as CustomEvent).detail??{};if(Number(s.fps)>0)physisFpsCap=Number(s.fps);if(Number(s.pixelRatio)>0){physisPixelRatio=Number(s.pixelRatio);if(physisPixelRatio!==physisRatioApplied){physisRatioApplied=physisPixelRatio;resize();}}if(Number(s.particleLimit)>0)physisParticleCap=Number(s.particleLimit);needsFrame=true;}) as EventListener);
 function desktopSource():DesktopScene{return {expression:clone(store.document),sceneIndex,camera:{...camera},viewport:{width,height},name:scene().name+' · '+store.document.name};}
 installPhysis(desktopSource,source=>{loadJourney(validateJourney(source.expression));setScene(source.sceneIndex??0);camera={...defaultCamera(),...source.camera};if(source.viewport){camera.panX*=width/source.viewport.width;camera.panY*=height/source.viewport.height;}overlayDirty=true;needsFrame=true;renderAll();},toast);
