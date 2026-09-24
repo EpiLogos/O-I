@@ -75,12 +75,12 @@ try{
  // Explicit TEST geometry correspondence; never inserted into production.
  const binding={schema:'oi.native-expression-binding/v1',host:{instance_ref:'controlled:joined-browser',basis:input.basis,field:input.field},presentation:{units_per_metre:400,slots_a:Array.from({length:count},(_,i)=>i%samples),slots_b:Array.from({length:count},(_,i)=>(i+1)%samples)}};
  await writeFile(join(temp,'binding.json'),JSON.stringify(binding));
- await frame.locator('.native-field-panel>summary').click();await frame.locator('[name="native-path"]').fill('binding.json');await frame.locator('[data-native="source"]').click();await frame.locator('[data-native="connect"]').click();
+ await frame.locator('.native-field-panel>summary').click({force:true});await frame.locator('[name="native-path"]').fill('binding.json');await frame.locator('[data-native="source"]').click({force:true});await frame.locator('[data-native="connect"]').click({force:true});
  await frame.waitForFunction(()=>['following','held','unavailable'].includes(window.__FIELD_STUDIES__.native().status),null,{timeout:20000});
  assert.equal(await frame.evaluate(()=>window.__FIELD_STUDIES__.native().status),'following',await frame.locator('[data-native-status]').textContent());
  await frame.waitForFunction(()=>Number(window.__FIELD_STUDIES__.native().native?.presented.samples_elapsed)>0,null,{timeout:15000});
  assert.ok(pcm,'actual native PCM is nonzero');assert.equal(opens,1);report.checks.push('complete real native producer opens once and delivers nonzero PCM plus retained targets');
- await frame.locator('[data-native="hold"]').click(,{force:true});await page.waitForTimeout(200);
+ await frame.locator('[data-native="hold"]').click({force:true});await page.waitForTimeout(200);
  const held=await frame.evaluate(()=>({reading:window.__FIELD_STUDIES__.native(),targets:Array.from(window.__FIELD_STUDIES__.nativeTargets().target_a).slice(0,32),positions:window.__FIELD_STUDIES__.inspect(true).positions}));
  const native=frames.get(`${held.reading.native.presented.generation}:${held.reading.native.presented.samples_elapsed}`);assert.ok(native,'presented cursor must name an actual native reply');
  for(let slot=0;slot<8;slot++)for(let axis=0;axis<3;axis++)assert.equal(held.targets[slot*4+axis],Math.fround(Math.fround(native.targets[slot%samples].position[axis])*400));
@@ -90,24 +90,24 @@ try{
  assert.equal(held.reading.domain.m1.coordinate,latestSources.current.m1.config.selected_coordinate);report.checks.push('M1 carrier and M3 transcription consume the real inspected outputs');
  await frame.locator('summary').filter({hasText:'Native domain controls'}).click({force:true});
  const tick12=(held.reading.domain.m1.tick12+1)%12;
- await frame.locator('[name="native-tick"]').fill(String(tick12));await frame.locator('[data-native="tick"]').click(,{force:true});
+ await frame.locator('[name="native-tick"]').fill(String(tick12));await frame.locator('[data-native="tick"]').click({force:true});
  await frame.waitForFunction(expected=>window.__FIELD_STUDIES__.native().domain?.m1.tick12===expected,tick12,{timeout:15000});
  assert.notDeepEqual(latestSources.current.m1.carrier.quadrature,held.reading.domain.m1.quadrature);
  await frame.waitForFunction(()=>document.querySelector('[data-carrier]')?.getAttribute('x2')===String(window.__FIELD_STUDIES__.native().domain.m1.quadrature[0]));
  report.checks.push('native M1 carrier tick changes returned quadrature and the actual stage vector without a renderer oscillator');
- const priorRNA=held.reading.domain.m3.rna;await frame.locator('[name="native-rna"]').selectOption(String(!priorRNA));await frame.locator('[data-native="transcription"]').click(,{force:true});
+ const priorRNA=held.reading.domain.m3.rna;await frame.locator('[name="native-rna"]').selectOption(String(!priorRNA));await frame.locator('[data-native="transcription"]').click({force:true});
  await frame.waitForFunction(expected=>window.__FIELD_STUDIES__.native().domain?.m3.rna===expected,!priorRNA,{timeout:15000});
  assert.equal(latestSources.current.m3.transcription.rna,!priorRNA);assert.deepEqual(latestSources.original.input,input.basis);report.checks.push('M3 transcription edit returns real new source output without replacing original evidence');
- const mode=held.reading.domain.m2.modes[0],damping=mode.damping_per_second+.125;await frame.locator('[name="native-damping"]').fill(String(damping));await frame.locator('[data-native="damping"]').click(,{force:true});
+ const mode=held.reading.domain.m2.modes[0],damping=mode.damping_per_second+.125;await frame.locator('[name="native-damping"]').fill(String(damping));await frame.locator('[data-native="damping"]').click({force:true});
  await frame.waitForFunction(expected=>window.__FIELD_STUDIES__.native().domain?.m2.modes[0].damping_per_second===expected,damping,{timeout:15000});
  assert.equal(latestSources.current.m2.resonator.modes[0].damping_per_second,damping);report.checks.push('M2 damping reaches the actual material owner with a newer coupled generation');
- await frame.locator('[name="native-phase"]').fill('179');await frame.locator('[data-native="axis"]').click(,{force:true});
+ await frame.locator('[name="native-phase"]').fill('179');await frame.locator('[data-native="axis"]').click({force:true});
  await frame.waitForFunction(()=>window.__FIELD_STUDIES__.nativeTargets()?.native?.clock?.inscription?.half_degrees===179,null,{timeout:15000});
  report.checks.push('continuous native phase is consumed without advancing a second renderer clock');
- await frame.locator('[data-native="hold"]').click(,{force:true});await page.screenshot({path:join(out,'native-domain.png')});
+ await frame.locator('[data-native="hold"]').click({force:true});await page.screenshot({path:join(out,'native-domain.png')});
  await page.evaluate(()=>document.querySelector('iframe').contentWindow.postMessage({v:1,kind:'host-mode',mode:'techne'},'*'));await frame.waitForFunction(()=>window.__FIELD_STUDIES__.getState().hostMode==='techne');
  assert.equal(await frame.evaluate(()=>window.__FIELD_STUDIES__.native().lease),lease);assert.equal(opens,1);report.checks.push('host-mode switch retains native lease and app subject');
- disconnect=true;await frame.locator('[data-native="resume"]').click(,{force:true});await frame.waitForFunction(()=>window.__FIELD_STUDIES__.native().status==='unavailable',null,{timeout:15000});
+ disconnect=true;await frame.locator('[data-native="resume"]').click({force:true});await frame.waitForFunction(()=>window.__FIELD_STUDIES__.native().status==='unavailable',null,{timeout:15000});
  const frozen=await frame.evaluate(()=>({state:window.__FIELD_STUDIES__.inspect(true),cursor:window.__FIELD_STUDIES__.native().native.acknowledged}));
  // Unavailability stops simulation immediately; the one required asynchronous
  // close must finish before a no-further-request assertion is meaningful.
@@ -116,7 +116,7 @@ try{
  const after=await frame.evaluate(()=>({state:window.__FIELD_STUDIES__.inspect(true),cursor:window.__FIELD_STUDIES__.native().native.acknowledged}));
  assert.deepEqual(after.state.positions,frozen.state.positions);assert.deepEqual(after.state.velocities,frozen.state.velocities);assert.deepEqual(after.cursor,frozen.cursor);
  report.checks.push('disconnected producer stops GPU position, velocity, native cursor and request retries after its single required close');
- await frame.locator('[data-native="disconnect"]').click(,{force:true});await page.waitForTimeout(100);assert.equal(closes,1);
+ await frame.locator('[data-native="disconnect"]').click({force:true});await page.waitForTimeout(100);assert.equal(closes,1);
  await page.evaluate(()=>{window.disposeRelay();document.querySelector('iframe').remove();});await page.waitForTimeout(100);assert.equal(closes,1);assert.deepEqual(errors,[]);report.checks.push('native owner released exactly once');
  report.measurement={standing:'bounded single scenario, not sustained real-time performance acceptance',latency_by_operation:{}};
  for(const operation of new Set(report.timings_ms.map(x=>x.operation))){const values=report.timings_ms.filter(x=>x.operation===operation).map(x=>x.elapsed).sort((a,b)=>a-b);report.measurement.latency_by_operation[operation]={count:values.length,mean_ms:values.reduce((a,b)=>a+b,0)/values.length,p95_ms:values[Math.ceil(values.length*.95)-1],max_ms:values.at(-1)};}
