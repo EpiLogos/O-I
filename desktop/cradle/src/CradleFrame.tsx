@@ -8,6 +8,8 @@ import {createFormInPlace} from "./flow/createInPlace";
 import type {LeftHost} from "./workspace/left/host";
 import {createExpression} from "./workspace/left/createExpression";
 import {ContextTray} from "./context/ContextTray";
+import {SituationProvider} from "./context/SituationContext";
+import {buildSituationFrame} from "./context/situation";
 import {addToActiveMaterialScene} from "./techne/material";
 import {FileHistory} from "./files/FileHistory";
 import {encounter,encounterProvision} from "./encounter/client";
@@ -555,6 +557,8 @@ export function CradleFrame({onComposed}:{onComposed?:()=>void}) {
     const format = detectFormat({path: location.path});
     const isBinaryMaterial = format === "image" || format === "pdf" || format === "unsupported";
     const title = location.path.split("/").pop() ?? "File";
+    const originWorkspaceId = workspaceRef.current.current.id;
+    workspace.rememberPlace({kind:"file",label:title,path:location.path,ref:location.ref,location,project:workspaceRef.current.current.project},originWorkspaceId);
     const replaceId = opts?.replaceId;
     // The canvas is the person's choice; asked without one, a file opens in
     // the VISIBLE canvas — in a dedicated-stage mode that is the sidebar's
@@ -597,7 +601,6 @@ export function CradleFrame({onComposed}:{onComposed?:()=>void}) {
     // replaced fresh tab becomes the pending destination where it stands; a
     // new tab opens into the named canvas — the sidebar's own pane canvas
     // when the open came from there.
-    const originWorkspaceId = workspaceRef.current.current.id;
     if (replaceId) setState(s => ({...s, surfaces: {...s.surfaces, [id]: {id, kind: "file", title, pending: true}}}));
     else if (into === "side") await openInSidePane({id, kind: "file", title, pending: true}, "none");
     else setState(s => openBinding({...s, closedStack: s.closedStack.filter(x => x !== id)}, {id, kind: "file", title, pending: true}));
@@ -1664,6 +1667,7 @@ export function CradleFrame({onComposed}:{onComposed?:()=>void}) {
     * panel is collapsed. One more subscriber on the SAME shared observer —
     * never a second poll loop. */
   const agentPresence=useAgentPresence(state.accompanying?{project:state.accompanying.project,ref:state.accompanying.ref,space:state.accompanying.space}:undefined,state.rightDepth!=="collapsed");
+  const situation=useMemo(()=>buildSituationFrame({workspace:workspace.current,snapshot:kernel.snapshot,restorePoint:restorePoint.current}),[workspace.current,kernel.snapshot]);
   const agentLayer=<AgentLayer mode={mode} preferredBodyRef={epiPrimeBodyDefault} plane={state.panelPlanes?.[mode]} onPlane={plane=>setState(s=>s.panelPlanes?.[mode]===plane?s:{...s,panelPlanes:{...s.panelPlanes,[mode]:plane}})} extraPlanes={modeExtraPlanes(mode,panelSubject,state.accompanying,message=>setWindowError(message),factoryPanelHost,state.rightDepth==="full",taPaneOpens,workspace.current.project)} onError={report}
     onOpenConversation={accompanying=>void openConversationInCentre(accompanying).catch(report)}
     onOpenSubject={subject=>{if(subject.location){void openFile(subject.location).catch(report);return;}const held=Object.values(stateRef.current.surfaces).find(binding=>!!subject.ref&&binding.ref===subject.ref);if(held)execute("surface.activate",{surfaceId:held.id});}}
@@ -1695,7 +1699,7 @@ export function CradleFrame({onComposed}:{onComposed?:()=>void}) {
   const worldNavigator=(workspaceSelector:ReactNode)=><WorldNavigator onAgent={summonAgent} onMessage={message=>setWindowError(message)} onExplore={()=>void openExplore().catch(e=>setWindowError(String(e)))} mode={mode} onMode={enterMode} onOpenEncounter={openEncounter} centralFiles={workspace.current.centralFiles??false} onCentralFilesChange={workspace.setCentralFiles} workspaceSelector={workspaceSelector} searchShortcut={leader.label} key={workspace.current.id} projectNavigation={workspace.current.projectNavigation ?? {}} onNavigationChange={(ref,change)=>workspace.setProjectNavigation(ref,change,workspace.current.id)} onOpenFile={openFile} onProjectChange={workspace.browse} onOpenToday={openToday} onOpenWiki={(ref,title,project)=>openKnowledge({kind:"wiki",value:ref},title,project)} onSearch={()=>setSearchOpen(true)} activeEncounterRef={activeEncounterRef} onOpenFlowInstance={row=>openFlowInstance(row)} onNewFlow={()=>startWriting()} />;
 
   return (
-    <>
+    <SituationProvider value={situation}>
       <ExpressionLayout layout={state}/>
       <DesktopShell left={leftHost} onLibrary={()=>setLibrary(value=>value==="open"?"held":"open")} world={workspace.current.context?.world} onLeaveWorld={leaveEpiWorld} returnTo={workspace.current.context?.trail?.slice(-1)[0]} onReturn={()=>window.dispatchEvent(new Event("oi:context-return"))} mode={mode} onMode={enterMode} windowLights={windowLights} onTabPresentation={presentation=>execute(`frame.tabs:${presentation}`)} onToggleNavigator={()=>navigatorRef.current ? dismissWorld() : summonWorld()} onCloseNavigator={dismissWorld} native={kernel.transport.kind==="tauri"} namingRequest={namingRequest} onNamingHandled={()=>setNamingRequest(null)}
         arrangementActions={<ArrangementActions state={state} execute={execute} openFrameMenu={openFrameMenu} nativeWindows={kernel.transport.kind==="tauri"}/>}
@@ -1793,7 +1797,7 @@ export function CradleFrame({onComposed}:{onComposed?:()=>void}) {
       <ObjectCentreLayer fullPage={modeSoloStage} yields={object=>factoryCentreOwns(mode,object.kind)}/>
       </DesktopShell>
       {WalkChannel&&<WalkChannel layout={state}/>}
-      <ContextTray bindings={{...Object.assign({},...workspace.workspaces.map(w=>w.layout.surfaces)),...state.surfaces}} accompanying={state.accompanying}/>
+      <ContextTray bindings={{...Object.assign({},...workspace.workspaces.flatMap(w=>[w.layout.surfaces,...Object.values(w.modeLayouts??{}).map(layout=>layout.surfaces)])),...state.surfaces}} accompanying={state.accompanying}/>
       {/* T2 summon seam: answers "oi:techne-summon" (library / verso / search)
         * through the same Library overlay and the verso account overlay. */}
       <TechneSummonSurface subject={workspace.current.context?.subject} trail={workspace.current.context?.trail} onOpenLibrary={()=>setLibrary("open")}/>
@@ -1808,7 +1812,7 @@ export function CradleFrame({onComposed}:{onComposed?:()=>void}) {
       {menu ? (
         <ContextMenu menu={menu} onInvoke={invoke} onClose={() => setMenu(null)} />
       ) : null}
-    </>
+    </SituationProvider>
   );
 }
 

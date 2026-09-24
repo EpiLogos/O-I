@@ -10,6 +10,17 @@ import {setActiveListingWorkspace} from "../files/listingStore";
 
 export type ProjectMode = "chats" | "files" | "wiki";
 export interface ProjectNavigation { expanded: boolean; scroll: number; directories?: string[]; mode?: ProjectMode; locationPath?: string }
+export interface WorkspaceRecentPlace {
+  kind: "file" | "directory";
+  label: string;
+  path: string;
+  project?: string;
+  /** Native owner ref when one exists; directory navigation may only have a path + ProjectRef. */
+  ref?: string;
+  projectRef?: string;
+  location?: import("../kernel/types").CentralLocation;
+  visitedAt: number;
+}
 export interface Workspace {
   id: string; name: string;
   /** Owner query restored by a native read; never imported as semantic focus. */
@@ -31,6 +42,8 @@ export interface Workspace {
   /** WORLD CONTEXT — beside the per-mode trees, not inside them: what rides
    * through every mode switch and every reload. */
   context?: WorldContext;
+  /** Bounded reference-only recency. Contents and owner readings never live here. */
+  recentPlaces?: WorkspaceRecentPlace[];
   /** When the person last stood in this workspace (the retention warm set's
    * recency order — surface/retention.tsx keeps the active workspace plus
    * the most recently visited ones warm). Presentation bookkeeping, never
@@ -53,6 +66,29 @@ export interface WorldContext {
 }
 const TRAIL_LIMIT = 24;
 const text = (value: unknown, max = 512): string | undefined => typeof value === "string" && value.length > 0 && value.length <= max ? value : undefined;
+const RECENT_PLACE_LIMIT = 24;
+const recentPlaceKey = (place: Pick<WorkspaceRecentPlace,"kind"|"path"|"ref"|"location"|"projectRef">) =>
+  [place.kind, place.location?.ref ?? place.ref ?? place.projectRef ?? "", place.path].join(":");
+function withRecentPlace(workspace: Workspace, place: Omit<WorkspaceRecentPlace,"visitedAt"> & {visitedAt?:number}): Workspace {
+  const next: WorkspaceRecentPlace = {...place, visitedAt: place.visitedAt ?? Date.now()};
+  const recentPlaces = [next, ...(workspace.recentPlaces ?? []).filter(held => recentPlaceKey(held) !== recentPlaceKey(next))].slice(0, RECENT_PLACE_LIMIT);
+  return {...workspace, recentPlaces};
+}
+function decodeRecentPlaces(raw: unknown): WorkspaceRecentPlace[] | undefined {
+  if(!Array.isArray(raw))return undefined;
+  const places=raw.flatMap((entry):WorkspaceRecentPlace[]=>{
+    const o=entry as Record<string,unknown>|null;
+    if(!o||typeof o!=="object"||(o.kind!=="file"&&o.kind!=="directory"))return [];
+    const path=text(o.path,4096),label=text(o.label),ref=text(o.ref,4096),project=text(o.project),projectRef=text(o.projectRef,4096);
+    const visitedAt=typeof o.visitedAt==="number"&&Number.isFinite(o.visitedAt)&&o.visitedAt>0?o.visitedAt:undefined;
+    const rawLocation=o.location as Record<string,unknown>|undefined;
+    const location=rawLocation?.schema==="central.path-ref/v1"&&text(rawLocation.ref,4096)&&text(rawLocation.root,4096)&&text(rawLocation.path,4096)
+      ? {schema:"central.path-ref/v1" as const,ref:text(rawLocation.ref,4096)!,root:text(rawLocation.root,4096)!,path:text(rawLocation.path,4096)!}
+      : undefined;
+    return path&&label&&visitedAt?[{kind:o.kind,label,path,ref,project,projectRef,location,visitedAt}]:[];
+  }).sort((a,b)=>b.visitedAt-a.visitedAt).slice(0,RECENT_PLACE_LIMIT);
+  return places.length?places:undefined;
+}
 /** A workspace the person stands in has, by that fact, been visited: the
  * retention warm set (surface/retention.tsx) keeps only workspaces with a
  * `lastVisitedAt` stamp, and `activate` stamps on every switch — but the
@@ -203,7 +239,7 @@ function restoreWorkspace(w: Workspace): {workspace: Workspace; notes: string[]}
       if (state.mode !== undefined && !["chats", "files", "wiki"].includes(state.mode)) throw new Error("Invalid project mode");
       return [ref, { expanded: state.expanded, scroll: state.scroll, directories: state.directories, mode: state.mode ?? "files", locationPath: state.locationPath }];
     }));
-    return {workspace: carryLegacyWriting({ projectNavigation, centralFiles: w.centralFiles === true, id: w.id, name: w.name, project: w.project, writing: w.writing, writingMode: false, layout, modeLayouts, context: decodeWorldContext(w.context), lastVisitedAt: typeof w.lastVisitedAt === "number" ? w.lastVisitedAt : undefined }), notes};
+    return {workspace: carryLegacyWriting({ projectNavigation, centralFiles: w.centralFiles === true, id: w.id, name: w.name, project: w.project, writing: w.writing, writingMode: false, layout, modeLayouts, context: decodeWorldContext(w.context), recentPlaces: decodeRecentPlaces(w.recentPlaces), lastVisitedAt: typeof w.lastVisitedAt === "number" ? w.lastVisitedAt : undefined }), notes};
   } catch (error) {
     // The record still names itself when its name is readable; its
     // identifier survives only when it is a string no healthy workspace
@@ -395,10 +431,17 @@ export function useWorkspaces() {
    * or scroll that resolves after an owner round trip must land in that
    * workspace even when the active one has moved on. Defaults to the active
    * workspace only for callers that have no such origin. */
+  const rememberPlace = (place: Omit<WorkspaceRecentPlace,"visitedAt"> & {visitedAt?:number}, workspaceId?: string) => setBook(b => ({
+    ...b, workspaces: b.workspaces.map(w => w.id === (workspaceId ?? b.active) ? withRecentPlace(w,place) : w)
+  }));
   const setProjectNavigation = (projectRef: string, change: Partial<ProjectNavigation>, workspaceId?: string) => setBook(b => ({
-    ...b, workspaces: b.workspaces.map(w => w.id === (workspaceId ?? b.active) ? {
-      ...w, projectNavigation: { ...w.projectNavigation, [projectRef]: { expanded: true, scroll: 0, ...w.projectNavigation?.[projectRef], ...change } }
-    } : w)
+    ...b, workspaces: b.workspaces.map(w => {
+      if(w.id !== (workspaceId ?? b.active))return w;
+      const next={...w,projectNavigation:{...w.projectNavigation,[projectRef]:{expanded:true,scroll:0,...w.projectNavigation?.[projectRef],...change}}};
+      if(typeof change.locationPath!=="string"||!change.locationPath)return next;
+      const path=change.locationPath,label=path.split("/").filter(Boolean).at(-1)??path;
+      return withRecentPlace(next,{kind:"directory",label,path,project:w.project,projectRef});
+    })
   }));
   const windowBounds = (workspaceId:string,surfaceId:string,bounds:import("../surface/types").NativeWindowBounds) => setBook(b=>({...b,workspaces:b.workspaces.map(w=>w.id===workspaceId&&w.layout.surfaces[surfaceId]?{...w,layout:{...w.layout,windowBounds:{...w.layout.windowBounds,[surfaceId]:bounds}}}:w)}));
   const replaceSurface=(workspaceId:string,binding:import("../surface/types").SurfaceBinding)=>setBook(book=>({...book,workspaces:book.workspaces.map(w=>w.id===workspaceId&&w.layout.surfaces[binding.id]?{...w,layout:{...w.layout,surfaces:{...w.layout.surfaces,[binding.id]:binding}}}:w)}));
@@ -432,7 +475,7 @@ export function useWorkspaces() {
       const restored:Workspace[]=candidates.filter((w:unknown)=>w&&typeof w==="object").map((w:Workspace,index:number)=>{
         const id=crypto.randomUUID();
         const projectNavigation=Object.fromEntries(Object.entries(w.projectNavigation??{}).filter(([,state])=>state&&typeof state.expanded==="boolean"&&Number.isFinite(state.scroll)&&state.scroll>=0).map(([ref,state])=>[ref,{expanded:state.expanded,scroll:state.scroll,mode:state.mode&&["chats","files","wiki"].includes(state.mode)?state.mode:"chats",directories:Array.isArray(state.directories)?state.directories.filter(path=>typeof path==="string"):undefined,locationPath:typeof state.locationPath==="string"?state.locationPath:undefined}]));
-        return carryLegacyWriting({id,name:typeof w.name==="string"?w.name:`Recovered ${index+1}`,project:typeof w.project==="string"?w.project:undefined,centralFiles:w.centralFiles===true,projectNavigation,writing:typeof w.writing==="string"?w.writing:"",writingMode:false,layout:scopeLegacyIds(decodeWorkspaceLayout(w.layout),id,true)});
+        return carryLegacyWriting({id,name:typeof w.name==="string"?w.name:`Recovered ${index+1}`,project:typeof w.project==="string"?w.project:undefined,centralFiles:w.centralFiles===true,projectNavigation,recentPlaces:decodeRecentPlaces(w.recentPlaces),writing:typeof w.writing==="string"?w.writing:"",writingMode:false,layout:scopeLegacyIds(decodeWorkspaceLayout(w.layout),id,true)});
       });
       if(!restored.length){setSaveError("No complete workspace records could be recovered. The original bytes remain retained.");return;}
       setBook(book=>stampActiveVisited({version:2,active:restored[0].id,workspaces:[...book.workspaces.filter(workspace=>workspace.id!=="recovery"||!!workspace.writing),...restored]}));setRecovery(null);
@@ -440,5 +483,5 @@ export function useWorkspaces() {
   };
   const showRecovery=()=>{const saved=latestRecovery();if(saved)setRecovery({reason:saved.reason,key:saved.key});else setNotice("There is no retained workspace recovery record on this device.");};
   const error=[quarantine,saveError,notice].filter(Boolean).join(" ")||null;
-  return { switchMode, setContext, replaceSurface, surfaceView, surfaceEngine, showRecovery,recovery,reload,startFresh,recoverAvailable, setCentralFiles, setProjectNavigation, browseAll, windowBounds, redock, current, setWritingMode, workspaces: book.workspaces, setLayout, setWriting, activate, browse, create, rename, error, dismissError: () => { setQuarantine(null); setSaveError(null); setNotice(null); } };
+  return { switchMode, setContext, replaceSurface, surfaceView, surfaceEngine, showRecovery,recovery,reload,startFresh,recoverAvailable, setCentralFiles, rememberPlace, setProjectNavigation, browseAll, windowBounds, redock, current, setWritingMode, workspaces: book.workspaces, setLayout, setWriting, activate, browse, create, rename, error, dismissError: () => { setQuarantine(null); setSaveError(null); setNotice(null); } };
 }
