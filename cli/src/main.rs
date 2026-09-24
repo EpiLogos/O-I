@@ -29,6 +29,7 @@ mod composition {
     include!("setup_command.rs");
     include!("setup_terminal.rs");
     include!("config_contribution.rs");
+    include!("hosted_command.rs");
     include!("profile_command.rs");
     include!("desktop_command.rs");
     include!("dev_world_command.rs");

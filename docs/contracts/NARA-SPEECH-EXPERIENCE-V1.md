@@ -197,13 +197,24 @@ setting refs belong to real product owners (docs/cradle/09-CONFIGURATION-PLANE.m
 — no product owns a local speech stack, and inventing an owner would
 misattribute one. Dictation is desktop-owned input matter, the same class as
 the Visuals layer ("the appearance and expression layer owned by the desktop
-itself"), so the stipulation is a versioned, validated localStorage record
-(`oi-cradle.dictation.v1`, `src/dictation/store.ts`) with the documented
-default above, field-by-field fallback, and a named refusal for
-non-loopback endpoints (dictation is LOCAL; a remote endpoint is a different
-product and this record refuses to become one silently). If the desktop
-later grows an input settings slot, it binds to this same store door; until
-then the seam is this record and this paragraph.
+itself"), so the stipulation belongs to the native desktop kernel. **Conformance commission,
+2026-09-24:** this supersedes the earlier browser-localStorage prescription in
+this paragraph. `dictation_read` / `dictation_configure` retain a versioned,
+validated native record with compare-and-swap revision checks. Invalid saved
+configuration is refused visibly; it is never silently defaulted. No browser
+record is silently imported. The documented default above applies only when
+no native record exists. Remote endpoints, embedded credentials and redirects
+are refused; localhost resolves to loopback in the native transport.
+
+`dictation_probe` must succeed before the renderer requests microphone access.
+It issues a short-lived, single-use capture reference bound to the current
+endpoint revision. `dictation_transcribe` accepts bounded 16 kHz mono PCM16 WAV
+only under that reference, and performs local HTTP in the native kernel.
+Endpoint changes cannot retarget a recording in progress. Capture lasts at
+most five minutes and transcription has a bounded timeout. The renderer owns
+microphone permission and editable text landing, never direct HTTP or an
+endpoint authority. Disposal cancels capture; neither path auto-sends text.
+An eventual desktop input settings slot uses this same native store door.
 
 **Honest states, both directions.** Up → dictation works. Down → the mic
 probes BEFORE touching the microphone, so the named gap renders without a
@@ -223,8 +234,8 @@ node --experimental-strip-types --import ./tests/ts-register.mjs --test tests/na
     # 38 tests: QL fixture round-trips, admission/deixis/delegation laws, constitution + receipt
     # shapes, and the three body states (option+gap, absent, live) with the exact rendered strings
 node --experimental-strip-types --import ./tests/ts-register.mjs --test tests/dictation-conformance.mjs
-    # 12 tests: the dictation stipulation law, the 16 kHz mono WAV wire, the honest states against a
-    # real local HTTP fixture speaking the whisper.cpp contract, and the rendered words verbatim
+    # Production WAV encoder, named capture refusals and rendered words.
+    # Native ownership/refusal/restart coverage: tests/dictation-native.test.mjs (explicit opt-in).
 node tests/nara-presence-lifecycle.mjs
     # 30 checks: the real surface on a real kernel walk bridge; capture via the synthetic device;
     # the gated body rendered as an option and the text-only body as absent, in the real component
@@ -252,7 +263,7 @@ node walk/run.mjs agent-dictation
   the desktop-owned store (`src/dictation/store.ts`); a desktop input
   settings view, when one exists, binds to the same door. Until then the
   seam is the record and the dictation section above.
-- **The Tauri CSP now allows loopback http.** `connect-src` gained
+- **Historical CSP observation, superseded for dictation by the 2026-09-24 native migration.** `connect-src` gained
   `http://127.0.0.1:* http://localhost:*` for the stipulated speech server;
   non-loopback hosts stay refused. (Observation, owned elsewhere: the A2A
   exchange's arbitrary peer endpoints are NOT covered and will be

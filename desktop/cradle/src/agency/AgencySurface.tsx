@@ -61,7 +61,7 @@ export function AgencySurface({ project, onMessage, onOpenSettings }: { project?
         <div><NativeAgentLauncher project={project}/><div className="agency-roster-layout">
           <AgencyRoster reading={reading} pending={pending} error={error} selected={selected} onSelect={setSelected}/>
           {selected
-            ? <AgentDetail row={selected} siblingSessions={reading?.rows.filter((row) => row.spaceRef === selected.spaceRef) ?? []}/>
+            ? <AgentDetail harnessDisclosure={reading?.harnessDisclosure} row={selected} siblingSessions={reading?.rows.filter((row) => row.spaceRef === selected.spaceRef) ?? []}/>
             : <div className="oi-empty agency-detail-placeholder"><span>Select a session to see its Purpose, Skills & tools, Sessions, Knowledge and History.</span></div>}
         </div></div>
       )}

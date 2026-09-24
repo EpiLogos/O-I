@@ -1,10 +1,11 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { JSX } from "react";
+import { createPortal } from "react-dom";
 import { useStore } from "zustand";
 
 import type { ArchetypalLighting, ExpandedTimelineNode, GraphNode, LitInstance, TimelineFilters, TimelineLayoutMutationResult, TimelineRelationField as TimelineRelationFieldData, TimelineView, TimelineYearRange } from "./contracts";
 import { createTimelineStore, type TimelineCardGeometryUpdate } from "./timelineStore";
-import { DEFAULT_TIMELINE_CARD_WIDTH_PX, FALLBACK_TIMELINE_LANE_ID, placeItems, type PlacedItem, type TimelinePresentation } from "./projection";
+import { DEFAULT_TIMELINE_CARD_WIDTH_PX, FALLBACK_TIMELINE_LANE_ID, placeItems, timelineCardBounds, type PlacedItem, type TimelinePresentation } from "./projection";
 import { generateTicks } from "./ticks";
 import { TimelineAxis } from "./TimelineAxis";
 import { TimelineNode } from "./TimelineNode";
@@ -16,6 +17,8 @@ import { deriveTimelineCategory, TIMELINE_CATEGORIES, type TimelineCategory } fr
 import { assembleTimelineWalk } from "./walk";
 
 export interface TimelineDataSource {
+  styleCapability?: {available:boolean;reason?:string};
+  archetypeCapability?: {available:boolean;reason?:string};
   loadTimelineView(range?: TimelineYearRange, filters?: TimelineFilters): Promise<TimelineView>;
   loadNode?(graphNodeId: string): Promise<GraphNode>;
   archetypalLighting(operatorGraphNodeId: string): Promise<ArchetypalLighting>;
@@ -31,6 +34,7 @@ export interface TimelineDataSource {
 }
 
 export interface TimelineLensProps {
+  toolbarContainer?: HTMLElement;
   dataSource: TimelineDataSource;
   onOpenNode: (
     graphNodeId: string,
@@ -58,6 +62,7 @@ const TIMELINE_MIN_QUERY_BUFFER_YEARS = 32;
 type TimelineNavigationDirection = "earlier" | "later";
 
 export function TimelineLens({
+  toolbarContainer,
   dataSource,
   onOpenNode,
   initialViewport,
@@ -80,6 +85,8 @@ export function TimelineLens({
   const [relationField, setRelationField] = useState<TimelineRelationFieldData | null>(null);
   const [loaded, setLoaded] = useState(false);
   const [loadError, setLoadError] = useState<string | null>(null);
+  const [readAttempt, setReadAttempt] = useState(0);
+  const [contextError, setContextError] = useState<{message:string;retry:()=>void} | null>(null);
   const [saveErrors, setSaveErrors] = useState<Record<string, string>>({});
   const saveQueues = useRef(new Map<string, Promise<void>>());
   const saveVersions = useRef(new Map<string, number>());
@@ -98,6 +105,12 @@ export function TimelineLens({
   const [knownRelationTypes, setKnownRelationTypes] = useState<string[]>([]);
   const [knownTags, setKnownTags] = useState<string[]>([]);
   const [showRelations, setShowRelations] = useState(true);
+  const [showWalk, setShowWalk] = useState(!toolbarContainer);
+  const [showWorkingSet, setShowWorkingSet] = useState(true);
+  const walkToggleRef = useRef<HTMLButtonElement | null>(null);
+  const workingSetToggleRef = useRef<HTMLButtonElement | null>(null);
+  const closeWalk = () => { setShowWalk(false); walkToggleRef.current?.focus(); };
+  const closeWorkingSet = () => { setShowWorkingSet(false); workingSetToggleRef.current?.focus(); };
   const [showArchetypalContext, setShowArchetypalContext] = useState(true);
   const [relationFieldOpen, setRelationFieldOpen] = useState(false);
   const navigationRef = useRef<{
@@ -110,10 +123,11 @@ export function TimelineLens({
   const heldNavigationKeys = useRef(new Set<"ArrowLeft" | "ArrowRight">());
   const timelineFilters = useMemo<TimelineFilters | undefined>(() => {
     const filters: TimelineFilters = {};
-    if (relationTypeFilter !== null) filters.relationTypes = { include: relationTypeFilter };
+    // Relation visibility is local to the returned field; changing it must
+    // not reload cards and discard the focused native relation reading.
     if (tagFilter.length > 0) filters.tags = { include: tagFilter };
     return Object.keys(filters).length > 0 ? filters : undefined;
-  }, [relationTypeFilter, tagFilter]);
+  }, [tagFilter]);
   const timelineFiltersKey = useMemo(
     () => JSON.stringify(timelineFilters ?? {}),
     [timelineFilters],
@@ -141,6 +155,7 @@ export function TimelineLens({
     resonanceRequestVersion.current += 1;
     setRelationField(null);
     setResonances([]);
+    setContextError(null);
     setSaveErrors({});
     setLoaded(false);
     setLoadError(null);
@@ -164,7 +179,7 @@ export function TimelineLens({
       cancelled = true;
       if (timelineLoadTimer.current !== null) window.clearTimeout(timelineLoadTimer.current);
     };
-  }, [dataSource, store, timelineFilters, timelineFiltersKey]);
+  }, [dataSource, store, timelineFilters, timelineFiltersKey, readAttempt]);
 
   // Track width measurement (ResizeObserver is mocked in tests; fall back to a
   // sensible default so layout math runs even before the observer fires).
@@ -264,7 +279,7 @@ export function TimelineLens({
   const hasRelationContext = displayRelationField !== null
     && (displayRelationField.relationships.length > 0 || resonances.length > 0);
   useEffect(() => {
-    const next = [...new Set(state.relationships.map((relationship) => relationship.relType))].sort();
+    const next = [...new Set([...state.relationships, ...(displayRelationField?.relationships ?? [])].map((relationship) => relationship.relType))].sort();
     if (next.length === 0) return;
     setKnownRelationTypes((current) => {
       const merged = [...new Set([...current, ...next])].sort();
@@ -272,7 +287,7 @@ export function TimelineLens({
         ? current
         : merged;
     });
-  }, [state.relationships]);
+  }, [state.relationships, displayRelationField]);
   useEffect(() => {
     const next = [...new Set(state.items.flatMap((item) => item.node.evidenceTags))].sort();
     if (next.length === 0) return;
@@ -286,6 +301,7 @@ export function TimelineLens({
   const availableRelationTypes = [...new Set([
     ...knownRelationTypes,
     ...state.relationships.map((relationship) => relationship.relType),
+    ...(displayRelationField?.relationships ?? []).map((relationship) => relationship.relType),
   ])].sort();
   const availableTags = [...new Set([
     ...knownTags,
@@ -315,7 +331,22 @@ export function TimelineLens({
     return map;
   }, [state.nodes]);
 
+  const focusedNodeElement = useRef<HTMLElement | null>(null);
+  const closeFocusedRelations = () => {
+    relationFieldRequestVersion.current += 1;
+    resonanceRequestVersion.current += 1;
+    setRelationFieldOpen(false);
+    setRelationField(null);
+    setResonances([]);
+    setContextError(null);
+    store.getState().setSelected(null);
+    const target = focusedNodeElement.current;
+    if (target?.isConnected) target.focus();
+    else trackRef.current?.focus();
+  };
   const handleSelect = (graphNodeId: string) => {
+    if (document.activeElement instanceof HTMLElement && trackRef.current?.contains(document.activeElement)) focusedNodeElement.current = document.activeElement;
+    setContextError(null);
     store.getState().setSelected(graphNodeId);
     setRelationFieldOpen(false);
     const resonanceVersion = resonanceRequestVersion.current + 1;
@@ -323,8 +354,8 @@ export function TimelineLens({
     setResonances([]);
     void dataSource.resonancesForInstance(graphNodeId).then((nextResonances) => {
       if (resonanceRequestVersion.current === resonanceVersion) setResonances(nextResonances);
-    }).catch(() => {
-      if (resonanceRequestVersion.current === resonanceVersion) setResonances([]);
+    }).catch((error: unknown) => {
+      if (resonanceRequestVersion.current === resonanceVersion) setContextError({message:`Related reading unavailable: ${error instanceof Error ? error.message : String(error)}`,retry:()=>handleSelect(graphNodeId)});
     });
 
     const requestVersion = relationFieldRequestVersion.current + 1;
@@ -333,10 +364,8 @@ export function TimelineLens({
     if (dataSource.relationFieldForEvent) {
       void dataSource.relationFieldForEvent(graphNodeId).then((field) => {
         if (relationFieldRequestVersion.current === requestVersion) setRelationField(field);
-      }).catch(() => {
-        // Relation context is supplementary. Keep the selected historical
-        // event interactive if a remote/local field read is temporarily unavailable.
-        if (relationFieldRequestVersion.current === requestVersion) setRelationField(null);
+      }).catch((error: unknown) => {
+        if (relationFieldRequestVersion.current === requestVersion) setContextError({message:`Connection reading unavailable: ${error instanceof Error ? error.message : String(error)}`,retry:()=>handleSelect(graphNodeId)});
       });
     }
 
@@ -345,15 +374,16 @@ export function TimelineLens({
     // time); the base timeline view stays light. Absent on read-only surfaces.
     if (dataSource.expandNode) {
       void dataSource.expandNode(graphNodeId).then((expansion) => {
-        store.getState().expandNode(expansion);
-      }).catch(() => {
-        // Expansion is supplementary. A failed deep read must not close the
-        // selection or surface as an unhandled rejection.
+        if (relationFieldRequestVersion.current === requestVersion) store.getState().expandNode(expansion);
+      }).catch((error: unknown) => {
+        if (relationFieldRequestVersion.current === requestVersion) setContextError({message:`Source context unavailable: ${error instanceof Error ? error.message : String(error)}`,retry:()=>handleSelect(graphNodeId)});
       });
     }
   };
 
   const handleOpenNode = (graphNodeId: string, node: GraphNode, includeRelationField = true) => {
+    setContextError(null);
+    const requestEpoch = dataSourceEpoch.current;
     const contextField = includeRelationField ? relationField ?? undefined : undefined;
     const open = (nextNode: GraphNode) => onOpenNode(
       graphNodeId,
@@ -370,16 +400,19 @@ export function TimelineLens({
     if (dataSource.loadNode) {
       void dataSource.loadNode(graphNodeId)
         .then((nextNode) => open(nextNode))
-        .catch(() => {
-          // The projection is already a valid reader record; a failed deep
-          // read must not close it or surface as an unhandled rejection.
+        .catch((error: unknown) => {
+          if (dataSourceEpoch.current === requestEpoch) setContextError({message:`Source reading unavailable: ${error instanceof Error ? error.message : String(error)}`,retry:()=>handleOpenNode(graphNodeId,node,includeRelationField)});
         });
     }
   };
 
   const handleLightOperator = (operatorGraphNodeId: string) => {
+    setContextError(null);
+    const requestEpoch = dataSourceEpoch.current;
     void dataSource.archetypalLighting(operatorGraphNodeId).then((result) => {
-      store.getState().setLighting(result);
+      if (dataSourceEpoch.current === requestEpoch) store.getState().setLighting(result);
+    }).catch((error: unknown) => {
+      if (dataSourceEpoch.current === requestEpoch) setContextError({message:`Archetype reading unavailable: ${error instanceof Error ? error.message : String(error)}`,retry:()=>handleLightOperator(operatorGraphNodeId)});
     });
   };
 
@@ -560,10 +593,14 @@ export function TimelineLens({
 
   useEffect(() => stopTimelineNavigation, [stopTimelineNavigation]);
 
-  return (
-    <div className="timeline-lens" data-testid="timeline-lens">
+  const toolbar = (
       <div className="timeline-toolbar" data-testid="timeline-toolbar">
         <span className="timeline-tier" data-testid="timeline-tier">{tier}</span>
+        <button ref={walkToggleRef} type="button" aria-label={`${showWalk ? "Hide" : "Show"} temporal walk`}
+          aria-expanded={showWalk} onClick={() => setShowWalk(value => !value)}>
+          Walk · {walk.stops.length}
+        </button>
+        <button ref={workingSetToggleRef} type="button" aria-label={`${showWorkingSet ? "Hide" : "Show"} working set`} aria-expanded={showWorkingSet && state.workingSet.length > 0} disabled={state.workingSet.length === 0} onClick={() => setShowWorkingSet(value => !value)}>Working set · {state.workingSet.length}</button>
         {state.frame && (
           <div className="timeline-frame" data-testid="timeline-frame" aria-label="Timeline frame">
             <span className="timeline-frame-crumb" data-testid="timeline-frame-crumb">
@@ -629,6 +666,8 @@ export function TimelineLens({
             type="button"
             className="timeline-filter"
             data-testid="timeline-toggle-archetypal"
+            disabled={dataSource.archetypeCapability?.available===false}
+            title={dataSource.archetypeCapability?.available===false?dataSource.archetypeCapability.reason:undefined}
             data-active={showArchetypalContext ? "true" : "false"}
             aria-label={`${showArchetypalContext ? "Hide" : "Show"} archetypal context`}
             aria-pressed={showArchetypalContext}
@@ -728,10 +767,16 @@ export function TimelineLens({
           </button>
         )}
       </div>
+  );
+
+  return (
+    <div className="timeline-lens" data-testid="timeline-lens" onKeyDown={(event) => { if (event.key === "Escape" && (relationField || contextError)) { event.preventDefault(); event.stopPropagation(); closeFocusedRelations(); } }}>
+      {toolbarContainer ? createPortal(toolbar, toolbarContainer) : toolbar}
       <div
         className="timeline-track"
         data-testid="timeline-track"
         ref={trackRef}
+        tabIndex={-1}
         style={{ position: "relative", overflow: "hidden" }}
         onPointerDown={handlePointerDown}
         onPointerMove={handlePointerMove}
@@ -739,10 +784,14 @@ export function TimelineLens({
         onPointerLeave={handlePointerUp}
       >
         {loadError && (
-          <div className="timeline-load-state timeline-load-state--error" data-testid="timeline-load-error">
+          <div role="alert" className="timeline-load-state timeline-load-state--error" data-testid="timeline-load-error">
             Timeline data unavailable: {loadError}
+            <button type="button" onClick={() => setReadAttempt(value => value + 1)}>Retry reading</button>
           </div>
         )}
+        {contextError && <div role="alert" className="timeline-load-state timeline-load-state--error">
+          {contextError.message} <button type="button" onClick={contextError.retry}>Retry reading</button>
+        </div>}
         {Object.entries(saveErrors).map(([nodeId, message]) => (
           <div key={nodeId} role="alert" data-testid={`timeline-save-error-${nodeId}`}>
             {message} <button type="button" onClick={() => commitTimelineLayout(nodeId)}>Retry</button>
@@ -815,6 +864,7 @@ export function TimelineLens({
                   onCommit={commitTimelineLayout}
                   onColorTag={handleColorTag}
                   readOnly={!dataSource.saveTimelineLayout || p.item.relationCompanion}
+                  colorCapability={dataSource.styleCapability}
                 />
               );
             })}
@@ -843,6 +893,8 @@ export function TimelineLens({
           {relationFieldOpen && (
             <TimelineRelationField
               field={displayRelationField}
+              onClose={closeFocusedRelations}
+              relationTypes={relationTypeFilter}
               resonances={resonances}
               showRelations={showRelations}
               showArchetypalContext={showArchetypalContext}
@@ -852,17 +904,19 @@ export function TimelineLens({
           )}
         </div>
       )}
-      <TimelineWorkingSet
+      {showWorkingSet && <TimelineWorkingSet
+        onClose={closeWorkingSet}
         workingSet={state.workingSet}
         onUnload={(graphNodeId) => store.getState().collapseNode(graphNodeId)}
         onClear={() => store.getState().clearWorkingSet()}
         onOpenNode={(graphNodeId, node) => handleOpenNode(graphNodeId, node, false)}
-      />
-      <TimelineWalk
+      />}
+      {showWalk && <TimelineWalk
+        onClose={closeWalk}
         walk={walk}
         onSelectStop={(graphNodeId) => handleSelect(graphNodeId)}
         resolveNodeTitle={(graphNodeId) => nodeTitleById.get(graphNodeId) ?? null}
-      />
+      />}
     </div>
   );
 }
@@ -909,13 +963,7 @@ function verticalPanBounds(placed: ReturnType<typeof placeItems>, trackHeight: n
   let lowestCardBottom = 0;
 
   for (const position of placed) {
-    const laneOffset = 68 + position.laneIndex * 78;
-    const cardHeight = Math.min(260, Math.max(72, position.item.presentation.height));
-    const offsetY = position.item.presentation.offsetY;
-    const top = position.laneSide === "above"
-      ? -laneOffset - cardHeight + offsetY
-      : laneOffset + offsetY;
-    const bottom = top + cardHeight;
+    const {top,bottom}=timelineCardBounds(position);
     highestCardTop = Math.min(highestCardTop, top);
     lowestCardBottom = Math.max(lowestCardBottom, bottom);
   }

@@ -1,4 +1,5 @@
 import {useEffect, useRef, useState} from 'react';
+import {ParticipationFacts} from './ParticipationFacts';
 import {useKernel} from '../kernel/KernelProvider';
 import {useExpressionStage, type StagePresentation} from '../stage/ExpressionStage';
 import {expressionConfig} from '../expression/engineProjection';
@@ -9,7 +10,7 @@ import type {WikiNavigate} from './wikiDocument';
 import type {WikiPassage} from './selection';
 import {listFiles} from '../files/client';
 import {CONSTRUCTION, authoringForms, newRef, readRegister, saveConstruction,
-  type AuthoringForm, type ConstructionRequest, type SavedConstruction, type WikiRegister} from './construction';
+  PARTICIPATION, type AuthoringForm, type ConstructionRequest, type SavedConstruction, type WikiRegister} from './construction';
 import {emptyDraft, fromNative, withForm, withPassage, withoutMember, draftRequest, type ConstructionDraft} from './constructionDraft';
 import {projectConstruction, attachCompositionReturn, compositionReturnRequest, compositionAttached, compositionReturnRecorded, reopenComposition, type ArtifactReturn} from './constructionProjection';
 import {prepareArtifactSave, performArtifactSave, inspectArtifactSave, restorePendingArtifactDocument, readSavedArtifact, type ArtifactSaveIntent} from './artifactRecovery';
@@ -17,13 +18,13 @@ import './wikiConstruction.css';
 
 import {memberAnchor, type ConstructionCheckpoint} from './constructionCheckpoint';
 export type {ConstructionCheckpoint} from './constructionCheckpoint';
-type Props = {binding: SurfaceBinding; open: boolean; incoming?: WikiPassage; checkpoint?: ConstructionCheckpoint; onCheckpoint: (value: ConstructionCheckpoint) => void; onClose: () => void; onNavigate: WikiNavigate; onSaved: () => void; requestedFrame?: string};
+type Props = {binding: SurfaceBinding; open: boolean; incoming?: WikiPassage; checkpoint?: ConstructionCheckpoint; onCheckpoint: (value: ConstructionCheckpoint) => void; onClose: () => void; onNavigate: WikiNavigate; onSaved: () => void; requestedFrame?: string; requestedFrameRequest?: string};
 const message = (error: unknown) => error instanceof Error ? error.message : String(error);
 
 /** A source-backed authoring drawer in the existing Wiki surface. Committed
  * work belongs to the native register. Only unsaved input/checkpoints are held
  * by the containing surface, alongside its reading/camera history. */
-export function WikiConstructionPanel({binding, open, incoming, checkpoint, onCheckpoint, onClose, onNavigate, onSaved, requestedFrame}: Props) {
+export function WikiConstructionPanel({binding, open, incoming, checkpoint, onCheckpoint, onClose, onNavigate, onSaved, requestedFrame, requestedFrameRequest}: Props) {
   const kernel = useKernel(), stage = useExpressionStage();
   const [register, setRegister] = useState<WikiRegister>(), [forms, setForms] = useState<AuthoringForm[]>([]);
   const [draft, setDraft] = useState<ConstructionDraft>(() => checkpoint?.draft ?? emptyDraft());
@@ -40,6 +41,7 @@ export function WikiConstructionPanel({binding, open, incoming, checkpoint, onCh
   const pendingReturn = pending?.changes.length === 1 && pending.changes[0].change === 'composition_attach';
   const artifactPointer = artifact ? {location: artifact.file.location, revision: artifact.file.revision, expression_ref: artifact.document.expression_ref} : artifactLocation;
   const wantedFrame = useRef<string>();
+  const registerRead = useRef(0);
   const alive = useRef(true), initialized = useRef(false), incomingKey = useRef<WikiPassage>();
   const checkpointRef = useRef(onCheckpoint); checkpointRef.current = onCheckpoint;
 
@@ -53,8 +55,9 @@ export function WikiConstructionPanel({binding, open, incoming, checkpoint, onCh
     catch(error){setError(`Recovery could not be saved on this device: ${message(error)}`);}
   }, [draft, pending, dirty, artifact, artifactLocation, artifactSave]);
   const read = async () => {
+    const ticket=++registerRead.current;
     const result = await readRegister(kernel.transport, binding.project);
-    if (alive.current) {
+    if (alive.current && ticket===registerRead.current) {
       setRegister(result);
       setDraft(value => value.space_ref || value.basis ? value : {...value, space_ref: result.spaces[0]?.ref ?? ''});
       if (!folder) {
@@ -66,11 +69,11 @@ export function WikiConstructionPanel({binding, open, incoming, checkpoint, onCh
     return result;
   };
   useEffect(() => {
-    if (!open || initialized.current) return;
+    if (!open || (initialized.current && !requestedFrameRequest)) return;
     initialized.current = true; setBusy('Reading native constellations…');
     void read().catch(error => {if (alive.current) setError(message(error));}).finally(() => {if (alive.current) setBusy('');});
     void authoringForms(kernel.transport, binding.project).then(value => {if (alive.current) setForms(value);}, () => {if (alive.current) setNotice('QL authoring forms are unavailable from this owner. Ordinary constellation work remains available.');});
-  }, [open]);
+  }, [open, requestedFrameRequest]);
   useEffect(() => {
     if (!incoming || incomingKey.current === incoming) return;
     if (pending) {setError('Inspect the previous save before adding another passage. Your current source selection is still in the reader.'); return;}
@@ -91,7 +94,7 @@ export function WikiConstructionPanel({binding, open, incoming, checkpoint, onCh
     try {
       checkpointRef.current({draft,pending:request,saved:!dirty,artifactSave,artifact:artifactPointer});
       setPending(request);
-      const value = await saveConstruction(kernel.transport, binding.project, register, request, draft.members.flatMap(member => member.passage ? [member.passage] : []), kernel.apply);
+      const value = await saveConstruction(kernel.transport, binding.project, register, request, draft.members.flatMap(member => member.passage ? [member.passage] : []), kernel.apply,draft.members.flatMap(member=>member.facet_sources??[]));
       if (!alive.current) return;
       acceptSaved(value);
       // Readback failure never converts an acknowledged save into a retry.
@@ -121,17 +124,18 @@ export function WikiConstructionPanel({binding, open, incoming, checkpoint, onCh
   };
   const openFrame = (reference: string) => {
     const found = register?.frames.find(frame => frame.ref === reference);
-    if (!found) return;
-    if (dirty || pending || artifactSave) {setError('Resolve or explicitly discard the pending work before opening another constellation.'); return;}
-    try {closePresentation(); setDocument(undefined); setArtifact(undefined); setArtifactLocation(undefined); setSaved(undefined); setDraft(fromNative(found, register!.relations)); setDirty(false); setError('');} catch (error) {setError(message(error));}
+    if (!found) {setError('This constellation is no longer available in the current source register.');return false;}
+    if (draft.frame_ref === reference && draft.basis && (dirty || pending || artifactSave || draft.basis.revision === found.revision)) return true;
+    if (dirty || pending || artifactSave) {setError('Resolve or explicitly discard the pending work before opening another constellation.'); return false;}
+    try {closePresentation(); setDocument(undefined); setArtifact(undefined); setArtifactLocation(undefined); setSaved(undefined); setDraft(fromNative(found, register!.relations)); setDirty(false); setError('');return true;} catch (error) {setError(message(error));return false;}
   };
-  useEffect(() => {if (requestedFrame && register && wantedFrame.current !== requestedFrame) {wantedFrame.current = requestedFrame; openFrame(requestedFrame);}}, [requestedFrame, register]);
+  useEffect(() => {const key = `${requestedFrame}:${requestedFrameRequest ?? ""}:${register?.file.revision ?? ""}`;if (requestedFrame && register && wantedFrame.current !== key) {if(openFrame(requestedFrame))wantedFrame.current = key;}}, [requestedFrame, requestedFrameRequest, register]);
   const createNew = () => {if(artifactSave){setError('Inspect the pending artifact save before starting another inquiry.');return;}closePresentation(); setDraft(emptyDraft(register?.spaces[0]?.ref)); setPending(undefined); setSaved(undefined); setDocument(undefined); setArtifact(undefined); setArtifactLocation(undefined); setDirty(false); setShowDiscard(false); setNotice(''); setError('');};
   const live = async () => {
-    if (!draft.basis || dirty || pending) return;
+    if (!draft.basis || !register || dirty || pending) return;
     setBusy('Opening live composition…'); setError('');
     try {
-      const projected = await projectConstruction(kernel.transport, binding.project, draft.basis, draft.original_relations);
+      const projected = await projectConstruction(kernel.transport, binding.project, draft.basis, draft.original_relations, register);
       if (projected.state !== 'ready') throw new Error(projected.state === 'unavailable' ? projected.detail : 'The live composition changed. Reopen before applying more changes.');
       if (!alive.current) return;
       setDocument(projected.document); closePresentation();
@@ -228,7 +232,7 @@ export function WikiConstructionPanel({binding, open, incoming, checkpoint, onCh
       {draft.form&&<p className="wiki-construction-hint">This is a chosen interpretive frame. Unfilled roles remain open; selecting a form does not classify the original sources.</p>}
       <h3>Members <span>{draft.members.length}</span></h3>
       {!draft.members.length&&<p>Select a passage in the reader and choose “Add to constellation”. You can save a frame with open roles first.</p>}
-      <ol className="wiki-construction-members">{draft.members.map((member,index)=><li key={member.participation_ref} data-participation-ref={member.participation_ref}><blockquote>{member.label}</blockquote><button className="oi-action" onClick={()=>onNavigate({kind:member.sources.some(source=>source.source_ref===member.subject_ref)?'source':'wiki',value:member.subject_ref},member.passage?.title??member.subject_ref,memberAnchor(member))}>Read source {index+1}</button><label>Role<select aria-label={`Role for member ${index+1}`} value={member.role_ref??''} onChange={event=>update({...draft,members:draft.members.map((item,i)=>i===index?{...item,role_ref:event.target.value||null}:item)})}><option value="">Not assigned</option>{draft.form?.roles.map(role=><option key={role.role_ref} value={role.role_ref}>{role.label}</option>)}</select></label><button className="oi-tool" aria-label={`Remove member ${index+1}`} title="Removes this membership and its current connections; not the source" onClick={()=>update(withoutMember(draft,member.participation_ref))}>×</button></li>)}</ol>
+      <ol className="wiki-construction-members">{draft.members.map((member,index)=><li key={member.participation_ref} data-participation-ref={member.participation_ref}><blockquote>{member.label}</blockquote><button className="oi-action" onClick={()=>onNavigate({kind:member.sources.some(source=>source.source_ref===member.subject_ref)?'source':'wiki',value:member.subject_ref},member.passage?.title??member.subject_ref,memberAnchor(member))}>Read source {index+1}</button><label>Role<select aria-label={`Role for member ${index+1}`} value={member.role_ref??''} onChange={event=>update({...draft,members:draft.members.map((item,i)=>i===index?{...item,role_ref:event.target.value||null}:item)})}><option value="">Not assigned</option>{draft.form?.roles.map(role=><option key={role.role_ref} value={role.role_ref}>{role.label}</option>)}</select></label><button className="oi-tool" aria-label={`Remove member ${index+1}`} title="Removes this membership and its current connections; not the source" onClick={()=>update(withoutMember(draft,member.participation_ref))}>×</button><ParticipationFacts member={member} basis={draft.basis?.constellations[0].members.find(row=>row[PARTICIPATION].participation_ref===member.participation_ref)} transport={kernel.transport} onChange={next=>{if(!busy&&!pending)update({...draft,members:draft.members.map((row,i)=>i===index?next:row)});}}/></li>)}</ol>
       {draft.form&&<p className="wiki-construction-hint">Open roles: {draft.form.roles.filter(role=>!draft.members.some(member=>member.role_ref===role.role_ref)).map(role=>role.label).join(', ')||'none'}</p>}
       <h3>Connections <span>{draft.relations.length}</span></h3>
       <ol className="wiki-construction-relations">{draft.relations.map((edge,index)=><li key={edge.ref}><div className="wiki-construction-row"><label>From<select aria-label={`From member for connection ${index+1}`} value={edge.from} onChange={event=>relationChanged(index,{from:event.target.value})}>{draft.members.map((member,i)=><option key={member.participation_ref} value={member.participation_ref}>{i+1} · {member.label.slice(0,48)}</option>)}</select></label><label>To<select aria-label={`To member for connection ${index+1}`} value={edge.to} onChange={event=>relationChanged(index,{to:event.target.value})}>{draft.members.map((member,i)=><option key={member.participation_ref} value={member.participation_ref}>{i+1} · {member.label.slice(0,48)}</option>)}</select></label></div><label>Meaning<input aria-label={`Meaning of connection ${index+1}`} maxLength={256} value={edge.relation} onChange={event=>relationChanged(index,{relation:event.target.value})}/></label><div className="wiki-construction-row"><label>Direction<select aria-label={`Direction of connection ${index+1}`} value={edge.direction} onChange={event=>relationChanged(index,{direction:event.target.value})}><option value="directed">From → to</option><option value="undirected">Undirected</option><option value="bidirectional">Both directions</option></select></label><label>Standing<select aria-label={`Standing of connection ${index+1}`} value={edge.standing} onChange={event=>relationChanged(index,{standing:event.target.value})}>{['proposed','asserted','contested','uncertain'].map(value=><option key={value}>{value}</option>)}</select></label></div><button className="oi-action" onClick={()=>update({...draft,relations:draft.relations.filter((_,i)=>i!==index)})}>Remove connection</button></li>)}</ol>

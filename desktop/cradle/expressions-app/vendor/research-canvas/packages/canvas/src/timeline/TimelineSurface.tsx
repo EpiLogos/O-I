@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type JSX, type MouseEvent as ReactMouseEvent } from "react";
+import { createPortal } from "react-dom";
 import type {
   GraphNode,
   TimelineRelationField,
@@ -8,14 +9,16 @@ import type {
   TimelineWalk,
 } from "@research-canvas/desktop-api";
 import { TimelineLens as RichTimelineLens, type TimelineDataSource } from "./TimelineLens";
+import { MIN_PIXELS_PER_YEAR, MAX_PIXELS_PER_YEAR } from "./scale";
 
 const EMPTY_WALK: TimelineWalk = { earthboundNodes: [], archetypeLayers: [] };
-const MIN_PIXELS_PER_YEAR = 0.02;
-const MAX_PIXELS_PER_YEAR = 800;
 const CONTROL_ZOOM_FACTOR = 1.6;
 const SINGLE_CLICK_DELAY_MS = 180;
 
 export interface TimelineSurfaceProps {
+  toolbarContainer?: HTMLElement;
+  /** Extent of actual dated members in the native Scene, independent of camera. */
+  timeExtent?: { startYear: number; endYear: number };
   repository: TimelineRepository;
   constellationId: string;
   dataSource: TimelineDataSource;
@@ -37,6 +40,8 @@ export interface TimelineSurfaceProps {
  * behaviour required by the redemption-map surface contract.
  */
 export function TimelineSurface({
+  toolbarContainer,
+  timeExtent,
   repository,
   constellationId,
   dataSource,
@@ -53,6 +58,8 @@ export function TimelineSurface({
   const [widthPx, setWidthPx] = useState(1000);
   const [viewState, setViewState] = useState(initialState);
   const [walk, setWalk] = useState<TimelineWalk>(EMPTY_WALK);
+  const [walkError, setWalkError] = useState<string | null>(null);
+  const [readAttempt, setReadAttempt] = useState(0);
   const [lensRevision, setLensRevision] = useState(0);
 
   const publishState = useCallback((next: TimelineViewState) => {
@@ -92,17 +99,21 @@ export function TimelineSurface({
 
   useEffect(() => {
     let cancelled = false;
+    setWalkError(null);
     void repository.getTimelineWalk(constellationId, timeWindow)
       .then((next) => {
         if (!cancelled) setWalk(next);
       })
-      .catch(() => {
-        if (!cancelled) setWalk(EMPTY_WALK);
+      .catch((error: unknown) => {
+        if (!cancelled) {
+          setWalk(EMPTY_WALK);
+          setWalkError(error instanceof Error ? error.message : String(error));
+        }
       });
     return () => {
       cancelled = true;
     };
-  }, [constellationId, repository, timeWindow.startYear, timeWindow.endYear]);
+  }, [constellationId, repository, timeWindow.startYear, timeWindow.endYear, readAttempt]);
 
   const earthboundById = useMemo(
     () => new Map(walk.earthboundNodes.map((node) => [node.graphNodeId, node] as const)),
@@ -173,15 +184,16 @@ export function TimelineSurface({
     // or simply that the canonical repository read has not resolved yet. Fit
     // must never collapse a still-loading global view to an arbitrary year-0
     // window; the control remains disabled until there is data to fit.
-    if (walk.earthboundNodes.length === 0) return;
-    const years = walk.earthboundNodes.map((node) => node.x).filter(Number.isFinite);
+    const years = (timeExtent
+      ? [timeExtent.startYear, timeExtent.endYear]
+      : walk.earthboundNodes.map((node) => node.x)).filter(Number.isFinite);
     if (years.length === 0) return;
     const min = Math.min(...years);
     const max = Math.max(...years);
-    const span = Math.max(40, max - min);
+    const span = Math.max(2, max - min);
     const paddedSpan = span * 1.18;
     setControlledViewport((min + max) / 2, Math.max(1, widthPx) / paddedSpan);
-  }, [setControlledViewport, walk.earthboundNodes, widthPx]);
+  }, [setControlledViewport, timeExtent, walk.earthboundNodes, widthPx]);
 
   const handleSurfaceClick = useCallback((event: ReactMouseEvent<HTMLDivElement>) => {
     const target = event.target;
@@ -213,19 +225,11 @@ export function TimelineSurface({
     }
   }, []);
 
-  return (
-    <div
-      ref={rootRef}
-      className="timeline-surface"
-      data-testid="timeline-surface"
-      style={{ position: "absolute", inset: 0, overflow: "hidden" }}
-      onClick={handleSurfaceClick}
-      onDoubleClick={cancelPendingSingleClick}
-    >
-      <div
+  const controls = (
+<div
         className="timeline-surface-controls"
         aria-label="Timeline navigation controls"
-        style={{ position: "absolute", top: 8, right: 12, zIndex: 6, display: "flex", gap: 6 }}
+        style={toolbarContainer ? { display: "flex", gap: 6 } : { position: "absolute", top: 8, right: 12, zIndex: 6, display: "flex", gap: 6 }}
       >
         <button
           type="button"
@@ -240,7 +244,7 @@ export function TimelineSurface({
           type="button"
           data-testid="timeline-fit"
           aria-label="Fit timeline to active constellation"
-          disabled={walk.earthboundNodes.length === 0}
+          disabled={!timeExtent && walk.earthboundNodes.length === 0}
           onClick={(event) => {
             event.stopPropagation();
             fit();
@@ -256,6 +260,21 @@ export function TimelineSurface({
           }}
         >+</button>
       </div>
+  );
+
+  return (
+    <div
+      ref={rootRef}
+      className="timeline-surface"
+      data-testid="timeline-surface"
+      style={{ position: "absolute", inset: 0, overflow: "hidden" }}
+      onClick={handleSurfaceClick}
+      onDoubleClick={cancelPendingSingleClick}
+    >
+      {walkError && <div role="alert" style={{position:"absolute",left:12,top:48,zIndex:12}}>
+        Timeline reading unavailable: {walkError} <button type="button" onClick={() => setReadAttempt(value => value + 1)}>Retry reading</button>
+      </div>}
+      {toolbarContainer ? createPortal(controls, toolbarContainer) : controls}
 
       <div
         className="timeline-archetype-field"
@@ -315,6 +334,7 @@ export function TimelineSurface({
         style={{ position: "absolute", inset: 0, zIndex: 1 }}
       >
         <RichTimelineLens
+          toolbarContainer={toolbarContainer}
           key={lensRevision}
           dataSource={surfaceDataSource}
           onOpenNode={onOpenNode}

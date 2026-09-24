@@ -13,8 +13,8 @@ export class RetainedProductionAdapter extends RetainedBase {
     this.dirty = true;
   }
   render(frame) {
-    // Install on the actual field, never another renderer. onBeforeRender
-    // sees the current evaluated 3D poses after the native simulation step.
+    // Install on the actual field; its target update resolves current 3D
+    // poses before the existing particle simulation step.
     if (this.connectionLayer && this.connectionLayer.engine !== this.engine) {
       this.connectionLayer.dispose(); this.connectionLayer = null;
     }
@@ -24,7 +24,7 @@ export class RetainedProductionAdapter extends RetainedBase {
       this.connectionLayer = new ExpressionConnectionLayer(this.engine);
       this.connectionLayer.configure(this.expressionBindings, frame.selectedIds);
       // First attachment paints once without advancing/reseeding the clock.
-      this.engine.renderer.render(this.engine.scene, this.engine.camera);
+      this.engine.advance(0);
     }
   }
   hitTestExpression(x, y) {

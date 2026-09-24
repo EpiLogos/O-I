@@ -1,18 +1,10 @@
-/**
- * AgentDetail — Purpose · Skills & tools · Sessions · Knowledge ·
- * History/learning. `agency_read` (kernel/types.ts:209/284) only ever
- * discloses `{definition:{id}, label?, agent_sessions:{purpose?}}`
- * (the shape EncounterList.tsx and SettingsPage.tsx already read), so
- * every section beyond Purpose/Sessions renders the honest
- * "Not disclosed by the owner reading" fallback rather than inventing
- * content the reading never carried.
- */
+import {HarnessDisclosure} from "./harnessDisclosure";
 import type { ReactNode } from "react";
 import type { AgencySessionRow } from "./agencyTypes";
 
 const NOT_DISCLOSED = "Not disclosed by the owner reading";
 
-export function AgentDetail({ row, siblingSessions }: { row: AgencySessionRow; siblingSessions: AgencySessionRow[] }) {
+export function AgentDetail({ row, siblingSessions, harnessDisclosure }: { row: AgencySessionRow; siblingSessions: AgencySessionRow[]; harnessDisclosure?:unknown }) {
   return <div className="agency-detail" aria-label={`Agent detail — ${row.purpose ?? row.sessionRef}`}>
     <header className="oi-context-head">
       <div>
@@ -29,7 +21,7 @@ export function AgentDetail({ row, siblingSessions }: { row: AgencySessionRow; s
     </DetailSection>
 
     <DetailSection title="Skills & tools">
-      <p className="oi-note">{NOT_DISCLOSED} — the repertoire read model (harness-profile disclosure) is designed but not yet routed through `agency_read`.</p>
+      <HarnessDisclosure reading={harnessDisclosure}/>
     </DetailSection>
 
     <DetailSection title="Sessions">

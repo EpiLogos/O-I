@@ -34,6 +34,8 @@ function preferResonance(current: LitInstance | undefined, candidate: LitInstanc
 
 export function TimelineRelationField({
   field,
+  relationTypes = null,
+  onClose,
   resonances,
   showRelations,
   showArchetypalContext,
@@ -42,6 +44,8 @@ export function TimelineRelationField({
   onLightOperator,
 }: {
   field: TimelineRelationFieldData;
+  relationTypes?: readonly string[] | null;
+  onClose?: () => void;
   resonances: LitInstance[];
   showRelations: boolean;
   showArchetypalContext: boolean;
@@ -60,30 +64,21 @@ export function TimelineRelationField({
   // set remains in the transport; the field is a readable projection of it.
   const rowsByKey = new Map<string, RelationRow>();
   for (const relationship of field.relationships) {
-    const otherId = relationship.sourceGraphNodeId === field.subjectGraphNodeId
-      ? relationship.targetGraphNodeId
-      : relationship.targetGraphNodeId === field.subjectGraphNodeId
-        ? relationship.sourceGraphNodeId
-        : null;
-    if (!otherId) continue;
-    const key = `${otherId}:${relationship.relType}`;
-    const node = contextualById.get(otherId) ?? null;
-    const existing = rowsByKey.get(key);
-    if (existing) {
-      existing.duplicateCount += 1;
-      continue;
+    const otherIds = field.subjectRelationRef && relationship.properties.native_relation_ref === field.subjectRelationRef
+      ? [...new Set([relationship.sourceGraphNodeId, relationship.targetGraphNodeId])]
+      : relationship.sourceGraphNodeId === field.subjectGraphNodeId ? [relationship.targetGraphNodeId]
+      : relationship.targetGraphNodeId === field.subjectGraphNodeId ? [relationship.sourceGraphNodeId] : [];
+    for (const otherId of otherIds) {
+      const key = `${otherId}:${relationship.relType}`;
+      const node = contextualById.get(otherId) ?? null;
+      const existing = rowsByKey.get(key);
+      if (existing) { existing.duplicateCount += 1; continue; }
+      rowsByKey.set(key, {relationship,otherId,node,resonance:resonanceByKey.get(key) ?? null,duplicateCount:1});
     }
-    rowsByKey.set(key, {
-      relationship,
-      otherId,
-      node,
-      resonance: resonanceByKey.get(key) ?? null,
-      duplicateCount: 1,
-    });
   }
 
   const relationRows = [...rowsByKey.values()].filter((row) => {
-    if (!showRelations) return false;
+    if (!showRelations || (relationTypes !== null && !relationTypes.includes(row.relationship.relType))) return false;
     return showArchetypalContext || !isArchetypalContext(row.node);
   });
   // A resonance is folded into its canonical relation only while that
@@ -111,6 +106,7 @@ export function TimelineRelationField({
       aria-label={compact ? "Reader relation field" : "Focused relations"}
     >
       <strong>Relation field</strong>
+      {onClose && <button type="button" aria-label="Close focused relations" onClick={onClose}>Close</button>}
       {relationRows.length === 0 && resonanceRows.length === 0 ? (
         <p>No related entities in the current view</p>
       ) : (
@@ -123,7 +119,7 @@ export function TimelineRelationField({
                   const isDominant = resonance !== null
                     && strongest?.node.graphNodeId === resonance.node.graphNodeId;
                   return (
-                    <li key={relationship.id} data-testid={`timeline-relation-${relationship.id}`}>
+                    <li key={`${relationship.id}:${otherId}`} data-testid={`timeline-relation-${relationship.id}`}>
                       <span className="timeline-relation-field__meta">
                         {relationship.relType.replaceAll("_", " ")}
                         {duplicateCount > 1 && <small> ×{duplicateCount}</small>}

@@ -15,7 +15,7 @@ const {build}=require('esbuild');
 const temporary=await mkdtemp(join(tmpdir(),'oi-research-native-'));
 try {
 const out=join(temporary,'adapters.mjs');
-await build({stdin:{contents:`export * from './src/researchInstrumentsData.ts';export {kernelDocumentToJourney} from './src/kernelDocumentBridge.ts';export {wikiReadingPayload} from '../../src/techne/wikiReadingProvider.ts';`,resolveDir:engine},tsconfig:engine+'/tsconfig.json',nodePaths:[repo+'/desktop/cradle/expressions-app/node_modules'],bundle:true,platform:'node',format:'esm',outfile:out,logLevel:'warning'});
+await build({stdin:{contents:`export * from './src/researchInstrumentsData.ts';export {kernelDocumentToJourney} from './src/kernelDocumentBridge.ts';export {wikiReadingPayload,wikiSceneReadingPayload} from '../../src/techne/wikiReadingProvider.ts';`,resolveDir:engine},tsconfig:engine+'/tsconfig.json',nodePaths:[repo+'/desktop/cradle/expressions-app/node_modules'],bundle:true,platform:'node',format:'esm',outfile:out,logLevel:'warning'});
 const api=await import(pathToFileURL(out));
 const actual=JSON.parse(await readFile(artifact,'utf8'));assert.equal(actual.reading.state,'ready');
 const view=api.kernelDocumentToJourney(actual.document);
@@ -29,12 +29,16 @@ for(const actualScene of view.journey.scenes){
 }
 const canvas=api.nativeInstrumentCanvas(view,scene.id),binding=view.bindings[scene.id];
 assert.equal(canvas.nodes.length,scene.entities.length);
-for(const node of canvas.nodes){assert.ok(actual.document.entities[node.id]);const id=canvas.occurrences.get(node.id),entity=scene.entities.find(e=>e.id===id);assert.ok(entity);assert.equal(node.position.x/api.CANVAS_UNITS,entity.position.x);assert.equal(-node.position.y/api.CANVAS_UNITS,entity.position.y);assert.equal(api.expressionTextFromNote(node.content),entity.text);}
+for(const node of canvas.nodes){assert.ok(actual.document.entities[node.id]);const id=canvas.occurrences.get(node.id),entity=scene.entities.find(e=>e.id===id);assert.ok(entity);assert.equal(node.position.x/api.CANVAS_UNITS,entity.position.x);assert.equal(-node.position.y/api.CANVAS_UNITS,entity.position.y);if(node.type==='note')assert.equal(api.expressionTextFromNote(node.content),entity.text);else if(node.type==='resource')assert.equal(node.absolutePath,actual.document.entities[node.id].subject.subject_ref,'source card stays an exact native binding, not an editable note');}
 for(const edge of canvas.edges){
  const native=actual.document.relations[edge.id];assert.ok(native);assert.equal(edge.sourceNodeId,native.from_entity_ref);assert.equal(edge.targetNodeId,native.to_entity_ref);
  const type=native.provenance.find(source=>source.ref.startsWith('wiki:relation-type:'))?.ref.slice('wiki:relation-type:'.length);
  if(type)assert.equal(edge.label,type,'the source relation type labels the edge, never its observation ID');
 }
+const scoped=api.wikiSceneReadingPayload({register:actual.register,reading:actual.reading,document:actual.document,sceneRef:binding.scene_ref});
+const titles=api.nativeInstrumentTitles(view,scene.id),named=await api.readingInstruments(scoped,titles);
+for(const node of named.bundle.nodes)if(titles.has(node.graphNodeId)){assert.equal(node.title,titles.get(node.graphNodeId));assert.equal((await named.dataSource.loadNode(node.graphNodeId)).title,titles.get(node.graphNodeId),'actual instrument repository receives the disclosed native title');}
+assert.deepEqual(scoped.expressions,[{expression_ref:actual.document.expression_ref,revision:String(actual.document.revision),scene_ref:binding.scene_ref}]);
 api.assertInstrumentReadingScope(reading,view,scene.id);
 const unrelated={...reading,subject:{...reading.subject,subject_ref:'unrelated:subject'},expressions:[]};assert.throws(()=>api.assertInstrumentReadingScope(unrelated,view,scene.id),/No source reading is bound/);
 const stale={...unrelated,expressions:[{expression_ref:view.document.expression_ref,scene_ref:binding.scene_ref,revision:String(view.document.revision+1)}]};assert.throws(()=>api.assertInstrumentReadingScope(stale,view,scene.id),/No source reading is bound/);

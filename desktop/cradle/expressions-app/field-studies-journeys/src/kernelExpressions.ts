@@ -60,6 +60,26 @@ export function installKernelExpressions():void{
 /** True once the cradle host announced the kernel channel for this frame. */
 export function kernelExpressionsAvailable():boolean{return ready;}
 
+/** Read an exact owner proposal; binding remains a separate human action. */
+export function readSceneBlueprint(input:{expression_ref:string;revision:number;scene_ref:string}):Promise<typeof input&{binding:import('./blueprintGeometry.js').SceneBlueprint}>{
+ return call('scene-blueprint',{request:input});
+}
+
+/** Hosted drafts use the native private recovery owner. Wait for the same
+ * frame-bound handshake as expression operations; never silently fall back
+ * to an ephemeral browser copy after a native failure. */
+export async function nativeRecoveryRequest(request:import('../../../src/expressions/recoveryTypes').ExpressionRecoveryRequest):Promise<import('../../../src/expressions/recoveryTypes').ExpressionRecoveryResult>{
+ if(!ready)await new Promise<void>((resolve,reject)=>{
+  const done=(event:MessageEvent)=>{
+   if(event.source!==window.parent||event.data?.v!==VERSION||event.data?.kind!=='oi-kernel-channel')return;
+   clearTimeout(timer);window.removeEventListener('message',done);resolve();
+  };
+  const timer=window.setTimeout(()=>{window.removeEventListener('message',done);reject(new Error('The native recovery owner did not become available'));},20000);
+  window.addEventListener('message',done);post({kind:'oi-kernel-hello'});
+ });
+ return call('expression-recovery',{request});
+}
+
 function call<T>(kind:string,body:Record<string,unknown>,timeoutMs=20000):Promise<T>{
  if(typeof window==='undefined'||window.parent===window)return Promise.reject(new Error('The kernel host channel is unavailable outside the desktop shell'));
  if(!ready)return Promise.reject(new Error('The kernel host channel has not been announced by the host yet'));
@@ -218,8 +238,12 @@ export async function nativeFileRequest(request:Record<string,unknown>):Promise<
  return call('expression-file',{request});
 }
 
-/** Source-bound reading of this hosted field. Scope remains with the host's
- * selected native subject; callers cannot smuggle another repository path. */
-export const readTechneReading = (): Promise<unknown> => call("techne-reading", {});
+/** The active native Scene is the address. The host validates its revision
+ * and source projection; no shell workspace or renderer file path supplies scope. */
+export interface TechneSceneReadingRequest {expression_ref:string;revision:number;scene_ref:string;facet?:'relation-semantics'|'node-metadata'|'scene-relations'}
+export const readTechneReading = (request:TechneSceneReadingRequest): Promise<unknown> => call("techne-reading", {request}, 45000);
 
 export const techneWorldRequest = (request: {operation:'list'}|{operation:'open';register:string}): Promise<unknown> => call('techne-world', {request}, 120000);
+
+export interface TechneConstellationRequest extends TechneSceneReadingRequest {entity_ref:string;operation:'inspect'|'open'}
+export const techneConstellationRequest = (request:TechneConstellationRequest):Promise<{frame_ref:string;frame_revision:number;title:string;project?:string}> => call('techne-constellation',{request},30000);

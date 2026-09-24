@@ -1,3 +1,4 @@
+import {generatedWikiAppearance} from "../../../../packages/oi-design-system/expressions-engine/oi/wikiPresentation.mjs";
 import type {Entity, ExpressionDocument, Relation} from "./types";
 import {blankScene} from "@epilogos/oi-design-system/expressions-engine/shell/model.mjs";
 import {nativeExport} from "@epilogos/oi-design-system/expressions-engine/shell/nativeBridge.mjs";
@@ -49,7 +50,8 @@ export function expressionConfig(document:ExpressionDocument, start=0):Record<st
       const path = ({width:"extent.width",height:"extent.height",rotation:"extent.rotation",frequency:"shape.frequencyHz",force_strength:"forces.strength",force_radius:"forces.radius",force_spin:"forces.spin"} as Record<string,string>)[key] ?? key;
       automations.push({id:`${ref}:automation:${key}`,path:`entities.${index}.${path}`,enabled:true,type:"lfo",waveform:a.waveform,min:a.min,max:a.max,rateHz:a.rate_hz,phase:0,blend:"replace"});
     }
-    const shapeName=String(v("shape","glyph"));
+    const appearance=window.scene.presentation?null:generatedWikiAppearance(document,entity);
+    const shapeName=appearance?.shape??String(v("shape","glyph"));
     const shape=primitives.has(shapeName)?{kind:"primitive",primitive:shapeName}
       : shapeName==="yantra"?{kind:"yantra",yantraId:v("yantra","anahata")}
       : shapeName==="cymatic"?{kind:"cymatic",frequencyHz:v("frequency",396),plateGeometry:"square",dimension:"2D"}
@@ -60,7 +62,7 @@ export function expressionConfig(document:ExpressionDocument, start=0):Record<st
     // implicit disclosure: image bytes must already be deliberately admitted.
     const source=ascii?{kind:"ascii",ascii:{text:String(ascii)}}
       : image?{kind:"image",image:{name:entity.title,dataUrl:String(image),mode:"luminance",threshold:0.5,scale:1}}:undefined;
-    return {id:ref,name:entity.title,kind:v("kind","formation"),enabled:true,
+    return {id:ref,name:appearance?.title??entity.title,kind:v("kind","formation"),enabled:true,
       x:v("x",0),y:v("y",0),z:v("z",0),scale:v("scale",1),share:v("share",1),shape,
       ...(source?{authoringSource:source}:{}),
       extent:{width:v("width",400),height:v("height",400),rotation:v("rotation",0),normalized:true},

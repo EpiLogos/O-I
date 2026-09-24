@@ -139,6 +139,8 @@ uniform sampler2D uPairwiseCorrectionZTexture;
 
 // Partition geometry so a particle can resolve its own entity (mirrors the velocity pass).
 uniform int uEntityCount;
+uniform float uConnectionStart;
+uniform sampler2D uConnectionMetadata;
 uniform float uEntityBounds[10];
 uniform vec4 uEntityCenter[10];
 uniform float uEntityMorph[10];
@@ -151,6 +153,11 @@ varying vec2 vUv;
 void main() {
   vec4 posData = texture2D(uPositionTexture, vUv);
   vec4 velData = texture2D(uVelocityTexture, vUv);
+  float relationIndex = floor(vUv.y * uTexSize.y) * uTexSize.x + floor(vUv.x * uTexSize.x);
+  if (relationIndex >= uConnectionStart && texture2D(uConnectionMetadata, vUv).z < 0.5) {
+    gl_FragColor = posData; return;
+  }
+
 
   vec3 pos = posData.xyz;
   vec3 vel = velData.xyz;
@@ -176,7 +183,7 @@ void main() {
   // deeper before the wall heals as they calm down. Residency (the particle's own
   // slot lies in the solid) exempts a particle from its own formation's obstacle
   // wall — without it the formation hollows into a shell at the stroke edges.
-  if (uCollisionEnabled > 0.5 && uEntityCount > 0) {
+  if (uCollisionEnabled > 0.5 && uEntityCount > 0 && (floor(vUv.y * uTexSize.y) * uTexSize.x + floor(vUv.x * uTexSize.x)) < uConnectionStart) {
     float pIndex = floor(vUv.y * uTexSize.y) * uTexSize.x + floor(vUv.x * uTexSize.x);
     int eIdx = 0;
     for (int i = 0; i < 10; i++) {
@@ -298,6 +305,8 @@ uniform float uPolPhase;            // running poloidal phase (radians)
 // Entities — first-class centres of formation (see fieldModel.ts). Each enabled formation owns a
 // contiguous particle partition; every particle feels every entity's local force.
 uniform int uEntityCount;
+uniform float uConnectionStart;
+uniform sampler2D uConnectionMetadata;
 uniform float uEntityBounds[10];    // exclusive end particle index per partition
 uniform vec4 uEntityCenter[10];     // xyz world centre, w = force radius (px)
 uniform float uEntityMorph[10];
@@ -412,6 +421,11 @@ varying vec2 vUv;
 void main() {
   vec4 posData = texture2D(uPositionTexture, vUv);
   vec4 velData = texture2D(uVelocityTexture, vUv);
+  float relationIndex = floor(vUv.y * uTexSize.y) * uTexSize.x + floor(vUv.x * uTexSize.x);
+  if (relationIndex >= uConnectionStart && texture2D(uConnectionMetadata, vUv).z < 0.5) {
+    gl_FragColor = vec4(0.0); return;
+  }
+
   vec4 targetA = texture2D(uTargetATexture, vUv);
   vec4 targetB = texture2D(uTargetBTexture, vUv);
 
@@ -442,6 +456,13 @@ void main() {
   // Targets are baked in entity-local coordinates; the centre is a uniform (moving never re-bakes)
   vec3 targetPos = mix(targetA.xyz, targetB.xyz, sMorph) + entityCenter;
   float targetDensity = mix(targetA.w, targetB.w, sMorph);
+  // Native connection targets are already in world coordinates. They retain
+  // the same integration, forces, medium and pairwise collision as the field.
+  if (pIndex >= uConnectionStart) {
+    targetPos = texture2D(uTargetATexture, vUv).xyz;
+    targetDensity = texture2D(uTargetATexture, vUv).w;
+    sMorph = 0.0;
+  }
 
   // --- Dual-Phase Toroidal/Poloidal Hopf Fibration Interference Manifold ---
   vec3 fHopf = vec3(0.0);
@@ -990,7 +1011,7 @@ void main() {
   // obstacle walls stop visitors only, vessel walls contain residents only. Without
   // this the formation hollows itself into a wireframe shell.
   vec3 fCollision = vec3(0.0);
-  if (uCollisionEnabled > 0.5) {
+  if (uCollisionEnabled > 0.5 && pIndex < uConnectionStart) {
     vec4 tile = uCollisionTile[eIdx];
     if (tile.w > 0.5) {
       float cMorph = sMorph;

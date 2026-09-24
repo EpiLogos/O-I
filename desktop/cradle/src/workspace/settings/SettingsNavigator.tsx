@@ -6,9 +6,10 @@
  */
 import {useEffect, useState, type ReactNode} from "react";
 import {ensureSettingsLoaded, useSettings, type SettingsSnapshot} from "./settingsData";
-import {goTo, PRODUCTS, samePlace, SECTIONS, useSettingsNav, type SectionId} from "./settingsNav";
+import {goTo, samePlace, SECTIONS, useSettingsNav, type SectionId} from "./settingsNav";
 import {readyHarnesses, skillCounts, credentialCards} from "./sectionModel";
-import {productName} from "./vocabulary";
+import {SettingsProductRows} from "./SettingsProductRows";
+import {settingsProducts} from "./settingsProducts";
 import "./settings-page.css";
 
 const ICON: Record<SectionId | "product", ReactNode> = {
@@ -59,14 +60,7 @@ export function SettingsNavigator() {
       <span className="settings-nav-caret" aria-hidden="true">›</span>Products
     </button>
     {productsOpen && <ul className="settings-nav-list" aria-label="Products">
-      {[...PRODUCTS, ...(data.registry.state === "ok" ? data.registry.value.mounts.filter((mount) => !PRODUCTS.some((product) => product.id === mount.owner_ref)).map((mount) => ({id: mount.owner_ref, label: productName(mount.owner_ref)})) : [])].map((product) => {
-        const current = samePlace(nav.place, {kind: "product", id: product.id});
-        return <li key={product.id}>
-          <button type="button" className="settings-nav-row" aria-current={current ? "page" : undefined} data-settings-product={product.id} onClick={() => goTo({kind: "product", id: product.id})}>
-            <Icon name="product"/><span className="settings-nav-label">{product.label}</span>
-          </button>
-        </li>;
-      })}
+      <SettingsProductRows products={settingsProducts(data)} place={nav.place} onChoose={goTo} icon={<Icon name="product"/>}/>
     </ul>}
   </nav>;
 }

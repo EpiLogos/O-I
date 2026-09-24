@@ -105,15 +105,15 @@ export const MODE_CURATION: Record<WorkspaceMode, ModeCuration> = {
     panel: {planes: ["run", "Agents", "context"], extra: ["run", "context"], conversationInCentre: true},
   },
   expressions: {
-    id: "expressions", label: "Expressions", hint: "The living Expressions application, with Anima / Nara", glyph: "field", left: "expression-graph", centreKind: "expressions",
+    id: "expressions", label: "Expressions", hint: "The living Expressions application", glyph: "field", left: "expression-graph", centreKind: "expressions",
     // Canvas modes keep the core planes and their own per-mode selection.
     panel: {planes: ["Chat", "Activity", "Agents", "context"], extra: ["context"]},
   },
   techne: {
     // Owner direction 2026-09-18: the left body is the wiki map — the web
     // as its project's own regions, not a file listing. The panel follows
-    // the same three views as Expressions, for the Aletheia mode (S5').
-    id: "techne", label: "Technè", hint: "The same living field, the deep cut — with Epii", glyph: "instrument", left: "wiki-map", centreKind: "techne",
+    // the same core planes and context as Expressions, for the Aletheia mode (S5').
+    id: "techne", label: "Technè", hint: "The same living field, the deep cut", glyph: "instrument", left: "wiki-map", centreKind: "techne",
     panel: {planes: ["Chat", "Activity", "Agents", "context"], extra: ["context"]},
   },
   "epi-logos": {

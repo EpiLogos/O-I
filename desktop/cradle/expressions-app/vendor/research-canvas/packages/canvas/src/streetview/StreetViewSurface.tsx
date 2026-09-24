@@ -1,4 +1,5 @@
 import { useReducer, useState, type JSX } from "react";
+import { createPortal } from "react-dom";
 
 import type {
   StreetViewImageRecord,
@@ -14,12 +15,19 @@ import type { LiveServicePolicy } from "@research-canvas/geography";
  * the user consents, and the connection indicator reflects it.
  */
 
+/** Display accepts native image material without claiming an import timestamp. */
+export type StreetViewDisplayImage = Omit<StreetViewImageRecord, "createdAt" | "updatedAt"> & Partial<Pick<StreetViewImageRecord, "createdAt" | "updatedAt">>;
+
 export interface StreetViewSurfaceProps {
-  images: StreetViewImageRecord[];
-  policy: LiveServicePolicy;
+  toolbarContainer?: HTMLElement;
+  images: StreetViewDisplayImage[];
+  policy?: LiveServicePolicy;
+  /** Native hosts retain egress authority; no browser-local opt-in can grant it. */
+  offlineOnly?: boolean;
+  imageTitle?: (image: StreetViewDisplayImage) => string;
   /** Resolves a portable artifact path against the media root. */
   resolveAsset: (artifactPath: string) => string;
-  /** Opens the import flow (file picker → regions → redaction). */
+  /** Opens the host's actual available import flow. */
   onImport?: () => void;
 }
 
@@ -30,8 +38,11 @@ const REASON_LABELS: Record<StreetViewRegion["reason"], string> = {
 };
 
 export function StreetViewSurface({
+  toolbarContainer,
   images,
   policy,
+  offlineOnly = false,
+  imageTitle,
   resolveAsset,
   onImport,
 }: StreetViewSurfaceProps): JSX.Element {
@@ -39,15 +50,16 @@ export function StreetViewSurface({
     images[0]?.id ?? null,
   );
   const [, forceRender] = useReducer((count: number) => count + 1, 0);
-  const activeImage = images.find((image) => image.id === openImageId) ?? null;
-  const policyState = policy.state();
-  const activeReason = policy.activeReason();
-  const mapillaryOptedIn = policy.isOptedIn("street_view_browse");
+  const activeImage = images.find((image) => image.id === openImageId) ?? images[0] ?? null;
+  const policyState = offlineOnly ? "offline" : policy?.state() ?? "offline";
+  const activeReason = offlineOnly ? null : policy?.activeReason();
+  const mapillaryOptedIn = !offlineOnly && !!policy?.isOptedIn("street_view_browse");
   const firstLocated = images.find(
     (image) => image.latitude !== null && image.longitude !== null,
   );
 
   const browseMapillary = () => {
+    if (offlineOnly || !policy) return;
     if (!firstLocated || firstLocated.latitude === null || firstLocated.longitude === null) {
       return;
     }
@@ -72,8 +84,7 @@ export function StreetViewSurface({
     window.open(url, "_blank", "noopener,noreferrer");
   };
 
-  return (
-    <section className="street-view-surface" data-testid="street-view-surface">
+  const toolbar = (
       <div className="street-view-toolbar">
         <span className="street-view-toolbar__title">Street view</span>
         {onImport && (
@@ -87,6 +98,10 @@ export function StreetViewSurface({
           </button>
         )}
       </div>
+  );
+  return (
+    <section className="street-view-surface" data-testid="street-view-surface">
+      {toolbarContainer ? createPortal(toolbar, toolbarContainer) : toolbar}
       <div
         className="street-view-connection"
         data-testid="street-view-connection"
@@ -101,10 +116,9 @@ export function StreetViewSurface({
       {images.length === 0 ? (
         <div className="street-view-empty" data-testid="street-view-empty">
           <p>
-            No captured imagery for this journey yet. Import fieldwork photos to
-            build the street view, then mark redaction regions before publishing.
+            No images in this Scene yet. Import an image to view it here.
           </p>
-          {onImport && (
+          {onImport && !toolbarContainer && (
             <button
               type="button"
               data-testid="street-view-empty-import"
@@ -126,13 +140,13 @@ export function StreetViewSurface({
                   data-testid={`street-view-item-${image.id}`}
                   onClick={() => setOpenImageId(image.id)}
                 >
-                  <span>{image.artifactPath.split("/").pop()}</span>
-                  <span
+                  <span>{imageTitle?.(image) ?? image.artifactPath.split("/").pop()}</span>
+                  {!offlineOnly && <span
                     className="street-view-status"
                     data-status={image.redactionStatus}
                   >
                     {image.redactionStatus}
-                  </span>
+                  </span>}
                 </button>
               </li>
             ))}
@@ -149,7 +163,7 @@ export function StreetViewSurface({
                   src={resolveAsset(
                     activeImage.redactedArtifactPath ?? activeImage.artifactPath,
                   )}
-                  alt={`Street view capture ${activeImage.artifactPath}`}
+                  alt={imageTitle?.(activeImage) ?? "Imported image"}
                   data-testid="street-view-image"
                 />
                 {activeImage.redactionRegions.map((region, index) => (
@@ -168,23 +182,23 @@ export function StreetViewSurface({
                   />
                 ))}
               </div>
-              <figcaption>
+              {(activeImage.capturedAt || (activeImage.latitude !== null && activeImage.longitude !== null) || activeImage.headingDegrees !== null) && <figcaption>
                 {activeImage.capturedAt
                   ? `Captured ${activeImage.capturedAt}`
-                  : "Capture time unknown"}
+                  : ""}
                 {activeImage.latitude !== null && activeImage.longitude !== null
                   ? ` · ${activeImage.latitude.toFixed(4)}, ${activeImage.longitude.toFixed(4)}`
-                  : " · location unrecorded"}
+                  : ""}
                 {activeImage.headingDegrees !== null
                   ? ` · heading ${Math.round(activeImage.headingDegrees)}°`
                   : ""}
-              </figcaption>
+              </figcaption>}
             </figure>
           )}
         </div>
       )}
 
-      <div className="street-view-live" data-testid="street-view-live-controls">
+      {!offlineOnly && policy && <div className="street-view-live" data-testid="street-view-live-controls">
         <span className="street-view-live-label">
           {mapillaryOptedIn
             ? "Mapillary browsing opted in"
@@ -205,7 +219,7 @@ export function StreetViewSurface({
             Add a located capture to browse Mapillary.
           </span>
         )}
-      </div>
+      </div>}
     </section>
   );
 }

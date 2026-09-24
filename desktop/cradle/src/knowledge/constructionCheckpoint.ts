@@ -26,6 +26,8 @@ export function restoreConstructionCheckpoint(value: unknown): ConstructionCheck
   if (!ref(d.frame_ref) || !ref(d.anchor_ref) || !bounded(d.title, 512) || !bounded(d.question, 4096) || !bounded(d.space_ref, 4096) || (d.form !== null && !validNativeFrame(d.form)) || !Array.isArray(d.members) || d.members.length > 4096 || !Array.isArray(d.relations) || d.relations.length > 4096 || !Array.isArray(d.original_relations)) return fail();
   for (const m of d.members) {
     if (!object(m) || !ref(m.subject_ref) || !ref(m.participation_ref) || (m.role_ref !== null && !ref(m.role_ref)) || !bounded(m.label, 12000) || !records(m.sources)) return fail();
+    if(m.temporal!==undefined&&!records(m.temporal)||m.places!==undefined&&!records(m.places))return fail();
+    if(m.facet_sources!==undefined&&(!Array.isArray(m.facet_sources)||m.facet_sources.length>256||m.facet_sources.some(row=>!object(row)||!ref(row.source_ref)||!ref(row.revision)||!location(row.location))))return fail();
     if (m.passage !== undefined) {
       const p = m.passage;
       if (!object(p) || p.schema !== 'oi.wiki-passage/v1' || p.source_ref !== m.subject_ref || !ref(p.source_revision) || !object(p.address) || p.address.kind !== 'source' || p.address.value !== p.source_ref || !object(p.selector) || !Number.isSafeInteger(p.selector.start_byte) || !Number.isSafeInteger(p.selector.end_byte) || Number(p.selector.start_byte) < 0 || Number(p.selector.end_byte) <= Number(p.selector.start_byte) || !bounded(p.source_text, 65536) || !bounded(p.text, 12000) || !bounded(p.title, 512) || !ref(p.provider)) return fail();

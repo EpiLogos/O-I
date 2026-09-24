@@ -76,7 +76,7 @@ function CurrentChat({session}:{session:EncounterSessionHandle|undefined}) {
    </div>
    {verification&&<p className="settings-card-note" role="status" data-connection-verified={verification.connected}>{verification.summary} Checked {new Date(verification.at).toLocaleTimeString()}. No model turn was sent.</p>}
    <Row id="model:current" title="Model for this chat" description="Changes this session only; the harness confirms the selection.">
-    <ModelChip model={session.state.model} actions={{refresh:session.actions.readModel,select:session.actions.selectModel}} disabled={session.state.pending||status?.state==="TurnInFlight"||status?.state==="InterruptRequested"}/>
+    <ModelChip project={session.state.project||undefined} model={session.state.model} actions={{refresh:session.actions.readModel,select:session.actions.selectModel}} disabled={session.state.pending||status?.state==="TurnInFlight"||status?.state==="InterruptRequested"}/>
    </Row>
    {state?.error&&<p className="settings-inline-error" role="alert">{state.error}</p>}
   </>:<p className="settings-muted">No chat is selected. The default below decides which harness a new chat starts with.</p>}

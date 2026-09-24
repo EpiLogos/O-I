@@ -303,9 +303,8 @@ function placeProjectionFrom(facet: TechnePlaceFacetLite): TemporalPlaceProjecti
     validFrom: name.valid_from ?? null,
     validTo: name.valid_to ?? null,
   }));
-  if (names.length === 0) {
-    throw new Error(`techne place ${facet.place_ref}: no identity names disclosed`);
-  }
+  // Native place names are optional. Preserve that absence; the host supplies
+  // a display label independently, never an authored place identity.
 
   return {
     graphNodeId: facet.place_ref,

@@ -203,6 +203,8 @@ export interface PalaceGraphView {
  * inventing an historical date for them.
  */
 export interface TimelineRelationField {
+  /** A dated native edge is the focus; its endpoints keep their own identities. */
+  subjectRelationRef?: string;
   subjectGraphNodeId: string;
   relationships: GraphRelationship[];
   contextualNodes: GraphNode[];

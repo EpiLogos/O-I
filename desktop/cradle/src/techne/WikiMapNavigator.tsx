@@ -1,3 +1,4 @@
+import {wikiDisplayName} from "../../../../packages/oi-design-system/expressions-engine/oi/wikiPresentation.mjs";
 import {useEffect, useRef, useState} from "react";
 import {useKernel} from "../kernel/KernelProvider";
 import {Glyph} from "../workspace/Glyph";
@@ -8,11 +9,12 @@ import {
   setWikiProjectionRegisters,
   useWikiProjectionState,
   wikiProjectionOf,
+  wikiReadingOf,
   wikiStandingSubtitle,
   type RegisterStanding,
 } from "./wikiProjectionStore";
 import {wikiRegistersFrom, type ProjectedConstellation} from "./wikiExpression";
-import {ensureWikiNativeExpression} from "./wikiNativeExpression";
+import {ensureWikiNativeExpression,previewWikiRelationRecovery,applyWikiRelationRecovery,type WikiRelationRecovery} from "./wikiNativeExpression";
 import "./techne.css";
 
 /** The wiki tree projects the shared Wiki→Expression state. Row selection
@@ -65,6 +67,13 @@ function WikiRegion({register, defaultOpen, activeRegister, onOpenWiki, onMessag
   const projection = wikiProjectionOf(standing);
   const [opened, setOpened] = useState(defaultOpen);
   const [projecting, setProjecting] = useState(false);
+  const [recovery, setRecovery] = useState<WikiRelationRecovery | null>(null);
+  const [recovering, setRecovering] = useState(false);
+  const [recoveryNotice, setRecoveryNotice] = useState("");
+  const currentReading=wikiReadingOf(standing);
+  const nativeDocument="document" in standing?standing.document:undefined;
+  const incompleteConnections=!!nativeDocument&&!nativeDocument.provenance.some(row=>row.ref.startsWith("wiki:relations:"))&&(!projection?.document.provenance.some(row=>row.ref.startsWith("wiki:relations:"))||Object.keys(projection.document.relations).some(ref=>!nativeDocument.relations[ref])||!!recoveryNotice);
+  const connectionFailure=currentReading?.relations.state==="unavailable"?currentReading.relations.reason:undefined;
   const lastFailure = useRef<string | null>(null);
 
   useEffect(() => { if (opened) ensureWikiProjection(register, kernel.transport); }, [opened, register, kernel.transport]);
@@ -106,6 +115,20 @@ function WikiRegion({register, defaultOpen, activeRegister, onOpenWiki, onMessag
     } finally { setProjecting(false); }
   };
 
+  const reviewConnections=async()=>{
+    if(recovering)return;setRecovering(true);setRecovery(null);setRecoveryNotice("");
+    try{const plan=await previewWikiRelationRecovery(kernel.transport,register);setRecovery(plan);setRecoveryNotice(plan.missing.length?`${plan.missing.length} source connections can be restored. Your objects, Scene material and selection stay as they are.`:'The current source reading has no missing connections.');}
+    catch(error){setRecoveryNotice(error instanceof Error?error.message:String(error));}
+    finally{setRecovering(false);}
+  };
+  const restoreConnections=async()=>{
+    if(!recovery||recovering)return;setRecovering(true);
+    try{const document=await applyWikiRelationRecovery(kernel.transport,recovery);setRecovery(null);setRecoveryNotice('Source connections restored and confirmed by the native owner.');
+      requestWikiSelection({registerKey:register.key,sceneRef:document.selection.scene_ref,entityRef:document.selection.entity_ref,relationRef:document.selection.relation_ref??undefined,subjectRef:null,origin:'wiki-map'});
+    }catch(error){setRecovery(null);setRecoveryNotice(error instanceof Error?error.message:String(error));}
+    finally{setRecovering(false);}
+  };
+
   // Entries the reading holds but the projection does not place: page-open
   // rows, named — never invented projection membership.
   const elsewhere = elsewhereOf(standing);
@@ -136,6 +159,11 @@ function WikiRegion({register, defaultOpen, activeRegister, onOpenWiki, onMessag
       </button>
     </summary>
     {standing.phase === "unavailable" && <p className="wiki-map-note" role="status">{standing.reason}</p>}
+    {opened && incompleteConnections && <div className="wiki-map-note" role="status">
+      <p>{recoveryNotice|| (connectionFailure?`Source connections unavailable: ${connectionFailure}`:'This composition opened before source connections could be read.')}</p>
+      <button type="button" disabled={recovering} onClick={()=>void reviewConnections()}>{recovering?'Reading…':'Retry source connections'}</button>
+      {recovery && recovery.missing.length>0 && <button type="button" disabled={recovering} onClick={()=>void restoreConnections()}>Restore {recovery.missing.length} source connections</button>}
+    </div>}
     {opened && projection && <div ref={bodyRef} className="wiki-region-body">
       {(projection.constellations ?? []).map(constellation => <section key={constellation.sceneRef} className="wiki-space">
         <WholeRow constellation={constellation} selected={rowSelected({sceneRef: constellation.sceneRef, entityRef: null})} onFocus={focusRow}/>
@@ -199,5 +227,5 @@ function elsewhereOf(standing: RegisterStanding): {ref: string; title: string; t
   const placed = new Set<string>();
   for (const space of wiki.spaces) for (const ref of space.node_refs ?? []) placed.add(ref);
   for (const frame of wiki.constellations) for (const member of frame.members ?? []) if (member.ref) placed.add(member.ref);
-  return wiki.nodes.filter(node => !placed.has(node.ref)).map(node => ({ref: node.ref, title: node.title ?? node.ref, type: node.type}));
+  return wiki.nodes.filter(node => !placed.has(node.ref)).map(node => ({ref: node.ref, title: wikiDisplayName(node.title, node.ref), type: node.type}));
 }

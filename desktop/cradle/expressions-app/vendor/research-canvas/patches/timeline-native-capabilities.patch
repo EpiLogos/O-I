@@ -1,0 +1,246 @@
+--- a/packages/desktop-api/src/techneTransport.ts
++++ b/packages/desktop-api/src/techneTransport.ts
+@@ -93,7 +93,7 @@
+ }
+ 
+ function matchesFilter<T>(value: T | null, filter?: { include?: T[]; exclude?: T[] }): boolean {
+-  const included = !filter?.include?.length || (value !== null && filter.include.includes(value));
++  const included = filter?.include === undefined || (value !== null && filter.include.includes(value));
+   return included && !(value !== null && filter?.exclude?.includes(value));
+ }
+ 
+@@ -324,12 +324,15 @@
+         matchesFilter(node.entityType, filters?.entityTypes)
+         && matchesFilter(node.historicity, filters?.historicities)
+         && matchesFilter(node.temporalRole, filters?.temporalRoles)
++        && (filters?.tags?.include === undefined || node.evidenceTags.some(tag => filters.tags!.include!.includes(tag)))
++        && !node.evidenceTags.some(tag => filters?.tags?.exclude?.includes(tag))
+         && (!range || rangeIntersects(node, range)),
+       );
++      const visible = new Set(filtered.map(record => record.node.graphNodeId));
+       return {
+         workspaceId: TECHNE_WORKSPACE_ID,
+         nodes: filtered,
+-        relationships: temporalRelationships(),
++        relationships: temporalRelationships().filter(row => visible.has(row.sourceGraphNodeId) && visible.has(row.targetGraphNodeId) && matchesFilter(row.relType, filters?.relationTypes)),
+         lanes: [],
+         diagnostics,
+       };
+--- a/packages/canvas/src/timeline/TimelineLens.tsx
++++ b/packages/canvas/src/timeline/TimelineLens.tsx
+@@ -1,5 +1,6 @@
+ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+ import type { JSX } from "react";
++import { createPortal } from "react-dom";
+ import { useStore } from "zustand";
+ 
+ import type { ArchetypalLighting, ExpandedTimelineNode, GraphNode, LitInstance, TimelineFilters, TimelineLayoutMutationResult, TimelineRelationField as TimelineRelationFieldData, TimelineView, TimelineYearRange } from "./contracts";
+@@ -16,6 +17,8 @@
+ import { assembleTimelineWalk } from "./walk";
+ 
+ export interface TimelineDataSource {
++  styleCapability?: {available:boolean;reason?:string};
++  archetypeCapability?: {available:boolean;reason?:string};
+   loadTimelineView(range?: TimelineYearRange, filters?: TimelineFilters): Promise<TimelineView>;
+   loadNode?(graphNodeId: string): Promise<GraphNode>;
+   archetypalLighting(operatorGraphNodeId: string): Promise<ArchetypalLighting>;
+@@ -31,6 +34,7 @@
+ }
+ 
+ export interface TimelineLensProps {
++  toolbarContainer?: HTMLElement;
+   dataSource: TimelineDataSource;
+   onOpenNode: (
+     graphNodeId: string,
+@@ -58,6 +62,7 @@
+ type TimelineNavigationDirection = "earlier" | "later";
+ 
+ export function TimelineLens({
++  toolbarContainer,
+   dataSource,
+   onOpenNode,
+   initialViewport,
+@@ -80,6 +85,8 @@
+   const [relationField, setRelationField] = useState<TimelineRelationFieldData | null>(null);
+   const [loaded, setLoaded] = useState(false);
+   const [loadError, setLoadError] = useState<string | null>(null);
++  const [readAttempt, setReadAttempt] = useState(0);
++  const [contextError, setContextError] = useState<{message:string;retry:()=>void} | null>(null);
+   const [saveErrors, setSaveErrors] = useState<Record<string, string>>({});
+   const saveQueues = useRef(new Map<string, Promise<void>>());
+   const saveVersions = useRef(new Map<string, number>());
+@@ -141,6 +148,7 @@
+     resonanceRequestVersion.current += 1;
+     setRelationField(null);
+     setResonances([]);
++    setContextError(null);
+     setSaveErrors({});
+     setLoaded(false);
+     setLoadError(null);
+@@ -164,7 +172,7 @@
+       cancelled = true;
+       if (timelineLoadTimer.current !== null) window.clearTimeout(timelineLoadTimer.current);
+     };
+-  }, [dataSource, store, timelineFilters, timelineFiltersKey]);
++  }, [dataSource, store, timelineFilters, timelineFiltersKey, readAttempt]);
+ 
+   // Track width measurement (ResizeObserver is mocked in tests; fall back to a
+   // sensible default so layout math runs even before the observer fires).
+@@ -316,6 +324,7 @@
+   }, [state.nodes]);
+ 
+   const handleSelect = (graphNodeId: string) => {
++    setContextError(null);
+     store.getState().setSelected(graphNodeId);
+     setRelationFieldOpen(false);
+     const resonanceVersion = resonanceRequestVersion.current + 1;
+@@ -323,8 +332,8 @@
+     setResonances([]);
+     void dataSource.resonancesForInstance(graphNodeId).then((nextResonances) => {
+       if (resonanceRequestVersion.current === resonanceVersion) setResonances(nextResonances);
+-    }).catch(() => {
+-      if (resonanceRequestVersion.current === resonanceVersion) setResonances([]);
++    }).catch((error: unknown) => {
++      if (resonanceRequestVersion.current === resonanceVersion) setContextError({message:`Related reading unavailable: ${error instanceof Error ? error.message : String(error)}`,retry:()=>handleSelect(graphNodeId)});
+     });
+ 
+     const requestVersion = relationFieldRequestVersion.current + 1;
+@@ -333,10 +342,8 @@
+     if (dataSource.relationFieldForEvent) {
+       void dataSource.relationFieldForEvent(graphNodeId).then((field) => {
+         if (relationFieldRequestVersion.current === requestVersion) setRelationField(field);
+-      }).catch(() => {
+-        // Relation context is supplementary. Keep the selected historical
+-        // event interactive if a remote/local field read is temporarily unavailable.
+-        if (relationFieldRequestVersion.current === requestVersion) setRelationField(null);
++      }).catch((error: unknown) => {
++        if (relationFieldRequestVersion.current === requestVersion) setContextError({message:`Connection reading unavailable: ${error instanceof Error ? error.message : String(error)}`,retry:()=>handleSelect(graphNodeId)});
+       });
+     }
+ 
+@@ -346,14 +353,15 @@
+     if (dataSource.expandNode) {
+       void dataSource.expandNode(graphNodeId).then((expansion) => {
+         store.getState().expandNode(expansion);
+-      }).catch(() => {
+-        // Expansion is supplementary. A failed deep read must not close the
+-        // selection or surface as an unhandled rejection.
++      }).catch((error: unknown) => {
++        if (relationFieldRequestVersion.current === requestVersion) setContextError({message:`Source context unavailable: ${error instanceof Error ? error.message : String(error)}`,retry:()=>handleSelect(graphNodeId)});
+       });
+     }
+   };
+ 
+   const handleOpenNode = (graphNodeId: string, node: GraphNode, includeRelationField = true) => {
++    setContextError(null);
++    const requestEpoch = dataSourceEpoch.current;
+     const contextField = includeRelationField ? relationField ?? undefined : undefined;
+     const open = (nextNode: GraphNode) => onOpenNode(
+       graphNodeId,
+@@ -370,16 +378,19 @@
+     if (dataSource.loadNode) {
+       void dataSource.loadNode(graphNodeId)
+         .then((nextNode) => open(nextNode))
+-        .catch(() => {
+-          // The projection is already a valid reader record; a failed deep
+-          // read must not close it or surface as an unhandled rejection.
++        .catch((error: unknown) => {
++          if (dataSourceEpoch.current === requestEpoch) setContextError({message:`Source reading unavailable: ${error instanceof Error ? error.message : String(error)}`,retry:()=>handleOpenNode(graphNodeId,node,includeRelationField)});
+         });
+     }
+   };
+ 
+   const handleLightOperator = (operatorGraphNodeId: string) => {
++    setContextError(null);
++    const requestEpoch = dataSourceEpoch.current;
+     void dataSource.archetypalLighting(operatorGraphNodeId).then((result) => {
+-      store.getState().setLighting(result);
++      if (dataSourceEpoch.current === requestEpoch) store.getState().setLighting(result);
++    }).catch((error: unknown) => {
++      if (dataSourceEpoch.current === requestEpoch) setContextError({message:`Archetype reading unavailable: ${error instanceof Error ? error.message : String(error)}`,retry:()=>handleLightOperator(operatorGraphNodeId)});
+     });
+   };
+ 
+@@ -560,8 +571,7 @@
+ 
+   useEffect(() => stopTimelineNavigation, [stopTimelineNavigation]);
+ 
+-  return (
+-    <div className="timeline-lens" data-testid="timeline-lens">
++  const toolbar = (
+       <div className="timeline-toolbar" data-testid="timeline-toolbar">
+         <span className="timeline-tier" data-testid="timeline-tier">{tier}</span>
+         {state.frame && (
+@@ -629,6 +639,8 @@
+             type="button"
+             className="timeline-filter"
+             data-testid="timeline-toggle-archetypal"
++            disabled={dataSource.archetypeCapability?.available===false}
++            title={dataSource.archetypeCapability?.available===false?dataSource.archetypeCapability.reason:undefined}
+             data-active={showArchetypalContext ? "true" : "false"}
+             aria-label={`${showArchetypalContext ? "Hide" : "Show"} archetypal context`}
+             aria-pressed={showArchetypalContext}
+@@ -728,6 +740,11 @@
+           </button>
+         )}
+       </div>
++  );
++
++  return (
++    <div className="timeline-lens" data-testid="timeline-lens">
++      {toolbarContainer ? createPortal(toolbar, toolbarContainer) : toolbar}
+       <div
+         className="timeline-track"
+         data-testid="timeline-track"
+@@ -739,10 +756,14 @@
+         onPointerLeave={handlePointerUp}
+       >
+         {loadError && (
+-          <div className="timeline-load-state timeline-load-state--error" data-testid="timeline-load-error">
++          <div role="alert" className="timeline-load-state timeline-load-state--error" data-testid="timeline-load-error">
+             Timeline data unavailable: {loadError}
++            <button type="button" onClick={() => setReadAttempt(value => value + 1)}>Retry reading</button>
+           </div>
+         )}
++        {contextError && <div role="alert" className="timeline-load-state timeline-load-state--error">
++          {contextError.message} <button type="button" onClick={contextError.retry}>Retry reading</button>
++        </div>}
+         {Object.entries(saveErrors).map(([nodeId, message]) => (
+           <div key={nodeId} role="alert" data-testid={`timeline-save-error-${nodeId}`}>
+             {message} <button type="button" onClick={() => commitTimelineLayout(nodeId)}>Retry</button>
+@@ -815,6 +836,7 @@
+                   onCommit={commitTimelineLayout}
+                   onColorTag={handleColorTag}
+                   readOnly={!dataSource.saveTimelineLayout || p.item.relationCompanion}
++                  colorCapability={dataSource.styleCapability}
+                 />
+               );
+             })}
+--- a/packages/canvas/src/timeline/TimelineNode.tsx
++++ b/packages/canvas/src/timeline/TimelineNode.tsx
+@@ -41,6 +41,7 @@
+   onCommit?: (nodeId: string) => void;
+   onColorTag: (nodeId: string, style: { dotColour: string; bgColour: string; textColour?: string }) => void;
+   readOnly?: boolean;
++  colorCapability?: {available:boolean;reason?:string};
+ }
+ 
+ export function TimelineNode({
+@@ -57,6 +58,7 @@
+   onCommit,
+   onColorTag,
+   readOnly = false,
++  colorCapability,
+ }: TimelineNodeProps): JSX.Element {
+   const { item, startPx, endPx } = placed;
+   const projectedNode = item.node as TimelineProjectedGraphNode;
+@@ -285,7 +287,8 @@
+             className="timeline-node-color"
+             data-testid={`timeline-node-color-${item.graphNodeId}`}
+             aria-label={`Tag ${item.node.title} as ${categoryStyle.label}`}
+-            disabled={readOnly}
++            disabled={readOnly||colorCapability?.available===false}
++            title={colorCapability?.available===false?colorCapability.reason:undefined}
+             onClick={(event) => {
+               event.stopPropagation();
+               onColorTag(item.graphNodeId, {

@@ -497,6 +497,8 @@ class PointCloudField {
         uEditHasSelection: { value: 0 },
         uEditSelected: { value: new Float32Array(10) },
         uEntityCount: { value: 0 },
+        uConnectionStart: { value: 1e30 },
+        uConnectionMetadata: { value: this.entities.noiseTexture },
         uEntityBounds: { value: new Float32Array(10) },
         uEntityTint: { value: Array.from({ length: 10 }, () => new THREE.Color("#ffffff")) },
         uEntityTintWeight: { value: new Float32Array(10) },
@@ -1106,6 +1108,7 @@ class PointCloudField {
       seeds: this.seedGeneration,
       bakes: this.entities.bakeGeneration,
       particleCount: this.simulator.particleCount,
+      connections: {...this.entities.connections.inspect(),nodeFormations:this.entities.getPartitions().length,maxNodeFormations:10},
       drive: this.lastDrive,
       composition: this.getCompositionTelemetry(),
       positions: [],
@@ -1122,6 +1125,11 @@ class PointCloudField {
     return result;
   }
   /** Editing decoration only. Neither GPU state nor the stored configuration is touched. */
+  setNativeConnections(bindings, selected = []) {
+    this.entities.connections.configure(bindings, selected, this.simulator.particleCount);
+    this.entities.layout(this.config.entities || []);
+  }
+  nativeConnectionRuntime() {return this.entities.connections;}
   setSelection(ids) {
     const u = this.particleMaterial.uniforms, parts = this.entities.getPartitions();
     const mask = u.uEditSelected.value;
@@ -1133,7 +1141,7 @@ class PointCloudField {
         any = true;
       }
     });
-    u.uEditHasSelection.value = any ? 1 : 0;
+    u.uEditHasSelection.value = any || this.entities.connections.selected.size ? 1 : 0;
   }
   /** Copy a clean live framebuffer without readback, stepping, or changing the authoring frame. */
   withCleanFrame(copy) {
@@ -1363,6 +1371,8 @@ class PointCloudField {
     if (this.particleMaterial) {
       const u = this.particleMaterial.uniforms;
       const eu = this.entities.uniforms;
+      u.uConnectionStart.value = this.entities.connections.start;
+      u.uConnectionMetadata.value = this.entities.noiseTexture;
       u.uEntityCount.value = eu.count;
       u.uEntityBounds.value.set(eu.bounds);
       u.uEntityTintWeight.value.set(eu.tintWeights);

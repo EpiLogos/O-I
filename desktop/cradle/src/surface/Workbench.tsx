@@ -465,7 +465,7 @@ function SurfaceBodyImpl({
   // slot; a foreign-tree centre ONLY by its pane wrapper. Factory's body
   // composes the frame-built chat node — the frame passes
   // CradleFrame.factoryCentre down, so there is no second direct arm here.
-  if (isRetainedCentreKind(binding.kind)) {
+  if (isRetainedCentreKind(binding.kind) || binding.hosted) {
     if (binding.kind === MODE_CURATION[treeMode].centreKind) return null;
     return <ModeCentreBody binding={binding} subject={subject} factoryCentre={factoryCentre} factoryTasks={factoryTasks}/>;
   }

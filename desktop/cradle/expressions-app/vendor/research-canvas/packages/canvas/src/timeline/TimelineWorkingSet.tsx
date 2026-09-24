@@ -82,7 +82,9 @@ export function TimelineWorkingSet({
   onUnload,
   onClear,
   onOpenNode,
+  onClose,
 }: {
+  onClose?: () => void;
   workingSet: WorkingSetEntry[];
   onUnload: (graphNodeId: string) => void;
   onClear: () => void;
@@ -91,9 +93,10 @@ export function TimelineWorkingSet({
   if (workingSet.length === 0) return <></>;
 
   return (
-    <aside className="timeline-working-set" data-testid="timeline-working-set" aria-label="Timeline working set">
+    <aside className="timeline-working-set" data-testid="timeline-working-set" aria-label="Timeline working set" onKeyDown={event => { if (event.key === "Escape" && onClose) { event.preventDefault(); event.stopPropagation(); onClose(); } }}>
       <header className="timeline-working-set__header">
         <strong>Working set</strong>
+        {onClose && <button type="button" aria-label="Close working set" onClick={onClose}>Close</button>}
         <button
           type="button"
           data-testid="timeline-working-set-clear"

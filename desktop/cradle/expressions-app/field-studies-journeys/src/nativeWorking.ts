@@ -1,3 +1,5 @@
+import {prepareBlueprintEdit,blueprintReply,type BlueprintIntent,type BlueprintEdit} from './nativeBlueprint.js';
+import {prepareOccurrenceEdit,occurrenceReply,type OccurrenceIntent,type DuplicateOccurrenceIntent,type InsertSourceIntent,type OccurrenceEdit} from './nativeOccurrence.js';
 /** Retained native basis for the existing authoring draft. Every semantic
  * mutation and durable file save crosses existing owner operations. Recovery
  * shares the existing draft DB, separately from the exportable Journey. */
@@ -13,7 +15,9 @@ export type PendingNative =
  | {kind:'edit';request:CompositionEdit;submitted:WorkingSnapshot}
  | {kind:'file';intent:unknown}
  | {kind:'selection';request:SelectionEdit}
- | {kind:'connections';request:ConnectionEdit};
+ | {kind:'connections';request:ConnectionEdit}
+ | {kind:'occurrence';intent:OccurrenceIntent;request:OccurrenceEdit}
+ | {kind:'blueprint';intent:BlueprintIntent;request:BlueprintEdit};
 export interface NativeSelection {scene_ref:string;entity_ref?:string|null;binding_ref?:string}
 export interface SelectionEdit {operation:'edit';expression_ref:string;expected_revision:number;actor:string;changes:[Record<string,unknown>]}
 function selectionEdit(view:KernelConversion,selection:NativeSelection):SelectionEdit {
@@ -79,7 +83,8 @@ export interface NativeWorkingPorts {
 }
 const same=sameSceneData;
 function readDocument(value:unknown,reference:string):KernelExpressionDocument {
- const result=value as {state?:string;document?:KernelExpressionDocument}|null;
+ const result=value as {state?:string;expression_ref?:string;document?:KernelExpressionDocument}|null;
+ if(result?.state==='revision_conflict'&&result.expression_ref===reference)throw new Error('revision_conflict: the native Expression changed; inspect its current basis before trying again');
  if(result?.state!=='ready'||result.document?.expression_ref!==reference)throw new Error('The native owner did not return the addressed Expression');
  return kernelDocumentToJourney(result.document).document;
 }
@@ -124,7 +129,7 @@ export function validateWorkingRecord(raw:unknown,journey:Journey):NativeWorking
  }
  if(value.pending){
   const pending=value.pending;
-  if(!['create','edit','file','selection','connections'].includes(pending.kind))throw new Error('Unknown pending native operation');
+  if(!['create','edit','file','selection','connections','occurrence','blueprint'].includes(pending.kind))throw new Error('Unknown pending native operation');
   if(pending.kind==='create'||pending.kind==='edit'){
    validateJourney(pending.submitted.journey);
    if(pending.submitted.journey.id!==journey.id)throw new Error('Pending proposal belongs to another draft');
@@ -137,6 +142,8 @@ export function validateWorkingRecord(raw:unknown,journey:Journey):NativeWorking
    if(!value.view||!change||!same(pending.request,selectionEdit(value.view,{scene_ref:String(change.scene_ref),entity_ref:change.entity_ref as string|null,binding_ref:change.binding_ref as string|undefined})))throw new Error('Recovered selection does not match its native basis');
   }
   if(pending.kind==='connections'&&(!value.view||!same(pending.request,connectionEdit(value.view,pending.request.changes))))throw new Error('Recovered connection edit does not match its native basis');
+  if(pending.kind==='blueprint'&&(!value.view||!same(pending.request,prepareBlueprintEdit(value.view,pending.intent).request)))throw new Error('Recovered blueprint does not match its captured native basis');
+  if(pending.kind==='occurrence'&&(!value.view||!same(pending.request,prepareOccurrenceEdit(value.view,pending.intent).request)))throw new Error('Recovered occurrence does not match its captured native basis');
   if(pending.kind==='file'&&!value.view)throw new Error('A file-save checkpoint requires a native basis');
  }
  return value;
@@ -152,12 +159,49 @@ export class NativeWorking {
   * newly selected inquiry. Navigation does not cancel an authorised act. */
  detach():void{this.epoch++;this.record=undefined;}
  restore(raw:unknown,journey:Journey):void{this.epoch++;this.record=validateWorkingRecord(raw,journey);}
- async adopt(document:KernelExpressionDocument,file?:NativeFile):Promise<KernelConversion>{
+ /** Reopen an acknowledged native basis after process restart. Local draft
+  * edits and interrupted operations remain recovery data; none is replayed. */
+ async reopenCheckpoint(raw:unknown,journey:Journey,accept:()=>boolean=()=>true):Promise<KernelConversion>{
+  if(this.inFlight)throw new Error('A native operation is still returning');
+  const record=validateWorkingRecord(raw,journey);
+  if(!record.view)throw new Error('This draft has no acknowledged native basis to reopen');
+  const epoch=++this.epoch;this.inFlight=true;
+  try{
+   const result=await this.ports.expression({operation:'open',document:record.view.document,actor:'oi:working-draft-recovery'});
+   const conflict=result as {state?:string;expression_ref?:string}|null;
+   if(conflict?.state==='revision_conflict'&&conflict.expression_ref===record.view.document.expression_ref
+    &&!record.pending&&!prepareCompositionEdit(record.view,journey).changes.length){
+    // Another aperture may have advanced clean work (including its focus).
+    // Read that owner revision; never submit the old document as an edit or
+    // rebase unsaved/interrupted material onto an unrelated native basis.
+    const document=readDocument(await this.ports.expression({operation:'inspect',expression_ref:record.view.document.expression_ref}),record.view.document.expression_ref);
+    const view=connectionView(record.view,document),refreshed={...record,view};
+    if(epoch!==this.epoch||!accept())throw new Error('The selected draft changed while recovery was returning; its native basis was not replaced');
+    await this.ports.checkpoint(record.draft_id,clone(refreshed));
+    if(epoch!==this.epoch||!accept())throw new Error('The selected draft changed while recovery was returning; its native basis was not replaced');
+    this.record=refreshed;
+    return clone(view);
+   }
+   const reopened=readDocument(result,record.view.document.expression_ref);
+   if(!same(reopened,record.view.document))throw new Error('Native work changed; the recovery draft was retained separately');
+   if(epoch!==this.epoch||!accept())throw new Error('The selected draft changed while recovery was returning; its native basis was not replaced');
+   this.record=record;
+   return {...clone(record.view),journey:clone(journey)};
+  }finally{this.inFlight=false;}
+ }
+ async adopt(document:KernelExpressionDocument,file?:NativeFile,accept:()=>boolean=()=>true):Promise<KernelConversion>{
   if(this.inFlight)throw new Error('A native operation is still returning; the current draft is retained');
   const epoch=++this.epoch,view=kernelDocumentToJourney(document);
   const record:NativeWorkingRecord={schema:'oi.native-working/v1',draft_id:view.journey.id,view,...(file?{file}: {})};
   validateWorkingRecord(record,view.journey);
-  await this.persist(record,epoch);return view;
+  this.inFlight=true;
+  try{
+   await this.ports.checkpoint(record.draft_id,clone(record));
+   // Returning durable data is not permission to replace the selected work.
+   // Check before changing the basis, so a later navigation needs no rollback.
+   if(epoch!==this.epoch||!accept())throw new Error('The selected draft changed while opening; its native basis was not replaced');
+   this.record=clone(record);return view;
+  }finally{this.inFlight=false;}
  }
  private async persist(record:NativeWorkingRecord,epoch:number):Promise<void>{
   await this.ports.checkpoint(record.draft_id,clone(record));
@@ -211,6 +255,22 @@ export class NativeWorking {
    await this.persist({...record,view:rebaseCompositionView(record.view!,record.view!.journey,document),pending:undefined},epoch);
   }finally{this.inFlight=false;}
  }
+ async editBlueprint(intent:BlueprintIntent):Promise<KernelConversion>{
+  const epoch=this.begin();
+  try{
+   const record=this.record?clone(this.record):undefined;
+   if(!record?.view)throw Error('Open a native Expression before applying a blueprint');
+   if(record.pending)throw Error('Inspect the interrupted native operation before changing the blueprint');
+   const {request,expected}=prepareBlueprintEdit(record.view,intent);
+   if(same(expected,record.view.document))return clone(record.view);
+   await this.persist({...record,pending:{kind:'blueprint',intent:clone(intent),request}},epoch);
+   const reply=readDocument(await this.ports.expression({...request}),request.expression_ref);
+   blueprintReply(record.view,intent,reply);
+   const observed=readDocument(await this.ports.expression({operation:'inspect',expression_ref:request.expression_ref}),request.expression_ref);
+   const view=blueprintReply(record.view,intent,observed);
+   await this.persist({...record,view,pending:undefined},epoch);return view;
+  }finally{this.inFlight=false;}
+ }
  /** Exact native connection edit with durable intent and independent readback. */
  async editConnections(changes:Record<string,unknown>[]):Promise<KernelConversion>{
   const epoch=this.begin();
@@ -226,6 +286,25 @@ export class NativeWorking {
    const observed=readDocument(await this.ports.expression({operation:'inspect',expression_ref:request.expression_ref}),request.expression_ref);
    if(!same(observed,expected))throw new Error('Native connection readback changed; preserve the pending edit and reconcile');
    const view=connectionView(record.view,observed);
+   await this.persist({...record,view,pending:undefined},epoch);
+   return view;
+  }finally{this.inFlight=false;}
+ }
+ /** Duplicate one native source occurrence with durable intent and exact readback. */
+ async duplicateOccurrence(intent:DuplicateOccurrenceIntent):Promise<KernelConversion>{return this.editOccurrence(intent);}
+ async insertSource(intent:InsertSourceIntent):Promise<KernelConversion>{return this.editOccurrence(intent);}
+ private async editOccurrence(intent:OccurrenceIntent):Promise<KernelConversion>{
+  const epoch=this.begin();
+  try{
+   const record=this.record?clone(this.record):undefined;
+   if(!record?.view)throw new Error('Open a native Expression before duplicating an occurrence');
+   if(record.pending)throw new Error('Inspect the interrupted native operation before duplicating');
+   const captured=clone(intent),{request}=prepareOccurrenceEdit(record.view,captured);
+   await this.persist({...record,pending:{kind:'occurrence',intent:captured,request}},epoch);
+   const reply=readDocument(await this.ports.expression({...request}),request.expression_ref);
+   occurrenceReply(record.view,captured,reply);
+   const observed=readDocument(await this.ports.expression({operation:'inspect',expression_ref:request.expression_ref}),request.expression_ref);
+   const view=occurrenceReply(record.view,captured,observed);
    await this.persist({...record,view,pending:undefined},epoch);
    return view;
   }finally{this.inFlight=false;}
@@ -267,6 +346,18 @@ export class NativeWorking {
    }
    const reference=pending.kind==='create'?pending.expression_ref:pending.request.expression_ref;
    const doc=readDocument(await this.ports.expression({operation:'inspect',expression_ref:reference}),reference);
+   if(pending.kind==='blueprint'){
+    if(same(doc,record.view!.document)){await this.persist({...record,pending:undefined},epoch);return 'The blueprint edit was not applied. No write was replayed.';}
+    const view=blueprintReply(record.view!,pending.intent,doc);
+    await this.persist({...record,view,pending:undefined},epoch);
+    return 'Recovered the exact native blueprint without replaying its edit.';
+   }
+   if(pending.kind==='occurrence'){
+    if(same(doc,record.view!.document)){await this.persist({...record,pending:undefined},epoch);return 'The native duplicate was not applied. No write was replayed.';}
+    const view=occurrenceReply(record.view!,pending.intent,doc);
+    await this.persist({...record,view,pending:undefined},epoch);
+    return 'Recovered the exact native occurrence without duplicating it again or replacing newer local work.';
+   }
    if(pending.kind==='connections'){
     if(same(doc,record.view!.document)){
      await this.persist({...record,pending:undefined},epoch);return 'The native connection edit was not applied. No write was replayed.';

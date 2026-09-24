@@ -1,4 +1,5 @@
 import type { GraphNode, TemporalPrecision, TimelineLane, TimelineViewNode } from "./contracts";
+import { tierForPixelsPerYear } from "./scale";
 import { parseTemporalInstant } from "./instant";
 import { yearToPixel, type TimelineViewport } from "./viewport";
 
@@ -27,6 +28,10 @@ export interface PlacedItem {
   item: TimelineItem;
   startPx: number;
   endPx: number;
+  /** Collision-resolved display position; authored offsetY remains unchanged. */
+  cardTop?: number;
+  /** Actual card display height at the current level of detail. */
+  cardHeight?: number;
   laneIndex: number;
   laneSide: "above" | "below";
 }
@@ -101,6 +106,7 @@ export function placeItems(
   ]));
   const explicitSlots = new Map(explicitIds.map((id, index) => [id, index]));
   const laneEnds = new Array(LANE_ORDER.length).fill(Number.NEGATIVE_INFINITY);
+  const occupied: ReturnType<typeof timelineCardBounds>[] = [];
   return items.map((item) => {
     const startPx = yearToPixel(viewport, item.startYear);
     const endPx =
@@ -108,16 +114,24 @@ export function placeItems(
     const explicitSlot = item.presentation.lane !== null && isExplicitPlacementLane(item.presentation.lane)
       ? explicitSlots.get(item.presentation.lane)
       : undefined;
-    const autoSlot = chooseLaneSlot(laneEnds, startPx);
+    const width = cardWidth(item.presentation);
+    const autoSlot = chooseLaneSlot(laneEnds, startPx - width / 2);
     const laneSlot = explicitSlot ?? explicitIds.length + autoSlot;
-    if (explicitSlot === undefined) laneEnds[autoSlot] = startPx + cardWidth(item.presentation) + CARD_GAP_PX;
-    return {
-      item,
-      startPx,
-      endPx,
-      laneIndex: Math.floor(laneSlot / 2),
-      laneSide: LANE_ORDER[laneSlot % LANE_ORDER.length],
-    };
+    if (explicitSlot === undefined) laneEnds[autoSlot] = startPx + width / 2 + CARD_GAP_PX;
+    const placed: PlacedItem = {item,startPx,endPx,laneIndex:Math.floor(laneSlot / 2),laneSide:LANE_ORDER[laneSlot % LANE_ORDER.length],...(tierForPixelsPerYear(viewport.pixelsPerYear)==='century'?{cardHeight:64}:{})};
+    let bounds=timelineCardBounds(placed);
+    // Cards are centred on their exact dates. Expand vertically rather than
+    // reusing an occupied slot, merging events or changing authored layout.
+    const horizontal=occupied.filter(other=>bounds.left<other.right+CARD_GAP_PX&&bounds.right+CARD_GAP_PX>other.left);
+    for(let attempts=0;attempts<=horizontal.length;attempts++){
+      const collisions=horizontal.filter(other=>bounds.top<other.bottom+CARD_GAP_PX&&bounds.bottom+CARD_GAP_PX>other.top);
+      if(!collisions.length)break;
+      placed.cardTop=placed.laneSide==='above'
+        ? Math.min(...collisions.map(other=>other.top))-CARD_GAP_PX-bounds.height
+        : Math.max(...collisions.map(other=>other.bottom))+CARD_GAP_PX;
+      bounds=timelineCardBounds(placed);
+    }
+    placed.cardTop=bounds.top;occupied.push(bounds);return placed;
   });
 }
 
@@ -159,7 +173,7 @@ export function computeCardViewportFade({
 }
 
 function cardWidth(presentation: TimelinePresentation): number {
-  return Math.max(presentation.width, DEFAULT_TIMELINE_CARD_WIDTH_PX);
+  return Math.min(520,Math.max(180,presentation.width || DEFAULT_TIMELINE_CARD_WIDTH_PX));
 }
 
 function clamp01(value: number): number {
@@ -172,11 +186,15 @@ function chooseLaneSlot(laneEnds: number[], startPx: number): number {
   const openSlot = laneEnds.findIndex((endPx) => endPx <= startPx);
   if (openSlot !== -1) return openSlot;
 
-  let earliestSlot = 0;
-  for (let i = 1; i < laneEnds.length; i += 1) {
-    if (laneEnds[i] < laneEnds[earliestSlot]) {
-      earliestSlot = i;
-    }
-  }
-  return earliestSlot;
+  laneEnds.push(Number.NEGATIVE_INFINITY);
+  return laneEnds.length - 1;
+}
+
+/** One display rectangle for cards, connectors, collision and viewport bounds. */
+export function timelineCardBounds(placed:PlacedItem){
+ const width=cardWidth(placed.item.presentation),height=placed.cardHeight??Math.min(260,Math.max(72,placed.item.presentation.height||DEFAULT_TIMELINE_CARD_HEIGHT_PX));
+ const laneOffset=68+placed.laneIndex*78;
+ const top=placed.cardTop??(placed.laneSide==='above'?-laneOffset-height+placed.item.presentation.offsetY:laneOffset+placed.item.presentation.offsetY);
+ return {left:placed.startPx-width/2,right:placed.startPx+width/2,top,bottom:top+height,width,height,
+  connectorOffset:Math.max(16,placed.laneSide==='above'?-(top+height):top)};
 }

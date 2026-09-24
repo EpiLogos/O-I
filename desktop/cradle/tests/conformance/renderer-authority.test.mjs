@@ -31,3 +31,14 @@ test('Rust source scan preserves code around URL strings and excludes only test 
  const sample='const URL: &str = "https://example.invalid"; std::fs::read(path); #[cfg(test)] mod tests { fn scratch(){ std::fs::remove_dir_all(path); } }';
  assert.match(rustRuntime(sample),/std::fs::read/);assert.doesNotMatch(rustRuntime(sample),/remove_dir_all/);
 });
+
+test('Lane E §6: direct native decision-provider dispatch exists only in the bounded facility',()=>{
+ const dispatch=text=>/\[\s*"jev"\s*,\s*"invoke"/.test(text)||/\bjev\s+invoke\b/.test(text);
+ // Strip prose comments, retaining argv literals: a command mention in a
+ // comment grants no authority, while aliases outside the owner need review.
+ const runtime=text=>text.split('\n').filter(line=>!/^\s*\/\//.test(line)).join('\n');
+ const sites=files('kernel/src',/\.rs$/).filter(file=>dispatch(runtime(read(file))));
+ assert.deepEqual(sites,['kernel/src/decision.rs']);
+ assert.ok(dispatch('Command::new(owner).args(["jev", "invoke"])'));
+ assert.ok(!dispatch('Command::new(owner).args(["status"])'));
+});

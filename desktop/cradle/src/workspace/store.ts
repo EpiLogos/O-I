@@ -1,3 +1,4 @@
+import {publishArrangement} from "../visuals/observations";
 import {preservePresentation,latestRecovery} from "./recovery";
 import {commitCheckpoint,lastKnownGood,stageCheckpoint,decodeLayoutProgressive} from "./checkpoints";
 import { useEffect, useRef, useState, type SetStateAction } from "react";
@@ -300,6 +301,7 @@ export function useWorkspaces() {
       return outcome.book;
     } catch(error) { try{const record=preservePresentation(localStorage.getItem(KEY)?KEY:"oi-cradle.layout.v1",String(error));setRecovery({reason:String(error),key:record.key});}catch{setRecovery({reason:"Recovery data could not be copied. Original workspace storage is protected."});} return stampActiveVisited({ version: 2, active: "root", workspaces: [{ id: "root", name: "Central", writing: "", layout: initialLayout() }] }); }
   });
+  useEffect(() => { publishArrangement(book); }, [book]);
   const current = book.workspaces.find(w => w.id === book.active)!;
   // The file tree's listing cache keys on the workspace: switching releases.
   useEffect(() => { setActiveListingWorkspace(current.id); }, [current.id]);

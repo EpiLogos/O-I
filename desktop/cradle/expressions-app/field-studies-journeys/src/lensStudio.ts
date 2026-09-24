@@ -24,6 +24,7 @@ export interface LensStudioApi {
   setMode(mode: 'expressions' | 'techne'): void;
   select(id: LensId): void;
   closeStudio(): void;
+  toggleChooser(): void;
   refresh(): void;
   active(): LensId;
 }
@@ -41,8 +42,8 @@ export interface LensStudioHost {
 function studioBody(lens: LensDef): string {
   const actions: Partial<Record<LensId, string>> = {
     project: '<button class="oi-action" data-action="native-library">Library</button><button class="oi-action" data-action="native-work">Save and reopen</button>',
-    journey: '<button class="oi-action" data-action="sequence-panel">Scenes</button><button class="oi-action" data-action="lens-op" data-op="commit">Commit Scenes</button>',
-    palace: '<button class="oi-action" data-action="native-work">Composition</button><button class="oi-action" data-action="sequence-panel">Scenes</button><button class="oi-action" data-action="lens-op" data-op="commit">Commit composition</button>',
+    journey: '<button class="oi-action" data-action="timeline">Scenes</button><button class="oi-action" data-action="lens-op" data-op="commit">Commit Scenes</button>',
+    palace: '<button class="oi-action" data-action="native-work">Composition</button><button class="oi-action" data-action="timeline">Scenes</button><button class="oi-action" data-action="lens-op" data-op="commit">Commit composition</button>',
   };
   return `<header class="lens-studio-head"><h2>${esc(lens.label)}</h2><button type="button" class="lens-studio-close" data-action="lens-close" aria-label="Close instrument tools">${icon('close')}</button></header><div class="lens-studio-controls">${actions[lens.id] ?? ''}</div>`;
 }
@@ -69,6 +70,7 @@ export function installLensStudio(host: LensStudioHost): LensStudioApi {
 
   let active: LensId = 'project';
   let studioOpen = false;
+  let chooserCollapsed = false;
   let mode: 'expressions' | 'techne' = 'expressions';
   let built = false;
 
@@ -78,7 +80,7 @@ export function installLensStudio(host: LensStudioHost): LensStudioApi {
   const buildChooser = () => {
     chooser.innerHTML = LENSES.map((lens, index) =>
       `<button type="button" class="lens-choice" data-action="lens" data-lens="${lens.id}" role="tab" id="lens-tab-${lens.id}" aria-controls="lens-studio" aria-selected="${lens.id === active}" tabindex="${lens.id === active ? 0 : -1}" aria-label="${esc(`${lens.office} ${lens.label}`)}" title="${esc(`${lens.office} — ${lens.label}`)}" data-index="${index}"><span class="lens-office" aria-hidden="true">${lens.office}</span>${icon(lens.icon)}</button>`,
-    ).join('');
+    ).join('') + `<button type="button" class="lens-hide" data-action="lens-bar" aria-label="Hide instruments" title="Hide instruments">${icon('collapse')}</button>`;
     built = true;
   };
 
@@ -99,7 +101,11 @@ export function installLensStudio(host: LensStudioHost): LensStudioApi {
 
   const apply = () => {
     const techne = mode === 'techne';
-    chooser.hidden = !techne;
+    chooser.hidden = !techne || chooserCollapsed;
+    for (const toggle of document.querySelectorAll<HTMLButtonElement>('[data-action="lens-bar"]')) {
+      toggle.setAttribute('aria-controls', chooser.id);
+      toggle.setAttribute('aria-expanded', String(!chooser.hidden));
+    }
     studio.hidden = !techne || !studioOpen;
     if (techne) {
       if (!built) buildChooser(); else markActive();
@@ -110,7 +116,7 @@ export function installLensStudio(host: LensStudioHost): LensStudioApi {
   const api: LensStudioApi = {
     setMode(next) { mode = next; if (next === 'techne' && !built) buildChooser(); apply(); },
     select(id) {
-      active = id; studioOpen = !["canvas", "timeline", "place"].includes(id);
+      active = id; studioOpen = false;
       if (built) markActive(); else buildChooser();
       if (studio.hidden) studio.hidden = false;
       renderStudio();
@@ -118,6 +124,11 @@ export function installLensStudio(host: LensStudioHost): LensStudioApi {
       host.activate(id);
     },
     closeStudio() { studioOpen = false; studio.hidden = true; },
+    toggleChooser() {
+      const containedFocus=chooser.contains(document.activeElement);
+      chooserCollapsed=!chooserCollapsed;apply();
+      if(chooserCollapsed&&containedFocus)Array.from(document.querySelectorAll<HTMLButtonElement>('[data-action="lens-bar"]')).find(button=>!chooser.contains(button)&&button.getClientRects().length>0)?.focus();
+    },
     refresh() { if (mode === 'techne') { if (!built) buildChooser(); else markActive(); if (studioOpen) renderStudio(); } },
     active() { return active; },
   };

@@ -1,74 +1,92 @@
 {
   "schema": "oi.native-source-contribution/v1",
+  "contribution_ref": "oi.contribution/factory",
   "owner": "software-factory",
-  "candidate": "cb0d0011a66e2bd575b5c7839d5390002bfa3aed",
-  "parent": "761b2a62c1a07a78ab2747a75c98dd62d934b1e7",
-  "entry": "factory-ui/src/index.ts",
-  "runtime_exports": [
-    "BuildSurface",
-    "ExecutionTraceExplorer",
-    "SessionCards",
-    "PhaseDetail",
-    "SpanDetail",
-    "TraceWaterfall"
-  ],
-  "props_type": "BuildSurfaceProps",
-  "native_view_type": "FactoryBuildView",
-  "styles": [
-    "factory-ui/src/styles.css",
-    "factory-ui/src/build-surface.css"
-  ],
-  "files_sha256": {
-    "factory-ui/src/BuildSurface.tsx": "d5785110ab5e9c56980a6210b612a04657b572a8bb486758c12145fcad97d552",
-    "factory-ui/src/build-surface.css": "9a2079018e3696297d3cade937e65a5bdcbe1c33d61d261a7c3713eda46d4e15",
-    "factory-ui/src/components/ExecutionTraceExplorer.tsx": "75424ce8b65306ee96a3de7df9d275b6bac680359087b8e87660ccb2e0c59068",
-    "factory-ui/src/components/PhaseDetail.tsx": "62a5f9c97427d9bb15002434816c5ddaf3a4ba86f3f59884a1ea7927986dec4d",
-    "factory-ui/src/components/SessionCards.tsx": "d5d361028668550940d0f137cb2c268b7d7f8df2090cb97f513cac45a443f0d0",
-    "factory-ui/src/components/SpanDetail.tsx": "8f886be24bf8aed2dca5d0a4498de5c364a98ab9f18b4eea11332154a7cdfe9a",
-    "factory-ui/src/components/TraceWaterfall.tsx": "e17611750a36680462598f241ebb1292131476030cca095dfcc19dc68d0e35c0",
-    "factory-ui/src/index.ts": "e0e92a56cbdcc55037734a64a7855aaecb2b77335cd81acb2199c34045f09681",
-    "factory-ui/src/read-model.ts": "4a4d04b2b3c7f70ae65a77b5eac371c017ea3ec729744a06c23ff4847be560cd",
-    "factory-ui/src/sssf.ts": "840e20bce20e64e786ef738472d7ee0786c6a3b08d4d3d5ce6ba1e8fde0a4ad0",
-    "factory-ui/src/styles.css": "9ba0bc9fd45579c213d36051d297d3dae80db3389c0ef0bc2f071c6399721452",
-    "factory-ui/src/types.ts": "c46ed6c4e40c801b8826d0c7c615826966bc2225816dac35d2a86e4663ccf8c6"
-  },
-  "peer_dependencies": {
-    "react": "^18.3.1 || ^19.0.0",
-    "react-dom": "^18.3.1 || ^19.0.0"
-  },
-  "authority": "Host onAction is a request hook, never grant evidence; actual Factory/Actuation native authority required. This desktop cut has no native Factory Action dispatch: the host renders the owner-declared Actions undispatchable and says so.",
-  "tests": {
-    "component_tests": 34,
-    "typecheck": true,
-    "library_and_declarations": true,
-    "isolation": {
-      "css_selectors_scoped": 238,
-      "runtime_exports": [
-        "BuildSurface",
-        "ExecutionTraceExplorer",
-        "SessionCards",
-        "PhaseDetail",
-        "SpanDetail",
-        "TraceWaterfall"
-      ],
-      "react_external": true,
-      "types": true
+  "revision": 1,
+  "entry": "descriptor.tsx",
+  "entry_sha256": "d68ee7a54b22427adf4c721adfc59345b6a912a1617010519a990a0f56de3c5d",
+  "surfaces": [
+    {
+      "descriptor_ref": "oi.surface/factory",
+      "kind": "factory",
+      "title": "Factory",
+      "mount_export": "FactoryHostedSurface",
+      "retention": "mounted",
+      "region": "canvas"
     }
-  },
-  "standing": "Verified native Factory PR #238 candidate, not yet merged; exact owner source on accepted main 761b2a62. Host-owned theme, scoped styles and canonical fixtures; unavailable Actions disabled by their native owner. Verified by 34 component tests, TypeScript, library build and native CI.",
-  "capture": "Exact Git blobs; update through owner candidate, never edit captured source",
-  "captured_files_sha256": {
-    "BuildSurface.tsx": "d5785110ab5e9c56980a6210b612a04657b572a8bb486758c12145fcad97d552",
-    "build-surface.css": "9a2079018e3696297d3cade937e65a5bdcbe1c33d61d261a7c3713eda46d4e15",
-    "components/ExecutionTraceExplorer.tsx": "75424ce8b65306ee96a3de7df9d275b6bac680359087b8e87660ccb2e0c59068",
-    "components/PhaseDetail.tsx": "62a5f9c97427d9bb15002434816c5ddaf3a4ba86f3f59884a1ea7927986dec4d",
-    "components/SessionCards.tsx": "d5d361028668550940d0f137cb2c268b7d7f8df2090cb97f513cac45a443f0d0",
-    "components/SpanDetail.tsx": "8f886be24bf8aed2dca5d0a4498de5c364a98ab9f18b4eea11332154a7cdfe9a",
-    "components/TraceWaterfall.tsx": "e17611750a36680462598f241ebb1292131476030cca095dfcc19dc68d0e35c0",
-    "index.ts": "e0e92a56cbdcc55037734a64a7855aaecb2b77335cd81acb2199c34045f09681",
-    "read-model.ts": "4a4d04b2b3c7f70ae65a77b5eac371c017ea3ec729744a06c23ff4847be560cd",
-    "sssf.ts": "840e20bce20e64e786ef738472d7ee0786c6a3b08d4d3d5ce6ba1e8fde0a4ad0",
-    "styles.css": "9ba0bc9fd45579c213d36051d297d3dae80db3389c0ef0bc2f071c6399721452",
-    "types.ts": "c46ed6c4e40c801b8826d0c7c615826966bc2225816dac35d2a86e4663ccf8c6"
+  ],
+  "source_capture": {
+    "schema": "oi.native-source-contribution/v1",
+    "owner": "software-factory",
+    "candidate": "cb0d0011a66e2bd575b5c7839d5390002bfa3aed",
+    "parent": "761b2a62c1a07a78ab2747a75c98dd62d934b1e7",
+    "entry": "factory-ui/src/index.ts",
+    "runtime_exports": [
+      "BuildSurface",
+      "ExecutionTraceExplorer",
+      "SessionCards",
+      "PhaseDetail",
+      "SpanDetail",
+      "TraceWaterfall"
+    ],
+    "props_type": "BuildSurfaceProps",
+    "native_view_type": "FactoryBuildView",
+    "styles": [
+      "factory-ui/src/styles.css",
+      "factory-ui/src/build-surface.css"
+    ],
+    "files_sha256": {
+      "factory-ui/src/BuildSurface.tsx": "d5785110ab5e9c56980a6210b612a04657b572a8bb486758c12145fcad97d552",
+      "factory-ui/src/build-surface.css": "9a2079018e3696297d3cade937e65a5bdcbe1c33d61d261a7c3713eda46d4e15",
+      "factory-ui/src/components/ExecutionTraceExplorer.tsx": "75424ce8b65306ee96a3de7df9d275b6bac680359087b8e87660ccb2e0c59068",
+      "factory-ui/src/components/PhaseDetail.tsx": "62a5f9c97427d9bb15002434816c5ddaf3a4ba86f3f59884a1ea7927986dec4d",
+      "factory-ui/src/components/SessionCards.tsx": "d5d361028668550940d0f137cb2c268b7d7f8df2090cb97f513cac45a443f0d0",
+      "factory-ui/src/components/SpanDetail.tsx": "8f886be24bf8aed2dca5d0a4498de5c364a98ab9f18b4eea11332154a7cdfe9a",
+      "factory-ui/src/components/TraceWaterfall.tsx": "e17611750a36680462598f241ebb1292131476030cca095dfcc19dc68d0e35c0",
+      "factory-ui/src/index.ts": "e0e92a56cbdcc55037734a64a7855aaecb2b77335cd81acb2199c34045f09681",
+      "factory-ui/src/read-model.ts": "4a4d04b2b3c7f70ae65a77b5eac371c017ea3ec729744a06c23ff4847be560cd",
+      "factory-ui/src/sssf.ts": "840e20bce20e64e786ef738472d7ee0786c6a3b08d4d3d5ce6ba1e8fde0a4ad0",
+      "factory-ui/src/styles.css": "9ba0bc9fd45579c213d36051d297d3dae80db3389c0ef0bc2f071c6399721452",
+      "factory-ui/src/types.ts": "c46ed6c4e40c801b8826d0c7c615826966bc2225816dac35d2a86e4663ccf8c6"
+    },
+    "peer_dependencies": {
+      "react": "^18.3.1 || ^19.0.0",
+      "react-dom": "^18.3.1 || ^19.0.0"
+    },
+    "authority": "Host onAction is a request hook, never grant evidence; actual Factory/Actuation native authority required. This desktop cut has no native Factory Action dispatch: the host renders the owner-declared Actions undispatchable and says so.",
+    "tests": {
+      "component_tests": 34,
+      "typecheck": true,
+      "library_and_declarations": true,
+      "isolation": {
+        "css_selectors_scoped": 238,
+        "runtime_exports": [
+          "BuildSurface",
+          "ExecutionTraceExplorer",
+          "SessionCards",
+          "PhaseDetail",
+          "SpanDetail",
+          "TraceWaterfall"
+        ],
+        "react_external": true,
+        "types": true
+      }
+    },
+    "standing": "Verified native Factory PR #238 candidate, not yet merged; exact owner source on accepted main 761b2a62. Host-owned theme, scoped styles and canonical fixtures; unavailable Actions disabled by their native owner. Verified by 34 component tests, TypeScript, library build and native CI.",
+    "capture": "Exact Git blobs; update through owner candidate, never edit captured source",
+    "captured_files_sha256": {
+      "BuildSurface.tsx": "d5785110ab5e9c56980a6210b612a04657b572a8bb486758c12145fcad97d552",
+      "build-surface.css": "9a2079018e3696297d3cade937e65a5bdcbe1c33d61d261a7c3713eda46d4e15",
+      "components/ExecutionTraceExplorer.tsx": "75424ce8b65306ee96a3de7df9d275b6bac680359087b8e87660ccb2e0c59068",
+      "components/PhaseDetail.tsx": "62a5f9c97427d9bb15002434816c5ddaf3a4ba86f3f59884a1ea7927986dec4d",
+      "components/SessionCards.tsx": "d5d361028668550940d0f137cb2c268b7d7f8df2090cb97f513cac45a443f0d0",
+      "components/SpanDetail.tsx": "8f886be24bf8aed2dca5d0a4498de5c364a98ab9f18b4eea11332154a7cdfe9a",
+      "components/TraceWaterfall.tsx": "e17611750a36680462598f241ebb1292131476030cca095dfcc19dc68d0e35c0",
+      "index.ts": "e0e92a56cbdcc55037734a64a7855aaecb2b77335cd81acb2199c34045f09681",
+      "read-model.ts": "4a4d04b2b3c7f70ae65a77b5eac371c017ea3ec729744a06c23ff4847be560cd",
+      "sssf.ts": "840e20bce20e64e786ef738472d7ee0786c6a3b08d4d3d5ce6ba1e8fde0a4ad0",
+      "styles.css": "9ba0bc9fd45579c213d36051d297d3dae80db3389c0ef0bc2f071c6399721452",
+      "types.ts": "c46ed6c4e40c801b8826d0c7c615826966bc2225816dac35d2a86e4663ccf8c6"
+    }
   }
 }

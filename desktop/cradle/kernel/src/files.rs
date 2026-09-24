@@ -66,11 +66,23 @@ pub struct BytesReading {
     /// `SurfaceOpen` gate requires that registration regardless of which
     /// read op resolved the ref).
     pub project: Option<Project>,
+    #[serde(default)]
+    pub source: Option<crate::flow::SourceBinding>,
 }
 fn valid(location: &Location) -> bool {
     location.schema == "central.path-ref/v1"
         && !location.ref_id.is_empty()
         && !location.root.is_empty()
+}
+/// Decode native path identity only through Central's owning resolver.
+pub fn resolve(client: &CentralClient, reference: &str) -> Result<Location, String> {
+    let value = client.run("central.files.resolve", json!({"ref":reference,"project":null})).map_err(|error| error.to_string())?;
+    if value["schema"] != "central.file-location/v1" || value["automatic_agent_or_model_invocation"] != false {
+        return Err("Unsupported native file resolution".into());
+    }
+    let location: Location = serde_json::from_value(value["location"].clone()).map_err(|error| error.to_string())?;
+    if !valid(&location) || location.ref_id != reference { return Err("Central redirected the requested file identity".into()); }
+    Ok(location)
 }
 pub fn list(client: &CentralClient, path: &str) -> Result<Directory, String> {
     let reading: Directory = serde_json::from_value(
@@ -92,12 +104,16 @@ pub fn list(client: &CentralClient, path: &str) -> Result<Directory, String> {
     Ok(reading)
 }
 pub fn read(client: &CentralClient, location: &Location) -> Result<Reading, String> {
-    let reading: Reading = serde_json::from_value(
-        client
-            .run("central.files.read", json!({"location":location}))
-            .map_err(|e| e.to_string())?,
-    )
-    .map_err(|e| e.to_string())?;
+    let value = client
+        .run("central.files.read", json!({"location":location}))
+        .map_err(|e| e.to_string())?;
+    validate_reading(location, value)
+}
+pub(crate) fn validate_reading(
+    location: &Location,
+    value: serde_json::Value,
+) -> Result<Reading, String> {
+    let reading: Reading = serde_json::from_value(value).map_err(|e| e.to_string())?;
     if reading.schema != "central.file-reading/v1"
         || reading.automatic_agent_or_model_invocation
         || !valid(&reading.location)
@@ -141,6 +157,7 @@ pub fn read_bytes(client: &CentralClient, location: &Location) -> Result<BytesRe
         byte_len: reading.byte_len,
         mime_hint: reading.mime_hint,
         content_base64: reading.content,
+        source: reading.source,
         project: reading.project,
     })
 }
@@ -246,8 +263,12 @@ pub fn operate(client:&CentralClient,location:&Location,request:&Request)->Resul
 /// HTTP representation for owner-read material bytes. Specific owner hints win;
 /// extension fallback covers browser assets only when the owner has no hint.
 pub fn material_content_type(mime_hint: Option<&str>, path: &str) -> String {
-    if let Some(hint) = mime_hint { return hint.to_owned(); }
-    let extension = path.rsplit_once('.').map(|(_, ext)| ext.to_ascii_lowercase());
+    if let Some(hint) = mime_hint {
+        return hint.to_owned();
+    }
+    let extension = path
+        .rsplit_once('.')
+        .map(|(_, ext)| ext.to_ascii_lowercase());
     match extension.as_deref() {
         Some("html" | "htm") => "text/html; charset=utf-8",
         Some("md" | "markdown") => "text/markdown; charset=utf-8",
@@ -269,5 +290,6 @@ pub fn material_content_type(mime_hint: Option<&str>, path: &str) -> String {
         Some("pdf") => "application/pdf",
         Some("txt") => "text/plain; charset=utf-8",
         _ => "application/octet-stream",
-    }.to_owned()
+    }
+    .to_owned()
 }

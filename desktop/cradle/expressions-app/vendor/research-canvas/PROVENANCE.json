@@ -2,7 +2,7 @@
   "source": "Research Canvas / Antichrist Project",
   "source_checkout": "/Users/admin/Central/Work/projects/Antichrist Project",
   "revision": "7df35f822f9235331a69940cdaf484fe4a0b95c1",
-  "scope": "Mature Canvas, Timeline, Places and Street View source dependency closure plus native ql.techne compatibility adapters. Upstream files byte-exact except the explicitly recorded readOnly capability patch. No standalone application, database or backend is mounted.",
+  "scope": "Mature Canvas, Timeline, Places and Street View source dependency closure plus native ql.techne compatibility adapters. Upstream files byte-exact except explicitly recorded capability, native error disclosure and hosted offline-network patches. No standalone application, database or backend is mounted.",
   "entries": [
     "packages/desktop-api/src/techneBundle.ts",
     "packages/desktop-api/src/techneTransport.ts",
@@ -175,13 +175,16 @@
     "verify-source.mjs",
     "patches/read-only-capability.patch",
     "tests/readOnly.tsx",
-    "tests/run-read-only.mjs"
+    "tests/run-read-only.mjs",
+    "patches/native-host-capabilities.patch",
+    "patches/source-direction-markers.patch",
+    "patches/hosted-map-toolbar.patch"
   ],
   "patches": {
     "packages/canvas/src/CanvasView.tsx": {
       "upstream_sha256": "b343759c921b283f4a05bd83e3f1622bba3cd6f68b0ff8c83f31a681a32266ee",
-      "adapted_sha256": "6aa8f51877efe165aaeabba7e7a4671a107316809741f1c5c7c8d9de7937edb7",
-      "reason": "Explicit per-owner readOnly capability and callback-backed actions; retain reading/navigation, scope menu portal to embedded host."
+      "adapted_sha256": "04f2ee2e5d23c6a5e1bf7bce0f415a5aa9c249bd8245d4d13564776d371301d2",
+      "reason": "Explicit per-owner readOnly capability and callback-backed actions; retain reading/navigation, scope menu portal to embedded host; optional host toolbar portal uses the actual zoom/fit actions and suppresses duplicate ReactFlow Controls only when hosted."
     },
     "packages/canvas/src/components/ContextMenu.tsx": {
       "upstream_sha256": "9b496da82f532acddf529afd2f1a6cb154de1ddd76efd91d20d50dd96285ff9e",
@@ -190,8 +193,8 @@
     },
     "packages/canvas/src/edges/AnnotatedEdge.tsx": {
       "upstream_sha256": "f29a962dc9065920759d1f95c4e71ea458a6050cbfa69ca79941c0dc831fe719",
-      "adapted_sha256": "46b0d99e513374f18940d37d1a1fb4772c86fe70808b77a5461b897f440d87db",
-      "reason": "Explicit per-owner readOnly capability and callback-backed actions; retain reading/navigation, scope menu portal to embedded host."
+      "adapted_sha256": "18d4857cafac5577fc2bfb83b48e8de7ecdadd3f7d968c664561b6ac385e74ca",
+      "reason": "Explicit per-owner readOnly capability and callback-backed actions; retain reading/navigation, scope menu portal to embedded host. Pass both native direction markers to BaseEdge; the existing source direction is never inferred."
     },
     "packages/canvas/src/nodes/GroupNode.tsx": {
       "upstream_sha256": "b431969411ab3cee23021ff338e2f9ad74dd276c33fa940b0ed9e42fd867f3d8",
@@ -217,6 +220,81 @@
       "upstream_sha256": "2cae08fe04e59b055415544f3429a28d912d68e8ccdbc1a27c654f6ee64f5ed4",
       "adapted_sha256": "34849ba96c321731924db7190c2b7cdc99d93d661ffe04c8c5191811011681f5",
       "reason": "Module marker for the upstream comment-only sequence barrel export; no runtime behavior."
+    },
+    "packages/canvas/src/timeline/TimelineSurface.tsx": {
+      "upstream_sha256": "167ebc1722ce27f58d2bef03bc60a220d33ee58a7b0930c976ca334dca84f595",
+      "adapted_sha256": "a550f44e7e41bf473431594de2f60bfcdb123e5ea5fa3ea628613d5928e129a8",
+      "reason": "Preserve native repository failures as visible unavailable readings with explicit retry; empty successful readings remain distinct. Retain original zoom/fit controls via optional host HUD portal; existing native Timeline state remains unchanged. Inner Timeline controls use the same optional host toolbar portal; original filters, subtimeline, lighting and camera callbacks retained without a duplicate toolbar. Native supplied complete dated Scene extent supports Fit outside the current camera window; button zoom shares the original lens scale, including moment level."
+    },
+    "packages/canvas/src/timeline/TimelineLens.tsx": {
+      "upstream_sha256": "8f1c71bed489ca426e16bdec89f24b696ccff4f41901167160ace36098057979",
+      "adapted_sha256": "bc88824a1f502363ee9dd56b437ef5ab858948cd05c179ae6ffb1e93b2de6586",
+      "reason": "Exact focused native relation filtering without losing focused reading; explicit Close/Escape clears selection and invalidates late replies, restores card/track focus; preserve host toolbar, capability and Walk controls. Vertical pan bounds consume the same collision-resolved display rectangles as cards. Optional explicit Close/Escape and existing-HUD visibility controls with focus return; hiding retains native walk/working-set state, Clear/Unload remain separate intentional actions."
+    },
+    "packages/canvas/src/psychogeographic/PsychogeographicMap.tsx": {
+      "upstream_sha256": "55b9856e3106912eb7b6f8f6a9fb60e6b40e8852ef8126c0eb82f75a6bc25af7",
+      "adapted_sha256": "70110ff3f474b3709af9451b4788908bc7b6d66d3f2dcfc42e2fd874a99190a6",
+      "reason": "Expose rejected owner/context reads with retry; hosted offlineOnly capability omits live-network controls and refuses browser-policy activation. Optional host toolbar portal exposes the same Globe/Flat/Zoom to fit actions above the host HUD without another renderer or state store. Hosted selected-place context uses the existing native inspector with explicit close and selection clear. Hosted location details are explicitly toggled in native HUD; selection remains available when the inspector closes."
+    },
+    "packages/canvas/src/streetview/StreetViewSurface.tsx": {
+      "upstream_sha256": "0c77fb9bfb11a49f5683ddc38c5ee6f152a5e08c859a21c712064f8dd077a7d2",
+      "adapted_sha256": "0323bdfa45eaec4b616953699e7aa6c8ee6681d96332c62b50c400800c9ac580",
+      "reason": "Hosted offlineOnly capability omits external imagery activation; owner-provided image titles replace opaque artifact IDs; actual import/view copy and no absent metadata footer or synthetic review badge. Display existing native image occurrences without requiring invented import timestamps; retain valid image selection when the native list changes. Optional host toolbar portal presents the same import operation once in the native HUD; standalone toolbar retained."
+    },
+    "packages/desktop-api/src/techneBundle.ts": {
+      "upstream_sha256": "7ff3382b2331031cd4294595c660adbac2964330c9de41e807a97fa93e1e4b94",
+      "adapted_sha256": "5c56fa871f0a5d4b5344738dd818830c0e0843083d964e702a31894b5d22ee9a",
+      "reason": "Native canonical PlaceFacet allows absent names. Preserve empty names; only the host presentation chooses an occurrence title or neutral Location label."
+    },
+    "packages/desktop-api/src/techneTransport.ts": {
+      "upstream_sha256": "4054c16622be5cff834c7f5f5007efc6932fccde317194b259690e9d50bb7ab7",
+      "adapted_sha256": "ccdee5f278bb24dfcc54da9ba0189c7c4b984b40f6a5481487e55a24b32d297a",
+      "reason": "Exact temporal alias source resolution for native focused relations/expansion, preserving source endpoints without invented dates; retain native filter/error fixes. Resolve exact single-source Place aliases for current native incident relations, as for temporal aliases; no invented route semantics."
+    },
+    "packages/canvas/src/timeline/TimelineNode.tsx": {
+      "upstream_sha256": "b4fed38eeb92d5815ab81057ac3ea1d00459352baa1d30ab180c34f4bbb41b07",
+      "adapted_sha256": "4e01bb04b4e83557b8d92cc974c217ce2752a4adc3fca09bc3820fc57fcdbf65",
+      "reason": " Apply tag/relation filters to returned native view records and exact endpoint sets; explicit absent native style/archetype capability disables only unsupported controls with owner reason, retaining original standalone defaults and geometry controls. Keyboard focus reveals marker labels; Space selects and Enter opens the exact source through existing callbacks. Use shared collision-resolved rectangles/century display height for visible cards and connector anchors; authored resize height remains intact."
+    },
+    "packages/canvas/src/timeline/ticks.ts": {
+      "upstream_sha256": "32120f86b5b2bfa0b452227b5b287ac01ab6c9da314940eaf800636c70ce5897",
+      "reason": " Adapt tick label interval to actual screen spacing without truncating the time range. Convert native astronomical years to calendar BCE/CE labels: year zero is 1 BCE, no year zero CE.",
+      "adapted_sha256": "dcdcd921158df7810e1210cb956f214f72006170f0862be1e28fd9999ea4bbb4"
+    },
+    "packages/desktop-api/src/graph.ts": {
+      "upstream_sha256": "96471b5834b2544d8ab475019e8de1484ee414af6cb40570200910c58ede52a2",
+      "adapted_sha256": "15bbdce699c9184e367506c7a3ed10a6e3f5d8e1e3e9e152958b9ba2472b5f3b",
+      "reason": "Optional transient Timeline relation-focus ref preserves dated edge identity; no stored graph change."
+    },
+    "packages/canvas/src/timeline/TimelineRelationField.tsx": {
+      "upstream_sha256": "7a985dcad012bde50624a7bb846b1acdbac5ccee750f7f9d4538ec7b004c4901",
+      "adapted_sha256": "ffb97e473c6ac33bf63ad3ce7550c048d32aa524c1f61293e993899478e184f1",
+      "reason": "Filter actual native relation types; dated relation focus displays both real endpoints without invented edges; optional explicit Close callback."
+    },
+    "packages/canvas/src/psychogeographic/LocationPanel.tsx": {
+      "upstream_sha256": "7955e4173276c769fc98dfbef60847b72ff9927fe807a9123c46a83ea8c69731",
+      "reason": " Optional hosted panel follows native inspector styling and exposes Close/Escape without a second map panel.",
+      "adapted_sha256": "dc059b4787205903fd3a1acec5a582f66bef71a604fd07fc5d3087a4b49c5fd3"
+    },
+    "packages/canvas/src/timeline/projection.ts": {
+      "upstream_sha256": "686589e885e3cd6756c8f14b4a26a764c1e3a9058b0d27fc66952d66ee2714bc",
+      "adapted_sha256": "4e2ddf3cc29e22a6b7fe5fe045b33d181987d0c70cc57cab74f487e3b9a1e655",
+      "reason": "Collision-safe centred card rectangles expand vertical lanes without dropping dates or changing authored offsets; compact century display height matches the renderer."
+    },
+    "packages/canvas/src/timeline/instant.ts": {
+      "upstream_sha256": "e32b94dfab9c85caede5823fa914f3d0a0d4e35c672c53330d60646d928a4070",
+      "adapted_sha256": "90fe41b4634bc9bca046f2cc0642257fdabcc32af1efc455fc68e16e878c622d",
+      "reason": "Preserve actual native signed ISO instants in transient Timeline parsing; correct BCE chronological fraction and JavaScript year 0\u201399 offset without rewriting source date or precision."
+    },
+    "packages/canvas/src/timeline/TimelineWalk.tsx": {
+      "upstream_sha256": "5d6ba77d26a1ab8aee395a066ef70140d2103263f937f0ea39f492a20ce82638",
+      "adapted_sha256": "dc5203df7177af201cefea05af5edb5bad29095d2eeea5eb700387b7d5488cc2",
+      "reason": " Optional explicit Close/Escape and existing-HUD visibility controls with focus return; hiding retains native walk/working-set state, Clear/Unload remain separate intentional actions."
+    },
+    "packages/canvas/src/timeline/TimelineWorkingSet.tsx": {
+      "upstream_sha256": "b088ab363ab5a395202a151432c9cdfbdb734eb40110807612ca0c2404360662",
+      "adapted_sha256": "299067177df10e4146f5673118774b8d1b964450f79c889e4bcc8f52f49283ca",
+      "reason": " Optional explicit Close/Escape and existing-HUD visibility controls with focus return; hiding retains native walk/working-set state, Clear/Unload remain separate intentional actions."
     }
   }
 }

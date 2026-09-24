@@ -1,0 +1,5 @@
+.factory-computer{display:flex;flex-direction:column;gap:var(--oi-space-3);height:100%;min-height:240px;padding:var(--oi-space-4)}
+.factory-computer-controls{display:flex;align-items:center;gap:var(--oi-space-3);flex-wrap:wrap}
+.factory-computer-controls label{display:flex;align-items:center;gap:var(--oi-space-2)}
+.factory-computer-terminal{flex:1;min-height:200px;overflow:hidden}
+.factory-computer p{color:var(--oi-foreground-muted);font-size:var(--oi-shell-type-body)}

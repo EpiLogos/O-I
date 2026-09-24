@@ -60,6 +60,22 @@
 .agents-row-mark[data-presence="working"]::before{content:"";display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--oi-foreground);animation:panel-breathe 1.6s var(--oi-motion-ease) infinite}
 .agents-row-mark[data-presence="attention"]{color:var(--oi-foreground)}
 .agents-empty{margin:var(--oi-space-4) 14px;font-size:var(--oi-shell-type-body);color:var(--oi-muted-2)}
+/* Positions — who is here (§4.5, Amendment A7) */
+.agents-pos-row .agents-row-open{align-items:flex-start}
+.agents-pos-handle{font-weight:400;color:var(--oi-muted-2)}
+.agents-pos-occupancy,.agents-pos-work,.agents-pos-definition{font-size:var(--oi-shell-type-meta);color:var(--oi-muted-2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.agents-pos-mark{font-weight:700}
+.agents-pos-mark[data-mark="?"],.agents-pos-work[data-attention="true"],.agents-pos-definition{color:var(--oi-foreground)}
+.agents-undelivered{flex:none;align-self:center;min-width:16px;margin-right:8px;padding:0 5px;border-radius:var(--oi-radius-pill,999px);background:var(--oi-foreground);color:var(--oi-canvas-ground);font-size:10.5px;font-weight:650;text-align:center}
+.agents-notes{margin:var(--oi-space-2) 14px 0;display:flex;flex-direction:column;gap:2px}
+.agents-note{font-size:var(--oi-shell-type-meta);color:var(--oi-muted-2)}
+.agents-profiles{margin:var(--oi-space-3) 6px 0;border-top:var(--oi-shell-edge,1px) solid var(--oi-wash)}
+.agents-profiles>summary{cursor:pointer;list-style:none;padding:var(--oi-space-2) 8px;font-size:var(--oi-shell-type-eyebrow);font-weight:600;letter-spacing:var(--oi-shell-tracking);text-transform:uppercase;color:var(--oi-muted-2)}
+.agents-profiles>summary::-webkit-details-marker{display:none}
+.agents-profiles>summary::before{content:"▸ "}
+.agents-profiles[open]>summary::before{content:"▾ "}
+.agents-profiles-search{display:block;padding:0 8px var(--oi-space-2)}
+.agents-profiles-search input{width:100%;box-sizing:border-box}
 
 /* Context launcher (§4.6) */
 .context-canvas{display:flex;flex-direction:column;gap:var(--oi-space-2)}

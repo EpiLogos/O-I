@@ -1,7 +1,7 @@
 import {IconTabStrip} from "../workspace/primitives/IconTabStrip";
 import {planeIcon} from "../workspace/planeRegistry";
 import {PermissionCard} from "../agent/chat/PermissionCard";
-import {useLayoutEffect,useMemo,useRef,useState,type ReactNode} from "react";
+import {useEffect,useLayoutEffect,useMemo,useRef,useState,type ReactNode} from "react";
 import type {A2aDifference,A2aPeerFields,EncounterReading,EncounterStatus,JournalPage,PermissionDecision} from "./client";
 import {Glyph} from "../workspace/Glyph";
 import {ContextFacts,DeliveryRegistrations,NowRecords,OwnerActions,RawDisclosure,SessionFacts} from "./InspectParts";
@@ -9,7 +9,7 @@ import {sessionStateLabel} from "./session";
 import {parseContextItems,removeContextItem,type ContextItem} from "../context/contextItems";
 import {DictationSession,type DictationOutcome,type DictationRefusal} from "../dictation/client";
 import {dictationCopy} from "../dictation/copy";
-import {readDictationStipulation} from "../dictation/store";
+
 import "./encounter.css";
 /** Rendering and interaction only; AIKit owns transcript, consent and shared draft.
  * `presentation`: "tab" is the canvas-surface shape (own heading + plane nav);
@@ -42,12 +42,13 @@ export function EncounterView({title,plane,onPlane,reading,status,draft,pending,
   // Every failure is a named state; nothing is faked. ---
   const [dictation,setDictation]=useState<{state:"idle"|"recording"|"transcribing"|"service-down"|"mic-denied"|"mic-unavailable"|"failed"|"empty"|"landed";notice?:{role:"status"|"alert";text:string}}>({state:"idle"});
   const dictationSession=useRef<DictationSession|null>(null);
+  useEffect(()=>()=>{dictationSession.current?.cancel();},[]);
   // A press while the capture is still opening must stop THAT capture, not
   // fall into "no capture was running" — the starting promise is the seam.
   const dictationStarting=useRef<Promise<void>|null>(null);
   const dictationRefusalNotice=(refusal:DictationRefusal):{role:"status"|"alert";text:string}=>{
    switch(refusal.kind){
-    case "service-down":return {role:"alert",text:dictationCopy("serviceDown",{url:readDictationStipulation().stt_url})};
+    case "service-down":return {role:"alert",text:dictationCopy("serviceDown",{url:refusal.endpoint})};
     case "mic-denied":return {role:"alert",text:dictationCopy("micDenied")};
     case "mic-unavailable":return {role:"alert",text:dictationCopy("micUnavailable")};
     case "empty":return {role:"status",text:dictationCopy("empty")};
@@ -79,7 +80,7 @@ export function EncounterView({title,plane,onPlane,reading,status,draft,pending,
   const stopDictation=async()=>{
    const starting=dictationStarting.current;dictationStarting.current=null;
    let session=dictationSession.current;
-   if(!session&&starting){
+   if(starting){
     // The capture was still opening: give it its outcome first. If it was
     // refused, the named refusal already stands — there is nothing to stop.
     try{await starting;session=dictationSession.current;}
@@ -96,6 +97,7 @@ export function EncounterView({title,plane,onPlane,reading,status,draft,pending,
    if(dictation.state==="recording"){await stopDictation();return;}
    setDictation({state:"recording",notice:{role:"status",text:dictationCopy("recording")}});
    const session=new DictationSession();
+   dictationSession.current=session;
    const starting=session.begin().then(()=>{
     dictationSession.current=session;
    }).catch(refusal=>{

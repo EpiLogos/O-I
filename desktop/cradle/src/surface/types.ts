@@ -38,9 +38,15 @@ export const AGENCY_DEPTHS: readonly AgencyDepth[] = [
  * ('test', 'test:silent') — the single synthetic allowance of U0.3b. No fake
  * file trees, no invented owner semantics (law 4, law 7).
  */
-export interface SurfaceBinding {
+export interface SurfacePresentationBinding {
   id: SurfaceId;
   kind: string;
+  /** Compile-time provider descriptor identity, never a native subject or a
+   * runtime code URL. Absent in arrangements saved before descriptors. */
+  hosted?: {descriptor_ref: string; contribution_ref: string};
+}
+
+export interface SurfaceBinding extends SurfacePresentationBinding {
   /** Stable ref into the owner's grammar, when one exists. */
   ref?: string;
   project?: string;
@@ -59,7 +65,7 @@ export interface SurfaceBinding {
    * the session runs instead of the login shell. */
   terminal?: {cwd?:string;command?:string[]};
   flow?: {flowRef:string;path:string};
-  view?: {graphOrigin?:string;knowledgePlane?: "graph"|"page";encounterPlane?: "Conversation"|"Activity"|"Context"|"Inspect"};
+  view?: {constructionFrame?:{ref:string;requestId:string};graphOrigin?:string;knowledgePlane?: "graph"|"page";encounterPlane?: "Conversation"|"Activity"|"Context"|"Inspect"};
   /** The hosted engine's checkpoint (MODE-ENGINE-STATE-PERSISTENCE §7.2):
    * where the hosted application stands, written by its stage slot from the
    * application's own hosted-state announcements, debounced, on change

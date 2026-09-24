@@ -61,7 +61,7 @@
 //! outside the engine's own answers.
 
 use crate::composition;
-use crate::system_composition::{namespace_for, Availability, PRODUCT_IDS};
+use crate::system_composition::{namespace_for, Availability};
 use serde::{Deserialize, Serialize};
 use serde_json::{json, Value};
 use std::io::Write;
@@ -394,15 +394,21 @@ impl Client {
         let composition_reading = registry_composition(&census);
         // Independent owner processes run together, then join in canonical
         // order. A slow or unavailable owner does not serialize its siblings.
-        let mut requests = vec![("oi", vec!["config-contribution".to_owned(), "--json".to_owned()], MountComposition { standing: MountStanding::Unpositioned, position: None })];
-        for (index, product_id) in PRODUCT_IDS.iter().enumerate() {
-            requests.push((*product_id, vec![namespace_for(&census, index, product_id), "config-contribution".to_owned(), "--json".to_owned()], mount_composition(&census, product_id)));
+        let mut requests = vec![("oi".to_owned(), Ok(vec!["config-contribution".to_owned(), "--json".to_owned()]), MountComposition { standing: MountStanding::Unpositioned, position: None })];
+        for position in census.positions.iter().filter(|position| position.product_id != "oi") {
+            let product_id = &position.product_id;
+            requests.push((product_id.clone(), namespace_for(&census, product_id).map(|namespace| vec![namespace, "config-contribution".to_owned(), "--json".to_owned()]), mount_composition(&census, product_id)));
         }
         let mounts = std::thread::scope(|scope| {
             let handles: Vec<_> = requests.into_iter().map(|(product_id, args, composition)| {
                 scope.spawn(move || {
-                    let displayed = std::iter::once(self.executable.display().to_string()).chain(args.iter().cloned()).collect::<Vec<_>>();
-                    mount(product_id, &displayed, self.invoke(cwd, &args, None), composition)
+                    match args {
+                        Ok(args) => {
+                            let displayed = std::iter::once(self.executable.display().to_string()).chain(args.iter().cloned()).collect::<Vec<_>>();
+                            mount(&product_id, &displayed, self.invoke(cwd, &args, None), composition)
+                        }
+                        Err(error) => mount(&product_id, &[], InvokeOutcome::SpawnFailed(error), composition),
+                    }
                 })
             }).collect();
             handles.into_iter().map(|handle| handle.join().expect("configuration mount thread panicked")).collect()

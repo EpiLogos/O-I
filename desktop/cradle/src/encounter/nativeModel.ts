@@ -1,5 +1,5 @@
 /** Harness-native configuration, not the AIKit roster and never execution authority. */
-export interface NativeModelOption {modelId:string;name:string;description?:string}
+export interface NativeModelOption {modelId:string;name:string;description?:string;rosterIdentity?:{provider_ref:string;provider_native_id:string;harness_slug?:string}}
 export interface NativeEffort {configId:string;currentValue:string;options:{value:string;name:string;description?:string}[]}
 export interface NativeModelObservation {native_provider?:string;current_model_id:string;available_models:NativeModelOption[];reasoning_effort?:NativeEffort;standing:string}
 export interface NativeModelReading {

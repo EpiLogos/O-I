@@ -1,11 +1,11 @@
-//! Wave 5 composition-kernel adapter: discover and mount the six products'
+//! Wave 5 composition-kernel adapter: discover and mount the native products'
 //! `oi.product-settings-disclosure/v2` readings into one `oi.system-composition/v1`
 //! document, while preserving native ownership.
 //!
 //! This module is the smallest native composition layer. It owns discovery
 //! and mounting only — it never authors a product's configuration truth, never
 //! rewrites a descriptor, and never invents a reading. Its single rule is
-//! uniform across all six owners (L6): invoke `<canonical_namespace> system
+//! uniform across all disclosed owners (L6): invoke `<canonical_namespace> system
 //! --json` through the O:I suite executable, require the returned document to
 //! self-identify as `oi.product-settings-disclosure/v2`, and pass it through
 //! unmodified. A missing or non-conforming reading is a named degradation,
@@ -23,24 +23,6 @@ use std::time::{SystemTime, UNIX_EPOCH};
 pub const SCHEMA: &str = "oi.system-composition/v1";
 pub const CONTRACT_REVISION: &str = "wave-5/system.1";
 pub const DISCLOSURE_SCHEMA: &str = "oi.product-settings-disclosure/v2";
-
-/// The canonical seven-position world: six products plus the composition
-/// layer itself. Order is canonical and stable (matches `composition::PRODUCTS`).
-pub const PRODUCT_IDS: [&str; 6] = [
-    "central",
-    "actuation",
-    "ai-kit",
-    "software-factory",
-    "workcell",
-    "quaternal-logic",
-];
-
-/// Fallback canonical namespace per product_id, used only when the census
-/// reading is unavailable and cannot supply `canonical_namespace`. This is the
-/// single discovery convention, not a per-product branch: one aligned table,
-/// exactly like the existing `composition::PRODUCTS` array.
-const FALLBACK_NAMESPACES: [&str; 6] =
-    ["central", "actuation", "aikit", "factory", "workcell", "ql"];
 
 /// The one fixed Wave-5 reading verb every owner ships (07 §5).
 const SYSTEM_VERB: [&str; 2] = ["system", "--json"];
@@ -128,24 +110,15 @@ enum Mount {
     },
 }
 
-/// The canonical namespace of one product position, read from the census's
-/// owner row with the one fallback table. Shared with the configuration
-/// registry (`configuration.rs`, 09 §4) so every mount — System and
-/// configuration alike — resolves owners through the SAME discovery; there
-/// is no second registry.
-pub fn namespace_for(census: &composition::Reading, index: usize, product_id: &str) -> String {
-    census
-        .positions
-        .iter()
-        .find(|p| p.product_id == product_id)
-        .and_then(|p| {
-            p.current_world
-                .get("canonical_namespace")
-                .and_then(Value::as_str)
-                .filter(|s| !s.is_empty())
-                .map(str::to_owned)
-        })
-        .unwrap_or_else(|| FALLBACK_NAMESPACES[index].to_owned())
+/// A product's command namespace is an owner-supplied catalogue fact. No
+/// desktop fallback table may invent a route absent from the composition.
+pub fn namespace_for(census: &composition::Reading, product_id: &str) -> Result<String, String> {
+    census.positions.iter().find(|position| position.product_id == product_id)
+        .and_then(|position| position.current_world["canonical_namespace"].as_str())
+        .filter(|namespace| !namespace.is_empty() && !namespace.starts_with('-')
+            && namespace.chars().all(|character| character.is_ascii_alphanumeric() || character == '-' || character == '_'))
+        .map(str::to_owned)
+        .ok_or_else(|| format!("The native composition discloses no command namespace for {product_id}"))
 }
 
 impl Client {
@@ -169,36 +142,29 @@ impl Client {
             positions: census.positions.clone(),
         };
 
-        // The composition layer's own position, then the six products in
-        // canonical order. Always seven entries.
-        let mut owners = Vec::with_capacity(7);
+        // Preserve the native catalogue's order. New owners require a native
+        // position and descriptor, never an edit to this desktop adapter.
+        let mut owners = Vec::with_capacity(census.positions.len() + 1);
         owners.push(self.oi_owner(&census, observed));
-        // The six owner reads are independent (each its own process): they
-        // run side by side and mount in canonical order.
         let mounted: Vec<OwnerMount> = std::thread::scope(|scope| {
-            let handles: Vec<_> = PRODUCT_IDS
-                .iter()
-                .enumerate()
-                .map(|(index, product_id)| {
-                    let namespace = namespace_for(&census, index, product_id);
-                    scope.spawn(move || {
-                        let reading_command: Vec<String> = std::iter::once(namespace)
-                            .chain(SYSTEM_VERB.iter().map(|s| s.to_string()))
-                            .collect();
-                        let outcome = self.invoke(cwd, &reading_command);
-                        mount_owner(product_id, &reading_command, outcome, observed)
-                    })
-                })
-                .collect();
-            handles
-                .into_iter()
-                .zip(PRODUCT_IDS.iter())
-                .map(|(handle, product_id)| {
-                    handle.join().unwrap_or_else(|_| {
-                        mount_owner(product_id, &[], InvokeOutcome::SpawnFailed("the owner read stopped unexpectedly".into()), observed)
-                    })
-                })
-                .collect()
+            let handles: Vec<_> = census.positions.iter().filter(|position| position.product_id != "oi")
+                .map(|position| {
+                    let product_id = position.product_id.as_str();
+                    let namespace = namespace_for(&census, product_id);
+                    (product_id, scope.spawn(move || {
+                        match namespace {
+                            Ok(namespace) => {
+                                let command: Vec<String> = std::iter::once(namespace)
+                                    .chain(SYSTEM_VERB.iter().map(|value| value.to_string())).collect();
+                                mount_owner(product_id, &command, self.invoke(cwd, &command), observed)
+                            }
+                            Err(error) => mount_owner(product_id, &[], InvokeOutcome::SpawnFailed(error), observed),
+                        }
+                    }))
+                }).collect();
+            handles.into_iter().map(|(product_id, handle)| handle.join().unwrap_or_else(|_| {
+                mount_owner(product_id, &[], InvokeOutcome::SpawnFailed("the owner read stopped unexpectedly".into()), observed)
+            })).collect()
         });
         owners.extend(mounted);
 
@@ -618,10 +584,8 @@ impl Client {
     /// argument runs; anything else is refused in plain words. The owner's
     /// answer returns verbatim (it renders only behind "Show raw").
     pub fn run_action(&self, cwd: &Path, product_id: &str, action_ref: &str) -> Result<Value, String> {
-        let index = PRODUCT_IDS.iter().position(|id| *id == product_id)
-            .ok_or("Actions run only for the six suite products")?;
         let census = composition::Client::with(self.executable.clone()).read(cwd);
-        let namespace = namespace_for(&census, index, product_id);
+        let namespace = namespace_for(&census, product_id)?;
         let reading: Vec<String> = std::iter::once(namespace.clone()).chain(SYSTEM_VERB.iter().map(|s| s.to_string())).collect();
         let descriptor = match self.invoke(cwd, &reading) {
             InvokeOutcome::Completed { exit_code: 0, stdout, .. } => serde_json::from_str::<Value>(&stdout).map_err(|_| "The product's settings disclosure is unreadable")?,
@@ -787,7 +751,7 @@ mod tests {
     fn discovery_is_uniform_across_all_six_owners() {
         // The reading command is derived by one rule for every owner:
         // `<canonical_namespace> system --json`. Prove the suffix is identical.
-        for product_id in PRODUCT_IDS {
+        for product_id in ["central", "actuation", "ai-kit", "software-factory", "workcell", "quaternal-logic", "seventh-owner"] {
             let mount = mount_owner(
                 product_id,
                 &["X".into(), "system".into(), "--json".into()],
@@ -832,7 +796,7 @@ esac
             .iter()
             .map(|o| o.product_id.as_str())
             .collect();
-        assert_eq!(product_ids, PRODUCT_IDS.to_vec());
+        assert_eq!(product_ids, ["central", "actuation", "ai-kit", "software-factory", "workcell", "quaternal-logic"]);
         // Every product is either honestly degraded or unavailable — never an
         // empty success, never a fabricated descriptor.
         for owner in &reading.owners[1..] {

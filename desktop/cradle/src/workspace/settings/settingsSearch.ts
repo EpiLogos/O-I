@@ -7,7 +7,8 @@
 import {credentialCards, harnessName, readyHarnesses, adapterNeeded, skillParts, titleCase, permissionModeEntries, trustEntries} from "./sectionModel";
 import type {SettingsSnapshot} from "./settingsData";
 import {DEFAULT_CONNECTION_ROW, settingRowId, skillRowId} from "./changeModel";
-import {PRODUCTS, type SettingsPlace} from "./settingsNav";
+import type {SettingsPlace} from "./settingsNav";
+import {settingsProducts} from "./settingsProducts";
 import {connectionNames, MODEL_DEFAULT_SETTING} from "./harnessCapabilities";
 
 export interface SearchEntry {
@@ -20,6 +21,7 @@ export interface SearchEntry {
 
 export function searchIndex(data: SettingsSnapshot): SearchEntry[] {
   const out: SearchEntry[] = [];
+  const products = settingsProducts(data);
   const add = (label: string, where: string, place: SettingsPlace, row: string | null, extra = "") =>
     out.push({label, where, place, row, terms: `${label} ${where} ${extra}`.toLowerCase()});
   const section = (id: Extract<SettingsPlace, {kind: "section"}>["id"]): SettingsPlace => ({kind: "section", id});
@@ -52,13 +54,13 @@ export function searchIndex(data: SettingsSnapshot): SearchEntry[] {
   if (data.registry.state === "ok") {
     const special = new Set([...permissionModeEntries(data), ...trustEntries(data)].map((entry) => entry.setting.setting_ref));
     for (const entry of data.registry.value.entries) {
-      const product = PRODUCTS.find((candidate) => candidate.id === entry.owner.owner_ref);
+      const product = products.find((candidate) => candidate.id === entry.owner.owner_ref);
       if (entry.setting.setting_ref === MODEL_DEFAULT_SETTING) continue; // the capability row above owns this setting
       if (special.has(entry.setting.setting_ref)) add(entry.setting.title, "Permissions", section("permissions"), settingRowId(entry.setting.setting_ref), entry.setting.description ?? "");
       else if (product) add(entry.setting.title, product.label, {kind: "product", id: product.id}, settingRowId(entry.setting.setting_ref), entry.setting.description ?? "");
     }
   }
-  for (const product of PRODUCTS) add(product.label, "Products", {kind: "product", id: product.id}, null);
+  for (const product of products) add(product.label, "Products", {kind: "product", id: product.id}, null);
   return out;
 }
 

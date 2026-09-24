@@ -115,7 +115,7 @@ export function Desk({onNewRun, onAddObject}: DeskProps) {
             rendered (Agent… / Team… / Skill… appear once their creation
             pages are wired through onAddObject). */}
         {(onNewRun || onAddObject) && <MenuButton ariaLabel="Add to Desk" label={<><Glyph name="plus" size={13}/><span>Add to Desk</span></>} rows={[
-          ...(onNewRun ? [{label: "New run…", hint: "commission it with the Factory agent in Tasks", onSelect: onNewRun}] : []),
+          ...(onNewRun ? [{label: "New run…", hint: "Commission it in Tasks", onSelect: onNewRun}] : []),
           ...(onAddObject ? [
             {label: "Agent…", onSelect: () => onAddObject("agent"), separatorBefore: !!onNewRun},
             {label: "Team…", onSelect: () => onAddObject("team")},

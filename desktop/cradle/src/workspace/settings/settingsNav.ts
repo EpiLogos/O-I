@@ -6,6 +6,7 @@
  * the person left off.
  */
 import {useSyncExternalStore} from "react";
+import {productName} from "./vocabulary";
 
 export type SectionId = "status" | "harnesses" | "credentials" | "skills" | "profiles" | "permissions" | "appearance";
 
@@ -17,17 +18,6 @@ export const SECTIONS: readonly {id: SectionId; label: string; glyph: string}[] 
   {id: "profiles", label: "Profiles", glyph: "list"},
   {id: "permissions", label: "Permissions", glyph: "lock"},
   {id: "appearance", label: "Appearance", glyph: "appearance"},
-];
-
-/** The product pages, in the suite's canonical order (§3.9). */
-export const PRODUCTS: readonly {id: string; label: string}[] = [
-  {id: "central", label: "Central"},
-  {id: "ai-kit", label: "AIKit"},
-  {id: "actuation", label: "Actuation"},
-  {id: "software-factory", label: "Factory"},
-  {id: "workcell", label: "Workcell"},
-  {id: "quaternal-logic", label: "Quaternal Logic"},
-  {id: "oi", label: "O:I"},
 ];
 
 export type SettingsPlace = {kind: "section"; id: SectionId} | {kind: "product"; id: string};
@@ -42,7 +32,7 @@ export function restoreSettingsPlace(value: unknown): SettingsPlace {
   if (value && typeof value === "object" && "kind" in value && "id" in value) {
     if (value.kind === "section" && value.id === "models") return {kind: "section", id: "harnesses"};
     if (value.kind === "section" && SECTIONS.some(section => section.id === value.id)) return value as SettingsPlace;
-    if (value.kind === "product" && PRODUCTS.some(product => product.id === value.id)) return value as SettingsPlace;
+    if (value.kind === "product" && typeof value.id === "string" && value.id.trim().length > 0) return value as SettingsPlace;
   }
   return {kind: "section", id: "status"};
 }
@@ -94,5 +84,5 @@ export function samePlace(a: SettingsPlace, b: SettingsPlace): boolean {
 export function placeLabel(place: SettingsPlace): string {
   return place.kind === "section"
     ? SECTIONS.find((section) => section.id === place.id)?.label ?? "Settings"
-    : PRODUCTS.find((product) => product.id === place.id)?.label ?? place.id.split("/").pop()!.replace(/[-_]+/g, " ").replace(/^./, (first) => first.toUpperCase());
+    : productName(place.id);
 }

@@ -172,3 +172,75 @@ test('declared embedded buffering pays for a 65ms delivery without resampling or
   assert.equal(audio.nodes[0].time,.25);assert.equal(audio.sampleRate,48000);
  }finally{await c.dispose();}
 });
+
+function delayedPacket(owner,predicate){
+ const request=owner.request.bind(owner);let release,arrive,used=false;
+ const arrived=new Promise(resolve=>arrive=resolve),blocked=new Promise(resolve=>release=resolve);
+ owner.request=async packet=>{const reply=await request(packet);if(!used&&predicate(packet)){used=true;arrive();await blocked;}return reply;};
+ return {arrived,release:()=>release()};
+}
+const advances=owner=>owner.calls.filter(packet=>packet.request?.command?.operation==='advance').length;
+test('instrument suspension survives delayed admission and resumes only after its final token returns',async()=>{
+ const owner=new ControlledOwner(),audio=new ControlledAudio(),c=new NativeFieldController(owner,renderer(),()=>audio);
+ const gate=delayedPacket(owner,packet=>packet.operation==='open');
+ const opening=c.connect('source.json','r1',48000);
+ try{
+  await gate.arrived;const first=c.suspend('research instrument'),second=c.suspend('another inactive view');
+  c.frame(0,true);c.frame(0,true);gate.release();await opening;
+  assert.equal(c.status,'held');assert.equal(c.reason,'research instrument');
+  await tick();assert.equal(advances(owner),0);
+  await c.releaseSuspension(first);assert.equal(c.status,'held');
+  await c.releaseSuspension(second);assert.equal(c.status,'following');
+  await tick();assert.ok(advances(owner)>0);assert.equal(owner.calls.filter(p=>p.operation==='open').length,1);
+ }finally{gate.release();await opening;await c.dispose();}
+});
+test('leaving research before admission completes clears only its own opening hold',async()=>{
+ for(const manual of [false,true]){
+  const owner=new ControlledOwner(),c=new NativeFieldController(owner,renderer(),()=>new ControlledAudio());
+  const gate=delayedPacket(owner,packet=>packet.operation==='open'),opening=c.connect('source.json','r1',48000);
+  try{
+   await gate.arrived;const token=c.suspend('research instrument');c.frame(0,true);
+   if(manual)c.hold('document hidden');
+   await c.releaseSuspension(token);gate.release();await opening;
+   assert.equal(c.status,manual?'held':'following');
+   if(manual){assert.equal(c.reason,'document hidden');await tick();assert.equal(advances(owner),0);}
+  }finally{gate.release();await opening;await c.dispose();}
+ }
+});
+test('rapid research re-entry cancels queued restoration without losing its eventual playback intent',async()=>{
+ const owner=new ControlledOwner(),c=new NativeFieldController(owner,renderer(),()=>new ControlledAudio());
+ try{
+  await c.connect('source.json','r1',48000);
+  const first=c.suspend('research instrument'),resuming=c.releaseSuspension(first);
+  const second=c.suspend('research instrument');await resuming;
+  assert.equal(c.status,'held');assert.equal(c.reason,'research instrument');
+  const count=advances(owner);await tick();assert.equal(advances(owner),count);
+  await c.releaseSuspension(second);assert.equal(c.status,'following');
+ }finally{await c.dispose();}
+});
+test('research re-entry during native recovery cannot start the recovered driver',async()=>{
+ const owner=new ControlledOwner(),c=new NativeFieldController(owner,renderer(),()=>new ControlledAudio());
+ try{
+  await c.connect('source.json','r1',48000);const first=c.suspend('research instrument');
+  const gate=delayedPacket(owner,packet=>packet.request?.command?.operation==='read');
+  const resuming=c.releaseSuspension(first);await gate.arrived;
+  const second=c.suspend('research instrument');gate.release();await resuming;
+  assert.equal(c.status,'held');assert.equal(c.reason,'research instrument');
+  const count=advances(owner);await tick();assert.equal(advances(owner),count);
+  await c.releaseSuspension(second);assert.equal(c.status,'following');
+ }finally{await c.dispose();}
+});
+test('suspension tokens never release a manual hold or a replacement native lifetime',async()=>{
+ const owner=new ControlledOwner(),c=new NativeFieldController(owner,renderer(),()=>new ControlledAudio());
+ try{
+  await c.connect('source.json','r1',48000);c.hold('human pause');
+  const held=c.suspend('research instrument');await c.releaseSuspension(held);
+  assert.equal(c.status,'held');assert.equal(c.reason,'human pause');
+  await c.resume();const token=c.suspend('research instrument');c.hold('document hidden');
+  await c.releaseSuspension(token);assert.equal(c.status,'held');assert.equal(c.reason,'document hidden');
+  await c.resume();const old=c.suspend('research instrument');await c.release();
+  await c.connect('replacement.json','r2',48000);c.hold('new owner pause');
+  await c.releaseSuspension(old);assert.equal(c.status,'held');assert.equal(c.reason,'new owner pause');
+  const count=advances(owner);await tick();assert.equal(advances(owner),count);
+ }finally{await c.dispose();}
+});

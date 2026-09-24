@@ -14,7 +14,7 @@ export async function saveDesktopCapture(blob:Blob,filename:string,source:Deskto
  const result=await r.json();if(!r.ok)throw new Error(result.error??'Capture could not be saved');
  window.dispatchEvent(new Event('physis-library-changed'));return true;
 }
-export function installPhysis(getSource:()=>DesktopScene,load:(source:DesktopScene)=>void,toast:(text:string)=>void){
+export function installPhysis(getSource:()=>DesktopScene,load:(source:DesktopScene)=>void|Promise<void>,toast:(text:string)=>void){
  if(!physisHost())return;
  const button=document.createElement('button');button.className='icon-button';button.id='physis-desktop';button.textContent='✧';button.title='Physis desktop';button.setAttribute('aria-label','Physis desktop');button.setAttribute('aria-expanded','false');document.querySelector('.header-actions')!.append(button);
  const panel=document.createElement('section');panel.id='physis-panel';panel.className='capture-panel chrome';panel.setAttribute('aria-label','Physis desktop');panel.hidden=true;document.body.append(panel);
@@ -42,7 +42,7 @@ export function installPhysis(getSource:()=>DesktopScene,load:(source:DesktopSce
  panel.addEventListener('change',e=>{const target=e.target as HTMLInputElement;void run(async()=>{
   if(target.dataset.physisSetting==='opacity')await api('/api/overlay',{opacity:Number(target.value)});
   if(target.dataset.physisSetting==='quality'){await api('/api/overlay',{quality:target.value});await run(render);}
-  if(target.dataset.physisSetting==='load'&&target.value){const item=(await api('/api/scenes')).find((s:any)=>s.id===target.value);if(item){load(item);toast('Expression loaded from the Physis directory.');close();}}
+  if(target.dataset.physisSetting==='load'&&target.value){const item=(await api('/api/scenes')).find((s:any)=>s.id===target.value);if(item){await load(item);toast('Expression loaded from the Physis directory.');close();}}
  });});
  document.addEventListener('keydown',e=>{if(e.key==='Escape')close();});
  document.addEventListener('pointerdown',e=>{if(!panel.hidden&&!(e.target as Element).closest('#physis-panel,#physis-desktop'))close();});

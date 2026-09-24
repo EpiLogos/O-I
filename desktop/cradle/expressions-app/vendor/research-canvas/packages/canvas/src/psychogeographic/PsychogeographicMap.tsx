@@ -1,3 +1,4 @@
+import { createPortal } from "react-dom";
 import { useCallback, useEffect, useMemo, useRef, useState, type JSX } from "react";
 
 import type { ArchetypalExpression, GeographyEdge, GraphNodeContract } from "@research-canvas/schema";
@@ -15,10 +16,15 @@ import {
 } from "./renderer";
 
 export interface PsychogeographicMapProps {
+  /** Put genuine map controls in the host toolbar instead of beneath it. */
+  toolbarContainer?: HTMLElement;
+  inspectorContainer?: HTMLElement;
   repository: PlacesRepository;
   projectId: string;
   tileSource: MapTileSource;
-  policy: LiveServicePolicy;
+  policy?: LiveServicePolicy;
+  /** Hosted native applications do not delegate network authority to this UI. */
+  offlineOnly?: boolean;
   renderer?: MapSurfaceRenderer;
   /** Invalidates repository reads without recreating the map or its camera. */
   refreshVersion?: number;
@@ -37,10 +43,13 @@ export interface PsychogeographicMapProps {
  * over the bundled/offline base.
  */
 export function PsychogeographicMap({
+  toolbarContainer,
+  inspectorContainer,
   repository,
   projectId,
   tileSource,
   policy,
+  offlineOnly = false,
   renderer: rendererProp,
   refreshVersion = 0,
   initialViewState,
@@ -70,17 +79,36 @@ export function PsychogeographicMap({
   const [lanes, setLanes] = useState<GeographyEdge[]>([]);
   const [expressionsByPlace, setExpressionsByPlace] = useState<Map<string, ArchetypalExpression[]>>(new Map());
   const [selectedNodeId, setSelectedNodeId] = useState<string | null>(initialSelectedGraphNodeId);
+  const [detailsOpen, setDetailsOpen] = useState(false);
+  useEffect(() => {
+    if (!inspectorContainer) return;
+    inspectorContainer.hidden = selectedNodeId === null || !detailsOpen;
+    return () => { inspectorContainer.hidden = true; };
+  }, [inspectorContainer, selectedNodeId, detailsOpen]);
+  useEffect(() => {
+    if (selectedNodeId === null || (inspectorContainer && !detailsOpen)) return;
+    const escape = (event: KeyboardEvent) => {
+      if (event.key !== "Escape" || event.defaultPrevented) return;
+      event.preventDefault();
+      if (inspectorContainer) setDetailsOpen(false);
+      else { setSelectedNodeId(null); onSelectedGraphNodeIdChangeRef.current?.(null); }
+      containerRef.current?.querySelector<HTMLElement>('canvas')?.focus();
+    };
+    window.addEventListener('keydown', escape);
+    return () => window.removeEventListener('keydown', escape);
+  }, [selectedNodeId, inspectorContainer, detailsOpen]);
   const [relatedNodes, setRelatedNodes] = useState<GraphNodeContract[]>([]);
   const [contextLoading, setContextLoading] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [readAttempt, setReadAttempt] = useState(0);
   const [policyRevision, setPolicyRevision] = useState(0);
   const [liveTilesActive, setLiveTilesActive] = useState(false);
   const [liveFallback, setLiveFallback] = useState(false);
   const [activeLaneYear, setActiveLaneYear] = useState<number | null>(null);
   const [selectedLaneId, setSelectedLaneId] = useState<string | null>(null);
 
-  const tileRefreshOptedIn = policy.isOptedIn("tile_refresh");
+  const tileRefreshOptedIn = !offlineOnly && !!policy?.isOptedIn("tile_refresh");
   void policyRevision;
 
   useEffect(() => {
@@ -94,12 +122,8 @@ export function PsychogeographicMap({
       .then(async ([locatedNodes, geographyEdges]) => {
         const expressionRows = await Promise.all(
           locatedNodes.map(async (node) => {
-            try {
-              const expressions = await repository.getArchetypeExpressionsForPlace(projectId, node.graphNodeId);
-              return [node.graphNodeId, expressions] as const;
-            } catch {
-              return [node.graphNodeId, [] as ArchetypalExpression[]] as const;
-            }
+            const expressions = await repository.getArchetypeExpressionsForPlace(projectId, node.graphNodeId);
+            return [node.graphNodeId, expressions] as const;
           }),
         );
         if (cancelled) return;
@@ -116,7 +140,7 @@ export function PsychogeographicMap({
     return () => {
       cancelled = true;
     };
-  }, [projectId, refreshVersion, repository]);
+  }, [projectId, refreshVersion, repository, readAttempt]);
 
   const placeMarkers = useMemo<PlaceRenderMarker[]>(() => nodes.flatMap((node) => {
     const point = pointForPlace(node);
@@ -172,8 +196,8 @@ export function PsychogeographicMap({
       .then((related) => {
         if (!cancelled) setRelatedNodes(related);
       })
-      .catch(() => {
-        if (!cancelled) setRelatedNodes([]);
+      .catch((cause: unknown) => {
+        if (!cancelled) setError(`Place context unavailable: ${cause instanceof Error ? cause.message : String(cause)}`);
       })
       .finally(() => {
         if (!cancelled) setContextLoading(false);
@@ -181,7 +205,7 @@ export function PsychogeographicMap({
     return () => {
       cancelled = true;
     };
-  }, [nodes, projectId, repository, selectedNodeId]);
+  }, [nodes, projectId, repository, selectedNodeId, readAttempt]);
 
   const laneYearRange = useMemo(() => {
     if (lanes.length === 0) return null;
@@ -327,6 +351,7 @@ export function PsychogeographicMap({
   }, []);
 
   const refreshLiveTiles = useCallback(async () => {
+    if (offlineOnly || !policy) return;
     const currentRenderer = mountedRenderer.current;
     if (!currentRenderer) return;
     if (policy.requestLiveAction("tile_refresh", "refresh live basemap tiles") !== "granted") return;
@@ -351,7 +376,7 @@ export function PsychogeographicMap({
         // unsupported by a test/static renderer.
       }
     }
-  }, [policy, tileSource]);
+  }, [policy, tileSource, offlineOnly]);
 
   const connectionLabel = liveFallback
     ? "Live tiles (offline fallback)"
@@ -359,17 +384,11 @@ export function PsychogeographicMap({
       ? "Live tiles"
       : "Offline";
 
-  return (
-    <div
-      className="psychogeographic-surface"
-      data-testid="psychogeographic-surface"
-      data-view={view}
-      style={{ position: "absolute", inset: 0, overflow: "hidden", background: "#05070f" }}
-    >
+  const controls = (
       <div
-        className="psychogeographic-toolbar"
+        className={toolbarContainer ? "psychogeographic-toolbar-hosted research-tool-actions" : "psychogeographic-toolbar"}
         data-testid="places-toolbar"
-        style={{
+        style={toolbarContainer ? { display: "flex", gap: 6 } : {
           position: "absolute",
           zIndex: 10,
           top: 10,
@@ -387,7 +406,8 @@ export function PsychogeographicMap({
         <button type="button" data-testid="places-globe-toggle" disabled={!readyRenderer} data-active={view === "globe"} onClick={() => setProjection("globe")}>Globe</button>
         <button type="button" data-testid="places-flat-toggle" disabled={!readyRenderer} data-active={view === "flat"} onClick={() => setProjection("flat")}>Flat</button>
         <button type="button" data-testid="places-zoom-fit" disabled={!readyRenderer || placeMarkers.length === 0} onClick={() => void mountedRenderer.current?.fitToPlaces?.(placeMarkers)}>Zoom to fit</button>
-        {!tileRefreshOptedIn ? (
+        {inspectorContainer && <button type="button" disabled={!selectedNodeId} aria-expanded={detailsOpen} onClick={() => setDetailsOpen(value => !value)}>Location details</button>}
+        {!offlineOnly && policy && (!tileRefreshOptedIn ? (
           <button
             type="button"
             data-testid="psychogeographic-opt-in-live"
@@ -407,8 +427,18 @@ export function PsychogeographicMap({
           >
             Refresh tiles
           </button>
-        )}
+        ))}
       </div>
+  );
+
+  return (
+    <div
+      className="psychogeographic-surface"
+      data-testid="psychogeographic-surface"
+      data-view={view}
+      style={{ position: "absolute", inset: 0, overflow: "hidden", background: "#05070f" }}
+    >
+      {toolbarContainer ? createPortal(controls, toolbarContainer) : controls}
 
       <div
         ref={containerRef}
@@ -451,14 +481,13 @@ export function PsychogeographicMap({
         </div>
       )}
 
-      {selectedNode && (
-        <LocationPanel
-          node={selectedNode}
-          relatedNodes={relatedNodes}
-          expressions={selectedExpressions}
-          loadingContext={contextLoading}
-        />
-      )}
+      {selectedNode && (!inspectorContainer || detailsOpen) && (() => {
+        const panel = <LocationPanel node={selectedNode} relatedNodes={relatedNodes}
+          expressions={selectedExpressions} loadingContext={contextLoading}
+          hosted={!!inspectorContainer}
+          onClose={() => { if (inspectorContainer) setDetailsOpen(false); else { setSelectedNodeId(null); onSelectedGraphNodeIdChangeRef.current?.(null); } containerRef.current?.querySelector<HTMLElement>('canvas')?.focus(); }} />;
+        return inspectorContainer ? createPortal(panel, inspectorContainer) : panel;
+      })()}
 
       {lanes.length > 0 && (
         <div
@@ -525,6 +554,7 @@ export function PsychogeographicMap({
       {error && (
         <div role="alert" data-testid="psychogeographic-error" style={{ position: "absolute", right: 12, bottom: 12, zIndex: 11 }}>
           Map unavailable: {error}
+          <button type="button" onClick={() => setReadAttempt(value => value + 1)}>Retry reading</button>
         </div>
       )}
     </div>

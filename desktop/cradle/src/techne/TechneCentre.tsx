@@ -3,7 +3,7 @@
 import {useCallback, useEffect, useRef, useState} from "react";
 import {PointCloudHost} from "../expressions/PointCloudHost";
 import {useKernel} from "../kernel/KernelProvider";
-import {techneGroundSubject, wikiTechneReadingProvider} from "./wikiReadingProvider";
+import {readWikiSceneTechne} from "./wikiReadingProvider";
 import type {SurfaceBinding} from "../surface/types";
 import type {HostedAppState} from "../expressions/hostedApp";
 import type {TechneSubject} from "./techneReading";
@@ -12,7 +12,7 @@ import {ensureWikiNativeExpression, focusWikiNativeExpression, publishWikiNative
 import {consumeWikiSelectionRequest, getWikiProjectionState, subscribeWikiProjection} from "./wikiProjectionStore";
 import {requestTechneFieldOpen} from "../expressions/fieldOpen";
 
-export function TechneCentre({binding, subject, deepLink, onHostedState}: {
+export function TechneCentre({binding, deepLink, onHostedState}: {
   binding: SurfaceBinding;
   subject?: TechneSubject;
   deepLink?: string;
@@ -83,7 +83,7 @@ export function TechneCentre({binding, subject, deepLink, onHostedState}: {
     selectWikiNativeRegister(register.key);
     return {expression_ref: prepared.document.expression_ref, register: register.key};
   }, [kernel.transport]);
-  const readTechne = useCallback(() => wikiTechneReadingProvider(kernel.transport).read(techneGroundSubject(subject)), [kernel.transport, subject]);
+  const readTechne = useCallback((request: unknown) => readWikiSceneTechne(kernel.transport, request), [kernel.transport]);
   return <div ref={centre} className="techne-centre">
     {failure && <p className="techne-owner-error" role="alert">{failure}</p>}
     <div className="techne-centre-field">

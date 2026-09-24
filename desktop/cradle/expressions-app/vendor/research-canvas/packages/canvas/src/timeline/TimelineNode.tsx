@@ -1,10 +1,10 @@
 import { useRef } from "react";
 import type { CSSProperties, JSX, PointerEvent as ReactPointerEvent } from "react";
-import { computeCardViewportFade, type PlacedItem } from "./projection";
+import { computeCardViewportFade, timelineCardBounds, type PlacedItem } from "./projection";
 import type { LitNodeState } from "./lighting";
 import type { GraphNode } from "./contracts";
 import { categoryDefinition, deriveTimelineCategory } from "./categories";
-import { DEFAULT_TIMELINE_CARD_HEIGHT_PX, DEFAULT_TIMELINE_CARD_WIDTH_PX } from "./projection";
+import { DEFAULT_TIMELINE_CARD_HEIGHT_PX } from "./projection";
 
 const MIN_CARD_WIDTH = 180;
 const MAX_CARD_WIDTH = 520;
@@ -41,6 +41,7 @@ export interface TimelineNodeProps {
   onCommit?: (nodeId: string) => void;
   onColorTag: (nodeId: string, style: { dotColour: string; bgColour: string; textColour?: string }) => void;
   readOnly?: boolean;
+  colorCapability?: {available:boolean;reason?:string};
 }
 
 export function TimelineNode({
@@ -57,11 +58,12 @@ export function TimelineNode({
   onCommit,
   onColorTag,
   readOnly = false,
+  colorCapability,
 }: TimelineNodeProps): JSX.Element {
   const { item, startPx, endPx } = placed;
   const projectedNode = item.node as TimelineProjectedGraphNode;
   const spanWidth = Math.max(endPx - startPx, 0);
-  const laneOffset = 68 + placed.laneIndex * 78;
+  const bounds = timelineCardBounds(placed);
   const summary = item.node.summary.trim();
   const category = deriveTimelineCategory(item.node);
   const categoryStyle = categoryDefinition(category);
@@ -69,8 +71,8 @@ export function TimelineNode({
   const colorTag = projectedNode.timelineColorTag ?? category;
   const positionX = 0;
   const positionY = item.presentation.offsetY;
-  const cardWidth = clampNumber(item.presentation.width || DEFAULT_TIMELINE_CARD_WIDTH_PX, MIN_CARD_WIDTH, MAX_CARD_WIDTH);
-  const cardHeight = clampNumber(item.presentation.height || DEFAULT_TIMELINE_CARD_HEIGHT_PX, MIN_CARD_HEIGHT, MAX_CARD_HEIGHT);
+  const cardWidth = bounds.width;
+  const cardHeight = bounds.height;
   const dragState = useRef<{
     mode: "resize" | "move";
     pointerId: number;
@@ -81,15 +83,9 @@ export function TimelineNode({
     didMutate: boolean;
   } | null>(null);
   const suppressClick = useRef(false);
-  const cardLeft = positionX - cardWidth / 2;
-  const cardTop =
-    placed.laneSide === "above"
-      ? -laneOffset - cardHeight + positionY
-      : laneOffset + positionY;
-  const connectorOffset =
-    placed.laneSide === "above"
-      ? Math.max(16, laneOffset - positionY)
-      : Math.max(16, laneOffset + positionY);
+  const cardLeft = bounds.left - startPx;
+  const cardTop = bounds.top;
+  const connectorOffset = bounds.connectorOffset;
   const edgeFade =
     viewportWidth === undefined
       ? { left: 0, right: 0, edge: "none" as const }
@@ -153,7 +149,7 @@ export function TimelineNode({
         positionX,
         positionY,
         width: cardWidth,
-        height: cardHeight,
+        height: clampNumber(item.presentation.height || DEFAULT_TIMELINE_CARD_HEIGHT_PX, MIN_CARD_HEIGHT, MAX_CARD_HEIGHT),
       },
       didMutate: false,
     };
@@ -175,7 +171,20 @@ export function TimelineNode({
       data-category={category}
       data-lod={lod}
       className={`timeline-node timeline-node--${placed.laneSide}`}
+      role="group"
+      tabIndex={0}
+      aria-label={`${item.node.title}. Space to select; Enter to open source.`}
       style={style}
+      onKeyDown={(event) => {
+        if (event.target !== event.currentTarget) return;
+        if (event.key === " ") {
+          event.preventDefault();
+          onSelect(item.graphNodeId);
+        } else if (event.key === "Enter") {
+          event.preventDefault();
+          onOpen(item.graphNodeId, item.node);
+        }
+      }}
       onPointerMove={handlePointerMove}
       onPointerUp={handlePointerUp}
       onPointerCancel={handlePointerUp}
@@ -285,7 +294,8 @@ export function TimelineNode({
             className="timeline-node-color"
             data-testid={`timeline-node-color-${item.graphNodeId}`}
             aria-label={`Tag ${item.node.title} as ${categoryStyle.label}`}
-            disabled={readOnly}
+            disabled={readOnly||colorCapability?.available===false}
+            title={colorCapability?.available===false?colorCapability.reason:undefined}
             onClick={(event) => {
               event.stopPropagation();
               onColorTag(item.graphNodeId, {

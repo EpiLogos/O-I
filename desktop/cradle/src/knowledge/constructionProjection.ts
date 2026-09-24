@@ -5,17 +5,26 @@ import type {CentralLocation, KernelTransportStatus, NativeFileReading} from '..
 import type {ExpressionDocument, ExpressionRequest, ExpressionResult, ReadingRef} from '../expression/types';
 import {knowledge} from './client';
 import {projectProvidedLocalWhole, type LocalMember, type LocalWhole, type ProjectionOutcome} from './expressionProjection';
-import {ACTOR, CONSTRUCTION, PARTICIPATION, RELATION, editConstruction, saveConstruction, type ApplyKernel, type ConstructionRequest, type NativeConstruction, type NativeRelation, type WikiRegister, type SavedConstruction} from './construction';
+import {ACTOR, CONSTRUCTION, PARTICIPATION, RELATION, editConstruction, saveConstruction, decodeRegister, type ApplyKernel, type ConstructionRequest, type NativeConstruction, type NativeRelation, type WikiRegister, type SavedConstruction} from './construction';
 import {readFile} from '../files/client';
 
 /** Projection uses native participation identities as occurrences and keeps
  * source identity in the binding. A source reused in two roles stays two bodies. */
-export async function constructionWhole(transport: KernelTransportStatus, project: string | undefined, frame: NativeConstruction, relations: NativeRelation[]): Promise<LocalWhole> {
+export async function constructionWhole(transport: KernelTransportStatus, project: string | undefined, frame: NativeConstruction, relations: NativeRelation[], register?: WikiRegister): Promise<LocalWhole> {
+  let registerReading: ReadingRef | undefined;
+  if (register) {
+    const file = await readFile(transport, register.file.location);
+    if (file.revision !== register.file.revision) throw new Error('The constellation register changed; refresh it before opening its live composition.');
+    const current = decodeRegister(file, register.source_ref).frames.find(row => row.ref === frame.ref);
+    if (!current || current.revision !== frame.revision || !sameComposition(current, frame)) throw new Error('The constellation no longer matches its exact register basis; refresh it before opening.');
+    registerReading = {ref: `wiki:${file.location.path}`, revision: file.revision, availability: 'available'};
+  }
   const meta = frame[CONSTRUCTION], sourceReads = new Map<string, Promise<import('../kernel/types').KnowledgeReading>>();
-  const members = await Promise.all(frame.constellations[0].members.map(async member => {
+  const memberReads = new AbortController();
+  const readMember = async (member: NativeConstruction['constellations'][number]['members'][number]) => {
     const part = member[PARTICIPATION];
     let pending = sourceReads.get(member.ref);
-    if (!pending) {pending = knowledge(transport, project, {action: 'read', address: {kind: part.sources.some(s => s.source_ref === member.ref) ? 'source' : 'wiki', value: member.ref}}, {fresh: true}); sourceReads.set(member.ref, pending);}
+    if (!pending) {pending = knowledge(transport, project, {action: 'read', address: {kind: part.sources.some(s => s.source_ref === member.ref) ? 'source' : 'wiki', value: member.ref}}, {fresh: true, signal: memberReads.signal}); sourceReads.set(member.ref, pending);}
     const reading = await pending;
     if (reading.resource !== member.ref || !reading.revision) throw new Error(`The native source for ${member.ref} is unavailable or redirected.`);
     for (const source of part.sources) if (source.source_ref === reading.resource && source.source_revision !== reading.revision) throw new Error(`Source changed: ${member.ref}. Reconcile the constellation before presenting its interpretation as current.`);
@@ -26,8 +35,27 @@ export async function constructionWhole(transport: KernelTransportStatus, projec
     const sources: ReadingRef[] = part.sources.map(source => ({ref: String(source.source_ref), revision: String(source.source_revision), availability: 'available'}));
     return {node: {ref: part.participation_ref, subject_ref: member.ref, frame_ref: frame.ref, label: role ? `${role.label} · ${part.note || member.ref}` : part.note || member.ref,
       kind: 'constellation-member', native_owner: 'ai-kit', provenance: {source: frame.ref, revision: String(frame.revision)}, actions: []},
-      reading, sources, initialPosition, frameReading: {ref: frame.ref, revision: String(frame.revision), availability: 'available'} as ReadingRef} as LocalMember;
-  }));
+      reading, sources, initialPosition, frameReading: {ref: frame.ref, revision: String(frame.revision), availability: 'available'} as ReadingRef, registerReading} as LocalMember;
+  };
+  // A native frame may contain more members than the shared read queue can
+  // hold. Feed that existing coordinator incrementally; preserve native order,
+  // deduplication and refusal semantics instead of raising its global budget.
+  const nativeMembers = frame.constellations[0].members;
+  const members: LocalMember[] = new Array(nativeMembers.length);
+  let next = 0, failed = false;
+  let failure: unknown;
+  try {
+    await Promise.all(Array.from({length: Math.min(4, nativeMembers.length)}, async () => {
+      while (!failed && next < nativeMembers.length) {
+        const index = next++;
+        try { members[index] = await readMember(nativeMembers[index]); }
+        catch (error) {
+          if (!failed) { failed = true; failure = error; memberReads.abort(); }
+          throw error;
+        }
+      }
+    }));
+  } catch (error) { throw failed ? failure : error; }
   if (!members.length) throw new Error('This frame has open roles but no source members yet. Add material before opening its live composition.');
   const ids = new Set(members.map(member => member.node.ref));
   const active = relations.filter(edge => edge[RELATION].standing !== 'retracted' && ids.has(edge[RELATION].from_participation_ref) && ids.has(edge[RELATION].to_participation_ref));
@@ -36,8 +64,8 @@ export async function constructionWhole(transport: KernelTransportStatus, projec
       relation: {ref: edge.ref, revision: String(edge.revision), availability: 'available'}, provenance: [{ref: frame.ref, revision: String(frame.revision), availability: 'available'}]})),
     truncated: false, warnings: [], pinned: [], grammar: {state: 'unavailable', detail: 'Explicit native role addresses govern this authored frame; no discovered interpretation is inferred.'}, relationBindingsUnavailable: 0};
 }
-export async function projectConstruction(transport: KernelTransportStatus, project: string | undefined, frame: NativeConstruction, relations: NativeRelation[]): Promise<ProjectionOutcome> {
-  const whole = await constructionWhole(transport, project, frame, relations);
+export async function projectConstruction(transport: KernelTransportStatus, project: string | undefined, frame: NativeConstruction, relations: NativeRelation[], register: WikiRegister): Promise<ProjectionOutcome> {
+  const whole = await constructionWhole(transport, project, frame, relations, register);
   return projectProvidedLocalWhole(transport, `constellation:${frame.ref}`, frame[CONSTRUCTION].title, whole);
 }
 export async function expressionOperation(transport: KernelTransportStatus, request: ExpressionRequest, apply?: ApplyKernel): Promise<ExpressionResult> {

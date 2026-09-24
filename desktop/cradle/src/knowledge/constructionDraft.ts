@@ -1,3 +1,5 @@
+import type {CentralLocation} from '../kernel/types';
+import {validateTemporalFacet,validatePlaceFacet,type TechneTemporalFacet,type TechnePlaceFacet} from '../techne/contract';
 import {ACTOR, CONSTRUCTION, PARTICIPATION, RELATION, editable, nativeFrame, newRef,
   type AuthoringForm, type ConstructionRequest, type NativeConstruction, type NativeFrame, type NativeMember, type NativeRelation} from './construction';
 import {passageKey, passageProvenance, type WikiPassage} from './selection';
@@ -9,6 +11,9 @@ export interface DraftMember {
   label: string;
   sources: Record<string, unknown>[];
   passage?: WikiPassage;
+  temporal?: TechneTemporalFacet[];
+  places?: TechnePlaceFacet[];
+  facet_sources?: {source_ref:string;revision:string;location:CentralLocation;title?:string}[];
 }
 export interface DraftRelation {
   ref: string; revision?: number; from: string; to: string;
@@ -28,7 +33,8 @@ export function emptyDraft(space_ref = ''): ConstructionDraft {
 export function memberDraft(member: NativeMember): DraftMember {
   const part = member[PARTICIPATION];
   return {subject_ref: member.ref, participation_ref: part.participation_ref, role_ref: part.role_ref ?? null,
-    label: part.note || member.ref, sources: part.sources};
+    label: part.note || member.ref, sources: part.sources,
+    ...(member['aikit.techne-facet/v1']?{temporal:structuredClone(member['aikit.techne-facet/v1']!.temporal??[]),places:structuredClone(member['aikit.techne-facet/v1']!.spatial??[])}:{})};
 }
 export function fromNative(frame: NativeConstruction, relations: NativeRelation[]): ConstructionDraft {
   editable(frame);
@@ -77,6 +83,13 @@ export function draftRequest(draft: ConstructionDraft): ConstructionRequest {
     const previous = before.get(member.participation_ref)?.[PARTICIPATION];
     if (!previous) changes.push({change: 'member_add', member: {subject_ref: member.subject_ref, participation: {participation_ref: member.participation_ref, role_ref: member.role_ref, sources: member.sources, note: member.label}}});
     else if ((previous.role_ref ?? null) !== member.role_ref) changes.push({change: 'role_set', participation_ref: member.participation_ref, role_ref: member.role_ref});
+    const held=before.get(member.participation_ref)?.['aikit.techne-facet/v1'];
+    for(const [key,original,validate,change,field]of [['temporal',held?.temporal??[],validateTemporalFacet,'temporal_set','temporal'],['places',held?.spatial??[],validatePlaceFacet,'place_set','places']] as const){
+      const facts=member[key];if(facts===undefined||same(facts,original))continue;
+      if(facts.length>256)throw new Error('A participation accepts at most 256 time/place facts.');
+      const errors:string[]=[];facts.forEach((fact,index)=>{validate(fact,`${key} ${index+1}`,errors);if(!fact.source_ref)errors.push('Choose the evidence source for each fact.');});if(errors.length)throw new Error(errors.join('; '));
+      changes.push({change,participation_ref:member.participation_ref,[field]:facts});
+    }
   }
   const ids = new Set(draft.members.map(member => member.participation_ref));
   for (const edge of draft.relations) {

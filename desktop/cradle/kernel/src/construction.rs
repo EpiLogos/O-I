@@ -44,24 +44,63 @@ fn request_valid(target: &str, input: &Input) -> Result<(),String> {
     }
     // Native source/evidence revisions are not a renderer label. Every basis
     // this operation cites must be one of the caller-disclosed source reads.
-    fn check(value: &Value, sources: &[Basis]) -> Result<(),String> {
+    fn check(value: &Value, sources: &[Basis], native_facet: bool) -> Result<(),String> {
         match value {
             Value::Object(object) => {
                 if let Some(source)=object.get("source_ref").and_then(Value::as_str) {
-                    let revision=object.get("source_revision").and_then(Value::as_str)
-                        .ok_or("A selected source requires its exact owner revision")?;
-                    if !sources.iter().any(|s|s.source_ref==source && s.revision==revision) {
-                        return Err(format!("Source {source} was not disclosed on this operation's exact basis"));
+                    if native_facet {
+                        // Canonical PlaceFacet and TemporalFacet have no source_revision field.
+                        // Its one supplied Basis is independently re-read below
+                        // before invoking the native Wiki writer. This exception
+                        // applies only to PlaceSet/TemporalSet facet arrays, never nested evidence.
+                        if object.contains_key("source_revision") {
+                            return Err("A native facet takes its revision from the supplied source basis, not an extra facet field".into());
+                        }
+                        let mut matching = sources.iter().filter(|basis| basis.source_ref == source);
+                        if source.trim().is_empty() || matching.next().is_none() || matching.next().is_some() {
+                            return Err(format!("Facet source {source} requires one unique disclosed source basis"));
+                        }
+                    } else {
+                        let revision=object.get("source_revision").and_then(Value::as_str)
+                            .ok_or("A selected source requires its exact owner revision")?;
+                        if !sources.iter().any(|s|s.source_ref==source && s.revision==revision) {
+                            return Err(format!("Source {source} was not disclosed on this operation's exact basis"));
+                        }
                     }
+                } else if native_facet {
+                    return Err("A native facet requires its native source reference".into());
                 }
-                for nested in object.values(){check(nested,sources)?;}
+                for nested in object.values(){check(nested,sources,false)?;}
             }
-            Value::Array(values)=>for value in values{check(value,sources)?;},
+            Value::Array(values)=>for value in values{check(value,sources,false)?;},
+            _ if native_facet => return Err("A native facet must be an object".into()),
             _=>{}
         }
         Ok(())
     }
-    check(&input.request,&input.sources)
+    // Preserve the recursive rule for the whole request except the exact native
+    // PlaceSet/TemporalSet field. A similarly named object elsewhere gains no exemption.
+    let request=input.request.as_object().ok_or("Native construction request must be an object")?;
+    let mut header=request.clone();
+    let changes=header.remove("changes").ok_or("Native construction changes are required")?;
+    check(&Value::Object(header),&input.sources,false)?;
+    {
+        let changes=changes.as_array().ok_or("Native construction changes must be an array")?;
+        for change in changes {
+            let facet_field=match change["change"].as_str() {
+                Some("place_set") => "places",
+                Some("temporal_set") => "temporal",
+                _ => { check(change,&input.sources,false)?; continue; }
+            };
+            let fields=change.as_object().ok_or("Native facet change must be an object")?;
+            let mut header=fields.clone();
+            let places=header.remove(facet_field).ok_or("Native facet values are required")?;
+            check(&Value::Object(header),&input.sources,false)?;
+            let places=places.as_array().ok_or("Native facet values must be an array")?;
+            for place in places { check(place,&input.sources,true)?; }
+        }
+    }
+    Ok(())
 }
 /// Called only through the existing Action boundary with its Central-resolved
 /// context. A payload cannot redirect this operation into a different Wiki.
@@ -133,11 +172,42 @@ mod tests{
         assert!(request_valid("wiki:other",&input()).is_err());
         let mut command=input();command.request["changes"]=json!([{"evidence":[{"source_ref":"native:private","source_revision":"r3"}]}]);
         assert!(request_valid("wiki:whole",&command).is_err());
-        command.sources.push(Basis{source_ref:"native:private".into(),revision:"r3".into(),location:Some(command.location.clone())});
+        command.sources.push(Basis{source_ref:"native:private".into(),revision:"r3".into(),location:Some(command.location.clone()),content_encoding:Default::default()});
         assert!(request_valid("wiki:whole",&command).is_ok());
         assert!(!relative("../private"));assert!(!relative("/other/wiki.json"));
         let mut value=serde_json::to_value(&command.request).unwrap();value["unbounded_authority"]=json!(true);
         assert!(serde_json::from_value::<Input>(value).is_err());
+    }
+    #[test]fn place_set_uses_one_basis_without_exempting_nested_evidence(){
+        let mut command=input();
+        command.sources.push(Basis{source_ref:"source:place".into(),revision:"r3".into(),location:Some(command.location.clone()),content_encoding:Default::default()});
+        let facet=json!({"place_ref":"wiki:place:proof","source_ref":"source:place","precision":"unlocated"});
+        command.request["changes"]=json!([{"change":"place_set","participation_ref":"part:proof","places":[facet]}]);
+        assert!(request_valid("wiki:whole",&command).is_ok());
+        command.request["changes"][0]["places"][0]["source_revision"]=json!("r3");
+        assert!(request_valid("wiki:whole",&command).is_err());
+        command.request["changes"][0]["places"][0].as_object_mut().unwrap().remove("source_revision");
+        command.request["changes"][0]["places"][0]["provenance"]=json!([{"source_ref":"source:place"}]);
+        assert!(request_valid("wiki:whole",&command).is_err());
+        command.request["changes"][0]["places"][0]["provenance"][0]["source_revision"]=json!("r3");
+        assert!(request_valid("wiki:whole",&command).is_ok());
+        command.sources.push(Basis{source_ref:"source:place".into(),revision:"r3".into(),location:Some(command.location.clone()),content_encoding:Default::default()});
+        assert!(request_valid("wiki:whole",&command).is_err());
+        command.sources.clear();
+        assert!(request_valid("wiki:whole",&command).is_err());
+        command.request["changes"]=json!([{"change":"member_add","member":{"change":"place_set","places":[{"source_ref":"source:place"}]}}]);
+        assert!(request_valid("wiki:whole",&command).is_err());
+    }
+    #[test]fn temporal_set_uses_the_same_exact_basis_without_general_source_exemption(){
+        let mut command=input();
+        command.sources.push(Basis{source_ref:"source:time".into(),revision:"r5".into(),location:Some(command.location.clone()),content_encoding:Default::default()});
+        command.request["changes"]=json!([{"change":"temporal_set","participation_ref":"part:time","temporal":[{"kind":"occurrence","instant":"2024-01-01T00:00:00Z","source_ref":"source:time"}]}]);
+        assert!(request_valid("wiki:whole",&command).is_ok());
+        command.request["changes"][0]["temporal"][0]["source_revision"]=json!("r5");
+        assert!(request_valid("wiki:whole",&command).is_err());
+        command.request["changes"][0]["temporal"][0].as_object_mut().unwrap().remove("source_revision");
+        command.sources.clear();
+        assert!(request_valid("wiki:whole",&command).is_err());
     }
     #[test]fn receipts_and_titles_are_not_indexed_subjects(){
         assert!(!contains_ref(&json!({"state":"routed","title":"wiki:subject"}),"wiki:subject"));

@@ -91,6 +91,9 @@ export const mediumSplatVertexShader = /* glsl */ `
 precision highp float;
 
 uniform sampler2D uPositionTexture;
+uniform float uConnectionStart;
+uniform sampler2D uConnectionMetadata;
+uniform vec2 uTexSize;
 uniform sampler2D uVelocityTexture;
 uniform vec2 uMediumMin;
 uniform vec2 uMediumMax;
@@ -104,6 +107,10 @@ attribute vec2 aParticleUv;
 varying vec4 vSplat;
 
 void main() {
+  float pIndex = floor(aParticleUv.y * uTexSize.y) * uTexSize.x + floor(aParticleUv.x * uTexSize.x);
+  if (pIndex >= uConnectionStart && texture2D(uConnectionMetadata,aParticleUv).z < 0.5) {
+    vSplat = vec4(0.0); gl_Position = vec4(2.0,2.0,2.0,1.0); gl_PointSize = 1.0; return;
+  }
   vec3 pos = texture2D(uPositionTexture, aParticleUv).xyz;
   vec3 vel = texture2D(uVelocityTexture, aParticleUv).xyz;
   if (uMedium3D > 0.5) {

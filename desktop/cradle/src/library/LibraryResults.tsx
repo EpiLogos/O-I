@@ -67,7 +67,7 @@ export function LibraryResults({items, coverage, selectedRef, onSelect, onOpen}:
         <div className="oi-action-group">
           <button type="button" className="oi-action" onClick={() => onOpen(item, "page")}>Open page</button>
           {item.expressionRef && <button type="button" className="oi-action" onClick={() => onOpen(item, "expression")}>Open Expression</button>}
-          {item.kind === "projected-object" && <button type="button" className="oi-action" onClick={() => onOpen(item, "instrument")}>Examine in Instrument 0</button>}
+          {(item.address || item.sourceLocation) && !item.fixture && <button type="button" className="oi-action" onClick={() => onOpen(item, "instrument")}>Insert into current Scene</button>}
           {item.sourceLocation && <button type="button" className="oi-action" onClick={() => onOpen(item, "source")}>Open exact source</button>}
         </div>
       </div>}

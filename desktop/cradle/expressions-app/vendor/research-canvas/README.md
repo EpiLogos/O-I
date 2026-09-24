@@ -48,3 +48,12 @@ the engine host and its native owner adapter.
 Run `node vendor/research-canvas/tests/run-read-only.mjs` for real-component server
 render checks using the installed React/ReactFlow/viewer dependencies, without
 substitutes. Native interactive acceptance belongs to the integrated engine.
+
+The optional `CanvasView.toolbarContainer` adaptation portals the existing zoom/fit/play toolbar into the host HUD and suppresses the duplicate ReactFlow Controls there. Omitting the prop retains the original standalone placement and controls. The source diff and adapted hash are recorded with the other capability overlays.
+
+`patches/native-host-capabilities.patch` retains native read refusals as visible
+errors with explicit retry. Hosted map/image views pass `offlineOnly`: this
+omits live network controls and refuses local-policy activation; the host need
+not construct a Research Canvas policy. `imageTitle` carries a native readable
+label. Missing image metadata is not rendered as an automatic footer. These
+are UI capabilities, not a new egress authority or source store.

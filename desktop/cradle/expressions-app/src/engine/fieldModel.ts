@@ -450,7 +450,7 @@ function nodeToShape(n: SpatialChakraNode): Shape {
   return { kind: 'yantra', yantraId: n.id };
 }
 
-export function entityFromNode(n: SpatialChakraNode, index: number, chakraCount: number, influence: number, vortexPower: number): Entity {
+export function entityFromNode(n: SpatialChakraNode, index: number, _chakraCount: number, influence: number, vortexPower: number): Entity {
   const canonIdx = CANONICAL_CHAKRAS.findIndex((c) => c.id === n.id);
   return makeFormation({
     id: `ent_${n.id}`,

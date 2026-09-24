@@ -33,6 +33,7 @@ export interface ComposerTools {
 }
 export interface ComposerConnection {
   status?: EncounterStatus;
+  project?:string;
   /** The owner's connections with their harness facts (A1): protocol, command. */
   providers: ConnectionFacts[];
   /** The connected harness's facts, when the providers listing lacks them
@@ -82,7 +83,7 @@ export function ChatComposer({reading,draft,pending,busy,error,editable,promptAl
   /** The message text without its attachment blocks — what the person reads as theirs. */
   const message=useMemo(()=>{let text=draft;for(const item of [...selected].reverse())text=text.slice(0,item.start)+text.slice(item.end);return text.replace(/^\n+|\n+$/g,"");},[draft,selected]);
   const setMessage=(text:string)=>onDraft([text.replace(/\n+$/,""),...selected.map(item=>draft.slice(item.start,item.end))].filter(Boolean).join("\n\n"));
-  /** Voice dictation: the webview's own speech engine where it exists, an
+  /** Local dictation through the native speech seam, an
    * honest named gap where it does not. Dictation writes the message part of
    * the shared draft and never touches the attached context blocks. */
   const voice=useVoiceDictation(text=>setMessage(text),()=>message);
@@ -125,6 +126,7 @@ export function ChatComposer({reading,draft,pending,busy,error,editable,promptAl
     <textarea ref={input} disabled={!editable} aria-label="Message" placeholder={drafting?"Write the first message…":unreachable?"Agents are out of reach for now":!reading?"Reading…":connected?"Message the agent…":"Connect a provider, then write…"} value={message} rows={3}
       onChange={event=>setMessage(event.target.value)} onPaste={onPaste}
       onKeyDown={event=>{if(event.key==="Enter"&&!event.shiftKey&&!event.nativeEvent.isComposing){event.preventDefault();if(canSend)onSend();}}}/>
+    {voice.error&&<p role="alert" className="oi-note">{voice.error}</p>}
     <div className="chat-composer-row">
       {/* Plain tools, no menus: files from this computer, the centre subject.
           Everything else attaches by drop — a sidebar file, a tab. The
@@ -132,12 +134,12 @@ export function ChatComposer({reading,draft,pending,busy,error,editable,promptAl
       <button className="oi-tool" aria-label="Attach files from this computer" title={drafting?"Attach after the message is carried by a conversation":"Attach files from this computer"} disabled={!editable||drafting} onClick={()=>picker.current?.click()}><Glyph name="attach" size={14}/></button>
       <input ref={picker} type="file" multiple hidden aria-hidden="true" tabIndex={-1} onChange={event=>{const files=event.target.files;if(files?.length)void tools.pickFiles(files);event.target.value="";}}/>
       {tools.subject&&<button className="oi-tool" aria-label={`Attach ${tools.subject.title}`} title={`Attach ${tools.subject.title} (the open subject)`} disabled={!editable||drafting} onClick={()=>void tools.subject!.attach()}><Glyph name="file" size={14}/></button>}
-      <button type="button" className="oi-tool chat-voice" aria-pressed={voice.listening} aria-label={voice.listening?"Stop voice input":"Voice input"} title={voice.supported?(voice.listening?"Stop dictation":"Dictate into the message"):(voice.error??"Voice input is not available in this webview yet")} data-listening={voice.listening||undefined} disabled={!editable&&!voice.listening} onClick={voice.toggle}><Glyph name="mic" size={14}/></button>
+      <button type="button" className="oi-tool chat-voice" aria-pressed={voice.listening} aria-label={voice.listening?"Stop voice input":"Voice input"} title={voice.supported?(voice.listening?"Stop dictation":"Dictate into the message"):(voice.error??"Voice input is not available in this webview yet")} data-listening={voice.listening||undefined} disabled={voice.transcribing||(!editable&&!voice.listening)} onClick={voice.toggle}><Glyph name="mic" size={14}/></button>
       {connection.mode&&connection.onMode&&<ModeChip mode={connection.mode} agentName={agentName} onSelect={connection.onMode} disabled={pending} turnRunning={running}/>}
-      <span className="chat-composer-status" role="status">{voice.listening?"Listening…":pending?"Updating…":busy?"Saving…":drafting?"First send opens the conversation":paged?<button className="oi-action" onClick={onLatest}>Latest</button>:null}</span>
+      <span className="chat-composer-status" role="status">{voice.notice??(pending?"Updating…":busy?"Saving…":drafting?"First send opens the conversation":paged?<button className="oi-action" onClick={onLatest}>Latest</button>:null)}</span>
       {connected&&currentFacts&&<div className="chat-composer-chips" role="group" aria-label="Harness and model">
         <HarnessChip current={currentFacts} picker={{connections:connection.providers,onChoose:connection.onProvider,disabled:pending||!connection.openAllowed,reason:connection.openReason,resume:connection.resume?{provider:connection.resume.provider,onResume:()=>connection.onReconnect(connection.resume!.provider)}:undefined}}/>
-        {connection.model&&connection.modelActions&&<ModelChip model={connection.model} actions={connection.modelActions} disabled={pending||running}/>}
+        {connection.model&&connection.modelActions&&<ModelChip project={connection.project} model={connection.model} actions={connection.modelActions} disabled={pending||running}/>}
       </div>}
       {running
         ?<button className="chat-stop" disabled={pending||stopping||!cancelAllowed} aria-label={stopping?"Stopping":"Stop"} title="Stop the provider turn" onClick={()=>{setStopAsked(true);onCancel();}}><Glyph name="stop" size={12}/><span>{stopping?"Stopping…":"Stop"}</span></button>

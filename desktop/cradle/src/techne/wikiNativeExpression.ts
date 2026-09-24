@@ -3,9 +3,9 @@
  * The caller opens only the returned native ref through the current host. */
 import {kernelOp} from '../kernel/bridge';
 import type {KernelTransportStatus} from '../kernel/types';
-import type {Change,ExpressionDocument,ExpressionRequest,ExpressionResult} from '../expression/types';
-import {wikiRegistersFrom,type WikiProjection,type WikiRegister} from './wikiExpression';
-import {ensureWikiProjection,getWikiProjectionState,setWikiProjectionRegisters,setWikiProjectionRegister,subscribeWikiProjection,wikiProjectionOpening,wikiProjectionDocumentReady,wikiProjectionDocumentFocused,wikiProjectionKernelUnavailable,wikiProjectionDrift} from './wikiProjectionStore';
+import type {Change,ExpressionDocument,ExpressionRequest,ExpressionResult,Relation} from '../expression/types';
+import {projectWikiExpression,readWikiRegister,wikiRegistersFrom,type WikiProjection,type WikiRegister} from './wikiExpression';
+import {ensureWikiProjection,getWikiProjectionState,setWikiProjectionRegisters,setWikiProjectionRegister,subscribeWikiProjection,wikiProjectionOpening,wikiProjectionDocumentReady,wikiProjectionDocumentFocused,wikiProjectionKernelUnavailable,wikiProjectionDrift,refreshWikiProjectionReading} from './wikiProjectionStore';
 
 export interface WikiNativeExpression {document:ExpressionDocument;projection:WikiProjection;drift?:string}
 export interface WikiNativeFocus {sceneRef:string;entityRef:string|null;relationRef?:string|null}
@@ -45,7 +45,8 @@ function projectionReady(transport:KernelTransportStatus,register:WikiRegister):
 function accepted(register:WikiRegister,projection:WikiProjection,document:ExpressionDocument):WikiNativeExpression{
  if(document.expression_ref!==projection.document.expression_ref)throw Error('The native owner returned another Expression identity');
  const basis=projection.document.provenance[0];const original=document.provenance.find(row=>row.ref===basis?.ref);
- const drift=basis&&original?.revision!==basis.revision?'The source revision changed. This native composition, its Scenes and selection were retained; reconcile its source bindings before applying a new interpretation.':undefined;
+ const incomplete=!document.provenance.some(row=>row.ref.startsWith('wiki:relations:'))&&(!projection.document.provenance.some(row=>row.ref.startsWith('wiki:relations:'))||Object.values(projection.document.relations).some(row=>canonical(document.relations[row.binding_ref])!==canonical(row)));
+ const drift=basis&&original?.revision!==basis.revision?'The source revision changed. This native composition, its Scenes and selection were retained; reconcile its source bindings before applying a new interpretation.':incomplete?'Source connections were unavailable when this composition was opened. Retry their reading and review missing connections before restoring them.':undefined;
  if(drift)wikiProjectionDrift(register.key,document,drift);else wikiProjectionDocumentReady(register.key,document);
  return {document,projection,...(drift?{drift}:{})};
 }
@@ -96,4 +97,69 @@ async function applyNativeFocus(transport:KernelTransportStatus,register:WikiReg
   wikiProjectionDocumentFocused(register.key,data.document);return {...prepared,document:data.document};
  }
  throw Error('The native composition changed again; choose the current Scene and retry');
+}
+
+/** Explicit repair of a failed source read. Missing bindings are never an
+ * automatic migration: removal is a legitimate native presentation edit. */
+export interface WikiRelationRecovery {
+ register:WikiRegister;
+ document:ExpressionDocument;
+ projection:WikiProjection;
+ missing:Relation[];
+}
+const canonical=(value:unknown):string=>JSON.stringify(value,(_key,item)=>item&&typeof item==='object'&&!Array.isArray(item)?Object.fromEntries(Object.entries(item).sort(([a],[b])=>a.localeCompare(b))):item);
+export function planWikiRelationRecovery(register:WikiRegister,document:ExpressionDocument,projection:WikiProjection):WikiRelationRecovery {
+ const proposed=projection.document;
+ if(document.expression_ref!==proposed.expression_ref)throw Error('The source reading belongs to another composition');
+ if(document.provenance.some(row=>row.ref.startsWith('wiki:relations:')))throw Error('This composition already read its source connections. Missing connections may have been intentionally removed.');
+ const basis=proposed.provenance.find(row=>row.ref.startsWith('wiki:')&&!row.ref.startsWith('wiki:relations:'));
+ if(!basis||!document.provenance.some(row=>row.ref===basis.ref&&row.revision===basis.revision&&row.availability==='available'))throw Error('The Wiki source changed. Review its changed membership before restoring connections.');
+ if(!proposed.provenance.some(row=>row.ref.startsWith('wiki:relations:')&&row.availability==='available'))throw Error(projection.notices.find(note=>note.startsWith('Typed relations unavailable:'))??'Source connections are still unavailable');
+ const missing:Relation[]=[];
+ for(const relation of Object.values(proposed.relations)){
+  const existing=document.relations[relation.binding_ref];
+  if(existing){if(canonical(existing)!==canonical(relation))throw Error('A connection with this identity has changed. Review its endpoints before restoring.');continue;}
+  for(const ref of [relation.from_entity_ref,relation.to_entity_ref]){
+   const expected=proposed.entities[ref]?.subject,current=document.entities[ref]?.subject;
+   if(!expected||!current||expected.subject_ref!==current.subject_ref||expected.native_owner!==current.native_owner)throw Error('A connection endpoint was removed or rebound. Restore its membership explicitly before connecting it.');
+  }
+  const scopes=proposed.scenes.filter(scene=>scene.entity_refs.includes(relation.from_entity_ref)&&scene.entity_refs.includes(relation.to_entity_ref));
+  if(!scopes.length||scopes.some(scope=>{const scene=document.scenes.find(row=>row.scene_ref===scope.scene_ref);return !scene||!scene.entity_refs.includes(relation.from_entity_ref)||!scene.entity_refs.includes(relation.to_entity_ref);}))throw Error('Scene membership changed. Restore its membership explicitly before connecting it.');
+  missing.push(relation);
+ }
+ return {register,document,projection,missing};
+}
+export async function previewWikiRelationRecovery(transport:KernelTransportStatus,register:WikiRegister):Promise<WikiRelationRecovery>{
+ const reading=await refreshWikiProjectionReading(register,transport);
+ const projection=projectWikiExpression(reading);
+ const result=await expression(transport,{operation:'inspect',expression_ref:projection.document.expression_ref});
+ if(!result.document)throw Error('Open this native composition before restoring its source connections');
+ accepted(register,projection,result.document);
+ return planWikiRelationRecovery(register,result.document,projection);
+}
+export async function applyWikiRelationRecovery(transport:KernelTransportStatus,preview:WikiRelationRecovery):Promise<ExpressionDocument>{
+ // Re-read at acceptance: previewed source and owner revision are both guards.
+ const reading=await readWikiRegister(transport,preview.register);
+ if(reading.state!=='ready')throw Error(reading.state==='unavailable'?reading.reason:'The Wiki source is absent');
+ const fresh=projectWikiExpression(reading);
+ if(canonical(fresh.document.provenance)!==canonical(preview.projection.document.provenance)||canonical(fresh.document.relations)!==canonical(preview.projection.document.relations))throw Error('The source connections changed after review. Retry their reading before restoring.');
+ return commitWikiRelationRecovery(transport,preview,fresh);
+}
+/** Native transaction stage, after source revalidation. Kept separate so the
+ * real owner CAS/readback can be checked without replacing a source provider. */
+export async function commitWikiRelationRecovery(transport:KernelTransportStatus,preview:WikiRelationRecovery,fresh:WikiProjection):Promise<ExpressionDocument>{
+ if(canonical(fresh.document.provenance)!==canonical(preview.projection.document.provenance)||canonical(fresh.document.relations)!==canonical(preview.projection.document.relations))throw Error('The source connections changed after review. Retry their reading before restoring.');
+ const inspected=await expression(transport,{operation:'inspect',expression_ref:preview.document.expression_ref});
+ if(!inspected.document||canonical(inspected.document)!==canonical(preview.document))throw Error('The native composition changed after review. Retry before restoring connections.');
+ const checked=planWikiRelationRecovery(preview.register,inspected.document,fresh);
+ if(canonical(checked.missing)!==canonical(preview.missing))throw Error('The connection review changed. Retry before restoring.');
+ if(!checked.missing.length)return inspected.document;
+ const changed=await expression(transport,{operation:'edit',expression_ref:preview.document.expression_ref,expected_revision:preview.document.revision,actor:ACTOR,changes:checked.missing.map(binding=>({change:'relation_bind',binding}))});
+ if(changed.state==='revision_conflict'||!changed.document)throw Error('The native composition changed. Retry before restoring connections.');
+ const confirmed=await expression(transport,{operation:'inspect',expression_ref:preview.document.expression_ref});
+ if(!confirmed.document)throw Error('Restored connections could not be independently read back. Inspect the native composition before retrying.');
+ const expected={...preview.document,revision:changed.document.revision,relations:{...preview.document.relations,...Object.fromEntries(checked.missing.map(row=>[row.binding_ref,row]))}};
+ if(canonical(confirmed.document)!==canonical(expected))throw Error('The native composition changed during confirmation. Inspect it before retrying.');
+ accepted(preview.register,fresh,confirmed.document);
+ return confirmed.document;
 }

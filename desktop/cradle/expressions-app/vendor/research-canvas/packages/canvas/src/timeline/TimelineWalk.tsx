@@ -13,16 +13,19 @@ export function TimelineWalk({
   walk,
   onSelectStop,
   resolveNodeTitle,
+  onClose,
 }: {
+  onClose?: () => void;
   walk: TimelineWalk;
   onSelectStop: (graphNodeId: string) => void;
   /** Resolve a frame member's graph node id to a readable title. */
   resolveNodeTitle?: (graphNodeId: string) => string | null;
 }): JSX.Element {
   return (
-    <aside className="timeline-walk" data-testid="timeline-walk" aria-label="Global temporal walk">
+    <aside className="timeline-walk" data-testid="timeline-walk" aria-label="Global temporal walk" onKeyDown={event => { if (event.key === "Escape" && onClose) { event.preventDefault(); event.stopPropagation(); onClose(); } }}>
       <header className="timeline-walk__header">
         <strong>Global / temporal walk</strong>
+        {onClose && <button type="button" aria-label="Close temporal walk" onClick={onClose}>Close</button>}
         <span className="timeline-walk__counts">
           {walk.stops.length} stops
           {walk.locatedCount > 0 && <> · {walk.locatedCount} located</>}

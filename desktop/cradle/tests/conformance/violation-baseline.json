@@ -4,50 +4,10 @@
   "standing": "Bounded debt, not conformance approval or UX acceptance. Remove resolved rows; new debt cannot be auto-accepted.",
   "debts": [
     {
-      "id": "B-theme-persistence",
-      "owner_lane": "B",
-      "source": "src/visuals/store.ts",
-      "description": "Theme selection/visuals persisted without native read disclosure or events.",
-      "spec_ref": "Finding 1",
-      "status": "open"
-    },
-    {
-      "id": "B-theme-imports",
-      "owner_lane": "B",
-      "source": "src/visuals/customThemes.ts",
-      "description": "Imported theme documents persist in browser storage, outside the planned kernel owner.",
-      "spec_ref": "Finding 1",
-      "status": "open"
-    },
-    {
-      "id": "B-theme-window",
-      "owner_lane": "B",
-      "source": "src/workspace/nativeTheme.ts",
-      "description": "Direct native theme mutation has no kernel effect receipt.",
-      "spec_ref": "Finding 1",
-      "status": "open"
-    },
-    {
-      "id": "B-arrangement-disclosure",
-      "owner_lane": "B",
-      "source": "src/workspace/store.ts",
-      "description": "Presentation arrangement is legitimate but not disclosed via the kernel. Browser URLs/drafts retain provisional classifications.",
-      "spec_ref": "Finding 2",
-      "status": "open"
-    },
-    {
-      "id": "B-nara-decisions",
-      "owner_lane": "B/E",
-      "source": "src/nara/session.ts",
-      "description": "Typed Nara decision records are renderer-local, not kernel-recorded. Preserve decided_by attribution.",
-      "spec_ref": "Finding 3",
-      "status": "open"
-    },
-    {
       "id": "C-harness-disclosure",
       "owner_lane": "C",
       "source": "src/agency/AgentDetail.tsx",
-      "description": "Harness-native disclosure still designed but not joined through agency_read.",
+      "description": "Implemented: agency_read retrieves aikit.harness-disclosure/v1 and AgentDetail renders native profiles and layers. Current protocol contract checks pass; an independently replayed live harness-disclosure UI walk is still required before closing acceptance.",
       "spec_ref": "Finding 4",
       "status": "open"
     },
@@ -55,96 +15,40 @@
       "id": "C-owner-catalogue",
       "owner_lane": "C",
       "source": "kernel/src/composition.rs",
-      "description": "Owner IDs and fallback namespaces are a closed six-member list.",
+      "description": "Implemented: owner membership and canonical namespaces derive from native current-world positions. The recorded hosted CLI gate proves adopted catalogue \u2192 current-world \u2192 actual kernel service registration; current seventh-owner Settings/search contract checks pass. Native UI replay with an additional admitted owner remains unverified.",
       "spec_ref": "Finding 5",
-      "status": "open"
-    },
-    {
-      "id": "D-surface-catalogue",
-      "owner_lane": "D",
-      "source": "../../surfaces.json",
-      "description": "Desktop service registration does not consume the declared product catalogue.",
-      "spec_ref": "Finding 6",
-      "status": "open"
-    },
-    {
-      "id": "D-hosted-contributions",
-      "owner_lane": "D",
-      "source": "src/contributions/factory/",
-      "description": "Hard imports and closed surface kinds remain; native-source-contribution schema/registration absent.",
-      "spec_ref": "Finding 7",
-      "status": "open"
-    },
-    {
-      "id": "D-world-presentation",
-      "owner_lane": "D",
-      "source": "../../shared-field/presentation-schema-v1.json",
-      "description": "World presentation has no native oi validation/registration verb.",
-      "spec_ref": "Finding 8",
-      "status": "open"
-    },
-    {
-      "id": "C-capsule-paths",
-      "owner_lane": "C",
-      "source": "../../docs/PI-PACKAGE-SPEC.md",
-      "description": "Historical capsule links need canonical AIKit registry path audit.",
-      "spec_ref": "Finding 9",
       "status": "open"
     },
     {
       "id": "E-decision-substrate",
       "owner_lane": "E",
       "source": "kernel/src/lib.rs",
-      "description": "No typed Decide primitive, bounded authority pre-egress or decision-event family yet.",
+      "description": "Implemented: typed Decide, pre-egress bounded authority, decision receipts and declared decision sites. Five recorded kernel boundary tests and the real-bridge preflight/forged-permission refusal pass. Positive native-confirmed provider execution, receipt/cache replay and live UI acceptance remain unverified; no provider success is claimed.",
       "spec_ref": "Finding 10",
-      "status": "open"
-    },
-    {
-      "id": "A-kernel-starvation",
-      "owner_lane": "lead",
-      "source": "src-tauri/src/main.rs",
-      "description": "Global kernel apply mutex still serializes retained Settings/native owner reads. Caching reduced fanout; independent mutation latency remains a native verification obligation.",
-      "spec_ref": "Finding 11",
       "status": "open"
     },
     {
       "id": "B-dictation-endpoint",
       "owner_lane": "B/lead",
       "source": "src/dictation/store.ts",
-      "description": "Endpoint preference is browser-owned; reconcile authored local-dictation contract with declared native authority seam.",
-      "spec_ref": "02-ARCHITECTURE §6/§12; NARA-SPEECH-EXPERIENCE-V1 Dictation",
+      "description": "Implemented: dictation_read/configure persist endpoint stipulation under the native owner with revision checks; browser storage is no longer its authority. The recorded real-bridge lifecycle verifies persistence and refusal of remote targets. Native Settings edit/restart UI acceptance remains unverified.",
+      "spec_ref": "02-ARCHITECTURE \u00a76/\u00a712; NARA-SPEECH-EXPERIENCE-V1 Dictation",
       "status": "open"
     },
     {
       "id": "B-dictation-network",
       "owner_lane": "B/lead",
       "source": "src/dictation/client.ts",
-      "description": "Two existing direct loopback HTTP calls bypass typed KernelOp. No new egress site is allowed.",
-      "spec_ref": "02-ARCHITECTURE §12",
+      "description": "Implemented: renderer probe/transcription requests cross typed KernelOps; the authority guard passes and the real-bridge test refuses forged capture references and probes before microphone use. Successful real local-STT audio transcription and native microphone UI replay remain unverified.",
+      "spec_ref": "02-ARCHITECTURE \u00a712",
       "status": "open"
     },
     {
       "id": "B-source-reading-cache",
       "owner_lane": "B",
       "source": "src/files/FileSurface.tsx",
-      "description": "Complete last source reading is retained in localStorage; determine owner-retained resource path, never bless it as mere view coordinates.",
-      "spec_ref": "02-ARCHITECTURE §6",
-      "status": "open"
-    },
-    {
-      "id": "C-advertised-mode-cache",
-      "owner_lane": "C",
-      "source": "src/encounter/advertisedModes.ts",
-      "description": "Browser cache holds owner capability/mode data. Audit advisory/currentness boundary; no restored capability confers authority.",
-      "spec_ref": "02-ARCHITECTURE §6",
-      "status": "open"
-    },
-    {
-      "id": "B-settings-effect-events",
-      "owner_lane": "B/lead",
-      "source": "kernel/src/lib.rs",
-      "description": "config_desired_hold/discard and config_apply currently return empty kernel receipts after native changes. Strict seam walk retains required events; plan is read-only.",
-      "spec_ref": "02-ARCHITECTURE §5; canonical Lane A §5",
+      "description": "Implemented: FileSurface uses native retained-file readings; legacy browser copies can only be explicitly recovered as unverified drafts. The recorded real-bridge test verifies restart/missing-branch retention and fresh retrieval exclusion. Native editor recovery and legacy-copy UI walks remain unverified.",
+      "spec_ref": "02-ARCHITECTURE \u00a76",
       "status": "open"
     }
   ]

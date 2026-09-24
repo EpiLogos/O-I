@@ -93,7 +93,7 @@ function defaultLayoutFor(graphNodeId: string, canvasId: string): NodeLayout {
 }
 
 function matchesFilter<T>(value: T | null, filter?: { include?: T[]; exclude?: T[] }): boolean {
-  const included = !filter?.include?.length || (value !== null && filter.include.includes(value));
+  const included = filter?.include === undefined || (value !== null && filter.include.includes(value));
   return included && !(value !== null && filter?.exclude?.includes(value));
 }
 
@@ -170,6 +170,18 @@ export function createTechneTransport(bundle: TechneFieldBundle): TechneWorkspac
       });
     }
     return { nodes, diagnostics };
+  };
+
+  const focusedRelations = (graphNodeId: string) => {
+    const node = nodeById.get(graphNodeId);
+    if (!node) throw new Error(`graph node not found: ${graphNodeId}`);
+    const source = (node.isTemporal || node.place !== null) && node.sourceCoordinates.length === 1 ? node.sourceCoordinates[0] : graphNodeId;
+    const subjectEdges = bundle.relationships.filter(row => row.properties.native_relation_ref === source);
+    const subjectRelationRef = subjectEdges.length ? source : undefined;
+    const subjectGraphNodeId = subjectRelationRef ? graphNodeId : nodeById.has(source) ? source : graphNodeId;
+    const relationships = subjectRelationRef ? subjectEdges : bundle.relationships.filter(row => row.sourceGraphNodeId === subjectGraphNodeId || row.targetGraphNodeId === subjectGraphNodeId);
+    const contextualNodes = [...new Set(relationships.flatMap(row => [row.sourceGraphNodeId, row.targetGraphNodeId]))].filter(id => id !== subjectGraphNodeId).flatMap(id => nodeById.has(id) ? [nodeById.get(id)!] : []);
+    return {subjectGraphNodeId, subjectRelationRef, relationships, contextualNodes};
   };
 
   const temporalRelationships = () =>
@@ -324,12 +336,15 @@ export function createTechneTransport(bundle: TechneFieldBundle): TechneWorkspac
         matchesFilter(node.entityType, filters?.entityTypes)
         && matchesFilter(node.historicity, filters?.historicities)
         && matchesFilter(node.temporalRole, filters?.temporalRoles)
+        && (filters?.tags?.include === undefined || node.evidenceTags.some(tag => filters.tags!.include!.includes(tag)))
+        && !node.evidenceTags.some(tag => filters?.tags?.exclude?.includes(tag))
         && (!range || rangeIntersects(node, range)),
       );
+      const visible = new Set(filtered.map(record => record.node.graphNodeId));
       return {
         workspaceId: TECHNE_WORKSPACE_ID,
         nodes: filtered,
-        relationships: temporalRelationships(),
+        relationships: temporalRelationships().filter(row => visible.has(row.sourceGraphNodeId) && visible.has(row.targetGraphNodeId) && matchesFilter(row.relType, filters?.relationTypes)),
         lanes: [],
         diagnostics,
       };
@@ -337,52 +352,14 @@ export function createTechneTransport(bundle: TechneFieldBundle): TechneWorkspac
 
     async loadTimelineRelationField({ workspaceId, graphNodeId }) {
       assertWorkspace(workspaceId);
-      const relationships = bundle.relationships.filter(
-        (relationship) =>
-          relationship.sourceGraphNodeId === graphNodeId
-          || relationship.targetGraphNodeId === graphNodeId,
-      );
-      const contextualNodes = [
-        ...new Set(
-          relationships.flatMap((relationship) => [
-            relationship.sourceGraphNodeId,
-            relationship.targetGraphNodeId,
-          ]),
-        ),
-      ]
-        .filter((id) => id !== graphNodeId)
-        .flatMap((id) => {
-          const node = nodeById.get(id);
-          return node ? [node] : [];
-        });
-      return { subjectGraphNodeId: graphNodeId, relationships, contextualNodes };
+      return focusedRelations(graphNodeId);
     },
 
     async expandTimelineNode({ workspaceId, graphNodeId }): Promise<ExpandedTimelineNode> {
       assertWorkspace(workspaceId);
-      const subject = nodeById.get(graphNodeId);
-      if (!subject) {
-        throw new Error(`graph node not found: ${graphNodeId}`);
-      }
-      const edges = bundle.relationships.filter(
-        (relationship) =>
-          relationship.sourceGraphNodeId === graphNodeId
-          || relationship.targetGraphNodeId === graphNodeId,
-      );
-      const neighbours = [
-        ...new Set(
-          edges.flatMap((relationship) => [
-            relationship.sourceGraphNodeId,
-            relationship.targetGraphNodeId,
-          ]),
-        ),
-      ]
-        .filter((id) => id !== graphNodeId)
-        .flatMap((id) => {
-          const node = nodeById.get(id);
-          return node ? [node] : [];
-        });
-      return { subjectGraphNodeId: graphNodeId, subject, edges, neighbours };
+      const field = focusedRelations(graphNodeId);
+      const subject = nodeById.get(field.subjectGraphNodeId)!;
+      return {subjectGraphNodeId: field.subjectGraphNodeId, subject, edges: field.relationships, neighbours: field.contextualNodes};
     },
 
     async loadPalaceGraph({ workspaceId }) {

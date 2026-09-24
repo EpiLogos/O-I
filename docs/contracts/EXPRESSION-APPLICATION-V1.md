@@ -98,6 +98,22 @@ bound native subjects. EX1 supports an existing ordinary Expression file;
 creating/adopting authored source remains a separate owner operation. Save failure
 preserves the dirty draft and the owner's exact result.
 
+The desktop retains private working copies through `expression_recovery`, a
+bounded native store under `$OI_HOME/desktop/expression-recovery`. The hosted
+frame supplies no filesystem path; its host fixes the Expressions or Technè
+scope. Drafts and acknowledged native checkpoints have separate identities,
+compare-and-swap revisions and atomic durable writes. A stale writer is refused;
+storage limits refuse a write rather than evicting another live draft.
+
+After restart, a checkpoint may reopen its exact acknowledged configuration
+through `open` when that Expression is absent from the live owner. Unsaved local
+edits remain a separate draft, and interrupted operations remain available for
+inspection; recovery does not replay them. Existing live native work wins over
+an older checkpoint. These copies are neither Central files nor publication,
+and grant no authority over their bound subjects. Standalone browser artifacts
+retain their browser recovery path; native recovery failures never silently
+downgrade a desktop backup to browser-only storage.
+
 Representation bindings refer to existing `live`, `image`, `video`, `html`,
 `embed`, or `projection` representations. Recording a binding does not capture,
 embed, publish, upload, admit executable content or grant authority. EX5 supplies

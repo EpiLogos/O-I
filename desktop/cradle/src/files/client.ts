@@ -18,8 +18,8 @@ export async function readFile(transport:KernelTransportStatus,location:CentralL
 export async function readFileBytes(transport:KernelTransportStatus,location:CentralLocation):Promise<NativeFileBytes> {
   const result=await kernelOp(transport,{op:"file_bytes",location});
   if(result.error || result.outcome?.result!=="file_bytes")throw new Error(result.error??"Central did not return a material reading");
-  const {location:loc,revision,byte_len,mime_hint,content_base64}=result.outcome;
-  return {location:loc,revision,byte_len,mime_hint,content_base64};
+  const {location:loc,revision,byte_len,mime_hint,content_base64,source}=result.outcome;
+  return {location:loc,revision,byte_len,mime_hint,content_base64,source};
 }
 
 export type FileRequest={action:"write";expected_revision:string;content:string}|{action:"history";limit?:number;before?:number}|{action:"recovery_preview"|"restore";expected_revision:string;revision:string};
@@ -31,4 +31,19 @@ export async function fileOperation<T>(transport:KernelTransportStatus,location:
  const result=await kernelOp(transport,{op:"file_operation",location,request});
  if(result.error||result.outcome?.result!=="file_operation")throw new Error(result.error??"Central did not return a file operation");
  return result.outcome.data as T;
+}
+
+/** Native retained resources never grant write, history or restore authority. */
+export async function lastFileReading(transport:KernelTransportStatus,location:CentralLocation):Promise<import("../kernel/types").RetainedFileRecovery>{
+ const result=await kernelOp(transport,{op:"file_last_reading",location});
+ if(result.outcome?.result!=="file_last_reading")throw Error(result.error??"Native retained reading is unavailable");
+ return result.outcome.recovery;
+}
+
+/** Resolve an opaque native path reference in its owner; never parse it here. */
+export async function resolveFileLocation(transport:KernelTransportStatus,reference:string):Promise<CentralLocation>{
+ const result=await kernelOp(transport,{op:"file_resolve",reference});
+ if(result.error||result.outcome?.result!=="file_resolved")throw Error(result.error??"Central did not resolve this file");
+ if(result.outcome.location.ref!==reference)throw Error("Central redirected the file reference");
+ return result.outcome.location;
 }

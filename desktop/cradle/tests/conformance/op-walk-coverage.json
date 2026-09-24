@@ -5,7 +5,7 @@
     {
       "op": "a2a_exchange",
       "native_owner": "kernel/src/encounter.rs",
-      "spec_ref": "docs/cradle/02-ARCHITECTURE.md §5; docs/cradle/04-VERIFICATION.md; canonical plan Lane A §3",
+      "spec_ref": "docs/cradle/02-ARCHITECTURE.md \u00a75; docs/cradle/04-VERIFICATION.md; canonical plan Lane A \u00a73",
       "status": "unverified",
       "scenarios": [],
       "owner_lane": "A/native verification",
@@ -14,7 +14,7 @@
     {
       "op": "agency_read",
       "native_owner": "kernel/src/agency.rs",
-      "spec_ref": "docs/cradle/02-ARCHITECTURE.md §5; docs/cradle/04-VERIFICATION.md; canonical plan Lane A §3",
+      "spec_ref": "docs/cradle/02-ARCHITECTURE.md \u00a75; docs/cradle/04-VERIFICATION.md; canonical plan Lane A \u00a73",
       "status": "unverified",
       "scenarios": [],
       "owner_lane": "A/native verification",
@@ -23,7 +23,7 @@
     {
       "op": "agent_definition",
       "native_owner": "kernel/src/lib.rs",
-      "spec_ref": "docs/cradle/02-ARCHITECTURE.md §5; docs/cradle/04-VERIFICATION.md; canonical plan Lane A §3",
+      "spec_ref": "docs/cradle/02-ARCHITECTURE.md \u00a75; docs/cradle/04-VERIFICATION.md; canonical plan Lane A \u00a73",
       "status": "unverified",
       "scenarios": [],
       "owner_lane": "A/native verification",
@@ -32,7 +32,7 @@
     {
       "op": "being_encounter",
       "native_owner": "kernel/src/lib.rs",
-      "spec_ref": "docs/cradle/02-ARCHITECTURE.md §5; docs/cradle/04-VERIFICATION.md; canonical plan Lane A §3",
+      "spec_ref": "docs/cradle/02-ARCHITECTURE.md \u00a75; docs/cradle/04-VERIFICATION.md; canonical plan Lane A \u00a73",
       "status": "unverified",
       "scenarios": [],
       "owner_lane": "A/native verification",
@@ -41,7 +41,7 @@
     {
       "op": "central",
       "native_owner": "kernel/src/lib.rs",
-      "spec_ref": "docs/cradle/02-ARCHITECTURE.md §5; docs/cradle/04-VERIFICATION.md; canonical plan Lane A §3",
+      "spec_ref": "docs/cradle/02-ARCHITECTURE.md \u00a75; docs/cradle/04-VERIFICATION.md; canonical plan Lane A \u00a73",
       "status": "unverified",
       "scenarios": [],
       "owner_lane": "A/native verification",
@@ -50,7 +50,7 @@
     {
       "op": "chat_default_discard",
       "native_owner": "kernel/src/chat_defaults.rs",
-      "spec_ref": "docs/cradle/02-ARCHITECTURE.md §5; docs/cradle/04-VERIFICATION.md; canonical plan Lane A §3",
+      "spec_ref": "docs/cradle/02-ARCHITECTURE.md \u00a75; docs/cradle/04-VERIFICATION.md; canonical plan Lane A \u00a73",
       "status": "unverified",
       "scenarios": [],
       "owner_lane": "A/native verification",
@@ -59,7 +59,7 @@
     {
       "op": "chat_default_hold",
       "native_owner": "kernel/src/chat_defaults.rs",
-      "spec_ref": "docs/cradle/02-ARCHITECTURE.md §5; docs/cradle/04-VERIFICATION.md; canonical plan Lane A §3",
+      "spec_ref": "docs/cradle/02-ARCHITECTURE.md \u00a75; docs/cradle/04-VERIFICATION.md; canonical plan Lane A \u00a73",
       "status": "unverified",
       "scenarios": [],
       "owner_lane": "A/native verification",
@@ -68,7 +68,7 @@
     {
       "op": "chat_default_read",
       "native_owner": "kernel/src/chat_defaults.rs",
-      "spec_ref": "docs/cradle/02-ARCHITECTURE.md §5; docs/cradle/04-VERIFICATION.md; canonical plan Lane A §3",
+      "spec_ref": "docs/cradle/02-ARCHITECTURE.md \u00a75; docs/cradle/04-VERIFICATION.md; canonical plan Lane A \u00a73",
       "status": "unverified",
       "scenarios": [],
       "owner_lane": "A/native verification",
@@ -77,7 +77,7 @@
     {
       "op": "client_install",
       "native_owner": "kernel/src/lib.rs",
-      "spec_ref": "docs/cradle/02-ARCHITECTURE.md §5; docs/cradle/04-VERIFICATION.md; canonical plan Lane A §3",
+      "spec_ref": "docs/cradle/02-ARCHITECTURE.md \u00a75; docs/cradle/04-VERIFICATION.md; canonical plan Lane A \u00a73",
       "status": "unverified",
       "scenarios": [],
       "owner_lane": "A/native verification",
@@ -86,7 +86,7 @@
     {
       "op": "composition_read",
       "native_owner": "kernel/src/composition.rs",
-      "spec_ref": "docs/cradle/02-ARCHITECTURE.md §5; docs/cradle/04-VERIFICATION.md; canonical plan Lane A §3",
+      "spec_ref": "docs/cradle/02-ARCHITECTURE.md \u00a75; docs/cradle/04-VERIFICATION.md; canonical plan Lane A \u00a73",
       "status": "unverified",
       "scenarios": [],
       "owner_lane": "A/native verification",
@@ -95,7 +95,7 @@
     {
       "op": "config_apply",
       "native_owner": "kernel/src/configuration.rs",
-      "spec_ref": "docs/cradle/02-ARCHITECTURE.md §5; docs/cradle/04-VERIFICATION.md; canonical plan Lane A §3",
+      "spec_ref": "docs/cradle/02-ARCHITECTURE.md \u00a75; docs/cradle/04-VERIFICATION.md; canonical plan Lane A \u00a73",
       "status": "unverified",
       "scenarios": [],
       "owner_lane": "A/native verification",
@@ -104,7 +104,7 @@
     {
       "op": "config_desired_discard",
       "native_owner": "kernel/src/configuration.rs",
-      "spec_ref": "docs/cradle/02-ARCHITECTURE.md §5; docs/cradle/04-VERIFICATION.md; canonical plan Lane A §3",
+      "spec_ref": "docs/cradle/02-ARCHITECTURE.md \u00a75; docs/cradle/04-VERIFICATION.md; canonical plan Lane A \u00a73",
       "status": "unverified",
       "scenarios": [],
       "owner_lane": "A/native verification",
@@ -113,7 +113,7 @@
     {
       "op": "config_desired_hold",
       "native_owner": "kernel/src/configuration.rs",
-      "spec_ref": "docs/cradle/02-ARCHITECTURE.md §5; docs/cradle/04-VERIFICATION.md; canonical plan Lane A §3",
+      "spec_ref": "docs/cradle/02-ARCHITECTURE.md \u00a75; docs/cradle/04-VERIFICATION.md; canonical plan Lane A \u00a73",
       "status": "unverified",
       "scenarios": [],
       "owner_lane": "A/native verification",
@@ -122,7 +122,7 @@
     {
       "op": "config_diff",
       "native_owner": "kernel/src/configuration.rs",
-      "spec_ref": "docs/cradle/02-ARCHITECTURE.md §5; docs/cradle/04-VERIFICATION.md; canonical plan Lane A §3",
+      "spec_ref": "docs/cradle/02-ARCHITECTURE.md \u00a75; docs/cradle/04-VERIFICATION.md; canonical plan Lane A \u00a73",
       "status": "unverified",
       "scenarios": [],
       "owner_lane": "A/native verification",
@@ -131,7 +131,7 @@
     {
       "op": "config_plan",
       "native_owner": "kernel/src/configuration.rs",
-      "spec_ref": "docs/cradle/02-ARCHITECTURE.md §5; docs/cradle/04-VERIFICATION.md; canonical plan Lane A §3",
+      "spec_ref": "docs/cradle/02-ARCHITECTURE.md \u00a75; docs/cradle/04-VERIFICATION.md; canonical plan Lane A \u00a73",
       "status": "unverified",
       "scenarios": [],
       "owner_lane": "A/native verification",
@@ -140,7 +140,7 @@
     {
       "op": "config_receipts",
       "native_owner": "kernel/src/configuration.rs",
-      "spec_ref": "docs/cradle/02-ARCHITECTURE.md §5; docs/cradle/04-VERIFICATION.md; canonical plan Lane A §3",
+      "spec_ref": "docs/cradle/02-ARCHITECTURE.md \u00a75; docs/cradle/04-VERIFICATION.md; canonical plan Lane A \u00a73",
       "status": "unverified",
       "scenarios": [],
       "owner_lane": "A/native verification",
@@ -149,7 +149,7 @@
     {
       "op": "config_registry_read",
       "native_owner": "kernel/src/configuration.rs",
-      "spec_ref": "docs/cradle/02-ARCHITECTURE.md §5; docs/cradle/04-VERIFICATION.md; canonical plan Lane A §3",
+      "spec_ref": "docs/cradle/02-ARCHITECTURE.md \u00a75; docs/cradle/04-VERIFICATION.md; canonical plan Lane A \u00a73",
       "status": "unverified",
       "scenarios": [],
       "owner_lane": "A/native verification",
@@ -158,7 +158,7 @@
     {
       "op": "config_resolutions_read",
       "native_owner": "kernel/src/configuration.rs",
-      "spec_ref": "docs/cradle/02-ARCHITECTURE.md §5; docs/cradle/04-VERIFICATION.md; canonical plan Lane A §3",
+      "spec_ref": "docs/cradle/02-ARCHITECTURE.md \u00a75; docs/cradle/04-VERIFICATION.md; canonical plan Lane A \u00a73",
       "status": "unverified",
       "scenarios": [],
       "owner_lane": "A/native verification",
@@ -167,7 +167,7 @@
     {
       "op": "credential_discover",
       "native_owner": "kernel/src/credentials.rs",
-      "spec_ref": "docs/cradle/02-ARCHITECTURE.md §5; docs/cradle/04-VERIFICATION.md; canonical plan Lane A §3",
+      "spec_ref": "docs/cradle/02-ARCHITECTURE.md \u00a75; docs/cradle/04-VERIFICATION.md; canonical plan Lane A \u00a73",
       "status": "unverified",
       "scenarios": [],
       "owner_lane": "A/native verification",
@@ -176,7 +176,7 @@
     {
       "op": "credential_list",
       "native_owner": "kernel/src/credentials.rs",
-      "spec_ref": "docs/cradle/02-ARCHITECTURE.md §5; docs/cradle/04-VERIFICATION.md; canonical plan Lane A §3",
+      "spec_ref": "docs/cradle/02-ARCHITECTURE.md \u00a75; docs/cradle/04-VERIFICATION.md; canonical plan Lane A \u00a73",
       "status": "unverified",
       "scenarios": [],
       "owner_lane": "A/native verification",
@@ -185,7 +185,7 @@
     {
       "op": "credential_revoke",
       "native_owner": "kernel/src/credentials.rs",
-      "spec_ref": "docs/cradle/02-ARCHITECTURE.md §5; docs/cradle/04-VERIFICATION.md; canonical plan Lane A §3",
+      "spec_ref": "docs/cradle/02-ARCHITECTURE.md \u00a75; docs/cradle/04-VERIFICATION.md; canonical plan Lane A \u00a73",
       "status": "unverified",
       "scenarios": [],
       "owner_lane": "A/native verification",
@@ -194,7 +194,7 @@
     {
       "op": "credential_rotate",
       "native_owner": "kernel/src/credentials.rs",
-      "spec_ref": "docs/cradle/02-ARCHITECTURE.md §5; docs/cradle/04-VERIFICATION.md; canonical plan Lane A §3",
+      "spec_ref": "docs/cradle/02-ARCHITECTURE.md \u00a75; docs/cradle/04-VERIFICATION.md; canonical plan Lane A \u00a73",
       "status": "unverified",
       "scenarios": [],
       "owner_lane": "A/native verification",
@@ -203,7 +203,7 @@
     {
       "op": "credential_setup",
       "native_owner": "kernel/src/credentials.rs",
-      "spec_ref": "docs/cradle/02-ARCHITECTURE.md §5; docs/cradle/04-VERIFICATION.md; canonical plan Lane A §3",
+      "spec_ref": "docs/cradle/02-ARCHITECTURE.md \u00a75; docs/cradle/04-VERIFICATION.md; canonical plan Lane A \u00a73",
       "status": "unverified",
       "scenarios": [],
       "owner_lane": "A/native verification",
@@ -212,7 +212,7 @@
     {
       "op": "credential_verify",
       "native_owner": "kernel/src/credentials.rs",
-      "spec_ref": "docs/cradle/02-ARCHITECTURE.md §5; docs/cradle/04-VERIFICATION.md; canonical plan Lane A §3",
+      "spec_ref": "docs/cradle/02-ARCHITECTURE.md \u00a75; docs/cradle/04-VERIFICATION.md; canonical plan Lane A \u00a73",
       "status": "unverified",
       "scenarios": [],
       "owner_lane": "A/native verification",
@@ -221,7 +221,7 @@
     {
       "op": "day_read",
       "native_owner": "kernel/src/lib.rs",
-      "spec_ref": "docs/cradle/02-ARCHITECTURE.md §5; docs/cradle/04-VERIFICATION.md; canonical plan Lane A §3",
+      "spec_ref": "docs/cradle/02-ARCHITECTURE.md \u00a75; docs/cradle/04-VERIFICATION.md; canonical plan Lane A \u00a73",
       "status": "unverified",
       "scenarios": [],
       "owner_lane": "A/native verification",
@@ -230,16 +230,88 @@
     {
       "op": "day_source_open",
       "native_owner": "kernel/src/lib.rs",
-      "spec_ref": "docs/cradle/02-ARCHITECTURE.md §5; docs/cradle/04-VERIFICATION.md; canonical plan Lane A §3",
+      "spec_ref": "docs/cradle/02-ARCHITECTURE.md \u00a75; docs/cradle/04-VERIFICATION.md; canonical plan Lane A \u00a73",
       "status": "unverified",
       "scenarios": [],
       "owner_lane": "A/native verification",
       "reason": "No directly attributable executed native walk is recorded here for day_source_open; retain explicit operation-specific coverage debt until its owner supplies a receipt."
     },
     {
+      "op": "decide",
+      "native_owner": "kernel/src/decision.rs",
+      "spec_ref": "canonical conformance plan Lane E",
+      "status": "unverified",
+      "owner_lane": "E",
+      "reason": "Native boundary and client tests are recorded; native dialog and provider walk remain required.",
+      "scenarios": []
+    },
+    {
+      "op": "decision_episode_revoke",
+      "native_owner": "kernel/src/decision.rs",
+      "spec_ref": "canonical conformance plan Lane E",
+      "status": "unverified",
+      "owner_lane": "E",
+      "reason": "Native boundary and client tests are recorded; native dialog and provider walk remain required.",
+      "scenarios": []
+    },
+    {
+      "op": "decision_preflight",
+      "native_owner": "kernel/src/decision.rs",
+      "spec_ref": "canonical conformance plan Lane E",
+      "status": "unverified",
+      "owner_lane": "E",
+      "reason": "Native boundary and client tests are recorded; native dialog and provider walk remain required.",
+      "scenarios": []
+    },
+    {
+      "op": "decision_read",
+      "native_owner": "kernel/src/decision.rs",
+      "spec_ref": "canonical conformance plan Lane E",
+      "status": "unverified",
+      "owner_lane": "E",
+      "reason": "Native boundary and client tests are recorded; native dialog and provider walk remain required.",
+      "scenarios": []
+    },
+    {
+      "op": "dictation_configure",
+      "native_owner": "kernel/src/dictation.rs",
+      "spec_ref": "canonical conformance plan Lane B; authored native dictation stipulation",
+      "status": "unverified",
+      "owner_lane": "B/native verification",
+      "reason": "Implementation added; executed native native dictation stipulation evidence required before acceptance.",
+      "scenarios": []
+    },
+    {
+      "op": "dictation_probe",
+      "native_owner": "kernel/src/dictation.rs",
+      "spec_ref": "canonical conformance plan Lane B; authored local speech preflight",
+      "status": "unverified",
+      "owner_lane": "B/native verification",
+      "reason": "Implementation added; executed native local speech preflight evidence required before acceptance.",
+      "scenarios": []
+    },
+    {
+      "op": "dictation_read",
+      "native_owner": "kernel/src/dictation.rs",
+      "spec_ref": "canonical conformance plan Lane B; authored native dictation stipulation",
+      "status": "unverified",
+      "owner_lane": "B/native verification",
+      "reason": "Implementation added; executed native native dictation stipulation evidence required before acceptance.",
+      "scenarios": []
+    },
+    {
+      "op": "dictation_transcribe",
+      "native_owner": "kernel/src/dictation.rs",
+      "spec_ref": "canonical conformance plan Lane B; authored local speech recognition",
+      "status": "unverified",
+      "owner_lane": "B/native verification",
+      "reason": "Implementation added; executed native local speech recognition evidence required before acceptance.",
+      "scenarios": []
+    },
+    {
       "op": "encounter",
       "native_owner": "kernel/src/encounter.rs",
-      "spec_ref": "docs/cradle/02-ARCHITECTURE.md §5; docs/cradle/04-VERIFICATION.md; canonical plan Lane A §3",
+      "spec_ref": "docs/cradle/02-ARCHITECTURE.md \u00a75; docs/cradle/04-VERIFICATION.md; canonical plan Lane A \u00a73",
       "status": "referenced",
       "scenarios": [
         "walk/scenarios/task-basis.mjs"
@@ -250,7 +322,7 @@
     {
       "op": "encounter_join",
       "native_owner": "kernel/src/encounter.rs",
-      "spec_ref": "docs/cradle/02-ARCHITECTURE.md §5; docs/cradle/04-VERIFICATION.md; canonical plan Lane A §3",
+      "spec_ref": "docs/cradle/02-ARCHITECTURE.md \u00a75; docs/cradle/04-VERIFICATION.md; canonical plan Lane A \u00a73",
       "status": "unverified",
       "scenarios": [],
       "owner_lane": "A/native verification",
@@ -259,7 +331,7 @@
     {
       "op": "encounter_provision",
       "native_owner": "kernel/src/encounter.rs",
-      "spec_ref": "docs/cradle/02-ARCHITECTURE.md §5; docs/cradle/04-VERIFICATION.md; canonical plan Lane A §3",
+      "spec_ref": "docs/cradle/02-ARCHITECTURE.md \u00a75; docs/cradle/04-VERIFICATION.md; canonical plan Lane A \u00a73",
       "status": "unverified",
       "scenarios": [],
       "owner_lane": "A/native verification",
@@ -268,7 +340,7 @@
     {
       "op": "encounter_task_read",
       "native_owner": "kernel/src/encounter.rs",
-      "spec_ref": "docs/cradle/02-ARCHITECTURE.md §5; docs/cradle/04-VERIFICATION.md; canonical plan Lane A §3",
+      "spec_ref": "docs/cradle/02-ARCHITECTURE.md \u00a75; docs/cradle/04-VERIFICATION.md; canonical plan Lane A \u00a73",
       "status": "referenced",
       "scenarios": [
         "walk/scenarios/task-basis.mjs"
@@ -279,7 +351,7 @@
     {
       "op": "expression",
       "native_owner": "kernel/src/lib.rs",
-      "spec_ref": "docs/cradle/02-ARCHITECTURE.md §5; docs/cradle/04-VERIFICATION.md; canonical plan Lane A §3",
+      "spec_ref": "docs/cradle/02-ARCHITECTURE.md \u00a75; docs/cradle/04-VERIFICATION.md; canonical plan Lane A \u00a73",
       "status": "referenced",
       "scenarios": [
         "walk/scenarios/explore-sf1.mjs",
@@ -293,9 +365,29 @@
       "reason": "expression is directly named in these existing scenario sources; no run is claimed by this register."
     },
     {
+      "op": "expression_recovery",
+      "native_owner": "kernel/src/expression_recovery.rs",
+      "spec_ref": "docs/contracts/EXPRESSION-APPLICATION-V1.md: private working-copy persistence and explicit native reopening; docs/cradle/02-ARCHITECTURE.md \u00a75; canonical conformance plan Lane A \u00a73",
+      "status": "unverified",
+      "scenarios": [],
+      "owner_lane": "GPT/native recovery; lead/native desktop acceptance",
+      "reason": "The native private-storage module gate passed eight tests on disposable disk state. This proves the tested storage behavior only; actual desktop restart, hosted recovery and adoption acceptance remain unverified. Native process tests are retained separately and are not credited as desktop acceptance.",
+      "native_storage_evidence": {
+        "test_source": "kernel/src/expression_recovery.rs",
+        "test_filter": "expression_recovery::tests",
+        "result": "8 passed; 0 failed; 0 ignored",
+        "evidence_ref": "/Users/admin/Central/Work/O-I/ProjectCentral/agents/now/clearings/0b8155ede2d947c7620f76538aff94954092e9e9f156eb069867cd1d2126aab9/T/native-recovery-disk-tests.log",
+        "scope": "Private disk retention, CAS, identity, storage bounds, interrupted temporary cleanup and destination refusal; no desktop or hosted-frame acceptance."
+      },
+      "pending_native_tests": [
+        "tests/expression-recovery-native.test.mjs",
+        "tests/native-adoption-races-native.test.mjs"
+      ]
+    },
+    {
       "op": "expression_world",
       "native_owner": "kernel/src/lib.rs",
-      "spec_ref": "docs/cradle/02-ARCHITECTURE.md §5; docs/cradle/04-VERIFICATION.md; canonical plan Lane A §3",
+      "spec_ref": "docs/cradle/02-ARCHITECTURE.md \u00a75; docs/cradle/04-VERIFICATION.md; canonical plan Lane A \u00a73",
       "status": "unverified",
       "scenarios": [],
       "owner_lane": "A/native verification",
@@ -304,7 +396,7 @@
     {
       "op": "factory_attempt_read",
       "native_owner": "kernel/src/factory.rs",
-      "spec_ref": "docs/cradle/02-ARCHITECTURE.md §5; docs/cradle/04-VERIFICATION.md; canonical plan Lane A §3",
+      "spec_ref": "docs/cradle/02-ARCHITECTURE.md \u00a75; docs/cradle/04-VERIFICATION.md; canonical plan Lane A \u00a73",
       "status": "unverified",
       "scenarios": [],
       "owner_lane": "A/native verification",
@@ -313,7 +405,7 @@
     {
       "op": "factory_attempt_task_list_read",
       "native_owner": "kernel/src/factory.rs",
-      "spec_ref": "docs/cradle/02-ARCHITECTURE.md §5; docs/cradle/04-VERIFICATION.md; canonical plan Lane A §3",
+      "spec_ref": "docs/cradle/02-ARCHITECTURE.md \u00a75; docs/cradle/04-VERIFICATION.md; canonical plan Lane A \u00a73",
       "status": "unverified",
       "scenarios": [],
       "owner_lane": "A/native verification",
@@ -322,7 +414,7 @@
     {
       "op": "factory_attempt_task_read",
       "native_owner": "kernel/src/factory.rs",
-      "spec_ref": "docs/cradle/02-ARCHITECTURE.md §5; docs/cradle/04-VERIFICATION.md; canonical plan Lane A §3",
+      "spec_ref": "docs/cradle/02-ARCHITECTURE.md \u00a75; docs/cradle/04-VERIFICATION.md; canonical plan Lane A \u00a73",
       "status": "unverified",
       "scenarios": [],
       "owner_lane": "A/native verification",
@@ -331,7 +423,7 @@
     {
       "op": "factory_build_snapshot",
       "native_owner": "kernel/src/factory.rs",
-      "spec_ref": "docs/cradle/02-ARCHITECTURE.md §5; docs/cradle/04-VERIFICATION.md; canonical plan Lane A §3",
+      "spec_ref": "docs/cradle/02-ARCHITECTURE.md \u00a75; docs/cradle/04-VERIFICATION.md; canonical plan Lane A \u00a73",
       "status": "unverified",
       "scenarios": [],
       "owner_lane": "A/native verification",
@@ -340,7 +432,7 @@
     {
       "op": "factory_development_read",
       "native_owner": "kernel/src/factory.rs",
-      "spec_ref": "docs/cradle/02-ARCHITECTURE.md §5; docs/cradle/04-VERIFICATION.md; canonical plan Lane A §3",
+      "spec_ref": "docs/cradle/02-ARCHITECTURE.md \u00a75; docs/cradle/04-VERIFICATION.md; canonical plan Lane A \u00a73",
       "status": "unverified",
       "scenarios": [],
       "owner_lane": "A/native verification",
@@ -349,7 +441,7 @@
     {
       "op": "factory_owner",
       "native_owner": "kernel/src/factory.rs",
-      "spec_ref": "docs/cradle/02-ARCHITECTURE.md §5; docs/cradle/04-VERIFICATION.md; canonical plan Lane A §3",
+      "spec_ref": "docs/cradle/02-ARCHITECTURE.md \u00a75; docs/cradle/04-VERIFICATION.md; canonical plan Lane A \u00a73",
       "status": "unverified",
       "scenarios": [],
       "owner_lane": "A/native verification",
@@ -358,16 +450,25 @@
     {
       "op": "file_bytes",
       "native_owner": "kernel/src/files.rs",
-      "spec_ref": "docs/cradle/02-ARCHITECTURE.md §5; docs/cradle/04-VERIFICATION.md; canonical plan Lane A §3",
+      "spec_ref": "docs/cradle/02-ARCHITECTURE.md \u00a75; docs/cradle/04-VERIFICATION.md; canonical plan Lane A \u00a73",
       "status": "unverified",
       "scenarios": [],
       "owner_lane": "A/native verification",
       "reason": "No directly attributable executed native walk is recorded here for file_bytes; retain explicit operation-specific coverage debt until its owner supplies a receipt."
     },
     {
+      "op": "file_last_reading",
+      "native_owner": "kernel/src/retained_files.rs",
+      "spec_ref": "canonical conformance plan Lane B; authored native last-reading recovery",
+      "status": "unverified",
+      "owner_lane": "B/native verification",
+      "reason": "Implementation added; executed native native last-reading recovery evidence required before acceptance.",
+      "scenarios": []
+    },
+    {
       "op": "file_operation",
       "native_owner": "kernel/src/files.rs",
-      "spec_ref": "docs/cradle/02-ARCHITECTURE.md §5; docs/cradle/04-VERIFICATION.md; canonical plan Lane A §3",
+      "spec_ref": "docs/cradle/02-ARCHITECTURE.md \u00a75; docs/cradle/04-VERIFICATION.md; canonical plan Lane A \u00a73",
       "status": "unverified",
       "scenarios": [],
       "owner_lane": "A/native verification",
@@ -376,7 +477,7 @@
     {
       "op": "file_read",
       "native_owner": "kernel/src/files.rs",
-      "spec_ref": "docs/cradle/02-ARCHITECTURE.md §5; docs/cradle/04-VERIFICATION.md; canonical plan Lane A §3",
+      "spec_ref": "docs/cradle/02-ARCHITECTURE.md \u00a75; docs/cradle/04-VERIFICATION.md; canonical plan Lane A \u00a73",
       "status": "referenced",
       "scenarios": [
         "walk/scenarios/corpus-return-of-zero.mjs"
@@ -387,7 +488,7 @@
     {
       "op": "files_list",
       "native_owner": "kernel/src/files.rs",
-      "spec_ref": "docs/cradle/02-ARCHITECTURE.md §5; docs/cradle/04-VERIFICATION.md; canonical plan Lane A §3",
+      "spec_ref": "docs/cradle/02-ARCHITECTURE.md \u00a75; docs/cradle/04-VERIFICATION.md; canonical plan Lane A \u00a73",
       "status": "referenced",
       "scenarios": [
         "walk/scenarios/corpus-return-of-zero.mjs",
@@ -399,16 +500,34 @@
     {
       "op": "flow_changed_since",
       "native_owner": "kernel/src/lib.rs",
-      "spec_ref": "docs/cradle/02-ARCHITECTURE.md §5; docs/cradle/04-VERIFICATION.md; canonical plan Lane A §3",
+      "spec_ref": "docs/cradle/02-ARCHITECTURE.md \u00a75; docs/cradle/04-VERIFICATION.md; canonical plan Lane A \u00a73",
       "status": "unverified",
       "scenarios": [],
       "owner_lane": "A/native verification",
       "reason": "No directly attributable executed native walk is recorded here for flow_changed_since; retain explicit operation-specific coverage debt until its owner supplies a receipt."
     },
     {
+      "op": "git_diff_read",
+      "native_owner": "kernel/src/git.rs",
+      "spec_ref": "cradle-ui-research-video-computer-diff-2026-09-23-1028.md \u00a73",
+      "status": "unverified",
+      "scenarios": [],
+      "owner_lane": "lead",
+      "reason": "real GitState patch\u2192unified/split object page; actual native desktop walk pending. Central real-repository tests passed."
+    },
+    {
+      "op": "git_repository_read",
+      "native_owner": "kernel/src/git.rs",
+      "spec_ref": "cradle-ui-research-video-computer-diff-2026-09-23-1028.md \u00a73",
+      "status": "unverified",
+      "scenarios": [],
+      "owner_lane": "lead",
+      "reason": "Context native project\u2192GitState census; actual native desktop walk pending. Central real-repository tests passed."
+    },
+    {
       "op": "graph",
       "native_owner": "kernel/src/lib.rs",
-      "spec_ref": "docs/cradle/02-ARCHITECTURE.md §5; docs/cradle/04-VERIFICATION.md; canonical plan Lane A §3",
+      "spec_ref": "docs/cradle/02-ARCHITECTURE.md \u00a75; docs/cradle/04-VERIFICATION.md; canonical plan Lane A \u00a73",
       "status": "referenced",
       "scenarios": [
         "walk/scenarios/shared-field-hosted.mjs"
@@ -419,7 +538,7 @@
     {
       "op": "ground",
       "native_owner": "kernel/src/lib.rs",
-      "spec_ref": "docs/cradle/02-ARCHITECTURE.md §5; docs/cradle/04-VERIFICATION.md; canonical plan Lane A §3",
+      "spec_ref": "docs/cradle/02-ARCHITECTURE.md \u00a75; docs/cradle/04-VERIFICATION.md; canonical plan Lane A \u00a73",
       "status": "unverified",
       "scenarios": [],
       "owner_lane": "A/native verification",
@@ -428,7 +547,7 @@
     {
       "op": "harness_auth_describe",
       "native_owner": "kernel/src/lib.rs",
-      "spec_ref": "docs/cradle/02-ARCHITECTURE.md §5; docs/cradle/04-VERIFICATION.md; canonical plan Lane A §3",
+      "spec_ref": "docs/cradle/02-ARCHITECTURE.md \u00a75; docs/cradle/04-VERIFICATION.md; canonical plan Lane A \u00a73",
       "status": "unverified",
       "scenarios": [],
       "owner_lane": "A/native verification",
@@ -437,7 +556,7 @@
     {
       "op": "harness_status",
       "native_owner": "kernel/src/lib.rs",
-      "spec_ref": "docs/cradle/02-ARCHITECTURE.md §5; docs/cradle/04-VERIFICATION.md; canonical plan Lane A §3",
+      "spec_ref": "docs/cradle/02-ARCHITECTURE.md \u00a75; docs/cradle/04-VERIFICATION.md; canonical plan Lane A \u00a73",
       "status": "unverified",
       "scenarios": [],
       "owner_lane": "A/native verification",
@@ -446,7 +565,7 @@
     {
       "op": "inhabitation_read",
       "native_owner": "kernel/src/lib.rs",
-      "spec_ref": "docs/cradle/02-ARCHITECTURE.md §5; docs/cradle/04-VERIFICATION.md; canonical plan Lane A §3",
+      "spec_ref": "docs/cradle/02-ARCHITECTURE.md \u00a75; docs/cradle/04-VERIFICATION.md; canonical plan Lane A \u00a73",
       "status": "unverified",
       "scenarios": [],
       "owner_lane": "A/native verification",
@@ -455,7 +574,7 @@
     {
       "op": "instance_commission",
       "native_owner": "kernel/src/lib.rs",
-      "spec_ref": "docs/cradle/02-ARCHITECTURE.md §5; docs/cradle/04-VERIFICATION.md; canonical plan Lane A §3",
+      "spec_ref": "docs/cradle/02-ARCHITECTURE.md \u00a75; docs/cradle/04-VERIFICATION.md; canonical plan Lane A \u00a73",
       "status": "unverified",
       "scenarios": [],
       "owner_lane": "A/native verification",
@@ -464,7 +583,7 @@
     {
       "op": "invoke_action",
       "native_owner": "kernel/src/lib.rs",
-      "spec_ref": "docs/cradle/02-ARCHITECTURE.md §5; docs/cradle/04-VERIFICATION.md; canonical plan Lane A §3",
+      "spec_ref": "docs/cradle/02-ARCHITECTURE.md \u00a75; docs/cradle/04-VERIFICATION.md; canonical plan Lane A \u00a73",
       "status": "unverified",
       "scenarios": [],
       "owner_lane": "A/native verification",
@@ -473,7 +592,7 @@
     {
       "op": "knowledge",
       "native_owner": "kernel/src/lib.rs",
-      "spec_ref": "docs/cradle/02-ARCHITECTURE.md §5; docs/cradle/04-VERIFICATION.md; canonical plan Lane A §3",
+      "spec_ref": "docs/cradle/02-ARCHITECTURE.md \u00a75; docs/cradle/04-VERIFICATION.md; canonical plan Lane A \u00a73",
       "status": "unverified",
       "scenarios": [],
       "owner_lane": "A/native verification",
@@ -482,7 +601,7 @@
     {
       "op": "material_read",
       "native_owner": "kernel/src/lib.rs",
-      "spec_ref": "docs/cradle/02-ARCHITECTURE.md §5; docs/cradle/04-VERIFICATION.md; canonical plan Lane A §3",
+      "spec_ref": "docs/cradle/02-ARCHITECTURE.md \u00a75; docs/cradle/04-VERIFICATION.md; canonical plan Lane A \u00a73",
       "status": "unverified",
       "scenarios": [],
       "owner_lane": "A/native verification",
@@ -491,16 +610,34 @@
     {
       "op": "model_catalogue",
       "native_owner": "kernel/src/lib.rs",
-      "spec_ref": "docs/cradle/02-ARCHITECTURE.md §5; docs/cradle/04-VERIFICATION.md; canonical plan Lane A §3",
+      "spec_ref": "docs/cradle/02-ARCHITECTURE.md \u00a75; docs/cradle/04-VERIFICATION.md; canonical plan Lane A \u00a73",
       "status": "unverified",
       "scenarios": [],
       "owner_lane": "A/native verification",
       "reason": "No directly attributable executed native walk is recorded here for model_catalogue; retain explicit operation-specific coverage debt until its owner supplies a receipt."
     },
     {
+      "op": "model_roster",
+      "native_owner": "kernel/src/agency.rs",
+      "spec_ref": "canonical plan Lane C \u00a74; ai-kit model_harness_binding/rank_model_roster",
+      "status": "unverified",
+      "scenarios": [],
+      "owner_lane": "C",
+      "reason": "Native ranked roster read added; candidate build and real native no-inference replay still required."
+    },
+    {
+      "op": "nara_decision_record",
+      "native_owner": "kernel/src/presentation.rs",
+      "spec_ref": "canonical conformance plan Lane B",
+      "status": "unverified",
+      "owner_lane": "B",
+      "reason": "Real kernel/store tests and strict native protocol walk; execution evidence required before acceptance.",
+      "scenarios": []
+    },
+    {
       "op": "native_expression",
       "native_owner": "kernel/src/lib.rs",
-      "spec_ref": "docs/cradle/02-ARCHITECTURE.md §5; docs/cradle/04-VERIFICATION.md; canonical plan Lane A §3",
+      "spec_ref": "docs/cradle/02-ARCHITECTURE.md \u00a75; docs/cradle/04-VERIFICATION.md; canonical plan Lane A \u00a73",
       "status": "unverified",
       "scenarios": [],
       "owner_lane": "A/native verification",
@@ -509,7 +646,7 @@
     {
       "op": "now",
       "native_owner": "kernel/src/lib.rs",
-      "spec_ref": "docs/cradle/02-ARCHITECTURE.md §5; docs/cradle/04-VERIFICATION.md; canonical plan Lane A §3",
+      "spec_ref": "docs/cradle/02-ARCHITECTURE.md \u00a75; docs/cradle/04-VERIFICATION.md; canonical plan Lane A \u00a73",
       "status": "referenced",
       "scenarios": [
         "walk/scenarios/now-relations.mjs"
@@ -518,9 +655,27 @@
       "reason": "now is directly named in these existing scenario sources; no run is claimed by this register."
     },
     {
+      "op": "presentation_observe",
+      "native_owner": "kernel/src/presentation.rs",
+      "spec_ref": "canonical conformance plan Lane B",
+      "status": "unverified",
+      "owner_lane": "B",
+      "reason": "Real kernel/store tests and strict native protocol walk; execution evidence required before acceptance.",
+      "scenarios": []
+    },
+    {
+      "op": "presentation_read",
+      "native_owner": "kernel/src/presentation.rs",
+      "spec_ref": "canonical conformance plan Lane B",
+      "status": "unverified",
+      "owner_lane": "B",
+      "reason": "Real kernel/store tests and strict native protocol walk; execution evidence required before acceptance.",
+      "scenarios": []
+    },
+    {
       "op": "product_action_run",
       "native_owner": "kernel/src/lib.rs",
-      "spec_ref": "docs/cradle/02-ARCHITECTURE.md §5; docs/cradle/04-VERIFICATION.md; canonical plan Lane A §3",
+      "spec_ref": "docs/cradle/02-ARCHITECTURE.md \u00a75; docs/cradle/04-VERIFICATION.md; canonical plan Lane A \u00a73",
       "status": "unverified",
       "scenarios": [],
       "owner_lane": "A/native verification",
@@ -529,7 +684,7 @@
     {
       "op": "profile_create",
       "native_owner": "kernel/src/configuration.rs",
-      "spec_ref": "docs/cradle/02-ARCHITECTURE.md §5; docs/cradle/04-VERIFICATION.md; canonical plan Lane A §3",
+      "spec_ref": "docs/cradle/02-ARCHITECTURE.md \u00a75; docs/cradle/04-VERIFICATION.md; canonical plan Lane A \u00a73",
       "status": "unverified",
       "scenarios": [],
       "owner_lane": "A/native verification",
@@ -538,7 +693,7 @@
     {
       "op": "profile_edit",
       "native_owner": "kernel/src/configuration.rs",
-      "spec_ref": "docs/cradle/02-ARCHITECTURE.md §5; docs/cradle/04-VERIFICATION.md; canonical plan Lane A §3",
+      "spec_ref": "docs/cradle/02-ARCHITECTURE.md \u00a75; docs/cradle/04-VERIFICATION.md; canonical plan Lane A \u00a73",
       "status": "unverified",
       "scenarios": [],
       "owner_lane": "A/native verification",
@@ -547,7 +702,7 @@
     {
       "op": "profile_list",
       "native_owner": "kernel/src/configuration.rs",
-      "spec_ref": "docs/cradle/02-ARCHITECTURE.md §5; docs/cradle/04-VERIFICATION.md; canonical plan Lane A §3",
+      "spec_ref": "docs/cradle/02-ARCHITECTURE.md \u00a75; docs/cradle/04-VERIFICATION.md; canonical plan Lane A \u00a73",
       "status": "unverified",
       "scenarios": [],
       "owner_lane": "A/native verification",
@@ -556,7 +711,7 @@
     {
       "op": "profile_read",
       "native_owner": "kernel/src/configuration.rs",
-      "spec_ref": "docs/cradle/02-ARCHITECTURE.md §5; docs/cradle/04-VERIFICATION.md; canonical plan Lane A §3",
+      "spec_ref": "docs/cradle/02-ARCHITECTURE.md \u00a75; docs/cradle/04-VERIFICATION.md; canonical plan Lane A \u00a73",
       "status": "unverified",
       "scenarios": [],
       "owner_lane": "A/native verification",
@@ -565,7 +720,7 @@
     {
       "op": "profile_use_apply",
       "native_owner": "kernel/src/configuration.rs",
-      "spec_ref": "docs/cradle/02-ARCHITECTURE.md §5; docs/cradle/04-VERIFICATION.md; canonical plan Lane A §3",
+      "spec_ref": "docs/cradle/02-ARCHITECTURE.md \u00a75; docs/cradle/04-VERIFICATION.md; canonical plan Lane A \u00a73",
       "status": "unverified",
       "scenarios": [],
       "owner_lane": "A/native verification",
@@ -574,7 +729,7 @@
     {
       "op": "profile_use_plan",
       "native_owner": "kernel/src/configuration.rs",
-      "spec_ref": "docs/cradle/02-ARCHITECTURE.md §5; docs/cradle/04-VERIFICATION.md; canonical plan Lane A §3",
+      "spec_ref": "docs/cradle/02-ARCHITECTURE.md \u00a75; docs/cradle/04-VERIFICATION.md; canonical plan Lane A \u00a73",
       "status": "unverified",
       "scenarios": [],
       "owner_lane": "A/native verification",
@@ -583,7 +738,7 @@
     {
       "op": "project_browse",
       "native_owner": "kernel/src/lib.rs",
-      "spec_ref": "docs/cradle/02-ARCHITECTURE.md §5; docs/cradle/04-VERIFICATION.md; canonical plan Lane A §3",
+      "spec_ref": "docs/cradle/02-ARCHITECTURE.md \u00a75; docs/cradle/04-VERIFICATION.md; canonical plan Lane A \u00a73",
       "status": "unverified",
       "scenarios": [],
       "owner_lane": "A/native verification",
@@ -592,7 +747,7 @@
     {
       "op": "project_read",
       "native_owner": "kernel/src/lib.rs",
-      "spec_ref": "docs/cradle/02-ARCHITECTURE.md §5; docs/cradle/04-VERIFICATION.md; canonical plan Lane A §3",
+      "spec_ref": "docs/cradle/02-ARCHITECTURE.md \u00a75; docs/cradle/04-VERIFICATION.md; canonical plan Lane A \u00a73",
       "status": "unverified",
       "scenarios": [],
       "owner_lane": "A/native verification",
@@ -601,16 +756,34 @@
     {
       "op": "receiving",
       "native_owner": "kernel/src/lib.rs",
-      "spec_ref": "docs/cradle/02-ARCHITECTURE.md §5; docs/cradle/04-VERIFICATION.md; canonical plan Lane A §3",
+      "spec_ref": "docs/cradle/02-ARCHITECTURE.md \u00a75; docs/cradle/04-VERIFICATION.md; canonical plan Lane A \u00a73",
       "status": "unverified",
       "scenarios": [],
       "owner_lane": "A/native verification",
       "reason": "No directly attributable executed native walk is recorded here for receiving; retain explicit operation-specific coverage debt until its owner supplies a receipt."
     },
     {
+      "op": "recording_capability_read",
+      "native_owner": "kernel/src/working_surface.rs",
+      "spec_ref": "canonical conformance plan Lane B; authored native recording availability",
+      "status": "unverified",
+      "owner_lane": "B/native verification",
+      "reason": "Implementation added; executed native native recording availability evidence required before acceptance.",
+      "scenarios": []
+    },
+    {
+      "op": "routine",
+      "native_owner": "kernel/src/routine.rs",
+      "spec_ref": "automations-routine-spec-2026-09-23-0951.md; automations-routine-addendum-grok-hermes-2026-09-23-1028.md",
+      "status": "unverified",
+      "scenarios": [],
+      "owner_lane": "GPT/routines",
+      "reason": "Native list/show/history and run/disable handler implemented; executed native app walk not yet recorded."
+    },
+    {
       "op": "settings_reveal",
       "native_owner": "kernel/src/lib.rs",
-      "spec_ref": "docs/cradle/02-ARCHITECTURE.md §5; docs/cradle/04-VERIFICATION.md; canonical plan Lane A §3",
+      "spec_ref": "docs/cradle/02-ARCHITECTURE.md \u00a75; docs/cradle/04-VERIFICATION.md; canonical plan Lane A \u00a73",
       "status": "unverified",
       "scenarios": [],
       "owner_lane": "A/native verification",
@@ -619,7 +792,7 @@
     {
       "op": "setup",
       "native_owner": "kernel/src/lib.rs",
-      "spec_ref": "docs/cradle/02-ARCHITECTURE.md §5; docs/cradle/04-VERIFICATION.md; canonical plan Lane A §3",
+      "spec_ref": "docs/cradle/02-ARCHITECTURE.md \u00a75; docs/cradle/04-VERIFICATION.md; canonical plan Lane A \u00a73",
       "status": "unverified",
       "scenarios": [],
       "owner_lane": "A/native verification",
@@ -628,7 +801,7 @@
     {
       "op": "shared_field",
       "native_owner": "kernel/src/lib.rs",
-      "spec_ref": "docs/cradle/02-ARCHITECTURE.md §5; docs/cradle/04-VERIFICATION.md; canonical plan Lane A §3",
+      "spec_ref": "docs/cradle/02-ARCHITECTURE.md \u00a75; docs/cradle/04-VERIFICATION.md; canonical plan Lane A \u00a73",
       "status": "referenced",
       "scenarios": [
         "walk/scenarios/contribution-return-sf4.mjs",
@@ -642,7 +815,7 @@
     {
       "op": "source_edit",
       "native_owner": "kernel/src/lib.rs",
-      "spec_ref": "docs/cradle/02-ARCHITECTURE.md §5; docs/cradle/04-VERIFICATION.md; canonical plan Lane A §3",
+      "spec_ref": "docs/cradle/02-ARCHITECTURE.md \u00a75; docs/cradle/04-VERIFICATION.md; canonical plan Lane A \u00a73",
       "status": "unverified",
       "scenarios": [],
       "owner_lane": "A/native verification",
@@ -651,7 +824,7 @@
     {
       "op": "source_history",
       "native_owner": "kernel/src/lib.rs",
-      "spec_ref": "docs/cradle/02-ARCHITECTURE.md §5; docs/cradle/04-VERIFICATION.md; canonical plan Lane A §3",
+      "spec_ref": "docs/cradle/02-ARCHITECTURE.md \u00a75; docs/cradle/04-VERIFICATION.md; canonical plan Lane A \u00a73",
       "status": "unverified",
       "scenarios": [],
       "owner_lane": "A/native verification",
@@ -660,7 +833,7 @@
     {
       "op": "source_open",
       "native_owner": "kernel/src/lib.rs",
-      "spec_ref": "docs/cradle/02-ARCHITECTURE.md §5; docs/cradle/04-VERIFICATION.md; canonical plan Lane A §3",
+      "spec_ref": "docs/cradle/02-ARCHITECTURE.md \u00a75; docs/cradle/04-VERIFICATION.md; canonical plan Lane A \u00a73",
       "status": "unverified",
       "scenarios": [],
       "owner_lane": "A/native verification",
@@ -669,7 +842,7 @@
     {
       "op": "source_reread",
       "native_owner": "kernel/src/lib.rs",
-      "spec_ref": "docs/cradle/02-ARCHITECTURE.md §5; docs/cradle/04-VERIFICATION.md; canonical plan Lane A §3",
+      "spec_ref": "docs/cradle/02-ARCHITECTURE.md \u00a75; docs/cradle/04-VERIFICATION.md; canonical plan Lane A \u00a73",
       "status": "unverified",
       "scenarios": [],
       "owner_lane": "A/native verification",
@@ -678,7 +851,7 @@
     {
       "op": "source_restore",
       "native_owner": "kernel/src/lib.rs",
-      "spec_ref": "docs/cradle/02-ARCHITECTURE.md §5; docs/cradle/04-VERIFICATION.md; canonical plan Lane A §3",
+      "spec_ref": "docs/cradle/02-ARCHITECTURE.md \u00a75; docs/cradle/04-VERIFICATION.md; canonical plan Lane A \u00a73",
       "status": "unverified",
       "scenarios": [],
       "owner_lane": "A/native verification",
@@ -687,7 +860,7 @@
     {
       "op": "source_save",
       "native_owner": "kernel/src/lib.rs",
-      "spec_ref": "docs/cradle/02-ARCHITECTURE.md §5; docs/cradle/04-VERIFICATION.md; canonical plan Lane A §3",
+      "spec_ref": "docs/cradle/02-ARCHITECTURE.md \u00a75; docs/cradle/04-VERIFICATION.md; canonical plan Lane A \u00a73",
       "status": "unverified",
       "scenarios": [],
       "owner_lane": "A/native verification",
@@ -696,7 +869,7 @@
     {
       "op": "sources_list",
       "native_owner": "kernel/src/lib.rs",
-      "spec_ref": "docs/cradle/02-ARCHITECTURE.md §5; docs/cradle/04-VERIFICATION.md; canonical plan Lane A §3",
+      "spec_ref": "docs/cradle/02-ARCHITECTURE.md \u00a75; docs/cradle/04-VERIFICATION.md; canonical plan Lane A \u00a73",
       "status": "unverified",
       "scenarios": [],
       "owner_lane": "A/native verification",
@@ -705,7 +878,7 @@
     {
       "op": "state",
       "native_owner": "kernel/src/lib.rs",
-      "spec_ref": "docs/cradle/02-ARCHITECTURE.md §5; docs/cradle/04-VERIFICATION.md; canonical plan Lane A §3",
+      "spec_ref": "docs/cradle/02-ARCHITECTURE.md \u00a75; docs/cradle/04-VERIFICATION.md; canonical plan Lane A \u00a73",
       "status": "unverified",
       "scenarios": [],
       "owner_lane": "A/native verification",
@@ -714,7 +887,7 @@
     {
       "op": "surface_close",
       "native_owner": "kernel/src/lib.rs",
-      "spec_ref": "docs/cradle/02-ARCHITECTURE.md §5; docs/cradle/04-VERIFICATION.md; canonical plan Lane A §3",
+      "spec_ref": "docs/cradle/02-ARCHITECTURE.md \u00a75; docs/cradle/04-VERIFICATION.md; canonical plan Lane A \u00a73",
       "status": "unverified",
       "scenarios": [],
       "owner_lane": "A/native verification",
@@ -723,7 +896,7 @@
     {
       "op": "surface_focus",
       "native_owner": "kernel/src/lib.rs",
-      "spec_ref": "docs/cradle/02-ARCHITECTURE.md §5; docs/cradle/04-VERIFICATION.md; canonical plan Lane A §3",
+      "spec_ref": "docs/cradle/02-ARCHITECTURE.md \u00a75; docs/cradle/04-VERIFICATION.md; canonical plan Lane A \u00a73",
       "status": "unverified",
       "scenarios": [],
       "owner_lane": "A/native verification",
@@ -732,7 +905,7 @@
     {
       "op": "surface_open",
       "native_owner": "kernel/src/lib.rs",
-      "spec_ref": "docs/cradle/02-ARCHITECTURE.md §5; docs/cradle/04-VERIFICATION.md; canonical plan Lane A §3",
+      "spec_ref": "docs/cradle/02-ARCHITECTURE.md \u00a75; docs/cradle/04-VERIFICATION.md; canonical plan Lane A \u00a73",
       "status": "referenced",
       "scenarios": [
         "walk/scenarios/nara-speech.mjs"
@@ -743,16 +916,52 @@
     {
       "op": "system_composition_read",
       "native_owner": "kernel/src/system_composition.rs",
-      "spec_ref": "docs/cradle/02-ARCHITECTURE.md §5; docs/cradle/04-VERIFICATION.md; canonical plan Lane A §3",
+      "spec_ref": "docs/cradle/02-ARCHITECTURE.md \u00a75; docs/cradle/04-VERIFICATION.md; canonical plan Lane A \u00a73",
       "status": "unverified",
       "scenarios": [],
       "owner_lane": "A/native verification",
       "reason": "No directly attributable executed native walk is recorded here for system_composition_read; retain explicit operation-specific coverage debt until its owner supplies a receipt."
     },
     {
+      "op": "theme_apply",
+      "native_owner": "kernel/src/presentation.rs",
+      "spec_ref": "canonical conformance plan Lane B",
+      "status": "unverified",
+      "owner_lane": "B",
+      "reason": "Real kernel/store tests and strict native protocol walk; execution evidence required before acceptance.",
+      "scenarios": []
+    },
+    {
+      "op": "theme_import",
+      "native_owner": "kernel/src/presentation.rs",
+      "spec_ref": "canonical conformance plan Lane B",
+      "status": "unverified",
+      "owner_lane": "B",
+      "reason": "Real kernel/store tests and strict native protocol walk; execution evidence required before acceptance.",
+      "scenarios": []
+    },
+    {
+      "op": "theme_remove",
+      "native_owner": "kernel/src/presentation.rs",
+      "spec_ref": "canonical conformance plan Lane B",
+      "status": "unverified",
+      "owner_lane": "B",
+      "reason": "Real kernel/store tests and strict native protocol walk; execution evidence required before acceptance.",
+      "scenarios": []
+    },
+    {
+      "op": "theme_revert",
+      "native_owner": "kernel/src/presentation.rs",
+      "spec_ref": "canonical conformance plan Lane B",
+      "status": "unverified",
+      "owner_lane": "B",
+      "reason": "Real kernel/store tests and strict native protocol walk; execution evidence required before acceptance.",
+      "scenarios": []
+    },
+    {
       "op": "wiki_projection_read",
       "native_owner": "kernel/src/lib.rs",
-      "spec_ref": "docs/cradle/02-ARCHITECTURE.md §5; docs/cradle/04-VERIFICATION.md; canonical plan Lane A §3",
+      "spec_ref": "docs/cradle/02-ARCHITECTURE.md \u00a75; docs/cradle/04-VERIFICATION.md; canonical plan Lane A \u00a73",
       "status": "unverified",
       "scenarios": [],
       "owner_lane": "A/native verification",
@@ -761,7 +970,7 @@
     {
       "op": "wiki_projection_sources",
       "native_owner": "kernel/src/lib.rs",
-      "spec_ref": "docs/cradle/02-ARCHITECTURE.md §5; docs/cradle/04-VERIFICATION.md; canonical plan Lane A §3",
+      "spec_ref": "docs/cradle/02-ARCHITECTURE.md \u00a75; docs/cradle/04-VERIFICATION.md; canonical plan Lane A \u00a73",
       "status": "unverified",
       "scenarios": [],
       "owner_lane": "A/native verification",
@@ -770,16 +979,34 @@
     {
       "op": "workcell_status_read",
       "native_owner": "kernel/src/lib.rs",
-      "spec_ref": "docs/cradle/02-ARCHITECTURE.md §5; docs/cradle/04-VERIFICATION.md; canonical plan Lane A §3",
+      "spec_ref": "docs/cradle/02-ARCHITECTURE.md \u00a75; docs/cradle/04-VERIFICATION.md; canonical plan Lane A \u00a73",
       "status": "unverified",
       "scenarios": [],
       "owner_lane": "A/native verification",
       "reason": "No directly attributable executed native walk is recorded here for workcell_status_read; retain explicit operation-specific coverage debt until its owner supplies a receipt."
     },
     {
+      "op": "working_surface_attachment",
+      "native_owner": "kernel/src/working_surface.rs",
+      "spec_ref": "canonical conformance plan Lane B; authored native terminal attachment",
+      "status": "unverified",
+      "owner_lane": "B/native verification",
+      "reason": "Implementation added; executed native native terminal attachment evidence required before acceptance.",
+      "scenarios": []
+    },
+    {
+      "op": "working_surface_read",
+      "native_owner": "kernel/src/working_surface.rs",
+      "spec_ref": "canonical conformance plan Lane B; authored native terminal capture",
+      "status": "unverified",
+      "owner_lane": "B/native verification",
+      "reason": "Implementation added; executed native native terminal capture evidence required before acceptance.",
+      "scenarios": []
+    },
+    {
       "op": "world_browse",
       "native_owner": "kernel/src/lib.rs",
-      "spec_ref": "docs/cradle/02-ARCHITECTURE.md §5; docs/cradle/04-VERIFICATION.md; canonical plan Lane A §3",
+      "spec_ref": "docs/cradle/02-ARCHITECTURE.md \u00a75; docs/cradle/04-VERIFICATION.md; canonical plan Lane A \u00a73",
       "status": "unverified",
       "scenarios": [],
       "owner_lane": "A/native verification",
@@ -788,7 +1015,7 @@
     {
       "op": "world_read",
       "native_owner": "kernel/src/lib.rs",
-      "spec_ref": "docs/cradle/02-ARCHITECTURE.md §5; docs/cradle/04-VERIFICATION.md; canonical plan Lane A §3",
+      "spec_ref": "docs/cradle/02-ARCHITECTURE.md \u00a75; docs/cradle/04-VERIFICATION.md; canonical plan Lane A \u00a73",
       "status": "unverified",
       "scenarios": [],
       "owner_lane": "A/native verification",

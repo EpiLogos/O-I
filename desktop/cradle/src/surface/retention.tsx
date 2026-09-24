@@ -41,43 +41,16 @@
  * hosts cleanly. The kernel stays the state owner — nothing here caches
  * readings; it keeps mounted presentation alive, nothing more.
  */
-import {lazy, Suspense, useEffect, type ReactNode} from "react";
+import {Suspense, useEffect, type ReactNode} from "react";
 import {groupsOf} from "./engine";
 import {markPresented, markReleased, markRetained, exposeRuntimeProbe} from "./runtime";
 import type {LayoutState, SurfaceBinding} from "./types";
 import {MODE_CURATION, type WorkspaceMode} from "../workspace/mode";
 import type {Workspace} from "../workspace/store";
-import type {HostedAppState} from "../expressions/hostedApp";
 
-// The retained centre bodies are the same lazy chunks the workbench mounts;
-// a retained centre loads on first presentation, never at startup.
-const PointCloudHost = lazy(() => import("../expressions/PointCloudHost").then((module) => ({default: module.PointCloudHost})));
-const TechneCentre = lazy(() => import("../techne/TechneCentre").then((module) => ({default: module.TechneCentre})));
-
-const EpiLogosSurface = lazy(() => import("../epilogos/EpiLogosSurface").then((module) => ({default: module.EpiLogosSurface})));
-const SystemPanel = lazy(() => import("../workspace/SystemPanel").then((module) => ({default: module.SystemPanel})));
-const FactoryCentre = lazy(() => import("../contributions/factory/FactoryCentre").then((module) => ({default: module.FactoryCentre})));
-
-// The centre kinds this tier retains (see the module law above) are defined
-// beside the warm-tree selection law in ./warmTrees — pure presentation
-// selection, importable without JSX — and re-exported below so every
-// consumer keeps its import path.
-
-/** Factory's Desk/Tasks context (CradleFrame.factoryCentreProps): the
- * browsed project, the bound conversation, the one task-open path and the
- * message sink — the same shape Workbench carries. */
-export interface FactoryCentreContext {
-  project?: string;
-  accompanying?: {ref: string; project: string; space: string};
-  onOpenTask?: (row: import("../encounter/EncounterList").EncounterRow) => void | Promise<void>;
-  onNewTask?: () => void;
-  onOpenActivity?: () => void;
-  onMessage?: (message: string) => void;
-}
-
-// ---------------------------------------------------------------------------
-
-interface WorkbenchSubject { ref?: string; kind?: string; title: string; project?: string }
+import {hostedSurfaceFor} from "../contributions/registry";
+import type {HostedMountProps} from "../contributions/contracts";
+export type {FactoryCentreContext} from "../contributions/contracts";
 
 function presentedBindingOfKind(layout: LayoutState, kind: string): SurfaceBinding | undefined {
   for (const group of groupsOf(layout.root)) {
@@ -111,24 +84,11 @@ export function centreBindingOf(workspace: Workspace, activeMode: WorkspaceMode,
  * of moving or unmounting anything. Factory's arm composes the frame-built
  * chat node the frame holds. `deepLink` is the restart checkpoint's
  * expression ref (§7.2) — read by the hosted arm once, at its mount. */
-export function ModeCentreBody({binding, subject, factoryCentre, factoryTasks, onHostedState}: {binding: SurfaceBinding; subject?: WorkbenchSubject; factoryCentre?: ReactNode; factoryTasks?: FactoryCentreContext; onHostedState?: (state: HostedAppState) => void}): ReactNode {
-  return <Suspense fallback={null}>{retainedBody(binding, subject, factoryCentre, factoryTasks, onHostedState)}</Suspense>;
-}
-
-function retainedBody(binding: SurfaceBinding, subject?: WorkbenchSubject, factoryCentre?: ReactNode, factoryTasks?: FactoryCentreContext, onHostedState?: (state: HostedAppState) => void): ReactNode {
-  // The centre arms of the workbench's own SurfaceBody, mirrored here with
-  // the props the shell itself holds. Factory's arm composes the frame-built
-  // chat node the shell received — one body with it, never a second copy.
-  if (binding.kind === "expressions") return <PointCloudHost mode="expressions" bindingId={binding.id} deepLink={binding.engine?.expressionRef} onHostedState={onHostedState}/>;
-  // Technē mode: the Expressions app is the one field (physics, 3:3); the
-  // Technē HUD mounts the six existing M0′–M5′ instruments over it as the deep
-  // 4:2 apertures on the same live reading — not a second renderer, and the
-  // field suspends while the HUD covers it (TechneCentre owns that handoff).
-  if (binding.kind === "techne") return <TechneCentre binding={binding} subject={subject} deepLink={binding.engine?.expressionRef} onHostedState={onHostedState}/>;
-  if (binding.kind === "epi-logos") return <EpiLogosSurface binding={binding}/>;
-  if (binding.kind === "system") return <SystemPanel binding={binding}/>;
-  if (binding.kind === "factory") return <FactoryCentre chat={factoryCentre} project={factoryTasks?.project} accompanying={factoryTasks?.accompanying} onOpenTask={factoryTasks?.onOpenTask} onNewTask={factoryTasks?.onNewTask} onOpenActivity={factoryTasks?.onOpenActivity} onMessage={factoryTasks?.onMessage}/>;
-  return null;
+export function ModeCentreBody(props: HostedMountProps): ReactNode {
+  const registered = hostedSurfaceFor(props.binding);
+  if (!registered) return <p role="status">This saved surface is unavailable in this desktop build. Its binding and subject have been kept.</p>;
+  const Body = registered.Component;
+  return <Suspense fallback={null}><Body {...props}/></Suspense>;
 }
 
 /** The stage-presented centre's residency record — the honest

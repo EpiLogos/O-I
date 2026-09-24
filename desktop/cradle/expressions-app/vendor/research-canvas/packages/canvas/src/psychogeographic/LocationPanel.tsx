@@ -7,6 +7,8 @@ export interface LocationPanelProps {
   relatedNodes: GraphNodeContract[];
   expressions: ArchetypalExpression[];
   loadingContext?: boolean;
+  hosted?: boolean;
+  onClose?: () => void;
 }
 
 /** Focused context panel for one selected location on Surface #3. */
@@ -15,6 +17,8 @@ export function LocationPanel({
   relatedNodes,
   expressions,
   loadingContext = false,
+  hosted = false,
+  onClose,
 }: LocationPanelProps): JSX.Element {
   const coordinate = pointForPlace(node);
   const precision = node.place.coordinate.precision;
@@ -27,7 +31,8 @@ export function LocationPanel({
       className="places-location-panel"
       data-testid="places-location-panel"
       aria-label={`Location details for ${node.title}`}
-      style={{
+      onKeyDown={event => { if (event.key === "Escape" && onClose) { event.preventDefault(); event.stopPropagation(); onClose(); } }}
+      style={hosted ? undefined : {
         position: "absolute",
         top: 56,
         right: 12,
@@ -45,6 +50,7 @@ export function LocationPanel({
       }}
     >
       <header style={{ marginBottom: 14 }}>
+        {onClose && <button type="button" aria-label="Close location details" onClick={onClose}>Close</button>}
         <div style={{ fontSize: 10, letterSpacing: ".12em", textTransform: "uppercase", color: "var(--ob-faint, #7a8ca4)" }}>
           {node.entityType} · {precision}
         </div>

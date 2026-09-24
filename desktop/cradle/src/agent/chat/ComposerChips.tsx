@@ -1,3 +1,5 @@
+import {kernelOp,detectTransport} from "../../kernel/bridge";
+import {readModelRoster,modelRosterReason,type ModelRosterReading} from "./modelRoster";
 import {useEffect,useRef,useState,type ReactNode} from "react";
 import {Glyph} from "../../workspace/Glyph";
 import type {NativeModelActions} from "../../encounter/NativeModelControls";
@@ -88,9 +90,11 @@ export function HarnessChip({current,picker}:{current:ConnectionFacts;picker:Omi
  </div>;
 }
 
-export function ModelChip({model,actions,disabled}:{model:NativeModelState;actions:NativeModelActions;disabled?:boolean}) {
+export function ModelChip({model,actions,disabled,project}:{model:NativeModelState;actions:NativeModelActions;disabled?:boolean;project?:string}) {
  const {open,setOpen,host}=useMenu();
  useEffect(()=>{if(model.phase==="unread")void actions.refresh();},[actions,model.phase]);
+ const [roster,setRoster]=useState<ModelRosterReading>();
+ useEffect(()=>{setRoster(undefined);if(!open)return;let current=true;void kernelOp(detectTransport(),{op:"model_roster",project}).then(result=>{if(current&&result.outcome?.result==="model_roster_reading")setRoster(readModelRoster(result.outcome.reading));});return()=>{current=false;};},[open,project]);
  const observation=model.reading?.model_observation;
  const options=modelChoices(observation?.available_models??[]);
  const current=options.find(option=>option.modelId===observation?.current_model_id);
@@ -101,7 +105,7 @@ export function ModelChip({model,actions,disabled}:{model:NativeModelState;actio
  return <div className="chat-chip-host" ref={host} data-chip-host="model">
   <Chip chip="model" label={label} title={`Model — ${label}${reason?` · ${reason}`:""}${model.phase==="unknown"?" (change unconfirmed)":""}`} open={open} onToggle={()=>setOpen(value=>!value)} marked={model.phase==="unknown"}>
    {options.map(option=><button key={option.modelId} type="button" role="menuitemradio" aria-checked={option.modelId===observation?.current_model_id} className="oi-menu-item chat-model-item" disabled={!writable||(!!pinned&&option.modelId!==pinned)} title={option.description} onClick={()=>{setOpen(false);if(option.modelId!==observation?.current_model_id)void actions.select(option.modelId);}}>
-    <span>{option.name}</span>{option.modelId===observation?.current_model_id&&<Glyph name="check" size={11}/>}
+    <span>{option.name}{modelRosterReason(option,roster)&&<small className="chat-mode-description">{modelRosterReason(option,roster)}</small>}</span>{option.modelId===observation?.current_model_id&&<Glyph name="check" size={11}/>}
    </button>)}
    {!options.length&&<p className="oi-note chat-chip-note">The harness lists no other models.</p>}
    {reason&&<p className="oi-note chat-chip-note">{reason}</p>}

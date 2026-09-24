@@ -16,7 +16,7 @@ export async function runSeamConformance({op,events,request,themeOperations=[]})
  const invoke=async operation=>{const result=await op(operation);observations.push({operation,result});for(const receipt of result.receipts??[])assertKernelReceipt(receipt);return result;};
  const surface_id=`conformance-${randomUUID()}`;
  const before=await events();assertKernelLog(before);const cursor=before.at(-1)?.seq??0;
- const opened=await invoke({op:'surface_open',surface_id,kind:'file',title:'Native conformance observation'});
+ const opened=await invoke({op:'surface_open',surface_id,kind:'blank',title:'Native conformance observation'});
  check('surface open emits its exact identity',()=>assert.ok(opened.receipts?.some(r=>r.event==='surface_changed'&&r.surface_id===surface_id)));
  const closed=await invoke({op:'surface_close',surface_id});
  check('surface close emits its exact identity',()=>assert.ok(closed.receipts?.some(r=>r.event==='surface_changed'&&r.surface_id===surface_id)));

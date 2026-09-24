@@ -9,7 +9,7 @@ export interface AxisTick {
 
 export function formatYearLabel(year: number, _tier: ScaleTier): string {
   const rounded = Math.round(year);
-  if (rounded < 0) return `${Math.abs(rounded)} BCE`;
+  if (rounded <= 0) return `${1 - rounded} BCE`;
   return `${rounded} CE`;
 }
 
@@ -22,7 +22,13 @@ export function generateTicks(
   viewport: TimelineViewport,
   tier: ScaleTier,
 ): AxisTick[] {
-  const interval = tickIntervalYears(tier);
+  // Tier boundaries determine precision, while screen distance determines
+  // readable label density. Keep the complete time range at every zoom.
+  const baseInterval = tickIntervalYears(tier);
+  const required = Math.max(1, 88 / (baseInterval * viewport.pixelsPerYear));
+  const magnitude = 10 ** Math.floor(Math.log10(required));
+  const multiplier = [1, 2, 5, 10].find(value => value * magnitude >= required)! * magnitude;
+  const interval = baseInterval * multiplier;
   const leftYear = pixelToYear(viewport, 0);
   const rightYear = pixelToYear(viewport, viewport.widthPx);
 

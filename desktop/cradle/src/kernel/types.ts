@@ -93,7 +93,7 @@ export interface NativeDirectory { schema: "central.directory-reading/v1"; locat
 export interface NativeFileReading { schema: "central.file-reading/v1"; location: CentralLocation; revision: string; byte_len: number; content_encoding: "utf-8"; content: string; project: {name:string;path:string;project_ref:string|null} | null; source: ListedSource | null; operations?:Record<"write"|"history"|"restore",{available:boolean;reason:string|null}>; automatic_agent_or_model_invocation: false }
 /** A binary-safe material reading (FND-04): `central.files.read` with
  * `encoding: "base64"`, distinct from the UTF-8 `NativeFileReading` above. */
-export interface NativeFileBytes { location: CentralLocation; revision: string; byte_len: number; mime_hint: string | null; content_base64: string }
+export interface NativeFileBytes { location: CentralLocation; revision: string; byte_len: number; mime_hint: string | null; content_base64: string; source: ListedSource | null }
 
 /** W1.5 changed-since-thought compose (`flow_cognition.rs`): ONE typed
  * reading with both owner sides explicit — a side that could not be queried
@@ -164,11 +164,51 @@ export type ProfileEditOpWire =
   | { action: "set_title"; title: string | null }
   | { action: "set_description"; description: string | null };
 
+/** Kernel-owned appearance; observations are advisory renderer disclosures only. */
+export interface PresentationTheme { appearance: "light" | "dark" | "system"; id: string | null }
+export interface PresentationCustomTheme { id: string; name: string; appearance: "light" | "dark"; preview: {ground:string;ink:string;accent:string;strip:string[]}; variables:Record<string,string> }
+export interface PresentationDocument { schema:"oi.presentation/v1";revision:number;theme:PresentationTheme;custom_themes:PresentationCustomTheme[];observations:Record<string,{standing:"advisory-renderer-observation";visuals:unknown;arrangement:unknown}> }
+
+/** Bounded native decision episodes; references are not authority by themselves. */
+export type DecisionQuestion =
+ | {type:"noul";instructions?:unknown;criteria?:Record<"true"|"false",unknown>|null}
+ | {type:"choice";instructions?:unknown;criteria:Record<string,unknown>}
+ | {type:"score";instructions?:unknown;criteria:unknown[]};
+export interface DecisionTariff {model_version:string;source:string;max_input_tokens_per_attempt:number;max_output_tokens_per_attempt:number;input_microusd_per_million_tokens:number;output_microusd_per_million_tokens:number}
+export interface DecisionLimits {timeout_ms:number;max_attempts:number;max_total_reserved_microusd:number;tariff:DecisionTariff}
+export interface DecisionProposal {project?:string|null;observer_id?:string|null;sites:string[];agent_questions?:Record<string,DecisionQuestion>;credential_ref:string;limits:DecisionLimits;episode_budget_microusd:number;episode_seconds:number}
+export interface DecisionPreflight {schema:"oi.decision-preflight/v1";preflight_ref:string;basis_digest:string;proposal:DecisionProposal;basis:{scope_ref:string;source_refs:string[];inputs:Record<string,unknown>};questions:Record<string,DecisionQuestion>;expires_at_unix_seconds:number}
+export interface DecisionEpisode {episode_ref:string;authority_ref:string;scope_ref:string;source_refs:string[];sites:string[];credential_ref:string;limits:DecisionLimits;budget_microusd:number;spent_microusd:number;reserved_microusd:number;expires_at_unix_seconds:number;revoked:boolean}
+export interface DecisionReceipt {schema:"oi.decision-receipt/v1";decision_ref:string;authority_ref:string;episode_ref:string;scope_ref:string;sites:string[];basis_digest:string;questions:Record<string,DecisionQuestion>;outcome:string;model_version:string|null;answers:Record<string,unknown>|null;usage:unknown;cost_microusd:number;unknown_reserved_microusd:number;provider_receipts:unknown[];reason:string|null;cached_from:string|null}
+export interface DecisionReading {schema:"oi.decision-reading/v1";sites:{name:string;label:string;plane:string;input:string;questions:Record<string,DecisionQuestion>;max_reserved_microusd:number;gate_behavior:string}[];episodes:DecisionEpisode[];receipts:DecisionReceipt[];standing:string}
+
+export interface DictationStipulation {revision:number;stt_url:string}
+export type NativeDictationOutcome={kind:"transcript";text:string}|{kind:"service-down";detail:string;endpoint:string}|{kind:"failed";detail:string}|{kind:"empty"};
+export interface RetainedFileRecovery {retained:{standing:"last-native-reading";observed_at_unix_ms:number;reading:NativeFileReading}|null;migration_allowed:boolean;reason:string}
 export type KernelOp =
+  | {op:"file_last_reading";location:CentralLocation}
+  | {op:"dictation_read"}
+  | {op:"dictation_configure";stt_url:string;expected_revision:number}
+  | {op:"dictation_probe"}
+  | {op:"dictation_transcribe";capture_ref:string;wav_base64:string}
+  | {op:"decision_read"}
+  | {op:"decision_preflight";proposal:DecisionProposal}
+  | {op:"decide";preflight_ref:string;authority_ref:string}
+  | {op:"decision_episode_revoke";authority_ref:string}
+  | {op:"git_repository_read";project:string}
+  | {op:"git_diff_read";request:{repo_root:string;from:string;to:string;ignore_whitespace?:boolean;max_bytes?:number;max_files?:number}}
+  | {op:"presentation_read"}
+  | {op:"presentation_observe";window_id:string;visuals:unknown;arrangement:unknown}
+  | {op:"theme_import";theme:PresentationCustomTheme}
+  | {op:"theme_apply";appearance:"light"|"dark"|"system";id?:string|null}
+  | {op:"theme_revert"}
+  | {op:"theme_remove";id:string}
+  | {op:"nara_decision_record";decision:import("../nara/session").SpeechToolDecision}
   | {op: "native_expression"; request: {operation: "open"; path: string; expected_revision: string} | {operation: "exchange"; lease: string; request: unknown} | {operation: "close"; lease: string}}
   | {op: "setup"; request: import("../configuration/adoptionController").AdoptionRequest}
   | {op:"being_encounter";request:Record<string,unknown>}
   | {op:"expression";request:import("../expression/types").ExpressionRequest}
+  | {op:"expression_recovery";request:import("../expressions/recoveryTypes").ExpressionRecoveryRequest}
   | {op:"graph";project?:string;query:string;options?:import("../knowledge/graph").GraphReadOptions}
   /** One request to the O:I-owned SharedField client (kernel
    * `shared_field.rs`): `status` | `snapshot` | `read {ref}` | `publish
@@ -205,10 +245,15 @@ export type KernelOp =
   | { op: "profile_create"; profile_ref: string; title?: string }
   | { op: "profile_edit"; profile_ref: string; operations: ProfileEditOpWire[] }
   | { op: "config_receipts" }
+  | { op: "file_resolve"; reference: string }
   | { op: "files_list"; path: string; /** Explicit refresh: bypass the kernel's short-horizon read cache for this one read. */ fresh?: boolean }
   | { op: "file_read"; location: CentralLocation }
   | { op: "file_bytes"; location: CentralLocation }
+  | {op:"working_surface_read";project:string;agent_session:string;binding?:string}
+  | {op:"working_surface_attachment";project:string;agent_session:string;binding:string}
+  | {op:"recording_capability_read"}
   | { op: "agency_read"; project: string }
+  | { op: "model_roster"; project?: string }
   | { op: "agent_definition"; project: string | null; request: import("../agency/nativeAgent").AgentRequest }
   | {op:"file_operation";location:CentralLocation;request:import("../files/client").FileRequest}
   | {op:"encounter";project:string;request:import("../encounter/client").EncounterRequest}
@@ -273,6 +318,7 @@ export type KernelOp =
   | {op:"day_read";day_ref?:string}
   | {op:"day_source_open";day_ref?:string}
   | { op: "knowledge"; project?: string; request: KnowledgeRequest; fresh?: boolean }
+  | { op: "routine"; project?: string; request: import("../contributions/automations/client").RoutineRequest }
   | { op: "state" }
   | { op: "world_read" }
   | { op: "world_browse"; fresh?: boolean }
@@ -303,10 +349,24 @@ export type KernelOp =
  * The Rust seam serialises `{ receipts, #[serde(flatten)] result }`, so on
  * the wire the tag and the payload sit flat beside `receipts`. */
 export type KernelOpResult =
+  | {result:"file_last_reading";recovery:RetainedFileRecovery}
+  | {result:"dictation_reading";stipulation:DictationStipulation}
+  | {result:"dictation_prepared";capture_ref:string;stipulation:DictationStipulation}
+  | {result:"dictation_transcribed";outcome:NativeDictationOutcome}
+  | {result:"decision_reading";reading:DecisionReading}
+  | {result:"decision_preflight_reading";preflight:DecisionPreflight}
+  | {result:"decision_episode_authorised";episode:DecisionEpisode}
+  | {result:"decision_episode_revoked";episode:DecisionEpisode}
+  | {result:"decision_made";receipt:DecisionReceipt}
+  | {result:"git_repository_reading";document:unknown}
+  | {result:"git_diff_reading";document:unknown}
+  | {result:"presentation_reading";document:PresentationDocument}
+  | {result:"nara_decision_recorded";decision:unknown}
   | {result: "native_expression"; data: unknown}
   | {result: "setup_reading"; data: unknown}
   | {result:"being_encounter";data:unknown}
   | {result:"expression";data:import("../expression/types").ExpressionResult}
+  | {result:"expression_recovery";data:import("../expressions/recoveryTypes").ExpressionRecoveryResult}
   | {result:"graph_reading";reading:import("../knowledge/graph").GraphReading}
   | {result:"shared_field_reading";data:unknown}
   | {result:"action_dispatched";dispatch:ActionDispatch}
@@ -363,13 +423,18 @@ export type KernelOpResult =
   | { result:"config_diff_reading";resolutions:unknown[] }
   | { result:"day_reading";data:unknown }
   | { result:"central_reading";data:unknown }
-  | { result: "agency_reading"; project_ref: string; spaces: unknown[]; observed_at_unix_ms: number }
+  | {result:"working_surface_reading";document:unknown}
+  | {result:"recording_capability";document:unknown}
+  | { result: "agency_reading"; project_ref: string; spaces: unknown[]; harness_disclosure?: unknown; observed_at_unix_ms: number }
+  | { result: "model_roster_reading"; reading: unknown }
   | { result: "knowledge"; data: unknown }
+  | { result: "routine"; data: unknown }
   | { result: "state"; snapshot: KernelSnapshotState }
   | { result: "world_read"; snapshot: KernelSnapshotState }
   | { result: "directory_read"; directory: NativeDirectory }
   | { result: "file_read"; reading: NativeFileReading }
-  | { result: "file_bytes"; location: CentralLocation; revision: string; byte_len: number; mime_hint: string | null; content_base64: string }
+  | { result: "file_resolved"; location: CentralLocation }
+  | { result: "file_bytes"; location: CentralLocation; revision: string; byte_len: number; mime_hint: string | null; content_base64: string; source: ListedSource | null }
   | { result: "sources_listed"; listing: SourceListingState }
   | { result: "source_opened"; buffer: SourceBufferState }
   | { result: "source_history"; history: SourceHistoryReading }
@@ -477,7 +542,7 @@ export type ActionDispatch =
   | { state: "owner_unavailable"; owner_operation: string; detail: string };
 
 export interface KnowledgeAddress { kind: "wiki" | "source" | "project-map"; value: string }
-export type KnowledgeRequest = {action:"resolve";query:string} | { action: "search"; query: string } | { action: "history" } | { action: "read" | "relations" | "explain" | "use"; address: KnowledgeAddress };
+export type KnowledgeRequest = {action:"resolve";query:string} | { action: "search"; query: string } | { action: "history" | "status" } | { action: "read" | "relations" | "explain" | "use"; address: KnowledgeAddress };
 export interface KnowledgeReading { document?: unknown; resource: string; provider: string; revision?: string; authority: string; content?: string; evidence: string[]; why_selected: string }
 export interface KnowledgeHit { address: KnowledgeAddress; resource: string; label: string; kind: string; snippet: string; provider: string; authority: string }
 export interface KnowledgeRelations { nodes: {resource: string; label: string; kind: string; address?: KnowledgeAddress}[]; edges: {from: string; to: string; relation: string;reference?:string;authored_relation?:import('../knowledge/wikiDocument').WikiEvidence;origin?:string|{provider?:string;revision?:string;authority?:string}}[]; truncated: boolean; warnings: string[] }

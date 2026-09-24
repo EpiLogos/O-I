@@ -16,6 +16,7 @@ import {
   type NodeTypes
 } from "@xyflow/react";
 import type { ComponentType } from "react";
+import { createPortal } from "react-dom";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import type {
@@ -39,6 +40,8 @@ import { ResourceNode } from "./nodes/ResourceNode";
 import { defaultSourceHandleId, defaultTargetHandleId } from "./nodes/nodeHandles";
 
 export interface CanvasViewProps {
+  /** Optional host HUD. Omitted keeps the standalone toolbar and controls. */
+  toolbarContainer?: HTMLElement | null;
   /** Owner supplies no write capability; preserve navigation and selection only. */
   readOnly?: boolean;
   /** A source-owned relation can remain read-only inside an editable Scene. */
@@ -123,6 +126,7 @@ export function CanvasView(props: CanvasViewProps) {
 }
 
 function CanvasViewInner({
+  toolbarContainer = null,
   readOnly = false,
   isEdgeReadOnly,
   canvasKey,
@@ -501,9 +505,8 @@ function CanvasViewInner({
     onSelectNode,
   ],);
 
-  return (
-    <div ref={containerRef} className="canvas-flow" data-testid="canvas-flow">
-      <div className="canvas-toolbar" data-testid="canvas-toolbar">
+  const toolbar = (
+      <div className={toolbarContainer ? "canvas-toolbar canvas-toolbar-hosted" : "canvas-toolbar"} data-testid="canvas-toolbar">
         <button type="button" aria-label="Zoom in" onClick={() => zoomIn?.()}>+</button>
         <button type="button" aria-label="Zoom out" onClick={() => zoomOut?.()}>-</button>
         <button type="button" aria-label="Fit view" onClick={() => fitView({ padding: 0.15 })}>Fit</button>
@@ -511,6 +514,10 @@ function CanvasViewInner({
           <button type="button" aria-label="Play sequence" onClick={() => onPlaySequence?.()}>Play</button>
         )}
       </div>
+  );
+  return (
+    <div ref={containerRef} className="canvas-flow" data-testid="canvas-flow">
+      {toolbarContainer ? createPortal(toolbar, toolbarContainer) : toolbar}
       <ReactFlow
         defaultViewport={{ x: 0, y: 0, zoom: 1 }}
         edgeTypes={edgeTypes}
@@ -634,7 +641,7 @@ function CanvasViewInner({
         panOnDrag={true}
       >
         <Background color="rgba(244, 232, 208, 0.08)" gap={24} />
-        <Controls showInteractive={false} />
+        {!toolbarContainer && <Controls showInteractive={false} />}
         {sequenceGraph.nodeSet.size > 0 && (
           <SequenceMap
             graph={sequenceGraph}

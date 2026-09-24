@@ -286,7 +286,7 @@ export function AgentLayer({project:projectProp, subject, accompanying, onAccomp
               if(offered.some(entry=>entry.id==="Chat"))select("Chat");
             }}/>)}
           {name==="Activity"&&<ActivityTab key={accompanying?.ref??"none"} session={session} tape={tape} reading={journal} focus={focus} followToken={followToken} onChat={offered.some(entry=>entry.id==="Chat")?()=>select("Chat"):undefined}/>}
-          {name==="Agents"&&<AgentsTab roster={roster} boundRef={chosen?.ref} boundPresence={accompanying?presence:undefined} onMessage={agentChosen=>{chooseAgent(agentChosen);select(offered.some(entry=>entry.id==="Chat")?"Chat":plane);}}/>}
+          {name==="Agents"&&<AgentsTab project={project} roster={roster} boundRef={chosen?.ref} boundPresence={accompanying?presence:undefined} onMessage={agentChosen=>{chooseAgent(agentChosen);select(offered.some(entry=>entry.id==="Chat")?"Chat":plane);}}/>}
         </div>;
       })}
       {plane==="Composition"&&!detail&&<Suspense fallback={null}><ExpressionView key={compositionRef??"expression-composition"} initialExpressionRef={compositionRef??(subject.ref?.startsWith("expression:")?subject.ref:undefined)}/></Suspense>}
