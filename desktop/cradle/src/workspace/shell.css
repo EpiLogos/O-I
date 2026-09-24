@@ -103,7 +103,6 @@
 }
 .desktop-side.right.depth-panel, .desktop-side.right.depth-full {
   margin: 0;
-  background: var(--oi-agent-ground);
   border: 0;
   border-radius: 0;
   overflow: hidden;
@@ -606,9 +605,6 @@ html, body, #root, .desktop-shell { overflow: clip; }
 .desktop-shell .mode-stage > main { width: 100%; padding-left: 0; padding-right: 0; border-left: none; border-right: none; }
 .desktop-shell .mode-stage .system-panel { width: 100%; }
 .desktop-shell .surface-host { background: transparent; }
-/* The agent plane in push mode is chrome on the same glass as the left. */
-.desktop-shell .desktop-side.right.depth-panel,
-.desktop-shell .desktop-side.right.depth-full { background: transparent; border-top-color: transparent; }
 .desktop-shell .agent-layer,
 .desktop-shell .agent-chat { background: transparent; }
 /* The sidebar is text on glass with its two hairlines — rows carry no
@@ -625,7 +621,6 @@ html, body, #root, .desktop-shell { overflow: clip; }
 .desktop-shell [data-window-corner-left="true"] { border-top-left-radius: 8px; }
 
 .desktop-side.left.depth-panel, .desktop-side.left.depth-full {
-  background: transparent;
   border: none;
   border-radius: 0;
   box-shadow: none;
@@ -635,14 +630,6 @@ html, body, #root, .desktop-shell { overflow: clip; }
 .desktop-side.left .workspace-name,
 .desktop-side.left .world-navigator .world-system,
 .desktop-side.left .ground-chooser input { background: transparent; }
-/* The floating agent: glass, not a wall. */
-.desktop-side.right[data-overlay="true"] {
-  background: color-mix(in srgb, var(--oi-agent-ground) 55%, transparent);
-  backdrop-filter: blur(24px) saturate(150%);
-  -webkit-backdrop-filter: blur(24px) saturate(150%);
-  box-shadow: inset 0 1px 0 color-mix(in srgb, var(--oi-foreground) 10%, transparent);
-}
-
 /* The agent plane floats only where floating is the design — canvas modes
    (expressions, techne) and the ≤760px drawer. Everywhere else it takes
    layout room: the centre yields to the panel, never the reverse. */
@@ -651,10 +638,9 @@ html, body, #root, .desktop-shell { overflow: clip; }
    depth-full inset/left rules above carry its geometry — this regime's
    relative + width var must not pin it back into the row). */
 .desktop-shell .desktop-side.right.depth-full { position: absolute; inset: var(--oi-shell-gutter); left: calc(var(--desktop-left-width) + var(--oi-shell-gutter)); width: auto !important; z-index: var(--oi-z-drawer); }
-/* Expressions/techne: the panel floats (canvas modes) but carries NO fill
-   of its own — the shell's own right-segment agent ground is the panel's
-   background, exactly as in Factory. No tint, no blur, no inset hairline:
-   nowhere else in the app does a sidebar lay out its own background. */
+/* Canvas modes retain the full field beneath the floating panel. PanelShell
+   owns the same solid ground here and in push mode; the shell's background
+   cannot contain panel content above a live canvas. */
 .desktop-shell[data-mode="expressions"] .desktop-side.right,
 .desktop-shell[data-mode="techne"] .desktop-side.right {
   position: absolute; inset: 0 0 0 auto; width: var(--desktop-right-width) !important; z-index: var(--oi-z-drawer);
@@ -728,7 +714,6 @@ html.tauri .desktop-shell { background-color: transparent; }
   overflow: clip;
   background: linear-gradient(to right, var(--oi-sidebar-ground) 0 var(--desktop-left-width), var(--oi-shell-ground) var(--desktop-left-width) calc(100% - var(--desktop-right-width, 0px)), var(--oi-sidebar-ground) calc(100% - var(--desktop-right-width, 0px)) 100%);
 }
-.desktop-side.right.depth-panel, .desktop-side.right.depth-full { background: var(--oi-sidebar-ground); }
 .desktop-shell:has(.desktop-side.left.depth-collapsed, .desktop-side.left.depth-strip) .desktop-centre .pane.group { border-left-color: transparent; }
 .desktop-shell:has(.desktop-side.right.depth-collapsed, .desktop-side.right.depth-strip) .desktop-centre .pane.group { border-right-color: transparent; }
 /* The mode-centre stage wears the same card — the same per-side fade applies
@@ -739,7 +724,7 @@ html.tauri .desktop-shell { background-color: transparent; }
 
 /* Full-height canvas: window controls and status reveal over it, never subtract a row. */
 .desktop-shell{position:relative}
-.desktop-shell>.shell-topbar{position:absolute;inset:0 0 auto;z-index:20;background:transparent;border:0;pointer-events:none}
+.desktop-shell>.shell-topbar{position:absolute;inset:0 0 auto;z-index:calc(var(--oi-z-drawer) + 1);background:transparent;border:0;pointer-events:none}
 .shell-topbar button,.shell-topbar select{pointer-events:auto}
 .desktop-shell>.desktop-regions{height:100%}
 .desktop-shell .canvas-host{margin:0;min-width:0}

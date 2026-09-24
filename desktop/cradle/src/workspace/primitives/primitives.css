@@ -1,5 +1,5 @@
 /* Shared geometry and chrome. Bodies inherit their region's ground. */
-.panel-shell { --panel-padding:var(--oi-space-3); background:var(--oi-agent-ground); }
+.panel-shell { --panel-padding:var(--oi-space-3); background:var(--oi-sidebar-ground); }
 .panel-shell .agent-layer,.panel-shell .agent-body,.panel-shell .agent-plane-host { min-width:0; width:100%; box-sizing:border-box; background:transparent; }
 .panel-shell :is(.agent-chat,.panel-activity,.panel-agents,.context-canvas,.factory-sidebar-tab) {background:transparent;box-sizing:border-box;width:100%;padding-inline:var(--panel-padding)}
 .panel-top {display:flex;align-items:center;min-height:var(--oi-shell-tabbar);height:var(--oi-shell-tabbar);gap:var(--oi-space-1);padding-inline:var(--oi-space-2);flex:none}
