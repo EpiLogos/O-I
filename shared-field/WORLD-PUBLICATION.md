@@ -33,9 +33,10 @@ ownership.
 
 | Module | Role |
 |---|---|
-| `central-wiki-projection.mjs` | readings + selection → publication bundle; `hostedPublicationArgs`; `exploreSeedFromPublication`; `reprojectCentralWikiWorld`; `publicationSentinelLeaks` |
+| `central-wiki-projection.mjs` | readings + selection → publication bundle; `hostedPublicationArgs`; `exploreSeedFromPublication`; `reprojectCentralWikiWorld`; `publicationSentinelLeaks`; `worldPublicationLeaks` |
 | `world-edition.mjs` | standalone edition HTML + manifest, rendered only from the Projection |
-| `scripts/publish-world.mjs` | local step: `--selection`, `--reading`/`--from-ctrl`, `--sentinel`, `--out` |
+| `scripts/publish-world.mjs` | local step: `--selection`, `--reading`/`--from-ctrl` (wiki, Positions, population, constellations), `--sentinel`, `--out` |
+| `expression-projection.mjs` | one Expression → Projection; World relations to a hosted Position / constellation |
 | `spacetimedb/publish-world.ts` | hosted push through the generated client; owner token outside the repo |
 | `spacetimedb/two-world-live-acceptance.ts` | two independently grounded worlds meet, contribute, return, re-project |
 | `aikit-contribution-field.mjs` | `aikit.composition-body/v1` → authoring contribution field |
@@ -85,6 +86,94 @@ The selection is the owner's authored publication decision. Its durable home is
 the owner's ground (`ProjectCentral/user/…`), not this repository; the CI
 fixture selection under `fixtures/` describes a Central-shaped fixture world,
 never an owner's world.
+
+## The inhabited World in the same bundle
+
+The same selection, the same bundle and the same Projection lineage carry the
+World's Positions, their occupancy and current work, and its constellations —
+each only when the selection names it. There is no second script and no second
+Projection.
+
+```text
+central.position.list {project}              central.position-listing/v1   Central: the Position definitions
+aikit gateway who --project-world P --json   aikit.population-reading/v1   AIKit: occupancy (Actuation) + current work (Factory), joined
+aikit wiki-construct inspect --file W <ref>  aikit.constellation/v1        AIKit: one constructive WikiFrame with its participations
+```
+
+`publish-world.mjs --from-ctrl` runs these when the selection needs them (the
+Position listing when any Position is selected, the population when any is in
+`occupancy` mode, one inspect per selected constellation against each wiki
+register `central.world.here` discloses). The same documents may be passed as
+`--reading` files; each is recognised by its schema, bare or inside its
+owner's `--json` envelope. O:I never reads Actuation or Factory itself — AIKit
+is their joiner — and never reads AIKit's files.
+
+```json
+{
+  "positions": {
+    "central:position:project:O-I:anima-4": "occupancy",
+    "central:position:project:O-I:aletheia-5": "address"
+  },
+  "constellations": ["wiki:frame:…"]
+}
+```
+
+| Selected | Entry | Relations |
+|---|---|---|
+| Position, `address` | `world-position` at `<world>/<position_ref>`; `meta.local_ref`, `role_ref`, `handle`, `label` | `oi.world/position` World → Position (origin `projection`) |
+| Position, `occupancy` | the same, plus `meta.occupancy {state, generation_ordinal, workcell_ref, observed_via?}`, `meta.current_work {outcome}`, `meta.communiques {undelivered}` | as above; plus `oi.world/works-on` Position → entry when current work is exactly one custody whose `work_ref` is a selected wiki node or constellation (provenance names the custody ref) |
+| constellation | `constellation` at `<world>/<frame_ref>`; title, revision, participation count | `oi.world/constellation` World → constellation (origin `projection`); `aikit.constellation/participation` constellation → each participating wiki node that is itself selected (origin `aikit-knowledge`) |
+
+The presentation gains a `positions` region and a `constellations` region of
+reference cards. Occupancy lives in entry meta, never in generation-specific
+entries or relations: the hosted field has no delete for Explore rows, so a
+changing occupant updates one entry in place.
+
+What never travels, whatever the selection says: `agent_session_ref`,
+`session_space_ref`, gateway addresses and tokens, attention, Communique bodies,
+a Position's `purpose` and `purpose_ref`, participation notes and sources, the
+constellation's inquiry and its participation-to-participation edges, and any
+`remotes` detail. Entries are built from allow-lists; then every outward
+payload is scanned for the values of those protected keys found in the readings
+and for session-ref, gateway-address and token shapes, and a bundle that would
+carry any of them is refused whole. `publish-world.mjs` runs the same scan over
+the edition HTML and manifest, in addition to the publisher's `--sentinel`s.
+`observed_via` travels only as `local` or `gateway:<gateway_ref>`; a value that
+looks like an address is withheld.
+
+A World with Positions or constellations carries a composite source revision
+(`oi.world-sources/v1:<digest>`) over every source it stands on — each wiki
+reading, the selected Positions' definitions, the occupancy and custody this
+publication carries, each selected constellation's revision — listed in the
+bundle's `sources` and the World entry's provenance. So a new occupant
+generation or a custody change is a source revision on re-projection
+(`moved_sources` names which source moved), while a change in anything that is
+never published (attention, an unselected Position, an `address`-mode
+Position's occupant) moves nothing. A wiki-only publication keeps its subject
+wiki revision exactly as before.
+
+**AIKit follow-up.** `aikit wiki-construct inspect` is AIKit's read-only
+constellation reading, but it takes `--file <wiki.json>`: the caller has to
+compose the register's file path (O:I composes it from the roots
+`central.world.here` discloses), and there is no read-only command that lists
+the constructive frames a register holds. The AIKit read this lane needs is a
+register-addressed `aikit wiki-construct list|inspect --project-world <W>`
+(root when absent) emitting `aikit.constellation/v1` records; until it lands,
+the selection names constellation refs the owner already knows.
+
+## Technè: Expressions related to their World
+
+`expression-projection.mjs` relates a shared Expression to the World it came
+from. The Cradle's Share / Project passes the constellation the Expression was
+constructed from (the frame reading every member's subject binding carries)
+and — only when its own `aikit whoami` reading proves this body holds an
+occupied Position — that Position. When the hosted field already holds either
+as a World entry, the owner may place the Expression beside that World (in the
+World's field, under the field's unchanged contract) and the publication
+carries `oi.world/authored-by` (Expression → Position) and `oi.world/expresses`
+(Expression → constellation). Relations never cross a field boundary; an
+authoring ref the field does not host is named to the publisher as an omission
+and never travels.
 
 ## What must not leak
 

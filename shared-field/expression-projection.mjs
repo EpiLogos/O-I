@@ -26,6 +26,15 @@
  *   protected ground (`PROTECTED_REF_PATTERNS`) unless the selection admits
  *   that exact ref through `include_source_refs`.
  *
+ * World relations (`oi.world/authored-by`, `oi.world/expresses`): when the
+ * publisher names the Position the Expression was authored for and/or the
+ * constellation it expresses (`input.authoring`), and the target SharedField
+ * already hosts that Position / constellation as a World entry
+ * (`input.field_entries`, from the field's own snapshot), the publication
+ * relates the Expression to them. An authoring ref the field does not host —
+ * or hosts ambiguously, or hosts in another field — yields no relation and
+ * is named to the publisher as an omission; the local ref never travels.
+ *
  * The receiving client renders the live Expression from the composition when
  * it admits the named live renderer; otherwise it renders the explicit
  * fallback representation the publication carries (a frozen HTML reading of
@@ -426,7 +435,15 @@ export function projectExpression(input) {
     locators: [{ surface: 'web', locator: `/explore.html?ref=${encodeURIComponent(composition.expression_ref)}` }],
     meta: { projection_ref: projectionRef, standing: 'projection', presentation_ref: presentationRef, expression_revision: composition.revision, live_renderer_ref: liveRendererRef },
   });
-  const field = createSharedField({ field_ref: fieldRef, kind: 'explore', visibility: audience.visibility, title, provenance: [{ kind: 'human-publication', ref: publisherRef, source_system: 'o-i', revision: sourceRevision }] });
+  // Publishing into a field that already exists keeps that field's own
+  // contract byte-for-byte; the Expression never retitles a World's field.
+  const hostedField = input.field === undefined ? undefined : record(input.field, 'field');
+  if (hostedField && hostedField.field_ref !== fieldRef) throw new TypeError('field must be the hosted contract of field_ref');
+  const field = hostedField
+    ? createSharedField(hostedField)
+    : createSharedField({ field_ref: fieldRef, kind: 'explore', visibility: audience.visibility, title, provenance: [{ kind: 'human-publication', ref: publisherRef, source_system: 'o-i', revision: sourceRevision }] });
+  const { relations, omitted } = worldRelations({ authoring: input.authoring, entries: input.field_entries, fieldRef, expressionRef: composition.expression_ref, sourceRevision });
+  omissions.world_relations = omitted;
   const participant = createParticipant({ participant_ref: publisherRef, field_ref: fieldRef, identity: { kind: 'human', ref: identityRef }, presentation: { world_ref: worldRef, ...(publisher.chosen_name ? { chosen_name: publisher.chosen_name } : {}) }, provenance: { source_system: 'o-i', source_revision: sourceRevision, source_ref: composition.expression_ref } });
 
   return {
@@ -442,9 +459,55 @@ export function projectExpression(input) {
     entry,
     field,
     participant,
+    relations,
     live: { renderer_ref: liveRendererRef, fallback_kinds: representations.map((representation) => representation.kind) },
     omissions,
   };
+}
+
+const WORLD_RELATIONS = Object.freeze([
+  { key: 'position_ref', kind: 'world-position', relation: 'oi.world/authored-by', provenance: 'authoring-position', source_system: 'central' },
+  { key: 'constellation_ref', kind: 'constellation', relation: 'oi.world/expresses', provenance: 'source-constellation', source_system: 'ai-kit' },
+]);
+
+/**
+ * The Expression's World relations: one per authoring ref the target field
+ * hosts exactly once as an entry of the matching kind (matched on the
+ * entry's `meta.local_ref`, its semantic ref, or an alias). Everything else
+ * becomes a local omission with its reason.
+ */
+function worldRelations({ authoring, entries, fieldRef, expressionRef, sourceRevision }) {
+  const relations = [];
+  const omitted = [];
+  if (authoring === undefined || authoring === null) return { relations, omitted };
+  record(authoring, 'authoring');
+  const hostedEntries = entries === undefined ? [] : entries;
+  if (!Array.isArray(hostedEntries)) throw new TypeError('field_entries must be an array of hosted entries');
+  for (const spec of WORLD_RELATIONS) {
+    const value = authoring[spec.key];
+    if (value === undefined || value === null) continue;
+    const ref = text(value, `authoring.${spec.key}`);
+    const names = (entry) => entry.meta?.local_ref === ref || entry.ref === ref || (Array.isArray(entry.aliases) && entry.aliases.includes(ref));
+    const candidates = hostedEntries.filter((entry) => isRecord(entry) && entry.kind === spec.kind && names(entry));
+    const here = candidates.filter((entry) => entry.field_ref === fieldRef);
+    if (here.length !== 1) {
+      const reason = here.length > 1 ? 'hosted more than once in this field' : candidates.length ? 'hosted in another SharedField; relations never cross a field boundary' : 'not hosted in the SharedField';
+      omitted.push({ relation: spec.relation, ref, reason });
+      continue;
+    }
+    const target = text(here[0].ref, `hosted ${spec.kind}.ref`);
+    const relationRef = `${expressionRef}#${spec.relation}#${target}`;
+    relations.push({
+      relation_ref: relationRef,
+      from: expressionRef,
+      to: target,
+      relation: spec.relation,
+      origin: 'projection',
+      direction: 'forward',
+      provenance: [{ kind: spec.provenance, ref, source_system: spec.source_system, revision: sourceRevision }],
+    });
+  }
+  return { relations, omitted };
 }
 
 /** The hosted reducer arguments the O:I-owned field client's `publish` expects. */
@@ -457,7 +520,7 @@ export function hostedExpressionArgs(bundle) {
     putParticipant: { participantRef: participant.participant_ref, fieldRef: participant.field_ref, identityKind: participant.identity.kind, identityRef: participant.identity.ref, sourceSystem: participant.provenance.source_system, sourceRevision: participant.provenance.source_revision, contractJson: JSON.stringify(participant) },
     putProjection: { projectionKey: projectionStorageKey(projection.projection_ref, projection.projection_revision), fieldRef: field.field_ref, projectionRef: projection.projection_ref, projectionRevision: projection.projection_revision, sourceRevision: projection.source.revision, publisherParticipantRef: projection.publisher_participant_ref, state: projection.state, contractJson: JSON.stringify(projection) },
     putExploreEntries: [{ semanticRef: entry.ref, fieldRef: field.field_ref, worldRef: entry.world_ref, kind: entry.kind, label: entry.label, revision: entry.revision ?? '', entryJson: JSON.stringify(entry) }],
-    putExploreRelations: [],
+    putExploreRelations: (bundle.relations ?? []).map((relation) => ({ relationRef: relation.relation_ref, fieldRef: field.field_ref, fromRef: relation.from, toRef: relation.to, relation: relation.relation, origin: relation.origin, relationJson: JSON.stringify(relation) })),
   };
 }
 
@@ -465,7 +528,7 @@ export function hostedExpressionArgs(bundle) {
 export function expressionPublicationPayloads(bundle) {
   record(bundle, 'expression publication');
   const args = hostedExpressionArgs(bundle);
-  return { projection: bundle.projection, presentation: bundle.presentation, expression: bundle.expression, composition: bundle.composition, entry: bundle.entry, field: bundle.field, participant: bundle.participant, hosted_args: args, fallback_html: bundle.expression.representations.filter((representation) => representation.kind === 'html').map((representation) => representation.html).join('\n') };
+  return { projection: bundle.projection, presentation: bundle.presentation, expression: bundle.expression, composition: bundle.composition, entry: bundle.entry, field: bundle.field, participant: bundle.participant, relations: bundle.relations ?? [], hosted_args: args, fallback_html: bundle.expression.representations.filter((representation) => representation.kind === 'html').map((representation) => representation.html).join('\n') };
 }
 
 export function expressionPublicationLeaks(bundle, sentinels) {

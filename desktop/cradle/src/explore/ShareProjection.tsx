@@ -14,9 +14,19 @@
  * eligibility. Omissions are named to the publisher and never serialised
  * outward. `Create Projection`, `Publish to the hosted field` and `Open in
  * Explore` are separate acts; nothing reaches the network before the second.
+ *
+ * World relations: an Expression constructed from a constellation, or
+ * shared while this Cradle acts for an occupied Position (its own
+ * `aikit whoami` reading), names them as its authoring. When the hosted
+ * field already holds that Position / constellation as a World entry, the
+ * owner may place the Expression beside that World — in the World's own
+ * field, under its unchanged contract — and the publication relates the
+ * Expression to them (`oi.world/expresses`, `oi.world/authored-by`).
  */
 import {useEffect,useMemo,useState} from "react";
 import {useKernel} from "../kernel/KernelProvider";
+import {kernelOp} from "../kernel/bridge";
+import {actingPositionRef,entriesWithField,projectedConstellationRef,worldHostFor,type ActingReading} from "./worldAuthoring";
 import {useVisuals} from "../visuals/ParticleExpression";
 import {useExpressionStage} from "../stage/ExpressionStage";
 import type {ExpressionDocument} from "../expression/types";
@@ -33,7 +43,7 @@ import {structuredProjectionReading} from "../../../../shared-field/projection-r
 import {createNaraPresenceConsent,hostedNaraExpressionArgs,isNaraBoundExpression,projectNaraExpression,withdrawNaraProjection} from "../../../../shared-field/nara-expression-projection.mjs";
 import "./explore.css";
 
-interface Bundle {schema:string;expression_ref:string;expression_revision:number;world_ref:string;field_ref:string;composition:unknown;expression:{live_renderer_ref:string;representations:{kind:string}[]};presentation:WorldPresentation;projection:{projection_ref:string;projection_revision:number;state:string;subject:{kind:string;ref:string};source:{system:string;ref?:string;revision:string};publisher_participant_ref:string;audience:{visibility:string;refs?:string[]}};entry:{ref:string;kind:string;world_ref:string;label:string};field:unknown;participant:unknown;live:{renderer_ref:string;fallback_kinds:string[]};omissions:{readings:number;actions:number;scenes:{scene_ref:string;title:string}[];entities:{entity_ref:string;title:string}[];parameters:{entity_ref:string;parameter:string}[];representations:{kind:string;ref?:string}[];sources:{withheld:{ref:string;availability:string;subject:string}[];protected:{ref:string;subject:string}[];unavailable:{ref:string;availability:string;subject:string}[]};provenance:{ref:string;of:string}[]}}
+interface Bundle {schema:string;expression_ref:string;expression_revision:number;world_ref:string;field_ref:string;composition:unknown;expression:{live_renderer_ref:string;representations:{kind:string}[]};presentation:WorldPresentation;projection:{projection_ref:string;projection_revision:number;state:string;subject:{kind:string;ref:string};source:{system:string;ref?:string;revision:string};publisher_participant_ref:string;audience:{visibility:string;refs?:string[]}};entry:{ref:string;kind:string;world_ref:string;label:string};field:unknown;participant:unknown;live:{renderer_ref:string;fallback_kinds:string[]};relations?:{relation:string;to:string}[];omissions:{world_relations?:{relation:string;ref:string;reason:string}[];readings:number;actions:number;scenes:{scene_ref:string;title:string}[];entities:{entity_ref:string;title:string}[];parameters:{entity_ref:string;parameter:string}[];representations:{kind:string;ref?:string}[];sources:{withheld:{ref:string;availability:string;subject:string}[];protected:{ref:string;subject:string}[];unavailable:{ref:string;availability:string;subject:string}[]};provenance:{ref:string;of:string}[]}}
 interface AgentReading {projection_ref:string;projection_revision:number;presentation_ref:string;presentation_revision:number;modules:{renderer:string;props:{expression?:{expression_ref:string;expression_revision:number}}}[]}
 interface PresenceEdge {kind?:string;to?:string;consent_ref?:string;expression_ref?:string}
 interface NaraProjection extends HostedProjection {audience?:{visibility?:string;refs?:string[]};relation_hints?:PresenceEdge[];representation?:{kind?:string;payload?:{presentation_ref?:string}}}
@@ -64,19 +74,32 @@ export function ShareProjection({document,onClose}:{document:ExpressionDocument;
   const [recoveryState,setRecoveryState]=useState<"pending"|"complete"|"failed">(nara?"pending":"complete");
   const [recoveryError,setRecoveryError]=useState<string>();
   const recovered=recoveries.length===1?recoveries[0]:recoveryBasis;
+  // Authoring: the constellation this Expression was constructed from, and the
+  // Position this Cradle acts for — each only when native state proves it.
+  const constellationRef=useMemo(()=>nara?undefined:projectedConstellationRef(document),[document,nara]);
+  const [actingPosition,setActingPosition]=useState<string>();
+  useEffect(()=>{if(nara)return;let active=true;void kernelOp(transport,{op:"inhabitation_read",request:{kind:"whoami"}}).then(result=>{if(active&&result.outcome?.result==="inhabitation_reading")setActingPosition(actingPositionRef(result.outcome.data as ActingReading));}).catch(()=>{});return()=>{active=false;};},[transport,nara]);
+  const authoring=useMemo(()=>({...(actingPosition?{position_ref:actingPosition}:{}),...(constellationRef?{constellation_ref:constellationRef}:{})}),[actingPosition,constellationRef]);
+  const authored=Boolean(authoring.position_ref||authoring.constellation_ref);
+  const [worldSnapshot,setWorldSnapshot]=useState<SharedFieldSnapshot>();
+  useEffect(()=>{if(!authored)return;let active=true;void sharedField<SharedFieldSnapshot|SharedFieldUnavailable>(transport,{kind:"snapshot"}).then(reading=>{if(active&&!isUnavailable(reading))setWorldSnapshot(reading);}).catch(()=>{});return()=>{active=false;};},[authored,transport]);
+  const worldHost=useMemo(()=>worldSnapshot&&authored?worldHostFor(worldSnapshot,authoring):undefined,[worldSnapshot,authored,authoring]);
+  const fieldEntries=useMemo(()=>worldSnapshot?entriesWithField(worldSnapshot):[],[worldSnapshot]);
+  const [besideWorld,setBesideWorld]=useState(false);
+  const placed=besideWorld&&worldHost&&!nara?worldHost:undefined;
   const protectedCandidates=useMemo(()=>{const refs=new Set<string>();for(const entity of Object.values(document.entities))for(const source of entity.subject?.sources??[])if(source.availability==="available"&&isProtectedRef(source.ref))refs.add(source.ref);for(const reading of document.provenance)if(isProtectedRef(reading.ref))refs.add(reading.ref);for(const relation of Object.values(document.relations))for(const reading of relation.provenance)if(isProtectedRef(reading.ref))refs.add(reading.ref);return [...refs];},[document]);
   const applyRecoveredScope=(item:RecoveredPresence)=>{setPublisher(item.publisher_identity_ref??"");setAudienceRefs(item.target_ref??"");setVisibility(item.projection.audience?.visibility??"restricted");setNaraTargetIdentity(item.target_identity_ref??"");};
   const refs=audienceRefs.split(/[\s,]+/).filter(Boolean);
   const preview=useMemo<{bundle?:Bundle;error?:string}>(()=>{
     try{
-      const fieldRef=`oi:field:desktop:${slug(document.expression_ref)}`,identity=publisher.trim()||"human:unnamed",participantRef=`participant:${slug(fieldRef)}:${slug(identity)}`;
+      const fieldRef=placed?.field_ref??`oi:field:desktop:${slug(document.expression_ref)}`,identity=publisher.trim()||"human:unnamed",participantRef=`participant:${slug(fieldRef)}:${slug(identity)}`;
       const prior=recovered?.projection,priorPresentation=prior?.representation?.kind==="oi.world-presentation/v1"?prior.representation.payload?.presentation_ref:undefined;
-      const base={document,selection:{scene_refs:sceneRefs,...(summary.trim()?{summary:summary.trim()}:{}),disclose_sources:discloseSources,include_source_refs:admitted},publisher:{identity_ref:identity},audience:{visibility,...(refs.length?{refs}:{})},field_ref:fieldRef,projection_ref:prior?.projection_ref??`projection:desktop:${slug(document.expression_ref)}:${stamp}`,presentation_ref:priorPresentation??`presentation:desktop:${slug(document.expression_ref)}:${stamp}`,projection_revision:nara?(prior?.state==="withdrawn"?prior.projection_revision+1:prior?.projection_revision??1+naraCycle*2):1,live_renderer_ref:LIVE_RENDERER_REF};
+      const base={document,selection:{scene_refs:sceneRefs,...(summary.trim()?{summary:summary.trim()}:{}),disclose_sources:discloseSources,include_source_refs:admitted},publisher:{identity_ref:identity},audience:{visibility,...(refs.length?{refs}:{})},field_ref:fieldRef,projection_ref:prior?.projection_ref??`projection:desktop:${slug(document.expression_ref)}:${stamp}`,presentation_ref:priorPresentation??`presentation:desktop:${slug(document.expression_ref)}:${stamp}`,projection_revision:nara?(prior?.state==="withdrawn"?prior.projection_revision+1:prior?.projection_revision??1+naraCycle*2):1,live_renderer_ref:LIVE_RENDERER_REF,...(placed?{world_ref:placed.world_ref,...(placed.field?{field:placed.field}:{})}:{}),...(authored&&!nara?{authoring,field_entries:fieldEntries}:{})};
       const bundle=((nara?projectNaraExpression({...base,consent:createNaraPresenceConsent({consent_ref:`consent:${slug(document.expression_ref)}:${stamp}:${naraCycle}`,participant_ref:participantRef,expression_ref:document.expression_ref,target_ref:refs[0]??"",target_identity_ref:naraTargetIdentity,granted_at:new Date().toISOString(),source_refs:document.provenance.map(item=>item.ref)})}):projectExpression(base)) as unknown) as Bundle;
       return {bundle};
     }catch(cause){return {error:String(cause instanceof Error?cause.message:cause)};}
-  },[document,sceneRefs,summary,discloseSources,admitted,publisher,visibility,audienceRefs,stamp,nara,naraCycle,naraTargetIdentity,recovered]);
-  useEffect(()=>{if(!hosted&&recovered?.projection.state!=="published"){setCreated(undefined);setHosted(undefined);}},[document.expression_ref,document.revision,sceneRefs,summary,discloseSources,admitted,publisher,visibility,audienceRefs,naraTargetIdentity,naraConsent,hosted,recovered]);
+  },[document,sceneRefs,summary,discloseSources,admitted,publisher,visibility,audienceRefs,stamp,nara,naraCycle,naraTargetIdentity,recovered,placed,authored,authoring,fieldEntries]);
+  useEffect(()=>{if(!hosted&&recovered?.projection.state!=="published"){setCreated(undefined);setHosted(undefined);}},[document.expression_ref,document.revision,sceneRefs,summary,discloseSources,admitted,publisher,visibility,audienceRefs,naraTargetIdentity,naraConsent,hosted,recovered,placed,authoring]);
   useEffect(()=>{if(nara)setNaraConsent(false);},[nara,document.expression_ref,document.revision,sceneRefs,publisher,visibility,audienceRefs,naraTargetIdentity]);
   useEffect(()=>{
     if(!created||hostedStatus)return;
@@ -152,7 +175,7 @@ export function ShareProjection({document,onClose}:{document:ExpressionDocument;
   const agentReading=useMemo<AgentReading|undefined>(()=>{if(!created)return undefined;try{return structuredProjectionReading(created.projection) as AgentReading;}catch{return undefined;}},[created]);
   const agentSummary=agentReading?{projection_ref:agentReading.projection_ref,projection_revision:agentReading.projection_revision,presentation_ref:agentReading.presentation_ref,presentation_revision:agentReading.presentation_revision,expression:agentReading.modules.find(m=>m.renderer==="oi.presentation/expression/v1")?.props.expression}:undefined;
   const o=bundle?.omissions;
-  return <section className="share-projection" aria-label="Share / Project" data-expression-ref={document.expression_ref} data-expression-revision={document.revision} data-preview-projection-ref={bundle?.projection.projection_ref} data-created={Boolean(created)} data-hosted={Boolean(hosted)}>
+  return <section className="share-projection" aria-label="Share / Project" data-expression-ref={document.expression_ref} data-expression-revision={document.revision} data-preview-projection-ref={bundle?.projection.projection_ref} data-created={Boolean(created)} data-hosted={Boolean(hosted)} data-acting-position={actingPosition??""} data-constellation-ref={constellationRef??""} data-world-relations={(bundle?.relations??[]).map(relation=>relation.relation).join(",")}>
     <header className="share-head"><div><small>Share / Project</small><strong>{document.title}</strong><span>{document.expression_ref} · revision {document.revision}</span></div><button type="button" aria-label="Close share" disabled={busy} onClick={onClose}>×</button></header>
     {preview.error&&<p role="alert">{preview.error}</p>}
     <div className="share-columns">
@@ -175,6 +198,7 @@ export function ShareProjection({document,onClose}:{document:ExpressionDocument;
             {o.sources.unavailable.map((s,i)=><li key={`u${i}`} data-omission="source-unavailable">source {s.availability}: <code>{s.ref}</code></li>)}
             {o.sources.protected.map((s,i)=><li key={`p${i}`} data-omission="source-protected">protected ground, not admitted: <code>{s.ref}</code></li>)}
             {o.provenance.map((p,i)=><li key={`v${i}`} data-omission="provenance">protected provenance ref: <code>{p.ref}</code></li>)}
+            {(o.world_relations??[]).map((w,i)=><li key={`r${i}`} data-omission="world-relation">{w.relation} to <code>{w.ref}</code> not published: {w.reason}</li>)}
           </ul>}
         </section>
         <section className="share-selection" aria-label="Selection">
@@ -195,14 +219,15 @@ export function ShareProjection({document,onClose}:{document:ExpressionDocument;
             <label><input type="checkbox" checked={naraConsent||recoveries.length>0} disabled={Boolean(withdrawn)||locked} onChange={event=>setNaraConsent(event.target.checked)}/>I explicitly consent to share this Expression presence with <code>{refs[0]||"the named target Participant"}</code>.</label>
             <label>Target identity<input aria-label="Nara target identity" disabled={locked} value={naraTargetIdentity} onChange={event=>setNaraTargetIdentity(event.target.value)} placeholder="the Human identity behind the target Participant"/></label>
           </div>}
-          {bundle&&<p className="share-destination">World <code>{bundle.world_ref}</code> · field <code>{bundle.field_ref}</code> · projection <code>{bundle.projection.projection_ref}</code></p>}
+          {worldHost&&!nara&&<label className="share-beside-world" data-world-field={worldHost.field_ref} data-world-ref={worldHost.world_ref}><input type="checkbox" aria-label="Place beside its World" disabled={locked} checked={besideWorld} onChange={e=>setBesideWorld(e.target.checked)}/>Place beside <strong>{worldHost.label}</strong> in its field <code>{worldHost.field_ref}</code>, related to {[worldHost.hosts.position?<>the Position <code key="p">{authoring.position_ref}</code></>:null,worldHost.hosts.constellation?<>the constellation <code key="c">{authoring.constellation_ref}</code></>:null].filter(Boolean).map((part,i)=><span key={i}>{i?" and ":""}{part}</span>)} it already hosts. The field keeps its own title and visibility.</label>}
+          {bundle&&<p className="share-destination">World <code>{bundle.world_ref}</code> · field <code>{bundle.field_ref}</code> · projection <code>{bundle.projection.projection_ref}</code>{bundle.relations?.length?<> · {bundle.relations.map(relation=>relation.relation).join(", ")}</>:null}</p>}
         </section>
         <div className="share-actions">
           <button type="button" className="share-create" disabled={!bundle||!!created||locked} onClick={create}>Create Projection</button>
           {created&&<div className="share-created" data-projection-ref={created.projection.projection_ref} data-projection-revision={created.projection.projection_revision} data-projection-state={created.projection.state} data-presentation-ref={created.presentation.presentation_ref} data-presentation-revision={created.presentation.revision} data-source-revision={created.projection.source.revision} data-projection={JSON.stringify(created.projection)}>
             <p role="status">Projection <code>{created.projection.projection_ref}</code> · revision {created.projection.projection_revision} · {created.projection.state} — subject <code>{created.projection.subject.ref}</code> at source revision {created.projection.source.revision}; presentation <code>{created.presentation.presentation_ref}</code> revision {created.presentation.revision}; audience {created.projection.audience.visibility}{created.projection.audience.refs?`: ${created.projection.audience.refs.join(", ")}`:""}; published by {created.projection.publisher_participant_ref} (identity {publisher.trim()}). The Expression itself is unchanged at revision {created.expression_revision}.</p>
             {agentSummary&&<details className="share-agent-reading"><summary>Structured reading (what an Agent receives)</summary><pre data-agent-reading={JSON.stringify(agentSummary)}>{JSON.stringify(agentSummary,null,2)}</pre></details>}
-            {!hosted&&bound&&<div className="share-host" data-hosted-target={`${bound.target.uri}/${bound.target.database}`}><span>Hosting target <code>{bound.target.name}</code> ({bound.target.uri}/{bound.target.database}) is bound. Publishing places this Projection, its field, its publisher and one Explore entry there — visible to the {created.projection.audience.visibility} audience.</span><button type="button" className="share-host-send" disabled={busy} onClick={()=>void publishHosted()}>{busy?"Publishing to the hosted field…":"Publish to the hosted field"}</button></div>}
+            {!hosted&&bound&&<div className="share-host" data-hosted-target={`${bound.target.uri}/${bound.target.database}`}><span>Hosting target <code>{bound.target.name}</code> ({bound.target.uri}/{bound.target.database}) is bound. Publishing places this Projection, its field, its publisher and one Explore entry there{created.relations?.length?`, with ${created.relations.length} World relation${created.relations.length===1?"":"s"} (${created.relations.map(relation=>relation.relation).join(", ")})`:""} — visible to the {created.projection.audience.visibility} audience.</span><button type="button" className="share-host-send" disabled={busy} onClick={()=>void publishHosted()}>{busy?"Publishing to the hosted field…":"Publish to the hosted field"}</button></div>}
             {!hosted&&hostedStatus&&!bound&&<p className="share-host-absent" role="status" data-hosted-bound="false">No hosting target is bound for this desktop — {absentReason}. The Projection remains local beside this Expression; nothing was sent.</p>}
             {hosted&&<div className="share-hosted" data-hosted-result={JSON.stringify(hosted)} data-hosted-projection-ref={hosted.hosted_projection_row.projectionRef} data-hosted-entry-ref={hosted.entries[0]??""}><p role="status">Hosted in <code>{hosted.target.name}</code>: projection row <code>{hosted.hosted_projection_row.projectionKey}</code> · revision {hosted.hosted_projection_row.projectionRevision} · source revision {hosted.hosted_projection_row.sourceRevision} · {hosted.hosted_projection_row.state}; entry <code>{hosted.entries[0]}</code>; transport identity <code>{hosted.transport_identity}</code> — the client's connection identity, not a human participant.</p></div>}
             <button type="button" className="share-open-explore" disabled={!hosted} title={hosted?"Encounter the hosted representation in Explore":"Open in Explore needs the hosted field; publish first"} onClick={openInExplore}>Open in Explore</button>
