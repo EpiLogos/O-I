@@ -69,9 +69,10 @@ try{
  const binding={schema:'oi.native-expression-binding/v1',host:{instance_ref:'controlled:joined-browser',basis:input.basis,field:input.field},presentation:{units_per_metre:400,slots_a:Array.from({length:count},(_,i)=>i%samples),slots_b:Array.from({length:count},(_,i)=>(i+1)%samples)}};
  await writeFile(join(temp,'binding.json'),JSON.stringify(binding));
  // Entry gate is the ordinary New/Continue/Open front door; dismiss before native depth.
- if(await frame.locator('#entry-gate:not([hidden]) [data-action="entry-dismiss"]').count()){
-  await frame.locator('[data-action="entry-dismiss"]').click();
-  await frame.waitForSelector('#entry-gate[hidden]',{timeout:5000});
+ const dismiss=frame.locator('#entry-gate:not([hidden]) [data-action="entry-dismiss"]');
+ if(await dismiss.count()){
+  await dismiss.click();
+  await frame.waitForFunction(()=>document.querySelector('#entry-gate')?.hasAttribute('hidden'),null,{timeout:5000});
  }
  await frame.locator('.native-field-panel>summary').click();await frame.locator('[name="native-path"]').fill('binding.json');await frame.locator('[data-native="source"]').click();await frame.locator('[data-native="connect"]').click();
  await frame.waitForFunction(()=>['following','held','unavailable'].includes(window.__FIELD_STUDIES__.native().status),null,{timeout:20000});
