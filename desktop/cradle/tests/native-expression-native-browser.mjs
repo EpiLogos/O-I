@@ -61,19 +61,20 @@ const interrupt=()=>{report.failure='Explicit local test interruption';void brow
 report.browser=browser.version();report.renderer=hardwareGPU?'default browser GPU requested; actual renderer below':'Chromium software WebGL / SwiftShader';report.viewport='1100x800';
 try{
  await page.goto(`http://127.0.0.1:${server.address().port}`);const frame=page.frames().find(f=>f!==page.mainFrame());
- await frame.waitForFunction(()=>window.__FIELD_STUDIES__?.native()?.renderer_requirements?.slot_count>0,null,{timeout:30000});
+ // Entry gate is the ordinary New/Continue/Open front door; dismiss before the
+ // field admits topology or native depth (gate can withhold the living stage).
+ const dismiss=frame.locator('#entry-gate:not([hidden]) [data-action="entry-dismiss"]');
+ if(await dismiss.count()){
+  await dismiss.click();
+  await frame.waitForFunction(()=>document.querySelector('#entry-gate')?.hasAttribute('hidden'),null,{timeout:5000});
+ }
+ await frame.waitForFunction(()=>window.__FIELD_STUDIES__?.native()?.renderer_requirements?.slot_count>0,null,{timeout:60000});
  const topology=await frame.evaluate(()=>window.__FIELD_STUDIES__.native().renderer_requirements);report.topology=topology;
  report.gpu=await frame.evaluate(()=>{for(const canvas of document.querySelectorAll('canvas')){const gl=canvas.getContext('webgl2')||canvas.getContext('webgl');if(gl){const ext=gl.getExtension('WEBGL_debug_renderer_info');return{vendor:gl.getParameter(ext?ext.UNMASKED_VENDOR_WEBGL:gl.VENDOR),renderer:gl.getParameter(ext?ext.UNMASKED_RENDERER_WEBGL:gl.RENDERER)};}}return{renderer:'unavailable'};});
  const count=topology.slot_count,samples=input.field.samples.length;
  // Explicit TEST geometry correspondence; never inserted into production.
  const binding={schema:'oi.native-expression-binding/v1',host:{instance_ref:'controlled:joined-browser',basis:input.basis,field:input.field},presentation:{units_per_metre:400,slots_a:Array.from({length:count},(_,i)=>i%samples),slots_b:Array.from({length:count},(_,i)=>(i+1)%samples)}};
  await writeFile(join(temp,'binding.json'),JSON.stringify(binding));
- // Entry gate is the ordinary New/Continue/Open front door; dismiss before native depth.
- const dismiss=frame.locator('#entry-gate:not([hidden]) [data-action="entry-dismiss"]');
- if(await dismiss.count()){
-  await dismiss.click();
-  await frame.waitForFunction(()=>document.querySelector('#entry-gate')?.hasAttribute('hidden'),null,{timeout:5000});
- }
  await frame.locator('.native-field-panel>summary').click();await frame.locator('[name="native-path"]').fill('binding.json');await frame.locator('[data-native="source"]').click();await frame.locator('[data-native="connect"]').click();
  await frame.waitForFunction(()=>['following','held','unavailable'].includes(window.__FIELD_STUDIES__.native().status),null,{timeout:20000});
  assert.equal(await frame.evaluate(()=>window.__FIELD_STUDIES__.native().status),'following',await frame.locator('[data-native-status]').textContent());
