@@ -182,8 +182,15 @@ export class InstrumentSession {
     }
     if (this.#busy || this.#held || this.#uncertain) return this.reading;
     const estimate = JSON.stringify(this.#native).length * 2;
+    // target_context_seconds is the device time of the last admitted END cursor,
+    // including the empty post-rebase origin. That origin sits lead-seconds in the
+    // future with nothing scheduled yet — do not treat it as filled lookahead.
+    const scheduledAhead = this.#audio.lastReceipt?.scheduled_blocks > 0 || this.#queue.length > 0;
+    const fillHorizon = scheduledAhead
+      ? audio.target_context_seconds + this.#block / this.#context.sampleRate - this.#context.currentTime
+      : 0;
     if (capacity.frames < this.#block || !capacity.blocks || this.#queue.length >= this.#maxBlocks ||
-      this.#bytes + estimate > this.#maxBytes || audio.target_context_seconds + this.#block / this.#context.sampleRate - this.#context.currentTime > this.#lookahead)
+      this.#bytes + estimate > this.#maxBytes || fillHorizon > this.#lookahead)
       return this.reading;
     this.#busy = true; const generation = this.#generation;
     try {
