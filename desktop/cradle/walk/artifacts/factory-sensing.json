@@ -1,0 +1,186 @@
+{
+  "schema": "oi.cradle.walk.scenario/v1",
+  "scenario": "factory-sensing",
+  "spec_ref": "docs/cradle/11-FACTORY.md §3.4 §5; Factory telemetry commission §§13/21 (native signals, decisions, history, coverage)",
+  "grade": "B",
+  "binding": null,
+  "generated_at": "2026-09-24T11:43:28.396Z",
+  "environment": {
+    "base_url": "http://localhost:4173",
+    "bridge_url": "http://127.0.0.1:4179",
+    "viewport": "1280x820",
+    "browser_engine": "chromium",
+    "bundle": "walk (WALK=1) served by vite preview",
+    "build_input": {
+      "mode": "reused-dist",
+      "bundle_fingerprint": "6522b5b186605c0d0647bcec9c7d6899497059e896a8b251eed636e96227bd66"
+    },
+    "node": "v24.16.0",
+    "platform": "darwin",
+    "source": {
+      "repository_root": "/Users/admin/Central/worktrees/factory-sensing-20260924/o-i",
+      "repository_head": "f7082e5db055fceead01033e0693e126ef667d30",
+      "tracked_changes": [
+        "desktop/cradle/kernel/src/factory.rs",
+        "desktop/cradle/scripts/receipt-lint.mjs",
+        "desktop/cradle/src/contributions/factory/desk/Desk.tsx",
+        "desktop/cradle/src/contributions/factory/desk/RunPage.tsx",
+        "desktop/cradle/src/contributions/factory/desk/factoryReads.ts",
+        "desktop/cradle/walk/run.mjs"
+      ],
+      "dirty_digest": "7d5f2ec0c72f80c9d7d86d98ad5008003459e2b0434dc65a38c15a09bb8de009",
+      "engine_provenance_path": "/Users/admin/Central/worktrees/factory-sensing-20260924/o-i/packages/oi-design-system/expressions-engine/PROVENANCE.json",
+      "engine_source": "EpiLogos/Point-Cloud-Demo",
+      "engine_revision": "91db8428fc9dfba06cd258ec5a58e7dd9eef5313"
+    }
+  },
+  "passed": true,
+  "error": null,
+  "duration_ms": 14018,
+  "checks": [
+    {
+      "ok": true,
+      "label": "Signals: every visible signal equals the native Factory field reading",
+      "data": {
+        "rows": [
+          "factory:signal:4a8f02512ce9893acf8956cdf8ef80d838119a6e57214e48f44957ae0e9dada7",
+          "factory:signal:7b8e32e65b59618530812dfa18297194500bbc6861ab17d5c343472b0ff2eb0d"
+        ]
+      }
+    },
+    {
+      "ok": true,
+      "label": "Health: source coverage states equal the native collection",
+      "data": {
+        "coverage": [
+          "truncated"
+        ]
+      }
+    },
+    {
+      "ok": true,
+      "label": "Partial source: the UI carries Factory's exact reason for incomplete interval coverage alongside retained signals"
+    },
+    {
+      "ok": true,
+      "label": "Signal drill: the original observation and source ref equal native telemetry signal"
+    },
+    {
+      "ok": true,
+      "label": "Source drill: the exact telemetry ref resolves through Factory's native inspection"
+    },
+    {
+      "ok": true,
+      "label": "Work drill: native telemetry inspection links its recorded Run back to the source signal"
+    },
+    {
+      "ok": true,
+      "label": "Run return: back-navigation reopens the exact source signal in the Desk"
+    },
+    {
+      "ok": true,
+      "label": "Decisions: unclassified source signals are not promoted into human decisions; incomplete coverage is explicit"
+    },
+    {
+      "ok": true,
+      "label": "Digest: no mutation control appears without an owner decision"
+    },
+    {
+      "ok": true,
+      "label": "History: grouped boundaries equal the native lookback reading"
+    },
+    {
+      "ok": true,
+      "label": "History: a pattern signal ref drills back to the exact native observation"
+    },
+    {
+      "ok": true,
+      "label": "Day: grouped boundaries equal the native civil-Day reading"
+    },
+    {
+      "ok": true,
+      "label": "Current refresh: an unavailable hot projection falls back to the owner-native field with explicit basis"
+    },
+    {
+      "ok": true,
+      "label": "Kernel: source, current and temporal sensing reads reached their owners through the real bridge",
+      "data": {
+        "readKinds": [
+          "locate",
+          "inhabitation",
+          "telemetry-digest",
+          "telemetry-field",
+          "telemetry-signal",
+          "telemetry-inspect",
+          "workflow-inspect",
+          "telemetry-lookback",
+          "telemetry-day",
+          "telemetry-current"
+        ]
+      }
+    },
+    {
+      "ok": true,
+      "label": "UI: no sensing mutation was dispatched"
+    },
+    {
+      "ok": true,
+      "label": "Kernel: a hot request for another ProjectWorld is refused against the owner state source"
+    },
+    {
+      "ok": true,
+      "label": "UI: the owner state is byte-identical after all sensing reads"
+    }
+  ],
+  "ops": [
+    {
+      "ok": true,
+      "op": "info",
+      "duration_ms": 0.1,
+      "data": {
+        "schema": "oi.cradle.walk/v1",
+        "mounted_at": "2026-09-24T11:43:28.687Z",
+        "transport": {
+          "kind": "bridge",
+          "url": "http://127.0.0.1:4179"
+        },
+        "url": "http://localhost:4173/"
+      }
+    },
+    {
+      "ok": true,
+      "op": "info",
+      "duration_ms": 0,
+      "data": {
+        "schema": "oi.cradle.walk/v1",
+        "mounted_at": "2026-09-24T11:43:30.473Z",
+        "transport": {
+          "kind": "bridge",
+          "url": "http://127.0.0.1:4179"
+        },
+        "url": "http://localhost:4173/"
+      }
+    },
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 76,
+      "data": {
+        "file": "factory-sensing-factory-sensing-signal.png"
+      }
+    },
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 64,
+      "data": {
+        "file": "factory-sensing-factory-sensing-day.png"
+      }
+    }
+  ],
+  "metrics": {},
+  "screenshots": [
+    "factory-sensing-factory-sensing-signal.png",
+    "factory-sensing-factory-sensing-day.png"
+  ]
+}
