@@ -221,7 +221,7 @@ export class NativeAudioBinding {
     // Full validation precedes dropping anything already scheduled.
     this.hold(reason);
     this.#source = packet; this.#origin = packet.end; this.#originTime = this.#newOriginTime();
-    this.#lastAudio = null; this.#held = false; this.#epoch++;
+    this.#lastAudio = null; this.#held = false; this.#epoch++; this.#scheduled = 0;
     return this.#receipt('rebased-with-explicit-discontinuity', null);
   }
   dispose() {
