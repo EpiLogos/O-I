@@ -1,0 +1,118 @@
+{
+  "schema": "oi.native-expression-local/v1",
+  "status": "isolated-native-browser-passed",
+  "checks": {
+    "head": {
+      "argv": [
+        "git",
+        "rev-parse",
+        "HEAD"
+      ],
+      "code": 0,
+      "stdout": "182ab33ae6dceec15dda150d4b8c919abec299fd\n",
+      "stderr": ""
+    },
+    "working_copy": {
+      "argv": [
+        "git",
+        "status",
+        "--porcelain",
+        "--untracked-files=no"
+      ],
+      "code": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    "mac_version": {
+      "argv": [
+        "/usr/bin/sw_vers"
+      ],
+      "code": 0,
+      "stdout": "ProductName:\t\tmacOS\nProductVersion:\t\t26.5.2\nBuildVersion:\t\t25F84\n",
+      "stderr": ""
+    },
+    "mac_audio_display_inventory": {
+      "argv": [
+        "/usr/sbin/system_profiler",
+        "SPAudioDataType",
+        "SPDisplaysDataType",
+        "-json"
+      ],
+      "code": 0,
+      "stdout": "{\n  \"SPAudioDataType\" : [\n    {\n      \"_items\" : [\n        {\n          \"_name\" : \"MacBook Air Microphone\",\n          \"coreaudio_default_audio_input_device\" : \"spaudio_yes\",\n          \"coreaudio_device_input\" : 1,\n          \"coreaudio_device_manufacturer\" : \"Apple Inc.\",\n          \"coreaudio_device_srate\" : 44100,\n          \"coreaudio_device_transport\" : \"coreaudio_device_type_builtin\",\n          \"coreaudio_input_source\" : \"MacBook Air Microphone\"\n        },\n        {\n          \"_name\" : \"MacBook Air Speakers\",\n          \"_properties\" : \"coreaudio_default_audio_system_device\",\n          \"coreaudio_default_audio_output_device\" : \"spaudio_yes\",\n          \"coreaudio_default_audio_system_device\" : \"spaudio_yes\",\n          \"coreaudio_device_manufacturer\" : \"Apple Inc.\",\n          \"coreaudio_device_output\" : 2,\n          \"coreaudio_device_srate\" : 44100,\n          \"coreaudio_device_transport\" : \"coreaudio_device_type_builtin\",\n          \"coreaudio_output_source\" : \"MacBook Air Speakers\"\n        }\n      ],\n      \"_name\" : \"coreaudio_device\"\n    }\n  ],\n  \"SPDisplaysDataType\" : [\n    {\n      \"_name\" : \"Apple M4\",\n      \"spdisplays_mtlgpufamilysupport\" : \"spdisplays_metal4\",\n      \"spdisplays_ndrvs\" : [\n        {\n          \"_name\" : \"Color LCD\",\n          \"_spdisplays_display-product-id\" : \"a062\",\n          \"_spdisplays_display-serial-number\" : \"fd626d62\",\n          \"_spdisplays_display-vendor-id\" : \"610\",\n          \"_spdisplays_display-week\" : \"0\",\n          \"_spdisplays_display-year\" : \"0\",\n          \"_spdisplays_displayID\" : \"1\",\n          \"_spdisplays_pixels\" : \"2560 x 1664\",\n          \"_spdisplays_resolution\" : \"1280 x 832 @ 60.00Hz\",\n          \"spdisplays_ambient_brightness\" : \"spdisplays_yes\",\n          \"spdisplays_connection_type\" : \"spdisplays_internal\",\n          \"spdisplays_display_type\" : \"spdisplays_built-in-liquid-retina\",\n          \"spdisplays_main\" : \"spdisplays_yes\",\n          \"spdisplays_mirror\" : \"spdisplays_off\",\n          \"spdisplays_online\" : \"spdisplays_yes\",\n          \"spdisplays_pixelresolution\" : \"spdisplays_2560x1664Retina\"\n        },\n        {\n          \"_name\" : \"Cinema HD\",\n          \"_spdisplays_display-product-id\" : \"921c\",\n          \"_spdisplays_display-serial-number\" : \"201c9fc\",\n          \"_spdisplays_display-vendor-id\" : \"610\",\n          \"_spdisplays_display-week\" : \"18\",\n          \"_spdisplays_display-year\" : \"2008\",\n          \"_spdisplays_displayID\" : \"2\",\n          \"_spdisplays_pixels\" : \"1920 x 1200\",\n          \"_spdisplays_resolution\" : \"1920 x 1200 @ 60.00Hz\",\n          \"spdisplays_mirror\" : \"spdisplays_off\",\n          \"spdisplays_online\" : \"spdisplays_yes\",\n          \"spdisplays_pixelresolution\" : \"spdisplays_wuxga\",\n          \"spdisplays_resolution\" : \"1920 x 1200 @ 60.00Hz\",\n          \"spdisplays_rotation\" : \"spdisplays_supported\"\n        }\n      ],\n      \"spdisplays_vendor\" : \"sppci_vendor_Apple\",\n      \"sppci_bus\" : \"spdisplays_builtin\",\n      \"sppci_cores\" : \"10\",\n      \"sppci_device_type\" : \"spdisplays_gpu\",\n      \"sppci_model\" : \"Apple M4\"\n    }\n  ]\n}",
+      "stderr": ""
+    },
+    "node": {
+      "argv": [
+        "/opt/homebrew/opt/node@24/bin/node",
+        "--version"
+      ],
+      "code": 0,
+      "stdout": "v24.16.0\n",
+      "stderr": ""
+    },
+    "browser_process": {
+      "code": 0
+    },
+    "browser_receipt": {
+      "path": "/tmp/oi-nara-embodiment-local-hw13/browser/joined.json",
+      "sha256": "0a7688f3360dffad97d165ee05f0dcc189ccd7cd544b7d7a8696ae3a4f5286c6",
+      "schema": "oi.native-expression-joined-browser/v1",
+      "checks": 10,
+      "standing": "child behavioural result verified; not independent or installed acceptance"
+    },
+    "head_after": {
+      "argv": [
+        "git",
+        "rev-parse",
+        "HEAD"
+      ],
+      "code": 0,
+      "stdout": "182ab33ae6dceec15dda150d4b8c919abec299fd\n",
+      "stderr": ""
+    },
+    "working_copy_after": {
+      "argv": [
+        "git",
+        "status",
+        "--porcelain",
+        "--untracked-files=no"
+      ],
+      "code": 0,
+      "stdout": "",
+      "stderr": ""
+    }
+  },
+  "machine": {
+    "system": "Darwin",
+    "release": "25.5.0",
+    "machine": "arm64"
+  },
+  "claims": {
+    "installed_app": false,
+    "native_wkwebview": false,
+    "audible_speakers": false,
+    "microphone": false,
+    "real_model_provider": false,
+    "human_acceptance": false,
+    "controlled_central_disclosure": true
+  },
+  "files": {
+    "host": {
+      "path": "/Users/admin/Central/Work/Quaternal-Logic/target/release/ql-field-host",
+      "sha256": "a6e69d38b1dc352dbb5cc8e072981cfbc9ab11c2bfe15b17e65eb0e9719ba5e6"
+    },
+    "worker": {
+      "path": "/Users/admin/Central/Work/Quaternal-Logic/cpp/build/ql-field-worker",
+      "sha256": "c00e89a93ea6e1e38519dc956e94e0ddc77c684d59b0e0d730931dfdcb5c5e5e"
+    },
+    "bridge": {
+      "path": "/Users/admin/Central/Work/O-I/desktop/cradle/kernel/target/debug/walk-bridge",
+      "sha256": "9969dd479340aa83e919501fa8f164c75839badc4b8063ae42f3b03bb771c956"
+    },
+    "input": {
+      "path": "/Users/admin/Central/Work/O-I/desktop/cradle/walk/artifacts/ui-convergence/owner-verification/ql-coupled/input.json",
+      "sha256": "4b79e5c0d9b0c30c5c38dc1839de6fb00772480b4889b1ac5bc386ac9669ad32"
+    }
+  }
+}

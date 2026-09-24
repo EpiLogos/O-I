@@ -20,10 +20,14 @@
  *
  * A deictic focus ref no bound entity carries is `unmapped`: the stage
  * renders bound entities only, and nothing is invented in its place.
+ *
+ * When a PersonalProjectionBinding stands, centre locus_refs may resolve
+ * through the same Expression body used by speech (#336 co-ref).
  */
 
 import type {DeixisResolution} from "./dialogueContext";
 import type {ExpressionDocument} from "../expression/types";
+import type {PersonalProjectionBinding} from "./personalProjection";
 
 export type StageFocusOperation =
   |{op:"kernel-focus";subject_ref:string;entity_ref:string}
@@ -37,12 +41,44 @@ export interface StageFocusPlan {
   unmapped:string[];
 }
 
-export function stageFocusPlan(resolution:DeixisResolution,document:ExpressionDocument):StageFocusPlan {
+function resolveEntity(
+  document:ExpressionDocument,
+  refId:string,
+  personal:PersonalProjectionBinding|null|undefined,
+):{entity_ref:string}|null {
+  const entity=Object.values(document.entities).find(candidate=>candidate.subject?.subject_ref===refId);
+  if(entity)return {entity_ref:entity.entity_ref};
+  const centre=personal?.profile?.centres.find(c=>c.locus_ref===refId);
+  if(centre){
+    const bound=Object.values(document.entities).find(candidate=>
+      candidate.subject?.subject_ref===centre.locus_ref
+      ||candidate.title===centre.label
+      ||candidate.entity_ref.includes(`centre-${centre.ordinal}`)
+      ||candidate.entity_ref.includes(`centre:${centre.ordinal}`),
+    );
+    if(bound)return {entity_ref:bound.entity_ref};
+  }
+  if(personal?.profile?.earth_body.locus_ref===refId){
+    const earth=Object.values(document.entities).find(candidate=>
+      candidate.title==="EarthBody"
+      ||candidate.subject?.subject_ref===personal.profile!.earth_body.locus_ref
+      ||candidate.subject?.subject_ref?.includes("earth"),
+    );
+    if(earth)return {entity_ref:earth.entity_ref};
+  }
+  return null;
+}
+
+export function stageFocusPlan(
+  resolution:DeixisResolution,
+  document:ExpressionDocument,
+  personal?:PersonalProjectionBinding|null,
+):StageFocusPlan {
   if(resolution.outcome.outcome!=="focused")return {operations:[],unmapped:[resolution.outcome.ref_id]};
   const operations:StageFocusOperation[]=[];
   const unmapped:string[]=[];
   for(const focus of resolution.outcome.focus){
-    const entity=Object.values(document.entities).find(candidate=>candidate.subject?.subject_ref===focus.ref_id);
+    const entity=resolveEntity(document,focus.ref_id,personal);
     if(!entity){
       unmapped.push(focus.ref_id);
       continue;

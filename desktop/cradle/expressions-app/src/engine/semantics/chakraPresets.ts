@@ -6,7 +6,9 @@ import type { SemanticFieldConfig } from './semanticTypes';
 
 /**
  * Chakra is authored as ordinary physical entities plus separate semantic bindings.
+ * Authored seven-centre starter standing — not live Nara personal state.
  * No semantic identity or resonant station number is stored on the Entity itself.
+ * Hard law: centre identity ≠ cymatic station.
  */
 export function makeSemanticChakraEntities(shapeKind: ShapeKind = 'yantra'): Entity[] {
   return CHAKRA_DEFINITIONS.map((definition) => {

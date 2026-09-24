@@ -71,7 +71,7 @@ export class NativeAudioBinding {
     need(Number.isInteger(context.sampleRate) && context.sampleRate >= 8000 && context.sampleRate <= 192000,
       'unsupported device sample rate');
     need(finite(gain) && gain >= 0 && gain <= 1 && typeof muted === 'boolean', 'invalid explicit presentation gain/mute');
-    need(finite(leadSeconds) && leadSeconds >= 0 && leadSeconds <= 0.25, 'invalid scheduling lead');
+    need(finite(leadSeconds) && leadSeconds >= 0 && leadSeconds <= 0.5, 'invalid scheduling lead');
     need(Number.isInteger(maxQueuedFrames) && maxQueuedFrames >= 128 && maxQueuedFrames <= context.sampleRate * 2 &&
       Number.isInteger(maxBlocks) && maxBlocks >= 1 && maxBlocks <= 256, 'invalid audio queue ceiling');
     const initial = decode(initialFrame, context.sampleRate);
@@ -221,8 +221,19 @@ export class NativeAudioBinding {
     // Full validation precedes dropping anything already scheduled.
     this.hold(reason);
     this.#source = packet; this.#origin = packet.end; this.#originTime = this.#newOriginTime();
-    this.#lastAudio = null; this.#held = false; this.#epoch++;
+    this.#lastAudio = null; this.#held = false; this.#reason = null; this.#epoch++; this.#scheduled = 0;
     return this.#receipt('rebased-with-explicit-discontinuity', null);
+  }
+  /** Keep the admitted native cursor and open a fresh device epoch around it.
+   * Used when PCM for the next contiguous interval arrived after the previous
+   * origin was already past — never advances or rewinds native samples.
+   */
+  realignClock(reason) {
+    need(!this.#closed, 'audio receiver disposed'); reference(reason);
+    this.hold(reason);
+    this.#origin = this.#source.end; this.#originTime = this.#newOriginTime();
+    this.#lastAudio = null; this.#held = false; this.#reason = null; this.#epoch++; this.#scheduled = 0;
+    return this.#receipt('realigned-device-clock', null);
   }
   dispose() {
     if (this.#closed) return;
