@@ -14,6 +14,8 @@ export default defineConfig(() => {
     resolve: {
       alias: {
         '@': path.resolve(__dirname, '.'),
+        ...Object.fromEntries(['schema','domain','desktop-api','geography','viewers','node-document'].map(name => [`@research-canvas/${name}`, path.resolve(__dirname, `vendor/research-canvas/packages/${name}/src/index.ts`)])),
+        '@research-canvas/exporter': path.resolve(__dirname, 'vendor/research-canvas/browserExporter.ts'),
         // O:I-owned correspondence modules share this app's actual Three instance.
         'three': path.resolve(__dirname, 'node_modules/three'),
       },

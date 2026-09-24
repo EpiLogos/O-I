@@ -1,0 +1,618 @@
+--- a/packages/canvas/src/CanvasView.tsx
++++ b/packages/canvas/src/CanvasView.tsx
+@@ -29,7 +29,7 @@
+ import { AnnotatedEdge } from "./edges/AnnotatedEdge";
+ import { SequenceMap } from "./sequences/SequenceMap";
+ import { walkSequenceGraph } from "./sequences/walkSequenceGraph";
+-import { ContextMenu } from "./components/ContextMenu";
++import { ContextMenu, type MenuItem } from "./components/ContextMenu";
+ import { FuzzyFilePicker, type FileEntry } from "./components/FuzzyFilePicker";
+ import { defaultRelationshipKind } from "./state/canvasStore";
+ import { GroupNode } from "./nodes/GroupNode";
+@@ -38,7 +38,11 @@
+ import { ResourceNode } from "./nodes/ResourceNode";
+ import { defaultSourceHandleId, defaultTargetHandleId } from "./nodes/nodeHandles";
+ 
+-interface CanvasViewProps {
++export interface CanvasViewProps {
++  /** Owner supplies no write capability; preserve navigation and selection only. */
++  readOnly?: boolean;
++  /** A source-owned relation can remain read-only inside an editable Scene. */
++  isEdgeReadOnly?: (edgeId: string) => boolean;
+   /** Changes whenever the active workspace canvas changes. */
+   canvasKey?: string;
+   /** A persisted or tab-local viewport to restore after a canvas switch. */
+@@ -119,6 +123,8 @@
+ }
+ 
+ function CanvasViewInner({
++  readOnly = false,
++  isEdgeReadOnly,
+   canvasKey,
+   initialViewport = null,
+   edges,
+@@ -155,6 +161,7 @@
+   assetUrlForPath,
+   resolveAssetUrl,
+ }: CanvasViewProps) {
++  const containerRef = useRef<HTMLDivElement>(null);
+   const { fitView, getViewport, getZoom, screenToFlowPosition, setCenter, setViewport, zoomIn, zoomOut } =
+     useReactFlow();
+ 
+@@ -288,14 +295,14 @@
+     }
+ 
+     const editingNode = nodes.find((node) => node.id === editingNodeId);
+-    if (!editingNode || editingNode.type !== "note") {
++    if (readOnly || !editingNode || editingNode.type !== "note") {
+       setEditingNodeId(null);
+     }
+-  }, [editingNodeId, nodes]);
++  }, [editingNodeId, nodes, readOnly]);
+ 
+   const handleConnect = useCallback(
+     (connection: Connection) => {
+-      if (!connection.source || !connection.target) return;
++      if (readOnly || !connection.source || !connection.target) return;
+       onConnectNodes?.({
+         sourceNodeId: connection.source,
+         targetNodeId: connection.target,
+@@ -305,18 +312,19 @@
+         directionality: "forward",
+       });
+     },
+-    [onConnectNodes],
++    [onConnectNodes, readOnly],
+   );
+ 
+   const handleNodesChange = useCallback(
+     (changes: NodeChange[]) => {
++      if (readOnly) return;
+       for (const change of changes) {
+         if (change.type === "dimensions" && change.resizing && change.dimensions) {
+           onResizeNode?.(change.id, change.dimensions.width, change.dimensions.height);
+         }
+       }
+     },
+-    [onResizeNode],
++    [onResizeNode, readOnly],
+   );
+ 
+   useEffect(() => {
+@@ -326,20 +334,20 @@
+         return;
+       }
+       if (!(e.target as HTMLElement)?.closest?.(".react-flow")) return;
+-      if (e.key === "Delete" || e.key === "Backspace") {
++      if (!readOnly && (e.key === "Delete" || e.key === "Backspace")) {
+         const selected = nodes.find((n) => n.id === selectedNodeId);
+         if (selected) {
+           onDeleteNode?.(selected.id);
+-        } else if (selectedEdgeId) {
++        } else if (selectedEdgeId && !isEdgeReadOnly?.(selectedEdgeId)) {
+           onDeleteEdge?.(selectedEdgeId);
+         }
+       }
+-      if ((e.metaKey || e.ctrlKey) && e.key === "d") {
++      if (!readOnly && (e.metaKey || e.ctrlKey) && e.key === "d") {
+         e.preventDefault();
+         const selected = nodes.find((n) => n.id === selectedNodeId);
+         if (selected) onDuplicateNode?.(selected.id);
+       }
+-      if (e.key === "n" && !e.metaKey && !e.ctrlKey && !e.shiftKey) {
++      if (!readOnly && e.key === "n" && !e.metaKey && !e.ctrlKey && !e.shiftKey) {
+         onCreateNote?.(getViewportCenter());
+       }
+       if (e.key === "p" && !e.metaKey && !e.ctrlKey && !e.shiftKey) {
+@@ -361,6 +369,8 @@
+     onCreateNote,
+     onPlaySequence,
+     getViewportCenter,
++    readOnly,
++    isEdgeReadOnly,
+   ]);
+ 
+   const flowNodes: Node[] = nodes.map((node) => ({
+@@ -370,6 +380,7 @@
+     width: node.size?.width,
+     height: node.size?.height,
+     data: {
++      readOnly,
+       summary:
+         node.summary,
+       nodeType: node.type === "portal" ? "portal" : node.type === "group" ? "group" : undefined,
+@@ -379,19 +390,19 @@
+       src: node.type === "image" ? node.src : undefined,
+       caption: node.type === "image" ? node.caption ?? undefined : undefined,
+       onCaptionChange:
+-        node.type === "image"
++        !readOnly && node.type === "image" && onUpdateImageCaption
+           ? (caption: string) => onUpdateImageCaption?.(node.id, caption)
+           : undefined,
+       tags: node.type === "note" ? node.tags : undefined,
+       resourceKind: node.type === "resource" ? node.resourceKind : undefined,
+       absolutePath: node.type === "resource" ? node.absolutePath : undefined,
+-      isEditing: node.type === "note" ? node.id === editingNodeId : false,
++      isEditing: !readOnly && node.type === "note" ? node.id === editingNodeId : false,
+       onContentChange:
+-        node.type === "note"
++        !readOnly && node.type === "note" && onUpdateNoteContent
+           ? (content: string) => onUpdateNoteContent?.(node.id, content)
+           : undefined,
+       onStartEditing:
+-        node.type === "note"
++        !readOnly && node.type === "note" && onUpdateNoteContent
+           ? () => {
+               onSelectNode?.(node.id);
+               onSelectEdge?.(null);
+@@ -399,7 +410,7 @@
+             }
+           : undefined,
+       onStopEditing:
+-        node.type === "note"
++        !readOnly && node.type === "note" && onUpdateNoteContent
+           ? () => setEditingNodeId((current) => (current === node.id ? null : current))
+           : undefined,
+       style: {
+@@ -413,7 +424,7 @@
+             : undefined),
+       },
+     },
+-    draggable: true,
++    draggable: !readOnly && !!onMoveNode,
+     selectable: true,
+     selected: node.id === selectedNodeId
+   }));
+@@ -425,7 +436,9 @@
+     target: edge.targetNodeId,
+     targetHandle: edge.targetHandleId ?? defaultTargetHandleId(),
+     type: "annotated",
++    reconnectable: !readOnly && !isEdgeReadOnly?.(edge.id) && !!onReconnectEdge,
+     data: {
++      readOnly: readOnly || !!isEdgeReadOnly?.(edge.id),
+       directionality: edge.directionality,
+       relationKind: edge.relationKind,
+       note: edge.note,
+@@ -434,10 +447,10 @@
+         onSelectNode?.(null);
+         onSelectEdge?.(edge.id);
+       },
+-      onCycleDirectionality: () => onCycleEdgeDirectionality?.(edge.id),
+-      onDelete: () => onDeleteEdge?.(edge.id),
+-      onUpdateRelationKind: (relationKind: string) =>
+-        onUpdateEdgeRelationKind?.(edge.id, relationKind),
++      onCycleDirectionality: onCycleEdgeDirectionality ? () => onCycleEdgeDirectionality(edge.id) : undefined,
++      onDelete: onDeleteEdge ? () => onDeleteEdge(edge.id) : undefined,
++      onUpdateRelationKind: onUpdateEdgeRelationKind ? (relationKind: string) =>
++        onUpdateEdgeRelationKind(edge.id, relationKind) : undefined,
+       selected: edge.id === selectedEdgeId
+     },
+     ...(edge.sequencing
+@@ -456,8 +469,8 @@
+         label: flowNodes.find((n) => n.id === nodeId)?.data?.title as string ?? "Node",
+       },
+       { type: "separator" as const },
+-      { type: "item" as const, label: "Open content", shortcut: "↵", onClick: () => onNodeDoubleClick?.(nodeId) },
+-      ...(nodes.find((candidate) => candidate.id === nodeId)?.type === "note"
++      ...(onNodeDoubleClick ? [{ type: "item" as const, label: "Open content", shortcut: "↵", onClick: () => onNodeDoubleClick(nodeId) }] : []),
++      ...(onUpdateNoteContent && nodes.find((candidate) => candidate.id === nodeId)?.type === "note"
+         ? [
+             {
+               type: "item" as const,
+@@ -470,13 +483,11 @@
+             },
+           ]
+         : []),
+-      { type: "item" as const, label: "Draw edge →", onClick: () => {} },
+       { type: "separator" as const },
+-      { type: "item" as const, label: "Duplicate", shortcut: "⌘D", onClick: () => onDuplicateNode?.(nodeId) },
++      ...(onDuplicateNode ? [{ type: "item" as const, label: "Duplicate", shortcut: "⌘D", onClick: () => onDuplicateNode(nodeId) }] : []),
+       { type: "separator" as const },
+-      { type: "item" as const, label: "Customise…", onClick: () => {} },
+       { type: "separator" as const },
+-      { type: "item" as const, label: "Delete", shortcut: "⌫", danger: true, onClick: () => onDeleteNode?.(nodeId) },
++      ...(onDeleteNode ? [{ type: "item" as const, label: "Delete", shortcut: "⌫", danger: true, onClick: () => onDeleteNode(nodeId) }] : []),
+     ];
+   }, [
+     contextMenu,
+@@ -485,17 +496,18 @@
+     onNodeDoubleClick,
+     onDuplicateNode,
+     onDeleteNode,
++    onUpdateNoteContent,
+     onSelectEdge,
+     onSelectNode,
+   ],);
+ 
+   return (
+-    <div className="canvas-flow" data-testid="canvas-flow">
++    <div ref={containerRef} className="canvas-flow" data-testid="canvas-flow">
+       <div className="canvas-toolbar" data-testid="canvas-toolbar">
+         <button type="button" aria-label="Zoom in" onClick={() => zoomIn?.()}>+</button>
+         <button type="button" aria-label="Zoom out" onClick={() => zoomOut?.()}>-</button>
+         <button type="button" aria-label="Fit view" onClick={() => fitView({ padding: 0.15 })}>Fit</button>
+-        {edges.some((e) => e.sequencing) && (
++        {onPlaySequence && edges.some((e) => e.sequencing) && (
+           <button type="button" aria-label="Play sequence" onClick={() => onPlaySequence?.()}>Play</button>
+         )}
+       </div>
+@@ -506,9 +518,13 @@
+         fitView
+         nodes={flowNodes}
+         nodeTypes={nodeTypes}
+-        nodesDraggable
++        nodesDraggable={!readOnly && !!onMoveNode}
++        nodesConnectable={!readOnly && !!onConnectNodes}
++        edgesReconnectable={!readOnly && !!onReconnectEdge}
++        deleteKeyCode={null}
+         nodesFocusable
+         onDragOver={(e: React.DragEvent) => {
++          if (readOnly) return;
+           // Always prevent default to allow drops; validate content in onDrop
+           // (WKWebView may not reliably support custom MIME types in DataTransfer)
+           e.preventDefault();
+@@ -516,6 +532,7 @@
+         }}
+         onDrop={(e: React.DragEvent) => {
+           e.preventDefault();
++          if (readOnly) return;
+           // Try custom type first, fall back to text/plain (WKWebView compatibility)
+           const raw = e.dataTransfer.getData("application/x-canvas-entry")
+             || e.dataTransfer.getData("text/plain");
+@@ -570,10 +587,10 @@
+           onSelectEdge?.(null);
+         }}
+         onNodeDrag={(_event, node) => {
+-          onMoveNode?.(node.id, node.position);
++          if (!readOnly) onMoveNode?.(node.id, node.position);
+         }}
+         onNodeDragStop={(_event, node) => {
+-          onMoveNode?.(node.id, node.position);
++          if (!readOnly) onMoveNode?.(node.id, node.position);
+         }}
+         onNodeDoubleClick={(_e, node) => {
+           setEditingNodeId(null);
+@@ -587,7 +604,7 @@
+         onNodesChange={handleNodesChange}
+         onConnect={handleConnect}
+         onReconnect={(oldEdge, newConnection) => {
+-          if (!newConnection.source || !newConnection.target) {
++          if (readOnly || isEdgeReadOnly?.(oldEdge.id) || !newConnection.source || !newConnection.target) {
+             return;
+           }
+           onReconnectEdge?.(oldEdge.id, {
+@@ -599,20 +616,20 @@
+         }}
+         reconnectRadius={20}
+         connectionMode={ConnectionMode.Loose}
+-        connectOnClick={true}
++        connectOnClick={!readOnly && !!onConnectNodes}
+         onPaneContextMenu={(e) => {
+           e.preventDefault();
+-          setContextMenu({ x: e.clientX, y: e.clientY, kind: "canvas" });
++          if (!readOnly) setContextMenu({ x: e.clientX, y: e.clientY, kind: "canvas" });
+         }}
+         onNodeContextMenu={(e, node) => {
+           e.preventDefault();
+           e.stopPropagation();
+-          setContextMenu({ x: e.clientX, y: e.clientY, kind: "node", nodeId: node.id });
++          if (!readOnly) setContextMenu({ x: e.clientX, y: e.clientY, kind: "node", nodeId: node.id });
+         }}
+         onEdgeContextMenu={(e, edge) => {
+           e.preventDefault();
+           e.stopPropagation();
+-          setContextMenu({ x: e.clientX, y: e.clientY, kind: "edge", edgeId: edge.id });
++          if (!readOnly && !isEdgeReadOnly?.(edge.id)) setContextMenu({ x: e.clientX, y: e.clientY, kind: "edge", edgeId: edge.id });
+         }}
+         panOnDrag={true}
+       >
+@@ -628,16 +645,17 @@
+       </ReactFlow>
+       <AnnotationLayer
+         annotations={annotations}
+-        drawingEnabled={drawingEnabled}
+-        onCreateStroke={(points) => onCreateStroke?.(points)}
++        drawingEnabled={!readOnly && drawingEnabled}
++        onCreateStroke={(points) => { if (!readOnly) onCreateStroke?.(points); }}
+       />
+ 
+-      {contextMenu && contextMenu.kind === "canvas" && (
++      {!readOnly && contextMenu && contextMenu.kind === "canvas" && (
+         <ContextMenu
++          portalRoot={containerRef.current}
+           x={contextMenu.x}
+           y={contextMenu.y}
+           onClose={closeContextMenu}
+-          items={[
++          items={availableMenu([
+             { type: "item", label: "Add note", shortcut: "N", onClick: () => onCreateNote?.(screenToFlowPosition({ x: contextMenu.x, y: contextMenu.y })) },
+             { type: "item", label: "Add image", shortcut: "I", onClick: () => setShowFilePicker({ x: contextMenu.x, y: contextMenu.y }) },
+             {
+@@ -650,8 +668,6 @@
+               },
+             },
+             { type: "item", label: "Add group", shortcut: "G", onClick: () => onCreateGroup?.(getViewportCenter()) },
+-          { type: "item", label: "Paste", shortcut: "⌘V", onClick: () => {} },
+-          { type: "item", label: "Select all", shortcut: "⌘A", onClick: () => {} },
+           ...(edges.some((e) => e.sequencing)
+             ? [
+                 { type: "separator" as const },
+@@ -666,25 +682,27 @@
+                 },
+               ]
+             : []),
+-        ]}
++        ], {"Add note": !!onCreateNote, "Add image": !!onCreateImageFromFile, "Add resource from file…": !!onCreateResourceFromFile, "Add group": !!onCreateGroup, "Play sequence": !!onPlaySequence})}
+       />
+       )}
+ 
+-      {contextMenu?.nodeId && (
++      {!readOnly && contextMenu?.nodeId && (
+         <ContextMenu
++          portalRoot={containerRef.current}
+           x={contextMenu.x}
+           y={contextMenu.y}
+           onClose={closeContextMenu}
+-          items={nodeContextMenuItems}
++          items={availableMenu(nodeContextMenuItems,{})}
+         />
+       )}
+ 
+-      {contextMenu?.kind === "edge" && contextMenu.edgeId && (
++      {!readOnly && contextMenu?.kind === "edge" && contextMenu.edgeId && !isEdgeReadOnly?.(contextMenu.edgeId) && (
+         <ContextMenu
++          portalRoot={containerRef.current}
+           x={contextMenu.x}
+           y={contextMenu.y}
+           onClose={closeContextMenu}
+-          items={[
++          items={availableMenu([
+             {
+               type: "item",
+               label: edges.find((e) => e.id === contextMenu.edgeId)?.sequencing
+@@ -715,11 +733,11 @@
+                 closeContextMenu();
+               },
+             },
+-          ]}
++          ], {"Remove from sequence": !!onToggleEdgeSequencing, "Mark as sequence arrow": !!onToggleEdgeSequencing, "Cycle arrow direction": !!onCycleEdgeDirectionality, "Delete connection": !!onDeleteEdge})}
+         />
+       )}
+ 
+-      {showFilePicker && (
++      {!readOnly && showFilePicker && (
+         <FuzzyFilePicker
+           anchorX={showFilePicker.x}
+           anchorY={showFilePicker.y}
+@@ -740,6 +758,12 @@
+   );
+ }
+ 
++/** Keep only native callback-backed actions and meaningful separators. */
++export function availableMenu(items: MenuItem[], capabilities: Record<string, boolean>): MenuItem[] {
++ const kept=items.filter(item=>item.type!=='item'||(!!item.onClick&&!!item.label&&capabilities[item.label]!==false));
++ return kept.filter((item,index)=>item.type!=='separator'||(index>0&&kept.slice(index+1).some(next=>next.type!=='separator')&&kept[index-1].type!=='separator'));
++}
++
+ function edgeMarkers(directionality: CanvasEdge["directionality"]): {
+   markerStart?: EdgeMarker;
+   markerEnd?: EdgeMarker;
+--- a/packages/canvas/src/components/ContextMenu.tsx
++++ b/packages/canvas/src/components/ContextMenu.tsx
+@@ -12,13 +12,15 @@
+ }
+ 
+ interface ContextMenuProps {
++  /** Keep host-scoped component styling on embedded menus. */
++  portalRoot?: HTMLElement | null;
+   x: number;
+   y: number;
+   items: MenuItem[];
+   onClose: () => void;
+ }
+ 
+-export function ContextMenu({ x, y, items, onClose }: ContextMenuProps) {
++export function ContextMenu({ x, y, items, onClose, portalRoot }: ContextMenuProps) {
+   const ref = useRef<HTMLDivElement>(null);
+ 
+   const adjustedX = Math.min(x, window.innerWidth - 180);
+@@ -90,6 +92,6 @@
+         );
+       })}
+     </div>,
+-    document.body,
++    portalRoot ?? document.body,
+   );
+ }
+--- a/packages/canvas/src/edges/AnnotatedEdge.tsx
++++ b/packages/canvas/src/edges/AnnotatedEdge.tsx
+@@ -79,7 +79,7 @@
+           }}
+         >
+           <div className="flow-edge-label__text">
+-            {data?.selected ? (
++            {data?.selected && !data.readOnly && data.onUpdateRelationKind ? (
+               <select
+                 aria-label="Relation kind"
+                 className="flow-edge-label__select"
+@@ -126,9 +126,9 @@
+             )}
+             {data?.note ? <span>{data.note}</span> : null}
+           </div>
+-          {data?.selected ? (
++          {data?.selected && !data.readOnly ? (
+             <div className="flow-edge-actions">
+-              <button
++              {data.onCycleDirectionality && <button
+                 className="flow-edge-action"
+                 onClick={(event) => {
+                   event.preventDefault();
+@@ -142,8 +142,8 @@
+                 type="button"
+               >
+                 ⇄
+-              </button>
+-              <button
++              </button>}
++              {data.onDelete && <button
+                 className="flow-edge-action"
+                 onClick={(event) => {
+                   event.preventDefault();
+@@ -157,7 +157,7 @@
+                 type="button"
+               >
+                 ×
+-              </button>
++              </button>}
+             </div>
+           ) : null}
+         </div>
+--- a/packages/canvas/src/nodes/GroupNode.tsx
++++ b/packages/canvas/src/nodes/GroupNode.tsx
+@@ -42,7 +42,7 @@
+         minHeight={120}
+         position="bottom-right"
+         className="node-resize-control node-resize-control--bottom-right"
+-        style={{ display: selected ? "flex" : "none" }}
++        style={{ display: selected && !data.readOnly ? "flex" : "none" }}
+       >
+         <div className="node-resize-grip" />
+       </NodeResizeControl>
+@@ -51,7 +51,7 @@
+         minHeight={120}
+         position="bottom-left"
+         className="node-resize-control node-resize-control--bottom-left"
+-        style={{ display: selected ? "flex" : "none" }}
++        style={{ display: selected && !data.readOnly ? "flex" : "none" }}
+       >
+         <div className="node-resize-grip" />
+       </NodeResizeControl>
+@@ -60,7 +60,7 @@
+         minHeight={120}
+         position="top-right"
+         className="node-resize-control node-resize-control--top-right"
+-        style={{ display: selected ? "flex" : "none" }}
++        style={{ display: selected && !data.readOnly ? "flex" : "none" }}
+       >
+         <div className="node-resize-grip" />
+       </NodeResizeControl>
+@@ -69,7 +69,7 @@
+         minHeight={120}
+         position="top-left"
+         className="node-resize-control node-resize-control--top-left"
+-        style={{ display: selected ? "flex" : "none" }}
++        style={{ display: selected && !data.readOnly ? "flex" : "none" }}
+       >
+         <div className="node-resize-grip" />
+       </NodeResizeControl>
+--- a/packages/canvas/src/nodes/ImageNode.tsx
++++ b/packages/canvas/src/nodes/ImageNode.tsx
+@@ -30,7 +30,7 @@
+         minHeight={80}
+         position="bottom-right"
+         className="node-resize-control node-resize-control--bottom-right"
+-        style={{ display: selected ? "flex" : "none" }}
++        style={{ display: selected && !data.readOnly ? "flex" : "none" }}
+       >
+         <div className="node-resize-grip" />
+       </NodeResizeControl>
+@@ -56,7 +56,7 @@
+             src={data.src}
+             style={{ width: "100%", height: "100%", objectFit: "cover" }}
+           />
+-          {selected ? (
++          {selected && !data.readOnly && data.onCaptionChange ? (
+             <input
+               aria-label="Image caption"
+               className="image-node__caption nodrag nopan"
+--- a/packages/canvas/src/nodes/NoteNode.tsx
++++ b/packages/canvas/src/nodes/NoteNode.tsx
+@@ -60,7 +60,7 @@
+         minHeight={60}
+         position="bottom-right"
+         className="node-resize-control node-resize-control--bottom-right"
+-        style={{ display: selected ? "flex" : "none" }}
++        style={{ display: selected && !data.readOnly ? "flex" : "none" }}
+       >
+         <div className="node-resize-grip" />
+       </NodeResizeControl>
+@@ -69,7 +69,7 @@
+         minHeight={60}
+         position="bottom-left"
+         className="node-resize-control node-resize-control--bottom-left"
+-        style={{ display: selected ? "flex" : "none" }}
++        style={{ display: selected && !data.readOnly ? "flex" : "none" }}
+       >
+         <div className="node-resize-grip" />
+       </NodeResizeControl>
+@@ -78,7 +78,7 @@
+         minHeight={60}
+         position="top-right"
+         className="node-resize-control node-resize-control--top-right"
+-        style={{ display: selected ? "flex" : "none" }}
++        style={{ display: selected && !data.readOnly ? "flex" : "none" }}
+       >
+         <div className="node-resize-grip" />
+       </NodeResizeControl>
+@@ -87,7 +87,7 @@
+         minHeight={60}
+         position="top-left"
+         className="node-resize-control node-resize-control--top-left"
+-        style={{ display: selected ? "flex" : "none" }}
++        style={{ display: selected && !data.readOnly ? "flex" : "none" }}
+       >
+         <div className="node-resize-grip" />
+       </NodeResizeControl>
+@@ -107,7 +107,7 @@
+           data-editing={data.isEditing ? "true" : "false"}
+           data-selected={selected ? "true" : "false"}
+         >
+-          {data.isEditing ? (
++          {data.isEditing && !data.readOnly ? (
+             <div
+               ref={editorRef}
+               className="note-node__editor nodrag nopan"
+--- a/packages/canvas/src/nodes/ResourceNode.tsx
++++ b/packages/canvas/src/nodes/ResourceNode.tsx
+@@ -47,7 +47,7 @@
+         minHeight={60}
+         position="bottom-right"
+         className="node-resize-control node-resize-control--bottom-right"
+-        style={{ display: selected ? "flex" : "none" }}
++        style={{ display: selected && !data.readOnly ? "flex" : "none" }}
+       >
+         <div className="node-resize-grip" />
+       </NodeResizeControl>
+@@ -56,7 +56,7 @@
+         minHeight={60}
+         position="bottom-left"
+         className="node-resize-control node-resize-control--bottom-left"
+-        style={{ display: selected ? "flex" : "none" }}
++        style={{ display: selected && !data.readOnly ? "flex" : "none" }}
+       >
+         <div className="node-resize-grip" />
+       </NodeResizeControl>
+@@ -65,7 +65,7 @@
+         minHeight={60}
+         position="top-right"
+         className="node-resize-control node-resize-control--top-right"
+-        style={{ display: selected ? "flex" : "none" }}
++        style={{ display: selected && !data.readOnly ? "flex" : "none" }}
+       >
+         <div className="node-resize-grip" />
+       </NodeResizeControl>
+@@ -74,7 +74,7 @@
+         minHeight={60}
+         position="top-left"
+         className="node-resize-control node-resize-control--top-left"
+-        style={{ display: selected ? "flex" : "none" }}
++        style={{ display: selected && !data.readOnly ? "flex" : "none" }}
+       >
+         <div className="node-resize-grip" />
+       </NodeResizeControl>
+--- a/packages/schema/src/sequence.ts
++++ b/packages/schema/src/sequence.ts
+@@ -1,2 +1,3 @@
+ // Sequences are now graph-emergent — defined by edge.sequencing flags.
+ // The old Sequence and SequenceStep types have been removed.
++export {};

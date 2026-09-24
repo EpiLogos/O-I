@@ -10,7 +10,8 @@
     "test": "npm run build && node --test tests/model.test.mjs",
     "test:browser": "python tests/native_browser.py",
     "typecheck": "tsc --noEmit",
-    "test:gpu": "python tests/native_gpu.py"
+    "test:gpu": "python tests/native_gpu.py",
+    "test:research-native": "node --test tests/research-instruments-native.test.mjs"
   },
   "devDependencies": {
     "typescript": "5.8.3"

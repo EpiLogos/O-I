@@ -18,10 +18,33 @@
     "paths": {
       "@/*": [
         "./*"
+      ],
+      "@research-canvas/schema": [
+        "./vendor/research-canvas/packages/schema/src/index.ts"
+      ],
+      "@research-canvas/domain": [
+        "./vendor/research-canvas/packages/domain/src/index.ts"
+      ],
+      "@research-canvas/desktop-api": [
+        "./vendor/research-canvas/packages/desktop-api/src/index.ts"
+      ],
+      "@research-canvas/geography": [
+        "./vendor/research-canvas/packages/geography/src/index.ts"
+      ],
+      "@research-canvas/viewers": [
+        "./vendor/research-canvas/packages/viewers/src/index.ts"
+      ],
+      "@research-canvas/node-document": [
+        "./vendor/research-canvas/packages/node-document/src/index.ts"
+      ],
+      "@research-canvas/exporter": [
+        "./vendor/research-canvas/browserExporter.ts"
       ]
     },
     "allowImportingTsExtensions": true,
-    "noEmit": true
+    "noEmit": true,
+    "resolveJsonModule": true,
+    "strictNullChecks": true
   },
   "exclude": [
     "tests/parity",

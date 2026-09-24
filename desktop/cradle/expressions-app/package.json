@@ -14,14 +14,22 @@
     "export:legacy-collections": "node scripts/export-legacy-collections.mjs"
   },
   "dependencies": {
+    "@blocknote/core": "^0.39.2",
+    "@blocknote/mantine": "^0.39.2",
+    "@blocknote/react": "^0.39.2",
     "@tailwindcss/vite": "^4.1.14",
     "@vitejs/plugin-react": "^5.0.4",
+    "@xyflow/react": "^12.11.6",
     "lucide-react": "^0.546.0",
+    "maplibre-gl": "^6.11.1",
+    "perfect-freehand": "^1.2.3",
     "react": "^19.0.1",
     "react-dom": "^19.0.1",
     "three": "^0.186.0",
     "tweakpane": "^4.0.5",
-    "vite": "^6.2.3"
+    "vite": "^6.2.3",
+    "zod": "^4.6.5",
+    "zustand": "^5.0.15"
   },
   "devDependencies": {
     "@types/node": "^22.14.0",

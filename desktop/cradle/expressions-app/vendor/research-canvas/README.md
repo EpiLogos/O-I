@@ -1,0 +1,50 @@
+# Research Canvas source intake
+
+The implementations come from Research Canvas / Antichrist Project,
+revision `7df35f822f9235331a69940cdaf484fe4a0b95c1`. `PROVENANCE.json` records every
+upstream source SHA-256 and every explicit adaptation; the private collaborator
+notice is retained as `LICENSE`.
+
+This is the static dependency closure of the actual CanvasView, TimelineSurface,
+PsychogeographicMap and StreetViewSurface components, their offline geography
+pack, and their styles. It does not mount Research Canvas's separate application,
+public viewer, SQLite store, backend or workspace provider. The O:I engine supplies
+its own actual native construction, selection and repository operations.
+
+`components.ts` is the O:I host export facade. `browserExporter.ts` exposes the
+existing pure Markdown converters needed by the viewer, keeping the unrelated
+native file-export runner out of browser module loading. These files and this
+README are O:I overlays. The upstream `techneBundle` and `techneTransport`
+adapters project native readings without a database, preserving native refs.
+Semantic mutations refuse; accepted layout changes stay on that transport
+instance only and are not durable. Hosts must not call the separate standalone
+application transport factory.
+
+`patches/read-only-capability.patch` is the explicit adaptation to CanvasView and
+its node/edge renderers. Pass `readOnly` when the native owner supplies no writes.
+Selection, opening content, zoom and scene playback remain available; dragging,
+connections, resizing, caption/note/edge editing, drawing and mutation menus or
+shortcuts are withheld. The manifest keeps both upstream and adapted hashes.
+
+Resolve `@research-canvas/{schema,domain,desktop-api,geography,viewers,node-document}`
+to the respective `packages/<name>/src/index.ts` here. Resolve
+`@research-canvas/exporter` to `browserExporter.ts`. Import `components.ts` directly;
+the whole upstream canvas barrel and unrelated instruments are intentionally not
+copied. Use the engine's single React19 instance.
+
+Runtime dependency requirements are recorded in the copied package manifests:
+`@xyflow/react ^12.8.5`, `maplibre-gl ^6.2.0`, `perfect-freehand ^1.2.2`,
+`zustand ^5.0.8`, `zod ^4.1.11`, and `@blocknote/{core,react,mantine} ^0.39.1`.
+The selected components do not use the separate Palace renderer or react-three.
+
+Upstream styles are retained byte-exact for host review. The engine owns how they
+are scoped; do not blindly apply the upstream application's global shell styles.
+MapLibre's worker URL and offline pack assets remain part of the real component.
+
+Run `node vendor/research-canvas/verify-source.mjs` from expressions-app to verify
+source integrity. This is provenance evidence; functional acceptance still needs
+the engine host and its native owner adapter.
+
+Run `node vendor/research-canvas/tests/run-read-only.mjs` for real-component server
+render checks using the installed React/ReactFlow/viewer dependencies, without
+substitutes. Native interactive acceptance belongs to the integrated engine.
