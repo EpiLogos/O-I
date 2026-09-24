@@ -120,7 +120,7 @@ function bindingPlace(binding: SurfaceBinding, snapshot: KernelSnapshotState, mo
 
 function recentPlace(place: WorkspaceRecentPlace): SituationPlace {
   return {
-    key: placeKey(place.kind, place.location?.ref ?? place.ref ?? place.path),
+    key: place.kind === "directory" && place.projectRef ? placeKey("directory", place.projectRef + ":" + place.path) : placeKey(place.kind, place.location?.ref ?? place.ref ?? place.path),
     kind: place.kind,
     title: place.label,
     path: place.path,
