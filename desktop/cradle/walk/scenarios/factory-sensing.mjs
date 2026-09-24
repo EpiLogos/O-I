@@ -125,10 +125,21 @@ export default async function run({page, baseUrl, bridgeUrl, check, shot, channe
   await panel.locator('[data-history-schema="factory.telemetry-day/v1"]').waitFor({timeout:60000});
   check((await panel.locator(".fsense-history-row").count()) === p.dayRead.patterns.length,
     "Day: grouped boundaries equal the native civil-Day reading");
+  const historyReadsBefore = ops.filter(op => op.kind === "telemetry-lookback" || op.kind === "telemetry-day").length;
+  await panel.getByRole("button", {name:"Look back"}).click();
+  await panel.getByRole("button", {name:"Read Day"}).click();
+  for (let elapsed = 0; elapsed < 60000 && ops.filter(op => op.kind === "telemetry-lookback" || op.kind === "telemetry-day").length < historyReadsBefore + 2; elapsed += 100) await page.waitForTimeout(100);
+  check(ops.filter(op => op.kind === "telemetry-lookback" || op.kind === "telemetry-day").length >= historyReadsBefore + 2
+    && await panel.locator('[data-history-schema="factory.telemetry-day/v1"]').count() === 1,
+    "History: after two real overlapping owner reads, the latest requested Day remains selected");
+  const signalReadsBeforeRefresh = ops.filter(op => op.kind === "telemetry-signal" && op.result === "factory_development_reading").length;
   await panel.getByRole("button", {name:"Refresh sensing for Specimen"}).click();
   await page.waitForFunction(() => document.querySelector(".fsense-source[data-sensing-source='Specimen'] .fsense-source-head small")?.textContent?.includes("hot projection unavailable"), null, {timeout:60000});
   check((await panel.locator(".fsense-source-head small").innerText()).includes("Factory native"),
     "Current refresh: an unavailable hot projection falls back to the owner-native field with explicit basis");
+  for (let elapsed = 0; elapsed < 60000 && ops.filter(op => op.kind === "telemetry-signal" && op.result === "factory_development_reading").length <= signalReadsBeforeRefresh; elapsed += 100) await page.waitForTimeout(100);
+  check(ops.filter(op => op.kind === "telemetry-signal" && op.result === "factory_development_reading").length > signalReadsBeforeRefresh,
+    "Selected signal: refreshing the owner field rereads its detail, even when the signal ref is unchanged");
   await shot("factory-sensing-day");
 
   const readKinds = new Set(ops.filter(op => op.op === "factory_owner" && op.result === "factory_development_reading").map(op => op.kind));

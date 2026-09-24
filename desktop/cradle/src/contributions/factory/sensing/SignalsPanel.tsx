@@ -1,4 +1,4 @@
-import {useEffect, useState} from "react";
+import {useEffect, useRef, useState} from "react";
 import {useKernel} from "../../../kernel/KernelProvider";
 import type {DeskReading} from "../desk/deskStore";
 import {openRunPage} from "../desk/deskStore";
@@ -31,6 +31,9 @@ function SourceSensing({statePath, project, desk, readAt}: {statePath: string; p
   const [history, setHistory] = useState<DocumentRead>();
   const [day, setDay] = useState("");
   const [refreshAt, setRefreshAt] = useState(0);
+  const historyGeneration = useRef(0);
+  const data = field?.state === "read" ? field.data : undefined;
+  const fieldRevision = data?.source_revision;
   useEffect(() => { void readField(kernel.transport, statePath, refreshAt > 0); }, [kernel.transport, statePath, readAt, refreshAt]);
   useEffect(() => {
     const timer = window.setInterval(() => {
@@ -49,20 +52,23 @@ function SourceSensing({statePath, project, desk, readAt}: {statePath: string; p
   }, [kernel.transport, statePath, readAt, refreshAt]);
   useEffect(() => {
     if (selected?.statePath !== statePath) return;
-    let live = true;
     setDetailFor(selected.signalRef);
     setDetail({state: "reading"});
+    // A refresh must reread selected evidence even when the signal ref and
+    // field source revision remain unchanged after an owner-side mutation.
+    let live = true;
     void readSignal(kernel.transport, statePath, selected.signalRef).then(answer => { if (live) setDetail(answer); });
     return () => { live = false; };
-  }, [kernel.transport, selected?.signalRef, selected?.statePath, statePath]);
+  }, [kernel.transport, selected?.signalRef, selected?.statePath, statePath, fieldRevision, readAt, refreshAt]);
   const historyRead = async (kind: "telemetry-lookback" | "telemetry-day") => {
+    const generation = ++historyGeneration.current;
     setHistory({state: "reading"});
     try {
       const data = await factoryOwner(kernel.transport, {kind, state_path: statePath, ...(day ? {day} : {})});
-      setHistory({state: "read", source: `factory ${kind}`, data: temporalOf(data, kind === "telemetry-day" ? "factory.telemetry-day/v1" : "factory.telemetry-lookback/v1")});
-    } catch (error) { setHistory(ownerReadFailure(error, `factory ${kind}`)); }
+      const reading = temporalOf(data, kind === "telemetry-day" ? "factory.telemetry-day/v1" : "factory.telemetry-lookback/v1");
+      if (generation === historyGeneration.current) setHistory({state: "read", source: `factory ${kind}`, data: reading});
+    } catch (error) { if (generation === historyGeneration.current) setHistory(ownerReadFailure(error, `factory ${kind}`)); }
   };
-  const data = field?.state === "read" ? field.data : undefined;
   const source = sourceName(project);
   const currentSelection = selected?.statePath === statePath
     ? data?.signals.find(signal => signal.signal_ref === selected.signalRef)
