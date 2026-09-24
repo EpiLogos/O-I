@@ -179,9 +179,12 @@
           "build": [
             "cargo",
             "build",
-            "--workspace",
             "--locked",
-            "--release"
+            "--release",
+            "-p",
+            "aikit-cli",
+            "--bin",
+            "aikit"
           ],
           "executable_path": "target/release/aikit"
         },
