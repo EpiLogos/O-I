@@ -28,7 +28,7 @@ export interface FactoryPanelHost {
   /** Switch the Factory sidebar to another top-level plane (e.g. Context for a comparison). */
   onOpenPlane?: (plane: "run" | "agents" | "factory-context") => void;
   /** Open a conversation as the centre's Chat tab (the one open path). */
-  onOpenEncounterRow?: (row: EncounterRow) => void;
+  onOpenEncounterRow?: (row: EncounterRow) => Promise<void> | void;
 }
 
 // ---------------------------------------------------------------------------

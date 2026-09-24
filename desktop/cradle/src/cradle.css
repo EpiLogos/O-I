@@ -962,6 +962,10 @@
   border-radius: var(--oi-shell-radius); }
 /* Scrolling inherits the global design-system law. */
 
+/* The stage and everything it holds never show a scrollbar. */
+.mode-stage,.mode-stage * { scrollbar-width: none; }
+.mode-stage::-webkit-scrollbar,.mode-stage *::-webkit-scrollbar { display: none; width: 0; height: 0; }
+
 
 /* The per-mode stage slots (CradleFrame.tsx): a slot is ALWAYS PRESENT and
  * hides by visibility alone — the authored display:flex above would
