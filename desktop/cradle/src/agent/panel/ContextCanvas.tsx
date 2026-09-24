@@ -2,6 +2,7 @@ import {useEffect,useRef,useState,type KeyboardEvent} from "react";
 import {Glyph} from "../../workspace/Glyph";
 import {FileTree} from "../../files/FileTree";
 import {PreparedContextView} from "../../context/PreparedContextView";
+import {SituationView} from "../../context/SituationView";
 import {ActiveContext} from "../../expressions/ActiveContext";
 import type {TaPaneOpens} from "../../expressions/TaOntaSide";
 import type {CentralLocation} from "../../kernel/types";
@@ -58,6 +59,7 @@ export function ContextCanvas({opens,dataPlane,project,session,onOpenSubject}:{o
   else if(event.key==="Escape"&&picking){event.preventDefault();setPicking(false);}
  };
  return <div ref={host} className="desk-plane oi-side-plane ta-context-plane context-canvas" data-plane={dataPlane} data-empty={empty?"true":undefined} onKeyDown={keys}>
+  <SituationView/>
   {project&&<PreparedContextView project={project} session={session} onOpenSubject={onOpenSubject}/>}
   {empty&&<div className="context-launcher" aria-label="Insert into context">
    <p className="context-launcher-line">Bring material into this conversation&apos;s context.</p>
