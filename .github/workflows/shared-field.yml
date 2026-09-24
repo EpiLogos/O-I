@@ -95,7 +95,7 @@ jobs:
           SPACETIMEDB_URI: ws://127.0.0.1:3000
           SPACETIMEDB_DATABASE: oi-shared-field-ci
         run: npm --prefix shared-field/spacetimedb run acceptance:w11-return
-      - name: Publish a Central-shaped world through the real Projection provider and hosted push
+      - name: Publish a Central-shaped inhabited world (wiki, Positions, occupancy, constellation) through the real Projection provider and hosted push
         env:
           SPACETIMEDB_URI: ws://127.0.0.1:3000
           SPACETIMEDB_DATABASE: oi-shared-field-ci
@@ -104,9 +104,20 @@ jobs:
             --selection shared-field/fixtures/central-world-ci.selection.json \
             --reading shared-field/fixtures/central-world-ci.root-reading.json \
             --reading shared-field/fixtures/central-world-ci.project-reading.json \
+            --reading shared-field/fixtures/central-world-ci.positions.json \
+            --reading shared-field/fixtures/central-world-ci.population.json \
+            --reading shared-field/fixtures/central-world-ci.constellation.json \
             --sentinel PRIVATE_SENTINEL --sentinel identity.md --sentinel 'wiki:node:identity' \
+            --sentinel agent-session --sentinel 'claude-code:session' --sentinel 'ws://100.64.0.7' --sentinel 'Control/agents/expressions' \
             --out /tmp/oi-world-ci
-          npm --prefix shared-field/spacetimedb run publish:world -- --bundle /tmp/oi-world-ci/bundle.json --token-file /tmp/oi-world-ci/owner-token
+          npm --prefix shared-field/spacetimedb run publish:world -- --bundle /tmp/oi-world-ci/bundle.json --token-file /tmp/oi-world-ci/owner-token --receipt /tmp/oi-world-ci/receipt.json
+          node -e '
+            const receipt = JSON.parse(require("fs").readFileSync("/tmp/oi-world-ci/receipt.json", "utf8"));
+            const want = ["world:ci:central:project:Fixture/central:position:project:Fixture:anima-4", "world:ci:central:project:Fixture/central:position:project:Fixture:aletheia-5", "world:ci:central:project:Fixture/wiki:frame:ci-fixture-inquiry"];
+            for (const ref of want) if (!receipt.entries.includes(ref)) throw new Error(`hosted field lacks ${ref}`);
+            for (const kind of ["oi.world/position", "oi.world/constellation", "aikit.constellation/participation", "oi.world/works-on"]) if (!receipt.relations.some((ref) => ref.includes(`#${kind}#`))) throw new Error(`hosted field lacks a ${kind} relation`);
+            if (!receipt.source.revision.startsWith("oi.world-sources/v1:")) throw new Error("the inhabited World carries its composite source revision");
+            console.log("hosted World carries", receipt.entries.length, "entries and", receipt.relations.length, "relations");'
       - name: Prove two independently grounded worlds meet, contribute, return and re-project in one field
         env:
           SPACETIMEDB_URI: ws://127.0.0.1:3000

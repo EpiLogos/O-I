@@ -87,6 +87,55 @@ fn hosted_snapshot_rows_become_nodes_and_edges_with_target_and_both_revisions() 
     assert!(reading.edges.iter().all(|edge| edge.provenance.source == SHARED_FIELD_INPUT));
 }
 
+/// The inhabited World published through the same bundle
+/// (shared-field/central-wiki-projection.mjs): the CI World publication —
+/// Positions (one in occupancy mode, one address only), a constellation and
+/// their World relations — as the hosted field hands it back. Positions and
+/// constellations are hosted nodes like every other entry; their relation
+/// spellings arrive verbatim, and nothing of an occupant's session rides the
+/// graph.
+#[test]
+fn hosted_world_positions_and_constellations_become_nodes_with_their_world_relations() {
+    let reading = with_client("inhabited.sh", assemble_with_absent_owners);
+    assert!(matches!(reading.inputs.shared_field, GraphInput::Available { .. }));
+    let hosted: Vec<_> = reading.nodes.iter().filter(|node| node.native_owner == "shared-field").collect();
+    assert_eq!(hosted.len(), 7, "world, two spaces, one node, one constellation, two Positions");
+    assert_eq!(reading.counts.edges, 9);
+
+    let world = "world:ci:central:project:Fixture";
+    let anima = format!("{world}/central:position:project:Fixture:anima-4");
+    let aletheia = format!("{world}/central:position:project:Fixture:aletheia-5");
+    let frame = format!("{world}/wiki:frame:ci-fixture-inquiry");
+    let node = format!("{world}/wiki:node:project-root/fixture");
+
+    let positions: Vec<_> = hosted.iter().filter(|node| node.kind == "hosted-world-position").collect();
+    assert_eq!(positions.len(), 2);
+    let occupied = positions.iter().find(|node| node.ref_id == anima).expect("the occupancy-mode Position");
+    assert_eq!(occupied.label, "Anima 4 (CI fixture)");
+    assert_eq!(occupied.provenance.revision.as_deref(), Some("1"), "a Position carries its World projection's revision");
+    assert_eq!(occupied.provenance.detail, vec!["ws://fixture.invalid:3000/oi-shared-field-fixture".to_owned(), "r1".to_owned()], "and its own definition revision");
+    assert!(occupied.actions.is_empty());
+    assert!(positions.iter().any(|node| node.ref_id == aletheia));
+
+    let constellation = hosted.iter().find(|node| node.ref_id == frame).expect("the constellation");
+    assert_eq!(constellation.kind, "hosted-constellation");
+    assert_eq!(constellation.label, "What holds the Fixture together?");
+    assert_eq!(constellation.provenance.detail[1], "1", "the constellation's own frame revision");
+
+    let edge = |relation: &str, from: &str, to: &str| reading.edges.iter().any(|edge| edge.relation == relation && edge.from_ref == from && edge.to_ref == to);
+    assert!(edge("oi.world/position", world, &anima));
+    assert!(edge("oi.world/position", world, &aletheia));
+    assert!(edge("oi.world/constellation", world, &frame));
+    assert!(edge("aikit.constellation/participation", &frame, &node));
+    assert!(edge("oi.world/works-on", &anima, &node), "attested custody relates the occupied Position to its work");
+    assert!(!reading.edges.iter().any(|edge| edge.relation == "oi.world/works-on" && edge.from_ref == aletheia), "an address-only Position discloses no work");
+
+    let serialised = serde_json::to_string(&reading.nodes).unwrap() + &serde_json::to_string(&reading.edges).unwrap();
+    for private in ["PRIVATE_SENTINEL", "session", "attention", "100.64.0.7"] {
+        assert!(!serialised.contains(private), "no occupant-private material reaches the graph: {private}");
+    }
+}
+
 #[test]
 fn an_unbound_target_is_an_explicit_unavailable_input_with_the_clients_reason() {
     let reading = with_client("unbound.sh", assemble_with_absent_owners);

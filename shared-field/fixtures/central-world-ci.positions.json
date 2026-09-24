@@ -1,0 +1,110 @@
+{
+  "ok": true,
+  "status": "success",
+  "action": "central.position.list",
+  "data": {
+    "schema": "central.position-listing/v1",
+    "world_ref": "project:Fixture",
+    "positions": [
+      {
+        "record": {
+          "continuity_ref": null,
+          "eligible_agent_refs": [],
+          "enclosing_co_internality_ref": null,
+          "enclosing_world_ref": "project:Fixture",
+          "handle": "@anima-4",
+          "label": "Anima 4 (CI fixture)",
+          "profile_ref": null,
+          "purpose": "Anima 4 (CI fixture): CI fixture Position.",
+          "purpose_ref": "central:source:project:Actuation:docs/EPI-LOGOS-AGENT-ARCHITECTURE.md",
+          "ref": "central:position:project:Fixture:anima-4",
+          "revision": "r1",
+          "role_ref": "role:anima",
+          "schema": "central.world-position/v1",
+          "slug": "anima-4",
+          "stewards_ref": null
+        },
+        "source": {
+          "path": "Work/Fixture/ProjectCentral/relations/positions/anima-4.json",
+          "ref": "central:source:project:Fixture:ProjectCentral/relations/positions/anima-4.json",
+          "revision": "central.content-fnv1a64/v1:700:ci-anima-4-1"
+        }
+      },
+      {
+        "record": {
+          "continuity_ref": null,
+          "eligible_agent_refs": [],
+          "enclosing_co_internality_ref": null,
+          "enclosing_world_ref": "project:Fixture",
+          "handle": "@aletheia-5",
+          "label": "Aletheia 5 (CI fixture)",
+          "profile_ref": null,
+          "purpose": "Aletheia 5 (CI fixture): CI fixture Position.",
+          "purpose_ref": "central:source:project:Actuation:docs/EPI-LOGOS-AGENT-ARCHITECTURE.md",
+          "ref": "central:position:project:Fixture:aletheia-5",
+          "revision": "r1",
+          "role_ref": "role:aletheia",
+          "schema": "central.world-position/v1",
+          "slug": "aletheia-5",
+          "stewards_ref": null
+        },
+        "source": {
+          "path": "Work/Fixture/ProjectCentral/relations/positions/aletheia-5.json",
+          "ref": "central:source:project:Fixture:ProjectCentral/relations/positions/aletheia-5.json",
+          "revision": "central.content-fnv1a64/v1:700:ci-aletheia-5-1"
+        }
+      },
+      {
+        "record": {
+          "continuity_ref": null,
+          "eligible_agent_refs": [],
+          "enclosing_co_internality_ref": null,
+          "enclosing_world_ref": "project:Fixture",
+          "handle": "@private-sentinel-office",
+          "label": "PRIVATE_SENTINEL_OFFICE",
+          "profile_ref": null,
+          "purpose": "PRIVATE_SENTINEL_OFFICE: CI fixture Position.",
+          "purpose_ref": "central:source:control:root:Control/agents/expressions/PRIVATE_SENTINEL_OFFICE/OFFICE.md",
+          "ref": "central:position:project:Fixture:private-sentinel-office",
+          "revision": "r1",
+          "role_ref": "role:product-guardian",
+          "schema": "central.world-position/v1",
+          "slug": "private-sentinel-office",
+          "stewards_ref": null
+        },
+        "source": {
+          "path": "Work/Fixture/ProjectCentral/relations/positions/private-sentinel-office.json",
+          "ref": "central:source:project:Fixture:ProjectCentral/relations/positions/private-sentinel-office.json",
+          "revision": "central.content-fnv1a64/v1:700:ci-private-sentinel-office-1"
+        }
+      }
+    ],
+    "inherited": [
+      {
+        "record": {
+          "continuity_ref": null,
+          "eligible_agent_refs": [],
+          "enclosing_co_internality_ref": null,
+          "enclosing_world_ref": "control:root",
+          "handle": "@root-agency",
+          "label": "PRIVATE_SENTINEL_ROOT_AGENCY",
+          "profile_ref": null,
+          "purpose": "PRIVATE_SENTINEL_ROOT_AGENCY: CI fixture Position.",
+          "purpose_ref": "central:source:control:root:Control/agents/expressions/root/OFFICE.md",
+          "ref": "central:position:control:root:root-agency",
+          "revision": "r1",
+          "role_ref": "role:root-agency",
+          "schema": "central.world-position/v1",
+          "slug": "root-agency",
+          "stewards_ref": null
+        },
+        "source": {
+          "path": "Work/Fixture/Control/relations/positions/root-agency.json",
+          "ref": "central:source:control:root:Control/relations/positions/root-agency.json",
+          "revision": "central.content-fnv1a64/v1:700:ci-root-agency-1"
+        }
+      }
+    ],
+    "invalid": []
+  }
+}

@@ -1,0 +1,144 @@
+{
+  "context": {
+    "context_id": null,
+    "project_root": "/home/PRIVATE_SENTINEL_HOME/Central/Work/Fixture",
+    "session_id": null
+  },
+  "data": {
+    "file": "/home/PRIVATE_SENTINEL_HOME/Central/Work/Fixture/ProjectCentral/agents/wiki/wiki.json",
+    "reading": {
+      "actions": [
+        "aikit.constellation.apply"
+      ],
+      "construction": {
+        "alternatives": [],
+        "applied": {
+          "operation:ci:create-1": {
+            "actor_ref": "human:ci:owner",
+            "basis_revision": 0,
+            "request_digest": "c2bee13a2399e3954e49cc7006d7aa91fd4f013228d709106b3f32fa2ecce8de",
+            "result_revision": 1
+          }
+        },
+        "authored_by": "human:ci:owner",
+        "compositions": [],
+        "frame": null,
+        "inquiry": {
+          "purpose": "CI fixture",
+          "question": "PRIVATE_SENTINEL_QUESTION what holds it"
+        },
+        "relation_refs": [
+          "wiki:edge:ci-grounds"
+        ],
+        "title": "What holds the Fixture together?",
+        "variant_of": null
+      },
+      "frame": {
+        "aikit.constellation/v1": {
+          "alternatives": [],
+          "applied": {
+            "operation:ci:create-1": {
+              "actor_ref": "human:ci:owner",
+              "basis_revision": 0,
+              "request_digest": "c2bee13a2399e3954e49cc7006d7aa91fd4f013228d709106b3f32fa2ecce8de",
+              "result_revision": 1
+            }
+          },
+          "authored_by": "human:ci:owner",
+          "compositions": [],
+          "frame": null,
+          "inquiry": {
+            "purpose": "CI fixture",
+            "question": "PRIVATE_SENTINEL_QUESTION what holds it"
+          },
+          "relation_refs": [
+            "wiki:edge:ci-grounds"
+          ],
+          "title": "What holds the Fixture together?",
+          "variant_of": null
+        },
+        "constellations": [
+          {
+            "anchor_ref": "wiki:anchor:ci-fixture-inquiry",
+            "members": [
+              {
+                "aikit.constellation-participation/v1": {
+                  "nested": null,
+                  "note": "PRIVATE_SENTINEL_NOTE the root as ground",
+                  "participation_ref": "wiki:participation:ci-root",
+                  "role_ref": null,
+                  "sources": [
+                    {
+                      "source_ref": "central:source:project:Fixture:ProjectCentral/project.json",
+                      "source_revision": "r1"
+                    }
+                  ]
+                },
+                "conjugate": false,
+                "ref": "wiki:node:project-root/fixture"
+              },
+              {
+                "aikit.constellation-participation/v1": {
+                  "nested": null,
+                  "note": "draft",
+                  "participation_ref": "wiki:participation:ci-draft",
+                  "role_ref": null,
+                  "sources": []
+                },
+                "conjugate": false,
+                "ref": "wiki:node:PRIVATE_SENTINEL_DRAFT"
+              }
+            ],
+            "returns": []
+          }
+        ],
+        "external_refs": [],
+        "member_refs": [
+          "wiki:anchor:ci-fixture-inquiry",
+          "wiki:node:PRIVATE_SENTINEL_DRAFT",
+          "wiki:node:project-root/fixture"
+        ],
+        "profile": "okf-wiki/v1",
+        "provenance": [],
+        "ref": "wiki:frame:ci-fixture-inquiry",
+        "revision": 1,
+        "space_refs": [
+          "central:wiki:project:Fixture"
+        ]
+      },
+      "native_owner": "ai-kit",
+      "relations": [
+        {
+          "aikit.constellation-relation/v1": {
+            "direction": "directed",
+            "evidence": [],
+            "expected_revision": null,
+            "from_participation_ref": "wiki:participation:ci-root",
+            "relation": "grounds",
+            "relation_ref": "wiki:edge:ci-grounds",
+            "standing": "asserted",
+            "temporal": [],
+            "to_participation_ref": "wiki:participation:ci-draft",
+            "uncertainty": null
+          },
+          "from_ref": "wiki:node:project-root/fixture",
+          "independent_corroboration": false,
+          "origin": "authored",
+          "origin_ref": "wiki:frame:ci-fixture-inquiry",
+          "profile": "okf-wiki/v1",
+          "provenance": [],
+          "ref": "wiki:edge:ci-grounds",
+          "relation": "grounds",
+          "revision": 1,
+          "to_ref": "wiki:node:PRIVATE_SENTINEL_DRAFT"
+        }
+      ],
+      "schema": "aikit.constellation/v1",
+      "semantic_whole_truncated": false
+    },
+    "state": "read"
+  },
+  "ok": true,
+  "schema": 1,
+  "warnings": []
+}
