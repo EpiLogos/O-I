@@ -225,6 +225,12 @@ return address), carrying foreign refs verbatim. It is a projection, not a regis
   state: held | pending | delivered | escalated, delivered_to_generation_ref?,
   delivered_at_unix_ms?, escalated_custody_ref?, reply_to?}`. `held` = the recipient
   Position is vacant; it is delivered to the next occupant that claims it.
+  Across Workcells the record also carries `origin_gateway_ref`, `routing?`
+  (`{workcell_ref, gateway_ref, generation_ref?, basis, observed_at_unix_ms}`, the
+  remote occupancy answer a relay was taken on), `forward?` (the relay state) and
+  `transitions` (each state change with its basis). Population rows gain
+  `occupancy.observed_via` (`local` | `gateway:<gateway_ref>`) and the reading gains
+  `remotes: [{workcell_ref, gateway_ref, status: reachable | unreachable, detail}]`.
 - `aikit refocus` → `aikit.refocus-reading/v1`: current operation ← workflow unit ←
   attempt/Run ← Journey/Commission ← Project intent ← ProjectCentral ground, plus
   Position, NOW, body, nearby work, changed sources and Return target. Delivered at
@@ -236,3 +242,42 @@ return address), carrying foreign refs verbatim. It is a projection, not a regis
 - Fresh entry: SessionStart delivers the lean reading (World, Project World, Position,
   current work/NOW, body/context pointers and the faculties above), not a historical
   NOW dump. Consequential work retrieves the governing source on demand.
+
+## Across Workcells, and teams (landed 2026-09-24)
+
+Proven live between the Mac (`workcell:mac`) and Omarchy (`workcell:omarchy`); evidence in the
+owner's Central NOW flow `two-machine-inhabitation-2026-09-24`.
+
+- **Each machine is its own Workcell.** A fabric never has two cells named `workcell:local`:
+  occupancy and routing compare Workcell refs. The name is the machine's Central binding
+  (`Control/machines/current.json`), the same ref its Workcell control plane serves.
+- **Occupancy is owned per Workcell and asked for, never copied.** Each machine's Actuation
+  keeps its own ledger. A gateway answers `occupancy-read` / `occupancy-list` from its own
+  Workcell's Actuation at the moment it is asked; nothing is cached (EpiLogos/ai-kit#425).
+- **Routing a Communique.** Local ledger first: a current tenure here is delivered here; a
+  tenure naming another Workcell is relayed to that Workcell's declared gateway. With no
+  current tenure here, every declared remote is asked (bounded wait): exactly one current
+  occupant → relayed there, the answer recorded as `routing`; more than one → refused as
+  ambiguous; none, or remotes unreachable → `held`, naming who was asked and who could not be.
+  The relay pass (every service tick, or `aikit gateway forward`) re-resolves held Communiques,
+  so a Position occupied later elsewhere still receives them. Remotes are declared per machine
+  (`aikit gateway remote add --workcell W --ws HOST:PORT --token-location …`); the gateway runs as
+  a user service serving its Unix socket beside the authenticated WebSocket
+  (`aikit gateway install-service --ws … --ws-token-location …`, EpiLogos/ai-kit#433; Workcell's
+  reference description, EpiLogos/Workcell#104).
+- **Positions need their root ground on every machine.** A Position's `profile_ref` must resolve
+  in that machine's `control:root`; Central's source transfer carries the root agent ground
+  (profiles, agent expressions, agent sets) between grounds with the absent-`project` root scope,
+  first transfer established with explicit acknowledgements, later ones fast-forwarding
+  (EpiLogos/Central#224). `Control/user/` does not travel by agent.
+- **The inhabited World in the SharedField.** Positions, and in `occupancy` mode their occupancy
+  (state, generation ordinal, Workcell, `observed_via`, current-work outcome, undelivered count),
+  enter the same World publication bundle as the wiki, selection-gated and privacy-scanned; an
+  occupancy change re-projects as a source revision (O-I#505, `shared-field/WORLD-PUBLICATION.md`).
+- **Teams.** When the Agent inhabiting a Position orchestrates a Central agent set, `aikit
+  inhabit` launches Claude Code with the set's members as subagents and carries each member's
+  catalogued skills in the same per-session plugin, named `<plugin>:<skill>`; the whole team or
+  none, removed on release (EpiLogos/ai-kit#434, #437). Anima (`anima-4`) and Aletheia
+  (`aletheia-5`) are occupied this way; their work arrives through Factory workflows authored in
+  Vāk (EpiLogos/QL-MEF#247, EpiLogos/Factory#269).
+

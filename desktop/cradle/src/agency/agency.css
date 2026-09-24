@@ -54,3 +54,20 @@
 
 .agency-settings-link { padding: 6px var(--oi-desktop-gap-lg); border-top: var(--oi-shell-edge) solid var(--oi-hairline-soft); }
 .agency-settings-link .oi-action { font-size: var(--oi-shell-type-ui); color: var(--oi-muted-2); }
+
+/* Human Agent card (oi.human-agent-card/v1): one plain line per field,
+   progressive expansion to exact refs. Tokens only. */
+.agent-card { display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+.agent-card-head { display: flex; flex-direction: column; gap: 4px; }
+.agent-card-field { display: flex; flex-direction: column; gap: 3px; min-width: 0; padding-top: 6px; border-top: var(--oi-shell-edge) solid var(--oi-hairline-soft); }
+.agent-card-field[data-unavailable="true"] { opacity: 0.85; }
+.agent-card-label { margin: 0; font-size: var(--oi-shell-type-ui); font-weight: 550; color: var(--oi-muted-2); }
+.agent-card-refs > summary { cursor: pointer; font-size: var(--oi-shell-type-ui); color: var(--oi-muted-2); }
+.agent-card-ref-list { list-style: none; margin: 2px 0 0; padding: 0; display: flex; flex-direction: column; gap: 2px; overflow-wrap: anywhere; }
+.agent-card-command { font-size: var(--oi-shell-type-ui); color: var(--oi-muted-2); overflow-wrap: anywhere; }
+.agent-card-intent { white-space: pre-wrap; overflow-wrap: anywhere; margin: 4px 0 0; }
+.agent-card-dimensions { list-style: none; margin: 4px 0 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
+.agent-card-dimension { display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px; min-width: 0; }
+.agent-card-dimension-name { min-width: 96px; font-weight: 550; }
+.agent-card-dimension-reading { flex-basis: 100%; color: var(--oi-muted-2); }
+.agent-card-dimension[data-state="unavailable"] .oi-state { border-style: dashed; }

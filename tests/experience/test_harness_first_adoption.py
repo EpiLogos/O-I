@@ -112,7 +112,7 @@ class HarnessFirstAdoptionSourceTests(unittest.TestCase):
         self.assertEqual(hashlib.sha256(block.encode("utf-8")).hexdigest(),
                          "7aa3005900612ee79323bf61b466ed25e36ee5427649b1b53953a8a53983cd61")
         guide = (ROOT / "docs/SUITE-OPERATOR-SKILLSET.md").read_text(encoding="utf-8")
-        self.assertIn("two O:I-owned Skills", guide)
+        self.assertIn("three O:I-owned Skills", guide)
         manifest = (ROOT / "skills/suite-operator/skillset.toml").read_text(encoding="utf-8")
         # Owner ruling 2026-09-17: O:I holds and projects the Central session
         # strap itself, so the guardian manifest ships central-session-strap.

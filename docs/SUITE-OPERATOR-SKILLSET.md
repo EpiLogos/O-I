@@ -4,21 +4,22 @@ O:I composes and explains source-owned procedural competence; it does not become
 
 ## What O:I ships
 
-The shipped manifest (`skills/suite-operator/skillset.toml`, schema `oi.suite-skillset/v1`) declares exactly one profile and two O:I-owned Skills:
+The shipped manifest (`skills/suite-operator/skillset.toml`, schema `oi.suite-skillset/v1`) declares exactly one profile and three O:I-owned Skills:
 
 ```text
 oi:skillset:base-guardian
   oi:skill:operate-suite          (skills/oi/SKILL.md)
   oi:skill:suite-operator         (skills/suite-operator/SKILL.md)
+  oi:skill:central-session-strap  (skills/central-session-strap/SKILL.md)
 ```
 
-**Source correction — 19 September 2026:** the earlier guide incorrectly listed a third frozen Central session-strap member. The current manifest deliberately removed it. Central's session strap remains Central-owned source, received through AIKit's Central binding; it is not copied back into this binary or added to the O:I bootstrap manifest. This repairs the guide to the existing implementation, not a new removal or Skill migration.
+O:I holds and projects the Central session strap: `skills/central-session-strap/SKILL.md` is its authoritative source, and every harness copy is a receipt-gated derived projection.
 
-Both Skills carry `revision_policy = "resolve_authoritative_installed_revision"`: O:I resolves each Skill's authoritative revision from the installed native owner rather than pinning one by hand. A projected copy carries its source revision in its receipt header; local edits never become authoritative.
+All three Skills carry `revision_policy = "resolve_authoritative_installed_revision"`: O:I resolves each Skill's authoritative revision from the installed native owner rather than pinning one by hand. A projected copy carries its source revision in its receipt header; local edits never become authoritative.
 
 A test guards this shape: `shipped_manifest_declares_only_oi_owned_skills` fails if the shipped manifest ever names another product's Skills again. That is deliberate. The manifest once pinned every suite product's Skills; that made it a second registry in a second format, and its silent path drift proved the point.
 
-A bootstrap SkillSet is not an AgentSet. Product Guardian agents and their defaults retain their actual native Central/AIKit identities and source; the existence of these two procedural members neither creates nor starts agents. Explain and resolve selected Guardian/product repertoires through the real owner rather than inferring a roster from this manifest.
+A bootstrap SkillSet is not an AgentSet. Product Guardian agents and their defaults retain their actual native Central/AIKit identities and source; the existence of these three procedural members neither creates nor starts agents. Explain and resolve selected Guardian/product repertoires through the real owner rather than inferring a roster from this manifest.
 
 ## How the rest of the suite is composed
 
@@ -46,7 +47,7 @@ For an agent already operating in a person's harness, use [Harness-first adoptio
 
 ## Fallback
 
-Without AIKit, direct projection remains limited in code to O:I/Central Skills. Foreign source-owned Skill bodies are never copied into O:I as a convenience path. That limit does not authorise resurrecting a retired frozen Central strap source.
+Without AIKit, direct projection remains limited in code to O:I/Central Skills. Foreign source-owned Skill bodies are never copied into O:I as a convenience path.
 
 ## Epi experience practices — pending H review
 

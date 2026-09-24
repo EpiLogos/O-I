@@ -56,6 +56,7 @@ pub mod knowledge;
 pub mod construction;
 pub mod shared_field;
 pub mod setup;
+pub mod agent_card;
 pub mod agent_definition;
 pub mod chat_defaults;
 pub mod credentials;
@@ -309,6 +310,14 @@ pub enum KernelOp {
         project: String,
     },
     AgentDefinition { project: Option<String>, request: agent_definition::Request },
+    /// The human Agent card (`oi.human-agent-card/v1`), derived by the
+    /// installed suite's `oi agent card` from AgentWorldParticipation. Read
+    /// only; the kernel neither composes nor keeps it.
+    AgentCard {
+        agent_ref: String,
+        #[serde(default)]
+        world_ref: Option<String>,
+    },
     /// Wave 6E: pending Returns tray — list/read plus human review/include
     /// through Central's native receiving operations (owner-validated).
     /// `project` names the project register's field; `None` is the ROOT
@@ -706,6 +715,7 @@ pub enum KernelOpResult {
     /// the chosen default provider and the owner's own open result, verbatim.
     EncounterProvisioned {data:serde_json::Value},
     AgentDefinitionReading { data: serde_json::Value },
+    AgentCardReading { data: serde_json::Value },
     ReceivingReading {data:serde_json::Value},
     NowReading {data:serde_json::Value},
     EncounterTaskReading {data:serde_json::Value},
@@ -1551,6 +1561,10 @@ impl Kernel {
                 let cwd=self.agent_location(project.as_deref())?;
                 let data=agent_definition::execute(&self.client,&self.agency,project.as_deref(),&cwd,&request)?;
                 Ok(KernelOpOutcome {receipts:Vec::new(),result:KernelOpResult::AgentDefinitionReading {data}})
+            }
+            KernelOp::AgentCard { agent_ref, world_ref } => {
+                let data = agent_card::read(&agent_card::oi_executable(), &agent_ref, world_ref.as_deref())?;
+                Ok(KernelOpOutcome { receipts: Vec::new(), result: KernelOpResult::AgentCardReading { data } })
             }
             KernelOp::Encounter {project,request} => {
                 let cwd=self.agent_location((!project.is_empty()).then_some(project.as_str()))?;

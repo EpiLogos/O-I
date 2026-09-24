@@ -1,12 +1,11 @@
 //! The O:I guardian SkillSet — the bootstrap's cognition step.
 //!
 //! A fresh personal ground receives exactly one shipped SkillSet projected
-//! into its harnesses: the O:I guardian Skills (the `oi` router and the
-//! suite operator). The Central session strap used to ship here as a frozen
-//! copy claiming local authority; it forked from its Control source and
-//! resurrected retired procedure, so it is no longer a guardian member — it
-//! is Central ground and reaches a ground through AIKit's Central binding,
-//! the normal resolver. Everything else in the suite stays authoritative in
+//! into its harnesses: the three O:I guardian Skills — the `oi` router
+//! (`oi:skill:operate-suite`), the suite operator (`oi:skill:suite-operator`)
+//! and the Central session strap (`oi:skill:central-session-strap`). O:I
+//! holds and projects the strap: `skills/central-session-strap/SKILL.md` is
+//! its authoritative source. Everything else in the suite stays authoritative in
 //! its own product repository and is resolved on demand. Projected copies
 //! are derived state with receipts; local edits never become authoritative
 //! and are never clobbered.
