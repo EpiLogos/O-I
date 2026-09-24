@@ -1,3 +1,4 @@
+import {WikiFactsButton} from './WikiFactsEditor';
 import {useEffect, useRef, useState} from 'react';
 import {ParticipationFacts} from './ParticipationFacts';
 import {useKernel} from '../kernel/KernelProvider';
@@ -224,6 +225,7 @@ export function WikiConstructionPanel({binding, open, incoming, checkpoint, onCh
     <div className="wiki-construction-toolbar"><button className="oi-action" disabled={!!busy} onClick={()=>void inspect()}>Inspect saved state</button><button className="oi-action" disabled={!!busy || !!pending || !!artifactSave} onClick={()=>dirty ? setShowDiscard(true) : createNew()}>New inquiry</button></div>
     {showDiscard && <div role="group" aria-label="Discard construction draft"><p>Discard this unsaved proposal? Its source documents are not changed.</p><button className="oi-action" onClick={createNew}>Discard draft and start new</button><button className="oi-action" onClick={()=>setShowDiscard(false)}>Keep working</button></div>}
     {!!register?.frames.length && <label>Saved constellation<select aria-label="Open saved constellation" value={draft.basis?.ref ?? ''} disabled={!!busy || !!pending} onChange={event=>openFrame(event.target.value)}><option value="">Choose a saved inquiry…</option>{register.frames.map(frame=><option key={frame.ref} value={frame.ref}>{frame[CONSTRUCTION].title} · r{frame.revision}</option>)}</select></label>}
+    {draft.basis&&<WikiFactsButton reference={draft.basis.ref} disabled={!!busy||!!pending||dirty||!!artifactSave} onSaved={()=>void inspect()}/>}
     <fieldset disabled={!!busy || !!pending}>
       <label>Title<input aria-label="Constellation title" maxLength={512} value={draft.title} onChange={event=>update({...draft,title:event.target.value})}/></label>
       <label>Inquiry<textarea aria-label="Constellation inquiry" rows={2} maxLength={4096} value={draft.question} onChange={event=>update({...draft,question:event.target.value})} placeholder="What are you exploring through this material?"/></label>

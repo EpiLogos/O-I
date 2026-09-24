@@ -2,6 +2,8 @@ import {projectNativeSources,editNativeBasis,NativeDomainReading,NativeBasisEdit
 import {InstrumentSession} from './ql/instrument-session.mjs';
 import {NativeProjection} from './projection';
 import type {NativePort} from './channel';
+import {applyPhysicalFormPose} from '../physicalFormActuator';
+import {nativeActuatorStanding} from '../nativeActuatorStanding';
 export interface NativeRenderer {
  retainedTargetPort():any;releaseRetainedField():void;
  retainedTopology?():{tex_width:number;tex_height:number;particle_count:number;slot_count:number}|null;
@@ -10,7 +12,7 @@ export interface NativeRenderer {
  setNativeDomain(active:boolean):void;
 }
 export interface NativePlaybackPolicy {blockFrames:number;leadSeconds:number;lookaheadSeconds:number;}
-export const EMBEDDED_NATIVE_PLAYBACK:Readonly<NativePlaybackPolicy>=Object.freeze({blockFrames:8192,leadSeconds:.25,lookaheadSeconds:.5});
+export const EMBEDDED_NATIVE_PLAYBACK:Readonly<NativePlaybackPolicy>=Object.freeze({blockFrames:8192,leadSeconds:.5,lookaheadSeconds:.5});
 export type NativeStatus='manual'|'opening'|'following'|'held'|'unavailable';
 /** The QL driver schedules PCM/targets; the app remains the sole GPU stage.
  * The controller owns admission/lifetime only, never native math or a second clock.
@@ -47,7 +49,12 @@ export class NativeFieldController {
   this.playback=Object.freeze({...this.playback});
   port.onHold=reason=>{this.hold(reason);};
  }
- get reading(){return{schema:'oi.native-expression-reading/v1',status:this.status,reason:this.reason,
+  get reading(){
+  const physical=this.domain?.m3.physical_form;
+  const unavailable=physical
+    ?['material model replacement beyond the existing modal owner requires a new binding']
+    :['arbitrary M3 glyph mesh/physical pose is not supplied by this native output','material model replacement beyond the existing modal owner requires a new binding'];
+  return{schema:'oi.native-expression-reading/v1',status:this.status,reason:this.reason,
   source:this.opened?.source??null,lease:this.opened?.lease??null,
   playback_policy:{...this.playback,owner:'QL InstrumentSession / explicit application buffering; no sample-rate change'},
   renderer_requirements:this.renderer.retainedTopology?.()??null,
@@ -61,7 +68,20 @@ export class NativeFieldController {
   domain_owned:['M1/M2/M3 native targets','native PCM','native clock'],
   presentation_owned:['resident particle mechanics','camera','presentation scale'],
   presentation_changes_requiring_rebind:['scene membership','target topology or density','authored scene configuration while leased'],
-  unavailable_consumers:['arbitrary M3 glyph mesh/physical pose is not supplied by this native output','material model replacement beyond the existing modal owner requires a new binding'],
+  unavailable_consumers:unavailable,
+  causal_trace:this.domain?{
+    schema:'oi.native-causal-trace/v1',
+    layers:[
+      {layer:'M1',source_ref:this.domain.m1.coordinate,generation:this.domain.m1.revision,target:'carrier quadrature / harmonic row',actuator:'native domain overlay + continuous topology',observable:'SVG carrier lines / retained topology'},
+      {layer:'M2',source_ref:this.domain.m2.modes[0]?.ref??'—',generation:String(this.domain.m2.generation),target:'modal frequency / damping / PCM',actuator:'NativeAudioBinding + material modes',observable:'audio device + modal standing'},
+      {layer:'M3',source_ref:this.domain.m3.codon_ref,generation:String(this.domain.m3.generation),target:physical?'physical_form fold-pose':'transcription + source angles (non-pose)',actuator:physical?'Expression form/glyph pose consumer':'unavailable — do not infer pose from angles',observable:physical?`pose ${physical.pose_ordinal}/${physical.state_count}`:'transcription overlay only'},
+    ],
+  }:null,
+  physical_form_actuator:applyPhysicalFormPose(
+    physical??null,
+    this.status==='following'&&!!physical,
+  ),
+  actuator_standing:nativeActuatorStanding({status:this.status,domain:this.domain as any,causal_trace:this.domain?{layers:[]}:null}),
  } as const;}
  private changed(){this.onChange();}
  async connect(path:string,revision:string,sampleRate:number){
@@ -88,8 +108,17 @@ export class NativeFieldController {
    await this.readSources(this.session);
    await this.session.recover('complete native sources admitted; rebase device only');
    if(epoch!==this.epoch||this.dead)return;
+   // Reassert an existing admission hold without issuing a new controller hold:
+   // the suspension token must keep ownership of its captured hold revision.
    if(this.openingHold){this.session.hold(this.openingHold);this.status='held';this.reason=this.openingHold;}
-   else{this.status='following';this.session.start();}
+   else{
+    // Rebase once more immediately before the pump so inspect/open cost cannot
+    // consume the whole audio lead on a slow GPU/main-thread admission path.
+    await this.session.recover('pre-pump device rebase after source admission');
+    if(epoch!==this.epoch||this.dead)return;
+    if(this.openingHold){this.session.hold(this.openingHold);this.status='held';this.reason=this.openingHold;}
+    else{this.status='following';this.session.start();}
+   }
    this.changed();
   }catch(error){
    // A completion belonging to an old epoch may not close a newer owner.

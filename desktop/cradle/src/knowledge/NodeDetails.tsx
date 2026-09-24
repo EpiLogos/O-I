@@ -1,3 +1,4 @@
+import {WikiFactsButton} from './WikiFactsEditor';
 import {useEffect,useRef,useState,type PointerEvent,type KeyboardEvent} from "react";
 import type {KnowledgeAddress,KnowledgeReading,KernelTransportStatus} from "../kernel/types";
 import type {GraphNode,GraphEdge} from "./graph";
@@ -58,6 +59,7 @@ export function NodeDetails({node,reading,hosted,error,project,onClose,onPromote
     <article className="knowledge-detail-body oi-sidecar" aria-busy={!reading&&!hosted&&!error}>
       <h1>{node.label}</h1>
       <p className="knowledge-owner">{node.native_owner} · {node.kind.replaceAll("-"," ")}</p>
+      {!isHosted&&graphAddress(node)?.kind==="wiki"&&<WikiFactsButton reference={graphAddress(node)!.value} onSaved={onActionDispatched}/>}
       {disclosures.map((disclosure,i)=><OwnerActions key={i} node={disclosure} transport={transport} project={project} onDispatched={onActionDispatched}/>)}
       {error?<p role="alert">{error}</p>:hosted?<HostedReadingBody reading={hosted}/>:reading?<ReadingBody reading={reading} {...readingProps}/>:<p role="status">{isHosted?"Reading the hosted field…":"Reading content…"}</p>}
       {failure&&<p role="alert">{failure}</p>}{storageError&&<p role="status">{storageError}</p>}

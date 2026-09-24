@@ -1,3 +1,4 @@
+import {wikiRelationMetadata,type WikiRelationMetadata} from './wikiRelationMetadata';
 import {readWikiSpatial,type WikiSpatialReading} from "./spatialFacets";
 import {readWikiTemporal,type WikiTemporalReading} from "./temporalFacets";
 import {wikiDisplayName} from "../../../../packages/oi-design-system/expressions-engine/oi/wikiPresentation.mjs";
@@ -72,7 +73,7 @@ export function wikiPathOf(register: WikiRegister): string {
 // ---------------------------------------------------------------------------
 // Live reads (through the owners — the files seam and the kernel knowledge op)
 
-export interface WikiRelationEdge { ref?: string; direction?: string; relation: string; from: string; to: string; provider: string | null; authority: string | null; revision: string | null }
+export interface WikiRelationEdge extends WikiRelationMetadata { ref?: string; direction?: string; relation: string; from: string; to: string; provider: string | null; authority: string | null; revision: string | null }
 export type WikiRelationsReading =
   | { state: "available"; focusRef: string; edges: WikiRelationEdge[]; truncated: boolean; warnings: string[] }
   | { state: "unavailable"; focusRef: string; reason: string };
@@ -103,15 +104,23 @@ export async function readWikiRegister(transport: KernelTransportStatus, registe
     try {
       const reply = await kernelOp(transport, {op: "knowledge", project: register.project, request: {action: "relations", address: {kind: "wiki", value: focusRef}}});
       const data = reply.outcome?.result === "knowledge" ? reply.outcome.data as {
-        edges?: { reference?: string; ref?: string; edge_ref?: string; relation: string; direction?: string; from: string; to: string; origin?: { provider?: string; authority?: string; revision?: string } }[];
+        edges?: { reference?: string; ref?: string; edge_ref?: string; relation: string; direction?: string; from: string; to: string; origin?: { provider?: string; authority?: string; revision?: string }; standing?: string | null }[];
         truncated?: boolean;
         warnings?: string[];
       } : null;
       if (!data) throw new Error(reply.error ?? "AIKit did not return the requested reading");
+      const nativeDocument=JSON.parse(file.content),nativeObjects:Array<Record<string,unknown>>=Array.isArray(nativeDocument)?nativeDocument:nativeDocument.objects;
       relations = {
         state: "available",
         focusRef,
-        edges: (data.edges ?? []).map(edge => ({
+        edges: (data.edges ?? []).map(edge => {
+          const reference=edge.reference??edge.edge_ref??edge.ref;
+          const matches=reference?nativeObjects.filter(row=>row.object==='edge'&&row.ref===reference):[];
+          if(matches.length>1)throw Error('The native relation identity is ambiguous.');
+          const native=matches[0];
+          if(native&&String(native.revision)!==edge.origin?.revision)throw Error('The native relation changed while reading its attribution.');
+          const metadata=native?wikiRelationMetadata(native):typeof edge.standing==='string'?{standing:edge.standing}:{};
+          return {
           ref: edge.reference ?? edge.edge_ref ?? edge.ref,
           direction: edge.direction,
           relation: String(edge.relation),
@@ -120,7 +129,8 @@ export async function readWikiRegister(transport: KernelTransportStatus, registe
           provider: edge.origin?.provider ?? null,
           authority: edge.origin?.authority ?? null,
           revision: edge.origin?.revision ?? null,
-        })),
+          ...metadata,
+        };}),
         truncated: data.truncated === true,
         warnings: data.warnings ?? [],
       };
@@ -276,6 +286,18 @@ export function projectWikiExpression(input: WikiRegisterReading & { state: "rea
   const notices: string[] = [];
   const expressionRef = projectionExpressionRef(register, {wikiRevision: wikiBasis.revision, relations});
   const byRef = new Map(wiki.nodes.map(node => [node.ref, node]));
+  const subjectReadings = (ref: string, disclosure: DisclosedConstellation, occurrence?: number): ReadingRef[] => {
+    const observed: ReadingRef[] = [reading(`wiki:${wikiBasis.path}`, wikiBasis.revision)];
+    const revision = byRef.get(ref)?.revision ?? wiki.spaces.find(space => space.ref === ref)?.revision;
+    if (Number.isSafeInteger(revision) && Number(revision) > 0) observed.push(reading(ref, String(revision)));
+    const frame = disclosure.constellation;
+    if (frame?.frame_ref && Number.isSafeInteger(frame.frame_revision) && Number(frame.frame_revision) > 0) {
+      observed.push(reading(frame.frame_ref, String(frame.frame_revision)));
+      const member = occurrence === undefined ? undefined : frame.members?.filter(member => member.ref === ref)[occurrence];
+      if (member?.participation_ref) observed.push(reading(member.participation_ref, String(frame.frame_revision)));
+    }
+    return observed;
+  };
 
   const entities: Record<string, Entity> = {};
   const scenes: Scene[] = [];
@@ -299,7 +321,7 @@ export function projectWikiExpression(input: WikiRegisterReading & { state: "rea
       native_owner: "wiki",
       presentation_role: "thing",
       sources: [reading(disclosure.wholeRef, String(disclosure.space?.revision ?? byRef.get(disclosure.wholeRef)?.revision ?? wikiBasis.revision))],
-      readings: [],
+      readings: subjectReadings(disclosure.kind === "space" && disclosure.space ? disclosure.space.ref : disclosure.wholeRef, disclosure),
       actions: [],
     };
     entities[overviewEntityRef] = {
@@ -344,7 +366,7 @@ export function projectWikiExpression(input: WikiRegisterReading & { state: "rea
         native_owner: "wiki",
         presentation_role: "thing",
         sources: [reading(disclosure.wholeRef, String(disclosure.space?.revision ?? byRef.get(disclosure.wholeRef)?.revision ?? wikiBasis.revision))],
-        readings: [],
+        readings: subjectReadings(disclosure.wholeRef, disclosure),
         actions: [],
       },
       parameters: {x: parameter(0), y: parameter(0), z: parameter(0), scale: parameter(0.28), glyph: parameter("●"), shape: parameter("disc")},
@@ -367,7 +389,7 @@ export function projectWikiExpression(input: WikiRegisterReading & { state: "rea
           native_owner: "wiki",
           presentation_role: "thing",
           sources: (node?.source_refs ?? []).map(sourceRef => reading(sourceRef, revision)),
-          readings: [],
+          readings: subjectReadings(memberRef, disclosure, placedMembers.slice(0,memberIndex).filter(ref=>ref===memberRef).length),
           actions: node ? [{action_ref: "aikit:knowledge:read", target_ref: memberRef, authority_requirement: "read"}] : [],
         },
         parameters: {x: parameter(at.x * 1000), y: parameter(-at.y * 1000), z: parameter(0), scale: parameter(0.2), glyph: parameter("●"), shape: parameter("disc")},

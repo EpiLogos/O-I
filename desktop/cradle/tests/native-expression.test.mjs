@@ -168,8 +168,8 @@ test('declared embedded buffering pays for a 65ms delivery without resampling or
  const c=new NativeFieldController(owner,renderer(),()=>audio,EMBEDDED_NATIVE_PLAYBACK);
  try{await c.connect('source.json','r1',48000);await tick();c.frame(.016,false);
   assert.equal(c.status,'following');assert.equal(c.reading.native.acknowledged.samples_elapsed,'8192');
-  assert.equal(c.reading.playback_policy.leadSeconds,.25);assert.equal(audio.nodes[0].buffer.data.length,8192);
-  assert.equal(audio.nodes[0].time,.25);assert.equal(audio.sampleRate,48000);
+  assert.equal(c.reading.playback_policy.leadSeconds,.5);assert.equal(audio.nodes[0].buffer.data.length,8192);
+  assert.equal(audio.nodes[0].time,.5);assert.equal(audio.sampleRate,48000);
  }finally{await c.dispose();}
 });
 

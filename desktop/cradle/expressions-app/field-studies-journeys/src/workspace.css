@@ -460,13 +460,6 @@ body.presentation #physis-panel,body.library-open #physis-panel{display:none}
    and formation sequence (left) it routes to. ===== */
 #lens-chooser{position:fixed;z-index:66;top:clamp(40px,6vh,54px);left:50%;transform:translateX(-50%);display:flex;gap:3px;padding:4px;border-radius:14px;background:var(--panel);border:1px solid var(--line);box-shadow:0 8px 30px #2027170f;backdrop-filter:blur(14px)}
 #lens-chooser[hidden]{display:none}
-.lens-choice{position:relative;width:46px;height:42px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;border:0;border-radius:10px;background:none;color:var(--muted);cursor:pointer}
-.lens-choice .lens-office{font:8px/1 var(--sans);letter-spacing:.03em}
-.lens-choice svg{width:17px;height:17px}
-.lens-choice:hover{color:var(--accent)}
-.lens-choice[aria-selected="true"]{background:var(--wash);color:var(--ink)}
-.lens-choice[aria-selected="true"] .lens-office{color:var(--accent)}
-.lens-choice:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 #lens-studio{position:fixed;z-index:64;top:clamp(88px,11.5vh,106px);left:50%;transform:translateX(-50%);width:min(374px,calc(100vw - 40px));max-height:min(58vh,520px);overflow:auto;padding:15px 18px 17px;border-radius:13px;color:var(--ink);background:var(--panel);border:1px solid var(--line);box-shadow:0 16px 50px #20271716;backdrop-filter:blur(16px)}
 #lens-studio[hidden]{display:none}
 .lens-studio-head{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:4px}
@@ -525,3 +518,17 @@ body.presentation #physis-panel,body.library-open #physis-panel{display:none}
 #lens-chooser .lens-hide{align-self:center;width:24px;height:28px;padding:4px;border:0;background:transparent;color:var(--muted);cursor:pointer}
 #lens-chooser .lens-hide svg{width:16px;height:16px}
 #lens-chooser .lens-hide:focus-visible{outline:2px solid var(--accent);outline-offset:-2px}
+/* Creation-first entry gate — New / Continue / Open */
+.entry-gate{position:fixed;inset:0;z-index:90;display:grid;place-items:center;background:color-mix(in srgb,var(--paper,#f4f2eb) 88%,transparent);backdrop-filter:blur(8px);padding:24px}
+.entry-gate[hidden]{display:none!important}
+.entry-gate-card{width:min(440px,100%);background:var(--panel,#f9f8f3);border:1px solid var(--line,rgba(43,45,36,.16));border-radius:14px;padding:28px 26px;box-shadow:0 18px 60px #20271718}
+.entry-gate-card h1{font:28px/1.15 var(--serif,Georgia,serif);font-weight:400;margin:4px 0 12px;letter-spacing:-.03em}
+.entry-gate-lede{font-size:12px;line-height:1.7;color:var(--muted,#74766b);margin-bottom:18px}
+.entry-gate-actions{display:grid;gap:8px;margin-bottom:16px}
+.entry-gate-actions .primary{width:100%}
+.entry-gate-actions button:not(.primary){border:1px solid var(--line,rgba(43,45,36,.16));border-radius:6px;padding:10px 14px;font-size:12px;background:transparent}
+.entry-gate-standing{font-size:10px;line-height:1.6;color:var(--muted,#74766b);margin:0 0 16px}
+.entry-gate-starters{border-top:1px solid var(--line,rgba(43,45,36,.16));padding-top:14px}
+.entry-gate-starters p{font-size:10px;color:var(--muted,#74766b);margin:0 0 10px}
+.entry-gate-starters button{display:block;width:100%;text-align:left;padding:8px 0;font-size:12px;color:var(--accent,#8b5844)}
+.modes-standing{font-size:10px;color:var(--muted,#74766b);padding:0 20px 8px;margin:0}

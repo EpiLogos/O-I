@@ -44,6 +44,17 @@ import {
   type ChoreographyPlan,
 } from "./expressiveAct";
 import {stageFocusPlan} from "./stageFocus";
+import {
+  assertSharedPersonalIdentity,
+  bindPersonalProjection,
+  disconnectPersonalProjection,
+  personalStandingLabel,
+  type AnimaExpressionProfile,
+  type PersonalProjectionBinding,
+  AUTHORED_CHAKRA_STARTER,
+  NARA_PERSONAL_LIVE,
+} from "./personalProjection";
+import {planAnimaStageActuators} from "./animaStageActuators";
 import {holdToTalkLive,holdToTalkRefusal,naraBodyState} from "./bodyState";
 import {voiceBodyFromConstitution,voiceBodySatisfactionReceipt} from "./voiceBody";
 import {NaraSpeechBinding,type NaraSpeechRead,type SpeechToolDecision} from "./session";
@@ -88,6 +99,8 @@ export function NaraSurface({binding}:{binding:SurfaceBinding}){
  const [subjectField,setSubjectField]=useState("");
  const [coordinateField,setCoordinateField]=useState("M4.1.1");
  const [naraField,setNaraField]=useState("nara:desktop");
+ const [personal,setPersonal]=useState<PersonalProjectionBinding|null>(null);
+ const [animaProfileText,setAnimaProfileText]=useState("");
 
  const renderFrom=useCallback(()=>{
   const current=client.current;
@@ -207,6 +220,30 @@ export function NaraSurface({binding}:{binding:SurfaceBinding}){
     denied_action_refs:[],
    });
    setChangeReceipt(null);setProposals([]);setTurns([]);setInterruptReceipt(null);setToolReceipt(null);setHighlight(null);setFloor(null);
+   // Speech and personal body share the same nara_ref / subject / Expression.
+   // Live M4 projection is bound separately when an Anima profile is supplied;
+   // until then standing remains authored Expression material.
+   setPersonal({
+    nara_ref:context.nara_ref,
+    subject_ref:context.subject_ref,
+    expression_ref:context.expression_ref,
+    expression_revision:context.expression_revision,
+    profile:null,
+    standing:AUTHORED_CHAKRA_STARTER,
+    disconnected:true,
+   });
+   assertSharedPersonalIdentity(
+    {nara_ref:context.nara_ref,subject_ref:context.subject_ref,expression_ref:context.expression_ref},
+    {
+     nara_ref:context.nara_ref,
+     subject_ref:context.subject_ref,
+     expression_ref:context.expression_ref,
+     expression_revision:context.expression_revision,
+     profile:null,
+     standing:AUTHORED_CHAKRA_STARTER,
+     disconnected:true,
+    },
+   );
    // The caller-side composition check: does the resolved body satisfy the
    // QL dialogical floor? Computed and disclosed at attach, recomputed at
    // reconnect — floor unmet is a fact, never an error.
@@ -290,7 +327,7 @@ export function NaraSurface({binding}:{binding:SurfaceBinding}){
   }
   const document=await readDocument();
   if(!document){setError("No live Expression document; Nara's focus plan has nothing real to move");return;}
-  const plan=stageFocusPlan(resolution,document);
+  const plan=stageFocusPlan(resolution,document,personal);
   const notices:string[]=[];
   try{
    for(const operation of plan.operations){
@@ -317,7 +354,7 @@ export function NaraSurface({binding}:{binding:SurfaceBinding}){
    }
    if(notices.length)setNotice(notices.join(" · "));
   }catch(e){setError(String(e));}
- },[readDocument,stage]);
+ },[readDocument,stage,personal]);
 
  /** Focus a bound entity for real: a committed, reversible kernel edit on
   * the exact entity the plan mapped. Returns the moved document, or null
@@ -362,6 +399,49 @@ export function NaraSurface({binding}:{binding:SurfaceBinding}){
   }
   await point("pointed",selected.subject.subject_ref,"subject");
  },[readDocument,point]);
+
+ /** Admit a live Anima ExpressionProfile onto the same personal body as speech. */
+ const admitAnimaProfile=useCallback(async()=>{
+  setError("");setNotice("");
+  try{
+   const current=client.current;
+   if(!current||!personal)throw new Error("Attach Nara before admitting an Anima profile");
+   const document=await readDocument();
+   if(!document)throw new Error("No live Expression document");
+   const parsed=JSON.parse(animaProfileText) as AnimaExpressionProfile;
+   const binding=bindPersonalProjection({
+    nara_ref:personal.nara_ref,
+    subject_ref:personal.subject_ref,
+    expression_ref:document.expression_ref,
+    expression_revision:String(document.revision),
+    profile:parsed,
+   });
+   assertSharedPersonalIdentity(
+    {nara_ref:current.contextNow.nara_ref,subject_ref:current.contextNow.subject_ref,expression_ref:document.expression_ref},
+    binding,
+   );
+   const entities=Object.values(document.entities).map(entity=>({
+    entity_ref:entity.entity_ref,
+    subject_ref:entity.subject?.subject_ref,
+    title:entity.title,
+   }));
+   const plan=planAnimaStageActuators(binding,entities);
+   const changes:Change[]=[];
+   for(const centre of plan.centres){
+    if(!centre.applied)continue;
+    const entity=document.entities[centre.entity_ref];
+    if(!entity)continue;
+    if(entity.parameters.tintWeight)changes.push({change:"parameter_set",entity_ref:centre.entity_ref,parameter:"tintWeight",value:centre.tintWeight});
+    if(entity.parameters.sizeScale)changes.push({change:"parameter_set",entity_ref:centre.entity_ref,parameter:"sizeScale",value:centre.sizeScale});
+    if(entity.parameters.size)changes.push({change:"parameter_set",entity_ref:centre.entity_ref,parameter:"size",value:centre.sizeScale});
+   }
+   if(changes.length)await editExpression(changes);
+   const applied=plan.centres.filter(c=>c.applied).length;
+   const missed=plan.centres.filter(c=>!c.applied).length;
+   setPersonal(binding);
+   setNotice(`Live Anima profile admitted (generation ${parsed.profile_generation}); stage actuators planned for ${applied} centre(s)${missed?`, ${missed} unbound`:""}${changes.length?`; applied ${changes.length} parameter edit(s)`:""}; EarthBody ${plan.earth_body.applied?"grounded":"absent (not invented)"}`);
+  }catch(e){setError(String(e));}
+ },[animaProfileText,personal,readDocument,editExpression]);
 
  /** Point the current selection as a highlight: the QL hovered deixis kind —
   * a pure presentation movement on the live stage, no document change. */
@@ -710,6 +790,28 @@ export function NaraSurface({binding}:{binding:SurfaceBinding}){
    </div>;
   })()}
   {floor&&!floor["satisfied"]&&<p className="oi-note" data-voice-floor-unmet>Dialogical floor unmet for {String(floor["body_ref"])}: {(floor["unmet"] as string[]).join("; ")}. The composition is honest about the gap; it does not claim foreground dialogical speech.</p>}
+  <dl className="nara-capabilities" aria-label="Personal Expression standing">
+   <dt>personal body</dt>
+   <dd data-personal-standing={personalStandingLabel(personal)}>
+    {personalStandingLabel(personal)===NARA_PERSONAL_LIVE?"live Nara M4 projection":"authored Expression (no live personal projection)"}
+   </dd>
+  </dl>
+  {personal&&(
+   <details className="oi-disclosure nara-anima-admit" open={personalStandingLabel(personal)!==NARA_PERSONAL_LIVE}>
+    <summary>Admit Anima ExpressionProfile <span className="oi-state">same nara_ref as speech</span></summary>
+    <label className="oi-field">ql.nara-anima-expression-profile/v1
+     <textarea className="oi-input nara-resolution" aria-label="Anima ExpressionProfile JSON" spellCheck={false} value={animaProfileText} onChange={e=>setAnimaProfileText(e.target.value)} placeholder='{"schema":"ql.nara-anima-expression-profile/v1",...}'/>
+    </label>
+    <div className="oi-action-group">
+     <button className="oi-action" onClick={()=>void admitAnimaProfile()}>Admit live personal projection</button>
+     {personal&&!personal.disconnected&&personal.profile&&(
+      <button className="oi-action" onClick={()=>{setPersonal(disconnectPersonalProjection(personal));setNotice("Personal projection disconnected; authored Expression retained; last reading is not current");}}>
+       Disconnect personal projection
+      </button>
+     )}
+    </div>
+   </details>
+  )}
   <div className="nara-composer oi-action-group">
    <input ref={composer} className="oi-input" aria-label="Message Nara" placeholder="Text is always available" onKeyDown={e=>{if(e.key==="Enter"){e.preventDefault();void sendText();}}}/>
    <button className="oi-action oi-action-primary" onClick={()=>void sendText()}>Send</button>

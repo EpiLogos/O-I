@@ -1,3 +1,4 @@
+import {wikiRelationMetadata} from './wikiRelationMetadata';
 /** Transient source semantics for exact native relation bindings. The source
  * Wiki keeps direction; this adapter never adds it to an Expression or Scene. */
 import type {ExpressionDocument,Scene} from '../expression/types';
@@ -47,7 +48,7 @@ export function wikiSceneSourceRelations({document,scene,current}:{document:Expr
   const source=matches[0],from=document.entities[binding.from_entity_ref]?.subject,to=document.entities[binding.to_entity_ref]?.subject;
   if(source.object!=='edge'||typeof source.relation!=='string'||!source.relation||binding.relation.availability!=='available'||binding.relation.revision!==String(source.revision)||!from||!to||source.from_ref!==from.subject_ref||source.to_ref!==to.subject_ref)throw Error('A bound native relation or its endpoints changed; refresh this Scene before reading its relations.');
   if([from,to].some(subject=>!subject.readings.some(row=>row.ref===basis&&row.revision===current.file.revision&&row.availability==='available')))throw Error('A relation endpoint has no current native register binding.');
-  return {binding_ref:binding.binding_ref,relation_ref:binding.relation.ref,relation_revision:binding.relation.revision,native_owner:binding.native_owner,from_entity_ref:binding.from_entity_ref,to_entity_ref:binding.to_entity_ref,from_subject_ref:from.subject_ref,to_subject_ref:to.subject_ref,relation:source.relation};
+  return {binding_ref:binding.binding_ref,relation_ref:binding.relation.ref,relation_revision:binding.relation.revision,native_owner:binding.native_owner,from_entity_ref:binding.from_entity_ref,to_entity_ref:binding.to_entity_ref,from_subject_ref:from.subject_ref,to_subject_ref:to.subject_ref,relation:source.relation,...wikiRelationMetadata(source)};
  });
  return {schema:'oi.scene-source-relations/v1',expression_ref:document.expression_ref,revision:document.revision,scene_ref:scene.scene_ref,register:{source_ref:current.source_ref,reading_ref:basis,revision:current.file.revision},relation_readings};
 }

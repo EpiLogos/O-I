@@ -178,7 +178,8 @@
     "tests/run-read-only.mjs",
     "patches/native-host-capabilities.patch",
     "patches/source-direction-markers.patch",
-    "patches/hosted-map-toolbar.patch"
+    "patches/hosted-map-toolbar.patch",
+    "patches/native-relation-attribution.patch"
   ],
   "patches": {
     "packages/canvas/src/CanvasView.tsx": {
@@ -243,8 +244,8 @@
     },
     "packages/desktop-api/src/techneBundle.ts": {
       "upstream_sha256": "7ff3382b2331031cd4294595c660adbac2964330c9de41e807a97fa93e1e4b94",
-      "adapted_sha256": "5c56fa871f0a5d4b5344738dd818830c0e0843083d964e702a31894b5d22ee9a",
-      "reason": "Native canonical PlaceFacet allows absent names. Preserve empty names; only the host presentation chooses an occurrence title or neutral Location label."
+      "adapted_sha256": "e4352dc9742954f7a1582d21144d54eb21fcebf2fadafa0b351daa2d9957137e",
+      "reason": "Native canonical PlaceFacet allows absent names. Preserve empty names; only the host presentation chooses an occurrence title or neutral Location label. Preserve exact native relation identity, standing, evidence refs and disclosed temporal qualification in transient relationship properties; no inferred classification or provider-authority substitution."
     },
     "packages/desktop-api/src/techneTransport.ts": {
       "upstream_sha256": "4054c16622be5cff834c7f5f5007efc6932fccde317194b259690e9d50bb7ab7",

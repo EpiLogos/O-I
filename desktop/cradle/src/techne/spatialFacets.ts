@@ -1,11 +1,11 @@
-/** Canonical native PlaceSet declarations remain Wiki-owned. Only exact
- * participating occurrences lend those declarations to a Scene instrument. */
+/** Canonical native PlaceSet declarations remain Wiki-owned. Exact source,
+ * whole and participation readings admit their own facts to a Scene. */
 import {validatePlaceFacet,type TechnePlaceFacet,type TechneSourceProvenance} from './contract';
 import {CONSTRUCTION,PARTICIPATION} from '../knowledge/construction';
 import {knowledgeEntityRef} from '../knowledge/expressionProjection';
 import type {ExpressionDocument,Scene} from '../expression/types';
 const CONTRACT='aikit.techne-facet/v1';
-interface SpatialSource {ref:string;revision:string;facets:TechnePlaceFacet[];frame?:{ref:string;revision:string;participation_ref:string}}
+interface SpatialSource {ref:string;revision:string;facets:TechnePlaceFacet[];whole_subjects?:string[];frame?:{ref:string;revision:string;participation_ref:string}}
 export type WikiSpatialReading={state:'available';sources:SpatialSource[]}|{state:'unavailable';reason:string};
 export interface SceneSpatialReading {spatial:TechnePlaceFacet[];provenance:TechneSourceProvenance[];reason?:string}
 export function readWikiSpatial(content:string):WikiSpatialReading {
@@ -23,7 +23,9 @@ export function readWikiSpatial(content:string):WikiSpatialReading {
   }
   for(const row of rows){
    const revision=Number.isSafeInteger(row.revision)&&row.revision>0?String(row.revision):'';
-   declared(row,{ref:row.ref,revision});
+   const whole_subjects=row.object==='frame'?(row.constellations??[]).flatMap((constellation:any)=>[...(constellation.anchor_ref?[constellation.anchor_ref]:[]),...(constellation.members??[]).map((member:any)=>member.ref)]):undefined;
+   if(whole_subjects?.some((ref:unknown)=>typeof ref!=='string'||!ref))throw Error('A Wiki whole has an invalid native member identity');
+   declared(row,{ref:row.ref,revision,whole_subjects});
    if(row.object!=='frame'||!row[CONSTRUCTION])continue;
    for(const member of row.constellations?.[0]?.members??[]){
     const participation_ref=member?.[PARTICIPATION]?.participation_ref;
@@ -41,19 +43,28 @@ export async function sceneSpatialFacets(reading:WikiSpatialReading|undefined,do
  const byPlace=new Map<string,string>();
  for(const source of reading.sources){
   if(source.frame){
-   const entityRef=await knowledgeEntityRef(document.expression_ref,source.frame.participation_ref);
-   if(!scene.entity_refs.includes(entityRef))continue;
-   const subject=document.entities[entityRef]?.subject;
-   if(subject?.subject_ref!==source.ref||!subject.readings.some(row=>row.ref===source.frame!.ref&&row.revision===source.frame!.revision&&row.availability==='available'))throw Error('A placed occurrence has changed source membership; refresh its live composition before opening Places');
+   const derived=await knowledgeEntityRef(document.expression_ref,source.frame.participation_ref);
+   const candidates=scene.entity_refs.filter(ref=>ref===derived||document.entities[ref]?.subject?.readings.some(row=>row.ref===source.frame!.participation_ref));
+   if(!candidates.length)continue;
+   for(const entityRef of candidates){
+    const subject=document.entities[entityRef]?.subject;
+    if(subject?.subject_ref!==source.ref||!subject.readings.some(row=>row.ref===source.frame!.ref&&row.revision===source.frame!.revision&&row.availability==='available')||subject.readings.some(row=>(row.ref===source.frame!.ref||row.ref===source.frame!.participation_ref)&&(row.revision!==source.frame!.revision||row.availability!=='available')))throw Error('A placed occurrence has changed source membership; refresh its live composition before opening Places');
+   }
   }else{
    const subjects=scene.entity_refs.map(ref=>document.entities[ref]?.subject).filter(subject=>subject?.subject_ref===source.ref);
-   if(!subjects.length)continue;
-   if(!subjects.some(subject=>subject!.readings.some(row=>row.ref===source.ref&&row.revision===source.revision&&row.availability==='available')))throw Error('A placed source changed; refresh its live composition before opening Places');
+   if(subjects.length){
+    if(!subjects.some(subject=>subject!.readings.some(row=>row.ref===source.ref&&row.revision===source.revision&&row.availability==='available')))throw Error('A placed source changed; refresh its live composition before opening Places');
+   }else{
+    if(!source.whole_subjects)continue;
+    const bound=scene.entity_refs.map(ref=>document.entities[ref]?.subject).filter(subject=>subject?.readings.some(row=>row.ref===source.ref));
+    if(!bound.length)continue;
+    if(bound.some(subject=>!source.whole_subjects!.includes(subject!.subject_ref)||subject!.readings.some(row=>row.ref===source.ref&&(row.revision!==source.revision||row.availability!=='available'))))throw Error('A placed whole has changed source membership or revision; refresh its live composition before opening Places');
+   }
   }
   for(const facet of source.facets){
    const previous=byPlace.get(facet.place_ref),signature=JSON.stringify(facet);
    if(previous&&previous!==signature)throw Error('This Scene discloses conflicting native readings of one place; resolve them in the source editor');
-   if(previous)continue;byPlace.set(facet.place_ref,signature);spatial.push(facet);
+   if(!previous){byPlace.set(facet.place_ref,signature);spatial.push(facet);}
    provenance.push({source_ref:source.ref,source_revision:source.revision,native_owner:'wiki',selector:{unit:'other',kind:'techne-spatial-facet',value:facet.place_ref}});
   }
  }

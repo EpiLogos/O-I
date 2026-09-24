@@ -132,7 +132,7 @@ export function editConstruction(frame: NativeConstruction, changes: Record<stri
 export function memberChange(passage: WikiPassage, role_ref?: string): Record<string, unknown> {
   return {change: 'member_add', member: {subject_ref: passage.source_ref, participation: {participation_ref: newRef('participation:wiki'), role_ref: role_ref ?? null, sources: [passageProvenance(passage)], note: passage.text}}};
 }
-export function sourceBases(request: ConstructionRequest, facetBases: {source_ref:string;revision:string}[]=[]): {source_ref: string; revision: string}[] {
+export function sourceBases(request: {changes:Record<string,unknown>[]}, facetBases: {source_ref:string;revision:string}[]=[]): {source_ref: string; revision: string}[] {
   const sources = new Map<string, {source_ref: string; revision: string}>();
   const visit = (value: unknown, nativeFacet=false) => {
     if (Array.isArray(value)) {value.forEach(row=>visit(row)); return;}

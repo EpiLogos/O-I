@@ -1,3 +1,5 @@
+import {WikiFactsProvider,WikiFactsButton} from './WikiFactsEditor';
+import {restoreFactsCheckpoints,retainFactsCheckpoint,type FactsCheckpoint} from './wikiFacts';
 import {emphasizeGraph} from './graphEmphasis';
 import {useCallback,useEffect,useMemo,useRef,useState} from "react";
 import {useKernel} from "../kernel/KernelProvider";
@@ -29,11 +31,12 @@ import {Glyph} from "../workspace/Glyph";
 
 type Camera={zoom:number;x:number;y:number};
 type Visit={query:string;selected?:string;camera:Camera;overviewCamera?:Camera;filters?:GraphFilterState;pageAddress?:KnowledgeAddress;pageTitle?:string;pageAnchor?:WikiAnchor;scroll?:number};
-type Travel={visits:Visit[];index:number;saved?:SavedGraphView[];construction?:ConstructionCheckpoint;constructionRecovery?:{message:string;raw:unknown}};
+type Travel={facts?:Record<string,FactsCheckpoint>;factsRecovery?:{message:string;raw:unknown};visits:Visit[];index:number;saved?:SavedGraphView[];construction?:ConstructionCheckpoint;constructionRecovery?:{message:string;raw:unknown}};
 const origin=():Camera=>({zoom:1,x:0,y:0});
 function restore(id:string):Travel {
   try {
     const saved=JSON.parse(localStorage.getItem(`oi-cradle.knowledge-travel.v1:${id}`)??"null");
+    if(saved?.facts){try{saved.facts=restoreFactsCheckpoints(saved.facts);}catch(error){saved.factsRecovery={message:String(error),raw:saved.facts};delete saved.facts;}}
     if(saved?.construction){try{saved.construction=restoreConstructionCheckpoint(saved.construction);}catch(error){saved.constructionRecovery={message:String(error),raw:saved.construction};delete saved.construction;}}
     if(saved&&Array.isArray(saved.visits)&&saved.visits.length>0&&saved.visits.length<=32&&Number.isInteger(saved.index)&&saved.index>=0&&saved.index<saved.visits.length&&saved.visits.every((v:Visit)=>typeof v.query==="string"&&(v.selected===undefined||typeof v.selected==="string")&&v.camera&&[v.camera.zoom,v.camera.x,v.camera.y].every(Number.isFinite)&&v.camera.zoom>=.15&&v.camera.zoom<=4&&(!v.overviewCamera||([v.overviewCamera.zoom,v.overviewCamera.x,v.overviewCamera.y].every(Number.isFinite)&&v.overviewCamera.zoom>=.15&&v.overviewCamera.zoom<=4))))return {...saved,visits:saved.visits.map((visit:Visit)=>({...visit,pageAddress:visit.pageAddress&&['source','wiki','project-map'].includes(visit.pageAddress.kind)&&typeof visit.pageAddress.value==='string'?visit.pageAddress:undefined,pageTitle:typeof visit.pageTitle==='string'?visit.pageTitle:undefined,scroll:typeof visit.scroll==='number'&&Number.isFinite(visit.scroll)&&visit.scroll>=0?visit.scroll:0,pageAnchor:visit.pageAnchor&&typeof visit.pageAnchor==='object'?visit.pageAnchor:undefined})),saved:restoreSavedGraphViews(saved.saved)};
     const camera=JSON.parse(localStorage.getItem(`oi-cradle.knowledge-view.v1:${id}`)??"null");
@@ -62,6 +65,13 @@ export function KnowledgeSurface({binding,onOpen}: {binding:SurfaceBinding;onOpe
     // An operation intent is a recovery boundary, not an ordinary debounced
     // camera preference. Persist it before allowing a native write to begin.
     if(value.pending||value.artifactSave)localStorage.setItem(`oi-cradle.knowledge-travel.v1:${binding.id}`,JSON.stringify(next));
+    latestTravel.current=next;setTravel(next);
+  },[binding.id]);
+  const saveFactsCheckpoint=useCallback((key:string,value:FactsCheckpoint)=>{
+    const next={...latestTravel.current,facts:retainFactsCheckpoint(latestTravel.current.facts??{},key,value)};
+    restoreFactsCheckpoints(next.facts);
+    // Retain every input and immutable operation before native dispatch.
+    localStorage.setItem(`oi-cradle.knowledge-travel.v1:${binding.id}`,JSON.stringify(next));
     latestTravel.current=next;setTravel(next);
   },[binding.id]);
   const [detailNode,setDetailNode]=useState<GraphNode>();
@@ -169,6 +179,8 @@ export function KnowledgeSurface({binding,onOpen}: {binding:SurfaceBinding;onOpe
     setCamera(()=>visit.selected?unaccommodate(fitted,anchor,{x:0,y:0,...extent},extent):fitted);
   };
   return <section className="knowledge-surface" aria-label="Knowledge surface" aria-busy={busy}>
+    <WikiFactsProvider transport={transport} project={binding.project} checkpoints={travel.facts??{}} onCheckpoint={saveFactsCheckpoint} onSaved={()=>setGeneration(n=>n+1)}>
+    {travel.factsRecovery&&<details><summary>Show raw retained time/place recovery</summary><p role="alert">{travel.factsRecovery.message}</p><pre>{JSON.stringify(travel.factsRecovery.raw,null,2)}</pre></details>}
     {travel.constructionRecovery&&<details className="knowledge-raw"><summary>Recover retained constellation draft</summary><p role="alert">{travel.constructionRecovery.message}</p><pre>{JSON.stringify(travel.constructionRecovery.raw,null,2)}</pre></details>}
     {busy&&<Loading label="Reading graph inputs…" scope="inline"/>}{error&&<p role="alert">{error}</p>}{layout.error&&<p role="alert">{layout.error}</p>}
     {isGraph&&<div className="knowledge-graph" ref={graph} data-focused={Boolean(visit.selected)} data-detail-open={Boolean(detailNode)} data-dense={nodes.length>80}>
@@ -180,7 +192,7 @@ export function KnowledgeSurface({binding,onOpen}: {binding:SurfaceBinding;onOpe
       {detailNode&&<NodeDetails readingProps={{transport,project:binding.project,binding,onNavigate:navigate,anchor:visit.pageAnchor,onSelectSource:receivePassage}} node={detailNode} reading={reading?.resource===(graphAddress(detailNode)?.value??detailNode.ref)?reading:undefined} hosted={hosted&&isHostedNode(detailNode)&&(hosted.state==="unavailable"||hosted.ref===detailNode.ref)?hosted:undefined} error={readError} project={binding.project} onClose={release} onPromote={()=>setDetailNode(undefined)} onOpen={(address,title,project,placement)=>onOpen(address,title,project,placement,binding.id)} disclosures={grouped.find(s=>s.node.ref===detailNode.ref)?.disclosures??[detailNode]} related={related.map(edge=>({edge,node:nodes.find(n=>n.ref===(edge.from_ref===detailNode.ref?edge.to_ref:edge.from_ref))}))} onRelated={open} native={transport.kind==="tauri"} rect={detailGeometry.rect} extent={extent} onGeometry={detailGeometry.change} storageError={detailGeometry.storageError} transport={transport} onActionDispatched={()=>setGeneration(n=>n+1)}/>}
     </div>}
     {model&&<div className="knowledge-inputs">{Object.values(model.inputs).filter(input=>input.state!=="available").map((input,i)=><details key={i} open={input.state==="unavailable"}><summary>{input.owner_operation==="shared-field.projection"?"Shared Field":input.owner_operation} · {input.state}</summary><p role="status">{input.owner_operation} — {input.detail}</p></details>)}</div>}
-    {!isGraph&&<article className="knowledge-content oi-scroll" ref={content} tabIndex={-1} aria-label="Selected node content"><div className="knowledge-page-heading"><h1>{visit.pageTitle??binding.title}</h1>{selectedAddress&&reading&&<KnowledgeExpression surface={binding.id} project={binding.project} address={selectedAddress} locus={{ref:reading.resource,label:visit.pageTitle??binding.title,kind:"knowledge-subject",native_owner:reading.provider,provenance:{source:reading.authority,revision:reading.revision},actions:[]}} pins={[]} follow={false}/>} {selectedAddress?.kind==="wiki"&&<button className="oi-action" onClick={()=>void onOpen(selectedAddress!,visit.pageTitle??binding.title,binding.project,"tab").catch(e=>setReadError(String(e)))}>Show in graph ↗</button>}</div>{readError?<p role="alert">{readError}</p>:reading?<ReadingBody reading={reading} transport={transport} project={binding.project} binding={{...binding,title:visit.pageTitle??binding.title}} onNavigate={navigate} anchor={visit.pageAnchor} onSelectSource={receivePassage}/>:<p role="status">Reading content…</p>}</article>}
+    {!isGraph&&<article className="knowledge-content oi-scroll" ref={content} tabIndex={-1} aria-label="Selected node content"><div className="knowledge-page-heading"><h1>{visit.pageTitle??binding.title}</h1>{selectedAddress&&reading&&<KnowledgeExpression surface={binding.id} project={binding.project} address={selectedAddress} locus={{ref:reading.resource,label:visit.pageTitle??binding.title,kind:"knowledge-subject",native_owner:reading.provider,provenance:{source:reading.authority,revision:reading.revision},actions:[]}} pins={[]} follow={false}/>} {selectedAddress?.kind==="wiki"&&<WikiFactsButton reference={selectedAddress.value}/>} {selectedAddress?.kind==="wiki"&&<button className="oi-action" onClick={()=>void onOpen(selectedAddress!,visit.pageTitle??binding.title,binding.project,"tab").catch(e=>setReadError(String(e)))}>Show in graph ↗</button>}</div>{readError?<p role="alert">{readError}</p>:reading?<ReadingBody reading={reading} transport={transport} project={binding.project} binding={{...binding,title:visit.pageTitle??binding.title}} onNavigate={navigate} anchor={visit.pageAnchor} onSelectSource={receivePassage}/>:<p role="status">Reading content…</p>}</article>}
     {(constructionOpen||travel.construction||constructionIncoming)&&<WikiConstructionPanel key={binding.project??"central-root"} binding={binding} open={constructionOpen} incoming={constructionIncoming} checkpoint={travel.construction} requestedFrame={constructionFrame} requestedFrameRequest={binding.view?.constructionFrame?.requestId} onCheckpoint={saveCheckpoint} onClose={()=>setConstructionOpen(false)} onNavigate={(address,title,anchor)=>{navigate(address,title,anchor);setConstructionOpen(false);}} onSaved={()=>setGeneration(n=>n+1)}/>}
     <footer className="knowledge-surface-footer">
       <button className="oi-action" aria-expanded={constructionOpen} onClick={()=>setConstructionOpen(value=>!value)}>Constellations</button>
@@ -189,5 +201,5 @@ export function KnowledgeSurface({binding,onOpen}: {binding:SurfaceBinding;onOpe
       {!isGraph&&binding.view?.graphOrigin&&<button className="oi-tool" aria-label="Release graph focus" title="Release graph focus" onClick={()=>{try{releaseGraph(binding.view!.graphOrigin!);}catch(e){setReadError(String(e));}}}><Glyph name="release" size={13}/></button>}
       <button className="oi-tool" aria-label="Refresh knowledge" title="Refresh" onClick={()=>setGeneration(n=>n+1)}><Glyph name="refresh" size={13}/></button>
     </footer>
-  </section>;
+  </WikiFactsProvider></section>;
 }

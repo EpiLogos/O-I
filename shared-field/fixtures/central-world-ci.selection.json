@@ -23,5 +23,12 @@
   "node_refs": [
     "wiki:node:project-root/fixture"
   ],
-  "disclose_source_refs": true
+  "disclose_source_refs": true,
+  "positions": {
+    "central:position:project:Fixture:anima-4": "occupancy",
+    "central:position:project:Fixture:aletheia-5": "address"
+  },
+  "constellations": [
+    "wiki:frame:ci-fixture-inquiry"
+  ]
 }

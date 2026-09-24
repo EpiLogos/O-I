@@ -103,7 +103,9 @@ function relationOf(edge: WikiRelationEdge, sourceRef: string) {
     from_ref: edge.from,
     to_ref: edge.to,
     origin: edge.provider ?? "wiki",
-    standing: edge.authority ?? null,
+    standing: edge.standing ?? null,
+    relation_ref: edge.ref ?? null,
+    ...(edge.evidence_refs ? {evidence_refs:edge.evidence_refs} : {}),
     source_ref: sourceRef,
   };
 }

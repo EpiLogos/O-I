@@ -8,7 +8,9 @@ export interface ChakraResonanceMapping {
   anchor: ResonanceAnchor | null;
 }
 
-/** Root→Crown maps monotonically onto the seven physical anchors selected by the current instrument. */
+/** Authored semantic presentation profile — not a live Nara M4 reading.
+ * Root→Crown maps onto physical anchors by frequency for resonance colouring only.
+ * Centre identity remains distinct from any cymatic station. */
 export function mapChakrasToAnchors(anchors: readonly ResonanceAnchor[]): ChakraResonanceMapping[] {
   const ordered = [...anchors].sort((a,b)=>a.frequencyHz-b.frequencyHz);
   return CHAKRA_DEFINITIONS.map((node)=>({node,anchor:ordered[node.order]??null}));

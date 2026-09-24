@@ -1,0 +1,803 @@
+{
+  "schema": "oi.shared-field.snapshot/v1",
+  "target": {
+    "name": "fixture",
+    "uri": "ws://fixture.invalid:3000",
+    "database": "oi-shared-field-fixture"
+  },
+  "transport_identity": "c200fixture",
+  "status": {
+    "healthy": true
+  },
+  "fields": [
+    {
+      "schema": "oi.shared-field/v1",
+      "field_ref": "oi:field:ci:central:project:Fixture",
+      "kind": "explore",
+      "visibility": "public",
+      "title": "Fixture — a CI ProjectCentral world",
+      "provenance": [
+        {
+          "kind": "human-publication",
+          "ref": "participant:ci:owner",
+          "source_system": "central",
+          "revision": "oi.world-sources/v1:6ea96295cc5d0897"
+        }
+      ]
+    }
+  ],
+  "participants": [
+    {
+      "schema": "oi.participant/v1",
+      "participant_ref": "participant:ci:owner",
+      "field_ref": "oi:field:ci:central:project:Fixture",
+      "identity": {
+        "kind": "human",
+        "ref": "human:ci:owner"
+      },
+      "presentation": {
+        "world_ref": "world:ci:central:project:Fixture",
+        "chosen_name": "CI owner"
+      },
+      "provenance": {
+        "source_system": "central",
+        "source_revision": "oi.world-sources/v1:6ea96295cc5d0897",
+        "source_ref": "central:source:project:Fixture:ProjectCentral/agents/wiki/wiki.json"
+      }
+    }
+  ],
+  "projections": [
+    {
+      "schema": "oi.projection/v1",
+      "projection_ref": "projection:ci:central:project:Fixture",
+      "projection_revision": 1,
+      "state": "published",
+      "subject": {
+        "kind": "central-world",
+        "ref": "world:ci:central:project:Fixture"
+      },
+      "source": {
+        "system": "central",
+        "ref": "central:source:project:Fixture:ProjectCentral/agents/wiki/wiki.json",
+        "revision": "oi.world-sources/v1:6ea96295cc5d0897"
+      },
+      "publisher_participant_ref": "participant:ci:owner",
+      "published_at": "2026-09-24T09:00:00.000Z",
+      "audience": {
+        "visibility": "public"
+      },
+      "representation": {
+        "kind": "oi.world-presentation/v1",
+        "payload": {
+          "schema": "oi.world-presentation/v1",
+          "presentation_ref": "presentation:ci:central:project:Fixture",
+          "world_ref": "world:ci:central:project:Fixture",
+          "revision": 1,
+          "title": "Fixture — a CI ProjectCentral world",
+          "summary": "Central-shaped CI fixture; not an owner's real world.",
+          "theme": {
+            "tokens": {}
+          },
+          "regions": [
+            {
+              "region_ref": "lede",
+              "role": "lede",
+              "bindings": [
+                {
+                  "schema": "oi.presentation-binding/v1",
+                  "binding_ref": "lede",
+                  "component_ref": "oi.presentation/lede/v1",
+                  "subject_ref": "world:ci:central:project:Fixture",
+                  "portable_renderer": "oi.presentation/lede/v1",
+                  "props": {
+                    "title": "Fixture — a CI ProjectCentral world",
+                    "text": "Central-shaped CI fixture; not an owner's real world."
+                  },
+                  "fallback": {
+                    "title": "Fixture — a CI ProjectCentral world",
+                    "text": "Central-shaped CI fixture; not an owner's real world."
+                  },
+                  "provenance": [
+                    {
+                      "kind": "agent-wiki",
+                      "ref": "world:ci:central:project:Fixture",
+                      "source_system": "central",
+                      "revision": "central.content-fnv1a64/v1:837:ci-project-1"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "region_ref": "wiki",
+              "role": "relation",
+              "label": "Wiki topology",
+              "bindings": [
+                {
+                  "schema": "oi.presentation-binding/v1",
+                  "binding_ref": "space:central-wiki-root",
+                  "component_ref": "oi.presentation/wiki-reading/v1",
+                  "subject_ref": "world:ci:central:project:Fixture/central:wiki:root",
+                  "portable_renderer": "oi.presentation/wiki-reading/v1",
+                  "props": {
+                    "title": "Central (CI fixture)",
+                    "text": "central:wiki:root · root register",
+                    "refs": [
+                      "world:ci:central:project:Fixture/central:wiki:project:Fixture"
+                    ]
+                  },
+                  "fallback": {
+                    "title": "Central (CI fixture)",
+                    "text": "central:wiki:root"
+                  },
+                  "provenance": [
+                    {
+                      "kind": "agent-wiki",
+                      "ref": "central:wiki:root",
+                      "source_system": "central",
+                      "revision": "central.content-fnv1a64/v1:1639:ci-root-1"
+                    }
+                  ]
+                },
+                {
+                  "schema": "oi.presentation-binding/v1",
+                  "binding_ref": "space:central-wiki-project-fixture",
+                  "component_ref": "oi.presentation/wiki-reading/v1",
+                  "subject_ref": "world:ci:central:project:Fixture/central:wiki:project:Fixture",
+                  "portable_renderer": "oi.presentation/wiki-reading/v1",
+                  "props": {
+                    "title": "Fixture",
+                    "text": "central:wiki:project:Fixture · project register",
+                    "refs": [
+                      "world:ci:central:project:Fixture/wiki:node:project-root/fixture"
+                    ]
+                  },
+                  "fallback": {
+                    "title": "Fixture",
+                    "text": "central:wiki:project:Fixture"
+                  },
+                  "provenance": [
+                    {
+                      "kind": "agent-wiki",
+                      "ref": "central:wiki:project:Fixture",
+                      "source_system": "central",
+                      "revision": "central.content-fnv1a64/v1:837:ci-project-1"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "region_ref": "nodes",
+              "role": "reading",
+              "label": "Selected nodes",
+              "bindings": [
+                {
+                  "schema": "oi.presentation-binding/v1",
+                  "binding_ref": "node:wiki-node-project-root-fixture",
+                  "component_ref": "oi.presentation/reference-card/v1",
+                  "subject_ref": "world:ci:central:project:Fixture/wiki:node:project-root/fixture",
+                  "portable_renderer": "oi.presentation/reference-card/v1",
+                  "props": {
+                    "title": "Fixture",
+                    "text": "project-root · agent-maintained",
+                    "refs": [
+                      "ProjectCentral/project.json"
+                    ]
+                  },
+                  "fallback": {
+                    "title": "Fixture",
+                    "text": "project-root · agent-maintained"
+                  },
+                  "provenance": [
+                    {
+                      "kind": "agent-wiki",
+                      "ref": "wiki:node:project-root/fixture",
+                      "source_system": "central",
+                      "revision": "central.content-fnv1a64/v1:837:ci-project-1"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "region_ref": "constellations",
+              "role": "relation",
+              "label": "Constellations",
+              "bindings": [
+                {
+                  "schema": "oi.presentation-binding/v1",
+                  "binding_ref": "constellation:wiki-frame-ci-fixture-inquiry",
+                  "component_ref": "oi.presentation/reference-card/v1",
+                  "subject_ref": "world:ci:central:project:Fixture/wiki:frame:ci-fixture-inquiry",
+                  "portable_renderer": "oi.presentation/reference-card/v1",
+                  "props": {
+                    "title": "What holds the Fixture together?",
+                    "text": "constellation · 2 participations · revision 1",
+                    "refs": [
+                      "world:ci:central:project:Fixture/wiki:node:project-root/fixture"
+                    ]
+                  },
+                  "fallback": {
+                    "title": "What holds the Fixture together?",
+                    "text": "constellation · 2 participations · revision 1"
+                  },
+                  "provenance": [
+                    {
+                      "kind": "aikit-constellation",
+                      "ref": "wiki:frame:ci-fixture-inquiry",
+                      "source_system": "ai-kit",
+                      "revision": "1"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "region_ref": "positions",
+              "role": "relation",
+              "label": "Positions",
+              "bindings": [
+                {
+                  "schema": "oi.presentation-binding/v1",
+                  "binding_ref": "position:central-position-project-fixture-anima-4",
+                  "component_ref": "oi.presentation/reference-card/v1",
+                  "subject_ref": "world:ci:central:project:Fixture/central:position:project:Fixture:anima-4",
+                  "portable_renderer": "oi.presentation/reference-card/v1",
+                  "props": {
+                    "title": "Anima 4 (CI fixture)",
+                    "text": "@anima-4 · role:anima · occupied (generation #2, workcell:omarchy)",
+                    "refs": [
+                      "world:ci:central:project:Fixture/wiki:node:project-root/fixture"
+                    ]
+                  },
+                  "fallback": {
+                    "title": "Anima 4 (CI fixture)",
+                    "text": "@anima-4 · role:anima · occupied (generation #2, workcell:omarchy)"
+                  },
+                  "provenance": [
+                    {
+                      "kind": "central-position",
+                      "ref": "central:position:project:Fixture:anima-4",
+                      "source_system": "central",
+                      "revision": "central.content-fnv1a64/v1:700:ci-anima-4-1"
+                    }
+                  ]
+                },
+                {
+                  "schema": "oi.presentation-binding/v1",
+                  "binding_ref": "position:central-position-project-fixture-aletheia-5",
+                  "component_ref": "oi.presentation/reference-card/v1",
+                  "subject_ref": "world:ci:central:project:Fixture/central:position:project:Fixture:aletheia-5",
+                  "portable_renderer": "oi.presentation/reference-card/v1",
+                  "props": {
+                    "title": "Aletheia 5 (CI fixture)",
+                    "text": "@aletheia-5 · role:aletheia",
+                    "refs": []
+                  },
+                  "fallback": {
+                    "title": "Aletheia 5 (CI fixture)",
+                    "text": "@aletheia-5 · role:aletheia"
+                  },
+                  "provenance": [
+                    {
+                      "kind": "central-position",
+                      "ref": "central:position:project:Fixture:aletheia-5",
+                      "source_system": "central",
+                      "revision": "central.content-fnv1a64/v1:700:ci-aletheia-5-1"
+                    }
+                  ]
+                }
+              ]
+            }
+          ],
+          "provenance": [
+            {
+              "kind": "central-wiki-reading",
+              "ref": "central:source:control:root:Control/agents/wiki/wiki.json",
+              "source_system": "central",
+              "revision": "central.content-fnv1a64/v1:1639:ci-root-1"
+            },
+            {
+              "kind": "central-wiki-reading",
+              "ref": "central:source:project:Fixture:ProjectCentral/agents/wiki/wiki.json",
+              "source_system": "central",
+              "revision": "central.content-fnv1a64/v1:837:ci-project-1"
+            },
+            {
+              "kind": "central-position-listing",
+              "ref": "central:positions:project:Fixture",
+              "source_system": "central",
+              "revision": "positions:7466e64080d2cf4f"
+            },
+            {
+              "kind": "aikit-population-reading",
+              "ref": "aikit:population:project:Fixture",
+              "source_system": "ai-kit",
+              "revision": "population:4c31c899568e27b4"
+            },
+            {
+              "kind": "aikit-constellation",
+              "ref": "wiki:frame:ci-fixture-inquiry",
+              "source_system": "ai-kit",
+              "revision": "1"
+            }
+          ]
+        }
+      },
+      "provenance": [
+        {
+          "kind": "human-publication",
+          "ref": "participant:ci:owner",
+          "source_system": "central",
+          "revision": "oi.world-sources/v1:6ea96295cc5d0897"
+        }
+      ]
+    }
+  ],
+  "entries": [
+    {
+      "schema": "oi.explore-entry/v1",
+      "ref": "world:ci:central:project:Fixture",
+      "kind": "central-world",
+      "world_ref": "world:ci:central:project:Fixture",
+      "label": "Fixture — a CI ProjectCentral world",
+      "summary": "Central-shaped CI fixture; not an owner's real world.",
+      "revision": "oi.world-sources/v1:6ea96295cc5d0897",
+      "aliases": [],
+      "provenance": [
+        {
+          "kind": "central-wiki-reading",
+          "ref": "central:source:control:root:Control/agents/wiki/wiki.json",
+          "source_system": "central",
+          "revision": "central.content-fnv1a64/v1:1639:ci-root-1"
+        },
+        {
+          "kind": "central-wiki-reading",
+          "ref": "central:source:project:Fixture:ProjectCentral/agents/wiki/wiki.json",
+          "source_system": "central",
+          "revision": "central.content-fnv1a64/v1:837:ci-project-1"
+        },
+        {
+          "kind": "central-position-listing",
+          "ref": "central:positions:project:Fixture",
+          "source_system": "central",
+          "revision": "positions:7466e64080d2cf4f"
+        },
+        {
+          "kind": "aikit-population-reading",
+          "ref": "aikit:population:project:Fixture",
+          "source_system": "ai-kit",
+          "revision": "population:4c31c899568e27b4"
+        },
+        {
+          "kind": "aikit-constellation",
+          "ref": "wiki:frame:ci-fixture-inquiry",
+          "source_system": "ai-kit",
+          "revision": "1"
+        }
+      ],
+      "locators": [
+        {
+          "surface": "web",
+          "locator": "/explore.html?ref=world%3Aci%3Acentral%3Aproject%3AFixture"
+        }
+      ],
+      "meta": {
+        "register": "project",
+        "standing": "projection",
+        "projection_ref": "projection:ci:central:project:Fixture"
+      }
+    },
+    {
+      "schema": "oi.explore-entry/v1",
+      "ref": "world:ci:central:project:Fixture/central:wiki:root",
+      "kind": "wiki-space",
+      "world_ref": "world:ci:central:project:Fixture",
+      "label": "Central (CI fixture)",
+      "summary": "WikiSpace at the root register · addressable only; no nodes selected",
+      "revision": "1",
+      "aliases": [
+        "central:wiki:root"
+      ],
+      "provenance": [
+        {
+          "kind": "agent-wiki",
+          "ref": "central:wiki:root",
+          "source_system": "central",
+          "revision": "central.content-fnv1a64/v1:1639:ci-root-1"
+        }
+      ],
+      "locators": [
+        {
+          "surface": "web",
+          "locator": "/explore.html?ref=world%3Aci%3Acentral%3Aproject%3AFixture%2Fcentral%3Awiki%3Aroot"
+        }
+      ],
+      "meta": {
+        "register": "root",
+        "standing": "agent-maintained",
+        "disclosure": "address",
+        "local_ref": "central:wiki:root"
+      }
+    },
+    {
+      "schema": "oi.explore-entry/v1",
+      "ref": "world:ci:central:project:Fixture/central:wiki:project:Fixture",
+      "kind": "wiki-space",
+      "world_ref": "world:ci:central:project:Fixture",
+      "label": "Fixture",
+      "summary": "WikiSpace at the project register · 1 of 1 nodes selected",
+      "revision": "1",
+      "aliases": [
+        "central:wiki:project:Fixture"
+      ],
+      "provenance": [
+        {
+          "kind": "agent-wiki",
+          "ref": "central:wiki:project:Fixture",
+          "source_system": "central",
+          "revision": "central.content-fnv1a64/v1:837:ci-project-1"
+        }
+      ],
+      "locators": [
+        {
+          "surface": "web",
+          "locator": "/explore.html?ref=world%3Aci%3Acentral%3Aproject%3AFixture%2Fcentral%3Awiki%3Aproject%3AFixture"
+        }
+      ],
+      "meta": {
+        "register": "project",
+        "standing": "agent-maintained",
+        "disclosure": "nodes",
+        "local_ref": "central:wiki:project:Fixture"
+      }
+    },
+    {
+      "schema": "oi.explore-entry/v1",
+      "ref": "world:ci:central:project:Fixture/wiki:node:project-root/fixture",
+      "kind": "wiki-node",
+      "world_ref": "world:ci:central:project:Fixture",
+      "label": "Fixture",
+      "summary": "project-root · agent-maintained · revision 1",
+      "revision": "1",
+      "aliases": [
+        "wiki:node:project-root/fixture"
+      ],
+      "provenance": [
+        {
+          "kind": "agent-wiki",
+          "ref": "wiki:node:project-root/fixture",
+          "source_system": "central",
+          "revision": "central.content-fnv1a64/v1:837:ci-project-1"
+        },
+        {
+          "kind": "agent-maintained-source",
+          "ref": "ProjectCentral/project.json",
+          "source_system": "central",
+          "revision": "central.content-fnv1a64/v1:837:ci-project-1"
+        }
+      ],
+      "locators": [
+        {
+          "surface": "web",
+          "locator": "/explore.html?ref=world%3Aci%3Acentral%3Aproject%3AFixture%2Fwiki%3Anode%3Aproject-root%2Ffixture"
+        }
+      ],
+      "meta": {
+        "register": "project",
+        "standing": "agent-maintained",
+        "node_type": "project-root",
+        "local_ref": "wiki:node:project-root/fixture"
+      }
+    },
+    {
+      "schema": "oi.explore-entry/v1",
+      "ref": "world:ci:central:project:Fixture/wiki:frame:ci-fixture-inquiry",
+      "kind": "constellation",
+      "world_ref": "world:ci:central:project:Fixture",
+      "label": "What holds the Fixture together?",
+      "summary": "constellation · 2 participations · 1 in this World · revision 1",
+      "revision": "1",
+      "aliases": [
+        "wiki:frame:ci-fixture-inquiry"
+      ],
+      "provenance": [
+        {
+          "kind": "aikit-constellation",
+          "ref": "wiki:frame:ci-fixture-inquiry",
+          "source_system": "ai-kit",
+          "revision": "1"
+        }
+      ],
+      "locators": [
+        {
+          "surface": "web",
+          "locator": "/explore.html?ref=world%3Aci%3Acentral%3Aproject%3AFixture%2Fwiki%3Aframe%3Aci-fixture-inquiry"
+        }
+      ],
+      "meta": {
+        "standing": "aikit-constellation",
+        "native_owner": "ai-kit",
+        "local_ref": "wiki:frame:ci-fixture-inquiry",
+        "participations": 2
+      }
+    },
+    {
+      "schema": "oi.explore-entry/v1",
+      "ref": "world:ci:central:project:Fixture/central:position:project:Fixture:anima-4",
+      "kind": "world-position",
+      "world_ref": "world:ci:central:project:Fixture",
+      "label": "Anima 4 (CI fixture)",
+      "summary": "World Position · @anima-4 · role:anima · occupied (generation #2, workcell:omarchy)",
+      "revision": "r1",
+      "aliases": [
+        "central:position:project:Fixture:anima-4",
+        "@anima-4"
+      ],
+      "provenance": [
+        {
+          "kind": "central-position",
+          "ref": "central:position:project:Fixture:anima-4",
+          "source_system": "central",
+          "revision": "central.content-fnv1a64/v1:700:ci-anima-4-1"
+        },
+        {
+          "kind": "aikit-population-reading",
+          "ref": "aikit:population:project:Fixture",
+          "source_system": "ai-kit",
+          "revision": "population:4c31c899568e27b4"
+        }
+      ],
+      "locators": [
+        {
+          "surface": "web",
+          "locator": "/explore.html?ref=world%3Aci%3Acentral%3Aproject%3AFixture%2Fcentral%3Aposition%3Aproject%3AFixture%3Aanima-4"
+        }
+      ],
+      "meta": {
+        "standing": "world-position",
+        "disclosure": "occupancy",
+        "local_ref": "central:position:project:Fixture:anima-4",
+        "role_ref": "role:anima",
+        "handle": "@anima-4",
+        "label": "Anima 4 (CI fixture)",
+        "enclosing_world_ref": "project:Fixture",
+        "inherited": false,
+        "occupancy": {
+          "state": "occupied",
+          "generation_ordinal": 2,
+          "workcell_ref": "workcell:omarchy",
+          "observed_via": "gateway:agency-gateway/omarchy"
+        },
+        "current_work": {
+          "outcome": "one"
+        },
+        "communiques": {
+          "undelivered": 2
+        }
+      }
+    },
+    {
+      "schema": "oi.explore-entry/v1",
+      "ref": "world:ci:central:project:Fixture/central:position:project:Fixture:aletheia-5",
+      "kind": "world-position",
+      "world_ref": "world:ci:central:project:Fixture",
+      "label": "Aletheia 5 (CI fixture)",
+      "summary": "World Position · @aletheia-5 · role:aletheia",
+      "revision": "r1",
+      "aliases": [
+        "central:position:project:Fixture:aletheia-5",
+        "@aletheia-5"
+      ],
+      "provenance": [
+        {
+          "kind": "central-position",
+          "ref": "central:position:project:Fixture:aletheia-5",
+          "source_system": "central",
+          "revision": "central.content-fnv1a64/v1:700:ci-aletheia-5-1"
+        }
+      ],
+      "locators": [
+        {
+          "surface": "web",
+          "locator": "/explore.html?ref=world%3Aci%3Acentral%3Aproject%3AFixture%2Fcentral%3Aposition%3Aproject%3AFixture%3Aaletheia-5"
+        }
+      ],
+      "meta": {
+        "standing": "world-position",
+        "disclosure": "address",
+        "local_ref": "central:position:project:Fixture:aletheia-5",
+        "role_ref": "role:aletheia",
+        "handle": "@aletheia-5",
+        "label": "Aletheia 5 (CI fixture)",
+        "enclosing_world_ref": "project:Fixture",
+        "inherited": false
+      }
+    }
+  ],
+  "relations": [
+    {
+      "relation_ref": "world:ci:central:project:Fixture/central:wiki:root#wiki.contains#world:ci:central:project:Fixture/central:wiki:project:Fixture",
+      "from": "world:ci:central:project:Fixture/central:wiki:root",
+      "to": "world:ci:central:project:Fixture/central:wiki:project:Fixture",
+      "relation": "wiki.contains",
+      "origin": "wiki",
+      "direction": "forward",
+      "provenance": [
+        {
+          "kind": "wiki-relation",
+          "ref": "world:ci:central:project:Fixture/central:wiki:root#wiki.contains#world:ci:central:project:Fixture/central:wiki:project:Fixture",
+          "source_system": "central",
+          "revision": "central.content-fnv1a64/v1:1639:ci-root-1"
+        }
+      ]
+    },
+    {
+      "relation_ref": "world:ci:central:project:Fixture/central:wiki:project:Fixture#wiki.contains#world:ci:central:project:Fixture/wiki:node:project-root/fixture",
+      "from": "world:ci:central:project:Fixture/central:wiki:project:Fixture",
+      "to": "world:ci:central:project:Fixture/wiki:node:project-root/fixture",
+      "relation": "wiki.contains",
+      "origin": "wiki",
+      "direction": "forward",
+      "provenance": [
+        {
+          "kind": "wiki-relation",
+          "ref": "world:ci:central:project:Fixture/central:wiki:project:Fixture#wiki.contains#world:ci:central:project:Fixture/wiki:node:project-root/fixture",
+          "source_system": "central",
+          "revision": "central.content-fnv1a64/v1:837:ci-project-1"
+        }
+      ]
+    },
+    {
+      "relation_ref": "world:ci:central:project:Fixture#oi.world/wiki-space#world:ci:central:project:Fixture/central:wiki:root",
+      "from": "world:ci:central:project:Fixture",
+      "to": "world:ci:central:project:Fixture/central:wiki:root",
+      "relation": "oi.world/wiki-space",
+      "origin": "projection",
+      "provenance": [
+        {
+          "kind": "projection-relation",
+          "ref": "world:ci:central:project:Fixture#oi.world/wiki-space#world:ci:central:project:Fixture/central:wiki:root",
+          "source_system": "o-i",
+          "revision": "projection:ci:central:project:Fixture@1"
+        }
+      ]
+    },
+    {
+      "relation_ref": "world:ci:central:project:Fixture#oi.world/wiki-space#world:ci:central:project:Fixture/central:wiki:project:Fixture",
+      "from": "world:ci:central:project:Fixture",
+      "to": "world:ci:central:project:Fixture/central:wiki:project:Fixture",
+      "relation": "oi.world/wiki-space",
+      "origin": "projection",
+      "provenance": [
+        {
+          "kind": "projection-relation",
+          "ref": "world:ci:central:project:Fixture#oi.world/wiki-space#world:ci:central:project:Fixture/central:wiki:project:Fixture",
+          "source_system": "o-i",
+          "revision": "projection:ci:central:project:Fixture@1"
+        }
+      ]
+    },
+    {
+      "relation_ref": "world:ci:central:project:Fixture#oi.world/constellation#world:ci:central:project:Fixture/wiki:frame:ci-fixture-inquiry",
+      "from": "world:ci:central:project:Fixture",
+      "to": "world:ci:central:project:Fixture/wiki:frame:ci-fixture-inquiry",
+      "relation": "oi.world/constellation",
+      "origin": "projection",
+      "provenance": [
+        {
+          "kind": "projection-relation",
+          "ref": "world:ci:central:project:Fixture#oi.world/constellation#world:ci:central:project:Fixture/wiki:frame:ci-fixture-inquiry",
+          "source_system": "o-i",
+          "revision": "projection:ci:central:project:Fixture@1"
+        }
+      ]
+    },
+    {
+      "relation_ref": "world:ci:central:project:Fixture/wiki:frame:ci-fixture-inquiry#aikit.constellation/participation#world:ci:central:project:Fixture/wiki:node:project-root/fixture#wiki:participation:ci-root",
+      "from": "world:ci:central:project:Fixture/wiki:frame:ci-fixture-inquiry",
+      "to": "world:ci:central:project:Fixture/wiki:node:project-root/fixture",
+      "relation": "aikit.constellation/participation",
+      "origin": "aikit-knowledge",
+      "direction": "forward",
+      "participation": {
+        "participation_ref": "wiki:participation:ci-root",
+        "role_ref": null,
+        "position": null,
+        "conjugate": false
+      },
+      "provenance": [
+        {
+          "kind": "aikit-participation",
+          "ref": "wiki:participation:ci-root",
+          "source_system": "ai-kit",
+          "revision": "1"
+        }
+      ]
+    },
+    {
+      "relation_ref": "world:ci:central:project:Fixture#oi.world/position#world:ci:central:project:Fixture/central:position:project:Fixture:anima-4",
+      "from": "world:ci:central:project:Fixture",
+      "to": "world:ci:central:project:Fixture/central:position:project:Fixture:anima-4",
+      "relation": "oi.world/position",
+      "origin": "projection",
+      "provenance": [
+        {
+          "kind": "projection-relation",
+          "ref": "world:ci:central:project:Fixture#oi.world/position#world:ci:central:project:Fixture/central:position:project:Fixture:anima-4",
+          "source_system": "o-i",
+          "revision": "projection:ci:central:project:Fixture@1"
+        }
+      ]
+    },
+    {
+      "relation_ref": "world:ci:central:project:Fixture#oi.world/position#world:ci:central:project:Fixture/central:position:project:Fixture:aletheia-5",
+      "from": "world:ci:central:project:Fixture",
+      "to": "world:ci:central:project:Fixture/central:position:project:Fixture:aletheia-5",
+      "relation": "oi.world/position",
+      "origin": "projection",
+      "provenance": [
+        {
+          "kind": "projection-relation",
+          "ref": "world:ci:central:project:Fixture#oi.world/position#world:ci:central:project:Fixture/central:position:project:Fixture:aletheia-5",
+          "source_system": "o-i",
+          "revision": "projection:ci:central:project:Fixture@1"
+        }
+      ]
+    },
+    {
+      "relation_ref": "world:ci:central:project:Fixture/central:position:project:Fixture:anima-4#oi.world/works-on#world:ci:central:project:Fixture/wiki:node:project-root/fixture",
+      "from": "world:ci:central:project:Fixture/central:position:project:Fixture:anima-4",
+      "to": "world:ci:central:project:Fixture/wiki:node:project-root/fixture",
+      "relation": "oi.world/works-on",
+      "origin": "projection",
+      "provenance": [
+        {
+          "kind": "factory-custody",
+          "ref": "factory:custody:00000000-0000-4000-8000-0000000c0570",
+          "source_system": "factory",
+          "revision": "population:4c31c899568e27b4"
+        },
+        {
+          "kind": "projection-relation",
+          "ref": "world:ci:central:project:Fixture/central:position:project:Fixture:anima-4#oi.world/works-on#world:ci:central:project:Fixture/wiki:node:project-root/fixture",
+          "source_system": "o-i",
+          "revision": "projection:ci:central:project:Fixture@1"
+        }
+      ]
+    }
+  ],
+  "contributions": [],
+  "my_authority": [],
+  "my_contribution_receipts": [],
+  "my_watches": [],
+  "my_contacts": [],
+  "counts": {
+    "fields": 1,
+    "participants": 1,
+    "projections": 1,
+    "entries": 7,
+    "relations": 9
+  },
+  "entry_fields": {
+    "world:ci:central:project:Fixture": "oi:field:ci:central:project:Fixture",
+    "world:ci:central:project:Fixture/central:wiki:root": "oi:field:ci:central:project:Fixture",
+    "world:ci:central:project:Fixture/central:wiki:project:Fixture": "oi:field:ci:central:project:Fixture",
+    "world:ci:central:project:Fixture/wiki:node:project-root/fixture": "oi:field:ci:central:project:Fixture",
+    "world:ci:central:project:Fixture/wiki:frame:ci-fixture-inquiry": "oi:field:ci:central:project:Fixture",
+    "world:ci:central:project:Fixture/central:position:project:Fixture:anima-4": "oi:field:ci:central:project:Fixture",
+    "world:ci:central:project:Fixture/central:position:project:Fixture:aletheia-5": "oi:field:ci:central:project:Fixture"
+  },
+  "relation_fields": {
+    "world:ci:central:project:Fixture/central:wiki:root#wiki.contains#world:ci:central:project:Fixture/central:wiki:project:Fixture": "oi:field:ci:central:project:Fixture",
+    "world:ci:central:project:Fixture/central:wiki:project:Fixture#wiki.contains#world:ci:central:project:Fixture/wiki:node:project-root/fixture": "oi:field:ci:central:project:Fixture",
+    "world:ci:central:project:Fixture#oi.world/wiki-space#world:ci:central:project:Fixture/central:wiki:root": "oi:field:ci:central:project:Fixture",
+    "world:ci:central:project:Fixture#oi.world/wiki-space#world:ci:central:project:Fixture/central:wiki:project:Fixture": "oi:field:ci:central:project:Fixture",
+    "world:ci:central:project:Fixture#oi.world/constellation#world:ci:central:project:Fixture/wiki:frame:ci-fixture-inquiry": "oi:field:ci:central:project:Fixture",
+    "world:ci:central:project:Fixture/wiki:frame:ci-fixture-inquiry#aikit.constellation/participation#world:ci:central:project:Fixture/wiki:node:project-root/fixture#wiki:participation:ci-root": "oi:field:ci:central:project:Fixture",
+    "world:ci:central:project:Fixture#oi.world/position#world:ci:central:project:Fixture/central:position:project:Fixture:anima-4": "oi:field:ci:central:project:Fixture",
+    "world:ci:central:project:Fixture#oi.world/position#world:ci:central:project:Fixture/central:position:project:Fixture:aletheia-5": "oi:field:ci:central:project:Fixture",
+    "world:ci:central:project:Fixture/central:position:project:Fixture:anima-4#oi.world/works-on#world:ci:central:project:Fixture/wiki:node:project-root/fixture": "oi:field:ci:central:project:Fixture"
+  }
+}

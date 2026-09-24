@@ -7,6 +7,10 @@ const diagnostics=ts.getPreEmitDiagnostics(ts.createProgram(parsed.fileNames,par
 if(diagnostics.length){console.error(ts.formatDiagnosticsWithColorAndContext(diagnostics,{getCanonicalFileName:x=>x,getCurrentDirectory:()=>root,getNewLine:()=> '\n'}));process.exit(1);}
 const rcRoot=path.resolve(root,'../vendor/research-canvas');
 const aliases=Object.fromEntries(['schema','domain','desktop-api','geography','viewers','node-document'].map(name=>[`@research-canvas/${name}`,path.join(rcRoot,`packages/${name}/src/index.ts`)]));
+// Shared chrome lives outside this package; bind it to this application's
+// existing React runtime, including JSX/client/server subpaths.
+aliases.react=path.resolve(root,'../node_modules/react');
+aliases['react-dom']=path.resolve(root,'../node_modules/react-dom');
 aliases['@research-canvas/exporter']=path.join(rcRoot,'browserExporter.ts');
 const assets={'.woff':'dataurl','.woff2':'dataurl','.ttf':'dataurl','.svg':'dataurl','.png':'dataurl','.jpg':'dataurl','.webp':'dataurl'};
 const sourceAssets={name:'research-canvas-source-assets',setup(builder){

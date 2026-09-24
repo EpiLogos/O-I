@@ -1,0 +1,106 @@
+{
+  "context": {
+    "context_id": null,
+    "project_root": "/home/PRIVATE_SENTINEL_HOME/Central/Work/Fixture",
+    "session_id": null
+  },
+  "ok": true,
+  "schema": 1,
+  "warnings": [],
+  "data": {
+    "schema": "aikit.population-reading/v1",
+    "project_world_ref": "project:Fixture",
+    "local_world_ref": "control:root",
+    "positions": [
+      {
+        "position_ref": "central:position:project:Fixture:anima-4",
+        "handle": "@anima-4",
+        "label": "Anima 4 (CI fixture)",
+        "role_ref": "role:anima",
+        "inherited": false,
+        "definition": "present",
+        "occupancy": {
+          "state": "occupied",
+          "generation_ref": "actuation:generation:00000000-0000-4000-8000-00000000c1a4",
+          "generation_ordinal": 2,
+          "kind": "handover",
+          "agent_ref": "agent/anima-4",
+          "agency_ref": "agency:anima-4@project:Fixture",
+          "agent_session_ref": "claude-code:session:0badc0de-PRIVATE_SENTINEL_SESSION",
+          "session_space_ref": "session-space:PRIVATE_SENTINEL_SPACE",
+          "workcell_ref": "workcell:omarchy",
+          "observed_via": "gateway:agency-gateway/omarchy",
+          "gateway_address": "ws://100.64.0.7:7337/PRIVATE_SENTINEL_GATEWAY",
+          "since_unix_ms": 1790200000000,
+          "presence": "active",
+          "attention": "PRIVATE_SENTINEL_ATTENTION composing the M4 participation"
+        },
+        "current_work": {
+          "outcome": "one",
+          "work_ref": "wiki:node:project-root/fixture",
+          "custody_ref": "factory:custody:00000000-0000-4000-8000-0000000c0570",
+          "run_ref": "run:PRIVATE_SENTINEL_RUN",
+          "candidates": 1
+        },
+        "communiques": {
+          "undelivered": 2
+        }
+      },
+      {
+        "position_ref": "central:position:project:Fixture:aletheia-5",
+        "handle": "@aletheia-5",
+        "label": "Aletheia 5 (CI fixture)",
+        "role_ref": "role:aletheia",
+        "inherited": false,
+        "definition": "present",
+        "occupancy": {
+          "state": "occupied",
+          "generation_ordinal": 1,
+          "kind": "initial",
+          "agent_ref": "agent/aletheia-5",
+          "agent_session_ref": "agent-session/aletheia-5-PRIVATE_SENTINEL_SESSION_B",
+          "workcell_ref": "workcell:mac",
+          "observed_via": "local",
+          "since_unix_ms": 1790200001000,
+          "attention": "PRIVATE_SENTINEL_ATTENTION_B"
+        },
+        "current_work": {
+          "outcome": "one",
+          "work_ref": "wiki:frame:ci-fixture-inquiry",
+          "custody_ref": "factory:custody:PRIVATE_SENTINEL_CUSTODY_B",
+          "candidates": 1
+        },
+        "communiques": {
+          "undelivered": 0
+        }
+      },
+      {
+        "position_ref": "central:position:project:Fixture:private-sentinel-office",
+        "handle": "@private-sentinel-office",
+        "label": "PRIVATE_SENTINEL_OFFICE",
+        "role_ref": "role:product-guardian",
+        "inherited": false,
+        "definition": "present",
+        "occupancy": {
+          "state": "vacant"
+        },
+        "current_work": {
+          "outcome": "none",
+          "candidates": 0
+        },
+        "communiques": {
+          "undelivered": 0
+        }
+      }
+    ],
+    "remotes": [
+      {
+        "workcell_ref": "workcell:omarchy",
+        "gateway_ref": "agency-gateway/omarchy",
+        "status": "reachable",
+        "detail": "ws://100.64.0.7:7337 answered PRIVATE_SENTINEL_REMOTE"
+      }
+    ],
+    "absences": []
+  }
+}

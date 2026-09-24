@@ -1,6 +1,11 @@
 /** One chooser inside the Expressions application. Selecting an instrument
  * changes tools over the current native work; it never asks the cradle to
  * replace this application with another renderer. */
+import {createElement} from 'react';
+import {createRoot} from 'react-dom/client';
+import {flushSync} from 'react-dom';
+import {IconTab, IconTabStrip} from '../../../src/workspace/primitives/IconTabStrip';
+import './lensChooser.css';
 import {icon, esc} from './icons.js';
 import type {NativeSubject, ConstructionFacets} from './nativeWorkspace.js';
 
@@ -48,6 +53,24 @@ function studioBody(lens: LensDef): string {
   return `<header class="lens-studio-head"><h2>${esc(lens.label)}</h2><button type="button" class="lens-studio-close" data-action="lens-close" aria-label="Close instrument tools">${icon('close')}</button></header><div class="lens-studio-controls">${actions[lens.id] ?? ''}</div>`;
 }
 
+/** Presentation only: native engine state and document-level actions stay in
+ * installLensStudio/app. Keyed tabs preserve focus across native selection. */
+export function LensChooser({active}: {active: LensId}) {
+  return createElement('div', {className: 'lens-chooser-row'},
+    createElement(IconTabStrip, {'aria-label': 'Instruments — M0′ to M5′', crossAxisArrows: true},
+      LENSES.map(lens => createElement(IconTab, {
+        key: lens.id, label: `${lens.office} ${lens.label}`, selected: lens.id === active,
+        title: `${lens.office} — ${lens.label}`, className: 'lens-choice',
+        id: `lens-tab-${lens.id}`, 'aria-controls': 'lens-studio',
+        ...{'data-action': 'lens', 'data-lens': lens.id},
+        iconContent: createElement('span', {className: 'lens-glyph', 'aria-hidden': true,
+          dangerouslySetInnerHTML: {__html: icon(lens.icon)}}),
+      }, createElement('span', {className: 'lens-office', 'aria-hidden': true}, lens.office)))),
+    createElement('button', {type: 'button', className: 'lens-hide', 'aria-label': 'Hide instruments',
+      title: 'Hide instruments', ...{'data-action': 'lens-bar'},
+      dangerouslySetInnerHTML: {__html: icon('collapse')}}));
+}
+
 export function installLensStudio(host: LensStudioHost): LensStudioApi {
   // No `chrome`/`hud-panel` class: those carry the `body.studio-open` visibility
   // toggle, and the chooser must stand while a routed surface (the Scene Studio)
@@ -55,7 +78,6 @@ export function installLensStudio(host: LensStudioHost): LensStudioApi {
   const chooser = document.createElement('nav');
   chooser.id = 'lens-chooser';
   chooser.className = 'lens-chooser';
-  chooser.setAttribute('role', 'tablist');
   chooser.setAttribute('aria-label', 'Instruments — M0′ to M5′');
   chooser.hidden = true;
 
@@ -74,24 +96,15 @@ export function installLensStudio(host: LensStudioHost): LensStudioApi {
   let mode: 'expressions' | 'techne' = 'expressions';
   let built = false;
 
-  // Build the chooser buttons ONCE; selection updates their state in place so
-  // the just-activated button keeps keyboard focus (never a full innerHTML
-  // rebuild on select).
+  // One React root, stable keys, and the shared tab primitive. The engine's
+  // delegated data-action handler remains the sole selection operation.
+  const chooserRoot = createRoot(chooser);
   const buildChooser = () => {
-    chooser.innerHTML = LENSES.map((lens, index) =>
-      `<button type="button" class="lens-choice" data-action="lens" data-lens="${lens.id}" role="tab" id="lens-tab-${lens.id}" aria-controls="lens-studio" aria-selected="${lens.id === active}" tabindex="${lens.id === active ? 0 : -1}" aria-label="${esc(`${lens.office} ${lens.label}`)}" title="${esc(`${lens.office} — ${lens.label}`)}" data-index="${index}"><span class="lens-office" aria-hidden="true">${lens.office}</span>${icon(lens.icon)}</button>`,
-    ).join('') + `<button type="button" class="lens-hide" data-action="lens-bar" aria-label="Hide instruments" title="Hide instruments">${icon('collapse')}</button>`;
+    flushSync(() => chooserRoot.render(createElement(LensChooser, {active})));
     built = true;
-  };
-
-  const markActive = () => {
-    for (const button of chooser.querySelectorAll<HTMLButtonElement>('.lens-choice')) {
-      const on = button.dataset.lens === active;
-      button.setAttribute('aria-selected', String(on));
-      button.tabIndex = on ? 0 : -1;
-    }
     studio.setAttribute('aria-labelledby', `lens-tab-${active}`);
   };
+  const markActive = buildChooser;
 
   const renderStudio = () => {
     const lens = LENSES.find(candidate => candidate.id === active)!;
@@ -132,19 +145,6 @@ export function installLensStudio(host: LensStudioHost): LensStudioApi {
     refresh() { if (mode === 'techne') { if (!built) buildChooser(); else markActive(); if (studioOpen) renderStudio(); } },
     active() { return active; },
   };
-
-  // Arrow-key roving across the tablist (§13 keyboard-reachable controls).
-  // Pointer and keyboard selection share the same in-application operation.
-  chooser.addEventListener('keydown', event => {
-    const keys: Record<string, number> = {ArrowRight: 1, ArrowDown: 1, ArrowLeft: -1, ArrowUp: -1};
-    const delta = keys[event.key];
-    if (delta === undefined) return;
-    event.preventDefault();
-    const at = LENSES.findIndex(lens => lens.id === active);
-    const next = LENSES[(at + delta + LENSES.length) % LENSES.length];
-    api.select(next.id);
-    chooser.querySelector<HTMLButtonElement>(`.lens-choice[data-lens="${next.id}"]`)?.focus();
-  });
 
   return api;
 }

@@ -2192,12 +2192,12 @@ impl Kernel {
                 self.reads.invalidate_prefix("knowledge:");
                 self.reads.invalidate_prefix("graph:");
                 let mut receipts=Vec::new();
-                if invocation.action==construction::APPLY {
+                if matches!(invocation.action.as_str(), construction::APPLY | construction::APPLY_FACTS) {
                     if let action::ActionDispatch::Invoked{data,..}=&dispatch {
                         if data["persisted"]==true && data["state"]=="saved" {
                             if let Some(path)=data["native_file"]["location"]["path"].as_str().or_else(||invocation.input.as_ref().and_then(|i|i["location"]["path"].as_str())) {
                                 self.reads.invalidate(&format!("dir:{}",files::parent_path(path)));
-                                receipts.push(self.log.record(KernelEvent::FileChanged{path:path.into(),summary:"The native Wiki owner saved a constructive whole.".into()}));
+                                receipts.push(self.log.record(KernelEvent::FileChanged{path:path.into(),summary:if invocation.action==construction::APPLY_FACTS {"The native Wiki owner saved time and place facts.".into()} else {"The native Wiki owner saved a constructive whole.".into()}}));
                             }
                         }
                     }

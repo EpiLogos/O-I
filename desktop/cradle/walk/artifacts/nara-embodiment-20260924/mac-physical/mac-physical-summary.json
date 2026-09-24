@@ -1,0 +1,68 @@
+{
+  "schema": "oi.nara-embodiment-mac-physical/v1",
+  "standing": "isolated native browser join on this Mac; not installed WKWebView, not audible-speaker proof, not H ratification",
+  "recorded_at_utc": "2026-09-24T18:19:42.421915+00:00",
+  "machine": {
+    "system": "Darwin",
+    "release": "25.5.0",
+    "machine": "arm64"
+  },
+  "mac_version": "ProductName:\t\tmacOS\nProductVersion:\t\t26.5.2\nBuildVersion:\t\t25F84\n",
+  "audio_display_inventory_standing": "captured in local-receipt.json checks.mac_audio_display_inventory (MacBook Air Speakers + Apple M4 + Cinema HD)",
+  "gpu_requested": "hardware",
+  "gpu_observed": {
+    "vendor": "Google Inc. (Google)",
+    "renderer": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (LLVM 10.0.0) (0x0000C0DE)), SwiftShader driver)"
+  },
+  "gpu_note": "Chromium headless still bound SwiftShader despite --hardware-gpu; Apple M4 is present in system_profiler",
+  "join": {
+    "status": "isolated-native-browser-passed",
+    "oi_head": "182ab33ae6dceec15dda150d4b8c919abec299fd",
+    "ql_head": "e50fd5f917ee2870f21cab4280f0c19262b28e0e",
+    "checks": [
+      "complete real native producer opens once and delivers nonzero PCM plus retained targets",
+      "actual C++ coordinates reach exact mapped GPU slots; hold preserves particle positions",
+      "M1 carrier and M3 transcription consume the real inspected outputs",
+      "native M1 carrier tick changes returned quadrature and the actual stage vector without a renderer oscillator",
+      "M3 transcription edit returns real new source output without replacing original evidence",
+      "M2 damping reaches the actual material owner with a newer coupled generation",
+      "continuous native phase is consumed without advancing a second renderer clock",
+      "host-mode switch retains native lease and app subject",
+      "disconnected producer stops GPU position, velocity, native cursor and request retries after its single required close",
+      "native owner released exactly once"
+    ],
+    "sources": {
+      "bridge": {
+        "path": "/Users/admin/Central/Work/O-I/desktop/cradle/kernel/target/debug/walk-bridge",
+        "sha256": "9969dd479340aa83e919501fa8f164c75839badc4b8063ae42f3b03bb771c956"
+      },
+      "host": {
+        "path": "/Users/admin/Central/Work/Quaternal-Logic/target/release/ql-field-host",
+        "sha256": "a6e69d38b1dc352dbb5cc8e072981cfbc9ab11c2bfe15b17e65eb0e9719ba5e6"
+      },
+      "worker": {
+        "path": "/Users/admin/Central/Work/Quaternal-Logic/cpp/build/ql-field-worker",
+        "sha256": "c00e89a93ea6e1e38519dc956e94e0ddc77c684d59b0e0d730931dfdcb5c5e5e"
+      },
+      "input": {
+        "path": "/Users/admin/Central/Work/O-I/desktop/cradle/walk/artifacts/ui-convergence/owner-verification/ql-coupled/input.json",
+        "sha256": "4b79e5c0d9b0c30c5c38dc1839de6fb00772480b4889b1ac5bc386ac9669ad32"
+      }
+    },
+    "browser_receipt_sha256": "0a7688f3360dffad97d165ee05f0dcc189ccd7cd544b7d7a8696ae3a4f5286c6"
+  },
+  "claims": {
+    "installed_app": false,
+    "native_wkwebview": false,
+    "audible_speakers": false,
+    "microphone": false,
+    "real_model_provider": false,
+    "human_acceptance": false,
+    "controlled_central_disclosure": true
+  },
+  "evidence_paths": {
+    "local_receipt": "/Users/admin/Central/Work/O-I/desktop/cradle/walk/artifacts/nara-embodiment-20260924/mac-physical/local-receipt.json",
+    "joined": "/Users/admin/Central/Work/O-I/desktop/cradle/walk/artifacts/nara-embodiment-20260924/mac-physical/browser/joined.json",
+    "native_domain_png": "/Users/admin/Central/Work/O-I/desktop/cradle/walk/artifacts/nara-embodiment-20260924/mac-physical/browser/native-domain.png"
+  }
+}

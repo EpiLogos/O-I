@@ -186,3 +186,70 @@ test('refusals: a restricted audience without refs, an unknown scene, a foreign 
   assert.throws(() => validateExpressionComposition({ ...projectExpression(input()).composition, representations: [{ kind: 'live', representation: { ref: 'x', revision: 'r', availability: 'available' }, provenance: [] }] }), /not portable/);
   assert.throws(() => frozenExpressionHtml({ schema: 'oi.expression/v1' }), /Unsupported Expression composition schema/);
 });
+
+/*
+ * Technè through the World: an Expression authored for an occupied Position
+ * and composed from a constellation relates to both — when the field it is
+ * published into already hosts them as World entries (published through the
+ * World bundle, central-wiki-projection.mjs). Entries mirror that bundle's
+ * `world-position` and `constellation` entries as the field client's
+ * snapshot reads them, with each entry's hosting field attached.
+ */
+const WORLD_FIELD = 'oi:field:central:project:O-I';
+const POSITION = 'central:position:project:O-I:anima-4';
+const CONSTELLATION = 'wiki:frame:inquiry-o-i';
+const hostedEntries = (field = WORLD_FIELD) => [
+  { ref: `world:central:project:O-I/${POSITION}`, kind: 'world-position', world_ref: 'world:central:project:O-I', label: 'Anima 4', aliases: [POSITION, '@anima-4'], meta: { local_ref: POSITION }, field_ref: field },
+  { ref: `world:central:project:O-I/${CONSTELLATION}`, kind: 'constellation', world_ref: 'world:central:project:O-I', label: 'What grounds O-I?', aliases: [CONSTELLATION], meta: { local_ref: CONSTELLATION }, field_ref: field },
+  { ref: 'world:central:project:O-I/wiki:node:project-root/o-i', kind: 'wiki-node', world_ref: 'world:central:project:O-I', label: 'O-I', aliases: ['wiki:node:project-root/o-i'], meta: { local_ref: 'wiki:node:project-root/o-i' }, field_ref: field },
+];
+const worldField = { schema: 'oi.shared-field/v1', field_ref: WORLD_FIELD, kind: 'explore', visibility: 'public', title: 'O-I — a ProjectCentral world', provenance: [{ kind: 'human-publication', ref: 'participant:central:owner', source_system: 'central', revision: 'oi.world-sources/v1:0123456789abcdef' }] };
+
+test('an Expression authored for a hosted Position from a hosted constellation relates to both, in that field', () => {
+  const bundle = projectExpression(input({ field_ref: WORLD_FIELD, world_ref: 'world:central:project:O-I', field: worldField, authoring: { position_ref: POSITION, constellation_ref: CONSTELLATION }, field_entries: hostedEntries() }));
+  assert.deepEqual(bundle.relations.map((relation) => [relation.from, relation.relation, relation.to, relation.origin]), [
+    ['expression:sf1-walk', 'oi.world/authored-by', `world:central:project:O-I/${POSITION}`, 'projection'],
+    ['expression:sf1-walk', 'oi.world/expresses', `world:central:project:O-I/${CONSTELLATION}`, 'projection'],
+  ]);
+  assert.deepEqual(bundle.relations[0].provenance, [{ kind: 'authoring-position', ref: POSITION, source_system: 'central', revision: '4' }]);
+  assert.deepEqual(bundle.omissions.world_relations, []);
+  const args = hostedExpressionArgs(bundle);
+  assert.deepEqual(args.putExploreRelations.map((relation) => [relation.fromRef, relation.relation, relation.toRef, relation.fieldRef]), [
+    ['expression:sf1-walk', 'oi.world/authored-by', `world:central:project:O-I/${POSITION}`, WORLD_FIELD],
+    ['expression:sf1-walk', 'oi.world/expresses', `world:central:project:O-I/${CONSTELLATION}`, WORLD_FIELD],
+  ]);
+  for (const relation of args.putExploreRelations) assert.equal(JSON.parse(relation.relationJson).relation_ref, relation.relationRef);
+  // The World's field contract is carried unchanged — the Expression never retitles it.
+  assert.equal(args.putSharedField.contractJson, JSON.stringify(worldField));
+  assert.equal(bundle.entry.world_ref, 'world:central:project:O-I');
+  assert.deepEqual(expressionPublicationLeaks(bundle, SENTINELS), []);
+});
+
+test('no World relation without a hosted entry in the same field; the refs stay local and the reasons are named', () => {
+  const unhosted = projectExpression(input({ authoring: { position_ref: POSITION, constellation_ref: CONSTELLATION }, field_entries: [] }));
+  assert.deepEqual(unhosted.relations, []);
+  assert.deepEqual(hostedExpressionArgs(unhosted).putExploreRelations, []);
+  assert.deepEqual(unhosted.omissions.world_relations.map((omission) => [omission.relation, omission.reason]), [
+    ['oi.world/authored-by', 'not hosted in the SharedField'],
+    ['oi.world/expresses', 'not hosted in the SharedField'],
+  ]);
+  assert.deepEqual(expressionPublicationLeaks(unhosted, [POSITION, CONSTELLATION]), [], 'an unrelated authoring ref never travels');
+
+  const elsewhere = projectExpression(input({ authoring: { position_ref: POSITION }, field_entries: hostedEntries('oi:field:someone-else') }));
+  assert.deepEqual(elsewhere.relations, []);
+  assert.match(elsewhere.omissions.world_relations[0].reason, /another SharedField/);
+
+  const twice = projectExpression(input({ field_ref: WORLD_FIELD, authoring: { constellation_ref: CONSTELLATION }, field_entries: [...hostedEntries(), { ...hostedEntries()[1], ref: 'world:other/wiki:frame:inquiry-o-i' }] }));
+  assert.deepEqual(twice.relations, []);
+  assert.match(twice.omissions.world_relations[0].reason, /more than once/);
+
+  // A Position named by a wiki node's ref is not a Position: kinds must match.
+  const wrongKind = projectExpression(input({ field_ref: WORLD_FIELD, authoring: { position_ref: 'wiki:node:project-root/o-i' }, field_entries: hostedEntries() }));
+  assert.deepEqual(wrongKind.relations, []);
+
+  // No authoring at all is the ordinary Share: nothing changes.
+  const plain = projectExpression(input());
+  assert.deepEqual(plain.relations, []);
+  assert.deepEqual(plain.omissions.world_relations, []);
+  assert.throws(() => projectExpression(input({ field_ref: WORLD_FIELD, field: { ...worldField, field_ref: 'oi:field:other' } })), /hosted contract of field_ref/);
+});

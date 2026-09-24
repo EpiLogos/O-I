@@ -145,6 +145,19 @@ export class InstrumentSession {
   }
 
   #enqueue(frame) {
+    try {
+      return this.#admit(frame);
+    } catch (error) {
+      // Device clock can outrun the lead on a stalled main thread after an
+      // already-acknowledged advance. Rebase to that cursor once and retry;
+      // a second refusal still holds for explicit recovery.
+      if (!/late native audio|allocation missed the audio deadline/.test(String(error))) throw error;
+      this.#audio.realignClock('late-native-audio-realign');
+      return this.#admit(frame);
+    }
+  }
+
+  #admit(frame) {
     const presentation = withoutAudio(frame), bytes = JSON.stringify(presentation).length * 2;
     need(this.#queue.length < this.#maxBlocks && this.#bytes + bytes <= this.#maxBytes, 'bounded target queue full');
     const receipt = this.#audio.apply(frame);
@@ -182,8 +195,15 @@ export class InstrumentSession {
     }
     if (this.#busy || this.#held || this.#uncertain) return this.reading;
     const estimate = JSON.stringify(this.#native).length * 2;
+    // target_context_seconds is the device time of the last admitted END cursor,
+    // including the empty post-rebase origin. That origin sits lead-seconds in the
+    // future with nothing scheduled yet — do not treat it as filled lookahead.
+    const scheduledAhead = this.#audio.lastReceipt?.scheduled_blocks > 0 || this.#queue.length > 0;
+    const fillHorizon = scheduledAhead
+      ? audio.target_context_seconds + this.#block / this.#context.sampleRate - this.#context.currentTime
+      : 0;
     if (capacity.frames < this.#block || !capacity.blocks || this.#queue.length >= this.#maxBlocks ||
-      this.#bytes + estimate > this.#maxBytes || audio.target_context_seconds + this.#block / this.#context.sampleRate - this.#context.currentTime > this.#lookahead)
+      this.#bytes + estimate > this.#maxBytes || fillHorizon > this.#lookahead)
       return this.reading;
     this.#busy = true; const generation = this.#generation;
     try {

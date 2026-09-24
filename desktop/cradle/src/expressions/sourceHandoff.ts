@@ -3,7 +3,7 @@
 import type {KernelTransportStatus,KnowledgeAddress,CentralLocation} from '../kernel/types';
 import {inspectWikiScene,resolveWikiSceneSource} from '../techne/wikiReadingProvider';
 import {resolveFileLocation,readFileBytes} from '../files/client';
-import {PARTICIPATION} from '../knowledge/construction';
+import {CONSTRUCTION,PARTICIPATION} from '../knowledge/construction';
 export interface HostedSourceTarget {address?:KnowledgeAddress;location?:CentralLocation;title:string;project?:string;returnTo:{place:{ref:string;title:string};passageId:string}}
 const object=(value:unknown):Record<string,unknown>|undefined=>value&&typeof value==='object'&&!Array.isArray(value)?value as Record<string,unknown>:undefined;
 const reference=(value:unknown):value is string=>typeof value==='string'&&value.length>0&&value.length<=2048&&!/[\u0000-\u001f]/.test(value);
@@ -18,9 +18,13 @@ export async function resolveHostedSource(transport:KernelTransportStatus,value:
  const memberRefs=new Set(members.map(entity=>entity.subject!.subject_ref));
  const sceneRefs=new Set(scene.entity_refs),relations=Object.values(document.relations).filter(row=>sceneRefs.has(row.from_entity_ref)&&sceneRefs.has(row.to_entity_ref)&&row.native_owner!=='oi'&&row.relation.availability==='available');
  const relationRefs=new Set(relations.map(row=>row.relation.ref));
+ // ReadingRefs are only candidates here. A whole is admitted below only after
+ // the fresh register proves its native frame identity, revision and membership.
+ const wholeCandidates=new Set(members.flatMap(entity=>entity.subject!.readings.map(row=>row.ref)));
  const owns=(ref:string)=>memberRefs.has(ref)||relationRefs.has(ref);
+ const candidate=(ref:string)=>owns(ref)||wholeCandidates.has(ref);
  const coordinates=Array.isArray(node?.sourceCoordinates)?node.sourceCoordinates.filter(reference):[];
- const choices=[...new Set((owns(requested)?[requested]:coordinates.filter(owns)))];
+ const choices=[...new Set((candidate(requested)?[requested]:coordinates.filter(candidate)))];
  if(choices.length!==1)throw Error('This Timeline item has no single source in the current native Scene.');
  const ref=choices[0],entity=members.find(row=>row.subject!.subject_ref===ref),relation=relations.find(row=>row.relation.ref===ref);
  // Consume only bounded identity context. Titles, dates and relation metadata
@@ -41,7 +45,24 @@ export async function resolveHostedSource(transport:KernelTransportStatus,value:
   await inspectWikiScene(transport,request);
   return {location:reading.location,title:entity.title,returnTo};
  }
- const {register,current}=await resolveWikiSceneSource(transport,entity?{...request,subject_ref:ref}:request);
+ const wholeMember=!entity&&!relation?members.find(row=>row.subject!.readings.some(reading=>reading.ref===ref)):undefined;
+ const {register,current}=await resolveWikiSceneSource(transport,entity||wholeMember?{...request,subject_ref:(entity??wholeMember)!.subject!.subject_ref}:request);
+ if(wholeMember){
+  const raw:unknown=JSON.parse(current.file.content),container=object(raw);
+  const rows=Array.isArray(raw)?raw:Array.isArray(container?.objects)?container.objects:[];
+  const frames=rows.map(object).filter(row=>row?.object==='frame'&&row.ref===ref);
+  if(frames.length!==1||!Number.isSafeInteger(frames[0]?.revision)||Number(frames[0]?.revision)<1)throw Error('This item has no exact native whole in its source register.');
+  const frame=frames[0]!,constellations=Array.isArray(frame.constellations)?frame.constellations.map(object):[];
+  const declared=new Set(constellations.flatMap(row=>[row?.anchor_ref,...(Array.isArray(row?.members)?row.members.map(member=>object(member)?.ref):[])].filter(reference)));
+  const bound=members.filter(row=>row.subject!.readings.some(reading=>reading.ref===ref));
+  if(!bound.length||bound.some(row=>!declared.has(row.subject!.subject_ref)||row.subject!.readings.filter(reading=>reading.ref===ref).some(reading=>reading.availability!=='available'||reading.revision!==String(frame.revision))))throw Error('The whole or its Scene membership changed; refresh the source binding before opening it.');
+  // The source can change during a read, but a later Expression edit cannot
+  // redirect this acknowledged navigation to a different Scene.
+  await inspectWikiScene(transport,request);
+  const title=object(frame[CONSTRUCTION])?.title??frame.title;
+  return {address:{kind:'wiki',value:ref},title:typeof title==='string'?title:'Whole',project:register.project,returnTo};
+ }
+
  if(relation&&!current.relations.some(row=>row.ref===relation.relation.ref&&String(row.revision)===relation.relation.revision))throw Error('The source relation changed; refresh its Scene binding before opening it.');
  const sources=current.frames.flatMap(frame=>frame.constellations[0].members).filter(member=>member.ref===ref).flatMap(member=>member[PARTICIPATION].sources);
  const kind:KnowledgeAddress['kind']=relation||!sources.some(source=>source.source_ref===ref)?'wiki':'source';

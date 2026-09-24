@@ -9,7 +9,7 @@ use std::{fs::{self, OpenOptions}, io::{BufRead, BufReader, Read, Write}, path::
 
 const MAX_REQUEST: usize = 32 * 1024 * 1024;
 const MAX_REPLY: usize = 64 * 1024 * 1024;
-const TIMEOUT: Duration = Duration::from_secs(6);
+const TIMEOUT: Duration = Duration::from_secs(20);
 
 #[derive(Clone, Debug, Deserialize, Serialize, PartialEq)]
 #[serde(tag = "operation", rename_all = "snake_case", deny_unknown_fields)]

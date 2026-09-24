@@ -119,7 +119,8 @@ export function nativeInstrumentNodeTags(raw:unknown,view:KernelConversion,scene
  }
  return result;
 }
-export interface NativeSourceRelationReading {binding_ref:string;relation_ref:string;relation_revision:string;native_owner:string;from_entity_ref:string;to_entity_ref:string;from_subject_ref:string;to_subject_ref:string;relation:string}
+export interface NativeRelationAttribution {standing?:string;evidence?:Record<string,unknown>[];evidence_refs?:string[];provenance?:Record<string,unknown>[];uncertainty?:string}
+export interface NativeSourceRelationReading extends NativeRelationAttribution {binding_ref:string;relation_ref:string;relation_revision:string;native_owner:string;from_entity_ref:string;to_entity_ref:string;from_subject_ref:string;to_subject_ref:string;relation:string}
 export function nativeInstrumentSourceRelations(raw:unknown,view:KernelConversion,sceneId:string):readonly NativeSourceRelationReading[]{
  const packet=raw as {schema?:string;expression_ref?:string;revision?:number;scene_ref?:string;register?:{reading_ref?:string;revision?:string};relation_readings?:NativeSourceRelationReading[]}|null;
  const sceneRef=view.bindings[sceneId]?.scene_ref,scene=view.document.scenes.find(row=>row.scene_ref===sceneRef);
@@ -129,6 +130,7 @@ export function nativeInstrumentSourceRelations(raw:unknown,view:KernelConversio
  for(const row of packet.relation_readings){
   const binding=row&&expected.find(binding=>binding.binding_ref===row.binding_ref),from=binding&&view.document.entities[binding.from_entity_ref]?.subject,to=binding&&view.document.entities[binding.to_entity_ref]?.subject;
   if(!binding||seen.has(row.binding_ref)||!from||!to||binding.native_owner!==row.native_owner||binding.relation.availability!=='available'||binding.relation.ref!==row.relation_ref||binding.relation.revision!==row.relation_revision||binding.from_entity_ref!==row.from_entity_ref||binding.to_entity_ref!==row.to_entity_ref||from.subject_ref!==row.from_subject_ref||to.subject_ref!==row.to_subject_ref||typeof row.relation!=='string'||!row.relation||[from,to].some(subject=>!hasNativeReading(subject.readings,packet.register!.reading_ref,packet.register!.revision)))throw Error('A returned native relation has changed identity, revision or endpoints.');
+  if((row.standing!==undefined&&typeof row.standing!=='string')||(row.uncertainty!==undefined&&typeof row.uncertainty!=='string')||[row.evidence,row.provenance].some(value=>value!==undefined&&(!Array.isArray(value)||value.some(item=>!item||typeof item.source_ref!=='string')))||(row.evidence_refs!==undefined&&(!Array.isArray(row.evidence_refs)||row.evidence_refs.some(ref=>typeof ref!=='string'))))throw Error('A returned native relation has malformed attribution.');
   seen.add(row.binding_ref);
  }
  return packet.relation_readings;
@@ -156,7 +158,12 @@ export async function readingInstruments(raw:unknown,titles:ReadonlyMap<string,s
   bundle.relationships=bundle.relationships.filter(row=>!Object.prototype.hasOwnProperty.call(row.properties,'relation_origin'));
   for(const relation of relations){
    if(!bundle.nodes.some(node=>node.graphNodeId===relation.from_subject_ref)||!bundle.nodes.some(node=>node.graphNodeId===relation.to_subject_ref))throw Error('A native relation endpoint is absent from the current reading.');
-   bundle.relationships.push({id:relation.binding_ref,sourceGraphNodeId:relation.from_subject_ref,targetGraphNodeId:relation.to_subject_ref,relType:relation.relation,properties:{native_relation_ref:relation.relation_ref,native_relation_revision:relation.relation_revision,native_owner:relation.native_owner,from_entity_ref:relation.from_entity_ref,to_entity_ref:relation.to_entity_ref}});
+   bundle.relationships.push({id:relation.binding_ref,sourceGraphNodeId:relation.from_subject_ref,targetGraphNodeId:relation.to_subject_ref,relType:relation.relation,properties:{native_relation_ref:relation.relation_ref,native_relation_revision:relation.relation_revision,native_owner:relation.native_owner,from_entity_ref:relation.from_entity_ref,to_entity_ref:relation.to_entity_ref,
+    ...(relation.standing!==undefined?{standing:relation.standing}:{}),
+    ...(relation.evidence!==undefined?{evidence:relation.evidence}:{}),
+    ...(relation.evidence_refs!==undefined?{evidence_refs:relation.evidence_refs}:{}),
+    ...(relation.provenance!==undefined?{provenance:relation.provenance}:{}),
+    ...(relation.uncertainty!==undefined?{uncertainty:relation.uncertainty}:{})}});
   }
   for(const canvas of bundle.canvases)canvas.relationshipIds=bundle.relationships.map(row=>row.id);
  }
