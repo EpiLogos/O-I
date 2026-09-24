@@ -1797,7 +1797,7 @@ export function CradleFrame({onComposed}:{onComposed?:()=>void}) {
       <ObjectCentreLayer fullPage={modeSoloStage} yields={object=>factoryCentreOwns(mode,object.kind)}/>
       </DesktopShell>
       {WalkChannel&&<WalkChannel layout={state}/>}
-      <ContextTray bindings={{...Object.assign({},...workspace.workspaces.map(w=>w.layout.surfaces)),...state.surfaces}} accompanying={state.accompanying}/>
+      <ContextTray bindings={{...Object.assign({},...workspace.workspaces.flatMap(w=>[w.layout.surfaces,...Object.values(w.modeLayouts??{}).map(layout=>layout.surfaces)])),...state.surfaces}} accompanying={state.accompanying}/>
       {/* T2 summon seam: answers "oi:techne-summon" (library / verso / search)
         * through the same Library overlay and the verso account overlay. */}
       <TechneSummonSurface subject={workspace.current.context?.subject} trail={workspace.current.context?.trail} onOpenLibrary={()=>setLibrary("open")}/>
