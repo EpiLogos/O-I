@@ -255,6 +255,8 @@ export type KernelOp =
   | { op: "agency_read"; project: string }
   | { op: "model_roster"; project?: string }
   | { op: "agent_definition"; project: string | null; request: import("../agency/nativeAgent").AgentRequest }
+  /** The human Agent card, derived by the installed `oi agent card` (read only). */
+  | { op: "agent_card"; agent_ref: string; world_ref: string | null }
   | {op:"file_operation";location:CentralLocation;request:import("../files/client").FileRequest}
   | {op:"encounter";project:string;request:import("../encounter/client").EncounterRequest}
   /** Provision one fresh chat conversation (new-chat first Send): the kernel
@@ -394,6 +396,7 @@ export type KernelOpResult =
   | { result:"encounter_reading";data:unknown }
   | { result:"encounter_provisioned";data:unknown }
   | { result: "agent_definition_reading"; data: unknown }
+  | { result: "agent_card_reading"; data: unknown }
   | { result:"receiving_reading";data:unknown }
   | { result:"now_reading";data:unknown }
   | { result:"encounter_task_reading";data:unknown }

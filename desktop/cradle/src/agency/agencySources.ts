@@ -30,11 +30,11 @@ export async function readAgency(transport: KernelTransportStatus, project: stri
   const outcome = result.outcome;
   const rows: AgencySessionRow[] = [];
   for (const raw of outcome.spaces) {
-    const space = raw as { definition?: { id?: string }; label?: string; agent_sessions?: Record<string, { purpose?: string }> };
+    const space = raw as { definition?: { id?: string }; label?: string; agent_sessions?: Record<string, { purpose?: string; agent_ref?: string }> };
     const spaceRef = space?.definition?.id;
     if (!spaceRef || !space.agent_sessions) continue;
     for (const [sessionRef, attachment] of Object.entries(space.agent_sessions)) {
-      rows.push({ spaceRef, spaceLabel: space.label, sessionRef, purpose: attachment?.purpose, raw });
+      rows.push({ spaceRef, spaceLabel: space.label, sessionRef, purpose: attachment?.purpose, agentRef: typeof attachment?.agent_ref === "string" ? attachment.agent_ref : undefined, raw });
     }
   }
   return { reading: { projectRef: outcome.project_ref, harnessDisclosure: outcome.harness_disclosure, rows, observedAtUnixMs: outcome.observed_at_unix_ms } };

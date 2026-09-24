@@ -10,6 +10,8 @@ pub fn cli_main() -> ExitCode {
                 println!("  oi profile --help             sparse O:I World profiles: list/show/create/use/diff/clone/export/import");
                 println!("  oi contribution --help        validate/register compiled native surface descriptors; emit reviewed source registry");
                 println!("  oi presentation --help        validate/register/show portable world-presentation data");
+                println!("  oi agent participation|card|a2a-card --agent REF [--world REF] [--json]");
+                println!("                                one Agent in one World, composed from its native owners; the human card and A2A card derive from it");
                 println!("  oi <namespace> config-contribution --json");
                 println!("                                an owner's configuration contribution through the dispatcher, like `system --json`");
                 println!("  oi desktop --help             install/remove/status lifecycle plus M′ application operations");
@@ -109,6 +111,12 @@ pub fn cli_main() -> ExitCode {
         return match command_profile(args.get(1..).unwrap_or_default()) {
             Ok(code) => ExitCode::from(code.clamp(0, 255) as u8),
             Err(message) => { eprintln!("oi: {message}"); ExitCode::from(2) }
+        };
+    }
+    if command == Some("agent") {
+        return match command_agent(args.get(1..).unwrap_or_default()) {
+            Ok(code) => ExitCode::from(code.clamp(0, 255) as u8),
+            Err(message) => { eprintln!("oi: agent: {message}"); ExitCode::from(2) }
         };
     }
     if command == Some("update") {

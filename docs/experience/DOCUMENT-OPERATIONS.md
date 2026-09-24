@@ -77,7 +77,7 @@ The following **source locations were inspected** in this refinement. They are n
 
 **Central's public source Skills** include `skills/docs-methodology/SKILL.md`, `skills/documentation-standing/SKILL.md` and `skills/capability-matrices/SKILL.md`. These add standing and matrix discipline; they remain Central-owned. Scope-select them through the actual native resolver when available. Do not copy them into O:I's guardian manifest or presume they already belong to AIKit's set.
 
-**O:I's `skills/suite-operator/skillset.toml`** at inspected blob `6520098ae46f7545a4ee4aa85af5b6fef2300e6b` declares the shipped guardian's **two** O:I Skills (`oi:skill:operate-suite`, `oi:skill:suite-operator`). Older prose saying three including a frozen Central strap is stale at this cut. It is not a reason to add that strap back. Central's live source arrives through its native binding. Base/Root procedural roles do not constitute Agent identity or install themselves.
+**O:I's `skills/suite-operator/skillset.toml`** declares the shipped guardian's **three** O:I Skills (`oi:skill:operate-suite`, `oi:skill:suite-operator`, `oi:skill:central-session-strap`). O:I holds and projects the strap from `skills/central-session-strap/SKILL.md`. Base/Root procedural roles do not constitute Agent identity or install themselves.
 
 **Central #164** is the owner record for private local orientation/intake/retrieval/placement/ledger/day-close/contribution/knowledge-return/Git/delegation/verification/release/handoff practices. Resolve the actual `Control/user/skills` source locally under permission and preserve the accepted #299 loading procedure and later amendments. The personal engineering floor is not changed by this campaign publication.
 

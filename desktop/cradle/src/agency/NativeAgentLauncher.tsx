@@ -4,6 +4,7 @@ import type {EncounterRow} from "../encounter/EncounterList";
 import {agentController} from "./nativeAgentClient";
 import type {NativeAgentController,NativePrepared} from "./nativeAgent";
 import {openAgentSetup} from "./agentSetup";
+import {LiveHumanAgentCard} from "./HumanAgentCard";
 
 /** Native source creation and session selection in the existing Agent surface.
  * `controller` is a test/embed seam; production always uses the kernel owner. */
@@ -46,6 +47,7 @@ export function NativeAgentLauncher({project,onChoose,controller:injected}:{proj
    <pre className="oi-note" style={{whiteSpace:"pre-wrap",overflowWrap:"anywhere"}}>{review.profile.intent_provenance?.intent_expression??review.profile.purpose}</pre>
    <p className="oi-note">Scope <code>{review.scope_ref}</code> · source <code>{review.profile.ref}</code> · revision <code>{review.profile.revision}</code></p>
    <details><summary>Show raw — exact source basis and delivery limits</summary><p><code>{review.content_digest}</code></p><pre style={{whiteSpace:"pre-wrap",overflowWrap:"anywhere"}}>{JSON.stringify(review.profile,null,2)}</pre><p>Selected Skill content is checked and delivered to the native parent session. Child activation requires its own admission and is not implied.</p></details>
+   {review.accepted&&<LiveHumanAgentCard agentRef={review.profile.agent_ref} worldRef={review.scope_ref}/>}
    {review.accepted?<p role="status">Accepted by the native human-authority path and read back from the roster.</p>:<p role="status">This is a stored proposal, not an accepted Agent and not permission to execute.</p>}
    {!review.accepted&&<button type="button" className="oi-action" disabled={state.busy||!!state.unknown} onClick={()=>void controller.accept()}>Accept this exact Agent definition</button>}
    {review.accepted&&!prepared&&<button type="button" className="oi-action" disabled={state.busy||!!state.unknown||state.world?.world_readiness.ready!==true} onClick={()=>void controller.prepare()}>Prepare Direct session</button>}

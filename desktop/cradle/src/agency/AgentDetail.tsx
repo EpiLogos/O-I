@@ -1,6 +1,11 @@
+/**
+ * AgentDetail — Purpose · Agent card · Sessions · Knowledge ·
+ * History/learning. Sections the owner reading does not carry say so.
+ */
 import {HarnessDisclosure} from "./harnessDisclosure";
 import type { ReactNode } from "react";
 import type { AgencySessionRow } from "./agencyTypes";
+import { LiveHumanAgentCard } from "./HumanAgentCard";
 
 const NOT_DISCLOSED = "Not disclosed by the owner reading";
 
@@ -18,6 +23,12 @@ export function AgentDetail({ row, siblingSessions, harnessDisclosure }: { row: 
 
     <DetailSection title="Purpose">
       {row.purpose ? <p className="oi-note">{row.purpose}</p> : <p className="oi-note">{NOT_DISCLOSED}</p>}
+    </DetailSection>
+
+    <DetailSection title="Agent card">
+      {row.agentRef
+        ? <LiveHumanAgentCard agentRef={row.agentRef}/>
+        : <p className="oi-note">{NOT_DISCLOSED} — this session attachment names no canonical Agent (`agent_ref`), so no card can be derived for it.</p>}
     </DetailSection>
 
     <DetailSection title="Skills & tools">

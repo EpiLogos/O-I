@@ -1,3 +1,4 @@
+pub mod agent_participation;
 pub mod catalog_source;
 pub mod config_surface;
 pub mod configuration;

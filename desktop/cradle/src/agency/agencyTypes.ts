@@ -119,6 +119,9 @@ export interface AgencySessionRow {
   spaceLabel?: string;
   sessionRef: string;
   purpose?: string;
+  /** The canonical Agent the session attachment names, when the owner
+   * reading discloses one (`agent_ref`); the human card is derived from it. */
+  agentRef?: string;
   /** The unparsed space payload, kept only so a section can double-check
    * for a field it did not expect rather than silently dropping it. */
   raw: unknown;
