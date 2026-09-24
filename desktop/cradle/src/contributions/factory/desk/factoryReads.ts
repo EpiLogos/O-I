@@ -19,6 +19,11 @@ export type FactoryOwnerRequest =
   | {kind: "workflow-inspect"; state_path: string; run_ref: string; unit?: string; attempt?: string; limit?: number; cursor?: unknown}
   | {kind: "telemetry-status"; state_path: string}
   | {kind: "telemetry-inspect"; state_path: string; telemetry_ref: string}
+  | {kind: "telemetry-field"; state_path: string}
+  | {kind: "telemetry-current"; state_path: string; project_world_ref: string}
+  | {kind: "telemetry-signal"; state_path: string; signal_ref: string}
+  | {kind: "telemetry-digest"; state_path: string}
+  | {kind: "telemetry-lookback" | "telemetry-day"; state_path: string; day?: string; from_day?: string; through_day?: string}
   | {kind: "attempt-return"; state_path: string; run_ref: string; attempt_ref: string}
   | {kind: "action-list"; state_path: string; project_ref: string; run_ref: string}
   | {kind: "action-invoke"; state_path: string; project_ref: string; run_ref: string; request: unknown}

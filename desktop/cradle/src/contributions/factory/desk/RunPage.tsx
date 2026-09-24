@@ -22,6 +22,7 @@ import {RunMap} from "./RunMap";
 import {RunLive} from "./RunLive";
 import {RunHandoff} from "./RunHandoff";
 import {RunTrajectory} from "./RunTrajectory";
+import {RunSignalLink} from "../sensing/RunSignalLink";
 
 export type RunTab = "map" | "trajectory" | "live" | "handoff";
 const TABS: {key: RunTab; label: string}[] = [{key: "map", label: "Map"}, {key: "trajectory", label: "Trajectory"}, {key: "live", label: "Live"}, {key: "handoff", label: "Handoff"}];
