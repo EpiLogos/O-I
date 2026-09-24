@@ -1,5 +1,6 @@
 import {hostedCompositionFile} from "./hostedComposition";
 import {relayNativeChannel} from "./nativeChannel";
+import {convertFileSrc} from "@tauri-apps/api/core";
 /**
  * Shared hosting for the Expressions application — the vendored app at
  * desktop/cradle/expressions-app (owner ruling 2026-09-19: the application
@@ -7,22 +8,35 @@ import {relayNativeChannel} from "./nativeChannel";
  * repo). Both surfaces that host the application share this module: the
  * Expressions centre (PointCloudHost) and the Technè M0 entry face.
  *
- * The bundle is served the only way rich material may reach a webview
- * (FND-04): through the owner's `oi-material://` file seam in the desktop
- * build, or the walk bridge's mirror under probes — every byte through the
- * owner's own file reads. The build law is one line (see the app's README):
- * `cd desktop/cradle/expressions-app && npm install && npm run build`.
+ * Native application code is served from the candidate's `oi-material://…/__application/` asset
+ * owner. Personal documents remain on `oi-material://`; the explicit walk
+ * bridge retains its Central file route. Both frames use the same narrow
+ * message channel to reach real owners, without ambient native authority.
  */
 import {kernelOp} from "../kernel/bridge";
 import {listFiles, readFile} from "../files/client";
 import type {CentralLocation, KernelTransportStatus} from "../kernel/types";
 
-/** The vendored application's build, on Central's disclosed ground. The
- * cradle checkout sits inside Central, so the files seam resolves this
- * Central-relative path exactly as it resolved Work/Point-Cloud-Demo/dist
- * before the vendoring — no copy-sync, the in-repo dist IS the artefact. */
+/** Ground-bound bridge walks explicitly serve this owner-disclosed location.
+ * Native candidates never use it, including when their own build is missing. */
 export const EXPRESSIONS_APP_DIST = "Work/O-I/desktop/cradle/expressions-app/dist";
 export const EXPRESSIONS_APP_ENTRY = "index.html";
+
+/** Native application code belongs to this candidate's asset owner, not a
+ * personal-ground checkout. The bridge is an explicit ground-bound walk
+ * transport and retains its owner-verified material route. */
+export async function hostedAppUrl(transport: KernelTransportStatus, query = ""): Promise<string> {
+  if (transport.kind === "tauri") {
+    // convertFileSrc encodes slashes as filename data. Convert only the
+    // protocol root, then retain real path segments for relative JS/CSS URLs.
+    return `${convertFileSrc("", "oi-material").replace(/\/$/, "")}/__application/expressions/index.html${query}`;
+  }
+  if (transport.kind !== "bridge") throw new Error("The Expressions application requires the native desktop or an explicit material bridge.");
+  const directory = await listFiles(transport, EXPRESSIONS_APP_DIST);
+  const found = directory.entries.find(candidate => candidate.name === EXPRESSIONS_APP_ENTRY);
+  if (!found) throw new Error(`The material bridge has no Expressions build at ${EXPRESSIONS_APP_DIST}`);
+  return `${transport.url}/material/${encodeURIComponent(JSON.stringify(found.location))}/${query}`;
+}
 
 /** The oi-material URL grammar (material_protocol.rs): the url-encoded
  * location JSON as the first segment, relative siblings after it. A query
@@ -121,7 +135,7 @@ const isEnvelope = (data: unknown): data is ChannelEnvelope =>
 
 /** Relay the kernel host channel into one hosted frame. Returns the
  * teardown, exactly like trackShellCutout. */
-export function relayKernelChannel(frame: HTMLIFrameElement, transport: KernelTransportStatus): () => void {
+export function relayKernelChannel(frame: HTMLIFrameElement, transport: KernelTransportStatus, owner: {readTechne?: () => Promise<unknown>; techneWorld?: (request: unknown) => Promise<unknown>} = {}): () => void {
   const disposeNative = relayNativeChannel(frame, transport);
   let live = true;
   const announce = () => {
@@ -157,6 +171,20 @@ export function relayKernelChannel(frame: HTMLIFrameElement, transport: KernelTr
       } catch (cause) {
         refuse(kind, req, cause instanceof Error ? cause.message : String(cause));
       }
+      return;
+    }
+    if (kind === "techne-world") {
+      try {
+        if (!owner.techneWorld) throw new Error("This field has no Wiki world owner");
+        reply(`${kind}-result`, req, {ok: true, data: await owner.techneWorld(event.data.request)});
+      } catch (cause) { refuse(kind, req, cause instanceof Error ? cause.message : String(cause)); }
+      return;
+    }
+    if (kind === "techne-reading") {
+      try {
+        if (!owner.readTechne) throw new Error("This field has no Technè reading owner");
+        reply(`${kind}-result`, req, {ok: true, data: await owner.readTechne()});
+      } catch (cause) { refuse(kind, req, cause instanceof Error ? cause.message : String(cause)); }
       return;
     }
     if (kind === "expression-file") {
@@ -300,6 +328,16 @@ export function trackHostedAppState(frame: HTMLIFrameElement | null, onState: (s
   return () => { window.removeEventListener("message", handler); };
 }
 
+/** A URL is not evidence that the application loaded. Its existing state
+ * handshake confirms that the candidate's code is actually running; a missing
+ * bundle gives a bounded refusal without falling back to another checkout. */
+export function watchHostedAppReady(frame: HTMLIFrameElement, mode: HostedAppMode, ready: () => void, unavailable: (reason: string) => void): () => void {
+  const timeout = window.setTimeout(() => unavailable("The Expressions application did not start. Build this candidate's hosted application and rebuild the desktop; no other checkout is used."), 30_000);
+  const stop = trackHostedAppState(frame, () => { window.clearTimeout(timeout); ready(); });
+  const stopMode = postHostMode(frame, mode);
+  return () => { window.clearTimeout(timeout); stop(); stopMode(); };
+}
+
 /** Post one host→frame message into a hosted frame — the host-command
  * grammar the Technē HUD's direct-mode controls ride. */
 export function postMessageToFrame(frame: HTMLIFrameElement | null, message: {v: number; kind: string} & Record<string, unknown>) {
@@ -311,7 +349,7 @@ export function postMessageToFrame(frame: HTMLIFrameElement | null, message: {v:
  * own native workspace (kernel inspect); it never remounts the frame and never
  * carries the document itself. Refs only, and a non-Expression ref is ignored
  * here rather than posted for the frame to refuse. */
-export function postOpenExpression(frame: HTMLIFrameElement | null, expressionRef: string): void {
+export function postOpenExpression(frame: HTMLIFrameElement | null, expressionRef: string, refresh = false): void {
   if (!frame || typeof expressionRef !== "string" || !expressionRef.startsWith("expression:")) return;
-  frame.contentWindow?.postMessage({v: KERNEL_CHANNEL_VERSION, kind: "host-command", command: "open-expression", ref: expressionRef}, "*");
+  frame.contentWindow?.postMessage({v: KERNEL_CHANNEL_VERSION, kind: "host-command", command: refresh ? "refresh-expression" : "open-expression", ref: expressionRef}, "*");
 }

@@ -17,7 +17,7 @@
  *     states) and the selection mirror derived from the kernel document's
  *     own selection — the kernel document remains the authoritative
  *     selection, the mirror is what apertures read;
- *   - the centre (WikiExpressionBody) is the only kernel actor: it ensures
+ *   - the hosted centre (wikiNativeExpression) is the kernel actor: it ensures
  *     the projection, opens/focuses the real document through the kernel's
  *     expression op, and writes every result back here;
  *   - apertures ask for selection through `requestWikiSelection`; the

@@ -1,6 +1,8 @@
 //! The `oi-material://` custom protocol (FND-04): the only way rich
 //! material content (HTML, its relative assets, images, PDFs) reaches a
-//! webview. Every byte still passes through the Central owner's
+//! webview. The reserved `/__application/` route serves candidate-owned code
+//! through the application asset owner; every personal-material byte passes
+//! through the Central owner's
 //! `central.files.read` (via the kernel's typed `KernelOp::FilesList` /
 //! `KernelOp::FileBytes` seam) — this module resolves the URL grammar and
 //! translates the owner reading into an HTTP response; it never touches
@@ -40,6 +42,10 @@ pub fn register<R: Runtime>(builder: tauri::Builder<R>) -> tauri::Builder<R> {
 
 fn handle<R: Runtime>(app_handle: &AppHandle<R>, request: &Request<Vec<u8>>) -> Response<Vec<u8>> {
     let path = request.uri().path();
+    // Candidate-owned application code shares the historical material origin
+    // so hosted drafts retain their browser storage. Personal file requests
+    // still use the Central-owner location grammar below.
+    if path.starts_with("/__application/") { return crate::app_assets::handle(app_handle, request); }
     let mut segments = path.split('/').filter(|segment| !segment.is_empty());
 
     let Some(encoded_location) = segments.next() else {

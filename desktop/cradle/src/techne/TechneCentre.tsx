@@ -1,32 +1,16 @@
-/**
- * The Technē centre (parent integration, 2026-09-22): the Expressions app's
- * Technē field and the deep-instrument HUD, composed as ONE centre body with
- * ONE active renderer.
- *
- * The field (`PointCloudHost` → field-studies-journeys) is the one physics
- * renderer. It stands visible and running while the HUD is collapsed — the
- * default, so entering Technē mode preserves the field exactly as before, and
- * a Wiki summon still opens its Expression in the live field. Opening the
- * deep-instrument HUD SUSPENDS the field with `display:none` — the same hide
- * the stage visibility flip uses on a mode cross, which pauses the iframe's
- * render loop — so no heavy renderer runs hidden behind the HUD (the
- * dual-reading suspend law, §16/§22: only the active visual surface allocates).
- * Collapsing the HUD reveals and resumes the field.
- *
- * The application's own Lens Studio chooser reaches the same HUD through the
- * host channel (owner direction 2026-09-23): a chooser press inside the
- * application summons the deep instruments, and this centre answers by
- * opening its HUD on that lens — the one registered lens set, the one
- * DisclosureSession, the same suspend handoff as the rail. One press, the
- * instrument opens over the field; collapsing returns to the field with the
- * application's chooser exactly where it stood.
- */
-import {useCallback, useState} from "react";
+/** Technè operates inside the hosted Expressions application. The cradle
+ * supplies owner readings; it never replaces the field with another lens UI. */
+import {useCallback, useEffect, useRef, useState} from "react";
 import {PointCloudHost} from "../expressions/PointCloudHost";
-import {TechneSurfaceHost} from "./TechneSurfaceHost";
+import {useKernel} from "../kernel/KernelProvider";
+import {techneGroundSubject, wikiTechneReadingProvider} from "./wikiReadingProvider";
 import type {SurfaceBinding} from "../surface/types";
 import type {HostedAppState} from "../expressions/hostedApp";
-import type {TechneInstrumentId, TechneSubject} from "./techneReading";
+import type {TechneSubject} from "./techneReading";
+import "./techneHud.css";
+import {ensureWikiNativeExpression, focusWikiNativeExpression, publishWikiNativeRegisters, selectedWikiNativeRegister, selectWikiNativeRegister, wikiNativeRegisters} from "./wikiNativeExpression";
+import {consumeWikiSelectionRequest, getWikiProjectionState, subscribeWikiProjection} from "./wikiProjectionStore";
+import {requestTechneFieldOpen} from "../expressions/fieldOpen";
 
 export function TechneCentre({binding, subject, deepLink, onHostedState}: {
   binding: SurfaceBinding;
@@ -34,18 +18,68 @@ export function TechneCentre({binding, subject, deepLink, onHostedState}: {
   deepLink?: string;
   onHostedState?: (state: HostedAppState) => void;
 }) {
-  const [collapsed, setCollapsed] = useState(true);
-  const [summon, setSummon] = useState<{instrument: TechneInstrumentId; nonce: number} | null>(null);
-  const summonLens = useCallback((instrument: TechneInstrumentId) => {
-    setCollapsed(false);
-    setSummon(previous => ({instrument, nonce: (previous?.nonce ?? 0) + 1}));
+  const kernel = useKernel();
+  const centre = useRef<HTMLDivElement>(null);
+  const [presented, setPresented] = useState(false);
+  useEffect(() => {
+    const node = centre.current;
+    if (!node) return;
+    const observer = new IntersectionObserver(entries => setPresented(entries.some(entry => entry.isIntersecting)));
+    observer.observe(node);
+    return () => observer.disconnect();
   }, []);
-  return (
-    <div className="techne-centre">
-      <div className="techne-centre-field" style={collapsed ? undefined : {display: "none"}}>
-        <PointCloudHost mode="techne" bindingId={binding.id} deepLink={deepLink} onHostedState={onHostedState} onLensSummon={summonLens}/>
-      </div>
-      <TechneSurfaceHost binding={binding} subject={subject} collapsed={collapsed} onCollapsedChange={setCollapsed} summon={summon}/>
+  const [failure, setFailure] = useState<string>();
+  useEffect(() => {
+    publishWikiNativeRegisters((kernel.snapshot.navigator?.root?.work.projects ?? []).map(row => ({name: row.name, path: row.path})));
+  }, [kernel.snapshot.navigator?.root?.work.projects]);
+  useEffect(() => {
+    if (!presented) return;
+    let live = true, generation = 0, draining = false;
+    const openSelection = async () => {
+      if (draining) return;
+      draining = true;
+      try { while (live) {
+      const request = getWikiProjectionState().request;
+      if (!request) break;
+      const register = wikiNativeRegisters().find(row => row.key === request.registerKey);
+      if (!register) break;
+      consumeWikiSelectionRequest();
+      const current = ++generation;
+      try {
+        const prepared = await focusWikiNativeExpression(kernel.transport, register, request);
+        if (live && current === generation) {setFailure(undefined);requestTechneFieldOpen(prepared.document.expression_ref, binding.id, true);}
+      } catch (error) { if (live && current === generation) setFailure(String(error instanceof Error ? error.message : error)); }
+      } } finally {draining = false;}
+    };
+    const unsubscribe = subscribeWikiProjection(() => {void openSelection();});
+    void openSelection();
+    {
+      // A restored authored work wins over the register's default projection.
+      if (!deepLink || deepLink === "oi-mark" || deepLink === "source-twelve-faces") {
+        const register = selectedWikiNativeRegister() ?? wikiNativeRegisters()[0];
+        const current = generation;
+        if (register) void ensureWikiNativeExpression(kernel.transport, register).then(prepared => {
+          if (live && generation === current) requestTechneFieldOpen(prepared.document.expression_ref, binding.id);
+        }).catch(error => {if (live && generation === current) setFailure(String(error instanceof Error ? error.message : error));});
+      }
+    }
+    return () => {live = false; unsubscribe();};
+  }, [kernel.transport, binding.id, deepLink, presented]);
+  const techneWorld = useCallback(async (request: unknown) => {
+    const value = request as {operation?: unknown; register?: unknown} | null;
+    if (value?.operation === 'list') return {registers: wikiNativeRegisters(), selected: selectedWikiNativeRegister()?.key};
+    if (value?.operation !== 'open' || typeof value.register !== 'string') throw new Error('Choose a disclosed Wiki register');
+    const register = wikiNativeRegisters().find(row => row.key === value.register);
+    if (!register) throw new Error('This register is not disclosed by the current World');
+    const prepared = await ensureWikiNativeExpression(kernel.transport, register);
+    selectWikiNativeRegister(register.key);
+    return {expression_ref: prepared.document.expression_ref, register: register.key};
+  }, [kernel.transport]);
+  const readTechne = useCallback(() => wikiTechneReadingProvider(kernel.transport).read(techneGroundSubject(subject)), [kernel.transport, subject]);
+  return <div ref={centre} className="techne-centre">
+    {failure && <p className="techne-owner-error" role="alert">{failure}</p>}
+    <div className="techne-centre-field">
+      <PointCloudHost mode="techne" bindingId={binding.id} deepLink={deepLink} onHostedState={onHostedState} readTechne={readTechne} techneWorld={techneWorld}/>
     </div>
-  );
+  </div>;
 }

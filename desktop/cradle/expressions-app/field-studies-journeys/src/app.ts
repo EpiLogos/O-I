@@ -44,9 +44,11 @@ import {mountShell,iconButton as ib} from './shell.js';
 import {OrbitControl} from './orbitControl.js';
 import {RailItem,railPressed} from './rail.js';
 import {featuredExpressions,startingPoints,nativeSeven,forkExpression,libraryHTML,modesHTML,compositionCover} from './expressions.js';
-import {installKernelExpressions,kernelExpressionsAvailable} from './kernelExpressions.js';
+import {installKernelExpressions,kernelExpressionsAvailable,readTechneReading} from './kernelExpressions.js';
 import {installNativeWorkspace,type NativeSubject} from './nativeWorkspace.js';
 import {installLensStudio,type LensId} from './lensStudio.js';
+import {installResearchInstruments} from './researchInstruments.js';
+import {installTechneWorld} from './techneWorld.js';
 import type {ConnectionBinding} from '../../../../../packages/oi-design-system/expressions-engine/oi/expressionBindings.mjs';
 import type {KernelConversion} from './kernelDocumentBridge.js';
 mountShell();installPanelResize();installKernelExpressions();
@@ -66,7 +68,7 @@ let studioDocked=false,studioSizeMemo:{width:string;height:string}|null=null;let
 // The instrument opens on the O:I mark — the light/dark theme expression
 // that matches the base O:I image (owner direction 2026-09-19). A last-opened
 // library expression still restores over it, exactly as before.
-let initial:Journey=(new URLSearchParams(location.search).get('mode')==='techne'?startingPoints().find(p=>p.expression.id==='source-twelve-faces')?.expression:undefined)??oiMark(),startupError='';
+let initial:Journey=startsInTechne?{...blankJourney(),name:'Wiki'}:oiMark(),startupError='';
 try{if(window.__JOURNEY__)initial=validateJourney(window.__JOURNEY__);else{try{const last=localStorage.getItem('oi.field-studies.last');const saved=readLibrary().find(j=>j.id===last);if(saved)initial=saved;}catch{/* An opaque or private origin must still open cleanly. */}}}catch(err){startupError=err instanceof Error?err.message:String(err);}
 function initialiseBelts(j:Journey){initialiseShared(j);initialiseSources(j);for(const s of [...j.scenes,...Object.values(j.savedScenes??{})])if(!s.toolbelt)s.toolbelt=clone(workspace.entries).map(e=>e.scope==='named'&&!s.entities.some(v=>v.id===e.entityId)?{id:e.id,key:e.key,scope:'selected' as const}:e);return j;}
 const store=new DocumentStore(initialiseSceneSaves(initialiseBelts(initial)));let engine:FieldEngineAdapter;
@@ -214,7 +216,7 @@ function applySceneView(){const v=activeScene().view;if(v){camera.mode=v.mode;ca
 function setScene(index:number,automatic=false){if(propertyTake)finishPropertyTake();trackPreview=false;pointer.active=false;if(index<0)index=store.document.scenes.length-1;if(index>=store.document.scenes.length)index=0;if(index===sceneIndex&&!automatic)return;
  if(scenePlaying&&store.document.scenes[index].transition>0&&engine.capabilities.kind==='preview'){const c=$<HTMLCanvasElement>('transition-canvas');c.width=engine.canvas.width;c.height=engine.canvas.height;c.getContext('2d')!.drawImage(engine.canvas,0,0);transitionBackground=scene().field.background;c.style.background=transitionBackground;c.style.opacity='1';c.hidden=false;transitionStart=simTime;transitionDuration=store.document.scenes[index].transition;transitionSceneId=store.document.scenes[index].id;}else{transitionDuration=0;$('transition-canvas').hidden=true;}
 
- sceneIndex=index;if(!automatic)journeyPlaying=false;applySceneView();sceneElapsed=0;selected=[];textId=scene().text[0]?.id??null;saveSession();placementStep=false;shapePickerOpen=false;if(!automatic)journeyPlaying=false;renderAll();}
+ sceneIndex=index;if(!automatic)journeyPlaying=false;applySceneView();sceneElapsed=0;selected=[];textId=scene().text[0]?.id??null;saveSession();placementStep=false;shapePickerOpen=false;if(!automatic)journeyPlaying=false;renderAll();void researchInstruments?.refresh();}
 function selectEntity(id:string,multi=false){cursorTool='select';pointer.active=false;railKey='select';railExpanded=true;if(multi){selected=selected.includes(id)?selected.filter(x=>x!==id):[...selected,id];}else selected=[id];editing=true;inspectorOpen=false;contextKind='objects';tab='objects';studioSection='formations';tool='select';shapePickerOpen=false;journeyPlaying=false;stepIndex=0;renderAll();}
 function semanticBindingFor(s:Scene,entityId:string):SemanticBinding|undefined{return s.semanticField?.bindings.find(b=>b.carriers.some(c=>c.kind==='entity'&&c.id===entityId));}
 function defaultSemanticColor():SemanticColorCoupling{return{enabled:true,colorSource:'canonical',gain:1,radius:{source:'force'},falloff:'gaussian',metric:'compositionPlane',blend:'weighted',activation:'constant'};}
@@ -322,6 +324,7 @@ function collectImported(documents:Journey[]){
 }
 function ensureCapacity(additions:Entity[]){const all=[...scene().entities,...additions];if(all.filter(e=>e.kind==='formation').length>10||all.filter(e=>e.kind==='pin').length>8)throw new Error('The native field supports 10 formations and 8 force-only pins. Remove an object before adding this composition.');}
 let nativeWorkspace:ReturnType<typeof installNativeWorkspace>|undefined;
+let researchInstruments:ReturnType<typeof installResearchInstruments>|undefined;
 let nativeConnectionRows:Record<string,ConnectionBinding[]>={},nativeSelectedRelation:string|null=null;
 function loadJourney(j:Journey,native=false){if(!native)void nativeWorkspace?.changed(j);if(propertyTake)finishPropertyTake();trackPreview=false;rememberWork(j.id);studioOpen=false;j.scenes.forEach(checkNativeLimits);sessionExpressions.set(store.document.id,clone(store.document));sessionExpressions.set(j.id,clone(j));try{if(!deletedLibraryIds.has(store.document.id))saveToLibrary(store.document);}catch{toast('The previous expression is retained in Undo; browser storage is unavailable. Export it before closing this page.',6500);}store.replace(initialiseSceneSaves(initialiseBelts(j)));store.document.updatedAt=j.updatedAt;sceneIndex=0;selected=[];camera=defaultCamera();applySceneView();transitionDuration=0;$('transition-canvas').hidden=true;sceneElapsed=0;journeyPlaying=false;editing=false;inspectorOpen=false;timelineOpen=false;cursorTool='interact';tool='interact';railKey='interact';railExpanded=false;shapePickerOpen=false;closeDialogs();libraryOpen=false;modesOpen=false;try{history.replaceState(null,'',location.pathname+location.search);}catch{}markSaved();renderAll();}
 function openKeep(){captureOpen=!captureOpen;modesOpen=false;pointer.active=false;
@@ -653,7 +656,7 @@ function recordableTracks(){return workspace.entries.flatMap(entry=>{const subje
 function finishPropertyTake(){if(!propertyTake)return;const take=propertyTake;propertyTake=null;if(take.elapsed>0){const end=Math.min(3600,take.start+take.elapsed);for(const t of take.tracks){const value=readTrackValue(scene(),t);if(value!==undefined&&t.points.at(-1)?.time!==end)t.points.push({time:end,value});}changed(()=>{scene().propertyTakeRange={start:take.start,end};scene().propertyTracks=mergeTake(scene().propertyTracks??[],take.tracks,take.start,end);scene().duration=Math.max(scene().duration,end);});takeWindows.set(scene().id,{start:take.start,end});sceneElapsed=take.start;trackPreview=true;scenePlaying=false;toast('Property take recorded · save the scene to keep this version.');}renderAll();}
 function updatePropertyTake(now:number){const t=propertyTake;if(!t)return;if(t.sceneId!==scene().id){finishPropertyTake();return;}const remaining=Math.max(0,Math.ceil((t.armed-now)/1000));$('take-status').hidden=false;$('take-status').textContent=remaining?'Recording in '+remaining+'…':'Recording '+t.elapsed.toFixed(1)+'s · click record to stop';if(remaining)return;const elapsed=Math.min((now-t.armed)/1000,3600-t.start,t.limit??Infinity);t.elapsed=elapsed;sceneElapsed=t.start+elapsed;scenePlaying=true;if(elapsed-t.lastSample>=.05||t.lastSample<0){for(const track of t.tracks){const value=readTrackValue(scene(),track);if(value===undefined)continue;sampleTrack(track,t.start+elapsed,value,t.start+Math.max(0,t.lastSample));}t.lastSample=elapsed;}if(t.start+elapsed>=3600||t.limit!==undefined&&elapsed>=t.limit)finishPropertyTake();}
 let frames=0,lastFpsTime=performance.now(),fps=0,rafId=0;
-function tick(now:number){updatePropertyTake(now);const rawDelta=Math.max(0,Math.min((now-lastTime)/1000,.25));lastTime=now;let delta=!fieldPaused&&!document.hidden&&!libraryOpen?Math.min(rawDelta,.05):0;delta=nativeField?.controller.frame(delta,fieldPaused||document.hidden||libraryOpen)??delta;const previousTime=simTime;if(engine.capabilities.kind!=='production'){delta*=scene().field.params.timeScale;simTime+=delta;}
+function tick(now:number){if(researchInstruments?.active()){lastTime=now;rafId=requestAnimationFrame(tick);return;}updatePropertyTake(now);const rawDelta=Math.max(0,Math.min((now-lastTime)/1000,.25));lastTime=now;let delta=!fieldPaused&&!document.hidden&&!libraryOpen?Math.min(rawDelta,.05):0;delta=nativeField?.controller.frame(delta,fieldPaused||document.hidden||libraryOpen)??delta;const previousTime=simTime;if(engine.capabilities.kind!=='production'){delta*=scene().field.params.timeScale;simTime+=delta;}
  if(recovery.hidden&&!libraryOpen&&(!fieldPaused||needsFrame||engine.needsRender?.()||pointer.active||recorder.active||transitionDuration>0)&&now-lastStudioRender>=(physisFpsCap?1000/physisFpsCap:0)){try{engine.render(frameData(delta));needsFrame=false;lastStudioRender=now;}catch(err){nativeField?.controller.hold('native surface render failed: '+String(err));needsFrame=false;if(String(err).toLowerCase().includes('context'))recovery.hidden=false;else error(err);transportUI();}}
  const native=engine.telemetry?.();if(native){simTime=native.simTime;delta=simTime-previousTime;document.documentElement.style.setProperty('--paper',native.background);document.documentElement.style.setProperty('--ink',native.palette[0]);$('text-layers').style.opacity=String(.25+.75*native.transition);}
  // A finished property preview holds its recorded end values; the field itself
@@ -710,7 +713,7 @@ function renderRail(){
     ?DEEP_TOOLS.map(([a,i,l,extra])=>ib(a,i,l,extra??'')).join('<span class="toolbar-divider" aria-hidden="true"></span>')
     :livedRailHTML;
 }
-function hostRequest(payload:{request:string;mode?:string;detail?:{kind:string;lens?:string;subject?:NativeSubject}}){
+function hostRequest(payload:{request:string;mode?:string;detail?:{kind:string;lens?:string;ref?:string;subject?:NativeSubject}}){
  if(window.parent===window)return;
  try{window.parent.postMessage({v:1,kind:'host-request',...payload},'*');}catch{/* nothing sent rather than a wrong-channel throw */}
 }
@@ -729,6 +732,7 @@ function setHostMode(mode:'expressions'|'techne'){
  document.body.classList.toggle('oi-host-techne',mode==='techne');
  renderRail();
  lensStudio.setMode(mode);
+ if(mode==='expressions'){researchInstruments?.close();techneWorld.hide();}else activateInstrument(lensStudio.active());
  renderAll();
 }
 // Open an existing native Expression the host asked for at runtime — a
@@ -762,13 +766,14 @@ window.addEventListener('message',ev=>{if(ev.source!==window.parent)return;const
  if(d&&d.v===1&&d.kind==='host-command'){
   if(d.command==='interact'||d.command==='select')activateRail(d.command);
   else if(d.command==='open-expression'&&typeof d.ref==='string')openHostExpression(d.ref);
+  else if(d.command==='refresh-expression'&&typeof d.ref==='string')void nativeWorkspace?.refreshReference(d.ref);
   else console.warn('[oi] refused host command: '+String(d.command));
   return;
  }
 });
 window.addEventListener('pagehide',()=>{if(propertyTake)finishPropertyTake();recorder.stop();lastLibraryWrite=0;void flushDraft();});
 const nativeField=installNativeField(engine,()=>{fieldPaused=false;needsFrame=true;renderAll();});
-window.__FIELD_STUDIES__={getDocument:()=>clone(store.document),getState:()=>({studioOpen,beltOpen,needsFrame,libraryOpen,librarySection,modesOpen,captureOpen,railKey,railExpanded,sceneIndex,selected:[...selected],textId,editing,inspectorOpen,timelineOpen,tool,simTime,sceneElapsed,playing:scenePlaying,scenePlaying,fieldPaused,journeyPlaying,automationLoop,camera:{...camera},fps,recording:recorder.active,pointerActive:pointer.active,engine:engine.capabilities.name,hostMode,activeLens:lensStudio.active()}),project:(v:Vec3)=>project(v,camera,width,height),unproject:(x:number,y:number)=>unproject(x,y,camera,width,height),selectEntity:(id:string)=>selectEntity(id),setScene:(i:number)=>setScene(i),openEditor:(t:InspectorContext['tab'])=>edit(true,t),pause:()=>{fieldPaused=true;needsFrame=true;renderAll();},play:()=>{fieldPaused=false;needsFrame=true;renderAll();},native:()=>nativeField?.controller.reading,nativeTargets:()=>nativeField?.controller.inspectTargets(),dispose:()=>{nativeField?.dispose();cancelAnimationFrame(rafId);coverObserver?.disconnect();orbitControl.dispose();engine.dispose();},command:(cmd:any)=>{engine.command?.(cmd);needsFrame=true;},capabilities:engine.capabilities,inspect:(read=false)=>engine.inspect?.(read),telemetry:()=>engine.telemetry?.(),nativeProject:(v:Vec3)=>engine.projectNative?.(v),capture:(w:number,h:number)=>engine.capture?.(w,h)};
+window.__FIELD_STUDIES__={getDocument:()=>clone(store.document),getState:()=>({studioOpen,beltOpen,needsFrame,libraryOpen,librarySection,modesOpen,captureOpen,railKey,railExpanded,sceneIndex,selected:[...selected],textId,editing,inspectorOpen,timelineOpen,tool,simTime,sceneElapsed,playing:scenePlaying,scenePlaying,fieldPaused,journeyPlaying,automationLoop,camera:{...camera},fps,recording:recorder.active,pointerActive:pointer.active,engine:engine.capabilities.name,hostMode,activeLens:lensStudio.active()}),project:(v:Vec3)=>project(v,camera,width,height),unproject:(x:number,y:number)=>unproject(x,y,camera,width,height),selectEntity:(id:string)=>selectEntity(id),setScene:(i:number)=>setScene(i),openEditor:(t:InspectorContext['tab'])=>edit(true,t),pause:()=>{fieldPaused=true;needsFrame=true;renderAll();},play:()=>{fieldPaused=false;needsFrame=true;renderAll();},native:()=>nativeField?.controller.reading,nativeTargets:()=>nativeField?.controller.inspectTargets(),dispose:()=>{researchInstruments?.destroy();techneWorld.destroy();nativeField?.dispose();cancelAnimationFrame(rafId);coverObserver?.disconnect();orbitControl.dispose();engine.dispose();},command:(cmd:any)=>{engine.command?.(cmd);needsFrame=true;},capabilities:engine.capabilities,inspect:(read=false)=>engine.inspect?.(read),telemetry:()=>engine.telemetry?.(),nativeProject:(v:Vec3)=>engine.projectNative?.(v),capture:(w:number,h:number)=>engine.capture?.(w,h)};
 function applyNativeView(view:KernelConversion,preservePosition=false){
  const oldScene=scene().id,oldCamera={...camera},oldTime=sceneElapsed,oldSelection=[...selected],oldPlaying=journeyPlaying;
  if(!preservePosition)loadJourney(view.journey,true);else {store.replace(initialiseSceneSaves(initialiseBelts(view.journey)));}
@@ -776,13 +781,49 @@ function applyNativeView(view:KernelConversion,preservePosition=false){
  sceneIndex=Math.max(0,store.document.scenes.findIndex(s=>s.id===desired));
  if(preservePosition){camera=oldCamera;sceneElapsed=oldTime;selected=oldSelection.filter(id=>scene().entities.some(e=>e.id===id));journeyPlaying=oldPlaying;}
  else {applySceneView();const nativeRef=view.document.selection?.entity_ref;const occurrence=view.bindings[scene().id]?.occurrences.find(o=>o.entity_ref===nativeRef);selected=occurrence?[occurrence.view_entity_id]:[];}
- markSaved();renderAll();announceHostState();
+ markSaved();renderAll();announceHostState();void researchInstruments?.refresh();
 }
 // The M0′–M5′ Lens Studio stands on the SAME native construction the native
 // workspace holds; refreshing it when the construction changes keeps the
 // Studio's basis exact without touching the field.
-const lensStudio=installLensStudio({subject:()=>nativeWorkspace?.nativeSubject()??null,construction:()=>nativeWorkspace?.construction()??null,summonInstrument:lens=>hostRequest({request:'summon',detail:{kind:'instrument',lens}})});
+function activateInstrument(lens:LensId){
+ pointer.active=false;
+ if(drag){if(store.transactionOpen)store.finish();drag=null;markSaved();}
+ placementStep=false;keepPlacing=false;pinRepeat=false;
+ if(lens==='project')techneWorld.show();else techneWorld.hide();
+ // M0/M3/M5 are operating modes of this same Expression and Scene engine.
+ // Mature Research Canvas tools are mounted by the research instrument adapter.
+ if(lens==='canvas'||lens==='timeline'||lens==='place'){if(propertyTake)finishPropertyTake();if(recorder.active){recorder.stop();toast('Recording stopped before opening the research instrument.');}void researchInstruments?.open(lens==='canvas'?'m1':lens==='timeline'?'m2':'m4');}
+ else researchInstruments?.close();
+ if(lens==='journey'){sequenceOpen=true;timelineOpen=false;inspectorOpen=false;}
+ if(lens==='palace'){sequenceOpen=true;beltOpen=true;studioOpen=true;studioSection='physics';}
+ renderAll();announceHostState();
+}
+const lensStudio=installLensStudio({subject:()=>nativeWorkspace?.nativeSubject()??null,construction:()=>nativeWorkspace?.construction()??null,activate:activateInstrument});
 nativeWorkspace=installNativeWorkspace({snapshot:()=>({journey:clone(store.document),sceneId:scene().id,entityId:selected[0]??null}),version:()=>store.revision,load:applyNativeView,toast,summon:(kind,subject)=>hostRequest({request:'summon',detail:{kind,subject}}),correspondence:(rows,selection)=>{nativeConnectionRows=rows;nativeSelectedRelation=selection;needsFrame=true;lensStudio.refresh();}});
+const techneWorld=installTechneWorld(ref=>nativeWorkspace!.open(ref));
+const researchContainer=document.createElement('section');
+researchContainer.id='research-workspace';researchContainer.setAttribute('aria-label','Research instrument workspace');
+researchContainer.addEventListener('keydown',event=>event.stopPropagation());
+document.body.append(researchContainer);
+function researchScene(id:string){const value=store.document.scenes.find(item=>item.id===id);if(!value||value.id!==scene().id)throw new Error('The active Scene changed; return to that Scene before editing.');return value;}
+async function commitResearch(){if(!await nativeWorkspace?.commit())throw new Error('The native owner did not acknowledge this edit. Your working draft is retained.');}
+function ownResearchConnection(ref:string){const value=nativeWorkspace?.nativeView()?.document.relations?.[ref];if(!value||value.native_owner!=='oi')throw new Error('Source relations must be changed through their source owner.');return value;}
+function connectionKind(kind:string){if(!kind.trim()||kind.length>120)throw new Error('Choose a connection type of 1–120 characters.');return encodeURIComponent(kind.trim());}
+function assertConnectionMembers(sceneId:string,source:string,target:string){researchScene(sceneId);const members=nativeWorkspace?.nativeView()?.bindings[sceneId]?.member_refs;if(!members?.includes(source)||!members.includes(target))throw new Error('Both connection endpoints must belong to the current native Scene.');}
+researchInstruments=installResearchInstruments({
+ container:researchContainer,read:readTechneReading,nativeView:()=>nativeWorkspace?.nativeView(),sceneId:()=>scene().id,
+ select:(sceneId,entityId,bindingRef)=>{if(sceneId!==scene().id)return;selected=entityId?[entityId]:[];nativeSelectedRelation=bindingRef??null;void nativeWorkspace?.select(sceneId,entityId,bindingRef);overlayDirty=true;needsFrame=true;},
+ openSubject:ref=>hostRequest({request:'summon',detail:{kind:'source',ref}}),
+ move:async(sceneId,entityId,position)=>{const item=researchScene(sceneId).entities.find(value=>value.id===entityId);if(!item||item.locked)throw new Error('This occurrence is locked or no longer present.');if(!Number.isFinite(position.x)||!Number.isFinite(position.y))throw new Error('Position must be finite.');changed(()=>{item.position.x=clamp(position.x,-50,50);item.position.y=clamp(position.y,-50,50);});await commitResearch();},
+ createNote:async(sceneId,position)=>{const target=researchScene(sceneId),item=entity('New note','New note',{...position,z:0});ensureCapacity([item]);changed(()=>{target.entities.push(item);selected=[item.id];});await commitResearch();},
+ deleteOccurrence:async(sceneId,entityId)=>{const target=researchScene(sceneId),item=target.entities.find(value=>value.id===entityId);if(!item||item.locked)throw new Error('This occurrence is locked or no longer present.');changed(()=>{target.entities=target.entities.filter(value=>value.id!==entityId);selected=selected.filter(id=>id!==entityId);pruneAutomation(target);});await commitResearch();},
+ updateContent:async(sceneId,entityId,text)=>{const item=researchScene(sceneId).entities.find(value=>value.id===entityId);if(!item||item.locked)throw new Error('This occurrence is locked or no longer present.');changed(()=>{item.text=text;item.name=text.split('\n')[0].slice(0,160)||'Note';});await commitResearch();},
+ connect:async(sceneId,input)=>{assertConnectionMembers(sceneId,input.sourceEntityRef,input.targetEntityRef);if(input.directionality&&!['directed','forward'].includes(input.directionality))throw new Error('Expression connections are directed. Choose a directed connection.');const id=`${nativeWorkspace!.nativeView()!.document.expression_ref}:relation:connection-${crypto.randomUUID()}`;await nativeWorkspace?.edit([{change:'relation_bind',binding:{binding_ref:id,native_owner:'oi',relation:{ref:`${id}:${connectionKind(input.relationKind)}`,revision:'1',availability:'available'},from_entity_ref:input.sourceEntityRef,to_entity_ref:input.targetEntityRef,provenance:[]}}]);},
+ reconnect:async(sceneId,ref,input)=>{assertConnectionMembers(sceneId,input.sourceEntityRef,input.targetEntityRef);const binding=ownResearchConnection(ref);await nativeWorkspace?.edit([{change:'relation_bind',binding:{...binding,from_entity_ref:input.sourceEntityRef,to_entity_ref:input.targetEntityRef}}]);},
+ deleteConnection:async(sceneId,ref)=>{researchScene(sceneId);ownResearchConnection(ref);await nativeWorkspace?.edit([{change:'relation_remove',binding_ref:ref}]);},
+ updateConnectionKind:async(sceneId,ref,kind)=>{researchScene(sceneId);const binding=ownResearchConnection(ref);await nativeWorkspace?.edit([{change:'relation_bind',binding:{...binding,relation:{...binding.relation,ref:`${ref}:${connectionKind(kind)}`,revision:String(Number(binding.relation.revision)+1)}}}]);},
+});
 lensStudio.setMode(hostMode);
 (document.querySelector('#workspace-menu') as HTMLElement)?.insertAdjacentHTML('beforeend',ib('native-work','save','Native composition — save and reopen'));
 (document.querySelector('#workspace-menu') as HTMLElement)?.insertAdjacentHTML('beforeend',ib('native-library','library','Native Library — My World / O:I Web'));

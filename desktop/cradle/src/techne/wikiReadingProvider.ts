@@ -37,6 +37,7 @@
  *
  * Erasable TypeScript: loadable by the renderer, Vite, and node --test.
  */
+import {kernelOp} from "../kernel/bridge";
 import type {KernelTransportStatus} from "../kernel/types";
 import type {ExpressionDocument} from "../expression/types";
 import {readWikiRegister, type WikiRegister, type WikiRegisterReading, type WikiRelationEdge} from "./wikiExpression";
@@ -208,11 +209,18 @@ export function wikiTechneReadingProvider(transport: KernelTransportStatus): Tec
       if (!register) throw new Error("no wiki register is disclosed in this window");
       const reading = await readWikiRegister(transport, register);
       if (reading.state === "unavailable") throw new Error(reading.reason);
+      let document = wikiExpressionDocumentFor(register.key);
+      if (document) {
+        const result = await kernelOp(transport, {op: "expression", request: {operation: "inspect", expression_ref: document.expression_ref}});
+        const latest = result.outcome?.result === "expression" ? (result.outcome.data as {document?: ExpressionDocument}).document : undefined;
+        if (result.error || !latest || latest.expression_ref !== document.expression_ref) throw new Error(result.error ?? "The current native composition could not be read");
+        document = latest;
+      }
       return wikiReadingPayload({
         register,
         subject,
         reading,
-        document: wikiExpressionDocumentFor(register.key),
+        document,
       });
     },
   };

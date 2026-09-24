@@ -217,3 +217,9 @@ export async function nativeExpressionRequest(request:Record<string,unknown>):Pr
 export async function nativeFileRequest(request:Record<string,unknown>):Promise<unknown>{
  return call('expression-file',{request});
 }
+
+/** Source-bound reading of this hosted field. Scope remains with the host's
+ * selected native subject; callers cannot smuggle another repository path. */
+export const readTechneReading = (): Promise<unknown> => call("techne-reading", {});
+
+export const techneWorldRequest = (request: {operation:'list'}|{operation:'open';register:string}): Promise<unknown> => call('techne-world', {request}, 120000);

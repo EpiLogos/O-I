@@ -293,9 +293,20 @@ export function CradleFrame({onComposed}:{onComposed?:()=>void}) {
     lastFocusedSurface.current = null;
     restorePoint.current = snapshotOf(workspace.current.layout);
     const project = workspace.current.project;
+    let live = true;
     if (project) {
-      if (kernel.snapshot.navigator?.project?.project.name !== project) void kernel.apply({ op: "project_browse", project });
-    } else if (kernel.snapshot.navigator?.project) void kernel.apply({ op: "world_browse" });
+      if (kernel.snapshot.navigator?.project?.project.name !== project) void (async () => {
+        // The native project operation admits only the World census's refs.
+        if (!kernel.snapshot.navigator?.root) await kernel.apply({ op: "world_browse" });
+        if (live) await kernel.apply({ op: "project_browse", project });
+      })();
+    } else if (!kernel.snapshot.navigator?.root || kernel.snapshot.navigator?.project) {
+      // A restored Technè/Expressions mode does not mount WorldNavigator.
+      // Load the native World census here so its Wiki register chooser has
+      // the same real project inventory as a window first opened in Base.
+      void kernel.apply({ op: "world_browse" });
+    }
+    return () => { live = false; };
   }, [workspace.current.id, workspace.current.layout.mode, workspace.current.project]);
 
 

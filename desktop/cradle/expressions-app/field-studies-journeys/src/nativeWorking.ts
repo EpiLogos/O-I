@@ -12,7 +12,8 @@ export type PendingNative =
  | {kind:'create';expression_ref:string;submitted:WorkingSnapshot}
  | {kind:'edit';request:CompositionEdit;submitted:WorkingSnapshot}
  | {kind:'file';intent:unknown}
- | {kind:'selection';request:SelectionEdit};
+ | {kind:'selection';request:SelectionEdit}
+ | {kind:'connections';request:ConnectionEdit};
 export interface NativeSelection {scene_ref:string;entity_ref?:string|null;binding_ref?:string}
 export interface SelectionEdit {operation:'edit';expression_ref:string;expected_revision:number;actor:string;changes:[Record<string,unknown>]}
 function selectionEdit(view:KernelConversion,selection:NativeSelection):SelectionEdit {
@@ -32,6 +33,40 @@ function selectionMatches(view:KernelConversion,request:SelectionEdit,document:K
  if(document.revision!==expected.revision&&document.revision!==expected.revision+1)return false;
  expected.revision=document.revision;
  return same(expected,document);
+}
+export interface ConnectionEdit {operation:'edit';expression_ref:string;expected_revision:number;actor:string;changes:Record<string,unknown>[]}
+/** Expression connections are local composition bindings. This never edits a
+ * source-owned semantic relation or infers Wiki write authority. */
+function connectionEdit(view:KernelConversion,changes:Record<string,unknown>[]):ConnectionEdit {
+ if(!changes.length||changes.length>256)throw new Error('Choose 1–256 native connection changes');
+ const request:ConnectionEdit={operation:'edit',expression_ref:view.document.expression_ref,expected_revision:view.document.revision,actor:'human:expressions-app',changes:clone(changes)};
+ connectionResult(view,request); // refuse unsupported ownership before dispatch
+ return request;
+}
+function connectionResult(view:KernelConversion,request:ConnectionEdit):KernelExpressionDocument {
+ const doc=clone(view.document);doc.relations??={};
+ for(const change of request.changes){
+  const binding=change.binding as NonNullable<KernelExpressionDocument['relations']>[string]|undefined;
+  const ref=change.change==='relation_bind'?binding?.binding_ref:change.binding_ref;
+  if(typeof ref!=='string'||!ref.startsWith(doc.expression_ref+':relation:connection-'))throw new Error('Only O:I Expression connections can be edited here');
+  const previous=doc.relations[ref];
+  if(previous&&previous.native_owner!=='oi')throw new Error('Source relations must be changed through their source owner');
+  if(change.change==='relation_bind'){
+   if(!binding||binding.native_owner!=='oi'||!binding.relation?.ref.startsWith(ref+':'))throw new Error('Connection binding must identify its O:I owner');
+   if(!doc.scenes.some(scene=>scene.entity_refs.includes(binding.from_entity_ref)&&scene.entity_refs.includes(binding.to_entity_ref)))throw new Error('Both connection endpoints must belong to the same native Scene');
+   doc.relations[ref]=clone(binding);
+  }else if(change.change==='relation_remove'){
+   if(!previous)throw new Error('Connection is absent');
+   delete doc.relations[ref];
+   if(doc.selection?.relation_ref===ref)delete doc.selection.relation_ref;
+  }else throw new Error('Only native connection bind/remove is admitted by this operation');
+ }
+ if(!same(doc,view.document))doc.revision++;
+ kernelDocumentToJourney(doc); // complete binding and membership validation
+ return doc;
+}
+function connectionView(view:KernelConversion,doc:KernelExpressionDocument):KernelConversion {
+ return kernelDocumentToJourney(doc,{identity:{expression:view.journey.id,scenes:Object.fromEntries(Object.entries(view.bindings).map(([id,b])=>[b.scene_ref,id])),entities:view.entity_ids},pages:Object.fromEntries(Object.values(view.bindings).map(b=>[b.scene_ref,b.page]))});
 }
 export interface NativeWorkingRecord {
  schema:'oi.native-working/v1';draft_id:string;view?:KernelConversion;file?:NativeFile;pending?:PendingNative;
@@ -89,7 +124,7 @@ export function validateWorkingRecord(raw:unknown,journey:Journey):NativeWorking
  }
  if(value.pending){
   const pending=value.pending;
-  if(!['create','edit','file','selection'].includes(pending.kind))throw new Error('Unknown pending native operation');
+  if(!['create','edit','file','selection','connections'].includes(pending.kind))throw new Error('Unknown pending native operation');
   if(pending.kind==='create'||pending.kind==='edit'){
    validateJourney(pending.submitted.journey);
    if(pending.submitted.journey.id!==journey.id)throw new Error('Pending proposal belongs to another draft');
@@ -101,6 +136,7 @@ export function validateWorkingRecord(raw:unknown,journey:Journey):NativeWorking
    const change=pending.request?.changes?.[0];
    if(!value.view||!change||!same(pending.request,selectionEdit(value.view,{scene_ref:String(change.scene_ref),entity_ref:change.entity_ref as string|null,binding_ref:change.binding_ref as string|undefined})))throw new Error('Recovered selection does not match its native basis');
   }
+  if(pending.kind==='connections'&&(!value.view||!same(pending.request,connectionEdit(value.view,pending.request.changes))))throw new Error('Recovered connection edit does not match its native basis');
   if(pending.kind==='file'&&!value.view)throw new Error('A file-save checkpoint requires a native basis');
  }
  return value;
@@ -175,6 +211,25 @@ export class NativeWorking {
    await this.persist({...record,view:rebaseCompositionView(record.view!,record.view!.journey,document),pending:undefined},epoch);
   }finally{this.inFlight=false;}
  }
+ /** Exact native connection edit with durable intent and independent readback. */
+ async editConnections(changes:Record<string,unknown>[]):Promise<KernelConversion>{
+  const epoch=this.begin();
+  try{
+   const record=this.record?clone(this.record):undefined;
+   if(!record?.view)throw new Error('Open a native Expression before editing its connections');
+   if(record.pending)throw new Error('Inspect the interrupted native operation before editing connections');
+   const request=connectionEdit(record.view,changes),expected=connectionResult(record.view,request);
+   if(same(expected,record.view.document))return clone(record.view);
+   await this.persist({...record,pending:{kind:'connections',request}},epoch);
+   const reply=readDocument(await this.ports.expression({...request}),request.expression_ref);
+   if(!same(reply,expected))throw new Error('Native connection acknowledgement differs from the captured edit; inspect before retrying');
+   const observed=readDocument(await this.ports.expression({operation:'inspect',expression_ref:request.expression_ref}),request.expression_ref);
+   if(!same(observed,expected))throw new Error('Native connection readback changed; preserve the pending edit and reconcile');
+   const view=connectionView(record.view,observed);
+   await this.persist({...record,view,pending:undefined},epoch);
+   return view;
+  }finally{this.inFlight=false;}
+ }
  async saveFile(snapshot:WorkingSnapshot,destination:SaveDestination):Promise<NativeFile>{
   const document=await this.commit(snapshot),epoch=this.begin();
   try{
@@ -212,6 +267,14 @@ export class NativeWorking {
    }
    const reference=pending.kind==='create'?pending.expression_ref:pending.request.expression_ref;
    const doc=readDocument(await this.ports.expression({operation:'inspect',expression_ref:reference}),reference);
+   if(pending.kind==='connections'){
+    if(same(doc,record.view!.document)){
+     await this.persist({...record,pending:undefined},epoch);return 'The native connection edit was not applied. No write was replayed.';
+    }
+    if(!same(doc,connectionResult(record.view!,pending.request)))throw new Error('revision_conflict: native connections differ from the captured edit; preserve and reconcile');
+    await this.persist({...record,view:connectionView(record.view!,doc),pending:undefined},epoch);
+    return 'Recovered the exact native connection edit without replaying it or replacing newer local work.';
+   }
    if(pending.kind==='selection'){
     if(same(doc,record.view!.document)){
      await this.persist({...record,pending:undefined},epoch);return 'The native selection did not change. No write was replayed.';

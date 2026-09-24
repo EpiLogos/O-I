@@ -7,23 +7,15 @@
  * owns the centre; the shell's chrome (navigator, panel, footer) frames it
  * without covering it.
  *
- * The bundle is served the only way rich material may reach a webview
- * (FND-04): through the owner's `oi-material://` file seam in the desktop
- * build, or the walk bridge's mirror under probes — every byte through the
- * owner's own file reads, no ambient filesystem or native-bridge authority.
- * In a plain browser (no owner transport) the host says so honestly rather
- * than hosting a copy that could drift from the owner's ground.
- *
- * The served artefact is the VENDORED app's own dist (hostedApp.ts carries
- * the location): the cradle checkout sits on Central's disclosed ground, so
- * the files seam resolves it exactly as it resolved the outer workspace —
- * the source of record is now in-repo, Work/Point-Cloud-Demo is retired as
- * the app of record.
+ * Native candidates serve their own bundled application through the reserved oi-material application route;
+ * explicit bridge walks serve owner-disclosed material. No native failure
+ * falls back to another checkout. The existing application-state handshake
+ * confirms that the requested code actually started.
  *
  * The frame keeps same-origin within its own material origin: the
  * application autosaves its drafts to browser storage at boot, and an opaque
- * sandboxed origin would refuse storage and kill the boot — the material
- * protocol's own CSP remains the authority over what the frame may do.
+ * sandboxed origin would refuse storage and kill the boot. The frame gets
+ * owner operations only through the typed host message relay.
  *
  * The app's masthead aligns with the shell's traffic-lights cutout (owner
  * addendum 2026-09-19): the host posts the live cutout geometry to the
@@ -31,28 +23,23 @@
  */
 import {useEffect, useRef, useState} from "react";
 import {useKernel} from "../kernel/KernelProvider";
-import {listFiles} from "../files/client";
-import type {NativeFileEntry} from "../kernel/types";
 import {
-  EXPRESSIONS_APP_DIST,
-  EXPRESSIONS_APP_ENTRY,
-  materialUrl,
+  hostedAppUrl,
   relayKernelChannel,
   trackShellCutout,
   trackHostedAppState,
+  watchHostedAppReady,
   postHostMode,
   postOpenExpression,
-  isHostedTechneLens,
   type HostedAppMode,
   type HostedAppState,
-  type HostedTechneLens,
 } from "./hostedApp";
-import {consumeTechneFieldOpen, peekTechneFieldOpen, subscribeTechneFieldOpen} from "./fieldOpen";
+import {consumeTechneFieldOpen, peekTechneFieldOpen, peekTechneFieldRefresh, subscribeTechneFieldOpen} from "./fieldOpen";
 import "./point-cloud-host.css";
 
-export function PointCloudHost({mode = "expressions", deepLink, bindingId, onHostedState, onLensSummon}: {mode?: HostedAppMode; deepLink?: string; bindingId?: string; onHostedState?: (state: HostedAppState) => void; onLensSummon?: (lens: HostedTechneLens) => void}) {
+export function PointCloudHost({mode = "expressions", deepLink, bindingId, onHostedState, readTechne, techneWorld}: {mode?: HostedAppMode; deepLink?: string; bindingId?: string; onHostedState?: (state: HostedAppState) => void; readTechne?: () => Promise<unknown>; techneWorld?: (request: unknown) => Promise<unknown>}) {
   const kernel = useKernel();
-  const [entry, setEntry] = useState<NativeFileEntry | undefined>();
+  const [src, setSrc] = useState<string | undefined>();
   const [state, setState] = useState<"reading" | "ready" | "refused">("reading");
   const [reason, setReason] = useState<string | undefined>();
   const frame = useRef<HTMLIFrameElement | null>(null);
@@ -69,11 +56,9 @@ export function PointCloudHost({mode = "expressions", deepLink, bindingId, onHos
     let alive = true;
     void (async () => {
       try {
-        const directory = await listFiles(kernel.transport, EXPRESSIONS_APP_DIST);
-        const found = directory.entries.find(candidate => candidate.name === EXPRESSIONS_APP_ENTRY);
-        if (!found) throw new Error(`The Expressions application is not built at ${EXPRESSIONS_APP_DIST} — build it with the one law in desktop/cradle/expressions-app/README.md`);
+        const url = await hostedAppUrl(kernel.transport, bootQuery);
         if (!alive) return;
-        setEntry(found); setState("ready");
+        setSrc(url);
       } catch (error) {
         if (!alive) return;
         setState("refused"); setReason(String(error instanceof Error ? error.message : error));
@@ -83,40 +68,38 @@ export function PointCloudHost({mode = "expressions", deepLink, bindingId, onHos
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const src = entry
-    ? kernel.transport.kind === "tauri"
-      ? materialUrl(entry.location, "", bootQuery)
-      : kernel.transport.kind === "bridge"
-        ? `${kernel.transport.url}/material/${encodeURIComponent(JSON.stringify(entry.location))}/${bootQuery}`
-        : undefined
-    : undefined;
 
   // The shell's corner cutout and the app's header row read as one
   // continuous aligned edge: keep posting the live geometry to the frame.
   useEffect(() => {
     const node = frame.current;
     return node ? trackShellCutout(node) : undefined;
-  }, [state]);
+  }, [src]);
+
+  useEffect(() => {
+    const node = frame.current;
+    return node ? watchHostedAppReady(node, mode, () => { setState("ready"); setReason(undefined); }, message => { setReason(message); setState("refused"); }) : undefined;
+  }, [src, mode]);
 
   // The kernel host channel: the application reaches the kernel's expression
   // ops and Central's file reads through this host — the kernel document is
   // the only store (hostedApp.relayKernelChannel, same laws as the cutout).
   useEffect(() => {
     const node = frame.current;
-    if (!node || state !== "ready") return;
-    return relayKernelChannel(node, kernel.transport);
+    if (!node) return;
+    return relayKernelChannel(node, kernel.transport, {readTechne, techneWorld});
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [state, kernel.transport]);
+  }, [src, kernel.transport, readTechne, techneWorld]);
 
   // The checkpoint channel: the application's oi-app-state announcements
   // (current expression, scene, selection — its own position, in its own
   // grammar) reach the stage slot's checkpoint effect when one is mounted.
   useEffect(() => {
     const node = frame.current;
-    if (!node || state !== "ready" || !onHostedState) return;
+    if (!node || !onHostedState) return;
     return trackHostedAppState(node, onHostedState);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [state, onHostedState]);
+  }, [src, onHostedState]);
 
   // The operating cut (the cradle's own workspace modes carry it): the
   // binding's kind IS the cut — the Technē centre presents this application
@@ -125,7 +108,7 @@ export function PointCloudHost({mode = "expressions", deepLink, bindingId, onHos
   useEffect(() => {
     const node = frame.current;
     return node ? postHostMode(node, mode) : undefined;
-  }, [mode, state]);
+  }, [mode, src]);
 
   // The Technē cut's summon answer: a constellation constructed in the Wiki
   // opens IN this same living field, not a second renderer and not the panel's
@@ -143,7 +126,7 @@ export function PointCloudHost({mode = "expressions", deepLink, bindingId, onHos
   useEffect(() => {
     const node = frame.current;
     if (mode !== "techne" || !node || state !== "ready") return;
-    const open = () => { const ref = consumeTechneFieldOpen(bindingId ?? null); if (ref) postOpenExpression(node, ref); };
+    const open = () => { const refresh = peekTechneFieldRefresh(); const ref = consumeTechneFieldOpen(bindingId ?? null); if (ref) postOpenExpression(node, ref, refresh); };
     open(); // a ref recorded before this host was ready
     return subscribeTechneFieldOpen(() => { if (peekTechneFieldOpen()) open(); });
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -156,20 +139,17 @@ export function PointCloudHost({mode = "expressions", deepLink, bindingId, onHos
   // the seams that already exist.
   useEffect(() => {
     const handler = (event: MessageEvent) => {
-      const data = event.data as {v?: number; kind?: string; request?: string; mode?: string; kind2?: string; detail?: {kind?: string; lens?: string; subject?: unknown}} | null;
+      const data = event.data as {v?: number; kind?: string; request?: string; mode?: string; kind2?: string; detail?: {kind?: string; lens?: string; ref?: unknown; subject?: unknown}} | null;
       if (!data || data.v !== 1 || data.kind !== "host-request") return;
       if (event.source !== frame.current?.contentWindow) return;
       if (data.request === "workspace-mode" && (data.mode === "expressions" || data.mode === "techne")) {
         window.dispatchEvent(new CustomEvent("oi:host-workspace-mode", {detail: {mode: data.mode}}));
       }
-      if (data.request === "summon" && data.detail?.kind === "instrument") {
-        // The application's Lens Studio chooser summons the deep instruments.
-        // Answered by THIS centre instance — the presented Technē centre opens
-        // its own HUD on that lens over this same field — never a global
-        // listener and never a second renderer. A host whose centre passed no
-        // answerer (the Expressions cut, where the chooser never stands)
-        // consumes nothing, exactly like any other unanswered summon.
-        if (isHostedTechneLens(data.detail.lens)) onLensSummon?.(data.detail.lens);
+      if (data.request === "summon" && data.detail?.kind === "source") {
+        const ref = data.detail.ref;
+        if (typeof ref === "string" && ref.length > 0 && ref.length <= 2048 && !/[\u0000-\u001f]/.test(ref)) {
+          window.dispatchEvent(new CustomEvent("oi:epi-open-knowledge", {detail: {ref}}));
+        }
         return;
       }
       if (data.request === "summon" && data.detail?.kind) {
@@ -181,7 +161,7 @@ export function PointCloudHost({mode = "expressions", deepLink, bindingId, onHos
     };
     window.addEventListener("message", handler);
     return () => window.removeEventListener("message", handler);
-  }, [onLensSummon]);
+  }, []);
 
   return <div className="pcd-host" aria-label="O:I Expressions application" data-state={state}>
     {state === "reading" && <p className="oi-note" role="status">Opening the Expressions application…</p>}

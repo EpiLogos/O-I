@@ -486,3 +486,11 @@ body.presentation #physis-panel,body.library-open #physis-panel{display:none}
 .lens-facet{border:1px dashed var(--line);border-radius:9px;padding:12px 13px}
 .lens-facet-purpose{font-size:11.5px;line-height:1.5;margin:0 0 8px}
 .lens-facet-standing{font-size:10px;line-height:1.6;color:var(--muted);margin:0}
+
+#research-workspace{position:fixed;inset:108px 12px 66px 12px;z-index:50;pointer-events:none;min-width:0;min-height:0}
+#research-workspace>.research-instrument{pointer-events:auto;border:1px solid var(--line);border-radius:8px;overflow:hidden}
+
+#techne-world{position:fixed;z-index:63;top:108px;left:14px;display:flex;gap:8px;align-items:center;max-width:min(360px,60vw);padding:6px 9px;background:var(--panel);border:1px solid var(--line);border-radius:7px;color:var(--ink)}
+#techne-world[hidden]{display:none}
+#techne-world select{min-width:110px;max-width:220px;color:inherit;background:var(--paper);border:1px solid var(--line);padding:5px}
+#techne-world span{font:11px/1.4 var(--sans)}

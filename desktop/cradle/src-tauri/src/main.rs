@@ -11,6 +11,7 @@ mod terminal;
 mod menus;
 mod ground_dialog;
 mod material_protocol;
+mod app_assets;
 mod walk_diagnostics;
 use std::sync::Mutex;
 

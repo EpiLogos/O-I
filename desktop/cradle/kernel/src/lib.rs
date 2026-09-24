@@ -28,6 +28,7 @@
 
 pub mod action;
 pub mod agency;
+pub mod application_asset;
 pub mod being;
 pub mod commission;
 pub mod composition;

@@ -160,7 +160,19 @@ export function installNativeWorkspace(host:NativeWorkspaceHost){
    if(action==='refresh'){await refresh();return;}
    if(action==='open'){await openReference(field('expression').value);return;}
    if(action==='open-file'){await loadFile(field('path').value);return;}
-   if(action==='inspect'){status(await work.inspectPending());return;}
+   if(action==='inspect'){
+    const before=work.state,version=host.version();
+    const clean=before?.view&&!prepareCompositionEdit(before.view,host.snapshot().journey).changes.length;
+    const result=await work.inspectPending();
+    if(before?.pending?.kind==='connections'&&work.state?.view){
+     if(clean&&host.version()===version){
+      restoreGeneration++;selections.cancel();host.load(work.state.view,true);
+     }else{
+      status(`${result} Newer local edits remain in your working draft.`);return;
+     }
+    }
+    status(result);return;
+   }
    if(action==='retry'){const file=await work.retryFile();status(`Verified the exact retained file save: ${file.location.path}. No new operation identity was minted.`);return;}
    if(action==='previous'||action==='next'){await changePage(action==='next'?1:-1);return;}
    const snapshot=clone(host.snapshot()),version=host.version();
@@ -190,6 +202,30 @@ export function installNativeWorkspace(host:NativeWorkspaceHost){
    catch(error){if(generation===restoreGeneration){status(`Native recovery was not adopted: ${error instanceof Error?error.message:String(error)}`);update();}}
   },
   inspect(){const state=work.state;return {native_ref:state?.view?.document.expression_ref,revision:state?.view?.document.revision,file:state?.file,pending:state?.pending?.kind,notes:state?.view?.notes??[],bindings:state?.view?.bindings};},
+  edit:async(changes:Record<string,unknown>[])=>{
+   if(!changes.length)return;
+   if(busy||work.busy)throw new Error('The native composition is busy; retry after its current operation.');
+   const succeeded=await run(async()=>{
+    const current=work.state?.view;
+    if(!current)throw new Error('Open a native Expression before editing its connections.');
+    if(prepareCompositionEdit(current,host.snapshot().journey).changes.length)throw new Error('Commit the current composition before editing its connections. The draft was retained.');
+    const version=host.version();
+    const view=await work.editConnections(changes);
+    if(host.version()!==version)throw new Error('The connection was saved natively; newer local edits remain in your working draft.');
+    restoreGeneration++;selections.cancel();
+    host.load(view,true);update();
+
+   });
+   if(!succeeded)throw new Error(notice||'The native edit was not acknowledged.');
+  },
+  nativeView:()=>work.state?.view,
+  refreshReference:(reference:string)=>run(async()=>{
+   const current=work.state?.view;
+   if(!current||current.document.expression_ref!==reference){await openReference(reference);return;}
+   if(prepareCompositionEdit(current,host.snapshot().journey).changes.length)throw new Error('Commit the current edits before opening a different native selection. Your draft was retained.');
+   const version=host.version();
+   await adopt(await readKernelExpression(reference) as KernelExpressionDocument,version);
+  }),
   nativeSubject,
   construction,
   // Persist the current composition — its scenes, members and relations —
