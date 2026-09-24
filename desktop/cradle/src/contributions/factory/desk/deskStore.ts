@@ -15,10 +15,19 @@ import {useSyncExternalStore} from "react";
 import type {KernelTransportStatus} from "../../../kernel/types";
 import type {Scope} from "../../../workspace/scope";
 import {readDeskSources} from "./deskModel";
-import {discoverSources, inspectWorkflow, readJourney, readProject, readRun, type Discovery} from "./factoryReads";
+import {discoverSources, inspectWorkflow, readCurrentWork, readFactoryInhabitation, readJourney, readProject, readRun, type Discovery} from "./factoryReads";
 import {cardKey, deskCard, type DeskCard, type DeskSourceRef, type JourneyReading, type RunReading, type WorkflowInspection} from "./runModel";
+import {joinBySession, namesOf, positionsInCustody, runInhabitationView, runOwners, type FactoryCurrentWork, type FactoryInhabitationReading, type Join, type OwnerRead, type PositionNames, type RunInhabitationView} from "../inhabitation/model";
+import {peekPopulation, readPopulation, readPopulationFor} from "../inhabitation/reads";
 
-export interface RunEntry { card: DeskCard; run: RunReading; journey?: JourneyReading; inspection?: WorkflowInspection; inspectionError?: string }
+export interface RunEntry {
+  card: DeskCard; run: RunReading; journey?: JourneyReading;
+  inspection?: WorkflowInspection; inspectionError?: string;
+  /** Set when the whole inspection could not be read (inspectionPages.ts). */
+  inspectionPartial?: string;
+  /** The run's Positions from Factory's inhabitation reading (absent until read). */
+  inhabitation?: RunInhabitationView;
+}
 export interface DeskReading {
   scopeKey: string;
   status: "reading" | "read" | "error";
@@ -28,6 +37,12 @@ export interface DeskReading {
   /** Sources whose project/journey/run reads refused, in the owner's words. */
   refused: {label: string; error: string}[];
   runs: Record<string, RunEntry>;
+  /** Factory's inhabitation reading per source (state path), or its absence. */
+  inhabitation?: Record<string, OwnerRead<FactoryInhabitationReading>>;
+  /** Factory's current-work reading per source, per Position in custody there. */
+  currentWork?: Record<string, Record<string, OwnerRead<FactoryCurrentWork>>>;
+  /** Central's names for the Positions (from the population readings), by ref. */
+  names?: Record<string, PositionNames>;
 }
 
 export const scopeKeyOf = (scope: Scope) => scope.kind === "project" ? `project:${scope.project}` : scope.kind;
@@ -49,13 +64,43 @@ export function runEntry(key: string | undefined): RunEntry | undefined {
   return key ? reading?.runs[key] : undefined;
 }
 
-/** Read one source: project → journeys → runs. Refusals are collected, never
- * thrown past the source. */
-async function readSource(transport: KernelTransportStatus, source: DeskSourceRef, runs: Record<string, RunEntry>, refused: DeskReading["refused"]) {
+/** A run's title as the Desk names it — for the Positions' current-work
+ * words ("Working on …"); a run the Desk has not read has no title here. */
+export function titleOfRun(runRef: string, runs: Record<string, RunEntry> | undefined = reading?.runs): string | undefined {
+  for (const entry of Object.values(runs ?? {})) if (entry.run.runRef === runRef) return entry.card.title;
+  return undefined;
+}
+
+/** What a run's inhabitation join reads beside Factory's reading: Central's
+ * names by ref and Factory's current work per Position, for the source. */
+interface JoinBasis { names?: Record<string, PositionNames>; work?: Record<string, OwnerRead<FactoryCurrentWork>>; runs?: Record<string, RunEntry> }
+
+/** Join a run to its source's inhabitation reading: the Positions view and
+ * the card's owner line and ambiguity signal. */
+function withInhabitation(entry: RunEntry, read: OwnerRead<FactoryInhabitationReading> | undefined, basis: JoinBasis = {}): RunEntry {
+  const work = (ref: string) => { const found = basis.work?.[ref]; return found?.state === "read" ? found.data : undefined; };
+  const view = runInhabitationView(read, entry.run.runRef, {names: ref => basis.names?.[ref], titleOf: runRef => titleOfRun(runRef, basis.runs), work}) ?? entry.inhabitation;
+  const card = deskCard(entry.card.source, entry.run, entry.journey, entry.inspection, {owners: runOwners(view), ambiguities: view?.ambiguities ?? []});
+  return {...entry, card, ...(view ? {inhabitation: view} : {})};
+}
+
+/** Read one source: project → journeys → runs, and Factory's inhabitation
+ * reading for the source beside them. Refusals are collected, never thrown
+ * past the source. */
+async function readSource(transport: KernelTransportStatus, source: DeskSourceRef, runs: Record<string, RunEntry>, refused: DeskReading["refused"], inhabitation: Record<string, OwnerRead<FactoryInhabitationReading>>, currentWork: Record<string, Record<string, OwnerRead<FactoryCurrentWork>>>) {
   const label = source.project ?? "Central";
+  // Factory's inhabitation reading for the source, then Factory's own
+  // current-work derivation for every Position whose custody is open there
+  // (the ambiguity signal is Factory's answer, never a UI count).
+  const positions = readFactoryInhabitation(transport, source.statePath).then(async read => {
+    inhabitation[source.statePath] = read;
+    const held = read.state === "read" ? positionsInCustody(read.data) : [];
+    const answers = await Promise.all(held.map(ref => readCurrentWork(transport, source.statePath, ref).then(answer => [ref, answer] as const)));
+    currentWork[source.statePath] = Object.fromEntries(answers);
+  });
   let project;
   try { project = await readProject(transport, source); }
-  catch (error) { refused.push({label, error: errorWords(error)}); return; }
+  catch (error) { refused.push({label, error: errorWords(error)}); await positions; return; }
   for (const summary of project.journeys ?? []) {
     let journey: JourneyReading | undefined;
     try { journey = await readJourney(transport, source.statePath, summary.journeyRef); }
@@ -67,6 +112,7 @@ async function readSource(transport: KernelTransportStatus, source: DeskSourceRe
       } catch (error) { refused.push({label, error: errorWords(error)}); }
     }
   }
+  await positions;
 }
 
 export function errorWords(error: unknown): string {
@@ -97,15 +143,37 @@ export async function readDesk(transport: KernelTransportStatus, scope: Scope): 
   }
   const runs: Record<string, RunEntry> = {};
   const refused: DeskReading["refused"] = [];
-  await Promise.all(discovery.sources.map(source => readSource(transport, source, runs, refused)));
+  const inhabitation: Record<string, OwnerRead<FactoryInhabitationReading>> = {};
+  const currentWork: Record<string, Record<string, OwnerRead<FactoryCurrentWork>>> = {};
+  const [, names] = await Promise.all([
+    Promise.all(discovery.sources.map(source => readSource(transport, source, runs, refused, inhabitation, currentWork))),
+    readNames(transport, scope, discovery),
+  ]);
   if (gen !== generation) return;
-  // Inspections already held for a run survive the refresh until reread.
   for (const [key, entry] of Object.entries(runs)) {
+    // Inspections already held for a run survive the refresh until reread.
     const held = previous?.runs[key];
-    if (held?.inspection) { entry.inspection = held.inspection; entry.card = deskCard(entry.card.source, entry.run, entry.journey, held.inspection); }
+    if (held?.inspection) { entry.inspection = held.inspection; entry.inspectionPartial = held.inspectionPartial; }
+    runs[key] = withInhabitation(entry, inhabitation[entry.card.source.statePath], {names, work: currentWork[entry.card.source.statePath], runs});
   }
-  reading = {scopeKey, status: "read", readAt: Date.now(), discovery, refused, runs};
+  reading = {scopeKey, status: "read", readAt: Date.now(), discovery, refused, runs, inhabitation, currentWork, names};
   emit();
+}
+
+/** Central's names for the Positions in scope, from AIKit's population
+ * reading: the scope's own (shared with the Agents aperture) for a project,
+ * else one per project the discovered sources belong to. A population that
+ * cannot be read leaves its Positions named by their refs (the Agents
+ * aperture names that absence). */
+async function readNames(transport: KernelTransportStatus, scope: Scope, discovery: Discovery): Promise<Record<string, PositionNames>> {
+  if (scope.kind === "project") {
+    await readPopulationFor(transport, scope.project);
+    const held = peekPopulation(scope.project)?.read;
+    return held?.state === "read" ? namesOf(held.data) : {};
+  }
+  const projects = [...new Set(discovery.sources.map(source => source.project).filter((name): name is string => !!name))];
+  const reads = await Promise.all([undefined, ...projects].map(project => readPopulation(transport, project)));
+  return Object.assign({}, ...reads.map(read => read.state === "read" ? namesOf(read.data) : {}));
 }
 
 /** Re-read one run (its run, journey and workflow inspection) — the Run
@@ -120,9 +188,16 @@ export async function readRunEntry(transport: KernelTransportStatus, key: string
   ]);
   let inspection: WorkflowInspection | undefined;
   let inspectionError: string | undefined;
-  try { inspection = await inspectWorkflow(transport, source.statePath, entry.run.runRef); }
+  let inspectionPartial: string | undefined;
+  const positions = readFactoryInhabitation(transport, source.statePath, entry.run.runRef);
+  try { const whole = await inspectWorkflow(transport, source.statePath, entry.run.runRef); inspection = whole.inspection; inspectionPartial = whole.partial; }
   catch (error) { inspectionError = errorWords(error); }
-  const next: RunEntry = {card: deskCard(source, run, journey, inspection), run, journey, inspection, inspectionError};
+  const base: RunEntry = {card: deskCard(source, run, journey, inspection), run, journey, inspection, inspectionError, ...(inspectionPartial ? {inspectionPartial} : {})};
+  const positionsRead = await positions;
+  // Factory's current work for the Positions holding this run, re-read with it.
+  const held = positionsRead.state === "read" ? positionsInCustody(positionsRead.data) : [];
+  const work = {...(reading?.currentWork?.[source.statePath] ?? {}), ...Object.fromEntries(await Promise.all(held.map(ref => readCurrentWork(transport, source.statePath, ref).then(answer => [ref, answer] as const))))};
+  const next = withInhabitation(base, positionsRead, {names: reading?.names, work, runs: reading?.runs});
   if (reading?.runs[key]) {
     reading = {...reading, runs: {...reading.runs, [key]: next}};
     emit();
@@ -169,12 +244,11 @@ export function runSessions(entry: RunEntry): Set<string> {
   return refs;
 }
 
-/** The run a conversation belongs to, if the Desk has read one that carried
- * its session. */
-export function runForSession(sessionRef: string | undefined): RunEntry | undefined {
-  if (!sessionRef || !reading) return undefined;
-  for (const entry of Object.values(reading.runs)) if (runSessions(entry).has(sessionRef)) return entry;
-  return undefined;
+/** The runs a conversation belongs to: every run the Desk has read whose
+ * sessions carry it. One is a join; more than one is an ambiguity shown to
+ * the person — never the first match. */
+export function runsForSession(sessionRef: string | undefined): Join<RunEntry> {
+  return joinBySession(Object.values(reading?.runs ?? {}), runSessions, sessionRef);
 }
 
 // ---------------------------------------------------------------------------

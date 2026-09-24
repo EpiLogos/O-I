@@ -122,7 +122,8 @@ else
   [ -n "${APPIMAGE}" ] || die "no AppImage found at ${APPIMAGE_GLOB}; run the tauri build first (or drop --skip-build)"
 fi
 
-STAGE="$(mktemp -d "${OUT_DIR:?}/.stage-XXXXXX")"
+mkdir -p "${OUT_DIR:?}"
+STAGE="$(mktemp -d "${OUT_DIR}/.stage-XXXXXX")"
 trap 'rm -rf "${STAGE}"' EXIT
 BUNDLE_ROOT="${STAGE}/oi-desktop-bundle"
 mkdir -p "${BUNDLE_ROOT}/app"

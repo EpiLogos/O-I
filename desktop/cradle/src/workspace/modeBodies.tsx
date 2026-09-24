@@ -72,7 +72,9 @@ export function modeExtraPlanes(mode: WorkspaceMode, subject: PanelSubject, acco
     // former Needs-you/Sources/Produced stack under the canvas is unmounted.
     // §5: Factory's Context is the preserved canvas; with nothing inserted its
     // empty state also offers Factory's slice (Intent, run material, NOW).
-    {id: "context", label: "Context", body: <Suspense fallback={null}><ContextPaneMount opens={opens} dataPlane="context" project={project ?? accompanying?.project} session={accompanying?.ref}/>{!opens?.sideTabs?.length && <FactoryContextSlice/>}</Suspense>},
+    // The canvas and Factory's slice stack in one column: the canvas grows
+    // with what it holds and the slice follows it (never drawn over it).
+    {id: "context", label: "Context", body: <Suspense fallback={null}><div className="factory-context-stack"><ContextPaneMount opens={opens} dataPlane="context" project={project ?? accompanying?.project} session={accompanying?.ref}/>{!opens?.sideTabs?.length && <FactoryContextSlice/>}</div></Suspense>},
   ];
   // Expressions (Anima) and Technè (Aletheia): the same one panel; their
   // Context is the canvas under its Ta-Onta id.

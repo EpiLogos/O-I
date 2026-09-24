@@ -73,6 +73,9 @@ jobs:
       - name: Prove the Factory attempt-task consumer joins the native reads honestly
         working-directory: desktop/cradle
         run: node tests/factory-attempt-task.mjs
+      - name: Prove the Factory run model and the World-inhabitation apertures (no silent picks)
+        working-directory: desktop/cradle
+        run: node --experimental-strip-types --import ./tests/ts-register.mjs --test tests/factory-run-model.test.mjs tests/factory-inhabitation-model.test.mjs
       - name: Prove collection source identity and native-protocol consumer regressions
         working-directory: desktop/cradle
         run: |

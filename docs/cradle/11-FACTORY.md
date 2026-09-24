@@ -1,6 +1,6 @@
 ---
 Register: episteme
-Standing: design-commitment — owner-accepted as part of the UI lead, 2026-09-23 (with amendments A1–A6 in 10-SIDEBARS §7)
+Standing: design-commitment — owner-accepted as part of the UI lead, 2026-09-23 (with amendments A1–A7 in 10-SIDEBARS §7)
 ---
 
 # 11 — Factory: Desk, Tasks, the Run and its objects
@@ -194,7 +194,7 @@ Recognition controls sit at the top of the tab when recognition is the applicabl
 | Tab | Holds | Empty |
 |---|---|---|
 | **Run** | Compact header (run title, state, next decision) and the **tape**. The tape is the Trajectory rows (§3.3) in their compact form, following the selected run's live session. Filter chips appear only for kinds present: All · Tools · Errors · Permission. | "No run yet — start one." |
-| **Agents** | The roster (10-SIDEBARS §4.5): real agents working on this run first, then Guardians from their real identities. Each row is avatar, name, one purpose line. **Clicking opens the agent's page in the canvas.** Today's panel dumps the Guardian's markdown; that stops. | "Create an agent to work with." |
+| **Agents** | Who is here (10-SIDEBARS §4.5, Amendment A7). The rows are the World's **Positions** and their occupancy, from the owner's population reading (`aikit gateway who`). The Positions Factory holds on the selected run come first (*On this run*, from `factory development inhabitation`), then the rest of the World, then inherited root Positions. Each row shows the label and handle, occupancy as the owner states it (`?` when unknown, never drawn as present), and current work (one, none, or ambiguous; ambiguity is marked as needing attention). **Clicking opens the Position's page in the canvas.** Agent profiles stay reachable under a collapsed *Agent profiles* section and from attempt and Position pages. | "No Positions in this world yet." (read, empty) · "Couldn't read who is here — …" + Retry (failed) |
 | **Context** | The existing canvas insertion of files, terminals and browser material, preserved. Its empty state offers Factory's slice: the project's **Intent** (vision, goals), run material, NOW records. | — |
 
 ## 6. Object pages — what Inspect opens *(Ruling D1)*
@@ -209,7 +209,8 @@ Factory's centre is full-page, so each opens **in place** with `← back`, or po
 | **Tool call** | Tool, input, output, result, duration, the turn it belongs to | Trajectory or tape row → *Open page* |
 | **Candidate / produced material** | The material itself, via the HTML template system where it is a document, or the diff or preview; its basis revision; claims and evidence about it; compare with other candidates | Map node, Handoff |
 | **Check / evidence** | Assertion, basis, the tested state (revision), result, what remains | Map detail, Handoff |
-| **Agent** | Avatar, name, purpose; Skills · Setup · Activity | Agents tab, avatars |
+| **Position** | Label, handle and purpose, then each facet of the joined reading (`aikit whoami --position P --full`) with its standing and reason (World, Project World, occupancy, agent, session, body, Workcell, root and child NOW, current work, peers, prepared context, authority, working surface, Return destination), Factory's own current-work candidates, and links to its NOW records and the occupant's agent profile | Agents tab, Live → Positions |
+| **Agent** | Avatar, name, purpose; Skills · Setup · Activity | Position page, attempt page, *Agent profiles* |
 | **NOW record** | Purpose, participants, sources, lifecycle | Live, Context |
 
 ## 7. State catalogue (Factory)
@@ -242,7 +243,7 @@ Factory's centre is full-page, so each opens **in place** with `← back`, or po
 | Map: a flat node list with edge text | Lanes by work unit with forks, gates and convergence (§3.2) |
 | Trajectory: "no executions available" | The journal-backed run log (§3.3) |
 | Header shows raw run and project refs, "live · owner build revision 4" | Title, purpose, facts line; refs behind *Copy* and *Show raw* |
-| Agents tab dumps a Guardian's markdown | Roster rows; the agent's page opens in the canvas |
+| Agents tab dumps a Guardian's markdown | Position rows with their occupancy and current work; the Position's page opens in the canvas (A7) |
 | "The conversation is in the centre." note, "Situated in Central", "Observed 15m ago" | Removed |
 | Composer's plain "Connect with …" list | Harness-grouped connection picker |
 | Hand-typed Desk sources | `factory project locate` discovery |

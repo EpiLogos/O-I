@@ -77,6 +77,8 @@ export interface WorkflowInspection {
   barriers?: {key: string; waitsFor?: string[]; releases?: string[]; notReturned?: string[]; complete?: boolean}[];
   attempts?: InspectionAttempt[]; telemetry?: {telemetryRef: string; workflowUnitRef?: string; executionRef?: string}[];
   totalAttempts?: number; totalUnits?: number;
+  /** The owner's page cursor (null when the reading is exhausted). */
+  nextCursor?: unknown;
 }
 
 // ---------------------------------------------------------------------------
@@ -213,6 +215,11 @@ export interface DeskCard {
   units: UnitSegment[];
   needsYou: number; blocked: boolean;
   agents: string[];
+  /** The Positions holding the run, from Factory's inhabitation reading
+   * (handles when the owner gives them) — never inferred from agent names. */
+  owners: string[];
+  /** Owner-stated ambiguities on the run, in words: an attention signal. */
+  ambiguities: string[];
   projectName?: string;
   startedAt?: string;
 }
@@ -222,7 +229,7 @@ export const DESK_COLUMNS: {key: DeskColumn; label: string}[] = [
 ];
 export const cardKey = (source: DeskSourceRef, runRef: string) => `${source.statePath}\u0000${source.projectRef}\u0000${runRef}`;
 
-export function deskCard(source: DeskSourceRef, run: RunReading, journey?: JourneyReading, inspection?: WorkflowInspection): DeskCard {
+export function deskCard(source: DeskSourceRef, run: RunReading, journey?: JourneyReading, inspection?: WorkflowInspection, inhabitation?: {owners: string[]; ambiguities: string[]}): DeskCard {
   const state = runState(run.lifecycle);
   const frontier = frontierNode(run);
   const needsYou = (run.humanRequests?.length ?? 0) + pendingRecognitions(journey, run.runRef).length;
@@ -239,13 +246,17 @@ export function deskCard(source: DeskSourceRef, run: RunReading, journey?: Journ
     units: unitSegments(run, inspection),
     needsYou, blocked: state === "blocked",
     agents,
+    owners: inhabitation?.owners ?? [],
+    ambiguities: inhabitation?.ambiguities ?? [],
     projectName: projectName(source.projectKey, source.project),
     startedAt: journey?.startedAt ?? undefined,
   };
 }
 
 export function deskColumn(card: DeskCard): DeskColumn {
-  if (card.needsYou > 0 || card.blocked) return "needs-you";
+  // An owner-stated ambiguity (who holds the work, which work is current) is
+  // attention: someone must resolve it, so the card sits in Needs you.
+  if (card.needsYou > 0 || card.blocked || card.ambiguities.length > 0) return "needs-you";
   if (card.state === "running") return "active";
   if (card.state === "queued") return "queued";
   return "recent";
@@ -262,7 +273,7 @@ export function initials(name: string): string {
 export function cardMatches(card: DeskCard, query: string): boolean {
   const q = query.trim().toLowerCase();
   if (!q) return true;
-  return [card.title, card.purpose, card.next, card.projectName, ...card.agents].filter(Boolean).join(" ").toLowerCase().includes(q);
+  return [card.title, card.purpose, card.next, card.projectName, ...card.agents, ...card.owners].filter(Boolean).join(" ").toLowerCase().includes(q);
 }
 
 // ---------------------------------------------------------------------------

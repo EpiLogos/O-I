@@ -46,7 +46,7 @@ if(process.argv[1] && resolve(process.argv[1])===fileURLToPath(import.meta.url))
   const root=fileURLToPath(new URL('../',import.meta.url));
   const sha=execFileSync('git',['rev-parse','HEAD'],{cwd:root,encoding:'utf8'}).trim();
   const results=[];
-  for(const [name,count,driver] of [['shell-recovery',12,'shell-recovery.browser.mjs'],['shell-setup',36,'shell-setup.browser.mjs'],['visuals-preferences',22,'visuals-preview-lifecycle.mjs']]) {
+  for(const [name,count,driver] of [['shell-recovery',12,'shell-recovery.browser.mjs'],['shell-setup',36,'shell-setup.browser.mjs'],['visuals-preferences',42,'visuals-preview-lifecycle.mjs']]) {
     const bytes=readFileSync(new URL(`./artifacts/${name}/receipt.json`,import.meta.url));
     validateReceipt(JSON.parse(bytes),count,receiptIdentity(new URL(driver,import.meta.url)));
     // These three inputs are controlled production component and protocol

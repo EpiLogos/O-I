@@ -56,7 +56,8 @@ export type FactoryObjectRef =
   | {kind: "attempt"; runKey: string; attemptRef: string}
   | {kind: "check"; runKey: string; unitRef: string; check: string}
   | {kind: "now-record"; ref: string}
-  | {kind: "agent"; ref: string; label?: string};
+  | {kind: "agent"; ref: string; label?: string}
+  | {kind: "position"; ref: string; label?: string};
 
 export function RunPage({runKey, onBack, host}: {runKey: string; onBack: () => void; host: RunPageHost}) {
   const kernel = useKernel();
@@ -135,6 +136,7 @@ export function RunPage({runKey, onBack, host}: {runKey: string; onBack: () => v
     <IconTabStrip aria-label="Run views" items={TABS.map(entry=>({id:entry.key,label:entry.label,icon:entry.key==="map"?"graph":entry.key==="trajectory"?"history":entry.key==="live"?"factory":"file"}))} current={tab} onSelect={id=>setTab(id as typeof tab)}/>
     {reading === "reading" && !entry.inspection && !entry.inspectionError && <p className="frun-note" role="status">Reading this run…</p>}
     {reading === "refused" && <p className="frun-note" role="alert">Couldn't read this run: {error}</p>}
+    {entry.inspectionPartial && <p className="frun-note" role="status" data-inspection-partial>{entry.inspectionPartial}</p>}
     <section className="frun-body" role="tabpanel" aria-label={TABS.find(entryTab => entryTab.key === tab)!.label}>
       {tab === "map" && <RunMap entry={entry} runKey={runKey} host={host}/>}
       {tab === "trajectory" && <RunTrajectory entry={entry} host={host}/>}
