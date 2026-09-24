@@ -20,7 +20,8 @@
    one bounded row; narrow windows scroll the tools rather than covering lenses. */
 /* 28px controls plus the native thin horizontal scrollbar must fit inside
    the padded row even when the shell's traffic-light cutout is only 24–32px. */
-body.research-active #research-hud{align-items:stretch;flex-wrap:nowrap;min-width:0;height:max(44px,var(--shell-cutout-h,32px));max-height:none}
+body.research-active #research-hud{align-items:stretch;flex-wrap:nowrap;min-width:0;height:var(--shell-cutout-h,32px);max-height:var(--shell-cutout-h,32px);overflow:hidden}
+#app>.masthead[hidden]{display:none}
 #research-hud #research-tools{flex:1 1 0;min-width:0;min-height:0;flex-wrap:nowrap;overflow-x:auto;overflow-y:hidden;gap:6px;max-width:100%;scrollbar-width:thin}
 #research-hud .research-common{flex:0 1 auto;min-width:0;min-height:0;max-width:50%;overflow-x:auto;overflow-y:hidden;scrollbar-width:thin}
 #research-hud .research-common>*{flex-shrink:0}

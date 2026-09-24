@@ -872,7 +872,9 @@ function setInstrumentSurface(lens:LensId|null){
  $('stage').inert=research;
  $('stage').setAttribute('aria-hidden',String(research));
  const originalHeader=document.querySelector<HTMLElement>('#app > .masthead');
- if(originalHeader)originalHeader.inert=research;
+ // One header. The instrument HUD is itself a masthead; leaving the
+ // expressions header standing under it is the doubled bar on M1, M2 and M4.
+ if(originalHeader){originalHeader.inert=research;originalHeader.hidden=research;}
  const hud=document.getElementById('research-hud');if(hud)hud.hidden=!research;
  const inspector=document.getElementById('research-inspector');if(inspector)inspector.hidden=!research;
  if(research){
