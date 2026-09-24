@@ -11,7 +11,7 @@ export function installNativeField(engine:FieldEngineAdapter,onResumeApplication
  const controller=new NativeFieldController(port,engine as unknown as NativeRenderer,undefined,EMBEDDED_NATIVE_PLAYBACK);
  const panel=document.createElement('details');panel.dataset.nativeField='';panel.className='native-field-panel';
  panel.innerHTML=`<summary>Native M1–M3</summary><div class="native-field-depth">
- <p>Same Expressions body. Native topology, modal sound and clock; existing GPU particle mechanics.</p><p>Buffered native playback: 8,192 samples per block, 250 ms initial device lead, 500 ms lookahead ceiling. This pays for the complete native transfer; lateness holds rather than silently skipping samples. The chosen sample rate must fit this policy.</p>
+ <p>Same Expressions body. Native topology, modal sound and clock; existing GPU particle mechanics.</p><p>Buffered native playback: 8,192 samples per block, 500 ms initial device lead, 500 ms lookahead ceiling. This pays for the complete native transfer; lateness holds rather than silently skipping samples. The chosen sample rate must fit this policy.</p>
  <label>Central binding source <input name="native-path" type="text" spellcheck="false" placeholder="Work/…/native-binding.json"></label>
  <button type="button" data-native="source">Read binding</button><output data-native-source>No source selected.</output>
  <button type="button" data-native="connect" disabled>Connect muted</button>
