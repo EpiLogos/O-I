@@ -44,10 +44,20 @@ Aggregate rule — **conservative**: the weakest non-historical source verdict g
 
 1. **Ground.** Read the current matrix + the receipt laws above before touching any record.
 2. **Recover claims.** New intent enters as capability-entry records from frame-layer extracts, §21 tickets, or receipt assertions — with `why_this_exists` and evidence refs, before any verification.
-3. **Reconcile statically.** Static evidence only: ls/rg/git-log against the trees. No builds or tests in repos with live actors; recommend test runs instead of running them there.
+3. **Reconcile statically.** Static evidence only: ls/rg/git-log against the trees, plus the GitNexus code lens (`aikit knowledge code search`, `aikit knowledge code context`, `aikit knowledge code impact`, each with `--repo <repo>`) to locate the symbol a claim rests on. Cite the path and symbol you read, never a GitNexus node id; the lens is derived and never outranks the tree. No builds or tests in repos with live actors; recommend test runs instead of running them there.
 4. **Stamp and aggregate.** Verdict + cited evidence per source; conservative aggregate; historical annotates.
 5. **Regenerate.** `python3 assemble.py && python3 render_md.py` in `ledger/capability-matrix/`; land refreshed artifacts in O-I `docs/` + `suite/` (pathspec commit, main — never a branch).
 6. **Promote honestly.** No generated text promotes itself: a standing change is an acceptance event for the matrix owner. Record it with its date and source.
+
+## After a merge, and when planning
+
+A merged change can move a capability's standing; planned work can depend on one. Situate it the way Central's `capability-matrices` skill describes under "Situate the concern before asking":
+- take the changed paths and the GitNexus reading;
+- join them to the product matrices' `code_refs`/`test_refs` (`aikit now-context field` does this with revisions);
+- read the affected records here;
+- ask Jev a few precise questions over just those records if a judgement is needed.
+
+A record whose tree evidence changed is re-reconciled through steps 3–6; it is never restamped from the reading alone.
 
 ## Ownership
 
