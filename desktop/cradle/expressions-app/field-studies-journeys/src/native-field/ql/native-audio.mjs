@@ -71,7 +71,7 @@ export class NativeAudioBinding {
     need(Number.isInteger(context.sampleRate) && context.sampleRate >= 8000 && context.sampleRate <= 192000,
       'unsupported device sample rate');
     need(finite(gain) && gain >= 0 && gain <= 1 && typeof muted === 'boolean', 'invalid explicit presentation gain/mute');
-    need(finite(leadSeconds) && leadSeconds >= 0 && leadSeconds <= 0.25, 'invalid scheduling lead');
+    need(finite(leadSeconds) && leadSeconds >= 0 && leadSeconds <= 0.5, 'invalid scheduling lead');
     need(Number.isInteger(maxQueuedFrames) && maxQueuedFrames >= 128 && maxQueuedFrames <= context.sampleRate * 2 &&
       Number.isInteger(maxBlocks) && maxBlocks >= 1 && maxBlocks <= 256, 'invalid audio queue ceiling');
     const initial = decode(initialFrame, context.sampleRate);

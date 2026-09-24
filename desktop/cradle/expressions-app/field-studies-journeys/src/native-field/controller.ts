@@ -12,7 +12,7 @@ export interface NativeRenderer {
  setNativeDomain(active:boolean):void;
 }
 export interface NativePlaybackPolicy {blockFrames:number;leadSeconds:number;lookaheadSeconds:number;}
-export const EMBEDDED_NATIVE_PLAYBACK:Readonly<NativePlaybackPolicy>=Object.freeze({blockFrames:8192,leadSeconds:.25,lookaheadSeconds:.5});
+export const EMBEDDED_NATIVE_PLAYBACK:Readonly<NativePlaybackPolicy>=Object.freeze({blockFrames:8192,leadSeconds:.5,lookaheadSeconds:.5});
 export type NativeStatus='manual'|'opening'|'following'|'held'|'unavailable';
 /** The QL driver schedules PCM/targets; the app remains the sole GPU stage.
  * The controller owns admission/lifetime only, never native math or a second clock.
@@ -106,7 +106,14 @@ export class NativeFieldController {
    await this.session.recover('complete native sources admitted; rebase device only');
    if(epoch!==this.epoch||this.dead)return;
    if(this.openingHold){this.hold(this.openingHold);}
-   else{this.status='following';this.session.start();}
+   else{
+    // Rebase once more immediately before the pump so inspect/open cost cannot
+    // consume the whole audio lead on a slow GPU/main-thread admission path.
+    await this.session.recover('pre-pump device rebase after source admission');
+    if(epoch!==this.epoch||this.dead)return;
+    if(this.openingHold){this.hold(this.openingHold);}
+    else{this.status='following';this.session.start();}
+   }
    this.changed();
   }catch(error){
    // A completion belonging to an old epoch may not close a newer owner.
