@@ -117,3 +117,14 @@ Read the joined operation in either direction: exact native source and revision 
 The scoped proof must exercise exact repeated-text occurrences and Unicode ranges, one editor across source/rendered/split views, save/conflict safety, no-modal addition, retained non-source cues, remove/reveal, Project preparation without a running Agent, chosen-session isolation, stale selection refusal before dispatch and failed-dispatch retention. An ordinary remote web page remains an observation, not writable canonical source. The imported Flow/Day export and native browser/window/protected-context/Return paths retain their full existing acceptance conditions.
 
 Implementation branches and controlled/Rust proof do not establish mainline delivery, installed Tauri support, an actual model turn or human acceptance. The native root-Central context route must be joined through the root owner, not fabricated by naming a child Project.
+
+
+## Agent praxis and experiential document world — 24 September 2026
+
+The current connective implementation map is [Agent praxis, documentation and experiential document world](../../.wayfinder/maps/agent-praxis-document-world.md).
+
+It joins the general Skill / Method / Methodology / SkillSet architecture to the documentation field and the local Cradle experience. The map makes the Agent's repertoire/world disclosure and the person's crafted HTML document surfaces complementary parts of the same source → situated act → evidence → Return relation.
+
+For project documentation, prefer the maintained native media the map defines when the undertaking needs them: Vision and UI Mockup as crafted experiential HTML; Design and Architecture as precise Markdown; architectural/relational diagrams as editable Mermaid source; capability matrices as the existing functional connective tissue. This is a repertoire of strong forms, not an adoption gate or a demand that every Project produce every artifact.
+
+For desktop implementation, extend the existing document, canvas/context, receiving, workspace and source routes. Do not create a parallel document store or a generic page-builder. Cradle remains the stable habitat; the authored HTML surface carries the distinctive experience and receives a bounded native host bridge for identity, save, selection/context, Agents, relations, receiving/Return and export.
