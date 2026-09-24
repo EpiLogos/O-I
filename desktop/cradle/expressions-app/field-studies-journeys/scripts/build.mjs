@@ -16,7 +16,13 @@ const sourceAssets={name:'research-canvas-source-assets',setup(builder){
   return {path:resolved,namespace:kind==='raw'?'oi-raw-source':'oi-worker-source'};
  });
  builder.onLoad({filter:/.*/,namespace:'oi-raw-source'},args=>({contents:fs.readFileSync(args.path,'utf8'),loader:'text'}));
- builder.onLoad({filter:/.*/,namespace:'oi-worker-source'},args=>({contents:`export default URL.createObjectURL(new Blob([${JSON.stringify(fs.readFileSync(args.path,'utf8'))}],{type:'text/javascript'}));`,loader:'js'}));
+ builder.onLoad({filter:/.*/,namespace:'oi-worker-source'},async args=>{
+  // MapLibre's module worker imports a shared module. A raw source Blob loses
+  // that relative module base in the native protocol; bundle the real worker
+  // and its dependencies before giving it an offline Blob URL.
+  const worker=await build({entryPoints:[args.path],bundle:true,write:false,platform:'browser',format:'iife',target:'es2022',minify:true});
+  return {contents:`export default URL.createObjectURL(new Blob([${JSON.stringify(worker.outputFiles[0].text)}],{type:'text/javascript'}));`,loader:'js'};
+ });
 }};
 
 // A real dependency-aware bundle includes the existing engine and Three.js, offline.

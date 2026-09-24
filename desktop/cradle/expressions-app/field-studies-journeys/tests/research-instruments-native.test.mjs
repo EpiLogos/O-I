@@ -30,7 +30,11 @@ for(const actualScene of view.journey.scenes){
 const canvas=api.nativeInstrumentCanvas(view,scene.id),binding=view.bindings[scene.id];
 assert.equal(canvas.nodes.length,scene.entities.length);
 for(const node of canvas.nodes){assert.ok(actual.document.entities[node.id]);const id=canvas.occurrences.get(node.id),entity=scene.entities.find(e=>e.id===id);assert.ok(entity);assert.equal(node.position.x/api.CANVAS_UNITS,entity.position.x);assert.equal(-node.position.y/api.CANVAS_UNITS,entity.position.y);assert.equal(api.expressionTextFromNote(node.content),entity.text);}
-for(const edge of canvas.edges){const native=actual.document.relations[edge.id];assert.ok(native);assert.equal(edge.sourceNodeId,native.from_entity_ref);assert.equal(edge.targetNodeId,native.to_entity_ref);}
+for(const edge of canvas.edges){
+ const native=actual.document.relations[edge.id];assert.ok(native);assert.equal(edge.sourceNodeId,native.from_entity_ref);assert.equal(edge.targetNodeId,native.to_entity_ref);
+ const type=native.provenance.find(source=>source.ref.startsWith('wiki:relation-type:'))?.ref.slice('wiki:relation-type:'.length);
+ if(type)assert.equal(edge.label,type,'the source relation type labels the edge, never its observation ID');
+}
 api.assertInstrumentReadingScope(reading,view,scene.id);
 const unrelated={...reading,subject:{...reading.subject,subject_ref:'unrelated:subject'},expressions:[]};assert.throws(()=>api.assertInstrumentReadingScope(unrelated,view,scene.id),/No source reading is bound/);
 const stale={...unrelated,expressions:[{expression_ref:view.document.expression_ref,scene_ref:binding.scene_ref,revision:String(view.document.revision+1)}]};assert.throws(()=>api.assertInstrumentReadingScope(stale,view,scene.id),/No source reading is bound/);

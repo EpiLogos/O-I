@@ -5,7 +5,6 @@ import {scrollWithin} from "../shared/scrollWithin";
 import {
   ensureWikiProjection,
   requestWikiSelection,
-  setWikiProjectionRegister,
   setWikiProjectionRegisters,
   useWikiProjectionState,
   wikiProjectionOf,
@@ -13,6 +12,7 @@ import {
   type RegisterStanding,
 } from "./wikiProjectionStore";
 import {wikiRegistersFrom, type ProjectedConstellation} from "./wikiExpression";
+import {ensureWikiNativeExpression} from "./wikiNativeExpression";
 import "./techne.css";
 
 /** The wiki tree projects the shared Wiki→Expression state. Row selection
@@ -64,6 +64,7 @@ function WikiRegion({register, defaultOpen, activeRegister, onOpenWiki, onMessag
   const standing: RegisterStanding = store.standings[register.key] ?? {phase: "idle"};
   const projection = wikiProjectionOf(standing);
   const [opened, setOpened] = useState(defaultOpen);
+  const [projecting, setProjecting] = useState(false);
   const lastFailure = useRef<string | null>(null);
 
   useEffect(() => { if (opened) ensureWikiProjection(register, kernel.transport); }, [opened, register, kernel.transport]);
@@ -94,6 +95,17 @@ function WikiRegion({register, defaultOpen, activeRegister, onOpenWiki, onMessag
   const focusRow = (row: FocusAsk) =>
     requestWikiSelection({registerKey: register.key, sceneRef: row.sceneRef, entityRef: row.entityRef, subjectRef: row.subjectRef, title: row.title, origin: "wiki-map"});
 
+  const projectRegister = async () => {
+    if (projecting) return;
+    setProjecting(true);
+    try {
+      const prepared = await ensureWikiNativeExpression(kernel.transport, register);
+      focusRow({sceneRef: prepared.projection.overviewSceneRef, entityRef: null, subjectRef: null, title: register.title});
+    } catch (error) {
+      onMessage(`${register.title} wiki map: ${error instanceof Error ? error.message : String(error)}`);
+    } finally { setProjecting(false); }
+  };
+
   // Entries the reading holds but the projection does not place: page-open
   // rows, named — never invented projection membership.
   const elsewhere = elsewhereOf(standing);
@@ -119,7 +131,7 @@ function WikiRegion({register, defaultOpen, activeRegister, onOpenWiki, onMessag
         <Glyph name="arrow" size={11}/>
       </button>}
       <button className="wiki-project-register" aria-label={`Project ${register.title} in Instrument 0`}
-        title={`Project ${register.title} in Instrument 0`} onClick={event => { event.preventDefault(); setWikiProjectionRegister(register.key); }}>
+        disabled={projecting} title={`Project ${register.title} in Instrument 0`} onClick={event => { event.preventDefault(); void projectRegister(); }}>
         <Glyph name="instrument" size={11}/>
       </button>
     </summary>

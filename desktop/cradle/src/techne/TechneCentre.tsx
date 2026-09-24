@@ -20,6 +20,10 @@ export function TechneCentre({binding, subject, deepLink, onHostedState}: {
 }) {
   const kernel = useKernel();
   const centre = useRef<HTMLDivElement>(null);
+  // Live engine checkpoints update deepLink while the first Wiki read is
+  // pending. Only the mount-time checkpoint decides whether to open the
+  // default Wiki; a fresh blank engine announcement must not cancel it.
+  const initialWiki = useRef(!deepLink || deepLink === "oi-mark" || deepLink === "source-twelve-faces");
   const [presented, setPresented] = useState(false);
   useEffect(() => {
     const node = centre.current;
@@ -43,6 +47,7 @@ export function TechneCentre({binding, subject, deepLink, onHostedState}: {
       if (!request) break;
       const register = wikiNativeRegisters().find(row => row.key === request.registerKey);
       if (!register) break;
+      initialWiki.current = false;
       consumeWikiSelectionRequest();
       const current = ++generation;
       try {
@@ -55,16 +60,19 @@ export function TechneCentre({binding, subject, deepLink, onHostedState}: {
     void openSelection();
     {
       // A restored authored work wins over the register's default projection.
-      if (!deepLink || deepLink === "oi-mark" || deepLink === "source-twelve-faces") {
+      if (initialWiki.current) {
         const register = selectedWikiNativeRegister() ?? wikiNativeRegisters()[0];
         const current = generation;
         if (register) void ensureWikiNativeExpression(kernel.transport, register).then(prepared => {
-          if (live && generation === current) requestTechneFieldOpen(prepared.document.expression_ref, binding.id);
+          if (live && generation === current && initialWiki.current) {
+            initialWiki.current = false;
+            requestTechneFieldOpen(prepared.document.expression_ref, binding.id);
+          }
         }).catch(error => {if (live && generation === current) setFailure(String(error instanceof Error ? error.message : error));});
       }
     }
     return () => {live = false; unsubscribe();};
-  }, [kernel.transport, binding.id, deepLink, presented]);
+  }, [kernel.transport, binding.id, presented]);
   const techneWorld = useCallback(async (request: unknown) => {
     const value = request as {operation?: unknown; register?: unknown} | null;
     if (value?.operation === 'list') return {registers: wikiNativeRegisters(), selected: selectedWikiNativeRegister()?.key};

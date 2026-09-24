@@ -227,23 +227,23 @@
 /* World inhabitation (WORLD-INHABITATION-V1): Desk owner line and ambiguity
    mark, Live → Positions, the Agents population aperture, Context →
    Prepared context. Tokens only. */
-.fdesk-card-owner{ color: var(--fd-muted); font-size: var(--oi-shell-type-meta, 11px); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.fdesk-card-ambiguous{ color: var(--fd-warn); font-size: var(--oi-shell-type-meta, 11px); overflow-wrap: anywhere; }
+.fdesk-card-owner{ color: var(--oi-muted-2); font-size: var(--oi-shell-type-meta, 11px); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.fdesk-card-ambiguous{ color: var(--oi-status-warning); font-size: var(--oi-shell-type-meta, 11px); overflow-wrap: anywhere; }
 .flive-stack{ display: flex; flex-direction: column; gap: 14px; }
-.fpos{ display: flex; flex-direction: column; border: var(--oi-shell-edge, 1px) solid var(--fd-rule); border-radius: var(--fd-radius); background: var(--fd-card); padding: 4px 14px 8px; }
+.fpos{ display: flex; flex-direction: column; border: var(--oi-shell-edge, 1px) solid var(--oi-hairline-soft); border-radius: var(--oi-shell-radius); background: var(--oi-surface); padding: var(--oi-shell-gutter) var(--oi-shell-gutter) calc(2 * var(--oi-shell-gutter)); }
 .fpos .fagents-head{ margin-top: 8px; }
-.fpos-row{ display: grid; grid-template-columns: 30px minmax(140px, 1fr) minmax(160px, 1.4fr); gap: 10px 12px; align-items: start; padding: 10px 0; border-bottom: var(--oi-shell-edge, 1px) solid var(--fd-rule); font-size: var(--oi-shell-type-ui); }
+.fpos-row{ display: grid; grid-template-columns: 30px minmax(140px, 1fr) minmax(160px, 1.4fr); gap: 10px 12px; align-items: start; padding: 10px 0; border-bottom: var(--oi-shell-edge, 1px) solid var(--oi-hairline-soft); font-size: var(--oi-shell-type-ui); }
 .fpos-row:last-of-type{ border-bottom: 0; }
 .fpos-who, .fpos-occupants, .fpos-occupant{ display: flex; flex-direction: column; gap: 3px; min-width: 0; }
-.fpos-who small, .fpos-occupant small{ color: var(--fd-muted); overflow-wrap: anywhere; }
+.fpos-who small, .fpos-occupant small{ color: var(--oi-muted-2); overflow-wrap: anywhere; }
 .factory-centre .fpos-name{ text-align: left; font-weight: 600; text-decoration: none; }
 .fpos-occupant{ flex-direction: row; flex-wrap: wrap; align-items: baseline; gap: 4px 10px; }
-.fpos-absence, .fpos-ambiguous{ margin: 0; color: var(--fd-muted); font-size: var(--oi-shell-type-ui); }
-.fpos-ambiguous{ color: var(--fd-warn); padding: 4px 0; }
+.fpos-absence, .fpos-ambiguous{ margin: 0; color: var(--oi-muted-2); font-size: var(--oi-shell-type-ui); }
+.fpos-ambiguous{ color: var(--oi-status-warning); padding: 4px 0; }
 .fpos-agent .fdesk-needs{ margin-left: auto; flex: none; }
 .fpos-handle{ font-weight: 400; color: var(--oi-muted-2); }
-.fpos-mark[data-mark="?"]{ color: var(--fd-warn); }
-.fagent-text small[data-attention="true"]{ color: var(--fd-warn); }
+.fpos-mark[data-mark="?"]{ color: var(--oi-status-warning); }
+.fagent-text small[data-attention="true"]{ color: var(--oi-status-warning); }
 .fagents-profiles{ margin-top: 8px; }
 .fagents-profiles > summary{ cursor: pointer; list-style: none; }
 .fagents-profiles > summary::-webkit-details-marker{ display: none; }
@@ -256,7 +256,7 @@
 .fprep-basis{ display: grid; grid-template-columns: max-content 1fr; gap: 3px 10px; margin: 4px 0 0; font-size: var(--oi-shell-type-ui); }
 .fprep-basis dt{ color: var(--oi-muted-2); }
 .fprep-basis dd{ margin: 0; min-width: 0; overflow-wrap: anywhere; }
-.factory-centre .ftasks-ambiguous{ display: inline-flex; flex-wrap: wrap; align-items: center; gap: 6px; color: var(--fd-muted); font-size: var(--oi-shell-type-ui); }
+.factory-centre .ftasks-ambiguous{ display: inline-flex; flex-wrap: wrap; align-items: center; gap: 6px; color: var(--oi-muted-2); font-size: var(--oi-shell-type-ui); }
 @media (max-width: 760px){ .fpos-row{ grid-template-columns: 30px 1fr; } .fpos-occupants{ grid-column: 2; } }
 
 /* Factory's Context plane: the canvas and the slice stack; the canvas sizes

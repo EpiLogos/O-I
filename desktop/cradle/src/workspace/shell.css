@@ -735,8 +735,6 @@ html.tauri .desktop-shell { background-color: transparent; }
 }
 .desktop-shell .desktop-side.left.depth-panel,
 .desktop-shell .desktop-side.left.depth-full,
-.desktop-shell .desktop-side.right.depth-panel,
-.desktop-shell .desktop-side.right.depth-full,
 .panel-shell { background: transparent; }
 .desktop-shell:has(.desktop-side.left.depth-collapsed, .desktop-side.left.depth-strip) .desktop-centre .pane.group { border-left-color: transparent; }
 .desktop-shell:has(.desktop-side.right.depth-collapsed, .desktop-side.right.depth-strip) .desktop-centre .pane.group { border-right-color: transparent; }

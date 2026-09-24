@@ -37,7 +37,11 @@ export function nativeInstrumentCanvas(view:KernelConversion,sceneId:string):Ins
  const edges=binding.relations.filter(r=>visible.has(r.from_entity_ref)&&visible.has(r.to_entity_ref)).map(r=>{
   // O:I's connection authoring grammar carries its chosen kind after the
   // exact binding ref. A source-owned relation keeps its disclosed vocabulary.
-  let label=r.relation.ref;
+  const provenance=Array.isArray(r.provenance)?r.provenance as {ref?:string}[]:[];
+  const type=provenance.find(source=>source.ref?.startsWith('wiki:relation-type:'))?.ref?.slice('wiki:relation-type:'.length);
+  // A record identity is available in the inspector; it is not an edge title.
+  let label=type??'';
+  if(r.native_owner==='oi')label=r.relation.ref;
   if(r.native_owner==='oi'&&label.startsWith(r.binding_ref+':')){try{label=decodeURIComponent(label.slice(r.binding_ref.length+1));}catch{/* retain the native ref if its label is not encoded correctly */}}
   return edge(r.binding_ref,key,r.from_entity_ref,r.to_entity_ref,label);
  });

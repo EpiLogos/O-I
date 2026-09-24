@@ -43,6 +43,8 @@ export function PointCloudHost({mode = "expressions", deepLink, bindingId, onHos
   const [state, setState] = useState<"reading" | "ready" | "refused">("reading");
   const [reason, setReason] = useState<string | undefined>();
   const frame = useRef<HTMLIFrameElement | null>(null);
+  const owner = useRef({readTechne, techneWorld});
+  owner.current = {readTechne, techneWorld};
   // The restart checkpoint's deep link (MODE-ENGINE-STATE-PERSISTENCE
   // §7.2), minted ONCE at mount: the checkpoint may keep changing while the
   // application is mounted, but the frame's URL must never change after
@@ -87,9 +89,21 @@ export function PointCloudHost({mode = "expressions", deepLink, bindingId, onHos
   useEffect(() => {
     const node = frame.current;
     if (!node) return;
-    return relayKernelChannel(node, kernel.transport, {readTechne, techneWorld});
+    // A workspace checkpoint can replace the reading callbacks while an
+    // owner reply is in flight. Keep the channel alive for this frame and
+    // read the current callbacks when a new request arrives.
+    return relayKernelChannel(node, kernel.transport, {
+      readTechne: () => {
+        if (!owner.current.readTechne) throw new Error("No Technè reading is available in this view");
+        return owner.current.readTechne();
+      },
+      techneWorld: request => {
+        if (!owner.current.techneWorld) throw new Error("No Wiki register is available in this view");
+        return owner.current.techneWorld(request);
+      },
+    });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [src, kernel.transport, readTechne, techneWorld]);
+  }, [src, kernel.transport]);
 
   // The checkpoint channel: the application's oi-app-state announcements
   // (current expression, scene, selection — its own position, in its own

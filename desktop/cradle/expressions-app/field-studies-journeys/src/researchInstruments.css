@@ -8,3 +8,8 @@
 .research-canvas .node-resize-control{display:none}
 .research-canvas-reading .react-flow__handle{display:none}
 .research-instrument-body>.timeline-surface,.research-instrument-body>.psychogeographic-map{height:100%}
+/* The offline map carries its own dark geography palette. Its controls must
+   not inherit the light Expressions field's dark foreground. */
+.research-instrument .psychogeographic-toolbar button{color:var(--ob-ink,#e4ebf4);padding:5px 8px;border:1px solid transparent;border-radius:4px}
+.research-instrument .psychogeographic-toolbar button[data-active="true"]{border-color:currentColor}
+.research-instrument .psychogeographic-toolbar button:disabled{opacity:.45}
