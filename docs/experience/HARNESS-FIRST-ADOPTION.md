@@ -61,7 +61,7 @@ Human-authored instructions remain human source. Agent-maintained knowledge, imp
 
 ### D. Deliver the selected practice and defaults
 
-Use the actual current O:I bootstrap manifest and AIKit's native source/trust/set/scope mechanism. At this source inspection `skills/suite-operator/skillset.toml` has **two O:I-owned Skills**: `oi:skill:operate-suite` and `oi:skill:suite-operator`. The Central session strap is supplied from its Central-owned ground through AIKit, not restored as a frozen third Skill inside the O:I binary. Reinspect the authoritative manifest at execution; this count is not a new invariant over all future product development.
+Use the actual current O:I bootstrap manifest and AIKit's native source/trust/set/scope mechanism. At this source inspection `skills/suite-operator/skillset.toml` has **three O:I-owned Skills**: `oi:skill:operate-suite`, `oi:skill:suite-operator` and `oi:skill:central-session-strap`. O:I holds and projects the strap from `skills/central-session-strap/SKILL.md`; harness copies are receipt-gated derived projections. Reinspect the authoritative manifest at execution; this count is not a new invariant over all future product development.
 
 A SkillSet is not an AgentSet. Explain each selected Skill or Method's purpose and relevant trigger; explain existing Guardian agents' role and selected defaults separately. Resolve their current native source/default refs and product-operating repertoires. No copied foreign manuals, replacement Guardian identities, automatic invocation of all Guardians, or private Control material in shared evidence. A Method remains a Skill whose description begins `METHOD:`.
 

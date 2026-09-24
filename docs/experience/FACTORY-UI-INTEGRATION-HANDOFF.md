@@ -33,7 +33,7 @@ Each Guardian stewards a maintained product-operating repertoire using existing 
 
 Particular task/NOW and evidence → product-relative finding → practice proposal with applicability/regression → authorised native refinement → independent fresh useful reuse → maintained product repertoire. Only warranted cross-product generalisation returns upward to O:I routing/orchestration. Keep rejected proposals, contradictory evidence and superseded versions. Do not auto-promote a successful task into governance.
 
-`oi` and `suite-operator` retain their current roles. Their two-member bootstrap SkillSet is not the six-Agent roster. Do not revive the frozen Central strap or rewrite private practice. Existing companion-file shipment and real loading/use are bounded native checks, not a UI redesign prerequisite.
+`oi` and `suite-operator` retain their current roles. Their three-member bootstrap SkillSet (router, suite operator, session strap) is not the six-Agent roster. Do not rewrite private practice. Existing companion-file shipment and real loading/use are bounded native checks, not a UI redesign prerequisite.
 
 ## 3. Agents: intent, organisation and usable repertoire
 

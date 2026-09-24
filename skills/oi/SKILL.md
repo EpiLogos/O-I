@@ -50,7 +50,7 @@ A fresh Central root must contain `Control/user`, `Control/agents`, `Control/mac
 
 ## Guardian SkillSet and refresh
 
-`oi init --personal-ground` projects one shipped SkillSet containing two O:I-owned Skills: the `oi` router and suite operator. The current `skills/suite-operator/skillset.toml` and `cli/src/guardian.rs` define that membership. The Central session strap is not a bundled Guardian member: the current practice belongs to Central ground and reaches the Agent through AIKit's Central binding. Do not reinstate the retained O:I copy as a third shipped member or overwrite the person's independently developed repertoire.
+`oi init --personal-ground` projects one shipped SkillSet containing three O:I-owned Skills: the `oi` router (`oi:skill:operate-suite`), the suite operator (`oi:skill:suite-operator`) and the Central session strap (`oi:skill:central-session-strap`). The current `skills/suite-operator/skillset.toml` and `cli/src/guardian.rs` define that membership. O:I holds and projects the strap: `skills/central-session-strap/SKILL.md` is its authoritative source, and every harness copy is a receipt-gated derived projection. Projection never overwrites the person's independently developed repertoire.
 
 The Guardian Skills enter harness trees as receipt-gated derived copies. When AIKit is installed, the same pickup hands that tree to AIKit through its own confirmed procedures — `aikit adopt`, the `oi-guardian` SkillSet, and `aikit apply` — so AIKit becomes the owner of the harness-visible copies.
 

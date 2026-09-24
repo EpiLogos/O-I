@@ -1,5 +1,5 @@
 /**
- * AgentDetail — Purpose · Skills & tools · Sessions · Knowledge ·
+ * AgentDetail — Purpose · Agent card · Sessions · Knowledge ·
  * History/learning. `agency_read` (kernel/types.ts:209/284) only ever
  * discloses `{definition:{id}, label?, agent_sessions:{purpose?}}`
  * (the shape EncounterList.tsx and SettingsPage.tsx already read), so
@@ -9,6 +9,7 @@
  */
 import type { ReactNode } from "react";
 import type { AgencySessionRow } from "./agencyTypes";
+import { LiveHumanAgentCard } from "./HumanAgentCard";
 
 const NOT_DISCLOSED = "Not disclosed by the owner reading";
 
@@ -28,8 +29,10 @@ export function AgentDetail({ row, siblingSessions }: { row: AgencySessionRow; s
       {row.purpose ? <p className="oi-note">{row.purpose}</p> : <p className="oi-note">{NOT_DISCLOSED}</p>}
     </DetailSection>
 
-    <DetailSection title="Skills & tools">
-      <p className="oi-note">{NOT_DISCLOSED} — the repertoire read model (harness-profile disclosure) is designed but not yet routed through `agency_read`.</p>
+    <DetailSection title="Agent card">
+      {row.agentRef
+        ? <LiveHumanAgentCard agentRef={row.agentRef}/>
+        : <p className="oi-note">{NOT_DISCLOSED} — this session attachment names no canonical Agent (`agent_ref`), so no card can be derived for it.</p>}
     </DetailSection>
 
     <DetailSection title="Sessions">

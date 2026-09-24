@@ -60,8 +60,8 @@
       "story_ids": ["AD04", "AD05", "GV03", "GV05", "PX01"],
       "required_evidence": ["C", "P"],
       "required_branches": [
-        "Current O:I bootstrap manifest governs membership; do not resurrect the retired frozen Central strap or a foreign-skill registry.",
-        "Central-owned strap source arrives through the native AIKit ground binding; actual source/projection/loading/use are recorded distinctly.",
+        "Current O:I bootstrap manifest governs membership (router, suite operator, held Central session strap); do not turn it into a foreign-skill registry.",
+        "The O:I-held strap source (skills/central-session-strap/SKILL.md) reaches the harness through the guardian SkillSet projection and, when installed, AIKit's adoption; actual source/projection/loading/use are recorded distinctly.",
         "A SkillSet is not an AgentSet; use real Guardian source/default identities and explain purpose and scope without auto-running all agents.",
         "Methods remain Skills whose description begins METHOD:; test relevant trigger and near-miss, not only presence of a file.",
         "A fresh actor performs a useful task with the selected source/practice without being given the verifier's expected answer."
