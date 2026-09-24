@@ -223,8 +223,8 @@ campaign or an instruction to benchmark every model before useful work begins.
    repertoire and relevant Central docs-methodology/documentation-standing/
    capability-matrices sources. Use native product-understanding, structured
    account, reflection, source review and directional matrix maintenance.
-   The actual two-member O:I guardian manifest is not a foreign-skill registry;
-   do not restore an old frozen Central strap or invent installed sets.
+   The actual three-member O:I guardian manifest (router, suite operator,
+   session strap) is not a foreign-skill registry; do not invent installed sets.
    Resolve private Central#164 practices locally; preserve its accepted #299
    loading procedure and personal engineering floor. No private adoption here.
 3. **Compile only what source can establish.** `scripts/experience_map.py` reads

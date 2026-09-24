@@ -33,12 +33,13 @@ procedural competence != permission
 successful use != automatic Skill promotion
 ```
 
-The shipped `oi:skillset:base-guardian` composes O:I's two native Skills —
-`oi:skill:operate-suite` (the `oi` router) and `oi:skill:suite-operator` (this
-Skill), exactly as `skills/suite-operator/skillset.toml` declares. The Central
-session strap used to ship here as a third member; it forked from its Control
-source and was removed, so Central ground receives it through AIKit's Central
-binding, not through this manifest. The Base-suite and Root-metagentic profiles
+The shipped `oi:skillset:base-guardian` composes O:I's three native Skills —
+`oi:skill:operate-suite` (the `oi` router), `oi:skill:suite-operator` (this
+Skill) and `oi:skill:central-session-strap` (the Central session strap),
+exactly as `skills/suite-operator/skillset.toml` declares. O:I holds and
+projects the strap: `skills/central-session-strap/SKILL.md` is its
+authoritative source and every harness copy is a receipt-gated derived
+projection. The Base-suite and Root-metagentic profiles
 remain resolution capabilities, not automatically installed named sets. Discover
 the actual AIKit sets before selecting them; never ask for an unregistered
 profile from remembered prose. An Actuation WorldBinding/root determination
@@ -95,7 +96,7 @@ material allocations, not reasons to create another code branch for every actor.
    presence, operative availability and authority. An absent optional product
    does not block unrelated writing or work.
 3. **Resolve the smallest repertoire.** Use the shipped guardian set for its
-   two O:I Skills. Resolve foreign native procedures through AIKit's source,
+   three O:I Skills (router, suite operator, session strap). Resolve foreign native procedures through AIKit's source,
    trust, SkillSet and scope machinery; do not add them to another O:I registry.
    The Central#164 repertoire is an existing native composition to discover,
    not a request to copy its private bodies or invent installed membership.

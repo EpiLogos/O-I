@@ -490,3 +490,76 @@ fn shipped_manifest_declares_only_oi_owned_skills() {
         );
     }
 }
+
+/// Operative texts that describe the guardian membership must agree with the
+/// manifest: three members, the strap among them, and no text claiming the
+/// strap was removed or withdrawn. Owner ruling 2026-09-17 (landed a5012f5a):
+/// O:I holds and projects the strap. History lives in git, not in operative
+/// prose, so a stale "two members / strap removed" sentence fails here.
+#[test]
+fn operative_guardian_texts_name_all_three_members_and_never_retire_the_strap() {
+    let manifest =
+        parse_manifest(include_str!("../../skills/suite-operator/skillset.toml")).unwrap();
+    let members: Vec<&str> = manifest.profiles[0]
+        .members
+        .iter()
+        .map(|member| member.skill_ref.as_str())
+        .collect();
+    assert_eq!(
+        members,
+        vec![
+            "oi:skill:operate-suite",
+            "oi:skill:suite-operator",
+            "oi:skill:central-session-strap"
+        ]
+    );
+    let texts: [(&str, &str); 4] = [
+        (
+            "skills/suite-operator/SKILL.md",
+            include_str!("../../skills/suite-operator/SKILL.md"),
+        ),
+        (
+            "skills/oi/SKILL.md",
+            include_str!("../../skills/oi/SKILL.md"),
+        ),
+        ("cli/src/guardian.rs", include_str!("../src/guardian.rs")),
+        (
+            "docs/SUITE-OPERATOR-SKILLSET.md",
+            include_str!("../../docs/SUITE-OPERATOR-SKILLSET.md"),
+        ),
+    ];
+    let stale = [
+        "two native Skills",
+        "two O:I-owned Skills",
+        "two O:I Skills",
+        "two-member",
+        "two procedural members",
+        "used to ship here",
+        "no longer a guardian member",
+        "not a bundled Guardian member",
+        "as a third shipped member",
+        "deliberately removed",
+        "retired frozen",
+    ];
+    for (path, text) in texts {
+        // guardian.rs embeds this doc at its head; only check the module doc
+        // there so string literals in code cannot mask or fake the reading.
+        let text = if path.ends_with(".rs") {
+            text.lines()
+                .take_while(|line| line.starts_with("//!") || line.trim().is_empty())
+                .collect::<Vec<_>>()
+                .join("\n")
+        } else {
+            text.to_owned()
+        };
+        for member in &members {
+            assert!(text.contains(member), "{path} does not name {member}");
+        }
+        for phrase in stale {
+            assert!(
+                !text.contains(phrase),
+                "{path} still carries stale guardian membership prose: {phrase:?}"
+            );
+        }
+    }
+}
