@@ -132,12 +132,7 @@ export function ExpressionVerso({document, account, onInvokeAction, onOpenRef, o
             onClick={() => { if (action.entityRef) onInvokeAction?.(action.entityRef, action.actionRef); }}>
             {action.actionRef}</button>)}</div>
       </section>}
-      {ready.returnTrail && ready.returnTrail.length > 0 && <section className="expression-verso__region" aria-label="Return position" data-region="return">
-        <h4>Return · {ready.returnTrail.length}</h4>
-        <ul className="expression-verso__relations">{ready.returnTrail.slice(-4).map((stop, index) =>
-          <li key={`${stop.mode}:${stop.label}:${index}`} data-return-mode={stop.mode}>{stop.label} <span className="oi-state">{stop.mode}</span></li>)}</ul>
-        <p className="oi-note">Closing the verso returns to the exact field position — the verso changes nothing.</p>
-      </section>}
+      <AccountSaving account={ready} representations={verso?.representations}/>
       {ready.notices.length > 0 && <div className="expression-verso__notices" role="status" data-region="notices">
         {ready.notices.map(notice => <p key={notice} className="oi-note">{notice}</p>)}
       </div>}
@@ -215,6 +210,61 @@ function AccountWebPosition({account}: {account: NonNullable<Extract<VersoAccoun
       {web.entityRef && <div><dt>Entity</dt><dd><span className="oi-ref">{web.entityRef}</span></dd></div>}
       {web.subjectRef && <div><dt>Subject</dt><dd data-web-subject={web.subjectRef}><span className="oi-ref">{web.subjectRef}</span></dd></div>}
     </dl>
+  </section>;
+}
+
+/** Version, destination and saving/Return (owner Wayfinder §10 commission):
+ * the native composition's saved state, its file destination, the exact
+ * source it published to and the Return position — five distinct
+ * operations named separately, each its own truthful status, never a
+ * single collapsed "saved" light. Every row reads an owner disclosure
+ * already carried on the account or the face's own verso reading; nothing
+ * here invents a status or performs a write — the existing save/Return
+ * controls stay where they are (Stage/Library), this only accounts for
+ * their outcome. */
+function AccountSaving({account, representations}: {
+  account: NonNullable<Extract<VersoAccountReading, {state: "ready"}>["account"]>;
+  representations?: {kind: string; ref: string; revision: string; availability: string}[];
+}) {
+  const isExpression = account.subject.ref.startsWith("expression:");
+  if (!isExpression && !account.returnTrail?.length) return null;
+  const backup = account.draftBackup;
+  const publication = (representations ?? []).filter(representation => representation.kind !== "live");
+  return <section className="expression-verso__region" aria-label="Version, destination and Return" data-region="saving"
+    data-scene-dirty={account.sceneDirty} data-draft-backup={backup ? (backup.found ? "found" : "none") : "unavailable"}>
+    <h4>Saving &amp; Return</h4>
+    <dl className="expression-verso__sources expression-verso__identity">
+      {isExpression && <div data-saving-row="draft-backup">
+        <dt>Draft backup</dt>
+        <dd>{backup
+          ? backup.found ? `a local recovery checkpoint stands · revision ${backup.revision}` : "no local recovery checkpoint stands for this subject"
+          : "the draft backup read did not resolve — see notices below"}</dd>
+      </div>}
+      {isExpression && <div data-saving-row="saved-scene">
+        <dt>Saved Scene</dt>
+        <dd>{account.sceneDirty === true ? "unsaved changes stand against the native saved revision"
+          : account.sceneDirty === false ? `matches the native saved revision${account.document ? ` · r${account.document.revision}` : ""}`
+          : "not disclosed for this subject"}</dd>
+      </div>}
+      <div data-saving-row="native-file">
+        <dt>Native file</dt>
+        <dd>{account.savedFile
+          ? <><span className="oi-ref">{account.savedFile.ref}</span> · revision {account.savedFile.revision}</>
+          : "no native file destination is disclosed yet"}</dd>
+      </div>
+      {isExpression && <div data-saving-row="publication">
+        <dt>Publication</dt>
+        <dd>{publication.length
+          ? publication.map(representation => `${representation.kind} · ${representation.availability}`).join(" · ")
+          : "no published representation stands for this subject"}</dd>
+      </div>}
+      {account.returnTrail && account.returnTrail.length > 0 && <div data-saving-row="return">
+        <dt>Return</dt>
+        <dd><ul className="expression-verso__relations">{account.returnTrail.slice(-4).map((stop, index) =>
+          <li key={`${stop.mode}:${stop.label}:${index}`} data-return-mode={stop.mode}>{stop.label} <span className="oi-state">{stop.mode}</span></li>)}</ul></dd>
+      </div>}
+    </dl>
+    <p className="oi-note">Closing the verso returns to the exact field position; nothing above is a write — each status reflects the owner's own last disclosure, read through the existing save and Return operations.</p>
   </section>;
 }
 
