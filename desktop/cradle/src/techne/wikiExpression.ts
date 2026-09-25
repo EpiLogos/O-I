@@ -83,11 +83,15 @@ export function projectOfWikiSpace(ref: string): string | null {
  * identity. A child space the root wiki discloses for a Project that stands
  * as its own register IS that Project's node in the one tree — it is not
  * listed a second time. A constellation's anchor, which its space also holds
- * as a member, is listed once: as the constellation itself. */
-export function treeConstellationsOf(constellations: readonly ProjectedConstellation[], projects: ReadonlySet<string>): ProjectedConstellation[] {
+ * as a member, is listed once: as the constellation itself. `ownAnchorRef`
+ * (the register's home-space anchor) is never listed beneath its own node:
+ * the node IS that space, and its web opens through the register's tools —
+ * a register that repeats itself reads as a duplicated root. */
+export function treeConstellationsOf(constellations: readonly ProjectedConstellation[], projects: ReadonlySet<string>, ownAnchorRef?: string): ProjectedConstellation[] {
   const anchors = new Set(constellations.filter(row => row.kind === "frame").map(row => row.wholeRef));
   return constellations
     .filter(constellation => {
+      if (ownAnchorRef && constellation.wholeRef === ownAnchorRef) return false;
       if (!constellation.disclosedChild) return true;
       const project = projectOfWikiSpace(constellation.wholeRef);
       return !project || !projects.has(project);
@@ -235,8 +239,12 @@ export interface ProjectedMember { entityRef: string; subjectRef: string; title:
 export interface ProjectedConstellation {
   index: number;
   kind: "space" | "frame";
-  /** The native whole ref — the space ref, or the frame anchor. */
+  /** The native whole ref — the space's anchor when it names one, else the
+   * space ref itself (frames: their anchor). */
   wholeRef: string;
+  /** The space's own ref on space constellations: exact addressability of
+   * the space beside its anchored whole. */
+  spaceRef?: string;
   title: string;
   scheme: ConstellationScheme;
   overviewEntityRef: string;
@@ -283,13 +291,14 @@ const reading = (ref: string, revision: string, availability: ReadingRef["availa
  * (explicit positional carrier) is one too. Child spaces a space discloses
  * are carried as further constellations whose members their OWN register's
  * wiki discloses — this reading names that state honestly. */
-interface DisclosedConstellation { kind: "space" | "frame"; wholeRef: string; title: string; space?: WikiSpace; constellation?: WikiConstellation; childSpaceRefs: string[]; disclosedChild?: boolean }
+interface DisclosedConstellation { kind: "space" | "frame"; wholeRef: string; spaceRef?: string; title: string; space?: WikiSpace; constellation?: WikiConstellation; childSpaceRefs: string[]; disclosedChild?: boolean }
 function constellationsOf(wiki: WikiReading & { state: "ready" }): DisclosedConstellation[] {
   const byRef = new Map(wiki.nodes.map(node => [node.ref, node]));
   const own: DisclosedConstellation[] = [
     ...wiki.spaces.map(space => ({
       kind: "space" as const,
       wholeRef: space.anchor_ref ?? space.ref,
+      spaceRef: space.ref,
       title: wikiDisplayName(space.title, space.ref),
       space,
       childSpaceRefs: space.child_space_refs ?? [],
@@ -459,6 +468,7 @@ export function projectWikiExpression(input: WikiRegisterReading & { state: "rea
       index,
       kind: disclosure.kind,
       wholeRef: disclosure.wholeRef,
+      ...(disclosure.spaceRef ? {spaceRef: disclosure.spaceRef} : {}),
       title: disclosure.title,
       scheme,
       overviewEntityRef,
