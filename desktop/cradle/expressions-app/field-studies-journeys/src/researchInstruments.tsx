@@ -404,8 +404,11 @@ export function installResearchInstruments(host:ResearchInstrumentsHost){
   const edgeId=!current?state.selectedEdge:null;
   const selectedEdgeObj=edgeId?canvas.edges.find(e=>e.id===edgeId):undefined;
   const relateEndpoints=editable&&host.relateKnowledge&&selectedEdgeObj&&host.nativeView()?.document.relations?.[selectedEdgeObj.id]?.native_owner==='oi'?{
-   from:host.nativeView()?.document.entities[selectedEdgeObj.sourceNodeId]?.subject?.subject_ref,
-   to:host.nativeView()?.document.entities[selectedEdgeObj.targetNodeId]?.subject?.subject_ref,
+   // The exact native occurrences (not their source subjects): one source
+   // can hold two roles, and the constellation owner resolves each
+   // occurrence to its own participation.
+   from:host.nativeView()?.document.entities[selectedEdgeObj.sourceNodeId]?.subject?selectedEdgeObj.sourceNodeId:undefined,
+   to:host.nativeView()?.document.entities[selectedEdgeObj.targetNodeId]?.subject?selectedEdgeObj.targetNodeId:undefined,
   }:undefined;
   const inspector=<div className="research-inspector-content" onKeyDown={event=>{if(event.key==='Escape'){event.preventDefault();event.stopPropagation();closeInspector();}}}><header><h3>{current?.title??(state.selectedEdge?'Connection':'Canvas')}</h3><button onClick={closeInspector} aria-label="Close canvas inspector">Close</button></header>
    {current&&<button onClick={()=>{const ref=current.type==='resource'?current.absolutePath:host.nativeView()?.document.entities[current.id]?.subject?.subject_ref;if(ref)host.inspectSubject(ref);else{inspecting=true;host.inspector.hidden=false;redraw();}}}>Open source</button>}
