@@ -1,6 +1,6 @@
 import {IconTabStrip} from "../workspace/primitives/IconTabStrip";
 import {readDraft} from "../workspace/drafts";
-import {useCallback,useEffect,useMemo,useRef,useState} from "react";
+import {useCallback,useEffect,useMemo,useRef,useState,type RefObject} from "react";
 import {Loading} from "../shared/Loading";
 import {useKernel} from "../kernel/KernelProvider";
 import type {CentralLocation, KernelTransportStatus} from "../kernel/types";
@@ -11,7 +11,10 @@ import {materialCapabilities,type MaterialFormat} from "./detect";
 import {renderMarkdown} from "./markdown";
 import "./material.css";
 import pageContextScript from "../context/page-context.js?raw";
+import documentHostScript from "../context/document-host.js?raw";
 import {useMaterialContext} from "../context/PageContext";
+import {readDocumentIdentity,islandSpan,FAMILY_LABEL} from "../document/identity";
+import {saveDocumentPayload,type DocumentSaveOutcome} from "../document/hostSave";
 import {EditorButton,EditorFrame} from "../editor/EditorChrome";
 // @ts-ignore -- Personal Web ql-doc parser is the canonical JS document contract.
 import {readPage} from "../personal/page.mjs";
@@ -45,6 +48,44 @@ function materialUrl(transport: KernelTransportStatus, location: CentralLocation
 }
 
 interface Disposition { byte_len: number; mime_hint: string | null }
+
+interface FrameIsland { text: string | null; revision: number | null; documentId: string | null }
+
+/** The document host bridge read (DOCUMENT-SURFACE.md): one bounded
+ * question to the rendered frame — what does the page's own payload
+ * island hold right now. The page gains nothing; the host learns only
+ * what the page already keeps in its own data island. */
+function useDocumentHostRead(frame: RefObject<HTMLIFrameElement | null>, active: boolean) {
+  const requests = useRef(new Map<string, {resolve: (value: FrameIsland | null) => void; timer: ReturnType<typeof setTimeout>}>());
+  useEffect(() => {
+    if (!active) return;
+    const receive = (event: MessageEvent) => {
+      const value = event.data;
+      if (value?.type !== "oi:document-host-response") return;
+      const pending = requests.current.get(value.request);
+      if (!pending || !frame.current || event.source !== frame.current.contentWindow) return;
+      requests.current.delete(value.request);
+      clearTimeout(pending.timer);
+      pending.resolve(value.result);
+    };
+    window.addEventListener("message", receive);
+    return () => {
+      window.removeEventListener("message", receive);
+      for (const pending of requests.current.values()) { clearTimeout(pending.timer); pending.resolve(null); }
+      requests.current.clear();
+    };
+  }, [active, frame]);
+  return useCallback(() => {
+    const target = frame.current;
+    if (!target?.contentWindow) return Promise.resolve(null);
+    return new Promise<FrameIsland | null>(resolve => {
+      const request = crypto.randomUUID();
+      const timer = setTimeout(() => { requests.current.delete(request); resolve(null); }, 1500);
+      requests.current.set(request, {resolve, timer});
+      target.contentWindow?.postMessage({type: "oi:document-host-request", request, op: "read"}, "*");
+    });
+  }, [frame]);
+}
 
 /** Extension fallback for a `data:` URL's mime type when the owner
  * disclosed no hint — mirrors `ctrl/src/files.rs::sniff_mime`'s small
@@ -131,6 +172,60 @@ export function MaterialSurface({ binding, format }: { binding: SurfaceBinding; 
   const [pageExpressionInvalidated,setPageExpressionInvalidated]=useState(false);
   const location = binding.location;
 
+  // Document identity (DOCUMENT-SURFACE.md): what the crafted document is,
+  // from its own payload island — never from the filename.
+  const identity = useMemo(() => (format === "html" ? readDocumentIdentity(previewSource) : undefined), [format, previewSource]);
+  const savedIslandText = useMemo(() => {
+    if (identity?.payload !== "ql-doc" || textContent === undefined) return undefined;
+    return islandSpan(textContent, "ql-doc")?.text ?? null;
+  }, [identity?.payload, textContent]);
+  const [frameIsland, setFrameIsland] = useState<FrameIsland>();
+  const [docSave, setDocSave] = useState<{busy: true} | {busy: false; outcome: DocumentSaveOutcome}>();
+  // What the owner disclosed about the saved source at last acquisition:
+  // whether it is a participating source (its own CAS route) and whether
+  // ordinary write authority exists at all.
+  const [readingMeta, setReadingMeta] = useState<{sourceRef: string | null; writeAvailable: boolean; writeReason: string | null}>();
+  const readIsland = useDocumentHostRead(htmlFrame, identity?.payload === "ql-doc");
+  // The page's own live payload, polled while the frame is up: the page
+  // rewrites its island as the person edits, so the island text IS the
+  // page's dirty state — no second editing model is invented here.
+  useEffect(() => {
+    if (identity?.payload !== "ql-doc" || loadState.frameLoaded !== generation) return;
+    let live = true;
+    const poll = () => { void readIsland().then(value => { if (live && value) setFrameIsland(value); }); };
+    poll();
+    const timer = setInterval(poll, 2500);
+    return () => { live = false; clearInterval(timer); };
+  }, [identity?.payload, loadState.frameLoaded, generation, readIsland]);
+  const pageDirty = identity?.payload === "ql-doc"
+    && frameIsland?.text != null && savedIslandText != null && frameIsland.text !== savedIslandText;
+  const docWritable = !!location && textRevision !== undefined
+    && (!!readingMeta?.sourceRef || readingMeta?.writeAvailable !== false);
+  const saveDocument = () => {
+    if (docSave?.busy || !identity || identity.payload !== "ql-doc" || !location || textRevision === undefined) return;
+    setDocSave({busy: true});
+    void (async () => {
+      try {
+        const value = await readIsland();
+        const islandText = typeof value?.text === "string" && value.text.length > 0 ? value.text : undefined;
+        if (!islandText) throw new Error("This page did not answer the document host; nothing was saved.");
+        const result = await saveDocumentPayload(transport, {
+          location, project: binding.project, identity,
+          basisFileRevision: textRevision, frameIslandText: islandText,
+        });
+        setDocSave({busy: false, outcome: result.outcome});
+        if (result.outcome.state === "saved" && result.reading) {
+          // The frame already holds what was saved; refresh the canonical
+          // layer and revision stamps without remounting it.
+          setTextContent(result.reading.content);
+          setTextRevision(result.reading.revision);
+        }
+      } catch (error) {
+        setDocSave({busy: false, outcome: {state: "refused", detail: String(error)}});
+      }
+    })();
+  };
+
   // The pure document strings are cached by their content/transport inputs
   // (§6: never reparse identical content on unrelated shell changes) — and
   // they are NOT a function of suspension, so a concealed frame's srcDoc
@@ -162,7 +257,11 @@ export function MaterialSurface({ binding, format }: { binding: SurfaceBinding; 
         // again; an unchanged cached reading IS the same revision, so the
         // broker's cache hit is correctness, not staleness.
         const reading = await acquireFileReading(transport, location);
-        if (live) {setTextContent(reading.content);setTextRevision(reading.revision);}
+        if (live) {
+          setTextContent(reading.content);
+          setTextRevision(reading.revision);
+          setReadingMeta({sourceRef: reading.source?.ref ?? null, writeAvailable: reading.operations?.write?.available !== false, writeReason: reading.operations?.write?.reason ?? null});
+        }
       } else if (format === "unsupported") {
         const reading = await acquireFileBytes(transport, location);
         if (live) setDisposition({ byte_len: reading.byte_len, mime_hint: reading.mime_hint });
@@ -218,7 +317,7 @@ export function MaterialSurface({ binding, format }: { binding: SurfaceBinding; 
     <div className="material-preview-pane" hidden={view==="source"}>
   <EditorFrame className="material-surface" label={`Material ${binding.title}`}
     toolbar={null} presentationTools={<>{showToggle&&<MaterialToggle view={view} onChange={setView}/>} {tools}</>}
-    footer={<><span className="editor-path" title={`Central / ${location.path}`}>Central / {location.path}</span><span>{FORMAT_LABEL[format]}{unsavedPreview?" · unsaved preview":""}</span>{zoomable&&<span>{Math.round(zoom*100)}%</span>}<EditorButton disabled={busy} onClick={()=>setGeneration(value=>value+1)}>Reload</EditorButton></>}
+    footer={<><span className="editor-path" title={`Central / ${location.path}`}>Central / {location.path}</span><span>{FORMAT_LABEL[format]}{unsavedPreview?" · unsaved preview":""}</span>{zoomable&&<span>{Math.round(zoom*100)}%</span>}{identity&&<span className="editor-path" title={identity.templateRef?`Template ${identity.templateRef}`:undefined}>{FAMILY_LABEL[identity.family]??identity.label}{identity.documentRevision!=null?` · r${identity.documentRevision}`:""}{pageDirty?" · unsaved on the page":""}</span>}{docSave&&!docSave.busy&&<span role={docSave.outcome.state==="saved"||docSave.outcome.state==="unchanged"?"status":"alert"}>{docSave.outcome.state==="saved"?"Saved":docSave.outcome.state==="unchanged"?"Already saved":docSave.outcome.detail}</span>}<EditorButton disabled={busy} onClick={()=>setGeneration(value=>value+1)}>Reload</EditorButton>{identity?.payload==="ql-doc"&&<EditorButton disabled={docSave?.busy===true||!docWritable} onClick={saveDocument} title={docWritable?undefined:readingMeta?.writeReason??"No write authority for this document"}>{docSave?.busy?"Saving…":"Save"}</EditorButton>}</>}
   >
     <div ref={containerRef} className="material-rendered-content" data-suspended={suspended || undefined} aria-busy={!showing && !loadError}>
     {loadError && <p role="alert" className="source-note">{loadError} <button type="button" onClick={()=>setGeneration(value=>value+1)}>Retry</button></p>}
@@ -292,7 +391,7 @@ function MaterialToggle({ view, onChange }: { view: MaterialView; onChange: (vie
  * the `oi-material://` URL directly — the document never passes through
  * this function there. */
 function injectBase(html: string, baseHref: string | undefined): string {
-  const base = `${baseHref?`<base href="${baseHref.replace(/"/g, "&quot;")}">`:""}<script>${pageContextScript}</script>`;
+  const base = `${baseHref?`<base href="${baseHref.replace(/"/g, "&quot;")}">`:""}<script>${pageContextScript}</script><script>${documentHostScript}</script>`;
   if (/<head[^>]*>/i.test(html)) return html.replace(/<head[^>]*>/i, match => `${match}${base}`);
   return `${base}${html}`;
 }
