@@ -173,9 +173,23 @@ export default async function run({page,baseUrl,check,shot,channel,provision:p})
   await shot("document-open");
 
   // 3 — select a passage; the context tray offers the addressed destination.
+  // Ordinary selection prepares the passage natively with no modal (#441,
+  // canvas-editor-context CE2/CE3); the destinations tray is the deliberately
+  // summoned extra — the prepared row's "Other actions…" in the Context plane.
   await selectRange(editor,start+1,start+1+passage.length);
-  await page.getByRole("button",{name:"Pick component for context",exact:true}).click();
   await page.getByRole("button",{name:"Add selected text to context",exact:true}).click();
+  await page.getByRole("button",{name:"Toggle right region",exact:true}).click();
+  const panel=page.getByRole("region",{name:"Accompanying agent"});await panel.waitFor();
+  const planes=()=>panel.locator('[aria-label="Right region planes"]');
+  for(let attempt=0;;attempt++){try{
+    if(await planes().getByRole("button",{name:"Context",exact:true}).isVisible())await planes().getByRole("button",{name:"Context",exact:true}).click({timeout:3000});
+    else{await planes().getByRole("button",{name:/More views \(/}).click({timeout:3000});await panel.getByRole("group",{name:"More views"}).getByRole("button",{name:"Context",exact:true}).click({timeout:3000});}
+    break;}catch(error){await page.keyboard.press("Escape").catch(()=>{});if(attempt>=6)throw error;}}
+  const prepared=panel.getByRole("region",{name:"Selected context"}).locator(".prepared-context-item").filter({hasText:passage});
+  await prepared.waitFor({timeout:20000});
+  check(await page.getByRole("dialog").count()===0,"Selecting the passage prepares it in Context without opening a modal");
+  await prepared.locator("summary").click();
+  await prepared.getByRole("button",{name:"Other actions…",exact:true}).click();
   const dialog=page.getByRole("dialog",{name:"Include selected context"});await dialog.waitFor();
   check(await dialog.locator("pre").innerText()===passage,"The tray presents the exact selected passage from the real document");
   await shot("selection-in-tray");

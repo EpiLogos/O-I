@@ -1,0 +1,64 @@
+--- a/packages/canvas/src/timeline/instant.ts
++++ b/packages/canvas/src/timeline/instant.ts
+@@ -1,37 +1,30 @@
+ export const MS_PER_DAY = 86_400_000;
+ 
+-/**
+- * Convert an ISO-8601 date / datetime / bare-year string into a fractional
+- * Gregorian year. Returns null when the input is null, empty, or unparseable.
+- * Astronomical year numbering: "-0043-01-01" => -43 (43 BCE), year 0 exists.
+- */
++/** Fractional proleptic Gregorian year, using astronomical year numbering.
++ * Native signed six-digit ISO instants are preserved by the source. Only the
++ * parser input for legacy short signed dates is padded to JavaScript ISO. */
+ export function parseTemporalInstant(iso: string | null): number | null {
+   if (iso === null) return null;
+   const trimmed = iso.trim();
+-  if (trimmed === "") return null;
+-
+-  // Bare year, optionally signed: "1917", "-0043".
+-  const bareYear = /^(-?\d{1,6})$/u.exec(trimmed);
+-  if (bareYear) {
+-    const year = Number.parseInt(bareYear[1], 10);
+-    return Number.isNaN(year) ? null : year;
+-  }
+-
+-  // Signed full date/datetime: capture the leading (possibly negative) year,
+-  // then let Date parse the absolute calendar value for the fractional part.
+-  const dateMatch = /^(-?)(\d{1,6})-(\d{2})-(\d{2})/u.exec(trimmed);
+-  if (!dateMatch) return null;
+-  const sign = dateMatch[1] === "-" ? -1 : 1;
+-  const year = Number.parseInt(dateMatch[2], 10);
+-
+-  // Build a UTC date for the absolute year to measure the day-of-year fraction.
+-  const yearStart = Date.UTC(year, 0, 1);
+-  const nextYearStart = Date.UTC(year + 1, 0, 1);
+-  const month = Number.parseInt(dateMatch[3], 10) - 1;
+-  const day = Number.parseInt(dateMatch[4], 10);
+-  const at = Date.UTC(year, month, day);
+-  if (Number.isNaN(at)) return null;
+-  const fractionOfYear = (at - yearStart) / (nextYearStart - yearStart);
+-
+-  return sign * year + (sign < 0 ? -fractionOfYear : fractionOfYear);
++  if (!trimmed) return null;
++  const bareYear = /^([+-]?\d{1,6})$/u.exec(trimmed);
++  if (bareYear) return Number(bareYear[1]);
++  const match = /^([+-]?)(\d{1,6})(-\d{2}-\d{2}.*)$/u.exec(trimmed);
++  if (!match) return null;
++  const year = Number(`${match[1]}${match[2]}`);
++  const normalizedYear = year < 0 ? `-${String(-year).padStart(6, "0")}`
++    : year > 9999 || match[1] === "+" ? `+${String(year).padStart(6, "0")}`
++    : String(year).padStart(4, "0");
++  const at = Date.parse(`${normalizedYear}${match[3]}`);
++  if (!Number.isFinite(at)) return null;
++  const actualYear = new Date(at).getUTCFullYear();
++  // Date.UTC(0..99, ...) silently adds 1900. setUTCFullYear does not.
++  const boundary = (value: number) => {
++    const date = new Date(0);
++    date.setUTCFullYear(value, 0, 1);
++    date.setUTCHours(0, 0, 0, 0);
++    return date.getTime();
++  };
++  const start = boundary(actualYear), end = boundary(actualYear + 1);
++  return actualYear + (at - start) / (end - start);
+ }

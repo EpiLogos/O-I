@@ -305,8 +305,7 @@ function ItemRow({item, selected, onSelect, onOpen}: {
   onSelect: (item: LibraryItem) => void;
   onOpen: (item: LibraryItem, how: "page" | "expression" | "instrument" | "source") => void;
 }) {
-  const openHow: "page" | "expression" | "instrument" = item.kind === "composition" ? "expression"
-    : item.kind === "projected-object" ? "instrument" : "page";
+  const openHow: "page" | "expression" = item.kind === "composition" ? "expression" : "page";
   const identity = item.sourceLocation
     ? <span className="oi-ref">{item.sourceLocation.path ?? item.sourceLocation.ref}</span>
     : item.project ? <>project {item.project}</> : item.owner;
@@ -318,6 +317,7 @@ function ItemRow({item, selected, onSelect, onOpen}: {
     <span className="lib-col-identity">{identity}{item.revision ? <> · rev {shortRevision(item.revision)}</> : null}{item.fixture ? " · fixture" : null}</span>
     <span className="lib-col-open">
       <button type="button" className="oi-action" onClick={() => onOpen(item, openHow)}>Open</button>
+      {(item.address||item.sourceLocation)&&!item.fixture&&<button type="button" className="oi-action" onClick={()=>onOpen(item,"instrument")}>Insert into current Scene</button>}
       {item.sourceLocation && <button type="button" className="oi-action" onClick={() => onOpen(item, "source")} title="Open the exact source">Source</button>}
     </span>
   </div>;

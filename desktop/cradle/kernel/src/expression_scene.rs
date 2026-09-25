@@ -58,7 +58,7 @@ pub fn validate(presentation: &Presentation, scene: &Scene, document: &Document)
     // The existing document's 512 KiB budget remains the outer storage bound.
     data(&presentation.scene, 0)?;
     let material = object(&presentation.scene, "Authoring Scene")?;
-    const KEYS: &[&str] = &["id", "name", "character", "duration", "transition", "view", "field", "entities", "text", "composition", "morph", "automation", "engine", "semanticField", "resonanceDrive", "favourites", "native", "propertyTakeRange", "toolbelt", "propertyTracks", "pointerScope"];
+    const KEYS: &[&str] = &["id", "name", "character", "duration", "transition", "view", "field", "entities", "text", "composition", "morph", "automation", "engine", "semanticField", "resonanceDrive", "favourites", "native", "propertyTakeRange", "toolbelt", "propertyTracks", "pointerScope", "research"];
     if material.keys().any(|key| !KEYS.contains(&key.as_str())) { return Err("Unsupported authoring Scene field; original input was not rewritten".into()); }
     if material.get("id").and_then(Value::as_str) != Some(scene.scene_ref.as_str()) {
         return Err("Scene presentation addresses a different native Scene".into());
@@ -87,6 +87,7 @@ pub fn validate(presentation: &Presentation, scene: &Scene, document: &Document)
         }
         if !matches!(entity["kind"].as_str(), Some("formation" | "pin")) { return Err("Invalid Scene entity kind".into()); }
     }
+    if let Some(research) = material.get("research") { validate_research(research, &identities)?; }
     if let Some(saved) = &presentation.saved {
         let mut saved_scene = scene.clone();
         saved_scene.title = saved["name"].as_str().ok_or("Saved Scene requires its own title")?.to_owned();
@@ -96,6 +97,69 @@ pub fn validate(presentation: &Presentation, scene: &Scene, document: &Document)
         validate(&Presentation {schema: SCHEMA.into(), scene: saved.clone(), saved: None}, &saved_scene, document)?;
     }
     Ok(())
+}
+
+fn validate_research(value: &Value, ids: &BTreeSet<&str>) -> Result<(), String> {
+    let r = object(value, "Research material")?;
+    if value["schema"] != "oi.research-scene/v1" || serde_json::to_vec(value).map_err(|e| e.to_string())?.len() > 262144
+        || r.keys().any(|key| !["schema","cards","strokes","views","timeline"].contains(&key.as_str())) {
+        return Err("Invalid or unbounded research Scene material".into());
+    }
+    for key in ["cards","views","timeline"] {
+        let rows = object(&value[key], key)?;
+        if rows.len() > if key == "views" {16} else {256} { return Err("Research record budget exceeded".into()); }
+    }
+    let bounded = |v: &Value, max: usize| v.as_str().is_some_and(|s| s.len() <= max);
+    let colour = |v: &Value| v.as_str().is_some_and(|s| (s.len()==7 || s.len()==9) && s.starts_with('#') && s[1..].bytes().all(|b| b.is_ascii_hexdigit()));
+    let viewport = |v: &Value| -> Result<(),String> {
+        let map=object(v,"Research viewport")?;
+        if map.keys().any(|k| !["x","y","zoom"].contains(&k.as_str())) {return Err("Unknown viewport field".into());}
+        number(&v["x"],-1e8,1e8,"Viewport x")?;number(&v["y"],-1e8,1e8,"Viewport y")?;number(&v["zoom"],0.001,1e5,"Viewport zoom")
+    };
+    for (id, card) in value["cards"].as_object().unwrap() {
+        let c=object(card,"Research card")?;
+        if !ids.contains(id.as_str()) || !matches!(card["type"].as_str(),Some("note"|"image"))
+            || c.keys().any(|k| !["type","importedAt","content","caption","color","dotColour","bgColour","textColour"].contains(&k.as_str())) {
+            return Err("Research card must address a disclosed occurrence with an admitted kind".into());
+        }
+        if let Some(v)=c.get("importedAt") {if card["type"]!="image" || !bounded(v,64) {return Err("Invalid image import time".into());}}
+        if let Some(content)=c.get("content") {
+            if card["type"]!="note" || !bounded(content,65536) {return Err("Invalid rich note".into());}
+            let blocks:Value=serde_json::from_str(content.as_str().unwrap()).map_err(|_|"Research note must be BlockNote JSON")?;
+            if !blocks.as_array().is_some_and(|a|a.len()<=256) {return Err("Rich note block budget exceeded".into());}
+            validate_note(&blocks,0)?;
+        }
+        for key in ["caption"] {if let Some(v)=c.get(key) {if !bounded(v,4096) {return Err("Research caption budget exceeded".into());}}}
+        for key in ["color","dotColour","bgColour","textColour"] {if let Some(v)=c.get(key) {if !colour(v) {return Err("Invalid research colour".into());}}}
+
+    }
+    let strokes=value["strokes"].as_array().ok_or("Research annotations must be an array")?;
+    if strokes.len()>128 {return Err("Annotation budget exceeded".into());}
+    let mut seen=BTreeSet::new();
+    for stroke in strokes {
+        let m=object(stroke,"Annotation")?;
+        if m.keys().any(|k| !["id","points","color","width","opacity","createdAt"].contains(&k.as_str()))
+            || !stroke["id"].as_str().is_some_and(|s|!s.is_empty()&&s.len()<=160&&seen.insert(s)) || !colour(&stroke["color"]) || !bounded(&stroke["createdAt"],64) {return Err("Invalid annotation".into());}
+        number(&stroke["width"],0.1,100.,"Stroke width")?;number(&stroke["opacity"],0.,1.,"Stroke opacity")?;
+        let points=stroke["points"].as_array().ok_or("Stroke points must be an array")?;
+        if points.is_empty()||points.len()>4096 {return Err("Stroke point budget exceeded".into());}
+        for point in points {object(point,"Stroke point")?;number(&point["x"],-40000.,40000.,"Stroke x")?;number(&point["y"],-40000.,40000.,"Stroke y")?;if let Some(v)=point.get("pressure"){number(v,0.,1.,"Stroke pressure")?;}}
+    }
+    for v in value["views"].as_object().unwrap().values(){viewport(v)?;}
+    for layout in value["timeline"].as_object().unwrap().values(){let m=object(layout,"Timeline layout")?;if m.keys().any(|k| !["offsetY","width","height","lane","layoutRevision"].contains(&k.as_str())){return Err("Unknown timeline layout field".into());}if let Some(v)=m.get("lane"){if !bounded(v,1024){return Err("Invalid timeline lane".into());}}if let Some(v)=m.get("layoutRevision"){if !v.as_u64().is_some_and(|n|n>=1&&n<=9007199254740991){return Err("Invalid timeline layout revision".into());}}number(&layout["offsetY"],-40000.,40000.,"Timeline offset")?;for key in ["width","height"]{if let Some(v)=m.get(key){number(v,40.,40000.,"Timeline card size")?;}}}
+    Ok(())
+}
+fn validate_note(value:&Value,depth:usize)->Result<(),String>{
+    if depth>24{return Err("Rich note nesting budget exceeded".into());}
+    match value {
+        Value::Array(values)=>{if values.len()>1024{return Err("Rich note array budget exceeded".into());}for v in values{validate_note(v,depth+1)?;}},
+        Value::Object(values)=>for (key,v) in values{
+            if ["__proto__","prototype","constructor"].contains(&key.as_str()) || (key=="type" && matches!(v.as_str(),Some("image"|"video"|"audio"|"file"))) {return Err("Note media requires a native resource binding".into());}
+            if key=="href" && !v.as_str().is_some_and(|s| {let s=s.to_ascii_lowercase();["https:","http:","mailto:"].iter().any(|p|s.starts_with(p))}) {return Err("Unsupported note link".into());}
+            if key=="url" && v.as_str()!=Some("") && !v.is_null(){return Err("Note media requires a native resource binding".into());}
+            validate_note(v,depth+1)?;
+        }, _=>{}
+    } Ok(())
 }
 
 /// Only known presentation-local identity fields are remapped on a native
@@ -108,8 +172,20 @@ pub fn fork(presentation: &mut Presentation, old: &str, new: &str) {
     };
     for material in std::iter::once(&mut presentation.scene).chain(presentation.saved.iter_mut()) {
     map(&mut material["id"]);
+    if let Some(members) = material.get_mut("composition").and_then(|v|v.get_mut("blueprint")).and_then(|v|v.get_mut("members")).and_then(Value::as_array_mut) {
+        for member in members { map(&mut member["entity_ref"]); }
+    }
     if let Some(entities) = material["entities"].as_array_mut() {
         for entity in entities { map(&mut entity["id"]); }
+    }
+    if let Some(research)=material.get_mut("research") {
+        if let Some(cards)=research.get_mut("cards").and_then(Value::as_object_mut) {
+            let previous=std::mem::take(cards);
+            for (id,card) in previous {
+                let mut key=Value::String(id);map(&mut key);
+                cards.insert(key.as_str().unwrap().to_owned(),card);
+            }
+        }
     }
     if let Some(native) = material.get_mut("native") {
         for key in ["config", "projection"] {
@@ -175,6 +251,7 @@ pub fn remove_entity(presentation: &mut Presentation, reference: &str) {
     if let Some(entities) = material.get_mut("entities").and_then(Value::as_array_mut) {
         entities.retain(|entity| entity["id"] != reference);
     }
+    if let Some(cards)=material.get_mut("research").and_then(|r|r.get_mut("cards")).and_then(Value::as_object_mut){cards.remove(reference);}
     for key in ["automation", "propertyTracks", "toolbelt"] {
         if let Some(values) = material.get_mut(key).and_then(Value::as_array_mut) {
             values.retain(|value| value["entityId"] != reference);

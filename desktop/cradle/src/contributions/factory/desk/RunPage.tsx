@@ -1,3 +1,4 @@
+import {IconTabStrip} from "../../../workspace/primitives/IconTabStrip";
 /**
  * The Run page (11-FACTORY §3): understand the current developmental question
  * before any tool log; then watch it, steer it, and recognise what returned.
@@ -9,7 +10,7 @@
  * in ⋯ with Copy run reference and Show raw. No refs in the header.
  * Tabs Map · Trajectory · Live · Handoff — nothing stacked below.
  */
-import {useEffect, useState, type ReactNode, useRef} from "react";
+import {useEffect, useState, type ReactNode, useRef, lazy, Suspense} from "react";
 import {useKernel} from "../../../kernel/KernelProvider";
 import {Glyph} from "../../../workspace/Glyph";
 import {formatRelativeTime} from "../../../shared/relativeTime";
@@ -23,8 +24,9 @@ import {RunHandoff} from "./RunHandoff";
 import {RunTrajectory} from "./RunTrajectory";
 import {RunSignalLink} from "../sensing/RunSignalLink";
 
-export type RunTab = "map" | "trajectory" | "live" | "handoff";
-const TABS: {key: RunTab; label: string}[] = [{key: "map", label: "Map"}, {key: "trajectory", label: "Trajectory"}, {key: "live", label: "Live"}, {key: "handoff", label: "Handoff"}];
+const ComputerView=lazy(()=>import("../ComputerView").then(module=>({default:module.ComputerView})));
+export type RunTab = "map" | "trajectory" | "live" | "computer" | "handoff";
+const TABS: {key: RunTab; label: string}[] = [{key: "map", label: "Map"}, {key: "trajectory", label: "Trajectory"}, {key: "live", label: "Live"}, {key:"computer",label:"Computer"}, {key: "handoff", label: "Handoff"}];
 const tabMemory = new Map<string, RunTab>();
 
 /** The Git basis a telemetry reading carries, in its owner's field names. */
@@ -134,9 +136,7 @@ export function RunPage({runKey, onBack, host}: {runKey: string; onBack: () => v
       </div>
     </header>
     <RunSignalLink runKey={runKey} entry={entry} onBack={onBack}/>
-    <nav className="frun-tabs" role="tablist" aria-label="Run views">
-      {TABS.map(entryTab => <button key={entryTab.key} type="button" role="tab" aria-selected={tab === entryTab.key} className="frun-tab" onClick={() => setTab(entryTab.key)}>{entryTab.label}</button>)}
-    </nav>
+    <IconTabStrip aria-label="Run views" items={TABS.map(entry=>({id:entry.key,label:entry.label,icon:entry.key==="map"?"graph":entry.key==="trajectory"?"history":entry.key==="live"?"factory":"file"}))} current={tab} onSelect={id=>setTab(id as typeof tab)}/>
     {reading === "reading" && !entry.inspection && !entry.inspectionError && <p className="frun-note" role="status">Reading this run…</p>}
     {reading === "refused" && <p className="frun-note" role="alert">Couldn't read this run: {error}</p>}
     {entry.inspectionPartial && <p className="frun-note" role="status" data-inspection-partial>{entry.inspectionPartial}</p>}
@@ -144,6 +144,7 @@ export function RunPage({runKey, onBack, host}: {runKey: string; onBack: () => v
       {tab === "map" && <RunMap entry={entry} runKey={runKey} host={host}/>}
       {tab === "trajectory" && <RunTrajectory entry={entry} host={host}/>}
       {tab === "live" && <RunLive entry={entry} runKey={runKey} host={host} primary={primary} onPrimary={primary ? () => void invoke(primary) : undefined} telemetry={telemetry}/>}
+      {tab === "computer" && <Suspense fallback={<p>Opening Computer…</p>}><ComputerView entry={entry}/></Suspense>}
       {tab === "handoff" && <RunHandoff entry={entry} host={host} onRecognised={() => void reread()}/>}
     </section>
     {raw && <details className="frun-raw" open>

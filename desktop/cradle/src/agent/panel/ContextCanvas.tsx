@@ -2,6 +2,7 @@ import {useEffect,useRef,useState,type KeyboardEvent} from "react";
 import {Glyph} from "../../workspace/Glyph";
 import {FileTree} from "../../files/FileTree";
 import {PreparedContextView} from "../../context/PreparedContextView";
+import {SituationView} from "../../context/SituationView";
 import {ActiveContext} from "../../expressions/ActiveContext";
 import type {TaPaneOpens} from "../../expressions/TaOntaSide";
 import type {CentralLocation} from "../../kernel/types";
@@ -10,14 +11,14 @@ import type {CentralLocation} from "../../kernel/types";
 import "../../contributions/factory/sidebar/sidebar.css";
 
 /**
- * The Context tab (10-SIDEBARS §4.6). PRESERVED: the panel's own pane canvas
- * — the real pane, its tab strip and +, and Active Context — into which
- * files, terminals and browser pages are inserted, exactly as it works
- * today. Only the empty state is new: the three-entry launcher
- * (File ⌘P · Terminal ⌃` · Browser page ⌘T), each opening the existing
- * insertion route — Terminal and Browser page through the canvas's own New
- * tab and its fresh-tab choice, File through the frame's open-into-the-panel
- * route. The conversation's prepared selections stay at the top.
+ * The Context tab for modes that keep a side pane canvas (Factory, Expressions,
+ * Technè — 10-SIDEBARS §4.6). Files, terminals and browser pages insert here.
+ * Prepared selections ride at the top through the same native context system
+ * the centre editor uses for highlight / save.
+ *
+ * Central (base) mode does not mount this body: its Context plane is the
+ * prepared-context view alone, because the pane canvas belongs in the middle
+ * workspace there — not as a second copy in the right panel.
  */
 export function ContextCanvas({opens,dataPlane,project,session,onOpenSubject}:{opens?:TaPaneOpens;dataPlane:string;project?:string;session?:string;onOpenSubject?:(subject:{ref?:string;title:string;location?:CentralLocation})=>void}) {
  const tabs=opens?.sideTabs??[];
@@ -58,6 +59,7 @@ export function ContextCanvas({opens,dataPlane,project,session,onOpenSubject}:{o
   else if(event.key==="Escape"&&picking){event.preventDefault();setPicking(false);}
  };
  return <div ref={host} className="desk-plane oi-side-plane ta-context-plane context-canvas" data-plane={dataPlane} data-empty={empty?"true":undefined} onKeyDown={keys}>
+  <SituationView/>
   {project&&<PreparedContextView project={project} session={session} onOpenSubject={onOpenSubject}/>}
   {empty&&<div className="context-launcher" aria-label="Insert into context">
    <p className="context-launcher-line">Bring material into this conversation&apos;s context.</p>

@@ -2,8 +2,15 @@ import {docText, waitForDoc, openWorkspaceStrip, recoverArrangement} from '../ed
 export default async function run({page,baseUrl,check,channel,shot}) {
  await page.goto(baseUrl);await channel('info');
  const raw=JSON.stringify({version:99,active:'held',workspaces:[{id:'held',name:'Held arrangement',writing:'Original writing survives recovery',layout:{root:null,surfaces:{},closedStack:[],focusedGroupId:null,agencyDepth:'panel'}}]});
- await page.evaluate(raw=>localStorage.setItem('oi-cradle.workspaces.v1',raw),raw);
- await page.reload();await channel('info');
+ // Book writes coalesce (250 ms): let the opening write land before planting.
+ const plant=async({journal})=>{await page.waitForTimeout(400);await page.evaluate(([raw,journal])=>{if(!journal)localStorage.removeItem('oi-cradle.book.stage.v1');localStorage.setItem('oi-cradle.workspaces.v1',raw);},[raw,journal]);await page.reload();await channel('info');};
+ // WF1 (workspace continuity, 32450cff): an unreadable book never discards
+ // the last committed copy — while the publication journal holds one, that
+ // copy opens and the footer names the substitution; recovery is not raised.
+ await plant({journal:true});
+ check((await page.getByLabel('Workspace messages').getAttribute('aria-label')).includes('the last committed copy was opened instead')&&await page.getByRole('button',{name:'Start a fresh arrangement',exact:true,includeHidden:true}).count()===0,'An unsupported book with a committed journal copy opens that copy and names the substitution — no recovery presentation');
+ // Recovery proper stands only when no committed copy exists.
+ await plant({journal:false});
  // Owner law 2026-09-17: recovery — like every workspace message — stands
  // only in the footer status disclosure. Nothing renders above the shell,
  // and the shell needs no dismiss button: the recovery actions resolve it.

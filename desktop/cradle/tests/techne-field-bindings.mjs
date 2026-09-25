@@ -1,4 +1,4 @@
-/** Deterministic production-converter / actual Three geometry contract tests.
+/** Deterministic production-converter / actual particle target contract tests.
  * These are U evidence, not a substitute for the WebGL/native-storage walk. */
 import assert from 'node:assert/strict';
 import {createServer} from 'vite';
@@ -9,9 +9,9 @@ const eq=(a,b,message)=>{assert.deepEqual(a,b,message);assertions++;};
 const ok=(value,message)=>{assert.ok(value,message);assertions++;};
 try{
  const {expressionConfig,expressionWindow}=await server.ssrLoadModule('/src/expression/engineProjection.ts');
- const {connectionPaths,hitConnection,ExpressionConnectionLayer}=await server.ssrLoadModule(`${ENGINE}/oi/expressionBindings.mjs`);
+ const {connectionPaths,hitConnection}=await server.ssrLoadModule(`${ENGINE}/oi/expressionBindings.mjs`);
  const {nativeExport,nativeSnapshotToJourney}=await server.ssrLoadModule(`${ENGINE}/shell/nativeBridge.mjs`);
- const {Group}=await import('three');
+ const {ConnectionRuntime}=await server.ssrLoadModule(`${ENGINE}/oi/connectionRuntime.mjs`);
  const prefix='expression:proof',scene=`${prefix}:scene:main`;
  const refs=Array.from({length:18},(_,i)=>`${prefix}:entity:n${i}`);
  const parameter=value=>({value,automation:null});
@@ -54,13 +54,14 @@ try{
  for(const path of paths.paths){const p=path.points[12];eq(hitConnection(paths.paths,p.x,p.y,project,3)?.binding_ref,path.binding.binding_ref);}
  eq(hitConnection(paths.paths,0,0,p=>({...p,visible:false})),null);
  eq(hitConnection(connectionPaths([],poses).paths,0,-11,project),null,'disconnecting renderer correspondence must break selection proof');
- const engine={scene:new Group(),lastPoses:poses,isLightScene:()=>true,projectWorldToScreen:(x,y,z)=>({x,y,z,visible:true})};
- const before=engine.scene.onBeforeRender,layer=new ExpressionConnectionLayer(engine);
- layer.configure(rows);engine.scene.onBeforeRender();eq(layer.group.children.length,2);
- const line=layer.group.children[0];eq(line.userData.binding_ref,rows[0].binding_ref);
- eq(line.geometry.getAttribute('position').count,25);eq(layer.hitTest(0,-11)?.relation.ref,'wiki:edge:a');
- poses[0].x=-250;engine.scene.onBeforeRender();eq(line.geometry.getAttribute('position').getX(0),-250);
- layer.configure([]);engine.scene.onBeforeRender();eq(layer.group.children.length,0);eq(layer.hitTest(0,-11),null);
- layer.dispose();eq(engine.scene.children.length,0);eq(engine.scene.onBeforeRender,before);
- console.log(`Technē field bindings: ${assertions} production conversion/geometry/negative-control assertions passed`);
+ const runtime=new ConnectionRuntime(),targetA=new Float32Array(8192*4),targetB=new Float32Array(8192*4),metadata=new Float32Array(8192*4);
+ runtime.configure(rows,[],8192);runtime.update(poses,targetA,targetB,metadata);
+ eq(runtime.inspect().rendered,[rows[0].binding_ref,rows[1].binding_ref]);
+ const occurrence=runtime.inspect().occurrences[0],slot=runtime.slots.get(occurrence.binding_ref);
+ eq(targetA[occurrence.start*4],-180);eq(runtime.start,6144);
+ poses[0].x=-250;runtime.update(poses,targetA,targetB,metadata);
+ eq(targetA[occurrence.start*4],-250);eq(runtime.slots.get(occurrence.binding_ref),slot);
+ runtime.configure([],[],8192);runtime.update(poses,targetA,targetB,metadata);
+ eq(runtime.inspect().rendered,[]);ok(metadata.subarray(runtime.start*4).every(v=>v===0),'vacant relation particles are inactive');
+ console.log(`Technē field bindings: ${assertions} production conversion/particle-target/negative-control assertions passed`);
 } finally {await server.close();}

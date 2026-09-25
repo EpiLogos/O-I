@@ -1,3 +1,4 @@
+import {IconTabStrip} from "../workspace/primitives/IconTabStrip";
 import {TextEditor,EditorCommands,type EditorHandle} from "../editor/lazy";
 /**
  * The source editor surface (U0.4, kind 'source') — the minimal editor the
@@ -15,10 +16,10 @@ import {TextEditor,EditorCommands,type EditorHandle} from "../editor/lazy";
 import { useEffect, useRef, useState } from "react";
 import { readDraft, writeDraft } from "../workspace/drafts";
 import { SourceHistory } from "./SourceHistory";
-import { DocumentReceiving } from "../receiving/DocumentReceiving";
-import { DocumentContributions } from "../receiving/DocumentContributions";
 import { SharedFieldMaterial } from "../receiving/SharedFieldMaterial";
 import { DayDieFace } from "../receiving/DayDieFace";
+import { SourceDocumentHost } from "../document/SourceDocumentHost";
+import { readDocumentIdentity } from "../document/identity";
 import { useKernel } from "../kernel/KernelProvider";
 import type { SurfaceBinding } from "./types";
 import {EditorFrame} from "../editor/EditorChrome";
@@ -172,6 +173,15 @@ export function SourceSurface(props: SourceSurfaceProps) {
   const dayDocument = nativeDaySource(buffer.saved_content);
   const breadcrumb = sourceBreadcrumb(buffer);
   const dieView = dayDocument!==null && view==="rendered";
+  // A page save is the surface's own edit (draft, mirror guards and all)
+  // followed by the source CAS save — never a second, divergent write path.
+  // A bound source carrying a crafted payload (a project vision page, a
+  // mockup, a ql-doc family document) renders as itself in the document
+  // host view — the Day die's law, generalized: presentation over the
+  // canonical buffer, saves through the same source CAS.
+  const documentIdentity = readDocumentIdentity(buffer.saved_content);
+  const documentView = dayDocument===null && !!documentIdentity
+    && (documentIdentity.payload === "ql-doc" || documentIdentity.family === "mockup");
   /** Register routing follows the owner's ref grammar (same law as the
    * strips below): a `central:source:control:root:` source is the ROOT
    * register, named to the owner as an explicit null. */
@@ -180,15 +190,27 @@ export function SourceSurface(props: SourceSurfaceProps) {
     <EditorFrame
       className={`source-editor${buffer.dirty ? " dirty" : ""}${saveFailed ? " conflicted" : ""}`}
       label={`Editor ${binding.title}`}
-      toolbar={<>{dayDocument&&<span className="source-view-toggle oi-segment" role="group" aria-label="Document view"><button type="button" role="tab" aria-selected={dieView} onClick={()=>setView("rendered")}>Rendered</button><button type="button" role="tab" aria-selected={!dieView} onClick={()=>setView("source")}>Source</button></span>}{buffer.root_register&&<button type="button" className="source-reread-day" data-action="source.day-reread" onClick={()=>void kernel.rereadSource(binding.ref!)}>Re-read canonical</button>}<EditorCommands editor={textareaRef} markdown={markdown} readOnly={!!dayDocument}/></>}
+      toolbar={<>{(dayDocument!==null||documentView)&&<IconTabStrip className="source-view-toggle" aria-label="Document view" current={(dieView||(documentView&&view==="rendered"))?"rendered":"source"} onSelect={id=>setView(id as "rendered"|"source")} showLabels items={[{id:"rendered",label:"Rendered",icon:"file"},{id:"source",label:"Source",icon:"terminal"}]}/>}{buffer.root_register&&<button type="button" className="source-reread-day" data-action="source.day-reread" onClick={()=>void kernel.rereadSource(binding.ref!)}>Re-read canonical</button>}<EditorCommands editor={textareaRef} markdown={markdown} readOnly={!!dayDocument}/></>}
       footer={<><span className="editor-path source-revision" data-revision={buffer.base_revision} title={breadcrumb}>{breadcrumb}</span><span>Ln {caret.line}, Col {caret.column}</span><span className={buffer.dirty?"source-dirty-marker":"source-clean-marker"}>{sourceSaveLabel(buffer.dirty,!!dayDocument)}</span><button type="button" aria-expanded={historyOpen} onClick={()=>setHistoryOpen(open=>!open)}>History</button><button type="button" onClick={onSave} disabled={!buffer.dirty||!!dayDocument}>Save · ⌘S</button></>}
       data={{kind:"source",ref:binding.ref,dirty:buffer.dirty,conflicted:saveFailed}}
     >
       {draftError && <p role="alert">{draftError}</p>}
       {error && <p className="source-note" role="alert">{error}</p>}
       {dayDocument&&<div hidden={!dieView} style={{height:"100%",minHeight:0}}><DayDieFace payload={dayDocument.template_payload} revision={buffer.base_revision} sourceRef={binding.ref} documentId={dayDocument.document_id??""} fields={dayDocument.fields??[]} project={dayProject}/></div>}
+      {documentView&&<div hidden={view!=="rendered"} style={{height:"100%",minHeight:0}}><SourceDocumentHost binding={binding} text={text} bufferDirty={buffer.dirty} conflicted={saveFailed} onComposeSave={async composed=>{
+          // The page save is one ordered act: surface bookkeeping, the
+          // buffer edit, then the CAS save — awaited, never racing.
+          setText(composed);
+          lastSynced.current=composed;
+          pendingEdits.current+=1;
+          try{
+            if(binding.ref){try{writeDraft(binding.ref,{content:composed,base_revision:buffer.base_revision,saved_content:buffer.saved_content});setDraftError(null);}catch{setDraftError("This draft could not be saved on this device. Keep this window open until the source is saved.");}}
+            await kernel.editBuffer(binding.ref!,composed);
+            await kernel.saveSource(binding.ref!);
+          }finally{pendingEdits.current-=1;}
+        }}/></div>}
       {historyOpen && <SourceHistory sourceRef={binding.ref} revision={buffer.conflict?.current_revision ?? buffer.base_revision} />}
-      <div className="source-editor-scroll" ref={scrollRef} onScroll={retainView} onKeyDown={onKeyDown} hidden={dieView}>
+      <div className="source-editor-scroll" ref={scrollRef} onScroll={retainView} onKeyDown={onKeyDown} hidden={dieView||(documentView&&view==="rendered")}>
         <div className="source-editor-body">
           <TextEditor ref={textareaRef} binding={binding} filename={buffer.path} aria-label={`Editing ${binding.title}`} value={text} onChange={onEdit} onSelect={updateCaret} onSave={onSave} readOnly={!!dayDocument}/>
         </div>
@@ -241,10 +263,6 @@ export function SourceSurface(props: SourceSurfaceProps) {
         </div>
         ) : null}
       </div>
-      {/* The strips' register follows the owner's own ref grammar — the same
-          `dayProject` routing the die face uses. */}
-      <DocumentReceiving sourceRef={binding.ref} project={dayProject}/>
-      <DocumentContributions sourceRef={binding.ref} project={dayProject}/>
       <SharedFieldMaterial sourceRef={binding.ref}/>
 
     </EditorFrame>

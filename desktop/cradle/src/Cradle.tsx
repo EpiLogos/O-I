@@ -4,6 +4,7 @@ import {VisualsProvider} from "./visuals/ParticleExpression";
 import {ExpressionStageProvider} from "./stage/ExpressionStage";
 import {ExpressionProvider} from "./shared/Expression";
 import {WelcomeField} from "./visuals/WelcomeField";
+import {PRESENTED_EDITOR} from "./surface/presented";
 
 // The static opening splash paints before the workspace's heavy component
 // graph is requested. It does not take the expression stage. Native
@@ -56,7 +57,7 @@ function Opening() {
   const entered = useCallback(() => { document.body.removeAttribute("data-oi-opening"); setWelcomeUp(false); startFrame(); }, [startFrame]);
   useEffect(() => {
     if (welcomeUp || detached) return;
-    const target = document.querySelector<HTMLElement>(".pane.focused .cm-content") ?? document.getElementById("root");
+    const target = document.querySelector<HTMLElement>(PRESENTED_EDITOR) ?? document.getElementById("root");
     if (target && !target.hasAttribute("tabindex")) target.setAttribute("tabindex", "-1");
     target?.focus();
   }, [welcomeUp, detached]);

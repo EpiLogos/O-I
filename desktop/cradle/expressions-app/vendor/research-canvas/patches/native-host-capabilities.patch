@@ -1,0 +1,409 @@
+--- a/packages/canvas/src/timeline/TimelineSurface.tsx
++++ b/packages/canvas/src/timeline/TimelineSurface.tsx
+@@ -53,6 +53,8 @@
+   const [widthPx, setWidthPx] = useState(1000);
+   const [viewState, setViewState] = useState(initialState);
+   const [walk, setWalk] = useState<TimelineWalk>(EMPTY_WALK);
++  const [walkError, setWalkError] = useState<string | null>(null);
++  const [readAttempt, setReadAttempt] = useState(0);
+   const [lensRevision, setLensRevision] = useState(0);
+ 
+   const publishState = useCallback((next: TimelineViewState) => {
+@@ -92,17 +94,21 @@
+ 
+   useEffect(() => {
+     let cancelled = false;
++    setWalkError(null);
+     void repository.getTimelineWalk(constellationId, timeWindow)
+       .then((next) => {
+         if (!cancelled) setWalk(next);
+       })
+-      .catch(() => {
+-        if (!cancelled) setWalk(EMPTY_WALK);
++      .catch((error: unknown) => {
++        if (!cancelled) {
++          setWalk(EMPTY_WALK);
++          setWalkError(error instanceof Error ? error.message : String(error));
++        }
+       });
+     return () => {
+       cancelled = true;
+     };
+-  }, [constellationId, repository, timeWindow.startYear, timeWindow.endYear]);
++  }, [constellationId, repository, timeWindow.startYear, timeWindow.endYear, readAttempt]);
+ 
+   const earthboundById = useMemo(
+     () => new Map(walk.earthboundNodes.map((node) => [node.graphNodeId, node] as const)),
+@@ -222,6 +228,9 @@
+       onClick={handleSurfaceClick}
+       onDoubleClick={cancelPendingSingleClick}
+     >
++      {walkError && <div role="alert" style={{position:"absolute",left:12,top:48,zIndex:12}}>
++        Timeline reading unavailable: {walkError} <button type="button" onClick={() => setReadAttempt(value => value + 1)}>Retry reading</button>
++      </div>}
+       <div
+         className="timeline-surface-controls"
+         aria-label="Timeline navigation controls"
+--- a/packages/canvas/src/timeline/TimelineLens.tsx
++++ b/packages/canvas/src/timeline/TimelineLens.tsx
+@@ -80,6 +80,8 @@
+   const [relationField, setRelationField] = useState<TimelineRelationFieldData | null>(null);
+   const [loaded, setLoaded] = useState(false);
+   const [loadError, setLoadError] = useState<string | null>(null);
++  const [readAttempt, setReadAttempt] = useState(0);
++  const [contextError, setContextError] = useState<{message:string;retry:()=>void} | null>(null);
+   const [saveErrors, setSaveErrors] = useState<Record<string, string>>({});
+   const saveQueues = useRef(new Map<string, Promise<void>>());
+   const saveVersions = useRef(new Map<string, number>());
+@@ -141,6 +143,7 @@
+     resonanceRequestVersion.current += 1;
+     setRelationField(null);
+     setResonances([]);
++    setContextError(null);
+     setSaveErrors({});
+     setLoaded(false);
+     setLoadError(null);
+@@ -164,7 +167,7 @@
+       cancelled = true;
+       if (timelineLoadTimer.current !== null) window.clearTimeout(timelineLoadTimer.current);
+     };
+-  }, [dataSource, store, timelineFilters, timelineFiltersKey]);
++  }, [dataSource, store, timelineFilters, timelineFiltersKey, readAttempt]);
+ 
+   // Track width measurement (ResizeObserver is mocked in tests; fall back to a
+   // sensible default so layout math runs even before the observer fires).
+@@ -316,6 +319,7 @@
+   }, [state.nodes]);
+ 
+   const handleSelect = (graphNodeId: string) => {
++    setContextError(null);
+     store.getState().setSelected(graphNodeId);
+     setRelationFieldOpen(false);
+     const resonanceVersion = resonanceRequestVersion.current + 1;
+@@ -323,8 +327,8 @@
+     setResonances([]);
+     void dataSource.resonancesForInstance(graphNodeId).then((nextResonances) => {
+       if (resonanceRequestVersion.current === resonanceVersion) setResonances(nextResonances);
+-    }).catch(() => {
+-      if (resonanceRequestVersion.current === resonanceVersion) setResonances([]);
++    }).catch((error: unknown) => {
++      if (resonanceRequestVersion.current === resonanceVersion) setContextError({message:`Related reading unavailable: ${error instanceof Error ? error.message : String(error)}`,retry:()=>handleSelect(graphNodeId)});
+     });
+ 
+     const requestVersion = relationFieldRequestVersion.current + 1;
+@@ -333,10 +337,8 @@
+     if (dataSource.relationFieldForEvent) {
+       void dataSource.relationFieldForEvent(graphNodeId).then((field) => {
+         if (relationFieldRequestVersion.current === requestVersion) setRelationField(field);
+-      }).catch(() => {
+-        // Relation context is supplementary. Keep the selected historical
+-        // event interactive if a remote/local field read is temporarily unavailable.
+-        if (relationFieldRequestVersion.current === requestVersion) setRelationField(null);
++      }).catch((error: unknown) => {
++        if (relationFieldRequestVersion.current === requestVersion) setContextError({message:`Connection reading unavailable: ${error instanceof Error ? error.message : String(error)}`,retry:()=>handleSelect(graphNodeId)});
+       });
+     }
+ 
+@@ -346,14 +348,15 @@
+     if (dataSource.expandNode) {
+       void dataSource.expandNode(graphNodeId).then((expansion) => {
+         store.getState().expandNode(expansion);
+-      }).catch(() => {
+-        // Expansion is supplementary. A failed deep read must not close the
+-        // selection or surface as an unhandled rejection.
++      }).catch((error: unknown) => {
++        if (relationFieldRequestVersion.current === requestVersion) setContextError({message:`Source context unavailable: ${error instanceof Error ? error.message : String(error)}`,retry:()=>handleSelect(graphNodeId)});
+       });
+     }
+   };
+ 
+   const handleOpenNode = (graphNodeId: string, node: GraphNode, includeRelationField = true) => {
++    setContextError(null);
++    const requestEpoch = dataSourceEpoch.current;
+     const contextField = includeRelationField ? relationField ?? undefined : undefined;
+     const open = (nextNode: GraphNode) => onOpenNode(
+       graphNodeId,
+@@ -370,16 +373,19 @@
+     if (dataSource.loadNode) {
+       void dataSource.loadNode(graphNodeId)
+         .then((nextNode) => open(nextNode))
+-        .catch(() => {
+-          // The projection is already a valid reader record; a failed deep
+-          // read must not close it or surface as an unhandled rejection.
++        .catch((error: unknown) => {
++          if (dataSourceEpoch.current === requestEpoch) setContextError({message:`Source reading unavailable: ${error instanceof Error ? error.message : String(error)}`,retry:()=>handleOpenNode(graphNodeId,node,includeRelationField)});
+         });
+     }
+   };
+ 
+   const handleLightOperator = (operatorGraphNodeId: string) => {
++    setContextError(null);
++    const requestEpoch = dataSourceEpoch.current;
+     void dataSource.archetypalLighting(operatorGraphNodeId).then((result) => {
+-      store.getState().setLighting(result);
++      if (dataSourceEpoch.current === requestEpoch) store.getState().setLighting(result);
++    }).catch((error: unknown) => {
++      if (dataSourceEpoch.current === requestEpoch) setContextError({message:`Archetype reading unavailable: ${error instanceof Error ? error.message : String(error)}`,retry:()=>handleLightOperator(operatorGraphNodeId)});
+     });
+   };
+ 
+@@ -739,10 +745,14 @@
+         onPointerLeave={handlePointerUp}
+       >
+         {loadError && (
+-          <div className="timeline-load-state timeline-load-state--error" data-testid="timeline-load-error">
++          <div role="alert" className="timeline-load-state timeline-load-state--error" data-testid="timeline-load-error">
+             Timeline data unavailable: {loadError}
++            <button type="button" onClick={() => setReadAttempt(value => value + 1)}>Retry reading</button>
+           </div>
+         )}
++        {contextError && <div role="alert" className="timeline-load-state timeline-load-state--error">
++          {contextError.message} <button type="button" onClick={contextError.retry}>Retry reading</button>
++        </div>}
+         {Object.entries(saveErrors).map(([nodeId, message]) => (
+           <div key={nodeId} role="alert" data-testid={`timeline-save-error-${nodeId}`}>
+             {message} <button type="button" onClick={() => commitTimelineLayout(nodeId)}>Retry</button>
+--- a/packages/canvas/src/psychogeographic/PsychogeographicMap.tsx
++++ b/packages/canvas/src/psychogeographic/PsychogeographicMap.tsx
+@@ -18,7 +18,9 @@
+   repository: PlacesRepository;
+   projectId: string;
+   tileSource: MapTileSource;
+-  policy: LiveServicePolicy;
++  policy?: LiveServicePolicy;
++  /** Hosted native applications do not delegate network authority to this UI. */
++  offlineOnly?: boolean;
+   renderer?: MapSurfaceRenderer;
+   /** Invalidates repository reads without recreating the map or its camera. */
+   refreshVersion?: number;
+@@ -41,6 +43,7 @@
+   projectId,
+   tileSource,
+   policy,
++  offlineOnly = false,
+   renderer: rendererProp,
+   refreshVersion = 0,
+   initialViewState,
+@@ -74,13 +77,14 @@
+   const [contextLoading, setContextLoading] = useState(false);
+   const [loading, setLoading] = useState(true);
+   const [error, setError] = useState<string | null>(null);
++  const [readAttempt, setReadAttempt] = useState(0);
+   const [policyRevision, setPolicyRevision] = useState(0);
+   const [liveTilesActive, setLiveTilesActive] = useState(false);
+   const [liveFallback, setLiveFallback] = useState(false);
+   const [activeLaneYear, setActiveLaneYear] = useState<number | null>(null);
+   const [selectedLaneId, setSelectedLaneId] = useState<string | null>(null);
+ 
+-  const tileRefreshOptedIn = policy.isOptedIn("tile_refresh");
++  const tileRefreshOptedIn = !offlineOnly && !!policy?.isOptedIn("tile_refresh");
+   void policyRevision;
+ 
+   useEffect(() => {
+@@ -94,12 +98,8 @@
+       .then(async ([locatedNodes, geographyEdges]) => {
+         const expressionRows = await Promise.all(
+           locatedNodes.map(async (node) => {
+-            try {
+-              const expressions = await repository.getArchetypeExpressionsForPlace(projectId, node.graphNodeId);
+-              return [node.graphNodeId, expressions] as const;
+-            } catch {
+-              return [node.graphNodeId, [] as ArchetypalExpression[]] as const;
+-            }
++            const expressions = await repository.getArchetypeExpressionsForPlace(projectId, node.graphNodeId);
++            return [node.graphNodeId, expressions] as const;
+           }),
+         );
+         if (cancelled) return;
+@@ -116,7 +116,7 @@
+     return () => {
+       cancelled = true;
+     };
+-  }, [projectId, refreshVersion, repository]);
++  }, [projectId, refreshVersion, repository, readAttempt]);
+ 
+   const placeMarkers = useMemo<PlaceRenderMarker[]>(() => nodes.flatMap((node) => {
+     const point = pointForPlace(node);
+@@ -172,8 +172,8 @@
+       .then((related) => {
+         if (!cancelled) setRelatedNodes(related);
+       })
+-      .catch(() => {
+-        if (!cancelled) setRelatedNodes([]);
++      .catch((cause: unknown) => {
++        if (!cancelled) setError(`Place context unavailable: ${cause instanceof Error ? cause.message : String(cause)}`);
+       })
+       .finally(() => {
+         if (!cancelled) setContextLoading(false);
+@@ -181,7 +181,7 @@
+     return () => {
+       cancelled = true;
+     };
+-  }, [nodes, projectId, repository, selectedNodeId]);
++  }, [nodes, projectId, repository, selectedNodeId, readAttempt]);
+ 
+   const laneYearRange = useMemo(() => {
+     if (lanes.length === 0) return null;
+@@ -327,6 +327,7 @@
+   }, []);
+ 
+   const refreshLiveTiles = useCallback(async () => {
++    if (offlineOnly || !policy) return;
+     const currentRenderer = mountedRenderer.current;
+     if (!currentRenderer) return;
+     if (policy.requestLiveAction("tile_refresh", "refresh live basemap tiles") !== "granted") return;
+@@ -351,7 +352,7 @@
+         // unsupported by a test/static renderer.
+       }
+     }
+-  }, [policy, tileSource]);
++  }, [policy, tileSource, offlineOnly]);
+ 
+   const connectionLabel = liveFallback
+     ? "Live tiles (offline fallback)"
+@@ -387,7 +388,7 @@
+         <button type="button" data-testid="places-globe-toggle" disabled={!readyRenderer} data-active={view === "globe"} onClick={() => setProjection("globe")}>Globe</button>
+         <button type="button" data-testid="places-flat-toggle" disabled={!readyRenderer} data-active={view === "flat"} onClick={() => setProjection("flat")}>Flat</button>
+         <button type="button" data-testid="places-zoom-fit" disabled={!readyRenderer || placeMarkers.length === 0} onClick={() => void mountedRenderer.current?.fitToPlaces?.(placeMarkers)}>Zoom to fit</button>
+-        {!tileRefreshOptedIn ? (
++        {!offlineOnly && policy && (!tileRefreshOptedIn ? (
+           <button
+             type="button"
+             data-testid="psychogeographic-opt-in-live"
+@@ -407,7 +408,7 @@
+           >
+             Refresh tiles
+           </button>
+-        )}
++        ))}
+       </div>
+ 
+       <div
+@@ -525,6 +526,7 @@
+       {error && (
+         <div role="alert" data-testid="psychogeographic-error" style={{ position: "absolute", right: 12, bottom: 12, zIndex: 11 }}>
+           Map unavailable: {error}
++          <button type="button" onClick={() => setReadAttempt(value => value + 1)}>Retry reading</button>
+         </div>
+       )}
+     </div>
+--- a/packages/canvas/src/streetview/StreetViewSurface.tsx
++++ b/packages/canvas/src/streetview/StreetViewSurface.tsx
+@@ -16,10 +16,13 @@
+ 
+ export interface StreetViewSurfaceProps {
+   images: StreetViewImageRecord[];
+-  policy: LiveServicePolicy;
++  policy?: LiveServicePolicy;
++  /** Native hosts retain egress authority; no browser-local opt-in can grant it. */
++  offlineOnly?: boolean;
++  imageTitle?: (image: StreetViewImageRecord) => string;
+   /** Resolves a portable artifact path against the media root. */
+   resolveAsset: (artifactPath: string) => string;
+-  /** Opens the import flow (file picker → regions → redaction). */
++  /** Opens the host's actual available import flow. */
+   onImport?: () => void;
+ }
+ 
+@@ -32,6 +35,8 @@
+ export function StreetViewSurface({
+   images,
+   policy,
++  offlineOnly = false,
++  imageTitle,
+   resolveAsset,
+   onImport,
+ }: StreetViewSurfaceProps): JSX.Element {
+@@ -40,14 +45,15 @@
+   );
+   const [, forceRender] = useReducer((count: number) => count + 1, 0);
+   const activeImage = images.find((image) => image.id === openImageId) ?? null;
+-  const policyState = policy.state();
+-  const activeReason = policy.activeReason();
+-  const mapillaryOptedIn = policy.isOptedIn("street_view_browse");
++  const policyState = offlineOnly ? "offline" : policy?.state() ?? "offline";
++  const activeReason = offlineOnly ? null : policy?.activeReason();
++  const mapillaryOptedIn = !offlineOnly && !!policy?.isOptedIn("street_view_browse");
+   const firstLocated = images.find(
+     (image) => image.latitude !== null && image.longitude !== null,
+   );
+ 
+   const browseMapillary = () => {
++    if (offlineOnly || !policy) return;
+     if (!firstLocated || firstLocated.latitude === null || firstLocated.longitude === null) {
+       return;
+     }
+@@ -101,8 +107,7 @@
+       {images.length === 0 ? (
+         <div className="street-view-empty" data-testid="street-view-empty">
+           <p>
+-            No captured imagery for this journey yet. Import fieldwork photos to
+-            build the street view, then mark redaction regions before publishing.
++            No images in this Scene yet. Import an image to view it here.
+           </p>
+           {onImport && (
+             <button
+@@ -126,13 +131,13 @@
+                   data-testid={`street-view-item-${image.id}`}
+                   onClick={() => setOpenImageId(image.id)}
+                 >
+-                  <span>{image.artifactPath.split("/").pop()}</span>
+-                  <span
++                  <span>{imageTitle?.(image) ?? image.artifactPath.split("/").pop()}</span>
++                  {!offlineOnly && <span
+                     className="street-view-status"
+                     data-status={image.redactionStatus}
+                   >
+                     {image.redactionStatus}
+-                  </span>
++                  </span>}
+                 </button>
+               </li>
+             ))}
+@@ -149,7 +154,7 @@
+                   src={resolveAsset(
+                     activeImage.redactedArtifactPath ?? activeImage.artifactPath,
+                   )}
+-                  alt={`Street view capture ${activeImage.artifactPath}`}
++                  alt={imageTitle?.(activeImage) ?? "Imported image"}
+                   data-testid="street-view-image"
+                 />
+                 {activeImage.redactionRegions.map((region, index) => (
+@@ -168,23 +173,23 @@
+                   />
+                 ))}
+               </div>
+-              <figcaption>
++              {(activeImage.capturedAt || (activeImage.latitude !== null && activeImage.longitude !== null) || activeImage.headingDegrees !== null) && <figcaption>
+                 {activeImage.capturedAt
+                   ? `Captured ${activeImage.capturedAt}`
+-                  : "Capture time unknown"}
++                  : ""}
+                 {activeImage.latitude !== null && activeImage.longitude !== null
+                   ? ` · ${activeImage.latitude.toFixed(4)}, ${activeImage.longitude.toFixed(4)}`
+-                  : " · location unrecorded"}
++                  : ""}
+                 {activeImage.headingDegrees !== null
+                   ? ` · heading ${Math.round(activeImage.headingDegrees)}°`
+                   : ""}
+-              </figcaption>
++              </figcaption>}
+             </figure>
+           )}
+         </div>
+       )}
+ 
+-      <div className="street-view-live" data-testid="street-view-live-controls">
++      {!offlineOnly && policy && <div className="street-view-live" data-testid="street-view-live-controls">
+         <span className="street-view-live-label">
+           {mapillaryOptedIn
+             ? "Mapillary browsing opted in"
+@@ -205,7 +210,7 @@
+             Add a located capture to browse Mapillary.
+           </span>
+         )}
+-      </div>
++      </div>}
+     </section>
+   );
+ }

@@ -11,17 +11,6 @@
  * this file keeps only the panel's own layout. Nothing here moves: status is
  * text, and the one agent cue is the head's ExpressionAnchor. */
 .agent-layer{height:100%;min-height:0;display:flex;flex-direction:column;background:var(--oi-agent-ground);color:var(--oi-foreground);container-type:inline-size}
-.agent-head{height:65px;min-height:65px}
-.agent-head-row{display:flex;align-items:center;gap:9px;flex:1;min-width:0}
-/* The plane nav packs left with a fixed gap so its five labels fit the 260px
- * agent minimum (finding 5). A mode with more planes than fit scrolls the nav
- * itself, quietly — the panel never widens and the document never scrolls. */
-.agent-layer .agent-planes{gap:10px;overflow-x:auto;overflow-y:hidden;scrollbar-width:none}
-/* Leading plane glyphs: icon + label on one baseline (aria-hidden svg — the
-   accessible name stays the label). */
-.agent-layer .agent-planes>button,.agent-layer .agent-planes .oi-menu-item{display:inline-flex;align-items:center;gap:5px}
-.agent-layer .agent-planes::-webkit-scrollbar{display:none}
-.agent-head-glyph{width:var(--oi-shell-control);height:28px;flex:none;border:var(--oi-shell-edge) solid var(--oi-hairline);border-radius:7px;display:grid;place-items:center;background:var(--oi-canvas-ground);color:var(--oi-accent-ink)}
 
 /* ===== session row: which conversation, its provider, the owner's state ===== */
 .agent-session{position:relative;flex:none;display:flex;align-items:center;gap:8px;min-width:0;height:30px;box-sizing:border-box;padding:0 12px 0 10px;border-top:var(--oi-shell-edge) solid var(--oi-hairline-soft);font-size:var(--oi-shell-type-ui);color:var(--oi-muted-2)}
@@ -53,7 +42,8 @@
 .agent-plane{flex:1;min-height:0;box-sizing:border-box}
 .agent-empty{flex:1;overflow:auto;padding:23px 20px}
 .agent-empty .project-encounters{display:flex;flex-direction:column;gap:2px}
-.agent-extra-plane{overflow:auto}
+.agent-extra-plane{overflow:auto;scrollbar-width:none}
+.agent-extra-plane::-webkit-scrollbar{display:none;width:0;height:0}
 
 /* ----- Activity ----- */
 .agent-activity{padding:0 8px 16px;font-size:var(--oi-shell-type-ui)}
@@ -130,8 +120,7 @@
 .agent-layer .agent-inspect-material pre.agent-inspect-payload{max-height:none}
 /* The reader registry's readable body (planes/inspectReaders.tsx): prose with
    whitespace kept — never a pre in the primary view (ruling 2, spec L5). */
-.agent-inspect-read{white-space:pre-wrap;overflow-wrap:anywhere;line-height:1.55;font-size:var(--oi-shell-type-ui);max-height:320px;overflow-y:auto;scrollbar-width:none}
-.agent-inspect-read::-webkit-scrollbar,.agent-inspect-read *::-webkit-scrollbar{display:none;width:0;height:0}
+.agent-inspect-read{white-space:pre-wrap;overflow-wrap:anywhere;line-height:1.55;font-size:var(--oi-shell-type-ui);max-height:320px;overflow-y:auto}
 .agent-inspect-material .encounter-session-facts{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.2fr);gap:8px 12px;margin:0 0 10px}
 .agent-inspect-material .encounter-session-facts dt{color:var(--oi-muted-2)}
 .agent-inspect-material .encounter-session-facts dd{margin:0;overflow-wrap:anywhere}
@@ -144,26 +133,12 @@
 .agent-inspect[data-layout="columns"] .agent-inspect-list{max-height:none;border-bottom:0;border-right:var(--oi-shell-edge) solid var(--oi-hairline-soft);padding:16px 12px}
 .agent-inspect[data-layout="columns"] .agent-inspect-material{padding:10px 28px 28px}
 .agent-inspect[data-layout="columns"] .agent-inspect-two{grid-template-columns:1fr 1fr}
-
-/* Item (e): full agent keeps one horizontal axis for head, nav and body.
- * The nav and body already centre at min(720px,90%); the head row gets the
- * same treatment instead of its old fixed 25px left pad, so the tile and
- * the tools sit on the same column as the content below them. */
-[data-full=true][data-full=true].agent-layer .agent-head{padding:0 20px}
-[data-full=true].agent-layer .agent-head-row{max-width:720px;width:100%;margin:0 auto}
 [data-full=true].agent-layer .agent-context,[data-full=true].agent-layer .agent-empty{width:min(720px,90%);align-self:center;margin:0 auto}
-/* Finding 7: this used to fire at any container ≤600px — which is every
- * side-plane rendering (agent-min is 260px), so the compact 45px head only
- * ever existed in `full`. One head geometry (65px) always; the compact
- * head is reserved for a plane narrower than the agent minimum itself. */
-@container (max-width:259px){.agent-head{height:45px}.agent-planes{height:27px;gap:12px}.agent-context,.agent-empty{padding:16px}.agent-session-provider{display:none}.agent-inspect-views>button{padding:0 4px}}
+@container (max-width:259px){.agent-context,.agent-empty{padding:16px}.agent-session-provider{display:none}.agent-inspect-views>button{padding:0 4px}}
 
 /* Expanded agency uses a shared, responsive reading column. */
 .agent-layer[data-full="true"]{--agent-reading-width:960px}
-.agent-layer[data-full="true"] .agent-head{height:72px;padding-inline:clamp(20px,4cqi,56px)}
-.agent-layer[data-full="true"] .agent-head-row{max-width:var(--agent-reading-width)}
-.agent-layer[data-full="true"] :is(.agent-planes,.agent-session,.agent-centre-conversation){padding-inline:max(24px,calc((100% - var(--agent-reading-width))/2));justify-content:flex-start}
-.agent-layer[data-full="true"] .agent-planes{gap:22px}
+.agent-layer[data-full="true"] :is(.agent-session,.agent-centre-conversation){padding-inline:max(24px,calc((100% - var(--agent-reading-width))/2));justify-content:flex-start}
 .agent-layer[data-full="true"] .agent-session-switch{flex:0 1 auto}
 .agent-layer[data-full="true"] .agent-session-state{margin-left:auto}
 .agent-layer[data-full="true"] .agent-switcher{left:max(24px,calc((100% - var(--agent-reading-width))/2));right:auto;width:min(420px,calc(100% - 48px))}
@@ -173,14 +148,6 @@
 .agent-layer[data-full="true"] .agent-empty{justify-content:center;gap:20px;max-width:760px}
 .agent-layer[data-full="true"] .encounter[data-presentation="full"] :is(.encounter-transcript,.encounter-composer){box-sizing:border-box;width:min(var(--agent-reading-width),calc(100% - 48px))}
 @media (prefers-reduced-motion:reduce){.agent-session-switch{transition:none}}
-
-/* Plane nav overflow (planes/PlaneNav.tsx): what fits reads in the row, the
- * rest sit behind one "More" control; the ruler measures labels off-screen. */
-.agent-layer .agent-planes{position:relative;overflow:visible}
-.agent-planes-more{position:relative;flex:none;display:flex;align-items:center;margin-left:auto}
-.agent-planes-more>.oi-menu{position:absolute;top:calc(100% + 2px);right:0;min-width:168px}
-.agent-planes-ruler{position:absolute;left:0;top:0;display:flex;gap:inherit;visibility:hidden;pointer-events:none;height:0;overflow:hidden;white-space:nowrap}
-.agent-planes-ruler>button{flex:none;padding:0;border:0;font:inherit;font-size:var(--oi-shell-type-ui)}
 
 /* Instrument sections (Expressions alignment): each group opens on a faint
  * tinted band — a small uppercase label at the left, its status caption at the

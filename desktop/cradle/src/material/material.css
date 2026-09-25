@@ -48,44 +48,12 @@
  * language (desktop.css `.oi-segment`): a hairline body at
  * --oi-shell-segment, the selected segment in wash + ink with an inset
  * edge — the same control as the Source surface's Rendered / Source pair. */
-.material-toggle {
-  display: flex;
-  align-items: stretch;
-  gap: 2px;
-  height: var(--oi-shell-segment);
-  box-sizing: border-box;
-  flex: none;
-  padding: 2px;
-  background: transparent;
-  border: 1px solid var(--oi-hairline);
-  border-radius: 7px;
-}
 
 /* `.material-chrome` scoping (two classes) is needed to beat
  * `.desktop-shell button, select, input { color: var(--oi-accent-ink) }`
  * (shell.css) — a bare `.material-toggle button` ties with it on
  * specificity and loses on source order, so the unselected segment read
  * as accent-ink instead of muted. */
-.editor-command-line .material-toggle button {
-  appearance: none;
-  border: none;
-  height: 100%;
-  background: none;
-  padding: 0 8px;
-  font-size: var(--oi-shell-type-ui);
-  color: var(--oi-muted-2);
-  border-radius: var(--oi-shell-radius-row);
-  cursor: pointer;
-  transition: background var(--oi-motion-ui) var(--oi-motion-ease-out), color var(--oi-motion-ui) var(--oi-motion-ease-out), box-shadow var(--oi-motion-ui) var(--oi-motion-ease-out);
-}
-
-.editor-command-line .material-toggle button:hover { color: var(--oi-accent-ink); background: var(--oi-wash); }
-
-.editor-command-line .material-toggle button[aria-selected="true"] {
-  background: var(--oi-wash);
-  color: var(--oi-accent-ink);
-  box-shadow: inset 0 0 0 1px var(--oi-hairline);
-}
 
 .material-body {
   flex: 1;

@@ -1,0 +1,131 @@
+{
+  "roles": [
+    "--oi-accent",
+    "--oi-accent-ink",
+    "--oi-accent-soft",
+    "--oi-active-ground",
+    "--oi-active-ink",
+    "--oi-agent-ground",
+    "--oi-canvas-ground",
+    "--oi-card-glass",
+    "--oi-card-solid",
+    "--oi-composer-ground",
+    "--oi-composer-rule",
+    "--oi-control-edge",
+    "--oi-focus",
+    "--oi-foreground",
+    "--oi-hairline",
+    "--oi-hairline-soft",
+    "--oi-ink",
+    "--oi-inverse-canvas-ground",
+    "--oi-inverse-foreground",
+    "--oi-muted",
+    "--oi-muted-2",
+    "--oi-muted-3",
+    "--oi-pane-bar-ground",
+    "--oi-paper",
+    "--oi-popover-ground-glass",
+    "--oi-rule",
+    "--oi-scrollbar-thumb",
+    "--oi-scrollbar-thumb-strong",
+    "--oi-shadow-drawer",
+    "--oi-shadow-menu",
+    "--oi-shadow-overlay",
+    "--oi-shadow-plane",
+    "--oi-shell-ground",
+    "--oi-sidebar-ground",
+    "--oi-sidebar-ground-glass",
+    "--oi-surface",
+    "--oi-syntax-atom",
+    "--oi-syntax-comment",
+    "--oi-syntax-definition",
+    "--oi-syntax-heading",
+    "--oi-syntax-invalid",
+    "--oi-syntax-keyword",
+    "--oi-syntax-link",
+    "--oi-syntax-literal",
+    "--oi-syntax-meta",
+    "--oi-syntax-special",
+    "--oi-syntax-string",
+    "--oi-syntax-type",
+    "--oi-syntax-variable",
+    "--oi-terminal-ansi-black",
+    "--oi-terminal-ansi-blue",
+    "--oi-terminal-ansi-bright-black",
+    "--oi-terminal-ansi-bright-blue",
+    "--oi-terminal-ansi-bright-cyan",
+    "--oi-terminal-ansi-bright-green",
+    "--oi-terminal-ansi-bright-magenta",
+    "--oi-terminal-ansi-bright-red",
+    "--oi-terminal-ansi-bright-white",
+    "--oi-terminal-ansi-bright-yellow",
+    "--oi-terminal-ansi-cyan",
+    "--oi-terminal-ansi-green",
+    "--oi-terminal-ansi-magenta",
+    "--oi-terminal-ansi-red",
+    "--oi-terminal-ansi-white",
+    "--oi-terminal-ansi-yellow",
+    "--oi-terminal-background",
+    "--oi-terminal-cursor",
+    "--oi-terminal-foreground",
+    "--oi-terminal-selection",
+    "--oi-wash",
+    "--oi-wash-strong"
+  ],
+  "shadow_values": {
+    "--oi-shadow-plane": [
+      "0 1px 2px rgba(22, 22, 20, 0.05)",
+      "0 1px 2px rgba(0, 0, 0, 0.4)"
+    ],
+    "--oi-shadow-menu": [
+      "0 10px 40px rgba(22, 22, 20, 0.12), 0 1px 2px rgba(22, 22, 20, 0.08)",
+      "0 10px 40px rgba(0, 0, 0, 0.5), 0 1px 2px rgba(0, 0, 0, 0.4)"
+    ],
+    "--oi-shadow-overlay": [
+      "0 20px 70px rgba(22, 22, 20, 0.14)",
+      "0 20px 70px rgba(0, 0, 0, 0.55)"
+    ],
+    "--oi-shadow-drawer": [
+      "-10px 0 25px rgba(22, 22, 20, 0.07)",
+      "-10px 0 25px rgba(0, 0, 0, 0.35)"
+    ]
+  },
+  "bundled_themes": [
+    {
+      "id": "catppuccin-mocha",
+      "appearance": "dark"
+    },
+    {
+      "id": "dracula-dark",
+      "appearance": "dark"
+    },
+    {
+      "id": "night-owl-dark",
+      "appearance": "dark"
+    },
+    {
+      "id": "nord-dark",
+      "appearance": "dark"
+    },
+    {
+      "id": "one-dark-pro",
+      "appearance": "dark"
+    },
+    {
+      "id": "tokyo-night-dark",
+      "appearance": "dark"
+    },
+    {
+      "id": "light-plus",
+      "appearance": "light"
+    },
+    {
+      "id": "quiet-light",
+      "appearance": "light"
+    },
+    {
+      "id": "solarized-light",
+      "appearance": "light"
+    }
+  ]
+}

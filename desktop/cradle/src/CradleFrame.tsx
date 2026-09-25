@@ -1,21 +1,28 @@
+import type {HostedSourceTarget} from "./expressions/sourceHandoff";
+import {hostedSurfaceFor, withHostedDescriptor} from "./contributions/registry";
+import {useChosenAgent} from "./agency/selection";
+import {useAgentRoster} from "./agency/roster";
+import {ActiveEncounterContext} from "./workspace/activeEncounter";
+import {CanvasStage,CanvasHUD} from "./workspace/primitives/CanvasHost";
 import {ExpressionLayout} from "./shared/Expression";
 import {mintInstance,mintBlankInstance,parseInstance,instanceFileName} from "./flow/instance";
 import {userFlowsArea} from "./flow/instances";
-import {fileOperation,listFiles,type FileMutation} from "./files/client";
+import {fileOperation,type FileMutation} from "./files/client";
 import {DRAFT_KEY} from "./flow/DraftSurface";
+import {readUnplacedDraft} from "./flow/unplacedDrafts";
 import {DOCUMENT_FORMS} from "./flow/documentForms";
 import {createFormInPlace} from "./flow/createInPlace";
 import type {LeftHost} from "./workspace/left/host";
 import {createExpression} from "./workspace/left/createExpression";
 import {ContextTray} from "./context/ContextTray";
-import {addToActiveMaterialScene} from "./techne/material";
+import {SituationProvider} from "./context/SituationContext";
+import {buildSituationFrame} from "./context/situation";
 import {FileHistory} from "./files/FileHistory";
 import {encounter,encounterProvision} from "./encounter/client";
 import {useEncounterSession} from "./encounter/session";
 import {AgentChat} from "./agent/chat/AgentChat";
 import type {EncounterRow} from "./encounter/EncounterList";
 import {AgentLayer} from "./agent/AgentLayer";
-import {useAgentPresence} from "./agent/presence";
 import {navigateExplore,type PresentationMeta} from "./explore/navigate";
 import {MODE_CURATION,isWorkspaceMode,WORKSPACE_MODES,type WorkspaceMode} from "./workspace/mode";
 import {modeDefaultAgentBody} from "./workspace/agentBody";
@@ -30,7 +37,8 @@ import type {FactoryPanelHost} from "./contributions/factory/sidebar/sidebarMode
 import {publishCentreView} from "./contributions/factory/desk/deskModel";
 import {GroupPane} from "./surface/Workbench";
 import {centreBindingOf, ModeCentreBody, StageCentreMark, warmWorkspaceTrees} from "./surface/retention";
-import type {HostedAppState} from "./expressions/hostedApp";
+import {PRESENTED_EDITOR} from "./surface/presented";
+import {captureHostedInsertion,insertIntoHostedScene,type HostedAppState} from "./expressions/hostedApp";
 import {FactoryNavigator} from "./surfaces/navigator/FactoryNavigator";
 /**
  * The Cradle root (U0.3b + U0.4 + U0.6). One layout state, persisted to
@@ -108,6 +116,7 @@ import type {
 import { createPortal, flushSync } from "react-dom";
 import {OPEN_OBJECT_EVENT,ObjectCentreLayer,encodeObjectRef,isOpenObjectDetail} from "./agent/objects";
 import {factoryCentreOwns} from "./contributions/factory/objectKinds";
+import {OPEN_AUTOMATIONS_EVENT, openAutomations} from "./contributions/automations/open";
 
 function snapshotOf(state: LayoutState): RestorePoint {
   return {
@@ -257,7 +266,7 @@ export function CradleFrame({onComposed}:{onComposed?:()=>void}) {
     if (active && active !== document.body && active.closest(".workspace-canvas,.pane") && !active.closest(".ctx-menu,.world-navigator")) {
       returnFocus.current = active;
     } else if (!returnFocus.current?.isConnected) {
-      returnFocus.current = document.querySelector<HTMLElement>(".pane.focused .cm-content");
+      returnFocus.current = document.querySelector<HTMLElement>(PRESENTED_EDITOR);
     }
   };
   const summonWorld = () => {
@@ -267,7 +276,7 @@ export function CradleFrame({onComposed}:{onComposed?:()=>void}) {
   const dismissWorld = () => {
     setNavigatorOpen(false);
     requestAnimationFrame(() => {
-      const target = returnFocus.current?.isConnected ? returnFocus.current : document.querySelector<HTMLElement>(".pane.focused .cm-content");
+      const target = returnFocus.current?.isConnected ? returnFocus.current : document.querySelector<HTMLElement>(PRESENTED_EDITOR);
       target?.focus();
     });
   };
@@ -287,9 +296,20 @@ export function CradleFrame({onComposed}:{onComposed?:()=>void}) {
     lastFocusedSurface.current = null;
     restorePoint.current = snapshotOf(workspace.current.layout);
     const project = workspace.current.project;
+    let live = true;
     if (project) {
-      if (kernel.snapshot.navigator?.project?.project.name !== project) void kernel.apply({ op: "project_browse", project });
-    } else if (kernel.snapshot.navigator?.project) void kernel.apply({ op: "world_browse" });
+      if (kernel.snapshot.navigator?.project?.project.name !== project) void (async () => {
+        // The native project operation admits only the World census's refs.
+        if (!kernel.snapshot.navigator?.root) await kernel.apply({ op: "world_browse" });
+        if (live) await kernel.apply({ op: "project_browse", project });
+      })();
+    } else if (!kernel.snapshot.navigator?.root || kernel.snapshot.navigator?.project) {
+      // A restored Technè/Expressions mode does not mount WorldNavigator.
+      // Load the native World census here so its Wiki register chooser has
+      // the same real project inventory as a window first opened in Base.
+      void kernel.apply({ op: "world_browse" });
+    }
+    return () => { live = false; };
   }, [workspace.current.id, workspace.current.layout.mode, workspace.current.project]);
 
 
@@ -541,13 +561,14 @@ export function CradleFrame({onComposed}:{onComposed?:()=>void}) {
     setState(state=>groupsOf(state.root).some(group=>group.tabs.includes(binding.id))?executeFrameAction(state,"surface.activate",{surfaceId:binding.id}):openBinding({...state,closedStack:state.closedStack.filter(id=>id!==binding.id)},binding));
   };
 
-  const openFileRef=useRef<(location:CentralLocation)=>Promise<void>>(async()=>{});
+  const openFileRef=useRef<(location:CentralLocation,opts?:{current?:()=>boolean})=>Promise<void>>(async()=>{});
   /** Open a real file. Two canvas refinements (owner, 2026-09-19):
    * `replaceId` — a fresh tab's own opener-page choice replaces THAT tab in
    * place, in whatever canvas it lives, never a second tab; `into:"side"` —
    * the open lands in the sidebar's own pane canvas, the canvas the request
    * came from. */
-  const openFile = async (location:CentralLocation, opts?:{replaceId?:SurfaceId;into?:"side"}) => {
+  const openFile = async (location:CentralLocation, opts?:{replaceId?:SurfaceId;into?:"side";current?:()=>boolean}) => {
+    if(opts?.current&&!opts.current())throw Error("The source destination changed; open it again from the current Scene.");
     // FND-04: a binary material format (image/pdf/an unsupported disposition)
     // reads through the binary-safe `FileBytes` op; text/HTML/Markdown read
     // as UTF-8 — and BOTH reads run once, through the shared broker, with
@@ -555,6 +576,8 @@ export function CradleFrame({onComposed}:{onComposed?:()=>void}) {
     const format = detectFormat({path: location.path});
     const isBinaryMaterial = format === "image" || format === "pdf" || format === "unsupported";
     const title = location.path.split("/").pop() ?? "File";
+    const originWorkspaceId = workspaceRef.current.current.id;
+    workspace.rememberPlace({kind:"file",label:title,path:location.path,ref:location.ref,location,project:workspaceRef.current.current.project},originWorkspaceId);
     const replaceId = opts?.replaceId;
     // The canvas is the person's choice; asked without one, a file opens in
     // the VISIBLE canvas — in a dedicated-stage mode that is the sidebar's
@@ -585,6 +608,7 @@ export function CradleFrame({onComposed}:{onComposed?:()=>void}) {
       }
       if (kernel.transport.kind === "tauri" && location.ref) {
         const {invoke} = await import("@tauri-apps/api/core");
+        if (opts?.current&&!opts.current())throw Error("The source destination changed; open it again from the current Scene.");
         if (await invoke<boolean>("window_focus_subject",{reference:location.ref}))return;
       }
     }
@@ -597,10 +621,11 @@ export function CradleFrame({onComposed}:{onComposed?:()=>void}) {
     // replaced fresh tab becomes the pending destination where it stands; a
     // new tab opens into the named canvas — the sidebar's own pane canvas
     // when the open came from there.
-    const originWorkspaceId = workspaceRef.current.current.id;
     if (replaceId) setState(s => ({...s, surfaces: {...s.surfaces, [id]: {id, kind: "file", title, pending: true}}}));
     else if (into === "side") await openInSidePane({id, kind: "file", title, pending: true}, "none");
     else setState(s => openBinding({...s, closedStack: s.closedStack.filter(x => x !== id)}, {id, kind: "file", title, pending: true}));
+    const originMode=stateRef.current.mode??"base";
+    const stillAtFile=()=>workspaceRef.current.current.id===originWorkspaceId&&(stateRef.current.mode??"base")===originMode;
     try {
       const reading = isBinaryMaterial
         ? await acquireFileBytes(kernel.transport, location)
@@ -612,14 +637,14 @@ export function CradleFrame({onComposed}:{onComposed?:()=>void}) {
       // same tab, now a source binding, in the origin workspace.
       if (textReading?.source) {
         workspace.replaceSurface(originWorkspaceId, {id, kind: "source", ref: textReading.source.ref, title: textReading.source.path.split("/").pop() ?? title, project: textReading.project?.name});
-        if (workspaceRef.current.current.id === originWorkspaceId) setState(s => activateInHostCanvas(s, id));
+        if (stillAtFile()) setState(s => activateInHostCanvas(s, id));
         return;
       }
       const ref = reading.location.ref;
       const opened = await kernel.apply({op:"surface_open",surface_id:id,kind:"file",source_ref:ref,title});
       if(opened?.result!=="surface_opened")throw new Error("Central file surface could not be opened");
       workspace.replaceSurface(originWorkspaceId, {id, kind: "file", ref, title, project: textReading?.project?.name, location: reading.location});
-      if (workspaceRef.current.current.id === originWorkspaceId) setState(s => activateInHostCanvas(s, id));
+      if (stillAtFile()) setState(s => activateInHostCanvas(s, id));
     } catch (error) {
       // The pending tab becomes the failure's place (BOOT-09): the location
       // is kept, the error overlay + Retry render where the tab is, and
@@ -646,7 +671,9 @@ export function CradleFrame({onComposed}:{onComposed?:()=>void}) {
     await openSource({ref: buffer.source_ref, path: buffer.path ?? "", treatment: "projectcentral-user", agent_retrieval_allowed: true, revision: buffer.base_revision}, undefined);
   };
 
-  const openKnowledge = async (address: KnowledgeAddress, title: string, project?: string, placement: "tab"|"page"|"window" = "tab", graphOrigin?:string, intoArg?: "side") => {
+  const openKnowledge = async (address: KnowledgeAddress, title: string, project?: string, placement: "tab"|"page"|"window" = "tab", graphOrigin?:string, intoArg?: "side", stillCurrent?:()=>boolean) => {
+    const requireCurrent=()=>{if(stillCurrent&&!stillCurrent())throw new Error("Navigation changed while the source was opening; open it again from its Scene.");};
+    requireCurrent();
     if(placement==="window"&&kernel.transport.kind!=="tauri")throw new Error("Native popout is available in the desktop app");
     // Project wiki ownership is an exact Central disclosure, never inferred
     // from a label or parsed out of an opaque wiki reference.
@@ -655,15 +682,16 @@ export function CradleFrame({onComposed}:{onComposed?:()=>void}) {
     const into = intoArg ?? personCanvasAsk();
     // A side-canvas open detaches nowhere: pop-out is a centre-tree act.
     if(into==="side"&&placement==="window")placement="tab";
-    if(kernel.transport.kind==="tauri"&&placement==="tab") {
+    if(!stillCurrent&&kernel.transport.kind==="tauri"&&placement==="tab") {
       const {invoke}=await import("@tauri-apps/api/core");
       if(await invoke<boolean>("window_focus_subject",{reference:address.value})) return;
     }
     const read = await knowledge<KnowledgeReading>(kernel.transport,project,{action:"read",address});
+    requireCurrent();
     const current = stateRef.current;
     // Single-host law: one knowledge page, one tab — activate where it is,
     // move it to the asking canvas, or open it there fresh.
-    const same=(b:SurfaceBinding)=>b.kind==="knowledge"&&b.ref===read.resource&&(!graphOrigin||b.view?.graphOrigin===graphOrigin)&&(b.view?.knowledgePlane==="page")===(placement!=="tab");
+    const same=(b:SurfaceBinding)=>b.kind==="knowledge"&&b.ref===read.resource&&b.project===project&&(!graphOrigin||b.view?.graphOrigin===graphOrigin)&&(b.view?.knowledgePlane==="page")===(placement!=="tab");
     if(into==="side"){
       const twins=twinsByCanvas(same);
       if(twins.side){setState(s=>activateInHostCanvas(s,twins.side!.id));}
@@ -672,6 +700,7 @@ export function CradleFrame({onComposed}:{onComposed?:()=>void}) {
         const binding:SurfaceBinding={id:crypto.randomUUID(),kind:"knowledge",ref:read.resource,title,project,address,...(placement!=="tab"?{view:{knowledgePlane:"page" as const,graphOrigin}}:{})};
         const opened = await kernel.apply({op:"surface_open",surface_id:binding.id,kind:"knowledge",source_ref:binding.ref,title:binding.title});
         if (opened?.result !== "surface_opened") throw new Error("The native knowledge surface could not be opened");
+        requireCurrent();
         setState(s=>openInSidePlace(s,binding.id,binding));
       }
     } else {
@@ -680,6 +709,7 @@ export function CradleFrame({onComposed}:{onComposed?:()=>void}) {
       const binding:SurfaceBinding = existing ?? {id:crypto.randomUUID(),kind:"knowledge",ref:read.resource,title,project,address,...(placement!=="tab"?{view:{knowledgePlane:"page" as const,graphOrigin}}:{})};
       const opened = await kernel.apply({op:"surface_open",surface_id:binding.id,kind:"knowledge",source_ref:binding.ref,title:binding.title});
       if (opened?.result !== "surface_opened") throw new Error("The native knowledge surface could not be opened");
+      requireCurrent();
       setState(s=>groupsOf(s.root).some(g=>g.tabs.includes(binding.id)) ? executeFrameAction(s,"surface.activate",{surfaceId:binding.id}) : openBinding({...s,closedStack:s.closedStack.filter(id=>id!==binding.id)},binding));
       if(placement==="window") {
         try {
@@ -815,10 +845,10 @@ export function CradleFrame({onComposed}:{onComposed?:()=>void}) {
     // layout binding: an awaited owner call here could resolve after a further
     // switch and land this mode's surface in another mode's tree. The kernel
     // learns of the binding through the ordinary mount reconciliation.
-    const title={factory:"Factory",expressions:"Expressions",techne:"Technè","epi-logos":"Epi-Logos",system:"Settings"}[centre];
+    const title=hostedSurfaceFor({kind:centre})?.descriptor.title??centre;
     setState(s=>{
       const existing=Object.values(s.surfaces).find(binding=>binding.kind===centre);
-      const binding=existing??{id:crypto.randomUUID(),kind:centre,title};
+      const binding=existing??withHostedDescriptor({id:crypto.randomUUID(),kind:centre,title});
       return groupsOf(s.root).some(group=>group.tabs.includes(binding.id))?executeFrameAction(s,"surface.activate",{surfaceId:binding.id}):openBinding({...s,closedStack:s.closedStack.filter(id=>id!==binding.id)},binding);
     });
     // Factory's centre is Desk/Tasks (handoff §11): the mode surface mounts
@@ -880,7 +910,7 @@ export function CradleFrame({onComposed}:{onComposed?:()=>void}) {
       workspaceRef.current.setContext(context=>({...context,subject:{ref:item.ref,kind:item.kind,title:item.title,project:item.project},trail:[...(context.trail??[]),{mode,label:"Library",surfaceKind:"library",surfaceRef:item.ref}]}));
       setLibrary("held");
       if(d.how==="expression"&&(item.expressionRef??item.ref).startsWith("expression:")){enterModeRef.current("expressions");try{summonExpression(item.expressionRef??item.ref);}catch(reason){fail(reason);}}
-      else if(d.how==="instrument"){enterModeRef.current("techne");if(item.sourceLocation)requestAnimationFrame(()=>window.dispatchEvent(new CustomEvent("oi:techne-add-material",{detail:{location:item.sourceLocation}})));}
+      else if(d.how==="instrument"){fail("Choose Insert into current Scene from the Library with its native destination open.");}
       else if(d.how==="source"&&item.sourceLocation){enterModeRef.current("base");void openFileRef.current(item.sourceLocation).catch(fail);}
       else if(item.kind==="composition"){enterModeRef.current("expressions");try{summonExpression(item.ref);}catch(reason){fail(reason);}}
       else void openKnowledgeRef.current({kind:"wiki",value:item.ref},item.title,item.project).catch(fail);
@@ -894,6 +924,41 @@ export function CradleFrame({onComposed}:{onComposed?:()=>void}) {
         setState(s=>groupsOf(s.root).some(g=>g.tabs.includes(binding.id))?executeFrameAction(s,"surface.activate",{surfaceId:binding.id}):openBinding({...s,closedStack:s.closedStack.filter(id=>id!==binding.id)},binding));
       }).catch(fail);
     };
+    const sceneSourceOpen=(event:Event)=>{
+      const target=detail<{target?:HostedSourceTarget}>(event)?.target;
+      if((!target?.address?.value&&!target?.location)||!target.returnTo?.place?.ref)return;
+      leave("Scene",target.returnTo);enterModeRef.current("base");
+      const workspaceId=workspaceRef.current.current.id,root=stateRef.current.root;
+      const current=()=>workspaceRef.current.current.id===workspaceId&&(stateRef.current.mode??"base")==="base"&&stateRef.current.root===root;
+      if(target.location)void openFileRef.current(target.location,{current}).catch(fail);
+      else if(target.address)void openKnowledgeRef.current(target.address,target.title,target.project,"tab",undefined,undefined,current).catch(fail);
+    };
+    const constellationOpen=(event:Event)=>{
+      const d=detail<{target?:{frame_ref:string;title:string;project?:string};returnTo?:unknown;complete?:(error?:string)=>void}>(event),target=d?.target;
+      if(!target?.frame_ref){d?.complete?.("No verified constellation was supplied");return;}
+      leave("Canvas",d.returnTo);enterModeRef.current("base");
+      const destinationWorkspaceId=workspaceRef.current.current.id;
+      // This request has already inspected the exact native Scene and its
+      // current source. Open the existing editor without an unrelated graph read.
+      const existing=Object.values(stateRef.current.surfaces).find(b=>b.kind==="knowledge"&&b.ref===target.frame_ref&&b.project===target.project);
+      const binding:SurfaceBinding={...(existing??{id:crypto.randomUUID(),kind:"knowledge" as const,ref:target.frame_ref,title:target.title,project:target.project,address:{kind:"wiki" as const,value:target.frame_ref}}),view:{...existing?.view,constructionFrame:{ref:target.frame_ref,requestId:crypto.randomUUID()}}};
+      void kernel.apply({op:"surface_open",surface_id:binding.id,kind:"knowledge",source_ref:binding.ref,title:binding.title}).then(opened=>{
+        if(opened?.result!=="surface_opened")throw new Error("The constellation editor could not be opened");
+        if(workspaceRef.current.current.id!==destinationWorkspaceId||(stateRef.current.mode??"base")!=="base")throw new Error("The workspace changed while the constellation editor was opening; open it again from the selected Canvas.");
+        setState(s=>{const next={...s,surfaces:{...s.surfaces,[binding.id]:binding}};return s.sidePane?.tabs.includes(binding.id)?activateInHostCanvas(next,binding.id):groupsOf(s.root).some(g=>g.tabs.includes(binding.id))?executeFrameAction(next,"surface.activate",{surfaceId:binding.id}):openBinding({...next,closedStack:s.closedStack.filter(id=>id!==binding.id)},binding);});
+        d.complete?.();
+      }).catch(error=>{const reason=String(error instanceof Error?error.message:error);d.complete?.(reason);fail(error);});
+    };
+    const automationsOpen=(event:Event)=>{
+      const request=detail<{project?:string}>(event);
+      const project=request?request.project:workspaceRef.current.current.project??undefined;
+      const existing=Object.values(stateRef.current.surfaces).find(binding=>binding.kind==="automations"&&binding.project===project);
+      const binding:SurfaceBinding=existing??{id:crypto.randomUUID(),kind:"automations",title:"Automations",project};
+      void kernel.apply({op:"surface_open",surface_id:binding.id,kind:"automations",title:binding.title}).then(opened=>{
+        if(opened?.result!=="surface_opened")throw new Error("The Automations surface could not be opened");
+        setState(s=>groupsOf(s.root).some(g=>g.tabs.includes(binding.id))?executeFrameAction(s,"surface.activate",{surfaceId:binding.id}):openBinding({...s,closedStack:s.closedStack.filter(id=>id!==binding.id)},binding));
+      }).catch(fail);
+    };
     const message=(event:Event)=>{const text=detail<{message?:string}>(event)?.message;if(text)setWindowError(text);};
     // The agent setup flow records the mode it left so its own return event
     // can restore it; the general settings close still uses the frame's
@@ -903,12 +968,13 @@ export function CradleFrame({onComposed}:{onComposed?:()=>void}) {
     const closeSettings=()=>{
       if ((stateRef.current.mode ?? "base") !== "settings") return;
       enterModeRef.current(stateRef.current.settingsReturnMode ?? "base");
-      requestAnimationFrame(() => document.querySelector<HTMLElement>('.warm-tree-host:not([hidden]) .pane.focused .cm-content, .warm-tree-host:not([hidden]) .pane.focused [role="tab"][aria-selected="true"]')?.focus());
+      requestAnimationFrame(() => document.querySelector<HTMLElement>(`${PRESENTED_EDITOR}, .warm-tree-host:not([hidden]) .pane.focused [role="tab"][aria-selected="true"]`)?.focus());
     };
     const agentSetupReturn=()=>{if(agentSetupReturnMode!==undefined){const mode=agentSetupReturnMode;agentSetupReturnMode=undefined;enterModeRef.current(mode);}};
     // Results' "Open in centre": the subject's own tab if it is open here, else its file.
     const openSubject=(event:Event)=>{const subject=detail<{subject?:{ref?:string;location?:CentralLocation}}>(event)?.subject;if(!subject)return;if(subject.location){void openFileRef.current(subject.location).catch(fail);return;}const held=Object.values(stateRef.current.surfaces).find(binding=>!!subject.ref&&binding.ref===subject.ref);if(held)setState(s=>executeFrameAction(s,"surface.activate",{surfaceId:held.id}));};
     const pairs:[string,(event:Event)=>void][]=[["oi:open-agency",agencyOpen],["oi:panel-open-subject",openSubject],["oi:workspace-message",message],["oi:open-settings",settings],["oi:close-settings",closeSettings],["oi:agent-setup-return",agentSetupReturn],["oi:library-open",libraryOpen],["oi:epi-open-expression",expression],["oi:epi-examine",examine],["oi:epi-open-source",source],["oi:epi-open-knowledge",knowledgeOpen],["oi:context-return",back]];
+    pairs.push([OPEN_AUTOMATIONS_EVENT,automationsOpen],["oi:open-scene-constellation",constellationOpen],["oi:open-scene-source",sceneSourceOpen]);
     for(const [name,handler] of pairs)window.addEventListener(name,handler);
     return()=>{for(const [name,handler] of pairs)window.removeEventListener(name,handler);};
   },[]);
@@ -946,27 +1012,6 @@ export function CradleFrame({onComposed}:{onComposed?:()=>void}) {
     window.addEventListener("oi:techne-open-file",open);
     return()=>window.removeEventListener("oi:techne-open-file",open);
   },[]);
-  // "Open in instrument" hands the material to Technè's active scene — the
-  // gathering path material-first work depends on. The add never blocks: a
-  // scene is ensured, the material joins it, and the file itself opens in
-  // the centre through the frame's own opener (the documented ⌘⏎ route).
-  useEffect(()=>{
-    const add=async(event:Event)=>{
-      const location=(event as CustomEvent<{location?:CentralLocation}>).detail?.location;
-      if(!location)return;
-      try{
-        const slash=location.path.lastIndexOf("/"),parent=slash<0?".":location.path.slice(0,slash),name=location.path.slice(slash+1);
-        const directory=await listFiles(kernel.transport,parent);
-        const entry=directory.entries.find(candidate=>candidate.name===name&&candidate.kind==="file");
-        if(!entry){setWindowError(`Central lists no "${name}" — the material ref is not a readable file`);return;}
-        if(!entry.retrieval_allowed){setWindowError(`Central's retrieval policy does not allow reading ${name}`);return;}
-        const added=addToActiveMaterialScene({kind:"file",location:entry.location},entry.name);
-        if(added)window.dispatchEvent(new CustomEvent("oi:techne-open-file",{detail:{location:entry.location}}));
-      }catch(reason){setWindowError(String(reason instanceof Error?reason.message:reason));}
-    };
-    window.addEventListener("oi:techne-add-material",add);
-    return()=>window.removeEventListener("oi:techne-add-material",add);
-  },[]);
 
   const openFresh=(groupId?:string)=>{
     const binding:SurfaceBinding={id:crypto.randomUUID(),kind:"blank",title:"New tab",project:workspaceRef.current.current.project??undefined};
@@ -989,6 +1034,20 @@ export function CradleFrame({onComposed}:{onComposed?:()=>void}) {
    *  2026-09-13, #267). The ground is written only when the human explicitly
    *  saves real content (placeDraft). The navigator's New flow keeps this
    *  law; the rest page's Start writing is the exception (startFlowWriting). */
+  // An acknowledged device recovery opens a local draft only. No caller
+  // detail can supply source identity, Project or native write authority.
+  useEffect(()=>{
+    const recover=(event:Event)=>{
+      const detail=(event as CustomEvent<unknown>).detail;
+      if(!detail||typeof detail!=="object")return;
+      const {id,title}=detail as {id?:unknown;title?:unknown};
+      if(typeof id!=="string"||!/^device-recovery:[0-9a-f-]{36}$/.test(id)||typeof title!=="string"||title.length>80||/[\u0000-\u001f]/.test(title))return;
+      if(readUnplacedDraft(id)?.unverified_recovery!==true)return;
+      setState(state=>openBinding(state,{id,kind:"draft",title}));
+    };
+    window.addEventListener("oi:recover-device-copy",recover);
+    return()=>window.removeEventListener("oi:recover-device-copy",recover);
+  },[]);
   const startWriting=async()=>{
     setState(s=>openBinding(s,{id:crypto.randomUUID(),kind:"draft",title:"Draft"}));
   };
@@ -1028,7 +1087,10 @@ export function CradleFrame({onComposed}:{onComposed?:()=>void}) {
         const opened=await kernel.apply({op:"surface_open",surface_id:surfaceId,kind:"flow",title,source_ref:location.ref});
         if(opened?.result!=="surface_opened")throw new Error("Central created the flow document but the surface could not be opened.");
         await kernel.apply({op:"surface_focus",surface_id:surfaceId});
-        setState(s=>({...s,surfaces:{...s.surfaces,[surfaceId]:binding}}));
+        // A draft being placed already holds its tab: the binding yields in
+        // place. A freshly minted surface (the rest page's Start writing) has
+        // no placement yet and opens as a tab like any other open.
+        setState(s=>s.surfaces[surfaceId]?{...s,surfaces:{...s.surfaces,[surfaceId]:binding}}:openBinding(s,binding));
         return;
       }catch(reason){
         lastError=reason;
@@ -1486,10 +1548,14 @@ export function CradleFrame({onComposed}:{onComposed?:()=>void}) {
     onOpenActivity:()=>setState(s=>({...s,rightDepth:s.rightDepth==="collapsed"?"panel":s.rightDepth,panelPlanes:{...s.panelPlanes,factory:"run"}})),
     onMessage:message=>setWindowError(message),
   };
+  const [chosenAgentRef]=useChosenAgent(workspace.current.project);
+  const centreRoster=useAgentRoster(workspace.current.project,!!chosenAgentRef);
+  const centreAgent=centreRoster.agents.find(agent=>agent.ref===chosenAgentRef);
   const factoryCentre=
     <AgentChat session={factoryChatSession} accompanying={state.accompanying??undefined}
       project={workspace.current.project??state.accompanying?.project}
-      agentName="Factory agent"
+      agentName={centreAgent?.name}
+      identity={centreAgent?{name:centreAgent.name,ref:centreAgent.ref,description:centreAgent.purpose,state:"read"}:undefined}
       situating={workspace.current.project?`Situated in ${workspace.current.project}`:"Situated in Central"}
       choosing={factoryChoosing}
       variant="centre"
@@ -1659,11 +1725,7 @@ export function CradleFrame({onComposed}:{onComposed?:()=>void}) {
         nativeWindows={kernel.transport.kind==="tauri"}
         workspaceName={workspace.current.name}/>);})(),
   };
-  /** The Status face of the agent-work gradient (Status → Preview →
-    * Takeover): the observed encounter state, carried in the frame while the
-    * panel is collapsed. One more subscriber on the SAME shared observer —
-    * never a second poll loop. */
-  const agentPresence=useAgentPresence(state.accompanying?{project:state.accompanying.project,ref:state.accompanying.ref,space:state.accompanying.space}:undefined,state.rightDepth!=="collapsed");
+  const situation=useMemo(()=>buildSituationFrame({workspace:workspace.current,snapshot:kernel.snapshot,restorePoint:restorePoint.current}),[workspace.current,kernel.snapshot]);
   const agentLayer=<AgentLayer mode={mode} preferredBodyRef={epiPrimeBodyDefault} plane={state.panelPlanes?.[mode]} onPlane={plane=>setState(s=>s.panelPlanes?.[mode]===plane?s:{...s,panelPlanes:{...s.panelPlanes,[mode]:plane}})} extraPlanes={modeExtraPlanes(mode,panelSubject,state.accompanying,message=>setWindowError(message),factoryPanelHost,state.rightDepth==="full",taPaneOpens,workspace.current.project)} onError={report}
     onOpenConversation={accompanying=>void openConversationInCentre(accompanying).catch(report)}
     onOpenSubject={subject=>{if(subject.location){void openFile(subject.location).catch(report);return;}const held=Object.values(stateRef.current.surfaces).find(binding=>!!subject.ref&&binding.ref===subject.ref);if(held)execute("surface.activate",{surfaceId:held.id});}}
@@ -1678,13 +1740,13 @@ export function CradleFrame({onComposed}:{onComposed?:()=>void}) {
   const planeOf=(pattern:RegExp)=>MODE_CURATION[mode].panel.planes.find(plane=>pattern.test(plane));
   const leftHost:LeftHost={
     onSearch:()=>setSearchOpen(true),
-    onNewChat:()=>{if(mode==="factory"){setState(s=>({...s,accompanying:undefined}));publishCentreView("tasks");return;}const chat=planeOf(/^chat$/i);setState(s=>({...s,accompanying:undefined,rightDepth:s.rightDepth==="full"?"full":"panel",panelPlanes:chat?{...s.panelPlanes,[mode]:chat}:s.panelPlanes}));},
+    onNewChat:()=>{if(curation.panel.conversationInCentre){setState(s=>({...s,accompanying:undefined}));publishCentreView("tasks");return;}const chat=planeOf(/^chat$/i);setState(s=>({...s,accompanying:undefined,rightDepth:s.rightDepth==="full"?"full":"panel",panelPlanes:chat?{...s.panelPlanes,[mode]:chat}:s.panelPlanes}));},
     onNewFlow:()=>void startWriting(),
     onNewExpression:()=>void createExpression(kernel.transport).catch(report),
     onNewAgent:()=>window.dispatchEvent(new CustomEvent("oi:open-agency",{detail:{project:workspace.current.project}})),
-    onOpenChat:row=>{const chat=planeOf(/^chat$/i);if(mode==="factory"||!chat)return factoryChoose(row);setState(s=>({...s,accompanying:{ref:row.ref,project:row.project,space:row.space},rightDepth:s.rightDepth==="full"?"full":"panel",panelPlanes:{...s.panelPlanes,[mode]:chat}}));},
+    onOpenChat:row=>{const chat=planeOf(/^chat$/i);if(curation.panel.conversationInCentre||!chat)return factoryChoose(row);setState(s=>({...s,accompanying:{ref:row.ref,project:row.project,space:row.space},rightDepth:s.rightDepth==="full"?"full":"panel",panelPlanes:{...s.panelPlanes,[mode]:chat}}));},
     openConversationRef:state.accompanying?.ref,
-    onOpenChatInCentre:row=>mode==="factory"?factoryChoose(row):openEncounter(row),
+    onOpenChatInCentre:row=>curation.panel.conversationInCentre?factoryChoose(row):openEncounter(row),
     onOpenFile:location=>openFile(location),
     onOpenBeside:async location=>{await openFile(location,{into:"side"});const context=planeOf(/context/i);setState(s=>({...s,rightDepth:s.rightDepth==="full"?"full":"panel",panelPlanes:context?{...s.panelPlanes,[mode]:context}:s.panelPlanes}));},
     onPopOut:kernel.transport.kind==="tauri"?async location=>{await openFile(location);requestAnimationFrame(()=>{const held=Object.values(stateRef.current.surfaces).find(binding=>binding.location?.ref===location.ref||binding.ref===location.ref);if(held)void detach(held.id);});}:undefined,
@@ -1695,13 +1757,12 @@ export function CradleFrame({onComposed}:{onComposed?:()=>void}) {
   const worldNavigator=(workspaceSelector:ReactNode)=><WorldNavigator onAgent={summonAgent} onMessage={message=>setWindowError(message)} onExplore={()=>void openExplore().catch(e=>setWindowError(String(e)))} mode={mode} onMode={enterMode} onOpenEncounter={openEncounter} centralFiles={workspace.current.centralFiles??false} onCentralFilesChange={workspace.setCentralFiles} workspaceSelector={workspaceSelector} searchShortcut={leader.label} key={workspace.current.id} projectNavigation={workspace.current.projectNavigation ?? {}} onNavigationChange={(ref,change)=>workspace.setProjectNavigation(ref,change,workspace.current.id)} onOpenFile={openFile} onProjectChange={workspace.browse} onOpenToday={openToday} onOpenWiki={(ref,title,project)=>openKnowledge({kind:"wiki",value:ref},title,project)} onSearch={()=>setSearchOpen(true)} activeEncounterRef={activeEncounterRef} onOpenFlowInstance={row=>openFlowInstance(row)} onNewFlow={()=>startWriting()} />;
 
   return (
-    <>
+    <SituationProvider value={situation}>
       <ExpressionLayout layout={state}/>
-      <DesktopShell left={leftHost} onLibrary={()=>setLibrary(value=>value==="open"?"held":"open")} world={workspace.current.context?.world} onLeaveWorld={leaveEpiWorld} returnTo={workspace.current.context?.trail?.slice(-1)[0]} onReturn={()=>window.dispatchEvent(new Event("oi:context-return"))} mode={mode} onMode={enterMode} windowLights={windowLights} onTabPresentation={presentation=>execute(`frame.tabs:${presentation}`)} onToggleNavigator={()=>navigatorRef.current ? dismissWorld() : summonWorld()} onCloseNavigator={dismissWorld} native={kernel.transport.kind==="tauri"} namingRequest={namingRequest} onNamingHandled={()=>setNamingRequest(null)}
+      <ActiveEncounterContext.Provider value={state.accompanying}><DesktopShell left={leftHost} onLibrary={()=>setLibrary(value=>value==="open"?"held":"open")} world={workspace.current.context?.world} onLeaveWorld={leaveEpiWorld} returnTo={workspace.current.context?.trail?.slice(-1)[0]} onReturn={()=>window.dispatchEvent(new Event("oi:context-return"))} mode={mode} onMode={enterMode} windowLights={windowLights} onTabPresentation={presentation=>execute(`frame.tabs:${presentation}`)} onToggleNavigator={()=>navigatorRef.current ? dismissWorld() : summonWorld()} onCloseNavigator={dismissWorld} native={kernel.transport.kind==="tauri"} namingRequest={namingRequest} onNamingHandled={()=>setNamingRequest(null)}
         arrangementActions={<ArrangementActions state={state} execute={execute} openFrameMenu={openFrameMenu} nativeWindows={kernel.transport.kind==="tauri"}/>}
         subject={{ref:subjectRef,title:subjectTitle,context:<><h2>{subjectTitle}</h2>{subjectBinding?.flow&&<p data-subject-flow-ref={subjectBinding.flow.flowRef}>Working through <code>{subjectBinding.flow.flowRef}</code></p>}{subjectBuffer ? <p>{subjectBuffer.project} · {subjectBuffer.dirty ? "Unsaved changes" : "Saved"}</p> : subjectBinding?.project ? <p>{subjectBinding.project}</p> : <p>Select a surface to inspect its context.</p>}</>,history:subjectHistory}}
         right={agentLayer}
-        agentPresence={agentPresence}
         layout={state} setLayout={setState} workspace={workspace.current} workspaces={workspace.workspaces} activate={workspace.activate} create={workspace.create} rename={workspace.rename} onRecover={workspace.showRecovery} error={workspace.error ?? windowError ?? kernel.opError ?? null} onErrorDismiss={()=>{setWindowError(undefined); workspace.dismissError(); kernel.dismissOpError();}}
         epiLogos={state.epiLogos===true} onEpiLogosToggle={()=>{epiWorldActive()?leaveEpiWorld():enterEpiWorld();}}
         recovery={workspace.recovery} onRecoverAvailable={workspace.recoverAvailable} onStartFresh={workspace.startFresh} onReload={()=>workspace.reload()}
@@ -1717,10 +1778,10 @@ export function CradleFrame({onComposed}:{onComposed?:()=>void}) {
       {stageCentres.map(({mode: stageMode, binding}) => {
         const presented = stageMode === mode && !!binding;
         return (
-          <div key={`mode-stage-${stageMode}`} className="mode-stage" data-mode={stageMode} data-mode-stage={stageMode} data-window-corner="true" data-window-corner-left="true" hidden={!presented || undefined}>
+          <CanvasStage key={`mode-stage-${stageMode}`} data-mode={stageMode} data-mode-stage={stageMode} data-window-corner="true" data-window-corner-left="true" hidden={!presented || undefined}>
             {binding && <StageCentreMark binding={binding} presented={presented}/>}
             {binding && <ModeCentreBody key={binding.id} binding={binding} subject={workspace.current.context?.subject} factoryCentre={factoryCentre} factoryTasks={factoryCentreProps} onHostedState={engineCallbackFor(binding.id)}/>}
-          </div>
+          </CanvasStage>
         );
       })}
       {/* The centre region renders as ONE stable sibling list — the rest
@@ -1752,13 +1813,7 @@ export function CradleFrame({onComposed}:{onComposed?:()=>void}) {
               const form=DOCUMENT_FORMS.find(candidate=>candidate.kind==="document-epi-card");
               if(!form)throw new Error("The Epi-Card form is not offered by the document roster");
               await openFile((await createFormInPlace(kernel.transport,form,{project:workspace.current.project,projects:kernel.snapshot.navigator?.root?.work.projects})).location);
-            }}
-            onWiki={(() => {
-            const reading=kernel.snapshot.navigator;
-            const project=reading?.project?.project;
-            const ref=project ? project.projectcentral.agent_wiki.wiki.space_ref : reading?.root?.control.agent_wiki.wiki.space_ref;
-            return ref ? () => { void openKnowledge({kind:"wiki",value:ref},project ? `${project.name} wiki` : "Central wiki",project?.name).catch(e=>setWindowError(String(e))); } : undefined;
-          })()} />
+            }} />
         </RestPane>
       </div>
       {/* The warm trees (surface/retention.tsx): every tree of the warm set
@@ -1791,24 +1846,38 @@ export function CradleFrame({onComposed}:{onComposed?:()=>void}) {
         </div>
       ))}
       <ObjectCentreLayer fullPage={modeSoloStage} yields={object=>factoryCentreOwns(mode,object.kind)}/>
-      </DesktopShell>
+      </DesktopShell></ActiveEncounterContext.Provider>
       {WalkChannel&&<WalkChannel layout={state}/>}
-      <ContextTray bindings={{...Object.assign({},...workspace.workspaces.map(w=>w.layout.surfaces)),...state.surfaces}} accompanying={state.accompanying}/>
+      <ContextTray bindings={{...Object.assign({},...workspace.workspaces.flatMap(w=>[w.layout.surfaces,...Object.values(w.modeLayouts??{}).map(layout=>layout.surfaces)])),...state.surfaces}} accompanying={state.accompanying}/>
       {/* T2 summon seam: answers "oi:techne-summon" (library / verso / search)
         * through the same Library overlay and the verso account overlay. */}
       <TechneSummonSurface subject={workspace.current.context?.subject} trail={workspace.current.context?.trail} onOpenLibrary={()=>setLibrary("open")}/>
       {library!=="closed"&&<Suspense fallback={null}><div className="library-overlay" hidden={library!=="open"} role="dialog" aria-modal="true" aria-label="Library" onKeyDown={event=>{if(event.key==="Escape"&&!event.defaultPrevented){event.stopPropagation();setLibrary("held");}}}>
         <button className="library-scrim" aria-label="Close the Library" onClick={()=>setLibrary("held")}/>
-        <div className="library-sheet"><LibraryBrowser mode={mode} onMessage={message=>setWindowError(message)} onOpen={(item,how)=>window.dispatchEvent(new CustomEvent("oi:library-open",{detail:{item,how}}))}/></div>
+        <div className="library-sheet"><LibraryBrowser mode={mode} active={library==="open"} requestContext={workspace.current.id} onMessage={message=>setWindowError(message)}
+          captureInsertion={()=>{
+            const currentMode=stateRef.current.mode??"base";
+            if(currentMode!=="techne"&&currentMode!=="expressions")throw new Error("Open the native Expression Scene that should receive this source first.");
+            return {target:captureHostedInsertion(),workspaceId:workspaceRef.current.current.id,mode:currentMode};
+          }}
+          onOpen={async(item,how,capture,signal)=>{
+            if(how!=="instrument"){window.dispatchEvent(new CustomEvent("oi:library-open",{detail:{item,how}}));return;}
+            if(!capture)throw new Error("The source insertion has no captured native Scene.");
+            const current=()=>workspaceRef.current.current.id===capture.workspaceId&&(stateRef.current.mode??"base")===capture.mode;
+            if(!current())throw new Error("The workspace changed while the source was selected.");
+            await insertIntoHostedScene(capture.target,item,current,signal);
+            if(current()&&!signal?.aborted)setLibrary("held");
+          }}/>
+</div>
       </div></Suspense>}
-      {searchOpen && <SearchOverlay typed={{registers:["",...(kernel.snapshot.navigator?.root?.work.projects??[]).map(entry=>entry.name)],onOpenChat:leftHost.onOpenChat,onOpenFlow:row=>openFlowInstance(row),onOpenAgents:leftHost.onNewAgent,actions:[{label:"New chat",hint:"Start a fresh conversation",run:leftHost.onNewChat!},{label:"New flow",hint:"Start writing",run:leftHost.onNewFlow!},...(["base","factory","expressions","techne","settings"] as const).map(id=>({label:`Go to ${id==="base"?"Base":MODE_CURATION[id].label}`,hint:"Mode",run:()=>enterMode(id)}))]}} leader={leader.shift} onLeaderChange={leader.change} shortcutError={leader.error} project={workspace.current.project} onClose={()=>setSearchOpen(false)} onOpen={openKnowledge} />}
+      {searchOpen && <SearchOverlay typed={{registers:["",...(kernel.snapshot.navigator?.root?.work.projects??[]).map(entry=>entry.name)],onOpenChat:leftHost.onOpenChat,onOpenFlow:row=>openFlowInstance(row),onOpenAgents:leftHost.onNewAgent,actions:[{label:"Automations",hint:"Routines, Methods and harness timers",run:()=>openAutomations(workspace.current.project)},{label:"New chat",hint:"Start a fresh conversation",run:leftHost.onNewChat!},{label:"New flow",hint:"Start writing",run:leftHost.onNewFlow!},...(["base","factory","expressions","techne","settings"] as const).map(id=>({label:`Go to ${id==="base"?"Base":MODE_CURATION[id].label}`,hint:"Mode",run:()=>enterMode(id)}))]}} leader={leader.shift} onLeaderChange={leader.change} shortcutError={leader.error} project={workspace.current.project} onClose={()=>setSearchOpen(false)} onOpen={openKnowledge} />}
       {Object.entries(surfaceErrors).map(([id, error]) => (
         <SurfaceErrorOverlay key={id} surfaceId={id} error={error} onRetry={() => retrySurfaceOpen(id)} />
       ))}
       {menu ? (
         <ContextMenu menu={menu} onInvoke={invoke} onClose={() => setMenu(null)} />
       ) : null}
-    </>
+    </SituationProvider>
   );
 }
 
@@ -1820,7 +1889,7 @@ export function CradleFrame({onComposed}:{onComposed?:()=>void}) {
 function RestPane({ children }: { children: ReactNode }) {
   return <div className="workbench"><main className="surface-host" aria-label="Canvas">
     <section className="pane group focused" data-pane="group" data-window-corner="true" data-window-corner-left="true" aria-label="Surface group">
-      <div className="tab-strip" aria-hidden="true"><div className="tab-scroll"/></div>
+      <CanvasHUD aria-hidden="true"/>
       <div className="surface-body">{children}</div>
       <footer className="pane-status pane-footer" aria-label="Pane status"/>
     </section>

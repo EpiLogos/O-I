@@ -176,9 +176,21 @@ export function plane(): Promise<ConfigPlaneSource> {
   return planeSource;
 }
 
+let compositionRead: Promise<{reading: {owners: OwnerMount[]}}> | null = null;
+export function invalidateComposition(): void { compositionRead = null; }
+function readComposition(): Promise<{reading: {owners: OwnerMount[]}}> {
+  compositionRead ??= expect<{reading: {owners: OwnerMount[]}}>({op: "system_composition_read"}, "system_composition_reading");
+  return compositionRead;
+}
+
 let disclosure: Promise<SystemDisclosureSource> | null = null;
 function disclosureSource(): Promise<SystemDisclosureSource> {
-  disclosure ??= systemDisclosureSource();
+  disclosure ??= systemDisclosureSource(async (op) => {
+    if (op.op === "system_composition_read") return {outcome: await readComposition() as unknown as KernelOutcome};
+    const send = call();
+    if (!send) throw new Error("The desktop kernel is unavailable.");
+    return send(op);
+  });
   return disclosure;
 }
 
@@ -272,6 +284,27 @@ export async function loadRegistry(): Promise<void> {
  * (setting, scope) pairs the open sections watch. Each owner resolution is
  * a slow read, so only what a section shows is read; concurrent calls
  * coalesce into one more round. */
+const freshResolutions = new Set<string>();
+let resolutionRevision = 0;
+export function invalidateResolutions(setting_ref?: string, scope?: ScopeAddress): void {
+  resolutionRevision += 1;
+  if (setting_ref && scope) freshResolutions.delete(resolutionKey(setting_ref, scope));
+  else freshResolutions.clear();
+}
+
+/** A staged write changes one address. Re-read that address, preserving all
+ * other cached scopes and avoiding the full desired-store diff on each click. */
+export async function refreshResolution(setting_ref: string, scope: ScopeAddress): Promise<void> {
+  const source = await plane();
+  const rows = await source.readResolutions([{setting_ref, scope}]);
+  const key = resolutionKey(setting_ref, scope);
+  const resolution = rows.find((row) => resolutionKey(row.setting_ref, row.scope) === key);
+  if (!resolution) throw new Error("The owner returned no resolution for the changed setting.");
+  freshResolutions.add(key);
+  const resolutions = {...snapshot.resolutions, [key]: resolution};
+  set({resolutions, resolutionsState: {state: "ok", value: Object.keys(resolutions).length, at: Date.now()}});
+}
+
 let resolutionsRound: Promise<void> | null = null;
 let resolutionsAgain = false;
 export function loadResolutions(): Promise<void> {
@@ -289,6 +322,7 @@ export function loadResolutions(): Promise<void> {
 }
 
 async function readResolutionsOnce(): Promise<void> {
+  const revision = resolutionRevision;
   const registry = snapshot.registry;
   if (registry.state !== "ok") return;
   const pairs = new Map<string, {setting_ref: string; scope: ScopeAddress}>();
@@ -310,8 +344,15 @@ async function readResolutionsOnce(): Promise<void> {
           const ref = scope.scope_ref ?? (SINGULAR_SCOPE_KINDS.has(scope.scope_kind) ? null : source.scopeRefHint?.(scope.scope_kind) ?? null);
           return SINGULAR_SCOPE_KINDS.has(scope.scope_kind) || ref ? [{setting_ref: entry.setting.setting_ref, scope: {...scope, scope_ref: ref}}] : [];
         }))).filter((resolution) => resolution.desired);
-    const watched = pairs.size ? await source.readResolutions([...pairs.values()]) : [];
-    const keyed: Record<string, ConfigResolution> = {};
+    const stagedKeys = new Set(staged.map((resolution) => resolutionKey(resolution.setting_ref, resolution.scope)));
+    // The full desired-store diff is authoritative at review time. If a
+    // cached hold disappeared, read that address again rather than retaining
+    // stale intent; a row already returned by the diff needs no second read.
+    const missing = [...pairs.entries()].filter(([key]) => !stagedKeys.has(key) && (!freshResolutions.has(key) || !!snapshot.resolutions[key]?.desired));
+    const watched = missing.length ? await source.readResolutions(missing.map(([, pair]) => pair)) : [];
+    if (revision === resolutionRevision) for (const resolution of [...watched, ...staged]) freshResolutions.add(resolutionKey(resolution.setting_ref, resolution.scope));
+    if (revision !== resolutionRevision) return;
+    const keyed: Record<string, ConfigResolution> = Object.fromEntries(Object.entries(snapshot.resolutions).filter(([key]) => pairs.has(key)));
     for (const resolution of [...watched, ...staged]) keyed[resolutionKey(resolution.setting_ref, resolution.scope)] = resolution;
     set({resolutions: keyed, resolutionsState: {state: "ok", value: Object.keys(keyed).length, at: Date.now()}});
   } catch (cause) {
@@ -321,7 +362,7 @@ async function readResolutionsOnce(): Promise<void> {
 
 export async function loadOwners(): Promise<void> {
   await part("owners", async () => {
-    const outcome = await expect<{reading: {owners: OwnerMount[]}}>({op: "system_composition_read"}, "system_composition_reading");
+    const outcome = await readComposition();
     return Object.fromEntries(outcome.reading.owners.map((mount) => [mount.product_id, mount]));
   });
 }
@@ -351,14 +392,15 @@ export function ensureSettingsLoaded(): void {
 }
 
 export async function refreshAll(): Promise<void> {
+  compositionRead = null;
+  invalidateResolutions();
   await Promise.all([loadSuite(), loadCredentials(), loadRegistry(), loadOwners(), loadCensus(), loadProfiles()]);
 }
 
 /** Ask for one more `skills.capabilities` scope (the Skills scope switch). */
 export async function watchSkillScope(scope: ScopeAddress): Promise<void> {
-  if (!snapshot.skillScopes.some((known) => compactScope(known) === compactScope(scope))) {
-    set({skillScopes: [...snapshot.skillScopes, scope]});
-  }
+  if (snapshot.skillScopes.some((known) => compactScope(known) === compactScope(scope)) && freshResolutions.has(resolutionKey("ai-kit:skills:skills.capabilities", scope))) return;
+  if (!snapshot.skillScopes.some((known) => compactScope(known) === compactScope(scope))) set({skillScopes: [...snapshot.skillScopes, scope]});
   await loadResolutions();
 }
 

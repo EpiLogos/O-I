@@ -39,6 +39,8 @@ uniform float uColorContrast;
 // Spatial Chakra Body System Uniforms
 // Entity tints (per particle partition) and the composition focus tint \u2014 layered over the field palette
 uniform int uEntityCount;
+uniform float uConnectionStart;
+uniform sampler2D uConnectionMetadata;
 uniform float uEditHasSelection;
 uniform float uEditSelected[10];
 uniform float uEntityBounds[10];
@@ -252,7 +254,12 @@ void main() {
     if (pIndex < uEntityBounds[i]) break;
   }
   vEditAlpha = (uEditHasSelection > 0.5 && uEntityCount > 0 && uEditSelected[eIdx] < 0.5) ? 0.23 : 1.0;
-  float tintW = (uEntityCount > 0) ? clamp(uEntityTintWeight[eIdx], 0.0, 1.0) : 0.0;
+  bool connection = pIndex >= uConnectionStart;
+  if (connection) {
+    vec4 metadata = texture2D(uConnectionMetadata, uv);
+    vEditAlpha = metadata.z * ((uEditHasSelection > 0.5 && metadata.w < 0.5) ? 0.23 : 1.0);
+  }
+  float tintW = (!connection && uEntityCount > 0) ? clamp(uEntityTintWeight[eIdx], 0.0, 1.0) : 0.0;
   vTinted = max(tintW, clamp(uFocusTintWeight, 0.0, 1.0));
   if (tintW > 0.001) {
     vec3 tint = uEntityTint[eIdx];

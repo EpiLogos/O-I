@@ -22,6 +22,9 @@ precision highp float;
 uniform sampler2D uPositionTexture;
 uniform sampler2D uVelocityTexture;
 uniform float uDelta;
+uniform float uConnectionStart;
+uniform sampler2D uConnectionMetadata;
+uniform vec2 uTexSize;
 uniform float uCompPlane;        // 0 = vertical (XY facing camera), 1 = horizontal (XZ plate)
 uniform float uMorphTrajectory;
 uniform float uZDepthRetention;
@@ -32,6 +35,11 @@ varying vec2 vUv;
 void main() {
   vec4 posData = texture2D(uPositionTexture, vUv);
   vec4 velData = texture2D(uVelocityTexture, vUv);
+  float relationIndex = floor(vUv.y * uTexSize.y) * uTexSize.x + floor(vUv.x * uTexSize.x);
+  if (relationIndex >= uConnectionStart && texture2D(uConnectionMetadata, vUv).z < 0.5) {
+    gl_FragColor = posData; return;
+  }
+
 
   vec3 pos = posData.xyz;
   vec3 vel = velData.xyz;
@@ -98,6 +106,7 @@ uniform float uPolPhase;            // running poloidal phase (radians)
 // Entities \u2014 first-class centres of formation (see fieldModel.ts). Each enabled formation owns a
 // contiguous particle partition; every particle feels every entity's local force.
 uniform int uEntityCount;
+uniform float uConnectionStart;
 uniform float uEntityBounds[10];    // exclusive end particle index per partition
 uniform vec4 uEntityCenter[10];     // xyz world centre, w = force radius (px)
 uniform float uEntityMorph[10];
@@ -172,6 +181,11 @@ varying vec2 vUv;
 void main() {
   vec4 posData = texture2D(uPositionTexture, vUv);
   vec4 velData = texture2D(uVelocityTexture, vUv);
+  float relationIndex = floor(vUv.y * uTexSize.y) * uTexSize.x + floor(vUv.x * uTexSize.x);
+  if (relationIndex >= uConnectionStart && texture2D(uTargetNoise, vUv).z < 0.5) {
+    gl_FragColor = vec4(0.0); return;
+  }
+
   vec4 targetA = texture2D(uTargetATexture, vUv);
   vec4 targetB = texture2D(uTargetBTexture, vUv);
 
@@ -202,6 +216,13 @@ void main() {
   // Targets are baked in entity-local coordinates; the centre is a uniform (moving never re-bakes)
   vec3 targetPos = mix(targetA.xyz, targetB.xyz, sMorph) + entityCenter;
   float targetDensity = mix(targetA.w, targetB.w, sMorph);
+  // Connection pool uses world-space targets in the SAME velocity integration.
+  // Do not apply node-local transforms, morphing or the composition plane.
+  if (pIndex >= uConnectionStart) {
+    targetPos = texture2D(uTargetATexture, vUv).xyz;
+    targetDensity = texture2D(uTargetATexture, vUv).w;
+    sMorph = 0.0;
+  }
 
   // --- Dual-Phase Toroidal/Poloidal Hopf Fibration Interference Manifold ---
   vec3 fHopf = vec3(0.0);

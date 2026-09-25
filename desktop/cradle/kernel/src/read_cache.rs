@@ -25,8 +25,41 @@ struct Entry {
 pub struct OwnerReadCache {
     entries: HashMap<String, Entry>,
     bytes: usize,
+    request_clock: u64,
+    requests: HashMap<String, u64>,
 }
 impl OwnerReadCache {
+    /// A pending owner read is a distinct observation, not a cache entry.
+    /// Latest request wins, and source invalidation also withdraws pending reads.
+    pub(crate) fn begin(&mut self, key: String) -> u64 {
+        self.request_clock = self
+            .request_clock
+            .checked_add(1)
+            .expect("owner read ticket exhausted");
+        if self.requests.len() >= MAX_ENTRIES && !self.requests.contains_key(&key) {
+            if let Some(oldest) = self
+                .requests
+                .iter()
+                .min_by_key(|(_, ticket)| *ticket)
+                .map(|(key, _)| key.clone())
+            {
+                self.requests.remove(&oldest);
+            }
+        }
+        self.requests.insert(key, self.request_clock);
+        self.request_clock
+    }
+    pub(crate) fn current(&self, key: &str, ticket: u64) -> bool {
+        self.requests.get(key) == Some(&ticket)
+    }
+    pub(crate) fn finish(&mut self, key: &str, ticket: u64) -> bool {
+        if !self.current(key, ticket) {
+            return false;
+        }
+        self.requests.remove(key);
+        true
+    }
+
     pub fn get(&self, key: &str, ttl: Duration) -> Option<serde_json::Value> {
         let entry = self.entries.get(key)?;
         (entry.at.elapsed() < ttl).then(|| entry.value.clone())
@@ -60,11 +93,13 @@ impl OwnerReadCache {
         );
     }
     pub fn invalidate(&mut self, key: &str) {
+        self.requests.remove(key);
         if let Some(entry) = self.entries.remove(key) {
             self.bytes = self.bytes.saturating_sub(entry.bytes);
         }
     }
     pub fn invalidate_prefix(&mut self, prefix: &str) {
+        self.requests.retain(|key, _| !key.starts_with(prefix));
         let keys: Vec<_> = self
             .entries
             .keys()
@@ -76,6 +111,7 @@ impl OwnerReadCache {
         }
     }
     pub fn clear(&mut self) {
+        self.requests.clear();
         self.entries.clear();
         self.bytes = 0;
     }
@@ -124,5 +160,34 @@ mod tests {
         let before = cache.bytes;
         cache.put("large".into(), json!("x".repeat(MAX_BYTES + 1)));
         assert_eq!(cache.bytes, before);
+    }
+    #[test]
+    fn pending_reads_cannot_return_after_refresh_or_source_invalidation() {
+        let mut cache = OwnerReadCache::default();
+        let key = "knowledge:pending:read";
+        let older = cache.begin(key.into());
+        let newer = cache.begin(key.into());
+        assert!(!cache.finish(key, older));
+        assert!(cache.current(key, newer));
+        cache.invalidate_prefix("knowledge:");
+        assert!(!cache.finish(key, newer));
+        let before_ground = cache.begin(key.into());
+        cache.clear();
+        let after_ground = cache.begin(key.into());
+        assert!(!cache.finish(key, before_ground));
+        assert!(cache.finish(key, after_ground));
+    }
+    #[test]
+    fn unrelated_reads_do_not_cancel_each_other_and_tickets_are_bounded() {
+        let mut cache = OwnerReadCache::default();
+        let first = cache.begin("knowledge:pending:one".into());
+        cache.put("world".into(), json!("native root"));
+        cache.invalidate("dir:Work");
+        assert!(cache.current("knowledge:pending:one", first));
+        for n in 0..MAX_ENTRIES {
+            cache.begin(format!("knowledge:pending:{n}"));
+        }
+        assert_eq!(cache.requests.len(), MAX_ENTRIES);
+        assert!(!cache.finish("knowledge:pending:one", first));
     }
 }

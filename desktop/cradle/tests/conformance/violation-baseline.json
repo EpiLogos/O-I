@@ -1,0 +1,55 @@
+{
+  "schema": "oi.desktop-conformance-debt/v1",
+  "basis_revision": "fce02fca",
+  "standing": "Bounded debt, not conformance approval or UX acceptance. Remove resolved rows; new debt cannot be auto-accepted.",
+  "debts": [
+    {
+      "id": "C-harness-disclosure",
+      "owner_lane": "C",
+      "source": "src/agency/AgentDetail.tsx",
+      "description": "Implemented: agency_read retrieves aikit.harness-disclosure/v1 and AgentDetail renders native profiles and layers. Current protocol contract checks pass; an independently replayed live harness-disclosure UI walk is still required before closing acceptance.",
+      "spec_ref": "Finding 4",
+      "status": "open"
+    },
+    {
+      "id": "C-owner-catalogue",
+      "owner_lane": "C",
+      "source": "kernel/src/composition.rs",
+      "description": "Implemented: owner membership and canonical namespaces derive from native current-world positions. The recorded hosted CLI gate proves adopted catalogue \u2192 current-world \u2192 actual kernel service registration; current seventh-owner Settings/search contract checks pass. Native UI replay with an additional admitted owner remains unverified.",
+      "spec_ref": "Finding 5",
+      "status": "open"
+    },
+    {
+      "id": "E-decision-substrate",
+      "owner_lane": "E",
+      "source": "kernel/src/lib.rs",
+      "description": "Implemented: typed Decide, pre-egress bounded authority, decision receipts and declared decision sites. Five recorded kernel boundary tests and the real-bridge preflight/forged-permission refusal pass. Positive native-confirmed provider execution, receipt/cache replay and live UI acceptance remain unverified; no provider success is claimed.",
+      "spec_ref": "Finding 10",
+      "status": "open"
+    },
+    {
+      "id": "B-dictation-endpoint",
+      "owner_lane": "B/lead",
+      "source": "src/dictation/store.ts",
+      "description": "Implemented: dictation_read/configure persist endpoint stipulation under the native owner with revision checks; browser storage is no longer its authority. The recorded real-bridge lifecycle verifies persistence and refusal of remote targets. Native Settings edit/restart UI acceptance remains unverified.",
+      "spec_ref": "02-ARCHITECTURE \u00a76/\u00a712; NARA-SPEECH-EXPERIENCE-V1 Dictation",
+      "status": "open"
+    },
+    {
+      "id": "B-dictation-network",
+      "owner_lane": "B/lead",
+      "source": "src/dictation/client.ts",
+      "description": "Implemented: renderer probe/transcription requests cross typed KernelOps; the authority guard passes and the real-bridge test refuses forged capture references and probes before microphone use. Successful real local-STT audio transcription and native microphone UI replay remain unverified.",
+      "spec_ref": "02-ARCHITECTURE \u00a712",
+      "status": "open"
+    },
+    {
+      "id": "B-source-reading-cache",
+      "owner_lane": "B",
+      "source": "src/files/FileSurface.tsx",
+      "description": "Implemented: FileSurface uses native retained-file readings; legacy browser copies can only be explicitly recovered as unverified drafts. The recorded real-bridge test verifies restart/missing-branch retention and fresh retrieval exclusion. Native editor recovery and legacy-copy UI walks remain unverified.",
+      "spec_ref": "02-ARCHITECTURE \u00a76",
+      "status": "open"
+    }
+  ]
+}

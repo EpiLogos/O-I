@@ -60,7 +60,7 @@
 .knowledge-inputs details[open] { width:100%; }
 .knowledge-inputs summary { cursor:pointer; }
 .knowledge-inputs p { overflow-wrap:anywhere; line-height:var(--oi-space-3); }
-.knowledge-content { box-sizing:border-box; flex:1; min-height:0; overflow:auto; max-width:var(--oi-reading-width); width:100%; margin-inline:auto; padding:var(--oi-space-6) var(--oi-space-5); font-size:var(--oi-desktop-type-body); }
+.knowledge-content { box-sizing:border-box; flex:1; min-height:0; overflow:auto; max-width:var(--oi-reading-width); width:100%; margin-inline:auto; padding:var(--oi-space-6) var(--oi-space-5); font-size:var(--oi-shell-type-prose); }
 .knowledge-content:empty { display:none; }
 .knowledge-content pre { white-space:pre-wrap; overflow-wrap:anywhere; }
 .knowledge-page-heading h1 { font-size:var(--oi-shell-type-title); font-weight:normal; margin-block:var(--oi-space-4) var(--oi-space-3); }

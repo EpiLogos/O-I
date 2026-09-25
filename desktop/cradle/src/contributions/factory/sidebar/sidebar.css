@@ -113,7 +113,7 @@
 .ta-pane-launcher{display:flex;align-items:center;gap:4px;padding:6px 10px}
 .ta-pane-launcher .oi-tool{width:26px;height:26px}
 .ta-held-pane{display:flex;flex-direction:column;min-height:0}
-.ta-held-pane-chrome{display:flex;align-items:center;gap:6px;height:26px;padding:0 8px;border-bottom:var(--oi-shell-edge) solid var(--oi-hairline-soft)}
+.ta-held-pane-chrome{display:flex;align-items:center;gap:6px;height:var(--oi-panel-head-height);padding:0 var(--oi-shell-gutter);border-bottom:var(--oi-shell-edge) solid var(--oi-hairline-soft)}
 .ta-held-pane-title{flex:1 1 auto;min-width:0;font-size:var(--oi-shell-type-ui);color:var(--oi-muted-2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .ta-held-pane-tools{display:flex;align-items:center;gap:2px}
 .ta-held-pane-tools .oi-tool{width:22px;height:22px}
@@ -130,7 +130,22 @@
 .ta-context-plane .pane.group{flex:1 1 auto;min-height:280px;height:auto;overflow:hidden;margin:var(--oi-shell-gutter);border-radius:8px}
 /* Active Context is the pared strip beneath the canvas — content-sized,
    capped so it never crowds the canvas above it. It is a sidebar region:
-   the wheel scrolls it, but it never shows a scrollbar (the navigator law,
-   navigator.css 2026-09-17). */
-.ta-active-context{flex:none;max-height:168px;overflow-y:auto;scrollbar-width:none;box-sizing:border-box}
-.ta-active-context::-webkit-scrollbar,.ta-active-context *::-webkit-scrollbar{display:none;width:0;height:0}
+   it uses the shared thin scrollbar while hovered or focused. */
+.ta-active-context{flex:none;max-height:168px;overflow-y:auto;box-sizing:border-box}
+
+/* SituationFrame: read-only presence above deliberate prepared Context. */
+.situation-reading{flex:none;padding:8px 10px;border-bottom:var(--oi-shell-edge) solid var(--oi-hairline-soft);display:flex;flex-direction:column;gap:6px}
+.situation-reading>header{display:flex;align-items:baseline;justify-content:space-between;gap:8px}
+.situation-reading>header strong{font-weight:550}
+.situation-reading>header small,.situation-primary small,.situation-place small,.situation-depth small{color:var(--oi-muted-2);font-size:var(--oi-shell-type-ui)}
+.situation-primary{display:flex;align-items:baseline;justify-content:space-between;gap:8px}
+.situation-place{display:flex;flex-direction:column;align-items:flex-start;gap:1px;width:100%;padding:5px 6px;border:var(--oi-shell-edge) solid var(--oi-hairline-soft);border-radius:6px;background:transparent;color:inherit;text-align:left;font:inherit}
+.situation-place:not(:disabled){cursor:pointer}
+.situation-place:not(:disabled):hover{background:var(--oi-wash)}
+.situation-place small{max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.situation-depth>summary{cursor:pointer;color:var(--oi-muted-2);font-size:var(--oi-shell-type-ui)}
+.situation-depth ul{list-style:none;margin:5px 0 0;padding:0;display:flex;flex-direction:column;gap:4px}
+.situation-depth li{display:flex;align-items:center;justify-content:space-between;gap:8px;min-width:0}
+.situation-depth li small,.situation-depth li code{min-width:0;max-width:62%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.situation-depth code{font-size:var(--oi-shell-type-ui);color:var(--oi-muted-2)}
+.situation-law{margin:0;color:var(--oi-muted-2);font-size:var(--oi-shell-type-ui)}

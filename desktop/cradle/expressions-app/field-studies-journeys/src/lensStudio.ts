@@ -1,31 +1,11 @@
-/** The M0′–M5′ Lens Studio — the compact instrument chooser and the floating
- * Studio that presents the ACTIVE lens's operating controls over the ONE field,
- * DISCLOSED by the actual construction (owner wayfinder §§2, 13–21, 28, 36).
- *
- * One environment, one renderer. Each lens is a differentiated way of working
- * the SAME native construction — not a separate application, a second store or
- * a facts panel. A lens discloses its own material from the OPEN kernel
- * Expression (its members, typed relations and real Scenes, read through
- * `construction()`, never hardcoded) and offers the operations that act on that
- * material through the native owner: the Library and source gathering (M0′), the
- * native composition and its commit (M1′), the relation/timeline field (M2′),
- * the scene sequence and native Scene persistence (M3′). Where the construction
- * discloses no facet an instrument needs — a source-backed place (M4′), or a
- * native Palace owner (M5′) — the lens names the honest state, the eligible
- * material derived from the real construction, and the exact unsurfaced native
- * seam, inventing no control or coordinate (§§18–21).
- *
- * Selecting a lens re-presents the Studio only; the field, camera and selection
- * stand (§28 lens continuity). This is the current-app instrument surface; the
- * native operations behind the controls are proven separately by the native
- * composition/application walks.
- *
- * The chooser also SUMMONS the deep instruments (owner direction 2026-09-23):
- * when hosted, a chooser press asks the hosting centre to open the ONE real
- * instrument HUD (the registered M0′–M5′ lenses over the same field and
- * reading) through the host channel — press the button, the instrument opens.
- * Standalone there is no host and nothing is posted.
- */
+/** One chooser inside the Expressions application. Selecting an instrument
+ * changes tools over the current native work; it never asks the cradle to
+ * replace this application with another renderer. */
+import {createElement} from 'react';
+import {createRoot} from 'react-dom/client';
+import {flushSync} from 'react-dom';
+import {IconTab, IconTabStrip} from '../../../src/workspace/primitives/IconTabStrip';
+import './lensChooser.css';
 import {icon, esc} from './icons.js';
 import type {NativeSubject, ConstructionFacets} from './nativeWorkspace.js';
 
@@ -49,6 +29,7 @@ export interface LensStudioApi {
   setMode(mode: 'expressions' | 'techne'): void;
   select(id: LensId): void;
   closeStudio(): void;
+  toggleChooser(): void;
   refresh(): void;
   active(): LensId;
 }
@@ -59,81 +40,35 @@ export interface LensStudioHost {
   /** The open construction's real facets (members, relations, Scenes) — the
    * disclosure each lens stands on. Null when no native work is open. */
   construction(): ConstructionFacets | null;
-  /** Ask the hosting centre to open the deep-instrument HUD on this lens over
-   * the same field (the host channel's instrument summon). Absent standalone. */
-  summonInstrument?(lens: LensId): void;
+  /** Activate tools in this application while retaining its native field. */
+  activate(lens: LensId): void;
 }
 
-const shortRef = (ref: string) => {
-  const tail = ref.split(':').pop() ?? ref;
-  return tail.length > 24 ? `${tail.slice(0, 22)}…` : tail;
-};
-
-const plural = (n: number, one: string) => `${n} ${one}${n === 1 ? '' : 's'}`;
-
-/** An operative control that opens one of the application's own surfaces. */
-const control = (action: string, iconName: string, label: string, note: string) =>
-  `<button type="button" class="lens-control oi-action" data-action="${esc(action)}"><span class="lens-control-icon">${icon(iconName)}</span><span class="lens-control-text"><strong>${esc(label)}</strong><small>${esc(note)}</small></span></button>`;
-
-/** An operative control that runs a NATIVE operation through the owner (a
- * `lens-op`), not a browser-local save. */
-const nativeOp = (opName: string, iconName: string, label: string, note: string) =>
-  `<button type="button" class="lens-control lens-control-native oi-action" data-action="lens-op" data-op="${esc(opName)}"><span class="lens-control-icon">${icon(iconName)}</span><span class="lens-control-text"><strong>${esc(label)}</strong><small>${esc(note)}</small></span></button>`;
-
-/** The material a lens discloses from the real construction — never session
- * statistics, always the actual structure the lens operates on (§36). */
-const material = (line: string) => `<p class="lens-material" role="note">${line}</p>`;
-
-/** An honest facet state (§§18–21) derived from the real construction: the
- * instrument's purpose, the eligible material named from actual refs, and the
- * exact unsurfaced native seam — no invented control, no fabricated coordinate. */
-const honestFacet = (facet: 'place' | 'palace', purpose: string, standing: string) =>
-  `<div class="lens-facet" data-lens-facet="${facet}" role="note"><p class="lens-facet-purpose">${esc(purpose)}</p><p class="lens-facet-standing">${standing}</p></div>`;
-
-function lensControls(lens: LensDef, c: ConstructionFacets | null): string {
-  switch (lens.id) {
-    case 'project':
-      return material('Find, read and gather connected sources; establish an inquiry and enter or create a constellation.') +
-        control('native-library', 'library', 'Library — My World / O:I Web', 'Connected sources across your world; open a Web or Wiki to gather and construct.') +
-        control('native-work', 'save', c ? 'Open the native construction' : 'Enter or create a construction', c ? 'Continue the open native work.' : 'Begin a native constellation in place.');
-    case 'canvas':
-      return material(c ? `${plural(c.members, 'member')} · ${plural(c.relations, 'typed relation')} in this construction.` : 'No construction is open — the constellation composes real members, never an empty whole.') +
-        control('native-work', 'formation', 'Native composition', 'Members, contextual roles and typed relations in the real Expression medium.') +
-        nativeOp('commit', 'save', 'Commit the constellation', 'Persist members and typed relations to the native Expression through the owner.');
-    case 'timeline':
-      return material(c ? `${plural(c.relations, 'relation')} to operate — chronology, dependence, recurrence — with evidence and direction.` : 'No construction is open — relations are read and authored from real members.') +
-        control('open-timeline', 'branch', 'Relations in time', 'Temporal relations and automation over the field.') +
-        control('native-work', 'formation', 'Typed relation authoring', 'Author non-temporal typed relations through the native composition.');
-    case 'journey':
-      return material(c ? (c.scenes.length ? `${plural(c.scenes.length, 'native Scene')}: ${c.scenes.map(s => `<code title="${esc(s.scene_ref)}">${esc(s.title)}</code>`).join(', ')}` : 'This construction has no Scenes yet — author one and commit it natively.') : 'No construction is open — a Journey orders real Expression Scenes.') +
-        control('sequence-panel', 'sequence', 'Author & order Scenes', 'Order, pace and branch the scene sequence.') +
-        nativeOp('commit', 'save', 'Commit Scenes to the Expression', 'Persist the Scenes as native Expression Scenes through the owner — not a browser save.');
-    case 'place':
-      // Derived, not hardcoded: the kernel Expression carries no place facet, so
-      // it is honestly absent — a place is read from a source that carries one,
-      // never manufactured. The native place owner operation is the named seam.
-      return honestFacet('place',
-        'Situate this work in source-backed places, occasions and reference frames.',
-        c
-          ? `This construction (<code>${esc(shortRef(c.ref))}</code>) discloses no source-backed place facet across its ${plural(c.members, 'member')}. A place enters only from a source that carries one; the native place owner operation is not surfaced in this application, so no coordinate is invented.`
-          : 'Open or create a construction first. A place is read from a source that carries one; none is manufactured.');
-    case 'palace': {
-      // Derived from the real construction: the eligible material is named from
-      // actual refs and Scene count, and creation is honestly gated on the
-      // native Palace owner operation, which this application does not surface.
-      const eligible = c
-        ? `The eligible material is this construction (<code>${esc(shortRef(c.ref))}</code>) with its ${plural(c.scenes.length, 'Scene')} and ${plural(c.members, 'member')}. Durable Palace composition and portals are the native Palace owner operation, not surfaced in this application — nothing here is presented as a saved Palace that is only session state.`
-        : 'Open or create a construction first. A Palace composes real refs into a whole, never an empty one.';
-      return honestFacet('palace', 'Compose constellations, Expressions, Journeys and sources into an inhabitable whole with regions and portals.', eligible);
-    }
-  }
+function studioBody(lens: LensDef): string {
+  const actions: Partial<Record<LensId, string>> = {
+    project: '<button class="oi-action" data-action="native-library">Library</button><button class="oi-action" data-action="native-work">Save and reopen</button>',
+    journey: '<button class="oi-action" data-action="timeline">Scenes</button><button class="oi-action" data-action="lens-op" data-op="commit">Commit Scenes</button>',
+    palace: '<button class="oi-action" data-action="native-work">Composition</button><button class="oi-action" data-action="timeline">Scenes</button><button class="oi-action" data-action="lens-op" data-op="commit">Commit composition</button>',
+  };
+  return `<header class="lens-studio-head"><h2>${esc(lens.label)}</h2><button type="button" class="lens-studio-close" data-action="lens-close" aria-label="Close instrument tools">${icon('close')}</button></header><div class="lens-studio-controls">${actions[lens.id] ?? ''}</div>`;
 }
 
-function studioBody(lens: LensDef, subject: NativeSubject | null, c: ConstructionFacets | null): string {
-  const basis = subject
-    ? `<p class="lens-basis">Standing on <code>${esc(shortRef(subject.ref))}</code> · revision ${subject.revision}${subject.sceneRef ? ` · scene <code>${esc(shortRef(subject.sceneRef))}</code>` : ''}${subject.relationRef ? ` · relation <code>${esc(shortRef(subject.relationRef))}</code>` : subject.entityRef ? ` · member <code>${esc(shortRef(subject.entityRef))}</code>` : ''}</p>`
-    : `<p class="lens-basis" data-empty="true">No native construction is open. Enter or create one from <strong>M0′ · Web</strong> or the native composition — the instruments compose real work, never an empty whole.</p>`;
-  return `<header class="lens-studio-head"><div><span class="panel-kicker">${lens.office} · ${esc(lens.name)}</span><h2>${esc(lens.label)}</h2></div><button type="button" class="lens-studio-close" data-action="lens-close" aria-label="Close Lens Studio">${icon('close')}</button></header>${basis}<div class="lens-studio-controls">${lensControls(lens, c)}</div>`;
+/** Presentation only: native engine state and document-level actions stay in
+ * installLensStudio/app. Keyed tabs preserve focus across native selection. */
+export function LensChooser({active}: {active: LensId}) {
+  return createElement('div', {className: 'lens-chooser-row'},
+    createElement(IconTabStrip, {'aria-label': 'Instruments — M0′ to M5′', crossAxisArrows: true},
+      LENSES.map(lens => createElement(IconTab, {
+        key: lens.id, label: `${lens.office} ${lens.label}`, selected: lens.id === active,
+        title: `${lens.office} — ${lens.label}`, className: 'lens-choice',
+        id: `lens-tab-${lens.id}`, 'aria-controls': 'lens-studio',
+        ...{'data-action': 'lens', 'data-lens': lens.id},
+        iconContent: createElement('span', {className: 'lens-glyph', 'aria-hidden': true,
+          dangerouslySetInnerHTML: {__html: icon(lens.icon)}}),
+      }, createElement('span', {className: 'lens-office', 'aria-hidden': true}, lens.office)))),
+    createElement('button', {type: 'button', className: 'lens-hide', 'aria-label': 'Hide instruments',
+      title: 'Hide instruments', ...{'data-action': 'lens-bar'},
+      dangerouslySetInnerHTML: {__html: icon('collapse')}}));
 }
 
 export function installLensStudio(host: LensStudioHost): LensStudioApi {
@@ -143,7 +78,6 @@ export function installLensStudio(host: LensStudioHost): LensStudioApi {
   const chooser = document.createElement('nav');
   chooser.id = 'lens-chooser';
   chooser.className = 'lens-chooser';
-  chooser.setAttribute('role', 'tablist');
   chooser.setAttribute('aria-label', 'Instruments — M0′ to M5′');
   chooser.hidden = true;
 
@@ -158,37 +92,33 @@ export function installLensStudio(host: LensStudioHost): LensStudioApi {
 
   let active: LensId = 'project';
   let studioOpen = false;
+  let chooserCollapsed = false;
   let mode: 'expressions' | 'techne' = 'expressions';
   let built = false;
 
-  // Build the chooser buttons ONCE; selection updates their state in place so
-  // the just-activated button keeps keyboard focus (never a full innerHTML
-  // rebuild on select).
+  // One React root, stable keys, and the shared tab primitive. The engine's
+  // delegated data-action handler remains the sole selection operation.
+  const chooserRoot = createRoot(chooser);
   const buildChooser = () => {
-    chooser.innerHTML = LENSES.map((lens, index) =>
-      `<button type="button" class="lens-choice" data-action="lens" data-lens="${lens.id}" role="tab" id="lens-tab-${lens.id}" aria-controls="lens-studio" aria-selected="${lens.id === active}" tabindex="${lens.id === active ? 0 : -1}" aria-label="${esc(`${lens.office} ${lens.label}`)}" title="${esc(`${lens.office} — ${lens.label}`)}" data-index="${index}"><span class="lens-office" aria-hidden="true">${lens.office}</span>${icon(lens.icon)}</button>`,
-    ).join('');
+    flushSync(() => chooserRoot.render(createElement(LensChooser, {active})));
     built = true;
-  };
-
-  const markActive = () => {
-    for (const button of chooser.querySelectorAll<HTMLButtonElement>('.lens-choice')) {
-      const on = button.dataset.lens === active;
-      button.setAttribute('aria-selected', String(on));
-      button.tabIndex = on ? 0 : -1;
-    }
     studio.setAttribute('aria-labelledby', `lens-tab-${active}`);
   };
+  const markActive = buildChooser;
 
   const renderStudio = () => {
     const lens = LENSES.find(candidate => candidate.id === active)!;
-    studio.innerHTML = studioBody(lens, host.subject(), host.construction());
+    studio.innerHTML = studioBody(lens);
     studio.dataset.lens = active;
   };
 
   const apply = () => {
     const techne = mode === 'techne';
-    chooser.hidden = !techne;
+    chooser.hidden = !techne || chooserCollapsed;
+    for (const toggle of document.querySelectorAll<HTMLButtonElement>('[data-action="lens-bar"]')) {
+      toggle.setAttribute('aria-controls', chooser.id);
+      toggle.setAttribute('aria-expanded', String(!chooser.hidden));
+    }
     studio.hidden = !techne || !studioOpen;
     if (techne) {
       if (!built) buildChooser(); else markActive();
@@ -199,33 +129,22 @@ export function installLensStudio(host: LensStudioHost): LensStudioApi {
   const api: LensStudioApi = {
     setMode(next) { mode = next; if (next === 'techne' && !built) buildChooser(); apply(); },
     select(id) {
-      active = id; studioOpen = true;
+      active = id; studioOpen = false;
       if (built) markActive(); else buildChooser();
       if (studio.hidden) studio.hidden = false;
       renderStudio();
-      // One press opens the deep instrument: the hosting centre answers the
-      // summon by opening its HUD on this lens over the same field (§13's
-      // active lens chooser; standalone there is no host and this is a no-op).
-      host.summonInstrument?.(id);
+      apply();
+      host.activate(id);
     },
     closeStudio() { studioOpen = false; studio.hidden = true; },
+    toggleChooser() {
+      const containedFocus=chooser.contains(document.activeElement);
+      chooserCollapsed=!chooserCollapsed;apply();
+      if(chooserCollapsed&&containedFocus)Array.from(document.querySelectorAll<HTMLButtonElement>('[data-action="lens-bar"]')).find(button=>!chooser.contains(button)&&button.getClientRects().length>0)?.focus();
+    },
     refresh() { if (mode === 'techne') { if (!built) buildChooser(); else markActive(); if (studioOpen) renderStudio(); } },
     active() { return active; },
   };
-
-  // Arrow-key roving across the tablist (§13 keyboard-reachable controls).
-  // The roving routes through the one select path, so keyboard lens changes
-  // summon the deep instrument exactly as a pointer press does.
-  chooser.addEventListener('keydown', event => {
-    const keys: Record<string, number> = {ArrowRight: 1, ArrowDown: 1, ArrowLeft: -1, ArrowUp: -1};
-    const delta = keys[event.key];
-    if (delta === undefined) return;
-    event.preventDefault();
-    const at = LENSES.findIndex(lens => lens.id === active);
-    const next = LENSES[(at + delta + LENSES.length) % LENSES.length];
-    api.select(next.id);
-    chooser.querySelector<HTMLButtonElement>(`.lens-choice[data-lens="${next.id}"]`)?.focus();
-  });
 
   return api;
 }

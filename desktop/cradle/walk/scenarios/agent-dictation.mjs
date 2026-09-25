@@ -25,7 +25,6 @@ import {chromium} from "playwright";
 import {setup as sourceSetup} from "./editor.mjs";
 
 const providerScript = join(dirname(fileURLToPath(import.meta.url)), "..", "fixtures", "activity-provider.py");
-const DICTATION_KEY = "oi-cradle.dictation.v1";
 const COPY = {
   buttonIdle: "Dictate into the message (local)",
   buttonRecording: "Stop dictation and transcribe locally",
@@ -95,7 +94,8 @@ async function deadPort() {
 export default async function run({baseUrl, bridgeUrl, artifactsDir, check, log, provision: p}) {
   const stt = await startSttFixture();
   const dead = await deadPort();
-  const stipulate = url => page.evaluate(([key, value]) => localStorage.setItem(key, value), [DICTATION_KEY, JSON.stringify({revision: 1, stt_url: url})]);
+  const nativeOp=async operation=>{const response=await fetch(`${bridgeUrl}/op`,{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify(operation)});const result=await response.json();if(!result.ok)throw Error(result.error);return result.outcome;};
+  const stipulate=async url=>{const current=await nativeOp({op:"dictation_read"});return nativeOp({op:"dictation_configure",stt_url:url,expected_revision:current.stipulation.revision});};
 
   // A dedicated browser: chromium's synthetic microphone, the same proven
   // pattern as tests/nara-presence-lifecycle.mjs (the run.mjs browser has no
@@ -112,7 +112,7 @@ export default async function run({baseUrl, bridgeUrl, artifactsDir, check, log,
   });
   // The stipulation is read at each dictation press, so the walk re-points
   // it live for the honest states below.
-  await page.addInitScript(([key, value]) => { localStorage.setItem(key, value); }, [DICTATION_KEY, JSON.stringify({revision: 1, stt_url: stt.url("ok")})]);
+  await stipulate(stt.url("ok"));
 
   const shot = async label => { const file = `agent-dictation-${label}.png`; await page.screenshot({path: join(artifactsDir, file)}); return file; };
   const consoleLines = [];

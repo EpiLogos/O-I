@@ -16,8 +16,11 @@ import {compactScope} from "../../configuration/contracts";
 import type {ChangeRequest} from "../../configuration/source";
 import {effectiveChatDefault} from "../../configuration/harnessSource";
 import {briefValue, effectInWords, onOff} from "./sectionModel";
+import {harnessName} from "../../agent/chat/harness";
+import {modelDisplayName} from "../../agent/chat/modelPresentation";
+import {MODEL_DEFAULT_SETTING, modelDefaults} from "./harnessCapabilities";
 import {
-  expect, loadResolutions, loadSuite, plain, plane, resolutionKey, settingsSnapshot, stageDefaultConnection, watchPairsQuietly,
+  expect, invalidateComposition, invalidateResolutions, loadResolutions, loadSuite, plain, plane, refreshResolution, resolutionKey, settingsSnapshot, stageDefaultConnection, watchPairsQuietly,
   type SettingsSnapshot,
 } from "./settingsData";
 import type {SettingsPlace} from "./settingsNav";
@@ -70,6 +73,28 @@ function providerLabel(data: SettingsSnapshot, id: string): string {
   return rows.find((row) => row.id === id)?.label ?? id;
 }
 
+/** Review the actual native choice, not the number of entries in its table. */
+function modelDefaultsInWords(data: SettingsSnapshot, value: unknown): string {
+  const rows = data.suite.state === "ok" && data.suite.value.harness.providers.state === "ok" ? data.suite.value.harness.providers.rows : [];
+  const baseName = (row: typeof rows[number]): string => harnessName(row)
+    ?? (row.label !== row.id ? modelDisplayName(row.label) : undefined)
+    ?? "Configured harness";
+  const names = Object.entries(modelDefaults(value)).map(([id, model]) => {
+    const row = rows.find((candidate) => candidate.id === id);
+    let name = row ? baseName(row) : "Configured harness";
+    if (row) {
+      const peers = rows.filter((candidate) => baseName(candidate) === name);
+      if (peers.length > 1) {
+        const label = row.label !== row.id ? modelDisplayName(row.label) : undefined;
+        name = label && label !== name && peers.filter((candidate) => candidate.label === label).length === 1
+          ? `${name} · ${label}` : `${name} · connection ${peers.indexOf(row) + 1}`;
+      }
+    }
+    return `${name} · ${modelDisplayName(model.model_name) ?? "Saved model"}`;
+  });
+  return names.length ? names.sort((a, b) => a.localeCompare(b)).join("; ") : "Harness default";
+}
+
 /** The connection a new chat opens with right now (the owner rows' law). */
 export function currentConnection(data: SettingsSnapshot): string | null {
   if (data.suite.state !== "ok") return null;
@@ -104,7 +129,7 @@ export function stagedChanges(data: SettingsSnapshot): StagedChange[] {
       title: "Default connection for new chats", scopeLabel: "This machine",
       from: from ? providerLabel(data, from) : "the suite's default", to: providerLabel(data, data.stagedDefault),
       effectKind: "new-chats", effect: effectInWords("new-chats"), rowId: DEFAULT_CONNECTION_ROW,
-      place: {kind: "section", id: "models"}, provider: data.stagedDefault,
+      place: {kind: "section", id: "harnesses"}, provider: data.stagedDefault,
     });
   }
   for (const resolution of Object.values(data.resolutions)) {
@@ -137,10 +162,12 @@ export function stagedChanges(data: SettingsSnapshot): StagedChange[] {
     changes.push({
       key: requestKey, requestKey, kind: "config",
       title: setting?.title ?? resolution.setting_ref, scopeLabel: scopeLabel(resolution.scope),
-      from: secret ? "a stored secret" : briefValue(resolution.native.effective?.value ?? resolution.native.declared?.value),
-      to: secret ? "a stored secret" : briefValue(desired.value),
+      from: secret ? "a stored secret" : resolution.setting_ref === MODEL_DEFAULT_SETTING
+        ? modelDefaultsInWords(data, resolution.native.effective?.value ?? resolution.native.declared?.value)
+        : briefValue(resolution.native.effective?.value ?? resolution.native.declared?.value),
+      to: secret ? "a stored secret" : resolution.setting_ref === MODEL_DEFAULT_SETTING ? modelDefaultsInWords(data, desired.value) : briefValue(desired.value),
       effectKind, effect: effectInWords(effectKind), rowId: settingRowId(resolution.setting_ref),
-      place: {kind: "product", id: entry?.owner.owner_ref ?? "oi"}, request,
+      place: resolution.setting_ref === MODEL_DEFAULT_SETTING ? {kind: "section", id: "harnesses"} : {kind: "product", id: entry?.owner.owner_ref ?? "oi"}, request,
     });
   }
   return changes;
@@ -152,15 +179,27 @@ export function stagedChanges(data: SettingsSnapshot): StagedChange[] {
 async function hold(request: ChangeRequest): Promise<void> {
   const source = await plane();
   await source.holdDesired(request);
+  invalidateResolutions(request.setting_ref, request.scope);
 }
 async function discard(setting_ref: string, scope: ScopeAddress): Promise<void> {
   const source = await plane();
   await source.discardDesired(setting_ref, scope);
+  invalidateResolutions(setting_ref, scope);
 }
 
 /** Stage one skill on/off at a scope: the scope's held toggle map gains (or,
  * when it returns to what the owner already has, loses) this capability. */
-export async function stageSkill(scope: ScopeAddress, id: string, enabled: boolean): Promise<void> {
+const skillWrites = new Map<string, Promise<void>>();
+export function stageSkill(scope: ScopeAddress, id: string, enabled: boolean): Promise<void> {
+  const key = resolutionKey(CAPABILITIES_REF, scope);
+  const previous = skillWrites.get(key) ?? Promise.resolve();
+  const next = previous.catch(() => {}).then(() => stageSkillOnce(scope, id, enabled));
+  skillWrites.set(key, next);
+  void next.finally(() => { if (skillWrites.get(key) === next) skillWrites.delete(key); }).catch(() => {});
+  return next;
+}
+
+async function stageSkillOnce(scope: ScopeAddress, id: string, enabled: boolean): Promise<void> {
   const data = settingsSnapshot();
   const resolution = data.resolutions[resolutionKey(CAPABILITIES_REF, scope)];
   const held = (resolution && isStaged(resolution) && resolution.desired?.value && typeof resolution.desired.value === "object" && !Array.isArray(resolution.desired.value))
@@ -172,7 +211,7 @@ export async function stageSkill(scope: ScopeAddress, id: string, enabled: boole
   } else {
     await hold({setting_ref: CAPABILITIES_REF, scope, value: held, secret_reference: null});
   }
-  await loadResolutions();
+  await refreshResolution(CAPABILITIES_REF, scope);
 }
 
 /** Stage any ordinary owner setting (product pages). */
@@ -309,7 +348,13 @@ export async function applyReviewed(reviewed: ReviewedPlan): Promise<ApplyOutcom
     }
     // 4 · read back from the owners (every applied pair is read, staged or not).
     watchPairsQuietly(uniqueRequests(reviewed.changes).map(([, request]) => ({setting_ref: request.setting_ref, scope: request.scope})));
-    await Promise.all([loadSuite(), loadResolutions()]);
+    invalidateComposition();
+    invalidateResolutions();
+    // Model defaults render and confirm from native resolutions. Other settings
+    // can change suite facts (including skill activation), and new-chat defaults
+    // need heldDefault. Avoid that full disclosure only for model-default Apply.
+    const needsSuite = reviewed.changes.some((change) => change.kind === "chat-default" || change.request?.setting_ref !== MODEL_DEFAULT_SETTING);
+    await Promise.all([loadResolutions(), ...(needsSuite ? [loadSuite()] : [])]);
     const after = settingsSnapshot();
     const rows: Record<string, RowResult> = {};
     for (const change of reviewed.changes) {

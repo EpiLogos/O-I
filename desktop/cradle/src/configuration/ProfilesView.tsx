@@ -109,7 +109,7 @@ export function ProfilesView() {
       />}
       {!current && <p className="config-empty">No profile is selected.</p>}
     </div>
-    {usePlan && <div className="config-drawer" role="dialog" aria-label="Profile use plan" data-profile-use-plan>
+    {usePlan && <div className="config-drawer oi-scroll" role="dialog" aria-label="Profile use plan" data-profile-use-plan>
       <header>
         <h4>Use profile “{usePlan.profile_ref}” — inspectable plan</h4>
         <button type="button" className="config-mini" onClick={() => setUsePlan(null)}>close</button>
@@ -150,7 +150,7 @@ export function ProfilesView() {
         <span className="config-muted">the owners receive native-profile references; sparse overrides ride the resolution order</span>
       </div>
     </div>}
-    {useResult && <div className="config-drawer" role="dialog" aria-label="Profile use result">
+    {useResult && <div className="config-drawer oi-scroll" role="dialog" aria-label="Profile use result">
       <header>
         <h4>Profile switch result</h4>
         <button type="button" className="config-mini" onClick={() => setUseResult(null)}>close</button>

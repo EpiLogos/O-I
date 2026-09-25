@@ -1,3 +1,4 @@
+import {CanvasHUD} from "../workspace/primitives/CanvasHost";
 /**
  * Explore — the stable global desktop entrance to the open/shared field
  * (SHARED-FIELD-DESKTOP §1–§3, §12), and the ordinary Surface a projected
@@ -130,7 +131,7 @@ export function ExploreSurface({binding,onOpenPresentation,onOpenExplore}:Explor
   const subjectTitle=reading?.state==="hosted"?reading.entry.label:selectedHit?.label??selected;
   const availability=view.state==="available"?{label:view.target?.name??"field",healthy:view.status?.healthy!==false&&view.status?.transport?.state!=="unavailable"}:unavailable?{label:"unavailable",healthy:false}:{label:"reading…",healthy:true};
 
-  const strip=<nav className="explore-strip" aria-label="Explore">
+  const strip=<CanvasHUD className="explore-strip" aria-label="Explore">
     {!pinned&&<div className="explore-travel"><button type="button" aria-label="Back" title="Back" disabled={!canTravel(travel,-1)} onClick={()=>move(-1)}>←</button><button type="button" aria-label="Forward" title="Forward" disabled={!canTravel(travel,1)} onClick={()=>move(1)}>→</button></div>}
     {!pinned&&<form className="explore-aperture" role="search" onSubmit={e=>{e.preventDefault();commitQuery(query);}}><Glyph name="search" size={13}/><input type="search" aria-label="Search the open field" placeholder="Search worlds, Beings, Things, fields…" value={query} onChange={e=>setQuery(e.target.value)} onBlur={()=>commitQuery(query)} onKeyDown={e=>{if(e.key==="Escape"){e.preventDefault();setQuery("");commitQuery("");}}}/></form>}
     {selected&&<div className="explore-subject" data-selected-ref={selected}><span className="explore-subject-kind">{kindLabel(reading?.state==="hosted"?reading.entry.kind:selectedHit?.subject_kind??"subject")}</span><strong title={selected}>{subjectTitle}</strong>{!pinned&&<button type="button" aria-label="Return to the field" title="Return to the field" onClick={release}>×</button>}</div>}
@@ -143,7 +144,7 @@ export function ExploreSurface({binding,onOpenPresentation,onOpenExplore}:Explor
       {pinned&&onOpenExplore&&<button type="button" title="Show this subject in the Explore field" onClick={()=>void onOpenExplore({ref:binding.ref!,title:binding.title}).catch(e=>setPromoteError(String(e)))}>Show in Explore</button>}
     </div>}
     <button type="button" className="explore-refresh" aria-label="Refresh the field" title="Refresh" onClick={()=>setGeneration(n=>n+1)}>↻</button>
-  </nav>;
+  </CanvasHUD>;
 
   return <section className="explore-surface" aria-label={pinned?"Projected subject":"Explore"} data-explore-mode={pinned?"presentation":"explore"} data-selected-ref={selected??""} data-travel-index={travel.index} data-travel-length={travel.visits.length} aria-busy={busy||readBusy}>
     {(watchError||promoteError||storageError)&&<p role="alert">{watchError??promoteError??storageError}</p>}

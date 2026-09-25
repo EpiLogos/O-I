@@ -1,9 +1,11 @@
+import {WindowFunctionsMenu} from "./primitives/WindowFunctionsMenu";
+import {PanelShell} from "./primitives/PanelShell";
+import {CanvasHost,CanvasHUD} from "./primitives/CanvasHost";
 import {useShellGeometry} from "./geometry";
 import { useEffect, useLayoutEffect, useRef, useState, type ReactNode, type Dispatch, type SetStateAction } from "react";
 import type { AgencyDepth, LayoutState } from "../surface/types";
 import type { Workspace } from "./store";
 import "./shell.css";
-import "./sidebar-presentation.css";
 import { Glyph } from "./Glyph";
 import { focusGroup, groupsOf } from "../surface/engine";
 import { type TabPresentation, type WorkspaceMode } from "./mode";
@@ -257,7 +259,7 @@ export function DesktopShell(p: Props) {
 
       host.current?.style.setProperty(side === "left" ? "--desktop-left-width" : "--desktop-right-width", `${value}px`);
       host.current?.style.setProperty(side === "left" ? "--desktop-left-target" : "--desktop-right-target", `${value}px`);
-      if(side==="right"&&!overlayRight)host.current?.style.setProperty("--desktop-right-space",`${value}px`);
+      if(side==="right"&&!overlayRight&&!canvasCentre)host.current?.style.setProperty("--desktop-right-space",`${value}px`);
       e.currentTarget.setAttribute("aria-valuenow", String(Math.round(value)));
       setResizeFeedback({side, width: Math.round(value)});
     }}
@@ -276,7 +278,7 @@ export function DesktopShell(p: Props) {
   const left = depth("left"), right = depth("right");
   const leftOpen=left==="panel"||left==="full";
   const rightOpen=right==="panel"||right==="full";
-  const stopGeometry=useShellGeometry(host,[leftOpen?leftWidth:0,rightOpen?(right==="full"?Math.max(240,width-(leftOpen?leftWidth:0)):rightWidth):0,rightOpen&&!overlayRight?rightWidth:0]);
+  const stopGeometry=useShellGeometry(host,[leftOpen?leftWidth:0,rightOpen?(right==="full"?Math.max(240,width-(leftOpen?leftWidth:0)):rightWidth):0,rightOpen&&!overlayRight&&!canvasCentre?rightWidth:0]);
   useLayoutEffect(()=>{for(const side of ["left","right"] as const){const node=host.current?.querySelector<HTMLElement>(`[data-region="${side}"]`);if(node)node.inert=side==="left"?!leftOpen:!rightOpen;}},[leftOpen,rightOpen]);
   useEffect(() => {
     const centre=host.current?.querySelector<HTMLElement>('[data-region="centre"]');
@@ -298,6 +300,26 @@ export function DesktopShell(p: Props) {
   // as a broken counter, not a state. Name it, matching the reference
   // vocabulary's "1 group" / "Focused view" register.
   const groupCount = groupsOf(l.root).length;
+  const canvasFunctions = <WindowFunctionsMenu label="Canvas window functions" attention={!!p.error || !!p.recovery}>
+            {p.arrangementActions}
+            {/* Modes live only in the left foot's strip (the duplicate mode
+              * radios are removed, 10-SIDEBARS §3.1); the pane tab
+              * presentation stays reachable here. */}
+            <span className="oi-eyebrow">Tabs</span>
+            {([["pinned-horizontal","Pin tabs horizontally"],["pinned-vertical","Pin tabs vertically"],["unpinned","Unpin tabs"]] as const).map(([id,label])=><button key={id} className="oi-menu-item" role="menuitemradio" aria-checked={(groupsOf(l.root).find(g=>g.id===l.focusedGroupId)?.tabPresentation??"pinned-horizontal")===id} onClick={()=>p.onTabPresentation(id)}>{label}</button>)}
+          {/* Owner ruling 2026-09-17: ALL workspace messaging — errors and
+           * the recovery state alike — lives hidden here, in the status
+           * disclosure at the row's right end. Nothing renders above the
+           * app; a standing message only marks the arrow. */}
+              {p.recovery && <>
+                <p className="footer-status-message" role="alert">{p.recovery.reason}</p>
+                <button className="oi-menu-item" disabled={!p.recovery.key} onClick={p.onRecoverAvailable}>Recover available workspaces</button>
+                <button className="oi-menu-item" onClick={p.onStartFresh}>Start a fresh arrangement</button>
+              </>}
+              {p.error
+                ? <div className="footer-status-message" role="alert"><span>{p.error}</span><button className="footer-status-dismiss" aria-label="Dismiss message" onClick={p.onErrorDismiss}><Glyph name="close" size={10}/></button></div>
+                : !p.recovery && <p className="footer-status-message" role="status">No workspace messages.</p>}
+          </WindowFunctionsMenu>;
   return <div ref={host} className="desktop-shell" data-native={p.native} data-window-lights={p.windowLights ? "true" : undefined} data-mode={p.mode} data-workspace-id={p.workspace.id} style={{"--desktop-left-target":`${leftWidth}px`,"--desktop-right-target":`${rightWidth}px`} as React.CSSProperties}>
     <header className="shell-topbar" aria-label="Window and focused pane" data-tauri-drag-region>
       <button className="shell-region-toggle oi-tool" aria-label="Toggle left region" aria-expanded={left === "panel" || left === "full"} onClick={summonNavigator} title="Show / hide Central (⌘B)"><Glyph name="sidebar"/></button>
@@ -307,9 +329,6 @@ export function DesktopShell(p: Props) {
       {/* Status → Preview: while the panel is collapsed the frame carries the
         * agent's observed state as a dot and a state line; opening it is the
         * one action, so the chip IS the way to the pinned panel. */}
-      {!rightOpen && p.agentPresence && <button type="button" className="shell-agent-presence" data-presence-state={p.agentPresence.state} aria-label={`Accompanying agent: ${p.agentPresence.label} — show the panel`} title={`Accompanying agent: ${p.agentPresence.label}`} onClick={() => toggle("right")}>
-        <span className="shell-agent-presence-dot" aria-hidden="true">{p.agentPresence.state==="attention"?"!":""}</span><span className="shell-agent-presence-label">{p.agentPresence.label}</span>
-      </button>}
       <button className="shell-region-toggle shell-agent-toggle oi-tool" aria-label="Toggle right region" aria-expanded={right === "panel" || right === "full"} onClick={() => toggle("right")} title="Show / hide accompanying agent (⌘⇧B)"><Glyph name="sidebar"/></button>
     </header>
     {naming && <form className="workspace-name" onSubmit={e => { e.preventDefault(); if (!name.trim()) return; if (naming === "create") p.create(name); else p.rename(name); setNaming(null); }}>
@@ -334,7 +353,8 @@ export function DesktopShell(p: Props) {
           </div>{left === "panel" && separator("left")}
         </>}
       </aside>
-      <main className="desktop-centre" data-region="centre" aria-label="Workspace canvas">
+      <CanvasHost>
+      <CanvasHUD className="canvas-window-functions">{canvasFunctions}</CanvasHUD>
 
       {/* The centre region renders as one stable sibling list owned by the
         * frame (CradleFrame): the per-mode stage slots, the rest host and
@@ -343,8 +363,8 @@ export function DesktopShell(p: Props) {
         * centre mounts in place, in the stage slot or the pane that
         * presents it. */}
       {p.children}
-      </main>
-      <aside className={`desktop-side right depth-${right}`} data-region="right" data-depth={right} data-overlay={overlayRight && right === "panel"} data-focus-ref={ref} aria-hidden={!rightOpen} aria-label="Agent and inspector region">
+      </CanvasHost>
+      <PanelShell depth={right} overlay={overlayRight && right === "panel"} data-focus-ref={ref} aria-hidden={!rightOpen} aria-label="Agent and inspector region">
         {<>
           {right === "panel" && separator("right")}
           <div className="desktop-side-content">
@@ -352,7 +372,7 @@ export function DesktopShell(p: Props) {
            * edge-to-edge; there is no legacy fallback body. */}
           {p.right}</div>
         </>}
-      </aside>
+      </PanelShell>
     </div>
         <div className="workspace-footer-edge" data-pinned={footerPinned}><footer className="canvas-arrangement" aria-label="Workspace status">
           {/* The workspace itself (switch, new, rename, recover) lives in the
@@ -368,32 +388,8 @@ export function DesktopShell(p: Props) {
             * name themselves in the tooltips, and `.canvas-arrangement >
             * button` is this row's own styling for them. Declared-but-never-
             * rendered since the shell landed; rendered now, deliberately. */}
-          {p.arrangementActions}
           <span className="canvas-arrangement-spacer"/>
-          <details className="desktop-menu"><summary aria-label="Tab presentation"><Glyph name="more"/></summary><div className="oi-menu">
-            {/* Modes live only in the left foot's strip (the duplicate mode
-              * radios are removed, 10-SIDEBARS §3.1); the pane tab
-              * presentation stays reachable here. */}
-            <span className="oi-eyebrow">Tabs</span>
-            {([["pinned-horizontal","Pin tabs horizontally"],["pinned-vertical","Pin tabs vertically"],["unpinned","Unpin tabs"]] as const).map(([id,label])=><button key={id} className="oi-menu-item" role="menuitemradio" aria-checked={(groupsOf(l.root).find(g=>g.id===l.focusedGroupId)?.tabPresentation??"pinned-horizontal")===id} onClick={()=>p.onTabPresentation(id)}>{label}</button>)}
-          </div></details>
-          {/* Owner ruling 2026-09-17: ALL workspace messaging — errors and
-           * the recovery state alike — lives hidden here, in the status
-           * disclosure at the row's right end. Nothing renders above the
-           * app; a standing message only marks the arrow. */}
-          <details className="desktop-menu footer-status" data-attention={!!p.error || !!p.recovery}>
-            <summary aria-label={p.recovery ? `Workspace messages. Recovery standing: ${p.recovery.reason}` : p.error ? `Workspace messages. 1 standing: ${p.error}` : "Workspace messages"}><Glyph name="down" size={10}/></summary>
-            <div className="oi-menu">
-              {p.recovery && <>
-                <p className="footer-status-message" role="alert">{p.recovery.reason}</p>
-                <button className="oi-menu-item" disabled={!p.recovery.key} onClick={p.onRecoverAvailable}>Recover available workspaces</button>
-                <button className="oi-menu-item" onClick={p.onStartFresh}>Start a fresh arrangement</button>
-              </>}
-              {p.error
-                ? <div className="footer-status-message" role="alert"><span>{p.error}</span><button className="footer-status-dismiss" aria-label="Dismiss message" onClick={p.onErrorDismiss}><Glyph name="close" size={10}/></button></div>
-                : !p.recovery && <p className="footer-status-message" role="status">No workspace messages.</p>}
-            </div>
-          </details>
+
           <button className="footer-pin oi-tool" aria-label={footerPinned?"Unpin workspace footer":"Pin workspace footer"} aria-pressed={footerPinned} onClick={()=>{const next=!footerPinned;setFooterPinned(next);try{localStorage.setItem(FOOTER_KEY,next?"pinned":"revealed");}catch{}}}><Glyph name="pin"/></button>
           {/* A5: the Epi-Logos LENS toggle, minimal, at the end of the hidden
             * window footer. It re-roots the file trees on the corpus; it
@@ -404,4 +400,3 @@ export function DesktopShell(p: Props) {
         </footer></div>
   </div>;
 }
-

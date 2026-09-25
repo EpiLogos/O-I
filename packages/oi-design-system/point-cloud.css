@@ -22,5 +22,5 @@
 }
 .oi-loading[hidden] { display: none; }
 .oi-loading-copy { display: grid; gap: var(--oi-desktop-gap-sm); }
-.oi-loading-label { margin: 0; font-size: var(--oi-desktop-type-body); font-weight: 500; }
-.oi-loading-detail { margin: 0; font-size: var(--oi-desktop-type-caption); color: var(--oi-muted); }
+.oi-loading-label { margin: 0; font-size: var(--oi-shell-type-prose); font-weight: 500; }
+.oi-loading-detail { margin: 0; font-size: var(--oi-shell-type-nav); color: var(--oi-muted); }

@@ -1,0 +1,19 @@
+--- a/packages/canvas/src/edges/AnnotatedEdge.tsx
++++ b/packages/canvas/src/edges/AnnotatedEdge.tsx
+@@ -25,6 +25,7 @@
+ export function AnnotatedEdge({
+   id,
+   data,
++  markerStart,
+   markerEnd,
+   sourceX,
+   sourceY,
+@@ -59,7 +60,7 @@
+   return (
+     <>
+       <g data-sequencing={data?.sequencing ? "true" : "false"} data-testid={`edge-${id}`}>
+-        <BaseEdge markerEnd={markerEnd} path={edgePath} />
++        <BaseEdge markerStart={markerStart} markerEnd={markerEnd} path={edgePath} />
+       </g>
+       <EdgeLabelRenderer>
+         <div

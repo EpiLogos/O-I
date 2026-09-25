@@ -1,0 +1,301 @@
+{
+  "source": "Research Canvas / Antichrist Project",
+  "source_checkout": "/Users/admin/Central/Work/projects/Antichrist Project",
+  "revision": "7df35f822f9235331a69940cdaf484fe4a0b95c1",
+  "scope": "Mature Canvas, Timeline, Places and Street View source dependency closure plus native ql.techne compatibility adapters. Upstream files byte-exact except explicitly recorded capability, native error disclosure and hosted offline-network patches. No standalone application, database or backend is mounted.",
+  "entries": [
+    "packages/desktop-api/src/techneBundle.ts",
+    "packages/desktop-api/src/techneTransport.ts",
+    "packages/canvas/src/CanvasView.tsx",
+    "packages/canvas/src/timeline/TimelineSurface.tsx",
+    "packages/canvas/src/psychogeographic/PsychogeographicMap.tsx",
+    "packages/canvas/src/streetview/StreetViewSurface.tsx",
+    "packages/canvas/src/geography/bundledPack.ts",
+    "packages/canvas/src/styles/shell.css",
+    "apps/desktop/src/styles.css",
+    "apps/desktop/src/layout/timeline.css",
+    "apps/desktop/src/layout/lenses.css"
+  ],
+  "external_imports": [
+    "@blocknote/core",
+    "@blocknote/core/fonts/inter.css",
+    "@blocknote/mantine",
+    "@blocknote/mantine/style.css",
+    "@blocknote/react",
+    "@xyflow/react",
+    "@xyflow/react/dist/style.css",
+    "maplibre-gl",
+    "maplibre-gl/dist/maplibre-gl-worker.mjs?url",
+    "maplibre-gl/dist/maplibre-gl.css",
+    "node:fs/promises",
+    "node:path",
+    "perfect-freehand",
+    "react",
+    "react-dom",
+    "zod",
+    "zustand",
+    "zustand/vanilla"
+  ],
+  "files": {
+    "LICENSE": "41ff8ac18f6841338a6031f119c867badf1d7dfe16ee52250c17033fe3c5931a",
+    "apps/desktop/src/layout/lenses.css": "ff5d66b514db5e8999853572c62b375a758bd7b8c5b04d6d6a17a5a082450466",
+    "apps/desktop/src/layout/timeline.css": "7b4d232d56d08ab6200b572172064c5671135ce170ba1ddff70202da5fc3c6af",
+    "apps/desktop/src/styles.css": "e6c08ff2b137eee45a1b8428460867665bfeb0cee301286256db7105a95cac0e",
+    "packages/canvas/package.json": "b9fde0d14481b789b9a69e1c11a594a34ead855a256d61b8dcf764978e116473",
+    "packages/canvas/src/CanvasView.tsx": "b343759c921b283f4a05bd83e3f1622bba3cd6f68b0ff8c83f31a681a32266ee",
+    "packages/canvas/src/annotations/AnnotationLayer.tsx": "869fb6841d1d9d4dcda59293747e03e7536d908b29b51f06a6436f23416a4610",
+    "packages/canvas/src/annotations/annotationTools.ts": "fd0ad8dff629549bc2f0776c2b2ea0a3cf104b10dcbff6b8c242dd0a2a40e6a6",
+    "packages/canvas/src/components/ContextMenu.tsx": "9b496da82f532acddf529afd2f1a6cb154de1ddd76efd91d20d50dd96285ff9e",
+    "packages/canvas/src/components/FuzzyFilePicker.tsx": "7f7de27614eb4a8ba548f5f21635deb64987a0bbfe3621a4d0ee4e585295809d",
+    "packages/canvas/src/content/relationshipKinds.ts": "808d7cb8493799f4792a4b5d457b9a52b432c6f21bb64322561366176bf6bffd",
+    "packages/canvas/src/edges/AnnotatedEdge.tsx": "f29a962dc9065920759d1f95c4e71ea458a6050cbfa69ca79941c0dc831fe719",
+    "packages/canvas/src/geography/bundledPack.ts": "5536c2fb3d2acd75b03de440343ebdecc788dd7a6638c8d64d764f5490ebee41",
+    "packages/canvas/src/nodes/GroupNode.tsx": "b431969411ab3cee23021ff338e2f9ad74dd276c33fa940b0ed9e42fd867f3d8",
+    "packages/canvas/src/nodes/ImageNode.tsx": "1898706382031c6b81732771cf5049210b537c95776f3c4d7d5dda30e1494fdb",
+    "packages/canvas/src/nodes/KnowledgeCard.tsx": "38ecbe0f0ca48f6817e5f340c0bc5516ea71f26343722ed88d399534b6481884",
+    "packages/canvas/src/nodes/NoteNode.tsx": "a619c4fe95a90b50a287aac1326cb7ac682aac3a45f3e7f49fa10d3d2d87f338",
+    "packages/canvas/src/nodes/ResourceNode.tsx": "038b52df7bddd41fcc9f51445466969419d9425ba1e669733ab9350e828069f5",
+    "packages/canvas/src/nodes/nodeHandles.ts": "b7d99fc09e11e502413e39d32018763d7edbf24d0b8f70edff6777e832bbca94",
+    "packages/canvas/src/nodes/nodeVisualStyle.ts": "4eb46d6c9a54be722ab65fae8b707fb564b51493f2199928d88b60a17648888f",
+    "packages/canvas/src/presentation/cardPresentation.ts": "767aa78733f2cb8bcd5d8085778e7084976ccfc59e20f51e19455727a83b41e6",
+    "packages/canvas/src/psychogeographic/LocationPanel.tsx": "7955e4173276c769fc98dfbef60847b72ff9927fe807a9123c46a83ea8c69731",
+    "packages/canvas/src/psychogeographic/PsychogeographicMap.tsx": "55b9856e3106912eb7b6f8f6a9fb60e6b40e8852ef8126c0eb82f75a6bc25af7",
+    "packages/canvas/src/psychogeographic/geometry.ts": "7b9cc1b85b3bda72a4acffb295cef5a871613eb3e4d5a205cfa02f16e8cfca2d",
+    "packages/canvas/src/psychogeographic/mapStyle.ts": "1a59316a06bbcfbba0bb41c3de461763d01cfd06591994b28decd9607eb6e626",
+    "packages/canvas/src/psychogeographic/renderer.ts": "c20d573672250c6befe77b187745f90d602b6b76378134b0a4c1c3fe9aafad1e",
+    "packages/canvas/src/scenes/walkAssembly.ts": "08bb5f0871fbc812dbd110dc6fd018384f67335c9687e4d589bc4cda8da60dc3",
+    "packages/canvas/src/sequences/SequenceMap.tsx": "6dbc9e0e321c2bcd881cac799581cbfc277e1a422a8ce07c818c180bbae02185",
+    "packages/canvas/src/sequences/walkSequenceGraph.ts": "5453d52196fcb9a858f43e8ef838e793e27e8f647496f44b3f87f491a7afcdee",
+    "packages/canvas/src/state/canvasStore.ts": "10d4b5e2429b6fdceb2b25bbee054a8cd88a907427e939dcfde833878127975b",
+    "packages/canvas/src/streetview/StreetViewSurface.tsx": "0c77fb9bfb11a49f5683ddc38c5ee6f152a5e08c859a21c712064f8dd077a7d2",
+    "packages/canvas/src/styles/shell.css": "58390b21ce78b011977ecc8ee19f4b0c42bb5ed2d0aa105d4e8df01d740c93b1",
+    "packages/canvas/src/timeline/TimelineAxis.tsx": "95841d29270644201254c177eeda7f51ba4f2da51b84aaee824952ec90dcdab9",
+    "packages/canvas/src/timeline/TimelineLens.tsx": "8f1c71bed489ca426e16bdec89f24b696ccff4f41901167160ace36098057979",
+    "packages/canvas/src/timeline/TimelineNode.tsx": "b4fed38eeb92d5815ab81057ac3ea1d00459352baa1d30ab180c34f4bbb41b07",
+    "packages/canvas/src/timeline/TimelineRelationField.tsx": "7a985dcad012bde50624a7bb846b1acdbac5ccee750f7f9d4538ec7b004c4901",
+    "packages/canvas/src/timeline/TimelineRelationshipLayer.tsx": "d93fe4e1dcbefe6b3751d6a1be0c57cb5ed7f050c38922968e3a3e5f5270477a",
+    "packages/canvas/src/timeline/TimelineSurface.tsx": "167ebc1722ce27f58d2bef03bc60a220d33ee58a7b0930c976ca334dca84f595",
+    "packages/canvas/src/timeline/TimelineWalk.tsx": "5d6ba77d26a1ab8aee395a066ef70140d2103263f937f0ea39f492a20ce82638",
+    "packages/canvas/src/timeline/TimelineWorkingSet.tsx": "b088ab363ab5a395202a151432c9cdfbdb734eb40110807612ca0c2404360662",
+    "packages/canvas/src/timeline/categories.ts": "201d672a055205d5843cc7467d6393dfa56c8aa1b19598154d45f32670023734",
+    "packages/canvas/src/timeline/contracts.ts": "c81245c09771491f9a029e82cce231227ac7a0fab350909dc74ec482cfe71ca6",
+    "packages/canvas/src/timeline/frames.ts": "697888d35c35460076cab2ac80d0206cfb30ac7e7a690465153e1f842f124397",
+    "packages/canvas/src/timeline/instant.ts": "e32b94dfab9c85caede5823fa914f3d0a0d4e35c672c53330d60646d928a4070",
+    "packages/canvas/src/timeline/lighting.ts": "f8bda9ee932df2d73ea6eec4b6b1eb22ac9fdfa8a5342d5633b04de3da315de6",
+    "packages/canvas/src/timeline/projection.ts": "686589e885e3cd6756c8f14b4a26a764c1e3a9058b0d27fc66952d66ee2714bc",
+    "packages/canvas/src/timeline/scale.ts": "d8d5925a582f71603071b8e0632ce58b94a4b8600c7ddeb3b764ceb36f73723f",
+    "packages/canvas/src/timeline/ticks.ts": "32120f86b5b2bfa0b452227b5b287ac01ab6c9da314940eaf800636c70ce5897",
+    "packages/canvas/src/timeline/timelineStore.ts": "558f85c091137a2892a8e03bb2c911412a8b7d919a780ddcc5c9f6fc00d069b0",
+    "packages/canvas/src/timeline/viewport.ts": "b69f4207c14e181f9bfd11f4d0e82852a364d4cb2e386ae2714ac27cf3158f54",
+    "packages/canvas/src/timeline/walk.ts": "a8e71dc12b7d4a127c1e2e9b602aca5ff66a93749767250871f42470d364abdf",
+    "packages/desktop-api/package.json": "6b3de4a4c3a702182efbfd1d7fd46e9a8aa6ca3d30c3f302b62fd5e64908c474",
+    "packages/desktop-api/src/fetchRecords.ts": "fc9d06a3a774b3fc1fcd82efb6bbefa43ccfcd2dfbb02d3eb91ae9a81e0afcf0",
+    "packages/desktop-api/src/geographyEdges.ts": "40576101254564e5a3e1b341a26997ba68ca41d1540e898b83a09e713f32b638",
+    "packages/desktop-api/src/graph.ts": "96471b5834b2544d8ab475019e8de1484ee414af6cb40570200910c58ede52a2",
+    "packages/desktop-api/src/index.ts": "ca763905e2e85fb8684cea30b8c304b94dd26bcd32d4c0ca24c4128c06d5f0a4",
+    "packages/desktop-api/src/repositories.ts": "031bdc197f7d2caab828eb889a6c4f5da2973406cb269271e27a75d156b1a321",
+    "packages/desktop-api/src/scenes.ts": "fefe5b5f0a878253584d6be3d74430118528c6e7c4de4a45014d25283aedb38a",
+    "packages/desktop-api/src/streetView.ts": "45e4c9d3298b186c746942a0f7616c46ce0a5d4cb0b8fb0d2ff9c9e8e95a8100",
+    "packages/desktop-api/src/techneBundle.ts": "7ff3382b2331031cd4294595c660adbac2964330c9de41e807a97fa93e1e4b94",
+    "packages/desktop-api/src/techneTransport.ts": "4054c16622be5cff834c7f5f5007efc6932fccde317194b259690e9d50bb7ab7",
+    "packages/domain/package.json": "831ec0bed1bfa28f076f24692c68d0468a45e67926e072ee42d1d864b57c8fd4",
+    "packages/domain/src/index.ts": "7e7dde6530a66313c475354b9a3e108270bde157879af044598ccb7709aff062",
+    "packages/domain/src/ports/archetypeRepository.ts": "bad3b5c4d44b8bbc6d5e24e88d9a65685959f31831c9e8f80a24678eab7cb246",
+    "packages/domain/src/ports/canvas.ts": "289420b5c112998a3865b2c740fbcf5b2e07aed2cabae5704e3aada74226c501",
+    "packages/domain/src/ports/constellation.ts": "058c414a254bf23594bb1cdf112d9b16fc79e1a0f5e7c10a6514e671703294d5",
+    "packages/domain/src/ports/edge.ts": "8232e032b46de86a6901d97727c47ba63715bac85ada1ffe465536ebc8e52123",
+    "packages/domain/src/ports/node.ts": "ec6ca2d5845bbede2970d75b1fe5959264483886ca6b124a4049b1dc4deec734",
+    "packages/domain/src/ports/palaceRepository.ts": "5f6d2f9d342bcecc79df99023f831b31303586169acd2de664566ed7ad63f0c8",
+    "packages/domain/src/ports/placesRepository.ts": "251f6bc6ea6e2476c4edae32d01236d7db0d5717a07d170fc5790ac729b03381",
+    "packages/domain/src/ports/project.ts": "8396ad8273b9ba98d4886b417b7953fc54d0c04d54c35f375ff8e504581f09c8",
+    "packages/domain/src/ports/scene.ts": "192dbd3e69126f19525f384c04146dba371fa59ec7060378243d5a9131ed9436",
+    "packages/domain/src/ports/sequence.ts": "3cbc5f8310eb86293437745f6886d505788833029bbfcd9c66040e098757c709",
+    "packages/domain/src/ports/storyRepository.ts": "43f3b4f74f68be23df37a56476783406540a618c09c6eb7aab2f4326ddd7ff0b",
+    "packages/domain/src/ports/streetViewRepository.ts": "e949a9f0b98ba77c74b046a5b36aeffc66d916254831819c32de52fab2e23f89",
+    "packages/domain/src/ports/timelineRepository.ts": "ce14eda0f4fbacd4f65fbbf04ae7808508a4febfeae53e9d2aee4e59ec35ed43",
+    "packages/domain/src/types.ts": "64e918c0b16a7f44b64c0de616a2e01f72e74fc0cabb98661d6804c4a9f44d70",
+    "packages/exporter/package.json": "9fc2f6ab2bcab1cc6fb6592ffbae10f22356fcd0cc8c64d532a72169bd8547c8",
+    "packages/exporter/src/buildSearchIndex.ts": "849649ab998c50af9b8cdbc98d2d9dea85dcfc1e8aa08733d44b519443d48716",
+    "packages/exporter/src/copyAssets.ts": "c1dc5b7407f0d58cd5f9c755c01c905802ff6212c17ff61fbba97dbec67cb7e2",
+    "packages/exporter/src/graphBundle.ts": "94575a960f48ed63562d061824a68828786dd0504927b02462e17598c0d1e6b9",
+    "packages/exporter/src/index.ts": "730a98b5e30ae0d1a212aa8088e7083b83fc86876adc726f05ad95c75ccc4c9f",
+    "packages/exporter/src/keepsake.ts": "322ebc8f86551e8297cd625f25cb9a170be024ccc7471b272cf7f23c81b23b07",
+    "packages/exporter/src/manifest.ts": "baa936bf80e20b732239392ec01a4a652e25c4c2efba0d4c2399d0e6022c4e8d",
+    "packages/exporter/src/renderMarkdown.ts": "95457d3d27d5f77cffc355a9cfe5e85b38719bcae7c383df51a1dd00d15d430d",
+    "packages/geography/data/ATTRIBUTION.md": "5776150dd51cedb48e0b5e1c13b8134c31a565855fc5b3074809f38c4e31842c",
+    "packages/geography/data/README.md": "3ce556d62e3a1adab8824057e08aca7f3fc55ef90833bb1cbbf9cff36970d3d7",
+    "packages/geography/data/pack/basemap.geojson": "0e5b512a1feb099d022915890ea764eca6f16a87ef1120a2d331aef86952bde2",
+    "packages/geography/data/pack/gazetteer.ndjson": "3b20d95042ca015604f23e1f7b7650ba803d6716d6b4ad764aff021ace456791",
+    "packages/geography/data/pack/pack.json": "751023a1019f966b3bd2128e9133eeae7a15931018b2d1b9306e100d9e6f185b",
+    "packages/geography/package.json": "026b193d07d8bec8ccbe32f999ae16aeef2a920543512368d0d875ec040b722c",
+    "packages/geography/src/gazetteer.ts": "40932b2843c69a25e7440245dd28bc35455276ffca42b2ba57115d5aa734ac4f",
+    "packages/geography/src/index.ts": "00bce188fc4e8c13abf115a7863d082f6727f8aff307209e5bb76a0420184114",
+    "packages/geography/src/pack.ts": "c34fe9a07e992fd5d882d9b80898f80a6e48c67b263a543776292bafec58e6ae",
+    "packages/geography/src/policy.ts": "32e9e5861e8b58ee5ac090cabf0f11fed1c606c139264b708bb28679a7dcade2",
+    "packages/node-document/package.json": "48bf3cabd18e1e76c00e733768b40481ab22e05d4011724e47ffa4c8445fab78",
+    "packages/node-document/src/body.ts": "06f42f7bda27aa671ee6e0a75ad36f5b42b966f341708b6189f7158261047a1e",
+    "packages/node-document/src/index.ts": "3cbfb83379517c9b73a7b45eeb05084756548f536eeea68b493bae90879a49f8",
+    "packages/node-document/src/nodeDocumentStore.ts": "468bc69fa82ac24afb5b72d9a6e611c626e12c4963469c5412a7cff5c714d1ec",
+    "packages/node-document/src/summary.ts": "d5d4756c849b8f531e634f27f107e72d19c17146cc28762ea2a17c8377663b07",
+    "packages/schema/package.json": "4f69ebf46d9daf59a09be81b62c631a8116ada00f2e82a9b76c237d189c49c5c",
+    "packages/schema/src/annotation.ts": "d01ec9ab545153d19063d15eca3380665e9fc65accf172f75ab4f9f25981cb50",
+    "packages/schema/src/archetype.ts": "30503e3316aeaf883cf8e6eff41c5bd59a3133a62c98d8126c74302d9ec13887",
+    "packages/schema/src/canvas.ts": "034be87d0b344e56b4b312ce4b665f4a334a350d9bd037cacad8d4d191b894a0",
+    "packages/schema/src/colour.ts": "346a5ef74179f29c33156ca5553fc91a86a254561143fd47cd358bc83952add7",
+    "packages/schema/src/consent.ts": "e961c7e9e1f1ed70abd0b415022091eab2bbee65f3ac6754837b6f7d6f853263",
+    "packages/schema/src/constellation.ts": "15b1349b8138a3ea5bb28afa25e887d5cad74b40ac4b888bd84280a225d4b383",
+    "packages/schema/src/edge.ts": "510ec68ab271c08e71a07b2e1c78b250cec52f3de38afa0593fe86511e787387",
+    "packages/schema/src/export.ts": "f2e2ea355199eb23255c189525efbae10847a0baa254faff87dc6a0f7f82cfcd",
+    "packages/schema/src/geography_edge.ts": "959f511c90b4eed16074ea56f7e4d450be48546a18e499ec07d6b77dca47e71e",
+    "packages/schema/src/index.ts": "23cef31f866574b40f44e79928c54e993d035b2106acd29fff63380915e8bc64",
+    "packages/schema/src/node.ts": "8af952f4d6b79470ed7572e1e056cb42119e8ef1192d8614447e9ecf2f09c6c2",
+    "packages/schema/src/passage.ts": "bbfa4716b550234b20511f43359728e42ff775701a62b77adf68d35a2f5dcc5c",
+    "packages/schema/src/place.ts": "9a7da51fbc8768a0b386abfccfe2ef8a8a89d607f3fd2555aed5a655315c79a0",
+    "packages/schema/src/project.ts": "704e00b11202efd70e29bee52971d143691c89c13f2be3cdedf80b953ec6e953",
+    "packages/schema/src/relationship.ts": "f482a7322235dae9707a5d27f543d8f33971d55c0088d282612644085adb5196",
+    "packages/schema/src/scene.ts": "869066a9c46e426df3793bb4a0bf15bf63dcaf6baaf363a8fc3f08b9590114f8",
+    "packages/schema/src/sequence.ts": "2cae08fe04e59b055415544f3429a28d912d68e8ccdbc1a27c654f6ee64f5ed4",
+    "packages/schema/src/surface.ts": "6956bb167729b369433dc56ea445c86c634e3293b34f1cf8ce69210627289bdd",
+    "packages/schema/src/tab.ts": "39404802d67da3e0c807d52f13012d3f295aadbb48347043dfde0e0a75d9c957",
+    "packages/schema/src/time.ts": "9107194ab14fcfaeca85499e7a88f71c06661cad824ed4ec89e28c87d7f9a9ea",
+    "packages/viewers/package.json": "249e13929503439dcf8b86a8011448337e835eff7f4b8d0fa79b1229a9e608d4",
+    "packages/viewers/src/BlockNoteDocument.tsx": "d0ea8a77ac5d882d44b8bff2f57065c8ae9dc9333bca7319496a34b726e0aaa3",
+    "packages/viewers/src/BlockNoteReadOnly.tsx": "c832e742bba050a7cf37b1e8f66419f8102fbbee5508ac2f32e3b65d15ebff03",
+    "packages/viewers/src/FileMetaViewer.tsx": "b26d145ecc5496dacd7c55f7320ce5872c140c967768eee4d289da7c5672d53e",
+    "packages/viewers/src/ImageViewer.tsx": "c38a068e17bca56768dea0dc114e98d55e71dbbfd22c20c275ece39668898526",
+    "packages/viewers/src/MarkdownViewer.tsx": "42bb6839a6f098d74758f205badc3bc42619aa9735615d636479a2e6a1af946a",
+    "packages/viewers/src/NoteViewer.tsx": "1dfcd7662402d028d6ccd84b1d1c23b50ee4695aabb3cb252c1d39827353d247",
+    "packages/viewers/src/PdfViewer.tsx": "791c0736f3945bf2a9e28abb5a559553eb98825759fd629bdb96089519cc09b8",
+    "packages/viewers/src/index.ts": "562fe808a8ad8841354d16d373d2ad6e21c6310c4ae70a34fd5bae9708b210d9"
+  },
+  "overlays": [
+    "components.ts",
+    "browserExporter.ts",
+    "README.md",
+    "verify-source.mjs",
+    "patches/read-only-capability.patch",
+    "tests/readOnly.tsx",
+    "tests/run-read-only.mjs",
+    "patches/native-host-capabilities.patch",
+    "patches/source-direction-markers.patch",
+    "patches/hosted-map-toolbar.patch",
+    "patches/native-relation-attribution.patch"
+  ],
+  "patches": {
+    "packages/canvas/src/CanvasView.tsx": {
+      "upstream_sha256": "b343759c921b283f4a05bd83e3f1622bba3cd6f68b0ff8c83f31a681a32266ee",
+      "adapted_sha256": "04f2ee2e5d23c6a5e1bf7bce0f415a5aa9c249bd8245d4d13564776d371301d2",
+      "reason": "Explicit per-owner readOnly capability and callback-backed actions; retain reading/navigation, scope menu portal to embedded host; optional host toolbar portal uses the actual zoom/fit actions and suppresses duplicate ReactFlow Controls only when hosted."
+    },
+    "packages/canvas/src/components/ContextMenu.tsx": {
+      "upstream_sha256": "9b496da82f532acddf529afd2f1a6cb154de1ddd76efd91d20d50dd96285ff9e",
+      "adapted_sha256": "a93205fa68be9580b283c8e9f5d58817e98ee0c9af14bc8f59482d97cd221a3e",
+      "reason": "Explicit per-owner readOnly capability and callback-backed actions; retain reading/navigation, scope menu portal to embedded host."
+    },
+    "packages/canvas/src/edges/AnnotatedEdge.tsx": {
+      "upstream_sha256": "f29a962dc9065920759d1f95c4e71ea458a6050cbfa69ca79941c0dc831fe719",
+      "adapted_sha256": "18d4857cafac5577fc2bfb83b48e8de7ecdadd3f7d968c664561b6ac385e74ca",
+      "reason": "Explicit per-owner readOnly capability and callback-backed actions; retain reading/navigation, scope menu portal to embedded host. Pass both native direction markers to BaseEdge; the existing source direction is never inferred."
+    },
+    "packages/canvas/src/nodes/GroupNode.tsx": {
+      "upstream_sha256": "b431969411ab3cee23021ff338e2f9ad74dd276c33fa940b0ed9e42fd867f3d8",
+      "adapted_sha256": "ba28624bc892d09b33794ca357ed6868437b03edbab3ef3425c8f20b96b1f709",
+      "reason": "Explicit per-owner readOnly capability and callback-backed actions; retain reading/navigation, scope menu portal to embedded host."
+    },
+    "packages/canvas/src/nodes/ImageNode.tsx": {
+      "upstream_sha256": "1898706382031c6b81732771cf5049210b537c95776f3c4d7d5dda30e1494fdb",
+      "adapted_sha256": "19da0e4dd54ec64edcdc485c450e89efd1c752804132abc3f27cbab64e171c48",
+      "reason": "Explicit per-owner readOnly capability and callback-backed actions; retain reading/navigation, scope menu portal to embedded host."
+    },
+    "packages/canvas/src/nodes/NoteNode.tsx": {
+      "upstream_sha256": "a619c4fe95a90b50a287aac1326cb7ac682aac3a45f3e7f49fa10d3d2d87f338",
+      "adapted_sha256": "316b7e56d3b7729b675fd3fbc1da6347b62ea8a79ccef9946d6aecc38c91b3db",
+      "reason": "Explicit per-owner readOnly capability and callback-backed actions; retain reading/navigation, scope menu portal to embedded host."
+    },
+    "packages/canvas/src/nodes/ResourceNode.tsx": {
+      "upstream_sha256": "038b52df7bddd41fcc9f51445466969419d9425ba1e669733ab9350e828069f5",
+      "adapted_sha256": "f4ab5affd2f0fbf28e8a5e16f3b5f5ea2060040c78c458797c851ebff20efbd0",
+      "reason": "Explicit per-owner readOnly capability and callback-backed actions; retain reading/navigation, scope menu portal to embedded host."
+    },
+    "packages/schema/src/sequence.ts": {
+      "upstream_sha256": "2cae08fe04e59b055415544f3429a28d912d68e8ccdbc1a27c654f6ee64f5ed4",
+      "adapted_sha256": "34849ba96c321731924db7190c2b7cdc99d93d661ffe04c8c5191811011681f5",
+      "reason": "Module marker for the upstream comment-only sequence barrel export; no runtime behavior."
+    },
+    "packages/canvas/src/timeline/TimelineSurface.tsx": {
+      "upstream_sha256": "167ebc1722ce27f58d2bef03bc60a220d33ee58a7b0930c976ca334dca84f595",
+      "adapted_sha256": "a550f44e7e41bf473431594de2f60bfcdb123e5ea5fa3ea628613d5928e129a8",
+      "reason": "Preserve native repository failures as visible unavailable readings with explicit retry; empty successful readings remain distinct. Retain original zoom/fit controls via optional host HUD portal; existing native Timeline state remains unchanged. Inner Timeline controls use the same optional host toolbar portal; original filters, subtimeline, lighting and camera callbacks retained without a duplicate toolbar. Native supplied complete dated Scene extent supports Fit outside the current camera window; button zoom shares the original lens scale, including moment level."
+    },
+    "packages/canvas/src/timeline/TimelineLens.tsx": {
+      "upstream_sha256": "8f1c71bed489ca426e16bdec89f24b696ccff4f41901167160ace36098057979",
+      "adapted_sha256": "bc88824a1f502363ee9dd56b437ef5ab858948cd05c179ae6ffb1e93b2de6586",
+      "reason": "Exact focused native relation filtering without losing focused reading; explicit Close/Escape clears selection and invalidates late replies, restores card/track focus; preserve host toolbar, capability and Walk controls. Vertical pan bounds consume the same collision-resolved display rectangles as cards. Optional explicit Close/Escape and existing-HUD visibility controls with focus return; hiding retains native walk/working-set state, Clear/Unload remain separate intentional actions."
+    },
+    "packages/canvas/src/psychogeographic/PsychogeographicMap.tsx": {
+      "upstream_sha256": "55b9856e3106912eb7b6f8f6a9fb60e6b40e8852ef8126c0eb82f75a6bc25af7",
+      "adapted_sha256": "70110ff3f474b3709af9451b4788908bc7b6d66d3f2dcfc42e2fd874a99190a6",
+      "reason": "Expose rejected owner/context reads with retry; hosted offlineOnly capability omits live-network controls and refuses browser-policy activation. Optional host toolbar portal exposes the same Globe/Flat/Zoom to fit actions above the host HUD without another renderer or state store. Hosted selected-place context uses the existing native inspector with explicit close and selection clear. Hosted location details are explicitly toggled in native HUD; selection remains available when the inspector closes."
+    },
+    "packages/canvas/src/streetview/StreetViewSurface.tsx": {
+      "upstream_sha256": "0c77fb9bfb11a49f5683ddc38c5ee6f152a5e08c859a21c712064f8dd077a7d2",
+      "adapted_sha256": "0323bdfa45eaec4b616953699e7aa6c8ee6681d96332c62b50c400800c9ac580",
+      "reason": "Hosted offlineOnly capability omits external imagery activation; owner-provided image titles replace opaque artifact IDs; actual import/view copy and no absent metadata footer or synthetic review badge. Display existing native image occurrences without requiring invented import timestamps; retain valid image selection when the native list changes. Optional host toolbar portal presents the same import operation once in the native HUD; standalone toolbar retained."
+    },
+    "packages/desktop-api/src/techneBundle.ts": {
+      "upstream_sha256": "7ff3382b2331031cd4294595c660adbac2964330c9de41e807a97fa93e1e4b94",
+      "adapted_sha256": "e4352dc9742954f7a1582d21144d54eb21fcebf2fadafa0b351daa2d9957137e",
+      "reason": "Native canonical PlaceFacet allows absent names. Preserve empty names; only the host presentation chooses an occurrence title or neutral Location label. Preserve exact native relation identity, standing, evidence refs and disclosed temporal qualification in transient relationship properties; no inferred classification or provider-authority substitution."
+    },
+    "packages/desktop-api/src/techneTransport.ts": {
+      "upstream_sha256": "4054c16622be5cff834c7f5f5007efc6932fccde317194b259690e9d50bb7ab7",
+      "adapted_sha256": "ccdee5f278bb24dfcc54da9ba0189c7c4b984b40f6a5481487e55a24b32d297a",
+      "reason": "Exact temporal alias source resolution for native focused relations/expansion, preserving source endpoints without invented dates; retain native filter/error fixes. Resolve exact single-source Place aliases for current native incident relations, as for temporal aliases; no invented route semantics."
+    },
+    "packages/canvas/src/timeline/TimelineNode.tsx": {
+      "upstream_sha256": "b4fed38eeb92d5815ab81057ac3ea1d00459352baa1d30ab180c34f4bbb41b07",
+      "adapted_sha256": "4e01bb04b4e83557b8d92cc974c217ce2752a4adc3fca09bc3820fc57fcdbf65",
+      "reason": " Apply tag/relation filters to returned native view records and exact endpoint sets; explicit absent native style/archetype capability disables only unsupported controls with owner reason, retaining original standalone defaults and geometry controls. Keyboard focus reveals marker labels; Space selects and Enter opens the exact source through existing callbacks. Use shared collision-resolved rectangles/century display height for visible cards and connector anchors; authored resize height remains intact."
+    },
+    "packages/canvas/src/timeline/ticks.ts": {
+      "upstream_sha256": "32120f86b5b2bfa0b452227b5b287ac01ab6c9da314940eaf800636c70ce5897",
+      "reason": " Adapt tick label interval to actual screen spacing without truncating the time range. Convert native astronomical years to calendar BCE/CE labels: year zero is 1 BCE, no year zero CE.",
+      "adapted_sha256": "dcdcd921158df7810e1210cb956f214f72006170f0862be1e28fd9999ea4bbb4"
+    },
+    "packages/desktop-api/src/graph.ts": {
+      "upstream_sha256": "96471b5834b2544d8ab475019e8de1484ee414af6cb40570200910c58ede52a2",
+      "adapted_sha256": "15bbdce699c9184e367506c7a3ed10a6e3f5d8e1e3e9e152958b9ba2472b5f3b",
+      "reason": "Optional transient Timeline relation-focus ref preserves dated edge identity; no stored graph change."
+    },
+    "packages/canvas/src/timeline/TimelineRelationField.tsx": {
+      "upstream_sha256": "7a985dcad012bde50624a7bb846b1acdbac5ccee750f7f9d4538ec7b004c4901",
+      "adapted_sha256": "ffb97e473c6ac33bf63ad3ce7550c048d32aa524c1f61293e993899478e184f1",
+      "reason": "Filter actual native relation types; dated relation focus displays both real endpoints without invented edges; optional explicit Close callback."
+    },
+    "packages/canvas/src/psychogeographic/LocationPanel.tsx": {
+      "upstream_sha256": "7955e4173276c769fc98dfbef60847b72ff9927fe807a9123c46a83ea8c69731",
+      "reason": " Optional hosted panel follows native inspector styling and exposes Close/Escape without a second map panel.",
+      "adapted_sha256": "dc059b4787205903fd3a1acec5a582f66bef71a604fd07fc5d3087a4b49c5fd3"
+    },
+    "packages/canvas/src/timeline/projection.ts": {
+      "upstream_sha256": "686589e885e3cd6756c8f14b4a26a764c1e3a9058b0d27fc66952d66ee2714bc",
+      "adapted_sha256": "4e2ddf3cc29e22a6b7fe5fe045b33d181987d0c70cc57cab74f487e3b9a1e655",
+      "reason": "Collision-safe centred card rectangles expand vertical lanes without dropping dates or changing authored offsets; compact century display height matches the renderer."
+    },
+    "packages/canvas/src/timeline/instant.ts": {
+      "upstream_sha256": "e32b94dfab9c85caede5823fa914f3d0a0d4e35c672c53330d60646d928a4070",
+      "adapted_sha256": "90fe41b4634bc9bca046f2cc0642257fdabcc32af1efc455fc68e16e878c622d",
+      "reason": "Preserve actual native signed ISO instants in transient Timeline parsing; correct BCE chronological fraction and JavaScript year 0\u201399 offset without rewriting source date or precision."
+    },
+    "packages/canvas/src/timeline/TimelineWalk.tsx": {
+      "upstream_sha256": "5d6ba77d26a1ab8aee395a066ef70140d2103263f937f0ea39f492a20ce82638",
+      "adapted_sha256": "dc5203df7177af201cefea05af5edb5bad29095d2eeea5eb700387b7d5488cc2",
+      "reason": " Optional explicit Close/Escape and existing-HUD visibility controls with focus return; hiding retains native walk/working-set state, Clear/Unload remain separate intentional actions."
+    },
+    "packages/canvas/src/timeline/TimelineWorkingSet.tsx": {
+      "upstream_sha256": "b088ab363ab5a395202a151432c9cdfbdb734eb40110807612ca0c2404360662",
+      "adapted_sha256": "299067177df10e4146f5673118774b8d1b964450f79c889e4bcc8f52f49283ca",
+      "reason": " Optional explicit Close/Escape and existing-HUD visibility controls with focus return; hiding retains native walk/working-set state, Clear/Unload remain separate intentional actions."
+    }
+  }
+}

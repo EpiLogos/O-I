@@ -21,9 +21,9 @@ test("a read records the connection's own modes, and 'offers none' is recorded t
   assert.equal(told, 2);
   assert.deepEqual(M.advertisedModes().map((row) => [row.provider, row.modes.map((m) => m.id)]), [["hermes-probe", ["default", "accept_edits"]], ["pi", []]]);
   assert.equal(M.advertisedModes()[0].modes[0].description, undefined, "only id and name are kept");
-  // the memory survives a reload of the window (per-viewer storage)
+  // A reload discards owner capability observations until the next native read.
   M.resetAdvertisedModesForTest();
-  assert.deepEqual(M.advertisedModes().map((row) => row.provider), ["hermes-probe", "pi"]);
+  assert.deepEqual(M.advertisedModes(), []);
 });
 
 test("an identical re-read within a minute does not churn; a changed advertisement replaces the old one", () => {
@@ -37,10 +37,10 @@ test("an identical re-read within a minute does not churn; a changed advertiseme
   assert.deepEqual(M.advertisedModes()[0].modes.map((m) => m.id), ["plan"]);
 });
 
-test("unreadable or malformed storage starts empty rather than inventing modes", () => {
+test("historical browser capability data cannot confer current modes", () => {
   store.clear(); M.resetAdvertisedModesForTest();
   store.set("oi-cradle.advertised-modes.v1", JSON.stringify({x: {label: "X", modes: [{id: 3}]}, y: {label: "Y", modes: [{id: "a", name: "A"}], seenAt: 5}}));
-  assert.deepEqual(M.advertisedModes().map((row) => row.provider), ["y"]);
+  assert.deepEqual(M.advertisedModes(), []);
   store.set("oi-cradle.advertised-modes.v1", "{not json"); M.resetAdvertisedModesForTest();
   assert.deepEqual(M.advertisedModes(), []);
 });

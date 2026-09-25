@@ -128,6 +128,7 @@ export interface AgencySessionRow {
 }
 
 export interface AgencyReading {
+  harnessDisclosure?: unknown;
   projectRef: string;
   rows: AgencySessionRow[];
   observedAtUnixMs?: number;

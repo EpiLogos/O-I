@@ -25,6 +25,7 @@ use crate::configuration::changeset::Receipt;
 use crate::configuration::refs::Scope;
 use crate::configuration::resolution::SecretReference;
 use serde_json::{json, Value};
+use std::cell::RefCell;
 use std::collections::BTreeMap;
 use std::io::Write;
 use std::path::PathBuf;
@@ -168,6 +169,7 @@ pub fn verb_argv(verb: &str, setting_ref: Option<&str>, scope: Option<&Scope>) -
 #[derive(Clone, Debug, Default)]
 pub struct ProcessTransport {
     programs: BTreeMap<String, PathBuf>,
+    reading_batch: RefCell<Option<BTreeMap<String, Result<Value, TransportError>>>>,
 }
 
 impl ProcessTransport {
@@ -187,6 +189,23 @@ impl ProcessTransport {
 
     pub fn insert(&mut self, owner_ref: &str, program: PathBuf) {
         self.programs.insert(owner_ref.to_owned(), program);
+    }
+
+    /// A read batch shares one native disclosure per owner. The cache cannot
+    /// escape this closure, so apply/verification always reads fresh evidence.
+    pub fn with_reading_batch<T>(&self, read: impl FnOnce() -> T) -> T {
+        struct Clear<'a>(&'a RefCell<Option<BTreeMap<String, Result<Value, TransportError>>>>);
+        impl Drop for Clear<'_> {
+            fn drop(&mut self) {
+                self.0.replace(None);
+            }
+        }
+        if self.reading_batch.borrow().is_some() {
+            return read();
+        }
+        self.reading_batch.replace(Some(BTreeMap::new()));
+        let _clear = Clear(&self.reading_batch);
+        read()
     }
 
     fn program(&self, owner_ref: &str) -> Result<PathBuf, TransportFailure> {
@@ -286,7 +305,19 @@ impl OwnerTransport for ProcessTransport {
     }
 
     fn system_reading(&self, owner_ref: &str) -> Result<Value, TransportError> {
-        self.run(owner_ref, vec!["system".into(), "--json".into()], None)
+        if let Some(value) = self
+            .reading_batch
+            .borrow()
+            .as_ref()
+            .and_then(|batch| batch.get(owner_ref))
+        {
+            return value.clone();
+        }
+        let result = self.run(owner_ref, vec!["system".into(), "--json".into()], None);
+        if let Some(batch) = self.reading_batch.borrow_mut().as_mut() {
+            batch.insert(owner_ref.to_owned(), result.clone());
+        }
+        result
     }
 
     fn validate(&self, owner_ref: &str, request: &SettingRequest) -> Result<Value, TransportError> {

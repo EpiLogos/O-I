@@ -14,22 +14,6 @@
 .expression-verso__identity dd { margin: 0; overflow-wrap: anywhere; }
 
 /* Scene breakdown apertures — the wiki map's tab grammar. */
-.expression-verso__apertures { display: flex; gap: 2px; }
-.expression-verso__apertures button {
-  border: var(--oi-shell-edge) solid transparent;
-  background: transparent;
-  color: var(--oi-muted-2);
-  padding: 2px 8px;
-  border-radius: 999px;
-  font-size: var(--oi-shell-type-nav);
-  cursor: pointer;
-}
-.expression-verso__apertures button:hover { color: var(--oi-foreground); }
-.expression-verso__apertures button[aria-selected="true"] {
-  color: var(--oi-foreground);
-  border-color: var(--oi-hairline);
-  background: var(--oi-surface);
-}
 
 .expression-verso__scene-list, .expression-verso__scene-tree { margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 4px; font-size: var(--oi-shell-type-ui); }
 .expression-verso__scene-list li, .expression-verso__scene-branch { display: flex; gap: 8px; align-items: baseline; }

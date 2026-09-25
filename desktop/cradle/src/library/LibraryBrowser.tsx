@@ -19,8 +19,10 @@
  */
 import {useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore} from "react";
 import {useKernel} from "../kernel/KernelProvider";
+import type {LibraryInsertionCapture} from "../expressions/sourceInsertion";
 import {resolveCollectionSelection} from "./collectionSelection";
 import {CollectionMembershipEditor} from "./CollectionMembershipEditor";
+import {IconChoiceStrip,IconTab} from "../workspace/primitives/IconTabStrip";
 import {Glyph} from "../workspace/Glyph";
 import {MODE_CURATION, type WorkspaceMode} from "../workspace/mode";
 import type {LibraryCoverage, LibraryItem, LibraryKind, LibraryQuery, LibraryScopeId} from "./scope";
@@ -57,9 +59,12 @@ function initialView(): LibraryView {
   } catch { return "browse"; }
 }
 
-export function LibraryBrowser({mode, onOpen, onMessage, initialScope}: {
+export function LibraryBrowser({mode, onOpen, onMessage, initialScope, captureInsertion, active=true, requestContext=""}: {
   mode: WorkspaceMode;
-  onOpen: (item: LibraryItem, how: "page" | "expression" | "instrument" | "source") => void;
+  onOpen: (item: LibraryItem, how: "page" | "expression" | "instrument" | "source", capture?:LibraryInsertionCapture, signal?:AbortSignal) => void | Promise<void>;
+  captureInsertion?:()=>LibraryInsertionCapture;
+  active?:boolean;
+  requestContext?:string;
   onMessage?: (message: string) => void;
   initialScope?: LibraryScopeId;
 }) {
@@ -69,27 +74,30 @@ export function LibraryBrowser({mode, onOpen, onMessage, initialScope}: {
   const [refreshGeneration, setRefreshGeneration] = useState(0);
   const opening = useRef<AbortController | null>(null);
   useEffect(() => () => { opening.current?.abort(); }, []);
+  useEffect(()=>{if(!active)opening.current?.abort();},[active]);
   const openItem = useCallback((item: LibraryItem, how: "page" | "expression" | "instrument" | "source") => {
     opening.current?.abort();
     const controller = new AbortController(); opening.current = controller;
     setOpenError("");
     void (async () => {
       try {
+        const capture=how==="instrument"?captureInsertion?.():undefined;
+        if(how==="instrument"&&!capture)throw new Error("Open the native Scene that should receive this source first.");
         const resolved = await resolveCollectionSelection(transport, item, controller.signal);
         if (controller.signal.aborted) return;
         if (resolved.collectionMemberships?.length && how === "expression" && !resolved.expressionRef) throw new Error("This saved Journey has no native Expression binding yet. Open its exact source or use the Expressions collection import.");
-        await onOpen(resolved, resolved.collectionMemberships?.length && how === "page" ? "source" : how);
+        await onOpen(resolved, resolved.collectionMemberships?.length && how === "page" ? "source" : how,capture,controller.signal);
       } catch (cause) {
         if (!controller.signal.aborted) setOpenError(cause instanceof Error ? cause.message : String(cause));
       }
     })();
-  }, [transport, onOpen]);
+  }, [transport, onOpen, captureInsertion]);
   const [scope, setScope] = useState<LibraryScopeId>(initialScope ?? "here");
   const [view, setView] = useState<LibraryView>(initialView);
   const [text, setText] = useState("");
   const [items, setItems] = useState<LibraryItem[]>([]);
   const [coverage, setCoverage] = useState<LibraryCoverage[]>([]);
-  const contextKey = `${scope}:${mode}`;
+  const contextKey = `${requestContext}:${scope}:${mode}`;
   const [readingContext, setReadingContext] = useState("");
   useEffect(() => { opening.current?.abort(); setOpenError(""); }, [contextKey]);
   const [selectedRef, setSelectedRef] = useState<string | undefined>();
@@ -207,18 +215,12 @@ export function LibraryBrowser({mode, onOpen, onMessage, initialScope}: {
       <span className="oi-eyebrow">Library</span>
       <div className="lib-head-controls">
         <LibraryScope value={scope} mode={mode} onChange={setScope}/>
-        <div className="oi-segment lib-view" role="radiogroup" aria-label="Library presentation">
-          <button type="button" role="radio" aria-checked={view === "browse"} tabIndex={view === "browse" ? 0 : -1}
-            data-view-choice="browse" title="Browse / location — the columnar Web inventory"
-            onClick={() => setView("browse")} onKeyDown={event => { if (event.key === "ArrowRight") setView("gallery"); }}>
-            <Glyph name="columns" size={12}/> Browse
-          </button>
-          <button type="button" role="radio" aria-checked={view === "gallery"} tabIndex={view === "gallery" ? 0 : -1}
-            data-view-choice="gallery" title="Search / discovery — the card gallery"
-            onClick={() => setView("gallery")} onKeyDown={event => { if (event.key === "ArrowLeft") setView("browse"); }}>
-            <Glyph name="search" size={12}/> Search
-          </button>
-        </div>
+        <IconChoiceStrip className="lib-view" aria-label="Library presentation">
+          <IconTab choice icon="columns" label="Browse" selected={view==="browse"} data-view-choice="browse"
+            title="Browse / location — the columnar Web inventory" onClick={()=>setView("browse")}>Browse</IconTab>
+          <IconTab choice icon="search" label="Search" selected={view==="gallery"} data-view-choice="gallery"
+            title="Search / discovery — the card gallery" onClick={()=>setView("gallery")}>Search</IconTab>
+        </IconChoiceStrip>
       </div>
     </div>
     <div className="oi-tool-row lib-search-row">

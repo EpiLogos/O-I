@@ -1,3 +1,4 @@
+import {applyBlueprintAnchors} from './blueprintGeometry.js';
 import {stateSource} from './sourceState';
 import {resolvedAutomation,automationLeader} from './automationLinks';
 import {applyNativeDelta} from './nativeDelta';
@@ -113,11 +114,11 @@ function projectNativeConfig(s:Scene):PointCloudConfig{
 /** Lossless native documents: display defaults do not rewrite unedited native data. */
 export function toNativeConfig(s:Scene):PointCloudConfig {
  const projected=projectNativeConfig(s);
- if(!s.native)return projected;
+ if(!s.native)return applyBlueprintAnchors(s,projected);
  // Earlier Expressions files have an original config but no projection baseline.
  // Recover that baseline without mutating the document or erasing authored edits.
  const baseline=s.native.projection??nativeSnapshotToJourney({schemaVersion:CONFIG_SCHEMA_VERSION,config:s.native.config}).scenes[0].native!.projection!;
- return applyNativeDelta(s.native.config,baseline,projected) as PointCloudConfig;
+ return applyBlueprintAnchors(s,applyNativeDelta(s.native.config,baseline,projected) as PointCloudConfig);
 }
 const shellShape=(s:NativeShape):Shape=>s.kind==='glyph'?'text':s.kind==='primitive'?s.primitive??'disc':s.kind;
 export function fromNativeEntity(e:NativeEntity):Entity{

@@ -45,7 +45,7 @@ export default async function run({page, baseUrl, check, shot, channel, provisio
   // Enter Expressions — a dedicated-stage mode whose panel hosts the canvas.
   await page.getByRole("radio", {name: "Expressions", exact: true}).first().click();
   const panel = await openPanel(page);
-  const planes = panel.getByRole("navigation", {name: "Right region planes"});
+  const planes = panel.locator('[aria-label="Right region planes"]');
   const plane = name => planes.getByRole("button", {name, exact: true}).click();
   await plane("Context");
   const canvas = panel.locator('[data-plane="ta-onta-context"]');

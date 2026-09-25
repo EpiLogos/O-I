@@ -9,6 +9,8 @@ import {readJournalEvent} from "../tape/journal";
 import {tapeFromJournal,VERB_LABEL,formatClock,formatDuration,isToolRow,type JournalEventLike,type TapeRow} from "../tape/model";
 import {CallDetail} from "../tape/Tape";
 import "./agentObject";
+import "./positionObject";
+import "../../git/object";
 
 /** A tape row's page identity: `<agent-session>#<cursor>,<cursor>…` in its
  *  project. The page re-reads those exact journal events from the owner. */

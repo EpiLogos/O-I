@@ -2,20 +2,18 @@
  *
  * Tokens only (packages/oi-design-system/tokens.css, desktop.css); nothing
  * here styles a scrollbar — every scrolling element opts into the design
- * system's quiet scroller (.oi-scroll-quiet), so no bar is ever drawn. Selection is a quiet wash, never gold,
+ * system's house scroller, with a thin thumb on hover. Selection is a quiet wash, never gold,
  * never inverted. Hover never changes a row's height (R7): trailing actions
  * sit in space every row reserves at rest. */
 
 .left-frame { flex: 1; min-height: 0; display: flex; flex-direction: column; font-family: var(--oi-font-sans); color: var(--oi-accent-ink); }
 
 /* ── head ─────────────────────────────────────────────────────────── */
-.left-head { flex: none; position: relative; display: flex; align-items: center; gap: 4px; height: 40px; padding: 6px 8px 6px 10px; box-sizing: border-box; z-index: var(--oi-z-popover); }
+.left-head { flex: none; position: relative; display: flex; align-items: center; gap: 4px; height: var(--oi-panel-head-height); padding: 0 var(--oi-shell-gutter); box-sizing: border-box; z-index: var(--oi-z-popover); }
 .left-scope { position: relative; display: flex; align-items: center; gap: 6px; min-width: 0; flex: 1; }
 .left-scope-trigger { display: inline-flex; align-items: center; gap: 8px; min-width: 0; max-width: 100%; height: var(--oi-shell-hit); padding: 0 6px 0 2px; border: 0; border-radius: var(--oi-shell-radius-row); background: transparent; color: var(--oi-accent-ink); font: inherit; cursor: pointer; transition: background var(--oi-motion-ui) var(--oi-motion-ease-out); }
 .left-scope-trigger:hover, .left-scope-trigger[aria-expanded="true"] { background: var(--oi-wash); }
 .left-scope-trigger:focus-visible { outline: var(--oi-focus-ring-width) solid var(--oi-accent); outline-offset: calc(0px - var(--oi-focus-ring-width)); }
-.left-scope-tile { flex: none; display: inline-flex; align-items: center; justify-content: center; width: 20px; height: 20px; border-radius: 5px; background: var(--oi-active-ground); color: var(--oi-active-ink); font-size: var(--oi-shell-type-ui); font-weight: 700; line-height: 1; }
-.left-scope-tile.small { width: 16px; height: 16px; border-radius: 4px; font-size: var(--oi-shell-type-meta); }
 .left-scope-name { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: var(--oi-shell-type-heading); font-weight: 600; letter-spacing: -0.2px; }
 .left-scope-chevron { position: relative; flex: none; display: inline-flex; color: var(--oi-muted-2); }
 .left-news-dot { position: absolute; top: -3px; right: -5px; width: 5px; height: 5px; border-radius: 50%; background: var(--oi-accent-ink); }
@@ -54,10 +52,10 @@
 
 /* ── body ─────────────────────────────────────────────────────────── */
 /* The one scrolling region: it opts into the design system's quiet
- * scroller (.oi-scroll-quiet on the element) — no bar is ever drawn. */
+ * scroller with the shared thin thumb on hover. */
 .left-body { flex: 1; min-height: 0; padding: 2px 0 8px; }
 .left-body > .world-navigator, .left-body > nav, .left-body > aside, .left-body > div { flex: none; }
-.desktop-side .left-body .world-navigator { overflow: visible; min-height: auto; flex: none; padding: 0 8px; display: block; }
+.desktop-side .left-body .world-navigator { overflow: visible; min-height: auto; flex: none; padding: 0 var(--oi-shell-gutter); display: block; }
 .left-body .world-scroll { overflow: visible; min-height: auto; }
 .left-inbox-body { padding: 0 8px; }
 
@@ -83,9 +81,6 @@
 .left-link { padding: 0; border: 0; background: transparent; color: var(--oi-accent-ink); font: inherit; text-decoration: underline; text-underline-offset: 2px; cursor: pointer; }
 
 /* rows — one grammar */
-.left-row { position: relative; display: flex; align-items: center; gap: 8px; width: 100%; min-width: 0; min-height: var(--oi-shell-row-dense); box-sizing: border-box; margin: 0 0 1px; padding: 0 8px; border: 0; border-radius: var(--oi-shell-radius-row); background: transparent; color: var(--oi-muted); font: inherit; font-size: var(--oi-shell-type-nav); text-align: left; cursor: pointer; transition: background var(--oi-motion-ui) var(--oi-motion-ease-out), color var(--oi-motion-ui) var(--oi-motion-ease-out); }
-button.left-row:hover, .left-row:has(> .left-row-main:hover), .left-row:focus-within { background: var(--oi-wash); color: var(--oi-accent-ink); }
-.left-row[aria-current="true"], .left-row[aria-pressed="true"] { background: var(--oi-wash-strong); color: var(--oi-accent-ink); }
 .left-row > svg, .left-row-main > svg { flex: none; color: var(--oi-muted-2); }
 .left-row:is(:hover, [aria-current="true"], [aria-pressed="true"]) > svg, .left-row:is(:hover, [aria-current="true"]) .left-row-main > svg { color: var(--oi-accent-ink); }
 .left-row:focus-visible, .left-row-main:focus-visible { outline: var(--oi-focus-ring-width) solid var(--oi-accent); outline-offset: calc(0px - var(--oi-focus-ring-width)); }

@@ -8,7 +8,19 @@
     },
     {
       "path": "oi/expressionBindings.mjs",
-      "standing": "O:I-authored native occurrence/connection drawing and hit testing on the existing field; not upstream"
+      "standing": "O:I-authored native occurrence hit testing and particle-runtime correspondence on the existing field; not upstream"
+    },
+    {
+      "path": "oi/connectionRuntime.mjs",
+      "standing": "O:I-authored native relation particle allocation and exact endpoint targets; shared by hosted source and retained Global Stage, not upstream. Stable binding slots share the full reserved tail among currently renderable paths; density changes write targets and metadata only, preserving both consumers' existing GPU integration and forces."
+    },
+    {
+      "path": "oi/wikiPresentation.mjs",
+      "standing": "O:I-authored read-only Wiki display normalization; never changes source refs or authored Scene material"
+    },
+    {
+      "path": "engine/{entityRuntime,GPGPUSimulator,PointCloudField,shaders/simulationShaders,shaders/particleShaders}.mjs",
+      "standing": "O:I native connection tail-pool plumbing over pinned engine. Same shared oi/connectionRuntime as active expressions-app/src/engine TS; preserves this consumer physics. Re-vendoring must retain/reconcile this overlay, not claim byte-exact upstream engine."
     }
   ],
   "vendored_at": "2026-09-15T15:23:59Z",

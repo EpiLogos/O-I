@@ -20,7 +20,7 @@ The Projection remains the public/shared representation envelope. The native sou
 
 ## Contract
 
-The executable contract is `presentation.mjs`; the language-neutral compatibility surface is `presentation-schema-v1.json`.
+The executable authoring contract is `presentation.mjs`; the canonical native schema is [`../schemas/oi.world-presentation-v1.schema.json`](../schemas/oi.world-presentation-v1.schema.json). `presentation-schema-v1.json` remains a compatibility `$ref`. Native validation and registration use `oi presentation validate/register/show/list`; see [the hosting contract](../docs/cradle/HOSTED-CONTRIBUTIONS.md).
 
 ```text
 WorldPresentation {
@@ -244,7 +244,7 @@ READ mode lets the entered world's authored presentation dominate. LIST/TREE/GRA
 
 ## Web / desktop convergence
 
-`desktop/ui/src/explore-presentation.mjs` consumes the same `oi.world-presentation/v1` and `oi.presentation-authoring/v1` application reading as web Explore.
+`desktop/cradle/src/explore/presentation.tsx` consumes the same `oi.world-presentation/v1` and `oi.presentation-authoring/v1` application reading as web Explore.
 
 The desktop adapter preserves presentation/binding/component/contribution/surface/Action refs. If no live WorldPresentation instance or renderer is bound, it reports explicit degradation rather than inventing another desktop page/plugin identity.
 

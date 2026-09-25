@@ -1,5 +1,8 @@
+import type {LibraryItem} from "../library/scope";
+import type {NativeInsertionTarget,VerifiedInsertionSource} from "./sourceInsertion";
 import {hostedCompositionFile} from "./hostedComposition";
 import {relayNativeChannel} from "./nativeChannel";
+import {convertFileSrc} from "@tauri-apps/api/core";
 /**
  * Shared hosting for the Expressions application — the vendored app at
  * desktop/cradle/expressions-app (owner ruling 2026-09-19: the application
@@ -7,22 +10,35 @@ import {relayNativeChannel} from "./nativeChannel";
  * repo). Both surfaces that host the application share this module: the
  * Expressions centre (PointCloudHost) and the Technè M0 entry face.
  *
- * The bundle is served the only way rich material may reach a webview
- * (FND-04): through the owner's `oi-material://` file seam in the desktop
- * build, or the walk bridge's mirror under probes — every byte through the
- * owner's own file reads. The build law is one line (see the app's README):
- * `cd desktop/cradle/expressions-app && npm install && npm run build`.
+ * Native application code is served from the candidate's `oi-material://…/__application/` asset
+ * owner. Personal documents remain on `oi-material://`; the explicit walk
+ * bridge retains its Central file route. Both frames use the same narrow
+ * message channel to reach real owners, without ambient native authority.
  */
 import {kernelOp} from "../kernel/bridge";
 import {listFiles, readFile} from "../files/client";
 import type {CentralLocation, KernelTransportStatus} from "../kernel/types";
 
-/** The vendored application's build, on Central's disclosed ground. The
- * cradle checkout sits inside Central, so the files seam resolves this
- * Central-relative path exactly as it resolved Work/Point-Cloud-Demo/dist
- * before the vendoring — no copy-sync, the in-repo dist IS the artefact. */
+/** Ground-bound bridge walks explicitly serve this owner-disclosed location.
+ * Native candidates never use it, including when their own build is missing. */
 export const EXPRESSIONS_APP_DIST = "Work/O-I/desktop/cradle/expressions-app/dist";
 export const EXPRESSIONS_APP_ENTRY = "index.html";
+
+/** Native application code belongs to this candidate's asset owner, not a
+ * personal-ground checkout. The bridge is an explicit ground-bound walk
+ * transport and retains its owner-verified material route. */
+export async function hostedAppUrl(transport: KernelTransportStatus, query = ""): Promise<string> {
+  if (transport.kind === "tauri") {
+    // convertFileSrc encodes slashes as filename data. Convert only the
+    // protocol root, then retain real path segments for relative JS/CSS URLs.
+    return `${convertFileSrc("", "oi-material").replace(/\/$/, "")}/__application/expressions/index.html${query}`;
+  }
+  if (transport.kind !== "bridge") throw new Error("The Expressions application requires the native desktop or an explicit material bridge.");
+  const directory = await listFiles(transport, EXPRESSIONS_APP_DIST);
+  const found = directory.entries.find(candidate => candidate.name === EXPRESSIONS_APP_ENTRY);
+  if (!found) throw new Error(`The material bridge has no Expressions build at ${EXPRESSIONS_APP_DIST}`);
+  return `${transport.url}/material/${encodeURIComponent(JSON.stringify(found.location))}/${query}`;
+}
 
 /** The oi-material URL grammar (material_protocol.rs): the url-encoded
  * location JSON as the first segment, relative siblings after it. A query
@@ -41,7 +57,7 @@ export function materialUrl(location: CentralLocation, relative = "", query = ""
  * --window-cutout-right: the 52.5px icon reserve — keep in step with that
  * rule — minus the right side region). Null when the frame does not sit
  * inside the desktop shell's corner. */
-export function shellCutout(from: HTMLElement): {width: number; height: number; right: number} | null {
+export function shellCutout(from: HTMLElement): {width: number; height: number; right: number; coveredRight: number} | null {
   const corner = from.closest("[data-window-corner]");
   if (!corner) return null;
   const shell = corner.closest(".desktop-shell") ?? corner;
@@ -52,7 +68,25 @@ export function shellCutout(from: HTMLElement): {width: number; height: number; 
   const reserve = read(shell, "--shell-window-reserve", 42);
   const left = read(shell, "--desktop-left-width", 0);
   const right = Math.max(0, 52.5 - read(shell, "--desktop-right-width", 0));
-  return {width: Math.max(0, reserve - left), height: read(corner, "--oi-shell-tabbar", 32), right};
+  const height = read(corner, "--oi-shell-tabbar", 32);
+  const frame = from.getBoundingClientRect();
+  // The field remains full size beneath a floating panel, while its controls
+  // need the actual uncovered area. A panel in normal flow overlaps by zero.
+  const panel = shell.querySelector('.desktop-side.right');
+  const panelRect = panel?.getBoundingClientRect();
+  const coveredRight = panelRect && panelRect.width > 0 && panelRect.bottom > frame.top && panelRect.top < frame.bottom
+    ? Math.max(0, Math.min(frame.width, frame.right - Math.max(frame.left, panelRect.left))) : 0;
+  let width = Math.max(0, reserve - left);
+  // The collapsed scope label lives beside the real navigator toggle. Its
+  // width is content-dependent and can extend beyond the native light wedge.
+  for (const control of shell.querySelectorAll(".shell-topbar > .shell-region-toggle:first-child, .shell-topbar > .shell-scope-name")) {
+    const rect = control.getBoundingClientRect();
+    const style = getComputedStyle(control);
+    if (rect.width <= 0 || rect.height <= 0 || style.visibility === "hidden" || style.display === "none") continue;
+    if (rect.bottom <= frame.top || rect.top >= frame.top + height) continue;
+    width = Math.max(width, Math.ceil(rect.right - frame.left + 8));
+  }
+  return {width, height, right, coveredRight};
 }
 
 /** Align a hosted application frame with the shell's corner cutout (owner
@@ -66,20 +100,50 @@ export function shellCutout(from: HTMLElement): {width: number; height: number; 
  * shell's cut corners and the app's header row read as one continuous
  * aligned edge. */
 export function trackShellCutout(frame: HTMLIFrameElement): () => void {
+  let previous = "", scheduled = 0;
+  const shell = frame.closest(".desktop-shell");
+  const header = shell?.querySelector(".shell-topbar");
   const post = () => {
     const cutout = shellCutout(frame);
-    if (cutout) frame.contentWindow?.postMessage({type: "oi-shell-cutout", ...cutout}, "*");
+    const appearance = document.body.dataset.theme === 'dark' ? 'dark' : 'light';
+    const key = JSON.stringify({cutout,appearance});
+    if (cutout && key !== previous) {
+      previous = key;
+      frame.contentWindow?.postMessage({type: "oi-shell-cutout", ...cutout, appearance}, "*");
+    }
   };
-  frame.addEventListener("load", post);
-  window.addEventListener("resize", post);
-  const shell = frame.closest(".desktop-shell");
-  const observer = shell ? new MutationObserver(post) : null;
+  const observed = new Set<Element>();
+  const refreshGeometry = () => {
+    const desired = new Set<Element>([frame]);
+    const panel = shell?.querySelector('.desktop-side.right');
+    if (panel) desired.add(panel);
+    if (header) {
+      desired.add(header);
+      for (const node of header.querySelectorAll(".shell-region-toggle:first-child, .shell-scope-name")) desired.add(node);
+    }
+    for (const node of observed) if (!desired.has(node)) {resize.unobserve(node); observed.delete(node);}
+    for (const node of desired) if (!observed.has(node)) {resize.observe(node); observed.add(node);}
+  };
+  const schedule = () => {
+    if (scheduled) return;
+    scheduled = requestAnimationFrame(() => {scheduled = 0; refreshGeometry(); post();});
+  };
+  const loaded = () => {previous = ""; schedule();};
+  const resize = new ResizeObserver(schedule);
+  const observer = shell ? new MutationObserver(schedule) : null;
   if (shell && observer) observer.observe(shell, {attributes: true, attributeFilter: ["style", "class", "data-native", "data-window-lights"]});
-  post();
+  const headerObserver = header ? new MutationObserver(schedule) : null;
+  const appearanceObserver = new MutationObserver(schedule);
+  appearanceObserver.observe(document.body, {attributes:true,attributeFilter:['data-theme']});
+  if (header && headerObserver) headerObserver.observe(header, {childList: true, subtree: true, characterData: true, attributes: true, attributeFilter: ["style", "class", "hidden"]});
+  frame.addEventListener("load", loaded);
+  window.addEventListener("resize", schedule);
+  refreshGeometry(); post();
   return () => {
-    frame.removeEventListener("load", post);
-    window.removeEventListener("resize", post);
-    observer?.disconnect();
+    frame.removeEventListener("load", loaded);
+    window.removeEventListener("resize", schedule);
+    if (scheduled) cancelAnimationFrame(scheduled);
+    observer?.disconnect(); headerObserver?.disconnect(); appearanceObserver.disconnect(); resize.disconnect();
   };
 }
 
@@ -121,7 +185,7 @@ const isEnvelope = (data: unknown): data is ChannelEnvelope =>
 
 /** Relay the kernel host channel into one hosted frame. Returns the
  * teardown, exactly like trackShellCutout. */
-export function relayKernelChannel(frame: HTMLIFrameElement, transport: KernelTransportStatus): () => void {
+export function relayKernelChannel(frame: HTMLIFrameElement, transport: KernelTransportStatus, owner: {constellation?: (request: unknown) => Promise<unknown>; readTechne?: (request: unknown) => Promise<unknown>; techneWorld?: (request: unknown) => Promise<unknown>} = {}): () => void {
   const disposeNative = relayNativeChannel(frame, transport);
   let live = true;
   const announce = () => {
@@ -138,6 +202,19 @@ export function relayKernelChannel(frame: HTMLIFrameElement, transport: KernelTr
     // The announce answers hello; anything else in the envelope grammar gets
     // exactly one reply — data or a named error, never silence.
     if (kind === "oi-kernel-hello") { announce(); return; }
+    if (kind === "expression-recovery") {
+      try {
+        const request = event.data.request;
+        if (!request || typeof request !== "object") throw new Error("A recovery operation is required");
+        // The hosting aperture owns its recovery scope. A frame cannot ask
+        // for another aperture's private drafts by changing request data.
+        const scope = new URL(frame.src).searchParams.get("mode") === "techne" ? "techne" : "expressions";
+        const call = await kernelOp(transport, {op: "expression_recovery", request: {...request, scope} as import("./recoveryTypes").ExpressionRecoveryRequest});
+        if (call.error || call.outcome?.result !== "expression_recovery") throw new Error(call.error ?? "The native recovery owner did not answer");
+        reply(`${kind}-result`, req, {ok: true, data: call.outcome.data});
+      } catch (cause) { refuse(kind, req, cause instanceof Error ? cause.message : String(cause)); }
+      return;
+    }
     if (kind === "kernel-expression") {
       const request = event.data.request as {operation?: unknown} | undefined;
       const operation = request && typeof request === "object" ? request.operation : undefined;
@@ -157,6 +234,34 @@ export function relayKernelChannel(frame: HTMLIFrameElement, transport: KernelTr
       } catch (cause) {
         refuse(kind, req, cause instanceof Error ? cause.message : String(cause));
       }
+      return;
+    }
+    if (kind === "techne-world") {
+      try {
+        if (!owner.techneWorld) throw new Error("This field has no Wiki world owner");
+        reply(`${kind}-result`, req, {ok: true, data: await owner.techneWorld(event.data.request)});
+      } catch (cause) { refuse(kind, req, cause instanceof Error ? cause.message : String(cause)); }
+      return;
+    }
+    if (kind === "techne-constellation") {
+      try {
+        if (!owner.constellation) throw new Error("This field has no constellation editor owner");
+        reply(`${kind}-result`, req, {ok: true, data: await owner.constellation(event.data.request)});
+      } catch (error) {reply(`${kind}-result`, req, {ok: false, error: error instanceof Error ? error.message : String(error)});}
+      return;
+    }
+    if (kind === "techne-reading") {
+      try {
+        if (!owner.readTechne) throw new Error("This field has no Technè reading owner");
+        reply(`${kind}-result`, req, {ok: true, data: await owner.readTechne(event.data.request)});
+      } catch (cause) { refuse(kind, req, cause instanceof Error ? cause.message : String(cause)); }
+      return;
+    }
+    if (kind === "scene-blueprint") {
+      try {
+        const {readSceneBlueprint} = await import("../knowledge/constructionBlueprint");
+        reply(`${kind}-result`, req, {ok: true, data: await readSceneBlueprint(transport, event.data.request as never)});
+      } catch (cause) { refuse(kind, req, cause instanceof Error ? cause.message : String(cause)); }
       return;
     }
     if (kind === "expression-file") {
@@ -270,6 +375,7 @@ export function postHostMode(frame: HTMLIFrameElement | null, mode: HostedAppMod
  * Every facet is what the application actually reported — an absent facet
  * stays absent (honest absence, never a guessed position). */
 export interface HostedAppState {
+  nativeScene?:{expression_ref:string;revision:number;scene_ref:string};
   document?: {id?: string; name?: string};
   sceneIndex?: number;
   sceneCount?: number;
@@ -300,6 +406,16 @@ export function trackHostedAppState(frame: HTMLIFrameElement | null, onState: (s
   return () => { window.removeEventListener("message", handler); };
 }
 
+/** A URL is not evidence that the application loaded. Its existing state
+ * handshake confirms that the candidate's code is actually running; a missing
+ * bundle gives a bounded refusal without falling back to another checkout. */
+export function watchHostedAppReady(frame: HTMLIFrameElement, mode: HostedAppMode, ready: () => void, unavailable: (reason: string) => void): () => void {
+  const timeout = window.setTimeout(() => unavailable("The Expressions application did not start. Build this candidate's hosted application and rebuild the desktop; no other checkout is used."), 30_000);
+  const stop = trackHostedAppState(frame, () => { window.clearTimeout(timeout); ready(); });
+  const stopMode = postHostMode(frame, mode);
+  return () => { window.clearTimeout(timeout); stop(); stopMode(); };
+}
+
 /** Post one host→frame message into a hosted frame — the host-command
  * grammar the Technē HUD's direct-mode controls ride. */
 export function postMessageToFrame(frame: HTMLIFrameElement | null, message: {v: number; kind: string} & Record<string, unknown>) {
@@ -311,7 +427,41 @@ export function postMessageToFrame(frame: HTMLIFrameElement | null, message: {v:
  * own native workspace (kernel inspect); it never remounts the frame and never
  * carries the document itself. Refs only, and a non-Expression ref is ignored
  * here rather than posted for the frame to refuse. */
-export function postOpenExpression(frame: HTMLIFrameElement | null, expressionRef: string): void {
+export function postOpenExpression(frame: HTMLIFrameElement | null, expressionRef: string, refresh = false): void {
   if (!frame || typeof expressionRef !== "string" || !expressionRef.startsWith("expression:")) return;
-  frame.contentWindow?.postMessage({v: KERNEL_CHANNEL_VERSION, kind: "host-command", command: "open-expression", ref: expressionRef}, "*");
+  frame.contentWindow?.postMessage({v: KERNEL_CHANNEL_VERSION, kind: "host-command", command: refresh ? "refresh-expression" : "open-expression", ref: expressionRef}, "*");
+}
+
+
+export const CAPTURE_INSERTION_EVENT="oi:capture-scene-insertion";
+export const INSERT_SOURCE_EVENT="oi:insert-scene-source";
+export interface CaptureInsertionRequest {accept:(target:NativeInsertionTarget)=>void}
+export interface InsertSourceRequest {target:NativeInsertionTarget;item:LibraryItem;signal?:AbortSignal;current:()=>boolean;accepted:boolean;resolve:()=>void;reject:(reason:unknown)=>void}
+/** Capture the one visible native host synchronously, before Library reads. */
+export function captureHostedInsertion():NativeInsertionTarget {
+ const candidates:NativeInsertionTarget[]=[];
+ window.dispatchEvent(new CustomEvent<CaptureInsertionRequest>(CAPTURE_INSERTION_EVENT,{detail:{accept:target=>candidates.push(target)}}));
+ if(candidates.length!==1)throw Error('Open one native Expression Scene before inserting Library material.');
+ return candidates[0];
+}
+export function insertIntoHostedScene(target:NativeInsertionTarget,item:LibraryItem,current:()=>boolean,signal?:AbortSignal):Promise<void>{
+ return new Promise((resolve,reject)=>{
+  const detail:InsertSourceRequest={target,item,current,signal,accepted:false,resolve,reject};
+  window.dispatchEvent(new CustomEvent(INSERT_SOURCE_EVENT,{detail}));
+  if(!detail.accepted)reject(Error('The captured Scene is no longer hosted; open it and choose the source again.'));
+ });
+}
+/** Request acknowledgement from this frame only. An uncertain reply is never
+ * replayed here: the existing native occurrence recovery owns reconciliation. */
+export function postSourceInsertion(frame:HTMLIFrameElement,target:NativeInsertionTarget,source:VerifiedInsertionSource,signal?:AbortSignal):Promise<void>{
+ return new Promise((resolve,reject)=>{
+  const req=crypto.randomUUID();let timer:number|undefined;
+  const done=(error?:unknown)=>{window.removeEventListener('message',reply);signal?.removeEventListener('abort',aborted);if(timer!==undefined)window.clearTimeout(timer);error?reject(error):resolve();};
+  const aborted=()=>done(Error('Stopped waiting for native insertion. Inspect the native occurrence before retrying.'));
+  const reply=(event:MessageEvent)=>{const data=event.data;if(event.source!==frame.contentWindow||data?.v!==1||data.kind!=='host-insertion-result'||data.req!==req)return;done(data.ok===true?undefined:Error(typeof data.error==='string'?data.error:'The native Scene refused this source.'));};
+  if(signal?.aborted){reject(signal.reason);return;}
+  window.addEventListener('message',reply);signal?.addEventListener('abort',aborted,{once:true});
+  timer=window.setTimeout(()=>done(Error('Native insertion acknowledgement is unavailable. Inspect the pending occurrence before retrying.')),30000);
+  frame.contentWindow?.postMessage({v:1,kind:'host-command',command:'insert-source',req,target:{expression_ref:target.expression_ref,revision:target.revision,scene_ref:target.scene_ref},source},'*');
+ });
 }

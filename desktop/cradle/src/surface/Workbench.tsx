@@ -1,3 +1,5 @@
+import {IconTabStrip,IconTab} from "../workspace/primitives/IconTabStrip";
+import {CanvasHUD} from "../workspace/primitives/CanvasHost";
 import {ObjectSurface} from "../agent/objects/ObjectSurface";
 import {EncounterSurface} from "../encounter/EncounterSurface";
 import {lazy,Suspense,type ReactNode} from "react";
@@ -42,6 +44,7 @@ const KnowledgeSurface=lazy(()=>import("../knowledge/KnowledgeSurface").then((mo
 // in place, and a mode switch shelves this whole tree hidden instead of
 // moving anything).
 import {ModeCentreBody, isRetainedCentreKind} from "./retention";
+import {PANE_PRESENTED_EDITOR} from "./presented";
 const AgencySurface=lazy(()=>import("../agency/AgencySurface").then((module)=>({default:module.AgencySurface})));
 import type { ActionArg, LayoutState, Pane, SurfaceId } from "./types";
 import { TAB_LIST_WIDTH_MAX, TAB_LIST_WIDTH_MIN, MODE_CURATION } from "../workspace/mode";
@@ -155,7 +158,7 @@ export function Workbench(props: WorkbenchProps) {
         return;
       }
       if (active && active !== document.body && active.isConnected && (!activePane || activePane.dataset.groupId === g.id)) return;
-      const editor = el.closest(".pane.group")?.querySelector<HTMLElement>(".cm-content");
+      const editor = el.closest(".pane.group")?.querySelector<HTMLElement>(PANE_PRESENTED_EDITOR);
       (editor ?? el).focus();
     });
     return () => cancelAnimationFrame(frame);
@@ -244,7 +247,6 @@ export function GroupPane(props: PaneProps & { group: Extract<Pane, { type: "gro
   const pinOrientation = group.tabPinOrientation ?? "horizontal";
   const unpinned = tabPresentation === "unpinned";
   const verticalTabs = tabPresentation === "pinned-vertical" || (unpinned && pinOrientation === "vertical");
-  const presentationTitle = {unpinned: "unpinned — tabs hide until you reveal them", "pinned-horizontal": "pinned horizontally", "pinned-vertical": "pinned vertically"} as const;
   const tabListWidth = state.tabListWidth;
 
   return (
@@ -281,7 +283,7 @@ export function GroupPane(props: PaneProps & { group: Extract<Pane, { type: "gro
         * top edge with extra depth over the pane tools (horizontal), the
         * bottom of the strip region (vertical). */}
       {unpinned && <div className="tab-reveal-zone" aria-hidden="true" data-orientation={pinOrientation} />}
-      <div
+      <CanvasHUD
         className="tab-strip"
         onContextMenu={(e) => {
           if ((e.target as HTMLElement).closest(".tab")) return;
@@ -300,7 +302,7 @@ export function GroupPane(props: PaneProps & { group: Extract<Pane, { type: "gro
           if (id) execute("surface.drop", { surfaceId: id, groupId: group.id });
         }}
       >
-        <div className="tab-scroll" role="tablist" aria-label="Open surfaces" aria-orientation={verticalTabs?"vertical":"horizontal"}>
+        <IconTabStrip className="tab-scroll" aria-label="Open surfaces" orientation={verticalTabs?"vertical":"horizontal"}>
         {tabs.map((id) => (
           <Tab
             key={id}
@@ -316,27 +318,9 @@ export function GroupPane(props: PaneProps & { group: Extract<Pane, { type: "gro
             openBindingMenu={openBindingMenu}
           />
         ))}
-        </div>
+        </IconTabStrip>
         <div className="pane-tools">
           {group.emptySlot && <button type="button" className="pane-tool-menu" aria-label="Close empty pane" title="Close empty pane (⌘W)" onClick={() => execute("surface.close-empty-pane", { groupId: group.id })}><Glyph name="close" size={13} /></button>}
-          {/* Owner ruling 2026-09-17: the pin only pins or unpins the current
-           * orientation; orientation is the neighbouring control's job. The
-           * pane size toggle left the strip — panes present at their larger
-           * size, and maximize stays with the arrangement actions (⌘⌥Enter). */}
-          <button type="button" className="pane-tool-menu pane-tool-orient"
-            aria-label={verticalTabs ? "Show tabs horizontally" : "Show tabs vertically"}
-            title={verticalTabs ? "Tabs are vertical — show horizontally" : "Tabs are horizontal — show vertically"}
-            onClick={() => execute("frame.tabs-orient", { groupId: group.id })}>
-            <Glyph name={verticalTabs ? "rows" : "columns"} size={13} />
-          </button>
-          <button type="button" className="pane-tool-menu pane-tool-pin"
-            aria-label={unpinned ? "Pin tabs" : "Unpin tabs"}
-            title={`Tabs are ${presentationTitle[tabPresentation]} — ${unpinned ? "Pin tabs" : "Unpin tabs"} (⌘⌥\\)`}
-            data-pin-target={unpinned ? `pinned-${pinOrientation}` : "unpinned"}
-            data-tab-presentation={tabPresentation}
-            onClick={() => execute("frame.tabs-pin", { groupId: group.id })}>
-            <Glyph name="pin" size={13} />
-          </button>
           <button
             type="button"
             className="strip-open"
@@ -349,21 +333,9 @@ export function GroupPane(props: PaneProps & { group: Extract<Pane, { type: "gro
           >
             <Glyph name="plus" size={13} />
           </button>
-          <button
-            type="button"
-            className="pane-tool-menu"
-            aria-label="Window menu"
-            title="Window menu"
-            onClick={(e) => {
-              const r = e.currentTarget.getBoundingClientRect();
-              if (active) openBindingMenu(active, r.left, r.bottom + 2);
-              else openFrameMenu(r.left, r.bottom + 2);
-            }}
-          >
-            <Glyph name="more" size={13} />
-          </button>
+
         </div>
-      </div>
+      </CanvasHUD>
       {/* The pinned-vertical list's width: a separator on the strip's inner
         * edge, drag or arrow-key resizable (the .region-resizer grammar),
         * persisted as LayoutState.tabListWidth through frame.tabs-width. */}
@@ -494,7 +466,7 @@ function SurfaceBodyImpl({
   // slot; a foreign-tree centre ONLY by its pane wrapper. Factory's body
   // composes the frame-built chat node — the frame passes
   // CradleFrame.factoryCentre down, so there is no second direct arm here.
-  if (isRetainedCentreKind(binding.kind)) {
+  if (isRetainedCentreKind(binding.kind) || binding.hosted) {
     if (binding.kind === MODE_CURATION[treeMode].centreKind) return null;
     return <ModeCentreBody binding={binding} subject={subject} factoryCentre={factoryCentre} factoryTasks={factoryTasks}/>;
   }
@@ -564,12 +536,13 @@ const KIND_GLYPH: Record<string, import("../workspace/Glyph").GlyphName> = {
   instrument: "instrument",
 };
 
-function Tab({ id, title, kind, active, pinned, dirty, groupId, vertical, execute, openBindingMenu }: TabProps) {
+function Tab({ id, title, kind, active, pinned, dirty, groupId, execute, openBindingMenu }: TabProps) {
   return (
     <div className="tab-entry" role="presentation">
-    <button
-      type="button"
-      role="tab"
+    <IconTab
+      label={title}
+      icon={KIND_GLYPH[kind] ?? "file"}
+      selected={active}
       id={`surface-tab-${id}`}
       aria-controls={`surface-panel-${groupId}`}
       aria-selected={active}
@@ -597,24 +570,9 @@ function Tab({ id, title, kind, active, pinned, dirty, groupId, vertical, execut
           const r = e.currentTarget.getBoundingClientRect();
           openBindingMenu(id, r.left, r.bottom + 2);
         }
-        // Plain arrows switch tabs within the strip; modified arrows belong
-        // to the frame keymap (⌥ arrows move focus, ⌘⌥ arrows move the
-        // surface) and must not race it.
         if (e.altKey || e.metaKey || e.ctrlKey) return;
-        if (e.key === "Home" || e.key === "End") {
-          e.preventDefault();
-          const siblings = e.currentTarget.closest('[role="tablist"]')?.querySelectorAll<HTMLElement>('[role="tab"]');
-          const target = siblings?.[e.key === "Home" ? 0 : siblings.length - 1]?.dataset.surfaceId;
-          if (target) execute("surface.activate", { surfaceId: target });
-        } else if (e.key === "Delete" || e.key === "Backspace") {
-          e.preventDefault();
-          execute("surface.close", { surfaceId: id });
-        } else if (e.key === (vertical ? "ArrowUp" : "ArrowLeft")) {
-          e.preventDefault();
-          execute("surface.tab-prev");
-        } else if (e.key === (vertical ? "ArrowDown" : "ArrowRight")) {
-          e.preventDefault();
-          execute("surface.tab-next");
+        if (e.key === "Delete" || e.key === "Backspace") {
+          e.preventDefault(); execute("surface.close", {surfaceId:id});
         }
       }}
       onDragStart={(e) => {
@@ -641,7 +599,6 @@ function Tab({ id, title, kind, active, pinned, dirty, groupId, vertical, execut
           });
       }}
     >
-      <Glyph name={KIND_GLYPH[kind] ?? "file"} size={12} />
       <span className="tab-title">{title}</span>
       {dirty ? (
         <span className="tab-dirty" aria-hidden="true" title="Unsaved buffer">
@@ -653,7 +610,7 @@ function Tab({ id, title, kind, active, pinned, dirty, groupId, vertical, execut
           ◈
         </span>
       ) : null}
-    </button>
+    </IconTab>
       <button
         type="button"
         className="tab-close"
@@ -681,6 +638,5 @@ export function ArrangementActions({state, execute, openFrameMenu, nativeWindows
         <button aria-label="Tile all surfaces" title="Tile all surfaces" disabled={groupsOf(state.root).flatMap(g => g.tabs).length < 2} onClick={() => props.execute("surface.tile")}><Glyph name="grid"/></button>
         {props.nativeWindows && <button aria-label="Detach active surface" disabled={!detachable} title="Detach into native window" onClick={()=>props.execute("surface.detach")}><Glyph name="detach"/></button>}
         <button aria-label={state.maximizedGroupId ? "Restore panes" : "Maximize active pane"} title="Maximize / restore (⌘⌥Enter)" disabled={!active} onClick={() => props.execute("surface.maximize")}><Glyph name={state.maximizedGroupId ? "restore" : "expand"}/></button>
-        <button aria-label="Window actions" title="Window actions" onClick={e => { const r = e.currentTarget.getBoundingClientRect(); props.openFrameMenu(r.left, r.bottom); }}><Glyph name="more"/></button>
   </>;
 }

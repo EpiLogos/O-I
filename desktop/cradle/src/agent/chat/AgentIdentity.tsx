@@ -1,4 +1,4 @@
-import {useEffect,useRef,useState} from "react";
+import {useEffect,useState} from "react";
 import {useKernel} from "../../kernel/KernelProvider";
 import type {ProfileDocumentWire} from "../../kernel/types";
 import {Glyph} from "../../workspace/Glyph";
@@ -17,15 +17,13 @@ export interface AgentIdentityReading {name:string;ref?:string;description?:stri
  *  is an owner process through the one kernel seam, so the panel and the
  *  chat never queue two of them (or several on remount) ahead of boot. */
 let identityRead:{transport:unknown;promise:Promise<Awaited<ReturnType<ReturnType<typeof useKernel>["apply"]>>>}|undefined;
-export function useAgentIdentity(fallbackName:string,read=true):AgentIdentityReading {
+export function useAgentIdentity(fallbackName="World",read=true):AgentIdentityReading {
   const kernel=useKernel();
   const [reading,setReading]=useState<AgentIdentityReading>({name:fallbackName,state:read?"reading":"none"});
-  const listed=useRef(false);
   useEffect(()=>{
     // Boot first: the window stays inert until the kernel's first state
     // settles, so an owner read here must never queue ahead of it.
-    if(!read||listed.current||!kernel.stateSettled)return;
-    listed.current=true;
+    if(!read||!kernel.stateSettled)return;
     let live=true;
     if(!identityRead||identityRead.transport!==kernel.transport)identityRead={transport:kernel.transport,promise:kernel.apply({op:"profile_list"})};
     const pending=identityRead.promise;
@@ -34,10 +32,10 @@ export function useAgentIdentity(fallbackName:string,read=true):AgentIdentityRea
       if(outcome?.result!=="profile_listing"){setReading({name:fallbackName,state:"unavailable"});return;}
       const active=outcome.profiles.find(profile=>profile.profile_ref===outcome.active_profile_ref);
       if(!active){setReading({name:fallbackName,state:"none"});return;}
-      setReading({name:active.title||active.profile_ref,ref:active.profile_ref,description:active.description??undefined,image:imageOf(active),state:"read"});
+      setReading({name:active.title?.trim()||fallbackName||"World",ref:active.profile_ref,description:active.description??undefined,image:imageOf(active),state:"read"});
     }).catch(()=>{if(identityRead?.promise===pending)identityRead=undefined;if(live)setReading({name:fallbackName,state:"unavailable"});});
     return()=>{live=false;};
-  },[kernel,kernel.stateSettled,fallbackName,read]);
+  },[kernel.transport,kernel.stateSettled,fallbackName,read]);
   return reading;
 }
 
@@ -48,7 +46,7 @@ const imageOf=(profile:ProfileDocumentWire):string|undefined=>{
 
 export function AgentIdentity({identity,situating}:{identity:AgentIdentityReading;situating:string}) {
   const monogram=identity.name.split(/[\s·/-]+/).filter(Boolean).slice(0,2).map(part=>part[0]?.toUpperCase()??"").join("")||"A";
-  return <div className="agent-identity" data-state={identity.state} data-profile-ref={identity.ref} title={identity.description??identity.ref??undefined}>
+  return <div className="agent-identity" data-state={identity.state} data-profile-ref={identity.ref} title={identity.description??undefined}>
     <span className="agent-identity-image" aria-hidden="true">{identity.image?<img src={identity.image} alt=""/>:identity.state==="read"?monogram:<Glyph name="agent" size={13}/>}</span>
     <span className="agent-identity-text">
       <strong className="agent-identity-name">{identity.name}</strong>

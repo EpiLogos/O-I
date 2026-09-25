@@ -1,3 +1,4 @@
+import {IconTabStrip} from "../workspace/primitives/IconTabStrip";
 import {readDraft} from "../workspace/drafts";
 import {useCallback,useEffect,useMemo,useRef,useState} from "react";
 import {Loading} from "../shared/Loading";
@@ -10,7 +11,11 @@ import {materialCapabilities,type MaterialFormat} from "./detect";
 import {renderMarkdown} from "./markdown";
 import "./material.css";
 import pageContextScript from "../context/page-context.js?raw";
+import {documentScripts, useDocumentHostRead, type FrameIsland} from "../document/frame";
 import {useMaterialContext} from "../context/PageContext";
+import {readDocumentIdentity,islandSpan,FAMILY_LABEL} from "../document/identity";
+import {saveDocumentPayload,type DocumentSaveOutcome} from "../document/hostSave";
+import {waitingReturnsForSource} from "../document/returns";
 import {EditorButton,EditorFrame} from "../editor/EditorChrome";
 // @ts-ignore -- Personal Web ql-doc parser is the canonical JS document contract.
 import {readPage} from "../personal/page.mjs";
@@ -130,6 +135,74 @@ export function MaterialSurface({ binding, format }: { binding: SurfaceBinding; 
   const [pageExpressionInvalidated,setPageExpressionInvalidated]=useState(false);
   const location = binding.location;
 
+  // Document identity (DOCUMENT-SURFACE.md): what the crafted document is,
+  // from its own payload island — never from the filename.
+  const identity = useMemo(() => (format === "html" ? readDocumentIdentity(previewSource) : undefined), [format, previewSource]);
+  const savedIslandText = useMemo(() => {
+    if (identity?.payload !== "ql-doc" || textContent === undefined) return undefined;
+    return islandSpan(textContent, "ql-doc")?.text ?? null;
+  }, [identity?.payload, textContent]);
+  const [frameIsland, setFrameIsland] = useState<FrameIsland>();
+  const [docSave, setDocSave] = useState<{busy: true} | {busy: false; outcome: DocumentSaveOutcome}>();
+  // What the owner disclosed about the saved source at last acquisition:
+  // whether it is a participating source (its own CAS route) and whether
+  // ordinary write authority exists at all.
+  const [readingMeta, setReadingMeta] = useState<{sourceRef: string | null; writeAvailable: boolean; writeReason: string | null}>();
+  const readIsland = useDocumentHostRead(htmlFrame, identity?.payload === "ql-doc");
+  // The page's own live payload, polled while the frame is up: the page
+  // rewrites its island as the person edits, so the island text IS the
+  // page's dirty state — no second editing model is invented here.
+  useEffect(() => {
+    if (identity?.payload !== "ql-doc" || loadState.frameLoaded !== generation) return;
+    let live = true;
+    const poll = () => { void readIsland().then(value => { if (live && value) setFrameIsland(value); }); };
+    poll();
+    const timer = setInterval(poll, 2500);
+    return () => { live = false; clearInterval(timer); };
+  }, [identity?.payload, loadState.frameLoaded, generation, readIsland]);
+  const pageDirty = identity?.payload === "ql-doc"
+    && frameIsland?.text != null && savedIslandText != null && frameIsland.text !== savedIslandText;
+  const docWritable = !!location && textRevision !== undefined
+    && (!!readingMeta?.sourceRef || readingMeta?.writeAvailable !== false);
+  // Returns beside the document: what the native receiving field holds
+  // against this exact source. Counting only — review stays in the Inbox.
+  const [waitingReturns, setWaitingReturns] = useState<number>();
+  useEffect(() => {
+    const sourceRef = readingMeta?.sourceRef;
+    if (!sourceRef) return;
+    let live = true;
+    const read = () => void waitingReturnsForSource(transport, binding.project ?? null, sourceRef).then(count => { if (live) setWaitingReturns(count); });
+    read();
+    const focus = () => { if (document.visibilityState === "visible") read(); };
+    window.addEventListener("focus", focus);
+    const timer = setInterval(focus, 60_000);
+    return () => { live = false; window.removeEventListener("focus", focus); clearInterval(timer); };
+  }, [transport, binding.project, readingMeta?.sourceRef]);
+  const saveDocument = () => {
+    if (docSave?.busy || !identity || identity.payload !== "ql-doc" || !location || textRevision === undefined) return;
+    setDocSave({busy: true});
+    void (async () => {
+      try {
+        const value = await readIsland();
+        const islandText = typeof value?.text === "string" && value.text.length > 0 ? value.text : undefined;
+        if (!islandText) throw new Error("This page did not answer the document host; nothing was saved.");
+        const result = await saveDocumentPayload(transport, {
+          location, project: binding.project, identity,
+          basisFileRevision: textRevision, frameIslandText: islandText,
+        });
+        setDocSave({busy: false, outcome: result.outcome});
+        if (result.outcome.state === "saved" && result.reading) {
+          // The frame already holds what was saved; refresh the canonical
+          // layer and revision stamps without remounting it.
+          setTextContent(result.reading.content);
+          setTextRevision(result.reading.revision);
+        }
+      } catch (error) {
+        setDocSave({busy: false, outcome: {state: "refused", detail: String(error)}});
+      }
+    })();
+  };
+
   // The pure document strings are cached by their content/transport inputs
   // (§6: never reparse identical content on unrelated shell changes) — and
   // they are NOT a function of suspension, so a concealed frame's srcDoc
@@ -161,7 +234,11 @@ export function MaterialSurface({ binding, format }: { binding: SurfaceBinding; 
         // again; an unchanged cached reading IS the same revision, so the
         // broker's cache hit is correctness, not staleness.
         const reading = await acquireFileReading(transport, location);
-        if (live) {setTextContent(reading.content);setTextRevision(reading.revision);}
+        if (live) {
+          setTextContent(reading.content);
+          setTextRevision(reading.revision);
+          setReadingMeta({sourceRef: reading.source?.ref ?? null, writeAvailable: reading.operations?.write?.available !== false, writeReason: reading.operations?.write?.reason ?? null});
+        }
       } else if (format === "unsupported") {
         const reading = await acquireFileBytes(transport, location);
         if (live) setDisposition({ byte_len: reading.byte_len, mime_hint: reading.mime_hint });
@@ -217,7 +294,7 @@ export function MaterialSurface({ binding, format }: { binding: SurfaceBinding; 
     <div className="material-preview-pane" hidden={view==="source"}>
   <EditorFrame className="material-surface" label={`Material ${binding.title}`}
     toolbar={null} presentationTools={<>{showToggle&&<MaterialToggle view={view} onChange={setView}/>} {tools}</>}
-    footer={<><span className="editor-path" title={`Central / ${location.path}`}>Central / {location.path}</span><span>{FORMAT_LABEL[format]}{unsavedPreview?" · unsaved preview":""}</span>{zoomable&&<span>{Math.round(zoom*100)}%</span>}<EditorButton disabled={busy} onClick={()=>setGeneration(value=>value+1)}>Reload</EditorButton></>}
+    footer={<><span className="editor-path" title={`Central / ${location.path}`}>Central / {location.path}</span><span>{FORMAT_LABEL[format]}{unsavedPreview?" · unsaved preview":""}</span>{zoomable&&<span>{Math.round(zoom*100)}%</span>}{identity&&<span className="editor-path" title={identity.templateRef?`Template ${identity.templateRef}`:undefined}>{FAMILY_LABEL[identity.family]??identity.label}{identity.documentRevision!=null?` · r${identity.documentRevision}`:""}{pageDirty?" · unsaved on the page":""}</span>}{docSave&&!docSave.busy&&<span role={docSave.outcome.state==="saved"||docSave.outcome.state==="unchanged"?"status":"alert"}>{docSave.outcome.state==="saved"?"Saved":docSave.outcome.state==="unchanged"?"Already saved":docSave.outcome.detail}</span>}{waitingReturns?<span role="status" title="Material returned against this document is waiting in the Inbox">{waitingReturns} waiting return{waitingReturns===1?"":"s"}</span>:null}<EditorButton disabled={busy} onClick={()=>setGeneration(value=>value+1)}>Reload</EditorButton>{identity?.payload==="ql-doc"&&<EditorButton disabled={docSave?.busy===true||!docWritable} onClick={saveDocument} title={docWritable?undefined:readingMeta?.writeReason??"No write authority for this document"}>{docSave?.busy?"Saving…":"Save"}</EditorButton>}</>}
   >
     <div ref={containerRef} className="material-rendered-content" data-suspended={suspended || undefined} aria-busy={!showing && !loadError}>
     {loadError && <p role="alert" className="source-note">{loadError} <button type="button" onClick={()=>setGeneration(value=>value+1)}>Retry</button></p>}
@@ -281,11 +358,7 @@ const FORMAT_LABEL: Record<MaterialFormat, string> = {
 // second, unrelated selection grammar. Reusing role=tab/aria-selected, the
 // pill body now carries the selection instead.
 function MaterialToggle({ view, onChange }: { view: MaterialView; onChange: (view: MaterialView) => void }) {
-  return <div className="material-toggle" role="tablist" aria-label="Document presentation">
-    <button type="button" role="tab" aria-selected={view === "rendered"} onClick={() => onChange("rendered")}>Rendered</button>
-    <button type="button" role="tab" aria-selected={view === "split"} onClick={() => onChange("split")}>Split</button>
-    <button type="button" role="tab" aria-selected={view === "source"} onClick={() => onChange("source")}>Source</button>
-  </div>;
+  return <IconTabStrip aria-label="Document presentation" items={[{id:"rendered",label:"Rendered",icon:"file"},{id:"split",label:"Split",icon:"columns"},{id:"source",label:"Source",icon:"terminal"}]} current={view} onSelect={id=>onChange(id as MaterialView)}/>;
 }
 
 /** For the browser-transport HTML rendered view: the already-fetched
@@ -295,7 +368,7 @@ function MaterialToggle({ view, onChange }: { view: MaterialView; onChange: (vie
  * the `oi-material://` URL directly — the document never passes through
  * this function there. */
 function injectBase(html: string, baseHref: string | undefined): string {
-  const base = `${baseHref?`<base href="${baseHref.replace(/"/g, "&quot;")}">`:""}<script>${pageContextScript}</script>`;
+  const base = `${baseHref?`<base href="${baseHref.replace(/"/g, "&quot;")}">`:""}${documentScripts}`;
   if (/<head[^>]*>/i.test(html)) return html.replace(/<head[^>]*>/i, match => `${match}${base}`);
   return `${base}${html}`;
 }

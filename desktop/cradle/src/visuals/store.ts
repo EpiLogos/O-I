@@ -145,7 +145,8 @@ class VisualsStore {
     if (this.applyingExternal) return;
     if (!remote || typeof remote.revision !== "number") return;
     if (remote.revision <= this.snapshot.revision) return;
-    this.snapshot = sanitize({ ...remote });
+    // Cross-window presentation broadcasts cannot select a kernel-owned theme.
+    this.snapshot = sanitize({ ...remote, theme: this.snapshot.theme, themeId: this.snapshot.themeId });
     this.persistNow();
     this.emit();
   }
@@ -198,16 +199,13 @@ class VisualsStore {
     this.bump((snapshot) => ({ ...snapshot, welcomeEnabled }));
   }
 
-  setTheme(theme: ThemeChoice) {
-    // The house appearances clear any named theme selection.
-    this.bump((snapshot) => ({ ...snapshot, theme, themeId: null }));
-  }
-
-  /** Select a theme-library entry: the entry's appearance becomes the
-   * resolved theme (dark ground, native material, prepaint) and its values
-   * ride data-oi-theme. */
-  setNamedTheme(entry: { id: string; appearance: "light" | "dark" }) {
-    this.bump((snapshot) => ({ ...snapshot, theme: entry.appearance, themeId: entry.id }));
+  /** Cache only: called after an authoritative kernel presentation read. This
+   * does not mint a local revision or broadcast a competing theme selection. */
+  acceptKernelTheme(theme: { appearance: ThemeChoice; id: string | null }) {
+    if(this.snapshot.theme === theme.appearance && this.snapshot.themeId === theme.id)return;
+    this.snapshot = { ...this.snapshot, theme: theme.appearance, themeId: theme.id };
+    this.persistNow();
+    this.emit();
   }
 
   resetConfig() {

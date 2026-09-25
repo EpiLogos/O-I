@@ -1,0 +1,104 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://o-i.dev/schemas/oi.world-presentation.v1.json",
+  "title": "O:I World Presentation v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema",
+    "presentation_ref",
+    "world_ref",
+    "revision",
+    "title",
+    "theme",
+    "regions",
+    "provenance"
+  ],
+  "properties": {
+    "schema": { "const": "oi.world-presentation/v1" },
+    "presentation_ref": { "type": "string", "minLength": 1 },
+    "world_ref": { "type": "string", "minLength": 1 },
+    "revision": { "type": "integer", "minimum": 1 },
+    "title": { "type": "string", "minLength": 1 },
+    "summary": { "type": "string", "minLength": 1 },
+    "theme": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "name": { "type": "string", "minLength": 1 },
+        "tokens": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "surface": { "type": "string", "minLength": 1 },
+            "foreground": { "type": "string", "minLength": 1 },
+            "muted": { "type": "string", "minLength": 1 },
+            "rule": { "type": "string", "minLength": 1 },
+            "relation": { "type": "string", "minLength": 1 },
+            "focus": { "type": "string", "minLength": 1 },
+            "projection": { "type": "string", "minLength": 1 },
+            "human": { "type": "string", "minLength": 1 },
+            "agent": { "type": "string", "minLength": 1 }
+          }
+        }
+      }
+    },
+    "regions": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["region_ref", "role", "bindings"],
+        "properties": {
+          "region_ref": { "type": "string", "minLength": 1 },
+          "role": { "type": "string", "minLength": 1 },
+          "label": { "type": "string", "minLength": 1 },
+          "bindings": {
+            "type": "array",
+            "items": { "$ref": "#/$defs/binding" }
+          }
+        }
+      }
+    },
+    "provenance": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/provenance" }
+    }
+  },
+  "$defs": {
+    "provenance": {
+      "type": "object",
+      "additionalProperties": true,
+      "required": ["kind", "ref", "source_system"],
+      "properties": {
+        "kind": { "type": "string", "minLength": 1 },
+        "ref": { "type": "string", "minLength": 1 },
+        "source_system": { "type": "string", "minLength": 1 },
+        "revision": { "type": "string", "minLength": 1 }
+      }
+    },
+    "binding": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["binding_ref", "component_ref", "props", "fallback", "provenance"],
+      "properties": {
+        "schema": { "const": "oi.presentation-binding/v1" },
+        "binding_ref": { "type": "string", "minLength": 1 },
+        "component_ref": { "type": "string", "minLength": 1 },
+        "contribution_ref": { "type": "string", "minLength": 1 },
+        "surface_ref": { "type": "string", "minLength": 1 },
+        "projection_ref": { "type": "string", "minLength": 1 },
+        "subject_ref": { "type": "string", "minLength": 1 },
+        "portable_renderer": { "type": "string", "minLength": 1 },
+        "props": { "type": "object" },
+        "fallback": { "type": "object" },
+        "provenance": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "$ref": "#/$defs/provenance" }
+        }
+      }
+    }
+  }
+}

@@ -11,7 +11,7 @@ import {scopeProject, useScope} from "../../scope";
 import type {ScopeAddress, SettingSpec} from "../../../configuration/contracts";
 import {SettingControl} from "../../../configuration/SettingControl";
 import {settingsActionable} from "../../../configuration/composition";
-import {productName, reconciliationWord} from "../v2/vocabulary";
+import {productName, reconciliationWord} from "../vocabulary";
 import {briefValue} from "../sectionModel";
 import {defaultScope, resolutionKey, watchPair, type SettingEntry, type SettingsSnapshot} from "../settingsData";
 import {settingRowId, stageSetting, stagedChanges, undoChange} from "../changeModel";

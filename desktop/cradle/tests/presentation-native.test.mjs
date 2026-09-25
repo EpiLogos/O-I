@@ -1,0 +1,93 @@
+/** Production presentation client against the real Rust kernel. No browser,
+ * fake owner or seeded owner output; all writes use a disposable OI_HOME. */
+import test from "node:test";
+import assert from "node:assert/strict";
+import {spawn} from "node:child_process";
+import {once} from "node:events";
+import {mkdtemp,readFile,rm} from "node:fs/promises";
+import {tmpdir} from "node:os";
+import {join} from "node:path";
+import {PresentationClient} from "../src/visuals/presentation.ts";
+import {convertImportedTheme} from "../src/visuals/customThemes.ts";
+import {kernelOp} from "../src/kernel/bridge.ts";
+import {recordToolDecision} from "../src/nara/decisionRecord.ts";
+
+test("native theme lifecycle, refusal, restart, advisory observation and exact Nara decision recording",{skip:process.env.OI_NATIVE_PRESENTATION!=="1",timeout:90000},async t=>{
+  assert.ok(process.env.OI_KERNEL_BIN,"OI_KERNEL_BIN must name the candidate native walk-bridge");
+  const home=await mkdtemp(join(tmpdir(),"oi-presentation-"));
+  let child, url, stderr="",lastError=null;
+  const calls=[];
+  const start=async()=>{
+    child=spawn(process.env.OI_KERNEL_BIN,["127.0.0.1:0"],{env:{...process.env,OI_HOME:home},stdio:["ignore","pipe","pipe"]});
+    child.stderr.on("data",chunk=>{stderr+=chunk;});
+    url=await new Promise((resolve,reject)=>{
+      let text="";
+      const timer=setTimeout(()=>reject(new Error(`Native bridge startup timed out: ${stderr}`)),30000);
+      child.once("error",error=>{clearTimeout(timer);reject(error);});
+      child.once("exit",code=>{clearTimeout(timer);reject(new Error(`Native bridge exited ${code}: ${stderr}`));});
+      child.stdout.on("data",chunk=>{text+=chunk;const match=/listening on (http:\/\/[^ ]+)/.exec(text);if(match){clearTimeout(timer);resolve(match[1]);}});
+    });
+  };
+  const stop=async()=>{if(child && child.exitCode===null){const exited=once(child,"exit");child.kill();await exited;}};
+  const apply=async op=>{calls.push(op.op);const result=await kernelOp({kind:"bridge",url},op);lastError=result.error??null;return result.outcome;};
+  let projected;
+  const client=new PresentationClient(apply,document=>{projected=document;},()=>lastError);
+  try {
+    await start();
+    await client.read();
+    assert.equal(client.get().error,null);
+    assert.deepEqual(projected.theme,{appearance:"system",id:null});
+    await client.select({appearance:"dark",id:"nord-dark"});
+    assert.equal(client.get().error,null);
+    assert.equal(projected.theme.id,"nord-dark");
+    const before=structuredClone(projected);
+    await client.select({appearance:"light",id:"nord-dark"});
+    assert.ok(client.get().error,"the native appearance mismatch is visible");
+    assert.deepEqual(projected,before,"failed selection never projects an optimistic theme");
+    await client.read(false);
+    assert.ok(client.get().error,"background refresh does not hide the recorded failure");
+    const text=await readFile(new URL("../../../packages/oi-design-system/themes/upstream/nord-dark.color-theme.json",import.meta.url),"utf8");
+    const converted=convertImportedTheme(text,"nord.json",[]);
+    await client.importFile(text,"nord.json");
+    assert.equal(client.get().error,null);
+    assert.equal(projected.theme.id,converted.id);
+    assert.deepEqual(projected.custom_themes[0],converted);
+    const saved=JSON.parse(await readFile(join(home,"desktop/presentation.json"),"utf8"));
+    assert.equal(saved.theme.id,converted.id);
+    assert.equal(saved.observations,undefined,"advisory renderer observations are never durable owner state");
+    const revision=projected.revision;
+    const unsafe={...converted,id:"unsafe",variables:{...converted.variables,"--oi-canvas-ground":"#ffffff; display:none"}};
+    assert.equal(await apply({op:"theme_import",theme:unsafe}),null);
+    assert.match(lastError,/unsafe|invalid|colour|value/i);
+    await client.read();
+    assert.equal(projected.revision,revision);
+    assert.equal(projected.theme.id,converted.id);
+    await client.observe("view:native-test",{enabled:true},{mode:"base",active:"workspace:test"});
+    assert.equal(client.get().observationError,null);
+    const observed=await apply({op:"presentation_read"});
+    assert.deepEqual(observed.document.observations["view:native-test"],{standing:"advisory-renderer-observation",visuals:{enabled:true},arrangement:{mode:"base",active:"workspace:test"}});
+    await client.observe("view:native-test",null,null);
+    assert.equal((await apply({op:"presentation_read"})).document.observations["view:native-test"],undefined);
+    await stop();await start();
+    await client.read();
+    assert.equal(projected.theme.id,converted.id,"native persisted selection survives kernel restart");
+    assert.deepEqual(projected.custom_themes[0],converted);
+    await client.remove(converted.id);
+    assert.equal(client.get().error,null);
+    assert.deepEqual(projected.theme,{appearance:"system",id:null},"removing the selected imported theme clears selection atomically");
+    assert.deepEqual(projected.custom_themes,[]);
+    await client.select({appearance:"dark",id:null});await client.revert();
+    assert.deepEqual(projected.theme,{appearance:"system",id:null});
+    const at=new Date().toISOString();
+    const decision={schema:"actuation.speech-tool-decision/v1",decision_ref:"decision:native-test",constitution_ref:"constitution:native-test",decided_by:"person:desktop",decided_at:at,request:{schema:"actuation.speech-tool-decision/v1",request_ref:"request:native-test",constitution_ref:"constitution:native-test",agent_session_ref:"session:native-test",proposed_action_ref:"central.source.write",payload_refs:["source:native-test"],requested_at:at},resolution:{resolution:"refused",stage:"denied",reason:"Explicit native record test; no action is dispatched"}};
+    await recordToolDecision(apply,decision,()=>lastError);
+    const repeat=await apply({op:"nara_decision_record",decision});
+    assert.deepEqual(repeat.decision,decision);
+    assert.deepEqual(repeat.receipts,[],"identical recording is idempotent");
+    await assert.rejects(recordToolDecision(apply,{...decision,decided_by:"agent:different"},()=>lastError),/not recorded/);
+    const authorised={...decision,decision_ref:"decision:native-authorised",request:{...decision.request,request_ref:"request:native-authorised",proposed_action_ref:"action:expression.focus"},resolution:{resolution:"authorised",action_ref:"action:expression.focus"}};
+    await recordToolDecision(apply,authorised,()=>lastError);
+    assert.ok(!calls.some(op=>op==="expression" || op==="invoke_action"),"recording a refused decision dispatches no action");
+    t.diagnostic(`Candidate ${process.env.OI_KERNEL_BIN}; native operations: ${calls.join(", ")}`);
+  } finally {await stop();await rm(home,{recursive:true,force:true});}
+});

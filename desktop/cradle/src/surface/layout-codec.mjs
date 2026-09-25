@@ -14,14 +14,10 @@
  * page/graph plane with its origin graph — never a cloned payload.
  */
 
-// `factory` was mounted by the Workbench but missing here, so a workspace saved
-// with the Factory development tab open lost that binding on decode; the
-// workspace store treats a dropped binding as an unrestorable book and fell
-// into recovery on the next launch. `expressions` and `techne` are the mode
-// centre surfaces (workspace/mode.ts): singleton, owner-less presentation
-// bindings like `system`/`explore` — their state lives with their own owners
-// and per-viewer stores, never in the binding.
-const SURFACE_KINDS = ['source', 'sources', 'knowledge', 'file', 'encounter', 'system', 'browser', 'terminal', 'flow', 'draft', 'blank', 'instrument', 'explore', 'presentation', 'factory', 'expressions', 'techne', 'epi-logos', 'agency', 'object'];
+// Hosted kinds come from the same reviewed source generation as the mounts.
+// Their state stays with their owners, never copied into the arrangement.
+import {hostedSurfaceDescriptors} from '../contributions/registered-kinds.mjs';
+const SURFACE_KINDS = ['source', 'sources', 'knowledge', 'file', 'encounter', 'browser', 'terminal', 'flow', 'draft', 'blank', 'instrument', 'explore', 'presentation', 'agency', 'object', ...hostedSurfaceDescriptors.map(descriptor => descriptor.kind)];
 const ENCOUNTER_PLANES = ['Conversation', 'Activity', 'Context', 'Inspect'];
 const KNOWLEDGE_PLANES = ['graph', 'page'];
 
@@ -34,7 +30,16 @@ export function validBinding(raw) {
   // surface id, and dropping the binding would orphan it. `instrument` is a
   // presentation binding to an externally owned QL source; the source itself
   // is never serialised into desktop state.
-  if (!SURFACE_KINDS.includes(o.kind)) return null;
+  let hosted = o.hosted && typeof o.hosted === 'object' && typeof o.hosted.descriptor_ref === 'string' && o.hosted.descriptor_ref.trim() && typeof o.hosted.contribution_ref === 'string' && o.hosted.contribution_ref.trim()
+    ? {descriptor_ref:o.hosted.descriptor_ref, contribution_ref:o.hosted.contribution_ref} : undefined;
+  if (o.hosted !== undefined && !hosted) return null;
+  // Upgrade older arrangements when this build can identify the provider.
+  // The next save then survives a later build that removes that provider.
+  if (!hosted) {
+    const descriptor = hostedSurfaceDescriptors.find(row => row.kind === o.kind);
+    if (descriptor) hosted = {descriptor_ref:descriptor.descriptor_ref, contribution_ref:descriptor.contribution_ref};
+  }
+  if (!SURFACE_KINDS.includes(o.kind) && !hosted) return null;
   if (o.ref !== undefined && typeof o.ref !== 'string') return null;
   if (o.kind === 'instrument' && (typeof o.ref !== 'string' || !o.ref.trim())) return null;
   // An object page (10-SIDEBARS §4.7) is identity only: its ref names the object.
@@ -98,6 +103,7 @@ export function validBinding(raw) {
       }
     : undefined;
   return {
+    ...(hosted ? {hosted} : {}),
     presentation, terminal,
     flow: o.kind === 'flow' ? flow : undefined,
     browser,

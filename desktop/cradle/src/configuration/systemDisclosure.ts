@@ -364,12 +364,12 @@ export function createUnboundSystemDisclosure(reason: string): SystemDisclosureS
 /** The binding: the kernel ops in every build — walk bundles included, the
  * same way the System census reads. No fixture variant exists for these
  * panels: they render the machine's truth or its honest absence. */
-export function systemDisclosureSource(): Promise<SystemDisclosureSource> {
+export function systemDisclosureSource(send?: OpCall): Promise<SystemDisclosureSource> {
   const transport = detectTransport();
   if (transport.kind === "unavailable") {
     return Promise.resolve(createUnboundSystemDisclosure(
       `no kernel transport is reachable (${transport.reason}); these panels need the Tauri host or a walk bridge`,
     ));
   }
-  return Promise.resolve(createLiveSystemDisclosure((op) => kernelOp(transport, op)));
+  return Promise.resolve(createLiveSystemDisclosure(send ?? ((op) => kernelOp(transport, op))));
 }

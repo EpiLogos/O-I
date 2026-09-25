@@ -1,7 +1,7 @@
 import {useCallback,useEffect,useRef,useState} from "react";
 import {useKernel} from "../kernel/KernelProvider";
 import {receiving,type DocumentReading,type ReceivingPage,type ReceivingRequest,type ReturnReading,type ReturnRow} from "./client";
-import {NowRelations} from "./NowRelations";
+import {htmlToText} from "../flow/instance";
 import {Glyph} from "../workspace/Glyph";
 import {formatRelativeTime} from "../shared/relativeTime";
 import "./receiving.css";
@@ -26,6 +26,10 @@ import "./receiving.css";
 /** Statuses still waiting for a human act (review, include or recover). */
 export const WAITING=new Set(["pending","needs-review","accepted","including","uncertain"]);
 const PAGE=20;
+const REVIEW_STATUS:Record<string,string>={pending:"Waiting for review","needs-review":"Needs review",accepted:"Accepted for inclusion",rejected:"Rejected",including:"Including…",uncertain:"Needs recovery",included:"Included"};
+const reviewStatus=(status:string)=>REVIEW_STATUS[status]??"Review status unavailable";
+/** Labels come from the native document, never from transport identifiers. */
+const named=(label:unknown,id?:string)=>typeof label==="string"&&label.trim()&&label!==id?label.trim():undefined;
 
 export interface InboxRegister {project?:string;label:string}
 export interface InboxRow extends ReturnRow {register:InboxRegister}
@@ -92,9 +96,15 @@ export function ReceivingTray({inbox,onOpenMaterial}:{inbox:InboxReading&{reload
   setPending(true);setError(undefined);
   try{
    const reading=await call<ReturnReading>(open.register,request);
-   setOpen({reading,register:open.register});inbox.reload();
-  }catch(err){setError(`${label} was refused: ${String(err)}`);}
-  finally{setPending(false);}
+   setOpen({reading,register:open.register});
+   setBasis(await call<DocumentReading>(open.register,{kind:"document",source_ref:reading.record.source_ref,document_id:reading.record.document_id}));
+  }catch(err){
+   setError(`${label} was refused: ${String(err)}`);
+   // A failed inclusion may have recorded an uncertain intent. Re-read that
+   // owner's state so Recover is offered without repeating the inclusion.
+   try{setOpen({reading:await call<ReturnReading>(open.register,{kind:"read",return_ref:open.reading.return_ref}),register:open.register});}catch{/* Keep the original refusal visible; the queue still refreshes. */}
+  }
+  finally{setPending(false);inbox.reload();}
  };
  const expand=async(row:InboxRow)=>{
   setPending(true);setError(undefined);setBasis(undefined);
@@ -123,10 +133,12 @@ export function ReceivingTray({inbox,onOpenMaterial}:{inbox:InboxReading&{reload
   void act({kind:"recover",return_ref:open.reading.return_ref,expected_return_revision:open.reading.revision},"Recovery");
  };
  const current=open?.reading;
- // The proposal's exact document anchor — the entry/field the operation
- // targets — shown beside the operation, never paraphrased.
- const proposal=current?.record.proposal as {operation?:string;entry_id?:string;field_id?:string;reply_to?:string}|undefined;
- const anchor=[proposal?.entry_id&&`entry ${proposal.entry_id}`,proposal?.field_id&&`field ${proposal.field_id}`,proposal?.reply_to&&`reply anchor ${proposal.reply_to}`].filter(Boolean).join(" · ");
+ const proposal=current?.record.proposal;
+ const document=basis?.document as (DocumentReading["document"]&{fields?:{id:string;label?:string}[];entries?:{id:string;title?:string;label?:string}[]})|undefined;
+ const field=document?.fields?.find(item=>item.id===proposal?.field_id);
+ const entry=document?.entries?.find(item=>item.id===proposal?.entry_id);
+ const target=[named(document?.title,document?.document_id),named(field?.label,field?.id)??named(entry?.title??entry?.label,entry?.id)].filter(Boolean).join(" · ");
+ const changedSinceReview=!!current&&!!basis&&!current.included&&basis.revision.revision!==(current.record.review?.source_revision??current.record.proposed_source_revision);
  // The waiting queue, plus the item open here whatever its status — so the
  // outcome of an act stays readable where it was taken.
  const shown=inbox.rows.filter(row=>WAITING.has(row.status)||row.return_ref===current?.return_ref);
@@ -134,22 +146,18 @@ export function ReceivingTray({inbox,onOpenMaterial}:{inbox:InboxReading&{reload
  return <section className="project-receiving left-inbox" aria-label="Inbox">
   <header><span>Inbox</span><small aria-label="Inbox summary">{inbox.state==="reading"?"Reading…":inbox.state==="unavailable"?"Receiving isn't available here":shown.length?`${inbox.waiting.length}${inbox.lowerBound?"+":""} waiting`:"Nothing waiting"}</small><button className="receiving-refresh" aria-label="Refresh receiving" disabled={pending} onClick={inbox.reload}><Glyph name="refresh" size={12}/></button></header>
   {shown.map(row=><button key={`${row.register.project??""}:${row.return_ref}`} className={`receiving-row ${row.now_ref?"receiving-has-now":""}`} data-now-ref={row.now_ref??undefined} data-register={row.register.project??"Central"} aria-expanded={current?.return_ref===row.return_ref} onClick={()=>void expand(row)}>
-    <span className={`receiving-status receiving-${row.status}`}>{row.status}</span>
-    <span className="receiving-origin">{row.author.actor_kind==="human"?"Human":"Agent"} · {row.document_id}{multi?<span className="receiving-register"> · {row.register.label}</span>:null}{row.now_ref&&<span className="receiving-now-mark" data-now-ref={row.now_ref}> · now</span>}</span>
+    <span className={`receiving-status receiving-${row.status}`} data-status={row.status}>{reviewStatus(row.status)}</span>
+    <span className="receiving-origin">{row.author.actor_kind==="human"?"Human":"Agent"} · {current?.return_ref===row.return_ref?named(basis?.document.title,row.document_id)??"Contribution":"Contribution"}{multi?<span className="receiving-register"> · {row.register.label}</span>:null}</span>
     <time className="receiving-when">{formatRelativeTime(row.received_at_unix_seconds*1000).replace(/ ago$/,"")}</time>
    </button>)}
   {pending&&!current&&<p className="left-reading" role="status">Opening…</p>}
   {current&&<div className="receiving-detail">
-    <dl>
-      <dt>Author</dt><dd>{current.record.author.actor_kind==="human"?"Human":"Agent"} — {current.record.author.principal_ref}</dd>
-      <dt>Proposed operation</dt><dd>{String((current.record.proposal as {operation?:string}).operation??"a change")}{anchor&&<span className="receiving-anchor"> — {anchor}</span>}</dd>
-      {"html" in current.record.proposal&&<><dt>Proposed content</dt><dd className="receiving-proposal">{String(current.record.proposal.html)}</dd></>}
-      <dt>Basis at arrival</dt><dd>{current.record.proposed_source_revision}{current.record.stale_at_arrival?" — already stale when it arrived":""}</dd>
-      {basis&&<><dt>Current document basis</dt><dd>{basis.revision.revision}{basis.unreviewed_external_revision?" — externally edited since":""}</dd></>}
-      {current.record.review&&<><dt>Review</dt><dd>{current.record.review.disposition} by {current.record.review.reviewer_ref} on {current.record.review.source_revision}</dd></>}
-      {current.record.applied_source_revision&&<><dt>Applied</dt><dd>{current.record.applied_source_revision}</dd></>}
-      {current.record.now_ref&&<NowRelations nowRef={current.record.now_ref} project={open?.register.project??null}/>}
-    </dl>
+    <p className="receiving-origin">{current.record.author.actor_kind==="human"?"Human":"Agent"} contribution</p>
+    {target&&<p className="receiving-target">For {target}</p>}
+    {"html" in current.record.proposal&&<div className="receiving-proposal">{htmlToText(String(current.record.proposal.html))}</div>}
+    <p className="receiving-review" role="status">{reviewStatus(current.record.status)}</p>
+    {current.record.stale_at_arrival&&<p className="receiving-warning" role="status">This contribution arrived against an earlier version of the document.</p>}
+    {!current.included&&current.record.status!=="included"&&(changedSinceReview||basis?.unreviewed_external_revision)&&<p className="receiving-warning" role="status">The document has changed{basis?.unreviewed_external_revision?" outside the app":" since this contribution was prepared or reviewed"}. Review the current document before including it.</p>}
     {!current.included&&current.record.status!=="included"&&<div className="receiving-actions">
       {(current.record.status==="pending"||current.record.status==="needs-review")&&<>
         <button className="receiving-accept" disabled={pending||!basis} title={basis?undefined:"Read the document's current basis first"} onClick={()=>review("accepted")}>Accept current basis</button>

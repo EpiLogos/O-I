@@ -36,6 +36,7 @@ fn command_config(args: &[OsString]) -> Result<i32, String> {
     let outcome: SurfaceResult<ConfigCommandOutcome> = match subcommand {
         "list" => config_list(&*config, json),
         "show" => config_show(&*config, &positional, json),
+        "resolve" => config_resolve_many(&*config, rest, json),
         "get" => config_get(&*config, &positional, json),
         "set" => config_set(&*config, &positional, json),
         "hold" => config_hold(&*config, &positional, json),
@@ -122,7 +123,11 @@ fn bind_config_surfaces() -> Result<BoundSurfaces, String> {
         );
         return Ok(surface.into_surfaces());
     }
-    let surface = Rc::new(oi_cli::kernel_surface::KernelSurface::open()?);
+    let catalogue = oi_cli::product_command::product_command_catalogue()?;
+    let mut programs = resolve_product_executables(&catalogue.products)?;
+    let surface = Rc::new(oi_cli::kernel_surface::KernelSurface::open_with_product_resolver(|product| {
+        programs.remove(&product.id).ok_or_else(|| format!("No native executable resolved for {}", product.id))
+    })?);
     let config: Rc<dyn ConfigSurface> = surface.clone();
     let profiles: Rc<dyn ProfileSurface> = surface;
     Ok((config, profiles))
@@ -521,6 +526,21 @@ fn config_list(config: &dyn ConfigSurface, json: bool) -> SurfaceResult<ConfigCo
         }
     }
     config_outcome(Some(text.trim_end().to_owned()), None)
+}
+
+/// Batch desktop reads cross once; owner-native resolution semantics stay here.
+fn config_resolve_many(config: &dyn ConfigSurface, args: &[String], json: bool) -> SurfaceResult<ConfigCommandOutcome> {
+    let path = config_flag_value(args, "--request-file").ok_or_else(|| SurfaceError::new(ErrorCode::InvalidValue, "usage: oi config resolve --request-file <path|-> --json"))?;
+    let value = read_request_document(&path).map_err(|error| SurfaceError::new(ErrorCode::InvalidValue, error))?;
+    #[derive(serde::Deserialize)]
+    struct Pair { setting_ref: String, scope: Scope }
+    let pairs: Vec<Pair> = serde_json::from_value(value).map_err(|error| SurfaceError::new(ErrorCode::InvalidValue, error.to_string()))?;
+    let pairs: Vec<_> = pairs.into_iter().map(|pair| (pair.setting_ref, pair.scope)).collect();
+    let resolutions: Vec<Value> = config.resolve_many(&pairs).into_iter().map(|result| match result {
+        Ok(resolution) => serde_json::to_value(resolution).expect("resolution is serializable"),
+        Err(error) => serde_json::to_value(error.document()).expect("error is serializable"),
+    }).collect();
+    config_outcome(if json { None } else { Some(format!("{} configuration resolutions", resolutions.len())) }, Some(serde_json::json!({"schema":"oi.config-resolutions/v1", "resolutions":resolutions})))
 }
 
 fn config_show(
@@ -1163,6 +1183,7 @@ OI_CONFIG_SURFACE_FIXTURES=<suite/configuration/cases> binds the fixture\n\
 surface used by the conformance tests.\n\
 \n\
   oi config list [--json]                     every contributed setting, owners and degradations\n\
+  oi config resolve --request-file <path|-> [--json]   batched native readings\n\
   oi config show <setting-ref> [scope] [--json]   the oi.config-resolution/v1 reading\n\
   oi config get <setting-ref> [scope] [--json]    the addressed value (secrets: reference only)\n\
   oi config set <setting-ref> <value> [scope] [--json]   assemble a ChangeSet request\n\

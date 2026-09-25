@@ -4,6 +4,8 @@ import {mkdirSync,writeFileSync} from 'node:fs';
 import {fileURLToPath} from 'node:url';
 import {createServer} from 'vite';
 import {chromium,webkit} from 'playwright';
+const kernelBridge=process.env.OI_KERNEL_BRIDGE;
+if(!kernelBridge)throw new Error('OI_KERNEL_BRIDGE must name a real kernel with a disposable OI_HOME');
 const root=fileURLToPath(new URL('../',import.meta.url));
 const out=process.env.W1_ARTIFACTS??fileURLToPath(new URL('./artifacts/shell-recovery/',import.meta.url));mkdirSync(out,{recursive:true});
 const reference=process.env.W1_REFERENCE_CAPTURE==='1';
@@ -17,14 +19,17 @@ const scenario=async(name,body)=>{currentScenario=name;try{await body();receipt.
 const visible='.warm-tree-host:not([hidden])';
 const bodyTheme=page=>page.evaluate(()=>document.body.dataset.theme??'light');
 async function seed(browser,scheme){
+ const selection=await (await fetch(`${kernelBridge}/op`,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({op:'theme_apply',appearance:scheme,id:null})})).json();
+ assert.equal(selection.ok,true,JSON.stringify(selection));
  const context=await browser.newContext({colorScheme:scheme,reducedMotion:'reduce',viewport:{width:1440,height:900}});
- await context.addInitScript(({layout,scheme})=>{
+ await context.addInitScript(({layout,scheme,kernelBridge})=>{
+  window.__OI_KERNEL_BRIDGE__=kernelBridge;
   if(!sessionStorage.getItem('w1-seeded')){
    localStorage.setItem('oi-cradle.workspaces.v1',JSON.stringify({version:2,active:'w1',workspaces:[{id:'w1',name:'Central',writing:'',layout}]}));
    localStorage.setItem('oi-cradle.visuals.v1',JSON.stringify({theme:scheme,enabled:false,welcomeEnabled:false}));sessionStorage.setItem('w1-seeded','yes');
   }
   sessionStorage.setItem('oi-cradle.welcome.v1','w1');
- },{layout,scheme});
+ },{layout,scheme,kernelBridge});
  const page=await context.newPage();page.setDefaultTimeout(15000);
  page.on('pageerror',error=>{(page.w1Errors??=[]).push(String(error));});
  try {await page.goto(url);await page.locator('.desktop-shell').waitFor();
@@ -111,8 +116,8 @@ try{
      }
      if(reference)return;
      const appearance=page.getByRole('group',{name:'Appearance',exact:true});
-     await appearance.getByRole('button',{name:'Dark',exact:true}).click();await page.waitForFunction(()=>document.body.dataset.theme==='dark');assert.equal(await bodyTheme(page),'dark');
-     await appearance.getByRole('button',{name:'System',exact:true}).click();await page.emulateMedia({colorScheme:'light'});await page.waitForFunction(()=>!document.body.dataset.theme);assert.equal(await bodyTheme(page),'light');
+     await appearance.getByRole('radio',{name:'Dark',exact:true}).click();await page.waitForFunction(()=>document.body.dataset.theme==='dark');assert.equal(await bodyTheme(page),'dark');
+     await appearance.getByRole('radio',{name:'System',exact:true}).click();await page.emulateMedia({colorScheme:'light'});await page.waitForFunction(()=>!document.body.dataset.theme);assert.equal(await bodyTheme(page),'light');
      assert.equal(await page.locator('.visuals-preferences canvas,.visuals-preferences iframe').count(),0,'Visuals has no duplicate Expression host');
      await page.getByRole('button',{name:'Back to work',exact:true}).click();await editor.waitFor();assert.equal(await editor.evaluate(el=>el===window.retainedEditor),true,'the same editor DOM returns, not a remount');await page.screenshot({path:`${out}/${engineName}-${scheme}-return-360.png`});await corner(page,'left');
      for(const width of [639,640,760,1440,360,640,1440]){await page.setViewportSize({width,height:900});await page.waitForFunction(width=>innerWidth===width,width);await corner(page,width<640?'left':'upper-right');}

@@ -8,7 +8,7 @@ import '@epilogos/oi-design-system/desktop.css';
 import '../src/rest.css';
 import '../src/cradle.css';
 import '../src/workspace/shell.css';
-import '../src/workspace/settings/settings-v2.css';
+import '../src/workspace/settings/settings-page.css';
 import '../src/configuration/configuration.css';
 async function main(){
  const source=await createFixtureConfigPlaneSource();const registry=await source.readRegistry();const settings=settingsOf(registry.mounts);

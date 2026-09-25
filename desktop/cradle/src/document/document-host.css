@@ -1,0 +1,17 @@
+/* The document host rendered view (SourceSurface) — one bar over the
+   document's own art direction. The shell keeps its language; the frame
+   keeps the page's. */
+.document-host{display:flex;flex-direction:column;height:100%;min-height:0}
+.document-host-bar{display:flex;align-items:center;gap:10px;padding:6px 12px;border-bottom:1px solid var(--oi-wash,rgba(127,127,127,.25));font:12px/1.4 var(--oi-font-sans,system-ui);color:var(--oi-foreground,CanvasText);flex:none}
+.document-host-family{font-weight:600}
+.document-host-template{color:var(--oi-mid,GrayText);overflow-wrap:anywhere}
+.document-host-revision{color:var(--oi-mid,GrayText)}
+.document-host-state{margin-left:auto}
+.document-host-state[role="alert"]{color:var(--oi-danger,#9b4e50)}
+.document-host-save{border:1px solid var(--oi-wash,rgba(127,127,127,.3));border-radius:4px;background:none;color:inherit;font:12px var(--oi-font-sans,system-ui);padding:3px 10px;cursor:pointer}
+.document-host-save:disabled{opacity:.5;cursor:default}
+.document-host-relations{display:flex;gap:14px;margin:0;padding:4px 12px;border-bottom:1px solid var(--oi-wash,rgba(127,127,127,.18));font:11px/1.4 var(--oi-font-sans,system-ui);color:var(--oi-mid,GrayText);flex:none}
+.document-host-relations dt{font-weight:600;margin-right:4px}
+.document-host-relations dd{margin:0;overflow-wrap:anywhere}
+.document-host-body{flex:1;min-height:0;overflow:auto;background:var(--oi-canvas-ground,Canvas)}
+.document-frame{display:block;width:100%;height:100%;border:0;background:var(--oi-canvas-ground,Canvas)}

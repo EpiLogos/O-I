@@ -22,6 +22,30 @@ pub struct Client {
 }
 
 impl Client {
+    /// Read-only protocol currency comes from the same owner and isolated home
+    /// as this client's SessionSpace calls. These verbs never open a provider.
+    fn disclosure(&self, cwd: &Path, verb: &[&str], schema: &str) -> Result<Value, String> {
+        let mut args: Vec<std::ffi::OsString> = Vec::new();
+        if self.suite_route { args.push("aikit".into()); }
+        args.push("--json".into());
+        args.extend(verb.iter().map(std::ffi::OsString::from));
+        let mut environment = self.home.as_ref().map(|home| vec![("AIKIT_HOME".into(), home.as_os_str().to_owned())]).unwrap_or_default();
+        if let Some(root) = std::env::var_os("OI_CENTRAL_ROOT") { environment.push(("CENTRAL_ROOT".into(), root)); }
+        let mut value = crate::inhabitation::run_bounded_with_env(&self.executable, &args, Some(cwd), std::time::Duration::from_secs(15), "AIKit native disclosure", &environment).map_err(|error| error.message)?;
+        if value.get("ok").and_then(Value::as_bool) == Some(false) { return Err(format!("AIKit disclosure refused: {}", value["error"])); }
+        if value.get("ok").and_then(Value::as_bool) == Some(true) { value = value.get("data").cloned().ok_or("AIKit disclosure has no data")?; }
+        if value.get("schema").and_then(Value::as_str) != Some(schema) { return Err("This AIKit owner does not carry the requested native disclosure".into()); }
+        Ok(value)
+    }
+
+    pub fn harness_disclosure(&self, cwd: &Path) -> Result<Value, String> {
+        self.disclosure(cwd, &["harness", "disclose"], "aikit.harness-disclosure/v1")
+    }
+
+    pub fn model_roster(&self, cwd: &Path) -> Result<Value, String> {
+        self.disclosure(cwd, &["model-resolve", "--roster-only", "--use-type", "desktop-chat", "--ranking-policy", "CHEAPEST_ELIGIBLE"], "aikit.model-roster-reading/v1")
+    }
+
     pub fn with(executable: PathBuf, home: Option<PathBuf>) -> Self {
         Self { executable, home, suite_route: false, mint_support: Arc::new(AtomicU8::new(0)) }
     }
@@ -62,6 +86,16 @@ impl Client {
     /// record is the owner's — identity, readiness, the allocated Central
     /// task — carried verbatim; absence (no task bound) surfaces the owner's
     /// own refusal, never a desktop-fabricated record.
+    pub(crate) fn working_surface_call(&self, cwd: &Path, space: &str, binding: &str, attachment: bool) -> Result<Value,String> {
+        let mut args: Vec<std::ffi::OsString> = Vec::new();
+        if self.suite_route { args.push("aikit".into()); }
+        args.extend(["session-space", "-C"].into_iter().map(Into::into));
+        args.push(cwd.as_os_str().to_owned());
+        args.extend(["working-surface", if attachment {"attachment"} else {"capture"}, space, binding].into_iter().map(Into::into));
+        let environment = self.home.as_ref().map(|home| vec![("AIKIT_HOME".into(), home.as_os_str().to_owned())]).unwrap_or_default();
+        crate::inhabitation::run_bounded_with_env(&self.executable, &args, Some(cwd), std::time::Duration::from_secs(5), "Working surface", &environment).map_err(|error|error.message)
+    }
+
     pub fn task_read(&self, cwd: &Path, agent_session: &str) -> Result<Value, String> {
         let mut command = Command::new(&self.executable);
         if self.suite_route { command.arg("aikit"); }
