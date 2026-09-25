@@ -6,7 +6,10 @@ import {join} from 'node:path';
 import {execFileSync} from 'node:child_process';
 import {readComparisons,diffFileKey,hunkPatch,patchLines,chooseDiffLayout,readDiffLayout} from '../src/git/diffModel.ts';
 
-test('Central separates committed and dirty rows and preserves copyable native hunks', async()=>{
+// Native: runs only when a candidate ctrl, Central root and disposable scratch
+// are supplied (as the other *-native tests are gated); never against owner ground.
+const nativeReady=!!(process.env.OI_TEST_CTRL_BIN&&process.env.OI_TEST_CENTRAL_ROOT&&process.env.OI_TEST_SCRATCH);
+test('Central separates committed and dirty rows and preserves copyable native hunks', {skip:nativeReady?false:'Set OI_TEST_CTRL_BIN, OI_TEST_CENTRAL_ROOT and OI_TEST_SCRATCH to run against a candidate ctrl'}, async()=>{
  const {OI_TEST_CTRL_BIN,OI_TEST_CENTRAL_ROOT,OI_TEST_SCRATCH}=process.env;
  assert.ok(OI_TEST_CTRL_BIN&&OI_TEST_CENTRAL_ROOT&&OI_TEST_SCRATCH,'Set candidate ctrl, Central root and admitted disposable scratch paths');
  const root=mkdtempSync(join(OI_TEST_SCRATCH,'git-diff-'));
