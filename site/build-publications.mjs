@@ -44,21 +44,22 @@ function assertPublic(value, key = '', depth = 0) {
 }
 function admittedNativeBody(raw, projection) {
  if(raw===undefined||raw===null)return null;
- if(raw?.schema!=='oi.native-expression-body/v1'||raw.source_schema!=='oi.journey'||raw.expression_ref!==projection.subject?.ref||raw.expression_ref!==projection.source?.ref||raw.expression_revision!==Number(projection.source?.revision)||raw.digest?.algorithm!=='sha256'||!/^[a-f0-9]{64}$/.test(raw.digest.value)||typeof raw.bytes!=='string'||raw.bytes.length>16*1024*1024||typeof raw.source_path!=='string'||typeof raw.source_revision!=='string'||!raw.scene_map||typeof raw.scene_map!=='object'||Array.isArray(raw.scene_map))throw failure();
+ if(raw?.schema!=='oi.native-expression-body/v1'||raw.source_schema!=='oi.journey'||raw.expression_ref!==projection.subject?.ref||raw.expression_ref!==projection.source?.ref||raw.expression_revision!==Number(projection.source?.revision)||raw.digest?.algorithm!=='sha256'||!/^[a-f0-9]{64}$/.test(raw.digest.value)||typeof raw.bytes!=='string'||raw.bytes.length>16*1024*1024||typeof raw.source_path!=='string'||typeof raw.source_revision!=='string'||!raw.scene_map||typeof raw.scene_map!=='object'||Array.isArray(raw.scene_map)||!raw.entity_map||typeof raw.entity_map!=='object'||Array.isArray(raw.entity_map))throw failure();
  const bytes=Buffer.from(raw.bytes,'utf8');
  if(digest(bytes)!==raw.digest.value)throw failure();
  let journey;
  try{journey=validateJourney(JSON.parse(raw.bytes));}catch{throw failure();}
  assertPublic(journey);
- const sourceIds=new Set(journey.scenes.map(scene=>scene.id));
- const projectedScenes=new Set();
- for(const region of worldPresentationFromProjection(projection).regions)for(const b of region.bindings||[])if(b.portable_renderer==='oi.presentation/expression/v1')for(const scene of b.props?.composition?.scenes||[])projectedScenes.add(scene.scene_ref);
- const mapped=Object.entries(raw.scene_map);
+ const sourceIds=new Set(journey.scenes.map(scene=>scene.id)),sourceEntityIds=new Set(journey.scenes.flatMap(scene=>scene.entities.map(entity=>entity.id)));
+ const projectedScenes=new Set(),projectedEntities=new Set();
+ for(const region of worldPresentationFromProjection(projection).regions)for(const b of region.bindings||[])if(b.portable_renderer==='oi.presentation/expression/v1'){for(const scene of b.props?.composition?.scenes||[])projectedScenes.add(scene.scene_ref);for(const ref of Object.keys(b.props?.composition?.entities||{}))projectedEntities.add(ref);}
+ const mapped=Object.entries(raw.scene_map),mappedEntities=Object.entries(raw.entity_map);
  if(mapped.length!==projectedScenes.size||mapped.some(([sceneRef,sourceId])=>!projectedScenes.has(sceneRef)||typeof sourceId!=='string'||!sourceIds.has(sourceId))||[...projectedScenes].some(ref=>!(ref in raw.scene_map)))throw failure();
+ if(mappedEntities.length!==projectedEntities.size||mappedEntities.some(([entityRef,sourceId])=>!projectedEntities.has(entityRef)||typeof sourceId!=='string'||!sourceEntityIds.has(sourceId))||[...projectedEntities].some(ref=>!(ref in raw.entity_map)))throw failure();
  return {
   schema:raw.schema,source_schema:raw.source_schema,expression_ref:raw.expression_ref,expression_revision:raw.expression_revision,
   source_path:raw.source_path,source_revision:raw.source_revision,digest:{algorithm:'sha256',value:raw.digest.value},
-  scene_map:{...raw.scene_map},bytes:raw.bytes,
+  scene_map:{...raw.scene_map},entity_map:{...raw.entity_map},bytes:raw.bytes,
  };
 }
 
@@ -174,7 +175,7 @@ export function compilePublications(inputs = []) {
   if(native_body)manifest.native_body={
    schema:'oi.native-expression-body/v1',source_schema:'oi.journey',path:path+'/native-body.journey.json',
    expression_ref:native_body.expression_ref,expression_revision:native_body.expression_revision,
-   source_path:native_body.source_path,source_revision:native_body.source_revision,digest:native_body.digest,scene_map:native_body.scene_map,
+   source_path:native_body.source_path,source_revision:native_body.source_revision,digest:native_body.digest,scene_map:native_body.scene_map,entity_map:native_body.entity_map,
   };
   return {projection,html,manifest,directory:path.split('/').pop(),native_body};
  });
