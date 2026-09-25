@@ -451,7 +451,8 @@ fn migration_places_existing_work_tree_without_changing_its_contents() {
         "uncommitted work stays"
     );
     assert!(
-        text(&result.stdout).contains("No Project, Factory, AIKit, or Workcell object was created")
+        text(&result.stdout)
+            .contains("Existing identities preserved; native Central and Factory project setup reconciled.")
     );
 }
 
