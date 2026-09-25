@@ -114,7 +114,7 @@
       "standing": "retained-source",
       "scope": "project",
       "placement": "human ground: ProjectCentral/user/mockup-<slug>-<local-stamp>.html; many per project",
-      "source": "added 2026-09-25: the dedicated UI Mockup template retained byte-exact (sha-256 9b3f0c7d0d3a59f5e45af1958c9d1787640133481403771dac3b600ae8095f3a) from Central skills/ui-mockup-authoring/assets/ui-mockup-template.html (Central main b3c867d, #225); state switcher, mockup-provenance block (design/vision/capability refs) and per-state trace refs are the template's own law; created in place, never edited as the template"
+      "source": "retained 2026-09-25 byte-exact from Central skills/ui-mockup-authoring/assets/ui-mockup-template.html (sha-256 594b150eff21a2fc710223c9f5214d1cabf29516475a46fb69602fcee220c8ef; the owner template with hash-routing guarded for opaque-origin transports; supersedes the 2026-09-24 specimen 9b3f0c7d…); state switcher, mockup-provenance block (design/vision/capability refs) and per-state trace refs are the template's own law; created in place, never edited as the template"
     }
   ]
 }

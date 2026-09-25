@@ -48,7 +48,7 @@ const owner = (bin, args, cwd) => {
 };
 const digest = path => createHash("sha256").update(readFileSync(path)).digest("hex");
 const tail = ref => (ref ?? "").split(/[:/]/).filter(Boolean).pop();
-const plane = (page, name) => page.getByRole("navigation", {name: "Right region planes"}).getByRole("button", {name, exact: true});
+const plane = (page, name) => page.locator('[aria-label="Right region planes"]').getByRole("button", {name, exact: true});
 const firstSentence = text => { const t = text.trim().replace(/\s+/g, " "); const m = /^(.+?[.!?])(?=\s+[A-Z0-9"“(])/.exec(t); return (m ? m[1] : t).replace(/[.]$/, ""); };
 
 export async function setup() {

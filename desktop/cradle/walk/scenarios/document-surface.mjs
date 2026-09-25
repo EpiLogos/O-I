@@ -272,17 +272,5 @@ export default async function run({ page, baseUrl, provision, check, shot }) {
     restoredState);
   await shot('continuity-restored');
 
-  // The retained mockup template's own hash routing calls
-  // history.replaceState, which throws inside the opaque-origin srcdoc
-  // transport (no URL to rewrite). Under the installed oi-material://
-  // transport the frame carries a URL and the call is legal. State
-  // switching itself operated (checks above), so this named degradation is
-  // recorded, not silently swallowed.
-  const knownTemplateDegradation = (message) => message.includes("replaceState") && message.includes("origin 'null'");
-  const unexpected = errors.filter((message) => !knownTemplateDegradation(message));
-  const named = errors.filter(knownTemplateDegradation);
-  check(unexpected.length === 0, 'No unexpected page errors during the document-surface walk', unexpected);
-  check(named.length > 0,
-    'The mockup template’s hash routing degrades, named: its replaceState is illegal in the opaque-origin srcdoc transport (a feedback item for the template’s owner); state switching still operates',
-    { count: named.length });
+  check(errors.length === 0, 'No page errors during the document-surface walk', errors);
 }

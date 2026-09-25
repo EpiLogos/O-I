@@ -4,7 +4,7 @@
   "spec_ref": "docs/cradle/05-EXECUTION.md §3",
   "grade": "B",
   "binding": null,
-  "generated_at": "2026-09-25T10:36:43.010Z",
+  "generated_at": "2026-09-25T12:02:11.614Z",
   "environment": {
     "base_url": "http://localhost:4173",
     "bridge_url": "http://127.0.0.1:4179",
@@ -12,22 +12,38 @@
     "browser_engine": "chromium",
     "bundle": "walk (WALK=1) served by vite preview",
     "build_input": {
-      "mode": "fresh-build",
-      "bundle_fingerprint": "567be751420cff72a5a17554b0df67370c64bf82638d66a93644674b23c2d9f4"
+      "mode": "reused-dist",
+      "bundle_fingerprint": "7f90fd8d393f0623611df254fe0611ba4a250d1df6c21b0ac6546fcf2a0d51b7"
     },
     "node": "v24.16.0",
     "platform": "darwin",
     "source": {
       "repository_root": "/Users/admin/Central/worktrees/env-2/o-i",
-      "repository_head": "2a43791e503805e6e9fbd686167800ff7864bfe1",
+      "repository_head": "4732433e082dac3963bf110d020386d81258f3d3",
       "tracked_changes": [
-        "desktop/cradle/docs/DOCUMENT-SURFACE.md",
-        "desktop/cradle/src/material/MaterialSurface.tsx",
-        "desktop/cradle/src/surface/SourceSurface.tsx",
-        "desktop/cradle/walk/run.mjs",
-        "desktop/cradle/walk/scenarios/document-entry.mjs"
+        "desktop/cradle/documents/forms.json",
+        "desktop/cradle/documents/ui-mockup-template.html",
+        "desktop/cradle/walk/artifacts/canvas-context-failure.png",
+        "desktop/cradle/walk/artifacts/canvas-context-native-resolve-on-prepared-selection.png",
+        "desktop/cradle/walk/artifacts/canvas-context-real-return-after-explicit-delivery.png",
+        "desktop/cradle/walk/artifacts/canvas-context-stale-source-refusal-retains-preparation.png",
+        "desktop/cradle/walk/artifacts/canvas-context.json",
+        "desktop/cradle/walk/artifacts/document-entry-dialogue-01-journal.png",
+        "desktop/cradle/walk/artifacts/document-entry-dialogue-01-native-save.png",
+        "desktop/cradle/walk/artifacts/document-entry-die-42-rendered.png",
+        "desktop/cradle/walk/artifacts/document-entry-die-42-unavailable.png",
+        "desktop/cradle/walk/artifacts/document-entry-epi-card-pair-drawer.png",
+        "desktop/cradle/walk/artifacts/document-entry-epi-card-return.png",
+        "desktop/cradle/walk/artifacts/document-entry.json",
+        "desktop/cradle/walk/artifacts/document-surface.json",
+        "desktop/cradle/walk/scenarios/agent-panel.mjs",
+        "desktop/cradle/walk/scenarios/canvas-context.mjs",
+        "desktop/cradle/walk/scenarios/context-canvas-insert.mjs",
+        "desktop/cradle/walk/scenarios/document-surface.mjs",
+        "desktop/cradle/walk/scenarios/factory-inhabitation.mjs",
+        "desktop/cradle/walk/scenarios/first-vertical.mjs"
       ],
-      "dirty_digest": "f6e537dd3b67aec5159d68f490fd48a3c997b744c0c986acbbdb88386a406642",
+      "dirty_digest": "5586e6a174b1fc3530407f38c0bee22e43f85c30fbc10f30edfefcb4702bcdcf",
       "engine_provenance_path": "/Users/admin/Central/worktrees/env-2/o-i/packages/oi-design-system/expressions-engine/PROVENANCE.json",
       "engine_source": "EpiLogos/Point-Cloud-Demo",
       "engine_revision": "91db8428fc9dfba06cd258ec5a58e7dd9eef5313"
@@ -35,7 +51,7 @@
   },
   "passed": true,
   "error": null,
-  "duration_ms": 13956,
+  "duration_ms": 18116,
   "checks": [
     {
       "ok": true,
@@ -90,7 +106,7 @@
       "ok": true,
       "label": "Choosing Mockup creates a dated project mockup in the human ground from the retained template",
       "data": {
-        "file": "mockup-mockup-2026-09-25-1136.html"
+        "file": "mockup-mockup-2026-09-25-1302.html"
       }
     },
     {
@@ -128,22 +144,15 @@
     },
     {
       "ok": true,
-      "label": "No unexpected page errors during the document-surface walk",
+      "label": "No page errors during the document-surface walk",
       "data": []
-    },
-    {
-      "ok": true,
-      "label": "The mockup template’s hash routing degrades, named: its replaceState is illegal in the opaque-origin srcdoc transport (a feedback item for the template’s owner); state switching still operates",
-      "data": {
-        "count": 3
-      }
     }
   ],
   "ops": [
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 68,
+      "duration_ms": 101,
       "data": {
         "file": "document-surface-vision-created.png"
       }
@@ -151,7 +160,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 121,
+      "duration_ms": 144,
       "data": {
         "file": "document-surface-vision-edited-on-page.png"
       }
@@ -159,7 +168,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 56,
+      "duration_ms": 148,
       "data": {
         "file": "document-surface-vision-saved.png"
       }
@@ -167,7 +176,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 47,
+      "duration_ms": 85,
       "data": {
         "file": "document-surface-vision-after-save.png"
       }
@@ -175,7 +184,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 112,
+      "duration_ms": 86,
       "data": {
         "file": "document-surface-vision-stale-conflict.png"
       }
@@ -183,7 +192,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 107,
+      "duration_ms": 94,
       "data": {
         "file": "document-surface-mockup-loading-state.png"
       }
@@ -191,7 +200,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 108,
+      "duration_ms": 106,
       "data": {
         "file": "document-surface-mockup-semantic-selection.png"
       }
@@ -199,7 +208,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 114,
+      "duration_ms": 129,
       "data": {
         "file": "document-surface-continuity-restored.png"
       }

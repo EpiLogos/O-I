@@ -155,23 +155,25 @@ export default async function run({page, baseUrl, check, shot, channel, provisio
   await page.getByRole("button", {name: "Toggle right region", exact: true}).click();
   const panel = page.getByRole("region", {name: "Accompanying agent"});
   await panel.waitFor();
-  const planesRow = () => panel.getByRole("navigation", {name: "Right region planes"});
+  // The reconciled panel top is the shared icon tab strip — a labelled
+  // container, not a navigation landmark — so the row is found by its
+  // aria-label rather than a role.
+  const planesRow = () => panel.locator('[aria-label="Right region planes"]');
   await planesRow().waitFor({timeout: 15000});
-  const contextButton = planesRow().getByRole("button", {name: "Context", exact: true});
+  // The reconciled panel top is one icon tab strip — every plane is a tab,
+  // no overflow menu. The panel re-renders while the conversation polls, so
+  // the tab click is retried before giving up.
+  const contextButton = planesRow().getByRole("tab", {name: "Context", exact: true});
   try {
     await contextButton.click({timeout: 8000});
   } catch {
-    // The panel re-renders while the conversation polls; the overflow menu
-    // can detach between open and click, so open-and-click is retried.
     for (let attempt = 0; ; attempt++) {
       try {
-        await planesRow().getByRole("button", {name: /More views \(/}).click();
-        await panel.getByRole("group", {name: "More views"}).getByRole("button", {name: "Context", exact: true}).click({timeout: 3000});
+        await contextButton.click({timeout: 3000});
         break;
       } catch (error) {
-        await page.keyboard.press("Escape").catch(() => {});
-        const row = await planesRow().getByRole("button").allInnerTexts().catch(() => []);
-        if (attempt >= 6) throw new Error(`${error}; plane row buttons: ${JSON.stringify(row)}`);
+        const row = await planesRow().getByRole("tab").evaluateAll(els => els.map(el => el.getAttribute("aria-label"))).catch(() => []);
+        if (attempt >= 6) throw new Error(`${error}; plane row tabs: ${JSON.stringify(row)}`);
       }
     }
   }
