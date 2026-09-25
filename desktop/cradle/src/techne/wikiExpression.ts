@@ -218,8 +218,15 @@ function memberPosition(index: number, count: number, declared: number | null): 
     return polar(-90 + 60 * position, MEMBER_RING_RADIUS * Math.pow(RING_GROWTH, ring));
   }
   if (count <= 1) return {x: 0, y: 0};
-  return polar(-90 + (360 / count) * index, MEMBER_RING_RADIUS);
+  if (count <= RING_CAPACITY) return polar(-90 + (360 / count) * index, MEMBER_RING_RADIUS);
+  // A large undeclared membership: a sunflower spiral keeps neighbour
+  // spacing constant as the count grows (one fixed ring packed 192 members
+  // ~39px apart and stacked their anchors). Presentation only — no position
+  // is claimed as a QL warrant.
+  return polar(-90 + GOLDEN_ANGLE * index, MEMBER_RING_RADIUS * Math.sqrt((index + 1) / RING_CAPACITY));
 }
+const RING_CAPACITY = 12;
+const GOLDEN_ANGLE = 137.50776405;
 
 // ---------------------------------------------------------------------------
 // The projection (pure): reading → oi.expression/v1 document

@@ -116,6 +116,9 @@ export interface ResearchInstrumentsHost {
  placesHome?:HTMLElement;
  /** The Studio's Canvas section: source focus, frames and saved views. */
  canvasHome?:HTMLElement;
+ /** Page the Scene's loaded members (the renderer window) through the native
+  * working document; every member of a large constellation stays reachable. */
+ pageMembers?:(delta:number)=>Promise<unknown>;
  sceneMaterial:(sceneId:string)=>Scene;
  material:(sceneId:string,action:ResearchMaterialAction)=>Promise<void>;
  inspectSubject:(ref:string,context?:{node?:unknown;relationField?:unknown})=>void;
@@ -398,7 +401,7 @@ export function installResearchInstruments(host:ResearchInstrumentsHost){
   host.inspector.hidden=!inspecting;
   const closeInspector=()=>{dismissedCard=cardFor;host.inspector.hidden=true;redraw();};
   const controls=<div className="research-tool-actions" aria-label="Canvas tools">
-   {editable&&<><button aria-label="Note" title="Note" onClick={()=>act({type:'create-card',kind:'note',position:{x:0,y:0}})}><ToolIcon name="text"/></button><button aria-label="Image" title="Image" onClick={imageImport}><ToolIcon name="camera"/></button>
+   {editable&&<><button aria-label="Note" title="Note" onClick={()=>act({type:'create-card',kind:'note',position:{x:0,y:0}})}><ToolIcon name="text"/></button><button aria-label="Image" title="Image" onClick={imageImport}><ToolIcon name="upload"/></button>
    <button aria-label="Draw" title="Draw" aria-pressed={drawing} onClick={()=>{drawing=!drawing;redraw();}}><ToolIcon name="pen"/></button>{drawing&&<input type="color" aria-label="Stroke colour" value={strokeColour} onChange={e=>{strokeColour=e.target.value;redraw();}}/>}
    {selection.size>0&&<span className="research-selection-count" aria-live="polite">{selection.size} selected</span>}
    {selection.size>=2&&<select aria-label="Align selection" value="" onChange={event=>{const mode=event.target.value as AlignMode;if(mode)alignSelection(mode);event.target.value='';}}>
@@ -408,6 +411,10 @@ export function installResearchInstruments(host:ResearchInstrumentsHost){
    <button aria-label="Lasso" title="Lasso" aria-pressed={!!state.lassoOn} onClick={()=>{state.lassoOn=!state.lassoOn;redraw();}}><ToolIcon name="lasso"/></button>
    {selection.size>=2&&<button aria-label="Frame selection" title="Frame selection" onClick={saveFrame}><ToolIcon name="frame"/></button>}
 </>}
+   {(()=>{const binding=canvas.sceneId?host.nativeView()?.bindings[canvas.sceneId]:undefined;if(!binding||binding.page_count<=1||!host.pageMembers)return null;
+    return <><button aria-label="Previous members" title="Previous members" disabled={binding.page<=0} onClick={()=>void host.pageMembers!(-1)}><ToolIcon name="arrowLeft"/></button>
+     <span className="research-selection-count" title={`${binding.occurrences.length} of ${binding.member_refs.length} members loaded`}>{binding.page+1}/{binding.page_count}</span>
+     <button aria-label="Next members" title="Next members" disabled={binding.page>=binding.page_count-1} onClick={()=>void host.pageMembers!(1)}><ToolIcon name="arrowRight"/></button></>;})()}
    {constellationRequest&&<ConstellationAction request={constellationRequest} onError={message}/>}
    {editable&&host.editObject&&current&&localId&&<button aria-label="Edit object" title="Edit object" onClick={()=>host.editObject!(canvas.sceneId!,localId)}><ToolIcon name="pen"/></button>}
   </div>;

@@ -999,7 +999,7 @@ function ownResearchConnection(ref:string){const value=nativeWorkspace?.nativeVi
 function connectionKind(kind:string){if(!kind.trim()||kind.length>120)throw new Error('Choose a connection type of 1–120 characters.');return encodeURIComponent(kind.trim());}
 function assertConnectionMembers(sceneId:string,source:string,target:string){researchScene(sceneId);const members=nativeWorkspace?.nativeView()?.bindings[sceneId]?.member_refs;if(!members?.includes(source)||!members.includes(target))throw new Error('Both connection endpoints must belong to the current native Scene.');}
 researchInstruments=installResearchInstruments({
- container:researchContainer,tools:researchTools,inspector:researchInspector,placesHome,canvasHome,read:readTechneReading,
+ container:researchContainer,tools:researchTools,inspector:researchInspector,placesHome,canvasHome,pageMembers:delta=>nativeWorkspace?nativeWorkspace.page(delta):Promise.resolve(false),read:readTechneReading,
  sceneMaterial:id=>clone(researchScene(id)),
  material:async(id,action:ResearchMaterialAction)=>{const target=researchScene(id);changed(()=>applyResearchMaterial(target,action));await commitResearch();},
  inspectSubject:(ref,context)=>{const view=nativeWorkspace?.nativeView(),binding=view?.bindings[scene().id];if(!view||!binding){toast('Open a native Scene before opening its source.');return;}hostRequest({request:'summon',detail:{kind:'source',ref,context,subject:{ref:view.document.expression_ref,kind:'expression',nativeOwner:'oi',revision:view.document.revision,title:view.document.title,sceneRef:binding.scene_ref,entityRef:null,relationRef:null}}});},nativeView:()=>nativeWorkspace?.nativeView(),sceneId:()=>scene().id,

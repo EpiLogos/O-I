@@ -461,6 +461,17 @@ body.presentation #physis-panel,body.library-open #physis-panel{display:none}
 .blueprint-home fieldset{border:0;margin:0;padding:0;min-width:0}.blueprint-home legend{display:none}
 .blueprint-home label{display:flex;flex-direction:column;gap:4px;font-size:11px;margin:8px 0}.blueprint-home .native-actions{display:flex;flex-wrap:wrap;gap:6px}
 body:not(.oi-host-techne) [data-techne-only]{display:none}
+/* Technē's masthead keeps its three parts in one row that cannot overlap:
+   the rail (with the instrument's tools) yields width before the centred
+   chooser or the actions do. */
+body.oi-host-techne #app>.masthead{display:flex;align-items:center;gap:12px}
+body.oi-host-techne #app>.masthead>#tool-rail{flex:0 1 auto;min-width:0;overflow:hidden}
+body.oi-host-techne #app>.masthead>.masthead-centre{flex:1 1 auto}
+body.oi-host-techne #app>.masthead>.header-actions{flex:none;margin-left:auto}
+/* The instrument's standing line is a quiet caption over its body, not a
+   label inside the tool row. */
+#instrument-tools .research-instrument-status{position:fixed;z-index:52;top:calc(var(--shell-cutout-h,32px) + 8px);left:calc(var(--shell-cutout-w,0px) + 14px);max-width:min(420px,40vw);padding:0;background:none;color:var(--ui-muted);font:11px/1.4 var(--sans);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;pointer-events:none}
+#instrument-tools .research-instrument-status:empty{display:none}
 /* The instrument's own tools, inside the rail after its common tools. */
 .instrument-tools{display:contents}
 .instrument-tools:empty{display:none}
@@ -515,3 +526,7 @@ body.library-open #lens-chooser{display:none!important}
 .entry-gate-starters button{display:block;width:100%;text-align:left;padding:8px 0;font-size:12px;color:var(--accent,#8b5844)}
 .modes-standing{font-size:10px;color:var(--muted,#74766b);padding:0 20px 8px;margin:0}
 
+/* A long Scene name never pushes the save state under the next-scene arrow. */
+#scene-picker{min-width:0;max-width:min(360px,40vw)}
+#scene-picker #scene-name{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+#scene-picker #scene-state{flex:none}
