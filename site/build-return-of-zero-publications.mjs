@@ -108,19 +108,41 @@ const provenance = [{ kind: 'collection-publication', ref: 'desktop/cradle/expre
 
 const members = [];
 for (const manifest of envelope.manifests) {
-  const manifestPath = manifest.member_root
-    ? resolve(repo, 'desktop/cradle/expressions-app', manifest.member_root, basename(manifest.manifest))
-    : resolve(envelopeDir, manifest.manifest.split('return-of-zero/')[1]);
+  const appRoot = resolve(repo, 'desktop/cradle/expressions-app');
+  const envRoot = manifest.member_root_env ? process.env[manifest.member_root_env] : null;
+  if (manifest.member_root_env && !envRoot) throw new Error(`Manifest ${manifest.manifest} requires ${manifest.member_root_env}.`);
+  const memberRoot = envRoot ? resolve(envRoot) : manifest.member_root ? resolve(appRoot, manifest.member_root) : envelopeDir;
+  const manifestPath = envRoot
+    ? resolve(appRoot, manifest.manifest)
+    : manifest.member_root
+      ? resolve(memberRoot, basename(manifest.manifest))
+      : resolve(envelopeDir, manifest.manifest.split('return-of-zero/')[1]);
+  if (envRoot && manifest.source_revision?.commit) {
+    const {stdout} = await exec('git', ['-C', memberRoot, 'rev-parse', 'HEAD'], {encoding: 'utf8'});
+    if (stdout.trim() !== manifest.source_revision.commit) throw new Error(`External corpus ${manifest.manifest} is not at pinned revision ${manifest.source_revision.commit}.`);
+  }
   const manifestDoc = JSON.parse(await readFile(manifestPath, 'utf8'));
   const featured = [...(manifestDoc.featured ?? []), ...(manifestDoc.starters ?? [])];
   if (featured.length !== manifest.members) throw new Error(`Manifest ${manifest.manifest} lists ${manifest.members} members but carries ${featured.length}.`);
-  for (const featuredMember of featured) members.push({ ...featuredMember, manifest: manifest.manifest, memberRoot: manifest.member_root ? resolve(repo, 'desktop/cradle/expressions-app', manifest.member_root) : envelopeDir });
+  for (const featuredMember of featured) {
+    const body = JSON.parse(await readFile(resolve(memberRoot, featuredMember.file), 'utf8'));
+    members.push({
+      ...featuredMember,
+      id: featuredMember.id ?? body.id,
+      name: featuredMember.name ?? body.name ?? body.id,
+      manifest: manifest.manifest,
+      memberRoot,
+      sourceBindingRoot: manifest.source_binding_root ?? null,
+      sourceRevision: manifest.source_revision?.commit ?? null,
+    });
+  }
 }
 const memberIds = new Set(members.map((m) => m.id));
 if (memberIds.size !== members.length) throw new Error('Duplicate member ids across manifests; the edition would collide on output files.');
 const expectedMembers = envelope.manifests.reduce((total, manifest) => total + manifest.members, 0);
 if (members.length !== expectedMembers) throw new Error(`Expected ${expectedMembers} envelope members, found ${members.length}.`);
-if (members.length !== 92 && !envelope.candidate) throw new Error(`Expected the 92 published members (full committed corpus, published 2026-09-21 per owner stipulation), found ${members.length}.`);
+const declaredMembers = Number(envelope.expected_members ?? expectedMembers);
+if (!Number.isSafeInteger(declaredMembers) || declaredMembers < 1 || members.length !== declaredMembers) throw new Error(`Expected ${declaredMembers} selected publication members, found ${members.length}.`);
 
 // ---------------------------------------------------------------------------
 // 3. Reading bodies: the pinned section-room prose; the essay member carries
@@ -183,7 +205,7 @@ async function readingBody(member) {
   if (journey.scenes.some((scene) => (scene.text ?? []).some((t) => (t.body ?? '').trim().length > 0))) {
     return {
       text: sceneProseBody(journey),
-      sources: [{ ref: `production/return-of-zero/bindings/${member.id}.binding.json`, revision: envelope.corpus?.production_revision?.commit ?? sourceCommit }],
+      sources: [{ ref: member.sourceBindingRoot ? `${member.sourceBindingRoot}/${member.id}.binding.json` : `production/return-of-zero/bindings/${member.id}.binding.json`, revision: member.sourceRevision ?? envelope.corpus?.production_revision?.commit ?? sourceCommit }],
     };
   }
   return {
@@ -319,9 +341,7 @@ const collectionBinding = {
   subject_ref: COLLECTION_REF,
   props: {
     title: envelope.title,
-    text: envelope.candidate
-      ? `The Return-of-Zero public edition candidate: ${members.length} committed native members, each readable at full disclosed length with its derived Expression. Grounded in the sha-verified essay sources at ${sourceCommit} and the pinned Point-Cloud-Demo production corpus; the owner remains the recognition authority, and nothing is published until the owner approves on O:I #417.`
-      : `The deliberately published Return-of-Zero collection: the full committed corpus — 92 native members across the corpus, essay, rooms and legacy manifests — each readable at full disclosed length with its derived Expression. Grounded in the sha-verified essay sources at ${sourceCommit} and the pinned Point-Cloud-Demo production corpus; the owner remains the recognition authority for anything beyond these surfaces.`,
+    text: `The deliberately selected Return-of-Zero public collection: ${members.length} native members, each carrying its full disclosed reading and exact authored oi.journey body beside the bounded SharedField projection. Selection basis: ${envelope.standing}. Source revisions remain explicit per manifest; the public receiver does not substitute legacy/demo members or rebuild native fields.`,
     refs: worldEntries.map((entry) => entry.ref),
   },
   fallback: { title: envelope.title },
@@ -333,9 +353,7 @@ const presentation = createWorldPresentation({
   world_ref: WORLD,
   revision: 1,
   title: envelope.title,
-  summary: envelope.candidate
-    ? `${members.length} committed native members: the sovereign reading path, the eight section rooms, the E0 corpus families and the legacy collections, each readable at full disclosed length with its derived Expression.`
-    : 'Nine published subjects: the sovereign reading path and eight section rooms, each readable at full disclosed length with its native Expression.',
+  summary: `${members.length} selected native members across the authored Return-of-Zero field, each readable with its exact native Expression body and explicit source revision.`,
   theme: { tokens: {} },
   provenance,
   regions: [{ region_ref: 'reading', role: 'reading', bindings: [collectionBinding, ...readingBindings] }],
@@ -373,9 +391,9 @@ await writeFile(resolve(outDir, 'world-publication.json'), JSON.stringify(world,
 const receipt = {
   schema: 'oi.return-of-zero-producer-receipt/v1',
   standing: 'produced-from-pinned-native-sources',
-  owner_authority: envelope.candidate
-    ? 'Owner commission 2026-09-20/21 (O:I #417): assemble the full committed Return-of-Zero corpus as a publication-tuple candidate; the producer runs as a local dry-run only and nothing is published or deployed until the owner approves on #417.'
-    : 'Owner stipulation 2026-09-21 (recorded on the O:I #65/#417 thread): the full committed Return-of-Zero corpus is deliberately published — no per-family approval gates; the publisher identity is the envelope-declared frank-sovereign ownership and the owner remains the recognition authority for anything beyond these surfaces.',
+  owner_authority: envelope.owner_authority ?? (envelope.candidate
+    ? 'Owner approval remains required for this candidate envelope.'
+    : 'The envelope records the deliberately selected public corpus; anything outside it remains outside this publication.'),
   deterministic: { published_at: publishedAt, source_commit: sourceCommit },
   reconciliation,
   corpus: corpusReceipt,
