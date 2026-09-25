@@ -7,3 +7,5 @@ public/data/library/
 .essay-source/
 public/essay-shell/
 *.tsbuildinfo
+vendor/quartz/node_modules/
+vendor/quartz/public/

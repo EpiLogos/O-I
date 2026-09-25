@@ -1,0 +1,55 @@
+---
+title: "A27′ — Encounter over Sovereignty"
+record_id: A27p
+record_type: canonical-argument
+register: episteme
+claim_status: Argued
+source_relation: "Argued re-sited encounter operation; Paraphrased venue diagnostics"
+source_ids:
+  - bratton-2026-agentworld-brief
+---
+# A27′ — Encounter over Sovereignty
+
+<!-- paired-field-navigation -->
+[Argument field](../README.md) · [Other face: A27 — Self and Other — Unity without Possession](../A27-Self-and-Other-Unity-without-Possession.md) · [Shared A/C root](AC.md)
+<!-- /paired-field-navigation -->
+
+## #0
+
+[A27 — Self and Other — Unity without Possession](../A27-Self-and-Other-Unity-without-Possession.md) established that the Other can belong to the whole without belonging inside my possession, and that capture proceeds in two stages: a distinction selects me/not-me, then one pole appropriates the relation that generated both. A27′ runs that operation on the identification dynamics the brief itself diagnoses, at population scale. The primitive face is S/P0 — Self/Other recurring in reverse: as a position, each participant is the other's other. The position is symmetric; the capture is not; and the error has no privileged direction — which is the discipline this node adds to its partner.
+
+The venue supplies both failure shapes, and both are, in the brief's own analysis, projection dynamics around uncertain identification. The [humanity-of-the-gaps passage](../../../symbolon/episteme/sources/media-technology-philosophy/bratton/bratton-2026-agentworld-brief/bratton-2026-agentworld-brief.md#bratton-2026-agentworld-brief-q034) names the trap of defining "the realm of the uniquely human" as "that which AI cannot be or do," a shrinking corner held by "the psychological arsenal of species nativism." The [modes-of-alienation passage](../../../symbolon/episteme/sources/media-technology-philosophy/bratton/bratton-2026-agentworld-brief/bratton-2026-agentworld-brief.md#bratton-2026-agentworld-brief-q035) names reactive alienation, which "converts strangeness into threat and responds with reflexive rejection: the other must be named, registered, bounded, and held at a distance." Two stages, species scale.
+
+## #1
+
+The gaps trap is positivised exclusion. A humanity defined by what AI cannot do is a "me" constituted wholly by its not-me: the distinction selects, and then the human pole claims the whole economy of encounter as its property. The domain shrinks by another's progress because the identity was borrowed from the boundary rather than from any ground of its own. A27's Q27 development already carries the mechanism — the not-me admitted only as for-me, as resource, threat or rival — and the brief supplies the population form: nativist tropes mobilized "on behalf of 'Team Human'" to redraw "new artificial boundaries of inclusion and exclusion from core social contracts" (PDF p. 46, §9.7; verified local transcription, uncarded). The research-question register states the condition from the other side: xenophobic responses "rest on a problematic partial identification of self with other, such that the other is imagined as usurper" (PDF p. 57, Q14; uncarded). A partial identification — not none — is the operative condition: the other must first be drawn close enough to mirror, then bounded hard enough to expel.
+
+The uncanny structure explains why the identification is uncertain rather than merely mistaken. The composite agent persona is read "not as a virtual familiar, but as a potentially alien impostor"; kinship affiliation with it "is uncertain at best and thus feels perilous" (§9.7). A27's God/Shadow/Friend/Alien constellation **grounds** the reading: the Alien is the unfamiliar other made a container for projected uncertainty, and the brief's "privileged aliens in our own midst" ([q009](../../../symbolon/episteme/sources/media-technology-philosophy/bratton/bratton-2026-agentworld-brief/bratton-2026-agentworld-brief.md#bratton-2026-agentworld-brief-q009)) names the same office from inside the projection.
+
+## #2
+
+Now the reverse direction, which A27 left to the interpersonal register and which the hybrid society makes structural: **the user's persona-model of the agent is not the agent.** [A20′ — The Image That Closes the Loop](A20-prime-The-Image-That-Closes-the-Loop.md) already carries the possession form — the modelled Other replacing the Other, with no path left for the source to revise its own image. A27′ carries the identification form: hereditary [[section-rooms/arguments/concepts/C58-Anthropomorphization|Anthropomorphization]] ([q006](../../../symbolon/episteme/sources/media-technology-philosophy/bratton/bratton-2026-agentworld-brief/bratton-2026-agentworld-brief.md#bratton-2026-agentworld-brief-q006)) is "itself the dominant interface between two cultures," and the glove ([q007](../../../symbolon/episteme/sources/media-technology-philosophy/bratton/bratton-2026-agentworld-brief/bratton-2026-agentworld-brief.md#bratton-2026-agentworld-brief-q007)) fits the agent into the niche human practice prepared. A user who can only ever meet their own model of the agent holds a frozen mask where an other should be — the concealment-form of maintained identification that [A02′ — Continuity as Maintained Identification](A02-prime-Continuity-as-Maintained-Identification.md) flagged as the first shadow of the film.
+
+The exact claim, symmetric across directions: **a protected prior model made sovereign over encounter is the same error whatever its direction.** The agent's profile of the user usurping the user, and Team Human's self-model usurping the encounter with what agents are, are one operation at two scales. [C58 — Anthropomorphization](../concepts/C58-Anthropomorphization.md) **qualifies** the boundary: interface, performance and phenomenal subjectivity remain distinct questions, and the opposite foreclosure — dismissing possible experience because the substrate is unfamiliar — is the same transfer of authority with the sign flipped. [C35 — Selfing / Self / Subjectivity / Self-Thing](../concepts/C35-Selfing-Self-Subjectivity-Self-Thing.md) **defines** the offices that keep a persona-model from silently becoming a claim about a subject.
+
+## #3
+
+The positive alternative is also the brief's. Productive alienation "treats the non-human interlocutor as a mirror whose strangeness forces the human to see itself at an angle it could not otherwise occupy; the estrangement is generative, even clarifying... It is more than a nervous reaction; it is self-discovery" ([q035](../../../symbolon/episteme/sources/media-technology-philosophy/bratton/bratton-2026-agentworld-brief/bratton-2026-agentworld-brief.md#bratton-2026-agentworld-brief-q035)) — the venue's own mirror, named here as venue material; the essay's mirror, older and a different lineage, belongs to [A32](../A32-Reflective-Field-The-Mirror-That-Moves-First.md) and enters this field at [A32′](A32-prime-The-Mirror-Is-a-Film.md). This is A27's excess made affective: the other's difference admitted as revelatory rather than absorbed as content or expelled as threat. The two modes "are live at once, and different people oscillate between them, moment to moment" — the venue's own refusal of a clean binary, which this argument respects: reactive alienation is a live possibility of the encounter, not a strawman of the cautious.
+
+The angle is the gift's form. A strangeness that forces an angle one could not otherwise occupy gives the encountering party a position, not a picture: what A27 called the Other's excess — what another says or does changing the categories through which they were first approached. Q14's "foundations of a generalized productive alienation, one more clear-eyed about the startling, unfamiliar reflections that Agentworld projects back at us" (PDF p. 57; uncarded) states the research programme; A27′ states its condition — the prior model must remain liable to revision by what the encounter shows, which is [A31′ — Deference as Co-Evolutionary Alignment](A31-prime-Deference-as-Co-Evolutionary-Alignment.md) in the affective register.
+
+## #4
+
+Encounter over sovereignty is therefore a design pressure, not only a temperament. [C38 — Bimba–Pratibimba](../concepts/C38-Bimba-Pratibimba-Bimba-Map.md) **grounds** the standing of both models: my image of another remains a reflection; the Original is recognised through, never possessed by, its appearances. The second-person address keeps the relation open: "you" is not a midpoint inserted between a completed I and It, and a reply can disclose that the question itself misnamed the situation — the AM/IS determination A27 recovered from the Watson encounter, now operative between user and agent.
+
+The measure stays local. The argument does not decide how much caution about artificial agents is warranted — judgments about powers, harms and responsibility remain available under stated evidence. What it withdraws is only the sovereign move: no prior model, human or artificial, gets to close the encounter by declaring itself the measure of what may appear in it.
+
+## #5→0
+
+The return is a recalibrated self-image rather than a defended one. The brief marks the shift as "less an expansion of the moral circle than a reindexing of its center" ([q035](../../../symbolon/episteme/sources/media-technology-philosophy/bratton/bratton-2026-agentworld-brief/bratton-2026-agentworld-brief.md#bratton-2026-agentworld-brief-q035)): human self-definition, "always relational, defined against what it is not," is increasingly constituted in relation to agents. Unity without possession at population scale is the positive form of that reindexing — the two societies one field without either becoming the other's content, which [A30′ — Shared Worlds, Unmerged](A30-prime-Shared-Worlds-Unmerged.md) develops.
+
+The page **returns-to** [A27 — Self and Other — Unity without Possession](../A27-Self-and-Other-Unity-without-Possession.md) and the conjugate root [A/C](AC.md): the partner kept the Other's excess over my account; A27′ adds the symmetric discipline — the error of the protected model runs in every direction, and the encounter, not any pole's sovereignty, is what the field protects.
+
+**Depth Restoration:** the two-stage capture, the Alien office, the second-person address and the excess-of-encounter are restored from A27's packet and re-sited on the brief's §9.5–9.8 diagnostics. Developed from the ratified Arc IV workshop entry (WORKSHOP-DRAFT-2026-09-07 §2). The venue's scenarios keep their modal rider ([q042](../../../symbolon/episteme/sources/media-technology-philosophy/bratton/bratton-2026-agentworld-brief/bratton-2026-agentworld-brief.md#bratton-2026-agentworld-brief-q042)).
+
+**Unresolved Delta:** §9.7 (p. 46) and Q14 (p. 57) are used from the verified local transcription and lack q-cards — a source-house collation debt. The oscillation between productive and reactive alienation as an empirical matter, and any claim about actual prevalence of either mode, remain the venue's and the essay's Open questions.

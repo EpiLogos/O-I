@@ -1,0 +1,81 @@
+---
+title: "A29 — Power / Delegated Labour / Return"
+record_id: A29
+record_type: argument
+register: episteme
+claim_status: Argued
+source_relation: "Argued delegated-labour operation; Paraphrased governance comparison"
+---
+
+# A29 — Power / Delegated Labour / Return
+
+<!-- paired-field-navigation -->
+[Argument field](README.md) · [Other face: A29′ — Return or Extraction](conjugate/A29-prime-Return-or-Extraction.md) · [Shared A/C root](conjugate/AC.md)
+<!-- /paired-field-navigation -->
+
+## #0
+
+Power makes a difference in a shared field. Delegation entrusts a participant with labour, decision or transformation whose consequences enter conditions held in common. [[A25-Covenant-Mediating-Office-Source-Authority|A25]] grounds covenantal mediation; [[A28-Authored-Ground-Positional-Delegation|A28]] distinguishes intention, formulated commission and situated agency. A29 follows the completed work back toward its source: the power that receives a product must remain answerable to the labour and world through which it arrived.
+
+The [[quilt/2026-08-02-PARALLEL-HARMONISED-QUILT|QH R16.4 ratification]] sources the full return. Resistance, error, cost, dissent, unforeseen possibility and consequence encountered where labour meets the world must be able to change the governing model, measure, instruction, institution or purpose. Receiving a report so the commissioner can grade the worker is only one direction of this relation.
+
+## #1
+
+A commission distributes authority rather than creating all the conditions of work. The executing office draws on capacities, tools, knowledge, infrastructure and prior labour it did not originate. An evaluator determines adequacy under an inherited purpose. The source of permission, the performer, the recipient of value and the bearer of consequence can be different participants. [[section-rooms/arguments/concepts/C53-Power-Delegated-Labour|C53 Power / Delegated Labour]] defines this distribution without locating power in one visible actor alone.
+
+The [[symbolon/episteme/etymologies/apportionment-and-economy/WHOLE-FIELD|Apportionment / Economy field]] derives the circuit of shares within a common ordering. Its historical household/distribution senses remain separately warranted; the labour operation is register 3. No lexical essence settles who owns a resource or owes a particular debt. The concrete account must identify what was entrusted, by whom, under what terms, and to whom the consequence returns.
+
+## #2
+
+The asymmetry becomes visible when products travel upward while costs remain below. A worker meets an unforeseen obstacle and changes the task in practice; the result is accepted as the commissioner's achievement, while the encountered difference is excluded from the next commission. The governing office becomes more insulated precisely as its reported capacity increases.
+
+Q27's Work/Play inversion makes this an accounting operation. Visible public work can be performed within a field whose consequential decisions occur elsewhere, in protected private play. The distinction of work and play can be generative; capture lies in hiding their relation. [[symbolon/episteme/sources/internal-corpus/taylor/taylor-2026-revision-notes-trust/taylor-2026-revision-notes-trust.md|The trust revision]] sources the adjacent failure: an account can offer provisional support for trust or export the uncertainty it cannot acknowledge onto a scapegoat. Failure-reporting and dissent therefore belong to the source relation. Their suppression can protect the task's criterion by making the worker bear every contradiction.
+
+## #3
+
+Delegation, automation, extraction, exchange and gift identify different relations. Delegation concerns entrusted capacity and answerability; automation concerns how an operation is executed. Exchange organises reciprocal transfer under terms. Gift can relinquish a product without requiring equivalent return. Extraction names a taking whose relation to the sustaining field, affected parties and returned value must be examined. A delegated or automated operation is not thereby one particular economic relation; an exchange or gift does not remove the material conditions of its production.
+
+The specific monopoly mechanism recovered in Q27 separates participants horizontally while retaining their means of combination vertically. Each appears as user, worker, score or case; their dependencies disappear from the operative count. The centre then claims to supply the only unity through which they can act. [[A24-Arbitration-and-the-Usurpation-of-Measure|A24]] explains the criterion's usurpation; A29 adds the disposition of capacity, work and value. A new ruler or a shared database alone does not change who can set the terms of combination.
+
+## #4
+
+[[symbolon/episteme/sources/political-theory-institutions/ostrom/ostrom-2009-beyond-markets-states-nobel-lecture/ostrom-2009-beyond-markets-states-nobel-lecture.md|Ostrom’s governance source]] tests a distinct institutional neighbour. Its q001 recognises most affected participants' standing in making and modifying a resource regime's rules, local rule-making rights and nested governance. Its q002 qualifies rigid transplantation across social and ecological conditions. Those source-specific principles do not verify a QL institution or a complete architecture for every labour relation.
+
+Q27 gives sovereignty practical verbs: set terms, refuse, revise, leave and reconnect. Exit without access to one's memory or continuing relations can make a nominal right ineffective. A federation shares selected capacities while participants retain governed interiors. [[section-rooms/arguments/concepts/C54-Commons-Non-Monopoly|C54 Commons / Non-Monopoly]] defines that conjunction. [[symbolon/episteme/sources/media-technology-philosophy/42-techne/42-techne-2026-sovereign-commons/42-techne-2026-sovereign-commons.md|The 4:2 Technè source house]] sources an affiliated design proposal; its mandates, redress and ownership programme require implementation and evaluation. Federation can relocate monopoly into reputation, settlement or attention mechanisms rather than abolish it.
+
+## #5→0
+
+
+The [authored BwO correction](../../quilt/27-07-26-QUILTING-FOR-FULL-ARGUMENT.md) **compares** the conditions of delegated capacity: full composition remains an ongoing construction of connections, empty composition loses passages needed for continued response, and cancerous composition lets one stratum proliferate across the field. The proposed single societal full body is diagnosed as the last case. [A30](A30-Objective-Co-Internality.md) retains plural, selectively revisable relations. This is the admitted diagnostic, with Deleuze–Guattari attribution a separate source task; neither pure latent source nor constitutional organogenesis is newly ratified.
+
+
+The [Foucault lens](../../symbolon/episteme/sources/phenomenology-continental-philosophy/foucault/foucault-1976-history-sexuality-v1/foucault-1976-history-sexuality-v1.md#foucault-scales-of-measure) **qualifies** delegated labour by tracing how a report becomes an assessable object. Recording, classifying and maintaining comparisons are work on which the apparent institutional capacity depends. A score that retains only the output can omit that expenditure from the next commission. Bodily discipline and population regulation remain different source scales; the actual disappearance of costs requires empirical evidence.
+
+
+The [language, law and nation history](../../symbolon/episteme/histories/places-and-peoples/language-law-nation-centralisation/DEVELOPMENT.md#branch-xii-computation) **tests** disclosure by whether a returned consequence can alter the criterion which produced it. DPO’s optimal and reference policies have distinct mathematical offices; the institutional account must also identify who selected the preference data, proxy and use. Ostrom’s selected principles supply a comparison for affected users changing rules and for nested governance. Their presence in an account establishes neither an implemented computational return nor a verdict on phenomenality.
+
+Taylor’s [erased taijitu](../../symbolon/mytheme/worlds/frank-taylor/taylor-authored-images/WHOLE.md#erased-taijitu) **figures** divided participants whose internal plurality has been removed while the power of recombination is retained elsewhere. The [black sun–radiating star whole](../../symbolon/mytheme/worlds/frank-taylor/taylor-authored-images/WHOLE.md#black-sun-radiating-star) **extends** this accounting through private play’s protected decisions and public work’s visible performance. Its rings of philanthropy, capital, fixing and mutual compromise give the withheld return a differentiated body. The healthy Power–Play–Need–Sacrifice–Decision–Love–Work circulation remains coequal with Name–Truth–Mind–Word–Logos–Son–Image; release returns capacity and consequence to the commissioning relation. The [city–bomb–surveillance–AI sequence](../../symbolon/mytheme/worlds/frank-taylor/taylor-authored-images/WHOLE.md#god-city-bomb-surveillance-ai) **qualifies** this return by retaining destruction, capture within a continuing habitat and counterfeit source as different mechanisms. Their authored force does not certify a particular institution or technical case.
+
+Delegated labour **returns-to** [Nomos — answerable office](../../symbolon/episteme/etymologies/trust-place-logos-nomos-natio-credere/WHOLE-FIELD.md#nomos-answerable-office) through the rule connecting commissioner, performer, recipient and bearer of consequence. Their positions need not coincide. Returning the product must also allow encountered cost or dissent to revise the commission. Renewed entrustment can then proceed on examined terms, while the institution’s inherited authority remains attributable rather than naturalised.
+
+The [Indra’s jewel-net whole](../../symbolon/mytheme/worlds/chinese-huayan/indra-net/WHOLE.md#indra-whole-return) **figures** a definite member sustained by relations beyond its own office. Its institutional return asks whether accepting the finished product also admits the labour, costs and consequences borne elsewhere. Those consequences must reach the commission that can change the next act; the net supplies no measured account of them.
+
+The [Meal whole](../../symbolon/mytheme/worlds/frank-taylor/meal-epistemic-metabolism/WHOLE.md#meal-logos-health-return) **figures** received labour remaining present in the finished product: preparation makes understanding possible, and the table lets contributors question its ingredients and terms. Assimilation reaches the receiving authority when resistance can change how the next meal is commissioned. Honour for preparation therefore includes an effective route for its costs and consequences.
+
+The [Mirror That Moves First whole](../../symbolon/mytheme/worlds/frank-taylor/mirror-that-moves-first/WHOLE.md#mirror-institutional-gauge) **tests** the institution holding the instrument by the disclosure it requires of others. Its own commissioning gauge, labour and material dependencies must become reachable by returned consequence. The argued reciprocal obligation survives independently of the unverified particular conference allegation in the developmental carrier.
+
+The [Mother, Assumption and chiasm whole](../../symbolon/mytheme/worlds/frank-taylor/mother-assumption-chiasm/WHOLE.md#mother-bearing-return) **figures** return to sustaining labour through the maternal body received within what it bore. A completed product carries that dependence forward when consequence and recognition reach the conditions of its making. The chiasm gives this obligation a bodily form without making suffering a requirement of completion.
+
+The six Objective Internality products now make the distribution of Power explicit rather than leaving “Return” as one generic feedback channel. [Central](products/S0-Central.md) carries the authored ground, source and commission that may have to change. [Actuation](products/S1-Actuation.md) carries the judgment, evaluator and delegated event. [AIKit](products/S2-AIKit.md) carries the horizon of available, relevant, permitted and selected powers. [Software Factory](products/S3-Software-Factory.md) carries the transformation through which evidence becomes changed form. [Workcell](products/S4-Workcell.md) carries the bodily/material place where labour, scarcity, latency, failure and environmental consequence are actually borne. [Quaternal Logic](products/S5-Quaternal-Logic.md) carries the differentiated relation that prevents one office from presenting its local measure as the whole. **Returned experience is effective only when it can reach whichever of these offices presently determines the next act.** A trace that cannot alter source, permission, criterion, form or entrusted decision remains an observation of Power rather than its return.
+
+This is also the daily-life form of the argument. The tools through which a world becomes ordinary distribute what can be found, remembered, named, ranked, permitted, refused and carried elsewhere. Their settings and defaults can become the air of a Life precisely because they cease to appear as decisions. A29's concern is therefore not an external political appendix to the technical system. It asks whether the lived world built by those tools can return inconvenience, exclusion, labour and dissent to the places from which its rules are set.
+
+Returned consequence must reach the office able to change the next action. [[A30-Objective-Co-Internality|A30]] develops the plural internalities that work affects; [[A33-Epistemic-Cultivation-Operational-Parity|A33]] tests whether a revision changes actual permissions, criteria or execution. [[symbolon/episteme/sources/media-technology-philosophy/bratton/bratton-2026-agentworld-brief/bratton-2026-agentworld-brief.md|Agentworld]] compares institutions' non-market conditions and ensembles' shared inheritance in q025–q027 and q038–q041. The projected accrual of capability to a commons does not itself establish who governs or receives it.
+
+[[A35-Compassion-Sensitivity-to-Origins-Epi-Logos-as-Vocation|A35]] returns the work to its origins as a vocation of care. The product can be offered and released; responsibility for its effects is not extinguished by release. The next commission inherits what the prior labour learned, including a changed purpose when the encounter warrants it. This is power capable of return: real authority and real capacity remain, while the sustaining field is not reduced to their disposable means.
+
+[the Job whole](../../symbolon/mytheme/worlds/biblical/job/WHOLE.md#job-consequence-return) **figures** the distance between authorised action and the bodies that bear its costs. The council's permissions reach servants, children and Job's body; an account concerned only with the test's outcome would make those losses materials of someone else's purpose. The return asks where such consequence can challenge the terms of power. It does not commend the wager as an exemplary commission or make later prosperity discharge the first losses.
+
+[the Prisoner whole](../../symbolon/mytheme/worlds/british-television/the-prisoner/WHOLE.md#prisoner-administered-world) **figures** delegated power whose continuing apparatus separates the changing officer from the costs borne by captives. Number Two's succession leaves the interrogation's purpose in force, while the week of Degree Absolute drives its incumbent into the ordeal alongside Six. The return asks whether suffered consequence can revise that purpose and its permission to act. Replacing the officer alone cannot establish such answerability.
+
+**Depth Restoration:** product/cost/revision asymmetry, distinct distributing offices, Work/Play and scapegoat accounting, economic relation distinctions, hidden combination, practical sovereignty, source-sensitive governance and the six-product return route restored from the A29 packet, QH R16.4, direct trust revision, Q27 and Ostrom/Bratton/4:2 houses. **Remaining debt:** specific political-economic histories, AI labour/infrastructure chains and implementation results. No empirical exploitation or commons success case is fabricated. P1 consumers M40/M46 remain in their Movement homes.

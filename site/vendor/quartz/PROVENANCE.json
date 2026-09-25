@@ -1,0 +1,15 @@
+{
+  "upstream": "https://github.com/jackyzha0/quartz",
+  "branch": "v4",
+  "commit": "d25a6eabf96751ffca56f8a8139272def7a65041",
+  "version": "4.5.2",
+  "license": "MIT (LICENSE.txt)",
+  "vendored": "2026-09-25",
+  "by": "O:I production-deploy lane, per site/ESSAY-QUARTZ-HARD-BRIEF-2026-09-25.md",
+  "local_modifications": [
+    "quartz.config.ts - night palette (Plate B tokens), baseUrl oi.epi-logos.org/essay, graph/explorer/backlinks on",
+    "quartz.layout.ts - explorer left; graph, backlinks, TOC right",
+    "quartz/styles/custom.scss - night-paper skin, serif stack"
+  ],
+  "upgrade_procedure": "diff against upstream v4 branch at the pinned commit; keep local_modifications"
+}

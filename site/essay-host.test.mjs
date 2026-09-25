@@ -44,31 +44,37 @@ test('built essay.html boots from the site base and drops root-absolute asset ta
   assert.match(out, /This page is not on the site/);
 });
 
-test('the publish step deletes Quartz under essay/ and copies the shell to 404.html', () => {
+test('the publish step requires the Quartz publication, prunes the shell catalog, and publishes the Quartz not-found page', () => {
   const dir = mkdtempSync(join(tmpdir(), 'essay-dist-'));
   try {
-    mkdirSync(join(dir, 'essay', 'symbolon'), { recursive: true });
-    writeFileSync(join(dir, 'essay', 'index.html'), '<html><meta name="generator" content="Quartz"></html>');
-    writeFileSync(join(dir, 'essay', 'symbolon', 'matheme.html'), '<meta http-equiv="refresh" content="0">');
-    const shell = rewriteBuiltEssayHtml('<html><body><script type="module" src="./assets/essay-abc.js"></script></body></html>');
-    writeFileSync(join(dir, 'essay.html'), shell);
+    mkdirSync(join(dir, 'essay'), { recursive: true });
+    writeFileSync(join(dir, 'essay', 'index.html'), '<html><title>The Return of Zero</title><div class="graph-container"></div></html>');
+    writeFileSync(join(dir, 'essay', 'quartz-source.json'), '{"schema":"oi.essay-quartz-source/v1"}');
+    const quartz404 = '<html><title>Not found</title></html>';
+    writeFileSync(join(dir, 'essay', '404.html'), quartz404);
     mkdirSync(join(dir, 'essay-shell'), { recursive: true });
     writeFileSync(join(dir, 'essay-shell', 'catalog.json'), '{}');
     finalizeEssayDist(dir);
-    assert.equal(readFileSync(join(dir, '404.html'), 'utf8'), shell);
-    assert.throws(() => readFileSync(join(dir, 'essay', 'index.html')));
+    assert.equal(readFileSync(join(dir, '404.html'), 'utf8'), quartz404);
+    assert.throws(() => readFileSync(join(dir, 'essay-shell', 'catalog.json')));
   } finally {
     rmSync(dir, { recursive: true, force: true });
   }
 });
 
-test('a refresh stub or a missing catalog fails the publish step', () => {
+test('a missing Quartz publication, a shell stub, or a missing stamp fails the publish step', () => {
   const dir = mkdtempSync(join(tmpdir(), 'essay-dist-'));
   try {
-    writeFileSync(join(dir, 'essay.html'), '<meta http-equiv="refresh" content="0;url=./zero">');
-    assert.throws(() => finalizeEssayDist(dir), /refresh stub/);
-    writeFileSync(join(dir, 'essay.html'), rewriteBuiltEssayHtml('<html><body><script type="module" src="/assets/essay-abc.js"></script></body></html>'));
-    assert.throws(() => finalizeEssayDist(dir), /catalog.json/);
+    assert.throws(() => finalizeEssayDist(dir), /Quartz essay publication is missing/);
+    mkdirSync(join(dir, 'essay'), { recursive: true });
+    writeFileSync(join(dir, 'essay', 'index.html'), '<html><title>x</title><div class="graph-container"></div></html>');
+    writeFileSync(join(dir, 'essay', '404.html'), '<html></html>');
+    writeFileSync(join(dir, 'essay', 'quartz-source.json'), '{"schema":"oi.essay-quartz-source/v1"}');
+    writeFileSync(join(dir, 'essay.html'), '<html>stale shell stub</html>');
+    assert.throws(() => finalizeEssayDist(dir), /must not ship/);
+    rmSync(join(dir, 'essay.html'));
+    rmSync(join(dir, 'essay', 'quartz-source.json'));
+    assert.throws(() => finalizeEssayDist(dir), /provenance stamp/);
   } finally {
     rmSync(dir, { recursive: true, force: true });
   }
