@@ -1,14 +1,31 @@
 /** Browser host of the same production adapter used by the native Expressions
  * instrument. No document mutation API; camera/clock/selection are view state. */
 import { ProductionAdapter } from '@epilogos/oi-design-system/expressions-engine/oi/retained.mjs';
-import { blankScene } from '@epilogos/oi-design-system/expressions-engine/shell/model.mjs';
+import { blankScene, validateJourney } from '@epilogos/oi-design-system/expressions-engine/shell/model.mjs';
 import { nativeExport, nativeSnapshotToJourney } from '@epilogos/oi-design-system/expressions-engine/shell/nativeBridge.mjs';
 import { defaultCamera, project } from '@epilogos/oi-design-system/expressions-engine/shell/camera.mjs';
 // Paths are resolved by Vite's native-engine alias; renderer ownership is unchanged.
 const base=nativeExport(blankScene()).config;
-export function projectComposition(composition,sceneRef) {
+export async function loadNativeJourney(descriptor) {
+ if(!descriptor)return null;
+ if(descriptor.schema!=='oi.native-expression-body/v1'||descriptor.source_schema!=='oi.journey'||typeof descriptor.path!=='string'||descriptor.digest?.algorithm!=='sha256'||!/^[a-f0-9]{64}$/.test(descriptor.digest.value)||!descriptor.scene_map||typeof descriptor.scene_map!=='object')throw new Error('The published native Expression body descriptor is invalid.');
+ const response=await fetch(descriptor.path,{cache:'no-store',credentials:'omit'});
+ if(!response.ok)throw new Error('The exact native Expression body is unavailable.');
+ const bytes=await response.arrayBuffer();
+ const actual=[...new Uint8Array(await crypto.subtle.digest('SHA-256',bytes))].map(v=>v.toString(16).padStart(2,'0')).join('');
+ if(actual!==descriptor.digest.value)throw new Error('The native Expression body does not match the published edition.');
+ const text=new TextDecoder().decode(bytes);
+ return {journey:validateJourney(JSON.parse(text)),sceneMap:descriptor.scene_map};
+}
+export function projectComposition(composition,sceneRef,nativeJourney=null,nativeSceneMap=null) {
  const scene=composition.scenes.find(s=>s.scene_ref===sceneRef);
  if(!scene)throw new Error('This Scene is no longer available.');
+ if(nativeJourney){
+  const sourceId=nativeSceneMap?.[sceneRef];
+  const sourceScene=nativeJourney.scenes.find(s=>s.id===sourceId);
+  if(!sourceScene)throw new Error('The published Scene does not map to its exact native body.');
+  return structuredClone(sourceScene);
+ }
  if(scene.entity_refs.length>10)throw new Error('This Scene exceeds the available formation capacity.');
  const automations=[];
  const entities=scene.entity_refs.map((ref,index)=>{
@@ -39,9 +56,9 @@ export class PublicField {
   if(this.width!==r.width||this.height!==r.height){this.width=r.width;this.height=r.height;this.adapter.resize(this.width,this.height,Math.min(devicePixelRatio||1,1.5));}
   this.schedule();return true;
  }
- setScene(composition,ref,camera){
+ setScene(composition,ref,camera,nativeJourney=null,nativeSceneMap=null){
   const changed=this.scene?.id!==ref;
-  this.scene=projectComposition(composition,ref);this.revision=composition.revision;
+  this.scene=projectComposition(composition,ref,nativeJourney,nativeSceneMap);this.revision=composition.revision;
   // A paused/reduced-motion Scene choice displays that configuration immediately.
   // Library, source and camera crossings never reset the resident particles.
   if(changed&&!this.playing)this.resetOnNextFrame=true;
