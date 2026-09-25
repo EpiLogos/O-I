@@ -1,6 +1,7 @@
 /** Stage only declared public edition files and approved editorial media.
  * Vite must never copy the repository's entire development public/data folder. */
 import { readFile, writeFile, cp, mkdir, rm, lstat } from 'node:fs/promises';
+import { existsSync } from 'node:fs';
 import { resolve, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 const root=fileURLToPath(new URL('.',import.meta.url));
@@ -28,6 +29,9 @@ for(const path of files){
  if((await lstat(from)).isSymbolicLink())throw new Error('A publication file cannot be a filesystem alias.');
  await mkdir(dirname(to),{recursive:true});await cp(from,to);
 }
+const essayShell=resolve(source,'essay-shell');
+if(!existsSync(resolve(essayShell,'catalog.json')))throw new Error('Essay browser catalog is missing. Run node build-essay-browser.mjs before preparing the public edition.');
+await cp(essayShell,resolve(target,'essay-shell'),{recursive:true});
 await cp(resolve(source,'media'),resolve(target,'media'),{recursive:true,filter:async path=>!(await lstat(path)).isSymbolicLink()});
 // A static, public-only input for compatible Explore readers. Never the raw owner seed.
 await writeFile(resolve(target,'data/explore-public.json'),JSON.stringify(await json('data/library/published.json')));

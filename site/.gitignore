@@ -4,4 +4,6 @@ evidence/
 public/data/library/
 .public-edition/
 .publication-staging/
+.essay-source/
+public/essay-shell/
 *.tsbuildinfo

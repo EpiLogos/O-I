@@ -76,6 +76,8 @@ jobs:
           spacetime --version | tee /tmp/spacetimedb-version.txt
           grep -q '2.8.1' /tmp/spacetimedb-version.txt
       - run: npm install --no-audit --no-fund
+      - name: Verify the essay shell publication and host fallback
+        run: node --experimental-strip-types --test essay-browser.test.mjs essay-host.test.mjs
       - name: Verify the full live Explore client build separately
         env:
           VITE_OI_SPACETIMEDB_URI: ${{ vars.OI_SPACETIMEDB_URI }}
@@ -99,6 +101,7 @@ jobs:
           python tests/library-acceptance.py || result=1
           python tests/library-regressions.py || result=1
           python tests/publication-acceptance.py || result=1
+          python tests/essay-host-smoke.py || result=1
           exit "$result"
       - name: Retain publication verification separately from deployable files
         if: always()

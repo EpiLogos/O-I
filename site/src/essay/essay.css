@@ -1,0 +1,197 @@
+:root {
+  --night: #141311;
+  --night-2: #1c1b18;
+  --night-3: #26241f;
+  --night-line: #3a372f;
+  --night-text: #e6e0d4;
+  --night-muted: #a39b8c;
+  --night-link: #d7c4a3;
+  --gold: #b08958;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+html, body, #root { margin: 0; height: 100%; background: var(--night); color: var(--night-text); }
+body {
+  font-family: "Iowan Old Style", Palatino, "Palatino Linotype", Georgia, serif;
+  text-rendering: optimizeLegibility;
+}
+button { font: inherit; }
+a { color: var(--night-link); }
+:focus-visible { outline: 2px solid var(--night-link); outline-offset: 2px; }
+.skip {
+  position: absolute;
+  left: 12px;
+  top: 8px;
+  transform: translateY(-150%);
+  background: var(--night-3);
+  color: var(--night-text);
+  padding: 8px 12px;
+  z-index: 5;
+}
+.skip:focus { transform: none; }
+
+.essay {
+  height: 100%;
+  min-height: 100vh;
+  display: grid;
+  grid-template-columns: 292px minmax(0, 1fr) 240px;
+  grid-template-rows: auto auto minmax(0, 1fr);
+  background: var(--night);
+  color: var(--night-text);
+}
+.essay-wait {
+  display: grid;
+  place-items: center;
+  align-content: center;
+  gap: 18px;
+  grid-template-columns: 1fr;
+}
+.wait-mark { width: 92px; height: 36px; color: var(--night-text); }
+
+.essay-top {
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 22px;
+  border-bottom: 1px solid var(--night-line);
+}
+.brand { display: flex; color: var(--night-text); text-decoration: none; }
+.brand-mark, .essay-top .brand svg { width: 72px; height: 28px; color: var(--night-text); }
+.who {
+  font-family: "Avenir Next", "Segoe UI", sans-serif;
+  font-size: 12px;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  color: var(--night-muted);
+}
+.path {
+  grid-column: 1 / -1;
+  display: flex;
+  gap: 0;
+  align-items: center;
+  padding: 10px 22px;
+  border-bottom: 1px solid var(--night-line);
+  font-family: "Avenir Next", "Segoe UI", sans-serif;
+  font-size: 12px;
+  color: var(--night-muted);
+  overflow: auto;
+}
+.path a { color: var(--night-link); text-decoration: none; white-space: nowrap; }
+.path .now { color: var(--night-text); white-space: nowrap; }
+.path i { font-style: normal; margin: 0 8px; color: #6d675c; }
+.path-step { display: inline-flex; align-items: center; }
+
+.spine {
+  border-right: 1px solid var(--night-line);
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+  min-height: 0;
+}
+.offices { padding: 16px 14px 8px; border-bottom: 1px solid var(--night-line); }
+.offices h2, .files h2, .graph h2 {
+  font-family: "Avenir Next", "Segoe UI", sans-serif;
+  font-size: 10px;
+  letter-spacing: .16em;
+  text-transform: uppercase;
+  font-weight: 600;
+  color: var(--night-muted);
+  margin: 0 0 10px;
+}
+.offices button, .files a {
+  display: flex;
+  width: 100%;
+  text-align: left;
+  background: none;
+  border: 0;
+  color: var(--night-text);
+  font: inherit;
+  font-size: 15px;
+  padding: 6px 8px;
+  cursor: pointer;
+  text-decoration: none;
+}
+.offices button.child { padding-left: 26px; color: var(--night-muted); font-size: 14px; }
+.offices button.on, .files a.on { background: var(--night-3); color: var(--night-text); }
+.files { overflow: auto; padding: 14px; min-height: 0; }
+.files a { font-size: 14px; line-height: 1.35; padding: 7px 8px; }
+
+.read { padding: 36px 48px 64px; max-width: 46rem; overflow: auto; min-height: 0; }
+.read .crumbs {
+  font-family: "Avenir Next", "Segoe UI", sans-serif;
+  font-size: 12px;
+  color: var(--night-muted);
+  margin-bottom: 18px;
+}
+.read h1 { font-size: 40px; font-weight: 500; letter-spacing: -.02em; line-height: 1.05; margin: 0 0 8px; }
+.read .meta {
+  font-family: "Avenir Next", "Segoe UI", sans-serif;
+  font-size: 12px;
+  color: var(--night-muted);
+  margin: 0 0 22px;
+}
+.read p, .read .body p { font-size: 18px; line-height: 1.55; margin: 0 0 16px; }
+.read a { color: var(--night-link); }
+.read h2 { font-size: 28px; font-weight: 500; letter-spacing: -.02em; margin: 1.4em 0 .45em; }
+.read h3 { font-size: 22px; font-weight: 500; margin: 1.2em 0 .35em; }
+.read ul, .read ol { margin: 0 0 16px; padding-left: 1.2em; }
+.read li { font-size: 18px; line-height: 1.5; margin: 0 0 8px; }
+.read blockquote {
+  margin: 0 0 16px;
+  padding-left: 14px;
+  border-left: 2px solid var(--gold);
+  color: var(--night-muted);
+}
+.read code {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: .86em;
+}
+.read pre {
+  overflow: auto;
+  padding: 12px 14px;
+  background: var(--night-2);
+  border: 1px solid var(--night-line);
+  margin: 0 0 16px;
+}
+.read table { border-collapse: collapse; width: 100%; font-size: 15px; margin: 0 0 18px; }
+.read th, .read td { border-bottom: 1px solid var(--night-line); text-align: left; padding: 6px 8px; vertical-align: top; }
+.read .footnotes { margin-top: 36px; color: var(--night-muted); font-size: 15px; }
+.read .footnotes li { font-size: 15px; }
+.read .fn { font-size: .7em; }
+.read .math-display { margin: 0 0 16px; overflow: auto; }
+
+.graph {
+  border-left: 1px solid var(--night-line);
+  padding: 16px 14px;
+  overflow: auto;
+  min-height: 0;
+}
+.nodes { list-style: none; margin: 0; padding: 0; }
+.nodes li { position: relative; padding: 0 0 12px 22px; font-family: "Avenir Next", "Segoe UI", sans-serif; font-size: 12px; line-height: 1.35; color: var(--night-muted); }
+.nodes li::before { content: ""; position: absolute; left: 6px; top: 8px; bottom: -4px; width: 1px; background: #6d675c; }
+.nodes li:last-child::before { bottom: auto; height: 0; }
+.nodes .here { color: var(--night-text); }
+.nodes .dot { position: absolute; left: 2px; top: 3px; width: 9px; height: 9px; border: 1.4px solid #d7c4a3; border-radius: 50%; background: transparent; }
+.nodes .here .dot { background: #e6e0d4; border-color: #e6e0d4; }
+.nodes a { color: var(--night-muted); text-decoration: none; display: block; }
+.graph a { text-decoration: none; }
+.graph p {
+  font-family: "Avenir Next", "Segoe UI", sans-serif;
+  font-size: 12px;
+  line-height: 1.4;
+  color: var(--night-muted);
+  margin: 10px 0 0;
+}
+
+@media (max-width: 960px) {
+  .essay {
+    height: auto;
+    min-height: 100vh;
+    grid-template-columns: 1fr;
+    grid-template-rows: auto;
+  }
+  .spine, .read, .graph { border: 0; border-top: 1px solid var(--night-line); }
+  .files { max-height: 42vh; }
+  .read { padding: 28px 22px 48px; max-width: none; }
+  .read h1 { font-size: 32px; }
+}
