@@ -110,6 +110,8 @@ jobs:
         # producer outputs assembled above. The old demo/starter collection is
         # not a member of this edition.
         run: npm run build:public
+      - name: Verify exact curated publication bytes
+        run: node verify-public-edition.mjs --directory dist --expected-inputs "$OI_LIBRARY_PUBLICATIONS" --out evidence/library/curated-byte-receipt.json
       - name: Verify the public receiving route before publication
         run: |
           python -m pip install playwright==1.51.0 pillow
