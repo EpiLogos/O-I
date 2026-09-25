@@ -275,7 +275,7 @@ fn validate_wav(bytes: &[u8]) -> Result<(), String> {
         || u16at(32) != 2
         || u16at(34) != 16
         || u32at(40) as usize != bytes.len() - 44
-        || (bytes.len() - 44) % 2 != 0
+        || !(bytes.len() - 44).is_multiple_of(2)
     {
         return Err("Dictation WAV format or length is invalid".into());
     }
