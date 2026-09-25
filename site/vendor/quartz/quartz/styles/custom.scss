@@ -48,3 +48,135 @@ article > h1 {
 .graph-outer circle.node {
   fill: var(--tertiary);
 }
+
+// Tags are vault bookkeeping, not reading furniture: never rendered.
+ul.tags { display: none !important; }
+
+// Reading comfort — the essay breathes.
+article {
+  line-height: 1.75;
+  p, li { line-height: 1.75; }
+  p { margin-block: 1.1em; }
+  h1 { margin-top: 2.2rem; margin-bottom: 1rem; }
+  h2, h3 { margin-top: 2rem; margin-bottom: 0.8rem; }
+  hr { margin-block: 2.5rem; }
+  blockquote { margin-block: 1.5rem; padding-inline: 1.2rem; }
+  ul, ol { padding-left: 1.6rem; }
+}
+.article-title { margin-bottom: 1.4rem; line-height: 1.3; }
+.breadcrumbs { margin-bottom: 0.6rem; }
+.center, article { padding-inline: clamp(1.2rem, 4vw, 3rem); }
+
+// Fade toggles — tiny ghost chevrons at the viewport edges; clicking one
+// collapses its column and lets the reading column breathe wider.
+.fade-toggle {
+  position: fixed;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 20;
+  width: 28px;
+  height: 28px;
+  border-radius: 999px;
+  border: 1px solid var(--lightgray);
+  background: var(--light);
+  color: var(--gray);
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  opacity: 0.35;
+  transition: opacity 0.2s ease, color 0.2s ease, border-color 0.2s ease;
+
+  &:hover { opacity: 1; color: var(--tertiary); border-color: var(--tertiary); }
+  &[aria-pressed="true"] { opacity: 0.7; }
+}
+.fade-left { left: 6px; }
+.fade-right { right: 6px; }
+
+@media all and (min-width: 800px) {
+  .page { transition: grid-template-columns 300ms ease; }
+
+  body.oi-explorer-hidden .page { grid-template-columns: 0px minmax(0, 1fr) 320px; }
+  body.oi-explorer-hidden .sidebar.left {
+    visibility: hidden;
+    overflow: hidden;
+  }
+
+  body.oi-rail-hidden .page { grid-template-columns: 320px minmax(0, 1fr) 0px; }
+  body.oi-rail-hidden .sidebar.right {
+    visibility: hidden;
+    overflow: hidden;
+  }
+
+  // The fullscreen graph escapes its faded rail.
+  body.oi-rail-hidden .sidebar.right .global-graph-outer.active {
+    visibility: visible;
+  }
+
+  body.oi-explorer-hidden.oi-rail-hidden .page { grid-template-columns: 0px minmax(0, 1fr) 0px; }
+}
+@media all and (max-width: 799px) {
+  .fade-toggle { display: none; }
+}
+
+// Explorer hierarchy — folders read as containers, files as leaves, the
+// open page carries a gold rule; guides show where one room ends.
+.explorer-content {
+  ul {
+    border-left: 1px solid var(--lightgray);
+  }
+  ul, li {
+    margin-block: 0.1rem;
+  }
+  .folder-container {
+    color: var(--secondary);
+    font-weight: 600;
+  }
+  a {
+    color: var(--darkgray);
+    opacity: 0.88;
+    font-size: 0.92rem;
+    &:hover { color: var(--tertiary); opacity: 1; }
+  }
+  a.on, li > a[aria-current="page"] {
+    color: var(--tertiary);
+    opacity: 1;
+    border-left: 2px solid var(--tertiary);
+    padding-left: 0.35rem;
+  }
+}
+
+// Fullscreen graph tag filter — a quiet chip row above the graph; tags stay
+// hidden until a namespace is invited back.
+.tag-filter {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.6rem 1rem;
+  border-bottom: 1px solid var(--lightgray);
+  font-family: var(--sansFont);
+  font-size: 0.72rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+
+  .tag-filter-label { color: var(--gray); }
+
+  .tag-chip {
+    border: 1px solid var(--lightgray);
+    border-radius: 999px;
+    background: transparent;
+    color: var(--gray);
+    padding: 0.15rem 0.6rem;
+    cursor: pointer;
+    font: inherit;
+    letter-spacing: inherit;
+    text-transform: inherit;
+    transition: color 0.2s ease, border-color 0.2s ease;
+
+    &:hover { color: var(--tertiary); border-color: var(--tertiary); }
+    &[aria-pressed="true"] {
+      color: var(--tertiary);
+      border-color: var(--tertiary);
+    }
+  }
+}
