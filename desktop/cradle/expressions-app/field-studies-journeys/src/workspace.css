@@ -533,4 +533,4 @@ body.library-open #lens-chooser{display:none!important}
 #scene-picker #scene-state{flex:none}
 .object-symbol .shape-mark{width:60%;height:60%;color:var(--tint,currentColor)}
 
-body:not(.research-active) [data-research-only]{display:none}
+body:not(.research-active) #tool-rail [data-research-only]{display:none!important}
