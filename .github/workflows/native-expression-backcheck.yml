@@ -27,7 +27,7 @@ jobs:
       - uses: actions/checkout@v4
         with:
           repository: EpiLogos/QL-MEF
-          ref: 5970757e25532c7329f07f4819273155c4f3f135
+          ref: 56921a5e70b1385dbc7afe159a1d1fad4c9798fe
           path: .native-owner/QL-MEF
           persist-credentials: false
       - uses: actions/setup-node@v4

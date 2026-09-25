@@ -9,3 +9,9 @@
 #lens-chooser .lens-office{font:8px/1 var(--sans);letter-spacing:.03em}
 #lens-chooser .lens-glyph{display:flex}
 #lens-chooser .lens-glyph svg{width:17px;height:17px}
+/* An icon-led committing action inside the Lens Studio's control column —
+   same 24x24 thin-stroke language as the rest of the icon chrome (map §13),
+   never a bare text "Commit …" button. */
+.oi-action-icon{display:inline-flex;align-items:center;justify-content:center;width:24px;height:24px;min-height:24px;padding:0;border:1px solid var(--line,currentColor);border-radius:6px;background:transparent;color:inherit;cursor:pointer}
+.oi-action-icon svg{width:16px;height:16px;stroke:currentColor;fill:none}
+.oi-action-icon:hover,.oi-action-icon:focus-visible{background:var(--wash,rgba(0,0,0,.06))}

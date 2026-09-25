@@ -33,14 +33,16 @@ import {
   watchHostedAppReady,
   postHostMode,
   postOpenExpression,
+  postMessageToFrame,
   type HostedAppMode,
   type HostedAppState,
 } from "./hostedApp";
-import {consumeTechneFieldOpen, peekTechneFieldOpen, peekTechneFieldRefresh, subscribeTechneFieldOpen} from "./fieldOpen";
+import {consumeTechneFieldOpen, peekTechneFieldLens, peekTechneFieldOpen, peekTechneFieldRefresh, subscribeTechneFieldOpen} from "./fieldOpen";
 import "./point-cloud-host.css";
 import {verifyInsertionSource} from "./sourceInsertion";
 import {resolveHostedSource} from "./sourceHandoff";
 import {resolveSceneConstellation} from "../techne/wikiReadingProvider";
+import {relateSceneConstellation} from "../techne/sceneConstellationRelation";
 
 export function PointCloudHost({mode = "expressions", deepLink, bindingId, onHostedState, readTechne, techneWorld}: {mode?: HostedAppMode; deepLink?: string; bindingId?: string; onHostedState?: (state: HostedAppState) => void; readTechne?: (request: unknown) => Promise<unknown>; techneWorld?: (request: unknown) => Promise<unknown>}) {
   const kernel = useKernel();
@@ -103,6 +105,8 @@ export function PointCloudHost({mode = "expressions", deepLink, bindingId, onHos
     return relayKernelChannel(node, kernel.transport, {
       constellation: async request => {
         const operation = (request as {operation?: unknown} | null)?.operation;
+        // Deliberate typed knowledge relationship through the constellation owner.
+        if (operation === "relate") return relateSceneConstellation(kernel.transport, request);
         if (operation !== "inspect" && operation !== "open") throw new Error("Unknown constellation request");
         const target = await resolveSceneConstellation(kernel.transport, request);
         if (operation === "open") await new Promise<void>((resolve, reject) => {
@@ -192,7 +196,15 @@ export function PointCloudHost({mode = "expressions", deepLink, bindingId, onHos
   useEffect(() => {
     const node = frame.current;
     if (mode !== "techne" || !node || state !== "ready") return;
-    const open = () => { const refresh = peekTechneFieldRefresh(); const ref = consumeTechneFieldOpen(bindingId ?? null); if (ref) postOpenExpression(node, ref, refresh); };
+    const open = () => {
+      const refresh = peekTechneFieldRefresh(), lens = peekTechneFieldLens();
+      const ref = consumeTechneFieldOpen(bindingId ?? null);
+      if (!ref) return;
+      postOpenExpression(node, ref, refresh);
+      // A newly created constellation stands on the Canvas lens of the same
+      // application — the host-command grammar, after the open it follows.
+      if (lens) postMessageToFrame(node, {v: 1, kind: "host-command", command: "lens", lens});
+    };
     open(); // a ref recorded before this host was ready
     return subscribeTechneFieldOpen(() => { if (peekTechneFieldOpen()) open(); });
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -210,6 +222,12 @@ export function PointCloudHost({mode = "expressions", deepLink, bindingId, onHos
       if (event.source !== frame.current?.contentWindow) return;
       if (data.request === "workspace-mode" && (data.mode === "expressions" || data.mode === "techne")) {
         window.dispatchEvent(new CustomEvent("oi:host-workspace-mode", {detail: {mode: data.mode}}));
+      }
+      if (data.request === "new-constellation") {
+        // An empty Canvas asks for construction: the navigator's own
+        // Project-scoped creation row answers it (one creation path).
+        window.dispatchEvent(new CustomEvent("oi:techne-new-constellation"));
+        return;
       }
       if (data.request === "summon" && data.detail?.kind === "source") {
         const request=++sourceRequest.current,node=frame.current,at=hostedState.current;

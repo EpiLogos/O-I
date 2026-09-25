@@ -33,6 +33,22 @@ pub struct Binding {
     pub frame: ReadingRef,
     pub members: Vec<Member>,
     pub transform: Transform,
+    /// QL-MEF #214 geometry-closeout: the wider warranted constellation this
+    /// pinned sixfold basis retains — the QL ShapeBinding's own
+    /// `basis_refs`, carried verbatim, never invented here. Optional: absent
+    /// on every existing bound Scene and on a caller that discloses no
+    /// wider basis; the pinned sixfold geometry (`owner()`) is unaffected
+    /// either way.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub basis_refs: Vec<String>,
+    /// QL ShapeBinding's own `derivation_ref`, carried verbatim when the
+    /// caller discloses one. Optional; no behaviour changes when absent.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub derivation_ref: Option<String>,
+    /// QL ShapeBinding's own `operator_ref`, carried verbatim when the
+    /// caller discloses one. Optional; no behaviour changes when absent.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub operator_ref: Option<String>,
 }
 fn owner() -> &'static Value {
     static READING: OnceLock<Value> = OnceLock::new();
@@ -93,6 +109,24 @@ fn validate_basis(binding: &Binding, scene: &Scene, doc: &Document) -> Result<()
         || !(0.01..=1600.).contains(&t.scale)
     {
         return Err("Blueprint whole transform is outside native bounds".into());
+    }
+    if binding.basis_refs.len() > 64
+        || binding
+            .basis_refs
+            .iter()
+            .any(|r| r.is_empty() || r.len() > 4096)
+    {
+        return Err("Blueprint basis refs must be bounded, non-empty native refs".into());
+    }
+    if let Some(r) = &binding.derivation_ref {
+        if r.is_empty() || r.len() > 4096 {
+            return Err("Blueprint derivation ref must be a bounded, non-empty native ref".into());
+        }
+    }
+    if let Some(r) = &binding.operator_ref {
+        if r.is_empty() || r.len() > 4096 {
+            return Err("Blueprint operator ref must be a bounded, non-empty native ref".into());
+        }
     }
     let mut refs = BTreeSet::new();
     let mut positions = BTreeSet::new();

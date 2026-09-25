@@ -16,7 +16,7 @@
  *
  * Erasable TypeScript: loadable by the renderer, Vite, and `node --test`.
  */
-import type { TechnePlaceFacet, TechnePlaceName, TechneReading } from "../../contract.ts";
+import type { TechnePlaceFacet, TechnePlaceName, TechneReading } from "../../contract";
 import {
   DEFAULT_CAMERA,
   precisionMarker,
@@ -24,8 +24,8 @@ import {
   type CameraState,
   type PlaceMarker,
   type PlaceProjection,
-} from "./project.ts";
-import { nameInWindow, placesInWindow, type TimeWindow } from "./filter.ts";
+} from "./project";
+import { nameInWindow, placesInWindow, type TimeWindow } from "./filter";
 
 export type PlaceMode = "map" | "globe" | "street";
 

@@ -7,6 +7,14 @@ use std::collections::{BTreeMap, BTreeSet};
 
 pub const SCHEMA: &str = "oi.expression/v1";
 pub(crate) const LIMIT: usize = 256;
+/// A document's own semantic cardinality (entities, relations,
+/// representations, one Scene's members). Separate from list guards (LIMIT)
+/// and from the renderer's resident window (`render_formations`, paged per
+/// Scene): a constellation is never truncated to fit a draw budget (Technē
+/// map §36).
+pub(crate) const DOCUMENT_MEMBERS: usize = 2048;
+/// Outer storage bound for one native Expression document.
+pub(crate) const DOCUMENT_BYTES: usize = 8 * 1024 * 1024;
 pub(crate) const MAX_REVISION: u64 = 9_007_199_254_740_991;
 
 #[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
@@ -78,6 +86,12 @@ pub struct Parameter {
     pub value: Value,
     pub automation: Option<Automation>,
 }
+/// serde `skip_serializing_if` helper: omit `pinned` from the wire when
+/// false, so every existing bound Entity (none of which ever set it) stays
+/// byte-identical after this field's addition.
+fn is_false(value: &bool) -> bool {
+    !*value
+}
 #[derive(Clone, Debug, Deserialize, Serialize, PartialEq)]
 #[serde(deny_unknown_fields)]
 pub struct Entity {
@@ -86,6 +100,13 @@ pub struct Entity {
     pub title: String,
     pub subject: Option<SubjectBinding>,
     pub parameters: BTreeMap<String, Parameter>,
+    /// World-position pin (owner commission, QL-MEF #214 geometry-closeout):
+    /// an explicit native hold on this entity's own world position, distinct
+    /// from blueprint membership (a whole's shared transform) and from
+    /// release (leaving a blueprint). Optional; defaults to unpinned and
+    /// changes only through `Change::EntityPin`.
+    #[serde(default, skip_serializing_if = "is_false")]
+    pub pinned: bool,
 }
 #[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
 #[serde(deny_unknown_fields)]
@@ -236,6 +257,14 @@ pub enum Change {
     },
     EntityRemove {
         entity_ref: String,
+    },
+    /// World-position pin: distinct from `SceneBlueprintBind`/`Transform`
+    /// (whole membership and shared transform) and from
+    /// `SceneBlueprintRelease` (leaving a blueprint) — this holds one
+    /// entity's own world position independent of either.
+    EntityPin {
+        entity_ref: String,
+        pinned: bool,
     },
     SubjectBind {
         entity_ref: String,
@@ -471,11 +500,11 @@ pub fn capabilities() -> Value {
     json!({"schema":"oi.expression-capabilities/v1", "document_schema":SCHEMA,
         "operations":["capabilities","list","inspect","create","open","open_file","fork","edit","propose","review","export","save","save_as","invoke",
             "profile_define","profile_inspect","profile_resolve","edition_create","edition_inspect","index","asset_admit","asset_traverse","asset_subject"],
-        "changes":["rename","composition_set","scene_material_set","scene_material_clear","scene_blueprint_bind","scene_blueprint_transform","scene_blueprint_release","scene_rename","scene_remove","scene_create","scene_reorder","scene_compose","entity_add","entity_remove","subject_bind","subject_unbind","relation_bind","relation_remove","focus","relation_focus","parameter_set","parameter_automate","parameter_manual","representation_bind",
+        "changes":["rename","composition_set","scene_material_set","scene_material_clear","scene_blueprint_bind","scene_blueprint_transform","scene_blueprint_release","scene_rename","scene_remove","scene_create","scene_reorder","scene_compose","entity_add","entity_remove","entity_pin","subject_bind","subject_unbind","relation_bind","relation_remove","focus","relation_focus","parameter_set","parameter_automate","parameter_manual","representation_bind",
             "scene_body_set","scene_body_clear","scene_trigger_attach","scene_trigger_detach","profile_adopt","profile_release","collections_set"],
         "composition_presentation":{"schema":"oi.journey-properties/v1","data_only":true,"scene_store":"Document.scenes"},
         "scene_presentation":{"schema":"oi.journey-scene/v1","owner":"existing Expressions authoring Scene","data_only":true,"full_native_membership_retained":true},
-        "composition_budget":{"scenes":64,"entities":LIMIT,"scene_members":LIMIT,"render_formations":10,"render_pins":8},
+        "composition_budget":{"scenes":64,"entities":DOCUMENT_MEMBERS,"scene_members":DOCUMENT_MEMBERS,"render_formations":10,"render_pins":8},
         "parameters":{"glyph":{"type":"string","max_length":128},"shape":{"values":["glyph","ring","disc","square","triangle","yantra","cymatic"]},"kind":{"values":["formation","pin"]},"ascii":{"max_bytes":32768},"image":{"formats":["embedded_png","embedded_jpeg","embedded_webp"]},"x":{"min":-1600,"max":1600},"y":{"min":-1600,"max":1600},"z":{"min":-1600,"max":1600},"scale":{"min":0.05,"max":4},"share":{"min":0,"max":1000}},
         "automation":{"type":"lfo","waveforms":["sine","triangle","square","saw"],"rate_hz":{"min":0.001,"max":10},"clock_owner":"accepted Expressions engine"},
         "scene_body":{"carriers":["engine_composition","text_source","glyph_form","image_media","file_thing","knowledge_whole","html_surface","agent_surface","expression_ref"],
@@ -601,8 +630,8 @@ pub(crate) fn parameter(key: &str, p: &Parameter) -> Result<(), String> {
 }
 impl Document {
     pub fn validate(&self) -> Result<(), String> {
-        if serde_json::to_vec(self).map_err(|e| e.to_string())?.len() > 512 * 1024 {
-            return Err("Expression document exceeds 512 KiB".into());
+        if serde_json::to_vec(self).map_err(|e| e.to_string())?.len() > DOCUMENT_BYTES {
+            return Err("Expression document exceeds 8 MiB".into());
         }
         if self.schema != SCHEMA || self.revision == 0 || self.revision > MAX_REVISION {
             return Err("Unsupported document schema/revision".into());
@@ -613,9 +642,9 @@ impl Document {
         if let Some(presentation) = &self.presentation { presentation.validate()?; }
         if self.scenes.is_empty()
             || self.scenes.len() > 64
-            || self.entities.len() > LIMIT
-            || self.relations.len() > LIMIT
-            || self.representations.len() > LIMIT
+            || self.entities.len() > DOCUMENT_MEMBERS
+            || self.relations.len() > DOCUMENT_MEMBERS
+            || self.representations.len() > DOCUMENT_MEMBERS
         {
             return Err("Expression composition budget exceeded".into());
         }
@@ -628,7 +657,7 @@ impl Document {
             }
             let unique: BTreeSet<_> = s.entity_refs.iter().collect();
             if unique.len() != s.entity_refs.len()
-                || s.entity_refs.len() > LIMIT
+                || s.entity_refs.len() > DOCUMENT_MEMBERS
                 || s.entity_refs.iter().any(|r| !self.entities.contains_key(r))
             {
                 return Err("Scene contains duplicate, missing or too many entities".into());
@@ -893,8 +922,12 @@ impl Document {
                                 automation: None,
                             },
                         )]),
+                        pinned: false,
                     },
                 );
+            }
+            Change::EntityPin { entity_ref, pinned } => {
+                self.entity(&entity_ref)?.pinned = pinned;
             }
             Change::EntityRemove { entity_ref } => {
                 if self.entities.remove(&entity_ref).is_none() {

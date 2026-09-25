@@ -15,7 +15,10 @@ test('research material actions retain rich notes, real dimensions and ink in th
  api.applyResearchMaterial(scene,{type:'annotation-add',stroke:{id:'authored-stroke',points:[{x:10,y:20},{x:40,y:50,pressure:.5}],color:'#808080',width:3,opacity:1,createdAt:new Date().toISOString()}});
  const returned=api.validateJourney(JSON.parse(JSON.stringify(journey)));
  assert.equal(returned.scenes[0].research.cards[id].content,content);
- assert.deepEqual(returned.scenes[0].entities.find(e=>e.id===id).size,{x:1.6,y:.8});
+ // Canvas display size is Research Canvas presentation, stored on the card —
+ // 'resize' must never reach the Expression's own occurrence size.
+ assert.deepEqual(returned.scenes[0].entities.find(e=>e.id===id).size,{x:.6,y:.4},'card display resize never mutates the entity/Expression body size');
+ assert.deepEqual(returned.scenes[0].research.cards[id].size,{width:640,height:320},'card display resize is stored on the research card');
  assert.equal(returned.scenes[0].research.strokes.length,1);
  assert.equal(returned.scenes[0].research.connections,undefined,'native relations have no copied research store');
 });
@@ -71,4 +74,53 @@ test('styling a real native source occurrence preserves source identity and neve
  const local=scene.entities.at(-1),rich='[{"type":"heading","content":[{"type":"text","text":"Local rich note","styles":{"bold":true}}]}]';
  api.applyResearchMaterial(scene,{type:'card-content',id:local.id,content:rich});
  assert.equal(scene.research.cards[local.id].content,rich,'true local notes retain rich editing');
+});
+test('frames are presentation-only groupings, never a membership record, and order/prune correctly',()=>{
+ const scene=api.blankJourney().scenes[0];scene.entities=[];
+ for(const name of ['A','B','C'])api.applyResearchMaterial(scene,{type:'create-card',kind:'note',position:{x:0,y:0},title:name});
+ const [a,b,c]=scene.entities.map(e=>e.id);
+ api.applyResearchMaterial(scene,{type:'frame-save',id:'frame-1',label:'Group one',memberRefs:[a,b]});
+ assert.deepEqual(scene.research.frames['frame-1'].memberRefs,[a,b]);
+ assert.equal(scene.research.frames['frame-1'].z,0,'first frame starts at the base layer');
+ api.applyResearchMaterial(scene,{type:'frame-save',id:'frame-2',label:'Group two',memberRefs:[c]});
+ assert.equal(scene.research.frames['frame-2'].z,1);
+ api.applyResearchMaterial(scene,{type:'frame-order',id:'frame-1',direction:'front'});
+ assert.ok(scene.research.frames['frame-1'].z>scene.research.frames['frame-2'].z,'bring-to-front is layer order only');
+ // Re-saving an existing frame id keeps its z (relabel/re-group is not a
+ // silent re-order) and rejects membership referring to an absent card.
+ const zBefore=scene.research.frames['frame-1'].z;
+ api.applyResearchMaterial(scene,{type:'frame-save',id:'frame-1',label:'Renamed',memberRefs:[a]});
+ assert.equal(scene.research.frames['frame-1'].label,'Renamed');
+ assert.equal(scene.research.frames['frame-1'].z,zBefore);
+ assert.throws(()=>api.applyResearchMaterial(scene,{type:'frame-save',id:'frame-3',label:'Bad',memberRefs:['absent-occurrence']}),/missing/);
+ // Removing an occurrence prunes it from frame membership, and an emptied
+ // frame is removed entirely rather than persisted as a dangling group.
+ api.applyResearchMaterial(scene,{type:'frame-save',id:'frame-4',label:'Solo',memberRefs:[b]});
+ const withoutB=api.clone(scene);withoutB.entities=withoutB.entities.filter(e=>e.id!==b);
+ api.pruneResearchOccurrence(withoutB,b);
+ assert.equal(withoutB.research.frames['frame-4'],undefined,'a frame left with zero members is pruned, not persisted empty');
+});
+test('named views persist camera, selection and frame order, and round-trip through the journey',()=>{
+ const journey=api.blankJourney(),scene=journey.scenes[0];scene.entities=[];
+ api.applyResearchMaterial(scene,{type:'create-card',kind:'note',position:{x:0,y:0},title:'A'});
+ const id=scene.entities.at(-1).id;
+ api.applyResearchMaterial(scene,{type:'frame-save',id:'frame-1',label:'Group',memberRefs:[id]});
+ api.applyResearchMaterial(scene,{type:'view-save',name:'Overview',viewport:{x:10,y:-5,zoom:1.25},selectedRefs:[id],frameOrder:['frame-1']});
+ assert.deepEqual(scene.research.namedViews.Overview,{viewport:{x:10,y:-5,zoom:1.25},selectedRefs:[id],frameOrder:['frame-1']});
+ const returned=api.validateJourney(JSON.parse(JSON.stringify(journey)));
+ assert.deepEqual(returned.scenes[0].research.namedViews.Overview.viewport,{x:10,y:-5,zoom:1.25});
+ api.applyResearchMaterial(scene,{type:'view-remove',name:'Overview'});
+ assert.equal(scene.research.namedViews.Overview,undefined);
+ assert.throws(()=>api.applyResearchMaterial(scene,{type:'view-save',name:'',viewport:{x:0,y:0,zoom:1},selectedRefs:[],frameOrder:[]}),/name/);
+});
+test('research material saved before frames/named views existed is still valid, and self-heals on the next write',()=>{
+ const scene=api.blankJourney().scenes[0];
+ api.applyResearchMaterial(scene,{type:'create-card',kind:'note',position:{x:0,y:0}});
+ const id=scene.entities.at(-1).id;
+ // Simulate a pre-existing persisted shape (no frames/namedViews fields).
+ delete scene.research.frames;delete scene.research.namedViews;
+ api.validateResearchMaterial(scene.research,new Set(scene.entities.map(e=>e.id)));
+ api.applyResearchMaterial(scene,{type:'card-caption',id,caption:'still works'});
+ assert.deepEqual(scene.research.frames,{});
+ assert.deepEqual(scene.research.namedViews,{});
 });

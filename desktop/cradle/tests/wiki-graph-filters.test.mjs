@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {defaultGraphFilters,filterGraph,restoreGraphFilters,restoreSavedGraphViews} from '../src/knowledge/filters.ts';
 import {topologyKey,pointsForReading} from '../src/knowledge/layoutIdentity.ts';
-import {constellation} from '../src/knowledge/layout.ts';
+import {ForceWorld} from '../src/knowledge/layout.ts';
 
 const node=(ref,label=ref,extra={})=>({ref,label,kind:'wiki-node',native_owner:'native',provenance:{source:'authored'},actions:[],...extra});
 const edge=(from_ref,to_ref,relation='references')=>({from_ref,to_ref,relation,provenance:{source:'authored'}});
@@ -65,8 +65,8 @@ test('filter/label/provider state never changes layout identity; reordered owner
   const source=graph([node('space','Space',{kind:'wiki-space'}),node('b'),node('a')],[edge('space','a','space-node'),edge('a','b')]);
   const later={...source,nodes:[...source.nodes].reverse().map(n=>({...n,label:n.label+' renamed'})),edges:[...source.edges].reverse(),inputs:{provider:{state:'unavailable'}}};
   assert.equal(topologyKey(source),topologyKey(later));
-  const original=new Map(source.nodes.map((n,i)=>[n.ref,constellation(source,0,0)[i]]));
-  const rearranged=constellation(later,0,0);
+  const original=new Map(source.nodes.map((n,i)=>[n.ref,new ForceWorld(source).advance(300)[i]]));
+  const rearranged=new ForceWorld(later).advance(300);
   later.nodes.forEach((n,i)=>assert.deepEqual(rearranged[i],original.get(n.ref)));
   assert.deepEqual(pointsForReading(later,original),later.nodes.map(n=>original.get(n.ref)));
   assert.notEqual(topologyKey(source),topologyKey({...source,edges:[]}));
@@ -88,13 +88,31 @@ test('native role geometry survives source layout, filters and repeated-source o
   const source=graph(['frame','a0','a1','source'].map(x=>node(x)),[edge('frame','a0'),edge('frame','a1')],{formations:[{ref:'frame',shape_ref:'native:pair',members:[
     {ref:'a0',subject_ref:'source',role:'0',address:{layout:{x:-1,y:0,z:.2}}},
     {ref:'a1',subject_ref:'source',role:'1',address:{layout:{x:1,y:0,z:.2}}}]}]});
-  const points=constellation(source,0,0),byRef=new Map(source.nodes.map((n,i)=>[n.ref,points[i]]));
+  const points=new ForceWorld(source).advance(300),byRef=new Map(source.nodes.map((n,i)=>[n.ref,points[i]]));
   assert.equal(byRef.get('a1').x-byRef.get('a0').x,190);
   assert.equal(byRef.get('a1').y,byRef.get('a0').y);
   assert.equal(byRef.get('a1').z,19);
   const previous=topologyKey(source);
   source.formations[0].members[0].address.layout.x=-2;
   assert.notEqual(topologyKey(source),previous,'native role layout change invalidates layout, not source label edits');
+});
+
+test('the live world drags a subject exactly, releases it, and edits retain the settled arrangement',()=>{
+  const source=graph([node('space','Space',{kind:'wiki-space'}),node('a'),node('b')],[edge('space','a','space-node'),edge('a','b')]);
+  const world=new ForceWorld(source);
+  const settledRetained=world.advance(400)&&world.retain();
+  world.drag('a',-1000,500);
+  const dragged=world.advance(3),byRef=new Map(source.nodes.map((n,i)=>[n.ref,dragged[i]]));
+  assert.equal(byRef.get('a').x,-1000,'a dragged subject holds its exact pointer position');
+  assert.equal(byRef.get('a').y,500);
+  world.release('a');
+  const released=world.advance(400),releasedRetained=world.retain();
+  assert.ok(Math.hypot(releasedRetained.get('a').x+1000,releasedRetained.get('a').y-500)>1,'a released subject rejoins the simulation');
+  const edited=graph([node('space','Space',{kind:'wiki-space'}),node('a'),node('b'),node('c')],[edge('space','a','space-node'),edge('a','b'),edge('b','c')]);
+  const next=new ForceWorld(edited,settledRetained).advance(300);
+  const after=new Map(edited.nodes.map((n,i)=>[n.ref,next[i]]));
+  assert.ok(Math.hypot(after.get('space').x-settledRetained.get('space').x,after.get('space').y-settledRetained.get('space').y)<40,'an edited topology starts from the settled arrangement instead of resettling');
+  assert.equal(after.get('c').z,0,'free subjects carry no generated depth');
 });
 
 test('source occurrences and authored QL relations remain separately filterable layers',()=>{

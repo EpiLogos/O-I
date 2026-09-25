@@ -16,7 +16,7 @@ import {convertFileSrc} from "@tauri-apps/api/core";
  * message channel to reach real owners, without ambient native authority.
  */
 import {kernelOp} from "../kernel/bridge";
-import {listFiles, readFile} from "../files/client";
+import {listFiles, readFile, readFileBytes, resolveFileLocation} from "../files/client";
 import type {CentralLocation, KernelTransportStatus} from "../kernel/types";
 
 /** Ground-bound bridge walks explicitly serve this owner-disclosed location.
@@ -178,6 +178,7 @@ interface ChannelEnvelope {
   req?: unknown;
   request?: unknown;
   path?: unknown;
+  ref?: unknown;
 }
 
 const isEnvelope = (data: unknown): data is ChannelEnvelope =>
@@ -269,6 +270,18 @@ export function relayKernelChannel(frame: HTMLIFrameElement, transport: KernelTr
       catch (cause) { refuse(kind, req, cause instanceof Error ? cause.message : String(cause)); }
       return;
     }
+    if (kind === "library-read") {
+      try {
+        const request = event.data.request as {scope?: unknown} | undefined;
+        const scope = request && request.scope === "shared" ? "shared" : "local";
+        const {readLibrary} = await import("../library/libraryReading");
+        const data = await readLibrary(transport, {scope});
+        reply(`${kind}-result`, req, {ok: true, data});
+      } catch (cause) {
+        refuse(kind, req, cause instanceof Error ? cause.message : String(cause));
+      }
+      return;
+    }
     if (kind === "central-read") {
       const path = event.data.path;
       if (typeof path !== "string" || !path.trim()) {
@@ -286,6 +299,33 @@ export function relayKernelChannel(frame: HTMLIFrameElement, transport: KernelTr
         if (!entry.retrieval_allowed) throw new Error(`Central withholds ${path} from retrieval`);
         const reading = await readFile(transport, entry.location);
         reply(`${kind}-result`, req, {ok: true, data: {path, revision: reading.revision, byte_len: reading.byte_len, content: reading.content}});
+      } catch (cause) {
+        refuse(kind, req, cause instanceof Error ? cause.message : String(cause));
+      }
+      return;
+    }
+    // ES1A scene-body carriers (O:I #352): a `SceneBody`'s `subject_ref` is an
+    // opaque native reference — never parsed by the frame, resolved only
+    // through the owner's own `file_resolve` seam, exactly like every other
+    // native ref on this channel. Two typed reads ride the same shape as
+    // `central-read` above: text (UTF-8, for `text_source` bodies) and bytes
+    // (base64 + mime hint, for `image_media` bodies — the binary-safe seam
+    // FND-04 already defines, simply not previously relayed to this frame).
+    if (kind === "central-subject-text" || kind === "central-subject-bytes") {
+      const ref = event.data.ref;
+      if (typeof ref !== "string" || !ref.trim()) {
+        refuse(kind, req, `${kind} needs a native subject ref`);
+        return;
+      }
+      try {
+        const location = await resolveFileLocation(transport, ref);
+        if (kind === "central-subject-text") {
+          const reading = await readFile(transport, location);
+          reply(`${kind}-result`, req, {ok: true, data: {ref, revision: reading.revision, byte_len: reading.byte_len, content: reading.content}});
+        } else {
+          const bytes = await readFileBytes(transport, location);
+          reply(`${kind}-result`, req, {ok: true, data: {ref, revision: bytes.revision, byte_len: bytes.byte_len, mime_hint: bytes.mime_hint, content_base64: bytes.content_base64}});
+        }
       } catch (cause) {
         refuse(kind, req, cause instanceof Error ? cause.message : String(cause));
       }
@@ -326,6 +366,9 @@ export function relayKernelChannel(frame: HTMLIFrameElement, transport: KernelTr
 //       The frame opens it through its own native workspace (kernel inspect),
 //       no remount, buffering until its kernel channel is announced. Refs
 //       only; the kernel document stays the store.
+//   host → frame  `{v:1, kind:"host-command", command:"lens", lens:"canvas"}`
+//     — posted right after an open-expression when the open asks for a lens
+//       (a constellation just created in the navigator stands on the Canvas).
 //   frame → host  `{v:1, kind:"oi-app-state", state:{...}}`
 //     — the application's position announcement: current expression, scene
 //       (index/count/name/save state), selection names and the honest

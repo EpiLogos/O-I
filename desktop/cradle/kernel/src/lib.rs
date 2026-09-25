@@ -1401,8 +1401,16 @@ impl Kernel {
             }
             KernelOp::SettingsReveal{path} => Ok(KernelOpOutcome{receipts:Vec::new(),result:KernelOpResult::SettingsRevealed{data:system_composition::reveal(&path)?}}),
             KernelOp::Ground{request} => {
-                // A ground change re-bases every path the cache holds.
-                self.reads.clear();
+                // A ground change re-bases every path the cache holds — but
+                // `Status`/`Recognize` are read-only (their own contract
+                // rejects a mutated/bound reply), and a status poll runs
+                // concurrently with ordinary reads throughout a session.
+                // Clearing the whole cache — and every in-flight read
+                // ticket — for a read-only ground query supersedes
+                // unrelated, unchanged reads on pure coincidence of timing.
+                if request.mutates() {
+                    self.reads.clear();
+                }
                 Ok(KernelOpOutcome {
                     receipts: Vec::new(),
                     result: KernelOpResult::GroundReading {

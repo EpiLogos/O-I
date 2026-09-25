@@ -184,10 +184,16 @@
 
 .wiki-map { min-width: 0; padding: 2px var(--oi-shell-gutter) 12px; font-size: var(--oi-shell-type-nav); color: var(--oi-foreground); }
 
+/* One row grammar for every node of the one tree: register summaries share
+ * the dense row height of constellation/member rows, and hover tools only
+ * change opacity — a row never changes height on hover. */
 .wiki-region-register > summary {
-  display: flex; align-items: center; gap: 7px; padding: 6px 6px; border-radius: var(--oi-shell-radius-row);
+  display: flex; align-items: center; gap: 7px; min-height: var(--oi-shell-row-dense); box-sizing: border-box;
+  padding: 0 var(--oi-row-inset, 6px); border-radius: var(--oi-shell-radius-row);
   cursor: pointer; user-select: none; font-weight: 550; list-style: none;
 }
+.wiki-region-register[data-register-kind="project"] > summary { font-weight: 500; }
+.wiki-map-tools { flex: none; display: flex; align-items: center; gap: 1px; }
 .wiki-region-register > summary::-webkit-details-marker { display: none; }
 .wiki-region-register > summary::before {
   content: ""; flex: none; width: 5px; height: 5px; margin-right: 1px;
@@ -206,8 +212,18 @@
   opacity: 0; transition: opacity var(--oi-motion-ui) var(--oi-motion-ease-out), background var(--oi-motion-ui) var(--oi-motion-ease-out), color var(--oi-motion-ui) var(--oi-motion-ease-out);
 }
 .wiki-open-web svg { transform: rotate(-45deg); }
-summary:hover > .wiki-open-web, summary:focus-within > .wiki-open-web, .wiki-space-head:hover > .wiki-open-web { opacity: 1; }
+summary:hover > .wiki-map-tools > .wiki-open-web, summary:focus-within > .wiki-map-tools > .wiki-open-web, .wiki-open-web[aria-expanded="true"], .wiki-space-head:hover > .wiki-open-web { opacity: 1; }
 .wiki-open-web:hover { background: var(--oi-wash-strong); color: var(--oi-accent-ink); }
+
+/* The per-Project "+": opens constellation authoring scoped to this
+ * register — same restrained tool grammar as wiki-open-web/wiki-project-register. */
+.wiki-new-constellation {
+  flex: none; display: flex; align-items: center; justify-content: center; width: 20px; height: 20px;
+  padding: 0; border-radius: var(--oi-shell-radius-row); color: var(--oi-muted-2);
+  opacity: 0; transition: opacity var(--oi-motion-ui) var(--oi-motion-ease-out), background var(--oi-motion-ui) var(--oi-motion-ease-out), color var(--oi-motion-ui) var(--oi-motion-ease-out);
+}
+summary:hover > .wiki-map-tools > .wiki-new-constellation, summary:focus-within > .wiki-map-tools > .wiki-new-constellation, .wiki-new-constellation[aria-expanded="true"] { opacity: 1; }
+.wiki-new-constellation:hover { background: var(--oi-wash-strong); color: var(--oi-accent-ink); }
 
 .wiki-region-body { margin: 1px 0 8px var(--oi-shell-gutter); padding-left: 0; border-left: 1px solid var(--oi-hairline-soft); }
 
@@ -225,8 +241,32 @@ summary:hover > .wiki-open-web, summary:focus-within > .wiki-open-web, .wiki-spa
   opacity: 0; transition: opacity var(--oi-motion-ui) var(--oi-motion-ease-out);
 }
 .wiki-node-row:hover .wiki-node-type, .wiki-node-row:focus-visible .wiki-node-type { opacity: 1; }
+/* Truthful, restrained member/relation counts on a constellation's whole row
+ * — native numbers only, never a placeholder or invented edge. */
+.wiki-node-count { flex: none; color: var(--oi-muted-2); font-size: var(--oi-shell-type-meta); font-variant-numeric: tabular-nums; }
+.wiki-node-edges { flex: none; color: var(--oi-muted-3); font-size: var(--oi-shell-type-meta); font-variant-numeric: tabular-nums; }
 
 .wiki-constellation { padding-left: var(--oi-shell-gutter); }
+
+/* A register's quiet state (reading, no wiki, a failed read, relations not
+ * read): one row, a short word, a small retry — never a paragraph over the tree. */
+.wiki-map-state {
+  display: flex; align-items: center; gap: 6px; min-height: var(--oi-shell-row-dense); box-sizing: border-box;
+  margin: 0; padding: 0 var(--oi-row-inset, 6px); color: var(--oi-muted-2); font-size: var(--oi-shell-type-meta);
+}
+.wiki-map-state-text { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.wiki-map-retry, .wiki-map-state-action {
+  flex: none; display: flex; align-items: center; justify-content: center; height: 20px; min-width: 20px;
+  padding: 0 4px; border: 0; border-radius: var(--oi-shell-radius-row); background: transparent;
+  color: var(--oi-muted-2); font: inherit; cursor: pointer;
+}
+.wiki-map-retry:hover, .wiki-map-state-action:hover { background: var(--oi-wash-strong); color: var(--oi-accent-ink); }
+
+/* The per-Project creation row: title, question, frame, Create / Cancel. */
+.wiki-create { display: flex; flex-direction: column; gap: 4px; margin: 2px 0 6px; padding: 6px var(--oi-row-inset, 6px); border-radius: var(--oi-shell-radius-row); background: var(--oi-wash); }
+.wiki-create .oi-input { inline-size: 100%; box-sizing: border-box; font-size: var(--oi-shell-type-nav); }
+.wiki-create-actions { display: flex; justify-content: flex-end; gap: 6px; }
+.wiki-create-error { margin: 0; color: var(--oi-status-error); font-size: var(--oi-shell-type-meta); overflow-wrap: anywhere; }
 
 
 @media (prefers-reduced-motion: reduce) { .wiki-map * { transition: none; } }
@@ -290,7 +330,7 @@ summary:hover > .wiki-open-web, summary:focus-within > .wiki-open-web, .wiki-spa
   padding: 0; border-radius: var(--oi-shell-radius-row); color: var(--oi-muted-2);
   opacity: 0; transition: opacity var(--oi-motion-ui) var(--oi-motion-ease-out), background var(--oi-motion-ui) var(--oi-motion-ease-out), color var(--oi-motion-ui) var(--oi-motion-ease-out);
 }
-summary:hover > .wiki-project-register, summary:focus-within > .wiki-project-register { opacity: 1; }
+summary:hover > .wiki-map-tools > .wiki-project-register, summary:focus-within > .wiki-map-tools > .wiki-project-register, .wiki-project-register[aria-expanded="true"] { opacity: 1; }
 .wiki-project-register:hover { background: var(--oi-wash-strong); color: var(--oi-accent-ink); }
 .wiki-node-row[aria-selected="true"] .wiki-node-type { opacity: 1; }
 .wiki-node-whole .wiki-node-title { font-weight: 550; }
@@ -422,3 +462,16 @@ summary:hover > .wiki-project-register, summary:focus-within > .wiki-project-reg
 @media (prefers-reduced-motion: reduce) {
   .tn-hud, .tn-cut-recall, .tn-toolbelt { backdrop-filter: none; }
 }
+
+/* A constellation's whole row with its member disclosure: collapsed until
+   opened or entered; the chevron turns like the register disclosure. */
+.wiki-whole-line { display: flex; align-items: center; min-width: 0; }
+.wiki-whole-line > .wiki-node-whole { flex: 1; min-width: 0; }
+.wiki-disclose { flex: none; display: inline-flex; align-items: center; justify-content: center; width: 16px; height: 16px; margin-left: 2px; padding: 0; border: 0; background: none; color: var(--oi-muted); cursor: pointer; }
+.wiki-disclose::before {
+  content: ""; width: 5px; height: 5px;
+  border-right: 1px solid var(--oi-muted-2); border-bottom: 1px solid var(--oi-muted-2);
+  transform: rotate(-45deg); transition: transform var(--oi-motion-ui) var(--oi-motion-ease-out);
+}
+.wiki-disclose[aria-expanded="true"]::before { transform: rotate(45deg); }
+.wiki-more .wiki-node-title { color: var(--oi-muted); }

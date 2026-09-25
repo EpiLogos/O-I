@@ -10,6 +10,7 @@ type Subscriber = {
 };
 type PendingRead = {
   key: string;
+  resource: string;
   run: () => Promise<unknown>;
   subscribers: Set<Subscriber>;
   started: boolean;
@@ -19,6 +20,15 @@ const aborted = () => new DOMException("This knowledge read was cancelled", "Abo
 export class KnowledgeReadCoordinator {
   private readonly entries = new Map<string, PendingRead>();
   private readonly waiting: PendingRead[] = [];
+  // Two distinct keys (e.g. an explicit-fresh read and an ordinary one) can
+  // name the identical owner resource. Running both at once races the same
+  // kernel read ticket — "latest wins" there is deliberate (a genuinely
+  // newer read must supersede a stale one), but two of OUR OWN concurrent
+  // requests for the same resource have no such intent; one would simply
+  // supersede the other's ticket by accident of timing, superseding a read
+  // that was never stale. Serialising same-resource entries here removes
+  // that self-inflicted race without touching the kernel's ticket law.
+  private readonly activeByResource = new Map<string, PendingRead>();
   private active = 0;
   readonly concurrency: number;
   readonly maxWaiting: number;
@@ -31,12 +41,16 @@ export class KnowledgeReadCoordinator {
     this.maxWaiting = maxWaiting;
   }
 
-  read<T>(key: string, run: () => Promise<T>, signal?: AbortSignal): Promise<T> {
+  /** `resource` identifies the same owner reading across differently-keyed
+   * requests (e.g. fresh vs cached) for it; it defaults to `key`, so a caller
+   * that never distinguishes resource identity keeps exactly today's
+   * behaviour. */
+  read<T>(key: string, run: () => Promise<T>, signal?: AbortSignal, resource: string = key): Promise<T> {
     if (signal?.aborted) return Promise.reject(aborted());
     let entry = this.entries.get(key);
     if (!entry) {
       if (this.waiting.length >= this.maxWaiting) return Promise.reject(new Error("Knowledge read queue is full; retry the requested reading"));
-      entry = {key, run, subscribers: new Set(), started: false};
+      entry = {key, resource, run, subscribers: new Set(), started: false};
       this.entries.set(key, entry);
       this.waiting.push(entry);
     }
@@ -62,10 +76,16 @@ export class KnowledgeReadCoordinator {
   }
 
   private drain(): void {
-    while (this.active < this.concurrency && this.waiting.length) {
-      const entry = this.waiting.shift()!;
-      if (!entry.subscribers.size) { this.entries.delete(entry.key); continue; }
+    let index = 0;
+    while (this.active < this.concurrency && index < this.waiting.length) {
+      const entry = this.waiting[index];
+      if (!entry.subscribers.size) { this.entries.delete(entry.key); this.waiting.splice(index, 1); continue; }
+      // A same-resource entry already running: leave this one queued and
+      // look further down the queue rather than blocking unrelated resources.
+      if (this.activeByResource.has(entry.resource)) { index++; continue; }
+      this.waiting.splice(index, 1);
       entry.started = true;
+      this.activeByResource.set(entry.resource, entry);
       ++this.active;
       // A synchronous transport failure follows the same cleanup path.
       void Promise.resolve().then(entry.run).then(
@@ -77,6 +97,7 @@ export class KnowledgeReadCoordinator {
 
   private finish(entry: PendingRead, fulfilled: boolean, value: unknown): void {
     if (this.entries.get(entry.key) === entry) this.entries.delete(entry.key);
+    if (this.activeByResource.get(entry.resource) === entry) this.activeByResource.delete(entry.resource);
     --this.active;
     for (const subscriber of entry.subscribers) {
       if (subscriber.abort) subscriber.signal?.removeEventListener("abort", subscriber.abort);

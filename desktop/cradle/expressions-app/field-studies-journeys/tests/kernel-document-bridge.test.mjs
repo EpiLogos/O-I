@@ -13,7 +13,7 @@ function document(count=2){
  }));
  const refs=Object.keys(entities);
  const rel=(id)=>({binding_ref:`${E}:relation:${id}`,native_owner:'ai-kit',relation:read('wiki:edge:'+id),from_entity_ref:refs[0],to_entity_ref:refs[1],provenance:[read('wiki:assertion:'+id)]});
- return {schema:'oi.expression/v1',expression_ref:E,revision:3,title:'Ordinary linked notes',entities,scenes:[{scene_ref:S,title:'Main',revision:1,entity_refs:refs,body:{carrier:'text_source',subject_ref:'central:note',native_owner:'Central',reading:read('central:note'),presentation:'inline',capability:{state:'renderable'},span:{start:2,end:40},actions:[]},triggers:[{trigger_ref:'declared:portal'}]}],relations:count>1?{[E+':relation:a']:rel('a'),[E+':relation:b']:rel('b')}:{},selection:{scene_ref:S,entity_ref:refs[0]??null},provenance:[read('wiki:whole')],profiles:[{profile_ref:'profile:quiet',revision:2}],refinements:[{proposal_ref:'proposal:unapplied'}],representations:[],collections:['world:local']};
+ return {schema:'oi.expression/v1',expression_ref:E,revision:3,title:'Ordinary linked notes',entities,scenes:[{scene_ref:S,title:'Main',revision:1,entity_refs:refs,body:{carrier:'text_source',subject_ref:'central:note',native_owner:'Central',reading:read('central:note'),presentation:'inline',capability:{state:'renderable'},span:{start:2,end:40},actions:[],provenance:[],recursion:null},triggers:[{trigger_ref:'declared:portal',occasion:'scene_enter',target:{kind:'navigate',scene_ref:S}}]}],relations:count>1?{[E+':relation:a']:rel('a'),[E+':relation:b']:rel('b')}:{},selection:{scene_ref:S,entity_ref:refs[0]??null},provenance:[read('wiki:whole')],profiles:[{profile_ref:'profile:quiet',revision:2}],refinements:[{proposal_ref:'proposal:unapplied'}],representations:[],collections:['world:local']};
 }
 test('actual app adapter retains the complete native document, body and independent sourced relations',()=>{
  const input=document(),before=clone(input),view=kernelDocumentToJourney(input),binding=view.bindings[view.startSceneId];
@@ -99,6 +99,19 @@ test('material edits return exact native refs and leave hidden members and all s
  assert.deepEqual(kernelViewToChanges(view,edited),[{change:'parameter_set',entity_ref:E+':entity:m0',parameter:'x',value:100}]);
  assert.equal(view.document.scenes[0].entity_refs.length,20);assert.deepEqual(view.document,input);
  edited.scenes[0].entities.pop();assert.throws(()=>kernelViewToChanges(view,edited),/hide is not delete/);
+});
+test('ES1A/ES1B scene bodies and triggers are typed and validated, never an opaque passthrough',()=>{
+ const input=document(),badCarrier=clone(input);badCarrier.scenes[0].body.carrier='not_a_real_carrier';
+ assert.throws(()=>kernelDocumentToJourney(badCarrier),/unrecognised carrier/);
+ const badTrigger=clone(input);badTrigger.scenes[0].triggers=[{trigger_ref:'declared:portal'}];
+ assert.throws(()=>kernelDocumentToJourney(badTrigger),/occasion/);
+ const badTarget=clone(input);badTarget.scenes[0].triggers=[{trigger_ref:'declared:portal',occasion:'select',target:{kind:'mystery'}}];
+ assert.throws(()=>kernelDocumentToJourney(badTarget),/malformed target/);
+ const missingImage=clone(input);delete missingImage.scenes[0].body.native_owner;
+ assert.throws(()=>kernelDocumentToJourney(missingImage),/native_owner/);
+ const engine=clone(input);engine.scenes[0].body=null;engine.scenes[0].triggers=[];
+ const view=kernelDocumentToJourney(engine),binding=view.bindings[view.startSceneId];
+ assert.equal(binding.body,null);assert.deepEqual(binding.triggers,[]);
 });
 test('independent occurrences cannot silently overwrite one another or native automation',()=>{
  const input=document();input.scenes.push({...clone(input.scenes[0]),scene_ref:E+':scene:other'});

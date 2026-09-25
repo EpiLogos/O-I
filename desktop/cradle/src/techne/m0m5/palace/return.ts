@@ -21,7 +21,29 @@
  */
 import type { NativeActionRef, TechneActionRoute, TechneReading } from "../../contract.ts";
 import type { PalaceComposition } from "./palace-state.ts";
-import { arrangementOrder, composeChange, palaceElements } from "./composition.ts";
+import { arrangementOrder, palaceElements, type PalaceRegionSpec } from "./composition.ts";
+
+/** The region-name stem the 3:3 expression floor composes under — matches
+ * `regions.ts`'s own office label for the same facet, so a reader sees a
+ * related name in each composed Scene's title as in the read-model region.
+ * A region discloses exactly ONE contained Expression (composition.ts's
+ * header finding: the kernel refuses an Entity subject bound to another
+ * Expression, and a Scene has one body), so the reading's arranged Expression
+ * refs each become their OWN region — never several members forced under one
+ * region name. The exact diff against the live document (minting each
+ * region's Scene ref, skipping what already matches) happens at execution
+ * time, by whichever executor holds the live snapshot (composition.ts
+ * `composeRegions`/`planRegions`) — this module only names the INTENT: which Expression refs compose, in what
+ * order. Never a `composition_set`/`shared.values` payload (a second store
+ * in disguise) and never a bound-Entity subject. */
+export const EXPRESSION_FLOOR_REGION = "Expression (3:3)";
+
+/** The stable per-index region name for the 3:3 floor's Nth composed
+ * Expression — deterministic, so re-deriving the same arrangement always
+ * names the same regions (replay-idempotent at the naming layer too). */
+export function expressionFloorRegionName(index: number): string {
+  return `${EXPRESSION_FLOOR_REGION} ${index + 1}`;
+}
 
 /** The reading's disclosed Return action: the first action carrying
  * governed-write authority. Returns null when the reading discloses none —
@@ -31,20 +53,23 @@ export function palaceReturnAction(reading: TechneReading): NativeActionRef | nu
 }
 
 /** The shaped Return input: the composition's native refs in arrangement
- * order, the reading basis it derives from, and — when an Expression
- * composition exists — the Expression substrate's own `scene_compose`
- * change. The owner's input schema governs; this payload only ever carries
- * verbatim refs and the basis they came from. */
+ * order, the reading basis it derives from, and the region INTENT (never a
+ * diffed change list — this module has no live document to diff against;
+ * see composition.ts's `planRegions`/`composeRegions`, which the executing
+ * adapter calls with the live snapshot). The owner's input schema governs;
+ * this payload only ever carries verbatim refs and the basis they came
+ * from. */
 export interface PalaceReturnInput {
   summary: string;
   basis_ref: string;
   subject_ref: string;
   composed_refs: string[];
-  scene_compose?: {
-    expression_ref: string;
-    scene_ref: string | null;
-    elements: string[];
-  };
+  /** The Palace's own anchor Expression — the current native Expression
+   * open in the field (its Scenes carry the composed regions). Never a
+   * minted or guessed ref: the first of the reading's own bound Expression
+   * refs, in arrangement order — the same target the prior model used. */
+  expression_ref: string | null;
+  regions: PalaceRegionSpec[];
 }
 
 /** Shape the Return proposal from the composition. Returns null when there
@@ -60,21 +85,25 @@ export function palaceReturnInput(reading: TechneReading, composition: PalaceCom
   }
   if (composedRefs.length === 0) return null;
   const elements = palaceElements(reading);
-  const compose = composeChange(elements, composition.expressions, reading.actions);
+  const present = new Set(elements.map((element) => element.expression_ref));
+  const orderedRefs = arrangementOrder(composition.expressions).filter((ref) => present.has(ref));
+  const memberRefs = orderedRefs.length > 0 ? orderedRefs : elements.map((element) => element.expression_ref);
+  // One region per Expression ref — a region discloses exactly one member.
+  const regions: PalaceRegionSpec[] = memberRefs.map((expression_ref, index) => {
+    const element = elements.find((candidate) => candidate.expression_ref === expression_ref);
+    return {
+      name: expressionFloorRegionName(index),
+      scene_ref: null,
+      member: { expression_ref, title: expression_ref, revision: element?.revision ?? null },
+    };
+  });
   return {
     summary: `Palace integral composition of ${composedRefs.length} native refs over reading ${reading.reading_ref}`,
     basis_ref: reading.reading_ref,
     subject_ref: reading.subject.subject_ref,
     composed_refs: composedRefs,
-    ...(compose
-      ? {
-          scene_compose: {
-            expression_ref: compose.input.expression_ref,
-            scene_ref: compose.input.change.scene_ref,
-            elements: compose.input.change.elements,
-          },
-        }
-      : {}),
+    expression_ref: regions[0]?.member?.expression_ref ?? null,
+    regions,
   };
 }
 

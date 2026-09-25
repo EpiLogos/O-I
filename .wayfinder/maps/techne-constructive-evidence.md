@@ -507,3 +507,116 @@ Run `35523293159` later passed controlled engine/consumer checks at the explicit
 ## Delivery restrictions
 
 PR #420 remains draft. Finish the actual imported-app six-instrument/Studio construction, durable Palace and whole Return, Library/source account/portal continuity, canonical Agent co-work and eligible shared-world behavior. Recheck current mains, active owner boundaries, native specifications and the complete map rather than interpreting this list as a reduced scope. Temporary branch-write/reconciliation/source-recovery workflows are removed by this delivery; the ordinary read-only proving workflow remains. Run normal checks and independent review on the actual delivered head, retaining source and hardware/provider limitations honestly.
+
+## 25 September — capability inheritance matrix (restoration commission)
+
+Execution overlay for the owner's 25 September restoration commission. It adds no scope; §§0–42 and C1–C12 of [`techne-expression-mode.md`](techne-expression-mode.md) stay binding. Branch `feat/techne-inheritance-restoration-20260925` from O:I main `6e777b2740fb8790c9c68d33e87ef5adf69b27cc`. QL-MEF main `b6b58b7dfd6a3c48a23084a1cc138d9af29a877a`; refined lane heads and the converged generation `07cfe4a8ca55f78a72191b5abcc5ec695b16866a` exist only as local QL-MEF commits (branch `techne/tb0-surfaces-port`, unpushed). Vendored Research Canvas records revision `7df35f822f9235331a69940cdaf484fe4a0b95c1` (Antichrist Project — not QL-MEF).
+
+**Generations compared.** (1) Research Canvas donor 7df35f8 → `expressions-app/vendor/research-canvas` (byte-exact + recorded patches) is the *mounted* Canvas/Timeline/Places body. (2) QL-MEF refinement lanes #213–#219 → converged 07cfe4a, whose pure models O:I carries unchanged under `desktop/cradle/src/techne/m0m5/**` (every file identical apart from import paths; `adapter.ts`, `place/register.ts`, `timeline/relations.ts` carry small O:I adaptations). Their `*Instrument.tsx` bodies were never ported. (3) Current host: `TechneCentre` → `PointCloudHost` → imported `app.ts` → `researchInstruments.tsx` → vendored components. `m0m5/**` is consumed only by readings/adapter types and tests — **the refined repertoire is implemented but not reachable** from the mounted instruments.
+
+Owner decisions applied (recovered, not re-asked): #375 2026-09-19 (one Expressions system, two HUDs; six-tab host is provenance, not UX) and 2026-09-20 (host-only scope and no-internal-repair prohibition superseded); consolidation work-order `docs/OI-CRADLE-UI-CONSOLIDATION-2026-09-23.md` §4 (left navigator keeps ONE rendering — tree; no right title band; icon-only chrome; companion Run/Agents/Context); 13-BUILD-PROMPT is provenance only. Owner geometry-closeout amendments on QL-MEF #214/#219 (reversible `0/1 ↔ retained 2/3-fold basis ↔ wider constellation`) remain open lane work.
+
+Standing vocabulary: **OP** preserved and operational · **NR** implemented, not reachable · **NC** reachable, not natively connected · **RG** regression · **SUP** superseded by cited owner decision · **UNAV** unavailable at a named boundary · **NV** not yet verified.
+
+| Obligation | Donor / refinement | Current mount → handler → native target | Standing at 6e777b2 | Repair (this commission) |
+|---|---|---|---|---|
+| M1 drag/move (§15, commission §5 A) | RC `CanvasView` onNodeDrag+onNodeDragStop both call onMoveNode; #214 `canvas/interactions.ts moveSelection` | `researchInstruments.tsx onMoveNode` → `host.move` → app `changed()`+`commitResearch()` → native `work.commit(snapshot)` (whole composition) **per pointer move** | RG (durable write per pointer event) | Gesture transaction: preview outside native loop, one commit per completed gesture (packet C) |
+| M1 resize vs material body (commission §5 D) | RC resize → card dims | `researchMaterial 'resize'` writes `entity.size` | RG (card resize rewrites expressive body) | Card/anchor size in Scene research material; compact circular anchors; entity.size untouched (packet C) |
+| M1 selected-object editor (§§13,15; commission §5 B) | Expressions Studio `inspector.ts` objects/motion tabs (glyph, `sequence.steps` states, tint, `force`) | Canvas selection → `host.select` sets shared selection; Studio `#inspector` and toolbelt hidden by `workspace.css .research-active #app>.hud-panel{display:none!important}` | NR (editor exists; unreachable while Canvas active) | `editObject` opens the existing Studio over the active Canvas; toolbelt reachable; explicit live-field preview; Studio stamped with its rendered occurrence (parent) |
+| Edit target binding (commission §10 negatives) | — | `applyBinding` subject = closest `[data-entity-id]` else **current** selection; Studio content unstamped | RG (select A, edit, select B ⇒ writes B) | `#inspector-content[data-entity-id]` = rendered occurrence (parent) |
+| M1 typed knowledge relation (§§15,35,38; commission §5 C) | #214 `canvas/proposal.ts` (typed proposal via native Action) | Canvas connect → app `relation_bind` `native_owner:'oi'` in the Expression only | NC (presentation-only; no constellation relation) | `relate` → `aikit.constellation.apply relation_put` between exact participations; in-place re-projection of the constellation Expression; partial success reported (parent: `src/techne/sceneConstellationRelation.ts`) |
+| M1 omitted callbacks (commission §5 E) | RC onCreateGroup, onCycleEdgeDirectionality, onRegisterFlyToEdge, onToggleEdgeSequencing, onPlaySequence, file/resource drop | not passed by adapter | NV per callback | Audit + wire to existing ops or declare missing owner op (packet C) |
+| M1 repertoire: lasso/multi-select, align/distribute/snap, frames/z-order, semantic zoom, saved Views (§13 M1′; #214) | `m0m5/canvas/{interactions,view,layout,selection}.ts` | not imported by mount | NR | Wave 2 packet (M1 repertoire) |
+| M1 geometry: ShapeBinding, reversible folds, whole move with retained structure (§6; #214 amendment) | `nativeBlueprint.ts`, `blueprintGeometry.ts`, QL `ShapeBinding` | Blueprint HUD in `#native-work` panel; move refuses blueprint members | NV | Wave 2 packet G |
+| M2 relation projections (§16; #215) | `m0m5/timeline/relations.ts` (families, chains, cycles, phases, standing) | mounted = RC `TimelineSurface` date timeline only | NR | Wave 2 packet T |
+| M3 Journey / object states (§17; #216) | `m0m5/journey/**`; Studio sequence editor | lens `journey` → scene strip + Studio; "Commit Scenes" label in Lens Studio | NV (states editable in Studio; Journey model unreachable) | Wave 2 packet J |
+| M4 places (§18; #217) | RC PsychogeographicMap/StreetView; `m0m5/place/**` | mounted RC map over native place facets; Nara/EarthBody legs absent | OP (map) / UNAV (M2 planetary, M3 clock, M4 EarthBody: no callable owner leg — QL-MEF receipt) | Wave 2 packet W |
+| M5 Palace (§19; #218) | `m0m5/palace/**` (regions, recall, composition, return) | lens `palace` → `inspectorOpen=true; tab='field'; studioSection='physics'` (app.ts `activateInstrument`) | RG (Palace = ordinary physics panel) | Wave 2 packet P; kernel `composition_set` seam per 22 Sep finding |
+| Library (§§7–8,32; commission §7) | imported `expressions.ts libraryHTML` (required since a222c8b §7) | two entrances: in-app `libraryHTML` (browser drafts) and `native-library` → cradle `LibraryBrowser` React surface | RG (competing entrances; native entries not in reused page) | One reused page fed by existing native providers (packet L) |
+| Verso (§10) | native page family | `deep-verso` summon → cradle verso account | NV | Wave 2 packet L2 |
+| Left navigator one Central tree (§7; consolidation §4) | `WikiMapNavigator.tsx` (#480) | Central + Wiki trees | NV | Wave 2 packet N |
+| HUD: one row, no duplicates (§13; commission §6) | Expressions shell | research HUD `#research-tools`+`.research-common` plus app masthead, lens chooser, Lens Studio, native-work panel | NV (duplicate targets suspected) | Wave 2 packet H |
+| Bolted-on native M1–M3 apparatus (commission §6) | — | `#native-work` "Keep the whole work" panel with raw revision/basis text; Lens Studio "Commit Scenes"/"Commit composition" text buttons | NV | Wave 2 packet H (keep producers, remove apparatus) |
+| >10 members, bounded not truncated (§36; C6) | — | `projectProvidedLocalWhole` refuses when members > owner `scene_members` budget (default 10); Canvas pages members | NV (refusal is honest, not truncation; budget extension is owner work) | Verify in joined walk |
+
+
+## 25 September — restoration execution, first same-node gate (O:I #519)
+
+Delivery: draft [O:I #519](https://github.com/EpiLogos/O-I/pull/519), branch `feat/techne-inheritance-restoration-20260925` from `6e777b2`. One parent integrator; bounded Sonnet workers on disjoint write claims in one shared checkout; parent owned `app.ts` host wiring, shared bridges, builds, commits and this ledger.
+
+**First same-node gate (commission §5) — N+B, passing.** `desktop/cradle/tests/techne-same-node-gate.mjs`, 32 checks, 3/3 local runs; installed `oi` 6e777b2 / `aikit` ce0e528 / `ctrl` 2076b9f, source-built `walk-bridge`, temporary Central ground, headless software-GL Chromium. Added to the Technē native-application CI job. Covers: Wiki constellation (one source, two roles) opened live; Canvas occurrences = native entities; 30-move drag → 0 durable writes during, 1 at release, B untouched; Edit object → full Studio over active Canvas; force/tint/new object state (glyph ▲) written to the exact occurrence; interrupted edit never lands on B; A keeps its acknowledged value; live-field preview; native owner holds A's configuration (Scene working presentation) and not B's; drawn connection stays O:I presentation; *Record as constellation relationship* writes one typed relation (`grounds`) with identity distinct from `qualifies` on the same endpoints; it reaches the same live Expression as a source relation; save → kernel restart → reopen keeps identities, A's edits and both relation classes; register readback. Not yet in this walk: Journey/live-field traversal of the same member (separate lens walk), Wiki search/index readback beyond the register file.
+
+**Standing changes against the matrix (source → code → evidence).**
+
+| Obligation | Now | Evidence grade |
+|---|---|---|
+| M1 drag/resize | OP — gesture transactions; held pointer drags never idle-commit (`canvasGesture.ts`, vendor patch `host-selection-viewport-gesture`) | U + N+B (gate) |
+| M1 card size vs body | OP — card/anchor size in Scene research material; compact anchors | U + B |
+| M1 selected-object editor | OP — `editObject` + `research-studio`; Studio stamped with rendered occurrence; telemetry refresh no longer re-commits stale values (`liveValues.ts`) | N+B (gate) |
+| Node click selection | RG repaired — `onSelectEdge(null)` after every node click cleared the node | N+B (gate) |
+| M1 typed relation | OP — `src/techne/sceneConstellationRelation.ts` (register from occurrence readings; exact participation via minted identity); clean draft adopts newer owner revision (`advanceClean`) | U + N+B (gate) |
+| Same-endpoint relations | OP — vendor patch `parallel-edge-curvature` | U (vendor) + B |
+| M1 repertoire | OP (reachable) — multi/box select, group move, nudge, align/distribute, snap, frames (presentation), named views | U; B partial |
+| M1 geometry | Partial — declared-position layout only; kernel Binding basis/derivation/operator refs; native `EntityPin`; Canvas whole-shape acts. Only one pinned sixfold Blueprint form supported | U + kernel tests |
+| M2 relation projections | OP (reachable) — `relationFieldView.tsx` over m0m5 relations | U |
+| M3 Scene bodies / triggers | OP (reachable) — `sceneBodies.ts`, bridge typed bodies/triggers, Studio scene tab | U |
+| M4 place readings | OP (reachable) — `placeFacetsPanel.tsx`; M2/M3/M4 world frames UNAV (no owner leg, QL-MEF receipt) | U |
+| M5 Palace | Replaced physics stand-in — regions as Scenes with Expression body + portal, CAS, explicit removal. Multi-member regions UNAV (kernel: entity may not bind an `expression:` subject; one body per Scene) | U + kernel test |
+| Library | One reused page fed by native providers + Expression-owner Scene lists | U |
+| HUD / apparatus | One row; Native field as Studio section; refs behind disclosures | B (HUD worker walk, 18 state×viewport combos) |
+| Navigator | Native-identity dedupe, counts, per-Project + (one-click fresh construction needs KnowledgeSurface receiver change) | U |
+| Verso | Distinct saving account rows | U |
+| Wiki read path | Repaired: ground status poll no longer clears reads (kernel); register decode discriminator; per-resource read serialization; bounded fresh retries for forms/readback | U + kernel tests + N+B (join 17/17, gate) |
+
+Remaining at this cut: independent joined verification (negatives, §28 lens continuity, ≥12-member corpus, measured drag/call counts) in progress; C11 shared/privacy, live Agent co-work (C8), installed-app and human acceptance not exercised; Blueprint canonical forms beyond the pinned sixfold; Palace multi-member regions; Journey↔live-field same-member traversal walk.
+
+## 25 September — installed walk: what failed, and the complete repair map
+
+Installed `~/Applications/O-I.app` from `94ad7c54` (PR #519 + main; CI 28/28). The owner walked it: nothing of the commission is usable. Causes, from the code (not agent summaries):
+
+1. **Technē replaces the Expressions app instead of being a mode of it.** `app.ts setInstrumentSurface/activateInstrument`: for M1′/M2′/M4′ the Expressions masthead is hidden, the field suspended and the whole vendored Research Canvas mounted with its own HUD (`#research-hud`, `#research-tools` with the vendor toolbar and an adapter tool row) and inspector (`#research-inspector`). M0′/M3′/M5′ get `#lens-studio` (two or three text buttons that re-fire `native-library`/`native-work`/`timeline`) and the `#native-work` "Keep the whole work" panel (commit / retry / file save / blueprint), which substitutes for instrument panels. Palace, Places and the relation field were added as further separately-styled panels. Commission §6 and map §§12–13 required the opposite.
+2. **The left navigator was never made one tree.** Every register renders as its own top-level region; the root wiki's `child_space_refs` become empty "constellations", so every Project appears twice; "+" (`onNewConstellation`) is supplied by no host (`CradleFrame.tsx:1769`), so it opens the Wiki page. New frame titles would show the raw anchor ref (`parseWiki` ignores the frame title).
+3. **Nothing to work on in the real world.** Every real `wiki.json` has 0 frames and 0 edges; there is no working creation path from Technē. The first gate proved Canvas editing on `tests/techne-construction-join.html` over a seeded temporary ground, not in the app.
+4. Five independent Wiki reader shapes exist; `kernelTechneAdapter.ts` is imported by nothing.
+
+### Repair map (one integrator; each item is verified in the installed app)
+
+**H — one Expressions HUD in both modes**
+- H1 Keep `#app > .masthead`, `#inspector` (Studio), toolbelt, `#context-panel`, transport and orbit control standing in every lens. Delete `#research-hud`, `.research-common` and `#research-inspector`.
+- H2 Instrument tools render as icon buttons in the masthead tool rail (one row, no scrollbar); the vendor toolbar is not portalled as a second bar.
+- H3 The M0′–M5′ chooser is a compact icon group in the masthead; the floating chooser bar and `#lens-studio` are deleted.
+- H4 Delete the `#native-work` panel. Its real producers move to their homes: Commit → the ordinary Save (masthead + ⌘S) with truthful status in the Studio footer (pending/conflict/retry there); native file save → Library file bar; open failure → toast with retry; blueprint → M1′ Studio section; Continue/Open file → Library.
+- H5 Delete `#techne-world` (register select duplicating the navigator).
+- H6 Instrument controls are Studio sections (same Studio, same resize/search/pin): M1′ Constellation (members/roles, frame/blueprint, relation type/standing, align/distribute/frames/views, whole transform), M2′ Relations (projection mode, standing/lane filters), M3′ Journey (scene list, bodies/triggers), M4′ Places (place facets, filters), M5′ Palace (regions/portals/order). Object sections (glyph sequence, colour & material, forces, morph, 3D body, text) stay available for the selected occurrence in every lens.
+- H7 Node anchor click → compact node information in `#context-panel` (open source, Edit object, relate); edge selection → the same panel with relation type and **Record as constellation relationship**.
+
+**N — one Central tree**
+- N1 Central is the root node; Projects nest under it; each Project lists its constellations (frames with inquiry title) and spaces with members, with truthful member counts and a restrained relation mark. Root child spaces map onto their Project nodes; no second listing.
+- N2 Project "+" opens an inline creation row scoped to that Project (title, question, frame/blueprint chooser from the AIKit authoring forms) → `aikit.constellation.apply create` → the new constellation opens in Technē M1′ with its Studio section.
+- N3 Relations-read failure is a quiet per-register state with retry, not a banner over the tree.
+- N4 Navigator and Technē read through the one projection store; delete the orphaned `kernelTechneAdapter.ts`.
+
+**C — Canvas edits the same node**
+- C1 Wire omitted Canvas callbacks: group, image/resource file drop, directionality cycle, "New constellation" (`host.createScene`) to the N2 creation.
+- C2 Selected-object editing through the Studio from Canvas (existing binding), drag = one save on release (existing), recorded relation appears as a relation (existing writer).
+
+**V — verification in the installed app** (screenshots): tree and "+" creation in a real Project; Canvas drag/select/Edit object/live preview; draw + record relationship; Journey, Places, Palace, Library, verso; save → quit → relaunch → reopen.
+
+### Repair progress — 25 September (installed walks)
+
+Installed builds from this branch (`oi desktop install --bundle`, BUNDLE.json source revision recorded): `b4a41410`, `54f7d5b8`, then the current head. Walks use the installed binary against the real ground and, for constellation work, against the synthetic 192-member dataset (`tests/prepare-timeline-native-stress.mjs`, own `OI_CENTRAL_ROOT`/`AIKIT_HOME`), never the owner's wiki.
+
+| Map item | State | Evidence |
+|---|---|---|
+| H1–H5 one HUD | Done: masthead in every lens; chooser in its centre; instrument tools in the rail; `#research-hud`, `#lens-studio`, `#native-work`, `#techne-world` deleted; Save in masthead + ⌘S | `tests/techne-lens-studio-browser.mjs` (one-HUD assertions); installed screenshots |
+| H6 Studio sections | Blueprint, Palace, Places, Canvas views live in the existing Studio | installed walk (Palace); unit + browser tests |
+| H7 node/connection card | Follows selection; relate action on connection | source contract test; installed walk pending |
+| N1 one tree | Done; members collapse by default with bounded reveal | `techne-navigator-tree.test.mjs` 12/12; installed screenshot |
+| N2 Project “+” | Creates natively in the real Project (O-I wiki `wiki:frame:545f3f5d…`); open-after-create race fixed (`54f7d5b8`) | installed walk; wiki readback |
+| N3 relations state | Quiet per-register state | installed |
+| §36 scale | Document semantic bound 2048 / 8 MiB, separate from list guards; tree counts truthful (192) | `kernel/tests/expression.rs` 300-member Scene through native edits |
+| Library | Reused original collections page, no HUD over it | installed screenshots |
+
+Known boundary (owner-assigned elsewhere): every `aikit knowledge` call costs ~18–23 s (GitNexus CLI re-probed per project per call; indexes rebuilt per call). Relations reads time out at the kernel's 20 s cap and the QL authoring forms (frame chooser) never arrive. Diagnosis and a probe memoisation are on ai-kit branch `perf/knowledge-provider-probe-memo-20260925` in `worktrees/env-2/ai-kit`, handed to the env-2 worker.
+
+Delivered head `69ed21a8` (installed; CI 28/28). All CI walks drive the one HUD (masthead Save, Library file-save/open modal, Studio-footer native status, selection-following card). Open: `tests/techne-joined-verification.mjs` (not in CI) passes through the V1a/V1b/V1c negatives, then its clean reopen after the V1c fault times out at 120 s in full runs while an instrumented run reopens within 20 s — timing-dependent under the current AIKit latency; re-run after the AIKit fix before treating it as a product defect.

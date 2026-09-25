@@ -77,6 +77,12 @@ export interface VersoAction {actionRef: string; targetRef: string; authorityReq
 export interface VersoPageReading {resource: string; provider: string; authority: string; revision?: string; content?: string; evidence: string[]}
 export interface VersoSourceFileReading {location: CentralLocation; revision: string; content: string}
 
+/** A local recovery checkpoint for this Expression, read through the same
+ * native recovery owner the editor itself uses (`expression_recovery`,
+ * `find_checkpoint`) — never a guessed localStorage key. `found: false` is
+ * the honest "no local backup stands" reading, not an absence of the field. */
+export type VersoDraftBackup = {found: true; revision: number} | {found: false};
+
 /** The verso account reading. Sparse-able: an absent piece is absent, named
  * by its region's own honest line — never fabricated. */
 export interface VersoAccount {
@@ -85,6 +91,14 @@ export interface VersoAccount {
   document?: ExpressionDocument;
   /** The saved file identity the owner disclosed for this Expression. */
   savedFile?: {ref: string; revision: string};
+  /** Whether the native document reading carries unsaved changes against its
+   * saved file — the owner's own `dirty` disclosure, undefined when the
+   * subject carries none (never guessed from revisions). */
+  sceneDirty?: boolean;
+  /** The subject's local recovery checkpoint, read through the native
+   * recovery owner — undefined only when the subject is not an Expression
+   * (nothing to check); a failed read is named in `notices` instead. */
+  draftBackup?: VersoDraftBackup;
   page?: VersoPageReading;
   sourceFile?: VersoSourceFileReading;
   web: VersoWebPosition;
@@ -247,6 +261,7 @@ export async function readVersoAccount(transport: KernelTransportStatus, subject
         notices.push(`The face stood on member ${subject.entityRef}, which the owner's current revision no longer carries.`);
       }
       if (data.file) account.savedFile = {ref: data.file.location.ref, revision: data.file.revision};
+      if (typeof data.dirty === "boolean") account.sceneDirty = data.dirty;
       for (const entity of Object.values(data.document.entities)) {
         const binding = entity.subject;
         if (!binding) continue;
@@ -256,6 +271,19 @@ export async function readVersoAccount(transport: KernelTransportStatus, subject
       if (data.document.collections?.length) account.editions.push(...data.document.collections);
     } catch (cause) {
       notices.push(`The Expression read did not resolve: ${text(cause)}`);
+    }
+    // The subject's local recovery checkpoint — read through the same native
+    // recovery owner the editor itself uses, never a guessed storage key.
+    // A read failure is named and the account stands on what did resolve;
+    // it never invents a "no backup" reading from an unanswered call.
+    try {
+      const reply = await kernelOp(transport, {op: "expression_recovery", request: {operation: "find_checkpoint", scope: "techne", expression_ref: subject.ref}});
+      if (reply.error || reply.outcome?.result !== "expression_recovery") throw new Error(reply.error ?? "the kernel returned no recovery reading");
+      const data = reply.outcome.data;
+      if (data.state !== "ready") throw new Error(`the recovery owner returned "${data.state}"`);
+      account.draftBackup = data.record ? {found: true, revision: data.record.revision} : {found: false};
+    } catch (cause) {
+      notices.push(`The draft backup read did not resolve: ${text(cause)}`);
     }
   } else {
     try {

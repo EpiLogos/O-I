@@ -3,6 +3,7 @@
 import {useState} from 'react';
 import {createRoot} from 'react-dom/client';
 import {KernelProvider} from '../src/kernel/KernelProvider';
+import {VisualsProvider} from '../src/visuals/ParticleExpression';
 import {ExpressionStageProvider} from '../src/stage/ExpressionStage';
 import {KnowledgeSurface} from '../src/knowledge/KnowledgeSurface';
 import '@epilogos/oi-design-system/tokens.css';
@@ -17,4 +18,4 @@ function App(){
   <div style={{minHeight:0,flex:1,display:'flex'}}><KnowledgeSurface key={graph?'graph':'page'} binding={{id:graph?'wiki-test-graph':'wiki-test-page',kind:'knowledge',title:'Alpha',address:graph?{kind:'wiki',value:'wiki:root'}:{kind:'source',value:'source:a'},view:{knowledgePlane:graph?'graph':'page'}}} onOpen={async(address,title,project)=>{observed.opened.push({address,title,project});}}/></div>
  </main>;
 }
-createRoot(document.getElementById('root')!).render(<KernelProvider><ExpressionStageProvider><App/></ExpressionStageProvider></KernelProvider>);
+createRoot(document.getElementById('root')!).render(<KernelProvider><VisualsProvider><ExpressionStageProvider><App/></ExpressionStageProvider></VisualsProvider></KernelProvider>);

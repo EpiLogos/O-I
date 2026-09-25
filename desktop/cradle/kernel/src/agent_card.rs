@@ -127,22 +127,62 @@ mod tests {
         assert!(validate(&json!({"schema": "other"}), "agent/a").is_err());
     }
 
+    /// Write an executable test fixture without ever exposing a half-written
+    /// or still-open file at its final name: write the bytes to a sibling
+    /// temp name, set permissions, then atomically rename into place. This
+    /// avoids the transient ETXTBSY a bare `fs::write` + `set_permissions`
+    /// can hit under a loaded, parallel `cargo test` run, where another
+    /// thread's fork/exec can briefly race an in-place write.
+    #[cfg(unix)]
+    fn write_executable_fixture(path: &std::path::Path, contents: &str) {
+        use std::os::unix::fs::PermissionsExt;
+        let tmp = path.with_extension(format!("tmp-{}", std::process::id()));
+        std::fs::write(&tmp, contents).unwrap();
+        std::fs::set_permissions(&tmp, std::fs::Permissions::from_mode(0o755)).unwrap();
+        std::fs::rename(&tmp, path).unwrap();
+    }
+
+    /// `read` on a freshly-written local fixture can still observe a
+    /// transient ETXTBSY (`os error 26`) on `fork`/`exec` under a busy,
+    /// parallel test run, even though the file was written via an atomic
+    /// rename above. This is a known kernel-level race, not a defect in the
+    /// command being tested, so the TEST retries a bounded number of times
+    /// rather than weakening what `read` itself asserts.
+    #[cfg(unix)]
+    fn read_retrying_etxtbsy(
+        executable: &PathBuf,
+        agent_ref: &str,
+        world_ref: Option<&str>,
+    ) -> Result<Value, String> {
+        let mut attempt = 0;
+        loop {
+            match read(executable, agent_ref, world_ref) {
+                Err(message) if attempt < 20 && message.contains("os error 26") => {
+                    attempt += 1;
+                    std::thread::sleep(std::time::Duration::from_millis(25));
+                }
+                other => return other,
+            }
+        }
+    }
+
     #[cfg(unix)]
     #[test]
     fn read_runs_the_installed_suite_and_returns_its_card() {
-        use std::os::unix::fs::PermissionsExt;
-        let dir = std::env::temp_dir().join(format!("oi-agent-card-test-{}", std::process::id()));
+        let dir = std::env::temp_dir().join(format!(
+            "oi-agent-card-test-{}-{:?}",
+            std::process::id(),
+            std::thread::current().id()
+        ));
         std::fs::create_dir_all(&dir).unwrap();
         let bin = dir.join("oi");
-        std::fs::write(
+        write_executable_fixture(
             &bin,
             "#!/bin/sh\n[ \"$1 $2 $3 $4\" = \"agent card --agent agent/a\" ] || exit 9\nprintf '%s' '{\"schema\":\"oi.human-agent-card/v1\",\"identity\":{\"agent_ref\":\"agent/a\"}}'\n",
-        )
-        .unwrap();
-        std::fs::set_permissions(&bin, std::fs::Permissions::from_mode(0o755)).unwrap();
-        let card = read(&bin, "agent/a", None).unwrap();
+        );
+        let card = read_retrying_etxtbsy(&bin, "agent/a", None).unwrap();
         assert_eq!(card["identity"]["agent_ref"], "agent/a");
-        let refused = read(&bin, "agent/b", None).unwrap_err();
+        let refused = read_retrying_etxtbsy(&bin, "agent/b", None).unwrap_err();
         assert!(refused.contains("refused"), "{refused}");
         let _ = std::fs::remove_dir_all(&dir);
     }

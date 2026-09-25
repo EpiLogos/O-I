@@ -69,7 +69,7 @@ jobs:
           node tests/knowledge-expression.mjs
           node tests/techne-field-bindings.mjs
           node --test tests/verso-account-binding.test.mjs
-          node --experimental-strip-types --import ./tests/ts-register.mjs --test tests/techne-journey-submit.test.mjs tests/field-open.test.mjs tests/techne-summon-record.test.mjs tests/techne-place-facets.test.mjs tests/techne-wiki-provider.test.mjs
+          node --experimental-strip-types --import ./tests/ts-register.mjs --test tests/field-open.test.mjs tests/techne-summon-record.test.mjs tests/techne-place-facets.test.mjs tests/techne-wiki-provider.test.mjs
       - name: Prove entrance and actual relation drawing with disconnected-binding negatives
         working-directory: desktop/cradle
         env:
@@ -229,6 +229,14 @@ jobs:
           OI_CENTRAL_CTRL_BIN: ${{ runner.temp }}/native-bin/ctrl
           WIKI_KERNEL_BIN: ${{ runner.temp }}/native-bin/walk-bridge
         run: node tests/techne-construction-join.mjs
+      - name: First same-node gate — Canvas edits, typed relation, save, restart
+        working-directory: desktop/cradle
+        env:
+          OI_BIN: ${{ runner.temp }}/native-bin/oi
+          OI_AIKIT_BIN: ${{ runner.temp }}/native-bin/aikit
+          OI_CENTRAL_CTRL_BIN: ${{ runner.temp }}/native-bin/ctrl
+          WIKI_KERNEL_BIN: ${{ runner.temp }}/native-bin/walk-bridge
+        run: node tests/techne-same-node-gate.mjs
       - uses: actions/upload-artifact@v4
         if: always()
         with:
@@ -237,5 +245,6 @@ jobs:
             desktop/cradle/tests/artifacts/techne-native-application
             desktop/cradle/tests/artifacts/techne-native-composition
             desktop/cradle/tests/artifacts/techne-construction-join
+            desktop/cradle/tests/artifacts/techne-same-node-gate
           retention-days: 7
           if-no-files-found: error

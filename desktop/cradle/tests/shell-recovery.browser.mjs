@@ -115,7 +115,7 @@ try{
       if(!reference){assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),'page has no horizontal overflow');assert.ok(await page.locator('[data-settings-page]:visible').evaluate(el=>el.scrollWidth<=el.clientWidth+1),'settings has no clipped horizontal content');}
      }
      if(reference)return;
-     const appearance=page.getByRole('group',{name:'Appearance',exact:true});
+     const appearance=page.getByRole('radiogroup',{name:'Appearance',exact:true});
      await appearance.getByRole('radio',{name:'Dark',exact:true}).click();await page.waitForFunction(()=>document.body.dataset.theme==='dark');assert.equal(await bodyTheme(page),'dark');
      await appearance.getByRole('radio',{name:'System',exact:true}).click();await page.emulateMedia({colorScheme:'light'});await page.waitForFunction(()=>!document.body.dataset.theme);assert.equal(await bodyTheme(page),'light');
      assert.equal(await page.locator('.visuals-preferences canvas,.visuals-preferences iframe').count(),0,'Visuals has no duplicate Expression host');
@@ -147,11 +147,16 @@ try{
      if(!reference){await page.locator('.mode-stage .factory-centre[data-centre-view="desk"]').waitFor({state:'visible'});assert.equal(await page.locator('.factory-centre:visible').count(),1,'one actual Factory body has one presenter');}
      await page.screenshot({path:`${out}/${engineName}-${scheme}-factory.png`});
      if(reference)return;
+     // Row icons carry a colour transition (desktop.css icon-row rule); settle
+     // it before sampling, so a still-running transition is not read as a
+     // hard-coded colour. A genuinely fixed colour never converges and fails.
+     await views.locator('button').first().evaluate(()=>new Promise(r=>setTimeout(r,0)));
+     await page.waitForFunction(()=>[...document.querySelectorAll('[role="radiogroup"][aria-label="Factory view"] button')].every(n=>getComputedStyle(n.querySelector('svg')).color===getComputedStyle(n).color),null,{timeout:2000}).catch(()=>{});
      const colours=await views.locator('button').evaluateAll(ns=>ns.map(n=>({selected:n.getAttribute('aria-checked'),color:getComputedStyle(n).color,bg:getComputedStyle(n).backgroundColor,icon:getComputedStyle(n.querySelector('svg')).color})));
      assert.notEqual(colours[0].color,colours[1].color,'active/inactive semantic emphasis differs');for(const c of colours)assert.equal(c.icon,c.color,'icons inherit state instead of hard-coded black/white');
      const right=page.locator('.desktop-side.right');
      for(const name of ['Run','Agents','Context']){
-      const button=right.getByRole('button',{name,exact:true});if(await button.count()!==1)throw Error('Expected existing '+name+' plane');await button.click();
+      const button=right.getByRole('tab',{name,exact:true});if(await button.count()!==1)throw Error('Expected existing '+name+' plane');await button.click();
       await page.screenshot({path:`${out}/${engineName}-${scheme}-sidebar-${name.toLowerCase()}.png`});
       assert.ok(await right.evaluate(el=>el.scrollWidth<=el.clientWidth+1),'right section has no horizontal overflow');
      }

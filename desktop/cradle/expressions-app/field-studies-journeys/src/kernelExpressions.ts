@@ -238,6 +238,28 @@ export async function nativeFileRequest(request:Record<string,unknown>):Promise<
  return call('expression-file',{request});
 }
 
+/** ES1A scene-body native carrier reads (O:I #352): a `SceneBody.subject_ref`
+ * is an opaque native reference, resolved only through the owner's own
+ * `file_resolve` seam — this app never parses it. Two typed reads over the
+ * `central-subject-text`/`central-subject-bytes` host-channel kinds (the
+ * cradle relay, `relayKernelChannel` in desktop/cradle/src/expressions/
+ * hostedApp.ts): UTF-8 text for `text_source` bodies, base64 + mime hint for
+ * `image_media` bodies (the same binary-safe seam FND-04 already defines). */
+export interface NativeSubjectText {ref:string;revision:string;byte_len:number;content:string}
+export interface NativeSubjectBytes {ref:string;revision:string;byte_len:number;mime_hint:string|null;content_base64:string}
+export async function nativeSubjectTextRequest(ref:string):Promise<NativeSubjectText>{
+ if(typeof ref!=='string'||!ref)throw new Error('nativeSubjectTextRequest needs a native subject ref');
+ const data=await call<NativeSubjectText>('central-subject-text',{ref});
+ if(!data||typeof data.content!=='string')throw new Error(`the native owner returned no readable text for ${ref}`);
+ return data;
+}
+export async function nativeSubjectBytesRequest(ref:string):Promise<NativeSubjectBytes>{
+ if(typeof ref!=='string'||!ref)throw new Error('nativeSubjectBytesRequest needs a native subject ref');
+ const data=await call<NativeSubjectBytes>('central-subject-bytes',{ref});
+ if(!data||typeof data.content_base64!=='string')throw new Error(`the native owner returned no readable image bytes for ${ref}`);
+ return data;
+}
+
 /** The active native Scene is the address. The host validates its revision
  * and source projection; no shell workspace or renderer file path supplies scope. */
 export interface TechneSceneReadingRequest {expression_ref:string;revision:number;scene_ref:string;facet?:'relation-semantics'|'node-metadata'|'scene-relations'}
@@ -247,3 +269,21 @@ export const techneWorldRequest = (request: {operation:'list'}|{operation:'open'
 
 export interface TechneConstellationRequest extends TechneSceneReadingRequest {entity_ref:string;operation:'inspect'|'open'}
 export const techneConstellationRequest = (request:TechneConstellationRequest):Promise<{frame_ref:string;frame_revision:number;title:string;project?:string}> => call('techne-constellation',{request},30000);
+/** Deliberate typed relationship between two occurrences' exact constellation participations. */
+export interface TechneConstellationRelation extends TechneSceneReadingRequest {operation:'relate';from_entity_ref:string;to_entity_ref:string;relation:string;direction:'directed'|'undirected'|'bidirectional'}
+export interface TechneConstellationRelationReceipt {frame_ref:string;frame_revision:number;relation_ref:string;state:'saved'|'unchanged';expression:{state:'ready';expression_ref:string;revision:number}|{state:'pending';detail:string}}
+export const techneConstellationRelate = (request:TechneConstellationRelation):Promise<TechneConstellationRelationReceipt> => call('techne-constellation',{request},60000);
+
+/** The sanitized native Library reading (nativeLibrary.ts's model shape) —
+ * Central Projects (via their bound overview Expression), Scenes and native
+ * collections, read live through the host's EXISTING Library providers
+ * (desktop/cradle/src/library/libraryReading.ts) via the "library-read"
+ * host-channel kind. No source bodies; never copied into browser storage. */
+export interface LibraryReadingEntry {
+ ref:string;title:string;kind:string;owner:string;scope:'local'|'shared';
+ revision?:string;project?:string;expressionRef?:string;
+ scenes?:{scene_ref:string;title:string}[];collections?:string[];
+ collectionMemberships?:{title:string;group:string;manifest_path:string}[];
+}
+export interface LibraryReadingCoverage {provider:string;state:string;reason?:string}
+export const readLibraryEntries = (scope:'local'|'shared'='local'):Promise<{entries:LibraryReadingEntry[];coverage:LibraryReadingCoverage[]}> => call('library-read',{request:{scope}},20000);

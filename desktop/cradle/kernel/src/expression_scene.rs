@@ -55,7 +55,7 @@ fn data(value: &Value, depth: usize) -> Result<(), String> {
 
 pub fn validate(presentation: &Presentation, scene: &Scene, document: &Document) -> Result<(), String> {
     if presentation.schema != SCHEMA { return Err("Unsupported native Scene presentation".into()); }
-    // The existing document's 512 KiB budget remains the outer storage bound.
+    // The existing document's byte budget remains the outer storage bound.
     data(&presentation.scene, 0)?;
     let material = object(&presentation.scene, "Authoring Scene")?;
     const KEYS: &[&str] = &["id", "name", "character", "duration", "transition", "view", "field", "entities", "text", "composition", "morph", "automation", "engine", "semanticField", "resonanceDrive", "favourites", "native", "propertyTakeRange", "toolbelt", "propertyTracks", "pointerScope", "research"];
@@ -146,7 +146,14 @@ fn validate_research(value: &Value, ids: &BTreeSet<&str>) -> Result<(), String> 
         for point in points {object(point,"Stroke point")?;number(&point["x"],-40000.,40000.,"Stroke x")?;number(&point["y"],-40000.,40000.,"Stroke y")?;if let Some(v)=point.get("pressure"){number(v,0.,1.,"Stroke pressure")?;}}
     }
     for v in value["views"].as_object().unwrap().values(){viewport(v)?;}
-    for layout in value["timeline"].as_object().unwrap().values(){let m=object(layout,"Timeline layout")?;if m.keys().any(|k| !["offsetY","width","height","lane","layoutRevision"].contains(&k.as_str())){return Err("Unknown timeline layout field".into());}if let Some(v)=m.get("lane"){if !bounded(v,1024){return Err("Invalid timeline lane".into());}}if let Some(v)=m.get("layoutRevision"){if !v.as_u64().is_some_and(|n|n>=1&&n<=9007199254740991){return Err("Invalid timeline layout revision".into());}}number(&layout["offsetY"],-40000.,40000.,"Timeline offset")?;for key in ["width","height"]{if let Some(v)=m.get(key){number(v,40.,40000.,"Timeline card size")?;}}}
+    for layout in value["timeline"].as_object().unwrap().values(){
+        let m=object(layout,"Timeline layout")?;
+        if m.keys().any(|k| !["offsetY","width","height","lane","layoutRevision"].contains(&k.as_str())){return Err("Unknown timeline layout field".into());}
+        if let Some(v)=m.get("lane"){if !bounded(v,1024){return Err("Invalid timeline lane".into());}}
+        if let Some(v)=m.get("layoutRevision"){if !v.as_u64().is_some_and(|n|(1..=9007199254740991).contains(&n)){return Err("Invalid timeline layout revision".into());}}
+        number(&layout["offsetY"],-40000.,40000.,"Timeline offset")?;
+        for key in ["width","height"]{if let Some(v)=m.get(key){number(v,40.,40000.,"Timeline card size")?;}}
+    }
     Ok(())
 }
 fn validate_note(value:&Value,depth:usize)->Result<(),String>{

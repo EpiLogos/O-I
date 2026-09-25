@@ -75,7 +75,16 @@ try{
  // Explicit TEST geometry correspondence; never inserted into production.
  const binding={schema:'oi.native-expression-binding/v1',host:{instance_ref:'controlled:joined-browser',basis:input.basis,field:input.field},presentation:{units_per_metre:400,slots_a:Array.from({length:count},(_,i)=>i%samples),slots_b:Array.from({length:count},(_,i)=>(i+1)%samples)}};
  await writeFile(join(temp,'binding.json'),JSON.stringify(binding));
- await frame.locator('.native-field-panel>summary').click({force:true});
+ // Native field is Studio-section content, not a floating pill: open Studio
+ // and select its "Native field" section before its controls exist in the DOM.
+ // At this viewport the workspace header cluster is in its compact form
+ // (the "Studio" button rides the collapsed "•••" menu, per the 1100px
+ // breakpoint in workspace.css), so open that menu first when present.
+ const workspaceMenuToggle=frame.locator('.workspace-cluster>.header-menu-toggle');
+ if(await workspaceMenuToggle.isVisible())await workspaceMenuToggle.click({force:true});
+ await frame.locator('[data-action="studio"]').click({force:true});
+ await frame.locator('[data-action="studio-section"][data-value="native"]').click({force:true});
+ await frame.locator('.native-field-panel').waitFor();
  await frame.locator('[name="native-path"]').fill('binding.json');
  await frame.locator('[data-native="source"]').click({force:true});
  await frame.waitForFunction(()=>!document.querySelector('[data-native="connect"]')?.disabled,null,{timeout:10000});
@@ -111,6 +120,13 @@ try{
  await frame.locator('[data-native="hold"]').click({force:true});await page.screenshot({path:join(out,'native-domain.png')});
  await page.evaluate(()=>document.querySelector('iframe').contentWindow.postMessage({v:1,kind:'host-mode',mode:'techne'},'*'));await frame.waitForFunction(()=>window.__FIELD_STUDIES__.getState().hostMode==='techne');
  assert.equal(await frame.evaluate(()=>window.__FIELD_STUDIES__.native().lease),lease);assert.equal(opens,1);report.checks.push('host-mode switch retains native lease and app subject');
+ // Technē's M0 lens closes the Studio (the native field now lives in its
+ // Native field section, not a floating pill); return to Expressions and
+ // reopen that section before operating the same native control.
+ await page.evaluate(()=>document.querySelector('iframe').contentWindow.postMessage({v:1,kind:'host-mode',mode:'expressions'},'*'));await frame.waitForFunction(()=>window.__FIELD_STUDIES__.getState().hostMode==='expressions');
+ {const toggle=frame.locator('.workspace-cluster>.header-menu-toggle');if(await toggle.isVisible())await toggle.click({force:true});}
+ if(await frame.locator('.native-field-panel').count()===0||!(await frame.locator('.native-field-panel').isVisible())){await frame.locator('[data-action="studio"]').click({force:true});const section=frame.locator('[data-action="studio-section"][data-value="native"]');if(await section.getAttribute('aria-current')!=='page')await section.click({force:true});}
+ await frame.locator('[data-native="resume"]').waitFor();await frame.locator('[data-native="resume"]').scrollIntoViewIfNeeded();
  disconnect=true;await frame.locator('[data-native="resume"]').click({force:true});await frame.waitForFunction(()=>window.__FIELD_STUDIES__.native().status==='unavailable',null,{timeout:15000});
  const frozen=await frame.evaluate(()=>({state:window.__FIELD_STUDIES__.inspect(true),cursor:window.__FIELD_STUDIES__.native().native.acknowledged}));
  // Unavailability stops simulation immediately; the one required asynchronous
