@@ -8,7 +8,7 @@
  */
 import test from "node:test";
 import assert from "node:assert/strict";
-import {occurrenceParticipation, readSceneRelationRequest} from "../src/techne/sceneConstellationRelation.ts";
+import {occurrenceParticipation, readSceneRelationRequest, registerProject} from "../src/techne/sceneConstellationRelation.ts";
 import {knowledgeEntityRef} from "../src/knowledge/expressionProjection.ts";
 
 const PARTICIPATION = "aikit.constellation-participation/v1";
@@ -48,4 +48,10 @@ test("the request must carry an exact revision, two occurrences and a bounded me
   assert.throws(() => readSceneRelationRequest({...valid, relation: ""}), /relationship meaning/);
   assert.throws(() => readSceneRelationRequest({...valid, relation: "x".repeat(161)}), /relationship meaning/);
   assert.throws(() => readSceneRelationRequest({...valid, direction: "sideways"}), /directed, undirected/);
+});
+
+test("the register's own path names its Project; foreign paths are refused", () => {
+  assert.equal(registerProject("Work/Notes/ProjectCentral/agents/wiki/wiki.json"), "Notes");
+  assert.equal(registerProject("Control/agents/wiki/wiki.json"), undefined);
+  assert.throws(() => registerProject("Work/Notes/other.json"), /outside Central/);
 });

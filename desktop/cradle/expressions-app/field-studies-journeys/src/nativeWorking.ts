@@ -266,6 +266,24 @@ export class NativeWorking {
    this.record=clone(record);return view;
   }finally{this.inFlight=false;}
  }
+ /** Adopt a newer owner revision of the SAME Expression (advanced by another
+  * native owner operation, e.g. a constellation re-projection) only while
+  * this draft is clean: nothing pending and no local changes. Unsaved work is
+  * never rebased; the caller is told the draft was kept. */
+ async advanceClean(journey:Journey,accept:()=>boolean=()=>true):Promise<KernelConversion|null>{
+  const record=this.record;
+  if(!record?.view)throw new Error('No native work is open');
+  if(record.pending||prepareCompositionEdit(record.view,journey).changes.length)return null;
+  const epoch=this.begin();
+  try{
+   const document=readDocument(await this.ports.expression({operation:'inspect',expression_ref:record.view.document.expression_ref}),record.view.document.expression_ref);
+   if(document.revision<=record.view.document.revision)return clone(record.view);
+   const view=connectionView(record.view,document);
+   if(epoch!==this.epoch||!accept())throw new Error('The work changed while the newer native revision was returning; its basis was kept');
+   await this.persist({...record,view},epoch);
+   return clone(view);
+  }finally{this.inFlight=false;}
+ }
  private async persist(record:NativeWorkingRecord,epoch:number):Promise<void>{
   await this.ports.checkpoint(record.draft_id,clone(record));
   if(epoch===this.epoch)this.record=clone(record);

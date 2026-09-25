@@ -257,6 +257,18 @@ export function installNativeWorkspace(host:NativeWorkspaceHost){
   cancelOpen:()=>{opens.cancel();update();},
   openFile:(path:string)=>run(()=>loadFile(path)),
   refresh:update,
+  /** Follow the same Expression to a newer owner revision when the draft is
+   * clean. Resolves false (draft kept) when there is local work to reconcile. */
+  advance:async():Promise<boolean>=>{
+   let adopted=false;
+   await run(async()=>{
+    const current=captureNativeAdoption(host,()=>restoreGeneration);
+    const view=await work.advanceClean(host.snapshot().journey,current);
+    if(!view)return;
+    restoreGeneration++;selections.cancel();host.load(view,true);update();adopted=true;
+   });
+   return adopted;
+  },
   select:(sceneId:string,entityId:string|null,bindingRef?:string)=>{
    const nativeRef=work.state?.view?.document.expression_ref;
    if(!nativeRef)return Promise.resolve('invalidated' as const);

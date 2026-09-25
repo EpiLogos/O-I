@@ -8,7 +8,7 @@ import type {KernelTransportStatus} from "../kernel/types";
 import {PARTICIPATION, RELATION, editConstruction, newRef, readRegister, saveConstruction, type ApplyKernel, type NativeConstruction} from "../knowledge/construction";
 import {projectConstruction} from "../knowledge/constructionProjection";
 import {knowledgeEntityRef} from "../knowledge/expressionProjection";
-import {resolveWikiSceneSource} from "./wikiReadingProvider";
+import {inspectWikiScene} from "./wikiReadingProvider";
 
 export interface SceneRelationRequest {
   expression_ref: string; revision: number; scene_ref: string;
@@ -59,14 +59,34 @@ export async function occurrenceParticipation(frame: NativeConstruction, occurre
   return candidates[0][PARTICIPATION].participation_ref;
 }
 
+/** `Work/<Project>/ProjectCentral/agents/wiki/wiki.json` names its Project;
+ * the root register (`Control/agents/wiki/wiki.json`) has none. */
+export function registerProject(path: string): string | undefined {
+  const match = /^Work\/([^/]+)\/ProjectCentral\/agents\/wiki\/wiki\.json$/.exec(path);
+  if (match) return match[1];
+  if (path === "Control/agents/wiki/wiki.json") return undefined;
+  throw new Error("The occurrences name a register outside Central's Wiki registers.");
+}
+
 export async function relateSceneConstellation(transport: KernelTransportStatus, input: unknown, apply?: ApplyKernel): Promise<SceneRelationReceipt> {
   const request = readSceneRelationRequest(input);
-  const {document, scene, register, current} = await resolveWikiSceneSource(transport, request);
+  const {document, scene} = await inspectWikiScene(transport, request);
   const subjects = [request.from_entity_ref, request.to_entity_ref].map(ref => {
     const subject = document.entities[ref]?.subject;
     if (!scene.entity_refs.includes(ref) || !subject) throw new Error("Both occurrences must be source-bound members of this Scene.");
     return subject;
   });
+  // The register is the one the occurrences themselves were read from: no
+  // dependency on which Wiki a navigator happens to have published.
+  const registerReadings = new Map<string, string>();
+  for (const subject of subjects) for (const row of subject.readings) if (row.availability === "available" && row.ref.startsWith("wiki:") && row.ref.endsWith("/wiki.json")) registerReadings.set(row.ref, row.revision);
+  if (registerReadings.size !== 1) throw new Error("These occurrences do not share one constellation register. Author the relationship in the source editor.");
+  const [[registerRef, registerRevision]] = [...registerReadings];
+  const path = registerRef.slice("wiki:".length), project = registerProject(path);
+  const current = await readRegister(transport, project);
+  if (current.file.location.path !== path) throw new Error("The occurrences' constellation register is not this Project's Wiki register.");
+  if (current.file.revision !== registerRevision) throw new Error("The constellation changed since this composition was opened. Refresh the live composition, then record the relationship.");
+  const register = {project};
   const bound = current.frames.filter(frame => subjects.every(subject => subject.readings.some(row => row.availability === "available" && row.ref === frame.ref && row.revision === String(frame.revision)) && frame.constellations[0].members.some(member => member.ref === subject.subject_ref)));
   if (bound.length !== 1) throw new Error("These occurrences have no single current constellation in common. Refresh the live composition or author the relationship in the source editor.");
   const frame = bound[0];
