@@ -6,13 +6,13 @@
  * the person left off.
  */
 import {useSyncExternalStore} from "react";
+import {productName} from "./vocabulary";
 
-export type SectionId = "status" | "harnesses" | "models" | "credentials" | "skills" | "profiles" | "permissions" | "appearance";
+export type SectionId = "status" | "harnesses" | "credentials" | "skills" | "profiles" | "permissions" | "appearance";
 
 export const SECTIONS: readonly {id: SectionId; label: string; glyph: string}[] = [
   {id: "status", label: "Status", glyph: "status"},
   {id: "harnesses", label: "Harnesses", glyph: "terminal"},
-  {id: "models", label: "Models", glyph: "cube"},
   {id: "credentials", label: "Credentials", glyph: "key"},
   {id: "skills", label: "Skills", glyph: "skills"},
   {id: "profiles", label: "Profiles", glyph: "list"},
@@ -20,18 +20,22 @@ export const SECTIONS: readonly {id: SectionId; label: string; glyph: string}[] 
   {id: "appearance", label: "Appearance", glyph: "appearance"},
 ];
 
-/** The product pages, in the suite's canonical order (§3.9). */
-export const PRODUCTS: readonly {id: string; label: string}[] = [
-  {id: "central", label: "Central"},
-  {id: "ai-kit", label: "AIKit"},
-  {id: "actuation", label: "Actuation"},
-  {id: "software-factory", label: "Factory"},
-  {id: "workcell", label: "Workcell"},
-  {id: "quaternal-logic", label: "Quaternal Logic"},
-  {id: "oi", label: "O:I"},
-];
-
 export type SettingsPlace = {kind: "section"; id: SectionId} | {kind: "product"; id: string};
+type PreviousPlace = {kind: "section"; id: "models"};
+
+/** Old saved links reach the same working harness/model controls. */
+function canonicalPlace(place: SettingsPlace | PreviousPlace): SettingsPlace {
+  return place.kind === "section" && place.id === "models" ? {kind: "section", id: "harnesses"} : place;
+}
+
+export function restoreSettingsPlace(value: unknown): SettingsPlace {
+  if (value && typeof value === "object" && "kind" in value && "id" in value) {
+    if (value.kind === "section" && value.id === "models") return {kind: "section", id: "harnesses"};
+    if (value.kind === "section" && SECTIONS.some(section => section.id === value.id)) return value as SettingsPlace;
+    if (value.kind === "product" && typeof value.id === "string" && value.id.trim().length > 0) return value as SettingsPlace;
+  }
+  return {kind: "section", id: "status"};
+}
 
 export interface SettingsNavState {
   place: SettingsPlace;
@@ -44,9 +48,7 @@ const KEY = "oi-settings.place.v1";
 
 function restore(): SettingsPlace {
   try {
-    const raw = JSON.parse(window.sessionStorage.getItem(KEY) ?? "null") as SettingsPlace | null;
-    if (raw?.kind === "section" && SECTIONS.some((section) => section.id === raw.id)) return raw;
-    if (raw?.kind === "product" && PRODUCTS.some((product) => product.id === raw.id)) return raw;
+    return restoreSettingsPlace(JSON.parse(window.sessionStorage.getItem(KEY) ?? "null"));
   } catch { /* presentation state only */ }
   return {kind: "section", id: "status"};
 }
@@ -71,8 +73,8 @@ export function useSettingsNav(): SettingsNavState {
   return useSyncExternalStore(subscribeSettingsNav, settingsNav, settingsNav);
 }
 
-export function goTo(place: SettingsPlace, focusRow: string | null = null): void {
-  publish({place, focusRow, focusSeq: state.focusSeq + 1});
+export function goTo(place: SettingsPlace | PreviousPlace, focusRow: string | null = null): void {
+  publish({place: canonicalPlace(place), focusRow, focusSeq: state.focusSeq + 1});
 }
 
 export function samePlace(a: SettingsPlace, b: SettingsPlace): boolean {
@@ -82,5 +84,5 @@ export function samePlace(a: SettingsPlace, b: SettingsPlace): boolean {
 export function placeLabel(place: SettingsPlace): string {
   return place.kind === "section"
     ? SECTIONS.find((section) => section.id === place.id)?.label ?? "Settings"
-    : PRODUCTS.find((product) => product.id === place.id)?.label ?? place.id.split("/").pop()!.replace(/[-_]+/g, " ").replace(/^./, (first) => first.toUpperCase());
+    : productName(place.id);
 }

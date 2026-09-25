@@ -57,7 +57,7 @@ export interface HarnessRow {
   adapter_gap: {authoring_skill_ref: string | null; missing_contract: string | null} | null;
 }
 
-export interface ProviderRow {id: string; label: string}
+export interface ProviderRow {id: string; label: string; protocol?:string; command?:string; entry?:string; sandboxed?:boolean}
 
 /** One declared route of a catalogued model (the owner's own words: a
  * route is a way to reach the model, and it names whether a key is needed). */
@@ -126,7 +126,12 @@ export function shapeProviders(data: unknown): ProviderRow[] {
   return data
     .map((row) => (row ?? {}) as Record<string, unknown>)
     .filter((row) => typeof row.id === "string" && row.id.length > 0)
-    .map((row) => ({id: row.id as string, label: typeof row.label === "string" ? row.label : row.id as string}));
+    .map((row) => ({id: row.id as string, label: typeof row.label === "string" ? row.label : row.id as string,
+      ...(typeof row.protocol === "string" ? {protocol:row.protocol} : {}),
+      ...(typeof row.command === "string" ? {command:row.command} : {}),
+      ...(typeof row.entry === "string" ? {entry:row.entry} : {}),
+      ...(typeof row.sandboxed === "boolean" ? {sandboxed:row.sandboxed} : {}),
+    }));
 }
 
 /** The resolved model catalogue → count + readable entries, owner order. */

@@ -30,8 +30,8 @@
 //!   `namespace_for` is reused; there is no second registry). A failed or
 //!   non-conforming read is a named degradation on the mount, never an
 //!   invented contribution.
-//! - `ConfigResolutionsRead` — one `oi config show <ref> <scope> --json`
-//!   per (setting, scope): the engine folds desired from the O:I desired
+//! - `ConfigResolutionsRead` — one `oi config resolve --request-file - --json`
+//!   batch for all (setting, scope) pairs: the engine folds desired from the O:I desired
 //!   state and passes the owner's `system --json` v2 axes through
 //!   unmodified (09 §7: O:I never recomputes them). A refusal the engine
 //!   answers with `oi.config-error/v1` (unsupported setting/scope, blocked
@@ -61,7 +61,7 @@
 //! outside the engine's own answers.
 
 use crate::composition;
-use crate::system_composition::{namespace_for, Availability, PRODUCT_IDS};
+use crate::system_composition::{namespace_for, Availability};
 use serde::{Deserialize, Serialize};
 use serde_json::{json, Value};
 use std::io::Write;
@@ -392,39 +392,27 @@ impl Client {
         let observed = now_ms();
         let census = composition::Client::with(self.executable.clone()).read(cwd);
         let composition_reading = registry_composition(&census);
-        let mut mounts = Vec::with_capacity(1 + PRODUCT_IDS.len());
-        let oi_args = vec!["config-contribution".to_owned(), "--json".to_owned()];
-        let oi_displayed: Vec<String> = std::iter::once(self.executable.display().to_string())
-            .chain(oi_args.iter().cloned())
-            .collect();
-        let oi_outcome = self.invoke(cwd, &oi_args, None);
-        mounts.push(mount(
-            "oi",
-            &oi_displayed,
-            oi_outcome,
-            MountComposition {
-                standing: MountStanding::Unpositioned,
-                position: None,
-            },
-        ));
-        for (index, product_id) in PRODUCT_IDS.iter().enumerate() {
-            let namespace = namespace_for(&census, index, product_id);
-            let args = vec![
-                namespace,
-                "config-contribution".to_owned(),
-                "--json".to_owned(),
-            ];
-            let displayed: Vec<String> = std::iter::once(self.executable.display().to_string())
-                .chain(args.iter().cloned())
-                .collect();
-            let outcome = self.invoke(cwd, &args, None);
-            mounts.push(mount(
-                product_id,
-                &displayed,
-                outcome,
-                mount_composition(&census, product_id),
-            ));
+        // Independent owner processes run together, then join in canonical
+        // order. A slow or unavailable owner does not serialize its siblings.
+        let mut requests = vec![("oi".to_owned(), Ok(vec!["config-contribution".to_owned(), "--json".to_owned()]), MountComposition { standing: MountStanding::Unpositioned, position: None })];
+        for position in census.positions.iter().filter(|position| position.product_id != "oi") {
+            let product_id = &position.product_id;
+            requests.push((product_id.clone(), namespace_for(&census, product_id).map(|namespace| vec![namespace, "config-contribution".to_owned(), "--json".to_owned()]), mount_composition(&census, product_id)));
         }
+        let mounts = std::thread::scope(|scope| {
+            let handles: Vec<_> = requests.into_iter().map(|(product_id, args, composition)| {
+                scope.spawn(move || {
+                    match args {
+                        Ok(args) => {
+                            let displayed = std::iter::once(self.executable.display().to_string()).chain(args.iter().cloned()).collect::<Vec<_>>();
+                            mount(&product_id, &displayed, self.invoke(cwd, &args, None), composition)
+                        }
+                        Err(error) => mount(&product_id, &[], InvokeOutcome::SpawnFailed(error), composition),
+                    }
+                })
+            }).collect();
+            handles.into_iter().map(|handle| handle.join().expect("configuration mount thread panicked")).collect()
+        });
         RegistryReading {
             schema: "oi.cradle.config-registry/v1".to_owned(),
             observed_at_unix_ms: observed,
@@ -441,30 +429,26 @@ impl Client {
     /// back as a resolution whose reconciliation names the refusal —
     /// unsupported pairings are data (the source contract: never omitted).
     pub fn resolutions_read(&self, cwd: &Path, pairs: &[ConfigPair]) -> Vec<Value> {
-        // Each pair is one `oi config show`, and each of those reads its
-        // owner's whole disclosure — independent, slow reads. They run side
-        // by side (a bounded handful at a time) and return in request order.
-        const PARALLEL: usize = 6;
-        let mut out = Vec::with_capacity(pairs.len());
-        for chunk in pairs.chunks(PARALLEL) {
-            let answers: Vec<Value> = std::thread::scope(|scope| {
-                let handles: Vec<_> = chunk
-                    .iter()
-                    .map(|pair| scope.spawn(move || self.resolution_one(cwd, pair)))
-                    .collect();
-                handles
-                    .into_iter()
-                    .zip(chunk)
-                    .map(|(handle, pair)| {
-                        handle.join().unwrap_or_else(|_| {
-                            degraded_resolution(pair, "unknown", "the resolution read stopped unexpectedly")
-                        })
-                    })
-                    .collect()
-            });
-            out.extend(answers);
+        if pairs.is_empty() { return Vec::new(); }
+        let args = vec!["config".to_owned(), "resolve".to_owned(), "--request-file".to_owned(), "-".to_owned(), "--json".to_owned()];
+        let request = serde_json::to_value(pairs).expect("configuration pairs are serializable");
+        match self.answer(cwd, &args, Some(&request)) {
+            Ok(document) if document["schema"] == "oi.config-resolutions/v1" => {
+                let rows = document["resolutions"].as_array();
+                pairs.iter().enumerate().map(|(index, pair)| {
+                    let row = rows.and_then(|rows| rows.get(index));
+                    if let Some(row) = row.filter(|row| row["schema"] == RESOLUTION_SCHEMA) {
+                        if row["setting_ref"] == pair.setting_ref && row["scope"] == serde_json::to_value(&pair.scope).expect("scope is serializable") { return row.clone(); }
+                        return degraded_resolution(pair, "unknown", "the batch resolution names a different setting or scope");
+                    }
+                    let (code, message) = error_parts(row.unwrap_or(&Value::Null), "The batch returned no resolution for this address");
+                    let status = if matches!(code.as_str(), "unsupported_setting" | "unsupported_scope" | "unknown_scope_kind") { "unsupported" } else { "blocked" };
+                    degraded_resolution(pair, status, &format!("{code}: {message}"))
+                }).collect()
+            }
+            Ok(_) => pairs.iter().map(|pair| degraded_resolution(pair, "unknown", "the engine answered with a document that is not a resolution batch")).collect(),
+            Err(error) => pairs.iter().map(|pair| degraded_resolution(pair, "blocked", error["message"].as_str().unwrap_or("the engine could not resolve settings"))).collect(),
         }
-        out
     }
 
     /// Every held desired entry with its resolution, in ONE engine call
@@ -475,58 +459,6 @@ impl Client {
             .answer(cwd, &args, None)
             .map_err(|error| error["message"].as_str().unwrap_or("the engine could not diff the held settings").to_owned())?;
         Ok(document["resolutions"].as_array().cloned().unwrap_or_default())
-    }
-
-    fn resolution_one(&self, cwd: &Path, pair: &ConfigPair) -> Value {
-        std::iter::once(pair)
-            .map(|pair| {
-                let args = vec![
-                    "config".to_owned(),
-                    "show".to_owned(),
-                    pair.setting_ref.clone(),
-                    pair.scope.compact(),
-                    "--json".to_owned(),
-                ];
-                match self.invoke(cwd, &args, None) {
-                    InvokeOutcome::SpawnFailed(error) => degraded_resolution(
-                        pair,
-                        "blocked",
-                        &format!("the oi engine could not be started: {error}"),
-                    ),
-                    InvokeOutcome::Completed {
-                        exit_code,
-                        stdout,
-                        stderr,
-                    } => {
-                        let document: Value = serde_json::from_str(&stdout).unwrap_or(Value::Null);
-                        if exit_code == 0 {
-                            if document.get("schema").and_then(Value::as_str)
-                                == Some(RESOLUTION_SCHEMA)
-                            {
-                                return document;
-                            }
-                            return degraded_resolution(
-                                pair,
-                                "unknown",
-                                "the engine answered with a document that is not a resolution",
-                            );
-                        }
-                        let (code, message) = error_parts(&document, &stderr);
-                        let status = match code.as_str() {
-                            "unsupported_setting" | "unsupported_scope" | "unknown_scope_kind" => {
-                                "unsupported"
-                            }
-                            // The engine answered `owner_unavailable`, or
-                            // failed otherwise: the subject cannot be
-                            // reconciled now, and the reason names it.
-                            _ => "blocked",
-                        };
-                        degraded_resolution(pair, status, &format!("{code}: {message}"))
-                    }
-                }
-            })
-            .next()
-            .expect("one pair yields one resolution")
     }
 
     // -----------------------------------------------------------------------
@@ -1546,12 +1478,9 @@ esac
         let scene = Scene::with_answers(
             r#"#!/bin/sh
 case "$*" in
-  "config show ai-kit:resolution:model.default project:p --json")
-    echo '{"schema":"oi.config-resolution/v1","setting_ref":"ai-kit:resolution:model.default","scope":{"scope_kind":"project","scope_ref":"p"},"desired":null,"native":{"effective":{"value":"sonnet-current"}},"native_reading":{"reading_digest":"aa","observed_at_unix_ms":0},"reconciliation":{"status":"satisfied","reason":null}}' ;;
-  "config show nope:section:key project:p --json")
-    echo '{"schema":"oi.config-error/v1","error_code":"unsupported_setting","message":"`nope:section:key` is not contributed"}' >&1; exit 1 ;;
-  "config show ai-kit:session:session.provider world --json")
-    echo '{"schema":"oi.config-error/v1","error_code":"owner_unavailable","message":"the owner did not answer"}' >&1; exit 1 ;;
+  "config resolve --request-file - --json")
+    cat >/dev/null
+    echo '{"schema":"oi.config-resolutions/v1","resolutions":[{"schema":"oi.config-resolution/v1","setting_ref":"ai-kit:resolution:model.default","scope":{"scope_kind":"project","scope_ref":"p"},"desired":null,"native":{"effective":{"value":"sonnet-current"}},"native_reading":{"reading_digest":"aa","observed_at_unix_ms":0},"reconciliation":{"status":"satisfied","reason":null}},{"schema":"oi.config-error/v1","error_code":"unsupported_setting","message":"`nope:section:key` is not contributed"},{"schema":"oi.config-error/v1","error_code":"owner_unavailable","message":"the owner did not answer"}]}' ;;
   *) echo "unexpected" >&2; exit 3 ;;
 esac
 "#,

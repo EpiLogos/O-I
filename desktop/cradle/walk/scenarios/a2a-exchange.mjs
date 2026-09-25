@@ -146,24 +146,31 @@ export default async function run({page,baseUrl,check,shot,channel,provision:p})
   // 8 — the human reviews beside the document: the return discloses its A2A
   // lineage, the exact peer reply, then lands through the owner's
   // revision-checked include.
-  const returns=page.locator(".document-receiving");
-  await returns.getByRole("button",{name:"Refresh this document's receiving"}).click();
-  await page.waitForFunction(()=>document.querySelector(".document-receiving header small")?.textContent?.includes("1 in the receiving field"),null,{timeout:20000});
+  await page.locator("[data-left-foot]").getByRole("button",{name:/^Inbox/}).click();
+  const returns=page.locator(".left-inbox");
+  await returns.getByRole("button",{name:"Refresh receiving"}).click();
+  await page.waitForFunction(()=>document.querySelector(".left-inbox header small")?.textContent?.includes("1 waiting"),null,{timeout:20000});
   await returns.locator(".receiving-row").first().click();
   const detail=returns.locator(".receiving-detail");await detail.waitFor();
+  await page.waitForFunction(()=>{const button=document.querySelector(".left-inbox .receiving-accept");return button&&!button.disabled;},null,{timeout:20000});
   const detailText=await detail.innerText();
-  check(detailText.includes("Agent — agent:reader-walk"),"The A2A return's producer is the receiving participant");
-  check(detailText.includes("A2A exchange")&&detailText.includes(difference.exchange_ref)&&detailText.includes("a2a-task:peer-1"),"The return discloses its A2A lineage — the exchange and the task it came back as");
+  const proposed=p.human("central.receiving.read",{project:"Editor",return_ref:submitted.return_ref});
+  check(proposed.record.author.principal_ref==="agent:reader-walk"&&proposed.record.author.actor_kind==="agent","The native receiving record identifies the exact receiving participant as producer");
+  check(detailText.includes("Agent contribution")&&!detailText.includes("agent:reader-walk"),"Inbox shows Agent attribution without a principal identifier dump");
   check(detailText.includes(reply),"The exact peer reply is shown before any decision");
   await returns.getByRole("button",{name:"Accept current basis"}).click();
-  await page.waitForFunction(()=>document.querySelector(".document-receiving .receiving-detail")?.textContent?.includes("accepted by"),null,{timeout:20000});
+  await returns.getByRole("button",{name:"Include into the document"}).waitFor({state:"visible",timeout:20000});
+  const reviewed=p.human("central.receiving.read",{project:"Editor",return_ref:submitted.return_ref});
+  check(reviewed.record.review?.disposition==="accepted"&&reviewed.record.review.reviewer_ref==="human:walk"&&reviewed.record.review.source_revision===p.doc.revision.revision,"Native review retains the exact human reviewer and accepted source revision");
   await returns.getByRole("button",{name:"Include into the document"}).click();
-  await page.waitForFunction(()=>document.querySelector(".document-receiving .receiving-status")?.textContent==="included",null,{timeout:20000});
+  await page.waitForFunction(()=>document.querySelector(".left-inbox p.receiving-included")!==null,null,{timeout:20000});
   check(true,"Inclusion lands through the owner's revision-checked operation on the exact reviewed basis");
   await shot("a2a-return-included");
 
   // 9 — the document holds the peer's reply as native facts.
   const finalDoc=p.human("central.document.read",{project:"Editor",source_ref:p.doc.source.ref,document_id:p.doc.document_id});
+  const included=p.human("central.receiving.read",{project:"Editor",return_ref:submitted.return_ref});
+  check(included.record.status==="included"&&included.record.proposal.a2a.exchange_ref===difference.exchange_ref&&included.record.proposal.a2a.transport_ref==="a2a-task:peer-1","Native inclusion preserves the A2A exchange and peer task");
   const contributions=finalDoc.document.contributions;
   check(contributions.length===1&&contributions[0].html.includes(reply)&&contributions[0].author_ref==="agent:reader-walk"&&contributions[0].reviewed_by==="human:walk","The document holds the admitted A2A material with distinct producer and human-review facts");
   check(finalDoc.revision.revision!==p.doc.revision.revision,"The document source revision advanced through the inclusion");

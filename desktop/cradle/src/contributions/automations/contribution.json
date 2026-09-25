@@ -1,0 +1,18 @@
+{
+  "schema": "oi.native-source-contribution/v1",
+  "contribution_ref": "oi.contribution/automations",
+  "owner": "ai-kit",
+  "revision": 1,
+  "entry": "descriptor.tsx",
+  "entry_sha256": "98a0004d8ec301a845feba95f663c39cb32b7ac55593f0ca43a42702a7c483c6",
+  "surfaces": [
+    {
+      "descriptor_ref": "oi.surface/automations",
+      "kind": "automations",
+      "title": "Automations",
+      "mount_export": "AutomationsHostedSurface",
+      "retention": "mounted",
+      "region": "canvas"
+    }
+  ]
+}

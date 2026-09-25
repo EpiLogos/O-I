@@ -1,3 +1,4 @@
+import {ConnectionRuntime} from "../oi/connectionRuntime.mjs";
 /**
  * @license
  * SPDX-License-Identifier: Apache-2.0
@@ -12,6 +13,7 @@ import { resolveEntityPose } from "./entityPose.mjs";
 const BASE_SCALE = 0.56;
 class EntityRuntime {
   sampler;
+  connections = new ConnectionRuntime();
   bakeGeneration = 0;
   currentPlane = "vertical";
   texW = 0;
@@ -52,6 +54,7 @@ class EntityRuntime {
     this.texW = texW;
     this.texH = texH;
     this.particleCount = particleCount;
+    this.connections.resize(particleCount);
     this.dataA = new Float32Array(texW * texH * 4);
     this.dataB = new Float32Array(texW * texH * 4);
     this.noiseData = new Float32Array(texW * texH * 4);
@@ -146,7 +149,7 @@ class EntityRuntime {
   // ------------------------------------------------------------------ layout & baking
   /** Recompute partitions. Returns true when the layout changed (all partitions need baking). */
   layout(entities) {
-    this.partitions = layoutPartitions(entities, this.particleCount);
+    this.partitions = layoutPartitions(entities, this.connections.start);
     const sig = this.partitions.map((p) => `${p.entityId}:${p.start}-${p.end}`).join(",");
     if (sig === this.layoutSig) return false;
     this.layoutSig = sig;
@@ -257,6 +260,11 @@ class EntityRuntime {
       u.tintWeights[i] = 0;
       u.morph[i] = 0;
     }
+    this.connections.update(poses, this.dataA, this.dataB, this.noiseData);
+    if (this.connections.enabled) {
+      this.textureA.needsUpdate = true; this.textureB.needsUpdate = true; this.noiseTexture.needsUpdate = true;
+    }
+    this.uniforms.connectionStart = this.connections.start;
     return { frames, poses, impulses, rebaked };
   }
   /** Explicit reset: particle seed = current blended targets translated to each entity's centre. */

@@ -217,6 +217,14 @@ impl CentralClient {
 
     /// The project query this host configured — the co-reference fallback
     /// when a caller holds no project of its own.
+    /// Resource identity includes the native owner route and configured World;
+    /// renderer transport URLs and presentation refs cannot choose this epoch.
+    pub(crate) fn retained_resource_epoch(&self)->String {
+        use sha2::{Digest,Sha256};
+        let basis=format!("{:?}|{:?}|{:?}|{}",self.executable,self.central_executable,self.central_root,self.suite_route);
+        format!("central-owner:{:x}",Sha256::digest(basis.as_bytes()))
+    }
+
     pub fn configured_project(&self) -> &str {
         &self.project_query
     }

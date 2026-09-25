@@ -9,9 +9,9 @@ const { chatProvisionTarget } = await import('../src/agent/chat/firstSend.ts');
 const { parseContextItems, removeContextItem } = await import('../src/context/contextItems.ts');
 
 test('a fresh chat provisions into the bound project, else Central', () => {
-  assert.equal(chatProvisionTarget(undefined), 'Central', 'no bound project means the Central meta-project');
-  assert.equal(chatProvisionTarget(''), 'Central');
-  assert.equal(chatProvisionTarget('   '), 'Central', 'a blank selection is no selection');
+  assert.equal(chatProvisionTarget(undefined), '', 'Central root uses the native empty scope, not a child name');
+  assert.equal(chatProvisionTarget(''), '');
+  assert.equal(chatProvisionTarget('   '), '', 'a blank selection is Central root');
   assert.equal(chatProvisionTarget('Factory'), 'Factory');
   assert.equal(chatProvisionTarget(' O-I '), 'O-I', 'a real project name is kept, only padded');
 });

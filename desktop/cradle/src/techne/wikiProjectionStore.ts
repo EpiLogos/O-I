@@ -17,7 +17,7 @@
  *     states) and the selection mirror derived from the kernel document's
  *     own selection — the kernel document remains the authoritative
  *     selection, the mirror is what apertures read;
- *   - the centre (WikiExpressionBody) is the only kernel actor: it ensures
+ *   - the hosted centre (wikiNativeExpression) is the kernel actor: it ensures
  *     the projection, opens/focuses the real document through the kernel's
  *     expression op, and writes every result back here;
  *   - apertures ask for selection through `requestWikiSelection`; the
@@ -41,15 +41,16 @@ type ReadyReading = Extract<WikiRegisterReading, {state: "ready"}>;
  * projected but its generation is not (yet) open in the kernel; "opening" =
  * the centre's inspect/open is in flight; "ready"/"drift" carry the
  * standing kernel document. */
-export type RegisterStanding =
+export type RegisterStanding = (
   | {phase: "idle"}
   | {phase: "reading"}
   | {phase: "absent"}
   | {phase: "unavailable"; reason: string; reading?: WikiRegisterReading; projection?: WikiProjection}
   | {phase: "projected"; reading: ReadyReading; projection: WikiProjection}
   | {phase: "opening"; reading: ReadyReading; projection: WikiProjection}
-  | {phase: "ready"; projection: WikiProjection; document: ExpressionDocument}
-  | {phase: "drift"; projection: WikiProjection; document: ExpressionDocument; reason: string};
+  | {phase: "ready"; reading?: ReadyReading; projection: WikiProjection; document: ExpressionDocument}
+  | {phase: "drift"; reading?: ReadyReading; projection: WikiProjection; document: ExpressionDocument; reason: string}
+) & {readingInvalidated?: boolean};
 
 export interface WikiProjectionSelection {
   registerKey: string | null;
@@ -184,17 +185,65 @@ export function setWikiProjectionRegister(registerKey: string) {
 export function ensureWikiProjection(register: WikiRegister, transport: KernelTransportStatus) {
   const existing = state.standings[register.key];
   if (existing && existing.phase !== "idle") return;
+  const generation = (rereadGenerations.get(register.key) ?? 0) + 1;
+  rereadGenerations.set(register.key, generation);
   setStanding(register.key, {phase: "reading"});
   void (async () => {
     try {
       const reading = await readWikiRegister(transport, register);
+      if (rereadGenerations.get(register.key) !== generation) return;
       if (reading.state === "absent") { setStanding(register.key, {phase: "absent"}); return; }
       if (reading.state === "unavailable") { setStanding(register.key, {phase: "unavailable", reason: reading.reason}); return; }
       setStanding(register.key, {phase: "projected", reading, projection: projectWikiExpression(reading)});
     } catch (cause) {
+      if (rereadGenerations.get(register.key) !== generation) return;
       setStanding(register.key, {phase: "unavailable", reason: text(cause)});
     }
   })();
+}
+
+/** Keep the very reading that produced the projection; no second cache or
+ * register fallback. An invalidated reading may remain visible as a draft's
+ * basis, but cannot supply new instrument facets as a current reading. */
+function retainedReadingOf(standing: RegisterStanding | undefined): ReadyReading | undefined {
+  return standing && "reading" in standing && standing.reading?.state === "ready" ? standing.reading : undefined;
+}
+export function wikiReadingOf(standing: RegisterStanding | undefined): ReadyReading | undefined {
+  return standing?.readingInvalidated ? undefined : retainedReadingOf(standing);
+}
+
+/** Resolve only the requested register's existing projection owner. Normal
+ * instrument switches return synchronously cached material; restored native
+ * documents can initialize their proven register once. */
+export function ensureWikiProjectionReading(register: WikiRegister, transport: KernelTransportStatus): Promise<ReadyReading> {
+  return new Promise((resolve, reject) => {
+    let done = false;
+    let unsubscribe = () => {};
+    const check = () => {
+      const standing = state.standings[register.key];
+      if (!standing || standing.phase === "idle" || standing.phase === "reading") return;
+      let error: string | undefined;
+      if (standing.readingInvalidated) error = "This Scene's source reading changed; refresh its Wiki reading before using its facets";
+      else if (standing.phase === "unavailable") error = standing.reason;
+      else if (standing.phase === "absent") error = "This register has no Wiki reading";
+      const reading = wikiReadingOf(standing);
+      if (!error && !reading) error = "The native projection has no retained source reading";
+      if (done) return;
+      done = true; unsubscribe();
+      if (error) reject(new Error(error)); else resolve(reading!);
+    };
+    unsubscribe = subscribeWikiProjection(check);
+    ensureWikiProjection(register, transport);
+    check();
+  });
+}
+
+/** Explicit source refresh reuses the existing receipt-driven owner path.
+ * It does not replace or edit the native Expression document. */
+export async function refreshWikiProjectionReading(register: WikiRegister, transport: KernelTransportStatus): Promise<ReadyReading> {
+  if (!state.standings[register.key] || state.standings[register.key].phase === "idle") return ensureWikiProjectionReading(register, transport);
+  await rereadWikiRegister(register, transport, true);
+  return ensureWikiProjectionReading(register, transport);
 }
 
 // ---- the centre writes the kernel lifecycle back ---------------------------
@@ -211,7 +260,7 @@ export function wikiProjectionOpening(registerKey: string) {
 export function wikiProjectionDocumentReady(registerKey: string, document: ExpressionDocument) {
   const standing = state.standings[registerKey];
   if (!standing || !("projection" in standing) || !standing.projection) return;
-  setStanding(registerKey, {phase: "ready", projection: standing.projection, document});
+  setStanding(registerKey, {phase: "ready", reading: retainedReadingOf(standing), readingInvalidated: standing.readingInvalidated, projection: standing.projection, document});
   mutate(current => ({selection: selectionOf(registerKey, current.standings[registerKey])}));
 }
 
@@ -221,8 +270,8 @@ export function wikiProjectionDocumentFocused(registerKey: string, document: Exp
   const standing = state.standings[registerKey];
   if (!standing || !("projection" in standing) || !standing.projection) return;
   setStanding(registerKey, standing.phase === "drift"
-    ? {phase: "drift", projection: standing.projection, document, reason: standing.reason}
-    : {phase: "ready", projection: standing.projection, document});
+    ? {phase: "drift", reading: retainedReadingOf(standing), readingInvalidated: standing.readingInvalidated, projection: standing.projection, document, reason: standing.reason}
+    : {phase: "ready", reading: retainedReadingOf(standing), readingInvalidated: standing.readingInvalidated, projection: standing.projection, document});
   mutate(current => ({selection: selectionOf(registerKey, current.standings[registerKey])}));
 }
 
@@ -244,7 +293,7 @@ export function wikiProjectionKernelUnavailable(registerKey: string, reason: str
 export function wikiProjectionDrift(registerKey: string, document: ExpressionDocument, reason: string) {
   const standing = state.standings[registerKey];
   if (!standing || !("projection" in standing) || !standing.projection) return;
-  setStanding(registerKey, {phase: "drift", projection: standing.projection, document, reason});
+  setStanding(registerKey, {phase: "drift", reading: retainedReadingOf(standing), readingInvalidated: standing.readingInvalidated, projection: standing.projection, document, reason});
   mutate(current => ({selection: selectionOf(registerKey, current.standings[registerKey])}));
 }
 
@@ -289,7 +338,7 @@ export function applyWikiProjectionReceipt(
   for (const register of state.registers) {
     if (wikiPathOf(register) !== receipt.path) continue;
     const standing = state.standings[register.key];
-    if (!standing || standing.phase === "idle" || standing.phase === "reading") continue;
+    if (!standing || standing.phase === "idle") continue;
     invalidated.push(register.key);
     void rereadWikiRegister(register, transport);
   }
@@ -301,9 +350,11 @@ export function applyWikiProjectionReceipt(
  * opens its new generation), an honest absence or refusal replaces a cache
  * that no longer has a basis, and a failed re-read under a standing document
  * is named as drift rather than silently keeping a currentness claim. */
-async function rereadWikiRegister(register: WikiRegister, transport: KernelTransportStatus) {
+async function rereadWikiRegister(register: WikiRegister, transport: KernelTransportStatus, preserveDocument = false) {
   const generation = (rereadGenerations.get(register.key) ?? 0) + 1;
   rereadGenerations.set(register.key, generation);
+  const previous = state.standings[register.key];
+  if (previous) setStanding(register.key, {...previous, readingInvalidated: true});
   let fresh: WikiRegisterReading;
   try {
     fresh = await readWikiRegister(transport, register);
@@ -314,7 +365,7 @@ async function rereadWikiRegister(register: WikiRegister, transport: KernelTrans
   }
   try {
     const standing = state.standings[register.key];
-    if (!standing || standing.phase === "idle" || standing.phase === "reading") return;
+    if (!standing || standing.phase === "idle") return;
     if (rereadGenerations.get(register.key) !== generation) return;
     if (fresh.state === "absent") { setStanding(register.key, {phase: "absent"}); return; }
     if (fresh.state === "unavailable") {
@@ -328,7 +379,14 @@ async function rereadWikiRegister(register: WikiRegister, transport: KernelTrans
       });
       return;
     }
-    setStanding(register.key, {phase: "projected", reading: fresh, projection: projectWikiExpression(fresh)});
+    const projection = projectWikiExpression(fresh);
+    if (preserveDocument && (standing.phase === "ready" || standing.phase === "drift")) {
+      const basis = projection.document.provenance[0];
+      const matches = standing.document.provenance.some(row => row.ref === basis.ref && row.revision === basis.revision && row.availability === "available");
+      setStanding(register.key, matches
+        ? {phase: "ready", reading: fresh, projection, document: standing.document}
+        : {phase: "drift", reading: fresh, projection, document: standing.document, reason: "The source revision changed; the native composition was retained"});
+    } else setStanding(register.key, {phase: "projected", reading: fresh, projection});
   } catch {
     // The standing generation stays exactly as it was.
   }

@@ -31,12 +31,6 @@ const errors = [];
 page.on('pageerror', error => errors.push(String(error)));
 
 const LENSES = ['project', 'canvas', 'timeline', 'journey', 'place', 'palace'];
-const OFFICE = {project: 'M0′', canvas: 'M1′', timeline: 'M2′', journey: 'M3′', place: 'M4′', palace: 'M5′'};
-// The surface each routed lens opens, and the lenses whose Studio carries a
-// NATIVE operation (a `lens-op`, not a browser-local save).
-const ROUTED = {project: 'native-library', canvas: 'native-work', timeline: 'open-timeline', journey: 'sequence-panel'};
-const NATIVE_OP = ['canvas', 'journey'];
-const FACET = {place: 'place', palace: 'palace'};
 const receipt = {schema: 'oi.techne-lens-studio/v1', standing: 'current-app instrument surface in a real browser; native operations are a separate host-channel proof', passed: false, lenses: []};
 
 const state = () => page.evaluate(() => window.__FIELD_STUDIES__.getState());
@@ -52,43 +46,26 @@ try {
   const choices = await page.locator('#lens-chooser .lens-choice').evaluateAll(nodes => nodes.map(n => n.dataset.lens));
   assert.deepEqual(choices, LENSES, 'the chooser carries M0′–M5′ in order');
 
-  // A construction basis is honest before any native work is open.
+  // This standalone CI probe has no native host. It must not fabricate a
+  // source field; positive component/owner acceptance belongs to native tests.
   await active('project').click();
-  await page.waitForSelector('#lens-studio:not([hidden])');
-  assert.ok(await page.locator('#lens-studio .lens-basis[data-empty="true"]').count(), 'the empty construction is an honest state, not an invented subject');
-
-  // Field basis for the continuity check — captured before touching lenses.
   const before = await state();
-
+  const documentBefore = await page.evaluate(() => window.__FIELD_STUDIES__.getDocument());
   for (const id of LENSES) {
     await active(id).click();
-    assert.equal(await active(id).getAttribute('aria-selected'), 'true', `${id} is the selected instrument`);
-    assert.equal((await state()).activeLens, id, `getState reports ${id} active`);
-    const studio = page.locator('#lens-studio');
-    assert.equal(await studio.getAttribute('data-lens'), id, `the Studio presents the ${id} lens`);
-    assert.ok((await studio.locator('.panel-kicker').innerText()).includes(OFFICE[id]), `the Studio names office ${OFFICE[id]}`);
-    // Every lens discloses its material from the construction (§36), never a
-    // blank panel.
-    assert.ok(await studio.locator('.lens-material, .lens-facet').count(), `${id} discloses material or an honest facet`);
-    // No lens routes to a browser-local scene save — the §29/§41 negative that
-    // would fire if an instrument regressed to the shadow store.
-    assert.equal(await studio.locator('[data-action="save-scene"], [data-action="save-next"]').count(), 0, `${id} carries no browser-local save`);
-    if (ROUTED[id]) {
-      // M0′–M3′: operative controls carrying the app's own actions, not stats.
-      assert.ok(await studio.locator(`.lens-control[data-action="${ROUTED[id]}"]`).count(), `${id} presents its real operating control (${ROUTED[id]})`);
-      assert.equal(await studio.locator('.lens-facet').count(), 0, `${id} is not an honest-facet placeholder`);
+    assert.equal(await active(id).getAttribute('aria-selected'), 'true');
+    assert.equal((await state()).activeLens, id);
+    if (['canvas', 'timeline', 'place'].includes(id)) {
+      await page.waitForFunction(() => /unavailable|not been announced/.test(document.querySelector('.research-instrument-status')?.textContent ?? ''));
+      assert.equal(await page.locator('#lens-studio:not([hidden])').count(), 0, 'research tools do not open a duplicate explanatory panel');
+      assert.equal(await page.locator('.research-instrument-body .react-flow__node').count(), 0, 'missing owner never becomes demo graph data');
     } else {
-      // M4′/M5′: an honest facet state DERIVED from the construction — its
-      // purpose and eligible material — with no fabricated control or coordinate
-      // (there is no native place/palace owner op in this application to honour).
-      assert.ok(await studio.locator(`.lens-facet[data-lens-facet="${FACET[id]}"]`).count(), `${id} names its honest facet state`);
-      assert.equal(await studio.locator('.lens-control').count(), 0, `${id} invents no control it cannot honour`);
+      await page.waitForSelector('#lens-studio:not([hidden])');
+      const action = id === 'project' ? 'native-library' : 'sequence-panel';
+      assert.equal(await page.locator(`#lens-studio [data-action="${action}"]`).count(), 1);
+      if (id !== 'project') assert.equal(await page.locator('#lens-studio [data-op="commit"]').count(), 1);
     }
-    if (NATIVE_OP.includes(id)) {
-      // M1′/M3′ persist through a NATIVE operation (the owner's commit), not a
-      // browser save — the misroute the review caught.
-      assert.ok(await studio.locator('.lens-control-native[data-action="lens-op"][data-op="commit"]').count(), `${id} commits through the native owner, not a browser save`);
-    }
+    assert.deepEqual(await page.evaluate(() => window.__FIELD_STUDIES__.getDocument()), documentBefore, 'lens selection retains the same actual Expression draft and Scenes');
     receipt.lenses.push(id);
   }
 
@@ -102,12 +79,11 @@ try {
   assert.deepEqual(after.selected, before.selected, 'switching instruments does not change the selection');
   assert.equal(after.hostMode, 'techne', 'the workspace stays in the Technē cut across lens changes');
 
-  // The active lens's control is operative: routing M1′ opens the real native
-  // composition surface (its native operations are the separate host proof).
-  await active('canvas').click();
-  await page.locator('#lens-studio .lens-control[data-action="native-work"]').click();
+  // M5 operates the existing native composition controls in this engine.
+  await active('palace').click();
+  await page.locator('#lens-studio [data-action="native-work"]').click();
   await page.waitForSelector('#native-work:not([hidden])');
-  assert.ok(await page.locator('#native-work:not([hidden])').count(), 'the M1′ control opens the real native composition surface');
+  await page.locator('#native-work [data-native="close"]').click();
 
   // Keyboard: the chooser is a tablist. Selecting keeps focus on the chosen tab
   // (the innerHTML-rebuild focus loss the review caught is fixed), and arrow
@@ -141,7 +117,7 @@ try {
     await page.screenshot({path: resolve(dir, 'lens-studio.png')});
     writeFileSync(resolve(dir, 'lens-studio-receipt.json'), JSON.stringify(receipt, null, 2));
   }
-  console.log(`Technē Lens Studio: chooser + floating Studio in the current app, six instruments (${receipt.lenses.join(', ')}) with real controls or honest facet states, lens continuity preserved, chooser absent in the lived cut.`);
+  console.log(`Technē Lens Studio: chooser + floating Studio in the current app, six instrument choices (${receipt.lenses.join(', ')}) with real engine controls and missing-owner refusal, lens continuity preserved, chooser absent in the lived cut.`);
 } finally {
   await browser.close();
   await new Promise(done => server.close(done));

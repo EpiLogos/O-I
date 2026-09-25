@@ -14,12 +14,11 @@ try{
  assert.equal(await page.getByRole('checkbox',{name:'Skill Disabled native skill',exact:true}).isDisabled(),true);
  assert.equal(await page.evaluate(()=>window.creation.calls.filter(c=>!['roster','scope','skills'].includes(c.action)).length),0);
  await page.getByRole('button',{name:'Open native Agent/session setup',exact:true}).click();
- const search=page.getByRole('searchbox',{name:'Search settings',exact:true});await search.waitFor();
- assert.equal(await search.inputValue(),'@owner:ai-kit');
- await page.getByRole('button',{name:'Open credential presence and references',exact:true}).click();
- await page.waitForFunction(()=>document.querySelector('[aria-label="Search settings"]')?.value==='@owner:ai-kit @secret');
+ await page.getByRole('heading',{name:'Harnesses',exact:true}).waitFor();
+ await page.locator('[data-settings-section="credentials"]').click();
+ await page.getByRole('heading',{name:'Credentials',exact:true}).waitFor();
  assert.equal(await page.locator('input[type="password"]').count(),0);
- checks.push('The actual SettingsHome receiving path targets the disclosed native owner and credential-reference controls, with no secret-material field.');
+ checks.push('The production Settings page receives the Agent setup destination at Harnesses and navigates to Credentials; unavailable disclosures do not invent a secret-material field.');
  await page.getByRole('button',{name:'Return to preserved composer and re-read readiness',exact:true}).click();
  assert.equal(await page.getByRole('textbox',{name:'Human purpose',exact:true}).inputValue(),'Read the permitted source.');
  checks.push('Setup excursion preserves the exact held purpose and only refreshes owner readings on return.');

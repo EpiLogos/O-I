@@ -36,7 +36,8 @@ pub fn install(app: &AppHandle, arrangements: &[Arrangement], active: &str) -> t
         .text("surface.maximize", "Maximize / Restore Pane")
         .text("surface.detach", "Detach Active Surface")
         .separator().text("region.left", "Show / Hide Central")
-        .text("region.right", "Show / Hide Agent").build()?;
+        .text("region.right", "Show / Hide Agent");
+    let window=window.build()?;
     app.set_menu(MenuBuilder::new(app).items(&[&application, &edit, &workspace, &window]).build()?)?;
     if let Some(current) = arrangements.iter().find(|w| w.id == active) {
         if let Some(window) = app.get_window("main") { window.set_title(&format!("{} — O-I", current.name))?; }

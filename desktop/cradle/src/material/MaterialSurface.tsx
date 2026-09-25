@@ -1,3 +1,4 @@
+import {IconTabStrip} from "../workspace/primitives/IconTabStrip";
 import {readDraft} from "../workspace/drafts";
 import {useCallback,useEffect,useMemo,useRef,useState} from "react";
 import {Loading} from "../shared/Loading";
@@ -281,11 +282,7 @@ const FORMAT_LABEL: Record<MaterialFormat, string> = {
 // second, unrelated selection grammar. Reusing role=tab/aria-selected, the
 // pill body now carries the selection instead.
 function MaterialToggle({ view, onChange }: { view: MaterialView; onChange: (view: MaterialView) => void }) {
-  return <div className="material-toggle" role="tablist" aria-label="Document presentation">
-    <button type="button" role="tab" aria-selected={view === "rendered"} onClick={() => onChange("rendered")}>Rendered</button>
-    <button type="button" role="tab" aria-selected={view === "split"} onClick={() => onChange("split")}>Split</button>
-    <button type="button" role="tab" aria-selected={view === "source"} onClick={() => onChange("source")}>Source</button>
-  </div>;
+  return <IconTabStrip aria-label="Document presentation" items={[{id:"rendered",label:"Rendered",icon:"file"},{id:"split",label:"Split",icon:"columns"},{id:"source",label:"Source",icon:"terminal"}]} current={view} onSelect={id=>onChange(id as MaterialView)}/>;
 }
 
 /** For the browser-transport HTML rendered view: the already-fetched

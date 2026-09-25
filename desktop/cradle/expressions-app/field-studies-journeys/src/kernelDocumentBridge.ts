@@ -1,3 +1,4 @@
+import {generatedWikiAppearance, wikiDisplayName} from '../../../../../packages/oi-design-system/expressions-engine/oi/wikiPresentation.mjs';
 /** Native Expression -> bounded working view of the SAME document.
  *
  * Native identities and the complete document stay above the engine's ten
@@ -53,12 +54,12 @@ function idFor(raw:string,kind:string,ids:Map<string,string>,preferred?:string):
  }
  ids.set(id,key);return id;
 }
-function convertEntity(input:KernelEntity,id:string,notes:string[]):Entity{
- const p=input.parameters??{},glyph=text(p.glyph,'O');
- const out=entity(input.title.slice(0,160),glyph.slice(0,120),{x:number(p.x,0)/WORLD_SCALE,y:number(p.y,0)/WORLD_SCALE,z:number(p.z,0)/WORLD_SCALE});
+function convertEntity(input:KernelEntity,id:string,notes:string[],document?:KernelExpressionDocument):Entity{
+ const p=input.parameters??{},glyph=text(p.glyph,'O'),appearance=generatedWikiAppearance(document,input);
+ const out=entity((appearance?.title??input.title).slice(0,160),glyph.slice(0,120),{x:number(p.x,0)/WORLD_SCALE,y:number(p.y,0)/WORLD_SCALE,z:number(p.z,0)/WORLD_SCALE});
  out.id=id;
  out.kind=text(p.kind,'formation') as Entity['kind'];
- const shape=text(p.shape,'glyph');out.shape=(shape==='glyph'?'text':shape) as Entity['shape'];
+ const shape=appearance?.shape??text(p.shape,'glyph');out.shape=(shape==='glyph'?'text':shape) as Entity['shape'];
  out.scale=number(p.scale,1);out.share=number(p.share,1);
  out.size={x:number(p.width,out.size.x*WORLD_SCALE)/WORLD_SCALE,y:number(p.height,out.size.y*WORLD_SCALE)/WORLD_SCALE};
  out.rotation=number(p.rotation,0)*180/Math.PI;
@@ -83,8 +84,9 @@ export function nativeSceneMaterial(doc:KernelExpressionDocument,s:KernelScene):
   if(material.name!==s.title)throw new Error('Native Scene name and material title disagree');
   return material;
  }
- const material=blankScene(s.title.slice(0,160));material.id=s.scene_ref;
- material.entities=s.entity_refs.map(ref=>convertEntity(doc.entities[ref],ref,[]));
+ const generated=s.entity_refs.some(ref=>generatedWikiAppearance(doc,doc.entities[ref]));
+ const material=blankScene((generated?wikiDisplayName(s.title):s.title).slice(0,160));material.id=s.scene_ref;
+ material.entities=s.entity_refs.map(ref=>convertEntity(doc.entities[ref],ref,[],doc));
  if(material.entities.some(e=>e.position.z!==0))material.view.mode='3d';
  return material;
 }
@@ -114,7 +116,7 @@ export function kernelDocumentToJourney(raw:unknown,options:ViewOptions={}):Kern
  const bindings:Record<string,SceneBinding>={};
  for(const [ref,input] of Object.entries(doc.entities)){
   if(!input||input.entity_ref!==ref||typeof input.title!=='string')throw new Error('Native entity identity disagrees with its binding');
-  converted.set(ref,convertEntity(input,idFor(ref,'entity',ids,options.identity?.entities?.[ref]),notes));
+  converted.set(ref,convertEntity(input,idFor(ref,'entity',ids,options.identity?.entities?.[ref]),notes,doc));
  }
  for(const [ref,r] of Object.entries(doc.relations??{})){
   if(!r||r.binding_ref!==ref||!r.relation||typeof r.relation.ref!=='string'||typeof r.relation.revision!=='string'||!converted.has(r.from_entity_ref)||!converted.has(r.to_entity_ref))throw new Error(`Native relation ${ref} has absent or ambiguous endpoints`);

@@ -206,10 +206,17 @@ fn refusal_words(stdout: &[u8], stderr: &[u8]) -> String {
 /// non-zero exit is the owner's refusal in its own words; unparsable output
 /// is `incompatible`. Reads never mutate, so `operation_may_have_run` is false.
 pub(crate) fn run_bounded(executable: &Path, args: &[OsString], cwd: Option<&Path>, timeout: Duration, source: &str) -> Result<Value, Error> {
+    run_bounded_with_env(executable, args, cwd, timeout, source, &[])
+}
+
+/// Explicit owner-home overrides are applied only to this bounded child.
+/// Callers never mutate the process environment shared by other owners.
+pub(crate) fn run_bounded_with_env(executable: &Path, args: &[OsString], cwd: Option<&Path>, timeout: Duration, source: &str, environment: &[(OsString, OsString)]) -> Result<Value, Error> {
     let fail = |kind: &str, message: String| Error { kind: kind.into(), message, operation_may_have_run: false };
     let mut command = Command::new(executable);
     command
         .args(args)
+        .envs(environment.iter().cloned())
         .env_remove("OI_POSITION_REF")
         .env_remove("OI_OCCUPANT_GENERATION")
         .stdin(Stdio::null())

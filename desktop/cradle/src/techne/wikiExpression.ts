@@ -1,3 +1,7 @@
+import {wikiRelationMetadata,type WikiRelationMetadata} from './wikiRelationMetadata';
+import {readWikiSpatial,type WikiSpatialReading} from "./spatialFacets";
+import {readWikiTemporal,type WikiTemporalReading} from "./temporalFacets";
+import {wikiDisplayName} from "../../../../packages/oi-design-system/expressions-engine/oi/wikiPresentation.mjs";
 /**
  * The Wiki→Expression projection (O-I #366 EX3A, Technè M0′ — owner
  * direction 2026-09-19): a register's bounded local whole — the wiki.json
@@ -69,7 +73,7 @@ export function wikiPathOf(register: WikiRegister): string {
 // ---------------------------------------------------------------------------
 // Live reads (through the owners — the files seam and the kernel knowledge op)
 
-export interface WikiRelationEdge { ref?: string; direction?: string; relation: string; from: string; to: string; provider: string | null; authority: string | null; revision: string | null }
+export interface WikiRelationEdge extends WikiRelationMetadata { ref?: string; direction?: string; relation: string; from: string; to: string; provider: string | null; authority: string | null; revision: string | null }
 export type WikiRelationsReading =
   | { state: "available"; focusRef: string; edges: WikiRelationEdge[]; truncated: boolean; warnings: string[] }
   | { state: "unavailable"; focusRef: string; reason: string };
@@ -77,7 +81,7 @@ export type WikiRelationsReading =
 export type WikiRegisterReading =
   | { state: "unavailable"; reason: string }
   | { state: "absent" }
-  | { state: "ready"; register: WikiRegister; wiki: WikiReading & { state: "ready" }; wikiBasis: { path: string; revision: string; location: CentralLocation }; relations: WikiRelationsReading };
+  | { state: "ready"; register: WikiRegister; wiki: WikiReading & { state: "ready" }; wikiBasis: { path: string; revision: string; location: CentralLocation }; relations: WikiRelationsReading; temporal?: WikiTemporalReading; spatial?: WikiSpatialReading };
 
 /** Read one register's bounded local whole: the wiki.json its ground
  * discloses (verbatim through the files seam), then the typed relations
@@ -100,16 +104,24 @@ export async function readWikiRegister(transport: KernelTransportStatus, registe
     try {
       const reply = await kernelOp(transport, {op: "knowledge", project: register.project, request: {action: "relations", address: {kind: "wiki", value: focusRef}}});
       const data = reply.outcome?.result === "knowledge" ? reply.outcome.data as {
-        edges?: { ref?: string; edge_ref?: string; relation: string; direction?: string; from: string; to: string; origin?: { provider?: string; authority?: string; revision?: string } }[];
+        edges?: { reference?: string; ref?: string; edge_ref?: string; relation: string; direction?: string; from: string; to: string; origin?: { provider?: string; authority?: string; revision?: string }; standing?: string | null }[];
         truncated?: boolean;
         warnings?: string[];
       } : null;
       if (!data) throw new Error(reply.error ?? "AIKit did not return the requested reading");
+      const nativeDocument=JSON.parse(file.content),nativeObjects:Array<Record<string,unknown>>=Array.isArray(nativeDocument)?nativeDocument:nativeDocument.objects;
       relations = {
         state: "available",
         focusRef,
-        edges: (data.edges ?? []).map(edge => ({
-          ref: edge.edge_ref ?? edge.ref,
+        edges: (data.edges ?? []).map(edge => {
+          const reference=edge.reference??edge.edge_ref??edge.ref;
+          const matches=reference?nativeObjects.filter(row=>row.object==='edge'&&row.ref===reference):[];
+          if(matches.length>1)throw Error('The native relation identity is ambiguous.');
+          const native=matches[0];
+          if(native&&String(native.revision)!==edge.origin?.revision)throw Error('The native relation changed while reading its attribution.');
+          const metadata=native?wikiRelationMetadata(native):typeof edge.standing==='string'?{standing:edge.standing}:{};
+          return {
+          ref: edge.reference ?? edge.edge_ref ?? edge.ref,
           direction: edge.direction,
           relation: String(edge.relation),
           from: String(edge.from),
@@ -117,7 +129,8 @@ export async function readWikiRegister(transport: KernelTransportStatus, registe
           provider: edge.origin?.provider ?? null,
           authority: edge.origin?.authority ?? null,
           revision: edge.origin?.revision ?? null,
-        })),
+          ...metadata,
+        };}),
         truncated: data.truncated === true,
         warnings: data.warnings ?? [],
       };
@@ -125,7 +138,7 @@ export async function readWikiRegister(transport: KernelTransportStatus, registe
       relations = {state: "unavailable", focusRef, reason: cause instanceof Error ? cause.message : String(cause)};
     }
   }
-  return {state: "ready", register, wiki, wikiBasis: {path: wikiPath, revision: file.revision, location: file.location}, relations};
+  return {state: "ready", register, wiki, wikiBasis: {path: wikiPath, revision: file.revision, location: file.location}, relations, temporal: readWikiTemporal(file.content), spatial: readWikiSpatial(file.content)};
 }
 
 // ---------------------------------------------------------------------------
@@ -224,14 +237,14 @@ function constellationsOf(wiki: WikiReading & { state: "ready" }): DisclosedCons
     ...wiki.spaces.map(space => ({
       kind: "space" as const,
       wholeRef: space.anchor_ref ?? space.ref,
-      title: space.title ?? space.ref,
+      title: wikiDisplayName(space.title, space.ref),
       space,
       childSpaceRefs: space.child_space_refs ?? [],
     })),
     ...wiki.constellations.map((constellation, index) => ({
       kind: "frame" as const,
       wholeRef: constellation.anchor_ref ?? `wiki:frame:${index}`,
-      title: byRef.get(constellation.anchor_ref ?? "")?.title ?? constellation.anchor_ref ?? `Constellation ${index + 1}`,
+      title: wikiDisplayName(byRef.get(constellation.anchor_ref ?? "")?.title, constellation.anchor_ref ?? `Constellation ${index + 1}`),
       constellation,
       childSpaceRefs: [],
     })),
@@ -245,7 +258,7 @@ function constellationsOf(wiki: WikiReading & { state: "ready" }): DisclosedCons
     for (const childRef of entry.childSpaceRefs) {
       if (ownRefs.has(childRef)) continue;
       ownRefs.add(childRef);
-      children.push({kind: "space", wholeRef: childRef, title: childRef, childSpaceRefs: []});
+      children.push({kind: "space", wholeRef: childRef, title: wikiDisplayName(undefined, childRef), childSpaceRefs: []});
     }
   }
   return [...own, ...children];
@@ -273,6 +286,18 @@ export function projectWikiExpression(input: WikiRegisterReading & { state: "rea
   const notices: string[] = [];
   const expressionRef = projectionExpressionRef(register, {wikiRevision: wikiBasis.revision, relations});
   const byRef = new Map(wiki.nodes.map(node => [node.ref, node]));
+  const subjectReadings = (ref: string, disclosure: DisclosedConstellation, occurrence?: number): ReadingRef[] => {
+    const observed: ReadingRef[] = [reading(`wiki:${wikiBasis.path}`, wikiBasis.revision)];
+    const revision = byRef.get(ref)?.revision ?? wiki.spaces.find(space => space.ref === ref)?.revision;
+    if (Number.isSafeInteger(revision) && Number(revision) > 0) observed.push(reading(ref, String(revision)));
+    const frame = disclosure.constellation;
+    if (frame?.frame_ref && Number.isSafeInteger(frame.frame_revision) && Number(frame.frame_revision) > 0) {
+      observed.push(reading(frame.frame_ref, String(frame.frame_revision)));
+      const member = occurrence === undefined ? undefined : frame.members?.filter(member => member.ref === ref)[occurrence];
+      if (member?.participation_ref) observed.push(reading(member.participation_ref, String(frame.frame_revision)));
+    }
+    return observed;
+  };
 
   const entities: Record<string, Entity> = {};
   const scenes: Scene[] = [];
@@ -296,7 +321,7 @@ export function projectWikiExpression(input: WikiRegisterReading & { state: "rea
       native_owner: "wiki",
       presentation_role: "thing",
       sources: [reading(disclosure.wholeRef, String(disclosure.space?.revision ?? byRef.get(disclosure.wholeRef)?.revision ?? wikiBasis.revision))],
-      readings: [],
+      readings: subjectReadings(disclosure.kind === "space" && disclosure.space ? disclosure.space.ref : disclosure.wholeRef, disclosure),
       actions: [],
     };
     entities[overviewEntityRef] = {
@@ -304,7 +329,7 @@ export function projectWikiExpression(input: WikiRegisterReading & { state: "rea
       revision: 1,
       title: disclosure.title,
       subject,
-      parameters: {x: parameter(at.x * 1000), y: parameter(-at.y * 1000), z: parameter(0), scale: parameter(0.24), glyph: parameter(disclosure.title.slice(0,120))},
+      parameters: {x: parameter(at.x * 1000), y: parameter(-at.y * 1000), z: parameter(0), scale: parameter(0.24), glyph: parameter("●"), shape: parameter("disc")},
     };
     entitySubjects.set(overviewEntityRef, subject.subject_ref);
     overviewEntityRefs.push(overviewEntityRef);
@@ -341,17 +366,17 @@ export function projectWikiExpression(input: WikiRegisterReading & { state: "rea
         native_owner: "wiki",
         presentation_role: "thing",
         sources: [reading(disclosure.wholeRef, String(disclosure.space?.revision ?? byRef.get(disclosure.wholeRef)?.revision ?? wikiBasis.revision))],
-        readings: [],
+        readings: subjectReadings(disclosure.wholeRef, disclosure),
         actions: [],
       },
-      parameters: {x: parameter(0), y: parameter(0), z: parameter(0), scale: parameter(0.28), glyph: parameter(disclosure.title.slice(0,120))},
+      parameters: {x: parameter(0), y: parameter(0), z: parameter(0), scale: parameter(0.28), glyph: parameter("●"), shape: parameter("disc")},
     };
     entitySubjects.set(wholeEntityRef, disclosure.wholeRef);
 
     const members: ProjectedMember[] = placedMembers.map((memberRef, memberIndex) => {
       const entityRef = `${expressionRef}:entity:n${projectionKey(`${disclosure.kind}:${disclosure.wholeRef}`)}.${projectionKey(memberRef)}.${placedMembers.slice(0,memberIndex).filter(ref=>ref===memberRef).length}`;
       const node = byRef.get(memberRef);
-      const title = node?.title ?? memberRef;
+      const title = wikiDisplayName(node?.title, memberRef);
       const declared = declaredPosition(disclosure.kind, memberRef, disclosure.constellation, wiki);
       const at = memberPosition(memberIndex, placedMembers.length, declared);
       const revision = node?.revision !== undefined ? String(node.revision) : wikiBasis.revision;
@@ -364,10 +389,10 @@ export function projectWikiExpression(input: WikiRegisterReading & { state: "rea
           native_owner: "wiki",
           presentation_role: "thing",
           sources: (node?.source_refs ?? []).map(sourceRef => reading(sourceRef, revision)),
-          readings: [],
+          readings: subjectReadings(memberRef, disclosure, placedMembers.slice(0,memberIndex).filter(ref=>ref===memberRef).length),
           actions: node ? [{action_ref: "aikit:knowledge:read", target_ref: memberRef, authority_requirement: "read"}] : [],
         },
-        parameters: {x: parameter(at.x * 1000), y: parameter(-at.y * 1000), z: parameter(0), scale: parameter(0.2), glyph: parameter(title.slice(0,120))},
+        parameters: {x: parameter(at.x * 1000), y: parameter(-at.y * 1000), z: parameter(0), scale: parameter(0.2), glyph: parameter("●"), shape: parameter("disc")},
       };
       entitySubjects.set(entityRef, memberRef);
       sceneEntityRefs.push(entityRef);
@@ -433,6 +458,7 @@ export function projectWikiExpression(input: WikiRegisterReading & { state: "rea
     selection: {scene_ref: overviewSceneRef, entity_ref: null},
     provenance: [
       reading(`wiki:${wikiBasis.path}`, wikiBasis.revision),
+      reading("oi:wiki-presentation", "2"),
       ...(relations.state === "available" ? [reading(`wiki:relations:${relations.focusRef}`, `${relations.edges.length} edges at wiki basis ${wikiBasis.revision}`)] : []),
     ],
     representations: [],

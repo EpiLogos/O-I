@@ -1,0 +1,57 @@
+--- a/packages/canvas/src/timeline/TimelineLens.tsx
++++ b/packages/canvas/src/timeline/TimelineLens.tsx
+@@ -1,5 +1,6 @@
+ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+ import type { JSX } from "react";
++import { createPortal } from "react-dom";
+ import { useStore } from "zustand";
+ 
+ import type { ArchetypalLighting, ExpandedTimelineNode, GraphNode, LitInstance, TimelineFilters, TimelineLayoutMutationResult, TimelineRelationField as TimelineRelationFieldData, TimelineView, TimelineYearRange } from "./contracts";
+@@ -31,6 +32,7 @@
+ }
+ 
+ export interface TimelineLensProps {
++  toolbarContainer?: HTMLElement;
+   dataSource: TimelineDataSource;
+   onOpenNode: (
+     graphNodeId: string,
+@@ -58,6 +60,7 @@
+ type TimelineNavigationDirection = "earlier" | "later";
+ 
+ export function TimelineLens({
++  toolbarContainer,
+   dataSource,
+   onOpenNode,
+   initialViewport,
+@@ -566,8 +569,7 @@
+ 
+   useEffect(() => stopTimelineNavigation, [stopTimelineNavigation]);
+ 
+-  return (
+-    <div className="timeline-lens" data-testid="timeline-lens">
++  const toolbar = (
+       <div className="timeline-toolbar" data-testid="timeline-toolbar">
+         <span className="timeline-tier" data-testid="timeline-tier">{tier}</span>
+         {state.frame && (
+@@ -734,6 +736,11 @@
+           </button>
+         )}
+       </div>
++  );
++
++  return (
++    <div className="timeline-lens" data-testid="timeline-lens">
++      {toolbarContainer ? createPortal(toolbar, toolbarContainer) : toolbar}
+       <div
+         className="timeline-track"
+         data-testid="timeline-track"
+--- a/packages/canvas/src/timeline/TimelineSurface.tsx
++++ b/packages/canvas/src/timeline/TimelineSurface.tsx
+@@ -331,6 +331,7 @@
+         style={{ position: "absolute", inset: 0, zIndex: 1 }}
+       >
+         <RichTimelineLens
++          toolbarContainer={toolbarContainer}
+           key={lensRevision}
+           dataSource={surfaceDataSource}
+           onOpenNode={onOpenNode}

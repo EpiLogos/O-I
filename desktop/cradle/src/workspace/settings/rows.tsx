@@ -107,8 +107,10 @@ export function Card({title, children, id, className}: {title: ReactNode; childr
   </section>;
 }
 
-export function Group({title, count, children, collapsible, defaultOpen = true, id, summary}: {title: string; count?: number; children: ReactNode; collapsible?: boolean; defaultOpen?: boolean; id?: string; summary?: ReactNode}) {
+export function Group({title, count, children, collapsible, defaultOpen = true, id, summary, reveal}: {title: string; count?: number; children: ReactNode; collapsible?: boolean; defaultOpen?: boolean; id?: string; summary?: ReactNode; reveal?: number}) {
   const [open, setOpen] = useState(defaultOpen);
+  // A search landing may reveal its own row without losing the group's state.
+  useEffect(() => { if (reveal !== undefined) setOpen(true); }, [reveal]);
   const label = `${title}${count !== undefined ? ` · ${count}` : ""}`;
   if (!collapsible) return <section className="settings-group-block" data-settings-group={id}><h3 className="settings-eyebrow">{label}</h3>{children}</section>;
   return <section className="settings-group-block" data-settings-group={id} data-open={open ? "true" : "false"}>

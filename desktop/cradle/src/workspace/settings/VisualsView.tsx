@@ -2,13 +2,13 @@
  * is entered through the workspace mode route; there is no second workbench,
  * preview stage, scene store, or renderer under Settings. */
 import { useCallback, useEffect, useMemo, useRef, useState, type ChangeEvent } from "react";
+import {IconChoiceStrip} from "../primitives/IconTabStrip";
 import { useVisuals } from "../../visuals/ParticleExpression";
 import type { StagePresentation } from "../../stage/ExpressionStage";
 import { visuals, type SavedState, type ThemeChoice } from "../../visuals/store";
 import { PRESETS } from "@epilogos/oi-design-system/point-cloud/presets";
 import { CONTROL_SCHEMA, readPath, type PointCloudConfig, type PointCloudPatch } from "@epilogos/oi-design-system/point-cloud/config";
 import { THEMES } from "@epilogos/oi-design-system/themes/index";
-import { listCustomThemes, importTheme, removeCustomTheme } from "../../visuals/customThemes";
 import "./visuals.css";
 
 const QUICK_CHARS = ["✦", "✧", "★", "∞", "Ω", "∑", "∫", "⌘", "⌥", "§", "λ", "☯"];
@@ -30,8 +30,9 @@ interface LibraryEntry {
 }
 
 export function VisualsView() {
-  const {snapshot} = useVisuals();
-  const [customs, setCustoms] = useState(listCustomThemes);
+  const {snapshot, presentation, themes, retryObservation} = useVisuals();
+  const customs = presentation.document?.custom_themes ?? [];
+  const themeDisabled = !presentation.document || presentation.loading || presentation.pending;
   const [importFailure, setImportFailure] = useState<string | null>(null);
   const fileInput = useRef<HTMLInputElement>(null);
   const library: LibraryEntry[] = [
@@ -45,33 +46,33 @@ export function VisualsView() {
     if (!file) return;
     try {
       setImportFailure(null);
-      const theme = importTheme(await file.text(), file.name);
-      setCustoms(listCustomThemes());
-      visuals.setNamedTheme(theme);
+      await themes.importFile(await file.text(), file.name);
     } catch (cause) {
       setImportFailure(cause instanceof Error ? cause.message : String(cause));
     }
   };
   const removeActiveImport = () => {
     if (!activeImport) return;
-    removeCustomTheme(activeImport.id);
-    setCustoms(listCustomThemes());
-    if (snapshot.themeId === activeImport.id) visuals.setTheme("system");
+    void themes.remove(activeImport.id);
   };
   return <div className="settings-view visuals-preferences" aria-label="Appearance preferences">
     <section aria-labelledby="appearance-heading">
       <h3 id="appearance-heading">Appearance</h3>
       <p className="settings-note">The same appearance follows your workspace, tools and document controls.</p>
-      <div className="oi-segment" role="group" aria-label="Appearance">
-        {THEME_CHOICES.map(option=><button key={option.value} type="button" aria-pressed={snapshot.themeId === null && snapshot.theme === option.value} title={option.hint} onClick={()=>visuals.setTheme(option.value)}>{option.label}</button>)}
-      </div>
+      {presentation.loading && <p className="settings-note" role="status">Reading saved appearance…</p>}
+      {presentation.pending && <p className="settings-note" role="status">Saving appearance…</p>}
+      {presentation.error && <div role="alert" className="oi-refusal"><p>{presentation.error}</p><button type="button" className="settings-mini" disabled={presentation.pending || presentation.loading} onClick={()=>void themes.read()}>Read saved appearance again</button></div>}
+      {presentation.observationError && <div role="alert" className="oi-refusal"><p>The current layout could not be disclosed: {presentation.observationError}</p><button type="button" className="settings-mini" onClick={retryObservation}>Retry layout disclosure</button></div>}
+      <IconChoiceStrip aria-label="Appearance" current={snapshot.themeId===null?snapshot.theme:undefined} onSelect={value=>void (value === "system" ? themes.revert() : themes.select({appearance:value as ThemeChoice,id:null}))}
+        items={THEME_CHOICES.map(option=>({id:option.value,label:option.label,description:option.hint,icon:"settings",disabled:themeDisabled}))}/>
+
       <p className="settings-note">Or pick a theme from the library: each recolours the shell, editors and terminal.</p>
       <div className="visuals-themes" role="group" aria-label="Theme library">
         {library.map(theme=>{
           const active = snapshot.themeId === theme.id;
           return <button key={theme.id} type="button" className={active?"visuals-theme is-active":"visuals-theme"} aria-pressed={active}
             title={`${theme.name} (${theme.appearance}) — ${theme.custom ? "imported file, license not recorded" : `${theme.origin} under ${theme.license}`}`}
-            onClick={()=>visuals.setNamedTheme(theme)}>
+            disabled={themeDisabled} onClick={()=>void themes.select({id:theme.id,appearance:theme.appearance})}>
             <span className="visuals-theme-swatch" style={{background: theme.preview.ground}}>
               <span className="visuals-theme-word" style={{color: theme.preview.ink}}>A</span>
               <span className="visuals-theme-strip">
@@ -84,12 +85,12 @@ export function VisualsView() {
         })}
       </div>
       <div className="visuals-import-row">
-        <input ref={fileInput} type="file" accept=".json,.jsonc,application/json" aria-label="Import a theme file" className="visuals-file-input" onChange={importFile}/>
-        <button type="button" className="oi-action" onClick={()=>fileInput.current?.click()}>Import a theme file…</button>
+        <input ref={fileInput} type="file" accept=".json,.jsonc,application/json" aria-label="Import a theme file" className="visuals-file-input" disabled={themeDisabled} onChange={importFile}/>
+        <button type="button" className="oi-action" disabled={themeDisabled} onClick={()=>fileInput.current?.click()}>Import a theme file…</button>
         <p className="settings-note">Any VS Code color theme (.json) — converted into the app's roles and kept on this device.</p>
       </div>
       {importFailure && <p className="oi-refusal" role="alert">{importFailure}</p>}
-      {activeImport && <button type="button" className="settings-mini" onClick={removeActiveImport}>Remove “{activeImport.name}”</button>}
+      {activeImport && <button type="button" className="settings-mini" disabled={themeDisabled} onClick={removeActiveImport}>Remove “{activeImport.name}”</button>}
     </section>
     <section aria-labelledby="opening-heading">
       <h3 id="opening-heading">Opening</h3>
@@ -478,13 +479,8 @@ function ToggleRow({ label, value, options, onPick }: {
   return (
     <div className="visuals-row">
       <span className="visuals-slider-label">{label}</span>
-      <div className="oi-segment" role="group" aria-label={label}>
-        {options.map(([option, optionLabel]) => (
-          <button key={option} type="button" aria-pressed={value === option} onClick={() => onPick(option)}>
-            {optionLabel}
-          </button>
-        ))}
-      </div>
+      <IconChoiceStrip aria-label={label} current={value} onSelect={onPick} items={options.map(([id,optionLabel])=>({id,label:optionLabel,icon:"dot"}))}/>
+
     </div>
   );
 }

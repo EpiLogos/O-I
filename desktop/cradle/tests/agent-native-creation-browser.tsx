@@ -4,8 +4,8 @@ import {createRoot} from 'react-dom/client';
 import {KernelProvider} from '../src/kernel/KernelProvider';
 import {NativeAgentLauncher} from '../src/agency/NativeAgentLauncher';
 import {NativeAgentController} from '../src/agency/nativeAgent';
-import {AgentSetupReturn} from '../src/agency/AgentSetupReturn';
-import {SettingsHome} from '../src/workspace/settings/v2/SettingsHome';
+import {SettingsPage} from '../src/workspace/settings/SettingsPage';
+import {SettingsNavigator} from '../src/workspace/settings/SettingsNavigator';
 import {agentSetupSnapshot,subscribeAgentSetup} from '../src/agency/agentSetup';
 const calls:any[]=[];let accepted=false,stored=false,lose=false,open:any;
 const profile={ref:'agent-profile:browser',revision:'r1',agent_ref:'agent:browser',name:'Reading colleague',purpose:'Read the permitted source.',intent_provenance:{intent_expression:'Read the permitted source.'}};
@@ -22,5 +22,5 @@ const controller=new NativeAgentController(async request=>{
  throw Error('Unexpected native request');
 });
 (window as any).creation={calls,loseAcceptance:()=>{lose=true;},state:controller.snapshot,opened:()=>open};
-function App(){const target=React.useSyncExternalStore(subscribeAgentSetup,agentSetupSnapshot);return <KernelProvider><NativeAgentLauncher controller={controller} onChoose={row=>{open=row;}}/><AgentSetupReturn/>{target&&<SettingsHome target={target.destination}/>}</KernelProvider>;}
+function App(){const target=React.useSyncExternalStore(subscribeAgentSetup,agentSetupSnapshot);return <KernelProvider><NativeAgentLauncher controller={controller} onChoose={row=>{open=row;}}/>{target&&<><SettingsNavigator/><SettingsPage/></>}</KernelProvider>;}
 createRoot(document.getElementById('root')!).render(<App/>);

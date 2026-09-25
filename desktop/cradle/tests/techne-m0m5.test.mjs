@@ -1,25 +1,8 @@
-// The T3 M0′–M5′ lens bridge, pure logic, node --test:
-//   (1) the six lens definitions register through the REAL parent seam
-//       (lensMount.ts) exactly once — a duplicate is refused — and each
-//       standing() maps the four disclosure states to the right
-//       availability/reason;
-//   (2) the one-reading bridge composes the full ql.techne/v1 reading from
-//       the disclosure state (raw wire payload preferred, contract-checked),
-//       absent facets absent — never invented;
-//   (3) the ONE session: ground-selection grammar, lens-to-lens projection
-//       (one navigation hop, selection carried byte-exact), and the
-//       alignment no-op that never overwrites a body's refined selection;
-//   (4) the M3′ Journey real-ref law: beats are the reading's own Expression
-//       scene refs verbatim; a composed scene follows the substrate's
-//       `${expressionRef}:scene:<slug>` grammar; the 3:3 crossing carries
-//       the scene ref in the selection's focus and refuses a drifted crossing.
-//
-// Run: node --test tests/techne-m0m5.test.mjs
+// Shared Technè reading, session and native Scene contract tests.
+// Retired cradle UI registry assertions are recorded in the retirement manifest.
 import test from "node:test";
 import assert from "node:assert/strict";
 
-import {registerTechneLens, techneLenses, subscribeTechneLenses} from "../src/techne/lensMount.ts";
-import {m0m5LensDefs, m0m5LensStanding, M0M5_LENSES} from "../src/techne/m0m5/lensDefs.ts";
 import {bridgeReading, groundSelection, ensureSession, resetSessionAlignment} from "../src/techne/m0m5/reading.ts";
 import {validateReading, validateSession, crossCutSession} from "../src/techne/contract.ts";
 import {createDisclosureSessionStore, coReferenced} from "../src/techne/session.ts";
@@ -79,56 +62,6 @@ const READ = {standing: "read", reading: {
     degraded: [], suggestions: [],
   },
 }};
-
-// ---- (1) the six lenses through the real seam -----------------------------
-
-test("the six M′ lens definitions carry identity in M′ order", () => {
-  const defs = m0m5LensDefs();
-  assert.deepEqual(defs.map((def) => def.instrument), [...M0M5_LENSES]);
-  assert.deepEqual(defs.map((def) => def.mPrime), [0, 1, 2, 3, 4, 5]);
-  for (const def of defs) {
-    assert.equal(typeof def.label, "string");
-    assert.equal(typeof def.glyph, "string");
-    assert.equal(typeof def.standing, "function");
-  }
-});
-
-test("each of the six lenses registers exactly once through the parent seam; a duplicate is refused", () => {
-  const defs = m0m5LensDefs().map((def) => ({...def, Body: function Probe() { return null; }}));
-  const unregister = defs.map((def) => registerTechneLens(def));
-  const registered = techneLenses().map((lens) => lens.instrument);
-  assert.deepEqual(M0M5_LENSES.map((id) => registered.includes(id)), [true, true, true, true, true, true]);
-  for (const id of M0M5_LENSES) {
-    assert.throws(() => registerTechneLens({...defs[0], instrument: id}),
-      (cause) => String(cause).includes("already registered"),
-      `a second ${id} lens must be refused`);
-  }
-  // Unregistration is symmetric: the registry returns to its prior shape.
-  const countBefore = techneLenses().length;
-  unregister.forEach((off) => off());
-  assert.equal(techneLenses().length, countBefore - M0M5_LENSES.length);
-  // Re-registerable afterwards (module side-effect registration is once
-  // per module instance; the registry itself allows a fresh mount).
-  const again = defs.map((def) => registerTechneLens(def));
-  again.forEach((off) => off());
-});
-
-test("standing() maps the four disclosure states to the right availability/reason", () => {
-  // No subject: discoverable (the chooser shows it; the body renders NO SUBJECT).
-  assert.deepEqual(m0m5LensStanding("canvas", {standing: "no-subject"}), {available: true});
-  // Reading genuinely in flight: still discoverable; the body renders LOADING.
-  assert.deepEqual(m0m5LensStanding("canvas", {standing: "reading"}), {available: true});
-  // Reading refused at the owner: discoverable, the refusal rides to the body.
-  assert.deepEqual(m0m5LensStanding("canvas", {standing: "unavailable", reason: "no ql.techne/v1 reading source is registered in this window"}), {available: true});
-  // Reading resolved, lens disclosed unavailable: unavailable WITH the reading's own reason.
-  const palace = m0m5LensStanding("palace", READ);
-  assert.deepEqual(palace, {available: false, reason: "the reading names no unclaimed composition"});
-  // Reading resolved, lens available: mounts immediately.
-  assert.deepEqual(m0m5LensStanding("canvas", READ), {available: true});
-  // Reading resolved but silent about this instrument: not refused by a guess.
-  const silent = {...READ, reading: {...READ.reading, disclosure: {...READ.reading.disclosure, instruments: []}}};
-  assert.deepEqual(m0m5LensStanding("canvas", silent), {available: true});
-});
 
 // ---- (2) the one-reading bridge --------------------------------------------
 

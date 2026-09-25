@@ -1,0 +1,22 @@
+.object-page[data-object-kind="git-diff"]{max-width:none;gap:var(--oi-space-2);overflow:hidden}
+.object-page[data-object-kind="git-diff"] .object-content{min-height:0;flex:1;display:flex}
+.object-page[data-object-kind="git-diff"] .object-fields:empty{display:none}
+.git-diff-page{flex:1;min-width:0;min-height:0;display:flex;flex-direction:column;font-size:var(--oi-shell-type-body)}
+.diff-toolbar{display:flex;align-items:center;gap:var(--oi-space-3);flex-wrap:wrap;padding-bottom:var(--oi-space-3);border-bottom:1px solid var(--oi-hairline)}
+.diff-toolbar>span{flex:1}.diff-toolbar label{display:flex;gap:4px;align-items:center;color:var(--oi-muted)}
+.diff-workspace{display:flex;flex:1;min-height:260px;min-width:0}
+.diff-files{width:clamp(150px,24%,280px);flex:none;overflow:auto;border-right:1px solid var(--oi-hairline);padding:var(--oi-space-2) 0}
+.diff-files button{display:flex;gap:6px;width:100%;align-items:baseline;text-align:left;border:0;background:transparent;color:var(--oi-foreground);padding:7px 8px;font:11px var(--oi-font-mono);cursor:pointer}
+.diff-files button[aria-current="true"]{background:var(--oi-wash);box-shadow:inset 2px 0 var(--oi-foreground)}
+.diff-path{flex:1;overflow-wrap:anywhere}.diff-old-path,.diff-status{color:var(--oi-muted)}.diff-counts{white-space:nowrap;font-variant-numeric:tabular-nums;color:var(--oi-muted)}
+.diff-file{display:flex;flex-direction:column;min-width:0;flex:1;min-height:0}.diff-file>header{display:flex;gap:8px;align-items:center;padding:8px;border-bottom:1px solid var(--oi-hairline)}.diff-file>header strong{flex:1;font:12px var(--oi-font-mono);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.diff-viewport{flex:1;min-height:200px;overflow:auto;background:var(--oi-canvas-ground);font:12px/22px var(--oi-font-mono);position:relative}.diff-rows{position:relative;min-width:100%;width:max-content}.diff-row{height:22px;line-height:22px;box-sizing:border-box;white-space:pre;min-width:max-content}.diff-row code,.diff-cell code{font:inherit;white-space:pre}.diff-split{display:grid;grid-template-columns:minmax(33ch,1fr) minmax(33ch,1fr);min-width:100%}.diff-cell{display:flex;min-width:0}.diff-cell+ .diff-cell{border-left:1px solid var(--oi-hairline)}.diff-unified{display:flex}.diff-number{display:inline-block;flex:none;width:5ch;text-align:right;padding-right:1ch;color:var(--oi-muted);user-select:none}.diff-sign{display:inline-block;flex:none;width:2ch;text-align:center;user-select:none}.diff-hunk{color:var(--oi-muted);background:var(--oi-wash);padding-left:10px}.diff-note{color:var(--oi-muted);padding-left:10px}.diff-row.add,.diff-cell.add{background:color-mix(in srgb,var(--oi-terminal-ansi-green) 12%,transparent)}.diff-row.delete,.diff-cell.delete{background:color-mix(in srgb,var(--oi-terminal-ansi-red) 15%,transparent)}
+.diff-keyword{color:var(--oi-syntax-keyword)}.diff-literal{color:var(--oi-syntax-literal)}.diff-comment{color:var(--oi-syntax-comment);font-style:italic}
+.context-repository{padding:var(--oi-space-3);border-bottom:1px solid var(--oi-hairline);font-size:var(--oi-shell-type-body)}.context-repository h3{margin:0 0 6px;font-size:var(--oi-shell-type-eyebrow);color:var(--oi-muted)}.context-repository select{width:100%;margin:6px 0}.context-repository p{margin:4px 0;color:var(--oi-muted)}
+
+.diff-files h3{margin:8px 8px 4px;font:var(--oi-shell-type-eyebrow) var(--oi-font-mono);color:var(--oi-muted);font-weight:500}
+.diff-counts .diff-adds{color:var(--oi-terminal-ansi-green)}.diff-counts .diff-dels{color:var(--oi-terminal-ansi-red)}
+.diff-copy-line,.diff-copy-hunk{font:10px/18px var(--oi-font-mono);height:18px;min-height:0;padding:0 4px;margin:2px 4px;border:1px solid var(--oi-hairline);background:var(--oi-canvas-ground);color:var(--oi-muted);cursor:pointer;user-select:none;flex:none}
+.diff-copy-line{opacity:0;margin-left:auto}.diff-row:hover .diff-copy-line,.diff-copy-line:focus-visible{opacity:1}.diff-hunk{display:flex;align-items:center;gap:12px}.diff-copy-hunk{margin-left:auto}
+.context-repository input{width:100%;margin:6px 0;font:inherit}
+@media (prefers-reduced-motion:reduce){.git-diff-page *{scroll-behavior:auto;transition:none;animation:none}}

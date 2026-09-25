@@ -69,12 +69,12 @@ export default async function run({page, baseUrl, check, shot, provision: world,
     && await skill("walk-beta").getByRole("button", {name: "Undo"}).count() === 1,
     "S4 the switched skill shows its staged value, marked changed, with Undo on the row");
   check(!active().has("skill/walkskills/walk-beta"), "S4 nothing is written before Apply — AIKit still reports walk-beta off");
-  await openSection(page, "models");
-  const connection = page.locator("[data-default-connection]");
-  await connection.waitFor({timeout: 240000});
-  const before = await connection.inputValue();
+  await openSection(page, "harnesses");
+  const connectionCards = page.locator("[data-harness-connection]");
+  await connectionCards.first().waitFor({timeout: 240000});
+  const before = await page.locator("[data-harness-connection]:has([data-harness-default])").getAttribute("data-harness-connection");
   const target = before === "walk-pi" ? "walk-hermes" : "walk-pi";
-  await connection.selectOption(target);
+  await page.locator(`[data-harness-connection="${target}"] [data-harness-set-default]`).click();
   await page.waitForFunction(() => document.querySelector("[data-settings-pending-count]")?.textContent?.startsWith("2 changes pending"), null, {timeout: 60000});
   check((await strip.innerText()).includes("2 changes pending") && (await strip.innerText()).includes("Review changes") && (await strip.innerText()).includes("Discard"),
     "S4 the strip reads \"2 changes pending · Review changes · Discard\"");

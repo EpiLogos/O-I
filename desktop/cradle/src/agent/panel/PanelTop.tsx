@@ -1,26 +1,14 @@
 import type {ReactNode} from "react";
-import {Glyph} from "../../workspace/Glyph";
-
-/**
- * The panel's ONE top row (10-SIDEBARS §4.1, amendment A3): the avatar menu,
- * the tabs, then ⤢ (full, ⌘⌥J) and ✕ (collapse, ⌘⇧B). No title band, no
- * "Situated in …". Tabs are plain text with an ink underline; a tab can carry
- * a dot (new activity) or ! (needs you). There is no "More" overflow.
- */
+import {IconTabStrip} from "../../workspace/primitives/IconTabStrip";
+import {WindowFunctionsMenu} from "../../workspace/primitives/WindowFunctionsMenu";
+import {planeIcon} from "../../workspace/planeRegistry";
 export interface PanelTab {id:string;label:string;mark?:"dot"|"attention"}
-export function PanelTop({avatar,tabs,current,onSelect,full,onFull,onCollapse}:{avatar:ReactNode;tabs:PanelTab[];current:string;onSelect:(id:string)=>void;full:boolean;onFull:()=>void;onCollapse?:()=>void}) {
- return <div className="panel-top">
-  {avatar}
-  <nav className="panel-tabs" aria-label="Right region planes">
-   {tabs.map(tab=><button key={tab.id} type="button" id={`panel-tab-${tab.id}`} aria-current={tab.id===current?"page":undefined} data-plane-tab={tab.id} data-mark={tab.mark} title={tab.mark==="dot"?`${tab.label} — new activity`:tab.mark==="attention"?`${tab.label} — needs you`:undefined} className="panel-tab" onClick={()=>onSelect(tab.id)}>
-    <span>{tab.label}</span>
-    {tab.mark==="dot"&&<span className="panel-tab-dot" aria-hidden="true"/>}
-    {tab.mark==="attention"&&<span className="panel-tab-attention" aria-hidden="true">!</span>}
-   </button>)}
-  </nav>
-  <div className="panel-controls">
-   <button type="button" className="oi-tool panel-full" aria-label={full?"Leave full screen":"Full screen conversation"} aria-pressed={full} title={full?"Back to the panel (⌘⌥J)":"Full screen (⌘⌥J)"} onClick={onFull}><Glyph name={full?"restore":"expand"} size={13}/></button>
-   {onCollapse&&<button type="button" className="oi-tool panel-collapse" aria-label="Collapse the panel" title="Collapse (⌘⇧B)" onClick={onCollapse}><Glyph name="close" size={13}/></button>}
-  </div>
+export function PanelTop({avatar,tabs,current,onSelect,full,onFull,onPromote}:{avatar:ReactNode;tabs:PanelTab[];current:string;onSelect:(id:string)=>void;full:boolean;onFull:()=>void;onPromote?:()=>void}) {
+ return <div className="panel-top">{avatar}
+  <IconTabStrip aria-label="Right region planes" items={tabs.map(tab=>({...tab,icon:planeIcon(tab.id)}))} current={current} onSelect={onSelect}/>
+  <WindowFunctionsMenu label="Panel window functions">
+   <button className="oi-menu-item" onClick={onFull}>{full?"Leave full screen":"Full screen"}<kbd>⌘⌥J</kbd></button>
+   {onPromote&&<button className="oi-menu-item" onClick={onPromote}>Open conversation in canvas</button>}
+  </WindowFunctionsMenu>
  </div>;
 }

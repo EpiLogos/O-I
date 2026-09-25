@@ -11,5 +11,7 @@
  */
 export const chatProvisionTarget=(project?:string):string=>{
   const trimmed=project?.trim();
-  return trimmed?trimmed:"Central";
+  // The native encounter seam uses an empty scope for Central root. The
+  // display label "Central" must never be sent as a child-project name.
+  return trimmed ?? "";
 };

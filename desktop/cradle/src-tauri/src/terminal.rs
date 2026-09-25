@@ -510,3 +510,68 @@ pub async fn terminal_reconcile(
 #[cfg(test)]
 #[path = "terminal_tests.rs"]
 mod tests;
+
+/// A native owner's attachment client, separate from persistent shell tabs.
+/// Dropping/releasing this client never asks the provider to kill its pane.
+pub(crate) struct BoundClient {row: Arc<Session>, host:String, lease:u64}
+impl BoundClient {
+    pub(crate) fn start(cwd:String, command:Vec<String>, host:String, dimensions:Size) -> Result<Self,String> {
+        let dimensions=size(dimensions)?;
+        let row=start(cwd,dimensions,Some(command))?;
+        match attach_session(&row,&host,dimensions) {
+            Ok(attachment)=>Ok(Self {row,host,lease:attachment.lease}),
+            Err(reason)=>{let _=close_session(&row);Err(reason)}
+        }
+    }
+    pub(crate) fn poll(&self, seq:u64)->Result<Batch,String> {
+        let batch=poll_session(&self.row,&self.host,self.lease,seq)?;
+        checkpoint_session(&self.row,&self.host,self.lease,batch.seq,String::new())?;
+        Ok(batch)
+    }
+    pub(crate) fn input(&self,data:&str)->Result<(),String> {
+        if data.len()>64*1024 {return Err("Input exceeds the bounded terminal paste size".into());}
+        input_session(&self.row,&self.host,self.lease,data)
+    }
+    pub(crate) fn resize(&self,dimensions:Size)->Result<(),String> {resize_session(&self.row,&self.host,self.lease,size(dimensions)?)}
+    pub(crate) fn release(&self)->Result<(),String> {close_session(&self.row)}
+}
+impl Drop for BoundClient {fn drop(&mut self) {let _=close_session(&self.row);}}
+
+#[cfg(test)]
+mod bound_client_tests {
+    use super::*;
+    use std::{process::Command,time::{Duration,Instant,SystemTime,UNIX_EPOCH}};
+    #[test]
+    #[ignore = "requires real tmux and PTYs; run in native host gate"]
+    fn releasing_one_bound_client_preserves_other_client_and_provider_pane() {
+        let socket=format!("oi-bound-client-{}-{}",std::process::id(),SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_nanos());
+        struct Server(String);
+        impl Drop for Server {fn drop(&mut self){let _=Command::new("tmux").args(["-L",&self.0,"kill-server"]).output();}}
+        let _server=Server(socket.clone());
+        let tmux=|args:&[&str]| {
+            let output=Command::new("tmux").args(["-L",&socket,"-f","/dev/null"]).args(args).output().expect("real tmux is required");
+            assert!(output.status.success(),"tmux {args:?}: {}",String::from_utf8_lossy(&output.stderr));
+            String::from_utf8_lossy(&output.stdout).into_owned()
+        };
+        tmux(&["new-session","-d","-s","bound-client","/bin/sh"]);
+        let native=tmux(&["display-message","-p","-t","bound-client","#{pane_id}"]).trim().to_owned();
+        let attach=|| BoundClient::start(std::env::current_dir().unwrap().display().to_string(),
+            vec!["tmux".into(),"-L".into(),socket.clone(),"attach-session".into(),"-t".into(),"bound-client".into()],
+            "controlled-native-view".into(),Size{cols:80,rows:24}).unwrap();
+        let first=attach();let second=attach();
+        let wait_clients=|count:usize| {
+            let deadline=Instant::now()+Duration::from_secs(5);
+            loop {if tmux(&["list-clients","-t","bound-client","-F","#{client_pid}"]).lines().count()==count {break;}
+                assert!(Instant::now()<deadline,"expected {count} real attachment clients");std::thread::sleep(Duration::from_millis(20));}
+        };
+        wait_clients(2);first.release().unwrap();wait_clients(1);
+        second.input("printf 'OI_BOUND_CLIENT_ALIVE\\n'\r").unwrap();
+        let deadline=Instant::now()+Duration::from_secs(5);
+        loop {let output=tmux(&["capture-pane","-p","-t",&native]);
+            if output.lines().any(|line|line.trim()=="OI_BOUND_CLIENT_ALIVE") {break;}
+            assert!(Instant::now()<deadline,"remaining client must reach the same pane");std::thread::sleep(Duration::from_millis(20));}
+        second.release().unwrap();wait_clients(0);
+        assert_eq!(tmux(&["display-message","-p","-t","bound-client","#{pane_id}"]).trim(),native);
+        assert_eq!(tmux(&["display-message","-p","-t",&native,"#{pane_dead}"]).trim(),"0");
+    }
+}

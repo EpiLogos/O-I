@@ -64,7 +64,7 @@ export function SetupFlow({controller, native, startAtReview = false, onClose, o
     controller.setRequests([...state.requests, request]);
     setPicker("");
   };
-  return <div className="config-drawer" role="dialog" aria-label="Plan and apply" aria-busy={state.busy !== null} data-config-drawer>
+  return <div className="config-drawer oi-scroll" role="dialog" aria-label="Plan and apply" aria-busy={state.busy !== null} data-config-drawer>
     <header>
       <h4 ref={heading} tabIndex={-1}>{state.step === "result" ? "ChangeSet result" : state.step === "review" ? "Plan" : "Set up your world"}</h4>
       <button type="button" className="config-mini" disabled={locked} onClick={close}>close</button>

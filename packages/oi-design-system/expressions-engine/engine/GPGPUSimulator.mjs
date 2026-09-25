@@ -67,6 +67,9 @@ class GPGPUSimulator {
         uPositionTexture: { value: null },
         uVelocityTexture: { value: null },
         uDelta: { value: 0.016 },
+        uConnectionStart: { value: 1e30 },
+        uConnectionMetadata: { value: null },
+        uTexSize: { value: new THREE.Vector2(this.texWidth, this.texHeight) },
         uCompPlane: { value: 0 },
         uMorphTrajectory: { value: 0 },
         uZDepthRetention: { value: 0 },
@@ -135,6 +138,7 @@ class GPGPUSimulator {
         uChaosFactor: { value: 0 },
         // Entities (first-class centres of formation)
         uEntityCount: { value: 0 },
+        uConnectionStart: { value: 1e30 },
         uEntityBounds: { value: new Float32Array(10) },
         uEntityCenter: { value: Array.from({ length: 10 }, () => new THREE.Vector4(0, 0, 0, 200)) },
         uEntityMorph: { value: new Float32Array(10) },
@@ -253,6 +257,7 @@ class GPGPUSimulator {
    */
   setTargetTextures(texA, texB, vortexCenter, noise) {
     this.velMaterial.uniforms.uTargetNoise.value = noise ?? null;
+    this.posMaterial.uniforms.uConnectionMetadata.value = noise ?? null;
     this.velMaterial.uniforms.uTargetATexture.value = texA;
     this.velMaterial.uniforms.uTargetBTexture.value = texB;
     this.velMaterial.uniforms.uVortexCenter.value.copy(vortexCenter);
@@ -273,6 +278,8 @@ class GPGPUSimulator {
   /** Push formation partition geometry/state; physical forces use the separate emitter table. */
   setEntityState(u) {
     const vU = this.velMaterial.uniforms;
+    vU.uConnectionStart.value = u.connectionStart ?? this.particleCount;
+    this.posMaterial.uniforms.uConnectionStart.value = vU.uConnectionStart.value;
     vU.uEntityCount.value = Math.min(10, u.count);
     vU.uEntityBounds.value.set(u.bounds.subarray(0, 10));
     vU.uEntityMorph.value.set(u.morph.subarray(0, 10));

@@ -3,6 +3,8 @@ import {TextEditor,EditorCommands,type EditorHandle} from "../editor/lazy";
 import {EditorFrame} from "../editor/EditorChrome";
 import type {SurfaceBinding} from "../surface/types";
 import "./flow.css";
+import {readUnplacedDraft,retainUnplacedDraft} from "./unplacedDrafts";
+export {DRAFT_KEY} from "./unplacedDrafts";
 
 /**
  * Writing that has not been placed anywhere yet.
@@ -19,17 +21,12 @@ import "./flow.css";
  * writing's name (owner correction, 2026-09-12 — the blank now/flows/
  * premise was the fault).
  */
-export const DRAFT_KEY=(id:string)=>`oi-cradle.unplaced-draft.v1:${id}`;
-
-export function readDraft(id:string):string {
-  try{const raw=localStorage.getItem(DRAFT_KEY(id));if(!raw)return "";const parsed:unknown=JSON.parse(raw);
-    return parsed&&typeof parsed==="object"&&typeof (parsed as {text?:unknown}).text==="string"?(parsed as {text:string}).text:"";}
-  catch{return "";}
-}
+export function readDraft(id:string):string{return readUnplacedDraft(id)?.text??"";}
 
 export function DraftSurface({binding}:{binding:SurfaceBinding}) {
   const editor=useRef<EditorHandle>(null);
   const [text,setText]=useState(()=>readDraft(binding.id));
+  const recovered=readUnplacedDraft(binding.id)?.unverified_recovery===true;
   const [retained,setRetained]=useState(true);
   const [saving,setSaving]=useState(false);
   const [error,setError]=useState<string>();
@@ -44,7 +41,7 @@ export function DraftSurface({binding}:{binding:SurfaceBinding}) {
 
   const change=(value:string)=>{
     setText(value);
-    try{localStorage.setItem(DRAFT_KEY(binding.id),JSON.stringify({text:value,at:Date.now()}));setRetained(true);}
+    try{retainUnplacedDraft(binding.id,value,recovered);setRetained(true);}
     catch{setRetained(false);}
   };
   const save=()=>{
@@ -68,6 +65,7 @@ export function DraftSurface({binding}:{binding:SurfaceBinding}) {
       <span role="status">{saving?"Saving…":retained?"Unsaved":"Not kept on this device"}</span>
       <button disabled={saving||!text.trim()} onClick={save} title={text.trim()?"Place this writing through Central":"Nothing to place yet — write first"}>Save · ⌘S</button>
     </>}>
+    {recovered&&<p className="flow-error">Recovered device copy — unverified. This separate draft has no source identity or permission to overwrite the original.</p>}
     {!retained&&<p role="alert" className="flow-error">This device would not keep the writing. Copy it somewhere you trust before closing this tab.</p>}
     {error&&<p role="alert" className="flow-error">{error}</p>}
     <TextEditor ref={editor} binding={binding} filename="Draft.md" aria-label="Writing not yet saved" value={text} onChange={change} onSave={save} onAttach={attach}/>

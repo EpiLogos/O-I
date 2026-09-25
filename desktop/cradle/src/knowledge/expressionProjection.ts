@@ -8,7 +8,7 @@ import {knowledge} from './client';
 export const KNOWLEDGE_EXPRESSION_LIMIT=96;
 export type ParticipationForm="constellation"|"pair"|"triad"|"whole"|"direct-conjugate";
 export interface OwnerParticipation {contract:"ql-mef/wiki-participation/v1";participation_ref:string;revision:number;form:ParticipationForm;members:{role:"member"|"direct"|"conjugate";canonical_ref:string;source_identity:string}[];provenance:{source_ref:string;source_revision?:string}[]}
-export interface LocalMember {initialPosition?:{x:number;y:number;z:number};frameReading?:ReadingRef;node:GraphNode;reading:KnowledgeReading;sources?:ReadingRef[]}
+export interface LocalMember {initialPosition?:{x:number;y:number;z:number};frameReading?:ReadingRef;registerReading?:ReadingRef;node:GraphNode;reading:KnowledgeReading;sources?:ReadingRef[]}
 export interface LocalWhole {locus:string;members:LocalMember[];edges:KnowledgeRelations["edges"];truncated:boolean;warnings:string[];pinned:string[];ownerRelations?:{from:string;to:string;relation:ReadingRef;provenance:ReadingRef[]}[];grammar:{state:"applied";participation:OwnerParticipation}|{state:"unavailable"|"stale";detail:string};relationBindingsUnavailable:number}
 export type ProjectionOutcome={state:"ready";document:ExpressionDocument;whole:LocalWhole}|{state:"revision_conflict";whole:LocalWhole;result:ExpressionResult}|{state:"unavailable";whole?:LocalWhole;detail:string};
 async function digest(value:string){const bytes=await crypto.subtle.digest("SHA-256",new TextEncoder().encode(value));return [...new Uint8Array(bytes)].map(v=>v.toString(16).padStart(2,"0")).join("").slice(0,32);}
@@ -76,7 +76,7 @@ export async function readLocalWhole(transport:KernelTransportStatus,project:str
 
 function rr(member:LocalMember):ReadingRef{return {ref:member.reading.resource,revision:member.reading.revision??"revision-unavailable",availability:member.reading.revision?"available":"unavailable"};}
 function source(ref:string):ReadingRef{return {ref,revision:"revision-unavailable",availability:"unavailable"};}
-function binding(member:LocalMember):SubjectBinding{return {subject_ref:member.node.subject_ref??member.node.ref,native_owner:member.reading.provider??member.node.native_owner,presentation_role:"thing",sources:member.sources??(member.reading.evidence.length?member.reading.evidence.map(source):[source(member.reading.resource)]),readings:[rr(member),...(member.frameReading?[member.frameReading]:[])],actions:[]};}
+function binding(member:LocalMember):SubjectBinding{return {subject_ref:member.node.subject_ref??member.node.ref,native_owner:member.reading.provider??member.node.native_owner,presentation_role:"thing",sources:member.sources??(member.reading.evidence.length?member.reading.evidence.map(source):[source(member.reading.resource)]),readings:[rr(member),...(member.frameReading?[member.frameReading]:[]),...(member.registerReading?[member.registerReading]:[])],actions:[]};}
 function glyph(member:LocalMember,whole:LocalWhole){if(whole.grammar.state==="applied"){const role=whole.grammar.participation.members.find(m=>m.canonical_ref===member.node.ref)?.role;if(role==="direct")return "◐";if(role==="conjugate")return "◑";return whole.grammar.participation.form==="pair"?"◒":whole.grammar.participation.form==="triad"?"△":whole.grammar.participation.form==="whole"?"◎":"✦";}return member.node.kind.startsWith("wiki")?"○":member.node.kind==="file"?"□":"·";}
 // New managed members fit the native stage's 400-unit camera. One subject
 // stays central; a bounded ring leaves space between multiple glyphs as the

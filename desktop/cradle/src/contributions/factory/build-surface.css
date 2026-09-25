@@ -10,11 +10,7 @@
 .fb-build-surface .fb-title-row { display: flex; justify-content: space-between; gap: 20px; align-items: flex-end; margin-top: 5px; }
 .fb-build-surface .fb-title-row p { margin-bottom: 0; color: var(--fb-muted); }
 .fb-build-surface .fb-run-state { display: flex; align-items: center; gap: 8px; min-width: 0; }
-.fb-build-surface .fb-depth-tabs { display: flex; gap: 4px; margin-top: 18px; }
-.fb-build-surface .fb-depth-tabs button { padding: 9px 12px; border: 0; border-bottom: 2px solid transparent; background: transparent; color: var(--fb-muted); cursor: pointer; text-transform: capitalize; }
-.fb-build-surface .fb-depth-tabs button:hover { color: var(--fb-text); }
-.fb-build-surface .fb-depth-tabs button.is-selected { color: var(--fb-text); border-bottom-color: var(--fb-focus); }
-.fb-build-surface .fb-depth-tabs button:focus-visible, .fb-build-surface .fb-action:focus-visible { outline: 2px solid var(--fb-focus); outline-offset: 2px; }
+.fb-build-surface .fb-action:focus-visible { outline: 2px solid var(--fb-focus); outline-offset: 2px; }
 
 .fb-build-surface .fb-depth { padding: 24px 0 40px; }
 .fb-build-surface .fb-frontier { margin: 0 24px 12px; padding: 22px; display: grid; grid-template-columns: minmax(0,1fr) auto; gap: 24px; align-items: start; border: 1px solid var(--fb-rule); border-radius: 14px; background: var(--fb-panel); }
@@ -100,7 +96,6 @@
   .fb-build-surface .fb-frontier, .fb-build-surface .fb-candidates, .fb-build-surface .fb-two-col, .fb-build-surface .fb-live-grid, .fb-build-surface .fb-run-actions { margin-inline: 0; padding-inline: 12px; }
   .fb-build-surface .fb-frontier { margin-inline: 12px; }
   .fb-build-surface .fb-trace-provenance, .fb-build-surface.factory-build > .fb-depth > .fb-waterfall, .fb-build-surface.factory-build > .fb-depth > .fb-detail { margin-inline: 12px; }
-  .fb-build-surface .fb-depth-tabs { overflow-x: auto; }
   .fb-build-surface .fb-event-list > div { grid-template-columns: 74px minmax(100px,1fr); }
   .fb-build-surface .fb-event-list > div small { display: none; }
 }

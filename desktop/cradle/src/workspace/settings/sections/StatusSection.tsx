@@ -8,7 +8,8 @@ import type {DisclosedSetting} from "../types";
 import {adapterNeeded, readyHarnesses, skillCounts, credentialCards, storedIn, providerName} from "../sectionModel";
 import {useEffect} from "react";
 import {refreshAll, watchPair, type SettingsSnapshot} from "../settingsData";
-import {goTo, PRODUCTS} from "../settingsNav";
+import {goTo} from "../settingsNav";
+import {settingsProducts} from "../settingsProducts";
 import {stagedChanges} from "../changeModel";
 import {Card, Reading, Unreadable} from "../rows";
 import {formatRelativeTime} from "../../../shared/relativeTime";
@@ -40,7 +41,7 @@ export interface DriftRow {
 export function driftRows(data: SettingsSnapshot): DriftRow[] {
   if (data.owners.state !== "ok") return [];
   const rows: DriftRow[] = [];
-  for (const product of PRODUCTS) {
+  for (const product of settingsProducts(data)) {
     const descriptor = data.owners.value[product.id]?.descriptor;
     for (const section of descriptor?.sections ?? []) {
       for (const setting of section.settings) {
@@ -67,7 +68,7 @@ export function StatusSection({data}: {data: SettingsSnapshot}) {
   if (data.suite.state === "reading" && data.census.state === "reading") return <Reading/>;
   const drift = driftRows(data);
   const owners = data.owners.state === "ok" ? data.owners.value : null;
-  const unread = owners ? PRODUCTS.filter((product) => product.id !== "oi" && !owners[product.id]?.descriptor) : [];
+  const unread = owners ? settingsProducts(data).filter((product) => product.id !== "oi" && !owners[product.id]?.descriptor) : [];
   const pending = stagedChanges(data);
   const suite = data.suite.state === "ok" ? data.suite.value : null;
   const oi = data.owners.state === "ok" ? data.owners.value.oi?.descriptor : null;
@@ -108,7 +109,7 @@ export function StatusSection({data}: {data: SettingsSnapshot}) {
     <h3 className="settings-eyebrow">Drift</h3>
     {data.owners.state === "failed" ? <Unreadable error={data.owners.state === "failed" ? data.owners.error : ""} onRetry={() => void refreshAll()}/>
       : data.owners.state === "reading" ? <p className="settings-muted">Reading each product's settings…</p>
-      : unread.length > 0 && drift.length === 0 ? <p className="settings-muted" data-status-drift-unknown>{unread.length === PRODUCTS.length - 1 ? "No product's settings could be read, so drift can't be known." : `${unread.map((product) => product.label).join(", ")} couldn't be read, so drift can't be known there; the others agree.`}</p>
+      : unread.length > 0 && drift.length === 0 ? <p className="settings-muted" data-status-drift-unknown>{unread.length === settingsProducts(data).filter(product => product.id !== "oi").length ? "No product's settings could be read, so drift can't be known." : `${unread.map((product) => product.label).join(", ")} couldn't be read, so drift can't be known there; the others agree.`}</p>
       : drift.length === 0 ? <p className="settings-muted" data-status-drift-none>Nothing has drifted: every product's declared and effective settings agree.</p>
       : <div className="settings-drift-list" data-status-drift>
         {drift.map((row) => <div className="settings-drift" key={`${row.product}:${row.setting.key}`} data-drift-product={row.product} data-drift-setting={row.setting.key}>

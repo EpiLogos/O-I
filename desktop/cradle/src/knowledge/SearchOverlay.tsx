@@ -1,3 +1,4 @@
+import {IconTabStrip,IconTab} from "../workspace/primitives/IconTabStrip";
 import { useEffect, useRef, useState } from "react";
 import { useKernel } from "../kernel/KernelProvider";
 import type { KnowledgeAddress, KnowledgeHit, KnowledgeRequest } from "../kernel/types";
@@ -17,6 +18,7 @@ import type {FlowInstanceRow} from "../flow/instances";
 import {listFlowInstances} from "../flow/instances";
 import {readConversations} from "../workspace/left/ChatRows";
 import {nativeAgentOwner} from "../agency/nativeAgentClient";
+import {KnowledgeStatus} from "./KnowledgeStatus";
 export {normalizeResolution} from "./searchProgress";
 
 /** The palette's typed tabs (10-SIDEBARS §3.1): All · Chats · Agents · Files
@@ -285,9 +287,9 @@ export function SearchOverlay({ project, onClose, onOpen, leader, onLeaderChange
         placeholder={`Search ${project ?? "Central"}`} />
       <button type="button" className="search-dismiss" aria-label="Close search" onClick={onClose}><kbd>esc</kbd></button>
     </form>
-    <nav className="search-tabs" role="tablist" aria-label="Result kinds">
-      {tabs.map(entry => <button key={entry.id} type="button" role="tab" aria-selected={tab === entry.id} data-palette-tab={entry.id} onClick={() => setTab(entry.id)}>{entry.label}</button>)}
-    </nav>
+    <IconTabStrip aria-label="Result kinds">
+      {tabs.map(entry => <IconTab key={entry.id} label={entry.label} icon="search" selected={tab === entry.id} data-palette-tab={entry.id} onClick={() => setTab(entry.id)}/>)}
+    </IconTabStrip>
     {tab !== "all" && <div className="search-scroll search-typed" role="tabpanel" aria-label={tabs.find(entry => entry.id === tab)?.label}>
       {error && <p role="alert">{error}</p>}
       {typedState && !typedItems.length ? <p className="search-empty" role="status">{typedState}</p>
@@ -329,6 +331,7 @@ export function SearchOverlay({ project, onClose, onOpen, leader, onLeaderChange
       {detailBusy && <p role="status">Reading owner evidence…</p>}
       {detail !== undefined && <details className="search-evidence" open><summary>Owner evidence</summary><pre>{JSON.stringify(detail, null, 2)}</pre></details>}
       <section id="search-options" className="search-options" hidden={!optionsOpen} aria-label="Search options">
+        {optionsOpen && <KnowledgeStatus transport={transport} project={project}/>}
         <label className="search-shortcut">Shortcut <select aria-label="Search shortcut" value={String(leader)} onChange={event => onLeaderChange(event.target.value === "true")}><option value="false">{searchLeaderLabel(false)}</option><option value="true">{searchLeaderLabel(true)}</option></select></label>
         <p>AIKit interprets the full query. Result actions run only when you choose them.</p>
         <dl className="search-syntax"><div><dt>Address</dt><dd><code>@</code> or <code>@0</code>–<code>@5</code></dd></div><div><dt>Relations</dt><dd><code>@# - + x / =</code></dd></div><div><dt>Group / literal</dt><dd><code>( … )</code> · <code>"quoted subject"</code> · escapes</dd></div></dl>

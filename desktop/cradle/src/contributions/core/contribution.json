@@ -1,0 +1,42 @@
+{
+  "schema": "oi.native-source-contribution/v1",
+  "contribution_ref": "oi.contribution/core",
+  "owner": "oi",
+  "revision": 1,
+  "entry": "descriptor.tsx",
+  "entry_sha256": "c26e4337df803f0d103638cae0be660c3d2da8dfa66ba313b4dd224c36f350df",
+  "surfaces": [
+    {
+      "descriptor_ref": "oi.surface/expressions",
+      "kind": "expressions",
+      "title": "Expressions",
+      "mount_export": "ExpressionsHostedSurface",
+      "retention": "mounted",
+      "region": "canvas"
+    },
+    {
+      "descriptor_ref": "oi.surface/techne",
+      "kind": "techne",
+      "title": "Technè",
+      "mount_export": "TechneHostedSurface",
+      "retention": "mounted",
+      "region": "canvas"
+    },
+    {
+      "descriptor_ref": "oi.surface/epi-logos",
+      "kind": "epi-logos",
+      "title": "Epi-Logos",
+      "mount_export": "EpiLogosHostedSurface",
+      "retention": "mounted",
+      "region": "canvas"
+    },
+    {
+      "descriptor_ref": "oi.surface/system",
+      "kind": "system",
+      "title": "Settings",
+      "mount_export": "SystemHostedSurface",
+      "retention": "mounted",
+      "region": "canvas"
+    }
+  ]
+}

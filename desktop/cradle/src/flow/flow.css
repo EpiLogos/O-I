@@ -48,3 +48,11 @@
 .fresh-more label { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; margin-block: 12px; }
 .fresh-more select { min-width: 0; max-width: 100%; }
 .fresh-surface .rest-actions { flex-wrap: wrap; }
+
+.flow-decision { margin-block-start: var(--oi-space-3); }
+.flow-decision fieldset { border: 0; padding: 0; min-width: 0; }
+.flow-decision label { display: flex; flex-direction: column; gap: var(--oi-space-1); margin-block: var(--oi-space-2); }
+.flow-decision label:has(input[type="checkbox"]) { flex-direction: row; align-items: center; }
+.flow-decision input { min-width: 0; }
+.flow-decision-numbers { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 14rem), 1fr)); gap: var(--oi-space-2); }
+.flow-decision pre { max-height: 20rem; overflow: auto; white-space: pre-wrap; overflow-wrap: anywhere; }

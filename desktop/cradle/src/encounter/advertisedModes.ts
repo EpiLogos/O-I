@@ -15,40 +15,27 @@ import type {NativeModeOption} from "./nativeMode";
 
 export interface AdvertisedModes {provider:string;label:string;modes:NativeModeOption[];seenAt:number}
 
-const KEY="oi-cradle.advertised-modes.v1";
 const listeners=new Set<()=>void>();
-let held:Record<string,AdvertisedModes>|undefined;
-
-function load():Record<string,AdvertisedModes> {
- if(held)return held;
- held={};
- try{
-  const raw=localStorage.getItem(KEY);
-  const parsed=raw?JSON.parse(raw):{};
-  if(parsed&&typeof parsed==="object")for(const [provider,entry] of Object.entries(parsed as Record<string,AdvertisedModes>)){
-   if(entry&&typeof entry.label==="string"&&Array.isArray(entry.modes)&&entry.modes.every(mode=>mode&&typeof mode.id==="string"&&typeof mode.name==="string"))held[provider]={provider,label:entry.label,modes:entry.modes.map(({id,name})=>({id,name})),seenAt:Number(entry.seenAt)||0};
-  }
- }catch{/* unreadable storage: start empty */}
- return held;
-}
+// These are session observations, not browser-owned capability declarations.
+// A reload starts unknown until a native session advertises its modes again.
+let held:Record<string,AdvertisedModes>={};
 
 /** Record what a connection's harness advertised (an empty list is recorded too: "offers none"). */
 export function recordAdvertisedModes(provider:string,label:string,modes:NativeModeOption[],now=Date.now()):void {
  if(!provider)return;
- const all=load();
+ const all=held;
  const next={provider,label,modes:modes.map(({id,name})=>({id,name})),seenAt:now};
  const prior=all[provider];
  if(prior&&prior.label===next.label&&JSON.stringify(prior.modes)===JSON.stringify(next.modes)&&now-prior.seenAt<60_000)return;
  all[provider]=next;
- try{localStorage.setItem(KEY,JSON.stringify(all));}catch{/* memory only */}
  for(const listener of listeners)listener();
 }
 
 export function advertisedModes():AdvertisedModes[] {
- return Object.values(load()).sort((a,b)=>a.label.localeCompare(b.label)||a.provider.localeCompare(b.provider));
+ return Object.values(held).sort((a,b)=>a.label.localeCompare(b.label)||a.provider.localeCompare(b.provider));
 }
 
 export function watchAdvertisedModes(listener:()=>void):()=>void {listeners.add(listener);return()=>{listeners.delete(listener);};}
 
 /** Tests only. */
-export function resetAdvertisedModesForTest():void {held=undefined;listeners.clear();}
+export function resetAdvertisedModesForTest():void {held={};listeners.clear();}

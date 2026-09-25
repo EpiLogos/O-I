@@ -20,6 +20,8 @@ export function mapSceneOccurrences(
   const map = (id: string): string => refs.get(id) ?? id;
   const keep = (id: unknown): boolean => typeof id !== 'string' || !visible || visible.has(id);
   scene.id = sceneId;
+  // Keep the whole constraint even on a paged view; only occurrence IDs map.
+  if(scene.composition.blueprint)scene.composition.blueprint.members=scene.composition.blueprint.members.map(member=>({...member,entity_ref:map(member.entity_ref)}));
   scene.entities = scene.entities.filter(entity => keep(entity.id)).map(entity => {
     const id = map(entity.id);
     // Embedded native entity parameters still address this exact occurrence.
@@ -31,6 +33,9 @@ export function mapSceneOccurrences(
       .filter(value => keep((value as RecordValue).entityId))
       .map(value => typeof (value as RecordValue).entityId === 'string'
         ? {...value, entityId: map((value as RecordValue).entityId)} : value);
+  }
+  if (scene.research) {
+    scene.research.cards=Object.fromEntries(Object.entries(scene.research.cards).filter(([id])=>keep(id)).map(([id,card])=>[map(id),card]));
   }
   if (scene.semanticField) {
     scene.semanticField.bindings = scene.semanticField.bindings.map(binding => ({
@@ -79,6 +84,10 @@ export function mergeScenePage(whole: Scene, edited: Scene, loaded: ReadonlySet<
     const current = result[key] ?? [];
     const ids = new Set(current.map(value => value.id));
     (result as unknown as RecordValue)[key] = [...current, ...older.filter(value => unseen(value as RecordValue) && !ids.has(value.id))];
+  }
+  if (whole.research) {
+    if(!result.research&&hidden.some(entity=>whole.research!.cards[entity.id]))throw new Error('Hidden research cards still need their material; retain the carrier');
+    if(result.research)for(const [id,card] of Object.entries(whole.research.cards))if(retained.has(id)&&!result.research.cards[id])result.research.cards[id]=clone(card);
   }
   if (whole.semanticField && result.semanticField) {
     const bindings = result.semanticField.bindings;

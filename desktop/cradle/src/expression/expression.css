@@ -15,7 +15,6 @@
 .expression-tools{display:flex;align-items:flex-end;gap:8px;flex-wrap:wrap}
 /* The artboard: the one production field, framed on the canvas ground. */
 .expression-stage-host{position:relative;min-height:360px;background:var(--oi-canvas-ground);color:var(--oi-foreground);border:var(--oi-shell-edge) solid var(--oi-hairline);border-radius:var(--oi-shell-radius);overflow:hidden;isolation:isolate}
-.expression-scenes{padding-inline:0;gap:14px;overflow-x:auto;overflow-y:hidden}
 .expression-scenes .expression-add{align-self:center;margin-left:4px;font-size:var(--oi-shell-type-body)}
 .expression-entities{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
 .expression-entity{display:inline-flex;align-items:center;gap:8px;min-height:26px;padding:3px 10px;border:var(--oi-shell-edge) solid var(--oi-hairline);border-radius:var(--oi-radius-pill);background:transparent;color:var(--oi-accent-ink);font:inherit;font-size:var(--oi-shell-type-nav);cursor:pointer;transition:background var(--oi-motion-ui) var(--oi-motion-ease-out),border-color var(--oi-motion-ui) var(--oi-motion-ease-out)}

@@ -14,7 +14,7 @@
  */
 import { mkdirSync, readFileSync, readdirSync, writeFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
-import { convertTheme, emitCss, emitIndexModule, mergeInclude, parseJsonc } from './convert.mjs';
+import { convertTheme, emitCss, emitIndexModule, emitImportRules, mergeInclude, parseJsonc } from './convert.mjs';
 
 const HERE = fileURLToPath(new URL('../', import.meta.url));
 const UPSTREAM = `${HERE}themes/upstream/`;
@@ -50,4 +50,5 @@ mkdirSync(`${OUT}oi`, { recursive: true });
 for (const doc of docs) writeFileSync(`${OUT}oi/${doc.id}.json`, `${JSON.stringify(doc, null, 2)}\n`);
 writeFileSync(`${OUT}themes.css`, emitCss(docs));
 writeFileSync(`${OUT}index.mjs`, emitIndexModule(docs));
+writeFileSync(`${OUT}import-rules.json`, emitImportRules(docs));
 console.log(`${docs.length} themes -> themes/oi/, themes/themes.css, themes/index.mjs`);

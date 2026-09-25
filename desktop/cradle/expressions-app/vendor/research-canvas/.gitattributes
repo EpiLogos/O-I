@@ -1,0 +1,4 @@
+# Keep upstream bytes (and therefore provenance hashes) intact.
+packages/** whitespace=-blank-at-eof
+# Unified patch context deliberately represents blank lines with one space.
+patches/*.patch -whitespace

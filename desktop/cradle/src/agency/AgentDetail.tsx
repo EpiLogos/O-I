@@ -1,19 +1,15 @@
 /**
  * AgentDetail — Purpose · Agent card · Sessions · Knowledge ·
- * History/learning. `agency_read` (kernel/types.ts:209/284) only ever
- * discloses `{definition:{id}, label?, agent_sessions:{purpose?}}`
- * (the shape EncounterList.tsx and SettingsPage.tsx already read), so
- * every section beyond Purpose/Sessions renders the honest
- * "Not disclosed by the owner reading" fallback rather than inventing
- * content the reading never carried.
+ * History/learning. Sections the owner reading does not carry say so.
  */
+import {HarnessDisclosure} from "./harnessDisclosure";
 import type { ReactNode } from "react";
 import type { AgencySessionRow } from "./agencyTypes";
 import { LiveHumanAgentCard } from "./HumanAgentCard";
 
 const NOT_DISCLOSED = "Not disclosed by the owner reading";
 
-export function AgentDetail({ row, siblingSessions }: { row: AgencySessionRow; siblingSessions: AgencySessionRow[] }) {
+export function AgentDetail({ row, siblingSessions, harnessDisclosure }: { row: AgencySessionRow; siblingSessions: AgencySessionRow[]; harnessDisclosure?:unknown }) {
   return <div className="agency-detail" aria-label={`Agent detail — ${row.purpose ?? row.sessionRef}`}>
     <header className="oi-context-head">
       <div>
@@ -33,6 +29,10 @@ export function AgentDetail({ row, siblingSessions }: { row: AgencySessionRow; s
       {row.agentRef
         ? <LiveHumanAgentCard agentRef={row.agentRef}/>
         : <p className="oi-note">{NOT_DISCLOSED} — this session attachment names no canonical Agent (`agent_ref`), so no card can be derived for it.</p>}
+    </DetailSection>
+
+    <DetailSection title="Skills & tools">
+      <HarnessDisclosure reading={harnessDisclosure}/>
     </DetailSection>
 
     <DetailSection title="Sessions">

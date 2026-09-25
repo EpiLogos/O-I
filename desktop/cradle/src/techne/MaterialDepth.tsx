@@ -25,6 +25,7 @@ import {useKernel} from "../kernel/KernelProvider";
 import {listFiles} from "../files/client";
 import {knowledge} from "../knowledge/client";
 import type {KnowledgeAddress, KnowledgeReading} from "../kernel/types";
+import {IconTabStrip} from "../workspace/primitives/IconTabStrip";
 import {Glyph} from "../workspace/Glyph";
 import {ICON} from "../expressions/icons";
 import {useDock, useDockEdge} from "../expressions/dock";
@@ -192,7 +193,7 @@ export function MaterialDepth({sceneId, project, onNotice}: {sceneId: string; pr
         <div className="oi-panel-head">
           <span className="oi-panel-head-title">{selected ? selected.name : "Lens"}</span>
           <span className="oi-panel-head-tools">
-            {accepted.length > 0 && <div className="oi-segment" role="group" aria-label="Lens">{accepted.map(candidate => <button key={candidate.id} type="button" aria-pressed={candidate.id === lens?.id} onClick={() => setLensId(candidate.id)}>{candidate.label}</button>)}</div>}
+            {accepted.length > 0 && <IconTabStrip aria-label="Lens" current={lens?.id} onSelect={setLensId} items={accepted.map(candidate=>({id:candidate.id,label:candidate.label,icon:candidate.id.includes("knowledge")?"wiki":candidate.id.includes("reference")?"link":"file"}))}/>}
             <button type="button" className="oi-tool" aria-label="Close lens host" onClick={() => dock.setOpen(false)}><Glyph name={ICON.close} size={13}/></button>
           </span>
         </div>

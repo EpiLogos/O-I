@@ -158,49 +158,49 @@ export const TweakpaneDebug: React.FC<TweakpaneDebugProps> = ({
         },
       })
       .on('change', (ev: any) => {
-        onConfigChange({ relational: { ...config.relational, mode: ev.value as any } });
+        onConfigChange({ relational: { enabled: false, ...config.relational, mode: ev.value as any } });
       });
 
     fRelational
       .addBinding(params, 'attractorCount', { label: 'Attractor Poles', min: 1, max: 6, step: 1 })
       .on('change', (ev: any) => {
-        onConfigChange({ relational: { ...config.relational, attractorCount: ev.value } });
+        onConfigChange({ relational: { enabled: false, ...config.relational, attractorCount: ev.value } });
       });
 
     fRelational
       .addBinding(params, 'attractorGravity', { label: 'Attractor Gravity', min: -15.0, max: 25.0, step: 0.1 })
       .on('change', (ev: any) => {
-        onConfigChange({ relational: { ...config.relational, attractorGravity: ev.value } });
+        onConfigChange({ relational: { enabled: false, ...config.relational, attractorGravity: ev.value } });
       });
 
     fRelational
       .addBinding(params, 'orbitSpeed', { label: 'Orbit Angular Speed', min: -10.0, max: 10.0, step: 0.1 })
       .on('change', (ev: any) => {
-        onConfigChange({ relational: { ...config.relational, orbitSpeed: ev.value } });
+        onConfigChange({ relational: { enabled: false, ...config.relational, orbitSpeed: ev.value } });
       });
 
     fRelational
       .addBinding(params, 'orbitRadius', { label: 'Orbit Separation (px)', min: 0, max: 1200, step: 10 })
       .on('change', (ev: any) => {
-        onConfigChange({ relational: { ...config.relational, orbitRadius: ev.value } });
+        onConfigChange({ relational: { enabled: false, ...config.relational, orbitRadius: ev.value } });
       });
 
     fRelational
       .addBinding(params, 'relationalSpin', { label: 'Vortex Swirl Torque', min: -20.0, max: 20.0, step: 0.1 })
       .on('change', (ev: any) => {
-        onConfigChange({ relational: { ...config.relational, relationalSpin: ev.value } });
+        onConfigChange({ relational: { enabled: false, ...config.relational, relationalSpin: ev.value } });
       });
 
     fRelational
       .addBinding(params, 'chaosFactor', { label: 'Strange Chaos Factor', min: 0.0, max: 15.0, step: 0.1 })
       .on('change', (ev: any) => {
-        onConfigChange({ relational: { ...config.relational, chaosFactor: ev.value } });
+        onConfigChange({ relational: { enabled: false, ...config.relational, chaosFactor: ev.value } });
       });
 
     fRelational
       .addBinding(params, 'wanderSpeed', { label: 'Wander Rate', min: 0.0, max: 10.0, step: 0.1 })
       .on('change', (ev: any) => {
-        onConfigChange({ relational: { ...config.relational, wanderSpeed: ev.value } });
+        onConfigChange({ relational: { enabled: false, ...config.relational, wanderSpeed: ev.value } });
       });
 
     // --- Tab: Fluid Dynamics & GPGPU ---

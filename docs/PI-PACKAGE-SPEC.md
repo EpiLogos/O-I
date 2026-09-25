@@ -165,7 +165,7 @@ plus the native Pi extension installable into Pi's own package host.
 - `Work/O-I/skills/oi/SKILL.md` — agent-facing orientation to the whole.
 - `Work/O-I/packages/README.md` — package envelope boundary.
 - `schemas/oi.package-v1.schema.json` — descriptor schema.
-- `Work/ai-kit/skills/registry/capsules/skill/aikit/component-surface-authoring/payload/SKILL.md`
+- `Work/ai-kit/registry/capsules/skill/aikit/component-surface-authoring/payload/SKILL.md`
 - DSH adapter (parallel work): `Work/ai-kit` branch `agent/dsh-adapter-main`
   (`crates/aikit-adapters/src/clients/dsh.rs`, PR EpiLogos/ai-kit#170).
 - Pi SDK: `earendil-works/pi` `packages/coding-agent/src/core/sdk.ts`.

@@ -273,7 +273,7 @@ The portable contract lives in:
 ```text
 ../shared-field/presentation.mjs
 ../shared-field/presentation-projection.mjs
-../shared-field/presentation-schema-v1.json
+../schemas/oi.world-presentation-v1.schema.json
 ```
 
 The governing relation is:

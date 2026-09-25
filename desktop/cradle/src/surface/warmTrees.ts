@@ -6,12 +6,13 @@ import {RETAINED_VIEW_BUDGET} from "./runtime";
 import type {LayoutState, SurfaceId} from "./types";
 import {MODE_CURATION, TREE_MODES, type WorkspaceMode} from "../workspace/mode";
 import type {Workspace} from "../workspace/store";
+import {hostedSurfaceDescriptors} from "../contributions/registered-kinds.mjs";
 
 /** The centre kinds the tier retains: engines and hosted applications —
  * `expressions` (the vendored application's iframe), `techne`, `epi-logos`,
  * `system`, and `factory` (the retention tier's own law; re-exported by
  * surface/retention). */
-export const RETAINED_CENTRE_KINDS = new Set(["expressions", "techne", "epi-logos", "system", "factory"]);
+export const RETAINED_CENTRE_KINDS = new Set(hostedSurfaceDescriptors.filter(descriptor => descriptor.retention === "mounted").map(descriptor => descriptor.kind));
 export const isRetainedCentreKind = (kind: string) => RETAINED_CENTRE_KINDS.has(kind);
 
 export const RETAINED_PANE_KINDS = new Set(["draft", "file", "source", "knowledge", "encounter", "terminal", "browser", "presentation", "explore"]);
@@ -42,7 +43,7 @@ function treeShelfReasons(layout: LayoutState): SurfaceId[] {
   return treeBindingIds(layout).filter((id) => {
     const binding = layout.surfaces[id];
     if (!binding || binding.pending) return false;
-    if (isRetainedPaneKind(binding.kind)) return true;
+    if (isRetainedPaneKind(binding.kind) || (binding.hosted && !isRetainedCentreKind(binding.kind))) return true;
     return isRetainedCentreKind(binding.kind) && binding.kind !== stageKind;
   });
 }

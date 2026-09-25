@@ -7,7 +7,7 @@
  */
 import {useState} from "react";
 import type {DisclosedAction, DisclosedSetting, OwnerMount} from "../types";
-import {availabilityWord} from "../v2/vocabulary";
+import {availabilityWord} from "../vocabulary";
 import {expect, plain, refreshAll, type SettingsSnapshot} from "../settingsData";
 import {CAPABILITIES_REF} from "../changeModel";
 import {goTo} from "../settingsNav";

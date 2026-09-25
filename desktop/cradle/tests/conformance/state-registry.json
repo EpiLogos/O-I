@@ -1,0 +1,2178 @@
+{
+  "schema": "oi.desktop-conformance-state-registry/v1",
+  "standing": "Individually reviewed initial enumeration, not an approved future-key wildcard. No regeneration/accept command exists.",
+  "owners": [
+    {
+      "owner": "src/CradleFrame.tsx",
+      "references": [
+        "localStorage"
+      ],
+      "sites": [
+        {
+          "owner": "src/CradleFrame.tsx",
+          "receiver": "localStorage",
+          "method": "removeItem",
+          "key": "DRAFT_KEY(bindingId)",
+          "basis": []
+        }
+      ],
+      "key_literals": [
+        "oi-action",
+        "oi:agent-setup-return",
+        "oi:arrangement-action",
+        "oi:browser-attached",
+        "oi:browser-pane-focus",
+        "oi:browser-title",
+        "oi:close-settings",
+        "oi:context-candidate",
+        "oi:context-insert",
+        "oi:context-return",
+        "oi:detached-context",
+        "oi:epi-examine",
+        "oi:epi-open-expression",
+        "oi:epi-open-knowledge",
+        "oi:epi-open-source",
+        "oi:epi-return",
+        "oi:form-created",
+        "oi:fresh-choice",
+        "oi:fresh-result",
+        "oi:host-workspace-mode",
+        "oi:library-open",
+        "oi:new-tab",
+        "oi:open-agency",
+        "oi:open-explore",
+        "oi:open-settings",
+        "oi:open-terminal",
+        "oi:panel-open-subject",
+        "oi:place-draft",
+        "oi:place-draft-result",
+        "oi:recover-device-copy",
+        "oi:surface-view",
+        "oi:techne-add-material",
+        "oi:techne-open-file",
+        "oi:terminal-attached",
+        "oi:toggle-central",
+        "oi:window-bounds",
+        "oi:window-navigate",
+        "oi:window-navigate-result",
+        "oi:window-redock",
+        "oi:workspace-message"
+      ],
+      "spec_ref": "docs/cradle/02-ARCHITECTURE.md \u00a76; canonical conformance plan Lane A \u00a71 / Lane B \u00a71",
+      "rationale": "Removes an unplaced writing draft only after its owner has saved it.",
+      "keys": [
+        {
+          "family": "DRAFT_KEY(bindingId)",
+          "classification": "device-draft",
+          "rationale": "Removes an unplaced writing draft only after its owner has saved it.",
+          "review": "Lane B source-reviewed; presentation/device draft only. See PRESENTATION-STATE-ADDENDUM-PROPOSED.md; owner law ratification remains distinct."
+        }
+      ]
+    },
+    {
+      "owner": "src/agency/selection.ts",
+      "references": [
+        "localStorage"
+      ],
+      "sites": [
+        {
+          "owner": "src/agency/selection.ts",
+          "receiver": "localStorage",
+          "method": "getItem",
+          "key": "KEY",
+          "basis": [
+            "KEY = 'oi-panel-agent.v1'"
+          ]
+        },
+        {
+          "owner": "src/agency/selection.ts",
+          "receiver": "localStorage",
+          "method": "setItem",
+          "key": "KEY",
+          "basis": [
+            "KEY = 'oi-panel-agent.v1'"
+          ]
+        }
+      ],
+      "key_literals": [
+        "oi-panel-agent.v1"
+      ],
+      "spec_ref": "docs/cradle/02-ARCHITECTURE.md \u00a76; canonical conformance plan Lane A \u00a71 / Lane B \u00a71",
+      "rationale": "Selected agent/profile reference for a view; not admission or authority.",
+      "keys": [
+        {
+          "family": "KEY",
+          "classification": "presentation-local",
+          "rationale": "Selected agent/profile reference for a view; not admission or authority.",
+          "review": "provisional; Lane B ratifies scope without converting source truth into browser state"
+        }
+      ]
+    },
+    {
+      "owner": "src/agent/chat/AgentChat.tsx",
+      "references": [
+        "localStorage"
+      ],
+      "sites": [
+        {
+          "owner": "src/agent/chat/AgentChat.tsx",
+          "receiver": "localStorage",
+          "method": "getItem",
+          "key": "DRAFT_KEY",
+          "basis": [
+            "DRAFT_KEY = \"oi-chat-draft\""
+          ]
+        },
+        {
+          "owner": "src/agent/chat/AgentChat.tsx",
+          "receiver": "localStorage",
+          "method": "removeItem",
+          "key": "DRAFT_KEY",
+          "basis": [
+            "DRAFT_KEY = \"oi-chat-draft\""
+          ]
+        },
+        {
+          "owner": "src/agent/chat/AgentChat.tsx",
+          "receiver": "localStorage",
+          "method": "setItem",
+          "key": "DRAFT_KEY",
+          "basis": [
+            "DRAFT_KEY = \"oi-chat-draft\""
+          ]
+        }
+      ],
+      "key_literals": [
+        "oi-action chat-history-open",
+        "oi-chat-draft",
+        "oi-eyebrow",
+        "oi-menu-item",
+        "oi-menu-item chat-preview-entry",
+        "oi-tool chat-history-open",
+        "oi-tool chat-new"
+      ],
+      "spec_ref": "docs/cradle/02-ARCHITECTURE.md \u00a76; canonical conformance plan Lane A \u00a71 / Lane B \u00a71",
+      "rationale": "Unsent composer text; sending still requires the native encounter operation.",
+      "keys": [
+        {
+          "family": "DRAFT_KEY",
+          "classification": "device-draft",
+          "rationale": "Unsent composer text; sending still requires the native encounter operation.",
+          "review": "provisional; Lane B ratifies scope without converting source truth into browser state"
+        }
+      ]
+    },
+    {
+      "owner": "src/browser/BrowserSurface.tsx",
+      "references": [
+        "localStorage"
+      ],
+      "sites": [
+        {
+          "owner": "src/browser/BrowserSurface.tsx",
+          "receiver": "localStorage",
+          "method": "getItem",
+          "key": "`oi-browser-profile:${id}`",
+          "basis": []
+        },
+        {
+          "owner": "src/browser/BrowserSurface.tsx",
+          "receiver": "localStorage",
+          "method": "getItem",
+          "key": "`oi-browser-url:${id}`",
+          "basis": []
+        },
+        {
+          "owner": "src/browser/BrowserSurface.tsx",
+          "receiver": "localStorage",
+          "method": "setItem",
+          "key": "`oi-browser-profile:${binding.id}`",
+          "basis": []
+        },
+        {
+          "owner": "src/browser/BrowserSurface.tsx",
+          "receiver": "localStorage",
+          "method": "setItem",
+          "key": "`oi-browser-url:${binding.id}`",
+          "basis": []
+        }
+      ],
+      "key_literals": [
+        "oi-browser-profile:${\u2026}",
+        "oi-browser-url:${\u2026}",
+        "oi:browser-attached",
+        "oi:browser-focus",
+        "oi:browser-pane-focus",
+        "oi:browser-reading",
+        "oi:browser-title"
+      ],
+      "spec_ref": "docs/cradle/02-ARCHITECTURE.md \u00a76; canonical conformance plan Lane A \u00a71 / Lane B \u00a71",
+      "rationale": "Restorable pane URL and browser profile choice; native lease controls the actual browser.",
+      "keys": [
+        {
+          "family": "`oi-browser-profile:${id}`",
+          "classification": "presentation-local",
+          "rationale": "Restorable pane URL and browser profile choice; native lease controls the actual browser.",
+          "review": "Lane B source-reviewed; presentation/device draft only. See PRESENTATION-STATE-ADDENDUM-PROPOSED.md; owner law ratification remains distinct."
+        },
+        {
+          "family": "`oi-browser-url:${id}`",
+          "classification": "presentation-local",
+          "rationale": "Restorable pane URL and browser profile choice; native lease controls the actual browser.",
+          "review": "Lane B source-reviewed; presentation/device draft only. See PRESENTATION-STATE-ADDENDUM-PROPOSED.md; owner law ratification remains distinct."
+        },
+        {
+          "family": "`oi-browser-profile:${binding.id}`",
+          "classification": "presentation-local",
+          "rationale": "Restorable pane URL and browser profile choice; native lease controls the actual browser.",
+          "review": "Lane B source-reviewed; presentation/device draft only. See PRESENTATION-STATE-ADDENDUM-PROPOSED.md; owner law ratification remains distinct."
+        },
+        {
+          "family": "`oi-browser-url:${binding.id}`",
+          "classification": "presentation-local",
+          "rationale": "Restorable pane URL and browser profile choice; native lease controls the actual browser.",
+          "review": "Lane B source-reviewed; presentation/device draft only. See PRESENTATION-STATE-ADDENDUM-PROPOSED.md; owner law ratification remains distinct."
+        }
+      ]
+    },
+    {
+      "owner": "src/context/ContextActions.tsx",
+      "references": [
+        "localStorage"
+      ],
+      "sites": [
+        {
+          "owner": "src/context/ContextActions.tsx",
+          "receiver": "localStorage",
+          "method": "getItem",
+          "key": "`oi-flow-instance-draft:${binding.id}`",
+          "basis": []
+        }
+      ],
+      "key_literals": [
+        "oi-flow-instance-draft:${\u2026}",
+        "oi:context-options"
+      ],
+      "spec_ref": "docs/cradle/02-ARCHITECTURE.md \u00a76; canonical conformance plan Lane A \u00a71 / Lane B \u00a71",
+      "rationale": "Selected text held as an unsaved Flow draft until an owner operation accepts it.",
+      "keys": [
+        {
+          "family": "`oi-flow-instance-draft:${binding.id}`",
+          "classification": "device-draft",
+          "rationale": "Selected text held as an unsaved Flow draft until an owner operation accepts it.",
+          "review": "provisional; Lane B ratifies scope without converting source truth into browser state"
+        }
+      ]
+    },
+    {
+      "owner": "src/contributions/factory/desk/deskModel.ts",
+      "references": [
+        "localStorage"
+      ],
+      "sites": [
+        {
+          "owner": "src/contributions/factory/desk/deskModel.ts",
+          "receiver": "localStorage",
+          "method": "getItem",
+          "key": "DETAIL_KEY",
+          "basis": [
+            "DETAIL_KEY = \"oi-factory-desk-detail.v1\""
+          ]
+        },
+        {
+          "owner": "src/contributions/factory/desk/deskModel.ts",
+          "receiver": "localStorage",
+          "method": "getItem",
+          "key": "LAST_RUN_KEY",
+          "basis": [
+            "LAST_RUN_KEY = \"oi-factory-desk-last-run.v1\""
+          ]
+        },
+        {
+          "owner": "src/contributions/factory/desk/deskModel.ts",
+          "receiver": "localStorage",
+          "method": "getItem",
+          "key": "SOURCES_KEY",
+          "basis": [
+            "SOURCES_KEY = \"oi-factory-desk-sources.v1\""
+          ]
+        },
+        {
+          "owner": "src/contributions/factory/desk/deskModel.ts",
+          "receiver": "localStorage",
+          "method": "getItem",
+          "key": "VIEW_KEY",
+          "basis": [
+            "VIEW_KEY = \"oi-factory-centre-view.v1\""
+          ]
+        },
+        {
+          "owner": "src/contributions/factory/desk/deskModel.ts",
+          "receiver": "localStorage",
+          "method": "removeItem",
+          "key": "DETAIL_KEY",
+          "basis": [
+            "DETAIL_KEY = \"oi-factory-desk-detail.v1\""
+          ]
+        },
+        {
+          "owner": "src/contributions/factory/desk/deskModel.ts",
+          "receiver": "localStorage",
+          "method": "setItem",
+          "key": "DETAIL_KEY",
+          "basis": [
+            "DETAIL_KEY = \"oi-factory-desk-detail.v1\""
+          ]
+        },
+        {
+          "owner": "src/contributions/factory/desk/deskModel.ts",
+          "receiver": "localStorage",
+          "method": "setItem",
+          "key": "LAST_RUN_KEY",
+          "basis": [
+            "LAST_RUN_KEY = \"oi-factory-desk-last-run.v1\""
+          ]
+        },
+        {
+          "owner": "src/contributions/factory/desk/deskModel.ts",
+          "receiver": "localStorage",
+          "method": "setItem",
+          "key": "SOURCES_KEY",
+          "basis": [
+            "SOURCES_KEY = \"oi-factory-desk-sources.v1\""
+          ]
+        },
+        {
+          "owner": "src/contributions/factory/desk/deskModel.ts",
+          "receiver": "localStorage",
+          "method": "setItem",
+          "key": "VIEW_KEY",
+          "basis": [
+            "VIEW_KEY = \"oi-factory-centre-view.v1\""
+          ]
+        }
+      ],
+      "key_literals": [
+        "oi-factory-centre-view.v1",
+        "oi-factory-desk-detail.v1",
+        "oi-factory-desk-last-run.v1",
+        "oi-factory-desk-sources.v1"
+      ],
+      "spec_ref": "docs/cradle/02-ARCHITECTURE.md \u00a76; canonical conformance plan Lane A \u00a71 / Lane B \u00a71",
+      "rationale": "View/filter/detail and last-run/source references; live Factory read supplies semantic state.",
+      "keys": [
+        {
+          "family": "DETAIL_KEY",
+          "classification": "presentation-local",
+          "rationale": "View/filter/detail and last-run/source references; live Factory read supplies semantic state.",
+          "review": "provisional; Lane B ratifies scope without converting source truth into browser state"
+        },
+        {
+          "family": "LAST_RUN_KEY",
+          "classification": "presentation-local",
+          "rationale": "View/filter/detail and last-run/source references; live Factory read supplies semantic state.",
+          "review": "provisional; Lane B ratifies scope without converting source truth into browser state"
+        },
+        {
+          "family": "SOURCES_KEY",
+          "classification": "presentation-local",
+          "rationale": "View/filter/detail and last-run/source references; live Factory read supplies semantic state.",
+          "review": "provisional; Lane B ratifies scope without converting source truth into browser state"
+        },
+        {
+          "family": "VIEW_KEY",
+          "classification": "presentation-local",
+          "rationale": "View/filter/detail and last-run/source references; live Factory read supplies semantic state.",
+          "review": "provisional; Lane B ratifies scope without converting source truth into browser state"
+        }
+      ]
+    },
+    {
+      "owner": "src/editor/TextEditor.tsx",
+      "references": [
+        "localStorage"
+      ],
+      "sites": [
+        {
+          "owner": "src/editor/TextEditor.tsx",
+          "receiver": "localStorage",
+          "method": "getItem",
+          "key": "storageKey",
+          "basis": [
+            "storageKey = `oi-editor-view:${callbacks.current.binding.ref ?? callbacks.current.binding.id}`"
+          ]
+        },
+        {
+          "owner": "src/editor/TextEditor.tsx",
+          "receiver": "localStorage",
+          "method": "setItem",
+          "key": "storageKey",
+          "basis": [
+            "storageKey = `oi-editor-view:${callbacks.current.binding.ref ?? callbacks.current.binding.id}`"
+          ]
+        }
+      ],
+      "key_literals": [
+        "oi-editor-view:${\u2026}",
+        "oi:attach-selection",
+        "oi:context-candidate",
+        "oi:context-reveal",
+        "oi:editor-command",
+        "oi:editor-selection",
+        "oi:editor-status",
+        "oi:selection-anchor",
+        "oi:selection-preview"
+      ],
+      "spec_ref": "docs/cradle/02-ARCHITECTURE.md \u00a76; canonical conformance plan Lane A \u00a71 / Lane B \u00a71",
+      "rationale": "Caret and scroll restore per editor binding; no source mutation.",
+      "keys": [
+        {
+          "family": "storageKey",
+          "classification": "presentation-local",
+          "rationale": "Caret and scroll restore per editor binding; no source mutation.",
+          "review": "provisional; Lane B ratifies scope without converting source truth into browser state"
+        }
+      ]
+    },
+    {
+      "owner": "src/epilogos/annotations.ts",
+      "references": [
+        "localStorage"
+      ],
+      "sites": [
+        {
+          "owner": "src/epilogos/annotations.ts",
+          "receiver": "window.localStorage",
+          "method": "getItem",
+          "key": "KEY",
+          "basis": [
+            "KEY = \"oi-cradle.epilogos.annotations.v1\""
+          ]
+        },
+        {
+          "owner": "src/epilogos/annotations.ts",
+          "receiver": "window.localStorage",
+          "method": "setItem",
+          "key": "KEY",
+          "basis": [
+            "KEY = \"oi-cradle.epilogos.annotations.v1\""
+          ]
+        }
+      ],
+      "key_literals": [
+        "oi-cradle.epilogos.annotations.v1"
+      ],
+      "spec_ref": "docs/cradle/02-ARCHITECTURE.md \u00a76; canonical conformance plan Lane A \u00a71 / Lane B \u00a71",
+      "rationale": "Viewer-authored local annotation drafts, explicitly outside the source corpus.",
+      "keys": [
+        {
+          "family": "KEY",
+          "classification": "device-draft",
+          "rationale": "Viewer-authored local annotation drafts, explicitly outside the source corpus.",
+          "review": "provisional; Lane B ratifies scope without converting source truth into browser state"
+        }
+      ]
+    },
+    {
+      "owner": "src/epilogos/places.ts",
+      "references": [
+        "localStorage"
+      ],
+      "sites": [
+        {
+          "owner": "src/epilogos/places.ts",
+          "receiver": "window.localStorage",
+          "method": "getItem",
+          "key": "READING_KEY",
+          "basis": [
+            "READING_KEY = \"oi-cradle.epilogos.reading.v1\""
+          ]
+        },
+        {
+          "owner": "src/epilogos/places.ts",
+          "receiver": "window.localStorage",
+          "method": "setItem",
+          "key": "READING_KEY",
+          "basis": [
+            "READING_KEY = \"oi-cradle.epilogos.reading.v1\""
+          ]
+        }
+      ],
+      "key_literals": [
+        "oi-cradle.epilogos.reading.v1"
+      ],
+      "spec_ref": "docs/cradle/02-ARCHITECTURE.md \u00a76; canonical conformance plan Lane A \u00a71 / Lane B \u00a71",
+      "rationale": "Passage/reading location by place, not the content of the corpus.",
+      "keys": [
+        {
+          "family": "READING_KEY",
+          "classification": "presentation-local",
+          "rationale": "Passage/reading location by place, not the content of the corpus.",
+          "review": "provisional; Lane B ratifies scope without converting source truth into browser state"
+        }
+      ]
+    },
+    {
+      "owner": "src/explore/KnowledgeEncounter.tsx",
+      "references": [
+        "localStorage"
+      ],
+      "sites": [
+        {
+          "owner": "src/explore/KnowledgeEncounter.tsx",
+          "receiver": "localStorage",
+          "method": "getItem",
+          "key": "name",
+          "basis": []
+        },
+        {
+          "owner": "src/explore/KnowledgeEncounter.tsx",
+          "receiver": "localStorage",
+          "method": "setItem",
+          "key": "name",
+          "basis": []
+        }
+      ],
+      "key_literals": [
+        "oi-cradle.knowledge.${\u2026}"
+      ],
+      "spec_ref": "docs/cradle/02-ARCHITECTURE.md \u00a76; canonical conformance plan Lane A \u00a71 / Lane B \u00a71",
+      "rationale": "Presentation mode, pinned refs and held locus; material is reread from the owner.",
+      "keys": [
+        {
+          "family": "name",
+          "classification": "presentation-local",
+          "rationale": "Presentation mode, pinned refs and held locus; material is reread from the owner.",
+          "review": "provisional; Lane B ratifies scope without converting source truth into browser state"
+        }
+      ]
+    },
+    {
+      "owner": "src/explore/navigate.ts",
+      "references": [
+        "localStorage"
+      ],
+      "sites": [
+        {
+          "owner": "src/explore/navigate.ts",
+          "receiver": "localStorage",
+          "method": "getItem",
+          "key": "EXPLORE_TRAVEL_KEY",
+          "basis": []
+        },
+        {
+          "owner": "src/explore/navigate.ts",
+          "receiver": "localStorage",
+          "method": "setItem",
+          "key": "EXPLORE_TRAVEL_KEY",
+          "basis": []
+        }
+      ],
+      "key_literals": [
+        "oi:explore-navigate"
+      ],
+      "spec_ref": "docs/cradle/02-ARCHITECTURE.md \u00a76; canonical conformance plan Lane A \u00a71 / Lane B \u00a71",
+      "rationale": "Explore travel history and exact refs for restoration, not authoritative focus.",
+      "keys": [
+        {
+          "family": "EXPLORE_TRAVEL_KEY",
+          "classification": "presentation-local",
+          "rationale": "Explore travel history and exact refs for restoration, not authoritative focus.",
+          "review": "provisional; Lane B ratifies scope without converting source truth into browser state"
+        }
+      ]
+    },
+    {
+      "owner": "src/expressions/dock.ts",
+      "references": [
+        "localStorage"
+      ],
+      "sites": [
+        {
+          "owner": "src/expressions/dock.ts",
+          "receiver": "window.localStorage",
+          "method": "getItem",
+          "key": "key",
+          "basis": []
+        },
+        {
+          "owner": "src/expressions/dock.ts",
+          "receiver": "window.localStorage",
+          "method": "setItem",
+          "key": "key",
+          "basis": []
+        }
+      ],
+      "key_literals": [],
+      "spec_ref": "docs/cradle/02-ARCHITECTURE.md \u00a76; canonical conformance plan Lane A \u00a71 / Lane B \u00a71",
+      "rationale": "Dock open state and bounded geometry; caller keys are separately enumerated.",
+      "keys": [
+        {
+          "family": "key",
+          "classification": "presentation-local",
+          "rationale": "Dock open state and bounded geometry; caller keys are separately enumerated.",
+          "review": "provisional; Lane B ratifies scope without converting source truth into browser state"
+        }
+      ]
+    },
+    {
+      "owner": "src/files/FileSurface.tsx",
+      "references": [
+        "localStorage"
+      ],
+      "sites": [
+        {
+          "owner": "src/files/FileSurface.tsx",
+          "receiver": "localStorage",
+          "method": "getItem",
+          "key": "caretKey",
+          "basis": [
+            "caretKey = `oi-cradle.file-caret:${binding.id}`"
+          ]
+        },
+        {
+          "owner": "src/files/FileSurface.tsx",
+          "receiver": "localStorage",
+          "method": "getItem",
+          "key": "scrollKey",
+          "basis": [
+            "scrollKey = `oi-cradle.file-scroll:${binding.id}`"
+          ]
+        },
+        {
+          "owner": "src/files/FileSurface.tsx",
+          "receiver": "localStorage",
+          "method": "setItem",
+          "key": "caretKey",
+          "basis": [
+            "caretKey = `oi-cradle.file-caret:${binding.id}`"
+          ]
+        },
+        {
+          "owner": "src/files/FileSurface.tsx",
+          "receiver": "localStorage",
+          "method": "setItem",
+          "key": "scrollKey",
+          "basis": [
+            "scrollKey = `oi-cradle.file-scroll:${binding.id}`"
+          ]
+        }
+      ],
+      "key_literals": [
+        "oi-cradle.draft.v1:${\u2026}",
+        "oi-cradle.file-caret:${\u2026}",
+        "oi-cradle.file-scroll:${\u2026}",
+        "oi:file-draft-changed",
+        "oi:file-reading-changed",
+        "oi:recover-device-copy"
+      ],
+      "spec_ref": "docs/cradle/02-ARCHITECTURE.md \u00a76; canonical conformance plan Lane A \u00a71 / Lane B \u00a71",
+      "rationale": "Only caret and scroll remain browser presentation state. Actual last readings are bounded native retained resources, revalidated by Central before recovery.",
+      "keys": [
+        {
+          "family": "caretKey",
+          "classification": "presentation-local",
+          "rationale": "Caret and scroll positions have no source or write authority.",
+          "review": "Reviewed 2026-09-24 native retained-reading migration"
+        },
+        {
+          "family": "scrollKey",
+          "classification": "presentation-local",
+          "rationale": "Caret and scroll positions have no source or write authority.",
+          "review": "Reviewed 2026-09-24 native retained-reading migration"
+        }
+      ]
+    },
+    {
+      "owner": "src/files/legacyRecovery.ts",
+      "references": [
+        "localStorage"
+      ],
+      "sites": [
+        {
+          "owner": "src/files/legacyRecovery.ts",
+          "receiver": "localStorage",
+          "method": "getItem",
+          "key": "LEGACY_READING_KEY(ref)",
+          "basis": [
+            "LEGACY_READING_KEY = (ref: string) => `oi-cradle.file-last-reading.v1:${ref}`"
+          ]
+        },
+        {
+          "owner": "src/files/legacyRecovery.ts",
+          "receiver": "localStorage",
+          "method": "removeItem",
+          "key": "LEGACY_READING_KEY(ref)",
+          "basis": [
+            "LEGACY_READING_KEY = (ref: string) => `oi-cradle.file-last-reading.v1:${ref}`"
+          ]
+        }
+      ],
+      "key_literals": [
+        "oi-cradle.file-last-reading.v1:${\u2026}"
+      ],
+      "spec_ref": "docs/cradle/02-ARCHITECTURE.md \u00a76; docs/experience/WORKSPACE-CONTINUITY.md \u00a7WF2; 2026-09-24 commissioned native recovery migration",
+      "rationale": "Read/remove only, explicit one-time conversion of an older browser copy into an acknowledged detached unverified device draft. Native recovery must freshly allow it. No source identity or revision imported; no cache writes, no source writes/history, original preserved until acknowledgement.",
+      "keys": [
+        {
+          "family": "LEGACY_READING_KEY(ref)",
+          "classification": "device-draft",
+          "rationale": "Bounded legacy recovery ingress only; never read as an authoritative or retained native source. User must explicitly request the unverified detached draft.",
+          "review": "Reviewed 2026-09-24 exact migration path"
+        }
+      ]
+    },
+    {
+      "owner": "src/flow/FlowSurface.tsx",
+      "references": [
+        "localStorage"
+      ],
+      "sites": [
+        {
+          "owner": "src/flow/FlowSurface.tsx",
+          "receiver": "localStorage",
+          "method": "getItem",
+          "key": "key",
+          "basis": [
+            "key = `oi-flow-instance-draft:${binding.id}`"
+          ]
+        },
+        {
+          "owner": "src/flow/FlowSurface.tsx",
+          "receiver": "localStorage",
+          "method": "removeItem",
+          "key": "key",
+          "basis": [
+            "key = `oi-flow-instance-draft:${binding.id}`"
+          ]
+        },
+        {
+          "owner": "src/flow/FlowSurface.tsx",
+          "receiver": "localStorage",
+          "method": "setItem",
+          "key": "key",
+          "basis": [
+            "key = `oi-flow-instance-draft:${binding.id}`"
+          ]
+        }
+      ],
+      "key_literals": [
+        "oi-flow-instance-draft:${\u2026}",
+        "oi-note",
+        "oi:context-candidate",
+        "oi:file-draft-changed"
+      ],
+      "spec_ref": "docs/cradle/02-ARCHITECTURE.md \u00a76; canonical conformance plan Lane A \u00a71 / Lane B \u00a71",
+      "rationale": "Unsaved Flow instance draft; owner save remains the durable mutation.",
+      "keys": [
+        {
+          "family": "key",
+          "classification": "device-draft",
+          "rationale": "Unsaved Flow instance draft; owner save remains the durable mutation.",
+          "review": "provisional; Lane B ratifies scope without converting source truth into browser state"
+        }
+      ]
+    },
+    {
+      "owner": "src/flow/unplacedDrafts.ts",
+      "references": [
+        "localStorage"
+      ],
+      "sites": [
+        {
+          "owner": "src/flow/unplacedDrafts.ts",
+          "receiver": "localStorage",
+          "method": "getItem",
+          "key": "DRAFT_KEY(id)",
+          "basis": [
+            "DRAFT_KEY = (id: string) => `oi-cradle.unplaced-draft.v1:${id}`"
+          ]
+        },
+        {
+          "owner": "src/flow/unplacedDrafts.ts",
+          "receiver": "localStorage",
+          "method": "setItem",
+          "key": "DRAFT_KEY(id)",
+          "basis": [
+            "DRAFT_KEY = (id: string) => `oi-cradle.unplaced-draft.v1:${id}`"
+          ]
+        }
+      ],
+      "key_literals": [
+        "oi-cradle.unplaced-draft.v1:${\u2026}"
+      ],
+      "spec_ref": "docs/cradle/02-ARCHITECTURE.md \u00a76; docs/experience/WORKSPACE-CONTINUITY.md \u00a7WF2; 2026-09-24 commissioned native recovery migration",
+      "rationale": "Existing unplaced human writing and explicitly recovered unverified text only; acknowledged device-draft persistence. No native source binding, revision, write or history authority.",
+      "keys": [
+        {
+          "family": "DRAFT_KEY(id)",
+          "classification": "device-draft",
+          "rationale": "The existing detached-draft key retains editable text and an unverified-recovery label. Saving a new source still requires its existing explicit owner action.",
+          "review": "Reviewed 2026-09-24 helper extraction and acknowledged legacy recovery"
+        }
+      ]
+    },
+    {
+      "owner": "src/knowledge/KnowledgeSurface.tsx",
+      "references": [
+        "localStorage"
+      ],
+      "sites": [
+        {
+          "owner": "src/knowledge/KnowledgeSurface.tsx",
+          "receiver": "localStorage",
+          "method": "getItem",
+          "key": "`oi-cradle.knowledge-travel.v1:${id}`",
+          "basis": []
+        },
+        {
+          "owner": "src/knowledge/KnowledgeSurface.tsx",
+          "receiver": "localStorage",
+          "method": "getItem",
+          "key": "`oi-cradle.knowledge-view.v1:${id}`",
+          "basis": []
+        },
+        {
+          "owner": "src/knowledge/KnowledgeSurface.tsx",
+          "receiver": "localStorage",
+          "method": "setItem",
+          "key": "`oi-cradle.knowledge-travel.v1:${binding.id}`",
+          "basis": []
+        },
+        {
+          "owner": "src/knowledge/KnowledgeSurface.tsx",
+          "receiver": "localStorage",
+          "method": "setItem",
+          "key": "`oi-cradle.knowledge-view.v1:${binding.id}`",
+          "basis": []
+        }
+      ],
+      "key_literals": [
+        "oi-action",
+        "oi-cradle.knowledge-travel.v1:${\u2026}",
+        "oi-cradle.knowledge-view.v1:${\u2026}",
+        "oi-tool",
+        "oi:graph-release"
+      ],
+      "spec_ref": "docs/cradle/02-ARCHITECTURE.md \u00a76; canonical conformance plan Lane A \u00a71 / Lane B \u00a71",
+      "rationale": "Graph visit history, view/camera and pending draft restoration; owner readings remain native.",
+      "keys": [
+        {
+          "family": "`oi-cradle.knowledge-travel.v1:${id}`",
+          "classification": "presentation-local",
+          "rationale": "Graph visit history, view/camera and pending draft restoration; owner readings remain native.",
+          "review": "provisional; Lane B ratifies scope without converting source truth into browser state"
+        },
+        {
+          "family": "`oi-cradle.knowledge-view.v1:${id}`",
+          "classification": "presentation-local",
+          "rationale": "Graph visit history, view/camera and pending draft restoration; owner readings remain native.",
+          "review": "provisional; Lane B ratifies scope without converting source truth into browser state"
+        },
+        {
+          "family": "`oi-cradle.knowledge-travel.v1:${binding.id}`",
+          "classification": "presentation-local",
+          "rationale": "Graph visit history, view/camera and pending draft restoration; owner readings remain native.",
+          "review": "provisional; Lane B ratifies scope without converting source truth into browser state"
+        },
+        {
+          "family": "`oi-cradle.knowledge-view.v1:${binding.id}`",
+          "classification": "presentation-local",
+          "rationale": "Graph visit history, view/camera and pending draft restoration; owner readings remain native.",
+          "review": "provisional; Lane B ratifies scope without converting source truth into browser state"
+        }
+      ]
+    },
+    {
+      "owner": "src/knowledge/detailGeometry.ts",
+      "references": [
+        "localStorage"
+      ],
+      "sites": [
+        {
+          "owner": "src/knowledge/detailGeometry.ts",
+          "receiver": "localStorage",
+          "method": "getItem",
+          "key": "key",
+          "basis": [
+            "key = `oi-cradle.knowledge-detail.v1:${id}`"
+          ]
+        },
+        {
+          "owner": "src/knowledge/detailGeometry.ts",
+          "receiver": "localStorage",
+          "method": "setItem",
+          "key": "key",
+          "basis": [
+            "key = `oi-cradle.knowledge-detail.v1:${id}`"
+          ]
+        }
+      ],
+      "key_literals": [
+        "oi-cradle.knowledge-detail.v1:${\u2026}"
+      ],
+      "spec_ref": "docs/cradle/02-ARCHITECTURE.md \u00a76; canonical conformance plan Lane A \u00a71 / Lane B \u00a71",
+      "rationale": "Detail panel bounds and size only.",
+      "keys": [
+        {
+          "family": "key",
+          "classification": "presentation-local",
+          "rationale": "Detail panel bounds and size only.",
+          "review": "provisional; Lane B ratifies scope without converting source truth into browser state"
+        }
+      ]
+    },
+    {
+      "owner": "src/knowledge/focus.ts",
+      "references": [
+        "localStorage"
+      ],
+      "sites": [
+        {
+          "owner": "src/knowledge/focus.ts",
+          "receiver": "localStorage",
+          "method": "getItem",
+          "key": "key",
+          "basis": [
+            "key = `oi-cradle.knowledge-travel.v1:${id}`"
+          ]
+        },
+        {
+          "owner": "src/knowledge/focus.ts",
+          "receiver": "localStorage",
+          "method": "setItem",
+          "key": "key",
+          "basis": [
+            "key = `oi-cradle.knowledge-travel.v1:${id}`"
+          ]
+        }
+      ],
+      "key_literals": [
+        "oi-cradle.knowledge-travel.v1:${\u2026}",
+        "oi:graph-release"
+      ],
+      "spec_ref": "docs/cradle/02-ARCHITECTURE.md \u00a76; canonical conformance plan Lane A \u00a71 / Lane B \u00a71",
+      "rationale": "Clears the selected presentation ref on remembered graph travel; not semantic focus authority.",
+      "keys": [
+        {
+          "family": "key",
+          "classification": "presentation-local",
+          "rationale": "Clears the selected presentation ref on remembered graph travel; not semantic focus authority.",
+          "review": "provisional; Lane B ratifies scope without converting source truth into browser state"
+        }
+      ]
+    },
+    {
+      "owner": "src/knowledge/leader.ts",
+      "references": [
+        "localStorage"
+      ],
+      "sites": [
+        {
+          "owner": "src/knowledge/leader.ts",
+          "receiver": "localStorage",
+          "method": "getItem",
+          "key": "\"oi.search-leader.shift\"",
+          "basis": []
+        },
+        {
+          "owner": "src/knowledge/leader.ts",
+          "receiver": "localStorage",
+          "method": "setItem",
+          "key": "\"oi.search-leader.shift\"",
+          "basis": []
+        }
+      ],
+      "key_literals": [
+        "oi.search-leader.shift"
+      ],
+      "spec_ref": "docs/cradle/02-ARCHITECTURE.md \u00a76; canonical conformance plan Lane A \u00a71 / Lane B \u00a71",
+      "rationale": "Device search shortcut preference.",
+      "keys": [
+        {
+          "family": "\"oi.search-leader.shift\"",
+          "classification": "presentation-local",
+          "rationale": "Device search shortcut preference.",
+          "review": "provisional; Lane B ratifies scope without converting source truth into browser state"
+        }
+      ]
+    },
+    {
+      "owner": "src/library/LibraryBrowser.tsx",
+      "references": [
+        "localStorage"
+      ],
+      "sites": [
+        {
+          "owner": "src/library/LibraryBrowser.tsx",
+          "receiver": "window.localStorage",
+          "method": "getItem",
+          "key": "VIEW_STORAGE",
+          "basis": [
+            "VIEW_STORAGE = \"oi-cradle.library.view.v1\""
+          ]
+        },
+        {
+          "owner": "src/library/LibraryBrowser.tsx",
+          "receiver": "window.localStorage",
+          "method": "setItem",
+          "key": "VIEW_STORAGE",
+          "basis": [
+            "VIEW_STORAGE = \"oi-cradle.library.view.v1\""
+          ]
+        }
+      ],
+      "key_literals": [
+        "oi-action",
+        "oi-cradle.library.view.v1",
+        "oi-eyebrow",
+        "oi-input lib-search",
+        "oi-panel-head lib-head",
+        "oi-refusal",
+        "oi-tool-row lib-search-row",
+        "oi:library-view"
+      ],
+      "spec_ref": "docs/cradle/02-ARCHITECTURE.md \u00a76; canonical conformance plan Lane A \u00a71 / Lane B \u00a71",
+      "rationale": "Library list/tile presentation selection.",
+      "keys": [
+        {
+          "family": "VIEW_STORAGE",
+          "classification": "presentation-local",
+          "rationale": "Library list/tile presentation selection.",
+          "review": "provisional; Lane B ratifies scope without converting source truth into browser state"
+        }
+      ]
+    },
+    {
+      "owner": "src/material/MaterialSurface.tsx",
+      "references": [
+        "localStorage"
+      ],
+      "sites": [
+        {
+          "owner": "src/material/MaterialSurface.tsx",
+          "receiver": "localStorage",
+          "method": "getItem",
+          "key": "viewKey",
+          "basis": []
+        },
+        {
+          "owner": "src/material/MaterialSurface.tsx",
+          "receiver": "localStorage",
+          "method": "setItem",
+          "key": "viewKey",
+          "basis": []
+        }
+      ],
+      "key_literals": [
+        "oi-material://localhost/${\u2026}",
+        "oi:file-draft-changed",
+        "oi:file-reading-changed",
+        "oi:page-expression-host",
+        "oi:page-expression-host-invalidated",
+        "oi:page-expression-host-response"
+      ],
+      "spec_ref": "docs/cradle/02-ARCHITECTURE.md \u00a76; canonical conformance plan Lane A \u00a71 / Lane B \u00a71",
+      "rationale": "Material view caret and scroll; no material content mutation.",
+      "keys": [
+        {
+          "family": "viewKey",
+          "classification": "presentation-local",
+          "rationale": "Material view caret and scroll; no material content mutation.",
+          "review": "provisional; Lane B ratifies scope without converting source truth into browser state"
+        }
+      ]
+    },
+    {
+      "owner": "src/study/Seed.tsx",
+      "references": [
+        "localStorage"
+      ],
+      "sites": [
+        {
+          "owner": "src/study/Seed.tsx",
+          "receiver": "localStorage",
+          "method": "getItem",
+          "key": "STORE",
+          "basis": [
+            "STORE = 'oi.ui-study.v1'"
+          ]
+        },
+        {
+          "owner": "src/study/Seed.tsx",
+          "receiver": "localStorage",
+          "method": "setItem",
+          "key": "STORE",
+          "basis": [
+            "STORE = 'oi.ui-study.v1'"
+          ]
+        }
+      ],
+      "key_literals": [
+        "oi.ui-study.v1"
+      ],
+      "spec_ref": "docs/cradle/02-ARCHITECTURE.md \u00a76; canonical conformance plan Lane A \u00a71 / Lane B \u00a71",
+      "rationale": "Explicit design-study local workspace and drafts, no live native claims; never native acceptance evidence.",
+      "keys": [
+        {
+          "family": "STORE",
+          "classification": "presentation-local",
+          "rationale": "Explicit design-study local workspace and drafts, no live native claims; never native acceptance evidence.",
+          "review": "provisional; Lane B ratifies scope without converting source truth into browser state"
+        }
+      ]
+    },
+    {
+      "owner": "src/study/WorkspaceStudy.tsx",
+      "references": [
+        "localStorage"
+      ],
+      "sites": [
+        {
+          "owner": "src/study/WorkspaceStudy.tsx",
+          "receiver": "localStorage",
+          "method": "getItem",
+          "key": "`oi.study.round2.${variant}`",
+          "basis": []
+        },
+        {
+          "owner": "src/study/WorkspaceStudy.tsx",
+          "receiver": "localStorage",
+          "method": "setItem",
+          "key": "`oi.study.round2.${variant}`",
+          "basis": []
+        }
+      ],
+      "key_literals": [
+        "oi.study.round2.${\u2026}"
+      ],
+      "spec_ref": "docs/cradle/02-ARCHITECTURE.md \u00a76; canonical conformance plan Lane A \u00a71 / Lane B \u00a71",
+      "rationale": "Explicit design-study arrangement and unsent draft persistence; never native acceptance evidence.",
+      "keys": [
+        {
+          "family": "`oi.study.round2.${variant}`",
+          "classification": "presentation-local",
+          "rationale": "Explicit design-study arrangement and unsent draft persistence; never native acceptance evidence.",
+          "review": "provisional; Lane B ratifies scope without converting source truth into browser state"
+        }
+      ]
+    },
+    {
+      "owner": "src/surface/SourceSurface.tsx",
+      "references": [
+        "localStorage"
+      ],
+      "sites": [
+        {
+          "owner": "src/surface/SourceSurface.tsx",
+          "receiver": "localStorage",
+          "method": "getItem",
+          "key": "viewKey",
+          "basis": [
+            "viewKey = `oi-cradle.source-view:${binding.ref}`"
+          ]
+        },
+        {
+          "owner": "src/surface/SourceSurface.tsx",
+          "receiver": "localStorage",
+          "method": "setItem",
+          "key": "viewKey",
+          "basis": [
+            "viewKey = `oi-cradle.source-view:${binding.ref}`"
+          ]
+        }
+      ],
+      "key_literals": [
+        "oi-cradle.source-view:${\u2026}"
+      ],
+      "spec_ref": "docs/cradle/02-ARCHITECTURE.md \u00a76; canonical conformance plan Lane A \u00a71 / Lane B \u00a71",
+      "rationale": "Caret and scroll restoration; source truth and working buffer remain kernel-owned.",
+      "keys": [
+        {
+          "family": "viewKey",
+          "classification": "presentation-local",
+          "rationale": "Caret and scroll restoration; source truth and working buffer remain kernel-owned.",
+          "review": "provisional; Lane B ratifies scope without converting source truth into browser state"
+        }
+      ]
+    },
+    {
+      "owner": "src/surface/persist.ts",
+      "references": [
+        "localStorage"
+      ],
+      "sites": [
+        {
+          "owner": "src/surface/persist.ts",
+          "receiver": "localStorage",
+          "method": "getItem",
+          "key": "KEY",
+          "basis": [
+            "KEY = \"oi-cradle.layout.v1\""
+          ]
+        },
+        {
+          "owner": "src/surface/persist.ts",
+          "receiver": "localStorage",
+          "method": "setItem",
+          "key": "KEY",
+          "basis": [
+            "KEY = \"oi-cradle.layout.v1\""
+          ]
+        }
+      ],
+      "key_literals": [
+        "oi-cradle.layout.v1"
+      ],
+      "spec_ref": "docs/cradle/02-ARCHITECTURE.md \u00a76; canonical conformance plan Lane A \u00a71 / Lane B \u00a71",
+      "rationale": "Versioned legacy layout/focus-reference checkpoint, not authoritative source/identity state.",
+      "keys": [
+        {
+          "family": "KEY",
+          "classification": "presentation-local",
+          "rationale": "Versioned legacy layout/focus-reference checkpoint, not authoritative source/identity state.",
+          "review": "provisional; Lane B ratifies scope without converting source truth into browser state"
+        }
+      ]
+    },
+    {
+      "owner": "src/techne/MaterialNavigator.tsx",
+      "references": [
+        "localStorage"
+      ],
+      "sites": [
+        {
+          "owner": "src/techne/MaterialNavigator.tsx",
+          "receiver": "window.localStorage",
+          "method": "getItem",
+          "key": "EXPANDED_KEY",
+          "basis": [
+            "EXPANDED_KEY = \"oi-cradle.techne.navigator.v1\""
+          ]
+        },
+        {
+          "owner": "src/techne/MaterialNavigator.tsx",
+          "receiver": "window.localStorage",
+          "method": "setItem",
+          "key": "EXPANDED_KEY",
+          "basis": [
+            "EXPANDED_KEY = \"oi-cradle.techne.navigator.v1\""
+          ]
+        }
+      ],
+      "key_literals": [
+        "oi-cradle.techne.navigator.v1",
+        "oi-empty",
+        "oi-eyebrow",
+        "oi-note tn-nav-inline",
+        "oi-note tn-nav-note",
+        "oi-panel-head tn-nav-head",
+        "oi-panel-head-title",
+        "oi-panel-head-tools",
+        "oi-refusal tn-nav-inline",
+        "oi-row tn-nav-row",
+        "oi-row-title",
+        "oi-state",
+        "oi-tool",
+        "oi-tool tn-nav-add"
+      ],
+      "spec_ref": "docs/cradle/02-ARCHITECTURE.md \u00a76; canonical conformance plan Lane A \u00a71 / Lane B \u00a71",
+      "rationale": "Expanded navigation rows only.",
+      "keys": [
+        {
+          "family": "EXPANDED_KEY",
+          "classification": "presentation-local",
+          "rationale": "Expanded navigation rows only.",
+          "review": "provisional; Lane B ratifies scope without converting source truth into browser state"
+        }
+      ]
+    },
+    {
+      "owner": "src/techne/instrumentRail.ts",
+      "references": [
+        "localStorage"
+      ],
+      "sites": [
+        {
+          "owner": "src/techne/instrumentRail.ts",
+          "receiver": "window.localStorage",
+          "method": "getItem",
+          "key": "STORAGE_KEY",
+          "basis": [
+            "STORAGE_KEY = \"oi-cradle.techne.instrument-rail.v1\""
+          ]
+        },
+        {
+          "owner": "src/techne/instrumentRail.ts",
+          "receiver": "window.localStorage",
+          "method": "setItem",
+          "key": "STORAGE_KEY",
+          "basis": [
+            "STORAGE_KEY = \"oi-cradle.techne.instrument-rail.v1\""
+          ]
+        }
+      ],
+      "key_literals": [
+        "oi-cradle.techne.instrument-rail.v1"
+      ],
+      "spec_ref": "docs/cradle/02-ARCHITECTURE.md \u00a76; canonical conformance plan Lane A \u00a71 / Lane B \u00a71",
+      "rationale": "Instrument rail presentation order/selection.",
+      "keys": [
+        {
+          "family": "STORAGE_KEY",
+          "classification": "presentation-local",
+          "rationale": "Instrument rail presentation order/selection.",
+          "review": "provisional; Lane B ratifies scope without converting source truth into browser state"
+        }
+      ]
+    },
+    {
+      "owner": "src/techne/m0m5/journey/presence.ts",
+      "references": [
+        "localStorage"
+      ],
+      "sites": [
+        {
+          "owner": "src/techne/m0m5/journey/presence.ts",
+          "receiver": "storage",
+          "method": "getItem",
+          "key": "JOURNEY_PRESENCE_KEY",
+          "basis": [
+            "JOURNEY_PRESENCE_KEY = \"oi-cradle.techne-journey.presence.v1\""
+          ]
+        },
+        {
+          "owner": "src/techne/m0m5/journey/presence.ts",
+          "receiver": "storage",
+          "method": "setItem",
+          "key": "JOURNEY_PRESENCE_KEY",
+          "basis": [
+            "JOURNEY_PRESENCE_KEY = \"oi-cradle.techne-journey.presence.v1\""
+          ]
+        }
+      ],
+      "key_literals": [
+        "oi-cradle.techne-journey.presence.v1"
+      ],
+      "spec_ref": "docs/cradle/02-ARCHITECTURE.md \u00a76; canonical conformance plan Lane A \u00a71 / Lane B \u00a71",
+      "rationale": "Traversal refs and local composition draft; scene contents remain in the Expression owner.",
+      "keys": [
+        {
+          "family": "JOURNEY_PRESENCE_KEY",
+          "classification": "presentation-local",
+          "rationale": "Traversal refs and local composition draft; scene contents remain in the Expression owner.",
+          "review": "provisional; Lane B ratifies scope without converting source truth into browser state"
+        }
+      ]
+    },
+    {
+      "owner": "src/techne/material.ts",
+      "references": [
+        "localStorage"
+      ],
+      "sites": [
+        {
+          "owner": "src/techne/material.ts",
+          "receiver": "window.localStorage",
+          "method": "getItem",
+          "key": "STORAGE_KEY",
+          "basis": [
+            "STORAGE_KEY = \"oi-cradle.techne.material.v1\""
+          ]
+        },
+        {
+          "owner": "src/techne/material.ts",
+          "receiver": "window.localStorage",
+          "method": "setItem",
+          "key": "STORAGE_KEY",
+          "basis": [
+            "STORAGE_KEY = \"oi-cradle.techne.material.v1\""
+          ]
+        }
+      ],
+      "key_literals": [
+        "oi-cradle.techne.material.v1",
+        "oi:techne-open-file"
+      ],
+      "spec_ref": "docs/cradle/02-ARCHITECTURE.md \u00a76; canonical conformance plan Lane A \u00a71 / Lane B \u00a71",
+      "rationale": "Material reference arrangement only; current content is read through native owners.",
+      "keys": [
+        {
+          "family": "STORAGE_KEY",
+          "classification": "presentation-local",
+          "rationale": "Material reference arrangement only; current content is read through native owners.",
+          "review": "provisional; Lane B ratifies scope without converting source truth into browser state"
+        }
+      ]
+    },
+    {
+      "owner": "src/techne/wikiProjectionStore.ts",
+      "references": [
+        "localStorage"
+      ],
+      "sites": [
+        {
+          "owner": "src/techne/wikiProjectionStore.ts",
+          "receiver": "window.localStorage",
+          "method": "getItem",
+          "key": "ENTRY_STORAGE",
+          "basis": [
+            "ENTRY_STORAGE = \"oi-cradle.techne.m0-entry.v1\""
+          ]
+        },
+        {
+          "owner": "src/techne/wikiProjectionStore.ts",
+          "receiver": "window.localStorage",
+          "method": "getItem",
+          "key": "REGISTER_KEY_STORAGE",
+          "basis": [
+            "REGISTER_KEY_STORAGE = \"oi-cradle.techne.m0-register.v1\""
+          ]
+        },
+        {
+          "owner": "src/techne/wikiProjectionStore.ts",
+          "receiver": "window.localStorage",
+          "method": "setItem",
+          "key": "ENTRY_STORAGE",
+          "basis": [
+            "ENTRY_STORAGE = \"oi-cradle.techne.m0-entry.v1\""
+          ]
+        },
+        {
+          "owner": "src/techne/wikiProjectionStore.ts",
+          "receiver": "window.localStorage",
+          "method": "setItem",
+          "key": "REGISTER_KEY_STORAGE",
+          "basis": [
+            "REGISTER_KEY_STORAGE = \"oi-cradle.techne.m0-register.v1\""
+          ]
+        }
+      ],
+      "key_literals": [
+        "oi-cradle.techne.m0-entry.v1",
+        "oi-cradle.techne.m0-register.v1"
+      ],
+      "spec_ref": "docs/cradle/02-ARCHITECTURE.md \u00a76; canonical conformance plan Lane A \u00a71 / Lane B \u00a71",
+      "rationale": "Projection entry refs and chosen register ref only; never stored wiki data or permission.",
+      "keys": [
+        {
+          "family": "ENTRY_STORAGE",
+          "classification": "presentation-local",
+          "rationale": "Projection entry refs and chosen register ref only; never stored wiki data or permission.",
+          "review": "provisional; Lane B ratifies scope without converting source truth into browser state"
+        },
+        {
+          "family": "REGISTER_KEY_STORAGE",
+          "classification": "presentation-local",
+          "rationale": "Projection entry refs and chosen register ref only; never stored wiki data or permission.",
+          "review": "provisional; Lane B ratifies scope without converting source truth into browser state"
+        }
+      ]
+    },
+    {
+      "owner": "src/visuals/WelcomeField.tsx",
+      "references": [
+        "sessionStorage"
+      ],
+      "sites": [
+        {
+          "owner": "src/visuals/WelcomeField.tsx",
+          "receiver": "sessionStorage",
+          "method": "getItem",
+          "key": "DONE_KEY",
+          "basis": [
+            "DONE_KEY = \"oi-cradle.welcome.v1\""
+          ]
+        },
+        {
+          "owner": "src/visuals/WelcomeField.tsx",
+          "receiver": "sessionStorage",
+          "method": "setItem",
+          "key": "DONE_KEY",
+          "basis": [
+            "DONE_KEY = \"oi-cradle.welcome.v1\""
+          ]
+        }
+      ],
+      "key_literals": [
+        "oi-cradle.welcome.v1",
+        "oi-welcome",
+        "oi-welcome-detail",
+        "oi-welcome-enter",
+        "oi-welcome-error",
+        "oi-welcome-hint",
+        "oi-welcome-logo"
+      ],
+      "spec_ref": "docs/cradle/02-ARCHITECTURE.md \u00a76; canonical conformance plan Lane A \u00a71 / Lane B \u00a71",
+      "rationale": "Per-window welcome already-shown marker; no native appearance authority.",
+      "keys": [
+        {
+          "family": "DONE_KEY",
+          "classification": "presentation-local",
+          "rationale": "Per-window welcome already-shown marker; no native appearance authority.",
+          "review": "provisional; Lane B ratifies scope without converting source truth into browser state"
+        }
+      ]
+    },
+    {
+      "owner": "src/visuals/store.ts",
+      "references": [
+        "localStorage"
+      ],
+      "sites": [
+        {
+          "owner": "src/visuals/store.ts",
+          "receiver": "localStorage",
+          "method": "getItem",
+          "key": "STORAGE_KEY",
+          "basis": [
+            "STORAGE_KEY = \"oi-cradle.visuals.v1\""
+          ]
+        },
+        {
+          "owner": "src/visuals/store.ts",
+          "receiver": "localStorage",
+          "method": "setItem",
+          "key": "STORAGE_KEY",
+          "basis": [
+            "STORAGE_KEY = \"oi-cradle.visuals.v1\""
+          ]
+        }
+      ],
+      "key_literals": [
+        "oi-cradle.visuals.v1",
+        "oi:visuals-snapshot"
+      ],
+      "spec_ref": "docs/cradle/02-ARCHITECTURE.md \u00a76; canonical conformance plan Lane A \u00a71 / Lane B \u00a71",
+      "rationale": "Browser preference retains particle geometry/motion only; validated theme choice and imports are native kernel state.",
+      "keys": [
+        {
+          "family": "STORAGE_KEY",
+          "classification": "presentation-local",
+          "rationale": "Particle geometry, motion and view coordinates only; theme choice and imports now come from native presentation storage.",
+          "review": "Lane B source-reviewed; presentation/device draft only. See PRESENTATION-STATE-ADDENDUM-PROPOSED.md; owner law ratification remains distinct."
+        }
+      ]
+    },
+    {
+      "owner": "src/workspace/DesktopShell.tsx",
+      "references": [
+        "localStorage"
+      ],
+      "sites": [
+        {
+          "owner": "src/workspace/DesktopShell.tsx",
+          "receiver": "localStorage",
+          "method": "getItem",
+          "key": "FOOTER_KEY",
+          "basis": [
+            "FOOTER_KEY = \"oi-shell-footer.v2\""
+          ]
+        },
+        {
+          "owner": "src/workspace/DesktopShell.tsx",
+          "receiver": "localStorage",
+          "method": "removeItem",
+          "key": "FOOTER_LEGACY_KEY",
+          "basis": [
+            "FOOTER_LEGACY_KEY = \"oi-shell-footer-pinned\""
+          ]
+        },
+        {
+          "owner": "src/workspace/DesktopShell.tsx",
+          "receiver": "localStorage",
+          "method": "setItem",
+          "key": "FOOTER_KEY",
+          "basis": [
+            "FOOTER_KEY = \"oi-shell-footer.v2\""
+          ]
+        }
+      ],
+      "key_literals": [
+        "oi-eyebrow",
+        "oi-menu-item",
+        "oi-shell-footer-pinned",
+        "oi-shell-footer.v2",
+        "oi:toggle-central"
+      ],
+      "spec_ref": "docs/cradle/02-ARCHITECTURE.md \u00a76; canonical conformance plan Lane A \u00a71 / Lane B \u00a71",
+      "rationale": "Footer pin state and removal of its obsolete prior key.",
+      "keys": [
+        {
+          "family": "FOOTER_KEY",
+          "classification": "presentation-local",
+          "rationale": "Footer pin state and removal of its obsolete prior key.",
+          "review": "provisional; Lane B ratifies scope without converting source truth into browser state"
+        },
+        {
+          "family": "FOOTER_LEGACY_KEY",
+          "classification": "presentation-local",
+          "rationale": "Footer pin state and removal of its obsolete prior key.",
+          "review": "provisional; Lane B ratifies scope without converting source truth into browser state"
+        }
+      ]
+    },
+    {
+      "owner": "src/workspace/DetachedFrame.tsx",
+      "references": [
+        "localStorage"
+      ],
+      "sites": [
+        {
+          "owner": "src/workspace/DetachedFrame.tsx",
+          "receiver": "localStorage",
+          "method": "getItem",
+          "key": "\"oi-cradle.workspaces.v1\"",
+          "basis": []
+        }
+      ],
+      "key_literals": [
+        "oi-cradle.workspaces.v1",
+        "oi:context-candidate",
+        "oi:detached-context",
+        "oi:surface-view",
+        "oi:window-navigate",
+        "oi:window-navigate-result"
+      ],
+      "spec_ref": "docs/cradle/02-ARCHITECTURE.md \u00a76; canonical conformance plan Lane A \u00a71 / Lane B \u00a71",
+      "rationale": "Reads the shared workspace checkpoint for detached presentation restoration.",
+      "keys": [
+        {
+          "family": "\"oi-cradle.workspaces.v1\"",
+          "classification": "presentation-local",
+          "rationale": "Reads the shared workspace checkpoint for detached presentation restoration.",
+          "review": "provisional; Lane B ratifies scope without converting source truth into browser state"
+        }
+      ]
+    },
+    {
+      "owner": "src/workspace/checkpoints.ts",
+      "references": [
+        "localStorage"
+      ],
+      "sites": [
+        {
+          "owner": "src/workspace/checkpoints.ts",
+          "receiver": "localStorage",
+          "method": "getItem",
+          "key": "STAGE_KEY",
+          "basis": [
+            "STAGE_KEY = \"oi-cradle.book.stage.v1\""
+          ]
+        },
+        {
+          "owner": "src/workspace/checkpoints.ts",
+          "receiver": "localStorage",
+          "method": "setItem",
+          "key": "STAGE_KEY",
+          "basis": [
+            "STAGE_KEY = \"oi-cradle.book.stage.v1\""
+          ]
+        }
+      ],
+      "key_literals": [
+        "oi-cradle.book.stage.v1"
+      ],
+      "spec_ref": "docs/cradle/02-ARCHITECTURE.md \u00a76; canonical conformance plan Lane A \u00a71 / Lane B \u00a71",
+      "rationale": "Presentation draft checkpoint journal; no Central source mutation.",
+      "keys": [
+        {
+          "family": "STAGE_KEY",
+          "classification": "device-draft",
+          "rationale": "Presentation draft checkpoint journal; no Central source mutation.",
+          "review": "provisional; Lane B ratifies scope without converting source truth into browser state"
+        }
+      ]
+    },
+    {
+      "owner": "src/workspace/drafts.ts",
+      "references": [
+        "localStorage"
+      ],
+      "sites": [
+        {
+          "owner": "src/workspace/drafts.ts",
+          "receiver": "localStorage",
+          "method": "getItem",
+          "key": "key(ref)",
+          "basis": [
+            "key = (ref: string) => `oi-cradle.draft.v1:${ref}`"
+          ]
+        },
+        {
+          "owner": "src/workspace/drafts.ts",
+          "receiver": "localStorage",
+          "method": "removeItem",
+          "key": "key(ref)",
+          "basis": [
+            "key = (ref: string) => `oi-cradle.draft.v1:${ref}`"
+          ]
+        },
+        {
+          "owner": "src/workspace/drafts.ts",
+          "receiver": "localStorage",
+          "method": "setItem",
+          "key": "key(ref)",
+          "basis": [
+            "key = (ref: string) => `oi-cradle.draft.v1:${ref}`"
+          ]
+        }
+      ],
+      "key_literals": [
+        "oi-cradle.draft.v1:${\u2026}"
+      ],
+      "spec_ref": "docs/cradle/02-ARCHITECTURE.md \u00a76; canonical conformance plan Lane A \u00a71 / Lane B \u00a71",
+      "rationale": "Shared source working-copy recovery with base revision and acknowledgment, not authoritative source bytes.",
+      "keys": [
+        {
+          "family": "key(ref)",
+          "classification": "device-draft",
+          "rationale": "Shared source working-copy recovery with base revision and acknowledgment, not authoritative source bytes.",
+          "review": "provisional; Lane B ratifies scope without converting source truth into browser state"
+        }
+      ]
+    },
+    {
+      "owner": "src/workspace/left/rows.tsx",
+      "references": [
+        "localStorage"
+      ],
+      "sites": [
+        {
+          "owner": "src/workspace/left/rows.tsx",
+          "receiver": "localStorage",
+          "method": "getItem",
+          "key": "COLLAPSE_KEY",
+          "basis": [
+            "COLLAPSE_KEY = \"oi-left-sections.v1\""
+          ]
+        },
+        {
+          "owner": "src/workspace/left/rows.tsx",
+          "receiver": "localStorage",
+          "method": "setItem",
+          "key": "COLLAPSE_KEY",
+          "basis": [
+            "COLLAPSE_KEY = \"oi-left-sections.v1\""
+          ]
+        }
+      ],
+      "key_literals": [
+        "oi-action",
+        "oi-left-sections.v1",
+        "oi-menu-item"
+      ],
+      "spec_ref": "docs/cradle/02-ARCHITECTURE.md \u00a76; canonical conformance plan Lane A \u00a71 / Lane B \u00a71",
+      "rationale": "Sidebar row collapse state.",
+      "keys": [
+        {
+          "family": "COLLAPSE_KEY",
+          "classification": "presentation-local",
+          "rationale": "Sidebar row collapse state.",
+          "review": "provisional; Lane B ratifies scope without converting source truth into browser state"
+        }
+      ]
+    },
+    {
+      "owner": "src/workspace/left/sessionMarks.ts",
+      "references": [
+        "localStorage"
+      ],
+      "sites": [
+        {
+          "owner": "src/workspace/left/sessionMarks.ts",
+          "receiver": "localStorage",
+          "method": "getItem",
+          "key": "SEEN_KEY",
+          "basis": [
+            "SEEN_KEY = \"oi-left-seen.v1\""
+          ]
+        },
+        {
+          "owner": "src/workspace/left/sessionMarks.ts",
+          "receiver": "localStorage",
+          "method": "setItem",
+          "key": "SEEN_KEY",
+          "basis": [
+            "SEEN_KEY = \"oi-left-seen.v1\""
+          ]
+        }
+      ],
+      "key_literals": [
+        "oi-left-seen.v1"
+      ],
+      "spec_ref": "docs/cradle/02-ARCHITECTURE.md \u00a76; canonical conformance plan Lane A \u00a71 / Lane B \u00a71",
+      "rationale": "Seen/unseen presentation markers, not session completion or native activity state.",
+      "keys": [
+        {
+          "family": "SEEN_KEY",
+          "classification": "presentation-local",
+          "rationale": "Seen/unseen presentation markers, not session completion or native activity state.",
+          "review": "provisional; Lane B ratifies scope without converting source truth into browser state"
+        }
+      ]
+    },
+    {
+      "owner": "src/workspace/recovery.ts",
+      "references": [
+        "localStorage"
+      ],
+      "sites": [
+        {
+          "owner": "src/workspace/recovery.ts",
+          "receiver": "localStorage",
+          "method": "getItem",
+          "key": "k",
+          "basis": [
+            "POINTER = \"oi-cradle.recovery.latest\"",
+            "k = localStorage.key(i)"
+          ]
+        },
+        {
+          "owner": "src/workspace/recovery.ts",
+          "receiver": "localStorage",
+          "method": "getItem",
+          "key": "key",
+          "basis": [
+            "POINTER = \"oi-cradle.recovery.latest\""
+          ]
+        },
+        {
+          "owner": "src/workspace/recovery.ts",
+          "receiver": "localStorage",
+          "method": "getItem",
+          "key": "POINTER",
+          "basis": [
+            "POINTER = \"oi-cradle.recovery.latest\""
+          ]
+        },
+        {
+          "owner": "src/workspace/recovery.ts",
+          "receiver": "localStorage",
+          "method": "getItem",
+          "key": "sourceKey",
+          "basis": []
+        },
+        {
+          "owner": "src/workspace/recovery.ts",
+          "receiver": "localStorage",
+          "method": "key",
+          "key": "i",
+          "basis": []
+        },
+        {
+          "owner": "src/workspace/recovery.ts",
+          "receiver": "localStorage",
+          "method": "removeItem",
+          "key": "k",
+          "basis": [
+            "POINTER = \"oi-cradle.recovery.latest\"",
+            "k = localStorage.key(i)"
+          ]
+        },
+        {
+          "owner": "src/workspace/recovery.ts",
+          "receiver": "localStorage",
+          "method": "setItem",
+          "key": "POINTER",
+          "basis": [
+            "POINTER = \"oi-cradle.recovery.latest\""
+          ]
+        },
+        {
+          "owner": "src/workspace/recovery.ts",
+          "receiver": "localStorage",
+          "method": "setItem",
+          "key": "record.key",
+          "basis": [
+            "POINTER = \"oi-cradle.recovery.latest\"",
+            "PREFIX = \"oi-cradle.recovery.\"",
+            "k = localStorage.key(i)",
+            "listRecovery = {\n    const keys: string[] = [];\n    for (let i = 0; i < localStorage.length; i++) {\n        const k = localStorage.key(i);\n        if (k && k.startsWith(PREFIX) && k !== POINTER)\n            keys.push(k);\n    }\n    return keys.map(k => parseRecord(localStorage.getItem(k))).filter((r): r is PresentationRecovery => !!r).sort((a, b) => (b.seq ?? 0) - (a.seq ?? 0) || b.savedAt.localeCompare(a.savedAt));\n}",
+            "record = { key: `${PREFIX}${crypto.randomUUID()}`, sourceKey, raw, reason, savedAt: new Date().toISOString(), seq }"
+          ]
+        }
+      ],
+      "key_literals": [
+        "oi-cradle.recovery.",
+        "oi-cradle.recovery.latest"
+      ],
+      "spec_ref": "docs/cradle/02-ARCHITECTURE.md \u00a76; canonical conformance plan Lane A \u00a71 / Lane B \u00a71",
+      "rationale": "Recoverable copies of exact presentation/draft records. Pointer and family are bounded; sourceKey is a caller-supplied existing presentation key.",
+      "keys": [
+        {
+          "family": "k",
+          "classification": "device-draft",
+          "rationale": "Recoverable copies of exact presentation/draft records. Pointer and family are bounded; sourceKey is a caller-supplied existing presentation key.",
+          "review": "provisional; Lane B ratifies scope without converting source truth into browser state"
+        },
+        {
+          "family": "key",
+          "classification": "device-draft",
+          "rationale": "Recoverable copies of exact presentation/draft records. Pointer and family are bounded; sourceKey is a caller-supplied existing presentation key.",
+          "review": "provisional; Lane B ratifies scope without converting source truth into browser state"
+        },
+        {
+          "family": "POINTER",
+          "classification": "device-draft",
+          "rationale": "Recoverable copies of exact presentation/draft records. Pointer and family are bounded; sourceKey is a caller-supplied existing presentation key.",
+          "review": "provisional; Lane B ratifies scope without converting source truth into browser state"
+        },
+        {
+          "family": "sourceKey",
+          "classification": "device-draft",
+          "rationale": "Recoverable copies of exact presentation/draft records. Pointer and family are bounded; sourceKey is a caller-supplied existing presentation key.",
+          "review": "provisional; Lane B ratifies scope without converting source truth into browser state"
+        },
+        {
+          "family": "i",
+          "classification": "device-draft",
+          "rationale": "Recoverable copies of exact presentation/draft records. Pointer and family are bounded; sourceKey is a caller-supplied existing presentation key.",
+          "review": "provisional; Lane B ratifies scope without converting source truth into browser state"
+        },
+        {
+          "family": "record.key",
+          "classification": "device-draft",
+          "rationale": "Recoverable copies of exact presentation/draft records. Pointer and family are bounded; sourceKey is a caller-supplied existing presentation key.",
+          "review": "provisional; Lane B ratifies scope without converting source truth into browser state"
+        }
+      ]
+    },
+    {
+      "owner": "src/workspace/settings/settingsData.ts",
+      "references": [
+        "sessionStorage"
+      ],
+      "sites": [
+        {
+          "owner": "src/workspace/settings/settingsData.ts",
+          "receiver": "window.sessionStorage",
+          "method": "getItem",
+          "key": "STAGED_DEFAULT_KEY",
+          "basis": [
+            "STAGED_DEFAULT_KEY = \"oi-settings.staged-connection.v1\""
+          ]
+        },
+        {
+          "owner": "src/workspace/settings/settingsData.ts",
+          "receiver": "window.sessionStorage",
+          "method": "removeItem",
+          "key": "STAGED_DEFAULT_KEY",
+          "basis": [
+            "STAGED_DEFAULT_KEY = \"oi-settings.staged-connection.v1\""
+          ]
+        },
+        {
+          "owner": "src/workspace/settings/settingsData.ts",
+          "receiver": "window.sessionStorage",
+          "method": "setItem",
+          "key": "STAGED_DEFAULT_KEY",
+          "basis": [
+            "STAGED_DEFAULT_KEY = \"oi-settings.staged-connection.v1\""
+          ]
+        }
+      ],
+      "key_literals": [
+        "oi-settings.staged-connection.v1"
+      ],
+      "spec_ref": "docs/cradle/02-ARCHITECTURE.md \u00a76; canonical conformance plan Lane A \u00a71 / Lane B \u00a71",
+      "rationale": "Staged new-chat provider intent before native apply; not active/effective owner state.",
+      "keys": [
+        {
+          "family": "STAGED_DEFAULT_KEY",
+          "classification": "device-draft",
+          "rationale": "Staged new-chat provider intent before native apply; not active/effective owner state.",
+          "review": "provisional; Lane B ratifies scope without converting source truth into browser state"
+        }
+      ]
+    },
+    {
+      "owner": "src/workspace/settings/settingsNav.ts",
+      "references": [
+        "sessionStorage"
+      ],
+      "sites": [
+        {
+          "owner": "src/workspace/settings/settingsNav.ts",
+          "receiver": "window.sessionStorage",
+          "method": "getItem",
+          "key": "KEY",
+          "basis": [
+            "KEY = \"oi-settings.place.v1\""
+          ]
+        },
+        {
+          "owner": "src/workspace/settings/settingsNav.ts",
+          "receiver": "window.sessionStorage",
+          "method": "setItem",
+          "key": "KEY",
+          "basis": [
+            "KEY = \"oi-settings.place.v1\""
+          ]
+        }
+      ],
+      "key_literals": [
+        "oi-settings.place.v1"
+      ],
+      "spec_ref": "docs/cradle/02-ARCHITECTURE.md \u00a76; canonical conformance plan Lane A \u00a71 / Lane B \u00a71",
+      "rationale": "Within-window Settings navigation only.",
+      "keys": [
+        {
+          "family": "KEY",
+          "classification": "presentation-local",
+          "rationale": "Within-window Settings navigation only.",
+          "review": "provisional; Lane B ratifies scope without converting source truth into browser state"
+        }
+      ]
+    },
+    {
+      "owner": "src/workspace/store.ts",
+      "references": [
+        "localStorage"
+      ],
+      "sites": [
+        {
+          "owner": "src/workspace/store.ts",
+          "receiver": "localStorage",
+          "method": "getItem",
+          "key": "\"oi-cradle.layout.v1\"",
+          "basis": []
+        },
+        {
+          "owner": "src/workspace/store.ts",
+          "receiver": "localStorage",
+          "method": "getItem",
+          "key": "KEY",
+          "basis": [
+            "KEY = \"oi-cradle.workspaces.v1\""
+          ]
+        },
+        {
+          "owner": "src/workspace/store.ts",
+          "receiver": "localStorage",
+          "method": "setItem",
+          "key": "`oi-cradle.unplaced-draft.v1:${id}`",
+          "basis": [
+            "KEY = \"oi-cradle.workspaces.v1\"",
+            "legacyRaw = localStorage.getItem(\"oi-cradle.layout.v1\")",
+            "raw = localStorage.getItem(KEY)",
+            "record = preservePresentation(localStorage.getItem(KEY) ? KEY : \"oi-cradle.layout.v1\", String(error))"
+          ]
+        },
+        {
+          "owner": "src/workspace/store.ts",
+          "receiver": "localStorage",
+          "method": "setItem",
+          "key": "KEY",
+          "basis": [
+            "KEY = \"oi-cradle.workspaces.v1\""
+          ]
+        }
+      ],
+      "key_literals": [
+        "oi-cradle.layout.v1",
+        "oi-cradle.unplaced-draft.v1:${\u2026}",
+        "oi-cradle.workspaces.v1"
+      ],
+      "spec_ref": "docs/cradle/02-ARCHITECTURE.md \u00a76; canonical conformance plan Lane A \u00a71 / Lane B \u00a71",
+      "rationale": "Workspace arrangement book, legacy migration and unsaved drafts. Classification provisional pending Lane B disclosure, not semantic ownership.",
+      "keys": [
+        {
+          "family": "\"oi-cradle.layout.v1\"",
+          "classification": "presentation-local",
+          "rationale": "Workspace arrangement book, legacy migration and unsaved drafts. Classification provisional pending Lane B disclosure, not semantic ownership.",
+          "review": "Lane B source-reviewed; presentation/device draft only. See PRESENTATION-STATE-ADDENDUM-PROPOSED.md; owner law ratification remains distinct."
+        },
+        {
+          "family": "KEY",
+          "classification": "presentation-local",
+          "rationale": "Workspace arrangement book, legacy migration and unsaved drafts. Classification provisional pending Lane B disclosure, not semantic ownership.",
+          "review": "Lane B source-reviewed; presentation/device draft only. See PRESENTATION-STATE-ADDENDUM-PROPOSED.md; owner law ratification remains distinct."
+        },
+        {
+          "family": "`oi-cradle.unplaced-draft.v1:${id}`",
+          "classification": "presentation-local",
+          "rationale": "Workspace arrangement book, legacy migration and unsaved drafts. Classification provisional pending Lane B disclosure, not semantic ownership.",
+          "review": "Lane B source-reviewed; presentation/device draft only. See PRESENTATION-STATE-ADDENDUM-PROPOSED.md; owner law ratification remains distinct."
+        }
+      ]
+    }
+  ],
+  "indirect_key_sources": [
+    {
+      "owner": "src/explore/travel.mjs",
+      "key_literals": [
+        "oi-cradle.explore.v1",
+        "oi.cradle.explore-travel/v1"
+      ],
+      "rationale": "Imported/caller-supplied storage key definition; access owner is separately registered."
+    },
+    {
+      "owner": "src/techne/MaterialDepth.tsx",
+      "key_literals": [
+        "oi-action",
+        "oi-action oi-action-primary",
+        "oi-chip",
+        "oi-cradle.techne.lens.v1",
+        "oi-empty tn-empty",
+        "oi-input",
+        "oi-kbd",
+        "oi-menu tn-add-popover",
+        "oi-note",
+        "oi-panel-head",
+        "oi-panel-head-title",
+        "oi-panel-head-tools",
+        "oi-ref",
+        "oi-ref tn-item-ref",
+        "oi-refusal",
+        "oi-refusal tn-notice",
+        "oi-resize-handle",
+        "oi-row tn-item",
+        "oi-row-title",
+        "oi-state",
+        "oi-tool"
+      ],
+      "rationale": "Imported/caller-supplied storage key definition; access owner is separately registered."
+    }
+  ],
+  "native_retained_resources": [
+    {
+      "id": "expression-working-recovery",
+      "classification": "device-draft",
+      "native_owner": "kernel/src/expression_recovery.rs",
+      "clients": [
+        "expressions-app/field-studies-journeys/src/nativeRecovery.ts",
+        "expressions-app/field-studies-journeys/src/recovery.ts"
+      ],
+      "protocol_source": "src/expressions/recoveryTypes.ts",
+      "operation": "expression_recovery",
+      "schema": "oi.expression-recovery/v1",
+      "storage": "OI_HOME/desktop/expression-recovery/<scope>/<sha256(kind:id)>.json; fallback HOME/.oi",
+      "scopes": [
+        "expressions",
+        "techne"
+      ],
+      "kinds": [
+        "draft",
+        "checkpoint"
+      ],
+      "identity": "Exact scope, kind and bounded draft ID; find_checkpoint resolves one exact Expression reference within the requested scope and refuses ambiguity.",
+      "write_law": "Native compare-and-swap: null expected_revision creates an absent record; existing writes and removals require the exact current revision. Native monotonic revisions survive remove/recreate. Atomic private-file writes and native file locking; failures preserve existing recovery bytes.",
+      "bounds": {
+        "record_bytes": 8388608,
+        "scope_bytes": 67108864,
+        "records_per_scope": 256,
+        "eviction": "none; refuse excess without deleting retained work"
+      },
+      "authority": "Private local working material and interrupted-operation checkpoints only. No canonical Central file, source/publication authority, automatic replay or permission grant. Reopen and mutation still use the ordinary native Expression owner with its exact basis.",
+      "spec_ref": "docs/cradle/02-ARCHITECTURE.md \u00a75\u20136/\u00a712; canonical desktop-agent-conformance-rectification-2026-09-23-1756.md Lane A\u2013B; 2026-09-24 commissioned native Expression restart recovery",
+      "rationale": "Hosted macOS WebKit third-party IndexedDB does not reliably survive app restart; native private storage retains the working draft independently of the canonical document.",
+      "verification": {
+        "status": "unverified",
+        "native_test": "tests/expression-recovery-native.test.mjs",
+        "native_app": "pending actual restart walk",
+        "accepted": false
+      }
+    }
+  ]
+}

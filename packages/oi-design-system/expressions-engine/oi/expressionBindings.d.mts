@@ -10,6 +10,6 @@ export class ExpressionConnectionLayer {
  paths:ConnectionPath[];
  hitTest(x:number,y:number,radius?:number):(ConnectionBinding&{kind:'relation';distance:number})|null;
  pickEntity(x:number,y:number,radius?:number):string|null;
- inspect():{rendered:string[];unavailable:string[]};
+ inspect():{rendered:string[];unavailable:string[];enabled:boolean;totalParticles:number;nodeParticles:number;reservedParticles:number;limit:number;requested:number;overflow:string[];occurrences:(ConnectionBinding&{start:number;end:number})[]};
  dispose():void;
 }

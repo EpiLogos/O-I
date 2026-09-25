@@ -1,0 +1,29 @@
+/* Shared geometry and chrome. Bodies inherit their region's ground. */
+.panel-shell { --panel-padding:var(--oi-space-3); background:transparent; }
+.panel-shell .agent-layer,.panel-shell .agent-body,.panel-shell .agent-plane-host { min-width:0; width:100%; box-sizing:border-box; background:transparent; }
+.panel-shell :is(.agent-chat,.panel-activity,.panel-agents,.context-canvas,.factory-sidebar-tab) {background:transparent;box-sizing:border-box;width:100%;padding-inline:var(--panel-padding)}
+.panel-top {display:flex;align-items:center;min-height:var(--oi-shell-tabbar);height:var(--oi-shell-tabbar);gap:var(--oi-space-1);padding-inline:var(--oi-space-2);flex:none}
+.icon-tab-strip {display:flex;align-items:stretch;gap:0;min-width:0;overflow:auto;flex:1;box-sizing:border-box;height:var(--oi-shell-tabbar);min-height:var(--oi-shell-tabbar)}
+.icon-tab-strip[aria-orientation="horizontal"]{overflow-y:hidden}
+.icon-tab-strip[aria-orientation="vertical"]{flex-direction:column;height:auto}
+:is(.desktop-shell,.icon-tab-strip) .icon-tab {position:relative;display:inline-flex;align-items:center;justify-content:center;gap:var(--oi-space-1);flex:none;box-sizing:border-box;min-width:var(--oi-shell-tabbar);min-height:var(--oi-shell-tabbar);padding:0 var(--oi-space-2);border:0;border-radius:0;background:transparent;color:var(--oi-muted-2)}
+.icon-tab-strip[aria-orientation="horizontal"]>.icon-tab,.icon-tab-strip[aria-orientation="horizontal"]>.tab-entry,.icon-tab-strip[aria-orientation="horizontal"]>.tab-entry>.icon-tab{height:100%;min-height:0}
+:is(.desktop-shell,.icon-tab-strip) .icon-tab:is([aria-selected="true"],[aria-checked="true"]){color:var(--oi-accent-ink);box-shadow:inset 0 -2px var(--oi-accent-ink)}
+:is(.desktop-shell,.icon-tab-strip) .icon-tab:hover{background:var(--oi-wash);color:var(--oi-accent-ink)}
+.icon-tab-mark{position:absolute;right:3px;top:4px;width:5px;height:5px;border-radius:50%;background:var(--oi-accent-ink)}
+.icon-tab-mark[data-mark="attention"]{width:10px;height:12px;background:var(--oi-wash);font-size:var(--oi-shell-type-eyebrow)}
+.window-functions{position:relative;flex:none}
+.window-functions>summary{display:grid;place-items:center;width:var(--oi-shell-tabbar);height:var(--oi-shell-tabbar);cursor:pointer;list-style:none}
+.window-functions>summary::-webkit-details-marker{display:none}
+.window-functions>.oi-menu{position:absolute;right:0;top:100%;bottom:auto;z-index:var(--oi-z-popover);min-width:220px;max-height:70vh;overflow:auto}
+.canvas-host{position:relative;flex:1;min-height:0;margin:0;overflow:clip}
+.canvas-hud{display:flex;align-items:center;min-height:var(--oi-shell-tabbar);flex:none}
+.panel-reconnect{position:absolute;top:var(--oi-shell-tabbar);right:var(--oi-space-3);width:7px;height:7px;border:1px solid var(--oi-muted-2);border-radius:50%;z-index:2}
+
+.canvas-window-functions{position:absolute;right:max(var(--oi-shell-gutter),calc(48px - var(--desktop-right-width,0px)));top:0;z-index:10}
+.canvas-host .pane.group>.canvas-hud{padding-right:calc(var(--oi-shell-tabbar) + var(--oi-space-2))}
+.canvas-stage>.canvas-hud{padding-left:max(var(--oi-space-2),var(--window-cutout,0px));padding-right:max(var(--oi-space-2),var(--window-cutout-right,0px))}
+.tab-entry>.icon-tab{max-width:220px;white-space:nowrap;overflow:hidden;padding-right:30px}
+.panel-shell .panel-top{padding-top:0;padding-bottom:0}
+
+.icon-tab-strip .icon-tab:focus-visible{outline:2px solid var(--oi-accent-ink);outline-offset:-2px}

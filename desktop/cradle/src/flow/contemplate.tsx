@@ -3,6 +3,7 @@ import {kernelOp} from "../kernel/bridge";
 import {useKernel} from "../kernel/KernelProvider";
 import type {ActionDispatch,ChangedSinceReading,KernelTransportStatus} from "../kernel/types";
 import "./flow.css";
+import {DecisionContemplate} from "./DecisionContemplate";
 
 /** W1.4/W1.5 flow cognition, the desktop half. The owner operations are
  * live (`aikit flow preflight|contemplate|changed-since`, reached through
@@ -64,6 +65,7 @@ export function FlowCognition({project,flowRef}:{project:string|null;flowRef:str
      {changed&&<ChangedReading reading={changed}/>}
    </div>}
   </details>
+  <DecisionContemplate project={project}/>
  </div>;
 }
 

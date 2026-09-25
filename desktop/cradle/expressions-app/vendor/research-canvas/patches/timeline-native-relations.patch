@@ -1,0 +1,483 @@
+--- a/packages/desktop-api/src/graph.ts
++++ b/packages/desktop-api/src/graph.ts
+@@ -203,6 +203,8 @@
+  * inventing an historical date for them.
+  */
+ export interface TimelineRelationField {
++  /** A dated native edge is the focus; its endpoints keep their own identities. */
++  subjectRelationRef?: string;
+   subjectGraphNodeId: string;
+   relationships: GraphRelationship[];
+   contextualNodes: GraphNode[];
+--- a/packages/desktop-api/src/techneTransport.ts
++++ b/packages/desktop-api/src/techneTransport.ts
+@@ -93,7 +93,7 @@
+ }
+ 
+ function matchesFilter<T>(value: T | null, filter?: { include?: T[]; exclude?: T[] }): boolean {
+-  const included = !filter?.include?.length || (value !== null && filter.include.includes(value));
++  const included = filter?.include === undefined || (value !== null && filter.include.includes(value));
+   return included && !(value !== null && filter?.exclude?.includes(value));
+ }
+ 
+@@ -170,6 +170,18 @@
+       });
+     }
+     return { nodes, diagnostics };
++  };
++
++  const focusedRelations = (graphNodeId: string) => {
++    const node = nodeById.get(graphNodeId);
++    if (!node) throw new Error(`graph node not found: ${graphNodeId}`);
++    const source = node.isTemporal && node.sourceCoordinates.length === 1 ? node.sourceCoordinates[0] : graphNodeId;
++    const subjectEdges = bundle.relationships.filter(row => row.properties.native_relation_ref === source);
++    const subjectRelationRef = subjectEdges.length ? source : undefined;
++    const subjectGraphNodeId = subjectRelationRef ? graphNodeId : nodeById.has(source) ? source : graphNodeId;
++    const relationships = subjectRelationRef ? subjectEdges : bundle.relationships.filter(row => row.sourceGraphNodeId === subjectGraphNodeId || row.targetGraphNodeId === subjectGraphNodeId);
++    const contextualNodes = [...new Set(relationships.flatMap(row => [row.sourceGraphNodeId, row.targetGraphNodeId]))].filter(id => id !== subjectGraphNodeId).flatMap(id => nodeById.has(id) ? [nodeById.get(id)!] : []);
++    return {subjectGraphNodeId, subjectRelationRef, relationships, contextualNodes};
+   };
+ 
+   const temporalRelationships = () =>
+@@ -324,12 +336,15 @@
+         matchesFilter(node.entityType, filters?.entityTypes)
+         && matchesFilter(node.historicity, filters?.historicities)
+         && matchesFilter(node.temporalRole, filters?.temporalRoles)
++        && (filters?.tags?.include === undefined || node.evidenceTags.some(tag => filters.tags!.include!.includes(tag)))
++        && !node.evidenceTags.some(tag => filters?.tags?.exclude?.includes(tag))
+         && (!range || rangeIntersects(node, range)),
+       );
++      const visible = new Set(filtered.map(record => record.node.graphNodeId));
+       return {
+         workspaceId: TECHNE_WORKSPACE_ID,
+         nodes: filtered,
+-        relationships: temporalRelationships(),
++        relationships: temporalRelationships().filter(row => visible.has(row.sourceGraphNodeId) && visible.has(row.targetGraphNodeId) && matchesFilter(row.relType, filters?.relationTypes)),
+         lanes: [],
+         diagnostics,
+       };
+@@ -337,52 +352,14 @@
+ 
+     async loadTimelineRelationField({ workspaceId, graphNodeId }) {
+       assertWorkspace(workspaceId);
+-      const relationships = bundle.relationships.filter(
+-        (relationship) =>
+-          relationship.sourceGraphNodeId === graphNodeId
+-          || relationship.targetGraphNodeId === graphNodeId,
+-      );
+-      const contextualNodes = [
+-        ...new Set(
+-          relationships.flatMap((relationship) => [
+-            relationship.sourceGraphNodeId,
+-            relationship.targetGraphNodeId,
+-          ]),
+-        ),
+-      ]
+-        .filter((id) => id !== graphNodeId)
+-        .flatMap((id) => {
+-          const node = nodeById.get(id);
+-          return node ? [node] : [];
+-        });
+-      return { subjectGraphNodeId: graphNodeId, relationships, contextualNodes };
++      return focusedRelations(graphNodeId);
+     },
+ 
+     async expandTimelineNode({ workspaceId, graphNodeId }): Promise<ExpandedTimelineNode> {
+       assertWorkspace(workspaceId);
+-      const subject = nodeById.get(graphNodeId);
+-      if (!subject) {
+-        throw new Error(`graph node not found: ${graphNodeId}`);
+-      }
+-      const edges = bundle.relationships.filter(
+-        (relationship) =>
+-          relationship.sourceGraphNodeId === graphNodeId
+-          || relationship.targetGraphNodeId === graphNodeId,
+-      );
+-      const neighbours = [
+-        ...new Set(
+-          edges.flatMap((relationship) => [
+-            relationship.sourceGraphNodeId,
+-            relationship.targetGraphNodeId,
+-          ]),
+-        ),
+-      ]
+-        .filter((id) => id !== graphNodeId)
+-        .flatMap((id) => {
+-          const node = nodeById.get(id);
+-          return node ? [node] : [];
+-        });
+-      return { subjectGraphNodeId: graphNodeId, subject, edges, neighbours };
++      const field = focusedRelations(graphNodeId);
++      const subject = nodeById.get(field.subjectGraphNodeId)!;
++      return {subjectGraphNodeId: field.subjectGraphNodeId, subject, edges: field.relationships, neighbours: field.contextualNodes};
+     },
+ 
+     async loadPalaceGraph({ workspaceId }) {
+--- a/packages/canvas/src/timeline/TimelineLens.tsx
++++ b/packages/canvas/src/timeline/TimelineLens.tsx
+@@ -1,5 +1,6 @@
+ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+ import type { JSX } from "react";
++import { createPortal } from "react-dom";
+ import { useStore } from "zustand";
+ 
+ import type { ArchetypalLighting, ExpandedTimelineNode, GraphNode, LitInstance, TimelineFilters, TimelineLayoutMutationResult, TimelineRelationField as TimelineRelationFieldData, TimelineView, TimelineYearRange } from "./contracts";
+@@ -16,6 +17,8 @@
+ import { assembleTimelineWalk } from "./walk";
+ 
+ export interface TimelineDataSource {
++  styleCapability?: {available:boolean;reason?:string};
++  archetypeCapability?: {available:boolean;reason?:string};
+   loadTimelineView(range?: TimelineYearRange, filters?: TimelineFilters): Promise<TimelineView>;
+   loadNode?(graphNodeId: string): Promise<GraphNode>;
+   archetypalLighting(operatorGraphNodeId: string): Promise<ArchetypalLighting>;
+@@ -31,6 +34,7 @@
+ }
+ 
+ export interface TimelineLensProps {
++  toolbarContainer?: HTMLElement;
+   dataSource: TimelineDataSource;
+   onOpenNode: (
+     graphNodeId: string,
+@@ -58,6 +62,7 @@
+ type TimelineNavigationDirection = "earlier" | "later";
+ 
+ export function TimelineLens({
++  toolbarContainer,
+   dataSource,
+   onOpenNode,
+   initialViewport,
+@@ -80,6 +85,8 @@
+   const [relationField, setRelationField] = useState<TimelineRelationFieldData | null>(null);
+   const [loaded, setLoaded] = useState(false);
+   const [loadError, setLoadError] = useState<string | null>(null);
++  const [readAttempt, setReadAttempt] = useState(0);
++  const [contextError, setContextError] = useState<{message:string;retry:()=>void} | null>(null);
+   const [saveErrors, setSaveErrors] = useState<Record<string, string>>({});
+   const saveQueues = useRef(new Map<string, Promise<void>>());
+   const saveVersions = useRef(new Map<string, number>());
+@@ -98,6 +105,7 @@
+   const [knownRelationTypes, setKnownRelationTypes] = useState<string[]>([]);
+   const [knownTags, setKnownTags] = useState<string[]>([]);
+   const [showRelations, setShowRelations] = useState(true);
++  const [showWalk, setShowWalk] = useState(!toolbarContainer);
+   const [showArchetypalContext, setShowArchetypalContext] = useState(true);
+   const [relationFieldOpen, setRelationFieldOpen] = useState(false);
+   const navigationRef = useRef<{
+@@ -110,10 +118,11 @@
+   const heldNavigationKeys = useRef(new Set<"ArrowLeft" | "ArrowRight">());
+   const timelineFilters = useMemo<TimelineFilters | undefined>(() => {
+     const filters: TimelineFilters = {};
+-    if (relationTypeFilter !== null) filters.relationTypes = { include: relationTypeFilter };
++    // Relation visibility is local to the returned field; changing it must
++    // not reload cards and discard the focused native relation reading.
+     if (tagFilter.length > 0) filters.tags = { include: tagFilter };
+     return Object.keys(filters).length > 0 ? filters : undefined;
+-  }, [relationTypeFilter, tagFilter]);
++  }, [tagFilter]);
+   const timelineFiltersKey = useMemo(
+     () => JSON.stringify(timelineFilters ?? {}),
+     [timelineFilters],
+@@ -141,6 +150,7 @@
+     resonanceRequestVersion.current += 1;
+     setRelationField(null);
+     setResonances([]);
++    setContextError(null);
+     setSaveErrors({});
+     setLoaded(false);
+     setLoadError(null);
+@@ -164,7 +174,7 @@
+       cancelled = true;
+       if (timelineLoadTimer.current !== null) window.clearTimeout(timelineLoadTimer.current);
+     };
+-  }, [dataSource, store, timelineFilters, timelineFiltersKey]);
++  }, [dataSource, store, timelineFilters, timelineFiltersKey, readAttempt]);
+ 
+   // Track width measurement (ResizeObserver is mocked in tests; fall back to a
+   // sensible default so layout math runs even before the observer fires).
+@@ -264,7 +274,7 @@
+   const hasRelationContext = displayRelationField !== null
+     && (displayRelationField.relationships.length > 0 || resonances.length > 0);
+   useEffect(() => {
+-    const next = [...new Set(state.relationships.map((relationship) => relationship.relType))].sort();
++    const next = [...new Set([...state.relationships, ...(displayRelationField?.relationships ?? [])].map((relationship) => relationship.relType))].sort();
+     if (next.length === 0) return;
+     setKnownRelationTypes((current) => {
+       const merged = [...new Set([...current, ...next])].sort();
+@@ -272,7 +282,7 @@
+         ? current
+         : merged;
+     });
+-  }, [state.relationships]);
++  }, [state.relationships, displayRelationField]);
+   useEffect(() => {
+     const next = [...new Set(state.items.flatMap((item) => item.node.evidenceTags))].sort();
+     if (next.length === 0) return;
+@@ -286,6 +296,7 @@
+   const availableRelationTypes = [...new Set([
+     ...knownRelationTypes,
+     ...state.relationships.map((relationship) => relationship.relType),
++    ...(displayRelationField?.relationships ?? []).map((relationship) => relationship.relType),
+   ])].sort();
+   const availableTags = [...new Set([
+     ...knownTags,
+@@ -315,7 +326,22 @@
+     return map;
+   }, [state.nodes]);
+ 
++  const focusedNodeElement = useRef<HTMLElement | null>(null);
++  const closeFocusedRelations = () => {
++    relationFieldRequestVersion.current += 1;
++    resonanceRequestVersion.current += 1;
++    setRelationFieldOpen(false);
++    setRelationField(null);
++    setResonances([]);
++    setContextError(null);
++    store.getState().setSelected(null);
++    const target = focusedNodeElement.current;
++    if (target?.isConnected) target.focus();
++    else trackRef.current?.focus();
++  };
+   const handleSelect = (graphNodeId: string) => {
++    if (document.activeElement instanceof HTMLElement && trackRef.current?.contains(document.activeElement)) focusedNodeElement.current = document.activeElement;
++    setContextError(null);
+     store.getState().setSelected(graphNodeId);
+     setRelationFieldOpen(false);
+     const resonanceVersion = resonanceRequestVersion.current + 1;
+@@ -323,8 +349,8 @@
+     setResonances([]);
+     void dataSource.resonancesForInstance(graphNodeId).then((nextResonances) => {
+       if (resonanceRequestVersion.current === resonanceVersion) setResonances(nextResonances);
+-    }).catch(() => {
+-      if (resonanceRequestVersion.current === resonanceVersion) setResonances([]);
++    }).catch((error: unknown) => {
++      if (resonanceRequestVersion.current === resonanceVersion) setContextError({message:`Related reading unavailable: ${error instanceof Error ? error.message : String(error)}`,retry:()=>handleSelect(graphNodeId)});
+     });
+ 
+     const requestVersion = relationFieldRequestVersion.current + 1;
+@@ -333,10 +359,8 @@
+     if (dataSource.relationFieldForEvent) {
+       void dataSource.relationFieldForEvent(graphNodeId).then((field) => {
+         if (relationFieldRequestVersion.current === requestVersion) setRelationField(field);
+-      }).catch(() => {
+-        // Relation context is supplementary. Keep the selected historical
+-        // event interactive if a remote/local field read is temporarily unavailable.
+-        if (relationFieldRequestVersion.current === requestVersion) setRelationField(null);
++      }).catch((error: unknown) => {
++        if (relationFieldRequestVersion.current === requestVersion) setContextError({message:`Connection reading unavailable: ${error instanceof Error ? error.message : String(error)}`,retry:()=>handleSelect(graphNodeId)});
+       });
+     }
+ 
+@@ -345,15 +369,16 @@
+     // time); the base timeline view stays light. Absent on read-only surfaces.
+     if (dataSource.expandNode) {
+       void dataSource.expandNode(graphNodeId).then((expansion) => {
+-        store.getState().expandNode(expansion);
+-      }).catch(() => {
+-        // Expansion is supplementary. A failed deep read must not close the
+-        // selection or surface as an unhandled rejection.
++        if (relationFieldRequestVersion.current === requestVersion) store.getState().expandNode(expansion);
++      }).catch((error: unknown) => {
++        if (relationFieldRequestVersion.current === requestVersion) setContextError({message:`Source context unavailable: ${error instanceof Error ? error.message : String(error)}`,retry:()=>handleSelect(graphNodeId)});
+       });
+     }
+   };
+ 
+   const handleOpenNode = (graphNodeId: string, node: GraphNode, includeRelationField = true) => {
++    setContextError(null);
++    const requestEpoch = dataSourceEpoch.current;
+     const contextField = includeRelationField ? relationField ?? undefined : undefined;
+     const open = (nextNode: GraphNode) => onOpenNode(
+       graphNodeId,
+@@ -370,16 +395,19 @@
+     if (dataSource.loadNode) {
+       void dataSource.loadNode(graphNodeId)
+         .then((nextNode) => open(nextNode))
+-        .catch(() => {
+-          // The projection is already a valid reader record; a failed deep
+-          // read must not close it or surface as an unhandled rejection.
++        .catch((error: unknown) => {
++          if (dataSourceEpoch.current === requestEpoch) setContextError({message:`Source reading unavailable: ${error instanceof Error ? error.message : String(error)}`,retry:()=>handleOpenNode(graphNodeId,node,includeRelationField)});
+         });
+     }
+   };
+ 
+   const handleLightOperator = (operatorGraphNodeId: string) => {
++    setContextError(null);
++    const requestEpoch = dataSourceEpoch.current;
+     void dataSource.archetypalLighting(operatorGraphNodeId).then((result) => {
+-      store.getState().setLighting(result);
++      if (dataSourceEpoch.current === requestEpoch) store.getState().setLighting(result);
++    }).catch((error: unknown) => {
++      if (dataSourceEpoch.current === requestEpoch) setContextError({message:`Archetype reading unavailable: ${error instanceof Error ? error.message : String(error)}`,retry:()=>handleLightOperator(operatorGraphNodeId)});
+     });
+   };
+ 
+@@ -560,10 +588,13 @@
+ 
+   useEffect(() => stopTimelineNavigation, [stopTimelineNavigation]);
+ 
+-  return (
+-    <div className="timeline-lens" data-testid="timeline-lens">
++  const toolbar = (
+       <div className="timeline-toolbar" data-testid="timeline-toolbar">
+         <span className="timeline-tier" data-testid="timeline-tier">{tier}</span>
++        <button type="button" aria-label={`${showWalk ? "Hide" : "Show"} temporal walk`}
++          aria-expanded={showWalk} onClick={() => setShowWalk(value => !value)}>
++          Walk · {walk.stops.length}
++        </button>
+         {state.frame && (
+           <div className="timeline-frame" data-testid="timeline-frame" aria-label="Timeline frame">
+             <span className="timeline-frame-crumb" data-testid="timeline-frame-crumb">
+@@ -629,6 +660,8 @@
+             type="button"
+             className="timeline-filter"
+             data-testid="timeline-toggle-archetypal"
++            disabled={dataSource.archetypeCapability?.available===false}
++            title={dataSource.archetypeCapability?.available===false?dataSource.archetypeCapability.reason:undefined}
+             data-active={showArchetypalContext ? "true" : "false"}
+             aria-label={`${showArchetypalContext ? "Hide" : "Show"} archetypal context`}
+             aria-pressed={showArchetypalContext}
+@@ -728,10 +761,16 @@
+           </button>
+         )}
+       </div>
++  );
++
++  return (
++    <div className="timeline-lens" data-testid="timeline-lens" onKeyDown={(event) => { if (event.key === "Escape" && (relationField || contextError)) { event.preventDefault(); event.stopPropagation(); closeFocusedRelations(); } }}>
++      {toolbarContainer ? createPortal(toolbar, toolbarContainer) : toolbar}
+       <div
+         className="timeline-track"
+         data-testid="timeline-track"
+         ref={trackRef}
++        tabIndex={-1}
+         style={{ position: "relative", overflow: "hidden" }}
+         onPointerDown={handlePointerDown}
+         onPointerMove={handlePointerMove}
+@@ -739,10 +778,14 @@
+         onPointerLeave={handlePointerUp}
+       >
+         {loadError && (
+-          <div className="timeline-load-state timeline-load-state--error" data-testid="timeline-load-error">
++          <div role="alert" className="timeline-load-state timeline-load-state--error" data-testid="timeline-load-error">
+             Timeline data unavailable: {loadError}
++            <button type="button" onClick={() => setReadAttempt(value => value + 1)}>Retry reading</button>
+           </div>
+         )}
++        {contextError && <div role="alert" className="timeline-load-state timeline-load-state--error">
++          {contextError.message} <button type="button" onClick={contextError.retry}>Retry reading</button>
++        </div>}
+         {Object.entries(saveErrors).map(([nodeId, message]) => (
+           <div key={nodeId} role="alert" data-testid={`timeline-save-error-${nodeId}`}>
+             {message} <button type="button" onClick={() => commitTimelineLayout(nodeId)}>Retry</button>
+@@ -815,6 +858,7 @@
+                   onCommit={commitTimelineLayout}
+                   onColorTag={handleColorTag}
+                   readOnly={!dataSource.saveTimelineLayout || p.item.relationCompanion}
++                  colorCapability={dataSource.styleCapability}
+                 />
+               );
+             })}
+@@ -843,6 +887,8 @@
+           {relationFieldOpen && (
+             <TimelineRelationField
+               field={displayRelationField}
++              onClose={closeFocusedRelations}
++              relationTypes={relationTypeFilter}
+               resonances={resonances}
+               showRelations={showRelations}
+               showArchetypalContext={showArchetypalContext}
+@@ -858,11 +904,11 @@
+         onClear={() => store.getState().clearWorkingSet()}
+         onOpenNode={(graphNodeId, node) => handleOpenNode(graphNodeId, node, false)}
+       />
+-      <TimelineWalk
++      {showWalk && <TimelineWalk
+         walk={walk}
+         onSelectStop={(graphNodeId) => handleSelect(graphNodeId)}
+         resolveNodeTitle={(graphNodeId) => nodeTitleById.get(graphNodeId) ?? null}
+-      />
++      />}
+     </div>
+   );
+ }
+--- a/packages/canvas/src/timeline/TimelineRelationField.tsx
++++ b/packages/canvas/src/timeline/TimelineRelationField.tsx
+@@ -34,6 +34,8 @@
+ 
+ export function TimelineRelationField({
+   field,
++  relationTypes = null,
++  onClose,
+   resonances,
+   showRelations,
+   showArchetypalContext,
+@@ -42,6 +44,8 @@
+   onLightOperator,
+ }: {
+   field: TimelineRelationFieldData;
++  relationTypes?: readonly string[] | null;
++  onClose?: () => void;
+   resonances: LitInstance[];
+   showRelations: boolean;
+   showArchetypalContext: boolean;
+@@ -60,30 +64,21 @@
+   // set remains in the transport; the field is a readable projection of it.
+   const rowsByKey = new Map<string, RelationRow>();
+   for (const relationship of field.relationships) {
+-    const otherId = relationship.sourceGraphNodeId === field.subjectGraphNodeId
+-      ? relationship.targetGraphNodeId
+-      : relationship.targetGraphNodeId === field.subjectGraphNodeId
+-        ? relationship.sourceGraphNodeId
+-        : null;
+-    if (!otherId) continue;
+-    const key = `${otherId}:${relationship.relType}`;
+-    const node = contextualById.get(otherId) ?? null;
+-    const existing = rowsByKey.get(key);
+-    if (existing) {
+-      existing.duplicateCount += 1;
+-      continue;
++    const otherIds = field.subjectRelationRef && relationship.properties.native_relation_ref === field.subjectRelationRef
++      ? [...new Set([relationship.sourceGraphNodeId, relationship.targetGraphNodeId])]
++      : relationship.sourceGraphNodeId === field.subjectGraphNodeId ? [relationship.targetGraphNodeId]
++      : relationship.targetGraphNodeId === field.subjectGraphNodeId ? [relationship.sourceGraphNodeId] : [];
++    for (const otherId of otherIds) {
++      const key = `${otherId}:${relationship.relType}`;
++      const node = contextualById.get(otherId) ?? null;
++      const existing = rowsByKey.get(key);
++      if (existing) { existing.duplicateCount += 1; continue; }
++      rowsByKey.set(key, {relationship,otherId,node,resonance:resonanceByKey.get(key) ?? null,duplicateCount:1});
+     }
+-    rowsByKey.set(key, {
+-      relationship,
+-      otherId,
+-      node,
+-      resonance: resonanceByKey.get(key) ?? null,
+-      duplicateCount: 1,
+-    });
+   }
+ 
+   const relationRows = [...rowsByKey.values()].filter((row) => {
+-    if (!showRelations) return false;
++    if (!showRelations || (relationTypes !== null && !relationTypes.includes(row.relationship.relType))) return false;
+     return showArchetypalContext || !isArchetypalContext(row.node);
+   });
+   // A resonance is folded into its canonical relation only while that
+@@ -111,6 +106,7 @@
+       aria-label={compact ? "Reader relation field" : "Focused relations"}
+     >
+       <strong>Relation field</strong>
++      {onClose && <button type="button" aria-label="Close focused relations" onClick={onClose}>Close</button>}
+       {relationRows.length === 0 && resonanceRows.length === 0 ? (
+         <p>No related entities in the current view</p>
+       ) : (
+@@ -123,7 +119,7 @@
+                   const isDominant = resonance !== null
+                     && strongest?.node.graphNodeId === resonance.node.graphNodeId;
+                   return (
+-                    <li key={relationship.id} data-testid={`timeline-relation-${relationship.id}`}>
++                    <li key={`${relationship.id}:${otherId}`} data-testid={`timeline-relation-${relationship.id}`}>
+                       <span className="timeline-relation-field__meta">
+                         {relationship.relType.replaceAll("_", " ")}
+                         {duplicateCount > 1 && <small> ×{duplicateCount}</small>}

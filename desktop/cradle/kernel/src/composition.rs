@@ -21,14 +21,6 @@ fn observed_at_unix_ms() -> u64 {
         .unwrap_or(0)
 }
 
-const PRODUCTS: [&str; 6] = [
-    "central",
-    "actuation",
-    "ai-kit",
-    "software-factory",
-    "workcell",
-    "quaternal-logic",
-];
 
 #[derive(Clone, Debug)]
 pub struct Client {
@@ -211,8 +203,8 @@ fn validate(data: &Value, schemas: &[&str], rows: &str, id: &str) -> Result<(), 
         let product = row[id]
             .as_str()
             .ok_or("S composition owner identity missing")?;
-        if !PRODUCTS.contains(&product) || !seen.insert(product) {
-            return Err("S composition contains unknown or duplicate owner identity".into());
+        if product.trim().is_empty() || !seen.insert(product) {
+            return Err("S composition contains empty or duplicate owner identity".into());
         }
         if !matches!(
             row["state"].as_str(),
@@ -221,8 +213,23 @@ fn validate(data: &Value, schemas: &[&str], rows: &str, id: &str) -> Result<(), 
             return Err(format!("Unsupported S availability state for {product}"));
         }
     }
-    if seen.len() != PRODUCTS.len() {
-        return Err("S composition does not disclose all six owners".into());
-    }
     Ok(())
+}
+
+#[cfg(test)]
+mod membership_tests {
+    use super::*;
+    #[test]
+    fn owner_membership_comes_from_native_rows_not_a_six_product_table() {
+        let mut reading=serde_json::json!({"schema":"oi.current-world/v2","positions":[
+            {"product_id":"oi","state":"installed"},{"product_id":"central","state":"installed"},
+            {"product_id":"ai-kit","state":"installed"},{"product_id":"actuation","state":"installed"},
+            {"product_id":"workcell","state":"installed"},{"product_id":"software-factory","state":"installed"},
+            {"product_id":"seventh-owner","state":"registered"}]});
+        assert!(validate(&reading,&["oi.current-world/v2"],"positions","product_id").is_ok());
+        reading["positions"][6]["product_id"]=serde_json::json!("oi");
+        assert!(validate(&reading,&["oi.current-world/v2"],"positions","product_id").is_err());
+        reading["positions"][6]["product_id"]=serde_json::json!(" ");
+        assert!(validate(&reading,&["oi.current-world/v2"],"positions","product_id").is_err());
+    }
 }

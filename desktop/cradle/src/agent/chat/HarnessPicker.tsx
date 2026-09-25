@@ -31,7 +31,7 @@ export function HarnessPicker({connections,currentId,onChoose,resume,disabled,re
     const current=connection.id===currentId;
     return <button key={connection.id} type="button" role="menuitemradio" aria-checked={current} className="harness-row" disabled={disabled||current} title={reason} onClick={()=>onChoose(connection.id)}>
      <span className="harness-row-main"><span className="harness-row-name">{group.name}</span>{variant&&<span className="harness-variant">{variant}</span>}{current&&<Glyph name="check" size={11}/>}</span>
-     {connection.label&&<span className="harness-row-label">{connection.label}</span>}
+     {connection.label&&connection.label!==connection.id&&<span className="harness-row-label">{connection.label}</span>}
     </button>;
    })}
   </section>)}

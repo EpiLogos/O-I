@@ -1,0 +1,62 @@
+--- a/packages/canvas/src/psychogeographic/PsychogeographicMap.tsx
++++ b/packages/canvas/src/psychogeographic/PsychogeographicMap.tsx
+@@ -1,3 +1,4 @@
++import { createPortal } from "react-dom";
+ import { useCallback, useEffect, useMemo, useRef, useState, type JSX } from "react";
+ 
+ import type { ArchetypalExpression, GeographyEdge, GraphNodeContract } from "@research-canvas/schema";
+@@ -15,6 +16,8 @@
+ } from "./renderer";
+ 
+ export interface PsychogeographicMapProps {
++  /** Put genuine map controls in the host toolbar instead of beneath it. */
++  toolbarContainer?: HTMLElement;
+   repository: PlacesRepository;
+   projectId: string;
+   tileSource: MapTileSource;
+@@ -39,6 +42,7 @@
+  * over the bundled/offline base.
+  */
+ export function PsychogeographicMap({
++  toolbarContainer,
+   repository,
+   projectId,
+   tileSource,
+@@ -360,17 +364,11 @@
+       ? "Live tiles"
+       : "Offline";
+ 
+-  return (
+-    <div
+-      className="psychogeographic-surface"
+-      data-testid="psychogeographic-surface"
+-      data-view={view}
+-      style={{ position: "absolute", inset: 0, overflow: "hidden", background: "#05070f" }}
+-    >
++  const controls = (
+       <div
+-        className="psychogeographic-toolbar"
++        className={toolbarContainer ? "psychogeographic-toolbar-hosted research-tool-actions" : "psychogeographic-toolbar"}
+         data-testid="places-toolbar"
+-        style={{
++        style={toolbarContainer ? { display: "flex", gap: 6 } : {
+           position: "absolute",
+           zIndex: 10,
+           top: 10,
+@@ -410,6 +408,16 @@
+           </button>
+         ))}
+       </div>
++  );
++
++  return (
++    <div
++      className="psychogeographic-surface"
++      data-testid="psychogeographic-surface"
++      data-view={view}
++      style={{ position: "absolute", inset: 0, overflow: "hidden", background: "#05070f" }}
++    >
++      {toolbarContainer ? createPortal(controls, toolbarContainer) : controls}
+ 
+       <div
+         ref={containerRef}

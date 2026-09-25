@@ -12,7 +12,7 @@
  * open, draft, prompt, …) has no voice input hook on this cut — audio is not
  * an encounter currency. So the transcript rides the door typed text already
  * uses: the owner-owned shared draft. The desktop captures locally, encodes
- * 16 kHz mono WAV, POSTs to the stipulated loopback endpoint, and places the
+ * 16 kHz mono WAV, submits through the native loopback transcription operation, and places the
  * returned text in the composer as EDITABLE text. It never sends.
  *
  * Honest states, each named (copy.ts): service down (probe before capture —
@@ -21,10 +21,12 @@
  */
 
 import {readDictationStipulation} from "./store";
+import {detectTransport,kernelOp} from "../kernel/bridge";
+import type {KernelTransportStatus} from "../kernel/types";
 import {DICTATION_SAMPLE_RATE, encodeWav16kMono, resampleTo16k} from "./wav";
 
 export type DictationRefusal =
-  | {kind: "service-down"; detail?: string}
+  | {kind: "service-down"; detail?: string; endpoint?:string}
   | {kind: "mic-denied"}
   | {kind: "mic-unavailable"}
   | {kind: "failed"; detail: string}
@@ -32,54 +34,20 @@ export type DictationRefusal =
 
 export type DictationOutcome = {kind: "transcript"; text: string} | DictationRefusal;
 
-/** A minimal valid PCM16 WAV (3 ms of silence at 16 kHz) used to probe the
- * endpoint: any HTTP answer — including an error — proves the server is
- * there; only a transport failure proves it is not. */
-function probeWav(): Blob {
-  return encodeWav16kMono(new Float32Array(48));
+/** The native probe is the only route to a single-use recording lease. */
+export async function probeTranscriptionEndpoint(transport:KernelTransportStatus=detectTransport()) {
+ const stipulation=await readDictationStipulation(transport);
+ const result=await kernelOp(transport,{op:"dictation_probe"});
+ if(result.outcome?.result!=="dictation_prepared")throw {kind:"service-down",detail:result.error,endpoint:stipulation.stt_url} satisfies DictationRefusal;
+ return result.outcome;
 }
-
-function multipart(wav: Blob): FormData {
-  const form = new FormData();
-  form.append("file", new File([wav], "dictation.wav", {type: "audio/wav"}));
-  form.append("response_format", "json");
-  return form;
-}
-
-/** Reachability probe: runs BEFORE the microphone is touched, so the named
- * "local speech is not running" gap renders without a permission prompt.
- * Throws the typed refusal; any HTTP answer — even an error — means alive. */
-export async function probeTranscriptionEndpoint(url: string, signal?: AbortSignal): Promise<void> {
-  try {
-    const response = await fetch(url, {method: "POST", body: multipart(probeWav()), signal});
-    await response.arrayBuffer().catch(() => undefined);
-  } catch (error) {
-    if ((error as Error)?.name === "AbortError") throw error;
-    throw {kind: "service-down", detail: String(error)} satisfies DictationRefusal;
-  }
-}
-
-/** One transcription attempt against the stipulated endpoint. Returns the
- * outcome as data — the surface renders it, it never invents text. */
-export async function transcribeWav(url: string, wav: Blob, signal?: AbortSignal): Promise<DictationOutcome> {
-  let response: Response;
-  try {
-    response = await fetch(url, {method: "POST", body: multipart(wav), signal});
-  } catch (error) {
-    if ((error as Error)?.name === "AbortError") throw error;
-    return {kind: "service-down", detail: String(error)};
-  }
-  if (!response.ok) return {kind: "failed", detail: `the local server answered HTTP ${response.status}`};
-  let parsed: unknown;
-  try {
-    parsed = JSON.parse(await response.text());
-  } catch (error) {
-    return {kind: "failed", detail: `the local server's answer was not JSON (${String(error)})`};
-  }
-  const text = (parsed as {text?: unknown})?.text;
-  if (typeof text !== "string") return {kind: "failed", detail: "the local server's answer carried no \"text\" field"};
-  if (text.trim().length === 0) return {kind: "empty"};
-  return {kind: "transcript", text};
+export async function transcribeWav(transport:KernelTransportStatus,captureRef:string,wav:Blob):Promise<DictationOutcome>{
+ if(wav.size>44+16000*2*300)return {kind:"failed",detail:"The recording exceeds five minutes; record a shorter passage."};
+ const bytes=new Uint8Array(await wav.arrayBuffer());let binary="";
+ for(let offset=0;offset<bytes.length;offset+=8192)binary+=String.fromCharCode(...bytes.subarray(offset,offset+8192));
+ const result=await kernelOp(transport,{op:"dictation_transcribe",capture_ref:captureRef,wav_base64:btoa(binary)});
+ if(result.outcome?.result!=="dictation_transcribed")return {kind:"failed",detail:result.error??"Native local transcription returned no result"};
+ return result.outcome.outcome;
 }
 
 /** Map a getUserMedia refusal to its named state (pure, conformance-tested). */
@@ -98,16 +66,26 @@ export class DictationSession {
   private processor: ScriptProcessorNode | null = null;
   private chunks: Float32Array[] = [];
   private sampleRate = DICTATION_SAMPLE_RATE;
+  private captureRef:string|null=null;
+  private cancelled=false;
+  private capturedSamples=0;
+  private overflow=false;
+  private transport:KernelTransportStatus;
+  constructor(transport:KernelTransportStatus=detectTransport()) {this.transport=transport;}
 
   /** Probe the stipulated endpoint, then open the microphone. Throws the
    * named DictationRefusal — the surface renders it, word for word. */
   async begin(): Promise<string> {
-    const stipulation = readDictationStipulation();
-    await probeTranscriptionEndpoint(stipulation.stt_url);
+    const prepared=await probeTranscriptionEndpoint(this.transport);
+    if(this.cancelled)throw new DOMException("Capture cancelled","AbortError");
+    this.captureRef=prepared.capture_ref;
+    const stipulation=prepared.stipulation;
     const media = await navigator.mediaDevices.getUserMedia({audio: true}).catch(error => {
       throw dictationRefusalFromCaptureError(error);
     });
+    if(this.cancelled){media.getTracks().forEach(track=>track.stop());throw new DOMException("Capture cancelled","AbortError");}
     this.stream = media;
+    try {
     const context = new AudioContext();
     this.context = context;
     this.sampleRate = context.sampleRate;
@@ -116,7 +94,10 @@ export class DictationSession {
     const processor = context.createScriptProcessor(4096, 1, 1);
     this.processor = processor;
     processor.onaudioprocess = event => {
-      this.chunks.push(new Float32Array(event.inputBuffer.getChannelData(0)));
+      const chunk=event.inputBuffer.getChannelData(0);
+      this.capturedSamples+=chunk.length;
+      if(this.capturedSamples>this.sampleRate*300){this.overflow=true;this.stream?.getTracks().forEach(track=>track.stop());processor.onaudioprocess=null;return;}
+      this.chunks.push(new Float32Array(chunk));
     };
     // ScriptProcessor pulls only when wired toward the destination; a zero
     // gain keeps the capture silent to the room.
@@ -126,6 +107,7 @@ export class DictationSession {
     processor.connect(mute);
     mute.connect(context.destination);
     return stipulation.stt_url;
+    } catch(error) { this.cancel(); throw error; }
   }
 
   /** Stop the capture and transcribe. Never throws for ordinary failures —
@@ -134,10 +116,14 @@ export class DictationSession {
     try {
       this.processor && (this.processor.onaudioprocess = null);
       this.stream?.getTracks().forEach(track => track.stop());
+      if(this.overflow)return {kind:"failed",detail:"The recording exceeds five minutes; record a shorter passage."};
+      if(this.cancelled)return {kind:"failed",detail:"Capture was cancelled."};
       const flat = this.flatChunks();
       if (!this.context) return {kind: "failed", detail: "no capture was running"};
       const wav = encodeWav16kMono(resampleTo16k(flat, this.sampleRate));
-      return await transcribeWav(readDictationStipulation().stt_url, wav);
+      if(!this.captureRef)return {kind:"failed",detail:"No native capture lease exists."};
+      const outcome=await transcribeWav(this.transport,this.captureRef,wav);
+      return this.cancelled?{kind:"failed",detail:"Capture was cancelled."}:outcome;
     } finally {
       try {
         await this.context?.close();
@@ -149,6 +135,15 @@ export class DictationSession {
       this.stream = null;
       this.chunks = [];
     }
+  }
+
+  /** Disposal never transcribes or sends; it releases the local mic. */
+  cancel():void {
+    this.cancelled=true;
+    if(this.processor)this.processor.onaudioprocess=null;
+    this.stream?.getTracks().forEach(track=>track.stop());
+    void this.context?.close().catch(()=>undefined);
+    this.context=null;this.stream=null;this.processor=null;this.chunks=[];
   }
 
   private flatChunks(): Float32Array {

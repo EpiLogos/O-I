@@ -1,9 +1,6 @@
 /**
- * The Place instrument registration (L5 Technē T4) — the lane's composition
- * entry. `registerPlaceSurface()` mounts the Place surface in the shared
- * Technē registry ("map | globe | street are presentations of the same
- * Place readings"); nothing here edits shared files.
- *
+ * Place selection and cross-open law. The retired cradle component registry
+ * no longer controls rendering; native reading and selection identity remain.
  * Selection law (wayfinder §3–§5, K9 co-reference): clicking a place sets
  * the DisclosureSession selection with `focus_refs = [place_ref]` — subject,
  * reading basis, source qualification and agent-session ref are carried
@@ -12,16 +9,7 @@
  *
  * Erasable TypeScript: loadable by the renderer, Vite, and `node --test`.
  */
-import { registerTechneSurface } from "../registry";
 import type { DisclosureSelection, DisclosureSession, TechneDisclosureEntry, TechnePlaceFacet, TechneReading } from "../../contract";
-import { PlaceInstrument } from "./PlaceInstrument";
-
-/** Mount the Place surface (map | globe | street). Returns the unregister
- * function. A duplicate registration is a composition bug and is refused by
- * the registry. */
-export function registerPlaceSurface(): () => void {
-  return registerTechneSurface("place", PlaceInstrument);
-}
 
 /**
  * The selection for a clicked place: the session's own selection with the

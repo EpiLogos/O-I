@@ -27,7 +27,7 @@ pub use orchestration::{
     ChangeKind, DesiredChange, DesiredInput, ExecuteReport, KernelError,
 };
 pub use registry::{
-    product_position_specs, OwnerEntry, OwnerRegistry, RegistryDegradation, PRODUCT_POSITIONS,
+    product_position_specs, product_position_specs_with, OwnerEntry, OwnerRegistry, RegistryDegradation, PRODUCT_POSITIONS,
 };
 pub use store::{oi_home, ConfigurationStore, DesiredRecord, ReconciliationRecord};
 pub use surface_adapter::{

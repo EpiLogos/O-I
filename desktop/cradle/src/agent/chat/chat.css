@@ -2,12 +2,12 @@
  * (oi-tool, oi-chip, oi-menu, oi-action, oi-state, oi-note, oi-scroll)
  * supplies the controls, this file keeps the chat's own layout: a head, the
  * transcript of turns, the composer card, and the drop veil. */
-.agent-chat{position:relative;height:100%;min-height:0;display:flex;flex-direction:column;background:var(--oi-agent-ground);color:var(--oi-foreground);container-type:inline-size}
+.agent-chat{position:relative;height:100%;min-height:0;display:flex;flex-direction:column;color:var(--oi-foreground);container-type:inline-size}
 .desktop-side.left .agent-chat{height:auto;flex:1}
 
 /* ===== head: identity · tools — the window row owns open/close, so the =====
  * ===== head carries only the conversation's own commands ============== */
-.chat-head{flex:none;display:flex;align-items:center;gap:8px;min-height:65px;box-sizing:border-box;padding:8px 10px 8px 14px;border-bottom:var(--oi-shell-edge) solid var(--oi-hairline-soft)}
+.chat-head{flex:none;display:flex;align-items:center;gap:8px;min-height:var(--oi-panel-head-height);box-sizing:border-box;padding:var(--oi-shell-gutter) calc(var(--oi-shell-gutter) * 2);border-bottom:var(--oi-shell-edge) solid var(--oi-hairline-soft)}
 .chat-head-titles{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}
 .chat-head-tools{flex:none;display:flex;align-items:center;gap:2px}
 .chat-head-tools>.oi-tool{flex:none}
@@ -123,8 +123,6 @@
 .chat-composer-chip-label{max-width:min(110px,24cqi);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .chat-provider-menu>.oi-menu{position:absolute;bottom:calc(100% + 6px);left:0;z-index:var(--oi-z-popover,30);min-width:200px}
 .chat-composer-status{flex:1;min-width:0;text-align:right;padding-right:6px;font-size:var(--oi-shell-type-meta);color:var(--oi-muted-2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.chat-drop-hint{color:var(--oi-muted-3)}
-@container (max-width:319px){.chat-drop-hint{display:none}}
 .chat-send{flex:none;width:28px;height:28px;display:inline-flex;align-items:center;justify-content:center;border:0;border-radius:7px;background:var(--oi-accent);color:var(--oi-composer-ground);cursor:pointer;transition:background var(--oi-motion-ui) var(--oi-motion-ease-out),opacity var(--oi-motion-ui) var(--oi-motion-ease-out)}
 .chat-send .sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
 .chat-send:hover:not(:disabled),.chat-send:focus-visible{background:var(--oi-accent-ink);outline:none}
@@ -197,4 +195,4 @@
 .chat-preview-choice[aria-pressed="true"]{background:var(--oi-active-ground);border-color:var(--oi-active-ground);color:var(--oi-active-ink)}
 .chat-preview-close{margin-left:auto}
 .chat-preview-stage{flex:1;min-height:0;display:flex;overflow:auto;padding:10px;gap:10px}
-.chat-preview-stage>.oi-desktop{flex:none;height:auto;min-height:100%;display:flex;flex-direction:column;border:var(--oi-shell-edge) solid var(--oi-hairline);border-radius:var(--oi-shell-radius);overflow:hidden;background:var(--oi-agent-ground);box-shadow:var(--oi-shadow-plane)}
+.chat-preview-stage>.oi-desktop{flex:none;height:auto;min-height:100%;display:flex;flex-direction:column;border:var(--oi-shell-edge) solid var(--oi-hairline);border-radius:var(--oi-shell-radius);overflow:hidden;box-shadow:var(--oi-shadow-plane)}

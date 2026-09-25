@@ -1,10 +1,20 @@
 import { fileURLToPath } from "node:url";
+import { cpSync, existsSync } from "node:fs";
+import { resolve } from "node:path";
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
 
 // https://vitejs.dev/config/
 export default defineConfig(({ command }) => ({
-  plugins: [react()],
+  plugins: [react(), {
+    name: "candidate-hosted-expressions",
+    apply: "build",
+    writeBundle(output) {
+      const source = fileURLToPath(new URL("./expressions-app/dist", import.meta.url));
+      if (!existsSync(resolve(source, "index.html"))) throw new Error("Build this checkout's Expressions application before bundling the desktop (npm run build:expressions).");
+      cpSync(source, resolve(output.dir ?? "dist", "expressions"), {recursive: true});
+    },
+  }],
   clearScreen: false,
   // The point-cloud engine lives in the design-system package (which has no
   // node_modules of its own); resolve the heavy dependency from the app's

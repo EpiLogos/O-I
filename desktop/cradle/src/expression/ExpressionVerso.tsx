@@ -1,3 +1,4 @@
+import {IconTabStrip,IconTab} from "../workspace/primitives/IconTabStrip";
 /**
  * The Expression verso — the back of ONE subject (ES2 + owner Wayfinder
  * §10), rendered over the same identity the face presents. Two readings
@@ -242,12 +243,11 @@ function AccountScenes({account}: {account: NonNullable<Extract<VersoAccountRead
   return <section className="expression-verso__region" aria-label="Scene breakdown" data-region="scenes" data-aperture={aperture}
     data-scene-count={document.scenes.length} data-expression-ref={document.expression_ref}>
     <h4>Scenes · {document.scenes.length}{projection ? " · the standing projection" : ""}</h4>
-    <div className="expression-verso__apertures" role="tablist" aria-label="Scene breakdown aperture">
-      {(["list", "tree", "graph"] as const).map(choice => <button key={choice} type="button" role="tab"
-        aria-selected={aperture === choice} data-aperture-choice={choice}
+    <IconTabStrip aria-label="Scene breakdown aperture">
+      {(["list", "tree", "graph"] as const).map(choice => <IconTab key={choice} label={choice} icon={choice==="graph"?"graph":choice==="tree"?"folder":"file"} selected={aperture === choice} data-aperture-choice={choice}
         title={choice === "list" ? "Flat index of the scenes" : choice === "tree" ? "Scenes and their entities, nested" : "The current scene drawn from the document itself — same positions, bound relations only"}
-        onClick={() => setAperture(choice)}>{choice === "list" ? "List" : choice === "tree" ? "Tree" : "Graph"}</button>)}
-    </div>
+        onClick={() => setAperture(choice)}/>)}
+    </IconTabStrip>
     {aperture === "list" && <ul className="expression-verso__scene-list">
       {document.scenes.map(scene => <li key={scene.scene_ref} data-scene-ref={scene.scene_ref}>
         <span className="expression-verso__scene-title">{scene.title}</span>

@@ -28,7 +28,12 @@ export interface Representation {kind:"live"|"image"|"video"|"html"|"embed"|"pro
 export interface RefinementDecision {state:"accepted"|"rejected";actor:string;reason:string;decided_at_revision:number;corrections:Change[]}
 export interface Refinement {proposal_ref:string;basis_revision:number;proposed_by:string;activity_ref:string|null;continues_proposal_ref:string|null;summary:string;changes:Change[];method_refs:ReadingRef[];evidence_refs:ReadingRef[];decision:RefinementDecision|null}
 export interface ExpressionDocument {presentation?:CompositionPresentation|null;schema:"oi.expression/v1";expression_ref:string;revision:number;title:string;scenes:Scene[];entities:Record<string,Entity>;relations:Record<string,Relation>;selection:{scene_ref:string;entity_ref:string|null;relation_ref?:string|null};provenance:ReadingRef[];representations:Representation[];refinements:Refinement[];collections?:string[];profiles?:ProfileAdoption[]}
+export interface BlueprintTransform {translation:[number,number,number];rotation:[number,number,number];scale:number}
+export interface SceneBlueprint {schema:'oi.scene-blueprint/v1';shape_ref:string;reading_digest:string;frame:ReadingRef;members:{entity_ref:string;subject_ref:string;role_ref:string;position:number}[];transform:BlueprintTransform}
 export type Change =
+ | {change:"scene_blueprint_bind";scene_ref:string;binding:SceneBlueprint}
+ | {change:"scene_blueprint_transform";scene_ref:string;transform:BlueprintTransform}
+ | {change:"scene_blueprint_release";scene_ref:string}
  | {change:"rename";title:string}
  | {change:"composition_set";presentation:CompositionPresentation}
  | {change:"scene_rename";scene_ref:string;title:string}

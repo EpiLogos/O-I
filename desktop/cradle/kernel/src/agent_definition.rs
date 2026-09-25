@@ -11,6 +11,7 @@ pub enum Request {
     Roster,
     Scope,
     Skills,
+    Session { agent_session: String },
     Propose {
         name: String,
         purpose: String,
@@ -72,6 +73,47 @@ pub fn execute(
         Request::Roster => owner(client, "agent-profile.roster", input),
         Request::Scope => aikit.direct_agent(cwd, "agent-session-scope", None),
         Request::Skills => aikit.direct_agent(cwd, "agent-session-skills", None),
+        Request::Session {agent_session} => {
+            exact(agent_session, 1024, "AgentSession reference")?;
+            let session = aikit.direct_agent(cwd, "agent-session-read", Some(("--agent-session", agent_session)))?;
+            if session.is_null() { return Ok(json!({"session":null,"profile":null})); }
+            if session["schema"] != "aikit.direct-agent-session/v1" || session["agent_session"].as_str() != Some(agent_session) {
+                return Err("Native Agent session identity mismatch".into());
+            }
+            for field in ["agent_ref", "profile_ref", "profile_revision", "space", "project_ref", "acceptance_ref"] {
+                exact(session[field].as_str().ok_or_else(|| format!("Native session omitted {field}"))?, 2048, field)?;
+            }
+            if session["provider_started"] != false || session["execution_authority_granted"] != false {
+                return Err("Native session reading has incompatible authority standing".into());
+            }
+            let scope = aikit.direct_agent(cwd, "agent-session-scope", None)?;
+            if scope["schema"] != "aikit.direct-agent-scope/v1" || scope["execution_authority_granted"] != false
+                || session["project_ref"] != scope["project_ref"] { return Err("Agent session belongs to another native scope".into()); }
+            let mut profile_input = scoped(project);
+            profile_input["profile_ref"] = session["profile_ref"].clone();
+            let profile = match owner(client, "agent-profile.review", profile_input) {
+                Ok(profile) => profile,
+                Err(reason) => return Ok(json!({"session":session,"profile":null,"source_state":"unavailable","reason":reason})),
+            };
+            let scope_ref = if project.is_some() { format!("project:{}",session["project_ref"].as_str().unwrap()) } else { "control:root".into() };
+            if profile["schema"] != "central.agent-profile-review/v1" || profile["execution_authority_granted"] != false
+                || profile["scope_ref"].as_str() != Some(scope_ref.as_str()) || profile["profile"]["ref"] != session["profile_ref"] {
+                return Ok(json!({"session":session,"profile":null,"source_state":"unavailable","reason":"Current source review has incompatible identity or standing"}));
+            }
+            let accepted = profile["accepted"] == true;
+            let acceptance = &profile["acceptance"];
+            let current = accepted && profile["profile"]["revision"] == session["profile_revision"]
+                && profile["profile"]["agent_ref"] == session["agent_ref"]
+                && acceptance["schema"] == "central.agent-profile-acceptance/v1"
+                && acceptance["scope_ref"].as_str() == Some(scope_ref.as_str())
+                && acceptance["acceptance_ref"] == session["acceptance_ref"]
+                && acceptance["profile_ref"] == session["profile_ref"]
+                && acceptance["profile_revision"] == session["profile_revision"]
+                && acceptance["agent_ref"] == session["agent_ref"]
+                && acceptance["content_digest"] == profile["content_digest"];
+            Ok(json!({"session":session,"profile":if current {profile["profile"].clone()} else {Value::Null},
+                "source_state":if current {"current"} else if accepted {"changed"} else {"revoked"}}))
+        }
         Request::Propose {
             name,
             purpose,

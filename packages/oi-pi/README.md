@@ -41,6 +41,8 @@ column-reserving side panel is out of scope until `#97`.
 
 ### AIKit component-surface contract (`aikit:component-surface-authoring`)
 
+The owner contract lives at `Work/ai-kit/registry/capsules/skill/aikit/component-surface-authoring/payload/SKILL.md`.
+
 - Uses the existing Component/Surface/SessionSpace contribution contract; there
   is no UI-private configuration path.
 - Declares stable identity, provider/source provenance, target/surface semantics

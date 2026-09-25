@@ -46,7 +46,7 @@ export function harnessName(facts:ConnectionFacts):string|undefined {
 /** The chip's words: the harness name, never the label. Without owner facts
  *  the chip says what kind of connection it is, not what someone named it. */
 export function harnessChip(facts:ConnectionFacts):string {
- return harnessName(facts)??(facts.protocol==="acp"?"ACP agent":facts.protocol?`${facts.protocol} harness`:"Harness");
+ return harnessName(facts)??(facts.protocol==="acp"?"ACP agent":"Harness");
 }
 export function harnessVariant(facts:ConnectionFacts):string|undefined {
  return facts.sandboxed?"sandboxed":undefined;
