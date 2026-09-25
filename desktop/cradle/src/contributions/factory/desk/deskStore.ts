@@ -157,6 +157,9 @@ export async function readDesk(transport: KernelTransportStatus, scope: Scope): 
     runs[key] = withInhabitation(entry, inhabitation[entry.card.source.statePath], {names, work: currentWork[entry.card.source.statePath], runs});
   }
   reading = {scopeKey, status: "read", readAt: Date.now(), discovery, refused, runs, inhabitation, currentWork, names};
+  // Re-entry: with nothing chosen yet this session, the persisted held
+  // selection returns from the canonical refs the reading now answers for.
+  reestablishHeldSelection(readHeldSelection(), runs);
   emit();
 }
 
@@ -206,28 +209,91 @@ export async function readRunEntry(transport: KernelTransportStatus, key: string
 }
 
 // ---------------------------------------------------------------------------
-// The open run and the Desk's remembered scroll
+// The open run, the held selection, and the board's remembered presentation
 // ---------------------------------------------------------------------------
 
 let openKey: string | undefined;
 let selectedKey: string | undefined;
-let deskScroll = 0;
 const openListeners = new Set<() => void>();
 const emitOpen = () => { for (const listener of [...openListeners]) listener(); };
 const subscribeOpen = (listener: () => void) => { openListeners.add(listener); return () => { openListeners.delete(listener); }; };
 
-export function openRunPage(key: string) { openKey = key; selectedKey = key; emitOpen(); }
+export function openRunPage(key: string) { openKey = key; selectedKey = key; persistSelection(key); emitOpen(); }
 export function closeRunPage() { if (openKey === undefined) return; openKey = undefined; emitOpen(); }
 export function useOpenRun(): string | undefined { return useSyncExternalStore(subscribeOpen, () => openKey, () => openKey); }
 /** The run the right panel answers about: the open run, else the last one
  * opened from the Desk (a held selection — never an auto-choice). */
 export function useSelectedRun(): string | undefined { return useSyncExternalStore(subscribeOpen, () => selectedKey, () => selectedKey); }
-export function selectRun(key: string | undefined) { if (selectedKey === key) return; selectedKey = key; emitOpen(); }
-let deskQuery = "";
-/** The board's search survives leaving for a Run page or Tasks and back. */
-export function rememberDeskQuery(query: string) { deskQuery = query; }
+export function peekSelectedRun(): string | undefined { return selectedKey; }
+export function selectRun(key: string | undefined) { if (selectedKey === key) return; selectedKey = key; persistSelection(key); emitOpen(); }
+
+// Re-entry (FACTORY-AGENCY §1: "re-entry restores from canonical work refs
+// plus presentation state"): the held selection is persisted as the run's
+// canonical refs and re-established from them once a reading actually
+// contains that run — never from a label, and a locator the owner no longer
+// answers re-establishes nothing (the honest neutral state, not a guess).
+const SELECTION_KEY = "oi-factory-desk-selection.v1";
+interface HeldSelection { statePath: string; projectRef: string; runRef: string }
+function readHeldSelection(): HeldSelection | undefined {
+  try {
+    const held = JSON.parse(localStorage.getItem(SELECTION_KEY) ?? "null") as Partial<HeldSelection> | null;
+    if (!held || typeof held.statePath !== "string" || typeof held.projectRef !== "string" || typeof held.runRef !== "string") return undefined;
+    return {statePath: held.statePath, projectRef: held.projectRef, runRef: held.runRef};
+  } catch { return undefined; }
+}
+function persistSelection(key: string | undefined) {
+  const entry = key ? reading?.runs[key] : undefined;
+  try {
+    if (!entry) localStorage.removeItem(SELECTION_KEY);
+    else localStorage.setItem(SELECTION_KEY, JSON.stringify({statePath: entry.card.source.statePath, projectRef: entry.card.source.projectRef, runRef: entry.run.runRef}));
+  } catch { /* per-viewer convenience */ }
+}
+/** The desk key whose run is exactly the held locator — canonical ref
+ * identity, never a label match. */
+export function deskKeyOfLocator(runs: Record<string, RunEntry>, held: HeldSelection): string | undefined {
+  for (const [key, entry] of Object.entries(runs)) {
+    if (entry.card.source.statePath === held.statePath && entry.card.source.projectRef === held.projectRef && entry.run.runRef === held.runRef) return key;
+  }
+  return undefined;
+}
+/** Re-establish the held selection from canonical refs. With a selection
+ * already chosen this session it does nothing; returns whether a run now
+ * answers as the subject. */
+export function reestablishHeldSelection(held: HeldSelection | undefined, runs: Record<string, RunEntry> = reading?.runs ?? {}): boolean {
+  if (selectedKey !== undefined || !held) return false;
+  const key = deskKeyOfLocator(runs, held);
+  if (!key) return false;
+  selectedKey = key;
+  emitOpen();
+  return true;
+}
+
+// The board's search and scroll survive leaving for a Run page or Tasks and
+// back — and, coalesced through localStorage, an application restart too.
+const BOARD_KEY = "oi-factory-desk-board.v1";
+function readStoredBoard(): {query: string; scroll: number} {
+  try {
+    const parsed = JSON.parse(localStorage.getItem(BOARD_KEY) ?? "null") as {query?: unknown; scroll?: unknown} | null;
+    return {
+      query: typeof parsed?.query === "string" ? parsed.query : "",
+      scroll: typeof parsed?.scroll === "number" && Number.isFinite(parsed.scroll) && parsed.scroll >= 0 ? parsed.scroll : 0,
+    };
+  } catch { return {query: "", scroll: 0}; }
+}
+const storedBoard = readStoredBoard();
+let deskScroll = storedBoard.scroll;
+let deskQuery = storedBoard.query;
+let scrollWrite: number | undefined;
+function persistBoard() {
+  try { localStorage.setItem(BOARD_KEY, JSON.stringify({query: deskQuery, scroll: deskScroll})); } catch { /* per-viewer convenience */ }
+}
+export function rememberDeskQuery(query: string) { deskQuery = query; persistBoard(); }
 export function heldDeskQuery(): string { return deskQuery; }
-export function rememberDeskScroll(top: number) { deskScroll = top; }
+export function rememberDeskScroll(top: number) {
+  deskScroll = top;
+  if (scrollWrite !== undefined) window.clearTimeout(scrollWrite);
+  scrollWrite = window.setTimeout(() => { scrollWrite = undefined; persistBoard(); }, 250);
+}
 export function deskScrollTop(): number { return deskScroll; }
 
 // ---------------------------------------------------------------------------
