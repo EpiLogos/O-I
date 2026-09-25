@@ -1,0 +1,228 @@
+{
+  "schema": "oi.cradle.walk.scenario/v1",
+  "scenario": "document-surface",
+  "spec_ref": "docs/cradle/05-EXECUTION.md §3",
+  "grade": "B",
+  "binding": null,
+  "generated_at": "2026-09-25T12:02:11.614Z",
+  "environment": {
+    "base_url": "http://localhost:4173",
+    "bridge_url": "http://127.0.0.1:4179",
+    "viewport": "1280x820",
+    "browser_engine": "chromium",
+    "bundle": "walk (WALK=1) served by vite preview",
+    "build_input": {
+      "mode": "reused-dist",
+      "bundle_fingerprint": "7f90fd8d393f0623611df254fe0611ba4a250d1df6c21b0ac6546fcf2a0d51b7"
+    },
+    "node": "v24.16.0",
+    "platform": "darwin",
+    "source": {
+      "repository_root": "/Users/admin/Central/worktrees/env-2/o-i",
+      "repository_head": "4732433e082dac3963bf110d020386d81258f3d3",
+      "tracked_changes": [
+        "desktop/cradle/documents/forms.json",
+        "desktop/cradle/documents/ui-mockup-template.html",
+        "desktop/cradle/walk/artifacts/canvas-context-failure.png",
+        "desktop/cradle/walk/artifacts/canvas-context-native-resolve-on-prepared-selection.png",
+        "desktop/cradle/walk/artifacts/canvas-context-real-return-after-explicit-delivery.png",
+        "desktop/cradle/walk/artifacts/canvas-context-stale-source-refusal-retains-preparation.png",
+        "desktop/cradle/walk/artifacts/canvas-context.json",
+        "desktop/cradle/walk/artifacts/document-entry-dialogue-01-journal.png",
+        "desktop/cradle/walk/artifacts/document-entry-dialogue-01-native-save.png",
+        "desktop/cradle/walk/artifacts/document-entry-die-42-rendered.png",
+        "desktop/cradle/walk/artifacts/document-entry-die-42-unavailable.png",
+        "desktop/cradle/walk/artifacts/document-entry-epi-card-pair-drawer.png",
+        "desktop/cradle/walk/artifacts/document-entry-epi-card-return.png",
+        "desktop/cradle/walk/artifacts/document-entry.json",
+        "desktop/cradle/walk/artifacts/document-surface.json",
+        "desktop/cradle/walk/scenarios/agent-panel.mjs",
+        "desktop/cradle/walk/scenarios/canvas-context.mjs",
+        "desktop/cradle/walk/scenarios/context-canvas-insert.mjs",
+        "desktop/cradle/walk/scenarios/document-surface.mjs",
+        "desktop/cradle/walk/scenarios/factory-inhabitation.mjs",
+        "desktop/cradle/walk/scenarios/first-vertical.mjs"
+      ],
+      "dirty_digest": "5586e6a174b1fc3530407f38c0bee22e43f85c30fbc10f30edfefcb4702bcdcf",
+      "engine_provenance_path": "/Users/admin/Central/worktrees/env-2/o-i/packages/oi-design-system/expressions-engine/PROVENANCE.json",
+      "engine_source": "EpiLogos/Point-Cloud-Demo",
+      "engine_revision": "91db8428fc9dfba06cd258ec5a58e7dd9eef5313"
+    }
+  },
+  "passed": true,
+  "error": null,
+  "duration_ms": 18116,
+  "checks": [
+    {
+      "ok": true,
+      "label": "Choosing Vision creates the project vision page in its human ground through the owner door (an oi.page/v1 document at ProjectCentral/user/oi.html)"
+    },
+    {
+      "ok": true,
+      "label": "The document host names the family from the payload itself, not the filename"
+    },
+    {
+      "ok": true,
+      "label": "Editing in the rendered body turns the host state to \"Unsaved on the page\" and the page island itself carries the determination",
+      "data": {
+        "revision": 1,
+        "introduction": "The document is the product: authored, encounterable, native."
+      }
+    },
+    {
+      "ok": true,
+      "label": "The direct edit saves through the source CAS; the horizon’s change record carries the desktop’s declared-human attribution (the kernel’s human:desktop identity)",
+      "data": {
+        "actors": [
+          "human:desktop/human/modified"
+        ],
+        "islandAtSave": {
+          "revision": 1,
+          "introduction": "The document is the product: authored, encounterable, native."
+        },
+        "savedIntroduction": "The document is the product: authored, encounterable, native."
+      }
+    },
+    {
+      "ok": true,
+      "label": "After the save the rendered page still shows the authored determination",
+      "data": {
+        "revision": 1,
+        "introduction": "The document is the product: authored, encounterable, native."
+      }
+    },
+    {
+      "ok": true,
+      "label": "A stale basis refuses the save and the owner’s newer revision stands untouched; the conflict is the structured one"
+    },
+    {
+      "ok": true,
+      "label": "After the rebase the kept edit saves onto the new basis — the person’s explicit save is what changes the source",
+      "data": {
+        "hasSecondThought": true
+      }
+    },
+    {
+      "ok": true,
+      "label": "Choosing Mockup creates a dated project mockup in the human ground from the retained template",
+      "data": {
+        "file": "mockup-mockup-2026-09-25-1302.html"
+      }
+    },
+    {
+      "ok": true,
+      "label": "The mockup’s own state switcher operates: the loading state is the live one and the trace names it"
+    },
+    {
+      "ok": true,
+      "label": "The mockup’s provenance (its vision/design/capability trace) is visible in the host bar",
+      "data": {
+        "relationsText": "Design[design.md#unit-id]Vision[vision.html#unit-id]Capability[cap.id]"
+      }
+    },
+    {
+      "ok": true,
+      "label": "A selection inside a mockup state carries the state’s semantic identity (the actual locator), not a bare text blob",
+      "data": {
+        "nodeRef": "state-loading",
+        "role": "text",
+        "text": "[Loading]"
+      }
+    },
+    {
+      "ok": true,
+      "label": "Forged page messages move nothing: the revision is unchanged and only the host’s own controls can save"
+    },
+    {
+      "ok": true,
+      "label": "After a reload the workspace restores the open Vision and Mockup, and the saved determination is still on the page",
+      "data": {
+        "revision": 2,
+        "introduction": "The document is the product: authored, encounterable, native",
+        "bar": null
+      }
+    },
+    {
+      "ok": true,
+      "label": "No page errors during the document-surface walk",
+      "data": []
+    }
+  ],
+  "ops": [
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 101,
+      "data": {
+        "file": "document-surface-vision-created.png"
+      }
+    },
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 144,
+      "data": {
+        "file": "document-surface-vision-edited-on-page.png"
+      }
+    },
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 148,
+      "data": {
+        "file": "document-surface-vision-saved.png"
+      }
+    },
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 85,
+      "data": {
+        "file": "document-surface-vision-after-save.png"
+      }
+    },
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 86,
+      "data": {
+        "file": "document-surface-vision-stale-conflict.png"
+      }
+    },
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 94,
+      "data": {
+        "file": "document-surface-mockup-loading-state.png"
+      }
+    },
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 106,
+      "data": {
+        "file": "document-surface-mockup-semantic-selection.png"
+      }
+    },
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 129,
+      "data": {
+        "file": "document-surface-continuity-restored.png"
+      }
+    }
+  ],
+  "metrics": {},
+  "screenshots": [
+    "document-surface-vision-created.png",
+    "document-surface-vision-edited-on-page.png",
+    "document-surface-vision-saved.png",
+    "document-surface-vision-after-save.png",
+    "document-surface-vision-stale-conflict.png",
+    "document-surface-mockup-loading-state.png",
+    "document-surface-mockup-semantic-selection.png",
+    "document-surface-continuity-restored.png"
+  ]
+}

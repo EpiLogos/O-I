@@ -7,8 +7,10 @@ import { fileURLToPath } from 'node:url';
 const here = dirname(fileURLToPath(import.meta.url));
 const DOCUMENTS = resolve(here, '..', '..', 'documents');
 
-/** Wayfinder §2 + §3.3 — the blank tab's two supplied document forms (0/1,
- *  4+2), opened as their real files through the existing file route, then
+/** Wayfinder §2 + §3.3 — the supplied document forms (0/1, 4+2, Epi-Card),
+ *  opened as their real staged files through the existing file route (the
+ *  navigator tree; the blank tab's form picker creates copies in place —
+ *  that path is document-surface's walk), then
  *  exercised through the native Save path: CAS revision advance, a lossless
  *  round trip of the real 466,929-byte payload, the structured conflict
  *  under an external change, the rendered document re-read from saved
@@ -74,7 +76,11 @@ export default async function run({ page, baseUrl, provision, check, shot }) {
   // it has been interacted with (the frame, not the desktop, gets ⌘T).
   const newBlankTab = async (via = 'keyboard') => {
     if (via === 'keyboard') await page.keyboard.press('Meta+t');
-    else await page.locator('.pane.focused .strip-open').click();
+    // The die's own canvas animation defeats the click stability heuristic
+    // and an overlay can eat a forced pointer event; keyboard activation of
+    // the same button is the person's own route (the frame holds focus
+    // after it has been interacted with).
+    else await page.locator('.pane.focused .strip-open').focus().then(() => page.keyboard.press('Enter'));
     await page.locator('.pane.focused .fresh-surface:not(.rest-ground)').waitFor({ timeout: 15000 });
     const disclosure = page.locator('.pane.focused .fresh-more');
     if (!(await disclosure.evaluate((el) => el.open))) await disclosure.locator('summary').click();
@@ -115,7 +121,7 @@ export default async function run({ page, baseUrl, provision, check, shot }) {
     // The visible Source toggle: concealed documents keep their own (hidden)
     // material surface mounted, so the pane may hold several — the person
     // clicks the one on the surface they are looking at.
-    await page.locator('.pane.focused .material-surface [role="tab"]').filter({ hasText: 'Source' }).locator('visible=true').first().click();
+    await page.locator('.pane.focused .material-surface [role="tab"][data-tab-id="source"]').locator('visible=true').first().click();
     await page.locator(`.pane.focused .native-file-surface .cm-content[aria-label="Editing ${title}"]`).waitFor({ timeout: 30000 });
     await waitStatus('Saved', title, 30000);
   };
@@ -123,12 +129,36 @@ export default async function run({ page, baseUrl, provision, check, shot }) {
   // hold several material iframes at once: every frame access names its
   // document by the iframe's own title.
   const frameFor = (title) => page.frameLocator(`.pane.focused iframe.material-frame[title="${title}"]`);
+  // The supplied forms are STAGED REAL FILES in this ground, and the walk
+  // opens them as themselves through the file route (the scenario's own
+  // contract). The blank tab's form picker creates copies in place since
+  // 10-SIDEBARS §3.7 — the creation path is document-surface's walk; here
+  // the navigator tree carries the person to the actual documents.
+  const openViaTree = async (relPath) => {
+    const nav = page.getByRole('complementary', { name: 'World navigator' });
+    if (!await nav.isVisible()) await page.keyboard.press('Meta+b');
+    await nav.locator('[data-project-path="Work/O-I"]').click();
+    await nav.getByRole('button', { name: 'O-I: files', exact: true }).click();
+    await page.waitForFunction(() => document.querySelector('.world-navigator')?.getAttribute('aria-busy') === 'false', null, { timeout: 10000 });
+    const parts = relPath.split('/');
+    let current = '';
+    for (const part of parts.slice(2)) {
+      current = current ? `${current}/${part}` : `Work/O-I/${part}`;
+      const row = page.locator(`[data-file-path="${current}"]`);
+      await row.waitFor({ state: 'attached', timeout: 30000 });
+      if (current !== relPath) {
+        if ((await row.getAttribute('aria-expanded')) === 'false') await row.click();
+      } else {
+        await row.click();
+      }
+    }
+  };
   const toRendered = async (title) => {
     // The pane hosts more than one Rendered toggle (the material surface's
     // own presentation tabs, and the editor toolbar's), never more than one
     // of them visible in a given view — click the visible one, which is the
     // one act a person performs.
-    await page.locator('.pane.focused [role="tab"]').filter({ hasText: 'Rendered' }).locator('visible=true').first().click();
+    await page.locator('.pane.focused [role="tab"][data-tab-id="rendered"]').locator('visible=true').first().click();
     await page.locator(`.pane.focused iframe.material-frame[title="${title}"]`).waitFor({ timeout: 30000 });
   };
   const appendAtEnd = async (text, title) => {
@@ -141,12 +171,18 @@ export default async function run({ page, baseUrl, provision, check, shot }) {
   // --- 4+2: the Day die opens as its real file -----------------------------
   await newBlankTab();
   const formButtons = await page.locator('.pane.focused .fresh-docforms button').allTextContents();
-  check(formButtons.length === 5 && formButtons.some(t => t.includes('Flow')) && formButtons.some(t => t.includes('Day'))
+  // The roster offers Flow, Day, Beings, Things, Epi-Card and Goal
+  // everywhere; Vision and Mockup join when the picker carries a project
+  // scope (they create in a project's human ground). The cube stays
+  // withdrawn (forms.json records it as declared scope, never UI).
+  check(formButtons.some(t => t.includes('Flow')) && formButtons.some(t => t.includes('Day'))
       && formButtons.some(t => t.includes('Beings')) && formButtons.some(t => t.includes('Things'))
-      && formButtons.some(t => t.includes('Epi-Card')),
-    'The blank tab offers exactly the five document types — Day, Flow, Beings, Things, Epi-Card (the cube is withdrawn)', { formButtons });
+      && formButtons.some(t => t.includes('Epi-Card')) && formButtons.some(t => t.includes('Goal'))
+      && !formButtons.some(t => t.includes('Cube') || t.includes('Yoshimoto'))
+      && (formButtons.length === 6 || (formButtons.length === 8 && formButtons.some(t => t.includes('Vision')) && formButtons.some(t => t.includes('Mockup')))),
+    'The blank tab offers Flow, Day, Beings, Things, Epi-Card and Goal everywhere, plus Vision and Mockup in a project scope (the cube is withdrawn)', { formButtons });
 
-  await page.locator('.pane.focused .fresh-docforms button', { hasText: 'Day' }).click();
+  await openViaTree('Work/O-I/desktop/cradle/documents/ql-daily-die.html');
   await page.locator('.tab[data-title="ql-daily-die.html"][data-active="true"]').waitFor({ timeout: 20000 });
   await page.locator('.pane.focused .material-surface').waitFor({ timeout: 20000 });
   check(await page.locator('.pane.focused iframe.material-frame[title="ql-daily-die.html"]').getAttribute('sandbox') === 'allow-scripts allow-forms allow-downloads',
@@ -217,10 +253,8 @@ export default async function run({ page, baseUrl, provision, check, shot }) {
     'The 4+2 document performs its own Save HTML copy — a separate, network-free export that overwrites nothing',
     { filename: download.suggestedFilename() });
 
-  // --- 0/1: Dialogue · Flow · Journal, chosen from the keyboard ----------
-  await newBlankTab('strip');
-  await page.locator('.pane.focused .fresh-docforms button', { hasText: 'Flow' }).focus();
-  await page.keyboard.press('Enter');
+  // --- 0/1: Dialogue · Flow · Journal, opened as its staged real file -----
+  await openViaTree('Work/O-I/desktop/cradle/documents/ql-dialogue-flow.html');
   await page.locator('.tab[data-title="ql-dialogue-flow.html"][data-active="true"]').waitFor({ timeout: 20000 });
   const dialogue = frameFor('ql-dialogue-flow.html');
   await dialogue.locator('.mast .views').waitFor({ timeout: 30000 });
@@ -260,8 +294,7 @@ export default async function run({ page, baseUrl, provision, check, shot }) {
   // occupancy honestly unknown, and whose faces/hexagon/drawer/return mirror
   // the component's structure. The assertions below are the spec's content,
   // not "an iframe appeared".
-  await newBlankTab('strip');
-  await page.locator('.pane.focused .fresh-docforms button', { hasText: 'Epi-Card' }).click();
+  await openViaTree('Work/O-I/desktop/cradle/documents/oi-epi-card.html');
   await page.locator('.tab[data-title="oi-epi-card.html"][data-active="true"]').waitFor({ timeout: 20000 });
   await page.locator('.pane.focused iframe.material-frame[title="oi-epi-card.html"]').waitFor({ timeout: 20000 });
   const card = frameFor('oi-epi-card.html');

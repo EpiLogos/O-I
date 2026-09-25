@@ -14,13 +14,19 @@
   const textOf=node=>(node.getAttribute('aria-label')||node.innerText||node.getAttribute('alt')||node.tagName.toLowerCase()).trim();
   const pathOf=node=>{const parts=[];while(node&&node.nodeType===1&&parts.length<8){const siblings=node.parentElement?[...node.parentElement.children].filter(el=>el.tagName===node.tagName):[];parts.unshift(node.tagName.toLowerCase()+(siblings.length>1?`:nth-of-type(${siblings.indexOf(node)+1})`:''));node=node.parentElement;}return parts.join(' > ');};
   const ui=node=>!!node?.closest?.('[data-oi-context-ui]');
+  // Semantic unit identity: the meaningful host a selection lands in — a
+  // mockup state section, a page field, an entry carrier. The locator is
+  // the host's actual attribute/id, never an invented ref.
+  const unitHost=node=>node?.closest?.('[data-source-ref],[data-entry-id],[data-state],[data-field]');
+  const unitOf=node=>{const host=unitHost(node);if(!host)return undefined;const state=host.getAttribute('data-state'),field=host.getAttribute('data-field');return host.getAttribute('data-source-ref')||host.getAttribute('data-entry-id')||host.id||(state?`[data-state="${state}"]`:undefined)||(field?`[data-field="${field}"]`:undefined);};
   const currentRange=()=>{const s=getSelection();return s?.rangeCount===1&&!s.isCollapsed?s.getRangeAt(0):null;};
   const emit=value=>{pending=value;if(value)signal?.();};
   const observe=(node,range)=>{
     const text=range?range.toString():textOf(node);if(!text.trim())return null;
     const key=crypto.randomUUID(),box=(range||node).getBoundingClientRect();
     const error=text.length>65536?'This selection exceeds 65,536 characters. Select a smaller range; nothing was truncated.':undefined;
-    const value={key,documentId,text:error?'':text,error,selector:pathOf(node),role:range?'text':node.getAttribute('role')||node.tagName.toLowerCase(),bounds:{x:box.x,y:box.y,width:box.width,height:box.height},pageUrl:location.href,nodeRef:node.closest('[data-source-ref],[data-node-ref],[data-entry-id],[data-fixture-id]')?.getAttribute('data-source-ref')||node.closest('[data-entry-id]')?.getAttribute('data-entry-id')||undefined};
+    const anchorNode=range?(range.commonAncestorContainer.nodeType===1?range.commonAncestorContainer:range.commonAncestorContainer.parentElement):node;
+    const value={key,documentId,text:error?'':text,error,selector:pathOf(node),role:range?'text':(unitHost(node)?.getAttribute('data-state')||node.getAttribute('role')||node.tagName.toLowerCase()),bounds:{x:box.x,y:box.y,width:box.width,height:box.height},pageUrl:location.href,nodeRef:node.closest('[data-source-ref],[data-node-ref],[data-entry-id],[data-fixture-id]')?.getAttribute('data-source-ref')||node.closest('[data-entry-id]')?.getAttribute('data-entry-id')||unitOf(anchorNode)||unitOf(node)};
     if(error)return value;
     observations.set(key,{node,range:range?.cloneRange(),text});
     if(observations.size>64){const oldest=observations.keys().next().value;observations.delete(oldest);marks.delete(oldest);}

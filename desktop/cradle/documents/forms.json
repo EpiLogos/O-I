@@ -102,6 +102,19 @@
       "scope": "project",
       "placement": "human ground: ProjectCentral/user/<project>.html, only where the project has no vision page yet",
       "source": "added 2026-09-23 (10-SIDEBARS §3.7, ruling D5): a project's vision page, rendered by the same page template system (src/personal/page.mjs family vision); created in place, never edited as the template"
+    },
+    {
+      "kind": "document-mockup",
+      "label": "Mockup",
+      "family": "UI Mockup",
+      "hint": "An encounterable design projection with live states",
+      "file": "ui-mockup-template.html",
+      "templateRef": "oi.template/ui-mockup",
+      "version": "1.0.0",
+      "standing": "retained-source",
+      "scope": "project",
+      "placement": "human ground: ProjectCentral/user/mockup-<slug>-<local-stamp>.html; many per project",
+      "source": "retained 2026-09-25 byte-exact from Central skills/ui-mockup-authoring/assets/ui-mockup-template.html (sha-256 594b150eff21a2fc710223c9f5214d1cabf29516475a46fb69602fcee220c8ef; the owner template with hash-routing guarded for opaque-origin transports; supersedes the 2026-09-24 specimen 9b3f0c7d…); state switcher, mockup-provenance block (design/vision/capability refs) and per-state trace refs are the template's own law; created in place, never edited as the template"
     }
   ]
 }
