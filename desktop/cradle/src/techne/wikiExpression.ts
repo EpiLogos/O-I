@@ -325,9 +325,9 @@ function declaredPosition(kind: "space" | "frame", memberRef: string, constellat
   return typeof position === "number" ? position : null;
 }
 
-const SCENE_ENTITY_BUDGET = 256; // semantic composition, distinct from the renderer window
+const SCENE_ENTITY_BUDGET = 2048; // semantic composition, distinct from the renderer window
 const SCENE_BUDGET = 64;
-const ENTITY_BUDGET = 256; // stays under the kernel's 256-entity document budget
+const ENTITY_BUDGET = 2048; // the kernel document's semantic bound (DOCUMENT_MEMBERS)
 
 export function projectWikiExpression(input: WikiRegisterReading & { state: "ready" }): WikiProjection {
   const {register, wiki, wikiBasis, relations} = input;
@@ -477,7 +477,7 @@ export function projectWikiExpression(input: WikiRegisterReading & { state: "rea
         const from=scene.entity_refs.filter(ref=>entitySubjects.get(ref)===edge.from);
         const to=scene.entity_refs.filter(ref=>entitySubjects.get(ref)===edge.to);
         for(const fromEntity of from) for(const toEntity of to) {
-          if(boundRelations.length>=256)continue;
+          if(boundRelations.length>=2048)continue;
           const observed=edge.ref ?? `wiki:relation-observation:${projectionKey(JSON.stringify([edge.provider,edge.authority,edge.revision,edge.from,edge.relation,edge.to,edgeIndex]))}`;
           boundRelations.push({
             native_owner:edge.provider ?? "wiki",

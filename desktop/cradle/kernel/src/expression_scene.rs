@@ -55,7 +55,7 @@ fn data(value: &Value, depth: usize) -> Result<(), String> {
 
 pub fn validate(presentation: &Presentation, scene: &Scene, document: &Document) -> Result<(), String> {
     if presentation.schema != SCHEMA { return Err("Unsupported native Scene presentation".into()); }
-    // The existing document's 512 KiB budget remains the outer storage bound.
+    // The existing document's byte budget remains the outer storage bound.
     data(&presentation.scene, 0)?;
     let material = object(&presentation.scene, "Authoring Scene")?;
     const KEYS: &[&str] = &["id", "name", "character", "duration", "transition", "view", "field", "entities", "text", "composition", "morph", "automation", "engine", "semanticField", "resonanceDrive", "favourites", "native", "propertyTakeRange", "toolbelt", "propertyTracks", "pointerScope", "research"];

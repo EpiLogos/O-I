@@ -669,3 +669,47 @@ fn entity_pin_holds_world_position_independent_of_blueprint_membership_and_defau
         .iter()
         .any(|c| c == "entity_pin"));
 }
+#[test]
+fn a_constellation_larger_than_the_render_window_is_held_whole_not_truncated() {
+    // Technē map §36: semantic cardinality is separate from the renderer's
+    // resident window. A 300-member Scene (above the old 256 bound) is added
+    // through the owner's own edits and stays one valid document; only the
+    // document's semantic bound refuses.
+    let mut app = Application::default();
+    create(&mut app);
+    let batch = |from: usize, to: usize| {
+        json!((from..to)
+            .map(|i| json!({"change":"entity_add","scene_ref":"expression:test:scene:main","entity_ref":format!("expression:test:entity:m{i}"),"title":format!("Member {i}")}))
+            .collect::<Vec<_>>())
+    };
+    edit(&mut app, 1, batch(0, 150));
+    let data = edit(&mut app, 2, batch(150, 300));
+    let document = data["document"].clone();
+    assert_eq!(document["entities"].as_object().unwrap().len(), 300);
+    assert_eq!(
+        document["scenes"][0]["entity_refs"]
+            .as_array()
+            .unwrap()
+            .len(),
+        300
+    );
+    serde_json::from_value::<Document>(document.clone())
+        .unwrap()
+        .validate()
+        .expect("a 300-member Scene is one valid document");
+    let mut oversized = document;
+    let template = oversized["entities"]["expression:test:entity:m0"].clone();
+    let mut refs = Vec::new();
+    for i in 0..2049 {
+        let entity_ref = format!("expression:test:entity:x{i}");
+        let mut entity = template.clone();
+        entity["entity_ref"] = json!(entity_ref);
+        oversized["entities"][&entity_ref] = entity;
+        refs.push(json!(entity_ref));
+    }
+    oversized["scenes"][0]["entity_refs"] = json!(refs);
+    assert!(serde_json::from_value::<Document>(oversized)
+        .unwrap()
+        .validate()
+        .is_err());
+}

@@ -206,7 +206,9 @@ export function kernelDocumentToJourney(raw:unknown,options:ViewOptions={}):Kern
  safe(raw);
  const doc=clone(raw) as KernelExpressionDocument;
  if(!doc||doc.schema!=='oi.expression/v1'||typeof doc.expression_ref!=='string'||!Number.isSafeInteger(doc.revision)||doc.revision<1||typeof doc.title!=='string'||!doc.entities||Array.isArray(doc.entities)||!Array.isArray(doc.scenes)||!doc.scenes.length||doc.scenes.length>64)throw new Error('The kernel document is not a bounded oi.expression/v1 expression');
- if(Object.keys(doc.entities).length>256||Object.keys(doc.relations??{}).length>256)throw new Error('Native Expression exceeds its binding budget');
+ // Semantic cardinality matches the kernel document bound (2048); the resident
+ // renderer window is the per-Scene page, not this check.
+ if(Object.keys(doc.entities).length>2048||Object.keys(doc.relations??{}).length>2048)throw new Error('Native Expression exceeds its binding budget');
  const notes:string[]=[],ids=new Map<string,string>(),converted=new Map<string,Entity>();
  const bindings:Record<string,SceneBinding>={};
  for(const [ref,input] of Object.entries(doc.entities)){
