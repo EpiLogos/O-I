@@ -852,7 +852,7 @@ export function NaraSurface({binding}:{binding:SurfaceBinding}){
      ?<dl className="nara-proposal-facts">
       <dt>standing</dt><dd>{String(row.enrichment_receipt["standing"])}</dd>
       <dt>applied</dt><dd>{String(row.enrichment_receipt["applied"])}</dd>
-      <dt>currentness</dt><dd>{JSON.stringify(row.enrichment_receipt["currentness"])}</dd>
+      <dt>currentness</dt><dd>{currentnessLine(row.enrichment_receipt["currentness"])}</dd>
      </dl>
      :<button className="oi-action" onClick={()=>void receiveEnrichment(index)}>Receive returned enrichment (proof)</button>}
    </article>)}
@@ -909,4 +909,15 @@ function branchOf(coordinate:string):M4Branch|null {
 
 function capWord(support:SpeechSupport):string {
  return support.state==="supported"?"supported":support.state;
+}
+
+/** The enrichment receipt's currentness as a human phrase: proposed against
+ * the live encounter, or stale with the QL apply gate's own reason. The
+ * exact receipt stays behind the collapsed disclosures below (law: raw only
+ * behind "Show raw"). */
+function currentnessLine(value:unknown):string {
+ const currentness=(value??{}) as {current?:unknown;reason?:unknown};
+ if(currentness.current===true)return "current against the live encounter";
+ if(typeof currentness.reason==="string")return `stale — ${currentness.reason}`;
+ return "not stated by the receipt";
 }

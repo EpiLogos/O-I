@@ -15,6 +15,7 @@ import { Glyph } from "../workspace/Glyph";
 import { useKernel } from "../kernel/KernelProvider";
 import { kernelOp } from "../kernel/bridge";
 import type { ProfileUsePlanWire } from "../kernel/types";
+import { RawDisclosure } from "../shared/contributionPresentation";
 import { getAgentMintSource, getSetupInferenceSource, getSkillSearchSource, subscribeAgentMintSource } from "./agencySources";
 import type { SkillCandidate } from "./agencySources";
 import { emptyDraft } from "./agencyTypes";
@@ -244,6 +245,18 @@ function UnavailableActionRow({ label, reason }: { label: string; reason: string
   </div>;
 }
 
+/** A plan value reads plainly when it is plain (a config scalar as itself);
+ * a structured value names its shape, and every exact value stays behind
+ * "Show raw plan" (law: raw only behind an explicit disclosure). */
+function readableValue(value: unknown): string {
+  if (value === undefined || value === null) return "unset";
+  if (typeof value === "string") return value;
+  if (typeof value === "number" || typeof value === "boolean") return String(value);
+  if (Array.isArray(value)) return `${value.length} ${value.length === 1 ? "item" : "items"} — in Show raw plan`;
+  const fields = Object.keys(value as object).length;
+  return `${fields} ${fields === 1 ? "field" : "fields"} — in Show raw plan`;
+}
+
 /** "Apply repertoire to Project/Profile" binds to the real profile plane
  * (profile_list → profile_use_plan → profile_use_apply,
  * kernel/types.ts:199-204) via `keepIn` as the target profile ref, the
@@ -296,10 +309,11 @@ function ApplyRepertoireAction({ draft, onMessage, kernel, kernelOpFn }: {
         {plan.entries.map((entry) => (
           <Fragment key={entry.setting_ref}>
             <dt className="oi-ref">{entry.setting_ref}</dt>
-            <dd>{JSON.stringify(entry.current)} → {JSON.stringify(entry.target)}</dd>
+            <dd>{readableValue(entry.current)} → {readableValue(entry.target)}</dd>
           </Fragment>
         ))}
       </dl>
+      <RawDisclosure value={plan.entries} label="Show raw plan"/>
       <div className="agency-action-row">
         <button type="button" className="oi-action oi-action-primary" disabled={pending} onClick={() => void apply()}>Apply</button>
         <button type="button" className="oi-action" onClick={() => setPlan(undefined)}>Discard plan</button>

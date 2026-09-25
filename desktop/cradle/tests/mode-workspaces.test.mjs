@@ -35,7 +35,7 @@ test('widths, the live session and the panel planes ride through; the active mod
 
 test('Epi-Logos is whole-app world state, not a tree mode (owner refinement 2026-09-19)', () => {
   // The owner moved Epi-Logos out of TREE_MODES (mode.ts): the world is the
-  // footer toggle (LayoutState.epiLogos) riding across every mode, never a
+  // workspace world context (context.world) riding across every mode, never a
   // per-mode tree — so the mode switch refuses it and changes nothing.
   const before = workspace();
   assert.equal(switchWorkspaceMode(before, 'epi-logos'), before, 'Epi-Logos is no mode entry');
@@ -48,4 +48,17 @@ test('world context decodes leniently: refs and positions only, bounded, never g
   assert.equal(c.world, 'epi-logos'); assert.equal(c.reading.position, '#p3');
   assert.equal(c.trail.length, 1, 'stops without a real mode and a label are dropped');
   assert.equal(decodeWorldContext({ trail: Array.from({ length: 40 }, () => ({ mode: 'base', label: 'x' })) }).trail.length, 24);
+});
+
+test('the world context is the one owner: a legacy arrangement-world flag is dropped, never resurrected', async () => {
+  // The arrangement once carried a persisted LayoutState.epiLogos copy of
+  // `context.world` (written in tandem, never reconciled — a restore with a
+  // stale flag could disagree with the world actually in force). The copy is
+  // retired: a payload carrying it decodes without it, and the world context
+  // alone decides which world is in force.
+  const { decodeLayout } = await import('../src/surface/persist.ts');
+  const decoded = decodeLayout({ epiLogos: true, mode: 'factory' });
+  assert.equal('epiLogos' in decoded, false, 'the arrangement carries no world copy');
+  assert.equal(decoded.mode, 'factory', 'the rest of the legacy payload still decodes');
+  assert.equal(decodeWorldContext({ world: 'epi-logos' })?.world, 'epi-logos', 'the world context remains the owner');
 });
