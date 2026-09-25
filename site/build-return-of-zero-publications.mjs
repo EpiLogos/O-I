@@ -295,7 +295,7 @@ for (const member of members) {
     entities,
     relations: {},
     selection: { scene_ref: scenes[0].scene_ref, entity_ref: scenes[0].entity_refs[0] },
-    provenance: [{ ref: member.file, revision: 'track3-2026-09-19', availability: 'available' }],
+    provenance: [{ ref: member.file, revision: memberRevision, availability: 'available' }],
     representations: [],
   };
   const publication = projectExpression({
@@ -318,10 +318,10 @@ for (const member of members) {
     expression_ref: expressionRef,
     expression_revision: 1,
     source_path: member.file,
-    source_revision: envelope.corpus?.production_revision?.commit ?? sourceCommit,
+    source_revision: member.sourceRevision ?? envelope.corpus?.production_revision?.commit ?? sourceCommit,
     digest: { algorithm: 'sha256', value: sha(rawJourney) },
     scene_map: Object.fromEntries(journey.scenes.map((scene) => [`${expressionRef}:scene:${scene.id}`, scene.id])),
-    entity_map: Object.fromEntries([...new Set(journey.scenes.flatMap((scene) => scene.entities.map((entity) => entity.id)))].map((id) => [`${expressionRef}:entity:${id}`, id])),
+    entity_map: Object.fromEntries(journey.scenes.flatMap((scene) => scene.entities.map((entity) => [`${expressionRef}:scene:${scene.id}:${entity.id}`, entity.id]))),
     bytes: rawJourney.toString('utf8'),
   };
   await writeFile(resolve(outDir, `expression-${member.id}.json`), JSON.stringify(publication, null, 1));
