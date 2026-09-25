@@ -30,7 +30,7 @@ export function quartzEssayUrl(url: string, publicDir: string): string | null {
  * the built dist. (Vite preview installs its static stack before plugin
  * middlewares, so deep-link checks self-host the dist — see
  * tests/essay-host-smoke.py — instead of relying on this hook.) */
-export function essayShellPlugin(): Plugin {
+export function essayShellPlugin(opts: { enforcePublication?: boolean } = {}): Plugin {
   let publicDir = '';
   let outDir = '';
   const attach = (middlewares: { use: (fn: (req: IncomingMessage, res: unknown, next: () => void) => void) => void }) => {
@@ -50,7 +50,9 @@ export function essayShellPlugin(): Plugin {
     configureServer(server) { attach(server.middlewares); },
     configurePreviewServer(server) { attach(server.middlewares); },
     closeBundle() {
-      if (outDir) finalizeEssayDist(outDir);
+      // Only the public reading edition carries the deployable essay; the
+      // default live-client build opts out of the publication contract.
+      if (outDir && opts.enforcePublication) finalizeEssayDist(outDir);
     },
   };
 }

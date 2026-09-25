@@ -7,7 +7,7 @@ const here=(path:string)=>fileURLToPath(new URL(path,import.meta.url));
 /** The published site has no live-service or SDK-generator dependency. The old
  * Explore address enters the same reading surface; the full live client remains
  * available through the separate native build, not copied into public payloads. */
-export default defineConfig({base:'./',publicDir:here('./.public-edition'),plugins:[react(),essayShellPlugin(),{
+export default defineConfig({base:'./',publicDir:here('./.public-edition'),plugins:[react(),essayShellPlugin({ enforcePublication: true }),{
  name:'public-reading-compatibility',
  configureServer(server){server.middlewares.use((request,_response,next)=>{if(request.url)request.url=request.url.replace(/^\/explore\.html(?=\?|$)/,'/library.html');next();});},
  writeBundle(){copyFileSync(here('./dist/library.html'),here('./dist/explore.html'));}
