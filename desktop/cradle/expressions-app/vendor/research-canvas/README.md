@@ -57,3 +57,16 @@ omits live network controls and refuses local-policy activation; the host need
 not construct a Research Canvas policy. `imageTitle` carries a native readable
 label. Missing image metadata is not rendered as an automatic footer. These
 are UI capabilities, not a new egress authority or source store.
+
+`patches/host-selection-viewport-gesture.patch` adds optional CanvasView
+capabilities the host previously worked around: `selectedNodeIds` drives real
+multi-node `selected` state alongside the existing single `selectedNodeId`;
+`onSelectionChange` (xyflow's own selection reporting) and `selectionOnDrag`
+enable native box selection while a plain drag still pans when
+`selectionOnDrag` is unset; `onViewportChange` reports xyflow's `onMove`/
+`onMoveEnd` directly, so a host no longer needs to poll `captureCanvas()` on
+an interval; `onMoveNodePreview`/`onMoveNodeEnd` fire on `onNodeDrag`/
+`onNodeDragStop` for every dragged node (including a multi-selection), and
+when supplied `onMoveNode` is not also called for that gesture. Every one of
+these is optional and additive: omitting all of them keeps the exact prior
+single-select, poll-driven, per-callback `onMoveNode` behaviour.

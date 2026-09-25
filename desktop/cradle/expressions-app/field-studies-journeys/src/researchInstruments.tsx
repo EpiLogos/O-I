@@ -10,7 +10,7 @@ import {techneConstellationRequest,type TechneSceneReadingRequest,type TechneCon
 import {nativeInstrumentCanvas,nativeInstrumentTitles,nativeInstrumentPreviews,nativeInstrumentNodeTags,nativeInstrumentSourceRelations,readingInstruments,CANVAS_UNITS,assertInstrumentReadingScope,expressionTextFromNote,type InstrumentCanvas,type NativeRelationDirectionReading} from './researchInstrumentsData.js';
 import {createGestureTransaction,withGesturePreviews,type GestureTransaction} from './canvasGesture.js';
 import {
- positioned,lassoHitScreen,nudge,translateSelection,align as alignPositions,distribute as distributePositions,snapToGrid,
+ positioned,nudge,translateSelection,align as alignPositions,distribute as distributePositions,snapToGrid,
  semanticZoomLevel,trackModifiers,type AlignMode,type RepertoireMove,
 } from './canvasRepertoire.js';
 import {RelationFieldView} from './relationFieldView.js';
@@ -50,22 +50,6 @@ function RelateKnowledgeAction({sceneId,sourceRef,targetRef,defaultRelation,rela
  </div>;
 }
 
-/** R1 — a real rubber-band lasso, without a vendor patch. The mounted
- * Canvas offers no viewport transform or box-select callback, but a lasso
- * drawn in SCREEN space can be hit-tested directly against the rendered
- * node elements' own screen rectangles (lassoHitScreen), so this needs no
- * flow/unit conversion at all — only raw pointer coordinates. */
-function LassoOverlay({active,onComplete}:{active:boolean;onComplete:(rect:{x:number;y:number;width:number;height:number})=>void}){
- const [drag,setDrag]=useState<{x0:number;y0:number;x1:number;y1:number}|null>(null);
- if(!active)return null;
- const rect=drag?{x:Math.min(drag.x0,drag.x1),y:Math.min(drag.y0,drag.y1),width:Math.abs(drag.x1-drag.x0),height:Math.abs(drag.y1-drag.y0)}:null;
- return <div className="research-lasso-overlay"
-  onPointerDown={event=>{setDrag({x0:event.clientX,y0:event.clientY,x1:event.clientX,y1:event.clientY});event.currentTarget.setPointerCapture(event.pointerId);}}
-  onPointerMove={event=>{setDrag(current=>current?{...current,x1:event.clientX,y1:event.clientY}:current);}}
-  onPointerUp={()=>{if(rect&&(rect.width>4||rect.height>4))onComplete(rect);setDrag(null);}}>
-  {rect&&<div className="research-lasso-rect" style={{left:rect.x,top:rect.y,width:rect.width,height:rect.height}}/>}
- </div>;
-}
 export type ResearchInstrument='m1'|'m2'|'m4';
 function ImageryPanel(props:React.ComponentProps<typeof StreetViewSurface>&{tools:HTMLElement}){
  const [open,setOpen]=useState(false),toggle=useRef<HTMLButtonElement>(null),panel=useRef<HTMLElement>(null);
@@ -144,19 +128,19 @@ interface ViewState {
  sequencedEdges?:Set<string>;
  /** M1′ direct manipulation (Wayfinder §6, §13): the multi-select set (the
   * shift/ctrl-click extended selection; `selectedNode` above stays the
-  * single "focus" the inspector shows). `groupPreview`/`groupDragOrigin`
-  * carry an in-progress group drag's overlay positions and starting
-  * positions; `groupMoveGesture` batches the whole selection's move into
-  * ONE native write per gesture (keyed by a single synthetic id so the
-  * existing per-gesture idle/pointerup batching commits exactly once). */
+  * single "focus" the inspector shows). `groupPreview` carries an
+  * in-progress group drag's overlay positions — each dragged member's own
+  * position is now reported directly by the vendored Canvas (no local
+  * drag-origin/delta bookkeeping); `groupMoveGesture` batches the whole
+  * selection's move into ONE native write per gesture (keyed by a single
+  * synthetic id so the existing per-gesture idle/deferred-flush batching
+  * commits exactly once). */
  multiSelect?:Set<string>;
- groupDragOrigin?:Map<string,{x:number;y:number}>;
  groupPreview?:Map<string,{x:number;y:number}>;
  groupMoveGesture?:GestureTransaction<RepertoireMove[]>;
  snapToGrid?:boolean;
  lassoOn?:boolean;
  zoomLevel?:'constellation'|'named'|'detailed';
- zoomPoll?:ReturnType<typeof setInterval>;
 }
 class InstrumentBoundary extends Component<{children:ReactNode},{error:string|null}> {
  state={error:null as string|null};
@@ -177,7 +161,7 @@ export function installResearchInstruments(host:ResearchInstrumentsHost){
  const body=document.createElement('div');body.className='research-instrument-body';mount.append(body);host.tools.append(status);
  const message=(text:string)=>{status.textContent=text;};
  function retain(){if(currentKey&&captureCanvas){const state=views.get(currentKey);if(state)state.canvas=captureCanvas();}captureCanvas=null;}
- function disposeGestures(){for(const state of views.values()){state.moveGesture?.dispose();state.resizeGesture?.dispose();state.groupMoveGesture?.dispose();if(state.zoomPoll)clearInterval(state.zoomPoll);}}
+ function disposeGestures(){for(const state of views.values()){state.moveGesture?.dispose();state.resizeGesture?.dispose();state.groupMoveGesture?.dispose();}}
  function unmount(){retain();disposeGestures();root?.unmount();root=null;body.replaceChildren();}
  // Multi-select repertoire (R1/R2, Wayfinder §6, §13). The vendored Canvas
  // reports neither modifier keys on a node click nor a batched multi-node
@@ -290,22 +274,24 @@ export function installResearchInstruments(host:ResearchInstrumentsHost){
    state.multiSelect=id?new Set([id]):new Set();
    select(id);
   };
-  // R1 — a group drag: the dragged node's own delta (from its last known
-  // committed position) is applied to every OTHER selected node's preview.
-  // One `groupMoveGesture` batches the whole selection into ONE commit
-  // (applyGroupOverrides), same as a keyboard nudge or an align/distribute.
+  // R1 — a group drag: the vendored Canvas now reports every dragged node's
+  // own already-correct position directly (host-selection-viewport-gesture.patch
+  // multi-node onMoveNodePreview/onMoveNodeEnd), once per selected member —
+  // no delta math or drag-origin bookkeeping is needed here any more. Each
+  // call still only overlays ONE id→position pair; `applyGroupOverrides`
+  // accumulates them into the same batched `groupMoveGesture` so the whole
+  // selection still lands as ONE native write per gesture.
   const groupMove=(id:string,position:{x:number;y:number})=>{
    if(!canvas.sceneId||!selection.has(id)||selection.size<2){state.moveGesture!.preview(id,position);return;}
-   state.groupDragOrigin??=new Map(canvas.nodes.filter(n=>selection.has(n.id)).map(n=>[n.id,{...n.position}]));
-   const origin=state.groupDragOrigin.get(id);if(!origin)return;
-   const delta={x:position.x-origin.x,y:position.y-origin.y};
-   const overrides:Record<string,{x:number;y:number}>={};
-   for(const ref of selection){
-    const base=state.groupDragOrigin.get(ref);if(!base)continue;
-    overrides[ref]=ref===id?position:{x:base.x+delta.x,y:base.y+delta.y};
-   }
-   applyGroupOverrides(state,canvas,canvas.sceneId,overrides);
+   applyGroupOverrides(state,canvas,canvas.sceneId,{[id]:position});
   };
+  // Gesture end is now disclosed directly by the vendored Canvas
+  // (onMoveNodeEnd) instead of being guessed from a global pointerup
+  // listener. A multi-node drag end still fires this once per dragged node
+  // in the same synchronous pass, so the actual flush is deferred to the
+  // next microtask — by then every member's override is already recorded
+  // and canvasGesture's own single-commit flush drains exactly once.
+  const flushMoveEnd=()=>{queueMicrotask(()=>{void state.moveGesture?.flushNow();void state.groupMoveGesture?.flushNow();});};
   const alignSelection=(mode:AlignMode)=>{if(!canvas.sceneId||selection.size<2)return;applyGroupOverrides(state,canvas,canvas.sceneId,alignPositions(canvas.nodes,[...selection],mode));};
   const distributeSelection=(axis:'h'|'v')=>{if(!canvas.sceneId||selection.size<3)return;applyGroupOverrides(state,canvas,canvas.sceneId,distributePositions(canvas.nodes,[...selection],axis));};
   const frames=material?.frames??{};
@@ -320,11 +306,13 @@ export function installResearchInstruments(host:ResearchInstrumentsHost){
   const namedViews=material?.namedViews??{};
   const saveView=()=>{if(!canvas.sceneId||!captureCanvas)return;const name=window.prompt('Name this view');if(!name)return;const viewport=captureCanvas();act({type:'view-save',name,viewport:{x:viewport.x,y:viewport.y,zoom:viewport.zoom},selectedRefs:[...selection].map(occurrence),frameOrder:framesOrdered.map(([id])=>id)},false);};
   const applyView=(name:string)=>{const view=namedViews[name];if(!view)return;flyToNode?.('',{x:view.viewport.x,y:view.viewport.y,zoom:view.viewport.zoom});state.multiSelect=new Set(view.selectedRefs.map(ref=>canvas.nodes.find(n=>occurrence(n.id)===ref)?.id).filter((v):v is string=>!!v));select(state.multiSelect.size?[...state.multiSelect][0]:null);message(`View "${name}" applied`);};
-  const lassoComplete=(rect:{x:number;y:number;width:number;height:number})=>{
-   const nodeRects=[...mount.querySelectorAll<HTMLElement>('.react-flow__node[data-id]')].map(el=>{const box=el.getBoundingClientRect();return {id:el.getAttribute('data-id')!,rect:{x:box.left,y:box.top,width:box.width,height:box.height}};});
-   const hits=lassoHitScreen(nodeRects,rect);
-   state.multiSelect=new Set(hits);state.lassoOn=false;
-   select(hits[0]??null);
+  // R1 — box selection is now the vendored Canvas's own xyflow selectionOnDrag
+  // (host-selection-viewport-gesture.patch), reported through onSelectionChange
+  // with the exact flow-space hit set; no screen-rect DOM query or lasso
+  // overlay component is needed any more.
+  const boxSelectionComplete=(nodeIds:string[])=>{
+   state.multiSelect=new Set(nodeIds);state.lassoOn=false;
+   select(nodeIds[0]??null);
    redraw();
   };
   const current=canvas.nodes.find(n=>n.id===state.selectedNode);
@@ -375,6 +363,16 @@ export function installResearchInstruments(host:ResearchInstrumentsHost){
   return <>{createPortal(controls,host.tools)}{inspecting&&createPortal(inspector,host.inspector)}<div className={`research-canvas ${editable?'research-canvas-native':'research-canvas-reading'}`} data-zoom={state.zoomLevel}>
    <CanvasView toolbarContainer={host.tools} canvasKey={canvas.key} initialViewport={state.canvas??material?.views.canvas} nodes={previewNodes} edges={previewEdges}
     selectedNodeId={state.selectedNode} selectedEdgeId={state.selectedEdge}
+    selectedNodeIds={selection.size?[...selection]:undefined}
+    selectionOnDrag={editable&&!!state.lassoOn}
+    onSelectionChange={editable&&state.lassoOn?boxSelectionComplete:undefined}
+    onViewportChange={viewport=>{
+     // R3 — semantic zoom/LOD, driven directly by the vendored Canvas's own
+     // viewport reporting instead of a 400ms captureCanvas() poll. Applies
+     // to both native (editable) and read-only reading canvases.
+     const level=semanticZoomLevel(viewport.zoom);
+     if(level!==state.zoomLevel){state.zoomLevel=level;redraw();}
+    }}
     readOnly={!editable}
     isEdgeReadOnly={id=>host.nativeView()?.document.relations?.[id]?.native_owner!=='oi'}
     onCreateNote={editable?position=>act({type:'create-card',kind:'note',position:{x:(position?.x??0)/CANVAS_UNITS,y:-(position?.y??0)/CANVAS_UNITS}}):undefined}
@@ -412,12 +410,14 @@ export function installResearchInstruments(host:ResearchInstrumentsHost){
     onSelectNode={id=>{selectMulti(id);redraw();}}
     onSelectEdge={id=>{state.selectedEdge=id;state.selectedNode=null;if(canvas.sceneId)host.select(canvas.sceneId,null,id??undefined);if(id)flyToEdge?.(id);redraw();}}
     onNodeDoubleClick={id=>{const view=host.nativeView(),node=canvas.nodes.find(n=>n.id===id);const subject=node?.type==='resource'?node.absolutePath:view?.document.entities[id]?.subject?.subject_ref;if(subject)host.inspectSubject(subject);else{select(id);inspecting=true;host.inspector.hidden=false;redraw();}}}
-    onMoveNode={editable?(id,position)=>{
-     const snapped=state.snapToGrid?snapToGrid(position,CANVAS_UNITS/4,CANVAS_UNITS/16):position;
-     groupMove(id,snapped);
+    onMoveNodePreview={editable?(id,position)=>{
+     groupMove(id,state.snapToGrid?snapToGrid(position,CANVAS_UNITS/4,CANVAS_UNITS/16):position);
+    }:undefined}
+    onMoveNodeEnd={editable?(id,position)=>{
+     groupMove(id,state.snapToGrid?snapToGrid(position,CANVAS_UNITS/4,CANVAS_UNITS/16):position);
+     flushMoveEnd();
     }:undefined}
     onRegisterCaptureViewport={capture=>{captureCanvas=capture;}} />
-   {editable&&<LassoOverlay active={!!state.lassoOn} onComplete={lassoComplete}/>}
   </div></>;
  }
  async function load(selected:ResearchInstrument){
@@ -434,15 +434,9 @@ export function installResearchInstruments(host:ResearchInstrumentsHost){
     render(canvasNode(canvas,state,generation));
     // R3 — semantic zoom/LOD is presentational only and never touches
     // entity/card size (interactions.ts semanticZoomLevel/labelsForZoom).
-    // The vendored Canvas exposes no live viewport-change callback, only a
-    // pull-based captureCanvas() (a real getViewport() read); this polls it
-    // so the disclosed label density stays live with pan/zoom without
-    // touching vendor files.
-    if(!state.zoomPoll)state.zoomPoll=setInterval(()=>{
-     if(destroyed||currentKey!==canvas.key||!captureCanvas||lens!=='m1')return;
-     const level=semanticZoomLevel(captureCanvas().zoom);
-     if(level!==state.zoomLevel){state.zoomLevel=level;render(canvasNode(canvas,state,generation));}
-    },400);
+    // The vendored Canvas now reports the live viewport directly
+    // (host-selection-viewport-gesture.patch onViewportChange, wired in
+    // canvasNode above), so no polling loop is mounted here any more.
     if(canvas.edges.some(edge=>view.document.relations?.[edge.id]?.native_owner!=='oi'))void host.read({expression_ref:view.document.expression_ref,revision:view.document.revision,scene_ref:view.bindings[sceneId].scene_ref,facet:'relation-semantics'}).then(raw=>{
      if(epoch!==generation||destroyed||!sameBasis())return;
      const result=raw as {schema?:string;expression_ref?:string;revision?:number;scene_ref?:string;relation_readings?:NativeRelationDirectionReading[]};

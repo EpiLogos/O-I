@@ -179,13 +179,14 @@
     "patches/native-host-capabilities.patch",
     "patches/source-direction-markers.patch",
     "patches/hosted-map-toolbar.patch",
-    "patches/native-relation-attribution.patch"
+    "patches/native-relation-attribution.patch",
+    "patches/host-selection-viewport-gesture.patch"
   ],
   "patches": {
     "packages/canvas/src/CanvasView.tsx": {
       "upstream_sha256": "b343759c921b283f4a05bd83e3f1622bba3cd6f68b0ff8c83f31a681a32266ee",
-      "adapted_sha256": "04f2ee2e5d23c6a5e1bf7bce0f415a5aa9c249bd8245d4d13564776d371301d2",
-      "reason": "Explicit per-owner readOnly capability and callback-backed actions; retain reading/navigation, scope menu portal to embedded host; optional host toolbar portal uses the actual zoom/fit actions and suppresses duplicate ReactFlow Controls only when hosted."
+      "adapted_sha256": "7cbec584ac2700e565696b1c8c558f20f30e47542a165eb81f560bddde1b8bbb",
+      "reason": "Explicit per-owner readOnly capability and callback-backed actions; retain reading/navigation, scope menu portal to embedded host; optional host toolbar portal uses the actual zoom/fit actions and suppresses duplicate ReactFlow Controls only when hosted. patches/host-selection-viewport-gesture.patch: optional selectedNodeIds (real multi-selection), onSelectionChange/selectionOnDrag (native xyflow box select, pan preserved when unset), onViewportChange (xyflow onMove/onMoveEnd, no host polling loop), and onMoveNodePreview/onMoveNodeEnd (per-gesture drag preview/end, reporting every dragged node in a multi-selection; onMoveNode keeps its original per-callback behaviour when these are omitted)."
     },
     "packages/canvas/src/components/ContextMenu.tsx": {
       "upstream_sha256": "9b496da82f532acddf529afd2f1a6cb154de1ddd76efd91d20d50dd96285ff9e",

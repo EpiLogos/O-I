@@ -57,6 +57,26 @@ export interface CanvasViewProps {
   onSelectNode?: (nodeId: string | null) => void;
   selectedNodeId?: string | null;
   selectedEdgeId?: string | null;
+  /** When given, node.selected reflects set membership instead of the single
+   * `selectedNodeId`. Omitted keeps the existing single-selection reading. */
+  selectedNodeIds?: readonly string[];
+  /** xyflow's own multi-selection change (drag-box, shift/ctrl-click, marquee). */
+  onSelectionChange?: (nodeIds: string[]) => void;
+  /** Enables xyflow's box selection on a plain left-drag. Omitted keeps the
+   * existing pan-on-drag behaviour unchanged. */
+  selectionOnDrag?: boolean;
+  /** Reports the live viewport during and at the end of a pan/zoom gesture.
+   * Omitted mounts no viewport listener at all — no hidden polling loop. */
+  onViewportChange?: (viewport: { x: number; y: number; zoom: number }) => void;
+  /** Fires on every intermediate position during a node drag (all dragged
+   * nodes in a multi-selection). When supplied, onMoveNode is not also
+   * called for drag gestures — pair with onMoveNodeEnd. */
+  onMoveNodePreview?: (nodeId: string, position: { x: number; y: number }) => void;
+  /** Fires once per dragged node when a drag gesture ends. When supplied
+   * together with onMoveNodePreview, onMoveNode is not also called for drag
+   * gestures; omitting both keeps the original onMoveNode-on-every-callback
+   * behaviour. */
+  onMoveNodeEnd?: (nodeId: string, position: { x: number; y: number }) => void;
   onDeleteNode?: (nodeId: string) => void;
   onDuplicateNode?: (nodeId: string) => void;
   onCreateNote?: (position?: { x: number; y: number }) => void;
@@ -138,6 +158,12 @@ function CanvasViewInner({
   onSelectNode,
   selectedNodeId,
   selectedEdgeId,
+  selectedNodeIds,
+  onSelectionChange,
+  selectionOnDrag = false,
+  onViewportChange,
+  onMoveNodePreview,
+  onMoveNodeEnd,
   onDeleteNode,
   onDuplicateNode,
   onCreateNote,
@@ -428,9 +454,9 @@ function CanvasViewInner({
             : undefined),
       },
     },
-    draggable: !readOnly && !!onMoveNode,
+    draggable: !readOnly && (!!onMoveNode || !!onMoveNodePreview || !!onMoveNodeEnd),
     selectable: true,
-    selected: node.id === selectedNodeId
+    selected: isNodeSelected(node.id, selectedNodeId, selectedNodeIds)
   }));
 
   const flowEdges: Edge[] = edges.map((edge) => ({
@@ -525,10 +551,18 @@ function CanvasViewInner({
         fitView
         nodes={flowNodes}
         nodeTypes={nodeTypes}
-        nodesDraggable={!readOnly && !!onMoveNode}
+        nodesDraggable={!readOnly && (!!onMoveNode || !!onMoveNodePreview || !!onMoveNodeEnd)}
         nodesConnectable={!readOnly && !!onConnectNodes}
         edgesReconnectable={!readOnly && !!onReconnectEdge}
         deleteKeyCode={null}
+        selectionOnDrag={selectionOnDrag}
+        onSelectionChange={
+          onSelectionChange
+            ? ({ nodes: selected }) => onSelectionChange(selected.map((node) => node.id))
+            : undefined
+        }
+        onMove={onViewportChange ? (_event, viewport) => onViewportChange(viewport) : undefined}
+        onMoveEnd={onViewportChange ? (_event, viewport) => onViewportChange(viewport) : undefined}
         nodesFocusable
         onDragOver={(e: React.DragEvent) => {
           if (readOnly) return;
@@ -593,11 +627,21 @@ function CanvasViewInner({
           onSelectNode?.(node.id);
           onSelectEdge?.(null);
         }}
-        onNodeDrag={(_event, node) => {
-          if (!readOnly) onMoveNode?.(node.id, node.position);
+        onNodeDrag={(_event, node, draggedNodes) => {
+          if (readOnly) return;
+          if (onMoveNodePreview) {
+            for (const dragged of draggedNodes ?? [node]) onMoveNodePreview(dragged.id, dragged.position);
+          } else {
+            onMoveNode?.(node.id, node.position);
+          }
         }}
-        onNodeDragStop={(_event, node) => {
-          if (!readOnly) onMoveNode?.(node.id, node.position);
+        onNodeDragStop={(_event, node, draggedNodes) => {
+          if (readOnly) return;
+          if (onMoveNodeEnd) {
+            for (const dragged of draggedNodes ?? [node]) onMoveNodeEnd(dragged.id, dragged.position);
+          } else {
+            onMoveNode?.(node.id, node.position);
+          }
         }}
         onNodeDoubleClick={(_e, node) => {
           setEditingNodeId(null);
@@ -638,7 +682,7 @@ function CanvasViewInner({
           e.stopPropagation();
           if (!readOnly && !isEdgeReadOnly?.(edge.id)) setContextMenu({ x: e.clientX, y: e.clientY, kind: "edge", edgeId: edge.id });
         }}
-        panOnDrag={true}
+        panOnDrag={selectionOnDrag ? [1, 2] : true}
       >
         <Background color="rgba(244, 232, 208, 0.08)" gap={24} />
         {!toolbarContainer && <Controls showInteractive={false} />}
@@ -763,6 +807,16 @@ function CanvasViewInner({
       )}
     </div>
   );
+}
+
+/** `selectedNodeIds`, when given, is the multi-selection reading; omitted,
+ * the original single `selectedNodeId` reading is unchanged. */
+export function isNodeSelected(
+  nodeId: string,
+  selectedNodeId: string | null | undefined,
+  selectedNodeIds: readonly string[] | undefined,
+): boolean {
+  return selectedNodeIds ? selectedNodeIds.includes(nodeId) : nodeId === selectedNodeId;
 }
 
 /** Keep only native callback-backed actions and meaningful separators. */
