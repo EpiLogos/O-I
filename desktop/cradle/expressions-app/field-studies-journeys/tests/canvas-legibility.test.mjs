@@ -37,10 +37,15 @@ test('canvas tool row is icon-led with the prior text preserved as aria-label/ti
  const controlsStart = src.indexOf('const controls=');
  assert.ok(controlsStart > -1, 'the controls block still exists');
  const controlsEnd = src.indexOf('const edgeId=', controlsStart);
+ // The rail row and the Studio's Canvas section together are the Canvas tools.
  const controls = src.slice(controlsStart, controlsEnd);
+ const studioStart = src.indexOf('const canvasStudio=');
+ assert.ok(studioStart > controlsStart && studioStart < controlsEnd, 'Canvas views/frames/source focus live in the Studio section');
+ const rail = src.slice(controlsStart, studioStart);
+ for (const select of ['Focus disclosed source', 'Frames', 'Saved views']) assert.doesNotMatch(rail, new RegExp(`aria-label="${select}"`), `${select} is not a drop-down in the rail`);
  // The old bare text-led buttons must be gone …
  for (const bareText of ['>Note<', '>Image<', '>Draw<', '>Save view<', '>Snap<', '>Lasso<', '>Save view as…<', '>Inspector<', '>Distribute ↔<', '>Distribute ↕<', '>Frame selection<']) {
-  assert.doesNotMatch(controls, new RegExp(bareText.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')), `${bareText} is no longer a bare-text button label`);
+  assert.doesNotMatch(rail, new RegExp(bareText.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')), `${bareText} is no longer a bare-text button label`);
  }
  // … and every one of them must still carry its exact old text as an
  // accessible name, so aria semantics and hover discovery are unchanged.
