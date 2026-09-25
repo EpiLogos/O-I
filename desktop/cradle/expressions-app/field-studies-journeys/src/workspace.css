@@ -532,3 +532,5 @@ body.library-open #lens-chooser{display:none!important}
 #scene-picker #scene-name{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 #scene-picker #scene-state{flex:none}
 .object-symbol .shape-mark{width:60%;height:60%;color:var(--tint,currentColor)}
+
+body:not(.research-active) [data-research-only]{display:none}

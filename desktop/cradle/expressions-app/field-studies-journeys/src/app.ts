@@ -966,6 +966,9 @@ const masthead=document.querySelector<HTMLElement>('#app > .masthead')!;
 // the rail — never a second header.
 const researchTools=document.createElement('div');researchTools.id='instrument-tools';researchTools.className='instrument-tools';researchTools.setAttribute('role','toolbar');researchTools.setAttribute('aria-label','Active instrument tools');
 masthead.querySelector('#tool-rail')!.append(researchTools);
+// Canvas/Relations/Places keep the live field one click away: preview it
+// without leaving the instrument (the instrument stays mounted beneath).
+masthead.querySelector('#tool-rail')!.insertAdjacentHTML('beforeend',ib('research-preview','eye','Preview the live field','aria-pressed="false" data-research-only'));
 // The masthead keeps its three cells: rail · centre · actions. The instrument
 // chooser joins the centre cell beside the workspace menu.
 const mastheadCentre=document.createElement('div');mastheadCentre.className='masthead-centre';
@@ -1085,7 +1088,7 @@ function openNativeFileDialog(){
  const dialog=$<HTMLDialogElement>('confirm-dialog');
  const current=nativeState?.file;
  dialog.innerHTML=`<form method="dialog" class="native-file-form"><h2>Save to a Central file</h2><p>${current?`Attached to ${esc(current.path)} · revision ${esc(String(current.revision))}`:'Writes this composition as a native Expression file and reads it back.'}</p><label>Folder<input name="folder" value="." ${current?'disabled':''}></label><label>Filename<input name="name" value="${esc(slug(store.document.name)||'expression')}.expression.json" ${current?'disabled':''}></label><footer><button value="cancel">Cancel</button><button value="save" class="primary">Save file</button></footer></form>`;
- dialog.onclose=()=>{if(dialog.returnValue!=='save')return;const form=dialog.querySelector('form')!;void nativeWorkspace?.saveFile((form.elements.namedItem('folder') as HTMLInputElement).value,(form.elements.namedItem('name') as HTMLInputElement).value);};
+ dialog.onclose=()=>{if(dialog.returnValue!=='save')return;const form=dialog.querySelector('form')!;void nativeWorkspace?.saveFile((form.elements.namedItem('folder') as HTMLInputElement).value,(form.elements.namedItem('name') as HTMLInputElement).value).then(ok=>{if(ok)toast(nativeState?.text||'Saved to a Central file.',6000);});};
  dialog.showModal();
 }
 async function startWorkspace(){

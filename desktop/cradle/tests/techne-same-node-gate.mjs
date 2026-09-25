@@ -160,12 +160,12 @@ try {
   // ——— Edit object: the existing full Studio over the still-active Canvas ———
   await frame.locator(`.research-canvas .react-flow__node[data-id="${nodeA}"]`).click();
   await page.waitForTimeout(300);
-  probe.toolsAfterSelect = await frame.$$eval('#research-tools button, #research-tools select', els => els.map(e => (e.getAttribute('aria-label') || e.textContent.trim()) + (e.offsetParent ? '' : '(hidden)')));
+  probe.toolsAfterSelect = await frame.$$eval('#instrument-tools button, #instrument-tools select', els => els.map(e => (e.getAttribute('aria-label') || e.textContent.trim()) + (e.offsetParent ? '' : '(hidden)')));
   probe.selectionAfterClick = (await state()).selected;
   probe.selectedClass = await frame.$$eval('.research-canvas .react-flow__node', els => els.map(e => e.dataset.id.slice(-6) + ':' + e.classList.contains('selected')));
   await frame.locator(`.research-canvas .react-flow__node[data-id="${nodeB}"]`).click();
   await page.waitForTimeout(300);
-  probe.afterClickB = {sel: (await state()).selected, tools: await frame.$$eval('#research-tools button', els => els.map(e => e.getAttribute('aria-label') || e.textContent.trim()).filter(t => /Edit/.test(t)))};
+  probe.afterClickB = {sel: (await state()).selected, tools: await frame.$$eval('#instrument-tools button', els => els.map(e => e.getAttribute('aria-label') || e.textContent.trim()).filter(t => /Edit/.test(t)))};
   await frame.locator(`.research-canvas .react-flow__node[data-id="${nodeA}"]`).click();
   await page.waitForTimeout(300);
   await frame.getByRole('button', {name: 'Edit object'}).first().click();
@@ -212,6 +212,9 @@ try {
   // B is selected through Canvas's own source selector (the Studio panel
   // covers part of the field); the focused input blurs exactly as a person's
   // pointer on the Canvas tool would make it.
+  // Source focus lives in the Studio's Canvas section; switching to it blurs
+  // A's field exactly as leaving the control would.
+  await frame.locator('[data-action="studio-section"][data-value="canvas"]').click();
   await frame.getByLabel('Focus disclosed source').selectOption(nodeB);
   await page.waitForTimeout(400);
   probe.negSteps.push({at: 'after-click-B', a: (await journeyEntity(viewA))?.force.strength, sel: (await state()).selected, doc: await frame.evaluate(() => window.__FIELD_STUDIES__.getDocument().id), edits: expressionEdits.slice(-3).map(e => e.changes.slice(0, 4)), studioEntity: await frame.evaluate(() => document.getElementById('inspector-content').dataset.entityId), active: await frame.evaluate(() => document.activeElement?.dataset?.bind ?? document.activeElement?.tagName)});
@@ -232,11 +235,12 @@ try {
   await frame.locator('[data-action="research-preview"]').first().click();
 
   // Native commit, then kernel readback: A changed, B unchanged.
-  if (!await frame.locator('#native-work').isVisible()) await frame.locator('[data-action="native-work"]:visible').first().click();
-  await frame.getByRole('button', {name: 'Commit composition', exact: true}).waitFor({state: 'visible'});
-  await frame.waitForFunction(() => !document.querySelector('[data-native="commit"]').disabled);
-  await frame.getByRole('button', {name: 'Commit composition', exact: true}).click();
-  await frame.locator('.native-status').filter({hasText: 'Native working revision'}).waitFor();
+  // Save is the app's own masthead act (no separate native panel): it commits
+  // the working composition and the Studio footer reports the saved revision.
+  const revisionBefore = (await kernelDoc()).revision;
+  await frame.waitForFunction(() => !document.getElementById('native-save')?.disabled);
+  await frame.locator('#native-save').click();
+  await frame.waitForFunction(r => new RegExp('saved revision (\\d+)').test(document.getElementById('native-status')?.textContent ?? '') && Number(/saved revision (\d+)/.exec(document.getElementById('native-status').textContent)[1]) > r, revisionBefore, {timeout: 60000});
   const committed = await kernelDoc();
   probe.committed = {a: committed.entities[nodeA], b: committed.entities[nodeB], scenes: committed.scenes.map(sc => ({scene_ref: sc.scene_ref, keys: Object.keys(sc), presentationKeys: Object.keys(sc.presentation ?? {}), aForces: JSON.stringify(sc.presentation ?? {}).match(/"force":\{[^}]*\}/g)?.slice(0, 6), tints: JSON.stringify(sc.presentation ?? {}).match(/"tint":"#[0-9a-f]+"/gi)?.slice(0, 6)}))};
   // Expressive configuration (force, material, object states) is persisted in
@@ -250,7 +254,6 @@ try {
   await page.screenshot({path: resolve(out, '03-committed.png')});
 
   // ——— A deliberate typed knowledge relationship from the Canvas ———
-  if (await frame.locator('#native-work').isVisible()) await frame.locator('[data-action="native-work"]:visible').first().click();
   if (await frame.locator('#inspector:not([hidden])').count()) await frame.locator('#inspector [data-action="close-studio"]').first().click();
   const edgesBefore = await frame.$$eval('.research-canvas .react-flow__edge', els => els.map(e => e.getAttribute('data-id') ?? e.getAttribute('data-testid')));
   await frame.locator(`.research-canvas .react-flow__node[data-id="${nodeA}"] .react-flow__handle`).first().click({force: true});
@@ -268,9 +271,8 @@ try {
   probe.edgeDom = await frame.$$eval('.research-canvas .react-flow__edge', els => els.map(e => ({id: e.getAttribute('data-id'), testid: e.getAttribute('data-testid'), cls: e.getAttribute('class')})));
   const clicked = await frame.evaluate(ref => {const el = [...document.querySelectorAll('.research-canvas .react-flow__edge')].find(e => (e.getAttribute('data-id') ?? e.getAttribute('data-testid') ?? '').endsWith(ref)); const target = el?.querySelector('.react-flow__edge-interaction') ?? el?.querySelector('path'); if (!target) return false; target.dispatchEvent(new MouseEvent('click', {bubbles: true})); return true;}, presentationRef);
   check(clicked, 'The presentation connection is drawn as its own selectable edge');
-  const inspectorToggle = frame.getByRole('button', {name: 'Toggle canvas inspector'}).first();
-  if (await inspectorToggle.getAttribute('aria-pressed') !== 'true') await inspectorToggle.click();
-  await page.waitForTimeout(300);
+  // The connection card follows the selection (no separate inspector toggle).
+  await frame.locator('#research-inspector:not([hidden])').waitFor();
   probe.edgeInspector = await frame.evaluate(() => ({text: document.getElementById('research-inspector')?.innerText.slice(0, 400), rel: window.__TMP_REL__?.()}));
   const relationInput = frame.locator('#research-inspector').getByLabel('Relation');
   await relationInput.fill('grounds');
@@ -293,15 +295,19 @@ try {
   await page.screenshot({path: resolve(out, '04-relation.png')});
 
   // ——— Native save, restart, reopen ———
-  if (!await frame.locator('#native-work').isVisible()) await frame.locator('[data-action="native-work"]:visible').first().click();
-  const statusBefore = await frame.locator('.native-status').textContent();
-  await frame.locator('[data-native="commit"]').click();
-  await frame.waitForFunction(before => {const t = document.querySelector('.native-status')?.textContent ?? ''; return t && t !== before;}, statusBefore, {timeout: 30000}).catch(() => {});
-  probe.secondCommit = await frame.locator('.native-status').textContent();
-  await frame.locator('[data-native-field="folder"]').fill('Work/Notes');
-  await frame.locator('[data-native-field="name"]').fill('gate.expression.json');
-  await frame.locator('[data-native="save"]').click();
-  await frame.waitForFunction(() => /saved|Saved/.test(document.querySelector('.native-status')?.textContent ?? ''), null, {timeout: 60000});
+  const statusBefore = await frame.locator('#native-status').textContent();
+  await frame.locator('#native-save').click();
+  await frame.waitForFunction(before => {const t = document.getElementById('native-status')?.textContent ?? ''; return t && t !== before;}, statusBefore, {timeout: 30000}).catch(() => {});
+  probe.secondCommit = await frame.locator('#native-status').textContent();
+  // Central file save: the Library's file bar opens the app's own modal.
+  await frame.evaluate(() => document.querySelector('[data-action="library"]').click());
+  await frame.locator('#library-page:not([hidden])').waitFor();
+  await frame.locator('#library-page [data-action="native-save-file"]').first().click();
+  await frame.locator('#confirm-dialog[open] input[name="folder"]').fill('Work/Notes');
+  await frame.locator('#confirm-dialog[open] input[name="name"]').fill('gate.expression.json');
+  await frame.locator('#confirm-dialog[open] button[value="save"]').click();
+  await frame.waitForFunction(() => /Saved and read back/.test(document.getElementById('native-status')?.textContent ?? '') || /Saved and read back/.test(document.getElementById('toast')?.textContent ?? ''), null, {timeout: 60000});
+  await frame.locator('#library-page [data-action="close-library"]').first().click();
   const savedPath = resolve(project, 'gate.expression.json');
   const savedFile = JSON.parse(readFileSync(savedPath, 'utf8'));
   check(savedFile.expression_ref === expectedRef && !!savedFile.entities[nodeA], 'The native Expression file holds the same Expression and occurrence identities');
@@ -329,8 +335,7 @@ try {
   const journey = await frame.evaluate(id => {const d = window.__FIELD_STUDIES__.getDocument(), st = window.__FIELD_STUDIES__.getState(); const sc = d.scenes[st.sceneIndex]; const e = sc?.entities.find(v => v.id === id); return {strip: document.querySelectorAll('#timeline-panel .scene-strip [data-action]').length, scene: sc?.name, force: e?.force.strength, tint: e?.tint, steps: e?.sequence.steps.length, doc: d.id};}, viewA);
   probe.journey = journey;
   check(journey.strip > 0 && journey.force === reopenedA.force.strength && journey.tint === reopenedA.tint && journey.steps === reopenedA.sequence.steps.length, 'M3′ Journey shows the same Scene with the same member, material and object states');
-  if (await frame.locator('#lens-studio:not([hidden])').count()) await frame.locator('#lens-studio .lens-studio-close').click();
-  await frame.locator('[data-action="native-library"]:visible').first().click();
+  await frame.evaluate(() => document.querySelector('[data-action="library"]').click());
   await frame.locator('#library-page:not([hidden])').waitFor();
   check(await frame.evaluate(() => getComputedStyle(document.getElementById('lens-chooser')).display === 'none'), 'The Technē instrument chooser does not float over the full-page Library');
   await frame.waitForFunction(title => [...document.querySelectorAll('#library-page .oi-lib-kernel-row, #library-page .oi-lib-native-row')].some(row => row.textContent.includes(title)), reopened.title, {timeout: 60000});
