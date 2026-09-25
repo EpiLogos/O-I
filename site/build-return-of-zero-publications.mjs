@@ -321,6 +321,7 @@ for (const member of members) {
     source_revision: envelope.corpus?.production_revision?.commit ?? sourceCommit,
     digest: { algorithm: 'sha256', value: sha(rawJourney) },
     scene_map: Object.fromEntries(journey.scenes.map((scene) => [`${expressionRef}:scene:${scene.id}`, scene.id])),
+    entity_map: Object.fromEntries([...new Set(journey.scenes.flatMap((scene) => scene.entities.map((entity) => entity.id)))].map((id) => [`${expressionRef}:entity:${id}`, id])),
     bytes: rawJourney.toString('utf8'),
   };
   await writeFile(resolve(outDir, `expression-${member.id}.json`), JSON.stringify(publication, null, 1));
