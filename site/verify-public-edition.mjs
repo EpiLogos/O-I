@@ -33,7 +33,7 @@ export async function verifyPublicEdition({read,expectedInputs,allowEmpty=false}
   check(isDeepStrictEqual(manifest,individual),'The native standalone manifest differs from the delivered manifest set.');
   check(sha(htmlBytes)===manifest.digest.value,'The native HTML bytes do not match the edition digest.');
   check(isDeepStrictEqual(JSON.parse(projectionBytes.toString('utf8')),projection),'The native Projection download differs from the selected edition.');
-  const embedded=htmlBytes.toString('utf8').match(/<script type="application\\/json" id="oi-projection">([\\s\\S]*?)<\\/script>/)?.[1];
+  const embedded=htmlBytes.toString('utf8').match(/<script type="application\/json" id="oi-projection">([\s\S]*?)<\/script>/)?.[1];
   check(Boolean(embedded)&&isDeepStrictEqual(JSON.parse(embedded),projection),'The HTML contains a different embedded Projection.');
   let native_body=null;
   if(manifest.native_body){
