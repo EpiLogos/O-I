@@ -35,37 +35,13 @@ main:focus { outline: none; }
 .skip-link { position: fixed; top: 1rem; left: var(--gutter); z-index: 100; padding: 1rem; background: var(--paper); color: var(--oi-ink); transform: translateY(-200%); }
 .skip-link:focus { transform: none; }
 
-/* An unpinned transparent header; its modal lives in the native top layer. */
-.sn, .sn__panel-head { display: flex; align-items: center; justify-content: space-between; gap: 2rem; }
-.sn { position: absolute; inset: 0 0 auto; z-index: 50; padding: 1.1rem var(--gutter); color: var(--white); }
-.sn--light { color: var(--oi-ink); }
-.sn__brand { display: grid; align-items: center; width: clamp(6.5rem, 10vw, 9rem); min-height: 44px; }
-.sn__mark { display: block; width: 100%; height: auto; }
-.sn__toggle { display: inline-flex; align-items: center; gap: .8rem; min-height: 44px; min-width: 44px; }
-.sn__toggle-label { font-size: .7rem; font-weight: 650; letter-spacing: var(--track); text-transform: uppercase; }
-.sn__toggle-icon { display: grid; place-items: center; width: 2.2rem; height: 2.2rem; border: 1px solid currentColor; border-radius: 50%; font-size: 1.15rem; line-height: 1; transition: transform var(--oi-motion-normal) var(--ease), background-color var(--oi-motion-fast) var(--ease); }
-.sn__toggle:hover .sn__toggle-icon { transform: rotate(90deg); }
-.sn__toggle:focus-visible .sn__toggle-icon { background: rgb(178 148 79 / 12%); }
-.sn__panel {
-  position: fixed; inset: 0; width: 100%; max-width: none; height: 100%; height: 100dvh; max-height: none;
-  margin: 0; border: 0; padding: 0 var(--gutter) 2rem;
-  background: var(--paper); color: var(--oi-ink); overscroll-behavior: contain;
-}
-.sn__panel::backdrop { background: var(--paper); }
-.sn__panel[open] { display: flex; flex-direction: column; animation: menu-enter var(--oi-motion-normal) var(--ease) both; }
-.sn__panel-head { position: sticky; top: 0; flex: none; padding: 1.1rem 0; background: var(--paper); z-index: 1; }
-.sn__panel nav { width: 100%; max-width: 88rem; margin: auto; padding-block: 2rem; }
-.sn__list { list-style: none; padding: 0; margin: 0; border-top: 1px solid var(--oi-rule); }
-.sn__item { border-bottom: 1px solid var(--oi-rule); }
-.sn__link { display: grid; grid-template-columns: 3rem minmax(0, 1fr) minmax(0, auto); gap: 1rem; align-items: baseline; padding: clamp(1rem, 2.7vh, 1.6rem) .25rem; transition: background-color var(--oi-motion-fast) var(--ease); }
-.sn__index { font-family: var(--mono); font-size: .72rem; color: #80642e; }
-.sn__label { font-size: clamp(1.65rem, 4.6vw, 3.4rem); font-weight: 500; letter-spacing: -.035em; line-height: 1.12; transition: transform var(--oi-motion-normal) var(--ease); }
-.sn__hint { color: #66645f; font-size: .68rem; font-weight: 650; letter-spacing: var(--track); text-transform: uppercase; text-align: right; }
-.sn__link--active .sn__label { text-decoration: underline; text-decoration-color: var(--gold); text-underline-offset: .16em; text-decoration-thickness: 1px; }
-.sn__link:hover, .sn__link:focus-visible { background: rgb(17 17 18 / 3%); }
-.sn__link:hover .sn__label { transform: translateX(.3rem); }
-.sn__foot { flex: none; color: #66645f; font-size: .68rem; letter-spacing: var(--track); text-transform: uppercase; }
-@keyframes menu-enter { from { opacity: 0; transform: translateY(-8px); } to { opacity: 1; transform: none; } }
+/* Plate A header: mark left, Library and Essay right. No menu. */
+.sn { position: relative; z-index: 50; display: flex; align-items: center; justify-content: space-between; gap: 1.5rem; flex-wrap: wrap; padding: 22px 36px 18px; border-bottom: 1px solid #d5cfc3; color: #1a1916; background: transparent; }
+.sn__brand { display: flex; align-items: center; gap: 14px; min-height: 44px; color: inherit; text-decoration: none; }
+.sn__mark { display: block; width: 92px; height: 36px; flex: none; }
+.sn__brand small { font-family: "Avenir Next", Avenir, "Segoe UI", sans-serif; font-size: 11px; font-weight: 500; letter-spacing: .14em; line-height: 1.3; text-transform: uppercase; color: #6e685e; }
+.sn__links { display: flex; gap: 28px; align-items: baseline; margin-left: auto; }
+.sn__links a { display: inline-flex; align-items: center; min-height: 44px; font-family: "Avenir Next", Avenir, "Segoe UI", sans-serif; font-size: 13px; letter-spacing: .08em; text-transform: uppercase; color: #1a1916; text-decoration: none; }
 
 /* Mask the stationary frame, not the scaled media. Orthogonal feathering
    reaches zero at EVERY edge; blending removes the source's white rectangle. */
@@ -248,10 +224,10 @@ main:focus { outline: none; }
   .sec__cells { grid-template-columns: minmax(0, 1fr); gap: 2.5rem; }
   .sec__items li { flex-direction: column; gap: .5rem; }
   .sec__detail { max-width: none; text-align: left; }
-  .sn__link { grid-template-columns: 2rem minmax(0, 1fr); gap: .65rem; }
-  .sn__hint { grid-column: 2; text-align: left; line-height: 1.5; }
-  .sn__panel nav { padding-block: 1rem; }
-  .sn__panel-head { gap: 1rem; }
+  .sn { padding: 16px 18px 14px; }
+  .sn__brand { align-items: flex-start; flex-direction: column; gap: 6px; }
+  .sn__mark { width: 72px; height: 28px; }
+  .sn__links { gap: 18px; }
   .pl { height: 200vh; height: 200svh; }
   .pl__mark { width: min(88vw, 32rem); }
   .opening__body { line-height: 1.75; }
@@ -288,7 +264,6 @@ main:focus { outline: none; }
 @media (max-height: 540px) and (orientation: landscape) {
   .pl__sticky { min-height: 0; }
   .pl__mark { width: min(50vw, 28rem); }
-  .sn__panel-head { padding-block: .5rem; }
 }
 
 /* The OS reduced-motion preference uses one static visual grammar. Effects also

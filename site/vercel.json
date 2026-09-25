@@ -1,0 +1,16 @@
+{
+  "rewrites": [
+    { "source": "/essay", "destination": "/essay.html" },
+    { "source": "/essay/", "destination": "/essay.html" },
+    { "source": "/section-rooms", "destination": "/essay.html" },
+    { "source": "/section-rooms/", "destination": "/essay.html" },
+    { "source": "/section-rooms/:path*", "destination": "/essay.html" },
+    { "source": "/symbolon", "destination": "/essay.html" },
+    { "source": "/symbolon/", "destination": "/essay.html" },
+    { "source": "/symbolon/:path*", "destination": "/essay.html" },
+    { "source": "/manuscript", "destination": "/essay.html" },
+    { "source": "/manuscript/", "destination": "/essay.html" },
+    { "source": "/manuscript/:path*", "destination": "/essay.html" },
+    { "source": "/essay/:path*", "destination": "/essay.html" }
+  ]
+}
