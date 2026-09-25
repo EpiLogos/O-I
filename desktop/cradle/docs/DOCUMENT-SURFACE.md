@@ -100,15 +100,18 @@ Small, underneath, through existing owners:
   and distinct from any filtered projection.
 - **Creation** (`projectcentral.source.create`, Central): creates one
   absent document in a project's human ground under the same discipline as
-  the flows door — expected-absent, single bounded filename, declared
-  human attribution, owner lock, horizon record. The desktop's
-  create-in-place consumes it for vision/mockup; the refusal names the
+  the flows door — expected-absent, atomic no-overwrite admission, the
+  parent must already exist, declared human attribution, owner lock, and
+  the recorded change is the horizon's Added entry. The desktop's
+  create-in-place consumes it for goal/vision/mockup; the refusal names the
   owner when the door is absent.
 - **Placement law (created documents)**: vision
   `ProjectCentral/user/<project>.html` (one per project, existing rule);
-  mockups `ProjectCentral/user/mockups/<slug>-<local-stamp>.html` — the
-  project's own human ground, where aperture treatment already governs
-  who may write.
+  mockups `ProjectCentral/user/mockup-<slug>-<local-stamp>.html` — flat in
+  the project's own human ground (no implicit directory creation), many per
+  project. Created files join the horizon as
+  project-human-source-aperture sources; every later revision goes through
+  `projectcentral.source.write` CAS.
 
 Day and Flow adopt identity + native Save through this same relation
 without their designs or payloads changing (W8). Relations surface through

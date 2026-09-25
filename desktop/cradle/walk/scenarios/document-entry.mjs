@@ -141,10 +141,16 @@ export default async function run({ page, baseUrl, provision, check, shot }) {
   // --- 4+2: the Day die opens as its real file -----------------------------
   await newBlankTab();
   const formButtons = await page.locator('.pane.focused .fresh-docforms button').allTextContents();
-  check(formButtons.length === 5 && formButtons.some(t => t.includes('Flow')) && formButtons.some(t => t.includes('Day'))
+  // The roster offers Flow, Day, Beings, Things, Epi-Card and Goal
+  // everywhere; Vision and Mockup join when the picker carries a project
+  // scope (they create in a project's human ground). The cube stays
+  // withdrawn (forms.json records it as declared scope, never UI).
+  check(formButtons.some(t => t.includes('Flow')) && formButtons.some(t => t.includes('Day'))
       && formButtons.some(t => t.includes('Beings')) && formButtons.some(t => t.includes('Things'))
-      && formButtons.some(t => t.includes('Epi-Card')),
-    'The blank tab offers exactly the five document types — Day, Flow, Beings, Things, Epi-Card (the cube is withdrawn)', { formButtons });
+      && formButtons.some(t => t.includes('Epi-Card')) && formButtons.some(t => t.includes('Goal'))
+      && !formButtons.some(t => t.includes('Cube') || t.includes('Yoshimoto'))
+      && (formButtons.length === 6 || (formButtons.length === 8 && formButtons.some(t => t.includes('Vision')) && formButtons.some(t => t.includes('Mockup')))),
+    'The blank tab offers Flow, Day, Beings, Things, Epi-Card and Goal everywhere, plus Vision and Mockup in a project scope (the cube is withdrawn)', { formButtons });
 
   await page.locator('.pane.focused .fresh-docforms button', { hasText: 'Day' }).click();
   await page.locator('.tab[data-title="ql-daily-die.html"][data-active="true"]').waitFor({ timeout: 20000 });

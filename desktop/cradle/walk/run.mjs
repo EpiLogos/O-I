@@ -156,6 +156,7 @@ const SCENARIOS = {
   study: { module: "scenarios/study.mjs", kernel: false, aliases: ["ui-study"] },
   native: { module: "scenarios/native.mjs", kernel: false, aliases: ["package"] },
   "document-entry": { module: "scenarios/document-entry.mjs", kernel: true, aliases: ["6a"] },
+  "document-surface": { module: "scenarios/document-surface.mjs", kernel: true, aliases: ["docsurface"] },
   "background-completion": {module:"scenarios/background-completion.mjs",kernel:true,aliases:[]},
   "lane0-repairs": {module:"scenarios/lane0-repairs.mjs",kernel:true,aliases:[]},
   // 11-FACTORY (lane 3): one walk per Factory state group, grade B.

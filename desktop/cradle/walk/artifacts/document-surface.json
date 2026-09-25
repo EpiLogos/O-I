@@ -1,0 +1,219 @@
+{
+  "schema": "oi.cradle.walk.scenario/v1",
+  "scenario": "document-surface",
+  "spec_ref": "docs/cradle/05-EXECUTION.md §3",
+  "grade": "B",
+  "binding": null,
+  "generated_at": "2026-09-25T10:36:43.010Z",
+  "environment": {
+    "base_url": "http://localhost:4173",
+    "bridge_url": "http://127.0.0.1:4179",
+    "viewport": "1280x820",
+    "browser_engine": "chromium",
+    "bundle": "walk (WALK=1) served by vite preview",
+    "build_input": {
+      "mode": "fresh-build",
+      "bundle_fingerprint": "567be751420cff72a5a17554b0df67370c64bf82638d66a93644674b23c2d9f4"
+    },
+    "node": "v24.16.0",
+    "platform": "darwin",
+    "source": {
+      "repository_root": "/Users/admin/Central/worktrees/env-2/o-i",
+      "repository_head": "2a43791e503805e6e9fbd686167800ff7864bfe1",
+      "tracked_changes": [
+        "desktop/cradle/docs/DOCUMENT-SURFACE.md",
+        "desktop/cradle/src/material/MaterialSurface.tsx",
+        "desktop/cradle/src/surface/SourceSurface.tsx",
+        "desktop/cradle/walk/run.mjs",
+        "desktop/cradle/walk/scenarios/document-entry.mjs"
+      ],
+      "dirty_digest": "f6e537dd3b67aec5159d68f490fd48a3c997b744c0c986acbbdb88386a406642",
+      "engine_provenance_path": "/Users/admin/Central/worktrees/env-2/o-i/packages/oi-design-system/expressions-engine/PROVENANCE.json",
+      "engine_source": "EpiLogos/Point-Cloud-Demo",
+      "engine_revision": "91db8428fc9dfba06cd258ec5a58e7dd9eef5313"
+    }
+  },
+  "passed": true,
+  "error": null,
+  "duration_ms": 13956,
+  "checks": [
+    {
+      "ok": true,
+      "label": "Choosing Vision creates the project vision page in its human ground through the owner door (an oi.page/v1 document at ProjectCentral/user/oi.html)"
+    },
+    {
+      "ok": true,
+      "label": "The document host names the family from the payload itself, not the filename"
+    },
+    {
+      "ok": true,
+      "label": "Editing in the rendered body turns the host state to \"Unsaved on the page\" and the page island itself carries the determination",
+      "data": {
+        "revision": 1,
+        "introduction": "The document is the product: authored, encounterable, native."
+      }
+    },
+    {
+      "ok": true,
+      "label": "The direct edit saves through the source CAS; the horizon’s change record carries the desktop’s declared-human attribution (the kernel’s human:desktop identity)",
+      "data": {
+        "actors": [
+          "human:desktop/human/modified"
+        ],
+        "islandAtSave": {
+          "revision": 1,
+          "introduction": "The document is the product: authored, encounterable, native."
+        },
+        "savedIntroduction": "The document is the product: authored, encounterable, native."
+      }
+    },
+    {
+      "ok": true,
+      "label": "After the save the rendered page still shows the authored determination",
+      "data": {
+        "revision": 1,
+        "introduction": "The document is the product: authored, encounterable, native."
+      }
+    },
+    {
+      "ok": true,
+      "label": "A stale basis refuses the save and the owner’s newer revision stands untouched; the conflict is the structured one"
+    },
+    {
+      "ok": true,
+      "label": "After the rebase the kept edit saves onto the new basis — the person’s explicit save is what changes the source",
+      "data": {
+        "hasSecondThought": true
+      }
+    },
+    {
+      "ok": true,
+      "label": "Choosing Mockup creates a dated project mockup in the human ground from the retained template",
+      "data": {
+        "file": "mockup-mockup-2026-09-25-1136.html"
+      }
+    },
+    {
+      "ok": true,
+      "label": "The mockup’s own state switcher operates: the loading state is the live one and the trace names it"
+    },
+    {
+      "ok": true,
+      "label": "The mockup’s provenance (its vision/design/capability trace) is visible in the host bar",
+      "data": {
+        "relationsText": "Design[design.md#unit-id]Vision[vision.html#unit-id]Capability[cap.id]"
+      }
+    },
+    {
+      "ok": true,
+      "label": "A selection inside a mockup state carries the state’s semantic identity (the actual locator), not a bare text blob",
+      "data": {
+        "nodeRef": "state-loading",
+        "role": "text",
+        "text": "[Loading]"
+      }
+    },
+    {
+      "ok": true,
+      "label": "Forged page messages move nothing: the revision is unchanged and only the host’s own controls can save"
+    },
+    {
+      "ok": true,
+      "label": "After a reload the workspace restores the open Vision and Mockup, and the saved determination is still on the page",
+      "data": {
+        "revision": 2,
+        "introduction": "The document is the product: authored, encounterable, native",
+        "bar": null
+      }
+    },
+    {
+      "ok": true,
+      "label": "No unexpected page errors during the document-surface walk",
+      "data": []
+    },
+    {
+      "ok": true,
+      "label": "The mockup template’s hash routing degrades, named: its replaceState is illegal in the opaque-origin srcdoc transport (a feedback item for the template’s owner); state switching still operates",
+      "data": {
+        "count": 3
+      }
+    }
+  ],
+  "ops": [
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 68,
+      "data": {
+        "file": "document-surface-vision-created.png"
+      }
+    },
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 121,
+      "data": {
+        "file": "document-surface-vision-edited-on-page.png"
+      }
+    },
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 56,
+      "data": {
+        "file": "document-surface-vision-saved.png"
+      }
+    },
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 47,
+      "data": {
+        "file": "document-surface-vision-after-save.png"
+      }
+    },
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 112,
+      "data": {
+        "file": "document-surface-vision-stale-conflict.png"
+      }
+    },
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 107,
+      "data": {
+        "file": "document-surface-mockup-loading-state.png"
+      }
+    },
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 108,
+      "data": {
+        "file": "document-surface-mockup-semantic-selection.png"
+      }
+    },
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 114,
+      "data": {
+        "file": "document-surface-continuity-restored.png"
+      }
+    }
+  ],
+  "metrics": {},
+  "screenshots": [
+    "document-surface-vision-created.png",
+    "document-surface-vision-edited-on-page.png",
+    "document-surface-vision-saved.png",
+    "document-surface-vision-after-save.png",
+    "document-surface-vision-stale-conflict.png",
+    "document-surface-mockup-loading-state.png",
+    "document-surface-mockup-semantic-selection.png",
+    "document-surface-continuity-restored.png"
+  ]
+}

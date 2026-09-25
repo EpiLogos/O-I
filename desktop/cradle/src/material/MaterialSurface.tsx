@@ -1,6 +1,6 @@
 import {IconTabStrip} from "../workspace/primitives/IconTabStrip";
 import {readDraft} from "../workspace/drafts";
-import {useCallback,useEffect,useMemo,useRef,useState,type RefObject} from "react";
+import {useCallback,useEffect,useMemo,useRef,useState} from "react";
 import {Loading} from "../shared/Loading";
 import {useKernel} from "../kernel/KernelProvider";
 import type {CentralLocation, KernelTransportStatus} from "../kernel/types";
@@ -11,7 +11,7 @@ import {materialCapabilities,type MaterialFormat} from "./detect";
 import {renderMarkdown} from "./markdown";
 import "./material.css";
 import pageContextScript from "../context/page-context.js?raw";
-import documentHostScript from "../context/document-host.js?raw";
+import {documentScripts, useDocumentHostRead, type FrameIsland} from "../document/frame";
 import {useMaterialContext} from "../context/PageContext";
 import {readDocumentIdentity,islandSpan,FAMILY_LABEL} from "../document/identity";
 import {saveDocumentPayload,type DocumentSaveOutcome} from "../document/hostSave";
@@ -49,44 +49,6 @@ function materialUrl(transport: KernelTransportStatus, location: CentralLocation
 }
 
 interface Disposition { byte_len: number; mime_hint: string | null }
-
-interface FrameIsland { text: string | null; revision: number | null; documentId: string | null }
-
-/** The document host bridge read (DOCUMENT-SURFACE.md): one bounded
- * question to the rendered frame — what does the page's own payload
- * island hold right now. The page gains nothing; the host learns only
- * what the page already keeps in its own data island. */
-function useDocumentHostRead(frame: RefObject<HTMLIFrameElement | null>, active: boolean) {
-  const requests = useRef(new Map<string, {resolve: (value: FrameIsland | null) => void; timer: ReturnType<typeof setTimeout>}>());
-  useEffect(() => {
-    if (!active) return;
-    const receive = (event: MessageEvent) => {
-      const value = event.data;
-      if (value?.type !== "oi:document-host-response") return;
-      const pending = requests.current.get(value.request);
-      if (!pending || !frame.current || event.source !== frame.current.contentWindow) return;
-      requests.current.delete(value.request);
-      clearTimeout(pending.timer);
-      pending.resolve(value.result);
-    };
-    window.addEventListener("message", receive);
-    return () => {
-      window.removeEventListener("message", receive);
-      for (const pending of requests.current.values()) { clearTimeout(pending.timer); pending.resolve(null); }
-      requests.current.clear();
-    };
-  }, [active, frame]);
-  return useCallback(() => {
-    const target = frame.current;
-    if (!target?.contentWindow) return Promise.resolve(null);
-    return new Promise<FrameIsland | null>(resolve => {
-      const request = crypto.randomUUID();
-      const timer = setTimeout(() => { requests.current.delete(request); resolve(null); }, 1500);
-      requests.current.set(request, {resolve, timer});
-      target.contentWindow?.postMessage({type: "oi:document-host-request", request, op: "read"}, "*");
-    });
-  }, [frame]);
-}
 
 /** Extension fallback for a `data:` URL's mime type when the owner
  * disclosed no hint — mirrors `ctrl/src/files.rs::sniff_mime`'s small
@@ -406,7 +368,7 @@ function MaterialToggle({ view, onChange }: { view: MaterialView; onChange: (vie
  * the `oi-material://` URL directly — the document never passes through
  * this function there. */
 function injectBase(html: string, baseHref: string | undefined): string {
-  const base = `${baseHref?`<base href="${baseHref.replace(/"/g, "&quot;")}">`:""}<script>${pageContextScript}</script><script>${documentHostScript}</script>`;
+  const base = `${baseHref?`<base href="${baseHref.replace(/"/g, "&quot;")}">`:""}${documentScripts}`;
   if (/<head[^>]*>/i.test(html)) return html.replace(/<head[^>]*>/i, match => `${match}${base}`);
   return `${base}${html}`;
 }
