@@ -618,3 +618,5 @@ Installed builds from this branch (`oi desktop install --bundle`, BUNDLE.json so
 | Library | Reused original collections page, no HUD over it | installed screenshots |
 
 Known boundary (owner-assigned elsewhere): every `aikit knowledge` call costs ~18–23 s (GitNexus CLI re-probed per project per call; indexes rebuilt per call). Relations reads time out at the kernel's 20 s cap and the QL authoring forms (frame chooser) never arrive. Diagnosis and a probe memoisation are on ai-kit branch `perf/knowledge-provider-probe-memo-20260925` in `worktrees/env-2/ai-kit`, handed to the env-2 worker.
+
+Delivered head `69ed21a8` (installed; CI 28/28). All CI walks drive the one HUD (masthead Save, Library file-save/open modal, Studio-footer native status, selection-following card). Open: `tests/techne-joined-verification.mjs` (not in CI) passes through the V1a/V1b/V1c negatives, then its clean reopen after the V1c fault times out at 120 s in full runs while an instrumented run reopens within 20 s — timing-dependent under the current AIKit latency; re-run after the AIKit fix before treating it as a product defect.
