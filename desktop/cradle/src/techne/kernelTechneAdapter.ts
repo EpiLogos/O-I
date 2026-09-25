@@ -40,6 +40,7 @@ import {
   type TechneReading,
 } from "./contract";
 import {resolveActionRoute, createTechneSource, type TechneAdapter, type TechneSource} from "./m0m5/adapter";
+import {composeRegions, type PalaceDocumentSnapshot, type PalaceRegionSpec} from "./m0m5/palace/composition";
 
 /** The actor name the journey edits carry (the projection's focus edits use
  * the same grammar; the kernel records it on the document). */
@@ -50,6 +51,55 @@ interface SceneCompositionInput {
   expression_ref: string;
   revision: string | null;
   change: {change: "scene_create"; scene_ref: string; title: string};
+}
+
+/** The route input the Palace's durable composition carries
+ * (`m0m5/palace/return.ts` `palaceReturnInput`): the INTENT (which regions,
+ * which Expressions in each) — never a diffed change list and never a
+ * `composition_set`/`shared.values` payload. The diff against the live
+ * document happens here, in `submitPalaceComposition`, against the ONE
+ * standing document this window actually holds. */
+interface PalaceCompositionInput {
+  expression_ref: string;
+  regions: PalaceRegionSpec[];
+}
+
+/** The receipt a Palace composition earns: routed, with the applied kernel
+ * Changes named verbatim (never a generic "composition_set applied" — the
+ * Change list is exactly what the substrate recorded). */
+function appliedPalaceReceipt(route: TechneActionRoute, applied: {expression_ref: string; revision: number; changes: string[]}): TechneActionReceipt {
+  return {
+    action_ref: route.action_ref,
+    native_owner: "oi.cradle.kernel",
+    routed: true,
+    authority: "oi.kernel/expression-edit",
+    expected_effects: [
+      ...applied.changes,
+      `document ${applied.expression_ref} now at revision ${applied.revision}`,
+    ],
+  };
+}
+
+/** Build the pure diffing snapshot from the ONE live standing document —
+ * exactly the facts `composition.ts`'s `planRegions` needs, nothing more.
+ * No Entity facts: a region's contained Expression is read only from its
+ * Scene's own body, never from an Entity. */
+function paletteSnapshot(document: ExpressionDocument): PalaceDocumentSnapshot {
+  return {
+    expression_ref: document.expression_ref,
+    revision: document.revision,
+    scenes: document.scenes.map(scene => ({
+      scene_ref: scene.scene_ref,
+      title: scene.title,
+      body: scene.body ? {carrier: scene.body.carrier, subject_ref: scene.body.subject_ref} : null,
+      triggers: (scene.triggers ?? []).map(trigger => ({
+        trigger_ref: trigger.trigger_ref,
+        target: trigger.target && "kind" in trigger.target
+          ? {kind: (trigger.target as {kind?: string}).kind, subject_ref: (trigger.target as {subject_ref?: string}).subject_ref}
+          : undefined,
+      })),
+    })),
+  };
 }
 
 /** Where the fresh expected revision comes from: the register's standing
@@ -120,6 +170,52 @@ export async function submitSceneComposition(
   return {ok:false,reason:reply.error ?? data?.state ?? "the kernel did not confirm the composed scene"};
 }
 
+/** Execute the Palace's durable composition through the kernel's expression
+ * edit op — diffed FIRST against the ONE live standing document
+ * (`composition.ts` `composeRegions`/`planRegions`), so a region that
+ * already matches emits nothing (replay-idempotent), and the CAS basis is
+ * always the document's OWN current revision, never a stale one the caller
+ * carried in. A revision_conflict refreshes the mirror without retrying;
+ * "nothing to compose" (every region already matches) is an honest
+ * no-op receipt, never a fabricated failure. */
+export async function submitPalaceComposition(
+  transport: KernelTransportStatus,
+  input: PalaceCompositionInput,
+  actions: TechneReading["actions"],
+  seams?: {
+    runner?: typeof kernelOp;
+    readStanding?: typeof standingDocument;
+    adopt?: typeof adoptEditedDocument;
+  },
+): Promise<{ok: true; expression_ref: string; revision: number; changes: string[]} | {ok: false; reason: string}> {
+  const run = seams?.runner ?? kernelOp;
+  const readStanding = seams?.readStanding ?? standingDocument;
+  const adopt = seams?.adopt ?? adoptEditedDocument;
+  const standing = readStanding(input.expression_ref);
+  if (!standing) {
+    return {ok: false, reason: `the Expression ${input.expression_ref} is not open in this window — enter its Web (M0′) first so the kernel holds the generation, then compose`};
+  }
+  const proposal = composeRegions(paletteSnapshot(standing), input.regions, actions);
+  if (!proposal) {
+    return {ok: true, expression_ref: input.expression_ref, revision: standing.revision, changes: []};
+  }
+  const basis = standing.revision;
+  const reply = await run(transport, {op:"expression",request:{operation:"edit",
+    expression_ref:input.expression_ref, expected_revision:basis,actor:JOURNEY_ACTOR,changes:proposal.input.changes}});
+  const data=reply.outcome?.result === "expression" ? reply.outcome.data as ExpressionResult : undefined;
+  if (!reply.error && data?.document && data.document.expression_ref === input.expression_ref && data.document.revision>basis) {
+    adopt(input.expression_ref,data.document);
+    return {ok:true,expression_ref:input.expression_ref,revision:data.document.revision,changes:proposal.input.changes.map(change=>change.change)};
+  }
+  if(data?.state === "revision_conflict") {
+    const fresh=await run(transport,{op:"expression",request:{operation:"inspect",expression_ref:input.expression_ref}});
+    const document=fresh.outcome?.result === "expression" ? (fresh.outcome.data as ExpressionResult).document : undefined;
+    if(document?.expression_ref===input.expression_ref)adopt(input.expression_ref,document);
+    return {ok:false,reason:"revision_conflict: the construction changed during composition; inspect and explicitly reconcile the proposal"};
+  }
+  return {ok:false,reason:reply.error ?? data?.state ?? "the kernel did not confirm the composition"};
+}
+
 /** The receipt the kernel's applied edit earns: routed, with the applied
  * effect named in the kernel's own terms. */
 function appliedReceipt(route: TechneActionRoute, applied: {scene_ref: string; expression_ref: string; revision: number}): TechneActionReceipt {
@@ -169,10 +265,19 @@ export function kernelTechneAdapter(transport: KernelTransportStatus): TechneAda
     async routeAction(route: TechneActionRoute, reading: TechneReading): Promise<TechneActionReceipt> {
       const resolution = resolveActionRoute(reading, route);
       if (resolution.routed !== true) return resolution;
-      const input = route.input as SceneCompositionInput | undefined;
-      if (route.action_ref !== "oi.expression.edit" || input?.change?.change !== "scene_create") return resolution;
-      const applied = await submitSceneComposition(transport, input);
-      return applied.ok ? appliedReceipt(route, applied) : {...resolution, routed: false, reason: applied.reason};
+      if (route.action_ref !== "oi.expression.edit") return resolution;
+      const input = route.input as (SceneCompositionInput & {regions?: undefined}) | (PalaceCompositionInput & {expression_ref: string | null}) | undefined;
+      if (input && Array.isArray((input as {regions?: unknown}).regions) && typeof input.expression_ref === "string" && input.expression_ref) {
+        const palaceInput = {expression_ref: input.expression_ref, regions: (input as {regions: PalaceRegionSpec[]}).regions};
+        const applied = await submitPalaceComposition(transport, palaceInput, reading.actions);
+        return applied.ok ? appliedPalaceReceipt(route, applied) : {...resolution, routed: false, reason: applied.reason};
+      }
+      const sceneInput = input as SceneCompositionInput | undefined;
+      if (sceneInput?.change?.change === "scene_create") {
+        const applied = await submitSceneComposition(transport, sceneInput);
+        return applied.ok ? appliedReceipt(route, applied) : {...resolution, routed: false, reason: applied.reason};
+      }
+      return resolution;
     },
   };
 }

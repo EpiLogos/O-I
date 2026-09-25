@@ -46,13 +46,15 @@ import {mountShell,iconButton as ib} from './shell.js';
 import {OrbitControl} from './orbitControl.js';
 import {RailItem,railPressed} from './rail.js';
 import {featuredExpressions,startingPoints,nativeSeven,forkExpression,libraryHTML,modesHTML,compositionCover} from './expressions.js';
-import {installKernelExpressions,kernelExpressionsAvailable,readTechneReading,techneConstellationRelate} from './kernelExpressions.js';
+import {installKernelExpressions,kernelExpressionsAvailable,readTechneReading,techneConstellationRelate,listKernelExpressions,readKernelExpression,nativeExpressionRequest} from './kernelExpressions.js';
 import {hostedRecovery} from './nativeRecovery.js';
 import {entryGateHTML} from './entryGate.js';
 import {AUTHORED_CHAKRA_STARTER,STANDING_LABEL} from './centreStanding.js';
 import {installNativeWorkspace,type NativeSubject} from './nativeWorkspace.js';
 import {installLensStudio,type LensId} from './lensStudio.js';
 import {installResearchInstruments} from './researchInstruments.js';
+import {installPalaceInstrument} from './palaceInstrument.js';
+import type {PalaceDocumentSnapshot} from '../../../src/techne/m0m5/palace/composition';
 import {applyResearchMaterial,pruneResearchOccurrence,type ResearchMaterialAction} from './researchMaterial.js';
 import {installTechneWorld} from './techneWorld.js';
 import type {ConnectionBinding} from '../../../../../packages/oi-design-system/expressions-engine/oi/expressionBindings.mjs';
@@ -886,6 +888,7 @@ let researchSuspension:symbol|null=null;
 function setInstrumentSurface(lens:LensId|null){
  const research=lens==='canvas'||lens==='timeline'||lens==='place';
  document.body.classList.toggle('research-active',research);
+ document.body.classList.toggle('palace-active',lens==='palace');
  document.body.dataset.activeInstrument=lens??'expression';
  $('stage').inert=research;
  $('stage').setAttribute('aria-hidden',String(research));
@@ -923,7 +926,8 @@ function activateInstrument(lens:LensId){
  else researchInstruments?.close();
  if(lens==='project'){sequenceOpen=false;timelineOpen=false;inspectorOpen=false;contextKind='';beltPickerOpen=false;}
  if(lens==='journey'){sequenceOpen=false;timelineOpen=true;inspectorOpen=false;contextKind='';beltPickerOpen=false;}
- if(lens==='palace'){sequenceOpen=false;timelineOpen=false;contextKind='';beltPickerOpen=false;inspectorOpen=true;editing=true;tab='field';studioSection='physics';}
+ if(lens==='palace'){if(propertyTake)finishPropertyTake();void palaceInstrument.open();}
+ else palaceInstrument.close();
  renderAll();announceHostState();
 }
 const lensStudio=installLensStudio({subject:()=>nativeWorkspace?.nativeSubject()??null,construction:()=>nativeWorkspace?.construction()??null,activate:activateInstrument});
@@ -973,6 +977,17 @@ researchInstruments=installResearchInstruments({
  updateConnectionDirectionality:async(sceneId,ref,directionality)=>{researchScene(sceneId);const binding=ownResearchConnection(ref);if(directionality==='forward')return;if(directionality!=='backward')throw new Error('Expression connections are directed. Reverse it, or record an undirected constellation relationship.');assertConnectionMembers(sceneId,binding.to_entity_ref,binding.from_entity_ref);await nativeWorkspace?.edit([{change:'relation_bind',binding:{...binding,from_entity_ref:binding.to_entity_ref,to_entity_ref:binding.from_entity_ref}}]);},
  deleteConnection:async(sceneId,ref)=>{researchScene(sceneId);ownResearchConnection(ref);await nativeWorkspace?.edit([{change:'relation_remove',binding_ref:ref}]);},
  updateConnectionKind:async(sceneId,ref,kind)=>{researchScene(sceneId);const binding=ownResearchConnection(ref);await nativeWorkspace?.edit([{change:'relation_bind',binding:{...binding,relation:{...binding.relation,ref:`${ref}:${connectionKind(kind)}`,revision:String(Number(binding.relation.revision)+1)}}}]);},
+});
+// M5′ Palace: regions are Scenes of the Palace Expression, each disclosing one
+// contained Expression as its body with a portal; the guided path is Scene
+// order. Everything goes through the kernel Expression owner with CAS.
+const palaceSnapshot=(raw:unknown):PalaceDocumentSnapshot&{title:string}=>{const doc=raw as {expression_ref:string;revision:number;title?:string;scenes?:{scene_ref:string;title?:string;body?:{carrier?:string;subject_ref?:string}|null;triggers?:{trigger_ref:string;target?:{kind?:string;subject_ref?:string}}[]}[]};return {expression_ref:doc.expression_ref,revision:doc.revision,title:doc.title??doc.expression_ref,scenes:(doc.scenes??[]).map(scene=>({scene_ref:scene.scene_ref,title:scene.title??'',body:scene.body?{carrier:scene.body.carrier,subject_ref:scene.body.subject_ref}:null,triggers:(scene.triggers??[]).map(trigger=>({trigger_ref:trigger.trigger_ref,target:trigger.target?{kind:trigger.target.kind,subject_ref:trigger.target.subject_ref}:undefined}))}))};};
+const palaceInstrument=installPalaceInstrument({
+ nativeView:()=>nativeWorkspace?.nativeView(),sceneId:()=>scene().id,
+ listExpressions:()=>listKernelExpressions(),
+ readExpression:async ref=>palaceSnapshot(await readKernelExpression(ref)),
+ composeExpression:async({expression_ref,expected_revision,changes})=>{const data=await nativeExpressionRequest({operation:'edit',expression_ref,expected_revision,actor:'human:techne-palace',changes}) as {state?:string;current_revision?:number;document?:unknown}|null;if(data?.state==='revision_conflict')return {ok:false,reason:`This Palace changed elsewhere (now revision ${data.current_revision}). Nothing was saved; reopen it and try again.`};if(!data?.document||data.state!=='ready')return {ok:false,reason:`The Expression owner did not accept the composition (${String(data?.state)}).`};return {ok:true,document:palaceSnapshot(data.document)};},
+ openExpression:ref=>{void nativeWorkspace?.open(ref);},
 });
 lensStudio.setMode(hostMode);
 (document.querySelector('#workspace-menu') as HTMLElement)?.insertAdjacentHTML('beforeend',ib('native-work','save','Native composition — save and reopen'));

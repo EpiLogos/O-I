@@ -550,3 +550,8 @@ body.research-active.research-preview #research-workspace>.research-instrument{v
 .entry-gate-starters p{font-size:10px;color:var(--muted,#74766b);margin:0 0 10px}
 .entry-gate-starters button{display:block;width:100%;text-align:left;padding:8px 0;font-size:12px;color:var(--accent,#8b5844)}
 .modes-standing{font-size:10px;color:var(--muted,#74766b);padding:0 20px 8px;margin:0}
+
+/* M5′ Palace: its own composition body stands over the retained field. */
+.palace-active #stage,.palace-active #app>.chrome,.palace-active #app>.hud-panel,
+.palace-active #shape-picker,.palace-active #recording-badge,.palace-active #present-return,
+.palace-active .native-domain-output,.palace-active #engine-recovery{display:none!important}

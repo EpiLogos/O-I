@@ -10,12 +10,42 @@
  *   - the arrangement (grid rooms and loci) is LOCAL presentation state of
  *     one surface: moving an element asserts no semantic relation, mutates
  *     nothing in the reading, and persists nowhere (no localStorage, no
- *     IndexedDB, no Palace record);
- *   - there is no second knowledge graph and no second Scene type: the
- *     composition proposal names the Expression substrate's own
- *     `scene_compose` change (`../expression/types.ts` Change union) and is
- *     ROUTED to the disclosed Expression-owner Action — the native owner
- *     executes under its own authority, never the Palace;
+ *     IndexedDB, no Palace record) until composed;
+ *   - there is no second knowledge graph, no second Scene type and no
+ *     second store of any kind — not even a JSON blob riding inside an
+ *     existing field. A DURABLE Palace region is a real Scene of the
+ *     Palace's own Expression (O:I #352 ES1A/ES1B substrate); a region's
+ *     primary contained Expression is disclosed as that Scene's own body
+ *     (`scene_body_set`, carrier `expression_ref`); the guided path is the
+ *     Palace's own scene order (`scene_reorder`); independent opening is a
+ *     declarative Portal trigger (`scene_trigger_attach`). This is NEVER
+ *     `composition_set`/`shared.values` (a second store in disguise — the
+ *     rejected design) and NEVER `scene_compose` on an Expression ref (that
+ *     change takes a Scene's own `entity_refs`, a different object).
+ *     FINDING (kernel `expression.rs` Entity-subject validation, proven in
+ *     `kernel/tests/palace_composition_native.rs`): an Entity's own
+ *     `subject_bind` explicitly REFUSES a `subject_ref` starting with
+ *     `expression:` ("Subject must remain native") — so a contained
+ *     Expression can never be disclosed by binding an Entity to it, and a
+ *     Scene has exactly one body — so a region Scene discloses EXACTLY ONE
+ *     contained Expression, never several. There is no marker-Entity
+ *     fallback for a second member: identity encoded into a minted ref's own
+ *     id string is a second store in disguise, and such members are not
+ *     independently addressable through the substrate anyway. A region that
+ *     wants a second Expression is a second region — the UI refuses adding
+ *     past one member with a plain reason and offers "Add as new region"
+ *     instead;
+ *   - a region's removal is an explicit act, never inferred from a region
+ *     simply going unmentioned: `planRegions`'s `removedRegionNames` is the
+ *     only path to `scene_remove`;
+ *   - every plan is diffed against a live document snapshot before it is
+ *     returned, so replaying the same composition twice emits NO changes
+ *     the second time (no duplicate Scenes or triggers) — this module never
+ *     invents identity a snapshot doesn't already disclose;
+ *   - the proposal always carries the CAS basis (`revision`, the snapshot's
+ *     own document revision) so execution can be gated on the exact
+ *     revision this proposal was derived from — never a freshly
+ *     re-inspected one;
  *   - no stochastic identity: every derivation is a pure function of its
  *     inputs, so re-deriving yields the same elements in the same order.
  *
@@ -59,27 +89,28 @@ export const PALACE_LOCI_PER_ROOM = 4;
 /** Loci inside a room sit on a square span (2×2 for 4 loci). */
 export const PALACE_LOCUS_SPAN = 2;
 
-/** The proposal's change kind: the Expression substrate's own composition
- * change (Change union, `scene_compose`) — never a Palace persistence shape. */
-export type PalaceComposeKind = "scene_compose";
-
-/** The route input carried to the Expression owner: the target expression,
- * the scene to compose into (the binding's own scene_ref, verbatim) and the
- * composed element refs in arrangement order. */
-export interface PalaceCompositionInput {
-  expression_ref: string;
-  change: { kind: PalaceComposeKind; scene_ref: string | null; elements: string[] };
-}
-
-/** A native composition proposal: an Action route plus its input. Routing
- * and execution stay with the adapter and the native owner. */
-export interface PalaceCompositionProposal {
-  action_ref: string;
-  input: PalaceCompositionInput;
-}
-
 /** The fallback Expression-owner action when the reading discloses none. */
 export const FALLBACK_EXPRESSION_ACTION = "oi.expression.edit";
+
+// ---------------------------------------------------------------------------
+// Native ref minting — Expression-local refs, valid under the kernel's own
+// `id(value, prefix)` charset (alnumeric plus `-_.` after the prefix).
+// ---------------------------------------------------------------------------
+
+/** Sanitise a region NAME (a free-form label, never another native ref) into
+ * a safe Expression-local suffix for its Scene/trigger refs. This never
+ * carries a target object's own identity — a region's contained Expression
+ * is disclosed only through its Scene's own body (`scene_body_set`), read
+ * back from the document itself, never decoded from a ref string. */
+function sanitiseSuffix(value: string): string {
+  const escaped = value.replace(/[^A-Za-z0-9\-_.]/g, "-");
+  if (escaped.length > 0 && escaped.length <= 120) return escaped;
+  let a = 2166136261;
+  for (let index = 0; index < value.length; index += 1) {
+    a = Math.imul(a ^ value.charCodeAt(index), 16777619) >>> 0;
+  }
+  return `region-${a.toString(16)}`;
+}
 
 // ---------------------------------------------------------------------------
 // Elements — the reading's own Expression bindings, verbatim
@@ -199,28 +230,227 @@ export function expressionOwnerAction(actions: readonly NativeActionRef[] | unde
   return (actions ?? []).find((action) => action.action_ref.startsWith("oi.expression.")) ?? null;
 }
 
-/** Compose the arranged elements into the native composition proposal. The
- * proposal targets the first element in arrangement order: its expression_ref
- * names the target Expression, its scene_ref (verbatim, nullable) names the
- * scene, and the arranged element refs ride in order inside the substrate's
- * `scene_compose` change. Returns null when there is nothing to compose.
- * Nothing is executed and nothing is persisted here. */
-export function composeChange(
-  elements: readonly PalaceElement[],
-  arrangement: PalaceArrangement,
+// ---------------------------------------------------------------------------
+// Kernel Change shapes this module emits — the exact substrate primitives
+// (O:I #352 ES1A/ES1B), never a Palace-invented shape. Typed narrowly to
+// what the Palace actually uses; the kernel's own Change union is wider.
+// ---------------------------------------------------------------------------
+
+export interface PalaceReadingRef { ref: string; revision: string; availability: "available" | "unavailable" | "withheld" | "stale" }
+export type PalaceChange =
+  | { change: "scene_create"; scene_ref: string; title: string }
+  | { change: "scene_rename"; scene_ref: string; title: string }
+  | { change: "scene_remove"; scene_ref: string }
+  | {
+      change: "scene_body_set";
+      scene_ref: string;
+      body: {
+        carrier: "expression_ref";
+        subject_ref: string;
+        native_owner: string;
+        reading: PalaceReadingRef;
+        provenance: PalaceReadingRef[];
+        actions: { action_ref: string; target_ref: string; authority_requirement: string }[];
+        presentation: "live" | "inline" | "preview" | "degraded";
+        capability: { state: "renderable" } | { state: "degrades_to_thing"; reason: string } | { state: "unavailable"; reason: string };
+        recursion: { host_expression_ref: string; max_depth: number };
+      };
+    }
+  | { change: "scene_trigger_detach"; trigger_ref: string }
+  | {
+      change: "scene_trigger_attach";
+      scene_ref: string;
+      trigger: { trigger_ref: string; occasion: "activate"; target: { kind: "portal"; placement: "beside"; subject_ref: string } };
+    }
+  | { change: "scene_reorder"; scene_refs: string[] };
+
+/** One region as the Palace intends it: a name, its ONE contained Expression
+ * (or null for an empty, not-yet-filled region), and the region's own Scene
+ * ref when it already exists (from a prior readback) — null for a region not
+ * yet created. A region discloses AT MOST ONE Expression — the kernel's own
+ * Entity-subject validation refuses an Entity bound to another Expression
+ * ("Subject must remain native"; `kernel/tests/palace_composition_native.rs`
+ * proves it), and a Scene has exactly one body, so one Scene can durably
+ * disclose exactly one contained Expression. No marker Entities, no ref
+ * encoded into an id string — an object's containment is read from the
+ * Scene's own body, never decoded from anywhere. */
+export interface PalaceRegionSpec {
+  name: string;
+  scene_ref: string | null;
+  member: { expression_ref: string; title: string; revision?: string | null } | null;
+}
+
+/** The live document facts this module diffs against — exactly what a
+ * kernel `inspect`/`edit` reply discloses, never a second reading of it. */
+export interface PalaceSceneSnapshot {
+  scene_ref: string;
+  title: string;
+  body?: { carrier?: string; subject_ref?: string } | null;
+  triggers?: readonly { trigger_ref: string; target?: { kind?: string; subject_ref?: string } }[];
+}
+export interface PalaceDocumentSnapshot {
+  expression_ref: string;
+  revision: number;
+  scenes: readonly PalaceSceneSnapshot[];
+}
+
+const PALACE_PRESENTATION = "preview" as const;
+const PALACE_RECURSION_DEPTH = 1;
+
+function findScene(snapshot: PalaceDocumentSnapshot, sceneRef: string | null): PalaceSceneSnapshot | undefined {
+  return sceneRef ? snapshot.scenes.find((scene) => scene.scene_ref === sceneRef) : undefined;
+}
+
+/** Mint the region's own Scene ref, deterministic from the region name. */
+export function regionSceneRef(paletteExpressionRef: string, regionName: string): string {
+  return `${paletteExpressionRef}:scene:region-${sanitiseSuffix(regionName)}`;
+}
+/** Mint the region's Portal trigger ref — flat under the Palace Expression
+ * (kernel `id()` requires `<expression_ref>:trigger:<suffix>`, never nested
+ * under the region's own scene ref). */
+export function regionTriggerRef(paletteExpressionRef: string, regionName: string): string {
+  return `${paletteExpressionRef}:trigger:region-${sanitiseSuffix(regionName)}-portal`;
+}
+
+/** Plan the exact kernel Changes to bring the live document to the composed
+ * regions — diffed against `snapshot` FIRST, so nothing already disclosed is
+ * re-emitted: a region whose Scene, body and trigger already match composes
+ * to zero changes for that region (replay-idempotent, no duplicate Scenes or
+ * triggers). `removedRegionNames` names regions the caller explicitly
+ * decided to remove — NEVER inferred from a region simply being absent from
+ * `regions` (an omission is not a deletion): only a name listed here emits
+ * `scene_remove`. Returns null when there is nothing to compose (no regions,
+ * no removals, or every region already matches the snapshot exactly).
+ * Nothing is executed here — planning is pure over the snapshot given. */
+export function planRegions(
+  snapshot: PalaceDocumentSnapshot,
+  regions: readonly PalaceRegionSpec[],
+  removedRegionNames: readonly string[] = [],
+): PalaceChange[] | null {
+  const changes: PalaceChange[] = [];
+  const anchor = snapshot.expression_ref;
+  const guidedSceneRefs: string[] = [];
+
+  for (const removedName of removedRegionNames) {
+    const sceneRef = regionSceneRef(anchor, removedName);
+    if (findScene(snapshot, sceneRef)) changes.push({ change: "scene_remove", scene_ref: sceneRef });
+  }
+  const removedSceneRefs = new Set(removedRegionNames.map((name) => regionSceneRef(anchor, name)));
+
+  for (const region of regions) {
+    const sceneRef = region.scene_ref ?? regionSceneRef(anchor, region.name);
+    if (removedSceneRefs.has(sceneRef)) continue; // an explicit removal always wins over a stale kept-region entry
+    guidedSceneRefs.push(sceneRef);
+    const existingScene = findScene(snapshot, sceneRef);
+
+    if (!existingScene) {
+      changes.push({ change: "scene_create", scene_ref: sceneRef, title: region.name });
+    } else if (existingScene.title !== region.name) {
+      changes.push({ change: "scene_rename", scene_ref: sceneRef, title: region.name });
+    }
+
+    // The region's ONE contained Expression: the only object a Scene can
+    // durably disclose (its own body) — the kernel-Entity-subject-bind
+    // refusal above is exactly why this is one member, never several.
+    const member = region.member;
+    if (member) {
+      const desiredBody = {
+        carrier: "expression_ref" as const,
+        subject_ref: member.expression_ref,
+        native_owner: "oi",
+        reading: { ref: member.expression_ref, revision: member.revision ?? "1", availability: "available" as const },
+        provenance: [],
+        actions: [],
+        presentation: PALACE_PRESENTATION,
+        capability: { state: "renderable" as const },
+        recursion: { host_expression_ref: anchor, max_depth: PALACE_RECURSION_DEPTH },
+      };
+      const bodyMatches = existingScene?.body?.carrier === "expression_ref" && existingScene.body.subject_ref === member.expression_ref;
+      if (!bodyMatches) changes.push({ change: "scene_body_set", scene_ref: sceneRef, body: desiredBody });
+
+      const triggerRef = regionTriggerRef(anchor, region.name);
+      const existingTrigger = existingScene?.triggers?.find((trigger) => trigger.trigger_ref === triggerRef);
+      const triggerMatches = existingTrigger?.target?.kind === "portal" && existingTrigger.target.subject_ref === member.expression_ref;
+      if (!triggerMatches) {
+        if (existingTrigger) changes.push({ change: "scene_trigger_detach", trigger_ref: triggerRef });
+        changes.push({
+          change: "scene_trigger_attach",
+          scene_ref: sceneRef,
+          trigger: { trigger_ref: triggerRef, occasion: "activate", target: { kind: "portal", placement: "beside", subject_ref: member.expression_ref } },
+        });
+      }
+    }
+  }
+
+  // Guided path: the Palace's own region Scenes in the given order, any
+  // other Scene in the document (e.g. the Expression's own main Scene) kept
+  // in its existing relative position, appended after the regions, and any
+  // explicitly removed Scene dropped. Safe to name a region Scene not yet
+  // in the snapshot: its `scene_create` (pushed above) always precedes this
+  // `scene_reorder` in the SAME changes array, and the kernel applies
+  // changes sequentially — by the time reorder runs, every named Scene
+  // already exists (and every removed one is already gone).
+  const managedRefs = new Set(guidedSceneRefs);
+  const otherRefs = snapshot.scenes
+    .map((scene) => scene.scene_ref)
+    .filter((ref) => !managedRefs.has(ref) && !removedSceneRefs.has(ref));
+  const desiredOrder = [...otherRefs, ...guidedSceneRefs];
+  const currentOrder = snapshot.scenes.map((scene) => scene.scene_ref).filter((ref) => !removedSceneRefs.has(ref));
+  if (currentOrder.length !== desiredOrder.length || currentOrder.some((ref, index) => ref !== desiredOrder[index])) {
+    changes.push({ change: "scene_reorder", scene_refs: desiredOrder });
+  }
+
+  return changes.length > 0 ? changes : null;
+}
+
+/** The full composition proposal: the plan (if any) plus the routing Action
+ * and CAS basis. Returns null when there is nothing to compose (every
+ * region already matches the snapshot — an honest idempotent no-op). */
+export function composeRegions(
+  snapshot: PalaceDocumentSnapshot,
+  regions: readonly PalaceRegionSpec[],
   actions?: readonly NativeActionRef[],
-): PalaceCompositionProposal | null {
-  if (elements.length === 0) return null;
-  const present = new Set(elements.map((element) => element.expression_ref));
-  const ordered = arrangementOrder(arrangement).filter((ref) => present.has(ref));
-  const orderedRefs = ordered.length > 0 ? ordered : elements.map((element) => element.expression_ref);
-  const target = elements.find((element) => element.expression_ref === orderedRefs[0]) ?? elements[0];
+  removedRegionNames?: readonly string[],
+): { action_ref: string; input: { expression_ref: string; revision: string; changes: PalaceChange[] } } | null {
+  const changes = planRegions(snapshot, regions, removedRegionNames);
+  if (!changes) return null;
   const disclosed = expressionOwnerAction(actions);
   return {
     action_ref: disclosed ? disclosed.action_ref : FALLBACK_EXPRESSION_ACTION,
-    input: {
-      expression_ref: target.expression_ref,
-      change: { kind: "scene_compose", scene_ref: target.scene_ref ?? null, elements: orderedRefs },
-    },
+    input: { expression_ref: snapshot.expression_ref, revision: String(snapshot.revision), changes },
   };
+}
+
+/** Recover one region's ONE member from its own Scene — read from the
+ * Scene's own body, authoritative and lossless. Never a marker Entity, never
+ * a ref decoded from an id string: containment is only ever what the
+ * document's own body discloses. */
+function regionMemberFromScene(scene: PalaceSceneSnapshot): PalaceRegionSpec["member"] {
+  if (scene.body?.carrier !== "expression_ref" || !scene.body.subject_ref) return null;
+  return { expression_ref: scene.body.subject_ref, title: scene.body.subject_ref };
+}
+
+/** Read the composed regions back from a live document snapshot, by their
+ * already-known names — the readback half of `planRegions`/`composeRegions`,
+ * over the document's OWN scenes/bodies, never a second reading. "Composition
+ * survives reopening" is this round trip, not an assertion. */
+export function readPalaceRegions(snapshot: PalaceDocumentSnapshot, regionNames: readonly string[]): PalaceRegionSpec[] {
+  return regionNames.map((name) => {
+    const sceneRef = regionSceneRef(snapshot.expression_ref, name);
+    const scene = findScene(snapshot, sceneRef);
+    if (!scene) return { name, scene_ref: null, member: null };
+    return { name, scene_ref: sceneRef, member: regionMemberFromScene(scene) };
+  });
+}
+
+/** Discover every Palace region a live document already carries, with no
+ * name known in advance: every Scene minted by `regionSceneRef` (its own
+ * ref prefix names it as a Palace region — never a guess, never a second
+ * index) becomes one region, named from the Scene's own title. This is how
+ * the mounted Palace instrument rehydrates its region list on reopen. */
+export function discoverRegions(snapshot: PalaceDocumentSnapshot): PalaceRegionSpec[] {
+  const prefix = `${snapshot.expression_ref}:scene:region-`;
+  return snapshot.scenes
+    .filter((scene) => scene.scene_ref.startsWith(prefix))
+    .map((scene) => ({ name: scene.title, scene_ref: scene.scene_ref, member: regionMemberFromScene(scene) }));
 }
