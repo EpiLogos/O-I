@@ -9,6 +9,8 @@ import type {KernelConversion} from './kernelDocumentBridge.js';
 import {techneConstellationRequest,type TechneSceneReadingRequest,type TechneConstellationRequest} from './kernelExpressions.js';
 import {nativeInstrumentCanvas,nativeInstrumentTitles,nativeInstrumentPreviews,nativeInstrumentNodeTags,nativeInstrumentSourceRelations,readingInstruments,CANVAS_UNITS,assertInstrumentReadingScope,expressionTextFromNote,type InstrumentCanvas,type NativeRelationDirectionReading} from './researchInstrumentsData.js';
 import {createGestureTransaction,withGesturePreviews,type GestureTransaction} from './canvasGesture.js';
+import {RelationFieldView} from './relationFieldView.js';
+import type {TechneReading} from '../../../src/techne/contract';
 import './researchInstrumentStyles.css';
 import './researchInstruments.css';
 
@@ -92,6 +94,10 @@ export interface ResearchInstrumentsHost {
 }
 interface ViewState {
  canvas?:{x:number;y:number;zoom:number};timeline?:TimelineViewState;place?:{latitude:number;longitude:number;zoom:number};selectedNode?:string|null;selectedEdge?:string|null;selectedPlace?:string|null;
+ /** M2′: chronology (the vendored TimelineSurface) vs. the relation-field
+  * projections (relationFieldView.tsx) — session-local presentation state,
+  * never a second store. */
+ m2Projection?:'chronology'|'field';
  /** Gesture transactions live on the ViewState, not inside canvasNode's
   * per-render closures, so one gesture survives the many re-renders a drag
   * or resize produces. The `*Adapter` refs are rebound on every canvasNode()
@@ -310,10 +316,30 @@ export function installResearchInstruments(host:ResearchInstrumentsHost){
     const available=Math.max(240,host.container.clientWidth-320);
     const savedTimeline=view?host.sceneMaterial(sceneId).research?.views.timeline:undefined;
     state.timeline??={centerYear:savedTimeline?.x??(first+last)/2,pixelsPerYear:savedTimeline?.zoom??Math.max(.02,Math.min(4000,available/Math.max(2,(last-first)*1.4))),selectedNodeId:null};
-    message(temporal.length?'Timeline':'No dates disclosed by this source');
-    render(<>{createPortal(<div className="research-tool-actions"><button onClick={()=>void load('m2')}>Refresh timeline</button>{view&&<button onClick={()=>{if(state.timeline)void host.material(sceneId,{type:'viewport',key:'timeline',value:{x:state.timeline.centerYear,y:0,zoom:state.timeline.pixelsPerYear}}).then(()=>message('View saved'),error=>message(String(error)));}}>Save view</button>}{(tagReason||relationReason)&&<button onClick={()=>message([tagReason&&`Tags: ${tagReason}`,relationReason&&`Relations: ${relationReason}`].filter(Boolean).join(' · '))}>Reading incomplete</button>}</div>,host.tools)}<TimelineSurface timeExtent={years.length?{startYear:first,endYear:last}:undefined} toolbarContainer={host.tools} repository={data.timeline} constellationId={data.reading.subject.subject_ref} dataSource={data.dataSource}
-     initialState={state.timeline} onViewStateChange={value=>{state.timeline=value;}}
-     onOpenCanvasNode={ref=>{const node=data.bundle.nodes.find(node=>node.graphNodeId===ref);if(node)host.inspectSubject(ref,{node});}} onOpenNode={(ref,node,relationField)=>host.inspectSubject(ref,{node,relationField})}/></>);return;
+    // Chronology vs. the M2′ relation-field projections is a presentation
+    // switch over the SAME reading/repository — never a second app, tab or
+    // store (Wayfinder §16). Session-local only, like the timeline camera.
+    state.m2Projection??='chronology';
+    const setProjection=(next:'chronology'|'field')=>{state.m2Projection=next;render(canvasNode2());};
+    const canvasNode2=():ReactNode=>{
+     const toggle=<div className="research-tool-actions" role="tablist" aria-label="Timeline projection">
+      <button role="tab" aria-selected={state.m2Projection==='chronology'} aria-pressed={state.m2Projection==='chronology'} onClick={()=>setProjection('chronology')}>Chronology</button>
+      <button role="tab" aria-selected={state.m2Projection==='field'} aria-pressed={state.m2Projection==='field'} onClick={()=>setProjection('field')}>Relations</button>
+      <button onClick={()=>void load('m2')}>Refresh timeline</button>
+      {view&&state.m2Projection==='chronology'&&<button onClick={()=>{if(state.timeline)void host.material(sceneId,{type:'viewport',key:'timeline',value:{x:state.timeline.centerYear,y:0,zoom:state.timeline.pixelsPerYear}}).then(()=>message('View saved'),error=>message(String(error)));}}>Save view</button>}
+      {(tagReason||relationReason)&&<button onClick={()=>message([tagReason&&`Tags: ${tagReason}`,relationReason&&`Relations: ${relationReason}`].filter(Boolean).join(' · '))}>Reading incomplete</button>}
+     </div>;
+     if(state.m2Projection==='field'){
+      return <>{createPortal(toggle,host.tools)}<RelationFieldView reading={data.reading as unknown as TechneReading} width={available}
+       onSelectRelation={edge=>{if(!edge.derived_id)host.select(sceneId,null,edge.id);}}
+       onOpenMember={ref=>host.inspectSubject(ref)}/></>;
+     }
+     return <>{createPortal(toggle,host.tools)}<TimelineSurface timeExtent={years.length?{startYear:first,endYear:last}:undefined} toolbarContainer={host.tools} repository={data.timeline} constellationId={data.reading.subject.subject_ref} dataSource={data.dataSource}
+      initialState={state.timeline!} onViewStateChange={value=>{state.timeline=value;}}
+      onOpenCanvasNode={ref=>{const node=data.bundle.nodes.find(node=>node.graphNodeId===ref);if(node)host.inspectSubject(ref,{node});}} onOpenNode={(ref,node,relationField)=>host.inspectSubject(ref,{node,relationField})}/></>;
+    };
+    message(temporal.length||state.m2Projection==='field'?(state.m2Projection==='field'?'Relations':'Timeline'):'No dates disclosed by this source');
+    render(canvasNode2());return;
    }
    const places=await data.places.getLocatedNodes(data.reading.subject.subject_ref);if(epoch!==generation||destroyed)return;
    // The shipped basemap is geographic context, never personal graph nodes.
