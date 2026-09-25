@@ -153,11 +153,10 @@ try {
   await frame.locator('[data-action="studio-section"][data-value="scene"]').click();
   await frame.locator('#inspector-content [data-detail="journey"] summary').click();
   await edit('journey.name', 'Worked in the field');
-  if (!await frame.locator('#native-work').isVisible()) await frame.locator('[data-action="native-work"]').first().click();
-  await frame.getByRole('button', {name: 'Commit composition', exact: true}).waitFor({state: 'visible'});
-  await frame.waitForFunction(() => !document.querySelector('[data-native="commit"]').disabled);
-  await frame.getByRole('button', {name: 'Commit composition', exact: true}).click();
-  await frame.locator('.native-status').filter({hasText: 'Native working revision'}).waitFor();
+  // Save is the app's own masthead act; it commits the working composition.
+  await frame.waitForFunction(() => !document.getElementById('native-save')?.disabled);
+  await frame.locator('#native-save').click();
+  await frame.waitForFunction(r => (window.__FIELD_STUDIES__.nativeWorking()?.revision ?? 0) > r, openedRevision, {timeout: 60000});
   const reread = (await op({op: 'expression', request: {operation: 'inspect', expression_ref: expectedRef}})).data.document;
   check(reread.revision > openedRevision && reread.title === 'Worked in the field', 'An edit made in the field commits to the SAME native constellation Expression through the owner (revision advanced, title changed)');
 

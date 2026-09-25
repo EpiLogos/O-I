@@ -557,6 +557,7 @@ async function action(name:string,el:HTMLElement,event?:Event){const s=scene(),s
  case 'native-retry-file':void nativeWorkspace?.retryFile();break;
  case 'native-page':void nativeWorkspace?.page(Number(el.dataset.delta));break;
  case 'native-save-file':openNativeFileDialog();break;
+ case 'native-open-file':openCentralFileDialog();break;
  case 'research-preview':if(!researchInstruments?.active())break;researchPreview=!researchPreview;lastTime=performance.now();needsFrame=true;overlayDirty=true;renderAll();break;
  case 'native-library':openLibrary('collection');break;
  case 'lens':lensStudio.select(el.dataset.lens as LensId);break;
@@ -1055,7 +1056,9 @@ const palaceInstrument=installPalaceInstrument({
 },palaceHome);
 lensStudio.setMode(hostMode);
 (document.querySelector('#workspace-menu') as HTMLElement)?.insertAdjacentHTML('beforeend',ib('deep-home','home','Epii home','data-techne-only')+ib('deep-verso','wiki','Verso — the subject\u2019s account and sources','data-techne-only'));
-(document.querySelector('#header-actions-menu') as HTMLElement)?.insertAdjacentHTML('afterbegin',ib('native-save','save','Save (⌘S)','id="native-save"'));
+// Save is the primary act: it stays in the masthead at every width, outside
+// the history/capture overflow menu.
+(document.querySelector('#app .header-actions') as HTMLElement)?.insertAdjacentHTML('afterbegin',ib('native-save','save','Save (⌘S)','id="native-save"'));
 Object.assign(window.__FIELD_STUDIES__,{nativeWorking:()=>nativeWorkspace?.inspect(),nativeConnections:()=>engine.inspectConnections?.(),openNative:(reference:string)=>nativeWorkspace?.open(reference),openNativeFile:(path:string)=>nativeWorkspace?.openFile(path)});
 const qs=new URLSearchParams(location.search);
 // A hosted deep link (the app's own ?journey/?scene idiom): open a named
@@ -1086,6 +1089,13 @@ function showNativeStatus(state:import('./nativeWorkspace.js').NativeStatus){
  const text=failed?state.text:state.identity?`${state.identity.title} · saved revision ${state.identity.revision}`:'';
  line.innerHTML=`${esc(text)}${actions}`;line.classList.toggle('failed',failed);
  if(state.failed&&state.retryOpen)toast(state.text,7000);
+}
+/** Re-enter an exact native Expression file (e.g. after a restart). */
+function openCentralFileDialog(){
+ const dialog=$<HTMLDialogElement>('confirm-dialog');
+ dialog.innerHTML=`<form method="dialog" class="native-file-form"><h2>Open a Central file</h2><p>Opens a saved native Expression file under its own identity.</p><label>Central path<input name="path" placeholder="Project/folder/name.expression.json"></label><footer><button value="cancel">Cancel</button><button value="open" class="primary">Open</button></footer></form>`;
+ dialog.onclose=()=>{if(dialog.returnValue!=='open')return;const path=(dialog.querySelector('form')!.elements.namedItem('path') as HTMLInputElement).value.trim();if(!path)return;if(libraryOpen)closeLibrary();void nativeWorkspace?.openFile(path).then(ok=>{if(ok)toast(nativeState?.text||'Opened.',5000);});};
+ dialog.showModal();
 }
 /** Native file save in the app's own modal: a Central folder and filename. */
 function openNativeFileDialog(){

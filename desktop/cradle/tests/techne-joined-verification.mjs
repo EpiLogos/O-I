@@ -310,9 +310,8 @@ try {
     const drawnId = edgesAfter.find(id => !edgesBefore.includes(id));
     const clickEdge = async () => frame.evaluate(id => {const el = [...document.querySelectorAll('.research-canvas .react-flow__edge')].find(e => (e.getAttribute('data-id') ?? e.getAttribute('data-testid') ?? '') === id); const target = el?.querySelector('.react-flow__edge-interaction') ?? el?.querySelector('path'); if (!target) return false; target.dispatchEvent(new MouseEvent('click', {bubbles: true})); return true;}, drawnId);
     check(await clickEdge(), 'A drawn Canvas connection is its own selectable O:I presentation edge (relation-to-renderer precondition)');
-    const inspectorToggle = frame.getByRole('button', {name: 'Toggle canvas inspector'}).first();
-    if (await inspectorToggle.getAttribute('aria-pressed') !== 'true') await inspectorToggle.click();
-    await page.waitForTimeout(200);
+    // The connection card follows the selection (no separate inspector toggle).
+    await frame.locator('#research-inspector:not([hidden])').waitFor();
     const relationsBefore = relationRows();
     // Positive: the constellation writer succeeds.
     await frame.locator('#research-inspector').getByLabel('Relation').fill('verifies');
@@ -401,14 +400,24 @@ try {
       const input = frame.locator('#inspector-content [data-bind="entity.force.strength"]').first();
       await input.fill(String(value)); await input.press('Enter');
       await frame.locator('#inspector [data-action="close-studio"]').first().click().catch(() => {});
-      if (!await frame.locator('#native-work').isVisible()) await frame.locator('[data-action="native-work"]:visible').first().click();
-      await frame.getByRole('button', {name: 'Commit composition', exact: true}).waitFor({state: 'visible'});
-      await frame.waitForFunction(() => !document.querySelector('[data-native="commit"]').disabled);
-      await frame.getByRole('button', {name: 'Commit composition', exact: true}).click();
-      await frame.locator('.native-status').filter({hasText: 'Native working revision'}).waitFor();
+      const before = await frame.evaluate(() => window.__FIELD_STUDIES__.nativeWorking()?.revision ?? 0);
+      await frame.waitForFunction(() => !document.getElementById('native-save')?.disabled);
+      await frame.locator('#native-save').click();
+      await frame.waitForFunction(r => (window.__FIELD_STUDIES__.nativeWorking()?.revision ?? 0) > r, before, {timeout: 120000});
+    }
+    // Central file save is the Library file bar's modal (no native panel).
+    async function saveFileAs(name) {
+      await frame.waitForFunction(() => !document.getElementById('native-save')?.disabled);
+      await frame.evaluate(() => document.querySelector('[data-action="library"]').click());
+      await frame.locator('#library-page:not([hidden])').waitFor();
+      await frame.locator('#library-page [data-action="native-save-file"]').first().click();
+      await frame.locator('#confirm-dialog[open] input[name="folder"]:not([disabled])').waitFor({timeout: 90000});
+      await frame.locator('#confirm-dialog[open] input[name="folder"]').fill('Work/Notes');
+      await frame.locator('#confirm-dialog[open] input[name="name"]').fill(name);
+      await frame.locator('#confirm-dialog[open] button[value="save"]').click();
     }
     // Each attempt gets its own fresh page load before editing/saving — the
-    // native-work panel's own destination fields were observed to stay
+    // former native panel's destination fields were observed to stay
     // disabled across a second in-session edit+save cycle (a UI-state finding
     // worth its own follow-up, noted separately); a fresh load sidesteps that
     // without weakening what this negative actually proves.
@@ -422,10 +431,7 @@ try {
     await frame.locator(`.research-canvas .react-flow__node[data-id="${nodeA}"]`).waitFor();
     await setForce(9.5);
     routeFault = {mode: 'refuse', message: 'Native save refused by test fault injection', match: (text) => text.includes(badName)};
-    await frame.locator('[data-native-field="folder"]:not([disabled])').waitFor({timeout: 90000});
-    await frame.locator('[data-native-field="folder"]').fill('Work/Notes');
-    await frame.locator('[data-native-field="name"]').fill(badName);
-    await frame.locator('[data-native="save"]').click();
+    await saveFileAs(badName);
     await page.waitForTimeout(2000);
     negative(!existsSync(resolve(project, badName)), '[V1d negative] With native save refused at the bridge, no file is written to Central');
     routeFault = null;
@@ -437,11 +443,8 @@ try {
     await frame.locator('[data-action="lens"][data-lens="canvas"]').first().click();
     await frame.locator(`.research-canvas .react-flow__node[data-id="${nodeA}"]`).waitFor();
     await setForce(2.75);
-    await frame.locator('[data-native-field="folder"]:not([disabled])').waitFor({timeout: 90000});
-    await frame.locator('[data-native-field="folder"]').fill('Work/Notes');
-    await frame.locator('[data-native-field="name"]').fill(goodName);
-    await frame.locator('[data-native="save"]').click();
-    await frame.waitForFunction(() => /saved|Saved/.test(document.querySelector('.native-status')?.textContent ?? ''), null, {timeout: 120000});
+    await saveFileAs(goodName);
+    await frame.waitForFunction(() => /Saved and read back/.test(document.getElementById('toast')?.textContent ?? ''), null, {timeout: 120000});
     check(existsSync(resolve(project, goodName)), '[V1d positive] The native file save writes the exact file to Central');
     const goodFile = JSON.parse(readFileSync(resolve(project, goodName), 'utf8'));
     check(goodFile.expression_ref === expectedRef, '[V1d positive] The saved native file carries the exact Expression identity');

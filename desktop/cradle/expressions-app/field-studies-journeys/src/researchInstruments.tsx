@@ -443,7 +443,7 @@ export function installResearchInstruments(host:ResearchInstrumentsHost){
   }:undefined;
   const inspector=<div className="research-inspector-content" onKeyDown={event=>{if(event.key==='Escape'){event.preventDefault();event.stopPropagation();closeInspector();}}}><header><h3>{current?.title??(state.selectedEdge?'Connection':'Canvas')}</h3><button className="card-close" onClick={closeInspector} aria-label="Close" title="Close"><ToolIcon name="close"/></button></header>
    {current&&<button onClick={()=>{const ref=current.type==='resource'?current.absolutePath:host.nativeView()?.document.entities[current.id]?.subject?.subject_ref;if(ref)host.inspectSubject(ref);}}>Open source</button>}
-   {editable&&current&&localId&&host.editObject&&<button onClick={()=>host.editObject!(canvas.sceneId!,localId)}>Edit object</button>}
+   {editable&&current&&localId&&host.editObject&&<button aria-label="Edit object" onClick={()=>host.editObject!(canvas.sceneId!,localId)}>Edit object</button>}
    {constellationRequest&&<ConstellationAction request={constellationRequest} onError={message}/>}
    {editable&&localId&&current&&<><label>Width<input type="number" defaultValue={Math.round(current.size.width)} onBlur={e=>act({type:'resize',id:localId,width:Number(e.target.value),height:current.size.height})}/></label><label>Height<input type="number" defaultValue={Math.round(current.size.height)} onBlur={e=>act({type:'resize',id:localId,width:current.size.width,height:Number(e.target.value)})}/></label>
    {<button disabled={!!subject&&!host.duplicateOccurrence} onClick={()=>subject?apply(()=>host.duplicateOccurrence!(canvas.sceneId!,localId)):act({type:'duplicate',id:localId})}>Duplicate</button>}
