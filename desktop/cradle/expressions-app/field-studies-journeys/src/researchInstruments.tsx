@@ -112,6 +112,8 @@ function ImageryPanel(props:React.ComponentProps<typeof StreetViewSurface>&{tool
 export interface ResearchInstrumentsHost {
  container:HTMLElement;
  tools:HTMLElement; inspector:HTMLElement;
+ /** The Studio's Places section: M4′ place facets and filters render here. */
+ placesHome?:HTMLElement;
  sceneMaterial:(sceneId:string)=>Scene;
  material:(sceneId:string,action:ResearchMaterialAction)=>Promise<void>;
  inspectSubject:(ref:string,context?:{node?:unknown;relationField?:unknown})=>void;
@@ -627,16 +629,17 @@ export function installResearchInstruments(host:ResearchInstrumentsHost){
    // and the panel always agree.
    const renderPlaces=():ReactNode=>{
     const filteredRepository=filteredPlacesRepository(data.places,data.reading as unknown as TechneReading,state.placeFilter!);
-    return <>{createPortal(<div className="research-tool-actions"><button onClick={()=>void load('m4')}>Refresh geography</button>{scene&&<button onClick={()=>{if(state.place)void host.material(sceneId,{type:'viewport',key:'place',value:{x:state.place.longitude,y:state.place.latitude,zoom:state.place.zoom}}).then(()=>message('View saved'),error=>message(String(error)));}}>Save view</button>}</div>,host.tools)}
+    const facets=<PlaceFacetsPanel reading={data.reading as unknown as TechneReading} selectedRef={state.selectedPlace??null} filter={state.placeFilter!}
+      onFilterChange={next=>{state.placeFilter=next;render(renderPlaces());}}
+      editRequest={placeEditRequest} onError={message}/>;
+    return <>{createPortal(<div className="research-tool-actions"><button aria-label="Refresh geography" title="Refresh geography" onClick={()=>void load('m4')}><ToolIcon name="history"/></button>{scene&&<button aria-label="Save map view" title="Save map view" onClick={()=>{if(state.place)void host.material(sceneId,{type:'viewport',key:'place',value:{x:state.place.longitude,y:state.place.latitude,zoom:state.place.zoom}}).then(()=>message('View saved'),error=>message(String(error)));}}><ToolIcon name="save"/></button>}</div>,host.tools)}
     <div className="research-places"><PsychogeographicMap inspectorContainer={host.inspector} toolbarContainer={host.tools} repository={filteredRepository} projectId={data.reading.subject.subject_ref} tileSource={tileSource} offlineOnly
      initialViewState={state.place} initialSelectedGraphNodeId={state.selectedPlace}
      onViewStateChange={value=>{state.place=value;}} onSelectedGraphNodeIdChange={value=>{state.selectedPlace=value;render(renderPlaces());}}
      onOpenCanvasNode={ref=>{const node=data.bundle.nodes.find(node=>node.graphNodeId===ref&&node.place);if(node)host.inspectSubject(ref,{node});}}/>
      <ImageryPanel tools={host.tools} toolbarContainer={host.tools} images={images} offlineOnly imageTitle={image=>scene?.entities.find(entity=>entity.id===image.id)?.name??'Scene image'} resolveAsset={path=>{const value=assets.get(path);if(!value)throw new Error('Image is not bound to this native Scene');return value;}} onImport={importImagery}/>
-     <PlaceFacetsPanel reading={data.reading as unknown as TechneReading} selectedRef={state.selectedPlace??null} filter={state.placeFilter!}
-      onFilterChange={next=>{state.placeFilter=next;render(renderPlaces());}}
-      editRequest={placeEditRequest} onError={message}/>
-    </div></>;
+     {!host.placesHome&&facets}
+    </div>{host.placesHome&&createPortal(facets,host.placesHome)}</>;
    };
    render(renderPlaces());
   }catch(error){if(epoch!==generation||destroyed)return;message(error instanceof Error?error.message:String(error));body.replaceChildren();}
