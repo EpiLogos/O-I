@@ -203,3 +203,66 @@ The preview workflow separately observes the candidate default Pages address wit
 writing to it. A failed strict observation remains **not accepted**, regardless
 of the preview workflow's overall status. Neither corpus nor installation is closed
 by this receiver's green checks.
+
+
+## Native Expression fidelity gate — 25 September 2026
+
+The publication failure discovered on the 92-member Return-of-Zero bundle is now
+a named regression. The source corpus was not the flat monochrome material seen
+through the public receiver. The producer had reduced every formation to six
+portable values (`glyph/x/y/z/scale/share`), mapped non-text shapes to `O`,
+and the browser rebuilt those values on a hard-coded 8,192-particle monochrome
+field. That portable composition is useful for SharedField discovery and safe
+fallback; it is **not the native Expression body** and must never again be
+presented as one.
+
+For any published member whose source is `oi.journey` v1:
+
+- the producer carries the exact journey bytes beside the portable Projection;
+- the receiver validates the journey with the existing native validator, checks
+  its SHA-256, checks every public Scene → native scene mapping, and writes the
+  body as a revisioned edition sidecar;
+- the browser verifies the sidecar digest before loading it and gives the exact
+  native Scene directly to the existing `ProductionAdapter`;
+- background, palette, material, every field/particle parameter, engine setting,
+  native entity shape or source image/ASCII, text/glyph content, transforms,
+  tint, force, station, sequence, composition, morph, automation, page-text
+  blocks and authored view therefore remain properties of the source body.
+  No publication adapter is licensed to synthesize defaults for these when the
+  exact native body exists;
+- a missing, changed, unsafe or unmapped native body makes the live Expression
+  unavailable. Falling back to the six-parameter composition is allowed only as
+  an explicitly named portable/frozen representation, never as evidence that
+  the native Expression rendered faithfully.
+
+### Curated Return-of-Zero selection
+
+The current public selection is `PUBLICATION-CURATED.json`: **135 authored
+members** — 43 E0 corpus members (including A, A′, A/C and C), one sovereign
+essay reading, eight section rooms, and 83 S0–S5 product Expressions from the
+pinned Point-Cloud-Demo product corpus. The 40 legacy field-study/demo/starter
+journeys from the former 92-member envelope are not members of this edition.
+They may survive as historical/authoring material, but must only re-enter a
+public Library through an explicitly named archive collection.
+
+The S-product set is resolved from a separately checked-out, exact
+Point-Cloud-Demo revision. If that revision is absent or different, publication
+fails; the producer may not silently publish only the aggregate `roz-s-products`
+register Expression.
+
+### Development/curation standard
+
+Schema validity and visible pixels are necessary but not sufficient evidence of
+an authored Expression. New or revised corpus work must show why its visual and
+material decisions belong to the represented source. The review packet for each
+family therefore keeps source bindings/Profile rationale and inspects real-engine
+captures across representative members. Repeated defaults are legitimate only
+where they are an authored family continuity; they cannot be used as a generic
+template in place of decisions about glyph/form, source imagery, colour/ground,
+density/size/material, force and motion, morph/sequence/automation, spatial
+composition and textual projection.
+
+Executable acceptance protects **fidelity** (exact body/digest/mapping and
+absence of legacy substitution). Human/owner review protects **meaningful
+composition**. A green pixel test that proves only “something rendered” does not
+satisfy either standard.
