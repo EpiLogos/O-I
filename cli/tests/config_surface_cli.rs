@@ -63,7 +63,8 @@ fn help_screens_are_wired_and_the_real_engine_binds_without_fixtures() {
     // settings for an owner that did not contribute.
     let isolated = TempDir::new().unwrap();
     let mut command = oi();
-    command.env_remove("OI_CONFIG_SURFACE_FIXTURES")
+    command
+        .env_remove("OI_CONFIG_SURFACE_FIXTURES")
         .env("OI_HOME", isolated.path().join("oi"))
         .env("OI_AIKIT_BIN", isolated.path().join("owner-does-not-exist"));
     let output = command.args(["config", "list", "--json"]).output().unwrap();
@@ -73,7 +74,9 @@ fn help_screens_are_wired_and_the_real_engine_binds_without_fixtures() {
     assert_eq!(listing["schema"], "oi.config-listing/v1");
     let owners = listing["owners"].as_array().expect("owners array");
     assert!(
-        owners.iter().any(|owner| owner["owner_ref"] == "ai-kit" && owner["state"] == "unavailable"),
+        owners
+            .iter()
+            .any(|owner| owner["owner_ref"] == "ai-kit" && owner["state"] == "unavailable"),
         "owners that did not answer are named degradations: {owners:?}"
     );
 }

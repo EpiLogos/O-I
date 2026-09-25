@@ -43,9 +43,9 @@ use crate::config_surface::{
 };
 use crate::configuration::kernel::{
     assemble_changeset, desired_change, execute_changeset, mint_changeset_id, plan_request,
-    product_position_specs, product_position_specs_with, reset_setting, resolve_setting, resolve_setting_address,
-    ConfigurationStore, DesiredChange, DesiredInput, DesiredRecord, KernelError, OwnerGateway,
-    OwnerRegistry, PlanDocument, ProcessTransport,
+    product_position_specs, product_position_specs_with, reset_setting, resolve_setting,
+    resolve_setting_address, ConfigurationStore, DesiredChange, DesiredInput, DesiredRecord,
+    KernelError, OwnerGateway, OwnerRegistry, PlanDocument, ProcessTransport,
 };
 use crate::configuration::profile_store::{
     import_document, is_valid_profile_ref, ProfileStore, StoreError,
@@ -99,12 +99,16 @@ impl KernelSurface {
 
     /// Bind through the same executable authority as the calling CLI.
     pub fn open_with_product_resolver(
-        resolve: impl FnMut(&crate::product_command::ProductCommandDescriptor) -> Result<PathBuf, String>,
+        resolve: impl FnMut(
+            &crate::product_command::ProductCommandDescriptor,
+        ) -> Result<PathBuf, String>,
     ) -> Result<Self, String> {
         Self::open_with_specs(product_position_specs_with(resolve)?)
     }
 
-    fn open_with_specs(specs: Vec<crate::configuration::kernel::OwnerSpec>) -> Result<Self, String> {
+    fn open_with_specs(
+        specs: Vec<crate::configuration::kernel::OwnerSpec>,
+    ) -> Result<Self, String> {
         let home = crate::configuration::kernel::oi_home()
             .map_err(|error| format!("configuration engine cannot find the O:I home: {error}"))?;
         let transport = ProcessTransport::with_specs(&specs);
@@ -743,7 +747,12 @@ impl ConfigSurface for KernelSurface {
     }
 
     fn resolve_many(&self, pairs: &[(String, Scope)]) -> Vec<SurfaceResult<Resolution>> {
-        self.transport.with_reading_batch(|| pairs.iter().map(|(setting, scope)| self.resolve(setting, scope)).collect())
+        self.transport.with_reading_batch(|| {
+            pairs
+                .iter()
+                .map(|(setting, scope)| self.resolve(setting, scope))
+                .collect()
+        })
     }
 
     fn resolve_entry(&self, entry: &DesiredEntry) -> SurfaceResult<Resolution> {
@@ -764,9 +773,12 @@ impl ConfigSurface for KernelSurface {
 
     fn diff(&self) -> SurfaceResult<Vec<Resolution>> {
         self.transport.with_reading_batch(|| {
-            self.composed_desired()?.iter().map(|held| {
-                self.build_resolution(&held.entry.setting_ref, &held.entry.scope, Some(held))
-            }).collect()
+            self.composed_desired()?
+                .iter()
+                .map(|held| {
+                    self.build_resolution(&held.entry.setting_ref, &held.entry.scope, Some(held))
+                })
+                .collect()
         })
     }
 

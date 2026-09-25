@@ -448,7 +448,10 @@ pub trait ConfigSurface {
 
     /// Resolve an ordered batch; each refused address keeps its own error.
     fn resolve_many(&self, pairs: &[(String, Scope)]) -> Vec<SurfaceResult<Resolution>> {
-        pairs.iter().map(|(setting, scope)| self.resolve(setting, scope)).collect()
+        pairs
+            .iter()
+            .map(|(setting, scope)| self.resolve(setting, scope))
+            .collect()
     }
 
     /// Resolve one explicit desired entry (e.g. a profile entry) against
