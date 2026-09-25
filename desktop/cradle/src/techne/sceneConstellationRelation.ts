@@ -8,7 +8,8 @@ import type {KernelTransportStatus} from "../kernel/types";
 import {PARTICIPATION, RELATION, editConstruction, newRef, readRegister, saveConstruction, type ApplyKernel, type NativeConstruction} from "../knowledge/construction";
 import {projectConstruction} from "../knowledge/constructionProjection";
 import {knowledgeEntityRef} from "../knowledge/expressionProjection";
-import {inspectWikiScene} from "./wikiReadingProvider";
+import {kernelOp} from "../kernel/bridge";
+import type {ExpressionDocument} from "../expression/types";
 
 export interface SceneRelationRequest {
   expression_ref: string; revision: number; scene_ref: string;
@@ -68,9 +69,24 @@ export function registerProject(path: string): string | undefined {
   throw new Error("The occurrences name a register outside Central's Wiki registers.");
 }
 
+/** The Expression as the owner holds it now. A newer revision is accepted —
+ * selection focus edits advance it constantly — because the relationship's
+ * basis is the exact occurrences (checked below) and the constellation
+ * register revision, not the Expression's presentation revision. */
+async function currentScene(transport: KernelTransportStatus, request: SceneRelationRequest) {
+  if (transport.kind === "unavailable") throw new Error(transport.reason);
+  const inspected = await kernelOp(transport, {op: "expression", request: {operation: "inspect", expression_ref: request.expression_ref}});
+  const document = inspected.outcome?.result === "expression" ? (inspected.outcome.data as {document?: ExpressionDocument}).document : undefined;
+  if (inspected.error || !document || document.expression_ref !== request.expression_ref) throw new Error(inspected.error ?? "The native Expression could not be read");
+  if (document.revision < request.revision) throw new Error("The native Expression is older than the field's view; reopen it before recording a relationship.");
+  const scene = document.scenes.find(row => row.scene_ref === request.scene_ref);
+  if (!scene) throw new Error("The requested Scene is absent from this native Expression");
+  return {document, scene};
+}
+
 export async function relateSceneConstellation(transport: KernelTransportStatus, input: unknown, apply?: ApplyKernel): Promise<SceneRelationReceipt> {
   const request = readSceneRelationRequest(input);
-  const {document, scene} = await inspectWikiScene(transport, request);
+  const {document, scene} = await currentScene(transport, request);
   const subjects = [request.from_entity_ref, request.to_entity_ref].map(ref => {
     const subject = document.entities[ref]?.subject;
     if (!scene.entity_refs.includes(ref) || !subject) throw new Error("Both occurrences must be source-bound members of this Scene.");

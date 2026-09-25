@@ -329,8 +329,10 @@ try {
   const journey = await frame.evaluate(id => {const d = window.__FIELD_STUDIES__.getDocument(), st = window.__FIELD_STUDIES__.getState(); const sc = d.scenes[st.sceneIndex]; const e = sc?.entities.find(v => v.id === id); return {strip: document.querySelectorAll('#timeline-panel .scene-strip [data-action]').length, scene: sc?.name, force: e?.force.strength, tint: e?.tint, steps: e?.sequence.steps.length, doc: d.id};}, viewA);
   probe.journey = journey;
   check(journey.strip > 0 && journey.force === reopenedA.force.strength && journey.tint === reopenedA.tint && journey.steps === reopenedA.sequence.steps.length, 'M3′ Journey shows the same Scene with the same member, material and object states');
+  if (await frame.locator('#lens-studio:not([hidden])').count()) await frame.locator('#lens-studio .lens-studio-close').click();
   await frame.locator('[data-action="native-library"]:visible').first().click();
   await frame.locator('#library-page:not([hidden])').waitFor();
+  check(await frame.evaluate(() => getComputedStyle(document.getElementById('lens-chooser')).display === 'none'), 'The Technē instrument chooser does not float over the full-page Library');
   await frame.waitForFunction(title => [...document.querySelectorAll('#library-page .oi-lib-kernel-row, #library-page .oi-lib-native-row')].some(row => row.textContent.includes(title)), reopened.title, {timeout: 60000});
   probe.libraryRows = await frame.$$eval('#library-page .oi-lib-kernel-row, #library-page .oi-lib-native-row', rows => rows.map(r => r.textContent.replace(/\s+/g, ' ').trim().slice(0, 120)));
   check(true, 'Independent readback: the reused Library page lists the reopened native Expression by its title');

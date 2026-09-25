@@ -565,3 +565,6 @@ body.research-active.research-preview #research-workspace>.research-instrument{v
 .palace-active #stage,.palace-active #app>.chrome,.palace-active #app>.hud-panel,
 .palace-active #shape-picker,.palace-active #recording-badge,.palace-active #present-return,
 .palace-active .native-domain-output,.palace-active #engine-recovery{display:none!important}
+/* The full-page Library is its own reading surface: the Technē instrument
+   chooser and Lens Studio do not float over it (they return on close). */
+body.library-open #lens-chooser,body.library-open #lens-studio{display:none!important}
