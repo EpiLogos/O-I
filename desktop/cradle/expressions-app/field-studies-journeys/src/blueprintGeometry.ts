@@ -4,12 +4,19 @@ import type {PointCloudConfig} from '../../src/engine/types';
 export const BLUEPRINT_READING_DIGEST='sha256:4d148c4155b5a16ff6bcafedf024bae3b3f60206a965b70a4fe69b58a1660139';
 export const BLUEPRINT_SHAPE=owner.shape_ref;
 export interface BlueprintTransform {translation:[number,number,number];rotation:[number,number,number];scale:number}
-export interface SceneBlueprint {schema:'oi.scene-blueprint/v1';shape_ref:string;reading_digest:string;frame:{ref:string;revision:string;availability:'available'};members:{entity_ref:string;subject_ref:string;role_ref:string;position:number}[];transform:BlueprintTransform}
+/** `basis_refs`/`derivation_ref`/`operator_ref` mirror the QL ShapeBinding's
+ * own optional fields (QL-MEF #214 geometry-closeout) — carried verbatim
+ * when the caller discloses them, never invented here. Absent on every
+ * existing bound Scene; the pinned sixfold geometry is unaffected either
+ * way. */
+export interface SceneBlueprint {schema:'oi.scene-blueprint/v1';shape_ref:string;reading_digest:string;frame:{ref:string;revision:string;availability:'available'};members:{entity_ref:string;subject_ref:string;role_ref:string;position:number}[];transform:BlueprintTransform;basis_refs?:string[];derivation_ref?:string|null;operator_ref?:string|null}
 export function validateBlueprint(value:SceneBlueprint):void {
  const fail=()=>{throw Error('The Scene blueprint does not match its exact native sixfold presentation');};
  if(!value||value.schema!=='oi.scene-blueprint/v1'||value.shape_ref!==BLUEPRINT_SHAPE||value.reading_digest!==BLUEPRINT_READING_DIGEST||value.frame?.availability!=='available'||!value.frame.ref||!value.frame.revision||!Array.isArray(value.members)||value.members.length>6)fail();
  const t=value.transform;
  if(!t||!Array.isArray(t.translation)||t.translation.length!==3||!t.translation.every(v=>Number.isFinite(v)&&Math.abs(v)<=1600)||!Array.isArray(t.rotation)||t.rotation.length!==3||!t.rotation.every(v=>Number.isFinite(v)&&Math.abs(v)<=1000)||!Number.isFinite(t.scale)||t.scale<.01||t.scale>1600)fail();
+ if(value.basis_refs!==undefined&&(!Array.isArray(value.basis_refs)||value.basis_refs.length>64||!value.basis_refs.every(r=>typeof r==='string'&&r.length>0&&r.length<=4096)))fail();
+ for(const optional of [value.derivation_ref,value.operator_ref])if(optional!=null&&(typeof optional!=='string'||optional.length===0||optional.length>4096))fail();
  const ids=new Set<string>(),roles=new Set<string>(),positions=new Set<number>();
  for(const m of value.members){if(!m.entity_ref||!m.subject_ref||!m.role_ref||!Number.isInteger(m.position)||m.position<0||m.position>5||ids.has(m.entity_ref)||roles.has(m.role_ref)||positions.has(m.position))fail();ids.add(m.entity_ref);roles.add(m.role_ref);positions.add(m.position);}
 }

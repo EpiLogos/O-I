@@ -78,6 +78,12 @@ pub struct Parameter {
     pub value: Value,
     pub automation: Option<Automation>,
 }
+/// serde `skip_serializing_if` helper: omit `pinned` from the wire when
+/// false, so every existing bound Entity (none of which ever set it) stays
+/// byte-identical after this field's addition.
+fn is_false(value: &bool) -> bool {
+    !*value
+}
 #[derive(Clone, Debug, Deserialize, Serialize, PartialEq)]
 #[serde(deny_unknown_fields)]
 pub struct Entity {
@@ -86,6 +92,13 @@ pub struct Entity {
     pub title: String,
     pub subject: Option<SubjectBinding>,
     pub parameters: BTreeMap<String, Parameter>,
+    /// World-position pin (owner commission, QL-MEF #214 geometry-closeout):
+    /// an explicit native hold on this entity's own world position, distinct
+    /// from blueprint membership (a whole's shared transform) and from
+    /// release (leaving a blueprint). Optional; defaults to unpinned and
+    /// changes only through `Change::EntityPin`.
+    #[serde(default, skip_serializing_if = "is_false")]
+    pub pinned: bool,
 }
 #[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
 #[serde(deny_unknown_fields)]
@@ -236,6 +249,14 @@ pub enum Change {
     },
     EntityRemove {
         entity_ref: String,
+    },
+    /// World-position pin: distinct from `SceneBlueprintBind`/`Transform`
+    /// (whole membership and shared transform) and from
+    /// `SceneBlueprintRelease` (leaving a blueprint) — this holds one
+    /// entity's own world position independent of either.
+    EntityPin {
+        entity_ref: String,
+        pinned: bool,
     },
     SubjectBind {
         entity_ref: String,
@@ -471,7 +492,7 @@ pub fn capabilities() -> Value {
     json!({"schema":"oi.expression-capabilities/v1", "document_schema":SCHEMA,
         "operations":["capabilities","list","inspect","create","open","open_file","fork","edit","propose","review","export","save","save_as","invoke",
             "profile_define","profile_inspect","profile_resolve","edition_create","edition_inspect","index","asset_admit","asset_traverse","asset_subject"],
-        "changes":["rename","composition_set","scene_material_set","scene_material_clear","scene_blueprint_bind","scene_blueprint_transform","scene_blueprint_release","scene_rename","scene_remove","scene_create","scene_reorder","scene_compose","entity_add","entity_remove","subject_bind","subject_unbind","relation_bind","relation_remove","focus","relation_focus","parameter_set","parameter_automate","parameter_manual","representation_bind",
+        "changes":["rename","composition_set","scene_material_set","scene_material_clear","scene_blueprint_bind","scene_blueprint_transform","scene_blueprint_release","scene_rename","scene_remove","scene_create","scene_reorder","scene_compose","entity_add","entity_remove","entity_pin","subject_bind","subject_unbind","relation_bind","relation_remove","focus","relation_focus","parameter_set","parameter_automate","parameter_manual","representation_bind",
             "scene_body_set","scene_body_clear","scene_trigger_attach","scene_trigger_detach","profile_adopt","profile_release","collections_set"],
         "composition_presentation":{"schema":"oi.journey-properties/v1","data_only":true,"scene_store":"Document.scenes"},
         "scene_presentation":{"schema":"oi.journey-scene/v1","owner":"existing Expressions authoring Scene","data_only":true,"full_native_membership_retained":true},
@@ -893,8 +914,12 @@ impl Document {
                                 automation: None,
                             },
                         )]),
+                        pinned: false,
                     },
                 );
+            }
+            Change::EntityPin { entity_ref, pinned } => {
+                self.entity(&entity_ref)?.pinned = pinned;
             }
             Change::EntityRemove { entity_ref } => {
                 if self.entities.remove(&entity_ref).is_none() {

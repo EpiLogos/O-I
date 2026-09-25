@@ -40,8 +40,10 @@ export interface GestureTransactionOptions<T> {
 export interface GestureTransaction<T> {
  /** Record the latest value for a node during an in-progress gesture. Safe
   * to call any number of times; only the last value per node survives to
-  * the eventual single commit. */
- preview(nodeId:string,value:T):void;
+  * the eventual single commit. `held` marks a preview from a pointer the
+  * person is still holding: it never arms the idle fallback, so a slow or
+  * paused drag cannot commit mid-gesture; its end comes from the pointer. */
+ preview(nodeId:string,value:T,held?:boolean):void;
  /** The node's current preview value, if a gesture is in progress for it. */
  previewValue(nodeId:string):T|undefined;
  /** Force an immediate flush, bypassing the idle timer and pointer wait.
@@ -115,11 +117,11 @@ export function createGestureTransaction<T>(options:GestureTransactionOptions<T>
  }
 
  return {
-  preview(nodeId,value){
+  preview(nodeId,value,held=false){
    pending.set(nodeId,value);
    options.onChange();
    armEndListener();
-   armIdleFallback();
+   if(held)clearIdle();else armIdleFallback();
   },
   previewValue(nodeId){return pending.get(nodeId);},
   flushNow(){return flush();},

@@ -608,3 +608,64 @@ fn relation_focus_preserves_exact_native_record_and_occurrence() {
     assert!(removed["document"]["selection"]["relation_ref"].is_null());
     assert!(removed["document"]["relations"]["expression:test:relation:one"].is_object());
 }
+#[test]
+fn entity_pin_holds_world_position_independent_of_blueprint_membership_and_defaults_unpinned_and_omitted() {
+    let mut app = Application::default();
+    create(&mut app);
+    let after_add = edit(&mut app, 1, json!([entity()]));
+    // Unpinned by default, and the field is omitted from the wire entirely —
+    // an entity added before this field existed stays byte-identical.
+    assert!(after_add["document"]["entities"]["expression:test:entity:a"]
+        .get("pinned")
+        .is_none());
+    let pinned = edit(
+        &mut app,
+        2,
+        json!([{"change":"entity_pin","entity_ref":"expression:test:entity:a","pinned":true}]),
+    );
+    assert_eq!(pinned["document"]["revision"], 3);
+    assert_eq!(
+        pinned["document"]["entities"]["expression:test:entity:a"]["revision"],
+        3,
+        "pinning touches only the pinned entity, and its own revision moves"
+    );
+    assert_eq!(
+        pinned["document"]["entities"]["expression:test:entity:a"]["pinned"],
+        true
+    );
+    // Round trip through export/open: pinned survives exactly.
+    let export = apply(
+        &mut app,
+        json!({"operation":"export","expression_ref":"expression:test","expected_revision":3}),
+    );
+    let mut fresh = Application::default();
+    let reopened = apply(
+        &mut fresh,
+        json!({"operation":"open","document":export["document"],"actor":"agent:fresh"}),
+    );
+    assert_eq!(
+        reopened["document"]["entities"]["expression:test:entity:a"]["pinned"],
+        true
+    );
+    // Unpinning is its own act, distinct from blueprint bind/transform/release,
+    // and flips the field back — with the field again omitted once false.
+    let unpinned = edit(
+        &mut app,
+        3,
+        json!([{"change":"entity_pin","entity_ref":"expression:test:entity:a","pinned":false}]),
+    );
+    assert!(unpinned["document"]["entities"]["expression:test:entity:a"]
+        .get("pinned")
+        .is_none());
+    // Pinning an absent entity refuses rather than inventing one.
+    let invalid = request(json!({"operation":"edit","expression_ref":"expression:test","expected_revision":4,"actor":"human:test",
+        "changes":[{"change":"entity_pin","entity_ref":"expression:test:entity:missing","pinned":true}]}));
+    assert!(app.apply(&CentralClient::discover(), invalid).is_err());
+    // The capability disclosure names the change.
+    let capabilities = apply(&mut app, json!({"operation":"capabilities"}));
+    assert!(capabilities["changes"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .any(|c| c == "entity_pin"));
+}

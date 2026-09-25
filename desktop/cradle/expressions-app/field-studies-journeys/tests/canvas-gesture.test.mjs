@@ -133,3 +133,21 @@ test('withGesturePreviews overlays only nodes with an active preview, without mu
  assert.deepEqual(overlaid[1],nodes[1],'node without a preview is returned as-is');
  assert.deepEqual(nodes,before,'the source node list is never mutated');
 });
+
+test('a held pointer drag that pauses longer than the idle window does not commit until the pointer is released',async()=>{
+ const win=new FakeWindow();
+ const commits=[];
+ const gesture=api.createGestureTransaction({commit:async(id,value)=>{commits.push([id,value]);},onChange:()=>{},eventTarget:win,scheduleMacrotask:fn=>fn(),idleMs:20});
+ gesture.preview('n1',{x:1,y:1},true);
+ await sleep(60);
+ gesture.preview('n1',{x:2,y:2},true);
+ await sleep(60);
+ assert.equal(commits.length,0,'a paused held drag never commits on the idle timer');
+ win.dispatch('pointerup');
+ await sleep(5);
+ assert.deepEqual(commits,[['n1',{x:2,y:2}]],'release commits exactly once with the final position');
+ // Negative: the unheld (keyboard) path still flushes on idle.
+ gesture.preview('n2',{x:5,y:5});
+ await sleep(60);
+ assert.deepEqual(commits.at(-1),['n2',{x:5,y:5}]);
+});

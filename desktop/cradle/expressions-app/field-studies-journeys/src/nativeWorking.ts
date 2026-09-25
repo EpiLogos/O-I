@@ -63,6 +63,14 @@ function connectionResult(view:KernelConversion,request:ConnectionEdit):KernelEx
    applySceneChange(doc,change,touchedScenes);
    continue;
   }
+  // A world-position pin: the exact occurrence keeps its place; this is not
+  // blueprint membership and not a lock on its other properties.
+  if(change.change==='entity_pin'){
+   const ref=change.entity_ref,entity=typeof ref==='string'?doc.entities[ref]:undefined;
+   if(!entity||typeof change.pinned!=='boolean')throw new Error('A pin names an existing occurrence and a pinned state');
+   if(change.pinned)(entity as {pinned?:boolean}).pinned=true;else delete (entity as {pinned?:boolean}).pinned;
+   continue;
+  }
   const binding=change.binding as NonNullable<KernelExpressionDocument['relations']>[string]|undefined;
   const ref=change.change==='relation_bind'?binding?.binding_ref:change.binding_ref;
   if(typeof ref!=='string'||!ref.startsWith(doc.expression_ref+':relation:connection-'))throw new Error('Only O:I Expression connections can be edited here');

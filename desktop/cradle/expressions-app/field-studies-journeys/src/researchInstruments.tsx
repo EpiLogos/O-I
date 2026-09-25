@@ -17,6 +17,7 @@ import {RelationFieldView} from './relationFieldView.js';
 import {PlaceFacetsPanel} from './placeFacetsPanel.js';
 import {OPEN_PLACE_FILTER,filteredPlacesRepository,subjectEntityRef,type PlaceFilterState} from './placeReading.js';
 import type {TechneReading} from '../../../src/techne/contract';
+import {blueprintMember,type SceneBlueprint,type BlueprintTransform} from './blueprintGeometry.js';
 import './researchInstrumentStyles.css';
 import './researchInstruments.css';
 
@@ -52,6 +53,43 @@ function RelateKnowledgeAction({sceneId,sourceRef,targetRef,defaultRelation,rela
  </div>;
 }
 
+/** Compact Canvas control group over a bound blueprint whole (owner
+ * commission, QL-MEF #214 geometry-closeout): Move/Rotate/Scale are ONE
+ * transform act (one `transformBlueprint` call per press, mirroring the
+ * native `scene_blueprint_transform` law — never a member-by-member edit);
+ * Release and Pin/Unpin are their own distinct labelled acts, never folded
+ * into the transform. Shown only while the current selection is an actual
+ * blueprint member (`blueprintMember`), never guessed from shape or count. */
+function BlueprintWholeControls({binding,pinned,busy,onTransform,onRelease,onPin}:{
+ binding:SceneBlueprint;pinned:boolean;busy:boolean;
+ onTransform:(transform:BlueprintTransform)=>void;onRelease:()=>void;onPin:(pinned:boolean)=>void;
+}){
+ const TRANSLATE_STEP=20,ROTATE_STEP=15*Math.PI/180,SCALE_FACTOR=1.1;
+ const move=(dx:number,dy:number)=>onTransform({...binding.transform,translation:[binding.transform.translation[0]+dx,binding.transform.translation[1]+dy,binding.transform.translation[2]]});
+ const rotate=(delta:number)=>onTransform({...binding.transform,rotation:[binding.transform.rotation[0],binding.transform.rotation[1],binding.transform.rotation[2]+delta]});
+ const rescale=(factor:number)=>onTransform({...binding.transform,scale:binding.transform.scale*factor});
+ return <div className="research-blueprint-controls" aria-label="Blueprint whole controls">
+  <p>{binding.members.length} sixfold roles move together.</p>
+  <div className="native-actions" role="group" aria-label="Move whole">
+   <button type="button" disabled={busy} aria-label="Move whole left" onClick={()=>move(-TRANSLATE_STEP,0)}>←</button>
+   <button type="button" disabled={busy} aria-label="Move whole right" onClick={()=>move(TRANSLATE_STEP,0)}>→</button>
+   <button type="button" disabled={busy} aria-label="Move whole up" onClick={()=>move(0,-TRANSLATE_STEP)}>↑</button>
+   <button type="button" disabled={busy} aria-label="Move whole down" onClick={()=>move(0,TRANSLATE_STEP)}>↓</button>
+  </div>
+  <div className="native-actions" role="group" aria-label="Rotate whole">
+   <button type="button" disabled={busy} onClick={()=>rotate(-ROTATE_STEP)}>Rotate −</button>
+   <button type="button" disabled={busy} onClick={()=>rotate(ROTATE_STEP)}>Rotate +</button>
+  </div>
+  <div className="native-actions" role="group" aria-label="Scale whole">
+   <button type="button" disabled={busy} onClick={()=>rescale(1/SCALE_FACTOR)}>Scale −</button>
+   <button type="button" disabled={busy} onClick={()=>rescale(SCALE_FACTOR)}>Scale +</button>
+  </div>
+  <div className="native-actions">
+   <button type="button" disabled={busy} aria-pressed={pinned} onClick={()=>onPin(!pinned)}>{pinned?'Unpin world position':'Pin world position'}</button>
+   <button type="button" disabled={busy} onClick={()=>{if(window.confirm('Release this blueprint? Its roles keep their current positions but stop moving as one whole.'))onRelease();}}>Release blueprint</button>
+  </div>
+ </div>;
+}
 export type ResearchInstrument='m1'|'m2'|'m4';
 function ImageryPanel(props:React.ComponentProps<typeof StreetViewSurface>&{tools:HTMLElement}){
  const [open,setOpen]=useState(false),toggle=useRef<HTMLButtonElement>(null),panel=useRef<HTMLElement>(null);
@@ -108,6 +146,21 @@ export interface ResearchInstrumentsHost {
   * implicitly by the presentation connect gesture — only by an explicit
   * "Record as constellation relationship" act in the inspector. */
  relateKnowledge?:(sceneId:string,input:{sourceEntityRef:string;targetEntityRef:string;relation:string;direction:'directed'|'undirected'})=>Promise<{relation_ref:string;frame_ref:string;frame_revision:number}>;
+ /** OPTIONAL — declared for the Canvas whole-transform control group (owner
+  * commission, QL-MEF #214 geometry-closeout). ONE native
+  * `scene_blueprint_transform` edit per call — move/rotate/scale together,
+  * never a member-by-member edit. Undeclared hosts simply do not offer the
+  * in-canvas controls; the separate Blueprint panel (blueprintHUD) still
+  * works either way. */
+ transformBlueprint?:(sceneId:string,transform:BlueprintTransform)=>Promise<void>;
+ /** OPTIONAL — releases the current Scene's blueprint (`scene_blueprint_release`).
+  * A distinct act from `transformBlueprint`: it never runs implicitly from a
+  * transform press, only from its own explicit, confirmed control. */
+ releaseBlueprint?:(sceneId:string)=>Promise<void>;
+ /** OPTIONAL — the world-position pin (`entity_pin`), distinct from both
+  * blueprint membership and release: holds or releases one entity's own
+  * world position independent of any whole. */
+ pinEntity?:(sceneId:string,entityId:string,pinned:boolean)=>Promise<void>;
 }
 interface ViewState {
  canvas?:{x:number;y:number;zoom:number};timeline?:TimelineViewState;place?:{latitude:number;longitude:number;zoom:number};selectedNode?:string|null;selectedEdge?:string|null;selectedPlace?:string|null;placeFilter?:PlaceFilterState;
@@ -192,7 +245,7 @@ export function installResearchInstruments(host:ResearchInstrumentsHost){
  /** Preview every override immediately (one redraw) and batch the whole
   * selection into ONE gesture-transaction id, so N nudges/drags/aligns in a
   * row still land as exactly one native write when the gesture settles. */
- function applyGroupOverrides(state:ViewState,canvas:InstrumentCanvas,sceneId:string,overrides:Record<string,{x:number;y:number}>){
+ function applyGroupOverrides(state:ViewState,canvas:InstrumentCanvas,sceneId:string,overrides:Record<string,{x:number;y:number}>,held=false){
   if(!Object.keys(overrides).length)return;
   state.groupPreview??=new Map();
   for(const [ref,position] of Object.entries(overrides))state.groupPreview.set(ref,position);
@@ -206,7 +259,7 @@ export function installResearchInstruments(host:ResearchInstrumentsHost){
   });
   const occurrence=(id:string)=>canvas.occurrences.get(id)??id;
   const moves:RepertoireMove[]=[...state.groupPreview.entries()].map(([ref,position])=>({entityId:occurrence(ref),position}));
-  state.groupMoveGesture.preview('__group__',moves);
+  state.groupMoveGesture.preview('__group__',moves,held);
   if(currentKey===canvas.key&&lens==='m1'&&!destroyed)render(canvasNode(canvas,state,epoch));
  }
  function stateFor(key:string){let state=views.get(key);if(!state){state={};views.set(key,state);if(views.size>32)views.delete(views.keys().next().value!);}currentKey=key;return state;}
@@ -284,8 +337,10 @@ export function installResearchInstruments(host:ResearchInstrumentsHost){
   // accumulates them into the same batched `groupMoveGesture` so the whole
   // selection still lands as ONE native write per gesture.
   const groupMove=(id:string,position:{x:number;y:number})=>{
-   if(!canvas.sceneId||!selection.has(id)||selection.size<2){state.moveGesture!.preview(id,position);return;}
-   applyGroupOverrides(state,canvas,canvas.sceneId,{[id]:position});
+   // Pointer drags are held gestures: they commit at drag end, never on an
+   // idle pause mid-drag.
+   if(!canvas.sceneId||!selection.has(id)||selection.size<2){state.moveGesture!.preview(id,position,true);return;}
+   applyGroupOverrides(state,canvas,canvas.sceneId,{[id]:position},true);
   };
   // Gesture end is now disclosed directly by the vendored Canvas
   // (onMoveNodeEnd) instead of being guessed from a global pointerup
@@ -359,6 +414,14 @@ export function installResearchInstruments(host:ResearchInstrumentsHost){
    {<button disabled={!!subject&&!host.duplicateOccurrence} onClick={()=>subject?apply(()=>host.duplicateOccurrence!(canvas.sceneId!,localId)):act({type:'duplicate',id:localId})}>Duplicate</button>}
    {(['dotColour','bgColour','textColour'] as const).map(key=><label key={key}>{key==='dotColour'?'Dot colour':key==='bgColour'?'Background':'Text colour'}<input type="color" value={material?.cards[localId]?.[key]??'#808080'} onChange={e=>act({type:'card-style',id:localId,patch:{[key]:e.target.value}})}/></label>)}
    </>}
+   {editable&&current&&host.transformBlueprint&&scene?.composition.blueprint&&blueprintMember(scene,current.id)&&<BlueprintWholeControls
+     binding={scene.composition.blueprint}
+     pinned={host.nativeView()?.document.entities[current.id]?.pinned===true}
+     busy={materialInFlight>0}
+     onTransform={transform=>apply(()=>host.transformBlueprint!(canvas.sceneId!,transform))}
+     onRelease={()=>host.releaseBlueprint&&apply(()=>host.releaseBlueprint!(canvas.sceneId!))}
+     onPin={next=>host.pinEntity&&apply(()=>host.pinEntity!(canvas.sceneId!,current.id,next),false)}
+    />}
    {relateEndpoints?.from&&relateEndpoints.to&&<RelateKnowledgeAction sceneId={canvas.sceneId!} sourceRef={relateEndpoints.from} targetRef={relateEndpoints.to} defaultRelation={selectedEdgeObj!.relationKind} relate={host.relateKnowledge!} onError={message} onResult={message}/>}
    {editable&&(material?.strokes??[]).map((stroke,i)=><button key={stroke.id} onClick={()=>act({type:'annotation-remove',id:stroke.id})}>Remove annotation {i+1}</button>)}
   </div>;
@@ -379,7 +442,7 @@ export function installResearchInstruments(host:ResearchInstrumentsHost){
     isEdgeReadOnly={id=>host.nativeView()?.document.relations?.[id]?.native_owner!=='oi'}
     onCreateNote={editable?position=>act({type:'create-card',kind:'note',position:{x:(position?.x??0)/CANVAS_UNITS,y:-(position?.y??0)/CANVAS_UNITS}}):undefined}
     onDuplicateNode={editable?id=>{if(host.nativeView()?.document.entities[id]?.subject){if(host.duplicateOccurrence)apply(()=>host.duplicateOccurrence!(canvas.sceneId!,occurrence(id)));else message('Native occurrence duplication is unavailable.');return;}act({type:'duplicate',id:occurrence(id)});}:undefined}
-    onResizeNode={editable?(id,width,height)=>state.resizeGesture!.preview(id,{width,height}):undefined}
+    onResizeNode={editable?(id,width,height)=>state.resizeGesture!.preview(id,{width,height},true):undefined}
     onUpdateImageCaption={editable?(id,caption)=>act({type:'card-caption',id:occurrence(id),caption},false):undefined}
     annotations={annotations} drawingEnabled={editable&&drawing}
     onCreateStroke={editable?points=>act({type:'annotation-add',stroke:{id:crypto.randomUUID(),points,color:strokeColour,width:3,opacity:1,createdAt:new Date().toISOString()}}):undefined}
@@ -410,7 +473,9 @@ export function installResearchInstruments(host:ResearchInstrumentsHost){
      path.forEach((id,index)=>setTimeout(()=>flyToNode?.(id),index*900));
     }:undefined}
     onSelectNode={id=>{selectMulti(id);redraw();}}
-    onSelectEdge={id=>{state.selectedEdge=id;state.selectedNode=null;if(canvas.sceneId)host.select(canvas.sceneId,null,id??undefined);if(id)flyToEdge?.(id);redraw();}}
+    // CanvasView reports onSelectEdge(null) right after every node click; that
+    // clears only an edge selection and never the node just selected.
+    onSelectEdge={id=>{if(id===null){if(state.selectedEdge!==null&&state.selectedEdge!==undefined){state.selectedEdge=null;redraw();}return;}state.selectedEdge=id;state.selectedNode=null;if(canvas.sceneId)host.select(canvas.sceneId,null,id??undefined);if(id)flyToEdge?.(id);redraw();}}
     onNodeDoubleClick={id=>{const view=host.nativeView(),node=canvas.nodes.find(n=>n.id===id);const subject=node?.type==='resource'?node.absolutePath:view?.document.entities[id]?.subject?.subject_ref;if(subject)host.inspectSubject(subject);else{select(id);inspecting=true;host.inspector.hidden=false;redraw();}}}
     onMoveNodePreview={editable?(id,position)=>{
      groupMove(id,state.snapToGrid?snapToGrid(position,CANVAS_UNITS/4,CANVAS_UNITS/16):position);
@@ -430,7 +495,10 @@ export function installResearchInstruments(host:ResearchInstrumentsHost){
    if(selected==='m1'&&view){
     relationReadings=[];const canvas=nativeCanvas(view,sceneId);if(epoch!==generation||destroyed)return;
     const state=stateFor(canvas.key),focus=view.document.selection;
-    state.selectedNode=focus?.scene_ref===view.bindings[sceneId].scene_ref?focus.entity_ref:null;
+    // Native focus seeds the selection; a live local selection of a node still
+    // on this Canvas is never discarded by a reload of the same work.
+    const focused=focus?.scene_ref===view.bindings[sceneId].scene_ref?focus.entity_ref??null:null;
+    state.selectedNode=state.selectedNode&&canvas.nodes.some(node=>node.id===state.selectedNode)?state.selectedNode:focused;
     state.selectedEdge=focus?.scene_ref===view.bindings[sceneId].scene_ref?focus.relation_ref??null:null;
     message(canvas.hiddenCount?`${canvas.title} · ${canvas.hiddenCount} further members on other Scene pages`:canvas.title);
     render(canvasNode(canvas,state,generation));
@@ -561,7 +629,21 @@ export function installResearchInstruments(host:ResearchInstrumentsHost){
  return {
   async open(selected:ResearchInstrument){if(destroyed)throw new Error('Research instrument workspace is closed');lens=selected;await load(selected);},
   close(){++epoch;lens=null;unmount();mount.hidden=true;},
-  async refresh(){if(materialInFlight){deferredRefresh=true;return;}if(lens)await load(lens);},
+  async refresh(){
+   if(materialInFlight){deferredRefresh=true;return;}
+   if(!lens)return;
+   // An acknowledged edit or native focus on the SAME composition and Scene
+   // updates the Canvas in place: no remount, no camera reset, and the
+   // person's selection is kept. Only a changed composition/Scene reloads.
+   if(lens==='m1'&&currentKey){
+    const view=host.nativeView(),sceneId=host.sceneId();
+    if(view&&view.bindings[sceneId]){
+     let canvas:InstrumentCanvas|undefined;try{canvas=nativeCanvas(view,sceneId);}catch{canvas=undefined;}
+     if(canvas&&canvas.key===currentKey){const state=stateFor(canvas.key);if(state.selectedNode&&!canvas.nodes.some(node=>node.id===state.selectedNode))state.selectedNode=null;render(canvasNode(canvas,state,epoch));return;}
+    }
+   }
+   await load(lens);
+  },
   destroy(){++epoch;lens=null;destroyed=true;unmount();mount.remove();status.remove();views.clear();window.removeEventListener('keydown',onWindowKeydown);modifiers.dispose();},
   active(){return lens;},
  };
