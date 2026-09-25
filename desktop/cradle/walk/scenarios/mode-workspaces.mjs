@@ -5,7 +5,7 @@ import {docText} from '../editor-doc.mjs';
  * while the base tree waits unmounted in the store and remounts exactly on
  * return. Settings is its own mode whose centre is the System panel;
  * Epi-Logos is no mode entry at all but the footer's whole-app world state
- * (LayoutState.epiLogos); unsaved writing rides through; a v1 book upgrades
+ * (the workspace world context, `context.world`); unsaved writing rides through; a v1 book upgrades
  * cleanly; idle after a switch schedules no frames. Runs over real
  * owner-backed sources. */
 export { setup } from './editor.mjs';

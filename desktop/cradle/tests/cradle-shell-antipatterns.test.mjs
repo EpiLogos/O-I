@@ -100,3 +100,33 @@ test('left and right side planes stay glass — no solid sidebar ground slab', (
   assert.doesNotMatch(shell, /background:\s*linear-gradient\([^)]*var\(--oi-sidebar-ground\)[^)]*var\(--desktop-left-width\)/);
   assert.match(shell, /--oi-sidebar-ground-glass/);
 });
+
+test('primary surfaces render no raw JSON where a person reads (DESKTOP-LANGUAGE ruling 2)', () => {
+  // The payload-presentation repair (2026-09-25): every former dump is a real
+  // component now, and the verbatim owner material sits only behind an
+  // explicit collapsed disclosure — shared idiom in contributionPresentation.
+  const shared = src('shared/contributionPresentation.tsx');
+  assert.match(shared, /<details className="oi-disclosure" data-show-raw>/);
+  const collapsed = (rel, marker) => {
+    const body = src(rel);
+    assert.doesNotMatch(body, marker, `${rel} still renders the old raw dump`);
+  };
+  collapsed('knowledge/SearchOverlay.tsx', /details className="search-evidence" open/);
+  collapsed('knowledge/OwnerActions.tsx', /<pre>\{JSON\.stringify\(outcome\.data/);
+  collapsed('explore/BeingEncounter.tsx', /JSON\.stringify\(change\)/);
+  collapsed('explore/BeingEncounter.tsx', /being-invocation-result" open/);
+  collapsed('explore/ContributionPanel.tsx', /JSON\.stringify\(body\.content\)/);
+  collapsed('explore/ContextContributionPanel.tsx', /JSON\.stringify\(body\.content\)/);
+  collapsed('agency/MintAgent.tsx', /JSON\.stringify\(entry\.current\)/);
+  collapsed('nara/NaraSurface.tsx', /JSON\.stringify\(row\.enrichment_receipt\["currentness"\]\)/);
+});
+
+test('the world context is the one world owner; the arrangement carries no copy', () => {
+  const types = src('surface/types.ts');
+  assert.doesNotMatch(types, /epiLogos\?: boolean/, 'the retired LayoutState.epiLogos copy must not return');
+  const persist = src('surface/persist.ts');
+  assert.doesNotMatch(persist, /epiLogos: parsed\.epiLogos/);
+  const frame = src('CradleFrame.tsx');
+  assert.doesNotMatch(frame, /epiLogos: true\}\)\;/);
+  assert.doesNotMatch(frame, /epiLogos=\{state\.epiLogos/);
+});

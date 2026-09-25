@@ -14,8 +14,9 @@ import type {GlyphName} from "./Glyph";
 /** The work modes, in order, with Settings the terminal system entry.
  * Epi-Logos is a WorkspaceMode value only so its curated world (left body,
  * centre, companions) stays defined — it is not in the sidebar strip: as an
- * experience it is a whole-app world state (LayoutState.epiLogos, toggled and
- * displayed in the workspace footer), not a page. O:I Web is deliberately
+ * experience it is a whole-app world state (the workspace's world context,
+ * `context.world` — the one owner, published to the lens and footer — toggled
+ * and displayed in the workspace footer), not a page. O:I Web is deliberately
  * NOT a mode at all: it is the connective field every mode reaches through
  * the one Library (the wiki as the expressions library, the shared wiki web,
  * the local instance nested in it as a subset) — see library/scope.ts. */
@@ -132,9 +133,9 @@ export const MODE_CURATION: Record<WorkspaceMode, ModeCuration> = {
 };
 
 /** The modes in the sidebar strip. Owner ruling 2026-09-18: Epi-Logos is NOT
- * a mode entry — it is a whole-app world state (LayoutState.epiLogos,
- * displayed and toggled in the workspace footer). Settings is the terminal
- * system entry and switches instantly like any other mode. */
+ * a mode entry — it is a whole-app world state (the workspace world context,
+ * `context.world`, displayed and toggled in the workspace footer). Settings
+ * is the terminal system entry and switches instantly like any other mode. */
 export const TREE_MODES: readonly WorkspaceMode[] = WORKSPACE_MODES.filter(mode => mode !== "epi-logos");
 /** The icons the sidebar strip carries: the four work modes only. Settings is
  * the separate terminal button beside them (never a second settings icon in

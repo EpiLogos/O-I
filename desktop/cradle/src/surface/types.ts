@@ -160,11 +160,6 @@ export interface LayoutState {
   /** Each mode remembers how its side regions were left, so returning to a
    * mode returns to its arrangement. Widths and the pane tree are shared. */
   modeRegions?: Partial<Record<import("../workspace/mode").WorkspaceMode, {left: AgencyDepth; right: AgencyDepth}>>;
-  /** Owner ruling 2026-09-18: Epi-Logos is a whole-app world state, not a
-   * page or a mode entry — when true, the entire system works within the
-   * Epi-Logos ground regardless of mode. Displayed and toggled in the
-   * workspace footer. */
-  epiLogos?: boolean;
 }
 
 /**
