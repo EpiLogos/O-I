@@ -99,6 +99,41 @@ async function applyNativeFocus(transport:KernelTransportStatus,register:WikiReg
  throw Error('The native composition changed again; choose the current Scene and retry');
 }
 
+/** A constellation created after this register's composition was opened is
+ * absent from the standing native document (the owner never replaces an open
+ * composition). Seat exactly that one constellation: its Scene, its bodies
+ * (bound to the same native subjects the fresh projection binds) and its
+ * overview body, focused — one additive edit that leaves every authored
+ * Scene, body and relation as it stands. Idempotent when the Scene exists. */
+export async function seatWikiConstellation(transport:KernelTransportStatus,register:WikiRegister,sceneRef:string):Promise<WikiNativeExpression>{
+ let prepared=await ensureWikiNativeExpression(transport,register);
+ for(let attempt=0;attempt<2;attempt++){
+  const {document,projection}=prepared;
+  if(document.scenes.some(row=>row.scene_ref===sceneRef))return prepared;
+  const constellation=projection.constellations.find(row=>row.sceneRef===sceneRef);
+  const scene=projection.document.scenes.find(row=>row.scene_ref===sceneRef);
+  if(!constellation||!scene)throw Error('The new constellation is not in the current Wiki reading');
+  const changes:Change[]=[{change:'scene_create',scene_ref:sceneRef,title:scene.title}];
+  const seat=(target:string,entityRef:string)=>{
+   const entity=projection.document.entities[entityRef];
+   if(!entity||document.entities[entityRef])return;
+   changes.push({change:'entity_add',scene_ref:target,entity_ref:entityRef,title:entity.title});
+   if(entity.subject)changes.push({change:'subject_bind',entity_ref:entityRef,binding:entity.subject});
+   for(const [parameter,value] of Object.entries(entity.parameters??{}))if(typeof value.value==='string'||typeof value.value==='number')changes.push({change:'parameter_set',entity_ref:entityRef,parameter,value:value.value});
+  };
+  for(const entityRef of scene.entity_refs)seat(sceneRef,entityRef);
+  if(scene.entity_refs.some(ref=>document.entities[ref]))changes.push({change:'scene_compose',scene_ref:sceneRef,entity_refs:scene.entity_refs});
+  if(document.scenes.some(row=>row.scene_ref===projection.overviewSceneRef))seat(projection.overviewSceneRef,constellation.overviewEntityRef);
+  changes.push({change:'focus',scene_ref:sceneRef,entity_ref:null});
+  const data=await expression(transport,{operation:'edit',expression_ref:document.expression_ref,expected_revision:document.revision,actor:ACTOR,changes});
+  if(data.state==='revision_conflict'&&attempt===0){const current=await expression(transport,{operation:'inspect',expression_ref:document.expression_ref});if(!current.document)throw Error('The changed native composition could not be read');prepared=accepted(register,projection,current.document);continue;}
+  if(!data.document)throw Error('The native composition did not accept the new constellation');
+  if(data.document.expression_ref!==document.expression_ref)throw Error('The native edit redirected the Expression');
+  return accepted(register,projection,data.document);
+ }
+ throw Error('The native composition changed again; open the constellation from the tree');
+}
+
 /** Explicit repair of a failed source read. Missing bindings are never an
  * automatic migration: removal is a legitimate native presentation edit. */
 export interface WikiRelationRecovery {

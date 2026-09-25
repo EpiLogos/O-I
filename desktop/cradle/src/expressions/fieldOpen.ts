@@ -27,7 +27,7 @@
  */
 import {useSyncExternalStore} from "react";
 
-interface Pending { ref: string; target: string | null; refresh: boolean }
+interface Pending { ref: string; target: string | null; refresh: boolean; lens: string | null }
 let pending: Pending | null = null;
 const listeners = new Set<() => void>();
 const emit = () => { for (const listener of [...listeners]) listener(); };
@@ -35,10 +35,10 @@ const emit = () => { for (const listener of [...listeners]) listener(); };
 /** Record a ref to open in the presented Technē field, naming that presented
  * centre by its binding id so only it consumes (null = any Technē host may).
  * Ignores a non-Expression ref rather than recording something it would refuse. */
-export function requestTechneFieldOpen(expressionRef: string, target: string | null = null, refresh = false): void {
+export function requestTechneFieldOpen(expressionRef: string, target: string | null = null, refresh = false, lens: string | null = null): void {
   if (typeof expressionRef !== "string" || !expressionRef.startsWith("expression:")) return;
-  if (pending && pending.ref === expressionRef && pending.target === target && pending.refresh === refresh) return;
-  pending = {ref: expressionRef, target, refresh};
+  if (pending && pending.ref === expressionRef && pending.target === target && pending.refresh === refresh && pending.lens === lens) return;
+  pending = {ref: expressionRef, target, refresh, lens};
   emit();
 }
 
@@ -80,3 +80,7 @@ export function useTechneFieldOpen(): string | null {
 }
 
 export const peekTechneFieldRefresh = (): boolean => pending?.refresh ?? false;
+
+/** The application lens the pending open asks the field to stand in (the
+ * consumer posts it as the host-command `lens` after the open), or null. */
+export const peekTechneFieldLens = (): string | null => pending?.lens ?? null;

@@ -31,7 +31,7 @@ const FactoryRunTab = lazy(() => import("../contributions/factory/sidebar/Factor
 const FactoryContextSlice = lazy(() => import("../contributions/factory/sidebar/FactoryContextSlice").then(module => ({default: module.FactoryContextSlice})));
 
 /** The left body for a mode whose curation does not use the World navigator. */
-export function ModeLeftBody({mode, project, onOpenExpressions, onOpenTechne, onOpenPlace, onOpenFile, onOpenWiki, onNewConstellation, onMessage}: {
+export function ModeLeftBody({mode, project, onOpenExpressions, onOpenTechne, onOpenPlace, onOpenFile, onOpenWiki, onMessage}: {
   mode: WorkspaceMode;
   project?: string;
   onOpenExpressions: (expressionRef?: string) => void;
@@ -39,14 +39,13 @@ export function ModeLeftBody({mode, project, onOpenExpressions, onOpenTechne, on
   onOpenPlace: (place: {family: string; ref: string; title: string}) => void;
   onOpenFile: (location: CentralLocation) => Promise<void> | void;
   onOpenWiki: (ref: string, title: string, project?: string) => void;
-  onNewConstellation?: (project: string | undefined, title: string) => void;
   onMessage: (message: string) => void;
 }) {
   return <Suspense fallback={null}>
     {mode === "expressions"
       ? <ExpressionGraphNavigator onOpenExpressions={onOpenExpressions} onOpenTechne={onOpenTechne} onMessage={onMessage}/>
       : mode === "epi-logos" ? <EpiPlacesNavigator onOpenPlace={onOpenPlace} onMessage={onMessage}/>
-      : mode === "techne" ? <WikiMapNavigator project={project} onOpenWiki={onOpenWiki} onNewConstellation={onNewConstellation} onMessage={onMessage}/>
+      : mode === "techne" ? <WikiMapNavigator project={project} onOpenWiki={onOpenWiki} onMessage={onMessage}/>
       : mode === "settings" ? <SettingsNavigator/>
       : <MaterialNavigator project={project} onOpenFile={onOpenFile} onMessage={onMessage}/>}
   </Suspense>;

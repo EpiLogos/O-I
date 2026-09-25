@@ -366,6 +366,9 @@ export function relayKernelChannel(frame: HTMLIFrameElement, transport: KernelTr
 //       The frame opens it through its own native workspace (kernel inspect),
 //       no remount, buffering until its kernel channel is announced. Refs
 //       only; the kernel document stays the store.
+//   host → frame  `{v:1, kind:"host-command", command:"lens", lens:"canvas"}`
+//     — posted right after an open-expression when the open asks for a lens
+//       (a constellation just created in the navigator stands on the Canvas).
 //   frame → host  `{v:1, kind:"oi-app-state", state:{...}}`
 //     — the application's position announcement: current expression, scene
 //       (index/count/name/save state), selection names and the honest

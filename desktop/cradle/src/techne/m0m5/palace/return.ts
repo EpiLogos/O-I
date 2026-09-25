@@ -32,8 +32,8 @@ import { arrangementOrder, palaceElements, type PalaceRegionSpec } from "./compo
  * refs each become their OWN region — never several members forced under one
  * region name. The exact diff against the live document (minting each
  * region's Scene ref, skipping what already matches) happens at execution
- * time (`kernelTechneAdapter.ts`, which alone holds the live snapshot) —
- * this module only names the INTENT: which Expression refs compose, in what
+ * time, by whichever executor holds the live snapshot (composition.ts
+ * `composeRegions`/`planRegions`) — this module only names the INTENT: which Expression refs compose, in what
  * order. Never a `composition_set`/`shared.values` payload (a second store
  * in disguise) and never a bound-Entity subject. */
 export const EXPRESSION_FLOOR_REGION = "Expression (3:3)";

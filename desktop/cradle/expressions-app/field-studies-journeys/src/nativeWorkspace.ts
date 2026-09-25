@@ -1,11 +1,9 @@
 import type {SourceOccurrenceChoice} from './nativeOccurrence.js';
 import type {BlueprintIntent} from './nativeBlueprint.js';
-/** Working controls for the actual hosted application. The browser gallery
- * remains useful for drafts; the native Library, files and mutations remain
- * owned by the cradle. Neither opening this panel nor inspecting a file
- * publishes material or starts an Agent. */
+/** The native working document behind the hosted application: open, commit,
+ * recover and file-save through the owner. It has no panel of its own; its
+ * standing reaches the app's Save control and Studio footer via host.status. */
 import {clone,type Journey} from './model.js';
-import {esc} from './icons.js';
 import {NativeWorking,type NativeFile,type WorkingSnapshot} from './nativeWorking.js';
 import {kernelExpressionsAvailable,listKernelExpressions,readKernelExpression,nativeExpressionRequest,nativeFileRequest} from './kernelExpressions.js';
 import {readWorkingCheckpoint,readWorkingDraft,writeWorkingCheckpoint,writeDraft} from './recovery.js';
@@ -41,6 +39,16 @@ export interface NativeWorkspaceHost {
  toast:(message:string,duration?:number)=>void;
  summon:(kind:'library'|'verso'|'search',subject?:NativeSubject)=>void;
  correspondence:(rows:Record<string,ConnectionBinding[]>,selection:string|null)=>void;
+ /** The working document's truthful standing, shown by the app's own Save
+  * control and Studio footer — there is no separate native panel. */
+ status?:(state:NativeStatus)=>void;
+}
+export interface NativeStatus {
+ text:string;failed:boolean;busy:boolean;
+ identity:{ref:string;title:string;revision:number}|null;
+ pending:string|null;retryOpen:boolean;
+ file:{path:string;revision:string|number}|null;
+ page:{page:number;count:number;shown:number;total:number;hidden:number}|null;
 }
 /** Capture the visible draft and navigation generation before any owner read.
  * A native reply may be retained, but only this still-current draft may adopt it. */
@@ -64,42 +72,19 @@ export function installNativeWorkspace(host:NativeWorkspaceHost){
  const scope=new URLSearchParams(location.search).get('mode')==='techne'?'techne':'expressions';
  const work=new NativeWorking({expression:nativeExpressionRequest,file:nativeFileRequest,
   checkpoint:(id,value)=>writeWorkingCheckpoint(id,value,scope),mint:()=>`expression:authored-${crypto.randomUUID()}`});
- const panel=document.createElement('aside');panel.id='native-work';panel.className='native-work hud-panel chrome';panel.hidden=true;panel.setAttribute('aria-label','Native composition');
- panel.innerHTML=`<header><div><span class="panel-kicker">NATIVE COMPOSITION</span><h2>Keep the whole work</h2></div><button type="button" data-native="close" aria-label="Close native composition">×</button></header>
- <p class="native-status" role="status" aria-live="polite"></p><p class="native-basis"></p>
- <details class="native-basis-detail"><summary>Exact reference</summary><p class="native-basis-ref"></p></details>
- <div class="native-actions"><button type="button" class="secondary" data-native="commit">Commit composition</button><button type="button" class="secondary" data-native="retry-open" hidden>Retry opening</button><button type="button" class="secondary" data-native="inspect">Inspect interrupted operation</button><button type="button" class="secondary" data-native="retry">Retry exact file save</button></div>
- <fieldset><legend>Native file</legend><label>Central folder<input data-native-field="folder" value="." placeholder="Central-relative folder"></label><label>Filename<input data-native-field="name" value="expression.json" placeholder="expression.json"></label><button type="button" class="secondary" data-native="save">Save native file</button><p class="native-file"></p><details class="native-file-detail"><summary>Exact location</summary><p class="native-file-path"></p></details></fieldset>
- <fieldset><legend>Continue native work</legend><div class="native-actions"><button type="button" data-native="library">Library</button><button type="button" data-native="verso">Account / sources</button><button type="button" data-native="refresh">Refresh open work</button></div><label>Open native Expression<select data-native-field="expression"><option value="">Choose open work…</option></select></label><button type="button" class="secondary" data-native="open">Open selected work</button><label>Or open an exact native file<input data-native-field="path" placeholder="Project/file.expression.json"></label><button type="button" class="secondary" data-native="open-file">Open file</button></fieldset>
- <section class="native-disclosure"><h3>Field disclosure</h3><p class="native-page"></p><div class="native-actions"><button type="button" data-native="previous">Previous members</button><button type="button" data-native="next">Next members</button></div></section>
- <p class="native-note">Commit updates the native working document. Save writes and independently reads its file. Working-copy backup is private recovery, not file publication.</p>`;
- document.body.appendChild(panel);
  let busy=false,notice='',lastFailure=false,restoreGeneration=0;const bootState={booted:false};
  let ownerIdle:Promise<void>=Promise.resolve();
  let queuedMutations=0;
- const field=(name:string)=>panel.querySelector<HTMLInputElement|HTMLSelectElement>(`[data-native-field="${name}"]`)!;
- const status=(text:string)=>{notice=text;panel.querySelector('.native-status')!.textContent=text;};
+ const status=(text:string)=>{notice=text;update();};
  const update=()=>{
   const state=work.state,doc=state?.view?.document;
   host.correspondence(nativeConnections(state?.view),doc?.selection?.relation_ref??null);
-  // Default face: plain status prose only ("Saved · revision N" — §4, no raw
-  // transport strings). The exact expression ref and file path stay
-  // available, but behind an explicit "Exact reference"/"Exact location"
-  // disclosure rather than on the face every reader sees.
-  panel.querySelector('.native-basis')!.textContent=doc?`${doc.title} · Saved · revision ${doc.revision}`:'This authoring draft does not yet have a native identity. Its first commit creates one.';
-  panel.querySelector('.native-basis-ref')!.textContent=doc?doc.expression_ref:'No native identity yet.';
-  panel.querySelector('.native-file')!.textContent=state?.file?`Saved · revision ${state.file.revision}`:'No verified native file is attached to this working draft.';
-  panel.querySelector('.native-file-path')!.textContent=state?.file?state.file.location.path:'No verified native file is attached to this working draft.';
-  const pending=state?.pending;
-  panel.querySelectorAll<HTMLButtonElement>('[data-native]').forEach(button=>{button.disabled=busy&&!['close','library','verso'].includes(button.dataset.native!);});
-  (panel.querySelector('[data-native="retry-open"]') as HTMLButtonElement).hidden=!opens.reference;
-  (panel.querySelector('[data-native="inspect"]') as HTMLButtonElement).hidden=!pending;
-  (panel.querySelector('[data-native="retry"]') as HTMLButtonElement).hidden=pending?.kind!=='file';
   const binding=state?.view?.bindings[host.snapshot().sceneId];
-  panel.querySelector('.native-page')!.textContent=binding?`${binding.occurrences.length} represented of ${binding.member_refs.length} native memberships · page ${binding.page+1}/${binding.page_count}${binding.hidden_refs.length?` · ${binding.hidden_refs.length} deliberately hidden`:''}`:'Open or commit a native composition to inspect its exact occurrences.';
-  (panel.querySelector('[data-native="previous"]') as HTMLButtonElement).disabled=busy||!binding||binding.page<=0;
-  (panel.querySelector('[data-native="next"]') as HTMLButtonElement).disabled=busy||!binding||binding.page>=binding.page_count-1;
-  field('folder').disabled=busy||!!state?.file;field('name').disabled=busy||!!state?.file;
+  host.status?.({text:notice,failed:lastFailure,busy,
+   identity:doc?{ref:doc.expression_ref,title:doc.title,revision:doc.revision}:null,
+   pending:state?.pending?.kind??null,retryOpen:!!opens?.reference,
+   file:state?.file?{path:state.file.location.path,revision:state.file.revision}:null,
+   page:binding?{page:binding.page,count:binding.page_count,shown:binding.occurrences.length,total:binding.member_refs.length,hidden:binding.hidden_refs.length}:null});
  };
  const run=async(task:()=>Promise<void>):Promise<boolean>=>{
   if(busy)return false;busy=true;
@@ -136,12 +121,6 @@ export function installNativeWorkspace(host:NativeWorkspaceHost){
     :occurrence?`Selected ${occurrence.subject?.subject_ref??occurrence.entity_ref} · occurrence ${occurrence.entity_ref}`:'Native selection cleared.');
   }),
  });
- const refresh=async()=>{
-  if(!kernelExpressionsAvailable())throw new Error('Native operations are unavailable until the desktop host announces its channel. Your browser draft remains available.');
-  const selected=field('expression').value,entries=await listKernelExpressions();
-  field('expression').innerHTML='<option value="">Choose open work…</option>'+entries.map(entry=>`<option value="${esc(entry.expression_ref)}">${esc(entry.title)} · r${entry.revision}</option>`).join('');
-  field('expression').value=selected;status(`${entries.length} native Expressions are open. The Library also discovers saved files and collections.`);
- };
  const retainSubmitted=async(snapshot:WorkingSnapshot)=>{
   const generation=restoreGeneration;
   await writeDraft(snapshot.journey);
@@ -179,7 +158,7 @@ export function installNativeWorkspace(host:NativeWorkspaceHost){
  const opens=new NativeOpenIntent({
   idle:async()=>{while(busy)await ownerIdle;},
   open:(reference,current)=>run(()=>openReference(reference,current)),
-  changed:()=>{update();if(opens.reference&&lastFailure)panel.hidden=false;},
+  changed:()=>{update();},
  });
  const requestOpen=(reference:string)=>{
   if(!reference.startsWith('expression:')){status('Choose a native Expression reference');return Promise.resolve(false);}
@@ -225,50 +204,39 @@ export function installNativeWorkspace(host:NativeWorkspaceHost){
    members:Object.keys(doc.entities).length,relations:Object.keys(doc.relations??{}).length,
    scenes,currentScene:doc.selection?.scene_ref??null};
  };
- panel.addEventListener('click',event=>{
-  const action=(event.target as HTMLElement).closest<HTMLElement>('[data-native]')?.dataset.native;if(!action)return;
-  if(action==='close'){panel.hidden=true;return;}
-  if(action==='retry-open'){void opens.retry();return;}
-  if(action==='open'){void requestOpen(field('expression').value);return;}
-  if(action==='library'||action==='verso'){host.summon(action,action==='verso'?nativeSubject()??undefined:undefined);return;}
-  void run(async()=>{
-   if(!kernelExpressionsAvailable())throw new Error('The native host channel is not ready. No native operation has been staged.');
-   if(action==='refresh'){await refresh();return;}
-   if(action==='open-file'){await loadFile(field('path').value);return;}
-   if(action==='inspect'){
-    const before=work.state,version=host.version();
-    const clean=before?.view&&!prepareCompositionEdit(before.view,host.snapshot().journey).changes.length;
-    const result=await work.inspectPending();
-    if(before?.pending?.kind==='connections'&&work.state?.view){
-     if(clean&&host.version()===version){
-      restoreGeneration++;selections.cancel();host.load(work.state.view,true);
-     }else{
-      status(`${result} Newer local edits remain in your working draft.`);return;
-     }
-    }
-    status(result);return;
-   }
-   if(action==='retry'){const file=await work.retryFile();status(`Verified the exact retained file save: ${file.location.path}. No new operation identity was minted.`);return;}
-   if(action==='previous'||action==='next'){await changePage(action==='next'?1:-1);return;}
-   const snapshot=clone(host.snapshot()),version=host.version();
-   if(action==='commit'){
-    await retainSubmitted(snapshot);
-    const doc=await work.commit(snapshot);
-    status(`Native working revision ${doc.revision} committed.${host.version()!==version?' Newer local edits remain a separate draft.':''} Save native file for durable reopening.`);
-   }else if(action==='save'){
-    await retainSubmitted(snapshot);
-    const file=await work.saveFile(snapshot,{parent_path:field('folder').value,name:field('name').value});
-    status(`Saved and independently read ${file.location.path}.${host.version()!==version?' Newer local edits are still unsaved.':''} Native Return to a constellation remains its own operation.`);
-   }
-  });
+ const guarded=(task:()=>Promise<void>)=>run(async()=>{
+  if(!kernelExpressionsAvailable())throw new Error('The native host channel is not ready. No native operation has been staged.');
+  await task();
  });
- panel.addEventListener('keydown',event=>{if(event.key==='Escape'){panel.hidden=true;event.stopPropagation();}});
+ const resolvePending=()=>guarded(async()=>{
+  const before=work.state,version=host.version();
+  const clean=before?.view&&!prepareCompositionEdit(before.view,host.snapshot().journey).changes.length;
+  const result=await work.inspectPending();
+  if(before?.pending?.kind==='connections'&&work.state?.view){
+   if(clean&&host.version()===version){restoreGeneration++;selections.cancel();host.load(work.state.view,true);}
+   else{status(`${result} Newer local edits remain in your working draft.`);return;}
+  }
+  status(result);
+ });
  return {
-  toggle(){panel.hidden=!panel.hidden;if(!panel.hidden){update();(panel.querySelector('[data-native="close"]') as HTMLButtonElement).focus();if(!lastFailure)void run(refresh);}},
+  /** Retry the last native open that failed (e.g. a revision conflict). */
+  retryOpen:()=>opens.retry(),
+  /** Inspect and settle an interrupted native operation. */
+  resolvePending,
+  /** Re-perform an interrupted file save with its retained identity. */
+  retryFile:()=>guarded(async()=>{const file=await work.retryFile();status(`Verified the retained file save: ${file.location.path}.`);}),
+  /** Page the loaded members of a Scene larger than the render budget. */
+  page:(delta:number)=>guarded(()=>changePage(delta)),
+  /** Write the working composition to a Central file and read it back. */
+  saveFile:(folder:string,name:string)=>{const snapshot=clone(host.snapshot()),version=host.version();return guarded(async()=>{
+   await retainSubmitted(snapshot);
+   const file=await work.saveFile(snapshot,{parent_path:folder,name});
+   status(`Saved and read back ${file.location.path}.${host.version()!==version?' Newer local edits are still unsaved.':''}`);
+  });},
+  status:()=>update(),
   open:requestOpen,
   cancelOpen:()=>{opens.cancel();update();},
   openFile:(path:string)=>run(()=>loadFile(path)),
-  refresh:update,
   /** Follow the same Expression to a newer owner revision when the draft is
    * clean. Resolves false (draft kept) when there is local work to reconcile. */
   advance:async():Promise<boolean>=>{

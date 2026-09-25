@@ -52,7 +52,7 @@ export function TechneCentre({binding, deepLink, onHostedState}: {
       const current = ++generation;
       try {
         const prepared = await focusWikiNativeExpression(kernel.transport, register, request);
-        if (live && current === generation) {setFailure(undefined);requestTechneFieldOpen(prepared.document.expression_ref, binding.id, true);}
+        if (live && current === generation) {setFailure(undefined);requestTechneFieldOpen(prepared.document.expression_ref, binding.id, true, request.lens ?? null);}
       } catch (error) { if (live && current === generation) setFailure(String(error instanceof Error ? error.message : error)); }
       } } finally {draining = false;}
     };

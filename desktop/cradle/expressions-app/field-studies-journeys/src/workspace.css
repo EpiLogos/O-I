@@ -445,107 +445,60 @@ body.presentation #physis-panel,body.library-open #physis-panel{display:none}
    stays. The class carries the whole decision — no state changes, so the
    cut is perfectly reversible and the HUD returns exactly as it was. */
 
-/* Native file controls are an optional floating working panel over the same
-   field, not an alternative Library or a second source/scene application. */
-.native-work{position:fixed;z-index:82;top:74px;right:24px;width:410px;max-width:calc(100vw - 96px);max-height:calc(100vh - 172px);overflow:auto;padding:20px;background:var(--paper);border:1px solid var(--line);border-radius:12px;color:var(--ink);box-sizing:border-box}
-.native-work[hidden]{display:none}.native-work header{display:flex;align-items:flex-start;justify-content:space-between;gap:14px}.native-work h2{font:22px var(--serif);margin:5px 0 14px}.native-work h3{font-size:12px;margin:16px 0 8px}.native-work p{font-size:11px;line-height:1.6;overflow-wrap:anywhere;margin:8px 0}.native-work .native-basis,.native-work .native-file,.native-work .native-note{color:var(--muted)}
-.native-work{--paper:var(--ui-surface);--ink:var(--ui-ink);--line:var(--ui-line);--muted:var(--ui-muted);background:var(--hud-glass);backdrop-filter:blur(18px)}
-.native-work .native-basis-detail,.native-work .native-file-detail{margin:2px 0 10px}.native-work .native-basis-detail summary,.native-work .native-file-detail summary{font-size:10px;color:var(--muted);cursor:pointer}.native-work .native-basis-detail p,.native-work .native-file-detail p{font-size:10px;color:var(--muted);word-break:break-all}
+/* ===== Technē: a mode of this same HUD (owner rulings 2026-09-19/20;
+   Technē map §§11–13). One masthead in every instrument; the M0′–M5′ chooser
+   sits in its centre cell; the active instrument's tools join the rail;
+   instrument controls live in the Studio; a selected node or connection
+   shows a compact card. No second header, panel or chooser bar. ===== */
+.masthead-centre{display:flex;align-items:center;justify-content:center;gap:6px;min-width:0}
+#lens-chooser{display:flex;align-items:center;min-width:0;--oi-shell-tabbar:30px;--oi-space-1:1px;--oi-space-2:4px;--oi-muted-2:var(--ui-muted);--oi-accent-ink:var(--ui-ink);--oi-wash:var(--ui-wash)}
+#lens-chooser[hidden]{display:none}
+#lens-chooser .lens-choice{min-width:30px}
+#lens-chooser .lens-glyph svg{width:16px;height:16px}
 #scene-blueprint-controls .native-actions>label{flex:1 1 4rem;min-width:0}
 #scene-blueprint-controls .native-actions input{width:100%;box-sizing:border-box}
-.native-work fieldset{border:0;border-top:1px solid var(--line);margin:18px 0 0;padding:14px 0 0;min-width:0}.native-work legend{font-size:12px;padding-right:10px}.native-work label{display:flex;flex-direction:column;gap:6px;font-size:11px;margin:10px 0}.native-work input,.native-work select{min-width:0;max-width:100%;font:12px var(--sans);padding:8px;border:1px solid var(--line);background:var(--paper);color:var(--ink);border-radius:4px}.native-actions{display:flex;flex-wrap:wrap;gap:8px;margin:12px 0}.native-work button{min-height:32px;padding:6px 10px;font-size:11px;border:1px solid var(--line);border-radius:5px}.native-work button:disabled{opacity:.45}.native-work button[hidden]{display:none}.native-work .native-disclosure{border-top:1px solid var(--line);margin-top:16px}.native-work button:focus-visible,.native-work input:focus-visible,.native-work select:focus-visible{outline:2px solid var(--ink);outline-offset:3px}
-@media(max-width:600px){.native-work{top:62px;right:10px;width:calc(100vw - 78px);max-width:calc(100vw - 78px);padding:14px;max-height:calc(100vh - 150px)}}
+.blueprint-home fieldset{border:0;margin:0;padding:0;min-width:0}.blueprint-home legend{display:none}
+.blueprint-home label{display:flex;flex-direction:column;gap:4px;font-size:11px;margin:8px 0}.blueprint-home .native-actions{display:flex;flex-wrap:wrap;gap:6px}
+body:not(.oi-host-techne) [data-techne-only]{display:none}
+/* The instrument's own tools, inside the rail after its common tools. */
+.instrument-tools{display:contents}
+.instrument-tools:empty{display:none}
+#native-status{display:flex;flex-wrap:wrap;align-items:center;gap:8px;font-size:10px;color:var(--ui-muted)}
+#native-status:empty{display:none}#native-status.failed{color:var(--accent)}
+#native-status .link-button{border:0;background:none;padding:0;font:inherit;color:var(--ui-ink);text-decoration:underline;cursor:pointer}
+#native-status .link-button:disabled{opacity:.4;cursor:default}
+#native-save.attention{color:var(--accent)}
+.native-file-form{display:grid;gap:10px;min-width:min(380px,80vw)}.native-file-form label{display:grid;gap:4px;font-size:11px}.native-file-form footer{display:flex;justify-content:flex-end;gap:8px}
 
-/* ===== M0′–M5′ Lens Studio: the Technē instrument chooser + floating Studio.
-   Top-centre, clear of the native composition (right), Scene Studio (right)
-   and formation sequence (left) it routes to. ===== */
-#lens-chooser{position:fixed;z-index:66;top:clamp(40px,6vh,54px);left:50%;transform:translateX(-50%);display:flex;gap:3px;padding:4px;border-radius:14px;background:var(--panel);border:1px solid var(--line);box-shadow:0 8px 30px #2027170f;backdrop-filter:blur(14px)}
-#lens-chooser[hidden]{display:none}
-#lens-studio{position:fixed;z-index:64;top:clamp(88px,11.5vh,106px);left:50%;transform:translateX(-50%);width:min(374px,calc(100vw - 40px));max-height:min(58vh,520px);overflow:auto;padding:15px 18px 17px;border-radius:13px;color:var(--ink);background:var(--panel);border:1px solid var(--line);box-shadow:0 16px 50px #20271716;backdrop-filter:blur(16px)}
-#lens-studio[hidden]{display:none}
-.lens-studio-head{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:4px}
-.lens-studio-head .panel-kicker{font:9px/1.4 var(--sans);letter-spacing:.14em;text-transform:uppercase;color:var(--accent)}
-.lens-studio-head h2{font:19px var(--serif);margin:3px 0 0}
-.lens-studio-close{width:26px;height:26px;min-width:26px;padding:5px;border:0;background:none;color:var(--muted);border-radius:7px;cursor:pointer}
-.lens-studio-close:hover{color:var(--accent)}
-.lens-studio-close svg{width:15px;height:15px}
-.lens-basis{font-size:10.5px;line-height:1.6;color:var(--muted);margin:6px 0 13px}
-.lens-basis code{font:10px monospace;color:var(--ink)}
-.lens-studio-controls{display:flex;flex-direction:column;gap:8px}
-.lens-control{display:flex;align-items:flex-start;gap:11px;text-align:left;padding:11px 12px;border:1px solid var(--line);border-radius:9px;width:100%;background:none;color:inherit;cursor:pointer}
-.lens-control:hover{border-color:var(--accent)}
-.lens-control:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
-.lens-control-icon{flex:none;margin-top:1px}
-.lens-control-icon svg{width:17px;height:17px;color:var(--accent)}
-.lens-control-text{display:flex;flex-direction:column;gap:2px;min-width:0}
-.lens-control-text strong{font-size:12px;font-weight:500}
-.lens-control-text small{font-size:10px;line-height:1.5;color:var(--muted)}
-.lens-facet{border:1px dashed var(--line);border-radius:9px;padding:12px 13px}
-.lens-facet-purpose{font-size:11.5px;line-height:1.5;margin:0 0 8px}
-.lens-facet-standing{font-size:10px;line-height:1.6;color:var(--muted);margin:0}
-
-#research-workspace{position:fixed;inset:0;z-index:50;pointer-events:none;min-width:0;min-height:0}
+#research-workspace{position:fixed;inset:var(--shell-cutout-h,32px) 0 0 0;z-index:50;pointer-events:none;min-width:0;min-height:0}
 #research-workspace>.research-instrument{pointer-events:auto;border:0;border-radius:0;overflow:hidden}
-/* Exactly one active body. The physical document and GPU state remain retained,
-   but its canvas and controls cannot receive input behind another instrument. */
-.research-active #stage,.research-active #app>.chrome,.research-active #app>.hud-panel,
-.research-active #shape-picker,.research-active #recording-badge,.research-active #present-return,
-.research-active .native-field-panel,.research-active .native-domain-output,.research-active #engine-recovery{display:none!important}
-/* The Native field's own controls now live inside the Studio drawer (its
-   settings moved out of a small fixed top-right popup — nativeField.ts).
-   The ambient corner readout (native-domain-output, fixed bottom-left,
-   z-index above the docked Studio drawer by design so it stays visible
-   over other Studio sections) duplicates exactly what the open Native
-   section already shows in place, and — unlike the old top-right popup —
-   the drawer's own left edge now reaches that same bottom-left corner, so
-   the readout can sit on top of and block the section's own controls.
-   Hide the redundant duplicate while that section is the one showing. */
-body:has(#inspector-content>.native-field-panel) .native-domain-output{display:none}
-/* ONE HUD row, also outside the research instruments (M0'/M3'/M5' keep the
-   masthead standing, not the Research HUD). In Techne mode the rail's own
-   Scene-blueprint / Native-Library / Native-work icons (DEEP_TOOLS, app.ts)
-   are the direct, one-click targets; the same Ref+Action rendered a second
-   time inside the "…" workspace menu (Expressions-mode-only actions,
-   appended there unconditionally) is dropped rather than shown alongside it. */
-body.oi-host-techne #workspace-menu [data-action="blueprint"],
-body.oi-host-techne #workspace-menu [data-action="native-work"],
-body.oi-host-techne #workspace-menu [data-action="native-library"]{display:none}
-/* The selected occurrence keeps its full object/state Studio and its toolbelt
-   over the active instrument. The field itself shows only on explicit preview;
-   the instrument stays mounted beneath it with its viewport and selection. */
-body.research-active.research-studio #app>#inspector.hud-panel:not([hidden]){display:grid!important;z-index:72}
-body.research-active #app>#toolbelt-button.chrome{display:inline-flex!important}
-body.research-active #app>#toolbelt-panel.hud-panel:not([hidden]){display:block!important;z-index:71}
+.research-active #research-workspace .canvas-flow{border:0;border-radius:0;min-height:0;height:100%}
+/* In a 2D instrument the particle field is suspended beneath it; field-only
+   controls stand down. The masthead, Studio, toolbelt, transport and
+   dialogs remain the same HUD. */
+.research-active #stage,.research-active #orbit-control,.research-active #coordinates,.research-active #view-controls,
+.research-active #live-workspace,.research-active #shape-picker,.research-active #tool-hint,
+.research-active .native-domain-output,.research-active #engine-recovery,
+.research-active #tool-rail [data-rail="pin"],.research-active #tool-rail [data-rail="formation"],
+.research-active #tool-rail [data-rail="text"],.research-active #tool-rail [data-rail="objects"],
+.research-active #tool-rail [data-rail="pointer-options"]{display:none!important}
 body.research-active.research-preview #stage{display:block!important}
 body.research-active.research-preview #research-workspace>.research-instrument{visibility:hidden;pointer-events:none}
-#research-hud{display:flex;z-index:70;gap:8px;align-items:flex-start}
-#research-hud[hidden],#research-inspector[hidden]{display:none}
-#research-tools{flex:1;min-width:0;display:flex;align-items:center;flex-wrap:wrap;gap:4px}
-.research-common{display:flex;align-items:center;gap:4px;flex:0 1 auto;min-width:0;overflow-x:auto}
-.research-common select{max-width:180px;min-width:0;background:var(--panel);color:var(--ink);border:1px solid var(--line);border-radius:5px;padding:5px;font:11px var(--sans)}
-#research-inspector{position:fixed;z-index:68;top:108px;right:12px;max-height:calc(100vh - 124px);max-width:min(360px,calc(100vw - 24px));overflow:auto}
-#research-inspector:empty{display:none}
+body.research-active #inspector.hud-panel:not([hidden]){z-index:72}
+body.research-active #toolbelt-panel.hud-panel:not([hidden]){z-index:71}
+body.research-active .masthead,body.research-active nav.instrument{z-index:73}
+body:has(#inspector-content>.native-field-panel) .native-domain-output{display:none}
+/* Selected node / connection: the context-panel card, compact. */
+#research-inspector{position:fixed;z-index:69;left:12px;bottom:calc(var(--footer-height,44px) + 36px);width:min(340px,calc(100vw - 24px));max-height:min(60vh,520px);overflow:auto;padding:0}
+#research-inspector[hidden],#research-inspector:empty{display:none}
 /* Floating shell panels cover the field, but never its active controls. */
 :root{--shell-covered-right:0px;--uncovered-width:calc(100vw - var(--shell-covered-right))}
 .masthead{right:var(--shell-covered-right);min-width:0}
-#lens-chooser,#lens-studio,.instrument{left:calc(var(--uncovered-width)/2);max-width:calc(var(--uncovered-width) - 24px)}
-#lens-chooser{overflow-x:auto}
+.instrument{left:calc(var(--uncovered-width)/2);max-width:calc(var(--uncovered-width) - 24px)}
 .instrument{width:min(600px,calc(var(--uncovered-width) - 24px))}
 .instrument.expanded{width:min(1050px,calc(var(--uncovered-width) - 24px))}
 .transport-row{justify-content:safe center;overflow-x:auto}
-.native-work{right:calc(var(--shell-covered-right) + 24px);max-width:calc(var(--uncovered-width) - 48px)}
-#research-inspector{right:calc(var(--shell-covered-right) + 12px);max-width:min(360px,calc(var(--uncovered-width) - 24px))}
-.research-active #research-workspace .canvas-flow{border:0;border-radius:0;min-height:0;height:100%}
-@media(max-width:700px){#research-hud{flex-wrap:wrap}.research-common select{max-width:130px}}
-
-#techne-world{position:fixed;z-index:63;top:108px;left:14px;display:flex;gap:8px;align-items:center;max-width:min(360px,60vw);padding:6px 9px;background:var(--panel);border:1px solid var(--line);border-radius:7px;color:var(--ink)}
-#techne-world[hidden]{display:none}
-#techne-world select{min-width:110px;max-width:220px;color:inherit;background:var(--paper);border:1px solid var(--line);padding:5px}
-#techne-world span{font:11px/1.4 var(--sans)}
-
-#lens-chooser .lens-hide{align-self:center;width:24px;height:28px;padding:4px;border:0;background:transparent;color:var(--muted);cursor:pointer}
-#lens-chooser .lens-hide svg{width:16px;height:16px}
-#lens-chooser .lens-hide:focus-visible{outline:2px solid var(--accent);outline-offset:-2px}
+body.library-open #lens-chooser{display:none!important}
 /* Creation-first entry gate — New / Continue / Open */
 .entry-gate{position:fixed;inset:0;z-index:90;display:grid;place-items:center;background:color-mix(in srgb,var(--paper,#f4f2eb) 88%,transparent);backdrop-filter:blur(8px);padding:24px}
 .entry-gate[hidden]{display:none!important}
@@ -561,10 +514,3 @@ body.research-active.research-preview #research-workspace>.research-instrument{v
 .entry-gate-starters button{display:block;width:100%;text-align:left;padding:8px 0;font-size:12px;color:var(--accent,#8b5844)}
 .modes-standing{font-size:10px;color:var(--muted,#74766b);padding:0 20px 8px;margin:0}
 
-/* M5′ Palace: its own composition body stands over the retained field. */
-.palace-active #stage,.palace-active #app>.chrome,.palace-active #app>.hud-panel,
-.palace-active #shape-picker,.palace-active #recording-badge,.palace-active #present-return,
-.palace-active .native-domain-output,.palace-active #engine-recovery{display:none!important}
-/* The full-page Library is its own reading surface: the Technē instrument
-   chooser and Lens Studio do not float over it (they return on close). */
-body.library-open #lens-chooser,body.library-open #lens-studio{display:none!important}

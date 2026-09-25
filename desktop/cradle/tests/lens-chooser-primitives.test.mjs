@@ -7,7 +7,7 @@ import {join} from 'node:path';
 import {fileURLToPath} from 'node:url';
 import {createRequire} from 'node:module';
 
-test('actual hosted chooser renders every native instrument with one accessible selected tab and separate hide control',async()=>{
+test('actual hosted chooser renders every native instrument as one accessible tab group with no extra panel or hide control',async()=>{
  const source=fileURLToPath(new URL('../expressions-app/field-studies-journeys/src/',import.meta.url));
  const scratch=await mkdtemp(join(tmpdir(),'oi-lens-chooser-'));
  try{
@@ -25,14 +25,13 @@ test('actual hosted chooser renders every native instrument with one accessible 
    for(const [index,row] of tabs.entries()){
     assert.ok(row.includes('data-action="lens"'),'activation stays on native delegated operation');
     assert.ok(row.includes(`tabindex="${ids[index]===active?'0':'-1'}"`));
-    assert.ok(row.includes('aria-controls="lens-studio"'));
+    assert.ok(!row.includes('lens-studio'),'no separate instrument panel is addressed');
     assert.match(row,/aria-label="M[0-5]′ [^"]+"/);
     assert.match(row,/title="M[0-5]′ — [^"]+"/);
    }
    assert.equal((html.match(/class="lens-glyph"/g)||[]).length,6);
-   assert.equal((html.match(/<svg\b/g)||[]).length,7,'six original instrument SVGs and original hide glyph');
-   const hide=/<button\b[^>]*class="lens-hide"[^>]*>/.exec(html)?.[0];
-   assert.ok(hide?.includes('data-action="lens-bar"'));assert.ok(!hide.includes('role="tab"'));
+   assert.equal((html.match(/<svg\b/g)||[]).length,6,'exactly the six instrument SVGs');
+   assert.ok(!html.includes('lens-hide')&&!html.includes('lens-bar'),'the chooser lives in the masthead; there is no floating bar to hide');
   }
   // Existing shell callers keep their Glyph and radio semantics after the
   // optional native-engine SVG slot is added to the same primitive.

@@ -72,7 +72,7 @@ const DEFAULT_REGION='Palace';
  * member (or null while empty). */
 interface RegionDraft {name:string;scene_ref:string|null;member:PalaceRegionSpec['member']}
 
-function PalacePanel({host,doc,onClose,onMessage}:{host:PalaceInstrumentHost;doc:PalaceDocumentSnapshot&{title:string};onClose:()=>void;onMessage:(text:string)=>void}) {
+function PalacePanel({host,doc,onMessage}:{host:PalaceInstrumentHost;doc:PalaceDocumentSnapshot&{title:string};onMessage:(text:string)=>void}) {
  const initial=useMemo(()=>{
   const found=discoverRegions(doc);
   return found.length>0?found:[{name:DEFAULT_REGION,scene_ref:null,member:null} as PalaceRegionSpec];
@@ -158,11 +158,10 @@ function PalacePanel({host,doc,onClose,onMessage}:{host:PalaceInstrumentHost;doc
 
  return <div className="palace-panel" role="region" aria-label="M5′ Palace">
   <header className="palace-header">
-   <h2>M5′ Palace — {doc.title}</h2>
+   <p className="control-note">Regions of {doc.title}</p>
    <div className="palace-header-actions">
     <button type="button" disabled={busy} onClick={()=>void save()}>Save composition</button>
-    <button type="button" disabled={busy} onClick={cancel}>Cancel</button>
-    <button type="button" onClick={onClose} aria-label="Close Palace">Close</button>
+    <button type="button" disabled={busy} onClick={cancel}>Revert</button>
    </div>
   </header>
   <div className="palace-body">
@@ -223,13 +222,15 @@ function PalacePanel({host,doc,onClose,onMessage}:{host:PalaceInstrumentHost;doc
  </div>;
 }
 
-export function installPalaceInstrument(host:PalaceInstrumentHost){
+/** The Palace composes inside the app's own Studio (section "Palace"): the
+ * host supplies the Studio-owned mount; the live Expression stays the field. */
+export function installPalaceInstrument(host:PalaceInstrumentHost,home:HTMLElement){
  let root:Root|null=null,mount:HTMLElement|null=null,status:HTMLElement|null=null,epoch=0,destroyed=false,open_=false;
  function ensureMount(){
   if(mount)return mount;
   mount=document.createElement('section');mount.id='techne-palace-workspace';mount.className='palace-workspace';mount.hidden=true;
   status=document.createElement('div');status.className='palace-status';status.setAttribute('role','status');status.setAttribute('aria-live','polite');
-  document.body.append(mount,status);
+  home.append(status,mount);
   return mount;
  }
  function message(text:string){if(status)status.textContent=text;}
@@ -243,7 +244,7 @@ export function installPalaceInstrument(host:PalaceInstrumentHost){
    if(generation!==epoch||destroyed)return;
    ensureMount();
    root??=createRoot(mount!);
-   root.render(<PalacePanel host={host} doc={doc} onClose={()=>{void close_();}} onMessage={message}/>);
+   root.render(<PalacePanel host={host} doc={doc} onMessage={message}/>);
   }catch(error){if(generation!==epoch||destroyed)return;message(error instanceof Error?error.message:String(error));}
  }
  async function close_(){

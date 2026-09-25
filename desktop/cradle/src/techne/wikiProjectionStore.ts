@@ -70,6 +70,9 @@ export interface WikiSelectionRequest {
   subjectRef: string | null;
   title?: string;
   origin: "wiki-map" | "graph-navigator" | "external";
+  /** The Expressions application lens the opened field should stand in
+   * (a constellation just created opens on the Canvas). */
+  lens?: "canvas";
 }
 
 interface WikiProjectionState {
@@ -244,6 +247,19 @@ export async function refreshWikiProjectionReading(register: WikiRegister, trans
   if (!state.standings[register.key] || state.standings[register.key].phase === "idle") return ensureWikiProjectionReading(register, transport);
   await rereadWikiRegister(register, transport, true);
   return ensureWikiProjectionReading(register, transport);
+}
+
+/** Re-read a register after a native write this session made (a created
+ * constellation): the same re-read an invalidating `file_changed` receipt
+ * runs, awaited, so the caller sees the fresh projection. A register never
+ * read is read for the first time. */
+export async function rereadWikiProjection(register: WikiRegister, transport: KernelTransportStatus): Promise<WikiProjection> {
+  const standing = state.standings[register.key];
+  if (standing && standing.phase !== "idle") await rereadWikiRegister(register, transport);
+  await ensureWikiProjectionReading(register, transport);
+  const projection = wikiProjectionOf(state.standings[register.key]);
+  if (!projection) throw new Error("The Wiki reading has no projection");
+  return projection;
 }
 
 // ---- the centre writes the kernel lifecycle back ---------------------------
@@ -440,26 +456,4 @@ export function wikiDocumentOf(standing: RegisterStanding | undefined): Expressi
   if (!standing) return undefined;
   if (standing.phase === "ready" || standing.phase === "drift") return standing.document;
   return wikiProjectionOf(standing)?.document;
-}
-
-/** The truthful short state line for a register's region head. */
-export function wikiStandingSubtitle(standing: RegisterStanding | undefined): string {
-  switch (standing?.phase ?? "idle") {
-    case "idle": return "";
-    case "reading": return "reading…";
-    case "absent": return "no wiki";
-    case "unavailable": return "couldn't read";
-    case "projected": return "projected";
-    case "opening": return "opening…";
-    case "ready": {
-      const projection = wikiProjectionOf(standing);
-      const constellations = projection?.constellations.length ?? 0;
-      if (constellations === 0) return "no constellations yet";
-      const relations = projection?.boundRelationCount ?? 0;
-      return relations > 0
-        ? `${constellations} ${constellations === 1 ? "constellation" : "constellations"}, ${relations} ${relations === 1 ? "relation" : "relations"}`
-        : `${constellations} ${constellations === 1 ? "constellation" : "constellations"}`;
-    }
-    case "drift": return "drift";
-  }
 }

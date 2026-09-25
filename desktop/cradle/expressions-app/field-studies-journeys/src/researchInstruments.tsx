@@ -216,7 +216,7 @@ export function installResearchInstruments(host:ResearchInstrumentsHost){
  const views=new Map<string,ViewState>();
  let mutations:Promise<void>=Promise.resolve();
  let materialInFlight=0,deferredRefresh=false;
- let drawing=false,inspecting=false,strokeColour='#808080';let flyToNode:((id:string,viewport?:{x:number;y:number;zoom:number})=>void)|null=null;
+ let drawing=false,dismissedCard:string|null=null,strokeColour='#808080';let flyToNode:((id:string,viewport?:{x:number;y:number;zoom:number})=>void)|null=null;
  let flyToEdge:((id:string,viewport?:{x:number;y:number;zoom:number})=>void)|null=null;
 
  const mount=document.createElement('div');mount.className='research-instrument';mount.hidden=true;host.container.append(mount);
@@ -387,7 +387,12 @@ export function installResearchInstruments(host:ResearchInstrumentsHost){
   const constellationRequest=nativeView&&nativeScene&&current&&subject&&Array.isArray(subject.readings)&&subject.readings.length>1?{expression_ref:nativeView.document.expression_ref,revision:nativeView.document.revision,scene_ref:nativeScene,entity_ref:current.id}:undefined;
   const imageImport=()=>{const input=document.createElement('input');input.type='file';input.accept='image/png,image/jpeg,image/webp';input.onchange=async()=>{const file=input.files?.[0];if(!file)return;try{if(file.size>196608)throw new Error('Choose an image smaller than 192 KiB for this native document.');const dataUrl=await new Promise<string>((resolve,reject)=>{const reader=new FileReader();reader.onload=()=>resolve(String(reader.result));reader.onerror=()=>reject(reader.error);reader.readAsDataURL(file);});act({type:'create-card',kind:'image',title:file.name.slice(0,160),dataUrl,position:{x:0,y:0}});}catch(error){message(String(error));}};input.click();};
   const annotations=(material?.strokes??[]).map(stroke=>({id:stroke.id,canvasId:canvas.key,annotationType:'stroke' as const,points:stroke.points,style:{color:stroke.color,width:stroke.width,opacity:stroke.opacity},bounds:{position:{x:Math.min(...stroke.points.map(p=>p.x)),y:Math.min(...stroke.points.map(p=>p.y))},size:{width:Math.max(1,Math.max(...stroke.points.map(p=>p.x))-Math.min(...stroke.points.map(p=>p.x))),height:Math.max(1,Math.max(...stroke.points.map(p=>p.y))-Math.min(...stroke.points.map(p=>p.y)))}},createdAt:stroke.createdAt,updatedAt:stroke.createdAt}));
-  const closeInspector=()=>{inspecting=false;host.inspector.hidden=true;redraw();host.tools.querySelector<HTMLButtonElement>('[aria-label="Toggle canvas inspector"]')?.focus();};
+  // The card follows the selection: selecting a node or connection shows it,
+  // closing dismisses it for that selection only.
+  const cardFor=state.selectedNode??state.selectedEdge??null;
+  const inspecting=!!cardFor&&cardFor!==dismissedCard;
+  host.inspector.hidden=!inspecting;
+  const closeInspector=()=>{dismissedCard=cardFor;host.inspector.hidden=true;redraw();};
   const controls=<div className="research-tool-actions" aria-label="Canvas tools">
    {editable&&<><button aria-label="Note" title="Note" onClick={()=>act({type:'create-card',kind:'note',position:{x:0,y:0}})}><ToolIcon name="text"/></button><button aria-label="Image" title="Image" onClick={imageImport}><ToolIcon name="camera"/></button>
    <select aria-label="Focus disclosed source" value="" onChange={event=>{const ref=event.target.value;const source=canvas.nodes.find(node=>node.id===ref);if(!source||!canvas.occurrences.has(ref)||!host.nativeView()?.document.entities[ref]?.subject)return;select(ref);flyToNode?.(ref);redraw();}}><option value="">Source…</option>{canvas.nodes.filter(node=>host.nativeView()?.document.entities[node.id]?.subject).map(node=><option key={node.id} value={node.id}>{node.title}</option>)}</select>
@@ -407,7 +412,6 @@ export function installResearchInstruments(host:ResearchInstrumentsHost){
     <option value="">Views…</option>{Object.keys(namedViews).map(name=><optgroup key={name} label={name}><option value={`apply\u0000${name}`}>Apply</option><option value={`remove\u0000${name}`}>Remove</option></optgroup>)}</select>}</>}
    {constellationRequest&&<ConstellationAction request={constellationRequest} onError={message}/>}
    {editable&&host.editObject&&current&&localId&&<button aria-label="Edit object" title="Edit object" onClick={()=>host.editObject!(canvas.sceneId!,localId)}><ToolIcon name="pen"/></button>}
-   <button aria-label="Toggle canvas inspector" title="Toggle canvas inspector" aria-pressed={inspecting} onClick={()=>{inspecting=!inspecting;host.inspector.hidden=!inspecting;redraw();}}><ToolIcon name="options"/></button>
   </div>;
   const edgeId=!current?state.selectedEdge:null;
   const selectedEdgeObj=edgeId?canvas.edges.find(e=>e.id===edgeId):undefined;
@@ -419,7 +423,7 @@ export function installResearchInstruments(host:ResearchInstrumentsHost){
    to:host.nativeView()?.document.entities[selectedEdgeObj.targetNodeId]?.subject?selectedEdgeObj.targetNodeId:undefined,
   }:undefined;
   const inspector=<div className="research-inspector-content" onKeyDown={event=>{if(event.key==='Escape'){event.preventDefault();event.stopPropagation();closeInspector();}}}><header><h3>{current?.title??(state.selectedEdge?'Connection':'Canvas')}</h3><button onClick={closeInspector} aria-label="Close canvas inspector">Close</button></header>
-   {current&&<button onClick={()=>{const ref=current.type==='resource'?current.absolutePath:host.nativeView()?.document.entities[current.id]?.subject?.subject_ref;if(ref)host.inspectSubject(ref);else{inspecting=true;host.inspector.hidden=false;redraw();}}}>Open source</button>}
+   {current&&<button onClick={()=>{const ref=current.type==='resource'?current.absolutePath:host.nativeView()?.document.entities[current.id]?.subject?.subject_ref;if(ref)host.inspectSubject(ref);}}>Open source</button>}
    {editable&&current&&localId&&host.editObject&&<button onClick={()=>host.editObject!(canvas.sceneId!,localId)}>Edit object</button>}
    {editable&&localId&&current&&<><label>Width<input type="number" defaultValue={Math.round(current.size.width)} onBlur={e=>act({type:'resize',id:localId,width:Number(e.target.value),height:current.size.height})}/></label><label>Height<input type="number" defaultValue={Math.round(current.size.height)} onBlur={e=>act({type:'resize',id:localId,width:current.size.width,height:Number(e.target.value)})}/></label>
    {<button disabled={!!subject&&!host.duplicateOccurrence} onClick={()=>subject?apply(()=>host.duplicateOccurrence!(canvas.sceneId!,localId)):act({type:'duplicate',id:localId})}>Duplicate</button>}
@@ -487,7 +491,7 @@ export function installResearchInstruments(host:ResearchInstrumentsHost){
     // CanvasView reports onSelectEdge(null) right after every node click; that
     // clears only an edge selection and never the node just selected.
     onSelectEdge={id=>{if(id===null){if(state.selectedEdge!==null&&state.selectedEdge!==undefined){state.selectedEdge=null;redraw();}return;}state.selectedEdge=id;state.selectedNode=null;if(canvas.sceneId)host.select(canvas.sceneId,null,id??undefined);if(id)flyToEdge?.(id);redraw();}}
-    onNodeDoubleClick={id=>{const view=host.nativeView(),node=canvas.nodes.find(n=>n.id===id);const subject=node?.type==='resource'?node.absolutePath:view?.document.entities[id]?.subject?.subject_ref;if(subject)host.inspectSubject(subject);else{select(id);inspecting=true;host.inspector.hidden=false;redraw();}}}
+    onNodeDoubleClick={id=>{const view=host.nativeView(),node=canvas.nodes.find(n=>n.id===id);const subject=node?.type==='resource'?node.absolutePath:view?.document.entities[id]?.subject?.subject_ref;if(subject)host.inspectSubject(subject);else{select(id);dismissedCard=null;host.inspector.hidden=false;redraw();}}}
     onMoveNodePreview={editable?(id,position)=>{
      groupMove(id,state.snapToGrid?snapToGrid(position,CANVAS_UNITS/4,CANVAS_UNITS/16):position);
     }:undefined}

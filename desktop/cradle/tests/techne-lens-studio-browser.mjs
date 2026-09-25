@@ -1,4 +1,4 @@
-/** The M0′–M5′ Lens Studio in the ACTUAL imported application (owner
+/** The M0′–M5′ instruments as ONE Expressions HUD in the ACTUAL imported application (owner
  * wayfinder §§2, 13–19, 28): the compact instrument chooser and the floating
  * Studio stand in the current mount's Technē cut, each lens presents its real
  * operating controls or an honest facet state, and switching lenses never
@@ -55,20 +55,22 @@ try {
     await active(id).click();
     assert.equal(await active(id).getAttribute('aria-selected'), 'true');
     assert.equal((await state()).activeLens, id);
+    // ONE HUD (owner ruling 2026-09-19, map §§11–13): every instrument keeps
+    // the Expressions masthead; the chooser sits inside it; no second header,
+    // no separate instrument panel, no native-composition panel.
+    assert.equal(await page.locator('#app > .masthead:visible').count(), 1, 'the Expressions masthead stands in every instrument');
+    assert.equal(await page.locator('.masthead:visible').count(), 1, 'exactly one header');
+    assert.equal(await page.locator('#app > .masthead #lens-chooser').count(), 1, 'the chooser is part of the masthead');
+    assert.equal(await page.locator('#lens-studio, #research-hud, #native-work, #techne-world').count(), 0, 'no bolted-on instrument chrome exists');
     if (['canvas', 'timeline', 'place'].includes(id)) {
-      // The actual refusal text every m1/m2/m4 instrument gives without a
-      // bound native Scene (researchInstruments.tsx `load`, the shared
-      // `if(!view||!binding)` throw, and m1's own no-view branch — R6,
-      // Wayfinder §21). "unavailable"/"not been announced" are kept for any
-      // other honest-refusal wording a future instrument may use.
       await page.waitForFunction(() => /unavailable|not been announced|open a native scene/i.test(document.querySelector('.research-instrument-status')?.textContent ?? ''));
-      assert.equal(await page.locator('#lens-studio:not([hidden])').count(), 0, 'research tools do not open a duplicate explanatory panel');
+      assert.equal(await page.locator('#app > .masthead #instrument-tools').count(), 1, 'instrument tools join the masthead rail');
       assert.equal(await page.locator('.research-instrument-body .react-flow__node').count(), 0, 'missing owner never becomes demo graph data');
-    } else {
-      await page.waitForSelector('#lens-studio:not([hidden])');
-      const action = id === 'project' ? 'native-library' : 'timeline';
-      assert.equal(await page.locator(`#lens-studio [data-action="${action}"]`).count(), 1);
-      if (id !== 'project') assert.equal(await page.locator('#lens-studio [data-op="commit"]').count(), 1);
+    } else if (id === 'journey') {
+      assert.equal(await page.locator('#timeline-panel:not([hidden])').count(), 1, 'Journey opens the existing Scene strip');
+    } else if (id === 'palace') {
+      await page.waitForSelector('#inspector:not([hidden]) #techne-palace-workspace, #inspector:not([hidden]) .palace-status');
+      assert.equal((await page.locator('#inspector-title').textContent())?.trim(), 'Palace', 'Palace composes inside the existing Studio');
     }
     assert.deepEqual(await page.evaluate(() => window.__FIELD_STUDIES__.getDocument()), documentBefore, 'lens selection retains the same actual Expression draft and Scenes');
     receipt.lenses.push(id);
@@ -84,11 +86,10 @@ try {
   assert.deepEqual(after.selected, before.selected, 'switching instruments does not change the selection');
   assert.equal(after.hostMode, 'techne', 'the workspace stays in the Technē cut across lens changes');
 
-  // M5 operates the existing native composition controls in this engine.
+  // Saving is the app's own act: one Save control in the masthead (and ⌘S),
+  // not a separate native-composition panel.
+  assert.equal(await page.locator('#app > .masthead #native-save').count(), 1, 'Save stands in the masthead');
   await active('palace').click();
-  await page.locator('#lens-studio [data-action="native-work"]').click();
-  await page.waitForSelector('#native-work:not([hidden])');
-  await page.locator('#native-work [data-native="close"]').click();
 
   // Keyboard: the chooser is a tablist. Selecting keeps focus on the chosen tab
   // (the innerHTML-rebuild focus loss the review caught is fixed), and arrow
@@ -100,8 +101,10 @@ try {
   assert.ok(await page.evaluate(() => document.activeElement?.dataset?.lens === 'journey'), 'the roved instrument takes focus');
 
   // The Studio closes without disturbing the chooser or the field.
-  await page.locator('#lens-studio .lens-studio-close').click();
-  await page.waitForSelector('#lens-studio', {state: 'hidden'});
+  await active('palace').click();
+  await page.waitForSelector('#inspector:not([hidden])');
+  await page.locator('#inspector [data-action="close-studio"]').click();
+  await page.waitForSelector('#inspector', {state: 'hidden'});
   assert.ok(await page.locator('#lens-chooser:not([hidden])').count(), 'closing the Studio leaves the chooser standing');
   assert.deepEqual((await state()).camera, before.camera, 'closing the Studio does not move the field');
 
@@ -122,7 +125,7 @@ try {
     await page.screenshot({path: resolve(dir, 'lens-studio.png')});
     writeFileSync(resolve(dir, 'lens-studio-receipt.json'), JSON.stringify(receipt, null, 2));
   }
-  console.log(`Technē Lens Studio: chooser + floating Studio in the current app, six instrument choices (${receipt.lenses.join(', ')}) with real engine controls and missing-owner refusal, lens continuity preserved, chooser absent in the lived cut.`);
+  console.log(`Technē one HUD: six instruments (${receipt.lenses.join(', ')}) inside the Expressions masthead, instrument controls in the existing Studio/rail, no bolted-on panels, missing-owner refusal, lens continuity preserved, chooser absent in the lived cut.`);
 } finally {
   await browser.close();
   await new Promise(done => server.close(done));
