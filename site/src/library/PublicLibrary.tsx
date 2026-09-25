@@ -34,8 +34,9 @@ function Listing({model,query='',collection='',page=1,focusRef=''}:{model:Public
 /** The primary native-subject section lives inside the existing Gallery. */
 export function PublishedShelf({query=''}:{query?:string}) {
  const {model,error,retry}=usePublication();
+ const primaryCollection=model?.collections()[0]?.ref||'';
  return <section className="published-shelf" aria-label="Native published subjects"><header><div><p className="eyebrow">PUBLICATIONS / NATIVE SUBJECTS</p><h2>Read the work.</h2></div><SetupAccess/></header><p>Deliberately published editions. Source, Expression and graph remain different views of the same subjects. This is not a live subscription.</p>
- {error?<div role="alert"><p>{error}</p><button onClick={retry}>Retry public Library</button></div>:model?<Listing model={model} query={query}/>:<p role="status">Opening the published collection…</p>}
+ {error?<div role="alert"><p>{error}</p><button onClick={retry}>Retry public Library</button></div>:model?<Listing model={model} query={query} collection={primaryCollection}/>:<p role="status">Opening the published collection…</p>}
  {model&&<PublicationStanding model={model}/>}
  </section>;
 }

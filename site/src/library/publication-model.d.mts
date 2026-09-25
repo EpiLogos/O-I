@@ -4,7 +4,7 @@ export interface PublicProjection {projection_ref:string;projection_revision:num
 export interface PublicBinding {binding_ref:string;subject_ref?:string;portable_renderer?:string;component_ref:string;props:Record<string,any>;fallback:Record<string,any>}
 export interface PublicPresentation {title:string;summary?:string;presentation_ref:string;revision:number;regions:{bindings:PublicBinding[]}[]}
 export interface PublicResource {ref:string;kind:string;world_ref:string;label:string;summary?:string;revision?:string;locators?:{surface:string;locator:string}[]}
-export interface PublicManifest {schema:string;projection_ref:string;projection_revision:number;source:{revision:string};page:string;projection_file:string;digest:{value:string}}
+export interface PublicManifest {schema:string;projection_ref:string;projection_revision:number;source:{revision:string};page:string;projection_file:string;digest:{value:string};native_body?:import('./model.mjs').NativeBodyDescriptor}
 export interface PublicRecord {projection:PublicProjection;presentation:PublicPresentation}
 export interface PublicForm extends PublicRecord {binding:PublicBinding}
 export interface PublicSubject extends PublicRecord {resource:PublicResource;readings:PublicBinding[];manifest?:PublicManifest;relations:{relation_ref?:string;from:string;to:string;relation:string}[];forms:unknown}

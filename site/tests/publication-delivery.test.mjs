@@ -12,7 +12,7 @@ function delivered(inputs=producerFixtures()) {
  ]);
  for(const e of editions) {
   const p=`data/library/editions/${e.directory}/`;
-  files.set(p+'index.html',e.html);files.set(p+'projection.json',JSON.stringify(e.projection));files.set(p+'manifest.json',JSON.stringify(e.manifest));
+  files.set(p+'index.html',e.html);files.set(p+'projection.json',JSON.stringify(e.projection));if(e.native_body)files.set(p+'native-body.journey.json',e.native_body.bytes);files.set(p+'manifest.json',JSON.stringify(e.manifest));
  }
  return {files,read:async path=>{assert.ok(files.has(path),path);return Buffer.from(files.get(path));}};
 }
@@ -25,7 +25,7 @@ test('a successful empty preview is not native corpus acceptance',async()=>{
  await assert.rejects(()=>verifyPublicEdition(packet),/No admitted native corpus/);
  assert.equal((await verifyPublicEdition({...packet,allowEmpty:true})).standing,'unavailable-native-corpus');
 });
-for(const ending of ['index.html','projection.json','manifest.json'])test(`changed native ${ending} bytes fail real acceptance`,async()=>{
+for(const ending of ['index.html','projection.json','native-body.journey.json','manifest.json'])test(`changed native ${ending} bytes fail real acceptance`,async()=>{
  const packet=delivered(),path=[...packet.files.keys()].find(p=>p.endsWith('/'+ending));
  packet.files.set(path,ending==='index.html'?packet.files.get(path)+'tampered':'{}');
  await assert.rejects(()=>verifyPublicEdition(packet));

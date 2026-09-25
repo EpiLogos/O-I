@@ -21,6 +21,12 @@ for(const manifest of manifests){
   if(!/^\.\/data\/library\/editions\/[a-f0-9]{64}\/(?:index\.html|projection\.json)$/.test(path))throw new Error('Unadmitted native edition path.');
   files.add(path.slice(2));
  }
+ if(manifest.native_body){
+  const path=manifest.native_body.path;
+  if(!/^\.\/data\/library\/editions\/[a-f0-9]{64}\/native-body\.journey\.json$/.test(path))throw new Error('Unadmitted native Expression body path.');
+  if(dirname(path.slice(2))!==dirname(manifest.page.slice(2)))throw new Error('The native Expression body must belong to the same exact edition.');
+  files.add(path.slice(2));
+ }
  files.add(dirname(manifest.page.slice(2))+'/manifest.json');
 }
 for(const path of files){

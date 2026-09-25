@@ -6,6 +6,7 @@ on:
       - 'site/**'
       - 'shared-field/**'
       - '.github/workflows/site.yml'
+      - 'desktop/cradle/expressions-app/collections/return-of-zero/**'
   push:
     branches:
       - main
@@ -13,6 +14,7 @@ on:
       - 'site/**'
       - 'shared-field/**'
       - '.github/workflows/site.yml'
+      - 'desktop/cradle/expressions-app/collections/return-of-zero/**'
   workflow_dispatch:
 
 permissions:
@@ -33,6 +35,20 @@ jobs:
         working-directory: site
     steps:
       - uses: actions/checkout@v4
+      - name: Check out the pinned native Expression corpus
+        uses: actions/checkout@v4
+        with:
+          repository: EpiLogos/Point-Cloud-Demo
+          ref: e875344c04c14228840665a91823edc42b078fb2
+          path: .publication-sources/Point-Cloud-Demo
+          persist-credentials: false
+      - name: Check out the pinned Return-of-Zero source revision
+        uses: actions/checkout@v4
+        with:
+          repository: EpiLogos/Antykathera-Essay-Work
+          ref: dbf3b1771724bd56663e4e3410df13e9d3ae681b
+          path: .publication-sources/Antykathera-Essay-Work
+          persist-credentials: false
       - uses: actions/setup-node@v4
         with:
           node-version: 22
@@ -81,11 +97,21 @@ jobs:
           VITE_OI_SPACETIMEDB_URI: ${{ vars.OI_SPACETIMEDB_URI }}
           VITE_OI_SPACETIMEDB_DATABASE: ${{ vars.OI_SPACETIMEDB_DATABASE }}
         run: npm run build
+      - name: Assemble the curated authored Expression publication
+        env:
+          OI_PUBLICATION_ENVELOPE: ${{ github.workspace }}/desktop/cradle/expressions-app/collections/return-of-zero/PUBLICATION-CURATED.json
+          OI_PCD_S_PRODUCTS_ROOT: ${{ github.workspace }}/.publication-sources/Point-Cloud-Demo/production/s-products
+          OI_ESSAY_REPO: ${{ github.workspace }}/.publication-sources/Antykathera-Essay-Work
+        run: |
+          node build-return-of-zero-publications.mjs
+          printf 'OI_LIBRARY_PUBLICATIONS=%s\n' "$(node -e "const fs=require('fs');process.stdout.write(JSON.stringify(JSON.parse(fs.readFileSync('publications/return-of-zero-curated/inputs.json','utf8'))))")" >> "$GITHUB_ENV"
       - name: Build the admitted public reading edition for deployment
-        # No live-service variables, author-machine endpoint or raw public/data
-        # folder enters this separate build. Track 3 inputs must be native
-        # revision-pinned producer outputs selected before this step.
+        # The deployment consumes only the curated revision-pinned native
+        # producer outputs assembled above. The old demo/starter collection is
+        # not a member of this edition.
         run: npm run build:public
+      - name: Verify exact curated publication bytes
+        run: node verify-public-edition.mjs --directory dist --expected-inputs "$OI_LIBRARY_PUBLICATIONS" --out evidence/library/curated-byte-receipt.json
       - name: Verify the public receiving route before publication
         run: |
           python -m pip install playwright==1.51.0 pillow

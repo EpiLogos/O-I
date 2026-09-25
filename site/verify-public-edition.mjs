@@ -35,7 +35,20 @@ export async function verifyPublicEdition({read,expectedInputs,allowEmpty=false}
   check(isDeepStrictEqual(JSON.parse(projectionBytes.toString('utf8')),projection),'The native Projection download differs from the selected edition.');
   const embedded=htmlBytes.toString('utf8').match(/<script type="application\/json" id="oi-projection">([\s\S]*?)<\/script>/)?.[1];
   check(Boolean(embedded)&&isDeepStrictEqual(JSON.parse(embedded),projection),'The HTML contains a different embedded Projection.');
-  editions.push({projection_ref:projection.projection_ref,projection_revision:projection.projection_revision,source:projection.source,html_sha256:sha(htmlBytes),projection_sha256:sha(projectionBytes)});
+  let native_body=null;
+  if(manifest.native_body){
+   const expectedPath=`./${directory}/native-body.journey.json`;
+   check(manifest.native_body.path===expectedPath,'The native Expression body path does not match the exact edition.');
+   const bodyBytes=await read(`${directory}/native-body.journey.json`);
+   check(sha(bodyBytes)===manifest.native_body.digest.value,'The native Expression body bytes do not match the edition digest.');
+   const body=JSON.parse(bodyBytes.toString('utf8'));
+   check(body?.schema==='oi.journey'&&body?.version===1,'The native Expression body is not an oi.journey v1 document.');
+   const sceneIds=new Set((body.scenes||[]).map(scene=>scene.id)),entityIds=new Set((body.scenes||[]).flatMap(scene=>(scene.entities||[]).map(entity=>entity.id)));
+   check(Object.values(manifest.native_body.scene_map||{}).every(id=>sceneIds.has(id)),'The edition maps a public Scene to a missing native Scene.');
+   check(Object.values(manifest.native_body.entity_map||{}).every(id=>entityIds.has(id)),'The edition maps a public formation to a missing native formation.');
+   native_body={sha256:sha(bodyBytes),scenes:sceneIds.size,entities:entityIds.size,source_revision:manifest.native_body.source_revision};
+  }
+  editions.push({projection_ref:projection.projection_ref,projection_revision:projection.projection_revision,source:projection.source,html_sha256:sha(htmlBytes),projection_sha256:sha(projectionBytes),native_body});
  }
  const subjects=model.search('', '');
  // Every emitted native subject must resolve to a particular published reading;
@@ -49,7 +62,7 @@ export async function verifyPublicEdition({read,expectedInputs,allowEmpty=false}
   producer_set_verified:sourceSetVerified,editions,
   browser_interaction:'not tested by this byte check',
   native_models_mac_microphone:'not invoked; not prerequisites for public reading',
-  completeness:'Byte/set agreement does not establish editorial corpus completeness or owner recognition.'
+  completeness:'Byte/set agreement establishes exact selected publication and native-body fidelity; symbolic/editorial quality and owner recognition remain separate review claims.'
  };
  if(!allowEmpty)check(editions.length>0&&readable>0,'No admitted native corpus reading is deployed. Public-edition acceptance is not complete.');
  return receipt;

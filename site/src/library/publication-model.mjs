@@ -57,6 +57,8 @@ export function openPublication(seed, manifests) {
   for(const record of records) {
    const p=record.projection,m=manifestFor(p),directory=m?.page?.match(/^(\.\/data\/library\/editions\/[a-f0-9]{64}\/)index\.html$/)?.[1];
    if(!m||!directory||paths.has(directory)||m.projection_file!==directory+'projection.json'||m.world_ref!==record.presentation.world_ref||m.presentation_ref!==record.presentation.presentation_ref||m.presentation_revision!==record.presentation.revision||m.audience?.visibility!=='public'||m.published_at!==p.published_at||m.digest?.algorithm!=='sha256'||!(/^[a-f0-9]{64}$/).test(m.digest.value)) throw new Error('The exact edition manifest is inconsistent. No source download has been substituted.');
+   const native=m.native_body;
+   if(native&&(native.schema!=='oi.native-expression-body/v1'||native.source_schema!=='oi.journey'||native.path!==directory+'native-body.journey.json'||native.expression_ref!==p.subject.ref||native.expression_ref!==p.source.ref||native.expression_revision!==Number(p.source.revision)||native.digest?.algorithm!=='sha256'||!(/^[a-f0-9]{64}$/).test(native.digest.value)||!native.scene_map||typeof native.scene_map!=='object'||Array.isArray(native.scene_map)||!native.entity_map||typeof native.entity_map!=='object'||Array.isArray(native.entity_map)))throw new Error('The exact native Expression body manifest is inconsistent.');
    paths.add(directory);
   }
  }
@@ -87,10 +89,11 @@ export function openPublication(seed, manifests) {
   if (composition.expression_ref !== admission.expression.expression_ref || composition.revision !== admission.expression.expression_revision || form.projection.source.ref !== composition.expression_ref || String(form.projection.source.revision) !== String(composition.revision)) throw new Error('The Expression and its published revision disagree.');
   const scene = composition.scenes.find(s => s.scene_ref === (sceneRef || admission.expression.scene_ref || composition.selection.scene_ref));
   if (!scene) throw new Error('This exact Scene is not in the published Expression.');
-  if (scene.entity_refs.length > 10) return {admission:{state:'unavailable',reason:'The published Scene exceeds this browser renderer’s ten-formation capacity. Reading and source depth remain available.'}};
+  const nativeBody=manifestFor(form.projection)?.native_body??null;
+  if (scene.entity_refs.length > 10 && !nativeBody) return {admission:{state:'unavailable',reason:'The portable fallback exceeds this browser adapter’s ten-formation capacity and this edition carries no verified native body. Reading and source depth remain available.'}};
   // An ephemeral props adapter for the already accepted NativeStage, not a store.
   const entry = {id:composition.expression_ref,title:composition.title,summary:form.presentation.summary || '',collection:'',kind:'expression',standing:'Published edition',expression_ref:composition.expression_ref,revision:composition.revision,source_revision:form.projection.source.revision,source_ref:form.projection.source.ref,source_location:form.presentation.title,url:'',scenes:composition.scenes.map(s => ({ref:s.scene_ref,title:s.title,subject_ref:composition.entities[s.entity_refs[0]]?.subject?.subject_ref || ''})),cover:[],search:''};
-  return {admission,scene,edition:{entry,publication:{schema:'oi.expression-publication/v1',expression_ref:composition.expression_ref,expression_revision:composition.revision,composition,expression:admission.expression,presentation:form.presentation,projection:form.projection},readings:{},source_basis:{commit:'',revision:form.projection.source.revision,path:''},standing:'Deliberately published revision; not a live subscription.'}};
+  return {admission,scene,edition:{entry,publication:{schema:'oi.expression-publication/v1',expression_ref:composition.expression_ref,expression_revision:composition.revision,composition,expression:admission.expression,presentation:form.presentation,projection:form.projection},native_body:nativeBody,readings:{},source_basis:{commit:'',revision:form.projection.source.revision,path:''},standing:'Deliberately published revision; not a live subscription.'}};
  }
  function collections() {
   return model.search('', {limit:Math.max(seed.entries.length,1)}).filter(e => e.kind === 'wiki-space');
