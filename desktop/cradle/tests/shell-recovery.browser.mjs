@@ -115,7 +115,7 @@ try{
       if(!reference){assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),'page has no horizontal overflow');assert.ok(await page.locator('[data-settings-page]:visible').evaluate(el=>el.scrollWidth<=el.clientWidth+1),'settings has no clipped horizontal content');}
      }
      if(reference)return;
-     const appearance=page.getByRole('group',{name:'Appearance',exact:true});
+     const appearance=page.getByRole('radiogroup',{name:'Appearance',exact:true});
      await appearance.getByRole('radio',{name:'Dark',exact:true}).click();await page.waitForFunction(()=>document.body.dataset.theme==='dark');assert.equal(await bodyTheme(page),'dark');
      await appearance.getByRole('radio',{name:'System',exact:true}).click();await page.emulateMedia({colorScheme:'light'});await page.waitForFunction(()=>!document.body.dataset.theme);assert.equal(await bodyTheme(page),'light');
      assert.equal(await page.locator('.visuals-preferences canvas,.visuals-preferences iframe').count(),0,'Visuals has no duplicate Expression host');
@@ -151,7 +151,7 @@ try{
      assert.notEqual(colours[0].color,colours[1].color,'active/inactive semantic emphasis differs');for(const c of colours)assert.equal(c.icon,c.color,'icons inherit state instead of hard-coded black/white');
      const right=page.locator('.desktop-side.right');
      for(const name of ['Run','Agents','Context']){
-      const button=right.getByRole('button',{name,exact:true});if(await button.count()!==1)throw Error('Expected existing '+name+' plane');await button.click();
+      const button=right.getByRole('tab',{name,exact:true});if(await button.count()!==1)throw Error('Expected existing '+name+' plane');await button.click();
       await page.screenshot({path:`${out}/${engineName}-${scheme}-sidebar-${name.toLowerCase()}.png`});
       assert.ok(await right.evaluate(el=>el.scrollWidth<=el.clientWidth+1),'right section has no horizontal overflow');
      }

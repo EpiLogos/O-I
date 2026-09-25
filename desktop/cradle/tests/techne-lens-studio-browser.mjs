@@ -56,12 +56,17 @@ try {
     assert.equal(await active(id).getAttribute('aria-selected'), 'true');
     assert.equal((await state()).activeLens, id);
     if (['canvas', 'timeline', 'place'].includes(id)) {
-      await page.waitForFunction(() => /unavailable|not been announced/.test(document.querySelector('.research-instrument-status')?.textContent ?? ''));
+      // The actual refusal text every m1/m2/m4 instrument gives without a
+      // bound native Scene (researchInstruments.tsx `load`, the shared
+      // `if(!view||!binding)` throw, and m1's own no-view branch — R6,
+      // Wayfinder §21). "unavailable"/"not been announced" are kept for any
+      // other honest-refusal wording a future instrument may use.
+      await page.waitForFunction(() => /unavailable|not been announced|open a native scene/i.test(document.querySelector('.research-instrument-status')?.textContent ?? ''));
       assert.equal(await page.locator('#lens-studio:not([hidden])').count(), 0, 'research tools do not open a duplicate explanatory panel');
       assert.equal(await page.locator('.research-instrument-body .react-flow__node').count(), 0, 'missing owner never becomes demo graph data');
     } else {
       await page.waitForSelector('#lens-studio:not([hidden])');
-      const action = id === 'project' ? 'native-library' : 'sequence-panel';
+      const action = id === 'project' ? 'native-library' : 'timeline';
       assert.equal(await page.locator(`#lens-studio [data-action="${action}"]`).count(), 1);
       if (id !== 'project') assert.equal(await page.locator('#lens-studio [data-op="commit"]').count(), 1);
     }

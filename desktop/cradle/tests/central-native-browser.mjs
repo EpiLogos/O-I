@@ -23,9 +23,14 @@ try{
    const context=await browser.newContext({viewport:{width:1440,height:1100}});
    page=await context.newPage();page.on('pageerror',error=>errors.push(String(error)));
       await page.goto(url);
-   // Day chrome is async from the bridge; wait for either the ready button or the honest not-ready status, then require ready.
-   await page.getByRole('button',{name:'Open current Daily Die',exact:true}).or(page.getByRole('status')).first().waitFor({timeout:60000});
-   await page.getByRole('button',{name:'Open current Daily Die',exact:true}).waitFor({timeout:60000});
+   // The root navigator is async from the bridge; wait for either the real
+   // "Today" destination (the live root read the WorldNavigator renders once
+   // root.control resolves — CentralGround's own gated "Open current Daily
+   // Die" button was superseded by this row and is no longer mounted
+   // anywhere, main included) or the honest failure alert, then require the
+   // real destination.
+   await page.getByRole('button',{name:'Open today',exact:true}).or(page.getByRole('alert')).first().waitFor({timeout:60000});
+   await page.getByRole('button',{name:'Open today',exact:true}).waitFor({timeout:60000});
    check(name+': root working ground rendered from actual native reads');
    await page.getByRole('button',{name:'Open today',exact:true}).click();
    const face=page.frameLocator('iframe[title^="Day die"]');

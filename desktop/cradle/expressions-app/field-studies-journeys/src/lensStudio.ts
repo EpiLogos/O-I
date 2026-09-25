@@ -44,6 +44,13 @@ export interface LensStudioHost {
   activate(lens: LensId): void;
 }
 
+// Only these instruments carry real Studio controls (§ studioBody's own
+// `actions` map). The rest (canvas/timeline/place) are honestly unavailable
+// facets, surfaced through the separate research-instrument status, never a
+// blank Studio panel — `select()` below gates opening the panel on this
+// same set so the two never disagree.
+const STUDIO_LENSES = new Set<LensId>(['project', 'journey', 'palace']);
+
 function studioBody(lens: LensDef): string {
   // Same operations, icon-led: 24×24 thin-stroke glyph, accessible label
   // (aria-label + title), never a bare text action for a committing act.
@@ -133,7 +140,7 @@ export function installLensStudio(host: LensStudioHost): LensStudioApi {
   const api: LensStudioApi = {
     setMode(next) { mode = next; if (next === 'techne' && !built) buildChooser(); apply(); },
     select(id) {
-      active = id; studioOpen = false;
+      active = id; studioOpen = STUDIO_LENSES.has(id);
       if (built) markActive(); else buildChooser();
       if (studio.hidden) studio.hidden = false;
       renderStudio();
