@@ -401,4 +401,5 @@ const receipt = {
   outputs: ['world-publication.json', ...members.map((m) => `expression-${m.id}.json`)],
 };
 await writeFile(resolve(outDir, 'PRODUCER-RECEIPT.json'), JSON.stringify(receipt, null, 1));
+await writeFile(resolve(outDir, 'inputs.json'), JSON.stringify(receipt.outputs.map((name) => resolve(outDir, name))));
 console.log(`Return-of-Zero publications: ${members.length + 1} producer documents from pinned sources at ${sourceCommit}; ${reconciliation.bindings.length} source bindings and ${reconciliation.assets.length} assets verified.`);
