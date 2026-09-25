@@ -3,7 +3,10 @@ import renderMathInElement from 'katex/contrib/auto-render';
 import { ShellMark } from '../shell/ShellMark';
 import {
   hrefFor,
+  isShellPath,
   resolveEssayRequest,
+  sitePath,
+  withoutSiteBase,
   type EssayCatalog,
   type EssayFile,
   type EssayResolution,
@@ -15,7 +18,7 @@ type Pin = { office: string; scope: string };
 const TRAIL_KEY = 'oi-essay-opened-path';
 
 function pageUrl(id: string) {
-  return `/essay-shell/pages/${id.split('/').map(encodeURIComponent).join('/')}.json`;
+  return sitePath(`/essay-shell/pages/${id.split('/').map(encodeURIComponent).join('/')}.json`);
 }
 
 function pathUrl(id: string, catalog: EssayCatalog) {
@@ -25,7 +28,7 @@ function pathUrl(id: string, catalog: EssayCatalog) {
 function canonicalUrl(resolution: EssayResolution, catalog: EssayCatalog, hash = '') {
   if (resolution.kind === 'page') return pathUrl(resolution.id, catalog) + hash;
   const id = resolution.kind === 'folder' ? resolution.scope : resolution.id;
-  return `/essay/${id.split('/').map(encodeURIComponent).join('/')}${hash}`;
+  return `${sitePath(`/essay/${id.split('/').map(encodeURIComponent).join('/')}`)}${hash}`;
 }
 
 function readTrail(): { id: string; title: string }[] {
@@ -67,7 +70,7 @@ export function EssayApp() {
 
   useEffect(() => {
     const controller = new AbortController();
-    fetch('/essay-shell/catalog.json', { signal: controller.signal })
+    fetch(sitePath('/essay-shell/catalog.json'), { signal: controller.signal })
       .then((response) => {
         if (!response.ok) throw new Error('The essay publication is not on this host yet.');
         return response.json();
@@ -186,8 +189,8 @@ export function EssayApp() {
     if (!raw || raw.startsWith('#')) return;
     const url = new URL(anchor.href, location.origin);
     if (url.origin !== location.origin) return;
-    const path = url.pathname;
-    if (!(path.startsWith('/essay') || path.startsWith('/section-rooms') || path.startsWith('/symbolon') || path.startsWith('/manuscript'))) return;
+    const path = withoutSiteBase(url.pathname);
+    if (!isShellPath(path)) return;
     event.preventDefault();
     openPath(path + url.hash);
   }
@@ -218,7 +221,7 @@ export function EssayApp() {
     <div className="essay">
       <a className="skip" href="#reading">Skip to the reading</a>
       <header className="essay-top">
-        <a className="brand" href="/essay" aria-label="Reading root" onClick={(event) => { event.preventDefault(); openPath('/essay'); }}>
+        <a className="brand" href={sitePath('/essay')} aria-label="Reading root" onClick={(event) => { event.preventDefault(); openPath('/essay'); }}>
           <ShellMark className="brand-mark" />
         </a>
         <div className="who">The Return of Zero</div>

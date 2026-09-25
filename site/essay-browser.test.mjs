@@ -4,7 +4,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import test from 'node:test';
 import { MANUSCRIPT_ID, OFFICES, publishVault } from './essay-browser.mjs';
-import { hrefFor, resolveEssayRequest } from './src/essay/resolve.ts';
+import { hrefFor, requestKey, resolveEssayRequest, sitePath } from './src/essay/resolve.ts';
 
 async function fixture() {
   const root = await mkdtemp(join(tmpdir(), 'essay-vault-'));
@@ -117,6 +117,11 @@ test('publication keeps the six folders and drops quilt, NOTES, reference-notes,
     assert.equal(resolveEssayRequest('/essay/not-a-real-page', catalog).kind, 'missing');
     assert.equal(hrefFor('README', catalog), '/essay');
     assert.equal(hrefFor(MANUSCRIPT_ID, catalog), '/essay/manuscript/THE-RETURN-OF-ZERO');
+    assert.equal(requestKey('/O-I/essay/symbolon/matheme', '/O-I'), 'symbolon/matheme');
+    assert.deepEqual(resolveEssayRequest('/O-I/essay/read.html', catalog, '/O-I'), { kind: 'page', id: MANUSCRIPT_ID });
+    assert.deepEqual(resolveEssayRequest('/O-I/section-rooms/00-integral-threshold', catalog, '/O-I'), { kind: 'page', id: 'section-rooms/00-integral-threshold/ROOM' });
+    assert.equal(hrefFor('README', catalog, '/O-I'), '/O-I/essay');
+    assert.equal(sitePath('/essay-shell/catalog.json', '/O-I'), '/O-I/essay-shell/catalog.json');
     assert.equal(OFFICES.filter((office) => office.child).map((office) => office.id).join(','), 'symbolon/matheme,symbolon/mytheme,symbolon/episteme');
   } finally {
     await rm(root, { recursive: true, force: true });
@@ -127,4 +132,7 @@ test('the shell points at Relational Logos and does not paste it into site prose
   const app = await readFile(new URL('./src/essay/EssayApp.tsx', import.meta.url), 'utf8');
   assert.equal(app.includes('Relational Logos places self'), false);
   assert.equal(app.includes('co-present consciousness'), false);
+  assert.match(app, /sitePath\('\/essay-shell\/catalog.json'\)/);
+  assert.equal(app.includes("fetch('/essay-shell/catalog.json'"), false);
+  assert.equal(app.includes('href="/essay"'), false);
 });

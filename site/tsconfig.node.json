@@ -6,5 +6,5 @@
     "moduleResolution": "Bundler",
     "types": ["node"]
   },
-  "include": ["vite.config.ts", "tailwind.config.ts", "essay-vite-plugin.ts"]
+  "include": ["vite.config.ts", "tailwind.config.ts", "essay-vite-plugin.ts", "essay-host.ts"]
 }

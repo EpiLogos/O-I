@@ -61,7 +61,7 @@ jobs:
             explore-provider.test.mjs \
             explore-public-seed.test.mjs \
             src/explore/relation-layout.test.mjs
-          node --experimental-strip-types --test essay-browser.test.mjs
+          node --experimental-strip-types --test essay-browser.test.mjs essay-host.test.mjs
       - name: Install SpaceTimeDB module dependencies
         run: npm install --prefix ../shared-field/spacetimedb --no-audit --no-fund
       - name: Install pinned SpaceTimeDB CLI 2.8.1
@@ -100,6 +100,7 @@ jobs:
           python tests/library-acceptance.py || result=1
           python tests/library-regressions.py || result=1
           python tests/publication-acceptance.py || result=1
+          python tests/essay-host-smoke.py || result=1
           exit "$result"
       - name: Retain publication verification separately from deployable files
         if: always()

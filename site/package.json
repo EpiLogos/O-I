@@ -10,7 +10,7 @@
     "preview": "vite preview",
     "build:essay": "node build-essay-browser.mjs",
     "build:library": "node build-library.mjs && node build-publications.mjs && node build-essay-browser.mjs && node prepare-public-assets.mjs",
-    "test:essay": "node --experimental-strip-types --test essay-browser.test.mjs",
+    "test:essay": "node --experimental-strip-types --test essay-browser.test.mjs essay-host.test.mjs",
     "dev:public": "npm run build:library && vite --config vite.public.config.ts",
     "build:public": "npm run build:library && tsc -p tsconfig.public.json && vite build --config vite.public.config.ts",
     "test:library": "node --test library.test.mjs publication.test.mjs"
