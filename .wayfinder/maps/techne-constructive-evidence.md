@@ -569,3 +569,35 @@ Delivery: draft [O:I #519](https://github.com/EpiLogos/O-I/pull/519), branch `fe
 | Wiki read path | Repaired: ground status poll no longer clears reads (kernel); register decode discriminator; per-resource read serialization; bounded fresh retries for forms/readback | U + kernel tests + N+B (join 17/17, gate) |
 
 Remaining at this cut: independent joined verification (negatives, §28 lens continuity, ≥12-member corpus, measured drag/call counts) in progress; C11 shared/privacy, live Agent co-work (C8), installed-app and human acceptance not exercised; Blueprint canonical forms beyond the pinned sixfold; Palace multi-member regions; Journey↔live-field same-member traversal walk.
+
+## 25 September — installed walk: what failed, and the complete repair map
+
+Installed `~/Applications/O-I.app` from `94ad7c54` (PR #519 + main; CI 28/28). The owner walked it: nothing of the commission is usable. Causes, from the code (not agent summaries):
+
+1. **Technē replaces the Expressions app instead of being a mode of it.** `app.ts setInstrumentSurface/activateInstrument`: for M1′/M2′/M4′ the Expressions masthead is hidden, the field suspended and the whole vendored Research Canvas mounted with its own HUD (`#research-hud`, `#research-tools` with the vendor toolbar and an adapter tool row) and inspector (`#research-inspector`). M0′/M3′/M5′ get `#lens-studio` (two or three text buttons that re-fire `native-library`/`native-work`/`timeline`) and the `#native-work` "Keep the whole work" panel (commit / retry / file save / blueprint), which substitutes for instrument panels. Palace, Places and the relation field were added as further separately-styled panels. Commission §6 and map §§12–13 required the opposite.
+2. **The left navigator was never made one tree.** Every register renders as its own top-level region; the root wiki's `child_space_refs` become empty "constellations", so every Project appears twice; "+" (`onNewConstellation`) is supplied by no host (`CradleFrame.tsx:1769`), so it opens the Wiki page. New frame titles would show the raw anchor ref (`parseWiki` ignores the frame title).
+3. **Nothing to work on in the real world.** Every real `wiki.json` has 0 frames and 0 edges; there is no working creation path from Technē. The first gate proved Canvas editing on `tests/techne-construction-join.html` over a seeded temporary ground, not in the app.
+4. Five independent Wiki reader shapes exist; `kernelTechneAdapter.ts` is imported by nothing.
+
+### Repair map (one integrator; each item is verified in the installed app)
+
+**H — one Expressions HUD in both modes**
+- H1 Keep `#app > .masthead`, `#inspector` (Studio), toolbelt, `#context-panel`, transport and orbit control standing in every lens. Delete `#research-hud`, `.research-common` and `#research-inspector`.
+- H2 Instrument tools render as icon buttons in the masthead tool rail (one row, no scrollbar); the vendor toolbar is not portalled as a second bar.
+- H3 The M0′–M5′ chooser is a compact icon group in the masthead; the floating chooser bar and `#lens-studio` are deleted.
+- H4 Delete the `#native-work` panel. Its real producers move to their homes: Commit → the ordinary Save (masthead + ⌘S) with truthful status in the Studio footer (pending/conflict/retry there); native file save → Library file bar; open failure → toast with retry; blueprint → M1′ Studio section; Continue/Open file → Library.
+- H5 Delete `#techne-world` (register select duplicating the navigator).
+- H6 Instrument controls are Studio sections (same Studio, same resize/search/pin): M1′ Constellation (members/roles, frame/blueprint, relation type/standing, align/distribute/frames/views, whole transform), M2′ Relations (projection mode, standing/lane filters), M3′ Journey (scene list, bodies/triggers), M4′ Places (place facets, filters), M5′ Palace (regions/portals/order). Object sections (glyph sequence, colour & material, forces, morph, 3D body, text) stay available for the selected occurrence in every lens.
+- H7 Node anchor click → compact node information in `#context-panel` (open source, Edit object, relate); edge selection → the same panel with relation type and **Record as constellation relationship**.
+
+**N — one Central tree**
+- N1 Central is the root node; Projects nest under it; each Project lists its constellations (frames with inquiry title) and spaces with members, with truthful member counts and a restrained relation mark. Root child spaces map onto their Project nodes; no second listing.
+- N2 Project "+" opens an inline creation row scoped to that Project (title, question, frame/blueprint chooser from the AIKit authoring forms) → `aikit.constellation.apply create` → the new constellation opens in Technē M1′ with its Studio section.
+- N3 Relations-read failure is a quiet per-register state with retry, not a banner over the tree.
+- N4 Navigator and Technē read through the one projection store; delete the orphaned `kernelTechneAdapter.ts`.
+
+**C — Canvas edits the same node**
+- C1 Wire omitted Canvas callbacks: group, image/resource file drop, directionality cycle, "New constellation" (`host.createScene`) to the N2 creation.
+- C2 Selected-object editing through the Studio from Canvas (existing binding), drag = one save on release (existing), recorded relation appears as a relation (existing writer).
+
+**V — verification in the installed app** (screenshots): tree and "+" creation in a real Project; Canvas drag/select/Edit object/live preview; draw + record relationship; Journey, Places, Palace, Library, verso; save → quit → relaunch → reopen.
