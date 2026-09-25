@@ -1069,12 +1069,15 @@ async function saveNative(){
 let nativeState:import('./nativeWorkspace.js').NativeStatus|null=null;
 function showNativeStatus(state:import('./nativeWorkspace.js').NativeStatus){
  nativeState=state;
+ // A background read failing before any native work exists is not a failed
+ // save: attention is only for work that has an identity or an open to retry.
+ const failed=state.failed&&(!!state.identity||state.retryOpen||!!state.pending);
  const save=document.getElementById('native-save');
- if(save){const label=state.busy?'Saving…':state.failed?`Not saved — ${state.text}`:state.identity?`Save (⌘S) · ${state.identity.title} · revision ${state.identity.revision}`:'Save (⌘S)';save.title=label;save.setAttribute('aria-label',label);save.classList.toggle('attention',state.failed||!!state.pending);save.toggleAttribute('disabled',state.busy);}
+ if(save){const label=state.busy?'Saving…':failed?`Not saved — ${state.text}`:state.identity?`Save (⌘S) · ${state.identity.title} · revision ${state.identity.revision}`:'Save (⌘S)';save.title=label;save.setAttribute('aria-label',label);save.classList.toggle('attention',failed||!!state.pending);save.toggleAttribute('disabled',state.busy);}
  const line=document.getElementById('native-status');if(!line)return;
  const actions=[state.pending?`<button type="button" class="link-button" data-action="native-resolve">Resolve interrupted save</button>`:'',state.pending==='file'?`<button type="button" class="link-button" data-action="native-retry-file">Retry file save</button>`:'',state.retryOpen&&state.failed?`<button type="button" class="link-button" data-action="native-retry-open">Retry opening</button>`:'',state.page&&state.page.count>1?`<span class="native-page">Members ${state.page.page+1}/${state.page.count}</span><button type="button" class="link-button" data-action="native-page" data-delta="-1" ${state.page.page<=0?'disabled':''}>Previous</button><button type="button" class="link-button" data-action="native-page" data-delta="1" ${state.page.page>=state.page.count-1?'disabled':''}>Next</button>`:''].join('');
- const text=state.failed?state.text:state.identity?`${state.identity.title} · saved revision ${state.identity.revision}`:'';
- line.innerHTML=`${esc(text)}${actions}`;line.classList.toggle('failed',state.failed);
+ const text=failed?state.text:state.identity?`${state.identity.title} · saved revision ${state.identity.revision}`:'';
+ line.innerHTML=`${esc(text)}${actions}`;line.classList.toggle('failed',failed);
  if(state.failed&&state.retryOpen)toast(state.text,7000);
 }
 /** Native file save in the app's own modal: a Central folder and filename. */
