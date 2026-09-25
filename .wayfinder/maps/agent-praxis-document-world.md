@@ -1214,3 +1214,23 @@ The implementation Return should contain:
 Update this Wayfinder when returned reality changes the developmental topology. Do not preserve a false plan merely because it was authored first.
 
 The completion target is a Cradle in which the person can author the World through beautiful, manipulable documents, an Agent can inhabit that World through a small intelligible repertoire and progressive context, and development can move between the two without losing source, ownership, evidence or Return.
+
+
+---
+
+## 25. Local implementation return — 25 September 2026 (the desktop lane)
+
+Implemented on `feat/document-surface-20260925` (O-I, from main `6e777b27`) and `feat/document-source-create-20260925` (Central, from `2076b9f`). W6, W7 and the local part of W8 are real; the evidence receipts live beside the code.
+
+**The shared Document Surface host is real in both surface grammars.** A crafted HTML document is hosted whether it stands as an ordinary file (MaterialSurface: identity bar, page-dirty state, native Save through the CAS router — ordinary `central.files.write` or, for participating sources, `projectcentral.source.read/write` with the same expected-revision law) or as a bound source (SourceSurface's rendered view: the Day die's law generalized — the document renders as itself over the canonical buffer, and a page save is the surface's own ordered act — bookkeeping, awaited buffer edit, kernel source CAS — so a stale basis meets the existing structured conflict and a rebased buffer saves onto its new basis). Document identity is read from each document's own payload island (`oi.page/v1` families, `ql-dialogue-flow`, `ql-daily`, mockup provenance) — never from filenames; unknown shapes stay unknown.
+
+**The missing owner door exists.** `projectcentral.source.create` (Central) admits one absent document into a project's human ground under the flows door's discipline: atomic no-overwrite, parent must exist, declared human callers only, the horizon's Added change as the record. Create-in-place for goal, vision and mockup consumes it; the created copy's location resolves through the owner's own listing.
+
+**UI Mockup is a first-class family** (`document-mockup`), carrying the Central `ui-mockup-authoring` template byte-exact (provenance sha-256 recorded in `documents/forms.json`), placed at `ProjectCentral/user/mockup-<slug>-<stamp>.html`. Its states operate in the host; its provenance trace shows in the host bar; a selection inside a state carries the state's actual locator as its semantic unit.
+
+**The first vertical walks green end to end** (`desktop/cradle/walk/scenarios/document-surface.mjs`, 15/15 against a real disposable ground and a ctrl carrying the door): Vision created in place → edited directly in its rendered body → saved through the source CAS (horizon change `human:desktop/human/modified`) → recovered; stale basis refuses with the owner's revision standing; rebase keeps the person's edit and lands it; the mockup operates and answers semantically; forged page messages move nothing; a restart restores both documents with content. Day/Flow acceptance (`document-entry`) walks 31/31 on the same branch — repaired to its own contract (the staged real files open through the file route; the picker now creates in place). Contract tests: 54 (identity, splice, placement, page-side bridge law, host boundary) + the personal-web roster contract grown deliberately.
+
+**Known, named, open:**
+- `walk/scenarios/canvas-context.mjs` is red on main independent of this lane (verified against untouched main `6e777b27`): the "Accompanying agent / Right region planes" wait no longer matches the reconciled right panel. The repair belongs to the canvas/shell lane that changed the regions.
+- The retained mockup template's `history.replaceState` hash routing is illegal in the opaque-origin srcdoc transport (legal under `oi-material://`); named in the walk, and feedback owed to the template's owner in Central.
+- Agent Card/World disclosure (#513) and the package SDK (W4/W5) are consumed as they stand; no desktop-side duplication was added.
