@@ -59,10 +59,16 @@ export interface WikiRegister {
   projectPath?: string;
 }
 
+/** One Central-rooted tree: "central" plus each disclosed project, deduped by
+ * its native identity (the disclosed project name — Central's own register
+ * key), never by a display label. A project the kernel's census names twice
+ * (a stale or duplicated disclosure) still projects exactly one register. */
 export function wikiRegistersFrom(projects: {name: string; path: string}[]): WikiRegister[] {
+  const seen = new Set<string>();
+  const native = projects.filter(row => seen.has(row.name) ? false : (seen.add(row.name), true));
   return [
     {key: "central", title: "Central"},
-    ...projects.map(row => ({key: row.name, title: row.name, project: row.name, projectPath: row.path})),
+    ...native.map(row => ({key: row.name, title: row.name, project: row.name, projectPath: row.path})),
   ];
 }
 
@@ -466,4 +472,17 @@ export function projectWikiExpression(input: WikiRegisterReading & { state: "rea
   };
   if (relations.state === "unavailable") notices.push(`Typed relations unavailable: ${relations.reason} — the projection binds no relation; membership shows as composition only.`);
   return {document, constellations, overviewSceneRef, boundRelationCount: boundRelations.length, adriftRelationCount, notices};
+}
+
+/** The relation edges bound wholly within one constellation's own Scene — a
+ * restrained per-constellation indicator, read from the standing document's
+ * actual bindings (never invented: zero where the reading carried none). */
+export function relationCountOf(document: ExpressionDocument | undefined, sceneRef: string): number {
+  if (!document) return 0;
+  const entityRefs = document.scenes.find(scene => scene.scene_ref === sceneRef)?.entity_refs;
+  if (!entityRefs?.length) return 0;
+  const inScene = new Set(entityRefs);
+  let count = 0;
+  for (const relation of Object.values(document.relations)) if (inScene.has(relation.from_entity_ref) && inScene.has(relation.to_entity_ref)) count++;
+  return count;
 }

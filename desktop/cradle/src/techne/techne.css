@@ -209,6 +209,16 @@
 summary:hover > .wiki-open-web, summary:focus-within > .wiki-open-web, .wiki-space-head:hover > .wiki-open-web { opacity: 1; }
 .wiki-open-web:hover { background: var(--oi-wash-strong); color: var(--oi-accent-ink); }
 
+/* The per-Project "+": opens constellation authoring scoped to this
+ * register — same restrained tool grammar as wiki-open-web/wiki-project-register. */
+.wiki-new-constellation {
+  flex: none; display: flex; align-items: center; justify-content: center; width: 20px; height: 20px;
+  padding: 0; border-radius: var(--oi-shell-radius-row); color: var(--oi-muted-2);
+  opacity: 0; transition: opacity var(--oi-motion-ui) var(--oi-motion-ease-out), background var(--oi-motion-ui) var(--oi-motion-ease-out), color var(--oi-motion-ui) var(--oi-motion-ease-out);
+}
+summary:hover > .wiki-new-constellation, summary:focus-within > .wiki-new-constellation { opacity: 1; }
+.wiki-new-constellation:hover { background: var(--oi-wash-strong); color: var(--oi-accent-ink); }
+
 .wiki-region-body { margin: 1px 0 8px var(--oi-shell-gutter); padding-left: 0; border-left: 1px solid var(--oi-hairline-soft); }
 
 .wiki-space { margin-top: 6px; }
@@ -225,6 +235,10 @@ summary:hover > .wiki-open-web, summary:focus-within > .wiki-open-web, .wiki-spa
   opacity: 0; transition: opacity var(--oi-motion-ui) var(--oi-motion-ease-out);
 }
 .wiki-node-row:hover .wiki-node-type, .wiki-node-row:focus-visible .wiki-node-type { opacity: 1; }
+/* Truthful, restrained member/relation counts on a constellation's whole row
+ * — native numbers only, never a placeholder or invented edge. */
+.wiki-node-count { flex: none; color: var(--oi-muted-2); font-size: var(--oi-shell-type-meta); font-variant-numeric: tabular-nums; }
+.wiki-node-edges { flex: none; color: var(--oi-muted-3); font-size: var(--oi-shell-type-meta); font-variant-numeric: tabular-nums; }
 
 .wiki-constellation { padding-left: var(--oi-shell-gutter); }
 

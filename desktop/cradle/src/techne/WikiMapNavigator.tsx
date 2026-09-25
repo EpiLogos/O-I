@@ -8,12 +8,13 @@ import {
   requestWikiSelection,
   setWikiProjectionRegisters,
   useWikiProjectionState,
+  wikiDocumentOf,
   wikiProjectionOf,
   wikiReadingOf,
   wikiStandingSubtitle,
   type RegisterStanding,
 } from "./wikiProjectionStore";
-import {wikiRegistersFrom, type ProjectedConstellation} from "./wikiExpression";
+import {wikiRegistersFrom, relationCountOf, type ProjectedConstellation} from "./wikiExpression";
 import {ensureWikiNativeExpression,previewWikiRelationRecovery,applyWikiRelationRecovery,type WikiRelationRecovery} from "./wikiNativeExpression";
 import "./techne.css";
 
@@ -29,9 +30,14 @@ interface FocusAsk {
   title?: string;
 }
 
-export function WikiMapNavigator({project, onOpenWiki, onMessage}: {
+export function WikiMapNavigator({project, onOpenWiki, onNewConstellation, onMessage}: {
   project?: string;
   onOpenWiki: (ref: string, title: string, project?: string) => void;
+  /** Per-Project authoring entry (owner commission: "Each Project's small +
+   * opens a fresh constellation and blueprint chooser already scoped to
+   * that Project"). Optional: a host that cannot yet offer this route
+   * simply omits the tool. */
+  onNewConstellation?: (project: string | undefined, title: string) => void;
   onMessage: (message: string) => void;
 }) {
   const kernel = useKernel();
@@ -47,24 +53,26 @@ export function WikiMapNavigator({project, onOpenWiki, onMessage}: {
     {store.registers.map(register => <WikiRegion key={register.key} register={register}
       defaultOpen={project ? register.key === project : register.key === "central"}
       activeRegister={store.registerKey === register.key}
-      onOpenWiki={onOpenWiki} onMessage={onMessage}/>)}
+      onOpenWiki={onOpenWiki} onNewConstellation={onNewConstellation} onMessage={onMessage}/>)}
     {store.registers.length === 0 && <p className="wiki-map-note" role="status">Reading the world's registers…</p>}
   </div>;
 }
 
 /** One register's region: head with a state subtitle, the projection's own
  * entries beneath — read once per register through the ONE state. */
-function WikiRegion({register, defaultOpen, activeRegister, onOpenWiki, onMessage}: {
+function WikiRegion({register, defaultOpen, activeRegister, onOpenWiki, onNewConstellation, onMessage}: {
   register: {key: string; title: string; project?: string; projectPath?: string};
   defaultOpen: boolean;
   activeRegister: boolean;
   onOpenWiki: (ref: string, title: string, project?: string) => void;
+  onNewConstellation?: (project: string | undefined, title: string) => void;
   onMessage: (message: string) => void;
 }) {
   const kernel = useKernel();
   const store = useWikiProjectionState();
   const standing: RegisterStanding = store.standings[register.key] ?? {phase: "idle"};
   const projection = wikiProjectionOf(standing);
+  const document = wikiDocumentOf(standing);
   const [opened, setOpened] = useState(defaultOpen);
   const [projecting, setProjecting] = useState(false);
   const [recovery, setRecovery] = useState<WikiRelationRecovery | null>(null);
@@ -153,6 +161,16 @@ function WikiRegion({register, defaultOpen, activeRegister, onOpenWiki, onMessag
         title={`Open the ${register.title} web`} onClick={event => { event.preventDefault(); onOpenWiki(webRef, homeSpace?.title ?? "Wiki", register.project); }}>
         <Glyph name="arrow" size={11}/>
       </button>}
+      <button className="wiki-new-constellation" aria-label={`New constellation in ${register.title}`}
+        title={`New constellation in ${register.title} — opens constellation authoring scoped to this Project`}
+        onClick={event => { event.preventDefault();
+          if (onNewConstellation) { onNewConstellation(register.project, register.title); return; }
+          if (webRef) { onOpenWiki(webRef, homeSpace?.title ?? "Wiki", register.project); return; }
+          setOpened(true);
+          onMessage(`${register.title}: reading its wiki — use “Constellations” once its web opens, to start a new one scoped to this Project.`);
+        }}>
+        <Glyph name="plus" size={11}/>
+      </button>
       <button className="wiki-project-register" aria-label={`Project ${register.title} in Instrument 0`}
         disabled={projecting} title={`Project ${register.title} in Instrument 0`} onClick={event => { event.preventDefault(); void projectRegister(); }}>
         <Glyph name="instrument" size={11}/>
@@ -166,7 +184,8 @@ function WikiRegion({register, defaultOpen, activeRegister, onOpenWiki, onMessag
     </div>}
     {opened && projection && <div ref={bodyRef} className="wiki-region-body">
       {(projection.constellations ?? []).map(constellation => <section key={constellation.sceneRef} className="wiki-space">
-        <WholeRow constellation={constellation} selected={rowSelected({sceneRef: constellation.sceneRef, entityRef: null})} onFocus={focusRow}/>
+        <WholeRow constellation={constellation} relationCount={relationCountOf(document, constellation.sceneRef)}
+          selected={rowSelected({sceneRef: constellation.sceneRef, entityRef: null})} onFocus={focusRow}/>
         <div className="wiki-constellation">
           {constellation.members.map(member => <MemberRow key={member.entityRef} member={member} sceneRef={constellation.sceneRef}
             selected={rowSelected({sceneRef: constellation.sceneRef, entityRef: member.entityRef})} onFocus={focusRow}/>)}
@@ -187,18 +206,23 @@ function WikiRegion({register, defaultOpen, activeRegister, onOpenWiki, onMessag
 }
 
 /** The whole row: entering the constellation scene — the transport's own
- * scene act, from the map's side of the one state. */
-function WholeRow({constellation, selected, onFocus}: {
+ * scene act, from the map's side of the one state. Member and relation
+ * counts are the native reading's own numbers, never a placeholder. */
+function WholeRow({constellation, relationCount, selected, onFocus}: {
   constellation: ProjectedConstellation;
+  relationCount: number;
   selected: boolean;
   onFocus(row: FocusAsk): void;
 }) {
+  const memberCount = constellation.members.length;
   return <button className="wiki-node-row wiki-node-whole" data-row-kind="whole"
     data-scene-ref={constellation.sceneRef} data-subject-ref={constellation.wholeRef}
     aria-selected={selected}
     title={`Enter ${constellation.title} — ${constellation.scheme === "ql-constellation" ? "QL constellation layout, warranted by the wiki's own positions" : "radial presentation, no warrant claimed"}`}
     onClick={() => onFocus({sceneRef: constellation.sceneRef, entityRef: null, subjectRef: constellation.wholeRef, title: constellation.title})}>
     <span className="wiki-node-title">{constellation.title}</span>
+    <span className="wiki-node-count" title={`${memberCount} ${memberCount === 1 ? "member" : "members"}`}>{memberCount}</span>
+    {relationCount > 0 && <span className="wiki-node-edges" title={`${relationCount} ${relationCount === 1 ? "relation" : "relations"}`}>⌇{relationCount}</span>}
     <span className="wiki-node-type">{constellation.scheme === "ql-constellation" ? "warranted shape" : "radial"}</span>
   </button>;
 }
