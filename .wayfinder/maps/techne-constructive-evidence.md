@@ -539,3 +539,33 @@ Standing vocabulary: **OP** preserved and operational · **NR** implemented, not
 | Bolted-on native M1–M3 apparatus (commission §6) | — | `#native-work` "Keep the whole work" panel with raw revision/basis text; Lens Studio "Commit Scenes"/"Commit composition" text buttons | NV | Wave 2 packet H (keep producers, remove apparatus) |
 | >10 members, bounded not truncated (§36; C6) | — | `projectProvidedLocalWhole` refuses when members > owner `scene_members` budget (default 10); Canvas pages members | NV (refusal is honest, not truncation; budget extension is owner work) | Verify in joined walk |
 
+
+## 25 September — restoration execution, first same-node gate (O:I #519)
+
+Delivery: draft [O:I #519](https://github.com/EpiLogos/O-I/pull/519), branch `feat/techne-inheritance-restoration-20260925` from `6e777b2`. One parent integrator; bounded Sonnet workers on disjoint write claims in one shared checkout; parent owned `app.ts` host wiring, shared bridges, builds, commits and this ledger.
+
+**First same-node gate (commission §5) — N+B, passing.** `desktop/cradle/tests/techne-same-node-gate.mjs`, 32 checks, 3/3 local runs; installed `oi` 6e777b2 / `aikit` ce0e528 / `ctrl` 2076b9f, source-built `walk-bridge`, temporary Central ground, headless software-GL Chromium. Added to the Technē native-application CI job. Covers: Wiki constellation (one source, two roles) opened live; Canvas occurrences = native entities; 30-move drag → 0 durable writes during, 1 at release, B untouched; Edit object → full Studio over active Canvas; force/tint/new object state (glyph ▲) written to the exact occurrence; interrupted edit never lands on B; A keeps its acknowledged value; live-field preview; native owner holds A's configuration (Scene working presentation) and not B's; drawn connection stays O:I presentation; *Record as constellation relationship* writes one typed relation (`grounds`) with identity distinct from `qualifies` on the same endpoints; it reaches the same live Expression as a source relation; save → kernel restart → reopen keeps identities, A's edits and both relation classes; register readback. Not yet in this walk: Journey/live-field traversal of the same member (separate lens walk), Wiki search/index readback beyond the register file.
+
+**Standing changes against the matrix (source → code → evidence).**
+
+| Obligation | Now | Evidence grade |
+|---|---|---|
+| M1 drag/resize | OP — gesture transactions; held pointer drags never idle-commit (`canvasGesture.ts`, vendor patch `host-selection-viewport-gesture`) | U + N+B (gate) |
+| M1 card size vs body | OP — card/anchor size in Scene research material; compact anchors | U + B |
+| M1 selected-object editor | OP — `editObject` + `research-studio`; Studio stamped with rendered occurrence; telemetry refresh no longer re-commits stale values (`liveValues.ts`) | N+B (gate) |
+| Node click selection | RG repaired — `onSelectEdge(null)` after every node click cleared the node | N+B (gate) |
+| M1 typed relation | OP — `src/techne/sceneConstellationRelation.ts` (register from occurrence readings; exact participation via minted identity); clean draft adopts newer owner revision (`advanceClean`) | U + N+B (gate) |
+| Same-endpoint relations | OP — vendor patch `parallel-edge-curvature` | U (vendor) + B |
+| M1 repertoire | OP (reachable) — multi/box select, group move, nudge, align/distribute, snap, frames (presentation), named views | U; B partial |
+| M1 geometry | Partial — declared-position layout only; kernel Binding basis/derivation/operator refs; native `EntityPin`; Canvas whole-shape acts. Only one pinned sixfold Blueprint form supported | U + kernel tests |
+| M2 relation projections | OP (reachable) — `relationFieldView.tsx` over m0m5 relations | U |
+| M3 Scene bodies / triggers | OP (reachable) — `sceneBodies.ts`, bridge typed bodies/triggers, Studio scene tab | U |
+| M4 place readings | OP (reachable) — `placeFacetsPanel.tsx`; M2/M3/M4 world frames UNAV (no owner leg, QL-MEF receipt) | U |
+| M5 Palace | Replaced physics stand-in — regions as Scenes with Expression body + portal, CAS, explicit removal. Multi-member regions UNAV (kernel: entity may not bind an `expression:` subject; one body per Scene) | U + kernel test |
+| Library | One reused page fed by native providers + Expression-owner Scene lists | U |
+| HUD / apparatus | One row; Native field as Studio section; refs behind disclosures | B (HUD worker walk, 18 state×viewport combos) |
+| Navigator | Native-identity dedupe, counts, per-Project + (one-click fresh construction needs KnowledgeSurface receiver change) | U |
+| Verso | Distinct saving account rows | U |
+| Wiki read path | Repaired: ground status poll no longer clears reads (kernel); register decode discriminator; per-resource read serialization; bounded fresh retries for forms/readback | U + kernel tests + N+B (join 17/17, gate) |
+
+Remaining at this cut: independent joined verification (negatives, §28 lens continuity, ≥12-member corpus, measured drag/call counts) in progress; C11 shared/privacy, live Agent co-work (C8), installed-app and human acceptance not exercised; Blueprint canonical forms beyond the pinned sixfold; Palace multi-member regions; Journey↔live-field same-member traversal walk.
