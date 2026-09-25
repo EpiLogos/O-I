@@ -7,8 +7,7 @@ export function NativeStage({edition,scene,active,playing,selected,onSelect,onSc
  const [error,setError]=useState(''),[ready,setReady]=useState(false);
  const [nativeBody,setNativeBody]=useState<{journey:any;sceneMap:Record<string,string>;entityMap:Record<string,string>}|null>(null);
  const nativeDescriptor=edition.native_body;
- useEffect(()=>{let cancelled=false;setNativeBody(null);setReady(false);if(!nativeDescriptor)return;
-  setError('');
+ useEffect(()=>{let cancelled=false;setNativeBody(null);setReady(false);setError('');if(!nativeDescriptor)return;
   import('./native-player.mjs').then(({loadNativeJourney})=>loadNativeJourney(nativeDescriptor)).then(body=>{if(!cancelled)setNativeBody(body);}).catch(e=>{if(!cancelled)setError(e instanceof Error?e.message:String(e));});
   return()=>{cancelled=true;};
  },[nativeDescriptor?.path,nativeDescriptor?.digest?.value]);
