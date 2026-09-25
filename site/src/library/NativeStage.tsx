@@ -5,7 +5,7 @@ import { Tool } from './ui';
 export function NativeStage({edition,scene,active,playing,selected,onSelect,onScene,onTick,onCamera,camera}:{edition:Edition;scene:NativeScene;active:boolean;playing:boolean;selected:string;onSelect:(ref:string)=>void;onScene:(ref:string)=>void;onTick:(delta:number)=>void;onCamera:(camera:Camera)=>void;camera?:Partial<Camera>}){
  const canvas=useRef<HTMLCanvasElement>(null),root=useRef<HTMLDivElement>(null),field=useRef<PublicField|null>(null);
  const [error,setError]=useState(''),[ready,setReady]=useState(false);
- const [nativeBody,setNativeBody]=useState<{journey:any;sceneMap:Record<string,string>}|null>(null);
+ const [nativeBody,setNativeBody]=useState<{journey:any;sceneMap:Record<string,string>;entityMap:Record<string,string>}|null>(null);
  const nativeDescriptor=edition.native_body;
  useEffect(()=>{let cancelled=false;setNativeBody(null);setReady(false);if(!nativeDescriptor)return;
   setError('');
@@ -19,11 +19,11 @@ export function NativeStage({edition,scene,active,playing,selected,onSelect,onSc
     if(!canvas.current?.dataset.ready){canvas.current!.dataset.ready='yes';setReady(true);}
     for(const p of positions){const node=root.current?.querySelector<HTMLElement>(`[data-entity-ref="${CSS.escape(p.ref)}"]`);if(node)node.style.transform=`translate(${p.x}px,${p.y}px)`;}
    },dt=>latest.current.onTick(dt));field.current=resident;
-   const p=latest.current;if(!p.edition.native_body||p.nativeBody)resident.setScene(p.edition.publication.composition,p.scene.scene_ref,p.camera,p.nativeBody?.journey,p.nativeBody?.sceneMap);resident.setSelected(p.selected);resident.setPlaying(p.playing);resident.setActive(p.active);
+   const p=latest.current;if(!p.edition.native_body||p.nativeBody)resident.setScene(p.edition.publication.composition,p.scene.scene_ref,p.camera,p.nativeBody?.journey,p.nativeBody?.sceneMap,p.nativeBody?.entityMap);resident.setSelected(p.selected);resident.setPlaying(p.playing);resident.setActive(p.active);
   }).catch(e=>{if(!cancelled)setError(String(e));});
   return()=>{cancelled=true;if(resident){latest.current.onCamera({...resident.camera});resident.dispose();}field.current=null;};
  },[]);
- useEffect(()=>{if(field.current&&(!nativeDescriptor||nativeBody)){field.current.setScene(edition.publication.composition,scene.scene_ref,camera,nativeBody?.journey,nativeBody?.sceneMap);field.current.setSelected(selected);}},[edition,scene.scene_ref,selected,nativeBody,nativeDescriptor]);
+ useEffect(()=>{if(field.current&&(!nativeDescriptor||nativeBody)){field.current.setScene(edition.publication.composition,scene.scene_ref,camera,nativeBody?.journey,nativeBody?.sceneMap,nativeBody?.entityMap);field.current.setSelected(selected);}},[edition,scene.scene_ref,selected,nativeBody,nativeDescriptor]);
  useEffect(()=>{field.current?.setActive(active);},[active]);
  useEffect(()=>{field.current?.setPlaying(playing);},[playing]);
  const save=()=>{if(field.current)onCamera({...field.current.camera});};
