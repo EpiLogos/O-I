@@ -11,4 +11,4 @@ export default defineConfig({base:'./',publicDir:here('./.public-edition'),plugi
  name:'public-reading-compatibility',
  configureServer(server){server.middlewares.use((request,_response,next)=>{if(request.url)request.url=request.url.replace(/^\/explore\.html(?=\?|$)/,'/library.html');next();});},
  writeBundle(){copyFileSync(here('./dist/library.html'),here('./dist/explore.html'));}
-}],resolve:{alias:{'@':here('./src'),'three':here('./node_modules/three')},dedupe:['three','react','react-dom']},build:{rollupOptions:{input:Object.fromEntries(['index','shell','library','oi','products','shared-field','research','build','essay'].map(name=>[name,here(`./${name}.html`)]))}}});
+}],resolve:{alias:{'@':here('./src'),'three':here('./node_modules/three')},dedupe:['three','react','react-dom']},build:{rollupOptions:{input:Object.fromEntries(['index','shell','library','oi','products','shared-field','research','build'].map(name=>[name,here(`./${name}.html`)]))}}});

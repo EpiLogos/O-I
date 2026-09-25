@@ -1,0 +1,50 @@
+@use "./base.scss";
+
+// O:I night-paper skin — the essay reads as the same publication as the
+// Plate A entrance and the Plate B shell. Palette lives in quartz.config.ts;
+// this file carries the type and surface details those tokens imply.
+
+:root {
+  // Plate B reads in Iowan Old Style / Palatino; EB Garamond (the configured
+  // Google font) stands in where those system faces are absent.
+  --headerFont: "Iowan Old Style", Palatino, "Palatino Linotype", "EB Garamond", Georgia, serif;
+  --bodyFont: "Iowan Old Style", Palatino, "Palatino Linotype", "EB Garamond", Georgia, serif;
+  --codeFont: "IBM Plex Mono", ui-monospace, "SF Mono", Menlo, monospace;
+}
+
+// Small-caps section labels, as the html entrance labels its offices.
+article h1,
+.page-title {
+  letter-spacing: 0.01em;
+}
+
+.sidebar h1,
+.sidebar > h2,
+.explorer-title,
+.toc-header,
+.backlinks-title {
+  font-family: var(--sansFont);
+  font-size: 0.72rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  font-weight: 600;
+}
+
+// Hairline rules echo the entrance's single-pixel lines.
+hr,
+article > h1 {
+  border-color: var(--lightgray);
+}
+
+.footer {
+  border-top: 1px solid var(--lightgray);
+  font-family: var(--sansFont);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  font-size: 0.7rem;
+}
+
+// Graph nodes in gold, matching the accent used across the entrance.
+.graph-outer circle.node {
+  fill: var(--tertiary);
+}

@@ -9,10 +9,11 @@
     "build": "npm run build:library && npm run generate:spacetimedb && tsc -b && vite build",
     "preview": "vite preview",
     "build:essay": "node build-essay-browser.mjs",
+    "build:essay-quartz": "node build-essay-quartz.mjs",
     "build:library": "node build-library.mjs && node build-publications.mjs && node build-essay-browser.mjs && node prepare-public-assets.mjs",
     "test:essay": "node --experimental-strip-types --test essay-browser.test.mjs essay-host.test.mjs",
     "dev:public": "npm run build:library && vite --config vite.public.config.ts",
-    "build:public": "npm run build:library && tsc -p tsconfig.public.json && vite build --config vite.public.config.ts",
+    "build:public": "npm run build:library && npm run build:essay-quartz && tsc -p tsconfig.public.json && vite build --config vite.public.config.ts",
     "test:library": "node --test library.test.mjs publication.test.mjs"
   },
   "dependencies": {

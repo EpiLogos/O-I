@@ -1,0 +1,26 @@
+---
+title: "Episteme atlas — historical routes through Etymology"
+record_id: episteme-atlas
+page_type: atlas-route
+register: episteme
+authority: non-governing navigation
+---
+
+# Historical routes through Etymology
+
+Each entrance retains the mature field’s exact operation and the independent historical evidence. The protected learning history and its developed companion share one historical identity. A comparison is not evidence of transmission. The [Mytheme geography](../../mytheme/atlas/geography/README.md) and [Mytheme temporality](../../mytheme/atlas/temporality/README.md) routes expose the corresponding tellings without copying their bodies or their source records.
+
+| Historical carrier | E-field branch | Operation |
+|---|---|---|
+| [ancient philosophy](../histories/traditions-and-disciplines/ancient-philosophy/DEVELOPMENT.md) · [learning history](../histories/traditions-and-disciplines/ancient-philosophy/HISTORY.md) | [E5-homology](../etymologies/homology-and-analogy/WHOLE-FIELD.md) | Homological agreement; Track how logos, measure, number and technē change their work across actual texts and their reception. |
+| [indian philosophy](../histories/traditions-and-disciplines/indian-philosophy/DEVELOPMENT.md) · [learning history](../histories/traditions-and-disciplines/indian-philosophy/HISTORY.md) | [E1-name](../etymologies/encounter-region-name-count/WHOLE-FIELD.md) | Name-through-Count; Keep enumeration, exclusion, recognition and speech as different operations within their own historical traditions. |
+| [language law nation centralisation](../histories/places-and-peoples/language-law-nation-centralisation/DEVELOPMENT.md) · [learning history](../histories/places-and-peoples/language-law-nation-centralisation/HISTORY.md) | [E3-natio](../etymologies/trust-place-logos-nomos-natio-credere/WHOLE-FIELD.md) | Natio (#4) → achieved history narrated as birth; Trace a contingent alignment of place, official language, law and born identity and how its exclusions return. |
+| [language symbol dialogue](../histories/traditions-and-disciplines/language-symbol-dialogue/DEVELOPMENT.md) · [learning history](../histories/traditions-and-disciplines/language-symbol-dialogue/HISTORY.md) | [E4-account](../etymologies/symbol-account-and-trust/WHOLE-FIELD.md) | Account does not replace source; Follow sign, exclusion, gathering and dialogue as historically situated means of returning an account to its conditions. |
+| [mathematics](../histories/traditions-and-disciplines/mathematics/DEVELOPMENT.md) · [learning history](../histories/traditions-and-disciplines/mathematics/HISTORY.md) | [E5-analogy](../etymologies/homology-and-analogy/WHOLE-FIELD.md) | Analogical proportion / focal relation; Show changed permissions of a formal system rather than a timeless taxonomy of mathematical topics. |
+| [myth](../histories/encounters-and-transmissions/myth/DEVELOPMENT.md) · [learning history](../histories/encounters-and-transmissions/myth/HISTORY.md) | [E5-boundary](../etymologies/homology-and-analogy/WHOLE-FIELD.md) | Research boundary: name what a cross-register relation establishes; Distinguish an ancient relational narrative from reception and the essay's authored cross-register operation. |
+| [process systems science](../histories/traditions-and-disciplines/process-systems-science/DEVELOPMENT.md) · [learning history](../histories/traditions-and-disciplines/process-systems-science/HISTORY.md) | [E4-reentry](../etymologies/symbol-account-and-trust/WHOLE-FIELD.md) | Account re-enters source-field; Follow ways an achieved form enters conditions of further becoming without conflating physical, biological and dialogical objects. |
+| [psychology](../histories/traditions-and-disciplines/psychology/DEVELOPMENT.md) · [learning history](../histories/traditions-and-disciplines/psychology/HISTORY.md) | [E2-return](../etymologies/arbitration-hybris-regard-anamnesis/WHOLE-FIELD.md) | Resolution-in-Reconciliation → Anamnesis / Recognition / Return; Follow collective formation, local complexes and individuation while returning psychic accounts to institutions and their evidence. |
+| [technology politics](../histories/traditions-and-disciplines/technology-politics/DEVELOPMENT.md) · [learning history](../histories/traditions-and-disciplines/technology-politics/HISTORY.md) | [E6-labour](../etymologies/apportionment-and-economy/WHOLE-FIELD.md) | Delegated labour distributes capacity and return; Trace classification, evaluation and delegated action as institutions distributing real capability and consequence. |
+| [zero subject advent](../histories/traditions-and-disciplines/zero-subject-advent/DEVELOPMENT.md) · [learning history](../histories/traditions-and-disciplines/zero-subject-advent/HISTORY.md) | [E4-symbol](../etymologies/symbol-account-and-trust/WHOLE-FIELD.md) | Symbol answers to source; Hold mathematical zero and the historical admission of subject/unconscious as two histories joined by the essay's exact authorial operation. |
+
+The [relational growth law](../etymologies/RELATIONAL-FORM-GROWTH.md) **defines** the return from achieved historical whole to a new relational participant. The [A/C/E reciprocity index](../etymologies/T09-A-C-E-RECIPROCITY-INDEX.md) locates declared consumers; actual consumer prose and reciprocal routes remain in those carriers.
