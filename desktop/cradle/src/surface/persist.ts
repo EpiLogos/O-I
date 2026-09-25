@@ -87,7 +87,7 @@ export function decodeLayout(value: unknown): LayoutState {
     const detached = Array.isArray(parsed.detached) ? parsed.detached.filter((d): d is NonNullable<LayoutState["detached"]>[number] => !!d && typeof d === "object" && typeof d.surfaceId === "string" && !!surfaces[d.surfaceId] && typeof d.groupId === "string" && Number.isInteger(d.index) && d.index >= 0 && typeof d.pinned === "boolean") : [];
     if (!root) {
       // Austere rest: no chrome, depth clamped, nothing carried visually.
-      return { ...freshLayout(), mode, settingsReturnMode, epiLogos: parsed.epiLogos === true ? true : undefined, panelPlanes, modeRegions, accompanying, detached, sidePane, subjectPlanes, windowBounds, surfaces, closedStack, agencyDepth: depth, rightDepth: AGENCY_DEPTHS.includes(parsed.rightDepth as AgencyDepth) ? parsed.rightDepth as AgencyDepth : "strip", leftWidth: typeof parsed.leftWidth === "number" ? Math.max(200, Math.min(600, parsed.leftWidth)) : 260, rightWidth: typeof parsed.rightWidth === "number" ? Math.max(240, Math.min(720, parsed.rightWidth)) : 320 };
+      return { ...freshLayout(), mode, settingsReturnMode, panelPlanes, modeRegions, accompanying, detached, sidePane, subjectPlanes, windowBounds, surfaces, closedStack, agencyDepth: depth, rightDepth: AGENCY_DEPTHS.includes(parsed.rightDepth as AgencyDepth) ? parsed.rightDepth as AgencyDepth : "strip", leftWidth: typeof parsed.leftWidth === "number" ? Math.max(200, Math.min(600, parsed.leftWidth)) : 260, rightWidth: typeof parsed.rightWidth === "number" ? Math.max(240, Math.min(720, parsed.rightWidth)) : 320 };
     }
     let focusedGroupId =
       typeof parsed.focusedGroupId === "string" && contains(root, parsed.focusedGroupId)
@@ -96,7 +96,7 @@ export function decodeLayout(value: unknown): LayoutState {
     if (!groupsOf(root).some((g) => g.id === focusedGroupId))
       focusedGroupId = groupsOf(root)[0].id;
     const state: LayoutState = {
-      mode, settingsReturnMode, epiLogos: parsed.epiLogos === true ? true : undefined, panelPlanes, modeRegions,
+      mode, settingsReturnMode, panelPlanes, modeRegions,
       accompanying,
       sidePane,
       subjectPlanes,windowBounds,

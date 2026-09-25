@@ -1,6 +1,7 @@
 import {useState} from "react";
 import {kernelOp} from "../kernel/bridge";
 import type {ActionDispatch,KernelTransportStatus} from "../kernel/types";
+import {RawDisclosure} from "../shared/contributionPresentation";
 import type {GraphNode} from "./graph";
 
 /** One disclosed spelling's lifecycle through the kernel dispatch seam. The
@@ -51,13 +52,24 @@ export function OwnerActions({node,transport,project,onDispatched}:{node:Pick<Gr
   </details>;
 }
 
+/** The owner payload is the owner's own shape, so only what reads plainly is
+ * presented — text as text, a named summary otherwise; law: the exact
+ * payload only behind "Show raw". */
+function DispatchData({data}:{data:unknown}) {
+  if(data===undefined||data===null)return <p role="status">The owner returned no payload.</p>;
+  if(typeof data==="string")return <p>{data||"(empty)"}</p>;
+  if(typeof data==="number"||typeof data==="boolean")return <p>{String(data)}</p>;
+  const shape=Array.isArray(data)?`${data.length} ${data.length===1?"item":"items"}`:`${Object.keys(data).length} fields`;
+  return <RawDisclosure value={data} label={`Show raw payload · ${shape}`}/>;
+}
+
 /** Every dispatch state renders from the adapter response alone — the owner
  * payload unchanged on success, the kernel's reason on unsupported, the
  * owner's own words on refusal, and absence kept distinct from refusal. */
 function DispatchOutcome({outcome}:{outcome:ActionDispatch}) {
   switch(outcome.state){
     case "invoked":
-      return <div data-dispatch-state="invoked"><p role="status">Invoked · {outcome.owner_operation}</p><pre>{JSON.stringify(outcome.data,null,2)}</pre></div>;
+      return <div data-dispatch-state="invoked"><p role="status">Invoked · {outcome.owner_operation}</p><DispatchData data={outcome.data}/></div>;
     case "unsupported_action":
       return <p data-dispatch-state="unsupported_action" role="status">{outcome.owner} — {outcome.detail}</p>;
     case "malformed_ref":

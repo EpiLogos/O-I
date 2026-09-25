@@ -7,7 +7,6 @@ import {Glyph} from "../../workspace/Glyph";
 import {EncounterList,type EncounterRow} from "../../encounter/EncounterList";
 import {handToPanelInspect} from "../../agent/planes/panelInspect";
 import {buildSnapshot,developmentRead,workcellStatus,type WorkcellStatus} from "./development";
-import {publishFactorySelection} from "./sidebar/sidebarModel";
 import {BuildSurface} from "./BuildSurface";
 import {factoryBuildFixture} from "./fixtures/factory-build";
 import type {FactoryBuildView} from "./types";
@@ -102,9 +101,6 @@ export function FactoryDevelopmentSurface({project:projectProp,onOpenEncounter}:
    if(read==="project"){
     const data=await developmentRead(kernel.transport,statePath.trim(),read,projectRef.trim()||undefined);
     setProject(data);
-    // The sidebar's Run plane reads the same journey registry — one read,
-    // two views; the sidebar never re-reads over the centre's shoulder.
-    publishFactorySelection({statePath:statePath.trim(),projectRef:projectRef.trim(),project:data,observedAtUnixMs:Date.now()});
    }
    else setUnits(await developmentRead(kernel.transport,statePath.trim(),read));
   }catch(error){
@@ -117,8 +113,6 @@ export function FactoryDevelopmentSurface({project:projectProp,onOpenEncounter}:
   try{
    const data=await buildSnapshot(kernel.transport,statePath.trim(),projectRef.trim(),runRefInput.trim());
    setBuildView(data);
-   const view=buildViewOf(data);
-   if(view)publishFactorySelection({statePath:statePath.trim(),projectRef:projectRef.trim(),runRef:runRefInput.trim(),view,observedAtUnixMs:Date.now()});
   }
   catch(error){setBuildView({__refused:String(error)});}
   finally{setBusy(false);}

@@ -4,8 +4,14 @@ import {useKernel} from "../kernel/KernelProvider";
 import {kernelOp} from "../kernel/bridge";
 import {summonExpression} from "../expression/summon";
 import type {Change,ReadingRef} from "../expression/types";
+import {changeLine,RawDisclosure} from "../shared/contributionPresentation";
 // @ts-ignore -- language-neutral SharedField projection, covered by node tests.
 import {agentReturnedRefinement,beingEncounter,invocationStanding} from "./being.mjs";
+
+/** The invocation Return's own facts as human lines; the exact payload stays
+ * behind Show raw (law: raw only behind an explicit disclosure). */
+const invocationFacts=(data:any):[string,string][]=>{const facts:[string,string][]=[["State",String(data.state)],["Owner operation",String(data.owner_operation)]];if(typeof data.target?.agent_ref==="string")facts.push(["Acting Agent",data.target.agent_ref]);if(typeof data.delivery?.delivery_ref==="string")facts.push(["Delivery",data.delivery.delivery_ref+(data.delivery.terminal_cursor!==undefined?` at cursor ${data.delivery.terminal_cursor}`:"")]);if(data.review?.decision)facts.push(["Review",`${data.review.decision} at revision ${data.review.revision}`]);return facts;};
+
 
 
 export function BeingEncounter({participantRef,snapshot,onOpenRef}:{participantRef:string;snapshot:SharedFieldSnapshot;onOpenRef:(ref:string)=>void}) {
@@ -35,8 +41,8 @@ export function BeingEncounter({participantRef,snapshot,onOpenRef}:{participantR
    {encounter.identity.kind==="agent"&&<label className="being-instruction">Exact request<textarea aria-label={`Request for ${encounter.label}`} value={instruction} onChange={event=>setInstruction(event.target.value)} placeholder="Ask for one bounded refinement of this projected Expression."/></label>}
    <button type="button" className="being-invoke" disabled={!invocation.available||!instruction.trim()||!encounter.expressionRevision||!encounter.expressionComposition||pending} title={!encounter.expressionComposition?"The Projection discloses no structured Expression composition.":invocation.available?"Invoke through the native AIKit session owner":invocation.reason} onClick={()=>void invoke()}>{pending?"Invoking…":"Invoke Agent"}</button>
    {!invocation.available&&<p role="status" className="being-refusal">Agent invocation unavailable: {invocation.reason}</p>}
-   {proposal&&<div className="being-review"><p>Native proposal <code>{proposal.proposal_ref}</code></p><strong>{proposal.summary}</strong><ul>{proposal.changes.map((change,index)=><li key={index}><code>{JSON.stringify(change)}</code></li>)}</ul>{encounter.reviewers?.length>1&&<label>Reviewer<select aria-label="Current human reviewer" value={reviewerRef??""} onChange={event=>setReviewerRef(event.target.value)}><option value="">Select a human participant</option>{encounter.reviewers.map((candidate:any)=><option key={candidate.participant_ref} value={candidate.participant_ref}>{candidate.presentation?.chosen_name??candidate.participant_ref}</option>)}</select></label>}<p>Reviewing as <code>{reviewer?.identity?.ref??"no human selected"}</code></p><button type="button" disabled={pending||!reviewer} onClick={()=>void review("accepted")}>Accept Agent refinement</button><button type="button" disabled={pending||!reviewer} onClick={()=>void review("rejected")}>Reject Agent refinement</button></div>}
-   {error&&<p role="alert" className="being-refusal">{error}</p>}{result&&<details className="being-invocation-result" open><summary>{result.state} · {result.owner_operation}</summary><pre>{JSON.stringify(result,null,2)}</pre></details>}
+   {proposal&&<div className="being-review"><p>Native proposal <code>{proposal.proposal_ref}</code></p><strong>{proposal.summary}</strong><ul>{proposal.changes.map((change,index)=><li key={index}>{changeLine(change)}<RawDisclosure value={change} label="Show raw change"/></li>)}</ul>{encounter.reviewers?.length>1&&<label>Reviewer<select aria-label="Current human reviewer" value={reviewerRef??""} onChange={event=>setReviewerRef(event.target.value)}><option value="">Select a human participant</option>{encounter.reviewers.map((candidate:any)=><option key={candidate.participant_ref} value={candidate.participant_ref}>{candidate.presentation?.chosen_name??candidate.participant_ref}</option>)}</select></label>}<p>Reviewing as <code>{reviewer?.identity?.ref??"no human selected"}</code></p><button type="button" disabled={pending||!reviewer} onClick={()=>void review("accepted")}>Accept Agent refinement</button><button type="button" disabled={pending||!reviewer} onClick={()=>void review("rejected")}>Reject Agent refinement</button></div>}
+   {error&&<p role="alert" className="being-refusal">{error}</p>}{result&&<details className="being-invocation-result"><summary>{result.state} · {result.owner_operation}</summary><dl className="world-component__meta">{invocationFacts(result).map(([label,value])=><div key={label}><dt>{label}</dt><dd>{value}</dd></div>)}</dl><RawDisclosure value={result} label="Show raw result"/></details>}
   </section>
  </article>;
 }

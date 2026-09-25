@@ -123,8 +123,11 @@ try {
       await fill('empty');
       check(await overlay.getByText('No results in the available native sources.',{exact:true}).isVisible(),`${name}: real empty response is distinguished`);
       await overlay.getByRole('button',{name:'History',exact:true}).click();
-      await overlay.locator('.search-evidence pre').waitFor();
-      check((await overlay.locator('.search-evidence pre').innerText()).includes('history'),`${name}: History is an explicit owner read`);
+      const evidence = overlay.locator('.search-evidence');
+      await evidence.waitFor();
+      check(await evidence.getAttribute('open')===null,`${name}: owner evidence stays collapsed behind a human summary`);
+      await evidence.locator('summary').click();
+      check((await evidence.locator('pre').innerText()).includes('history'),`${name}: History is an explicit owner read`);
       await fill('many');
       await page.setViewportSize({width:420,height:420});
       check(await input.getAttribute('aria-activedescendant')==='knowledge-search-0',`${name}: resizing does not invent a selection`);

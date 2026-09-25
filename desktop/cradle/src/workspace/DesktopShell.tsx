@@ -37,7 +37,6 @@ interface Props {
    * navigator is not shown. */
   mode: WorkspaceMode; onMode: (mode: WorkspaceMode) => void;
   onLibrary?: () => void;
-  world?: "central" | "epi-logos"; onLeaveWorld?: () => void;
   returnTo?: { mode: WorkspaceMode; label: string }; onReturn?: () => void;
   /** The left frame's host (10-SIDEBARS §3): the routes its head, foot and
    * rows reach — search, create, open beside, pop out, open a chat, open an
@@ -57,9 +56,6 @@ interface Props {
   /** The workspace-recovery state surfaces only here, inside the footer
    * status menu — nothing of the shell ever renders above the shell. */
   recovery?: { reason: string; key?: string } | null;
-  /** Epi-Logos: a whole-app world state, disclosed and toggled here in the
-   * footer (owner ruling 2026-09-18) — never a mode entry or a page. */
-  epiLogos?: boolean; onEpiLogosToggle?: () => void;
   onRecoverAvailable?: () => void; onStartFresh?: () => void; /** One click reloads the workspace (owner ruling 2026-09-19) — the message row and its dismissal both route here while a load failure stands. */ onReload?: () => void;
   navigator: (workspaceSelector: ReactNode) => ReactNode; children: ReactNode;
 }

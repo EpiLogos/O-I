@@ -47,6 +47,17 @@ type Props = {
   onOpen: (address: KnowledgeAddress, title: string, project?: string) => Promise<void>;
 };
 const message = (error: unknown) => error instanceof Error ? error.message : String(error);
+/** The owner evidence read as a human line: which owner and resource
+ * answered and how much it carried, plus its own reason when the reading
+ * states one. The exact reading stays inside the collapsed disclosure
+ * (law: raw only behind "Show raw"). */
+const evidenceSummary = (data: unknown): {name?: string; why?: string} => {
+  if (!data || typeof data !== "object") return {};
+  const reading = data as {resource?: unknown; provider?: unknown; authority?: unknown; evidence?: unknown; why_selected?: unknown};
+  const name = [reading.provider, reading.resource, reading.authority].filter((value): value is string => typeof value === "string").join(" · ")
+    + (Array.isArray(reading.evidence) ? ` · ${reading.evidence.length} ${reading.evidence.length === 1 ? "item" : "items"}` : "");
+  return {name: name || undefined, why: typeof reading.why_selected === "string" ? reading.why_selected : undefined};
+};
 
 export function SearchOverlay({ project, onClose, onOpen, leader, onLeaderChange, shortcutError, typed }: Props) {
   const { transport } = useKernel();
@@ -71,6 +82,7 @@ export function SearchOverlay({ project, onClose, onOpen, leader, onLeaderChange
   const [optionsOpen, setOptionsOpen] = useState(false);
   const [generation, setGeneration] = useState(0);
   const count = hits.length + rows.length;
+  const evidence = evidenceSummary(detail);
   // ---- typed tabs -------------------------------------------------------
   const [tab, setTab] = useState<PaletteTab>("all");
   const [typedSelected, setTypedSelected] = useState(0);
@@ -329,7 +341,7 @@ export function SearchOverlay({ project, onClose, onOpen, leader, onLeaderChange
       {resolutionAbsences.length > 0 && <details><summary>Resolution provider messages ({resolutionAbsences.length})</summary>{resolutionAbsences.map((item, i) => <p key={i}>{item}</p>)}</details>}
       {absences.length > 0 && <details><summary>Unavailable sources ({absences.length})</summary>{absences.map((item, i) => <p key={i}>{item}</p>)}</details>}
       {detailBusy && <p role="status">Reading owner evidence…</p>}
-      {detail !== undefined && <details className="search-evidence" open><summary>Owner evidence</summary><pre>{JSON.stringify(detail, null, 2)}</pre></details>}
+      {detail !== undefined && <details className="search-evidence"><summary>Owner evidence{evidence.name ? ` · ${evidence.name}` : ""}</summary>{evidence.why && <p>{evidence.why}</p>}<pre>{JSON.stringify(detail, null, 2)}</pre></details>}
       <section id="search-options" className="search-options" hidden={!optionsOpen} aria-label="Search options">
         {optionsOpen && <KnowledgeStatus transport={transport} project={project}/>}
         <label className="search-shortcut">Shortcut <select aria-label="Search shortcut" value={String(leader)} onChange={event => onLeaderChange(event.target.value === "true")}><option value="false">{searchLeaderLabel(false)}</option><option value="true">{searchLeaderLabel(true)}</option></select></label>

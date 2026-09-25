@@ -1675,18 +1675,19 @@ export function CradleFrame({onComposed}:{onComposed?:()=>void}) {
   // The Epi-Logos world entrance (#375 amendment): entering binds the world
   // context (corpus/profile/navigation basis — the context every arrangement
   // then retains, with its return trail) and opens the curated Epi surface as
-  // the mode centre; leaving is the explicit act that clears it. The footer
-  // state follows the world context, so the two can never disagree.
-  const epiWorldActive=()=>workspaceRef.current.current.context?.world==="epi-logos";
+  // the mode centre; leaving is the explicit act that clears it. The world
+  // context is the ONE owner of "which world am I in" — the footer and the
+  // lens both read the publication derived from it below, so nothing can
+  // disagree with it.
   // The Epi-Logos LENS (ruling D2, A5): it re-roots the file trees on the
-  // corpus and opens no surface; mode and scope stay where they are.
+  // corpus and opens no surface; mode and scope stay where they are. The
+  // workspace world context is the ONE owner of "which world am I in" — the
+  // lens is published from it below and nothing else persists a copy.
   const enterEpiWorld=()=>{
     workspaceRef.current.setContext(context=>({...context,world:"epi-logos"}));
-    setState(s=>({...s,epiLogos:true}));
   };
   const leaveEpiWorld=()=>{
     workspaceRef.current.setContext(context=>({...context,world:undefined}));
-    setState(s=>({...s,epiLogos:undefined}));
   };
   // The one scope and the lens (scope.ts, lens.ts): the workspace is their
   // only writer; every surface reads what the frame publishes here.
@@ -1759,12 +1760,11 @@ export function CradleFrame({onComposed}:{onComposed?:()=>void}) {
   return (
     <SituationProvider value={situation}>
       <ExpressionLayout layout={state}/>
-      <ActiveEncounterContext.Provider value={state.accompanying}><DesktopShell left={leftHost} onLibrary={()=>setLibrary(value=>value==="open"?"held":"open")} world={workspace.current.context?.world} onLeaveWorld={leaveEpiWorld} returnTo={workspace.current.context?.trail?.slice(-1)[0]} onReturn={()=>window.dispatchEvent(new Event("oi:context-return"))} mode={mode} onMode={enterMode} windowLights={windowLights} onTabPresentation={presentation=>execute(`frame.tabs:${presentation}`)} onToggleNavigator={()=>navigatorRef.current ? dismissWorld() : summonWorld()} onCloseNavigator={dismissWorld} native={kernel.transport.kind==="tauri"} namingRequest={namingRequest} onNamingHandled={()=>setNamingRequest(null)}
+      <ActiveEncounterContext.Provider value={state.accompanying}><DesktopShell left={leftHost} onLibrary={()=>setLibrary(value=>value==="open"?"held":"open")} returnTo={workspace.current.context?.trail?.slice(-1)[0]} onReturn={()=>window.dispatchEvent(new Event("oi:context-return"))} mode={mode} onMode={enterMode} windowLights={windowLights} onTabPresentation={presentation=>execute(`frame.tabs:${presentation}`)} onToggleNavigator={()=>navigatorRef.current ? dismissWorld() : summonWorld()} onCloseNavigator={dismissWorld} native={kernel.transport.kind==="tauri"} namingRequest={namingRequest} onNamingHandled={()=>setNamingRequest(null)}
         arrangementActions={<ArrangementActions state={state} execute={execute} openFrameMenu={openFrameMenu} nativeWindows={kernel.transport.kind==="tauri"}/>}
         subject={{ref:subjectRef,title:subjectTitle,context:<><h2>{subjectTitle}</h2>{subjectBinding?.flow&&<p data-subject-flow-ref={subjectBinding.flow.flowRef}>Working through <code>{subjectBinding.flow.flowRef}</code></p>}{subjectBuffer ? <p>{subjectBuffer.project} · {subjectBuffer.dirty ? "Unsaved changes" : "Saved"}</p> : subjectBinding?.project ? <p>{subjectBinding.project}</p> : <p>Select a surface to inspect its context.</p>}</>,history:subjectHistory}}
         right={agentLayer}
         layout={state} setLayout={setState} workspace={workspace.current} workspaces={workspace.workspaces} activate={workspace.activate} create={workspace.create} rename={workspace.rename} onRecover={workspace.showRecovery} error={workspace.error ?? windowError ?? kernel.opError ?? null} onErrorDismiss={()=>{setWindowError(undefined); workspace.dismissError(); kernel.dismissOpError();}}
-        epiLogos={state.epiLogos===true} onEpiLogosToggle={()=>{epiWorldActive()?leaveEpiWorld():enterEpiWorld();}}
         recovery={workspace.recovery} onRecoverAvailable={workspace.recoverAvailable} onStartFresh={workspace.startFresh} onReload={()=>workspace.reload()}
         navigator={workspaceSelector => curation.left==="factory" ? <FactoryNavigator project={workspace.current.project} accompanying={state.accompanying} onProjectChange={workspace.browse} onOpenEncounter={row=>factoryChoose(row)} activeEncounterRef={state.accompanying?.ref??activeEncounterRef} onMessage={message=>setWindowError(message)}/> : curation.left!=="world" ? <ModeLeftBody mode={mode} onOpenPlace={()=>void openModeSurface("epi-logos").catch(report)} project={workspace.current.project} onOpenExpressions={()=>void openModeSurface("expressions").catch(report)} onOpenTechne={()=>enterMode("techne")} onOpenFile={openFile} onOpenWiki={(ref,title,project)=>void openKnowledge({kind:"wiki",value:ref},title,project).catch(report)} onMessage={message=>setWindowError(message)}/> : worldNavigator(workspaceSelector)}>
       {/* The modes' dedicated stages (surface/retention.tsx, stage law
