@@ -83,7 +83,23 @@ export function SettingsPage() {
   const [reviewing, setReviewing] = useState(false);
   const [discovery, setDiscovery] = useState<Discovery>({state: "idle", findings: []});
   const body = useRef<HTMLDivElement>(null);
-  useEffect(() => ensureSettingsLoaded(), []);
+  const page = useRef<HTMLElement>(null);
+  // Once visited, the Settings stage stays mounted-hidden (the retention law)
+  // and a relaunch restores it concealed. Its first acquisition is a batch of
+  // owner reads that each hold the kernel for seconds, so it waits until the
+  // page is presented: a concealed page must not queue the reads of the
+  // surface in view behind its own (concealed means suspended).
+  useEffect(() => {
+    const node = page.current;
+    if (!node || typeof IntersectionObserver === "undefined") { ensureSettingsLoaded(); return; }
+    const observer = new IntersectionObserver((entries) => {
+      if (!entries.some((entry) => entry.isIntersecting)) return;
+      observer.disconnect();
+      ensureSettingsLoaded();
+    });
+    observer.observe(node);
+    return () => observer.disconnect();
+  }, []);
   // An Agent-setup excursion (agency/agentSetup.ts) lands on the section
   // that repairs it; its return control rides in the header.
   useEffect(() => {
@@ -133,7 +149,7 @@ export function SettingsPage() {
   const place = nav.place;
   const everythingFailed = [data.suite, data.registry, data.owners, data.credentials].every((part) => part.state === "failed");
   const anyRead = [data.suite, data.registry, data.owners, data.credentials, data.census].some((part) => part.state !== "reading");
-  return <section className="settings-page" aria-label="Settings" data-settings-page data-settings-place={`${place.kind}:${place.id}`}>
+  return <section ref={page} className="settings-page" aria-label="Settings" data-settings-page data-settings-place={`${place.kind}:${place.id}`}>
     <CanvasHUD className="settings-page-header">
       <h1>{placeLabel(place)}</h1>
       <div className="settings-page-actions">
