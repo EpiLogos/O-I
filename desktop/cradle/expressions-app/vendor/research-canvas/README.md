@@ -70,3 +70,12 @@ an interval; `onMoveNodePreview`/`onMoveNodeEnd` fire on `onNodeDrag`/
 when supplied `onMoveNode` is not also called for that gesture. Every one of
 these is optional and additive: omitting all of them keeps the exact prior
 single-select, poll-driven, per-callback `onMoveNode` behaviour.
+
+`patches/parallel-edge-curvature.patch` gives distinct native relation
+occurrences on the same unordered node pair (e.g. a constellation's own
+source relation and an O:I presentation connection between the same two
+occurrences) their own curvature so neither steals the other's click. The
+offset is computed inside `AnnotatedEdge` itself from xyflow's live edge
+list (`useEdges()`); a pair with exactly one edge keeps the prior single
+`getBezierPath` call, path and label placement byte-for-byte. No host prop
+is required; nothing outside this one edge renderer changed.

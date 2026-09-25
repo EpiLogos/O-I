@@ -18,8 +18,16 @@ import {PlaceFacetsPanel} from './placeFacetsPanel.js';
 import {OPEN_PLACE_FILTER,filteredPlacesRepository,subjectEntityRef,type PlaceFilterState} from './placeReading.js';
 import type {TechneReading} from '../../../src/techne/contract';
 import {blueprintMember,type SceneBlueprint,type BlueprintTransform} from './blueprintGeometry.js';
+import {icon} from './icons.js';
 import './researchInstrumentStyles.css';
 import './researchInstruments.css';
+
+/** D3 — the canvas tool row is icon-led, in the app's existing 24×24
+ * thin-stroke icon language (icons.ts), not text-led. Every button below
+ * keeps its own aria-label and title carrying the exact prior visible text,
+ * so nothing here changes for assistive tech or hover discovery — only the
+ * always-visible label becomes a glyph. */
+function ToolIcon({name}:{name:string}){return <span className="research-tool-icon" aria-hidden="true" dangerouslySetInnerHTML={{__html:icon(name)}}/>;}
 
 /** Visibility comes from the current native frame binding, not a card title. */
 function ConstellationAction({request,onError}:{request:Omit<TechneConstellationRequest,'operation'>;onError:(message:string)=>void}) {
@@ -381,25 +389,25 @@ export function installResearchInstruments(host:ResearchInstrumentsHost){
   const annotations=(material?.strokes??[]).map(stroke=>({id:stroke.id,canvasId:canvas.key,annotationType:'stroke' as const,points:stroke.points,style:{color:stroke.color,width:stroke.width,opacity:stroke.opacity},bounds:{position:{x:Math.min(...stroke.points.map(p=>p.x)),y:Math.min(...stroke.points.map(p=>p.y))},size:{width:Math.max(1,Math.max(...stroke.points.map(p=>p.x))-Math.min(...stroke.points.map(p=>p.x))),height:Math.max(1,Math.max(...stroke.points.map(p=>p.y))-Math.min(...stroke.points.map(p=>p.y)))}},createdAt:stroke.createdAt,updatedAt:stroke.createdAt}));
   const closeInspector=()=>{inspecting=false;host.inspector.hidden=true;redraw();host.tools.querySelector<HTMLButtonElement>('[aria-label="Toggle canvas inspector"]')?.focus();};
   const controls=<div className="research-tool-actions" aria-label="Canvas tools">
-   {editable&&<><button onClick={()=>act({type:'create-card',kind:'note',position:{x:0,y:0}})}>Note</button><button onClick={imageImport}>Image</button>
+   {editable&&<><button aria-label="Note" title="Note" onClick={()=>act({type:'create-card',kind:'note',position:{x:0,y:0}})}><ToolIcon name="text"/></button><button aria-label="Image" title="Image" onClick={imageImport}><ToolIcon name="camera"/></button>
    <select aria-label="Focus disclosed source" value="" onChange={event=>{const ref=event.target.value;const source=canvas.nodes.find(node=>node.id===ref);if(!source||!canvas.occurrences.has(ref)||!host.nativeView()?.document.entities[ref]?.subject)return;select(ref);flyToNode?.(ref);redraw();}}><option value="">Source…</option>{canvas.nodes.filter(node=>host.nativeView()?.document.entities[node.id]?.subject).map(node=><option key={node.id} value={node.id}>{node.title}</option>)}</select>
-   <button aria-pressed={drawing} onClick={()=>{drawing=!drawing;redraw();}}>Draw</button>{drawing&&<input type="color" aria-label="Stroke colour" value={strokeColour} onChange={e=>{strokeColour=e.target.value;redraw();}}/>}
-   <button onClick={()=>{if(captureCanvas)act({type:'viewport',key:'canvas',value:captureCanvas()},false);}}>Save view</button>
+   <button aria-label="Draw" title="Draw" aria-pressed={drawing} onClick={()=>{drawing=!drawing;redraw();}}><ToolIcon name="pen"/></button>{drawing&&<input type="color" aria-label="Stroke colour" value={strokeColour} onChange={e=>{strokeColour=e.target.value;redraw();}}/>}
+   <button aria-label="Save view" title="Save view" onClick={()=>{if(captureCanvas)act({type:'viewport',key:'canvas',value:captureCanvas()},false);}}><ToolIcon name="save"/></button>
    {selection.size>0&&<span className="research-selection-count" aria-live="polite">{selection.size} selected</span>}
    {selection.size>=2&&<select aria-label="Align selection" value="" onChange={event=>{const mode=event.target.value as AlignMode;if(mode)alignSelection(mode);event.target.value='';}}>
     <option value="">Align…</option><option value="left">Left</option><option value="hcenter">Centre</option><option value="right">Right</option><option value="top">Top</option><option value="vcenter">Middle</option><option value="bottom">Bottom</option></select>}
-   {selection.size>=3&&<><button onClick={()=>distributeSelection('h')}>Distribute ↔</button><button onClick={()=>distributeSelection('v')}>Distribute ↕</button></>}
-   <button aria-pressed={!!state.snapToGrid} onClick={()=>{state.snapToGrid=!state.snapToGrid;redraw();}}>Snap</button>
-   <button aria-pressed={!!state.lassoOn} onClick={()=>{state.lassoOn=!state.lassoOn;redraw();}}>Lasso</button>
-   {selection.size>=2&&<button onClick={saveFrame}>Frame selection</button>}
+   {selection.size>=3&&<><button aria-label="Distribute ↔" title="Distribute ↔" onClick={()=>distributeSelection('h')}><ToolIcon name="distributeH"/></button><button aria-label="Distribute ↕" title="Distribute ↕" onClick={()=>distributeSelection('v')}><ToolIcon name="distributeV"/></button></>}
+   <button aria-label="Snap" title="Snap" aria-pressed={!!state.snapToGrid} onClick={()=>{state.snapToGrid=!state.snapToGrid;redraw();}}><ToolIcon name="grid"/></button>
+   <button aria-label="Lasso" title="Lasso" aria-pressed={!!state.lassoOn} onClick={()=>{state.lassoOn=!state.lassoOn;redraw();}}><ToolIcon name="lasso"/></button>
+   {selection.size>=2&&<button aria-label="Frame selection" title="Frame selection" onClick={saveFrame}><ToolIcon name="frame"/></button>}
    {framesOrdered.length>0&&<select aria-label="Frames" value="" onChange={event=>{const [op,id]=event.target.value.split(':');if(op==='select'){const frame=frames[id];if(frame){state.multiSelect=new Set(frame.memberRefs.map(ref=>[...canvas.occurrences.entries()].find(([,v])=>v===ref)?.[0]).filter((v):v is string=>!!v));select([...state.multiSelect][0]??null);}}if(op==='front')act({type:'frame-order',id,direction:'front'},false);if(op==='back')act({type:'frame-order',id,direction:'back'},false);if(op==='remove')act({type:'frame-remove',id},false);event.target.value='';}}>
     <option value="">Frames…</option>{framesOrdered.map(([id,frame])=><optgroup key={id} label={frame.label}><option value={`select:${id}`}>Select members</option><option value={`front:${id}`}>Bring to front</option><option value={`back:${id}`}>Send to back</option><option value={`remove:${id}`}>Remove frame</option></optgroup>)}</select>}
-   <button onClick={saveView}>Save view as…</button>
+   <button aria-label="Save view as…" title="Save view as…" onClick={saveView}><ToolIcon name="save"/></button>
    {Object.keys(namedViews).length>0&&<select aria-label="Saved views" value="" onChange={event=>{const [op,name]=event.target.value.split('\u0000');if(op==='apply')applyView(name);if(op==='remove')act({type:'view-remove',name},false);event.target.value='';}}>
     <option value="">Views…</option>{Object.keys(namedViews).map(name=><optgroup key={name} label={name}><option value={`apply\u0000${name}`}>Apply</option><option value={`remove\u0000${name}`}>Remove</option></optgroup>)}</select>}</>}
    {constellationRequest&&<ConstellationAction request={constellationRequest} onError={message}/>}
-   {editable&&host.editObject&&current&&localId&&<button aria-label="Edit object" title="Edit object" onClick={()=>host.editObject!(canvas.sceneId!,localId)}>✎</button>}
-   <button aria-label="Toggle canvas inspector" aria-pressed={inspecting} onClick={()=>{inspecting=!inspecting;host.inspector.hidden=!inspecting;redraw();}}>Inspector</button>
+   {editable&&host.editObject&&current&&localId&&<button aria-label="Edit object" title="Edit object" onClick={()=>host.editObject!(canvas.sceneId!,localId)}><ToolIcon name="pen"/></button>}
+   <button aria-label="Toggle canvas inspector" title="Toggle canvas inspector" aria-pressed={inspecting} onClick={()=>{inspecting=!inspecting;host.inspector.hidden=!inspecting;redraw();}}><ToolIcon name="options"/></button>
   </div>;
   const edgeId=!current?state.selectedEdge:null;
   const selectedEdgeObj=edgeId?canvas.edges.find(e=>e.id===edgeId):undefined;

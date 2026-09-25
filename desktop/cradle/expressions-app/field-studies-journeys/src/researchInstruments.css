@@ -4,14 +4,58 @@
 .research-instrument-body,.research-canvas{position:relative;flex:1;min-height:0;width:100%;height:100%;overflow:hidden}
 .research-instrument-message{margin:24px;max-width:60ch}
 
+/* D3 — icon-led canvas tool buttons (24×24 thin-stroke glyphs, icons.ts).
+   The svg fills a small fixed box so every tool button stays the same
+   compact width regardless of its aria-label length; the button itself
+   keeps its existing min/height sizing from the #research-tools rules
+   below, so the row still fits one line at 1440/1000px and scrolls
+   horizontally rather than clipping when it does not. */
+.research-tool-icon{display:inline-flex;width:16px;height:16px;pointer-events:none}
+.research-tool-icon svg{width:100%;height:100%}
+#research-tools .research-tool-actions>button{gap:0}
+
 .research-canvas-reading .react-flow__handle{display:none}
 /* Source-bound cards default to a compact circular graph anchor (no
    authored display size on their research card). Density comes from many
    small anchors, not full-size cards; this is presentation only and never
    changes the bound Expression's own size. An authored display size still
    renders through the node's actual width/height — see researchInstrumentsData.ts. */
-.research-canvas-native .react-flow__node-resource{border-radius:50%;overflow:hidden}
-.research-canvas-native .react-flow__node-resource .resource-node--card{border-radius:50%;overflow:hidden;display:flex;align-items:center;justify-content:center;padding:0}
+/* D2 — the circular disc comes from a flat background + border-radius, never
+   from overflow:hidden clipping: clipping would also clip the title label
+   placed below it (CSS overflow clips a whole subtree regardless of an
+   absolutely-positioned descendant's own containing block). Everything that
+   would otherwise overflow the circle — accent bar, cover image, eyebrow,
+   pith, chips — is hidden outright instead of clipped; only the title
+   renders. This is display only: it never touches entity.size or card
+   material size (see researchInstrumentsData.ts, node.size). */
+.research-canvas-native .react-flow__node-resource{overflow:visible}
+.research-canvas-native .react-flow__node-resource .resource-node--card{overflow:visible;display:flex;align-items:center;justify-content:center;padding:0}
+.research-canvas-native .react-flow__node-resource .knowledge-card{overflow:visible;width:100%;height:100%;border:0;box-shadow:none;border-radius:50%;display:flex;align-items:center;justify-content:center}
+.research-canvas-native .react-flow__node-resource .knowledge-card__accent,
+.research-canvas-native .react-flow__node-resource .knowledge-card__cover,
+.research-canvas-native .react-flow__node-resource .knowledge-card__eyebrow,
+.research-canvas-native .react-flow__node-resource .knowledge-card__pith,
+.research-canvas-native .react-flow__node-resource .knowledge-card__chips{display:none}
+.research-canvas-native .react-flow__node-resource .knowledge-card__body{padding:0;min-width:0;min-height:0;flex:none;width:100%;height:100%;display:flex;align-items:center;justify-content:center;position:relative}
+/* Compact anchor (~48–56px, researchInstrumentsData.ts): its title is a
+   readable label below the circle, ellipsised by default, never squeezed
+   inside it (Wayfinder §13). The h3 already carries the full title text in
+   the DOM — assistive tech reads it regardless of the visual ellipsis — and
+   hover/focus expands the label to show it in full, since this compact
+   anchor sits inside overflow:visible ancestors and cannot also carry a
+   native title="" attribute without a vendor node-component patch. */
+.research-canvas-native .react-flow__node-resource .knowledge-card__title{
+ position:absolute;top:100%;left:50%;margin-top:4px;transform:translateX(-50%);
+ max-width:104px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+ font-size:10px;font-weight:600;line-height:1.2;text-align:center;
+ color:var(--ink);background:none;padding:0;z-index:1;pointer-events:none;
+}
+.research-canvas-native .react-flow__node-resource:hover .knowledge-card__title,
+.research-canvas-native .react-flow__node-resource:focus-within .knowledge-card__title{
+ white-space:normal;max-width:220px;overflow:visible;z-index:6;
+ background:var(--paper);border:1px solid var(--line);border-radius:4px;
+ padding:2px 6px;box-shadow:0 2px 6px rgba(0,0,0,.18);
+}
 .research-instrument-body>.timeline-surface,.research-instrument-body>.psychogeographic-map{height:100%}
 /* The offline map carries its own dark geography palette. Its controls must
    not inherit the light Expressions field's dark foreground. */

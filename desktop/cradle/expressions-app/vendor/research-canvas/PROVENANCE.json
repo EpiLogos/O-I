@@ -195,8 +195,8 @@
     },
     "packages/canvas/src/edges/AnnotatedEdge.tsx": {
       "upstream_sha256": "f29a962dc9065920759d1f95c4e71ea458a6050cbfa69ca79941c0dc831fe719",
-      "adapted_sha256": "18d4857cafac5577fc2bfb83b48e8de7ecdadd3f7d968c664561b6ac385e74ca",
-      "reason": "Explicit per-owner readOnly capability and callback-backed actions; retain reading/navigation, scope menu portal to embedded host. Pass both native direction markers to BaseEdge; the existing source direction is never inferred."
+      "adapted_sha256": "9e6745643343f4c7bbc9dba0a6ff87367c0e1c7a917217041d2ed9c34c462039",
+      "reason": "Explicit per-owner readOnly capability and callback-backed actions; retain reading/navigation, scope menu portal to embedded host. Pass both native direction markers to BaseEdge; the existing source direction is never inferred. Parallel native relation occurrences on the same unordered node pair (D1, techne-expression-mode.md \u00a736) get their own quadratic-bezier curvature offset, computed in the edge component itself from the live xyflow edge list via useEdges(); a pair with exactly one edge keeps the prior single getBezierPath call and label placement unchanged."
     },
     "packages/canvas/src/nodes/GroupNode.tsx": {
       "upstream_sha256": "b431969411ab3cee23021ff338e2f9ad74dd276c33fa940b0ed9e42fd867f3d8",
