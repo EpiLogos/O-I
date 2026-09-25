@@ -450,10 +450,9 @@ fn migration_places_existing_work_tree_without_changing_its_contents() {
         fs::read_to_string(target.join("dirty.txt")).unwrap(),
         "uncommitted work stays"
     );
-    assert!(
-        text(&result.stdout)
-            .contains("Existing identities preserved; native Central and Factory project setup reconciled.")
-    );
+    assert!(text(&result.stdout).contains(
+        "Existing identities preserved; native Central and Factory project setup reconciled."
+    ));
 }
 
 #[cfg(unix)]
