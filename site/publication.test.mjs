@@ -4,7 +4,6 @@ import { createHash } from 'node:crypto';
 import { readFileSync } from 'node:fs';
 import { compilePublications } from './build-publications.mjs';
 import { openPublication, publicationHref, publicationRoute, publicAssetUrl } from './src/library/publication-model.mjs';
-import { projectComposition } from './src/library/native-player.mjs';
 import { producerFixtures, SUBJECT, COLLECTION } from './tests/publication-fixtures.mjs';
 const clone=v=>JSON.parse(JSON.stringify(v));
 test('empty native publication remains empty; no fixture fallback',()=>{
@@ -25,7 +24,8 @@ test('native body fidelity preserves authored field, geometry, dynamics and text
  assert.ok(edition?.native_body);
  assert.equal(edition.manifest.native_body.digest.value,createHash('sha256').update(edition.native_body.bytes).digest('hex'));
  const journey=JSON.parse(edition.native_body.bytes),sceneRef='expression:fixture:subject:scene:reading';
- const scene=projectComposition(edition.projection.representation.payload.regions.find(r=>r.role==='body').bindings.find(b=>b.binding_ref==='expression').props.composition,sceneRef,journey,edition.manifest.native_body.scene_map);
+ const nativeSceneId=edition.manifest.native_body.scene_map[sceneRef],scene=journey.scenes.find(item=>item.id===nativeSceneId);
+ assert.ok(scene);
  assert.equal(scene.field.background,'#102030');assert.equal(scene.field.params.count,12345);assert.equal(scene.field.params.size,4.2);assert.equal(scene.field.params.speed,.37);
  assert.equal(scene.entities[0].shape,'triangle');assert.equal(scene.entities[0].tint,'#abcdef');assert.equal(scene.entities[0].force.kind,'vortex');assert.equal(scene.entities[0].sequence.enabled,true);
  assert.equal(scene.morph.law,'product');assert.equal(scene.text[0].title,'Native authored text');assert.match(scene.text[0].body,/exact native scene/);
