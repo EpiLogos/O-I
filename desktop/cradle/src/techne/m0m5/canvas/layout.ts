@@ -138,7 +138,7 @@ export function computeLayout(
   const placed = new Set<string>([wholeRef]);
 
   const openArrangementMembers = members.filter((ref) => !placed.has(ref));
-  members.forEach((memberRef, index) => {
+  members.forEach((memberRef) => {
     if (placed.has(memberRef)) return;
     placed.add(memberRef);
     const declared = declaredPositions[memberRef];
