@@ -102,7 +102,7 @@ jobs:
           cache: npm
           cache-dependency-path: desktop/cradle/package-lock.json
       - run: npm ci --prefix desktop/cradle --no-audit --no-fund
-      - run: node desktop/cradle/scripts/ensure-expressions-app.mjs
+      - run: node desktop/cradle/scripts/ensure-expressions-app.mjs --build
       - name: Wider suite, preserving the original Day-roster failure
         working-directory: desktop/cradle
         run: |

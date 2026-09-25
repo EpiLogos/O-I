@@ -16,10 +16,14 @@ const lock = resolve(app, 'package-lock.json');
 
 export function ensureExpressionsApp({build = false} = {}) {
   if (!existsSync(installed) || statSync(installed).mtimeMs < statSync(lock).mtimeMs) {
-    execFileSync(npm, ['ci', '--no-audit', '--no-fund'], {cwd: app, stdio: 'inherit'});
+    // An enclosing npm/npx run exports its own npm_config_* (prefix, omit,
+    // production …); the embedded app needs its full locked graph, including
+    // the type packages its build checks against.
+    const env = Object.fromEntries(Object.entries(process.env).filter(([key]) => !/^npm_config_/i.test(key)));
+    execFileSync(npm, ['ci', '--include=dev', '--no-audit', '--no-fund'], {cwd: app, stdio: 'inherit', env});
   }
   if (build && !existsSync(resolve(app, 'dist/index.html'))) {
-    execFileSync(npm, ['run', 'build'], {cwd: app, stdio: 'inherit'});
+    execFileSync(npm, ['run', 'build'], {cwd: app, stdio: 'inherit', env: Object.fromEntries(Object.entries(process.env).filter(([key]) => !/^npm_config_/i.test(key)))});
   }
 }
 
