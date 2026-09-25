@@ -244,14 +244,9 @@ function RegisterNode({register, projectKeys, createAsk, defaultOpen, activeRegi
           ? <button type="button" className="wiki-map-state-action" disabled={retrying} onClick={() => void restore()}>restore {recovery.missing.length}</button>
           : <RetryButton busy={retrying} label="Read relations again" onRetry={() => void retry()}/>}
       </p>}
-      {projection && constellations.map(constellation => <section key={constellation.sceneRef} className="wiki-space">
-        <WholeRow constellation={constellation} relationCount={relationCountOf(document, constellation.sceneRef)}
-          selected={rowSelected({sceneRef: constellation.sceneRef, entityRef: null})} onFocus={focusRow}/>
-        {constellation.members.length > 0 && <div className="wiki-constellation">
-          {constellation.members.map(member => <MemberRow key={member.entityRef} member={member} sceneRef={constellation.sceneRef}
-            selected={rowSelected({sceneRef: constellation.sceneRef, entityRef: member.entityRef})} onFocus={focusRow}/>)}
-        </div>}
-      </section>)}
+      {projection && constellations.map(constellation => <ConstellationNode key={constellation.sceneRef} constellation={constellation}
+        relationCount={relationCountOf(document, constellation.sceneRef)} entered={selectionMatches && selection.sceneRef === constellation.sceneRef}
+        rowSelected={rowSelected} onFocus={focusRow}/>)}
       {elsewhere.length > 0 && <section className="wiki-space" data-row-kind="elsewhere">
         {elsewhere.map(node => <button key={node.ref} type="button" className="wiki-node-row" data-row-kind="elsewhere"
           title={`${node.title}${node.type ? ` (${node.type})` : ""} — opens as a page`}
@@ -349,6 +344,39 @@ function CreateConstellationRow({register, focusSeq, onClose}: {register: WikiRe
 /** The whole row: entering the constellation scene — the transport's own
  * scene act, from the map's side of the one state. Member and relation
  * counts are the native reading's own numbers, never a placeholder. */
+/** One constellation: its whole row, and its members collapsed until the
+ * constellation is opened or entered. Large memberships reveal in bounded
+ * pages — the tree lists constellations cleanly, never every member at once. */
+const MEMBER_PAGE = 24;
+function ConstellationNode({constellation, relationCount, entered, rowSelected, onFocus}: {
+  constellation: ProjectedConstellation;
+  relationCount: number;
+  entered: boolean;
+  rowSelected(row: {sceneRef: string; entityRef: string | null}): boolean;
+  onFocus(row: FocusAsk): void;
+}) {
+  const [open, setOpen] = useState(false);
+  const [shown, setShown] = useState(MEMBER_PAGE);
+  useEffect(() => { if (entered) setOpen(true); }, [entered]);
+  const members = constellation.members;
+  const visible = open ? members.slice(0, shown) : [];
+  return <section className="wiki-space" data-open={open || undefined}>
+    <div className="wiki-whole-line">
+      {members.length > 0 && <button type="button" className="wiki-disclose" aria-expanded={open}
+        aria-label={`${open ? "Hide" : "Show"} members of ${constellation.title}`} onClick={() => setOpen(value => !value)}/>}
+      <WholeRow constellation={constellation} relationCount={relationCount}
+        selected={rowSelected({sceneRef: constellation.sceneRef, entityRef: null})} onFocus={onFocus}/>
+    </div>
+    {visible.length > 0 && <div className="wiki-constellation">
+      {visible.map(member => <MemberRow key={member.entityRef} member={member} sceneRef={constellation.sceneRef}
+        selected={rowSelected({sceneRef: constellation.sceneRef, entityRef: member.entityRef})} onFocus={onFocus}/>)}
+      {members.length > shown && <button type="button" className="wiki-node-row wiki-more" onClick={() => setShown(count => count + MEMBER_PAGE * 4)}>
+        <span className="wiki-node-title">+{members.length - shown} more</span>
+      </button>}
+    </div>}
+  </section>;
+}
+
 function WholeRow({constellation, relationCount, selected, onFocus}: {
   constellation: ProjectedConstellation;
   relationCount: number;

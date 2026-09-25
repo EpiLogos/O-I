@@ -462,3 +462,16 @@ summary:hover > .wiki-map-tools > .wiki-project-register, summary:focus-within >
 @media (prefers-reduced-motion: reduce) {
   .tn-hud, .tn-cut-recall, .tn-toolbelt { backdrop-filter: none; }
 }
+
+/* A constellation's whole row with its member disclosure: collapsed until
+   opened or entered; the chevron turns like the register disclosure. */
+.wiki-whole-line { display: flex; align-items: center; min-width: 0; }
+.wiki-whole-line > .wiki-node-whole { flex: 1; min-width: 0; }
+.wiki-disclose { flex: none; display: inline-flex; align-items: center; justify-content: center; width: 16px; height: 16px; margin-left: 2px; padding: 0; border: 0; background: none; color: var(--oi-muted); cursor: pointer; }
+.wiki-disclose::before {
+  content: ""; width: 5px; height: 5px;
+  border-right: 1px solid var(--oi-muted-2); border-bottom: 1px solid var(--oi-muted-2);
+  transform: rotate(-45deg); transition: transform var(--oi-motion-ui) var(--oi-motion-ease-out);
+}
+.wiki-disclose[aria-expanded="true"]::before { transform: rotate(45deg); }
+.wiki-more .wiki-node-title { color: var(--oi-muted); }
