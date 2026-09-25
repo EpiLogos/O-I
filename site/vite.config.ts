@@ -2,12 +2,13 @@ import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 import { fileURLToPath } from 'node:url';
 import { resolve } from 'node:path';
+import { essayShellPlugin } from './essay-vite-plugin';
 
 const siteRoot = fileURLToPath(new URL('.', import.meta.url));
 
 export default defineConfig({
   base: './',
-  plugins: [react()],
+  plugins: [react(), essayShellPlugin()],
   resolve: {
     dedupe: ['three','react','react-dom'],
     alias: {
@@ -27,6 +28,7 @@ export default defineConfig({
         research: resolve(siteRoot, 'research.html'),
         build: resolve(siteRoot, 'build.html'),
         explore: resolve(siteRoot, 'explore.html'),
+        essay: resolve(siteRoot, 'essay.html'),
       },
     },
   },
