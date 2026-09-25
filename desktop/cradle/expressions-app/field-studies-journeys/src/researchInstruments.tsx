@@ -14,6 +14,8 @@ import {
  semanticZoomLevel,trackModifiers,type AlignMode,type RepertoireMove,
 } from './canvasRepertoire.js';
 import {RelationFieldView} from './relationFieldView.js';
+import {PlaceFacetsPanel} from './placeFacetsPanel.js';
+import {OPEN_PLACE_FILTER,filteredPlacesRepository,subjectEntityRef,type PlaceFilterState} from './placeReading.js';
 import type {TechneReading} from '../../../src/techne/contract';
 import './researchInstrumentStyles.css';
 import './researchInstruments.css';
@@ -108,7 +110,7 @@ export interface ResearchInstrumentsHost {
  relateKnowledge?:(sceneId:string,input:{sourceEntityRef:string;targetEntityRef:string;relation:string;direction:'directed'|'undirected'})=>Promise<{relation_ref:string;frame_ref:string;frame_revision:number}>;
 }
 interface ViewState {
- canvas?:{x:number;y:number;zoom:number};timeline?:TimelineViewState;place?:{latitude:number;longitude:number;zoom:number};selectedNode?:string|null;selectedEdge?:string|null;selectedPlace?:string|null;
+ canvas?:{x:number;y:number;zoom:number};timeline?:TimelineViewState;place?:{latitude:number;longitude:number;zoom:number};selectedNode?:string|null;selectedEdge?:string|null;selectedPlace?:string|null;placeFilter?:PlaceFilterState;
  /** M2′: chronology (the vendored TimelineSurface) vs. the relation-field
   * projections (relationFieldView.tsx) — session-local presentation state,
   * never a second store. */
@@ -529,12 +531,31 @@ export function installResearchInstruments(host:ResearchInstrumentsHost){
    const images=(scene?.entities??[]).flatMap(entity=>{const card=scene?.research?.cards[entity.id];if(entity.source?.kind!=='image'||!entity.source.image.dataUrl)return [];const artifactPath=`scene-image:${entity.id}`;assets.set(artifactPath,entity.source.image.dataUrl);return [{id:entity.id,profileScope:data.reading.subject.subject_ref,artifactPath,capturedAt:null,latitude:null,longitude:null,headingDegrees:null,redactionStatus:'pending' as const,redactionRegions:[],redactedArtifactPath:null,createdAt:card?.importedAt,updatedAt:card?.importedAt}];});
    const importImagery=scene?()=>{const picker=document.createElement('input');picker.type='file';picker.accept='image/png,image/jpeg,image/webp';picker.onchange=async()=>{const file=picker.files?.[0];if(!file)return;try{if(file.size>196608)throw new Error('Choose an image smaller than 192 KiB for this native document.');const bytes=await new Promise<string>((resolve,reject)=>{const reader=new FileReader();reader.onload=()=>resolve(String(reader.result));reader.onerror=()=>reject(reader.error);reader.readAsDataURL(file);});await host.material(sceneId,{type:'create-card',kind:'image',position:{x:0,y:0},title:file.name.slice(0,160),dataUrl:bytes});if(lens==='m4')await load('m4');}catch(error){message(String(error));}};picker.click();}:undefined;
    const savedPlace=scene?.research?.views.place;state.place??=savedPlace?{latitude:savedPlace.y,longitude:savedPlace.x,zoom:savedPlace.zoom}:undefined;
-   render(<>{createPortal(<div className="research-tool-actions"><button onClick={()=>void load('m4')}>Refresh geography</button>{scene&&<button onClick={()=>{if(state.place)void host.material(sceneId,{type:'viewport',key:'place',value:{x:state.place.longitude,y:state.place.latitude,zoom:state.place.zoom}}).then(()=>message('View saved'),error=>message(String(error)));}}>Save view</button>}</div>,host.tools)}
-   <div className="research-places"><PsychogeographicMap inspectorContainer={host.inspector} toolbarContainer={host.tools} repository={data.places} projectId={data.reading.subject.subject_ref} tileSource={tileSource} offlineOnly
-    initialViewState={state.place} initialSelectedGraphNodeId={state.selectedPlace}
-    onViewStateChange={value=>{state.place=value;}} onSelectedGraphNodeIdChange={value=>{state.selectedPlace=value;}}
-    onOpenCanvasNode={ref=>{const node=data.bundle.nodes.find(node=>node.graphNodeId===ref&&node.place);if(node)host.inspectSubject(ref,{node});}}/>
-    <ImageryPanel tools={host.tools} toolbarContainer={host.tools} images={images} offlineOnly imageTitle={image=>scene?.entities.find(entity=>entity.id===image.id)?.name??'Scene image'} resolveAsset={path=>{const value=assets.get(path);if(!value)throw new Error('Image is not bound to this native Scene');return value;}} onImport={importImagery}/></div></>);
+   // W3 — "Edit place/time" reopens the SAME native constellation route
+   // "Edit constellation" already uses, for the Scene entity that carries
+   // this reading's own subject; absent when no such entity is bound (an
+   // honest absence, never a locally-invented edit path).
+   const placeEntityRef=view?subjectEntityRef(view.document.entities,data.reading.subject.subject_ref):null;
+   const placeEditRequest=view&&binding&&placeEntityRef?{expression_ref:view.document.expression_ref,revision:view.document.revision,scene_ref:binding.scene_ref,entity_ref:placeEntityRef}:undefined;
+   state.placeFilter??=OPEN_PLACE_FILTER;
+   // W2 — the SAME filter state drives both the map's own repository
+   // (presentation-only: `filteredPlacesRepository` never rewrites the
+   // wrapped repository's reads) and the panel's facet list, so the markers
+   // and the panel always agree.
+   const renderPlaces=():ReactNode=>{
+    const filteredRepository=filteredPlacesRepository(data.places,data.reading as unknown as TechneReading,state.placeFilter!);
+    return <>{createPortal(<div className="research-tool-actions"><button onClick={()=>void load('m4')}>Refresh geography</button>{scene&&<button onClick={()=>{if(state.place)void host.material(sceneId,{type:'viewport',key:'place',value:{x:state.place.longitude,y:state.place.latitude,zoom:state.place.zoom}}).then(()=>message('View saved'),error=>message(String(error)));}}>Save view</button>}</div>,host.tools)}
+    <div className="research-places"><PsychogeographicMap inspectorContainer={host.inspector} toolbarContainer={host.tools} repository={filteredRepository} projectId={data.reading.subject.subject_ref} tileSource={tileSource} offlineOnly
+     initialViewState={state.place} initialSelectedGraphNodeId={state.selectedPlace}
+     onViewStateChange={value=>{state.place=value;}} onSelectedGraphNodeIdChange={value=>{state.selectedPlace=value;render(renderPlaces());}}
+     onOpenCanvasNode={ref=>{const node=data.bundle.nodes.find(node=>node.graphNodeId===ref&&node.place);if(node)host.inspectSubject(ref,{node});}}/>
+     <ImageryPanel tools={host.tools} toolbarContainer={host.tools} images={images} offlineOnly imageTitle={image=>scene?.entities.find(entity=>entity.id===image.id)?.name??'Scene image'} resolveAsset={path=>{const value=assets.get(path);if(!value)throw new Error('Image is not bound to this native Scene');return value;}} onImport={importImagery}/>
+     <PlaceFacetsPanel reading={data.reading as unknown as TechneReading} selectedRef={state.selectedPlace??null} filter={state.placeFilter!}
+      onFilterChange={next=>{state.placeFilter=next;render(renderPlaces());}}
+      editRequest={placeEditRequest} onError={message}/>
+    </div></>;
+   };
+   render(renderPlaces());
   }catch(error){if(epoch!==generation||destroyed)return;message(error instanceof Error?error.message:String(error));body.replaceChildren();}
  }
  return {

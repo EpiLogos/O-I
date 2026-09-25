@@ -11,8 +11,8 @@
  *
  * Erasable TypeScript: loadable by the renderer, Vite, and `node --test`.
  */
-import type { TechnePlaceFacet, TechnePlacePrecision } from "../../contract.ts";
-import { nameInWindow, type TimeWindow } from "./filter.ts";
+import type { TechnePlaceFacet, TechnePlacePrecision } from "../../contract";
+import { nameInWindow, type TimeWindow } from "./filter";
 
 // ---------------------------------------------------------------------------
 // Camera (presentation state; the instrument owns it, this file only reads it)
