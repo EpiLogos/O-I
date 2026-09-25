@@ -51,6 +51,8 @@ with sync_playwright() as pw:
                     return route.fulfill(body=edition['html'], content_type='text/html')
                 if path.endswith('/editions/' + edition['directory'] + '/projection.json'):
                     return route.fulfill(json=edition['projection'])
+                if edition.get('native_body') and path.endswith('/editions/' + edition['directory'] + '/native-body.journey.json'):
+                    return route.fulfill(body=edition['native_body']['bytes'], content_type='application/json')
             route.continue_()
     context.route('**/data/library/**', receive)
     page.reload()
