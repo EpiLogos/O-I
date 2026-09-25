@@ -13,6 +13,7 @@ import { validateExpressionComposition, isProtectedRef } from '../shared-field/e
 import { validateExpressionPresentation } from '../shared-field/expression-presentation.mjs';
 import { renderWorldEdition, worldEditionManifest } from '../shared-field/world-edition.mjs';
 import { publicAssetUrl } from './src/library/publication-model.mjs';
+import { validateJourney } from '../packages/oi-design-system/expressions-engine/shell/model.mjs';
 
 const digest = value => createHash('sha256').update(value).digest('hex');
 const failure = () => new Error('A native publication failed public admission. No replacement or fixture publication was supplied.');
@@ -41,6 +42,26 @@ function assertPublic(value, key = '', depth = 0) {
   assertPublic(v,k,depth+1);
  }
 }
+function admittedNativeBody(raw, projection) {
+ if(raw===undefined||raw===null)return null;
+ if(raw?.schema!=='oi.native-expression-body/v1'||raw.source_schema!=='oi.journey'||raw.expression_ref!==projection.subject?.ref||raw.expression_ref!==projection.source?.ref||raw.expression_revision!==Number(projection.source?.revision)||raw.digest?.algorithm!=='sha256'||!/^[a-f0-9]{64}$/.test(raw.digest.value)||typeof raw.bytes!=='string'||raw.bytes.length>16*1024*1024||typeof raw.source_path!=='string'||typeof raw.source_revision!=='string'||!raw.scene_map||typeof raw.scene_map!=='object'||Array.isArray(raw.scene_map))throw failure();
+ const bytes=Buffer.from(raw.bytes,'utf8');
+ if(digest(bytes)!==raw.digest.value)throw failure();
+ let journey;
+ try{journey=validateJourney(JSON.parse(raw.bytes));}catch{throw failure();}
+ assertPublic(journey);
+ const sourceIds=new Set(journey.scenes.map(scene=>scene.id));
+ const projectedScenes=new Set();
+ for(const region of worldPresentationFromProjection(projection).regions)for(const b of region.bindings||[])if(b.portable_renderer==='oi.presentation/expression/v1')for(const scene of b.props?.composition?.scenes||[])projectedScenes.add(scene.scene_ref);
+ const mapped=Object.entries(raw.scene_map);
+ if(mapped.length!==projectedScenes.size||mapped.some(([sceneRef,sourceId])=>!projectedScenes.has(sceneRef)||typeof sourceId!=='string'||!sourceIds.has(sourceId))||[...projectedScenes].some(ref=>!(ref in raw.scene_map)))throw failure();
+ return {
+  schema:raw.schema,source_schema:raw.source_schema,expression_ref:raw.expression_ref,expression_revision:raw.expression_revision,
+  source_path:raw.source_path,source_revision:raw.source_revision,digest:{algorithm:'sha256',value:raw.digest.value},
+  scene_map:{...raw.scene_map},bytes:raw.bytes,
+ };
+}
+
 function admittedProjection(raw, deniedRefs) {
  const projection = validateProjection(raw);
  const presentation = worldPresentationFromProjection(projection);
@@ -71,7 +92,7 @@ function admittedProjection(raw, deniedRefs) {
 function inputParts(value) {
  if (value?.schema === 'oi.explore-browser-seed/v1') return {projections:value.presentation_projections || [],entries:value.entries || [],relations:value.relations || [],fields:value.fields || [],entry_fields:value.entry_fields || {},relation_fields:value.relation_fields || {}};
  if (value?.schema === 'oi.world-publication/v1') return {projections:[value.projection],entries:value.entries || [],relations:value.relations || [],fields:[value.field],scope_field:value.field_ref || value.field?.field_ref,entry_fields:Object.fromEntries((value.entries || []).map(e=>[e.ref,value.field_ref || value.field?.field_ref])),relation_fields:{}};
- if (value?.schema === 'oi.expression-publication/v1') return {projections:[value.projection],entries:[value.entry],relations:[],fields:[value.field],scope_field:value.field_ref || value.field?.field_ref,entry_fields:{[value.entry?.ref]:value.field_ref},relation_fields:{}};
+ if (value?.schema === 'oi.expression-publication/v1') return {projections:[value.projection],entries:[value.entry],relations:[],fields:[value.field],scope_field:value.field_ref || value.field?.field_ref,entry_fields:{[value.entry?.ref]:value.field_ref},relation_fields:{},native_body:value.native_body};
  throw failure();
 }
 /** Pure compilation: only output-bound public data survives into any artefact. */
@@ -100,8 +121,9 @@ export function compilePublications(inputs = []) {
  for(const part of parts) for(const raw of part.projections) {
   if(withheldProjections.has(raw?.projection_ref)||fieldDenied(part.scope_field)||deniedRefs.has(raw?.subject?.ref)) continue;
   const item=admittedProjection(raw,deniedRefs),key=item.projection.projection_ref;
-  if(records.has(key)&&!same(records.get(key).projection,item.projection)) throw failure();
-  records.set(key,item);
+  const native_body=part.native_body?admittedNativeBody(part.native_body,item.projection):null;
+  if(records.has(key)&&(!same(records.get(key).projection,item.projection)||!same(records.get(key).native_body,native_body))) throw failure();
+  records.set(key,{...item,native_body});
  }
  const bound = new Map();
  for (const record of records.values()) {
@@ -145,11 +167,16 @@ export function compilePublications(inputs = []) {
  const knownFields = new Set(publicFields.map(f=>f.field_ref));
  const seed = {schema:'oi.explore-browser-seed/v1',entries:[...entries.values()].sort((a,b)=>a.ref.localeCompare(b.ref)),relations:[...relations.values()],presentations:[],presentation_projections:[...records.values()].map(r=>r.projection),fields:publicFields,entry_fields:Object.fromEntries([...entries.keys()].filter(ref=>knownFields.has(entryFields[ref])).map(ref=>[ref,entryFields[ref]])),relation_fields:Object.fromEntries([...relations.values()].filter(r=>r.relation_ref&&knownFields.has(relationFields[r.relation_ref])).map(r=>[r.relation_ref,relationFields[r.relation_ref]]))};
  createExploreSurfaceModel(seed);
- const editions = [...records.values()].map(({projection}) => {
+ const editions = [...records.values()].map(({projection,native_body}) => {
   const path = `./data/library/editions/${digest(projection.projection_ref+'@'+projection.projection_revision)}`;
   const html = renderWorldEdition(projection, {explore_base:'../../../../library.html'});
   const manifest = worldEditionManifest(projection,html,{page:path+'/index.html',projection_file:path+'/projection.json'});
-  return {projection,html,manifest,directory:path.split('/').pop()};
+  if(native_body)manifest.native_body={
+   schema:'oi.native-expression-body/v1',source_schema:'oi.journey',path:path+'/native-body.journey.json',
+   expression_ref:native_body.expression_ref,expression_revision:native_body.expression_revision,
+   source_path:native_body.source_path,source_revision:native_body.source_revision,digest:native_body.digest,scene_map:native_body.scene_map,
+  };
+  return {projection,html,manifest,directory:path.split('/').pop(),native_body};
  });
  return {seed,editions};
 }
@@ -183,6 +210,7 @@ export async function buildPublications(options = {}) {
   const directory=join(staging,'editions',e.directory); await mkdir(directory,{recursive:true});
   await writeFile(join(directory,'index.html'),e.html);
   await writeFile(join(directory,'projection.json'),JSON.stringify(e.projection));
+  if(e.native_body)await writeFile(join(directory,'native-body.journey.json'),e.native_body.bytes);
   await writeFile(join(directory,'manifest.json'),JSON.stringify(e.manifest));
  }
  await mkdir(destination,{recursive:true});
