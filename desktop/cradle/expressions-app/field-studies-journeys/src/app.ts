@@ -78,7 +78,10 @@ let studioDocked=false,studioSizeMemo:{width:string;height:string}|null=null;let
 // The instrument opens on the O:I mark — the light/dark theme expression
 // that matches the base O:I image (owner direction 2026-09-19). A last-opened
 // library expression still restores over it, exactly as before.
-let initial:Journey=startsInTechne?{...blankJourney(),name:'Wiki'}:oiMark(),startupError='';
+// §9: Technē opens on the approved Epii entry face with no preselected Wiki
+// subject; the host may then open a default Wiki over it (TechneCentre
+// treats this face as replaceable). A blank placeholder is not the home.
+let initial:Journey=startsInTechne?(startingPoints().find(p=>p.expression.id==='source-twelve-faces')?.expression??{...blankJourney(),name:'Wiki'}):oiMark(),startupError='';
 try{if(window.__JOURNEY__)initial=validateJourney(window.__JOURNEY__);else if(!startsWithNativeReference){try{const last=localStorage.getItem('oi.field-studies.last');const saved=readLibrary().find(j=>j.id===last);if(saved)initial=saved;}catch{/* An opaque or private origin must still open cleanly. */}}}catch(err){startupError=err instanceof Error?err.message:String(err);}
 function initialiseBelts(j:Journey){initialiseShared(j);initialiseSources(j);for(const s of [...j.scenes,...Object.values(j.savedScenes??{})])if(!s.toolbelt)s.toolbelt=clone(workspace.entries).map(e=>e.scope==='named'&&!s.entities.some(v=>v.id===e.entityId)?{id:e.id,key:e.key,scope:'selected' as const}:e);return j;}
 const store=new DocumentStore(initialiseSceneSaves(initialiseBelts(initial)));let engine:FieldEngineAdapter;

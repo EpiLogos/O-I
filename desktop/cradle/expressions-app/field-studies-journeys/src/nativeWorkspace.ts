@@ -48,6 +48,18 @@ export function captureNativeAdoption(host:Pick<NativeWorkspaceHost,'snapshot'|'
  const version=host.version(),draftId=host.snapshot().journey.id,selected=generation();
  return ()=>host.version()===version&&host.snapshot().journey.id===draftId&&generation()===selected;
 }
+/** `changed()` runs once at boot (to associate whatever document is already
+ * showing with its own native working checkpoint) and again on every genuine
+ * local journey switch thereafter. Only the switches after boot may
+ * invalidate an in-flight native open: at boot nothing has opened yet, so
+ * there is nothing for that call to legitimately invalidate, and a native
+ * open captured concurrently (e.g. a click landing mid-boot) must not be
+ * refused by boot's own bookkeeping — an untouched boot canvas is not
+ * authored work (see `awaitingNativeBoot`/`shouldRetainDraft` in app.ts).
+ * Exported standalone so this sequencing is covered by a plain unit test. */
+export function isGenuineWorkspaceSwitch(state:{booted:boolean}):boolean{
+ const first=!state.booted;state.booted=true;return !first;
+}
 export function installNativeWorkspace(host:NativeWorkspaceHost){
  const scope=new URLSearchParams(location.search).get('mode')==='techne'?'techne':'expressions';
  const work=new NativeWorking({expression:nativeExpressionRequest,file:nativeFileRequest,
@@ -62,7 +74,7 @@ export function installNativeWorkspace(host:NativeWorkspaceHost){
  <section class="native-disclosure"><h3>Field disclosure</h3><p class="native-page"></p><div class="native-actions"><button type="button" data-native="previous">Previous members</button><button type="button" data-native="next">Next members</button></div></section>
  <p class="native-note">Commit updates the native working document. Save writes and independently reads its file. Working-copy backup is private recovery, not file publication.</p>`;
  document.body.appendChild(panel);
- let busy=false,notice='',lastFailure=false,restoreGeneration=0;
+ let busy=false,notice='',lastFailure=false,restoreGeneration=0;const bootState={booted:false};
  let ownerIdle:Promise<void>=Promise.resolve();
  let queuedMutations=0;
  const field=(name:string)=>panel.querySelector<HTMLInputElement|HTMLSelectElement>(`[data-native-field="${name}"]`)!;
@@ -275,7 +287,8 @@ export function installNativeWorkspace(host:NativeWorkspaceHost){
    return selections.submit({generation:restoreGeneration,nativeRef,sceneId,entityId,bindingRef});
   },
   async changed(journey:Journey){
-   opens.cancel();const generation=++restoreGeneration;selections.cancel();work.detach();host.correspondence({},null);
+   if(isGenuineWorkspaceSwitch(bootState)){opens.cancel();restoreGeneration++;selections.cancel();}
+   const generation=restoreGeneration;work.detach();host.correspondence({},null);
    try{const record=await readWorkingCheckpoint(journey.id,scope);if(generation!==restoreGeneration||host.snapshot().journey.id!==journey.id)return;if(record)work.restore(record,journey);update();}
    catch(error){if(generation===restoreGeneration){lastFailure=true;status(`Native recovery was not adopted: ${error instanceof Error?error.message:String(error)}`);update();}}
   },
