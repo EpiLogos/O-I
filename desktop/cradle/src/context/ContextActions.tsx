@@ -12,7 +12,7 @@ import {readDraft} from "../workspace/drafts";
 import "./context.css";
 import {observationIsCurrent} from "./ComponentSelection";
 import {CONTEXT_MARK} from "./contextItems";
-type Candidate={observationKey?:string;selector?:string;role?:string;bounds?:{x:number;y:number;width:number;height:number};bindingId:string;kind:string;text:string;sourceRef?:string;start?:number;end?:number;revision?:string;workingCopy?:boolean};
+type Candidate={observationKey?:string;selector?:string;role?:string;nodeRef?:string;bounds?:{x:number;y:number;width:number;height:number};bindingId:string;kind:string;text:string;sourceRef?:string;start?:number;end?:number;revision?:string;workingCopy?:boolean};
 /** The owner's typed remember answer (`central.remembered-note-proposal`,
  * probed live on the installed cut). Unknown shapes render as the raw
  * payload — the presentation invents no fields. */
@@ -54,7 +54,7 @@ export function ContextActions({bindings,accompanying}:{bindings:Record<string,S
   else if(binding.location){const read=await readFile(kernel.transport,binding.location);if(!revision||read.revision!==revision)throw new Error("The file changed since selection. Select the passage again.");if(working){const draft=binding.ref?readDraft(binding.ref):undefined;if(!draft||draft.base_revision!==revision)throw new Error("The file draft changed since selection. Select the passage again.");canonical=draft.content;}else canonical=read.content;}
   if(canonical!==undefined&&!matches(candidate,canonical))throw new Error("The selected material changed. Select it again before including it.");
   const origin=candidate.sourceRef??binding.terminal?.cwd??binding.browser?.url??binding.title;
-  const metadata=[binding.title,origin,revision?`revision ${revision}`:candidate.kind==="element"?`observed ${candidate.role==="text"?"text":"component"} · ${candidate.selector} · role ${candidate.role??"element"}${candidate.bounds?` · viewport bounds x=${candidate.bounds.x}, y=${candidate.bounds.y}, width=${candidate.bounds.width}, height=${candidate.bounds.height} CSS px`:""}`:"observed excerpt",working?"working copy — unsaved":""].filter(Boolean).join(" · ");
+  const metadata=[binding.title,origin,revision?`revision ${revision}`:candidate.kind==="element"?`observed ${candidate.role==="text"?"text":"component"} · ${candidate.selector} · role ${candidate.role??"element"}${candidate.nodeRef?` · unit ${candidate.nodeRef}`:""}${candidate.bounds?` · viewport bounds x=${candidate.bounds.x}, y=${candidate.bounds.y}, width=${candidate.bounds.width}, height=${candidate.bounds.height} CSS px`:""}`:"observed excerpt",working?"working copy — unsaved":""].filter(Boolean).join(" · ");
   const quoted=candidate.text.split("\n").map(line=>`> ${line}`).join("\n");
   return {sourceRef:origin,text:`${CONTEXT_MARK}${metadata}\n${quoted}`,revision,title:binding.title};
  };

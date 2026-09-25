@@ -15,6 +15,7 @@ import documentHostScript from "../context/document-host.js?raw";
 import {useMaterialContext} from "../context/PageContext";
 import {readDocumentIdentity,islandSpan,FAMILY_LABEL} from "../document/identity";
 import {saveDocumentPayload,type DocumentSaveOutcome} from "../document/hostSave";
+import {waitingReturnsForSource} from "../document/returns";
 import {EditorButton,EditorFrame} from "../editor/EditorChrome";
 // @ts-ignore -- Personal Web ql-doc parser is the canonical JS document contract.
 import {readPage} from "../personal/page.mjs";
@@ -201,6 +202,20 @@ export function MaterialSurface({ binding, format }: { binding: SurfaceBinding; 
     && frameIsland?.text != null && savedIslandText != null && frameIsland.text !== savedIslandText;
   const docWritable = !!location && textRevision !== undefined
     && (!!readingMeta?.sourceRef || readingMeta?.writeAvailable !== false);
+  // Returns beside the document: what the native receiving field holds
+  // against this exact source. Counting only — review stays in the Inbox.
+  const [waitingReturns, setWaitingReturns] = useState<number>();
+  useEffect(() => {
+    const sourceRef = readingMeta?.sourceRef;
+    if (!sourceRef) return;
+    let live = true;
+    const read = () => void waitingReturnsForSource(transport, binding.project ?? null, sourceRef).then(count => { if (live) setWaitingReturns(count); });
+    read();
+    const focus = () => { if (document.visibilityState === "visible") read(); };
+    window.addEventListener("focus", focus);
+    const timer = setInterval(focus, 60_000);
+    return () => { live = false; window.removeEventListener("focus", focus); clearInterval(timer); };
+  }, [transport, binding.project, readingMeta?.sourceRef]);
   const saveDocument = () => {
     if (docSave?.busy || !identity || identity.payload !== "ql-doc" || !location || textRevision === undefined) return;
     setDocSave({busy: true});
@@ -317,7 +332,7 @@ export function MaterialSurface({ binding, format }: { binding: SurfaceBinding; 
     <div className="material-preview-pane" hidden={view==="source"}>
   <EditorFrame className="material-surface" label={`Material ${binding.title}`}
     toolbar={null} presentationTools={<>{showToggle&&<MaterialToggle view={view} onChange={setView}/>} {tools}</>}
-    footer={<><span className="editor-path" title={`Central / ${location.path}`}>Central / {location.path}</span><span>{FORMAT_LABEL[format]}{unsavedPreview?" · unsaved preview":""}</span>{zoomable&&<span>{Math.round(zoom*100)}%</span>}{identity&&<span className="editor-path" title={identity.templateRef?`Template ${identity.templateRef}`:undefined}>{FAMILY_LABEL[identity.family]??identity.label}{identity.documentRevision!=null?` · r${identity.documentRevision}`:""}{pageDirty?" · unsaved on the page":""}</span>}{docSave&&!docSave.busy&&<span role={docSave.outcome.state==="saved"||docSave.outcome.state==="unchanged"?"status":"alert"}>{docSave.outcome.state==="saved"?"Saved":docSave.outcome.state==="unchanged"?"Already saved":docSave.outcome.detail}</span>}<EditorButton disabled={busy} onClick={()=>setGeneration(value=>value+1)}>Reload</EditorButton>{identity?.payload==="ql-doc"&&<EditorButton disabled={docSave?.busy===true||!docWritable} onClick={saveDocument} title={docWritable?undefined:readingMeta?.writeReason??"No write authority for this document"}>{docSave?.busy?"Saving…":"Save"}</EditorButton>}</>}
+    footer={<><span className="editor-path" title={`Central / ${location.path}`}>Central / {location.path}</span><span>{FORMAT_LABEL[format]}{unsavedPreview?" · unsaved preview":""}</span>{zoomable&&<span>{Math.round(zoom*100)}%</span>}{identity&&<span className="editor-path" title={identity.templateRef?`Template ${identity.templateRef}`:undefined}>{FAMILY_LABEL[identity.family]??identity.label}{identity.documentRevision!=null?` · r${identity.documentRevision}`:""}{pageDirty?" · unsaved on the page":""}</span>}{docSave&&!docSave.busy&&<span role={docSave.outcome.state==="saved"||docSave.outcome.state==="unchanged"?"status":"alert"}>{docSave.outcome.state==="saved"?"Saved":docSave.outcome.state==="unchanged"?"Already saved":docSave.outcome.detail}</span>}{waitingReturns?<span role="status" title="Material returned against this document is waiting in the Inbox">{waitingReturns} waiting return{waitingReturns===1?"":"s"}</span>:null}<EditorButton disabled={busy} onClick={()=>setGeneration(value=>value+1)}>Reload</EditorButton>{identity?.payload==="ql-doc"&&<EditorButton disabled={docSave?.busy===true||!docWritable} onClick={saveDocument} title={docWritable?undefined:readingMeta?.writeReason??"No write authority for this document"}>{docSave?.busy?"Saving…":"Save"}</EditorButton>}</>}
   >
     <div ref={containerRef} className="material-rendered-content" data-suspended={suspended || undefined} aria-busy={!showing && !loadError}>
     {loadError && <p role="alert" className="source-note">{loadError} <button type="button" onClick={()=>setGeneration(value=>value+1)}>Retry</button></p>}
