@@ -79,7 +79,7 @@ export default async function run({page,baseUrl,check,shot,channel,provision:p})
   // "More" menu away (the plane-nav overflow law). Reading a mode's planes
   // means reading the row AND the menu; choosing a plane opens the menu when
   // the row doesn't name it.
-  const planesRow=()=>panel.getByRole("navigation",{name:"Right region planes"});
+  const planesRow=()=>panel.locator('[aria-label="Right region planes"]');
   const planes=async()=>{
     const row=(await planesRow().locator(".panel-tab > span:first-child").allInnerTexts()).map(text=>text.trim()).filter(Boolean);
     const more=planesRow().getByRole("button",{name:/More views \(/});
@@ -299,7 +299,7 @@ export default async function run({page,baseUrl,check,shot,channel,provision:p})
     await page.setViewportSize({width,height:820});
     await page.waitForTimeout(250);
     check(await page.evaluate(()=>document.documentElement.scrollHeight<=window.innerHeight&&document.documentElement.scrollWidth<=window.innerWidth),`Narrow width ${width}: the document does not scroll`);
-    check(await panel.getByRole("navigation",{name:"Right region planes"}).evaluate(el=>el.scrollHeight<=el.clientHeight+2),`Narrow width ${width}: the plane nav stays one row`);
+    check(await panel.locator('[aria-label="Right region planes"]').evaluate(el=>el.scrollHeight<=el.clientHeight+2),`Narrow width ${width}: the plane nav stays one row`);
     await shot(`panel-narrow-${width}`);
   }
   await page.setViewportSize({width:1280,height:820});

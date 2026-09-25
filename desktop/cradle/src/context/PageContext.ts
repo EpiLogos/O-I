@@ -1,7 +1,7 @@
 import {useEffect,type RefObject} from 'react';
 import type {SurfaceBinding} from '../surface/types';
 import {registerPageObservation,releaseObservation} from './ComponentSelection';
-export interface PageObservation {key:string;documentId:string;text:string;error?:string;selector:string;role:string;nodeRef?:string;sourceStart?:number;sourceEnd?:number;bounds:{x:number;y:number;width:number;height:number};pageUrl?:string}
+export interface PageObservation {key:string;documentId:string;text:string;error?:string;selector:string;role:string;nodeRef?:string;sourceStart?:number;sourceEnd?:number;bounds:{x:number;y:number;width:number;height:number};pageUrl?:string;unit?:string}
 export function presentPageObservation(binding:SurfaceBinding,value:unknown,validate:(key:string,documentId:string)=>Promise<boolean>,sourceRef?:string,mark?:(key:string,documentId:string,enabled:boolean)=>void,revision?:string,workingCopy=false){
  const observation=value as PageObservation;
  if(!observation||typeof observation.key!=="string"||typeof observation.documentId!=="string"||typeof observation.text!=="string"||observation.text.length>65536||typeof observation.selector!=="string"||observation.selector.length>4096||!observation.bounds||!['x','y','width','height'].every(key=>typeof (observation.bounds as Record<string,unknown>)[key]==='number'&&Number.isFinite((observation.bounds as Record<string,number>)[key])))return;

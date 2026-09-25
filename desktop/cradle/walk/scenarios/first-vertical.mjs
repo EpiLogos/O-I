@@ -180,7 +180,7 @@ export default async function run({page,baseUrl,check,shot,channel,provision:p})
   await page.getByRole("button",{name:"Add selected text to context",exact:true}).click();
   await page.getByRole("button",{name:"Toggle right region",exact:true}).click();
   const panel=page.getByRole("region",{name:"Accompanying agent"});await panel.waitFor();
-  const planes=()=>panel.getByRole("navigation",{name:"Right region planes"});
+  const planes=()=>panel.locator('[aria-label="Right region planes"]');
   for(let attempt=0;;attempt++){try{
     if(await planes().getByRole("button",{name:"Context",exact:true}).isVisible())await planes().getByRole("button",{name:"Context",exact:true}).click({timeout:3000});
     else{await planes().getByRole("button",{name:/More views \(/}).click({timeout:3000});await panel.getByRole("group",{name:"More views"}).getByRole("button",{name:"Context",exact:true}).click({timeout:3000});}
