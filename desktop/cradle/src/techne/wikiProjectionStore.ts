@@ -225,6 +225,9 @@ export function ensureWikiProjectionReading(register: WikiRegister, transport: K
     const check = () => {
       const standing = state.standings[register.key];
       if (!standing || standing.phase === "idle" || standing.phase === "reading") return;
+      // A re-read in flight (an explicit refresh, or the receipt a native
+      // write produced) is not a changed basis yet: wait for its outcome.
+      if (standing.readingInvalidated && rereadsInFlight.has(register.key)) return;
       let error: string | undefined;
       if (standing.readingInvalidated) error = "This Scene's source reading changed; refresh its Wiki reading before using its facets";
       else if (standing.phase === "unavailable") error = standing.reason;
@@ -331,6 +334,9 @@ let appliedWikiReceiptSeq = 0;
 /** One generation per in-flight re-read, per register: a burst of writes to
  * the same wiki basis lets only the newest re-read write the standing back. */
 const rereadGenerations = new Map<string, number>();
+/** Re-reads currently running per register (a generation counter alone
+ * cannot tell a waiting caller whether a fresh reading is still coming). */
+const rereadsInFlight = new Map<string, number>();
 
 /** A kernel `file_changed` receipt whose path is a register's wiki basis
  * invalidates that register's cached reading (the seam the 13-step walk
@@ -369,6 +375,15 @@ export function applyWikiProjectionReceipt(
 async function rereadWikiRegister(register: WikiRegister, transport: KernelTransportStatus, preserveDocument = false) {
   const generation = (rereadGenerations.get(register.key) ?? 0) + 1;
   rereadGenerations.set(register.key, generation);
+  rereadsInFlight.set(register.key, (rereadsInFlight.get(register.key) ?? 0) + 1);
+  try { await rereadWikiRegisterOnce(register, transport, preserveDocument, generation); }
+  finally {
+    const left = (rereadsInFlight.get(register.key) ?? 1) - 1;
+    if (left > 0) rereadsInFlight.set(register.key, left); else rereadsInFlight.delete(register.key);
+    emit();
+  }
+}
+async function rereadWikiRegisterOnce(register: WikiRegister, transport: KernelTransportStatus, preserveDocument: boolean, generation: number) {
   const previous = state.standings[register.key];
   if (previous) setStanding(register.key, {...previous, readingInvalidated: true});
   let fresh: WikiRegisterReading;

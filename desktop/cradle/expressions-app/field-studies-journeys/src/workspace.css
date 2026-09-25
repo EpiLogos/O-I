@@ -450,10 +450,11 @@ body.presentation #physis-panel,body.library-open #physis-panel{display:none}
    sits in its centre cell; the active instrument's tools join the rail;
    instrument controls live in the Studio; a selected node or connection
    shows a compact card. No second header, panel or chooser bar. ===== */
-.masthead-centre{display:flex;align-items:center;justify-content:center;gap:6px;min-width:0}
+.masthead-centre{display:flex;align-items:center;justify-content:center;gap:6px;min-width:0;max-height:100%}
 #lens-chooser{display:flex;align-items:center;min-width:0;--oi-shell-tabbar:30px;--oi-space-1:1px;--oi-space-2:4px;--oi-muted-2:var(--ui-muted);--oi-accent-ink:var(--ui-ink);--oi-wash:var(--ui-wash)}
 #lens-chooser[hidden]{display:none}
-#lens-chooser .lens-choice{min-width:30px}
+#lens-chooser [role=tablist]{height:28px;min-height:0;align-items:center}
+#lens-chooser .lens-choice{height:28px;min-height:0;min-width:30px;padding-top:0;padding-bottom:0}
 #lens-chooser .lens-glyph svg{width:16px;height:16px}
 #scene-blueprint-controls .native-actions>label{flex:1 1 4rem;min-width:0}
 #scene-blueprint-controls .native-actions input{width:100%;box-sizing:border-box}

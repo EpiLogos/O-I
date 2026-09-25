@@ -340,7 +340,7 @@ function CreateConstellationRow({register, focusSeq, onClose}: {register: WikiRe
     </select>
     {error && <p className="wiki-create-error" role="alert">{error}</p>}
     <div className="wiki-create-actions">
-      {!saved && <button type="submit" className="oi-action" disabled={busy || !title.trim() || !question.trim()}>{busy ? "Creating…" : "Create"}</button>}
+      {!saved && <button type="submit" className="oi-action" disabled={busy || !title.trim() || !question.trim()}>{busy ? "Creating…" : "Create constellation"}</button>}
       <button type="button" className="oi-action" disabled={busy} onClick={onClose}>{saved ? "Close" : "Cancel"}</button>
     </div>
   </form>;
