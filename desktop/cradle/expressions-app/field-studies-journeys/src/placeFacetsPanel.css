@@ -24,3 +24,10 @@
 .place-facets-depths ul{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:.2rem}
 .place-facets-depths li[data-availability="producer-unavailable"],.place-facets-depths li[data-availability="absent-facet"]{opacity:.65}
 .place-facets-edit{margin-top:.5rem}
+
+.place-facets-unavailable{color:var(--ui-muted,var(--muted));font-style:italic;cursor:help}
+/* The map's own controls (Globe/Flat, Zoom to fit, Location details, imagery)
+   sit at the top of the Studio's Places section as one wrapped row. */
+.places-home>:is(.psychogeographic-toolbar,.street-view-toolbar,.research-tool-actions),.places-home div[style*="position"]{position:static!important;display:flex;flex-wrap:wrap;gap:6px;margin:0 0 10px;padding:0;background:none!important;border:0!important;backdrop-filter:none!important}
+.places-home button{font:11px var(--sans);color:var(--ui-ink);background:var(--ui-wash);border:1px solid var(--ui-line);border-radius:6px;padding:4px 8px}
+.places-home button[data-active=true]{border-color:var(--ui-ink)}

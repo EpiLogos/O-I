@@ -163,7 +163,7 @@ export function PlaceFacetsPanel({reading,selectedRef,filter,onFilterChange,edit
   <div className="place-facets-depths">
    <h5>Reference frame</h5>
    <ul>{depths.map(depth=><li key={depth.depth} data-availability={depth.availability}>
-    <strong>{depthLabel(depth.depth)}</strong>: {depth.availability==='disclosed'?depth.disclosed.join(', '):(depth.reason??'unavailable')}
+    <strong>{depthLabel(depth.depth)}</strong>: {depth.availability==='disclosed'?depth.disclosed.join(', '):<span className="place-facets-unavailable" title={depth.reason??undefined}>not available here</span>}
    </li>)}</ul>
   </div>
  </section>;

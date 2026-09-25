@@ -608,8 +608,8 @@ export function installResearchInstruments(host:ResearchInstrumentsHost){
      const toggle=<div className="research-tool-actions" role="tablist" aria-label="Timeline projection">
       <button role="tab" aria-selected={state.m2Projection==='chronology'} aria-pressed={state.m2Projection==='chronology'} onClick={()=>setProjection('chronology')}>Chronology</button>
       <button role="tab" aria-selected={state.m2Projection==='field'} aria-pressed={state.m2Projection==='field'} onClick={()=>setProjection('field')}>Relations</button>
-      <button onClick={()=>void load('m2')}>Refresh timeline</button>
-      {view&&state.m2Projection==='chronology'&&<button onClick={()=>{if(state.timeline)void host.material(sceneId,{type:'viewport',key:'timeline',value:{x:state.timeline.centerYear,y:0,zoom:state.timeline.pixelsPerYear}}).then(()=>message('View saved'),error=>message(String(error)));}}>Save view</button>}
+      <button aria-label="Refresh timeline" title="Refresh timeline" onClick={()=>void load('m2')}><ToolIcon name="history"/></button>
+      {view&&state.m2Projection==='chronology'&&<button aria-label="Save timeline view" title="Save timeline view" onClick={()=>{if(state.timeline)void host.material(sceneId,{type:'viewport',key:'timeline',value:{x:state.timeline.centerYear,y:0,zoom:state.timeline.pixelsPerYear}}).then(()=>message('View saved'),error=>message(String(error)));}}><ToolIcon name="save"/></button>}
       {(tagReason||relationReason)&&<button onClick={()=>message([tagReason&&`Tags: ${tagReason}`,relationReason&&`Relations: ${relationReason}`].filter(Boolean).join(' · '))}>Reading incomplete</button>}
      </div>;
      if(state.m2Projection==='field'){
@@ -651,11 +651,11 @@ export function installResearchInstruments(host:ResearchInstrumentsHost){
       onFilterChange={next=>{state.placeFilter=next;render(renderPlaces());}}
       editRequest={placeEditRequest} onError={message}/>;
     return <>{createPortal(<div className="research-tool-actions"><button aria-label="Refresh geography" title="Refresh geography" onClick={()=>void load('m4')}><ToolIcon name="history"/></button>{scene&&<button aria-label="Save map view" title="Save map view" onClick={()=>{if(state.place)void host.material(sceneId,{type:'viewport',key:'place',value:{x:state.place.longitude,y:state.place.latitude,zoom:state.place.zoom}}).then(()=>message('View saved'),error=>message(String(error)));}}><ToolIcon name="save"/></button>}</div>,host.tools)}
-    <div className="research-places"><PsychogeographicMap inspectorContainer={host.inspector} toolbarContainer={host.tools} repository={filteredRepository} projectId={data.reading.subject.subject_ref} tileSource={tileSource} offlineOnly
+    <div className="research-places"><PsychogeographicMap inspectorContainer={host.inspector} toolbarContainer={host.placesHome??host.tools} repository={filteredRepository} projectId={data.reading.subject.subject_ref} tileSource={tileSource} offlineOnly
      initialViewState={state.place} initialSelectedGraphNodeId={state.selectedPlace}
      onViewStateChange={value=>{state.place=value;}} onSelectedGraphNodeIdChange={value=>{state.selectedPlace=value;render(renderPlaces());}}
      onOpenCanvasNode={ref=>{const node=data.bundle.nodes.find(node=>node.graphNodeId===ref&&node.place);if(node)host.inspectSubject(ref,{node});}}/>
-     <ImageryPanel tools={host.tools} toolbarContainer={host.tools} images={images} offlineOnly imageTitle={image=>scene?.entities.find(entity=>entity.id===image.id)?.name??'Scene image'} resolveAsset={path=>{const value=assets.get(path);if(!value)throw new Error('Image is not bound to this native Scene');return value;}} onImport={importImagery}/>
+     <ImageryPanel tools={host.placesHome??host.tools} toolbarContainer={host.placesHome??host.tools} images={images} offlineOnly imageTitle={image=>scene?.entities.find(entity=>entity.id===image.id)?.name??'Scene image'} resolveAsset={path=>{const value=assets.get(path);if(!value)throw new Error('Image is not bound to this native Scene');return value;}} onImport={importImagery}/>
      {!host.placesHome&&facets}
     </div>{host.placesHome&&createPortal(facets,host.placesHome)}</>;
    };
