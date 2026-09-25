@@ -195,7 +195,10 @@ async function readingBody(member) {
 // ---------------------------------------------------------------------------
 // 4. The world publication: one edition, the collection and its nine readings.
 // ---------------------------------------------------------------------------
-const glyphFor = (shape) => (shape === 'text' ? '§' : 'O');
+const glyphFor = (entity) => {
+  if (entity.shape === 'text') return String(entity.text || '§').slice(0, 64);
+  return ({ring: '○', disc: '●', square: '□', triangle: '△', yantra: '✧', cymatic: '⌁'})[entity.shape] ?? '·';
+};
 const worldEntries = [];
 const worldRelations = [];
 const readingBindings = [];
@@ -204,7 +207,8 @@ const corpusReceipt = { members: [], envelope: { title: envelope.title, exported
 for (const member of members) {
   const ref = `${WORLD}/wiki:${member.id}`;
   const memberRef = (suffix) => `expression:return-of-zero:${member.id}${suffix}`;
-  const journey = JSON.parse(await readFile(memberFile(member), 'utf8'));
+  const rawJourney = await readFile(memberFile(member));
+  const journey = JSON.parse(rawJourney.toString('utf8'));
   const body = await readingBody(member);
   const memberRevision = manifestRevision(member) ?? MEMBER_REVISION;
 
@@ -248,7 +252,7 @@ for (const member of members) {
             : { ref: source.ref, revision: source.revision, availability: 'available' })),
         },
         parameters: {
-          glyph: { value: glyphFor(entity.shape), automation: null },
+          glyph: { value: glyphFor(entity), automation: null },
           x: { value: Number(entity.position?.x ?? 0), automation: null },
           y: { value: Number(entity.position?.y ?? 0), automation: null },
           z: { value: Number(entity.position?.z ?? 0), automation: null },
@@ -282,6 +286,21 @@ for (const member of members) {
     publisher: { identity_ref: publisherIdentity },
     published_at: publishedAt,
   });
+  // The six-parameter SharedField composition is a bounded portable projection,
+  // not the authored Expression body. Carry the exact validated oi.journey bytes
+  // beside it so the public receiver can render the real field without widening
+  // the generic cross-World material vocabulary or silently rebuilding a demo.
+  publication.native_body = {
+    schema: 'oi.native-expression-body/v1',
+    source_schema: 'oi.journey',
+    expression_ref: expressionRef,
+    expression_revision: 1,
+    source_path: member.file,
+    source_revision: envelope.corpus?.production_revision?.commit ?? sourceCommit,
+    digest: { algorithm: 'sha256', value: sha(rawJourney) },
+    scene_map: Object.fromEntries(journey.scenes.map((scene) => [`${expressionRef}:scene:${scene.id}`, scene.id])),
+    bytes: rawJourney.toString('utf8'),
+  };
   await writeFile(resolve(outDir, `expression-${member.id}.json`), JSON.stringify(publication, null, 1));
   corpusReceipt.members.push({
     id: member.id, ref, expression_ref: expressionRef,
