@@ -9,3 +9,5 @@ public/essay-shell/
 *.tsbuildinfo
 vendor/quartz/node_modules/
 vendor/quartz/public/
+vendor/quartz/content/
+vendor/quartz/quartz/.quartz-cache/

@@ -171,6 +171,12 @@ def main():
                     if status == 200:
                         expect(page.locator('.graph-container').first).to_be_attached(timeout=20000)
                         expect(page.locator('.explorer').first).to_be_visible(timeout=20000)
+                        assert page.locator('.tags').count() == 0, 'tag dump still on the page'
+                        assert page.locator('.content-meta').count() == 0, 'content meta still on the page'
+                        has_body = page.locator('article .body p').count() > 0
+                        if has_body:
+                            lh = page.evaluate('parseFloat(getComputedStyle(document.querySelector("article .body p")).lineHeight) / parseFloat(getComputedStyle(document.querySelector("article .body p")).fontSize)')
+                            assert lh >= 1.6, f'body line-height too tight: {lh}'
                         background = page.evaluate('getComputedStyle(document.body).backgroundColor')
                         assert background == NIGHT_BG, f'essay background {background}, expected the night ground'
                         if heading:
