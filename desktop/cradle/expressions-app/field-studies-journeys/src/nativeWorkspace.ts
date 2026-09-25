@@ -55,8 +55,9 @@ export function installNativeWorkspace(host:NativeWorkspaceHost){
  const panel=document.createElement('aside');panel.id='native-work';panel.className='native-work hud-panel chrome';panel.hidden=true;panel.setAttribute('aria-label','Native composition');
  panel.innerHTML=`<header><div><span class="panel-kicker">NATIVE COMPOSITION</span><h2>Keep the whole work</h2></div><button type="button" data-native="close" aria-label="Close native composition">×</button></header>
  <p class="native-status" role="status" aria-live="polite"></p><p class="native-basis"></p>
+ <details class="native-basis-detail"><summary>Exact reference</summary><p class="native-basis-ref"></p></details>
  <div class="native-actions"><button type="button" class="secondary" data-native="commit">Commit composition</button><button type="button" class="secondary" data-native="retry-open" hidden>Retry opening</button><button type="button" class="secondary" data-native="inspect">Inspect interrupted operation</button><button type="button" class="secondary" data-native="retry">Retry exact file save</button></div>
- <fieldset><legend>Native file</legend><label>Central folder<input data-native-field="folder" value="." placeholder="Central-relative folder"></label><label>Filename<input data-native-field="name" value="expression.json" placeholder="expression.json"></label><button type="button" class="secondary" data-native="save">Save native file</button><p class="native-file"></p></fieldset>
+ <fieldset><legend>Native file</legend><label>Central folder<input data-native-field="folder" value="." placeholder="Central-relative folder"></label><label>Filename<input data-native-field="name" value="expression.json" placeholder="expression.json"></label><button type="button" class="secondary" data-native="save">Save native file</button><p class="native-file"></p><details class="native-file-detail"><summary>Exact location</summary><p class="native-file-path"></p></details></fieldset>
  <fieldset><legend>Continue native work</legend><div class="native-actions"><button type="button" data-native="library">Library</button><button type="button" data-native="verso">Account / sources</button><button type="button" data-native="refresh">Refresh open work</button></div><label>Open native Expression<select data-native-field="expression"><option value="">Choose open work…</option></select></label><button type="button" class="secondary" data-native="open">Open selected work</button><label>Or open an exact native file<input data-native-field="path" placeholder="Project/file.expression.json"></label><button type="button" class="secondary" data-native="open-file">Open file</button></fieldset>
  <section class="native-disclosure"><h3>Field disclosure</h3><p class="native-page"></p><div class="native-actions"><button type="button" data-native="previous">Previous members</button><button type="button" data-native="next">Next members</button></div></section>
  <p class="native-note">Commit updates the native working document. Save writes and independently reads its file. Working-copy backup is private recovery, not file publication.</p>`;
@@ -69,8 +70,14 @@ export function installNativeWorkspace(host:NativeWorkspaceHost){
  const update=()=>{
   const state=work.state,doc=state?.view?.document;
   host.correspondence(nativeConnections(state?.view),doc?.selection?.relation_ref??null);
-  panel.querySelector('.native-basis')!.textContent=doc?`${doc.title} · revision ${doc.revision} · ${doc.expression_ref}`:'This authoring draft does not yet have a native identity. Its first commit creates one.';
-  panel.querySelector('.native-file')!.textContent=state?.file?`Saved at ${state.file.location.path} · ${state.file.revision}`:'No verified native file is attached to this working draft.';
+  // Default face: plain status prose only ("Saved · revision N" — §4, no raw
+  // transport strings). The exact expression ref and file path stay
+  // available, but behind an explicit "Exact reference"/"Exact location"
+  // disclosure rather than on the face every reader sees.
+  panel.querySelector('.native-basis')!.textContent=doc?`${doc.title} · Saved · revision ${doc.revision}`:'This authoring draft does not yet have a native identity. Its first commit creates one.';
+  panel.querySelector('.native-basis-ref')!.textContent=doc?doc.expression_ref:'No native identity yet.';
+  panel.querySelector('.native-file')!.textContent=state?.file?`Saved · revision ${state.file.revision}`:'No verified native file is attached to this working draft.';
+  panel.querySelector('.native-file-path')!.textContent=state?.file?state.file.location.path:'No verified native file is attached to this working draft.';
   const pending=state?.pending;
   panel.querySelectorAll<HTMLButtonElement>('[data-native]').forEach(button=>{button.disabled=busy&&!['close','library','verso'].includes(button.dataset.native!);});
   (panel.querySelector('[data-native="retry-open"]') as HTMLButtonElement).hidden=!opens.reference;

@@ -9,8 +9,12 @@ export function installNativeField(engine:FieldEngineAdapter,onResumeApplication
  const canRetain=typeof (engine as any).retainedTargetPort==='function';
  if(!canRetain){port.dispose();return null;}
  const controller=new NativeFieldController(port,engine as unknown as NativeRenderer,undefined,EMBEDDED_NATIVE_PLAYBACK);
- const panel=document.createElement('details');panel.dataset.nativeField='';panel.className='native-field-panel';
- panel.innerHTML=`<summary>Native M1–M3</summary><div class="native-field-depth">
+ // A Studio section's content, not a floating pill: mounted into the Studio
+ // aside's "Native field" section (shell.ts studio-sections nav) by the
+ // owning app shell, and never re-rendered via innerHTML after creation —
+ // it owns live listeners for the life of the session.
+ const panel=document.createElement('div');panel.dataset.nativeField='';panel.className='native-field-panel';
+ panel.innerHTML=`<div class="native-field-depth">
  <p>Same Expressions body. Native topology, modal sound and clock; existing GPU particle mechanics.</p><p>Buffered native playback: 8,192 samples per block, 500 ms initial device lead, 500 ms lookahead ceiling. This pays for the complete native transfer; lateness holds rather than silently skipping samples. The chosen sample rate must fit this policy.</p>
  <label>Central binding source <input name="native-path" type="text" spellcheck="false" placeholder="Work/…/native-binding.json"></label>
  <button type="button" data-native="source">Read binding</button><output data-native-source>No source selected.</output>
@@ -47,10 +51,15 @@ export function installNativeField(engine:FieldEngineAdapter,onResumeApplication
  <button type="button" data-native="checkpoint">Hold and checkpoint</button><button type="button" data-native="restore">Restore held checkpoint</button></details>
  <output role="status" aria-live="polite" data-native-status>Native owner unavailable until an explicit binding is connected.</output>
  <details><summary>Inspect owner readback</summary><pre data-native-reading></pre></details></div>`;
- // Local component styles, not a shared shell or palette rewrite.
- const style=document.createElement('style');style.textContent=`.native-field-panel{position:fixed;right:14px;top:58px;z-index:72;max-width:min(420px,calc(100vw - 28px));background:var(--paper,#f4f2eb);color:var(--ink,#222);border:1px solid currentColor;border-radius:6px;font:12px/1.4 system-ui}.native-field-panel>summary{padding:6px 10px;cursor:pointer}.native-field-depth{padding:10px;max-height:75vh;overflow:auto;display:grid;gap:8px}.native-field-depth label{display:grid;gap:4px}.native-field-depth input,.native-field-depth textarea,.native-field-depth select{min-width:0;width:100%;box-sizing:border-box;font:inherit;color:inherit;background:transparent;border:1px solid currentColor}.native-field-depth button{padding:5px 7px;border:1px solid currentColor;border-radius:3px;background:transparent;color:inherit;font:inherit;cursor:pointer}.native-field-depth button:disabled{opacity:.45;cursor:default}.native-field-actions{display:flex;gap:5px;flex-wrap:wrap}.native-field-depth pre{font:10px/1.4 monospace;white-space:pre-wrap;overflow-wrap:anywhere;max-height:240px;overflow:auto}.native-field-depth output{display:block;overflow-wrap:anywhere}`;
+ // Local component styles, not a shared shell or palette rewrite. Laid out
+ // as ordinary Studio-section content (font: 12px/1.4 system-ui text
+ // scale — the panel is no longer a fixed floating pill, so it carries no
+ // own position, background or border box; the Studio aside supplies both).
+ const style=document.createElement('style');style.textContent=`.native-field-panel{font:12px/1.4 system-ui}.native-field-depth{display:grid;gap:8px}.native-field-depth label{display:grid;gap:4px}.native-field-depth input,.native-field-depth textarea,.native-field-depth select{min-width:0;width:100%;box-sizing:border-box;font:inherit;color:inherit;background:transparent;border:1px solid currentColor}.native-field-depth button{padding:5px 7px;border:1px solid currentColor;border-radius:3px;background:transparent;color:inherit;font:inherit;cursor:pointer}.native-field-depth button:disabled{opacity:.45;cursor:default}.native-field-actions{display:flex;gap:5px;flex-wrap:wrap}.native-field-depth pre{font:10px/1.4 monospace;white-space:pre-wrap;overflow-wrap:anywhere;max-height:240px;overflow:auto}.native-field-depth output{display:block;overflow-wrap:anywhere}`;
  const domainView=new NativeDomainView();
- document.head.append(style);document.body.append(panel,domainView.element);
+ // The panel is mounted into the Studio "Native field" section by the app
+ // shell when that section is active; it is not appended to <body> here.
+ document.head.append(style);document.body.append(domainView.element);
  let domainStamp="";
  let source:{path:string;revision:string;sampleRate:number}|null=null,muted=true,busy=false;
  const query=<T extends HTMLElement>(selector:string)=>panel.querySelector<T>(selector)!;
@@ -71,7 +80,10 @@ export function installNativeField(engine:FieldEngineAdapter,onResumeApplication
    query<HTMLSelectElement>('[name="native-rna"]').value=String(reading.domain.m3.rna);
   }
   query('output[data-native-status]').textContent=reading.reason??`${reading.status} · ${reading.presentation_mode} · ${reading.native?.acknowledged?.generation??'—'} / ${reading.native?.acknowledged?.samples_elapsed??'—'}`;
-  if(panel.open){
+  // Only pay for the JSON dumps while the "Native field" Studio section is
+  // actually the one mounted and visible (panel.isConnected replaces the
+  // former <details>.open gate now that this is Studio-section content).
+  if(panel.isConnected){
    query('pre[data-native-reading]').textContent=JSON.stringify(reading,null,2);
    query('pre[data-native-causal]').textContent=JSON.stringify(reading.causal_trace??{status:'unavailable'},null,2);
    query('pre[data-native-actuators]').textContent=JSON.stringify({
@@ -135,5 +147,5 @@ export function installNativeField(engine:FieldEngineAdapter,onResumeApplication
  // Readback only at human cadence; native scheduling remains in InstrumentSession.
  const timer=window.setInterval(update,250);
  update();
- return {controller,dispose:()=>{clearInterval(timer);panel.removeEventListener('click',click);document.removeEventListener('visibilitychange',visibility);window.removeEventListener('pagehide',pagehide);panel.remove();domainView.dispose();style.remove();void controller.dispose();}};
+ return {controller,panel,dispose:()=>{clearInterval(timer);panel.removeEventListener('click',click);document.removeEventListener('visibilitychange',visibility);window.removeEventListener('pagehide',pagehide);panel.remove();domainView.dispose();style.remove();void controller.dispose();}};
 }

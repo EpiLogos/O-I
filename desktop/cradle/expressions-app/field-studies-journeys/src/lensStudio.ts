@@ -45,10 +45,14 @@ export interface LensStudioHost {
 }
 
 function studioBody(lens: LensDef): string {
+  // Same operations, icon-led: 24×24 thin-stroke glyph, accessible label
+  // (aria-label + title), never a bare text action for a committing act.
+  const commitIcon = (op: 'commit', label: string) =>
+    `<button class="oi-action oi-action-icon" data-action="lens-op" data-op="${op}" aria-label="${esc(label)}" title="${esc(label)}">${icon('check')}</button>`;
   const actions: Partial<Record<LensId, string>> = {
     project: '<button class="oi-action" data-action="native-library">Library</button><button class="oi-action" data-action="native-work">Save and reopen</button>',
-    journey: '<button class="oi-action" data-action="timeline">Scenes</button><button class="oi-action" data-action="lens-op" data-op="commit">Commit Scenes</button>',
-    palace: '<button class="oi-action" data-action="native-work">Composition</button><button class="oi-action" data-action="timeline">Scenes</button><button class="oi-action" data-action="lens-op" data-op="commit">Commit composition</button>',
+    journey: `<button class="oi-action" data-action="timeline">Scenes</button>${commitIcon('commit', 'Commit Scenes')}`,
+    palace: `<button class="oi-action" data-action="native-work">Composition</button><button class="oi-action" data-action="timeline">Scenes</button>${commitIcon('commit', 'Commit composition')}`,
   };
   return `<header class="lens-studio-head"><h2>${esc(lens.label)}</h2><button type="button" class="lens-studio-close" data-action="lens-close" aria-label="Close instrument tools">${icon('close')}</button></header><div class="lens-studio-controls">${actions[lens.id] ?? ''}</div>`;
 }
