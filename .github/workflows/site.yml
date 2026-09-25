@@ -61,6 +61,7 @@ jobs:
             explore-provider.test.mjs \
             explore-public-seed.test.mjs \
             src/explore/relation-layout.test.mjs
+          node --experimental-strip-types --test essay-browser.test.mjs
       - name: Install SpaceTimeDB module dependencies
         run: npm install --prefix ../shared-field/spacetimedb --no-audit --no-fund
       - name: Install pinned SpaceTimeDB CLI 2.8.1

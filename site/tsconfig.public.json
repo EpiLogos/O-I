@@ -1,4 +1,4 @@
 {
  "extends":"./tsconfig.app.json",
- "include":["src/main.tsx","src/shell","src/library","src/lib/public-content.ts","src/lib/public-parser.d.mts","src/vite-env.d.ts"]
+ "include":["src/main.tsx","src/shell","src/library","src/essay","src/lib/public-content.ts","src/lib/public-parser.d.mts","src/vite-env.d.ts"]
 }
