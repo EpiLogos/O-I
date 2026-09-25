@@ -12,6 +12,34 @@
 
 ### [title] Objective : Internality
 
+## [entrance] Public face
+
+### [eyebrow] O:I
+
+### [line-one] A world to act within.
+
+### [line-two] A way to read it.
+
+### [lede] Two doors
+
+The public face is two doors. The Library holds the expressions. The essay holds the written field, including what the six products are for. The instruments themselves are still being made.
+
+### [library] Library
+
+The published expressions. Open one and read it. This is the visual record of the work so far.
+
+### [essay] Essay
+
+The written field: rooms, symbolon, and the manuscript. The six products are described here, as intent, not as finished software.
+
+### [essay-title] The Return of Zero
+
+### [coming] Still being made
+
+Central, Actuation, AIKit, Software Factory, Workcell, and Quaternal Logic are named inside the essay. Say what each is for. Do not offer them as things a visitor can install.
+
+### [brand] Objective : Internality
+
 ## [what] What is O:I
 
 ### [title] A world to act within. A way to understand it.
