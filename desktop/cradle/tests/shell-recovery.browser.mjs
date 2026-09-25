@@ -147,6 +147,11 @@ try{
      if(!reference){await page.locator('.mode-stage .factory-centre[data-centre-view="desk"]').waitFor({state:'visible'});assert.equal(await page.locator('.factory-centre:visible').count(),1,'one actual Factory body has one presenter');}
      await page.screenshot({path:`${out}/${engineName}-${scheme}-factory.png`});
      if(reference)return;
+     // Row icons carry a colour transition (desktop.css icon-row rule); settle
+     // it before sampling, so a still-running transition is not read as a
+     // hard-coded colour. A genuinely fixed colour never converges and fails.
+     await views.locator('button').first().evaluate(()=>new Promise(r=>setTimeout(r,0)));
+     await page.waitForFunction(()=>[...document.querySelectorAll('[role="radiogroup"][aria-label="Factory view"] button')].every(n=>getComputedStyle(n.querySelector('svg')).color===getComputedStyle(n).color),null,{timeout:2000}).catch(()=>{});
      const colours=await views.locator('button').evaluateAll(ns=>ns.map(n=>({selected:n.getAttribute('aria-checked'),color:getComputedStyle(n).color,bg:getComputedStyle(n).backgroundColor,icon:getComputedStyle(n.querySelector('svg')).color})));
      assert.notEqual(colours[0].color,colours[1].color,'active/inactive semantic emphasis differs');for(const c of colours)assert.equal(c.icon,c.color,'icons inherit state instead of hard-coded black/white');
      const right=page.locator('.desktop-side.right');
