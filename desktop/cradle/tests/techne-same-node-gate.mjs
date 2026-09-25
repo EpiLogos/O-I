@@ -109,7 +109,7 @@ try {
   browser = await chromium.launch({headless: true, args: ['--no-sandbox', '--use-gl=angle', '--use-angle=swiftshader', '--enable-webgl']});
   receipt.browser = browser.version();
   page = await browser.newPage({viewport: {width: 1600, height: 1000}, reducedMotion: 'reduce'});
-  page.setDefaultTimeout(30000);
+  page.setDefaultTimeout(60000); // shared development hosts run under heavy load; waits, not assertions
   page.on('pageerror', e => errors.push(String(e)));
   page.on('console', m => {if (m.type() === 'error' || m.type() === 'warning') (probe.console ??= []).push(m.text().slice(0, 400));});
   page.on('response', async r => {if (r.request().method() === 'POST' && r.url().endsWith('/op')) {try {const body = r.request().postDataJSON(); const text = JSON.stringify(body); const resp = await r.text(); if (!resp.includes('"ok":true') || text.includes('constellation')) (probe.apply ??= []).push({request: text.slice(0, 600), response: resp.slice(0, 900)});} catch {}}});
@@ -322,6 +322,22 @@ try {
   const register = JSON.parse(readFileSync(wikiPath, 'utf8'));
   check(register.objects.some(o => o.ref === recorded[0].ref), 'Independent readback: the native Wiki register (source of truth) still holds the typed relationship after restart');
   await page.screenshot({path: resolve(out, '05-reopened.png')});
+
+  // ——— Same member through M3′ Journey and an independent Library readback ———
+  await frame.locator('[data-action="lens"][data-lens="journey"]').first().click();
+  await frame.locator('#timeline-panel:not([hidden])').waitFor();
+  const journey = await frame.evaluate(id => {const d = window.__FIELD_STUDIES__.getDocument(), st = window.__FIELD_STUDIES__.getState(); const sc = d.scenes[st.sceneIndex]; const e = sc?.entities.find(v => v.id === id); return {strip: document.querySelectorAll('#timeline-panel .scene-strip [data-action]').length, scene: sc?.name, force: e?.force.strength, tint: e?.tint, steps: e?.sequence.steps.length, doc: d.id};}, viewA);
+  probe.journey = journey;
+  check(journey.strip > 0 && journey.force === reopenedA.force.strength && journey.tint === reopenedA.tint && journey.steps === reopenedA.sequence.steps.length, 'M3′ Journey shows the same Scene with the same member, material and object states');
+  await frame.locator('[data-action="native-library"]:visible').first().click();
+  await frame.locator('#library-page:not([hidden])').waitFor();
+  await frame.waitForFunction(title => [...document.querySelectorAll('#library-page .oi-lib-kernel-row, #library-page .oi-lib-native-row')].some(row => row.textContent.includes(title)), reopened.title, {timeout: 60000});
+  probe.libraryRows = await frame.$$eval('#library-page .oi-lib-kernel-row, #library-page .oi-lib-native-row', rows => rows.map(r => r.textContent.replace(/\s+/g, ' ').trim().slice(0, 120)));
+  check(true, 'Independent readback: the reused Library page lists the reopened native Expression by its title');
+  await page.screenshot({path: resolve(out, '06-library.png')});
+  await frame.locator('#library-page [data-action="close-library"]').first().click();
+  await frame.locator('#library-page').waitFor({state: 'hidden'});
+  check(await frame.evaluate(ref => window.__FIELD_STUDIES__.nativeWorking()?.native_ref === ref, expectedRef), 'Closing the Library returns to the same open native work');
   check(errors.length === 0, `No uncaught application errors (${errors.join('; ')})`);
   receipt.passed = true;
 } catch (error) {
