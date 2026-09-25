@@ -58,8 +58,9 @@ export class PublicField {
  }
  setScene(composition,ref,camera,nativeJourney=null,nativeSceneMap=null,nativeEntityMap=null){
   const changed=this.scene?.id!==ref;
-  this.entityMap=nativeEntityMap;this.scene=projectComposition(composition,ref,nativeJourney,nativeSceneMap);this.revision=composition.revision;
-  this.selected=this.selectedRef?[nativeEntityMap?.[this.selectedRef]??this.selectedRef]:[];
+  this.entityMap=nativeEntityMap?Object.fromEntries(Object.entries(nativeEntityMap).filter(([publicRef])=>publicRef.startsWith(ref+':'))):null;
+  this.scene=projectComposition(composition,ref,nativeJourney,nativeSceneMap);this.revision=composition.revision;
+  this.selected=this.selectedRef?[this.entityMap?.[this.selectedRef]??this.selectedRef]:[];
   // A paused/reduced-motion Scene choice displays that configuration immediately.
   // Library, source and camera crossings never reset the resident particles.
   if(changed&&!this.playing)this.resetOnNextFrame=true;
