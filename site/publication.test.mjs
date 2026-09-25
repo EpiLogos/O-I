@@ -4,6 +4,7 @@ import { createHash } from 'node:crypto';
 import { readFileSync } from 'node:fs';
 import { compilePublications } from './build-publications.mjs';
 import { openPublication, publicationHref, publicationRoute, publicAssetUrl } from './src/library/publication-model.mjs';
+import { projectComposition } from './src/library/native-player.mjs';
 import { producerFixtures, SUBJECT, COLLECTION } from './tests/publication-fixtures.mjs';
 const clone=v=>JSON.parse(JSON.stringify(v));
 test('empty native publication remains empty; no fixture fallback',()=>{
@@ -16,8 +17,29 @@ test('native subject identities, source revisions and collection membership surv
  assert.equal(model.search('',COLLECTION).length,1);assert.equal(model.search('',COLLECTION)[0].ref,SUBJECT);
  const subject=model.select(SUBJECT);assert.equal(subject.projection.source.revision,'fixture-r1');assert.equal(subject.projection.projection_revision,3);
  assert.equal(subject.relations[0].relation,'wiki.contains');assert.equal(model.expressions(SUBJECT).length,1);
- const stage=model.stage(model.expressions(SUBJECT)[0]);assert.equal(stage.admission.state,'live');assert.equal(stage.edition.entry.expression_ref,'expression:fixture:subject');assert.equal(stage.edition.entry.revision,2);
+ const stage=model.stage(model.expressions(SUBJECT)[0]);assert.equal(stage.admission.state,'live');assert.equal(stage.edition.entry.expression_ref,'expression:fixture:subject');assert.equal(stage.edition.entry.revision,2);assert.equal(stage.edition.native_body?.schema,'oi.native-expression-body/v1');
 });
+test('native body fidelity preserves authored field, geometry, dynamics and text-bearing journey instead of rebuilding the demo shell',()=>{
+ const {editions}=compilePublications(producerFixtures());
+ const edition=editions.find(e=>e.projection.subject.ref==='expression:fixture:subject');
+ assert.ok(edition?.native_body);
+ assert.equal(edition.manifest.native_body.digest.value,createHash('sha256').update(edition.native_body.bytes).digest('hex'));
+ const journey=JSON.parse(edition.native_body.bytes),sceneRef='expression:fixture:subject:scene:reading';
+ const scene=projectComposition(edition.projection.representation.payload.regions.find(r=>r.role==='body').bindings.find(b=>b.binding_ref==='expression').props.composition,sceneRef,journey,edition.manifest.native_body.scene_map);
+ assert.equal(scene.field.background,'#102030');assert.equal(scene.field.params.count,12345);assert.equal(scene.field.params.size,4.2);assert.equal(scene.field.params.speed,.37);
+ assert.equal(scene.entities[0].shape,'triangle');assert.equal(scene.entities[0].tint,'#abcdef');assert.equal(scene.entities[0].force.kind,'vortex');assert.equal(scene.entities[0].sequence.enabled,true);
+ assert.equal(scene.morph.law,'product');assert.equal(scene.text[0].title,'Native authored text');assert.match(scene.text[0].body,/exact native scene/);
+});
+test('native body admission refuses changed bytes, changed scene maps and protected material',()=>{
+ for(const mutate of [
+  body=>{body.bytes=body.bytes.replace('Native authored text','Changed body');},
+  body=>{body.scene_map={'expression:fixture:subject:scene:reading':'missing-scene'};},
+  body=>{const journey=JSON.parse(body.bytes);journey.scenes[0].text[0].body='Control/user/private';body.bytes=JSON.stringify(journey);body.digest.value=createHash('sha256').update(body.bytes).digest('hex');},
+ ]){
+  const inputs=producerFixtures(),body=inputs[1].native_body;mutate(body);assert.throws(()=>compilePublications(inputs),/public admission/);
+ }
+});
+
 test('private objects, raw row copy, metadata, fields and wrappers never enter any outward payload',()=>{
  const inputs=producerFixtures();const privateWorld=clone(inputs[0]);privateWorld.projection.audience.visibility='private';privateWorld.entries=privateWorld.entries.map(e=>({...e,ref:e.ref+':PRIVATE_SUBJECT_SENTINEL',label:'PRIVATE_TITLE_SENTINEL'}));privateWorld.field={field_ref:'field:private',visibility:'private',title:'PRIVATE_FIELD_SENTINEL'};privateWorld.relations=[];
  const result=compilePublications([...inputs,privateWorld]);const wire=JSON.stringify(result);
