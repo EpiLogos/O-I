@@ -30,5 +30,10 @@ export async function knowledge<T>(transport: KernelTransportStatus, project: st
     }
   };
   const key = JSON.stringify([transport, project ?? null, request, options.fresh ?? false]);
-  return reads.read(key, run, options.signal);
+  // The resource identity omits `fresh`: an explicit-fresh read and an
+  // ordinary read of the identical owner reading name the same kernel read
+  // ticket, and running both at once would supersede one by accident of
+  // timing (see the coordinator's per-resource serialisation).
+  const resource = JSON.stringify([transport, project ?? null, request]);
+  return reads.read(key, run, options.signal, resource);
 }
