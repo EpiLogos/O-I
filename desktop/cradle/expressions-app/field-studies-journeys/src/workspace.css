@@ -491,6 +491,16 @@ body.presentation #physis-panel,body.library-open #physis-panel{display:none}
 .research-active #stage,.research-active #app>.chrome,.research-active #app>.hud-panel,
 .research-active #shape-picker,.research-active #recording-badge,.research-active #present-return,
 .research-active .native-field-panel,.research-active .native-domain-output,.research-active #engine-recovery{display:none!important}
+/* The Native field's own controls now live inside the Studio drawer (its
+   settings moved out of a small fixed top-right popup — nativeField.ts).
+   The ambient corner readout (native-domain-output, fixed bottom-left,
+   z-index above the docked Studio drawer by design so it stays visible
+   over other Studio sections) duplicates exactly what the open Native
+   section already shows in place, and — unlike the old top-right popup —
+   the drawer's own left edge now reaches that same bottom-left corner, so
+   the readout can sit on top of and block the section's own controls.
+   Hide the redundant duplicate while that section is the one showing. */
+body:has(#inspector-content>.native-field-panel) .native-domain-output{display:none}
 /* ONE HUD row, also outside the research instruments (M0'/M3'/M5' keep the
    masthead standing, not the Research HUD). In Techne mode the rail's own
    Scene-blueprint / Native-Library / Native-work icons (DEEP_TOOLS, app.ts)

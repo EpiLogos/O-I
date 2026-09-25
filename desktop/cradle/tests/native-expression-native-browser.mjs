@@ -75,7 +75,16 @@ try{
  // Explicit TEST geometry correspondence; never inserted into production.
  const binding={schema:'oi.native-expression-binding/v1',host:{instance_ref:'controlled:joined-browser',basis:input.basis,field:input.field},presentation:{units_per_metre:400,slots_a:Array.from({length:count},(_,i)=>i%samples),slots_b:Array.from({length:count},(_,i)=>(i+1)%samples)}};
  await writeFile(join(temp,'binding.json'),JSON.stringify(binding));
- await frame.locator('.native-field-panel>summary').click({force:true});
+ // Native field is Studio-section content, not a floating pill: open Studio
+ // and select its "Native field" section before its controls exist in the DOM.
+ // At this viewport the workspace header cluster is in its compact form
+ // (the "Studio" button rides the collapsed "•••" menu, per the 1100px
+ // breakpoint in workspace.css), so open that menu first when present.
+ const workspaceMenuToggle=frame.locator('.workspace-cluster>.header-menu-toggle');
+ if(await workspaceMenuToggle.isVisible())await workspaceMenuToggle.click({force:true});
+ await frame.locator('[data-action="studio"]').click({force:true});
+ await frame.locator('[data-action="studio-section"][data-value="native"]').click({force:true});
+ await frame.locator('.native-field-panel').waitFor();
  await frame.locator('[name="native-path"]').fill('binding.json');
  await frame.locator('[data-native="source"]').click({force:true});
  await frame.waitForFunction(()=>!document.querySelector('[data-native="connect"]')?.disabled,null,{timeout:10000});
