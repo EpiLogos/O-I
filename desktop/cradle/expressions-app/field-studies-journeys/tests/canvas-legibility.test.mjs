@@ -44,9 +44,14 @@ test('canvas tool row is icon-led with the prior text preserved as aria-label/ti
  }
  // … and every one of them must still carry its exact old text as an
  // accessible name, so aria semantics and hover discovery are unchanged.
- for (const label of ['Note', 'Image', 'Draw', 'Save view', 'Snap', 'Lasso', 'Save view as…', 'Frame selection', 'Distribute ↔', 'Distribute ↕', 'Edit object', 'Toggle canvas inspector']) {
+ for (const label of ['Note', 'Image', 'Draw', 'Save view', 'Snap', 'Lasso', 'Save view as…', 'Frame selection', 'Distribute ↔', 'Distribute ↕', 'Edit object']) {
   assert.match(controls + src.slice(controlsEnd, controlsEnd + 400), new RegExp(`aria-label="${label.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}"`), `${label} still has an aria-label`);
  }
+ // The node/connection card follows the selection (owner commission §6: an
+ // anchor click opens the compact information surface) — there is no
+ // separate toggle button that could leave it detached from the selection.
+ assert.doesNotMatch(controls, /Toggle canvas inspector/, 'no detached inspector toggle');
+ assert.match(src, /const inspecting=!!cardFor&&cardFor!==dismissedCard;/, 'the card is derived from the current node or connection selection');
  // Source…, Frames, Saved views, Align selection stay compact selects.
  for (const select of ['Focus disclosed source', 'Frames', 'Saved views', 'Align selection']) {
   assert.match(controls, new RegExp(`aria-label="${select}"[^>]*>|<select aria-label="${select}"`), `${select} is still offered as a select`);
