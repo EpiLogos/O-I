@@ -15,11 +15,106 @@ import {MAX_FORMATIONS,MAX_PINS} from '../../src/engine/fieldModel.js';
 export interface KernelParameter {value:string|number;automation?:{min:number;max:number;rate_hz:number;waveform:string}|null}
 export interface KernelSubject {subject_ref:string;native_owner:string;[key:string]:unknown}
 export interface KernelEntity {entity_ref:string;title:string;subject?:KernelSubject|null;parameters:Record<string,KernelParameter>;[key:string]:unknown}
-export interface KernelScene {presentation?:{schema:'oi.journey-scene/v1';scene:Scene;saved?:Scene|null}|null;scene_ref:string;title:string;entity_refs:string[];body?:{carrier?:string;[key:string]:unknown}|null;triggers?:unknown[];[key:string]:unknown}
+
+// ——— ES1A/ES1B (O:I #352): scene-body native carriers and declarative scene
+// triggers, mirrored field-for-field from the kernel's own Rust contract
+// (expression_carrier.rs, expression_trigger.rs). These are typed reads, not
+// an opaque `unknown` passthrough: an unrecognised shape is a refusal, never
+// a silently dropped field. ———
+export type CarrierKind='engine_composition'|'text_source'|'glyph_form'|'image_media'|'file_thing'|'knowledge_whole'|'html_surface'|'agent_surface'|'expression_ref';
+const CARRIER_KINDS=new Set<CarrierKind>(['engine_composition','text_source','glyph_form','image_media','file_thing','knowledge_whole','html_surface','agent_surface','expression_ref']);
+export type BodyPresentation='live'|'inline'|'preview'|'degraded';
+const BODY_PRESENTATIONS=new Set<BodyPresentation>(['live','inline','preview','degraded']);
+export type BodyCapability={state:'renderable'}|{state:'degrades_to_thing';reason:string}|{state:'unavailable';reason:string};
+export interface KernelReadingRef {ref:string;revision:string;availability:'available'|'unavailable'|'withheld'|'stale'}
+export interface KernelDisclosedAction {action_ref:string;target_ref:string;authority_requirement:string}
+export interface KernelTextSpan {start:number;end:number}
+export interface KernelRecursionBound {host_expression_ref:string;max_depth:number}
+export interface KernelSceneBody {
+ carrier:CarrierKind;subject_ref:string;native_owner:string;reading:KernelReadingRef;
+ provenance:KernelReadingRef[];actions:KernelDisclosedAction[];
+ presentation:BodyPresentation;capability:BodyCapability;
+ span:KernelTextSpan|null;recursion:KernelRecursionBound|null;
+}
+export type TriggerOccasion='scene_enter'|'scene_leave'|'activate'|'select'|'sequence_transition';
+const TRIGGER_OCCASIONS=new Set<TriggerOccasion>(['scene_enter','scene_leave','activate','select','sequence_transition']);
+export type PortalPlacement='preview'|'overlay'|'beside'|'full'|'detached'|'re_dock';
+const PORTAL_PLACEMENTS=new Set<PortalPlacement>(['preview','overlay','beside','full','detached','re_dock']);
+export type TriggerTarget=
+ |{kind:'expression_operation';operation:string;expression_ref:string}
+ |{kind:'portal';placement:PortalPlacement;subject_ref:string;scene_ref?:string|null}
+ |{kind:'native_action';action_ref:string;target_ref:string;authority_requirement:string}
+ |{kind:'navigate';scene_ref?:string|null;entity_ref?:string|null};
+export interface KernelSceneTrigger {trigger_ref:string;occasion:TriggerOccasion;target:TriggerTarget}
+
+function isReadingRef(v:unknown):v is KernelReadingRef{
+ const r=v as KernelReadingRef;
+ return !!r&&typeof r==='object'&&typeof r.ref==='string'&&typeof r.revision==='string'&&['available','unavailable','withheld','stale'].includes(r.availability);
+}
+function isDisclosedAction(v:unknown):v is KernelDisclosedAction{
+ const a=v as KernelDisclosedAction;
+ return !!a&&typeof a==='object'&&typeof a.action_ref==='string'&&typeof a.target_ref==='string'&&typeof a.authority_requirement==='string';
+}
+/** Validate one native Scene body against the kernel's exact shape. Absent
+ * (null/undefined) means the live engine composition, the current default;
+ * anything present but malformed is a refusal, never a silent drop. */
+export function validateSceneBody(value:unknown):KernelSceneBody|null{
+ if(value===null||value===undefined)return null;
+ const b=value as Record<string,unknown>;
+ if(typeof b!=='object')throw new Error('Native scene body is not an object');
+ if(typeof b.carrier!=='string'||!CARRIER_KINDS.has(b.carrier as CarrierKind))throw new Error(`Native scene body names an unrecognised carrier: ${String(b.carrier)}`);
+ if(typeof b.subject_ref!=='string'||!b.subject_ref)throw new Error('Native scene body is missing its subject_ref');
+ if(typeof b.native_owner!=='string'||!b.native_owner)throw new Error('Native scene body is missing its native_owner');
+ if(!isReadingRef(b.reading))throw new Error('Native scene body is missing a valid reading');
+ const provenance=b.provenance===undefined?[]:b.provenance;
+ if(!Array.isArray(provenance)||!provenance.every(isReadingRef))throw new Error('Native scene body provenance is malformed');
+ const actions=b.actions===undefined?[]:b.actions;
+ if(!Array.isArray(actions)||!actions.every(isDisclosedAction))throw new Error('Native scene body actions are malformed');
+ if(typeof b.presentation!=='string'||!BODY_PRESENTATIONS.has(b.presentation as BodyPresentation))throw new Error(`Native scene body names an unrecognised presentation: ${String(b.presentation)}`);
+ const capability=b.capability as BodyCapability;
+ if(!capability||typeof capability!=='object'||!['renderable','degrades_to_thing','unavailable'].includes(capability.state)||(capability.state!=='renderable'&&typeof (capability as {reason?:unknown}).reason!=='string'))throw new Error('Native scene body capability is malformed');
+ let span:KernelTextSpan|null=null;
+ if(b.span!==undefined&&b.span!==null){
+  const s=b.span as KernelTextSpan;
+  if(typeof s.start!=='number'||typeof s.end!=='number')throw new Error('Native scene body span is malformed');
+  span=s;
+ }
+ let recursion:KernelRecursionBound|null=null;
+ if(b.recursion!==undefined&&b.recursion!==null){
+  const r=b.recursion as KernelRecursionBound;
+  if(typeof r.host_expression_ref!=='string'||typeof r.max_depth!=='number')throw new Error('Native scene body recursion bound is malformed');
+  recursion=r;
+ }
+ return {carrier:b.carrier as CarrierKind,subject_ref:b.subject_ref,native_owner:b.native_owner,reading:b.reading as KernelReadingRef,provenance:provenance as KernelReadingRef[],actions:actions as KernelDisclosedAction[],presentation:b.presentation as BodyPresentation,capability,span,recursion};
+}
+function isTriggerTarget(v:unknown):v is TriggerTarget{
+ const t=v as {kind?:unknown};
+ if(!t||typeof t!=='object')return false;
+ if(t.kind==='expression_operation'){const o=t as {operation?:unknown;expression_ref?:unknown};return typeof o.operation==='string'&&typeof o.expression_ref==='string';}
+ if(t.kind==='portal'){const o=t as {placement?:unknown;subject_ref?:unknown;scene_ref?:unknown};return typeof o.placement==='string'&&PORTAL_PLACEMENTS.has(o.placement as PortalPlacement)&&typeof o.subject_ref==='string'&&(o.scene_ref===undefined||o.scene_ref===null||typeof o.scene_ref==='string');}
+ if(t.kind==='native_action'){const o=t as {action_ref?:unknown;target_ref?:unknown;authority_requirement?:unknown};return typeof o.action_ref==='string'&&typeof o.target_ref==='string'&&typeof o.authority_requirement==='string';}
+ if(t.kind==='navigate'){const o=t as {scene_ref?:unknown;entity_ref?:unknown};return (o.scene_ref===undefined||o.scene_ref===null||typeof o.scene_ref==='string')&&(o.entity_ref===undefined||o.entity_ref===null||typeof o.entity_ref==='string');}
+ return false;
+}
+/** Validate one native Scene's triggers. Absent/empty means no declared
+ * triggers; a malformed trigger is refused, never silently dropped. */
+export function validateSceneTriggers(value:unknown):KernelSceneTrigger[]{
+ if(value===undefined||value===null)return [];
+ if(!Array.isArray(value))throw new Error('Native scene triggers are not a list');
+ return value.map(raw=>{
+  const t=raw as Record<string,unknown>;
+  if(!t||typeof t!=='object'||typeof t.trigger_ref!=='string'||!t.trigger_ref)throw new Error('Native scene trigger is missing its trigger_ref');
+  if(typeof t.occasion!=='string'||!TRIGGER_OCCASIONS.has(t.occasion as TriggerOccasion))throw new Error(`Native scene trigger names an unrecognised occasion: ${String(t.occasion)}`);
+  if(!isTriggerTarget(t.target))throw new Error(`Native scene trigger ${t.trigger_ref} names a malformed target`);
+  return {trigger_ref:t.trigger_ref,occasion:t.occasion as TriggerOccasion,target:t.target as TriggerTarget};
+ });
+}
+
+export interface KernelScene {presentation?:{schema:'oi.journey-scene/v1';scene:Scene;saved?:Scene|null}|null;scene_ref:string;title:string;entity_refs:string[];body?:Record<string,unknown>|null;triggers?:unknown[];[key:string]:unknown}
 export interface KernelRelation {binding_ref:string;relation:{ref:string;revision:string;[key:string]:unknown};from_entity_ref:string;to_entity_ref:string;[key:string]:unknown}
 export interface KernelExpressionDocument {presentation?:{schema:'oi.journey-properties/v1';description:string;loop:boolean;shared?:Journey['shared']}|null;schema:string;expression_ref:string;revision:number;title:string;scenes:KernelScene[];entities:Record<string,KernelEntity>;relations?:Record<string,KernelRelation>;selection?:{scene_ref:string;entity_ref:string|null;relation_ref?:string|null};representations?:unknown[];refinements?:unknown[];collections?:string[];profiles?:unknown[];[key:string]:unknown}
 export interface OccurrenceBinding {expression_ref:string;scene_ref:string;entity_ref:string;view_entity_id:string;subject:KernelSubject|null}
-export interface SceneBinding {scene_ref:string;member_refs:string[];loaded_refs:string[];page:number;page_count:number;hidden_refs:string[];focused_relation:string|null;occurrences:OccurrenceBinding[];relations:KernelRelation[];body:KernelScene['body'];triggers:unknown[]}
+export interface SceneBinding {scene_ref:string;member_refs:string[];loaded_refs:string[];page:number;page_count:number;hidden_refs:string[];focused_relation:string|null;occurrences:OccurrenceBinding[];relations:KernelRelation[];body:KernelSceneBody|null;triggers:KernelSceneTrigger[]}
 export interface KernelConversion {journey:Journey;notes:string[];startSceneId:string|null;document:KernelExpressionDocument;bindings:Record<string,SceneBinding>;entity_ids:Record<string,string>}
 export interface ViewOptions {pages?:Record<string,number>;focusRelation?:string|null;identity?:{expression?:string;scenes?:Record<string,string>;entities?:Record<string,string>}}
 export type ViewChange={change:'parameter_set';entity_ref:string;parameter:string;value:string|number};
@@ -143,7 +238,7 @@ export function kernelDocumentToJourney(raw:unknown,options:ViewOptions={}):Kern
   const occurrenceIds=new Map([...converted].map(([ref,e])=>[ref,e.id]));
   const scene=mapSceneOccurrences(material,idFor(s.scene_ref,'scene',ids,options.identity?.scenes?.[s.scene_ref]),occurrenceIds,new Set(loaded));
   if(saved)savedScenes[scene.id]=mapSceneOccurrences(saved,scene.id,occurrenceIds,new Set(loaded));
-  bindings[scene.id]={scene_ref:s.scene_ref,member_refs:[...s.entity_refs],loaded_refs:[...loaded],page,page_count:pages.length,hidden_refs:s.entity_refs.filter(ref=>!materialEntities.has(ref)),focused_relation:focused?.binding_ref??null,occurrences:loaded.filter(ref=>materialEntities.has(ref)).map(ref=>({expression_ref:doc.expression_ref,scene_ref:s.scene_ref,entity_ref:ref,view_entity_id:converted.get(ref)!.id,subject:clone(doc.entities[ref].subject??null)})),relations:clone(relations),body:clone(s.body),triggers:clone(s.triggers??[])};
+  bindings[scene.id]={scene_ref:s.scene_ref,member_refs:[...s.entity_refs],loaded_refs:[...loaded],page,page_count:pages.length,hidden_refs:s.entity_refs.filter(ref=>!materialEntities.has(ref)),focused_relation:focused?.binding_ref??null,occurrences:loaded.filter(ref=>materialEntities.has(ref)).map(ref=>({expression_ref:doc.expression_ref,scene_ref:s.scene_ref,entity_ref:ref,view_entity_id:converted.get(ref)!.id,subject:clone(doc.entities[ref].subject??null)})),relations:clone(relations),body:validateSceneBody(clone(s.body??null)),triggers:validateSceneTriggers(clone(s.triggers??[]))};
   if(loaded.length<s.entity_refs.length)notes.push(`${s.scene_ref}: ${loaded.length}/${s.entity_refs.length} members loaded; ${pages.length} disclosure pages preserve the whole`);
   return scene;
  });

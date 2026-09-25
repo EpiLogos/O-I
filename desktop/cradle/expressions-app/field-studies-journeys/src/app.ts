@@ -58,7 +58,8 @@ import type {PalaceDocumentSnapshot} from '../../../src/techne/m0m5/palace/compo
 import {applyResearchMaterial,pruneResearchOccurrence,type ResearchMaterialAction} from './researchMaterial.js';
 import {installTechneWorld} from './techneWorld.js';
 import type {ConnectionBinding} from '../../../../../packages/oi-design-system/expressions-engine/oi/expressionBindings.mjs';
-import type {KernelConversion} from './kernelDocumentBridge.js';
+import type {KernelConversion,KernelSceneBody} from './kernelDocumentBridge.js';
+import {installSceneBodies} from './sceneBodies.js';
 mountShell();installPanelResize();installKernelExpressions();
 const recovery=document.createElement('section');recovery.id='engine-recovery';recovery.hidden=true;recovery.className='engine-recovery';recovery.setAttribute('role','alert');recovery.innerHTML='<h3>GPU context interrupted</h3><p>The expression is intact. Recovering recreates lost particle state, not a runtime checkpoint.</p><button class="secondary" data-action="native-recover">Recover field</button>';document.body.append(recovery);
 
@@ -170,7 +171,10 @@ async function refreshSourcePreviews(host:HTMLElement){
  }
 }
 function renderInspector(){const content=$('inspector-content');if(!inspectorOpen){content.replaceChildren();return;}content.querySelectorAll<HTMLDetailsElement>('details[data-detail]').forEach(d=>detailState.set(d.dataset.detail!,d.open));
- const ctx:InspectorContext={scene:effectiveScene(store.document,scene()),journey:store.document,selected,textId,tab,motionTab,stepIndex,preview:engine.capabilities.kind==='preview',search,customFont:customFontEdit,supported:[...engine.capabilities.parameters],pinned:workspace.entries.filter(v=>v.scope==='field').map(v=>v.key),stations:engine.stations?.(),automationLoop,fieldPaused};$('inspector').classList.toggle('is-motion',tab==='motion');content.innerHTML=inspectorHTML(ctx);
+ const nativeSceneView=nativeWorkspace?.nativeView(),nativeSceneBinding=nativeSceneView?.bindings[scene().id];
+ const ctx:InspectorContext={scene:effectiveScene(store.document,scene()),journey:store.document,selected,textId,tab,motionTab,stepIndex,preview:engine.capabilities.kind==='preview',search,customFont:customFontEdit,supported:[...engine.capabilities.parameters],pinned:workspace.entries.filter(v=>v.scope==='field').map(v=>v.key),stations:engine.stations?.(),automationLoop,fieldPaused,
+  nativeBody:nativeSceneBinding?nativeSceneBinding.body:undefined,nativeTriggers:nativeSceneBinding?nativeSceneBinding.triggers:undefined,nativeSceneRef:nativeSceneBinding?.scene_ref??null,nativeSceneChoices:nativeSceneView?nativeSceneView.document.scenes.map(sc=>({scene_ref:sc.scene_ref,title:sc.title})):undefined};
+ $('inspector').classList.toggle('is-motion',tab==='motion');content.innerHTML=inspectorHTML(ctx);
  // Edits address the occurrence this Studio was rendered for, even if another
  // instrument changes the selection before the edit commits.
  if(selected[0]&&scene().entities.some(e=>e.id===selected[0]))content.dataset.entityId=selected[0];else delete content.dataset.entityId;
@@ -195,7 +199,7 @@ function renderLive(){const parts=liveWorkspaceHTML(liveContext(),workspace);con
 // Docking swaps the studio's anchor side, so a width/height transition would teleport it: invert the layout change, then play the transform back.
 function flipPanel(el:HTMLElement,mutate:()=>void){el.style.transition='none';el.style.transform='';const a=el.getBoundingClientRect();mutate();const b=el.getBoundingClientRect(),dx=a.left-b.left,dy=a.top-b.top,sx=b.width?a.width/b.width:1,sy=b.height?a.height/b.height:1;if(!b.width||!b.height||(!dx&&!dy&&Math.abs(sx-1)<.002&&Math.abs(sy-1)<.002)){el.style.transition='';return;}const done=(ev:TransitionEvent)=>{if(ev.target!==el||ev.propertyName!=='transform')return;el.removeEventListener('transitionend',done);el.style.transition='';el.style.transformOrigin='';};el.addEventListener('transitionend',done);el.style.transformOrigin='top left';el.style.transform=`translate(${dx}px,${dy}px) scale(${sx},${sy})`;void el.offsetWidth;el.style.transition='transform .25s cubic-bezier(.2,.8,.2,1)';el.style.transform='';}
 function setStudio(open:boolean){pointer.active=false;if(open)journeyPlaying=false;studioOpen=open;inspectorOpen=open;editing=open||cursorTool==='select';renderAll();}
-function renderAll(){blueprintHUD?.refresh();renderResearchScenePicker();if(studioDocked&&studioOpen&&beltOpen){beltWasOpen=true;beltOpen=false;}if(!studioDocked&&beltWasOpen){beltWasOpen=false;beltOpen=true;}if((inspectorOpen||contextKind)&&(tool==='pin'||tool==='formation')){tool=cursorTool;railExpanded=false;}if(beltPickerOpen){inspectorOpen=false;contextKind='';timelineOpen=false;shapePickerOpen=false;modesOpen=false;captureOpen=false;}else if(inspectorOpen){contextKind='';timelineOpen=false;shapePickerOpen=false;modesOpen=false;captureOpen=false;}else if(contextKind){timelineOpen=false;shapePickerOpen=false;modesOpen=false;captureOpen=false;}else if(timelineOpen){shapePickerOpen=false;modesOpen=false;captureOpen=false;}sanitiseSelection();workspace.entries=clone(store.document.shared!.toolbelt);if(tab==='motion')studioSection=motionTab==='automation'?'automation':motionTab==='sequence'?'sequence':motionTab==='focus'?'focus':'motion';else if(tab==='objects'&&!['formations','layout'].includes(studioSection))studioSection='formations';else if(tab==='scene'&&!['scene','text'].includes(studioSection))studioSection='scene';else if(tab==='field'&&!['physics','pointer','relational','collision','appearance','volume','resonance','native'].includes(studioSection))studioSection='physics';studioOpen=inspectorOpen&&editing;if(railKey!=='objects'||tool!=='select')railKey=tool;if(transitionDuration&&transitionSceneId!==scene().id){transitionDuration=0;$('transition-canvas').hidden=true;}theme();document.body.classList.toggle('studio-open',studioOpen);$('inspector').classList.toggle('is-studio',studioOpen);$('inspector').classList.toggle('docked',studioDocked);const dockButton=$('dock-studio');if(dockButton){dockButton.setAttribute('aria-pressed',String(studioDocked));dockButton.title=studioDocked?'Return the studio to full size':'Dock the studio where the toolbelt sits';dockButton.innerHTML=icon(studioDocked?'expand':'collapse');}$<HTMLSelectElement>('workspace-appearance').value=workspace.appearance;document.querySelectorAll<HTMLElement>('[data-action="studio-section"]').forEach(b=>b.setAttribute('aria-current',b.dataset.value===studioSection?'page':'false'));document.body.classList.toggle('editing',editing);document.body.classList.toggle('presentation',presenting);document.body.classList.toggle('editing-text',editing&&tool==='text');
+function renderAll(){blueprintHUD?.refresh();renderResearchScenePicker();if(studioDocked&&studioOpen&&beltOpen){beltWasOpen=true;beltOpen=false;}if(!studioDocked&&beltWasOpen){beltWasOpen=false;beltOpen=true;}if((inspectorOpen||contextKind)&&(tool==='pin'||tool==='formation')){tool=cursorTool;railExpanded=false;}if(beltPickerOpen){inspectorOpen=false;contextKind='';timelineOpen=false;shapePickerOpen=false;modesOpen=false;captureOpen=false;}else if(inspectorOpen){contextKind='';timelineOpen=false;shapePickerOpen=false;modesOpen=false;captureOpen=false;}else if(contextKind){timelineOpen=false;shapePickerOpen=false;modesOpen=false;captureOpen=false;}else if(timelineOpen){shapePickerOpen=false;modesOpen=false;captureOpen=false;}sanitiseSelection();sceneBodies?.refresh();workspace.entries=clone(store.document.shared!.toolbelt);if(tab==='motion')studioSection=motionTab==='automation'?'automation':motionTab==='sequence'?'sequence':motionTab==='focus'?'focus':'motion';else if(tab==='objects'&&!['formations','layout'].includes(studioSection))studioSection='formations';else if(tab==='scene'&&!['scene','text'].includes(studioSection))studioSection='scene';else if(tab==='field'&&!['physics','pointer','relational','collision','appearance','volume','resonance','native'].includes(studioSection))studioSection='physics';studioOpen=inspectorOpen&&editing;if(railKey!=='objects'||tool!=='select')railKey=tool;if(transitionDuration&&transitionSceneId!==scene().id){transitionDuration=0;$('transition-canvas').hidden=true;}theme();document.body.classList.toggle('studio-open',studioOpen);$('inspector').classList.toggle('is-studio',studioOpen);$('inspector').classList.toggle('docked',studioDocked);const dockButton=$('dock-studio');if(dockButton){dockButton.setAttribute('aria-pressed',String(studioDocked));dockButton.title=studioDocked?'Return the studio to full size':'Dock the studio where the toolbelt sits';dockButton.innerHTML=icon(studioDocked?'expand':'collapse');}$<HTMLSelectElement>('workspace-appearance').value=workspace.appearance;document.querySelectorAll<HTMLElement>('[data-action="studio-section"]').forEach(b=>b.setAttribute('aria-current',b.dataset.value===studioSection?'page':'false'));document.body.classList.toggle('editing',editing);document.body.classList.toggle('presentation',presenting);document.body.classList.toggle('editing-text',editing&&tool==='text');
  if(!$('inspector').hidden)studioScroll=$('inspector-content').scrollTop;$('inspector').hidden=!inspectorOpen||!editing;$('tool-rail').hidden=presenting;$('view-controls').hidden=!editing||!(tool==='pin'||shapePickerOpen||placementStep)||!!contextKind||inspectorOpen;$('coordinates').hidden=presenting||libraryOpen;$('timeline-panel').hidden=!timelineOpen;$('shape-picker').hidden=!shapePickerOpen||!editing;$('present-return').hidden=!presenting;
  $('scene-number').textContent=String(sceneIndex+1).padStart(2,'0');$('scene-name').textContent=scene().name;
  $('scene-picker').setAttribute('aria-expanded',String(timelineOpen));$('scene-state').textContent=sceneSaveState(store.document,scene());
@@ -376,6 +380,7 @@ function collectImported(documents:Journey[]){
 }
 function ensureCapacity(additions:Entity[]){const all=[...scene().entities,...additions];if(all.filter(e=>e.kind==='formation').length>10||all.filter(e=>e.kind==='pin').length>8)throw new Error('The native field supports 10 formations and 8 force-only pins. Remove an object before adding this composition.');}
 let nativeWorkspace:ReturnType<typeof installNativeWorkspace>|undefined;
+let sceneBodies:ReturnType<typeof installSceneBodies>|undefined;
 let blueprintHUD:ReturnType<typeof installBlueprintHUD>|undefined;
 // A blank boot frame is not a new chosen work. Retain the host's native
 // reference until recovery succeeds or the user explicitly opens a draft.
@@ -480,6 +485,49 @@ async function action(name:string,el:HTMLElement,event?:Event){const s=scene(),s
  case 'face-plane':facePlane(camera);renderAll();break;
  case 'keep-view':changed(()=>{scene().view={...scene().view,mode:camera.mode,yaw:camera.yaw,pitch:camera.pitch,zoom:camera.zoom,panX:camera.panX/width,panY:camera.panY/height};});toast('This camera framing is now part of the scene.');break;
  case 'restore-view':applySceneView();renderAll();break;
+ // ES1A/ES1B (O:I #352): scene-body/trigger authoring. Every write is the
+ // Rust-exact kernel Change grammar, sent through the app's existing native
+ // edit path (nativeWorkspace.edit → the kernel's own `edit` operation);
+ // there is no second, presentation-only copy of a body or trigger.
+ case 'scene-body-image':{
+  const view=nativeWorkspace?.nativeView(),binding=view?.bindings[scene().id];
+  if(!view||!binding){toast('Open this Scene as a native Expression before setting its body.');break;}
+  const path=$<HTMLInputElement>('scene-body-image-path').value.trim();
+  if(!path){toast('Name the native image file first.');break;}
+  await nativeWorkspace?.edit([{change:'scene_body_set',scene_ref:binding.scene_ref,body:{carrier:'image_media',subject_ref:path,native_owner:'oi',reading:{ref:path,revision:'1',availability:'available'},provenance:[],actions:[],presentation:'inline',capability:{state:'renderable'},span:null,recursion:null}}]);
+  toast('Scene body set to this image.');break;
+ }
+ case 'scene-body-text':{
+  const view=nativeWorkspace?.nativeView(),binding=view?.bindings[scene().id];
+  if(!view||!binding){toast('Open this Scene as a native Expression before setting its body.');break;}
+  const path=$<HTMLInputElement>('scene-body-text-path').value.trim();
+  if(!path){toast('Name the native text file first.');break;}
+  const start=Number($<HTMLInputElement>('scene-body-text-start').value)||0,end=Number($<HTMLInputElement>('scene-body-text-end').value)||0;
+  const span=end>start?{start,end}:null;
+  await nativeWorkspace?.edit([{change:'scene_body_set',scene_ref:binding.scene_ref,body:{carrier:'text_source',subject_ref:path,native_owner:'oi',reading:{ref:path,revision:'1',availability:'available'},provenance:[],actions:[],presentation:'inline',capability:{state:'renderable'},span,recursion:null}}]);
+  toast('Scene body set to this text.');break;
+ }
+ case 'scene-body-clear':{
+  const view=nativeWorkspace?.nativeView(),binding=view?.bindings[scene().id];
+  if(!view||!binding){toast('Open this Scene as a native Expression first.');break;}
+  await nativeWorkspace?.edit([{change:'scene_body_clear',scene_ref:binding.scene_ref}]);
+  toast('Scene body cleared.');break;
+ }
+ case 'scene-trigger-add':{
+  const view=nativeWorkspace?.nativeView(),binding=view?.bindings[scene().id];
+  if(!view||!binding){toast('Open this Scene as a native Expression first.');break;}
+  const targetRef=$<HTMLSelectElement>('scene-trigger-target').value,occasion=$<HTMLSelectElement>('scene-trigger-occasion').value;
+  if(!targetRef){toast('Choose a Scene to jump to.');break;}
+  const triggerRef=`${view.document.expression_ref}:trigger:jump-${crypto.randomUUID()}`;
+  await nativeWorkspace?.edit([{change:'scene_trigger_attach',scene_ref:binding.scene_ref,trigger:{trigger_ref:triggerRef,occasion,target:{kind:'navigate',scene_ref:targetRef}}}]);
+  toast('Jump trigger added.');break;
+ }
+ case 'scene-trigger-remove':{
+  const ref=el.dataset.triggerRef;
+  if(!ref)break;
+  await nativeWorkspace?.edit([{change:'scene_trigger_detach',trigger_ref:ref}]);
+  toast('Trigger removed.');break;
+ }
  case 'fit-view':{const {plane,depth,grid,snap}=camera;camera=defaultCamera();Object.assign(camera,{plane,depth,grid,snap});facePlane(camera);renderAll();break;}
  case 'timeline':timelineOpen=!timelineOpen;if(timelineOpen){inspectorOpen=false;contextKind='';beltPickerOpen=false;modesOpen=false;captureOpen=false;}renderAll();break;
  case 'open-timeline':journeyPlaying=false;timelineOpen=true;inspectorOpen=false;contextKind='';beltPickerOpen=false;modesOpen=false;captureOpen=false;renderAll();break;
@@ -932,6 +980,14 @@ function activateInstrument(lens:LensId){
 }
 const lensStudio=installLensStudio({subject:()=>nativeWorkspace?.nativeSubject()??null,construction:()=>nativeWorkspace?.construction()??null,activate:activateInstrument});
 nativeWorkspace=installNativeWorkspace({shouldRetainDraft:()=>!awaitingNativeBoot||store.revision!==0,snapshot:()=>({journey:clone(store.document),sceneId:scene().id,entityId:selected[0]??null}),version:()=>store.revision,load:applyNativeView,toast,summon:(kind,subject)=>hostRequest({request:'summon',detail:{kind,subject}}),correspondence:(rows,selection)=>{nativeConnectionRows=rows;nativeSelectedRelation=selection;needsFrame=true;lensStudio.refresh();}});
+// ES1A/ES1B (O:I #352): the active native Scene's own body and its
+// declarative triggers, laid over the live field as real readable material.
+sceneBodies=installSceneBodies({
+ nativeView:()=>nativeWorkspace?.nativeView(),
+ sceneId:()=>scene().id,
+ open:ref=>{const view=nativeWorkspace?.nativeView(),binding=view?.bindings[scene().id];if(!view||!binding){toast('Open a native Scene before opening its source.');return;}hostRequest({request:'summon',detail:{kind:'source',ref,subject:{ref:view.document.expression_ref,kind:'expression',nativeOwner:'oi',revision:view.document.revision,title:view.document.title,sceneRef:binding.scene_ref,entityRef:null,relationRef:null}}});},
+ jumpToScene:sceneRef=>{const view=nativeWorkspace?.nativeView();if(!view){toast('Open a native Scene before jumping to another one.');return;}const entry=Object.entries(view.bindings).find(([,b])=>b.scene_ref===sceneRef);if(!entry){toast('That native Scene is not currently loaded in this view.');return;}const index=store.document.scenes.findIndex(s=>s.id===entry[0]);if(index<0)return;setScene(index);},
+});
 blueprintHUD=installBlueprintHUD({container:$('native-work'),nativeView:()=>nativeWorkspace?.nativeView(),sceneId:()=>scene().id,apply:intent=>nativeWorkspace!.blueprint(intent)});
 const techneWorld=installTechneWorld(ref=>nativeWorkspace!.open(ref));
 const researchContainer=document.createElement('section');

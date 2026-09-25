@@ -1,0 +1,21 @@
+/* ES1A/ES1B scene-body presentation (O:I #352). The active native Scene's
+ * own body laid over the live field — real readable material, never a
+ * particle-sampled decal. Presentation-only chrome; no state lives here. */
+.scene-body-layer{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;pointer-events:none;z-index:4}
+.scene-body-layer[hidden]{display:none}
+.scene-body-layer .scene-body-card{pointer-events:auto;max-width:min(72vw,620px);max-height:78vh;overflow:auto;background:var(--panel,var(--paper));border:1px solid var(--line);border-radius:10px;box-shadow:0 12px 40px rgba(0,0,0,.22);padding:14px 16px;color:var(--ink);cursor:pointer}
+.scene-body-layer.selected .scene-body-card{border-color:var(--ink);box-shadow:0 0 0 2px var(--ink),0 12px 40px rgba(0,0,0,.22)}
+.scene-body-layer.image .scene-body-card{padding:8px;background:transparent;border-color:transparent;box-shadow:none}
+.scene-body-layer.selected.image .scene-body-card{box-shadow:0 0 0 2px var(--ink)}
+.scene-body-image{display:block;max-width:min(80vw,900px);max-height:76vh;width:auto;height:auto;border-radius:6px}
+.scene-body-text{font:15px/1.6 var(--serif,Georgia,serif);white-space:pre-wrap;word-break:break-word}
+.scene-body-kicker{margin:0 0 4px;font:600 11px/1.3 var(--sans,system-ui,sans-serif);letter-spacing:.04em;text-transform:uppercase;color:var(--muted)}
+.scene-body-reason{margin:0 0 10px;font:13px/1.5 var(--sans,system-ui,sans-serif);color:var(--muted)}
+.scene-body-note{margin:0;font:12px/1.4 var(--sans,system-ui,sans-serif);color:var(--muted)}
+.scene-body-layer.degraded .scene-body-card,.scene-body-layer.unavailable .scene-body-card{text-align:left}
+.scene-body-layer.unavailable .scene-body-card{opacity:.8}
+.scene-body-card [data-scene-body-open]{margin-top:4px;font:12px/1.2 var(--sans,system-ui,sans-serif);color:var(--ink);background:var(--wash);border:1px solid var(--line);border-radius:6px;padding:6px 10px;cursor:pointer}
+.scene-body-card [data-scene-body-open]:hover{border-color:var(--muted)}
+.scene-body-triggers{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
+.scene-body-jump{display:inline-flex;align-items:center;gap:4px;font:11px/1.2 var(--sans,system-ui,sans-serif);color:var(--ink);background:var(--wash);border:1px solid var(--line);border-radius:999px;padding:5px 10px;cursor:pointer}
+.scene-body-jump:hover{border-color:var(--muted)}

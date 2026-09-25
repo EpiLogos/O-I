@@ -238,6 +238,28 @@ export async function nativeFileRequest(request:Record<string,unknown>):Promise<
  return call('expression-file',{request});
 }
 
+/** ES1A scene-body native carrier reads (O:I #352): a `SceneBody.subject_ref`
+ * is an opaque native reference, resolved only through the owner's own
+ * `file_resolve` seam — this app never parses it. Two typed reads over the
+ * `central-subject-text`/`central-subject-bytes` host-channel kinds (the
+ * cradle relay, `relayKernelChannel` in desktop/cradle/src/expressions/
+ * hostedApp.ts): UTF-8 text for `text_source` bodies, base64 + mime hint for
+ * `image_media` bodies (the same binary-safe seam FND-04 already defines). */
+export interface NativeSubjectText {ref:string;revision:string;byte_len:number;content:string}
+export interface NativeSubjectBytes {ref:string;revision:string;byte_len:number;mime_hint:string|null;content_base64:string}
+export async function nativeSubjectTextRequest(ref:string):Promise<NativeSubjectText>{
+ if(typeof ref!=='string'||!ref)throw new Error('nativeSubjectTextRequest needs a native subject ref');
+ const data=await call<NativeSubjectText>('central-subject-text',{ref});
+ if(!data||typeof data.content!=='string')throw new Error(`the native owner returned no readable text for ${ref}`);
+ return data;
+}
+export async function nativeSubjectBytesRequest(ref:string):Promise<NativeSubjectBytes>{
+ if(typeof ref!=='string'||!ref)throw new Error('nativeSubjectBytesRequest needs a native subject ref');
+ const data=await call<NativeSubjectBytes>('central-subject-bytes',{ref});
+ if(!data||typeof data.content_base64!=='string')throw new Error(`the native owner returned no readable image bytes for ${ref}`);
+ return data;
+}
+
 /** The active native Scene is the address. The host validates its revision
  * and source projection; no shell workspace or renderer file path supplies scope. */
 export interface TechneSceneReadingRequest {expression_ref:string;revision:number;scene_ref:string;facet?:'relation-semantics'|'node-metadata'|'scene-relations'}

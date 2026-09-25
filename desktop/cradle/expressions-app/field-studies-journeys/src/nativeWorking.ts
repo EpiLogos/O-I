@@ -40,16 +40,29 @@ function selectionMatches(view:KernelConversion,request:SelectionEdit,document:K
 }
 export interface ConnectionEdit {operation:'edit';expression_ref:string;expected_revision:number;actor:string;changes:Record<string,unknown>[]}
 /** Expression connections are local composition bindings. This never edits a
- * source-owned semantic relation or infers Wiki write authority. */
+ * source-owned semantic relation or infers Wiki write authority.
+ *
+ * ES1A/ES1B (O:I #352): the same bounded edit/readback path also carries
+ * scene-body and scene-trigger changes (`scene_body_set`/`scene_body_clear`/
+ * `scene_trigger_attach`/`scene_trigger_detach`) — the Rust-exact change
+ * grammar from kernel/src/expression.rs's `Change` enum. This function name
+ * predates that widening; it is kept so every existing call site
+ * (`nativeWorkspace.edit`) needs no change. */
 function connectionEdit(view:KernelConversion,changes:Record<string,unknown>[]):ConnectionEdit {
  if(!changes.length||changes.length>256)throw new Error('Choose 1–256 native connection changes');
  const request:ConnectionEdit={operation:'edit',expression_ref:view.document.expression_ref,expected_revision:view.document.revision,actor:'human:expressions-app',changes:clone(changes)};
  connectionResult(view,request); // refuse unsupported ownership before dispatch
  return request;
 }
+const SCENE_CHANGE_KINDS=new Set(['scene_body_set','scene_body_clear','scene_trigger_attach','scene_trigger_detach']);
 function connectionResult(view:KernelConversion,request:ConnectionEdit):KernelExpressionDocument {
  const doc=clone(view.document);doc.relations??={};
+ const touchedScenes=new Set<string>();
  for(const change of request.changes){
+  if(SCENE_CHANGE_KINDS.has(change.change as string)){
+   applySceneChange(doc,change,touchedScenes);
+   continue;
+  }
   const binding=change.binding as NonNullable<KernelExpressionDocument['relations']>[string]|undefined;
   const ref=change.change==='relation_bind'?binding?.binding_ref:change.binding_ref;
   if(typeof ref!=='string'||!ref.startsWith(doc.expression_ref+':relation:connection-'))throw new Error('Only O:I Expression connections can be edited here');
@@ -63,11 +76,53 @@ function connectionResult(view:KernelConversion,request:ConnectionEdit):KernelEx
    if(!previous)throw new Error('Connection is absent');
    delete doc.relations[ref];
    if(doc.selection?.relation_ref===ref)delete doc.selection.relation_ref;
-  }else throw new Error('Only native connection bind/remove is admitted by this operation');
+  }else throw new Error('Only native connection bind/remove/scene-body/scene-trigger changes are admitted by this operation');
  }
- if(!same(doc,view.document))doc.revision++;
+ if(!same(doc,view.document)){
+  doc.revision++;
+  for(const scene of doc.scenes)if(touchedScenes.has(scene.scene_ref))scene.revision=doc.revision;
+ }
  kernelDocumentToJourney(doc); // complete binding and membership validation
  return doc;
+}
+/** ES1A/ES1B change application, mirrored from kernel/src/expression.rs's
+ * `Change::SceneBodySet/SceneBodyClear/SceneTriggerAttach/SceneTriggerDetach`
+ * handling — a local prediction of the owner's own semantics, so the
+ * readback comparison in `editConnections` below stays an honest check
+ * rather than a rubber stamp. */
+function applySceneChange(doc:KernelExpressionDocument,change:Record<string,unknown>,touchedScenes:Set<string>):void {
+ if(change.change==='scene_body_set'||change.change==='scene_body_clear'){
+  const sceneRef=change.scene_ref;
+  if(typeof sceneRef!=='string'||!sceneRef)throw new Error('Scene body change needs a scene_ref');
+  const scene=doc.scenes.find(s=>s.scene_ref===sceneRef);
+  if(!scene)throw new Error(`Scene body change names an absent native Scene: ${sceneRef}`);
+  scene.body=change.change==='scene_body_set'?clone(change.body as Record<string,unknown>):null;
+  touchedScenes.add(sceneRef);
+  return;
+ }
+ if(change.change==='scene_trigger_attach'){
+  const sceneRef=change.scene_ref,trigger=change.trigger as {trigger_ref?:unknown}|undefined;
+  if(typeof sceneRef!=='string'||!sceneRef)throw new Error('Scene trigger attach needs a scene_ref');
+  const scene=doc.scenes.find(s=>s.scene_ref===sceneRef);
+  if(!scene)throw new Error(`Scene trigger attach names an absent native Scene: ${sceneRef}`);
+  if(!trigger||typeof trigger.trigger_ref!=='string'||!trigger.trigger_ref)throw new Error('Scene trigger attach needs a trigger_ref');
+  if(doc.scenes.some(s=>((s.triggers??[]) as {trigger_ref:string}[]).some(t=>t.trigger_ref===trigger.trigger_ref)))throw new Error('Scene trigger already exists');
+  scene.triggers=[...((scene.triggers??[]) as unknown[]),clone(trigger)];
+  touchedScenes.add(sceneRef);
+  return;
+ }
+ if(change.change==='scene_trigger_detach'){
+  const triggerRef=change.trigger_ref;
+  if(typeof triggerRef!=='string'||!triggerRef)throw new Error('Scene trigger detach needs a trigger_ref');
+  let removed=false;
+  for(const scene of doc.scenes){
+   const before=((scene.triggers??[]) as {trigger_ref:string}[]);
+   const after=before.filter(t=>t.trigger_ref!==triggerRef);
+   if(after.length!==before.length){scene.triggers=after;touchedScenes.add(scene.scene_ref);removed=true;}
+  }
+  if(!removed)throw new Error('Scene trigger is absent');
+  return;
+ }
 }
 function connectionView(view:KernelConversion,doc:KernelExpressionDocument):KernelConversion {
  return kernelDocumentToJourney(doc,{identity:{expression:view.journey.id,scenes:Object.fromEntries(Object.entries(view.bindings).map(([id,b])=>[b.scene_ref,id])),entities:view.entity_ids},pages:Object.fromEntries(Object.values(view.bindings).map(b=>[b.scene_ref,b.page]))});

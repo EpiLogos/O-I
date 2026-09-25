@@ -10,7 +10,13 @@ import {CANONICAL_CHAKRAS} from '../../src/engine/chakraSystem';
 import {CHAKRA_DEFINITIONS} from '../../src/engine/semantics/chakraSemantics';
 import {FONT_OPTIONS,CUSTOM_SENTINEL,resolveFontOption} from './fontCatalog.js';
 import {esc,icon} from './icons.js';
-export interface InspectorContext {scene:Scene;journey:Journey;selected:string[];textId:string|null;tab:'scene'|'objects'|'field'|'motion';motionTab:'sequence'|'morph'|'focus'|'automation';stepIndex:number;preview:boolean;search:string;customFont?:boolean;supported?:string[];pinned?:string[];stations?:{id?:string;index:number;name:string;frequencyHz:number;m:number;n:number;color:string;energy?:number;semanticNodeId?:string;affinity?:number}[];automationLoop?:boolean;fieldPaused?:boolean}
+import type {KernelSceneBody,KernelSceneTrigger} from './kernelDocumentBridge.js';
+export interface NativeSceneChoice {scene_ref:string;title:string}
+export interface InspectorContext {scene:Scene;journey:Journey;selected:string[];textId:string|null;tab:'scene'|'objects'|'field'|'motion';motionTab:'sequence'|'morph'|'focus'|'automation';stepIndex:number;preview:boolean;search:string;customFont?:boolean;supported?:string[];pinned?:string[];stations?:{id?:string;index:number;name:string;frequencyHz:number;m:number;n:number;color:string;energy?:number;semanticNodeId?:string;affinity?:number}[];automationLoop?:boolean;fieldPaused?:boolean;
+ // ES1A/ES1B (O:I #352): the active native Scene's own body/triggers, and
+ // the other native Scenes in this native Expression that a jump could
+ // target. Absent (undefined) means no native Scene is open here.
+ nativeBody?:KernelSceneBody|null;nativeTriggers?:KernelSceneTrigger[];nativeSceneRef?:string|null;nativeSceneChoices?:NativeSceneChoice[]}
 const button=(action:string,label:string,ico?:string,extra='')=>`<button class="secondary" data-action="${action}" ${extra}>${ico?icon(ico):''}${label}</button>`;
 const heading=(s:string,sub='')=>`<div class="section-heading"><h3>${s}</h3>${sub?`<span>${sub}</span>`:''}</div>`;
 export const text=(label:string,path:string,value:string,options='')=>`<label class="control"><span>${label}</span><input type="text" data-bind="${path}" value="${esc(value)}" ${options}></label>`;
@@ -44,6 +50,36 @@ function glyphSamplingControls(s:Scene,customChosen:boolean){
  const preview=`<p class="control-note" style="font-family:${esc(resolved.stack)};font-weight:${esc(weight)}">O · I · &amp; · Open 0123 — the quick brown ink</p>`;
  return `${chooser}${custom}${select('Font weight','engine.fontWeight',String(s.engine.fontWeight??900),[['400','Regular'],['600','Semibold'],['700','Bold'],['900','Heavy']])}${preview}<p class="control-note">The typeface is a stack of fonts already installed here; nothing is downloaded. Text and font edits renormalise state sizes around the new glyph while auto-fit is on. Family and weight changes rebuild target geometry only — particle positions and simulation time are retained.</p>`;
 }
+/** ES1A/ES1B (O:I #352): the Scene's own native body — an image, a text
+ * source, or a cleared/degraded reading — carried as the Scene's real
+ * readable material, plus the declarative Jump triggers a presentation
+ * honours. Authoring here writes through the app's existing native edit
+ * path (`nativeWorkspace.edit`) with the kernel's exact change/field names;
+ * this panel only ever proposes a `scene_body_set`/`scene_body_clear`/
+ * `scene_trigger_attach`/`scene_trigger_detach` change, never a fabricated
+ * renderer. Absent `nativeBody`/`nativeTriggers` (no native Scene open)
+ * shows an honest note instead of authoring controls. */
+function sceneBodyGroup(c:InspectorContext):string{
+ if(c.nativeBody===undefined)return group('Scene body','<p class="control-note">Open this Scene as a native Expression to give it a real body — an image, a text source, or a jump. Browser-only drafts have no native body to author.</p>',false,'scene-body');
+ const body=c.nativeBody,triggers=c.nativeTriggers??[];
+ const capabilityLabel=body?(body.capability.state==='renderable'?'Renderable':body.capability.state==='degrades_to_thing'?`Degraded · ${body.capability.reason}`:`Unavailable · ${body.capability.reason}`):'';
+ const current=body&&body.carrier!=='engine_composition'?`<p class="control-note">${esc(body.carrier.replace('_',' '))} · ${esc(body.subject_ref)} · ${esc(body.presentation)} · ${esc(capabilityLabel)}</p>${body.carrier==='text_source'&&body.span?`<p class="control-note">Span ${body.span.start}–${body.span.end}</p>`:''}${button('scene-body-clear','Clear body','close')}`:'<p class="control-note">No native body set — this Scene shows its live engine composition.</p>';
+ const choices=(c.nativeSceneChoices??[]).filter(v=>v.scene_ref!==c.nativeSceneRef);
+ const triggerList=triggers.length?`<div class="object-list">${triggers.map(t=>`<div class="object-row"><span><strong>${esc(t.occasion.replace('_',' '))}</strong><small>${t.target.kind==='navigate'?'Jump to '+esc(t.target.scene_ref??t.target.entity_ref??''):esc(t.target.kind)}</small></span>${button('scene-trigger-remove','Remove','trash','data-trigger-ref="'+esc(t.trigger_ref)+'"')}</div>`).join('')}</div>`:'<p class="control-note">No triggers on this Scene.</p>';
+ return group('Scene body',`
+ <p class="control-note">The Scene's own native body — real readable material laid over the live field, distinct from image-to-particle sampling.</p>
+ ${current}
+ <label class="control"><span>Native image path</span><input type="text" id="scene-body-image-path" placeholder="Project/artwork.png" maxlength="500"></label>
+ ${button('scene-body-image','Set image body','frame')}
+ <label class="control"><span>Native text path</span><input type="text" id="scene-body-text-path" placeholder="Project/notes.md" maxlength="500"></label>
+ <div class="two-col"><label class="number-field"><span>Span start</span><input type="number" id="scene-body-text-start" min="0" step="1" value="0"></label><label class="number-field"><span>Span end (0 = whole file)</span><input type="number" id="scene-body-text-end" min="0" step="1" value="0"></label></div>
+ ${button('scene-body-text','Set text body','text')}
+ <p class="control-note">A path names an existing Central file exactly; there is no picker here yet. Central resolves and reads it — nothing is copied into this document.</p>
+ ${heading('Jump triggers')}
+ ${triggerList}
+ ${choices.length?`<label class="control"><span>Jump to Scene</span><select id="scene-trigger-target">${choices.map(v=>`<option value="${esc(v.scene_ref)}">${esc(v.title||v.scene_ref)}</option>`).join('')}</select></label><label class="control"><span>On</span><select id="scene-trigger-occasion">${(['scene_enter','activate','select'] as const).map(o=>`<option value="${o}">${o.replace('_',' ')}</option>`).join('')}</select></label>${button('scene-trigger-add','Add jump trigger','branch')}`:'<p class="control-note">No other native Scenes are loaded in this view to jump to.</p>'}
+ `,false,'scene-body');
+}
 export function inspectorHTML(c:InspectorContext){const s=c.scene,e=s.entities.find(e=>e.id===c.selected[0]);
  if(c.search.trim()){
   const query=c.search.trim().toLowerCase(),matches=PARAMETERS.filter(p=>(p.label+' '+p.group+' '+p.key).toLowerCase().includes(query));
@@ -66,6 +102,7 @@ export function inspectorHTML(c:InspectorContext){const s=c.scene,e=s.entities.f
  ${button('add-text','Add a text block','plus')}
  <p class="control-note">Text is part of the scene, not the editor chrome. It can remain visible in presentations and captures.</p>`,true,'page-text')}
  ${group('Scene view',`<p class="control-note">Store this camera setup for this scene only. Working planes and guides stay editor-only.</p><div class="button-row">${button('keep-view','Set scene view','check')}${button('restore-view','Reset scene view','undo')}</div>`)}
+ ${sceneBodyGroup(c)}
  ${group('Expression settings',`${text('Expression title','journey.name',c.journey.name,'maxlength="160"')}${area('Description','journey.description',c.journey.description,'maxlength="5000"')}${toggle('Loop the expression','journey.loop',c.journey.loop)}<div class="button-row">${button('open-timeline','Scene strip','layers')}${button('new-scene','Add scene','plus')}</div>`,false,'journey')}
  `;}
 
