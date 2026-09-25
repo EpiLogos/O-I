@@ -38,6 +38,7 @@ import {kernelOp} from "../kernel/bridge";
 import type {CentralLocation, KernelTransportStatus} from "../kernel/types";
 import {resolveDocumentForm, type DocumentForm} from "./documentForms";
 import {instanceFileName, mintBlankInstance} from "./instance";
+import {inPlacePlacementFor, localStamp, stampCopy} from "./placement";
 
 export interface HumanGround {root: string; baseRef: string; basePath: string; project?: string}
 
@@ -51,50 +52,15 @@ export async function humanGround(transport: KernelTransportStatus, project?: st
   return {root: directory.location.root, baseRef: directory.location.ref, basePath: directory.location.path, project};
 }
 
-/** Local civil time only — never a UTC or scheduler stamp. */
-export function localStamp(now = new Date()): string {
-  const pad = (n: number) => String(n).padStart(2, "0");
-  return `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}-${pad(now.getHours())}${pad(now.getMinutes())}`;
-}
-const localDate = (now: Date) => localStamp(now).slice(0, 10);
-const slug = (value: string) => value.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "") || "document";
 
-/** Where a form's copy lives, relative to the human ground. `attempt`
- * resolves a same-minute collision with a numeric suffix. */
-export function placementFor(form: Pick<DocumentForm, "kind" | "label">, ground: Pick<HumanGround, "project"> & {telos?: boolean}, stamp: string, attempt = 0): string {
+/** Where a flows-area copy lives. The in-place placements (goal, vision,
+ * mockup) belong to the shared pure module — placement.ts. */
+function placementFor(form: Pick<DocumentForm, "kind" | "label">, stamp: string, attempt = 0): string {
   const suffix = attempt ? `-${attempt + 1}` : "";
-  switch (form.kind) {
-    case "document-01": return `flows/${instanceFileName(stamp, attempt)}`;
-    case "document-goal": return `${ground.telos ? "telos/" : ""}goal-${stamp}${suffix}.html`;
-    case "document-mockup": return `mockup-${slug(form.label)}-${stamp}${suffix}.html`;
-    // Everything else rides Central's one first-save door (the flows area).
-    case "document-vision":
-      if (!ground.project) throw new Error("A vision page belongs to a project — choose a project scope first.");
-      return `${ground.project.toLowerCase().replace(/[^a-z0-9]/g, "")}.html`;
-    default: return `flows/${slug(form.label)}-${stamp}${suffix}.html`;
-  }
+  if (form.kind === "document-01") return `flows/${instanceFileName(stamp, attempt)}`;
+  return `flows/${slug(form.label)}-${stamp}${suffix}.html`;
 }
-
-const QL_DOC = /(<script type="application\/json" id="ql-doc">)([\s\S]*?)(<\/script>)/;
-
-/** A fresh identity for the copy; every other byte stays the template's. */
-export function stampCopy(template: string, now = new Date(), identity: () => string = () => crypto.randomUUID()): string {
-  const match = template.match(QL_DOC);
-  if (!match) return template;
-  let doc: {meta?: Record<string, unknown>};
-  try { doc = JSON.parse(match[2]); } catch { return template; }
-  const meta = doc.meta;
-  if (!meta || typeof meta !== "object") return template;
-  const id = identity();
-  if ("documentId" in meta) meta.documentId = id;
-  if ("uuid" in meta) meta.uuid = id;
-  if ("created" in meta) meta.created = now.toISOString();
-  if (meta.type === "daily" && "date" in meta) meta.date = localDate(now);
-  // U+003C is escaped so no text can close the script (the page template's
-  // own jsonText law); JSON.parse reads it back unchanged.
-  const json = JSON.stringify(doc).replace(/</g, "\\u003c").replace(/\u2028/g, "\\u2028").replace(/\u2029/g, "\\u2029");
-  return template.replace(QL_DOC, (_all, open: string, _body: string, close: string) => open + json + close);
-}
+const slug = (value: string) => value.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "") || "document";
 
 export interface CreatedCopy {location: CentralLocation; html: string; form: DocumentForm; ground: HumanGround}
 
@@ -146,7 +112,7 @@ export async function createFormInPlace(transport: KernelTransportStatus, form: 
     // listing is the truth of where the human ground sits inside it.
     const groundScope = ground.basePath.replace(/^Work\/[^/]+\//, "");
     for (let attempt = 0; attempt < 8; attempt++) {
-      const relative = placementFor(form, {...ground, telos}, stamp, attempt);
+      const relative = inPlacePlacementFor(form, {...ground, telos}, stamp, attempt);
       const projectRelative = `${groundScope}/${relative}`;
       const created = await createThroughSourceDoor(transport, ground.project!, projectRelative, html);
       if (created.ok) {
@@ -164,7 +130,7 @@ export async function createFormInPlace(transport: KernelTransportStatus, form: 
     throw new Error(`Central would not accept a new ${form.label} this minute: ${String(lastError)}`);
   }
   for (let attempt = 0; attempt < 8; attempt++) {
-    const relative = placementFor(form, {...ground, telos}, stamp, attempt);
+    const relative = placementFor(form, stamp, attempt);
     const location: CentralLocation = {schema: "central.path-ref/v1", ref: `${ground.baseRef}/${relative}`, root: ground.root, path: `${ground.basePath}/${relative}`};
     const html = form.kind === "document-01" ? template : stampCopy(template, now);
     try {
