@@ -107,32 +107,32 @@ function walkHtml(dir: string, found: string[]) {
   }
 }
 
-/** Remove a Quartz `essay/` tree, require the shell plus catalog, and publish 404.html. */
+/** Require the Quartz essay publication, reject the stood-down shell, and publish 404.html.
+ * The public essay is Quartz at /essay — see ESSAY-QUARTZ-HARD-BRIEF-2026-09-25.md. */
 export function finalizeEssayDist(outDir: string) {
   const essayDir = join(outDir, 'essay');
-  if (existsSync(essayDir)) {
-    if (!statSync(essayDir).isDirectory()) throw new Error('The site build emitted a file named essay next to essay.html.');
-    rmSync(essayDir, { recursive: true, force: true });
+  const essayIndex = join(essayDir, 'index.html');
+  if (!existsSync(essayIndex)) {
+    throw new Error('Quartz essay publication is missing: run build:essay-quartz before building the site.');
   }
-  if (existsSync(essayDir)) throw new Error('Quartz output at essay/ could not be removed.');
-  const leftover: string[] = [];
-  if (existsSync(outDir)) walkHtml(outDir, leftover);
-  const quartz = leftover.filter((file) => {
-    const rel = relative(outDir, file).split(sep).join('/');
-    return rel === 'essay' || rel.startsWith('essay/');
-  });
-  if (quartz.length) throw new Error(`Quartz HTML is still in the site build: ${quartz.join(', ')}`);
-
+  const index = readFileSync(essayIndex, 'utf8');
+  if (!/<title>[^<]+<\/title>/.test(index)) throw new Error('essay/index.html has no title.');
+  if (!index.includes('graph-container')) throw new Error('essay/index.html does not carry the Quartz graph component.');
+  if (!existsSync(join(essayDir, 'quartz-source.json'))) {
+    throw new Error('essay/quartz-source.json provenance stamp is missing.');
+  }
   const essayHtmlPath = join(outDir, 'essay.html');
-  if (!existsSync(essayHtmlPath)) throw new Error('essay.html is missing from the site build.');
-  const html = readFileSync(essayHtmlPath, 'utf8');
-  if (/http-equiv\s*=\s*["']refresh/i.test(html)) throw new Error('essay.html is a meta-refresh stub.');
-  if (/<meta\b[^>]*name=["']generator["'][^>]*quartz/i.test(html)) throw new Error('essay.html is still a Quartz page.');
-  if (!html.includes('__OI_SITE_BASE__')) throw new Error('essay.html is missing the host-base bootstrap.');
-  const catalog = join(outDir, 'essay-shell', 'catalog.json');
-  if (!existsSync(catalog)) throw new Error('essay-shell/catalog.json is missing from the site build.');
+  if (existsSync(essayHtmlPath)) {
+    throw new Error('The Plate B shell stub essay.html must not ship; remove it from the public build inputs.');
+  }
+  const catalog = join(outDir, 'essay-shell');
+  if (existsSync(catalog)) {
+    rmSync(catalog, { recursive: true, force: true });
+  }
+  const notFound = join(essayDir, '404.html');
+  if (!existsSync(notFound)) throw new Error('essay/404.html is missing from the Quartz publication.');
   mkdirSync(dirname(join(outDir, '404.html')), { recursive: true });
-  writeFileSync(join(outDir, '404.html'), html);
+  writeFileSync(join(outDir, '404.html'), readFileSync(notFound));
 }
 
 const TYPES: Record<string, string> = {

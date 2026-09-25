@@ -33,6 +33,12 @@ jobs:
         working-directory: site
     steps:
       - uses: actions/checkout@v4
+      - name: Check out the essay vault at its published ref
+        uses: actions/checkout@v4
+        with:
+          repository: EpiLogos/Antykathera-Essay-Work
+          ref: fix/publish-readiness-2026-09-24
+          path: Antykathera-Essay-Work
       - uses: actions/setup-node@v4
         with:
           node-version: 22
@@ -76,7 +82,9 @@ jobs:
           spacetime --version | tee /tmp/spacetimedb-version.txt
           grep -q '2.8.1' /tmp/spacetimedb-version.txt
       - run: npm install --no-audit --no-fund
-      - name: Verify the essay shell publication and host fallback
+      - name: Install the vendored Quartz
+        run: npm ci --prefix vendor/quartz --no-audit --no-fund
+      - name: Verify the essay publication builders and host contract
         run: node --experimental-strip-types --test essay-browser.test.mjs essay-host.test.mjs
       - name: Verify the full live Explore client build separately
         env:

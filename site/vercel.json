@@ -1,16 +1,15 @@
 {
+  "cleanUrls": true,
+  "trailingSlash": true,
+  "redirects": [
+    { "source": "/section-rooms", "destination": "/essay/section-rooms/", "permanent": true },
+    { "source": "/section-rooms/:path*", "destination": "/essay/section-rooms/:path*", "permanent": true },
+    { "source": "/symbolon", "destination": "/essay/symbolon/", "permanent": true },
+    { "source": "/symbolon/:path*", "destination": "/essay/symbolon/:path*", "permanent": true },
+    { "source": "/manuscript", "destination": "/essay/THE-RETURN-OF-ZERO", "permanent": true }
+  ],
   "rewrites": [
-    { "source": "/essay", "destination": "/essay.html" },
-    { "source": "/essay/", "destination": "/essay.html" },
-    { "source": "/section-rooms", "destination": "/essay.html" },
-    { "source": "/section-rooms/", "destination": "/essay.html" },
-    { "source": "/section-rooms/:path*", "destination": "/essay.html" },
-    { "source": "/symbolon", "destination": "/essay.html" },
-    { "source": "/symbolon/", "destination": "/essay.html" },
-    { "source": "/symbolon/:path*", "destination": "/essay.html" },
-    { "source": "/manuscript", "destination": "/essay.html" },
-    { "source": "/manuscript/", "destination": "/essay.html" },
-    { "source": "/manuscript/:path*", "destination": "/essay.html" },
-    { "source": "/essay/:path*", "destination": "/essay.html" }
+    { "source": "/essay", "destination": "/essay/" },
+    { "source": "/essay/:path*", "destination": "/essay/" }
   ]
 }
