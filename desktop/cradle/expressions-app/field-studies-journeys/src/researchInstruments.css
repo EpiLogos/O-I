@@ -88,3 +88,21 @@ body.research-active #research-hud{align-items:stretch;flex-wrap:nowrap;min-widt
 #research-inspector button,.research-street-view>header button{color:var(--ui-ink);background:var(--ui-wash);border:1px solid var(--ui-line);border-radius:5px;padding:5px 8px;font:11px var(--sans)}
 .research-street-view[hidden]{display:none}
 .research-street-view>header h3{font:12px var(--sans)}
+
+/* R3 — semantic zoom/LOD (m0m5 interactions.ts labelsForZoom), presentation
+   only: never resizes a card or an entity's own expressive body, only
+   thins what a resource card discloses at a low camera scale. Only the
+   ResourceNode's KnowledgeCard exposes stable public class names to target
+   this way; note/image cards render no such structure and are unaffected —
+   a known gap, not attempted here with fragile DOM guesses. */
+.research-canvas[data-zoom="constellation"] .knowledge-card__pith,
+.research-canvas[data-zoom="constellation"] .knowledge-card__chips,
+.research-canvas[data-zoom="constellation"] .knowledge-card__eyebrow{display:none}
+.research-canvas[data-zoom="named"] .knowledge-card__chips{display:none}
+.research-selection-count{font:11px var(--sans,inherit);opacity:.75;padding:2px 6px}
+
+/* R1 — the screen-space lasso overlay (canvasRepertoire.lassoHitScreen).
+   position:fixed so its coordinates match the getBoundingClientRect() reads
+   used for hit-testing, with no viewport/flow transform involved. */
+.research-lasso-overlay{position:fixed;inset:0;z-index:20;cursor:crosshair}
+.research-lasso-rect{position:fixed;border:1px dashed var(--ui-ink,#8ab4ff);background:rgba(138,180,255,.12);pointer-events:none}

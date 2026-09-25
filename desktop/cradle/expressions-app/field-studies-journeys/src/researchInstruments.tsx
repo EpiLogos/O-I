@@ -9,6 +9,10 @@ import type {KernelConversion} from './kernelDocumentBridge.js';
 import {techneConstellationRequest,type TechneSceneReadingRequest,type TechneConstellationRequest} from './kernelExpressions.js';
 import {nativeInstrumentCanvas,nativeInstrumentTitles,nativeInstrumentPreviews,nativeInstrumentNodeTags,nativeInstrumentSourceRelations,readingInstruments,CANVAS_UNITS,assertInstrumentReadingScope,expressionTextFromNote,type InstrumentCanvas,type NativeRelationDirectionReading} from './researchInstrumentsData.js';
 import {createGestureTransaction,withGesturePreviews,type GestureTransaction} from './canvasGesture.js';
+import {
+ positioned,lassoHitScreen,nudge,translateSelection,align as alignPositions,distribute as distributePositions,snapToGrid,
+ semanticZoomLevel,trackModifiers,type AlignMode,type RepertoireMove,
+} from './canvasRepertoire.js';
 import {RelationFieldView} from './relationFieldView.js';
 import type {TechneReading} from '../../../src/techne/contract';
 import './researchInstrumentStyles.css';
@@ -46,6 +50,22 @@ function RelateKnowledgeAction({sceneId,sourceRef,targetRef,defaultRelation,rela
  </div>;
 }
 
+/** R1 — a real rubber-band lasso, without a vendor patch. The mounted
+ * Canvas offers no viewport transform or box-select callback, but a lasso
+ * drawn in SCREEN space can be hit-tested directly against the rendered
+ * node elements' own screen rectangles (lassoHitScreen), so this needs no
+ * flow/unit conversion at all — only raw pointer coordinates. */
+function LassoOverlay({active,onComplete}:{active:boolean;onComplete:(rect:{x:number;y:number;width:number;height:number})=>void}){
+ const [drag,setDrag]=useState<{x0:number;y0:number;x1:number;y1:number}|null>(null);
+ if(!active)return null;
+ const rect=drag?{x:Math.min(drag.x0,drag.x1),y:Math.min(drag.y0,drag.y1),width:Math.abs(drag.x1-drag.x0),height:Math.abs(drag.y1-drag.y0)}:null;
+ return <div className="research-lasso-overlay"
+  onPointerDown={event=>{setDrag({x0:event.clientX,y0:event.clientY,x1:event.clientX,y1:event.clientY});event.currentTarget.setPointerCapture(event.pointerId);}}
+  onPointerMove={event=>{setDrag(current=>current?{...current,x1:event.clientX,y1:event.clientY}:current);}}
+  onPointerUp={()=>{if(rect&&(rect.width>4||rect.height>4))onComplete(rect);setDrag(null);}}>
+  {rect&&<div className="research-lasso-rect" style={{left:rect.x,top:rect.y,width:rect.width,height:rect.height}}/>}
+ </div>;
+}
 export type ResearchInstrument='m1'|'m2'|'m4';
 function ImageryPanel(props:React.ComponentProps<typeof StreetViewSurface>&{tools:HTMLElement}){
  const [open,setOpen]=useState(false),toggle=useRef<HTMLButtonElement>(null),panel=useRef<HTMLElement>(null);
@@ -68,7 +88,18 @@ export interface ResearchInstrumentsHost {
  sceneId:()=>string;
  select:(sceneId:string,entityId:string|null,bindingRef?:string)=>void;
  move:(sceneId:string,entityId:string,position:{x:number;y:number})=>Promise<void>;
+ /** OPTIONAL — a multi-select move/align/distribute/nudge is one user
+  * gesture and must land as one native write, not one per member. Declared
+  * so the host can batch it through its own single `changed()`/commit;
+  * undeclared hosts fall back to sequential `move` calls (still one
+  * gesture, but N native writes — the host should implement this). */
+ moveMany?:(sceneId:string,moves:{entityId:string;position:{x:number;y:number}}[])=>Promise<void>;
  openSubject:(ref:string)=>void;
+ /** OPTIONAL — declared for the empty-field creation path (Wayfinder §21:
+  * choosing a frame can create an incomplete working draft; creation must
+  * not be disabled when no subject/constellation exists yet). Undeclared
+  * hosts simply do not offer "New constellation" from an unbound canvas. */
+ createScene?:()=>Promise<void>;
  createNote?:(sceneId:string,position:{x:number;y:number})=>Promise<void>;
  duplicateOccurrence?:(sceneId:string,entityId:string)=>Promise<void>;
  deleteOccurrence?:(sceneId:string,entityId:string)=>Promise<void>;
@@ -111,6 +142,21 @@ interface ViewState {
   * discloses a "sequence"; this is a personal navigation aid over the
   * already-disclosed connections, cleared on reload like the draw colour. */
  sequencedEdges?:Set<string>;
+ /** M1′ direct manipulation (Wayfinder §6, §13): the multi-select set (the
+  * shift/ctrl-click extended selection; `selectedNode` above stays the
+  * single "focus" the inspector shows). `groupPreview`/`groupDragOrigin`
+  * carry an in-progress group drag's overlay positions and starting
+  * positions; `groupMoveGesture` batches the whole selection's move into
+  * ONE native write per gesture (keyed by a single synthetic id so the
+  * existing per-gesture idle/pointerup batching commits exactly once). */
+ multiSelect?:Set<string>;
+ groupDragOrigin?:Map<string,{x:number;y:number}>;
+ groupPreview?:Map<string,{x:number;y:number}>;
+ groupMoveGesture?:GestureTransaction<RepertoireMove[]>;
+ snapToGrid?:boolean;
+ lassoOn?:boolean;
+ zoomLevel?:'constellation'|'named'|'detailed';
+ zoomPoll?:ReturnType<typeof setInterval>;
 }
 class InstrumentBoundary extends Component<{children:ReactNode},{error:string|null}> {
  state={error:null as string|null};
@@ -131,8 +177,52 @@ export function installResearchInstruments(host:ResearchInstrumentsHost){
  const body=document.createElement('div');body.className='research-instrument-body';mount.append(body);host.tools.append(status);
  const message=(text:string)=>{status.textContent=text;};
  function retain(){if(currentKey&&captureCanvas){const state=views.get(currentKey);if(state)state.canvas=captureCanvas();}captureCanvas=null;}
- function disposeGestures(){for(const state of views.values()){state.moveGesture?.dispose();state.resizeGesture?.dispose();}}
+ function disposeGestures(){for(const state of views.values()){state.moveGesture?.dispose();state.resizeGesture?.dispose();state.groupMoveGesture?.dispose();if(state.zoomPoll)clearInterval(state.zoomPoll);}}
  function unmount(){retain();disposeGestures();root?.unmount();root=null;body.replaceChildren();}
+ // Multi-select repertoire (R1/R2, Wayfinder §6, §13). The vendored Canvas
+ // reports neither modifier keys on a node click nor a batched multi-node
+ // drag, so shift/ctrl-extend is tracked independently here, and a group
+ // drag is realised by translating every OTHER selected node's preview by
+ // the SAME delta the actively-dragged node reports — one coherent commit
+ // per gesture either way (see groupContext below).
+ const modifiers=trackModifiers();
+ let groupContext:{state:ViewState;canvas:InstrumentCanvas;sceneId?:string}|null=null;
+ const nudgeStep=(shift:boolean)=>shift?40:10;
+ const onWindowKeydown=(event:KeyboardEvent)=>{
+  if(destroyed||lens!=='m1'||!groupContext)return;
+  const target=event.target as HTMLElement|null;
+  if(target?.isContentEditable||target?.tagName==='INPUT'||target?.tagName==='TEXTAREA')return;
+  if(!target?.closest?.('.research-canvas'))return;
+  const axis=event.key==='ArrowLeft'?'left':event.key==='ArrowRight'?'right':event.key==='ArrowUp'?'up':event.key==='ArrowDown'?'down':null;
+  if(!axis)return;
+  const {state,canvas,sceneId}=groupContext;
+  const selection=state.multiSelect?.size?[...state.multiSelect]:state.selectedNode?[state.selectedNode]:[];
+  if(!selection.length||!sceneId)return;
+  event.preventDefault();
+  const overrides=nudge(canvas.nodes.map(node=>state.groupPreview?.get(node.id)?{...node,position:state.groupPreview.get(node.id)!}:node),selection,axis,nudgeStep(event.shiftKey));
+  applyGroupOverrides(state,canvas,sceneId,overrides);
+ };
+ window.addEventListener('keydown',onWindowKeydown);
+ /** Preview every override immediately (one redraw) and batch the whole
+  * selection into ONE gesture-transaction id, so N nudges/drags/aligns in a
+  * row still land as exactly one native write when the gesture settles. */
+ function applyGroupOverrides(state:ViewState,canvas:InstrumentCanvas,sceneId:string,overrides:Record<string,{x:number;y:number}>){
+  if(!Object.keys(overrides).length)return;
+  state.groupPreview??=new Map();
+  for(const [ref,position] of Object.entries(overrides))state.groupPreview.set(ref,position);
+  state.groupMoveGesture??=createGestureTransaction<RepertoireMove[]>({
+   commit:async(_key,moves)=>{
+    const converted=moves.map(m=>({entityId:m.entityId,position:{x:m.position.x/CANVAS_UNITS,y:-m.position.y/CANVAS_UNITS}}));
+    if(host.moveMany)await host.moveMany(sceneId,converted);
+    else for(const mv of converted)await host.move(sceneId,mv.entityId,mv.position);
+   },
+   onChange:()=>{state.groupPreview=undefined;if(currentKey===canvas.key&&lens==='m1'&&!destroyed)render(canvasNode(canvas,state,epoch));},
+  });
+  const occurrence=(id:string)=>canvas.occurrences.get(id)??id;
+  const moves:RepertoireMove[]=[...state.groupPreview.entries()].map(([ref,position])=>({entityId:occurrence(ref),position}));
+  state.groupMoveGesture.preview('__group__',moves);
+  if(currentKey===canvas.key&&lens==='m1'&&!destroyed)render(canvasNode(canvas,state,epoch));
+ }
  function stateFor(key:string){let state=views.get(key);if(!state){state={};views.set(key,state);if(views.size>32)views.delete(views.keys().next().value!);}currentKey=key;return state;}
  function render(node:ReactNode){root??=createRoot(body);root.render(<InstrumentBoundary>{node}</InstrumentBoundary>);}
  let relationReadings:NativeRelationDirectionReading[]=[];
@@ -141,6 +231,8 @@ export function installResearchInstruments(host:ResearchInstrumentsHost){
   const editable=!!canvas.sceneId;
   const scene=canvas.sceneId?host.sceneMaterial(canvas.sceneId):undefined;
   const material=scene?.research;
+  groupContext=editable?{state,canvas,sceneId:canvas.sceneId}:null;
+  const selection=state.multiSelect?.size?state.multiSelect:new Set(state.selectedNode?[state.selectedNode]:[]);
   const apply=(action:()=>Promise<void>,refresh=true)=>{
    const key=canvas.key;message('Saving…');
    mutations=mutations.catch(()=>{}).then(async()=>{
@@ -182,8 +274,59 @@ export function installResearchInstruments(host:ResearchInstrumentsHost){
    commit:(id,size)=>state.resizeAdapter!.commit(id,size),
    onChange:()=>state.resizeAdapter!.onChange(),
   });
-  const previewNodes=withGesturePreviews(canvas.nodes,id=>state.moveGesture?.previewValue(id),id=>state.resizeGesture?.previewValue(id));
+  const previewNodes=withGesturePreviews(canvas.nodes,id=>state.groupPreview?.get(id)??state.moveGesture?.previewValue(id),id=>state.resizeGesture?.previewValue(id));
   const previewEdges=canvas.edges.map(edge=>state.sequencedEdges?.has(edge.id)?{...edge,sequencing:true}:edge);
+  // R1 — shift/ctrl-click extends the multi-select; a plain click replaces
+  // it. The vendored Canvas reports no modifier state itself (trackModifiers
+  // reads it independently), so this is the one seam that decides extend
+  // vs. replace for every click the Canvas reports.
+  const selectMulti=(id:string|null)=>{
+   if(id&&(modifiers.state.shift||modifiers.state.extend)){
+    state.multiSelect??=new Set(state.selectedNode?[state.selectedNode]:[]);
+    if(state.multiSelect.has(id))state.multiSelect.delete(id);else state.multiSelect.add(id);
+    select(state.multiSelect.size?[...state.multiSelect][state.multiSelect.size-1]:null);
+    return;
+   }
+   state.multiSelect=id?new Set([id]):new Set();
+   select(id);
+  };
+  // R1 — a group drag: the dragged node's own delta (from its last known
+  // committed position) is applied to every OTHER selected node's preview.
+  // One `groupMoveGesture` batches the whole selection into ONE commit
+  // (applyGroupOverrides), same as a keyboard nudge or an align/distribute.
+  const groupMove=(id:string,position:{x:number;y:number})=>{
+   if(!canvas.sceneId||!selection.has(id)||selection.size<2){state.moveGesture!.preview(id,position);return;}
+   state.groupDragOrigin??=new Map(canvas.nodes.filter(n=>selection.has(n.id)).map(n=>[n.id,{...n.position}]));
+   const origin=state.groupDragOrigin.get(id);if(!origin)return;
+   const delta={x:position.x-origin.x,y:position.y-origin.y};
+   const overrides:Record<string,{x:number;y:number}>={};
+   for(const ref of selection){
+    const base=state.groupDragOrigin.get(ref);if(!base)continue;
+    overrides[ref]=ref===id?position:{x:base.x+delta.x,y:base.y+delta.y};
+   }
+   applyGroupOverrides(state,canvas,canvas.sceneId,overrides);
+  };
+  const alignSelection=(mode:AlignMode)=>{if(!canvas.sceneId||selection.size<2)return;applyGroupOverrides(state,canvas,canvas.sceneId,alignPositions(canvas.nodes,[...selection],mode));};
+  const distributeSelection=(axis:'h'|'v')=>{if(!canvas.sceneId||selection.size<3)return;applyGroupOverrides(state,canvas,canvas.sceneId,distributePositions(canvas.nodes,[...selection],axis));};
+  const frames=material?.frames??{};
+  const framesOrdered=Object.entries(frames).sort(([,a],[,b])=>a.z-b.z);
+  // A frame's members are selected here, not dragged by a titlebar: the
+  // mounted Canvas exposes no viewport transform to this module, so a
+  // screen-accurate frame rectangle cannot be drawn over live pan/zoom
+  // (same root cause as the R3/R1 gaps below). Selecting its membership and
+  // dragging any member still moves the whole frame as ONE gesture, via the
+  // same groupMove/applyGroupOverrides path multi-select already uses.
+  const saveFrame=()=>{if(selection.size<2)return;act({type:'frame-save',id:crypto.randomUUID(),label:`Frame ${framesOrdered.length+1}`,memberRefs:[...selection].map(occurrence)});};
+  const namedViews=material?.namedViews??{};
+  const saveView=()=>{if(!canvas.sceneId||!captureCanvas)return;const name=window.prompt('Name this view');if(!name)return;const viewport=captureCanvas();act({type:'view-save',name,viewport:{x:viewport.x,y:viewport.y,zoom:viewport.zoom},selectedRefs:[...selection].map(occurrence),frameOrder:framesOrdered.map(([id])=>id)},false);};
+  const applyView=(name:string)=>{const view=namedViews[name];if(!view)return;flyToNode?.('',{x:view.viewport.x,y:view.viewport.y,zoom:view.viewport.zoom});state.multiSelect=new Set(view.selectedRefs.map(ref=>canvas.nodes.find(n=>occurrence(n.id)===ref)?.id).filter((v):v is string=>!!v));select(state.multiSelect.size?[...state.multiSelect][0]:null);message(`View "${name}" applied`);};
+  const lassoComplete=(rect:{x:number;y:number;width:number;height:number})=>{
+   const nodeRects=[...mount.querySelectorAll<HTMLElement>('.react-flow__node[data-id]')].map(el=>{const box=el.getBoundingClientRect();return {id:el.getAttribute('data-id')!,rect:{x:box.left,y:box.top,width:box.width,height:box.height}};});
+   const hits=lassoHitScreen(nodeRects,rect);
+   state.multiSelect=new Set(hits);state.lassoOn=false;
+   select(hits[0]??null);
+   redraw();
+  };
   const current=canvas.nodes.find(n=>n.id===state.selectedNode);
   const localId=current?canvas.occurrences.get(current.id):undefined;
   const nativeView=host.nativeView(),nativeScene=canvas.sceneId?nativeView?.bindings[canvas.sceneId]?.scene_ref:undefined;
@@ -196,7 +339,19 @@ export function installResearchInstruments(host:ResearchInstrumentsHost){
    {editable&&<><button onClick={()=>act({type:'create-card',kind:'note',position:{x:0,y:0}})}>Note</button><button onClick={imageImport}>Image</button>
    <select aria-label="Focus disclosed source" value="" onChange={event=>{const ref=event.target.value;const source=canvas.nodes.find(node=>node.id===ref);if(!source||!canvas.occurrences.has(ref)||!host.nativeView()?.document.entities[ref]?.subject)return;select(ref);flyToNode?.(ref);redraw();}}><option value="">Source…</option>{canvas.nodes.filter(node=>host.nativeView()?.document.entities[node.id]?.subject).map(node=><option key={node.id} value={node.id}>{node.title}</option>)}</select>
    <button aria-pressed={drawing} onClick={()=>{drawing=!drawing;redraw();}}>Draw</button>{drawing&&<input type="color" aria-label="Stroke colour" value={strokeColour} onChange={e=>{strokeColour=e.target.value;redraw();}}/>}
-   <button onClick={()=>{if(captureCanvas)act({type:'viewport',key:'canvas',value:captureCanvas()},false);}}>Save view</button></>}
+   <button onClick={()=>{if(captureCanvas)act({type:'viewport',key:'canvas',value:captureCanvas()},false);}}>Save view</button>
+   {selection.size>0&&<span className="research-selection-count" aria-live="polite">{selection.size} selected</span>}
+   {selection.size>=2&&<select aria-label="Align selection" value="" onChange={event=>{const mode=event.target.value as AlignMode;if(mode)alignSelection(mode);event.target.value='';}}>
+    <option value="">Align…</option><option value="left">Left</option><option value="hcenter">Centre</option><option value="right">Right</option><option value="top">Top</option><option value="vcenter">Middle</option><option value="bottom">Bottom</option></select>}
+   {selection.size>=3&&<><button onClick={()=>distributeSelection('h')}>Distribute ↔</button><button onClick={()=>distributeSelection('v')}>Distribute ↕</button></>}
+   <button aria-pressed={!!state.snapToGrid} onClick={()=>{state.snapToGrid=!state.snapToGrid;redraw();}}>Snap</button>
+   <button aria-pressed={!!state.lassoOn} onClick={()=>{state.lassoOn=!state.lassoOn;redraw();}}>Lasso</button>
+   {selection.size>=2&&<button onClick={saveFrame}>Frame selection</button>}
+   {framesOrdered.length>0&&<select aria-label="Frames" value="" onChange={event=>{const [op,id]=event.target.value.split(':');if(op==='select'){const frame=frames[id];if(frame){state.multiSelect=new Set(frame.memberRefs.map(ref=>[...canvas.occurrences.entries()].find(([,v])=>v===ref)?.[0]).filter((v):v is string=>!!v));select([...state.multiSelect][0]??null);}}if(op==='front')act({type:'frame-order',id,direction:'front'},false);if(op==='back')act({type:'frame-order',id,direction:'back'},false);if(op==='remove')act({type:'frame-remove',id},false);event.target.value='';}}>
+    <option value="">Frames…</option>{framesOrdered.map(([id,frame])=><optgroup key={id} label={frame.label}><option value={`select:${id}`}>Select members</option><option value={`front:${id}`}>Bring to front</option><option value={`back:${id}`}>Send to back</option><option value={`remove:${id}`}>Remove frame</option></optgroup>)}</select>}
+   <button onClick={saveView}>Save view as…</button>
+   {Object.keys(namedViews).length>0&&<select aria-label="Saved views" value="" onChange={event=>{const [op,name]=event.target.value.split('\u0000');if(op==='apply')applyView(name);if(op==='remove')act({type:'view-remove',name},false);event.target.value='';}}>
+    <option value="">Views…</option>{Object.keys(namedViews).map(name=><optgroup key={name} label={name}><option value={`apply\u0000${name}`}>Apply</option><option value={`remove\u0000${name}`}>Remove</option></optgroup>)}</select>}</>}
    {constellationRequest&&<ConstellationAction request={constellationRequest} onError={message}/>}
    {editable&&host.editObject&&current&&localId&&<button aria-label="Edit object" title="Edit object" onClick={()=>host.editObject!(canvas.sceneId!,localId)}>✎</button>}
    <button aria-label="Toggle canvas inspector" aria-pressed={inspecting} onClick={()=>{inspecting=!inspecting;host.inspector.hidden=!inspecting;redraw();}}>Inspector</button>
@@ -217,7 +372,7 @@ export function installResearchInstruments(host:ResearchInstrumentsHost){
    {relateEndpoints?.from&&relateEndpoints.to&&<RelateKnowledgeAction sceneId={canvas.sceneId!} sourceRef={relateEndpoints.from} targetRef={relateEndpoints.to} defaultRelation={selectedEdgeObj!.relationKind} relate={host.relateKnowledge!} onError={message} onResult={message}/>}
    {editable&&(material?.strokes??[]).map((stroke,i)=><button key={stroke.id} onClick={()=>act({type:'annotation-remove',id:stroke.id})}>Remove annotation {i+1}</button>)}
   </div>;
-  return <>{createPortal(controls,host.tools)}{inspecting&&createPortal(inspector,host.inspector)}<div className={`research-canvas ${editable?'research-canvas-native':'research-canvas-reading'}`}>
+  return <>{createPortal(controls,host.tools)}{inspecting&&createPortal(inspector,host.inspector)}<div className={`research-canvas ${editable?'research-canvas-native':'research-canvas-reading'}`} data-zoom={state.zoomLevel}>
    <CanvasView toolbarContainer={host.tools} canvasKey={canvas.key} initialViewport={state.canvas??material?.views.canvas} nodes={previewNodes} edges={previewEdges}
     selectedNodeId={state.selectedNode} selectedEdgeId={state.selectedEdge}
     readOnly={!editable}
@@ -254,11 +409,15 @@ export function installResearchInstruments(host:ResearchInstrumentsHost){
      for(let step=0;step<active.length;step++){const exit=active.find(e=>e.sourceNodeId===at&&!visited.has(e.targetNodeId));if(!exit)break;path.push(exit.targetNodeId);visited.add(exit.targetNodeId);at=exit.targetNodeId;}
      path.forEach((id,index)=>setTimeout(()=>flyToNode?.(id),index*900));
     }:undefined}
-    onSelectNode={id=>{select(id);redraw();}}
+    onSelectNode={id=>{selectMulti(id);redraw();}}
     onSelectEdge={id=>{state.selectedEdge=id;state.selectedNode=null;if(canvas.sceneId)host.select(canvas.sceneId,null,id??undefined);if(id)flyToEdge?.(id);redraw();}}
     onNodeDoubleClick={id=>{const view=host.nativeView(),node=canvas.nodes.find(n=>n.id===id);const subject=node?.type==='resource'?node.absolutePath:view?.document.entities[id]?.subject?.subject_ref;if(subject)host.inspectSubject(subject);else{select(id);inspecting=true;host.inspector.hidden=false;redraw();}}}
-    onMoveNode={editable?(id,position)=>state.moveGesture!.preview(id,position):undefined}
+    onMoveNode={editable?(id,position)=>{
+     const snapped=state.snapToGrid?snapToGrid(position,CANVAS_UNITS/4,CANVAS_UNITS/16):position;
+     groupMove(id,snapped);
+    }:undefined}
     onRegisterCaptureViewport={capture=>{captureCanvas=capture;}} />
+   {editable&&<LassoOverlay active={!!state.lassoOn} onComplete={lassoComplete}/>}
   </div></>;
  }
  async function load(selected:ResearchInstrument){
@@ -273,12 +432,37 @@ export function installResearchInstruments(host:ResearchInstrumentsHost){
     state.selectedEdge=focus?.scene_ref===view.bindings[sceneId].scene_ref?focus.relation_ref??null:null;
     message(canvas.hiddenCount?`${canvas.title} · ${canvas.hiddenCount} further members on other Scene pages`:canvas.title);
     render(canvasNode(canvas,state,generation));
+    // R3 — semantic zoom/LOD is presentational only and never touches
+    // entity/card size (interactions.ts semanticZoomLevel/labelsForZoom).
+    // The vendored Canvas exposes no live viewport-change callback, only a
+    // pull-based captureCanvas() (a real getViewport() read); this polls it
+    // so the disclosed label density stays live with pan/zoom without
+    // touching vendor files.
+    if(!state.zoomPoll)state.zoomPoll=setInterval(()=>{
+     if(destroyed||currentKey!==canvas.key||!captureCanvas||lens!=='m1')return;
+     const level=semanticZoomLevel(captureCanvas().zoom);
+     if(level!==state.zoomLevel){state.zoomLevel=level;render(canvasNode(canvas,state,generation));}
+    },400);
     if(canvas.edges.some(edge=>view.document.relations?.[edge.id]?.native_owner!=='oi'))void host.read({expression_ref:view.document.expression_ref,revision:view.document.revision,scene_ref:view.bindings[sceneId].scene_ref,facet:'relation-semantics'}).then(raw=>{
      if(epoch!==generation||destroyed||!sameBasis())return;
      const result=raw as {schema?:string;expression_ref?:string;revision?:number;scene_ref?:string;relation_readings?:NativeRelationDirectionReading[]};
      if(result.schema!=='oi.scene-relation-readings/v1'||result.expression_ref!==view.document.expression_ref||result.revision!==view.document.revision||result.scene_ref!==view.bindings[sceneId].scene_ref||!Array.isArray(result.relation_readings))throw new Error('The source direction reading returned another native Scene');
      relationReadings=result.relation_readings;render(canvasNode(nativeCanvas(view,sceneId),state,generation));
     }).catch(error=>{if(epoch===generation&&!destroyed&&sameBasis())message(error instanceof Error?error.message:String(error));});
+    return;
+   }
+   // R6 (Wayfinder §21) — "choosing a frame can create an incomplete
+   // working draft"; creation must not be disabled just because no native
+   // Scene is open yet. An unbound m1 canvas offers the one eligible
+   // creation act it can reach from here (host.createScene, if the host
+   // declares it) instead of only a dead-end refusal message.
+   if(selected==='m1'&&!view){
+    message('Open a native Scene to disclose its own sources');
+    render(<div className="research-instrument-message" role="status">
+     <p>No native Scene is open in this composition yet.</p>
+     {host.createScene?<button onClick={()=>{message('Creating…');void host.createScene!().then(()=>load('m1'),error=>message(error instanceof Error?error.message:String(error)));}}>New constellation</button>
+      :<p>This host does not yet offer construction from an empty canvas.</p>}
+    </div>);
     return;
    }
    const binding=view?.bindings[sceneId];
@@ -363,7 +547,7 @@ export function installResearchInstruments(host:ResearchInstrumentsHost){
   async open(selected:ResearchInstrument){if(destroyed)throw new Error('Research instrument workspace is closed');lens=selected;await load(selected);},
   close(){++epoch;lens=null;unmount();mount.hidden=true;},
   async refresh(){if(materialInFlight){deferredRefresh=true;return;}if(lens)await load(lens);},
-  destroy(){++epoch;lens=null;destroyed=true;unmount();mount.remove();status.remove();views.clear();},
+  destroy(){++epoch;lens=null;destroyed=true;unmount();mount.remove();status.remove();views.clear();window.removeEventListener('keydown',onWindowKeydown);modifiers.dispose();},
   active(){return lens;},
  };
 }

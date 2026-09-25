@@ -14,10 +14,19 @@ export interface ResearchCard {
 }
 export interface ResearchViewport {x:number;y:number;zoom:number}
 export interface ResearchStroke {id:string;points:{x:number;y:number;pressure?:number}[];color:string;width:number;opacity:number;createdAt:string}
+/** A presentation-only visual grouping over existing occurrence ids — never
+ * a membership/semantic record. `z` orders overlapping frames for drawing
+ * (bring-to-front / send-to-back are presentation state, nothing else). */
+export interface ResearchFrame {label:string;memberRefs:string[];z:number}
+/** A named saved view: camera + the presentation state a person would
+ * expect a "view" to restore — which cards were selected and which frame
+ * sits on top. Never a second copy of graph material. */
+export interface ResearchNamedView {viewport:ResearchViewport;selectedRefs:string[];frameOrder:string[]}
 export interface ResearchMaterial {
  schema:'oi.research-scene/v1';cards:Record<string,ResearchCard>;strokes:ResearchStroke[];
 
  views:Record<string,ResearchViewport>; timeline:Record<string,{offsetY:number;width?:number;height?:number;lane?:string;layoutRevision?:number}>;
+ frames:Record<string,ResearchFrame>; namedViews:Record<string,ResearchNamedView>;
 }
 export type ResearchMaterialAction =
  | {type:'resize';id:string;width:number;height:number}
@@ -29,7 +38,12 @@ export type ResearchMaterialAction =
  | {type:'annotation-add';stroke:ResearchStroke}
  | {type:'annotation-remove';id:string}
  | {type:'viewport';key:string;value:ResearchViewport}
- | {type:'timeline-layout';id:string;value:ResearchMaterial['timeline'][string];expectedRevision:number|null};
+ | {type:'timeline-layout';id:string;value:ResearchMaterial['timeline'][string];expectedRevision:number|null}
+ | {type:'frame-save';id:string;label:string;memberRefs:string[]}
+ | {type:'frame-remove';id:string}
+ | {type:'frame-order';id:string;direction:'front'|'back'}
+ | {type:'view-save';name:string;viewport:ResearchViewport;selectedRefs:string[];frameOrder:string[]}
+ | {type:'view-remove';name:string};
 const color=(value:unknown)=>typeof value==='string'&&/^#[0-9a-f]{6}([0-9a-f]{2})?$/i.test(value);
 const finite=(v:unknown,low:number,high:number)=>typeof v==='number'&&Number.isFinite(v)&&v>=low&&v<=high;
 const text=(v:unknown,max=4096)=>typeof v==='string'&&v.length<=max;
@@ -51,13 +65,40 @@ export function validateResearchContent(content:string):void {
   }else require(v===null||typeof v==='boolean'||typeof v==='string'||typeof v==='number'&&Number.isFinite(v),'Invalid note value');
  };inspect(blocks);
 }
-export function emptyResearchMaterial():ResearchMaterial{return {schema:'oi.research-scene/v1',cards:{},strokes:[],views:{},timeline:{}};}
-export function pruneResearchOccurrence(scene:Scene,id:string):void {if(!scene.research)return;delete scene.research.cards[id];}
+export function emptyResearchMaterial():ResearchMaterial{return {schema:'oi.research-scene/v1',cards:{},strokes:[],views:{},timeline:{},frames:{},namedViews:{}};}
+export function pruneResearchOccurrence(scene:Scene,id:string):void {
+ if(!scene.research)return;delete scene.research.cards[id];
+ // A removed occurrence can neither remain frame membership nor be
+ // addressed by a saved view's selection — both are ref-carrying
+ // presentation state over occurrences that still exist. Research material
+ // saved before frames/named views existed carries neither field.
+ const frames=scene.research.frames??={};const namedViews=scene.research.namedViews??={};
+ for(const frame of Object.values(frames))frame.memberRefs=frame.memberRefs.filter(ref=>ref!==id);
+ for(const key of Object.keys(frames))if(!frames[key].memberRefs.length)delete frames[key];
+ for(const view of Object.values(namedViews))view.selectedRefs=view.selectedRefs.filter(ref=>ref!==id);
+}
 export function validateResearchMaterial(value:unknown,ids:ReadonlySet<string>):asserts value is ResearchMaterial {
- require(object(value),'Research material must be an object');keys(value,['schema','cards','strokes','views','timeline']);
+ require(object(value),'Research material must be an object');keys(value,['schema','cards','strokes','views','timeline','frames','namedViews']);
  require(value.schema==='oi.research-scene/v1','Unsupported research material');
  require(new TextEncoder().encode(JSON.stringify(value)).length<=262144,'Research material exceeds 256 KiB');
  for(const key of ['cards','views','timeline'])require(object(value[key])&&Object.keys(value[key]).length<=(key==='views'?16:256),'Research record count exceeds its bound');
+ // Backward-compatible: research material persisted before frames/named
+ // views existed carries neither field. Absent is valid (treated as empty);
+ // present is validated strictly like every other record collection.
+ if(value.frames!==undefined)require(object(value.frames)&&Object.keys(value.frames).length<=64,'Research frame count exceeds its bound');
+ if(value.namedViews!==undefined)require(object(value.namedViews)&&Object.keys(value.namedViews).length<=32,'Research named view count exceeds its bound');
+ for(const [,frame] of Object.entries(value.frames??{}) as [string,{label?:unknown;memberRefs?:unknown;z?:unknown}][]){
+  require(object(frame),'Invalid frame');keys(frame,['label','memberRefs','z']);
+  require(text(frame.label,160)&&!!frame.label,'Invalid frame label');
+  require(Array.isArray(frame.memberRefs)&&frame.memberRefs.length>=1&&frame.memberRefs.length<=64&&frame.memberRefs.every(ref=>typeof ref==='string'&&ids.has(ref)),'Invalid frame membership');
+  require(Number.isInteger(frame.z),'Invalid frame order');
+ }
+ for(const [,view] of Object.entries(value.namedViews??{}) as [string,{viewport?:unknown;selectedRefs?:unknown;frameOrder?:unknown}][]){
+  require(object(view),'Invalid named view');keys(view,['viewport','selectedRefs','frameOrder']);
+  validateViewport(view.viewport);
+  require(Array.isArray(view.selectedRefs)&&view.selectedRefs.length<=64&&view.selectedRefs.every(ref=>typeof ref==='string'),'Invalid view selection');
+  require(Array.isArray(view.frameOrder)&&view.frameOrder.length<=64&&view.frameOrder.every(ref=>typeof ref==='string'),'Invalid view frame order');
+ }
  for(const [id,card] of Object.entries(value.cards) as [string,ResearchCard][]){
   require(ids.has(id)&&object(card),'Research card must address an existing occurrence');
   keys(card,['type','importedAt','content','caption','color','dotColour','bgColour','textColour','size']);
@@ -78,6 +119,10 @@ function validateViewport(v:unknown):void{require(object(v),'Invalid research vi
  * composition CAS. Validate before replacing so a refusal leaves it intact. */
 export function applyResearchMaterial(scene:Scene,action:ResearchMaterialAction):void {
  const next=clone(scene);const research=next.research??=emptyResearchMaterial();
+ // Research material saved before frames/named views existed carries
+ // neither field; backfill on first write so every action below can assume
+ // both are present, matching every other record collection here.
+ research.frames??={};research.namedViews??={};
  const target=(id:string)=>{const found=next.entities.find(e=>e.id===id);require(found&&!found.locked,'Occurrence is missing or locked');return found;};
  // Presentation metadata must not manufacture a local note body over a
  // source-bound occurrence. Only explicit note creation/content owns content.
@@ -96,6 +141,38 @@ export function applyResearchMaterial(scene:Scene,action:ResearchMaterialAction)
  case 'annotation-remove':research.strokes=research.strokes.filter(s=>s.id!==action.id);break;
  case 'viewport':research.views[action.key]=clone(action.value);break;
  case 'timeline-layout':{const previous=research.timeline[action.id];require(action.expectedRevision===(previous?.layoutRevision??null),'Timeline layout changed; reload before editing again');research.timeline[action.id]={...clone(action.value),layoutRevision:(previous?.layoutRevision??0)+1};break;}
+ // A frame is a presentation grouping over existing occurrence ids — never
+ // a constellation-membership change (that is the native owner's business
+ // through its own explicit Action). Re-saving an existing frame id keeps
+ // its current z so re-labelling or re-grouping never silently re-orders it.
+ case 'frame-save':{
+  require(text(action.label,160)&&!!action.label.trim(),'Invalid frame label');
+  require(Array.isArray(action.memberRefs)&&action.memberRefs.length>=1&&action.memberRefs.length<=64,'A frame needs at least one member');
+  const members=[...new Set(action.memberRefs)];
+  for(const ref of members)require(next.entities.some(e=>e.id===ref),'Frame member is missing');
+  const existing=research.frames[action.id];
+  research.frames[action.id]={label:action.label,memberRefs:members,z:existing?.z??Object.keys(research.frames).length};
+  break;
+ }
+ case 'frame-remove':delete research.frames[action.id];break;
+ case 'frame-order':{
+  const frame=research.frames[action.id];require(frame,'Frame is missing');
+  const others=Object.entries(research.frames).filter(([id])=>id!==action.id).map(([,f])=>f.z);
+  frame.z=action.direction==='front'?(others.length?Math.max(...others):frame.z)+1:(others.length?Math.min(...others):frame.z)-1;
+  break;
+ }
+ // A saved view restores camera plus the presentation state a person would
+ // expect it to: which cards were selected, and which frame sits on top —
+ // never a second copy of graph material.
+ case 'view-save':{
+  require(text(action.name,160)&&!!action.name.trim(),'Invalid view name');
+  validateViewport(action.viewport);
+  require(Array.isArray(action.selectedRefs)&&action.selectedRefs.length<=64&&action.selectedRefs.every(ref=>typeof ref==='string'),'Invalid view selection');
+  require(Array.isArray(action.frameOrder)&&action.frameOrder.length<=64&&action.frameOrder.every(ref=>typeof ref==='string'),'Invalid view frame order');
+  research.namedViews[action.name]={viewport:clone(action.viewport),selectedRefs:[...action.selectedRefs],frameOrder:[...action.frameOrder]};
+  break;
+ }
+ case 'view-remove':delete research.namedViews[action.name];break;
  }
  require(next.entities.length<=32,'Scene authoring occurrence limit reached');
  validateResearchMaterial(research,new Set(next.entities.map(e=>e.id)));
