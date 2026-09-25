@@ -113,6 +113,21 @@ export default async function run({page, baseUrl, check, shot, channel, log, pro
   const after = await centre.locator(".fdesk").evaluate(node => node.scrollTop);
   const afterTop = await centre.locator(`.fdesk [data-run-card="${A.runRef}"]`).evaluate(node => node.getBoundingClientRect().top);
   check(scrollable > 0 && before > 0 && near(before, after) && near(beforeTop, afterTop), "← Desk returns to the same scroll: scrollTop and the card's top equal before/after (±0.5px)", {scrollable, before, after, beforeTop, afterTop});
+  // Regression (owner report 2026-09-17, first guarded in mode-workspaces): a
+  // Factory jump called scrollIntoView, which scrolled the SHELL — the app slid
+  // up, the footer row jammed into view and the head was covered. With the
+  // board below the fold the wheel and an in-surface jump really have to
+  // scroll, and must land in a scroll owner inside the Factory stage only.
+  await desk.hover(); await page.mouse.wheel(0, 600); await page.waitForTimeout(150);
+  await desk.evaluate(node => node.lastElementChild?.scrollIntoView({block: "end"})); await page.waitForTimeout(150);
+  const scrolls = await page.evaluate(() => {
+    const stage = document.querySelector('.mode-stage[data-mode="factory"]');
+    const structural = [document.scrollingElement, document.body, document.getElementById("root"), ...document.querySelectorAll(".desktop-shell,.desktop-regions,.desktop-centre")];
+    return {scrolled: structural.filter(node => node && (node.scrollTop !== 0 || node.scrollLeft !== 0)).map(node => node.className || node.tagName), shell: document.querySelector(".desktop-shell").getBoundingClientRect().top, owners: [stage, ...(stage ? stage.querySelectorAll("*") : [])].filter(node => node.scrollTop > 0).map(node => node.className)};
+  });
+  check(scrolls.scrolled.length === 0 && scrolls.shell === 0 && scrolls.owners.length > 0, "Scrolling the Desk — wheel or an in-surface jump — moves a scroll owner inside the Factory stage alone; the shell and structural boxes never move", scrolls);
+  await desk.evaluate(node => { node.scrollTop = 0; }); await page.waitForTimeout(150);
+  check(await page.evaluate(() => { const head = document.querySelector('.mode-stage[data-mode="factory"] .fdesk-head'); const box = head.getBoundingClientRect(); const hit = document.elementFromPoint(box.left + 40, box.top + 2); return box.height >= 20 && !!hit && head.contains(hit); }), "The Desk head stands visible and hittable from its top edge after the scrolls — nothing clips it");
   await page.setViewportSize({width: 1280, height: 820});
 
   // No polling: an idle minute of the board sends no owner read.
