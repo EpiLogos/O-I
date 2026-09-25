@@ -601,3 +601,20 @@ Installed `~/Applications/O-I.app` from `94ad7c54` (PR #519 + main; CI 28/28). T
 - C2 Selected-object editing through the Studio from Canvas (existing binding), drag = one save on release (existing), recorded relation appears as a relation (existing writer).
 
 **V — verification in the installed app** (screenshots): tree and "+" creation in a real Project; Canvas drag/select/Edit object/live preview; draw + record relationship; Journey, Places, Palace, Library, verso; save → quit → relaunch → reopen.
+
+### Repair progress — 25 September (installed walks)
+
+Installed builds from this branch (`oi desktop install --bundle`, BUNDLE.json source revision recorded): `b4a41410`, `54f7d5b8`, then the current head. Walks use the installed binary against the real ground and, for constellation work, against the synthetic 192-member dataset (`tests/prepare-timeline-native-stress.mjs`, own `OI_CENTRAL_ROOT`/`AIKIT_HOME`), never the owner's wiki.
+
+| Map item | State | Evidence |
+|---|---|---|
+| H1–H5 one HUD | Done: masthead in every lens; chooser in its centre; instrument tools in the rail; `#research-hud`, `#lens-studio`, `#native-work`, `#techne-world` deleted; Save in masthead + ⌘S | `tests/techne-lens-studio-browser.mjs` (one-HUD assertions); installed screenshots |
+| H6 Studio sections | Blueprint, Palace, Places, Canvas views live in the existing Studio | installed walk (Palace); unit + browser tests |
+| H7 node/connection card | Follows selection; relate action on connection | source contract test; installed walk pending |
+| N1 one tree | Done; members collapse by default with bounded reveal | `techne-navigator-tree.test.mjs` 12/12; installed screenshot |
+| N2 Project “+” | Creates natively in the real Project (O-I wiki `wiki:frame:545f3f5d…`); open-after-create race fixed (`54f7d5b8`) | installed walk; wiki readback |
+| N3 relations state | Quiet per-register state | installed |
+| §36 scale | Document semantic bound 2048 / 8 MiB, separate from list guards; tree counts truthful (192) | `kernel/tests/expression.rs` 300-member Scene through native edits |
+| Library | Reused original collections page, no HUD over it | installed screenshots |
+
+Known boundary (owner-assigned elsewhere): every `aikit knowledge` call costs ~18–23 s (GitNexus CLI re-probed per project per call; indexes rebuilt per call). Relations reads time out at the kernel's 20 s cap and the QL authoring forms (frame chooser) never arrive. Diagnosis and a probe memoisation are on ai-kit branch `perf/knowledge-provider-probe-memo-20260925` in `worktrees/env-2/ai-kit`, handed to the env-2 worker.
