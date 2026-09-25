@@ -116,9 +116,26 @@ export function readAuthoringForms(value: unknown): AuthoringForm[] {
   if (!object(value) || value.schema !== 'aikit.ql-authoring-forms/v1' || !Array.isArray(value.forms)) return [];
   return value.forms.filter((item): item is AuthoringForm => validNativeFrame(item) && ref((item as AuthoringForm).id) && ref((item as AuthoringForm).label));
 }
+/** The graph op (unlike `knowledge()`) never participates in the kernel's
+ * read-ticket law — it cannot be "superseded" — but the native AIKit
+ * resolution it assembles from can still come back genuinely transiently
+ * unavailable (owner contention with the register/source reads a
+ * construction mount fires alongside it) without the graph op itself
+ * erroring: `inputs.aikit_resolution.state` reports it honestly instead of
+ * throwing. A caller that only reacted to a thrown rejection would silently
+ * drop QL frames — the Frame select falling back to "Open arrangement" with
+ * no notice and no way to try again. Retry a small, bounded number of times
+ * (never infinite; each retry forces `fresh` so a transient owner refusal is
+ * never cached over) before genuinely giving up. */
+const AUTHORING_FORMS_ATTEMPTS = 3;
 export async function authoringForms(transport: KernelTransportStatus, project?: string): Promise<AuthoringForm[]> {
-  const graph = await readGraph(transport, project, '', {input: 'aikit_resolution'});
-  return readAuthoringForms((graph as unknown as Record<string, unknown>).shape_catalog);
+  let detail: string | undefined;
+  for (let attempt = 0; attempt < AUTHORING_FORMS_ATTEMPTS; attempt++) {
+    const graph = await readGraph(transport, project, '', {input: 'aikit_resolution', fresh: attempt > 0});
+    if (graph.inputs.aikit_resolution.state === 'available') return readAuthoringForms(graph.shape_catalog);
+    detail = graph.inputs.aikit_resolution.detail;
+  }
+  throw new Error(detail ?? 'QL authoring forms are unavailable from this owner.');
 }
 export function nativeFrame(form: AuthoringForm): NativeFrame {
   const {shape_ref, contract_ref, roles, provenance, standing} = form;
