@@ -31,3 +31,6 @@
 .places-home>:is(.psychogeographic-toolbar,.street-view-toolbar,.research-tool-actions),.places-home div[style*="position"]{position:static!important;display:flex;flex-wrap:wrap;gap:6px;margin:0 0 10px;padding:0;background:none!important;border:0!important;backdrop-filter:none!important}
 .places-home button{font:11px var(--sans);color:var(--ui-ink);background:var(--ui-wash);border:1px solid var(--ui-line);border-radius:6px;padding:4px 8px}
 .places-home button[data-active=true]{border-color:var(--ui-ink)}
+#inspector .places-home button{color:var(--ui-ink)!important;background:var(--ui-wash)!important;border:1px solid var(--ui-line)!important;border-radius:6px;padding:4px 8px;font:11px var(--sans)}
+#inspector .places-home button[data-active=true]{border-color:var(--ui-ink)!important}
+#inspector .places-home button:disabled{opacity:.45}

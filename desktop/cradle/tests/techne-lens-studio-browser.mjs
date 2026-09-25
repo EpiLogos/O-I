@@ -76,6 +76,11 @@ try {
     receipt.lenses.push(id);
   }
 
+  // An instrument's Studio section never stays open, empty, over the next one.
+  await active('palace').click();
+  await page.waitForSelector('#inspector:not([hidden])');
+  await active('canvas').click();
+  assert.ok(await page.evaluate(() => document.getElementById('inspector').hidden || document.getElementById('inspector-title').textContent.trim() !== 'Palace'), 'leaving Palace closes its Studio section');
   // Field continuity (§28): moving through every instrument must not reset the
   // field — camera and selection stand. (This standalone walk has no host, so
   // no native construction is open; the subject-CARRYING continuity — a stale

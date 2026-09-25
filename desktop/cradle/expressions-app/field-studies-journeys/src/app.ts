@@ -945,6 +945,10 @@ function setInstrumentSurface(lens:LensId|null){
  }
 }
 function activateInstrument(lens:LensId){
+ // A Studio section that belongs to the instrument being left does not stay
+ // open, empty, over the next one.
+ const owned:Record<string,LensId>={places:'place',palace:'palace',canvas:'canvas'};
+ if(owned[studioSection]&&owned[studioSection]!==lens){inspectorOpen=false;studioSection='formations';tab='objects';}
  setInstrumentSurface(lens);
  pointer.active=false;
  if(drag){if(store.transactionOpen)store.finish();drag=null;markSaved();}
