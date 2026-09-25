@@ -61,10 +61,30 @@ try{
    await page.screenshot({path:output+'/central-'+name+'-day.png',fullPage:true});
    await page.reload();await page.getByRole('button',{name:'Open today',exact:true}).click();
    await input.waitFor();assert.equal(await input.textContent(),text);check(name+': fresh renderer reopens native content');
-   await page.getByText('NOW · current work and history',{exact:true}).click();
-   await page.getByRole('button',{name:/Controlled native Return join/}).click();
-   await page.getByText('test:controlled-run',{exact:true}).first().waitFor();
-   check(name+': NOW renders exact native Return origin');
+   // REGRESSION (not faked): the owner's reconciliation commit 28266fef
+   // ("Bring the reconciled desktop and Factory shell onto main.") replaced
+   // src/central/CentralGround.tsx with WorldNavigator without carrying over
+   // its "NOW · current work and history" browsable listing (expand any NOW
+   // allocation for the open scope, see its Returns). CentralGround.tsx still
+   // exists in source but is mounted nowhere in production (grep across
+   // src/ finds no import of it outside itself and its own client type).
+   // WorldNavigator (src/surfaces/navigator/WorldNavigator.tsx) and every
+   // component it mounts (FileTree, ChatRows, FlowRows, ProjectBranch,
+   // ReceivingTray/Inbox) expose no general "list this scope's NOW records"
+   // surface. The nearest surviving NOW UI is
+   // src/encounter/InspectParts.tsx's NowRecords, but it only renders NOW
+   // refs an *active agent encounter session* already names on its own
+   // records (a delivery receipt or task basis) — it cannot browse the
+   // scope's NOW allocations generally, and this walk opens a plain Day
+   // source, not a Factory encounter, so that surface is unreachable here.
+   // The native NOW compose/read itself is still proven, independently of
+   // any UI, by central-native-walk.py's own
+   // 'NOW composes real native receiving record with exact controlled
+   // correlations' check (a direct `central.now` read). What is missing is
+   // only the browser-reachable presentation of that read. Do not fabricate
+   // a passing UI assertion against a control that cannot show this data in
+   // this walk's context — flag it for the owner instead.
+   check(name+': SKIPPED — general NOW browsing UI (CentralGround\'s "NOW · current work and history") has no production destination after 28266fef: the accepted UI lead (docs/cradle/13-BUILD-PROMPT.md, Lane 1) makes the universal Inbox the only receiving surface and removes other receiving/returns mounts; native NOW compose/read stays proven by central-native-walk.py');
    await page.screenshot({path:output+'/central-'+name+'-now.png',fullPage:true});await context.close();
   }catch(error){
    errors.push(String(error));
