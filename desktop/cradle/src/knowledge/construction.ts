@@ -50,7 +50,12 @@ export function decodeRegister(file: NativeFileReading, source_ref: string): Wik
     if (!object(row) || !ref(row.ref)) continue;
     if (row.object === 'space') spaces.push({ref: row.ref, label: typeof row.title === 'string' ? row.title : row.ref});
     if (row.object === 'frame' && row[CONSTRUCTION] !== undefined) {
-      const frame = row as unknown as NativeConstruction;
+      // `object` is the register's own row-type discriminator for this mixed
+      // array — storage shape, not construction content. The native apply/read
+      // owner's `reading.frame` never carries it, so keeping it here would make
+      // an unchanged frame compare unequal to itself across the two shapes
+      // (`sameComposition`, the basis check below constructionWhole uses).
+      const {object: _rowKind, ...frame} = row as unknown as NativeConstruction & {object: string};
       if (!revision(frame.revision) || !object(frame[CONSTRUCTION]) || typeof frame[CONSTRUCTION].title !== 'string' || !object(frame[CONSTRUCTION].inquiry) || typeof frame[CONSTRUCTION].inquiry.question !== 'string' || !Array.isArray(frame.constellations) || frame.constellations.length !== 1 || !Array.isArray(frame.constellations[0].members)) throw new Error('A constructive frame is malformed; inspect its native source before editing.');
       for (const member of frame.constellations[0].members) if (!ref(member.ref) || !object(member[PARTICIPATION]) || !ref(member[PARTICIPATION].participation_ref) || !Array.isArray(member[PARTICIPATION].sources)) throw new Error('A native member has no valid contextual participation.');
       if (frame[CONSTRUCTION].frame && !validNativeFrame(frame[CONSTRUCTION].frame)) throw new Error('The saved frame has malformed native roles. Its register has not been changed.');
@@ -59,7 +64,9 @@ export function decodeRegister(file: NativeFileReading, source_ref: string): Wik
     if (row.object === 'edge' && object(row[RELATION]) && revision(row.revision)) {
       const meta = row[RELATION];
       if (!ref(meta.from_participation_ref) || !ref(meta.to_participation_ref) || !ref(row.relation) || !ref(meta.direction) || !ref(meta.standing) || !Array.isArray(meta.evidence)) throw new Error('A constructive relationship is malformed. Inspect its native source.');
-      relations.push(row as unknown as NativeRelation);
+      // Same row-type-discriminator leak as the frame above.
+      const {object: _edgeRowKind, ...relation} = row as unknown as NativeRelation & {object: string};
+      relations.push(relation);
     }
   }
   return {file, source_ref, spaces, frames, relations};
