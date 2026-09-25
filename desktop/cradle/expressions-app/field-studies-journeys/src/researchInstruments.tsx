@@ -403,7 +403,6 @@ export function installResearchInstruments(host:ResearchInstrumentsHost){
   const controls=<div className="research-tool-actions" aria-label="Canvas tools">
    {editable&&<><button aria-label="Note" title="Note" onClick={()=>act({type:'create-card',kind:'note',position:{x:0,y:0}})}><ToolIcon name="text"/></button><button aria-label="Image" title="Image" onClick={imageImport}><ToolIcon name="upload"/></button>
    <button aria-label="Draw" title="Draw" aria-pressed={drawing} onClick={()=>{drawing=!drawing;redraw();}}><ToolIcon name="pen"/></button>{drawing&&<input type="color" aria-label="Stroke colour" value={strokeColour} onChange={e=>{strokeColour=e.target.value;redraw();}}/>}
-   {selection.size>0&&<span className="research-selection-count" aria-live="polite">{selection.size} selected</span>}
    {selection.size>=2&&<select aria-label="Align selection" value="" onChange={event=>{const mode=event.target.value as AlignMode;if(mode)alignSelection(mode);event.target.value='';}}>
     <option value="">Align…</option><option value="left">Left</option><option value="hcenter">Centre</option><option value="right">Right</option><option value="top">Top</option><option value="vcenter">Middle</option><option value="bottom">Bottom</option></select>}
    {selection.size>=3&&<><button aria-label="Distribute ↔" title="Distribute ↔" onClick={()=>distributeSelection('h')}><ToolIcon name="distributeH"/></button><button aria-label="Distribute ↕" title="Distribute ↕" onClick={()=>distributeSelection('v')}><ToolIcon name="distributeV"/></button></>}
@@ -413,10 +412,8 @@ export function installResearchInstruments(host:ResearchInstrumentsHost){
 </>}
    {(()=>{const binding=canvas.sceneId?host.nativeView()?.bindings[canvas.sceneId]:undefined;if(!binding||binding.page_count<=1||!host.pageMembers)return null;
     return <><button aria-label="Previous members" title="Previous members" disabled={binding.page<=0} onClick={()=>void host.pageMembers!(-1)}><ToolIcon name="arrowLeft"/></button>
-     <span className="research-selection-count" title={`${binding.occurrences.length} of ${binding.member_refs.length} members loaded`}>{binding.page+1}/{binding.page_count}</span>
+     <span className="research-pager" title={`${binding.occurrences.length} of ${binding.member_refs.length} members loaded`}>{binding.page+1}/{binding.page_count}</span>
      <button aria-label="Next members" title="Next members" disabled={binding.page>=binding.page_count-1} onClick={()=>void host.pageMembers!(1)}><ToolIcon name="arrowRight"/></button></>;})()}
-   {constellationRequest&&<ConstellationAction request={constellationRequest} onError={message}/>}
-   {editable&&host.editObject&&current&&localId&&<button aria-label="Edit object" title="Edit object" onClick={()=>host.editObject!(canvas.sceneId!,localId)}><ToolIcon name="pen"/></button>}
   </div>;
   // Canvas views, frames and source focus live in the Studio's Canvas
   // section; the rail keeps only the direct icon tools.
@@ -444,9 +441,10 @@ export function installResearchInstruments(host:ResearchInstrumentsHost){
    from:host.nativeView()?.document.entities[selectedEdgeObj.sourceNodeId]?.subject?selectedEdgeObj.sourceNodeId:undefined,
    to:host.nativeView()?.document.entities[selectedEdgeObj.targetNodeId]?.subject?selectedEdgeObj.targetNodeId:undefined,
   }:undefined;
-  const inspector=<div className="research-inspector-content" onKeyDown={event=>{if(event.key==='Escape'){event.preventDefault();event.stopPropagation();closeInspector();}}}><header><h3>{current?.title??(state.selectedEdge?'Connection':'Canvas')}</h3><button onClick={closeInspector} aria-label="Close canvas inspector">Close</button></header>
+  const inspector=<div className="research-inspector-content" onKeyDown={event=>{if(event.key==='Escape'){event.preventDefault();event.stopPropagation();closeInspector();}}}><header><h3>{current?.title??(state.selectedEdge?'Connection':'Canvas')}</h3><button className="card-close" onClick={closeInspector} aria-label="Close" title="Close"><ToolIcon name="close"/></button></header>
    {current&&<button onClick={()=>{const ref=current.type==='resource'?current.absolutePath:host.nativeView()?.document.entities[current.id]?.subject?.subject_ref;if(ref)host.inspectSubject(ref);}}>Open source</button>}
    {editable&&current&&localId&&host.editObject&&<button onClick={()=>host.editObject!(canvas.sceneId!,localId)}>Edit object</button>}
+   {constellationRequest&&<ConstellationAction request={constellationRequest} onError={message}/>}
    {editable&&localId&&current&&<><label>Width<input type="number" defaultValue={Math.round(current.size.width)} onBlur={e=>act({type:'resize',id:localId,width:Number(e.target.value),height:current.size.height})}/></label><label>Height<input type="number" defaultValue={Math.round(current.size.height)} onBlur={e=>act({type:'resize',id:localId,width:current.size.width,height:Number(e.target.value)})}/></label>
    {<button disabled={!!subject&&!host.duplicateOccurrence} onClick={()=>subject?apply(()=>host.duplicateOccurrence!(canvas.sceneId!,localId)):act({type:'duplicate',id:localId})}>Duplicate</button>}
    {(['dotColour','bgColour','textColour'] as const).map(key=><label key={key}>{key==='dotColour'?'Dot colour':key==='bgColour'?'Background':'Text colour'}<input type="color" value={material?.cards[localId]?.[key]??'#808080'} onChange={e=>act({type:'card-style',id:localId,patch:{[key]:e.target.value}})}/></label>)}

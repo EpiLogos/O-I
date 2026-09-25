@@ -127,3 +127,18 @@
 .research-canvas[data-zoom="constellation"] .knowledge-card__eyebrow{display:none}
 .research-canvas[data-zoom="named"] .knowledge-card__chips{display:none}
 .research-selection-count{font:11px var(--sans,inherit);opacity:.75;padding:2px 6px}
+/* Canvas zooms by trackpad/scroll; the rail keeps only Fit view. */
+#instrument-tools button:is([aria-label="Zoom in"],[aria-label="Zoom out"]){display:none}
+
+/* The node/connection card is compact: a title line, then small actions and
+   fields in the Expressions HUD language — not a column of block buttons. */
+#research-inspector{width:min(300px,calc(100vw - 24px))}
+#research-inspector .research-inspector-content{display:flex;flex-wrap:wrap;align-items:center;gap:6px;padding:0 0 12px}
+#research-inspector header{flex:1 0 100%;display:flex;align-items:center;gap:8px;padding:10px 12px 8px;border-bottom:1px solid var(--ui-line);margin:0 0 4px}
+#research-inspector header h3{flex:1;min-width:0;margin:0;font:600 12px/1.35 var(--sans);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+#research-inspector .research-inspector-content>:not(header){margin:0 0 0 12px}
+#research-inspector .research-inspector-content>button{width:auto;padding:4px 8px;font:11px var(--sans)}
+#research-inspector .research-inspector-content>label{flex:0 0 calc(50% - 18px);display:flex;align-items:center;justify-content:space-between;gap:6px;font:11px var(--sans);color:var(--ui-muted)}
+#research-inspector .research-inspector-content>label input[type=number]{width:56px}
+#research-inspector .card-close{margin-left:auto;padding:2px;border:0;background:none}
+#instrument-tools .research-pager{color:var(--ui-muted);font:10px/1 var(--sans);padding:0 2px;white-space:nowrap}

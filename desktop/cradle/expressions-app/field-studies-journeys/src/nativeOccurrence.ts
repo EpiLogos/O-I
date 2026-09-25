@@ -23,7 +23,7 @@ export function prepareOccurrenceEdit(view:KernelConversion,intent:OccurrenceInt
  const prefix=before.expression_ref+':entity:occurrence-';
  if(typeof intent.new_entity_ref!=='string'||!intent.new_entity_ref.startsWith(prefix)||!/^[a-zA-Z0-9-]{1,80}$/.test(intent.new_entity_ref.slice(prefix.length))||before.entities[intent.new_entity_ref])throw Error('A duplicate needs a fresh native occurrence identity');
  if(!Object.hasOwn(entity.parameters,'glyph'))throw Error('This imported occurrence has no native glyph parameter; its exact parameters cannot be duplicated by the current owner grammar');
- if(Object.keys(before.entities).length>=256)throw Error('This native Expression has reached its occurrence limit');
+ if(Object.keys(before.entities).length>=2048)throw Error('This native Expression has reached its occurrence limit');
  const changes:Record<string,unknown>[]=[{change:'entity_add',scene_ref:scene.scene_ref,entity_ref:intent.new_entity_ref,title:entity.title},{change:'subject_bind',entity_ref:intent.new_entity_ref,binding:clone(entity.subject)}];
  for(const [parameter,value] of Object.entries(entity.parameters)){
   changes.push({change:'parameter_set',entity_ref:intent.new_entity_ref,parameter,value:clone(value.value)});

@@ -466,7 +466,8 @@ body:not(.oi-host-techne) [data-techne-only]{display:none}
    chooser or the actions do. */
 body.oi-host-techne #app>.masthead{display:flex;align-items:center;gap:12px}
 body.oi-host-techne #app>.masthead>#tool-rail{flex:0 1 auto;min-width:0;overflow:hidden}
-body.oi-host-techne #app>.masthead>.masthead-centre{flex:1 1 auto}
+body.oi-host-techne #app>.masthead>.masthead-centre{flex:1 0 auto}
+body.oi-host-techne #lens-chooser{flex:none}
 body.oi-host-techne #app>.masthead>.header-actions{flex:none;margin-left:auto}
 /* The instrument's standing line is a quiet caption over its body, not a
    label inside the tool row. */
@@ -530,3 +531,4 @@ body.library-open #lens-chooser{display:none!important}
 #scene-picker{min-width:0;max-width:min(360px,40vw)}
 #scene-picker #scene-name{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 #scene-picker #scene-state{flex:none}
+.object-symbol .shape-mark{width:60%;height:60%;color:var(--tint,currentColor)}

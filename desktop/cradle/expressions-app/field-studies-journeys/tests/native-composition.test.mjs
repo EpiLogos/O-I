@@ -170,3 +170,20 @@ test('a lost selection reply recovers its exact native focus without replay or r
  const record=JSON.parse(JSON.stringify(work.state)),restored=new NativeWorking(p.options);restored.restore(record,view.journey);
  await restored.inspectPending();assert.equal(p.effects.filter(r=>r.operation==='edit').length,1);assert.equal(restored.state.view.document.selection.entity_ref,'expression:links:entity:repeat');
 });
+
+test('a one-object edit on a constellation larger than 256 members prepares one small edit (Technē map §36)',()=>{
+ // Installed walk: saving one changed scale on a 192-member constellation
+ // (389 document entities) was refused by a stale 256-entity document bound.
+ const d=empty('expression:large','Large');
+ for(let i=0;i<300;i++){const ref=`expression:large:entity:m${i}`;d.entities[ref]={entity_ref:ref,title:`Member ${i}`,revision:1,subject:null,parameters:{glyph:{value:'O'},x:{value:i*10},y:{value:0}}};d.scenes[0].entity_refs.push(ref);}
+ const view=kernelDocumentToJourney(d);
+ const edited=clone(view.journey);const target=edited.scenes[0].entities[0];target.scale=target.scale*3;
+ const edit=prepareCompositionEdit(view,edited);
+ assert.equal(edit.operation,'edit');
+ assert.ok(edit.changes.length>0&&edit.changes.length<=256,'a small edit, not a refusal');
+ // Past the document's own bound the edit is still refused, never truncated.
+ const huge=empty('expression:huge','Huge');
+ for(let i=0;i<2049;i++){const ref=`expression:huge:entity:m${i}`;huge.entities[ref]={entity_ref:ref,title:`M${i}`,revision:1,subject:null,parameters:{glyph:{value:'O'}}};}
+ huge.scenes[0].entity_refs=Object.keys(huge.entities).slice(0,4);
+ assert.throws(()=>kernelDocumentToJourney(huge),/binding budget/);
+});
