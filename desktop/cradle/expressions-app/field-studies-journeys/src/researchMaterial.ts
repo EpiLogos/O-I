@@ -6,6 +6,10 @@ export interface ResearchCard {
  type:'note'|'image';
  importedAt?:string; content?:string; caption?:string;
  color?:string; dotColour?:string; bgColour?:string; textColour?:string;
+ /** Canvas display size only — never the Expression's own size. A
+  * source-bound occurrence keeps its own expressive body regardless of how
+  * large or small its card renders on this presentation Canvas. */
+ size?:{width:number;height:number};
 
 }
 export interface ResearchViewport {x:number;y:number;zoom:number}
@@ -56,12 +60,13 @@ export function validateResearchMaterial(value:unknown,ids:ReadonlySet<string>):
  for(const key of ['cards','views','timeline'])require(object(value[key])&&Object.keys(value[key]).length<=(key==='views'?16:256),'Research record count exceeds its bound');
  for(const [id,card] of Object.entries(value.cards) as [string,ResearchCard][]){
   require(ids.has(id)&&object(card),'Research card must address an existing occurrence');
-  keys(card,['type','importedAt','content','caption','color','dotColour','bgColour','textColour']);
+  keys(card,['type','importedAt','content','caption','color','dotColour','bgColour','textColour','size']);
   require(['note','image'].includes(card.type),'Unknown research card kind');
   if(card.importedAt!==undefined)require(card.type==='image'&&text(card.importedAt,64)&&Number.isFinite(Date.parse(card.importedAt)),'Invalid image import time');
   if(card.content!==undefined){require(card.type==='note','Only note cards carry note content');validateResearchContent(card.content);}
   for(const key of ['caption'] as const)if(card[key]!==undefined)require(text(card[key]),'Research caption exceeds its bound');
   for(const key of ['color','dotColour','bgColour','textColour'] as const)if(card[key]!==undefined)require(color(card[key]),'Research colour is invalid');
+  if(card.size!==undefined){require(object(card.size),'Invalid card display size');keys(card.size,['width','height']);require(finite(card.size.width,40,40000)&&finite(card.size.height,40,40000),'Invalid card display size');}
  }
  require(Array.isArray(value.strokes)&&value.strokes.length<=128,'Annotation count exceeds its bound');
  const seen=new Set<string>();for(const stroke of value.strokes){require(object(stroke),'Invalid annotation');keys(stroke,['id','points','color','width','opacity','createdAt']);require(text(stroke.id,160)&&!!stroke.id&&!seen.has(stroke.id),'Duplicate annotation');seen.add(stroke.id);require(color(stroke.color)&&finite(stroke.width,.1,100)&&finite(stroke.opacity,0,1)&&text(stroke.createdAt,64)&&Number.isFinite(Date.parse(stroke.createdAt)),'Invalid annotation style');require(Array.isArray(stroke.points)&&stroke.points.length>0&&stroke.points.length<=4096,'Annotation point budget exceeded');for(const p of stroke.points)require(object(p)&&finite(p.x,-40000,40000)&&finite(p.y,-40000,40000)&&(p.pressure===undefined||finite(p.pressure,0,1)),'Invalid annotation point');}
@@ -78,7 +83,10 @@ export function applyResearchMaterial(scene:Scene,action:ResearchMaterialAction)
  // source-bound occurrence. Only explicit note creation/content owns content.
  const card=(id:string)=>{const e=target(id);return research.cards[id]??={type:e.source?.kind==='image'?'image':'note'};};
  switch(action.type){
- case 'resize':{const e=target(action.id);require(finite(action.width,40,40000)&&finite(action.height,40,40000),'Invalid card size');e.size={x:action.width/400,y:action.height/400};break;}
+ // Canvas display size is Research Canvas presentation only. It must never
+ // reach the entity's own `size`, which is the Expression's expressive
+ // body — resizing a card on this Canvas is not editing the source.
+ case 'resize':{require(finite(action.width,40,40000)&&finite(action.height,40,40000),'Invalid card size');card(action.id).size={width:action.width,height:action.height};break;}
  case 'duplicate':{const original=target(action.id),copy=clone(original);copy.id=uid('research');copy.name=original.name+' copy';copy.position.x+=.1;copy.position.y-=.1;delete copy.native;next.entities.push(copy);if(research.cards[action.id])research.cards[copy.id]=clone(research.cards[action.id]);break;}
  case 'create-card':{require(finite(action.position.x,-100,100)&&finite(action.position.y,-100,100),'Invalid card position');const title=action.title??(action.kind==='image'?'Image':'Note');require(text(title,160)&&!!title,'Invalid card title');const e=entity(title,title.slice(0,120),{...action.position,z:0});e.id=uid('research');e.size={x:.6,y:.4};const c:ResearchCard={type:action.kind};if(action.kind==='note'){c.content='[]';e.shape='disc';e.text='';for(const step of e.sequence.steps){step.shape='disc';step.text='';}}if(action.kind==='image'){require(typeof action.dataUrl==='string'&&/^data:image\/(png|jpeg|webp);base64,[A-Za-z0-9+/=]+$/.test(action.dataUrl),'Choose a PNG/JPEG/WebP image');require(action.dataUrl.length<=262144,'Image exceeds native document budget; select a smaller image');c.importedAt=new Date().toISOString();e.source={kind:'image',image:{dataUrl:action.dataUrl,mode:'luminance',threshold:.5,invert:false,scale:1,name:title}};}next.entities.push(e);research.cards[e.id]=c;break;}
  case 'card-content':{const c=card(action.id);require(c.type==='note','Only note cards own rich note content');validateResearchContent(action.content);c.content=action.content;break;}

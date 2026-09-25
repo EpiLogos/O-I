@@ -15,7 +15,10 @@ test('research material actions retain rich notes, real dimensions and ink in th
  api.applyResearchMaterial(scene,{type:'annotation-add',stroke:{id:'authored-stroke',points:[{x:10,y:20},{x:40,y:50,pressure:.5}],color:'#808080',width:3,opacity:1,createdAt:new Date().toISOString()}});
  const returned=api.validateJourney(JSON.parse(JSON.stringify(journey)));
  assert.equal(returned.scenes[0].research.cards[id].content,content);
- assert.deepEqual(returned.scenes[0].entities.find(e=>e.id===id).size,{x:1.6,y:.8});
+ // Canvas display size is Research Canvas presentation, stored on the card —
+ // 'resize' must never reach the Expression's own occurrence size.
+ assert.deepEqual(returned.scenes[0].entities.find(e=>e.id===id).size,{x:.6,y:.4},'card display resize never mutates the entity/Expression body size');
+ assert.deepEqual(returned.scenes[0].research.cards[id].size,{width:640,height:320},'card display resize is stored on the research card');
  assert.equal(returned.scenes[0].research.strokes.length,1);
  assert.equal(returned.scenes[0].research.connections,undefined,'native relations have no copied research store');
 });

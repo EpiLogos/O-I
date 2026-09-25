@@ -5,7 +5,8 @@ import {FACTORY_PRESETS} from '../../src/engine/factoryPresets';
 import {sourceStudies} from './sourceExamples.js';
 import {defaultCamera,project,stageScale} from './camera.js';
 import {icon,esc} from './icons.js';
-import {isWebHorizon,libraryHorizonsHTML,libraryKernelSectionHTML,libraryScopesStyle,PROJECTED_WORLDS_UNAVAILABLE} from './libraryScopes.js';
+import {isWebHorizon,libraryHorizonsHTML,libraryKernelSectionHTML,libraryNativeSectionHTML,installNativeLibraryInteractions,libraryScopesStyle,PROJECTED_WORLDS_UNAVAILABLE} from './libraryScopes.js';
+installNativeLibraryInteractions();
 
 /** Expression is the public name. The oi.journey/1 envelope remains compatible. */
 export type Expression = Journey;
@@ -105,6 +106,7 @@ export function libraryHTML(c:LibraryContext):string{
   <section class="library-section" data-scope="current-project"><header><h2>Current project / world</h2><span>Your work in this world</span></header><div class="expression-grid">${saved.map(j=>card(j,'saved')).join('')}</div></section>
   ${featured.length?`<section class="library-section" data-scope="project-collections"><header><h2>Project collections</h2><span>Collected studies & featured compositions</span></header><div class="expression-grid">${featured.map(j=>card(j,'featured')).join('')}</div></section>`:''}
   <section class="library-section" data-scope="personal-collections"><header><h2>Personal collections</h2><label class="library-search">${icon('search')}<input id="library-search" placeholder="Find a mode or material" aria-label="Find a starting composition"></label></header><div class="expression-grid starting-grid">${starterGrid(personal)}</div><p id="library-empty" hidden>No compositions match that search.</p></section>
+  ${libraryNativeSectionHTML()}
   ${libraryKernelSectionHTML()}
   ${corpus.length?`<section class="library-section" data-scope="curated-corpus"><header><h2>Curated Epi-Logos corpus</h2><span>Source studies carried by this application</span></header><div class="expression-grid starting-grid">${starterGrid(corpus)}</div></section>`:''}
   <footer class="library-footer"><span>O:I · Native particle field</span><span>Editable configurations, not runtime checkpoints.</span></footer></div>`;

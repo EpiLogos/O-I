@@ -41,6 +41,7 @@ import "./point-cloud-host.css";
 import {verifyInsertionSource} from "./sourceInsertion";
 import {resolveHostedSource} from "./sourceHandoff";
 import {resolveSceneConstellation} from "../techne/wikiReadingProvider";
+import {relateSceneConstellation} from "../techne/sceneConstellationRelation";
 
 export function PointCloudHost({mode = "expressions", deepLink, bindingId, onHostedState, readTechne, techneWorld}: {mode?: HostedAppMode; deepLink?: string; bindingId?: string; onHostedState?: (state: HostedAppState) => void; readTechne?: (request: unknown) => Promise<unknown>; techneWorld?: (request: unknown) => Promise<unknown>}) {
   const kernel = useKernel();
@@ -103,6 +104,8 @@ export function PointCloudHost({mode = "expressions", deepLink, bindingId, onHos
     return relayKernelChannel(node, kernel.transport, {
       constellation: async request => {
         const operation = (request as {operation?: unknown} | null)?.operation;
+        // Deliberate typed knowledge relationship through the constellation owner.
+        if (operation === "relate") return relateSceneConstellation(kernel.transport, request);
         if (operation !== "inspect" && operation !== "open") throw new Error("Unknown constellation request");
         const target = await resolveSceneConstellation(kernel.transport, request);
         if (operation === "open") await new Promise<void>((resolve, reject) => {

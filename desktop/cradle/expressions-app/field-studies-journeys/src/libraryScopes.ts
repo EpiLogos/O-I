@@ -18,7 +18,8 @@
  * existing search grammar; no copied database exists or is searched. */
 
 import {esc} from './icons.js';
-import {kernelExpressionsAvailable,listKernelExpressions,KernelExpressionListing} from './kernelExpressions.js';
+import {kernelExpressionsAvailable,listKernelExpressions,readLibraryEntries,KernelExpressionListing,LibraryReadingEntry} from './kernelExpressions.js';
+import {nativeLibrarySectionHTML,NativeLibraryState} from './nativeLibrary.js';
 
 export type {KernelExpressionListing} from './kernelExpressions.js';
 
@@ -55,6 +56,86 @@ export const PROJECTED_WORLDS_UNAVAILABLE='Projected worlds are not reachable fr
 export function libraryKernelSectionHTML():string {
   scheduleKernelFill();
   return `<section class="library-section" data-scope="kernel-held"><header><h2>Kernel-held expressions</h2><span>Held by the native kernel · read live, never copied</span></header><div class="oi-lib-kernel-list" data-kernel-list data-kernel-state="pending"><p class="oi-lib-note">Reading the kernel…</p></div></section>`;
+}
+
+/** Central's native Library section: Project → bound overview Expression →
+ * Scene strip → native collections (owner commission 2026-09-25 — reuse the
+ * imported collections page, fed by the cradle's EXISTING Library providers
+ * through the "library-read" host request; never a second Library). Fills
+ * asynchronously exactly like the kernel-held section above; only the
+ * latest fill writes, only into a live section. */
+export function libraryNativeSectionHTML():string {
+  scheduleNativeLibraryFill();
+  return nativeLibrarySectionHTML({state:'absent'});
+}
+
+let nativeFillSeq=0;
+function scheduleNativeLibraryFill():void {
+  if(typeof document==='undefined')return;
+  const seq=++nativeFillSeq;
+  void (async()=>{
+    let state:NativeLibraryState={state:'absent'};
+    try {
+      let available=false;
+      for(let attempt=0;attempt<2&&!available;attempt++){
+        if(attempt)await new Promise(r=>setTimeout(r,1200));
+        try {available=kernelExpressionsAvailable();}
+        catch {available=false;}
+      }
+      if(available){
+        try {
+          const read=await withTimeout(readLibraryEntries('local'),6000);
+          const entries=read.entries as LibraryReadingEntry[];
+          state=entries.length?{state:'ready',entries}:{state:'empty'};
+        } catch(cause) {state={state:'error',reason:cause instanceof Error?cause.message:String(cause)};}
+      }
+    } catch {state={state:'absent'};}
+    if(seq!==nativeFillSeq)return;
+    const host=document.querySelector<HTMLElement>('#library-page [data-native-list]');
+    if(!host||!host.isConnected)return;
+    const rendered=document.createElement('div');rendered.innerHTML=nativeLibrarySectionHTML(state);
+    const body=rendered.querySelector<HTMLElement>('[data-native-list]');
+    host.innerHTML=body?body.innerHTML:'';
+    host.setAttribute('data-native-state',state.state);
+    if(state.state==='ready')reapplyLibrarySearch();
+  })();
+}
+
+/** Delegated, once-installed wiring for the native rows' own local
+ * controls — the scene-strip `+N` reveal (keyboard-reachable button,
+ * aria-expanded) and opening a native entry through the SAME native-open
+ * path the field already uses (window.__FIELD_STUDIES__.openNative), then
+ * returning through the Library's own close action so the exact prior
+ * field state (camera, selection, work) is restored. Installed once; the
+ * Library page's own re-renders replace #library-page's innerHTML, which
+ * this delegated listener on `document` survives. */
+let nativeLibraryWired=false;
+export function installNativeLibraryInteractions():void {
+  if(nativeLibraryWired||typeof document==='undefined')return;
+  nativeLibraryWired=true;
+  document.addEventListener('click',event=>{
+    const target=event.target as HTMLElement|null;
+    const reveal=target?.closest<HTMLElement>('[data-scene-reveal]');
+    if(reveal){
+      const strip=reveal.closest('[data-scene-strip]');
+      const overflow=strip?.querySelector<HTMLElement>('[data-scene-overflow]');
+      if(overflow){const expanded=reveal.getAttribute('aria-expanded')==='true';overflow.hidden=expanded;reveal.setAttribute('aria-expanded',String(!expanded));}
+      return;
+    }
+    const open=target?.closest<HTMLElement>('[data-native-open]');
+    if(open){
+      const ref=open.dataset.nativeOpen;
+      const api=(window as unknown as {__FIELD_STUDIES__?:{openNative?:(ref:string)=>unknown}}).__FIELD_STUDIES__;
+      if(!ref||!api?.openNative){return;}
+      open.setAttribute('aria-busy','true');
+      void Promise.resolve(api.openNative(ref)).then(()=>{
+        document.querySelector<HTMLElement>('[data-action="close-library"]')?.click();
+      }).catch(cause=>{
+        open.setAttribute('aria-busy','false');
+        open.title=cause instanceof Error?cause.message:String(cause);
+      });
+    }
+  });
 }
 
 type KernelFill={state:'absent'|'error'|'empty'|'rows';rows:KernelExpressionListing[]};
@@ -139,4 +220,21 @@ export const libraryScopesStyle=`
 .oi-lib-kernel-main strong{display:block;font:17px var(--serif);font-weight:400;letter-spacing:-.02em}
 .oi-lib-kernel-ref{display:block;font-size:9px;color:var(--muted);font-variant-numeric:tabular-nums;margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .oi-lib-kernel-meta{font-size:9px;color:var(--muted);flex:none}
-@media (max-width:760px){.oi-lib-horizons{gap:18px}.oi-lib-horizon-sub{display:none}}`;
+.oi-lib-native-group{margin:0 0 22px}
+.oi-lib-native-group h3{font:13px var(--serif);font-weight:400;letter-spacing:.02em;color:var(--muted);margin:0 0 4px;padding-top:14px;border-top:1px solid var(--line)}
+.oi-lib-native-group:first-child h3{border-top:none;padding-top:0}
+.oi-lib-native-rows{display:flex;flex-direction:column}
+.oi-lib-native-row{display:flex;align-items:center;gap:16px;padding:13px 0;border-bottom:1px solid var(--line)}
+.oi-lib-native-row[hidden]{display:none}
+.oi-lib-native-main{flex:0 1 auto;min-width:0;max-width:34%;display:flex;flex-direction:column;gap:1px}
+.oi-lib-native-main strong{font:15px var(--serif);font-weight:400;letter-spacing:-.02em;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.oi-lib-native-path{font-size:9px;color:var(--muted);font-variant-numeric:tabular-nums;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.oi-lib-native-collections{font-size:9px;color:var(--muted);opacity:.75}
+.oi-lib-scene-strip{flex:1 1 auto;min-width:0;display:flex;align-items:center;gap:6px;overflow:hidden;white-space:nowrap;position:relative}
+.oi-lib-scene-note{flex:1;font:italic 11px var(--serif);color:var(--muted);opacity:.75}
+.oi-lib-scene-chip{flex:none;font-size:10px;padding:3px 9px;border:1px solid var(--line);border-radius:99px;color:var(--muted);overflow:hidden;text-overflow:ellipsis;max-width:160px}
+.oi-lib-scene-more{flex:none;font-size:10px;padding:3px 9px;border:1px solid var(--line);border-radius:99px;color:var(--ink);background:none;cursor:pointer}
+.oi-lib-scene-more:hover,.oi-lib-scene-more:focus-visible{border-color:var(--accent);color:var(--accent)}
+.oi-lib-scene-overflow{display:flex;gap:6px;flex-wrap:wrap}
+.oi-lib-scene-overflow[hidden]{display:none}
+@media (max-width:760px){.oi-lib-horizons{gap:18px}.oi-lib-horizon-sub{display:none}.oi-lib-native-main{max-width:44%}}`;

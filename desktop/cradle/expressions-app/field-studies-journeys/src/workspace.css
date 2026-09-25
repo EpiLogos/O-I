@@ -490,6 +490,14 @@ body.presentation #physis-panel,body.library-open #physis-panel{display:none}
 .research-active #stage,.research-active #app>.chrome,.research-active #app>.hud-panel,
 .research-active #shape-picker,.research-active #recording-badge,.research-active #present-return,
 .research-active .native-field-panel,.research-active .native-domain-output,.research-active #engine-recovery{display:none!important}
+/* The selected occurrence keeps its full object/state Studio and its toolbelt
+   over the active instrument. The field itself shows only on explicit preview;
+   the instrument stays mounted beneath it with its viewport and selection. */
+body.research-active.research-studio #app>#inspector.hud-panel:not([hidden]){display:grid!important;z-index:72}
+body.research-active #app>#toolbelt-button.chrome{display:inline-flex!important}
+body.research-active #app>#toolbelt-panel.hud-panel:not([hidden]){display:block!important;z-index:71}
+body.research-active.research-preview #stage{display:block!important}
+body.research-active.research-preview #research-workspace>.research-instrument{visibility:hidden;pointer-events:none}
 #research-hud{display:flex;z-index:70;gap:8px;align-items:flex-start}
 #research-hud[hidden],#research-inspector[hidden]{display:none}
 #research-tools{flex:1;min-width:0;display:flex;align-items:center;flex-wrap:wrap;gap:4px}

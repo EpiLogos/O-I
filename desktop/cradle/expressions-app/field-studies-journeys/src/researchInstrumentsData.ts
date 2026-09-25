@@ -33,7 +33,14 @@ export function nativeInstrumentCanvas(view:KernelConversion,sceneId:string,read
   if(!native)throw new Error('The native entity is absent from this composition');
   const node=note(native.entity_ref,key,entity.name,'',entity.position.x*CANVAS_UNITS,-entity.position.y*CANVAS_UNITS);
   const card=scene.research?.cards[entity.id];
-  node.size={width:entity.size.x*CANVAS_UNITS,height:entity.size.y*CANVAS_UNITS};
+  // Card display size is presentation, stored on the research card — never
+  // the Expression's own `entity.size`. A source-bound member with no
+  // authored display size renders as a compact circular graph anchor by
+  // default (owner request); a deliberately placed note/image keeps its
+  // entity size, which the 'resize' action no longer touches either way.
+  node.size=card?.size?{width:card.size.width,height:card.size.height}
+   :occurrence.subject?{width:56,height:56}
+   :{width:entity.size.x*CANVAS_UNITS,height:entity.size.y*CANVAS_UNITS};
   Object.assign(node,{dotColour:card?.dotColour,bgColour:card?.bgColour,textColour:card?.textColour});
   if(entity.source?.kind==='image'&&entity.source.image.dataUrl)return {...node,type:'image',src:entity.source.image.dataUrl,caption:card?.caption??entity.name} as CanvasNode;
   if(occurrence.subject)return {...node,type:'resource',resourceKind:'binary',absolutePath:occurrence.subject.subject_ref,relativePath:occurrence.subject.subject_ref,mimeType:'application/vnd.oi.source-ref',fileFingerprint:occurrence.subject.subject_ref} as CanvasNode;

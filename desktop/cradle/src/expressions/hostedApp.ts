@@ -269,6 +269,18 @@ export function relayKernelChannel(frame: HTMLIFrameElement, transport: KernelTr
       catch (cause) { refuse(kind, req, cause instanceof Error ? cause.message : String(cause)); }
       return;
     }
+    if (kind === "library-read") {
+      try {
+        const request = event.data.request as {scope?: unknown} | undefined;
+        const scope = request && request.scope === "shared" ? "shared" : "local";
+        const {readLibrary} = await import("../library/libraryReading");
+        const data = await readLibrary(transport, {scope});
+        reply(`${kind}-result`, req, {ok: true, data});
+      } catch (cause) {
+        refuse(kind, req, cause instanceof Error ? cause.message : String(cause));
+      }
+      return;
+    }
     if (kind === "central-read") {
       const path = event.data.path;
       if (typeof path !== "string" || !path.trim()) {

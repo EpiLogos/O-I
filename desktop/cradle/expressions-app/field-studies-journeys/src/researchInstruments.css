@@ -5,6 +5,13 @@
 .research-instrument-message{margin:24px;max-width:60ch}
 
 .research-canvas-reading .react-flow__handle{display:none}
+/* Source-bound cards default to a compact circular graph anchor (no
+   authored display size on their research card). Density comes from many
+   small anchors, not full-size cards; this is presentation only and never
+   changes the bound Expression's own size. An authored display size still
+   renders through the node's actual width/height — see researchInstrumentsData.ts. */
+.research-canvas-native .react-flow__node-resource{border-radius:50%;overflow:hidden}
+.research-canvas-native .react-flow__node-resource .resource-node--card{border-radius:50%;overflow:hidden;display:flex;align-items:center;justify-content:center;padding:0}
 .research-instrument-body>.timeline-surface,.research-instrument-body>.psychogeographic-map{height:100%}
 /* The offline map carries its own dark geography palette. Its controls must
    not inherit the light Expressions field's dark foreground. */

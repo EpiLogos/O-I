@@ -247,3 +247,21 @@ export const techneWorldRequest = (request: {operation:'list'}|{operation:'open'
 
 export interface TechneConstellationRequest extends TechneSceneReadingRequest {entity_ref:string;operation:'inspect'|'open'}
 export const techneConstellationRequest = (request:TechneConstellationRequest):Promise<{frame_ref:string;frame_revision:number;title:string;project?:string}> => call('techne-constellation',{request},30000);
+/** Deliberate typed relationship between two occurrences' exact constellation participations. */
+export interface TechneConstellationRelation extends TechneSceneReadingRequest {operation:'relate';from_entity_ref:string;to_entity_ref:string;relation:string;direction:'directed'|'undirected'|'bidirectional'}
+export interface TechneConstellationRelationReceipt {frame_ref:string;frame_revision:number;relation_ref:string;state:'saved'|'unchanged';expression:{state:'ready';expression_ref:string;revision:number}|{state:'pending';detail:string}}
+export const techneConstellationRelate = (request:TechneConstellationRelation):Promise<TechneConstellationRelationReceipt> => call('techne-constellation',{request},60000);
+
+/** The sanitized native Library reading (nativeLibrary.ts's model shape) —
+ * Central Projects (via their bound overview Expression), Scenes and native
+ * collections, read live through the host's EXISTING Library providers
+ * (desktop/cradle/src/library/libraryReading.ts) via the "library-read"
+ * host-channel kind. No source bodies; never copied into browser storage. */
+export interface LibraryReadingEntry {
+ ref:string;title:string;kind:string;owner:string;scope:'local'|'shared';
+ revision?:string;project?:string;expressionRef?:string;
+ scenes?:{scene_ref:string;title:string}[];collections?:string[];
+ collectionMemberships?:{title:string;group:string;manifest_path:string}[];
+}
+export interface LibraryReadingCoverage {provider:string;state:string;reason?:string}
+export const readLibraryEntries = (scope:'local'|'shared'='local'):Promise<{entries:LibraryReadingEntry[];coverage:LibraryReadingCoverage[]}> => call('library-read',{request:{scope}},20000);
