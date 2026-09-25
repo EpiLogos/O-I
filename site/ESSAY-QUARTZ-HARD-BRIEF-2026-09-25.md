@@ -42,12 +42,16 @@ and named explicitly:
 8. **Routing is clean and genuinely usable.** `/` serves Plate A (200, never
    a redirect into the essay). `/essay` and `/essay/**` deep links cold-load
    the right page. Quartz pages carry depth-correct relative asset paths, so
-   folder pages live at trailing-slash URLs (`trailingSlash: true`; a bare
-   `/essay/x` redirects to `/essay/x/`) and file pages resolve `path.html`
-   via `cleanUrls`. Legacy vault addresses (`/section-rooms`, `/symbolon`,
-   `/manuscript`) redirect into the essay. A missing essay path falls back
-   to the reading root on Vercel and to the Quartz not-found page on Pages.
-   No stub pages, no meta-refresh.
+   folder pages live at trailing-slash URLs (Vercel's directory
+   normalisation provides this; do NOT set `trailingSlash: true`, which
+   slashes file pages and breaks `cleanUrls`) while file pages resolve
+   `path.html` via `cleanUrls`. Legacy vault addresses (`/section-rooms`,
+   `/symbolon`, `/manuscript`) redirect into the essay. A missing essay path
+   falls back to the reading root on Vercel and to the Quartz not-found page
+   on Pages. The deploy-side config (dist/vercel.json and the
+   dist/.vercel project link) is restored by the build itself
+   (`write-vercel-deploy-config.mjs`) because Vite empties dist on every
+   build. No stub pages, no meta-refresh.
 9. **Content scope stays curated.** The published publication scope already
    fixed by `essay-browser.mjs` (no quilt, NOTES, reference-notes, or JSON)
    is the same scope Quartz publishes. The vault source is the local
