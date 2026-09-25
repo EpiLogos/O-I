@@ -143,7 +143,7 @@
   background: var(--oi-pane-bar-ground);
   border-bottom: 1px solid var(--oi-hairline-soft);
   overflow-x: auto;
-  scrollbar-width: none;
+
 }
 
 .tab-strip.drop {
@@ -155,68 +155,6 @@
   position: relative;
   display: inline-flex;
   flex: none;
-}
-
-.tab-entry > .tab {
-  position: relative;
-  display: inline-flex;
-  flex-shrink: 0;
-  align-items: center;
-  gap: 7px;
-  padding: 0 30px 0 10px;
-  height: 31px;
-  border: none;
-  border-radius: 0;
-  background: transparent;
-  font-family: inherit;
-  font-size: var(--oi-shell-type-ui);
-  color: var(--oi-muted-2);
-  cursor: pointer;
-  max-width: 220px;
-  overflow: hidden;
-  white-space: nowrap;
-  border-right: 1px solid var(--oi-hairline-soft);
-  transition: color var(--oi-motion-ui) var(--oi-motion-ease-out), background var(--oi-motion-ui) var(--oi-motion-ease-out);
-}
-
-/* The kind glyph rests a step quieter than the title and takes ink with it. */
-.tab-entry > .tab > svg {
-  flex: none;
-  color: var(--oi-muted-3);
-  transition: color var(--oi-motion-ui) var(--oi-motion-ease-out);
-}
-
-.tab-entry > .tab.active {
-  color: var(--oi-accent-ink);
-  background: var(--oi-canvas-ground);
-}
-
-.tab-entry > .tab.active > svg,
-.tab-entry > .tab:hover > svg {
-  color: inherit;
-}
-
-.tab.active::after {
-  content: "";
-  position: absolute;
-  left: 10px;
-  right: 10px;
-  bottom: 0;
-  height: 1px;
-  background: var(--oi-accent);
-}
-
-.tab-entry > .tab:hover {
-  color: var(--oi-accent-ink);
-}
-
-.tab-entry > .tab:hover:not(.active) {
-  background: var(--oi-wash);
-}
-
-.tab:focus-visible {
-  outline: var(--oi-focus-ring-width) solid var(--oi-accent);
-  outline-offset: calc(0px - var(--oi-focus-ring-width));
 }
 
 .tab.drop-before {
@@ -867,11 +805,10 @@
 
 /* Owner cleanup: tabs scroll independently; pane actions stay within reach. */
 .tab-strip { overflow: hidden; }
-.tab-scroll { display: flex; flex: 1; min-width: 0; overflow-x: auto; scrollbar-width: none; }
-.tab-scroll::-webkit-scrollbar { display: none; }
+.tab-scroll { display: flex; flex: 1; min-width: 0; overflow-x: auto;  }
+
 .pane-tools { margin-left: 0; }
 .pane.group.focused > .tab-strip { box-shadow: none; }
-.tab.active::after { display: none; }
 .pane-status { flex: none; min-height: 18px; display: flex; align-items: center; gap: 8px; padding: 0 10px; background: var(--oi-canvas-ground); border-top: 1px solid var(--oi-hairline-soft); font-size: var(--oi-shell-type-meta); color: var(--oi-muted-2); white-space: nowrap; overflow: hidden; }
 
 /* A status edge expands in flow, gently making room for its content. */
@@ -887,7 +824,7 @@
 .desktop-shell .pane-footer-dot[aria-pressed="true"]{background:var(--oi-accent-ink);border-color:var(--oi-accent-ink)}
 /* Footer content keeps clear of the corner dot. */
 .desktop-shell .pane.group :is(.editor-footer,.terminal-footer,.browser-status),.desktop-shell .pane.group > .pane-footer{padding-right:24px}
-.surface-body,.surface-body *{scrollbar-width:none}.surface-body::-webkit-scrollbar,.surface-body *::-webkit-scrollbar{display:none;width:0;height:0}
+
 
 /* Writing surfaces already own a footer: keep one bottom status band. */
 .pane.group:has(.editor-footer, .browser-status, .terminal-footer) > .pane-status { display: none; }
@@ -919,17 +856,6 @@
  * would otherwise size the segments as toolbar buttons. */
 .source-view-toggle {
   margin-right: 8px;
-}
-.editor-frame .editor-command-line .source-view-toggle > button {
-  height: calc(var(--oi-shell-segment) - 6px);
-  padding: 0 8px;
-  border-radius: var(--oi-shell-radius-row);
-  font-size: var(--oi-shell-type-ui);
-}
-.editor-frame .editor-command-line .source-view-toggle > button[aria-selected="true"] {
-  color: var(--oi-accent-ink);
-  background: var(--oi-wash);
-  box-shadow: inset 0 0 0 1px var(--oi-hairline);
 }
 
 .die-face-unavailable,
@@ -1003,7 +929,6 @@
 .pane.group:is([data-tab-presentation="pinned-vertical"], [data-tab-presentation="unpinned"][data-tab-orientation="vertical"]) > .tab-strip > .tab-scroll { flex: 1; min-height: 0; flex-direction: column; overflow-x: hidden; overflow-y: auto; overscroll-behavior: contain; padding: 4px; gap: 1px; }
 .pane.group:is([data-tab-presentation="pinned-vertical"], [data-tab-presentation="unpinned"][data-tab-orientation="vertical"]) .tab-entry { display: flex; flex: none; width: 100%; }
 .pane.group:is([data-tab-presentation="pinned-vertical"], [data-tab-presentation="unpinned"][data-tab-orientation="vertical"]) .tab-entry > .tab { flex: 1; min-width: 0; max-width: none; height: 28px; padding: 0 28px 0 8px; border-right: 0; border-radius: 5px; }
-.pane.group:is([data-tab-presentation="pinned-vertical"], [data-tab-presentation="unpinned"][data-tab-orientation="vertical"]) .tab-entry > .tab.active { background: var(--oi-wash); }
 .pane.group:is([data-tab-presentation="pinned-vertical"], [data-tab-presentation="unpinned"][data-tab-orientation="vertical"]) .tab-entry > .tab-close { right: 4px; }
 .pane.group:is([data-tab-presentation="pinned-vertical"], [data-tab-presentation="unpinned"][data-tab-orientation="vertical"]) .tab.drop-before { box-shadow: inset 0 2px 0 var(--oi-accent); }
 
@@ -1029,16 +954,19 @@
 /* A dedicated mode stands full screen: its own surface, no pane/tab chrome.
  * The window-corner attribute carries the same top cutouts a tabbed pane
  * gets, so a dedicated mode never reads as an incomplete page. */
-.mode-stage { flex: 1; min-width: 0; min-height: 0; display: flex; flex-direction: column; background: var(--oi-canvas-ground); overflow: auto; scrollbar-width: none;
+.mode-stage { flex: 1; min-width: 0; min-height: 0; display: flex; flex-direction: column; background: var(--oi-canvas-ground); overflow: auto;
   /* Owner refinement 2026-09-18: the centre fixture wears the same card as
    * the Central workbench pane — canvas ground, hairline bevel, one radius —
    * so the chrome is coherent whatever mode holds the centre. */
   border: var(--oi-shell-edge) solid var(--oi-hairline);
   border-radius: var(--oi-shell-radius); }
-/* The same scrollbar law as .surface-body: the stage and everything it
- * holds never show a scrollbar — local rules cannot out-compete this. */
+/* Scrolling inherits the global design-system law. */
+
+/* The stage and everything it holds never show a scrollbar. */
 .mode-stage,.mode-stage * { scrollbar-width: none; }
 .mode-stage::-webkit-scrollbar,.mode-stage *::-webkit-scrollbar { display: none; width: 0; height: 0; }
+
+
 /* The per-mode stage slots (CradleFrame.tsx): a slot is ALWAYS PRESENT and
  * hides by visibility alone — the authored display:flex above would
  * otherwise override the UA [hidden] rule, and an off stage must genuinely

@@ -143,7 +143,7 @@ function RememberReceipt({outcome}:{outcome:ActionDispatch}){
   return <div className="context-remembered" data-remembered-state={outcome.state}><p role="alert">The remember operation did not land ({outcome.state})</p>{detail&&<p className="context-origin">{detail}</p>}</div>;}
  const proposal=(outcome.data??{}) as Partial<RememberedNoteProposal>;
  const note=proposal.note;
- if(!note?.ref||!note.provenance)return <div className="context-remembered" data-remembered-state="invoked"><p role="status">Remembered · {outcome.owner_operation}</p><pre>{JSON.stringify(outcome.data,null,2)}</pre></div>;
+ if(!note?.ref||!note.provenance)return <div className="context-remembered" data-remembered-state="invoked"><p role="status">Remembered · {outcome.owner_operation}</p><details><summary>Show raw receipt</summary><pre>{JSON.stringify(outcome.data,null,2)}</pre></details></div>;
  const recorded=new Date(note.provenance.recorded_at_unix_seconds*1000);
  return <div className="context-remembered" data-remembered-state="invoked">
   <p role="status">Remembered · {note.ref} · {note.provenance.authorship}</p>

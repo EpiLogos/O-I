@@ -19,14 +19,27 @@ The build writes `dist/` with a RELATIVE base (`--base=./` is fixed in
 cradle hosts it through the owner's `oi-material://` file seam, where the
 app's URL is the served dist directory itself, never a site root.
 
-The cradle's Expressions centre (`desktop/cradle/src/expressions/
-PointCloudHost.tsx`) reads this directory's `dist/` through the kernel's
-files seam by its Central-relative path — `Work/O-I/desktop/cradle/
-expressions-app/dist` — the same seam that previously served
-`Work/Point-Cloud-Demo/dist`. The cradle sits on Central's disclosed ground,
-so no copy-sync is needed: THIS directory is the source of truth, its
-`dist/` is the served artefact, and Work/Point-Cloud-Demo is no longer the
-app of record.
+The native desktop serves its own application build at
+`oi-material://localhost/__application/expressions/index.html`. The cradle's `npm run build`
+first builds this application, then copies its generated `dist/` into the
+desktop frontend bundle's `expressions/` directory. Tauri embeds those bytes
+in the candidate. Install this application's dependencies explicitly before
+building; no lifecycle hook installs them.
+
+For a debug native run without embedded assets, the kernel may read this
+checkout's `expressions-app/dist` only. Missing files are refused; a candidate
+never silently reads the primary checkout. The asset response's
+`X-OI-Asset-Source` header distinguishes `bundled` from `development-build`.
+This preserves the existing material origin and its stored hosted drafts.
+Only the reserved application/Expressions prefix is admitted; traversal and symlink escapes are
+refused, and browser webviews cannot reach this route. The frontend marks the
+application ready only after its own state handshake, with a bounded failure
+message if it does not start. Its sandbox and typed host relay remain in place.
+
+Explicit ground-bound bridge walks retain the Central material location
+`Work/O-I/desktop/cradle/expressions-app/dist`. This is a separate test transport,
+not a native fallback. Owner-authored personal documents still use the Central
+`oi-material://` seam.
 
 `dist/` and `node_modules/` are gitignored (generated); everything else in
 this tree is source and is committed.
@@ -59,8 +72,27 @@ this tree is source and is committed.
   host posts the live cutout geometry (`oi-shell-cutout` messages) and the
   header height/padding follow (`--shell-cutout-w/--shell-cutout-h`).
 - `?expression=<id>` is a hosted deep link (the app's own `?journey`/
-  `?scene` idiom) — Instrument 0 opens onto the Epii face
-  (`?expression=source-twelve-faces`).
+  `?scene` idiom). Under the owner's 2026-09-24 correction, Technè's M0
+  opens the selected Wiki register as a native Expression with Scenes.
+  The authored Epii face remains available through Home; it is not a
+  substitute graph or a second instrument application.
+
+## Technè instruments
+
+The engine mounts the existing Research Canvas `CanvasView`, `TimelineSurface`
+and `PsychogeographicMap` components for M1, M2 and M4. Their pinned source,
+license, dependency requirements and eight capability adaptations are recorded
+in `vendor/research-canvas/README.md` and `PROVENANCE.json`. M3 and M5 use the
+existing Expression and Scene controls. The cradle only supplies typed native
+readings and operations; it does not mount a competing instrument UI.
+
+Canvas edits use the current native Scene's occurrences and revision. Source
+relations remain read-only; locally authored Expression connections are committed
+and independently read back. An interrupted connection operation is recovered by
+inspection, without replaying its mutation. Timeline and Places consume actual
+source dates and locations; missing facets do not produce invented records.
+The map ships geographic context for offline use. Instrument camera/layout
+preferences currently survive lens switches in memory, not application restart.
 
 ## Tests
 
@@ -69,13 +101,7 @@ npm test    # the journey model suite (node --test), 53 tests
 npm run lint  # full typecheck of both tsconfigs
 ```
 
-Known pre-existing drift, inherited verbatim at vendoring time and NOT
-touched here: `tsc --noEmit` over the LEGACY workbench files (`src/App.tsx`,
-`src/components/ColorSystemPanel.tsx`, `src/components/ChakraPanel.tsx`)
-reports 22 errors — e.g. `App.tsx` calls `resetField`/`setActiveEntity` on
-`PointCloudComponentRef`, whose interface (src/components/
-PointCloudComponent.tsx) genuinely lacks them. A clean npm install resolves
-the dependency types and surfaces this drift; the outer tree's install
-masks it. The default application (field-studies-journeys, strictly
-typechecked by `build:journeys` on every build) is clean, and `npm run
-build` does not depend on the legacy workbench typechecking.
+Both configurations must pass. The wrapper enables `strictNullChecks` so the
+Research Canvas schema types retain their required fields; the engine uses full
+strict checking. Native instrument acceptance additionally requires the desktop
+host and real owner records, beyond the model and typecheck gates.

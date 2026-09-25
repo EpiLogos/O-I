@@ -1,3 +1,4 @@
+import {CanvasHUD} from "../primitives/CanvasHost";
 /**
  * The Settings page — the centre in Settings mode (docs/cradle/12-SETTINGS.md).
  *
@@ -15,7 +16,6 @@ import {PendingStrip, ReviewSheet} from "./ReviewSheet";
 import {searchIndex, searchSettings} from "./settingsSearch";
 import {StatusSection} from "./sections/StatusSection";
 import {HarnessesSection} from "./sections/HarnessesSection";
-import {ModelsSection} from "./sections/ModelsSection";
 import {CredentialsSection, discoverKeys, type Discovery} from "./sections/CredentialsSection";
 import {SkillScopeSwitch, SkillsSection} from "./sections/SkillsSection";
 import {ProfilesSection} from "./sections/ProfilesSection";
@@ -134,7 +134,7 @@ export function SettingsPage() {
   const everythingFailed = [data.suite, data.registry, data.owners, data.credentials].every((part) => part.state === "failed");
   const anyRead = [data.suite, data.registry, data.owners, data.credentials, data.census].some((part) => part.state !== "reading");
   return <section className="settings-page" aria-label="Settings" data-settings-page data-settings-place={`${place.kind}:${place.id}`}>
-    <header className="settings-page-header">
+    <CanvasHUD className="settings-page-header">
       <h1>{placeLabel(place)}</h1>
       <div className="settings-page-actions">
         {place.kind === "section" && place.id === "skills" && <SkillScopeSwitch/>}
@@ -143,7 +143,7 @@ export function SettingsPage() {
         <Search/>
         <button type="button" className="settings-button" data-settings-back onClick={backToWork}>Back to work</button>
       </div>
-    </header>
+    </CanvasHUD>
     <AgentSetupReturn/>
     {FixtureLabel && data.registry.state === "ok" && data.registry.value.source === "fixture" && <Suspense fallback={null}><FixtureLabel/></Suspense>}
     <div className="settings-page-body" ref={body}>
@@ -154,7 +154,6 @@ export function SettingsPage() {
         : place.kind === "product" ? <ProductSection key={place.id} id={place.id} data={data}/>
         : place.id === "status" ? <StatusSection data={data}/>
         : place.id === "harnesses" ? <HarnessesSection data={data}/>
-        : place.id === "models" ? <ModelsSection data={data}/>
         : place.id === "credentials" ? <CredentialsSection data={data} discovery={discovery}/>
         : place.id === "skills" ? <SkillsSection data={data}/>
         : place.id === "profiles" ? <ProfilesSection data={data}/>

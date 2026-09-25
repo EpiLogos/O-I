@@ -61,6 +61,18 @@
   --oi-section-y: clamp(5rem, 10vw, 10rem);
 
   /* ===== section: typography ===== */
+  --oi-shell-type-eyebrow: 10px;
+  --oi-shell-type-meta: 11px;
+  --oi-shell-type-ui: 12px;
+  --oi-shell-type-nav: 13px;
+  --oi-shell-type-body: 14px;
+  --oi-shell-type-prose: 15px;
+  --oi-shell-type-heading: 15px;
+  --oi-shell-type-title: 18px;
+  --oi-status-success: light-dark(#256b42, #69c489);
+  --oi-status-error: light-dark(#a3352b, #ef8179);
+  --oi-status-warning: light-dark(#745814, #d7b66a);
+  --oi-status-running: light-dark(#28619b, #79b8f3);
   /* Family stacks — verbatim from the site body (index.css, explore.css)
    * and the site code faces (pages.css, explore.css, direct-authoring.css). */
   --oi-font-sans: 'Avenir Next', Avenir, 'Helvetica Neue', Arial, sans-serif;
@@ -220,7 +232,7 @@
   --oi-desktop-gap-sm: 8px;
   --oi-desktop-gap: 12px;
   --oi-desktop-gap-lg: 20px;
-  --oi-desktop-bar: 34px;
+  --oi-desktop-bar: var(--oi-panel-head-height);
   --oi-desktop-row: 30px;
   --oi-desktop-hit-target: 28px;
   --oi-desktop-rule: 1px;
@@ -230,9 +242,6 @@
   --oi-graph-point-min-radius: 0.45px;
   --oi-graph-edge-width: 0.4px;
   /* ===== section: typography ===== */
-  --oi-desktop-type-caption: 11px;
-  --oi-desktop-type-body: 13px;
-  --oi-desktop-type-title: 16px;
   /* ===== section: motion ===== */
 }
 
@@ -275,8 +284,9 @@
   --oi-shell-gutter: 4px;              /* the thin offsetting margin between planes */
   --oi-shell-edge: 1px;
   --oi-shell-radius: 6px;              /* plane corner */
-  --oi-shell-bar: 35px;                /* workbench bar */
-  --oi-shell-tabbar: 32px;             /* pane tab bar */
+  --oi-panel-head-height: 32px;       /* every panel and canvas top row */
+  --oi-shell-bar: var(--oi-panel-head-height);
+  --oi-shell-tabbar: var(--oi-panel-head-height);
   --oi-shell-row: 30px;                /* nav row */
   --oi-shell-row-lg: 32px;             /* project row */
   --oi-shell-control: 26px;            /* icon control body */
@@ -291,14 +301,6 @@
   --oi-agent-min: 260px;
   --oi-agent-max: 520px;
   /* type */
-  --oi-shell-type-eyebrow: 8px;        /* tracked uppercase */
-  --oi-shell-type-meta: 9px;
-  --oi-shell-type-ui: 10px;
-  --oi-shell-type-nav: 11px;
-  --oi-shell-type-body: 12px;
-  --oi-shell-type-prose: 13px;
-  --oi-shell-type-heading: 15px;
-  --oi-shell-type-title: 18px;
   --oi-shell-tracking: 1.2px;
   /* elevation */
   --oi-shadow-plane: 0 1px 2px rgba(22, 22, 20, 0.05);
@@ -313,6 +315,8 @@
   /* Shared component language (additive, 2026-09-17) — the geometry the
    * desktop.css primitives draw with (.oi-row .oi-segment .oi-chip .oi-menu
    * .oi-range .oi-scroll .oi-resize-handle). No existing role changes. */
+  --oi-row-inset: var(--oi-shell-gutter);
+  --oi-row-gap: calc(2 * var(--oi-shell-gutter));
   --oi-shell-row-dense: 28px;          /* .oi-row: a dense list row */
   --oi-shell-segment: 24px;            /* .oi-segment: the control's outer height */
   --oi-shell-chip: 20px;               /* .oi-chip body */
@@ -422,12 +426,6 @@
    * type step up, and rows, controls and hit targets gain their step of room
    * to match. Role names unchanged; pinned walk geometry (tab bar, footer,
    * gutter) untouched. */
-  --oi-shell-type-eyebrow: 10px;
-  --oi-shell-type-meta: 11px;
-  --oi-shell-type-ui: 12px;
-  --oi-shell-type-nav: 13px;
-  --oi-shell-type-body: 14px;
-  --oi-shell-type-prose: 15px;
   --oi-shell-row: 32px;
   --oi-shell-row-lg: 34px;
   --oi-shell-row-dense: 30px;

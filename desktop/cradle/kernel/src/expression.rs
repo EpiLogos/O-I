@@ -219,6 +219,9 @@ pub enum Change {
     SceneRemove { scene_ref: String },
     SceneMaterialSet { scene_ref: String, presentation: crate::expression_scene::Presentation },
     SceneMaterialClear { scene_ref: String },
+    SceneBlueprintBind { scene_ref: String, binding: crate::expression_blueprint::Binding },
+    SceneBlueprintTransform { scene_ref: String, transform: crate::expression_blueprint::Transform },
+    SceneBlueprintRelease { scene_ref: String },
     SceneReorder {
         scene_refs: Vec<String>,
     },
@@ -468,7 +471,7 @@ pub fn capabilities() -> Value {
     json!({"schema":"oi.expression-capabilities/v1", "document_schema":SCHEMA,
         "operations":["capabilities","list","inspect","create","open","open_file","fork","edit","propose","review","export","save","save_as","invoke",
             "profile_define","profile_inspect","profile_resolve","edition_create","edition_inspect","index","asset_admit","asset_traverse","asset_subject"],
-        "changes":["rename","composition_set","scene_material_set","scene_material_clear","scene_rename","scene_remove","scene_create","scene_reorder","scene_compose","entity_add","entity_remove","subject_bind","subject_unbind","relation_bind","relation_remove","focus","relation_focus","parameter_set","parameter_automate","parameter_manual","representation_bind",
+        "changes":["rename","composition_set","scene_material_set","scene_material_clear","scene_blueprint_bind","scene_blueprint_transform","scene_blueprint_release","scene_rename","scene_remove","scene_create","scene_reorder","scene_compose","entity_add","entity_remove","subject_bind","subject_unbind","relation_bind","relation_remove","focus","relation_focus","parameter_set","parameter_automate","parameter_manual","representation_bind",
             "scene_body_set","scene_body_clear","scene_trigger_attach","scene_trigger_detach","profile_adopt","profile_release","collections_set"],
         "composition_presentation":{"schema":"oi.journey-properties/v1","data_only":true,"scene_store":"Document.scenes"},
         "scene_presentation":{"schema":"oi.journey-scene/v1","owner":"existing Expressions authoring Scene","data_only":true,"full_native_membership_retained":true},
@@ -636,6 +639,7 @@ impl Document {
             if let Some(body) = &s.body {
                 crate::expression_carrier::validate_body(body, &self.expression_ref)?;
             }
+            crate::expression_blueprint::validate(s, self)?;
         }
         crate::expression_trigger::validate_document_triggers(self)?;
         if self.collections.len() > 16 {
@@ -826,8 +830,17 @@ impl Document {
                 // Referencing triggers remain subject to document validation:
                 // remove/reconnect them explicitly in the same atomic edit.
             }
-            Change::SceneMaterialSet { scene_ref, presentation } => self.scene(&scene_ref)?.presentation = Some(presentation),
-            Change::SceneMaterialClear { scene_ref } => self.scene(&scene_ref)?.presentation = None,
+            Change::SceneMaterialSet { scene_ref, presentation } => {
+                crate::expression_blueprint::preserve(self.scene(&scene_ref)?.presentation.as_ref(), Some(&presentation))?;
+                self.scene(&scene_ref)?.presentation = Some(presentation);
+            }
+            Change::SceneMaterialClear { scene_ref } => {
+                crate::expression_blueprint::preserve(self.scene(&scene_ref)?.presentation.as_ref(), None)?;
+                self.scene(&scene_ref)?.presentation = None;
+            }
+            Change::SceneBlueprintBind { scene_ref, binding } => crate::expression_blueprint::bind(self, &scene_ref, binding)?,
+            Change::SceneBlueprintTransform { scene_ref, transform } => crate::expression_blueprint::transform(self, &scene_ref, transform)?,
+            Change::SceneBlueprintRelease { scene_ref } => crate::expression_blueprint::release(self, &scene_ref)?,
             Change::SceneReorder { scene_refs } => {
                 if scene_refs.len() != self.scenes.len()
                     || scene_refs.iter().collect::<BTreeSet<_>>().len() != scene_refs.len()

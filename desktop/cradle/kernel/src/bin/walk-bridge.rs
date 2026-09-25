@@ -181,8 +181,28 @@ fn handle(kernel: &Mutex<Kernel>, request: &Request) -> BridgeResponse {
                 Ok(op) => op,
                 Err(error) => return json_error(400, format!("unreadable op: {error}")),
             };
-            let mut kernel = kernel.lock().expect("kernel mutex");
-            match kernel.apply(op) {
+            let execute=||->Result<oi_cradle_kernel::KernelOpOutcome,String>{
+                if let KernelOp::ExpressionRecovery { request } = op {
+                    return oi_cradle_kernel::expression_recovery::execute(request);
+                }
+                let read=kernel.lock().expect("kernel mutex").prepare_owner_read(&op);
+                if let Some(read)=read{return read.execute();}
+                let dictation=kernel.lock().expect("kernel mutex").prepare_dictation(&op)?;
+                if let Some(read)=dictation{return read.execute();}
+                let knowledge=kernel.lock().expect("kernel mutex").prepare_knowledge(&op)?;
+                if let Some(read)=knowledge{let completed=read.execute()?;return kernel.lock().expect("kernel mutex").finish_knowledge(completed);}
+                let working=match &op {
+                    KernelOp::WorkingSurfaceRead{project,agent_session,binding}=>Some(kernel.lock().expect("kernel mutex").prepare_working_surface_read(project,agent_session.clone(),binding.clone(),false)?),
+                    KernelOp::WorkingSurfaceAttachment{project,agent_session,binding}=>Some(kernel.lock().expect("kernel mutex").prepare_working_surface_read(project,agent_session.clone(),Some(binding.clone()),true)?),
+                    _=>None,
+                };
+                if let Some(read)=working{return Ok(oi_cradle_kernel::KernelOpOutcome{receipts:vec![],result:KernelOpResult::WorkingSurfaceReading{document:read.execute()?}});}
+                let prepared=kernel.lock().expect("kernel mutex").prepare_decision(&op)?;
+                if let Some(decision)=prepared{let receipt=decision.execute()?;return kernel.lock().expect("kernel mutex").finish_decision(receipt,matches!(&op,KernelOp::InvokeAction{..}));}
+                kernel.lock().expect("kernel mutex").apply(op)
+            };
+            let result=execute();
+            match result {
                 Ok(outcome) => match serde_json::to_value(&outcome) {
                     Ok(outcome) => json_ok(serde_json::json!({"outcome": outcome})),
                     Err(error) => json_error(500, error.to_string()),

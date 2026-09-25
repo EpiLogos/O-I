@@ -25,6 +25,9 @@ export class NativeFieldController {
  private sources:any=null;private domain:NativeDomainReading|null=null;
  private openingHold:string|null=null;private closing:Promise<void>|null=null;
  private lastNative:any=null;private holdRevision=0;
+ private admitting:number|null=null;
+ private suspension:{tokens:Set<symbol>;epoch:number;revision:number;restore:boolean;reason:string}|null=null;
+ private restoring:{epoch:number;revision:number}|null=null;
  private closeOwner(opened:any){
   if(!opened)return Promise.resolve();
   if(opened.closing)return opened.closing as Promise<void>;
@@ -82,9 +85,9 @@ export class NativeFieldController {
  } as const;}
  private changed(){this.onChange();}
  async connect(path:string,revision:string,sampleRate:number){
-  if(this.dead||this.status==='opening'||this.session||this.closing)throw new Error('release the current native owner before opening another');
+  if(this.dead||this.status==='opening'||this.session||this.closing||this.suspension)throw new Error('release the current native owner and instrument suspension before opening another');
   if(!Number.isInteger(sampleRate)||sampleRate<8000||sampleRate>192000)throw new Error('native binding must supply its actual sample rate');
-  const epoch=++this.epoch;this.status='opening';this.reason=null;this.openingHold=null;this.lastNative=null;this.changed();
+  const epoch=++this.epoch;this.admitting=epoch;this.status='opening';this.reason=null;this.openingHold=null;this.lastNative=null;this.changed();
   let context:AudioContext|null=null;
   try{
    // This is invoked directly by the Connect button; no microphone and no
@@ -105,13 +108,15 @@ export class NativeFieldController {
    await this.readSources(this.session);
    await this.session.recover('complete native sources admitted; rebase device only');
    if(epoch!==this.epoch||this.dead)return;
-   if(this.openingHold){this.hold(this.openingHold);}
+   // Reassert an existing admission hold without issuing a new controller hold:
+   // the suspension token must keep ownership of its captured hold revision.
+   if(this.openingHold){this.session.hold(this.openingHold);this.status='held';this.reason=this.openingHold;}
    else{
     // Rebase once more immediately before the pump so inspect/open cost cannot
     // consume the whole audio lead on a slow GPU/main-thread admission path.
     await this.session.recover('pre-pump device rebase after source admission');
     if(epoch!==this.epoch||this.dead)return;
-    if(this.openingHold){this.hold(this.openingHold);}
+    if(this.openingHold){this.session.hold(this.openingHold);this.status='held';this.reason=this.openingHold;}
     else{this.status='following';this.session.start();}
    }
    this.changed();
@@ -119,12 +124,12 @@ export class NativeFieldController {
    // A completion belonging to an old epoch may not close a newer owner.
    if(epoch!==this.epoch||this.dead){if(context&&context.state!=='closed')await context.close();return;}
    await this.release(false);this.status='unavailable';this.reason=String(error);this.changed();throw error;
-  }
+  }finally{if(this.admitting===epoch)this.admitting=null;}
  }
  /** Called by the actual app frame. A hidden/paused app cannot leave audio running. */
  frame(delta:number,paused:boolean){
-  if(paused&&this.status==='opening')this.hold('application paused during native admission');
-  if(paused&&this.session&&this.status==='following')this.hold('application paused or hidden');
+  if(paused&&!this.suspension&&this.status==='opening')this.hold('application paused during native admission');
+  if(paused&&!this.suspension&&this.session&&this.status==='following')this.hold('application paused or hidden');
   if(this.session){
    const reading=this.session.reading;
    if(!reading.available&&this.status!=='unavailable'){this.status='unavailable';this.reason=reading.reason??'native acknowledgement unavailable';this.changed();}
@@ -135,9 +140,33 @@ export class NativeFieldController {
  }
  hold(reason='manual hold'){
   this.holdRevision++;
-  if(this.status==='opening')this.openingHold=reason;
+  if(this.admitting===this.epoch)this.openingHold=reason;
   if(!this.session)return;
   this.session.hold(reason);this.status='held';this.reason=reason;this.changed();
+ }
+ /** A temporary instrument hold owns only the state it actually suspended.
+  * Other holds and native lifetimes can never be released by its token. */
+ suspend(reason:string):symbol{
+  if(!reason||reason.length>2048)throw new Error('invalid instrument suspension');
+  const token=Symbol('native instrument suspension');
+  if(this.suspension){this.suspension.tokens.add(token);return token;}
+  const pending=this.restoring;
+  const restore=this.status==='following'||(this.admitting===this.epoch&&!this.openingHold)
+   ||!!(pending&&pending.epoch===this.epoch&&pending.revision===this.holdRevision);
+  // A pre-existing manual/error hold keeps its reason and revision.
+  if(restore)this.hold(reason);
+  this.suspension={tokens:new Set([token]),epoch:this.epoch,revision:this.holdRevision,restore,reason};
+  return token;
+ }
+ async releaseSuspension(token:symbol):Promise<void>{
+  const suspension=this.suspension;
+  if(!suspension?.tokens.delete(token)||suspension.tokens.size)return;
+  this.suspension=null;
+  if(!suspension.restore||suspension.epoch!==this.epoch||suspension.revision!==this.holdRevision||this.dead)return;
+  if(this.admitting===this.epoch){this.openingHold=null;this.reason=null;return;}
+  const restoring={epoch:suspension.epoch,revision:suspension.revision};this.restoring=restoring;
+  try{await this.resumeAt(restoring.epoch,restoring.revision);}
+  finally{if(this.restoring===restoring)this.restoring=null;}
  }
  private async idle(){const session=this.session;if(!session)throw new Error('native owner unavailable');
   const deadline=performance.now()+6500;while(session.reading.in_flight){if(performance.now()>deadline)throw new Error('native operation still in flight; not retried');await new Promise(r=>setTimeout(r,8));}
@@ -152,17 +181,20 @@ export class NativeFieldController {
  private finishCommand(session:InstrumentSession,following:boolean,revision:number,reason:string){
   if(!this.current(session))throw new Error('native operation belongs to a released lifetime');
   this.checkpoint=null;
-  if(following&&revision===this.holdRevision&&!this.contextLost){this.status='following';this.reason=null;session.start();this.changed();}
-  else this.hold(reason);
+  if(following&&revision===this.holdRevision&&!this.contextLost&&!this.suspension){this.status='following';this.reason=null;session.start();this.changed();}
+  else{session.hold(this.reason??reason);this.status='held';this.reason??=reason;this.changed();}
  }
- resume(){return this.serial(async()=>{
+ resume(){return this.resumeAt(this.epoch,this.holdRevision);}
+ private resumeAt(epoch:number,revision:number){return this.serial(async()=>{
+  const permitted=()=>epoch===this.epoch&&revision===this.holdRevision&&!this.suspension&&!this.dead;
+  if(!permitted())return;
   const session=this.session;if(!session)throw new Error('native owner unavailable');
-  const revision=this.holdRevision;
   try{
    if(this.contextLost)throw new Error('GPU context is unavailable');
    if(this.reason?.startsWith('GPU context'))throw new Error('restore a same-state GPU checkpoint before resuming, or disconnect');
    await this.context?.resume();await this.idle();
    if(!this.current(session))throw new Error('native resume belongs to a released lifetime');
+   if(!permitted())return;
    await session.recover('explicit native resume');
    this.finishCommand(session,true,revision,'resume interrupted by a newer hold');
   }catch(error){if(this.current(session))this.hold(String(error));throw error;}
@@ -212,6 +244,7 @@ export class NativeFieldController {
   this.renderer.releaseRetainedField();this.renderer.setNativeDomain(false);this.projection?.dispose();this.projection=null;
   const context=this.context;this.context=null;const opened=this.opened;this.opened=null;this.checkpoint=null;this.contextLost=false;
   this.sources=null;this.domain=null;this.openingHold=null;
+  this.admitting=null;this.suspension=null;this.restoring=null;
   if(manual){this.status='manual';this.lastNative=null;this.reason=null;this.changed();}
   const close=async()=>{
    const results=await Promise.allSettled([context&&context.state!=='closed'?context.close():Promise.resolve(),this.closeOwner(opened)]);

@@ -9,30 +9,35 @@ import {mkdirSync,writeFileSync} from 'node:fs';
 import {createServer} from 'vite';
 import {chromium} from 'playwright';
 import {fileURLToPath} from 'node:url';
+// Theme semantics now belong to the real kernel. Supply a bridge launched
+// with a disposable OI_HOME; this component harness creates no owner substitute.
+const kernelBridge=process.env.OI_KERNEL_BRIDGE;
+if(!kernelBridge)throw new Error('OI_KERNEL_BRIDGE must name a real kernel with a disposable OI_HOME');
 const root=fileURLToPath(new URL('../',import.meta.url));
 const out=fileURLToPath(new URL('./artifacts/visuals-preferences/',import.meta.url));mkdirSync(out,{recursive:true});
 const server=await createServer({root,appType:'custom',server:{host:'127.0.0.1',port:4390,strictPort:true},logLevel:'error'});
 server.middlewares.use('/visuals-preview',async(_,res)=>{res.setHeader('content-type','text/html');res.end(await server.transformIndexHtml('/visuals-preview','<body class="oi-desktop"><div id="root"></div><script type="module" src="/tests/visuals-preview-page.tsx"></script>'));});
 await server.listen();const browser=await chromium.launch({headless:true,args:['--use-gl=angle','--use-angle=swiftshader','--enable-webgl']});
 const context=await browser.newContext({colorScheme:'light',viewport:{width:900,height:800}});const page=await context.newPage();
-const receipt={...receiptIdentity(import.meta.url),classification:'controlled real-component/browser, not installed native or Mac',checks:[],errors:[],passed:false};
+const receipt={...receiptIdentity(import.meta.url),classification:'real components and supplied native kernel; browser rendering, not installed Mac acceptance',checks:[],errors:[],passed:false};
 page.on('pageerror',e=>receipt.errors.push(e.message));
-await context.addInitScript(()=>{
+await context.addInitScript(bridge=>{
+ window.__OI_KERNEL_BRIDGE__=bridge;
  if(!sessionStorage.getItem('visuals-seed')){localStorage.setItem('oi-cradle.visuals.v1',JSON.stringify({enabled:false,welcomeEnabled:false,theme:'system'}));sessionStorage.setItem('visuals-seed','yes');}
  window.hostModeRequests=[];window.addEventListener('oi:host-workspace-mode',e=>window.hostModeRequests.push(e.detail.mode));
-});
+},kernelBridge);
 const check=(ok,label)=>{assert.ok(ok,label);receipt.checks.push(label);};
 const noPresentation=async()=>{check((await page.evaluate(()=>previewTest.stage.inspect().presentations.length))===0,'settings acquires no stage presentation');check(await page.locator('.visuals-preview-stage,.visuals-composition-host').count()===0,'no embedded demo/workbench');};
 try{
  await page.goto('http://127.0.0.1:4390/visuals-preview');await page.getByLabel('Appearance preferences').waitFor();
  await noPresentation();check(await page.locator('canvas').count()===0,'disabled preference view allocates no canvas');
  for(const choice of ['Dark','Light','System']){
-  await page.getByRole('button',{name:choice,exact:true}).click();
+  await page.getByRole('radio',{name:choice,exact:true}).click();
   await page.waitForFunction(choice=>previewTest.visuals.get().theme===choice,choice.toLowerCase());
-  check(await page.getByRole('button',{name:choice,exact:true}).getAttribute('aria-pressed')==='true','selected '+choice+' is disclosed');
+  check(await page.getByRole('radio',{name:choice,exact:true}).getAttribute('aria-checked')==='true','selected '+choice+' is disclosed');
  }
  await page.emulateMedia({colorScheme:'dark'});await page.waitForFunction(()=>document.body.dataset.theme==='dark');
- await page.reload();await page.getByLabel('Appearance preferences').waitFor();check(await page.getByRole('button',{name:'System',exact:true}).getAttribute('aria-pressed')==='true','system choice survives restart');
+ await page.reload();await page.getByLabel('Appearance preferences').waitFor();check(await page.getByRole('radio',{name:'System',exact:true}).getAttribute('aria-checked')==='true','system choice survives restart');
  await page.emulateMedia({colorScheme:'light'});await page.waitForFunction(()=>!document.body.dataset.theme);receipt.checks.push('system appearance follows OS changes after restart');
  // Theme library: the generated index renders as real preview cards, and a
  // selection moves the shell ground, the store and data-oi-theme together.
@@ -47,10 +52,10 @@ try{
  check(await page.evaluate(()=>previewTest.visuals.get().themeId)===first.id,'the preference owner holds the named theme');
  check(await page.evaluate(()=>previewTest.visuals.get().theme)===first.appearance,'the resolved theme follows the entry’s appearance');
  check(await page.evaluate(()=>getComputedStyle(document.body).getPropertyValue('--oi-canvas-ground').trim())===first.preview.ground,'the shell ground takes the theme’s canvas colour');
- check(await page.getByRole('button',{name:'System',exact:true}).getAttribute('aria-pressed')==='false','house segment yields while a library theme is active');
+ check(await page.getByRole('radio',{name:'System',exact:true}).getAttribute('aria-checked')==='false','house segment yields while a library theme is active');
  await page.reload();await page.getByLabel('Appearance preferences').waitFor();
  check(await page.evaluate(()=>document.body.dataset.oiTheme)===first.id,'the named theme survives restart');
- await page.getByRole('button',{name:'System',exact:true}).click();
+ await page.getByRole('radio',{name:'System',exact:true}).click();
  await page.waitForFunction(()=>!document.body.dataset.oiTheme);
  check(await page.evaluate(()=>previewTest.visuals.get().themeId)===null,'returning to a house appearance clears the named theme');
  // Import from disk: a VS Code theme file (JSONC, as themes really ship)
@@ -70,7 +75,8 @@ try{
  const cardCount=()=>library.locator('button').count();
  const before=await cardCount();
  await importInput.setInputFiles(badFile);
- check(await page.locator('.oi-refusal').textContent()!=='','a malformed file refuses in plain words');
+ await page.getByRole('alert').waitFor();
+ check(await page.getByRole('alert').textContent()!=='','a malformed file refuses in plain words');
  check(await cardCount()===before,'a refused file adds no card');
  check(await page.evaluate(()=>!document.body.dataset.oiTheme),'a refused file selects nothing');
  await importInput.setInputFiles(themeFile);

@@ -1,3 +1,4 @@
+import {IconTabStrip} from '../../workspace/primitives/IconTabStrip'
 import { useMemo, useState } from 'react'
 import type { ActionInvocation, FactoryBuildView, ViewDepth } from './types'
 import { SessionCards } from './components/SessionCards'
@@ -46,9 +47,11 @@ export function BuildSurface({ view, initialDepth = 'semantic', onAction }: Buil
         <div><h1>{view.project.label}</h1><p>{view.run.label}</p></div>
         <div className="fb-run-state"><span className={`fb-status fb-status-${view.run.status}`}>{view.run.status}</span><Ref>{view.run.runRef}</Ref></div>
       </div>
-      <nav className="fb-depth-tabs" aria-label="Build view depth">
-        {(['semantic', 'live', 'trajectory'] as const).map((item) => <button key={item} type="button" className={depth === item ? 'is-selected' : ''} onClick={() => setDepth(item)}>{item}</button>)}
-      </nav>
+      <IconTabStrip aria-label="Build view depth" items={[
+        {id:'semantic',label:'Semantic',icon:'graph'},
+        {id:'live',label:'Live',icon:'factory'},
+        {id:'trajectory',label:'Trajectory',icon:'history'},
+      ]} current={depth} onSelect={id=>setDepth(id as ViewDepth)}/>
     </header>
 
     {depth === 'semantic' ? <section className="fb-depth fb-semantic">

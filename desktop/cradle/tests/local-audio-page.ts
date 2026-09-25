@@ -6,7 +6,7 @@ import '@epilogos/oi-design-system/tokens.css';
 import '@epilogos/oi-design-system/desktop.css';
 import '../src/rest.css';
 const params=new URLSearchParams(location.search),phrase=params.get('phrase')!;
-writeSttUrl(params.get('endpoint')!);
+const configure=()=>writeSttUrl(params.get('endpoint')!);
 const report:{classification:string;phrase:string;mic?:unknown;audio?:unknown;error?:string;done:boolean;passed:boolean}={classification:'human-operated real browser microphone/STT and audible-output check, not native-WKWebView microphone proof',phrase,done:false,passed:false};
 (window as unknown as {localAudio:typeof report}).localAudio=report;
 const main=document.createElement('main');main.style.cssText='max-width:52rem;margin:2rem auto;padding:1.5rem;line-height:1.6';document.body.append(main);
@@ -16,7 +16,7 @@ const words=document.createElement('p');words.textContent='Say: '+phrase;main.ap
 const status=document.createElement('p');status.setAttribute('role','status');main.append(status);
 function button(label:string,handler:()=>Promise<void>|void){const b=document.createElement('button');b.textContent=label;b.style.margin='0.5rem';b.onclick=()=>void Promise.resolve(handler()).catch(error=>{report.error=String(error);status.textContent=report.error;});main.append(b);return b;}
 let session:DictationSession|null=null;let micPassed=false,heard=false,started=0;
-const start=button('Start microphone',async()=>{start.disabled=true;session=new DictationSession();try{await session.begin();started=performance.now();stop.disabled=false;status.textContent='Recording. Speak the phrase and then stop.';}catch(error){session=null;start.disabled=false;throw error;}});
+const start=button('Start microphone',async()=>{start.disabled=true;session=new DictationSession();try{await configure();await session.begin();started=performance.now();stop.disabled=false;status.textContent='Recording. Speak the phrase and then stop.';}catch(error){session=null;start.disabled=false;throw error;}});
 const stop=button('Stop and transcribe locally',async()=>{
  stop.disabled=true;const active=session;session=null;if(!active)throw Error('No recording');
  status.textContent='Transcribing with your local server…';const outcome=await active.end();

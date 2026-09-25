@@ -15,7 +15,7 @@
 .factory-source-picker input { min-width: 0; width: 100%; min-height: 32px; padding: 6px 8px; font-size: var(--oi-shell-type-ui); color: var(--oi-ink); background: var(--oi-canvas-ground); border: var(--oi-shell-edge) solid var(--oi-hairline); border-radius: 4px; }
 .factory-source-picker button, .factory-runs-heading > button { min-height: 30px; padding: 6px 10px; font-size: var(--oi-shell-type-nav); border: var(--oi-shell-edge) solid var(--oi-hairline); border-radius: 4px; }
 .factory-source-picker form > button { justify-self: start; }
-.factory-owner-refusal { margin: 12px 20px; color: var(--oi-danger, #a33); font-size: var(--oi-shell-type-nav); }
+.factory-owner-refusal { margin: 12px 20px; color: var(--oi-status-error); font-size: var(--oi-shell-type-nav); }
 .factory-runs-empty { margin: 24px 20px; max-width: 56ch; }
 .factory-runs-layout { display: grid; grid-template-columns: minmax(235px, 29%) minmax(0, 1fr); flex: 1; min-height: 0; }
 .factory-run-list { overflow: auto; border-right: var(--oi-shell-edge) solid var(--oi-hairline); padding: 10px; }

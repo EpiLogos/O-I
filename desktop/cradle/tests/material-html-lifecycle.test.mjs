@@ -140,7 +140,9 @@ test('acquisition is shared: the renderer consumes the broker, never a second di
   assert.ok(fileSurfaceSource.includes('fileOperation'), 'writes, history and CAS still cross the owner operation');
   assert.ok(fileSurfaceSource.includes('expected_revision:draft.base_revision'), 'the CAS expected-revision guard is intact');
   assert.ok(fileSurfaceSource.includes('restoreView'), 'scroll/caret restoration is applied for seeded opens as for fresh reads');
-  assert.ok(fileSurfaceSource.includes('lastReading('), 'the labelled read-only last-reading fallback survives');
+  // Recovery now belongs to the native owner; retained-files-native.test.mjs
+  // exercises deletion, restart and permission checks against that owner.
+  assert.ok(fileSurfaceSource.includes('lastFileReading(transport,binding.location)'), 'the read-only fallback obtains its retained reading from the native owner');
 });
 
 /*

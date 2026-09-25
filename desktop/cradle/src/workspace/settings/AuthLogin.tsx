@@ -53,7 +53,7 @@ function LoginNote({harness, entry}: {harness: string; entry: AuthLoginOption}) 
   return <p className="settings-muted settings-auth-note" data-auth-note={harness} data-auth-provider={entry.provider_ref}>{entry.note}</p>;
 }
 
-/** The auth options of one harness, under its Models row. */
+/** The auth options of one harness, beside its setup controls. */
 export function HarnessAuth({harness}: {harness: string}) {
   const data = useSettings();
   const face = data.authFaces[harness];
@@ -74,7 +74,7 @@ export function HarnessAuth({harness}: {harness: string}) {
 /** The logins one provider's Credentials card gains: every ready harness
  * whose own profile declares a runnable login serving that provider. Cards
  * render runnable logins only — a note-only harness's note lives on its own
- * Models row, where it is attributable. */
+ * setup card, where it is attributable. */
 export function ProviderLogins({provider}: {provider: string}) {
   const data = useSettings();
   const ready = data.suite.state === "ok" ? readyHarnesses(data.suite.value) : [];

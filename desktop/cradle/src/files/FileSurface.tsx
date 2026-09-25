@@ -7,10 +7,11 @@ import {useKernel} from "../kernel/KernelProvider";
 import type {NativeFileReading} from "../kernel/types";
 import type {SurfaceBinding} from "../surface/types";
 import {readDraft,writeDraft,clearSavedDraft,type HeldDraft} from "../workspace/drafts";
-import {fileOperation,type FileMutation,type FileHistory,type FilePreview} from "./client";
+import {lastFileReading,fileOperation,type FileMutation,type FileHistory,type FilePreview} from "./client";
 import {acquireFileReading,peekFileReading,invalidateFile} from "./resources";
 import {detectFormat} from "../material/detect";
 import {EditorButton,EditorFrame} from "../editor/EditorChrome";
+import {hasLegacyDeviceCopy,recoverLegacyDeviceCopy} from "./legacyRecovery";
 
 /** All writes/history belong to Central. Local storage retains unsaved typing.
  * FND-04: every non-plain-text format delegates entirely to the material
@@ -20,38 +21,6 @@ import {EditorButton,EditorFrame} from "../editor/EditorChrome";
  * `MaterialSurface`'s own toggle mounts it without recursing back into
  * the material renderer); image/pdf/unsupported binary have no source
  * text to show at all. */
-/** The last reading Central served for a file, retained on this device.
- *
- * A file can go away, or the ground behind it can, between one look and the
- * next. When that happens the surface still shows what was last actually read,
- * labelled as a last reading and read-only — it never redirects, never blanks,
- * and never offers to write over something it cannot see. The retained copy is
- * presentation only: it carries no write operation, so nothing can be saved
- * through it.
- */
-const LAST_READING_KEY=(ref:string)=>`oi-cradle.file-last-reading.v1:${ref}`;
-
-function retainReading(ref:string|undefined,reading:NativeFileReading){
-  if(!ref)return;
-  try{localStorage.setItem(LAST_READING_KEY(ref),JSON.stringify(reading));}catch{/* Retention is a convenience, never a requirement. */}
-}
-
-function lastReading(ref:string|undefined):NativeFileReading|undefined{
-  if(!ref)return undefined;
-  try{
-    const raw=localStorage.getItem(LAST_READING_KEY(ref));
-    if(!raw)return undefined;
-    const parsed=JSON.parse(raw) as NativeFileReading;
-    if(typeof parsed?.content!=="string"||typeof parsed?.revision!=="string")return undefined;
-    // A retained reading is never writable: the file it came from is not there.
-    return {...parsed,operations:{
-      write:{available:false,reason:"This is the last reading retained on this device; the file itself is not readable now."},
-      history:{available:false,reason:"The file is not readable now."},
-      restore:{available:false,reason:"The file is not readable now."},
-    }};
-  }catch{return undefined;}
-}
-
 export function FileSurface({binding,forceSource,leadingTools}:{binding:SurfaceBinding;forceSource?:boolean;leadingTools?:ReactNode}) {
   const format=detectFormat({path:binding.location?.path});
   if(!forceSource&&format!=="text"){
@@ -60,6 +29,7 @@ export function FileSurface({binding,forceSource,leadingTools}:{binding:SurfaceB
   const {transport}=useKernel();
   const [reading,setReading]=useState<NativeFileReading>();
   const [draft,setDraft]=useState<HeldDraft>();const held=useRef(draft);held.current=draft;
+  const [legacyRecoverable,setLegacyRecoverable]=useState(false);
   const [error,setError]=useState<string>();const [pending,setPending]=useState(false);
   // First-presentation latch (the same inactive-tab law the material
   // renderer holds): an editor that mounted CONCEALED — a restart-restored
@@ -87,13 +57,24 @@ export function FileSurface({binding,forceSource,leadingTools}:{binding:SurfaceB
   // The scroll/caret restore used after both the seeded open and a fresh
   // read — the same localStorage view state, applied once the editor exists.
   const restoreView=()=>{requestAnimationFrame(()=>{try{if(body.current){if(scroll.current)scroll.current.scrollTop=Number(localStorage.getItem(scrollKey)??0);const caret=JSON.parse(localStorage.getItem(caretKey)??"null");if(caret&&Number.isInteger(caret.start)&&Number.isInteger(caret.end))body.current.setSelectionRange(caret.start,caret.end,caret.direction);}}catch{}});};
+  const recover=async(reason:unknown,live=()=>true)=>{
+    if(!live())return;
+    setError(String(reason));setReading(undefined);setLegacyRecoverable(false);setHistory(undefined);setPreview(undefined);
+    if(!binding.location)return;
+    try{
+      const recovery=await lastFileReading(transport,binding.location);if(!live())return;
+      const retained=recovery.retained?.reading;
+      if(retained){setReading(retained);setDraft(held.current??readDraft(binding.ref!)??{content:retained.content,saved_content:retained.content,base_revision:retained.revision});}
+      setLegacyRecoverable(recovery.migration_allowed&&!!binding.ref&&hasLegacyDeviceCopy(binding.ref));
+    }catch(error){if(live())setError(`${String(reason)} · ${String(error)}`);}
+  };
   const read=async(preserve=true)=>{
     if(!binding.location)throw new Error("The saved file location is unavailable");
     // A re-read is revalidation: invalidate first so the shared seam goes to
     // the owner instead of answering from the entry (its last reading stays
     // resident for peers), then acquire through it.
     invalidateFile(binding.location);
-    const value=await acquireFileReading(transport,binding.location);setReading(value);retainReading(binding.ref,value);
+    const value=await acquireFileReading(transport,binding.location).catch(async error=>{await recover(error);throw error;});setReading(value);setLegacyRecoverable(false);setError(undefined);
     const local=preserve?(held.current??readDraft(binding.ref!)):undefined;
     if(!local||local.content===local.saved_content){setDraft({content:value.content,saved_content:value.content,base_revision:value.revision});}
     else setDraft(local);
@@ -102,7 +83,7 @@ export function FileSurface({binding,forceSource,leadingTools}:{binding:SurfaceB
     return value;
   };
   useEffect(()=>{
-    let live=true;setPending(true);setError(undefined);
+    let live=true;setPending(true);setError(undefined);setLegacyRecoverable(false);
     // Inactive-tab deferral (WORKSPACE-CONTINUITY): while concealed this
     // editor holds every owner I/O — the seed and the forced revalidation —
     // until first presentation, which re-runs this effect exactly as a
@@ -126,27 +107,14 @@ export function FileSurface({binding,forceSource,leadingTools}:{binding:SurfaceB
     // one owner round trip for admission, renderer and editor.
     invalidateFile(binding.location);
     void acquireFileReading(transport,binding.location).then(value=>{
-      if(!live)return;setReading(value);retainReading(binding.ref,value);setDraft(readDraft(binding.ref!)??{content:value.content,saved_content:value.content,base_revision:value.revision});
+      if(!live)return;setReading(value);setDraft(readDraft(binding.ref!)??{content:value.content,saved_content:value.content,base_revision:value.revision});
       restoreView();
-    }).catch(error=>{
-      if(!live)return;
-      setError(String(error));
-      // The file is not readable. Show what was last actually read, labelled
-      // and read-only, rather than an empty surface — the reader keeps what
-      // they had, and cannot write over what is not there.
-      const retained=lastReading(binding.ref);
-      if(retained){setReading(retained);setDraft(readDraft(binding.ref!)??{content:retained.content,saved_content:retained.content,base_revision:retained.revision});}
-    }).finally(()=>{if(live)setPending(false);});
+    }).catch(error=>recover(error,()=>live)).finally(()=>{if(live)setPending(false);});
     const sync=(event:StorageEvent)=>{if(event.key===`oi-cradle.draft.v1:${binding.ref}`){const saved=readDraft(binding.ref!);if(saved)setDraft(saved);}};
     // A file changed outside the app is picked up when the window comes back to
     // the person, so re-reading is not a control they have to find. The held
     // draft is preserved; only the canonical layer is refreshed.
-    const reread=()=>{if(!live||!document.hasFocus())return;void read(true).catch(reason=>{
-      if(!live)return;
-      setError(String(reason));
-      const retained=lastReading(binding.ref);
-      if(retained)setReading(retained);
-    });};
+    const reread=()=>{if(!live||!document.hasFocus())return;void read(true).catch(()=>{/* read performs native recovery */});};
     window.addEventListener('focus',reread);
     document.addEventListener('visibilitychange',reread);
     window.addEventListener('storage',sync);
@@ -177,6 +145,13 @@ export function FileSurface({binding,forceSource,leadingTools}:{binding:SurfaceB
     if(result.outcome==="conflict"){setReading(result.current);setError("The file changed after this preview. Read and compare it again.");return;}
     held.current=undefined;await read(false);setPreview(undefined);setHistory(undefined);
   });
+  const recoverDeviceCopy=()=>perform(async()=>{
+    if(!binding.location||!binding.ref)return;
+    const recovery=await lastFileReading(transport,binding.location);
+    if(!recovery.migration_allowed){setLegacyRecoverable(false);throw Error(recovery.reason);}
+    const id=recoverLegacyDeviceCopy(binding.ref,true);setLegacyRecoverable(false);
+    window.dispatchEvent(new CustomEvent("oi:recover-device-copy",{detail:{id,title:"Recovered device copy"}}));
+  });
   const updateCaret=()=>{const el=body.current;if(!el)return;const before=el.value.slice(0,el.selectionStart),lines=before.split("\n");setCaret({line:lines.length,column:(lines[lines.length-1]?.length??0)+1,selected:el.selectionStart!==el.selectionEnd});try{localStorage.setItem(caretKey,JSON.stringify({start:el.selectionStart,end:el.selectionEnd,direction:el.selectionDirection}));}catch{}};
   const extension=binding.location?.path.split(".").pop()?.toLowerCase();const markdown=extension==="md"||extension==="markdown";const json=extension==="json";
   const formatJson=()=>{if(!draft)return;try{change(`${JSON.stringify(JSON.parse(draft.content),null,2)}\n`);setError(undefined);}catch{setError("JSON could not be formatted because it is not valid.");}};
@@ -185,6 +160,7 @@ export function FileSurface({binding,forceSource,leadingTools}:{binding:SurfaceB
     footer={<><span className="editor-path" title={`Central / ${binding.location?.path}`}>Central / {binding.location?.path}</span>{reading&&<span>Ln {caret.line}, Col {caret.column}</span>}<span>{error&&reading?"Last reading":dirty?"Unsaved":writable?"Saved":"Read only"}</span>{reading?.operations?.history.available&&<button onClick={()=>void loadHistory()} disabled={pending}>History</button>}{writable&&<button onClick={()=>void save()} disabled={pending||!dirty||conflict}>Save ⌘S</button>}</>}
   >
     {error&&<p role="alert" className="source-note">{error}</p>}
+    {legacyRecoverable&&<p className="source-note">A previous device copy remains. Recover it as a separate, unverified draft. <button disabled={pending} onClick={()=>void recoverDeviceCopy()}>Recover previous device copy</button></p>}
     {pending&&!reading&&<Loading label="Reading file…" scope="surface"/>}
     {conflict&&<section className="file-conflict" aria-label="File conflict"><p>Current file differs from your draft’s basis.</p><textarea readOnly aria-label="Current file" value={reading!.content}/><button disabled={pending} onClick={()=>{const next={...draft!,base_revision:reading!.revision,saved_content:reading!.content};setDraft(next);try{writeDraft(binding.ref!,next);window.dispatchEvent(new CustomEvent("oi:file-draft-changed",{detail:{ref:binding.ref}}));}catch{setError("Could not retain the updated draft basis.");}}}>Use current revision as draft basis</button></section>}
     {history&&<section className="file-history" aria-label="File history"><button onClick={()=>{setHistory(undefined);setPreview(undefined);}}>Close history</button>{history.entries.length===0&&<p>No changes recorded by Central.</p>}{history.entries.map(entry=><div key={entry.cursor}><span>{entry.actor} · {entry.actor_kind}</span><button onClick={()=>void compare(entry.previous_revision)} disabled={pending}>Compare before change {entry.cursor}</button><button onClick={()=>void compare(entry.revision)} disabled={pending}>Compare change {entry.cursor}</button></div>)}{history.more&&<button disabled={pending} onClick={()=>void loadHistory(history.next_before??undefined)}>Earlier changes</button>}</section>}

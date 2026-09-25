@@ -4,6 +4,8 @@ import {Glyph} from "../../workspace/Glyph";
 import {useKernel} from "../../kernel/KernelProvider";
 import type {CentralLocation} from "../../kernel/types";
 import type {SurfaceBinding} from "../../surface/types";
+import {readableSessionTitle} from "../../encounter/sessionTitle";
+import {harnessChip} from "./harness";
 import {sessionStateLabel,type EncounterSessionHandle} from "../../encounter/session";
 import {EncounterList,type EncounterRow} from "../../encounter/EncounterList";
 import {LOCATION_DRAG_TYPE,SURFACE_DRAG_TYPE} from "../../files/drag";
@@ -65,11 +67,11 @@ const suggestionsOf=(project?:string,subject?:{title:string;location?:CentralLoc
   return out.slice(0,3);
 };
 
-export function AgentChat({session,accompanying,project,agentName,situating,sessionTitle,choosing,subject,resolveSurface,onMessage,onNewChat,onChoose,onProvision,identity:identityOverride,fixture,variant,tape,onOpenActivity,connectionFacts,onArtifact}:{
+export function AgentChat({session,accompanying,project,agentName="World",situating,sessionTitle,choosing,subject,resolveSurface,onMessage,onNewChat,onChoose,onProvision,identity:identityOverride,fixture,variant,tape,onOpenActivity,connectionFacts,onArtifact}:{
   session?:EncounterSessionHandle;
   accompanying?:{ref:string;project:string;space:string};
   project?:string;
-  agentName:string;
+  agentName?:string;
   situating:string;
   sessionTitle?:string;
   choosing:boolean;
@@ -88,7 +90,7 @@ export function AgentChat({session,accompanying,project,agentName,situating,sess
    * sets its binding so the shared observer mounts and the parked draft is
    * applied and sent. Undefined in fixtures: fresh Send there is inert. */
   onProvision?:(project:string)=>Promise<void>;
-  /** Developer preview override: a fixed identity, no profile read. */
+  /** A selected live roster identity; otherwise the active profile is read. */
   identity?:AgentIdentityReading;
   /** Developer preview: attachment paths stay local in fixtures, so they are
    * disabled rather than silently doing nothing. */
@@ -110,7 +112,7 @@ export function AgentChat({session,accompanying,project,agentName,situating,sess
   const centre=variant==="centre";
   const kernel=useKernel();
   const liveIdentity=useAgentIdentity(agentName,!(identityOverride||fixture));
-  const identity=identityOverride??liveIdentity;
+  const identity=identityOverride??(agentName!=="World"?{...liveIdentity,name:agentName}:liveIdentity);
   const [dropping,setDropping]=useState(false);
   const [attaching,setAttaching]=useState<string>();
   const dragDepth=useRef(0);
@@ -219,7 +221,7 @@ export function AgentChat({session,accompanying,project,agentName,situating,sess
     artifactsForTurnFromEnd:(fromEnd:number)=>{const turn=turnAt(fromEnd);return turn&&!turn.open?editedPaths(tape,turn.index):[];},onArtifact}:undefined;
   const stateLabel=!accompanying?undefined:!state?.reading&&!status?"Reading…":sessionStateLabel(status);
   // The speaker is the agent, never the connection's free-text label (A1).
-  const agentLabel=agentName||identity.name;
+  const agentLabel=identity.name||"World";
   const bound=!!(session&&state&&actions);
   const suggestions=suggestionsOf(project,subject);
   // The history menu is the head's own control; the sidebar is the other way
@@ -248,8 +250,8 @@ export function AgentChat({session,accompanying,project,agentName,situating,sess
     </header>}
     {centre&&accompanying&&<div className="chat-session" data-bound={!!accompanying} data-session-state={stateLabel}>
       <Glyph name="chat" size={11}/>
-      <span className="chat-session-title">{choosing?"Opening…":sessionTitle??accompanying?.ref}</span>
-      {status?.provider?.label&&<span className="chat-session-provider" title="Native provider">{status.provider.label}</span>}
+      <span className="chat-session-title">{choosing?"Opening…":readableSessionTitle(sessionTitle,project)}</span>
+      {status?.provider?.label&&<span className="chat-session-provider" title="Native provider">{harnessChip({...connectionFacts,id:status.provider.id,label:status.provider.label})}</span>}
       {stateLabel&&!choosing&&<span className="chat-session-state oi-state" role="status" data-attention={status?.error?"true":undefined}>{status?.error?`${stateLabel} · fault`:stateLabel}</span>}
     </div>}
     {bound
@@ -258,13 +260,13 @@ export function AgentChat({session,accompanying,project,agentName,situating,sess
           ?<div className="chat-transcript-host"><p className="chat-unreachable oi-note" data-state="unreachable">The conversation shows here again when agents are reachable.</p></div>
           :<ChatTranscript reading={state.reading} status={status} error={state.error} agentLabel={agentLabel} onEarlier={actions.earlier} onLatest={actions.latest} paged={state.before!==undefined} onEdit={editTurn} marks={marks}>
           {answered.map(entry=><p key={entry.id} className="chat-permission-answered oi-note" data-request={entry.id}>{entry.line}</p>)}
-          {state.reading?.permissions?.filter(request=>!answered.some(entry=>entry.id===request.native_request_id)).map(request=><PermissionCard key={request.native_request_id} request={request} agentName={agentName} disabled={state.pending||!allowed("permission")} onAnswer={(decision,line)=>answer(request.native_request_id,decision,line)}/>)}
+          {state.reading?.permissions?.filter(request=>!answered.some(entry=>entry.id===request.native_request_id)).map(request=><PermissionCard key={request.native_request_id} request={request} agentName={agentLabel} disabled={state.pending||!allowed("permission")} onAnswer={(decision,line)=>answer(request.native_request_id,decision,line)}/>)}
         </ChatTranscript>}
-        {inFlight&&<StatusLine agentName={agentName} row={moving} startedAt={turnStart??flightSeen} stopping={status?.state==="InterruptRequested"} onOpen={rowId=>onOpenActivity?.(rowId)}/>}
+        {inFlight&&<StatusLine agentName={agentLabel} row={moving} startedAt={turnStart??flightSeen} stopping={status?.state==="InterruptRequested"} onOpen={rowId=>onOpenActivity?.(rowId)}/>}
         <ChatComposer reading={state.reading} draft={state.draft} pending={state.pending} busy={state.busy&&!state.pending} error={state.send?undefined:state.error} editable={!!state.reading&&allowed("draft")}
           promptAllowed={allowed("prompt")&&state.send?.phase!=="checking"} promptReason={action("prompt")?.reason??undefined} cancelAllowed={allowed("cancel")}
-          onDraft={actions.change} onSend={send} onCancel={actions.cancel} agentName={agentName} sendState={state.send} onRetry={()=>void actions.retrySend()} unreachable={!!state.unreachable}
-          connection={{onSetup:()=>openAgentSetup({project:state.project||undefined,destination:{owner:"ai-kit",topic:"harness"},reason:state.error??"Harness, model or credential setup",refresh:()=>actions.refreshProviders()}),status,model:state.model,modelActions:{refresh:actions.readModel,select:actions.selectModel},mode:state.mode,onMode:id=>void actions.selectMode(id),currentFacts:connectionFacts,onRefreshProviders:()=>void actions.refreshProviders(),providers:state.providers,resume:state.resume,onProvider:provider=>void actions.connect(provider),onReconnect:provider=>void actions.reconnect(provider),openAllowed:allowed("open"),openReason:action("open")?.reason??undefined}}
+          onDraft={actions.change} onSend={send} onCancel={actions.cancel} agentName={agentLabel} sendState={state.send} onRetry={()=>void actions.retrySend()} unreachable={!!state.unreachable}
+          connection={{project:state.project||undefined,onSetup:()=>openAgentSetup({project:state.project||undefined,destination:{owner:"ai-kit",topic:"harness"},reason:state.error??"Harness, model or credential setup",refresh:()=>actions.refreshProviders()}),status,model:state.model,modelActions:{refresh:actions.readModel,select:actions.selectModel},mode:state.mode,onMode:id=>void actions.selectMode(id),currentFacts:connectionFacts,onRefreshProviders:()=>void actions.refreshProviders(),providers:state.providers,resume:state.resume,onProvider:provider=>void actions.connect(provider),onReconnect:provider=>void actions.reconnect(provider),openAllowed:allowed("open"),openReason:action("open")?.reason??undefined}}
           tools={{subject:subject.location?{title:subject.title,attach:()=>attachLocation(subject.location!)}:undefined,pickFiles:attachFiles}}
           draftFailed={state.draftFailed} onRecover={()=>void actions.recover()} paged={state.before!==undefined} onLatest={actions.latest} focusToken={composerFocusToken}/>
       </>
@@ -289,7 +291,7 @@ export function AgentChat({session,accompanying,project,agentName,situating,sess
         </div>}
         <ChatComposer reading={undefined} draft={localDraft} pending={false} busy={choosing||provisioning} error={undefined} editable={!choosing&&!provisioning}
           promptAllowed={!choosing&&!provisioning} cancelAllowed={false}
-          onDraft={setLocal} onSend={send} onCancel={()=>{}} agentName={agentName}
+          onDraft={setLocal} onSend={send} onCancel={()=>{}} agentName={agentLabel}
           connection={{status:undefined,providers:[],resume:undefined,onProvider:()=>{},onReconnect:()=>{},openAllowed:false,openReason:undefined}}
           tools={{pickFiles:attachFiles}} drafting provisionProject={provisionProject}
           draftFailed={false} onRecover={()=>{}} paged={false} onLatest={()=>{}} focusToken={composerFocusToken}/>

@@ -1,3 +1,4 @@
+import {sceneSpatialFacets,type SceneSpatialReading} from "./spatialFacets";
 /**
  * The wiki-grounded ql.techne/v1 reading provider (parent integration,
  * 2026-09-19) — the resolve-once path the owner Wayfinder (PR #387 §20)
@@ -28,20 +29,23 @@
  * kernel's edit op. No document standing → both facets absent → the
  * Journey honestly refuses until the Web is entered.
  *
- * One reading, many consumers: this provider deliberately re-reads through
- * readWikiRegister rather than reading the projection store's standing,
- * because the store's standing phases drop the raw wiki reading once the
- * kernel document stands. The reading implementation is the same one
- * function, so no divergent parsing enters; the store keeps its own
- * projection law untouched.
+ * Hosted instruments use readWikiSceneTechne: the exact native Scene resolves
+ * its existing projection and retained source reading. The legacy subject
+ * provider remains for callers explicitly requesting a register reading.
  *
  * Erasable TypeScript: loadable by the renderer, Vite, and node --test.
  */
+import {kernelOp} from "../kernel/bridge";
+import {readFile} from "../files/client";
+import {decodeRegister, readRegister, CONSTRUCTION} from "../knowledge/construction";
 import type {KernelTransportStatus} from "../kernel/types";
 import type {ExpressionDocument} from "../expression/types";
-import {readWikiRegister, type WikiRegister, type WikiRegisterReading, type WikiRelationEdge} from "./wikiExpression";
-import {getWikiProjectionState, subscribeWikiProjection, wikiDocumentOf} from "./wikiProjectionStore";
+import {readWikiRegister, type WikiRegister, type WikiRegisterReading, type WikiRelationEdge, wikiPathOf} from "./wikiExpression";
+import {getWikiProjectionState, subscribeWikiProjection, wikiDocumentOf, wikiReadingOf, ensureWikiProjectionReading} from "./wikiProjectionStore";
 import {TECHNE_CONTRACT, type TechneReadingProvider, type TechneSubject} from "./techneReading";
+import {wikiSceneRelationReadings,wikiSceneSourceRelations} from "./wikiSceneRelationReadings";
+import {wikiSceneNodeReadings} from "./wikiSceneNodeReadings";
+import {sceneTemporalFacets,resolveSceneTemporalFacets,type SceneTemporalReading} from "./temporalFacets";
 import {placeFacetsFromReading} from "./placeFacets";
 import {useSyncExternalStore} from "react";
 
@@ -99,7 +103,9 @@ function relationOf(edge: WikiRelationEdge, sourceRef: string) {
     from_ref: edge.from,
     to_ref: edge.to,
     origin: edge.provider ?? "wiki",
-    standing: edge.authority ?? null,
+    standing: edge.standing ?? null,
+    relation_ref: edge.ref ?? null,
+    ...(edge.evidence_refs ? {evidence_refs:edge.evidence_refs} : {}),
     source_ref: sourceRef,
   };
 }
@@ -107,8 +113,7 @@ function relationOf(edge: WikiRelationEdge, sourceRef: string) {
 /** The disclosure for one register's wiki reading: every mounted lens is
  * available on the real whole except the ones whose facets the wiki reading
  * genuinely does not carry — those name the real reason. Timeline is
- * available exactly when the typed edges carry revisions (real temporal
- * basis); place is available exactly when the reading discloses a real
+ * available exactly when the source declares dated temporal facets; place is available exactly when the reading discloses a real
  * spatial facet (a declared place or a hard geography relation) — a truly
  * absent spatial facet stays absent, with the real reason. */
 function disclosureFor(hasTemporalBasis: boolean, hasExpression: boolean, hasSpatial: boolean) {
@@ -208,12 +213,194 @@ export function wikiTechneReadingProvider(transport: KernelTransportStatus): Tec
       if (!register) throw new Error("no wiki register is disclosed in this window");
       const reading = await readWikiRegister(transport, register);
       if (reading.state === "unavailable") throw new Error(reading.reason);
+      let document = wikiExpressionDocumentFor(register.key);
+      if (document) {
+        const result = await kernelOp(transport, {op: "expression", request: {operation: "inspect", expression_ref: document.expression_ref}});
+        const latest = result.outcome?.result === "expression" ? (result.outcome.data as {document?: ExpressionDocument}).document : undefined;
+        if (result.error || !latest || latest.expression_ref !== document.expression_ref) throw new Error(result.error ?? "The current native composition could not be read");
+        document = latest;
+      }
       return wikiReadingPayload({
         register,
         subject,
         reading,
-        document: wikiExpressionDocumentFor(register.key),
+        document,
       });
     },
+  };
+}
+
+
+/** The hosted engine supplies native identity only, never a filesystem scope. */
+export interface WikiSceneReadingRequest {expression_ref: string; revision: number; scene_ref: string}
+function sceneRequest(value: unknown): WikiSceneReadingRequest {
+  const request = value as Partial<WikiSceneReadingRequest> | null;
+  if (!request || typeof request !== "object" || Array.isArray(request)
+    || typeof request.expression_ref !== "string" || !request.expression_ref.trim() || request.expression_ref.length > 2048
+    || typeof request.scene_ref !== "string" || !request.scene_ref.trim() || request.scene_ref.length > 2048
+    || !Number.isSafeInteger(request.revision) || request.revision! < 1) {
+    throw new Error("A native Expression revision and Scene are required for this reading");
+  }
+  return request as WikiSceneReadingRequest;
+}
+
+/** Exact native inspection shared by reading and source-editor navigation. */
+export async function inspectWikiScene(transport: KernelTransportStatus, input: unknown) {
+  const request = sceneRequest(input);
+  if (transport.kind === "unavailable") throw new Error(transport.reason);
+  const inspected = await kernelOp(transport, {op: "expression", request: {operation: "inspect", expression_ref: request.expression_ref}});
+  const document = inspected.outcome?.result === "expression" ? (inspected.outcome.data as {document?: ExpressionDocument}).document : undefined;
+  if (inspected.error || !document || document.expression_ref !== request.expression_ref) throw new Error(inspected.error ?? "The native Expression could not be read");
+  if (document.revision !== request.revision) throw new Error("The native Expression revision changed; reopen the current Scene before reading its facets");
+  const scene = document.scenes.find(row => row.scene_ref === request.scene_ref);
+  if (!scene) throw new Error("The requested Scene is absent from this native Expression");
+  return {request, document, scene};
+}
+
+/** Fresh native register, selected solely through existing source readings.
+ * This does not invoke knowledge providers or create a projection. */
+export async function resolveWikiSceneSource(transport: KernelTransportStatus, input: unknown) {
+  const {request, document, scene} = await inspectWikiScene(transport, input);
+  const registers = getWikiProjectionState().registers;
+  const selectedSubject=(input as {subject_ref?:unknown}|null)?.subject_ref;
+  if(selectedSubject!==undefined&&(typeof selectedSubject!=="string"||!selectedSubject||selectedSubject.length>2048))throw new Error("A bounded selected native source is required");
+  const selectedMembers=scene.entity_refs.flatMap(ref=>{const entity=document.entities[ref];return entity?.subject&&(selectedSubject===undefined||entity.subject.subject_ref===selectedSubject)?[entity]:[];});
+  if(selectedSubject!==undefined&&!selectedMembers.length)throw new Error("The selected source is not a member of this native Scene");
+  const memberReadings = selectedMembers.flatMap(entity=>entity.subject?.readings??[]);
+  // A single source-open uses only its actual binding. Unrelated Scene or
+  // document provenance cannot lend that source a different register scope.
+  const all = selectedSubject===undefined?[...document.provenance,...memberReadings]:memberReadings;
+  const matches = registers.filter(register => all.some(row => row.availability === "available" && row.ref === `wiki:${wikiPathOf(register)}`));
+  if (matches.length !== 1) throw new Error("Open this constellation in its source editor and choose Open live composition to refresh its source bindings.");
+  const register = matches[0];
+  const current = await readRegister(transport, register.project);
+  const basis = `wiki:${current.file.location.path}`;
+  const readings = all.filter(row => row.availability === "available" && row.ref === basis);
+  if (wikiPathOf(register) !== current.file.location.path || !readings.length || readings.some(row => row.revision !== current.file.revision)) throw new Error("This Scene's source register changed; refresh its live composition before opening the editor.");
+  return {request, document, scene, register, current};
+}
+
+export interface SceneConstellationTarget {frame_ref: string; frame_revision: number; title: string; project?: string}
+export async function resolveSceneConstellation(transport: KernelTransportStatus, input: unknown): Promise<SceneConstellationTarget> {
+  const entityRef = (input as {entity_ref?: unknown} | null)?.entity_ref;
+  if (typeof entityRef !== "string" || !entityRef || entityRef.length > 2048) throw new Error("Select a native constellation occurrence first.");
+  const {document, scene, register, current} = await resolveWikiSceneSource(transport, input);
+  const subject = document.entities[entityRef]?.subject;
+  if (!scene.entity_refs.includes(entityRef) || !subject) throw new Error("The selected occurrence is not a source-bound member of this Scene.");
+  const available = subject.readings.filter(row => row.availability === "available");
+  if (!available.some(row => row.ref === `wiki:${current.file.location.path}` && row.revision === current.file.revision)) throw new Error("This occurrence has no current constellation register binding.");
+  const frames = current.frames.filter(frame => available.some(row => row.ref === frame.ref && row.revision === String(frame.revision)) && frame.constellations[0].members.some(member => member.ref === subject.subject_ref));
+  if (frames.length !== 1) throw new Error("This occurrence has no unambiguous current constellation binding. Open its source editor to refresh its live composition.");
+  const frame = frames[0];
+  return {frame_ref: frame.ref, frame_revision: frame.revision, title: frame[CONSTRUCTION].title, project: register.project};
+}
+
+/** Read the source of the exact Scene that the instrument is presenting.
+ * There is no selected-register, shell-workspace or Central fallback. */
+export async function readWikiSceneTechne(transport: KernelTransportStatus, input: unknown): Promise<unknown> {
+  if ((input as {facet?: unknown} | null)?.facet === "scene-relations") {
+    const source = await resolveWikiSceneSource(transport, input);
+    const result = wikiSceneSourceRelations(source);
+    await inspectWikiScene(transport, input);
+    return result;
+  }
+  if ((input as {facet?: unknown} | null)?.facet === "node-metadata") {
+    const source = await resolveWikiSceneSource(transport, input);
+    const result = wikiSceneNodeReadings(source);
+    await inspectWikiScene(transport, input); // Refuse a Scene changed during the native source read.
+    return result;
+  }
+  if ((input as {facet?: unknown} | null)?.facet === "relation-semantics") {
+    const source = await resolveWikiSceneSource(transport, input);
+    return {schema: "oi.scene-relation-readings/v1", expression_ref: source.document.expression_ref, revision: source.document.revision, scene_ref: source.scene.scene_ref, relation_readings: await wikiSceneRelationReadings(source)};
+  }
+  const {request, document, scene} = await inspectWikiScene(transport, input);
+  const state = getWikiProjectionState();
+  // The provenance lookup covers restored native work before any Wiki has
+  // been opened in this process. Both the path and register were disclosed
+  // by native owners; no reverse parsing of a generated expression hash.
+  const members = scene.entity_refs.flatMap(ref => document.entities[ref]?.subject ? [document.entities[ref].subject!] : []);
+  const documentBases = document.provenance.filter(row => row.availability === "available" && state.registers.some(register => row.ref === `wiki:${wikiPathOf(register)}`));
+  const memberBases = members.flatMap(member => member.readings.filter(row => row.availability === "available" && state.registers.some(register => row.ref === `wiki:${wikiPathOf(register)}`)));
+  const bases = documentBases.length ? documentBases : memberBases;
+  const matching = state.registers.filter(register => bases.some(row => row.ref === `wiki:${wikiPathOf(register)}`));
+  if (matching.length !== 1) throw new Error("This Scene has no exact Wiki register binding. Open its saved constellation in the source editor and choose Open live composition to refresh its source bindings.");
+  const register = matching[0];
+  const reading = await ensureWikiProjectionReading(register, transport);
+  const standing = getWikiProjectionState().standings[register.key];
+  if (!standing || !("projection" in standing) || !standing.projection) throw new Error("The owning Wiki source projection is unavailable");
+  const basis = bases.find(row => row.ref === `wiki:${reading.wikiBasis.path}`);
+  if (basis?.revision !== reading.wikiBasis.revision || basis.availability !== "available" || bases.some(row => row.ref === basis.ref && row.revision !== basis.revision)) throw new Error("This Scene's source revision changed; reconcile its retained composition before reading new facets");
+  if (!documentBases.length) {
+    // An authored constellation carries the register beside its existing
+    // frame reading on native subject bindings. Verify both at their owner;
+    // a frame ref alone never selects another project's register.
+    const file = await readFile(transport, reading.wikiBasis.location);
+    if (file.revision !== basis.revision) throw new Error("The constellation register changed; refresh it in the source editor");
+    const current = decodeRegister(file, file.location.ref);
+    for (const member of members) {
+      const scoped = member.readings.find(row => row.ref === basis.ref && row.revision === basis.revision && row.availability === "available");
+      if (!scoped) throw new Error("A Scene member has no exact constellation register binding; reopen its live composition from the source editor");
+      const frame = current.frames.find(frame => member.readings.some(row => row.ref === frame.ref && row.revision === String(frame.revision) && row.availability === "available"));
+      if (!frame || !frame.constellations[0].members.some(row => row.ref === member.subject_ref)) throw new Error("The Scene member's constellation or source membership changed; refresh it in the source editor");
+    }
+  }
+  if (wikiReadingOf(getWikiProjectionState().standings[register.key]) !== reading) throw new Error("This Scene's source reading was invalidated while it was returning");
+  const [declaredSpatial,declaredTemporal]=await Promise.all([sceneSpatialFacets(reading.spatial,document,scene),resolveSceneTemporalFacets(reading.temporal,document,scene)]);
+  if (wikiReadingOf(getWikiProjectionState().standings[register.key]) !== reading) throw new Error("This Scene's source reading was invalidated while its facet bindings were returning");
+  return wikiSceneReadingPayload({register, reading, document, sceneRef: request.scene_ref,declaredSpatial,declaredTemporal});
+}
+
+/** Pure aperture over the already disclosed owner reading. A Scene binding
+ * does not make the rest of its register relevant to this instrument. */
+export function wikiSceneReadingPayload(input: {
+  register: WikiRegister;
+  reading: Extract<WikiRegisterReading, {state: "ready"}>;
+  document: ExpressionDocument;
+  sceneRef: string;
+  declaredSpatial?: SceneSpatialReading;
+  declaredTemporal?: SceneTemporalReading;
+}): unknown {
+  const {reading, document, sceneRef} = input;
+  const scene = document.scenes.find(row => row.scene_ref === sceneRef);
+  if (!scene) throw new Error("The requested Scene is absent from this native Expression");
+  const known = new Set([
+    ...reading.wiki.nodes.map(node => node.ref),
+    ...reading.wiki.spaces.flatMap(space => [space.ref, ...(space.node_refs ?? []), ...(space.child_space_refs ?? [])]),
+    ...reading.wiki.constellations.flatMap(frame => [frame.anchor_ref, ...(frame.members ?? []).map(member => member.ref)]),
+  ]);
+  const refs = new Set(scene.entity_refs.map(ref => document.entities[ref]?.subject?.subject_ref).filter((ref): ref is string => !!ref && known.has(ref)));
+  const nativeMembers = new Set(scene.entity_refs);
+  const nativeRelations = Object.values(document.relations).filter(relation => nativeMembers.has(relation.from_entity_ref) && nativeMembers.has(relation.to_entity_ref));
+  const edges = reading.relations.state === "available" ? reading.relations.edges.filter(edge => refs.has(edge.from) && refs.has(edge.to) && nativeRelations.some(relation => {
+    const from = document.entities[relation.from_entity_ref]?.subject?.subject_ref;
+    const to = document.entities[relation.to_entity_ref]?.subject?.subject_ref;
+    return from === edge.from && to === edge.to
+      && relation.native_owner === (edge.provider ?? "wiki")
+      && (edge.ref ? relation.relation.ref === edge.ref : relation.provenance.some(row => row.ref === `wiki:relation-type:${edge.relation}`));
+  })) : [];
+  const scoped: typeof reading = {...reading,
+    wiki: {...reading.wiki, nodes: reading.wiki.nodes.filter(node => refs.has(node.ref)),
+      spaces: reading.wiki.spaces.filter(space => refs.has(space.ref)), constellations: []},
+    relations: reading.relations.state === "available" ? {...reading.relations, focusRef: sceneRef, edges} : reading.relations,
+  };
+  const sourceRef = `central:source:${reading.wikiBasis.path}`;
+  const canonical=input.declaredSpatial;
+  const spatial = [...(canonical?.spatial??[]),...placeFacetsFromReading(scoped).filter(facet=>!canonical?.spatial.some(native=>native.place_ref===facet.place_ref))];
+  const temporal = input.declaredTemporal ?? sceneTemporalFacets(reading.temporal, document, scene);
+  const disclosure = disclosureFor(temporal.temporal.some(facet=>!!(facet.instant||facet.interval?.from)),true,spatial.length>0);
+  if(canonical?.reason)disclosure.instruments.find(row=>row.instrument==="place")!.reason=canonical.reason;
+  if(temporal.reason)disclosure.instruments.find(row=>row.instrument==="timeline")!.reason=temporal.reason;
+  return {
+    contract: TECHNE_CONTRACT,
+    reading_ref: `ql.techne:reading:${document.expression_ref}@${document.revision}:${sceneRef}`,
+    snapshot: {revision: reading.wikiBasis.revision, basis_ref: sourceRef},
+    subject: {subject_ref: sceneRef, native_owner: "oi.cradle.kernel", kind: "expression-scene", native_revision: String(document.revision)},
+    whole: {whole_ref: sceneRef, member_refs: [...refs], relations: edges.map(edge => relationOf(edge, sourceRef)), focus_refs: [...refs]},
+    expressions: [{expression_ref: document.expression_ref, revision: String(document.revision), scene_ref: sceneRef}],
+    ...(spatial.length ? {spatial} : {}),
+    ...(temporal.temporal.length?{temporal:temporal.temporal}:{}),
+    ...((temporal.provenance.length||canonical?.provenance.length)?{provenance:[...temporal.provenance,...(canonical?.provenance??[])]}:{}),
+    disclosure,
   };
 }

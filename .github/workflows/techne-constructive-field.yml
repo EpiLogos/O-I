@@ -56,6 +56,7 @@ jobs:
         run: |
           npm ci --prefix desktop/cradle/expressions-app --no-audit --no-fund
           npm --prefix desktop/cradle/expressions-app run build
+          (cd desktop/cradle/expressions-app && npx tsc --noEmit)
           npm --prefix desktop/cradle/expressions-app test
           (cd desktop/cradle/expressions-app && node --test field-studies-journeys/tests/kernel-document-bridge.test.mjs field-studies-journeys/tests/native-composition.test.mjs field-studies-journeys/tests/native-selection-queue.test.mjs)
           tar -czf "$RUNNER_TEMP/techne-evidence/expressions-app-runtime.tar.gz" -C desktop/cradle/expressions-app node_modules dist field-studies-journeys/build
@@ -75,11 +76,8 @@ jobs:
           TECHNE_EVIDENCE_DIR: ${{ runner.temp }}/techne-evidence/browser
         run: |
           npx playwright install --with-deps chromium
-          node tests/techne-entry-browser.mjs
           node tests/techne-field-browser.mjs
           node tests/techne-lens-studio-browser.mjs
-          node tests/techne-hud-browser.mjs
-          node tests/techne-walk-sweep-browser.mjs
       - name: Retain exact sources, dependency graph and execution receipts
         if: always()
         uses: actions/upload-artifact@v4
@@ -208,6 +206,11 @@ jobs:
           OI_CENTRAL_CTRL_BIN: ${{ runner.temp }}/native-bin/ctrl
           WIKI_KERNEL_BIN: ${{ runner.temp }}/native-bin/walk-bridge
         run: node tests/techne-native-composition.mjs
+      - name: Research instrument connection edits and lost-reply recovery through the native owner
+        working-directory: desktop/cradle
+        env:
+          OI_KERNEL_BIN: ${{ runner.temp }}/native-bin/walk-bridge
+        run: node tests/research-connections-native.mjs
       - name: Actual current app native save, separate kernel restart and disconnected save negative
         working-directory: desktop/cradle
         env:

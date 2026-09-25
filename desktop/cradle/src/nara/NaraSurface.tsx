@@ -60,6 +60,7 @@ import {voiceBodyFromConstitution,voiceBodySatisfactionReceipt} from "./voiceBod
 import {NaraSpeechBinding,type NaraSpeechRead,type SpeechToolDecision} from "./session";
 import {supportUsable,type SpeechSupport} from "./support";
 import "./nara.css";
+import {recordToolDecision} from "./decisionRecord";
 import {putDelegationLedger} from "./delegationLedger";
 
 const PHASE_WORD:Record<NaraSpeechRead["phase"],string>={
@@ -84,6 +85,7 @@ export function NaraSurface({binding}:{binding:SurfaceBinding}){
  const [proposals,setProposals]=useState<ProposalRow[]>([]);
  const [changeReceipt,setChangeReceipt]=useState<SpeechConstitutionChangeReceipt|null>(null);
  const [interruptReceipt,setInterruptReceipt]=useState<Record<string,unknown>|null>(null);
+ const [toolPending,setToolPending]=useState(false);
  const [toolReceipt,setToolReceipt]=useState<{decision:SpeechToolDecision;execution:Record<string,unknown>|null}|null>(null);
  const [floor,setFloor]=useState<Record<string,unknown>|null>(null);
  const [mic,setMic]=useState<"idle"|"requesting"|"live"|"denied"|"unavailable">("idle");
@@ -658,9 +660,10 @@ export function NaraSurface({binding}:{binding:SurfaceBinding}){
  /** Authority proof: a speech-model tool request is a request, never a
   * canonical Action. Refusal happens before any effect; an authorised
   * request executes separately through the real seam. */
- const proveRefusal=useCallback(()=>{
+ const proveRefusal=useCallback(async()=>{
   const current=client.current;
-  if(!current)return;
+  if(!current || toolPending)return;
+  setToolPending(true);setError("");
   try{
    const decision=current.adjudicateToolRequest({
     decision_ref:`decision:${crypto.randomUUID()}`,
@@ -677,15 +680,17 @@ export function NaraSurface({binding}:{binding:SurfaceBinding}){
     at:new Date().toISOString(),
    });
    if(decision.resolution.resolution!=="refused")throw new Error("the refusal proof expected a refusal");
+   await recordToolDecision(kernel.apply,decision,kernel.lastOpError);
    setToolReceipt({decision,execution:null});
    setNotice(`Tool request refused before effect (${decision.resolution.stage}): no dispatch happened`);
    renderFrom();
-  }catch(e){setError(String(e));}
- },[renderFrom]);
+  }catch(e){setError(String(e));}finally{setToolPending(false);}
+ },[renderFrom,kernel.apply,toolPending]);
 
  const proveAuthorised=useCallback(async()=>{
   const current=client.current;
-  if(!current)return;
+  if(!current || toolPending)return;
+  setToolPending(true);setError("");
   try{
    const decision=current.adjudicateToolRequest({
     decision_ref:`decision:${crypto.randomUUID()}`,
@@ -702,6 +707,7 @@ export function NaraSurface({binding}:{binding:SurfaceBinding}){
     at:new Date().toISOString(),
    });
    if(decision.resolution.resolution!=="authorised")throw new Error("the authorised proof expected authorisation");
+   await recordToolDecision(kernel.apply,decision,kernel.lastOpError);
    // Execution is a separate receipt — and a real dispatch: the focus the
    // action names crosses the kernel expression seam here.
    await buildTurnContext();
@@ -713,6 +719,7 @@ export function NaraSurface({binding}:{binding:SurfaceBinding}){
    if(!target)throw new Error("No entity to focus");
    const scene=document.scenes.find(candidate=>candidate.scene_ref===document.selection.scene_ref)??document.scenes[0];
    const applied=await editExpression([{change:"focus",scene_ref:scene.scene_ref,entity_ref:target.entity_ref}]);
+   if(!applied)throw new Error(kernel.lastOpError() || "The authorised focus was not applied; no execution receipt was recorded.");
    const execution=current.recordExecution(decision,{
     execution_ref:`execution:${crypto.randomUUID()}`,
     owner_operation:"expression.edit",
@@ -723,8 +730,8 @@ export function NaraSurface({binding}:{binding:SurfaceBinding}){
    setToolReceipt({decision,execution:execution as unknown as Record<string,unknown>});
    setNotice(`Authorised tool request executed as expression.edit at revision ${applied?.revision}; receipts recorded`);
    renderFrom();
-  }catch(e){setError(String(e));}
- },[buildTurnContext,readDocument,editExpression,renderFrom]);
+  }catch(e){setError(String(e));}finally{setToolPending(false);}
+ },[buildTurnContext,readDocument,editExpression,renderFrom,kernel.apply,toolPending]);
 
  if(!read||!client.current)return <section className="nara-surface" aria-label="Nara presence" data-nara="unattached">
   <p className="oi-note">No canonical Nara is attached to a speech body. Attach consumes the AIKit-resolved body; the cradle invents no resolution and no voice.</p>
@@ -832,8 +839,8 @@ export function NaraSurface({binding}:{binding:SurfaceBinding}){
   <details className="oi-disclosure nara-authority"><summary>Authority proofs <span className="oi-state">{toolReceipt?toolReceipt.decision.resolution.resolution:"none run"}</span></summary>
    <p className="oi-note">A speech tool request is a request, never a canonical Action: refusal happens before any effect; authorisation and execution are separate receipts.</p>
    <div className="oi-action-group">
-    <button className="oi-action" onClick={proveRefusal}>Request refused (unauthorised action)</button>
-    <button className="oi-action" onClick={()=>void proveAuthorised()}>Request authorised focus (executes for real)</button>
+    <button className="oi-action" disabled={toolPending} onClick={()=>void proveRefusal()}>Request refused (unauthorised action)</button>
+    <button className="oi-action" disabled={toolPending} onClick={()=>void proveAuthorised()}>Request authorised focus (executes for real)</button>
    </div>
    {toolReceipt&&<pre data-tool-receipt>{JSON.stringify(toolReceipt,null,2)}</pre>}
   </details>

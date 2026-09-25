@@ -44,6 +44,8 @@ export const pairwiseCellIdShader = /* glsl */ `
 precision highp float;
 
 uniform sampler2D uPositionTexture;
+uniform float uConnectionStart;
+uniform sampler2D uConnectionMetadata;
 uniform vec2 uTexSize;        // particle-state texture size
 uniform float uParticleCount;
 uniform float uExtent;        // grid half-extent, world px
@@ -55,7 +57,7 @@ varying vec2 vUv;
 
 void main() {
   float pIndex = floor(vUv.y * uTexSize.y) * uTexSize.x + floor(vUv.x * uTexSize.x);
-  if (pIndex >= uParticleCount) {
+  if (pIndex >= uParticleCount || (pIndex >= uConnectionStart && texture2D(uConnectionMetadata, vUv).z < 0.5)) {
     gl_FragColor = vec4(${PAIRWISE_KEY_SENTINEL.toFixed(1)}, 0.0, 0.0, 1.0);
     return;
   }
@@ -152,6 +154,8 @@ export const pairwiseForceShader = /* glsl */ `
 precision highp float;
 
 uniform sampler2D uPositionTexture;
+uniform float uConnectionStart;
+uniform sampler2D uConnectionMetadata;
 uniform sampler2D uVelocityTexture;
 uniform sampler2D uSortTexture;   // sorted (cellKey, particleIndex) list
 uniform sampler2D uCellTable;     // per-cell (1-based start, count)
@@ -187,7 +191,7 @@ void main() {
   vec2 dv = vec2(0.0);
   float corrZ = 0.0;
   float dvZ = 0.0;
-  if (pIndex < uParticleCount) {
+  if (pIndex < uParticleCount && (pIndex < uConnectionStart || texture2D(uConnectionMetadata, vUv).z > 0.5)) {
     vec3 pos = texture2D(uPositionTexture, vUv).xyz;
     vec3 vel = texture2D(uVelocityTexture, vUv).xyz;
     vec2 p2 = (uCompPlane < 0.5) ? pos.xy : pos.xz;

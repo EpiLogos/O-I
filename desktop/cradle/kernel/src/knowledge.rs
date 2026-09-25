@@ -21,6 +21,7 @@ impl Address {
 #[derive(Clone, Debug, Deserialize, PartialEq, Serialize)]
 #[serde(tag = "action", rename_all = "snake_case")]
 pub enum Request {
+    Status,
     Search {
         query: String,
     },
@@ -70,30 +71,168 @@ pub fn run(cwd: &Path, args: &[&str]) -> Result<Value, CallError> {
 pub fn run_input(cwd: &Path, args: &[&str], input: &Value) -> Result<Value, CallError> {
     use std::io::Write;
     use std::process::Stdio;
-    let bytes=serde_json::to_vec(input).map_err(|e|CallError::Malformed{detail:e.to_string()})?;
-    if bytes.len()>16*1024*1024{return Err(CallError::Malformed{detail:"Native Action exceeds its 16 MiB input budget".into()});}
-    let executable=std::env::var_os("OI_BIN").unwrap_or_else(||"oi".into());
-    let mut child=Command::new(executable).args(["aikit","--json","-C"]).arg(cwd).args(args)
-        .stdin(Stdio::piped()).stdout(Stdio::piped()).stderr(Stdio::piped()).spawn()
-        .map_err(|e|CallError::Unavailable{detail:e.to_string()})?;
-    let write=child.stdin.take().ok_or_else(||CallError::Malformed{detail:"Native Action stdin is absent".into()})?
-        .write_all(&bytes);
-    if let Err(e)=write{let _=child.kill();let _=child.wait();return Err(CallError::Malformed{detail:e.to_string()});}
-    decode_envelope(&child.wait_with_output().map_err(|e|CallError::Malformed{detail:e.to_string()})?)
-}
-
-fn run_with_executable(cwd: &Path, args: &[&str], executable: &OsStr) -> Result<Value, CallError> {
-    let output = Command::new(executable)
-        .arg("aikit")
-        .arg("--json")
-        .arg("-C")
+    let bytes = serde_json::to_vec(input).map_err(|e| CallError::Malformed {
+        detail: e.to_string(),
+    })?;
+    if bytes.len() > 16 * 1024 * 1024 {
+        return Err(CallError::Malformed {
+            detail: "Native Action exceeds its 16 MiB input budget".into(),
+        });
+    }
+    let executable = std::env::var_os("OI_BIN").unwrap_or_else(|| "oi".into());
+    let mut child = Command::new(executable)
+        .args(["aikit", "--json", "-C"])
         .arg(cwd)
         .args(args)
-        .output()
+        .stdin(Stdio::piped())
+        .stdout(Stdio::piped())
+        .stderr(Stdio::piped())
+        .spawn()
         .map_err(|e| CallError::Unavailable {
             detail: e.to_string(),
         })?;
+    let write = child
+        .stdin
+        .take()
+        .ok_or_else(|| CallError::Malformed {
+            detail: "Native Action stdin is absent".into(),
+        })?
+        .write_all(&bytes);
+    if let Err(e) = write {
+        let _ = child.kill();
+        let _ = child.wait();
+        return Err(CallError::Malformed {
+            detail: e.to_string(),
+        });
+    }
+    decode_envelope(&child.wait_with_output().map_err(|e| CallError::Malformed {
+        detail: e.to_string(),
+    })?)
+}
+
+fn run_with_executable(cwd: &Path, args: &[&str], executable: &OsStr) -> Result<Value, CallError> {
+    let mut command = Command::new(executable);
+    command.args(["aikit", "--json", "-C"]).arg(cwd).args(args);
+    let output = bounded_output(command, std::time::Duration::from_secs(20))?;
     decode_envelope(&output)
+}
+
+// Read-only owner processes have a bounded lifetime and output. A stalled
+// source must not strand the desktop or leave an indexing descendant behind.
+fn bounded_output(
+    mut command: Command,
+    timeout: std::time::Duration,
+) -> Result<std::process::Output, CallError> {
+    use std::{
+        io::Read,
+        process::Stdio,
+        sync::{
+            atomic::{AtomicBool, Ordering},
+            mpsc, Arc,
+        },
+        time::Instant,
+    };
+    #[cfg(unix)]
+    {
+        use std::os::unix::process::CommandExt;
+        command.process_group(0);
+    }
+    let mut child = command
+        .stdin(Stdio::null())
+        .stdout(Stdio::piped())
+        .stderr(Stdio::piped())
+        .spawn()
+        .map_err(|e| CallError::Unavailable {
+            detail: e.to_string(),
+        })?;
+    let exceeded = Arc::new(AtomicBool::new(false));
+    fn drain<R: Read + Send + 'static>(
+        mut pipe: R,
+        limit: usize,
+        exceeded: Arc<AtomicBool>,
+    ) -> mpsc::Receiver<Result<Vec<u8>, String>> {
+        let (tx, rx) = mpsc::channel();
+        std::thread::spawn(move || {
+            let mut bytes = Vec::new();
+            let mut buf = [0u8; 8192];
+            let result = loop {
+                match pipe.read(&mut buf) {
+                    Ok(0) => break Ok(bytes),
+                    Ok(n) => {
+                        let keep = n.min(limit.saturating_sub(bytes.len()));
+                        bytes.extend_from_slice(&buf[..keep]);
+                        if keep < n {
+                            exceeded.store(true, Ordering::Relaxed);
+                        }
+                    }
+                    Err(e) => break Err(e.to_string()),
+                }
+            };
+            let _ = tx.send(result);
+        });
+        rx
+    }
+    let stdout = drain(
+        child.stdout.take().expect("piped stdout"),
+        8 * 1024 * 1024,
+        exceeded.clone(),
+    );
+    let stderr = drain(
+        child.stderr.take().expect("piped stderr"),
+        64 * 1024,
+        exceeded.clone(),
+    );
+    let started = Instant::now();
+    let mut status = None;
+    let mut out = None;
+    let mut err = None;
+    loop {
+        if status.is_none() {
+            status = child.try_wait().map_err(|e| CallError::Malformed {
+                detail: e.to_string(),
+            })?;
+        }
+        if out.is_none() {
+            out = stdout.try_recv().ok();
+        }
+        if err.is_none() {
+            err = stderr.try_recv().ok();
+        }
+        if exceeded.load(Ordering::Relaxed) || started.elapsed() >= timeout {
+            #[cfg(unix)]
+            {
+                let _ = Command::new("/bin/kill")
+                    .args(["-KILL", "--", &format!("-{}", child.id())])
+                    .stdout(Stdio::null())
+                    .stderr(Stdio::null())
+                    .status();
+            }
+            let _ = child.kill();
+            let _ = child.wait();
+            return Err(CallError::Unavailable {
+                detail: if exceeded.load(Ordering::Relaxed) {
+                    "AIKit knowledge response exceeded its bounded output".into()
+                } else {
+                    format!(
+                        "AIKit knowledge read did not return within {} seconds",
+                        timeout.as_secs()
+                    )
+                },
+            });
+        }
+        if status.is_some() && out.is_some() && err.is_some() {
+            return Ok(std::process::Output {
+                status: status.unwrap(),
+                stdout: out
+                    .unwrap()
+                    .map_err(|detail| CallError::Malformed { detail })?,
+                stderr: err
+                    .unwrap()
+                    .map_err(|detail| CallError::Malformed { detail })?,
+            });
+        }
+        std::thread::sleep(std::time::Duration::from_millis(10));
+    }
 }
 
 fn decode_envelope(output: &std::process::Output) -> Result<Value, CallError> {
@@ -140,6 +279,7 @@ fn decode_envelope(output: &std::process::Output) -> Result<Value, CallError> {
 fn request_args(request: &Request) -> Result<Vec<String>, String> {
     let mut args: Vec<String> = vec!["knowledge".into()];
     match request {
+        Request::Status => args.push("status".into()),
         Request::Search { query } => {
             args.extend([
                 "search".into(),
@@ -210,6 +350,25 @@ pub fn not_fresh(value: &bool) -> bool {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[cfg(unix)]
+    #[test]
+    fn native_read_deadline_stops_a_waiting_process_group() {
+        let mut command=Command::new("/bin/sh");command.args(["-c","sleep 30 & wait"]);
+        let start=std::time::Instant::now();
+        let error=bounded_output(command,std::time::Duration::from_millis(100)).unwrap_err();
+        assert!(matches!(error,CallError::Unavailable{..}));
+        assert!(start.elapsed()<std::time::Duration::from_secs(2));
+    }
+    #[cfg(unix)]
+    #[test]
+    fn native_read_bounds_a_real_process_output_stream() {
+        let mut command=Command::new("/usr/bin/yes");command.arg("bounded read");
+        let start=std::time::Instant::now();
+        let error=bounded_output(command,std::time::Duration::from_secs(5)).unwrap_err();
+        assert!(matches!(error,CallError::Unavailable{detail} if detail.contains("bounded output")));
+        assert!(start.elapsed()<std::time::Duration::from_secs(5));
+    }
 
     #[derive(Deserialize)]
     struct QueryCase {

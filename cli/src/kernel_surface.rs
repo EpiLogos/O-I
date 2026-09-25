@@ -43,7 +43,7 @@ use crate::config_surface::{
 };
 use crate::configuration::kernel::{
     assemble_changeset, desired_change, execute_changeset, mint_changeset_id, plan_request,
-    product_position_specs, reset_setting, resolve_setting, resolve_setting_address,
+    product_position_specs, product_position_specs_with, reset_setting, resolve_setting, resolve_setting_address,
     ConfigurationStore, DesiredChange, DesiredInput, DesiredRecord, KernelError, OwnerGateway,
     OwnerRegistry, PlanDocument, ProcessTransport,
 };
@@ -94,13 +94,19 @@ impl KernelSurface {
     /// resolved O:I home. Discovery degradations are carried, not raised:
     /// an owner that does not answer is data the surface reports.
     pub fn open() -> Result<Self, String> {
+        Self::open_with_specs(product_position_specs()?)
+    }
+
+    /// Bind through the same executable authority as the calling CLI.
+    pub fn open_with_product_resolver(
+        resolve: impl FnMut(&crate::product_command::ProductCommandDescriptor) -> Result<PathBuf, String>,
+    ) -> Result<Self, String> {
+        Self::open_with_specs(product_position_specs_with(resolve)?)
+    }
+
+    fn open_with_specs(specs: Vec<crate::configuration::kernel::OwnerSpec>) -> Result<Self, String> {
         let home = crate::configuration::kernel::oi_home()
             .map_err(|error| format!("configuration engine cannot find the O:I home: {error}"))?;
-        // The seven product positions come from the deployed surface
-        // catalogue; `oi` is the running executable. Connector owners
-        // (`connector/<name>` specs) join this list where a connector
-        // catalogue exists — the registry handles them without branching.
-        let specs = product_position_specs()?;
         let transport = ProcessTransport::with_specs(&specs);
         let mut registry = OwnerRegistry::new();
         registry.discover_specs(&transport, &specs);
@@ -736,6 +742,10 @@ impl ConfigSurface for KernelSurface {
         self.build_resolution(setting_ref, scope, held.as_ref())
     }
 
+    fn resolve_many(&self, pairs: &[(String, Scope)]) -> Vec<SurfaceResult<Resolution>> {
+        self.transport.with_reading_batch(|| pairs.iter().map(|(setting, scope)| self.resolve(setting, scope)).collect())
+    }
+
     fn resolve_entry(&self, entry: &DesiredEntry) -> SurfaceResult<Resolution> {
         let held = HeldDesired {
             entry: entry.clone(),
@@ -753,12 +763,11 @@ impl ConfigSurface for KernelSurface {
     }
 
     fn diff(&self) -> SurfaceResult<Vec<Resolution>> {
-        self.composed_desired()?
-            .iter()
-            .map(|held| {
+        self.transport.with_reading_batch(|| {
+            self.composed_desired()?.iter().map(|held| {
                 self.build_resolution(&held.entry.setting_ref, &held.entry.scope, Some(held))
-            })
-            .collect()
+            }).collect()
+        })
     }
 
     fn assemble(

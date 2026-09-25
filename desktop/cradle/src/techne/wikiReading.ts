@@ -26,9 +26,9 @@ export interface WikiPlaceFacet {
   observer_frame?: string | null;
 }
 export interface WikiNode { object: "node"; ref: string; title?: string; type?: string; revision?: number; source_refs?: string[]; ql?: { face?: string; position?: number; unit?: string }; place?: WikiPlaceFacet }
-export interface WikiConstellationMember { ref?: string; position?: number; conjugate?: boolean }
-export interface WikiConstellation { anchor_ref?: string; members?: WikiConstellationMember[] }
-export interface WikiFrame { object: "frame"; constellations?: WikiConstellation[] }
+export interface WikiConstellationMember { ref?: string; position?: number; conjugate?: boolean; participation_ref?: string }
+export interface WikiConstellation { anchor_ref?: string; members?: WikiConstellationMember[]; frame_ref?: string; frame_revision?: number }
+export interface WikiFrame { object: "frame"; ref?: string; revision?: number; constellations?: WikiConstellation[] }
 export type WikiObject = WikiSpace | WikiNode | WikiFrame;
 
 export type WikiReading =
@@ -46,7 +46,20 @@ export function parseWiki(content: string): WikiReading {
     spaces: objects.filter((entry): entry is WikiSpace => entry.object === "space"),
     nodes: objects.filter((entry): entry is WikiNode => entry.object === "node"),
     constellations: objects.filter((entry): entry is WikiFrame => entry.object === "frame")
-      .flatMap(frame => frame.constellations ?? []),
+      // Flattening is presentation only; keep the exact containing owner for
+      // frame facts. An anchor is a different native subject, not a frame ID.
+      .flatMap(frame => (frame.constellations ?? []).map(constellation => {
+        const {frame_ref:_frameRef,frame_revision:_frameRevision,...value}=constellation;
+        return {...value,
+          ...(typeof frame.ref === "string" && frame.ref ? {frame_ref:frame.ref} : {}),
+          ...(Number.isSafeInteger(frame.revision) && Number(frame.revision) > 0 ? {frame_revision:frame.revision} : {}),
+          ...(constellation.members ? {members:constellation.members.map(member => {
+            const {participation_ref:_participationRef,...value}=member;
+            const native = (member as WikiConstellationMember & {'aikit.constellation-participation/v1'?: {participation_ref?: unknown}})['aikit.constellation-participation/v1'];
+            return {...value,...(typeof native?.participation_ref === 'string' && native.participation_ref ? {participation_ref:native.participation_ref} : {})};
+          })} : {}),
+        };
+      })),
   };
 }
 

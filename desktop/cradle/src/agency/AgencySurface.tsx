@@ -1,3 +1,4 @@
+import {IconTabStrip} from "../workspace/primitives/IconTabStrip";
 import {NativeAgentLauncher} from "./NativeAgentLauncher";
 /**
  * AgencySurface — fills its host, composes the roster, mint flow and
@@ -52,11 +53,7 @@ export function AgencySurface({ project, onMessage, onOpenSettings }: { project?
   return <div className="agency-surface">
     <header className="oi-panel-head">
       <span className="oi-eyebrow">Agency · {project??"Central root"}</span>
-      <div className="oi-segment" role="tablist" aria-label="Agency view">
-        <button type="button" role="tab" aria-selected={view === "roster"} onClick={() => setView("roster")}>Roster</button>
-        <button type="button" role="tab" aria-selected={view === "mint"} onClick={() => setView("mint")}>Mint Agent</button>
-        <button type="button" role="tab" aria-selected={view === "guardians"} onClick={() => setView("guardians")}>Guardians</button>
-      </div>
+      <IconTabStrip aria-label="Agency view" items={[{id:"roster",label:"Roster",icon:"agent"},{id:"mint",label:"Mint Agent",icon:"plus"},{id:"guardians",label:"Guardians",icon:"agent"}]} current={view} onSelect={id=>setView(id as typeof view)}/>
     </header>
 
     <div className="agency-body">
@@ -64,7 +61,7 @@ export function AgencySurface({ project, onMessage, onOpenSettings }: { project?
         <div><NativeAgentLauncher project={project}/><div className="agency-roster-layout">
           <AgencyRoster reading={reading} pending={pending} error={error} selected={selected} onSelect={setSelected}/>
           {selected
-            ? <AgentDetail row={selected} siblingSessions={reading?.rows.filter((row) => row.spaceRef === selected.spaceRef) ?? []}/>
+            ? <AgentDetail harnessDisclosure={reading?.harnessDisclosure} row={selected} siblingSessions={reading?.rows.filter((row) => row.spaceRef === selected.spaceRef) ?? []}/>
             : <div className="oi-empty agency-detail-placeholder"><span>Select a session to see its Purpose, Skills & tools, Sessions, Knowledge and History.</span></div>}
         </div></div>
       )}

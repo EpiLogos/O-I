@@ -49,6 +49,17 @@ pub const KERNEL_EVENT_TOPIC: &str = "oi:kernel-event";
 // nature; boxing one arm would change how every emitter constructs it.
 #[allow(clippy::large_enum_variant)]
 pub enum KernelEvent {
+    DictationChanged { revision: u64, stt_url: String },
+    WorkingSurfaceDriving {agent_session:String,binding:String,client_id:String,driving:bool,observed_at_unix_ms:u64},
+    DecisionRecorded { receipt: serde_json::Value },
+    DecisionEpisodeChanged { episode: serde_json::Value },
+    /// An actual native action response; a returned failed/unreturned run is
+    /// preserved verbatim and must not be represented as completion.
+    RoutineActionReturned { action: String, routine_ref: String, data: serde_json::Value },
+    PresentationChanged { revision: u64, theme: crate::presentation::ThemeChoice },
+    NaraDecisionRecorded { decision: serde_json::Value },
+    ConfigurationChanged { operation: String, references: Vec<String> },
+
     ExpressionChanged { expression_ref: String, revision: u64, actor: String,
         /// Caller-supplied Activity correlation. It is unverified here and
         /// never authenticates the caller or grants Action authority.
@@ -114,7 +125,8 @@ impl KernelEvent {
     /// subject without matching every variant.
     pub fn subject(&self) -> Option<&SemanticRef> {
         match self {
-            Self::WorldChanged { .. } | Self::ExpressionChanged { .. } | Self::FileChanged { .. } => None,
+            Self::WorkingSurfaceDriving { .. } | Self::RoutineActionReturned { .. } => None,
+            Self::DictationChanged { .. } | Self::DecisionRecorded { .. } | Self::DecisionEpisodeChanged { .. } | Self::PresentationChanged { .. } | Self::NaraDecisionRecorded { .. } | Self::ConfigurationChanged { .. } | Self::WorldChanged { .. } | Self::ExpressionChanged { .. } | Self::FileChanged { .. } => None,
             Self::FocusChanged { focus } => focus.subject_ref(),
             Self::SurfaceChanged { surface_ref, .. } => surface_ref.as_ref(),
             Self::SourceOpened { source, .. }
@@ -127,6 +139,14 @@ impl KernelEvent {
     /// The event tag exactly as it is tagged on the wire.
     pub fn tag(&self) -> &'static str {
         match self {
+            Self::WorkingSurfaceDriving { .. } => "working_surface_driving",
+            Self::RoutineActionReturned { .. } => "routine_action_returned",
+            Self::DictationChanged { .. } => "dictation_changed",
+            Self::DecisionRecorded { .. } => "decision_recorded",
+            Self::DecisionEpisodeChanged { .. } => "decision_episode_changed",
+            Self::PresentationChanged { .. } => "presentation_changed",
+            Self::NaraDecisionRecorded { .. } => "nara_decision_recorded",
+            Self::ConfigurationChanged { .. } => "configuration_changed",
             Self::WorldChanged { .. } => "world_changed",
             Self::ExpressionChanged { .. } => "expression_changed",
             Self::FocusChanged { .. } => "focus_changed",
@@ -145,6 +165,26 @@ impl KernelEvent {
     /// is refused here.
     pub fn validate(&self) -> Result<(), String> {
         match self {
+            Self::WorkingSurfaceDriving {agent_session,binding,client_id,..} => {
+                non_empty("agent_session",agent_session)?;non_empty("binding",binding)?;non_empty("client_id",client_id)
+            },
+            Self::RoutineActionReturned { action, routine_ref, data } => crate::routine::validate_return(action, routine_ref, data),
+            Self::DictationChanged { revision, stt_url } => { if *revision==0 {return Err("Dictation revision must be positive".into());} non_empty("stt_url",stt_url) },
+            Self::DecisionRecorded { receipt } => {
+                if receipt["schema"]!=crate::decision::RECEIPT_SCHEMA {return Err("Invalid decision receipt schema".into());}
+                non_empty("decision_ref",receipt["decision_ref"].as_str().unwrap_or(""))?;
+                non_empty("authority_ref",receipt["authority_ref"].as_str().unwrap_or(""))
+            },
+            Self::DecisionEpisodeChanged { episode } => non_empty("episode_ref",episode["episode_ref"].as_str().unwrap_or("")),
+            Self::PresentationChanged { revision, theme } => {
+                if *revision == 0 || !["light","dark","system"].contains(&theme.appearance.as_str()) { Err("Invalid appearance event".into()) } else { Ok(()) }
+            },
+            Self::NaraDecisionRecorded { decision } => crate::presentation::validate_decision(decision),
+            Self::ConfigurationChanged { operation, references } => {
+                non_empty("configuration operation",operation)?;
+                for reference in references { non_empty("configuration reference",reference)?; }
+                Ok(())
+            },
             Self::ExpressionChanged { expression_ref, revision, actor, activity_ref } => {
                 non_empty("expression_ref", expression_ref)?;
                 non_empty("actor", actor)?;

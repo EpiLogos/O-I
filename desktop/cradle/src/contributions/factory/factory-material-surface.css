@@ -13,14 +13,14 @@
 .desk-material-basis div{ display: grid; gap: 2px; min-width: 0; }
 .desk-material-basis dd{ min-width: 0; margin: 0; overflow-wrap: anywhere; }
 .desk-material-fixture-note, .desk-material-refusal, .desk-material-empty, .desk-material-note{ margin: 0; font-size: var(--oi-shell-type-nav); line-height: 1.5; }
-.desk-material-refusal{ color: var(--desk-error, #a3352b); }
+.desk-material-refusal{ color: var(--oi-status-error); }
 .desk-material-fixture-note, .desk-material-empty, .desk-material-muted, .desk-material-note{ color: var(--oi-muted-2); }
 .desk-material-latest{ display: flex; align-items: start; justify-content: space-between; gap: 14px; padding: 10px 12px; border: var(--oi-shell-edge) solid var(--oi-accent-soft); border-radius: 8px; background: var(--oi-wash-strong); }
 .desk-material-latest strong{ font-size: var(--oi-shell-type-nav); }
 .desk-material-latest p{ max-width: 56ch; margin: 4px 0 0; color: var(--oi-muted-2); font-size: var(--oi-shell-type-nav); line-height: 1.5; }
 .desk-material-latest small{ display: block; margin-top: 4px; color: var(--oi-muted-2); font-size: var(--oi-shell-type-ui); }
 .desk-material-latest button{ min-height: 27px; padding: 4px 9px; color: var(--oi-foreground); background: transparent; border: var(--oi-shell-edge) solid var(--oi-hairline-soft); border-radius: 6px; font: inherit; font-size: var(--oi-shell-type-nav); cursor: pointer; }
-.desk-material-latest-refusal{ color: var(--desk-error, #a3352b) !important; }
+.desk-material-latest-refusal{ color: var(--oi-status-error) !important; }
 .desk-material-document{ display: flex; flex-direction: column; gap: 10px; }
 .desk-material-document-head{ display: flex; flex-direction: column; gap: 3px; }
 .desk-material-document-head h4{ margin: 0; font-size: var(--oi-shell-type-body); font-weight: 600; }

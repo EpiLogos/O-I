@@ -6,15 +6,15 @@
  */
 import {useEffect, useState, type ReactNode} from "react";
 import {ensureSettingsLoaded, useSettings, type SettingsSnapshot} from "./settingsData";
-import {goTo, PRODUCTS, samePlace, SECTIONS, useSettingsNav, type SectionId} from "./settingsNav";
+import {goTo, samePlace, SECTIONS, useSettingsNav, type SectionId} from "./settingsNav";
 import {readyHarnesses, skillCounts, credentialCards} from "./sectionModel";
-import {productName} from "./v2/vocabulary";
+import {SettingsProductRows} from "./SettingsProductRows";
+import {settingsProducts} from "./settingsProducts";
 import "./settings-page.css";
 
 const ICON: Record<SectionId | "product", ReactNode> = {
   status: <><circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="3"/></>,
   harnesses: <><rect x="3.5" y="5" width="17" height="14" rx="2"/><path d="M7.5 10l3 2.5-3 2.5M13 15h3.5"/></>,
-  models: <><path d="M12 3.5l7.5 4.2v8.6L12 20.5l-7.5-4.2V7.7z"/><path d="M4.8 7.9L12 12l7.2-4.1M12 12v8.3"/></>,
   credentials: <><circle cx="8" cy="15" r="3.5"/><path d="M10.5 12.5l8-8M15.5 7.5l2 2"/></>,
   skills: <><path d="M5 4.5v15M9 4.5v15M13.5 5l4.5 14"/></>,
   profiles: <><path d="M5 7h14M5 12h14M5 17h9"/></>,
@@ -60,14 +60,7 @@ export function SettingsNavigator() {
       <span className="settings-nav-caret" aria-hidden="true">›</span>Products
     </button>
     {productsOpen && <ul className="settings-nav-list" aria-label="Products">
-      {[...PRODUCTS, ...(data.registry.state === "ok" ? data.registry.value.mounts.filter((mount) => !PRODUCTS.some((product) => product.id === mount.owner_ref)).map((mount) => ({id: mount.owner_ref, label: productName(mount.owner_ref)})) : [])].map((product) => {
-        const current = samePlace(nav.place, {kind: "product", id: product.id});
-        return <li key={product.id}>
-          <button type="button" className="settings-nav-row" aria-current={current ? "page" : undefined} data-settings-product={product.id} onClick={() => goTo({kind: "product", id: product.id})}>
-            <Icon name="product"/><span className="settings-nav-label">{product.label}</span>
-          </button>
-        </li>;
-      })}
+      <SettingsProductRows products={settingsProducts(data)} place={nav.place} onChoose={goTo} icon={<Icon name="product"/>}/>
     </ul>}
   </nav>;
 }

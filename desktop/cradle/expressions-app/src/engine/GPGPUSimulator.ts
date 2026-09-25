@@ -172,6 +172,8 @@ export class GPGPUSimulator {
         uPairwiseCorrectionTexture: { value: null },
         uPairwiseCorrectionZTexture: { value: null },
         uEntityCount: { value: 0 },
+        uConnectionStart: { value: 1e30 },
+        uConnectionMetadata: { value: null },
         uEntityBounds: { value: new Float32Array(10) },
         uEntityCenter: { value: Array.from({ length: 10 }, () => new THREE.Vector4(0, 0, 0, 200)) },
         uEntityMorph: { value: new Float32Array(10) },
@@ -253,6 +255,8 @@ export class GPGPUSimulator {
 
         // Entities (first-class centres of formation)
         uEntityCount: { value: 0 },
+        uConnectionStart: { value: 1e30 },
+        uConnectionMetadata: { value: null },
         uEntityBounds: { value: new Float32Array(10) },
         uEntityCenter: { value: Array.from({ length: 10 }, () => new THREE.Vector4(0, 0, 0, 200)) },
         uEntityMorph: { value: new Float32Array(10) },
@@ -368,6 +372,9 @@ export class GPGPUSimulator {
           uMediumMin: { value: new THREE.Vector2(-1400, -1400) },
           uMediumMax: { value: new THREE.Vector2(1400, 1400) },
           uMediumPlane: { value: 0.0 },
+          uConnectionStart: { value: 1e30 },
+          uConnectionMetadata: { value: null },
+          uTexSize: { value: new THREE.Vector2(this.texWidth, this.texHeight) },
           uSplatGain: { value: 1.0 },
           // 3D medium: this draw writes the slice at round(fvz) + uSliceOffset
           uMedium3D: { value: 0.0 },
@@ -441,6 +448,8 @@ export class GPGPUSimulator {
 
     // Pairwise materials share the quad; targets are created on first enabled frame.
     const pwUniforms = () => ({
+      uConnectionStart: { value: 1e30 },
+      uConnectionMetadata: { value: null },
       uPositionTexture: { value: null },
       uVelocityTexture: { value: null },
       uSortTexture: { value: null },
@@ -569,6 +578,7 @@ export class GPGPUSimulator {
    */
   public setTargetTextures(texA: THREE.DataTexture, texB: THREE.DataTexture, vortexCenter: THREE.Vector2, noise?: THREE.DataTexture) {
     this.velMaterial.uniforms.uTargetNoise.value = noise ?? null;
+    for (const material of [this.posMaterial,this.velMaterial,this.pairCellIdMaterial,this.pairForceMaterial,this.mediumSplatMaterial]) material.uniforms.uConnectionMetadata.value = noise ?? null;
     this.velMaterial.uniforms.uTargetATexture.value = texA;
     this.velMaterial.uniforms.uTargetBTexture.value = texB;
     this.velMaterial.uniforms.uVortexCenter.value.copy(vortexCenter);
@@ -590,6 +600,7 @@ export class GPGPUSimulator {
 
   /** Push formation partition geometry/state; physical forces use the separate emitter table. */
   public setEntityState(u: {
+    connectionStart?: number;
     count: number;
     bounds: Float32Array;
     centers: THREE.Vector4[];
@@ -599,6 +610,8 @@ export class GPGPUSimulator {
     normalized?: Float32Array;
   }) {
     const vU = this.velMaterial.uniforms;
+    vU.uConnectionStart.value = u.connectionStart ?? this.particleCount;
+    for (const material of [this.posMaterial,this.pairCellIdMaterial,this.pairForceMaterial,this.mediumSplatMaterial]) material.uniforms.uConnectionStart.value = vU.uConnectionStart.value;
     vU.uEntityCount.value = Math.min(10, u.count);
     (vU.uEntityBounds.value as Float32Array).set(u.bounds.subarray(0, 10));
     (vU.uEntityMorph.value as Float32Array).set(u.morph.subarray(0, 10));

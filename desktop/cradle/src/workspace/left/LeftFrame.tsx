@@ -63,8 +63,6 @@ function usePopover(): {open: boolean; setOpen: (value: boolean) => void; root: 
   return {open, setOpen, root, trigger, layer};
 }
 
-const initial = (label: string) => (label.replace(/[^A-Za-z0-9]/g, "")[0] ?? "·").toUpperCase();
-
 interface Machine {label: string; reachable?: boolean; state?: string}
 
 /** The scope selector and its menu (§3.1, §3.6). */
@@ -121,7 +119,6 @@ function ScopeMenu({mode, workspace, workspaces, onActivateWorkspace, onNewWorks
   return <div className="left-scope" ref={root}>
     <button ref={trigger} type="button" className="left-scope-trigger" aria-haspopup="true" aria-expanded={open} aria-controls={open ? menuId : undefined}
       aria-label={`Scope: ${current}${news ? " — another project has news" : ""}`} title={`Scope: ${current}`} onClick={() => setOpen(!open)}>
-      <span className="left-scope-tile" aria-hidden="true">{initial(current)}</span>
       <span className="left-scope-name">{current}</span>
       <span className="left-scope-chevron" aria-hidden="true"><Glyph name="down" size={9}/>{news && <span className="left-news-dot" data-news="true"/>}</span>
     </button>
@@ -136,7 +133,7 @@ function ScopeMenu({mode, workspace, workspaces, onActivateWorkspace, onNewWorks
       </div>}
       <span className="left-menu-eyebrow">Scope</span>
       <button type="button" className="oi-menu-item left-menu-scope" role="menuitemradio" aria-checked={scope.kind === "central"} onClick={() => choose({kind: "central"})}>
-        <span className="left-scope-tile small" aria-hidden="true">C</span><span className="left-menu-label">Central</span>
+        <Glyph name="home" size={13}/><span className="left-menu-label">Central</span>
       </button>
       <span className="left-menu-eyebrow">Work</span>
       {!reading?.root && <p className="left-reading" role="status">{reading?.error ? "Couldn't read Central." : "Reading Work…"}</p>}

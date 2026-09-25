@@ -38,6 +38,14 @@ struct BootstrapDispatchEntry {
 
 const BOOTSTRAP_DISPATCH: &[BootstrapDispatchEntry] = &[
     BootstrapDispatchEntry {
+        subcommand: "factory-projects",
+        modality: InstallModality::ExistingGroundReconcile,
+        note: "read or reconcile native Factory placement for Central and its disclosed projects",
+        example: &["factory-projects", "--json"],
+        matches: matches_any_argv,
+        run: run_factory_projects,
+    },
+    BootstrapDispatchEntry {
         subcommand: "install",
         modality: InstallModality::FreshGround,
         note: "legacy fallback Central source install (`install central|ctrl`); the current-main route in trust_closure_route intercepts first",
@@ -445,6 +453,8 @@ fn command_init_personal(args: &[OsString]) -> Result<i32, String> {
     composition.personal_ground = Some(path.display().to_string());
     save_composition(&composition)?;
 
+    reconcile_installed_factory_projects(&catalog, &composition, &path)?;
+
     // Guardian SkillSet pickup — the bootstrap's cognition step. The ground
     // receives exactly one shipped SkillSet: the O:I guardian Skills,
     // projected as receipt-gated derived copies. AIKit remains the normal
@@ -590,7 +600,8 @@ fn command_migrate_placement(args: &[OsString]) -> Result<i32, String> {
         .map_err(|error| format!("cannot flush migration preview: {error}"))?;
 
     if source == target {
-        println!("Already placed under the configured Central Work field; no files changed.");
+        reconcile_installed_factory_projects(&catalog, &composition, &ground)?;
+        println!("Already placed under Central Work; native Factory project setup reconciled.");
         return Ok(0);
     }
     if target.exists() {
@@ -629,8 +640,8 @@ fn command_migrate_placement(args: &[OsString]) -> Result<i32, String> {
     // can work in it immediately — running migrate is the person's act of
     // bringing it in. Best-effort: never fails the completed placement.
     ensure_project_in_placement(&executable, &ground, &name.to_string_lossy());
-    println!("No Project, Factory, AIKit, or Workcell object was created or renamed.");
-    println!("Derived systems that remember the old path may now need an explicit refresh.");
+    reconcile_installed_factory_projects(&catalog, &composition, &ground)?;
+    println!("Existing identities preserved; native Central and Factory project setup reconciled.");
     Ok(0)
 }
 

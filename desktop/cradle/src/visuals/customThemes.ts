@@ -1,99 +1,58 @@
-/**
- * Runtime-imported themes: VS Code color-theme files a person imports
- * through Settings → Visuals. They convert through the SAME converter as the
- * bundled corpus (oi.theme/v1) and persist in their own localStorage record;
- * their variable blocks ride `data-oi-theme` exactly like bundled themes,
- * carried by one mounted <style> element (the CSP allows inline styles).
- *
- * Only validated role values ever reach the cascade: the converter emits
- * normalized hex colours, rgba() built from them, and the house's fixed
- * shadow strings — arbitrary file content cannot become CSS here.
- */
-import { parseJsonc, convertTheme, themeVariables, uniqueThemeId, guessAppearance } from "@epilogos/oi-design-system/themes/convert";
+/** Imported themes are kernel-owned. This module converts explicit file imports
+ * and validates the kernel library before projecting it into CSS. Old browser
+ * theme records are never silently promoted into authority. */
+import { parseJsonc, convertTheme, themeVariables, uniqueThemeId, guessAppearance, themeImportRules } from "@epilogos/oi-design-system/themes/convert";
 import { THEMES } from "@epilogos/oi-design-system/themes/index";
-
-export interface CustomTheme {
-  id: string;
-  name: string;
-  appearance: "light" | "dark";
-  preview: { ground: string; ink: string; accent: string; strip: string[] };
-  variables: Record<string, string>;
-}
-
-const STORAGE_KEY = "oi-cradle.custom-themes.v1";
+import type { PresentationCustomTheme } from "../kernel/types";
+export type CustomTheme = PresentationCustomTheme;
 const STYLE_ID = "oi-custom-themes";
 const MAX_IMPORT_BYTES = 2_000_000;
 const MAX_THEMES = 50;
-
-/** Structural validation of a stored record: wrong shapes drop field by field. */
-function sanitize(raw: unknown): CustomTheme[] {
-  if (!Array.isArray(raw)) return [];
-  return raw.flatMap((entry) => {
-    if (!entry || typeof entry !== "object") return [];
-    const record = entry as Record<string, unknown>;
-    if (typeof record.id !== "string" || !record.id || typeof record.name !== "string" || !record.name) return [];
-    if (record.appearance !== "light" && record.appearance !== "dark") return [];
-    const appearance: "light" | "dark" = record.appearance;
-    const preview = record.preview as Record<string, unknown> | undefined;
-    if (!preview || typeof preview.ground !== "string" || typeof preview.ink !== "string" || typeof preview.accent !== "string" || !Array.isArray(preview.strip)) return [];
-    const rawVariables = record.variables;
-    if (!rawVariables || typeof rawVariables !== "object") return [];
-    const variables: Record<string, string> = {};
-    for (const [role, value] of Object.entries(rawVariables)) {
-      if (role.startsWith("--oi-") && typeof value === "string") variables[role] = value;
-    }
-    if (!Object.keys(variables).length) return [];
-    return [{
-      id: record.id,
-      name: record.name,
-      appearance,
-      preview: { ground: preview.ground, ink: preview.ink, accent: preview.accent, strip: preview.strip.filter((c): c is string => typeof c === "string").slice(0, 3) },
-      variables,
-    }];
-  }).slice(0, MAX_THEMES);
+const rules = themeImportRules();
+const roles = new Set(rules.roles);
+const shadows = rules.shadow_values;
+const hex = (value: unknown): value is string => typeof value === "string" && /^#[0-9a-f]{6}$/i.test(value);
+function colour(value: string): boolean {
+  if (hex(value)) return true;
+  const match = /^rgba\(\s*(\d+(?:\.\d+)?)\s*,\s*(\d+(?:\.\d+)?)\s*,\s*(\d+(?:\.\d+)?)\s*,\s*(\d+(?:\.\d+)?)\s*\)$/.exec(value);
+  return !!match && match.slice(1,4).every(channel => Number(channel) <= 255) && Number(match[4]) <= 1;
 }
-
-function load(): CustomTheme[] {
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    return raw ? sanitize(JSON.parse(raw)) : [];
-  } catch {
-    return [];
+/** Reject the entire block: dropping invalid roles would disguise a corrupt library. */
+export function validateCustomTheme(raw: unknown): CustomTheme {
+  if (!raw || typeof raw !== "object" || Array.isArray(raw)) throw new Error("The saved theme is not a theme document.");
+  const theme = raw as CustomTheme;
+  if (typeof theme.id !== "string" || !/^[A-Za-z0-9_-]{1,80}$/.test(theme.id) || THEMES.some(entry => entry.id === theme.id)) throw new Error("The imported theme has an invalid or reserved identity.");
+  if (typeof theme.name !== "string" || !theme.name.trim() || theme.name.length > 256) throw new Error("The imported theme needs a name of at most 256 characters.");
+  if (theme.appearance !== "light" && theme.appearance !== "dark") throw new Error("The imported theme needs a light or dark appearance.");
+  if (!theme.preview || !hex(theme.preview.ground) || !hex(theme.preview.ink) || !hex(theme.preview.accent) || !Array.isArray(theme.preview.strip) || theme.preview.strip.length > 3 || !theme.preview.strip.every(hex)) throw new Error("The imported theme has invalid preview colours.");
+  if (!theme.variables || typeof theme.variables !== "object" || Array.isArray(theme.variables) || !Object.keys(theme.variables).length) throw new Error("The imported theme has no colour roles.");
+  for (const [role,value] of Object.entries(theme.variables)) {
+    if (!roles.has(role) || typeof value !== "string" || !(role.startsWith("--oi-shadow-") ? (shadows[role] ?? []).includes(value) : colour(value))) throw new Error(`The imported theme has an unsafe value for ${role}.`);
   }
+  return {id:theme.id,name:theme.name,appearance:theme.appearance,preview:{...theme.preview,strip:[...theme.preview.strip]},variables:{...theme.variables}};
 }
-
-let themes: CustomTheme[] = typeof localStorage === "undefined" ? [] : load();
-
-function persist() {
-  try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(themes));
-  } catch {
-    // a full or blocked store keeps the session's themes without persisting
-  }
-}
-
-export function listCustomThemes(): CustomTheme[] {
+export function validateCustomThemes(raw: unknown): CustomTheme[] {
+  if (!Array.isArray(raw) || raw.length > MAX_THEMES) throw new Error("The saved theme library is invalid.");
+  const themes = raw.map(validateCustomTheme);
+  if (new Set(themes.map(theme => theme.id)).size !== themes.length) throw new Error("The saved theme library contains duplicate identities.");
   return themes;
 }
-
-/** The one mounted style element carrying every custom theme's block. */
-export function ensureCustomThemeStyles(): void {
+/** This text can contain only bounded identities, exact roles and safe colour values. */
+export function customThemeCss(raw: unknown): string {
+  return validateCustomThemes(raw).map(theme => `.oi-desktop[data-oi-theme="${theme.id}"] {\n  color-scheme: ${theme.appearance};\n${Object.entries(theme.variables).map(([role,value]) => `  ${role}: ${value};`).join("\n")}\n}`).join("\n\n");
+}
+export function ensureCustomThemeStyles(themes: readonly CustomTheme[]): void {
+  const css = customThemeCss(themes);
   if (typeof document === "undefined") return;
   let style = document.getElementById(STYLE_ID) as HTMLStyleElement | null;
-  if (!style) {
-    style = document.createElement("style");
-    style.id = STYLE_ID;
-    document.head.appendChild(style);
-  }
-  style.textContent = themes.map((theme) => {
-    const lines = Object.entries(theme.variables).map(([role, value]) => `  ${role}: ${value};`);
-    return `.oi-desktop[data-oi-theme="${theme.id}"] {\n  color-scheme: ${theme.appearance};\n${lines.join("\n")}\n}`;
-  }).join("\n\n");
+  if (!style) { style = document.createElement("style"); style.id = STYLE_ID; document.head.appendChild(style); }
+  style.textContent = css;
 }
 
 /** Convert a VS Code color-theme file's text and keep it. Throws the plain
  * refusal the settings view shows — never a stack trace. */
-export function importTheme(text: string, fileName: string): CustomTheme {
+export function convertImportedTheme(text: string, fileName: string, existing: readonly CustomTheme[]): CustomTheme {
+  if (existing.length >= MAX_THEMES) throw new Error("Remove an imported theme before adding another (50 maximum).");
   const trimmed = text.trim();
   if (!trimmed) throw new Error(`${fileName} is empty.`);
   if (trimmed.length > MAX_IMPORT_BYTES) throw new Error(`${fileName} is too large to be a color theme.`);
@@ -107,7 +66,7 @@ export function importTheme(text: string, fileName: string): CustomTheme {
   const record = parsed as Record<string, unknown>;
   const name = typeof record.name === "string" && record.name.trim() ? record.name.trim() : fileName.replace(/\.(json|jsonc)$/i, "");
   const appearance = guessAppearance(record);
-  const taken = new Set<string>([...THEMES.map((theme) => theme.id), ...themes.map((theme) => theme.id)]);
+  const taken = new Set<string>([...THEMES.map((theme) => theme.id), ...existing.map((theme) => theme.id)]);
   const id = uniqueThemeId(name, taken);
   const doc = convertTheme(record, {
     id, name, appearance,
@@ -118,20 +77,5 @@ export function importTheme(text: string, fileName: string): CustomTheme {
     throw new Error(`${fileName} could not be converted into a theme for this app.`);
   }
   const theme: CustomTheme = { id, name, appearance, preview, variables: themeVariables(doc) };
-  themes = [theme, ...themes].slice(0, MAX_THEMES);
-  persist();
-  ensureCustomThemeStyles();
-  return theme;
+  return validateCustomTheme(theme);
 }
-
-/** Forget an imported theme. The caller is responsible for clearing a
- * selection that pointed at it. */
-export function removeCustomTheme(id: string): void {
-  themes = themes.filter((theme) => theme.id !== id);
-  persist();
-  ensureCustomThemeStyles();
-}
-
-// A restarting window re-mounts the imported blocks at module load, so a
-// restored data-oi-theme finds its variables before the first React commit.
-ensureCustomThemeStyles();

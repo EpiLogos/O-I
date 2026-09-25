@@ -15,21 +15,31 @@ import {
   useEffect,
   useMemo,
   useState,
+  useRef,
   type ReactNode,
 } from "react";
 import "@epilogos/oi-design-system/point-cloud.css";
 import { visuals, BROADCAST, type VisualsSnapshot } from "./store";
 import { ensureCustomThemeStyles } from "./customThemes";
+import { PresentationClient, type PresentationState } from "./presentation";
+import { currentArrangement, subscribeArrangement, visualObservation } from "./observations";
 import { useKernel } from "../kernel/KernelProvider";
 
 interface VisualsContextValue {
   snapshot: VisualsSnapshot;
+  presentation: PresentationState;
+  themes: PresentationClient;
+  retryObservation: () => void;
 }
 
-const Context = createContext<VisualsContextValue>({ snapshot: visuals.get() });
+const Context = createContext<VisualsContextValue | null>(null);
+// A renderer-instance observation identifier, not an authenticated native window ID.
+export const OBSERVER_ID = `view:${crypto.randomUUID()}`;
 
 export function useVisuals(): VisualsContextValue {
-  return useContext(Context);
+  const value = useContext(Context);
+  if (!value) throw new Error("VisualsProvider is missing.");
+  return value;
 }
 
 function resolveTheme(theme: VisualsSnapshot["theme"]): "light" | "dark" {
@@ -50,10 +60,9 @@ function applyTheme(theme: VisualsSnapshot["theme"], themeId: string | null) {
 // The appearance is applied synchronously at module load as well as by the
 // pre-paint script in index.html: both resolve the same persisted choice,
 // so a window (primary or detached) whose HTML lacks the inline script
-// still lands on the right ground before the first React commit. Imported
-// themes re-mount their variable blocks here for the same reason.
+// paints a cached appearance before the first React commit. The kernel read
+// replaces this cache and supplies validated imported theme blocks.
 if (typeof document !== "undefined") {
-  ensureCustomThemeStyles();
   const initial = visuals.get();
   applyTheme(initial.theme, initial.themeId);
 }
@@ -61,6 +70,45 @@ if (typeof document !== "undefined") {
 export function VisualsProvider({ children }: { children: ReactNode }) {
   const kernel = useKernel();
   const [snapshot, setSnapshot] = useState<VisualsSnapshot>(() => visuals.get());
+  const kernelRef = useRef(kernel); kernelRef.current = kernel;
+  const [themes] = useState(() => new PresentationClient(
+    op => kernelRef.current.apply(op),
+    document => {ensureCustomThemeStyles(document.custom_themes); visuals.acceptKernelTheme(document.theme);},
+    () => kernelRef.current.lastOpError(),
+  ));
+  const [presentation, setPresentation] = useState(themes.get);
+  const [observationRetry, setObservationRetry] = useState(0);
+  const retryObservation = () => setObservationRetry(value => value + 1);
+  useEffect(() => themes.subscribe(setPresentation), [themes]);
+  useEffect(() => {void themes.read();}, [themes, kernel.apply]);
+  const themeReceipt = [...kernel.receipts].reverse().find(receipt => receipt.event === "presentation_changed")?.seq;
+  useEffect(() => {if (themeReceipt !== undefined) void themes.read(false);}, [themes, themeReceipt]);
+  useEffect(() => {
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    let last = "";
+    let inFlight = false;
+    let live = true;
+    const publish = async () => {
+      if (!live || inFlight) return;
+      const visual = visualObservation(visuals.get()), arrangement = currentArrangement();
+      const serialized = JSON.stringify([visual,arrangement]);
+      if (serialized === last) return;
+      inFlight = true;
+      await themes.observe(OBSERVER_ID,visual,arrangement);
+      inFlight = false;
+      if (!themes.get().observationError) last = serialized;
+      // Capture changes that occurred while the native write was in flight.
+      if (live && serialized !== JSON.stringify([visualObservation(visuals.get()),currentArrangement()])) schedule();
+    };
+    const schedule = () => {if(timer)clearTimeout(timer);timer=setTimeout(()=>void publish(),300);};
+    const stopVisuals = visuals.subscribe(schedule), stopArrangement = subscribeArrangement(schedule);
+    schedule();
+    return () => {
+      live=false; if(timer)clearTimeout(timer);stopVisuals();stopArrangement();
+      // Best effort withdrawal; it never changes the arrangement or saved work.
+      void themes.observe(OBSERVER_ID,null,null);
+    };
+  }, [themes, observationRetry]);
 
   useEffect(() => visuals.subscribe(setSnapshot), []);
 
@@ -97,6 +145,6 @@ export function VisualsProvider({ children }: { children: ReactNode }) {
     };
   }, [kernel.transport.kind]);
 
-  const value = useMemo(() => ({ snapshot }), [snapshot]);
+  const value = useMemo(() => ({ snapshot, presentation, themes, retryObservation }), [snapshot, presentation, themes]);
   return <Context.Provider value={value}>{children}</Context.Provider>;
 }

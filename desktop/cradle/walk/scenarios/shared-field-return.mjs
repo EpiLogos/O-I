@@ -190,56 +190,54 @@ export default async function run({page,baseUrl,check,shot,channel,provision:p})
   // 7 — the human reviews beside the document: the strip is this document's
   // arrival point, so the new Return is one refresh away; it is visibly an
   // admitted shared-field contribution, distinct from a plain return.
-  const returns=page.locator(".document-receiving");
+  await page.locator("[data-left-foot]").getByRole("button",{name:/^Inbox/}).click();
+  const returns=page.locator(".left-inbox");
   await returns.waitFor();
-  check((await returns.locator("header small").innerText()).includes("0 in the receiving field"),"Before the Return arrives the strip honestly shows an empty receiving field");
-  await returns.getByRole("button",{name:"Refresh this document's receiving"}).click();
-  await page.waitForFunction(()=>document.querySelector(".document-receiving header small")?.textContent?.includes("1 in the receiving field"),null,{timeout:20000});
+  await returns.getByRole("button",{name:"Refresh receiving"}).click();
+  await page.waitForFunction(()=>document.querySelector(".left-inbox header small")?.textContent?.includes("1 waiting"),null,{timeout:20000});
   await returns.locator(".receiving-row").first().click();
   const detail=returns.locator(".receiving-detail");await detail.waitFor();
+  await page.waitForFunction(()=>{const button=document.querySelector(".left-inbox .receiving-accept");return button&&!button.disabled;},null,{timeout:20000});
   const detailText=await detail.innerText();
-  check(detailText.includes("Agent — agent:reader-walk"),"The Return's producer is the receiving participant");
-  check(detailText.includes("admitted contribution")&&detailText.includes(envelope.projection_ref)&&detailText.includes("withdrawn by the publisher, admitted material retained"),"The return discloses its shared-field lineage — admitted, and withdrawn by the publisher yet retained");
+  const proposed=p.human("central.receiving.read",{project:"Editor",return_ref:submitted.return_ref});
+  check(proposed.record.author.principal_ref==="agent:reader-walk"&&proposed.record.author.actor_kind==="agent","The native receiving record identifies the exact receiving participant as producer");
+  check(detailText.includes("Agent contribution")&&!detailText.includes("agent:reader-walk"),"Inbox shows Agent attribution without a principal identifier dump");
   check(detailText.includes(passage),"The exact admitted material is shown before any decision");
-  await shot("return-with-shared-field-lineage");
+  await shot("inbox-proposed-content");
 
   await returns.getByRole("button",{name:"Accept current basis"}).click();
-  await page.waitForFunction(()=>document.querySelector(".document-receiving .receiving-detail")?.textContent?.includes("accepted by"),null,{timeout:20000});
+  await returns.getByRole("button",{name:"Include into the document"}).waitFor({state:"visible",timeout:20000});
+  const reviewed=p.human("central.receiving.read",{project:"Editor",return_ref:submitted.return_ref});
+  check(reviewed.record.review?.disposition==="accepted"&&reviewed.record.review.reviewer_ref==="human:walk"&&reviewed.record.review.source_revision===p.doc.revision.revision,"Native review retains the exact human reviewer and accepted source revision");
   await returns.getByRole("button",{name:"Include into the document"}).click();
-  await page.waitForFunction(()=>document.querySelector(".document-receiving .receiving-status")?.textContent==="included",null,{timeout:20000});
+  await page.waitForFunction(()=>document.querySelector(".left-inbox p.receiving-included")!==null,null,{timeout:20000});
   check(true,"Inclusion lands through the owner's revision-checked operation on the exact reviewed basis");
 
-  // 8 — the surface unmounts when its tab goes inactive; coming back is a
-  // fresh mount. The withdrawn projection record returns through the
-  // consumed-on-view slot (presentation carry, no store), and the accepted
-  // revision strip now reads the included document.
-  if(!await nav.isVisible())await page.keyboard.press("Meta+b");
+  // 8 — Inbox keeps the reviewed result beside the source. Accepted
+  // contribution facts live in the owner's document, not a second footer.
+  const includedText=await detail.innerText();
+  const completed=p.human("central.receiving.read",{project:"Editor",return_ref:submitted.return_ref});
+  check(completed.record.review?.reviewer_ref==="human:walk"&&completed.record.proposal.entry_id==="entry:shared"&&completed.included,"Native readback confirms the human review, exact entry anchor and completed inclusion");
+  check(includedText.includes("Included into the document.")&&!includedText.includes("human:walk")&&!includedText.includes("entry:shared"),"Inbox confirms inclusion without reviewer or entry identifiers");
+  check(await page.locator(".cm-content[data-source-ref]").count()===1
+    &&await page.locator(".shared-field-published[data-projection-state='withdrawn']").count()===1
+    &&await returns.locator("p.receiving-included").count()===1,"Source, withdrawn projection and the admitted contribution remain visible beside the Inbox's inclusion confirmation");
+  await shot("included-contribution-inbox");
+
+  // 9 — navigation preserves the withdrawn projection presentation.
+  await page.locator("[data-left-foot]").getByRole("button",{name:/^Inbox/}).click();
   await nav.locator('[data-file-path="Work/Editor/ProjectCentral/user/00 01-DESIGN.md"]').click();
   await page.locator('.cm-content[data-source-ref]:not([data-source-ref="'+p.doc.source.ref+'"])').waitFor({timeout:15000});
   await nav.locator(`[data-file-path="Work/Editor/${p.doc.source.path}"]`).click();
   await page.locator(`.cm-content[data-source-ref="${p.doc.source.ref}"]`).waitFor({timeout:15000});
-
-  // 9 — the accepted source revision state, beside the open document.
-  const accepted=page.locator(".document-contributions");
-  await accepted.waitFor();
-  const acceptedRow=accepted.locator(".accepted-contribution").first();
-  check((await accepted.locator(".document-source-revision").getAttribute("data-revision"))!==p.doc.revision.revision,"The strip names the advanced source revision the inclusion produced");
-  const rowText=await acceptedRow.innerText();
-  check(rowText.includes("Agent — agent:reader-walk")&&rowText.includes("reviewed by human:walk")&&rowText.includes("entry entry:shared"),"The accepted contribution shows producer, human reviewer and entry anchor as distinct facts");
   await page.waitForFunction(()=>document.querySelector(".shared-field-published")?.getAttribute("data-projection-state")==="withdrawn",null,{timeout:10000});
-  // 10 — the four states are distinguishable in the one canvas.
-  await returns.locator(".receiving-row").first().click();
-  await page.locator(".return-shared-field").waitFor();
-  check(await page.locator(".cm-content[data-source-ref]").count()===1
-    &&await page.locator(".shared-field-published[data-projection-state='withdrawn']").count()===1
-    &&await page.locator(".return-shared-field").count()===1
-    &&await acceptedRow.count()===1,"All four material states are visible at once — local document, published (withdrawn) projection, admitted return, accepted revision");
-  await shot("four-states-one-canvas");
 
   // 10 — owner readback: the native facts behind the fourth state.
   const finalDoc=p.human("central.document.read",{project:"Editor",source_ref:p.doc.source.ref,document_id:p.doc.document_id});
+  const included=p.human("central.receiving.read",{project:"Editor",return_ref:submitted.return_ref});
+  check(included.record.status==="included"&&included.record.proposal.shared_field.projection_ref===envelope.projection_ref&&included.record.proposal.shared_field.withdrawn===true,"Native inclusion preserves the withdrawn projection lineage without adding document footer metadata");
   const contributions=finalDoc.document.contributions;
-  check(contributions.length===1&&contributions[0].author_ref==="agent:reader-walk"&&contributions[0].display_role==="Agent"&&contributions[0].reviewed_by==="human:walk","The document holds the admitted contribution with distinct native attribution");
+  check(contributions.length===1&&contributions[0].author_ref==="agent:reader-walk"&&contributions[0].display_role==="Agent"&&contributions[0].reviewed_by==="human:walk"&&contributions[0].entry_id==="entry:shared"&&contributions[0].html.includes(passage),"The document holds the admitted contribution with distinct native attribution");
   check(finalDoc.revision.revision!==p.doc.revision.revision,"The document source revision advanced through the inclusion");
   check(readFileSync(docPath,"utf8").includes("entry:shared"),"The proposed entry anchor exists in the real document bytes");
 }

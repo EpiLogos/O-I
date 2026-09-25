@@ -10,13 +10,15 @@
     "walk": "node walk/run.mjs",
     "lint:receipts": "node scripts/receipt-lint.mjs",
     "coverage": "cd ../.. && python3 scripts/experience_map.py --coverage-out docs/experience/coverage-reading",
-    "predev": "node documents/build-personal.mjs",
-    "prebuild": "node documents/build-personal.mjs",
+    "build:expressions": "npm --prefix expressions-app run build",
+    "predev": "npm run build:expressions && node documents/build-personal.mjs",
+    "prebuild": "npm run build:expressions && node documents/build-personal.mjs",
     "test:personal-web": "node documents/build-personal.mjs && node --test tests/personal-web.test.mjs && node tests/personal-web-browser.mjs",
     "test:configuration-live": "node --experimental-strip-types --import ./tests/ts-register.mjs --test tests/configuration-live-source.test.mjs",
     "test:configuration-composition": "node --experimental-strip-types --import ./tests/ts-register.mjs --test tests/configuration-composition.test.mjs",
     "test:canvas-editor": "node --experimental-strip-types --import ./tests/ts-register.mjs --test tests/canvas-editor-contract.test.mjs tests/material-html-lifecycle.test.mjs && node tests/canvas-editor-browser.mjs",
-    "test:chat-settings-live": "node --experimental-strip-types --import ./tests/ts-register.mjs --test tests/chat-settings.live.mjs"
+    "test:chat-settings-live": "node --experimental-strip-types --import ./tests/ts-register.mjs --test tests/chat-settings.live.mjs",
+    "test:situation": "node --experimental-strip-types --import ./tests/ts-register.mjs --test tests/situation-frame.test.mjs"
   },
   "dependencies": {
     "@codemirror/commands": "^6.11.0",

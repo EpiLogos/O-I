@@ -112,7 +112,9 @@ test("search lands on the exact row", () => {
   const index = search.searchIndex(data);
   assert.equal(search.searchSettings(index, "catalogue")[0].row, "model:catalogue");
   assert.equal(search.searchSettings(index, "walk-gamma")[0].row, "skill:machine:skill/walkskills/walk-gamma");
-  assert.equal(search.searchSettings(index, "claude")[0].row, "harness:claude");
+  assert.equal(search.searchSettings(index, "claude")[0].row, "harness-install:claude");
+  assert.deepEqual(search.searchSettings(index, "catalogue")[0].place, {kind: "section", id: "harnesses"});
+  assert.equal(index.some(entry => entry.place.id === "models"), false, "search never lands on the retired page");
   assert.deepEqual(search.searchSettings(index, "   "), []);
 });
 
@@ -122,4 +124,65 @@ test("posture and capability details shape from the owner's disclosure", () => {
   assert.deepEqual(shapePosture(null), {environmentImport: null, trust: null});
   const details = shapeCapabilityDetails([{resource: "skill/a/x", description: "Does X", annotations: {"capsule-kind": "skill"}, intent: {sources: [{source: "source/a"}]}}]);
   assert.deepEqual(details["skill/a/x"], {description: "Does X", source: "source/a", kind: "skill"});
+});
+
+test("harness search targets native connection identities and only available model controls", () => {
+  const data = {
+    suite: {state: "ok", value: {...reading, harness: {...reading.harness, providers: {state: "ok", rows: [
+      {id: "native-connection-a", label: "Epi Prime", protocol: "prime-rpc"},
+      {id: "native-connection-b", label: "Epi Prime", protocol: "prime-rpc"},
+    ]}}}}, credentials: {state: "reading"},
+    registry: {state: "ok", value: {index: {"ai-kit:models:models.default": {}}, entries: []}},
+  };
+  const index = search.searchIndex(data);
+  const first = search.searchSettings(index, "default model epi prime connection 1")[0];
+  assert.equal(first.row, "model:native-connection-a");
+  assert.deepEqual(first.place, {kind: "section", id: "harnesses"});
+  assert.doesNotMatch(first.label, /native-connection/);
+  assert.equal(search.searchSettings(index, "epi prime connection 2").some(hit => hit.row === "harness:native-connection-b"), true);
+  data.registry.value.index = {};
+  assert.equal(search.searchSettings(search.searchIndex(data), "default model").length, 0, "an unavailable owner setting must not produce a dead search target");
+});
+
+
+test("model-default review names the actual harness and model while retaining the native request", () => {
+  const setting = "ai-kit:models:models.default";
+  const before = {"transport-pi-42": {model_id: "old-native-model", model_name: "Previous model", native_provider: "native-provider"}};
+  const after = {"transport-pi-42": {model_id: "glm-5.3-flash", model_name: "GLM-5.3-Flash", native_provider: "zai"}};
+  const data = {
+    stagedDefault: null,
+    suite: {state: "ok", value: {...reading, harness: {...reading.harness, providers: {state: "ok", rows: [{id: "transport-pi-42", label: "Native proof", protocol: "pi-rpc", command: "pi"}]}}}},
+    registry: {state: "ok", value: {index: {[setting]: {owner: {owner_ref: "ai-kit"}, setting: {title: "Default model per harness", effect: {kind: "session-restart-required"}, value_schema: {type: "table"}}}}}},
+    resolutions: {k: {...resolution({value: after}, "drifted"), setting_ref: setting, native: {effective: {value: before}}}},
+  };
+  let line = change.stagedChanges(data)[0];
+  assert.equal(line.from, "Pi · Previous model");
+  assert.equal(line.to, "Pi · GLM-5.3-Flash");
+  assert.equal(line.effect, "Next session only");
+  assert.deepEqual(line.request.value, after, "the readable review must preserve exact native selection data");
+  assert.deepEqual(line.place, {kind: "section", id: "harnesses"});
+  assert.equal(line.rowId, `setting:${setting}`);
+  data.resolutions.k.native.effective.value = {};
+  assert.equal(change.stagedChanges(data)[0].from, "Harness default");
+  data.resolutions.k.desired.value = {};
+  assert.equal(change.stagedChanges(data)[0].to, "Harness default", "clearing a saved model says what new chats will use");
+});
+
+test("model-default review distinguishes matching harnesses and never substitutes transport IDs for absent names", () => {
+  const setting = "ai-kit:models:models.default";
+  const value = {"native-first": {model_id: "opaque-first", model_name: "Alpha"}, "native-second": {model_id: "opaque-second", model_name: "Beta"}, "provider/absent": {model_id: "opaque-absent", model_name: "model://internal"}};
+  const data = {
+    stagedDefault: null,
+    suite: {state: "ok", value: {...reading, harness: {...reading.harness, providers: {state: "ok", rows: [{id: "native-first", label: "Epi Prime", protocol: "prime-rpc"}, {id: "native-second", label: "Epi Prime", protocol: "prime-rpc"}]}}}},
+    registry: {state: "reading"},
+    resolutions: {k: {...resolution({value}, "drifted"), setting_ref: setting, native: {}}},
+  };
+  let line = change.stagedChanges(data)[0];
+  assert.equal(line.to, "Configured harness · Saved model; Epi Prime · connection 1 · Alpha; Epi Prime · connection 2 · Beta");
+  assert.doesNotMatch(line.to, /provider\/|model:\/\/|opaque|native-first|native-second/);
+  data.suite = {state: "reading"};
+  line = change.stagedChanges(data)[0];
+  assert.match(line.to, /Configured harness · Alpha/);
+  assert.match(line.to, /Configured harness · Beta/);
+  assert.match(line.to, /Configured harness · Saved model/);
 });

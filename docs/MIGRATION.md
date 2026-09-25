@@ -1,47 +1,28 @@
 # Placing existing work under Central
 
-Central's normative Work model is ordinary filesystem material. A directory under `Work/` does not require a Central-specific Project format, identity record, or adoption Action.
-
-For that reason, `oi migrate <path>` has one deliberately narrow meaning:
-
-> Place this existing local work tree under the configured Central `Work` field while preserving what it already is.
+Central can read ordinary directories under `Work/` without adopting them. The O:I installation and migration bootstrap additionally prepares the native Central and Factory project surfaces so the person can begin work immediately. This distinction follows the 2026-09-22 owner commission under O:I #65/#201: Factory must not require a pre-existing Run to become usable.
 
 ## Operation
 
 ```text
 oi migrate ~/code/foo
+oi factory-projects --json
 ```
 
-O:I resolves the configured personal ground, verifies it through native `ctrl doctor --json`, and previews:
+O:I verifies the configured Central ground through its native doctor, checks the source and target, then performs one same-filesystem directory rename. The move preserves `.git`, uncommitted files and nested data. An existing target or a symlink source refuses before the move; cross-filesystem copy-and-delete is not implemented.
 
-- the existing source directory;
-- the intended `<Central>/Work/<name>` target;
-- identity/history preservation;
-- the compatible native Central surface that validates the ground.
+When Factory is installed, bootstrap reconciles its native project placement for Central and the disclosed Work projects. Existing ProjectCentral identities are reused. An ordinary project without a manifest is initialized through Central's `projectcentral.init` Action; source is not adopted or rewritten to invent product purpose. Factory's `project setup` creates or reuses that project's `.factory` placement and native Project state with zero Runs. No Agent, provider, Workcell, Commission or execution is created by Factory setup.
 
-It then performs one same-filesystem directory rename. Moving the directory as a whole preserves `.git`, uncommitted files, nested data, and the work tree's existing identity. O:I does not create or rename a Factory `Project`, Run, AIKit registration, Workcell binding, or any other derived object.
+A project already at its Work destination still receives the idempotent setup pass. A setup failure after a completed move is reported with its retained outcomes; it is not described as a rolled-back move. Repeating the same operation resumes setup without recreating Project identity or history.
 
-## Safety boundary
+## Native locations and preserved history
 
-The first implementation is intentionally conservative.
+`oi factory-projects --json` is a read of Central's disclosed scopes and Factory's own location receipts. It returns each readable source plus per-project failures, including partial coverage. The desktop Desk consumes this route. Browser-local additional locations remain optional references to external Factory state, not the prerequisite for using a normal project.
 
-It:
+`oi factory-projects --reconcile --json` performs the same native bootstrap explicitly. The personal-ground initialization and Factory-registration paths invoke it as part of setup. Factory state already present at its canonical location is validated and preserved. Setup never manufactures a Run to make a project appear ready.
 
-- requires a real compatible Central surface and a doctor-valid personal ground;
-- requires the source to be a directory and refuses a symlink source;
-- returns success without mutation when the source is already at its intended Work target;
-- refuses an existing target collision before mutation;
-- on Unix, compares source and target-parent filesystem devices and refuses cross-filesystem placement;
-- uses filesystem rename only; it does not implement copy-and-delete fallback;
-- reports failure without deliberately deleting the original source;
-- leaves all derived systems untouched.
+When a linked project moves, Factory can relocate its Central link only if the native project reference and exact source digest are unchanged and the old source path is absent. The native state retains the original and relocated link as provenance. Changed source or identity requires its owning repair; existing Run/source/attempt history is not rewritten to force acceptance.
 
-A dirty Git work tree does not need special treatment because the operation does not edit Git or project files; the entire directory is moved intact.
+Other path-derived services retain their own refresh procedures. Factory setup is not authority to recreate AIKit identities, change providers or reset material data.
 
-On platforms where safe same-filesystem placement has not been proven, migration refuses rather than pretending to provide a migration framework.
-
-## After placement
-
-O:I reports that path-derived systems may need an explicit refresh. This can include AIKit registrations or indexes, Factory paths, Workcell materialisations, editor state, or other integrations that remember the old path. O:I does not perform those refreshes implicitly.
-
-This is a one-shot composition handoff, not a project manager.
+Implementation basis: `cli/src/factory_projects.rs`, `cli/src/bootstrap.rs`, native Factory `project_setup` and `FactoryDevelopmentalFileProvider::initialize_project`. Installed generation and campaign replay are recorded separately under the existing #65/#201 return.

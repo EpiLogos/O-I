@@ -37,7 +37,7 @@ export async function readAgency(transport: KernelTransportStatus, project: stri
       rows.push({ spaceRef, spaceLabel: space.label, sessionRef, purpose: attachment?.purpose, agentRef: typeof attachment?.agent_ref === "string" ? attachment.agent_ref : undefined, raw });
     }
   }
-  return { reading: { projectRef: outcome.project_ref, rows, observedAtUnixMs: outcome.observed_at_unix_ms } };
+  return { reading: { projectRef: outcome.project_ref, harnessDisclosure: outcome.harness_disclosure, rows, observedAtUnixMs: outcome.observed_at_unix_ms } };
 }
 
 // ---------------------------------------------------------------------------

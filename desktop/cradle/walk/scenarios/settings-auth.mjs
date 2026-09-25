@@ -42,23 +42,25 @@ export default async function run({page, baseUrl, check, shot, provision: world,
   };
   const runnableEntries = (authFace) => (authFace.own_login ?? []).filter((entry) => entry.runnable === true && Array.isArray(entry.argv) && entry.argv.length > 0);
 
-  // --- A1 · the Models rows render the live face -----------------------------
-  await openSection(page, "models");
+  // --- A1 · the Harnesses setup cards render the live face -----------------------------
+  await openSection(page, "harnesses");
   await settled(page);
+  const detection = page.locator('[data-settings-group="detection"] .settings-eyebrow-toggle');
+  if (await detection.getAttribute("aria-expanded") !== "true") await detection.click();
   await page.waitForFunction(() => {
-    const panel = document.querySelector("[data-models-panel]");
+    const panel = document.querySelector("[data-harness-panel]");
     return panel && panel.querySelectorAll("[data-harness-auth]").length > 0 && !panel.querySelector("[data-auth-reading]");
   }, null, {timeout: 120000});
 
-  const rows = await page.evaluate(() => [...document.querySelectorAll("[data-models-panel] [data-harness-auth]")].map((block) => block.getAttribute("data-harness-auth")));
-  check(rows.length > 0, "A1 the Models section shows at least one ready harness's auth options (live read)", {rows});
+  const rows = await page.evaluate(() => [...document.querySelectorAll("[data-harness-panel] [data-harness-auth]")].map((block) => block.getAttribute("data-harness-auth")));
+  check(rows.length > 0, "A1 the Harnesses section shows at least one ready harness's auth options (live read)", {rows});
   let sawRunnable = false;
   let sawNoteOnly = false;
   const noteOnlySlugs = [];
   const shownNotes = {};
   for (const slug of rows) {
     const authFace = await face(slug);
-    const block = page.locator(`[data-models-panel] [data-harness-auth="${slug}"]`);
+    const block = page.locator(`[data-harness-panel] [data-harness-auth="${slug}"]`);
     const runnable = runnableEntries(authFace);
     const buttons = block.locator("[data-auth-login-button]");
     if (runnable.length > 0) {
@@ -90,7 +92,7 @@ export default async function run({page, baseUrl, check, shot, provision: world,
       if (runnableEntries(await face(candidate)).length > 0) { slug = candidate; break; }
     }
     const declared = runnableEntries(await face(slug))[0].argv.join(" ");
-    await page.locator(`[data-models-panel] [data-harness-auth="${slug}"] [data-auth-login-button]`).first().click();
+    await page.locator(`[data-harness-panel] [data-harness-auth="${slug}"] [data-auth-login-button]`).first().click();
     // A login is interactive: the handover leaves the Settings page (which
     // has no terminal canvas of its own) and the workspace shows the login
     // terminal, carrying the declared command in its binding.

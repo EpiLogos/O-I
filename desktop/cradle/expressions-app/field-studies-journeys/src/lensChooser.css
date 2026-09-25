@@ -1,0 +1,11 @@
+/* Expressions supplies its existing HUD roles; the shared primitive owns
+   tab sizing, selection, hover and keyboard grammar. No desktop shell mount. */
+#lens-chooser{
+ --oi-shell-tabbar:42px;--oi-space-1:2px;--oi-space-2:6px;
+ --oi-muted-2:var(--muted);--oi-accent-ink:var(--ink);--oi-wash:var(--wash);
+}
+.lens-chooser-row{display:flex;min-width:0;align-items:center}
+#lens-chooser .lens-choice{flex-direction:column-reverse;min-width:46px}
+#lens-chooser .lens-office{font:8px/1 var(--sans);letter-spacing:.03em}
+#lens-chooser .lens-glyph{display:flex}
+#lens-chooser .lens-glyph svg{width:17px;height:17px}

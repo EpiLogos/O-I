@@ -1,3 +1,4 @@
+import type {TechneTemporalFacet,TechnePlaceFacet} from '../techne/contract';
 import {kernelOp} from '../kernel/bridge';
 import type {CentralLocation, KernelOp, KernelOutcome, KernelTransportStatus, NativeFileReading} from '../kernel/types';
 import {listFiles, readFile} from '../files/client';
@@ -11,7 +12,7 @@ export const ACTOR = 'human:cradle-wiki'; // Attribution, not an authority grant
 export interface NativeRole {role_ref: string; label: string; address: Record<string, unknown>}
 export interface NativeFrame {shape_ref: string; contract_ref: string; roles: NativeRole[]; provenance: Record<string, unknown>[]; standing: string}
 export interface AuthoringForm extends NativeFrame {id: string; label: string}
-export interface NativeMember {ref: string; position?: number | null; conjugate?: boolean; [PARTICIPATION]: {participation_ref: string; role_ref?: string | null; sources: Record<string, unknown>[]; note?: string}}
+export interface NativeMember {'aikit.techne-facet/v1'?: {contract:'aikit.techne-facet/v1';temporal?:TechneTemporalFacet[];spatial?:TechnePlaceFacet[]};ref: string; position?: number | null; conjugate?: boolean; [PARTICIPATION]: {participation_ref: string; role_ref?: string | null; sources: Record<string, unknown>[]; note?: string}}
 export interface NativeRelation {ref: string; revision: number; from_ref: string; to_ref: string; relation: string; [RELATION]: {from_participation_ref: string; to_participation_ref: string; direction: string; standing: string; evidence: Record<string, unknown>[]; uncertainty?: string | null; temporal?: unknown[]}}
 export interface NativeConstruction {
   ref: string; revision: number;
@@ -131,18 +132,24 @@ export function editConstruction(frame: NativeConstruction, changes: Record<stri
 export function memberChange(passage: WikiPassage, role_ref?: string): Record<string, unknown> {
   return {change: 'member_add', member: {subject_ref: passage.source_ref, participation: {participation_ref: newRef('participation:wiki'), role_ref: role_ref ?? null, sources: [passageProvenance(passage)], note: passage.text}}};
 }
-export function sourceBases(request: ConstructionRequest): {source_ref: string; revision: string}[] {
+export function sourceBases(request: {changes:Record<string,unknown>[]}, facetBases: {source_ref:string;revision:string}[]=[]): {source_ref: string; revision: string}[] {
   const sources = new Map<string, {source_ref: string; revision: string}>();
-  const visit = (value: unknown) => {
-    if (Array.isArray(value)) {value.forEach(visit); return;}
+  const visit = (value: unknown, nativeFacet=false) => {
+    if (Array.isArray(value)) {value.forEach(row=>visit(row)); return;}
     if (!object(value)) return;
     if ('source_ref' in value) {
-      if (!ref(value.source_ref) || !ref(value.source_revision)) throw new Error('Every cited source needs an exact revision.');
+      const matches=facetBases.filter(row=>row.source_ref===value.source_ref);
+      const sourceRevision=nativeFacet ? (matches.length&&new Set(matches.map(row=>row.revision)).size===1?matches[0].revision:undefined) : value.source_revision;
+      if(nativeFacet&&value.source_revision!==undefined)throw new Error('Native time/place facts take revision from their separately verified source.');
+      if (!ref(value.source_ref) || !ref(sourceRevision)) throw new Error(nativeFacet?'Choose and read the exact evidence file for each time/place fact before saving.':'Every cited source needs an exact revision.');
       const prior = sources.get(value.source_ref);
-      if (prior && prior.revision !== value.source_revision) throw new Error('The proposal mixes revisions of the same source. Reconcile it before saving.');
-      sources.set(value.source_ref, {source_ref: value.source_ref, revision: value.source_revision});
+      if (prior && prior.revision !== sourceRevision) throw new Error('The proposal mixes revisions of the same source. Reconcile it before saving.');
+      sources.set(value.source_ref, {source_ref: value.source_ref, revision: sourceRevision});
     }
-    Object.values(value).forEach(visit);
+    for(const [key,nested]of Object.entries(value)){
+      if((value.change==='temporal_set'&&key==='temporal')||(value.change==='place_set'&&key==='places')){if(!Array.isArray(nested))throw new Error('Native time/place facts must be a list.');nested.forEach(row=>visit(row,true));}
+      else visit(nested);
+    }
   };
   visit(request);
   return [...sources.values()];
@@ -155,7 +162,7 @@ export async function saveConstruction(transport: KernelTransportStatus, project
   // bounds concurrency; no sequential reread per passage from the same file.
   await Promise.all(passages.map(passage => revalidatePassage(transport, project, passage)));
   const result = await invoke<SavedConstruction>(transport, project, 'aikit.constellation.apply', request.frame_ref,
-    {location: register.file.location, expected_file_revision: register.file.revision, request, sources: sourceBases(request).map(basis => fileBases.find(file => file.source_ref === basis.source_ref && file.revision === basis.revision) ?? basis)}, apply);
+    {location: register.file.location, expected_file_revision: register.file.revision, request, sources: sourceBases(request,fileBases).map(basis => {const file=fileBases.find(file => file.source_ref === basis.source_ref && file.revision === basis.revision);return file?{...basis,location:file.location}:basis;})}, apply);
   if (result.persisted !== true || result.frame_ref !== request.frame_ref || !revision(result.revision) || !['saved', 'unchanged'].includes(result.state) || result.reading?.frame?.ref !== request.frame_ref) throw new Error('No matching native persistence receipt was returned. Keep this draft and inspect the register before retrying.');
   return result;
 }

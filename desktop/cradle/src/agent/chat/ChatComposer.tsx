@@ -33,6 +33,7 @@ export interface ComposerTools {
 }
 export interface ComposerConnection {
   status?: EncounterStatus;
+  project?:string;
   /** The owner's connections with their harness facts (A1): protocol, command. */
   providers: ConnectionFacts[];
   /** The connected harness's facts, when the providers listing lacks them
@@ -51,7 +52,7 @@ export interface ComposerConnection {
   onSetup?:()=>void;onRefreshProviders?:()=>void;
 }
 
-export function ChatComposer({reading,draft,pending,busy,error,editable,promptAllowed,promptReason,cancelAllowed,onDraft,onSend,onCancel,connection,tools,draftFailed,onRecover,paged,onLatest,focusToken,drafting,provisionProject,agentName="Agent",sendState,onRetry,unreachable}:{
+export function ChatComposer({reading,draft,pending,busy,error,editable,promptAllowed,promptReason,cancelAllowed,onDraft,onSend,onCancel,connection,tools,draftFailed,onRecover,paged,onLatest,focusToken,drafting,provisionProject,agentName="World",sendState,onRetry,unreachable}:{
   reading?:EncounterReading;draft:string;pending:boolean;busy:boolean;error?:string;
   editable:boolean;promptAllowed:boolean;promptReason?:string;cancelAllowed:boolean;
   onDraft:(text:string)=>void;onSend:()=>void;onCancel:()=>void;
@@ -82,7 +83,7 @@ export function ChatComposer({reading,draft,pending,busy,error,editable,promptAl
   /** The message text without its attachment blocks — what the person reads as theirs. */
   const message=useMemo(()=>{let text=draft;for(const item of [...selected].reverse())text=text.slice(0,item.start)+text.slice(item.end);return text.replace(/^\n+|\n+$/g,"");},[draft,selected]);
   const setMessage=(text:string)=>onDraft([text.replace(/\n+$/,""),...selected.map(item=>draft.slice(item.start,item.end))].filter(Boolean).join("\n\n"));
-  /** Voice dictation: the webview's own speech engine where it exists, an
+  /** Local dictation through the native speech seam, an
    * honest named gap where it does not. Dictation writes the message part of
    * the shared draft and never touches the attached context blocks. */
   const voice=useVoiceDictation(text=>setMessage(text),()=>message);
@@ -104,7 +105,7 @@ export function ChatComposer({reading,draft,pending,busy,error,editable,promptAl
   const currentFacts:ConnectionFacts|undefined=current?{...connection.providers.find(provider=>provider.id===current.id),...connection.currentFacts,...(current as Partial<ConnectionFacts>),id:current.id,label:current.label}:undefined;
   return <div className="chat-composer" data-connection={drafting?"drafting":connected?running?"running":"connected":"disconnected"}>
     {(error||status?.error)&&reading&&<p className="chat-composer-error oi-refusal" role="alert">{error||status?.error}</p>}
-    {status?.error&&status.native_session_id&&<p className="oi-note" role="status">The owner still holds this session&apos;s seat ({status.native_session_id}); recovery is the owner&apos;s service restart.</p>}
+    {status?.error&&status.native_session_id&&<p className="oi-note" role="status">The owner still holds this conversation; restart the connection service to recover it.</p>}
     {draftFailed&&<button className="oi-action" onClick={onRecover}>Apply my typing to the current shared draft</button>}
     {sendState?.phase==="checking"&&<p className="chat-send-state oi-note" role="status">Checking whether your message was sent…</p>}
     {sendState?.phase==="failed"&&<p className="chat-send-state" role="alert"><span>Message not sent.</span>{onRetry&&<button type="button" className="oi-action" onClick={onRetry}>Retry</button>}</p>}
@@ -116,15 +117,16 @@ export function ChatComposer({reading,draft,pending,busy,error,editable,promptAl
       :!connected&&!unreachable&&<div className="chat-connect" data-fact="disconnected">
       {status&&status.state!=="Disconnected"&&<span className="oi-note" role="status">{connectionLabel(status)}</span>}
       <span className="chat-connect-label"><Glyph name="link" size={11}/> Connect with</span>
-      {connection.providers.map(provider=><button key={provider.id} className="chat-provider oi-chip" data-provider={provider.id} disabled={pending||!connection.openAllowed} title={connection.openReason??provider.label} aria-label={`${harnessChip(provider)} — ${provider.label}`} onClick={()=>connection.onProvider(provider.id)}>{harnessChip(provider)}</button>)}
+      {connection.providers.map(provider=><button key={provider.id} className="chat-provider oi-chip" data-provider={provider.id} disabled={pending||!connection.openAllowed} title={connection.openReason??harnessChip(provider)} aria-label={harnessChip(provider)} onClick={()=>connection.onProvider(provider.id)}>{harnessChip(provider)}</button>)}
       {!connection.providers.length&&<span className="oi-note">No encounter harness is configured. Configure an eligible native harness in System, then refresh here; your draft stays.</span>}
       {connection.onSetup&&<button type="button" className="oi-menu-item" onClick={connection.onSetup}>Repair native harness / model / credentials</button>}{connection.onRefreshProviders&&<button type="button" className="chat-provider oi-chip" disabled={pending} onClick={connection.onRefreshProviders}>Refresh harnesses</button>}
-      {connection.resume&&<button className="chat-provider oi-chip" data-resume="true" disabled={pending} title="The owner holds a recorded native session for this conversation; reconnecting resumes that exact identity." onClick={()=>connection.onReconnect(connection.resume!.provider)}><Glyph name="refresh" size={10}/>Reconnect {connection.resume.provider}</button>}
+      {connection.resume&&<button className="chat-provider oi-chip" data-resume="true" disabled={pending} title="The owner holds a recorded native session for this conversation; reconnecting resumes that exact identity." onClick={()=>connection.onReconnect(connection.resume!.provider)}><Glyph name="refresh" size={10}/>Reconnect</button>}
     </div>}
     {selected.length>0&&<div className="chat-attachments" aria-label="Attached context">{selected.map(chip)}</div>}
     <textarea ref={input} disabled={!editable} aria-label="Message" placeholder={drafting?"Write the first message…":unreachable?"Agents are out of reach for now":!reading?"Reading…":connected?"Message the agent…":"Connect a provider, then write…"} value={message} rows={3}
       onChange={event=>setMessage(event.target.value)} onPaste={onPaste}
       onKeyDown={event=>{if(event.key==="Enter"&&!event.shiftKey&&!event.nativeEvent.isComposing){event.preventDefault();if(canSend)onSend();}}}/>
+    {voice.error&&<p role="alert" className="oi-note">{voice.error}</p>}
     <div className="chat-composer-row">
       {/* Plain tools, no menus: files from this computer, the centre subject.
           Everything else attaches by drop — a sidebar file, a tab. The
@@ -132,12 +134,12 @@ export function ChatComposer({reading,draft,pending,busy,error,editable,promptAl
       <button className="oi-tool" aria-label="Attach files from this computer" title={drafting?"Attach after the message is carried by a conversation":"Attach files from this computer"} disabled={!editable||drafting} onClick={()=>picker.current?.click()}><Glyph name="attach" size={14}/></button>
       <input ref={picker} type="file" multiple hidden aria-hidden="true" tabIndex={-1} onChange={event=>{const files=event.target.files;if(files?.length)void tools.pickFiles(files);event.target.value="";}}/>
       {tools.subject&&<button className="oi-tool" aria-label={`Attach ${tools.subject.title}`} title={`Attach ${tools.subject.title} (the open subject)`} disabled={!editable||drafting} onClick={()=>void tools.subject!.attach()}><Glyph name="file" size={14}/></button>}
-      <button type="button" className="oi-tool chat-voice" aria-pressed={voice.listening} aria-label={voice.listening?"Stop voice input":"Voice input"} title={voice.supported?(voice.listening?"Stop dictation":"Dictate into the message"):(voice.error??"Voice input is not available in this webview yet")} data-listening={voice.listening||undefined} disabled={!editable&&!voice.listening} onClick={voice.toggle}><Glyph name="mic" size={14}/></button>
+      <button type="button" className="oi-tool chat-voice" aria-pressed={voice.listening} aria-label={voice.listening?"Stop voice input":"Voice input"} title={voice.supported?(voice.listening?"Stop dictation":"Dictate into the message"):(voice.error??"Voice input is not available in this webview yet")} data-listening={voice.listening||undefined} disabled={voice.transcribing||(!editable&&!voice.listening)} onClick={voice.toggle}><Glyph name="mic" size={14}/></button>
       {connection.mode&&connection.onMode&&<ModeChip mode={connection.mode} agentName={agentName} onSelect={connection.onMode} disabled={pending} turnRunning={running}/>}
-      <span className="chat-composer-status" role="status">{voice.listening?"Listening…":pending?"Updating…":busy?"Saving…":drafting?"First send opens the conversation":paged?<button className="oi-action" onClick={onLatest}>Latest</button>:<span className="chat-drop-hint">Drop a file or a tab to attach</span>}</span>
+      <span className="chat-composer-status" role="status">{voice.notice??(pending?"Updating…":busy?"Saving…":drafting?"First send opens the conversation":paged?<button className="oi-action" onClick={onLatest}>Latest</button>:null)}</span>
       {connected&&currentFacts&&<div className="chat-composer-chips" role="group" aria-label="Harness and model">
         <HarnessChip current={currentFacts} picker={{connections:connection.providers,onChoose:connection.onProvider,disabled:pending||!connection.openAllowed,reason:connection.openReason,resume:connection.resume?{provider:connection.resume.provider,onResume:()=>connection.onReconnect(connection.resume!.provider)}:undefined}}/>
-        {connection.model&&connection.modelActions&&<ModelChip model={connection.model} actions={connection.modelActions} disabled={pending||running}/>}
+        {connection.model&&connection.modelActions&&<ModelChip project={connection.project} model={connection.model} actions={connection.modelActions} disabled={pending||running}/>}
       </div>}
       {running
         ?<button className="chat-stop" disabled={pending||stopping||!cancelAllowed} aria-label={stopping?"Stopping":"Stop"} title="Stop the provider turn" onClick={()=>{setStopAsked(true);onCancel();}}><Glyph name="stop" size={12}/><span>{stopping?"Stopping…":"Stop"}</span></button>

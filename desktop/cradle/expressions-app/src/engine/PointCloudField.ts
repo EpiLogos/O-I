@@ -1,3 +1,4 @@
+import type {ConnectionBinding} from "../../../../../packages/oi-design-system/expressions-engine/oi/connectionRuntime.mjs";
 import {TransportState,validateTransport} from './transportState';
 /**
  * @license
@@ -679,6 +680,8 @@ export class PointCloudField {
         uEditHasSelection: {value:0},
         uEditSelected: {value:new Float32Array(10)},
         uEntityCount: { value: 0 },
+        uConnectionStart: { value: 1e30 },
+        uConnectionMetadata: { value: this.entities.noiseTexture },
         uEntityBounds: { value: new Float32Array(10) },
         uEntityTint: { value: Array.from({ length: 10 }, () => new THREE.Color('#ffffff')) },
         uEntityTintWeight: { value: new Float32Array(10) },
@@ -1522,6 +1525,7 @@ export class PointCloudField {
   public inspectState(readParticles = false) {
     const result = { simTime: this.simTime, steps: this.simulator.stepCount, seeds: this.seedGeneration,
       bakes: this.entities.bakeGeneration, particleCount: this.simulator.particleCount,
+      connections: {...this.entities.connections.inspect(),nodeFormations:this.entities.getPartitions().length,maxNodeFormations:10},
       drive: this.lastDrive, composition: this.getCompositionTelemetry(),
       positions: [] as number[], velocities: [] as number[] };
     if (readParticles) {
@@ -1536,11 +1540,16 @@ export class PointCloudField {
   }
 
   /** Editing decoration only. Neither GPU state nor the stored configuration is touched. */
+  public setNativeConnections(bindings: readonly ConnectionBinding[], selected: readonly string[] = []) {
+    this.entities.connections.configure(bindings, selected, this.simulator.particleCount);
+    this.entities.layout(this.config.entities || []);
+  }
+  public nativeConnectionRuntime() {return this.entities.connections;}
   public setSelection(ids: readonly string[]) {
     const u=this.particleMaterial.uniforms,parts=this.entities.getPartitions();
     const mask=u.uEditSelected.value as Float32Array;mask.fill(0);
     let any=false;parts.forEach((p,i)=>{if(i<10&&ids.includes(p.entityId)){mask[i]=1;any=true;}});
-    u.uEditHasSelection.value=any?1:0;
+    u.uEditHasSelection.value=any||this.entities.connections.selected.size?1:0;
   }
   /** Copy a clean live framebuffer without readback, stepping, or changing the authoring frame. */
   public withCleanFrame<T>(copy:()=>T):T {
@@ -1765,6 +1774,8 @@ export class PointCloudField {
     if (this.particleMaterial) {
       const u = this.particleMaterial.uniforms;
       const eu = this.entities.uniforms;
+      u.uConnectionStart.value = this.entities.connections.start;
+      u.uConnectionMetadata.value = this.entities.noiseTexture;
       u.uEntityCount.value = eu.count;
       (u.uEntityBounds.value as Float32Array).set(eu.bounds);
       (u.uEntityTintWeight.value as Float32Array).set(eu.tintWeights);

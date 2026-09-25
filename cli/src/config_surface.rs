@@ -446,6 +446,11 @@ pub trait ConfigSurface {
     /// scope, with whatever desired state this surface holds.
     fn resolve(&self, setting_ref: &str, scope: &Scope) -> SurfaceResult<Resolution>;
 
+    /// Resolve an ordered batch; each refused address keeps its own error.
+    fn resolve_many(&self, pairs: &[(String, Scope)]) -> Vec<SurfaceResult<Resolution>> {
+        pairs.iter().map(|(setting, scope)| self.resolve(setting, scope)).collect()
+    }
+
     /// Resolve one explicit desired entry (e.g. a profile entry) against
     /// native truth — the input to `oi profile diff`.
     fn resolve_entry(&self, entry: &DesiredEntry) -> SurfaceResult<Resolution>;

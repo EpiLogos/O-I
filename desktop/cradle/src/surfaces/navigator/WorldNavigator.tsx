@@ -1,5 +1,4 @@
 import type {EncounterRow} from "../../encounter/EncounterList";
-import {CentralGround} from "../../central/CentralGround";
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { useKernel } from "../../kernel/KernelProvider";
 import type { CentralLocation } from "../../kernel/types";
@@ -110,7 +109,7 @@ export function WorldNavigator({ onExplore, onOpenEncounter, centralFiles, onCen
     : { kind: "loading", what: "Reading Central…" };
   const refresh = () => { setFileRefresh(n=>n+1); void load(true); };
   const centralChats = useConversations(centralOpen && centralMode === "chats" && root ? "" : undefined, fileRefresh);
-  return <aside className="world-navigator left-world-body" aria-label="World navigator" aria-busy={pending} data-lens={lens.on || undefined}>
+  return <aside className="world-navigator left-world-body oi-scroll" aria-label="World navigator" aria-busy={pending} data-lens={lens.on || undefined}>
     <div className="world-scroll">
     <FileRowDecor.Provider value={decor}>
     <nav className="left-destinations" aria-label="Destinations">
@@ -127,10 +126,6 @@ export function WorldNavigator({ onExplore, onOpenEncounter, centralFiles, onCen
       {host.onLibrary && <DestinationRow glyph="wiki" label="Library" ariaLabel="Library" onClick={host.onLibrary}/>}
       {onExplore && <DestinationRow glyph="explore" label="Explore" ariaLabel="Open Explore" className="explore-open" onClick={onExplore}/>}
     </nav>
-    {root && <details className="left-central-ground" open>
-      <summary>Daily ground</summary>
-      <CentralGround project={null} onOpenFile={onOpenFile}/>
-    </details>}
     {worldState && <Section id="control" label="Control" state={worldState}/>}
     {root && lens.on && <Section id="epi-corpus" label="Epi-Logos corpus" state={{ kind: "ready", rows: 1 }}>
       <div className="left-corpus" data-corpus-root={`Work/${lens.corpusProject}`}>

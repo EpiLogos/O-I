@@ -1,3 +1,4 @@
+import {ConnectionRuntime} from "../../../../../packages/oi-design-system/expressions-engine/oi/connectionRuntime.mjs";
 /**
  * @license
  * SPDX-License-Identifier: Apache-2.0
@@ -64,6 +65,7 @@ export interface EntityFrame {
 
 export interface EntityUniformSet {
   count: number;
+  connectionStart: number;
   bounds: Float32Array; // 10 — exclusive end particle index
   centers: THREE.Vector4[]; // 10 — xyz centre, w force radius
   morph: Float32Array; // 10
@@ -75,6 +77,7 @@ export interface EntityUniformSet {
 }
 
 export class EntityRuntime {
+  public readonly connections = new ConnectionRuntime();
   private sampler: GlyphSampler;
   public bakeGeneration = 0;
   private currentPlane: Composition['plane'] = 'vertical';
@@ -110,6 +113,7 @@ export class EntityRuntime {
 
   public readonly uniforms: EntityUniformSet = {
     count: 0,
+    connectionStart: 0,
     bounds: new Float32Array(10),
     centers: Array.from({ length: 10 }, () => new THREE.Vector4(0, 0, 0, 200)),
     morph: new Float32Array(10),
@@ -130,6 +134,7 @@ export class EntityRuntime {
     this.texW = texW;
     this.texH = texH;
     this.particleCount = particleCount;
+    this.connections.resize(particleCount);
     this.dataA = new Float32Array(texW * texH * 4);
     this.dataB = new Float32Array(texW * texH * 4);
     this.noiseData = new Float32Array(texW * texH * 4);
@@ -277,7 +282,7 @@ export class EntityRuntime {
   // ------------------------------------------------------------------ layout & baking
   /** Recompute partitions. Returns true when the layout changed (all partitions need baking). */
   public layout(entities: Entity[]): boolean {
-    this.partitions = layoutPartitions(entities, this.particleCount);
+    this.partitions = layoutPartitions(entities, this.connections.start);
     const sig = this.partitions.map((p) => `${p.entityId}:${p.start}-${p.end}`).join(',');
     if (sig === this.layoutSig) return false;
     this.layoutSig = sig;
@@ -532,6 +537,11 @@ export class EntityRuntime {
       u.morph[i] = 0;
       this.collisionTiles[i * 4 + 3] = 0;
     }
+    this.connections.update(poses, this.dataA, this.dataB, this.noiseData);
+    if (this.connections.enabled) {
+      this.textureA!.needsUpdate = true; this.textureB!.needsUpdate = true; this.noiseTexture!.needsUpdate = true;
+    }
+    this.uniforms.connectionStart = this.connections.start;
     return { frames, poses, impulses, rebaked };
   }
 

@@ -125,7 +125,7 @@ export async function sourceVisual(
 		analysis = sampled.analysis;
 	} else {
 		const decoded = await decodePayload(payload);
-		const imageData = new ImageData(decoded.data, decoded.width, decoded.height);
+		const imageData = new ImageData(new Uint8ClampedArray(decoded.data), decoded.width, decoded.height);
 		const sampled = sampler.rasterizeCustomImage(imageData, {
 			mode: opts.mode as 'luminance' | 'edgeSobel' | 'silhouette' | undefined,
 			threshold: opts.threshold,

@@ -555,7 +555,7 @@ function validateQlReading(value: unknown, errors: string[]): void {
   else validateQlWarrant(value.warrant, "ql.warrant", errors);
 }
 
-function validateTemporalFacet(value: unknown, label: string, errors: string[]): void {
+export function validateTemporalFacet(value: unknown, label: string, errors: string[]): void {
   if (!isObject(value)) { errors.push(`${label}: must be an object`); return; }
   keysAllowed(value, ["facet_ref", "kind", "instant", "interval", "precision", "day_ref", "now_ref", "session_ref", "run_ref", "attempt_ref", "return_ref", "timezone_policy_ref", "uncertainty", "source_ref"], label, errors);
   if (!TEMPORAL_KINDS.includes(value.kind as string)) errors.push(`${label}.kind: not a temporal kind`);
@@ -581,7 +581,7 @@ function validateTemporalFacet(value: unknown, label: string, errors: string[]):
   }
 }
 
-function validatePlaceFacet(value: unknown, label: string, errors: string[]): void {
+export function validatePlaceFacet(value: unknown, label: string, errors: string[]): void {
   if (!isObject(value)) { errors.push(`${label}: must be an object`); return; }
   keysAllowed(value, ["place_ref", "relation", "identity", "geometry", "precision", "uncertainty", "hierarchy", "valid_from", "valid_to", "observer_frame", "source_ref"], label, errors);
   if (!ref(value.place_ref)) errors.push(`${label}.place_ref: required`);

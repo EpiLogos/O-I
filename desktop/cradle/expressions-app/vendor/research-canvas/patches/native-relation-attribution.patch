@@ -1,0 +1,24 @@
+--- a/packages/desktop-api/src/techneBundle.ts
++++ b/packages/desktop-api/src/techneBundle.ts
+@@ -117,6 +117,7 @@
+ }
+ 
+ export interface TechneRelationLite {
++  relation_ref?:string|null; standing?:string|null; evidence_refs?:string[]; source_ref?:string|null; temporal_facet_ref?:string|null; derivation_ref?:string|null; confidence?:string|null;
+   relation: string;
+   from_ref: string;
+   to_ref: string;
+@@ -472,6 +473,13 @@
+         pushRelationship(relation.relation, relation.from_ref, relation.to_ref, {
+           relation_origin: relation.origin ?? null,
+           relation_origin_ref: relation.origin_ref ?? null,
++          ...(relation.relation_ref!=null?{native_relation_ref:relation.relation_ref}:{}),
++          ...(relation.standing!=null?{standing:relation.standing}:{}),
++          ...(relation.evidence_refs!==undefined?{evidence_refs:relation.evidence_refs}:{}),
++          ...(relation.source_ref!=null?{source_ref:relation.source_ref}:{}),
++          ...(relation.temporal_facet_ref!=null?{temporal_facet_ref:relation.temporal_facet_ref}:{}),
++          ...(relation.derivation_ref!=null?{derivation_ref:relation.derivation_ref}:{}),
++          ...(relation.confidence!=null?{confidence:relation.confidence}:{}),
+         });
+       }
+     }

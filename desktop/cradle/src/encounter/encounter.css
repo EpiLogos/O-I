@@ -29,10 +29,6 @@
 .encounter-heading small{font-size:var(--oi-shell-type-meta);color:var(--oi-muted-2)}
 .encounter-mark{font-size:calc(var(--oi-shell-type-title) * 1.28)}
 .encounter-state{margin-left:auto;font-size:var(--oi-shell-type-meta);color:var(--oi-muted-2)}
-.encounter-planes{flex:none;display:flex;height:31px;gap:20px;padding:0 25px;border-bottom:var(--oi-shell-edge) solid var(--oi-hairline)}
-.encounter-planes button{border:0;border-radius:0;background:none;padding:0;font:inherit;font-size:var(--oi-shell-type-ui);color:var(--oi-muted-2);border-bottom:2px solid transparent;cursor:pointer;transition:color var(--oi-motion-ui) var(--oi-motion-ease-out)}
-.encounter-planes button:hover,.encounter-planes button:focus-visible{color:var(--oi-accent-ink);outline:none}
-.encounter-planes button[aria-pressed=true]{border-bottom-color:var(--oi-accent);color:var(--oi-accent-ink)}
 .encounter-composer{box-sizing:border-box;width:min(710px,calc(100% - 52px));margin:0 auto 21px;padding:11px 13px}
 .encounter-context{font-size:var(--oi-shell-type-body);overflow-wrap:anywhere}
 .encounter-context dt{font-size:var(--oi-shell-type-ui);color:var(--oi-muted-2);margin-top:16px}
@@ -87,7 +83,7 @@
 .encounter[data-presentation="side"] .encounter-composer-actions,.encounter[data-presentation="full"] .encounter-composer-actions{font-size:var(--oi-shell-type-meta)}
 .encounter[data-presentation="side"] .encounter-composer,.encounter[data-presentation="full"] .encounter-composer{margin:10px 13px 13px;padding:10px;border-radius:9px;border-color:var(--oi-composer-rule);background:var(--oi-composer-ground);box-shadow:var(--oi-shadow-plane);width:auto}
 .encounter[data-presentation="full"] .encounter-transcript,.encounter[data-presentation="full"] .encounter-composer{width:min(720px,90%);margin-left:auto;margin-right:auto}
-@container (max-width:600px){.encounter-heading{height:45px;padding:0 16px}.encounter-heading h2{font-size:var(--oi-shell-type-ui)}.encounter-heading small{font-size:var(--oi-shell-type-eyebrow)}.encounter-planes{height:27px;padding:0 16px;gap:18px}.encounter-composer{width:calc(100% - 26px);margin-bottom:12px;padding:8px 10px}.encounter-composer textarea{min-height:38px;height:38px}.encounter-transcript{padding:16px}.encounter-turn p{font-size:var(--oi-shell-type-body)}}
+@container (max-width:600px){.encounter-heading{height:45px;padding:0 16px}.encounter-heading h2{font-size:var(--oi-shell-type-ui)}.encounter-heading small{font-size:var(--oi-shell-type-eyebrow)}.encounter-composer{width:calc(100% - 26px);margin-bottom:12px;padding:8px 10px}.encounter-composer textarea{min-height:38px;height:38px}.encounter-transcript{padding:16px}.encounter-turn p{font-size:var(--oi-shell-type-body)}}
 /* Addressed dispatch (6B): an explicit machine-turn composer, visually a
  * distinct card above the human composer — never a second chat box. */
 .encounter-addressed{border:var(--oi-shell-edge) solid var(--oi-hairline);border-radius:9px;padding:11px 13px;margin:13px 0 0;background:var(--oi-canvas-ground)}

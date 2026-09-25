@@ -34,7 +34,7 @@ export function AdoptionFlow({controller, chooseGround, onClose, onConfigure, on
     return () => document.removeEventListener("keydown", onKey);
   });
   const locked = !!state.busy || state.unresolved;
-  return <section className="config-drawer" role="dialog" aria-label="Install and set up this World" aria-busy={!!state.busy} data-adoption-flow>
+  return <section className="config-drawer oi-scroll" role="dialog" aria-label="Install and set up this World" aria-busy={!!state.busy} data-adoption-flow>
     <header><h3 ref={heading} tabIndex={-1}>Install and set up this World</h3><button type="button" disabled={!controller.canClose()} onClick={close}>Close</button></header>
     <p>Keep existing tools and Central. Choose what to add, review its effects, verify installation, then configure capabilities. Maintenance uses the same native owners; it does not restart your work.</p>
     {state.busy && <p role="status">{state.busy === "applying" ? "Applying the reviewed native plan. Closing or losing a reply does not roll it back." : state.busy === "preparing" ? "Preparing and checking the native Desktop offer; not installing it." : "Reading native state…"}</p>}

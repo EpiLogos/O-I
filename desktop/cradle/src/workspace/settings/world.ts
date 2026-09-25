@@ -9,7 +9,7 @@
  * and it is marked as cradle-composed provenance like the rest.
  */
 import type {ActivityExtras, CompositionReading, ProductSectionModel, SettingRow} from "./types";
-import {availabilityWord} from "./v2/vocabulary";
+import {availabilityWord} from "./vocabulary";
 
 
 interface WorldPosition {

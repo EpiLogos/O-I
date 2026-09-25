@@ -1,99 +1,31 @@
-import {useCallback, useEffect, useRef, useState} from "react";
-
-/**
- * Voice dictation for the chat composers (handoff §9: text, voice and
- * attachment facilities in the established grammar). One control, shared by
- * every agent panel through its composer.
- *
- * The engine is the webview's own Web Speech API — a client capability, not a
- * desktop-owned service. Where the webview does not expose it (Tauri's
- * WKWebView today), the control renders in an honest unavailable state: named,
- * never silently missing, and never a fabricated transcript. Interim
- * hypotheses stream into the draft live; only final results are committed.
- */
-
-type SpeechRecognitionLike = {
-  lang: string;
-  continuous: boolean;
-  interimResults: boolean;
-  start(): void;
-  stop(): void;
-  onresult: ((event: {resultIndex: number; results: ArrayLike<ArrayLike<{transcript: string}> & {isFinal: boolean}>}) => void) | null;
-  onerror: ((event: {error: string}) => void) | null;
-  onend: (() => void) | null;
-};
-
-function recognitionCtor(): (new () => SpeechRecognitionLike) | undefined {
-  if (typeof window === "undefined") return undefined;
-  const w = window as unknown as {SpeechRecognition?: new () => SpeechRecognitionLike; webkitSpeechRecognition?: new () => SpeechRecognitionLike};
-  return w.SpeechRecognition ?? w.webkitSpeechRecognition;
+import {useCallback,useEffect,useRef,useState} from "react";
+import {DictationSession,type DictationRefusal} from "../../dictation/client";
+import {dictationCopy} from "../../dictation/copy";
+/** Local microphone capture and native loopback STT, shared with Encounter.
+ * Transcription edits the current draft; this hook has no send operation. */
+export function voiceDictationAvailable():boolean{return typeof navigator!=="undefined"&&!!navigator.mediaDevices?.getUserMedia&&typeof AudioContext!=="undefined";}
+function refusalWords(reason:unknown):string{
+ const refusal=reason as DictationRefusal;
+ switch(refusal?.kind){case "service-down":return dictationCopy("serviceDown",{url:refusal.endpoint});case "mic-denied":return dictationCopy("micDenied");case "mic-unavailable":return dictationCopy("micUnavailable");case "empty":return dictationCopy("empty");case "failed":return dictationCopy("failed",{detail:refusal.detail});default:return dictationCopy("failed",{detail:String(reason)});}
 }
-
-/** Whether this webview can dictate at all. Cheap, stable, safe to call
- * during render for control availability. */
-export function voiceDictationAvailable(): boolean {
-  return !!recognitionCtor();
-}
-
-/** One dictation session bound to a draft setter. `compose` receives the
- * whole new draft text: final results are appended after the existing
- * message, interim hypotheses trail live and are replaced as the recognizer
- * revises them. Stop is explicit — the control is a mode, not a leak. */
-export function useVoiceDictation(onDraft: (text: string) => void, currentText: () => string): {
-  supported: boolean;
-  listening: boolean;
-  error?: string;
-  toggle: () => void;
-  stop: () => void;
-} {
-  const [listening, setListening] = useState(false);
-  const [error, setError] = useState<string>();
-  const recognition = useRef<SpeechRecognitionLike>();
-  const finalBase = useRef("");
-  const getText = useRef(currentText);
-  getText.current = currentText;
-  const setDraft = useRef(onDraft);
-  setDraft.current = onDraft;
-
-  const stop = useCallback(() => {
-    recognition.current?.stop();
-  }, []);
-
-  const toggle = useCallback(() => {
-    if (listening) { stop(); return; }
-    const Ctor = recognitionCtor();
-    if (!Ctor) { setError("This webview exposes no speech engine yet — voice input stays an honest gap until one is wired."); return; }
-    setError(undefined);
-    finalBase.current = getText.current();
-    const engine = new Ctor();
-    engine.lang = typeof navigator !== "undefined" && navigator.language ? navigator.language : "en-GB";
-    engine.continuous = true;
-    engine.interimResults = true;
-    engine.onresult = event => {
-      let interim = "";
-      for (let index = event.resultIndex; index < event.results.length; index += 1) {
-        const result = event.results[index];
-        const transcript = result[0]?.transcript ?? "";
-        if (result.isFinal) {
-          finalBase.current = `${finalBase.current}${finalBase.current && !/\s$/.test(finalBase.current) ? " " : ""}${transcript.trim()}`;
-          interim = "";
-        } else interim += transcript;
-      }
-      const spoken = interim ? `${finalBase.current}${finalBase.current && !/\s$/.test(finalBase.current) ? " " : ""}${interim}` : finalBase.current;
-      setDraft.current(spoken);
-    };
-    engine.onerror = event => {
-      if (event.error === "aborted") return;
-      setError(event.error === "not-allowed" ? "Microphone access was refused by the system." : `Voice input failed: ${event.error}`);
-      setListening(false);
-    };
-    engine.onend = () => setListening(false);
-    recognition.current = engine;
-    engine.start();
-    setListening(true);
-  }, [listening, stop]);
-
-  useEffect(() => () => {recognition.current?.stop();}, []);
-
-  return {supported: voiceDictationAvailable(), listening, error, toggle, stop};
+export function useVoiceDictation(onDraft:(text:string)=>void,currentText:()=>string){
+ const [listening,setListening]=useState(false),[transcribing,setTranscribing]=useState(false),[error,setError]=useState<string>(),[notice,setNotice]=useState<string>();
+ const session=useRef<DictationSession|null>(null),starting=useRef<Promise<string>|null>(null),alive=useRef(true),stopping=useRef(false);
+ const text=useRef(currentText);text.current=currentText;const draft=useRef(onDraft);draft.current=onDraft;
+ const stop=useCallback(()=>{if(stopping.current)return;stopping.current=true;void(async()=>{
+  try{await starting.current;const active=session.current;if(!active||!alive.current)return;setListening(false);setTranscribing(true);setNotice(dictationCopy("transcribing"));
+   const outcome=await active.end();if(!alive.current)return;
+   if(outcome.kind==="transcript"){const before=text.current();draft.current(`${before}${before&&!/\s$/.test(before)?" ":""}${outcome.text}`);setNotice(dictationCopy("landed"));}else{setError(refusalWords(outcome));setNotice(undefined);}
+  }catch(reason){if(alive.current){setError(refusalWords(reason));setNotice(undefined);}}
+  finally{session.current=null;starting.current=null;stopping.current=false;if(alive.current){setListening(false);setTranscribing(false);}}
+ })();},[]);
+ const toggle=useCallback(()=>{
+  if(transcribing||stopping.current)return;if(session.current){stop();return;}
+  if(!voiceDictationAvailable()){setError(dictationCopy("micUnavailable"));return;}
+  setError(undefined);setNotice("Checking local speech…");setListening(true);
+  const active=new DictationSession();session.current=active;const pending=active.begin();starting.current=pending;
+  void pending.then(()=>{if(alive.current&&!stopping.current)setNotice(dictationCopy("recording"));}).catch(reason=>{if(alive.current){setError(refusalWords(reason));setListening(false);setNotice(undefined);}if(session.current===active)session.current=null;});
+ },[transcribing,stop]);
+ useEffect(()=>{alive.current=true;return()=>{alive.current=false;session.current?.cancel();};},[]);
+ return {supported:voiceDictationAvailable(),listening,transcribing,error,notice,toggle,stop};
 }
