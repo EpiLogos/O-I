@@ -19,9 +19,14 @@ import {join} from "node:path";
 import {bindDefaultCentral} from "../editor-doc.mjs";
 import {enterFactory, factoryGround, near, recordOps, shotMatrix} from "../lib/factory-ground.mjs";
 import {makeSessions, SESSIONS, SPACE} from "../lib/factory-session.mjs";
+import {realProviderAuthorised, REAL_PROVIDER_SKIP_NOTE} from "../lib/walk-provider.mjs";
 
 export async function setup(args) {
   const ground = await factoryGround(args);
+  if (!realProviderAuthorised()) {
+    return {...ground, realProviderSkipped: true,
+      cleanup: () => ground.cleanup()};
+  }
   let sessions;
   try {
     const projectRoot = join(ground.root, "Work", "Specimen");
@@ -55,6 +60,11 @@ function ownerUsage(events) {
 const tokens = value => value >= 1_000_000 ? `${(value / 1_000_000).toFixed(value >= 10_000_000 ? 0 : 1)}M` : value >= 1000 ? `${Math.round(value / 1000)}K` : String(value);
 
 export default async function run({page, baseUrl, check, shot, channel, log, provision: p}) {
+  if (p.realProviderSkipped) {
+    await page.goto(baseUrl); await channel("info");
+    check(true, REAL_PROVIDER_SKIP_NOTE);
+    return;
+  }
   page.on("pageerror", error => log(`PAGE ERROR: ${error}`));
   recordOps(page);
   const A = p.specimen.runs.A;
