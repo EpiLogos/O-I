@@ -26,7 +26,7 @@ import {createHash} from "node:crypto";
 import {chmodSync, copyFileSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync} from "node:fs";
 import {tmpdir} from "node:os";
 import {join} from "node:path";
-
+import {walkPiArgv} from "../lib/walk-provider.mjs";
 export const SESSIONS = {
   idle: {ref: "agent-session/left-idle", purpose: "Plan the left sidebar's scope menu and its census of projects"},
   failing: {ref: "agent-session/left-failing", purpose: "A conversation whose provider refuses every send"},
@@ -148,8 +148,7 @@ export async function setup({cradleRoot}) {
     attach(beta, "session-space/beta-walk", "Beta walk", [BETA_SESSION]);
     // Providers: an immediately failing process, and the existing pi harness.
     alpha.native("encounter-configure", "--provider-json", JSON.stringify({id: "left-walk-false", label: "Walk failing provider", argv: ["/usr/bin/false"]}));
-    const pi = process.env.OI_WALK_PI_BIN ?? join(process.env.HOME, ".local/bin/pi");
-    alpha.native("encounter-configure", "--provider-json", JSON.stringify({protocol: "pi-rpc", id: "left-walk-pi", label: "Pi", argv: [pi, "--mode", "rpc"]}));
+    alpha.native("encounter-configure", "--provider-json", JSON.stringify({protocol: "pi-rpc", id: "left-walk-pi", label: "Pi", argv: walkPiArgv()}));
     const opencode = process.env.OI_WALK_OPENCODE_BIN;
     let consentProvider;
     if (opencode) {

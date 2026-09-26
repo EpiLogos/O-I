@@ -1,6 +1,7 @@
 import {setup as canvasSetup} from "./canvas-context.mjs";
 import {bindDefaultCentral} from "../editor-doc.mjs";
 import {openPanel, recordCalls, restoreScope} from "../lane2-support.mjs";
+import {realProviderAuthorised, REAL_PROVIDER_SKIP_NOTE} from "../lib/walk-provider.mjs";
 
 /** BASELINE (lane 2, step 0) — the right panel's Context canvas as it works
  *  today, walked against the real kernel before anything in the panel is
@@ -85,6 +86,10 @@ export default async function run({page, baseUrl, check, shot, channel, provisio
 
   // 4 — send through the real route: Chat → choose the attached
   // conversation → connect the existing pi provider → send.
+  if (!realProviderAuthorised()) {
+    check(true, REAL_PROVIDER_SKIP_NOTE);
+    return;
+  }
   await plane("Chat");
   const chat = panel.getByRole("region", {name: "Agent chat"});
   await chat.getByRole("button", {name: "History"}).click({timeout: 15000});

@@ -15,9 +15,14 @@ import {join} from "node:path";
 import {bindDefaultCentral} from "../editor-doc.mjs";
 import {enterFactory, factoryGround, recordOps, shotMatrix} from "../lib/factory-ground.mjs";
 import {makeSessions, SESSIONS} from "../lib/factory-session.mjs";
+import {realProviderAuthorised, REAL_PROVIDER_SKIP_NOTE} from "../lib/walk-provider.mjs";
 
 export async function setup(args) {
   const ground = await factoryGround(args);
+  if (!realProviderAuthorised()) {
+    return {...ground, realProviderSkipped: true,
+      cleanup: () => ground.cleanup()};
+  }
   let sessions;
   try {
     const projectRoot = join(ground.root, "Work", "Specimen");
@@ -32,6 +37,11 @@ export async function setup(args) {
 const firstSentence = text => text.trim().replace(/\s+/g, " ").replace(/[.]$/, "");
 
 export default async function run({page, baseUrl, check, shot, channel, log, provision: p}) {
+  if (p.realProviderSkipped) {
+    await page.goto(baseUrl); await channel("info");
+    check(true, REAL_PROVIDER_SKIP_NOTE);
+    return;
+  }
   page.on("pageerror", error => log(`PAGE ERROR: ${error}`));
   const ops = recordOps(page);
   const A = p.specimen.runs.A;

@@ -48,3 +48,6 @@ article > h1 {
 .graph-outer circle.node {
   fill: var(--tertiary);
 }
+
+// Tags are vault bookkeeping, not reading furniture: never rendered.
+ul.tags { display: none !important; }
