@@ -11,6 +11,12 @@ pub enum Request {
     Roster,
     Scope,
     Skills,
+    /// `aikit set list` — the SkillSet repertoire a creator selects first.
+    /// Read-only: a set is a request over installed capabilities.
+    SkillSets,
+    /// `aikit set show <name>` — the owner's reply: members, nested sets and
+    /// the members that would not project here, with the resolver's reason.
+    SkillSet { name: String },
     Session { agent_session: String },
     Propose {
         name: String,
@@ -18,6 +24,8 @@ pub enum Request {
         expected_scope_ref: String,
         #[serde(default)]
         skill_refs: Vec<String>,
+        #[serde(default)]
+        skill_set_refs: Vec<String>,
     },
     Review {
         profile_ref: String,
@@ -73,6 +81,11 @@ pub fn execute(
         Request::Roster => owner(client, "agent-profile.roster", input),
         Request::Scope => aikit.direct_agent(cwd, "agent-session-scope", None),
         Request::Skills => aikit.direct_agent(cwd, "agent-session-skills", None),
+        Request::SkillSets => aikit.set_list(cwd),
+        Request::SkillSet { name } => {
+            exact(name, 256, "SkillSet name")?;
+            aikit.set_show(cwd, name)
+        }
         Request::Session {agent_session} => {
             exact(agent_session, 1024, "AgentSession reference")?;
             let session = aikit.direct_agent(cwd, "agent-session-read", Some(("--agent-session", agent_session)))?;
@@ -119,6 +132,7 @@ pub fn execute(
             purpose,
             expected_scope_ref,
             skill_refs,
+            skill_set_refs,
         } => {
             exact(name, 256, "Agent name")?;
             exact(purpose, 16_384, "Human purpose")?;
@@ -135,11 +149,23 @@ pub fn execute(
                     "At most 64 explicitly selected native Skill references are allowed".into(),
                 );
             }
+            if skill_set_refs.len() > 64 {
+                return Err(
+                    "At most 64 explicitly selected native SkillSet references are allowed".into(),
+                );
+            }
             let mut unique = std::collections::BTreeSet::new();
             for reference in skill_refs {
                 exact(reference, 1024, "Skill reference")?;
                 if !unique.insert(reference) {
                     return Err("Repeated Skill reference".into());
+                }
+            }
+            let mut unique_sets = std::collections::BTreeSet::new();
+            for reference in skill_set_refs {
+                exact(reference, 1024, "SkillSet reference")?;
+                if !unique_sets.insert(reference) {
+                    return Err("Repeated SkillSet reference".into());
                 }
             }
             let roster = owner(client, "agent-profile.roster", scoped(project))?;
@@ -157,6 +183,7 @@ pub fn execute(
             input["intent_expression"] = json!(purpose);
             input["purpose"] = json!(purpose);
             input["skill_refs"] = json!(skill_refs);
+            input["skill_set_refs"] = json!(skill_set_refs);
             let proposal = owner(client, "agent-profile.express", input)?;
             let reference = proposal["profile"]["ref"].as_str().ok_or("Native proposal returned no profile reference; read the roster before proposing again")?;
             let mut read = scoped(project);
