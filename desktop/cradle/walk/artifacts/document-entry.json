@@ -20,7 +20,7 @@
     ],
     "claims_grade": "D"
   },
-  "generated_at": "2026-09-25T11:05:31.181Z",
+  "generated_at": "2026-09-26T10:35:33.925Z",
   "environment": {
     "base_url": "http://localhost:4173",
     "bridge_url": "http://127.0.0.1:4179",
@@ -28,32 +28,32 @@
     "browser_engine": "chromium",
     "bundle": "walk (WALK=1) served by vite preview",
     "build_input": {
-      "mode": "reused-dist",
-      "bundle_fingerprint": "567be751420cff72a5a17554b0df67370c64bf82638d66a93644674b23c2d9f4"
+      "mode": "fresh-build",
+      "bundle_fingerprint": "81a5708bc3ee94b20fe19e5af66f69239ee060a8147c7858a663443337e8ea84"
     },
     "node": "v24.16.0",
     "platform": "darwin",
     "source": {
-      "repository_root": "/Users/admin/Central/worktrees/env-2/o-i",
-      "repository_head": "b43ca13a8e6d0a3af6568f6cb41b3f3070b8c6c0",
+      "repository_root": "/Users/admin/Central/worktrees/flow-real-format/o-i",
+      "repository_head": "59efb78e89a4e3b2743ff8352a1ad02e3e8242ab",
       "tracked_changes": [
-        "desktop/cradle/walk/artifacts/document-entry-dialogue-01-journal.png",
-        "desktop/cradle/walk/artifacts/document-entry-dialogue-01-native-save.png",
-        "desktop/cradle/walk/artifacts/document-entry-die-42-rendered.png",
-        "desktop/cradle/walk/artifacts/document-entry-epi-card-pair-drawer.png",
-        "desktop/cradle/walk/artifacts/document-entry-epi-card-return.png",
-        "desktop/cradle/walk/artifacts/document-entry.json",
-        "desktop/cradle/walk/scenarios/document-entry.mjs"
+        "desktop/cradle/documents/README.md",
+        "desktop/cradle/documents/forms.json",
+        "desktop/cradle/src/CradleFrame.tsx",
+        "desktop/cradle/src/flow/instance.ts",
+        "desktop/cradle/tests/canvas-editor-browser.mjs",
+        "desktop/cradle/tests/document-surface.test.mjs",
+        "desktop/cradle/tests/personal-web.test.mjs"
       ],
-      "dirty_digest": "b60c44c66c872f10feb9622b04b6320e1cf88c7d0761aca7480fff110d159978",
-      "engine_provenance_path": "/Users/admin/Central/worktrees/env-2/o-i/packages/oi-design-system/expressions-engine/PROVENANCE.json",
+      "dirty_digest": "0cd50878525617ec1af489d5648935dc55a004a2c0f2e441b008cd65d2816f37",
+      "engine_provenance_path": "/Users/admin/Central/worktrees/flow-real-format/o-i/packages/oi-design-system/expressions-engine/PROVENANCE.json",
       "engine_source": "EpiLogos/Point-Cloud-Demo",
       "engine_revision": "91db8428fc9dfba06cd258ec5a58e7dd9eef5313"
     }
   },
   "passed": true,
   "error": null,
-  "duration_ms": 9615,
+  "duration_ms": 11916,
   "checks": [
     {
       "ok": true,
@@ -143,7 +143,7 @@
       "ok": true,
       "label": "The 4+2 document performs its own Save HTML copy — a separate, network-free export that overwrites nothing",
       "data": {
-        "filename": "2026-09-25-daily.html"
+        "filename": "2026-09-26-daily.html"
       }
     },
     {
@@ -274,7 +274,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 145,
+      "duration_ms": 144,
       "data": {
         "file": "document-entry-die-42-rendered.png"
       }
@@ -282,7 +282,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 62,
+      "duration_ms": 57,
       "data": {
         "file": "document-entry-dialogue-01-journal.png"
       }
@@ -290,7 +290,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 29,
+      "duration_ms": 59,
       "data": {
         "file": "document-entry-dialogue-01-native-save.png"
       }
@@ -298,7 +298,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 42,
+      "duration_ms": 56,
       "data": {
         "file": "document-entry-epi-card-pair-drawer.png"
       }
@@ -306,7 +306,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 28,
+      "duration_ms": 50,
       "data": {
         "file": "document-entry-epi-card-return.png"
       }
@@ -314,7 +314,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 43,
+      "duration_ms": 64,
       "data": {
         "file": "document-entry-die-42-unavailable.png"
       }

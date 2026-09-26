@@ -8,7 +8,7 @@ const root=fileURLToPath(new URL('../',import.meta.url));
 const out=fileURLToPath(new URL('./artifacts/canvas-editor/',import.meta.url));mkdirSync(out,{recursive:true});
 const original='---\ncustom: retain exactly\n---\n\n# Source document\n\nFirst same 🙂 passage.\n\nSecond same 🙂 passage.\n\n| A | B |\n| --- | --- |\n| x | y |\n';
 let source=original,revision='r1',draft={revision:0,text:''},sent=[],contexts=new Map(),calls=[],failSend=false,dropContextHandler=false,delayedRead;
-const template=readFileSync(root+'documents/ql-dialogue-flow.html','utf8');
+const template=readFileSync(root+'documents/ql-flow.html','utf8');
 const docPattern=/<script type="application\/json" id="ql-doc">([\s\S]*?)<\/script>/;
 const flowDoc=JSON.parse(template.match(docPattern)[1]);flowDoc.meta.documentId='controlled-flow';flowDoc.entries=[1,2].map(i=>({id:'entry-'+i,author:'F',at:'2026-09-20',html:'<p>Repeated authored passage.</p>',replyTo:null,touched:false}));
 flowDoc.entries[0].html='<p><strong>Repeated authored passage.</strong> echo echo <a href="jav&#x0a;ascript:window.__flowUnsafe=true">Unsafe link</a><img src="https://example.invalid/private-tracker" onerror="window.__flowUnsafe=true"><svg onload="window.__flowUnsafe=true"></svg><script>window.__flowUnsafe=true</script></p>';

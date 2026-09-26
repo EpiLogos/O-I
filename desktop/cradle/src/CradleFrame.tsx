@@ -10,7 +10,8 @@ import {userFlowsArea} from "./flow/instances";
 import {fileOperation,type FileMutation} from "./files/client";
 import {DRAFT_KEY} from "./flow/DraftSurface";
 import {readUnplacedDraft} from "./flow/unplacedDrafts";
-import {DOCUMENT_FORMS} from "./flow/documentForms";
+import {DOCUMENT_FORMS,resolveDocumentForm} from "./flow/documentForms";
+import {central,readGround} from "./central/client";
 import {createFormInPlace} from "./flow/createInPlace";
 import type {LeftHost} from "./workspace/left/host";
 import {createExpression} from "./workspace/left/createExpression";
@@ -660,8 +661,32 @@ export function CradleFrame({onComposed}:{onComposed?:()=>void}) {
    * discloses the Day source's canonical ref, and that disclosure is the
    * only identity the desktop opens it by (never a ref derived from a
    * path). The Day document is a root-register source; its strips route to
-   * the root register's receiving field. */
+   * the root register's receiving field. Since the owner's 2026-09-26
+   * correction, Today opens the Day as its document: a fresh civil day is
+   * native blank text until the Day document is initialised from the
+   * retained original form, so the Today affordance completes that act from
+   * the roster's own die — never a substitute shell — before opening. */
   const openToday = async () => {
+    let ground = await readGround(kernel.transport, null);
+    if (ground.day.state !== "ready") {
+      // No current Day yet: ensure it through Central's own route.
+      if (ground.time.state !== "ready" || !ground.time.data) throw new Error("Central's civil time is unavailable; the current Day cannot be ensured");
+      await central(kernel.transport, null, {kind: "ensure-day", expected_time_policy_revision: ground.time.data.revision});
+      ground = await readGround(kernel.transport, null);
+    }
+    const day = ground.day.data;
+    if (!day) throw new Error("Central's Day reading did not yield a Day to open");
+    if (day.document_state !== "ready") {
+      // Initialise the Day document from the retained original form — the
+      // same reviewed route the Daily ground panel offers, with the roster's
+      // own die, never an invented payload.
+      const form = DOCUMENT_FORMS.find(f => f.kind === "document-42" && f.file === "ql-daily-die.html");
+      if (!form) throw new Error("The Day form is missing from the document roster");
+      if (ground.placement.state !== "ready" || !ground.placement.data) throw new Error("Central's native placement authority is unavailable; the Day document cannot be initialised");
+      const formLocation = await resolveDocumentForm(kernel.transport, form, kernel.snapshot.navigator?.root?.work.projects);
+      const original = await readFile(kernel.transport, formLocation);
+      await central(kernel.transport, null, {kind: "initialise-day", day_ref: day.day_ref, document_id: `document:${crypto.randomUUID()}`, expected_revision: day.revision.revision, expected_policy_revision: ground.placement.data.revision, form: formLocation, expected_form_revision: original.revision});
+    }
     // The Day's buffer comes from the owner's Day route (root-register
     // sources have no project-scoped source read); the surface then binds
     // to the ref that reading disclosed.
@@ -1049,7 +1074,12 @@ export function CradleFrame({onComposed}:{onComposed?:()=>void}) {
     return()=>window.removeEventListener("oi:recover-device-copy",recover);
   },[]);
   const startWriting=async()=>{
-    setState(s=>openBinding(s,{id:crypto.randomUUID(),kind:"draft",title:"Draft"}));
+    // The navigator's New flow joins the real flow at once (owner direction,
+    // 2026-09-26): one dated 0/1 instance minted through Central's own file
+    // operation and opened as a document surface — the same act the rest
+    // page's Start writing performs. The device draft remains the no-ground
+    // fallback and the recovery path for unplaced drafts.
+    await startFlowWriting();
   };
   /** The rest page's "Start writing" (owner direction, 2026-09-22): writing
    *  starts in a real flow file — one dated 0/1 instance minted in the user
@@ -1153,9 +1183,13 @@ export function CradleFrame({onComposed}:{onComposed?:()=>void}) {
     if(form){const created=await createFormInPlace(kernel.transport,form,{project,projects:kernel.snapshot.navigator?.root?.work.projects});await openFile(created.location,{replaceId:id});window.dispatchEvent(new CustomEvent("oi:form-created",{detail:{path:created.location.path}}));return;}
     let binding:SurfaceBinding={...current,project,kind,title:kind==="terminal"?"Terminal":"Browser"};
     if(kind==="flow"){
-      // Writing, not minting: the fresh tab's Write opens the retained draft
-      // in place of the blank surface. No register refusal — blank writing is
-      // valid, and the picker names where a Save will place it.
+      // Writing starts in the real flow (owner direction, 2026-09-26): one
+      // dated 0/1 instance minted through Central's own file operation, this
+      // fresh tab becoming its document surface in place. Only when no owner
+      // ground is reachable does it fall back to the device draft.
+      let flowArea:import("./flow/instances").UserFlowsArea|undefined;
+      try{flowArea=await userFlowsArea(kernel.transport);}catch{flowArea=undefined;}
+      if(flowArea){await openMintedFlow(flowArea,()=>mintBlankInstance(),id);return;}
       binding={...current,project,kind:"draft",title:"Draft"};
     }else if(kind==="terminal"){
       binding.terminal={cwd:terminalCwd(project)};

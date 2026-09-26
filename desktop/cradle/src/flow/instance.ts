@@ -1,12 +1,14 @@
-import templateHtml from "../../documents/ql-dialogue-flow.html?raw";
+import templateHtml from "../../documents/ql-flow.html?raw";
 /** The ratified flow carrier (PROPOSAL-FLOW-DAY-LOGICS-2026-09-13-2): a flow
- * file is one self-contained instance of the supplied 0/1 template —
- * `entries` (the conversational thread), `journal` pages, `notes`, `packet`,
- * `media` — with its identity in `meta.documentId` / `created` / `revision`.
- * The desktop mints the instance at the human's explicit Save (identity from
- * birth, the typed writing as the first F entry) and later appends entries
- * through the template's own contract; it never rewrites the html of an
- * entry the human has written. */
+ * file is one self-contained instance of the 0/1 form — `entries` (the
+ * conversational thread), `journal` pages, `notes`, `packet`, `media` — with
+ * its identity in `meta.documentId` / `created` / `revision`. Since the
+ * owner's 2026-09-26 correction the form is `ql-flow.html` v0.2 (authored in
+ * conversation): no paste-an-agent-return intake, no seeded empty entry —
+ * the flow is written, and the desktop appends entries through the
+ * template's own contract; it never rewrites the html of an entry the human
+ * has written. The received v0.1 demo shell stays at `ql-dialogue-flow.html`
+ * as the intake record. */
 export interface QlDocEntry {
   id: string;
   author: "F" | "H";
@@ -81,17 +83,16 @@ export function mintInstance(draft: string, now = new Date()): string {
     replyTo: null,
     touched: false,
   };
-  // The pristine template ships with EMPTY collections — its in-browser init
-  // creates the first entry on open. The desktop mints at Save, so the first
-  // F entry is created here; the document's init keeps working as authored.
+  // The placed draft's writing becomes the first F entry; v0.2 opens with
+  // empty collections and no seeded entry, so this is the whole thread.
   doc.entries = [entry];
   doc.meta.current = entry.id;
   return embedDocument(templateHtml, doc);
 }
-/** Mint a blank instance from the pristine template: EMPTY collections, its
- * in-browser init creates the first entry on open. This is the "start
- * writing" mint — the file exists before the first word, and the surface's
- * own composer makes the first entry (owner direction, 2026-09-22). */
+/** Mint a blank instance from the form: EMPTY collections — the flow exists
+ * before the first word, and the surface's own composer makes the first
+ * entry (owner direction, 2026-09-22; the v0.2 form no longer seeds one on
+ * open). This is the "start writing" mint. */
 export function mintBlankInstance(now = new Date()): string {
   const doc = parseInstance(templateHtml);
   doc.meta.documentId = crypto.randomUUID();

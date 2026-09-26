@@ -97,3 +97,15 @@ HTML exists anywhere, so `forms.json` keeps Epi-Card at `intake-required` with
 `forms.json` records the six initial families without pretending un-ingested Card/Cube files are available. The existing two owner-supplied HTML files above remain byte-identical. `build-personal.mjs` generates only `oi-beings.html` and `oi-things.html` from `../src/personal/page.mjs` before native development/build. These are reproducible product assets, not new canonical person identities. User-created document copies are not generator targets.
 
 Run `node documents/build-personal.mjs` from the cradle, then `--check` for reproducibility. The current text/link references open through the existing Central file route, have embedded `ql-doc` source/subject/C bindings, and export a complete standalone copy. Their internal edit/export does not yet establish native edited-preview Save, safe filtered publication, Card/Cube delivery, user-roster discovery or installed asset placement; those are explicit [Personal Web](../../../docs/cradle/PERSONAL-WEB.md) obligations. Full-copy export retains private embedded data and is labelled accordingly.
+
+## Flow form v0.2 — authored in conversation (2026-09-26)
+
+The owner ruled the received 0/1 shell a demo format: its "Agent return"
+paste-JSON intake and its seeded empty F entry are demo cruft, not the flow
+system's UX. The roster's Flow form is now `ql-flow.html`
+(`ql-template: dialogue-flow v0.2`), derived from the received bytes with
+exactly those removals and an honest empty state; the received v0.1 shell
+stays in this directory as the intake record (`ql-dialogue-flow.html`,
+unchanged). Identity, island, views (Dialogue / Flow / Journal), notes,
+packet, media and the append/replace entry contract are the owner's design
+and carry over intact.

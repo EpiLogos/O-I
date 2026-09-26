@@ -21,10 +21,10 @@
       "label": "Flow",
       "family": "Flow / Dialogue",
       "hint": "Dialogue · Flow · Journal (0/1)",
-      "file": "ql-dialogue-flow.html",
+      "file": "ql-flow.html",
       "templateRef": "ql-template:dialogue-flow",
-      "version": "0.1",
-      "standing": "retained-source"
+      "version": "0.2",
+      "standing": "authored-current"
     },
     {
       "kind": "document-42",

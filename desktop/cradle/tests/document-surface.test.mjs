@@ -13,6 +13,13 @@ test("identity: every retained ql-doc family classifies from its own island", as
   assert.equal(flow.family, "flow");
   assert.equal(flow.payload, "ql-doc");
   assert.equal(flow.templateRef, "ql-dialogue-flow v0.1");
+  // The authored v0.2 form (owner, 2026-09-26): same 0/1 family, no paste
+  // intake, no seeded entry — classified from its own island like any form.
+  const flowV2 = readDocumentIdentity(await read("ql-flow.html"));
+  assert.equal(flowV2.family, "flow");
+  assert.equal(flowV2.payload, "ql-doc");
+  assert.equal(flowV2.templateRef, "ql-dialogue-flow v0.2");
+  assert.ok(!/dlg-agent|agent-json/.test(await read("ql-flow.html")), "the v0.2 form carries no paste-an-agent-return intake");
   const day = readDocumentIdentity(await read("ql-daily-die.html"));
   assert.equal(day.family, "day");
   assert.equal(day.payload, "ql-doc");
