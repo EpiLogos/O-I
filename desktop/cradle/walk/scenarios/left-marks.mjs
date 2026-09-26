@@ -18,6 +18,7 @@
  * owner's own `view` of the same session at that moment.
  */
 import {setup as groundSetup, bindDefaultCentral, SESSIONS} from "./left-ground.mjs";
+import {realProviderAuthorised, REAL_PROVIDER_SKIP_NOTE} from "../lib/walk-provider.mjs";
 
 export async function setup(args) {
   process.env.OI_WALK_OPENCODE_BIN ??= "/opt/homebrew/bin/opencode";
@@ -25,6 +26,11 @@ export async function setup(args) {
 }
 
 export default async function run({page, baseUrl, check, shot, channel, provision: p}) {
+  if (!realProviderAuthorised()) {
+    await page.goto(baseUrl); await channel("info");
+    check(true, REAL_PROVIDER_SKIP_NOTE);
+    return;
+  }
   await page.goto(baseUrl); await channel("info");
   await bindDefaultCentral(page, p.root);
   const left = page.locator('[data-region="left"]');

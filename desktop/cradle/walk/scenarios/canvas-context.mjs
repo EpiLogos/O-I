@@ -2,6 +2,7 @@ import {execFileSync} from "node:child_process";
 import {writeFileSync} from "node:fs";
 import {join} from "node:path";
 import {waitForDoc, docText, bindDefaultCentral} from "../editor-doc.mjs";
+import {walkPiArgv, realProviderAuthorised, REAL_PROVIDER_SKIP_NOTE} from "../lib/walk-provider.mjs";
 
 /** The canvas-editor/context native walk: the delivered editor, selection and
  *  prepared-context surface driven against the REAL native AIKit candidate —
@@ -55,8 +56,7 @@ export async function setup({cradleRoot}) {
   // Return. No new provider kind is launched and no unrelated conversation
   // is touched; the walk ground and home are disposable.
   native("encounter-configure", "--provider-json", JSON.stringify({id: "canvas-walk-false", label: "Canvas walk failing provider", argv: ["/usr/bin/false"]}));
-  const piBin = process.env.OI_WALK_PI_BIN ?? "/Users/admin/.local/bin/pi";
-  native("encounter-configure", "--provider-json", JSON.stringify({protocol: "pi-rpc", id: "canvas-walk-pi", label: "Canvas walk Pi (existing provider)", argv: [piBin, "--mode", "rpc"]}));
+  native("encounter-configure", "--provider-json", JSON.stringify({protocol: "pi-rpc", id: "canvas-walk-pi", label: "Canvas walk Pi (existing provider)", argv: walkPiArgv()}));
   const owner = native("encounter-start");
   if (!owner.ok) throw new Error(JSON.stringify(owner));
   const request = (action, fields = {}) => {
@@ -315,6 +315,10 @@ export default async function run({page, baseUrl, check, shot, channel, provisio
   check(sessHeld.items.length === 1, "the restored preparation sits in the conversation scope before delivery");
 
   // Explicit delivery with the real existing provider, then the Return.
+  if (!realProviderAuthorised()) {
+    check(true, REAL_PROVIDER_SKIP_NOTE);
+    return;
+  }
   await activateTab(page, "Canvas editor and prepared context acceptance");
   await page.getByRole("textbox", {name: "Message", exact: true}).waitFor({timeout: 15000});
   await page.getByRole("textbox", {name: "Message", exact: true}).fill(DRAFT);

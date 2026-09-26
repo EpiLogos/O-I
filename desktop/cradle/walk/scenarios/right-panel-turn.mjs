@@ -3,6 +3,7 @@ import {join} from "node:path";
 import {setup as canvasSetup} from "./canvas-context.mjs";
 import {bindDefaultCentral, docText} from "../editor-doc.mjs";
 import {openPanel, planeButton, recordCalls, restoreScope} from "../lane2-support.mjs";
+import {realProviderAuthorised, REAL_PROVIDER_SKIP_NOTE} from "../lib/walk-provider.mjs";
 
 /** Real turns in the right panel (10-SIDEBARS §4.3–§4.4; P1 P4 P6 P7 P16, and the
  *  tape): the existing pi provider (GLM) runs real tool calls in a disposable
@@ -18,6 +19,11 @@ const TURN_3 = "Use your bash tool to run `sleep 40 && echo late` and wait for i
 const box = async locator => { const b = await locator.boundingBox(); return b && {x: b.x, y: b.y, w: b.width, h: b.height, right: b.x + b.width, cy: b.y + b.height / 2}; };
 
 export default async function run({page, baseUrl, check, shot, channel, provision: p}) {
+  if (!realProviderAuthorised()) {
+    await page.goto(baseUrl); await channel("info");
+    check(true, REAL_PROVIDER_SKIP_NOTE);
+    return;
+  }
   const calls = recordCalls(page);
   await page.goto(baseUrl); await channel("info");
   await bindDefaultCentral(page, p.root);
