@@ -11,12 +11,21 @@ import templateHtml from "../../documents/ql-flow.html?raw";
  * as the intake record. */
 export interface QlDocEntry {
   id: string;
-  author: "F" | "H";
+  /** The declared initial of the participant who authored this entry.
+   *  v0.3: any declared participant, not only the received F/H pair. */
+  author: string;
   at: string;
   html: string;
   replyTo: { entryId: string; anchor: string | null } | null;
   touched: boolean;
   fromJournal?: string;
+}
+export interface QlDocParticipant {
+  initial: string;
+  name?: string;
+  kind: "person" | "agent";
+  /** Where a live agent identity came from: the session ref that answered. */
+  ref?: string;
 }
 export interface QlDoc {
   meta: {
@@ -29,12 +38,23 @@ export interface QlDoc {
     journalCurrent: string | null;
     exported: string | null;
     template: string;
+    /** Declared participants (v0.3): the identities entries are authored
+     * between. Absent in earlier documents — those keep the received F/H
+     * reading. */
+    participants?: QlDocParticipant[];
   };
   entries: QlDocEntry[];
   notes: unknown[];
   packet: unknown[];
   media: unknown[];
   journal: { id: string; at: string; html: string }[];
+}
+/** The document's declared participant for an initial, or the received F/H
+ * reading of it — the same fallback the form itself applies. */
+export function participantOf(doc: QlDoc, initial: string): QlDocParticipant {
+  const declared = doc.meta.participants?.find(p => p.initial === initial);
+  if (declared) return declared;
+  return initial === "F" ? {initial, kind: "person", name: "the person"} : {initial, kind: "agent", name: initial === "H" ? "the agent" : ""};
 }
 const QL_DOC = /<script type="application\/json" id="ql-doc">([\s\S]*?)<\/script>/;
 export function parseInstance(html: string): QlDoc {
@@ -70,11 +90,12 @@ export function htmlToText(html: string): string {
 /** Mint a fresh instance from the pristine template: the typed writing
  * becomes the first F entry, verbatim in its paragraph form; the document
  * mints its own identity now rather than at first open. */
-export function mintInstance(draft: string, now = new Date()): string {
+export function mintInstance(draft: string, participants?: QlDocParticipant[], now = new Date()): string {
   const doc = parseInstance(templateHtml);
   const at = now.toISOString();
   doc.meta.documentId = crypto.randomUUID();
   doc.meta.created = at;
+  if (participants?.length) doc.meta.participants = participants;
   const entry: QlDocEntry = {
     id: crypto.randomUUID(),
     author: "F",
@@ -93,23 +114,32 @@ export function mintInstance(draft: string, now = new Date()): string {
  * before the first word, and the surface's own composer makes the first
  * entry (owner direction, 2026-09-22; the v0.2 form no longer seeds one on
  * open). This is the "start writing" mint. */
-export function mintBlankInstance(now = new Date()): string {
+export function mintBlankInstance(participants?: QlDocParticipant[], now = new Date()): string {
   const doc = parseInstance(templateHtml);
   doc.meta.documentId = crypto.randomUUID();
   doc.meta.created = now.toISOString();
+  if (participants?.length) doc.meta.participants = participants;
   return embedDocument(templateHtml, doc);
 }
-/** Append one F entry to an existing instance — the template's own
+/** Append one entry to an existing instance through the template's own
  * `append-entry` contract. The document's revision advances by one; every
- * other byte of the document's state is preserved exactly. */
-export function appendEntry(instanceHtml: string, text: string, now = new Date()): { html: string; documentId: string | null; entry: QlDocEntry } {
+ * other byte of the document's state is preserved exactly. The entry is
+ * authored by the person's identity unless a declared participant is given —
+ * an answering agent's entry declares the live agent's own initial and the
+ * session ref it answered from. */
+export function appendEntry(instanceHtml: string, text: string, opts?: {participant?: QlDocParticipant; replyTo?: {entryId: string; anchor: string | null}}, now = new Date()): { html: string; documentId: string | null; entry: QlDocEntry } {
   const doc = parseInstance(instanceHtml);
+  const declared = opts?.participant;
+  const initial = declared?.initial ?? doc.meta.participants?.find(p => p.kind === "person")?.initial ?? "F";
+  if (declared && !(doc.meta.participants ?? []).some(p => p.initial === declared.initial)) {
+    doc.meta.participants = [...(doc.meta.participants ?? []), declared];
+  }
   const entry: QlDocEntry = {
     id: crypto.randomUUID(),
-    author: "F",
+    author: initial,
     at: now.toISOString(),
     html: textToHtml(text),
-    replyTo: null,
+    replyTo: opts?.replyTo ?? null,
     touched: false,
   };
   doc.entries.push(entry);

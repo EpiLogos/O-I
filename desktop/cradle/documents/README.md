@@ -109,3 +109,14 @@ stays in this directory as the intake record (`ql-dialogue-flow.html`,
 unchanged). Identity, island, views (Dialogue / Flow / Journal), notes,
 packet, media and the append/replace entry contract are the owner's design
 and carry over intact.
+
+### v0.3 — declared participants (2026-09-26, same conversation)
+
+Authorship is declared identity, not two fixed glyphs: F and H were Frank
+and Hermes, the voices the form was first drawn between. The form now reads
+`meta.participants` (initial, name, kind person|agent, optional session
+ref); attribution styling keys on the declared kind (the person set solid,
+an agent dissolving into points), with the received F/H reading kept for
+earlier documents. The desktop declares the person from its settable
+writing identity, and an answering agent's entry declares the live agent's
+own initial and the session ref it answered from.

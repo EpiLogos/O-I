@@ -20,7 +20,7 @@
     ],
     "claims_grade": "D"
   },
-  "generated_at": "2026-09-26T10:35:33.925Z",
+  "generated_at": "2026-09-26T11:18:08.193Z",
   "environment": {
     "base_url": "http://localhost:4173",
     "bridge_url": "http://127.0.0.1:4179",
@@ -29,23 +29,27 @@
     "bundle": "walk (WALK=1) served by vite preview",
     "build_input": {
       "mode": "fresh-build",
-      "bundle_fingerprint": "81a5708bc3ee94b20fe19e5af66f69239ee060a8147c7858a663443337e8ea84"
+      "bundle_fingerprint": "6a90e397de9707e65770fb2250ce991632fb92c780ac8e69d71dfe0043b04857"
     },
     "node": "v24.16.0",
     "platform": "darwin",
     "source": {
       "repository_root": "/Users/admin/Central/worktrees/flow-real-format/o-i",
-      "repository_head": "59efb78e89a4e3b2743ff8352a1ad02e3e8242ab",
+      "repository_head": "6703e67db3426cafecbc336c51363437ac09c250",
       "tracked_changes": [
+        ".wayfinder/maps/agent-praxis-document-world.md",
         "desktop/cradle/documents/README.md",
         "desktop/cradle/documents/forms.json",
+        "desktop/cradle/documents/ql-flow.html",
         "desktop/cradle/src/CradleFrame.tsx",
+        "desktop/cradle/src/flow/FlowSurface.tsx",
+        "desktop/cradle/src/flow/createInPlace.ts",
+        "desktop/cradle/src/flow/flow.css",
         "desktop/cradle/src/flow/instance.ts",
-        "desktop/cradle/tests/canvas-editor-browser.mjs",
         "desktop/cradle/tests/document-surface.test.mjs",
-        "desktop/cradle/tests/personal-web.test.mjs"
+        "desktop/cradle/walk/artifacts/document-entry-die-42-rendered.png"
       ],
-      "dirty_digest": "0cd50878525617ec1af489d5648935dc55a004a2c0f2e441b008cd65d2816f37",
+      "dirty_digest": "a7cf430dd2be4fd75d0ab56cb6fb0efbaeeb160b5b3f2a218301e5d8337ca209",
       "engine_provenance_path": "/Users/admin/Central/worktrees/flow-real-format/o-i/packages/oi-design-system/expressions-engine/PROVENANCE.json",
       "engine_source": "EpiLogos/Point-Cloud-Demo",
       "engine_revision": "91db8428fc9dfba06cd258ec5a58e7dd9eef5313"
@@ -53,7 +57,7 @@
   },
   "passed": true,
   "error": null,
-  "duration_ms": 11916,
+  "duration_ms": 9001,
   "checks": [
     {
       "ok": true,
@@ -274,7 +278,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 144,
+      "duration_ms": 173,
       "data": {
         "file": "document-entry-die-42-rendered.png"
       }
@@ -282,7 +286,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 57,
+      "duration_ms": 58,
       "data": {
         "file": "document-entry-dialogue-01-journal.png"
       }
@@ -290,7 +294,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 59,
+      "duration_ms": 52,
       "data": {
         "file": "document-entry-dialogue-01-native-save.png"
       }
@@ -298,7 +302,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 56,
+      "duration_ms": 54,
       "data": {
         "file": "document-entry-epi-card-pair-drawer.png"
       }
@@ -306,7 +310,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 50,
+      "duration_ms": 46,
       "data": {
         "file": "document-entry-epi-card-return.png"
       }
@@ -314,7 +318,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 64,
+      "duration_ms": 45,
       "data": {
         "file": "document-entry-die-42-unavailable.png"
       }

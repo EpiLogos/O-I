@@ -20,10 +20,10 @@
       "kind": "document-01",
       "label": "Flow",
       "family": "Flow / Dialogue",
-      "hint": "Dialogue · Flow · Journal (0/1)",
+      "hint": "Dialogue \u00b7 Flow \u00b7 Journal (0/1)",
       "file": "ql-flow.html",
       "templateRef": "ql-template:dialogue-flow",
-      "version": "0.2",
+      "version": "0.3",
       "standing": "authored-current"
     },
     {
@@ -65,7 +65,7 @@
       "templateRef": "oi.template/yoshimoto",
       "version": null,
       "standing": "retained-source",
-      "source": "recovered 2026-09-17 byte-exact from the owner-supplied ql-data-structure.zip (Work/personal/Nara-Personal/random-works; zip and extracted tree identical), impl/examples/out/name-power-yoshimoto.html — the post-rebuild build of the 2026-07-30 Symbolonic Weave semantic rebuild; carries no ql-template meta tag (recorded as received); preserve lawful mechanism and teaching Withdrawn from the offered roster by owner decision 2026-09-20 — the offered document types are Day, Flow, Beings and Things; the retained source bytes stay in documents/ unchanged, recorded here as declared scope that is not available UI."
+      "source": "recovered 2026-09-17 byte-exact from the owner-supplied ql-data-structure.zip (Work/personal/Nara-Personal/random-works; zip and extracted tree identical), impl/examples/out/name-power-yoshimoto.html \u2014 the post-rebuild build of the 2026-07-30 Symbolonic Weave semantic rebuild; carries no ql-template meta tag (recorded as received); preserve lawful mechanism and teaching Withdrawn from the offered roster by owner decision 2026-09-20 \u2014 the offered document types are Day, Flow, Beings and Things; the retained source bytes stay in documents/ unchanged, recorded here as declared scope that is not available UI."
     },
     {
       "kind": "document-epi-card",
@@ -76,19 +76,19 @@
       "templateRef": "oi.template/epi-card",
       "version": "1.0.0",
       "standing": "retained-source",
-      "source": "realized 2026-09-22 as a retained-source form carrier derived byte-from-source: the canonical frame is SPEC.md §3.1 quoted verbatim (Antykathera-Essay-Work/submission-package/epi-card-system-v1), the document contract is the package's ui/epi-card.d.ts (EpiCardData v1.0.0), and the interaction law is the real <epi-card> web component recovered from recovery bundle epi-card-local-branches-2026-09-10.bundle branch codex/epi-card-card-contract commit 2c53bb81 (epi-card/packages/card/src/epi-card.ts + state-reducer.ts + projection.ts). Every position's local articulation is honestly empty (occupancy unknown); the carrier header names what remains behind the live component: verified-asset film/symbol/audio, QR, nested depth, host action events, and the public-disclosure gate."
+      "source": "realized 2026-09-22 as a retained-source form carrier derived byte-from-source: the canonical frame is SPEC.md \u00a73.1 quoted verbatim (Antykathera-Essay-Work/submission-package/epi-card-system-v1), the document contract is the package's ui/epi-card.d.ts (EpiCardData v1.0.0), and the interaction law is the real <epi-card> web component recovered from recovery bundle epi-card-local-branches-2026-09-10.bundle branch codex/epi-card-card-contract commit 2c53bb81 (epi-card/packages/card/src/epi-card.ts + state-reducer.ts + projection.ts). Every position's local articulation is honestly empty (occupancy unknown); the carrier header names what remains behind the live component: verified-asset film/symbol/audio, QR, nested depth, host action events, and the public-disclosure gate."
     },
     {
       "kind": "document-goal",
       "label": "Goal",
       "family": "Goal",
-      "hint": "An open intent — why, done when, tracks",
+      "hint": "An open intent \u2014 why, done when, tracks",
       "file": "oi-goal.html",
       "templateRef": "oi.template/goal",
       "version": "0.1.0",
       "standing": "reference-carrier",
       "placement": "human ground: telos/<goal>/goal.html (Control/user at Central, ProjectCentral/user in a project)",
-      "source": "added 2026-09-23 (10-SIDEBARS §3.7, ruling D5): Factory INTENT's goal document, rendered by the same page template system as Beings/Things (src/personal/page.mjs family goal); created in place, never edited as the template"
+      "source": "added 2026-09-23 (10-SIDEBARS \u00a73.7, ruling D5): Factory INTENT's goal document, rendered by the same page template system as Beings/Things (src/personal/page.mjs family goal); created in place, never edited as the template"
     },
     {
       "kind": "document-vision",
@@ -101,7 +101,7 @@
       "standing": "reference-carrier",
       "scope": "project",
       "placement": "human ground: ProjectCentral/user/<project>.html, only where the project has no vision page yet",
-      "source": "added 2026-09-23 (10-SIDEBARS §3.7, ruling D5): a project's vision page, rendered by the same page template system (src/personal/page.mjs family vision); created in place, never edited as the template"
+      "source": "added 2026-09-23 (10-SIDEBARS \u00a73.7, ruling D5): a project's vision page, rendered by the same page template system (src/personal/page.mjs family vision); created in place, never edited as the template"
     },
     {
       "kind": "document-mockup",
@@ -114,7 +114,7 @@
       "standing": "retained-source",
       "scope": "project",
       "placement": "human ground: ProjectCentral/user/mockup-<slug>-<local-stamp>.html; many per project",
-      "source": "retained 2026-09-25 byte-exact from Central skills/ui-mockup-authoring/assets/ui-mockup-template.html (sha-256 594b150eff21a2fc710223c9f5214d1cabf29516475a46fb69602fcee220c8ef; the owner template with hash-routing guarded for opaque-origin transports; supersedes the 2026-09-24 specimen 9b3f0c7d…); state switcher, mockup-provenance block (design/vision/capability refs) and per-state trace refs are the template's own law; created in place, never edited as the template"
+      "source": "retained 2026-09-25 byte-exact from Central skills/ui-mockup-authoring/assets/ui-mockup-template.html (sha-256 594b150eff21a2fc710223c9f5214d1cabf29516475a46fb69602fcee220c8ef; the owner template with hash-routing guarded for opaque-origin transports; supersedes the 2026-09-24 specimen 9b3f0c7d\u2026); state switcher, mockup-provenance block (design/vision/capability refs) and per-state trace refs are the template's own law; created in place, never edited as the template"
     }
   ]
 }

@@ -1235,3 +1235,40 @@ Implemented on `feat/document-surface-20260925` (O-I, from main `6e777b27`) and 
 - The mockup template's hash routing was fixed at its owner (Central `ui-mockup-authoring`, best-effort `replaceState`); the retained carrier here refreshed byte-exact to the fixed bytes (provenance sha updated) and `document-surface` walks 14/14 with zero page errors.
 - Merged: O-I main fast-forwarded to this lane (`e673dfd1`); Central local main carries the merge (`1ced6e3`, alongside the in-flight file-map work, untouched) and the installed `ctrl` toolchain was rebuilt from that merged main (`ctrl 0.1.0 (1ced6e3)`, creation door verified end to end). Publication is via protected-branch PRs: O-I #518, Central #229.
 - Agent Card/World disclosure (#513) and the package SDK (W4/W5) are consumed as they stand; no desktop-side duplication was added.
+
+## 26. The Day protocol tracks through its native owners — no parallel tracking (2026-09-26)
+
+Owner direction: the Day protocol works as intended only when the Day's
+awareness of NOWs, active sessions and runs is a join over the native
+owners, never a desktop-side store. The owners already hold every fact:
+
+- **NOWs** — Central's own readings (`central.now.list`, child NOWs, the
+  scope's NOW section the Daily ground panel already renders).
+- **Sessions** — AIKit's SessionSpace reading (the encounter rows: space,
+  `agent-session/…` ref, purpose) the encounter surfaces already observe.
+- **Runs and machines** — the Workcell runs ledger (`workcell.run/v1`,
+  `<state-root>/runs/` + index) with its correlations carrier
+  (`workcell.correlated-observation/v1`), and Factory's `ExecutionRecord`
+  join line (`workcell_binding_refs`, `agent_session_ref`, agency/agent/
+  harness refs). The runs lane (workcell-runs-20260923, #103) is mid-cutover
+  hardening exactly this record; the desktop joins it through the owners'
+  own routes and re-pins when the cutover lands.
+
+The contract, for both this lane and the runs lane:
+
+1. The Day document (the die) records what the person writes; it never
+   mirrors machine state into its payload. Tracking views render joins,
+   read-only, beside the writing.
+2. The day's sessions strip in the Daily ground reads: NOWs from Central,
+   live sessions from SessionSpace, runs from the Workcell ledger — joined
+   on `agent_session_ref` and the NOW/day correlation fields Factory
+   already validates (#195 lineage). One line of correlation, two owners,
+   no merged stores — the runs spec's own law, kept.
+3. A flow document's agent answer declares the answering session's ref in
+   the entry's participant (landed this lane, §25's receiving seam), so a
+   day's file trail and the runs ledger meet at the same ref without
+   either copying the other.
+4. Until the runs cutover lands its CLI/reading surface the desktop
+   consumes, the sessions strip shows the SessionSpace + NOW joins and
+   names the runs join as pending — absence stated, never a parallel
+   read of another product's internal state files.

@@ -6,6 +6,7 @@ import {ActiveEncounterContext} from "./workspace/activeEncounter";
 import {CanvasStage,CanvasHUD} from "./workspace/primitives/CanvasHost";
 import {ExpressionLayout} from "./shared/Expression";
 import {mintInstance,mintBlankInstance,parseInstance,instanceFileName} from "./flow/instance";
+import {personParticipant} from "./flow/identity";
 import {userFlowsArea} from "./flow/instances";
 import {fileOperation,type FileMutation} from "./files/client";
 import {DRAFT_KEY} from "./flow/DraftSurface";
@@ -1091,7 +1092,7 @@ export function CradleFrame({onComposed}:{onComposed?:()=>void}) {
     let area:import("./flow/instances").UserFlowsArea|undefined;
     try{area=await userFlowsArea(kernel.transport);}catch{area=undefined;}
     if(!area){setState(s=>openBinding(s,{id:crypto.randomUUID(),kind:"draft",title:"Draft"}));return;}
-    await openMintedFlow(area,()=>mintBlankInstance(),crypto.randomUUID());
+    await openMintedFlow(area,()=>mintBlankInstance([personParticipant()]),crypto.randomUUID());
   };
   /** Mint one dated 0/1 instance in the user flows area (Central's own file
    *  operation) and open it as a flow document surface. `surfaceId` may be
@@ -1139,7 +1140,7 @@ export function CradleFrame({onComposed}:{onComposed?:()=>void}) {
     let area:import("./flow/instances").UserFlowsArea|undefined;
     try{area=await userFlowsArea(kernel.transport);}catch{area=undefined;}
     if(!area)throw new Error("No Central ground is reachable; the writing is still kept on this device.");
-    await openMintedFlow(area,()=>mintInstance(content),bindingId);
+    await openMintedFlow(area,()=>mintInstance(content,[personParticipant()]),bindingId);
     try{localStorage.removeItem(DRAFT_KEY(bindingId));}catch{/* The owner holds it now. */}
   };
   const placeDraftRef=useRef(placeDraft);placeDraftRef.current=placeDraft;
@@ -1189,7 +1190,7 @@ export function CradleFrame({onComposed}:{onComposed?:()=>void}) {
       // ground is reachable does it fall back to the device draft.
       let flowArea:import("./flow/instances").UserFlowsArea|undefined;
       try{flowArea=await userFlowsArea(kernel.transport);}catch{flowArea=undefined;}
-      if(flowArea){await openMintedFlow(flowArea,()=>mintBlankInstance(),id);return;}
+      if(flowArea){await openMintedFlow(flowArea,()=>mintBlankInstance([personParticipant()]),id);return;}
       binding={...current,project,kind:"draft",title:"Draft"};
     }else if(kind==="terminal"){
       binding.terminal={cwd:terminalCwd(project)};

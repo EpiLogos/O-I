@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<meta name="ql-template" content="dialogue-flow v0.2">
+<meta name="ql-template" content="dialogue-flow v0.3">
 <title>Flow</title>
 <style>
 :root{
@@ -51,9 +51,9 @@ svg.defs{position:absolute;width:0;height:0}
 /* shared: author initial. F is set solid; H dissolves into points. Declared attribution, made visible. */
 .ini{font:800 1em/0.8 var(--sans);letter-spacing:-.06em;position:relative;display:inline-block;user-select:none}
 .ini::before,.ini::after{content:attr(data-a);position:absolute;left:0;top:0}
-.ini[data-a=H]::before{-webkit-mask-image:linear-gradient(#000 38%,transparent 82%);mask-image:linear-gradient(#000 38%,transparent 82%)}
-.ini[data-a=H]::after{filter:url(#stipple);-webkit-mask-image:linear-gradient(transparent 18%,#000 55%,transparent 102%);mask-image:linear-gradient(transparent 18%,#000 55%,transparent 102%)}
-.ini[data-a=F]::after{display:none}
+.ini[data-a=H]::before,.ini[data-k=agent]::before{-webkit-mask-image:linear-gradient(#000 38%,transparent 82%);mask-image:linear-gradient(#000 38%,transparent 82%)}
+.ini[data-a=H]::after,.ini[data-k=agent]::after{filter:url(#stipple);-webkit-mask-image:linear-gradient(transparent 18%,#000 55%,transparent 102%);mask-image:linear-gradient(transparent 18%,#000 55%,transparent 102%)}
+.ini[data-a=F]::after,.ini[data-k=person]::after{display:none}
 .ini span{visibility:hidden}
 
 /* ---------- Dialogue view: the same entries read as a conversation ---------- */
@@ -230,7 +230,7 @@ noscript .snap h2{font:600 15px var(--sans);margin:2.4em 0 .6em}
 </div></dialog>
 
 <main class="doc" id="app" hidden></main>
-<script type="application/json" id="ql-doc">{"meta": {"documentId": null, "created": null, "title": "", "revision": 0, "view": "dialogue", "current": null, "journalCurrent": null, "exported": null, "template": "ql-dialogue-flow v0.2"}, "entries": [], "notes": [], "packet": [], "media": [], "journal": []}</script>
+<script type="application/json" id="ql-doc">{"meta": {"documentId": null, "created": null, "title": "", "revision": 0, "view": "dialogue", "current": null, "journalCurrent": null, "exported": null, "template": "ql-dialogue-flow v0.3"}, "entries": [], "notes": [], "packet": [], "media": [], "journal": []}</script>
 <script>
 (function(){
 'use strict';
@@ -287,15 +287,19 @@ function menu(anchor,items,opts={}){
   pop.style.left=left+'px'; pop.style.top=top+'px'; const first=pop.querySelector('button'); if(first) first.focus();
 }
 const entryOf = id => D.entries.find(e=>e.id===id);
+const participantOf = a => (D.meta.participants||[]).find(p=>p.initial===a)
+  || {initial:a,kind:a==='F'?'person':'agent',name:a==='F'?'the person':a==='H'?'the agent':''};
 const idx = id => D.entries.findIndex(e=>e.id===id);
 const plain = html => { const t=document.createElement('div'); t.innerHTML=html||''; return t.textContent; };
 const when = iso => iso? new Date(iso).toLocaleString('en-GB',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'}) : '';
 const num = e => 'entry '+(idx(e.id)+1);
 
 /* ---------- pieces ---------- */
-function ini(e){ const el=h('button',{class:'ini','data-a':e.author,'aria-label':'Declared author '+e.author+', click to change',title:'Declared author: '+(e.author==='F'?'F':'H (declared, not authenticated)'),onclick:ev=>menu(ev.currentTarget,[
-  {label:'F',current:e.author==='F',hint:'the person',run:()=>{ e.author='F'; touch(); render(); }},
-  {label:'H',current:e.author==='H',hint:'declared, not authenticated',run:()=>{ e.author='H'; touch(); render(); }}])},h('span',{text:e.author})); return el; }
+function ini(e){ const p=participantOf(e.author);
+  const choices=(D.meta.participants&&D.meta.participants.length)?D.meta.participants:[participantOf('F'),participantOf('H')];
+  const el=h('button',{class:'ini','data-a':e.author,'data-k':p.kind,'aria-label':'Declared author '+e.author+(p.name?', '+p.name:'')+', click to change',title:'Declared author: '+e.author+(p.name?' ('+p.name+')':'')+' - declared, not authenticated',onclick:ev=>menu(ev.currentTarget,choices.map(x=>({
+    label:x.initial,current:e.author===x.initial,hint:(x.name||'')+(x.kind==='agent'?' - agent':' - the person'),
+    run:()=>{ e.author=x.initial; if(x.kind==='agent'&&!e.touched){ e.touched=true; } touch(); render(); }})))},h('span',{text:e.author})); return el; }
 function moreBtn(e,inFlow){ return h('button',{class:'ib sm more','aria-label':'Entry actions','aria-haspopup':'menu',onclick:ev=>menu(ev.currentTarget,entryMenu(e,inFlow),{align:'right'})},svg(ICON.more)); }
 function replyEl(e){
   if(!e.replyTo) return null;
@@ -306,7 +310,7 @@ function replyEl(e){
 }
 function bodyEl(e,ph){
   return h('div',{class:'body',contenteditable:'true','data-entry':e.id,'data-placeholder':ph,role:'textbox','aria-label':num(e)+' by '+e.author,html:clean(e.html),
-    oninput:ev=>{ e.html=ev.target.innerHTML; if(e.author==='H'&&!e.touched){ e.touched=true; ev.target.closest('.entry,.flow')?.classList.add('touched'); } touch(); }});
+    oninput:ev=>{ e.html=ev.target.innerHTML; if(participantOf(e.author).kind==='agent'&&!e.touched){ e.touched=true; ev.target.closest('.entry,.flow')?.classList.add('touched'); } touch(); }});
 }
 function attachEl(e){
   const items=D.media.filter(m=>m.entry===e.id); if(!items.length) return null;
@@ -347,7 +351,7 @@ function entryMenu(e,inFlow){
 function syncPk(){ $$('.pk .n').forEach(n=>{ n.textContent=String(D.packet.length); n.hidden=!D.packet.length; }); }
 function betweenEl(e){ return h('div',{class:'between'},h('button',{class:'ib sm','aria-label':'Write between entries','aria-haspopup':'menu',onclick:ev=>menu(ev.currentTarget,[
   {label:'Write here',hint:'as F',run:()=>{ const n=insertAfter(e.id,'F'); render(); $('[data-entry="'+n.id+'"]').focus(); }},
-  {label:'Record an H return',hint:'written by you, declared as H',run:()=>{ const n=insertAfter(e.id,'H'); render(); $('[data-entry="'+n.id+'"]').focus(); }}])},svg(ICON.plus))); }
+  {label:'Record an agent return',hint:'written by you, declared for the agent',run:()=>{ const agent=(D.meta.participants||[]).find(p=>p.kind==='agent')||participantOf('H'); const n=insertAfter(e.id,agent.initial); render(); $('[data-entry="'+n.id+'"]').focus(); }}])},svg(ICON.plus))); }
 function insertAfter(id,author){
   const e={id:uid(),author,at:now(),html:'',replyTo:null,touched:false}; D.entries.splice(idx(id)+1,0,e); touch(); return e;
 }
@@ -384,7 +388,7 @@ function renderDialogue(){
   D.entries.forEach(e=>{
     const el=h('article',{class:'entry'+(e.touched?' touched':''),'data-a':e.author,id:'e-'+e.id},
       h('div',{class:'lead'},ini(e),h('div',{class:'meta'},h('div',{text:num(e)}),h('div',{text:when(e.at)}))),
-      h('div',{class:'bodycol'},replyEl(e),h('div',{class:'bodywrap'},bodyEl(e,e.author==='F'?'Begin here. An empty entry is allowed.':'Recorded on H’s behalf. Written by a person; declared, not authenticated.'),moreBtn(e,false)),attachEl(e)),
+      h('div',{class:'bodycol'},replyEl(e),h('div',{class:'bodywrap'},bodyEl(e,participantOf(e.author).kind==='person'?'Begin here. An empty entry is allowed.':'Recorded for '+(participantOf(e.author).name||'the agent')+'; declared, not authenticated.'),moreBtn(e,false)),attachEl(e)),
       marginEl(e),
       betweenEl(e));
     list.append(el);
@@ -420,7 +424,7 @@ function renderFlow(){
   const f=h('section',{class:'flow'+(e.touched?' touched':'')},
     h('div',{class:'head'},ini(e),h('div',{class:'meta'},h('span',{text:num(e)+' of '+D.entries.length}),h('span',{text:when(e.at)})),moreBtn(e,true)),
     replyEl(e),
-    h('div',{class:'page'},bodyEl(e,e.author==='F'?'Write. The page is yours; it need not become anything.':'Recorded on H’s behalf; declared, not authenticated.')),
+    h('div',{class:'page'},bodyEl(e,participantOf(e.author).kind==='person'?'Write. The page is yours; it need not become anything.':'Recorded for '+(participantOf(e.author).name||'the agent')+'; declared, not authenticated.')),
     marginEl(e),
     attachEl(e),
     h('div',{class:'nav'},
