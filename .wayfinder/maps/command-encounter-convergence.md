@@ -403,7 +403,7 @@ Probe Agent and probe agent-set removed by CAS after proof.
 
 ### Named remaining gaps
 
-1. Project-scope `agent-profile.accept` is denied: the human grant covers `control:root` only. Owner authority decision required; nothing is widened by agents.
+1. ~~Project-scope `agent-profile.accept` is denied: the human grant covers `control:root` only.~~ **Resolved 26 Sep:** the owner widened the human grant in conversation — `Control/user/native-action-authority.json` now carries the project scope set (`project:Actuation/Central/Factory/O-I/quaternal-logic/Workcell/ai-kit`). Re-proven live: project-scope express → review → accept (human token) → prepare **from the project cwd** with `project_ref:"O-I"` (`agent-session/direct-7209029b…`, probe removed by CAS afterwards). This also dissolves the verifier's cwd-scope friction: a root-scoped profile is no longer required for ordinary project work.
 2. The TUI conversation aperture lives in the newer unreconciled TUI state (primary checkout lane); on this base, terminal composition/entry/stage machine is real, in-TUI conversation is not — the desktop kernel join is the operable launch path.
 3. Cradle walk scenarios `rest`/`modes`/`kernel-cas` fail at expressions-substrate selectors (`.xg-navigator`, `.warm-tree-host … pane-tool-pin`) and the pre-existing shell-host check — present before #527 (receipts last green #482, 22 Sep); owned by the expressions/world-substrate lane.
 4. Factory/Workcell/QL CLI help treatment, packet A3 (executable praxis support), `oi ui` composed-World handoff, and in-TUI SkillSet-first picker (needs the headless prepare contract moved below the CLI/TUI split) remain open on this map's frontier.
