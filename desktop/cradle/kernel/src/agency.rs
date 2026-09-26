@@ -38,6 +38,35 @@ impl Client {
         Ok(value)
     }
 
+    /// Native AIKit SkillSet readings — the repertoire unit an Agent creator
+    /// selects first. Read-only and bounded: `set list` never loads member
+    /// bodies and `set show` is the owner's own reply (projecting members,
+    /// withheld members with the resolver's reason, nested sets). The reply
+    /// carries no schema field of its own, so unlike `disclosure` the
+    /// envelope is unwrapped and the shape is validated by the consumer.
+    pub fn set_reading(&self, cwd: &Path, subcommand: &str, name: Option<&str>) -> Result<Value, String> {
+        let mut args: Vec<std::ffi::OsString> = Vec::new();
+        if self.suite_route { args.push("aikit".into()); }
+        args.push("--json".into());
+        args.push("set".into());
+        args.push(subcommand.into());
+        if let Some(name) = name { args.push(name.into()); }
+        let mut environment = self.home.as_ref().map(|home| vec![("AIKIT_HOME".into(), home.as_os_str().to_owned())]).unwrap_or_default();
+        if let Some(root) = std::env::var_os("OI_CENTRAL_ROOT") { environment.push(("CENTRAL_ROOT".into(), root)); }
+        let mut value = crate::inhabitation::run_bounded_with_env(&self.executable, &args, Some(cwd), std::time::Duration::from_secs(15), "AIKit SkillSet reading", &environment).map_err(|error| error.message)?;
+        if value.get("ok").and_then(Value::as_bool) == Some(false) { return Err(format!("AIKit SkillSet reading refused: {}", value["error"])); }
+        if value.get("ok").and_then(Value::as_bool) == Some(true) { value = value.get("data").cloned().ok_or("AIKit SkillSet reading has no data")?; }
+        Ok(value)
+    }
+
+    pub fn set_list(&self, cwd: &Path) -> Result<Value, String> {
+        self.set_reading(cwd, "list", None)
+    }
+
+    pub fn set_show(&self, cwd: &Path, name: &str) -> Result<Value, String> {
+        self.set_reading(cwd, "show", Some(name))
+    }
+
     pub fn harness_disclosure(&self, cwd: &Path) -> Result<Value, String> {
         self.disclosure(cwd, &["harness", "disclose"], "aikit.harness-disclosure/v1")
     }

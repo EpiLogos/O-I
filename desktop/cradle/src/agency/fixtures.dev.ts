@@ -3,13 +3,14 @@
  * `import.meta.env.DEV && new URLSearchParams(location.search).has("fixtures")`
  * (COMMON-BRIEF fixture rule). Every fixture-backed reading a component
  * shows carries a visible "Fixture — not native data" label; these sources
- * exist so the search/inference/mint/guardian flows can be exercised
- * before their real AIKit/Factory producers land, never as a production
- * data path.
+ * exist so the search/inference flows can be exercised before their real
+ * AIKit/Factory producers land, never as a production data path. The
+ * durable-Agent mint fixture is gone: its replacement — the native
+ * propose/review/accept route in NativeAgentLauncher — works for real.
  */
-import { registerAgentMintSource, registerGuardianSource, registerSetupInferenceSource, registerSkillSearchSource } from "./agencySources";
+import { registerGuardianSource, registerSetupInferenceSource, registerSkillSearchSource } from "./agencySources";
 import type { SkillCandidate } from "./agencySources";
-import type { AgentDraft, GuardianRecord, SetupProposalRecord } from "./agencyTypes";
+import type { GuardianRecord, SetupProposalRecord } from "./agencyTypes";
 
 const FIXTURE_CATALOGUE_REVISION = "fixture-catalogue-r0";
 
@@ -49,21 +50,11 @@ export function installAgencyFixtures(): () => void {
       };
     },
   });
-  const unregisterMint = registerAgentMintSource({
-    async validate(draft: AgentDraft) {
-      const problems: string[] = [];
-      if (!draft.intentExpression.trim()) problems.push("Fixture check: an intent expression is required.");
-      return { ok: problems.length === 0, problems };
-    },
-    async create(draft: AgentDraft) {
-      return { agentRef: `fixture:agent:${draft.name?.trim() || "untitled"}-${Date.now()}` };
-    },
-  });
   const guardians: GuardianRecord[] = [
     { agentRef: "fixture:guardian:central", name: "Central Guardian (fixture)", product: "Central", repertoireSourceRef: "fixture:repertoire:central", readiness: "Adapter-inferred", pendingPracticeProposals: [], verifiedChanges: [] },
   ];
   const unregisterGuardian = registerGuardianSource({
     async list() { return guardians; },
   });
-  return () => { unregisterSearch(); unregisterInference(); unregisterMint(); unregisterGuardian(); };
+  return () => { unregisterSearch(); unregisterInference(); unregisterGuardian(); };
 }

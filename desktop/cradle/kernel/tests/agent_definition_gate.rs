@@ -103,6 +103,7 @@ fn root_does_not_fallback_to_a_configured_child_and_no_acceptance_is_implied() {
             purpose: "Keep my exact words.".into(),
             expected_scope_ref: "control:root".into(),
             skill_refs: vec![],
+            skill_set_refs: vec![],
         })
         .unwrap();
     assert_eq!(value["operation"], "agent-profile.review");
@@ -141,7 +142,8 @@ fn changed_scope_or_unreviewed_trim_is_refused_before_generation() {
             name: "Reader".into(),
             purpose: "Exact".into(),
             expected_scope_ref: "project:other".into(),
-            skill_refs: vec![]
+            skill_refs: vec![],
+            skill_set_refs: vec![],
         })
         .is_err());
     assert_eq!(rig.calls().len(), 1);
@@ -150,7 +152,8 @@ fn changed_scope_or_unreviewed_trim_is_refused_before_generation() {
             name: "Reader".into(),
             purpose: " Exact ".into(),
             expected_scope_ref: "control:root".into(),
-            skill_refs: vec![]
+            skill_refs: vec![],
+            skill_set_refs: vec![],
         })
         .is_err());
     assert_eq!(rig.calls().len(), 1);
@@ -262,6 +265,56 @@ fn readback_uses_the_original_request_and_cannot_invoke_an_arbitrary_cli() {
         .direct_agent(&rig.root, "credential-delete", None)
         .is_err());
     assert_eq!(rig.calls().len(), calls.len());
+}
+
+#[test]
+fn skillset_readings_use_the_owner_set_surface_and_propose_carries_set_refs() {
+    let rig = Rig::new();
+    rig.call(Request::SkillSets).unwrap();
+    rig.call(Request::SkillSet {
+        name: "research-deep".into(),
+    })
+    .unwrap();
+    let calls = rig.calls();
+    assert!(calls[0]
+        .as_array()
+        .unwrap()
+        .iter()
+        .any(|v| v == "set" || v == "--json"));
+    assert!(calls[0].as_array().unwrap().iter().any(|v| v == "list"));
+    assert!(calls[1].as_array().unwrap().iter().any(|v| v == "show"));
+    assert!(calls[1]
+        .as_array()
+        .unwrap()
+        .iter()
+        .any(|v| v == "research-deep"));
+    // Set selection rides the reviewed proposal into Central's own input.
+    let value = rig
+        .call(Request::Propose {
+            name: "Reader".into(),
+            purpose: "Keep my exact words.".into(),
+            expected_scope_ref: "control:root".into(),
+            skill_refs: vec!["skill/one".into()],
+            skill_set_refs: vec!["skill-set:research".into()],
+        })
+        .unwrap();
+    assert_eq!(value["operation"], "agent-profile.review");
+    let express = rig
+        .calls()
+        .iter()
+        .find(|c| c.as_array().unwrap().iter().any(|v| v == "agent-profile.express"))
+        .unwrap()
+        .clone();
+    let request: Value =
+        serde_json::from_str(express.as_array().unwrap().last().unwrap().as_str().unwrap())
+            .unwrap();
+    assert_eq!(request["skill_set_refs"], json!(["skill-set:research"]));
+    assert_eq!(request["skill_refs"], json!(["skill/one"]));
+    // Unknown ingress fields are refused at the door, never ignored.
+    assert!(serde_json::from_value::<Request>(json!({
+        "action": "skillset", "name": "x", "executable": "/bin/evil"
+    }))
+    .is_err());
 }
 
 #[test]

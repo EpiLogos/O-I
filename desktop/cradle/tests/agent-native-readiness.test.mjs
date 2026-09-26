@@ -14,9 +14,9 @@ test('World absence, missing owner or a launch claim cannot be a ready native sc
  for(const patch of [{world_readiness:{ready:true}},{provider_started:true},{execution_authority_granted:true},{project_ref:''}])assert.throws(()=>readAgentScope({...scope,...patch}));
 });
 test('discovery is independent, read only, and failure invalidates previously available Skills',async()=>{
- let fail=false;const calls=[];const c=new NativeAgentController(async q=>{calls.push(q.action);if(q.action==='scope')return scope;if(fail)throw Error('owner unavailable');return skills;});
+ let fail=false;const calls=[];const c=new NativeAgentController(async q=>{calls.push(q.action);if(q.action==='scope')return scope;if(q.action==='skillsets')return {sets:[]};if(fail)throw Error('owner unavailable');return skills;});
  await c.refreshReadiness();assert.equal(c.snapshot().skills[0].eligible,true);
- fail=true;await c.refreshReadiness();assert.equal(c.snapshot().skills,undefined);assert.equal(c.snapshot().world.project_ref,'control:root');assert.match(c.snapshot().readinessError,/unavailable/);assert.deepEqual(calls,['scope','skills','scope','skills']);
+ fail=true;await c.refreshReadiness();assert.equal(c.snapshot().skills,undefined);assert.equal(c.snapshot().world.project_ref,'control:root');assert.match(c.snapshot().readinessError,/unavailable/);assert.deepEqual(calls,['scope','skills','skillsets','scope','skills','skillsets']);
 });
 test('late prerequisite reads cannot overwrite a newer scope read',async()=>{
  let release;const c=new NativeAgentController(async q=>q.action==='scope'?new Promise(r=>release=r):skills);

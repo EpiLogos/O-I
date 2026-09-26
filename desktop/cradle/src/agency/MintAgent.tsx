@@ -1,27 +1,37 @@
 import {NativeAgentLauncher} from "./NativeAgentLauncher";
 /**
- * MintAgent — intent-led minting (COMMON-BRIEF §handoff 3). Begins with
+ * MintAgent — intent-led formation (COMMON-BRIEF §handoff 3). Begins with
  * "What should this agency take care of?", retains the exact intent text,
  * offers manual search and an explicit bounded "Find suitable skills"
- * inference pass, and ends at five DISTINCT actions — never one button.
+ * inference pass.
+ *
+ * Two formations route to their REAL native owners — this surface never
+ * writes an Agent record itself:
+ *   • Reusable native Agent — the durable source route (NativeAgentLauncher:
+ *     propose → review → human accept → prepare on the native owners).
+ *   • Temporary help / team composition — temporary help stays bounded (no
+ *     Central record, nothing durable); a reusable team proposes through the
+ *     existing `central.agent-set.*` native Actions via the kernel's
+ *     `invoke_action` dispatch (teamFormation.ts).
  *
  * The draft (intent, name, choices) lives in a module-level store so it
  * survives this surface unmounting; it is never auto-submitted and never
  * cleared by a reading refresh.
  */
-import { Fragment, useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {IconChoiceStrip} from "../workspace/primitives/IconTabStrip";
-import { Glyph } from "../workspace/Glyph";
 import { useKernel } from "../kernel/KernelProvider";
 import { kernelOp } from "../kernel/bridge";
-import type { ProfileUsePlanWire } from "../kernel/types";
-import { RawDisclosure } from "../shared/contributionPresentation";
-import { getAgentMintSource, getSetupInferenceSource, getSkillSearchSource, subscribeAgentMintSource } from "./agencySources";
+import type { KernelOpCall } from "../kernel/bridge";
+import type { ActionDispatch } from "../kernel/types";
+import { getSetupInferenceSource, getSkillSearchSource } from "./agencySources";
 import type { SkillCandidate } from "./agencySources";
 import { emptyDraft } from "./agencyTypes";
-import type { AgentDraft, AgentDurability, SetupProposalRecord } from "./agencyTypes";
+import type { AgentDraft, SetupProposalRecord } from "./agencyTypes";
 import { SkillSearch, SkillCandidateRow } from "./SkillSearch";
 import { SetupProposal } from "./SetupProposal";
+import { useAgentRoster } from "./roster";
+import { isWellFormedTeamRef, teamOutcomeRows, teamProposalBuild, teamResolveBuild } from "./teamFormation";
 
 // ---------------------------------------------------------------------------
 // module-level draft store — survives unmount, never auto-submitted.
@@ -35,10 +45,9 @@ function setStoredDraft(next: AgentDraft) { storedDraft = next; announceDraft();
 function setStoredProposal(next: SetupProposalRecord | null) { storedProposal = next; announceDraft(); }
 function setStoredCandidates(next: SkillCandidate[]) { storedCandidates = next; announceDraft(); }
 
-const DURABILITY_OPTIONS: { value: AgentDurability; label: string; detail: string }[] = [
-  { value: "durable", label: "Durable Agent", detail: "A standing native source — “Keep as Agent” is the explicit act that makes it one." },
-  { value: "team", label: "Reusable team", detail: "A reusable composition, not a single-use participant." },
-  { value: "temporary", label: "Bounded temporary help", detail: "Need not become a durable profile." },
+const DURABILITY_OPTIONS: { value: AgentDraft["durability"]; label: string; detail: string }[] = [
+  { value: "team", label: "Reusable team", detail: "A reusable composition through Central's native agent-set Actions — generated source awaiting human recognition, not a durable Agent." },
+  { value: "temporary", label: "Bounded temporary help", detail: "Never becomes a durable Agent: no Central record is written here at all." },
 ];
 
 export function MintAgent(props: { project?: string; onMessage?: (message: string) => void }) {
@@ -46,15 +55,11 @@ export function MintAgent(props: { project?: string; onMessage?: (message: strin
   return <><IconChoiceStrip aria-label="Agent identity or temporary formation" current={kind} onSelect={value=>setKind(value as "durable"|"other")} items={[{id:"durable",label:"Reusable native Agent",icon:"agent"},{id:"other",label:"Temporary help / team composition",icon:"graph"}]}/>{kind==="durable"?<NativeAgentLauncher project={props.project}/>:<FormationDraft {...props}/>}</>;
 }
 function FormationDraft({ project, onMessage }: { project?: string; onMessage?: (message: string) => void }) {
-  const kernel = useKernel();
   const [, force] = useState(0);
   useEffect(() => { const listener = () => force((n) => n + 1); draftListeners.add(listener); return () => { draftListeners.delete(listener); }; }, []);
   const draft = storedDraft;
   const proposal = storedProposal;
   const candidates = storedCandidates;
-
-  const [mintBound, setMintBound] = useState(() => getAgentMintSource() !== undefined);
-  useEffect(() => subscribeAgentMintSource(() => setMintBound(getAgentMintSource() !== undefined)), []);
 
   const [inferring, setInferring] = useState(false);
   const [inferError, setInferError] = useState<string>();
@@ -125,9 +130,9 @@ function FormationDraft({ project, onMessage }: { project?: string; onMessage?: 
       </div>
       <div className="oi-field">
         <span className="oi-eyebrow">Durability</span>
-        <IconChoiceStrip aria-label="Durability" current={draft.durability} onSelect={value=>setDraft({durability:value as AgentDurability})}
-          items={DURABILITY_OPTIONS.map(option=>({id:option.value,label:option.label,description:option.detail,icon:option.value==="team"?"graph":option.value==="durable"?"agent":"history"}))}/>
-
+        <IconChoiceStrip aria-label="Durability" current={draft.durability} onSelect={value=>setDraft({durability:value as AgentDraft["durability"]})}
+          items={DURABILITY_OPTIONS.map(option=>({id:option.value,label:option.label,description:option.detail,icon:option.value==="team"?"graph":"history"}))}/>
+        <p className="oi-note">A durable reusable Agent is the other tab — “Reusable native Agent” — where the native propose/review/accept route runs.</p>
       </div>
     </section>
 
@@ -141,9 +146,9 @@ function FormationDraft({ project, onMessage }: { project?: string; onMessage?: 
         <div className="oi-tool-row">
           {!inferring
             ? <button type="button" className="oi-action" disabled={!draft.intentExpression.trim() || !getSkillSearchSource() || !getSetupInferenceSource()} onClick={findSuitableSkills}>
-                <Glyph name="explore" size={13}/> Find suitable skills
+                Find suitable skills
               </button>
-            : <button type="button" className="oi-action" onClick={cancelInference}><Glyph name="stop" size={13}/> Cancel</button>}
+            : <button type="button" className="oi-action" onClick={cancelInference}>Cancel</button>}
           {inferring && <span className="oi-state">Searching, then proposing once…</span>}
         </div>
         {(!getSkillSearchSource() || !getSetupInferenceSource()) && (
@@ -181,143 +186,100 @@ function FormationDraft({ project, onMessage }: { project?: string; onMessage?: 
       </section>
     )}
 
-    <ReviewActions draft={draft} mintBound={mintBound} onMessage={onMessage} kernel={kernel} kernelOpFn={kernelOp}/>
+    {draft.durability === "team"
+      ? <TeamActions draft={draft} project={project ?? (draft.keepIn?.trim() || undefined)} onMessage={onMessage}/>
+      : <TemporaryHelpBounded/>}
   </div>;
 }
 
-// ---------------------------------------------------------------------------
-// the five distinct actions
-
-function ReviewActions({ draft, mintBound, onMessage, kernel, kernelOpFn }: {
-  draft: AgentDraft;
-  mintBound: boolean;
-  onMessage?: (message: string) => void;
-  kernel: ReturnType<typeof useKernel>;
-  kernelOpFn: typeof kernelOp;
-}) {
-  const [saving, setSaving] = useState(false);
-  const [savedRef, setSavedRef] = useState<string>();
-  const [validation, setValidation] = useState<string[]>();
-
-  const saveDefinition = async () => {
-    const mintSource = getAgentMintSource();
-    if (!mintSource) return;
-    setSaving(true);
-    setValidation(undefined);
-    try {
-      const validated = await mintSource.validate(draft);
-      if (!validated.ok) { setValidation(validated.problems); return; }
-      const created = await mintSource.create(draft);
-      setSavedRef(created.agentRef);
-      onMessage?.(`Agent definition saved: ${created.agentRef}.`);
-    } catch (cause) {
-      onMessage?.(`Saving the Agent definition failed: ${String(cause)}`);
-    } finally {
-      setSaving(false);
-    }
-  };
-
-  return <section className="oi-section agency-actions">
-    <span className="oi-eyebrow">Five distinct actions</span>
-    <div className="oi-action-group">
-      <div className="agency-action-row">
-        <button type="button" className="oi-action oi-action-primary" disabled={!mintBound || saving || !draft.intentExpression.trim()} onClick={() => void saveDefinition()}>
-          {saving ? "Saving…" : "Save Agent definition"}
-        </button>
-        <span className="oi-state">{mintBound ? "Effect timing: on save, before any work starts." : "No AgentMintSource is registered — Central's durable-source route supplies it."}</span>
-      </div>
-      {validation && validation.length > 0 && <ul className="agency-validation">{validation.map((problem, index) => <li key={index} className="oi-note" role="alert">{problem}</li>)}</ul>}
-      {savedRef && <p className="oi-note">Saved as <span className="oi-ref">{savedRef}</span>.</p>}
-
-      <ApplyRepertoireAction draft={draft} onMessage={onMessage} kernel={kernel} kernelOpFn={kernelOpFn}/>
-
-      <UnavailableActionRow label="Start work" reason="No owner operation starts a fresh unit of work from a minted Agent yet — Factory/AIKit session dispatch supplies it (O:I issue 220)."/>
-      <UnavailableActionRow label="Change a running session" reason="Encounter sessions exist on the seam (kernel op “encounter”), but this Agency surface has no encounter host bound to render a changed session in — the integrator wires that pane."/>
-      <UnavailableActionRow label="Grant authority" reason="No owner operation grants scoped authority to an Agent from this surface yet — native-action-authority supplies the grant, not Agency."/>
-    </div>
+/** Temporary help stays bounded: no native write exists behind this choice,
+ * and that is the feature — it names the ordinary route instead. */
+function TemporaryHelpBounded() {
+  return <section className="oi-section agency-actions" aria-label="Bounded temporary help">
+    <span className="oi-eyebrow">Bounded temporary help</span>
+    <p className="oi-note" data-temporary-bounded="true">
+      Temporary help never becomes a durable Agent, so nothing is written here — no Central record,
+      no native source, no authority. Start an ordinary conversation from the panel's “New chat” and
+      it stays exactly as bounded as you make it.
+    </p>
   </section>;
 }
 
-function UnavailableActionRow({ label, reason }: { label: string; reason: string }) {
-  return <div className="agency-action-row" data-unavailable="true">
-    <span className="agency-unavailable-label">{label}</span>
-    <span className="oi-state">{reason}</span>
-  </div>;
-}
-
-/** A plan value reads plainly when it is plain (a config scalar as itself);
- * a structured value names its shape, and every exact value stays behind
- * "Show raw plan" (law: raw only behind an explicit disclosure). */
-function readableValue(value: unknown): string {
-  if (value === undefined || value === null) return "unset";
-  if (typeof value === "string") return value;
-  if (typeof value === "number" || typeof value === "boolean") return String(value);
-  if (Array.isArray(value)) return `${value.length} ${value.length === 1 ? "item" : "items"} — in Show raw plan`;
-  const fields = Object.keys(value as object).length;
-  return `${fields} ${fields === 1 ? "field" : "fields"} — in Show raw plan`;
-}
-
-/** "Apply repertoire to Project/Profile" binds to the real profile plane
- * (profile_list → profile_use_plan → profile_use_apply,
- * kernel/types.ts:199-204) via `keepIn` as the target profile ref, the
- * same plan-before-apply shape ProfilesView.tsx already uses. */
-function ApplyRepertoireAction({ draft, onMessage, kernel, kernelOpFn }: {
+/** The reusable-team route: real `central.agent-set.propose` /
+ * `central.agent-set.resolve` through the kernel's `invoke_action` dispatch.
+ * Members come from the real Central roster; the reply's standing is carried
+ * verbatim — generated proposal, unrecognised, never an Agent by itself. */
+function TeamActions({ draft, project, onMessage }: {
   draft: AgentDraft;
+  project?: string;
   onMessage?: (message: string) => void;
-  kernel: ReturnType<typeof useKernel>;
-  kernelOpFn: typeof kernelOp;
 }) {
-  const [plan, setPlan] = useState<ProfileUsePlanWire>();
+  const kernel = useKernel();
+  const roster = useAgentRoster(project, true);
+  const [ref, setRef] = useState("");
+  const [revision, setRevision] = useState("r1");
+  const [members, setMembers] = useState<string[]>([]);
+  const [orchestrator, setOrchestrator] = useState<string | undefined>();
   const [pending, setPending] = useState(false);
-  const profileRef = draft.keepIn?.trim();
+  const [rows, setRows] = useState<ReturnType<typeof teamOutcomeRows>>();
 
-  const showPlan = async () => {
-    if (!profileRef) return;
+  const invoke = async (build: ReturnType<typeof teamProposalBuild>) => {
     setPending(true);
+    setRows(undefined);
     try {
-      const call = await kernelOpFn(kernel.transport, { op: "profile_use_plan", profile_ref: profileRef });
-      if (call.error || call.outcome?.result !== "profile_use_planning") { onMessage?.(call.error ?? `Profile “${profileRef}” has no inspectable use plan.`); return; }
-      setPlan(call.outcome.plan);
-    } finally {
-      setPending(false);
-    }
-  };
-  const apply = async () => {
-    if (!plan) return;
-    setPending(true);
-    try {
-      const call = await kernelOpFn(kernel.transport, { op: "profile_use_apply", profile_ref: plan.profile_ref });
-      if (call.error || call.outcome?.result !== "profile_used") { onMessage?.(call.error ?? "Applying the profile use did not settle."); return; }
-      onMessage?.(`Profile “${plan.profile_ref}” is now in use. Effect timing: next reload of that scope's projection.`);
-      setPlan(undefined);
+      const call: KernelOpCall = await kernelOp(kernel.transport, { op: "invoke_action", project, invocation: { action: build.action, target_ref: build.target_ref, input: build.input } });
+      const dispatch: ActionDispatch | undefined = call.outcome && call.outcome.result === "action_dispatched" ? call.outcome.dispatch : undefined;
+      if (!dispatch) { onMessage?.(call.error ?? "The kernel returned no Action dispatch."); return; }
+      setRows(teamOutcomeRows(dispatch));
     } finally {
       setPending(false);
     }
   };
 
-  if (!profileRef) {
-    return <div className="agency-action-row" data-unavailable="true">
-      <span className="agency-unavailable-label">Apply repertoire to Project/Profile</span>
-      <span className="oi-state">Set “Where to keep it” to a profile ref to plan this through `profile_use_plan`.</span>
-    </div>;
-  }
-  return <div className="agency-action-row">
-    <button type="button" className="oi-action" disabled={pending} onClick={() => void showPlan()}>{pending ? "Reading plan…" : "Apply repertoire to Project/Profile"}</button>
-    <span className="oi-state">Plans against profile <span className="oi-ref">{profileRef}</span> — nothing moves until you apply the shown plan.</span>
-    {plan && <div className="agency-plan-drawer" role="dialog" aria-label="Profile use plan">
-      <dl className="oi-kv">
-        {plan.entries.map((entry) => (
-          <Fragment key={entry.setting_ref}>
-            <dt className="oi-ref">{entry.setting_ref}</dt>
-            <dd>{readableValue(entry.current)} → {readableValue(entry.target)}</dd>
-          </Fragment>
-        ))}
-      </dl>
-      <RawDisclosure value={plan.entries} label="Show raw plan"/>
-      <div className="agency-action-row">
-        <button type="button" className="oi-action oi-action-primary" disabled={pending} onClick={() => void apply()}>Apply</button>
-        <button type="button" className="oi-action" onClick={() => setPlan(undefined)}>Discard plan</button>
-      </div>
-    </div>}
-  </div>;
+  const wellFormed = isWellFormedTeamRef(ref);
+  const ready = wellFormed && revision.trim() !== "" && members.length > 0;
+
+  return <section className="oi-section agency-actions" aria-label="Reusable team formation">
+    <span className="oi-eyebrow">Reusable team — native agent-set proposal</span>
+    <div className="oi-field">
+      <label htmlFor="agency-team-ref" className="oi-eyebrow">Team ref</label>
+      <input id="agency-team-ref" className="oi-input" type="text" value={ref} placeholder="e.g. research-crew" onChange={(event) => setRef(event.target.value)} aria-describedby="agency-team-ref-state"/>
+      <span id="agency-team-ref-state" className="oi-state">{ref === "" ? "a plain lowercase name" : wellFormed ? "accepted shape — Central remains the authority" : "not a plain lowercase name"}</span>
+    </div>
+    <div className="oi-field">
+      <label htmlFor="agency-team-revision" className="oi-eyebrow">Revision</label>
+      <input id="agency-team-revision" className="oi-input" type="text" value={revision} onChange={(event) => setRevision(event.target.value)}/>
+    </div>
+    <fieldset className="oi-section"><legend>Members — from the native Central roster</legend>
+      {roster.state === "reading" && <p className="oi-note" aria-busy="true">Reading the native roster…</p>}
+      {roster.state === "error" && <p className="oi-refusal" role="alert">The native roster is unavailable: {roster.error}</p>}
+      {roster.state === "ready" && roster.agents.length === 0 && <p className="oi-note">No native Agents are rostered in this scope yet.</p>}
+      {roster.agents.map((agent) => (
+        <label key={agent.ref} className="oi-field">
+          <input type="checkbox" aria-label={`Team member ${agent.name}`} checked={members.includes(agent.ref)}
+            onChange={(event) => setMembers(event.target.checked ? [...members, agent.ref] : members.filter((existing) => existing !== agent.ref))}/>
+          {agent.name} <span className="oi-note">{agent.ref}{agent.accepted ? "" : " — proposal, not accepted"}</span>
+        </label>
+      ))}
+    </fieldset>
+    <div className="oi-field">
+      <label htmlFor="agency-team-orchestrator" className="oi-eyebrow">Orchestrator (optional)</label>
+      <select id="agency-team-orchestrator" className="oi-input" value={orchestrator ?? ""} onChange={(event) => setOrchestrator(event.target.value || undefined)}>
+        <option value="">none</option>
+        {members.map((agentRef) => <option key={agentRef} value={agentRef}>{agentRef}</option>)}
+      </select>
+    </div>
+    <div className="agency-action-row">
+      <button type="button" className="oi-action" disabled={!ready || pending} onClick={() => void invoke(teamProposalBuild({ draft, project, ref, revision: revision.trim(), memberRefs: members, orchestrator }))}>
+        {pending ? "Proposing…" : "Propose team composition"}
+      </button>
+      <button type="button" className="oi-action" disabled={!wellFormed || pending} onClick={() => void invoke(teamResolveBuild({ project, ref, availableAgents: roster.agents.map((agent) => agent.ref) }))}>
+        Read resolution
+      </button>
+    </div>
+    <p className="oi-note">Propose creates generated source stamped unrecognised — human recognition stays with the owner, and a duplicate ref is refused, never overwritten.</p>
+    {rows && <ul className="agency-validation" aria-label="Native outcome">
+      {rows.map((row, index) => <li key={index} className="oi-note" data-team-outcome={row.kind} role={row.kind === "ok" ? "status" : "alert"}>{row.text}</li>)}
+    </ul>}
+  </section>;
 }

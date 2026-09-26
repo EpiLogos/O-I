@@ -85,3 +85,91 @@ test('lost acceptance cannot recover from source alone when the native roster is
  const owner=r.owner;r.controller.bind(async q=>q.action==='roster'?{schema:'central.agent-profile-roster/v1',scope_ref:scope,profiles:[],execution_authority_granted:false}:owner(q));
  await r.controller.recover();assert.equal(r.controller.snapshot().unknown,'accept');assert.equal(r.controller.snapshot().review.accepted,false);
 });
+
+// --- SkillSet-first repertoire and the save-and-start sequence -------------
+
+const readiness=()=>({schema:'aikit.direct-agent-scope/v1',project_ref:'control:root',world_readiness:{ready:true,world_ref:'control:root'},execution_authority_granted:false,provider_started:false});
+const emptySkills=()=>({schema:'aikit.direct-agent-skills/v1',rows:[],activation_performed:false,brokered_child_activation_observed:false});
+const oneSkill=()=>({schema:'aikit.direct-agent-skills/v1',rows:[{ref:'skill/one',name:'One',description:'a disclosed skill',eligible:true,reason_code:null}],activation_performed:false,brokered_child_activation_observed:false});
+const setList=()=>({sets:[{name:'research-deep',provenance:'registry:central',members:3,projected:2,withheld:1,summary:'deep research repertoire'}]});
+const setDetail=()=>({name:'research-deep',provenance:'registry:central',members:3,projected:['skill/a','skill/b'],withheld:[{capability:'skill/c',reason:'not installed on this machine'}],children:[{name:'core',ref:'research-core',members:2,attached_by:'set add --child'}]});
+
+test('SkillSet-first round-trip: a non-default set is selected, resolved and carried into the native proposal beside an individual exception',async()=>{
+ const r=rig({intercept:async q=>{
+  if(q.action==='skillsets')return setList();
+  if(q.action==='skillset')return setDetail();
+  if(q.action==='skills')return oneSkill();
+  if(q.action==='scope')return readiness();
+  if(q.action==='propose')return {schema:'central.agent-profile-review/v1',profile:{...profile,skill_refs:q.skill_refs,skill_set_refs:q.skill_set_refs},scope_ref:scope,content_digest:'sha256:controlled',accepted:false,execution_authority_granted:false,acceptance:null};
+  return undefined;
+ }});
+ await r.controller.refresh();
+ await r.controller.refreshReadiness();
+ assert.equal(r.controller.snapshot().skillSets.length,1,'the SkillSet field is read');
+ await r.controller.toggleSkillSet('research-deep',true);
+ assert.deepEqual(r.controller.snapshot().draft.skillSetRefs,['research-deep']);
+ assert.equal(r.controller.snapshot().skillSetDetail.name,'research-deep');
+ assert.equal(r.controller.snapshot().skillSetDetail.withheld[0].capability,'skill/c','the withheld member and its reason are read back');
+ assert.equal(r.controller.snapshot().skillSetDetail.children[0].ref,'research-core','nested membership is shown');
+ r.controller.edit({name:profile.name,purpose:profile.purpose,skillRefs:['skill/one'],scopeConfirmed:true});
+ await r.controller.propose();
+ const sent=r.calls.find(c=>c.action==='propose');
+ assert.deepEqual(sent.skill_set_refs,['research-deep'],'the set ref reaches the native proposal');
+ assert.deepEqual(sent.skill_refs,['skill/one'],'the individual exception rides beside the set');
+ assert.equal(r.controller.snapshot().review.accepted,false);
+ // Unselecting keeps the draft honest and drops the detail reading.
+ await r.controller.toggleSkillSet('research-deep',false);
+ assert.deepEqual(r.controller.snapshot().draft.skillSetRefs,[]);
+ assert.equal(r.controller.snapshot().skillSetDetail,undefined);
+});
+
+test('a save-then-failed-launch leaves the source saved and reports Saved; not running with the failing stage',async()=>{
+ const r=rig({losePrepare:true,intercept:async q=>{
+  if(q.action==='scope')return readiness();
+  if(q.action==='skills')return emptySkills();
+  if(q.action==='skillsets')return {sets:[]};
+  return undefined;
+ }});
+ await propose(r);
+ await r.controller.saveAndStart();
+ const s=r.controller.snapshot();
+ assert.equal(s.review.accepted,true,'the accepted source stays saved');
+ assert.equal(s.prepared,undefined,'no session is fabricated');
+ assert.equal(s.compound.prepare,'failed');
+ assert.match(s.error,/Saved; not running/);
+ assert.equal(s.unknown,'prepare','the uncertain prepare stays on the recover-without-replay path');
+ assert.equal(r.calls.filter(c=>c.action==='prepare').length,1,'the native write is never replayed silently');
+});
+
+test('save-and-start composes acceptance, readiness and preparation with every stage preserved',async()=>{
+ const r=rig({intercept:async q=>{
+  if(q.action==='scope')return readiness();
+  if(q.action==='skills')return emptySkills();
+  if(q.action==='skillsets')return {sets:[]};
+  return undefined;
+ }});
+ await propose(r);
+ await r.controller.saveAndStart();
+ const s=r.controller.snapshot();
+ assert.deepEqual(s.compound,{propose:'skipped',accept:'ok',readiness:'ok',prepare:'ok'});
+ assert.equal(s.prepared.agent_session,'agent-session/native');
+ assert.equal(s.prepared.provider_started,false,'preparation still never starts a provider');
+ assert.equal(s.unknown,undefined);
+ assert.equal(s.error,undefined);
+});
+
+test('an unavailable world stops the sequence after the save and names readiness as the failing stage',async()=>{
+ const r=rig({intercept:async q=>{
+  if(q.action==='scope')return {schema:'aikit.direct-agent-scope/v1',project_ref:'control:root',world_readiness:{ready:false,reason:'no authored world declaration'},execution_authority_granted:false,provider_started:false};
+  if(q.action==='skills')return emptySkills();
+  if(q.action==='skillsets')return {sets:[]};
+  return undefined;
+ }});
+ await propose(r);
+ await r.controller.saveAndStart();
+ const s=r.controller.snapshot();
+ assert.equal(s.review.accepted,true,'the save completed before readiness refused');
+ assert.deepEqual(s.compound,{propose:'skipped',accept:'ok',readiness:'failed',prepare:'pending'});
+ assert.match(s.error,/Saved; not running/);
+ assert.equal(s.unknown,undefined,'readiness absence is a refusal, not an uncertain write');
+});

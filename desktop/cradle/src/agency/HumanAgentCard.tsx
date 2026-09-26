@@ -14,12 +14,44 @@ import {useEffect, useState, type ReactNode} from "react";
 import {useKernel} from "../kernel/KernelProvider";
 import {citizenshipRows, readAgentCard, type CardField, type HumanAgentCard as Card} from "./agentCardReading";
 
+/** The native standing this card is rendered under. A source record must not
+ * render as an active card: each state names itself, and the card never
+ * infers a state the caller did not hold from a native reading. */
+export type AgentCardStanding = "saved" | "accepted" | "prepared" | "running" | "unavailable" | "unknown";
+const STANDING_LABEL: Record<AgentCardStanding, string> = {
+  saved: "Saved source — not an accepted Agent",
+  accepted: "Accepted — not prepared",
+  prepared: "Prepared — no provider started",
+  running: "Running",
+  unavailable: "Unavailable",
+  unknown: "Outcome unknown",
+};
+/** One host-supplied useful action (edit / use-start / continue …). The card
+ * invents no effect; it only renders the host's binding beside the exact
+ * native inspect spelling it can always derive. */
+export interface AgentCardAction {label: string; run: () => void}
+
 function Refs({refs, label}: {refs?: string[] | null; label: string}) {
-  if (!refs || refs.length === 0) return null;
-  return <details className="oi-disclosure agent-card-refs">
-    <summary>{label}</summary>
-    <ul className="agent-card-ref-list">{refs.map((ref) => <li key={ref}><code className="oi-ref">{ref}</code></li>)}</ul>
-  </details>;
+	if (!refs || refs.length === 0) return null;
+	return <details className="oi-disclosure agent-card-refs">
+		<summary>{label}</summary>
+		<ul className="agent-card-ref-list">{refs.map((ref) => <li key={ref}><code className="oi-ref">{ref}</code></li>)}</ul>
+	</details>;
+}
+
+/** Carried vs currently-operative repertoire, from the card's own per-set
+ * `resolved` fact: operative here / carried but not resolved here. A set the
+ * reading could not resolve stays visible as unresolved — never counted as
+ * operative. */
+function CarrySplit({field}: {field: CardField & {skill_sets?: {ref: string; resolved: boolean | null; members?: number; withheld?: number}[]}}) {
+	const sets = field.skill_sets ?? [];
+	if (sets.length === 0) return null;
+	const operative = sets.filter((set) => set.resolved === true);
+	const carried = sets.filter((set) => set.resolved !== true);
+	return <div className="agent-card-carry-split" aria-label="Carried and currently-operative repertoire">
+		<p className="oi-note">Operative here: {operative.length === 0 ? "none resolved" : operative.map((set) => set.ref).join(", ")}</p>
+		{carried.length > 0 && <p className="oi-note">Carried, not resolved here: {carried.map((set) => `${set.ref} (${set.members ?? 0} members${set.withheld ? `, ${set.withheld} withheld` : ""})`).join("; ")}</p>}
+	</div>;
 }
 
 function Field({title, field, children}: {title: string; field: CardField; children?: ReactNode}) {
@@ -33,25 +65,28 @@ function Field({title, field, children}: {title: string; field: CardField; child
   </section>;
 }
 
-export function HumanAgentCard({card}: {card: Card}) {
-  const {identity} = card;
-  return <article className="agent-card" aria-label={`Agent card — ${identity.name}`}>
-    <header className="agent-card-head">
-      <h3 className="agency-detail-title">{identity.name}</h3>
-      <div className="oi-ref-row">
-        <span className="oi-ref">{identity.agent_ref}</span>
-        <span className="oi-state">{identity.profile_ref}@{identity.revision}</span>
-      </div>
-    </header>
+export function HumanAgentCard({card, standing, actions}: {card: Card; standing?: AgentCardStanding; actions?: AgentCardAction[]}) {
+	const {identity} = card;
+	return <article className="agent-card" aria-label={`Agent card — ${identity.name}`} data-agent-standing={standing}>
+		<header className="agent-card-head">
+			<h3 className="agency-detail-title">{identity.name}</h3>
+			<div className="oi-ref-row">
+				<span className="oi-ref">{identity.agent_ref}</span>
+				<span className="oi-state">{identity.profile_ref}@{identity.revision}</span>
+				{standing && <span className="oi-state" data-agent-standing={standing} role="status">{STANDING_LABEL[standing]}</span>}
+			</div>
+		</header>
 
     <Field title="Why I'm here" field={card.why_im_here}>
       {card.why_im_here.intent_expression && card.why_im_here.intent_expression !== card.why_im_here.text &&
         <details className="oi-disclosure"><summary>Original intent, as expressed</summary><p className="agent-card-intent">{card.why_im_here.intent_expression}</p></details>}
     </Field>
-    <Field title="What I can do" field={card.what_i_can_do}/>
-    <Field title="How I work" field={card.how_i_work}/>
-    {card.how_i_orient && <Field title="How I orient" field={card.how_i_orient}/>}
-    <Field title="What I carry" field={card.what_i_carry}/>
+	<Field title="What I can do" field={card.what_i_can_do}/>
+		<Field title="How I work" field={card.how_i_work}/>
+		{card.how_i_orient && <Field title="How I orient" field={card.how_i_orient}/>}
+		<Field title="What I carry" field={card.what_i_carry}>
+			<CarrySplit field={card.what_i_carry}/>
+		</Field>
     <Field title="Where I participate" field={card.where_i_participate}>
       {card.where_i_participate.other_worlds && card.where_i_participate.other_worlds.length > 0 &&
         <p className="agency-dim">Also a separate reading in {card.where_i_participate.other_worlds.join(", ")}.</p>}
@@ -75,7 +110,15 @@ export function HumanAgentCard({card}: {card: Card}) {
       </details>
     </section>
 
-    <Field title="Currently" field={card.currently}/>
+	<Field title="Currently" field={card.currently}/>
+
+		<section className="agent-card-field" aria-label="Useful next action">
+			<h4 className="agent-card-label">Useful next action</h4>
+			<p className="oi-note">Inspect the exact native basis: <code>oi agent participation --agent {identity.agent_ref} --json</code></p>
+			{actions && actions.length > 0 && <div className="oi-action-group">
+				{actions.map((action) => <button key={action.label} type="button" className="oi-action" onClick={action.run}>{action.label}</button>)}
+			</div>}
+		</section>
 
     {card.public && <section className="agent-card-field" aria-label="Public disclosure">
       <h4 className="agent-card-label">Publicly disclosed</h4>
@@ -87,17 +130,17 @@ export function HumanAgentCard({card}: {card: Card}) {
 }
 
 /** Loads the card from the kernel for one Agent (and optionally one World). */
-export function LiveHumanAgentCard({agentRef, worldRef}: {agentRef: string; worldRef?: string | null}) {
-  const kernel = useKernel();
-  const [card, setCard] = useState<Card>();
-  const [error, setError] = useState<string>();
-  useEffect(() => {
-    let live = true;
-    setCard(undefined); setError(undefined);
-    readAgentCard(kernel.transport, agentRef, worldRef).then((value) => { if (live) setCard(value); }, (e) => { if (live) setError(String(e instanceof Error ? e.message : e)); });
-    return () => { live = false; };
-  }, [kernel.transport, agentRef, worldRef]);
-  if (error) return <p className="oi-refusal" role="status">The Agent card could not be derived: {error}</p>;
-  if (!card) return <p className="oi-note" aria-busy="true">Deriving the Agent card from its native owners…</p>;
-  return <HumanAgentCard card={card}/>;
+export function LiveHumanAgentCard({agentRef, worldRef, standing, actions}: {agentRef: string; worldRef?: string | null; standing?: AgentCardStanding; actions?: AgentCardAction[]}) {
+	const kernel = useKernel();
+	const [card, setCard] = useState<Card>();
+	const [error, setError] = useState<string>();
+	useEffect(() => {
+		let live = true;
+		setCard(undefined); setError(undefined);
+		readAgentCard(kernel.transport, agentRef, worldRef).then((value) => { if (live) setCard(value); }, (e) => { if (live) setError(String(e instanceof Error ? e.message : e)); });
+		return () => { live = false; };
+	}, [kernel.transport, agentRef, worldRef]);
+	if (error) return <p className="oi-refusal" role="status" data-agent-standing="unavailable">The Agent card could not be derived: {error}</p>;
+	if (!card) return <p className="oi-note" aria-busy="true">Deriving the Agent card from its native owners…</p>;
+	return <HumanAgentCard card={card} standing={standing} actions={actions}/>;
 }
