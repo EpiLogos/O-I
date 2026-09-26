@@ -17,7 +17,7 @@ export type DisclosureState =
   | "Withheld"
   | "Pending reload";
 
-export type AgentDurability = "durable" | "team" | "temporary";
+export type AgentDurability = "team" | "temporary";
 
 /** The mint draft. `intentExpression` is retained byte-for-byte: it is
  * shown back unedited in review and is never paraphrased or trimmed by
