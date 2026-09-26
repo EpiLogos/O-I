@@ -166,6 +166,20 @@ grep -rl "__cradle" dist/assets/ 2>/dev/null | wc -l   # expect 0
 }
 ```
 
+## The real-model provider (`walk/lib/walk-provider.mjs`)
+
+Walks whose scenario needs a real model turn register their pi provider
+through `walkPiArgv()`, which pins `--provider zai --model glm-5.3-flash`
+(override with `OI_WALK_MODEL_PROVIDER` / `OI_WALK_MODEL_ID`). A walk session
+can therefore never inherit an ambient harness default again — the
+2026-09-23 runs silently burned glm-5.3 non-flash that way.
+
+Prompting a real model is opt-in: without `OI_WALK_REAL_PROVIDER=1` the
+real-model phases are skipped and the receipt says so
+(`realProviderAuthorised()` / `REAL_PROVIDER_SKIP_NOTE`). The fixture-ACP
+walks (agent-dictation, select-send, task-basis, first-vertical,
+send-group-reconnect) reach no model and need no gate.
+
 ## How phase-gate walks use it
 
 At each phase gate the owner walks the app; the harness is what makes that

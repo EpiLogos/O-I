@@ -13,6 +13,7 @@
 import {execFileSync} from "node:child_process";
 import {chmodSync, writeFileSync} from "node:fs";
 import {join} from "node:path";
+import {walkPiArgv} from "./walk-provider.mjs";
 
 export const SESSIONS = Object.freeze({
   review: "agent-session/specimen-review",
@@ -39,8 +40,7 @@ export function makeSessions({root, projectRoot, projectId, env: baseEnv}) {
   for (const [key, ref] of Object.entries(SESSIONS)) intents.push({operation: "attach-agent-session", attachment: {agent_session: ref, purpose: {review: "Review the declared section order", survey: "Survey where section order is decided", direct: "A direct question about the release notes"}[key], provenance: ["Explicit real Factory trajectory walk"]}});
   for (const intent of intents) apply(native("stage", "--space", SPACE, "--intent-json", JSON.stringify(intent)));
   native("encounter-configure", "--provider-json", JSON.stringify({id: "factory-walk-false", label: "Factory walk failing provider", argv: ["/usr/bin/false"]}));
-  const piBin = process.env.OI_WALK_PI_BIN ?? join(process.env.HOME, ".local/bin/pi");
-  native("encounter-configure", "--provider-json", JSON.stringify({protocol: "pi-rpc", id: "factory-walk-pi", label: "Factory walk Pi (existing provider)", argv: [piBin, "--mode", "rpc"]}));
+  native("encounter-configure", "--provider-json", JSON.stringify({protocol: "pi-rpc", id: "factory-walk-pi", label: "Factory walk Pi (existing provider)", argv: walkPiArgv()}));
   const owner = native("encounter-start");
   if (!owner.ok) throw new Error(JSON.stringify(owner));
   const request = (session, action, fields = {}) => {
