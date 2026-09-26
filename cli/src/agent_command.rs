@@ -97,7 +97,7 @@ fn parse_agent_args(args: &[OsString], usage: &str) -> Result<AgentArgs, String>
     Ok(AgentArgs { agent, world, json, interface_url, out })
 }
 
-const AGENT_USAGE: &str = "oi agent participation|card --agent <agent_ref> [--world <world_ref>] [--json]\n       oi agent a2a-card --agent <agent_ref> --interface-url <url> [--world <world_ref>] [--out FILE]";
+const AGENT_USAGE: &str = "oi agent participation|card --agent <agent_ref> [--world <world_ref>] [--json]\n       oi agent a2a-card --agent <agent_ref> --interface-url <url> [--world <world_ref>] [--out FILE]\n       oi agent roster [--project <name>] [--json]";
 
 fn agent_scratch_dir() -> Result<PathBuf, String> {
     let dir = env::temp_dir().join(format!("oi-agent-participation-{}", std::process::id()));
@@ -136,7 +136,42 @@ fn command_agent(args: &[OsString]) -> Result<i32, String> {
             println!("  participation  compose oi.agent-world-participation/v1 from Central, AIKit, Actuation, Factory and Workcell");
             println!("  card           derive oi.human-agent-card/v1 from that participation");
             println!("  a2a-card       hand the participation to `aikit a2a card` (AIKit owns the A2A builder)");
+            println!("  roster         read the native Agent roster (`agent-profile.roster`); a proposal is a stored source, never an accepted Agent");
             Ok(0)
+        }
+        Some("roster") => {
+            let mut project: Option<String> = None;
+            let mut json = false;
+            let mut iter = rest.iter();
+            while let Some(argument) = iter.next() {
+                match argument.to_str().ok_or("agent roster arguments must be UTF-8")? {
+                    "--json" => json = true,
+                    "--project" => {
+                        project = Some(
+                            iter.next()
+                                .and_then(|value| value.to_str())
+                                .ok_or("--project requires a project name")?
+                                .to_owned(),
+                        )
+                    }
+                    other => return Err(format!("unexpected argument `{other}`; usage: {AGENT_USAGE}")),
+                }
+            }
+            let input = match &project {
+                Some(name) => serde_json::json!({"scope": "project", "project": name}),
+                None => serde_json::json!({"scope": "root"}),
+            };
+            let executable = resolve_owner_executable("central")?;
+            let mut argv = vec![
+                OsString::from("action"),
+                OsString::from("run"),
+                OsString::from("agent-profile.roster"),
+                OsString::from(serde_json::to_string(&input).map_err(|error| error.to_string())?),
+            ];
+            if json {
+                argv.push(OsString::from("--json"));
+            }
+            exec_native(&executable, argv)
         }
         Some("participation") => {
             let parsed = parse_agent_args(rest, AGENT_USAGE)?;

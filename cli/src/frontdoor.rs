@@ -20,9 +20,19 @@ pub fn cli_main() -> ExitCode {
                 println!("  oi ground status|bind          inspect or explicitly change the default ground binding");
                 println!("  oi mode list|set <frame>|clear [--json]");
                 println!("                                state which install mode (#268) you are adopting; the Context Frames organise the six modes");
+                println!();
                 println!("Current world:");
                 println!("  oi current-world [--json]      disclose the situated six-product composition and current machine/Workcell relation");
                 println!();
+                println!("Whole-World heads:");
+                println!("  oi world [--json]              whole-World orientation over the current-world, composition, ground and mode readings; old routes preserved (`oi world status|current|ground|mode|profile`)");
+                println!("  oi search WORDS...             inert search through the installed AIKit over the composed field; search finds, never executes");
+                println!("  oi act                         the Central native Action doorway: `oi act` lists (read-only), `oi act describe <action>`, `oi act invoke <action> --input <json>|@file`");
+                println!("  oi agent roster [--project P] [--json]");
+                println!("                                 read the native Agent roster; `oi agent participation|card` compose one Agent in one World");
+                println!("  oi work direct|factory ...     choose the work relation explicitly: Direct session work (native SessionSpace) or an explicit Factory Commission");
+                println!("  oi explain ...                 explanation through the installed AIKit owner");
+                println!("  oi ui                          the native AIKit terminal over this World");
                 println!("Current-main development / #97 acceptance:");
                 println!("  oi install central [--source existing|pinned]");
                 println!("                                install/register current ProjectCentral-capable Central source; the source is exclusive-and-declared when both a compatible ctrl and the pinned install apply");
@@ -117,6 +127,15 @@ pub fn cli_main() -> ExitCode {
         return match command_agent(args.get(1..).unwrap_or_default()) {
             Ok(code) => ExitCode::from(code.clamp(0, 255) as u8),
             Err(message) => { eprintln!("oi: agent: {message}"); ExitCode::from(2) }
+        };
+    }
+    if let Some(result) = world_heads_route(&args) {
+        return match result {
+            Ok(code) => ExitCode::from(code.clamp(0, 255) as u8),
+            Err(message) => {
+                eprintln!("oi: {message}");
+                ExitCode::from(2)
+            }
         };
     }
     if command == Some("update") {
