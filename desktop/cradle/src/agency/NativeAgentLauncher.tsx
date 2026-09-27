@@ -8,6 +8,10 @@ import {LiveHumanAgentCard} from "./HumanAgentCard";
 import {CharacterSection} from "./character/CharacterSection";
 import {CharacterEditor} from "./character/CharacterEditor";
 
+/** Native stage names read as outcomes, not implementation seams. The
+ * `data-stage` values stay the native stage identities for tests. */
+const STAGE_LABEL={propose:"Saved",accept:"Accepted",readiness:"World ready",prepare:"Prepared"} as const;
+
 /** Native source creation and session selection in the existing Agent surface.
  * `controller` is a test/embed seam; production always uses the kernel owner. */
 export function NativeAgentLauncher({project,onChoose,controller:injected}:{project?:string;onChoose?:(row:EncounterRow)=>Promise<void>|void;controller?:NativeAgentController}) {
@@ -24,6 +28,14 @@ export function NativeAgentLauncher({project,onChoose,controller:injected}:{proj
 			if(onChoose)await onChoose(row);
 			else window.dispatchEvent(new CustomEvent("oi:agent-session-prepared",{detail:row}));
 		}catch(error){setOpenError(String(error));}finally{setOpening(false);}
+	};
+	/** The reviewed compound journey: native save → acceptance → readiness →
+	 * preparation, then the conversation actually opens. A failed stage keeps
+	 * its per-stage affordances and the Saved; not running report; a failed
+	 * open leaves the prepared session standing for explicit retry. */
+	const saveAndStart=async()=>{
+		const prepared=await controller.saveAndStart();
+		if(prepared)await choose(prepared);
 	};
 	const {draft,review,prepared,compound}=state;
 	const repertoireFirst=!!state.skillSets&&state.skillSets.length>0;
@@ -61,8 +73,8 @@ export function NativeAgentLauncher({project,onChoose,controller:injected}:{proj
 				<p className="oi-note">Exact effective bytes are checked at preparation and sent to the parent session. Brokered children require separate admission.</p>
 			</fieldset>
 			<CharacterSection value={draft.characterRef} onChange={characterRef=>controller.edit({characterRef})}/>
-			<button type="button" className="oi-action" onClick={()=>void controller.propose()} disabled={!draft.name||!draft.purpose||!draft.scopeConfirmed}>Create native proposal</button>
-			<button type="button" className="oi-action oi-action-primary" onClick={()=>void controller.saveAndStart()} disabled={!draft.name||!draft.purpose||!draft.scopeConfirmed}>Save and start Direct work</button>
+			<button type="button" className="oi-action oi-action-primary" onClick={()=>void saveAndStart()} disabled={!draft.name||!draft.purpose||!draft.scopeConfirmed}>Save and start Direct work</button>
+			<button type="button" className="oi-action" onClick={()=>void controller.propose()} disabled={!draft.name||!draft.purpose||!draft.scopeConfirmed}>Save as native proposal only</button>
 			<p className="oi-note">Save and start runs the native save (CAS), acceptance, world-readiness check and session preparation in order, then opens the conversation. Each stage&apos;s real outcome is shown; a failure after the save keeps the source and names the failing stage.</p>
 		</fieldset>}
 		{review&&<section aria-label="Review native Agent source">
@@ -75,15 +87,17 @@ export function NativeAgentLauncher({project,onChoose,controller:injected}:{proj
 			{review.accepted&&<LiveHumanAgentCard agentRef={review.profile.agent_ref} worldRef={review.scope_ref} standing={prepared?"prepared":"accepted"} editableCharacter onCharacterChanged={()=>void controller.select(review.profile.ref)}
 				actions={[prepared
 					?{label:"Open conversation and choose harness",run:()=>void choose(prepared)}
-					:{label:"Save and start Direct work",run:()=>void controller.saveAndStart()}]}/>}
+					:{label:"Save and start Direct work",run:()=>void saveAndStart()}]}/>}
 			{review.accepted?<p role="status">Accepted by the native human-authority path and read back from the roster.</p>:<p role="status">This is a stored proposal, not an accepted Agent and not permission to execute.</p>}
-			{!review.accepted&&<button type="button" className="oi-action" disabled={state.busy||!!state.unknown} onClick={()=>void controller.accept()}>Accept this exact Agent definition</button>}
-			{review.accepted&&!prepared&&<button type="button" className="oi-action" disabled={state.busy||!!state.unknown||state.world?.world_readiness.ready!==true} onClick={()=>void controller.prepare()}>Prepare Direct session</button>}
-			{!prepared&&<button type="button" className="oi-action oi-action-primary" disabled={state.busy||!!state.unknown} onClick={()=>void controller.saveAndStart()}>Save and start Direct work</button>}
+			<details><summary>Stage-by-stage native operations</summary>
+				{!review.accepted&&<button type="button" className="oi-action" disabled={state.busy||!!state.unknown} onClick={()=>void controller.accept()}>Accept this exact Agent definition</button>}
+				{review.accepted&&!prepared&&<button type="button" className="oi-action" disabled={state.busy||!!state.unknown||state.world?.world_readiness.ready!==true} onClick={()=>void controller.prepare()}>Prepare Direct session</button>}
+			</details>
+			{!prepared&&<button type="button" className="oi-action oi-action-primary" disabled={state.busy||!!state.unknown} onClick={()=>void saveAndStart()}>Save and start Direct work</button>}
 			<button type="button" className="oi-action" disabled={state.busy||!!state.unknown} onClick={()=>controller.edit({})}>Back to held draft</button>
 		</section>}
 		{compound&&<div role="status" aria-label="Save and start stage outcomes" className="oi-note">
-			{(["propose","accept","readiness","prepare"] as const).map(stage=><span key={stage} data-stage={stage} data-stage-outcome={compound[stage]} style={{marginInlineEnd:"0.75em"}}>{stage}: {compound[stage]}</span>)}
+			{(["propose","accept","readiness","prepare"] as const).map(stage=><span key={stage} data-stage={stage} data-stage-outcome={compound[stage]} style={{marginInlineEnd:"0.75em"}}>{STAGE_LABEL[stage]}: {compound[stage]}</span>)}
 		</div>}
 		{prepared&&<section aria-label="Prepared native session"><p role="status">Native AgentSession attached. No provider has been started by preparation.</p><p className="oi-note"><code>{prepared.agent_session}</code><br/><code>{prepared.space}</code></p><button type="button" className="oi-action" disabled={opening} onClick={()=>void choose(prepared)}>Open conversation and choose harness</button></section>}
 		{state.world&&<p className="oi-note" role="status">{state.world.world_readiness.ready?`Native World: ${state.world.world_readiness.world_ref}`:state.world.world_readiness.reason??"A native World declaration is required before session preparation."}</p>}
