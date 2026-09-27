@@ -1,0 +1,11 @@
+{
+  "schema": "central.project-now.handoff/v1",
+  "id": "oi-full-convergence-landed-every-lane-2026-09-27",
+  "provenance": "agent-authored-bounded-return",
+  "actor": "zcode-convergence",
+  "kind": "handoff",
+  "recorded_at_unix_seconds": 1790526386,
+  "subject": "O-I full convergence landed: every lane onto main (9905eac4), fresh installs done; one envelope reconciliation open for the delivery lead",
+  "result": "PR #543 merged via rebase (linear history per branch protection). Integrated: techne #519 with committed tail, command-encounter #541, flow-day #529, factory-expressions commission + docs #542, expression-publication #521, situation-frame #512, design #528, deep-links, material fix, theme-bound mark recovered from stash. Conflicts resolved by the convergence law (context.world one owner; lens a publication; Library one surface; save-and-start returns the prepared session). Retired with record: all Sep-25-landed families (merge-tree NO-OP or verified-superseded), stale omarchy refs, the marker-bearing 65-jev prompt (content at 4141add3). Repairs: engine three-deps install site-wide, registry regeneration, state-placement classifications, canvas test to the Context-plane redesign, cargo fmt, flow.css tokens. Gates: tsc clean, 760/760 node, build green, modes 65/65, factory-tasks 1/1, factory-expressions 62/63 (harness provenance), mode-workspaces + factory-desk failures verified pre-existing on c32312bc. OPEN (named): curated-envelope essay-binding drift blocks build/preview/receiver CI until the delivery lead re-reconciles; env-1/3 cross-product lanes (ai-kit/central/factory/ql-mef) left standing as live. Installs: oi update --apply 7 products swapped (oi 9905eac4); desktop 0.1.0 bundle installed from converged tip and relaunched; doctor/verify/status green; frank pulled main and its update started. Stashes: site WIP kept (owner decision); six superseded dropped after the record. Record: campaign-evidence/2026-09-27-full-convergence/CONVERGENCE-RECORD.md",
+  "status": "active"
+}
