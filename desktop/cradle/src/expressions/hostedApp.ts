@@ -249,6 +249,8 @@ export function relayKernelChannel(frame: HTMLIFrameElement, transport: KernelTr
   const handler = async (event: MessageEvent) => {
     if (!live || event.source !== frame.contentWindow || !isEnvelope(event.data)) return;
     const {kind, req} = event.data;
+    // The private personal instrument has its own bounded native relay.
+    if (kind === "nara-instrument") return;
     // The announce answers hello; anything else in the envelope grammar gets
     // exactly one reply — data or a named error, never silence.
     if (kind === "oi-kernel-hello") { announce(); return; }

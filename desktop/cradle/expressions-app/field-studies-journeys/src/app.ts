@@ -53,6 +53,7 @@ import {installNativeWorkspace,type NativeSubject} from './nativeWorkspace.js';
 import {installLensStudio,type LensId} from './lensStudio.js';
 import {installResearchInstruments} from './researchInstruments.js';
 import {installPalaceInstrument} from './palaceInstrument.js';
+import {installNaraInstrument} from './naraInstrument.js';
 import type {PalaceDocumentSnapshot} from '../../../src/techne/m0m5/palace/composition';
 import {applyResearchMaterial,pruneResearchOccurrence,type ResearchMaterialAction} from './researchMaterial.js';
 import type {ConnectionBinding} from '../../../../../packages/oi-design-system/expressions-engine/oi/expressionBindings.mjs';
@@ -1101,6 +1102,10 @@ lensStudio.setMode(hostMode);
 (document.querySelector('#app .header-actions') as HTMLElement)?.insertAdjacentHTML('afterbegin',ib('native-save','save','Save (⌘S)','id="native-save"'));
 Object.assign(window.__FIELD_STUDIES__,{nativeWorking:()=>nativeWorkspace?.inspect(),nativeConnections:()=>engine.inspectConnections?.(),openNative:(reference:string)=>nativeWorkspace?.open(reference),openNativeFile:(path:string)=>nativeWorkspace?.openFile(path)});
 const qs=new URLSearchParams(location.search);
+const naraInstrument=installNaraInstrument({nativeView:()=>nativeWorkspace?.nativeView(),sceneId:()=>scene().id});
+if(qs.get('nara')==='1')naraInstrument.open();
+const disposeFieldStudies=window.__FIELD_STUDIES__.dispose;
+window.__FIELD_STUDIES__.dispose=()=>{naraInstrument.destroy();disposeFieldStudies();};
 // A hosted deep link (the app's own ?journey/?scene idiom): open a named
 // expression from the browser library, the featured set or the starters —
 // the Technè M0 instrument opens onto the Epii face this way

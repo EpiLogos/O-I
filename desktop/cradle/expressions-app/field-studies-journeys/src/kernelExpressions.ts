@@ -94,6 +94,11 @@ function call<T>(kind:string,body:Record<string,unknown>,timeoutMs=20000):Promis
  });
 }
 
+/** Personal readings stay on this session channel, outside Journey data. */
+export function naraInstrumentRequest(request:import('../../../src/nara/instrumentProtocol').NaraInstrumentRequest):Promise<import('../../../src/nara/instrumentProtocol').NaraInstrumentReply>{
+ return call('nara-instrument',{request},90000);
+}
+
 export interface KernelExpressionListing {expression_ref:string;title:string;revision:number;dirty?:boolean;last_touched_unix?:number}
 
 /** The kernel's own expression listing (oi.expression-list/v1) — most

@@ -36,6 +36,24 @@ async fn kernel_op(app: AppHandle, op: KernelOp) -> Result<KernelOpOutcome, Stri
             return oi_cradle_kernel::expression_recovery::execute(request);
         }
         let host = app.state::<KernelHost>();
+        let voice = host.0.lock().map_err(|_| "kernel lock unavailable")?.prepare_nara_voice(&op)?;
+        if let Some(prepared) = voice { return prepared.execute(); }
+        let dialogue = host
+            .0
+            .lock()
+            .map_err(|_| "kernel lock unavailable")?
+            .prepare_nara_dialogue(&op)?;
+        if let Some(prepared) = dialogue {
+            return prepared.execute();
+        }
+        let identity = host
+            .0
+            .lock()
+            .map_err(|_| "kernel lock unavailable")?
+            .prepare_nara_identity(&op);
+        if let Some(prepared) = identity {
+            return prepared.execute();
+        }
         let prepared = host.0.lock().map_err(|_| "kernel lock unavailable")?.prepare_owner_read(&op);
         if let Some(read) = prepared { return read.execute(); }
         let working=match &op {

@@ -67,6 +67,13 @@ pub mod inhabitation;
 pub mod knowledge;
 pub mod knowledge_prepared;
 pub mod material;
+pub mod nara_dialogue;
+pub mod nara_voice;
+mod nara_voice_actor;
+mod nara_voice_answer;
+mod nara_voice_constitution;
+mod nara_voice_transport;
+pub mod nara_identity;
 pub mod native_expression;
 pub mod owner_read;
 pub mod presentation;
@@ -183,6 +190,7 @@ pub struct Kernel {
     presentation: presentation::Store,
     decisions: decision::Store,
     dictation: dictation::Store,
+    nara_voice: nara_voice::Store,
     retained_files: retained_files::Store,
     expressions: expression::Application,
     native_expression: native_expression::Manager,
@@ -284,6 +292,14 @@ pub enum KernelOp {
     NativeExpression {
         request: native_expression::Request,
     },
+    NaraIdentity {
+        request: nara_identity::Request,
+    },
+    NaraDialogue {
+        project: String,
+        request: nara_dialogue::Request,
+    },
+    NaraVoice { project: String, request: nara_voice::Request },
     /// Pull the whole kernel state (read model; emits nothing).
     State,
     WorldRead,
@@ -901,6 +917,13 @@ pub enum KernelOpResult {
     NativeExpression {
         data: serde_json::Value,
     },
+    NaraIdentity {
+        data: serde_json::Value,
+    },
+    NaraDialogue {
+        data: serde_json::Value,
+    },
+    NaraVoice { data: serde_json::Value },
     State {
         snapshot: KernelSnapshot,
     },
@@ -1221,6 +1244,7 @@ impl Kernel {
             presentation: presentation::Store::default(),
             decisions: decision::Store::default(),
             dictation: dictation::Store::default(),
+            nara_voice: nara_voice::Store::default(),
             retained_files: retained_files::Store::default(),
             expressions: expression::Application::default(),
             native_expression: native_expression::Manager::default(),
@@ -1240,6 +1264,55 @@ impl Kernel {
 
     pub fn discover() -> Self {
         Self::new(CentralClient::discover())
+    }
+
+    /// Identity calls only native owners; release the global UI kernel lock
+    /// while ephemeris calculation or Central's source CAS is running.
+    pub fn prepare_nara_identity(&self, op: &KernelOp) -> Option<nara_identity::Prepared> {
+        match op {
+            KernelOp::NaraIdentity { request } => Some(nara_identity::Prepared::new(
+                self.client.clone(),
+                request.clone(),
+            )),
+            _ => None,
+        }
+    }
+
+    pub fn prepare_nara_voice(&mut self, op: &KernelOp) -> Result<Option<nara_voice::Prepared>, String> {
+        let KernelOp::NaraVoice { project, request } = op else { return Ok(None); };
+        let document = match self.nara_voice.binding(request)? {
+            Some(binding) => self.expressions.apply(&self.client,
+                expression::Request::Inspect { expression_ref: binding.expression_ref })?.0["document"].clone(),
+            None => serde_json::Value::Null,
+        };
+        let cwd = self.agent_location((!project.is_empty()).then_some(project.as_str()))?;
+        let project_ref = self.agent_project_ref(project, &cwd)?;
+        self.nara_voice.prepare(self.client.clone(), self.agency.clone(), cwd, project_ref,
+            request.clone(), document).map(Some)
+    }
+
+    pub fn prepare_nara_dialogue(
+        &mut self,
+        op: &KernelOp,
+    ) -> Result<Option<nara_dialogue::Prepared>, String> {
+        let KernelOp::NaraDialogue { project, request } = op else {
+            return Ok(None);
+        };
+        self.expressions.apply(
+            &self.client,
+            expression::Request::Inspect {
+                expression_ref: request.expression_ref.clone(),
+            },
+        )?;
+        let cwd = self.agent_location((!project.is_empty()).then_some(project.as_str()))?;
+        let project_ref = self.agent_project_ref(project, &cwd)?;
+        Ok(Some(nara_dialogue::Prepared::new(
+            self.client.clone(),
+            self.agency.clone(),
+            cwd,
+            project_ref,
+            request.clone(),
+        )))
     }
 
     /// The ordered event log — the observable seam the host exposes by
@@ -1500,6 +1573,36 @@ impl Kernel {
                     result: KernelOpResult::NativeExpression { data },
                 })
             }
+            op @ KernelOp::NaraVoice { .. } => self.prepare_nara_voice(&op)?.ok_or("Native voice preparation unavailable")?.execute(),
+            KernelOp::NaraDialogue { project, request } => {
+                // An arbitrary renderer string cannot invent an Expression.
+                self.expressions.apply(
+                    &self.client,
+                    expression::Request::Inspect {
+                        expression_ref: request.expression_ref.clone(),
+                    },
+                )?;
+                let cwd = self.agent_location((!project.is_empty()).then_some(project.as_str()))?;
+                let project_ref = self.agent_project_ref(&project, &cwd)?;
+                let data = nara_dialogue::resolve(
+                    &self.client,
+                    &self.agency,
+                    &cwd,
+                    &project_ref,
+                    request,
+                )?;
+                Ok(KernelOpOutcome {
+                    receipts: Vec::new(),
+                    result: KernelOpResult::NaraDialogue { data },
+                })
+            }
+            KernelOp::NaraIdentity { request } => {
+                let data = nara_identity::apply(&self.client, request)?;
+                Ok(KernelOpOutcome {
+                    receipts: Vec::new(),
+                    result: KernelOpResult::NaraIdentity { data },
+                })
+            }
             KernelOp::ExpressionRecovery { request } => expression_recovery::execute(request),
             KernelOp::Expression { request } => {
                 let focus_ref = match &request {
@@ -1522,6 +1625,7 @@ impl Kernel {
                 let (data, changed) = self.expressions.apply(&self.client, request)?;
                 let mut receipts = Vec::new();
                 if let Some(change) = changed {
+                    self.nara_voice.invalidate_expression(&change.expression_ref);
                     receipts.push(self.log.record(KernelEvent::ExpressionChanged {
                         expression_ref: change.expression_ref,
                         revision: change.revision,

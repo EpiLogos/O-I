@@ -213,6 +213,22 @@ fn handle(kernel: &Mutex<Kernel>, request: &Request) -> BridgeResponse {
                 if let KernelOp::ExpressionRecovery { request } = op {
                     return oi_cradle_kernel::expression_recovery::execute(request);
                 }
+                let voice = kernel.lock().expect("kernel mutex").prepare_nara_voice(&op)?;
+                if let Some(prepared) = voice { return prepared.execute(); }
+                let dialogue = kernel
+                    .lock()
+                    .expect("kernel mutex")
+                    .prepare_nara_dialogue(&op)?;
+                if let Some(prepared) = dialogue {
+                    return prepared.execute();
+                }
+                let identity = kernel
+                    .lock()
+                    .expect("kernel mutex")
+                    .prepare_nara_identity(&op);
+                if let Some(prepared) = identity {
+                    return prepared.execute();
+                }
                 let read = kernel.lock().expect("kernel mutex").prepare_owner_read(&op);
                 if let Some(read) = read {
                     return read.execute();

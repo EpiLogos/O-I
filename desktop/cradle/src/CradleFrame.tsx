@@ -847,8 +847,8 @@ export function CradleFrame({onComposed}:{onComposed?:()=>void}) {
    * binding in the ordinary pane system, opened or focused like System and
    * Explore. It holds no owner identity of its own — what it shows is read
    * through its own owners. */
-  const openModeSurface = async (kind:"expressions"|"techne"|"epi-logos") => {
-    const title = kind==="expressions" ? "Expressions" : kind==="techne" ? "Technè" : "Epi-Logos";
+  const openModeSurface = async (kind:"expressions"|"techne"|"epi-logos"|"nara-identity") => {
+    const title = kind==="expressions" ? "Expressions" : kind==="techne" ? "Technè" : kind==="nara-identity" ? "Identity · Nara" : "Epi-Logos";
     const existing = Object.values(stateRef.current.surfaces).find(b=>b.kind===kind);
     const binding = existing ?? {id:crypto.randomUUID(),kind,title};
     if(!kernel.snapshot.surfaces[binding.id]){
@@ -1034,6 +1034,7 @@ export function CradleFrame({onComposed}:{onComposed?:()=>void}) {
     };
     const pairs:[string,(event:Event)=>void][]=[["oi:enter-mode",enterModeEvent],["oi:open-encounter",openEncounterEvent],["oi:open-agency",agencyOpen],["oi:panel-open-subject",openSubject],["oi:workspace-message",message],["oi:open-settings",settings],["oi:close-settings",closeSettings],["oi:agent-setup-return",agentSetupReturn],["oi:library-open",libraryOpen],["oi:epi-open-expression",expression],["oi:epi-examine",examine],["oi:epi-open-source",source],["oi:epi-open-knowledge",knowledgeOpen],["oi:context-return",back]];
     pairs.push([OPEN_AUTOMATIONS_EVENT,automationsOpen],["oi:open-scene-constellation",constellationOpen],["oi:open-scene-source",sceneSourceOpen]);
+    pairs.push(["oi:open-personal-expression",()=>{leave("Epi-Logos",undefined);void openModeSurfaceRef.current("nara-identity").catch(fail);}]);
     for(const [name,handler] of pairs)window.addEventListener(name,handler);
     return()=>{for(const [name,handler] of pairs)window.removeEventListener(name,handler);};
   },[]);
@@ -1872,7 +1873,7 @@ export function CradleFrame({onComposed}:{onComposed?:()=>void}) {
     onCreateForm:async kind=>{const form=DOCUMENT_FORMS.find(candidate=>candidate.kind===kind);if(!form)throw new Error(`The ${kind} form is not offered by the document roster`);const created=await createFormInPlace(kernel.transport,form,{project:workspace.current.project,projects:kernel.snapshot.navigator?.root?.work.projects});await openFile(created.location);window.dispatchEvent(new CustomEvent("oi:form-created",{detail:{path:created.location.path}}));},
     onMessage:message=>setWindowError(message),
   };
-  const worldNavigator=(workspaceSelector:ReactNode)=><WorldNavigator onAgent={summonAgent} onMessage={message=>setWindowError(message)} onExplore={()=>void openExplore().catch(e=>setWindowError(String(e)))} mode={mode} onMode={enterMode} onOpenEncounter={openEncounter} centralFiles={workspace.current.centralFiles??false} onCentralFilesChange={workspace.setCentralFiles} workspaceSelector={workspaceSelector} searchShortcut={leader.label} key={workspace.current.id} projectNavigation={workspace.current.projectNavigation ?? {}} onNavigationChange={(ref,change)=>workspace.setProjectNavigation(ref,change,workspace.current.id)} onOpenFile={openFile} onProjectChange={workspace.browse} onOpenToday={openToday} onOpenWiki={(ref,title,project)=>openKnowledge({kind:"wiki",value:ref},title,project)} onSearch={()=>setSearchOpen(true)} activeEncounterRef={activeEncounterRef} onOpenFlowInstance={row=>openFlowInstance(row)} onNewFlow={()=>startWriting()} />;
+  const worldNavigator=(workspaceSelector:ReactNode)=><WorldNavigator onOpenIdentity={()=>void openModeSurface("nara-identity").catch(report)} onAgent={summonAgent} onMessage={message=>setWindowError(message)} onExplore={()=>void openExplore().catch(e=>setWindowError(String(e)))} mode={mode} onMode={enterMode} onOpenEncounter={openEncounter} centralFiles={workspace.current.centralFiles??false} onCentralFilesChange={workspace.setCentralFiles} workspaceSelector={workspaceSelector} searchShortcut={leader.label} key={workspace.current.id} projectNavigation={workspace.current.projectNavigation ?? {}} onNavigationChange={(ref,change)=>workspace.setProjectNavigation(ref,change,workspace.current.id)} onOpenFile={openFile} onProjectChange={workspace.browse} onOpenToday={openToday} onOpenWiki={(ref,title,project)=>openKnowledge({kind:"wiki",value:ref},title,project)} onSearch={()=>setSearchOpen(true)} activeEncounterRef={activeEncounterRef} onOpenFlowInstance={row=>openFlowInstance(row)} onNewFlow={()=>startWriting()} />;
 
   return (
     <SituationProvider value={situation}>

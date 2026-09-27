@@ -2,7 +2,7 @@ import {IconTabStrip,IconTab} from "../workspace/primitives/IconTabStrip";
 import {CanvasHUD} from "../workspace/primitives/CanvasHost";
 import {ObjectSurface} from "../agent/objects/ObjectSurface";
 import {EncounterSurface} from "../encounter/EncounterSurface";
-import {lazy,Suspense,type ReactNode} from "react";
+import {Component,lazy,Suspense,type ReactNode} from "react";
 import type {ExploreSurfaceProps} from "../explore/ExploreSurface";
 /**
  * The Workbench (U0.3b) — the OS frame that exists ONLY while ≥1 surface is
@@ -457,11 +457,24 @@ export function GroupPane(props: PaneProps & { group: Extract<Pane, { type: "gro
  * kind retains concealed; every kind releases on explicit close. */
 const CONCEAL_RELEASES = new Set(["sources", "blank"]);
 
-/** The surface body by kind: real owner surfaces where they exist (U0.4:
- * 'source', 'sources'), the clearly-named test card otherwise. */
+/** A failed lazy body must not take the tab strip and other working panes
+ * with it. Keep the existing workspace-message route and explicit tab close. */
+class SurfaceBoundary extends Component<{children: ReactNode; title: string}, {failed: boolean}> {
+  state = {failed: false};
+  static getDerivedStateFromError() {return {failed: true};}
+  componentDidCatch(error: unknown) {
+    const reason = error instanceof Error ? error.message : String(error);
+    window.dispatchEvent(new CustomEvent("oi:workspace-message", {detail: {
+      message: `${this.props.title} could not load — ${reason}. Close and reopen this tab to retry.`,
+    }}));
+  }
+  render() {return this.state.failed ? null : this.props.children;}
+}
+
+/** The surface body by kind, isolated from unrelated working panes. */
 export function SurfaceBody(props: Parameters<typeof SurfaceBodyImpl>[0]) {
   const label = props.binding.pending ? `Opening ${props.binding.title}…` : props.binding.title;
-  return <Suspense fallback={<Loading label={`Loading ${label}`} scope="surface"/>}><SurfaceBodyImpl {...props}/></Suspense>;
+  return <SurfaceBoundary key={props.binding.id} title={props.binding.title}><Suspense fallback={<Loading label={`Loading ${label}`} scope="surface"/>}><SurfaceBodyImpl {...props}/></Suspense></SurfaceBoundary>;
 }
 function SurfaceBodyImpl({
   binding,onView,

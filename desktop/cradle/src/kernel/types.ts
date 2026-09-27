@@ -204,6 +204,9 @@ export type KernelOp =
   | {op:"theme_revert"}
   | {op:"theme_remove";id:string}
   | {op:"nara_decision_record";decision:import("../nara/session").SpeechToolDecision}
+  | {op:"nara_identity";request:import("../nara/identity/types").NaraIdentityRequest}
+  | {op:"nara_voice";project:string;request:import("../nara/nativeVoice").NativeVoiceRequest}
+  | {op:"nara_dialogue";project:string;request:import("../nara/nativeDialogue").NativeDialogueRequest}
   | {op: "native_expression"; request: {operation: "open"; path: string; expected_revision: string} | {operation: "exchange"; lease: string; request: unknown} | {operation: "close"; lease: string}}
   | {op: "setup"; request: import("../configuration/adoptionController").AdoptionRequest}
   | {op:"being_encounter";request:Record<string,unknown>}
@@ -365,6 +368,9 @@ export type KernelOpResult =
   | {result:"presentation_reading";document:PresentationDocument}
   | {result:"nara_decision_recorded";decision:unknown}
   | {result: "native_expression"; data: unknown}
+  | {result: "nara_identity"; data: import("../nara/identity/types").NaraIdentityResult}
+  | {result:"nara_voice";data:import("../nara/nativeVoice").NativeVoiceResult}
+  | {result:"nara_dialogue";data:import("../nara/nativeDialogue").NativeDialogueResult}
   | {result: "setup_reading"; data: unknown}
   | {result:"being_encounter";data:unknown}
   | {result:"expression";data:import("../expression/types").ExpressionResult}
