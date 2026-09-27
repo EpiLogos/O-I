@@ -1,8 +1,10 @@
 {
   "standing": "controlled-browser-not-live-model",
   "checks": [
-    "The actual SettingsHome receiving path targets the disclosed native owner and credential-reference controls, with no secret-material field.",
+    "The production Settings page receives the Agent setup destination at Harnesses and navigates to Credentials; unavailable disclosures do not invent a secret-material field.",
     "Setup excursion preserves the exact held purpose and only refreshes owner readings on return.",
+    "Save and start completes the reviewed journey by itself — save, acceptance, readiness and preparation in order, then the conversation opens with the native identities; no separate manual relay.",
+    "Returning to the held draft preserves the exact purpose; the prepared session is cleared with it.",
     "The actual native Skill catalogue constrains selectable context; selected references survive proposal and exact review before any acceptance or launch.",
     "Lost acknowledgement becomes unknown; explicit source read recovers acceptance without a second write.",
     "Native Agent/session identities enter the existing conversation selector, including Central root."

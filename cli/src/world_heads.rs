@@ -15,11 +15,61 @@ fn world_heads_route(args: &[OsString]) -> Option<Result<i32, String>> {
         "world" => Some(command_world(rest)),
         "search" => Some(dispatch_aikit_verb("search", rest)),
         "explain" => Some(dispatch_aikit_verb("explain", rest)),
-        "ui" => Some(dispatch_aikit_verb("ui", rest)),
+        "ui" => Some(command_ui(rest)),
         "act" => Some(command_act(rest)),
         "work" => Some(command_work(rest)),
         _ => None,
     }
+}
+
+/// `oi ui` — the terminal application over this World: the plain `aikit ui`
+/// delegation plus the composed-World supply. The orientation document is
+/// handed to the terminal through the established environment boundary
+/// (`OI_COMPOSED_WORLD`, the exact `oi world --json` document), so the
+/// surface's resting view opens on the composed World instead of only what a
+/// standalone AIKit can see. A bounded supply that cannot be encoded
+/// degrades to the plain delegation with the reason named — never silently.
+fn command_ui(args: &[OsString]) -> Result<i32, String> {
+    let product_override = env::var_os("OI_AIKIT_BIN").filter(|value| !value.is_empty());
+    let active = if product_override.is_none() {
+        active_suite_executable_s0("ai-kit")?
+    } else {
+        None
+    };
+    let composition = load_composition()?;
+    let executable = product_override
+        .map(PathBuf::from)
+        .or(active)
+        .or_else(|| {
+            composition
+                .modules
+                .get("ai-kit")
+                .and_then(|registration| registration.native_executable.as_ref())
+                .map(PathBuf::from)
+        })
+        .unwrap_or_else(|| "aikit".into());
+    match world_orientation_document() {
+        Ok(document) if document["current_world"].is_object() || document["surfaces"].is_object() => {
+            let encoded = serde_json::to_string(&document)
+                .map_err(|error| format!("cannot encode the composed World supply: {error}"))?;
+            // The composed reading is bounded by construction (roster and
+            // disclosure rows); an oversized encoding is a defect, named and
+            // degraded, never a truncated handoff.
+            if encoded.len() <= 1024 * 1024 {
+                env::set_var("OI_COMPOSED_WORLD", &encoded);
+            } else {
+                eprintln!(
+                    "oi ui: the composed World reading exceeds the supply bound; opening the terminal without it"
+                );
+            }
+        }
+        Ok(_) => {}
+        Err(error) => {
+            eprintln!("oi ui: opening without the composed World supply: {error}");
+        }
+    }
+    let forwarded = std::iter::once(OsString::from("ui")).chain(args.iter().cloned());
+    exec_native(&executable, forwarded)
 }
 
 const WORLD_USAGE: &str = "oi world [--json]                          whole-World orientation (current world, composition, requested mode)\n       oi world status|current|ground|mode|profile ...\n                                                the preserved routes (`oi status`, `oi current-world`, `oi ground`, `oi mode`, `oi profile`)";
@@ -47,8 +97,10 @@ fn command_world(args: &[OsString]) -> Result<i32, String> {
 
 /// One bounded orientation reading composed from the existing world readings
 /// by reference. A degraded reading is named in place — never collapsed into
-/// an empty list and never treated as a failure of the whole reading.
-fn command_world_orientation(json: bool) -> Result<i32, String> {
+/// an empty list and never treated as a failure of the whole reading. The
+/// same document `oi world --json` prints and `oi ui` supplies to the
+/// terminal application through the environment boundary.
+fn world_orientation_document() -> Result<serde_json::Value, String> {
     let requested = requested_mode_statement()?;
     let world = oi_cli::current_world::live_current_world().map(|reading| {
         if let Some(requested) = requested {
@@ -58,26 +110,30 @@ fn command_world_orientation(json: bool) -> Result<i32, String> {
         }
     });
     let surfaces = oi_cli::status::live_disclosure();
+    Ok(json!({
+        "schema": "oi.world-orientation/v1",
+        "current_world": match &world {
+            Ok(reading) => json!(reading),
+            Err(error) => json!({"error": error}),
+        },
+        "surfaces": match &surfaces {
+            Ok(disclosure) => json!(disclosure),
+            Err(error) => json!({"error": error}),
+        },
+        "next_actions": [
+            "oi world current --json",
+            "oi search <words>            (inert: finds, never executes)",
+            "oi act describe <action>     (the Central native Action field)",
+            "oi agent roster --json       (native Agent roster; `oi agent card` composes one card)",
+            "oi work direct|factory       (choose the work relation explicitly)",
+            "oi explain <subject>",
+        ],
+    }))
+}
+
+fn command_world_orientation(json: bool) -> Result<i32, String> {
     if json {
-        let document = json!({
-            "schema": "oi.world-orientation/v1",
-            "current_world": match &world {
-                Ok(reading) => json!(reading),
-                Err(error) => json!({"error": error}),
-            },
-            "surfaces": match &surfaces {
-                Ok(disclosure) => json!(disclosure),
-                Err(error) => json!({"error": error}),
-            },
-            "next_actions": [
-                "oi world current --json",
-                "oi search <words>            (inert: finds, never executes)",
-                "oi act describe <action>     (the Central native Action field)",
-                "oi agent roster --json       (native Agent roster; `oi agent card` composes one card)",
-                "oi work direct|factory       (choose the work relation explicitly)",
-                "oi explain <subject>",
-            ],
-        });
+        let document = world_orientation_document()?;
         println!(
             "{}",
             serde_json::to_string_pretty(&document)
@@ -85,6 +141,15 @@ fn command_world_orientation(json: bool) -> Result<i32, String> {
         );
         return Ok(0);
     }
+    let requested = requested_mode_statement()?;
+    let world = oi_cli::current_world::live_current_world().map(|reading| {
+        if let Some(requested) = requested {
+            reading.with_requested_mode(requested)
+        } else {
+            reading
+        }
+    });
+    let surfaces = oi_cli::status::live_disclosure();
     println!("World orientation");
     match &world {
         Ok(reading) => {
@@ -216,13 +281,18 @@ fn resolve_owner_executable(namespace: &str) -> Result<PathBuf, String> {
     resolve_product_executable(product)
 }
 
-const ACT_USAGE: &str = "oi act                                     list the Central native Action field (read-only)\n       oi act describe <action> [--json]          the exact input/output/effect contract of one Action\n       oi act invoke <action> --input <json>|@file [--json]\n                                                  one explicit invocation; exact subject and input required";
+const ACT_USAGE: &str = "oi act [--json]                               list the Central native Action field (read-only)\n       oi act describe <action> [--json]          the exact input/output/effect contract of one Action\n       oi act invoke <action> --input <json>|@file [--json]\n                                                  one explicit invocation; exact subject and input required";
 
 fn command_act(args: &[OsString]) -> Result<i32, String> {
     let verb = args.first().and_then(|value| value.to_str());
     let rest = args.get(1..).unwrap_or_default();
     match verb {
-        None | Some("help" | "--help" | "-h") => {
+        None => act_list(false),
+        Some("--json") if rest.is_empty() => act_list(true),
+        Some("--json") => Err(format!(
+            "`oi act --json` takes no further arguments; usage:\n{ACT_USAGE}"
+        )),
+        Some("help" | "--help" | "-h") => {
             println!("{ACT_USAGE}");
             Ok(0)
         }
@@ -232,19 +302,10 @@ fn command_act(args: &[OsString]) -> Result<i32, String> {
     }
 }
 
-fn act_describe(args: &[OsString]) -> Result<i32, String> {
-    let mut json = false;
-    let mut positional: Vec<&str> = Vec::new();
-    for argument in args.iter().map(|value| value.to_str().ok_or("act arguments must be UTF-8")) {
-        let argument = argument?;
-        match argument {
-            "--json" => json = true,
-            other => positional.push(other),
-        }
-    }
-    let [reference] = positional.as_slice() else {
-        return Err(format!("usage: oi act describe <action> [--json] — one exact Action ref is required"));
-    };
+/// One bounded read of Central's native Action field. Both the read-only
+/// listing and `describe` consume exactly this owner answer; the doorway
+/// never keeps its own copy of the field.
+fn read_central_action_field() -> Result<Vec<serde_json::Value>, String> {
     let executable = resolve_owner_executable("central")?;
     let output = Command::new(&executable)
         .args(["actions", "--json"])
@@ -254,9 +315,62 @@ fn act_describe(args: &[OsString]) -> Result<i32, String> {
     let stdout = String::from_utf8_lossy(&output.stdout);
     let parsed: serde_json::Value = serde_json::from_str(stdout.trim())
         .map_err(|_| "Central answered without a readable Action field".to_owned())?;
-    let actions = parsed["data"]["actions"]
+    parsed["data"]["actions"]
         .as_array()
-        .ok_or_else(|| "Central's native Action field has no action list".to_owned())?;
+        .cloned()
+        .ok_or_else(|| "Central's native Action field has no action list".to_owned())
+}
+
+/// The read-only field listing: what is callable at all, before any choice
+/// of one Action to describe or invoke.
+fn act_list(json: bool) -> Result<i32, String> {
+    let actions = read_central_action_field()?;
+    if json {
+        let document = json!({
+            "schema": "oi.action-field/v1",
+            "actions": actions,
+        });
+        println!(
+            "{}",
+            serde_json::to_string_pretty(&document)
+                .map_err(|error| format!("cannot encode Action field: {error}"))?
+        );
+        return Ok(0);
+    }
+    println!(
+        "Central native Action field ({} actions, read-only):",
+        actions.len()
+    );
+    for action in &actions {
+        let id = action["id"].as_str().unwrap_or("?");
+        let title = action["title"].as_str().unwrap_or("");
+        let mutation = action["mutation_class"].as_str().unwrap_or("");
+        println!("  {id:<44} {mutation:<10} {title}");
+    }
+    println!(
+        "`oi act describe <action>` names the exact input contract; `oi act invoke <action> --input '<json>'` performs one explicit act."
+    );
+    Ok(0)
+}
+
+fn act_describe(args: &[OsString]) -> Result<i32, String> {
+    let mut json = false;
+    let mut positional: Vec<&str> = Vec::new();
+    for argument in args.iter().map(|value| value.to_str().ok_or("act arguments must be UTF-8")) {
+        let argument = argument?;
+        match argument {
+            "--json" => json = true,
+            "--help" | "-h" => {
+                println!("{ACT_USAGE}");
+                return Ok(0);
+            }
+            other => positional.push(other),
+        }
+    }
+    let [reference] = positional.as_slice() else {
+        return Err("usage: oi act describe <action> [--json] — one exact Action ref is required".to_owned());
+    };
+    let actions = read_central_action_field()?;
     let Some(descriptor) = actions
         .iter()
         .find(|action| action["id"].as_str() == Some(reference))
@@ -296,6 +410,7 @@ fn act_describe(args: &[OsString]) -> Result<i32, String> {
 fn act_invoke(args: &[OsString]) -> Result<i32, String> {
     let mut positional: Vec<OsString> = Vec::new();
     let mut input: Option<String> = None;
+    let mut structured = false;
     let mut passthrough: Vec<OsString> = Vec::new();
     let mut iter = args.iter();
     while let Some(argument) = iter.next() {
@@ -311,6 +426,11 @@ fn act_invoke(args: &[OsString]) -> Result<i32, String> {
                         .ok_or("act invoke input must be UTF-8")?
                         .to_owned(),
                 );
+            }
+            "--json" => structured = true,
+            "--help" | "-h" => {
+                println!("{ACT_USAGE}");
+                return Ok(0);
             }
             other => {
                 if positional.len() < 2 {
@@ -340,21 +460,36 @@ fn act_invoke(args: &[OsString]) -> Result<i32, String> {
     let parsed: serde_json::Value = serde_json::from_str(encoded.trim())
         .map_err(|error| format!("Action input must be one JSON value: {error}"))?;
     let executable = resolve_owner_executable("central")?;
+    let encoded = serde_json::to_vec(&parsed)
+        .map_err(|error| format!("cannot encode Action input: {error}"))?;
+    if encoded.len() > 64 * 1024 {
+        // Large native inputs exceed OS argv limits; the explicit `-` input
+        // argument tells Central to read the same JSON object on stdin (the
+        // same rule the O:I kernel's Central dispatch applies). Without `-`
+        // Central would parse the invocation as `{}` and silently lose the
+        // submitted input.
+        let mut argv = vec![
+            OsString::from("action"),
+            OsString::from("run"),
+            OsString::from(reference),
+            OsString::from("-"),
+        ];
+        argv.extend(passthrough);
+        if structured {
+            argv.push(OsString::from("--json"));
+        }
+        return exec_native_with_stdin(&executable, argv, &encoded);
+    }
     let mut argv = vec![
         OsString::from("action"),
         OsString::from("run"),
         OsString::from(reference),
+        OsString::from(String::from_utf8(encoded).map_err(|_| "Action input is not valid UTF-8")?),
     ];
-    let encoded = serde_json::to_vec(&parsed)
-        .map_err(|error| format!("cannot encode Action input: {error}"))?;
-    if encoded.len() > 64 * 1024 {
-        // Large native inputs exceed OS argv limits; the explicit native
-        // stdin transport retains the same owner validation (the same rule
-        // the O:I kernel's Central dispatch applies).
-        return exec_native_with_stdin(&executable, argv, &encoded);
-    }
-    argv.push(OsString::from(String::from_utf8(encoded).map_err(|_| "Action input is not valid UTF-8")?));
     argv.extend(passthrough);
+    if structured {
+        argv.push(OsString::from("--json"));
+    }
     exec_native(&executable, argv)
 }
 
@@ -369,12 +504,16 @@ fn exec_native_with_stdin(
         .stdin(Stdio::piped())
         .spawn()
         .map_err(|error| format!("cannot launch native command `{}`: {error}", executable.display()))?;
-    child
+    // An owner that closes stdin early has already said so on its own
+    // stderr; its exit status is the invocation outcome, never our
+    // broken pipe. A silently truncated payload still cannot parse as the
+    // owner's JSON object, so transport fidelity is not lost.
+    let _ = child
         .stdin
         .as_mut()
         .expect("stdin piped")
-        .write_all(stdin)
-        .map_err(|error| format!("cannot send Action input: {error}"))?;
+        .write_all(stdin);
+    drop(child.stdin.take());
     let status = child
         .wait()
         .map_err(|error| format!("native command ended unreadably: {error}"))?;

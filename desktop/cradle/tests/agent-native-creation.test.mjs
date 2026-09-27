@@ -159,7 +159,7 @@ test('a save-then-failed-launch leaves the source saved and reports Saved; not r
   return undefined;
  }});
  await propose(r);
- await r.controller.saveAndStart();
+ assert.equal(await r.controller.saveAndStart(),undefined,'a stopped journey hands back nothing to open');
  const s=r.controller.snapshot();
  assert.equal(s.review.accepted,true,'the accepted source stays saved');
  assert.equal(s.prepared,undefined,'no session is fabricated');
@@ -177,11 +177,12 @@ test('save-and-start composes acceptance, readiness and preparation with every s
   return undefined;
  }});
  await propose(r);
- await r.controller.saveAndStart();
+ const opened=await r.controller.saveAndStart();
  const s=r.controller.snapshot();
  assert.deepEqual(s.compound,{propose:'skipped',accept:'ok',readiness:'ok',prepare:'ok'});
  assert.equal(s.prepared.agent_session,'agent-session/native');
  assert.equal(s.prepared.provider_started,false,'preparation still never starts a provider');
+ assert.equal(opened,s.prepared,'the completed journey hands the prepared session to the surface, which opens the conversation');
  assert.equal(s.unknown,undefined);
  assert.equal(s.error,undefined);
 });

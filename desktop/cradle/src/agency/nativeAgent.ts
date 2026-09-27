@@ -361,6 +361,7 @@ export class NativeAgentController {
    stages.readiness="ok"; this.set({compound:{...stages}});
    await this.stagePrepare();
    this.set({busy:false,compound:{...stages,prepare:"ok"}});
+   return this.state.prepared;
   } catch (error) {
    const stage = stages.propose==="pending"?"propose":stages.accept==="pending"?"accept":stages.readiness==="pending"?"readiness":"prepare";
    if (error instanceof StagePrecondition) fail(stage,error.message,false);
