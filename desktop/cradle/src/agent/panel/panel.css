@@ -151,3 +151,14 @@
 .chat-unreachable{margin:auto;padding:24px 18px;text-align:center}
 /* The mode chip keeps its word ("Ask", "Bypass") at every width. */
 .chat-chip-host[data-chip-host="mode"]{flex:none}
+
+/* The model menu's own search, route footer and provider subtitle (the
+ * approved model-first composer: one model control, everything else folded
+ * into its menu). */
+.menu-rule{height:var(--oi-shell-edge);margin:4px 2px;background:var(--oi-hairline-soft)}
+.chat-model-search{display:flex;align-items:center;gap:7px;padding:6px 9px 9px;border-bottom:var(--oi-shell-edge) solid var(--oi-hairline-soft);margin-bottom:4px;color:var(--oi-muted-2)}
+.chat-model-search input{flex:1;min-width:0;border:0;background:transparent;color:inherit;font:inherit;font-size:var(--oi-shell-type-nav);outline:none}
+.chat-model-provider{font-size:var(--oi-shell-type-meta);color:var(--oi-muted-2);white-space:nowrap}
+.chat-model-route{display:flex;flex-direction:column;padding:0 0 4px}
+.chat-model-route .harness-group-name{margin:2px 8px 3px}
+.chat-model-route .harness-row{padding-left:8px;padding-right:8px}

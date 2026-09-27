@@ -42,8 +42,11 @@
 .agent-plane{flex:1;min-height:0;box-sizing:border-box}
 .agent-empty{flex:1;overflow:auto;padding:23px 20px}
 .agent-empty .project-encounters{display:flex;flex-direction:column;gap:2px}
-.agent-extra-plane{overflow:auto;scrollbar-width:none}
-.agent-extra-plane::-webkit-scrollbar{display:none;width:0;height:0}
+/* Extra planes fill the panel and own their scrolling: the approved
+   arrangement scrolls inside the working material, never a wrapper around
+   the whole plane. */
+.agent-extra-plane{overflow:hidden}
+.agent-extra-plane>.frtab,.agent-extra-plane>.oi-side-plane,.agent-extra-plane>.context-canvas{flex:1;min-height:0}
 
 /* ----- Activity ----- */
 .agent-activity{padding:0 8px 16px;font-size:var(--oi-shell-type-ui)}

@@ -182,7 +182,7 @@ What exists on disk today: the vision page `user/<project>.html` (agent-recovere
 
 ```text
 ┌──────────────────────────────────┐
-│ (Ep)▾ Chat Activity• Agents Ctx ⤢✕│  one row: avatar menu, tabs, controls
+│ (Ep)▾ Chat Activity• Agents Ctx ⤢ ⋮│  one row: avatar menu, tabs, expand, functions
 ├──────────────────────────────────┤
 │ tab body                         │
 │                                  │
@@ -190,17 +190,18 @@ What exists on disk today: the vision page `user/<project>.html` (agent-recovere
 │ ┌──────────────────────────────┐ │
 │ │ To: Epii                     │ │
 │ │ Message…                     │ │
-│ │ [+][mic] [Ask ▾]  Pi ▾ glm-5.3 ▾ [↑]│
+│ │ [+][mic] [Ask ▾]  glm-5.3 ▾ [↑]│
 │ └──────────────────────────────┘ │
 └──────────────────────────────────┘
 ```
 
-- **No title band** *(Amendment A3)*. The panel's top is one row: a tiny **avatar menu**, then the tabs, then ⤢ and ✕. The avatar carries the presence mark as a small badge on its corner. Its menu lists the agents available in the current scope, from real AIKit profiles, plus *Agent details* and *New agent…*. There is no agent name heading and no "Situated in …" line.
+- **No title band** *(Amendment A3)*. The panel's top is one row: a tiny **avatar menu**, then the tabs, then ⤢ and the window-functions menu. The avatar carries the presence mark as a small badge on its corner. Its menu lists the agents available in the current scope, from real AIKit profiles, plus *Agent details* and *New agent…*. There is no agent name heading and no "Situated in …" line.
 - **Presence** (on the avatar): idle ○, working ● (breathing only while a turn is actually in flight), needs you !, unavailable ×.
-- **⤢** toggles full-screen conversation (⌘⌥J; the takeover depth). **✕** collapses the panel (⌘⇧B).
+- **⤢** toggles full-screen conversation (⌘⌥J; the takeover depth).
+- **No close control on the panel** *(owner acceptance, 26 Sep 2026 — the approved Factory working-surface study, `docs/cradle/sidebars/factory-ui-study-20260926.html`)*. The former ✕ is removed. The shell's persistent sidebar icon in the topbar is the ONE open/close control, reachable while the panel is expanded, overlayed (narrow) or restored; ⌘⇧B keeps working. Expansion, restoration and reopening preserve the prior arrangement. Every mode's panel carries this same treatment — Base, Factory, Expressions, Technè, Epi-Logos, Settings — with each mode's own curated planes and established arrangements retained.
 - **Tabs**: plain text with an ink underline for the selected one. A tab can carry a dot (new activity) or `!` (needs you). Overflow never produces a "More" menu. If a mode needs a fifth tab, the design is wrong.
 - **Status line**: one line above the composer, present only while a turn is in flight (the Buzz "Honey: Working" pattern). Clicking it opens Activity at that event.
-- **Composer**: To: chips (@ opens the same picker); *Insert context* (+); dictation (mic; local STT); the **permission mode chip**; the **harness chip** and **model chip**; Send, which becomes **Stop** in the same slot while a turn runs.
+- **Composer** *(amended by the model-first ruling, owner acceptance 26 Sep 2026)*: To: chips (@ opens the same picker); *Insert context* (+); dictation (mic; local STT); the **permission mode chip**; the **model control — one chip, always present**, fresh conversations included (A1 below); Send, which becomes **Stop** in the same slot while a turn runs. The standing "Connect with …" harness inventory is removed: route switching, resume and setup fold into the model control's menu, and a disconnected conversation reads as one concise state at that control.
 - **Permission mode chip** *(Amendment A2)*: **Ask before acting · Accept edits · Plan only · Bypass permissions**, limited to the modes the connected harness actually supports.
   - Bypass is chosen deliberately: a one-line confirmation names what it allows. While it is on, the chip stays visibly marked and the avatar shows a small shield.
   - The session's mode is shown at a glance and changes apply to the next action.
@@ -257,7 +258,14 @@ The Agents tab answers *who is here*: the **Positions** of the World in scope, a
 
 ### 4.6 Context
 
-**Preserve.** The existing canvas insertion of files, terminals and browser material is the accepted specimen (owner, 21 Sep). This design only removes repeated empty instructions and "returns" wording. The Codex-style launcher (Files · Browser · Terminal) is this tab's empty state: three insert entries, each opening the existing insertion route.
+**Preserve.** The existing canvas insertion of files, terminals and browser material is the accepted specimen (owner, 21 Sep). This design only removes repeated empty instructions and "returns" wording.
+
+**Amended — the material workspace** *(owner acceptance, 26 Sep 2026, the approved Factory working-surface study; applies to every mode whose Context is the pane canvas — Factory, Expressions, Technè; Base and Epi-Logos keep their prepared-context Context)*:
+
+- The open material fills the plane **edge to edge** beneath the pane's one strip: no inset frame, no standing Situation / Prepared / Active stack above or below the canvas, no capped strip.
+- The strip's **+ insertion menu** opens **File · Terminal · Browser · Canvas · Graph · Side chat**. Canvas opens the standing hosted canvas surface (the Expressions application, or the Technè constellation); Graph opens the project's native knowledge graph — the developed GraphCanvas renderer with its filters, selection and open-in-Technè handoff; Side chat opens a chosen conversation into the pane through the ordinary encounter placement, so its conversation state rides through. Every entry converges on the same native opening routes the canvas's own keys and drag-and-drop use.
+- **Selection and preparation** ride in the strip's compact **Context** control: one button carrying the real prepared count, opening the present situation, the native prepared-context reading (inspect, include/remove, expressions, saved sets) and the active-material lanes. Counts come from the context owner, never a display guess.
+- The strip's close control on individual tabs stays; the panel-level close is the topbar sidebar icon (§4.1).
 
 ### 4.7 Inspect opens the object *(Ruling D1)*
 

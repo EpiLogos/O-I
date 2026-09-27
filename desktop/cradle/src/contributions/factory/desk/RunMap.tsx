@@ -71,9 +71,21 @@ export function RunMap({entry, runKey, host}: {entry: RunEntry; runKey: string; 
             const from = boxes.get(edge.from)!, to = boxes.get(edge.to)!;
             const x1 = from.x + from.w, y1 = from.y + from.h / 2, x2 = to.x, y2 = to.y + to.h / 2;
             const mid = (x1 + x2) / 2;
+            // A relation label is legible only in the clear: its whole span —
+            // ends included, at ~0.66em per capital — must clear every node
+            // and gate bar, or the geometry yields and the label stands down.
+            const labelX = mid, labelY = (y1 + y2) / 2 - 5;
+            const label = (EDGE_WORD[edge.relation] ?? edge.relation).toUpperCase();
+            const halfWidth = label.length * 9.5 * 0.66 / 2;
+            const inBox = (x: number, y: number, cell: MapCell) => {
+              const box = boxes.get(cell.id)!;
+              return x >= box.x && x <= box.x + box.w && y >= box.y && y <= box.y + box.h;
+            };
+            const labelClear = [labelX - halfWidth, labelX, labelX + halfWidth].every(x =>
+              !layout.cells.some(cell => inBox(x, labelY, cell)));
             return <g key={`${edge.from}>${edge.to}`} data-relation={edge.relation}>
               <path d={`M${x1},${y1} C${mid},${y1} ${mid},${y2} ${x2},${y2}`}/>
-              <text x={mid} y={(y1 + y2) / 2 - 5} textAnchor="middle">{(EDGE_WORD[edge.relation] ?? edge.relation).toUpperCase()}</text>
+              {labelClear && <text x={labelX} y={labelY} textAnchor="middle">{label}</text>}
             </g>;
           })}
         </svg>

@@ -117,21 +117,23 @@ export default async function run({page,baseUrl,check,shot,channel,provision:p})
   check(await page.evaluate(()=>document.documentElement.scrollHeight<=window.innerHeight&&document.body.scrollHeight<=window.innerHeight),'The document still does not scroll');
 
   // --- tab presentation: the pin model ---------------------------------------------
+  // The strip's own pin/orient buttons were retired by the shell
+  // reconciliation (28266fef): the pin walks ONE control — the workspace
+  // footer's Tab presentation menu (⌘⌥\ cycles the same way).
   const pane=page.locator('.warm-tree-host:not([hidden]) .pane.group.focused');
-  const pin=()=>pane.locator('.pane-tool-pin');
   const stripBox=()=>pane.locator('.tab-strip').boundingBox();
   const bodyBox=()=>pane.locator('.surface-body').boundingBox();
+  const choosePresentation=async label=>{
+    await page.locator('.canvas-window-functions summary').click();
+    await page.getByRole('menuitemradio',{name:label}).click();
+  };
   check(await pane.getAttribute('data-tab-presentation')==='pinned-horizontal','Tabs start pinned horizontally');
   check(await pane.getAttribute('data-tab-presentation')==='pinned-horizontal','Pinned horizontal is the absent presentation (per pane)');
-  check(await pin().getAttribute('aria-label')==='Unpin tabs'&&await pin().getAttribute('data-pin-target')==='unpinned','The pin only pins or unpins — from the strip it offers unpinning');
-  const orient=pane.locator('.pane-tool-orient');
-  check(await orient.getAttribute('aria-label')==='Show tabs vertically','The orientation control offers the vertical list from the strip');
-  await orient.click();
-  check(await pane.getAttribute('data-tab-presentation')==='pinned-vertical','The orientation control pins tabs vertically');
+  await choosePresentation('Pin tabs vertically');
+  check(await pane.getAttribute('data-tab-presentation')==='pinned-vertical','The presentation menu pins tabs vertically');
   let strip=await stripBox(), body=await bodyBox(), paneBox=await pane.boundingBox();
   check(strip.height>strip.width*0.9&&strip.x+strip.width<=body.x+1,'The vertical list stands beside the surface body');
   check(await pane.getByRole('tablist').getAttribute('aria-orientation')==='vertical','The list tells assistive technology it is vertical');
-  check(await pin().getAttribute('aria-label')==='Unpin tabs'&&await pin().getAttribute('data-pin-target')==='unpinned','The pin control offers unpinning while pinned vertical');
   await pane.locator('.tab[data-active="true"]').focus(); await page.keyboard.press('ArrowUp');
   check(await pane.locator('.tab[data-active="true"]').getAttribute('data-title')!==title(sources[2]),'↑/↓ walk the vertical list as ←/→ walk the strip');
   check(await pane.locator('.tab-list-resizer').getAttribute('role')==='separator','The list carries a width separator on its inner edge');
@@ -144,8 +146,8 @@ export default async function run({page,baseUrl,check,shot,channel,provision:p})
   await shot('tabs-list-1280');
 
   // unpinned: tabs fold to a slim edge, keeping the geometry they were pinned in
-  await pin().click();
-  check(await pane.getAttribute('data-tab-presentation')==='unpinned','The pin control unpins the tabs');
+  await choosePresentation('Unpin tabs');
+  check(await pane.getAttribute('data-tab-presentation')==='unpinned','The presentation menu unpins the tabs');
   check(await pane.getAttribute('data-tab-orientation')==='vertical','Unpinning from the list keeps the vertical geometry for the reveal');
   await pane.locator('.surface-retained:not([hidden]) .cm-content').click(); await page.mouse.move(640,500);
   await page.waitForTimeout(600);
@@ -164,17 +166,11 @@ export default async function run({page,baseUrl,check,shot,channel,provision:p})
   // ⌘⌥\ toggles the pin: unpinned pins back into the retained geometry.
   await page.keyboard.press('Meta+Alt+Backslash');
   check(await pane.getAttribute('data-tab-presentation')==='pinned-vertical','⌘⌥\\ pins the tabs back into the retained vertical geometry');
-  // The footer actions move between geometries; unpinning from the horizontal
-  // strip keeps the horizontal geometry for the reveal.
-  await page.locator('.workspace-footer-edge').hover();await page.waitForTimeout(300);
-  await page.getByLabel('Tab presentation',{exact:true}).click();
-  await page.getByRole('menuitemradio',{name:'Pin tabs horizontally'}).click();
-  await page.keyboard.press('Escape');
-  check(await pane.getAttribute('data-tab-presentation')==='pinned-horizontal','The footer actions pin horizontally');
-  await page.locator('.workspace-footer-edge').hover();await page.waitForTimeout(300);
-  await page.getByLabel('Tab presentation',{exact:true}).click();
-  await page.getByRole('menuitemradio',{name:'Unpin tabs'}).click();
-  await page.keyboard.press('Escape');
+  // The arrangement menu moves between geometries; unpinning from the
+  // horizontal strip keeps the horizontal geometry for the reveal.
+  await choosePresentation('Pin tabs horizontally');
+  check(await pane.getAttribute('data-tab-presentation')==='pinned-horizontal','The arrangement menu pins horizontally');
+  await choosePresentation('Unpin tabs');
   check(await pane.getAttribute('data-tab-presentation')==='unpinned'&&await pane.getAttribute('data-tab-orientation')==='horizontal','Unpinning from the strip keeps the horizontal geometry for the reveal');
   await pane.locator('.surface-retained:not([hidden]) .cm-content').click(); await page.mouse.move(640,500);
   await page.waitForFunction(()=>document.querySelector('.warm-tree-host:not([hidden]) .pane.group.focused > .tab-strip').getBoundingClientRect().height<8);
@@ -183,7 +179,9 @@ export default async function run({page,baseUrl,check,shot,channel,provision:p})
   const edge=await pane.locator('.tab-reveal-zone').boundingBox();
   check(edge.width>=paneBox.width-2,'The horizontal reveal zone spans the full top edge');
   check(await page.evaluate(()=>parseFloat(getComputedStyle(document.querySelector('.warm-tree-host:not([hidden]) .pane.group.focused > .tab-reveal-zone'),'::after').height)>=28),'The zone is deepest over the pane-tool icons at the right');
-  await page.mouse.move(edge.x+edge.width-40,edge.y+10);
+  // The reconciliation moved the canvas functions HUD over the top-right
+  // corner; the reveal zone itself is proved at the pane's top-centre.
+  await page.mouse.move(edge.x+edge.width/2,edge.y+4);
   await page.waitForFunction(()=>document.querySelector('.warm-tree-host:not([hidden]) .pane.group.focused > .tab-strip').getBoundingClientRect().height>=30);
   const after=await bodyBox();
   check(after.y>hiddenBody.y+20&&after.height<hiddenBody.height,'Hovering the edge opens the bar in flow, pushing the surface down');
@@ -191,7 +189,28 @@ export default async function run({page,baseUrl,check,shot,channel,provision:p})
   await pane.locator('.surface-retained:not([hidden]) .cm-content').click(); await page.mouse.move(640,500);
   await page.waitForFunction(()=>document.querySelector('.warm-tree-host:not([hidden]) .pane.group.focused > .tab-strip').getBoundingClientRect().height<8);
   await pane.locator('.tab[data-active="true"]').focus();
-  await page.waitForFunction(()=>document.querySelector('.warm-tree-host:not([hidden]) .pane.group.focused > .tab-strip').getBoundingClientRect().height>=30);
+  try{
+    await page.waitForFunction(()=>document.querySelector('.warm-tree-host:not([hidden]) .pane.group.focused > .tab-strip').getBoundingClientRect().height>=30,null,{timeout:6000});
+  }catch{
+    const probe=await page.evaluate(()=>{
+      const paneNode=document.querySelector('.warm-tree-host:not([hidden]) .pane.group.focused');
+      const strip=paneNode?.querySelector(':scope > .tab-strip');
+      const active=document.activeElement;
+      return {
+        panePresentation:paneNode?.getAttribute('data-tab-presentation'),
+        paneOrientation:paneNode?.getAttribute('data-tab-orientation'),
+        stripHeight:strip?.getBoundingClientRect().height,
+        stripClasses:strip?.className,
+        focusedTag:active?.tagName,
+        focusedClass:active?.className,
+        focusedInStrip:active instanceof Element&&!!active.closest('.tab-strip'),
+        tabbarToken:getComputedStyle(document.documentElement).getPropertyValue('--oi-shell-tabbar'),
+        stripTransition:getComputedStyle(strip).transition,
+      };
+    });
+    console.log('REVEAL-PROBE',JSON.stringify(probe));
+    throw new Error('reveal-on-focus probe');
+  }
   check(await page.evaluate(()=>document.querySelector('.warm-tree-host:not([hidden]) .pane.group.focused > .tab-strip').getBoundingClientRect().height>=30),'Focusing into the folded strip reveals it — a keyboard user never loses their place');
   await page.keyboard.press('Meta+1');
   check(await pane.locator('.tab').first().getAttribute('data-active')==='true','The keyboard tab map still works while tabs are unpinned');
@@ -205,7 +224,9 @@ export default async function run({page,baseUrl,check,shot,channel,provision:p})
   const beforeReloadBook=await page.evaluate(()=>localStorage.getItem('oi-cradle.workspaces.v1'));
   check(restored.mode===undefined&&await pane.getAttribute('data-tab-presentation')==='unpinned','Mode and tab presentation restore with the workspace',{mode:restored.mode,presentation:await pane.getAttribute('data-tab-presentation'),panes:await page.locator('.pane.group').evaluateAll(n=>n.map(x=>[x.closest('[hidden]')?'hidden':'shown',x.getAttribute('data-tab-presentation'),x.className]))});
   check(restored.tabListWidth===304,'The tab list width restores with the workspace');
-  check(await page.locator('.desktop-menu.footer-status').getAttribute('data-attention')!=='true','Restoring a workspace with every mode surface open raises no recovery or error');
+  // The workspace status disclosure lives in the canvas functions menu since
+  // the shell reconciliation; its attention mark is the recovery/error signal.
+  check(await page.locator('.canvas-window-functions .window-functions').getAttribute('data-attention')!=='true','Restoring a workspace with every mode surface open raises no recovery or error');
   const waiting=await page.evaluate(()=>JSON.parse(localStorage.getItem('oi-cradle.workspaces.v1')).workspaces[0].modeLayouts);
   const kindIn=(mode,kind)=>Object.values(waiting?.[mode]?.surfaces??{}).some(b=>b.kind===kind);
   check(kindIn('factory','factory')&&kindIn('expressions','expressions')&&kindIn('techne','techne')&&kindIn('settings','system'),'Factory, Expressions, Technè and Settings bindings all restore (a Factory tab used to send the book to recovery)');
@@ -213,9 +234,9 @@ export default async function run({page,baseUrl,check,shot,channel,provision:p})
   // press, because the pin only ever toggles pinned/unpinned in place.
   await page.keyboard.press('Meta+Alt+Backslash');
   check(await pane.getAttribute('data-tab-presentation')==='pinned-horizontal','The pin restores the retained horizontal pin');
-  // The orientation control returns the vertical list, at its persisted width.
-  await pane.locator('.pane-tool-orient').click();
-  check(await pane.getAttribute('data-tab-presentation')==='pinned-vertical','The orientation control returns the vertical list');
+  // The presentation menu returns the vertical list, at its persisted width.
+  await choosePresentation('Pin tabs vertically');
+  check(await pane.getAttribute('data-tab-presentation')==='pinned-vertical','The presentation menu returns the vertical list');
   check(Math.abs((await pane.locator('.tab-strip').boundingBox()).width-304)<3,'The list opens at its persisted width after a reload');
 
   // --- widths ---------------------------------------------------------------------------

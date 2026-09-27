@@ -120,18 +120,36 @@
 .ta-held-pane-body{height:300px;min-height:0;display:flex;flex-direction:column}
 .ta-held-pane-body>*{flex:1 1 auto;min-height:0}
 
-/* The Context plane: the canvas is the plane's substance — it takes the
-   plane's room in every mode that hosts it (factory, expressions, techne
-   alike); Active Context stays a pared, content-sized strip beneath it. */
-.ta-context-plane{display:flex;flex-direction:column;min-height:0;height:100%}
-/* The embedded canvas offsets by the ONE shell gutter token — the same
-   deterministic inset the centre canvas's surface host uses — never a
-   hand-picked margin, and equal on both sides. */
-.ta-context-plane .pane.group{flex:1 1 auto;min-height:280px;height:auto;overflow:hidden;margin:var(--oi-shell-gutter);border-radius:8px}
-/* Active Context is the pared strip beneath the canvas — content-sized,
-   capped so it never crowds the canvas above it. It is a sidebar region:
-   it uses the shared thin scrollbar while hovered or focused. */
-.ta-active-context{flex:none;max-height:168px;overflow-y:auto;box-sizing:border-box}
+/* The Context plane (the approved Factory study's material workspace): the
+   canvas is the plane's substance and takes ALL of the plane's room in every
+   mode that hosts it (factory, expressions, techne alike) — edge to edge,
+   no inset, no standing stack above or capped strip below. Selection and
+   preparation ride in the strip's compact Context control; insertion in the
+   strip's + menu. */
+.ta-context-plane{display:flex;flex-direction:column;min-height:0;height:100%;position:relative;padding-bottom:0}
+.ta-context-plane .pane.group{flex:1 1 auto;min-height:0;height:auto;overflow:hidden;margin:0;border-radius:0}
+/* The empty state centers in the pane room beneath the strip (the study's
+   "Open something beside your work"). */
+.ta-context-plane .context-launcher{position:absolute;inset:var(--oi-shell-tabbar) 0 0 0;display:grid;place-content:center;justify-items:center;gap:9px;text-align:center;pointer-events:none;padding:0 24px}
+.ta-context-plane .context-launcher>*{pointer-events:auto}
+.ta-context-plane .context-launcher .context-launcher-line{margin:0 0 4px}
+/* The file picker opens over the pane, anchored to the strip — never
+   squeezing the material beneath it. */
+.context-picker-pop{position:absolute;top:calc(var(--oi-shell-tabbar) + 2px);left:8px;z-index:calc(var(--oi-z-popover,30) + 1);width:min(320px,86%);max-height:min(60%,420px);box-shadow:var(--oi-shadow-pop,0 12px 34px #0003);background:var(--oi-canvas-ground)}
+/* The + insertion menu (File · Terminal · Browser · Canvas · Graph · Side
+   chat), anchored under the strip's + button. */
+.strip-open-host{position:relative;display:inline-flex;flex:none}
+.strip-open-menu{position:absolute;right:0;top:calc(100% + 2px);z-index:calc(var(--oi-z-popover,30) + 1);min-width:225px}
+/* The strip's compact Context control and its preparation popover. */
+.context-prep-host{position:relative;display:inline-flex;flex:none}
+.desktop-shell .context-prep{display:inline-flex;align-items:center;gap:5px;height:calc(var(--oi-shell-tabbar) - 8px);padding:0 7px;border:0;border-radius:6px;background:transparent;color:var(--oi-muted-2);font:inherit;font-size:var(--oi-shell-type-ui);cursor:pointer}
+.desktop-shell .context-prep:hover,.desktop-shell .context-prep[aria-expanded="true"]{background:var(--oi-wash);color:var(--oi-accent-ink)}
+.context-prep-count{min-width:16px;padding:0 4px;border-radius:4px;background:var(--oi-wash-strong);font-size:var(--oi-shell-type-eyebrow);text-align:center}
+.context-prep-pop{position:absolute;right:0;top:calc(100% + 2px);z-index:calc(var(--oi-z-popover,30) + 1);width:min(340px,calc(100vw - 24px))}
+.context-prep-scroll{display:flex;flex-direction:column;max-height:min(72vh,560px);overflow:auto}
+.context-prep-pop .ta-active-context{max-height:none;overflow:visible}
+.context-prep-pop .situation-reading,.context-prep-pop .prepared-context{border-bottom:var(--oi-shell-edge) solid var(--oi-hairline-soft)}
+
 
 /* SituationFrame: read-only presence above deliberate prepared Context. */
 .situation-reading{flex:none;padding:8px 10px;border-bottom:var(--oi-shell-edge) solid var(--oi-hairline-soft);display:flex;flex-direction:column;gap:6px}
@@ -149,3 +167,14 @@
 .situation-depth li small,.situation-depth li code{min-width:0;max-width:62%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .situation-depth code{font-size:var(--oi-shell-type-ui);color:var(--oi-muted-2)}
 .situation-law{margin:0;color:var(--oi-muted-2);font-size:var(--oi-shell-type-ui)}
+
+/* The + menu's items: icon · label · hint, and the Side chat conversation
+   list unfolding inside the same popover (the one insertion menu). */
+.context-insert-item{display:flex;align-items:center;gap:8px;width:100%;text-align:left}
+.context-insert-item svg{flex:none;color:var(--oi-muted-2)}
+.context-insert-item span{flex:1;min-width:0}
+.context-insert-item kbd{margin-left:auto;font-family:var(--oi-font-sans);font-size:var(--oi-shell-type-meta);color:var(--oi-muted-2)}
+.context-insert-sidechat>summary{list-style:none;cursor:pointer}
+.context-insert-sidechat>summary::-webkit-details-marker{display:none}
+.context-insert-sidechat[open]>summary{background:var(--oi-wash)}
+.context-sidechat-list{max-height:240px;overflow:auto;border-top:var(--oi-shell-edge) solid var(--oi-hairline-soft);margin-top:4px;padding-top:4px}

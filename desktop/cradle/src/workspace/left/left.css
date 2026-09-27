@@ -95,7 +95,11 @@
 
 /* a row whose main body is a button and whose trailing tools sit beside it */
 .left-row.left-material, .left-row.left-conversation { padding: 0; }
-.left-row-main { flex: 1; min-width: 0; display: flex; align-items: center; gap: 8px; min-height: var(--oi-shell-row-dense); padding: 0 56px 0 8px; border: 0; border-radius: inherit; background: transparent; color: inherit; font: inherit; text-align: left; cursor: pointer; }
+/* The extra .left-row ancestor outranks `.desktop-shell button { padding: 0 }`
+   (0-1-1): as a bare class this rule's inset never applied, so material rows
+   sat flush at the section edge while destination rows carried theirs — the
+   ragged icon/label column the owner flagged 2026-09-25. */
+.left-row .left-row-main { flex: 1; min-width: 0; display: flex; align-items: center; gap: 8px; min-height: var(--oi-shell-row-dense); padding: 0 56px 0 8px; border: 0; border-radius: inherit; background: transparent; color: inherit; font: inherit; text-align: left; cursor: pointer; }
 .left-material .left-row-main { padding-right: 56px; }
 /* A6: Open beside / Pop out, subtle, in the reserved trailing space. */
 .left-open-where { position: absolute; right: 4px; top: 50%; transform: translateY(-50%); display: inline-flex; gap: 1px; opacity: 0; visibility: hidden; transition: opacity var(--oi-motion-ui) var(--oi-motion-ease-out), visibility 0s linear var(--oi-motion-ui); }
@@ -148,6 +152,12 @@
 /* ── foot ─────────────────────────────────────────────────────────── */
 .left-foot { flex: none; padding: 4px 8px 6px; border-top: var(--oi-shell-edge) solid var(--oi-hairline-soft); }
 .left-inbox-row { margin: 0 0 4px; }
+/* The foot's 8px container + 4px row inset put the Inbox glyph where the
+   navigator destinations' 8px inset puts theirs; the glyph box matches the
+   16px the destinations carry (shell.css sizes side svgs; the left-foot auto
+   reset above restores the mode strip's small icons), so the label column
+   reads as one line. */
+.desktop-side.left .left-inbox-row > svg { width: 16px; height: 16px; }
 .left-inbox-row .left-row-badge { color: var(--oi-accent-ink); font-weight: 600; }
 .desktop-side .left-foot .left-mode-row { justify-content: flex-start; margin: 0; padding: 2px 0 0; border-top: 0; background: transparent; }
 .left-foot .world-mode-strip { display: flex; align-items: center; gap: 3px; }

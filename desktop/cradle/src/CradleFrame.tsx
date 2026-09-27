@@ -23,7 +23,7 @@ import {FileHistory} from "./files/FileHistory";
 import {encounter,encounterProvision} from "./encounter/client";
 import {useEncounterSession} from "./encounter/session";
 import {AgentChat} from "./agent/chat/AgentChat";
-import type {EncounterRow} from "./encounter/EncounterList";
+import {EncounterList,type EncounterRow} from "./encounter/EncounterList";
 import {AgentLayer} from "./agent/AgentLayer";
 import {navigateExplore,type PresentationMeta} from "./explore/navigate";
 import {MODE_CURATION,isWorkspaceMode,WORKSPACE_MODES,type WorkspaceMode} from "./workspace/mode";
@@ -38,9 +38,10 @@ import type {TaPaneOpens} from "./expressions/TaOntaSide";
 import type {FactoryPanelHost} from "./contributions/factory/sidebar/sidebarModel";
 import {publishCentreView} from "./contributions/factory/desk/deskModel";
 import {GroupPane} from "./surface/Workbench";
+import {ContextPreparationButton} from "./agent/panel/ContextPreparation";
 import {centreBindingOf, ModeCentreBody, StageCentreMark, warmWorkspaceTrees} from "./surface/retention";
 import {PRESENTED_EDITOR} from "./surface/presented";
-import {captureHostedInsertion,insertIntoHostedScene,type HostedAppState} from "./expressions/hostedApp";
+import {type HostedAppState} from "./expressions/hostedApp";
 import {FactoryNavigator} from "./surfaces/navigator/FactoryNavigator";
 /**
  * The Cradle root (U0.3b + U0.4 + U0.6). One layout state, persisted to
@@ -63,8 +64,7 @@ import {FactoryNavigator} from "./surfaces/navigator/FactoryNavigator";
  * bundles by the build gate above.
  */
 
-import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState, type ComponentType, type ReactNode } from "react";
-const LibraryBrowser=lazy(()=>import("./library/LibraryBrowser").then(module=>({default:module.LibraryBrowser})));
+import { useCallback, useEffect, useMemo, useRef, useState, type ComponentType, type ReactNode } from "react";
 // Technē summon seam (T2): the HUD's summon CustomEvents present the Library,
 // the gallery search and the current subject's verso through the existing
 // surfaces — see src/library/techneSummon.tsx (the parent reconciles the
@@ -78,6 +78,7 @@ import type { CentralLocation, NativeFileReading } from "./kernel/types";
 import { WorldNavigator } from "./surfaces/navigator/WorldNavigator";
 import { readDraft } from "./workspace/drafts";
 import { DesktopShell } from "./workspace/DesktopShell";
+import { Glyph } from "./workspace/Glyph";
 import { useWorkspaces } from "./workspace/store";
 import { useSearchLeader, matchesSearchLeader } from "./knowledge/leader";
 import { SearchOverlay } from "./knowledge/SearchOverlay";
@@ -194,7 +195,9 @@ export function CradleFrame({onComposed}:{onComposed?:()=>void}) {
   // so the Library is summoned over whatever mode you are in and scoped by
   // it. Once opened it stays mounted (hidden) so a return lands on the same
   // query, scope and selection.
-  const [library,setLibrary] = useState<"closed"|"open"|"held">("closed");
+  // The Library itself is no longer an overlay: owner direction 2026-09-25
+  // opens the Expressions application's real Library gallery as an ordinary
+  // canvas tab (kind "library", LibraryHost).
   const [namingRequest,setNamingRequest] = useState<"create" | "rename" | null>(null);
   const workspace = useWorkspaces();
   const workspaceRef=useRef(workspace);workspaceRef.current=workspace;
@@ -816,6 +819,30 @@ export function CradleFrame({onComposed}:{onComposed?:()=>void}) {
     return()=>window.removeEventListener("oi:open-explore",open);
   },[]);
 
+  /** The Library (owner direction 2026-09-25): the Expressions application's
+   * real gallery as an ordinary canvas tab — a singleton hosted surface, the
+   * same open-or-focus grammar the modes' centres use. The overlay it
+   * replaces is retired; the hosted page (LibraryHost) presents the gallery
+   * without booting the field engine. */
+  const openLibrarySurface = () => {
+    setState(s=>{
+      const existing=Object.values(s.surfaces).find(binding=>binding.kind==="library");
+      const binding=existing??withHostedDescriptor({id:crypto.randomUUID(),kind:"library",title:"Library"});
+      return groupsOf(s.root).some(group=>group.tabs.includes(binding.id))?executeFrameAction(s,"surface.activate",{surfaceId:binding.id}):openBinding({...s,closedStack:s.closedStack.filter(id=>id!==binding.id)},binding);
+    });
+  };
+  const openLibrarySurfaceRef=useRef(openLibrarySurface);openLibrarySurfaceRef.current=openLibrarySurface;
+  // The Library page's close hand-off: the tab goes the way every tab does.
+  useEffect(() => {
+    const close=(event:Event)=>{
+      if(event.defaultPrevented)return;
+      const binding=Object.values(stateRef.current.surfaces).find(candidate=>candidate.kind==="library");
+      if(binding)setState(s=>executeFrameAction(s,"surface.close",{surfaceId:binding.id}));
+    };
+    window.addEventListener("oi:library-close",close);
+    return()=>window.removeEventListener("oi:library-close",close);
+  }, []);
+
   /** A mode's centre surface (workspace/mode.ts): a singleton presentation
    * binding in the ordinary pane system, opened or focused like System and
    * Explore. It holds no owner identity of its own — what it shows is read
@@ -926,21 +953,8 @@ export function CradleFrame({onComposed}:{onComposed?:()=>void}) {
       const trail=workspaceRef.current.current.context?.trail??[];const stop=trail[trail.length-1];if(!stop)return;
       workspaceRef.current.setContext(context=>({...context,trail:(context.trail??[]).slice(0,-1)}));
       enterModeRef.current(stop.mode);
-      if(stop.surfaceKind==="library")setLibrary("open");
+      if(stop.surfaceKind==="library")openLibrarySurfaceRef.current();
       if(stop.surfaceKind==="epi-logos"&&stop.surfaceRef)requestAnimationFrame(()=>window.dispatchEvent(new CustomEvent("oi:epi-return",{detail:{place:{ref:stop.surfaceRef,title:stop.label},passageId:stop.position}})));
-    };
-    // Library → page → Expression → Instrument 0 → exact source → return to
-    // the same place: every hop out of the Library leaves a Library stop.
-    const libraryOpen=(event:Event)=>{
-      const d=detail<{item?:{ref:string;title:string;project?:string;expressionRef?:string;sourceLocation?:CentralLocation;kind?:string};how?:string}>(event);const item=d?.item;if(!item)return;
-      const mode=stateRef.current.mode??"base";
-      workspaceRef.current.setContext(context=>({...context,subject:{ref:item.ref,kind:item.kind,title:item.title,project:item.project},trail:[...(context.trail??[]),{mode,label:"Library",surfaceKind:"library",surfaceRef:item.ref}]}));
-      setLibrary("held");
-      if(d.how==="expression"&&(item.expressionRef??item.ref).startsWith("expression:")){enterModeRef.current("expressions");try{summonExpression(item.expressionRef??item.ref);}catch(reason){fail(reason);}}
-      else if(d.how==="instrument"){fail("Choose Insert into current Scene from the Library with its native destination open.");}
-      else if(d.how==="source"&&item.sourceLocation){enterModeRef.current("base");void openFileRef.current(item.sourceLocation).catch(fail);}
-      else if(item.kind==="composition"){enterModeRef.current("expressions");try{summonExpression(item.ref);}catch(reason){fail(reason);}}
-      else void openKnowledgeRef.current({kind:"wiki",value:item.ref},item.title,item.project).catch(fail);
     };
     const agencyOpen=(event:Event)=>{
       const project=detail<{project?:string}>(event)?.project??workspaceRef.current.current.project??undefined;
@@ -1004,6 +1018,20 @@ export function CradleFrame({onComposed}:{onComposed?:()=>void}) {
     const openEncounterEvent=(event:Event)=>{const d=(event as CustomEvent<{ref?:unknown;project?:unknown;space?:unknown;title?:unknown}>).detail;if(typeof d?.ref!=="string"||typeof d.project!=="string"||typeof d.space!=="string")return;void openEncounterRef.current({ref:d.ref,project:d.project,space:d.space,title:typeof d.title==="string"?d.title:"Conversation"}).catch(reason=>setWindowError(String(reason instanceof Error?reason.message:reason)));};
     // A carried expressive act (expression/crossModeAct) asks the root for its next working mode.
     const enterModeEvent=(event:Event)=>{const next=(event as CustomEvent<{mode?:unknown}>).detail?.mode;if(isWorkspaceMode(next))enterModeRef.current(next);};
+    // "oi:library-open" — the Library is its own canvas surface (owner
+    // direction 2026-09-25): the hop leaves its Library trail stop, and the
+    // surface opens exactly as every other Library path does.
+    const libraryOpen=(event:Event)=>{
+      const d=detail<{item?:{ref:string;title:string;project?:string;expressionRef?:string;sourceLocation?:CentralLocation;kind?:string};how?:string}>(event);const item=d?.item;if(!item)return;
+      const mode=stateRef.current.mode??"base";
+      workspaceRef.current.setContext(context=>({...context,subject:{ref:item.ref,kind:item.kind,title:item.title,project:item.project},trail:[...(context.trail??[]),{mode,label:"Library",surfaceKind:"library",surfaceRef:item.ref}]}));
+      openLibrarySurfaceRef.current();
+      if(d.how==="expression"&&(item.expressionRef??item.ref).startsWith("expression:")){enterModeRef.current("expressions");try{summonExpression(item.expressionRef??item.ref);}catch(reason){fail(reason);}}
+      else if(d.how==="instrument"){fail("Choose Insert into current Scene from the Library with its native destination open.");}
+      else if(d.how==="source"&&item.sourceLocation){enterModeRef.current("base");void openFileRef.current(item.sourceLocation).catch(fail);}
+      else if(item.kind==="composition"){enterModeRef.current("expressions");try{summonExpression(item.ref);}catch(reason){fail(reason);}}
+      else void openKnowledgeRef.current({kind:"wiki",value:item.ref},item.title,item.project).catch(fail);
+    };
     const pairs:[string,(event:Event)=>void][]=[["oi:enter-mode",enterModeEvent],["oi:open-encounter",openEncounterEvent],["oi:open-agency",agencyOpen],["oi:panel-open-subject",openSubject],["oi:workspace-message",message],["oi:open-settings",settings],["oi:close-settings",closeSettings],["oi:agent-setup-return",agentSetupReturn],["oi:library-open",libraryOpen],["oi:epi-open-expression",expression],["oi:epi-examine",examine],["oi:epi-open-source",source],["oi:epi-open-knowledge",knowledgeOpen],["oi:context-return",back]];
     pairs.push([OPEN_AUTOMATIONS_EVENT,automationsOpen],["oi:open-scene-constellation",constellationOpen],["oi:open-scene-source",sceneSourceOpen]);
     for(const [name,handler] of pairs)window.addEventListener(name,handler);
@@ -1176,7 +1204,7 @@ export function CradleFrame({onComposed}:{onComposed?:()=>void}) {
     const current=stateRef.current.surfaces[id];if(!current)return;
     project=project??current.project??workspaceRef.current.current.project??undefined;
     if(kind==="search"){setSearchOpen(true);return;}
-    if(kind==="library"){setLibrary("open");return;}
+    if(kind==="library"){openLibrarySurfaceRef.current();return;}
     // The supplied document forms (0/1, 4+2) are not created here: their
     // real files are resolved through Central's file route and opened by
     // the same path the navigator uses (dedup + focus included). A missing
@@ -1407,7 +1435,7 @@ export function CradleFrame({onComposed}:{onComposed?:()=>void}) {
       // preventDefaults them, which silently swallowed split-right and the
       // search leader whenever the caret was in a document. The editor keeps
       // every key the frame does not claim — ⌘Z, ⌘S, ⌘F and the rest.
-      if ((e.metaKey||e.ctrlKey)&&e.altKey&&!e.shiftKey&&e.code==="KeyL") { e.preventDefault(); e.stopPropagation(); setLibrary(value=>value==="open"?"held":"open"); return; }
+      if ((e.metaKey||e.ctrlKey)&&e.altKey&&!e.shiftKey&&e.code==="KeyL") { e.preventDefault(); e.stopPropagation(); openLibrarySurfaceRef.current(); return; }
       const act = frameActionForKey(e, !!menuRef.current);
       if (!act) return;
       e.preventDefault(); e.stopPropagation();
@@ -1748,10 +1776,57 @@ export function CradleFrame({onComposed}:{onComposed?:()=>void}) {
   // canvas lands THERE, and in these modes any person-open asked without a
   // canvas lands there too — never behind the mode's dedicated stage in the
   // workspace's hidden panes.
+  // The Context plane's Canvas / Graph / Side-chat inserts (the approved
+  // study's + menu): each opens an EXISTING surface into the side pane
+  // through its ordinary route — the hosted canvas surface, the knowledge
+  // graph, an encounter moved to side placement (state rides through).
+  const insertCanvasIntoSide=async()=>{
+    const kind=mode==="expressions"?"expressions":"techne";
+    const id=crypto.randomUUID();
+    let binding:SurfaceBinding={id,kind,title:kind==="expressions"?"Expressions canvas":"Canvas",project:workspace.current.project??undefined};
+    binding=withHostedDescriptor(binding);
+    const opened=await kernel.apply({op:"surface_open",surface_id:id,kind,title:binding.title});
+    if(opened?.result!=="surface_opened")throw new Error("The canvas surface could not be opened");
+    setState(s=>openInSidePlace(s,binding.id,binding));
+  };
+  const insertGraphIntoSide=async()=>{
+    const project=workspace.current.project;
+    const space=project?kernel.snapshot.navigator?.root?.work.projects.find(p=>p.name===project)?.projectcentral.agent_wiki.wiki.space_ref:undefined;
+    if(!space){report("This project has no native wiki to graph yet.");return;}
+    await openKnowledge({kind:"wiki",value:space},"Graph",project,"tab",undefined,"side");
+  };
+  // The Context + menu (the approved study's compact arrangement menu):
+  // every entry converges on the same native opening routes the canvas's own
+  // keys and drag-and-drop use — File through the canvas's picker, terminal
+  // and browser through the side pane's fresh tab, Canvas and Graph through
+  // the frame's surface opens, Side chat through encounter placement.
+  const contextInsert=(kind:string)=>window.dispatchEvent(new CustomEvent("oi:context-insert",{detail:{kind}}));
+  const contextInsertMenu=(close:()=>void):ReactNode=> <>
+    <button type="button" className="oi-menu-item context-insert-item" role="menuitem" onClick={()=>{close();contextInsert("file");}}><Glyph name="file" size={12}/><span>File</span><kbd>⌘P</kbd></button>
+    <button type="button" className="oi-menu-item context-insert-item" role="menuitem" onClick={()=>{close();contextInsert("terminal");}}><Glyph name="terminal" size={12}/><span>Terminal</span><kbd>⌃`</kbd></button>
+    <button type="button" className="oi-menu-item context-insert-item" role="menuitem" onClick={()=>{close();contextInsert("browser");}}><Glyph name="explore" size={12}/><span>Browser</span><kbd>⌘T</kbd></button>
+    <button type="button" className="oi-menu-item context-insert-item" role="menuitem" onClick={()=>{close();void taPaneOpens.insertCanvas?.();}}><Glyph name="field" size={12}/><span>Canvas</span></button>
+    <button type="button" className="oi-menu-item context-insert-item" role="menuitem" onClick={()=>{close();void taPaneOpens.insertGraph?.();}}><Glyph name="graph" size={12}/><span>Graph</span></button>
+    <div className="context-insert-sidechat">
+      <details>
+        <summary className="oi-menu-item context-insert-item" role="menuitem"><Glyph name="chat" size={12}/><span>Side chat</span></summary>
+        <div className="context-sidechat-list">
+          {workspace.current.project
+            ?<EncounterList project={workspace.current.project} variant="panel" activeRef={state.accompanying?.ref} onOpen={row=>{close();void taPaneOpens.insertSideChat?.(row);}}/>
+            :<p className="oi-note">Select a project to list its conversations.</p>}
+        </div>
+      </details>
+    </div>
+  </>;
+  const contextSideTabs:TaPaneOpens["sideTabs"]=(state.sidePane?.tabs??[]).map(id=>({id,title:state.surfaces[id]?.title??id,kind:state.surfaces[id]?.kind??"blank",active:state.sidePane?.active===id}));
+  const activateContextTab=(id:string)=>{if(state.sidePane?.tabs.includes(id))setState(s=>s.sidePane?{...s,sidePane:{...s.sidePane,active:id}}:s);};
   const taPaneOpens:TaPaneOpens={
-    sideTabs:(state.sidePane?.tabs??[]).map(id=>({id,title:state.surfaces[id]?.title??id,kind:state.surfaces[id]?.kind??"blank",active:state.sidePane?.active===id})),
-    activateTab:(id)=>{if(state.sidePane?.tabs.includes(id))setState(s=>s.sidePane?{...s,sidePane:{...s.sidePane,active:id}}:s);},
+    sideTabs:contextSideTabs,
+    activateTab:activateContextTab,
     insertFile:location=>openFile(location,{into:"side"}),
+    insertCanvas:()=>void insertCanvasIntoSide().catch(report),
+    insertGraph:()=>void insertGraphIntoSide().catch(report),
+    insertSideChat:row=>openEncounter(row,"side").catch(report),
     sideHost:(()=>{const sideGroup=state.sidePane??{type:"group" as const,id:"side-panel",tabs:[],pinned:[],active:null};return (
       <GroupPane group={sideGroup} pane={sideGroup} state={state} menuOpen={!!menu} execute={sideExecute}
         kernelDirty={ref=>!!ref&&!!kernel.snapshot.buffers[ref]?.dirty} openBindingMenu={openBindingMenu} openFrameMenu={openFrameMenu}
@@ -1764,7 +1839,9 @@ export function CradleFrame({onComposed}:{onComposed?:()=>void}) {
         factoryCentre={factoryCentre} factoryTasks={factoryCentreProps}
         subject={workspace.current.context?.subject}
         nativeWindows={kernel.transport.kind==="tauri"}
-        workspaceName={workspace.current.name}/>);})(),
+        workspaceName={workspace.current.name}
+        insertMenu={close=>contextInsertMenu(close)}
+        stripTools={<ContextPreparationButton project={workspace.current.project} session={state.accompanying?.ref} tabs={contextSideTabs} onActivateTab={activateContextTab}/>}/>);})(),
   };
   const situation=useMemo(()=>buildSituationFrame({workspace:workspace.current,snapshot:kernel.snapshot,restorePoint:restorePoint.current}),[workspace.current,kernel.snapshot]);
   const agentLayer=<AgentLayer mode={mode} preferredBodyRef={epiPrimeBodyDefault} plane={state.panelPlanes?.[mode]} onPlane={plane=>setState(s=>s.panelPlanes?.[mode]===plane?s:{...s,panelPlanes:{...s.panelPlanes,[mode]:plane}})} extraPlanes={modeExtraPlanes(mode,panelSubject,state.accompanying,message=>setWindowError(message),factoryPanelHost,state.rightDepth==="full",taPaneOpens,workspace.current.project)} onError={report}
@@ -1800,7 +1877,7 @@ export function CradleFrame({onComposed}:{onComposed?:()=>void}) {
   return (
     <SituationProvider value={situation}>
       <ExpressionLayout layout={state}/>
-      <ActiveEncounterContext.Provider value={state.accompanying}><DesktopShell left={leftHost} onLibrary={()=>setLibrary(value=>value==="open"?"held":"open")} returnTo={workspace.current.context?.trail?.slice(-1)[0]} onReturn={()=>window.dispatchEvent(new Event("oi:context-return"))} mode={mode} onMode={enterMode} windowLights={windowLights} onTabPresentation={presentation=>execute(`frame.tabs:${presentation}`)} onToggleNavigator={()=>navigatorRef.current ? dismissWorld() : summonWorld()} onCloseNavigator={dismissWorld} native={kernel.transport.kind==="tauri"} namingRequest={namingRequest} onNamingHandled={()=>setNamingRequest(null)}
+      <ActiveEncounterContext.Provider value={state.accompanying}><DesktopShell left={leftHost} onLibrary={()=>openLibrarySurfaceRef.current()} returnTo={workspace.current.context?.trail?.slice(-1)[0]} onReturn={()=>window.dispatchEvent(new Event("oi:context-return"))} mode={mode} onMode={enterMode} windowLights={windowLights} onTabPresentation={presentation=>execute(`frame.tabs:${presentation}`)} onToggleNavigator={()=>navigatorRef.current ? dismissWorld() : summonWorld()} onCloseNavigator={dismissWorld} native={kernel.transport.kind==="tauri"} namingRequest={namingRequest} onNamingHandled={()=>setNamingRequest(null)}
         arrangementActions={<ArrangementActions state={state} execute={execute} openFrameMenu={openFrameMenu} nativeWindows={kernel.transport.kind==="tauri"}/>}
         subject={{ref:subjectRef,title:subjectTitle,context:<><h2>{subjectTitle}</h2>{subjectBinding?.flow&&<p data-subject-flow-ref={subjectBinding.flow.flowRef}>Working through <code>{subjectBinding.flow.flowRef}</code></p>}{subjectBuffer ? <p>{subjectBuffer.project} · {subjectBuffer.dirty ? "Unsaved changes" : "Saved"}</p> : subjectBinding?.project ? <p>{subjectBinding.project}</p> : <p>Select a surface to inspect its context.</p>}</>,history:subjectHistory}}
         right={agentLayer}
@@ -1847,7 +1924,7 @@ export function CradleFrame({onComposed}:{onComposed?:()=>void}) {
             * route — the same resolveDocumentForm → openFile path the blank
             * tab's form buttons use (freshChoice). With no readable ground
             * the resolver's own precise refusal surfaces on this page. */}
-          <Rest project={workspace.current.project} onWrite={startFlowWriting} onDay={()=>openToday()} title={workspace.current.name} onSearch={()=>setSearchOpen(true)} onExplore={()=>setLibrary("open")}
+          <Rest project={workspace.current.project} onWrite={startFlowWriting} onDay={()=>openToday()} title={workspace.current.name} onSearch={()=>setSearchOpen(true)} onExplore={()=>openLibrarySurfaceRef.current()}
             onGraph={()=>enterMode("techne")}
             onCard={async () => {
               const form=DOCUMENT_FORMS.find(candidate=>candidate.kind==="document-epi-card");
@@ -1891,25 +1968,11 @@ export function CradleFrame({onComposed}:{onComposed?:()=>void}) {
       <ContextTray bindings={{...Object.assign({},...workspace.workspaces.flatMap(w=>[w.layout.surfaces,...Object.values(w.modeLayouts??{}).map(layout=>layout.surfaces)])),...state.surfaces}} accompanying={state.accompanying}/>
       {/* T2 summon seam: answers "oi:techne-summon" (library / verso / search)
         * through the same Library overlay and the verso account overlay. */}
-      <TechneSummonSurface subject={workspace.current.context?.subject} trail={workspace.current.context?.trail} onOpenLibrary={()=>setLibrary("open")}/>
-      {library!=="closed"&&<Suspense fallback={null}><div className="library-overlay" hidden={library!=="open"} role="dialog" aria-modal="true" aria-label="Library" onKeyDown={event=>{if(event.key==="Escape"&&!event.defaultPrevented){event.stopPropagation();setLibrary("held");}}}>
-        <button className="library-scrim" aria-label="Close the Library" onClick={()=>setLibrary("held")}/>
-        <div className="library-sheet"><LibraryBrowser mode={mode} active={library==="open"} requestContext={workspace.current.id} onMessage={message=>setWindowError(message)}
-          captureInsertion={()=>{
-            const currentMode=stateRef.current.mode??"base";
-            if(currentMode!=="techne"&&currentMode!=="expressions")throw new Error("Open the native Expression Scene that should receive this source first.");
-            return {target:captureHostedInsertion(),workspaceId:workspaceRef.current.current.id,mode:currentMode};
-          }}
-          onOpen={async(item,how,capture,signal)=>{
-            if(how!=="instrument"){window.dispatchEvent(new CustomEvent("oi:library-open",{detail:{item,how}}));return;}
-            if(!capture)throw new Error("The source insertion has no captured native Scene.");
-            const current=()=>workspaceRef.current.current.id===capture.workspaceId&&(stateRef.current.mode??"base")===capture.mode;
-            if(!current())throw new Error("The workspace changed while the source was selected.");
-            await insertIntoHostedScene(capture.target,item,current,signal);
-            if(current()&&!signal?.aborted)setLibrary("held");
-          }}/>
-</div>
-      </div></Suspense>}
+      <TechneSummonSurface subject={workspace.current.context?.subject} trail={workspace.current.context?.trail} onOpenLibrary={()=>openLibrarySurfaceRef.current()}/>
+      {/* The overlay Library is retired (owner direction 2026-09-25): the
+        * Library is the Expressions application's real gallery, presented as
+        * an ordinary canvas tab through LibraryHost. The summon's verso and
+        * search presentations above are untouched. */}
       {searchOpen && <SearchOverlay typed={{registers:["",...(kernel.snapshot.navigator?.root?.work.projects??[]).map(entry=>entry.name)],onOpenChat:leftHost.onOpenChat,onOpenFlow:row=>openFlowInstance(row),onOpenAgents:leftHost.onNewAgent,actions:[{label:"Automations",hint:"Routines, Methods and harness timers",run:()=>openAutomations(workspace.current.project)},{label:"New chat",hint:"Start a fresh conversation",run:leftHost.onNewChat!},{label:"New flow",hint:"Start writing",run:leftHost.onNewFlow!},...(["base","factory","expressions","techne","settings"] as const).map(id=>({label:`Go to ${id==="base"?"Base":MODE_CURATION[id].label}`,hint:"Mode",run:()=>enterMode(id)}))]}} leader={leader.shift} onLeaderChange={leader.change} shortcutError={leader.error} project={workspace.current.project} onClose={()=>setSearchOpen(false)} onOpen={openKnowledge} />}
       {Object.entries(surfaceErrors).map(([id, error]) => (
         <SurfaceErrorOverlay key={id} surfaceId={id} error={error} onRetry={() => retrySurfaceOpen(id)} />

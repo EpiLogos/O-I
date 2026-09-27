@@ -51,7 +51,7 @@ export interface LeftHost {
    * ground (flow/createInPlace.ts) and open it — Goal and Vision from
    * Factory's INTENT, every form from a new tab. */
   onCreateForm?: (kind: string) => Promise<void> | void;
-  /** Library (the O:I Web overlay) — a Base destination. */
+  /** Library — the Expressions application's gallery, an ordinary canvas tab. */
   onLibrary?: () => void;
   /** Report a refusal to the footer's message disclosure. */
   onMessage?: (message: string) => void;

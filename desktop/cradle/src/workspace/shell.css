@@ -448,9 +448,9 @@
 /* The window controls and region toggles occupy actual open corners, not an
    inset tab cell. Both corners are cut — left follows the window-control
    reserve (traffic lights when native, the navigator toggle otherwise),
-   right follows the icon reserve so the agent toggle sits in open corner
-   space whether or not the 3 dots are rendered. Masks and tab reservations
-   follow the live sidebar widths. */
+   right follows the floating functions menu ("…") so the toggle AND the
+   menu both sit in open corner space. Masks and tab reservations follow the
+   live sidebar widths. */
 @media(min-width:760px) and (pointer:fine){
  .desktop-shell .desktop-centre :is([data-window-corner="true"], [data-window-corner-left="true"]){
   --window-cutout:0px;
@@ -469,7 +469,18 @@
   clip-path:polygon(var(--window-cutout) 0,calc(100% - var(--window-cutout-right)) 0,100% var(--window-corner-depth),100% 100%,0 100%,0 var(--window-corner-depth-left),var(--window-cutout) var(--window-corner-depth-left));
  }
  .desktop-shell .desktop-centre [data-window-corner-left="true"]{--window-cutout:max(0px,calc(var(--shell-window-reserve) - var(--desktop-left-width)))}
- .desktop-shell .desktop-centre [data-window-corner="true"]{--window-cutout-right:max(0px,calc(52.5px - var(--desktop-right-width,0px)))}
+ /* Owner correction 2026-09-25: the right corner reserve must clear the
+    whole floating functions menu, not just the agent toggle — the menu's
+    own right offset (48px, gutter-clamped; primitives.css
+    .canvas-window-functions) plus its tabbar-wide glyph, one gap, less the
+    surface host's 6px card inset. It yields only to panel width that
+    floats OVER the corner (--desktop-right-float-width): an in-flow panel
+    narrows the canvas itself, so the menu keeps its gutter offset beside
+    the panel and the reserve stays. The old 52.5px figure cleared the
+    toggle alone, leaving the menu covering the tab strip's "+". Keep in
+    step with hostedApp.ts shellCutout. */
+ .desktop-shell{--desktop-right-float-width:max(calc(var(--desktop-right-width,0px) - var(--desktop-right-space,0px)),0px)}
+ .desktop-shell .desktop-centre [data-window-corner="true"]{--window-cutout-right:max(0px,calc(max(var(--oi-shell-gutter),48px - var(--desktop-right-width,0px)) + var(--oi-shell-tabbar) + var(--oi-space-2) - 6px - var(--desktop-right-float-width)))}
  .desktop-shell .desktop-centre [data-window-corner="true"] > .tab-strip{padding-right:max(4px,var(--window-cutout-right))}
 }
 
@@ -509,12 +520,6 @@
 .world-context-return > span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .world-context-return:hover, .world-context-return:focus-visible { background: var(--oi-wash); }
 .mode-strip-host { flex: none; margin: 0 10px; }
-
-/* The Library overlay: one summonable sheet over any mode, never a page. */
-.library-overlay { position: fixed; inset: 0; z-index: var(--oi-z-popover); display: grid; place-items: start center; padding-top: min(12vh, 96px); }
-.library-overlay[hidden] { display: none; }
-.library-scrim { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; background: color-mix(in srgb, var(--oi-ink) 19%, transparent); cursor: default; }
-.library-sheet { position: relative; width: min(760px, calc(100vw - 32px)); height: min(640px, calc(100vh - 160px)); display: flex; flex-direction: column; overflow: hidden; border: var(--oi-shell-edge) solid var(--oi-hairline); border-radius: 10px; background: var(--oi-sidebar-ground); box-shadow: var(--oi-shadow-menu); }
 
 /* `.desktop-shell button { padding: 0 }` ties `.oi-segment > button` on
  * specificity and wins by source order, crushing segment labels together;

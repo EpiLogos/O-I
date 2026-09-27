@@ -1,5 +1,8 @@
 import {kernelOp,detectTransport} from "../../kernel/bridge";
 import {readModelRoster,modelRosterReason,type ModelRosterReading} from "./modelRoster";
+import {modelDisplayName} from "./modelPresentation";
+import type {EncounterStatus} from "../../encounter/client";
+import {connectionLabel} from "../../encounter/nativeModel";
 import {useEffect,useRef,useState,type ReactNode} from "react";
 import {Glyph} from "../../workspace/Glyph";
 import type {NativeModelActions} from "../../encounter/NativeModelControls";
@@ -90,7 +93,10 @@ export function HarnessChip({current,picker}:{current:ConnectionFacts;picker:Omi
  </div>;
 }
 
-export function ModelChip({model,actions,disabled,project}:{model:NativeModelState;actions:NativeModelActions;disabled?:boolean;project?:string}) {
+export function ModelChip({model,actions,disabled,project,route,onSetup}:{model:NativeModelState;actions:NativeModelActions;disabled?:boolean;project?:string;
+ /** Footer slot for the connection's harness routes (the approved model-first
+  * composer: one model control in the row; route switching folds in here). */
+ route?:ReactNode;onSetup?:()=>void}) {
  const {open,setOpen,host}=useMenu();
  useEffect(()=>{if(model.phase==="unread")void actions.refresh();},[actions,model.phase]);
  const [roster,setRoster]=useState<ModelRosterReading>();
@@ -112,6 +118,90 @@ export function ModelChip({model,actions,disabled,project}:{model:NativeModelSta
    {model.error&&<p className="oi-refusal chat-chip-note" role="alert">{model.error}</p>}
    {(model.phase==="unknown"||model.phase==="unavailable")&&<button type="button" role="menuitem" className="oi-menu-item" onClick={()=>void actions.refresh()}>Read the session again</button>}
    {model.confirmed&&!model.error&&<p className="oi-note chat-chip-note" role="status">Set for this session. No model turn has run on it yet.</p>}
+   {(route||onSetup)&&<div className="menu-rule" role="separator"/>}
+   {route}
+   {onSetup&&<button type="button" role="menuitem" className="oi-menu-item" onClick={onSetup}>Harness, model or credential setup…</button>}
+  </Chip>
+ </div>;
+}
+
+/** The held model choice for a conversation that does not exist yet: the
+ * roster-backed intent the first send carries into provisioning and then
+ * applies through the session's own native model-select route (A1). */
+export interface ModelIntent {model:string;provider:string;variant:string;harness?:string;label:string;providerLabel?:string}
+const MODEL_INTENT_KEY="oi-chat-model-intent";
+export const readModelIntent=():ModelIntent|undefined=>{
+ try{const raw=localStorage.getItem(MODEL_INTENT_KEY);if(!raw)return undefined;
+  const value=JSON.parse(raw) as ModelIntent;
+  return value&&typeof value.model==="string"&&typeof value.provider==="string"&&typeof value.variant==="string"&&typeof value.label==="string"?value:undefined;
+ }catch{return undefined;}
+};
+export const writeModelIntent=(intent:ModelIntent|undefined)=>{try{if(intent)localStorage.setItem(MODEL_INTENT_KEY,JSON.stringify(intent));else localStorage.removeItem(MODEL_INTENT_KEY);}catch{/* per-viewer convenience only */}};
+
+interface RosterCandidate extends ModelIntent {eligible:boolean;note?:string}
+
+/** The fresh chat's model chip: real usable models from the native AIKit
+ * roster and route facts, one deliberate choice, held until a conversation
+ * can carry it. Setup lives behind its footer entry — never an inventory of
+ * harness names in the composer (the approved study's model-first control). */
+export function FreshModelChip({intent,onChoose,onSetup,disabled,project}:{intent?:ModelIntent;onChoose:(intent:ModelIntent)=>void;onSetup?:()=>void;disabled?:boolean;project?:string}) {
+ const {open,setOpen,host}=useMenu();
+ const [query,setQuery]=useState("");
+ const [candidates,setCandidates]=useState<RosterCandidate[]>();
+ const [error,setError]=useState<string>();
+ useEffect(()=>{if(!open)return;let current=true;setQuery("");
+  void kernelOp(detectTransport(),{op:"model_roster",project}).then(result=>{
+   if(!current)return;
+   if(result.outcome?.result!=="model_roster_reading"){setError("The model roster could not be read.");return;}
+   const reading=readModelRoster(result.outcome.reading);
+   if(!reading){setError("The model roster could not be read.");return;}
+   const rows:RosterCandidate[]=[];
+   for(const route of reading.route_facts){
+    if(route.availability.state!=="observed")continue;
+    const entries=reading.roster.entries.filter(entry=>entry.model===route.model&&entry.provider===route.provider&&entry.variant===route.variant);
+    if(!entries.length)continue;
+    const eligible=entries.some(entry=>entry.explanation.eligible);
+    const note=eligible?undefined:entries.map(entry=>entry.explanation.failed_gates.join(" · ")).filter(Boolean).join(" · ")||undefined;
+    rows.push({model:route.model,provider:route.provider,variant:route.variant,harness:route.harness??undefined,
+     label:modelDisplayName(route.model)??route.model,providerLabel:modelDisplayName(route.provider)??route.provider,eligible,note});
+   }
+   const seen=new Set<string>();
+   setCandidates(rows.filter(row=>{const key=`${row.model}\u0000${row.provider}\u0000${row.variant}`;if(seen.has(key))return false;seen.add(key);return true;}));
+  }).catch(reason=>{if(current)setError(String(reason instanceof Error?reason.message:reason));});
+  return()=>{current=false;};
+ },[open,project]);
+ const matches=candidates?.filter(row=>!query||`${row.label} ${row.providerLabel} ${row.harness??""}`.toLowerCase().includes(query.toLowerCase()))??[];
+ return <div className="chat-chip-host" ref={host} data-chip-host="model" data-fresh="true">
+  <Chip chip="model" label={intent?intent.label:"Model"} title={intent?`Model for the next conversation — ${intent.label} (${intent.providerLabel})`:"Model for the next conversation — choose from the project's model roster"} open={open} onToggle={()=>setOpen(value=>!value)}>
+   <div className="chat-model-search"><Glyph name="search" size={11}/><input aria-label="Search models" placeholder="Choose a model…" value={query} onChange={event=>setQuery(event.target.value)}/></div>
+   {matches.map(row=><button key={`${row.model}/${row.provider}/${row.variant}`} type="button" role="menuitemradio" aria-checked={!!intent&&row.model===intent.model&&row.provider===intent.provider&&row.variant===intent.variant} className="oi-menu-item chat-model-item" disabled={disabled||!row.eligible} title={row.note??`${row.providerLabel}${row.harness?` · ${row.harness}`:""}`} onClick={()=>{setOpen(false);onChoose({model:row.model,provider:row.provider,variant:row.variant,harness:row.harness,label:row.label,providerLabel:row.providerLabel});}}>
+    <span>{row.label}{row.note&&<small className="chat-mode-description">{row.note}</small>}</span>
+    {intent&&row.model===intent.model&&row.provider===intent.provider&&row.variant===intent.variant
+      ?<Glyph name="check" size={11}/>
+      :<span className="chat-model-provider">{row.providerLabel}{row.harness?` · ${row.harness}`:""}</span>}
+   </button>)}
+   {candidates&&!matches.length&&<p className="oi-note chat-chip-note">No roster model matches.</p>}
+   {!candidates&&!error&&<p className="oi-note chat-chip-note">Reading the model roster…</p>}
+   {error&&<p className="oi-refusal chat-chip-note" role="alert">{error}</p>}
+   {!candidates?.some(row=>row.eligible)&&candidates?.length?<p className="oi-note chat-chip-note">No model is eligible in this project's roster yet.</p>:null}
+   <div className="menu-rule" role="separator"/>
+   {onSetup&&<button type="button" role="menuitem" className="oi-menu-item" onClick={onSetup}>Harness, model or credential setup…</button>}
+   <p className="oi-note chat-chip-note">{intent?"Held for the next conversation; it is selected on the conversation itself before your first message is sent.":"No model held — the conversation opens with the project's default."}</p>
+  </Chip>
+ </div>;
+}
+
+/** The connected conversation's route state in one control (disconnected or
+ * mid-reconnect): the grouped harness routes, resume and setup — the compact
+ * successor of the old standing "Connect with …" chip strip. */
+export function ConnectionChip({status,providers,resume,onProvider,onReconnect,onSetup,disabled,reason}:{status?:EncounterStatus;providers:ConnectionFacts[];resume?:{provider:string};onProvider:(id:string)=>void;onReconnect:(provider:string)=>void;onSetup?:()=>void;disabled?:boolean;reason?:string}) {
+ const {open,setOpen,host}=useMenu();
+ return <div className="chat-chip-host" ref={host} data-chip-host="connection">
+  <Chip chip="connection" label={resume?"Reconnect":"Not connected"} title="Connect this conversation's harness route" open={open} onToggle={()=>setOpen(value=>!value)} marked={!resume}>
+   {status&&status.state!=="Disconnected"&&<p className="oi-note chat-chip-note">{connectionLabel(status)}</p>}
+   <HarnessPicker connections={providers} currentId={undefined} onChoose={id=>{setOpen(false);onProvider(id);}} disabled={disabled} reason={reason}
+    resume={resume?{provider:resume.provider,onResume:()=>{setOpen(false);onReconnect(resume.provider);}}:undefined}/>
+   {onSetup&&<button type="button" role="menuitem" className="oi-menu-item" onClick={onSetup}>Harness, model or credential setup…</button>}
   </Chip>
  </div>;
 }

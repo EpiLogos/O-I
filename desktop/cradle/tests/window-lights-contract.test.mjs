@@ -73,7 +73,13 @@ test("corner-left: the wedge is carried — the mode stages and the Workbench pa
 
 test("windowLights: the hosted-app cutout posts both wedges and re-posts when the lights flip", async () => {
   const hosted = await read("src/expressions/hostedApp.ts");
-  assert.match(hosted, /const right = Math\.max\(0, 52\.5 - read\(shell, "--desktop-right-width", 0\)\)/, "the right wedge is missing from the posted geometry");
+  // Owner correction 2026-09-25: the right wedge clears the whole floating
+  // functions menu (offset + glyph + one gap, less the card inset, yielding
+  // to floating panel width only) — the old 52.5px figure cleared the agent
+  // toggle alone, so the menu covered the tab strip's "+". Keep in step with
+  // shell.css --window-cutout-right.
+  assert.match(hosted, /const floatWidth = Math\.max\(0, rightWidth - read\(shell, "--desktop-right-space", 0\)\)/, "the right wedge no longer yields only to floating panel width");
+  assert.match(hosted, /const right = Math\.max\(0, Math\.max\(4, 48 - rightWidth\) \+ height \+ 12 - 6 - floatWidth\)/, "the right wedge is missing from the posted geometry");
   assert.match(hosted, /attributeFilter: \["style", "class", "data-native", "data-window-lights"\]/, "the cutout watcher no longer re-posts on lights flips");
   const app = await read("expressions-app/field-studies-journeys/src/app.ts");
   assert.match(app, /--shell-cutout-r/, "the vendored app no longer consumes the right wedge");

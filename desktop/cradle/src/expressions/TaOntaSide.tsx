@@ -15,5 +15,16 @@ export interface TaPaneOpens {
   /** Open a file into THIS canvas (the frame's openFile with into:"side") —
    *  the Context launcher's File entry (10-SIDEBARS §4.6). */
   insertFile?:(location:import("../kernel/types").CentralLocation)=>Promise<void>;
+  /** Open the standing canvas surface (the Expressions application, or the
+   * Technè constellation) into THIS canvas — the insertion menu's Canvas
+   * entry, through the frame's ordinary hosted-surface open. */
+  insertCanvas?:()=>Promise<void>|void;
+  /** Open the project's knowledge graph (the live GraphCanvas renderer with
+   * its filters, selection and open-in-Technè handoff) into THIS canvas. */
+  insertGraph?:()=>Promise<void>|void;
+  /** Open a chosen conversation into THIS canvas (the insertion menu's Side
+   * chat entry): the frame's openEncounter(row,"side") — placement changes,
+   * the conversation's state rides through. */
+  insertSideChat?:(row:import("../encounter/EncounterList").EncounterRow)=>Promise<void>|void;
 }
 

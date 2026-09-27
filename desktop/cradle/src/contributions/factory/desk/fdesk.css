@@ -167,7 +167,9 @@
    restored at matching weight where Factory hosts the tape. */
 .factory-centre .tape-filter, .frtab .tape-filter{ padding: 3px 8px; }
 .ftraj-card .tape-body{ max-height: 380px; }
-.frtab .tape-body{ max-height: calc(100vh - 260px); }
+/* The Run tab's tape fills the panel body (the approved compact summary
+   above a full-space working body); no fixed viewport arithmetic. */
+.frtab .tape-body{ flex: 1 1 auto; min-height: 0; max-height: none; }
 .ftraj-foot{ margin: 0; padding: 9px 12px; border-top: var(--oi-shell-edge, 1px) solid var(--oi-hairline-soft); color: var(--oi-muted-2); font-size: var(--oi-shell-type-ui); text-align: center; }
 .ftraj-waterfall{ display: flex; flex-direction: column; gap: 6px; }
 .factory-centre .ftraj-fall-row{ display: grid; grid-template-columns: 110px 1fr; gap: 10px; align-items: center; padding: 0; border: 0; background: none; color: var(--oi-muted-2); font: inherit; font-size: var(--oi-shell-type-ui); text-align: left; cursor: pointer; }
@@ -177,7 +179,7 @@
 .ftraj-fall-row[aria-pressed="true"] .ftraj-fall-bar{ background: var(--oi-accent-ink); }
 
 /* Right panel: Run tab, Agents tab, Context slice (no .factory-centre scope) */
-.frtab{ display: flex; flex-direction: column; gap: 10px; padding: 12px 14px; min-height: 0; }
+.frtab{ display: flex; flex-direction: column; gap: 10px; padding: 12px 14px; min-height: 0; flex: 1; }
 .frtab-head{ display: flex; flex-direction: column; gap: 4px; }
 .frtab-head strong{ font-size: var(--oi-shell-type-body); color: var(--oi-foreground); }
 .frtab-head > span{ color: var(--oi-muted-2); font-size: var(--oi-shell-type-ui); }

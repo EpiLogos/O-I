@@ -5,6 +5,7 @@ const PointCloudHost = lazy(() => import("../../expressions/PointCloudHost").the
 const TechneCentre = lazy(() => import("../../techne/TechneCentre").then(module => ({default: module.TechneCentre})));
 const EpiLogosSurface = lazy(() => import("../../epilogos/EpiLogosSurface").then(module => ({default: module.EpiLogosSurface})));
 const SystemPanel = lazy(() => import("../../workspace/SystemPanel").then(module => ({default: module.SystemPanel})));
+const LibraryHost = lazy(() => import("../../library/LibraryHost").then(module => ({default: module.LibraryHost})));
 
 export function ExpressionsHostedSurface({binding, onHostedState}: HostedMountProps) {
   return <PointCloudHost mode="expressions" bindingId={binding.id} deepLink={binding.engine?.expressionRef} onHostedState={onHostedState}/>;
@@ -14,3 +15,4 @@ export function TechneHostedSurface({binding, subject, onHostedState}: HostedMou
 }
 export function EpiLogosHostedSurface({binding}: HostedMountProps) { return <EpiLogosSurface binding={binding}/>; }
 export function SystemHostedSurface({binding}: HostedMountProps) { return <SystemPanel binding={binding}/>; }
+export function LibraryHostedSurface() { return <LibraryHost/>; }

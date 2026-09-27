@@ -1,0 +1,141 @@
+{
+  "results": [
+    {
+      "name": "Canvas has one library entry and direct still/video icons, no compulsory editorial copy",
+      "ok": true,
+      "evidence": null
+    },
+    {
+      "name": "All seven icon centres align in a thinner rail; Interact comes first",
+      "ok": true,
+      "evidence": [
+        {
+          "cy": 15.5,
+          "sy": 15.5,
+          "height": 24
+        },
+        {
+          "cy": 15.5,
+          "sy": 15.5,
+          "height": 24
+        },
+        {
+          "cy": 15.5,
+          "sy": 15.5,
+          "height": 24
+        },
+        {
+          "cy": 15.5,
+          "sy": 15.5,
+          "height": 24
+        },
+        {
+          "cy": 15.5,
+          "sy": 15.5,
+          "height": 24
+        },
+        {
+          "cy": 15.5,
+          "sy": 15.5,
+          "height": 24
+        },
+        {
+          "cy": 15.5,
+          "sy": 15.5,
+          "height": 24
+        }
+      ]
+    },
+    {
+      "name": "Every tool opens and closes its own surface in one click without mutating the expression",
+      "ok": true,
+      "evidence": null
+    },
+    {
+      "name": "Closing the Studio explicitly returns to the quiet canvas",
+      "ok": true,
+      "evidence": null
+    },
+    {
+      "name": "Camera controls stay off the HUD; the orbit controller is not mounted",
+      "ok": true,
+      "evidence": null
+    },
+    {
+      "name": "Wheel zoom shares the saved camera and preserves working-plane settings",
+      "ok": true,
+      "evidence": {
+        "mode": "2d",
+        "yaw": 0,
+        "pitch": 0,
+        "zoom": 1,
+        "panX": 0,
+        "panY": 0,
+        "plane": "XY",
+        "depth": 0,
+        "grid": false,
+        "snap": false
+      }
+    },
+    {
+      "name": "Camera moves cost no physics steps, target rebakes or reseeds",
+      "ok": true,
+      "evidence": null
+    },
+    {
+      "name": "Bottom-right XYZ values match the world-space pointer, not a corner status label",
+      "ok": true,
+      "evidence": {
+        "numbers": [
+          "+0.120",
+          "+0.065",
+          "+0.000"
+        ],
+        "bounds": {
+          "x": 1220.125,
+          "y": 975,
+          "width": 193.875,
+          "height": 15
+        }
+      }
+    },
+    {
+      "name": "Library is a full page with image/name/subtitle cards, not a modal",
+      "ok": true,
+      "evidence": null
+    },
+    {
+      "name": "Opening library clears field input and pauses its time without a reset",
+      "ok": true,
+      "evidence": null
+    },
+    {
+      "name": "About and import/export live in the library; browsing does not change the expression",
+      "ok": true,
+      "evidence": null
+    },
+    {
+      "name": "Returning from library restores exactly the camera and active expression",
+      "ok": true,
+      "evidence": null
+    },
+    {
+      "name": "A running field pauses for library browsing and resumes without time catch-up",
+      "ok": true,
+      "evidence": null
+    },
+    {
+      "name": "Modes open editable composition forks and retain the previous expression",
+      "ok": true,
+      "evidence": "composition-chakra_body"
+    },
+    {
+      "name": "Expressions workspace acceptance",
+      "ok": false,
+      "error": "semantic binding control visible"
+    }
+  ],
+  "passed": 14,
+  "browserErrors": [],
+  "environment": "Chromium software WebGL; 2048-particle fixtures; declared storage double except explicit unavailable-storage case. Native state and trusted touch checked."
+}

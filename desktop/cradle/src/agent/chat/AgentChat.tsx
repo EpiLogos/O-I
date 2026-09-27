@@ -12,6 +12,7 @@ import {LOCATION_DRAG_TYPE,SURFACE_DRAG_TYPE} from "../../files/drag";
 import {AgentIdentity,useAgentIdentity,type AgentIdentityReading} from "./AgentIdentity";
 import {ChatTranscript} from "./ChatTranscript";
 import {ChatComposer} from "./ChatComposer";
+import {readModelIntent,writeModelIntent,type ModelIntent} from "./ComposerChips";
 import {chatProvisionTarget} from "./firstSend";
 import {appendBlock,contextBlockForLocation,contextBlockForOsFile,contextBlockForSurface,type ContextBlock} from "./attach";
 import {CHAT_PREVIEW_EVENT} from "./previewGate";
@@ -123,13 +124,22 @@ export function AgentChat({session,accompanying,project,agentName="World",situat
   const localRef=useRef(localDraft);localRef.current=localDraft;
   const setLocal=(text:string)=>{setLocalDraft(text);if(!fixture)writeDraft(text);};
 
-  // --- first Send with no conversation: provision, then send ---------------
+  // --- first Send with no conversation: provision, select the held model, then send
   /** Set when Send was pressed with nothing bound; the provisioned binding
-   * below completes it. The draft waits for the bind and is never lost. */
+   * below completes it. The draft waits for the bind and is never lost. The
+   * held model intent (the fresh chat's chip) is applied through the
+   * conversation's own native model-select route BEFORE the first prompt —
+   * the selected model reaches the actual invocation, and a failure is said
+   * at the control instead of silently sending on another model. */
   const pendingSend=useRef(false);
   const flushed=useRef<string>();
+  const heldModel=useRef<{intent?:ModelIntent;stage:"draft"|"model"|"select"|"send";issued?:boolean;retries?:number;failed?:boolean}>({stage:"draft"});
   const [provisioning,setProvisioning]=useState(false);
   const [composerFocusToken,setComposerFocusToken]=useState(0);
+  /** The held model choice for the NEXT conversation — persisted, shown by
+   * the fresh composer's model chip. */
+  const [modelIntent,setModelIntent]=useState<ModelIntent|undefined>(readModelIntent);
+  const chooseModelIntent=(intent:ModelIntent)=>{setModelIntent(intent);writeModelIntent(intent);};
   const state=session?.state;const actions=session?.actions;
   const action=(name:string)=>state?.reading?.actions?.find(entry=>entry.ref===`aikit.encounter.${name}`);
   const allowed=(name:string)=>action(name)?.enabled===true;
@@ -140,14 +150,54 @@ export function AgentChat({session,accompanying,project,agentName="World",situat
     if(!pendingSend.current||!session||!state||!actions)return;
     if(!state.reading||state.pending||state.busy)return;
     const key=state.key;
-    if(flushed.current!==key){
-      if(!localRef.current.trim()){pendingSend.current=false;return;}
-      if(state.draft!==""){pendingSend.current=false;onMessage?.("That conversation already holds a draft; yours is kept in the composer.");return;}
-      if(!actions.allowed("draft")){pendingSend.current=false;onMessage?.(action("draft")?.reason??"The owner does not allow editing this draft.");return;}
-      flushed.current=key;actions.change(localRef.current);setLocal("");return;
+    const held=heldModel.current;
+    if(held.stage==="draft"){
+      if(flushed.current!==key){
+        if(!localRef.current.trim()){pendingSend.current=false;return;}
+        if(state.draft!==""){pendingSend.current=false;onMessage?.("That conversation already holds a draft; yours is kept in the composer.");return;}
+        if(!actions.allowed("draft")){pendingSend.current=false;onMessage?.(action("draft")?.reason??"The owner does not allow editing this draft.");return;}
+        flushed.current=key;actions.change(localRef.current);setLocal("");
+      }
+      held.stage=held.intent?"model":"send";return;
     }
-    if(!actions.allowed("prompt")){pendingSend.current=false;return;}
-    pendingSend.current=false;void actions.send();
+    if(held.stage==="model"){
+      const modelState=state.model;
+      if(!modelState){held.stage="send";return;}
+      if(modelState.phase==="unread"){void actions.readModel();return;}
+      if(modelState.phase==="reading")return;
+      if(modelState.phase==="unavailable"){
+        // The native session is settling right after provisioning: re-read
+        // briefly and bounded, then send on the current model and say so.
+        held.retries=(held.retries??0)+1;
+        if((held.retries??0)<=6){const timer=setTimeout(()=>void actions.readModel(),500);return()=>clearTimeout(timer);}
+        if(!held.failed){held.failed=true;onMessage?.(`The chosen model ${held.intent!.label} could not be read before sending; your message sends on the current model.`);}
+        held.stage="send";return;
+      }
+      if(modelState.phase==="ready"&&modelState.reading){
+        const option=modelState.reading.model_observation?.available_models?.find(candidate=>candidate.rosterIdentity&&candidate.rosterIdentity.provider_ref===held.intent!.provider&&candidate.rosterIdentity.provider_native_id===held.intent!.variant);
+        if(option&&option.modelId!==modelState.reading.model_observation?.current_model_id&&modelState.reading.model_controls?.model_selection===true){
+          held.stage="select";held.issued=false;return;
+        }
+        if(!option&&!held.failed){held.failed=true;onMessage?.(`The chosen model ${held.intent!.label} is not offered by the route this conversation opened with. Your message sends on the current model; choose ${held.intent!.label} again from the composer.`);}
+      }
+      held.stage="send";return;
+    }
+    if(held.stage==="select"){
+      const modelState=state.model;
+      if(!modelState){held.stage="send";return;}
+      if(!held.issued){
+        if(modelState.phase!=="ready"||!modelState.reading){held.failed=true;held.stage="send";onMessage?.("The conversation's model could not be read before sending; your message sends on the current model.");return;}
+        held.issued=true;
+        void actions.selectModel(held.intent!.model).catch(()=>{held.failed=true;onMessage?.(`The chosen model ${held.intent!.label} could not be selected; your message sends on the current model.`);});
+        return;
+      }
+      if(modelState.phase==="selecting")return;
+      held.stage="send";return;
+    }
+    if(held.stage==="send"){
+      if(!actions.allowed("prompt")){pendingSend.current=false;return;}
+      pendingSend.current=false;heldModel.current={stage:"draft"};void actions.send();
+    }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   },[session,state,actions]);
   const chooseRow=async(row:EncounterRow)=>{try{await onChoose?.(row);}catch(error){onMessage?.(String(error));}};
@@ -157,7 +207,8 @@ export function AgentChat({session,accompanying,project,agentName="World",situat
   const send=()=>{
     if(session&&actions){void actions.send();return;}
     if(!onProvision){onMessage?.("Provisioning a new conversation is not available in this view.");return;}
-    pendingSend.current=true;setProvisioning(true);
+    pendingSend.current=true;heldModel.current={stage:"draft",intent:modelIntent};
+    setProvisioning(true);
     onProvision(provisionProject)
       .catch(error=>{pendingSend.current=false;onMessage?.(String(error));})
       .finally(()=>setProvisioning(false));
@@ -292,7 +343,7 @@ export function AgentChat({session,accompanying,project,agentName="World",situat
         <ChatComposer reading={undefined} draft={localDraft} pending={false} busy={choosing||provisioning} error={undefined} editable={!choosing&&!provisioning}
           promptAllowed={!choosing&&!provisioning} cancelAllowed={false}
           onDraft={setLocal} onSend={send} onCancel={()=>{}} agentName={agentLabel}
-          connection={{status:undefined,providers:[],resume:undefined,onProvider:()=>{},onReconnect:()=>{},openAllowed:false,openReason:undefined}}
+          connection={{status:undefined,providers:[],resume:undefined,onProvider:()=>{},onReconnect:()=>{},openAllowed:false,openReason:undefined,modelIntent,onModelIntent:chooseModelIntent}}
           tools={{pickFiles:attachFiles}} drafting provisionProject={provisionProject}
           draftFailed={false} onRecover={()=>{}} paged={false} onLatest={()=>{}} focusToken={composerFocusToken}/>
       </div>}

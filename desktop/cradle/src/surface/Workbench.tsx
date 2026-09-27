@@ -181,6 +181,13 @@ interface PaneProps extends WorkbenchProps {
   /** Whether the source surface's buffer is dirty (kernel two-layer state). */
   kernelDirty: (ref: string | undefined) => boolean;
   weight?: number;
+  /** Extra controls in this pane's strip (the Context plane's selection and
+    * arrangement controls; the approved Factory study's material strip). */
+  stripTools?: ReactNode;
+  /** Replaces the plain new-tab act: the + opens this insertion menu, a
+    * render prop so the pane owns the anchor and the owner owns the choices.
+    * Absent (the centre panes): the ordinary `oi:new-tab` blank tab. */
+  insertMenu?: (close: () => void) => ReactNode;
 }
 
 function PaneNode(props: PaneProps) {
@@ -231,6 +238,13 @@ function PaneNode(props: PaneProps) {
 
 export function GroupPane(props: PaneProps & { group: Extract<Pane, { type: "group" }> }) {
   const { group, state, execute, openBindingMenu, openFrameMenu } = props;
+  const [insertOpen, setInsertOpen] = useState(false);
+  useEffect(() => {
+    if (!insertOpen) return;
+    const outside = (event: MouseEvent) => { if (!(event.target as HTMLElement).closest('.strip-open-host')) setInsertOpen(false); };
+    document.addEventListener('mousedown', outside);
+    return () => document.removeEventListener('mousedown', outside);
+  }, [insertOpen]);
   const focused = state.focusedGroupId === group.id;
   // The pane's footer follows focus by default (unfocused up; on focus it
   // drops). The corner dot pins THIS pane's footer up, overriding focus,
@@ -320,20 +334,38 @@ export function GroupPane(props: PaneProps & { group: Extract<Pane, { type: "gro
         ))}
         </IconTabStrip>
         <div className="pane-tools">
+          {props.stripTools}
           {group.emptySlot && <button type="button" className="pane-tool-menu" aria-label="Close empty pane" title="Close empty pane (⌘W)" onClick={() => execute("surface.close-empty-pane", { groupId: group.id })}><Glyph name="close" size={13} /></button>}
-          <button
-            type="button"
-            className="strip-open"
-            aria-label="New tab"
-            title="New tab (⌘T)"
-            onClick={() => {
-              execute("surface.focus-group", { groupId: group.id });
-              window.dispatchEvent(new CustomEvent("oi:new-tab", { detail: { groupId: group.id } }));
-            }}
-          >
-            <Glyph name="plus" size={13} />
-          </button>
-
+          {props.insertMenu
+            ? <span className="strip-open-host">
+                <button
+                  type="button"
+                  className="strip-open"
+                  aria-label="Insert into this pane"
+                  aria-haspopup="menu"
+                  aria-expanded={insertOpen}
+                  title="Insert into this pane"
+                  onClick={() => { execute("surface.focus-group", { groupId: group.id }); setInsertOpen(open => !open); }}
+                >
+                  <Glyph name="plus" size={13} />
+                </button>
+                {insertOpen && <div className="oi-menu strip-open-menu" role="menu" aria-label="Insert into this pane"
+                  onKeyDown={event => { if (event.key === 'Escape') { event.stopPropagation(); setInsertOpen(false); } }}>
+                  {props.insertMenu(() => setInsertOpen(false))}
+                </div>}
+              </span>
+            : <button
+                type="button"
+                className="strip-open"
+                aria-label="New tab"
+                title="New tab (⌘T)"
+                onClick={() => {
+                  execute("surface.focus-group", { groupId: group.id });
+                  window.dispatchEvent(new CustomEvent("oi:new-tab", { detail: { groupId: group.id } }));
+                }}
+              >
+                <Glyph name="plus" size={13} />
+              </button>}
         </div>
       </CanvasHUD>
       {/* The pinned-vertical list's width: a separator on the strip's inner
@@ -381,6 +413,7 @@ export function GroupPane(props: PaneProps & { group: Extract<Pane, { type: "gro
         * leaves the group and the body unmounts with it. */}
       <div
         className="surface-body"
+        data-empty={!tabs.length ? "true" : undefined}
         data-binding-id={active}
         role="tabpanel"
         id={`surface-panel-${group.id}`}

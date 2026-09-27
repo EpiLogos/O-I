@@ -41,6 +41,16 @@ export const hostedSurfaceDescriptors = [
     "title": "Settings"
   },
   {
+    "contribution_ref": "oi.contribution/core",
+    "descriptor_ref": "oi.surface/library",
+    "kind": "library",
+    "owner": "oi",
+    "region": "canvas",
+    "retention": "mounted",
+    "revision": 1,
+    "title": "Library"
+  },
+  {
     "contribution_ref": "oi.contribution/factory",
     "descriptor_ref": "oi.surface/factory",
     "kind": "factory",
@@ -49,15 +59,5 @@ export const hostedSurfaceDescriptors = [
     "retention": "mounted",
     "revision": 1,
     "title": "Factory"
-  },
-  {
-    "contribution_ref": "oi.contribution/automations",
-    "descriptor_ref": "oi.surface/automations",
-    "kind": "automations",
-    "owner": "ai-kit",
-    "region": "canvas",
-    "retention": "mounted",
-    "revision": 1,
-    "title": "Automations"
   }
 ];
