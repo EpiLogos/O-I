@@ -1,0 +1,11 @@
+{
+  "schema": "central.project-now.handoff/v1",
+  "id": "527-remit-pass-2-a3-method-2026-09-27-2",
+  "provenance": "agent-authored-bounded-return",
+  "actor": "zcode-command-encounter-finish",
+  "kind": "handoff",
+  "recorded_at_unix_seconds": 1790515002,
+  "subject": "#527 remit pass 2: A3 method run shipped, TUI SkillSet picker live, oi ui composed-World supply, Factory/Workcell/QL help lanes, #541 rebased to 61 files",
+  "result": "Finished the remaining lane frontier the owner asked for. ai-kit commit 595fbfcc on PR #443: (1) A3 executable praxis — aikit method run with preflight refusals before any effect, one execution through the existing native runner, and an aikit.method-execution/v1 receipt carrying digests for method prove which still refuses unverified runs (successful exit is not proof); two vertical practices proven through the real binary. (2) The TUI compose Praxis step reads the same SkillSet field aikit set list reads (read placed below the CLI/TUI split over application_home + resolved view), digits toggle numbered sets, and the selection rides save_agent_profile into the Central express request. (3) oi ui hands O:I oi.world-orientation/v1 through OI_COMPOSED_WORLD; the TUI renders the composed supply once at construction, degraded named. O-I branch rebased onto main: PR #541 went from 1194 files/122k insertions to 61 files/3k — the site/Quartz commits were patch-equivalents of what main already carries (main readability pass preserved), nothing discarded. Help treatment opened as three lanes: Factory #273, Workcell #106, QL-MEF #250 — each task-oriented grouped help off each repo main, exact routes preserved, Workcell help adds material/inspect/recover/run which were missing. Note: during QL work one edit briefly landed in the primary checkout by mistake; reverted cleanly (only file with a diff; lane work untouched). Evidence: method_run_route 2/2, skill_set_field_read, lifecycle 8/8, parity 10/10, desktop 16/16 green pre-push; final full gate and clippy running at commit time; Factory/Workcell/QL crates green in their worktrees. Remaining: V1 acceptance (X7 X9 X12 X13 X15 X16) with the desktop app installed and live providers; project-scope accept grant is an owner decision; expressions-substrate walk failures owned by that lane.",
+  "status": "active"
+}

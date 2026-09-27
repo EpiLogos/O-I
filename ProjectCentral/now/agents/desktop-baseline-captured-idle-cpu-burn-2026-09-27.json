@@ -1,0 +1,11 @@
+{
+  "schema": "central.project-now.handoff/v1",
+  "id": "desktop-baseline-captured-idle-cpu-burn-2026-09-27",
+  "provenance": "agent-authored-bounded-return",
+  "actor": "zcode-central-commission-20260926",
+  "kind": "handoff",
+  "recorded_at_unix_seconds": 1790500719,
+  "subject": "Desktop baseline captured: idle CPU burn measured + provider duplicates root-caused; poll-gate fix in lane",
+  "result": "BASELINE (installed cut b7f13cc2c, oi-cradle built 25 Sep 22:15, window Central-O-I): idle desktop WebContent burns ~16% CPU continuously (sampled: querySelectorAll sweeps + string-split + hot GC threads; main thread mostly idle -> a JS poll loop, not rendering). Reproduces on a FRESH session (relaunch 00:50: new WebContent 10-13.8% within a minute) — structural, not stale state. WebContent RSS 197MB fresh vs 348MB after 21h. UI observations: Connect-with provider row was 25 chips of duplicated harness names (root-caused + 11 stale rows withdrawn, see ai-kit register return — desktop row now sane from source); conversation panel Disconnected with no effective default provider; Terminal panel showed stuck Opening-goal.md state (candidate idle-animation source, unconfirmed). FIX IN LANE fix/material-context-idle-poll-20260926 @ 432532de (worktrees/material-context-gate-20260926, base aa0da4a6): useMaterialContext no longer calls take while editor context mode is off (was: 5 takes/sec per mounted surface even in off mode). tsc clean. NOT YET PROVEN ON INSTALL: attribution of the full 16% needs the installed cut + measurement — this lane removes one proven waste loop; remaining contributors (stuck loading animation, 43 rAF sites, graph) need a profiled pass on the installed candidate. Baseline artifacts: /tmp/oi-desktop-now.png, /tmp/oi-window2.png, /tmp/oi-webcontent-sample.txt.",
+  "status": "active"
+}

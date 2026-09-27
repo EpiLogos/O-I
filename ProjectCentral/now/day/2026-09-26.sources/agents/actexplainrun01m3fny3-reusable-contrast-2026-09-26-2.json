@@ -1,0 +1,11 @@
+{
+  "schema": "central.project-now.handoff/v1",
+  "id": "actexplainrun01m3fny3-reusable-contrast-2026-09-26-2",
+  "provenance": "agent-authored-bounded-return",
+  "actor": "agent:aletheia",
+  "kind": "learning",
+  "recorded_at_unix_seconds": 1790455442,
+  "subject": "act:explain-run-01M3FNY3 — reusable contrast explanation",
+  "result": "Variation saved at central:path:/Users/admin/Central:Work/O-I/desktop/cradle/material/expressive-material/scene/explanation-contrast.expression.json — performed in the act at central.content-fnv1a64/v1:18242:61eaa2d8235c3fc3 and curated at central.content-fnv1a64/v1:18285:2d761f7db473d107 with associations.event_families [message, review]. A two-voice claim/verdict scene whose roles are lead, participants.0, goal, caption, claimText and verdictText — claimText carries the claim, verdictText the verdict — created for act:explain-run-01M3FNY3 when the curated single-voice explanation scene could not carry the two-voice contrast. Reusable for any claim-vs-verdict or review explanation across workflows: the two text roles bind any pair of agents and any pair of texts, with nothing Factory-specific in the form. Evidence — act passages: 0 selected the curated scene central:path:/Users/admin/Central:Work/O-I/desktop/cradle/material/expressive-material/scene/explanation.expression.json@central.content-fnv1a64/v1:12298:bea2f9ef88bfd3b9 (expression:fx-scene-explanation:scene:explanation); 1 created and saved the contrast variation (expression:explanation-contrast:scene:explanation) because the two-voice roles were missing; 2 reselected the saved variation from material_list. The reuse law held: choose first, create only when missing, reselect the saved form.",
+  "status": "active"
+}

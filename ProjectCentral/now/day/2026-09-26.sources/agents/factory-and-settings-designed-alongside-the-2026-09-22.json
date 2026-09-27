@@ -1,0 +1,11 @@
+{
+  "schema": "central.project-now.handoff/v1",
+  "id": "factory-and-settings-designed-alongside-the-2026-09-22",
+  "provenance": "agent-authored-bounded-return",
+  "actor": "claude-code",
+  "kind": "handoff",
+  "recorded_at_unix_seconds": 1790113962,
+  "subject": "Factory and Settings designed alongside the sidebars",
+  "result": "PR #479 now carries 10-SIDEBARS (owner rulings D1-D6 recorded: Inspect opens object pages in canvas/pop-out; Epi-Logos is a footer lens over the file system; universal Inbox; chat routing; Factory INTENT via HTML templates and per-mode context slices; one scope + workspace model), 11-FACTORY (Desk, Run Map/Trajectory/Live/Handoff, Tasks, right panel, object pages, built on journey purpose, run map, workflow inspect, attempts, telemetry, journal; five Factory-side fixes), 12-SETTINGS (task sections + product pages, stage-review-apply-readback, harnesses/models/credentials/skills/profiles/permissions; kernel ops still needed), and the study (artifact UNaV7Y4vWLUBDvBcFczQDg v2). Open: owner Recognition of S1-S2; implementation per each spec build order. Follow-up agent: read docs/cradle/11-FACTORY.md and 12-SETTINGS.md on PR #479 and execute their build orders.",
+  "status": "active"
+}

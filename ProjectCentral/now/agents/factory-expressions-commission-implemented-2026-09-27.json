@@ -1,0 +1,15 @@
+{
+  "schema": "central.project-now.handoff/v1",
+  "id": "factory-expressions-commission-implemented-2026-09-27",
+  "provenance": "agent-authored-bounded-return",
+  "actor": "claude-code:expressions-engine-8a670c",
+  "kind": "handoff",
+  "recorded_at_unix_seconds": 1790466957,
+  "subject": "Factory Expressions commission — implemented, installed, §9 accepted",
+  "result": "Installed desktop b702ecf3 (integration/factory-expressions-20260926, head f4e955a6), oi 51971795, ctrl f42779dc, aikit f95f9dcb. §9 walk 63/63 plus real two-agent Run and agent track. Remaining: Run lifecycle not closed in Factory (receiving not attached); branches unpushed and unmerged. Read .wayfinder/maps/factory-expressions.md and execute its Remaining section.",
+  "status": "active",
+  "run_ref": "run:01M3FNY3P0E4H7JGN0BARSRQ8R",
+  "evidence_refs": [
+    "Control/agents/now/flows/factory-expressions-2026-09-26/README.md"
+  ]
+}

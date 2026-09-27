@@ -1,0 +1,11 @@
+{
+  "schema": "central.project-now.handoff/v1",
+  "id": "ui-lead-locked-and-build-prompt-2026-09-23",
+  "provenance": "agent-authored-bounded-return",
+  "actor": "claude-code",
+  "kind": "handoff",
+  "recorded_at_unix_seconds": 1790118455,
+  "subject": "UI lead locked and build prompt ready",
+  "result": "Owner accepted the UI lead 23 Sep with amendments A1-A6 (models are models; permission-mode selector incl. Bypass; no right title band, avatar menu in tab row; full-page centres without tabs for Factory/Expressions/Technè/Settings; Epi-Logos lens in the hidden window footer; Open beside / Pop out on left rows). Merged to O-I main via #479 (894edad3): docs/cradle/10-SIDEBARS, 11-FACTORY, 12-SETTINGS, 13-BUILD-PROMPT, sidebars/sidebars-study.html. Technè wiki map fix merged via #480 (1ef42473). Follow-up agent: open a fresh session and run the prompt in docs/cradle/13-BUILD-PROMPT.md; step 0 reconciles the local-only ui/shell-law-2026-09-22 branch and its uncommitted settings work before building.",
+  "status": "active"
+}
