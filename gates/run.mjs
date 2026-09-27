@@ -67,6 +67,7 @@ function cmdRun(selectedTier) {
   });
   if (!gates.length) { console.error(`no gates selected for tier ${selectedTier}`); process.exit(2); }
 
+  const partial = Boolean(only || skip);
   const started = new Date().toISOString();
   const sha = head();
   const dirty = git(['status', '--porcelain']).out.length > 0;
@@ -96,6 +97,8 @@ function cmdRun(selectedTier) {
     head: sha,
     dirty,
     tier: selectedTier,
+    scope: partial ? 'partial' : 'full',
+    selected: gates.map((g) => g.name),
     started, finished: new Date().toISOString(),
     pass: failed === 0,
     failed_count: failed,
