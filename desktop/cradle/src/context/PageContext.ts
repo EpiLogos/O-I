@@ -29,7 +29,11 @@ export function useMaterialContext(container:RefObject<HTMLDivElement>,binding:S
    // polled. Owner activity is untouched; the observation resumes from the
    // document's own state on reveal.
    if(typeof root.checkVisibility==='function'?!root.checkVisibility():root.offsetParent===null)return;
-   busy=true;try{const scope=mode();if(frame!==lastFrame||scope!==lastMode){const accepted=await rpc(frame,'mode',{scope,ink:getComputedStyle(document.body).getPropertyValue('--oi-accent-ink').trim()});if(!accepted)return;lastFrame=frame;lastMode=scope;}present(frame,await rpc(frame,'take'));}finally{busy=false;}};
+   busy=true;try{const scope=mode();if(frame!==lastFrame||scope!==lastMode){const accepted=await rpc(frame,'mode',{scope,ink:getComputedStyle(document.body).getPropertyValue('--oi-accent-ink').trim()});if(!accepted)return;lastFrame=frame;lastMode=scope;}
+    // Context off means there is no observation to take: the poll keeps the
+    // timer alive only to notice the mode changing back, and 'take' would make
+    // every mounted surface sweep the guest DOM 5x/second for nothing.
+    if(scope!=='off')present(frame,await rpc(frame,'take'));}finally{busy=false;}};
   const attach=()=>{const frame=root.querySelector<HTMLIFrameElement>('iframe[data-page-context]');if(frame)void rpc(frame,'selection').then(value=>present(frame,value));};
   const loaded=()=>{lastFrame=null;void tick();};
   root.addEventListener('load',loaded,true);root.addEventListener('oi:page-attach-selection',attach);
