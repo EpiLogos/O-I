@@ -117,6 +117,29 @@ oi ql ...           -> ql ...
 
 Dispatch is transparent. On Unix the implementation uses process replacement, so native arguments, input/output, signal behavior and exit status remain authoritative.
 
+## Entering the development World
+
+The ordinary entry for eligible agents on a machine with the O:I development
+World carrier (`Work/O-I/dev-world/` + `Control/machines/current/oi-development.toml`):
+
+```text
+oi dev world            # resolve the carrier; observe only (status is the default)
+oi dev world up         # bring the World up through its native owners, idempotently
+oi dev world up --json  # agents: canonical identities + created/reused facts
+oi dev world focus parent
+```
+
+`up` ensures the Herdr daemon, creates the SessionSpace from the carrier seed
+when absent (`session-space/oi-development`), binds and opens the Herdr parent
+working surface through the SessionSpace application contract, and delegates
+the tmux floor to `aikit session up`. Every materialising step is an
+AIKit-owned verb; O:I resolves machine facts and composes the order. Re-running
+is the warm entry: living state is reused, a dead provider place is recovered
+through the same open that created it, nothing duplicates. Machine facts stay
+in the machine config; a second machine runs the same entry against its own
+config. Positions, custody and Returns continue through `aikit inhabit`,
+`aikit gateway send|inbox`, and the Central native NOW actions.
+
 ## Operative praxis
 
 The target pre-`#97` suite UX is one first-hand `oi` instrument backed by AIKit's accepted general resolver. The implementation Wayfinder is `docs/OI-OPERATIVE-FRONTDOOR-WAYFINDER.md`; AIKit `#142` remains the runtime owner of `ResolveExpression`, typed refs, Search/Explain/History, Method discovery and the operative address grammar.
