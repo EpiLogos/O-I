@@ -92,6 +92,8 @@ jobs:
           spacetime --version | tee /tmp/spacetimedb-version.txt
           grep -q '2.8.1' /tmp/spacetimedb-version.txt
       - run: npm install --no-audit --no-fund
+      - name: Install the expression engine's own deps (headless admission imports it by real path)
+        run: npm install --prefix ../packages/oi-design-system --no-audit --no-fund
       - name: Install the vendored Quartz
         run: npm ci --prefix vendor/quartz --no-audit --no-fund
       - name: Verify the essay publication builders and host contract

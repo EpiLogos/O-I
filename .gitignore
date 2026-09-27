@@ -33,3 +33,6 @@ shared-field/spacetimedb/dist/
 shared-field/spacetimedb/module_bindings/
 shared-field/spacetimedb/node_modules/
 shared-field/spacetimedb/package-lock.json
+
+# Expression engine headless consumers install their own deps here
+packages/oi-design-system/node_modules/
