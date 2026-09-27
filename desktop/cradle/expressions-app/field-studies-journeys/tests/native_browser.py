@@ -35,7 +35,7 @@ try:
   p.set_content('<html><body></body></html>');p.add_script_tag(content=(ROOT/'build/native-harness.js').read_text())
   fixture=p.evaluate('()=>{const j=NATIVE_TEST.fieldStudies();j.scenes.forEach(s=>s.field.params.count=2048);return j;}')
   load(p,fixture)
-  check('Native opening, quiet canvas and seven aligned icon tools',lambda:require(current(p)['name']=='Ink' and not p.locator('#inspector').is_visible() and state(p)['engine']=='Native particle field' and p.locator('#tool-rail button').count()==7 and p.locator('#tool-rail button').first.get_attribute('data-action')=='tool-interact' and p.locator('.page-text').count()==0))
+  check('Native opening, quiet canvas and seven aligned icon tools',lambda:require(current(p)['name']=='Ink' and not p.locator('#inspector').is_visible() and state(p)['engine']=='Native particle field' and p.locator('#tool-rail button:visible').count()==7 and p.locator('#tool-rail button').first.get_attribute('data-action')=='tool-interact' and p.locator('.page-text').count()==0))
   before=inspect(p,True);p.evaluate("window.__FIELD_STUDIES__.openEditor('field')");act(p,'studio-section','[data-value="scene"]');after=inspect(p,True)
   check('Panel navigation leaves paused native state and render dimensions unchanged',lambda:require(equivalent(before,after,['simTime','steps','seeds','bakes','positions'])))
   p.keyboard.press('p');previous=current(p);p.mouse.click(710,315);p.wait_for_timeout(100);pin=current(p)['entities'][-1]
@@ -52,13 +52,13 @@ try:
   # Numeric positioning / locking / keyboard alternatives.
   fill(p,'entity.position.z',.31);fill(p,'entity.position.x',.14);p.locator('[data-bind="entity.locked"]').check();p.locator('[data-bind="entity.locked"]').blur();pos=current(p)['entities'][-1]['position'];p.keyboard.press('ArrowRight');require(current(p)['entities'][-1]['position']==pos)
   p.locator('[data-bind="entity.locked"]').uncheck();p.locator('[data-bind="entity.locked"]').blur();p.keyboard.press('ArrowRight');check('Editing lock and keyboard nudge are distinct from simulation motion',lambda:require(abs(current(p)['entities'][-1]['position']['x']-pos['x']-.01)<1e-9))
-  p.keyboard.press('Escape');p.keyboard.press('p');p.locator('[data-orbit="view"]').click();p.locator('#working-depth').fill('0.35');p.locator('#working-depth').press('Tab');p.mouse.click(735,365);p.wait_for_timeout(80)
+  p.keyboard.press('Escape');p.keyboard.press('p');p.locator('#working-depth').fill('0.35');p.locator('#working-depth').press('Tab');p.mouse.click(735,365);p.wait_for_timeout(80)
   check('Orbit-view placement respects explicit working-plane depth',lambda:require(current(p)['entities'][-1]['position']['z']==.35))
   # A camera gesture cannot also apply the pointer force.
   act(p,'tool-interact');p.mouse.move(720,300);p.mouse.down(button='right');p.mouse.move(755,310,steps=3);require(not state(p)['pointerActive']);p.mouse.up(button='right')
   check('Right-drag camera navigation does not also drive pointer force',lambda:require(not state(p)['pointerActive']))
   p.keyboard.press('Escape');p.keyboard.press('p');p.locator('#working-plane').select_option('XZ');act(p,'face-plane')
-  p.locator('#working-plane').select_option('XY');p.locator('[data-orbit="reset"]').click();p.locator('#working-depth').fill('0');p.locator('#working-depth').press('Tab')
+  p.locator('#working-plane').select_option('XY');p.locator('#working-depth').fill('0');p.locator('#working-depth').press('Tab')
   # Formation and draft editing.
   p.keyboard.press('a');act(p,'place-formation');p.locator('#placement-glyph').fill('S');p.locator('#placement-glyph').press('Tab');p.mouse.click(760,570);p.wait_for_timeout(100);form=current(p)['entities'][-1]
   check('Formation placement is additive with its own allocation and identity',lambda:require(form['kind']=='formation' and form['text']=='S' and len(current(p)['entities'])==5))

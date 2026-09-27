@@ -21,6 +21,15 @@
       "reason": "No directly attributable executed native walk is recorded here for agency_read; retain explicit operation-specific coverage debt until its owner supplies a receipt."
     },
     {
+      "op": "agent_card",
+      "native_owner": "kernel/src/agent_card.rs",
+      "spec_ref": "docs/cradle/02-ARCHITECTURE.md §5; docs/cradle/04-VERIFICATION.md; canonical plan Lane A §3",
+      "status": "unverified",
+      "scenarios": [],
+      "owner_lane": "A/native verification",
+      "reason": "No directly attributable executed native walk is recorded here for agent_card; retain explicit operation-specific coverage debt until its owner supplies a receipt."
+    },
+    {
       "op": "agent_definition",
       "native_owner": "kernel/src/lib.rs",
       "spec_ref": "docs/cradle/02-ARCHITECTURE.md \u00a75; docs/cradle/04-VERIFICATION.md; canonical plan Lane A \u00a73",
@@ -484,6 +493,15 @@
       ],
       "owner_lane": "A/native verification",
       "reason": "file_read is directly named in these existing scenario sources; no run is claimed by this register."
+    },
+    {
+      "op": "file_resolve",
+      "native_owner": "kernel/src/lib.rs",
+      "spec_ref": "docs/cradle/02-ARCHITECTURE.md §5; docs/cradle/04-VERIFICATION.md; canonical plan Lane A §3",
+      "status": "unverified",
+      "scenarios": [],
+      "owner_lane": "A/native verification",
+      "reason": "No directly attributable executed native walk is recorded here for file_resolve; retain explicit operation-specific coverage debt until its owner supplies a receipt."
     },
     {
       "op": "files_list",

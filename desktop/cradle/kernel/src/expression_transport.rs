@@ -1,8 +1,55 @@
 //! Local, permission-bounded transport of Expression requests, not a second
 //! application instance or a generic privileged command endpoint.
+//!
+//! One socket carries both Expression faces: an ordinary Expression request
+//! (`oi.expression/v1` operations), or an Expression-world request — a body
+//! whose `schema` is `oi.expression-world/v1` (the act/material/selection
+//! operations of `expression_world`).
+use serde::{Deserialize, Serialize};
+
+/// A request the Expression socket accepts.
+#[derive(Clone, Debug, PartialEq)]
+pub enum Request {
+    Expression(crate::expression::Request),
+    World(crate::expression_world::Request),
+}
+
+impl Serialize for Request {
+    fn serialize<S: serde::Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+        match self {
+            Request::Expression(request) => request.serialize(serializer),
+            Request::World(request) => {
+                let mut value = serde_json::to_value(request).map_err(serde::ser::Error::custom)?;
+                if let Some(map) = value.as_object_mut() {
+                    map.insert("schema".into(), crate::expression_world::WORLD_SCHEMA.into());
+                }
+                value.serialize(serializer)
+            }
+        }
+    }
+}
+
+impl<'de> Deserialize<'de> for Request {
+    fn deserialize<D: serde::Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
+        use serde::de::Error;
+        let mut value = serde_json::Value::deserialize(deserializer)?;
+        let schema = value.as_object_mut().and_then(|map| map.remove("schema"));
+        match schema {
+            None => serde_json::from_value(value).map(Request::Expression).map_err(D::Error::custom),
+            Some(serde_json::Value::String(s)) if s == crate::expression_world::WORLD_SCHEMA => {
+                serde_json::from_value(value).map(Request::World).map_err(D::Error::custom)
+            }
+            Some(other) => Err(D::Error::custom(format!(
+                "Unsupported Expression request schema {other}; expected none (oi.expression/v1 operations) or {}",
+                crate::expression_world::WORLD_SCHEMA
+            ))),
+        }
+    }
+}
+
 #[cfg(unix)]
 mod unix {
-    use super::super::expression::Request;
+    use serde::{de::DeserializeOwned, Serialize};
     use serde_json::{json, Value};
     use std::{
         fs,
@@ -46,9 +93,24 @@ mod unix {
         }
         Ok(value)
     }
+    /// Serve ordinary Expression requests only.
     pub fn serve(
         path: &Path,
-        apply: impl Fn(Request) -> Result<Value, String> + Send + Sync + 'static,
+        apply: impl Fn(crate::expression::Request) -> Result<Value, String> + Send + Sync + 'static,
+    ) -> Result<Server, String> {
+        serve_parsed(path, apply)
+    }
+    /// Serve both faces: an Expression request or an Expression-world
+    /// request (`schema: oi.expression-world/v1`), routed by [`super::Request`].
+    pub fn serve_routed(
+        path: &Path,
+        apply: impl Fn(super::Request) -> Result<Value, String> + Send + Sync + 'static,
+    ) -> Result<Server, String> {
+        serve_parsed(path, apply)
+    }
+    fn serve_parsed<R: DeserializeOwned + 'static>(
+        path: &Path,
+        apply: impl Fn(R) -> Result<Value, String> + Send + Sync + 'static,
     ) -> Result<Server, String> {
         if let Ok(meta) = fs::symlink_metadata(path) {
             if !meta.file_type().is_socket() {
@@ -69,11 +131,18 @@ mod unix {
             while live.load(Ordering::Acquire) {
                 match listener.accept() {
                     Ok((mut stream, _)) => {
+                        // BSD/macOS accept() inherits the listener's O_NONBLOCK;
+                        // a request larger than one socket read would then fail
+                        // with EAGAIN mid-line. The connection itself blocks
+                        // (bounded by the read/write timeouts below).
+                        if stream.set_nonblocking(false).is_err() {
+                            continue;
+                        }
                         let apply = apply.clone();
                         std::thread::spawn(move || {
                             let result = line(&mut stream)
                                 .and_then(|raw| {
-                                    serde_json::from_str::<Request>(&raw).map_err(|e| e.to_string())
+                                    serde_json::from_str::<R>(&raw).map_err(|e| e.to_string())
                                 })
                                 .and_then(|request| apply(request));
                             let response = match result {
@@ -97,7 +166,7 @@ mod unix {
             thread: Some(thread),
         })
     }
-    pub fn call(path: &Path, request: &Request) -> Result<Value, String> {
+    pub fn call<R: Serialize>(path: &Path, request: &R) -> Result<Value, String> {
         let mut stream = UnixStream::connect(path).map_err(|e| {
             format!(
                 "Expression application unavailable at {}: {e}",
@@ -174,6 +243,24 @@ fn fnv1a64(bytes: &[u8]) -> u64 {
         hash = hash.wrapping_mul(0x100000001b3);
     }
     hash
+}
+
+#[cfg(test)]
+mod request_tests {
+    use super::Request;
+    use serde_json::json;
+
+    #[test]
+    fn schema_routes_world_requests_and_round_trips() {
+        let world: Request = serde_json::from_value(json!({"schema":"oi.expression-world/v1","operation":"act_inspect","act_ref":"act:1"})).unwrap();
+        assert!(matches!(world, Request::World(_)));
+        assert_eq!(serde_json::to_value(&world).unwrap()["schema"], "oi.expression-world/v1");
+        let expression: Request = serde_json::from_value(json!({"operation":"list"})).unwrap();
+        assert!(matches!(expression, Request::Expression(_)));
+        assert!(serde_json::from_value::<Request>(json!({"schema":"other/v1","operation":"list"})).is_err());
+        // Unknown fields still fail closed under either face.
+        assert!(serde_json::from_value::<Request>(json!({"schema":"oi.expression-world/v1","operation":"act_inspect","act_ref":"a","extra":1})).is_err());
+    }
 }
 
 #[cfg(all(test, unix))]

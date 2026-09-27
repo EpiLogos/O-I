@@ -5,6 +5,7 @@
 import {clone, validateJourney, type Journey, type Scene} from './model.js';
 import {kernelDocumentToJourney,nativeSceneMaterial, type KernelConversion, type KernelExpressionDocument} from './kernelDocumentBridge.js';
 import {mapSceneOccurrences, mergeScenePage, validateSceneData, sameSceneData} from './sceneCorrespondence.js';
+import {validateEntitySound} from './native-field/entitySound.js';
 
 export type CompositionChange =
   | {change:'rename';title:string}
@@ -52,6 +53,9 @@ export function prepareCompositionEdit(
 ):CompositionEdit {
   const edited=validateJourney(raw);
   if (edited.id!==view.journey.id) throw new Error('This work no longer addresses the captured native Expression');
+  // Per-object sound is authored material; the same shape the kernel admits
+  // (expression_profile::sound) is refused here before any change is built.
+  for(const scene of [...edited.scenes,...Object.values(edited.savedScenes??{})])for(const entity of scene.entities)validateEntitySound(entity.sound);
   const doc=view.document;
   const changes:CompositionChange[]=[];
   const entityRefs=new Map<string,string>(Object.entries(view.entity_ids).map(([ref,id])=>[id,ref]));
@@ -130,8 +134,13 @@ export function prepareCompositionEdit(
       changes.push({change:'focus',scene_ref:sceneRef,entity_ref:entityRef??null});
     }
   }
-  if (Object.keys(doc.entities).length+createdEntities.size>256 || changes.length>256) {
-    throw new Error('This native edit exceeds the 256-object/operation budget; no work was truncated or submitted');
+  // The document's semantic bound matches the kernel (DOCUMENT_MEMBERS=2048);
+  // one edit still carries at most 256 changes (the owner's operation guard).
+  if (Object.keys(doc.entities).length+createdEntities.size>2048) {
+    throw new Error('This native edit would exceed the document’s 2048-object bound; no work was truncated or submitted');
+  }
+  if (changes.length>256) {
+    throw new Error('This native edit exceeds the 256-operation budget; no work was truncated or submitted');
   }
   return {operation:'edit',expression_ref:doc.expression_ref,expected_revision:doc.revision,
     actor:options.actor??'human:expressions-app',changes};

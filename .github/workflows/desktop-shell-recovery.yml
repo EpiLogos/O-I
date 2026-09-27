@@ -30,12 +30,19 @@ jobs:
           node-version: 22
           cache: npm
           cache-dependency-path: desktop/cradle/package-lock.json
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2.9.2
+        with:
+          workspaces: desktop/cradle/kernel
       - name: Locked desktop dependencies
         id: deps
         run: npm ci --prefix desktop/cradle --no-audit --no-fund
       - name: Production build
         working-directory: desktop/cradle
         run: npm run build
+      - name: Build the dev-only kernel walk bridge these component harnesses require
+        if: ${{ !cancelled() && steps.deps.outcome == 'success' }}
+        run: cargo build --manifest-path desktop/cradle/kernel/Cargo.toml --locked --bin walk-bridge
       - name: Geometry, state, retained documents, setup and acceptance safety
         if: ${{ !cancelled() && steps.deps.outcome == 'success' }}
         working-directory: desktop/cradle
@@ -50,17 +57,36 @@ jobs:
         if: ${{ !cancelled() && steps.deps.outcome == 'success' }}
         working-directory: desktop/cradle
         run: npx playwright install --with-deps chromium webkit
-      - name: Actual shell interactions in Chromium and WebKit
+      - name: Start the dev-only kernel walk bridge with a disposable OI_HOME
+        id: bridge
         if: ${{ !cancelled() && steps.browsers.outcome == 'success' }}
+        run: |
+          set -euo pipefail
+          export OI_HOME="$RUNNER_TEMP/shell-recovery-kernel-home"
+          mkdir -p "$OI_HOME"
+          OI_HOME="$OI_HOME" desktop/cradle/kernel/target/debug/walk-bridge 127.0.0.1:4179 \
+            > "$RUNNER_TEMP/walk-bridge.log" 2>&1 &
+          echo $! > "$RUNNER_TEMP/walk-bridge.pid"
+          for _ in $(seq 1 50); do
+            curl -sf http://127.0.0.1:4179/state > /dev/null && exit 0
+            sleep 0.2
+          done
+          echo "::error::walk bridge never came up"; cat "$RUNNER_TEMP/walk-bridge.log"; exit 1
+      - name: Actual shell interactions in Chromium and WebKit
+        if: ${{ !cancelled() && steps.bridge.outcome == 'success' }}
         working-directory: desktop/cradle
+        env:
+          OI_KERNEL_BRIDGE: http://127.0.0.1:4179
         run: node tests/shell-recovery.browser.mjs
       - name: Real setup component with test-only controlled source
         if: ${{ !cancelled() && steps.browsers.outcome == 'success' }}
         working-directory: desktop/cradle
         run: node tests/shell-setup.browser.mjs
       - name: Real theme preferences and Expressions route
-        if: ${{ !cancelled() && steps.browsers.outcome == 'success' }}
+        if: ${{ !cancelled() && steps.bridge.outcome == 'success' }}
         working-directory: desktop/cradle
+        env:
+          OI_KERNEL_BRIDGE: http://127.0.0.1:4179
         run: node tests/visuals-preview-lifecycle.mjs
       - name: Preserve appearance behaviour
         if: ${{ !cancelled() && steps.browsers.outcome == 'success' }}
@@ -71,7 +97,9 @@ jobs:
         working-directory: desktop/cradle
         run: node tests/verify-shell-evidence.mjs
       - name: Capture published pre-repair source separately
-        if: ${{ !cancelled() && steps.browsers.outcome == 'success' }}
+        if: ${{ !cancelled() && steps.bridge.outcome == 'success' }}
+        env:
+          OI_KERNEL_BRIDGE: http://127.0.0.1:4179
         run: |
           set -euo pipefail
           before="$RUNNER_TEMP/w1-before"
@@ -80,6 +108,10 @@ jobs:
           cp desktop/cradle/tests/shell-recovery.browser.mjs desktop/cradle/tests/verify-shell-evidence.mjs "$before/desktop/cradle/tests/"
           cd "$before/desktop/cradle"
           W1_REFERENCE_CAPTURE=1 W1_ARTIFACTS="$GITHUB_WORKSPACE/desktop/cradle/tests/artifacts/shell-reference" node tests/shell-recovery.browser.mjs
+      - name: Stop the dev-only kernel walk bridge
+        if: always()
+        run: |
+          [ -f "$RUNNER_TEMP/walk-bridge.pid" ] && kill "$(cat "$RUNNER_TEMP/walk-bridge.pid")" 2>/dev/null || true
       - name: Publish all evidence, including failures
         if: always()
         uses: actions/upload-artifact@v4
@@ -102,6 +134,7 @@ jobs:
           cache: npm
           cache-dependency-path: desktop/cradle/package-lock.json
       - run: npm ci --prefix desktop/cradle --no-audit --no-fund
+      - run: node desktop/cradle/scripts/ensure-expressions-app.mjs --build
       - name: Wider suite, preserving the original Day-roster failure
         working-directory: desktop/cradle
         run: |

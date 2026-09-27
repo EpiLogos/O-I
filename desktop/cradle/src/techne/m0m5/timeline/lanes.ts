@@ -26,7 +26,7 @@ import type {
   TechneTemporalKind,
   TechneTemporalPrecision,
 } from "../../contract.ts";
-import { facetRange } from "./scale.ts";
+import { facetRange } from "./scale";
 
 export type TimelineLaneOwner = "day" | "now" | "session" | "run" | "events";
 

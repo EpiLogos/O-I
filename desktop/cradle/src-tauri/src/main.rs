@@ -123,6 +123,10 @@ fn main() {
             app.manage(browser::Browsers::default());
             app.manage(terminal::Terminals::default());
             let mut kernel = Kernel::discover();
+            // Expressive acts survive restart ($OI_HOME/desktop/expression-acts).
+            if let Err(error) = kernel.attach_default_act_store() {
+                eprintln!("Expressive act store unavailable; acts stay in memory: {error}");
+            }
             match kernel.apply(KernelOp::PresentationRead) {
                 Ok(outcome) => if let oi_cradle_kernel::KernelOpResult::PresentationReading { document } = outcome.result {
                     apply_native_appearance(app.handle(), document["theme"]["appearance"].as_str().unwrap_or("system"));
@@ -135,10 +139,16 @@ fn main() {
                 let path = oi_cradle_kernel::expression_transport::default_socket_path()?;
                 if let Some(directory) = path.parent() { std::fs::create_dir_all(directory)?; }
                 let handle = app.handle().clone();
-                match oi_cradle_kernel::expression_transport::serve(&path, move |request| {
+                match oi_cradle_kernel::expression_transport::serve_routed(&path, move |request| {
                     let host = handle.state::<KernelHost>();
-                    let outcome = host.0.lock().map_err(|_| "kernel lock unavailable")?
-                        .apply(KernelOp::Expression { request })?;
+                    // A body whose schema is oi.expression-world/v1 reaches the
+                    // world seam (acts, material, selection); others are
+                    // ordinary Expression requests.
+                    let op = match request {
+                        oi_cradle_kernel::expression_transport::Request::Expression(request) => KernelOp::Expression { request },
+                        oi_cradle_kernel::expression_transport::Request::World(request) => KernelOp::ExpressionWorld { request },
+                    };
+                    let outcome = host.0.lock().map_err(|_| "kernel lock unavailable")?.apply(op)?;
                     for receipt in &outcome.receipts { let _ = handle.emit(KERNEL_EVENT_TOPIC, receipt); }
                     serde_json::to_value(outcome).map_err(|e| e.to_string())
                 }) {

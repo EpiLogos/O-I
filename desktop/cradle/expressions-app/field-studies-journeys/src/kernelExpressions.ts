@@ -118,12 +118,18 @@ type KernelChange =
  |{change:"entity_add";scene_ref:string;entity_ref:string;title:string}
  |{change:"entity_remove";entity_ref:string}
  |{change:"parameter_set";entity_ref:string;parameter:string;value:string|number}
+ |{change:"scene_material_set";scene_ref:string;presentation:{schema:'oi.journey-scene/v1';scene:unknown;saved?:unknown}}
+ |{change:"composition_set";presentation:unknown}
  |{change:"focus";scene_ref:string;entity_ref:string|null};
 
-/** The kernel's own parameter vocabulary; anything else cannot be expressed
- * as an edit and is refused here rather than mangled. */
-const EDITABLE=new Set(['x','y','z','scale','share','glyph']);
-const NUMERIC=new Set(['x','y','z','scale','share']);
+/** The kernel's own entity parameter vocabulary (`expression.rs` `parameter`/
+ * `bounds`): every text/material carrier and every bounded numeric key.
+ * Rich authored material (layers, sources, sequences, forces, tint, sound…)
+ * travels whole through the Scene presentation (`scene_material_set`), not
+ * through scalar parameters. Anything else is refused rather than mangled. */
+const TEXTUAL=new Set(['glyph','shape','kind','yantra','force_mode','ascii','image']);
+const NUMERIC=new Set(['x','y','z','scale','share','width','height','rotation','frequency','force_strength','force_spin','force_radius']);
+const EDITABLE=new Set([...TEXTUAL,...NUMERIC]);
 
 const isDocument=(doc:unknown):doc is KernelExpressionDocument=>
  !!doc&&typeof doc==='object'&&(doc as KernelExpressionDocument).schema==='oi.expression/v1'
@@ -168,7 +174,7 @@ export function documentToChanges(current:unknown,edited:unknown):{changes:Kerne
     if(!EDITABLE.has(key))return{error:`entity ${ref} parameter ${key} is not expressible as a kernel edit in this cut`};
     if(NUMERIC.has(key)){
      if(typeof p.value!=='number'||!Number.isFinite(p.value))return{error:`entity ${ref} parameter ${key} must be a finite number`};
-    }else if(typeof p.value!=='string')return{error:`entity ${ref} parameter glyph must be text`};
+    }else if(typeof p.value!=='string')return{error:`entity ${ref} parameter ${key} must be text`};
     changes.push({change:'parameter_set',entity_ref:ref,parameter:key,value:p.value});
    }
    continue;
@@ -184,7 +190,7 @@ export function documentToChanges(current:unknown,edited:unknown):{changes:Kerne
      if(typeof p.value!=='number'||!Number.isFinite(p.value))return{error:`entity ${ref} parameter ${key} must be a finite number`};
      changes.push({change:'parameter_set',entity_ref:ref,parameter:key,value:p.value});
     }else{
-     if(typeof p.value!=='string')return{error:`entity ${ref} parameter glyph must be text`};
+     if(typeof p.value!=='string')return{error:`entity ${ref} parameter ${key} must be text`};
      changes.push({change:'parameter_set',entity_ref:ref,parameter:key,value:p.value});
     }
    }
@@ -197,6 +203,23 @@ export function documentToChanges(current:unknown,edited:unknown):{changes:Kerne
   const refs=[...((scene as any).entity_refs??[])];
   for(const entityRef of refs)if(!editedEntities.has(entityRef))return{error:`scene ${sceneRef} carries entity ${entityRef}, which the edited document does not define`};
   if(!before||!sameJson((before as any).entity_refs??[],refs))changes.push({change:'scene_compose',scene_ref:sceneRef,entity_refs:refs});
+ }
+ // Rich Scene material: a changed presentation returns whole through the
+ // native composition path, after membership so its occurrences resolve.
+ for(const [sceneRef,scene] of editedScenes){
+  const presentation=(scene as any).presentation;
+  const before=currentScenes.get(sceneRef);
+  if(presentation===undefined||presentation===null){
+   if(before&&before.presentation)return{error:`scene ${sceneRef} material removal is not expressible as a kernel edit; keep the Scene material or remove the Scene`};
+   continue;
+  }
+  if(presentation.schema!=='oi.journey-scene/v1'||!presentation.scene||typeof presentation.scene!=='object')return{error:`scene ${sceneRef} carries unsupported Scene material`};
+  if(!before||!sameJson(before.presentation??null,presentation))changes.push({change:'scene_material_set',scene_ref:sceneRef,presentation:{schema:'oi.journey-scene/v1',scene:presentation.scene,saved:presentation.saved??null}});
+ }
+ const properties=(edited as any).presentation;
+ if(properties!==undefined&&properties!==null&&!sameJson((current as any).presentation??null,properties)){
+  if(properties.schema!=='oi.journey-properties/v1')return{error:'the Expression properties are not oi.journey-properties/v1'};
+  changes.push({change:'composition_set',presentation:properties});
  }
  const selection=(edited as any).selection;
  if(selection&&typeof selection.scene_ref==='string'&&(!current || !sameJson((current as any).selection,selection)))changes.push({change:'focus',scene_ref:selection.scene_ref,entity_ref:selection.entity_ref??null});
@@ -238,6 +261,28 @@ export async function nativeFileRequest(request:Record<string,unknown>):Promise<
  return call('expression-file',{request});
 }
 
+/** ES1A scene-body native carrier reads (O:I #352): a `SceneBody.subject_ref`
+ * is an opaque native reference, resolved only through the owner's own
+ * `file_resolve` seam — this app never parses it. Two typed reads over the
+ * `central-subject-text`/`central-subject-bytes` host-channel kinds (the
+ * cradle relay, `relayKernelChannel` in desktop/cradle/src/expressions/
+ * hostedApp.ts): UTF-8 text for `text_source` bodies, base64 + mime hint for
+ * `image_media` bodies (the same binary-safe seam FND-04 already defines). */
+export interface NativeSubjectText {ref:string;revision:string;byte_len:number;content:string}
+export interface NativeSubjectBytes {ref:string;revision:string;byte_len:number;mime_hint:string|null;content_base64:string}
+export async function nativeSubjectTextRequest(ref:string):Promise<NativeSubjectText>{
+ if(typeof ref!=='string'||!ref)throw new Error('nativeSubjectTextRequest needs a native subject ref');
+ const data=await call<NativeSubjectText>('central-subject-text',{ref});
+ if(!data||typeof data.content!=='string')throw new Error(`the native owner returned no readable text for ${ref}`);
+ return data;
+}
+export async function nativeSubjectBytesRequest(ref:string):Promise<NativeSubjectBytes>{
+ if(typeof ref!=='string'||!ref)throw new Error('nativeSubjectBytesRequest needs a native subject ref');
+ const data=await call<NativeSubjectBytes>('central-subject-bytes',{ref});
+ if(!data||typeof data.content_base64!=='string')throw new Error(`the native owner returned no readable image bytes for ${ref}`);
+ return data;
+}
+
 /** The active native Scene is the address. The host validates its revision
  * and source projection; no shell workspace or renderer file path supplies scope. */
 export interface TechneSceneReadingRequest {expression_ref:string;revision:number;scene_ref:string;facet?:'relation-semantics'|'node-metadata'|'scene-relations'}
@@ -247,3 +292,21 @@ export const techneWorldRequest = (request: {operation:'list'}|{operation:'open'
 
 export interface TechneConstellationRequest extends TechneSceneReadingRequest {entity_ref:string;operation:'inspect'|'open'}
 export const techneConstellationRequest = (request:TechneConstellationRequest):Promise<{frame_ref:string;frame_revision:number;title:string;project?:string}> => call('techne-constellation',{request},30000);
+/** Deliberate typed relationship between two occurrences' exact constellation participations. */
+export interface TechneConstellationRelation extends TechneSceneReadingRequest {operation:'relate';from_entity_ref:string;to_entity_ref:string;relation:string;direction:'directed'|'undirected'|'bidirectional'}
+export interface TechneConstellationRelationReceipt {frame_ref:string;frame_revision:number;relation_ref:string;state:'saved'|'unchanged';expression:{state:'ready';expression_ref:string;revision:number}|{state:'pending';detail:string}}
+export const techneConstellationRelate = (request:TechneConstellationRelation):Promise<TechneConstellationRelationReceipt> => call('techne-constellation',{request},60000);
+
+/** The sanitized native Library reading (nativeLibrary.ts's model shape) —
+ * Central Projects (via their bound overview Expression), Scenes and native
+ * collections, read live through the host's EXISTING Library providers
+ * (desktop/cradle/src/library/libraryReading.ts) via the "library-read"
+ * host-channel kind. No source bodies; never copied into browser storage. */
+export interface LibraryReadingEntry {
+ ref:string;title:string;kind:string;owner:string;scope:'local'|'shared';
+ revision?:string;project?:string;expressionRef?:string;
+ scenes?:{scene_ref:string;title:string}[];collections?:string[];
+ collectionMemberships?:{title:string;group:string;manifest_path:string}[];
+}
+export interface LibraryReadingCoverage {provider:string;state:string;reason?:string}
+export const readLibraryEntries = (scope:'local'|'shared'='local'):Promise<{entries:LibraryReadingEntry[];coverage:LibraryReadingCoverage[]}> => call('library-read',{request:{scope}},20000);

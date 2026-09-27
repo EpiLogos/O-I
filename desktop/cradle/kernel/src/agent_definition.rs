@@ -12,10 +12,13 @@ pub enum Request {
     Scope,
     Skills,
     /// `aikit set list` — the SkillSet repertoire a creator selects first.
-    /// Read-only: a set is a request over installed capabilities.
+    /// Read-only: a set is a request over installed capabilities. Wire name
+    /// `skillsets`, the renderer's spelling (kebab-case would be `skill-sets`).
+    #[serde(rename = "skillsets")]
     SkillSets,
     /// `aikit set show <name>` — the owner's reply: members, nested sets and
     /// the members that would not project here, with the resolver's reason.
+    #[serde(rename = "skillset")]
     SkillSet { name: String },
     Session { agent_session: String },
     Propose {
@@ -24,11 +27,26 @@ pub enum Request {
         expected_scope_ref: String,
         #[serde(default)]
         skill_refs: Vec<String>,
+        /// Central file ref to a reusable `kind:"character"` Expression
+        /// material document; forwarded as the profile's
+        /// `expressive_character_ref`. The material itself never travels here.
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        expressive_character_ref: Option<String>,
         #[serde(default)]
         skill_set_refs: Vec<String>,
     },
     Review {
         profile_ref: String,
+    },
+    /// Set (or clear, with `None`) an existing Agent's expressive character
+    /// through Central's own compare-and-swap save. The profile advances one
+    /// revision, so a prior acceptance no longer matches the source: the
+    /// reading discloses `re_acceptance_required`.
+    SetCharacter {
+        profile_ref: String,
+        expected_revision: String,
+        #[serde(default)]
+        expressive_character_ref: Option<String>,
     },
     Accept {
         profile_ref: String,
@@ -60,6 +78,25 @@ fn exact(value: &str, max: usize, field: &str) -> Result<(), String> {
     } else {
         Ok(())
     }
+}
+fn character_ref(value: &str) -> Result<(), String> {
+    exact(value, 1024, "Expressive character reference")?;
+    if value.contains('\n') || value.contains('\t') {
+        return Err("Expressive character reference must be a single-line ref".into());
+    }
+    Ok(())
+}
+/// The next authored revision: the trailing number advances (`r3` → `r4`),
+/// otherwise a counter is appended (`p` → `p-1`).
+pub fn next_revision(revision: &str) -> String {
+    let digits = revision.len() - revision.trim_end_matches(|c: char| c.is_ascii_digit()).len();
+    if digits > 0 {
+        let (head, tail) = revision.split_at(revision.len() - digits);
+        if let Ok(n) = tail.parse::<u64>() {
+            return format!("{head}{}", n + 1);
+        }
+    }
+    format!("{revision}-1")
 }
 fn scoped(project: Option<&str>) -> Value {
     // Explicit null suppresses the CentralClient configured-child fallback.
@@ -132,9 +169,13 @@ pub fn execute(
             purpose,
             expected_scope_ref,
             skill_refs,
+            expressive_character_ref,
             skill_set_refs,
         } => {
             exact(name, 256, "Agent name")?;
+            if let Some(character) = expressive_character_ref {
+                character_ref(character)?;
+            }
             exact(purpose, 16_384, "Human purpose")?;
             exact(
                 expected_scope_ref,
@@ -183,6 +224,9 @@ pub fn execute(
             input["intent_expression"] = json!(purpose);
             input["purpose"] = json!(purpose);
             input["skill_refs"] = json!(skill_refs);
+            if let Some(character) = expressive_character_ref {
+                input["expressive_character_ref"] = json!(character);
+            }
             input["skill_set_refs"] = json!(skill_set_refs);
             let proposal = owner(client, "agent-profile.express", input)?;
             let reference = proposal["profile"]["ref"].as_str().ok_or("Native proposal returned no profile reference; read the roster before proposing again")?;
@@ -194,6 +238,66 @@ pub fn execute(
             exact(profile_ref, 1024, "Profile reference")?;
             input["profile_ref"] = json!(profile_ref);
             owner(client, "agent-profile.review", input)
+        }
+        Request::SetCharacter {
+            profile_ref,
+            expected_revision,
+            expressive_character_ref,
+        } => {
+            exact(profile_ref, 1024, "Profile reference")?;
+            exact(expected_revision, 1024, "Revision")?;
+            if let Some(character) = expressive_character_ref {
+                character_ref(character)?;
+            }
+            let mut review_input = scoped(project);
+            review_input["profile_ref"] = json!(profile_ref);
+            let before = owner(client, "agent-profile.review", review_input.clone())?;
+            let mut read = scoped(project);
+            read["profile_ref"] = json!(profile_ref);
+            let reading = owner(client, "agent-profile.read", read)?;
+            let mut profile = reading["profile"].clone();
+            if profile["ref"].as_str() != Some(profile_ref.as_str()) {
+                return Err("Central read a different Agent definition".into());
+            }
+            let current = profile["revision"].as_str().unwrap_or_default().to_owned();
+            if current != *expected_revision {
+                return Err(format!(
+                    "revision_conflict: the Agent definition is at revision {current}, not {expected_revision}; re-read it before changing its character"
+                ));
+            }
+            if profile.get("expressive_character_ref").and_then(Value::as_str)
+                == expressive_character_ref.as_deref()
+            {
+                let mut unchanged = before;
+                unchanged["character_change"] = json!({"state":"unchanged","revision":current,"re_acceptance_required":false});
+                return Ok(unchanged);
+            }
+            let object = profile.as_object_mut().ok_or("Central returned no Agent definition object")?;
+            match expressive_character_ref {
+                Some(character) => {
+                    object.insert("expressive_character_ref".into(), json!(character));
+                }
+                None => {
+                    object.remove("expressive_character_ref");
+                }
+            }
+            let revision = next_revision(&current);
+            object.insert("revision".into(), json!(revision));
+            let mut save = scoped(project);
+            save["profile"] = profile;
+            save["expected_revision"] = json!(expected_revision);
+            owner(client, "agent-profile.save", save)?;
+            let mut after = owner(client, "agent-profile.review", review_input)?;
+            let was_accepted = before["accepted"] == true;
+            after["character_change"] = json!({
+                "state": "saved",
+                "previous_revision": current,
+                "revision": revision,
+                // Acceptance is bound to the exact revision and digest it
+                // reviewed; a changed source needs the human's acceptance again.
+                "re_acceptance_required": was_accepted && after["accepted"] != true,
+            });
+            Ok(after)
         }
         Request::Accept {
             profile_ref,

@@ -8,3 +8,12 @@
 .pcd-host-refusal { display: flex; flex-direction: column; gap: 8px; margin: 18px; max-inline-size: 52ch; }
 .pcd-host-refusal strong { font-weight: 600; }
 .pcd-host-refusal p { margin: 0; color: var(--oi-muted-2); }
+
+/* The carried expressive act (expression/ActStrip): where this working view
+   can take the act next. Sits over the field's lower edge, never over its HUD. */
+.pcd-host { position: relative; }
+.act-strip { position: absolute; inset-block-end: 12px; inset-inline-start: 50%; transform: translateX(-50%); display: flex; align-items: center; gap: 8px; padding: 6px 10px; border: 1px solid var(--oi-hairline-soft); border-radius: 8px; background: var(--oi-wash-strong); color: var(--oi-foreground); font: 12px/1.3 var(--oi-shell-type-ui); z-index: 2; }
+.act-strip-label { opacity: .8; max-inline-size: 28ch; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.act-strip button { font: inherit; padding: 3px 8px; border: 1px solid var(--oi-shell-edge); border-radius: 6px; background: var(--oi-wash); color: inherit; cursor: pointer; }
+.act-strip button:disabled { opacity: .5; cursor: default; }
+.act-strip-error { color: var(--oi-status-warning); }

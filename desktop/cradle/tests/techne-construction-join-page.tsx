@@ -15,6 +15,7 @@
  * presented host in the Expressions cut. */
 import {createRoot} from 'react-dom/client';
 import {KernelProvider} from '../src/kernel/KernelProvider';
+import {VisualsProvider} from '../src/visuals/ParticleExpression';
 import {ExpressionStageProvider} from '../src/stage/ExpressionStage';
 import {KnowledgeSurface} from '../src/knowledge/KnowledgeSurface';
 import {PointCloudHost} from '../src/expressions/PointCloudHost';
@@ -44,4 +45,4 @@ function App() {
     {mode === 'techne' && <div data-host="concealed" style={{display: 'none'}}><PointCloudHost mode="techne" bindingId="techne-concealed"/></div>}
   </main>;
 }
-createRoot(document.getElementById('root')!).render(<KernelProvider><ExpressionStageProvider><App/></ExpressionStageProvider></KernelProvider>);
+createRoot(document.getElementById('root')!).render(<KernelProvider><VisualsProvider><ExpressionStageProvider><App/></ExpressionStageProvider></VisualsProvider></KernelProvider>);

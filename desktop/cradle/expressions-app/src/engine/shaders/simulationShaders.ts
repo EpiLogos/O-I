@@ -4,6 +4,7 @@
  */
 
 import { curlNoiseGLSL } from './curlNoise';
+import { MAX_FORMATIONS, MAX_PINS, MAX_FORCE_EMITTERS } from '../fieldModel';
 import {
   SDF_GRID,
   SDF_EXTENT,
@@ -19,7 +20,7 @@ import {
  */
 const sdfSamplingGLSL = /* glsl */ `
 uniform sampler2D uSdfAtlas;
-uniform vec4 uCollisionTile[10];
+uniform vec4 uCollisionTile[${MAX_FORMATIONS}];
 
 vec2 sdfTileUv(vec2 local, vec4 tile, float which) {
   vec2 origin = vec2(tile.x + which * tile.z, tile.y);
@@ -141,11 +142,11 @@ uniform sampler2D uPairwiseCorrectionZTexture;
 uniform int uEntityCount;
 uniform float uConnectionStart;
 uniform sampler2D uConnectionMetadata;
-uniform float uEntityBounds[10];
-uniform vec4 uEntityCenter[10];
-uniform float uEntityMorph[10];
-uniform vec3 uEntityTransform[10];
-uniform float uEntityDepthScale[10];
+uniform float uEntityBounds[${MAX_FORMATIONS}];
+uniform vec4 uEntityCenter[${MAX_FORMATIONS}];
+uniform float uEntityMorph[${MAX_FORMATIONS}];
+uniform vec3 uEntityTransform[${MAX_FORMATIONS}];
+uniform float uEntityDepthScale[${MAX_FORMATIONS}];
 uniform vec2 uTexSize;
 
 varying vec2 vUv;
@@ -307,26 +308,26 @@ uniform float uPolPhase;            // running poloidal phase (radians)
 uniform int uEntityCount;
 uniform float uConnectionStart;
 uniform sampler2D uConnectionMetadata;
-uniform float uEntityBounds[10];    // exclusive end particle index per partition
-uniform vec4 uEntityCenter[10];     // xyz world centre, w = force radius (px)
-uniform float uEntityMorph[10];
-uniform float uEntityDepthScale[10];
-uniform float uEntityNormalized[10];
-uniform vec3 uEntityTransform[10];     // per-partition A→B progress
+uniform float uEntityBounds[${MAX_FORMATIONS}];    // exclusive end particle index per partition
+uniform vec4 uEntityCenter[${MAX_FORMATIONS}];     // xyz world centre, w = force radius (px)
+uniform float uEntityMorph[${MAX_FORMATIONS}];
+uniform float uEntityDepthScale[${MAX_FORMATIONS}];
+uniform float uEntityNormalized[${MAX_FORMATIONS}];
+uniform vec3 uEntityTransform[${MAX_FORMATIONS}];     // per-partition A→B progress
 uniform vec2 uTexSize;
 
 // Unified persistent force emitters (formations + pins). w in params = metric: 0 composition plane, 1 world 3D.
 uniform int uForceEmitterCount;
-uniform vec4 uForceEmitterCenter[18]; // xyz centre, w radius
-uniform vec4 uForceEmitterParams[18]; // x strength, y mode 1 attract 2 repel 3 vortex, z spin, w metric              // simulation texture size (particle index reconstruction)
+uniform vec4 uForceEmitterCenter[${MAX_FORCE_EMITTERS}]; // xyz centre, w radius
+uniform vec4 uForceEmitterParams[${MAX_FORCE_EMITTERS}]; // x strength, y mode 1 attract 2 repel 3 vortex, z spin, w metric              // simulation texture size (particle index reconstruction)
 uniform float uCompPlane;           // 0 = vertical (XY), 1 = horizontal (XZ)
 uniform float uResDominance;        // 0 = formation springs only … 1 = resonator transport only
 
 // Free Relational System & Multi-Attractor Orbits
 uniform float uRelationalEnabled;
 uniform int uAttractorCount;
-uniform vec4 uAttractors[10];      // xyz = center coords, w = relative mass
-uniform float uAttractorSpin[10];  // angular momentum/vorticity per pole
+uniform vec4 uAttractors[${MAX_PINS}];      // xyz = center coords, w = relative mass
+uniform float uAttractorSpin[${MAX_PINS}];  // angular momentum/vorticity per pole
 uniform float uRelationalGravity; // gravitational pull strength
 uniform float uRelationalSpin;    // orbital tangential swirl force
 uniform float uChaosFactor;       // strange attractor turbulence

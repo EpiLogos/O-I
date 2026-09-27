@@ -3,7 +3,7 @@ import {FACTORY_OBJECT_KINDS} from "./objectKinds";
 import {FactoryDevelopmentSurface} from "./FactoryDevelopmentSurface";
 import type {EncounterRow} from "../../encounter/EncounterList";
 import {Desk} from "./desk/Desk";
-import {RunPage, type FactoryObjectRef, type RunPageHost} from "./desk/RunPage";
+import {RunPage, rememberRunTab, type FactoryObjectRef, type RunPageHost} from "./desk/RunPage";
 import {ObjectPage} from "../../agent/objects";
 import {OPEN_OBJECT_EVENT, isOpenObjectDetail} from "../../agent/objects/registry";
 import {factoryObject} from "./desk/factoryObjects";
@@ -96,15 +96,22 @@ export function FactoryCentre({chat,accompanying,onOpenTask,onNewTask,onOpenActi
   };
 
   const openRunFromTask=(key=joined?.card.key)=>{ if(!key)return; openRunPage(key); publishCentreView("desk"); };
+  // The conversation attached to a Run opens the same Live (spec §5).
+  const openLiveFromTask=(key=joined?.card.key)=>{ if(!key)return; rememberRunTab(key,"live"); openRunFromTask(key); };
 
   return <main ref={centre} className={"factory-centre"+(view==="tasks"?" factory-tasks":"")} aria-label="Factory" data-centre-view={view}>
     {view==="tasks"
       ? <section className="factory-chat-full" aria-label="Task conversation">
         <header className="factory-chat-context ftasks-head">
           {joined
-            ? <button type="button" className="ftasks-runchip" data-run-chip={joined.run.runRef} title={`${RUN_STATE_WORD[joined.card.state]} · ${joined.card.title}`} onClick={()=>openRunFromTask()}>
-              <span className="ftasks-runchip-kind">Run</span><span>{joined.card.title}</span>
-            </button>
+            ? <span className="ftasks-runjoin">
+              <button type="button" className="ftasks-runchip" data-run-chip={joined.run.runRef} title={`${RUN_STATE_WORD[joined.card.state]} · ${joined.card.title}`} onClick={()=>openRunFromTask()}>
+                <span className="ftasks-runchip-kind">Run</span><span>{joined.card.title}</span>
+              </button>
+              <button type="button" className="ftasks-runchip" data-run-live={joined.run.runRef} title="Watch this Run performed live" onClick={()=>openLiveFromTask()}>
+                <span className="ftasks-runchip-kind">Live</span>
+              </button>
+            </span>
             : ambiguousRuns.length
               ? <span className="ftasks-ambiguous" data-run-join="ambiguous" role="status">
                 <span>This conversation carried {ambiguousRuns.length} runs — choose one:</span>

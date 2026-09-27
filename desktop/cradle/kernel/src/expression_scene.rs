@@ -27,7 +27,7 @@ fn number(value: &Value, low: f64, high: f64, name: &str) -> Result<(), String> 
     if value.as_f64().is_some_and(|n| n.is_finite() && n >= low && n <= high) { Ok(()) }
     else { Err(format!("{name} is outside its presentation bounds")) }
 }
-fn data(value: &Value, depth: usize) -> Result<(), String> {
+pub fn data(value: &Value, depth: usize) -> Result<(), String> {
     if depth > 40 { return Err("Scene presentation nesting budget exceeded".into()); }
     match value {
         Value::Object(values) => for (key, value) in values {
@@ -55,7 +55,7 @@ fn data(value: &Value, depth: usize) -> Result<(), String> {
 
 pub fn validate(presentation: &Presentation, scene: &Scene, document: &Document) -> Result<(), String> {
     if presentation.schema != SCHEMA { return Err("Unsupported native Scene presentation".into()); }
-    // The existing document's 512 KiB budget remains the outer storage bound.
+    // The existing document's byte budget remains the outer storage bound.
     data(&presentation.scene, 0)?;
     let material = object(&presentation.scene, "Authoring Scene")?;
     const KEYS: &[&str] = &["id", "name", "character", "duration", "transition", "view", "field", "entities", "text", "composition", "morph", "automation", "engine", "semanticField", "resonanceDrive", "favourites", "native", "propertyTakeRange", "toolbelt", "propertyTracks", "pointerScope", "research"];
@@ -86,7 +86,9 @@ pub fn validate(presentation: &Presentation, scene: &Scene, document: &Document)
             return Err("Scene material contains a duplicate or undisclosed native occurrence".into());
         }
         if !matches!(entity["kind"].as_str(), Some("formation" | "pin")) { return Err("Invalid Scene entity kind".into()); }
+        role_slot(entity)?;
     }
+    for layer in presentation.scene["text"].as_array().unwrap() { role_slot(layer)?; }
     if let Some(research) = material.get("research") { validate_research(research, &identities)?; }
     if let Some(saved) = &presentation.saved {
         let mut saved_scene = scene.clone();
@@ -95,6 +97,22 @@ pub fn validate(presentation: &Presentation, scene: &Scene, document: &Document)
             return Err("Saved Scene title is outside its authoring budget".into());
         }
         validate(&Presentation {schema: SCHEMA.into(), scene: saved.clone(), saved: None}, &saved_scene, document)?;
+    }
+    Ok(())
+}
+
+/// A role placeholder (contract EXPRESSION-ACT-MATERIAL-V1 §1/§3): `role` is a
+/// bounded role name; `overrides` is the placeholder's own material applied
+/// last over a grafted character and never re-addresses identity.
+fn role_slot(value: &Value) -> Result<(), String> {
+    if let Some(role) = value.get("role") {
+        crate::expression::role_name(role.as_str().ok_or("Scene role must be text")?)?;
+    }
+    if let Some(overrides) = value.get("overrides") {
+        let map = object(overrides, "Scene role overrides")?;
+        if map.len() > 64 || map.keys().any(|k| matches!(k.as_str(), "id" | "role" | "overrides")) {
+            return Err("Scene role overrides are bounded and never re-address identity".into());
+        }
     }
     Ok(())
 }
@@ -146,7 +164,14 @@ fn validate_research(value: &Value, ids: &BTreeSet<&str>) -> Result<(), String> 
         for point in points {object(point,"Stroke point")?;number(&point["x"],-40000.,40000.,"Stroke x")?;number(&point["y"],-40000.,40000.,"Stroke y")?;if let Some(v)=point.get("pressure"){number(v,0.,1.,"Stroke pressure")?;}}
     }
     for v in value["views"].as_object().unwrap().values(){viewport(v)?;}
-    for layout in value["timeline"].as_object().unwrap().values(){let m=object(layout,"Timeline layout")?;if m.keys().any(|k| !["offsetY","width","height","lane","layoutRevision"].contains(&k.as_str())){return Err("Unknown timeline layout field".into());}if let Some(v)=m.get("lane"){if !bounded(v,1024){return Err("Invalid timeline lane".into());}}if let Some(v)=m.get("layoutRevision"){if !v.as_u64().is_some_and(|n|n>=1&&n<=9007199254740991){return Err("Invalid timeline layout revision".into());}}number(&layout["offsetY"],-40000.,40000.,"Timeline offset")?;for key in ["width","height"]{if let Some(v)=m.get(key){number(v,40.,40000.,"Timeline card size")?;}}}
+    for layout in value["timeline"].as_object().unwrap().values(){
+        let m=object(layout,"Timeline layout")?;
+        if m.keys().any(|k| !["offsetY","width","height","lane","layoutRevision"].contains(&k.as_str())){return Err("Unknown timeline layout field".into());}
+        if let Some(v)=m.get("lane"){if !bounded(v,1024){return Err("Invalid timeline lane".into());}}
+        if let Some(v)=m.get("layoutRevision"){if !v.as_u64().is_some_and(|n|(1..=9007199254740991).contains(&n)){return Err("Invalid timeline layout revision".into());}}
+        number(&layout["offsetY"],-40000.,40000.,"Timeline offset")?;
+        for key in ["width","height"]{if let Some(v)=m.get(key){number(v,40.,40000.,"Timeline card size")?;}}
+    }
     Ok(())
 }
 fn validate_note(value:&Value,depth:usize)->Result<(),String>{
@@ -165,12 +190,23 @@ fn validate_note(value:&Value,depth:usize)->Result<(),String>{
 /// Only known presentation-local identity fields are remapped on a native
 /// fork. Source refs, evidence and arbitrary caption text are never rewritten.
 pub fn fork(presentation: &mut Presentation, old: &str, new: &str) {
-    let map = |value: &mut Value| {
-        if let Some(reference) = value.as_str() {
-            if let Some(suffix) = reference.strip_prefix(&format!("{old}:")) { *value = Value::String(format!("{new}:{suffix}")); }
-        }
-    };
+    let prefix = format!("{old}:");
+    let map = |reference: &str| reference.strip_prefix(&prefix).map(|suffix| format!("{new}:{suffix}"));
     for material in std::iter::once(&mut presentation.scene).chain(presentation.saved.iter_mut()) {
+        remap_refs(material, &map);
+    }
+}
+
+/// Remap every known presentation-local identity field of one authoring
+/// Scene (`id`, entity ids, blueprint members, research cards, native config
+/// entities, automation/track/toolbelt entity ids, semantic carriers). The
+/// mapping returns `None` to keep a ref. Source refs, evidence and caption
+/// text are never rewritten. Shared by native fork and act performance.
+pub fn remap_refs(material: &mut Value, remap: &dyn Fn(&str) -> Option<String>) {
+    let map = |value: &mut Value| {
+        if let Some(next) = value.as_str().and_then(remap) { *value = Value::String(next); }
+    };
+    {
     map(&mut material["id"]);
     if let Some(members) = material.get_mut("composition").and_then(|v|v.get_mut("blueprint")).and_then(|v|v.get_mut("members")).and_then(Value::as_array_mut) {
         for member in members { map(&mut member["entity_ref"]); }

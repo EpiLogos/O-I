@@ -70,6 +70,9 @@ export interface WikiSelectionRequest {
   subjectRef: string | null;
   title?: string;
   origin: "wiki-map" | "graph-navigator" | "external";
+  /** The Expressions application lens the opened field should stand in
+   * (a constellation just created opens on the Canvas). */
+  lens?: "canvas";
 }
 
 interface WikiProjectionState {
@@ -222,6 +225,9 @@ export function ensureWikiProjectionReading(register: WikiRegister, transport: K
     const check = () => {
       const standing = state.standings[register.key];
       if (!standing || standing.phase === "idle" || standing.phase === "reading") return;
+      // A re-read in flight (an explicit refresh, or the receipt a native
+      // write produced) is not a changed basis yet: wait for its outcome.
+      if (standing.readingInvalidated && rereadsInFlight.has(register.key)) return;
       let error: string | undefined;
       if (standing.readingInvalidated) error = "This Scene's source reading changed; refresh its Wiki reading before using its facets";
       else if (standing.phase === "unavailable") error = standing.reason;
@@ -244,6 +250,19 @@ export async function refreshWikiProjectionReading(register: WikiRegister, trans
   if (!state.standings[register.key] || state.standings[register.key].phase === "idle") return ensureWikiProjectionReading(register, transport);
   await rereadWikiRegister(register, transport, true);
   return ensureWikiProjectionReading(register, transport);
+}
+
+/** Re-read a register after a native write this session made (a created
+ * constellation): the same re-read an invalidating `file_changed` receipt
+ * runs, awaited, so the caller sees the fresh projection. A register never
+ * read is read for the first time. */
+export async function rereadWikiProjection(register: WikiRegister, transport: KernelTransportStatus): Promise<WikiProjection> {
+  const standing = state.standings[register.key];
+  if (standing && standing.phase !== "idle") await rereadWikiRegister(register, transport);
+  await ensureWikiProjectionReading(register, transport);
+  const projection = wikiProjectionOf(state.standings[register.key]);
+  if (!projection) throw new Error("The Wiki reading has no projection");
+  return projection;
 }
 
 // ---- the centre writes the kernel lifecycle back ---------------------------
@@ -315,6 +334,9 @@ let appliedWikiReceiptSeq = 0;
 /** One generation per in-flight re-read, per register: a burst of writes to
  * the same wiki basis lets only the newest re-read write the standing back. */
 const rereadGenerations = new Map<string, number>();
+/** Re-reads currently running per register (a generation counter alone
+ * cannot tell a waiting caller whether a fresh reading is still coming). */
+const rereadsInFlight = new Map<string, number>();
 
 /** A kernel `file_changed` receipt whose path is a register's wiki basis
  * invalidates that register's cached reading (the seam the 13-step walk
@@ -353,6 +375,15 @@ export function applyWikiProjectionReceipt(
 async function rereadWikiRegister(register: WikiRegister, transport: KernelTransportStatus, preserveDocument = false) {
   const generation = (rereadGenerations.get(register.key) ?? 0) + 1;
   rereadGenerations.set(register.key, generation);
+  rereadsInFlight.set(register.key, (rereadsInFlight.get(register.key) ?? 0) + 1);
+  try { await rereadWikiRegisterOnce(register, transport, preserveDocument, generation); }
+  finally {
+    const left = (rereadsInFlight.get(register.key) ?? 1) - 1;
+    if (left > 0) rereadsInFlight.set(register.key, left); else rereadsInFlight.delete(register.key);
+    emit();
+  }
+}
+async function rereadWikiRegisterOnce(register: WikiRegister, transport: KernelTransportStatus, preserveDocument: boolean, generation: number) {
   const previous = state.standings[register.key];
   if (previous) setStanding(register.key, {...previous, readingInvalidated: true});
   let fresh: WikiRegisterReading;
@@ -440,26 +471,4 @@ export function wikiDocumentOf(standing: RegisterStanding | undefined): Expressi
   if (!standing) return undefined;
   if (standing.phase === "ready" || standing.phase === "drift") return standing.document;
   return wikiProjectionOf(standing)?.document;
-}
-
-/** The truthful short state line for a register's region head. */
-export function wikiStandingSubtitle(standing: RegisterStanding | undefined): string {
-  switch (standing?.phase ?? "idle") {
-    case "idle": return "";
-    case "reading": return "reading…";
-    case "absent": return "no wiki";
-    case "unavailable": return "couldn't read";
-    case "projected": return "projected";
-    case "opening": return "opening…";
-    case "ready": {
-      const projection = wikiProjectionOf(standing);
-      const constellations = projection?.constellations.length ?? 0;
-      if (constellations === 0) return "no constellations yet";
-      const relations = projection?.boundRelationCount ?? 0;
-      return relations > 0
-        ? `${constellations} ${constellations === 1 ? "constellation" : "constellations"}, ${relations} ${relations === 1 ? "relation" : "relations"}`
-        : `${constellations} ${constellations === 1 ? "constellation" : "constellations"}`;
-    }
-    case "drift": return "drift";
-  }
 }

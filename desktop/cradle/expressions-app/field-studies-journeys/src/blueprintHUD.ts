@@ -27,6 +27,18 @@ export function blueprintTransformIntent(view:KernelConversion,sceneId:string,co
  prepareBlueprintEdit(view,intent); // the same native-bound edit law as submission
  return intent;
 }
+/** The fold's own disclosure text — the wider warranted constellation this
+ * pinned sixfold basis retains (QL-MEF #214 geometry-closeout): the
+ * binding's own `basis_refs`/`derivation_ref`/`operator_ref` when the
+ * caller disclosed them, verbatim; an honest "not disclosed" otherwise —
+ * expand/collapse (the surrounding `<details>`) changes only whether this
+ * text is shown, never the binding itself. */
+function foldDisclosure(binding:SceneBlueprint):string{
+ const basis=binding.basis_refs?.length?`Basis: ${binding.basis_refs.join(', ')}.`:'Basis: not disclosed.';
+ const derivation=binding.derivation_ref?`Derivation: ${binding.derivation_ref}.`:'Derivation: not disclosed.';
+ const operatorLine=binding.operator_ref?`Operator: ${binding.operator_ref}.`:'Operator: not disclosed.';
+ return `${basis} ${derivation} ${operatorLine}`;
+}
 export interface BlueprintHUDHost {
  container:HTMLElement;
  nativeView:()=>KernelConversion|undefined;
@@ -36,6 +48,7 @@ export interface BlueprintHUDHost {
 export function installBlueprintHUD(host:BlueprintHUDHost){
  const section=document.createElement('fieldset');section.id='scene-blueprint-controls';section.tabIndex=-1;
  section.innerHTML='<legend>Blueprint</legend><p data-blueprint-summary></p><p role="status" aria-live="polite" data-blueprint-status></p>'
+  +'<details data-blueprint-fold hidden><summary>Fold basis</summary><p data-blueprint-fold-body></p></details>'
   +'<button type="button" data-blueprint="bind">Bind sixfold roles</button><div data-blueprint-transform>'
   +'<p>Move, rotate and resize the assigned roles together.</p>'
   +['Position','Rotation'].map((group,index)=>'<div class="native-actions">'+['X','Y','Z'].map((axis,i)=>`<label>${group} ${axis}${index?' (°)':''}<input type="number" step="${index?'1':'0.05'}" data-blueprint-field="${index?'rotation':'position'}-${i}"></label>`).join('')+'</div>').join('')
@@ -43,6 +56,7 @@ export function installBlueprintHUD(host:BlueprintHUDHost){
   +'<div class="native-actions"><button type="button" data-blueprint="transform">Apply whole transform</button><button type="button" data-blueprint="release">Release blueprint</button></div><p>Release keeps the current positions.</p></div>';
  host.container.insertBefore(section,host.container.querySelector('fieldset'));
  const summary=section.querySelector<HTMLElement>('[data-blueprint-summary]')!,status=section.querySelector<HTMLElement>('[data-blueprint-status]')!;
+ const fold=section.querySelector<HTMLDetailsElement>('[data-blueprint-fold]')!,foldBody=section.querySelector<HTMLElement>('[data-blueprint-fold-body]')!;
  const transform=section.querySelector<HTMLElement>('[data-blueprint-transform]')!,bind=section.querySelector<HTMLButtonElement>('[data-blueprint="bind"]')!;
  const field=(name:string)=>section.querySelector<HTMLInputElement>(`[data-blueprint-field="${name}"]`)!;
  let busy=false,key='',disposed=false;
@@ -56,8 +70,13 @@ export function installBlueprintHUD(host:BlueprintHUDHost){
    const binding=bindingOf(view,sceneId);bind.hidden=!!binding;bind.disabled=false;transform.hidden=!binding;
    summary.textContent=binding?`${binding.members.length} sixfold roles move together.`:'Bind the roles already assigned in this Scene’s sixfold constellation.';
    status.textContent='';
-   if(binding){for(let i=0;i<3;i++){field(`position-${i}`).value=String(binding.transform.translation[i]/WORLD_SCALE);field(`rotation-${i}`).value=String(binding.transform.rotation[i]*180/Math.PI);}field('size').value=String(binding.transform.scale/BASE_SIZE);}
-  }catch(cause){key='';summary.textContent=cause instanceof Error?cause.message:String(cause);bind.hidden=false;bind.disabled=true;transform.hidden=true;status.textContent='';}
+   fold.hidden=!binding;
+   if(binding){
+    for(let i=0;i<3;i++){field(`position-${i}`).value=String(binding.transform.translation[i]/WORLD_SCALE);field(`rotation-${i}`).value=String(binding.transform.rotation[i]*180/Math.PI);}
+    field('size').value=String(binding.transform.scale/BASE_SIZE);
+    foldBody.textContent=foldDisclosure(binding);
+   }
+  }catch(cause){key='';summary.textContent=cause instanceof Error?cause.message:String(cause);bind.hidden=false;bind.disabled=true;transform.hidden=true;status.textContent='';fold.hidden=true;}
  };
  const click=async(event:Event)=>{
   const action=(event.target as HTMLElement).closest<HTMLElement>('[data-blueprint]')?.dataset.blueprint;if(!action||!['bind','transform','release'].includes(action)||busy)return;

@@ -24,7 +24,10 @@ impl PreparedRead {
             | KernelOp::ConfigResolutionsRead { .. }
             | KernelOp::ConfigDiff
             | KernelOp::SystemCompositionRead
-            | KernelOp::CompositionRead { .. } => Some(Self {
+            | KernelOp::CompositionRead { .. }
+            // The bounded telemetry follow waits on the owner for its whole
+            // window; it reads only the owner's state file, never the kernel's.
+            | KernelOp::FactoryOwner { request: crate::factory::OwnerRequest::TelemetryWatch { .. } } => Some(Self {
                 client: client.clone(),
                 world,
                 op: op.clone(),
@@ -49,6 +52,11 @@ impl PreparedRead {
             }
             let data = self.client.receiving(project.as_deref(), request).map_err(|error| error.to_string())?;
             return Ok(KernelOpOutcome { receipts: vec![], result: KernelOpResult::ReceivingReading { data } });
+        }
+        if let KernelOp::FactoryOwner { request: crate::factory::OwnerRequest::TelemetryWatch { state_path, resume, duration_secs, max_events, run_ref } } = &self.op {
+            let data = crate::factory::telemetry_watch(state_path, resume.as_ref(), *duration_secs, *max_events, run_ref.as_deref())
+                .map_err(|e| serde_json::to_string(&e).unwrap_or_else(|_| "factory telemetry watch failed".into()))?;
+            return Ok(KernelOpOutcome { receipts: vec![], result: KernelOpResult::FactoryDevelopmentReading { data } });
         }
         let git_reading = match &self.op {
             KernelOp::GitRepositoryRead { project } => Some(KernelOpResult::GitRepositoryReading {
@@ -97,5 +105,21 @@ impl PreparedRead {
             receipts: Vec::new(),
             result,
         })
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    /// The telemetry follow is a prepared read (outside the kernel lock);
+    /// every other Factory owner request keeps the ordered path.
+    #[test]
+    fn only_the_telemetry_watch_of_the_factory_family_is_prepared() {
+        let client = CentralClient::discover();
+        let watch: KernelOp = serde_json::from_value(serde_json::json!({"op": "factory_owner", "request": {"kind": "telemetry-watch", "state_path": "/s.json", "duration_secs": 1.0}})).unwrap();
+        assert!(PreparedRead::prepare(&client, None, &watch).is_some());
+        let status: KernelOp = serde_json::from_value(serde_json::json!({"op": "factory_owner", "request": {"kind": "telemetry-status", "state_path": "/s.json"}})).unwrap();
+        assert!(PreparedRead::prepare(&client, None, &status).is_none());
     }
 }

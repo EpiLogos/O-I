@@ -386,6 +386,91 @@ fn profile_domains_and_automation_stay_inside_the_bounded_vocabulary() {
     assert!(error.contains("numeric parameters"), "{error}");
 }
 
+fn rich_material() -> Value {
+    json!({
+        "name":"Nous","kind":"formation","shape":"text","text":"◇",
+        "source":{"kind":"ascii","ascii":{"text":"/\\\n\\/","cols":2,"rows":2}},
+        "layers":[{"id":"layer-halo","shape":"ring","text":"","tint":"#88aaff","scale":1.4}],
+        "sequence":{"enabled":true,"clock":"seconds","hold":2,"transition":0.8,"easing":"smoothstep",
+            "steps":[{"id":"s1","text":"◇","shape":"text","hold":2,"transition":0.8,"position":null},
+                     {"id":"s2","text":"◆","shape":"text","hold":2,"transition":0.8,"position":null}]},
+        "force":{"kind":"vortex","strength":2.5,"radius":0.6,"spin":1.2},
+        "tint":"#c0ffee","tintWeight":0.7,"size":{"x":0.65,"y":0.86},"scale":1.2,"share":2,"rotation":90,
+        "native":{"id":"expression:cast:entity:nous","params":{"glyphWeight":0.6}},
+        "sound":{"enabled":true,"followCymatic":false,"frequencyHz":432,"gain":0.3,"waveform":"triangle",
+            "attack":0.05,"release":1.5,"pan":-0.25}
+    })
+}
+
+#[test]
+fn profiles_carry_the_full_authoring_material_and_refuse_unknown_keys() {
+    let mut app = Application::default();
+    let profile = json!({
+        "profile_ref":"profile:character","revision":1,"title":"Character",
+        "accepted_binding_kinds":["text_source"],
+        "material_defaults":{
+            "material":{"value":rich_material(),"automation":null},
+            "shape":{"value":"ring","automation":null},
+            "force_mode":{"value":"attract","automation":null},
+            "force_strength":{"value":3.0,"automation":null},
+            "rotation":{"value":0.5,"automation":null},
+            "frequency":{"value":528.0,"automation":null},
+            "glyph":{"value":"◇","automation":null}
+        },
+        "provenance":[]
+    });
+    let defined = apply(&mut app, json!({"operation":"profile_define","profile":profile,"actor":"human:author"}));
+    assert_eq!(defined["state"], "profile");
+    assert_eq!(defined["resolved_defaults"]["material"]["value"]["sound"]["frequencyHz"], 432);
+    assert_eq!(defined["resolved_defaults"]["material"]["value"]["force"]["kind"], "vortex");
+    assert_eq!(defined["resolved_defaults"]["material"]["value"]["layers"][0]["tint"], "#88aaff");
+    // Rich material rotation is in degrees (the authoring Entity's unit).
+    assert_eq!(defined["resolved_defaults"]["material"]["value"]["rotation"], 90);
+
+    // An Expression adopts it with a rich material override.
+    create(&mut app, "expression:cast");
+    let mut variation = rich_material();
+    variation["tint"] = json!("#ff0066");
+    let data = edit(&mut app, "expression:cast", 1, json!([{"change":"profile_adopt","adoption":{
+        "profile_ref":"profile:character","revision":1,
+        "overridden_parameters":{"material":{"value":variation,"automation":null}}}}]));
+    assert_eq!(data["document"]["profiles"][0]["overridden_parameters"]["material"]["value"]["tint"], "#ff0066");
+
+    // Genuinely unknown or unsafe material fails closed.
+    for (bad, needle) in [
+        (json!({"mood":"dark"}), "Unsupported material field"),
+        (json!({"sound":{"enabled":true,"gain":4}}), "gain"),
+        (json!({"sound":{"enabled":true,"script":"x"}}), "Unsupported sound field"),
+        (json!({"force":{"kind":"explode","strength":1}}), "Force kind"),
+        (json!({"tint":"red"}), "hex colour"),
+        (json!({"rotation":40000}), "rotation"),
+        (json!({"native":{"__proto__":{}}}), "Unsafe"),
+        (json!({"native":"engine"}), "native"),
+        (json!({"source":{"kind":"image","image":{"dataUrl":"https://example.com/x.png"}}}), "embedded"),
+        (json!({"layers":[{"__proto__":{}}]}), "Unsafe"),
+    ] {
+        let mut app = Application::default();
+        let profile = json!({
+            "profile_ref":"profile:bad","revision":1,"title":"Bad",
+            "accepted_binding_kinds":["text_source"],
+            "material_defaults":{"material":{"value":bad,"automation":null}},
+            "provenance":[]
+        });
+        let error = refused(&mut app, json!({"operation":"profile_define","profile":profile,"actor":"human:author"}));
+        assert!(error.contains(needle), "{needle}: {error}");
+    }
+    // Material automation belongs to the material's own sequence.
+    let mut app = Application::default();
+    let automated = json!({
+        "profile_ref":"profile:auto","revision":1,"title":"Auto",
+        "accepted_binding_kinds":["text_source"],
+        "material_defaults":{"material":{"value":rich_material(),"automation":{"min":0.0,"max":1.0,"rate_hz":0.2,"waveform":"sine"}}},
+        "provenance":[]
+    });
+    let error = refused(&mut app, json!({"operation":"profile_define","profile":automated,"actor":"human:author"}));
+    assert!(error.contains("sequence"), "{error}");
+}
+
 // ——— ES3A: asset admission + occurrence index ————————————————————————
 
 fn asset(occurrences: Value) -> Value {

@@ -48,3 +48,17 @@ export function refitFormationToGlyphs(e:Entity,font:FontRef){
   k.objectState.size=fittedSize(box,null,glyphAspect(k.text,font));
  });
 }
+/** A glyph applied from the library adopts its own box: the step refits to the new
+ *  glyph's natural aspect at constant area, so every glyph in a sequence keeps its
+ *  self-contained scaling instead of stretching into the previous glyph's shape. */
+export function refitStepForGlyph(e:Entity,index:number,text:string,font:FontRef){
+ const k=e.sequence.steps[index];if(!k||!isTextGlyph(k.shape,k.source))return;
+ const box=effectiveBox(e,k);k.objectState??=capturedStepState(e,index);
+ // prev=null: a placed glyph is a new state, not an edit of the old one — adopt its aspect outright.
+ k.objectState.size=fittedSize(box,null,glyphAspect(text,font));
+}
+/** The held-entity form of the same law: a glyph applied to the entity base refits the base box. */
+export function refitEntityForGlyph(e:Entity,text:string,font:FontRef){
+ if(!isTextGlyph(e.shape,e.source))return;
+ e.size=fittedSize(e.size,null,glyphAspect(text,font));
+}

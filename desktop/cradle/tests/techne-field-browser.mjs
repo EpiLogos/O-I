@@ -7,7 +7,7 @@ import {chromium} from 'playwright';
 import {mkdirSync,writeFileSync} from 'node:fs';
 import {fileURLToPath} from 'node:url';
 const root=fileURLToPath(new URL('../',import.meta.url));
-const server=await createServer({root,appType:'custom',server:{host:'127.0.0.1',port:0},logLevel:'error'});
+const server=await createServer({root,appType:'custom',server:{host:'127.0.0.1',port:0,strictPort:false},logLevel:'error'});
 server.middlewares.use('/field-proof',async(_req,res)=>{
  res.setHeader('content-type','text/html');
  res.end(await server.transformIndexHtml('/field-proof','<!doctype html><body data-theme="light" style="margin:0;background:#f4f2eb"><div id="field" style="width:900px;height:600px;position:relative"></div><script type="module" src="/tests/techne-field-page.ts"></script>'));
@@ -29,7 +29,7 @@ try{
  const observed=await page.evaluate(()=>window.fieldProof.inspect());
  assert.equal(observed.canvasCount,1);assert.equal(observed.bindings.rendered.length,2);assert.equal(observed.lines.length,2);
  assert.ok(observed.calls>0,'actual WebGL draw calls, not only fixture data');
- for(const line of observed.lines){assert.equal(line.vertices.length,75);assert.ok(line.point.visible);assert.equal((await page.evaluate(p=>window.fieldProof.hit(p.x,p.y),line.point))?.binding_ref,line.ref);}
+ for(const line of observed.lines){assert.equal(line.points,25);assert.ok(line.particles>0,'each native relation owns a rendered particle range');assert.ok(line.point.visible);assert.equal((await page.evaluate(p=>window.fieldProof.hit(p.x,p.y),line.point))?.binding_ref,line.ref);}
  for(const entity of observed.entities){assert.equal((await page.evaluate(p=>window.fieldProof.hit(p.x,p.y),entity.point))?.entity_ref,entity.ref);}
  const before=await page.locator('canvas').screenshot();
  await page.evaluate(ref=>window.fieldProof.select(ref),observed.lines[0].ref);

@@ -8,14 +8,17 @@ import {IconTabStrip} from "../../../workspace/primitives/IconTabStrip";
  * as subtitle, one facts line (state · project · started · units · Git basis),
  * ONE primary action (the first currentlyApplicable native action), the rest
  * in ⋯ with Copy run reference and Show raw. No refs in the header.
- * Tabs Map · Trajectory · Live · Handoff — nothing stacked below.
+ * Tabs Map · Trajectory · Live · Handoff — nothing stacked below. Live is
+ * the Run performed through the Expressions engine (live/RunLiveExpression:
+ * cast, goal and work in the Run's act, its timeline, object panels), with
+ * the legs/attempts table beneath it.
  */
 import {useEffect, useState, type ReactNode, useRef, lazy, Suspense} from "react";
 import {useKernel} from "../../../kernel/KernelProvider";
 import {Glyph} from "../../../workspace/Glyph";
 import {formatRelativeTime} from "../../../shared/relativeTime";
 import {MenuButton, type MenuRow} from "./MenuButton";
-import {errorWords, readRunEntry, runEntry, useDeskReading, type RunEntry} from "./deskStore";
+import {errorWords, readRunEntry, rememberRunTab as rememberTab, rememberedRunTab, runEntry, useDeskReading, type RunEntry} from "./deskStore";
 import {inspectTelemetry, type TelemetryInspection} from "./factoryReads";
 import {RUN_STATE_GLYPH, RUN_STATE_WORD, splitActions, type RunAction} from "./runModel";
 import {RunMap} from "./RunMap";
@@ -23,11 +26,14 @@ import {RunLive} from "./RunLive";
 import {RunHandoff} from "./RunHandoff";
 import {RunTrajectory} from "./RunTrajectory";
 import {RunSignalLink} from "../sensing/RunSignalLink";
+import {RunLiveExpression} from "../live/RunLiveExpression";
 
 const ComputerView=lazy(()=>import("../ComputerView").then(module=>({default:module.ComputerView})));
 export type RunTab = "map" | "trajectory" | "live" | "computer" | "handoff";
 const TABS: {key: RunTab; label: string}[] = [{key: "map", label: "Map"}, {key: "trajectory", label: "Trajectory"}, {key: "live", label: "Live"}, {key:"computer",label:"Computer"}, {key: "handoff", label: "Handoff"}];
-const tabMemory = new Map<string, RunTab>();
+const isRunTab = (value: string | undefined): value is RunTab => TABS.some(tab => tab.key === value);
+/** Open a Run's page on a given tab (a Tasks conversation's Live). */
+export function rememberRunTab(runKey: string, tab: RunTab) { rememberTab(runKey, tab); }
 
 /** The Git basis a telemetry reading carries, in its owner's field names. */
 export function gitBasisOf(telemetry: TelemetryInspection | undefined): {branch?: string; clean?: boolean; head?: string; repository?: string} | undefined {
@@ -65,7 +71,7 @@ export function RunPage({runKey, onBack, host}: {runKey: string; onBack: () => v
   const kernel = useKernel();
   useDeskReading(); // re-render when the store's entry changes
   const entry = runEntry(runKey);
-  const [tab, setTab] = useState<RunTab>(() => tabMemory.get(runKey) ?? "map");
+  const [tab, setTab] = useState<RunTab>(() => { const remembered = rememberedRunTab(runKey); return isRunTab(remembered) ? remembered : "map"; });
   const [reading, setReading] = useState<"reading" | "read" | "refused">("reading");
   const [error, setError] = useState<string>();
   const [telemetry, setTelemetry] = useState<TelemetryInspection>();
@@ -92,7 +98,10 @@ export function RunPage({runKey, onBack, host}: {runKey: string; onBack: () => v
   };
   useEffect(() => { void reread(); /* the page's own read on open */ // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [runKey]);
-  useEffect(() => { tabMemory.set(runKey, tab); }, [runKey, tab]);
+  useEffect(() => { rememberTab(runKey, tab); }, [runKey, tab]);
+  // A Live open requested while this page is already showing the run.
+  useEffect(() => { const remembered = rememberedRunTab(runKey); if (isRunTab(remembered) && remembered !== tab) setTab(remembered); // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [entry]);
 
   if (!entry) return <div className="frun" aria-label="Run"><BackBar onBack={onBack}/><p className="frun-empty">This run is no longer in the Desk's reading.</p></div>;
   const {card, run} = entry;
@@ -143,7 +152,9 @@ export function RunPage({runKey, onBack, host}: {runKey: string; onBack: () => v
     <section className="frun-body" role="tabpanel" aria-label={TABS.find(entryTab => entryTab.key === tab)!.label}>
       {tab === "map" && <RunMap entry={entry} runKey={runKey} host={host}/>}
       {tab === "trajectory" && <RunTrajectory entry={entry} host={host}/>}
-      {tab === "live" && <RunLive entry={entry} runKey={runKey} host={host} primary={primary} onPrimary={primary ? () => void invoke(primary) : undefined} telemetry={telemetry}/>}
+      {tab === "live" && <RunLiveExpression entry={entry} runKey={runKey} host={host}>
+        <RunLive entry={entry} runKey={runKey} host={host} primary={primary} onPrimary={primary ? () => void invoke(primary) : undefined} telemetry={telemetry}/>
+      </RunLiveExpression>}
       {tab === "computer" && <Suspense fallback={<p>Opening Computer…</p>}><ComputerView entry={entry}/></Suspense>}
       {tab === "handoff" && <RunHandoff entry={entry} host={host} onRecognised={() => void reread()}/>}
     </section>

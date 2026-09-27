@@ -1,10 +1,12 @@
 /** Native Agent creation controller. State here is a held form and a last
  * owner reading, never the authority or persistence of an Agent/session. */
 import {readAgentScope,readAgentSkills,type NativeAgentScope,type NativeAgentSkill} from "./nativeAgentReadiness.ts";
-export interface AgentDraftInput { name: string; purpose: string; skillRefs: string[]; skillSetRefs: string[]; scopeConfirmed: boolean }
+export interface AgentDraftInput { name: string; purpose: string; skillRefs: string[]; skillSetRefs: string[]; scopeConfirmed: boolean;
+ /** Central file ref of the reusable expressive character (`reuse.kind:"character"`); saved as the profile's `expressive_character_ref`. */
+ characterRef?: string }
 export interface NativeReview {
  schema: "central.agent-profile-review/v1";
- profile: { ref: string; revision: string; agent_ref: string; name?: string; purpose?: string; intent_provenance?: {intent_expression: string}; skill_refs?: string[]; skill_set_refs?: string[] };
+ profile: { ref: string; revision: string; agent_ref: string; name?: string; purpose?: string; intent_provenance?: {intent_expression: string}; skill_refs?: string[]; skill_set_refs?: string[]; expressive_character_ref?: string };
  scope_ref: string; content_digest: string; accepted: boolean; execution_authority_granted: false;
  acceptance: null | {schema: "central.agent-profile-acceptance/v1"; acceptance_ref: string; profile_ref: string; agent_ref: string; profile_revision: string; content_digest: string; scope_ref: string};
 }
@@ -27,8 +29,9 @@ export type AgentRequest =
  | {action: "roster" | "scope" | "skills" | "skillsets"}
  | {action: "skillset"; name: string}
  | {action: "session"; agent_session: string}
- | {action: "propose"; name: string; purpose: string; skill_refs: string[]; skill_set_refs: string[]; expected_scope_ref: string}
+ | {action: "propose"; name: string; purpose: string; skill_refs: string[]; skill_set_refs: string[]; expected_scope_ref: string; expressive_character_ref?: string}
  | {action: "review"; profile_ref: string}
+ | {action: "set-character"; profile_ref: string; expected_revision: string; expressive_character_ref: string | null}
  | {action: "accept"; profile_ref: string; expected_revision: string; expected_content_digest: string}
  | {action: "prepare"; request_id: string; profile_ref: string; expected_revision: string; expected_content_digest: string; expected_acceptance_ref: string}
  | {action: "find"; request_id: string};
@@ -121,6 +124,21 @@ function validatePreparationBasis(value: unknown, review: NativeReview, requestI
   throw new Error("Native session preparation is incomplete or belongs to a different accepted Agent");
  }
  return p;
+}
+/** What changing a character did to the source (kernel `SetCharacter`). */
+export interface CharacterChange {state: "saved" | "unchanged"; previous_revision?: string; revision: string; re_acceptance_required: boolean}
+export type CharacterReview = NativeReview & {character_change?: CharacterChange};
+/** Set or clear an EXISTING Agent's expressive character through Central's
+ * compare-and-swap save. The answer is the re-read source review; it must
+ * carry exactly the requested character or the change is not confirmed. */
+export async function setAgentCharacter(owner: AgentOwner, scope: string, input: {profileRef: string; expectedRevision: string; characterRef: string | null}): Promise<CharacterReview> {
+ const character = input.characterRef?.trim() || null;
+ const value = await owner({action:"set-character",profile_ref:input.profileRef,expected_revision:input.expectedRevision,expressive_character_ref:character});
+ const review = validateReview(value, scope) as CharacterReview;
+ if (review.profile.ref !== input.profileRef || (review.profile.expressive_character_ref ?? null) !== character) {
+  throw new Error("Central's source does not carry the requested character; re-read it before trying again");
+ }
+ return review;
 }
 export class NativeAgentController {
  private state: NativeAgentState = {draft:{name:"",purpose:"",skillRefs:[],skillSetRefs:[],scopeConfirmed:false},profiles:[],busy:false};
@@ -237,15 +255,31 @@ export class NativeAgentController {
   if (draft.skillSetRefs.some(ref=>!this.state.skillSets?.some(set=>set.name===ref))) {
    throw new StagePrecondition("A selected SkillSet is not in the native set field. Re-read the repertoire and explicitly repair or remove that selection.");
   }
+  const character = draft.characterRef?.trim() || undefined;
   const review = validateReview(await this.owner({action:"propose",name:draft.name,purpose:draft.purpose,
-   skill_refs:[...draft.skillRefs],skill_set_refs:[...draft.skillSetRefs],expected_scope_ref:scopeRef}),scopeRef);
+   skill_refs:[...draft.skillRefs],skill_set_refs:[...draft.skillSetRefs],expected_scope_ref:scopeRef,
+   ...(character?{expressive_character_ref:character}:{})}),scopeRef);
   if (review.accepted || review.profile.name !== draft.name || review.profile.intent_provenance?.intent_expression !== draft.purpose
       || JSON.stringify(review.profile.skill_refs??[])!==JSON.stringify(draft.skillRefs)
-      || JSON.stringify(review.profile.skill_set_refs??[])!==JSON.stringify(draft.skillSetRefs)) {
-   throw new Error("The native proposal differs from the submitted purpose/name or was accepted without this review");
+      || JSON.stringify(review.profile.skill_set_refs??[])!==JSON.stringify(draft.skillSetRefs)
+      || (review.profile.expressive_character_ref ?? undefined) !== character) {
+   throw new Error("The native proposal differs from the submitted purpose/name/character or was accepted without this review");
   }
   this.set({review,prepared:undefined,requestId:undefined,compound:undefined});
  }
+ /** Change the reviewed Agent's character in place (CAS on its revision). */
+ setCharacter = async (characterRef: string | null): Promise<CharacterChange | undefined> => {
+  const {review,scopeRef,busy,unknown} = this.state;
+  if (busy || unknown || !review || !scopeRef) return undefined;
+  this.set({busy:true,error:undefined});
+  try {
+   const next = await setAgentCharacter(this.owner, scopeRef, {profileRef:review.profile.ref,expectedRevision:review.profile.revision,characterRef});
+   const roster = await this.readRoster();
+   this.set({review:next,profiles:roster.profiles,prepared:undefined,requestId:undefined,compound:undefined});
+   return next.character_change;
+  } catch (error) { this.set({error:`The character was not changed: ${String(error)}`}); return undefined; }
+  finally { this.set({busy:false}); }
+ };
  accept = async () => {
   const {review,busy,unknown,scopeRef} = this.state;
   if (busy || unknown || !review || review.accepted || !scopeRef) return;

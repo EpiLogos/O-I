@@ -48,6 +48,7 @@ import {
   makeFormation,
   makeLink,
   resolveFocus,
+  MAX_FORMATIONS,
 } from './fieldModel';
 
 /** A retained image/ASCII source, kept so the pool can be re-derived against a new true-3D law. */
@@ -678,13 +679,13 @@ export class PointCloudField {
 
         // Entity tints (per partition) + composition focus tint
         uEditHasSelection: {value:0},
-        uEditSelected: {value:new Float32Array(10)},
+        uEditSelected: {value:new Float32Array(MAX_FORMATIONS)},
         uEntityCount: { value: 0 },
         uConnectionStart: { value: 1e30 },
         uConnectionMetadata: { value: this.entities.noiseTexture },
-        uEntityBounds: { value: new Float32Array(10) },
-        uEntityTint: { value: Array.from({ length: 10 }, () => new THREE.Color('#ffffff')) },
-        uEntityTintWeight: { value: new Float32Array(10) },
+        uEntityBounds: { value: new Float32Array(MAX_FORMATIONS) },
+        uEntityTint: { value: Array.from({ length: MAX_FORMATIONS }, () => new THREE.Color('#ffffff')) },
+        uEntityTintWeight: { value: new Float32Array(MAX_FORMATIONS) },
         uTexSize: { value: new THREE.Vector2(texW, texH) },
         uFocusTint: { value: new THREE.Color('#ffffff') },
         uFocusTintWeight: { value: 0.0 },
@@ -2054,7 +2055,13 @@ export class PointCloudField {
     return this.latestResonatorTelemetry;
   }
 
-  public destroy() {
+  /** Recovery/StrictMode may reuse the canvas. Its terminal owner opts into context release. */
+  public destroy({releaseContext = false}: {releaseContext?: boolean} = {}) {
+    if (!this.isDestroyed) this.disposeResources();
+    if (releaseContext && !this.renderer.getContext().isContextLost()) this.renderer.forceContextLoss();
+  }
+
+  private disposeResources() {
     this.isDestroyed = true;
     if (this.animFrameId !== null) {
       cancelAnimationFrame(this.animFrameId);

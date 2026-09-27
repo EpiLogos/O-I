@@ -34,8 +34,8 @@ import type {
   TechnePlaceFacet,
   TechneReading,
   TechneTemporalFacet,
-} from "../../contract.ts";
-import { nameInWindow, type TimeWindow } from "./filter.ts";
+} from "../../contract";
+import { nameInWindow, type TimeWindow } from "./filter";
 
 // ---------------------------------------------------------------------------
 // The hard geography relations

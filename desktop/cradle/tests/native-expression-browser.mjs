@@ -43,7 +43,34 @@ try{
   await dismiss.click();
   await frame.waitForFunction(()=>document.querySelector('#entry-gate')?.hasAttribute('hidden'),null,{timeout:5000});
  }
- await frame.locator('.native-field-panel>summary').click();await frame.locator('[name="native-path"]').fill('binding.json');await frame.locator('[data-native="source"]').click();await frame.locator('[data-native="connect"]').click();
+ // Native field is Studio-section content, not a floating pill: open Studio
+ // and select its "Native field" section before its controls exist in the DOM.
+ // At this viewport the workspace header cluster is in its compact form
+ // (the "Studio" button rides the collapsed "•••" menu, per the 1100px
+ // breakpoint in workspace.css), so open that menu first when present.
+ const openNativeSection=async()=>{
+  const workspaceMenuToggle=frame.locator('.workspace-cluster>.header-menu-toggle');
+  if(await workspaceMenuToggle.isVisible())await workspaceMenuToggle.click();
+  await frame.locator('[data-action="studio"]').click();
+  const section=frame.locator('[data-action="studio-section"][data-value="native"]');
+  // Reopening Studio on an already-'native' section re-renders the panel
+  // immediately; only steer the section when it is not already current
+  // (the fixed native-domain-output overlay can otherwise intercept a
+  // no-op click on the section tab).
+  if(await section.getAttribute('aria-current')!=='page')await section.click();
+  await frame.locator('.native-field-panel').waitFor();
+ };
+ // The panel is now ordinary Studio-section content, not its own small
+ // fixed popup with its own internal 75vh scroll — its controls live in
+ // the shared #inspector-content scroll region, below the fixed scene
+ // transport bar (z-index above the Studio drawer). Playwright's built-in
+ // click auto-scroll does not reliably clear that fixed overlap here, so
+ // every native-panel click scrolls its own target into view first.
+ const clickNative=async target=>{const el=typeof target==='string'?frame.locator(target):target;await el.scrollIntoViewIfNeeded();await el.click();};
+ const domainSummary=frame.locator('summary').filter({hasText:'Native domain controls'});
+ const operationSummary=frame.locator('summary').filter({hasText:'Native operation and sources'});
+ await openNativeSection();
+ await frame.locator('[name="native-path"]').fill('binding.json');await clickNative('[data-native="source"]');await clickNative('[data-native="connect"]');
  await frame.waitForFunction(()=>['following','held','unavailable'].includes(window.__FIELD_STUDIES__.native()?.status),null,{timeout:15000});
  assert.equal(await frame.evaluate(()=>window.__FIELD_STUDIES__.native().status),'following',await frame.locator('[data-native-status]').textContent());
  await frame.waitForFunction(()=>window.__FIELD_STUDIES__.nativeTargets()?.target_a[1]>0,null,{timeout:10000});
@@ -56,28 +83,33 @@ try{
  assert.deepEqual(await frame.evaluate(()=>({lease:window.__FIELD_STUDIES__.native().lease,event:window.__FIELD_STUDIES__.native().native.event_ref,subject:window.__FIELD_STUDIES__.native().native.subject_ref})),identity);
  assert.equal(opens,1);report.checks.push('Expressions to Technè host-mode switch retains same stage, lease, subject and occasion');
  await page.evaluate(()=>document.querySelector('iframe').contentWindow.postMessage({v:1,kind:'host-mode',mode:'expressions'},'*'));
- await frame.locator('summary').filter({hasText:'Native domain controls'}).click();
- await frame.locator('[name="native-rna"]').selectOption('true');await frame.locator('[data-native="transcription"]').click();
+ // Entering Technè's M0 project lens closes the Studio (activateInstrument's
+ // 'project' branch sets inspectorOpen=false); the return to Expressions
+ // does not reopen it, so the Native field section is reselected here —
+ // same product control, reached fresh after the round trip.
+ await openNativeSection();
+ await clickNative(domainSummary);
+ await frame.locator('[name="native-rna"]').selectOption('true');await clickNative('[data-native="transcription"]');
  await frame.waitForFunction(()=>document.querySelector('[data-transcription]')?.textContent.includes('ACU')&&document.querySelector('[data-native-field]')?.getAttribute('aria-busy')==='false');
- await frame.locator('[name="native-row"]').fill('4');await frame.locator('[data-native="row"]').click();
+ await frame.locator('[name="native-row"]').fill('4');await clickNative('[data-native="row"]');
  await frame.waitForFunction(()=>window.__FIELD_STUDIES__.native()?.domain?.m1.row12===4&&document.querySelector('[data-carrier]')?.getAttribute('y2')==='-1'&&document.querySelector('[data-native-field]')?.getAttribute('aria-busy')==='false');
  assert.equal(owner.sources.current.input.m1.row12,4);report.checks.push('native transcription and carrier reach visible form output via native controls');
- await frame.locator('[name="native-damping"]').fill('0.75');await frame.locator('[data-native="damping"]').click();
+ await frame.locator('[name="native-damping"]').fill('0.75');await clickNative('[data-native="damping"]');
  await frame.waitForFunction(()=>window.__FIELD_STUDIES__.nativeTargets()?.target_b[2]===300);
  report.checks.push('native material control alters the actual retained target field');
- await frame.locator('summary').filter({hasText:'Native domain controls'}).click();
+ await clickNative(domainSummary);
  assert.equal((await frame.evaluate(()=>window.__FIELD_STUDIES__.inspect())).seeds,before.seeds);assert.equal(opens,1);report.checks.push('single owner attachment without reseed');
- await frame.locator('summary').filter({hasText:'Native operation and sources'}).click();await frame.locator('[name="native-command"]').fill(JSON.stringify({operation:'set-axis',axis:0,phase:{turns:'0',half_degrees:180}}));await frame.locator('[data-native="operate"]').click();
+ await clickNative(operationSummary);await frame.locator('[name="native-command"]').fill(JSON.stringify({operation:'set-axis',axis:0,phase:{turns:'0',half_degrees:180}}));await clickNative('[data-native="operate"]');
  await frame.waitForFunction(()=>window.__FIELD_STUDIES__.nativeTargets()?.target_a[0]===100,null,{timeout:10000});report.checks.push('native set-axis changes consumed target, not metadata');
  await frame.waitForFunction(()=>document.querySelector('[data-clock]')?.getAttribute('transform')==='rotate(90)');
- await frame.locator('[data-native="hold"]').click();await page.waitForTimeout(100);
+ await clickNative('[data-native="hold"]');await page.waitForTimeout(100);
  const held=await frame.evaluate(()=>({reading:window.__FIELD_STUDIES__.native(),field:window.__FIELD_STUDIES__.inspect(true)}));await page.waitForTimeout(160);
  const still=await frame.evaluate(()=>({reading:window.__FIELD_STUDIES__.native(),field:window.__FIELD_STUDIES__.inspect(true)}));
  assert.deepEqual(still.reading.native.acknowledged,held.reading.native.acknowledged);assert.deepEqual(still.field.positions,held.field.positions);assert.deepEqual(still.field.velocities,held.field.velocities);report.checks.push('hold freezes GPU position/velocity and native cursor');
- await frame.locator('[name="native-scale"]').fill('800');await frame.locator('[data-native="scale"]').click();const scaled=await frame.evaluate(()=>({reading:window.__FIELD_STUDIES__.native(),target:window.__FIELD_STUDIES__.nativeTargets().target_a[0]}));
+ await frame.locator('[name="native-scale"]').fill('800');await clickNative('[data-native="scale"]');const scaled=await frame.evaluate(()=>({reading:window.__FIELD_STUDIES__.native(),target:window.__FIELD_STUDIES__.nativeTargets().target_a[0]}));
  assert.equal(scaled.target,200);assert.deepEqual(scaled.reading.native.acknowledged,held.reading.native.acknowledged);assert.equal(scaled.reading.presentation_mode,'manual-presentation-override');report.checks.push('presentation scale changes without native state mutation');
- await frame.locator('[data-native="follow"]').click();assert.equal(await frame.evaluate(()=>window.__FIELD_STUDIES__.nativeTargets().target_a[0]),100);
- await frame.locator('[data-native="resume"]').click();await frame.waitForFunction(()=>window.__FIELD_STUDIES__.native()?.status==='following');
+ await clickNative('[data-native="follow"]');assert.equal(await frame.evaluate(()=>window.__FIELD_STUDIES__.nativeTargets().target_a[0]),100);
+ await clickNative('[data-native="resume"]');await frame.waitForFunction(()=>window.__FIELD_STUDIES__.native()?.status==='following');
  owner.lost=true;await frame.waitForFunction(()=>window.__FIELD_STUDIES__.native()?.status==='unavailable',null,{timeout:10000});
  const lost=await frame.evaluate(()=>window.__FIELD_STUDIES__.inspect(true)),requests=owner.calls.length;await page.waitForTimeout(200);const disconnected=await frame.evaluate(()=>window.__FIELD_STUDIES__.inspect(true));
  assert.deepEqual(disconnected.positions,lost.positions);assert.deepEqual(disconnected.velocities,lost.velocities);assert.equal(owner.calls.length,requests);report.checks.push('disconnect stops GPU evolution and request retries');

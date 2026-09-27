@@ -12,6 +12,7 @@ import {summarizeAnalysis} from '../../src/engine/sourceSampling';
 import {NATIVE_BINDINGS,WORLD_SCALE} from './nativeParameters';
 import {basis,stageCentre,stageScale} from './camera';
 import type {EngineFrame,FieldEngineAdapter,EngineCommand} from './engine';
+import {EntitySoundBank,activeFromFocus} from './native-field/entitySound';
 
 const mix=(a:number,b:number,t:number)=>a+(b-a)*t;
 function color(a:string,b:string,t:number){return '#'+new Color(a).lerp(new Color(b),t).getHexString();}
@@ -20,6 +21,7 @@ class EmbeddedProductionAdapter implements FieldEngineAdapter {
  readonly capabilities={name:'Native particle field',kind:'production' as const,parameters:[...NATIVE_BINDINGS.map(p=>p.key),...MATERIAL_KEYS,'grain'],physicalResonance:true,runtimeCheckpoints:false,exactSeek:false,
  notes:['GPU particle dynamics and continuous modal resonance. One simulation clock.','10 formations / 8 pins. Configuration saves are not runtime checkpoints.','Live video and native-resolution PNG. Offline controlled clip rendering is not available.']};
  private engine:PointCloudField|null=null;
+ private contextOwner:PointCloudField|null=null;
  private connections:ExpressionConnectionLayer|null=null;
  private connectionRows:readonly ConnectionBinding[]|undefined;
  private selectedConnection:string|null|undefined;
@@ -28,6 +30,8 @@ class EmbeddedProductionAdapter implements FieldEngineAdapter {
  private from:PointCloudConfig|null=null;private transitionStart=0;private duration=0;
  private evaluated:PointCloudConfig|null=null;private applied:PointCloudConfig|null=null;private sources=new Map<string,string>();private sourceStatus:Record<string,string>={};
  private nativeDomain=false;
+ /** Per-object sound voices for the present entities (authored `sound`). */
+ readonly entitySound=new EntitySoundBank();
  private nativeConfigs=new WeakMap<PointCloudConfig,PointCloudConfig>();
  setNativeDomain(active:boolean){this.nativeDomain=active;this.applied=null;this.dirty=true;}
  private nativeConfig(config:PointCloudConfig):PointCloudConfig{
@@ -78,9 +82,9 @@ class EmbeddedProductionAdapter implements FieldEngineAdapter {
   this.dirty=false;
   if(this.contextLost)throw new Error('GPU context was lost. Your expression is retained. Restore the field explicitly; its physical state must be reseeded.');
   const config=this.nativeConfig(this.configuration(frame));
-  if(!this.engine){this.engine=new PointCloudField(this.canvas,config,true);this.connections=new ExpressionConnectionLayer(this.engine);this.connectionRows=undefined;this.selectedConnection=undefined;this.seedRecoveredSources=true;}
+  if(!this.engine){this.engine=new PointCloudField(this.canvas,config,true);this.contextOwner=this.engine;this.connections=new ExpressionConnectionLayer(this.engine);this.connectionRows=undefined;this.selectedConnection=undefined;this.seedRecoveredSources=true;}
   else if(config!==this.applied)this.engine.replaceConfig(config);
-  if(config!==this.applied)this.syncSources(frame.scene);this.applied=config;
+  if(config!==this.applied){this.syncSources(frame.scene);this.soundScene=frame.scene.entities.some(e=>e.sound?.enabled)?frame.scene:null;}this.applied=config;
   if(frame.connections!==this.connectionRows||frame.selectedConnection!==this.selectedConnection){
    this.connectionRows=frame.connections;this.selectedConnection=frame.selectedConnection;
    this.connections?.configure(frame.connections??[],frame.selectedConnection?[frame.selectedConnection]:[]);
@@ -91,6 +95,17 @@ class EmbeddedProductionAdapter implements FieldEngineAdapter {
   this.engine.setHostPointer(frame.pointer.active,{x:frame.pointer.world.x*WORLD_SCALE,y:frame.pointer.world.y*WORLD_SCALE,z:frame.pointer.world.z*WORLD_SCALE},frame.delta);
   this.engine.advance(frame.delta);if(this.seedRecoveredSources&&Object.values(this.sourceStatus).every(v=>v.includes('source active'))){if(this.sources.size||this.restoredClock)this.engine.seedCurrentTargets();this.seedRecoveredSources=false;this.restoredClock=false;this.engine.advance(0);}
   this.evaluated=this.engine.getEvaluation().config;
+  this.followSound(frame);
+ }
+ private soundScene:EngineFrame['scene']|null=null;private soundAt=-1;
+ /** Object sound follows the present Scene and the engine's real focus
+  * (travelling compositions sound the focused entity only). ~10 Hz. */
+ private followSound(frame:EngineFrame){
+  const scene=this.soundScene;
+  if(!scene){if(this.soundAt!==-2){this.entitySound.sync({entities:[]});this.soundAt=-2;}return;}
+  const now=performance.now();if(this.soundAt>=0&&now-this.soundAt<100)return;this.soundAt=now;
+  const focus=scene.composition.focus==='travelling'?this.engine?.getCompositionTelemetry().focus:null;
+  this.entitySound.sync({entities:scene.entities,field:frame.scene.field},activeFromFocus(focus));
  }
  hitEntity(x:number,y:number){return this.connections?.pickEntity(x,y)??null;}
  hitConnection(x:number,y:number){return this.connections?.hitTest(x,y)??null;}
@@ -148,7 +163,7 @@ class EmbeddedProductionAdapter implements FieldEngineAdapter {
   }else this.engine.fireAutomation(command.id,command.delay??0);
   this.dirty=true;
  }
- dispose(){this.canvas.removeEventListener('webglcontextlost',this.lost);this.connections?.dispose();this.connections=null;this.engine?.destroy();this.engine=null;}
+ dispose(){this.entitySound.dispose();this.canvas.removeEventListener('webglcontextlost',this.lost);this.connections?.dispose();this.connections=null;this.contextOwner?.destroy({releaseContext:true});this.engine=null;this.contextOwner=null;}
 }
 
 export const ProductionAdapter = withRetainedField(EmbeddedProductionAdapter, WORLD_SCALE);

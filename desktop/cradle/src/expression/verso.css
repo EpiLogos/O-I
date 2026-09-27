@@ -29,6 +29,8 @@
 .expression-verso__graph-relation { stroke: var(--oi-hairline); stroke-width: 1; vector-effect: non-scaling-stroke; }
 .expression-verso__graph-node circle { fill: none; stroke: currentColor; stroke-width: 1; vector-effect: non-scaling-stroke; }
 .expression-verso__graph-node text { font-size: 0.07px; text-anchor: middle; fill: currentColor; }
+.expression-verso__graph-node[data-text-block="true"] text { text-anchor: start; }
+.expression-verso__graph-text { font-size: 0.062px; fill: currentColor; opacity: 0.88; }
 
 /* Actual page/source-file bodies: verbatim, bounded, readable. */
 .expression-verso__page-body {

@@ -34,8 +34,14 @@
 import type { ChainEasing, CymaticsConfig, PointCloudConfig, SpatialChakraNode } from './types';
 import { CANONICAL_CHAKRAS } from './chakraSystem';
 
-export const MAX_FORMATIONS = 10;
-export const MAX_PINS = 8;
+/** How many formations and pins the GPU field renders per pass — one budget,
+ * sized once in the shader uniform arrays that share it. This is a rendering
+ * budget, not an authoring limit: documents may hold more, and the Expression
+ * view pages them (kernelDocumentBridge). */
+export const MAX_FORMATIONS = 64;
+export const MAX_PINS = 64;
+/** Every formation and pin with a force contributes one force emitter. */
+export const MAX_FORCE_EMITTERS = MAX_FORMATIONS + MAX_PINS;
 
 // ---------------------------------------------------------------------------------------------
 // Types

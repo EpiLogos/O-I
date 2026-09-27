@@ -27,8 +27,12 @@ export interface WikiPlaceFacet {
 }
 export interface WikiNode { object: "node"; ref: string; title?: string; type?: string; revision?: number; source_refs?: string[]; ql?: { face?: string; position?: number; unit?: string }; place?: WikiPlaceFacet }
 export interface WikiConstellationMember { ref?: string; position?: number; conjugate?: boolean; participation_ref?: string }
-export interface WikiConstellation { anchor_ref?: string; members?: WikiConstellationMember[]; frame_ref?: string; frame_revision?: number }
-export interface WikiFrame { object: "frame"; ref?: string; revision?: number; constellations?: WikiConstellation[] }
+/** `title`/`question` are the containing frame's own authored inquiry
+ * (`aikit.constellation/v1`), carried for presentation: a constellation is
+ * named by what its author called it, never by its anchor's raw ref. */
+export interface WikiConstellation { anchor_ref?: string; members?: WikiConstellationMember[]; frame_ref?: string; frame_revision?: number; title?: string; question?: string }
+export interface WikiFrameConstruction { title?: unknown; inquiry?: { question?: unknown } }
+export interface WikiFrame { object: "frame"; ref?: string; revision?: number; constellations?: WikiConstellation[]; "aikit.constellation/v1"?: WikiFrameConstruction }
 export type WikiObject = WikiSpace | WikiNode | WikiFrame;
 
 export type WikiReading =
@@ -49,8 +53,13 @@ export function parseWiki(content: string): WikiReading {
       // Flattening is presentation only; keep the exact containing owner for
       // frame facts. An anchor is a different native subject, not a frame ID.
       .flatMap(frame => (frame.constellations ?? []).map(constellation => {
-        const {frame_ref:_frameRef,frame_revision:_frameRevision,...value}=constellation;
+        const {frame_ref:_frameRef,frame_revision:_frameRevision,title:_title,question:_question,...value}=constellation;
+        const construction = frame["aikit.constellation/v1"];
+        const title = typeof construction?.title === "string" ? construction.title.trim() : "";
+        const question = typeof construction?.inquiry?.question === "string" ? construction.inquiry.question.trim() : "";
         return {...value,
+          ...(title ? {title} : {}),
+          ...(question ? {question} : {}),
           ...(typeof frame.ref === "string" && frame.ref ? {frame_ref:frame.ref} : {}),
           ...(Number.isSafeInteger(frame.revision) && Number(frame.revision) > 0 ? {frame_revision:frame.revision} : {}),
           ...(constellation.members ? {members:constellation.members.map(member => {

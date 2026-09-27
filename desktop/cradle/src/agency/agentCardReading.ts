@@ -43,7 +43,19 @@ export interface HumanAgentCard {
   where_i_participate: CardField & {world_ref: string; home_world_ref?: string | null; other_worlds?: string[]};
   citizenship: {summary: string; dimensions: Partial<Record<(typeof CITIZENSHIP_DIMENSIONS)[number], CitizenshipDimension>>; refs: string[]};
   currently: CardField;
+  /** How the Agent appears: its profile's reusable expressive character, as a
+   * Central file ref (`expression.character_ref` in the participation
+   * reading). Null/absent when the profile names none. */
+  character?: CardCharacter | null;
   public?: {capabilities: {id: string; name: string; description?: string}[]; basis: string; refs: string[]};
+}
+
+export interface CardCharacter {character_ref: string; text?: string | null; refs?: string[]}
+
+/** The card's character ref, when it carries a well-formed one. */
+export function cardCharacterRef(card: Pick<HumanAgentCard, "character">): string | null {
+  const ref = card.character?.character_ref;
+  return typeof ref === "string" && ref.trim() !== "" && ref === ref.trim() ? ref : null;
 }
 
 export function isHumanAgentCard(value: unknown): value is HumanAgentCard {

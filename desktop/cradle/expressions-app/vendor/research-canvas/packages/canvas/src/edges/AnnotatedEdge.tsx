@@ -3,6 +3,7 @@ import {
   BaseEdge,
   EdgeLabelRenderer,
   getBezierPath,
+  useEdges,
   type Edge,
   type EdgeProps,
   type Position
@@ -24,6 +25,8 @@ type AnnotatedEdgeData = Record<string, unknown> & {
 
 export function AnnotatedEdge({
   id,
+  source,
+  target,
   data,
   markerStart,
   markerEnd,
@@ -36,7 +39,7 @@ export function AnnotatedEdge({
 }: EdgeProps<Edge<AnnotatedEdgeData, "annotated">>) {
   const [draftRelationKind, setDraftRelationKind] = useState(data?.relationKind ?? "");
   const cancelEditRef = useRef(false);
-  const selectRef = useRef<HTMLSelectElement>(null);
+  const selectRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     setDraftRelationKind(data?.relationKind ?? "");
@@ -48,14 +51,54 @@ export function AnnotatedEdge({
     }
   }, [data?.selected]);
 
-  const [edgePath, labelX, labelY] = getBezierPath({
-    sourceX,
-    sourceY,
-    sourcePosition: sourcePosition as Position,
-    targetX,
-    targetY,
-    targetPosition: targetPosition as Position
-  });
+  // Distinct native relation occurrences with the same endpoints/type are
+  // never accidentally deduplicated away, and never made unselectable by a
+  // sibling edge stealing the whole shared path. Every edge on the same
+  // unordered node pair gets its own curvature offset, computed here from
+  // the live edge list so no host wiring is required. A pair with only one
+  // edge keeps the exact prior single-edge path and label placement.
+  const allEdges = useEdges<Edge<AnnotatedEdgeData, "annotated">>();
+  const pairKey = source && target ? [source, target].slice().sort().join("\u0000") : null;
+  const parallelSiblings = pairKey
+    ? allEdges
+        .filter((candidate) => candidate.source && candidate.target && [candidate.source, candidate.target].slice().sort().join("\u0000") === pairKey)
+        .map((candidate) => candidate.id)
+        .sort()
+    : [id];
+  const parallelCount = parallelSiblings.length;
+  const parallelIndex = Math.max(0, parallelSiblings.indexOf(id));
+
+  let edgePath: string, labelX: number, labelY: number;
+  if (parallelCount > 1) {
+    // The perpendicular is taken from a canonical (alphabetically ordered)
+    // direction, not from this edge's own source/target: two edges drawn in
+    // opposite directions between the same pair would otherwise cancel each
+    // other's offset back onto the same path.
+    const canonicalForward = !target || (source ?? "") <= target;
+    const dx = canonicalForward ? targetX - sourceX : sourceX - targetX;
+    const dy = canonicalForward ? targetY - sourceY : sourceY - targetY;
+    const length = Math.hypot(dx, dy) || 1;
+    const nx = -dy / length;
+    const ny = dx / length;
+    const midX = (sourceX + targetX) / 2;
+    const midY = (sourceY + targetY) / 2;
+    const spacing = 28;
+    const offset = (parallelIndex - (parallelCount - 1) / 2) * spacing;
+    const controlX = midX + nx * offset;
+    const controlY = midY + ny * offset;
+    edgePath = `M ${sourceX} ${sourceY} Q ${controlX} ${controlY} ${targetX} ${targetY}`;
+    labelX = 0.25 * sourceX + 0.5 * controlX + 0.25 * targetX;
+    labelY = 0.25 * sourceY + 0.5 * controlY + 0.25 * targetY;
+  } else {
+    [edgePath, labelX, labelY] = getBezierPath({
+      sourceX,
+      sourceY,
+      sourcePosition: sourcePosition as Position,
+      targetX,
+      targetY,
+      targetPosition: targetPosition as Position
+    });
+  }
 
   return (
     <>
@@ -81,47 +124,59 @@ export function AnnotatedEdge({
         >
           <div className="flow-edge-label__text">
             {data?.selected && !data.readOnly && data.onUpdateRelationKind ? (
-              <select
-                aria-label="Relation kind"
-                className="flow-edge-label__select"
-                onBlur={() => {
-                  if (cancelEditRef.current) {
-                    cancelEditRef.current = false;
-                    setDraftRelationKind(data?.relationKind ?? "");
-                    return;
-                  }
-                  if (draftRelationKind && draftRelationKind !== data?.relationKind) {
-                    data?.onUpdateRelationKind?.(draftRelationKind);
-                  }
-                }}
-                onChange={(event) => {
-                  const nextRelationKind = event.currentTarget.value;
-                  setDraftRelationKind(nextRelationKind);
-                  if (nextRelationKind) {
-                    data?.onUpdateRelationKind?.(nextRelationKind);
-                  }
-                }}
-                onClick={(event) => {
-                  event.preventDefault();
-                  event.stopPropagation();
-                }}
-                onKeyDown={(event) => {
-                  if (event.key === "Escape") {
+              <>
+                <input
+                  aria-label="Relation label"
+                  className="flow-edge-label__input"
+                  list="relation-kind-suggestions"
+                  maxLength={120}
+                  placeholder="name this relation"
+                  onBlur={() => {
+                    if (cancelEditRef.current) {
+                      cancelEditRef.current = false;
+                      setDraftRelationKind(data?.relationKind ?? "");
+                      return;
+                    }
+                    const nextRelationKind = draftRelationKind.trim();
+                    if (nextRelationKind && nextRelationKind !== data?.relationKind) {
+                      data?.onUpdateRelationKind?.(nextRelationKind);
+                    } else if (!nextRelationKind) {
+                      setDraftRelationKind(data?.relationKind ?? "");
+                    }
+                  }}
+                  onChange={(event) => {
+                    setDraftRelationKind(event.currentTarget.value);
+                  }}
+                  onClick={(event) => {
                     event.preventDefault();
-                    cancelEditRef.current = true;
-                    setDraftRelationKind(data?.relationKind ?? "");
-                    selectRef.current?.blur();
-                  }
-                }}
-                ref={selectRef}
-                value={draftRelationKind}
-              >
-                {RELATIONSHIP_KINDS.map((option) => (
-                  <option key={option.kind} value={option.kind}>
-                    {option.label}
-                  </option>
-                ))}
-              </select>
+                    event.stopPropagation();
+                  }}
+                  onPointerDown={(event) => {
+                    event.stopPropagation();
+                  }}
+                  onKeyDown={(event) => {
+                    if (event.key === "Escape") {
+                      event.preventDefault();
+                      cancelEditRef.current = true;
+                      setDraftRelationKind(data?.relationKind ?? "");
+                      selectRef.current?.blur();
+                    }
+                    if (event.key === "Enter") {
+                      event.preventDefault();
+                      selectRef.current?.blur();
+                    }
+                  }}
+                  ref={selectRef}
+                  value={draftRelationKind}
+                />
+                <datalist id="relation-kind-suggestions">
+                  {RELATIONSHIP_KINDS.map((option) => (
+                    <option key={option.kind} value={option.kind}>
+                      {option.label}
+                    </option>
+                  ))}
+                </datalist>
+              </>
             ) : (
               <strong>{data?.relationKind}</strong>
             )}

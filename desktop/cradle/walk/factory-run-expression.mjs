@@ -1,8 +1,11 @@
-// Run-in-Expressions walk (O:I #220 presentation lane): compose a
-// `oi.expression/v1` document from the owner's own Factory readings and
-// verify the SSSF structure survives verbatim — every node kind, every edge
-// kind, declared barriers, attempt verifications, the readable Return, and
-// disclosed actions that keep their native authority.
+// Run-in-Expressions walk (O:I #220 presentation lane; Factory Expressions
+// FX-C2): compose the Run's `oi.expression/v1` document from the owner's own
+// Factory readings — the document the engine-backed Live presentation opens —
+// and verify that the SSSF facts survive in it (every node kind, every edge
+// kind, declared barriers, attempt verifications, the readable Return,
+// disclosed actions that keep their native authority) and that it binds the
+// cast (the attempts' participants), the goal (the destination with its
+// text) and the work objects into its Live Scene.
 // Usage: node walk/factory-run-expression.mjs <factory-bin> <state-path> <run-ref>
 import {readFile} from "node:fs/promises"
 import {spawnSync} from "node:child_process"
@@ -41,7 +44,10 @@ const transpile = async (path) => {
   // The data-URL module cannot resolve relative imports; the transport
   // helpers are not exercised here (this walk runs the owner CLI directly),
   // so the import is stubbed for this probe only.
-  const stubbed = source.replace(/import \{ *developmentRead *, *attemptRead *\} *from *"\.\/development";/, "const developmentRead = undefined, attemptRead = undefined")
+  let stubbed = source.replace(/import \{ *developmentRead *, *attemptRead *\} *from *"\.\/development";/, "const developmentRead = undefined, attemptRead = undefined")
+  // The cast comes from the Live event map (a pure module): inline it.
+  const eventMap = ts.transpileModule(await readFile(new URL("../src/contributions/factory/live/eventMap.ts", import.meta.url), "utf8"), {compilerOptions:{module:ts.ModuleKind.ESNext,target:ts.ScriptTarget.ES2022}}).outputText
+  stubbed = stubbed.replace(/from *"\.\/live\/eventMap";/, `from "data:text/javascript,${encodeURIComponent(eventMap)}";`)
   const js = ts.transpileModule(stubbed, {compilerOptions:{module:ts.ModuleKind.ESNext,target:ts.ScriptTarget.ES2022}}).outputText
   return (await import("data:text/javascript," + encodeURIComponent(js)))
 }
@@ -82,6 +88,19 @@ if (attempt) {
   check("attempt-less run discloses the refusal", Boolean(attemptsSkipped), attemptsSkipped ?? "")
   check("attempt-less run invents no attempts", !document.scenes.some(scn => scn.scene_ref.endsWith(":scene:executions-1")), "")
 }
+
+// The engine-backed Live binding: cast, goal and work objects.
+const participants = [...new Set((attempt?.attempts ?? []).map(a => a.disposition?.participant?.agentRef).filter(Boolean))]
+const castEntities = Object.values(document.entities).filter(e => e.subject?.readings?.some(r => r.ref.startsWith("oi.expression-cast/")))
+check("every attempt participant is cast", participants.every(agent => castEntities.some(e => e.subject.subject_ref === agent)), `${castEntities.length}/${participants.length}`)
+check("each cast member names its character or its absence", castEntities.every(e => e.subject.readings.some(r => r.revision === "expressive-character" || r.ref === "oi.expression-character/none")), "")
+const liveScene = document.scenes.find(scn => scn.scene_ref.endsWith(":scene:live"))
+const destinationNode = Object.values(run.runMap.nodes).find(n => n.kind === "destination")
+if (destinationNode) {
+  check("the goal carries the destination text", document.entities[entityFor(destinationNode.id)]?.title === (run.destination || destinationNode.label), "")
+  check("the Live Scene holds the goal", Boolean(liveScene?.entity_refs.includes(entityFor(destinationNode.id))), "")
+}
+check("the Live Scene leads when the run has a cast", !castEntities.length || document.scenes[0] === liveScene, "")
 
 // The renderer is registered for the world-presentation map.
 const presentation = await readFile(new URL("../src/explore/presentation.tsx", import.meta.url), "utf8")

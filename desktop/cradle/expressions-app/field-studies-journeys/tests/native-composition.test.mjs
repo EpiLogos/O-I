@@ -108,7 +108,11 @@ test('another native edit invalidates the returning operation basis and remains 
  p.doc={...p.doc,revision:p.doc.revision+1,title:'Someone else changed the inquiry'};j.scenes[0].duration=22;
  await assert.rejects(()=>work.commit(snapshot(j)),/revision_conflict/);
  assert.equal(p.doc.title,'Someone else changed the inquiry');assert.equal(work.state.pending.kind,'edit');
- await assert.rejects(()=>work.inspectPending(),/revision_conflict/);
+ // Owner correction 2026-09-25 (0d71c2e1): an interrupted operation settles
+ // against the owner instead of blocking every later save; the owner's
+ // current document becomes the basis and the draft stays unsaved work.
+ assert.match(await work.inspectPending(),/owner’s current document is now the working basis/);
+ assert.equal(work.state.pending,undefined);assert.equal(work.state.view.document.title,'Someone else changed the inquiry');
 });
 test('a late acknowledgement after navigation checkpoints its old work and does not bind the new draft',async()=>{
  const p=ports(),call=p.options.expression;let release,entered;const waiting=new Promise(resolve=>entered=resolve);
@@ -169,4 +173,21 @@ test('a lost selection reply recovers its exact native focus without replay or r
  await assert.rejects(()=>work.select({scene_ref:p.doc.scenes[0].scene_ref,entity_ref:'expression:links:entity:repeat'}),/lost/);
  const record=JSON.parse(JSON.stringify(work.state)),restored=new NativeWorking(p.options);restored.restore(record,view.journey);
  await restored.inspectPending();assert.equal(p.effects.filter(r=>r.operation==='edit').length,1);assert.equal(restored.state.view.document.selection.entity_ref,'expression:links:entity:repeat');
+});
+
+test('a one-object edit on a constellation larger than 256 members prepares one small edit (Technē map §36)',()=>{
+ // Installed walk: saving one changed scale on a 192-member constellation
+ // (389 document entities) was refused by a stale 256-entity document bound.
+ const d=empty('expression:large','Large');
+ for(let i=0;i<300;i++){const ref=`expression:large:entity:m${i}`;d.entities[ref]={entity_ref:ref,title:`Member ${i}`,revision:1,subject:null,parameters:{glyph:{value:'O'},x:{value:i*10},y:{value:0}}};d.scenes[0].entity_refs.push(ref);}
+ const view=kernelDocumentToJourney(d);
+ const edited=clone(view.journey);const target=edited.scenes[0].entities[0];target.scale=target.scale*3;
+ const edit=prepareCompositionEdit(view,edited);
+ assert.equal(edit.operation,'edit');
+ assert.ok(edit.changes.length>0&&edit.changes.length<=256,'a small edit, not a refusal');
+ // Past the document's own bound the edit is still refused, never truncated.
+ const huge=empty('expression:huge','Huge');
+ for(let i=0;i<2049;i++){const ref=`expression:huge:entity:m${i}`;huge.entities[ref]={entity_ref:ref,title:`M${i}`,revision:1,subject:null,parameters:{glyph:{value:'O'}}};}
+ huge.scenes[0].entity_refs=Object.keys(huge.entities).slice(0,4);
+ assert.throws(()=>kernelDocumentToJourney(huge),/binding budget/);
 });

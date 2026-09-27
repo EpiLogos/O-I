@@ -33,6 +33,34 @@ try{
  assert.deepEqual(captured.at(-1).request.basis,{ref:'wiki:node:lesson',revision:'wiki-r19',availability:'available'});n++;
  await worldOp(transport,{operation:'whole_rebase',whole_ref:'whole:1',expected_basis_revision:'wiki-r19',basis:{ref:'wiki:node:lesson',revision:'wiki-r20',availability:'available'},members:[{subject:{ref:'wiki:node:lesson',revision:'wiki-r20',availability:'available'},native_owner:'central'}],relations:[],actor:'human:author',activity_ref:null});
  assert.equal(captured.at(-1).request.expected_basis_revision,'wiki-r19');n++;
+ // Mode-spanning act + reusable material helpers (EXPRESSION-ACT-MATERIAL-V1 §4)
+ // put exactly the contract operations on the same seam.
+ const w=await server.ssrLoadModule('/src/expression/world.ts');
+ await w.materialList(transport,{kind:'character',association:{workflow_key:'handoff'}});
+ assert.deepEqual(captured.at(-1),{op:'expression_world',request:{operation:'material_list',kind:'character',association:{workflow_key:'handoff'}}});n++;
+ await w.actOpen(transport,{act_ref:'act:run',expression_ref:'expression:run',mode:'factory',actor:'agent:factory',cast:[{role:'sender',participant_ref:'agent:nous'}],subject_ref:'goal:draft'});
+ assert.deepEqual(captured.at(-1).request,{operation:'act_open',act_ref:'act:run',expression_ref:'expression:run',mode:'factory',actor:'agent:factory',cast:[{role:'sender',participant_ref:'agent:nous'}],subject_ref:'goal:draft'});n++;
+ await w.actSelect(transport,{act_ref:'act:run',actor:'agent:factory',material:{file_ref:'central:handoff',scene_ref:'main'},bindings:{sender:{kind:'agent',character_ref:'central:nous',state:'speaking'}},captions:{caption:'Hi'},event_basis:{family:'agent-message',source:'aikit-encounter',event_ref:'e:1',occurrence:0}});
+ assert.equal(captured.at(-1).request.operation,'act_select');assert.equal(captured.at(-1).request.bindings.sender.state,'speaking');n++;
+ await w.actSelect(transport,{act_ref:'act:run',actor:'agent:factory',role:'sender',state:'idle'});
+ assert.deepEqual(captured.at(-1).request,{operation:'act_select',act_ref:'act:run',actor:'agent:factory',role:'sender',state:'idle'});n++;
+ await w.actGesture(transport,{act_ref:'act:run',actor:'a',gesture:'nod',role:'sender'});
+ await w.actText(transport,{act_ref:'act:run',actor:'a',role:'progress',value:0.4});
+ await w.actOperate(transport,{act_ref:'act:run',actor:'a',operation_kind:'factory.task',native_ref:'task:1'});
+ await w.actContinue(transport,{act_ref:'act:run',actor:'a',to:'techne',instrument_ref:'techne:c:1'});
+ await w.actComplete(transport,{act_ref:'act:run',actor:'a',return_ref:'return:1',result:'Done'});
+ await w.actSeek(transport,{act_ref:'act:run',actor:'a',position:2});
+ await w.actInspect(transport,'act:run');
+ await w.actList(transport,{mode:'factory'});
+ assert.deepEqual(captured.slice(-8).map(c=>c.request.operation),['act_gesture','act_text','act_operate','act_continue','act_complete','act_seek','act_inspect','act_list']);n++;
+ assert.deepEqual(captured.at(-3).request,{operation:'act_seek',act_ref:'act:run',actor:'a',position:2});n++;
+ await w.actPlay(transport,{act_ref:'act:run',actor:'a',material:{file_ref:'central:handoff'},from:1});
+ assert.deepEqual(captured.at(-1).request,{operation:'act_play',act_ref:'act:run',actor:'a',material:{file_ref:'central:handoff'},from:1});n++;
+ await w.actArchive(transport,{act_ref:'act:run',actor:'a'});
+ assert.deepEqual(captured.at(-1).request,{operation:'act_archive',act_ref:'act:run',actor:'a'});n++;
+ // A hosted-frame relay is an equal carrier of the same request.
+ const relayed=[];await w.actInspect(async request=>{relayed.push(request);return {state:'act'};},'act:run');
+ assert.deepEqual(relayed,[{operation:'act_inspect',act_ref:'act:run'}]);n++;
  // An unavailable transport is an honest error, never a fabricated result.
  await assert.rejects(()=>worldOp({kind:'unavailable',reason:'no kernel transport'},{operation:'selection_read'}),/no kernel transport/);n++;
  console.log(`Expression world: ${n} wire-shape assertions passed`);

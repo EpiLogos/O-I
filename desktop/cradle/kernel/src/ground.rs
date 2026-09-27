@@ -14,6 +14,14 @@ pub struct BindingRequest {
 #[derive(Clone, Debug, Deserialize, Serialize, PartialEq)]
 #[serde(tag="action", rename_all="snake_case")]
 pub enum Request { Status, Recognize { path:String }, Bind { request:BindingRequest } }
+impl Request {
+    /// Only `Bind` actually re-bases the ground. `Status` is a plain read
+    /// and `Recognize`'s own reply is rejected below if it ever comes back
+    /// mutated or bound — a caller holding a whole-cache clear for either
+    /// of those is clearing every other in-flight read on pure coincidence
+    /// of timing, not because anything under it changed.
+    pub fn mutates(&self) -> bool { matches!(self, Request::Bind { .. }) }
+}
 
 pub fn operate(request: Request) -> Result<Value,String> {
     let executable=std::env::var_os("OI_BIN").map(PathBuf::from).unwrap_or_else(||"oi".into());
@@ -36,4 +44,23 @@ pub fn operate(request: Request) -> Result<Value,String> {
     // Owner refusal/conflict readings retain their structured outcomes.
     if !output.status.success() && reading.get("outcome").is_none() {return Err(format!("Suite ground operation failed: {}",output.status));}
     Ok(reading)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn only_bind_is_a_mutation() {
+        assert!(!Request::Status.mutates());
+        assert!(!Request::Recognize { path: "/x".into() }.mutates());
+        assert!(Request::Bind {
+            request: BindingRequest {
+                expected_previous: None,
+                canonical_path: "/x".into(),
+                identity: Identity { device: "d".into(), inode: "i".into() },
+            }
+        }
+        .mutates());
+    }
 }

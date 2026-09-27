@@ -410,7 +410,7 @@ fn expressive_acts_run_hold_checkpoint_and_restore_exact_documents() {
         json!({"operation":"act_perform","act_ref":"act:1","expression_ref":"expression:lesson","expected_revision":2,"summary":"Widen the lesson","actor":"agent:composer","activity_ref":"activity:caller:9","changes":[{"change":"parameter_set","entity_ref":"expression:lesson:entity:a","parameter":"scale","value":2}]}),
     );
     assert_eq!(data["state"], "act_running", "{data}");
-    assert_eq!(data["act"]["state"], "running");
+    assert_eq!(data["act"]["phase"], "running");
     assert_eq!(data["act"]["basis_revision"], 2);
     // A running act refuses a second performance.
     assert!(k.apply(KernelOp::ExpressionWorld { request: request(json!({

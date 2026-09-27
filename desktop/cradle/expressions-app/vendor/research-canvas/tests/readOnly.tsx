@@ -5,7 +5,7 @@ import {ImageNode} from '../packages/canvas/src/nodes/ImageNode';
 import {NoteNode} from '../packages/canvas/src/nodes/NoteNode';
 import {GroupNode} from '../packages/canvas/src/nodes/GroupNode';
 import {ResourceNode} from '../packages/canvas/src/nodes/ResourceNode';
-import {CanvasView,availableMenu} from '../packages/canvas/src/CanvasView';
+import {CanvasView,availableMenu,isNodeSelected} from '../packages/canvas/src/CanvasView';
 import {StreetViewSurface} from '../packages/canvas/src/streetview/StreetViewSurface';
 import {PsychogeographicMap} from '../packages/canvas/src/psychogeographic/PsychogeographicMap';
 import {TimelineSurface} from '../packages/canvas/src/timeline/TimelineSurface';
@@ -33,6 +33,33 @@ assert.match(canvas,/aria-label="Zoom in"/);
 assert.match(canvas,/aria-label="Fit view"/);
 assert.doesNotMatch(canvas,/Add note|Edit note|Add resource/);
 console.log('Research Canvas real component render: captions remain readable, resize/edit controls withheld, viewport controls retained.');
+
+// host-selection-viewport-gesture.patch — optional selection/viewport/gesture
+// capabilities are additive. ReactFlow defers node rendering past
+// renderToStaticMarkup (the react-flow__nodes container is empty on a
+// server render even with real node data), so the multi-selection reading
+// is checked directly against the same pure `isNodeSelected` CanvasView
+// uses to compute each node's `selected` flag — the real production logic,
+// not a re-implementation.
+assert.equal(isNodeSelected('note-a', 'note-a', undefined), true);
+assert.equal(isNodeSelected('note-b', 'note-a', undefined), false);
+assert.equal(isNodeSelected('note-a', null, ['note-a', 'note-b']), true);
+assert.equal(isNodeSelected('note-b', null, ['note-a', 'note-b']), true);
+assert.equal(isNodeSelected('note-c', null, ['note-a', 'note-b']), false);
+// selectedNodeIds, when supplied, takes over from selectedNodeId entirely.
+assert.equal(isNodeSelected('note-a', 'note-a', []), false);
+
+// selectionOnDrag/onSelectionChange/onViewportChange/onMoveNodePreview/onMoveNodeEnd
+// omitted entirely must render byte-identical markup to the pre-patch shape —
+// this is a server render so the drag/pointer/viewport gestures themselves
+// cannot fire here (they need a live DOM), but the wiring must not alter the
+// mounted tree when unset.
+const omittedNew=renderToStaticMarkup(<CanvasView nodes={[]} edges={[]} selectedNodeId="note-a"/>);
+const explicitlyUndefined=renderToStaticMarkup(<CanvasView nodes={[]} edges={[]} selectedNodeId="note-a"
+  selectedNodeIds={undefined} onSelectionChange={undefined} selectionOnDrag={undefined}
+  onViewportChange={undefined} onMoveNodePreview={undefined} onMoveNodeEnd={undefined}/>);
+assert.equal(omittedNew, explicitlyUndefined);
+console.log('Research Canvas selection/viewport/gesture patch: isNodeSelected reads real multi-selection, omitted new props keep the original single-select markup.');
 
 const menu=availableMenu([{type:'item',label:'Edit note',onClick:()=>{}},{type:'separator'},{type:'item',label:'Duplicate',onClick:()=>{}},{type:'separator'},{type:'item',label:'Unsupported'}],{'Edit note':true,Duplicate:false});
 assert.deepEqual(menu.map(item=>item.label),['Edit note']);

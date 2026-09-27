@@ -1,0 +1,437 @@
+{
+ "schema": "oi.expression/v1",
+ "expression_ref": "expression:fx-scene-continuation",
+ "revision": 1,
+ "title": "Continuation",
+ "presentation": {
+  "schema": "oi.journey-properties/v1",
+  "description": "Reusable Scene: Continuation.",
+  "loop": false
+ },
+ "scenes": [
+  {
+   "scene_ref": "expression:fx-scene-continuation:scene:continuation",
+   "revision": 1,
+   "title": "Continuation",
+   "entity_refs": [
+    "expression:fx-scene-continuation:entity:self",
+    "expression:fx-scene-continuation:entity:artifact",
+    "expression:fx-scene-continuation:entity:return-station"
+   ],
+   "presentation": {
+    "schema": "oi.journey-scene/v1",
+    "scene": {
+     "toolbelt": [
+      {
+       "id": "speed",
+       "scope": "field",
+       "key": "timeScale"
+      },
+      {
+       "id": "spring",
+       "scope": "field",
+       "key": "recovery"
+      },
+      {
+       "id": "viscosity",
+       "scope": "field",
+       "key": "native_fluid__viscosity"
+      },
+      {
+       "id": "flow",
+       "scope": "field",
+       "key": "turbulence"
+      },
+      {
+       "id": "transition",
+       "scope": "selected",
+       "key": "sequence.transition"
+      },
+      {
+       "id": "blend",
+       "scope": "field",
+       "key": "native_morphProgress"
+      }
+     ],
+     "engine": {
+      "paletteSource": "custom",
+      "grainProfile": true,
+      "backgroundMode": "vignette",
+      "resonatorMode": "resonator",
+      "focusOrder": "listed",
+      "dotShape": "circle",
+      "autoFitSizes": true,
+      "mediumEnabled": false,
+      "collisionEnabled": false,
+      "collisionMode": "obstacle",
+      "pairwiseEnabled": false,
+      "fontFamily": "system-ui, -apple-system, sans-serif",
+      "fontWeight": 900,
+      "resonanceEnabled": true,
+      "morphEnabled": true,
+      "trajectory": "vortexSpiral",
+      "driveShape": "sine",
+      "autoOscillate": true,
+      "relationalEnabled": false,
+      "relationalMode": "orbital",
+      "pointerMode": "repel",
+      "pointerClick": "pulse",
+      "pointerClickStrength": 2.2,
+      "pointerClickRadius": 0.45,
+      "colorMode": "linearGradient",
+      "colorEnabled": true,
+      "mediumPlane": "vertical",
+      "mediumDimension": "2D",
+      "autoSweep": false,
+      "sweepDirection": "ascent",
+      "inkMode": "blackOnWhite"
+     },
+     "id": "expression:fx-scene-continuation:scene:continuation",
+     "name": "Continuation",
+     "character": "The same cast returns to the work: the passage runs back through the station it left.",
+     "duration": 10,
+     "transition": 1.2,
+     "view": {
+      "mode": "2d",
+      "yaw": 0,
+      "pitch": 0,
+      "zoom": 1,
+      "panX": 0,
+      "panY": 0
+     },
+     "field": {
+      "background": "#ebe7dc",
+      "palette": [
+       "#2a2d33",
+       "#6f7d8c",
+       "#b0643c"
+      ],
+      "material": "print",
+      "params": {
+       "count": 40000,
+       "size": 3.2,
+       "sizeBias": 1.6,
+       "opacity": 0.88,
+       "roundness": 0.3,
+       "softness": 0.15,
+       "irregularity": 0.35,
+       "elongation": 0.04,
+       "orientation": 0,
+       "contrast": 0.74,
+       "densityScale": 1,
+       "densityPhase": 0.3,
+       "edgeWeight": 0,
+       "halo": 0.13,
+       "speed": 0.5,
+       "circulation": 1,
+       "turbulence": 0.12,
+       "turbulenceScale": 1.2,
+       "recovery": 1.1,
+       "dispersion": 0.05,
+       "pointerStrength": 0.8,
+       "pointerRadius": 0.23,
+       "pointerFalloff": 2,
+       "depth": 0.12,
+       "grain": 0.035,
+       "snapRigidity": 1,
+       "densityTether": 1,
+       "curlDepth": 0.2,
+       "vortexRadius": 0.4,
+       "gravityX": 0,
+       "gravityY": 0,
+       "gravityZ": 0,
+       "quadraticDrag": 0.2,
+       "thermalJitter": 0,
+       "speedLimit": 3,
+       "zConfinement": 1,
+       "timeScale": 1,
+       "gravitySoftening": 0.1,
+       "gravityFalloff": 2,
+       "swirlRadius": 0.4,
+       "frequency": 220,
+       "dominance": 0,
+       "excitation": 0.6
+      }
+     },
+     "entities": [
+      {
+       "id": "expression:fx-scene-continuation:entity:self",
+       "name": "Continuing agent",
+       "kind": "formation",
+       "position": {
+        "x": 0.8,
+        "y": -0.2,
+        "z": 0
+       },
+       "size": {
+        "x": 0.62,
+        "y": 0.72
+       },
+       "rotation": 0,
+       "shape": "text",
+       "text": "◯",
+       "share": 1,
+       "tint": "#8a7f6c",
+       "tintWeight": 0.5,
+       "locked": false,
+       "force": {
+        "kind": "attract",
+        "strength": 0.3,
+        "radius": 0.38,
+        "spin": 0.05
+       },
+       "station": null,
+       "sequence": {
+        "enabled": false,
+        "clock": "seconds",
+        "steps": [
+         {
+          "id": "expression:fx-scene-continuation:entity:self:rest",
+          "text": "◯",
+          "shape": "text",
+          "hold": 3,
+          "transition": 1,
+          "position": null
+         }
+        ]
+       },
+       "role": "self"
+      },
+      {
+       "id": "expression:fx-scene-continuation:entity:artifact",
+       "name": "Work object",
+       "kind": "formation",
+       "position": {
+        "x": 0.8,
+        "y": 0.15,
+        "z": 0
+       },
+       "size": {
+        "x": 0.48,
+        "y": 0.52
+       },
+       "rotation": 0,
+       "shape": "text",
+       "text": "▤",
+       "share": 0.6,
+       "tint": "#6f7d8c",
+       "tintWeight": 0.7,
+       "locked": false,
+       "force": {
+        "kind": "attract",
+        "strength": 0,
+        "radius": 0.45,
+        "spin": 0
+       },
+       "station": null,
+       "sequence": {
+        "enabled": false,
+        "clock": "seconds",
+        "steps": [
+         {
+          "id": "expression:fx-scene-continuation:entity:artifact:rest",
+          "text": "▤",
+          "shape": "text",
+          "hold": 3,
+          "transition": 1,
+          "position": null
+         }
+        ]
+       },
+       "role": "artifact"
+      },
+      {
+       "id": "expression:fx-scene-continuation:entity:return-station",
+       "name": "Return station",
+       "kind": "pin",
+       "position": {
+        "x": -0.6,
+        "y": 0.15,
+        "z": 0
+       },
+       "size": {
+        "x": 0.1,
+        "y": 0.1
+       },
+       "rotation": 0,
+       "shape": "text",
+       "text": "",
+       "share": 0,
+       "tint": "#252720",
+       "tintWeight": 0,
+       "locked": false,
+       "force": {
+        "kind": "attract",
+        "strength": 0.8,
+        "radius": 0.3,
+        "spin": 0
+       },
+       "station": null,
+       "sequence": {
+        "enabled": false,
+        "clock": "seconds",
+        "steps": [
+         {
+          "id": "step-1bdb08e5-9566-41d3-b0f1-da0ed719e659",
+          "text": "",
+          "shape": "text",
+          "hold": 3,
+          "transition": 1,
+          "position": null
+         }
+        ]
+       }
+      }
+     ],
+     "text": [
+      {
+       "id": "t-caption",
+       "visible": true,
+       "kicker": "AGAIN",
+       "title": "",
+       "italic": "",
+       "body": "",
+       "x": 0.07,
+       "y": 0.84,
+       "width": 520,
+       "size": 22,
+       "align": "left",
+       "role": "caption"
+      }
+     ],
+     "composition": {
+      "layout": "free",
+      "plane": "XY",
+      "focus": "parallel",
+      "focusDuration": 4,
+      "carryTint": true,
+      "carryStation": false,
+      "frequencyDriver": "manual"
+     },
+     "morph": {
+      "thetaRate": 0.08,
+      "phiRate": 0.13,
+      "thetaOffset": 0,
+      "phiOffset": 0,
+      "law": "theta",
+      "depth": 1,
+      "dwell": 0.3
+     },
+     "automation": [
+      {
+       "id": "return-x",
+       "enabled": true,
+       "target": "entity:expression%3Afx-scene-continuation%3Aentity%3Aartifact:x",
+       "type": "ramp",
+       "wave": "smooth",
+       "min": 0.8,
+       "max": -0.6,
+       "rate": 1,
+       "phase": 0,
+       "blend": "replace",
+       "duration": 5,
+       "delay": 0.4,
+       "loop": "once",
+       "firedAt": null,
+       "easing": "smoothstep"
+      },
+      {
+       "id": "return-bearer",
+       "enabled": true,
+       "target": "entity:expression%3Afx-scene-continuation%3Aentity%3Aself:x",
+       "type": "ramp",
+       "wave": "smooth",
+       "min": 0.8,
+       "max": -0.4,
+       "rate": 1,
+       "phase": 0,
+       "blend": "replace",
+       "duration": 5.4,
+       "delay": 0.6,
+       "loop": "once",
+       "firedAt": null,
+       "easing": "smoothstep"
+      }
+     ]
+    }
+   },
+   "triggers": []
+  }
+ ],
+ "entities": {
+  "expression:fx-scene-continuation:entity:self": {
+   "entity_ref": "expression:fx-scene-continuation:entity:self",
+   "revision": 1,
+   "title": "Continuing agent",
+   "subject": null,
+   "parameters": {}
+  },
+  "expression:fx-scene-continuation:entity:artifact": {
+   "entity_ref": "expression:fx-scene-continuation:entity:artifact",
+   "revision": 1,
+   "title": "Work object",
+   "subject": null,
+   "parameters": {}
+  },
+  "expression:fx-scene-continuation:entity:return-station": {
+   "entity_ref": "expression:fx-scene-continuation:entity:return-station",
+   "revision": 1,
+   "title": "Return station",
+   "subject": null,
+   "parameters": {}
+  }
+ },
+ "relations": {},
+ "selection": {
+  "scene_ref": "expression:fx-scene-continuation:scene:continuation",
+  "entity_ref": null
+ },
+ "provenance": [
+  {
+   "ref": "oi:desktop/cradle/material/factory-expressions",
+   "revision": "curated-2026-09-26",
+   "availability": "available"
+  }
+ ],
+ "representations": [],
+ "refinements": [],
+ "collections": [
+  "factory-expressions"
+ ],
+ "reuse": {
+  "schema": "oi.expression-reuse/v1",
+  "authored_by": "agent:factory-expressions-lane-c",
+  "kind": "scene",
+  "title": "Continuation",
+  "roles": [
+   {
+    "role": "self",
+    "accepts": "agent",
+    "entity_ref": "expression:fx-scene-continuation:entity:self"
+   },
+   {
+    "role": "artifact",
+    "accepts": "object",
+    "entity_ref": "expression:fx-scene-continuation:entity:artifact"
+   },
+   {
+    "role": "caption",
+    "accepts": "text",
+    "text_id": "t-caption"
+   }
+  ],
+  "entry_scene_ref": "expression:fx-scene-continuation:scene:continuation",
+  "playback": [
+   "expression:fx-scene-continuation:scene:continuation"
+  ],
+  "associations": {
+   "workflow_keys": [],
+   "task_types": [],
+   "skill_set_refs": [],
+   "skill_refs": [],
+   "event_families": [
+    "continuation"
+   ]
+  }
+ }
+}
