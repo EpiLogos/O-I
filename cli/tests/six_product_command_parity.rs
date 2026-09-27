@@ -151,6 +151,30 @@ mod unix {
     }
 
     #[test]
+    fn ui_supplies_the_composed_world_through_the_env_boundary() {
+        let home = TempDir::new().expect("home");
+        let bin = TempDir::new().expect("bin");
+        fs::write(
+            bin.path().join("aikit"),
+            "#!/bin/sh\nprintf 'supply:%.220s\\n' \"${OI_COMPOSED_WORLD:-UNSET}\"\nprintf 'native:aikit:%s:%s\\n' \"$1\" \"${2:-}\"\nexit 17\n",
+        )
+        .expect("write fake aikit");
+        let mut permissions = fs::metadata(bin.path().join("aikit")).expect("metadata").permissions();
+        permissions.set_mode(0o755);
+        fs::set_permissions(bin.path().join("aikit"), permissions).expect("chmod fake aikit");
+
+        let output = run_oi_args(&home, &bin, &["ui"]);
+        assert_eq!(output.status.code(), Some(17), "native exit is preserved");
+        let text = String::from_utf8_lossy(&output.stdout);
+        assert!(text.contains("\nnative:aikit:ui:\n") || text.ends_with("native:aikit:ui:\n"),
+            "the ui verb is still delegated: {text}");
+        assert!(
+            text.contains("supply:{\"current_world\":{"),
+            "the composed World supply rides the established env boundary: {text}"
+        );
+    }
+
+    #[test]
     fn world_head_reenters_the_preserved_routes_and_composes_one_orientation() {
         let home = TempDir::new().expect("home");
         let bin = TempDir::new().expect("bin");

@@ -15,11 +15,61 @@ fn world_heads_route(args: &[OsString]) -> Option<Result<i32, String>> {
         "world" => Some(command_world(rest)),
         "search" => Some(dispatch_aikit_verb("search", rest)),
         "explain" => Some(dispatch_aikit_verb("explain", rest)),
-        "ui" => Some(dispatch_aikit_verb("ui", rest)),
+        "ui" => Some(command_ui(rest)),
         "act" => Some(command_act(rest)),
         "work" => Some(command_work(rest)),
         _ => None,
     }
+}
+
+/// `oi ui` — the terminal application over this World: the plain `aikit ui`
+/// delegation plus the composed-World supply. The orientation document is
+/// handed to the terminal through the established environment boundary
+/// (`OI_COMPOSED_WORLD`, the exact `oi world --json` document), so the
+/// surface's resting view opens on the composed World instead of only what a
+/// standalone AIKit can see. A bounded supply that cannot be encoded
+/// degrades to the plain delegation with the reason named — never silently.
+fn command_ui(args: &[OsString]) -> Result<i32, String> {
+    let product_override = env::var_os("OI_AIKIT_BIN").filter(|value| !value.is_empty());
+    let active = if product_override.is_none() {
+        active_suite_executable_s0("ai-kit")?
+    } else {
+        None
+    };
+    let composition = load_composition()?;
+    let executable = product_override
+        .map(PathBuf::from)
+        .or(active)
+        .or_else(|| {
+            composition
+                .modules
+                .get("ai-kit")
+                .and_then(|registration| registration.native_executable.as_ref())
+                .map(PathBuf::from)
+        })
+        .unwrap_or_else(|| "aikit".into());
+    match world_orientation_document() {
+        Ok(document) if document["current_world"].is_object() || document["surfaces"].is_object() => {
+            let encoded = serde_json::to_string(&document)
+                .map_err(|error| format!("cannot encode the composed World supply: {error}"))?;
+            // The composed reading is bounded by construction (roster and
+            // disclosure rows); an oversized encoding is a defect, named and
+            // degraded, never a truncated handoff.
+            if encoded.len() <= 1024 * 1024 {
+                env::set_var("OI_COMPOSED_WORLD", &encoded);
+            } else {
+                eprintln!(
+                    "oi ui: the composed World reading exceeds the supply bound; opening the terminal without it"
+                );
+            }
+        }
+        Ok(_) => {}
+        Err(error) => {
+            eprintln!("oi ui: opening without the composed World supply: {error}");
+        }
+    }
+    let forwarded = std::iter::once(OsString::from("ui")).chain(args.iter().cloned());
+    exec_native(&executable, forwarded)
 }
 
 const WORLD_USAGE: &str = "oi world [--json]                          whole-World orientation (current world, composition, requested mode)\n       oi world status|current|ground|mode|profile ...\n                                                the preserved routes (`oi status`, `oi current-world`, `oi ground`, `oi mode`, `oi profile`)";
@@ -47,8 +97,10 @@ fn command_world(args: &[OsString]) -> Result<i32, String> {
 
 /// One bounded orientation reading composed from the existing world readings
 /// by reference. A degraded reading is named in place — never collapsed into
-/// an empty list and never treated as a failure of the whole reading.
-fn command_world_orientation(json: bool) -> Result<i32, String> {
+/// an empty list and never treated as a failure of the whole reading. The
+/// same document `oi world --json` prints and `oi ui` supplies to the
+/// terminal application through the environment boundary.
+fn world_orientation_document() -> Result<serde_json::Value, String> {
     let requested = requested_mode_statement()?;
     let world = oi_cli::current_world::live_current_world().map(|reading| {
         if let Some(requested) = requested {
@@ -58,26 +110,30 @@ fn command_world_orientation(json: bool) -> Result<i32, String> {
         }
     });
     let surfaces = oi_cli::status::live_disclosure();
+    Ok(json!({
+        "schema": "oi.world-orientation/v1",
+        "current_world": match &world {
+            Ok(reading) => json!(reading),
+            Err(error) => json!({"error": error}),
+        },
+        "surfaces": match &surfaces {
+            Ok(disclosure) => json!(disclosure),
+            Err(error) => json!({"error": error}),
+        },
+        "next_actions": [
+            "oi world current --json",
+            "oi search <words>            (inert: finds, never executes)",
+            "oi act describe <action>     (the Central native Action field)",
+            "oi agent roster --json       (native Agent roster; `oi agent card` composes one card)",
+            "oi work direct|factory       (choose the work relation explicitly)",
+            "oi explain <subject>",
+        ],
+    }))
+}
+
+fn command_world_orientation(json: bool) -> Result<i32, String> {
     if json {
-        let document = json!({
-            "schema": "oi.world-orientation/v1",
-            "current_world": match &world {
-                Ok(reading) => json!(reading),
-                Err(error) => json!({"error": error}),
-            },
-            "surfaces": match &surfaces {
-                Ok(disclosure) => json!(disclosure),
-                Err(error) => json!({"error": error}),
-            },
-            "next_actions": [
-                "oi world current --json",
-                "oi search <words>            (inert: finds, never executes)",
-                "oi act describe <action>     (the Central native Action field)",
-                "oi agent roster --json       (native Agent roster; `oi agent card` composes one card)",
-                "oi work direct|factory       (choose the work relation explicitly)",
-                "oi explain <subject>",
-            ],
-        });
+        let document = world_orientation_document()?;
         println!(
             "{}",
             serde_json::to_string_pretty(&document)
@@ -85,6 +141,15 @@ fn command_world_orientation(json: bool) -> Result<i32, String> {
         );
         return Ok(0);
     }
+    let requested = requested_mode_statement()?;
+    let world = oi_cli::current_world::live_current_world().map(|reading| {
+        if let Some(requested) = requested {
+            reading.with_requested_mode(requested)
+        } else {
+            reading
+        }
+    });
+    let surfaces = oi_cli::status::live_disclosure();
     println!("World orientation");
     match &world {
         Ok(reading) => {
