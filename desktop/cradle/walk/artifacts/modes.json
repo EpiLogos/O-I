@@ -15,7 +15,7 @@
     "negatives": [],
     "claims_grade": "D"
   },
-  "generated_at": "2026-09-26T13:10:40.537Z",
+  "generated_at": "2026-09-27T14:52:57.927Z",
   "environment": {
     "base_url": "http://localhost:4173",
     "bridge_url": "http://127.0.0.1:4179",
@@ -23,78 +23,108 @@
     "browser_engine": "chromium",
     "bundle": "walk (WALK=1) served by vite preview",
     "build_input": {
-      "mode": "reused-dist",
-      "bundle_fingerprint": "5e024045562f7a2ac73988da740c3f5b6193ecd8ae77cbb6dc03c4e95210572f"
+      "mode": "fresh-build",
+      "bundle_fingerprint": "11526b9664b2022ceafbef2353939d3bc1846fc49eba30dd8defb53018f8cfc8"
     },
     "node": "v24.16.0",
     "platform": "darwin",
     "source": {
-      "repository_root": "/Users/admin/Central/worktrees/env-1/o-i",
-      "repository_head": "48faa80d8862fb36431e74e3d5db7777e0574eda",
+      "repository_root": "/Users/admin/Central/Work/O-I",
+      "repository_head": "898ab6e257741c793dec9cd15e8305c79f8dab87",
       "tracked_changes": [
-        "desktop/cradle/expressions-app/field-studies-journeys/src/expressions.ts",
-        "desktop/cradle/expressions-app/vite.config.ts",
-        "desktop/cradle/src/CradleFrame.tsx",
-        "desktop/cradle/src/agent/agent.css",
-        "desktop/cradle/src/agent/chat/AgentChat.tsx",
-        "desktop/cradle/src/agent/chat/ChatComposer.tsx",
-        "desktop/cradle/src/agent/chat/ComposerChips.tsx",
-        "desktop/cradle/src/agent/panel/ContextCanvas.tsx",
-        "desktop/cradle/src/agent/panel/PanelTop.tsx",
-        "desktop/cradle/src/agent/panel/panel.css",
-        "desktop/cradle/src/contributions/core/contribution.json",
-        "desktop/cradle/src/contributions/core/descriptor.tsx",
-        "desktop/cradle/src/contributions/factory/desk/RunMap.tsx",
-        "desktop/cradle/src/contributions/factory/desk/fdesk.css",
-        "desktop/cradle/src/contributions/factory/sidebar/sidebar.css",
-        "desktop/cradle/src/contributions/generated.ts",
-        "desktop/cradle/src/contributions/registered-kinds.mjs",
-        "desktop/cradle/src/cradle.css",
-        "desktop/cradle/src/expressions/TaOntaSide.tsx",
-        "desktop/cradle/src/expressions/hostedApp.ts",
-        "desktop/cradle/src/expressions/point-cloud-host.css",
-        "desktop/cradle/src/surface/Workbench.tsx",
-        "desktop/cradle/src/surfaces/navigator/navigator.css",
-        "desktop/cradle/src/workspace/left/host.tsx",
-        "desktop/cradle/src/workspace/left/left.css",
-        "desktop/cradle/src/workspace/primitives/primitives.css",
-        "desktop/cradle/src/workspace/shell.css",
-        "desktop/cradle/tests/cradle-shell-antipatterns.test.mjs",
-        "desktop/cradle/tests/window-lights-contract.test.mjs",
-        "desktop/cradle/walk/artifacts/factory-development-agents-tab.png",
-        "desktop/cradle/walk/artifacts/factory-development-context-tab.png",
-        "desktop/cradle/walk/artifacts/factory-development-failure.png",
-        "desktop/cradle/walk/artifacts/factory-development-run-tab.png",
-        "desktop/cradle/walk/artifacts/factory-development.json",
-        "desktop/cradle/walk/artifacts/modes-base-1000.png",
-        "desktop/cradle/walk/artifacts/modes-base-1280.png",
-        "desktop/cradle/walk/artifacts/modes-base-640.png",
-        "desktop/cradle/walk/artifacts/modes-base-760.png",
-        "desktop/cradle/walk/artifacts/modes-expressions-1280.png",
-        "desktop/cradle/walk/artifacts/modes-factory-1280.png",
-        "desktop/cradle/walk/artifacts/modes-failure.png",
-        "desktop/cradle/walk/artifacts/modes-settings-1280.png",
-        "desktop/cradle/walk/artifacts/modes-tabs-list-1280.png",
-        "desktop/cradle/walk/artifacts/modes-tabs-unpinned-1280.png",
-        "desktop/cradle/walk/artifacts/modes-tabs-unpinned-horizontal-1280.png",
-        "desktop/cradle/walk/artifacts/modes-techne-1280.png",
-        "desktop/cradle/walk/artifacts/modes.json",
-        "desktop/cradle/walk/artifacts/rest-failure.png",
-        "desktop/cradle/walk/artifacts/rest.json",
-        "desktop/cradle/walk/artifacts/surfaces-failure.png",
-        "desktop/cradle/walk/artifacts/surfaces.json",
-        "desktop/cradle/walk/scenarios/factory-development.mjs",
-        "desktop/cradle/walk/scenarios/modes.mjs"
+        ".central/source-change-horizon.json",
+        "ProjectCentral/now/agents/agency-gateway-awareness-brief-interjected-for-2026-09-06.json",
+        "ProjectCentral/now/agents/cradle-final-sidebar-agent-polish-2026-09-08.json",
+        "ProjectCentral/now/agents/cradle-mode-context-corner-refinement-2026-09-08.json",
+        "ProjectCentral/now/agents/cradle-sidebars-designed-once-across-every-2026-09-22.json",
+        "ProjectCentral/now/agents/editor-suite-and-crosspane-context-attachment-2026-09-08.json",
+        "ProjectCentral/now/agents/expression-overlay-steps-onto-the-wayfinder-2026-09-08.json",
+        "ProjectCentral/now/agents/factory-and-settings-designed-alongside-the-2026-09-22.json",
+        "ProjectCentral/now/agents/fnd0006-foundation-execution-round-lead-2026-09-08.json",
+        "ProjectCentral/now/agents/fnd02-d11-system-canvas-surface-renders-2026-09-08.json",
+        "ProjectCentral/now/agents/foundation-ux-specification-completed-with-pane-2026-09-08.json",
+        "ProjectCentral/now/agents/gateway-bootstrap-fold-landed-in-aikit-2026-09-06.json",
+        "ProjectCentral/now/agents/guardian-skillset-extended-centralsessionstrap-2026-09-06.json",
+        "ProjectCentral/now/agents/handoff-1788870232874808000.json",
+        "ProjectCentral/now/agents/handoff-1788870267456874000.json",
+        "ProjectCentral/now/agents/handoff-1788871222533209000.json",
+        "ProjectCentral/now/agents/handoff-1788874734956344000.json",
+        "ProjectCentral/now/agents/handoff-1788896960839895000.json",
+        "ProjectCentral/now/agents/handoff-1789213962.json",
+        "ProjectCentral/now/agents/harness-settings-acceptance-research-landed-2026-09-22.json",
+        "ProjectCentral/now/agents/native-browser-panes-and-refined-shell-2026-09-08.json",
+        "ProjectCentral/now/agents/oi-multimatrix-product-capability-collation-2026-09-08.json",
+        "ProjectCentral/now/agents/ownerdomain-integration-checkpoint-f84bd61-2026-09-08.json",
+        "ProjectCentral/now/agents/ownerled-editor-and-chrome-refinement-2026-09-08.json",
+        "ProjectCentral/now/agents/p1-expression-native-foundation-integration-2026-09-08.json",
+        "ProjectCentral/now/agents/pointcloud-elements-review-artifact-revision-2-2026-09-08.json",
+        "ProjectCentral/now/agents/pointcloud-elements-review-artifact-revision-3-2026-09-08.json",
+        "ProjectCentral/now/agents/pointcloud-elements-revision-4-expression-2026-09-08.json",
+        "ProjectCentral/now/agents/pointcloud-study-rev-6-honed-fnd07-2026-09-08.json",
+        "ProjectCentral/now/agents/pr-199-acceptedmain-honesty-repair-pushed-2026-09-08.json",
+        "ProjectCentral/now/agents/refresh-desktop-foundations-against-current-2026-09-08.json",
+        "ProjectCentral/now/agents/resume-whole-desktop-execution-programme-2026-09-06.json",
+        "ProjectCentral/now/agents/s-cli-and-mprime-desktop-capability-2026-09-06.json",
+        "ProjectCentral/now/agents/selfother-ux-corrected-and-current-owners-2026-09-08.json",
+        "ProjectCentral/now/agents/september-8-desktop-productfoundation-map-2026-09-08.json",
+        "ProjectCentral/now/agents/shared-field-original-planning-recovered-2026-09-08.json",
+        "ProjectCentral/now/agents/terminal-flow-editor-context-and-final-2026-09-08.json",
+        "ProjectCentral/now/agents/theme-library-vscode-standard-research-2026-09-23.json",
+        "ProjectCentral/now/agents/ui-convergence-review-seven-lanes-surveyed-2026-09-22.json",
+        "ProjectCentral/now/agents/ui-lead-locked-and-build-prompt-2026-09-23.json",
+        "ProjectCentral/now/agents/window-lights-contract-test-live-cut-restored-2026-09-22.json",
+        "ProjectCentral/now/promotions.json",
+        "desktop/cradle/walk/artifacts/factory-desk-f1-reading.png",
+        "desktop/cradle/walk/artifacts/factory-desk-f2-empty.png",
+        "desktop/cradle/walk/artifacts/factory-desk-f3-partial.png",
+        "desktop/cradle/walk/artifacts/factory-desk-f4-needs-you.png",
+        "desktop/cradle/walk/artifacts/factory-desk-factory-desk-1000-dark.png",
+        "desktop/cradle/walk/artifacts/factory-desk-factory-desk-1000-light.png",
+        "desktop/cradle/walk/artifacts/factory-desk-factory-desk-1440-dark.png",
+        "desktop/cradle/walk/artifacts/factory-desk-factory-desk-1440-light.png",
+        "desktop/cradle/walk/artifacts/factory-desk-factory-desk-760-dark.png",
+        "desktop/cradle/walk/artifacts/factory-desk-factory-desk-760-light.png",
+        "desktop/cradle/walk/artifacts/factory-desk.json",
+        "desktop/cradle/walk/artifacts/factory-expressions-0-entered.png",
+        "desktop/cradle/walk/artifacts/factory-expressions-1-aletheia-idle.png",
+        "desktop/cradle/walk/artifacts/factory-expressions-1-aletheia-working.png",
+        "desktop/cradle/walk/artifacts/factory-expressions-1-anima-idle.png",
+        "desktop/cradle/walk/artifacts/factory-expressions-1-anima-working.png",
+        "desktop/cradle/walk/artifacts/factory-expressions-10-seek-1.png",
+        "desktop/cradle/walk/artifacts/factory-expressions-10-seek-2.png",
+        "desktop/cradle/walk/artifacts/factory-expressions-10-seek-3.png",
+        "desktop/cradle/walk/artifacts/factory-expressions-2-arrival-anima.png",
+        "desktop/cradle/walk/artifacts/factory-expressions-2-handoff-anima-aletheia.png",
+        "desktop/cradle/walk/artifacts/factory-expressions-4-live-timeline-end.png",
+        "desktop/cradle/walk/artifacts/factory-expressions-4-live-timeline-middle.png",
+        "desktop/cradle/walk/artifacts/factory-expressions-4-live-timeline-start.png",
+        "desktop/cradle/walk/artifacts/factory-expressions-5-artifact-details.png",
+        "desktop/cradle/walk/artifacts/factory-expressions-5-character-conversation.png",
+        "desktop/cradle/walk/artifacts/factory-expressions-5-message-composer.png",
+        "desktop/cradle/walk/artifacts/factory-expressions-5-panel-artifact.png",
+        "desktop/cradle/walk/artifacts/factory-expressions-5-panel-character.png",
+        "desktop/cradle/walk/artifacts/factory-expressions-5-panel-exchange.png",
+        "desktop/cradle/walk/artifacts/factory-expressions-5-panel-goal.png",
+        "desktop/cradle/walk/artifacts/factory-expressions-6-returned-live.png",
+        "desktop/cradle/walk/artifacts/factory-expressions-6-techne-act-strip.png",
+        "desktop/cradle/walk/artifacts/factory-expressions-6-techne-edited.png",
+        "desktop/cradle/walk/artifacts/factory-expressions-9-variation-running.png",
+        "desktop/cradle/walk/artifacts/factory-expressions.json",
+        "desktop/cradle/walk/artifacts/factory-tasks.json",
+        "desktop/cradle/walk/artifacts/mode-workspaces-factory-own-tree.png",
+        "desktop/cradle/walk/artifacts/mode-workspaces-failure.png",
+        "desktop/cradle/walk/artifacts/mode-workspaces.json",
+        "desktop/cradle/walk/artifacts/nara-embodiment-20260924/acceptance-walks.json"
       ],
-      "dirty_digest": "3b587bbf454b86182c7f569ca4faacd267173af4a3309730a239d8ecbdbf4614",
-      "engine_provenance_path": "/Users/admin/Central/worktrees/env-1/o-i/packages/oi-design-system/expressions-engine/PROVENANCE.json",
+      "dirty_digest": "8d089e82a7fc55c04c12bf60d1d1358e642675dac789b8c0159aaeecc461d68f",
+      "engine_provenance_path": "/Users/admin/Central/Work/O-I/packages/oi-design-system/expressions-engine/PROVENANCE.json",
       "engine_source": "EpiLogos/Point-Cloud-Demo",
       "engine_revision": "91db8428fc9dfba06cd258ec5a58e7dd9eef5313"
     }
   },
   "passed": true,
   "error": null,
-  "duration_ms": 12706,
+  "duration_ms": 7806,
   "checks": [
     {
       "ok": true,
@@ -188,7 +218,7 @@
       "ok": true,
       "label": "The terminal Settings button enters its mode instantly — the shell switches now, no awaited roundtrip gates it",
       "data": {
-        "entered_ms": 67
+        "entered_ms": 38
       }
     },
     {
@@ -382,7 +412,7 @@
       "duration_ms": 0,
       "data": {
         "schema": "oi.cradle.walk/v1",
-        "mounted_at": "2026-09-26T13:10:40.792Z",
+        "mounted_at": "2026-09-27T14:52:58.072Z",
         "transport": {
           "kind": "bridge",
           "url": "http://127.0.0.1:4179"
@@ -400,30 +430,30 @@
             "type": "group",
             "id": "g1",
             "tabs": [
-              "9d9c5afe-dde9-48b2-95b5-32840ccbe3e7",
-              "bfcdc089-ef6c-42c9-a321-2455aded6583",
-              "aaf64f41-0878-4f6e-a68b-9edd1305097f"
+              "89bf8f98-8b5b-4c1d-b234-6ed94addc1a2",
+              "bbacd4ea-4e45-49f7-9d8d-97b39fe9c5e2",
+              "e9053fe4-f281-4f5b-9a24-e6f6c5d775e0"
             ],
             "pinned": [],
-            "active": "aaf64f41-0878-4f6e-a68b-9edd1305097f"
+            "active": "e9053fe4-f281-4f5b-9a24-e6f6c5d775e0"
           },
           "surfaces": {
-            "9d9c5afe-dde9-48b2-95b5-32840ccbe3e7": {
-              "id": "9d9c5afe-dde9-48b2-95b5-32840ccbe3e7",
+            "89bf8f98-8b5b-4c1d-b234-6ed94addc1a2": {
+              "id": "89bf8f98-8b5b-4c1d-b234-6ed94addc1a2",
               "kind": "source",
               "ref": "central:source:project:editor-walk:ProjectCentral/user/00%2001-DESIGN.md",
               "title": "00 01-DESIGN.md",
               "project": "Editor"
             },
-            "bfcdc089-ef6c-42c9-a321-2455aded6583": {
-              "id": "bfcdc089-ef6c-42c9-a321-2455aded6583",
+            "bbacd4ea-4e45-49f7-9d8d-97b39fe9c5e2": {
+              "id": "bbacd4ea-4e45-49f7-9d8d-97b39fe9c5e2",
               "kind": "source",
               "ref": "central:source:project:editor-walk:ProjectCentral/user/01%2002-ARCHITECTURE.md",
               "title": "01 02-ARCHITECTURE.md",
               "project": "Editor"
             },
-            "aaf64f41-0878-4f6e-a68b-9edd1305097f": {
-              "id": "aaf64f41-0878-4f6e-a68b-9edd1305097f",
+            "e9053fe4-f281-4f5b-9a24-e6f6c5d775e0": {
+              "id": "e9053fe4-f281-4f5b-9a24-e6f6c5d775e0",
               "kind": "source",
               "ref": "central:source:project:editor-walk:ProjectCentral/user/02%2003-UX-STATES.md",
               "title": "02 03-UX-STATES.md",
@@ -442,7 +472,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 71,
+      "duration_ms": 51,
       "data": {
         "file": "modes-base-1280.png"
       }
@@ -457,14 +487,14 @@
             "type": "group",
             "id": "g1",
             "tabs": [
-              "d0555faa-7ba0-4c05-a81d-068c936dcab2"
+              "e0a1440b-0eec-4891-9f9e-f6117bdd03f9"
             ],
             "pinned": [],
-            "active": "d0555faa-7ba0-4c05-a81d-068c936dcab2"
+            "active": "e0a1440b-0eec-4891-9f9e-f6117bdd03f9"
           },
           "surfaces": {
-            "d0555faa-7ba0-4c05-a81d-068c936dcab2": {
-              "id": "d0555faa-7ba0-4c05-a81d-068c936dcab2",
+            "e0a1440b-0eec-4891-9f9e-f6117bdd03f9": {
+              "id": "e0a1440b-0eec-4891-9f9e-f6117bdd03f9",
               "kind": "factory",
               "title": "Factory",
               "hosted": {
@@ -486,7 +516,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 48,
+      "duration_ms": 20,
       "data": {
         "file": "modes-factory-1280.png"
       }
@@ -494,7 +524,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 90,
+      "duration_ms": 48,
       "data": {
         "file": "modes-expressions-1280.png"
       }
@@ -502,7 +532,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 125,
+      "duration_ms": 47,
       "data": {
         "file": "modes-techne-1280.png"
       }
@@ -510,37 +540,37 @@
     {
       "ok": true,
       "op": "read.layout",
-      "duration_ms": 0.1,
+      "duration_ms": 0,
       "data": {
         "layout": {
           "root": {
             "type": "group",
             "id": "g1",
             "tabs": [
-              "9d9c5afe-dde9-48b2-95b5-32840ccbe3e7",
-              "bfcdc089-ef6c-42c9-a321-2455aded6583",
-              "aaf64f41-0878-4f6e-a68b-9edd1305097f"
+              "89bf8f98-8b5b-4c1d-b234-6ed94addc1a2",
+              "bbacd4ea-4e45-49f7-9d8d-97b39fe9c5e2",
+              "e9053fe4-f281-4f5b-9a24-e6f6c5d775e0"
             ],
             "pinned": [],
-            "active": "aaf64f41-0878-4f6e-a68b-9edd1305097f"
+            "active": "e9053fe4-f281-4f5b-9a24-e6f6c5d775e0"
           },
           "surfaces": {
-            "9d9c5afe-dde9-48b2-95b5-32840ccbe3e7": {
-              "id": "9d9c5afe-dde9-48b2-95b5-32840ccbe3e7",
+            "89bf8f98-8b5b-4c1d-b234-6ed94addc1a2": {
+              "id": "89bf8f98-8b5b-4c1d-b234-6ed94addc1a2",
               "kind": "source",
               "ref": "central:source:project:editor-walk:ProjectCentral/user/00%2001-DESIGN.md",
               "title": "00 01-DESIGN.md",
               "project": "Editor"
             },
-            "bfcdc089-ef6c-42c9-a321-2455aded6583": {
-              "id": "bfcdc089-ef6c-42c9-a321-2455aded6583",
+            "bbacd4ea-4e45-49f7-9d8d-97b39fe9c5e2": {
+              "id": "bbacd4ea-4e45-49f7-9d8d-97b39fe9c5e2",
               "kind": "source",
               "ref": "central:source:project:editor-walk:ProjectCentral/user/01%2002-ARCHITECTURE.md",
               "title": "01 02-ARCHITECTURE.md",
               "project": "Editor"
             },
-            "aaf64f41-0878-4f6e-a68b-9edd1305097f": {
-              "id": "aaf64f41-0878-4f6e-a68b-9edd1305097f",
+            "e9053fe4-f281-4f5b-9a24-e6f6c5d775e0": {
+              "id": "e9053fe4-f281-4f5b-9a24-e6f6c5d775e0",
               "kind": "source",
               "ref": "central:source:project:editor-walk:ProjectCentral/user/02%2003-UX-STATES.md",
               "title": "02 03-UX-STATES.md",
@@ -559,21 +589,21 @@
     {
       "ok": true,
       "op": "read.layout",
-      "duration_ms": 0.1,
+      "duration_ms": 0,
       "data": {
         "layout": {
           "root": {
             "type": "group",
             "id": "g1",
             "tabs": [
-              "c7db434b-2d05-47ac-8d1d-530a69d6ce7f"
+              "7eb59fca-6643-47d5-962e-b30c6eaf4dc5"
             ],
             "pinned": [],
-            "active": "c7db434b-2d05-47ac-8d1d-530a69d6ce7f"
+            "active": "7eb59fca-6643-47d5-962e-b30c6eaf4dc5"
           },
           "surfaces": {
-            "c7db434b-2d05-47ac-8d1d-530a69d6ce7f": {
-              "id": "c7db434b-2d05-47ac-8d1d-530a69d6ce7f",
+            "7eb59fca-6643-47d5-962e-b30c6eaf4dc5": {
+              "id": "7eb59fca-6643-47d5-962e-b30c6eaf4dc5",
               "kind": "system",
               "title": "Settings",
               "hosted": {
@@ -596,7 +626,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 56,
+      "duration_ms": 20,
       "data": {
         "file": "modes-settings-1280.png"
       }
@@ -611,32 +641,32 @@
             "type": "group",
             "id": "g1",
             "tabs": [
-              "9d9c5afe-dde9-48b2-95b5-32840ccbe3e7",
-              "bfcdc089-ef6c-42c9-a321-2455aded6583",
-              "aaf64f41-0878-4f6e-a68b-9edd1305097f"
+              "89bf8f98-8b5b-4c1d-b234-6ed94addc1a2",
+              "bbacd4ea-4e45-49f7-9d8d-97b39fe9c5e2",
+              "e9053fe4-f281-4f5b-9a24-e6f6c5d775e0"
             ],
             "pinned": [],
-            "active": "bfcdc089-ef6c-42c9-a321-2455aded6583",
+            "active": "bbacd4ea-4e45-49f7-9d8d-97b39fe9c5e2",
             "tabPresentation": "pinned-vertical",
             "tabPinOrientation": "vertical"
           },
           "surfaces": {
-            "9d9c5afe-dde9-48b2-95b5-32840ccbe3e7": {
-              "id": "9d9c5afe-dde9-48b2-95b5-32840ccbe3e7",
+            "89bf8f98-8b5b-4c1d-b234-6ed94addc1a2": {
+              "id": "89bf8f98-8b5b-4c1d-b234-6ed94addc1a2",
               "kind": "source",
               "ref": "central:source:project:editor-walk:ProjectCentral/user/00%2001-DESIGN.md",
               "title": "00 01-DESIGN.md",
               "project": "Editor"
             },
-            "bfcdc089-ef6c-42c9-a321-2455aded6583": {
-              "id": "bfcdc089-ef6c-42c9-a321-2455aded6583",
+            "bbacd4ea-4e45-49f7-9d8d-97b39fe9c5e2": {
+              "id": "bbacd4ea-4e45-49f7-9d8d-97b39fe9c5e2",
               "kind": "source",
               "ref": "central:source:project:editor-walk:ProjectCentral/user/01%2002-ARCHITECTURE.md",
               "title": "01 02-ARCHITECTURE.md",
               "project": "Editor"
             },
-            "aaf64f41-0878-4f6e-a68b-9edd1305097f": {
-              "id": "aaf64f41-0878-4f6e-a68b-9edd1305097f",
+            "e9053fe4-f281-4f5b-9a24-e6f6c5d775e0": {
+              "id": "e9053fe4-f281-4f5b-9a24-e6f6c5d775e0",
               "kind": "source",
               "ref": "central:source:project:editor-walk:ProjectCentral/user/02%2003-UX-STATES.md",
               "title": "02 03-UX-STATES.md",
@@ -656,39 +686,39 @@
     {
       "ok": true,
       "op": "read.layout",
-      "duration_ms": 0.1,
+      "duration_ms": 0,
       "data": {
         "layout": {
           "root": {
             "type": "group",
             "id": "g1",
             "tabs": [
-              "9d9c5afe-dde9-48b2-95b5-32840ccbe3e7",
-              "bfcdc089-ef6c-42c9-a321-2455aded6583",
-              "aaf64f41-0878-4f6e-a68b-9edd1305097f"
+              "89bf8f98-8b5b-4c1d-b234-6ed94addc1a2",
+              "bbacd4ea-4e45-49f7-9d8d-97b39fe9c5e2",
+              "e9053fe4-f281-4f5b-9a24-e6f6c5d775e0"
             ],
             "pinned": [],
-            "active": "bfcdc089-ef6c-42c9-a321-2455aded6583",
+            "active": "bbacd4ea-4e45-49f7-9d8d-97b39fe9c5e2",
             "tabPresentation": "pinned-vertical",
             "tabPinOrientation": "vertical"
           },
           "surfaces": {
-            "9d9c5afe-dde9-48b2-95b5-32840ccbe3e7": {
-              "id": "9d9c5afe-dde9-48b2-95b5-32840ccbe3e7",
+            "89bf8f98-8b5b-4c1d-b234-6ed94addc1a2": {
+              "id": "89bf8f98-8b5b-4c1d-b234-6ed94addc1a2",
               "kind": "source",
               "ref": "central:source:project:editor-walk:ProjectCentral/user/00%2001-DESIGN.md",
               "title": "00 01-DESIGN.md",
               "project": "Editor"
             },
-            "bfcdc089-ef6c-42c9-a321-2455aded6583": {
-              "id": "bfcdc089-ef6c-42c9-a321-2455aded6583",
+            "bbacd4ea-4e45-49f7-9d8d-97b39fe9c5e2": {
+              "id": "bbacd4ea-4e45-49f7-9d8d-97b39fe9c5e2",
               "kind": "source",
               "ref": "central:source:project:editor-walk:ProjectCentral/user/01%2002-ARCHITECTURE.md",
               "title": "01 02-ARCHITECTURE.md",
               "project": "Editor"
             },
-            "aaf64f41-0878-4f6e-a68b-9edd1305097f": {
-              "id": "aaf64f41-0878-4f6e-a68b-9edd1305097f",
+            "e9053fe4-f281-4f5b-9a24-e6f6c5d775e0": {
+              "id": "e9053fe4-f281-4f5b-9a24-e6f6c5d775e0",
               "kind": "source",
               "ref": "central:source:project:editor-walk:ProjectCentral/user/02%2003-UX-STATES.md",
               "title": "02 03-UX-STATES.md",
@@ -708,7 +738,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 95,
+      "duration_ms": 49,
       "data": {
         "file": "modes-tabs-list-1280.png"
       }
@@ -716,7 +746,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 105,
+      "duration_ms": 75,
       "data": {
         "file": "modes-tabs-unpinned-1280.png"
       }
@@ -724,7 +754,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 130,
+      "duration_ms": 75,
       "data": {
         "file": "modes-tabs-unpinned-horizontal-1280.png"
       }
@@ -735,7 +765,7 @@
       "duration_ms": 0,
       "data": {
         "schema": "oi.cradle.walk/v1",
-        "mounted_at": "2026-09-26T13:10:45.614Z",
+        "mounted_at": "2026-09-27T14:53:01.790Z",
         "transport": {
           "kind": "bridge",
           "url": "http://127.0.0.1:4179"
@@ -756,32 +786,32 @@
             "type": "group",
             "id": "g1",
             "tabs": [
-              "9d9c5afe-dde9-48b2-95b5-32840ccbe3e7",
-              "bfcdc089-ef6c-42c9-a321-2455aded6583",
-              "aaf64f41-0878-4f6e-a68b-9edd1305097f"
+              "89bf8f98-8b5b-4c1d-b234-6ed94addc1a2",
+              "bbacd4ea-4e45-49f7-9d8d-97b39fe9c5e2",
+              "e9053fe4-f281-4f5b-9a24-e6f6c5d775e0"
             ],
             "pinned": [],
-            "active": "9d9c5afe-dde9-48b2-95b5-32840ccbe3e7",
+            "active": "89bf8f98-8b5b-4c1d-b234-6ed94addc1a2",
             "tabPresentation": "unpinned"
           },
           "surfaces": {
-            "9d9c5afe-dde9-48b2-95b5-32840ccbe3e7": {
+            "89bf8f98-8b5b-4c1d-b234-6ed94addc1a2": {
               "project": "Editor",
-              "id": "9d9c5afe-dde9-48b2-95b5-32840ccbe3e7",
+              "id": "89bf8f98-8b5b-4c1d-b234-6ed94addc1a2",
               "kind": "source",
               "ref": "central:source:project:editor-walk:ProjectCentral/user/00%2001-DESIGN.md",
               "title": "00 01-DESIGN.md"
             },
-            "bfcdc089-ef6c-42c9-a321-2455aded6583": {
+            "bbacd4ea-4e45-49f7-9d8d-97b39fe9c5e2": {
               "project": "Editor",
-              "id": "bfcdc089-ef6c-42c9-a321-2455aded6583",
+              "id": "bbacd4ea-4e45-49f7-9d8d-97b39fe9c5e2",
               "kind": "source",
               "ref": "central:source:project:editor-walk:ProjectCentral/user/01%2002-ARCHITECTURE.md",
               "title": "01 02-ARCHITECTURE.md"
             },
-            "aaf64f41-0878-4f6e-a68b-9edd1305097f": {
+            "e9053fe4-f281-4f5b-9a24-e6f6c5d775e0": {
               "project": "Editor",
-              "id": "aaf64f41-0878-4f6e-a68b-9edd1305097f",
+              "id": "e9053fe4-f281-4f5b-9a24-e6f6c5d775e0",
               "kind": "source",
               "ref": "central:source:project:editor-walk:ProjectCentral/user/02%2003-UX-STATES.md",
               "title": "02 03-UX-STATES.md"
@@ -800,7 +830,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 55,
+      "duration_ms": 47,
       "data": {
         "file": "modes-base-1000.png"
       }
@@ -808,7 +838,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 37,
+      "duration_ms": 43,
       "data": {
         "file": "modes-base-760.png"
       }
@@ -816,7 +846,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 38,
+      "duration_ms": 32,
       "data": {
         "file": "modes-base-640.png"
       }

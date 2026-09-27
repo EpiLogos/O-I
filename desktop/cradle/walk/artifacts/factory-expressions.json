@@ -4,7 +4,7 @@
   "spec_ref": "docs/cradle/handovers/factory-expressions-2026-09-26/EXPRESSION-DEVELOPMENT-SPEC.md §9",
   "grade": "B",
   "binding": null,
-  "generated_at": "2026-09-26T23:51:08.371Z",
+  "generated_at": "2026-09-27T14:49:43.275Z",
   "environment": {
     "base_url": "http://localhost:4173",
     "bridge_url": "http://127.0.0.1:4179",
@@ -13,42 +13,101 @@
     "bundle": "walk (WALK=1) served by vite preview",
     "build_input": {
       "mode": "fresh-build",
-      "bundle_fingerprint": "d3b1781d7f39520589bab1b9aa69cb68dc04b258b0115e1c136b475a85be32da"
+      "bundle_fingerprint": "11526b9664b2022ceafbef2353939d3bc1846fc49eba30dd8defb53018f8cfc8"
     },
     "node": "v24.16.0",
     "platform": "darwin",
     "source": {
-      "repository_root": "/private/tmp/claude-501/-Users-admin-Central/34430e23-ac90-4c0c-bdcb-76ac5547e22d/scratchpad/build-o-i",
-      "repository_head": "b702ecf36115ed0b501b77cbe42583ab944a9987",
-      "tracked_changes": [],
-      "dirty_digest": "6e340b9cffb37a989ca544e6bb780a2c78901d3fb33738768511a30617afa01d",
-      "engine_provenance_path": "/private/tmp/claude-501/-Users-admin-Central/34430e23-ac90-4c0c-bdcb-76ac5547e22d/scratchpad/build-o-i/packages/oi-design-system/expressions-engine/PROVENANCE.json",
+      "repository_root": "/Users/admin/Central/Work/O-I",
+      "repository_head": "898ab6e257741c793dec9cd15e8305c79f8dab87",
+      "tracked_changes": [
+        ".central/source-change-horizon.json",
+        "ProjectCentral/now/agents/agency-gateway-awareness-brief-interjected-for-2026-09-06.json",
+        "ProjectCentral/now/agents/cradle-final-sidebar-agent-polish-2026-09-08.json",
+        "ProjectCentral/now/agents/cradle-mode-context-corner-refinement-2026-09-08.json",
+        "ProjectCentral/now/agents/cradle-sidebars-designed-once-across-every-2026-09-22.json",
+        "ProjectCentral/now/agents/editor-suite-and-crosspane-context-attachment-2026-09-08.json",
+        "ProjectCentral/now/agents/expression-overlay-steps-onto-the-wayfinder-2026-09-08.json",
+        "ProjectCentral/now/agents/factory-and-settings-designed-alongside-the-2026-09-22.json",
+        "ProjectCentral/now/agents/fnd0006-foundation-execution-round-lead-2026-09-08.json",
+        "ProjectCentral/now/agents/fnd02-d11-system-canvas-surface-renders-2026-09-08.json",
+        "ProjectCentral/now/agents/foundation-ux-specification-completed-with-pane-2026-09-08.json",
+        "ProjectCentral/now/agents/gateway-bootstrap-fold-landed-in-aikit-2026-09-06.json",
+        "ProjectCentral/now/agents/guardian-skillset-extended-centralsessionstrap-2026-09-06.json",
+        "ProjectCentral/now/agents/handoff-1788870232874808000.json",
+        "ProjectCentral/now/agents/handoff-1788870267456874000.json",
+        "ProjectCentral/now/agents/handoff-1788871222533209000.json",
+        "ProjectCentral/now/agents/handoff-1788874734956344000.json",
+        "ProjectCentral/now/agents/handoff-1788896960839895000.json",
+        "ProjectCentral/now/agents/handoff-1789213962.json",
+        "ProjectCentral/now/agents/harness-settings-acceptance-research-landed-2026-09-22.json",
+        "ProjectCentral/now/agents/native-browser-panes-and-refined-shell-2026-09-08.json",
+        "ProjectCentral/now/agents/oi-multimatrix-product-capability-collation-2026-09-08.json",
+        "ProjectCentral/now/agents/ownerdomain-integration-checkpoint-f84bd61-2026-09-08.json",
+        "ProjectCentral/now/agents/ownerled-editor-and-chrome-refinement-2026-09-08.json",
+        "ProjectCentral/now/agents/p1-expression-native-foundation-integration-2026-09-08.json",
+        "ProjectCentral/now/agents/pointcloud-elements-review-artifact-revision-2-2026-09-08.json",
+        "ProjectCentral/now/agents/pointcloud-elements-review-artifact-revision-3-2026-09-08.json",
+        "ProjectCentral/now/agents/pointcloud-elements-revision-4-expression-2026-09-08.json",
+        "ProjectCentral/now/agents/pointcloud-study-rev-6-honed-fnd07-2026-09-08.json",
+        "ProjectCentral/now/agents/pr-199-acceptedmain-honesty-repair-pushed-2026-09-08.json",
+        "ProjectCentral/now/agents/refresh-desktop-foundations-against-current-2026-09-08.json",
+        "ProjectCentral/now/agents/resume-whole-desktop-execution-programme-2026-09-06.json",
+        "ProjectCentral/now/agents/s-cli-and-mprime-desktop-capability-2026-09-06.json",
+        "ProjectCentral/now/agents/selfother-ux-corrected-and-current-owners-2026-09-08.json",
+        "ProjectCentral/now/agents/september-8-desktop-productfoundation-map-2026-09-08.json",
+        "ProjectCentral/now/agents/shared-field-original-planning-recovered-2026-09-08.json",
+        "ProjectCentral/now/agents/terminal-flow-editor-context-and-final-2026-09-08.json",
+        "ProjectCentral/now/agents/theme-library-vscode-standard-research-2026-09-23.json",
+        "ProjectCentral/now/agents/ui-convergence-review-seven-lanes-surveyed-2026-09-22.json",
+        "ProjectCentral/now/agents/ui-lead-locked-and-build-prompt-2026-09-23.json",
+        "ProjectCentral/now/agents/window-lights-contract-test-live-cut-restored-2026-09-22.json",
+        "ProjectCentral/now/promotions.json",
+        "desktop/cradle/walk/artifacts/factory-desk-f1-reading.png",
+        "desktop/cradle/walk/artifacts/factory-desk-f2-empty.png",
+        "desktop/cradle/walk/artifacts/factory-desk-f3-partial.png",
+        "desktop/cradle/walk/artifacts/factory-desk-f4-needs-you.png",
+        "desktop/cradle/walk/artifacts/factory-desk-factory-desk-1000-dark.png",
+        "desktop/cradle/walk/artifacts/factory-desk-factory-desk-1000-light.png",
+        "desktop/cradle/walk/artifacts/factory-desk-factory-desk-1440-dark.png",
+        "desktop/cradle/walk/artifacts/factory-desk-factory-desk-1440-light.png",
+        "desktop/cradle/walk/artifacts/factory-desk-factory-desk-760-dark.png",
+        "desktop/cradle/walk/artifacts/factory-desk-factory-desk-760-light.png",
+        "desktop/cradle/walk/artifacts/factory-desk.json",
+        "desktop/cradle/walk/artifacts/factory-tasks.json",
+        "desktop/cradle/walk/artifacts/mode-workspaces-factory-own-tree.png",
+        "desktop/cradle/walk/artifacts/mode-workspaces-failure.png",
+        "desktop/cradle/walk/artifacts/mode-workspaces.json",
+        "desktop/cradle/walk/artifacts/nara-embodiment-20260924/acceptance-walks.json"
+      ],
+      "dirty_digest": "6eb415e38cd168112b3273630a5e0ae59d0bec8f820c04167252fea1a7b4621f",
+      "engine_provenance_path": "/Users/admin/Central/Work/O-I/packages/oi-design-system/expressions-engine/PROVENANCE.json",
       "engine_source": "EpiLogos/Point-Cloud-Demo",
       "engine_revision": "91db8428fc9dfba06cd258ec5a58e7dd9eef5313"
     }
   },
-  "passed": true,
+  "passed": false,
   "error": null,
-  "duration_ms": 163144,
+  "duration_ms": 169758,
   "checks": [
     {
       "ok": true,
       "label": "Harness: the hosted Expressions application is served from this checkout's build (not the ground's primary checkout dist)",
       "data": {
-        "dist": "/private/tmp/claude-501/-Users-admin-Central/34430e23-ac90-4c0c-bdcb-76ac5547e22d/scratchpad/build-o-i/desktop/cradle/expressions-app/dist/",
-        "commit": "b702ecf36115ed0b501b77cbe42583ab944a9987",
-        "built_at": "2026-09-26T23:50:57.282Z"
+        "dist": "/Users/admin/Central/Work/O-I/desktop/cradle/expressions-app/dist/",
+        "commit": "898ab6e257741c793dec9cd15e8305c79f8dab87",
+        "built_at": "2026-09-27T14:49:31.762Z"
       }
     },
     {
-      "ok": true,
+      "ok": false,
       "label": "Harness: the walk-bridge was compiled from this checkout's kernel into the dedicated CARGO_TARGET_DIR",
       "data": {
-        "compiled": "Compiling oi-cradle-kernel v0.1.0 (/private/tmp/claude-501/-Users-admin-Central/34430e23-ac90-4c0c-bdcb-76ac5547e22d/scratchpad/build-o-i/desktop/cradle/kernel)",
-        "kernel": "/private/tmp/claude-501/-Users-admin-Central/34430e23-ac90-4c0c-bdcb-76ac5547e22d/scratchpad/build-o-i/desktop/cradle/kernel",
-        "cargo_target_dir": "/private/tmp/claude-501/-Users-admin-Central/34430e23-ac90-4c0c-bdcb-76ac5547e22d/scratchpad/kernel-target-integration",
-        "binary_built_at": "2026-09-26T23:50:35.769Z",
-        "build_log": "/private/tmp/claude-501/-Users-admin-Central/34430e23-ac90-4c0c-bdcb-76ac5547e22d/scratchpad/walk-bridge-build.log"
+        "compiled": null,
+        "kernel": "/Users/admin/Central/Work/O-I/desktop/cradle/kernel",
+        "cargo_target_dir": null,
+        "binary_built_at": null,
+        "build_log": null
       }
     },
     {
@@ -56,7 +115,7 @@
       "label": "The curated material is seeded in the register (both characters, handoff, arrival, the workflow Expression)",
       "data": {
         "register": "Work/O-I/desktop/cradle/material/expressive-material",
-        "count": 43
+        "count": 44
       }
     },
     {
@@ -95,7 +154,7 @@
       "ok": true,
       "label": "1: Anima's live preview shows the working state (inked canvas pixels)",
       "data": {
-        "pixels": 250
+        "pixels": 249
       }
     },
     {
@@ -134,7 +193,7 @@
       "ok": true,
       "label": "1: Aletheia's live preview shows the working state (inked canvas pixels)",
       "data": {
-        "pixels": 120
+        "pixels": 118
       }
     },
     {
@@ -156,8 +215,8 @@
       "ok": true,
       "label": "2: the Expressions stage shows the handoff (announced Expression = the scratch Expression; entry gate closed; no conflict)",
       "data": {
-        "expression_ref": "expression:fx-walk-reuse-muj1mpyv",
-        "scene_ref": "expression:fx-walk-reuse-muj1mpyv:scene:main",
+        "expression_ref": "expression:fx-walk-reuse-mujxqbr2",
+        "scene_ref": "expression:fx-walk-reuse-mujxqbr2:scene:main",
         "revision": 2,
         "gate": false,
         "conflict": false,
@@ -190,7 +249,7 @@
         "acts": [
           [
             "act:factory-run-run-01M3FNY3P0E4H7JGN0BARSRQ8R",
-            3
+            9
           ]
         ]
       }
@@ -436,7 +495,7 @@
       "ok": true,
       "label": "5: Open conversation opens the agent's real session in Tasks",
       "data": {
-        "excerpt": "Run\nFactory Expressions acceptance: Anima conducts one Expression act over a real O-I contract and addresses Aletheia; Aletheia reviews and returns it\nLive\nWorld\nSituated in O-I · no active profile\nO-I conversation\nReading…\n\nReading the conversation…\n\nConnect with\nNo encounter harness is configured."
+        "excerpt": "Run\nFactory Expressions acceptance: Anima conducts one Expression act over a real O-I contract and addresses Aletheia; Aletheia reviews and returns it\nLive\nWorld\nSituated in O-I · no active profile\nO-I conversation\nReading…\n\nReading the conversation…\n\nNot connected\nSend"
       }
     },
     {
@@ -536,8 +595,8 @@
       "label": "9: the edited character is saved as a reusable COPY (Anima (walk variation)) into the register; the curated file is untouched",
       "data": {
         "location": {
-          "path": "Work/O-I/desktop/cradle/material/expressive-material/character/anima-walk-variation-muj1pd60.expression.json",
-          "ref": "central:path:/Users/admin/Central:Work/O-I/desktop/cradle/material/expressive-material/character/anima-walk-variation-muj1pd60.expression.json",
+          "path": "Work/O-I/desktop/cradle/material/expressive-material/character/anima-walk-variation-mujxt1ql.expression.json",
+          "ref": "central:path:/Users/admin/Central:Work/O-I/desktop/cradle/material/expressive-material/character/anima-walk-variation-mujxt1ql.expression.json",
           "root": "/Users/admin/Central",
           "schema": "central.path-ref/v1"
         }
@@ -579,24 +638,24 @@
       "ok": true,
       "label": "9: the engine runs the reopened variation (announced Expression = the variation; entry gate closed)",
       "data": {
-        "expected": "expression:fx-walk-anima-variation-muj1pd58",
+        "expected": "expression:fx-walk-anima-variation-mujxt1pt",
         "state": "ready",
-        "expression_ref": "expression:fx-walk-anima-variation-muj1pd58",
-        "scene_ref": "expression:fx-walk-anima-variation-muj1pd58:scene:idle",
+        "expression_ref": "expression:fx-walk-anima-variation-mujxt1pt",
+        "scene_ref": "expression:fx-walk-anima-variation-mujxt1pt:scene:idle",
         "revision": 3,
         "gate": false,
         "conflict": false,
         "canvas": true,
         "notice": null,
         "opened": {
-          "expression_ref": "expression:fx-walk-anima-variation-muj1pd58",
-          "scene_ref": "expression:fx-walk-anima-variation-muj1pd58:scene:idle",
+          "expression_ref": "expression:fx-walk-anima-variation-mujxt1pt",
+          "scene_ref": "expression:fx-walk-anima-variation-mujxt1pt:scene:idle",
           "revision": 3,
           "gate": false,
           "conflict": false,
           "canvas": true,
           "notice": null,
-          "waited_ms": 2347,
+          "waited_ms": 3998,
           "stage_shown_before_click": true,
           "frames": [
             {
@@ -618,14 +677,14 @@
           "heard": {
             "listening": true,
             "commands": [
-              "open-expression:expression:fx-walk-anima-variation-muj1pd58"
+              "open-expression:expression:fx-walk-anima-variation-mujxt1pt"
             ],
             "status": "Anima — the composer's flame · saved revision 3"
           }
         },
         "console": [
-          "warning: [.WebGL-0x1040043c000]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels",
-          "warning: [.WebGL-0x1040043c000]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels (this message will no longer repeat)",
+          "warning: [.WebGL-0x10400455200]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels",
+          "warning: [.WebGL-0x10400455200]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels (this message will no longer repeat)",
           "warning: THREE.Clock: This module has been deprecated. Please use THREE.Timer instead.",
           "warning: THREE.Clock: This module has been deprecated. Please use THREE.Timer instead.",
           "warning: THREE.Clock: This module has been deprecated. Please use THREE.Timer instead.",
@@ -698,7 +757,7 @@
       "duration_ms": 0,
       "data": {
         "schema": "oi.cradle.walk/v1",
-        "mounted_at": "2026-09-26T23:51:08.519Z",
+        "mounted_at": "2026-09-27T14:49:43.434Z",
         "transport": {
           "kind": "bridge",
           "url": "http://127.0.0.1:4179"
@@ -709,7 +768,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 34,
+      "duration_ms": 33,
       "data": {
         "file": "factory-expressions-0-entered.png"
       }
@@ -717,7 +776,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 57,
+      "duration_ms": 34,
       "data": {
         "file": "factory-expressions-1-anima-idle.png"
       }
@@ -725,7 +784,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 51,
+      "duration_ms": 46,
       "data": {
         "file": "factory-expressions-1-anima-working.png"
       }
@@ -733,7 +792,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 47,
+      "duration_ms": 41,
       "data": {
         "file": "factory-expressions-1-aletheia-idle.png"
       }
@@ -741,7 +800,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 56,
+      "duration_ms": 40,
       "data": {
         "file": "factory-expressions-1-aletheia-working.png"
       }
@@ -749,7 +808,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 194,
+      "duration_ms": 239,
       "data": {
         "file": "factory-expressions-2-handoff-anima-aletheia.png"
       }
@@ -757,7 +816,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 208,
+      "duration_ms": 229,
       "data": {
         "file": "factory-expressions-2-arrival-anima.png"
       }
@@ -765,7 +824,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 101,
+      "duration_ms": 187,
       "data": {
         "file": "factory-expressions-4-live-timeline-start.png"
       }
@@ -773,7 +832,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 191,
+      "duration_ms": 233,
       "data": {
         "file": "factory-expressions-4-live-timeline-middle.png"
       }
@@ -781,7 +840,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 220,
+      "duration_ms": 199,
       "data": {
         "file": "factory-expressions-4-live-timeline-end.png"
       }
@@ -789,7 +848,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 139,
+      "duration_ms": 154,
       "data": {
         "file": "factory-expressions-5-panel-character.png"
       }
@@ -797,7 +856,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 38,
+      "duration_ms": 41,
       "data": {
         "file": "factory-expressions-5-character-conversation.png"
       }
@@ -805,7 +864,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 188,
+      "duration_ms": 193,
       "data": {
         "file": "factory-expressions-5-panel-goal.png"
       }
@@ -813,7 +872,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 152,
+      "duration_ms": 155,
       "data": {
         "file": "factory-expressions-5-panel-artifact.png"
       }
@@ -829,7 +888,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 173,
+      "duration_ms": 180,
       "data": {
         "file": "factory-expressions-5-panel-exchange.png"
       }
@@ -837,7 +896,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 27,
+      "duration_ms": 30,
       "data": {
         "file": "factory-expressions-5-message-composer.png"
       }
@@ -845,7 +904,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 567,
+      "duration_ms": 722,
       "data": {
         "file": "factory-expressions-6-techne-act-strip.png"
       }
@@ -853,7 +912,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 220,
+      "duration_ms": 340,
       "data": {
         "file": "factory-expressions-6-techne-edited.png"
       }
@@ -861,7 +920,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 272,
+      "duration_ms": 236,
       "data": {
         "file": "factory-expressions-6-returned-live.png"
       }
@@ -869,7 +928,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 290,
+      "duration_ms": 240,
       "data": {
         "file": "factory-expressions-9-variation-running.png"
       }
@@ -877,7 +936,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 217,
+      "duration_ms": 258,
       "data": {
         "file": "factory-expressions-10-seek-1.png"
       }
@@ -885,7 +944,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 216,
+      "duration_ms": 232,
       "data": {
         "file": "factory-expressions-10-seek-2.png"
       }
@@ -893,7 +952,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 233,
+      "duration_ms": 278,
       "data": {
         "file": "factory-expressions-10-seek-3.png"
       }

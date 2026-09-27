@@ -4,42 +4,65 @@
   "spec_ref": "docs/cradle/11-FACTORY.md §7 F1 F2 F3 F4 F5",
   "grade": "B",
   "binding": null,
-  "generated_at": "2026-09-23T23:48:06.320Z",
+  "generated_at": "2026-09-27T14:46:21.620Z",
   "environment": {
-    "base_url": "http://localhost:4273",
-    "bridge_url": "http://127.0.0.1:4279",
+    "base_url": "http://localhost:4173",
+    "bridge_url": "http://127.0.0.1:4179",
     "viewport": "1280x820",
     "browser_engine": "chromium",
     "bundle": "walk (WALK=1) served by vite preview",
     "build_input": {
       "mode": "fresh-build",
-      "bundle_fingerprint": "43f96dfdd390ca85738f1076682484aeb2dffb950b3a970500df9e9e53571cef"
+      "bundle_fingerprint": "11526b9664b2022ceafbef2353939d3bc1846fc49eba30dd8defb53018f8cfc8"
     },
     "node": "v24.16.0",
     "platform": "darwin",
     "source": {
-      "repository_root": "/private/tmp/claude-501/-Users-admin-Central/bd077907-24fc-4a07-9d7e-541f7e0b4f77/scratchpad/wt/O-I-cradle",
-      "repository_head": "2a4d092c6f1c9dd9de9e71d3605377da74e736e5",
+      "repository_root": "/Users/admin/Central/Work/O-I",
+      "repository_head": "898ab6e257741c793dec9cd15e8305c79f8dab87",
       "tracked_changes": [
-        ".superpowers/sdd/cradle-rebuild/progress.md",
-        "desktop/cradle/kernel/src/inhabitation.rs",
-        "desktop/cradle/kernel/src/lib.rs",
-        "desktop/cradle/kernel/tests/inhabitation_reads.rs",
-        "desktop/cradle/scripts/receipt-lint.mjs",
-        "desktop/cradle/src/contributions/factory/desk/RunLive.tsx",
-        "desktop/cradle/src/contributions/factory/desk/RunPositions.tsx",
-        "desktop/cradle/src/contributions/factory/desk/deskStore.ts",
-        "desktop/cradle/src/contributions/factory/desk/factoryObjects.tsx",
-        "desktop/cradle/src/contributions/factory/desk/fdesk.css",
-        "desktop/cradle/src/contributions/factory/fixtures/inhabitation.ts",
-        "desktop/cradle/src/contributions/factory/inhabitation/model.ts",
-        "desktop/cradle/src/contributions/factory/inhabitation/reads.ts",
-        "desktop/cradle/src/contributions/factory/sidebar/FactoryAgentsTab.tsx",
-        "desktop/cradle/src/contributions/factory/sidebar/FactoryContextSlice.tsx",
-        "desktop/cradle/src/contributions/factory/sidebar/PreparedBasis.tsx",
-        "desktop/cradle/src/kernel/types.ts",
-        "desktop/cradle/src/workspace/modeBodies.tsx",
-        "desktop/cradle/tests/factory-inhabitation-model.test.mjs",
+        ".central/source-change-horizon.json",
+        "ProjectCentral/now/agents/agency-gateway-awareness-brief-interjected-for-2026-09-06.json",
+        "ProjectCentral/now/agents/cradle-final-sidebar-agent-polish-2026-09-08.json",
+        "ProjectCentral/now/agents/cradle-mode-context-corner-refinement-2026-09-08.json",
+        "ProjectCentral/now/agents/cradle-sidebars-designed-once-across-every-2026-09-22.json",
+        "ProjectCentral/now/agents/editor-suite-and-crosspane-context-attachment-2026-09-08.json",
+        "ProjectCentral/now/agents/expression-overlay-steps-onto-the-wayfinder-2026-09-08.json",
+        "ProjectCentral/now/agents/factory-and-settings-designed-alongside-the-2026-09-22.json",
+        "ProjectCentral/now/agents/fnd0006-foundation-execution-round-lead-2026-09-08.json",
+        "ProjectCentral/now/agents/fnd02-d11-system-canvas-surface-renders-2026-09-08.json",
+        "ProjectCentral/now/agents/foundation-ux-specification-completed-with-pane-2026-09-08.json",
+        "ProjectCentral/now/agents/gateway-bootstrap-fold-landed-in-aikit-2026-09-06.json",
+        "ProjectCentral/now/agents/guardian-skillset-extended-centralsessionstrap-2026-09-06.json",
+        "ProjectCentral/now/agents/handoff-1788870232874808000.json",
+        "ProjectCentral/now/agents/handoff-1788870267456874000.json",
+        "ProjectCentral/now/agents/handoff-1788871222533209000.json",
+        "ProjectCentral/now/agents/handoff-1788874734956344000.json",
+        "ProjectCentral/now/agents/handoff-1788896960839895000.json",
+        "ProjectCentral/now/agents/handoff-1789213962.json",
+        "ProjectCentral/now/agents/harness-settings-acceptance-research-landed-2026-09-22.json",
+        "ProjectCentral/now/agents/native-browser-panes-and-refined-shell-2026-09-08.json",
+        "ProjectCentral/now/agents/oi-multimatrix-product-capability-collation-2026-09-08.json",
+        "ProjectCentral/now/agents/ownerdomain-integration-checkpoint-f84bd61-2026-09-08.json",
+        "ProjectCentral/now/agents/ownerled-editor-and-chrome-refinement-2026-09-08.json",
+        "ProjectCentral/now/agents/p1-expression-native-foundation-integration-2026-09-08.json",
+        "ProjectCentral/now/agents/pointcloud-elements-review-artifact-revision-2-2026-09-08.json",
+        "ProjectCentral/now/agents/pointcloud-elements-review-artifact-revision-3-2026-09-08.json",
+        "ProjectCentral/now/agents/pointcloud-elements-revision-4-expression-2026-09-08.json",
+        "ProjectCentral/now/agents/pointcloud-study-rev-6-honed-fnd07-2026-09-08.json",
+        "ProjectCentral/now/agents/pr-199-acceptedmain-honesty-repair-pushed-2026-09-08.json",
+        "ProjectCentral/now/agents/refresh-desktop-foundations-against-current-2026-09-08.json",
+        "ProjectCentral/now/agents/resume-whole-desktop-execution-programme-2026-09-06.json",
+        "ProjectCentral/now/agents/s-cli-and-mprime-desktop-capability-2026-09-06.json",
+        "ProjectCentral/now/agents/selfother-ux-corrected-and-current-owners-2026-09-08.json",
+        "ProjectCentral/now/agents/september-8-desktop-productfoundation-map-2026-09-08.json",
+        "ProjectCentral/now/agents/shared-field-original-planning-recovered-2026-09-08.json",
+        "ProjectCentral/now/agents/terminal-flow-editor-context-and-final-2026-09-08.json",
+        "ProjectCentral/now/agents/theme-library-vscode-standard-research-2026-09-23.json",
+        "ProjectCentral/now/agents/ui-convergence-review-seven-lanes-surveyed-2026-09-22.json",
+        "ProjectCentral/now/agents/ui-lead-locked-and-build-prompt-2026-09-23.json",
+        "ProjectCentral/now/agents/window-lights-contract-test-live-cut-restored-2026-09-22.json",
+        "ProjectCentral/now/promotions.json",
         "desktop/cradle/walk/artifacts/factory-desk-f1-reading.png",
         "desktop/cradle/walk/artifacts/factory-desk-f2-empty.png",
         "desktop/cradle/walk/artifacts/factory-desk-f3-partial.png",
@@ -51,40 +74,20 @@
         "desktop/cradle/walk/artifacts/factory-desk-factory-desk-760-dark.png",
         "desktop/cradle/walk/artifacts/factory-desk-factory-desk-760-light.png",
         "desktop/cradle/walk/artifacts/factory-desk.json",
-        "desktop/cradle/walk/artifacts/factory-development-agents-tab.png",
-        "desktop/cradle/walk/artifacts/factory-development-context-tab.png",
-        "desktop/cradle/walk/artifacts/factory-development-run-tab.png",
-        "desktop/cradle/walk/artifacts/factory-development.json",
-        "desktop/cradle/walk/artifacts/factory-inhabitation-fixture-agents.png",
-        "desktop/cradle/walk/artifacts/factory-inhabitation-fixture-context.png",
-        "desktop/cradle/walk/artifacts/factory-inhabitation-fixture-desk.png",
-        "desktop/cradle/walk/artifacts/factory-inhabitation-fixture-position-page.png",
-        "desktop/cradle/walk/artifacts/factory-inhabitation-fixture-run-live.png",
-        "desktop/cradle/walk/artifacts/factory-inhabitation-live-agents.png",
-        "desktop/cradle/walk/artifacts/factory-inhabitation-live-context.png",
-        "desktop/cradle/walk/artifacts/factory-inhabitation-live-desk.png",
-        "desktop/cradle/walk/artifacts/factory-inhabitation-live-run-live.png",
-        "desktop/cradle/walk/artifacts/factory-inhabitation.json",
-        "desktop/cradle/walk/artifacts/factory-run-f13-before.png",
-        "desktop/cradle/walk/artifacts/factory-run-f6-queued-live.png",
-        "desktop/cradle/walk/artifacts/factory-run-factory-run-map-1440-dark.png",
-        "desktop/cradle/walk/artifacts/factory-run-live.png",
-        "desktop/cradle/walk/artifacts/factory-run-unit-page.png",
-        "desktop/cradle/walk/artifacts/factory-run.json",
-        "desktop/cradle/walk/run.mjs",
-        "desktop/cradle/walk/scenarios/factory-inhabitation.mjs",
-        "docs/cradle/10-SIDEBARS.md",
-        "docs/cradle/11-FACTORY.md"
+        "desktop/cradle/walk/artifacts/mode-workspaces-factory-own-tree.png",
+        "desktop/cradle/walk/artifacts/mode-workspaces-failure.png",
+        "desktop/cradle/walk/artifacts/mode-workspaces.json",
+        "desktop/cradle/walk/artifacts/nara-embodiment-20260924/acceptance-walks.json"
       ],
-      "dirty_digest": "685bef40af02987048c37db4c235b7df2b5267de921f5cf4a27ff852ef9e3017",
-      "engine_provenance_path": "/private/tmp/claude-501/-Users-admin-Central/bd077907-24fc-4a07-9d7e-541f7e0b4f77/scratchpad/wt/O-I-cradle/packages/oi-design-system/expressions-engine/PROVENANCE.json",
+      "dirty_digest": "4a5c0dc86499797915e150a03f2fb661680a343f88eef974ef58f55999eff7dd",
+      "engine_provenance_path": "/Users/admin/Central/Work/O-I/packages/oi-design-system/expressions-engine/PROVENANCE.json",
       "engine_source": "EpiLogos/Point-Cloud-Demo",
       "engine_revision": "91db8428fc9dfba06cd258ec5a58e7dd9eef5313"
     }
   },
-  "passed": true,
+  "passed": false,
   "error": null,
-  "duration_ms": 12678,
+  "duration_ms": 14791,
   "checks": [
     {
       "ok": true,
@@ -145,9 +148,9 @@
       "label": "Units: one segment per owner work unit (A 4, B 2, C 0) — never a percentage",
       "data": {
         "unitCounts": {
-          "run:01M380B3D0PA5YZPHKC3Z0SGRS": 4,
-          "run:01M380XDB0FZRYTNB1S5XBWAS2": 2,
-          "run:01M381FQ90RZQSJYSQMVGDT442": 0
+          "run:01M3HAZC60QMGVDHTG6JNW75WG": 4,
+          "run:01M3HBHP40DJHRES4T0P30XMEA": 2,
+          "run:01M3HC4020593E679Z7AVVTZ48": 0
         }
       }
     },
@@ -204,15 +207,30 @@
       "label": "Opening a run replaces the Desk with the Run page (no stacking)"
     },
     {
-      "ok": true,
+      "ok": false,
       "label": "← Desk returns to the same scroll: scrollTop and the card's top equal before/after (±0.5px)",
       "data": {
-        "scrollable": 273,
+        "scrollable": 1062,
         "before": 90,
-        "after": 90,
-        "beforeTop": 36,
-        "afterTop": 36
+        "after": 795,
+        "beforeTop": 827.359375,
+        "afterTop": -31.625
       }
+    },
+    {
+      "ok": true,
+      "label": "Scrolling the Desk — wheel or an in-surface jump — moves a scroll owner inside the Factory stage alone; the shell and structural boxes never move",
+      "data": {
+        "scrolled": [],
+        "shell": 0,
+        "owners": [
+          "fdesk"
+        ]
+      }
+    },
+    {
+      "ok": true,
+      "label": "The Desk head stands visible and hittable from its top edge after the scrolls — nothing clips it"
     },
     {
       "ok": true,
@@ -268,12 +286,12 @@
       "duration_ms": 0,
       "data": {
         "schema": "oi.cradle.walk/v1",
-        "mounted_at": "2026-09-23T23:48:06.402Z",
+        "mounted_at": "2026-09-27T14:46:21.774Z",
         "transport": {
           "kind": "bridge",
-          "url": "http://127.0.0.1:4279"
+          "url": "http://127.0.0.1:4179"
         },
-        "url": "http://localhost:4273/"
+        "url": "http://localhost:4173/"
       }
     },
     {
@@ -282,18 +300,18 @@
       "duration_ms": 0.1,
       "data": {
         "schema": "oi.cradle.walk/v1",
-        "mounted_at": "2026-09-23T23:48:06.832Z",
+        "mounted_at": "2026-09-27T14:46:22.139Z",
         "transport": {
           "kind": "bridge",
-          "url": "http://127.0.0.1:4279"
+          "url": "http://127.0.0.1:4179"
         },
-        "url": "http://localhost:4273/"
+        "url": "http://localhost:4173/"
       }
     },
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 26,
+      "duration_ms": 23,
       "data": {
         "file": "factory-desk-f1-reading.png"
       }
@@ -301,7 +319,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 17,
+      "duration_ms": 24,
       "data": {
         "file": "factory-desk-f4-needs-you.png"
       }
@@ -309,7 +327,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 42,
+      "duration_ms": 37,
       "data": {
         "file": "factory-desk-factory-desk-1440-light.png"
       }
@@ -317,7 +335,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 35,
+      "duration_ms": 42,
       "data": {
         "file": "factory-desk-factory-desk-1000-light.png"
       }
@@ -325,7 +343,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 54,
+      "duration_ms": 42,
       "data": {
         "file": "factory-desk-factory-desk-760-light.png"
       }
@@ -333,7 +351,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 47,
+      "duration_ms": 56,
       "data": {
         "file": "factory-desk-factory-desk-1440-dark.png"
       }
@@ -341,7 +359,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 58,
+      "duration_ms": 56,
       "data": {
         "file": "factory-desk-factory-desk-1000-dark.png"
       }
@@ -349,7 +367,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 37,
+      "duration_ms": 63,
       "data": {
         "file": "factory-desk-factory-desk-760-dark.png"
       }
@@ -357,7 +375,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 27,
+      "duration_ms": 24,
       "data": {
         "file": "factory-desk-f2-empty.png"
       }
@@ -365,7 +383,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 29,
+      "duration_ms": 45,
       "data": {
         "file": "factory-desk-f3-partial.png"
       }

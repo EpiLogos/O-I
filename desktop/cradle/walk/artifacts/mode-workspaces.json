@@ -15,42 +15,80 @@
     "negatives": [],
     "claims_grade": "D"
   },
-  "generated_at": "2026-09-23T10:26:00.366Z",
+  "generated_at": "2026-09-27T14:35:15.017Z",
   "environment": {
-    "base_url": "http://localhost:5510",
-    "bridge_url": "http://127.0.0.1:5515",
+    "base_url": "http://localhost:4322",
+    "bridge_url": "http://127.0.0.1:4179",
     "viewport": "1280x820",
     "browser_engine": "chromium",
     "bundle": "walk (WALK=1) served by vite preview",
     "build_input": {
-      "mode": "reused-dist",
-      "bundle_fingerprint": "519b0195a0d4bb8c0793922f80fc94895c7602c8e50e565a28a26f5c6bbf560d"
+      "mode": "external-url",
+      "url": "http://localhost:4322",
+      "bundle_fingerprint": null
     },
     "node": "v24.16.0",
     "platform": "darwin",
     "source": {
-      "repository_root": "/Users/admin/Central/worktrees/walk-reds/o-i",
-      "repository_head": "6d769d1f75f7a6c30ae7e5db0eff0c8e3647477f",
+      "repository_root": "/Users/admin/Central/Work/O-I",
+      "repository_head": "898ab6e257741c793dec9cd15e8305c79f8dab87",
       "tracked_changes": [
-        "desktop/cradle/src/Cradle.tsx",
-        "desktop/cradle/src/CradleFrame.tsx",
-        "desktop/cradle/src/surface/Workbench.tsx",
-        "desktop/cradle/src/workspace/settings/SettingsPage.tsx",
+        ".central/source-change-horizon.json",
+        "ProjectCentral/now/agents/agency-gateway-awareness-brief-interjected-for-2026-09-06.json",
+        "ProjectCentral/now/agents/cradle-final-sidebar-agent-polish-2026-09-08.json",
+        "ProjectCentral/now/agents/cradle-mode-context-corner-refinement-2026-09-08.json",
+        "ProjectCentral/now/agents/cradle-sidebars-designed-once-across-every-2026-09-22.json",
+        "ProjectCentral/now/agents/editor-suite-and-crosspane-context-attachment-2026-09-08.json",
+        "ProjectCentral/now/agents/expression-overlay-steps-onto-the-wayfinder-2026-09-08.json",
+        "ProjectCentral/now/agents/factory-and-settings-designed-alongside-the-2026-09-22.json",
+        "ProjectCentral/now/agents/fnd0006-foundation-execution-round-lead-2026-09-08.json",
+        "ProjectCentral/now/agents/fnd02-d11-system-canvas-surface-renders-2026-09-08.json",
+        "ProjectCentral/now/agents/foundation-ux-specification-completed-with-pane-2026-09-08.json",
+        "ProjectCentral/now/agents/gateway-bootstrap-fold-landed-in-aikit-2026-09-06.json",
+        "ProjectCentral/now/agents/guardian-skillset-extended-centralsessionstrap-2026-09-06.json",
+        "ProjectCentral/now/agents/handoff-1788870232874808000.json",
+        "ProjectCentral/now/agents/handoff-1788870267456874000.json",
+        "ProjectCentral/now/agents/handoff-1788871222533209000.json",
+        "ProjectCentral/now/agents/handoff-1788874734956344000.json",
+        "ProjectCentral/now/agents/handoff-1788896960839895000.json",
+        "ProjectCentral/now/agents/handoff-1789213962.json",
+        "ProjectCentral/now/agents/harness-settings-acceptance-research-landed-2026-09-22.json",
+        "ProjectCentral/now/agents/native-browser-panes-and-refined-shell-2026-09-08.json",
+        "ProjectCentral/now/agents/oi-multimatrix-product-capability-collation-2026-09-08.json",
+        "ProjectCentral/now/agents/ownerdomain-integration-checkpoint-f84bd61-2026-09-08.json",
+        "ProjectCentral/now/agents/ownerled-editor-and-chrome-refinement-2026-09-08.json",
+        "ProjectCentral/now/agents/p1-expression-native-foundation-integration-2026-09-08.json",
+        "ProjectCentral/now/agents/pointcloud-elements-review-artifact-revision-2-2026-09-08.json",
+        "ProjectCentral/now/agents/pointcloud-elements-review-artifact-revision-3-2026-09-08.json",
+        "ProjectCentral/now/agents/pointcloud-elements-revision-4-expression-2026-09-08.json",
+        "ProjectCentral/now/agents/pointcloud-study-rev-6-honed-fnd07-2026-09-08.json",
+        "ProjectCentral/now/agents/pr-199-acceptedmain-honesty-repair-pushed-2026-09-08.json",
+        "ProjectCentral/now/agents/refresh-desktop-foundations-against-current-2026-09-08.json",
+        "ProjectCentral/now/agents/resume-whole-desktop-execution-programme-2026-09-06.json",
+        "ProjectCentral/now/agents/s-cli-and-mprime-desktop-capability-2026-09-06.json",
+        "ProjectCentral/now/agents/selfother-ux-corrected-and-current-owners-2026-09-08.json",
+        "ProjectCentral/now/agents/september-8-desktop-productfoundation-map-2026-09-08.json",
+        "ProjectCentral/now/agents/shared-field-original-planning-recovered-2026-09-08.json",
+        "ProjectCentral/now/agents/terminal-flow-editor-context-and-final-2026-09-08.json",
+        "ProjectCentral/now/agents/theme-library-vscode-standard-research-2026-09-23.json",
+        "ProjectCentral/now/agents/ui-convergence-review-seven-lanes-surveyed-2026-09-22.json",
+        "ProjectCentral/now/agents/ui-lead-locked-and-build-prompt-2026-09-23.json",
+        "ProjectCentral/now/agents/window-lights-contract-test-live-cut-restored-2026-09-22.json",
+        "ProjectCentral/now/promotions.json",
         "desktop/cradle/walk/artifacts/mode-workspaces-factory-own-tree.png",
+        "desktop/cradle/walk/artifacts/mode-workspaces-failure.png",
         "desktop/cradle/walk/artifacts/mode-workspaces.json",
-        "desktop/cradle/walk/scenarios/factory-desk.mjs",
-        "desktop/cradle/walk/scenarios/mode-workspaces.mjs",
-        "desktop/cradle/walk/scenarios/shell-recovery.mjs"
+        "desktop/cradle/walk/artifacts/nara-embodiment-20260924/acceptance-walks.json"
       ],
-      "dirty_digest": "e6c9808e5245b8c1d635b8d100fa48733d0869bdfdb32d040a246e241db9d6ee",
-      "engine_provenance_path": "/Users/admin/Central/worktrees/walk-reds/o-i/packages/oi-design-system/expressions-engine/PROVENANCE.json",
+      "dirty_digest": "25a154d0b8cb60ac170df4dc52739149809c0747cb251c18c8077cfe828e52ec",
+      "engine_provenance_path": "/Users/admin/Central/Work/O-I/packages/oi-design-system/expressions-engine/PROVENANCE.json",
       "engine_source": "EpiLogos/Point-Cloud-Demo",
       "engine_revision": "91db8428fc9dfba06cd258ec5a58e7dd9eef5313"
     }
   },
-  "passed": true,
-  "error": null,
-  "duration_ms": 39799,
+  "passed": false,
+  "error": "locator.click: Timeout 30000ms exceeded.\nCall log:\n  - waiting for locator('.world-system-settings')\n    - locator resolved to <button type=\"button\" title=\"Settings\" aria-pressed=\"false\" aria-label=\"Settings\" class=\"world-system-settings\">…</button>\n  - attempting click action\n    2 × waiting for element to be visible, enabled and stable\n      - element is visible, enabled and stable\n      - scrolling into view if needed\n      - done scrolling\n      - <footer class=\"canvas-arrangement\" aria-label=\"Workspace status\">…</footer> from <div data-pinned=\"false\" class=\"workspace-footer-edge\">…</div> subtree intercepts pointer events\n    - retrying click action\n    - waiting 20ms\n    2 × waiting for element to be visible, enabled and stable\n      - element is visible, enabled and stable\n      - scrolling into view if needed\n      - done scrolling\n      - <footer class=\"canvas-arrangement\" aria-label=\"Workspace status\">…</footer> from <div data-pinned=\"false\" class=\"workspace-footer-edge\">…</div> subtree intercepts pointer events\n    - retrying click action\n      - waiting 100ms\n    58 × waiting for element to be visible, enabled and stable\n       - element is visible, enabled and stable\n       - scrolling into view if needed\n       - done scrolling\n       - <footer class=\"canvas-arrangement\" aria-label=\"Workspace status\">…</footer> from <div data-pinned=\"false\" class=\"workspace-footer-edge\">…</div> subtree intercepts pointer events\n     - retrying click action\n       - waiting 500ms\n\n    at Module.run (/Users/admin/Central/Work/O-I/desktop/cradle/walk/scenarios/mode-workspaces.mjs:79:24)\n    at async runScenario (/Users/admin/Central/Work/O-I/desktop/cradle/walk/run.mjs:629:7)\n    at async file:///Users/admin/Central/Work/O-I/desktop/cradle/walk/run.mjs:712:18",
+  "duration_ms": 34388,
   "checks": [
     {
       "ok": true,
@@ -103,60 +141,6 @@
     {
       "ok": true,
       "label": "Leaving the lens is the same one act"
-    },
-    {
-      "ok": true,
-      "label": "The terminal Settings button enters its mode instantly — no awaited owner call gates the switch",
-      "data": {
-        "entered_ms": 389
-      }
-    },
-    {
-      "ok": true,
-      "label": "The terminal button marks itself active (aria-pressed) while Settings stands"
-    },
-    {
-      "ok": true,
-      "label": "Settings dedicates the view: the System panel inside its stage, no tab chrome"
-    },
-    {
-      "ok": true,
-      "label": "Settings is recorded as the workspace mode, its own tree in the book"
-    },
-    {
-      "ok": true,
-      "label": "Unsaved writing is restored when its mode returns"
-    },
-    {
-      "ok": true,
-      "label": "Idle after mode switches: zero scheduled animation frames",
-      "data": {
-        "frames": 0
-      }
-    },
-    {
-      "ok": true,
-      "label": "At most the window's one field"
-    },
-    {
-      "ok": true,
-      "label": "The active mode and every visited mode's tree restore after a reload"
-    },
-    {
-      "ok": true,
-      "label": "The restore raises no recovery or error"
-    },
-    {
-      "ok": true,
-      "label": "A version-1 book (one tree) opens without recovery"
-    },
-    {
-      "ok": true,
-      "label": "Its single tree becomes the tree of the mode it recorded"
-    },
-    {
-      "ok": true,
-      "label": "and is written back as version 2 on the first change"
     }
   ],
   "ops": [
@@ -166,18 +150,18 @@
       "duration_ms": 0,
       "data": {
         "schema": "oi.cradle.walk/v1",
-        "mounted_at": "2026-09-23T10:26:00.665Z",
+        "mounted_at": "2026-09-27T14:35:15.169Z",
         "transport": {
           "kind": "bridge",
-          "url": "http://127.0.0.1:5515"
+          "url": "http://127.0.0.1:4179"
         },
-        "url": "http://localhost:5510/"
+        "url": "http://localhost:4322/"
       }
     },
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 26,
+      "duration_ms": 35,
       "data": {
         "file": "mode-workspaces-factory-own-tree.png"
       }
@@ -185,48 +169,21 @@
     {
       "ok": true,
       "op": "info",
-      "duration_ms": 0,
+      "duration_ms": 0.1,
       "data": {
         "schema": "oi.cradle.walk/v1",
-        "mounted_at": "2026-09-23T10:26:05.590Z",
+        "mounted_at": "2026-09-27T14:35:18.511Z",
         "transport": {
           "kind": "bridge",
-          "url": "http://127.0.0.1:5515"
+          "url": "http://127.0.0.1:4179"
         },
-        "url": "http://localhost:5510/"
-      }
-    },
-    {
-      "ok": true,
-      "op": "info",
-      "duration_ms": 0,
-      "data": {
-        "schema": "oi.cradle.walk/v1",
-        "mounted_at": "2026-09-23T10:26:09.892Z",
-        "transport": {
-          "kind": "bridge",
-          "url": "http://127.0.0.1:5515"
-        },
-        "url": "http://localhost:5510/"
-      }
-    },
-    {
-      "ok": true,
-      "op": "info",
-      "duration_ms": 0,
-      "data": {
-        "schema": "oi.cradle.walk/v1",
-        "mounted_at": "2026-09-23T10:26:10.417Z",
-        "transport": {
-          "kind": "bridge",
-          "url": "http://127.0.0.1:5515"
-        },
-        "url": "http://localhost:5510/"
+        "url": "http://localhost:4322/"
       }
     }
   ],
   "metrics": {},
   "screenshots": [
     "mode-workspaces-factory-own-tree.png"
-  ]
+  ],
+  "failure_stage": "application"
 }
