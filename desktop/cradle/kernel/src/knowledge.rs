@@ -356,20 +356,24 @@ mod tests {
     #[cfg(unix)]
     #[test]
     fn native_read_deadline_stops_a_waiting_process_group() {
-        let mut command=Command::new("/bin/sh");command.args(["-c","sleep 30 & wait"]);
-        let start=std::time::Instant::now();
-        let error=bounded_output(command,std::time::Duration::from_millis(100)).unwrap_err();
-        assert!(matches!(error,CallError::Unavailable{..}));
-        assert!(start.elapsed()<std::time::Duration::from_secs(2));
+        let mut command = Command::new("/bin/sh");
+        command.args(["-c", "sleep 30 & wait"]);
+        let start = std::time::Instant::now();
+        let error = bounded_output(command, std::time::Duration::from_millis(100)).unwrap_err();
+        assert!(matches!(error, CallError::Unavailable { .. }));
+        assert!(start.elapsed() < std::time::Duration::from_secs(2));
     }
     #[cfg(unix)]
     #[test]
     fn native_read_bounds_a_real_process_output_stream() {
-        let mut command=Command::new("/usr/bin/yes");command.arg("bounded read");
-        let start=std::time::Instant::now();
-        let error=bounded_output(command,std::time::Duration::from_secs(5)).unwrap_err();
-        assert!(matches!(error,CallError::Unavailable{detail} if detail.contains("bounded output")));
-        assert!(start.elapsed()<std::time::Duration::from_secs(5));
+        let mut command = Command::new("/usr/bin/yes");
+        command.arg("bounded read");
+        let start = std::time::Instant::now();
+        let error = bounded_output(command, std::time::Duration::from_secs(5)).unwrap_err();
+        assert!(
+            matches!(error,CallError::Unavailable{detail} if detail.contains("bounded output"))
+        );
+        assert!(start.elapsed() < std::time::Duration::from_secs(5));
     }
 
     #[derive(Deserialize)]

@@ -23,7 +23,10 @@ impl Ground {
         let root = std::env::temp_dir().join(format!(
             "oi-kernel-material-bytes-{}-{}-{}",
             std::process::id(),
-            SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_nanos(),
+            SystemTime::now()
+                .duration_since(UNIX_EPOCH)
+                .unwrap()
+                .as_nanos(),
             SEQ.fetch_add(1, std::sync::atomic::Ordering::Relaxed)
         ));
         fs::create_dir(&root).unwrap();
@@ -35,8 +38,14 @@ impl Ground {
             .arg(&root)
             .args(["--json", "action", "run", "central.init", "{}"])
             .output()
-            .expect("real ctrl must be installed, or OI_CENTRAL_CTRL_BIN must name the pinned build");
-        assert!(output.status.success(), "{}", String::from_utf8_lossy(&output.stdout));
+            .expect(
+                "real ctrl must be installed, or OI_CENTRAL_CTRL_BIN must name the pinned build",
+            );
+        assert!(
+            output.status.success(),
+            "{}",
+            String::from_utf8_lossy(&output.stdout)
+        );
         let client = CentralClient::with(binary, Some(root.clone()), "material-bytes".into());
         Self { root, client }
     }
@@ -50,7 +59,10 @@ impl Drop for Ground {
 const PNG_BYTES: &[u8] = &[0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A, 1, 2, 3, 4];
 
 fn locate(ground: &Ground, name: &str) -> oi_cradle_kernel::files::Location {
-    let listing = ground.client.run("central.files.list", serde_json::json!({"path": ""})).unwrap();
+    let listing = ground
+        .client
+        .run("central.files.list", serde_json::json!({"path": ""}))
+        .unwrap();
     let entries = listing["entries"].as_array().unwrap();
     let entry = entries.iter().find(|entry| entry["name"] == name).unwrap();
     serde_json::from_value(entry["location"].clone()).unwrap()
@@ -64,9 +76,19 @@ fn binary_material_reads_base64_with_mime_hint_and_matches_bytes() {
     let mut kernel = Kernel::new(ground.client.clone());
     let location = locate(&ground, "asset.png");
 
-    let outcome = kernel.apply(KernelOp::FileBytes { location: location.clone() }).unwrap();
+    let outcome = kernel
+        .apply(KernelOp::FileBytes {
+            location: location.clone(),
+        })
+        .unwrap();
     match outcome.result {
-        KernelOpResult::FileBytes { location: returned, byte_len, mime_hint, content_base64, .. } => {
+        KernelOpResult::FileBytes {
+            location: returned,
+            byte_len,
+            mime_hint,
+            content_base64,
+            ..
+        } => {
             assert_eq!(returned, location);
             assert_eq!(byte_len, PNG_BYTES.len() as u64);
             assert_eq!(mime_hint.as_deref(), Some("image/png"));
@@ -86,14 +108,31 @@ fn nul_containing_file_refuses_text_read_but_succeeds_as_material() {
     let mut kernel = Kernel::new(ground.client.clone());
     let location = locate(&ground, "mystery.bin");
 
-    let text_result = kernel.apply(KernelOp::FileRead { location: location.clone() });
-    assert!(text_result.is_err(), "NUL bytes must still refuse the UTF-8 text contract");
+    let text_result = kernel.apply(KernelOp::FileRead {
+        location: location.clone(),
+    });
+    assert!(
+        text_result.is_err(),
+        "NUL bytes must still refuse the UTF-8 text contract"
+    );
 
-    let outcome = kernel.apply(KernelOp::FileBytes { location: location.clone() }).unwrap();
+    let outcome = kernel
+        .apply(KernelOp::FileBytes {
+            location: location.clone(),
+        })
+        .unwrap();
     match outcome.result {
-        KernelOpResult::FileBytes { byte_len, content_base64, mime_hint, .. } => {
+        KernelOpResult::FileBytes {
+            byte_len,
+            content_base64,
+            mime_hint,
+            ..
+        } => {
             assert_eq!(byte_len, bytes.len() as u64);
-            assert_eq!(mime_hint, None, "an unrecognised extension and no magic bytes yields no hint");
+            assert_eq!(
+                mime_hint, None,
+                "an unrecognised extension and no magic bytes yields no hint"
+            );
             assert_eq!(base64_decode(&content_base64), bytes);
         }
         other => panic!("expected FileBytes, got {other:?}"),

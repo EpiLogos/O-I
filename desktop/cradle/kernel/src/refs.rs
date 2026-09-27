@@ -44,7 +44,10 @@ pub const SOURCE_PROVENANCE: &str = "central.projectcentral";
 /// Wrap a Central source ref — already in the owner's canonical grammar —
 /// as the whole ref the kernel names in events. The ref string is carried
 /// verbatim; nothing is normalised, escaped, or re-derived here.
-pub fn source_semantic_ref(source_ref: &str, revision: Option<&str>) -> Result<SemanticRef, String> {
+pub fn source_semantic_ref(
+    source_ref: &str,
+    revision: Option<&str>,
+) -> Result<SemanticRef, String> {
     if source_ref.trim().is_empty() {
         return Err("a source ref the kernel would name is empty".to_owned());
     }
@@ -65,15 +68,14 @@ mod tests {
 
     #[test]
     fn a_central_source_ref_travels_verbatim_and_whole() {
-        let canonical = "central:source:project:project:o-i:ProjectCentral/user/learnings/README.md";
+        let canonical =
+            "central:source:project:project:o-i:ProjectCentral/user/learnings/README.md";
         let reference = source_semantic_ref(canonical, Some("central.content-fnv1a64/v1:2389:x"))
             .expect("a canonical ref is a whole ref");
         assert_eq!(reference.ref_id, canonical);
         assert_eq!(reference.kind, "source");
         assert_eq!(reference.native_owner, "central");
-        assert_eq!(
-            reference.provenance.source, "central.projectcentral"
-        );
+        assert_eq!(reference.provenance.source, "central.projectcentral");
         let wire = serde_json::to_value(&reference).unwrap();
         assert_eq!(wire["ref"], canonical);
         // round trip keeps the owner's spelling byte-identical

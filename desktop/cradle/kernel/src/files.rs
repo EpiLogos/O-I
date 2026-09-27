@@ -76,12 +76,22 @@ fn valid(location: &Location) -> bool {
 }
 /// Decode native path identity only through Central's owning resolver.
 pub fn resolve(client: &CentralClient, reference: &str) -> Result<Location, String> {
-    let value = client.run("central.files.resolve", json!({"ref":reference,"project":null})).map_err(|error| error.to_string())?;
-    if value["schema"] != "central.file-location/v1" || value["automatic_agent_or_model_invocation"] != false {
+    let value = client
+        .run(
+            "central.files.resolve",
+            json!({"ref":reference,"project":null}),
+        )
+        .map_err(|error| error.to_string())?;
+    if value["schema"] != "central.file-location/v1"
+        || value["automatic_agent_or_model_invocation"] != false
+    {
         return Err("Unsupported native file resolution".into());
     }
-    let location: Location = serde_json::from_value(value["location"].clone()).map_err(|error| error.to_string())?;
-    if !valid(&location) || location.ref_id != reference { return Err("Central redirected the requested file identity".into()); }
+    let location: Location =
+        serde_json::from_value(value["location"].clone()).map_err(|error| error.to_string())?;
+    if !valid(&location) || location.ref_id != reference {
+        return Err("Central redirected the requested file identity".into());
+    }
     Ok(location)
 }
 pub fn list(client: &CentralClient, path: &str) -> Result<Directory, String> {
@@ -201,7 +211,10 @@ pub fn resolve_material(
             ));
         }
         let outcome = kernel
-            .apply(crate::KernelOp::FilesList { path: directory_path.clone(), fresh: None })
+            .apply(crate::KernelOp::FilesList {
+                path: directory_path.clone(),
+                fresh: None,
+            })
             .map_err(MaterialRouteError::NotFound)?;
         let directory = match outcome.result {
             crate::KernelOpResult::DirectoryRead { directory } => directory,
@@ -211,7 +224,11 @@ pub fn resolve_material(
                 ))
             }
         };
-        let Some(entry) = directory.entries.into_iter().find(|entry| &entry.name == name) else {
+        let Some(entry) = directory
+            .entries
+            .into_iter()
+            .find(|entry| &entry.name == name)
+        else {
             return Err(MaterialRouteError::NotFound(
                 "Material asset is not present in its owner directory".into(),
             ));
@@ -219,7 +236,9 @@ pub fn resolve_material(
         let is_last = index + 1 == relative.len();
         if is_last {
             if entry.kind != "file" {
-                return Err(MaterialRouteError::NotFound("Material asset is not a regular file".into()));
+                return Err(MaterialRouteError::NotFound(
+                    "Material asset is not a regular file".into(),
+                ));
             }
             return Ok(entry.location);
         }
@@ -233,31 +252,88 @@ pub fn resolve_material(
     unreachable!("the loop above returns on its last iteration")
 }
 
-#[derive(Clone,Debug,Deserialize,Serialize,PartialEq)]
-#[serde(tag="action",rename_all="snake_case")]
+#[derive(Clone, Debug, Deserialize, Serialize, PartialEq)]
+#[serde(tag = "action", rename_all = "snake_case")]
 pub enum Request {
- Write {expected_revision:String,content:String},
- History {limit:Option<usize>,before:Option<u64>},
- RecoveryPreview {expected_revision:String,revision:String},
- Restore {expected_revision:String,revision:String},
+    Write {
+        expected_revision: String,
+        content: String,
+    },
+    History {
+        limit: Option<usize>,
+        before: Option<u64>,
+    },
+    RecoveryPreview {
+        expected_revision: String,
+        revision: String,
+    },
+    Restore {
+        expected_revision: String,
+        revision: String,
+    },
 }
-pub fn operate(client:&CentralClient,location:&Location,request:&Request)->Result<serde_json::Value,String> {
- if !valid(location){return Err("Unsupported native file location".into());}
- let (action,mut input)=match request {
-  Request::Write{expected_revision,content}=>("central.files.write",json!({"expected_revision":expected_revision,"content":content})),
-  Request::History{limit,before}=>("central.files.history",json!({"limit":limit.unwrap_or(50),"before":before})),
-  Request::RecoveryPreview{expected_revision,revision}=>("central.files.recovery_preview",json!({"expected_revision":expected_revision,"revision":revision})),
-  Request::Restore{expected_revision,revision}=>("central.files.restore",json!({"expected_revision":expected_revision,"revision":revision})),
- };
- if input["before"].is_null(){input.as_object_mut().unwrap().remove("before");}
- input["location"]=json!(location);
- // Attribution of the explicit local UI action is not an authority override.
- if matches!(request,Request::Write{..}|Request::Restore{..}) {input["actor"]=json!("oi-desktop-user");input["actor_kind"]=json!("human");}
- let result=client.run(action,input).map_err(|error|error.to_string())?;
- let schema=match request {Request::Write{..}|Request::Restore{..}=>"central.file-mutation/v1",Request::History{..}=>"central.file-history/v1",Request::RecoveryPreview{..}=>"central.file-recovery-preview/v1"};
- if result["schema"]!=schema || result["location"]!=json!(location){return Err("Central returned a redirected or unsupported file operation".into());}
- if matches!(request,Request::Write{..}|Request::Restore{..}) && !["created","written","unchanged","conflict"].contains(&result["outcome"].as_str().unwrap_or("")){return Err("Central returned an unsupported mutation outcome".into());}
- Ok(result)
+pub fn operate(
+    client: &CentralClient,
+    location: &Location,
+    request: &Request,
+) -> Result<serde_json::Value, String> {
+    if !valid(location) {
+        return Err("Unsupported native file location".into());
+    }
+    let (action, mut input) = match request {
+        Request::Write {
+            expected_revision,
+            content,
+        } => (
+            "central.files.write",
+            json!({"expected_revision":expected_revision,"content":content}),
+        ),
+        Request::History { limit, before } => (
+            "central.files.history",
+            json!({"limit":limit.unwrap_or(50),"before":before}),
+        ),
+        Request::RecoveryPreview {
+            expected_revision,
+            revision,
+        } => (
+            "central.files.recovery_preview",
+            json!({"expected_revision":expected_revision,"revision":revision}),
+        ),
+        Request::Restore {
+            expected_revision,
+            revision,
+        } => (
+            "central.files.restore",
+            json!({"expected_revision":expected_revision,"revision":revision}),
+        ),
+    };
+    if input["before"].is_null() {
+        input.as_object_mut().unwrap().remove("before");
+    }
+    input["location"] = json!(location);
+    // Attribution of the explicit local UI action is not an authority override.
+    if matches!(request, Request::Write { .. } | Request::Restore { .. }) {
+        input["actor"] = json!("oi-desktop-user");
+        input["actor_kind"] = json!("human");
+    }
+    let result = client
+        .run(action, input)
+        .map_err(|error| error.to_string())?;
+    let schema = match request {
+        Request::Write { .. } | Request::Restore { .. } => "central.file-mutation/v1",
+        Request::History { .. } => "central.file-history/v1",
+        Request::RecoveryPreview { .. } => "central.file-recovery-preview/v1",
+    };
+    if result["schema"] != schema || result["location"] != json!(location) {
+        return Err("Central returned a redirected or unsupported file operation".into());
+    }
+    if matches!(request, Request::Write { .. } | Request::Restore { .. })
+        && !["created", "written", "unchanged", "conflict"]
+            .contains(&result["outcome"].as_str().unwrap_or(""))
+    {
+        return Err("Central returned an unsupported mutation outcome".into());
+    }
+    Ok(result)
 }
 
 /// HTTP representation for owner-read material bytes. Specific owner hints win;

@@ -53,7 +53,10 @@ fn temporary_root(tag: &str) -> PathBuf {
         .duration_since(UNIX_EPOCH)
         .unwrap()
         .as_nanos();
-    let root = std::env::temp_dir().join(format!("oi-action-dispatch-{tag}-{stamp}-{}", std::process::id()));
+    let root = std::env::temp_dir().join(format!(
+        "oi-action-dispatch-{tag}-{stamp}-{}",
+        std::process::id()
+    ));
     fs::create_dir(&root).unwrap();
     root
 }
@@ -153,7 +156,9 @@ impl Fixture {
     /// One isolated Central ground + project + AIKIT_HOME, exact bindings
     /// exported for every owner child process.
     fn new(tag: &str) -> Self {
-        let env = ENV_LOCK.lock().unwrap_or_else(|poisoned| poisoned.into_inner());
+        let env = ENV_LOCK
+            .lock()
+            .unwrap_or_else(|poisoned| poisoned.into_inner());
         let root = temporary_root(tag);
         let aikit_home = root.join("aikit-home");
         fs::create_dir_all(&aikit_home).unwrap();
@@ -181,7 +186,11 @@ impl Fixture {
         // `projectcentral.init` scaffolds a default wiki; replace it with the
         // hand-countable C1 fixture.
         seed_project_wiki(&project_root);
-        Self { _env: env, root, _aikit_home: aikit_home }
+        Self {
+            _env: env,
+            root,
+            _aikit_home: aikit_home,
+        }
     }
 
     fn client(&self) -> CentralClient {
@@ -213,8 +222,13 @@ impl Fixture {
             .args(["log", "export"])
             .output()
             .expect("launch the pinned suite executable for aikit log export");
-        assert!(output.status.success(), "aikit log export failed: {}", String::from_utf8_lossy(&output.stderr));
-        let envelope: Value = serde_json::from_slice(&output.stdout).expect("aikit log export envelope");
+        assert!(
+            output.status.success(),
+            "aikit log export failed: {}",
+            String::from_utf8_lossy(&output.stderr)
+        );
+        let envelope: Value =
+            serde_json::from_slice(&output.stdout).expect("aikit log export envelope");
         assert_eq!(envelope["ok"], true);
         envelope["data"]["events"]
             .as_array()
@@ -228,7 +242,12 @@ impl Fixture {
         self.dispatch_with_input(action, target_ref, None)
     }
 
-    fn dispatch_with_input(&self, action: &str, target_ref: &str, input: Option<Value>) -> ActionDispatch {
+    fn dispatch_with_input(
+        &self,
+        action: &str,
+        target_ref: &str,
+        input: Option<Value>,
+    ) -> ActionDispatch {
         let mut kernel = self.kernel();
         let outcome = kernel
             .apply(KernelOp::InvokeAction {
@@ -267,10 +286,14 @@ fn open_dispatches_through_the_real_owner_and_records_exactly_one_familiarity_ob
     // the disclosed open Action spelling, invocable on any resolved ref.
     let resolution = knowledge::call(
         &fixture.project_cwd(),
-        &knowledge::Request::Resolve { query: "action".into() },
+        &knowledge::Request::Resolve {
+            query: "action".into(),
+        },
     )
     .unwrap();
-    let hits = resolution["hits"].as_array().expect("merged resolve returns typed hits");
+    let hits = resolution["hits"]
+        .as_array()
+        .expect("merged resolve returns typed hits");
     assert!(
         hits.iter().any(|hit| hit["resource"] == FILE_ROW_REF),
         "the seeded file resolves as a hit"
@@ -285,7 +308,11 @@ fn open_dispatches_through_the_real_owner_and_records_exactly_one_familiarity_ob
 
     // Dispatch the disclosed Action through the typed kernel op.
     let dispatch = fixture.dispatch("knowledge/open", FILE_ROW_REF);
-    let ActionDispatch::Invoked { owner_operation, data } = &dispatch else {
+    let ActionDispatch::Invoked {
+        owner_operation,
+        data,
+    } = &dispatch
+    else {
         panic!("knowledge/open must invoke the real owner operation, got {dispatch:?}")
     };
     assert_eq!(owner_operation, "aikit knowledge open");
@@ -310,12 +337,20 @@ fn open_dispatches_through_the_real_owner_and_records_exactly_one_familiarity_ob
         matches!(refused, ActionDispatch::OwnerRefused { .. }),
         "unresolved ref refuses through the owner: {refused:?}"
     );
-    assert_eq!(fixture.familiarity_observation_events(), 1, "a failed open records nothing");
+    assert_eq!(
+        fixture.familiarity_observation_events(),
+        1,
+        "a failed open records nothing"
+    );
 
     // The kernel log itself stayed empty: owner-side effects live in the
     // owner store, not in kernel state.
     let kernel = fixture.kernel();
-    assert_eq!(kernel.event_log().len(), 0, "the dispatch adapter emits nothing");
+    assert_eq!(
+        kernel.event_log().len(),
+        0,
+        "the dispatch adapter emits nothing"
+    );
 
     let _ = fs::remove_dir_all(&fixture.root);
 }
@@ -335,7 +370,9 @@ fn every_seeded_resolution_hit_invokes_its_open_action() {
         },
     )
     .unwrap();
-    let hits = resolution["hits"].as_array().expect("merged resolve returns typed hits");
+    let hits = resolution["hits"]
+        .as_array()
+        .expect("merged resolve returns typed hits");
     let seeded = [FILE_ROW_REF, FLOW_ROW_REF, SUBJECT_ROW_REF];
     for expected in seeded {
         assert!(
@@ -373,7 +410,11 @@ fn central_wiki_read_action_returns_the_owner_payload_unchanged() {
     // The same Action, dispatched as the graph node's disclosed Action ref
     // (target_ref is the Central wiki node ref, carried verbatim).
     let dispatch = fixture.dispatch("projectcentral.wiki.read", "wiki:node:action-note");
-    let ActionDispatch::Invoked { owner_operation, data } = dispatch else {
+    let ActionDispatch::Invoked {
+        owner_operation,
+        data,
+    } = dispatch
+    else {
         panic!("Central wiki read must invoke, got {dispatch:?}")
     };
     assert_eq!(owner_operation, "projectcentral.wiki.read");
@@ -396,11 +437,16 @@ fn central_wiki_read_action_returns_the_owner_payload_unchanged() {
             },
         })
         .unwrap();
-    let KernelOpResult::ActionDispatched { dispatch: root_dispatch } = root_outcome.result else {
+    let KernelOpResult::ActionDispatched {
+        dispatch: root_dispatch,
+    } = root_outcome.result
+    else {
         panic!("typed ActionDispatched result expected")
     };
     match root_dispatch {
-        ActionDispatch::Invoked { data, .. } => assert_eq!(data["schema"], "central.wiki-reading/v1"),
+        ActionDispatch::Invoked { data, .. } => {
+            assert_eq!(data["schema"], "central.wiki-reading/v1")
+        }
         ActionDispatch::OwnerRefused { .. } => {
             // The fixture's root register keeps no authored wiki; the owner's
             // refusal is an owner truth, carried verbatim.
@@ -450,7 +496,9 @@ fn unknown_owner_and_malformed_refs_are_explicit_states() {
     let unknown = fixture.dispatch("acme.everything", FILE_ROW_REF);
     match &unknown {
         ActionDispatch::UnknownOwner { action } => assert_eq!(action, "acme.everything"),
-        other => panic!("unregistered spelling must be an explicit unknown-owner state, got {other:?}"),
+        other => {
+            panic!("unregistered spelling must be an explicit unknown-owner state, got {other:?}")
+        }
     }
 
     for (action, target_ref) in [
@@ -479,7 +527,10 @@ fn owner_refusal_and_unavailable_are_explicit_verbatim_states() {
     // `knowledge.open_unresolved` / "no knowledge provider resolves …").
     let refused = fixture.dispatch("knowledge/open", "wiki:node:absent");
     match &refused {
-        ActionDispatch::OwnerRefused { owner_operation, message } => {
+        ActionDispatch::OwnerRefused {
+            owner_operation,
+            message,
+        } => {
             assert_eq!(owner_operation, "aikit knowledge open");
             assert!(
                 message.contains("no knowledge provider resolves"),
@@ -493,9 +544,15 @@ fn owner_refusal_and_unavailable_are_explicit_verbatim_states() {
     // register answers no, verbatim.
     let central_refused = fixture.dispatch("projectcentral.wiki.absent", "wiki:node:action-note");
     match &central_refused {
-        ActionDispatch::OwnerRefused { owner_operation, message } => {
+        ActionDispatch::OwnerRefused {
+            owner_operation,
+            message,
+        } => {
             assert_eq!(owner_operation, "projectcentral.wiki.absent");
-            assert!(!message.trim().is_empty(), "Central refusal message verbatim: {message}");
+            assert!(
+                !message.trim().is_empty(),
+                "Central refusal message verbatim: {message}"
+            );
         }
         other => panic!("Central owner refusal must be explicit, got {other:?}"),
     }
@@ -523,9 +580,15 @@ fn owner_refusal_and_unavailable_are_explicit_verbatim_states() {
     );
     std::env::set_var("OI_BIN", &real_oi);
     match &unavailable {
-        ActionDispatch::OwnerUnavailable { owner_operation, detail } => {
+        ActionDispatch::OwnerUnavailable {
+            owner_operation,
+            detail,
+        } => {
             assert_eq!(owner_operation, "aikit knowledge open");
-            assert!(!detail.trim().is_empty(), "unavailable detail names the absence: {detail}");
+            assert!(
+                !detail.trim().is_empty(),
+                "unavailable detail names the absence: {detail}"
+            );
         }
         other => panic!("owner unavailability must be an explicit state, got {other:?}"),
     }
@@ -553,7 +616,10 @@ fn wire_shape_is_stable_for_the_typed_consumer() {
     assert_eq!(op["project"], "ActionProj");
     assert_eq!(op["invocation"]["action"], "knowledge/open");
     assert_eq!(op["invocation"]["target_ref"], FILE_ROW_REF);
-    assert!(op["invocation"].get("input").is_none(), "absent optional input stays off the wire");
+    assert!(
+        op["invocation"].get("input").is_none(),
+        "absent optional input stays off the wire"
+    );
 
     // Schema constant is named and versioned for the receipt contract.
     assert_eq!(ACTION_DISPATCH_SCHEMA, "oi.cradle.action-dispatch/v1");
@@ -567,14 +633,26 @@ fn wire_shape_is_stable_for_the_typed_consumer() {
     .unwrap();
     assert_eq!(states["state"], "invoked");
     for state in [
-        ActionDispatch::UnsupportedAction { owner: "ai-kit".into(), detail: "d".into() },
+        ActionDispatch::UnsupportedAction {
+            owner: "ai-kit".into(),
+            detail: "d".into(),
+        },
         ActionDispatch::MalformedRef { detail: "d".into() },
         ActionDispatch::UnknownOwner { action: "a".into() },
-        ActionDispatch::OwnerRefused { owner_operation: "o".into(), message: "m".into() },
-        ActionDispatch::OwnerUnavailable { owner_operation: "o".into(), detail: "d".into() },
+        ActionDispatch::OwnerRefused {
+            owner_operation: "o".into(),
+            message: "m".into(),
+        },
+        ActionDispatch::OwnerUnavailable {
+            owner_operation: "o".into(),
+            detail: "d".into(),
+        },
     ] {
         let wire = serde_json::to_value(state).unwrap();
-        assert!(wire["state"].is_string(), "explicit state named on the wire: {wire}");
+        assert!(
+            wire["state"].is_string(),
+            "explicit state named on the wire: {wire}"
+        );
         assert_ne!(wire["state"], "invoked");
     }
 

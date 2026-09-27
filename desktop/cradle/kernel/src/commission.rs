@@ -104,7 +104,7 @@ pub fn commission(
         Ok(data) => match data["outcome"].as_str() {
             Some("written") | Some("created") | Some("unchanged") => {
                 Ok(CommissionOutcome::Commissioned {
-                path,
+                    path,
                     previous_revision: data["previous_revision"]
                         .as_str()
                         .unwrap_or(expected_revision)
@@ -129,10 +129,9 @@ pub fn commission(
                 message: format!("Central returned an unsupported commission outcome {other:?}"),
             }),
         },
-        Err(OwnerCallError::Unavailable { detail }) => Ok(CommissionOutcome::OwnerUnavailable {
-            path,
-            detail,
-        }),
+        Err(OwnerCallError::Unavailable { detail }) => {
+            Ok(CommissionOutcome::OwnerUnavailable { path, detail })
+        }
         Err(refusal) => Ok(CommissionOutcome::OwnerRefused {
             path,
             message: refusal.detail().to_owned(),

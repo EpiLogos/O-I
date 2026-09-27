@@ -14,5 +14,9 @@ pub fn settle_stub(path: &std::path::Path) {
         .arg(path)
         .status()
         .expect("settle a test stub");
-    assert!(status.success(), "could not settle test stub {}", path.display());
+    assert!(
+        status.success(),
+        "could not settle test stub {}",
+        path.display()
+    );
 }

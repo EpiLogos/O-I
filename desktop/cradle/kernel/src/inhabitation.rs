@@ -65,7 +65,10 @@ pub enum Request {
 impl Request {
     pub fn project(&self) -> Option<&str> {
         match self {
-            Request::Population { project } | Request::Whoami { project, .. } | Request::Refocus { project, .. } | Request::Conversation { project, .. } => project.as_deref(),
+            Request::Population { project }
+            | Request::Whoami { project, .. }
+            | Request::Refocus { project, .. }
+            | Request::Conversation { project, .. } => project.as_deref(),
         }
     }
     /// The schema the owner must answer with.
@@ -96,13 +99,22 @@ impl Request {
 pub fn aikit_executable() -> (PathBuf, bool) {
     match std::env::var_os("OI_AIKIT_BIN").map(PathBuf::from) {
         Some(path) => (path, false),
-        None => (std::env::var_os("OI_BIN").map(PathBuf::from).unwrap_or_else(|| "oi".into()), true),
+        None => (
+            std::env::var_os("OI_BIN")
+                .map(PathBuf::from)
+                .unwrap_or_else(|| "oi".into()),
+            true,
+        ),
     }
 }
 
 /// The owner's argument grammar for one read. `project_world_ref` is the
 /// canonical `project:<project_id>` Central disclosed for the scope.
-pub fn aikit_args(request: &Request, project_world_ref: Option<&str>, suite_route: bool) -> Vec<OsString> {
+pub fn aikit_args(
+    request: &Request,
+    project_world_ref: Option<&str>,
+    suite_route: bool,
+) -> Vec<OsString> {
     let mut args: Vec<OsString> = Vec::new();
     if suite_route {
         args.push("aikit".into());
@@ -128,7 +140,14 @@ pub fn aikit_args(request: &Request, project_world_ref: Option<&str>, suite_rout
             }
         }
         Request::Conversation { position, with, .. } => {
-            args.extend(["gateway".into(), "conversation".into(), "--position".into(), position.into(), "--with".into(), with.into()]);
+            args.extend([
+                "gateway".into(),
+                "conversation".into(),
+                "--position".into(),
+                position.into(),
+                "--with".into(),
+                with.into(),
+            ]);
             if let Some(world) = project_world_ref {
                 args.extend(["--project-world".into(), world.into()]);
             }
@@ -143,18 +162,31 @@ pub fn aikit_args(request: &Request, project_world_ref: Option<&str>, suite_rout
 /// refusal, in its own words, whatever the exit status. A document without
 /// the envelope is the reading itself (no warnings).
 pub fn unwrap_envelope(document: Value, source: &str) -> Result<(Value, Vec<Value>), Error> {
-    let enveloped = document.get("ok").is_some_and(Value::is_boolean) && document.get("data").is_some();
+    let enveloped =
+        document.get("ok").is_some_and(Value::is_boolean) && document.get("data").is_some();
     if !enveloped {
         return Ok((document, Vec::new()));
     }
     if document.get("ok") != Some(&Value::Bool(true)) {
         let stdout = serde_json::to_vec(&document).unwrap_or_default();
-        return Err(Error { kind: "owner-refused-or-failed".into(), message: refusal_words(&stdout, b""), operation_may_have_run: false });
+        return Err(Error {
+            kind: "owner-refused-or-failed".into(),
+            message: refusal_words(&stdout, b""),
+            operation_may_have_run: false,
+        });
     }
-    let warnings = document.get("warnings").and_then(Value::as_array).cloned().unwrap_or_default();
+    let warnings = document
+        .get("warnings")
+        .and_then(Value::as_array)
+        .cloned()
+        .unwrap_or_default();
     let data = document.get("data").cloned().unwrap_or(Value::Null);
     if data.is_null() {
-        return Err(Error { kind: "incompatible".into(), message: format!("{source} answered ok without a reading"), operation_may_have_run: false });
+        return Err(Error {
+            kind: "incompatible".into(),
+            message: format!("{source} answered ok without a reading"),
+            operation_may_have_run: false,
+        });
     }
     Ok((data, warnings))
 }
@@ -163,19 +195,36 @@ pub fn unwrap_envelope(document: Value, source: &str) -> Result<(Value, Vec<Valu
 /// World ref Central disclosed for the scope (`None` when Central's world
 /// could not be read for a root-scope read: AIKit then resolves its own).
 /// Returns the reading (the envelope's `data`, verbatim) and its warnings.
-pub fn read(request: &Request, ground: Option<(&Path, Option<&str>)>) -> Result<(Value, Vec<Value>), Error> {
+pub fn read(
+    request: &Request,
+    ground: Option<(&Path, Option<&str>)>,
+) -> Result<(Value, Vec<Value>), Error> {
     let (executable, suite_route) = aikit_executable();
     let args = aikit_args(request, ground.and_then(|(_, world)| world), suite_route);
-    let document = run_bounded(&executable, &args, ground.map(|(cwd, _)| cwd), crate::factory::inhabitation_read_timeout(), request.source())?;
+    let document = run_bounded(
+        &executable,
+        &args,
+        ground.map(|(cwd, _)| cwd),
+        crate::factory::inhabitation_read_timeout(),
+        request.source(),
+    )?;
     let (data, warnings) = unwrap_envelope(document, request.source())?;
     if matches!(request, Request::Conversation { .. }) {
         return conversation_reading(data, request.source()).map(|data| (data, warnings));
     }
-    let schema = data.get("schema").or_else(|| data.get("contract")).and_then(Value::as_str).unwrap_or_default();
+    let schema = data
+        .get("schema")
+        .or_else(|| data.get("contract"))
+        .and_then(Value::as_str)
+        .unwrap_or_default();
     if schema != request.schema() {
         return Err(Error {
             kind: "incompatible".into(),
-            message: format!("{} answered an unexpected reading ({schema}) where {} was asked for", request.source(), request.schema()),
+            message: format!(
+                "{} answered an unexpected reading ({schema}) where {} was asked for",
+                request.source(),
+                request.schema()
+            ),
             operation_may_have_run: false,
         });
     }
@@ -185,10 +234,23 @@ pub fn read(request: &Request, ground: Option<(&Path, Option<&str>)>) -> Result<
 /// A conversation reading is `{position_ref, with_position_ref,
 /// communiques[]}`; every record must be an `aikit.communique/v1`.
 pub fn conversation_reading(data: Value, source: &str) -> Result<Value, Error> {
-    let fail = |message: String| Error { kind: "incompatible".into(), message, operation_may_have_run: false };
-    let records = data.get("communiques").and_then(Value::as_array).ok_or_else(|| fail(format!("{source} answered without its communiques")))?;
-    if let Some(other) = records.iter().find(|record| record.get("schema").and_then(Value::as_str) != Some("aikit.communique/v1")) {
-        let schema = other.get("schema").and_then(Value::as_str).unwrap_or_default();
+    let fail = |message: String| Error {
+        kind: "incompatible".into(),
+        message,
+        operation_may_have_run: false,
+    };
+    let records = data
+        .get("communiques")
+        .and_then(Value::as_array)
+        .ok_or_else(|| fail(format!("{source} answered without its communiques")))?;
+    if let Some(other) = records
+        .iter()
+        .find(|record| record.get("schema").and_then(Value::as_str) != Some("aikit.communique/v1"))
+    {
+        let schema = other
+            .get("schema")
+            .and_then(Value::as_str)
+            .unwrap_or_default();
         return Err(fail(format!("{source} answered an unexpected record ({schema}) where aikit.communique/v1 was asked for")));
     }
     Ok(data)
@@ -216,8 +278,14 @@ fn drain(mut reader: impl Read) -> (Vec<u8>, bool) {
 /// owner wrote one on stdout, else its `error.message`, else stderr.
 fn refusal_words(stdout: &[u8], stderr: &[u8]) -> String {
     if let Ok(value) = serde_json::from_slice::<Value>(stdout) {
-        let refusal = value.get("error").filter(|e| e.is_object()).unwrap_or(&value);
-        let parts: Vec<&str> = ["fact", "consequence", "action"].iter().filter_map(|key| refusal.get(*key).and_then(Value::as_str)).collect();
+        let refusal = value
+            .get("error")
+            .filter(|e| e.is_object())
+            .unwrap_or(&value);
+        let parts: Vec<&str> = ["fact", "consequence", "action"]
+            .iter()
+            .filter_map(|key| refusal.get(*key).and_then(Value::as_str))
+            .collect();
         if !parts.is_empty() {
             return parts.join(" ");
         }
@@ -228,7 +296,13 @@ fn refusal_words(stdout: &[u8], stderr: &[u8]) -> String {
     // The refusal paragraph only: a CLI parser appends its usage help after
     // a blank line, which is not the owner's answer to this read.
     let stderr = String::from_utf8_lossy(stderr);
-    let words = stderr.trim().split("\n\n").next().unwrap_or_default().trim().to_owned();
+    let words = stderr
+        .trim()
+        .split("\n\n")
+        .next()
+        .unwrap_or_default()
+        .trim()
+        .to_owned();
     if words.is_empty() {
         "the owner refused without words".into()
     } else {
@@ -240,21 +314,49 @@ fn refusal_words(stdout: &[u8], stderr: &[u8]) -> String {
 /// timeout are `unavailable`/`timeout` (the owner could not answer); a
 /// non-zero exit is the owner's refusal in its own words; unparsable output
 /// is `incompatible`. Reads never mutate, so `operation_may_have_run` is false.
-pub(crate) fn run_bounded(executable: &Path, args: &[OsString], cwd: Option<&Path>, timeout: Duration, source: &str) -> Result<Value, Error> {
+pub(crate) fn run_bounded(
+    executable: &Path,
+    args: &[OsString],
+    cwd: Option<&Path>,
+    timeout: Duration,
+    source: &str,
+) -> Result<Value, Error> {
     run_bounded_with_env(executable, args, cwd, timeout, source, &[])
 }
 
 /// Explicit owner-home overrides are applied only to this bounded child.
 /// Callers never mutate the process environment shared by other owners.
-pub(crate) fn run_bounded_with_env(executable: &Path, args: &[OsString], cwd: Option<&Path>, timeout: Duration, source: &str, environment: &[(OsString, OsString)]) -> Result<Value, Error> {
+pub(crate) fn run_bounded_with_env(
+    executable: &Path,
+    args: &[OsString],
+    cwd: Option<&Path>,
+    timeout: Duration,
+    source: &str,
+    environment: &[(OsString, OsString)],
+) -> Result<Value, Error> {
     let stdout = run_bounded_raw(executable, args, cwd, timeout, source, environment)?;
-    serde_json::from_slice(&stdout).map_err(|e| Error { kind: "incompatible".into(), message: format!("{source} answered without a JSON document: {e}"), operation_may_have_run: false })
+    serde_json::from_slice(&stdout).map_err(|e| Error {
+        kind: "incompatible".into(),
+        message: format!("{source} answered without a JSON document: {e}"),
+        operation_may_have_run: false,
+    })
 }
 
 /// The same bounded, read-only child as [`run_bounded_with_env`], returning
 /// the owner's stdout bytes as written (for owners that answer JSONL).
-pub(crate) fn run_bounded_raw(executable: &Path, args: &[OsString], cwd: Option<&Path>, timeout: Duration, source: &str, environment: &[(OsString, OsString)]) -> Result<Vec<u8>, Error> {
-    let fail = |kind: &str, message: String| Error { kind: kind.into(), message, operation_may_have_run: false };
+pub(crate) fn run_bounded_raw(
+    executable: &Path,
+    args: &[OsString],
+    cwd: Option<&Path>,
+    timeout: Duration,
+    source: &str,
+    environment: &[(OsString, OsString)],
+) -> Result<Vec<u8>, Error> {
+    let fail = |kind: &str, message: String| Error {
+        kind: kind.into(),
+        message,
+        operation_may_have_run: false,
+    };
     let mut command = Command::new(executable);
     command
         .args(args)
@@ -267,7 +369,12 @@ pub(crate) fn run_bounded_raw(executable: &Path, args: &[OsString], cwd: Option<
     if let Some(cwd) = cwd {
         command.current_dir(cwd);
     }
-    let mut child = command.spawn().map_err(|e| fail("unavailable", format!("{source} could not start ({}): {e}", executable.display())))?;
+    let mut child = command.spawn().map_err(|e| {
+        fail(
+            "unavailable",
+            format!("{source} could not start ({}): {e}", executable.display()),
+        )
+    })?;
     let stdout = child.stdout.take().expect("stdout is piped");
     let stderr = child.stderr.take().expect("stderr is piped");
     let out = std::thread::spawn(move || drain(stdout));
@@ -279,7 +386,10 @@ pub(crate) fn run_bounded_raw(executable: &Path, args: &[OsString], cwd: Option<
             Ok(None) if Instant::now() >= deadline => {
                 let _ = child.kill();
                 let _ = child.wait();
-                return Err(fail("timeout", format!("{source} did not answer within {} ms", timeout.as_millis())));
+                return Err(fail(
+                    "timeout",
+                    format!("{source} did not answer within {} ms", timeout.as_millis()),
+                ));
             }
             Ok(None) => std::thread::sleep(Duration::from_millis(10)),
             Err(e) => return Err(fail("process-error", format!("{source}: {e}"))),
@@ -288,10 +398,16 @@ pub(crate) fn run_bounded_raw(executable: &Path, args: &[OsString], cwd: Option<
     let (stdout, out_exceeded) = out.join().unwrap_or_default();
     let (stderr, err_exceeded) = err.join().unwrap_or_default();
     if out_exceeded || err_exceeded {
-        return Err(fail("resource-limit", format!("{source} answered more than 8 MiB")));
+        return Err(fail(
+            "resource-limit",
+            format!("{source} answered more than 8 MiB"),
+        ));
     }
     if !status.success() {
-        return Err(fail("owner-refused-or-failed", refusal_words(&stdout, &stderr)));
+        return Err(fail(
+            "owner-refused-or-failed",
+            refusal_words(&stdout, &stderr),
+        ));
     }
     Ok(stdout)
 }
@@ -301,29 +417,75 @@ mod tests {
     use super::*;
 
     fn words(args: Vec<OsString>) -> Vec<String> {
-        args.into_iter().map(|a| a.to_string_lossy().into_owned()).collect()
+        args.into_iter()
+            .map(|a| a.to_string_lossy().into_owned())
+            .collect()
     }
 
     #[test]
     fn the_conversation_read_names_both_positions_and_checks_its_records() {
         let request: Request = serde_json::from_value(serde_json::json!({"kind": "conversation", "project": "O-I", "position": "central:position:project:O-I:factory-guardian", "with": "@anima-4"})).unwrap();
-        assert_eq!(words(aikit_args(&request, Some("project:O-I"), true)), ["aikit", "gateway", "conversation", "--position", "central:position:project:O-I:factory-guardian", "--with", "@anima-4", "--project-world", "project:O-I", "--json"]);
+        assert_eq!(
+            words(aikit_args(&request, Some("project:O-I"), true)),
+            [
+                "aikit",
+                "gateway",
+                "conversation",
+                "--position",
+                "central:position:project:O-I:factory-guardian",
+                "--with",
+                "@anima-4",
+                "--project-world",
+                "project:O-I",
+                "--json"
+            ]
+        );
         assert_eq!(request.source(), "aikit gateway conversation");
         let ok = serde_json::json!({"position_ref": "p", "with_position_ref": "w", "communiques": [{"schema": "aikit.communique/v1", "communique_ref": "aikit:communique:1"}]});
         assert!(conversation_reading(ok, "aikit gateway conversation").is_ok());
-        assert!(conversation_reading(serde_json::json!({"communiques": [{"schema": "other/v1"}]}), "s").is_err());
+        assert!(conversation_reading(
+            serde_json::json!({"communiques": [{"schema": "other/v1"}]}),
+            "s"
+        )
+        .is_err());
         assert!(conversation_reading(serde_json::json!({"positions": []}), "s").is_err());
     }
 
     #[test]
     fn the_owner_grammar_for_each_read() {
-        let population = Request::Population { project: Some("O-I".into()) };
-        assert_eq!(words(aikit_args(&population, Some("project:O-I"), false)), ["gateway", "who", "--project-world", "project:O-I", "--json"]);
-        assert_eq!(words(aikit_args(&population, None, true)), ["aikit", "gateway", "who", "--json"]);
-        let whoami = Request::Whoami { project: None, position: Some("central:position:project:O-I:factory-guardian".into()) };
-        assert_eq!(words(aikit_args(&whoami, Some("project:O-I"), false)), ["whoami", "--position", "central:position:project:O-I:factory-guardian", "--full", "--json"]);
-        let refocus = Request::Refocus { project: None, position: None };
-        assert_eq!(words(aikit_args(&refocus, None, true)), ["aikit", "refocus", "--json"]);
+        let population = Request::Population {
+            project: Some("O-I".into()),
+        };
+        assert_eq!(
+            words(aikit_args(&population, Some("project:O-I"), false)),
+            ["gateway", "who", "--project-world", "project:O-I", "--json"]
+        );
+        assert_eq!(
+            words(aikit_args(&population, None, true)),
+            ["aikit", "gateway", "who", "--json"]
+        );
+        let whoami = Request::Whoami {
+            project: None,
+            position: Some("central:position:project:O-I:factory-guardian".into()),
+        };
+        assert_eq!(
+            words(aikit_args(&whoami, Some("project:O-I"), false)),
+            [
+                "whoami",
+                "--position",
+                "central:position:project:O-I:factory-guardian",
+                "--full",
+                "--json"
+            ]
+        );
+        let refocus = Request::Refocus {
+            project: None,
+            position: None,
+        };
+        assert_eq!(
+            words(aikit_args(&refocus, None, true)),
+            ["aikit", "refocus", "--json"]
+        );
         assert_eq!(population.schema(), "aikit.population-reading/v1");
         assert_eq!(whoami.schema(), "aikit.inhabitation-reading/v1");
         assert_eq!(refocus.schema(), "aikit.refocus-reading/v1");
@@ -332,14 +494,23 @@ mod tests {
     #[test]
     fn refusals_are_the_owners_three_part_words() {
         let stdout = br#"{"error":{"code":"position.not_found","fact":"No Position @x in project:O-I.","consequence":"Nothing was read.","action":"Run aikit gateway who."}}"#;
-        assert_eq!(refusal_words(stdout, b""), "No Position @x in project:O-I. Nothing was read. Run aikit gateway who.");
-        assert_eq!(refusal_words(b"", b"error: unrecognized subcommand 'whoami'\n"), "error: unrecognized subcommand 'whoami'");
+        assert_eq!(
+            refusal_words(stdout, b""),
+            "No Position @x in project:O-I. Nothing was read. Run aikit gateway who."
+        );
+        assert_eq!(
+            refusal_words(b"", b"error: unrecognized subcommand 'whoami'\n"),
+            "error: unrecognized subcommand 'whoami'"
+        );
         assert_eq!(
             refusal_words(b"", b"error: unrecognized subcommand 'who'\n\nUsage: aikit gateway [OPTIONS] <COMMAND>\n\nFor more information, try '--help'.\n"),
             "error: unrecognized subcommand 'who'",
             "the parser's usage trailer is not the refusal"
         );
-        assert_eq!(refusal_words(br#"{"error":{"message":"refused"}}"#, b""), "refused");
+        assert_eq!(
+            refusal_words(br#"{"error":{"message":"refused"}}"#, b""),
+            "refused"
+        );
     }
 
     #[test]
@@ -351,19 +522,44 @@ mod tests {
         let refused = serde_json::json!({"ok": false, "schema": 1, "data": null, "error": {"code": "x", "fact": "No World here.", "consequence": "Nothing was read.", "action": "Run ctrl central.world."}});
         let error = unwrap_envelope(refused, "aikit whoami").unwrap_err();
         assert_eq!(error.kind, "owner-refused-or-failed");
-        assert_eq!(error.message, "No World here. Nothing was read. Run ctrl central.world.");
+        assert_eq!(
+            error.message,
+            "No World here. Nothing was read. Run ctrl central.world."
+        );
         let bare = serde_json::json!({"schema": "aikit.refocus-reading/v1"});
-        assert_eq!(unwrap_envelope(bare.clone(), "aikit refocus").unwrap(), (bare, Vec::new()), "a bare reading passes as itself");
-        assert_eq!(unwrap_envelope(serde_json::json!({"ok": true, "data": null}), "aikit refocus").unwrap_err().kind, "incompatible");
+        assert_eq!(
+            unwrap_envelope(bare.clone(), "aikit refocus").unwrap(),
+            (bare, Vec::new()),
+            "a bare reading passes as itself"
+        );
+        assert_eq!(
+            unwrap_envelope(
+                serde_json::json!({"ok": true, "data": null}),
+                "aikit refocus"
+            )
+            .unwrap_err()
+            .kind,
+            "incompatible"
+        );
     }
 
     #[test]
     fn requests_deserialise_from_the_desktop_wire() {
-        let request: Request = serde_json::from_value(serde_json::json!({"kind": "population", "project": "O-I"})).unwrap();
+        let request: Request =
+            serde_json::from_value(serde_json::json!({"kind": "population", "project": "O-I"}))
+                .unwrap();
         assert_eq!(request.project(), Some("O-I"));
-        let request: Request = serde_json::from_value(serde_json::json!({"kind": "whoami", "position": "p"})).unwrap();
-        assert!(matches!(request, Request::Whoami { position: Some(_), project: None }));
-        let request: Request = serde_json::from_value(serde_json::json!({"kind": "refocus"})).unwrap();
+        let request: Request =
+            serde_json::from_value(serde_json::json!({"kind": "whoami", "position": "p"})).unwrap();
+        assert!(matches!(
+            request,
+            Request::Whoami {
+                position: Some(_),
+                project: None
+            }
+        ));
+        let request: Request =
+            serde_json::from_value(serde_json::json!({"kind": "refocus"})).unwrap();
         assert_eq!(request.source(), "aikit refocus");
     }
 }

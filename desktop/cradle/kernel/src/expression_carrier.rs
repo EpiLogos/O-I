@@ -63,7 +63,10 @@ impl CarrierKind {
     }
     /// carriers whose subject must stay native (never another Expression).
     pub fn native_subject(&self) -> bool {
-        !matches!(self, CarrierKind::EngineComposition | CarrierKind::ExpressionRef)
+        !matches!(
+            self,
+            CarrierKind::EngineComposition | CarrierKind::ExpressionRef
+        )
     }
 }
 
@@ -171,7 +174,9 @@ pub fn validate_body(body: &SceneBody, expression_ref: &str) -> Result<(), Strin
         text(&a.action_ref)?;
         text(&a.authority_requirement)?;
         if a.target_ref != body.subject_ref || !seen.insert(&a.action_ref) {
-            return Err("Scene-body Action target must match the placed subject; duplicate Action".into());
+            return Err(
+                "Scene-body Action target must match the placed subject; duplicate Action".into(),
+            );
         }
     }
     match body.capability.reason().map(reason) {
@@ -182,9 +187,13 @@ pub fn validate_body(body: &SceneBody, expression_ref: &str) -> Result<(), Strin
     match body.carrier {
         CarrierKind::EngineComposition => {
             if body.subject_ref != expression_ref {
-                return Err("The engine-composition body is this Expression's own composition".into());
+                return Err(
+                    "The engine-composition body is this Expression's own composition".into(),
+                );
             }
-            if body.presentation != BodyPresentation::Live || body.capability != BodyCapability::Renderable {
+            if body.presentation != BodyPresentation::Live
+                || body.capability != BodyCapability::Renderable
+            {
                 return Err("The engine-composition body is the live rendered composition".into());
             }
             if body.span.is_some() || body.recursion.is_some() {
@@ -192,13 +201,17 @@ pub fn validate_body(body: &SceneBody, expression_ref: &str) -> Result<(), Strin
             }
         }
         CarrierKind::ExpressionRef => {
-            let referenced = body.subject_ref.starts_with("expression:") || body.subject_ref.starts_with("edition:");
+            let referenced = body.subject_ref.starts_with("expression:")
+                || body.subject_ref.starts_with("edition:");
             if !referenced {
-                return Err("An expression_ref body must reference an Expression or Edition ref".into());
+                return Err(
+                    "An expression_ref body must reference an Expression or Edition ref".into(),
+                );
             }
-            let recursion = body.recursion.as_ref().ok_or(
-                "An expression_ref body must declare its recursion bound",
-            )?;
+            let recursion = body
+                .recursion
+                .as_ref()
+                .ok_or("An expression_ref body must declare its recursion bound")?;
             if recursion.host_expression_ref != expression_ref {
                 return Err("Recursion host must be the containing Expression".into());
             }
@@ -233,9 +246,16 @@ pub fn validate_body(body: &SceneBody, expression_ref: &str) -> Result<(), Strin
     // never present an unavailable reading as if it could be shown.
     let honest = matches!(
         (&body.presentation, &body.capability),
-        (BodyPresentation::Live | BodyPresentation::Inline, BodyCapability::Renderable)
-            | (BodyPresentation::Preview, BodyCapability::Renderable | BodyCapability::DegradesToThing { .. })
-            | (BodyPresentation::Degraded, BodyCapability::DegradesToThing { .. } | BodyCapability::Unavailable { .. })
+        (
+            BodyPresentation::Live | BodyPresentation::Inline,
+            BodyCapability::Renderable
+        ) | (
+            BodyPresentation::Preview,
+            BodyCapability::Renderable | BodyCapability::DegradesToThing { .. }
+        ) | (
+            BodyPresentation::Degraded,
+            BodyCapability::DegradesToThing { .. } | BodyCapability::Unavailable { .. }
+        )
     );
     if !honest {
         return Err(
@@ -249,7 +269,9 @@ impl BodyCapability {
     fn reason(&self) -> Option<&str> {
         match self {
             BodyCapability::Renderable => None,
-            BodyCapability::DegradesToThing { reason } | BodyCapability::Unavailable { reason } => Some(reason),
+            BodyCapability::DegradesToThing { reason } | BodyCapability::Unavailable { reason } => {
+                Some(reason)
+            }
         }
     }
 }

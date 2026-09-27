@@ -217,17 +217,21 @@ mod tests {
         let focus = GlobalFocus::unfocused();
         assert!(!focus.is_focused());
         assert!(focus.subject_ref().is_none());
-        assert_eq!(
-            serde_json::to_value(&focus).unwrap(),
-            serde_json::json!({})
-        );
+        assert_eq!(serde_json::to_value(&focus).unwrap(), serde_json::json!({}));
     }
 
     #[test]
     fn exactly_one_subject_is_held_never_an_accumulation() {
         let mut focus = GlobalFocus::unfocused();
-        focus.focus_subject(reference("central:source:project:project:o-i:a.md", "source")).unwrap();
-        focus.focus_subject(reference("factory.run/184", "run")).unwrap();
+        focus
+            .focus_subject(reference(
+                "central:source:project:project:o-i:a.md",
+                "source",
+            ))
+            .unwrap();
+        focus
+            .focus_subject(reference("factory.run/184", "run"))
+            .unwrap();
         assert_eq!(focus.subject_ref().unwrap().ref_id, "factory.run/184");
     }
 
@@ -254,7 +258,12 @@ mod tests {
     #[test]
     fn clearing_returns_to_b0() {
         let mut focus = GlobalFocus::unfocused();
-        focus.focus_subject(reference("central:source:project:project:o-i:a.md", "source")).unwrap();
+        focus
+            .focus_subject(reference(
+                "central:source:project:project:o-i:a.md",
+                "source",
+            ))
+            .unwrap();
         focus.clear_subject();
         assert!(!focus.is_focused());
     }

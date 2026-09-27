@@ -21,7 +21,6 @@ fn observed_at_unix_ms() -> u64 {
         .unwrap_or(0)
 }
 
-
 #[derive(Clone, Debug)]
 pub struct Client {
     executable: PathBuf,
@@ -83,8 +82,10 @@ impl Client {
     pub fn with(executable: PathBuf) -> Self {
         Self { executable }
     }
-    pub fn read(&self, cwd: &Path) -> Reading {self.read_with_owners(cwd,false)}
-    pub fn read_with_owners(&self, cwd:&Path, owners:bool)->Reading {
+    pub fn read(&self, cwd: &Path) -> Reading {
+        self.read_with_owners(cwd, false)
+    }
+    pub fn read_with_owners(&self, cwd: &Path, owners: bool) -> Reading {
         // v2 carries the Context Frame reading (containing frame + install
         // mode, #268); a v1 document is an older installed `oi` — accepted
         // as historical evidence with its own recorded meanings, never
@@ -94,9 +95,17 @@ impl Client {
             "current-world",
             &["oi.current-world/v2", "oi.current-world/v1"],
             "positions",
-            "product_id",owners,
+            "product_id",
+            owners,
         );
-        let status = self.invoke(cwd, "status", &["oi.suite-status/v1"], "surfaces", "id",false);
+        let status = self.invoke(
+            cwd,
+            "status",
+            &["oi.suite-status/v1"],
+            "surfaces",
+            "id",
+            false,
+        );
         let positions = current_world
             .data
             .as_ref()
@@ -150,10 +159,13 @@ impl Client {
         operation: &str,
         schemas: &[&str],
         rows: &str,
-        id: &str, owners:bool,
+        id: &str,
+        owners: bool,
     ) -> NativeReading {
-        let mut command:Vec<String> = vec![operation.into()];
-        if owners {command.push("--owners".into());}
+        let mut command: Vec<String> = vec![operation.into()];
+        if owners {
+            command.push("--owners".into());
+        }
         command.push("--json".into());
         let result = (|| {
             let output = Command::new(&self.executable)
@@ -221,15 +233,33 @@ mod membership_tests {
     use super::*;
     #[test]
     fn owner_membership_comes_from_native_rows_not_a_six_product_table() {
-        let mut reading=serde_json::json!({"schema":"oi.current-world/v2","positions":[
+        let mut reading = serde_json::json!({"schema":"oi.current-world/v2","positions":[
             {"product_id":"oi","state":"installed"},{"product_id":"central","state":"installed"},
             {"product_id":"ai-kit","state":"installed"},{"product_id":"actuation","state":"installed"},
             {"product_id":"workcell","state":"installed"},{"product_id":"software-factory","state":"installed"},
             {"product_id":"seventh-owner","state":"registered"}]});
-        assert!(validate(&reading,&["oi.current-world/v2"],"positions","product_id").is_ok());
-        reading["positions"][6]["product_id"]=serde_json::json!("oi");
-        assert!(validate(&reading,&["oi.current-world/v2"],"positions","product_id").is_err());
-        reading["positions"][6]["product_id"]=serde_json::json!(" ");
-        assert!(validate(&reading,&["oi.current-world/v2"],"positions","product_id").is_err());
+        assert!(validate(
+            &reading,
+            &["oi.current-world/v2"],
+            "positions",
+            "product_id"
+        )
+        .is_ok());
+        reading["positions"][6]["product_id"] = serde_json::json!("oi");
+        assert!(validate(
+            &reading,
+            &["oi.current-world/v2"],
+            "positions",
+            "product_id"
+        )
+        .is_err());
+        reading["positions"][6]["product_id"] = serde_json::json!(" ");
+        assert!(validate(
+            &reading,
+            &["oi.current-world/v2"],
+            "positions",
+            "product_id"
+        )
+        .is_err());
     }
 }

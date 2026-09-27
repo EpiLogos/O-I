@@ -69,8 +69,14 @@ fn entity_subject_bind_refuses_an_expression_ref_and_mutates_nothing() {
         app.apply(&CentralClient::discover(), attempt).is_err(),
         "Entity subject_bind onto another Expression must be refused, not silently accepted"
     );
-    let after = apply(&mut app, json!({"operation":"inspect","expression_ref":"expression:palace"}));
-    assert_eq!(after["document"]["revision"], 1, "the refused edit left the document completely unmutated");
+    let after = apply(
+        &mut app,
+        json!({"operation":"inspect","expression_ref":"expression:palace"}),
+    );
+    assert_eq!(
+        after["document"]["revision"], 1,
+        "the refused edit left the document completely unmutated"
+    );
     assert!(
         after["document"]["entities"].as_object().unwrap().is_empty(),
         "the entity_add in the SAME edit was rolled back too — the edit is atomic, not partially applied"
@@ -111,10 +117,18 @@ fn a_region_scene_discloses_its_contained_expression_as_its_own_body_and_is_port
         ]),
     );
     assert_eq!(data["document"]["revision"], 2);
-    let scene = data["document"]["scenes"].as_array().unwrap().iter().find(|s| s["scene_ref"] == region_scene).unwrap();
+    let scene = data["document"]["scenes"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .find(|s| s["scene_ref"] == region_scene)
+        .unwrap();
     assert_eq!(scene["body"]["subject_ref"], "expression:contained");
     assert_eq!(scene["triggers"][0]["target"]["kind"], "portal");
-    assert_eq!(scene["triggers"][0]["target"]["subject_ref"], "expression:contained");
+    assert_eq!(
+        scene["triggers"][0]["target"]["subject_ref"],
+        "expression:contained"
+    );
 }
 
 /// Guided path = `scene_reorder` over the Palace's own region Scenes; free
@@ -141,9 +155,25 @@ fn guided_path_reorders_region_scenes_and_replay_creates_no_duplicates() {
         2,
         json!([{"change":"scene_reorder","scene_refs":["expression:palace:scene:main","expression:palace:scene:b","expression:palace:scene:a"]}]),
     );
-    let refs: Vec<String> = reordered["document"]["scenes"].as_array().unwrap().iter().map(|s| s["scene_ref"].as_str().unwrap().to_string()).collect();
-    assert_eq!(refs, vec!["expression:palace:scene:main", "expression:palace:scene:b", "expression:palace:scene:a"]);
-    assert_eq!(reordered["document"]["scenes"].as_array().unwrap().len(), 3, "reorder mutates order only, never mints or drops a Scene");
+    let refs: Vec<String> = reordered["document"]["scenes"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .map(|s| s["scene_ref"].as_str().unwrap().to_string())
+        .collect();
+    assert_eq!(
+        refs,
+        vec![
+            "expression:palace:scene:main",
+            "expression:palace:scene:b",
+            "expression:palace:scene:a"
+        ]
+    );
+    assert_eq!(
+        reordered["document"]["scenes"].as_array().unwrap().len(),
+        3,
+        "reorder mutates order only, never mints or drops a Scene"
+    );
 
     // Replaying the identical reorder at the new CAS basis is idempotent:
     // same three scenes, same order, no duplicates.
@@ -153,7 +183,12 @@ fn guided_path_reorders_region_scenes_and_replay_creates_no_duplicates() {
         3,
         json!([{"change":"scene_reorder","scene_refs":["expression:palace:scene:main","expression:palace:scene:b","expression:palace:scene:a"]}]),
     );
-    let replayed_refs: Vec<String> = replayed["document"]["scenes"].as_array().unwrap().iter().map(|s| s["scene_ref"].as_str().unwrap().to_string()).collect();
+    let replayed_refs: Vec<String> = replayed["document"]["scenes"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .map(|s| s["scene_ref"].as_str().unwrap().to_string())
+        .collect();
     assert_eq!(replayed_refs, refs);
     assert_eq!(replayed["document"]["scenes"].as_array().unwrap().len(), 3);
 }
@@ -164,14 +199,29 @@ fn guided_path_reorders_region_scenes_and_replay_creates_no_duplicates() {
 fn a_stale_composition_basis_is_refused_and_mutates_nothing() {
     let mut app = Application::default();
     create(&mut app, "expression:palace", "Palace");
-    edit(&mut app, "expression:palace", 1, json!([{"change":"scene_create","scene_ref":"expression:palace:scene:a","title":"Region A"}]));
+    edit(
+        &mut app,
+        "expression:palace",
+        1,
+        json!([{"change":"scene_create","scene_ref":"expression:palace:scene:a","title":"Region A"}]),
+    );
     let stale = request(json!({
         "operation":"edit","expression_ref":"expression:palace","expected_revision":1,"actor":"human:palace-test",
         "changes":[{"change":"scene_create","scene_ref":"expression:palace:scene:b","title":"Region B"}]
     }));
     let result = app.apply(&CentralClient::discover(), stale).unwrap().0;
     assert_eq!(result["state"], "revision_conflict");
-    let after = apply(&mut app, json!({"operation":"inspect","expression_ref":"expression:palace"}));
-    assert_eq!(after["document"]["revision"], 2, "the stale attempt did not advance or mutate the document beyond the prior accepted edit");
-    assert_eq!(after["document"]["scenes"].as_array().unwrap().len(), 2, "only main + Region A — Region B from the refused stale edit was never created");
+    let after = apply(
+        &mut app,
+        json!({"operation":"inspect","expression_ref":"expression:palace"}),
+    );
+    assert_eq!(
+        after["document"]["revision"], 2,
+        "the stale attempt did not advance or mutate the document beyond the prior accepted edit"
+    );
+    assert_eq!(
+        after["document"]["scenes"].as_array().unwrap().len(),
+        2,
+        "only main + Region A — Region B from the refused stale edit was never created"
+    );
 }

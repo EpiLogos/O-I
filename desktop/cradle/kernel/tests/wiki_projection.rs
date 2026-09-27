@@ -34,8 +34,16 @@ fn wiki_projection_read_dispatches_to_aikit_and_verifies_the_contract() {
     let args_file = dir.join("argv.txt");
     let fake = write_fake(&dir, &args_file);
     let root = dir.join("Central");
-    let read_args = || fs::read_to_string(&args_file).unwrap_or_default().lines().map(str::to_string).collect::<Vec<_>>();
-    let reset = || { let _ = fs::remove_file(&args_file); };
+    let read_args = || {
+        fs::read_to_string(&args_file)
+            .unwrap_or_default()
+            .lines()
+            .map(str::to_string)
+            .collect::<Vec<_>>()
+    };
+    let reset = || {
+        let _ = fs::remove_file(&args_file);
+    };
 
     let prior = std::env::var_os("OI_AIKIT_BIN");
     std::env::set_var("OI_AIKIT_BIN", &fake);
@@ -44,7 +52,10 @@ fn wiki_projection_read_dispatches_to_aikit_and_verifies_the_contract() {
     // The read carries the machine envelope flag, the root, and the file.
     reset();
     let read = Kernel::new(CentralClient::discover())
-        .apply(KernelOp::WikiProjectionRead { root: root.clone(), path: "Control/agents/wiki/projections/collaboration.md".into() })
+        .apply(KernelOp::WikiProjectionRead {
+            root: root.clone(),
+            path: "Control/agents/wiki/projections/collaboration.md".into(),
+        })
         .expect("projection read dispatches");
     match read.result {
         KernelOpResult::WikiProjectionReading { data } => {
@@ -54,15 +65,21 @@ fn wiki_projection_read_dispatches_to_aikit_and_verifies_the_contract() {
         other => panic!("unexpected result: {other:?}"),
     }
     let argv = read_args();
-    assert_eq!(argv.first().map(String::as_str), Some("--json"), "reads speak the machine envelope");
+    assert_eq!(
+        argv.first().map(String::as_str),
+        Some("--json"),
+        "reads speak the machine envelope"
+    );
     assert!(argv.contains(&"-C".to_string()) && argv.contains(&root.to_string_lossy().to_string()));
     assert!(argv.contains(&"projection".to_string()) && argv.contains(&"read".to_string()));
 
     // An incompatible payload is refused, never carried.
     reset();
     std::env::set_var("FAKE_AIKIT_BAD", "1");
-    let bad = Kernel::new(CentralClient::discover())
-        .apply(KernelOp::WikiProjectionRead { root: root.clone(), path: "Control/agents/wiki/projections/collaboration.md".into() });
+    let bad = Kernel::new(CentralClient::discover()).apply(KernelOp::WikiProjectionRead {
+        root: root.clone(),
+        path: "Control/agents/wiki/projections/collaboration.md".into(),
+    });
     assert!(bad.is_err(), "an incompatible reading is refused");
     std::env::remove_var("FAKE_AIKIT_BAD");
 

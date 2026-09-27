@@ -35,15 +35,45 @@ fn write_script(dir: &Path, name: &str, body: &str) -> PathBuf {
 fn fake_aikit(dir: &Path) -> PathBuf {
     let envelope = |data: Value, warnings: Value| serde_json::json!({"ok": true, "schema": 1, "context": {"context_id": null}, "data": data, "warnings": warnings});
     let documents = [
-        ("who.json", envelope(serde_json::json!({"schema": "aikit.population-reading/v1", "project_world_ref": "project:O-I", "local_world_ref": "control:root",
+        (
+            "who.json",
+            envelope(
+                serde_json::json!({"schema": "aikit.population-reading/v1", "project_world_ref": "project:O-I", "local_world_ref": "control:root",
             "positions": [{"position_ref": "central:position:project:O-I:oi-root-agency", "handle": "@oi", "definition": "present", "occupancy": {"state": "vacant"},
-                "current_work": {"outcome": "none", "candidates": 0, "run_ref": null, "work_ref": null}, "communiques": {"undelivered": 0}}], "absences": []}), serde_json::json!([]))),
-        ("whoami.json", envelope(serde_json::json!({"schema": "aikit.inhabitation-reading/v1", "resolved_by": "flag",
-            "facets": {"position": {"state": "present", "source": "central.position.read", "summary": "@oi"}}}), serde_json::json!([]))),
-        ("refocus.json", envelope(serde_json::json!({"schema": "aikit.refocus-reading/v1", "chain": []}), serde_json::json!([{"message": "no earlier delivery"}]))),
-        ("refuse.json", serde_json::json!({"ok": false, "schema": 1, "data": null, "error": {"code": "position.not_found", "fact": "No Position @x here.", "consequence": "Nothing was read.", "action": "Run aikit gateway who."}})),
-        ("refuse0.json", serde_json::json!({"ok": false, "schema": 1, "data": null, "error": {"message": "refused with exit zero"}})),
-        ("wrong.json", envelope(serde_json::json!({"schema": "aikit.something-else/v1"}), serde_json::json!([]))),
+                "current_work": {"outcome": "none", "candidates": 0, "run_ref": null, "work_ref": null}, "communiques": {"undelivered": 0}}], "absences": []}),
+                serde_json::json!([]),
+            ),
+        ),
+        (
+            "whoami.json",
+            envelope(
+                serde_json::json!({"schema": "aikit.inhabitation-reading/v1", "resolved_by": "flag",
+            "facets": {"position": {"state": "present", "source": "central.position.read", "summary": "@oi"}}}),
+                serde_json::json!([]),
+            ),
+        ),
+        (
+            "refocus.json",
+            envelope(
+                serde_json::json!({"schema": "aikit.refocus-reading/v1", "chain": []}),
+                serde_json::json!([{"message": "no earlier delivery"}]),
+            ),
+        ),
+        (
+            "refuse.json",
+            serde_json::json!({"ok": false, "schema": 1, "data": null, "error": {"code": "position.not_found", "fact": "No Position @x here.", "consequence": "Nothing was read.", "action": "Run aikit gateway who."}}),
+        ),
+        (
+            "refuse0.json",
+            serde_json::json!({"ok": false, "schema": 1, "data": null, "error": {"message": "refused with exit zero"}}),
+        ),
+        (
+            "wrong.json",
+            envelope(
+                serde_json::json!({"schema": "aikit.something-else/v1"}),
+                serde_json::json!([]),
+            ),
+        ),
     ];
     for (name, document) in documents {
         fs::write(dir.join(name), serde_json::to_vec(&document).unwrap()).unwrap();
@@ -96,7 +126,11 @@ fn fake_factory(dir: &Path) -> PathBuf {
 }
 
 fn lines(path: &Path) -> Vec<String> {
-    fs::read_to_string(path).unwrap_or_default().lines().map(str::to_string).collect()
+    fs::read_to_string(path)
+        .unwrap_or_default()
+        .lines()
+        .map(str::to_string)
+        .collect()
 }
 
 fn reading(result: Result<oi_cradle_kernel::KernelOpOutcome, String>) -> Value {
@@ -108,7 +142,10 @@ fn reading(result: Result<oi_cradle_kernel::KernelOpOutcome, String>) -> Value {
 }
 
 fn error_kind(error: &str) -> String {
-    serde_json::from_str::<Value>(error).ok().and_then(|v| v["kind"].as_str().map(str::to_owned)).unwrap_or_default()
+    serde_json::from_str::<Value>(error)
+        .ok()
+        .and_then(|v| v["kind"].as_str().map(str::to_owned))
+        .unwrap_or_default()
 }
 
 #[test]
@@ -131,7 +168,11 @@ fn inhabitation_reads_follow_the_owner_grammar_and_degrade_honestly() {
     let no_central = dir.join("absent-central");
     let kernel = || Kernel::new(CentralClient::with(no_central.clone(), None, "o-i".into()));
     let apply = |request: Request| kernel().apply(KernelOp::InhabitationRead { request });
-    let reset = || { for name in ["aikit-argv.txt", "aikit-env.txt", "factory-argv.txt"] { let _ = fs::remove_file(dir.join(name)); } };
+    let reset = || {
+        for name in ["aikit-argv.txt", "aikit-env.txt", "factory-argv.txt"] {
+            let _ = fs::remove_file(dir.join(name));
+        }
+    };
 
     // Population: the owner's grammar and document, verbatim.
     reset();
@@ -139,58 +180,121 @@ fn inhabitation_reads_follow_the_owner_grammar_and_degrade_honestly() {
     assert_eq!(data["schema"], "aikit.population-reading/v1");
     assert_eq!(data["positions"][0]["handle"], "@oi");
     let argv = lines(&dir.join("aikit-argv.txt"));
-    assert_eq!(&argv[..2], &["gateway".to_string(), "who".into()], "a direct AIKit binary hears no suite prefix: {argv:?}");
+    assert_eq!(
+        &argv[..2],
+        &["gateway".to_string(), "who".into()],
+        "a direct AIKit binary hears no suite prefix: {argv:?}"
+    );
     assert_eq!(argv.last().map(String::as_str), Some("--json"));
     let env = lines(&dir.join("aikit-env.txt"));
-    assert_eq!(env, ["POS=unset GEN=unset"], "the desktop never forwards an occupant identity it happens to stand in");
+    assert_eq!(
+        env,
+        ["POS=unset GEN=unset"],
+        "the desktop never forwards an occupant identity it happens to stand in"
+    );
 
     // whoami names the Position explicitly and asks for the full reading.
     reset();
-    let data = reading(apply(Request::Whoami { project: None, position: Some("central:position:project:O-I:oi-root-agency".into()) }));
-    assert_eq!(data["facets"]["position"]["state"], "present", "the envelope is unwrapped: the reading is its data");
-    assert_eq!(lines(&dir.join("aikit-argv.txt")), ["whoami", "--position", "central:position:project:O-I:oi-root-agency", "--full", "--json"]);
+    let data = reading(apply(Request::Whoami {
+        project: None,
+        position: Some("central:position:project:O-I:oi-root-agency".into()),
+    }));
+    assert_eq!(
+        data["facets"]["position"]["state"], "present",
+        "the envelope is unwrapped: the reading is its data"
+    );
+    assert_eq!(
+        lines(&dir.join("aikit-argv.txt")),
+        [
+            "whoami",
+            "--position",
+            "central:position:project:O-I:oi-root-agency",
+            "--full",
+            "--json"
+        ]
+    );
 
     // Refocus: the envelope's data is the reading; its warnings travel beside it.
     reset();
-    let outcome = apply(Request::Refocus { project: None, position: Some("p".into()) }).expect("refocus dispatches");
-    let KernelOpResult::InhabitationReading { data, warnings } = outcome.result else { panic!("not an inhabitation reading") };
+    let outcome = apply(Request::Refocus {
+        project: None,
+        position: Some("p".into()),
+    })
+    .expect("refocus dispatches");
+    let KernelOpResult::InhabitationReading { data, warnings } = outcome.result else {
+        panic!("not an inhabitation reading")
+    };
     assert_eq!(data["schema"], "aikit.refocus-reading/v1");
-    assert_eq!(warnings.len(), 1, "the envelope's warnings are carried, not dropped");
-    assert_eq!(lines(&dir.join("aikit-argv.txt")), ["refocus", "--position", "p", "--json"]);
+    assert_eq!(
+        warnings.len(),
+        1,
+        "the envelope's warnings are carried, not dropped"
+    );
+    assert_eq!(
+        lines(&dir.join("aikit-argv.txt")),
+        ["refocus", "--position", "p", "--json"]
+    );
 
     // The suite route prefixes the product namespace.
     std::env::remove_var("OI_AIKIT_BIN");
     std::env::set_var("OI_BIN", &aikit);
     reset();
     reading(apply(Request::Population { project: None }));
-    assert_eq!(&lines(&dir.join("aikit-argv.txt"))[..3], &["aikit".to_string(), "gateway".into(), "who".into()]);
+    assert_eq!(
+        &lines(&dir.join("aikit-argv.txt"))[..3],
+        &["aikit".to_string(), "gateway".into(), "who".into()]
+    );
     std::env::remove_var("OI_BIN");
     std::env::set_var("OI_AIKIT_BIN", &aikit);
 
     // Failures are named, never a reading.
     std::env::set_var("FAKE_MODE", "refuse");
-    let error = apply(Request::Whoami { project: None, position: Some("@x".into()) }).expect_err("the owner refused");
-    assert!(error.contains("No Position @x here. Nothing was read. Run aikit gateway who."), "{error}");
+    let error = apply(Request::Whoami {
+        project: None,
+        position: Some("@x".into()),
+    })
+    .expect_err("the owner refused");
+    assert!(
+        error.contains("No Position @x here. Nothing was read. Run aikit gateway who."),
+        "{error}"
+    );
     assert_eq!(error_kind(&error), "owner-refused-or-failed");
     std::env::set_var("FAKE_MODE", "refuse0");
-    let error = apply(Request::Population { project: None }).expect_err("ok:false is a refusal even at exit 0");
+    let error = apply(Request::Population { project: None })
+        .expect_err("ok:false is a refusal even at exit 0");
     assert!(error.contains("refused with exit zero"), "{error}");
     std::env::set_var("FAKE_MODE", "wrong");
-    let error = apply(Request::Population { project: None }).expect_err("another schema is refused");
+    let error =
+        apply(Request::Population { project: None }).expect_err("another schema is refused");
     assert_eq!(error_kind(&error), "incompatible");
     assert!(error.contains("aikit.something-else/v1"), "{error}");
     std::env::set_var("FAKE_MODE", "garbage");
-    assert_eq!(error_kind(&apply(Request::Refocus { project: None, position: None }).expect_err("garbage is refused")), "incompatible");
+    assert_eq!(
+        error_kind(
+            &apply(Request::Refocus {
+                project: None,
+                position: None
+            })
+            .expect_err("garbage is refused")
+        ),
+        "incompatible"
+    );
     std::env::set_var("OI_INHABITATION_READ_TIMEOUT_MS", "3000");
     std::env::set_var("FAKE_MODE", "stall");
     let started = std::time::Instant::now();
-    let error = apply(Request::Population { project: None }).expect_err("a stalled owner is not waited on forever");
+    let error = apply(Request::Population { project: None })
+        .expect_err("a stalled owner is not waited on forever");
     assert_eq!(error_kind(&error), "timeout", "{error}");
-    assert!(started.elapsed() < std::time::Duration::from_secs(9), "the deadline held (3 s), not the 12 s stall: {:?}", started.elapsed());
+    assert!(
+        started.elapsed() < std::time::Duration::from_secs(9),
+        "the deadline held (3 s), not the 12 s stall: {:?}",
+        started.elapsed()
+    );
     std::env::remove_var("FAKE_MODE");
     std::env::remove_var("OI_INHABITATION_READ_TIMEOUT_MS");
     std::env::set_var("OI_AIKIT_BIN", dir.join("no-such-aikit"));
-    let error = apply(Request::Population { project: None }).expect_err("an absent owner is unavailable");
+    let error =
+        apply(Request::Population { project: None }).expect_err("an absent owner is unavailable");
     assert_eq!(error_kind(&error), "unavailable", "{error}");
     std::env::set_var("OI_AIKIT_BIN", &aikit);
 
@@ -198,21 +302,67 @@ fn inhabitation_reads_follow_the_owner_grammar_and_degrade_honestly() {
     let state = dir.join("state.json");
     let owner = |request: OwnerRequest| kernel().apply(KernelOp::FactoryOwner { request });
     reset();
-    let data = reading(owner(OwnerRequest::Inhabitation { state_path: state.clone(), run_ref: Some("run:1".into()), position_ref: None }));
+    let data = reading(owner(OwnerRequest::Inhabitation {
+        state_path: state.clone(),
+        run_ref: Some("run:1".into()),
+        position_ref: None,
+    }));
     assert_eq!(data["schema"], "factory.inhabitation-reading/v1");
-    assert_eq!(lines(&dir.join("factory-argv.txt")), ["development", "inhabitation", &state.to_string_lossy(), "--run", "run:1", "--json"]);
+    assert_eq!(
+        lines(&dir.join("factory-argv.txt")),
+        [
+            "development",
+            "inhabitation",
+            &state.to_string_lossy(),
+            "--run",
+            "run:1",
+            "--json"
+        ]
+    );
     reset();
-    let data = reading(owner(OwnerRequest::CurrentWork { state_path: state.clone(), position_ref: "p".into() }));
-    assert_eq!(data["outcome"], "ambiguous", "an ambiguous outcome is carried, never collapsed to one");
-    assert_eq!(lines(&dir.join("factory-argv.txt")), ["development", "current-work", &state.to_string_lossy(), "--position", "p", "--json"]);
+    let data = reading(owner(OwnerRequest::CurrentWork {
+        state_path: state.clone(),
+        position_ref: "p".into(),
+    }));
+    assert_eq!(
+        data["outcome"], "ambiguous",
+        "an ambiguous outcome is carried, never collapsed to one"
+    );
+    assert_eq!(
+        lines(&dir.join("factory-argv.txt")),
+        [
+            "development",
+            "current-work",
+            &state.to_string_lossy(),
+            "--position",
+            "p",
+            "--json"
+        ]
+    );
 
     // The development allowlist holds on the dispatch path too.
     reset();
-    let refused = kernel().apply(KernelOp::FactoryDevelopmentRead { project: None, state_path: state.clone(), read: "mutate".into(), subject: None });
-    assert!(refused.expect_err("an unlisted verb is refused").contains("Unsupported Factory development read"));
-    assert!(lines(&dir.join("factory-argv.txt")).is_empty(), "nothing was spawned for a refused verb");
+    let refused = kernel().apply(KernelOp::FactoryDevelopmentRead {
+        project: None,
+        state_path: state.clone(),
+        read: "mutate".into(),
+        subject: None,
+    });
+    assert!(refused
+        .expect_err("an unlisted verb is refused")
+        .contains("Unsupported Factory development read"));
+    assert!(
+        lines(&dir.join("factory-argv.txt")).is_empty(),
+        "nothing was spawned for a refused verb"
+    );
 
-    for name in ["OI_AIKIT_BIN", "OI_FACTORY_BIN", "OI_INHABITATION_READ_TIMEOUT_MS", "OI_POSITION_REF", "OI_OCCUPANT_GENERATION"] {
+    for name in [
+        "OI_AIKIT_BIN",
+        "OI_FACTORY_BIN",
+        "OI_INHABITATION_READ_TIMEOUT_MS",
+        "OI_POSITION_REF",
+        "OI_OCCUPANT_GENERATION",
+    ] {
         std::env::remove_var(name);
     }
     let _ = fs::remove_dir_all(&dir);

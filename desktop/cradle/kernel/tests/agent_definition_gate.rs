@@ -23,7 +23,10 @@ struct Rig {
 }
 impl Rig {
     fn new() -> Self {
-        let stamp=SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_nanos()
+        let stamp = SystemTime::now()
+            .duration_since(UNIX_EPOCH)
+            .unwrap()
+            .as_nanos()
             + 0x1000000 * RIG_SEQ.fetch_add(1, Ordering::Relaxed) as u128;
         let root = std::env::temp_dir().join(format!(
             "oi-agent-definition-{}-{stamp}",
@@ -159,7 +162,13 @@ fn the_expressive_character_ref_is_forwarded_to_the_profile_proposal() {
     .unwrap();
     let calls = rig.calls();
     let express: Value = serde_json::from_str(
-        calls[1].as_array().unwrap().last().unwrap().as_str().unwrap(),
+        calls[1]
+            .as_array()
+            .unwrap()
+            .last()
+            .unwrap()
+            .as_str()
+            .unwrap(),
     )
     .unwrap();
     assert_eq!(express["expressive_character_ref"], character);
@@ -176,7 +185,13 @@ fn the_expressive_character_ref_is_forwarded_to_the_profile_proposal() {
     .unwrap();
     let calls = bare.calls();
     let express: Value = serde_json::from_str(
-        calls[1].as_array().unwrap().last().unwrap().as_str().unwrap(),
+        calls[1]
+            .as_array()
+            .unwrap()
+            .last()
+            .unwrap()
+            .as_str()
+            .unwrap(),
     )
     .unwrap();
     assert!(express.get("expressive_character_ref").is_none());
@@ -189,7 +204,7 @@ fn the_expressive_character_ref_is_forwarded_to_the_profile_proposal() {
                 purpose: "Exact".into(),
                 expected_scope_ref: "control:root".into(),
                 skill_refs: vec![],
-        skill_set_refs: vec![],
+                skill_set_refs: vec![],
                 expressive_character_ref: Some(bad.into()),
             })
             .is_err());
@@ -199,7 +214,13 @@ fn the_expressive_character_ref_is_forwarded_to_the_profile_proposal() {
     let wire: Request = serde_json::from_value(json!({"action":"propose","name":"R","purpose":"P",
         "expected_scope_ref":"control:root","expressive_character_ref":character}))
     .unwrap();
-    assert!(matches!(wire, Request::Propose { expressive_character_ref: Some(_), .. }));
+    assert!(matches!(
+        wire,
+        Request::Propose {
+            expressive_character_ref: Some(_),
+            ..
+        }
+    ));
 }
 #[test]
 fn an_existing_agent_changes_its_character_through_central_cas_and_must_be_re_accepted() {
@@ -223,23 +244,45 @@ fn an_existing_agent_changes_its_character_through_central_cas_and_must_be_re_ac
     let changed = set(Some(character), "r3").unwrap();
     assert_eq!(changed["profile"]["expressive_character_ref"], character);
     assert_eq!(changed["profile"]["revision"], "r4");
-    assert_eq!(changed["profile"]["name"], "Reader", "the rest of the source is kept");
+    assert_eq!(
+        changed["profile"]["name"], "Reader",
+        "the rest of the source is kept"
+    );
     assert_eq!(changed["character_change"]["state"], "saved");
     assert_eq!(changed["character_change"]["re_acceptance_required"], true);
     let saves: Vec<Value> = rig
         .calls()
         .into_iter()
-        .filter(|c| c.as_array().unwrap().iter().any(|v| v == "agent-profile.save"))
+        .filter(|c| {
+            c.as_array()
+                .unwrap()
+                .iter()
+                .any(|v| v == "agent-profile.save")
+        })
         .collect();
     assert_eq!(saves.len(), 1);
-    let save: Value =
-        serde_json::from_str(saves[0].as_array().unwrap().last().unwrap().as_str().unwrap()).unwrap();
-    assert_eq!(save["expected_revision"], "r3", "compare-and-swap on the read revision");
+    let save: Value = serde_json::from_str(
+        saves[0]
+            .as_array()
+            .unwrap()
+            .last()
+            .unwrap()
+            .as_str()
+            .unwrap(),
+    )
+    .unwrap();
+    assert_eq!(
+        save["expected_revision"], "r3",
+        "compare-and-swap on the read revision"
+    );
     // A stale basis is refused before any write.
     let error = set(None, "r3").unwrap_err();
     assert!(error.contains("revision_conflict"), "{error}");
     // Setting the same ref is a no-op; clearing removes the field.
-    assert_eq!(set(Some(character), "r4").unwrap()["character_change"]["state"], "unchanged");
+    assert_eq!(
+        set(Some(character), "r4").unwrap()["character_change"]["state"],
+        "unchanged"
+    );
     let cleared = set(None, "r4").unwrap();
     assert!(cleared["profile"].get("expressive_character_ref").is_none());
     assert_eq!(cleared["profile"]["revision"], "r5");
@@ -248,7 +291,13 @@ fn an_existing_agent_changes_its_character_through_central_cas_and_must_be_re_ac
     let wire: Request = serde_json::from_value(json!({"action":"set-character","profile_ref":"p",
         "expected_revision":"r1","expressive_character_ref":null}))
     .unwrap();
-    assert!(matches!(wire, Request::SetCharacter { expressive_character_ref: None, .. }));
+    assert!(matches!(
+        wire,
+        Request::SetCharacter {
+            expressive_character_ref: None,
+            ..
+        }
+    ));
     assert_eq!(agent_definition::next_revision("r9"), "r10");
     assert_eq!(agent_definition::next_revision("p"), "p-1");
 }
@@ -423,12 +472,24 @@ fn skillset_readings_use_the_owner_set_surface_and_propose_carries_set_refs() {
     let express = rig
         .calls()
         .iter()
-        .find(|c| c.as_array().unwrap().iter().any(|v| v == "agent-profile.express"))
+        .find(|c| {
+            c.as_array()
+                .unwrap()
+                .iter()
+                .any(|v| v == "agent-profile.express")
+        })
         .unwrap()
         .clone();
-    let request: Value =
-        serde_json::from_str(express.as_array().unwrap().last().unwrap().as_str().unwrap())
-            .unwrap();
+    let request: Value = serde_json::from_str(
+        express
+            .as_array()
+            .unwrap()
+            .last()
+            .unwrap()
+            .as_str()
+            .unwrap(),
+    )
+    .unwrap();
     assert_eq!(request["skill_set_refs"], json!(["skill-set:research"]));
     assert_eq!(request["skill_refs"], json!(["skill/one"]));
     // Unknown ingress fields are refused at the door, never ignored.
@@ -505,5 +566,10 @@ fn renderer_skillset_actions_reach_the_owner_requests() {
     let list: Request = serde_json::from_str(r#"{"action":"skillsets"}"#).unwrap();
     assert_eq!(list, Request::SkillSets);
     let show: Request = serde_json::from_str(r#"{"action":"skillset","name":"anima"}"#).unwrap();
-    assert_eq!(show, Request::SkillSet { name: "anima".into() });
+    assert_eq!(
+        show,
+        Request::SkillSet {
+            name: "anima".into()
+        }
+    );
 }
