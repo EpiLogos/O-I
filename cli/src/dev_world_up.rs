@@ -197,12 +197,7 @@ fn ensure_session_space(
     setup: &DevWorldSetup,
     warnings: &mut Vec<String>,
 ) -> Result<(bool, Option<u64>), String> {
-    if run_capture(&format!(
-        "aikit session-space show {}",
-        setup.session_space
-    ))
-    .is_ok()
-    {
+    if run_capture(&format!("aikit session-space show {}", setup.session_space)).is_ok() {
         return Ok((false, read_space_revision(setup, warnings)));
     }
     // Create stages and applies one reviewed preview each; these are the
@@ -250,10 +245,7 @@ fn ensure_herdr_surface(
     setup: &DevWorldSetup,
     warnings: &mut Vec<String>,
 ) -> Result<(bool, String, Option<String>), String> {
-    let show_text = run_capture(&format!(
-        "aikit session-space show {}",
-        setup.session_space
-    ))?;
+    let show_text = run_capture(&format!("aikit session-space show {}", setup.session_space))?;
     let show: serde_json::Value = serde_json::from_str(&show_text)
         .map_err(|error| format!("SessionSpace show returned invalid JSON: {error}"))?;
     let bound = show
@@ -367,7 +359,12 @@ fn herdr_bind_intents(
     Ok(vec![
         ("attach", "attach-surface", "", json_string(&attach)?),
         ("native", "bind-native-reference", "", json_string(&native)?),
-        ("bind", "bind-working-surface", " --provider herdr", json_string(&bind)?),
+        (
+            "bind",
+            "bind-working-surface",
+            " --provider herdr",
+            json_string(&bind)?,
+        ),
     ])
 }
 
@@ -384,13 +381,12 @@ fn json_string(value: &serde_json::Value) -> Result<String, String> {
 }
 
 fn read_space_revision(setup: &DevWorldSetup, warnings: &mut Vec<String>) -> Option<u64> {
-    let text = match run_capture(&format!(
-        "aikit session-space show {}",
-        setup.session_space
-    )) {
+    let text = match run_capture(&format!("aikit session-space show {}", setup.session_space)) {
         Ok(text) => text,
         Err(error) => {
-            warnings.push(format!("cannot re-read the SessionSpace after ensure: {error}"));
+            warnings.push(format!(
+                "cannot re-read the SessionSpace after ensure: {error}"
+            ));
             return None;
         }
     };
@@ -492,9 +488,7 @@ mod tests {
             Some(HERDR_SURFACE)
         );
         assert_eq!(
-            value
-                .pointer("/binding/plan/mux")
-                .and_then(|v| v.as_str()),
+            value.pointer("/binding/plan/mux").and_then(|v| v.as_str()),
             Some("herdr")
         );
         assert_eq!(
@@ -513,7 +507,10 @@ mod tests {
     fn delegated_outcome_reads_the_envelope_summary_not_braces() {
         let envelope = r#"{"context":{},"data":{"summary":"created tmux session `oi-development` with 11 view(s)","session":"oi-development"},"ok":true}"#;
         assert!(delegated_outcome(envelope).starts_with("created tmux session"));
-        assert_eq!(delegated_outcome("plain line output\n"), "plain line output");
+        assert_eq!(
+            delegated_outcome("plain line output\n"),
+            "plain line output"
+        );
     }
 
     #[test]
