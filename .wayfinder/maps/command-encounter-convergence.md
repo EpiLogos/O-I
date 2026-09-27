@@ -364,6 +364,7 @@ These are Git blobs, not executable versions. The repository tree inspection obs
 
 Relevant existing tests and sources to inspect narrowly: AIKit CLI parse/every-command/JSON-envelope/search-surface-parity/praxis/direct-agent-session/scoped-praxis/session-space tests; the TUI application/surface/navigation/composition/working-field/host/performance tests; O:I native Agent/session, participation, six-product command parity, kernel/context/configuration and desktop interaction tests; current Central AgentProfile/SkillSet-related source contracts; and current Method/Routine/package support. Test names are pointers to existing families, not a demand to run every repository's full suite before the first change.
 
+
 ---
 
 ## 6. Returned implementation and evidence (coordinator, 26 September 2026)
@@ -408,3 +409,5 @@ Probe Agent and probe agent-set removed by CAS after proof.
 3. Cradle walk scenarios `rest`/`modes`/`kernel-cas` fail at expressions-substrate selectors (`.xg-navigator`, `.warm-tree-host … pane-tool-pin`) and the pre-existing shell-host check — present before #527 (receipts last green #482, 22 Sep); owned by the expressions/world-substrate lane.
 4. Factory/Workcell/QL CLI help treatment, packet A3 (executable praxis support), `oi ui` composed-World handoff, and in-TUI SkillSet-first picker (needs the headless prepare contract moved below the CLI/TUI split) remain open on this map's frontier.
 5. X-matrix items X7 (Factory Commission), X9 (edit-while-running), X12 (four-surface same-identity), X13/X15/X16 at full depth remain for the next pass with the desktop app installed.
+=======
+>>>>>>> origin/design/command-encounter-convergence
