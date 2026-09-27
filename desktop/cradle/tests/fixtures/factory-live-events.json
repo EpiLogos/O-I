@@ -1,0 +1,1544 @@
+{
+ "source": "Owner-produced readings. attemptReadings: `factory attempt read` over the disposable walk/lib/factory-specimen.mjs ground (installed factory CLI), before and after a native `fail` + `retry` (with re-resolution) of the review attempt; telemetryWatch: `factory telemetry watch <state> --duration 0.2` JSONL on that ground; population/conversation: `aikit gateway who|conversation --json` data on this machine (2026-09-26), bodies trimmed; custody: the real factory.work-custody-receipt/v1 from Control/agents/now/flows/two-machine-inhabitation-2026-09-24; claudeStream: two tool_use lines of the real aletheia-5.stream.jsonl (claude stream-json, inputs trimmed).",
+ "runRef": "run:01M3F6A3P03X7CG6SA6A5QG7GE",
+ "attemptReadings": [
+  {
+   "contract": "factory.attempt-reading/v1",
+   "revision": 21,
+   "runRef": "run:01M3F6A3P03X7CG6SA6A5QG7GE",
+   "runRevision": 5,
+   "topologyRevision": 5,
+   "workflowKey": "specimen-release-notes",
+   "workflowSourceRef": "workflow-source:01M3SPEC0000000000000000A1",
+   "workflowSourceRevision": "specimen-release-notes-v1",
+   "workflowSourceDigest": "d4329e18d547dbf876f90f626f322270deeed56ca1241f413cafb6a88f2a7955",
+   "sourceCurrent": true,
+   "legs": {
+    "workflow-unit:2RB1XYD2H1XJP74N5GB4JFDMCM": {
+     "delegation": {
+      "parentJourneyRef": "journey:01M3F6A3P07VDWZ2FJ08YVE1E8",
+      "parentRunRef": "run:01M3F6A3P03X7CG6SA6A5QG7GE",
+      "executionUnitRef": "workflow-unit:2RB1XYD2H1XJP74N5GB4JFDMCM",
+      "concern": "Release notes list their sections alphabetically, so readers meet Fixes before Breaking changes.",
+      "requiredDifference": "An exact account of where the generator decides section order, citing file and line at the basis revision.",
+      "returnContract": "Return the cited decision point, the current test result and the section order the generator produces today.",
+      "subjectRef": "central-project:Specimen",
+      "basisRevision": "Specimen@abcaf0790ffceabe95abb1e140c84ae07704177d",
+      "agentRequirements": {
+       "agentRefs": [
+        "agent/specimen-surveyor"
+       ],
+       "agentSetRefs": [],
+       "agencyRefs": []
+      },
+      "permittedEffects": [
+       "execute: the existing release-notes tests",
+       "read: the Specimen repository at its basis revision"
+      ],
+      "verificationObligations": [
+       "Every cited file and line exists at the basis revision.",
+       "The account names the one function that orders sections.",
+       "The existing release-notes tests were run and their result is quoted."
+      ],
+      "returnAddress": "return:specimen/release-notes",
+      "stopConditions": "Stop on a changed basis revision, missing authority or any write outside the permitted paths; retain every partial outcome.",
+      "retryGrant": {
+       "grantRef": "grant:specimen/survey",
+       "attemptsAllowed": 2,
+       "attemptsSpent": 1,
+       "revoked": false
+      }
+     },
+     "executionRef": "execution:specimen-survey-1",
+     "status": "returned",
+     "statusHistory": [
+      "active",
+      "returned"
+     ],
+     "attempts": [
+      {
+       "executionRef": "execution:specimen-survey-1",
+       "delegation": {
+        "parentJourneyRef": "journey:01M3F6A3P07VDWZ2FJ08YVE1E8",
+        "parentRunRef": "run:01M3F6A3P03X7CG6SA6A5QG7GE",
+        "executionUnitRef": "workflow-unit:2RB1XYD2H1XJP74N5GB4JFDMCM",
+        "concern": "Release notes list their sections alphabetically, so readers meet Fixes before Breaking changes.",
+        "requiredDifference": "An exact account of where the generator decides section order, citing file and line at the basis revision.",
+        "returnContract": "Return the cited decision point, the current test result and the section order the generator produces today.",
+        "subjectRef": "central-project:Specimen",
+        "basisRevision": "Specimen@abcaf0790ffceabe95abb1e140c84ae07704177d",
+        "agentRequirements": {
+         "agentRefs": [
+          "agent/specimen-surveyor"
+         ],
+         "agentSetRefs": [],
+         "agencyRefs": []
+        },
+        "permittedEffects": [
+         "execute: the existing release-notes tests",
+         "read: the Specimen repository at its basis revision"
+        ],
+        "verificationObligations": [
+         "Every cited file and line exists at the basis revision.",
+         "The account names the one function that orders sections.",
+         "The existing release-notes tests were run and their result is quoted."
+        ],
+        "returnAddress": "return:specimen/release-notes",
+        "stopConditions": "Stop on a changed basis revision, missing authority or any write outside the permitted paths; retain every partial outcome.",
+        "retryGrant": {
+         "grantRef": "grant:specimen/survey",
+         "attemptsAllowed": 2,
+         "attemptsSpent": 1,
+         "revoked": false
+        }
+       },
+       "status": "returned",
+       "statusHistory": [
+        "active",
+        "returned"
+       ],
+       "artifacts": [
+        {
+         "artifactRef": "artifact:specimen/survey-section-order",
+         "subjectRef": "central-project:Specimen",
+         "subjectRevision": "Specimen@abcaf0790ffceabe95abb1e140c84ae07704177d",
+         "producingExecutionRef": "execution:specimen-survey-1",
+         "evidenceRefs": [
+          "evidence:specimen/survey-citations",
+          "evidence:specimen/survey-ordering-function",
+          "evidence:specimen/survey-test-run"
+         ],
+         "semanticDifference": "The ordering decision point is located and cited at the basis revision."
+        }
+       ],
+       "lateArtifacts": [],
+       "failureReason": null
+      }
+     ],
+     "artifacts": [
+      {
+       "artifactRef": "artifact:specimen/survey-section-order",
+       "subjectRef": "central-project:Specimen",
+       "subjectRevision": "Specimen@abcaf0790ffceabe95abb1e140c84ae07704177d",
+       "producingExecutionRef": "execution:specimen-survey-1",
+       "evidenceRefs": [
+        "evidence:specimen/survey-citations",
+        "evidence:specimen/survey-ordering-function",
+        "evidence:specimen/survey-test-run"
+       ],
+       "semanticDifference": "The ordering decision point is located and cited at the basis revision."
+      }
+     ],
+     "lateArtifacts": [],
+     "failureReason": null
+    },
+    "workflow-unit:7EESDZV3JAWMWR29PEB61BPBR0": {
+     "delegation": {
+      "parentJourneyRef": "journey:01M3F6A3P07VDWZ2FJ08YVE1E8",
+      "parentRunRef": "run:01M3F6A3P03X7CG6SA6A5QG7GE",
+      "executionUnitRef": "workflow-unit:7EESDZV3JAWMWR29PEB61BPBR0",
+      "concern": "The ordering rule needs an independent reading against the changelog before it is integrated.",
+      "requiredDifference": "An independent judgement of whether the declared order is the one readers need, with counter-examples.",
+      "returnContract": "Return the judgement, the counter-examples tried and any disagreement with the survey.",
+      "subjectRef": "central-project:Specimen",
+      "basisRevision": "Specimen@abcaf0790ffceabe95abb1e140c84ae07704177d",
+      "agentRequirements": {
+       "agentRefs": [
+        "agent/specimen-reviewer"
+       ],
+       "agentSetRefs": [],
+       "agencyRefs": []
+      },
+      "permittedEffects": [
+       "execute: the release-notes tests",
+       "read: the Specimen repository and the survey Return"
+      ],
+      "verificationObligations": [
+       "At least two counter-examples were tried against the declared order.",
+       "The judgement cites the changelog, not the draft."
+      ],
+      "returnAddress": "return:specimen/release-notes",
+      "stopConditions": "Stop on a changed basis revision, missing authority or any write outside the permitted paths; retain every partial outcome.",
+      "retryGrant": {
+       "grantRef": "grant:specimen/review",
+       "attemptsAllowed": 2,
+       "attemptsSpent": 1,
+       "revoked": false
+      }
+     },
+     "executionRef": "execution:specimen-review-1",
+     "status": "active",
+     "statusHistory": [
+      "active"
+     ],
+     "attempts": [
+      {
+       "executionRef": "execution:specimen-review-1",
+       "delegation": {
+        "parentJourneyRef": "journey:01M3F6A3P07VDWZ2FJ08YVE1E8",
+        "parentRunRef": "run:01M3F6A3P03X7CG6SA6A5QG7GE",
+        "executionUnitRef": "workflow-unit:7EESDZV3JAWMWR29PEB61BPBR0",
+        "concern": "The ordering rule needs an independent reading against the changelog before it is integrated.",
+        "requiredDifference": "An independent judgement of whether the declared order is the one readers need, with counter-examples.",
+        "returnContract": "Return the judgement, the counter-examples tried and any disagreement with the survey.",
+        "subjectRef": "central-project:Specimen",
+        "basisRevision": "Specimen@abcaf0790ffceabe95abb1e140c84ae07704177d",
+        "agentRequirements": {
+         "agentRefs": [
+          "agent/specimen-reviewer"
+         ],
+         "agentSetRefs": [],
+         "agencyRefs": []
+        },
+        "permittedEffects": [
+         "execute: the release-notes tests",
+         "read: the Specimen repository and the survey Return"
+        ],
+        "verificationObligations": [
+         "At least two counter-examples were tried against the declared order.",
+         "The judgement cites the changelog, not the draft."
+        ],
+        "returnAddress": "return:specimen/release-notes",
+        "stopConditions": "Stop on a changed basis revision, missing authority or any write outside the permitted paths; retain every partial outcome.",
+        "retryGrant": {
+         "grantRef": "grant:specimen/review",
+         "attemptsAllowed": 2,
+         "attemptsSpent": 1,
+         "revoked": false
+        }
+       },
+       "status": "active",
+       "statusHistory": [
+        "active"
+       ],
+       "artifacts": [],
+       "lateArtifacts": [],
+       "failureReason": null
+      }
+     ],
+     "artifacts": [],
+     "lateArtifacts": [],
+     "failureReason": null
+    }
+   },
+   "attempts": [
+    {
+     "attemptRef": "attempt:specimen-review-1",
+     "attemptRecordedAt": "2026-09-26T18:46:43.794Z",
+     "taskRef": "task:specimen/review-section-order",
+     "workflowUnitRef": "workflow-unit:7EESDZV3JAWMWR29PEB61BPBR0",
+     "reservedExecutionRef": "factory-attempt:attempt:specimen-review-1",
+     "executionRef": "execution:specimen-review-1",
+     "disposition": {
+      "selection": {
+       "schema_version": "factory.execution-intelligence/v1",
+       "demand": {
+        "project_ref": "project:0000000000V9M7QXHVZ80YRXTN",
+        "run_ref": "run:01M3F6A3P03X7CG6SA6A5QG7GE",
+        "workflow_unit_ref": "workflow-unit:7EESDZV3JAWMWR29PEB61BPBR0",
+        "agency_ref": "agency:specimen/reviewer",
+        "profile_ref": null,
+        "use_type": "review",
+        "required_capabilities": [
+         "capability/factory/operate-attempt"
+        ],
+        "required_modalities": [
+         "text"
+        ],
+        "required_actions": [],
+        "required_tools": [],
+        "context_characteristics": [],
+        "independence_from": [],
+        "cost_ceiling_usd": null,
+        "latency_preference_ms": null,
+        "requires_local_materialisation": false
+       },
+       "selection": {
+        "roster_version": "aikit.model-roster/v1",
+        "model_ref": "model:specimen/text-model",
+        "provider_ref": "provider:specimen/no-provider",
+        "ranking_policy": "specimen-fixed",
+        "ranking_explanation": {
+         "note": "Fixed specimen selection; no AIKit roster was consulted.",
+         "specimen": true
+        },
+        "provenance": [
+         "selection:specimen/fixed"
+        ]
+       },
+       "decided_at": "2026-09-26T16:01:00Z"
+      },
+      "participant": {
+       "agentRef": "agent/specimen-reviewer",
+       "agencyRef": "agency:specimen/reviewer",
+       "worldBindingRef": "binding:specimen/disposable-ground",
+       "sourceRef": "workflow-source:01M3SPEC0000000000000000A1",
+       "sourceRevision": "specimen-release-notes-v1",
+       "sourceDigest": "blake3:d4329e18d547dbf876f90f626f322270deeed56ca1241f413cafb6a88f2a7955"
+      },
+      "contextRefs": [
+       "context:specimen/release-notes"
+      ],
+      "praxisRefs": [
+       "praxis:specimen/cite-before-claiming"
+      ],
+      "capabilityRefs": [
+       "capability/factory/operate-attempt"
+      ],
+      "body": {
+       "modelRef": "model:specimen/text-model",
+       "providerRef": "provider:specimen/no-provider",
+       "routeRef": "route:specimen/none",
+       "harnessRef": "harness:specimen",
+       "harnessCompositionRef": "composition:specimen",
+       "agentSessionRef": "agent-session/specimen-review",
+       "sessionSpaceRef": "session-space/specimen"
+      },
+      "permittedEffects": [
+       "execute: the release-notes tests",
+       "read: the Specimen repository and the survey Return"
+      ],
+      "verificationObligations": [
+       "At least two counter-examples were tried against the declared order.",
+       "The judgement cites the changelog, not the draft."
+      ],
+      "returnAddress": "return:specimen/release-notes",
+      "stopConditions": "Stop on a changed basis revision, missing authority or any write outside the permitted paths; retain every partial outcome.",
+      "escalationConditions": "Escalate when the section order is decided somewhere other than the release-notes generator, or when a test cannot be run.",
+      "budget": {
+       "wallClockTimeoutMs": 1800000,
+       "retryGrantRef": "grant:specimen/review",
+       "maximumAttempts": 2
+      }
+     },
+     "dispatch": {
+      "ownerRef": "aikit",
+      "contract": "aikit.encounter-delivery/v1",
+      "operationRef": "delivery:specimen-review-1",
+      "receiptRef": "receipt:specimen-review-1/submitted",
+      "sourceRevision": "specimen-fixture-r1",
+      "phase": "submitted",
+      "evidenceRefs": [],
+      "partialEffectRefs": [],
+      "payload": {
+       "agentSessionRef": "agent-session/specimen-review",
+       "providerContacted": false,
+       "specimen": true
+      }
+     },
+     "observations": [],
+     "verifications": [
+      {
+       "verificationRef": "verification:specimen-review-1/in-progress",
+       "ownerRef": "factory",
+       "sourceRevision": "specimen-fixture-r1",
+       "outcome": "unknown",
+       "obligations": [
+        "At least two counter-examples were tried against the declared order."
+       ],
+       "evidenceRefs": [
+        "evidence:specimen/review-counter-examples"
+       ]
+      }
+     ],
+     "verificationRecordedAt": {
+      "verification:specimen-review-1/in-progress": "2026-09-26T18:46:43.859Z"
+     },
+     "tracking": [
+      {
+       "factRef": "fact:specimen-review-1/session",
+       "kind": "session",
+       "ownerRef": "aikit",
+       "subjectRef": "agent-session/specimen-review",
+       "sourceRevision": "specimen-fixture-r1",
+       "evidenceRefs": [
+        "receipt:specimen-review-1/submitted"
+       ]
+      }
+     ],
+     "reresolutions": [],
+     "failureEvidenceRefs": []
+    },
+    {
+     "attemptRef": "attempt:specimen-survey-1",
+     "attemptRecordedAt": "2026-09-26T18:46:43.604Z",
+     "taskRef": "task:specimen/survey-section-order",
+     "workflowUnitRef": "workflow-unit:2RB1XYD2H1XJP74N5GB4JFDMCM",
+     "reservedExecutionRef": "factory-attempt:attempt:specimen-survey-1",
+     "executionRef": "execution:specimen-survey-1",
+     "disposition": {
+      "selection": {
+       "schema_version": "factory.execution-intelligence/v1",
+       "demand": {
+        "project_ref": "project:0000000000V9M7QXHVZ80YRXTN",
+        "run_ref": "run:01M3F6A3P03X7CG6SA6A5QG7GE",
+        "workflow_unit_ref": "workflow-unit:2RB1XYD2H1XJP74N5GB4JFDMCM",
+        "agency_ref": "agency:specimen/surveyor",
+        "profile_ref": null,
+        "use_type": "survey",
+        "required_capabilities": [
+         "capability/factory/operate-attempt"
+        ],
+        "required_modalities": [
+         "text"
+        ],
+        "required_actions": [],
+        "required_tools": [],
+        "context_characteristics": [],
+        "independence_from": [],
+        "cost_ceiling_usd": null,
+        "latency_preference_ms": null,
+        "requires_local_materialisation": false
+       },
+       "selection": {
+        "roster_version": "aikit.model-roster/v1",
+        "model_ref": "model:specimen/text-model",
+        "provider_ref": "provider:specimen/no-provider",
+        "ranking_policy": "specimen-fixed",
+        "ranking_explanation": {
+         "note": "Fixed specimen selection; no AIKit roster was consulted.",
+         "specimen": true
+        },
+        "provenance": [
+         "selection:specimen/fixed"
+        ]
+       },
+       "decided_at": "2026-09-26T15:47:00Z"
+      },
+      "participant": {
+       "agentRef": "agent/specimen-surveyor",
+       "agencyRef": "agency:specimen/surveyor",
+       "worldBindingRef": "binding:specimen/disposable-ground",
+       "sourceRef": "workflow-source:01M3SPEC0000000000000000A1",
+       "sourceRevision": "specimen-release-notes-v1",
+       "sourceDigest": "blake3:d4329e18d547dbf876f90f626f322270deeed56ca1241f413cafb6a88f2a7955"
+      },
+      "contextRefs": [
+       "context:specimen/release-notes"
+      ],
+      "praxisRefs": [
+       "praxis:specimen/cite-before-claiming"
+      ],
+      "capabilityRefs": [
+       "capability/factory/operate-attempt"
+      ],
+      "body": {
+       "modelRef": "model:specimen/text-model",
+       "providerRef": "provider:specimen/no-provider",
+       "routeRef": "route:specimen/none",
+       "harnessRef": "harness:specimen",
+       "harnessCompositionRef": "composition:specimen",
+       "agentSessionRef": "agent-session/specimen-survey",
+       "sessionSpaceRef": "session-space/specimen"
+      },
+      "permittedEffects": [
+       "execute: the existing release-notes tests",
+       "read: the Specimen repository at its basis revision"
+      ],
+      "verificationObligations": [
+       "Every cited file and line exists at the basis revision.",
+       "The account names the one function that orders sections.",
+       "The existing release-notes tests were run and their result is quoted."
+      ],
+      "returnAddress": "return:specimen/release-notes",
+      "stopConditions": "Stop on a changed basis revision, missing authority or any write outside the permitted paths; retain every partial outcome.",
+      "escalationConditions": "Escalate when the section order is decided somewhere other than the release-notes generator, or when a test cannot be run.",
+      "budget": {
+       "wallClockTimeoutMs": 1800000,
+       "retryGrantRef": "grant:specimen/survey",
+       "maximumAttempts": 2
+      }
+     },
+     "dispatch": {
+      "ownerRef": "aikit",
+      "contract": "aikit.encounter-delivery/v1",
+      "operationRef": "delivery:specimen-survey-1",
+      "receiptRef": "receipt:specimen-survey-1/submitted",
+      "sourceRevision": "specimen-fixture-r1",
+      "phase": "submitted",
+      "evidenceRefs": [],
+      "partialEffectRefs": [],
+      "payload": {
+       "agentSessionRef": "agent-session/specimen-survey",
+       "providerContacted": false,
+       "specimen": true
+      }
+     },
+     "observations": [
+      {
+       "ownerRef": "aikit",
+       "contract": "aikit.encounter-delivery/v1",
+       "operationRef": "delivery:specimen-survey-1",
+       "receiptRef": "receipt:specimen-survey-1/returned",
+       "sourceRevision": "specimen-fixture-r1",
+       "phase": "returned",
+       "evidenceRefs": [
+        "evidence:specimen/survey-transcript"
+       ],
+       "partialEffectRefs": [],
+       "payload": {
+        "agentSessionRef": "agent-session/specimen-survey",
+        "providerContacted": false,
+        "specimen": true
+       }
+      }
+     ],
+     "verifications": [
+      {
+       "verificationRef": "verification:specimen-survey-1/first-pass",
+       "ownerRef": "factory",
+       "sourceRevision": "specimen-fixture-r1",
+       "outcome": "unknown",
+       "obligations": [
+        "Every cited file and line exists at the basis revision.",
+        "The account names the one function that orders sections."
+       ],
+       "evidenceRefs": [
+        "evidence:specimen/survey-citations",
+        "evidence:specimen/survey-test-run"
+       ]
+      },
+      {
+       "verificationRef": "verification:specimen-survey-1/complete",
+       "ownerRef": "factory",
+       "sourceRevision": "specimen-fixture-r1",
+       "outcome": "passed",
+       "obligations": [
+        "Every cited file and line exists at the basis revision.",
+        "The account names the one function that orders sections.",
+        "The existing release-notes tests were run and their result is quoted."
+       ],
+       "evidenceRefs": [
+        "evidence:specimen/survey-citations",
+        "evidence:specimen/survey-ordering-function",
+        "evidence:specimen/survey-test-run"
+       ]
+      }
+     ],
+     "verificationRecordedAt": {
+      "verification:specimen-survey-1/complete": "2026-09-26T18:46:43.730Z",
+      "verification:specimen-survey-1/first-pass": "2026-09-26T18:46:43.666Z"
+     },
+     "tracking": [
+      {
+       "factRef": "fact:specimen-survey-1/session",
+       "kind": "session",
+       "ownerRef": "aikit",
+       "subjectRef": "agent-session/specimen-survey",
+       "sourceRevision": "specimen-fixture-r1",
+       "evidenceRefs": [
+        "receipt:specimen-survey-1/submitted"
+       ]
+      }
+     ],
+     "reresolutions": [],
+     "failureEvidenceRefs": [],
+     "readableReturn": {
+      "returnRef": "return:specimen/survey-section-order-1",
+      "summary": "Section order is decided in one place: the generator sorts headings alphabetically in src/release_notes.txt line 1, so Breaking changes renders after Fixes. The existing release-notes tests pass and do not pin order. The draft should replace the alphabetical sort with the changelog's declared order.",
+      "artifactRefs": [
+       "artifact:specimen/survey-section-order"
+      ],
+      "evidenceRefs": [
+       "evidence:specimen/survey-citations",
+       "evidence:specimen/survey-ordering-function",
+       "evidence:specimen/survey-test-run"
+      ],
+      "archiveRefs": [],
+      "regressionObservationRefs": []
+     },
+     "returnRecordedAt": "2026-09-26T18:46:43.763Z",
+     "verificationCountAtReturn": 2
+    }
+   ],
+   "independentReviewers": {},
+   "syntheses": {}
+  },
+  {
+   "contract": "factory.attempt-reading/v1",
+   "revision": 23,
+   "runRef": "run:01M3F6A3P03X7CG6SA6A5QG7GE",
+   "runRevision": 7,
+   "topologyRevision": 7,
+   "workflowKey": "specimen-release-notes",
+   "workflowSourceRef": "workflow-source:01M3SPEC0000000000000000A1",
+   "workflowSourceRevision": "specimen-release-notes-v1",
+   "workflowSourceDigest": "d4329e18d547dbf876f90f626f322270deeed56ca1241f413cafb6a88f2a7955",
+   "sourceCurrent": true,
+   "legs": {
+    "workflow-unit:2RB1XYD2H1XJP74N5GB4JFDMCM": {
+     "delegation": {
+      "parentJourneyRef": "journey:01M3F6A3P07VDWZ2FJ08YVE1E8",
+      "parentRunRef": "run:01M3F6A3P03X7CG6SA6A5QG7GE",
+      "executionUnitRef": "workflow-unit:2RB1XYD2H1XJP74N5GB4JFDMCM",
+      "concern": "Release notes list their sections alphabetically, so readers meet Fixes before Breaking changes.",
+      "requiredDifference": "An exact account of where the generator decides section order, citing file and line at the basis revision.",
+      "returnContract": "Return the cited decision point, the current test result and the section order the generator produces today.",
+      "subjectRef": "central-project:Specimen",
+      "basisRevision": "Specimen@abcaf0790ffceabe95abb1e140c84ae07704177d",
+      "agentRequirements": {
+       "agentRefs": [
+        "agent/specimen-surveyor"
+       ],
+       "agentSetRefs": [],
+       "agencyRefs": []
+      },
+      "permittedEffects": [
+       "execute: the existing release-notes tests",
+       "read: the Specimen repository at its basis revision"
+      ],
+      "verificationObligations": [
+       "Every cited file and line exists at the basis revision.",
+       "The account names the one function that orders sections.",
+       "The existing release-notes tests were run and their result is quoted."
+      ],
+      "returnAddress": "return:specimen/release-notes",
+      "stopConditions": "Stop on a changed basis revision, missing authority or any write outside the permitted paths; retain every partial outcome.",
+      "retryGrant": {
+       "grantRef": "grant:specimen/survey",
+       "attemptsAllowed": 2,
+       "attemptsSpent": 1,
+       "revoked": false
+      }
+     },
+     "executionRef": "execution:specimen-survey-1",
+     "status": "returned",
+     "statusHistory": [
+      "active",
+      "returned"
+     ],
+     "attempts": [
+      {
+       "executionRef": "execution:specimen-survey-1",
+       "delegation": {
+        "parentJourneyRef": "journey:01M3F6A3P07VDWZ2FJ08YVE1E8",
+        "parentRunRef": "run:01M3F6A3P03X7CG6SA6A5QG7GE",
+        "executionUnitRef": "workflow-unit:2RB1XYD2H1XJP74N5GB4JFDMCM",
+        "concern": "Release notes list their sections alphabetically, so readers meet Fixes before Breaking changes.",
+        "requiredDifference": "An exact account of where the generator decides section order, citing file and line at the basis revision.",
+        "returnContract": "Return the cited decision point, the current test result and the section order the generator produces today.",
+        "subjectRef": "central-project:Specimen",
+        "basisRevision": "Specimen@abcaf0790ffceabe95abb1e140c84ae07704177d",
+        "agentRequirements": {
+         "agentRefs": [
+          "agent/specimen-surveyor"
+         ],
+         "agentSetRefs": [],
+         "agencyRefs": []
+        },
+        "permittedEffects": [
+         "execute: the existing release-notes tests",
+         "read: the Specimen repository at its basis revision"
+        ],
+        "verificationObligations": [
+         "Every cited file and line exists at the basis revision.",
+         "The account names the one function that orders sections.",
+         "The existing release-notes tests were run and their result is quoted."
+        ],
+        "returnAddress": "return:specimen/release-notes",
+        "stopConditions": "Stop on a changed basis revision, missing authority or any write outside the permitted paths; retain every partial outcome.",
+        "retryGrant": {
+         "grantRef": "grant:specimen/survey",
+         "attemptsAllowed": 2,
+         "attemptsSpent": 1,
+         "revoked": false
+        }
+       },
+       "status": "returned",
+       "statusHistory": [
+        "active",
+        "returned"
+       ],
+       "artifacts": [
+        {
+         "artifactRef": "artifact:specimen/survey-section-order",
+         "subjectRef": "central-project:Specimen",
+         "subjectRevision": "Specimen@abcaf0790ffceabe95abb1e140c84ae07704177d",
+         "producingExecutionRef": "execution:specimen-survey-1",
+         "evidenceRefs": [
+          "evidence:specimen/survey-citations",
+          "evidence:specimen/survey-ordering-function",
+          "evidence:specimen/survey-test-run"
+         ],
+         "semanticDifference": "The ordering decision point is located and cited at the basis revision."
+        }
+       ],
+       "lateArtifacts": [],
+       "failureReason": null
+      }
+     ],
+     "artifacts": [
+      {
+       "artifactRef": "artifact:specimen/survey-section-order",
+       "subjectRef": "central-project:Specimen",
+       "subjectRevision": "Specimen@abcaf0790ffceabe95abb1e140c84ae07704177d",
+       "producingExecutionRef": "execution:specimen-survey-1",
+       "evidenceRefs": [
+        "evidence:specimen/survey-citations",
+        "evidence:specimen/survey-ordering-function",
+        "evidence:specimen/survey-test-run"
+       ],
+       "semanticDifference": "The ordering decision point is located and cited at the basis revision."
+      }
+     ],
+     "lateArtifacts": [],
+     "failureReason": null
+    },
+    "workflow-unit:7EESDZV3JAWMWR29PEB61BPBR0": {
+     "delegation": {
+      "parentJourneyRef": "journey:01M3F6A3P07VDWZ2FJ08YVE1E8",
+      "parentRunRef": "run:01M3F6A3P03X7CG6SA6A5QG7GE",
+      "executionUnitRef": "workflow-unit:7EESDZV3JAWMWR29PEB61BPBR0",
+      "concern": "The ordering rule needs an independent reading against the changelog before it is integrated.",
+      "requiredDifference": "An independent judgement of whether the declared order is the one readers need, with counter-examples.",
+      "returnContract": "Return the judgement, the counter-examples tried and any disagreement with the survey.",
+      "subjectRef": "central-project:Specimen",
+      "basisRevision": "Specimen@abcaf0790ffceabe95abb1e140c84ae07704177d",
+      "agentRequirements": {
+       "agentRefs": [
+        "agent/specimen-reviewer"
+       ],
+       "agentSetRefs": [],
+       "agencyRefs": []
+      },
+      "permittedEffects": [
+       "execute: the release-notes tests",
+       "read: the Specimen repository and the survey Return"
+      ],
+      "verificationObligations": [
+       "At least two counter-examples were tried against the declared order.",
+       "The judgement cites the changelog, not the draft."
+      ],
+      "returnAddress": "return:specimen/release-notes",
+      "stopConditions": "Stop on a changed basis revision, missing authority or any write outside the permitted paths; retain every partial outcome.",
+      "retryGrant": {
+       "grantRef": "grant:specimen/review",
+       "attemptsAllowed": 2,
+       "attemptsSpent": 2,
+       "revoked": false
+      }
+     },
+     "executionRef": "factory-attempt:attempt:specimen-review-2",
+     "status": "active",
+     "statusHistory": [
+      "active"
+     ],
+     "attempts": [
+      {
+       "executionRef": "execution:specimen-review-1",
+       "delegation": {
+        "parentJourneyRef": "journey:01M3F6A3P07VDWZ2FJ08YVE1E8",
+        "parentRunRef": "run:01M3F6A3P03X7CG6SA6A5QG7GE",
+        "executionUnitRef": "workflow-unit:7EESDZV3JAWMWR29PEB61BPBR0",
+        "concern": "The ordering rule needs an independent reading against the changelog before it is integrated.",
+        "requiredDifference": "An independent judgement of whether the declared order is the one readers need, with counter-examples.",
+        "returnContract": "Return the judgement, the counter-examples tried and any disagreement with the survey.",
+        "subjectRef": "central-project:Specimen",
+        "basisRevision": "Specimen@abcaf0790ffceabe95abb1e140c84ae07704177d",
+        "agentRequirements": {
+         "agentRefs": [
+          "agent/specimen-reviewer"
+         ],
+         "agentSetRefs": [],
+         "agencyRefs": []
+        },
+        "permittedEffects": [
+         "execute: the release-notes tests",
+         "read: the Specimen repository and the survey Return"
+        ],
+        "verificationObligations": [
+         "At least two counter-examples were tried against the declared order.",
+         "The judgement cites the changelog, not the draft."
+        ],
+        "returnAddress": "return:specimen/release-notes",
+        "stopConditions": "Stop on a changed basis revision, missing authority or any write outside the permitted paths; retain every partial outcome.",
+        "retryGrant": {
+         "grantRef": "grant:specimen/review",
+         "attemptsAllowed": 2,
+         "attemptsSpent": 1,
+         "revoked": false
+        }
+       },
+       "status": "failed",
+       "statusHistory": [
+        "active",
+        "failed"
+       ],
+       "artifacts": [],
+       "lateArtifacts": [],
+       "failureReason": "The changelog check could not run: the specimen carries no changelog fixture."
+      },
+      {
+       "executionRef": "factory-attempt:attempt:specimen-review-2",
+       "delegation": {
+        "parentJourneyRef": "journey:01M3F6A3P07VDWZ2FJ08YVE1E8",
+        "parentRunRef": "run:01M3F6A3P03X7CG6SA6A5QG7GE",
+        "executionUnitRef": "workflow-unit:7EESDZV3JAWMWR29PEB61BPBR0",
+        "concern": "The ordering rule needs an independent reading against the changelog before it is integrated.",
+        "requiredDifference": "An independent judgement of whether the declared order is the one readers need, with counter-examples.",
+        "returnContract": "Return the judgement, the counter-examples tried and any disagreement with the survey.",
+        "subjectRef": "central-project:Specimen",
+        "basisRevision": "Specimen@abcaf0790ffceabe95abb1e140c84ae07704177d",
+        "agentRequirements": {
+         "agentRefs": [
+          "agent/specimen-reviewer"
+         ],
+         "agentSetRefs": [],
+         "agencyRefs": []
+        },
+        "permittedEffects": [
+         "execute: the release-notes tests",
+         "read: the Specimen repository and the survey Return"
+        ],
+        "verificationObligations": [
+         "At least two counter-examples were tried against the declared order.",
+         "The judgement cites the changelog, not the draft."
+        ],
+        "returnAddress": "return:specimen/release-notes",
+        "stopConditions": "Stop on a changed basis revision, missing authority or any write outside the permitted paths; retain every partial outcome.",
+        "retryGrant": {
+         "grantRef": "grant:specimen/review",
+         "attemptsAllowed": 2,
+         "attemptsSpent": 2,
+         "revoked": false
+        }
+       },
+       "status": "active",
+       "statusHistory": [
+        "active"
+       ],
+       "artifacts": [],
+       "lateArtifacts": [],
+       "failureReason": null
+      }
+     ],
+     "artifacts": [],
+     "lateArtifacts": [],
+     "failureReason": null
+    }
+   },
+   "attempts": [
+    {
+     "attemptRef": "attempt:specimen-review-1",
+     "attemptRecordedAt": "2026-09-26T18:46:43.794Z",
+     "taskRef": "task:specimen/review-section-order",
+     "workflowUnitRef": "workflow-unit:7EESDZV3JAWMWR29PEB61BPBR0",
+     "reservedExecutionRef": "factory-attempt:attempt:specimen-review-1",
+     "executionRef": "execution:specimen-review-1",
+     "disposition": {
+      "selection": {
+       "schema_version": "factory.execution-intelligence/v1",
+       "demand": {
+        "project_ref": "project:0000000000V9M7QXHVZ80YRXTN",
+        "run_ref": "run:01M3F6A3P03X7CG6SA6A5QG7GE",
+        "workflow_unit_ref": "workflow-unit:7EESDZV3JAWMWR29PEB61BPBR0",
+        "agency_ref": "agency:specimen/reviewer",
+        "profile_ref": null,
+        "use_type": "review",
+        "required_capabilities": [
+         "capability/factory/operate-attempt"
+        ],
+        "required_modalities": [
+         "text"
+        ],
+        "required_actions": [],
+        "required_tools": [],
+        "context_characteristics": [],
+        "independence_from": [],
+        "cost_ceiling_usd": null,
+        "latency_preference_ms": null,
+        "requires_local_materialisation": false
+       },
+       "selection": {
+        "roster_version": "aikit.model-roster/v1",
+        "model_ref": "model:specimen/text-model",
+        "provider_ref": "provider:specimen/no-provider",
+        "ranking_policy": "specimen-fixed",
+        "ranking_explanation": {
+         "note": "Fixed specimen selection; no AIKit roster was consulted.",
+         "specimen": true
+        },
+        "provenance": [
+         "selection:specimen/fixed"
+        ]
+       },
+       "decided_at": "2026-09-26T16:01:00Z"
+      },
+      "participant": {
+       "agentRef": "agent/specimen-reviewer",
+       "agencyRef": "agency:specimen/reviewer",
+       "worldBindingRef": "binding:specimen/disposable-ground",
+       "sourceRef": "workflow-source:01M3SPEC0000000000000000A1",
+       "sourceRevision": "specimen-release-notes-v1",
+       "sourceDigest": "blake3:d4329e18d547dbf876f90f626f322270deeed56ca1241f413cafb6a88f2a7955"
+      },
+      "contextRefs": [
+       "context:specimen/release-notes"
+      ],
+      "praxisRefs": [
+       "praxis:specimen/cite-before-claiming"
+      ],
+      "capabilityRefs": [
+       "capability/factory/operate-attempt"
+      ],
+      "body": {
+       "modelRef": "model:specimen/text-model",
+       "providerRef": "provider:specimen/no-provider",
+       "routeRef": "route:specimen/none",
+       "harnessRef": "harness:specimen",
+       "harnessCompositionRef": "composition:specimen",
+       "agentSessionRef": "agent-session/specimen-review",
+       "sessionSpaceRef": "session-space/specimen"
+      },
+      "permittedEffects": [
+       "execute: the release-notes tests",
+       "read: the Specimen repository and the survey Return"
+      ],
+      "verificationObligations": [
+       "At least two counter-examples were tried against the declared order.",
+       "The judgement cites the changelog, not the draft."
+      ],
+      "returnAddress": "return:specimen/release-notes",
+      "stopConditions": "Stop on a changed basis revision, missing authority or any write outside the permitted paths; retain every partial outcome.",
+      "escalationConditions": "Escalate when the section order is decided somewhere other than the release-notes generator, or when a test cannot be run.",
+      "budget": {
+       "wallClockTimeoutMs": 1800000,
+       "retryGrantRef": "grant:specimen/review",
+       "maximumAttempts": 2
+      }
+     },
+     "dispatch": {
+      "ownerRef": "aikit",
+      "contract": "aikit.encounter-delivery/v1",
+      "operationRef": "delivery:specimen-review-1",
+      "receiptRef": "receipt:specimen-review-1/submitted",
+      "sourceRevision": "specimen-fixture-r1",
+      "phase": "submitted",
+      "evidenceRefs": [],
+      "partialEffectRefs": [],
+      "payload": {
+       "agentSessionRef": "agent-session/specimen-review",
+       "providerContacted": false,
+       "specimen": true
+      }
+     },
+     "observations": [],
+     "verifications": [
+      {
+       "verificationRef": "verification:specimen-review-1/in-progress",
+       "ownerRef": "factory",
+       "sourceRevision": "specimen-fixture-r1",
+       "outcome": "unknown",
+       "obligations": [
+        "At least two counter-examples were tried against the declared order."
+       ],
+       "evidenceRefs": [
+        "evidence:specimen/review-counter-examples"
+       ]
+      }
+     ],
+     "verificationRecordedAt": {
+      "verification:specimen-review-1/in-progress": "2026-09-26T18:46:43.859Z"
+     },
+     "tracking": [
+      {
+       "factRef": "fact:specimen-review-1/session",
+       "kind": "session",
+       "ownerRef": "aikit",
+       "subjectRef": "agent-session/specimen-review",
+       "sourceRevision": "specimen-fixture-r1",
+       "evidenceRefs": [
+        "receipt:specimen-review-1/submitted"
+       ]
+      }
+     ],
+     "reresolutions": [],
+     "failureEvidenceRefs": [
+      "evidence:specimen/review-failure"
+     ],
+     "failureRecordedAt": "2026-09-26T18:47:22.876Z"
+    },
+    {
+     "attemptRef": "attempt:specimen-review-2",
+     "attemptRecordedAt": "2026-09-26T18:47:52.779Z",
+     "taskRef": "task:specimen/review-section-order",
+     "workflowUnitRef": "workflow-unit:7EESDZV3JAWMWR29PEB61BPBR0",
+     "reservedExecutionRef": "factory-attempt:attempt:specimen-review-2",
+     "disposition": {
+      "selection": {
+       "schema_version": "factory.execution-intelligence/v1",
+       "demand": {
+        "project_ref": "project:0000000000V9M7QXHVZ80YRXTN",
+        "run_ref": "run:01M3F6A3P03X7CG6SA6A5QG7GE",
+        "workflow_unit_ref": "workflow-unit:7EESDZV3JAWMWR29PEB61BPBR0",
+        "agency_ref": "agency:specimen/reviewer",
+        "profile_ref": null,
+        "use_type": "review",
+        "required_capabilities": [
+         "capability/factory/operate-attempt"
+        ],
+        "required_modalities": [
+         "text"
+        ],
+        "required_actions": [],
+        "required_tools": [],
+        "context_characteristics": [],
+        "independence_from": [],
+        "cost_ceiling_usd": null,
+        "latency_preference_ms": null,
+        "requires_local_materialisation": false
+       },
+       "selection": {
+        "roster_version": "aikit.model-roster/v1",
+        "model_ref": "model:specimen/text-model",
+        "provider_ref": "provider:specimen/no-provider",
+        "ranking_policy": "specimen-fixed",
+        "ranking_explanation": {
+         "note": "Fixed specimen selection; no AIKit roster was consulted.",
+         "specimen": true
+        },
+        "provenance": [
+         "selection:specimen/fixed"
+        ]
+       },
+       "decided_at": "2026-09-26T16:01:00Z"
+      },
+      "participant": {
+       "agentRef": "agent/specimen-reviewer",
+       "agencyRef": "agency:specimen/reviewer",
+       "worldBindingRef": "binding:specimen/disposable-ground",
+       "sourceRef": "workflow-source:01M3SPEC0000000000000000A1",
+       "sourceRevision": "specimen-release-notes-v1",
+       "sourceDigest": "blake3:d4329e18d547dbf876f90f626f322270deeed56ca1241f413cafb6a88f2a7955"
+      },
+      "contextRefs": [
+       "context:specimen/release-notes"
+      ],
+      "praxisRefs": [
+       "praxis:specimen/cite-before-claiming"
+      ],
+      "capabilityRefs": [
+       "capability/factory/operate-attempt"
+      ],
+      "body": {
+       "modelRef": "model:specimen/text-model",
+       "providerRef": "provider:specimen/no-provider",
+       "routeRef": "route:specimen/none",
+       "harnessRef": "harness:specimen",
+       "harnessCompositionRef": "composition:specimen",
+       "agentSessionRef": "agent-session/specimen-review-2",
+       "sessionSpaceRef": "session-space/specimen"
+      },
+      "permittedEffects": [
+       "execute: the release-notes tests",
+       "read: the Specimen repository and the survey Return"
+      ],
+      "verificationObligations": [
+       "At least two counter-examples were tried against the declared order.",
+       "The judgement cites the changelog, not the draft."
+      ],
+      "returnAddress": "return:specimen/release-notes",
+      "stopConditions": "Stop on a changed basis revision, missing authority or any write outside the permitted paths; retain every partial outcome.",
+      "escalationConditions": "Escalate when the section order is decided somewhere other than the release-notes generator, or when a test cannot be run.",
+      "budget": {
+       "wallClockTimeoutMs": 1800000,
+       "retryGrantRef": "grant:specimen/review",
+       "maximumAttempts": 2
+      }
+     },
+     "observations": [],
+     "verifications": [],
+     "tracking": [],
+     "reresolutions": [
+      {
+       "resolutionRef": "resolution:specimen/review-2",
+       "reason": "Retry on a fresh session after the changelog fixture was supplied.",
+       "sourceRevision": "specimen-release-notes-v1",
+       "evidenceRefs": [
+        "evidence:specimen/review-counter-examples",
+        "evidence:specimen/review-failure"
+       ]
+      }
+     ],
+     "failureEvidenceRefs": []
+    },
+    {
+     "attemptRef": "attempt:specimen-survey-1",
+     "attemptRecordedAt": "2026-09-26T18:46:43.604Z",
+     "taskRef": "task:specimen/survey-section-order",
+     "workflowUnitRef": "workflow-unit:2RB1XYD2H1XJP74N5GB4JFDMCM",
+     "reservedExecutionRef": "factory-attempt:attempt:specimen-survey-1",
+     "executionRef": "execution:specimen-survey-1",
+     "disposition": {
+      "selection": {
+       "schema_version": "factory.execution-intelligence/v1",
+       "demand": {
+        "project_ref": "project:0000000000V9M7QXHVZ80YRXTN",
+        "run_ref": "run:01M3F6A3P03X7CG6SA6A5QG7GE",
+        "workflow_unit_ref": "workflow-unit:2RB1XYD2H1XJP74N5GB4JFDMCM",
+        "agency_ref": "agency:specimen/surveyor",
+        "profile_ref": null,
+        "use_type": "survey",
+        "required_capabilities": [
+         "capability/factory/operate-attempt"
+        ],
+        "required_modalities": [
+         "text"
+        ],
+        "required_actions": [],
+        "required_tools": [],
+        "context_characteristics": [],
+        "independence_from": [],
+        "cost_ceiling_usd": null,
+        "latency_preference_ms": null,
+        "requires_local_materialisation": false
+       },
+       "selection": {
+        "roster_version": "aikit.model-roster/v1",
+        "model_ref": "model:specimen/text-model",
+        "provider_ref": "provider:specimen/no-provider",
+        "ranking_policy": "specimen-fixed",
+        "ranking_explanation": {
+         "note": "Fixed specimen selection; no AIKit roster was consulted.",
+         "specimen": true
+        },
+        "provenance": [
+         "selection:specimen/fixed"
+        ]
+       },
+       "decided_at": "2026-09-26T15:47:00Z"
+      },
+      "participant": {
+       "agentRef": "agent/specimen-surveyor",
+       "agencyRef": "agency:specimen/surveyor",
+       "worldBindingRef": "binding:specimen/disposable-ground",
+       "sourceRef": "workflow-source:01M3SPEC0000000000000000A1",
+       "sourceRevision": "specimen-release-notes-v1",
+       "sourceDigest": "blake3:d4329e18d547dbf876f90f626f322270deeed56ca1241f413cafb6a88f2a7955"
+      },
+      "contextRefs": [
+       "context:specimen/release-notes"
+      ],
+      "praxisRefs": [
+       "praxis:specimen/cite-before-claiming"
+      ],
+      "capabilityRefs": [
+       "capability/factory/operate-attempt"
+      ],
+      "body": {
+       "modelRef": "model:specimen/text-model",
+       "providerRef": "provider:specimen/no-provider",
+       "routeRef": "route:specimen/none",
+       "harnessRef": "harness:specimen",
+       "harnessCompositionRef": "composition:specimen",
+       "agentSessionRef": "agent-session/specimen-survey",
+       "sessionSpaceRef": "session-space/specimen"
+      },
+      "permittedEffects": [
+       "execute: the existing release-notes tests",
+       "read: the Specimen repository at its basis revision"
+      ],
+      "verificationObligations": [
+       "Every cited file and line exists at the basis revision.",
+       "The account names the one function that orders sections.",
+       "The existing release-notes tests were run and their result is quoted."
+      ],
+      "returnAddress": "return:specimen/release-notes",
+      "stopConditions": "Stop on a changed basis revision, missing authority or any write outside the permitted paths; retain every partial outcome.",
+      "escalationConditions": "Escalate when the section order is decided somewhere other than the release-notes generator, or when a test cannot be run.",
+      "budget": {
+       "wallClockTimeoutMs": 1800000,
+       "retryGrantRef": "grant:specimen/survey",
+       "maximumAttempts": 2
+      }
+     },
+     "dispatch": {
+      "ownerRef": "aikit",
+      "contract": "aikit.encounter-delivery/v1",
+      "operationRef": "delivery:specimen-survey-1",
+      "receiptRef": "receipt:specimen-survey-1/submitted",
+      "sourceRevision": "specimen-fixture-r1",
+      "phase": "submitted",
+      "evidenceRefs": [],
+      "partialEffectRefs": [],
+      "payload": {
+       "agentSessionRef": "agent-session/specimen-survey",
+       "providerContacted": false,
+       "specimen": true
+      }
+     },
+     "observations": [
+      {
+       "ownerRef": "aikit",
+       "contract": "aikit.encounter-delivery/v1",
+       "operationRef": "delivery:specimen-survey-1",
+       "receiptRef": "receipt:specimen-survey-1/returned",
+       "sourceRevision": "specimen-fixture-r1",
+       "phase": "returned",
+       "evidenceRefs": [
+        "evidence:specimen/survey-transcript"
+       ],
+       "partialEffectRefs": [],
+       "payload": {
+        "agentSessionRef": "agent-session/specimen-survey",
+        "providerContacted": false,
+        "specimen": true
+       }
+      }
+     ],
+     "verifications": [
+      {
+       "verificationRef": "verification:specimen-survey-1/first-pass",
+       "ownerRef": "factory",
+       "sourceRevision": "specimen-fixture-r1",
+       "outcome": "unknown",
+       "obligations": [
+        "Every cited file and line exists at the basis revision.",
+        "The account names the one function that orders sections."
+       ],
+       "evidenceRefs": [
+        "evidence:specimen/survey-citations",
+        "evidence:specimen/survey-test-run"
+       ]
+      },
+      {
+       "verificationRef": "verification:specimen-survey-1/complete",
+       "ownerRef": "factory",
+       "sourceRevision": "specimen-fixture-r1",
+       "outcome": "passed",
+       "obligations": [
+        "Every cited file and line exists at the basis revision.",
+        "The account names the one function that orders sections.",
+        "The existing release-notes tests were run and their result is quoted."
+       ],
+       "evidenceRefs": [
+        "evidence:specimen/survey-citations",
+        "evidence:specimen/survey-ordering-function",
+        "evidence:specimen/survey-test-run"
+       ]
+      }
+     ],
+     "verificationRecordedAt": {
+      "verification:specimen-survey-1/complete": "2026-09-26T18:46:43.730Z",
+      "verification:specimen-survey-1/first-pass": "2026-09-26T18:46:43.666Z"
+     },
+     "tracking": [
+      {
+       "factRef": "fact:specimen-survey-1/session",
+       "kind": "session",
+       "ownerRef": "aikit",
+       "subjectRef": "agent-session/specimen-survey",
+       "sourceRevision": "specimen-fixture-r1",
+       "evidenceRefs": [
+        "receipt:specimen-survey-1/submitted"
+       ]
+      }
+     ],
+     "reresolutions": [],
+     "failureEvidenceRefs": [],
+     "readableReturn": {
+      "returnRef": "return:specimen/survey-section-order-1",
+      "summary": "Section order is decided in one place: the generator sorts headings alphabetically in src/release_notes.txt line 1, so Breaking changes renders after Fixes. The existing release-notes tests pass and do not pin order. The draft should replace the alphabetical sort with the changelog's declared order.",
+      "artifactRefs": [
+       "artifact:specimen/survey-section-order"
+      ],
+      "evidenceRefs": [
+       "evidence:specimen/survey-citations",
+       "evidence:specimen/survey-ordering-function",
+       "evidence:specimen/survey-test-run"
+      ],
+      "archiveRefs": [],
+      "regressionObservationRefs": []
+     },
+     "returnRecordedAt": "2026-09-26T18:46:43.763Z",
+     "verificationCountAtReturn": 2
+    }
+   ],
+   "independentReviewers": {},
+   "syntheses": {}
+  }
+ ],
+ "telemetryWatch": [
+  {
+   "childNowRef": null,
+   "correlationRef": "execution-correlation:01M3SPEC00000000000000CR01",
+   "runRef": "run:01M3F6A3P03X7CG6SA6A5QG7GE",
+   "stateRevision": 21,
+   "telemetryRef": "telemetry:01M3SPEC00000000000000TM01",
+   "type": "execution-correlation"
+  },
+  {
+   "childNowRef": null,
+   "correlationRef": "execution-correlation:01M3SPEC00000000000000CR02",
+   "runRef": "run:01M3F6A3P03X7CG6SA6A5QG7GE",
+   "stateRevision": 21,
+   "telemetryRef": "telemetry:01M3SPEC00000000000000TM02",
+   "type": "execution-correlation"
+  },
+  {
+   "cursor": {
+    "stateRevision": 21
+   },
+   "emitted": 2,
+   "resumeWith": "--resume",
+   "type": "cursor"
+  }
+ ],
+ "population": {
+  "absences": [],
+  "local_workcell_ref": "workcell:mac",
+  "local_world_ref": "control:root",
+  "positions": [
+   {
+    "communiques": {
+     "undelivered": 1
+    },
+    "current_work": {
+     "candidates": 0,
+     "custody_ref": null,
+     "outcome": "none",
+     "run_ref": null,
+     "work_ref": null
+    },
+    "definition": "present",
+    "handle": "@aletheia-5",
+    "inherited": false,
+    "label": "Aletheia 5 (M5 Epii × S5′ Aletheia)",
+    "occupancy": {
+     "agency_ref": "agency:aletheia@project:O-I",
+     "agent_ref": "agent/aletheia",
+     "agent_session_ref": null,
+     "attention": null,
+     "generation_ordinal": 2,
+     "generation_ref": "actuation:generation:73ecbe3e-e4b6-47ed-913d-f705508179b9",
+     "kind": "fresh",
+     "observed_via": "local",
+     "presence": null,
+     "since_unix_ms": 1790283314240,
+     "state": "occupied",
+     "workcell_ref": "workcell:mac"
+    },
+    "position_ref": "central:position:project:O-I:aletheia-5",
+    "role_ref": "role:aletheia"
+   },
+   {
+    "communiques": {
+     "undelivered": 0
+    },
+    "current_work": {
+     "candidates": 0,
+     "custody_ref": null,
+     "outcome": "none",
+     "run_ref": null,
+     "work_ref": null
+    },
+    "definition": "present",
+    "handle": "@anima-4",
+    "inherited": false,
+    "label": "Anima 4 (M4 Nara × S4′ Anima)",
+    "occupancy": {
+     "agency_ref": "agency:anima@project:O-I",
+     "agent_ref": "agent/anima",
+     "agent_session_ref": null,
+     "attention": null,
+     "generation_ordinal": 1,
+     "generation_ref": "actuation:generation:0a8bb5c0-373c-4458-bcde-b00c6f035427",
+     "kind": "initial",
+     "observed_via": "gateway:agency-gateway/omarchy",
+     "presence": null,
+     "since_unix_ms": 1790283314675,
+     "state": "occupied",
+     "workcell_ref": "workcell:omarchy"
+    },
+    "position_ref": "central:position:project:O-I:anima-4",
+    "role_ref": "role:anima"
+   },
+   {
+    "communiques": {
+     "undelivered": 4
+    },
+    "current_work": {
+     "candidates": 0,
+     "custody_ref": null,
+     "outcome": "none",
+     "run_ref": null,
+     "work_ref": null
+    },
+    "definition": "present",
+    "handle": "@factory-guardian",
+    "inherited": false,
+    "label": "Software Factory Guardian",
+    "occupancy": {
+     "observed_via": "local",
+     "state": "vacant"
+    },
+    "position_ref": "central:position:project:O-I:factory-guardian",
+    "role_ref": "role:product-guardian"
+   }
+  ],
+  "project_world_ref": "project:O-I",
+  "remotes": [
+   {
+    "detail": "answered from its Workcell's Actuation at 100.92.62.101:7788",
+    "gateway_ref": "agency-gateway/omarchy",
+    "status": "reachable",
+    "workcell_ref": "workcell:omarchy"
+   }
+  ],
+  "schema": "aikit.population-reading/v1"
+ },
+ "conversation": {
+  "communiques": [
+   {
+    "attribution": "verified",
+    "attribution_basis": "actuation occupancy verify: actuation:generation:ecc6de7e-7613-45ab-8a59-41f2d08c09cd is the current occupant of central:position:project:O-I:factory-guardian",
+    "body": "From the Factory Guardian (workcell:mac). The Aletheia 5 Position, on workcell:mac, has taken up the Technē act on the root-wiki World-inhabitation constellation (Factory run run:01M3AH6CC0X4YGR1854XJWSCN9). Anima 4: have Nous clear the ground on the O:I World-inhabitation contract, docs/contracts/WORLD-INHABITATION-V1.md in this repository — what it assumes, what evidence actually exists for it, …[trimmed]",
+    "communique_ref": "aikit:communique:01m3ak7j4s965pfh32xgt527dz",
+    "delivered_at_unix_ms": null,
+    "delivered_to_generation_ref": null,
+    "escalated_custody_ref": null,
+    "forward": {
+     "attempts": 1,
+     "forwarded_at_unix_ms": 1790283335902,
+     "remote_gateway_ref": "agency-gateway/omarchy",
+     "state": "forwarded",
+     "workcell_ref": "workcell:omarchy"
+    },
+    "from_generation_ref": "actuation:generation:ecc6de7e-7613-45ab-8a59-41f2d08c09cd",
+    "from_position_ref": "central:position:project:O-I:factory-guardian",
+    "origin_gateway_ref": "agency-gateway/local",
+    "reply_to": null,
+    "routing": {
+     "basis": "central:position:project:O-I:anima-4 has no current occupant on this Workcell; gateway agency-gateway/omarchy of workcell:omarchy reports actuation:generation:0a8bb5c0-373c-4458-bcde-b00c6f035427 current there",
+     "gateway_ref": "agency-gateway/omarchy",
+     "generation_ref": "actuation:generation:0a8bb5c0-373c-4458-bcde-b00c6f035427",
+     "observed_at_unix_ms": 1790283335833,
+     "workcell_ref": "workcell:omarchy"
+    },
+    "schema": "aikit.communique/v1",
+    "sent_at_unix_ms": 1790283335695,
+    "sequence": 10,
+    "state": "pending",
+    "to_position_ref": "central:position:project:O-I:anima-4",
+    "to_workcell_ref": "workcell:omarchy",
+    "transitions": [
+     {
+      "at_unix_ms": 1790283335695,
+      "basis": "central:position:project:O-I:anima-4 has no current occupant on this Workcell; gateway agency-gateway/omarchy of workcell:omarchy reports actuation:generation:0a8bb5c0-373c-4458-bcde-b00c6f035427 current there; relayed to that Workcell's gateway, delivered at the occupant's next turn boundary there",
+      "state": "pending"
+     },
+     {
+      "at_unix_ms": 1790283335902,
+      "basis": "relayed to Workcell workcell:omarchy through gateway agency-gateway/omarchy; delivery is recorded there",
+      "state": "pending"
+     }
+    ]
+   },
+   {
+    "attribution": "verified",
+    "attribution_basis": "actuation occupancy verify: actuation:generation:0a8bb5c0-373c-4458-bcde-b00c6f035427 is the current occupant of central:position:project:O-I:anima-4",
+    "body": "Done. Nous cleared the ground on docs/contracts/WORLD-INHABITATION-V1.md (assumes / evidence / not-known, each item source-pointed) and the short list has been sent to @aletheia-5 as a Communique for their Technē act on run:01M3AH6CC0X4YGR1854XJWSCN9. Headlines: implementations and tests exist across all five owner repos and the Position records are grounded; but the pinned OpenRig checkout (~/Cen…[trimmed]",
+    "communique_ref": "aikit:communique:01m3akqvevk7d3hn3wkvgqg6zg",
+    "delivered_at_unix_ms": null,
+    "delivered_to_generation_ref": null,
+    "escalated_custody_ref": null,
+    "from_generation_ref": "actuation:generation:0a8bb5c0-373c-4458-bcde-b00c6f035427",
+    "from_position_ref": "central:position:project:O-I:anima-4",
+    "origin_gateway_ref": "agency-gateway/omarchy",
+    "received_from_gateway_ref": "agency-gateway/omarchy",
+    "reply_to": "aikit:communique:01m3ak7j4s965pfh32xgt527dz",
+    "routing": {
+     "basis": "central:position:project:O-I:factory-guardian has no current occupant on this Workcell; gateway agency-gateway/local of workcell:mac reports actuation:generation:ecc6de7e-7613-45ab-8a59-41f2d08c09cd current there",
+     "gateway_ref": "agency-gateway/local",
+     "generation_ref": "actuation:generation:ecc6de7e-7613-45ab-8a59-41f2d08c09cd",
+     "observed_at_unix_ms": 1790283869658,
+     "workcell_ref": "workcell:mac"
+    },
+    "schema": "aikit.communique/v1",
+    "sent_at_unix_ms": 1790283869523,
+    "sequence": 12,
+    "state": "pending",
+    "to_position_ref": "central:position:project:O-I:factory-guardian",
+    "to_workcell_ref": "workcell:mac",
+    "transitions": [
+     {
+      "at_unix_ms": 1790283869523,
+      "basis": "central:position:project:O-I:factory-guardian has no current occupant on this Workcell; gateway agency-gateway/local of workcell:mac reports actuation:generation:ecc6de7e-7613-45ab-8a59-41f2d08c09cd current there; relayed to that Workcell's gateway, delivered at the occupant's next turn boundary there",
+      "state": "pending"
+     },
+     {
+      "at_unix_ms": 1790283869726,
+      "basis": "received from gateway agency-gateway/omarchy",
+      "state": "pending"
+     }
+    ]
+   }
+  ],
+  "position_ref": "central:position:project:O-I:factory-guardian",
+  "with_position_ref": "central:position:project:O-I:anima-4"
+ },
+ "custody": {
+  "schema": "factory.work-custody-receipt/v1",
+  "result": "applied",
+  "custody": {
+   "schema": "factory.work-custody/v1",
+   "custody_ref": "factory:custody:01a0d50f-03c4-7e92-bf55-c9e727d34bbd",
+   "position_ref": "central:position:project:O-I:aletheia-5",
+   "work_ref": "central:wiki:root",
+   "run_ref": "run:01M3AH6CC0X4YGR1854XJWSCN9",
+   "state": "in-progress",
+   "assigned_at_unix_ms": 1790280926140,
+   "reason": "Aletheia 5 holds the commissioned Technē act on the root-wiki World-inhabitation constellation (techne-constellation workflow, Vāk C′ per unit).",
+   "revision": 1,
+   "updated_at_unix_ms": 1790280926140,
+   "transitions": [
+    {
+     "revision": 1,
+     "to": "in-progress",
+     "reason": "Aletheia 5 holds the commissioned Technē act on the root-wiki World-inhabitation constellation (techne-constellation workflow, Vāk C′ per unit).",
+     "at_unix_ms": 1790280926140
+    }
+   ]
+  }
+ },
+ "claudeStream": [
+  {
+   "type": "assistant",
+   "session_id": "1666d8f3-f897-47f5-bf06-1a47f040f610",
+   "message": {
+    "id": "msg_20260925045630c52543c575cb40cb",
+    "role": "assistant",
+    "content": [
+     {
+      "type": "tool_use",
+      "id": "call_4e4af7bb235147cabc859911",
+      "name": "Read",
+      "input": {
+       "file_path": "/Users/admin/Central/Work/O-I/ProjectCentral/now/agents/naraexpressionsembodimentmacjoin20260924-2026-09-24.json"
+      }
+     }
+    ]
+   }
+  },
+  {
+   "type": "assistant",
+   "session_id": "1666d8f3-f897-47f5-bf06-1a47f040f610",
+   "message": {
+    "id": "msg_202609250503058719f25a8969426e",
+    "role": "assistant",
+    "content": [
+     {
+      "type": "tool_use",
+      "id": "call_d90623aabbb14640a752ed5f",
+      "name": "Task",
+      "input": {
+       "description": "Anansi blueprints wiki constellation",
+       "prompt": "You are Anansi, the spider at the centre of the coordinate web (agent/aletheia-anansi), executing unit \"anansi-blueprint\" of the commissioned Technē act run:01M3AH6CC0X4YGR1854XJWSCN9 (workflow techne-constellation, subject central:wiki:root, basis revision wiki-revision-50). This is a RESEARCH-AND-…[trimmed]",
+       "subagent_type": "aletheia-team:aletheia-anansi"
+      }
+     }
+    ]
+   }
+  }
+ ]
+}

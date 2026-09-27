@@ -19,6 +19,7 @@ export type FactoryOwnerRequest =
   | {kind: "workflow-inspect"; state_path: string; run_ref: string; unit?: string; attempt?: string; limit?: number; cursor?: unknown}
   | {kind: "telemetry-status"; state_path: string}
   | {kind: "telemetry-inspect"; state_path: string; telemetry_ref: string}
+  | {kind: "telemetry-watch"; state_path: string; resume?: {stateRevision: number}; duration_secs?: number; max_events?: number; run_ref?: string}
   | {kind: "telemetry-field"; state_path: string}
   | {kind: "telemetry-current"; state_path: string; project_world_ref: string}
   | {kind: "telemetry-signal"; state_path: string; signal_ref: string}
@@ -116,6 +117,15 @@ export interface TelemetryInspection {
 }
 export const inspectTelemetry = (transport: KernelTransportStatus, statePath: string, telemetryRef: string) =>
   factoryOwner<TelemetryInspection>(transport, {kind: "telemetry-inspect", state_path: statePath, telemetry_ref: telemetryRef});
+
+/** One bounded follow of the owner's telemetry stream (`factory telemetry
+ * watch --resume`): the correlation lines past the cursor and the cursor a
+ * resume carries. The kernel clamps the window (≤ 10 s, ≤ 500 events). */
+export interface TelemetryWatchReading {contract: "oi.factory-telemetry-watch/v1"; lines: Record<string, unknown>[]; cursor: {stateRevision: number}; emitted?: number | null}
+export const watchTelemetry = (transport: KernelTransportStatus, statePath: string, options: {resume?: {stateRevision: number}; durationSecs?: number; maxEvents?: number; runRef?: string} = {}) =>
+  factoryOwner<TelemetryWatchReading>(transport, {kind: "telemetry-watch", state_path: statePath,
+    ...(options.resume ? {resume: options.resume} : {}), ...(options.durationSecs !== undefined ? {duration_secs: options.durationSecs} : {}),
+    ...(options.maxEvents !== undefined ? {max_events: options.maxEvents} : {}), ...(options.runRef ? {run_ref: options.runRef} : {})});
 
 export const attemptReturn = (transport: KernelTransportStatus, statePath: string, runRef: string, attemptRef: string) =>
   factoryOwner<Record<string, unknown>>(transport, {kind: "attempt-return", state_path: statePath, run_ref: runRef, attempt_ref: attemptRef});

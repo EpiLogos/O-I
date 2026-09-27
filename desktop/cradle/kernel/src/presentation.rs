@@ -388,6 +388,31 @@ pub fn validate_decision(d: &Value) -> Result<(), String> {
     Ok(())
 }
 
+fn write_atomic(path: &Path, bytes: &[u8]) -> Result<(), String> {
+    use std::io::Write;
+    let parent = path.parent().ok_or("Appearance has no state directory")?;
+    std::fs::create_dir_all(parent).map_err(|e| e.to_string())?;
+    let nonce = std::time::SystemTime::now()
+        .duration_since(std::time::UNIX_EPOCH)
+        .map_err(|e| e.to_string())?
+        .as_nanos();
+    let stage = path.with_extension(format!("{}.{}.tmp", std::process::id(), nonce));
+    let result = (|| {
+        let mut file = std::fs::OpenOptions::new()
+            .write(true)
+            .create_new(true)
+            .open(&stage)
+            .map_err(|e| e.to_string())?;
+        file.write_all(bytes).map_err(|e| e.to_string())?;
+        file.sync_all().map_err(|e| e.to_string())?;
+        std::fs::rename(&stage, path).map_err(|e| e.to_string())
+    })();
+    if result.is_err() {
+        let _ = std::fs::remove_file(stage);
+    }
+    result
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -561,28 +586,4 @@ mod tests {
             .is_err());
         assert_eq!(kernel.event_log().len(), 1);
     }
-}
-fn write_atomic(path: &Path, bytes: &[u8]) -> Result<(), String> {
-    use std::io::Write;
-    let parent = path.parent().ok_or("Appearance has no state directory")?;
-    std::fs::create_dir_all(parent).map_err(|e| e.to_string())?;
-    let nonce = std::time::SystemTime::now()
-        .duration_since(std::time::UNIX_EPOCH)
-        .map_err(|e| e.to_string())?
-        .as_nanos();
-    let stage = path.with_extension(format!("{}.{}.tmp", std::process::id(), nonce));
-    let result = (|| {
-        let mut file = std::fs::OpenOptions::new()
-            .write(true)
-            .create_new(true)
-            .open(&stage)
-            .map_err(|e| e.to_string())?;
-        file.write_all(bytes).map_err(|e| e.to_string())?;
-        file.sync_all().map_err(|e| e.to_string())?;
-        std::fs::rename(&stage, path).map_err(|e| e.to_string())
-    })();
-    if result.is_err() {
-        let _ = std::fs::remove_file(stage);
-    }
-    result
 }

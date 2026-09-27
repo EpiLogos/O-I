@@ -220,13 +220,15 @@ fn bounded_output(
                 },
             });
         }
-        if status.is_some() && out.is_some() && err.is_some() {
+        if let (Some(_), Some(_), Some(_)) = (&status, &out, &err) {
             return Ok(std::process::Output {
-                status: status.unwrap(),
+                status: status.take().unwrap(),
                 stdout: out
+                    .take()
                     .unwrap()
                     .map_err(|detail| CallError::Malformed { detail })?,
                 stderr: err
+                    .take()
                     .unwrap()
                     .map_err(|detail| CallError::Malformed { detail })?,
             });

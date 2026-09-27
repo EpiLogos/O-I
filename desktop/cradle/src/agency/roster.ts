@@ -31,6 +31,8 @@ export interface RosterAgent {
  skillRefs:string[];
  governanceRefs:string[];
  worldRef?:string;
+ /** The profile's reusable expressive character (Central file ref), when authored. */
+ characterRef?:string;
 }
 export const isGuardian=(agent:Pick<RosterAgent,"role">)=>/(^|-)guardian$/.test(agent.role??"");
 
@@ -61,6 +63,7 @@ export function rosterFromReading(value:unknown):RosterAgent[] {
    purpose:str(profile.purpose),role:str(profile.role),
    accepted:entry.accepted===true,scopeRef:str(value.scope_ref),
    skillRefs:strings(profile.skill_refs),governanceRefs:strings(profile.governance_refs),worldRef:str(profile.world_ref),
+   ...(str(profile.expressive_character_ref)?{characterRef:str(profile.expressive_character_ref)}:{}),
   });
  }
  return agents;

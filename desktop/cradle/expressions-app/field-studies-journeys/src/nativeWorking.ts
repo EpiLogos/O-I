@@ -40,16 +40,44 @@ function selectionMatches(view:KernelConversion,request:SelectionEdit,document:K
 }
 export interface ConnectionEdit {operation:'edit';expression_ref:string;expected_revision:number;actor:string;changes:Record<string,unknown>[]}
 /** Expression connections are local composition bindings. This never edits a
- * source-owned semantic relation or infers Wiki write authority. */
+ * source-owned semantic relation or infers Wiki write authority.
+ *
+ * ES1A/ES1B (O:I #352): the same bounded edit/readback path also carries
+ * scene-body and scene-trigger changes (`scene_body_set`/`scene_body_clear`/
+ * `scene_trigger_attach`/`scene_trigger_detach`) — the Rust-exact change
+ * grammar from kernel/src/expression.rs's `Change` enum. This function name
+ * predates that widening; it is kept so every existing call site
+ * (`nativeWorkspace.edit`) needs no change. */
 function connectionEdit(view:KernelConversion,changes:Record<string,unknown>[]):ConnectionEdit {
  if(!changes.length||changes.length>256)throw new Error('Choose 1–256 native connection changes');
  const request:ConnectionEdit={operation:'edit',expression_ref:view.document.expression_ref,expected_revision:view.document.revision,actor:'human:expressions-app',changes:clone(changes)};
  connectionResult(view,request); // refuse unsupported ownership before dispatch
  return request;
 }
+const SCENE_CHANGE_KINDS=new Set(['scene_body_set','scene_body_clear','scene_trigger_attach','scene_trigger_detach']);
 function connectionResult(view:KernelConversion,request:ConnectionEdit):KernelExpressionDocument {
  const doc=clone(view.document);doc.relations??={};
+ const touchedScenes=new Set<string>();
  for(const change of request.changes){
+  if(SCENE_CHANGE_KINDS.has(change.change as string)){
+   applySceneChange(doc,change,touchedScenes);
+   continue;
+  }
+  // Reusable-material index (EXPRESSION-ACT-MATERIAL-V1 §1): document-level
+  // metadata; the kernel validates its refs against the whole document.
+  if(change.change==='reuse_set'){
+   if(!change.reuse||typeof change.reuse!=='object')throw new Error('reuse_set needs a reuse block');
+   (doc as {reuse?:unknown}).reuse=clone(change.reuse);continue;
+  }
+  if(change.change==='reuse_clear'){delete (doc as {reuse?:unknown}).reuse;continue;}
+  // A world-position pin: the exact occurrence keeps its place; this is not
+  // blueprint membership and not a lock on its other properties.
+  if(change.change==='entity_pin'){
+   const ref=change.entity_ref,entity=typeof ref==='string'?doc.entities[ref]:undefined;
+   if(!entity||typeof change.pinned!=='boolean')throw new Error('A pin names an existing occurrence and a pinned state');
+   if(change.pinned)(entity as {pinned?:boolean}).pinned=true;else delete (entity as {pinned?:boolean}).pinned;
+   continue;
+  }
   const binding=change.binding as NonNullable<KernelExpressionDocument['relations']>[string]|undefined;
   const ref=change.change==='relation_bind'?binding?.binding_ref:change.binding_ref;
   if(typeof ref!=='string'||!ref.startsWith(doc.expression_ref+':relation:connection-'))throw new Error('Only O:I Expression connections can be edited here');
@@ -63,11 +91,53 @@ function connectionResult(view:KernelConversion,request:ConnectionEdit):KernelEx
    if(!previous)throw new Error('Connection is absent');
    delete doc.relations[ref];
    if(doc.selection?.relation_ref===ref)delete doc.selection.relation_ref;
-  }else throw new Error('Only native connection bind/remove is admitted by this operation');
+  }else throw new Error('Only native connection bind/remove/scene-body/scene-trigger/reuse changes are admitted by this operation');
  }
- if(!same(doc,view.document))doc.revision++;
+ if(!same(doc,view.document)){
+  doc.revision++;
+  for(const scene of doc.scenes)if(touchedScenes.has(scene.scene_ref))scene.revision=doc.revision;
+ }
  kernelDocumentToJourney(doc); // complete binding and membership validation
  return doc;
+}
+/** ES1A/ES1B change application, mirrored from kernel/src/expression.rs's
+ * `Change::SceneBodySet/SceneBodyClear/SceneTriggerAttach/SceneTriggerDetach`
+ * handling — a local prediction of the owner's own semantics, so the
+ * readback comparison in `editConnections` below stays an honest check
+ * rather than a rubber stamp. */
+function applySceneChange(doc:KernelExpressionDocument,change:Record<string,unknown>,touchedScenes:Set<string>):void {
+ if(change.change==='scene_body_set'||change.change==='scene_body_clear'){
+  const sceneRef=change.scene_ref;
+  if(typeof sceneRef!=='string'||!sceneRef)throw new Error('Scene body change needs a scene_ref');
+  const scene=doc.scenes.find(s=>s.scene_ref===sceneRef);
+  if(!scene)throw new Error(`Scene body change names an absent native Scene: ${sceneRef}`);
+  scene.body=change.change==='scene_body_set'?clone(change.body as Record<string,unknown>):null;
+  touchedScenes.add(sceneRef);
+  return;
+ }
+ if(change.change==='scene_trigger_attach'){
+  const sceneRef=change.scene_ref,trigger=change.trigger as {trigger_ref?:unknown}|undefined;
+  if(typeof sceneRef!=='string'||!sceneRef)throw new Error('Scene trigger attach needs a scene_ref');
+  const scene=doc.scenes.find(s=>s.scene_ref===sceneRef);
+  if(!scene)throw new Error(`Scene trigger attach names an absent native Scene: ${sceneRef}`);
+  if(!trigger||typeof trigger.trigger_ref!=='string'||!trigger.trigger_ref)throw new Error('Scene trigger attach needs a trigger_ref');
+  if(doc.scenes.some(s=>((s.triggers??[]) as {trigger_ref:string}[]).some(t=>t.trigger_ref===trigger.trigger_ref)))throw new Error('Scene trigger already exists');
+  scene.triggers=[...((scene.triggers??[]) as unknown[]),clone(trigger)];
+  touchedScenes.add(sceneRef);
+  return;
+ }
+ if(change.change==='scene_trigger_detach'){
+  const triggerRef=change.trigger_ref;
+  if(typeof triggerRef!=='string'||!triggerRef)throw new Error('Scene trigger detach needs a trigger_ref');
+  let removed=false;
+  for(const scene of doc.scenes){
+   const before=((scene.triggers??[]) as {trigger_ref:string}[]);
+   const after=before.filter(t=>t.trigger_ref!==triggerRef);
+   if(after.length!==before.length){scene.triggers=after;touchedScenes.add(scene.scene_ref);removed=true;}
+  }
+  if(!removed)throw new Error('Scene trigger is absent');
+  return;
+ }
 }
 function connectionView(view:KernelConversion,doc:KernelExpressionDocument):KernelConversion {
  return kernelDocumentToJourney(doc,{identity:{expression:view.journey.id,scenes:Object.fromEntries(Object.entries(view.bindings).map(([id,b])=>[b.scene_ref,id])),entities:view.entity_ids},pages:Object.fromEntries(Object.values(view.bindings).map(b=>[b.scene_ref,b.page]))});
@@ -110,7 +180,7 @@ function editMatches(record:NativeWorkingRecord,request:CompositionEdit,submitte
   return prepareCompositionEdit(view,submitted.journey,{sceneId:submitted.sceneId,entityId:submitted.entityId}).changes.length===0;
  }catch{return false;}
 }
-/** Checkpoint data is validated through actual import and action laws. */
+ /** Checkpoint data is validated through actual import and action laws. */
 export function validateWorkingRecord(raw:unknown,journey:Journey):NativeWorkingRecord {
  const value=clone(raw) as NativeWorkingRecord;
  if(value?.schema!=='oi.native-working/v1'||value.draft_id!==journey.id)throw new Error('Recovery belongs to a different authoring draft');
@@ -203,11 +273,74 @@ export class NativeWorking {
    this.record=clone(record);return view;
   }finally{this.inFlight=false;}
  }
+ /** Adopt a newer owner revision of the SAME Expression (advanced by another
+  * native owner operation, e.g. a constellation re-projection) only while
+  * this draft is clean: nothing pending and no local changes. Unsaved work is
+  * never rebased; the caller is told the draft was kept. */
+ async advanceClean(journey:Journey,accept:()=>boolean=()=>true):Promise<KernelConversion|null>{
+  const record=this.record;
+  if(!record?.view)throw new Error('No native work is open');
+  if(record.pending||prepareCompositionEdit(record.view,journey).changes.length)return null;
+  const epoch=this.begin();
+  try{
+   const document=readDocument(await this.ports.expression({operation:'inspect',expression_ref:record.view.document.expression_ref}),record.view.document.expression_ref);
+   if(document.revision<=record.view.document.revision)return clone(record.view);
+   const view=connectionView(record.view,document);
+   if(epoch!==this.epoch||!accept())throw new Error('The work changed while the newer native revision was returning; its basis was kept');
+   await this.persist({...record,view},epoch);
+   return clone(view);
+  }finally{this.inFlight=false;}
+ }
  private async persist(record:NativeWorkingRecord,epoch:number):Promise<void>{
   await this.ports.checkpoint(record.draft_id,clone(record));
   if(epoch===this.epoch)this.record=clone(record);
  }
  private begin():number{if(this.inFlight)throw new Error('A native operation is already in flight');this.inFlight=true;return this.epoch;}
+ /** Adopt an owner document whose reply semantics cannot be validated against
+  * the captured intent: the typed check runs first; a diverged owner still
+  * becomes the acknowledged basis rather than a permanent refusal. */
+ private adoptOwnerDocument(view:KernelConversion,validate:(basis:KernelConversion,document:KernelExpressionDocument)=>KernelConversion,document:KernelExpressionDocument):KernelConversion{
+  try{return validate(view,document);}catch{return connectionView(view,document);}
+ }
+ /** An interrupted operation is settled before new work, never replayed
+  * blindly and never left blocking the draft: unchanged on the owner, the
+  * intent is dropped; applied, it is adopted; diverged, the owner's current
+  * document becomes the acknowledged basis and the local draft simply
+  * remains the user's unsaved work. */
+ private async settlePending(record:NativeWorkingRecord,epoch:number):Promise<NativeWorkingRecord>{
+  const pending=record.pending!;
+  if(pending.kind==='file'){
+   const response=await this.ports.file({operation:'inspect',intent:pending.intent}) as {state?:string;artifact?:unknown};
+   if(response?.state==='saved'&&record.view){
+    const file=artifact(response.artifact,record.view.document.expression_ref);
+    await this.persist({...record,file,pending:undefined},epoch);
+   }else await this.persist({...record,pending:undefined},epoch);
+   return clone(this.record!);
+  }
+  if(pending.kind==='create'){
+   let created:KernelExpressionDocument|null=null;
+   try{created=readDocument(await this.ports.expression({operation:'inspect',expression_ref:pending.expression_ref}),pending.expression_ref);}
+   catch{created=null;}
+   let adopted=false;
+   if(created){
+    try{const view=firstView(created,pending.submitted);await this.persist({...record,view,pending:undefined},epoch);adopted=true;}
+    catch{/* the created identity changed elsewhere; leave it to its owner and mint a fresh one on the next save */}
+   }
+   if(!adopted)await this.persist({...record,pending:undefined},epoch);
+   return clone(this.record!);
+  }
+  const view=record.view!;
+  const document=readDocument(await this.ports.expression({operation:'inspect',expression_ref:pending.request.expression_ref}),pending.request.expression_ref);
+  if(!same(document,view.document)){
+   const adopted=pending.kind==='edit'?rebaseCompositionView(view,pending.submitted.journey,document)
+    :pending.kind==='blueprint'?this.adoptOwnerDocument(view,(basis,doc)=>blueprintReply(basis,pending.intent,doc),document)
+    :pending.kind==='occurrence'?this.adoptOwnerDocument(view,(basis,doc)=>occurrenceReply(basis,pending.intent,doc),document)
+    :pending.kind==='selection'?rebaseCompositionView(view,view.journey,document)
+    :connectionView(view,document);
+   await this.persist({...record,view:adopted,pending:undefined},epoch);
+  }else await this.persist({...record,pending:undefined},epoch);
+  return clone(this.record!);
+ }
  async commit(snapshot:WorkingSnapshot):Promise<KernelExpressionDocument>{
   const epoch=this.begin(),submitted=clone(snapshot);
   try{
@@ -215,7 +348,7 @@ export class NativeWorking {
    if(!submitted.journey.name.trim())throw new Error("Give the native composition a nonempty title before saving");
    let record:NativeWorkingRecord=this.record?clone(this.record):{schema:'oi.native-working/v1',draft_id:submitted.journey.id};
    if(record.draft_id!==submitted.journey.id)throw new Error('Select the native basis of this draft before saving');
-   if(record.pending)throw new Error('Inspect the interrupted native operation before saving again');
+   if(record.pending)record=await this.settlePending(record,epoch);
    if(!record.view){
     const expression_ref=this.ports.mint();
     if(!/^expression:[a-zA-Z0-9_.-]{1,128}$/.test(expression_ref))throw new Error('Native creation needs a stable safe Expression identity');
@@ -245,7 +378,8 @@ export class NativeWorking {
   try{
    let record=this.record?clone(this.record):undefined;
    if(!record?.view)throw new Error('This representation has no native working basis');
-   if(record.pending)throw new Error('Inspect the interrupted native operation before changing its focus');
+   if(record.pending)record=await this.settlePending(record,epoch);
+   if(!record.view)throw new Error('This representation has no native working basis');
    const request=selectionEdit(record.view,selection),change=request.changes[0],selected=record.view.document.selection;
    if(selected&&selected.scene_ref===change.scene_ref&&((change.change==='relation_focus'&&selected.relation_ref===change.binding_ref)||(change.change==='focus'&&!selected.relation_ref&&selected.entity_ref===change.entity_ref)))return;
    record={...record,pending:{kind:'selection',request}};
@@ -260,10 +394,12 @@ export class NativeWorking {
   try{
    const record=this.record?clone(this.record):undefined;
    if(!record?.view)throw Error('Open a native Expression before applying a blueprint');
-   if(record.pending)throw Error('Inspect the interrupted native operation before changing the blueprint');
-   const {request,expected}=prepareBlueprintEdit(record.view,intent);
-   if(same(expected,record.view.document))return clone(record.view);
-   await this.persist({...record,pending:{kind:'blueprint',intent:clone(intent),request}},epoch);
+   let basis=record;
+   if(basis.pending)basis=await this.settlePending(basis,epoch);
+   if(!basis.view)throw Error('Open a native Expression before applying a blueprint');
+   const {request,expected}=prepareBlueprintEdit(basis.view,intent);
+   if(same(expected,basis.view!.document))return clone(basis.view!);
+   await this.persist({...basis,pending:{kind:'blueprint',intent:clone(intent),request}},epoch);
    const reply=readDocument(await this.ports.expression({...request}),request.expression_ref);
    blueprintReply(record.view,intent,reply);
    const observed=readDocument(await this.ports.expression({operation:'inspect',expression_ref:request.expression_ref}),request.expression_ref);
@@ -277,10 +413,12 @@ export class NativeWorking {
   try{
    const record=this.record?clone(this.record):undefined;
    if(!record?.view)throw new Error('Open a native Expression before editing its connections');
-   if(record.pending)throw new Error('Inspect the interrupted native operation before editing connections');
-   const request=connectionEdit(record.view,changes),expected=connectionResult(record.view,request);
-   if(same(expected,record.view.document))return clone(record.view);
-   await this.persist({...record,pending:{kind:'connections',request}},epoch);
+   let basis=record;
+   if(basis.pending)basis=await this.settlePending(basis,epoch);
+   if(!basis.view)throw new Error('Open a native Expression before editing its connections');
+   const request=connectionEdit(basis.view,changes),expected=connectionResult(basis.view,request);
+   if(same(expected,basis.view.document))return clone(basis.view);
+   await this.persist({...basis,pending:{kind:'connections',request}},epoch);
    const reply=readDocument(await this.ports.expression({...request}),request.expression_ref);
    if(!same(reply,expected))throw new Error('Native connection acknowledgement differs from the captured edit; inspect before retrying');
    const observed=readDocument(await this.ports.expression({operation:'inspect',expression_ref:request.expression_ref}),request.expression_ref);
@@ -298,14 +436,16 @@ export class NativeWorking {
   try{
    const record=this.record?clone(this.record):undefined;
    if(!record?.view)throw new Error('Open a native Expression before duplicating an occurrence');
-   if(record.pending)throw new Error('Inspect the interrupted native operation before duplicating');
-   const captured=clone(intent),{request}=prepareOccurrenceEdit(record.view,captured);
-   await this.persist({...record,pending:{kind:'occurrence',intent:captured,request}},epoch);
+   let basis=record;
+   if(basis.pending)basis=await this.settlePending(basis,epoch);
+   if(!basis.view)throw new Error('Open a native Expression before duplicating an occurrence');
+   const captured=clone(intent),{request}=prepareOccurrenceEdit(basis.view,captured);
+   await this.persist({...basis,pending:{kind:'occurrence',intent:captured,request}},epoch);
    const reply=readDocument(await this.ports.expression({...request}),request.expression_ref);
-   occurrenceReply(record.view,captured,reply);
+   occurrenceReply(basis.view,captured,reply);
    const observed=readDocument(await this.ports.expression({operation:'inspect',expression_ref:request.expression_ref}),request.expression_ref);
-   const view=occurrenceReply(record.view,captured,observed);
-   await this.persist({...record,view,pending:undefined},epoch);
+   const view=occurrenceReply(basis.view,captured,observed);
+   await this.persist({...basis,view,pending:undefined},epoch);
    return view;
   }finally{this.inFlight=false;}
  }
@@ -337,55 +477,11 @@ export class NativeWorking {
   try{
    const record=this.record?clone(this.record):undefined,pending=record?.pending;
    if(!record||!pending)throw new Error('There is no interrupted native operation');
-   if(pending.kind==='file'){
-    const response=await this.ports.file({operation:'inspect',intent:pending.intent}) as {state?:string;artifact?:unknown;detail?:string};
-    if(response.state!=='saved')throw new Error(response.detail??'The intended file is not verified; retain the exact save proposal');
-    const file=artifact(response.artifact,record.view!.document.expression_ref);
-    await this.persist({...record,file,pending:undefined},epoch);
-    return 'Recovered the exact saved file without replaying its write.';
-   }
-   const reference=pending.kind==='create'?pending.expression_ref:pending.request.expression_ref;
-   const doc=readDocument(await this.ports.expression({operation:'inspect',expression_ref:reference}),reference);
-   if(pending.kind==='blueprint'){
-    if(same(doc,record.view!.document)){await this.persist({...record,pending:undefined},epoch);return 'The blueprint edit was not applied. No write was replayed.';}
-    const view=blueprintReply(record.view!,pending.intent,doc);
-    await this.persist({...record,view,pending:undefined},epoch);
-    return 'Recovered the exact native blueprint without replaying its edit.';
-   }
-   if(pending.kind==='occurrence'){
-    if(same(doc,record.view!.document)){await this.persist({...record,pending:undefined},epoch);return 'The native duplicate was not applied. No write was replayed.';}
-    const view=occurrenceReply(record.view!,pending.intent,doc);
-    await this.persist({...record,view,pending:undefined},epoch);
-    return 'Recovered the exact native occurrence without duplicating it again or replacing newer local work.';
-   }
-   if(pending.kind==='connections'){
-    if(same(doc,record.view!.document)){
-     await this.persist({...record,pending:undefined},epoch);return 'The native connection edit was not applied. No write was replayed.';
-    }
-    if(!same(doc,connectionResult(record.view!,pending.request)))throw new Error('revision_conflict: native connections differ from the captured edit; preserve and reconcile');
-    await this.persist({...record,view:connectionView(record.view!,doc),pending:undefined},epoch);
-    return 'Recovered the exact native connection edit without replaying it or replacing newer local work.';
-   }
-   if(pending.kind==='selection'){
-    if(same(doc,record.view!.document)){
-     await this.persist({...record,pending:undefined},epoch);return 'The native selection did not change. No write was replayed.';
-    }
-    if(!selectionMatches(record.view!,pending.request,doc))throw new Error('revision_conflict: the native selection basis changed; inspect and reconcile');
-    await this.persist({...record,view:rebaseCompositionView(record.view!,record.view!.journey,doc),pending:undefined},epoch);
-    return 'Recovered the exact native selection without replaying it or replacing newer local work.';
-   }
-   if(pending.kind==='create'){
-    const view=firstView(doc,pending.submitted);
-    await this.persist({...record,view,pending:undefined},epoch);
-    return 'Recovered the created native identity. Your material draft is unchanged; save it when ready.';
-   }
-   if(same(doc,record.view!.document)){
-    await this.persist({...record,pending:undefined},epoch);
-    return 'The native edit was not applied. Your draft remains available for an explicit save.';
-   }
-   if(!editMatches(record,pending.request,pending.submitted,doc))throw new Error('revision_conflict: the native work differs from the pending proposal; preserve and reconcile it, do not silently retry');
-   await this.persist({...record,view:rebaseCompositionView(record.view!,pending.submitted.journey,doc),pending:undefined},epoch);
-   return 'Recovered the composition without replaying an edit or replacing newer local work.';
+   const basis=record.view;
+   await this.settlePending(record,epoch);
+   const settled=this.record!;
+   if(!basis||!settled.view||same(settled.view.document,basis.document))return 'The interrupted operation was not applied. Nothing was replayed, and saving works again.';
+   return 'The owner’s current document is now the working basis. Nothing was replayed; your draft edits remain as unsaved work.';
   }finally{this.inFlight=false;}
  }
 }

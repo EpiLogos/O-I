@@ -582,6 +582,25 @@ fn human_card_carries_every_field_with_refs() {
 }
 
 #[test]
+fn the_expressive_character_ref_reaches_the_reading_and_the_card() {
+    let fake = Fake::new();
+    let bare = participation(&fake, Some("project:O-I"));
+    assert!(bare["expression"]["character_ref"].is_null());
+    assert!(human_card(&bare)["character"].is_null());
+
+    let character = "central:Control/agents/expressive-material/character/aletheia.expression.json";
+    fake.profile.borrow_mut()["expressive_character_ref"] = json!(character);
+    let p = participation(&fake, Some("project:O-I"));
+    assert_eq!(p["expression"]["character_ref"], character);
+    let card = human_card(&p);
+    assert_eq!(card["character"]["character_ref"], character);
+    assert_eq!(
+        card["character"]["refs"],
+        json!([character, "profile/aletheia@r3"])
+    );
+}
+
+#[test]
 fn unknown_agent_is_a_three_part_refusal_not_an_invented_identity() {
     let fake = Fake::new();
     let scratch = tempfile::tempdir().unwrap();

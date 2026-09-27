@@ -73,7 +73,10 @@ export function WikiConstructionPanel({binding, open, incoming, checkpoint, onCh
     if (!open || (initialized.current && !requestedFrameRequest)) return;
     initialized.current = true; setBusy('Reading native constellations…');
     void read().catch(error => {if (alive.current) setError(message(error));}).finally(() => {if (alive.current) setBusy('');});
-    void authoringForms(kernel.transport, binding.project).then(value => {if (alive.current) setForms(value);}, () => {if (alive.current) setNotice('QL authoring forms are unavailable from this owner. Ordinary constellation work remains available.');});
+    // authoringForms already retries the native resolution itself (a bounded
+    // number of attempts, forcing a fresh basis) before ever reaching here —
+    // this branch is the genuine, exhausted-retry case, named honestly.
+    void authoringForms(kernel.transport, binding.project).then(value => {if (alive.current) setForms(value);}, error => {if (alive.current) setNotice(`QL authoring forms could not be read from this owner after retrying: ${message(error)}. Ordinary constellation work remains available.`);});
   }, [open, requestedFrameRequest]);
   useEffect(() => {
     if (!incoming || incomingKey.current === incoming) return;

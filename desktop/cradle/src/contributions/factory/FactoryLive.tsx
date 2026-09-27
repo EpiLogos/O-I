@@ -23,11 +23,30 @@
  * document does not disclose them (the labelled dev scenario's fixture
  * views), a bounded content signature over the material-bearing view fields
  * is used and disclosed as such — never presented as an owner revision.
+ *
+ * Live follow (Factory Expressions FX-C2): this module is also the owner of
+ * the Run's producer loop — the native follow the hardened products supply
+ * (`factory telemetry watch --resume`, the attempt reading's revision, each
+ * participant's encounter journal `after` cursor, the Gateway population and
+ * Communiques, Factory custody) performed into the Run's Expression act
+ * (live/producer.ts). One producer per Run, reference-counted by the views
+ * that show it (the Run page's Live tab, a Tasks conversation's Live), and
+ * stopped when the last view closes: bounded by construction.
  */
-import {createContext, useCallback, useContext, useMemo, useState, type ReactNode} from "react";
+import {createContext, useCallback, useContext, useMemo, useState, useSyncExternalStore, type ReactNode} from "react";
 import {emitExpressionCue} from "../../stage/cues";
-import {buildViewOf} from "./development";
+import {attemptRead, buildViewOf} from "./development";
 import type {FactoryBuildView, FactoryMaterialSelection} from "./types";
+import type {KernelTransportStatus} from "../../kernel/types";
+import {encounter, type JournalPage} from "../../encounter/client";
+import {cardCharacterRef, readAgentCard} from "../../agency/agentCardReading";
+import {readFactoryInhabitation, watchTelemetry} from "./desk/factoryReads";
+import {readConversation, readPopulation} from "./inhabitation/reads";
+import {viaTransport} from "../../expression/world";
+import {LiveProducer, actRefFor, liveExpressionRefFor, type LiveIO, type LiveState} from "./live/producer";
+import {contextOfUnits} from "./live/repertoire";
+import {syncRunExpression} from "./live/liveObjects";
+import {readAndComposeRunExpression} from "./run-expression";
 
 export interface FactoryLiveMaterial extends FactoryMaterialSelection { version: string }
 export interface FactoryLiveObservation {
@@ -152,3 +171,101 @@ export function FactoryLiveProvider({children}: {children: ReactNode}) {
 export function useFactoryLive(): FactoryLiveReading {
   return useContext(Context);
 }
+
+// ---------------------------------------------------------------------------
+// Live follow: the producer-to-UI connection (one producer per Run)
+// ---------------------------------------------------------------------------
+
+export interface LiveRunSource {runKey: string; runRef: string; statePath: string; project?: string; goal?: string; worldRef?: string | null; explicitExpression?: string;
+  /** The workflow inspection's units (task types, SkillSets, skills for the repertoire). */
+  units?: {key?: string; workflowUnitRef?: string; praxisRefs?: string[]; agentRequirements?: {agentSetRefs?: string[]}}[]}
+interface LiveHolder {producer: LiveProducer; holders: number; state: LiveState; unsubscribe: () => void}
+const liveHolders = new Map<string, LiveHolder>();
+const liveListeners = new Set<() => void>();
+const emitLive = () => { for (const listener of [...liveListeners]) listener(); };
+
+/** The kernel reads the producer follows, each through its existing owner
+ * route. A read that fails is a named unavailable source in the state. */
+export function kernelLiveIO(transport: KernelTransportStatus, source: LiveRunSource): LiveIO {
+  const project = source.project ?? "";
+  return {
+    readAttempts: () => attemptRead(transport, source.statePath, source.runRef),
+    watch: resume => watchTelemetry(transport, source.statePath, {resume, durationSecs: 4, maxEvents: 1, runRef: source.runRef}),
+    readJournal: async (session, after) => encounter<JournalPage>(transport, project, {action: "read", agent_session: session, after, limit: 256}),
+    readPopulation: async () => {
+      const read = await readPopulation(transport, source.project);
+      if (read.state !== "read") throw new Error(read.reason);
+      return read.data;
+    },
+    readConversation: async (position, withPosition) => {
+      const read = await readConversation(transport, position, withPosition, source.project);
+      if (read.state !== "read") throw new Error(read.reason);
+      return read.data.communiques ?? [];
+    },
+    readCustody: async () => {
+      const read = await readFactoryInhabitation(transport, source.statePath, source.runRef);
+      if (read.state !== "read") throw new Error(read.reason);
+      return (read.data.runs ?? []).filter(run => run.run_ref === source.runRef).flatMap(run => run.custody ?? []);
+    },
+    readCard: async agentRef => {
+      const card = await readAgentCard(transport, agentRef, source.worldRef);
+      const character = cardCharacterRef(card);
+      return typeof character === "string" && character ? {character_ref: character} : {};
+    },
+    syncExpression: async () => {
+      const readCard = (agentRef: string) => readAgentCard(transport, agentRef, source.worldRef);
+      await syncRunExpression(transport, () => readAndComposeRunExpression(transport, source.statePath, source.runRef, liveExpressionRefFor(source.runRef), undefined, undefined, readCard), "desktop:factory-live");
+    },
+    world: viaTransport(transport),
+  };
+}
+
+/** Hold the Run's live follow while a view shows it; the returned release
+ * stops the producer when the last holder leaves. */
+export function followRunLive(transport: KernelTransportStatus, source: LiveRunSource): () => void {
+  let holder = liveHolders.get(source.runKey);
+  if (!holder) {
+    const explicit = source.explicitExpression ?? explicitByRun.get(source.runKey);
+    const producer = new LiveProducer(kernelLiveIO(transport, source), {
+      runRef: source.runRef, goal: source.goal, actRef: actRefFor(source.runRef), expressionRef: liveExpressionRefFor(source.runRef),
+      actor: "desktop:factory-live", context: {...contextOfUnits(source.units ?? []), ...(explicit ? {explicit} : {})},
+    });
+    const created: LiveHolder = {producer, holders: 0, state: producer.state, unsubscribe: () => {}};
+    created.unsubscribe = producer.subscribe(state => { created.state = state; emitLive(); });
+    liveHolders.set(source.runKey, created);
+    holder = created;
+    producer.start();
+  }
+  holder.holders++;
+  emitLive();
+  let released = false;
+  return () => {
+    if (released) return;
+    released = true;
+    const current = liveHolders.get(source.runKey);
+    if (!current) return;
+    current.holders--;
+    if (current.holders <= 0) { current.producer.stop(); current.unsubscribe(); liveHolders.delete(source.runKey); }
+    emitLive();
+  };
+}
+
+/** The Run's live state (undefined while no view holds it). */
+export function useRunLive(runKey: string | undefined): LiveState | undefined {
+  return useSyncExternalStore(
+    listener => { liveListeners.add(listener); return () => { liveListeners.delete(listener); }; },
+    () => (runKey ? liveHolders.get(runKey)?.state : undefined),
+    () => undefined,
+  );
+}
+/** Tier 1: select an Expression (or Scene) for this Run's act explicitly;
+ * `undefined` returns to workflow → task/SkillSet → generic resolution. */
+export async function selectRunExpression(runKey: string, fileRef: string | undefined): Promise<void> {
+  // The person's choice outlives this view: reopening the Run's Live (or
+  // coming back from Technè) keeps the Expression they chose.
+  if (fileRef) explicitByRun.set(runKey, fileRef); else explicitByRun.delete(runKey);
+  await liveHolders.get(runKey)?.producer.select(fileRef);
+}
+const explicitByRun = new Map<string, string>();
+/** Tests / diagnostics: how many producers are held. */
+export const heldLiveFollows = () => liveHolders.size;

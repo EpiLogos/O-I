@@ -1017,6 +1017,10 @@ pub fn compose_participation(
             "intent_expression": profile["intent_provenance"]["intent_expression"],
             "authorship": profile["intent_provenance"]["authorship"],
             "recognition": profile["intent_provenance"]["recognition"],
+            // The reusable expressive character (Central file ref to an
+            // `oi.expression/v1` material document of reuse kind `character`)
+            // the Agent appears through; null when the profile names none.
+            "character_ref": profile["expressive_character_ref"],
         },
         "roles": {
             "profile_role": profile["role"],
@@ -1177,6 +1181,16 @@ pub fn human_card(participation: &Value) -> Value {
     let world_ref = text(&p["world_ref"]).unwrap_or_default();
     let name = text(&p["expression"]["name"]).unwrap_or_else(|| agent_ref.clone());
     let repertoire_present = p["repertoire"]["state"] == "present";
+    // How I appear: the profile's reusable expressive character, as a ref.
+    // The card never dereferences the material; the desktop previews it.
+    let character = match text(&p["expression"]["character_ref"]) {
+        Some(character_ref) => json!({
+            "character_ref": character_ref,
+            "text": "Appears through its reusable expressive character.",
+            "refs": [character_ref, profile_at],
+        }),
+        None => Value::Null,
+    };
     let unavailable_note = |what: &str| {
         json!({"state": "unavailable", "command": p["repertoire"]["command"],
             "text": format!("{what} is not readable here: AIKit's praxis disclosure is unavailable ({}).",
@@ -1367,6 +1381,7 @@ pub fn human_card(participation: &Value) -> Value {
             "role": p["expression"]["role"],
             "refs": [profile_at],
         },
+        "character": character,
         "what_i_can_do": what_i_can_do,
         "how_i_work": how_i_work,
         "how_i_orient": how_i_orient,

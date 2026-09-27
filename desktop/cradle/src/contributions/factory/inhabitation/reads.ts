@@ -17,9 +17,10 @@ import {ownerReadFailure, snakeKeys, type InhabitationReading, type OwnerRead, t
 export type InhabitationWireRequest =
   | {kind: "population"; project?: string}
   | {kind: "whoami"; project?: string; position?: string}
-  | {kind: "refocus"; project?: string; position?: string};
+  | {kind: "refocus"; project?: string; position?: string}
+  | {kind: "conversation"; project?: string; position: string; with: string};
 
-const SOURCE: Record<InhabitationWireRequest["kind"], string> = {population: "aikit gateway who", whoami: "aikit whoami", refocus: "aikit refocus"};
+const SOURCE: Record<InhabitationWireRequest["kind"], string> = {population: "aikit gateway who", whoami: "aikit whoami", refocus: "aikit refocus", conversation: "aikit gateway conversation"};
 
 async function inhabitationRead<T>(transport: KernelTransportStatus, request: InhabitationWireRequest): Promise<OwnerRead<T>> {
   const source = SOURCE[request.kind];
@@ -35,6 +36,13 @@ export const readWhoami = (transport: KernelTransportStatus, position: string, p
   inhabitationRead<InhabitationReading>(transport, {kind: "whoami", position, ...(project ? {project} : {})});
 export const readRefocus = (transport: KernelTransportStatus, position: string, project?: string) =>
   inhabitationRead<RefocusReading>(transport, {kind: "refocus", position, ...(project ? {project} : {})});
+
+/** Both directions of Communiques between two Positions (the Gateway
+ * journal): `aikit.communique/v1` records, the Live view's message source. */
+export interface CommuniqueRecord {schema: "aikit.communique/v1"; communique_ref: string; from_position_ref: string; to_position_ref: string; body: string; sent_at_unix_ms?: number; state?: string; sequence?: number; reply_to?: string | null; escalated_custody_ref?: string | null; delivered_at_unix_ms?: number | null; [field: string]: unknown}
+export interface ConversationReading {position_ref: string; with_position_ref: string; communiques: CommuniqueRecord[]}
+export const readConversation = (transport: KernelTransportStatus, position: string, withPosition: string, project?: string) =>
+  inhabitationRead<ConversationReading>(transport, {kind: "conversation", position, with: withPosition, ...(project ? {project} : {})});
 
 // ---------------------------------------------------------------------------
 // The population store — one reading per scope, shared

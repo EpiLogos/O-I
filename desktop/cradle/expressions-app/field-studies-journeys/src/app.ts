@@ -6,7 +6,7 @@ import {foldObjectState} from './foldState';
 import {imageSuiteHTML} from './imageSuite';
 import {initialiseShared,effectiveScene,isShared,writeShared,toggleShared,useLocalPointer,POINTER_PATHS} from './sharedSettings';
 import {initialiseSources,stateSource,stateLabel,setStateSource,transformObjectStates} from './sourceState';
-import {refitStepForText,refitEntityForText,refitFormationForFont,refitFormationToGlyphs,capturedStepState,FontRef} from './stateSizing.js';
+import {refitStepForText,refitEntityForText,refitFormationForFont,refitFormationToGlyphs,refitStepForGlyph,refitEntityForGlyph,capturedStepState,FontRef} from './stateSizing.js';
 import {CUSTOM_SENTINEL,FONT_OPTIONS} from './fontCatalog.js';
 import {assignmentHTML} from './automationEditor';
 import {automationLeader,automationGroups,linkAutomation,removeAutomation,removeGroupTarget,offsetAutomatedTarget,resolvedAutomation} from './automationLinks';
@@ -43,20 +43,37 @@ import {icon,esc} from './icons.js';
 import {defaultCapture,CaptureSettings,CaptureTransition,download,slug,createOutput,paintCapture,paintNativeCapture,png,LiveRecorder,textLayout} from './capture.js';
 const $=<T extends HTMLElement=HTMLElement>(id:string)=>document.getElementById(id) as T;
 import {mountShell,iconButton as ib} from './shell.js';
-import {OrbitControl} from './orbitControl.js';
 import {RailItem,railPressed} from './rail.js';
 import {featuredExpressions,startingPoints,nativeSeven,forkExpression,libraryHTML,modesHTML,compositionCover} from './expressions.js';
-import {installKernelExpressions,kernelExpressionsAvailable,readTechneReading} from './kernelExpressions.js';
+import {installKernelExpressions,kernelExpressionsAvailable,readTechneReading,techneConstellationRelate,listKernelExpressions,readKernelExpression,nativeExpressionRequest} from './kernelExpressions.js';
 import {hostedRecovery} from './nativeRecovery.js';
 import {entryGateHTML} from './entryGate.js';
 import {AUTHORED_CHAKRA_STARTER,STANDING_LABEL} from './centreStanding.js';
 import {installNativeWorkspace,type NativeSubject} from './nativeWorkspace.js';
 import {installLensStudio,type LensId} from './lensStudio.js';
 import {installResearchInstruments} from './researchInstruments.js';
+import {installPalaceInstrument} from './palaceInstrument.js';
+import type {PalaceDocumentSnapshot} from '../../../src/techne/m0m5/palace/composition';
 import {applyResearchMaterial,pruneResearchOccurrence,type ResearchMaterialAction} from './researchMaterial.js';
-import {installTechneWorld} from './techneWorld.js';
 import type {ConnectionBinding} from '../../../../../packages/oi-design-system/expressions-engine/oi/expressionBindings.mjs';
-import type {KernelConversion} from './kernelDocumentBridge.js';
+import type {KernelConversion,KernelSceneBody} from './kernelDocumentBridge.js';
+import {installSceneBodies} from './sceneBodies.js';
+import {installActPanel} from './actPanel.js';
+import {presentAdoption,followedPanels} from './nativeFollow.js';
+import {applyEasing} from '../../src/engine/fieldModel';
+import type {ChainEasing} from '../../src/engine/types';
+/** An act passage's authored transition, in the frame: hold the current
+ * image and fade it over the performed state with the passage's duration
+ * and the engine's own easing curve. */
+function actTransition(seconds:number,easing?:string){
+ if(!(seconds>0)||engine.capabilities.kind!=='preview'){return;}
+ const c=$<HTMLCanvasElement>('transition-canvas');c.width=engine.canvas.width;c.height=engine.canvas.height;c.getContext('2d')!.drawImage(engine.canvas,0,0);
+ transitionBackground=scene().field.background;c.style.background=transitionBackground;c.style.opacity='1';c.hidden=false;
+ transitionStart=simTime;transitionDuration=seconds;transitionSceneId=scene().id;
+ transitionEasing=(['smoothstep','linear','kineticSnap','whip'] as const).includes(easing as ChainEasing)?easing as ChainEasing:'smoothstep';
+ needsFrame=true;
+}
+import {mountSoundControls} from './soundControls.js';
 mountShell();installPanelResize();installKernelExpressions();
 const recovery=document.createElement('section');recovery.id='engine-recovery';recovery.hidden=true;recovery.className='engine-recovery';recovery.setAttribute('role','alert');recovery.innerHTML='<h3>GPU context interrupted</h3><p>The expression is intact. Recovering recreates lost particle state, not a runtime checkpoint.</p><button class="secondary" data-action="native-recover">Recover field</button>';document.body.append(recovery);
 
@@ -75,14 +92,17 @@ let studioDocked=false,studioSizeMemo:{width:string;height:string}|null=null;let
 // The instrument opens on the O:I mark — the light/dark theme expression
 // that matches the base O:I image (owner direction 2026-09-19). A last-opened
 // library expression still restores over it, exactly as before.
-let initial:Journey=startsInTechne?{...blankJourney(),name:'Wiki'}:oiMark(),startupError='';
+// §9: Technē opens on the approved Epii entry face with no preselected Wiki
+// subject; the host may then open a default Wiki over it (TechneCentre
+// treats this face as replaceable). A blank placeholder is not the home.
+let initial:Journey=startsInTechne?(startingPoints().find(p=>p.expression.id==='source-twelve-faces')?.expression??{...blankJourney(),name:'Wiki'}):oiMark(),startupError='';
 try{if(window.__JOURNEY__)initial=validateJourney(window.__JOURNEY__);else if(!startsWithNativeReference){try{const last=localStorage.getItem('oi.field-studies.last');const saved=readLibrary().find(j=>j.id===last);if(saved)initial=saved;}catch{/* An opaque or private origin must still open cleanly. */}}}catch(err){startupError=err instanceof Error?err.message:String(err);}
 function initialiseBelts(j:Journey){initialiseShared(j);initialiseSources(j);for(const s of [...j.scenes,...Object.values(j.savedScenes??{})])if(!s.toolbelt)s.toolbelt=clone(workspace.entries).map(e=>e.scope==='named'&&!s.entities.some(v=>v.id===e.entityId)?{id:e.id,key:e.key,scope:'selected' as const}:e);return j;}
 const store=new DocumentStore(initialiseSceneSaves(initialiseBelts(initial)));let engine:FieldEngineAdapter;
 try{engine=window.OI_ENGINE_FACTORY?window.OI_ENGINE_FACTORY($<HTMLCanvasElement>('field-canvas')):new ProductionAdapter($<HTMLCanvasElement>('field-canvas'));(window as any).OI_DEBUG_ENGINE=engine;}catch(err){$('stage').innerHTML='<p style="padding:110px 40px">The native WebGL field could not start. '+esc(err instanceof Error?err.message:err)+'</p>';throw err;}
 let sceneIndex=0;let selected:string[]=[];let textId:string|null=null;let tab:InspectorContext['tab']='field';let motionTab:InspectorContext['motionTab']='sequence';let stepIndex=0;let search='';let editing=false,inspectorOpen=false,timelineOpen=false,presenting=false,shapePickerOpen=false,tool:Tool='interact';let shapeChoice:Shape='text',glyphChoice='O';let camera=defaultCamera();let placementStep=false,keepPlacing=false,pinRepeat=false;
 let propertyTake:null|{sceneId:string;armed:number;start:number;elapsed:number;tracks:PropertyTrack[];lastSample:number;limit?:number}=null;let appendTake=false,trackPreview=false;const takeWindows=new Map<string,{start:number;end:number}>();
-let width=innerWidth,height=innerHeight;let simTime=0,sceneElapsed=0;let fieldPaused=matchMedia('(prefers-reduced-motion: reduce)').matches,scenePlaying=false,journeyPlaying=false;let lastTime=performance.now(),lastUI=0;let toastTimeout=0,saveTimeout=0,lastLibraryWrite=0;let transitionStart=0,transitionDuration=0;let transitionBackground='#f4f2eb',transitionSceneId='';let autosaveErrorShown=false;let captureSettings=defaultCapture();let recordPerformanceWarned=false;let currentVideo:{blob:Blob;mime:string;url:string;source:DesktopScene;settings:CaptureSettings}|null=null;let recordingSource:DesktopScene|null=null;let recordingSettings:CaptureSettings|null=null;const recorder=new LiveRecorder();
+let width=innerWidth,height=innerHeight;let simTime=0,sceneElapsed=0;let fieldPaused=matchMedia('(prefers-reduced-motion: reduce)').matches,scenePlaying=false,journeyPlaying=false;let lastTime=performance.now(),lastUI=0;let toastTimeout=0,saveTimeout=0,lastLibraryWrite=0;let transitionStart=0,transitionDuration=0;let transitionBackground='#f4f2eb',transitionSceneId='';let transitionEasing:ChainEasing='linear';let autosaveErrorShown=false;let captureSettings=defaultCapture();let recordPerformanceWarned=false;let currentVideo:{blob:Blob;mime:string;url:string;source:DesktopScene;settings:CaptureSettings}|null=null;let recordingSource:DesktopScene|null=null;let recordingSettings:CaptureSettings|null=null;const recorder=new LiveRecorder();
 let pointer={active:false,world:{x:0,y:0,z:0}};let drag:null|{kind:'entity'|'radius'|'camera'|'text';id:string;startX:number;startY:number;startWorld:Vec3;positions:Map<string,Vec3>;initialRadius:number;cam:Camera;layer:TextLayer|null;pan:boolean}=null;
 let guidesVisible=true;let sourceUploadEntityId:{sceneId:string;entityId:string;stepId?:string;layerId?:string}|null=null;let overlayDirty=true,needsFrame=true;const detailState=new Map<string,boolean>();
 // The studio remembers where you were: content scroll survives close/reopen, and
@@ -96,7 +116,8 @@ let railKey:RailItem='interact',railExpanded=false;let cursorTool:'interact'|'se
 const featured=featuredExpressions(),starters=startingPoints();
 const covers=new Map<string,string>();
 const sessionExpressions=new Map<string,Journey>();
-const orbitControl=new OrbitControl($('orbit-control'),()=>camera,()=>{overlayDirty=true;needsFrame=true;},()=>{pointer.active=false;});
+// Camera controls stay off the HUD: the field is zoomed by scroll/pinch and
+// each instrument carries its own view tools. The orbit widget is not mounted.
 const scene=()=>store.document.scenes[sceneIndex]??store.document.scenes[0];
 const activeScene=()=>effectiveScene(store.document,journeyPlaying?store.document.savedScenes?.[scene().id]??scene():scene());
 const selectedEntity=()=>scene().entities.find(e=>e.id===selected[0]);
@@ -168,7 +189,23 @@ async function refreshSourcePreviews(host:HTMLElement){
  }
 }
 function renderInspector(){const content=$('inspector-content');if(!inspectorOpen){content.replaceChildren();return;}content.querySelectorAll<HTMLDetailsElement>('details[data-detail]').forEach(d=>detailState.set(d.dataset.detail!,d.open));
- const ctx:InspectorContext={scene:effectiveScene(store.document,scene()),journey:store.document,selected,textId,tab,motionTab,stepIndex,preview:engine.capabilities.kind==='preview',search,customFont:customFontEdit,supported:[...engine.capabilities.parameters],pinned:workspace.entries.filter(v=>v.scope==='field').map(v=>v.key),stations:engine.stations?.(),automationLoop,fieldPaused};$('inspector').classList.toggle('is-motion',tab==='motion');content.innerHTML=inspectorHTML(ctx);content.querySelectorAll('.motion-tabs').forEach(el=>el.remove());if(studioSection==='formations')content.querySelector('[data-detail="arrange"]')?.remove();if(studioSection==='scene')content.querySelector('[data-detail="page-text"]')?.remove();if(studioSection==='automation')content.insertAdjacentHTML('beforeend',`<details class="recorded-tracks" data-detail="recorded-takes"><summary>Recorded property takes · ${(scene().propertyTracks??[]).length}</summary><p class="control-note">Recorded base settings follow expression time. Enabled LFO and ramp layers still apply.</p><button class="secondary" data-action="preview-tracks">${trackPreview?'Stop preview':'Preview from scene start'}</button>${(scene().propertyTracks??[]).map(t=>`<div>${esc(t.bind)} · ${t.points.length} keys <button data-action="delete-property-track" data-id="${esc(t.id)}" aria-label="Remove recorded ${esc(t.bind)}">×</button></div>`).join('')||'<p>Record toolbelt properties to create a take here.</p>'}</details>`);if(!search){const groups:Record<string,string[]>={physics:['physics'],pointer:['pointer'],relational:['relational'],collision:['medium','collision','pairwise'],appearance:['palette','material'],volume:['volume'],resonance:['resonance'],layout:['arrange'],text:['page-text']};const ids=groups[studioSection];if(ids&&((tab==='field')||studioSection==='layout'||studioSection==='text')){const extras=studioSection==='appearance'?Array.from(content.querySelectorAll<HTMLElement>('.material-cards,[data-control="field.params.size"],[data-control="field.params.opacity"]')):[];const nodes=[...extras,...ids.flatMap(id=>Array.from(content.querySelectorAll<HTMLElement>('[data-detail="'+id+'"]')))];if(nodes.length)content.replaceChildren(...nodes);nodes.forEach(n=>(n as HTMLDetailsElement).open=true);}}content.querySelectorAll<HTMLDetailsElement>('details[data-detail]').forEach(d=>{if(detailState.has(d.dataset.detail!))d.open=detailState.get(d.dataset.detail!)!;});content.scrollTop=studioScroll;
+ const nativeSceneView=nativeWorkspace?.nativeView(),nativeSceneBinding=nativeSceneView?.bindings[scene().id];
+ const ctx:InspectorContext={scene:effectiveScene(store.document,scene()),journey:store.document,selected,textId,tab,motionTab,stepIndex,preview:engine.capabilities.kind==='preview',search,customFont:customFontEdit,supported:[...engine.capabilities.parameters],pinned:workspace.entries.filter(v=>v.scope==='field').map(v=>v.key),stations:engine.stations?.(),automationLoop,fieldPaused,
+  nativeBody:nativeSceneBinding?nativeSceneBinding.body:undefined,nativeTriggers:nativeSceneBinding?nativeSceneBinding.triggers:undefined,nativeSceneRef:nativeSceneBinding?.scene_ref??null,nativeSceneChoices:nativeSceneView?nativeSceneView.document.scenes.map(sc=>({scene_ref:sc.scene_ref,title:sc.title})):undefined};
+ $('inspector').classList.toggle('is-motion',tab==='motion');content.innerHTML=inspectorHTML(ctx);
+ mountSoundControls(content,{entity:()=>scene().entities.find(e=>e.id===selected[0]),change:fn=>changed(fn)});
+ // Edits address the occurrence this Studio was rendered for, even if another
+ // instrument changes the selection before the edit commits.
+ if(selected[0]&&scene().entities.some(e=>e.id===selected[0]))content.dataset.entityId=selected[0];else delete content.dataset.entityId;
+ content.querySelectorAll('.motion-tabs').forEach(el=>el.remove());if(studioSection==='formations')content.querySelector('[data-detail="arrange"]')?.remove();if(studioSection==='scene')content.querySelector('[data-detail="page-text"]')?.remove();if(studioSection==='automation')content.insertAdjacentHTML('beforeend',`<details class="recorded-tracks" data-detail="recorded-takes"><summary>Recorded property takes · ${(scene().propertyTracks??[]).length}</summary><p class="control-note">Recorded base settings follow expression time. Enabled LFO and ramp layers still apply.</p><button class="secondary" data-action="preview-tracks">${trackPreview?'Stop preview':'Preview from scene start'}</button>${(scene().propertyTracks??[]).map(t=>`<div>${esc(t.bind)} · ${t.points.length} keys <button data-action="delete-property-track" data-id="${esc(t.id)}" aria-label="Remove recorded ${esc(t.bind)}">×</button></div>`).join('')||'<p>Record toolbelt properties to create a take here.</p>'}</details>`);if(!search){const groups:Record<string,string[]>={physics:['physics'],pointer:['pointer'],relational:['relational'],collision:['medium','collision','pairwise'],appearance:['palette','material'],volume:['volume'],resonance:['resonance'],layout:['arrange'],text:['page-text']};const ids=groups[studioSection];if(ids&&((tab==='field')||studioSection==='layout'||studioSection==='text')){const extras=studioSection==='appearance'?Array.from(content.querySelectorAll<HTMLElement>('.material-cards,[data-control="field.params.size"],[data-control="field.params.opacity"]')):[];const nodes=[...extras,...ids.flatMap(id=>Array.from(content.querySelectorAll<HTMLElement>('[data-detail="'+id+'"]')))];if(nodes.length)content.replaceChildren(...nodes);nodes.forEach(n=>(n as HTMLDetailsElement).open=true);}}content.querySelectorAll<HTMLDetailsElement>('details[data-detail]').forEach(d=>{if(detailState.has(d.dataset.detail!))d.open=detailState.get(d.dataset.detail!)!;});content.scrollTop=studioScroll;
+// The Native field section mounts the live producer panel itself (owner
+// addendum: re-parent, never re-render via innerHTML — it owns live
+// listeners), replacing the generic detail-groups content above.
+if(studioSection==='native'&&nativeField)content.replaceChildren(nativeField.panel);
+if(studioSection==='blueprint'&&!search)content.replaceChildren(blueprintHome);
+if(studioSection==='palace'&&!search)content.replaceChildren(palaceHome);
+if(studioSection==='places'&&!search)content.replaceChildren(placesHome);
+if(studioSection==='canvas'&&!search)content.replaceChildren(canvasHome);
 $('inspector-title').textContent=document.querySelector<HTMLElement>('[data-action="studio-section"][aria-current="page"]')?.textContent??'Studio';
  document.querySelectorAll<HTMLButtonElement>('[data-action="tab"]').forEach(b=>b.setAttribute('aria-selected',String(b.dataset.value===tab)));
  $('control-search').setAttribute('value',search);
@@ -185,7 +222,7 @@ function renderLive(){const parts=liveWorkspaceHTML(liveContext(),workspace);con
 // Docking swaps the studio's anchor side, so a width/height transition would teleport it: invert the layout change, then play the transform back.
 function flipPanel(el:HTMLElement,mutate:()=>void){el.style.transition='none';el.style.transform='';const a=el.getBoundingClientRect();mutate();const b=el.getBoundingClientRect(),dx=a.left-b.left,dy=a.top-b.top,sx=b.width?a.width/b.width:1,sy=b.height?a.height/b.height:1;if(!b.width||!b.height||(!dx&&!dy&&Math.abs(sx-1)<.002&&Math.abs(sy-1)<.002)){el.style.transition='';return;}const done=(ev:TransitionEvent)=>{if(ev.target!==el||ev.propertyName!=='transform')return;el.removeEventListener('transitionend',done);el.style.transition='';el.style.transformOrigin='';};el.addEventListener('transitionend',done);el.style.transformOrigin='top left';el.style.transform=`translate(${dx}px,${dy}px) scale(${sx},${sy})`;void el.offsetWidth;el.style.transition='transform .25s cubic-bezier(.2,.8,.2,1)';el.style.transform='';}
 function setStudio(open:boolean){pointer.active=false;if(open)journeyPlaying=false;studioOpen=open;inspectorOpen=open;editing=open||cursorTool==='select';renderAll();}
-function renderAll(){blueprintHUD?.refresh();renderResearchScenePicker();if(studioDocked&&studioOpen&&beltOpen){beltWasOpen=true;beltOpen=false;}if(!studioDocked&&beltWasOpen){beltWasOpen=false;beltOpen=true;}if((inspectorOpen||contextKind)&&(tool==='pin'||tool==='formation')){tool=cursorTool;railExpanded=false;}if(beltPickerOpen){inspectorOpen=false;contextKind='';timelineOpen=false;shapePickerOpen=false;modesOpen=false;captureOpen=false;}else if(inspectorOpen){contextKind='';timelineOpen=false;shapePickerOpen=false;modesOpen=false;captureOpen=false;}else if(contextKind){timelineOpen=false;shapePickerOpen=false;modesOpen=false;captureOpen=false;}else if(timelineOpen){shapePickerOpen=false;modesOpen=false;captureOpen=false;}sanitiseSelection();workspace.entries=clone(store.document.shared!.toolbelt);if(tab==='motion')studioSection=motionTab==='automation'?'automation':motionTab==='sequence'?'sequence':motionTab==='focus'?'focus':'motion';else if(tab==='objects'&&!['formations','layout'].includes(studioSection))studioSection='formations';else if(tab==='scene'&&!['scene','text'].includes(studioSection))studioSection='scene';else if(tab==='field'&&!['physics','pointer','relational','collision','appearance','volume','resonance'].includes(studioSection))studioSection='physics';studioOpen=inspectorOpen&&editing;if(railKey!=='objects'||tool!=='select')railKey=tool;if(transitionDuration&&transitionSceneId!==scene().id){transitionDuration=0;$('transition-canvas').hidden=true;}theme();document.body.classList.toggle('studio-open',studioOpen);$('inspector').classList.toggle('is-studio',studioOpen);$('inspector').classList.toggle('docked',studioDocked);const dockButton=$('dock-studio');if(dockButton){dockButton.setAttribute('aria-pressed',String(studioDocked));dockButton.title=studioDocked?'Return the studio to full size':'Dock the studio where the toolbelt sits';dockButton.innerHTML=icon(studioDocked?'expand':'collapse');}$<HTMLSelectElement>('workspace-appearance').value=workspace.appearance;document.querySelectorAll<HTMLElement>('[data-action="studio-section"]').forEach(b=>b.setAttribute('aria-current',b.dataset.value===studioSection?'page':'false'));document.body.classList.toggle('editing',editing);document.body.classList.toggle('presentation',presenting);document.body.classList.toggle('editing-text',editing&&tool==='text');
+function renderAll(){blueprintHUD?.refresh();if(studioDocked&&studioOpen&&beltOpen){beltWasOpen=true;beltOpen=false;}if(!studioDocked&&beltWasOpen){beltWasOpen=false;beltOpen=true;}if((inspectorOpen||contextKind)&&(tool==='pin'||tool==='formation')){tool=cursorTool;railExpanded=false;}if(beltPickerOpen){inspectorOpen=false;contextKind='';timelineOpen=false;shapePickerOpen=false;modesOpen=false;captureOpen=false;}else if(inspectorOpen){contextKind='';timelineOpen=false;shapePickerOpen=false;modesOpen=false;captureOpen=false;}else if(contextKind){timelineOpen=false;shapePickerOpen=false;modesOpen=false;captureOpen=false;}else if(timelineOpen){shapePickerOpen=false;modesOpen=false;captureOpen=false;}sanitiseSelection();sceneBodies?.refresh();workspace.entries=clone(store.document.shared!.toolbelt);if(tab==='motion')studioSection=motionTab==='automation'?'automation':motionTab==='sequence'?'sequence':motionTab==='focus'?'focus':'motion';else if(tab==='objects'&&!['formations','layout'].includes(studioSection))studioSection='formations';else if(tab==='scene'&&!['scene','text'].includes(studioSection))studioSection='scene';else if(tab==='field'&&!['physics','pointer','relational','collision','appearance','volume','resonance','native','blueprint','palace','places','canvas'].includes(studioSection))studioSection='physics';studioOpen=inspectorOpen&&editing;if(railKey!=='objects'||tool!=='select')railKey=tool;if(transitionDuration&&transitionSceneId!==scene().id){transitionDuration=0;$('transition-canvas').hidden=true;}theme();document.body.classList.toggle('studio-open',studioOpen);$('inspector').classList.toggle('is-studio',studioOpen);$('inspector').classList.toggle('docked',studioDocked);const dockButton=$('dock-studio');if(dockButton){dockButton.setAttribute('aria-pressed',String(studioDocked));dockButton.title=studioDocked?'Return the studio to full size':'Dock the studio where the toolbelt sits';dockButton.innerHTML=icon(studioDocked?'expand':'collapse');}$<HTMLSelectElement>('workspace-appearance').value=workspace.appearance;document.querySelectorAll<HTMLElement>('[data-action="studio-section"]').forEach(b=>b.setAttribute('aria-current',b.dataset.value===studioSection?'page':'false'));document.body.classList.toggle('editing',editing);document.body.classList.toggle('presentation',presenting);document.body.classList.toggle('editing-text',editing&&tool==='text');
  if(!$('inspector').hidden)studioScroll=$('inspector-content').scrollTop;$('inspector').hidden=!inspectorOpen||!editing;$('tool-rail').hidden=presenting;$('view-controls').hidden=!editing||!(tool==='pin'||shapePickerOpen||placementStep)||!!contextKind||inspectorOpen;$('coordinates').hidden=presenting||libraryOpen;$('timeline-panel').hidden=!timelineOpen;$('shape-picker').hidden=!shapePickerOpen||!editing;$('present-return').hidden=!presenting;
  $('scene-number').textContent=String(sceneIndex+1).padStart(2,'0');$('scene-name').textContent=scene().name;
  $('scene-picker').setAttribute('aria-expanded',String(timelineOpen));$('scene-state').textContent=sceneSaveState(store.document,scene());
@@ -193,14 +230,16 @@ function renderAll(){blueprintHUD?.refresh();renderResearchScenePicker();if(stud
  document.querySelectorAll<HTMLButtonElement>('[data-action="undo"]').forEach(b=>b.disabled=!store.undoStack.length);document.querySelectorAll<HTMLButtonElement>('[data-action="redo"]').forEach(b=>b.disabled=!store.redoStack.length);
  document.body.classList.toggle('library-open',libraryOpen);
  $('library-page').hidden=!libraryOpen;const researchActive=document.body.classList.contains('research-active');$('stage').inert=libraryOpen||researchActive;
- const originalHeader=document.querySelector('#app > .masthead');
- document.querySelectorAll<HTMLElement>('.chrome,#inspector,#shape-picker').forEach(el=>el.inert=libraryOpen||(researchActive&&el===originalHeader));
+ // The full object/state Studio and the toolbelt serve the selected occurrence
+ // over an active research instrument; the field shows only on explicit preview.
+ document.body.classList.toggle('research-studio',researchActive&&inspectorOpen&&editing);document.body.classList.toggle('research-preview',researchActive&&researchPreview);document.querySelectorAll('[data-action="research-preview"]').forEach(b=>{b.classList.toggle('active',researchPreview);b.setAttribute('aria-pressed',String(researchPreview));});
+ document.querySelectorAll<HTMLElement>('.chrome,#inspector,#shape-picker').forEach(el=>el.inert=libraryOpen);
  const researchWorkspace=document.getElementById('research-workspace');if(researchWorkspace)researchWorkspace.inert=libraryOpen;
  $('modes-panel').hidden=!modesOpen||libraryOpen;$('capture-panel').hidden=!captureOpen||libraryOpen;if(captureOpen)renderImageSuite();
  document.querySelector('[data-action="modes"]')?.setAttribute('aria-expanded',String(modesOpen));
  document.querySelector('[data-action="capture-options"]')?.setAttribute('aria-expanded',String(captureOpen));
  if(libraryOpen)renderLibrary();
- renderText();renderInspector();renderLive();renderTimeline();renderShapePicker();setHint();transportUI();orbitControl.render();overlayDirty=true;needsFrame=true;
+ renderText();renderInspector();renderLive();renderTimeline();renderShapePicker();setHint();transportUI();overlayDirty=true;needsFrame=true;
  announceHostState();
 }
 /** The scene's automation layers. One-shots fire on the engine runtime clock
@@ -252,10 +291,10 @@ function activateRail(next:RailItem){
 }
 function applySceneView(){const v=activeScene().view;if(v){camera.mode=v.mode;camera.yaw=v.yaw;camera.pitch=v.pitch;camera.zoom=v.zoom;camera.panX=v.panX*width;camera.panY=v.panY*height;if(v.nativeCamera){const c=v.nativeCamera;camera.yaw=-c.yaw;camera.pitch=c.pitch;camera.mode=c.yaw||c.pitch?'3d':'2d';camera.zoom=c.zoom*400/stageScale(width,height);const {a,b}=basis(camera),o=stageCentre(width,height);camera.panX=width/2-o.x-c.zoom*(a[0]*c.panX+a[1]*c.panY);camera.panY=height/2-o.y+c.zoom*(b[0]*c.panX+b[1]*c.panY);}}}
 function setScene(index:number,automatic=false){if(propertyTake)finishPropertyTake();trackPreview=false;pointer.active=false;if(index<0)index=store.document.scenes.length-1;if(index>=store.document.scenes.length)index=0;if(index===sceneIndex&&!automatic)return;
- if(scenePlaying&&store.document.scenes[index].transition>0&&engine.capabilities.kind==='preview'){const c=$<HTMLCanvasElement>('transition-canvas');c.width=engine.canvas.width;c.height=engine.canvas.height;c.getContext('2d')!.drawImage(engine.canvas,0,0);transitionBackground=scene().field.background;c.style.background=transitionBackground;c.style.opacity='1';c.hidden=false;transitionStart=simTime;transitionDuration=store.document.scenes[index].transition;transitionSceneId=store.document.scenes[index].id;}else{transitionDuration=0;$('transition-canvas').hidden=true;}
+ if(scenePlaying&&store.document.scenes[index].transition>0&&engine.capabilities.kind==='preview'){const c=$<HTMLCanvasElement>('transition-canvas');c.width=engine.canvas.width;c.height=engine.canvas.height;c.getContext('2d')!.drawImage(engine.canvas,0,0);transitionBackground=scene().field.background;c.style.background=transitionBackground;c.style.opacity='1';c.hidden=false;transitionStart=simTime;transitionDuration=store.document.scenes[index].transition;transitionEasing='linear';transitionSceneId=store.document.scenes[index].id;}else{transitionDuration=0;$('transition-canvas').hidden=true;}
 
  sceneIndex=index;if(!automatic)journeyPlaying=false;applySceneView();sceneElapsed=0;selected=[];textId=scene().text[0]?.id??null;saveSession();placementStep=false;shapePickerOpen=false;if(!automatic)journeyPlaying=false;renderAll();void researchInstruments?.refresh();}
-function selectEntity(id:string,multi=false){cursorTool='select';pointer.active=false;railKey='select';railExpanded=true;if(multi){selected=selected.includes(id)?selected.filter(x=>x!==id):[...selected,id];}else selected=[id];editing=true;tool='select';shapePickerOpen=false;journeyPlaying=false;stepIndex=0;renderAll();}
+function selectEntity(id:string,multi=false){cursorTool='select';pointer.active=false;railKey='select';railExpanded=true;if(multi){selected=selected.includes(id)?selected.filter(x=>x!==id):[...selected,id];}else selected=[id];editing=true;inspectorOpen=false;contextKind='objects';tab='objects';studioSection='formations';tool='select';shapePickerOpen=false;journeyPlaying=false;stepIndex=0;renderAll();}
 function semanticBindingFor(s:Scene,entityId:string):SemanticBinding|undefined{return s.semanticField?.bindings.find(b=>b.carriers.some(c=>c.kind==='entity'&&c.id===entityId));}
 function defaultSemanticColor():SemanticColorCoupling{return{enabled:true,colorSource:'canonical',gain:1,radius:{source:'force'},falloff:'gaussian',metric:'compositionPlane',blend:'weighted',activation:'constant'};}
 function ensureSemanticField(s:Scene):SemanticFieldConfig{return s.semanticField??=( {enabled:true,profile:{kind:'chakra',profileId:CHAKRA_PROFILE_ID},affinity:{method:'modalProjection',bandwidth:.14},globalColorGain:1,bindings:[]} );}
@@ -274,7 +313,7 @@ function setSemanticBindingValue(s:Scene,entityId:string,path:string,value:unkno
 }
 function mergeSemanticStarter(target:Scene,source:Scene){
  const incoming=clone(source.entities),idMap=new Map<string,string>();for(const e of incoming){const old=e.id,eid=uid('entity');idMap.set(old,eid);e.id=eid;e.sequence.steps.forEach(k=>k.id=uid('step'));}
- ensureCapacity(incoming);target.entities.push(...incoming);
+ target.entities.push(...incoming);
  if(source.semanticField?.bindings.length){const field=ensureSemanticField(target);field.enabled=true;field.profile=clone(source.semanticField.profile);field.affinity=clone(source.semanticField.affinity);field.globalColorGain=source.semanticField.globalColorGain;
   for(const raw of source.semanticField.bindings){const b=clone(raw);b.id=uid('semantic');b.carriers=b.carriers.map(c=>c.kind==='entity'?{...c,id:idMap.get(c.id)??c.id}:c);field.bindings.push(b);}}
  return incoming;
@@ -361,13 +400,21 @@ function collectImported(documents:Journey[]){
   try{saveToLibrary(j);}catch{/* Retain the imported document in-session without changing its source. */}
  }
 }
-function ensureCapacity(additions:Entity[]){const all=[...scene().entities,...additions];if(all.filter(e=>e.kind==='formation').length>10||all.filter(e=>e.kind==='pin').length>8)throw new Error('The native field supports 10 formations and 8 force-only pins. Remove an object before adding this composition.');}
 let nativeWorkspace:ReturnType<typeof installNativeWorkspace>|undefined;
+let sceneBodies:ReturnType<typeof installSceneBodies>|undefined;
 let blueprintHUD:ReturnType<typeof installBlueprintHUD>|undefined;
+// Studio-owned homes for instrument controls (re-parented, never re-rendered).
+const blueprintHome=document.createElement('div');blueprintHome.className='blueprint-home';
+const palaceHome=document.createElement('div');palaceHome.className='palace-home';
+const placesHome=document.createElement('div');placesHome.className='places-home';
+const canvasHome=document.createElement('div');canvasHome.className='canvas-home';
 // A blank boot frame is not a new chosen work. Retain the host's native
 // reference until recovery succeeds or the user explicitly opens a draft.
 let awaitingNativeBoot=startsWithNativeReference;
 let researchInstruments:ReturnType<typeof installResearchInstruments>|undefined;
+// A deliberate peek at the live field while a research instrument stays mounted
+// and active: the engine renders only while the person is looking at it.
+let researchPreview=false;
 let nativeConnectionRows:Record<string,ConnectionBinding[]>={},nativeSelectedRelation:string|null=null;
 let journeyNavigation=0;
 async function loadJourney(j:Journey){
@@ -402,7 +449,7 @@ recorder.onStop=(blob,mime)=>{transportUI();$('recording-badge').hidden=true;if(
 function addLane(target='field.dispersion',syncWith?:string){if(!target.startsWith('field.')&&!target.startsWith('entity:'))target='field.'+target;const p=automationTarget(scene(),target);if(!p||!Number.isFinite(p.value))return;editing=true;inspectorOpen=true;tab='motion';motionTab='automation';if(scene().automation.some(l=>l.target===target)){renderAll();return;}
  const newId=uid('lane');detailState.set('automation-'+(syncWith??newId),true);const span=(p.max-p.min)*.1,low=clamp(p.value-span,p.hardMin,p.hardMax),high=clamp(p.value+span,p.hardMin,p.hardMax);
  changed(()=>{scene().automation.push({id:newId,...(syncWith?{syncWith}:{}),enabled:true,target,type:'lfo',wave:'sine',min:low,max:high,rate:.08,phase:0,blend:'replace',duration:4,delay:0,loop:'once',firedAt:null});if(target==='field.frequency')scene().composition.frequencyDriver='automation';});}
-function duplicateEntity(){const list=scene().entities.filter(e=>selected.includes(e.id));if(!list.length)return;ensureCapacity(list);changed(()=>{selected=list.map(e=>{const n=clone(e);n.id=uid('entity');n.name+=' copy';n.position.x+=.12;n.position.y-=.12;n.locked=false;n.sequence.steps.forEach(k=>k.id=uid('step'));scene().entities.push(n);return n.id;});});}
+function duplicateEntity(){const list=scene().entities.filter(e=>selected.includes(e.id));if(!list.length)return;changed(()=>{selected=list.map(e=>{const n=clone(e);n.id=uid('entity');n.name+=' copy';n.position.x+=.12;n.position.y-=.12;n.locked=false;n.sequence.steps.forEach(k=>k.id=uid('step'));scene().entities.push(n);return n.id;});});}
 function deleteEntities(){if(selected.some(id=>blueprintMember(scene(),id))){toast('Release the blueprint before removing one of its members.');return;}const ids=selected.filter(id=>!scene().entities.find(e=>e.id===id)?.locked);if(!ids.length){toast('Unlock a selected entity before removing it.');return;}let prunedLanes=false;changed(()=>{scene().entities=scene().entities.filter(e=>!ids.includes(e.id));selected=[];prunedLanes=pruneAutomation(scene());});toast('Removed. Undo restores the configuration.'+(prunedLanes?' Its automation lanes without a remaining target were removed with it.':''));}
 function reorderScene(from:number,to:number){if(to<0||to>=store.document.scenes.length)return;const currentId=scene().id;changed(()=>{const [item]=store.document.scenes.splice(from,1);store.document.scenes.splice(to,0,item);sceneIndex=store.document.scenes.findIndex(s=>s.id===currentId);});}
 async function action(name:string,el:HTMLElement,event?:Event){const s=scene(),subjectId=el.closest<HTMLElement>('[data-entity-id]')?.dataset.entityId,e=subjectId?s.entities.find(v=>v.id===subjectId):selectedEntity();if(e&&el.closest('.live-sequence'))selected=[e.id];switch(name){
@@ -441,9 +488,12 @@ async function action(name:string,el:HTMLElement,event?:Event){const s=scene(),s
  case 'native-paper':changed(()=>applyBackground(s,el.dataset.id!));break;
  case 'native-palette-invert':changed(()=>invertPalette(s));break;
  case 'native-palette-random':changed(()=>{applyPalette(s,COLOR_PALETTES[Math.floor(Math.random()*COLOR_PALETTES.length)].id);});break;
- case 'native-glyph':if(e)changed(()=>{setStateSource(e,el.dataset.prefix==='step'?stepIndex:0,undefined);applyGlyph(e,el.dataset.prefix==='step'?stepIndex:null,el.dataset.value!);if(el.dataset.prefix==='step')syncHeldState(e,stepIndex);});break;
- case 'native-chain':if(e)changed(()=>{applyChain(e,el.dataset.id!);stepIndex=0;});break;
- case 'native-kundalini-sequence':if(e)changed(()=>{applyKundaliniSequence(e);stepIndex=0;});break;
+ case 'native-glyph':if(e)changed(()=>{const glyph=el.dataset.value!,base=el.dataset.prefix!=='step',font={fontFamily:s.engine.fontFamily,fontWeight:s.engine.fontWeight};
+  setStateSource(e,base?0:stepIndex,undefined);applyGlyph(e,base?null:stepIndex,glyph);
+  if(s.engine.autoFitSizes!==false){if(base){refitEntityForGlyph(e,glyph,font);if(e.sequence.steps.length===1)refitStepForGlyph(e,0,glyph,font);}else refitStepForGlyph(e,stepIndex,glyph,font);}
+  if(!base)syncHeldState(e,stepIndex);});break;
+ case 'native-chain':if(e)changed(()=>{applyChain(e,el.dataset.id!);stepIndex=0;if(s.engine.autoFitSizes!==false)refitFormationToGlyphs(e,{fontFamily:s.engine.fontFamily,fontWeight:s.engine.fontWeight});});break;
+ case 'native-kundalini-sequence':if(e)changed(()=>{applyKundaliniSequence(e);stepIndex=0;if(s.engine.autoFitSizes!==false)refitFormationToGlyphs(e,{fontFamily:s.engine.fontFamily,fontWeight:s.engine.fontWeight});});break;
  case 'native-layout':{const entities=s.entities.filter(v=>selected.includes(v.id)&&!v.locked&&v.kind==='formation'),layout=NATIVE_LAYOUTS[el.dataset.value!];if(layout)changed(()=>{const axes=s.composition.plane==='XZ'?['x','z']:s.composition.plane==='YZ'?['y','z']:['x','y'];layout(entities.length).forEach((pos,i)=>{entities[i].position[axes[0] as keyof Vec3]=pos.x/400;entities[i].position[axes[1] as keyof Vec3]=pos.y/400;});s.composition.layout='native-'+el.dataset.value;});break;}
  case 'native-disperse':engine.command?.({type:'disperse',strength:3});needsFrame=true;break;
  case 'native-reset-phases':engine.command?.({type:'reset-phases'});needsFrame=true;break;
@@ -464,6 +514,49 @@ async function action(name:string,el:HTMLElement,event?:Event){const s=scene(),s
  case 'face-plane':facePlane(camera);renderAll();break;
  case 'keep-view':changed(()=>{scene().view={...scene().view,mode:camera.mode,yaw:camera.yaw,pitch:camera.pitch,zoom:camera.zoom,panX:camera.panX/width,panY:camera.panY/height};});toast('This camera framing is now part of the scene.');break;
  case 'restore-view':applySceneView();renderAll();break;
+ // ES1A/ES1B (O:I #352): scene-body/trigger authoring. Every write is the
+ // Rust-exact kernel Change grammar, sent through the app's existing native
+ // edit path (nativeWorkspace.edit → the kernel's own `edit` operation);
+ // there is no second, presentation-only copy of a body or trigger.
+ case 'scene-body-image':{
+  const view=nativeWorkspace?.nativeView(),binding=view?.bindings[scene().id];
+  if(!view||!binding){toast('Open this Scene as a native Expression before setting its body.');break;}
+  const path=$<HTMLInputElement>('scene-body-image-path').value.trim();
+  if(!path){toast('Name the native image file first.');break;}
+  await nativeWorkspace?.edit([{change:'scene_body_set',scene_ref:binding.scene_ref,body:{carrier:'image_media',subject_ref:path,native_owner:'oi',reading:{ref:path,revision:'1',availability:'available'},provenance:[],actions:[],presentation:'inline',capability:{state:'renderable'},span:null,recursion:null}}]);
+  toast('Scene body set to this image.');break;
+ }
+ case 'scene-body-text':{
+  const view=nativeWorkspace?.nativeView(),binding=view?.bindings[scene().id];
+  if(!view||!binding){toast('Open this Scene as a native Expression before setting its body.');break;}
+  const path=$<HTMLInputElement>('scene-body-text-path').value.trim();
+  if(!path){toast('Name the native text file first.');break;}
+  const start=Number($<HTMLInputElement>('scene-body-text-start').value)||0,end=Number($<HTMLInputElement>('scene-body-text-end').value)||0;
+  const span=end>start?{start,end}:null;
+  await nativeWorkspace?.edit([{change:'scene_body_set',scene_ref:binding.scene_ref,body:{carrier:'text_source',subject_ref:path,native_owner:'oi',reading:{ref:path,revision:'1',availability:'available'},provenance:[],actions:[],presentation:'inline',capability:{state:'renderable'},span,recursion:null}}]);
+  toast('Scene body set to this text.');break;
+ }
+ case 'scene-body-clear':{
+  const view=nativeWorkspace?.nativeView(),binding=view?.bindings[scene().id];
+  if(!view||!binding){toast('Open this Scene as a native Expression first.');break;}
+  await nativeWorkspace?.edit([{change:'scene_body_clear',scene_ref:binding.scene_ref}]);
+  toast('Scene body cleared.');break;
+ }
+ case 'scene-trigger-add':{
+  const view=nativeWorkspace?.nativeView(),binding=view?.bindings[scene().id];
+  if(!view||!binding){toast('Open this Scene as a native Expression first.');break;}
+  const targetRef=$<HTMLSelectElement>('scene-trigger-target').value,occasion=$<HTMLSelectElement>('scene-trigger-occasion').value;
+  if(!targetRef){toast('Choose a Scene to jump to.');break;}
+  const triggerRef=`${view.document.expression_ref}:trigger:jump-${crypto.randomUUID()}`;
+  await nativeWorkspace?.edit([{change:'scene_trigger_attach',scene_ref:binding.scene_ref,trigger:{trigger_ref:triggerRef,occasion,target:{kind:'navigate',scene_ref:targetRef}}}]);
+  toast('Jump trigger added.');break;
+ }
+ case 'scene-trigger-remove':{
+  const ref=el.dataset.triggerRef;
+  if(!ref)break;
+  await nativeWorkspace?.edit([{change:'scene_trigger_detach',trigger_ref:ref}]);
+  toast('Trigger removed.');break;
+ }
  case 'fit-view':{const {plane,depth,grid,snap}=camera;camera=defaultCamera();Object.assign(camera,{plane,depth,grid,snap});facePlane(camera);renderAll();break;}
  case 'timeline':timelineOpen=!timelineOpen;if(timelineOpen){inspectorOpen=false;contextKind='';beltPickerOpen=false;modesOpen=false;captureOpen=false;}renderAll();break;
  case 'open-timeline':journeyPlaying=false;timelineOpen=true;inspectorOpen=false;contextKind='';beltPickerOpen=false;modesOpen=false;captureOpen=false;renderAll();break;
@@ -476,13 +569,17 @@ async function action(name:string,el:HTMLElement,event?:Event){const s=scene(),s
  case 'exit-present':presenting=false;renderAll();break;
  case 'library':case 'preset-browser':case 'keep':openLibrary();break;
  case 'deep-verso':hostRequest({request:'summon',detail:{kind:'verso',subject:nativeWorkspace?.nativeSubject()??undefined}});break;
- case 'native-work':nativeWorkspace?.toggle();break;
- case 'blueprint':blueprintHUD?.open();break;
- case 'native-library':hostRequest({request:'summon',detail:{kind:'library'}});break;
+ case 'blueprint':inspectorOpen=true;editing=true;contextKind='';studioSection='blueprint';tab='field';renderAll();blueprintHUD?.open();break;
+ case 'native-save':await saveNative();break;
+ case 'native-resolve':void nativeWorkspace?.resolvePending();break;
+ case 'native-retry-open':void nativeWorkspace?.retryOpen();break;
+ case 'native-retry-file':void nativeWorkspace?.retryFile();break;
+ case 'native-page':void nativeWorkspace?.page(Number(el.dataset.delta));break;
+ case 'native-save-file':openNativeFileDialog();break;
+ case 'native-open-file':openCentralFileDialog();break;
+ case 'research-preview':if(!researchInstruments?.active())break;researchPreview=!researchPreview;lastTime=performance.now();needsFrame=true;overlayDirty=true;renderAll();break;
+ case 'native-library':openLibrary('collection');break;
  case 'lens':lensStudio.select(el.dataset.lens as LensId);break;
- case 'lens-close':lensStudio.closeStudio();break;
- case 'lens-bar':lensStudio.toggleChooser();break;
- case 'lens-op':if(el.dataset.op==='commit'){await nativeWorkspace?.commit();lensStudio.refresh();}break;
  case 'deep-home':{const home=starters.find(p=>p.expression.id==='source-twelve-faces')?.expression;if(home){sequenceOpen=false;beltOpen=false;guidesVisible=false;await loadJourney(clone(home));}else toast('The authored Epii entrance is unavailable in this build. Your work was retained.',6000);break;}
  case 'deep-lived':hostRequest({request:'workspace-mode',mode:'expressions'});break;
  case 'capture-options':inspectorOpen=false;contextKind='';beltPickerOpen=false;timelineOpen=false;modesOpen=false;readCapture();openKeep();break;case 'about':closeDialogs();openAbout();break;
@@ -495,14 +592,14 @@ async function action(name:string,el:HTMLElement,event?:Event){const s=scene(),s
  case 'close-dialog':el.closest('dialog')?.close();break;
  case 'confirm':$('confirm-dialog').closest('dialog')?.close();confirmCallback?.();confirmCallback=null;break;
  case 'load-built-in':{const j=preset(el.dataset.value!);j.id=uid('journey');await loadJourney(j);break;}
- case 'add-built-in':{const added=clone(preset(el.dataset.value!).scenes[0].entities);ensureCapacity(added);for(const x of added)x.id=uid('entity');changed(()=>{s.entities.push(...added);selected=added.map(x=>x.id);});closeDialogs();edit(true,'objects');break;}
+ case 'add-built-in':{const added=clone(preset(el.dataset.value!).scenes[0].entities);for(const x of added)x.id=uid('entity');changed(()=>{s.entities.push(...added);selected=added.map(x=>x.id);});closeDialogs();edit(true,'objects');break;}
  case 'import-legacy':{const raw=localStorage.getItem('typographic_pointcloud_saved_states');if(raw){const result=importDocuments(JSON.parse(raw));collectImported(result.journeys);toast(`${result.journeys.length} previous native scenes imported. Original browser key unchanged. ${result.errors.map(e=>e.message).join(' · ')}`,9000);openLibrary();}break;}
  case 'load-saved':{const j=store.document.id===el.dataset.id?store.document:sessionExpressions.get(el.dataset.id!)??readLibrary().find(j=>j.id===el.dataset.id);if(j)await loadJourney(j);break;}
  case 'new-journey':await loadJourney(blankJourney());edit(true,'scene');closeEntryGate();break;
  case 'entry-new':await loadJourney(blankJourney());edit(true,'scene');closeEntryGate();toast('Blank Expression — place a glyph or formation to begin.');break;
  case 'entry-continue':closeEntryGate();toast(store.document.name?'Continued '+store.document.name:'Continued last work');break;
  case 'entry-open':closeEntryGate();openLibrary();break;
- case 'entry-open-native':closeEntryGate();nativeWorkspace?.toggle();break;
+ case 'entry-open-native':closeEntryGate();openLibrary('collection');break;
  case 'entry-starter-mark':await loadJourney(forkExpression(oiMark()));edit(true,'scene');closeEntryGate();break;
  case 'entry-dismiss':closeEntryGate();break;
  case 'new-scene':changed(()=>{store.document.scenes.splice(sceneIndex+1,0,blankScene());sceneIndex++;selected=[];textId=scene().text[0]?.id??null;sceneElapsed=0;journeyPlaying=false;});edit(true,'scene');timelineOpen=true;renderAll();break;
@@ -529,7 +626,7 @@ async function action(name:string,el:HTMLElement,event?:Event){const s=scene(),s
  case 'confirm-fold':{const dialog=$('confirm-dialog'),[to,target]=$<HTMLSelectElement>('fold-target').value.split('|'),mode=$<HTMLSelectElement>('fold-mode').value as 'seconds'|'morph'|'manual';changed(()=>{const result=foldObjectState(store.document,dialog.dataset.sourceScene!,dialog.dataset.sourceEntity!,Number(dialog.dataset.sourceStep),to,target,mode,$<HTMLInputElement>('fold-remove').checked);sceneIndex=store.document.scenes.findIndex(s=>s.id===result.sceneId);selected=[result.entityId];stepIndex=result.stepIndex;sceneElapsed=0;journeyPlaying=false;applySceneView();});closeDialogs();inspectorOpen=false;contextKind='';captureOpen=false;sequenceOpen=true;renderAll();toast('Object state added to the earlier sequence · draft backed up. Save the scene when ready.');break;}
  case 'image-suite':captureOpen=false;openKeep();break;
  case 'source-sequence':captureOpen=false;sequenceOpen=true;renderAll();break;
- case 'source-new':{const added=entity('Image / ASCII','O');ensureCapacity([added]);changed(()=>{s.entities.push(added);selected=[added.id];stepIndex=0;});break;}
+ case 'source-new':{const added=entity('Image / ASCII','O');changed(()=>{s.entities.push(added);selected=[added.id];stepIndex=0;});break;}
  case 'source-add':if(e&&!e.locked&&e.sequence.steps.length<32)changed(()=>{const step=clone(e.sequence.steps[stepIndex]);step.id=uid('step');step.source=undefined;step.name=undefined;e.sequence.steps.push(step);stepIndex=e.sequence.steps.length-1;syncHeldState(e,stepIndex);});break;
  case 'source-image':if(e&&!e.locked){sourceUploadEntityId={sceneId:s.id,entityId:e.id,stepId:e.sequence.steps[stepIndex].id};$<HTMLInputElement>('source-file').click();}break;
  case 'layer-add':{const id=el.closest<HTMLElement>('[data-entity-id]')?.dataset.entityId,ent=scene().entities.find(v=>v.id===id),kind=el.dataset.kind;if(ent&&!ent.locked&&(ent.layers?.length??0)<6)changed(()=>{const n=ent.layers?.length??0;const z=((n%2===0?1:-1)*Math.ceil((n+1)/2))*.25;const layer:EntityLayer={id:uid('layer'),text:kind==='glyph'?(el.dataset.value||'O'):'O',z,source:kind==='ascii'?{kind:'ascii',ascii:{text:['########','#      #','#  ##  #','#      #','########'].join('\n'),fontFamily:'monospace'}}:undefined};ent.layers=[...(ent.layers??[]),layer];if(kind==='image'){sourceUploadEntityId={sceneId:s.id,entityId:ent.id,layerId:layer.id};$<HTMLInputElement>('source-file').click();}});break;}
@@ -560,7 +657,7 @@ async function action(name:string,el:HTMLElement,event?:Event){const s=scene(),s
  case 'show-monitor':monitoredLane=el.dataset.id!;beltOpen=true;inspectorOpen=false;renderAll();break;
  case 'monitor-mode':monitorMode=el.dataset.value==='live'?'live':'cycle';renderLive();break;
  case 'monitor-dock':{monitorDocked=!monitorDocked;const m=$('automation-monitor');if(monitorDocked)$('toolbelt-panel').appendChild(m);else document.body.appendChild(m);renderAll();break;}
- case 'monitor-add-glyph':{changed(()=>{const added=entity('New glyph','O');ensureCapacity([added]);scene().entities.push(added);selected=[added.id];});toast('Glyph added. Drag it on the canvas, or edit it under Objects.');break;}
+ case 'monitor-add-glyph':{changed(()=>{const added=entity('New glyph','O');scene().entities.push(added);selected=[added.id];});toast('Glyph added. Drag it on the canvas, or edit it under Objects.');break;}
  case 'edit-monitored':monitoredLane=el.dataset.id!;editing=true;inspectorOpen=true;tab='motion';motionTab='automation';detailState.set('automation-'+monitoredLane,true);renderAll();break;
  case 'toggle-monitored':changed(()=>{const lane=s.automation.find(l=>l.id===el.dataset.id);if(lane)lane.enabled=!lane.enabled;});break;
  case 'choose-group-target':assignmentGroup=el.dataset.id!;assignmentTarget='';renderAll();break;
@@ -632,6 +729,7 @@ document.addEventListener('focusout',ev=>{const el=ev.target;if((el instanceof H
 document.addEventListener('focusin',ev=>{const el=ev.target;if((el instanceof HTMLInputElement||el instanceof HTMLTextAreaElement)&&el.dataset.bind){el.dataset.originalValue=el.value;delete el.dataset.liveEditValue;delete el.dataset.cancelCommit;}});
 document.addEventListener('keydown',ev=>{if(ev.defaultPrevented)return;const el=ev.target as HTMLElement;const typing=el.closest('input,textarea,select,[contenteditable="true"]');if(researchInstruments?.active()){if(libraryOpen){if(ev.key==='Escape'&&!document.querySelector('dialog[open]')){ev.preventDefault();if(assignmentTarget||assignmentGroup){assignmentTarget='';assignmentGroup='';renderAll();}else closeLibrary();}return;}if(!typing&&!document.querySelector('dialog[open]')&&(ev.metaKey||ev.ctrlKey)&&ev.key.toLowerCase()==='z'){ev.preventDefault();void action(ev.shiftKey?'redo':'undo',el);}return;}if(typing){if(ev.key==='Escape'){if(assignmentTarget||assignmentGroup){assignmentTarget='';assignmentGroup='';renderAll();return;}if(el instanceof HTMLInputElement&&el.dataset.originalValue!==undefined){el.value=el.dataset.originalValue;el.dataset.cancelCommit='true';}el.blur();return;}if(ev.key==='Enter'&&!(el instanceof HTMLTextAreaElement)){ev.preventDefault();if(el instanceof HTMLInputElement&&el.dataset.bind)applyBinding(el);else el.blur();}return;}if(document.querySelector('dialog[open]'))return;if(libraryOpen){if(ev.key==='Escape'){if(assignmentTarget||assignmentGroup){assignmentTarget='';assignmentGroup='';renderAll();return;}ev.preventDefault();closeLibrary();}return;}if(ev.key==='Escape'&&(modesOpen||captureOpen)){ev.preventDefault();readCapture();modesOpen=false;captureOpen=false;renderAll();return;}
  if((ev.metaKey||ev.ctrlKey)&&ev.key.toLowerCase()==='z'){ev.preventDefault();void action(ev.shiftKey?'redo':'undo',el);return;}
+ if((ev.metaKey||ev.ctrlKey)&&ev.key.toLowerCase()==='s'){ev.preventDefault();void action('native-save',el);return;}
  if(ev.metaKey||ev.ctrlKey||ev.altKey)return;
  if(ev.key==='Escape'){if(assignmentTarget||assignmentGroup){assignmentTarget='';assignmentGroup='';renderAll();return;}if(propertyTake){finishPropertyTake();return;}if(beltPickerOpen){beltPickerOpen=false;renderAll();return;}if(contextKind){contextKind='';renderAll();return;}if(studioOpen){setStudio(false);return;}if(presenting){presenting=false;renderAll();}else if(placementStep||shapePickerOpen){placementStep=false;shapePickerOpen=false;cursorTool='select';tool='select';renderAll();}else if(timelineOpen){timelineOpen=false;renderAll();}else if(inspectorOpen){inspectorOpen=false;railExpanded=false;renderAll();}else if(editing)edit(false);return;}
  if(ev.key===' '){ev.preventDefault();toggleScenePlay();needsFrame=true;return;}
@@ -719,7 +817,7 @@ function recordableTracks(){return workspace.entries.flatMap(entry=>{const subje
 function finishPropertyTake(){if(!propertyTake)return;const take=propertyTake;propertyTake=null;if(take.elapsed>0){const end=Math.min(3600,take.start+take.elapsed);for(const t of take.tracks){const value=readTrackValue(scene(),t);if(value!==undefined&&t.points.at(-1)?.time!==end)t.points.push({time:end,value});}changed(()=>{scene().propertyTakeRange={start:take.start,end};scene().propertyTracks=mergeTake(scene().propertyTracks??[],take.tracks,take.start,end);scene().duration=Math.max(scene().duration,end);});takeWindows.set(scene().id,{start:take.start,end});sceneElapsed=take.start;trackPreview=true;scenePlaying=false;toast('Property take recorded · save the scene to keep this version.');}renderAll();}
 function updatePropertyTake(now:number){const t=propertyTake;if(!t)return;if(t.sceneId!==scene().id){finishPropertyTake();return;}const remaining=Math.max(0,Math.ceil((t.armed-now)/1000));$('take-status').hidden=false;$('take-status').textContent=remaining?'Recording in '+remaining+'…':'Recording '+t.elapsed.toFixed(1)+'s · click record to stop';if(remaining)return;const elapsed=Math.min((now-t.armed)/1000,3600-t.start,t.limit??Infinity);t.elapsed=elapsed;sceneElapsed=t.start+elapsed;scenePlaying=true;if(elapsed-t.lastSample>=.05||t.lastSample<0){for(const track of t.tracks){const value=readTrackValue(scene(),track);if(value===undefined)continue;sampleTrack(track,t.start+elapsed,value,t.start+Math.max(0,t.lastSample));}t.lastSample=elapsed;}if(t.start+elapsed>=3600||t.limit!==undefined&&elapsed>=t.limit)finishPropertyTake();}
 let frames=0,lastFpsTime=performance.now(),fps=0,rafId=0;
-function tick(now:number){if(researchInstruments?.active()){nativeField?.controller.frame(0,true);lastTime=now;rafId=requestAnimationFrame(tick);return;}updatePropertyTake(now);const rawDelta=Math.max(0,Math.min((now-lastTime)/1000,.25));lastTime=now;let delta=!fieldPaused&&!document.hidden&&!libraryOpen?Math.min(rawDelta,.05):0;delta=nativeField?.controller.frame(delta,fieldPaused||document.hidden||libraryOpen)??delta;const previousTime=simTime;if(engine.capabilities.kind!=='production'){delta*=scene().field.params.timeScale;simTime+=delta;}
+function tick(now:number){if(researchInstruments?.active()&&!researchPreview){nativeField?.controller.frame(0,true);lastTime=now;rafId=requestAnimationFrame(tick);return;}updatePropertyTake(now);const rawDelta=Math.max(0,Math.min((now-lastTime)/1000,.25));lastTime=now;let delta=!fieldPaused&&!document.hidden&&!libraryOpen?Math.min(rawDelta,.05):0;delta=nativeField?.controller.frame(delta,fieldPaused||document.hidden||libraryOpen)??delta;const previousTime=simTime;if(engine.capabilities.kind!=='production'){delta*=scene().field.params.timeScale;simTime+=delta;}
  if(recovery.hidden&&!libraryOpen&&(!fieldPaused||needsFrame||engine.needsRender?.()||pointer.active||recorder.active||transitionDuration>0)&&now-lastStudioRender>=(physisFpsCap?1000/physisFpsCap:0)){try{engine.render(frameData(delta));needsFrame=false;lastStudioRender=now;}catch(err){nativeField?.controller.hold('native surface render failed: '+String(err));needsFrame=false;if(String(err).toLowerCase().includes('context'))recovery.hidden=false;else error(err);transportUI();}}
  const native=engine.telemetry?.();if(native){simTime=native.simTime;delta=simTime-previousTime;document.documentElement.style.setProperty('--paper',native.background);document.documentElement.style.setProperty('--ink',native.palette[0]);$('text-layers').style.opacity=String(.25+.75*native.transition);}
  // A finished property preview holds its recorded end values; the field itself
@@ -728,8 +826,8 @@ function tick(now:number){if(researchInstruments?.active()){nativeField?.control
  if(scenePlaying&&!propertyTake&&delta>0&&!libraryOpen){sceneElapsed=Math.min(scene().duration,sceneElapsed+Math.min(rawDelta,.25));
   if(sceneElapsed>=scene().duration-.001&&!journeyPlaying){scenePlaying=false;transportUI();}}
  if(journeyPlaying&&scenePlaying&&!editing&&!libraryOpen){sceneElapsed+=Math.min(rawDelta,.25);if(sceneElapsed>=activeScene().duration){const indices=savedSceneIndices(store.document),next=indices.indexOf(sceneIndex)+1;if(next>=indices.length&&!store.document.loop){journeyPlaying=false;scenePlaying=false;sceneElapsed=0;applySceneView();renderAll();}else{setScene(indices[next%indices.length],true);fireAutomations(true);}}}
- if(transitionDuration>0){const f=clamp((simTime-transitionStart)/Math.max(.01,transitionDuration),0,1);$<HTMLCanvasElement>('transition-canvas').style.opacity=String(1-f);if(f>=1){transitionDuration=0;$('transition-canvas').hidden=true;}}
- orbitControl.render();if(overlayDirty&&!libraryOpen)drawGuides();if(recorder.active){const paperScene={...activeScene(),field:{...activeScene().field,background:native?.background??scene().field.background,palette:native?.palette??scene().field.palette,params:{...scene().field.params,...native?.params}}};const copy=()=>recorder.frame(engine.canvas,paperScene,width,height,captureTransition());try{if(engine.withCleanFrame)engine.withCleanFrame(copy);else copy();}catch(err){recorder.stop();error(err);}}frames++;
+ if(transitionDuration>0){const f=clamp((simTime-transitionStart)/Math.max(.01,transitionDuration),0,1);$<HTMLCanvasElement>('transition-canvas').style.opacity=String(1-applyEasing(f,transitionEasing));if(f>=1){transitionDuration=0;$('transition-canvas').hidden=true;}}
+ if(overlayDirty&&!libraryOpen)drawGuides();if(recorder.active){const paperScene={...activeScene(),field:{...activeScene().field,background:native?.background??scene().field.background,palette:native?.palette??scene().field.palette,params:{...scene().field.params,...native?.params}}};const copy=()=>recorder.frame(engine.canvas,paperScene,width,height,captureTransition());try{if(engine.withCleanFrame)engine.withCleanFrame(copy);else copy();}catch(err){recorder.stop();error(err);}}frames++;
  if(now-lastFpsTime>1000){fps=Math.round(frames*1000/(now-lastFpsTime));frames=0;lastFpsTime=now;}
  if(now-lastUI>33){const s=activeScene(),timing=expressionTiming(store.document,sceneIndex,sceneElapsed,journeyPlaying),fraction=clamp(timing.time/timing.total,0,1);$('global-time').textContent=timing.time.toFixed(1)+' / '+timing.total.toFixed(1)+'s';const playhead=$<HTMLInputElement>('expression-playhead');if(playhead&&document.activeElement!==playhead)playhead.value=String(timing.time);$('journey-progress').style.width=fraction*100+'%';document.querySelectorAll<HTMLElement>('[data-scene-progress]').forEach(e=>e.style.width=(Number(e.dataset.sceneProgress)===sceneIndex?fraction*100:0)+'%');
  const nd=engine.telemetry?.()?.drive;const ph=nd?{theta:nd.theta,phi:nd.phi,drive:nd.progress}:phases(s,simTime);document.querySelectorAll<SVGLineElement>('[data-phase]').forEach(e=>e.setAttribute('transform',`rotate(${(e.dataset.phase==='theta'?ph.theta:ph.phi)*180/Math.PI} 50 50)`));if($('drive-value'))$('drive-value').style.width=ph.drive*100+'%';
@@ -754,27 +852,9 @@ window.addEventListener('resize',()=>{if(recorder.active){recorder.stop();toast(
 // (hostedApp.trackHostedAppState), which is also the race-free initial read.
 let hostMode:'expressions'|'techne'=new URLSearchParams(location.search).get('mode')==='techne'?'techne':'expressions';
 let livedRailHTML='';
-// The DEEP cut tools — the same rail element, the deep working set (owner
-// wayfinder §13: reuse the rail's grammar, change the working tools). The
-// lens chooser joins when the lens island lands; only real tools ship.
-const DEEP_TOOLS:[string,string,string,string?][]=[
-  ['tool-interact','pointer','Interact / navigate','data-rail="interact" aria-pressed="false"'],
-  ['tool-select','select','Select','data-rail="select" aria-pressed="false"'],
-  ['lens-bar','modes','Show or hide instruments','aria-expanded="true" aria-controls="lens-chooser"'],
-  ['deep-home','home','Epii home'],
-  ['native-library','library','Library — My World / O:I Web'],
-  ['native-work','save','Native composition — commit, save and reopen'],
-  ['blueprint','grid','Scene blueprint'],
-  ['deep-verso','wiki','Verso — the subject\u2019s account and sources'],
-];
-function renderRail(){
-  const rail=document.getElementById('tool-rail');
-  if(!rail)return;
-  if(!livedRailHTML)livedRailHTML=rail.innerHTML;
-  rail.innerHTML=hostMode==='techne'
-    ?DEEP_TOOLS.map(([a,i,l,extra])=>ib(a,i,l,extra??'')).join('<span class="toolbar-divider" aria-hidden="true"></span>')
-    :livedRailHTML;
-}
+// One rail in both modes: Technē keeps the Expressions tools; the active
+// instrument's own tools sit beside them in #instrument-tools.
+function renderRail(){}
 function hostRequest(payload:{request:string;mode?:string;detail?:{kind:string;lens?:string;ref?:string;subject?:NativeSubject;context?:{node?:unknown;relationField?:unknown}}}){
  if(window.parent===window)return;
  try{window.parent.postMessage({v:1,kind:'host-request',...payload},'*');}catch{/* nothing sent rather than a wrong-channel throw */}
@@ -794,7 +874,7 @@ function setHostMode(mode:'expressions'|'techne'){
  document.body.classList.toggle('oi-host-techne',mode==='techne');
  renderRail();
  lensStudio.setMode(mode);
- if(mode==='expressions'){researchInstruments?.close();techneWorld.hide();setInstrumentSurface(null);}else activateInstrument(lensStudio.active());
+ if(mode==='expressions'){researchInstruments?.close();palaceInstrument.close();setInstrumentSurface(null);}else activateInstrument(lensStudio.active());
  renderAll();
 }
 // Open an existing native Expression the host asked for at runtime — a
@@ -809,14 +889,14 @@ let pendingHostOpen:string|null=null,hostOpenArmed=false;
 let hostThemeReadingKey='';
 function openHostExpression(ref:string){
  if(typeof ref!=='string'||!ref.startsWith('expression:'))return;
- if(kernelExpressionsAvailable()){void nativeWorkspace?.open(ref);return;}
+ if(kernelExpressionsAvailable()){void nativeWorkspace?.follow(ref);return;}
  // Buffer the LATEST ref and arm exactly one announce listener (not one per
  // pre-ready call), so repeated posts before the channel is up converge to a
  // single last-wins open and no message listeners accumulate.
  pendingHostOpen=ref;
  if(hostOpenArmed)return;
  hostOpenArmed=true;
- window.addEventListener('message',function ready(event){if(event.source===window.parent&&event.data?.v===1&&event.data?.kind==='oi-kernel-channel'){window.removeEventListener('message',ready);hostOpenArmed=false;const r=pendingHostOpen;pendingHostOpen=null;if(r)void nativeWorkspace?.open(r);}});
+ window.addEventListener('message',function ready(event){if(event.source===window.parent&&event.data?.v===1&&event.data?.kind==='oi-kernel-channel'){window.removeEventListener('message',ready);hostOpenArmed=false;const r=pendingHostOpen;pendingHostOpen=null;if(r)void nativeWorkspace?.follow(r);}});
 }
 window.addEventListener('message',ev=>{if(ev.source!==window.parent)return;const d=ev.data as {type?:string;width?:number;height?:number;right?:number;coveredRight?:number;appearance?:unknown;theme?:unknown;v?:unknown;kind?:unknown;mode?:unknown;command?:unknown;ref?:unknown;req?:unknown;target?:unknown;source?:unknown}|null;
  if(d&&d.type==='oi-shell-cutout'&&typeof d.width==='number'&&typeof d.height==='number'){
@@ -836,7 +916,8 @@ window.addEventListener('message',ev=>{if(ev.source!==window.parent)return;const
  if(d&&d.v===1&&d.kind==='host-mode'&&(d.mode==='expressions'||d.mode==='techne')){setHostMode(d.mode);announceHostState();return;}
  if(d&&d.v===1&&d.kind==='host-command'){
   if(d.command==='interact'||d.command==='select')activateRail(d.command);
-  else if(d.command==='open-expression'&&typeof d.ref==='string')openHostExpression(d.ref);
+  else if(d.command==='open-expression'&&typeof d.ref==='string'){if((d as {refresh?:unknown}).refresh===true&&kernelExpressionsAvailable())void nativeWorkspace?.refreshReference(d.ref);else openHostExpression(d.ref);}
+  else if(d.command==='lens'&&typeof (d as {lens?:unknown}).lens==='string'&&['project','canvas','timeline','journey','place','palace'].includes((d as {lens:string}).lens)){if(hostMode!=='techne')setHostMode('techne');lensStudio.select((d as {lens:LensId}).lens);}
   else if(d.command==='refresh-expression'&&typeof d.ref==='string')void nativeWorkspace?.refreshReference(d.ref);
   else if(d.command==='insert-source'&&typeof d.req==='string'){
    const req=d.req,target=d.target as {expression_ref?:unknown;revision?:unknown;scene_ref?:unknown}|undefined,source=d.source as {title?:unknown;binding?:unknown}|undefined;
@@ -856,12 +937,19 @@ window.addEventListener('message',ev=>{if(ev.source!==window.parent)return;const
 });
 window.addEventListener('pagehide',()=>{if(propertyTake)finishPropertyTake();recorder.stop();lastLibraryWrite=0;void flushDraft();});
 const nativeField=installNativeField(engine,()=>{fieldPaused=false;needsFrame=true;renderAll();});
-window.__FIELD_STUDIES__={getDocument:()=>clone(store.document),getState:()=>({studioOpen,beltOpen,needsFrame,libraryOpen,librarySection,modesOpen,captureOpen,railKey,railExpanded,sceneIndex,selected:[...selected],textId,editing,inspectorOpen,timelineOpen,tool,simTime,sceneElapsed,playing:scenePlaying,scenePlaying,fieldPaused,journeyPlaying,automationLoop,camera:{...camera},fps,recording:recorder.active,pointerActive:pointer.active,engine:engine.capabilities.name,hostMode,activeLens:lensStudio.active()}),project:(v:Vec3)=>project(v,camera,width,height),unproject:(x:number,y:number)=>unproject(x,y,camera,width,height),selectEntity:(id:string)=>selectEntity(id),setScene:(i:number)=>setScene(i),openEditor:(t:InspectorContext['tab'])=>edit(true,t),pause:()=>{fieldPaused=true;needsFrame=true;renderAll();},play:()=>{fieldPaused=false;needsFrame=true;renderAll();},native:()=>nativeField?.controller.reading,nativeTargets:()=>nativeField?.controller.inspectTargets(),dispose:()=>{researchInstruments?.destroy();techneWorld.destroy();nativeField?.dispose();cancelAnimationFrame(rafId);coverObserver?.disconnect();orbitControl.dispose();engine.dispose();},command:(cmd:any)=>{engine.command?.(cmd);needsFrame=true;},capabilities:engine.capabilities,inspect:(read=false)=>engine.inspect?.(read),telemetry:()=>engine.telemetry?.(),nativeProject:(v:Vec3)=>engine.projectNative?.(v),capture:(w:number,h:number)=>engine.capture?.(w,h)};
+// Without a retaining engine there is no native producer to present; the
+// Studio nav offers no dead "Native field" entry for it.
+if(!nativeField)document.querySelector('[data-action="studio-section"][data-value="native"]')?.remove();
+window.__FIELD_STUDIES__={getDocument:()=>clone(store.document),getState:()=>({studioOpen,beltOpen,needsFrame,libraryOpen,librarySection,modesOpen,captureOpen,railKey,railExpanded,sceneIndex,selected:[...selected],textId,editing,inspectorOpen,timelineOpen,tool,simTime,sceneElapsed,playing:scenePlaying,scenePlaying,fieldPaused,journeyPlaying,automationLoop,camera:{...camera},fps,recording:recorder.active,pointerActive:pointer.active,engine:engine.capabilities.name,hostMode,activeLens:lensStudio.active()}),project:(v:Vec3)=>project(v,camera,width,height),unproject:(x:number,y:number)=>unproject(x,y,camera,width,height),selectEntity:(id:string)=>selectEntity(id),setScene:(i:number)=>setScene(i),openEditor:(t:InspectorContext['tab'])=>edit(true,t),pause:()=>{fieldPaused=true;needsFrame=true;renderAll();},play:()=>{fieldPaused=false;needsFrame=true;renderAll();},native:()=>nativeField?.controller.reading,nativeTargets:()=>nativeField?.controller.inspectTargets(),dispose:()=>{researchInstruments?.destroy();nativeField?.dispose();cancelAnimationFrame(rafId);coverObserver?.disconnect();engine.dispose();},command:(cmd:any)=>{engine.command?.(cmd);needsFrame=true;},capabilities:engine.capabilities,inspect:(read=false)=>engine.inspect?.(read),telemetry:()=>engine.telemetry?.(),nativeProject:(v:Vec3)=>engine.projectNative?.(v),capture:(w:number,h:number)=>engine.capture?.(w,h)};
 function applyNativeView(view:KernelConversion,preservePosition=false){
  awaitingNativeBoot=false;
+ // An opened native Expression is what the frame stands on: the entry gate
+ // closes and (unless the caller keeps its position) the engine presents the
+ // document's current Scene.
+ const presented=presentAdoption(view);closeEntryGate();
  const oldScene=scene().id,oldCamera={...camera},oldTime=sceneElapsed,oldSelection=[...selected],oldPlaying=journeyPlaying;
  if(!preservePosition)applyJourney(view.journey,true);else {store.replace(initialiseSceneSaves(initialiseBelts(view.journey)));}
- const desired=preservePosition?oldScene:view.startSceneId;
+ const desired=preservePosition?oldScene:presented.sceneId;
  sceneIndex=Math.max(0,store.document.scenes.findIndex(s=>s.id===desired));
  if(preservePosition){camera=oldCamera;sceneElapsed=oldTime;selected=oldSelection.filter(id=>scene().entities.some(e=>e.id===id));journeyPlaying=oldPlaying;}
  else {applySceneView();const nativeRef=view.document.selection?.entity_ref;const occurrence=view.bindings[scene().id]?.occurrences.find(o=>o.entity_ref===nativeRef);selected=occurrence?[occurrence.view_entity_id]:[];}
@@ -875,15 +963,10 @@ let researchSuspension:symbol|null=null;
 function setInstrumentSurface(lens:LensId|null){
  const research=lens==='canvas'||lens==='timeline'||lens==='place';
  document.body.classList.toggle('research-active',research);
+ document.body.classList.toggle('palace-active',lens==='palace');
  document.body.dataset.activeInstrument=lens??'expression';
  $('stage').inert=research;
  $('stage').setAttribute('aria-hidden',String(research));
- const originalHeader=document.querySelector<HTMLElement>('#app > .masthead');
- // One header. The instrument HUD is itself a masthead; leaving the
- // expressions header standing under it is the doubled bar on M1, M2 and M4.
- if(originalHeader){originalHeader.inert=research;originalHeader.hidden=research;}
- const hud=document.getElementById('research-hud');if(hud)hud.hidden=!research;
- const inspector=document.getElementById('research-inspector');if(inspector)inspector.hidden=!research;
  if(research){
   if(nativeField&&!researchSuspension)researchSuspension=nativeField.controller.suspend(researchHoldReason);
  }else{
@@ -891,71 +974,131 @@ function setInstrumentSurface(lens:LensId|null){
   if(suspension&&nativeField)void nativeField.controller.releaseSuspension(suspension).catch(error);
   lastTime=performance.now();needsFrame=true;overlayDirty=true;
  }
- renderResearchScenePicker();
-}
-function renderResearchScenePicker(){
- const picker=document.getElementById('research-scene') as HTMLSelectElement|null;if(!picker)return;
- const options=store.document.scenes.map((s,i)=>`<option value="${i}">${esc(s.name)}</option>`).join('');
- if(picker.dataset.options!==options){picker.innerHTML=options;picker.dataset.options=options;}
- picker.value=String(sceneIndex);
 }
 function activateInstrument(lens:LensId){
+ // A Studio section that belongs to the instrument being left does not stay
+ // open, empty, over the next one.
+ const owned:Record<string,LensId>={places:'place',palace:'palace',canvas:'canvas'};
+ if(owned[studioSection]&&owned[studioSection]!==lens){inspectorOpen=false;studioSection='formations';tab='objects';}
  setInstrumentSurface(lens);
  pointer.active=false;
  if(drag){if(store.transactionOpen)store.finish();drag=null;markSaved();}
  placementStep=false;keepPlacing=false;pinRepeat=false;
- if(lens==='project')techneWorld.show();else techneWorld.hide();
+ researchPreview=false;
  // M0/M3/M5 are operating modes of this same Expression and Scene engine.
  // Mature Research Canvas tools are mounted by the research instrument adapter.
  if(lens==='canvas'||lens==='timeline'||lens==='place'){if(propertyTake)finishPropertyTake();if(recorder.active){recorder.stop();toast('Recording stopped before opening the research instrument.');}void researchInstruments?.open(lens==='canvas'?'m1':lens==='timeline'?'m2':'m4');}
  else researchInstruments?.close();
  if(lens==='project'){sequenceOpen=false;timelineOpen=false;inspectorOpen=false;contextKind='';beltPickerOpen=false;}
  if(lens==='journey'){sequenceOpen=false;timelineOpen=true;inspectorOpen=false;contextKind='';beltPickerOpen=false;}
- if(lens==='palace'){sequenceOpen=false;timelineOpen=false;contextKind='';beltPickerOpen=false;inspectorOpen=true;editing=true;tab='field';studioSection='physics';}
+ if(lens==='place'){editing=true;inspectorOpen=true;contextKind='';tab='field';studioSection='places';}
+ if(lens==='palace'){if(propertyTake)finishPropertyTake();editing=true;inspectorOpen=true;contextKind='';tab='field';studioSection='palace';void palaceInstrument.open();}
+ else palaceInstrument.close();
  renderAll();announceHostState();
 }
-const lensStudio=installLensStudio({subject:()=>nativeWorkspace?.nativeSubject()??null,construction:()=>nativeWorkspace?.construction()??null,activate:activateInstrument});
-nativeWorkspace=installNativeWorkspace({shouldRetainDraft:()=>!awaitingNativeBoot||store.revision!==0,snapshot:()=>({journey:clone(store.document),sceneId:scene().id,entityId:selected[0]??null}),version:()=>store.revision,load:applyNativeView,toast,summon:(kind,subject)=>hostRequest({request:'summon',detail:{kind,subject}}),correspondence:(rows,selection)=>{nativeConnectionRows=rows;nativeSelectedRelation=selection;needsFrame=true;lensStudio.refresh();}});
-blueprintHUD=installBlueprintHUD({container:$('native-work'),nativeView:()=>nativeWorkspace?.nativeView(),sceneId:()=>scene().id,apply:intent=>nativeWorkspace!.blueprint(intent)});
-const techneWorld=installTechneWorld(ref=>nativeWorkspace!.open(ref));
+const masthead=document.querySelector<HTMLElement>('#app > .masthead')!;
+// The active instrument's tools live in their own compact floating panel:
+// instruments carry different tool counts, so a fixed slot inside the rail
+// misaligned the masthead. The dock wraps and scrolls on its own and is
+// only present while a 2D instrument is open.
+const researchToolsDock=document.createElement('div');researchToolsDock.id='instrument-tools-dock';
+const researchTools=document.createElement('div');researchTools.id='instrument-tools';researchTools.className='instrument-tools';researchTools.setAttribute('role','toolbar');researchTools.setAttribute('aria-label','Active instrument tools');
+researchToolsDock.append(researchTools);document.body.append(researchToolsDock);
+// Canvas/Relations/Places keep the live field one click away: preview it
+// without leaving the instrument (the instrument stays mounted beneath).
+masthead.querySelector('#tool-rail')!.insertAdjacentHTML('beforeend',ib('research-preview','eye','Preview the live field','aria-pressed="false" data-research-only'));
+// The masthead keeps its three cells: rail · centre · actions. The instrument
+// chooser joins the centre cell beside the workspace menu.
+const mastheadCentre=document.createElement('div');mastheadCentre.className='masthead-centre';
+const workspaceCluster=masthead.querySelector('.workspace-cluster')!;workspaceCluster.replaceWith(mastheadCentre);
+const lensStudio=installLensStudio({activate:activateInstrument},mastheadCentre);
+mastheadCentre.append(workspaceCluster);
+nativeWorkspace=installNativeWorkspace({shouldRetainDraft:()=>!awaitingNativeBoot||store.revision!==0,snapshot:()=>({journey:clone(store.document),sceneId:scene().id,entityId:selected[0]??null}),version:()=>store.revision,load:applyNativeView,toast,summon:(kind,subject)=>hostRequest({request:'summon',detail:{kind,subject}}),correspondence:(rows,selection)=>{nativeConnectionRows=rows;nativeSelectedRelation=selection;needsFrame=true;},status:showNativeStatus,followed:(_ref,readThrough)=>{const panels=followedPanels(readThrough);if(panels.sequence!==null)sequenceOpen=panels.sequence;if(panels.inspector!==null)inspectorOpen=panels.inspector;renderAll();}});
+// Acts & reusable material (EXPRESSION-ACT-MATERIAL-V1): roles on this Scene's
+// objects/text, save-as-reusable, the material register and act playback,
+// beside the saved-scene playback.
+installActPanel({journey:()=>store.document,scene,selected:()=>selected,changed:fn=>changed(fn),
+ nativeView:()=>nativeWorkspace?.nativeView(),
+ nativeEdit:async changes=>{if(!nativeWorkspace?.nativeView())throw new Error('Save this Expression to a Central file first: its native Expression is not open.');await nativeWorkspace.edit(changes);},
+ expressionRequest:nativeExpressionRequest,advance:async()=>await nativeWorkspace?.advance()??false,transition:actTransition,toast});
+// ES1A/ES1B (O:I #352): the active native Scene's own body and its
+// declarative triggers, laid over the live field as real readable material.
+sceneBodies=installSceneBodies({
+ nativeView:()=>nativeWorkspace?.nativeView(),
+ sceneId:()=>scene().id,
+ open:ref=>{const view=nativeWorkspace?.nativeView(),binding=view?.bindings[scene().id];if(!view||!binding){toast('Open a native Scene before opening its source.');return;}hostRequest({request:'summon',detail:{kind:'source',ref,subject:{ref:view.document.expression_ref,kind:'expression',nativeOwner:'oi',revision:view.document.revision,title:view.document.title,sceneRef:binding.scene_ref,entityRef:null,relationRef:null}}});},
+ jumpToScene:sceneRef=>{const view=nativeWorkspace?.nativeView();if(!view){toast('Open a native Scene before jumping to another one.');return;}const entry=Object.entries(view.bindings).find(([,b])=>b.scene_ref===sceneRef);if(!entry){toast('That native Scene is not currently loaded in this view.');return;}const index=store.document.scenes.findIndex(s=>s.id===entry[0]);if(index<0)return;setScene(index);},
+});
+blueprintHUD=installBlueprintHUD({container:blueprintHome,nativeView:()=>nativeWorkspace?.nativeView(),sceneId:()=>scene().id,apply:intent=>nativeWorkspace!.blueprint(intent)});
 const researchContainer=document.createElement('section');
 researchContainer.id='research-workspace';researchContainer.setAttribute('aria-label','Research instrument workspace');
 // Instrument keyboard handling remains with its actual research component.
 // The physical application's document handler stands down while it is active.
 document.body.append(researchContainer);
-const researchHUD=document.createElement('header');researchHUD.id='research-hud';researchHUD.className='masthead chrome';researchHUD.hidden=true;
-const researchTools=document.createElement('div');researchTools.id='research-tools';researchTools.setAttribute('role','toolbar');researchTools.setAttribute('aria-label','Active instrument tools');
-const researchCommon=document.createElement('nav');researchCommon.className='research-common';researchCommon.setAttribute('aria-label','Native work');
-researchCommon.innerHTML=`${ib('lens-bar','modes','Show or hide instruments','aria-expanded="true" aria-controls="lens-chooser"')}<select id="research-scene" aria-label="Active native Scene"></select>${ib('lens','sequence','Scenes and sequence','data-lens="journey"')}${ib('native-library','library','Native Library')}${ib('native-work','save','Save native composition')}${ib('blueprint','grid','Scene blueprint')}${ib('deep-verso','wiki','Sources for this work')}`;
-researchCommon.addEventListener('change',event=>{if((event.target as HTMLElement).id==='research-scene')setScene(Number((event.target as HTMLSelectElement).value));});
-researchHUD.append(researchTools,researchCommon);
-const researchInspector=document.createElement('aside');researchInspector.id='research-inspector';researchInspector.setAttribute('aria-label','Instrument inspector');researchInspector.hidden=true;
-document.body.append(researchHUD,researchInspector);
+// Node and connection information: a compact card in the Expressions HUD
+// language, opened by selecting an anchor or a connection.
+const researchInspector=document.createElement('aside');researchInspector.id='research-inspector';researchInspector.className='hud-panel instrument-card';researchInspector.setAttribute('aria-label','Selected node or connection');researchInspector.hidden=true;
+document.body.append(researchInspector);
+/** Native world-position pin for a view occurrence (read from the native document). */
+function pinnedOccurrence(sceneId:string,viewEntityId:string):boolean{const view=nativeWorkspace?.nativeView(),occurrence=view?.bindings[sceneId]?.occurrences.find(o=>o.view_entity_id===viewEntityId);return !!(occurrence&&(view!.document.entities[occurrence.entity_ref] as {pinned?:boolean}|undefined)?.pinned);}
 function researchScene(id:string){const value=store.document.scenes.find(item=>item.id===id);if(!value||value.id!==scene().id)throw new Error('The active Scene changed; return to that Scene before editing.');return value;}
 async function commitResearch(){if(!await nativeWorkspace?.commit())throw new Error('The native owner did not acknowledge this edit. Your working draft is retained.');}
 function ownResearchConnection(ref:string){const value=nativeWorkspace?.nativeView()?.document.relations?.[ref];if(!value||value.native_owner!=='oi')throw new Error('Source relations must be changed through their source owner.');return value;}
 function connectionKind(kind:string){if(!kind.trim()||kind.length>120)throw new Error('Choose a connection type of 1–120 characters.');return encodeURIComponent(kind.trim());}
 function assertConnectionMembers(sceneId:string,source:string,target:string){researchScene(sceneId);const members=nativeWorkspace?.nativeView()?.bindings[sceneId]?.member_refs;if(!members?.includes(source)||!members.includes(target))throw new Error('Both connection endpoints must belong to the current native Scene.');}
 researchInstruments=installResearchInstruments({
- container:researchContainer,tools:researchTools,inspector:researchInspector,read:readTechneReading,
+ container:researchContainer,tools:researchTools,inspector:researchInspector,placesHome,canvasHome,pageMembers:delta=>nativeWorkspace?nativeWorkspace.page(delta):Promise.resolve(false),read:readTechneReading,
  sceneMaterial:id=>clone(researchScene(id)),
  material:async(id,action:ResearchMaterialAction)=>{const target=researchScene(id);changed(()=>applyResearchMaterial(target,action));await commitResearch();},
  inspectSubject:(ref,context)=>{const view=nativeWorkspace?.nativeView(),binding=view?.bindings[scene().id];if(!view||!binding){toast('Open a native Scene before opening its source.');return;}hostRequest({request:'summon',detail:{kind:'source',ref,context,subject:{ref:view.document.expression_ref,kind:'expression',nativeOwner:'oi',revision:view.document.revision,title:view.document.title,sceneRef:binding.scene_ref,entityRef:null,relationRef:null}}});},nativeView:()=>nativeWorkspace?.nativeView(),sceneId:()=>scene().id,
- select:(sceneId,entityId,bindingRef)=>{if(sceneId!==scene().id)return;selected=entityId?[entityId]:[];nativeSelectedRelation=bindingRef??null;void nativeWorkspace?.select(sceneId,entityId,bindingRef);overlayDirty=true;needsFrame=true;},
+ select:(sceneId,entityId,bindingRef)=>{if(sceneId!==scene().id)return;selected=entityId?[entityId]:[];nativeSelectedRelation=bindingRef??null;void nativeWorkspace?.select(sceneId,entityId,bindingRef);overlayDirty=true;needsFrame=true;if(document.body.classList.contains('research-studio'))renderAll();},
+ // A deliberate typed knowledge relationship between the two occurrences'
+ // constellation participations. The presentation connection is unchanged.
+ relateKnowledge:async(sceneId,input)=>{const view=nativeWorkspace?.nativeView(),binding=view?.bindings[sceneId];if(sceneId!==scene().id||!view||!binding)throw new Error('Open the native Scene before recording a relationship.');const receipt=await techneConstellationRelate({operation:'relate',expression_ref:view.document.expression_ref,revision:view.document.revision,scene_ref:binding.scene_ref,from_entity_ref:input.sourceEntityRef,to_entity_ref:input.targetEntityRef,relation:input.relation,direction:input.direction});if(receipt.expression.state==='ready'){if(!await nativeWorkspace?.advance())toast(`Relationship saved in the constellation (revision ${receipt.frame_revision}). Commit or reconcile your unsaved draft to show it here.`,8000);}else toast(`Relationship saved in the constellation (revision ${receipt.frame_revision}). ${receipt.expression.detail}`,9000);return {relation_ref:receipt.relation_ref,frame_ref:receipt.frame_ref,frame_revision:receipt.frame_revision};},
+ // The existing full object/state Studio for this exact occurrence, over the
+ // still-active instrument. No second editor or Canvas-only store.
+ editObject:(sceneId,entityId)=>{if(sceneId!==scene().id){toast('The active Scene changed; return to that Scene before editing.');return;}if(!scene().entities.some(value=>value.id===entityId)){toast('This occurrence is no longer present.');return;}selected=[entityId];textId=null;stepIndex=0;researchPreview=false;editing=true;inspectorOpen=true;tab='objects';studioSection='formations';renderAll();},
  openSubject:ref=>{const view=nativeWorkspace?.nativeView(),binding=view?.bindings[scene().id];if(!view||!binding){toast('Open a native Scene before opening its source.');return;}hostRequest({request:'summon',detail:{kind:'source',ref,subject:{ref:view.document.expression_ref,kind:'expression',nativeOwner:'oi',revision:view.document.revision,title:view.document.title,sceneRef:binding.scene_ref,entityRef:null,relationRef:null}}});},
- move:async(sceneId,entityId,position)=>{if(blueprintMember(researchScene(sceneId),entityId))throw new Error('Use Blueprint to move the whole shape, or release it to edit individual positions.');const item=researchScene(sceneId).entities.find(value=>value.id===entityId);if(!item||item.locked)throw new Error('This occurrence is locked or no longer present.');if(!Number.isFinite(position.x)||!Number.isFinite(position.y))throw new Error('Position must be finite.');changed(()=>{item.position.x=clamp(position.x,-50,50);item.position.y=clamp(position.y,-50,50);});await commitResearch();},
- createNote:async(sceneId,position)=>{const target=researchScene(sceneId),item=entity('New note','New note',{...position,z:0});ensureCapacity([item]);changed(()=>{target.entities.push(item);selected=[item.id];});await commitResearch();},
+ move:async(sceneId,entityId,position)=>{if(pinnedOccurrence(sceneId,entityId))throw new Error('This occurrence is pinned in place. Unpin it to move it.');if(blueprintMember(researchScene(sceneId),entityId))throw new Error('Use Blueprint to move the whole shape, or release it to edit individual positions.');const item=researchScene(sceneId).entities.find(value=>value.id===entityId);if(!item||item.locked)throw new Error('This occurrence is locked or no longer present.');if(!Number.isFinite(position.x)||!Number.isFinite(position.y))throw new Error('Position must be finite.');changed(()=>{item.position.x=clamp(position.x,-50,50);item.position.y=clamp(position.y,-50,50);});await commitResearch();},
+ // A group gesture (multi-select move, align, distribute, nudge burst) is one
+ // store change and one native commit.
+ moveMany:async(sceneId,moves)=>{const target=researchScene(sceneId);for(const {entityId,position} of moves){if(pinnedOccurrence(sceneId,entityId))throw new Error('A pinned occurrence is in this selection. Unpin it to move the group.');if(blueprintMember(target,entityId))throw new Error('Use Blueprint to move the whole shape, or release it to edit individual positions.');const item=target.entities.find(value=>value.id===entityId);if(!item||item.locked)throw new Error('This occurrence is locked or no longer present.');if(!Number.isFinite(position.x)||!Number.isFinite(position.y))throw new Error('Position must be finite.');}changed(()=>{for(const {entityId,position} of moves){const item=target.entities.find(value=>value.id===entityId)!;item.position.x=clamp(position.x,-50,50);item.position.y=clamp(position.y,-50,50);}});await commitResearch();},
+ // Whole-shape Blueprint acts from Canvas: one native edit each; release and
+ // pin are separate, explicit acts.
+ transformBlueprint:async(sceneId,transform)=>{const view=nativeWorkspace?.nativeView(),binding=view?.bindings[sceneId];if(sceneId!==scene().id||!view||!binding)throw new Error('Open the native Scene before changing its blueprint.');await nativeWorkspace!.blueprint({expression_ref:view.document.expression_ref,revision:view.document.revision,scene_ref:binding.scene_ref,operation:'transform',transform});},
+ releaseBlueprint:async sceneId=>{const view=nativeWorkspace?.nativeView(),binding=view?.bindings[sceneId];if(sceneId!==scene().id||!view||!binding)throw new Error('Open the native Scene before releasing its blueprint.');await nativeWorkspace!.blueprint({expression_ref:view.document.expression_ref,revision:view.document.revision,scene_ref:binding.scene_ref,operation:'release'});},
+ pinEntity:async(sceneId,entityRef,pinned)=>{researchScene(sceneId);if(!nativeWorkspace?.nativeView()?.document.entities[entityRef])throw new Error('This occurrence has no native identity to pin.');await nativeWorkspace.edit([{change:'entity_pin',entity_ref:entityRef,pinned}]);},
+ // An empty Canvas starts construction through the navigator's Project-scoped
+ // creation (native constellation create), then opens the result here.
+ createScene:async()=>{if(window.parent===window)throw new Error('Constellation creation needs the desktop host.');hostRequest({request:'new-constellation'});},
+ createNote:async(sceneId,position)=>{const target=researchScene(sceneId),item=entity('New note','New note',{...position,z:0});changed(()=>{target.entities.push(item);selected=[item.id];});await commitResearch();},
  duplicateOccurrence:async(sceneId,entityId)=>{researchScene(sceneId);if(!nativeWorkspace)throw new Error('Open a native Scene first.');await nativeWorkspace.duplicateOccurrence(sceneId,entityId);},
  deleteOccurrence:async(sceneId,entityId)=>{if(blueprintMember(researchScene(sceneId),entityId))throw new Error('Release the blueprint before removing a member.');const target=researchScene(sceneId),item=target.entities.find(value=>value.id===entityId);if(!item||item.locked)throw new Error('This occurrence is locked or no longer present.');changed(()=>{target.entities=target.entities.filter(value=>value.id!==entityId);selected=selected.filter(id=>id!==entityId);pruneResearchOccurrence(target,entityId);pruneAutomation(target);});await commitResearch();},
  updateContent:async(sceneId,entityId,text)=>{const item=researchScene(sceneId).entities.find(value=>value.id===entityId);if(!item||item.locked)throw new Error('This occurrence is locked or no longer present.');changed(()=>{item.text=text;item.name=text.split('\n')[0].slice(0,160)||'Note';});await commitResearch();},
  connect:async(sceneId,input)=>{assertConnectionMembers(sceneId,input.sourceEntityRef,input.targetEntityRef);if(input.directionality&&!['directed','forward'].includes(input.directionality))throw new Error('Expression connections are directed. Choose a directed connection.');const id=`${nativeWorkspace!.nativeView()!.document.expression_ref}:relation:connection-${crypto.randomUUID()}`;await nativeWorkspace?.edit([{change:'relation_bind',binding:{binding_ref:id,native_owner:'oi',relation:{ref:`${id}:${connectionKind(input.relationKind)}`,revision:'1',availability:'available'},from_entity_ref:input.sourceEntityRef,to_entity_ref:input.targetEntityRef,provenance:[]}}]);},
  reconnect:async(sceneId,ref,input)=>{assertConnectionMembers(sceneId,input.sourceEntityRef,input.targetEntityRef);const binding=ownResearchConnection(ref);await nativeWorkspace?.edit([{change:'relation_bind',binding:{...binding,from_entity_ref:input.sourceEntityRef,to_entity_ref:input.targetEntityRef}}]);},
+ // Expression connections are directed: reversing swaps the exact endpoints;
+ // undirected/bidirectional have no presentation representation and refuse.
+ updateConnectionDirectionality:async(sceneId,ref,directionality)=>{researchScene(sceneId);const binding=ownResearchConnection(ref);if(directionality==='forward')return;if(directionality!=='backward')throw new Error('Expression connections are directed. Reverse it, or record an undirected constellation relationship.');assertConnectionMembers(sceneId,binding.to_entity_ref,binding.from_entity_ref);await nativeWorkspace?.edit([{change:'relation_bind',binding:{...binding,from_entity_ref:binding.to_entity_ref,to_entity_ref:binding.from_entity_ref}}]);},
  deleteConnection:async(sceneId,ref)=>{researchScene(sceneId);ownResearchConnection(ref);await nativeWorkspace?.edit([{change:'relation_remove',binding_ref:ref}]);},
  updateConnectionKind:async(sceneId,ref,kind)=>{researchScene(sceneId);const binding=ownResearchConnection(ref);await nativeWorkspace?.edit([{change:'relation_bind',binding:{...binding,relation:{...binding.relation,ref:`${ref}:${connectionKind(kind)}`,revision:String(Number(binding.relation.revision)+1)}}}]);},
 });
+// M5′ Palace: regions are Scenes of the Palace Expression, each disclosing one
+// contained Expression as its body with a portal; the guided path is Scene
+// order. Everything goes through the kernel Expression owner with CAS.
+const palaceSnapshot=(raw:unknown):PalaceDocumentSnapshot&{title:string}=>{const doc=raw as {expression_ref:string;revision:number;title?:string;scenes?:{scene_ref:string;title?:string;body?:{carrier?:string;subject_ref?:string}|null;triggers?:{trigger_ref:string;target?:{kind?:string;subject_ref?:string}}[]}[]};return {expression_ref:doc.expression_ref,revision:doc.revision,title:doc.title??doc.expression_ref,scenes:(doc.scenes??[]).map(scene=>({scene_ref:scene.scene_ref,title:scene.title??'',body:scene.body?{carrier:scene.body.carrier,subject_ref:scene.body.subject_ref}:null,triggers:(scene.triggers??[]).map(trigger=>({trigger_ref:trigger.trigger_ref,target:trigger.target?{kind:trigger.target.kind,subject_ref:trigger.target.subject_ref}:undefined}))}))};};
+const palaceInstrument=installPalaceInstrument({
+ nativeView:()=>nativeWorkspace?.nativeView(),sceneId:()=>scene().id,
+ listExpressions:()=>listKernelExpressions(),
+ readExpression:async ref=>palaceSnapshot(await readKernelExpression(ref)),
+ composeExpression:async({expression_ref,expected_revision,changes})=>{const data=await nativeExpressionRequest({operation:'edit',expression_ref,expected_revision,actor:'human:techne-palace',changes}) as {state?:string;current_revision?:number;document?:unknown}|null;if(data?.state==='revision_conflict')return {ok:false,reason:`This Palace changed elsewhere (now revision ${data.current_revision}). Nothing was saved; reopen it and try again.`};if(!data?.document||data.state!=='ready')return {ok:false,reason:`The Expression owner did not accept the composition (${String(data?.state)}).`};return {ok:true,document:palaceSnapshot(data.document)};},
+ openExpression:ref=>{void nativeWorkspace?.open(ref);},
+},palaceHome);
 lensStudio.setMode(hostMode);
-(document.querySelector('#workspace-menu') as HTMLElement)?.insertAdjacentHTML('beforeend',ib('native-work','save','Native composition — save and reopen'));
-(document.querySelector('#workspace-menu') as HTMLElement)?.insertAdjacentHTML('beforeend',ib('native-library','library','Native Library — My World / O:I Web'));
+(document.querySelector('#workspace-menu') as HTMLElement)?.insertAdjacentHTML('beforeend',ib('deep-home','home','Epii home','data-techne-only')+ib('deep-verso','wiki','Verso — the subject\u2019s account and sources','data-techne-only'));
+// Save is the primary act: it stays in the masthead at every width, outside
+// the history/capture overflow menu.
+(document.querySelector('#app .header-actions') as HTMLElement)?.insertAdjacentHTML('afterbegin',ib('native-save','save','Save (⌘S)','id="native-save"'));
 Object.assign(window.__FIELD_STUDIES__,{nativeWorking:()=>nativeWorkspace?.inspect(),nativeConnections:()=>engine.inspectConnections?.(),openNative:(reference:string)=>nativeWorkspace?.open(reference),openNativeFile:(path:string)=>nativeWorkspace?.openFile(path)});
 const qs=new URLSearchParams(location.search);
 // A hosted deep link (the app's own ?journey/?scene idiom): open a named
@@ -966,6 +1109,42 @@ const qsExpression=qs.get('expression');
 if(qsExpression){const found=[...readLibrary(),...featuredExpressions(),...startingPoints().map(p=>p.expression)].find(j=>j.id===qsExpression);if(found)store.document=initialiseSceneSaves(initialiseBelts(found));}
 if(qs.get('journey')==='seven')store.document=initialiseSceneSaves(initialiseBelts(nativeSeven()));if(qs.get('scene')){const index=store.document.scenes.findIndex(s=>s.name.toLowerCase()===qs.get('scene')!.toLowerCase());if(index>=0)sceneIndex=index;}if(qs.has('still'))fieldPaused=true;
 if(window.__START_PRESENTATION__||qs.has('present')){presenting=true;fieldPaused=false;scenePlaying=true;journeyPlaying=store.document.scenes.length>1;}
+// Save is the app's own act: in a hosted native work it commits the working
+// composition to its native Expression (the same owner operation the former
+// native panel used); otherwise it keeps the draft in this browser.
+async function saveNative(){
+ if(kernelExpressionsAvailable()&&(hostMode==='techne'||nativeWorkspace?.nativeView())){if(propertyTake)finishPropertyTake();const ok=await nativeWorkspace?.commit();if(ok)toast('Saved.');return;}
+ deletedLibraryIds.delete(store.document.id);saveToLibrary(store.document);if(libraryOpen)renderLibrary();toast('Saved in this browser.');
+}
+let nativeState:import('./nativeWorkspace.js').NativeStatus|null=null;
+function showNativeStatus(state:import('./nativeWorkspace.js').NativeStatus){
+ nativeState=state;
+ // A background read failing before any native work exists is not a failed
+ // save: attention is only for work that has an identity or an open to retry.
+ const failed=state.failed&&(!!state.identity||state.retryOpen||!!state.pending);
+ const save=document.getElementById('native-save');
+ if(save){const label=state.busy?'Saving…':failed?`Not saved — ${state.text}`:state.identity?`Save (⌘S) · ${state.identity.title} · revision ${state.identity.revision}`:'Save (⌘S)';save.title=label;save.setAttribute('aria-label',label);save.classList.toggle('attention',failed||!!state.pending);save.toggleAttribute('disabled',state.busy);}
+ const line=document.getElementById('native-status');if(!line)return;
+ const actions=[state.pending?`<button type="button" class="link-button" data-action="native-resolve">Resolve interrupted save</button>`:'',state.pending==='file'?`<button type="button" class="link-button" data-action="native-retry-file">Retry file save</button>`:'',state.retryOpen&&state.failed?`<button type="button" class="link-button" data-action="native-retry-open">Retry opening</button>`:'',state.page&&state.page.count>1?`<span class="native-page">Members ${state.page.page+1}/${state.page.count}</span><button type="button" class="link-button" data-action="native-page" data-delta="-1" ${state.page.page<=0?'disabled':''}>Previous</button><button type="button" class="link-button" data-action="native-page" data-delta="1" ${state.page.page>=state.page.count-1?'disabled':''}>Next</button>`:''].join('');
+ const text=failed?state.text:state.identity?`${state.identity.title} · saved revision ${state.identity.revision}`:'';
+ line.innerHTML=`${esc(text)}${actions}`;line.classList.toggle('failed',failed);
+ if(state.failed&&state.retryOpen)toast(state.text,7000);
+}
+/** Re-enter an exact native Expression file (e.g. after a restart). */
+function openCentralFileDialog(){
+ const dialog=$<HTMLDialogElement>('confirm-dialog');
+ dialog.innerHTML=`<form method="dialog" class="native-file-form"><h2>Open a Central file</h2><p>Opens a saved native Expression file under its own identity.</p><label>Central path<input name="path" placeholder="Project/folder/name.expression.json"></label><footer><button value="cancel">Cancel</button><button value="open" class="primary">Open</button></footer></form>`;
+ dialog.onclose=()=>{if(dialog.returnValue!=='open')return;const path=(dialog.querySelector('form')!.elements.namedItem('path') as HTMLInputElement).value.trim();if(!path)return;if(libraryOpen)closeLibrary();void nativeWorkspace?.openFile(path).then(ok=>{if(ok)toast(nativeState?.text||'Opened.',5000);});};
+ dialog.showModal();
+}
+/** Native file save in the app's own modal: a Central folder and filename. */
+function openNativeFileDialog(){
+ const dialog=$<HTMLDialogElement>('confirm-dialog');
+ const current=nativeState?.file;
+ dialog.innerHTML=`<form method="dialog" class="native-file-form"><h2>Save to a Central file</h2><p>${current?`Attached to ${esc(current.path)} · revision ${esc(String(current.revision))}`:'Writes this composition as a native Expression file and reads it back.'}</p><label>Folder<input name="folder" value="." ${current?'disabled':''}></label><label>Filename<input name="name" value="${esc(slug(store.document.name)||'expression')}.expression.json" ${current?'disabled':''}></label><footer><button value="cancel">Cancel</button><button value="save" class="primary">Save file</button></footer></form>`;
+ dialog.onclose=()=>{if(dialog.returnValue!=='save')return;const form=dialog.querySelector('form')!;void nativeWorkspace?.saveFile((form.elements.namedItem('folder') as HTMLInputElement).value,(form.elements.namedItem('name') as HTMLInputElement).value).then(ok=>{if(ok)toast(nativeState?.text||'Saved to a Central file.',6000);});};
+ dialog.showModal();
+}
 async function startWorkspace(){
  let recovered:SessionState|undefined;
  let showEntry=false;
@@ -980,9 +1159,10 @@ if(fieldPaused&&!recovered&&!qs.has('still'))toast('A still field, following you
 if(qs.has('edit'))edit(true,(['scene','objects','field','motion'].includes(qs.get('edit')!)?qs.get('edit'):'scene')as InspectorContext['tab']);
 if(showEntry)openEntryGate(!!recovered||!!localStorage.getItem('oi.field-studies.last'),store.document.name);
 
-if(qsExpression?.startsWith('expression:')){const open=()=>void nativeWorkspace?.open(qsExpression);if(kernelExpressionsAvailable())open();else window.addEventListener('message',function ready(event){if(event.source===window.parent&&event.data?.v===1&&event.data?.kind==='oi-kernel-channel'){window.removeEventListener('message',ready);open();}});}
+if(qsExpression?.startsWith('expression:')){const open=()=>void nativeWorkspace?.follow(qsExpression);if(kernelExpressionsAvailable())open();else window.addEventListener('message',function ready(event){if(event.source===window.parent&&event.data?.v===1&&event.data?.kind==='oi-kernel-channel'){window.removeEventListener('message',ready);open();}});}
 setInterval(()=>{saveSession();if(propertyTake&&propertyTake.elapsed>0)void flushDraft();},1000);}
 function openEntryGate(hasContinue:boolean,continueLabel?:string){
+ if(nativeWorkspace?.nativeView())return; // the host already opened a native Expression: the frame stands on it
  const gate=$('entry-gate');gate.hidden=false;gate.innerHTML=entryGateHTML({hasContinue,continueLabel:continueLabel?`Continue “${continueLabel}”`:undefined,hasNative:kernelExpressionsAvailable()});
 }
 function closeEntryGate(){const gate=$('entry-gate');gate.hidden=true;gate.innerHTML='';}

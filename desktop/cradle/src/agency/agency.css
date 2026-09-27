@@ -72,3 +72,20 @@
 .agent-card-dimension-name { min-width: 96px; font-weight: 550; }
 .agent-card-dimension-reading { flex-basis: 100%; color: var(--oi-muted-2); }
 .agent-card-dimension[data-state="unavailable"] .oi-state { border-style: dashed; }
+
+/* Expressive character (EXPRESSION-ACT-MATERIAL-V1 §2): a small DOM drawing
+   of the character's body — glyph/ASCII/image and stacked layers. Tint is
+   authored data applied inline; everything else stays inside --oi-* tokens. */
+.character-preview { position: relative; margin: 0; flex: none; display: flex; align-items: center; justify-content: center; overflow: hidden; border: var(--oi-shell-edge) solid var(--oi-hairline-soft); border-radius: var(--oi-shell-radius); background: var(--oi-canvas-ground); }
+.character-preview[data-empty="true"] { border-style: dashed; }
+.character-preview-stage { position: absolute; inset: 0; display: grid; place-items: center; }
+.character-preview-layer { grid-area: 1 / 1; margin: 0; line-height: 1; max-width: 100%; max-height: 100%; transform-origin: center; }
+.character-preview-glyph { font-weight: 600; }
+.character-preview-ascii { font-family: var(--oi-font-mono); line-height: 1.05; white-space: pre; }
+.character-preview-image { width: 70%; height: 70%; object-fit: contain; }
+.character-preview-empty { font-size: var(--oi-shell-type-meta); color: var(--oi-muted-2); }
+.character-preview-marks { position: absolute; left: 4px; right: 4px; bottom: 3px; display: flex; gap: 4px; flex-wrap: wrap; font-size: var(--oi-shell-type-meta); color: var(--oi-muted-2); }
+.character-section-body { display: flex; gap: var(--oi-desktop-gap); align-items: flex-start; flex-wrap: wrap; }
+.character-section-controls { flex: 1; min-width: 180px; display: flex; flex-direction: column; gap: 6px; }
+.agent-card-character .character-preview { align-self: flex-start; }
+.character-preview-canvas { position: absolute; inset: 0; display: block; }

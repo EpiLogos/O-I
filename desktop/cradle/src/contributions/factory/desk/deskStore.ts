@@ -14,7 +14,7 @@
 import {useSyncExternalStore} from "react";
 import type {KernelTransportStatus} from "../../../kernel/types";
 import type {Scope} from "../../../workspace/scope";
-import {readDeskSources} from "./deskModel";
+import {publishCentreView, readDeskSources} from "./deskModel";
 import {discoverSources, inspectWorkflow, readCurrentWork, readFactoryInhabitation, readJourney, readProject, readRun, type Discovery} from "./factoryReads";
 import {cardKey, deskCard, type DeskCard, type DeskSourceRef, type JourneyReading, type RunReading, type WorkflowInspection} from "./runModel";
 import {joinBySession, namesOf, positionsInCustody, runInhabitationView, runOwners, type FactoryCurrentWork, type FactoryInhabitationReading, type Join, type OwnerRead, type PositionNames, type RunInhabitationView} from "../inhabitation/model";
@@ -219,6 +219,13 @@ const emitOpen = () => { for (const listener of [...openListeners]) listener(); 
 const subscribeOpen = (listener: () => void) => { openListeners.add(listener); return () => { openListeners.delete(listener); }; };
 
 export function openRunPage(key: string) { openKey = key; selectedKey = key; persistSelection(key); emitOpen(); }
+/** The Run page's remembered tab per run (Map · Trajectory · Live · …). */
+const runTabs = new Map<string, string>();
+export function rememberRunTab(key: string, tab: string) { runTabs.set(key, tab); }
+export function rememberedRunTab(key: string): string | undefined { return runTabs.get(key); }
+/** Open a Run's page on its Live tab (a Tasks conversation's Live chip, a
+ * cross-mode act returning to Factory). */
+export function openRunLive(key: string) { rememberRunTab(key, "live"); openRunPage(key); publishCentreView("desk"); }
 export function closeRunPage() { if (openKey === undefined) return; openKey = undefined; emitOpen(); }
 export function useOpenRun(): string | undefined { return useSyncExternalStore(subscribeOpen, () => openKey, () => openKey); }
 /** The run the right panel answers about: the open run, else the last one

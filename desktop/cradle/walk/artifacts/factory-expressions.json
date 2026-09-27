@@ -1,0 +1,929 @@
+{
+  "schema": "oi.cradle.walk.scenario/v1",
+  "scenario": "factory-expressions",
+  "spec_ref": "docs/cradle/handovers/factory-expressions-2026-09-26/EXPRESSION-DEVELOPMENT-SPEC.md §9",
+  "grade": "B",
+  "binding": null,
+  "generated_at": "2026-09-26T23:51:08.371Z",
+  "environment": {
+    "base_url": "http://localhost:4173",
+    "bridge_url": "http://127.0.0.1:4179",
+    "viewport": "1280x820",
+    "browser_engine": "chromium",
+    "bundle": "walk (WALK=1) served by vite preview",
+    "build_input": {
+      "mode": "fresh-build",
+      "bundle_fingerprint": "d3b1781d7f39520589bab1b9aa69cb68dc04b258b0115e1c136b475a85be32da"
+    },
+    "node": "v24.16.0",
+    "platform": "darwin",
+    "source": {
+      "repository_root": "/private/tmp/claude-501/-Users-admin-Central/34430e23-ac90-4c0c-bdcb-76ac5547e22d/scratchpad/build-o-i",
+      "repository_head": "b702ecf36115ed0b501b77cbe42583ab944a9987",
+      "tracked_changes": [],
+      "dirty_digest": "6e340b9cffb37a989ca544e6bb780a2c78901d3fb33738768511a30617afa01d",
+      "engine_provenance_path": "/private/tmp/claude-501/-Users-admin-Central/34430e23-ac90-4c0c-bdcb-76ac5547e22d/scratchpad/build-o-i/packages/oi-design-system/expressions-engine/PROVENANCE.json",
+      "engine_source": "EpiLogos/Point-Cloud-Demo",
+      "engine_revision": "91db8428fc9dfba06cd258ec5a58e7dd9eef5313"
+    }
+  },
+  "passed": true,
+  "error": null,
+  "duration_ms": 163144,
+  "checks": [
+    {
+      "ok": true,
+      "label": "Harness: the hosted Expressions application is served from this checkout's build (not the ground's primary checkout dist)",
+      "data": {
+        "dist": "/private/tmp/claude-501/-Users-admin-Central/34430e23-ac90-4c0c-bdcb-76ac5547e22d/scratchpad/build-o-i/desktop/cradle/expressions-app/dist/",
+        "commit": "b702ecf36115ed0b501b77cbe42583ab944a9987",
+        "built_at": "2026-09-26T23:50:57.282Z"
+      }
+    },
+    {
+      "ok": true,
+      "label": "Harness: the walk-bridge was compiled from this checkout's kernel into the dedicated CARGO_TARGET_DIR",
+      "data": {
+        "compiled": "Compiling oi-cradle-kernel v0.1.0 (/private/tmp/claude-501/-Users-admin-Central/34430e23-ac90-4c0c-bdcb-76ac5547e22d/scratchpad/build-o-i/desktop/cradle/kernel)",
+        "kernel": "/private/tmp/claude-501/-Users-admin-Central/34430e23-ac90-4c0c-bdcb-76ac5547e22d/scratchpad/build-o-i/desktop/cradle/kernel",
+        "cargo_target_dir": "/private/tmp/claude-501/-Users-admin-Central/34430e23-ac90-4c0c-bdcb-76ac5547e22d/scratchpad/kernel-target-integration",
+        "binary_built_at": "2026-09-26T23:50:35.769Z",
+        "build_log": "/private/tmp/claude-501/-Users-admin-Central/34430e23-ac90-4c0c-bdcb-76ac5547e22d/scratchpad/walk-bridge-build.log"
+      }
+    },
+    {
+      "ok": true,
+      "label": "The curated material is seeded in the register (both characters, handoff, arrival, the workflow Expression)",
+      "data": {
+        "register": "Work/O-I/desktop/cradle/material/expressive-material",
+        "count": 43
+      }
+    },
+    {
+      "ok": true,
+      "label": "1: Anima's Agent card / source review opens from the native roster"
+    },
+    {
+      "ok": true,
+      "label": "1: Anima's profile carries character/anima.expression.json through Central (card reading)",
+      "data": {
+        "before": "r3",
+        "character_before": "central:path:/Users/admin/Central:Work/O-I/desktop/cradle/material/expressive-material/character/anima.expression.json",
+        "after": "r3",
+        "character_after": "central:path:/Users/admin/Central:Work/O-I/desktop/cradle/material/expressive-material/character/anima.expression.json"
+      }
+    },
+    {
+      "ok": true,
+      "label": "1: Anima's preview offers the saved states idle/working/speaking",
+      "data": {
+        "states": [
+          "idle",
+          "speaking",
+          "working"
+        ]
+      }
+    },
+    {
+      "ok": true,
+      "label": "1: Anima's live preview shows the idle state (inked canvas pixels)",
+      "data": {
+        "pixels": 219
+      }
+    },
+    {
+      "ok": true,
+      "label": "1: Anima's live preview shows the working state (inked canvas pixels)",
+      "data": {
+        "pixels": 250
+      }
+    },
+    {
+      "ok": true,
+      "label": "1: Aletheia's Agent card / source review opens from the native roster"
+    },
+    {
+      "ok": true,
+      "label": "1: Aletheia's profile carries character/aletheia.expression.json through Central (card reading)",
+      "data": {
+        "before": "r3",
+        "character_before": "central:path:/Users/admin/Central:Work/O-I/desktop/cradle/material/expressive-material/character/aletheia.expression.json",
+        "after": "r3",
+        "character_after": "central:path:/Users/admin/Central:Work/O-I/desktop/cradle/material/expressive-material/character/aletheia.expression.json"
+      }
+    },
+    {
+      "ok": true,
+      "label": "1: Aletheia's preview offers the saved states idle/working/speaking",
+      "data": {
+        "states": [
+          "idle",
+          "speaking",
+          "working"
+        ]
+      }
+    },
+    {
+      "ok": true,
+      "label": "1: Aletheia's live preview shows the idle state (inked canvas pixels)",
+      "data": {
+        "pixels": 92
+      }
+    },
+    {
+      "ok": true,
+      "label": "1: Aletheia's live preview shows the working state (inked canvas pixels)",
+      "data": {
+        "pixels": 120
+      }
+    },
+    {
+      "ok": true,
+      "label": "2: scene/handoff performs with sender=Anima, recipient=Aletheia",
+      "data": {
+        "state": "act_performed",
+        "passage": 0
+      }
+    },
+    {
+      "ok": true,
+      "label": "2: the handoff Scene carries Aletheia's character material (grafted from the profile character)",
+      "data": {
+        "revision": 2
+      }
+    },
+    {
+      "ok": true,
+      "label": "2: the Expressions stage shows the handoff (announced Expression = the scratch Expression; entry gate closed; no conflict)",
+      "data": {
+        "expression_ref": "expression:fx-walk-reuse-muj1mpyv",
+        "scene_ref": "expression:fx-walk-reuse-muj1mpyv:scene:main",
+        "revision": 2,
+        "gate": false,
+        "conflict": false,
+        "canvas": true,
+        "notice": null
+      }
+    },
+    {
+      "ok": true,
+      "label": "2: scene/arrival performs with self=Anima (a second Scene reusing the character)",
+      "data": {
+        "state": "act_performed"
+      }
+    },
+    {
+      "ok": true,
+      "label": "3: earlier walk acts of this Run are set aside (cancelled, still readable)",
+      "data": {
+        "set_aside": []
+      }
+    },
+    {
+      "ok": true,
+      "label": "3: the saved workflow Expression (expression-development) is chosen in the Live selector (explicit repertoire)"
+    },
+    {
+      "ok": true,
+      "label": "3: the Run's act is open in the kernel",
+      "data": {
+        "acts": [
+          [
+            "act:factory-run-run-01M3FNY3P0E4H7JGN0BARSRQ8R",
+            3
+          ]
+        ]
+      }
+    },
+    {
+      "ok": true,
+      "label": "3: the act's cast binds Anima and Aletheia with their profile characters",
+      "data": {
+        "cast": [
+          {
+            "character_ref": "central:path:/Users/admin/Central:Work/O-I/desktop/cradle/material/expressive-material/character/anima.expression.json",
+            "label": "anima",
+            "participant_ref": "agent/anima",
+            "profile_ref": "profile/anima",
+            "role": "participants.0"
+          },
+          {
+            "character_ref": "central:path:/Users/admin/Central:Work/O-I/desktop/cradle/material/expressive-material/character/aletheia.expression.json",
+            "label": "aletheia",
+            "participant_ref": "agent/aletheia",
+            "profile_ref": "profile/aletheia",
+            "role": "participants.1"
+          },
+          {
+            "character_ref": "central:path:/Users/admin/Central:Work/O-I/desktop/cradle/material/expressive-material/character/anima.expression.json",
+            "label": "anima",
+            "participant_ref": "agent/anima",
+            "role": "lead"
+          }
+        ]
+      }
+    },
+    {
+      "ok": true,
+      "label": "4: the Run's whole history is performed (no catch-up for this small Run)",
+      "data": {
+        "chain": [
+          [
+            "act:factory-run-run-01M3FNY3P0E4H7JGN0BARSRQ8R",
+            54
+          ]
+        ],
+        "passages": 54
+      }
+    },
+    {
+      "ok": true,
+      "label": "4: the act performed arrival passages from the real Run",
+      "data": {
+        "families": [
+          "arrival",
+          "activity",
+          "message",
+          "tool-operation",
+          "skill-invocation",
+          "review",
+          "artifact",
+          "completion"
+        ]
+      }
+    },
+    {
+      "ok": true,
+      "label": "4: the act performed activity passages from the real Run",
+      "data": {
+        "families": [
+          "arrival",
+          "activity",
+          "message",
+          "tool-operation",
+          "skill-invocation",
+          "review",
+          "artifact",
+          "completion"
+        ]
+      }
+    },
+    {
+      "ok": true,
+      "label": "4: the act performed skill-invocation passages from the real Run",
+      "data": {
+        "families": [
+          "arrival",
+          "activity",
+          "message",
+          "tool-operation",
+          "skill-invocation",
+          "review",
+          "artifact",
+          "completion"
+        ]
+      }
+    },
+    {
+      "ok": true,
+      "label": "4: the act performed message passages from the real Run",
+      "data": {
+        "families": [
+          "arrival",
+          "activity",
+          "message",
+          "tool-operation",
+          "skill-invocation",
+          "review",
+          "artifact",
+          "completion"
+        ]
+      }
+    },
+    {
+      "ok": true,
+      "label": "4: the act performed review passages from the real Run",
+      "data": {
+        "families": [
+          "arrival",
+          "activity",
+          "message",
+          "tool-operation",
+          "skill-invocation",
+          "review",
+          "artifact",
+          "completion"
+        ]
+      }
+    },
+    {
+      "ok": true,
+      "label": "4: the act performed artifact passages from the real Run",
+      "data": {
+        "families": [
+          "arrival",
+          "activity",
+          "message",
+          "tool-operation",
+          "skill-invocation",
+          "review",
+          "artifact",
+          "completion"
+        ]
+      }
+    },
+    {
+      "ok": true,
+      "label": "4: the act performed completion passages from the real Run",
+      "data": {
+        "families": [
+          "arrival",
+          "activity",
+          "message",
+          "tool-operation",
+          "skill-invocation",
+          "review",
+          "artifact",
+          "completion"
+        ]
+      }
+    },
+    {
+      "ok": true,
+      "label": "4: the exchange runs both ways (Anima→Aletheia and Aletheia→Anima agent-messages)",
+      "data": {
+        "senders": [
+          "{\"kind\":\"object\",\"label\":\"factory-expressions/acceptance-20260926-201904\",\"subject_ref\":\"run:01M3FNY3P0E4H7JGN0BARSRQ8R\"}",
+          "{\"agent_ref\":\"agent/anima\",\"character_ref\":\"central:path:/Users/admin/Central:Work/O-I/desktop/cradle/material/expressive-material/character/anima.expression.json\",\"character_revision\":\"central.content-fnv1a64/v1:53482:f5136dbe8c37925c\",\"kind\":\"agent\",\"label\":\"anima\",\"profile_ref\":\"profile/anima\",\"state\":\"speaking\"}",
+          "{\"kind\":\"object\",\"label\":\"factory-expressions/acceptance-20260926-201904\",\"subject_ref\":\"run:01M3FNY3P0E4H7JGN0BARSRQ8R\"}",
+          "{\"agent_ref\":\"agent/aletheia\",\"character_ref\":\"central:path:/Users/admin/Central:Work/O-I/desktop/cradle/material/expressive-material/character/aletheia.expression.json\",\"character_revision\":\"central.content-fnv1a64/v1:53360:7d779bc0ab7e872c\",\"kind\":\"agent\",\"label\":\"aletheia\",\"profile_ref\":\"profile/aletheia\",\"state\":\"speaking\"}"
+        ]
+      }
+    },
+    {
+      "ok": true,
+      "label": "4: progress and result text were filled"
+    },
+    {
+      "ok": true,
+      "label": "4: the goal is present as an expressive object",
+      "data": {
+        "titles": [
+          "aletheia",
+          "anima",
+          "task:factory-expressions/20260926-201904/aletheia",
+          "task:factory-expressions/20260926-201904/anima",
+          "Aletheia",
+          "Anima",
+          "factory-expressions/acceptance-20260926-201904",
+          "Message",
+          "factory-expressions/acceptance-20260926-201904",
+          "anima",
+          "anima",
+          "aletheia"
+        ]
+      }
+    },
+    {
+      "ok": true,
+      "label": "4: a work object is present"
+    },
+    {
+      "ok": true,
+      "label": "4: the Live stage stands on the Run's own Expression (announced nativeScene; no gate, no conflict)",
+      "data": {
+        "expression_ref": "expression:factory-run-run-01M3FNY3P0E4H7JGN0BARSRQ8R",
+        "scene_ref": "expression:factory-run-run-01M3FNY3P0E4H7JGN0BARSRQ8R:scene:live",
+        "revision": 42,
+        "gate": false,
+        "conflict": false,
+        "canvas": true,
+        "notice": null
+      }
+    },
+    {
+      "ok": true,
+      "label": "4: the Scene on stage holds both cast characters' entities",
+      "data": {
+        "scene": "expression:factory-run-run-01M3FNY3P0E4H7JGN0BARSRQ8R:scene:live",
+        "castEntities": [
+          "expression:factory-run-run-01M3FNY3P0E4H7JGN0BARSRQ8R:entity:role.participants.0",
+          "expression:factory-run-run-01M3FNY3P0E4H7JGN0BARSRQ8R:entity:role.participants.1"
+        ],
+        "members": 15
+      }
+    },
+    {
+      "ok": true,
+      "label": "5: the act has passages presenting a character, the goal, an artifact and an exchange",
+      "data": {
+        "character": 52,
+        "goal": 52,
+        "artifact": 51,
+        "exchange": 33
+      }
+    },
+    {
+      "ok": true,
+      "label": "5: the character is on stage; selecting it opens its agent panel",
+      "data": {
+        "ref": "expression:factory-run-run-01M3FNY3P0E4H7JGN0BARSRQ8R:entity:role.participants.0",
+        "onStage": true,
+        "panelKind": "agent"
+      }
+    },
+    {
+      "ok": true,
+      "label": "5: Open conversation opens the agent's real session in Tasks",
+      "data": {
+        "excerpt": "Run\nFactory Expressions acceptance: Anima conducts one Expression act over a real O-I contract and addresses Aletheia; Aletheia reviews and returns it\nLive\nWorld\nSituated in O-I · no active profile\nO-I conversation\nReading…\n\nReading the conversation…\n\nConnect with\nNo encounter harness is configured."
+      }
+    },
+    {
+      "ok": true,
+      "label": "5: the goal is on stage; selecting it opens its goal panel",
+      "data": {
+        "ref": "expression:factory-run-run-01M3FNY3P0E4H7JGN0BARSRQ8R:entity:role.goal",
+        "onStage": true,
+        "panelKind": "goal"
+      }
+    },
+    {
+      "ok": true,
+      "label": "5: the goal panel shows the brief/progress and its actions"
+    },
+    {
+      "ok": true,
+      "label": "5: the artifact is on stage; selecting it opens its artifact panel",
+      "data": {
+        "ref": "expression:factory-run-run-01M3FNY3P0E4H7JGN0BARSRQ8R:entity:role.artifact",
+        "onStage": true,
+        "panelKind": "artifact"
+      }
+    },
+    {
+      "ok": true,
+      "label": "5: the artifact opens its details (object page)"
+    },
+    {
+      "ok": true,
+      "label": "5: the exchange is on stage; selecting it opens its exchange panel",
+      "data": {
+        "ref": "expression:factory-run-run-01M3FNY3P0E4H7JGN0BARSRQ8R:entity:role.artifact",
+        "onStage": true,
+        "panelKind": "exchange"
+      }
+    },
+    {
+      "ok": true,
+      "label": "5: the exchange panel shows sender → recipient, the message body and its native ref",
+      "data": {
+        "parties": "aletheia → anima",
+        "body": "[agent/aletheia → agent/anima, addressed encounter send; answer in at most two sentences] Confirmed: the contract at docs/contracts/EXPRESSION-APPLICATION-V1.md",
+        "ref": "agent-session/fx-anima-20260926-201904#12994"
+      }
+    },
+    {
+      "ok": true,
+      "label": "5: Message agent pre-fills the conversation's addressed composer (sender/basis stay the person's)",
+      "data": {
+        "addressed": " |  |  | attempt:factory-expressions-20260926-201904-anima-1 | Walk check: the §9 panel addresses you (not sent). |  | "
+      }
+    },
+    {
+      "ok": true,
+      "label": "6: Technè opens the Run's Expression (announced) with the carried act strip",
+      "data": {
+        "expression_ref": "expression:factory-run-run-01M3FNY3P0E4H7JGN0BARSRQ8R",
+        "scene_ref": "expression:factory-run-run-01M3FNY3P0E4H7JGN0BARSRQ8R:scene:live",
+        "revision": 48,
+        "gate": false,
+        "conflict": false,
+        "canvas": true,
+        "notice": null
+      }
+    },
+    {
+      "ok": true,
+      "label": "6: the composition changes in Technè (moved an object through the native edit)",
+      "data": {
+        "from": 48,
+        "to": 49
+      }
+    },
+    {
+      "ok": true,
+      "label": "6: the act recorded Factory→Technè→Factory and the returned passage",
+      "data": {
+        "continuations": [
+          {
+            "at": 55,
+            "expression_ref": "expression:factory-run-run-01M3FNY3P0E4H7JGN0BARSRQ8R",
+            "from": "factory",
+            "instrument_ref": "run:01M3FNY3P0E4H7JGN0BARSRQ8R",
+            "to": "techne"
+          },
+          {
+            "at": 58,
+            "from": "techne",
+            "to": "factory"
+          }
+        ]
+      }
+    },
+    {
+      "ok": true,
+      "label": "9: the edited character is saved as a reusable COPY (Anima (walk variation)) into the register; the curated file is untouched",
+      "data": {
+        "location": {
+          "path": "Work/O-I/desktop/cradle/material/expressive-material/character/anima-walk-variation-muj1pd60.expression.json",
+          "ref": "central:path:/Users/admin/Central:Work/O-I/desktop/cradle/material/expressive-material/character/anima-walk-variation-muj1pd60.expression.json",
+          "root": "/Users/admin/Central",
+          "schema": "central.path-ref/v1"
+        }
+      }
+    },
+    {
+      "ok": true,
+      "label": "9: the curated anima.expression.json is byte-for-byte the material it was"
+    },
+    {
+      "ok": true,
+      "label": "9: physics survived save → close → reopen (kernel document)"
+    },
+    {
+      "ok": true,
+      "label": "9: colour survived save → close → reopen (kernel document)"
+    },
+    {
+      "ok": true,
+      "label": "9: morph survived save → close → reopen (kernel document)"
+    },
+    {
+      "ok": true,
+      "label": "9: resonance survived save → close → reopen (kernel document)"
+    },
+    {
+      "ok": true,
+      "label": "9: sound survived save → close → reopen (kernel document)"
+    },
+    {
+      "ok": true,
+      "label": "9: temporal survived save → close → reopen (kernel document)"
+    },
+    {
+      "ok": true,
+      "label": "9: reuse survived save → close → reopen (kernel document)"
+    },
+    {
+      "ok": true,
+      "label": "9: the engine runs the reopened variation (announced Expression = the variation; entry gate closed)",
+      "data": {
+        "expected": "expression:fx-walk-anima-variation-muj1pd58",
+        "state": "ready",
+        "expression_ref": "expression:fx-walk-anima-variation-muj1pd58",
+        "scene_ref": "expression:fx-walk-anima-variation-muj1pd58:scene:idle",
+        "revision": 3,
+        "gate": false,
+        "conflict": false,
+        "canvas": true,
+        "notice": null,
+        "opened": {
+          "expression_ref": "expression:fx-walk-anima-variation-muj1pd58",
+          "scene_ref": "expression:fx-walk-anima-variation-muj1pd58:scene:idle",
+          "revision": 3,
+          "gate": false,
+          "conflict": false,
+          "canvas": true,
+          "notice": null,
+          "waited_ms": 2347,
+          "stage_shown_before_click": true,
+          "frames": [
+            {
+              "stage": "factory",
+              "shown": false,
+              "query": "mode=expressions&expression=expression%3Afactory-run-run-01M3FNY3P0E4H7JGN0BARSRQ8R"
+            },
+            {
+              "stage": "expressions",
+              "shown": true,
+              "query": "mode=expressions"
+            },
+            {
+              "stage": "techne",
+              "shown": false,
+              "query": "mode=techne"
+            }
+          ],
+          "heard": {
+            "listening": true,
+            "commands": [
+              "open-expression:expression:fx-walk-anima-variation-muj1pd58"
+            ],
+            "status": "Anima — the composer's flame · saved revision 3"
+          }
+        },
+        "console": [
+          "warning: [.WebGL-0x1040043c000]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels",
+          "warning: [.WebGL-0x1040043c000]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels (this message will no longer repeat)",
+          "warning: THREE.Clock: This module has been deprecated. Please use THREE.Timer instead.",
+          "warning: THREE.Clock: This module has been deprecated. Please use THREE.Timer instead.",
+          "warning: THREE.Clock: This module has been deprecated. Please use THREE.Timer instead.",
+          "warning: THREE.Clock: This module has been deprecated. Please use THREE.Timer instead."
+        ]
+      }
+    },
+    {
+      "ok": true,
+      "label": "10: the completed workflow Expression plays its whole Scene sequence (playback order)",
+      "data": {
+        "state": "act_played",
+        "passages": 6,
+        "playback": 6
+      }
+    },
+    {
+      "ok": true,
+      "label": "10: timeline position 59 reopens from the Live timeline and the stage follows (announced revision advances)",
+      "data": {
+        "position": 59,
+        "onTimeline": true,
+        "before": 49,
+        "after": 56
+      }
+    },
+    {
+      "ok": true,
+      "label": "10: timeline position 63 reopens from the Live timeline and the stage follows (announced revision advances)",
+      "data": {
+        "position": 63,
+        "onTimeline": true,
+        "before": 56,
+        "after": 57
+      }
+    },
+    {
+      "ok": true,
+      "label": "10: timeline position 64 reopens from the Live timeline and the stage follows (announced revision advances)",
+      "data": {
+        "position": 64,
+        "onTimeline": true,
+        "before": 57,
+        "after": 58
+      }
+    },
+    {
+      "ok": true,
+      "label": "Receipt: profile revisions recorded",
+      "data": {
+        "agent/anima": {
+          "before": "r3",
+          "character_before": "central:path:/Users/admin/Central:Work/O-I/desktop/cradle/material/expressive-material/character/anima.expression.json",
+          "after": "r3",
+          "character_after": "central:path:/Users/admin/Central:Work/O-I/desktop/cradle/material/expressive-material/character/anima.expression.json"
+        },
+        "agent/aletheia": {
+          "before": "r3",
+          "character_before": "central:path:/Users/admin/Central:Work/O-I/desktop/cradle/material/expressive-material/character/aletheia.expression.json",
+          "after": "r3",
+          "character_after": "central:path:/Users/admin/Central:Work/O-I/desktop/cradle/material/expressive-material/character/aletheia.expression.json"
+        }
+      }
+    }
+  ],
+  "ops": [
+    {
+      "ok": true,
+      "op": "info",
+      "duration_ms": 0,
+      "data": {
+        "schema": "oi.cradle.walk/v1",
+        "mounted_at": "2026-09-26T23:51:08.519Z",
+        "transport": {
+          "kind": "bridge",
+          "url": "http://127.0.0.1:4179"
+        },
+        "url": "http://localhost:4173/"
+      }
+    },
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 34,
+      "data": {
+        "file": "factory-expressions-0-entered.png"
+      }
+    },
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 57,
+      "data": {
+        "file": "factory-expressions-1-anima-idle.png"
+      }
+    },
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 51,
+      "data": {
+        "file": "factory-expressions-1-anima-working.png"
+      }
+    },
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 47,
+      "data": {
+        "file": "factory-expressions-1-aletheia-idle.png"
+      }
+    },
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 56,
+      "data": {
+        "file": "factory-expressions-1-aletheia-working.png"
+      }
+    },
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 194,
+      "data": {
+        "file": "factory-expressions-2-handoff-anima-aletheia.png"
+      }
+    },
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 208,
+      "data": {
+        "file": "factory-expressions-2-arrival-anima.png"
+      }
+    },
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 101,
+      "data": {
+        "file": "factory-expressions-4-live-timeline-start.png"
+      }
+    },
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 191,
+      "data": {
+        "file": "factory-expressions-4-live-timeline-middle.png"
+      }
+    },
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 220,
+      "data": {
+        "file": "factory-expressions-4-live-timeline-end.png"
+      }
+    },
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 139,
+      "data": {
+        "file": "factory-expressions-5-panel-character.png"
+      }
+    },
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 38,
+      "data": {
+        "file": "factory-expressions-5-character-conversation.png"
+      }
+    },
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 188,
+      "data": {
+        "file": "factory-expressions-5-panel-goal.png"
+      }
+    },
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 152,
+      "data": {
+        "file": "factory-expressions-5-panel-artifact.png"
+      }
+    },
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 38,
+      "data": {
+        "file": "factory-expressions-5-artifact-details.png"
+      }
+    },
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 173,
+      "data": {
+        "file": "factory-expressions-5-panel-exchange.png"
+      }
+    },
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 27,
+      "data": {
+        "file": "factory-expressions-5-message-composer.png"
+      }
+    },
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 567,
+      "data": {
+        "file": "factory-expressions-6-techne-act-strip.png"
+      }
+    },
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 220,
+      "data": {
+        "file": "factory-expressions-6-techne-edited.png"
+      }
+    },
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 272,
+      "data": {
+        "file": "factory-expressions-6-returned-live.png"
+      }
+    },
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 290,
+      "data": {
+        "file": "factory-expressions-9-variation-running.png"
+      }
+    },
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 217,
+      "data": {
+        "file": "factory-expressions-10-seek-1.png"
+      }
+    },
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 216,
+      "data": {
+        "file": "factory-expressions-10-seek-2.png"
+      }
+    },
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 233,
+      "data": {
+        "file": "factory-expressions-10-seek-3.png"
+      }
+    }
+  ],
+  "metrics": {},
+  "screenshots": [
+    "factory-expressions-0-entered.png",
+    "factory-expressions-1-anima-idle.png",
+    "factory-expressions-1-anima-working.png",
+    "factory-expressions-1-aletheia-idle.png",
+    "factory-expressions-1-aletheia-working.png",
+    "factory-expressions-2-handoff-anima-aletheia.png",
+    "factory-expressions-2-arrival-anima.png",
+    "factory-expressions-4-live-timeline-start.png",
+    "factory-expressions-4-live-timeline-middle.png",
+    "factory-expressions-4-live-timeline-end.png",
+    "factory-expressions-5-panel-character.png",
+    "factory-expressions-5-character-conversation.png",
+    "factory-expressions-5-panel-goal.png",
+    "factory-expressions-5-panel-artifact.png",
+    "factory-expressions-5-artifact-details.png",
+    "factory-expressions-5-panel-exchange.png",
+    "factory-expressions-5-message-composer.png",
+    "factory-expressions-6-techne-act-strip.png",
+    "factory-expressions-6-techne-edited.png",
+    "factory-expressions-6-returned-live.png",
+    "factory-expressions-9-variation-running.png",
+    "factory-expressions-10-seek-1.png",
+    "factory-expressions-10-seek-2.png",
+    "factory-expressions-10-seek-3.png"
+  ]
+}

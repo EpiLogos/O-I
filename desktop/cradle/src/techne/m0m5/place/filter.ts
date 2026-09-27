@@ -16,7 +16,7 @@
  *
  * Erasable TypeScript: loadable by the renderer, Vite, and `node --test`.
  */
-import type { TechnePlaceFacet, TechnePlaceHierarchyEntry, TechnePlaceName } from "../../contract.ts";
+import type { TechnePlaceFacet, TechnePlaceHierarchyEntry, TechnePlaceName } from "../../contract";
 
 /** The presentation time window: ISO-8601 bounds, null = open side. */
 export interface TimeWindow {

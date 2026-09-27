@@ -1,0 +1,37 @@
+/* Factory Live — the Run performed through the Expressions engine: the hosted
+   application fills the stage; the object panel floats over it; the act's
+   timeline and the legs table sit beneath. Tokens only. */
+.flx{display:flex;flex-direction:column;gap:10px;min-height:0}
+.flx-stage{position:relative;height:min(62vh,640px);min-height:320px;border:var(--oi-shell-edge) solid var(--oi-hairline-soft);border-radius:10px;overflow:hidden;background:var(--oi-surface)}
+.flx-stage .pcd-host{position:absolute;inset:0}
+.flx-strip{position:absolute;left:10px;bottom:8px;right:10px;margin:0;font:var(--oi-shell-type-ui);font-size:11px;color:var(--oi-muted-2);pointer-events:none;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.flx-strip-absent{color:var(--oi-status-warning)}
+.flx-panel{position:absolute;top:10px;right:10px;width:min(320px,calc(100% - 20px));max-height:calc(100% - 44px);overflow:auto;padding:10px 12px;border:var(--oi-shell-edge) solid var(--oi-hairline-soft);border-radius:10px;background:var(--oi-surface);box-shadow:0 6px 24px color-mix(in srgb,var(--oi-foreground) 12%,transparent);font:var(--oi-shell-type-ui);font-size:12px;display:grid;gap:8px}
+.flx-panel header{display:flex;align-items:baseline;gap:8px}
+.flx-panel header strong{flex:1;min-width:0;overflow-wrap:anywhere}
+.flx-panel-kind{font-size:10px;letter-spacing:var(--oi-shell-tracking);text-transform:uppercase;color:var(--oi-muted-2)}
+.flx-panel-close{border:0;background:none;color:var(--oi-muted-2);font-size:16px;line-height:1;cursor:pointer}
+/* Long unbroken tokens (paths, refs, code) wrap inside the panel: grid items
+   default to min-width:auto and would otherwise run past its right edge. */
+.flx-panel>*{min-width:0}
+.flx-panel-line{margin:0;overflow-wrap:anywhere}
+.flx-panel-meta{margin:0;color:var(--oi-muted-2);font-size:11px;overflow-wrap:anywhere}
+.flx-panel-block h5{margin:0 0 4px;font-size:11px;font-weight:550;color:var(--oi-muted-2)}
+.flx-panel-block ul{margin:0;padding:0;list-style:none;display:grid;gap:3px}
+.flx-panel-block li{display:flex;gap:6px;align-items:baseline;justify-content:space-between;overflow-wrap:anywhere}
+.flx-panel-block li code{min-width:0}
+.flx-panel-block li button{flex:none;white-space:nowrap}
+.flx-panel-message{display:flex;gap:6px}
+.flx-panel-message input{flex:1;min-width:0;font:inherit;padding:4px 6px;border:var(--oi-shell-edge) solid var(--oi-hairline-soft);border-radius:6px;background:var(--oi-wash);color:var(--oi-foreground)}
+.flx-panel-actions{display:flex;flex-wrap:wrap;gap:10px}
+.flx-panel-note{margin:0;color:var(--oi-muted-2);font-size:11px}
+.flx-timeline{display:flex;gap:4px;overflow-x:auto;margin:0;padding:2px 0 6px;list-style:none}
+.flx-timeline li button{display:flex;gap:4px;align-items:baseline;white-space:nowrap;font:var(--oi-shell-type-ui);font-size:11px;padding:3px 7px;border:var(--oi-shell-edge) solid var(--oi-hairline-soft);border-radius:999px;background:var(--oi-wash);color:var(--oi-foreground);cursor:pointer}
+.flx-timeline li button:disabled{cursor:default}
+.flx-timeline li[aria-current="step"] button{background:var(--oi-wash-strong);border-color:var(--oi-accent-soft)}
+.flx-timeline li[data-state="refused"] button,.flx-timeline li[data-state="unresolved"] button{color:var(--oi-muted-2);border-style:dashed}
+.flx-family{color:var(--oi-muted-2)}
+.flx-timeline-empty{margin:0;color:var(--oi-muted-2);font-size:12px}
+.factory-centre .ftasks-runjoin{display:inline-flex;align-items:center;gap:6px;min-width:0}
+.flx-choice{display:flex;gap:8px;align-items:center;font:var(--oi-shell-type-ui);font-size:12px;color:var(--oi-muted-2)}
+.flx-choice select{font:inherit;color:var(--oi-foreground);background:var(--oi-wash);border:var(--oi-shell-edge) solid var(--oi-hairline-soft);border-radius:6px;padding:2px 6px}

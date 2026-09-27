@@ -5,25 +5,40 @@
  * entities, taken verbatim from the reading; layout is pure presentation
  * derived from them.
  *
- * Two schemes, chosen by the reading alone (never by user preference):
+ * Two schemes, chosen by DECLARED position, never by member count or array
+ * order (owner commission, QL-MEF #214 geometry-closeout: no
+ * cardinality-guessed sixfold ring — a structured whole moves only by its
+ * OWN declared structure):
  *
- *   - "ql-constellation" — engages only when the reading carries a WARRANTED
- *     ql facet (`reading.ql` with `warrant`; a QL facet exists only when
- *     warranted). The warranted fields present determine positions: the
- *     constellation's own shape is sixfold, so members take constellation
- *     positions 0..=5 around the whole — index 0 at the top (−90°), then
- *     clockwise at 60° steps (SVG y-down coordinates). More than six members
- *     continue the same six angles on outer rings (radius × 1.45 per ring).
- *     When `ql.address` is disclosed, it anchors on the bottom axis (90°) at
- *     radius 4/3 × the member ring, outside the constellation — the warrant's
- *     own address, not a member.
+ *   - "ql-constellation" — engages only when at least one member carries a
+ *     genuinely DECLARED sixfold position, passed in via `declaredPositions`
+ *     (ref → 0..=5, e.g. resolved from the reading's own `ql.constellation_ref`
+ *     against its owning shape/constellation registry — ql.techne/v1 itself
+ *     carries no per-member position field today, so nothing here may invent
+ *     one from `member_refs` order). A declared member takes its own
+ *     constellation position 0..=5 around the whole — position 0 at the top
+ *     (−90°), clockwise at 60° steps (SVG y-down coordinates); positions
+ *     ≥ 6 continue the same six angles on outer rings (radius × 1.45 per
+ *     extra sixfold). A member the caller never declared a position for
+ *     keeps `position: null` and is placed in the open arrangement below —
+ *     it is never backfilled into the ring by its index.
+ *     Independently, when the reading's own `ql` facet is warranted and
+ *     discloses `address`, that single reading-level coordinate anchors on
+ *     the bottom axis (90°) at radius 4/3 × the member ring, outside the
+ *     constellation — the warrant's own address, not a guessed member slot;
+ *     it renders whether or not any member position was declared.
  *
- *   - "radial" — no warranted ql facet: members are spaced evenly on one
- *     circle around the whole, clockwise from the top, in member_refs order.
+ *   - "radial" — the open arrangement: no member carries a declared
+ *     position (or the reading discloses no warranted `ql` facet at all).
+ *     Members are spaced evenly on one circle around the whole, clockwise
+ *     from the top, in member_refs order. This is presentation only — no
+ *     QL form is implied by it.
  *
  * Same input → same output, always: no clocks, no randomness, no iteration
- * order beyond the reading's own arrays. Native refs are opaque and carried
- * verbatim; relation vocabulary is preserved verbatim as edge labels.
+ * order beyond the reading's own arrays (and the caller-supplied declared
+ * positions, themselves keyed by ref, never by index). Native refs are
+ * opaque and carried verbatim; relation vocabulary is preserved verbatim as
+ * edge labels.
  *
  * Manual visual arrangement (dragging a node somewhere) is PRESENTATION
  * state: `applyManualOverrides` layers ref-keyed positions over a computed
@@ -79,6 +94,14 @@ export interface ConstellationLayout {
  * to a layout only and never reaches a reading. */
 export type LayoutOverrides = Readonly<Record<string, { x: number; y: number }>>;
 
+/** Genuinely DECLARED sixfold member positions, ref → 0..=5 (or beyond, for
+ * an outer ring). This is semantic input a caller resolved from the
+ * reading's own warranted structure (its `ql.constellation_ref` against the
+ * owning shape/constellation registry) — never derived here from array
+ * index or member count. Absent (the default), no member position is
+ * declared and layout never claims the "ql-constellation" scheme. */
+export type DeclaredMemberPositions = Readonly<Record<string, number>>;
+
 /** Member ring radius in unit space (the renderer scales by 1000). */
 export const MEMBER_RING_RADIUS = 0.36;
 /** The warranted QL address anchors at 4/3 × the member ring, below. */
@@ -93,35 +116,50 @@ function polar(angleDegrees: number, radius: number): { x: number; y: number } {
   return { x: Math.cos(angle) * radius, y: Math.sin(angle) * radius };
 }
 
-/** Compute the constellation layout of one reading. Pure: the reading is
- * only read, never written; the output shares no structure with it. */
-export function computeLayout(reading: TechneReading): ConstellationLayout {
+/** Compute the constellation layout of one reading. Pure: the reading and
+ * `declaredPositions` are only read, never written; the output shares no
+ * structure with either. `declaredPositions` carries genuinely DECLARED
+ * sixfold member positions (ref → 0..=5+); omit it (or leave a member out
+ * of it) when no such declaration exists — this function never guesses one
+ * from `member_refs` order or count. */
+export function computeLayout(
+  reading: TechneReading,
+  declaredPositions: DeclaredMemberPositions = {},
+): ConstellationLayout {
   const wholeRef = reading.whole?.whole_ref ?? reading.subject.subject_ref;
   const qlWarranted = reading.ql !== undefined && reading.ql.warrant !== undefined;
-  const scheme: ConstellationScheme = qlWarranted ? "ql-constellation" : "radial";
+  const members = reading.whole?.member_refs ?? [];
+  const hasDeclaredMemberPosition = members.some((ref) => Number.isInteger(declaredPositions[ref]));
+  const scheme: ConstellationScheme = hasDeclaredMemberPosition ? "ql-constellation" : "radial";
 
   const nodes: ConstellationNode[] = [
     { ref: wholeRef, role: "whole", x: 0, y: 0, position: null, ring: 0 },
   ];
   const placed = new Set<string>([wholeRef]);
 
-  const members = reading.whole?.member_refs ?? [];
-  members.forEach((memberRef, index) => {
+  const openArrangementMembers = members.filter((ref) => !placed.has(ref));
+  members.forEach((memberRef) => {
     if (placed.has(memberRef)) return;
     placed.add(memberRef);
-    if (scheme === "ql-constellation") {
-      const position = index % SIXFOLD;
-      const ring = Math.floor(index / SIXFOLD);
+    const declared = declaredPositions[memberRef];
+    if (scheme === "ql-constellation" && Number.isInteger(declared)) {
+      const position = ((declared % SIXFOLD) + SIXFOLD) % SIXFOLD;
+      const ring = Math.floor(declared / SIXFOLD);
       const at = polar(-90 + 60 * position, MEMBER_RING_RADIUS * Math.pow(RING_GROWTH, ring));
       nodes.push({ ref: memberRef, role: "member", x: at.x, y: at.y, position, ring });
     } else {
-      const at = polar(-90 + (360 / members.length) * index, MEMBER_RING_RADIUS);
+      // No declared position for this member — open arrangement, never
+      // backfilled into the sixfold ring by its index. Evenly spaced among
+      // the OTHER undeclared members so a mixed warranted/undeclared whole
+      // stays deterministic and readable.
+      const openIndex = openArrangementMembers.indexOf(memberRef);
+      const at = polar(-90 + (360 / openArrangementMembers.length) * openIndex, MEMBER_RING_RADIUS);
       nodes.push({ ref: memberRef, role: "member", x: at.x, y: at.y, position: null, ring: 0 });
     }
   });
 
   const address = reading.ql?.address;
-  if (scheme === "ql-constellation" && typeof address === "string" && address.trim().length > 0 && !placed.has(address)) {
+  if (qlWarranted && typeof address === "string" && address.trim().length > 0 && !placed.has(address)) {
     const at = polar(90, ADDRESS_RADIUS);
     nodes.push({ ref: address, role: "ql-address", x: at.x, y: at.y, position: null, ring: 0 });
     placed.add(address);

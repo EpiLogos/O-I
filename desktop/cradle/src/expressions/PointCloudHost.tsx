@@ -22,6 +22,8 @@
  * frame while it stands (hostedApp.trackShellCutout).
  */
 import {useEffect, useRef, useState} from "react";
+import {ActStrip} from "../expression/ActStrip";
+import {consumeExpressionRequest, getExpressionSelectionState, registerExpressionCentre, subscribeExpressionSelection} from "./selection";
 import {useKernel} from "../kernel/KernelProvider";
 import {
   hostedAppUrl,
@@ -33,22 +35,25 @@ import {
   watchHostedAppReady,
   postHostMode,
   postOpenExpression,
+  postMessageToFrame,
   type HostedAppMode,
   type HostedAppState,
 } from "./hostedApp";
-import {consumeTechneFieldOpen, peekTechneFieldOpen, peekTechneFieldRefresh, subscribeTechneFieldOpen} from "./fieldOpen";
+import {consumeTechneFieldOpen, peekTechneFieldLens, peekTechneFieldOpen, peekTechneFieldRefresh, subscribeTechneFieldOpen} from "./fieldOpen";
 import "./point-cloud-host.css";
 import {verifyInsertionSource} from "./sourceInsertion";
 import {resolveHostedSource} from "./sourceHandoff";
 import {resolveSceneConstellation} from "../techne/wikiReadingProvider";
+import {relateSceneConstellation} from "../techne/sceneConstellationRelation";
 
-export function PointCloudHost({mode = "expressions", deepLink, bindingId, onHostedState, readTechne, techneWorld}: {mode?: HostedAppMode; deepLink?: string; bindingId?: string; onHostedState?: (state: HostedAppState) => void; readTechne?: (request: unknown) => Promise<unknown>; techneWorld?: (request: unknown) => Promise<unknown>}) {
+export function PointCloudHost({mode = "expressions", deepLink, bindingId, onHostedState, readTechne, techneWorld, refreshToken, followsOwnRef = false}: {mode?: HostedAppMode; deepLink?: string; bindingId?: string; onHostedState?: (state: HostedAppState) => void; readTechne?: (request: unknown) => Promise<unknown>; techneWorld?: (request: unknown) => Promise<unknown>; /** A changed token re-opens `deepLink` in place (refresh, no reload): an act performed elsewhere moved the kernel document. */ refreshToken?: number; /** A fixed act host (Factory Live, a Run page) presents its own Expression and is never the Expressions centre a navigator row opens into. */ followsOwnRef?: boolean}) {
   const kernel = useKernel();
   const [src, setSrc] = useState<string | undefined>();
   const [state, setState] = useState<"reading" | "ready" | "refused">("reading");
   const [reason, setReason] = useState<string | undefined>();
   const frame = useRef<HTMLIFrameElement | null>(null);
   const hostedState=useRef<HostedAppState>();
+  const [hostedRevision,setHostedRevision]=useState<number|undefined>();
   const sourceRequest=useRef(0);
   const insertionEpoch=useRef(0);
   const owner = useRef({readTechne, techneWorld});
@@ -103,6 +108,8 @@ export function PointCloudHost({mode = "expressions", deepLink, bindingId, onHos
     return relayKernelChannel(node, kernel.transport, {
       constellation: async request => {
         const operation = (request as {operation?: unknown} | null)?.operation;
+        // Deliberate typed knowledge relationship through the constellation owner.
+        if (operation === "relate") return relateSceneConstellation(kernel.transport, request);
         if (operation !== "inspect" && operation !== "open") throw new Error("Unknown constellation request");
         const target = await resolveSceneConstellation(kernel.transport, request);
         if (operation === "open") await new Promise<void>((resolve, reject) => {
@@ -134,7 +141,7 @@ export function PointCloudHost({mode = "expressions", deepLink, bindingId, onHos
     return trackHostedAppState(node, value=>{
       const previous=hostedState.current;
       if(previous?.document?.id!==value.document?.id||previous?.sceneIndex!==value.sceneIndex||JSON.stringify(previous?.nativeScene)!==JSON.stringify(value.nativeScene))insertionEpoch.current++;
-      hostedState.current=value;onHostedState?.(value);
+      hostedState.current=value;setHostedRevision(value.nativeScene?.revision);onHostedState?.(value);
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [src, onHostedState]);
@@ -192,11 +199,48 @@ export function PointCloudHost({mode = "expressions", deepLink, bindingId, onHos
   useEffect(() => {
     const node = frame.current;
     if (mode !== "techne" || !node || state !== "ready") return;
-    const open = () => { const refresh = peekTechneFieldRefresh(); const ref = consumeTechneFieldOpen(bindingId ?? null); if (ref) postOpenExpression(node, ref, refresh); };
+    const open = () => {
+      const refresh = peekTechneFieldRefresh(), lens = peekTechneFieldLens();
+      const ref = consumeTechneFieldOpen(bindingId ?? null);
+      if (!ref) return;
+      postOpenExpression(node, ref, refresh);
+      // A newly created constellation stands on the Canvas lens of the same
+      // application — the host-command grammar, after the open it follows.
+      if (lens) postMessageToFrame(node, {v: 1, kind: "host-command", command: "lens", lens});
+    };
     open(); // a ref recorded before this host was ready
     return subscribeTechneFieldOpen(() => { if (peekTechneFieldOpen()) open(); });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [mode, state, bindingId]);
+
+  // The Expressions centre: a navigator row (requestExpressionSelection) opens
+  // its Expression in the presented frame through the app's follow path. A
+  // fixed act host (followsOwnRef: Factory Live, a Run page) keeps its own
+  // Expression — the centre's restored checkpoint deep link does not; a concealed host that
+  // merely stayed mounted leaves the request for the presented one.
+  useEffect(() => {
+    const node = frame.current;
+    if (mode !== "expressions" || !node || state !== "ready" || followsOwnRef) return;
+    const release = registerExpressionCentre();
+    const open = () => {
+      const request = getExpressionSelectionState().request;
+      if (!request || request.expressionRef.startsWith("expression:techne-m0.")) return;
+      if (!node.isConnected || node.getClientRects().length === 0) return;
+      consumeExpressionRequest();
+      postOpenExpression(node, request.expressionRef);
+    };
+    open(); // a request made before this host was ready
+    const stop = subscribeExpressionSelection(open);
+    return () => { stop(); release(); };
+  }, [mode, state, followsOwnRef]);
+
+  // An act driven outside the frame (Factory Live, an Agent's world request)
+  // edits the same kernel document; the frame re-reads it in place.
+  useEffect(() => {
+    const node = frame.current;
+    if (refreshToken === undefined || !deepLink || !node || state !== "ready") return;
+    postOpenExpression(node, deepLink, true);
+  }, [refreshToken, deepLink, state]);
 
   // The deep cut's requests ride back through the host: a workspace-mode
   // switch goes to the shell's own mode pipeline (enterMode); a summon asks
@@ -210,6 +254,12 @@ export function PointCloudHost({mode = "expressions", deepLink, bindingId, onHos
       if (event.source !== frame.current?.contentWindow) return;
       if (data.request === "workspace-mode" && (data.mode === "expressions" || data.mode === "techne")) {
         window.dispatchEvent(new CustomEvent("oi:host-workspace-mode", {detail: {mode: data.mode}}));
+      }
+      if (data.request === "new-constellation") {
+        // An empty Canvas asks for construction: the navigator's own
+        // Project-scoped creation row answers it (one creation path).
+        window.dispatchEvent(new CustomEvent("oi:techne-new-constellation"));
+        return;
       }
       if (data.request === "summon" && data.detail?.kind === "source") {
         const request=++sourceRequest.current,node=frame.current,at=hostedState.current;
@@ -248,5 +298,6 @@ export function PointCloudHost({mode = "expressions", deepLink, bindingId, onHos
       allow="fullscreen"
       referrerPolicy="no-referrer"
       sandbox="allow-scripts allow-forms allow-downloads allow-same-origin"/>}
+    {state === "ready" && <ActStrip mode={mode} transport={kernel.transport} currentRevision={hostedRevision}/>}
   </div>;
 }

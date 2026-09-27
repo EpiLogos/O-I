@@ -560,6 +560,7 @@ export function CradleFrame({onComposed}:{onComposed?:()=>void}) {
     if(twinSide){const fresh={...binding,id:crypto.randomUUID()};const opened=await kernel.apply({op:"surface_open",surface_id:fresh.id,kind:fresh.kind,source_ref:fresh.ref,title:fresh.title});if(opened?.result!=="surface_opened")throw new Error("AIKit encounter surface could not be opened");setState(state=>openBinding({...state,closedStack:state.closedStack.filter(id=>id!==fresh.id)},fresh));return;}
     setState(state=>groupsOf(state.root).some(group=>group.tabs.includes(binding.id))?executeFrameAction(state,"surface.activate",{surfaceId:binding.id}):openBinding({...state,closedStack:state.closedStack.filter(id=>id!==binding.id)},binding));
   };
+  const openEncounterRef=useRef(openEncounter);openEncounterRef.current=openEncounter;
 
   const openFileRef=useRef<(location:CentralLocation,opts?:{current?:()=>boolean})=>Promise<void>>(async()=>{});
   /** Open a real file. Two canvas refinements (owner, 2026-09-19):
@@ -973,7 +974,11 @@ export function CradleFrame({onComposed}:{onComposed?:()=>void}) {
     const agentSetupReturn=()=>{if(agentSetupReturnMode!==undefined){const mode=agentSetupReturnMode;agentSetupReturnMode=undefined;enterModeRef.current(mode);}};
     // Results' "Open in centre": the subject's own tab if it is open here, else its file.
     const openSubject=(event:Event)=>{const subject=detail<{subject?:{ref?:string;location?:CentralLocation}}>(event)?.subject;if(!subject)return;if(subject.location){void openFileRef.current(subject.location).catch(fail);return;}const held=Object.values(stateRef.current.surfaces).find(binding=>!!subject.ref&&binding.ref===subject.ref);if(held)setState(s=>executeFrameAction(s,"surface.activate",{surfaceId:held.id}));};
-    const pairs:[string,(event:Event)=>void][]=[["oi:open-agency",agencyOpen],["oi:panel-open-subject",openSubject],["oi:workspace-message",message],["oi:open-settings",settings],["oi:close-settings",closeSettings],["oi:agent-setup-return",agentSetupReturn],["oi:library-open",libraryOpen],["oi:epi-open-expression",expression],["oi:epi-examine",examine],["oi:epi-open-source",source],["oi:epi-open-knowledge",knowledgeOpen],["oi:context-return",back]];
+    // A Factory Live panel asks the root to open an agent's conversation (encounter surface).
+    const openEncounterEvent=(event:Event)=>{const d=(event as CustomEvent<{ref?:unknown;project?:unknown;space?:unknown;title?:unknown}>).detail;if(typeof d?.ref!=="string"||typeof d.project!=="string"||typeof d.space!=="string")return;void openEncounterRef.current({ref:d.ref,project:d.project,space:d.space,title:typeof d.title==="string"?d.title:"Conversation"}).catch(reason=>setWindowError(String(reason instanceof Error?reason.message:reason)));};
+    // A carried expressive act (expression/crossModeAct) asks the root for its next working mode.
+    const enterModeEvent=(event:Event)=>{const next=(event as CustomEvent<{mode?:unknown}>).detail?.mode;if(isWorkspaceMode(next))enterModeRef.current(next);};
+    const pairs:[string,(event:Event)=>void][]=[["oi:enter-mode",enterModeEvent],["oi:open-encounter",openEncounterEvent],["oi:open-agency",agencyOpen],["oi:panel-open-subject",openSubject],["oi:workspace-message",message],["oi:open-settings",settings],["oi:close-settings",closeSettings],["oi:agent-setup-return",agentSetupReturn],["oi:library-open",libraryOpen],["oi:epi-open-expression",expression],["oi:epi-examine",examine],["oi:epi-open-source",source],["oi:epi-open-knowledge",knowledgeOpen],["oi:context-return",back]];
     pairs.push([OPEN_AUTOMATIONS_EVENT,automationsOpen],["oi:open-scene-constellation",constellationOpen],["oi:open-scene-source",sceneSourceOpen]);
     for(const [name,handler] of pairs)window.addEventListener(name,handler);
     return()=>{for(const [name,handler] of pairs)window.removeEventListener(name,handler);};

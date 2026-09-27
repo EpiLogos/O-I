@@ -1,0 +1,1735 @@
+{
+ "schema": "oi.expression/v1",
+ "expression_ref": "expression:fx-character-aletheia",
+ "revision": 1,
+ "title": "Aletheia — the unconcealing lamp",
+ "presentation": {
+  "schema": "oi.journey-properties/v1",
+  "description": "An ASCII lamp-eye over an ajna yantra: calm and legible at rest, a resonating cymatic plate when it works, its inscription changing as it speaks.",
+  "loop": true
+ },
+ "scenes": [
+  {
+   "scene_ref": "expression:fx-character-aletheia:scene:idle",
+   "revision": 1,
+   "title": "Idle",
+   "entity_refs": [
+    "expression:fx-character-aletheia:entity:self"
+   ],
+   "presentation": {
+    "schema": "oi.journey-scene/v1",
+    "scene": {
+     "toolbelt": [
+      {
+       "id": "speed",
+       "scope": "field",
+       "key": "timeScale"
+      },
+      {
+       "id": "spring",
+       "scope": "field",
+       "key": "recovery"
+      },
+      {
+       "id": "viscosity",
+       "scope": "field",
+       "key": "native_fluid__viscosity"
+      },
+      {
+       "id": "flow",
+       "scope": "field",
+       "key": "turbulence"
+      },
+      {
+       "id": "transition",
+       "scope": "selected",
+       "key": "sequence.transition"
+      },
+      {
+       "id": "blend",
+       "scope": "field",
+       "key": "native_morphProgress"
+      }
+     ],
+     "engine": {
+      "paletteSource": "custom",
+      "grainProfile": true,
+      "backgroundMode": "ambientGlow",
+      "resonatorMode": "resonator",
+      "focusOrder": "listed",
+      "dotShape": "circle",
+      "autoFitSizes": true,
+      "mediumEnabled": false,
+      "collisionEnabled": false,
+      "collisionMode": "obstacle",
+      "pairwiseEnabled": false,
+      "fontFamily": "system-ui, -apple-system, sans-serif",
+      "fontWeight": 900,
+      "resonanceEnabled": true,
+      "morphEnabled": true,
+      "trajectory": "toroidalHopf",
+      "driveShape": "sine",
+      "autoOscillate": true,
+      "relationalEnabled": false,
+      "relationalMode": "orbital",
+      "pointerMode": "repel",
+      "pointerClick": "pulse",
+      "pointerClickStrength": 2.2,
+      "pointerClickRadius": 0.45,
+      "colorMode": "linearGradient",
+      "colorEnabled": true,
+      "mediumPlane": "vertical",
+      "mediumDimension": "2D",
+      "autoSweep": false,
+      "sweepDirection": "ascent",
+      "inkMode": "whiteOnBlack"
+     },
+     "id": "expression:fx-character-aletheia:scene:idle",
+     "name": "Idle",
+     "character": "Aletheia — the unconcealing lamp at rest: gathered, breathing.",
+     "duration": 12,
+     "transition": 1.5,
+     "view": {
+      "mode": "2d",
+      "yaw": 0,
+      "pitch": 0,
+      "zoom": 1,
+      "panX": 0,
+      "panY": 0
+     },
+     "field": {
+      "background": "#12161a",
+      "palette": [
+       "#efe6d2",
+       "#9fb7b0",
+       "#d9a36a"
+      ],
+      "material": "round",
+      "params": {
+       "count": 54000,
+       "size": 2.2,
+       "sizeBias": 1.6,
+       "opacity": 0.9,
+       "roundness": 0.95,
+       "softness": 0.15,
+       "irregularity": 0.35,
+       "elongation": 0.04,
+       "orientation": 0,
+       "contrast": 0.82,
+       "densityScale": 1,
+       "densityPhase": 1.7,
+       "edgeWeight": 0,
+       "halo": 0.22,
+       "speed": 0.62,
+       "circulation": 1,
+       "turbulence": 0.18,
+       "turbulenceScale": 1.2,
+       "recovery": 1.1,
+       "dispersion": 0.07,
+       "pointerStrength": 0.8,
+       "pointerRadius": 0.23,
+       "pointerFalloff": 2,
+       "depth": 0.12,
+       "grain": 0.035,
+       "snapRigidity": 1,
+       "densityTether": 1,
+       "curlDepth": 0.2,
+       "vortexRadius": 0.4,
+       "gravityX": 0,
+       "gravityY": 0,
+       "gravityZ": 0,
+       "quadraticDrag": 0.2,
+       "thermalJitter": 0,
+       "speedLimit": 3,
+       "zConfinement": 1,
+       "timeScale": 1,
+       "gravitySoftening": 0.1,
+       "gravityFalloff": 2,
+       "swirlRadius": 0.4,
+       "frequency": 220,
+       "dominance": 0,
+       "excitation": 0.6
+      }
+     },
+     "entities": [
+      {
+       "id": "expression:fx-character-aletheia:entity:self",
+       "name": "Aletheia",
+       "kind": "formation",
+       "position": {
+        "x": 0,
+        "y": 0.02,
+        "z": 0
+       },
+       "size": {
+        "x": 0.9,
+        "y": 1.02
+       },
+       "rotation": 0,
+       "shape": "text",
+       "text": "◉",
+       "share": 1,
+       "tint": "#6fb3c8",
+       "tintWeight": 0.85,
+       "locked": false,
+       "force": {
+        "kind": "attract",
+        "strength": 0.35,
+        "radius": 0.5,
+        "spin": 0.04
+       },
+       "station": null,
+       "sequence": {
+        "enabled": true,
+        "clock": "seconds",
+        "steps": [
+         {
+          "id": "aletheia-idle-a",
+          "text": "◉",
+          "shape": "text",
+          "hold": 3.5,
+          "transition": 2.2,
+          "position": null,
+          "objectState": {
+           "size": {
+            "x": 0.9,
+            "y": 1.02
+           },
+           "rotation": 0,
+           "scale": 1,
+           "tint": "#6fb3c8",
+           "tintWeight": 0.8,
+           "force": {
+            "kind": "attract",
+            "strength": 0.35,
+            "radius": 0.5,
+            "spin": 0.04
+           }
+          }
+         },
+         {
+          "id": "aletheia-idle-b",
+          "text": "◉",
+          "shape": "text",
+          "hold": 3.5,
+          "transition": 2.2,
+          "position": null,
+          "objectState": {
+           "size": {
+            "x": 0.98,
+            "y": 1.1
+           },
+           "rotation": 4,
+           "scale": 1,
+           "tint": "#6fb3c8",
+           "tintWeight": 0.9,
+           "force": {
+            "kind": "attract",
+            "strength": 0.45,
+            "radius": 0.56,
+            "spin": 0.06
+           }
+          },
+          "name": "breathe"
+         }
+        ],
+        "order": "pingpong",
+        "easing": "smoothstep"
+       },
+       "role": "self",
+       "source": {
+        "kind": "ascii",
+        "ascii": {
+         "text": "  .-^-.  \n (  ◉  ) \n  `-v-'  ",
+         "fontFamily": "Menlo, monospace",
+         "fontSize": 64,
+         "invert": false
+        }
+       }
+      }
+     ],
+     "text": [
+      {
+       "id": "t-label",
+       "visible": true,
+       "kicker": "ALETHEIA",
+       "title": "Idle",
+       "italic": "",
+       "body": "",
+       "x": 0.06,
+       "y": 0.86,
+       "width": 520,
+       "size": 18,
+       "align": "left",
+       "role": "caption"
+      }
+     ],
+     "composition": {
+      "layout": "free",
+      "plane": "XY",
+      "focus": "parallel",
+      "focusDuration": 4,
+      "carryTint": true,
+      "carryStation": false,
+      "frequencyDriver": "manual"
+     },
+     "morph": {
+      "thetaRate": 0.08,
+      "phiRate": 0.13,
+      "thetaOffset": 0,
+      "phiOffset": 0,
+      "law": "theta",
+      "depth": 1,
+      "dwell": 0.3
+     },
+     "automation": [
+      {
+       "id": "aletheia-idle-breath",
+       "enabled": true,
+       "target": "field.halo",
+       "type": "lfo",
+       "wave": "sine",
+       "min": 0.16,
+       "max": 0.3,
+       "rate": 0.12,
+       "phase": 0,
+       "blend": "replace",
+       "duration": 0,
+       "delay": 0,
+       "loop": "loop",
+       "firedAt": null
+      }
+     ]
+    }
+   },
+   "triggers": []
+  },
+  {
+   "scene_ref": "expression:fx-character-aletheia:scene:working",
+   "revision": 1,
+   "title": "Working",
+   "entity_refs": [
+    "expression:fx-character-aletheia:entity:self"
+   ],
+   "presentation": {
+    "schema": "oi.journey-scene/v1",
+    "scene": {
+     "toolbelt": [
+      {
+       "id": "speed",
+       "scope": "field",
+       "key": "timeScale"
+      },
+      {
+       "id": "spring",
+       "scope": "field",
+       "key": "recovery"
+      },
+      {
+       "id": "viscosity",
+       "scope": "field",
+       "key": "native_fluid__viscosity"
+      },
+      {
+       "id": "flow",
+       "scope": "field",
+       "key": "turbulence"
+      },
+      {
+       "id": "transition",
+       "scope": "selected",
+       "key": "sequence.transition"
+      },
+      {
+       "id": "blend",
+       "scope": "field",
+       "key": "native_morphProgress"
+      }
+     ],
+     "engine": {
+      "paletteSource": "custom",
+      "grainProfile": true,
+      "backgroundMode": "ambientGlow",
+      "resonatorMode": "template",
+      "focusOrder": "listed",
+      "dotShape": "circle",
+      "autoFitSizes": true,
+      "mediumEnabled": false,
+      "collisionEnabled": false,
+      "collisionMode": "obstacle",
+      "pairwiseEnabled": false,
+      "fontFamily": "system-ui, -apple-system, sans-serif",
+      "fontWeight": 900,
+      "resonanceEnabled": true,
+      "morphEnabled": true,
+      "trajectory": "toroidalHopf",
+      "driveShape": "sine",
+      "autoOscillate": true,
+      "relationalEnabled": false,
+      "relationalMode": "orbital",
+      "pointerMode": "repel",
+      "pointerClick": "pulse",
+      "pointerClickStrength": 2.2,
+      "pointerClickRadius": 0.45,
+      "colorMode": "linearGradient",
+      "colorEnabled": true,
+      "mediumPlane": "vertical",
+      "mediumDimension": "2D",
+      "autoSweep": false,
+      "sweepDirection": "ascent",
+      "inkMode": "whiteOnBlack",
+      "templateGeometry": "circular"
+     },
+     "id": "expression:fx-character-aletheia:scene:working",
+     "name": "Working",
+     "character": "Aletheia — the unconcealing lamp at work: a turning vortex, the body resonating.",
+     "duration": 12,
+     "transition": 1.5,
+     "view": {
+      "mode": "2d",
+      "yaw": 0,
+      "pitch": 0,
+      "zoom": 1,
+      "panX": 0,
+      "panY": 0
+     },
+     "field": {
+      "background": "#12161a",
+      "palette": [
+       "#efe6d2",
+       "#9fb7b0",
+       "#d9a36a"
+      ],
+      "material": "round",
+      "params": {
+       "count": 54000,
+       "size": 2.2,
+       "sizeBias": 1.6,
+       "opacity": 0.9,
+       "roundness": 0.95,
+       "softness": 0.15,
+       "irregularity": 0.35,
+       "elongation": 0.04,
+       "orientation": 0,
+       "contrast": 0.82,
+       "densityScale": 1,
+       "densityPhase": 1.7,
+       "edgeWeight": 0,
+       "halo": 0.22,
+       "speed": 0.9,
+       "circulation": 1,
+       "turbulence": 0.26,
+       "turbulenceScale": 1.2,
+       "recovery": 1.1,
+       "dispersion": 0.07,
+       "pointerStrength": 0.8,
+       "pointerRadius": 0.23,
+       "pointerFalloff": 2,
+       "depth": 0.12,
+       "grain": 0.035,
+       "snapRigidity": 1,
+       "densityTether": 1,
+       "curlDepth": 0.2,
+       "vortexRadius": 0.4,
+       "gravityX": 0,
+       "gravityY": 0,
+       "gravityZ": 0,
+       "quadraticDrag": 0.2,
+       "thermalJitter": 0,
+       "speedLimit": 3,
+       "zConfinement": 1,
+       "timeScale": 1,
+       "gravitySoftening": 0.1,
+       "gravityFalloff": 2,
+       "swirlRadius": 0.4,
+       "frequency": 528,
+       "dominance": 0,
+       "excitation": 0.8
+      }
+     },
+     "entities": [
+      {
+       "id": "expression:fx-character-aletheia:entity:self",
+       "name": "Aletheia",
+       "kind": "formation",
+       "position": {
+        "x": 0,
+        "y": 0.02,
+        "z": 0
+       },
+       "size": {
+        "x": 0.9,
+        "y": 1.02
+       },
+       "rotation": 0,
+       "shape": "yantra",
+       "text": "◉",
+       "share": 1,
+       "tint": "#6fb3c8",
+       "tintWeight": 0.85,
+       "locked": false,
+       "force": {
+        "kind": "vortex",
+        "strength": 1.1,
+        "radius": 0.42,
+        "spin": 0.9
+       },
+       "station": null,
+       "sequence": {
+        "enabled": true,
+        "clock": "seconds",
+        "steps": [
+         {
+          "id": "aletheia-work-a",
+          "text": "◉",
+          "shape": "text",
+          "hold": 1.2,
+          "transition": 0.8,
+          "position": null,
+          "objectState": {
+           "size": {
+            "x": 0.9,
+            "y": 1
+           },
+           "rotation": 0,
+           "scale": 1,
+           "tint": "#6fb3c8",
+           "tintWeight": 1,
+           "force": {
+            "kind": "vortex",
+            "strength": 1.1,
+            "radius": 0.42,
+            "spin": 0.9
+           }
+          }
+         },
+         {
+          "id": "aletheia-work-b",
+          "text": "",
+          "shape": "yantra",
+          "hold": 1.2,
+          "transition": 0.9,
+          "position": null,
+          "objectState": {
+           "size": {
+            "x": 1.05,
+            "y": 1.05
+           },
+           "rotation": 45,
+           "scale": 1,
+           "tint": "#6fb3c8",
+           "tintWeight": 1,
+           "force": {
+            "kind": "vortex",
+            "strength": 1.4,
+            "radius": 0.48,
+            "spin": 1.3
+           }
+          },
+          "yantraId": "ajna",
+          "name": "yantra"
+         },
+         {
+          "id": "aletheia-work-c",
+          "text": "",
+          "shape": "cymatic",
+          "hold": 1.4,
+          "transition": 1,
+          "position": null,
+          "objectState": {
+           "size": {
+            "x": 1.2,
+            "y": 1.2
+           },
+           "rotation": 90,
+           "scale": 1,
+           "tint": "#6fb3c8",
+           "tintWeight": 0.9,
+           "force": {
+            "kind": "repel",
+            "strength": 0.6,
+            "radius": 0.5,
+            "spin": 0.4
+           }
+          },
+          "templateFrequency": 528,
+          "templateGeometry": "circular",
+          "templateDimension": "2D",
+          "name": "resonance"
+         }
+        ],
+        "order": "loop",
+        "easing": "kineticSnap",
+        "rateMul": 1.4
+       },
+       "role": "self",
+       "source": {
+        "kind": "ascii",
+        "ascii": {
+         "text": "  .-^-.  \n (  ◉  ) \n  `-v-'  ",
+         "fontFamily": "Menlo, monospace",
+         "fontSize": 64,
+         "invert": false
+        }
+       },
+       "yantraId": "ajna"
+      }
+     ],
+     "text": [
+      {
+       "id": "t-label",
+       "visible": true,
+       "kicker": "ALETHEIA",
+       "title": "Working",
+       "italic": "",
+       "body": "",
+       "x": 0.06,
+       "y": 0.86,
+       "width": 520,
+       "size": 18,
+       "align": "left",
+       "role": "caption"
+      }
+     ],
+     "composition": {
+      "layout": "free",
+      "plane": "XY",
+      "focus": "parallel",
+      "focusDuration": 4,
+      "carryTint": true,
+      "carryStation": false,
+      "frequencyDriver": "manual"
+     },
+     "morph": {
+      "thetaRate": 0.08,
+      "phiRate": 0.13,
+      "thetaOffset": 0,
+      "phiOffset": 0,
+      "law": "theta",
+      "depth": 1,
+      "dwell": 0.3
+     },
+     "automation": [
+      {
+       "id": "aletheia-work-spin",
+       "enabled": true,
+       "target": "entity:expression%3Afx-character-aletheia%3Aentity%3Aself:forces.spin",
+       "type": "lfo",
+       "wave": "sine",
+       "min": 0.6,
+       "max": 1.4,
+       "rate": 0.25,
+       "phase": 0,
+       "blend": "replace",
+       "duration": 0,
+       "delay": 0,
+       "loop": "loop",
+       "firedAt": null
+      }
+     ],
+     "resonanceDrive": {
+      "kind": "sweep",
+      "glideS": 6,
+      "dwellS": 2,
+      "direction": "pingpong"
+     }
+    }
+   },
+   "triggers": []
+  },
+  {
+   "scene_ref": "expression:fx-character-aletheia:scene:speaking",
+   "revision": 1,
+   "title": "Speaking",
+   "entity_refs": [
+    "expression:fx-character-aletheia:entity:self"
+   ],
+   "presentation": {
+    "schema": "oi.journey-scene/v1",
+    "scene": {
+     "toolbelt": [
+      {
+       "id": "speed",
+       "scope": "field",
+       "key": "timeScale"
+      },
+      {
+       "id": "spring",
+       "scope": "field",
+       "key": "recovery"
+      },
+      {
+       "id": "viscosity",
+       "scope": "field",
+       "key": "native_fluid__viscosity"
+      },
+      {
+       "id": "flow",
+       "scope": "field",
+       "key": "turbulence"
+      },
+      {
+       "id": "transition",
+       "scope": "selected",
+       "key": "sequence.transition"
+      },
+      {
+       "id": "blend",
+       "scope": "field",
+       "key": "native_morphProgress"
+      }
+     ],
+     "engine": {
+      "paletteSource": "custom",
+      "grainProfile": true,
+      "backgroundMode": "ambientGlow",
+      "resonatorMode": "resonator",
+      "focusOrder": "listed",
+      "dotShape": "circle",
+      "autoFitSizes": true,
+      "mediumEnabled": false,
+      "collisionEnabled": false,
+      "collisionMode": "obstacle",
+      "pairwiseEnabled": false,
+      "fontFamily": "system-ui, -apple-system, sans-serif",
+      "fontWeight": 900,
+      "resonanceEnabled": true,
+      "morphEnabled": true,
+      "trajectory": "toroidalHopf",
+      "driveShape": "sine",
+      "autoOscillate": true,
+      "relationalEnabled": false,
+      "relationalMode": "orbital",
+      "pointerMode": "repel",
+      "pointerClick": "pulse",
+      "pointerClickStrength": 2.2,
+      "pointerClickRadius": 0.45,
+      "colorMode": "linearGradient",
+      "colorEnabled": true,
+      "mediumPlane": "vertical",
+      "mediumDimension": "2D",
+      "autoSweep": false,
+      "sweepDirection": "ascent",
+      "inkMode": "whiteOnBlack"
+     },
+     "id": "expression:fx-character-aletheia:scene:speaking",
+     "name": "Speaking",
+     "character": "Aletheia — the unconcealing lamp speaking: the inscription flickers between forms.",
+     "duration": 12,
+     "transition": 1.5,
+     "view": {
+      "mode": "2d",
+      "yaw": 0,
+      "pitch": 0,
+      "zoom": 1,
+      "panX": 0,
+      "panY": 0
+     },
+     "field": {
+      "background": "#12161a",
+      "palette": [
+       "#efe6d2",
+       "#9fb7b0",
+       "#d9a36a"
+      ],
+      "material": "round",
+      "params": {
+       "count": 54000,
+       "size": 2.2,
+       "sizeBias": 1.6,
+       "opacity": 0.9,
+       "roundness": 0.95,
+       "softness": 0.15,
+       "irregularity": 0.35,
+       "elongation": 0.04,
+       "orientation": 0,
+       "contrast": 0.82,
+       "densityScale": 1,
+       "densityPhase": 1.7,
+       "edgeWeight": 0,
+       "halo": 0.22,
+       "speed": 0.62,
+       "circulation": 1,
+       "turbulence": 0.18,
+       "turbulenceScale": 1.2,
+       "recovery": 1.1,
+       "dispersion": 0.07,
+       "pointerStrength": 0.8,
+       "pointerRadius": 0.23,
+       "pointerFalloff": 2,
+       "depth": 0.12,
+       "grain": 0.035,
+       "snapRigidity": 1,
+       "densityTether": 1,
+       "curlDepth": 0.2,
+       "vortexRadius": 0.4,
+       "gravityX": 0,
+       "gravityY": 0,
+       "gravityZ": 0,
+       "quadraticDrag": 0.2,
+       "thermalJitter": 0,
+       "speedLimit": 3,
+       "zConfinement": 1,
+       "timeScale": 1,
+       "gravitySoftening": 0.1,
+       "gravityFalloff": 2,
+       "swirlRadius": 0.4,
+       "frequency": 220,
+       "dominance": 0,
+       "excitation": 0.6
+      }
+     },
+     "entities": [
+      {
+       "id": "expression:fx-character-aletheia:entity:self",
+       "name": "Aletheia",
+       "kind": "formation",
+       "position": {
+        "x": 0,
+        "y": 0.02,
+        "z": 0
+       },
+       "size": {
+        "x": 0.9,
+        "y": 1.02
+       },
+       "rotation": 0,
+       "shape": "text",
+       "text": "◉",
+       "share": 1,
+       "tint": "#6fb3c8",
+       "tintWeight": 0.85,
+       "locked": false,
+       "force": {
+        "kind": "repel",
+        "strength": 0.5,
+        "radius": 0.38,
+        "spin": 0.2
+       },
+       "station": null,
+       "sequence": {
+        "enabled": true,
+        "clock": "seconds",
+        "steps": [
+         {
+          "id": "aletheia-speak-a",
+          "text": "◉",
+          "shape": "text",
+          "hold": 0.45,
+          "transition": 0.25,
+          "position": null,
+          "objectState": {
+           "size": {
+            "x": 0.95,
+            "y": 1.05
+           },
+           "rotation": 0,
+           "scale": 1,
+           "tint": "#6fb3c8",
+           "tintWeight": 1,
+           "force": {
+            "kind": "repel",
+            "strength": 0.5,
+            "radius": 0.38,
+            "spin": 0.2
+           }
+          }
+         },
+         {
+          "id": "aletheia-speak-b",
+          "text": "◈",
+          "shape": "text",
+          "hold": 0.35,
+          "transition": 0.2,
+          "position": null,
+          "objectState": {
+           "size": {
+            "x": 1.02,
+            "y": 1.1
+           },
+           "rotation": -6,
+           "scale": 1,
+           "tint": "#6fb3c8",
+           "tintWeight": 1,
+           "force": {
+            "kind": "repel",
+            "strength": 0.8,
+            "radius": 0.42,
+            "spin": 0.3
+           }
+          },
+          "name": "utter"
+         }
+        ],
+        "order": "loop",
+        "easing": "whip",
+        "jitter": 0.15,
+        "impulse": 0.8
+       },
+       "role": "self",
+       "source": {
+        "kind": "ascii",
+        "ascii": {
+         "text": "  .-^-.  \n (  ◉  ) \n  `-v-'  ",
+         "fontFamily": "Menlo, monospace",
+         "fontSize": 64,
+         "invert": false
+        }
+       }
+      }
+     ],
+     "text": [
+      {
+       "id": "t-label",
+       "visible": true,
+       "kicker": "ALETHEIA",
+       "title": "Speaking",
+       "italic": "",
+       "body": "",
+       "x": 0.06,
+       "y": 0.86,
+       "width": 520,
+       "size": 18,
+       "align": "left",
+       "role": "caption"
+      }
+     ],
+     "composition": {
+      "layout": "free",
+      "plane": "XY",
+      "focus": "parallel",
+      "focusDuration": 4,
+      "carryTint": true,
+      "carryStation": false,
+      "frequencyDriver": "manual"
+     },
+     "morph": {
+      "thetaRate": 0.08,
+      "phiRate": 0.13,
+      "thetaOffset": 0,
+      "phiOffset": 0,
+      "law": "theta",
+      "depth": 1,
+      "dwell": 0.3
+     },
+     "automation": [
+      {
+       "id": "aletheia-speak-pulse",
+       "enabled": true,
+       "target": "field.excitation",
+       "type": "lfo",
+       "wave": "square",
+       "min": 0.4,
+       "max": 0.95,
+       "rate": 2.2,
+       "phase": 0,
+       "blend": "replace",
+       "duration": 0,
+       "delay": 0,
+       "loop": "loop",
+       "firedAt": null
+      }
+     ]
+    }
+   },
+   "triggers": []
+  },
+  {
+   "scene_ref": "expression:fx-character-aletheia:scene:invoke-skill",
+   "revision": 1,
+   "title": "Invoke skill",
+   "entity_refs": [
+    "expression:fx-character-aletheia:entity:self"
+   ],
+   "presentation": {
+    "schema": "oi.journey-scene/v1",
+    "scene": {
+     "toolbelt": [
+      {
+       "id": "speed",
+       "scope": "field",
+       "key": "timeScale"
+      },
+      {
+       "id": "spring",
+       "scope": "field",
+       "key": "recovery"
+      },
+      {
+       "id": "viscosity",
+       "scope": "field",
+       "key": "native_fluid__viscosity"
+      },
+      {
+       "id": "flow",
+       "scope": "field",
+       "key": "turbulence"
+      },
+      {
+       "id": "transition",
+       "scope": "selected",
+       "key": "sequence.transition"
+      },
+      {
+       "id": "blend",
+       "scope": "field",
+       "key": "native_morphProgress"
+      }
+     ],
+     "engine": {
+      "paletteSource": "custom",
+      "grainProfile": true,
+      "backgroundMode": "ambientGlow",
+      "resonatorMode": "resonator",
+      "focusOrder": "listed",
+      "dotShape": "circle",
+      "autoFitSizes": true,
+      "mediumEnabled": false,
+      "collisionEnabled": false,
+      "collisionMode": "obstacle",
+      "pairwiseEnabled": false,
+      "fontFamily": "system-ui, -apple-system, sans-serif",
+      "fontWeight": 900,
+      "resonanceEnabled": true,
+      "morphEnabled": true,
+      "trajectory": "toroidalHopf",
+      "driveShape": "sine",
+      "autoOscillate": true,
+      "relationalEnabled": false,
+      "relationalMode": "orbital",
+      "pointerMode": "repel",
+      "pointerClick": "pulse",
+      "pointerClickStrength": 2.2,
+      "pointerClickRadius": 0.45,
+      "colorMode": "linearGradient",
+      "colorEnabled": true,
+      "mediumPlane": "vertical",
+      "mediumDimension": "2D",
+      "autoSweep": false,
+      "sweepDirection": "ascent",
+      "inkMode": "whiteOnBlack"
+     },
+     "id": "expression:fx-character-aletheia:scene:invoke-skill",
+     "name": "Invoke skill",
+     "character": "Aletheia — the unconcealing lamp: invoke skill while the current Scene continues.",
+     "duration": 4,
+     "transition": 0.4,
+     "view": {
+      "mode": "2d",
+      "yaw": 0,
+      "pitch": 0,
+      "zoom": 1,
+      "panX": 0,
+      "panY": 0
+     },
+     "field": {
+      "background": "#12161a",
+      "palette": [
+       "#efe6d2",
+       "#9fb7b0",
+       "#d9a36a"
+      ],
+      "material": "round",
+      "params": {
+       "count": 54000,
+       "size": 2.2,
+       "sizeBias": 1.6,
+       "opacity": 0.9,
+       "roundness": 0.95,
+       "softness": 0.15,
+       "irregularity": 0.35,
+       "elongation": 0.04,
+       "orientation": 0,
+       "contrast": 0.82,
+       "densityScale": 1,
+       "densityPhase": 1.7,
+       "edgeWeight": 0,
+       "halo": 0.22,
+       "speed": 0.62,
+       "circulation": 1,
+       "turbulence": 0.18,
+       "turbulenceScale": 1.2,
+       "recovery": 1.1,
+       "dispersion": 0.07,
+       "pointerStrength": 0.8,
+       "pointerRadius": 0.23,
+       "pointerFalloff": 2,
+       "depth": 0.12,
+       "grain": 0.035,
+       "snapRigidity": 1,
+       "densityTether": 1,
+       "curlDepth": 0.2,
+       "vortexRadius": 0.4,
+       "gravityX": 0,
+       "gravityY": 0,
+       "gravityZ": 0,
+       "quadraticDrag": 0.2,
+       "thermalJitter": 0,
+       "speedLimit": 3,
+       "zConfinement": 1,
+       "timeScale": 1,
+       "gravitySoftening": 0.1,
+       "gravityFalloff": 2,
+       "swirlRadius": 0.4,
+       "frequency": 220,
+       "dominance": 0,
+       "excitation": 0.6
+      }
+     },
+     "entities": [
+      {
+       "id": "expression:fx-character-aletheia:entity:self",
+       "name": "Aletheia",
+       "kind": "formation",
+       "position": {
+        "x": 0,
+        "y": 0.02,
+        "z": 0
+       },
+       "size": {
+        "x": 0.9,
+        "y": 1.02
+       },
+       "rotation": 0,
+       "shape": "text",
+       "text": "◉",
+       "share": 1,
+       "tint": "#6fb3c8",
+       "tintWeight": 0.85,
+       "locked": false,
+       "force": {
+        "kind": "attract",
+        "strength": 0,
+        "radius": 0.45,
+        "spin": 0
+       },
+       "station": null,
+       "sequence": {
+        "enabled": true,
+        "clock": "seconds",
+        "steps": [
+         {
+          "id": "aletheia-invoke-skill-0",
+          "text": "◉",
+          "shape": "text",
+          "hold": 0.2,
+          "transition": 0.25,
+          "position": null,
+          "objectState": {
+           "size": {
+            "x": 0.9,
+            "y": 1
+           },
+           "rotation": 0,
+           "scale": 1,
+           "tint": "#6fb3c8",
+           "tintWeight": 1,
+           "force": {
+            "kind": "attract",
+            "strength": 0.6,
+            "radius": 0.4,
+            "spin": 0.2
+           }
+          }
+         },
+         {
+          "id": "aletheia-invoke-skill-1",
+          "text": "☼",
+          "shape": "text",
+          "hold": 0.3,
+          "transition": 0.35,
+          "position": null,
+          "objectState": {
+           "size": {
+            "x": 1,
+            "y": 1
+           },
+           "rotation": 30,
+           "scale": 1,
+           "tint": "#6fb3c8",
+           "tintWeight": 1,
+           "force": {
+            "kind": "vortex",
+            "strength": 1,
+            "radius": 0.45,
+            "spin": 1.2
+           }
+          },
+          "name": "invoke-skill 1"
+         },
+         {
+          "id": "aletheia-invoke-skill-2",
+          "text": "✶",
+          "shape": "text",
+          "hold": 0.3,
+          "transition": 0.35,
+          "position": null,
+          "objectState": {
+           "size": {
+            "x": 1.15,
+            "y": 1.15
+           },
+           "rotation": 60,
+           "scale": 1,
+           "tint": "#6fb3c8",
+           "tintWeight": 1,
+           "force": {
+            "kind": "repel",
+            "strength": 1.5,
+            "radius": 0.5,
+            "spin": 1.2
+           }
+          },
+          "name": "invoke-skill 2"
+         },
+         {
+          "id": "aletheia-invoke-skill-3",
+          "text": "◎",
+          "shape": "text",
+          "hold": 0.3,
+          "transition": 0.35,
+          "position": null,
+          "objectState": {
+           "size": {
+            "x": 1.3,
+            "y": 1.3
+           },
+           "rotation": 90,
+           "scale": 1,
+           "tint": "#6fb3c8",
+           "tintWeight": 1,
+           "force": {
+            "kind": "vortex",
+            "strength": 2,
+            "radius": 0.55,
+            "spin": 1.2
+           }
+          },
+          "name": "invoke-skill 3"
+         },
+         {
+          "id": "aletheia-invoke-skill-end",
+          "text": "◉",
+          "shape": "text",
+          "hold": 0.5,
+          "transition": 0.6,
+          "position": null,
+          "objectState": {
+           "size": {
+            "x": 0.9,
+            "y": 1
+           },
+           "rotation": 360,
+           "scale": 1,
+           "tint": "#6fb3c8",
+           "tintWeight": 0.85,
+           "force": {
+            "kind": "attract",
+            "strength": 0.35,
+            "radius": 0.5,
+            "spin": 0.04
+           }
+          }
+         }
+        ],
+        "order": "loop",
+        "manual": false,
+        "easing": "whip",
+        "impulse": 1.2
+       },
+       "role": "self",
+       "source": {
+        "kind": "ascii",
+        "ascii": {
+         "text": "  .-^-.  \n (  ◉  ) \n  `-v-'  ",
+         "fontFamily": "Menlo, monospace",
+         "fontSize": 64,
+         "invert": false
+        }
+       }
+      }
+     ],
+     "text": [
+      {
+       "id": "t-label",
+       "visible": true,
+       "kicker": "ALETHEIA",
+       "title": "Invoke skill",
+       "italic": "",
+       "body": "",
+       "x": 0.06,
+       "y": 0.86,
+       "width": 520,
+       "size": 18,
+       "align": "left",
+       "role": "caption"
+      }
+     ],
+     "composition": {
+      "layout": "free",
+      "plane": "XY",
+      "focus": "parallel",
+      "focusDuration": 4,
+      "carryTint": true,
+      "carryStation": false,
+      "frequencyDriver": "manual"
+     },
+     "morph": {
+      "thetaRate": 0.08,
+      "phiRate": 0.13,
+      "thetaOffset": 0,
+      "phiOffset": 0,
+      "law": "theta",
+      "depth": 1,
+      "dwell": 0.3
+     },
+     "automation": [
+      {
+       "id": "aletheia-invoke-skill-burst",
+       "enabled": true,
+       "target": "field.excitation",
+       "type": "ramp",
+       "wave": "smooth",
+       "min": 0.2,
+       "max": 1,
+       "rate": 1,
+       "phase": 0,
+       "blend": "replace",
+       "duration": 1.2,
+       "delay": 0,
+       "loop": "once",
+       "firedAt": null,
+       "easing": "whip"
+      }
+     ]
+    }
+   },
+   "triggers": []
+  },
+  {
+   "scene_ref": "expression:fx-character-aletheia:scene:operate",
+   "revision": 1,
+   "title": "Operate",
+   "entity_refs": [
+    "expression:fx-character-aletheia:entity:self"
+   ],
+   "presentation": {
+    "schema": "oi.journey-scene/v1",
+    "scene": {
+     "toolbelt": [
+      {
+       "id": "speed",
+       "scope": "field",
+       "key": "timeScale"
+      },
+      {
+       "id": "spring",
+       "scope": "field",
+       "key": "recovery"
+      },
+      {
+       "id": "viscosity",
+       "scope": "field",
+       "key": "native_fluid__viscosity"
+      },
+      {
+       "id": "flow",
+       "scope": "field",
+       "key": "turbulence"
+      },
+      {
+       "id": "transition",
+       "scope": "selected",
+       "key": "sequence.transition"
+      },
+      {
+       "id": "blend",
+       "scope": "field",
+       "key": "native_morphProgress"
+      }
+     ],
+     "engine": {
+      "paletteSource": "custom",
+      "grainProfile": true,
+      "backgroundMode": "ambientGlow",
+      "resonatorMode": "resonator",
+      "focusOrder": "listed",
+      "dotShape": "circle",
+      "autoFitSizes": true,
+      "mediumEnabled": false,
+      "collisionEnabled": false,
+      "collisionMode": "obstacle",
+      "pairwiseEnabled": false,
+      "fontFamily": "system-ui, -apple-system, sans-serif",
+      "fontWeight": 900,
+      "resonanceEnabled": true,
+      "morphEnabled": true,
+      "trajectory": "toroidalHopf",
+      "driveShape": "sine",
+      "autoOscillate": true,
+      "relationalEnabled": false,
+      "relationalMode": "orbital",
+      "pointerMode": "repel",
+      "pointerClick": "pulse",
+      "pointerClickStrength": 2.2,
+      "pointerClickRadius": 0.45,
+      "colorMode": "linearGradient",
+      "colorEnabled": true,
+      "mediumPlane": "vertical",
+      "mediumDimension": "2D",
+      "autoSweep": false,
+      "sweepDirection": "ascent",
+      "inkMode": "whiteOnBlack"
+     },
+     "id": "expression:fx-character-aletheia:scene:operate",
+     "name": "Operate",
+     "character": "Aletheia — the unconcealing lamp: operate while the current Scene continues.",
+     "duration": 4,
+     "transition": 0.4,
+     "view": {
+      "mode": "2d",
+      "yaw": 0,
+      "pitch": 0,
+      "zoom": 1,
+      "panX": 0,
+      "panY": 0
+     },
+     "field": {
+      "background": "#12161a",
+      "palette": [
+       "#efe6d2",
+       "#9fb7b0",
+       "#d9a36a"
+      ],
+      "material": "round",
+      "params": {
+       "count": 54000,
+       "size": 2.2,
+       "sizeBias": 1.6,
+       "opacity": 0.9,
+       "roundness": 0.95,
+       "softness": 0.15,
+       "irregularity": 0.35,
+       "elongation": 0.04,
+       "orientation": 0,
+       "contrast": 0.82,
+       "densityScale": 1,
+       "densityPhase": 1.7,
+       "edgeWeight": 0,
+       "halo": 0.22,
+       "speed": 0.62,
+       "circulation": 1,
+       "turbulence": 0.18,
+       "turbulenceScale": 1.2,
+       "recovery": 1.1,
+       "dispersion": 0.07,
+       "pointerStrength": 0.8,
+       "pointerRadius": 0.23,
+       "pointerFalloff": 2,
+       "depth": 0.12,
+       "grain": 0.035,
+       "snapRigidity": 1,
+       "densityTether": 1,
+       "curlDepth": 0.2,
+       "vortexRadius": 0.4,
+       "gravityX": 0,
+       "gravityY": 0,
+       "gravityZ": 0,
+       "quadraticDrag": 0.2,
+       "thermalJitter": 0,
+       "speedLimit": 3,
+       "zConfinement": 1,
+       "timeScale": 1,
+       "gravitySoftening": 0.1,
+       "gravityFalloff": 2,
+       "swirlRadius": 0.4,
+       "frequency": 220,
+       "dominance": 0,
+       "excitation": 0.6
+      }
+     },
+     "entities": [
+      {
+       "id": "expression:fx-character-aletheia:entity:self",
+       "name": "Aletheia",
+       "kind": "formation",
+       "position": {
+        "x": 0,
+        "y": 0.02,
+        "z": 0
+       },
+       "size": {
+        "x": 0.9,
+        "y": 1.02
+       },
+       "rotation": 0,
+       "shape": "text",
+       "text": "◉",
+       "share": 1,
+       "tint": "#6fb3c8",
+       "tintWeight": 0.85,
+       "locked": false,
+       "force": {
+        "kind": "attract",
+        "strength": 0,
+        "radius": 0.45,
+        "spin": 0
+       },
+       "station": null,
+       "sequence": {
+        "enabled": true,
+        "clock": "seconds",
+        "steps": [
+         {
+          "id": "aletheia-operate-0",
+          "text": "◉",
+          "shape": "text",
+          "hold": 0.2,
+          "transition": 0.25,
+          "position": null,
+          "objectState": {
+           "size": {
+            "x": 0.9,
+            "y": 1
+           },
+           "rotation": 0,
+           "scale": 1,
+           "tint": "#6fb3c8",
+           "tintWeight": 1,
+           "force": {
+            "kind": "attract",
+            "strength": 0.6,
+            "radius": 0.4,
+            "spin": 0.2
+           }
+          }
+         },
+         {
+          "id": "aletheia-operate-1",
+          "text": "▣",
+          "shape": "text",
+          "hold": 0.3,
+          "transition": 0.35,
+          "position": null,
+          "objectState": {
+           "size": {
+            "x": 1,
+            "y": 1
+           },
+           "rotation": 30,
+           "scale": 1,
+           "tint": "#6fb3c8",
+           "tintWeight": 1,
+           "force": {
+            "kind": "vortex",
+            "strength": 1,
+            "radius": 0.45,
+            "spin": 1.2
+           }
+          },
+          "name": "operate 1"
+         },
+         {
+          "id": "aletheia-operate-2",
+          "text": "◇",
+          "shape": "text",
+          "hold": 0.3,
+          "transition": 0.35,
+          "position": null,
+          "objectState": {
+           "size": {
+            "x": 1.15,
+            "y": 1.15
+           },
+           "rotation": 60,
+           "scale": 1,
+           "tint": "#6fb3c8",
+           "tintWeight": 1,
+           "force": {
+            "kind": "repel",
+            "strength": 1.5,
+            "radius": 0.5,
+            "spin": 1.2
+           }
+          },
+          "name": "operate 2"
+         },
+         {
+          "id": "aletheia-operate-end",
+          "text": "◉",
+          "shape": "text",
+          "hold": 0.5,
+          "transition": 0.6,
+          "position": null,
+          "objectState": {
+           "size": {
+            "x": 0.9,
+            "y": 1
+           },
+           "rotation": 360,
+           "scale": 1,
+           "tint": "#6fb3c8",
+           "tintWeight": 0.85,
+           "force": {
+            "kind": "attract",
+            "strength": 0.35,
+            "radius": 0.5,
+            "spin": 0.04
+           }
+          }
+         }
+        ],
+        "order": "loop",
+        "manual": false,
+        "easing": "kineticSnap",
+        "impulse": 1.2
+       },
+       "role": "self",
+       "source": {
+        "kind": "ascii",
+        "ascii": {
+         "text": "  .-^-.  \n (  ◉  ) \n  `-v-'  ",
+         "fontFamily": "Menlo, monospace",
+         "fontSize": 64,
+         "invert": false
+        }
+       }
+      }
+     ],
+     "text": [
+      {
+       "id": "t-label",
+       "visible": true,
+       "kicker": "ALETHEIA",
+       "title": "Operate",
+       "italic": "",
+       "body": "",
+       "x": 0.06,
+       "y": 0.86,
+       "width": 520,
+       "size": 18,
+       "align": "left",
+       "role": "caption"
+      }
+     ],
+     "composition": {
+      "layout": "free",
+      "plane": "XY",
+      "focus": "parallel",
+      "focusDuration": 4,
+      "carryTint": true,
+      "carryStation": false,
+      "frequencyDriver": "manual"
+     },
+     "morph": {
+      "thetaRate": 0.08,
+      "phiRate": 0.13,
+      "thetaOffset": 0,
+      "phiOffset": 0,
+      "law": "theta",
+      "depth": 1,
+      "dwell": 0.3
+     },
+     "automation": [
+      {
+       "id": "aletheia-operate-burst",
+       "enabled": true,
+       "target": "field.excitation",
+       "type": "ramp",
+       "wave": "smooth",
+       "min": 0.2,
+       "max": 1,
+       "rate": 1,
+       "phase": 0,
+       "blend": "replace",
+       "duration": 1.2,
+       "delay": 0,
+       "loop": "once",
+       "firedAt": null,
+       "easing": "whip"
+      }
+     ]
+    }
+   },
+   "triggers": []
+  }
+ ],
+ "entities": {
+  "expression:fx-character-aletheia:entity:self": {
+   "entity_ref": "expression:fx-character-aletheia:entity:self",
+   "revision": 1,
+   "title": "Aletheia",
+   "subject": null,
+   "parameters": {}
+  }
+ },
+ "relations": {},
+ "selection": {
+  "scene_ref": "expression:fx-character-aletheia:scene:idle",
+  "entity_ref": null
+ },
+ "provenance": [
+  {
+   "ref": "oi:desktop/cradle/material/factory-expressions",
+   "revision": "curated-2026-09-26",
+   "availability": "available"
+  }
+ ],
+ "representations": [],
+ "refinements": [],
+ "collections": [
+  "factory-expressions"
+ ],
+ "reuse": {
+  "schema": "oi.expression-reuse/v1",
+  "authored_by": "agent:factory-expressions-lane-c",
+  "kind": "character",
+  "title": "Aletheia — the unconcealing lamp",
+  "roles": [
+   {
+    "role": "self",
+    "accepts": "agent",
+    "entity_ref": "expression:fx-character-aletheia:entity:self"
+   },
+   {
+    "role": "caption",
+    "accepts": "text",
+    "text_id": "t-label"
+   }
+  ],
+  "entry_scene_ref": "expression:fx-character-aletheia:scene:idle",
+  "states": {
+   "idle": "expression:fx-character-aletheia:scene:idle",
+   "working": "expression:fx-character-aletheia:scene:working",
+   "speaking": "expression:fx-character-aletheia:scene:speaking"
+  },
+  "gestures": {
+   "invoke-skill": {
+    "scene_ref": "expression:fx-character-aletheia:scene:invoke-skill",
+    "role": "self"
+   },
+   "operate": {
+    "scene_ref": "expression:fx-character-aletheia:scene:operate",
+    "role": "self"
+   }
+  },
+  "playback": [
+   "expression:fx-character-aletheia:scene:idle",
+   "expression:fx-character-aletheia:scene:working",
+   "expression:fx-character-aletheia:scene:speaking"
+  ],
+  "preview_state": "idle",
+  "associations": {
+   "workflow_keys": [],
+   "task_types": [],
+   "skill_set_refs": [],
+   "skill_refs": [],
+   "event_families": [
+    "arrival",
+    "activity",
+    "skill-invocation",
+    "tool-operation"
+   ]
+  }
+ }
+}

@@ -6,7 +6,7 @@ import {applyNativeDelta} from './nativeDelta';
 import type {PointCloudConfig,AutomationLane as NativeLane} from '../../src/engine/types';
 import {DEFAULT_CONFIG,DEFAULT_COLOR_CONFIG,DEFAULT_TOROIDAL_CONFIG,DEFAULT_MEDIUM_CONFIG,DEFAULT_COLLISION_CONFIG,DEFAULT_PAIRWISE_CONFIG,DEFAULT_DEPTH_CONFIG} from '../../src/engine/PointCloudField';
 import {DEFAULT_GLYPH_VOLUME} from '../../src/engine/glyphVolume';
-import {DEFAULT_SEQUENCE,DEFAULT_FORCES,DEFAULT_COMPOSITION,DEFAULT_CYMATIC_MEDIUM,MAX_FORMATIONS,MAX_PINS,type Entity as NativeEntity,type Shape as NativeShape} from '../../src/engine/fieldModel';
+import {DEFAULT_SEQUENCE,DEFAULT_FORCES,DEFAULT_COMPOSITION,DEFAULT_CYMATIC_MEDIUM,type Entity as NativeEntity,type Shape as NativeShape} from '../../src/engine/fieldModel';
 import {makeSemanticChakraEntities} from '../../src/engine/semantics/chakraPresets';
 import {migrateSnapshot,CONFIG_SCHEMA_VERSION} from '../../src/engine/configMigration';
 import {writePath,readPath} from '../../src/engine/automation';
@@ -24,8 +24,10 @@ export function assertSafe(value:unknown,depth=0):void{
  }
 }
 export function checkNativeLimits(s:Scene){
- if(s.entities.filter(e=>e.kind==='formation').length>MAX_FORMATIONS)throw new Error(`The native field supports ${MAX_FORMATIONS} formations per scene. Nothing was imported or discarded.`);
- if(s.entities.filter(e=>e.kind==='pin').length>MAX_PINS)throw new Error(`The native field supports ${MAX_PINS} pins per scene. Nothing was imported or discarded.`);
+ // The formation/pin counts are not refused: the field renders up to its
+ // uniform budget per pass (fieldModel MAX_FORMATIONS/MAX_PINS) and the
+ // Expression view pages larger scenes. Only genuinely validated numbers
+ // are enforced here.
  for(const b of NATIVE_BINDINGS){const value=baseValue(s,b.key);if(!Number.isFinite(value)||value<b.hardMin||value>b.hardMax)throw new Error(`${b.label} is outside its native validated bounds (${b.hardMin}–${b.hardMax}).`);}
 }
 function shapeOf(e:Pick<Entity,'shape'|'text'|'yantraId'|'templateFrequency'|'templateGeometry'|'templateDimension'>,native?:NativeShape):NativeShape{
@@ -139,8 +141,7 @@ export function nativeSnapshotToJourney(raw:unknown,index=0):Journey{
  if(Number(value.schemaVersion??0)>CONFIG_SCHEMA_VERSION)throw new Error(`Native schema ${value.schemaVersion} is newer than ${CONFIG_SCHEMA_VERSION}; the original is unchanged.`);
  const source=value.config??value;
  if(!source||!['entities','fluid','glyph','spatialChakra','particleCount'].some(k=>k in source))throw new Error('Not a recognised native configuration');
- if(!source.entities&&Array.isArray(source.interaction?.placedPoints)&&source.interaction.placedPoints.length>8)throw new Error('Native pin capacity exceeded; original entries have not been truncated.');
- const rawEntities=source.entities;if(Array.isArray(rawEntities)&&(rawEntities.filter((e:any)=>e.kind==='formation').length>10||rawEntities.filter((e:any)=>e.kind==='pin').length>8))throw new Error('Native capacity exceeded; no entities were silently truncated.');
+ const rawEntities=source.entities;
  const snapshot=migrateSnapshot(value,index);if(!snapshot)throw new Error('Native migration returned no scene');
  const cfg=snapshot.config,s=blankScene(snapshot.name),j=blankJourney();
  const completeNative=Number(value.schemaVersion)>=4&&Number(value.schemaVersion)<=CONFIG_SCHEMA_VERSION&&source.fluid&&source.interaction&&source.particleSize&&typeof source.particleCount==='number'&&Array.isArray(source.entities);

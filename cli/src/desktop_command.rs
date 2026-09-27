@@ -17,6 +17,9 @@ fn command_desktop(args: &[OsString]) -> Result<i32, String> {
             "O:I M′ desktop application operations\n\
   oi desktop expression capabilities\n\
   oi desktop expression [SOCKET] REQUEST_JSON\n\
+                                  an Expression request, or an Expression-world\n\
+                                  request (acts, material, selection) whose body\n\
+                                  carries \"schema\":\"oi.expression-world/v1\"\n\
   oi desktop install --bundle PATH [--sha256 HEX] [--backing ID] [--plan] [--json]\n\
   oi desktop install --recorded [--backing ID] [--plan] [--json]\n\
                                   adopt a packaged Desktop bundle; recognition\n\
@@ -59,14 +62,14 @@ native menu."
     }
     #[cfg(unix)]
     if let ["expression", request] = values.as_slice() {
-        let request = serde_json::from_str(request).map_err(|e| format!("invalid Expression request: {e}"))?;
+        let request: oi_cradle_kernel::expression_transport::Request = serde_json::from_str(request).map_err(|e| format!("invalid Expression request: {e}"))?;
         let response = oi_cradle_kernel::expression_transport::call(&oi_cradle_kernel::expression_transport::default_socket_path()?, &request)?;
         println!("{response}");
         return Ok(if response["ok"] == true { 0 } else { 1 });
     }
     #[cfg(unix)]
     if let ["expression", socket, request] = values.as_slice() {
-        let request = serde_json::from_str(request).map_err(|e| format!("invalid Expression request: {e}"))?;
+        let request: oi_cradle_kernel::expression_transport::Request = serde_json::from_str(request).map_err(|e| format!("invalid Expression request: {e}"))?;
         let response = oi_cradle_kernel::expression_transport::call(Path::new(socket), &request)?;
         println!("{response}");
         return Ok(if response["ok"] == true { 0 } else { 1 });

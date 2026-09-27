@@ -22,7 +22,9 @@ const api={
   return {bindings:adapter.expressionBindingSnapshot(),canvasCount:host.querySelectorAll('canvas').length,
    calls:engine?.renderer.info.render.calls,clock:engine?.time,
    lines:layer?.paths.map((path:any)=>({ref:path.binding.binding_ref,point:engine.projectWorldToScreen(path.points[12].x,path.points[12].y,path.points[12].z),
-    vertices:Array.from(layer.objects.get(path.binding.binding_ref).geometry.getAttribute('position').array)})) ?? [],
+    // The connection is carried by field particles (connectionRuntime): the
+    // rendered proof is its evaluated path and its own allocated particle range.
+    points:path.points.length,particles:(()=>{const o=engine.nativeConnectionRuntime().inspect().occurrences.find((row:any)=>row.binding_ref===path.binding.binding_ref);return o?o.end-o.start:0;})()})) ?? [],
    entities:engine?.lastPoses.map((p:any)=>({ref:p.entityId,point:engine.projectWorldToScreen(p.x,p.y,p.z)})) ?? []};
  },
  dispose(){surface.dispose();}

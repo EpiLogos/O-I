@@ -11,4 +11,4 @@
   inset: 0;
 }
 
-.techne-owner-error { position: absolute; bottom: 1rem; left: 1rem; right: 1rem; z-index: var(--oi-z-stage-overlay); padding: 0.6rem 1rem; color: var(--oi-ink); background: var(--oi-surface); border: 1px solid var(--oi-border); }
+.techne-owner-error { position: absolute; bottom: 1rem; left: 1rem; right: 1rem; z-index: var(--oi-z-stage-overlay); padding: 0.6rem 1rem; color: var(--oi-ink); background: var(--oi-surface); border: 1px solid var(--oi-rule); }

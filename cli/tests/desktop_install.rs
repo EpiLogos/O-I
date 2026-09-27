@@ -109,7 +109,7 @@ fn pack_bundle(data_home: &Path, home: &Path, version: &str) -> (PathBuf, TempDi
 
     let (app_entry, app_kind) = if target.ends_with("darwin") {
         write_executable(
-            &app_dir.join("O-I.app/Contents/MacOS/O-I"),
+            &app_dir.join("O-I.app/Contents/MacOS/oi-cradle"),
             "#!/bin/sh\necho oi-cradle\n",
         );
         ("app/O-I.app".to_string(), "app-bundle".to_string())
@@ -262,7 +262,7 @@ fn install(sandbox: &Sandbox, archive: &Path, extra: &[&str]) -> Output {
 
 fn expected_executable(sandbox: &Sandbox) -> PathBuf {
     if host_target().ends_with("darwin") {
-        sandbox.home.join("Applications/O-I.app/Contents/MacOS/O-I")
+        sandbox.home.join("Applications/O-I.app/Contents/MacOS/oi-cradle")
     } else {
         sandbox.data_home.join("bin/oi-cradle")
     }

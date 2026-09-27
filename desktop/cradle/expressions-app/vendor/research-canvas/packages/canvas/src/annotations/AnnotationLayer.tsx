@@ -9,12 +9,20 @@ interface AnnotationLayerProps {
   annotations: Annotation[];
   drawingEnabled: boolean;
   onCreateStroke: (points: AnnotationPoint[]) => void;
+  /** Colour of the in-progress stroke; matches the host's stroke tool. */
+  draftColour?: string;
+  /** Erase mode: tapping a stroke removes it through onDeleteStroke. */
+  erasing?: boolean;
+  onDeleteStroke?: (annotationId: string) => void;
 }
 
 export function AnnotationLayer({
   annotations,
   drawingEnabled,
-  onCreateStroke
+  onCreateStroke,
+  draftColour,
+  erasing = false,
+  onDeleteStroke
 }: AnnotationLayerProps) {
   const { screenToFlowPosition } = useReactFlow();
   const viewport = useViewport();
@@ -23,7 +31,7 @@ export function AnnotationLayer({
   const drawingRef = useRef(false);
 
   const beginStroke = (event: PointerEvent<SVGSVGElement>) => {
-    if (!drawingEnabled) {
+    if (!drawingEnabled || erasing) {
       return;
     }
 
@@ -32,6 +40,14 @@ export function AnnotationLayer({
     draftPointsRef.current = [point];
     setDraftPoints([point]);
     event.currentTarget.setPointerCapture(event.pointerId);
+  };
+
+  const eraseStroke = (annotationId: string) => (event: PointerEvent<SVGPathElement>) => {
+    if (!erasing) {
+      return;
+    }
+    event.stopPropagation();
+    onDeleteStroke?.(annotationId);
   };
 
   const extendStroke = (event: PointerEvent<SVGSVGElement>) => {
@@ -65,7 +81,8 @@ export function AnnotationLayer({
   return (
     <svg
       className="annotation-layer"
-      data-drawing={drawingEnabled}
+      data-drawing={drawingEnabled || erasing}
+      data-erasing={erasing}
       data-testid="annotation-surface"
       onPointerDown={beginStroke}
       onPointerLeave={endStroke}
@@ -81,13 +98,14 @@ export function AnnotationLayer({
             fill={annotation.style.color}
             fillOpacity={annotation.style.opacity}
             key={annotation.id}
+            onPointerDown={eraseStroke(annotation.id)}
           />
         ))}
 
         {draftPoints.length > 1 ? (
           <path
             d={strokePathFromPoints(draftPoints, 4)}
-            fill="#f0b45a"
+            fill={draftColour ?? "#f0b45a"}
             fillOpacity={0.9}
           />
         ) : null}

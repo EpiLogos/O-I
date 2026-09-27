@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {NativeAgentController,validateReview,validatePrepared} from '../src/agency/nativeAgent.ts';
+import {NativeAgentController,validateReview,validatePrepared,setAgentCharacter} from '../src/agency/nativeAgent.ts';
 const scope='control:root';
 const profile={ref:'agent-profile:test',revision:'r1',agent_ref:'agent:test',name:'Source reader',purpose:'Read only the selected sources.',intent_provenance:{intent_expression:'Read only the selected sources.'}};
 export function review(accepted=false){return {schema:'central.agent-profile-review/v1',profile:{...profile},scope_ref:scope,content_digest:'sha256:controlled',accepted,execution_authority_granted:false,acceptance:accepted?{schema:'central.agent-profile-acceptance/v1',acceptance_ref:'acceptance:test',profile_ref:profile.ref,agent_ref:profile.agent_ref,profile_revision:profile.revision,content_digest:'sha256:controlled',scope_ref:scope}:null};}
@@ -84,6 +84,34 @@ test('lost acceptance cannot recover from source alone when the native roster is
  const r=rig({loseAcceptance:true});await propose(r);await r.controller.accept();
  const owner=r.owner;r.controller.bind(async q=>q.action==='roster'?{schema:'central.agent-profile-roster/v1',scope_ref:scope,profiles:[],execution_authority_granted:false}:owner(q));
  await r.controller.recover();assert.equal(r.controller.snapshot().unknown,'accept');assert.equal(r.controller.snapshot().review.accepted,false);
+});
+test('the chosen expressive character travels on the proposal and must come back on the reviewed source',async()=>{
+ const character='central:Control/agents/expressive-material/character/source-reader.expression.json';
+ const echo=rig({intercept:q=>q.action==='propose'?{...review(),profile:{...review().profile,expressive_character_ref:q.expressive_character_ref}}:undefined});
+ await echo.controller.refresh();echo.controller.edit({name:profile.name,purpose:profile.purpose,scopeConfirmed:true,characterRef:character});await echo.controller.propose();
+ const sent=echo.calls.find(c=>c.action==='propose');assert.equal(sent.expressive_character_ref,character);
+ assert.equal(echo.controller.snapshot().review.profile.expressive_character_ref,character);assert.equal(echo.controller.snapshot().unknown,undefined);
+ // A source that silently dropped the character is not the submitted Agent.
+ const dropped=rig();await dropped.controller.refresh();dropped.controller.edit({name:profile.name,purpose:profile.purpose,scopeConfirmed:true,characterRef:character});await dropped.controller.propose();
+ assert.equal(dropped.controller.snapshot().unknown,'propose');assert.match(dropped.controller.snapshot().error,/character/);
+ // No character: nothing is sent, and none is required back.
+ const bare=rig();await propose(bare);assert.equal('expressive_character_ref' in bare.calls.find(c=>c.action==='propose'),false);assert.equal(bare.controller.snapshot().unknown,undefined);
+});
+test('an existing Agent changes its character through the CAS set-character request and re-reads the source',async()=>{
+ const character='central:Control/agents/expressive-material/character/source-reader.expression.json';
+ const r=rig({intercept:q=>q.action==='set-character'?{...review(false),profile:{...review().profile,revision:'r2',expressive_character_ref:q.expressive_character_ref??undefined},character_change:{state:'saved',previous_revision:'r1',revision:'r2',re_acceptance_required:false}}:undefined});
+ await propose(r);
+ const change=await r.controller.setCharacter(character);
+ const sent=r.calls.find(c=>c.action==='set-character');
+ assert.deepEqual(sent,{action:'set-character',profile_ref:profile.ref,expected_revision:'r1',expressive_character_ref:character});
+ assert.equal(change.revision,'r2');assert.equal(r.controller.snapshot().review.profile.expressive_character_ref,character);
+ assert.equal(r.calls.at(-1).action,'roster','the roster is re-read after the change');
+ // A source that does not carry the requested character is not a confirmed change.
+ const wrong=async()=>({...review(false),profile:{...review().profile,expressive_character_ref:'central:other'}});
+ await assert.rejects(()=>setAgentCharacter(wrong,scope,{profileRef:profile.ref,expectedRevision:'r1',characterRef:character}),/requested character/);
+ // Clearing sends null.
+ const cleared=[];await setAgentCharacter(async q=>{cleared.push(q);return review(false);},scope,{profileRef:profile.ref,expectedRevision:'r1',characterRef:null});
+ assert.equal(cleared[0].expressive_character_ref,null);
 });
 
 // --- SkillSet-first repertoire and the save-and-start sequence -------------

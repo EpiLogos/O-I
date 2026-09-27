@@ -47,10 +47,29 @@ jobs:
           node-version: 22
           cache: npm
           cache-dependency-path: desktop/cradle/package-lock.json
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2.9.2
+        with:
+          workspaces: desktop/cradle/kernel
       - name: Build cradle web bundle from the locked graph
         run: |
           npm ci --prefix desktop/cradle --no-audit --no-fund
           npm --prefix desktop/cradle run build
+      - name: Build and start the dev-only kernel walk bridge with a disposable OI_HOME
+        id: bridge
+        run: |
+          set -euo pipefail
+          cargo build --manifest-path desktop/cradle/kernel/Cargo.toml --locked --bin walk-bridge
+          export OI_HOME="$RUNNER_TEMP/cradle-kernel-home"
+          mkdir -p "$OI_HOME"
+          OI_HOME="$OI_HOME" desktop/cradle/kernel/target/debug/walk-bridge 127.0.0.1:4179 \
+            > "$RUNNER_TEMP/walk-bridge.log" 2>&1 &
+          echo $! > "$RUNNER_TEMP/walk-bridge.pid"
+          for _ in $(seq 1 50); do
+            curl -sf http://127.0.0.1:4179/state > /dev/null && exit 0
+            sleep 0.2
+          done
+          echo "::error::walk bridge never came up"; cat "$RUNNER_TEMP/walk-bridge.log"; exit 1
       - name: Guard executable source — no unresolved markers, runner entry points parse
         working-directory: desktop/cradle
         run: |
@@ -111,11 +130,17 @@ jobs:
         run: node tests/expression-stage-placement.mjs
       - name: Prove shared Expression ownership and sleeping lifecycle
         working-directory: desktop/cradle
+        env:
+          OI_KERNEL_BRIDGE: http://127.0.0.1:4179
         run: |
           node tests/expression-stage-lifecycle.mjs
           node tests/expression-provider-lifecycle.mjs
           node tests/visuals-preview-lifecycle.mjs
           node tests/welcome-lifecycle.mjs
+      - name: Stop the dev-only kernel walk bridge
+        if: always()
+        run: |
+          [ -f "$RUNNER_TEMP/walk-bridge.pid" ] && kill "$(cat "$RUNNER_TEMP/walk-bridge.pid")" 2>/dev/null || true
       - name: Prove desktop appearance, source syntax and native prepaint policy
         working-directory: desktop/cradle
         run: |

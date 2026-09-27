@@ -77,6 +77,7 @@ const SCENARIO_SPEC = {
   "factory-tasks": "docs/cradle/11-FACTORY.md §7 F14 F15",
   "factory-objects": "docs/cradle/11-FACTORY.md §6 §7 F16",
   "factory-real": "docs/cradle/11-FACTORY.md §7 F5 F6 F7 F12 (real Central-root runs, read-only)",
+  "factory-expressions": "docs/cradle/handovers/factory-expressions-2026-09-26/EXPRESSION-DEVELOPMENT-SPEC.md §9",
   "factory-inhabitation": "docs/contracts/WORLD-INHABITATION-V1.md §3 §4; docs/research/openrig-c8fca9d/CROSSWALK.md §8 §15; docs/cradle/11-FACTORY.md §3.4 §5; 10-SIDEBARS.md §4.5 (live, real Central, read-only)",
   "factory-inhabitation-fixture": "docs/contracts/WORLD-INHABITATION-V1.md §3 §4 (controlled standings and refusals)",
   "factory-sensing": "docs/cradle/11-FACTORY.md §3.4 §5; Factory telemetry commission §§13/21 (native signals, decisions, history, coverage)",

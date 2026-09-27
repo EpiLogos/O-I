@@ -41,6 +41,15 @@ if 'action' in args:
  op=args[-2];req=json.loads(args[-1])
  if op=='agent-profile.roster': value={'schema':'central.agent-profile-roster/v1','scope_ref':'control:root','profiles':[],'execution_authority_granted':False}
  elif op=='agent-profile.express': value={'profile':{'ref':'agent-profile:allocated'}}
+ elif op in ('agent-profile.read','agent-profile.review','agent-profile.save') and (root/'profile.json').exists():
+  profile=json.loads((root/'profile.json').read_text())
+  if op=='agent-profile.save':
+   if req.get('expected_revision')!=profile['revision']: print(json.dumps({'ok':False,'error':{'code':'invalid_input','message':'revision conflict'}})); sys.exit(1)
+   (root/'profile.json').write_text(json.dumps(req['profile'])); value={'saved':True}
+  elif op=='agent-profile.read': value={'profile':profile}
+  else:
+   accepted=(root/'accepted').exists() and (root/'accepted').read_text()==profile['revision']
+   value={'schema':'central.agent-profile-review/v1','scope_ref':'control:root','profile':profile,'accepted':accepted,'execution_authority_granted':False,'content_digest':'sha256:'+profile['revision']}
  else: value={'operation':op,'input':req}
  print(json.dumps({'ok':True,'data':value}))
 elif 'agent-session-scope' in args:
@@ -103,6 +112,7 @@ fn root_does_not_fallback_to_a_configured_child_and_no_acceptance_is_implied() {
             purpose: "Keep my exact words.".into(),
             expected_scope_ref: "control:root".into(),
             skill_refs: vec![],
+            expressive_character_ref: None,
             skill_set_refs: vec![],
         })
         .unwrap();
@@ -135,6 +145,114 @@ fn root_does_not_fallback_to_a_configured_child_and_no_acceptance_is_implied() {
         .any(|v| v == "agent-profile.accept")));
 }
 #[test]
+fn the_expressive_character_ref_is_forwarded_to_the_profile_proposal() {
+    let rig = Rig::new();
+    let character = "central:Control/agents/expressive-material/character/reader.expression.json";
+    rig.call(Request::Propose {
+        name: "Reader".into(),
+        purpose: "Keep my exact words.".into(),
+        expected_scope_ref: "control:root".into(),
+        skill_refs: vec![],
+        skill_set_refs: vec![],
+        expressive_character_ref: Some(character.into()),
+    })
+    .unwrap();
+    let calls = rig.calls();
+    let express: Value = serde_json::from_str(
+        calls[1].as_array().unwrap().last().unwrap().as_str().unwrap(),
+    )
+    .unwrap();
+    assert_eq!(express["expressive_character_ref"], character);
+    // Absent stays absent: nothing is invented for an Agent without a character.
+    let bare = Rig::new();
+    bare.call(Request::Propose {
+        name: "Reader".into(),
+        purpose: "Keep my exact words.".into(),
+        expected_scope_ref: "control:root".into(),
+        skill_refs: vec![],
+        skill_set_refs: vec![],
+        expressive_character_ref: None,
+    })
+    .unwrap();
+    let calls = bare.calls();
+    let express: Value = serde_json::from_str(
+        calls[1].as_array().unwrap().last().unwrap().as_str().unwrap(),
+    )
+    .unwrap();
+    assert!(express.get("expressive_character_ref").is_none());
+    // A multi-line or padded ref is refused before any owner call.
+    let refused = Rig::new();
+    for bad in [" central:x", "central:x\ny"] {
+        assert!(refused
+            .call(Request::Propose {
+                name: "Reader".into(),
+                purpose: "Exact".into(),
+                expected_scope_ref: "control:root".into(),
+                skill_refs: vec![],
+        skill_set_refs: vec![],
+                expressive_character_ref: Some(bad.into()),
+            })
+            .is_err());
+    }
+    assert!(refused.calls().is_empty());
+    // The wire spelling the renderer sends deserializes.
+    let wire: Request = serde_json::from_value(json!({"action":"propose","name":"R","purpose":"P",
+        "expected_scope_ref":"control:root","expressive_character_ref":character}))
+    .unwrap();
+    assert!(matches!(wire, Request::Propose { expressive_character_ref: Some(_), .. }));
+}
+#[test]
+fn an_existing_agent_changes_its_character_through_central_cas_and_must_be_re_accepted() {
+    let rig = Rig::new();
+    let character = "central:Control/agents/expressive-material/character/reader.expression.json";
+    fs::write(
+        rig.root.join("profile.json"),
+        json!({"schema":"central.agent-profile/v1","ref":"agent-profile:allocated","revision":"r3",
+            "agent_ref":"agent:native","scope":"personal","world_ref":"control:root","name":"Reader"})
+        .to_string(),
+    )
+    .unwrap();
+    fs::write(rig.root.join("accepted"), "r3").unwrap();
+    let set = |character: Option<&str>, expected: &str| {
+        rig.call(Request::SetCharacter {
+            profile_ref: "agent-profile:allocated".into(),
+            expected_revision: expected.into(),
+            expressive_character_ref: character.map(str::to_owned),
+        })
+    };
+    let changed = set(Some(character), "r3").unwrap();
+    assert_eq!(changed["profile"]["expressive_character_ref"], character);
+    assert_eq!(changed["profile"]["revision"], "r4");
+    assert_eq!(changed["profile"]["name"], "Reader", "the rest of the source is kept");
+    assert_eq!(changed["character_change"]["state"], "saved");
+    assert_eq!(changed["character_change"]["re_acceptance_required"], true);
+    let saves: Vec<Value> = rig
+        .calls()
+        .into_iter()
+        .filter(|c| c.as_array().unwrap().iter().any(|v| v == "agent-profile.save"))
+        .collect();
+    assert_eq!(saves.len(), 1);
+    let save: Value =
+        serde_json::from_str(saves[0].as_array().unwrap().last().unwrap().as_str().unwrap()).unwrap();
+    assert_eq!(save["expected_revision"], "r3", "compare-and-swap on the read revision");
+    // A stale basis is refused before any write.
+    let error = set(None, "r3").unwrap_err();
+    assert!(error.contains("revision_conflict"), "{error}");
+    // Setting the same ref is a no-op; clearing removes the field.
+    assert_eq!(set(Some(character), "r4").unwrap()["character_change"]["state"], "unchanged");
+    let cleared = set(None, "r4").unwrap();
+    assert!(cleared["profile"].get("expressive_character_ref").is_none());
+    assert_eq!(cleared["profile"]["revision"], "r5");
+    assert_eq!(cleared["character_change"]["re_acceptance_required"], false);
+    // Wire spelling from the renderer.
+    let wire: Request = serde_json::from_value(json!({"action":"set-character","profile_ref":"p",
+        "expected_revision":"r1","expressive_character_ref":null}))
+    .unwrap();
+    assert!(matches!(wire, Request::SetCharacter { expressive_character_ref: None, .. }));
+    assert_eq!(agent_definition::next_revision("r9"), "r10");
+    assert_eq!(agent_definition::next_revision("p"), "p-1");
+}
+#[test]
 fn changed_scope_or_unreviewed_trim_is_refused_before_generation() {
     let rig = Rig::new();
     assert!(rig
@@ -143,6 +261,7 @@ fn changed_scope_or_unreviewed_trim_is_refused_before_generation() {
             purpose: "Exact".into(),
             expected_scope_ref: "project:other".into(),
             skill_refs: vec![],
+            expressive_character_ref: None,
             skill_set_refs: vec![],
         })
         .is_err());
@@ -153,6 +272,7 @@ fn changed_scope_or_unreviewed_trim_is_refused_before_generation() {
             purpose: " Exact ".into(),
             expected_scope_ref: "control:root".into(),
             skill_refs: vec![],
+            expressive_character_ref: None,
             skill_set_refs: vec![],
         })
         .is_err());
@@ -296,6 +416,7 @@ fn skillset_readings_use_the_owner_set_surface_and_propose_carries_set_refs() {
             expected_scope_ref: "control:root".into(),
             skill_refs: vec!["skill/one".into()],
             skill_set_refs: vec!["skill-set:research".into()],
+            expressive_character_ref: None,
         })
         .unwrap();
     assert_eq!(value["operation"], "agent-profile.review");
@@ -373,4 +494,16 @@ fn partial_preparation_readback_is_not_complete_but_retains_the_original_native_
             })
             .is_err());
     }
+}
+
+/// The renderer's wire spellings deserialize (nativeAgent.ts sends
+/// `{"action":"skillsets"}` and `{"action":"skillset","name":…}`); the
+/// kebab-case defaults `skill-sets`/`skill-set` would refuse them.
+#[test]
+fn renderer_skillset_actions_reach_the_owner_requests() {
+    use oi_cradle_kernel::agent_definition::Request;
+    let list: Request = serde_json::from_str(r#"{"action":"skillsets"}"#).unwrap();
+    assert_eq!(list, Request::SkillSets);
+    let show: Request = serde_json::from_str(r#"{"action":"skillset","name":"anima"}"#).unwrap();
+    assert_eq!(show, Request::SkillSet { name: "anima".into() });
 }

@@ -1,0 +1,36 @@
+.place-facets-panel{display:flex;flex-direction:column;gap:.75rem;font-size:.85rem}
+.place-facets-panel h3{margin:0}
+.place-facets-panel h4{margin:0}
+.place-facets-panel h5{margin:.25rem 0}
+.place-facets-message{opacity:.75;font-style:italic}
+.place-facets-filters{border:1px solid var(--panel-border,#8883);border-radius:4px;padding:.5rem;display:flex;flex-direction:column;gap:.4rem}
+.place-facets-filter-group{display:flex;flex-wrap:wrap;gap:.5rem;align-items:center}
+.place-facets-filter-group>span:first-child{font-weight:600;min-width:5.5rem}
+.place-facets-filter-group label{display:inline-flex;align-items:center;gap:.25rem}
+.place-facets-filter-group input[type=text]{width:6rem}
+.place-facets-detail dl{display:grid;grid-template-columns:auto 1fr;gap:.15rem .5rem;margin:.25rem 0}
+.place-facets-detail dt{opacity:.7}
+.place-standing-tag{font-size:.7em;text-transform:uppercase;letter-spacing:.03em;opacity:.7;margin-left:.35rem}
+.place-standing-mythic{color:var(--place-mythic,#8a5a2b)}
+.place-facets-mythic-note{font-weight:600}
+.place-standing-owner-vocabulary{opacity:.9}
+.place-facets-hierarchy ol{margin:0;padding-left:1.1rem}
+.place-facets-hierarchy-relation{opacity:.65;font-size:.85em}
+.place-facets-hierarchy-window{opacity:.6;font-size:.8em}
+.place-facets-relations ul{list-style:none;margin:0;padding:0;display:flex;flex-wrap:wrap;gap:.5rem}
+.place-facets-route ol{margin:.25rem 0;padding-left:1.1rem}
+.place-facets-route-note{opacity:.6;font-size:.8em;margin:.25rem 0 0}
+.place-facets-route-svg{display:block;margin:.25rem 0;color:var(--place-route,#3b6ea5)}
+.place-facets-depths ul{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:.2rem}
+.place-facets-depths li[data-availability="producer-unavailable"],.place-facets-depths li[data-availability="absent-facet"]{opacity:.65}
+.place-facets-edit{margin-top:.5rem}
+
+.place-facets-unavailable{color:var(--ui-muted,var(--muted));font-style:italic;cursor:help}
+/* The map's own controls (Globe/Flat, Zoom to fit, Location details, imagery)
+   sit at the top of the Studio's Places section as one wrapped row. */
+.places-home>:is(.psychogeographic-toolbar,.street-view-toolbar,.research-tool-actions),.places-home div[style*="position"]{position:static!important;display:flex;flex-wrap:wrap;gap:6px;margin:0 0 10px;padding:0;background:none!important;border:0!important;backdrop-filter:none!important}
+.places-home button{font:11px var(--sans);color:var(--ui-ink);background:var(--ui-wash);border:1px solid var(--ui-line);border-radius:6px;padding:4px 8px}
+.places-home button[data-active=true]{border-color:var(--ui-ink)}
+#inspector .places-home button{color:var(--ui-ink)!important;background:var(--ui-wash)!important;border:1px solid var(--ui-line)!important;border-radius:6px;padding:4px 8px;font:11px var(--sans)}
+#inspector .places-home button[data-active=true]{border-color:var(--ui-ink)!important}
+#inspector .places-home button:disabled{opacity:.45}

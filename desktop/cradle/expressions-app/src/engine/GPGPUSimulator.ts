@@ -35,6 +35,7 @@ import {
   PairwiseSortPass,
   sortSideForParticleTexSide,
 } from './pairwiseSchedule';
+import { MAX_FORMATIONS, MAX_PINS, MAX_FORCE_EMITTERS } from './fieldModel';
 
 export class GPGPUSimulator {
   private renderer: THREE.WebGLRenderer;
@@ -163,7 +164,7 @@ export class GPGPUSimulator {
         uCollisionMode: { value: 0.0 },
         uCollisionIntegrity: { value: 0.5 },
         uSdfAtlas: { value: null },
-        uCollisionTile: { value: Array.from({ length: 10 }, () => new THREE.Vector4(0, 0, 0.5, 0)) },
+        uCollisionTile: { value: Array.from({ length: MAX_FORMATIONS }, () => new THREE.Vector4(0, 0, 0.5, 0)) },
         uTargetATexture: { value: null },
         uTargetBTexture: { value: null },
         uPairwiseEnabled: { value: 0.0 },
@@ -174,13 +175,13 @@ export class GPGPUSimulator {
         uEntityCount: { value: 0 },
         uConnectionStart: { value: 1e30 },
         uConnectionMetadata: { value: null },
-        uEntityBounds: { value: new Float32Array(10) },
-        uEntityCenter: { value: Array.from({ length: 10 }, () => new THREE.Vector4(0, 0, 0, 200)) },
-        uEntityMorph: { value: new Float32Array(10) },
+        uEntityBounds: { value: new Float32Array(MAX_FORMATIONS) },
+        uEntityCenter: { value: Array.from({ length: MAX_FORMATIONS }, () => new THREE.Vector4(0, 0, 0, 200)) },
+        uEntityMorph: { value: new Float32Array(MAX_FORMATIONS) },
         // Depth scale of each partition: the slab axis conversion for the
         // extruded-body boundary test.
-        uEntityDepthScale: { value: new Float32Array(10).fill(1) },
-        uEntityTransform: { value: Array.from({ length: 10 }, () => new THREE.Vector3(1, 1, 0)) },
+        uEntityDepthScale: { value: new Float32Array(MAX_FORMATIONS).fill(1) },
+        uEntityTransform: { value: Array.from({ length: MAX_FORMATIONS }, () => new THREE.Vector3(1, 1, 0)) },
         uTexSize: { value: new THREE.Vector2(1, 1) },
       },
       depthTest: false,
@@ -235,20 +236,25 @@ export class GPGPUSimulator {
         uRelationalEnabled: { value: 0.0 },
         uAttractorCount: { value: 2 },
         uAttractors: {
-          value: [
-            new THREE.Vector4(-150, 0, 0, 1.0),
-            new THREE.Vector4(150, 0, 0, 1.0),
-            new THREE.Vector4(0, 150, 0, 1.0),
-            new THREE.Vector4(0, -150, 0, 1.0),
-            new THREE.Vector4(100, 100, 0, 1.0),
-            new THREE.Vector4(-100, -100, 0, 1.0),
-            new THREE.Vector4(0, 250, 0, 1.0),
-            new THREE.Vector4(0, -250, 0, 1.0),
-            new THREE.Vector4(200, 0, 0, 1.0),
-            new THREE.Vector4(-200, 0, 0, 1.0),
-          ],
+          // The ten authored seed attractors, then inert poles: the uniform
+          // array is sized to the shader's pin budget (MAX_PINS).
+          value: Array.from({ length: MAX_PINS }, (_, index) => {
+            const seeds = [
+              new THREE.Vector4(-150, 0, 0, 1.0),
+              new THREE.Vector4(150, 0, 0, 1.0),
+              new THREE.Vector4(0, 150, 0, 1.0),
+              new THREE.Vector4(0, -150, 0, 1.0),
+              new THREE.Vector4(100, 100, 0, 1.0),
+              new THREE.Vector4(-100, -100, 0, 1.0),
+              new THREE.Vector4(0, 250, 0, 1.0),
+              new THREE.Vector4(0, -250, 0, 1.0),
+              new THREE.Vector4(200, 0, 0, 1.0),
+              new THREE.Vector4(-200, 0, 0, 1.0),
+            ];
+            return index < seeds.length ? seeds[index] : new THREE.Vector4(-99999, -99999, 0, 0);
+          }),
         },
-        uAttractorSpin: { value: [1.0, -1.0, 1.0, -1.0, 1.0, -1.0, 1.0, -1.0, 1.0, -1.0] },
+        uAttractorSpin: { value: Array.from({ length: MAX_PINS }, (_, index) => (index % 2 ? -1.0 : 1.0)) },
         uRelationalGravity: { value: 1.5 },
         uRelationalSpin: { value: 1.2 },
         uChaosFactor: { value: 0.0 },
@@ -257,16 +263,16 @@ export class GPGPUSimulator {
         uEntityCount: { value: 0 },
         uConnectionStart: { value: 1e30 },
         uConnectionMetadata: { value: null },
-        uEntityBounds: { value: new Float32Array(10) },
-        uEntityCenter: { value: Array.from({ length: 10 }, () => new THREE.Vector4(0, 0, 0, 200)) },
-        uEntityMorph: { value: new Float32Array(10) },
-        uEntityDepthScale: {value: new Float32Array(10).fill(1)},
-        uEntityNormalized: {value: new Float32Array(10)},
-        uEntityTransform: { value: Array.from({length:10},()=>new THREE.Vector3(1,1,0)) },
+        uEntityBounds: { value: new Float32Array(MAX_FORMATIONS) },
+        uEntityCenter: { value: Array.from({ length: MAX_FORMATIONS }, () => new THREE.Vector4(0, 0, 0, 200)) },
+        uEntityMorph: { value: new Float32Array(MAX_FORMATIONS) },
+        uEntityDepthScale: {value: new Float32Array(MAX_FORMATIONS).fill(1)},
+        uEntityNormalized: {value: new Float32Array(MAX_FORMATIONS)},
+        uEntityTransform: { value: Array.from({length:MAX_FORMATIONS},()=>new THREE.Vector3(1,1,0)) },
         uTexSize: { value: new THREE.Vector2(1, 1) },
         uForceEmitterCount: { value: 0 },
-        uForceEmitterCenter: { value: Array.from({ length: 18 }, () => new THREE.Vector4(-99999, -99999, 0, 1)) },
-        uForceEmitterParams: { value: Array.from({ length: 18 }, () => new THREE.Vector4(0, 0, 0, 0)) },
+        uForceEmitterCenter: { value: Array.from({ length: MAX_FORCE_EMITTERS }, () => new THREE.Vector4(-99999, -99999, 0, 1)) },
+        uForceEmitterParams: { value: Array.from({ length: MAX_FORCE_EMITTERS }, () => new THREE.Vector4(0, 0, 0, 0)) },
         uCompPlane: { value: 0.0 },
         uResDominance: { value: 1.0 },
 
@@ -342,7 +348,7 @@ export class GPGPUSimulator {
         uCollisionStrength: { value: 4.0 },
         uCollisionIntegrity: { value: 0.5 },
         uSdfAtlas: { value: null },
-        uCollisionTile: { value: Array.from({ length: 10 }, () => new THREE.Vector4(0, 0, 0.5, 0)) },
+        uCollisionTile: { value: Array.from({ length: MAX_FORMATIONS }, () => new THREE.Vector4(0, 0, 0.5, 0)) },
 
       },
       depthTest: false,
@@ -615,8 +621,8 @@ export class GPGPUSimulator {
     vU.uEntityCount.value = Math.min(10, u.count);
     (vU.uEntityBounds.value as Float32Array).set(u.bounds.subarray(0, 10));
     (vU.uEntityMorph.value as Float32Array).set(u.morph.subarray(0, 10));
-    (vU.uEntityDepthScale.value as Float32Array).set(u.depthScales ?? new Float32Array(10).fill(1));
-    (vU.uEntityNormalized.value as Float32Array).set(u.normalized ?? new Float32Array(10));
+    (vU.uEntityDepthScale.value as Float32Array).set(u.depthScales ?? new Float32Array(MAX_FORMATIONS).fill(1));
+    (vU.uEntityNormalized.value as Float32Array).set(u.normalized ?? new Float32Array(MAX_FORMATIONS));
     const cU = vU.uEntityCenter.value as THREE.Vector4[];
     for (let i = 0; i < 10; i++) {
       cU[i].copy(u.centers[i]);
@@ -628,7 +634,7 @@ export class GPGPUSimulator {
     pU.uEntityCount.value = vU.uEntityCount.value;
     (pU.uEntityBounds.value as Float32Array).set(u.bounds.subarray(0, 10));
     (pU.uEntityMorph.value as Float32Array).set(u.morph.subarray(0, 10));
-    (pU.uEntityDepthScale.value as Float32Array).set(u.depthScales ?? new Float32Array(10).fill(1));
+    (pU.uEntityDepthScale.value as Float32Array).set(u.depthScales ?? new Float32Array(MAX_FORMATIONS).fill(1));
     const pC = pU.uEntityCenter.value as THREE.Vector4[];
     for (let i = 0; i < 10; i++) {
       pC[i].copy(u.centers[i]);
@@ -659,7 +665,7 @@ export class GPGPUSimulator {
     const u=this.velMaterial.uniforms;
     const centers=u.uForceEmitterCenter.value as THREE.Vector4[];
     const params=u.uForceEmitterParams.value as THREE.Vector4[];
-    const count=Math.min(18,emitters.length);u.uForceEmitterCount.value=count;
+    const count=Math.min(MAX_FORCE_EMITTERS,emitters.length);u.uForceEmitterCount.value=count;
     for(let i=0;i<18;i++){const e=emitters[i];if(!e||!e.enabled){centers[i].set(-99999,-99999,0,1);params[i].set(0,0,0,0);continue;}
       centers[i].set(e.position.x,e.position.y,e.position.z,Math.max(5,e.radius));
       const mode=e.law==='vortex'?3:e.polarity==='repel'?2:1;params[i].set(e.strength,mode,e.spin,e.metric==='world3d'?1:0);

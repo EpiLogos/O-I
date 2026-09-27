@@ -34,7 +34,7 @@ try:
   fixture=p.evaluate('()=>{const j=NATIVE_TEST.fieldStudies();j.scenes.forEach(s=>s.field.params.count=2048);return j;}')
   open_page(p,fixture)
   check('Canvas has one library entry and direct still/video icons, no compulsory editorial copy',p.locator('.masthead [data-action="library"]').count()==1 and p.locator('#record-button').is_visible() and p.locator('.masthead [data-action="capture-image"]').is_visible() and p.locator('.gesture-note,.page-text,.edit-status,.version-note,.wordmark,[data-action="keep"]').count()==0)
-  boxes=p.locator('#tool-rail button').evaluate_all('(buttons)=>buttons.map(b=>{const r=b.getBoundingClientRect();const s=b.querySelector("svg").getBoundingClientRect();return {cy:r.y+r.height/2,sy:s.y+s.height/2,height:r.height};})')
+  boxes=p.locator('#tool-rail button:visible').evaluate_all('(buttons)=>buttons.map(b=>{const r=b.getBoundingClientRect();const s=b.querySelector("svg").getBoundingClientRect();return {cy:r.y+r.height/2,sy:s.y+s.height/2,height:r.height};})')
   check('All seven icon centres align in a thinner rail; Interact comes first',len(boxes)==7 and max(x['cy'] for x in boxes)-min(x['cy'] for x in boxes)<.1 and all(abs(x['cy']-x['sy'])<.1 for x in boxes) and p.locator('#tool-rail').bounding_box()['height']<=46 and p.locator('#tool-rail button').first.get_attribute('data-rail')=='interact',boxes)
   before=gpu(p);base=doc(p)
   act(p,'tool-select');require(state(p)['tool']=='select' and not state(p)['railExpanded'] and not state(p)['inspectorOpen'],'select stays put');act(p,'tool-select');require(state(p)['tool']=='select','select is idempotent')
@@ -45,16 +45,16 @@ try:
   check('Every tool opens and closes its own surface in one click without mutating the expression',doc(p)==base and gpu(p)['seeds']==before['seeds'])
   p.evaluate("window.__FIELD_STUDIES__.openEditor('field')");act(p,'close-studio')
   check('Closing the Studio explicitly returns to the quiet canvas',not state(p)['studioOpen'] and not state(p)['inspectorOpen'] and not p.locator('#inspector').is_visible())
-  p.locator('[data-orbit="reset"]').click();before=gpu(p);base=doc(p);initial=state(p)['camera'];box=p.locator('.orbit-pad').bounding_box();x=box['x']+box['width']*.28;y=box['y']+box['height']*.30
-  drag(p,x,y,27,18);rotated=state(p)['camera'];check('Orbital drag changes yaw/pitch without a field force or document edit',rotated['yaw']!=initial['yaw'] and rotated['pitch']!=initial['pitch'] and not state(p)['pointerActive'] and doc(p)==base)
-  p.locator('.orbit-pad').hover();p.mouse.wheel(0,-100);p.wait_for_timeout(80);zoom=state(p)['camera']['zoom'];require(zoom>initial['zoom'],'orbital wheel zoom')
-  drag(p,x,y,16,-13,True);c=state(p)['camera'];check('Orbital pan and zoom share the saved camera and preserve working-plane settings',abs(c['panX']-16)<.001 and abs(c['panY']+13)<.001 and c['zoom']==zoom and all(c[k]==initial[k] for k in ['plane','depth','grid','snap']),c)
-  p.locator('[data-axis="Z"]').click();require(state(p)['camera']['mode']=='2d','axis view')
-  p.locator('.orbit-pad').focus();p.keyboard.press('ArrowRight');require(state(p)['camera']['yaw']!=0,'keyboard orbit')
-  p.keyboard.press('Home');after=gpu(p);c=state(p)['camera']
-  check('Axis targets and keyboard controls work without physics steps, target rebakes or reseeds',c['yaw']==c['pitch']==c['panX']==c['panY']==0 and c['zoom']==1 and all(before[k]==after[k] for k in ['simTime','steps','seeds','bakes','positions']))
-  check('Camera tool has no duplicate persistent toolbar or instruction pill',not p.locator('#view-controls').is_visible() and not p.locator('#tool-hint').is_visible() and p.locator('#orbit-control').is_visible())
-  p.locator('[data-orbit="reset"]').click();p.mouse.move(790,450);p.wait_for_timeout(80)
+  # The orbit controller is not mounted (owner ruling 2026-09-25): the HUD
+  # carries no camera controls; the stage wheel zooms through the saved camera.
+  before=gpu(p);base=doc(p);initial=state(p)['camera']
+  check('Camera controls stay off the HUD; the orbit controller is not mounted',p.locator('#orbit-control').count()==0 and not p.locator('#view-controls').is_visible() and not p.locator('#tool-hint').is_visible())
+  p.locator('#stage').hover();p.mouse.wheel(0,-100);p.wait_for_timeout(80);zoom=state(p)['camera']['zoom'];require(zoom>initial['zoom'],'stage wheel zoom')
+  p.locator('#stage').hover();p.mouse.wheel(0,100);p.wait_for_timeout(80);c=state(p)['camera']
+  check('Wheel zoom shares the saved camera and preserves working-plane settings',c['zoom']<zoom and all(c[k]==initial[k] for k in ['plane','depth','grid','snap']),c)
+  after=gpu(p)
+  check('Camera moves cost no physics steps, target rebakes or reseeds',all(before[k]==after[k] for k in ['simTime','steps','seeds','bakes','positions']))
+  p.mouse.move(790,450);p.wait_for_timeout(80)
   coords=p.locator('#coordinates').bounding_box();numbers=p.locator('#coordinates b').all_text_contents();expected=p.evaluate('window.__FIELD_STUDIES__.unproject(790,450)')
   check('Bottom-right XYZ values match the world-space pointer, not a corner status label',coords['x']>1000 and coords['y']>900 and len(numbers)==3 and all(abs(float(n)-expected[k])<.0006 for n,k in zip(numbers,'xyz')),{'numbers':numbers,'bounds':coords})
   before=gpu(p);base=doc(p);cam=state(p)['camera'];act(p,'library');frozen=state(p)['simTime'];p.wait_for_timeout(350)
@@ -95,14 +95,14 @@ try:
   path=E/'reviewed.expression.json';downloaded.value.save_as(path)
   check('Expression export retains the compatible authoring envelope and the edited document',json.loads(path.read_text())==doc(p) and json.loads(path.read_text())['schema']=='oi.journey' and downloaded.value.suggested_filename.endswith('.expression.json'))
   act(p,'close-library');p.set_viewport_size({'width':390,'height':844});p.wait_for_timeout(180)
-  check('Narrow layout keeps controller, capture and transport without horizontal overflow',p.locator('#orbit-control').is_visible() and p.locator('#play-button').is_visible() and p.locator('[data-action="capture-options"]').is_visible() and p.evaluate('document.documentElement.scrollWidth<=innerWidth'))
+  check('Narrow layout keeps controller, capture and transport without horizontal overflow',p.locator('#play-button').is_visible() and p.locator('[data-action="capture-options"]').is_visible() and p.evaluate('document.documentElement.scrollWidth<=innerWidth'))
   p.screenshot(path=str(E/'expressions-mobile.png'));p.locator('.workspace-cluster .header-menu-toggle').click();p.wait_for_timeout(120);act(p,'library');p.wait_for_timeout(100);check('Library remains a scrollable single-column page on small screens',p.locator('#library-page').evaluate('e=>e.scrollHeight>e.clientHeight') and p.evaluate('document.documentElement.scrollWidth<=innerWidth'))
   p.screenshot(path=str(E/'expressions-library-mobile.png'));p.evaluate('window.__FIELD_STUDIES__.dispose()')
   # True trusted touch events on the controller; no synthetic event masquerading as a device test.
   tc=browser.new_context(viewport={'width':900,'height':700},has_touch=True,reduced_motion='reduce');tp=tc.new_page();open_page(tp,fixture)
-  b=tp.locator('.orbit-pad').bounding_box();x=b['x']+b['width']*.28;y=b['y']+b['height']*.3;before=doc(tp);cdp=tc.new_cdp_session(tp)
-  cdp.send('Input.dispatchTouchEvent',{'type':'touchStart','touchPoints':[{'x':x,'y':y}]});cdp.send('Input.dispatchTouchEvent',{'type':'touchMove','touchPoints':[{'x':x+25,'y':y+20}]});cdp.send('Input.dispatchTouchEvent',{'type':'touchEnd','touchPoints':[]});tp.wait_for_timeout(100)
-  check('Touch orbit changes the view without placing objects or applying field forces',state(tp)['camera']['yaw']!=0 and not state(tp)['pointerActive'] and doc(tp)==before)
+  before=doc(tp);cdp=tc.new_cdp_session(tp)
+  cdp.send('Input.dispatchTouchEvent',{'type':'touchStart','touchPoints':[{'x':450,'y':300}]});cdp.send('Input.dispatchTouchEvent',{'type':'touchMove','touchPoints':[{'x':475,'y':320}]});cdp.send('Input.dispatchTouchEvent',{'type':'touchEnd','touchPoints':[]});tp.wait_for_timeout(100)
+  check('Touch drag on the stage places nothing and applies no field force',not state(tp)['pointerActive'] and doc(tp)==before)
   tp.evaluate('window.__FIELD_STUDIES__.dispose()');tc.close()
   # The same file is still usable without localStorage; import retains a session card.
   p3=ctx.new_page();p3.emulate_media(reduced_motion='reduce');open_page(p3,fixture,False)

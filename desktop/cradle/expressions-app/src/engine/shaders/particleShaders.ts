@@ -3,6 +3,8 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import { MAX_FORMATIONS } from '../fieldModel';
+
 export const particleVertexShader = /* glsl */ `
 precision highp float;
 
@@ -41,10 +43,10 @@ uniform int uEntityCount;
 uniform float uConnectionStart;
 uniform sampler2D uConnectionMetadata;
 uniform float uEditHasSelection;
-uniform float uEditSelected[10];
-uniform float uEntityBounds[10];
-uniform vec3 uEntityTint[10];
-uniform float uEntityTintWeight[10];
+uniform float uEditSelected[${MAX_FORMATIONS}];
+uniform float uEntityBounds[${MAX_FORMATIONS}];
+uniform vec3 uEntityTint[${MAX_FORMATIONS}];
+uniform float uEntityTintWeight[${MAX_FORMATIONS}];
 uniform vec2 uTexSize;
 uniform vec3 uFocusTint;
 uniform float uFocusTintWeight;

@@ -1,0 +1,112 @@
+diff --git a/desktop/cradle/expressions-app/vendor/research-canvas/packages/canvas/src/CanvasView.tsx b/desktop/cradle/expressions-app/vendor/research-canvas/packages/canvas/src/CanvasView.tsx
+index 00bf3d68..1ca2f41b 100644
+--- a/desktop/cradle/expressions-app/vendor/research-canvas/packages/canvas/src/CanvasView.tsx
++++ b/desktop/cradle/expressions-app/vendor/research-canvas/packages/canvas/src/CanvasView.tsx
+@@ -113,6 +113,11 @@ export interface CanvasViewProps {
+   annotations?: Annotation[];
+   drawingEnabled?: boolean;
+   onCreateStroke?: (points: AnnotationPoint[]) => void;
++  /** Colour of the in-progress stroke, matching the host's stroke tool. */
++  draftColour?: string;
++  /** Erase mode: tapping a stroke reports it through onDeleteStroke. */
++  erasing?: boolean;
++  onDeleteStroke?: (annotationId: string) => void;
+   onRegisterFlyToNode?: (flyTo: (nodeId: string, viewport?: { x: number; y: number; zoom: number }) => void) => void;
+   onRegisterFlyToEdge?: (flyTo: (edgeId: string, viewport?: { x: number; y: number; zoom: number }) => void) => void;
+   onRegisterCaptureViewport?: (
+@@ -183,6 +188,9 @@ function CanvasViewInner({
+   annotations = [],
+   drawingEnabled = false,
+   onCreateStroke,
++  draftColour,
++  erasing = false,
++  onDeleteStroke,
+   onRegisterFlyToNode,
+   onRegisterFlyToEdge,
+   onRegisterCaptureViewport,
+@@ -698,6 +706,9 @@ function CanvasViewInner({
+         annotations={annotations}
+         drawingEnabled={!readOnly && drawingEnabled}
+         onCreateStroke={(points) => { if (!readOnly) onCreateStroke?.(points); }}
++        draftColour={draftColour}
++        erasing={!readOnly && erasing}
++        onDeleteStroke={onDeleteStroke}
+       />
+ 
+       {!readOnly && contextMenu && contextMenu.kind === "canvas" && (
+diff --git a/desktop/cradle/expressions-app/vendor/research-canvas/packages/canvas/src/annotations/AnnotationLayer.tsx b/desktop/cradle/expressions-app/vendor/research-canvas/packages/canvas/src/annotations/AnnotationLayer.tsx
+index 57f09bcc..8363f272 100644
+--- a/desktop/cradle/expressions-app/vendor/research-canvas/packages/canvas/src/annotations/AnnotationLayer.tsx
++++ b/desktop/cradle/expressions-app/vendor/research-canvas/packages/canvas/src/annotations/AnnotationLayer.tsx
+@@ -9,12 +9,20 @@ interface AnnotationLayerProps {
+   annotations: Annotation[];
+   drawingEnabled: boolean;
+   onCreateStroke: (points: AnnotationPoint[]) => void;
++  /** Colour of the in-progress stroke; matches the host's stroke tool. */
++  draftColour?: string;
++  /** Erase mode: tapping a stroke removes it through onDeleteStroke. */
++  erasing?: boolean;
++  onDeleteStroke?: (annotationId: string) => void;
+ }
+ 
+ export function AnnotationLayer({
+   annotations,
+   drawingEnabled,
+-  onCreateStroke
++  onCreateStroke,
++  draftColour,
++  erasing = false,
++  onDeleteStroke
+ }: AnnotationLayerProps) {
+   const { screenToFlowPosition } = useReactFlow();
+   const viewport = useViewport();
+@@ -23,7 +31,7 @@ export function AnnotationLayer({
+   const drawingRef = useRef(false);
+ 
+   const beginStroke = (event: PointerEvent<SVGSVGElement>) => {
+-    if (!drawingEnabled) {
++    if (!drawingEnabled || erasing) {
+       return;
+     }
+ 
+@@ -34,6 +42,14 @@ export function AnnotationLayer({
+     event.currentTarget.setPointerCapture(event.pointerId);
+   };
+ 
++  const eraseStroke = (annotationId: string) => (event: PointerEvent<SVGPathElement>) => {
++    if (!erasing) {
++      return;
++    }
++    event.stopPropagation();
++    onDeleteStroke?.(annotationId);
++  };
++
+   const extendStroke = (event: PointerEvent<SVGSVGElement>) => {
+     if (!drawingRef.current) {
+       return;
+@@ -65,7 +81,8 @@ export function AnnotationLayer({
+   return (
+     <svg
+       className="annotation-layer"
+-      data-drawing={drawingEnabled}
++      data-drawing={drawingEnabled || erasing}
++      data-erasing={erasing}
+       data-testid="annotation-surface"
+       onPointerDown={beginStroke}
+       onPointerLeave={endStroke}
+@@ -81,13 +98,14 @@ export function AnnotationLayer({
+             fill={annotation.style.color}
+             fillOpacity={annotation.style.opacity}
+             key={annotation.id}
++            onPointerDown={eraseStroke(annotation.id)}
+           />
+         ))}
+ 
+         {draftPoints.length > 1 ? (
+           <path
+             d={strokePathFromPoints(draftPoints, 4)}
+-            fill="#f0b45a"
++            fill={draftColour ?? "#f0b45a"}
+             fillOpacity={0.9}
+           />
+         ) : null}

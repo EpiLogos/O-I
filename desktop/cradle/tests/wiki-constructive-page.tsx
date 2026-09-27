@@ -3,6 +3,7 @@
 import {useEffect,useState} from 'react';
 import {createRoot} from 'react-dom/client';
 import {KernelProvider} from '../src/kernel/KernelProvider';
+import {VisualsProvider} from '../src/visuals/ParticleExpression';
 import {ExpressionStageProvider} from '../src/stage/ExpressionStage';
 import {KnowledgeSurface} from '../src/knowledge/KnowledgeSurface';
 import {ExpressionView} from '../src/expression/ExpressionView';
@@ -22,4 +23,4 @@ function App(){
   {composer&&<div style={{overflow:'auto',flex:1}}><ExpressionView initialExpressionRef={composer}/></div>}
  </main>;
 }
-createRoot(document.getElementById('root')!).render(<KernelProvider><ExpressionStageProvider><App/></ExpressionStageProvider></KernelProvider>);
+createRoot(document.getElementById('root')!).render(<KernelProvider><VisualsProvider><ExpressionStageProvider><App/></ExpressionStageProvider></VisualsProvider></KernelProvider>);

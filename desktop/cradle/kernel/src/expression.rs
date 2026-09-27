@@ -7,6 +7,14 @@ use std::collections::{BTreeMap, BTreeSet};
 
 pub const SCHEMA: &str = "oi.expression/v1";
 pub(crate) const LIMIT: usize = 256;
+/// A document's own semantic cardinality (entities, relations,
+/// representations, one Scene's members). Separate from list guards (LIMIT)
+/// and from the renderer's resident window (`render_formations`, paged per
+/// Scene): a constellation is never truncated to fit a draw budget (Technē
+/// map §36).
+pub(crate) const DOCUMENT_MEMBERS: usize = 2048;
+/// Outer storage bound for one native Expression document.
+pub(crate) const DOCUMENT_BYTES: usize = 8 * 1024 * 1024;
 pub(crate) const MAX_REVISION: u64 = 9_007_199_254_740_991;
 
 #[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
@@ -78,6 +86,12 @@ pub struct Parameter {
     pub value: Value,
     pub automation: Option<Automation>,
 }
+/// serde `skip_serializing_if` helper: omit `pinned` from the wire when
+/// false, so every existing bound Entity (none of which ever set it) stays
+/// byte-identical after this field's addition.
+fn is_false(value: &bool) -> bool {
+    !*value
+}
 #[derive(Clone, Debug, Deserialize, Serialize, PartialEq)]
 #[serde(deny_unknown_fields)]
 pub struct Entity {
@@ -86,6 +100,13 @@ pub struct Entity {
     pub title: String,
     pub subject: Option<SubjectBinding>,
     pub parameters: BTreeMap<String, Parameter>,
+    /// World-position pin (owner commission, QL-MEF #214 geometry-closeout):
+    /// an explicit native hold on this entity's own world position, distinct
+    /// from blueprint membership (a whole's shared transform) and from
+    /// release (leaving a blueprint). Optional; defaults to unpinned and
+    /// changes only through `Change::EntityPin`.
+    #[serde(default, skip_serializing_if = "is_false")]
+    pub pinned: bool,
 }
 #[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
 #[serde(deny_unknown_fields)]
@@ -205,6 +226,292 @@ pub struct Document {
     /// ES3 recorded profile instantiations with explicit, legible overrides.
     #[serde(default)]
     pub profiles: Vec<crate::expression_profile::ProfileAdoption>,
+    /// Reusable-material index (contract EXPRESSION-ACT-MATERIAL-V1 §1): a
+    /// character, Scene, Expression or gesture saved as an ordinary Expression
+    /// document. Absent on ordinary Expressions; changed only through
+    /// `reuse_set` / `reuse_clear`.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub reuse: Option<Reuse>,
+}
+
+pub const REUSE_SCHEMA: &str = "oi.expression-reuse/v1";
+const REUSE_ROLES: usize = 64;
+const REUSE_NAMES: usize = 64;
+const REUSE_PLAYBACK: usize = 256;
+const REUSE_ASSOCIATIONS: usize = 64;
+
+#[derive(Clone, Copy, Debug, Deserialize, Serialize, PartialEq, Eq, PartialOrd, Ord)]
+#[serde(rename_all = "snake_case")]
+pub enum ReuseKind {
+    Character,
+    Scene,
+    Expression,
+    Gesture,
+}
+impl ReuseKind {
+    pub const ALL: [ReuseKind; 4] = [Self::Character, Self::Scene, Self::Expression, Self::Gesture];
+    pub fn as_str(self) -> &'static str {
+        match self {
+            Self::Character => "character",
+            Self::Scene => "scene",
+            Self::Expression => "expression",
+            Self::Gesture => "gesture",
+        }
+    }
+}
+#[derive(Clone, Copy, Debug, Deserialize, Serialize, PartialEq, Eq)]
+#[serde(rename_all = "snake_case")]
+pub enum RoleAccepts {
+    Agent,
+    Object,
+    Text,
+    Value,
+}
+/// One discoverable role slot: an entity or text layer in saved Scene
+/// material carrying `"role": "<name>"`.
+#[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
+#[serde(deny_unknown_fields)]
+pub struct ReuseRole {
+    pub role: String,
+    pub accepts: RoleAccepts,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub entity_ref: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub text_id: Option<String>,
+}
+#[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
+#[serde(deny_unknown_fields)]
+pub struct ReuseGesture {
+    pub scene_ref: String,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub role: Option<String>,
+}
+#[derive(Clone, Debug, Default, Deserialize, Serialize, PartialEq, Eq)]
+#[serde(deny_unknown_fields)]
+pub struct ReuseAssociations {
+    #[serde(default)]
+    pub workflow_keys: Vec<String>,
+    #[serde(default)]
+    pub task_types: Vec<String>,
+    #[serde(default)]
+    pub skill_set_refs: Vec<String>,
+    #[serde(default)]
+    pub skill_refs: Vec<String>,
+    #[serde(default)]
+    pub event_families: Vec<String>,
+}
+impl ReuseAssociations {
+    pub fn is_empty(&self) -> bool {
+        self.lists().iter().all(|(_, l)| l.is_empty())
+    }
+    pub fn lists(&self) -> [(&'static str, &Vec<String>); 5] {
+        [
+            ("workflow_keys", &self.workflow_keys),
+            ("task_types", &self.task_types),
+            ("skill_set_refs", &self.skill_set_refs),
+            ("skill_refs", &self.skill_refs),
+            ("event_families", &self.event_families),
+        ]
+    }
+}
+#[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
+#[serde(deny_unknown_fields)]
+pub struct ReuseVariation {
+    pub file_ref: String,
+    pub revision: String,
+}
+/// `oi.expression-reuse/v1` — the smallest metadata that makes an ordinary
+/// Expression reusable: role slots, entry state, named states and gestures,
+/// playback order and discovery associations. Everything performative
+/// (transitions, sequences, sound, camera) stays in the Scene material.
+#[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
+#[serde(deny_unknown_fields)]
+pub struct Reuse {
+    pub schema: String,
+    pub kind: ReuseKind,
+    pub title: String,
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub roles: Vec<ReuseRole>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub entry_scene_ref: Option<String>,
+    #[serde(default, skip_serializing_if = "BTreeMap::is_empty")]
+    pub states: BTreeMap<String, String>,
+    #[serde(default, skip_serializing_if = "BTreeMap::is_empty")]
+    pub gestures: BTreeMap<String, ReuseGesture>,
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub playback: Vec<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub preview_state: Option<String>,
+    #[serde(default, skip_serializing_if = "ReuseAssociations::is_empty")]
+    pub associations: ReuseAssociations,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub variation_of: Option<ReuseVariation>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub authored_by: Option<String>,
+}
+
+/// A role / state / gesture name: bounded ASCII words joined by `.`, `-` or
+/// `_` (`sender`, `participants.0`, `invoke-skill`).
+pub fn role_name(value: &str) -> Result<(), String> {
+    if value.is_empty()
+        || value.len() > 64
+        || !value.bytes().all(|c| c.is_ascii_alphanumeric() || b"-_.".contains(&c))
+    {
+        return Err(format!("Invalid role/state/gesture name {value:?}"));
+    }
+    Ok(())
+}
+
+impl Reuse {
+    pub fn validate(&self, document: &Document) -> Result<(), String> {
+        if self.schema != REUSE_SCHEMA {
+            return Err("Unsupported reuse schema".into());
+        }
+        text(&self.title)?;
+        if self.title.len() > 256 {
+            return Err("Reuse title exceeds 256 bytes".into());
+        }
+        let scene = |r: &str| -> Result<(), String> {
+            if document.scenes.iter().any(|s| s.scene_ref == r) {
+                Ok(())
+            } else {
+                Err(format!("Reuse names absent Scene {r}"))
+            }
+        };
+        if self.roles.len() > REUSE_ROLES
+            || self.states.len() > REUSE_NAMES
+            || self.gestures.len() > REUSE_NAMES
+            || self.playback.len() > REUSE_PLAYBACK
+        {
+            return Err("Reuse budget exceeded".into());
+        }
+        let text_ids: BTreeSet<&str> = document
+            .scenes
+            .iter()
+            .filter_map(|s| s.presentation.as_ref())
+            .filter_map(|p| p.scene["text"].as_array())
+            .flatten()
+            .filter_map(|t| t["id"].as_str())
+            .collect();
+        let mut names = BTreeSet::new();
+        for role in &self.roles {
+            role_name(&role.role)?;
+            if !names.insert(role.role.as_str()) {
+                return Err(format!("Duplicate reuse role {}", role.role));
+            }
+            match (&role.entity_ref, &role.text_id) {
+                (Some(entity), None) => {
+                    if role.accepts == RoleAccepts::Text {
+                        return Err("A text role addresses a text layer (text_id)".into());
+                    }
+                    if !document.entities.contains_key(entity) {
+                        return Err(format!("Reuse role {} names absent entity", role.role));
+                    }
+                }
+                (None, Some(text_id)) => {
+                    if !matches!(role.accepts, RoleAccepts::Text | RoleAccepts::Value) {
+                        return Err("Only text/value roles address a text layer".into());
+                    }
+                    if !text_ids.contains(text_id.as_str()) {
+                        return Err(format!("Reuse role {} names absent text layer", role.role));
+                    }
+                }
+                _ => return Err("A reuse role names exactly one entity_ref or text_id".into()),
+            }
+        }
+        if let Some(entry) = &self.entry_scene_ref {
+            scene(entry)?;
+        }
+        for (name, scene_ref) in &self.states {
+            role_name(name)?;
+            scene(scene_ref)?;
+        }
+        for (name, gesture) in &self.gestures {
+            role_name(name)?;
+            scene(&gesture.scene_ref)?;
+            if let Some(role) = &gesture.role {
+                role_name(role)?;
+            }
+        }
+        for scene_ref in &self.playback {
+            scene(scene_ref)?;
+        }
+        if let Some(preview) = &self.preview_state {
+            if !self.states.contains_key(preview) {
+                return Err("preview_state must name one of the states".into());
+            }
+        }
+        for (_, list) in self.associations.lists() {
+            if list.len() > REUSE_ASSOCIATIONS {
+                return Err("Reuse association budget exceeded".into());
+            }
+            for value in list {
+                text(value)?;
+                if value.len() > 256 {
+                    return Err("Reuse association exceeds 256 bytes".into());
+                }
+            }
+        }
+        if let Some(variation) = &self.variation_of {
+            text(&variation.file_ref)?;
+            text(&variation.revision)?;
+        }
+        if let Some(author) = &self.authored_by {
+            text(author)?;
+        }
+        Ok(())
+    }
+
+    /// A removed Scene leaves the reuse index with it: its state, gesture and
+    /// playback entries (and an entry/preview pointing at it) are dropped, as
+    /// are text roles whose layer no remaining Scene carries.
+    pub fn forget_scene(&mut self, scene_ref: &str, remaining: &[Scene]) {
+        let dropped: Vec<String> = self.states.iter().filter(|(_, r)| r.as_str() == scene_ref).map(|(n, _)| n.clone()).collect();
+        self.states.retain(|_, r| r != scene_ref);
+        if self.preview_state.as_ref().is_some_and(|p| dropped.contains(p)) {
+            self.preview_state = None;
+        }
+        self.gestures.retain(|_, g| g.scene_ref != scene_ref);
+        self.playback.retain(|r| r != scene_ref);
+        if self.entry_scene_ref.as_deref() == Some(scene_ref) {
+            self.entry_scene_ref = None;
+        }
+        let text_ids: BTreeSet<String> = remaining
+            .iter()
+            .filter_map(|s| s.presentation.as_ref())
+            .filter_map(|p| p.scene["text"].as_array())
+            .flatten()
+            .filter_map(|t| t["id"].as_str().map(str::to_owned))
+            .collect();
+        self.roles.retain(|r| r.text_id.as_ref().is_none_or(|t| text_ids.contains(t)));
+    }
+
+    /// Remap Expression-local refs on a native fork (the same rule the fork
+    /// applies to Scenes and entities); foreign refs keep their identity.
+    pub fn fork(&mut self, old: &str, new: &str) {
+        let map = |r: &mut String| {
+            if let Some(suffix) = r.strip_prefix(&format!("{old}:")) {
+                *r = format!("{new}:{suffix}");
+            }
+        };
+        for role in &mut self.roles {
+            if let Some(entity) = &mut role.entity_ref {
+                map(entity);
+            }
+        }
+        if let Some(entry) = &mut self.entry_scene_ref {
+            map(entry);
+        }
+        for scene_ref in self.states.values_mut() {
+            map(scene_ref);
+        }
+        for gesture in self.gestures.values_mut() {
+            map(&mut gesture.scene_ref);
+        }
+        for scene_ref in &mut self.playback {
+            map(scene_ref);
+        }
+    }
 }
 #[derive(Clone, Debug, Deserialize, Serialize, PartialEq)]
 #[serde(tag = "change", rename_all = "snake_case", deny_unknown_fields)]
@@ -236,6 +543,14 @@ pub enum Change {
     },
     EntityRemove {
         entity_ref: String,
+    },
+    /// World-position pin: distinct from `SceneBlueprintBind`/`Transform`
+    /// (whole membership and shared transform) and from
+    /// `SceneBlueprintRelease` (leaving a blueprint) — this holds one
+    /// entity's own world position independent of either.
+    EntityPin {
+        entity_ref: String,
+        pinned: bool,
     },
     SubjectBind {
         entity_ref: String,
@@ -302,6 +617,11 @@ pub enum Change {
     CollectionsSet {
         collections: Vec<String>,
     },
+    /// Reusable material (contract EXPRESSION-ACT-MATERIAL-V1 §1).
+    ReuseSet {
+        reuse: Reuse,
+    },
+    ReuseClear,
 }
 #[derive(Clone, Debug, Deserialize, Serialize, PartialEq)]
 #[serde(tag = "operation", rename_all = "snake_case", deny_unknown_fields)]
@@ -433,6 +753,13 @@ pub enum Request {
     // matches, and the restored document advances the revision by one — a
     // change, never a silent rewind. Identity and subject refs are those of
     // the checkpointed document, byte for byte.
+    /// Close an open Expression and free its slot. A document with unsaved
+    /// work (never saved, or edited since its last save) is refused as
+    /// `dirty` — close never discards work.
+    Close {
+        expression_ref: String,
+        actor: String,
+    },
     Restore {
         expression_ref: String,
         expected_revision: u64,
@@ -470,12 +797,16 @@ pub struct Application {
 pub fn capabilities() -> Value {
     json!({"schema":"oi.expression-capabilities/v1", "document_schema":SCHEMA,
         "operations":["capabilities","list","inspect","create","open","open_file","fork","edit","propose","review","export","save","save_as","invoke",
-            "profile_define","profile_inspect","profile_resolve","edition_create","edition_inspect","index","asset_admit","asset_traverse","asset_subject"],
-        "changes":["rename","composition_set","scene_material_set","scene_material_clear","scene_blueprint_bind","scene_blueprint_transform","scene_blueprint_release","scene_rename","scene_remove","scene_create","scene_reorder","scene_compose","entity_add","entity_remove","subject_bind","subject_unbind","relation_bind","relation_remove","focus","relation_focus","parameter_set","parameter_automate","parameter_manual","representation_bind",
-            "scene_body_set","scene_body_clear","scene_trigger_attach","scene_trigger_detach","profile_adopt","profile_release","collections_set"],
+            "profile_define","profile_inspect","profile_resolve","edition_create","edition_inspect","index","asset_admit","asset_traverse","asset_subject","restore","close"],
+        "changes":["rename","composition_set","scene_material_set","scene_material_clear","scene_blueprint_bind","scene_blueprint_transform","scene_blueprint_release","scene_rename","scene_remove","scene_create","scene_reorder","scene_compose","entity_add","entity_remove","entity_pin","subject_bind","subject_unbind","relation_bind","relation_remove","focus","relation_focus","parameter_set","parameter_automate","parameter_manual","representation_bind",
+            "scene_body_set","scene_body_clear","scene_trigger_attach","scene_trigger_detach","profile_adopt","profile_release","collections_set","reuse_set","reuse_clear"],
+        "reuse":{"schema":REUSE_SCHEMA,"kinds":["character","scene","expression","gesture"],"accepts":["agent","object","text","value"],
+            "law":"reusable material is an ordinary Expression document; roles are placeholders in Scene material (entities/text layers carrying role); refs must name this Expression's Scenes, entities and text layers",
+            "budgets":{"roles":REUSE_ROLES,"states":REUSE_NAMES,"gestures":REUSE_NAMES,"playback":REUSE_PLAYBACK,"associations_per_list":REUSE_ASSOCIATIONS},
+            "register":crate::expression_material::MATERIAL_REGISTER,"discovery":"expression_world material_list"},
         "composition_presentation":{"schema":"oi.journey-properties/v1","data_only":true,"scene_store":"Document.scenes"},
         "scene_presentation":{"schema":"oi.journey-scene/v1","owner":"existing Expressions authoring Scene","data_only":true,"full_native_membership_retained":true},
-        "composition_budget":{"scenes":64,"entities":LIMIT,"scene_members":LIMIT,"render_formations":10,"render_pins":8},
+        "composition_budget":{"scenes":64,"entities":DOCUMENT_MEMBERS,"scene_members":DOCUMENT_MEMBERS,"render_formations":10,"render_pins":8},
         "parameters":{"glyph":{"type":"string","max_length":128},"shape":{"values":["glyph","ring","disc","square","triangle","yantra","cymatic"]},"kind":{"values":["formation","pin"]},"ascii":{"max_bytes":32768},"image":{"formats":["embedded_png","embedded_jpeg","embedded_webp"]},"x":{"min":-1600,"max":1600},"y":{"min":-1600,"max":1600},"z":{"min":-1600,"max":1600},"scale":{"min":0.05,"max":4},"share":{"min":0,"max":1000}},
         "automation":{"type":"lfo","waveforms":["sine","triangle","square","saw"],"rate_hz":{"min":0.001,"max":10},"clock_owner":"accepted Expressions engine"},
         "scene_body":{"carriers":["engine_composition","text_source","glyph_form","image_media","file_thing","knowledge_whole","html_surface","agent_surface","expression_ref"],
@@ -601,8 +932,8 @@ pub(crate) fn parameter(key: &str, p: &Parameter) -> Result<(), String> {
 }
 impl Document {
     pub fn validate(&self) -> Result<(), String> {
-        if serde_json::to_vec(self).map_err(|e| e.to_string())?.len() > 512 * 1024 {
-            return Err("Expression document exceeds 512 KiB".into());
+        if serde_json::to_vec(self).map_err(|e| e.to_string())?.len() > DOCUMENT_BYTES {
+            return Err("Expression document exceeds 8 MiB".into());
         }
         if self.schema != SCHEMA || self.revision == 0 || self.revision > MAX_REVISION {
             return Err("Unsupported document schema/revision".into());
@@ -613,9 +944,9 @@ impl Document {
         if let Some(presentation) = &self.presentation { presentation.validate()?; }
         if self.scenes.is_empty()
             || self.scenes.len() > 64
-            || self.entities.len() > LIMIT
-            || self.relations.len() > LIMIT
-            || self.representations.len() > LIMIT
+            || self.entities.len() > DOCUMENT_MEMBERS
+            || self.relations.len() > DOCUMENT_MEMBERS
+            || self.representations.len() > DOCUMENT_MEMBERS
         {
             return Err("Expression composition budget exceeded".into());
         }
@@ -628,7 +959,7 @@ impl Document {
             }
             let unique: BTreeSet<_> = s.entity_refs.iter().collect();
             if unique.len() != s.entity_refs.len()
-                || s.entity_refs.len() > LIMIT
+                || s.entity_refs.len() > DOCUMENT_MEMBERS
                 || s.entity_refs.iter().any(|r| !self.entities.contains_key(r))
             {
                 return Err("Scene contains duplicate, missing or too many entities".into());
@@ -663,6 +994,9 @@ impl Document {
         }
         for adoption in &self.profiles {
             adoption.validate()?;
+        }
+        if let Some(reuse) = &self.reuse {
+            reuse.validate(self)?;
         }
         for (key, e) in &self.entities {
             id(&e.entity_ref, &format!("{}:entity:", self.expression_ref))?;
@@ -824,6 +1158,9 @@ impl Document {
                 self.scene(&scene_ref)?;
                 if self.scenes.len() == 1 { return Err("An Expression retains at least one Scene".into()); }
                 self.scenes.retain(|scene| scene.scene_ref != scene_ref);
+                if let Some(reuse) = &mut self.reuse {
+                    reuse.forget_scene(&scene_ref, &self.scenes);
+                }
                 if self.selection.scene_ref == scene_ref {
                     self.selection = Selection { scene_ref: self.scenes[0].scene_ref.clone(), entity_ref: None, relation_ref: None };
                 }
@@ -893,8 +1230,12 @@ impl Document {
                                 automation: None,
                             },
                         )]),
+                        pinned: false,
                     },
                 );
+            }
+            Change::EntityPin { entity_ref, pinned } => {
+                self.entity(&entity_ref)?.pinned = pinned;
             }
             Change::EntityRemove { entity_ref } => {
                 if self.entities.remove(&entity_ref).is_none() {
@@ -1039,6 +1380,10 @@ impl Document {
             Change::CollectionsSet { collections } => {
                 self.collections = collections;
             }
+            // Validated with the whole document: its refs must name this
+            // Expression's real Scenes, entities and text layers.
+            Change::ReuseSet { reuse } => self.reuse = Some(reuse),
+            Change::ReuseClear => self.reuse = None,
         }
         Ok(())
     }
@@ -1147,6 +1492,7 @@ impl Application {
                     refinements: vec![],
                     collections: vec![],
                     profiles: vec![],
+                    reuse: None,
                 };
                 return self.open(d, actor);
             }
@@ -1267,6 +1613,7 @@ impl Application {
                     }
                 }
                 if let Some(presentation) = &mut d.presentation { presentation.fork(&expression_ref, &new_expression_ref); }
+                if let Some(reuse) = &mut d.reuse { reuse.fork(&expression_ref, &new_expression_ref); }
                 d.selection.scene_ref = map(&d.selection.scene_ref);
                 d.selection.entity_ref = d.selection.entity_ref.map(|r| map(&r));
                 d.selection.relation_ref = d.selection.relation_ref.map(|r| map(&r));
@@ -1745,6 +2092,20 @@ impl Application {
             }
             Request::AssetTraverse { asset_ref } => self.assets.traverse(&asset_ref)?,
             Request::AssetSubject { subject_ref } => self.assets.for_subject(&subject_ref),
+            Request::Close { expression_ref, actor } => {
+                text(&actor)?;
+                let revision = self.document(&expression_ref)?.revision;
+                let saved = self.saved.get(&expression_ref).copied();
+                if saved != Some(revision) {
+                    return Ok((json!({"state":"dirty","expression_ref":expression_ref,"revision":revision,"saved_revision":saved,
+                        "detail":"The Expression has unsaved work; save it before closing (close never discards work)"}), None));
+                }
+                self.documents.remove(&expression_ref);
+                self.saved.remove(&expression_ref);
+                self.touched.remove(&expression_ref);
+                let file = self.file_bindings.remove(&expression_ref);
+                json!({"state":"closed","expression_ref":expression_ref,"revision":revision,"file":file})
+            }
             // --- expression_world (ES4) addition, lane aikit/es-one-state-relation ---
             Request::Restore {
                 expression_ref,
@@ -1839,5 +2200,36 @@ impl Application {
         self.documents.insert(touched_ref.clone(), d);
         self.touched.insert(touched_ref, unix_now());
         Ok((self.inspect(&event.expression_ref)?, Some(event)))
+    }
+}
+
+#[cfg(test)]
+mod close_tests {
+    use super::*;
+
+    #[test]
+    fn close_refuses_unsaved_work_and_frees_a_saved_slot() {
+        let client = CentralClient::with("/nonexistent/oi".into(), None, String::new());
+        let mut app = Application::default();
+        let create = |r: &str| Request::Create { expression_ref: r.into(), title: "T".into(), actor: "a".into() };
+        let close = |r: &str| Request::Close { expression_ref: r.into(), actor: "a".into() };
+        app.apply(&client, create("expression:c")).unwrap();
+        let (dirty, _) = app.apply(&client, close("expression:c")).unwrap();
+        assert_eq!(dirty["state"], "dirty", "never-saved work is kept");
+        assert!(app.document("expression:c").is_ok());
+        // Saved at its current revision (as save/save_as/open_file record it).
+        app.saved.insert("expression:c".into(), 1);
+        let (closed, changed) = app.apply(&client, close("expression:c")).unwrap();
+        assert_eq!(closed["state"], "closed");
+        assert!(changed.is_none());
+        assert!(app.document("expression:c").is_err(), "the slot is free");
+        assert!(app.apply(&client, close("expression:c")).is_err(), "closing an unknown Expression is an error");
+        // Edited after its save: dirty again.
+        app.apply(&client, create("expression:d")).unwrap();
+        app.saved.insert("expression:d".into(), 1);
+        app.apply(&client, Request::Edit { expression_ref: "expression:d".into(), expected_revision: 1, actor: "a".into(),
+            changes: vec![Change::Rename { title: "U".into() }] }).unwrap();
+        assert_eq!(app.apply(&client, close("expression:d")).unwrap().0["state"], "dirty");
+        assert!(capabilities()["operations"].as_array().unwrap().contains(&json!("close")));
     }
 }

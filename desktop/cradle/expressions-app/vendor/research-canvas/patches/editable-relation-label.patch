@@ -1,0 +1,113 @@
+diff --git a/desktop/cradle/expressions-app/vendor/research-canvas/packages/canvas/src/edges/AnnotatedEdge.tsx b/desktop/cradle/expressions-app/vendor/research-canvas/packages/canvas/src/edges/AnnotatedEdge.tsx
+index ca956f8a..5e5c17a5 100644
+--- a/desktop/cradle/expressions-app/vendor/research-canvas/packages/canvas/src/edges/AnnotatedEdge.tsx
++++ b/desktop/cradle/expressions-app/vendor/research-canvas/packages/canvas/src/edges/AnnotatedEdge.tsx
+@@ -39,7 +39,7 @@ export function AnnotatedEdge({
+ }: EdgeProps<Edge<AnnotatedEdgeData, "annotated">>) {
+   const [draftRelationKind, setDraftRelationKind] = useState(data?.relationKind ?? "");
+   const cancelEditRef = useRef(false);
+-  const selectRef = useRef<HTMLSelectElement>(null);
++  const selectRef = useRef<HTMLInputElement>(null);
+ 
+   useEffect(() => {
+     setDraftRelationKind(data?.relationKind ?? "");
+@@ -124,47 +124,59 @@ export function AnnotatedEdge({
+         >
+           <div className="flow-edge-label__text">
+             {data?.selected && !data.readOnly && data.onUpdateRelationKind ? (
+-              <select
+-                aria-label="Relation kind"
+-                className="flow-edge-label__select"
+-                onBlur={() => {
+-                  if (cancelEditRef.current) {
+-                    cancelEditRef.current = false;
+-                    setDraftRelationKind(data?.relationKind ?? "");
+-                    return;
+-                  }
+-                  if (draftRelationKind && draftRelationKind !== data?.relationKind) {
+-                    data?.onUpdateRelationKind?.(draftRelationKind);
+-                  }
+-                }}
+-                onChange={(event) => {
+-                  const nextRelationKind = event.currentTarget.value;
+-                  setDraftRelationKind(nextRelationKind);
+-                  if (nextRelationKind) {
+-                    data?.onUpdateRelationKind?.(nextRelationKind);
+-                  }
+-                }}
+-                onClick={(event) => {
+-                  event.preventDefault();
+-                  event.stopPropagation();
+-                }}
+-                onKeyDown={(event) => {
+-                  if (event.key === "Escape") {
++              <>
++                <input
++                  aria-label="Relation label"
++                  className="flow-edge-label__input"
++                  list="relation-kind-suggestions"
++                  maxLength={120}
++                  placeholder="name this relation"
++                  onBlur={() => {
++                    if (cancelEditRef.current) {
++                      cancelEditRef.current = false;
++                      setDraftRelationKind(data?.relationKind ?? "");
++                      return;
++                    }
++                    const nextRelationKind = draftRelationKind.trim();
++                    if (nextRelationKind && nextRelationKind !== data?.relationKind) {
++                      data?.onUpdateRelationKind?.(nextRelationKind);
++                    } else if (!nextRelationKind) {
++                      setDraftRelationKind(data?.relationKind ?? "");
++                    }
++                  }}
++                  onChange={(event) => {
++                    setDraftRelationKind(event.currentTarget.value);
++                  }}
++                  onClick={(event) => {
+                     event.preventDefault();
+-                    cancelEditRef.current = true;
+-                    setDraftRelationKind(data?.relationKind ?? "");
+-                    selectRef.current?.blur();
+-                  }
+-                }}
+-                ref={selectRef}
+-                value={draftRelationKind}
+-              >
+-                {RELATIONSHIP_KINDS.map((option) => (
+-                  <option key={option.kind} value={option.kind}>
+-                    {option.label}
+-                  </option>
+-                ))}
+-              </select>
++                    event.stopPropagation();
++                  }}
++                  onPointerDown={(event) => {
++                    event.stopPropagation();
++                  }}
++                  onKeyDown={(event) => {
++                    if (event.key === "Escape") {
++                      event.preventDefault();
++                      cancelEditRef.current = true;
++                      setDraftRelationKind(data?.relationKind ?? "");
++                      selectRef.current?.blur();
++                    }
++                    if (event.key === "Enter") {
++                      event.preventDefault();
++                      selectRef.current?.blur();
++                    }
++                  }}
++                  ref={selectRef}
++                  value={draftRelationKind}
++                />
++                <datalist id="relation-kind-suggestions">
++                  {RELATIONSHIP_KINDS.map((option) => (
++                    <option key={option.kind} value={option.kind}>
++                      {option.label}
++                    </option>
++                  ))}
++                </datalist>
++              </>
+             ) : (
+               <strong>{data?.relationKind}</strong>
+             )}

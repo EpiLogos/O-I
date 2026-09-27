@@ -205,6 +205,24 @@ pub enum OwnerRequest {
     TelemetryStatus { state_path: PathBuf },
     /// `factory telemetry inspect <state> <telemetry-ref>`.
     TelemetryInspect { state_path: PathBuf, telemetry_ref: String },
+    /// `factory telemetry watch <state> [--resume <cursor>] --duration S
+    /// --max-events N --interval I` — the owner's resumable bounded stream
+    /// of execution correlations (JSONL), for the Factory Live producer loop.
+    /// Bounded here too: the duration is clamped to [0, 4] seconds and the
+    /// event count to [1, 500], so a follow can never hang the kernel arm.
+    /// `run_ref` filters the correlation lines to one Run (the owner's watch
+    /// is state-wide); the cursor line is always returned.
+    TelemetryWatch {
+        state_path: PathBuf,
+        #[serde(default)]
+        resume: Option<Value>,
+        #[serde(default)]
+        duration_secs: Option<f64>,
+        #[serde(default)]
+        max_events: Option<u32>,
+        #[serde(default)]
+        run_ref: Option<String>,
+    },
     /// Owner-native current sensing projection. No collection is triggered.
     TelemetryField { state_path: PathBuf },
     /// Try AIKit's bounded hot projection for this exact ProjectWorld, then
@@ -430,6 +448,92 @@ fn telemetry_args(
     Ok(args)
 }
 
+/// The owner's watch grammar with the kernel's bounds applied.
+pub fn telemetry_watch_args(
+    state_path: &Path,
+    resume: Option<&Value>,
+    duration_secs: Option<f64>,
+    max_events: Option<u32>,
+) -> Result<Vec<std::ffi::OsString>, Error> {
+    let duration = duration_secs.unwrap_or(2.0);
+    if !duration.is_finite() {
+        return Err(incompatible("The watch duration must be a finite number of seconds"));
+    }
+    let duration = duration.clamp(0.0, WATCH_WINDOW_MAX_SECS);
+    let max_events = max_events.unwrap_or(100).clamp(1, 500);
+    let mut args: Vec<std::ffi::OsString> = vec!["telemetry".into(), "watch".into(), path_arg(state_path)];
+    if let Some(cursor) = resume {
+        if cursor.get("stateRevision").and_then(Value::as_u64).is_none() {
+            return Err(incompatible("A watch cursor must carry the owner's stateRevision"));
+        }
+        args.extend(["--resume".into(), cursor.to_string().into()]);
+    }
+    // Poll within the bounded window: never the 2 s default when the window
+    // itself is shorter.
+    let interval = (duration / 4.0).clamp(0.05, 0.5);
+    args.extend([
+        "--duration".into(),
+        format!("{duration}").into(),
+        "--interval".into(),
+        format!("{interval}").into(),
+        "--max-events".into(),
+        max_events.to_string().into(),
+        "--json".into(),
+    ]);
+    Ok(args)
+}
+
+/// The longest watch window the kernel allows (the owner's --duration).
+pub const WATCH_WINDOW_MAX_SECS: f64 = 4.0;
+
+/// One bounded watch: the owner process is killed if it outlives its own
+/// window by more than two seconds. Runs outside the kernel lock (it is a
+/// prepared owner read, owner_read.rs).
+pub fn telemetry_watch(state_path: &Path, resume: Option<&Value>, duration_secs: Option<f64>, max_events: Option<u32>, run_ref: Option<&str>) -> Result<Value, Error> {
+    let args = telemetry_watch_args(state_path, resume, duration_secs, max_events)?;
+    let (executable, suite_route) = owner_executable();
+    let mut argv: Vec<std::ffi::OsString> = Vec::new();
+    if suite_route {
+        argv.push("factory".into());
+    }
+    argv.extend(args);
+    let window = duration_secs.unwrap_or(2.0).clamp(0.0, WATCH_WINDOW_MAX_SECS);
+    let timeout = std::time::Duration::from_secs_f64(window + 2.0);
+    let stdout = crate::inhabitation::run_bounded_raw(&executable, &argv, None, timeout, "factory telemetry watch", &[])?;
+    watch_reading(&String::from_utf8_lossy(&stdout), run_ref)
+}
+
+/// JSONL → one reading: the correlation lines (for `run_ref` when given) and
+/// the owner's resume cursor. A stream without its cursor line is refused —
+/// the follow could not resume honestly.
+pub fn watch_reading(stdout: &str, run_ref: Option<&str>) -> Result<Value, Error> {
+    let mut lines = Vec::new();
+    let mut cursor = None;
+    let mut emitted = None;
+    for raw in stdout.lines().map(str::trim).filter(|line| !line.is_empty()) {
+        let line: Value = serde_json::from_str(raw).map_err(|e| incompatible(format!("The owner's watch line is not JSON: {e}")))?;
+        match line.get("type").and_then(Value::as_str) {
+            Some("cursor") => {
+                cursor = line.get("cursor").cloned();
+                emitted = line.get("emitted").cloned();
+            }
+            Some(_) => {
+                if run_ref.is_none_or(|run| line.get("runRef").and_then(Value::as_str) == Some(run)) {
+                    lines.push(line);
+                }
+            }
+            None => return Err(incompatible("The owner's watch line names no type")),
+        }
+    }
+    let cursor = cursor.ok_or_else(|| incompatible("The owner's watch ended without its resume cursor"))?;
+    Ok(serde_json::json!({
+        "contract": "oi.factory-telemetry-watch/v1",
+        "lines": lines,
+        "cursor": cursor,
+        "emitted": emitted.unwrap_or(Value::Null),
+    }))
+}
+
 fn native_sensing_field(state_path: &Path) -> Result<Value, Error> {
     let mut args = telemetry_args("field", state_path, None, None, None, None)?;
     // A Project policy is source, never authority. Pass the canonical JSON
@@ -648,6 +752,9 @@ pub fn owner(request: OwnerRequest, world: Option<&Value>) -> Result<Value, Erro
                 Err(incompatible("Factory answered an unexpected telemetry contract"))
             }
         }
+        OwnerRequest::TelemetryWatch { state_path, resume, duration_secs, max_events, run_ref } => {
+            telemetry_watch(&state_path, resume.as_ref(), duration_secs, max_events, run_ref.as_deref())
+        }
         OwnerRequest::TelemetryField { state_path } => native_sensing_field(&state_path),
         OwnerRequest::TelemetryCurrent { state_path, project_world_ref } => current_sensing_field(&state_path, &project_world_ref),
         OwnerRequest::TelemetrySignal {
@@ -804,6 +911,63 @@ mod owner_tests {
         assert!(matches!(wire, OwnerRequest::CurrentWork { .. }));
         assert_eq!(reading_contract(&serde_json::json!({"schema": "factory.current-work/v1"})), "factory.current-work/v1");
         assert_eq!(reading_contract(&serde_json::json!({"contract": "factory.inhabitation-reading/v1"})), "factory.inhabitation-reading/v1");
+    }
+
+    #[test]
+    fn telemetry_watch_is_bounded_and_resumable() {
+        let args = telemetry_watch_args(Path::new("/s.json"), Some(&serde_json::json!({"stateRevision": 21})), Some(60.0), Some(9000)).unwrap();
+        let words: Vec<String> = args.iter().map(|a| a.to_string_lossy().into_owned()).collect();
+        assert_eq!(&words[..3], &["telemetry", "watch", "/s.json"]);
+        assert_eq!(words[words.iter().position(|w| w == "--resume").unwrap() + 1], r#"{"stateRevision":21}"#);
+        assert_eq!(words[words.iter().position(|w| w == "--duration").unwrap() + 1], "4");
+        assert_eq!(words[words.iter().position(|w| w == "--max-events").unwrap() + 1], "500");
+        assert_eq!(words.last().unwrap(), "--json");
+        assert!(telemetry_watch_args(Path::new("/s.json"), Some(&serde_json::json!({"revision": 1})), None, None).is_err(), "a cursor without the owner's key is refused");
+        assert!(telemetry_watch_args(Path::new("/s.json"), None, Some(f64::NAN), None).is_err());
+        let wire: OwnerRequest = serde_json::from_value(serde_json::json!({"kind": "telemetry-watch", "state_path": "/s.json", "duration_secs": 1.5, "run_ref": "run:A"})).unwrap();
+        assert!(matches!(wire, OwnerRequest::TelemetryWatch { .. }));
+    }
+
+    #[test]
+    fn watch_reading_filters_to_the_run_and_carries_the_cursor() {
+        // The owner's real output (factory telemetry watch on the specimen ground).
+        let stdout = concat!(
+            r#"{"childNowRef":null,"correlationRef":"execution-correlation:CR01","runRef":"run:A","stateRevision":21,"telemetryRef":"telemetry:TM01","type":"execution-correlation"}"#, "\n",
+            r#"{"childNowRef":null,"correlationRef":"execution-correlation:CR02","runRef":"run:B","stateRevision":21,"telemetryRef":"telemetry:TM02","type":"execution-correlation"}"#, "\n",
+            r#"{"cursor":{"stateRevision":21},"emitted":2,"resumeWith":"--resume","type":"cursor"}"#,
+        );
+        let reading = watch_reading(stdout, Some("run:A")).unwrap();
+        assert_eq!(reading["contract"], "oi.factory-telemetry-watch/v1");
+        assert_eq!(reading["lines"].as_array().unwrap().len(), 1);
+        assert_eq!(reading["cursor"]["stateRevision"], 21);
+        assert_eq!(watch_reading(stdout, None).unwrap()["lines"].as_array().unwrap().len(), 2);
+        assert!(watch_reading(r#"{"type":"execution-correlation"}"#, None).is_err(), "no cursor line → no honest resume");
+    }
+
+    /// The curated Factory Expressions starter material (FX-C4) is ordinary
+    /// native Expression material: each document deserialises and passes the
+    /// kernel's own document and Scene-material validation, `reuse` block
+    /// included.
+    #[test]
+    fn curated_factory_expression_material_is_valid_native_material() {
+        let root = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("../material/factory-expressions");
+        let mut files = Vec::new();
+        for kind in ["character", "scene", "gesture", "expression"] {
+            for entry in std::fs::read_dir(root.join(kind)).expect("material directory") {
+                let path = entry.unwrap().path();
+                if path.to_string_lossy().ends_with(".expression.json") {
+                    files.push(path);
+                }
+            }
+        }
+        assert!(files.len() >= 12, "curated material present ({})", files.len());
+        for path in files {
+            let value: Value = serde_json::from_slice(&std::fs::read(&path).unwrap()).unwrap();
+            assert_eq!(value["reuse"]["schema"], "oi.expression-reuse/v1", "{}", path.display());
+            let document: crate::expression::Document = serde_json::from_value(value).unwrap_or_else(|e| panic!("{}: {e}", path.display()));
+            assert!(document.reuse.is_some(), "{}: the reuse block survives", path.display());
+            document.validate().unwrap_or_else(|e| panic!("{}: {e}", path.display()));
+        }
     }
 
     #[test]

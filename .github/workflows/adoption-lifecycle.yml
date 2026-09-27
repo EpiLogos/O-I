@@ -32,6 +32,13 @@ jobs:
       - uses: Swatinem/rust-cache@v2.9.2
         with:
           workspaces: cli
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: desktop/cradle/package-lock.json
+      - name: Install the desktop cradle graph the CLI's hosted-contracts tests exercise
+        run: npm ci --prefix desktop/cradle --no-audit --no-fund
       - name: Record exact source
         run: |
           set -euo pipefail

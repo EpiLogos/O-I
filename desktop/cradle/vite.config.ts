@@ -2,6 +2,7 @@ import { fileURLToPath } from "node:url";
 import { cpSync, existsSync } from "node:fs";
 import { resolve } from "node:path";
 import { defineConfig } from "vite";
+import { ensureExpressionsApp } from "./scripts/ensure-expressions-app.mjs";
 import react from "@vitejs/plugin-react";
 
 // https://vitejs.dev/config/
@@ -9,6 +10,10 @@ export default defineConfig(({ command }) => ({
   plugins: [react(), {
     name: "candidate-hosted-expressions",
     apply: "build",
+    // A direct `vite build` (or `npm ci --ignore-scripts`) skips the prebuild
+    // hook; the embedded application is installed and built here instead of
+    // refusing the bundle.
+    buildStart() { ensureExpressionsApp({build: true}); },
     writeBundle(output) {
       const source = fileURLToPath(new URL("./expressions-app/dist", import.meta.url));
       if (!existsSync(resolve(source, "index.html"))) throw new Error("Build this checkout's Expressions application before bundling the desktop (npm run build:expressions).");

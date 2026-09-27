@@ -107,21 +107,21 @@ export class EntityRuntime {
   // Uploaded alongside the targets at bake time; never rewritten during steady-state frames.
   public collisionTexture: THREE.DataTexture | null = null;
   /** Per-partition tile rect (uv origin x/y, tile width u, enabled) pushed to the simulator. */
-  public readonly collisionTiles = new Float32Array(40);
+  public readonly collisionTiles = new Float32Array(MAX_FORMATIONS * 4);
   private collisionData = new Float32Array(0);
   private collisionSlots = new Map<string, number>();
 
   public readonly uniforms: EntityUniformSet = {
     count: 0,
     connectionStart: 0,
-    bounds: new Float32Array(10),
-    centers: Array.from({ length: 10 }, () => new THREE.Vector4(0, 0, 0, 200)),
-    morph: new Float32Array(10),
-    transforms: Array.from({ length: 10 }, () => new THREE.Vector3(1, 1, 0)),
-    depthScales: new Float32Array(10).fill(1),
-    normalized: new Float32Array(10),
-    tints: Array.from({ length: 10 }, () => new THREE.Color('#ffffff')),
-    tintWeights: new Float32Array(10),
+    bounds: new Float32Array(MAX_FORMATIONS),
+    centers: Array.from({ length: MAX_FORMATIONS }, () => new THREE.Vector4(0, 0, 0, 200)),
+    morph: new Float32Array(MAX_FORMATIONS),
+    transforms: Array.from({ length: MAX_FORMATIONS }, () => new THREE.Vector3(1, 1, 0)),
+    depthScales: new Float32Array(MAX_FORMATIONS).fill(1),
+    normalized: new Float32Array(MAX_FORMATIONS),
+    tints: Array.from({ length: MAX_FORMATIONS }, () => new THREE.Color('#ffffff')),
+    tintWeights: new Float32Array(MAX_FORMATIONS),
   };
 
   constructor(sampler: GlyphSampler) {
@@ -300,7 +300,6 @@ export class EntityRuntime {
     plane: Composition['plane'],
     jitterPx: number,
     channel: 0 | 2,
-    normalized: boolean,
     depthOffset: number = 0
   ) {
     const n = cands.length;
@@ -316,7 +315,7 @@ export class EntityRuntime {
       // The raster pool is scanline ordered. A prefix would crop low-share
       // allocations to the top of a glyph. A low-discrepancy stride covers the
       // complete local shape for every allocation size without changing IDs.
-      const c = normalized ? cands[Math.floor(((i-start)*0.6180339887498949 % 1)*n)] : cands[(i-start)%n];
+      const c = cands[Math.floor(((i-start)*0.6180339887498949 % 1)*n)];
       const jx = (Math.random() - 0.5) * jitterPx;
       const jy = (Math.random() - 0.5) * jitterPx;
       this.noiseData[i*4+channel]=jx;this.noiseData[i*4+channel+1]=jy;
@@ -378,11 +377,10 @@ export class EntityRuntime {
     const candB = this.linkCandidates(e, links[nextIndex], nextIndex, custom, fontFamily, fontWeight);
     this.bakeGeneration++;
     const scale = e.extent && e.extent.normalized !== false ? 1 : BASE_SCALE;
-    const normalized = !!e.extent && e.extent.normalized !== false;
     const poolA = this.presetPool(e, candA);
     const poolB = this.presetPool(e, candB);
-    this.writeCandidates(this.dataA, p.start, p.end, poolA, scale, plane, 2, 0, normalized);
-    this.writeCandidates(this.dataB, p.start, p.end, poolB, scale, plane, 2, 2, normalized);
+    this.writeCandidates(this.dataA, p.start, p.end, poolA, scale, plane, 2, 0);
+    this.writeCandidates(this.dataB, p.start, p.end, poolB, scale, plane, 2, 2);
     if (this.noiseTexture) this.noiseTexture.needsUpdate = true;
     if (this.textureA) this.textureA.needsUpdate = true;
     if (this.textureB) this.textureB.needsUpdate = true;
@@ -413,7 +411,6 @@ export class EntityRuntime {
     const layers = e.layers!;
     const custom = this.customCandidates.get(e.id);
     const baseScale = e.extent && e.extent.normalized !== false ? 1 : BASE_SCALE;
-    const normalized = !!e.extent && e.extent.normalized !== false;
     const K = Math.max(1, layers.length);
     const per = Math.floor((p.end - p.start) / K);
     // The union collision envelope reaches across the whole stack: from the
@@ -431,9 +428,9 @@ export class EntityRuntime {
       const start = p.start + k * per;
       const end = k === K - 1 ? p.end : start + per;
       this.bakeGeneration++;
-      this.writeCandidates(this.dataA, start, end, pool, baseScale, plane, 2, 0, normalized, layer.z);
+      this.writeCandidates(this.dataA, start, end, pool, baseScale, plane, 2, 0, layer.z);
       this.bakeGeneration++;
-      this.writeCandidates(this.dataB, start, end, pool, baseScale, plane, 2, 2, normalized, layer.z);
+      this.writeCandidates(this.dataB, start, end, pool, baseScale, plane, 2, 2, layer.z);
       // Collision: one union section whose thickness envelope reaches across
       // the whole lamination, so the wall is the bounding solid of the stack.
       for (const c of pool) union.push({...c, hz: Math.max(c.hz ?? 0, reach)});
@@ -487,7 +484,7 @@ export class EntityRuntime {
     u.count = Math.min(MAX_FORMATIONS, this.partitions.length);
 
     this.partitions.forEach((p, i) => {
-      if (i >= 10) return;
+      if (i >= MAX_FORMATIONS) return;
       const e = byId.get(p.entityId);
       if (!e) return;
       const pose = poseById.get(e.id)!;
@@ -560,7 +557,7 @@ export class EntityRuntime {
       }
     }
     this.partitions.forEach((p, i) => {
-      if (i >= 10) return;
+      if (i >= MAX_FORMATIONS) return;
       const c = this.uniforms.centers[i];
       for (let k = p.start; k < p.end; k++) {
         const tr=this.uniforms.transforms[i],blend=this.uniforms.morph[i];

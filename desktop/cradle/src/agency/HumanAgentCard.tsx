@@ -12,7 +12,11 @@
  */
 import {useEffect, useState, type ReactNode} from "react";
 import {useKernel} from "../kernel/KernelProvider";
-import {citizenshipRows, readAgentCard, type CardField, type HumanAgentCard as Card} from "./agentCardReading";
+import {cardCharacterRef, citizenshipRows, readAgentCard, type CardField, type HumanAgentCard as Card} from "./agentCardReading";
+import {LiveCharacterPreview} from "./character/CharacterPreview";
+import {CharacterEditor} from "./character/CharacterEditor";
+import {nativeAgentOwner} from "./nativeAgentClient";
+import {setAgentCharacter} from "./nativeAgent";
 
 /** The native standing this card is rendered under. A source record must not
  * render as an active card: each state names itself, and the card never
@@ -65,8 +69,13 @@ function Field({title, field, children}: {title: string; field: CardField; child
   </section>;
 }
 
-export function HumanAgentCard({card, standing, actions}: {card: Card; standing?: AgentCardStanding; actions?: AgentCardAction[]}) {
+/** How the card draws its character; the default reads the material by ref. */
+export type CharacterRenderer = (characterRef: string) => ReactNode;
+const liveCharacter: CharacterRenderer = (characterRef) => <LiveCharacterPreview characterRef={characterRef} size={72}/>;
+
+export function HumanAgentCard({card, standing, actions, renderCharacter = liveCharacter, characterEditor}: {card: Card; standing?: AgentCardStanding; actions?: AgentCardAction[]; renderCharacter?: CharacterRenderer; characterEditor?: ReactNode}) {
 	const {identity} = card;
+	const characterRef = cardCharacterRef(card);
 	return <article className="agent-card" aria-label={`Agent card — ${identity.name}`} data-agent-standing={standing}>
 		<header className="agent-card-head">
 			<h3 className="agency-detail-title">{identity.name}</h3>
@@ -76,6 +85,13 @@ export function HumanAgentCard({card, standing, actions}: {card: Card; standing?
 				{standing && <span className="oi-state" data-agent-standing={standing} role="status">{STANDING_LABEL[standing]}</span>}
 			</div>
 		</header>
+
+    {(characterRef || characterEditor) && <section className="agent-card-field agent-card-character" aria-label="Character">
+      <h4 className="agent-card-label">How I appear</h4>
+      {characterRef ? renderCharacter(characterRef) : <p className="oi-note">No expressive character yet.</p>}
+      {characterRef && <Refs refs={card.character?.refs ?? [characterRef]} label="Exact refs"/>}
+      {characterEditor && <details className="oi-disclosure"><summary>{characterRef ? "Change character" : "Give this Agent a character"}</summary>{characterEditor}</details>}
+    </section>}
 
     <Field title="Why I'm here" field={card.why_im_here}>
       {card.why_im_here.intent_expression && card.why_im_here.intent_expression !== card.why_im_here.text &&
@@ -130,17 +146,37 @@ export function HumanAgentCard({card, standing, actions}: {card: Card; standing?
 }
 
 /** Loads the card from the kernel for one Agent (and optionally one World). */
-export function LiveHumanAgentCard({agentRef, worldRef, standing, actions}: {agentRef: string; worldRef?: string | null; standing?: AgentCardStanding; actions?: AgentCardAction[]}) {
+/** The Central register holding the Agent's profile, from the card's home World. */
+export function profileProject(card: Pick<Card, "where_i_participate">): string | undefined {
+	const home = card.where_i_participate.home_world_ref ?? card.where_i_participate.world_ref;
+	return home?.startsWith("project:") ? home.slice("project:".length) : undefined;
+}
+
+/** Loads the card from the kernel for one Agent (and optionally one World).
+ * `editableCharacter` adds the Character editor for this existing Agent;
+ * `onCharacterChanged` lets a host re-read its own view of the source. */
+export function LiveHumanAgentCard({agentRef, worldRef, standing, actions, editableCharacter, onCharacterChanged}: {agentRef: string; worldRef?: string | null; standing?: AgentCardStanding; actions?: AgentCardAction[]; editableCharacter?: boolean; onCharacterChanged?: () => void}) {
 	const kernel = useKernel();
 	const [card, setCard] = useState<Card>();
 	const [error, setError] = useState<string>();
+	const [generation, setGeneration] = useState(0);
 	useEffect(() => {
 		let live = true;
 		setCard(undefined); setError(undefined);
 		readAgentCard(kernel.transport, agentRef, worldRef).then((value) => { if (live) setCard(value); }, (e) => { if (live) setError(String(e instanceof Error ? e.message : e)); });
 		return () => { live = false; };
-	}, [kernel.transport, agentRef, worldRef]);
+	}, [kernel.transport, agentRef, worldRef, generation]);
 	if (error) return <p className="oi-refusal" role="status" data-agent-standing="unavailable">The Agent card could not be derived: {error}</p>;
 	if (!card) return <p className="oi-note" aria-busy="true">Deriving the Agent card from its native owners…</p>;
-	return <HumanAgentCard card={card} standing={standing} actions={actions}/>;
+	const editor = editableCharacter ? <CharacterEditor current={cardCharacterRef(card)}
+		accepted={card.citizenship.dimensions.recognition?.state === "established"}
+		onSave={async (characterRef) => {
+			const owner = nativeAgentOwner(kernel.transport, profileProject(card));
+			const roster = await owner({action: "roster"}) as {scope_ref?: string};
+			if (typeof roster?.scope_ref !== "string") throw new Error("The native Agent register is not readable here.");
+			const review = await setAgentCharacter(owner, roster.scope_ref, {profileRef: card.identity.profile_ref, expectedRevision: card.identity.revision, characterRef});
+			setGeneration(n => n + 1); onCharacterChanged?.();
+			return review.character_change;
+		}}/> : undefined;
+	return <HumanAgentCard card={card} standing={standing} actions={actions} characterEditor={editor}/>;
 }

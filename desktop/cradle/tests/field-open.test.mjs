@@ -5,7 +5,7 @@
  * browser or kernel. */
 import {test} from 'node:test';
 import assert from 'node:assert/strict';
-import {requestTechneFieldOpen, consumeTechneFieldOpen, peekTechneFieldOpen, peekTechneFieldTarget, resetTechneFieldOpen} from '../src/expressions/fieldOpen.ts';
+import {requestTechneFieldOpen, consumeTechneFieldOpen, peekTechneFieldOpen, peekTechneFieldTarget, peekTechneFieldLens, resetTechneFieldOpen} from '../src/expressions/fieldOpen.ts';
 
 test('a non-Expression ref is never recorded', () => {
   resetTechneFieldOpen();
@@ -59,4 +59,17 @@ test('reset clears any pending ref', () => {
   resetTechneFieldOpen();
   assert.equal(peekTechneFieldOpen(), null);
   assert.equal(consumeTechneFieldOpen('x'), null);
+});
+
+test('an open may carry the lens the field should stand in; it travels with the ref and clears with it', () => {
+  resetTechneFieldOpen();
+  requestTechneFieldOpen('expression:techne-m0.o-i.1', 'techne-presented', true, 'canvas');
+  assert.equal(peekTechneFieldLens(), 'canvas');
+  assert.equal(consumeTechneFieldOpen('techne-concealed'), null);
+  assert.equal(peekTechneFieldLens(), 'canvas', 'a concealed host leaves the lens with the ref');
+  assert.equal(consumeTechneFieldOpen('techne-presented'), 'expression:techne-m0.o-i.1');
+  assert.equal(peekTechneFieldLens(), null);
+  requestTechneFieldOpen('expression:techne-m0.o-i.1', 'techne-presented', true);
+  assert.equal(peekTechneFieldLens(), null, 'an ordinary open asks for no lens');
+  resetTechneFieldOpen();
 });

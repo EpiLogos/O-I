@@ -32,7 +32,14 @@ async function mount(){
  await frame.waitForFunction(()=>window.__FIELD_STUDIES__&&window.__OI_KERNEL_EXPRESSIONS__?.kernelExpressionsAvailable());
 }
 async function edit(bind,value){const input=frame.locator(`#inspector-content [data-bind="${bind}"]`).first();await input.fill(String(value));if(await input.evaluate(el=>el.tagName!=='TEXTAREA'))await input.press('Enter');else await input.blur();}
-async function openPanel(){if(!await frame.locator('#native-work').isVisible())await frame.locator('[data-action="native-work"]').first().click();await frame.getByRole('button',{name:'Commit composition',exact:true}).waitFor({state:'visible'});await frame.waitForFunction(()=>!document.querySelector('[data-native="commit"]').disabled);}
+// Native working controls live in the app's own homes (no separate panel):
+// Save in the masthead, file save/open in the Library file bar's modal, and
+// the native standing in the Studio footer.
+async function saveReady(){await frame.waitForFunction(()=>{const b=document.getElementById('native-save');return b&&!b.disabled;});}
+async function commit(){await saveReady();const before=await frame.evaluate(()=>window.__FIELD_STUDIES__.nativeWorking()?.revision??0);await frame.locator('#native-save').click();await frame.waitForFunction(r=>{const b=document.getElementById('native-save');return b&&!b.disabled&&(window.__FIELD_STUDIES__.nativeWorking()?.revision??0)>=r;},before);}
+async function libraryAction(action){if(await frame.locator('#library-page').isHidden())await frame.evaluate(()=>document.querySelector('[data-action="library"]').click());await frame.locator('#library-page:not([hidden])').waitFor();await frame.locator(`#library-page [data-action="${action}"]`).first().click();}
+async function saveFile(folder,name){await saveReady();await libraryAction('native-save-file');const f=frame.locator('#confirm-dialog[open] input[name="folder"]');if(await f.isEnabled()){await f.fill(folder);await frame.locator('#confirm-dialog[open] input[name="name"]').fill(name);}await frame.locator('#confirm-dialog[open] button[value="save"]').click();}
+async function closeLibrary(){if(await frame.locator('#library-page').isVisible())await frame.locator('#library-page [data-action="close-library"]').first().click();}
 try{
  await startBridge();
  server=await createServer({root,configFile:false,plugins:[react()],resolve:{alias:{three:resolve(root,'node_modules/three')}},define:{__CRADLE_WALK__:'false'},server:{host:'127.0.0.1',port:0,fs:{allow:[root,resolve(root,'../../packages/oi-design-system')]}}});await server.listen();
@@ -57,9 +64,9 @@ try{
  await frame.evaluate(()=>window.__FIELD_STUDIES__.openEditor('scene'));await frame.locator('[data-action="studio-section"][data-value="text"]').click();await edit('text.title','A later unsaved interpretation');await frame.locator('[data-action="studio-section"][data-value="scene"]').click();await edit('duration',17);
  const captured=await frame.evaluate(()=>window.__FIELD_STUDIES__.getDocument());
  const canvas=await frame.locator('canvas').first().elementHandle();const position=await frame.evaluate(()=>window.__FIELD_STUDIES__.getState());
- await openPanel();await frame.locator('[data-native-field="folder"]').fill('Work/Notes');await frame.locator('[data-native-field="name"]').fill('whole.expression.json');
- await frame.getByRole('button',{name:'Save native file',exact:true}).click();
- await frame.locator('.native-status').filter({hasText:'Saved and independently read'}).waitFor();
+ await saveFile('Work/Notes','whole.expression.json');
+ await frame.waitForFunction(()=>/Saved and read back/.test(document.getElementById('toast')?.textContent??''));
+ await closeLibrary();
  const file=resolve(project,'whole.expression.json');check(existsSync(file),'Save in the actual imported app created a file through the native owner');
  const saved=JSON.parse(readFileSync(file,'utf8')),scene=saved.scenes[0];
  check(scene.presentation?.scene.text[0].title==='A later unsaved interpretation'&&scene.presentation?.saved.text[0].title==='A saved reading','Actual native file preserves distinct saved and working text versions');
@@ -67,7 +74,7 @@ try{
  check(await canvas.evaluate(el=>el.isConnected),'Native commit/file save did not remount the current renderer');
  check(await frame.evaluate(before=>JSON.stringify(window.__FIELD_STUDIES__.getState().camera)===JSON.stringify(before),position.camera),'Native save preserves the current camera');
  const ref=saved.expression_ref;
- await frame.getByRole('button',{name:'Commit composition',exact:true}).click();await frame.locator('.native-status').filter({hasText:'Native working revision'}).waitFor();
+ await commit();
  const unchanged=await op({op:'expression',request:{operation:'inspect',expression_ref:ref}});check(unchanged.data.document.revision===saved.revision,'An unchanged Scene does not generate a new native revision after JSON key ordering');
  // The M0′–M5′ Lens Studio stands on the SAME open native construction, not a
  // hardcoded surface: select the M3′ Journey instrument and it discloses the
@@ -75,35 +82,37 @@ try{
  // (not a browser save); switching to M1′ keeps the same construction — the
  // subject is carried, never reset (§28 lens continuity over a real subject).
  await frame.locator('#lens-chooser .lens-choice[data-lens="journey"]').click();
- await frame.locator('#lens-studio:not([hidden])').waitFor();
- const m3basis=(await frame.locator('#lens-studio .lens-basis code').first().innerText()).trim();
- check(m3basis.length>0,'The M3′ Lens Studio discloses the exact open native construction, not a hardcoded blank');
- check(/scene/i.test(await frame.locator('#lens-studio .lens-material').first().innerText()),'The M3′ Studio discloses the real Scenes of the construction');
- check(await frame.locator('#lens-studio .lens-control-native[data-action="lens-op"][data-op="commit"]').count()>0,'M3′ commits Scenes through the native owner, not a browser save');
+ // The reconciled Lens Studio shows no raw refs (consolidation §4); the open
+ // construction's identity is read from the native working state instead.
+ const m3basis=await frame.evaluate(()=>window.__FIELD_STUDIES__.nativeWorking()?.native_ref??'');
+ check(m3basis===ref,'The M3′ instrument stands on the exact open native construction, not a hardcoded blank');
+ await frame.locator('#timeline-panel:not([hidden])').waitFor();
+ const stripScenes=await frame.locator('#timeline-panel .scene-strip [data-action="choose-scene"]').count(),nativeScenes=await frame.evaluate(()=>window.__FIELD_STUDIES__.getDocument().scenes.length);
+ check(stripScenes>0&&stripScenes===nativeScenes,'M3′ Journey discloses the real Scenes of the construction in its Scene strip');
+ check(await frame.locator('#app > .masthead #native-save').isVisible(),'M3′ commits Scenes through the native owner (masthead Save), not a browser save');
  await frame.locator('#lens-chooser .lens-choice[data-lens="canvas"]').click();
- check((await frame.locator('#lens-studio .lens-basis code').first().innerText()).trim()===m3basis,'The open construction survives a lens change — the subject is carried, not reset');
- await frame.locator('#lens-studio .lens-studio-close').click();
- await frame.getByRole('button',{name:'Account / sources',exact:true}).click();await page.waitForFunction(()=>window.__TECHNE_HOST_PROOF__.summons.some(s=>s.kind==='verso'&&s.subject));
+ check(await frame.evaluate(()=>window.__FIELD_STUDIES__.nativeWorking()?.native_ref??'')===m3basis,'The open construction survives a lens change — the subject is carried, not reset');
+ await frame.evaluate(()=>document.querySelector('[data-action="deep-verso"]').click());await page.waitForFunction(()=>window.__TECHNE_HOST_PROOF__.summons.some(s=>s.kind==='verso'&&s.subject));
  const versoSummon=await page.evaluate(()=>window.__TECHNE_HOST_PROOF__.summons.find(s=>s.kind==='verso'&&s.subject));
  check(versoSummon.subject.ref===ref&&versoSummon.subject.revision===saved.revision,'The verso summon carries the EXACT open native work (expression ref + current revision), not a bare kind or a global focus');
  await page.screenshot({path:resolve(out,'native-saved.png')});
  // A second kernel must read the actual native file, not the first process or
  // a browser-memory imitation of it. Open uses real file and kernel operations.
  bridge.kill('SIGTERM');await new Promise(yes=>bridge.once('exit',yes));await startBridge();await mount();
- await openPanel();await frame.locator('[data-native-field="path"]').fill('Work/Notes/whole.expression.json');await frame.getByRole('button',{name:'Open file',exact:true}).click();
- await frame.locator('.native-status').filter({hasText:'Opened Native scene continuity'}).waitFor();
+ await libraryAction('native-open-file');await frame.locator('#confirm-dialog[open] input[name="path"]').fill('Work/Notes/whole.expression.json');await frame.locator('#confirm-dialog[open] button[value="open"]').click();
+ await frame.waitForFunction(r=>window.__FIELD_STUDIES__.nativeWorking()?.native_ref===r,ref,{timeout:60000});
  const reopened=await frame.evaluate(()=>window.__FIELD_STUDIES__.getDocument());
  check(reopened.scenes[0].text[0].title==='A later unsaved interpretation'&&reopened.savedScenes[reopened.scenes[0].id].text[0].title==='A saved reading','The actual app reopens both versions after a separate native kernel restart');
  check((await op({op:'expression',request:{operation:'inspect',expression_ref:ref}})).data.document.expression_ref===ref,'Native file re-entry keeps the original Expression identity');
  // Controlled negative over real effects: remove the native save request,
  // then demand file existence. It must fail, not fall back to browser storage.
- await frame.getByRole('button',{name:'Close native composition',exact:true}).click();await frame.evaluate(()=>window.__FIELD_STUDIES__.openEditor('scene'));await frame.locator('[data-action="studio-section"][data-value="text"]').click();await edit('text.body','A newer working change');await openPanel();
+ await frame.evaluate(()=>window.__FIELD_STUDIES__.openEditor('scene'));await frame.locator('[data-action="studio-section"][data-value="text"]').click();await edit('text.body','A newer working change');
  await page.route('**/op',route=>{const value=route.request().postDataJSON();if(value?.op==='expression'&&['save','save_as'].includes(value.request?.operation))return route.abort('failed');return route.continue();});
- const prior=readFileSync(file,'utf8');await frame.getByRole('button',{name:'Save native file',exact:true}).click();await frame.locator('#native-work [data-native="inspect"]').waitFor({state:'visible'});await frame.waitForFunction(()=>!document.querySelector('#native-work [data-native="inspect"]').disabled);
+ const prior=readFileSync(file,'utf8');await saveFile('Work/Notes','whole.expression.json');await frame.locator('#native-status [data-action="native-resolve"]').waitFor({state:'attached'});await saveReady();await closeLibrary();
  check(readFileSync(file,'utf8')===prior,'Removing native save leaves native storage unchanged; browser backup is not mistaken for successful Return');
  await page.unroute('**/op');
  await page.setViewportSize({width:430,height:850});await page.screenshot({path:resolve(out,'narrow-pending.png')});
- check(await frame.evaluate(()=>{const r=document.querySelector('#native-work').getBoundingClientRect();return r.left>=0&&r.right<=innerWidth+1;}),'Native working controls stay within the narrow viewport');
+ check(await frame.evaluate(()=>{const r=document.getElementById('native-save').getBoundingClientRect();return r.width>0&&r.left>=0&&r.right<=innerWidth+1;}),'The native Save control stays within the narrow viewport');
  // Additional source-labelled native fixture for the CURRENT imported canvas.
  // Native mutation/readback is real; no Markdown provenance is invented.
  await page.setViewportSize({width:1440,height:1000});
@@ -120,7 +129,6 @@ try{
  for(const id of ['one','two'])changes.push({change:'relation_bind',binding:{binding_ref:relatedRef+':relation:'+id,native_owner:'ai-kit',relation:{ref:'wiki:fixture:relation:'+id,revision:'r1',availability:'available'},from_entity_ref:relatedRef+':entity:a',to_entity_ref:relatedRef+':entity:b',provenance:[]}});
  await op({op:'expression',request:{operation:'edit',expression_ref:relatedRef,expected_revision:1,actor:'human:fixture',changes}});
  await frame.evaluate(async ref=>{await window.__FIELD_STUDIES__.openNative(ref);window.__FIELD_STUDIES__.pause();},relatedRef);
- await frame.getByRole('button',{name:'Close native composition',exact:true}).click();
  await frame.locator('[data-action="tool-select"]').first().click();
  await frame.waitForFunction(()=>window.__FIELD_STUDIES__.nativeConnections()?.rendered?.length===2);
  const paths=await frame.evaluate(()=>window.__FIELD_STUDIES__.nativeConnections());
@@ -136,5 +144,5 @@ try{
  await page.screenshot({path:resolve(out,'native-relations.png')});
  check(errors.length===0,`No uncaught application errors (${errors.join('; ')})`);
  receipt.passed=true;receipt.expression_ref=ref;receipt.nativeOperations=requests.filter(v=>v.op==='expression').length;
-}catch(error){receipt.failure=String(error);receipt.errors=errors;receipt.lastRequests=requests.slice(-8);if(frame)receipt.ui=await frame.locator('#native-work').innerText().catch(()=>null);if(page)await page.screenshot({path:resolve(out,'failure.png')}).catch(()=>{});console.error(JSON.stringify(receipt));throw error;}
+}catch(error){receipt.failure=String(error);receipt.errors=errors;receipt.lastRequests=requests.slice(-8);if(frame)receipt.ui=await frame.locator('#native-status').innerText().catch(()=>null);if(page)await page.screenshot({path:resolve(out,'failure.png')}).catch(()=>{});console.error(JSON.stringify(receipt));throw error;}
 finally{writeFileSync(resolve(out,'receipt.json'),JSON.stringify(receipt,null,2)+'\n');writeFileSync(resolve(out,'kernel.log'),logs.join(''));if(browser)await browser.close();if(server)await server.close();bridge?.kill('SIGTERM');}

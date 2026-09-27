@@ -27,7 +27,7 @@ export function AgentDetail({ row, siblingSessions, harnessDisclosure }: { row: 
 
     <DetailSection title="Agent card">
       {row.agentRef
-        ? <LiveHumanAgentCard agentRef={row.agentRef}/>
+        ? <LiveHumanAgentCard agentRef={row.agentRef} editableCharacter/>
         : <p className="oi-note">{NOT_DISCLOSED} — this session attachment names no canonical Agent (`agent_ref`), so no card can be derived for it.</p>}
     </DetailSection>
 

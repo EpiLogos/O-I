@@ -59,11 +59,58 @@ export interface WikiRegister {
   projectPath?: string;
 }
 
+/** One Central-rooted tree: "central" plus each disclosed project, deduped by
+ * its native identity (the disclosed project name — Central's own register
+ * key), never by a display label. A project the kernel's census names twice
+ * (a stale or duplicated disclosure) still projects exactly one register. */
 export function wikiRegistersFrom(projects: {name: string; path: string}[]): WikiRegister[] {
+  const seen = new Set<string>();
+  const native = projects.filter(row => seen.has(row.name) ? false : (seen.add(row.name), true));
   return [
     {key: "central", title: "Central"},
-    ...projects.map(row => ({key: row.name, title: row.name, project: row.name, projectPath: row.path})),
+    ...native.map(row => ({key: row.name, title: row.name, project: row.name, projectPath: row.path})),
   ];
+}
+
+/** The Project a Central wiki space ref names, by its canonical grammar
+ * (`central:wiki:project:<Project>`) — the native identity, never a label. */
+export function projectOfWikiSpace(ref: string): string | null {
+  const match = /^central:wiki:project:(.+)$/.exec(ref);
+  return match ? match[1] : null;
+}
+
+/** The constellations a register's tree node lists, deduplicated by native
+ * identity. A child space the root wiki discloses for a Project that stands
+ * as its own register IS that Project's node in the one tree — it is not
+ * listed a second time. A constellation's anchor, which its space also holds
+ * as a member, is listed once: as the constellation itself. `ownAnchorRef`
+ * (the register's home-space anchor) is never listed beneath its own node:
+ * the node IS that space, and its web opens through the register's tools —
+ * a register that repeats itself reads as a duplicated root. */
+export function treeConstellationsOf(constellations: readonly ProjectedConstellation[], projects: ReadonlySet<string>, ownAnchorRef?: string): ProjectedConstellation[] {
+  const anchors = new Set(constellations.filter(row => row.kind === "frame").map(row => row.wholeRef));
+  return constellations
+    .filter(constellation => {
+      if (ownAnchorRef && constellation.wholeRef === ownAnchorRef) return false;
+      if (!constellation.disclosedChild) return true;
+      const project = projectOfWikiSpace(constellation.wholeRef);
+      return !project || !projects.has(project);
+    })
+    .map(constellation => constellation.kind === "space" && constellation.members.some(member => anchors.has(member.subjectRef))
+      ? {...constellation, members: constellation.members.filter(member => !anchors.has(member.subjectRef))}
+      : constellation);
+}
+
+/** The space a new constellation in a Project is placed in, from that
+ * Project's own register reading: its canonical Project space by exact
+ * native ref, then by the Project's identity in the ref grammar, then the
+ * register's first disclosed space. Undefined = the register discloses none. */
+export function projectSpaceRefOf(spaces: readonly {ref: string}[], project: string | undefined): string | undefined {
+  if (!project) return (spaces.find(space => space.ref.endsWith(":root")) ?? spaces[0])?.ref;
+  const exact = spaces.find(space => space.ref === `central:wiki:project:${project}`);
+  if (exact) return exact.ref;
+  const named = spaces.find(space => projectOfWikiSpace(space.ref)?.toLowerCase() === project.toLowerCase());
+  return (named ?? spaces[0])?.ref;
 }
 
 export function wikiPathOf(register: WikiRegister): string {
@@ -175,8 +222,15 @@ function memberPosition(index: number, count: number, declared: number | null): 
     return polar(-90 + 60 * position, MEMBER_RING_RADIUS * Math.pow(RING_GROWTH, ring));
   }
   if (count <= 1) return {x: 0, y: 0};
-  return polar(-90 + (360 / count) * index, MEMBER_RING_RADIUS);
+  if (count <= RING_CAPACITY) return polar(-90 + (360 / count) * index, MEMBER_RING_RADIUS);
+  // A large undeclared membership: a sunflower spiral keeps neighbour
+  // spacing constant as the count grows (one fixed ring packed 192 members
+  // ~39px apart and stacked their anchors). Presentation only — no position
+  // is claimed as a QL warrant.
+  return polar(-90 + GOLDEN_ANGLE * index, MEMBER_RING_RADIUS * Math.sqrt((index + 1) / RING_CAPACITY));
 }
+const RING_CAPACITY = 12;
+const GOLDEN_ANGLE = 137.50776405;
 
 // ---------------------------------------------------------------------------
 // The projection (pure): reading → oi.expression/v1 document
@@ -185,8 +239,12 @@ export interface ProjectedMember { entityRef: string; subjectRef: string; title:
 export interface ProjectedConstellation {
   index: number;
   kind: "space" | "frame";
-  /** The native whole ref — the space ref, or the frame anchor. */
+  /** The native whole ref — the space's anchor when it names one, else the
+   * space ref itself (frames: their anchor). */
   wholeRef: string;
+  /** The space's own ref on space constellations: exact addressability of
+   * the space beside its anchored whole. */
+  spaceRef?: string;
   title: string;
   scheme: ConstellationScheme;
   overviewEntityRef: string;
@@ -195,6 +253,9 @@ export interface ProjectedConstellation {
   members: ProjectedMember[];
   /** Child spaces this constellation discloses (other registers' grounds). */
   childSpaceRefs: string[];
+  /** True for a child space another space discloses (its members live in
+   * its own register's wiki, not in this reading). */
+  disclosedChild: boolean;
 }
 
 export interface WikiProjection {
@@ -230,13 +291,14 @@ const reading = (ref: string, revision: string, availability: ReadingRef["availa
  * (explicit positional carrier) is one too. Child spaces a space discloses
  * are carried as further constellations whose members their OWN register's
  * wiki discloses — this reading names that state honestly. */
-interface DisclosedConstellation { kind: "space" | "frame"; wholeRef: string; title: string; space?: WikiSpace; constellation?: WikiConstellation; childSpaceRefs: string[] }
+interface DisclosedConstellation { kind: "space" | "frame"; wholeRef: string; spaceRef?: string; title: string; space?: WikiSpace; constellation?: WikiConstellation; childSpaceRefs: string[]; disclosedChild?: boolean }
 function constellationsOf(wiki: WikiReading & { state: "ready" }): DisclosedConstellation[] {
   const byRef = new Map(wiki.nodes.map(node => [node.ref, node]));
   const own: DisclosedConstellation[] = [
     ...wiki.spaces.map(space => ({
       kind: "space" as const,
       wholeRef: space.anchor_ref ?? space.ref,
+      spaceRef: space.ref,
       title: wikiDisplayName(space.title, space.ref),
       space,
       childSpaceRefs: space.child_space_refs ?? [],
@@ -244,7 +306,9 @@ function constellationsOf(wiki: WikiReading & { state: "ready" }): DisclosedCons
     ...wiki.constellations.map((constellation, index) => ({
       kind: "frame" as const,
       wholeRef: constellation.anchor_ref ?? `wiki:frame:${index}`,
-      title: wikiDisplayName(byRef.get(constellation.anchor_ref ?? "")?.title, constellation.anchor_ref ?? `Constellation ${index + 1}`),
+      // The frame's own authored title (then its question, then the anchor
+      // node's title) names it; the anchor ref is the last resort.
+      title: wikiDisplayName(constellation.title || constellation.question || byRef.get(constellation.anchor_ref ?? "")?.title, constellation.anchor_ref ?? `Constellation ${index + 1}`),
       constellation,
       childSpaceRefs: [],
     })),
@@ -258,7 +322,7 @@ function constellationsOf(wiki: WikiReading & { state: "ready" }): DisclosedCons
     for (const childRef of entry.childSpaceRefs) {
       if (ownRefs.has(childRef)) continue;
       ownRefs.add(childRef);
-      children.push({kind: "space", wholeRef: childRef, title: wikiDisplayName(undefined, childRef), childSpaceRefs: []});
+      children.push({kind: "space", wholeRef: childRef, title: wikiDisplayName(undefined, childRef), childSpaceRefs: [], disclosedChild: true});
     }
   }
   return [...own, ...children];
@@ -277,9 +341,9 @@ function declaredPosition(kind: "space" | "frame", memberRef: string, constellat
   return typeof position === "number" ? position : null;
 }
 
-const SCENE_ENTITY_BUDGET = 256; // semantic composition, distinct from the renderer window
+const SCENE_ENTITY_BUDGET = 2048; // semantic composition, distinct from the renderer window
 const SCENE_BUDGET = 64;
-const ENTITY_BUDGET = 256; // stays under the kernel's 256-entity document budget
+const ENTITY_BUDGET = 2048; // the kernel document's semantic bound (DOCUMENT_MEMBERS)
 
 export function projectWikiExpression(input: WikiRegisterReading & { state: "ready" }): WikiProjection {
   const {register, wiki, wikiBasis, relations} = input;
@@ -404,6 +468,7 @@ export function projectWikiExpression(input: WikiRegisterReading & { state: "rea
       index,
       kind: disclosure.kind,
       wholeRef: disclosure.wholeRef,
+      ...(disclosure.spaceRef ? {spaceRef: disclosure.spaceRef} : {}),
       title: disclosure.title,
       scheme,
       overviewEntityRef,
@@ -411,6 +476,7 @@ export function projectWikiExpression(input: WikiRegisterReading & { state: "rea
       sceneRef,
       members,
       childSpaceRefs: disclosure.childSpaceRefs,
+      disclosedChild: disclosure.disclosedChild === true,
     });
   }
 
@@ -428,7 +494,7 @@ export function projectWikiExpression(input: WikiRegisterReading & { state: "rea
         const from=scene.entity_refs.filter(ref=>entitySubjects.get(ref)===edge.from);
         const to=scene.entity_refs.filter(ref=>entitySubjects.get(ref)===edge.to);
         for(const fromEntity of from) for(const toEntity of to) {
-          if(boundRelations.length>=256)continue;
+          if(boundRelations.length>=2048)continue;
           const observed=edge.ref ?? `wiki:relation-observation:${projectionKey(JSON.stringify([edge.provider,edge.authority,edge.revision,edge.from,edge.relation,edge.to,edgeIndex]))}`;
           boundRelations.push({
             native_owner:edge.provider ?? "wiki",
@@ -466,4 +532,17 @@ export function projectWikiExpression(input: WikiRegisterReading & { state: "rea
   };
   if (relations.state === "unavailable") notices.push(`Typed relations unavailable: ${relations.reason} — the projection binds no relation; membership shows as composition only.`);
   return {document, constellations, overviewSceneRef, boundRelationCount: boundRelations.length, adriftRelationCount, notices};
+}
+
+/** The relation edges bound wholly within one constellation's own Scene — a
+ * restrained per-constellation indicator, read from the standing document's
+ * actual bindings (never invented: zero where the reading carried none). */
+export function relationCountOf(document: ExpressionDocument | undefined, sceneRef: string): number {
+  if (!document) return 0;
+  const entityRefs = document.scenes.find(scene => scene.scene_ref === sceneRef)?.entity_refs;
+  if (!entityRefs?.length) return 0;
+  const inScene = new Set(entityRefs);
+  let count = 0;
+  for (const relation of Object.values(document.relations)) if (inScene.has(relation.from_entity_ref) && inScene.has(relation.to_entity_ref)) count++;
+  return count;
 }

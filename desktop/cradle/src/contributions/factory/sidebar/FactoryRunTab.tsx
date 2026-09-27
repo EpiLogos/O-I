@@ -4,7 +4,8 @@
  * — the shared Tape (src/agent/tape) following the session carrying the run
  * NOW: the current, active attempt's session — never a past attempt or an
  * execution standing in for it. None is said ("No session is carrying this
- * run now."); several current sessions are shown as a choice the person
+ * run now."), and the sessions its attempts ran in are offered to open;
+ * several current sessions are shown as a choice the person
  * makes, never the first. With a Direct conversation in Tasks the tape is
  * that conversation's own. Nothing selected: "No run yet — start one."
  */
@@ -45,7 +46,22 @@ export function FactoryRunTab({accompanying}: {accompanying?: {ref: string; proj
 function LiveTape({entry}: {entry: RunEntry}) {
   const live = liveSessionOf(entry);
   const [chosen, setChosen] = useState<string>();
-  if (live.outcome === "none") return <p className="frtab-empty" data-run-session="none">{entry.inspection ? "No session is carrying this run now." : entry.inspectionError ? `Who is carrying this run couldn't be read — ${entry.inspectionError}` : "Open the run to read who is carrying it."}</p>;
+  if (live.outcome === "none") {
+    // Nobody carries it now; a run whose attempts ran still has their
+    // sessions — offered to open (the person chooses; never the first).
+    const past = pastSessionsOf(entry);
+    const pick = past.find(item => item.ref === chosen);
+    return <>
+      <p className="frtab-empty" data-run-session="none">{entry.inspection ? (past.length ? "No session is carrying this run now — its attempts ran in:" : "No session is carrying this run now.") : entry.inspectionError ? `Who is carrying this run couldn't be read — ${entry.inspectionError}` : "Open the run to read who is carrying it."}</p>
+      {past.length > 0 && <label className="frtab-direct" data-run-session="past">
+        <select className="oi-input" aria-label="Attempt session to open" value={chosen ?? ""} onChange={event => setChosen(event.target.value || undefined)}>
+          <option value="">choose a session…</option>
+          {past.map(item => <option key={item.ref} value={item.ref}>{item.label}</option>)}
+        </select>
+      </label>}
+      {pick && <SessionTape project={entry.card.source.project ?? ""} session={pick}/>}
+    </>;
+  }
   const session = live.outcome === "one" ? live.entries[0] : live.entries.find(item => item.ref === chosen);
   return <>
     {live.outcome === "ambiguous" && <label className="frtab-direct" data-run-session="ambiguous">{live.entries.length} sessions carry this run now —{" "}
@@ -56,6 +72,21 @@ function LiveTape({entry}: {entry: RunEntry}) {
     </label>}
     {session && <SessionTape project={entry.card.source.project ?? ""} session={session}/>}
   </>;
+}
+
+/** Every session the run's attempts ran in, newest attempt first, named by
+ * its agent and unit. */
+export function pastSessionsOf(entry: RunEntry): {ref: string; space?: string; label: string}[] {
+  const seen = new Set<string>();
+  const rows: {ref: string; space?: string; label: string}[] = [];
+  for (const attempt of [...(entry.inspection?.attempts ?? [])].reverse()) {
+    const ref = attempt.body?.agentSessionRef;
+    if (!ref || seen.has(ref)) continue;
+    seen.add(ref);
+    rows.push({ref, ...(attempt.body?.sessionSpaceRef ? {space: attempt.body.sessionSpaceRef} : {}),
+      label: `${refTail(attempt.participant?.agentRef) ?? "agent"} · ${refTail(attempt.taskRef) ?? refTail(attempt.workflowUnitRef) ?? ""}${attempt.status ? ` · ${attempt.status.replace(/_/g, " ")}` : ""}`});
+  }
+  return rows;
 }
 
 function SessionTape({project, session}: {project: string; session: {ref: string; space?: string}}) {

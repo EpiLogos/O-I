@@ -152,9 +152,11 @@ const collectFiles = (dir) => {
 // The package's other stylesheets (search.css) carry their own bounded
 // --oi-* vocabularies; a cradle reference to one of those resolves too.
 const packageDefined = new Set();
-for (const entry of readdirSync(pkgRoot)) {
-  if (!entry.endsWith(".css") || entry === "tokens.css") continue;
-  for (const line of readFileSync(join(pkgRoot, entry), "utf8").split("\n")) {
+// The theme library (themes/*.css) defines the per-theme vocabularies, e.g.
+// --oi-terminal-ansi-*; a cradle reference to one of those resolves too.
+for (const [dir, entry] of [...readdirSync(pkgRoot).map((name) => [pkgRoot, name]), ...readdirSync(join(pkgRoot, "themes")).map((name) => [join(pkgRoot, "themes"), name])]) {
+  if (!entry.endsWith(".css") || (dir === pkgRoot && entry === "tokens.css")) continue;
+  for (const line of readFileSync(join(dir, entry), "utf8").split("\n")) {
     const d = line.match(decl);
     if (d) packageDefined.add(d[1]);
   }

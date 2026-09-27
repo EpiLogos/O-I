@@ -179,13 +179,16 @@
     "patches/native-host-capabilities.patch",
     "patches/source-direction-markers.patch",
     "patches/hosted-map-toolbar.patch",
-    "patches/native-relation-attribution.patch"
+    "patches/native-relation-attribution.patch",
+    "patches/host-selection-viewport-gesture.patch",
+    "patches/annotation-erase-and-draft-colour.patch",
+    "patches/editable-relation-label.patch"
   ],
   "patches": {
     "packages/canvas/src/CanvasView.tsx": {
       "upstream_sha256": "b343759c921b283f4a05bd83e3f1622bba3cd6f68b0ff8c83f31a681a32266ee",
-      "adapted_sha256": "04f2ee2e5d23c6a5e1bf7bce0f415a5aa9c249bd8245d4d13564776d371301d2",
-      "reason": "Explicit per-owner readOnly capability and callback-backed actions; retain reading/navigation, scope menu portal to embedded host; optional host toolbar portal uses the actual zoom/fit actions and suppresses duplicate ReactFlow Controls only when hosted."
+      "adapted_sha256": "fa21bcc07a72e21ae13958efa033d7a9780ef36b28bbac2c3bc05c6cb34b5917",
+      "reason": "Explicit per-owner readOnly capability and callback-backed actions; retain reading/navigation, scope menu portal to embedded host; optional host toolbar portal uses the actual zoom/fit actions and suppresses duplicate ReactFlow Controls only when hosted. patches/host-selection-viewport-gesture.patch: optional selectedNodeIds (real multi-selection), onSelectionChange/selectionOnDrag (native xyflow box select, pan preserved when unset), onViewportChange (xyflow onMove/onMoveEnd, no host polling loop), and onMoveNodePreview/onMoveNodeEnd (per-gesture drag preview/end, reporting every dragged node in a multi-selection; onMoveNode keeps its original per-callback behaviour when these are omitted). patches/annotation-erase-and-draft-colour.patch: threads the host's draftColour, erasing mode and onDeleteStroke through to AnnotationLayer."
     },
     "packages/canvas/src/components/ContextMenu.tsx": {
       "upstream_sha256": "9b496da82f532acddf529afd2f1a6cb154de1ddd76efd91d20d50dd96285ff9e",
@@ -194,8 +197,8 @@
     },
     "packages/canvas/src/edges/AnnotatedEdge.tsx": {
       "upstream_sha256": "f29a962dc9065920759d1f95c4e71ea458a6050cbfa69ca79941c0dc831fe719",
-      "adapted_sha256": "18d4857cafac5577fc2bfb83b48e8de7ecdadd3f7d968c664561b6ac385e74ca",
-      "reason": "Explicit per-owner readOnly capability and callback-backed actions; retain reading/navigation, scope menu portal to embedded host. Pass both native direction markers to BaseEdge; the existing source direction is never inferred."
+      "adapted_sha256": "9b87a70cc3ae493ba5bb9d23163651b9332ec0e45ba10e37abb6c97fd5a2b2a9",
+      "reason": "Explicit per-owner readOnly capability and callback-backed actions; retain reading/navigation, scope menu portal to embedded host. Pass both native direction markers to BaseEdge; the existing source direction is never inferred. Parallel native relation occurrences on the same unordered node pair (D1, techne-expression-mode.md \u00a736) get their own quadratic-bezier curvature offset, computed in the edge component itself from the live xyflow edge list via useEdges(); a pair with exactly one edge keeps the prior single getBezierPath call and label placement unchanged. patches/editable-relation-label.patch: the selected edge's label is a free text field with the known kinds as suggestions (datalist), so a relation can be named in the author's own words, not only from a fixed vocabulary."
     },
     "packages/canvas/src/nodes/GroupNode.tsx": {
       "upstream_sha256": "b431969411ab3cee23021ff338e2f9ad74dd276c33fa940b0ed9e42fd867f3d8",
@@ -296,6 +299,11 @@
       "upstream_sha256": "b088ab363ab5a395202a151432c9cdfbdb734eb40110807612ca0c2404360662",
       "adapted_sha256": "299067177df10e4146f5673118774b8d1b964450f79c889e4bcc8f52f49283ca",
       "reason": " Optional explicit Close/Escape and existing-HUD visibility controls with focus return; hiding retains native walk/working-set state, Clear/Unload remain separate intentional actions."
+    },
+    "packages/canvas/src/annotations/AnnotationLayer.tsx": {
+      "upstream_sha256": "869fb6841d1d9d4dcda59293747e03e7536d908b29b51f06a6436f23416a4610",
+      "adapted_sha256": "e1b7f38e3e9e1182f8a80bb308beea0847d8061a7c139385dee80d6b1721e741",
+      "reason": "patches/annotation-erase-and-draft-colour.patch: optional draftColour (the in-progress stroke draws in the host's chosen stroke colour instead of a hardcoded orange) and optional erasing/onDeleteStroke (erase mode: the layer captures pointer events, tapping a stroke reports its id for removal; draw begin is suppressed while erasing)."
     }
   }
 }

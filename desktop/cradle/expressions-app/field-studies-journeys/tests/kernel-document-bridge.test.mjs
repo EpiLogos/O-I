@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {kernelDocumentToJourney,kernelViewToChanges} from '../build/kernelDocumentBridge.js';
+import {kernelDocumentToJourney,kernelViewToChanges,PAGE_ENTITY_LIMIT} from '../build/kernelDocumentBridge.js';
 import {validateJourney,clone} from '../build/model.js';
 import {toNativeConfig,checkNativeLimits} from '../build/nativeBridge.js';
 
@@ -13,7 +13,7 @@ function document(count=2){
  }));
  const refs=Object.keys(entities);
  const rel=(id)=>({binding_ref:`${E}:relation:${id}`,native_owner:'ai-kit',relation:read('wiki:edge:'+id),from_entity_ref:refs[0],to_entity_ref:refs[1],provenance:[read('wiki:assertion:'+id)]});
- return {schema:'oi.expression/v1',expression_ref:E,revision:3,title:'Ordinary linked notes',entities,scenes:[{scene_ref:S,title:'Main',revision:1,entity_refs:refs,body:{carrier:'text_source',subject_ref:'central:note',native_owner:'Central',reading:read('central:note'),presentation:'inline',capability:{state:'renderable'},span:{start:2,end:40},actions:[]},triggers:[{trigger_ref:'declared:portal'}]}],relations:count>1?{[E+':relation:a']:rel('a'),[E+':relation:b']:rel('b')}:{},selection:{scene_ref:S,entity_ref:refs[0]??null},provenance:[read('wiki:whole')],profiles:[{profile_ref:'profile:quiet',revision:2}],refinements:[{proposal_ref:'proposal:unapplied'}],representations:[],collections:['world:local']};
+ return {schema:'oi.expression/v1',expression_ref:E,revision:3,title:'Ordinary linked notes',entities,scenes:[{scene_ref:S,title:'Main',revision:1,entity_refs:refs,body:{carrier:'text_source',subject_ref:'central:note',native_owner:'Central',reading:read('central:note'),presentation:'inline',capability:{state:'renderable'},span:{start:2,end:40},actions:[],provenance:[],recursion:null},triggers:[{trigger_ref:'declared:portal',occasion:'scene_enter',target:{kind:'navigate',scene_ref:S}}]}],relations:count>1?{[E+':relation:a']:rel('a'),[E+':relation:b']:rel('b')}:{},selection:{scene_ref:S,entity_ref:refs[0]??null},provenance:[read('wiki:whole')],profiles:[{profile_ref:'profile:quiet',revision:2}],refinements:[{proposal_ref:'proposal:unapplied'}],representations:[],collections:['world:local']};
 }
 test('actual app adapter retains the complete native document, body and independent sourced relations',()=>{
  const input=document(),before=clone(input),view=kernelDocumentToJourney(input),binding=view.bindings[view.startSceneId];
@@ -34,15 +34,18 @@ test('the SAME subject in two Scenes retains exact scene/member occurrences',()=
  assert.equal(occurrences.length,4);assert.equal(new Set(occurrences.map(o=>o.scene_ref+'\0'+o.entity_ref)).size,4);
  for(const binding of Object.values(view.bindings))assert.equal(binding.relations.length,2);
 });
-test('27-member whole survives page changes and native render budget checks',()=>{
- const input=document(27),before=clone(input),view=kernelDocumentToJourney(input);
- assert.equal(view.bindings[view.startSceneId].member_refs.length,27);
- assert.equal(view.journey.scenes[0].entities.length,10);
+// A page satisfies the renderer budget AND the authoring Scene bound
+// (PAGE_ENTITY_LIMIT); the whole is never truncated by either.
+const MEMBERS=2*PAGE_ENTITY_LIMIT+5;
+test('a whole larger than two pages survives page changes and native render budget checks',()=>{
+ const input=document(MEMBERS),before=clone(input),view=kernelDocumentToJourney(input);
+ assert.equal(view.bindings[view.startSceneId].member_refs.length,MEMBERS);
+ assert.equal(view.journey.scenes[0].entities.length,PAGE_ENTITY_LIMIT);
  assert.equal(view.bindings[view.startSceneId].page_count,3);
  assert.doesNotThrow(()=>checkNativeLimits(view.journey.scenes[0]));
  const next=kernelDocumentToJourney(input,{pages:{[S]:2}});
  assert.equal(next.journey.id,view.journey.id);assert.equal(next.startSceneId,view.startSceneId);
- assert.equal(next.journey.scenes[0].entities.length,7);assert.deepEqual(input,before);
+ assert.equal(next.journey.scenes[0].entities.length,5);assert.deepEqual(input,before);
  assert.deepEqual(next.document,view.document);assert.deepEqual(kernelViewToChanges(next,next.journey),[]);
  assert.throws(()=>kernelDocumentToJourney(input,{pages:{[S]:3}}),/page/);
 });
@@ -70,14 +73,14 @@ test('primitive, pin, image, ASCII, 3D and forces reach the EXISTING native engi
  assert.equal(config.entities[2].authoringSource.image.dataUrl,entities[2].parameters.image.value);
  assert.equal(config.entities[3].kind,'pin');assert.equal(config.entities[4].authoringSource.ascii.text.length,128);
 });
-test('eight pins and ten formations are rendering budgets, not semantic membership limits',()=>{
- const input=document(30);Object.values(input.entities).slice(0,12).forEach(e=>{e.parameters.kind={value:'pin'};});
+test('pin and formation budgets are rendering budgets, not semantic membership limits',()=>{
+ const input=document(MEMBERS-4);Object.values(input.entities).slice(0,12).forEach(e=>{e.parameters.kind={value:'pin'};});
  const visited=new Set();
  for(let page=0;page<3;page++){
   const view=kernelDocumentToJourney(input,{pages:{[S]:page}}),binding=view.bindings[view.startSceneId];
   assert.doesNotThrow(()=>checkNativeLimits(view.journey.scenes[0]));binding.loaded_refs.forEach(r=>visited.add(r));
  }
- assert.equal(visited.size,30);
+ assert.equal(visited.size,MEMBERS-4);
 });
 test('invalid identities, orphan endpoints and missing members fail instead of inventing placeholders',()=>{
  const missing=document();missing.scenes[0].entity_refs.push('not:defined');assert.throws(()=>kernelDocumentToJourney(missing),/unresolved/);
@@ -99,6 +102,19 @@ test('material edits return exact native refs and leave hidden members and all s
  assert.deepEqual(kernelViewToChanges(view,edited),[{change:'parameter_set',entity_ref:E+':entity:m0',parameter:'x',value:100}]);
  assert.equal(view.document.scenes[0].entity_refs.length,20);assert.deepEqual(view.document,input);
  edited.scenes[0].entities.pop();assert.throws(()=>kernelViewToChanges(view,edited),/hide is not delete/);
+});
+test('ES1A/ES1B scene bodies and triggers are typed and validated, never an opaque passthrough',()=>{
+ const input=document(),badCarrier=clone(input);badCarrier.scenes[0].body.carrier='not_a_real_carrier';
+ assert.throws(()=>kernelDocumentToJourney(badCarrier),/unrecognised carrier/);
+ const badTrigger=clone(input);badTrigger.scenes[0].triggers=[{trigger_ref:'declared:portal'}];
+ assert.throws(()=>kernelDocumentToJourney(badTrigger),/occasion/);
+ const badTarget=clone(input);badTarget.scenes[0].triggers=[{trigger_ref:'declared:portal',occasion:'select',target:{kind:'mystery'}}];
+ assert.throws(()=>kernelDocumentToJourney(badTarget),/malformed target/);
+ const missingImage=clone(input);delete missingImage.scenes[0].body.native_owner;
+ assert.throws(()=>kernelDocumentToJourney(missingImage),/native_owner/);
+ const engine=clone(input);engine.scenes[0].body=null;engine.scenes[0].triggers=[];
+ const view=kernelDocumentToJourney(engine),binding=view.bindings[view.startSceneId];
+ assert.equal(binding.body,null);assert.deepEqual(binding.triggers,[]);
 });
 test('independent occurrences cannot silently overwrite one another or native automation',()=>{
  const input=document();input.scenes.push({...clone(input.scenes[0]),scene_ref:E+':scene:other'});

@@ -219,6 +219,76 @@
     "human_entry": "System / Visuals / Compose",
     "authority": "draft-local edits; save and subject Actions retain native owner results",
     "transport": "same resident kernel over a mode-0600 Unix socket on macOS/Linux; Windows unavailable",
-    "mapping_status": "EX1 implemented; bounded native human/Agent walk recorded; creative judgement remains human"
+    "mapping_status": "EX1 implemented; bounded native human/Agent walk recorded; creative judgement remains human",
+    "world_operation": {
+      "contract": "docs/contracts/EXPRESSION-ACT-MATERIAL-V1.md",
+      "schema": "oi.expression-world/v1",
+      "kernel_operation": "expression_world",
+      "resident_operation": "oi desktop expression [SOCKET] '{\"schema\":\"oi.expression-world/v1\",\"operation\":...}'",
+      "hosted_frame_relay": "kernel-expression-world",
+      "renderer_helpers": "desktop/cradle/src/expression/world.ts",
+      "operations": [
+        "capabilities",
+        "selection_set",
+        "selection_read",
+        "portal_inspect",
+        "portal_open",
+        "portal_close",
+        "portal_redock",
+        "act_perform",
+        "act_interrupt",
+        "act_checkpoint",
+        "act_restore",
+        "whole_bind",
+        "whole_inspect",
+        "whole_rebase",
+        "material_list",
+        "act_open",
+        "act_select",
+        "act_gesture",
+        "act_text",
+        "act_operate",
+        "act_continue",
+        "act_complete",
+        "act_seek",
+        "act_play",
+        "act_archive",
+        "act_inspect",
+        "act_list"
+      ],
+      "families": {
+        "select_bind": [
+          "act_open",
+          "material_list"
+        ],
+        "perform_transition": [
+          "act_select",
+          "act_gesture",
+          "act_text"
+        ],
+        "operate": [
+          "act_operate"
+        ],
+        "compose_save": [
+          "expression edit reuse_set",
+          "expression save_as",
+          "expression save"
+        ],
+        "continue_replay": [
+          "act_continue",
+          "act_complete",
+          "act_seek",
+          "act_play",
+          "act_inspect",
+          "act_list",
+          "act_archive"
+        ]
+      },
+      "material_register": "Work/O-I/desktop/cradle/material/expressive-material/<kind>/<slug>.expression.json",
+      "act_store": "$OI_HOME/desktop/expression-acts (live, 256) + archive/ (ended acts, never deleted)",
+      "implementation": "desktop/cradle/kernel/src/expression_world.rs",
+      "mapping_status": "FX-B2/FX-B3 implemented; kernel tests cover grafting, persistence, seek, continuation and refusals",
+      "updated_at": "2026-09-26"
+    }
   }
 }

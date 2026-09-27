@@ -27,7 +27,13 @@ export interface Relation {native_owner?:string;binding_ref:string;relation:Read
 export interface Representation {kind:"live"|"image"|"video"|"html"|"embed"|"projection";representation:ReadingRef;provenance:ReadingRef[]}
 export interface RefinementDecision {state:"accepted"|"rejected";actor:string;reason:string;decided_at_revision:number;corrections:Change[]}
 export interface Refinement {proposal_ref:string;basis_revision:number;proposed_by:string;activity_ref:string|null;continues_proposal_ref:string|null;summary:string;changes:Change[];method_refs:ReadingRef[];evidence_refs:ReadingRef[];decision:RefinementDecision|null}
-export interface ExpressionDocument {presentation?:CompositionPresentation|null;schema:"oi.expression/v1";expression_ref:string;revision:number;title:string;scenes:Scene[];entities:Record<string,Entity>;relations:Record<string,Relation>;selection:{scene_ref:string;entity_ref:string|null;relation_ref?:string|null};provenance:ReadingRef[];representations:Representation[];refinements:Refinement[];collections?:string[];profiles?:ProfileAdoption[]}
+/** Reusable-material block (contract EXPRESSION-ACT-MATERIAL-V1 §1, schema oi.expression-reuse/v1). */
+export type ReuseKind="character"|"scene"|"expression"|"gesture";
+export interface ReuseRole {role:string;accepts:"agent"|"object"|"text"|"value";entity_ref?:string;text_id?:string}
+export interface ReuseGesture {scene_ref:string;role?:string}
+export interface ReuseAssociations {workflow_keys?:string[];task_types?:string[];skill_set_refs?:string[];skill_refs?:string[];event_families?:string[]}
+export interface Reuse {schema:"oi.expression-reuse/v1";kind:ReuseKind;title:string;roles?:ReuseRole[];entry_scene_ref?:string;states?:Record<string,string>;gestures?:Record<string,ReuseGesture>;playback?:string[];preview_state?:string;associations?:ReuseAssociations;variation_of?:{file_ref:string;revision:string};authored_by?:string}
+export interface ExpressionDocument {reuse?:Reuse|null;presentation?:CompositionPresentation|null;schema:"oi.expression/v1";expression_ref:string;revision:number;title:string;scenes:Scene[];entities:Record<string,Entity>;relations:Record<string,Relation>;selection:{scene_ref:string;entity_ref:string|null;relation_ref?:string|null};provenance:ReadingRef[];representations:Representation[];refinements:Refinement[];collections?:string[];profiles?:ProfileAdoption[]}
 export interface BlueprintTransform {translation:[number,number,number];rotation:[number,number,number];scale:number}
 export interface SceneBlueprint {schema:'oi.scene-blueprint/v1';shape_ref:string;reading_digest:string;frame:ReadingRef;members:{entity_ref:string;subject_ref:string;role_ref:string;position:number}[];transform:BlueprintTransform}
 export type Change =
@@ -60,7 +66,10 @@ export type Change =
  | {change:"scene_trigger_detach";trigger_ref:string}
  | {change:"profile_adopt";adoption:ProfileAdoption}
  | {change:"profile_release";profile_ref:string}
- | {change:"collections_set";collections:string[]};
+ | {change:"collections_set";collections:string[]}
+ /* Reusable material (contract EXPRESSION-ACT-MATERIAL-V1 §1). */
+ | {change:"reuse_set";reuse:Reuse}
+ | {change:"reuse_clear"};
 export type ExpressionRequest =
  | {operation:"capabilities"|"list"|"index"}
  | {operation:"inspect";expression_ref:string}
@@ -83,5 +92,8 @@ export type ExpressionRequest =
  | {operation:"edition_inspect";edition_ref:string}
  | {operation:"asset_admit";asset:unknown;actor:string}
  | {operation:"asset_traverse";asset_ref:string}
- | {operation:"asset_subject";subject_ref:string};
+ | {operation:"asset_subject";subject_ref:string}
+ | {operation:"restore";expression_ref:string;expected_revision:number;document:ExpressionDocument;actor:string}
+ /** Frees the slot of a saved/clean Expression; unsaved work answers `{state:"dirty"}`. */
+ | {operation:"close";expression_ref:string;actor:string};
 export interface ExpressionResult {state?:string;document?:ExpressionDocument;dirty?:boolean;file?:{location:CentralLocation;revision:string}|null;expressions?:{expression_ref:string;revision:number;title:string;dirty:boolean;/** The owner's recency disclosure (unix seconds; 0 = before the field existed) — the listing arrives most-recently-touched first. */last_touched_unix?:number}[];[key:string]:unknown}

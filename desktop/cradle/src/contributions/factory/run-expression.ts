@@ -11,8 +11,16 @@ import type {ExpressionDocument,Entity,ReadingRef,Relation,Scene,SubjectBinding}
  * bindings (native owner + reading refs) and relations. Native node kinds,
  * states, verifications and the readable Return all survive verbatim as
  * readings on their entities; every open recomposes from fresh reads, so
- * this is presentation state only, never a second run store. */
+ * this is presentation state only, never a second run store.
+ *
+ * The Run's presentation is the engine-backed Expression (spec §1, §5): the
+ * cast — the attempts' disposition participants, each bound to its profile's
+ * expressive character (`expression.character_ref` on the Agent card) — the
+ * goal as an expressive object carrying the destination text, and the work
+ * objects (units and returned artifacts) head the document in a "Live" Scene
+ * that the Factory Live act performs into. */
 import {developmentRead,attemptRead} from "./development";
+import {castOf,type CastMember} from "./live/eventMap";
 
 /** The owner CLI serialises these readings camelCase; the desktop decodes
  * them as loose readings and never re-keys owner data. */
@@ -33,6 +41,9 @@ export interface AttemptReading {
   legs:Record<string,unknown>;
 }
 export interface UnitListReading {contract:string;units:{workflowUnitRef:string;key:string;locator:string}[]}
+/** One cast member with the character its profile carries (absent when the
+ * profile names none, or the card could not be read — never guessed). */
+export interface RunCastMember extends CastMember {character_ref?:string;card_state?:"read"|"unavailable"}
 
 const readingRef=(ref:string,revision:string,availability:ReadingRef["availability"]="available"):ReadingRef=>({ref,revision,availability});
 
@@ -70,8 +81,9 @@ function runSubjectBinding(run:RunReading,statePath:string,attempt?:AttemptReadi
  * no separate leg: the owner's topology projects compiled barriers as Gate
  * nodes with requires edges. Nothing is invented: every entity's subject
  * names its native ref, every fact names the reading it came from. */
-export function composeRunExpression(inputs:{run:RunReading;attempt?:AttemptReading;units:UnitListReading;statePath:string},expressionRef:string):ExpressionDocument {
+export function composeRunExpression(inputs:{run:RunReading;attempt?:AttemptReading;units:UnitListReading;statePath:string;cast?:RunCastMember[]},expressionRef:string):ExpressionDocument {
   const {run,attempt,units,statePath}=inputs;
+  const cast:RunCastMember[]=inputs.cast??castOf({runRef:run.runRef,attempts:attempt});
   if(!expressionRef.startsWith("expression:")) throw new Error("The expression ref must be expression-local (expression:<slug>)");
   const eRef=(suffix:string)=>`${expressionRef}:entity:${suffix}`;
   const sRef=(suffix:string)=>`${expressionRef}:scene:${suffix}`;
@@ -80,11 +92,12 @@ export function composeRunExpression(inputs:{run:RunReading;attempt?:AttemptRead
   const entities:Record<string,Entity>={};
   const relations:Record<string,Relation>={};
   const localOf=new Map<string,string>();
-  let revision=1;
   const ent=(suffix:string,title:string,subject:SubjectBinding|null):Entity=>{
     const ref=eRef(suffix);
     localOf.set(suffix,ref);
-    return {entity_ref:ref,revision:revision++,title,subject,parameters:{}};
+    // Every entity is born with the document (kernel law: entity revision ≤
+    // document revision).
+    return {entity_ref:ref,revision:1,title:title.trim()||suffix,subject,parameters:{}};
   };
 
   // The run itself is the bound subject: a Being, not decoration.
@@ -125,6 +138,49 @@ export function composeRunExpression(inputs:{run:RunReading;attempt?:AttemptRead
     });
   }
 
+  // The cast: who is present. Each participant is a Being bound to its
+  // native Agent, its profile and its expressive character as readings.
+  const castRefs:string[]=[];
+  for(const member of cast){
+    const suffix=`cast-${localSuffix(member.agent_ref)}`;
+    entities[eRef(suffix)]=ent(suffix,member.label,{
+      subject_ref:member.agent_ref,
+      native_owner:"central",
+      presentation_role:"being",
+      sources:[],
+      readings:[
+        readingRef(`oi.expression-cast/${member.role}`,member.attempt_refs.join(" ")||"present"),
+        ...(member.profile_ref?[readingRef(member.profile_ref,"profile")]:[]),
+        ...(member.position_ref?[readingRef(member.position_ref,"position")]:[]),
+        ...(member.character_ref?[readingRef(member.character_ref,"expressive-character")]
+          :[readingRef("oi.expression-character/none",member.card_state==="unavailable"?"card-unavailable":"profile-names-none","unavailable")]),
+      ],
+      actions:[],
+    });
+    castRefs.push(eRef(suffix));
+    for(const attemptRef of member.attempt_refs){
+      const binding=rRef(`carries-${localSuffix(member.agent_ref)}-${localSuffix(attemptRef)}`);
+      const target=localOf.get(localSuffix(attemptRef));
+      if(target)relations[binding]={binding_ref:binding,relation:readingRef("factory.attempt/participant",attempt?String(attempt.revision):"0"),
+        from_entity_ref:eRef(suffix),to_entity_ref:target,provenance:attempt?[readingRef(attempt.contract,String(attempt.revision))]:[]};
+    }
+  }
+  // The goal: the Run's destination node as an expressive object with its text.
+  const destination=Object.values(run.runMap.nodes).find(node=>node.kind==="destination");
+  const goalRef=destination?eRef(localSuffix(destination.id)):undefined;
+  if(goalRef&&run.destination)entities[goalRef]={...entities[goalRef],title:run.destination};
+  // Work objects: units in the map and the artifacts actually returned.
+  const workRefs=Object.values(run.runMap.nodes).filter(node=>node.kind==="work").map(node=>eRef(localSuffix(node.id)));
+  for(const a of attempt?.attempts??[]){
+    for(const artifactRef of a.readableReturn?.artifactRefs??[]){
+      const suffix=`artifact-${localSuffix(artifactRef)}`;
+      if(entities[eRef(suffix)])continue;
+      entities[eRef(suffix)]=ent(suffix,artifactRef.replace(/^.*[/:]/,""),{subject_ref:artifactRef,native_owner:"software-factory",presentation_role:"thing",sources:[],
+        readings:[readingRef(a.readableReturn!.returnRef,"readable-return")],actions:[]});
+      workRefs.push(eRef(suffix));
+    }
+  }
+
   // Every edge kind survives verbatim as a relation between local entities.
   for(const [i,edge] of run.runMap.edges.entries()){
     const from=localOf.get(localSuffix(edge.from));
@@ -140,6 +196,9 @@ export function composeRunExpression(inputs:{run:RunReading;attempt?:AttemptRead
   // Scenes: the kernel allows at most ten entities per scene, so each lane
   // chunks. The run heads the first topology scene.
   const scenes:Scene[]=[];
+  // The Live Scene the act performs into: cast, goal, work objects.
+  const live=[...castRefs,...(goalRef?[goalRef]:[]),...workRefs].filter((ref,i,all)=>all.indexOf(ref)===i);
+  if(live.length)scenes.push({scene_ref:sRef("live"),revision:1,title:"Live — cast, goal and work",entity_refs:live.slice(0,256)});
   const topology=[eRef("run"),...Object.values(run.runMap.nodes).map(n=>eRef(localSuffix(n.id)))];
   for(let i=0;i<topology.length;i+=10){
     scenes.push({scene_ref:sRef(`topology-${i/10+1}`),revision:1,
@@ -166,7 +225,7 @@ export function composeRunExpression(inputs:{run:RunReading;attempt?:AttemptRead
     scenes,
     entities,
     relations,
-    selection:{scene_ref:scenes[0].scene_ref,entity_ref:eRef("run")},
+    selection:{scene_ref:scenes[0].scene_ref,entity_ref:castRefs[0]??goalRef??eRef("run")},
     provenance:[
       readingRef(`file:${statePath}`,`run:${run.revision}`),
       readingRef(run.contract,String(run.revision)),
@@ -178,8 +237,30 @@ export function composeRunExpression(inputs:{run:RunReading;attempt?:AttemptRead
   };
 }
 
+/** The Run's cast with each member's expressive character, read from the
+ * Agent card (`oi agent card` → `expression.character_ref`, the profile's
+ * `expressive_character_ref`). A card that cannot be read leaves the member
+ * without a character and says so — the Scene keeps its placeholder. */
+export async function resolveRunCast(cast:CastMember[],readCard:(agentRef:string)=>Promise<unknown>):Promise<RunCastMember[]> {
+  return Promise.all(cast.map(async member=>{
+    try{
+      // The card carries the profile's character as `character.character_ref`
+      // (oi.human-agent-card/v1; `expression.character_ref` in the contract
+      // draft is read too).
+      const card=await readCard(member.agent_ref) as {character?:{character_ref?:unknown}|null;expression?:{character_ref?:unknown};identity?:{profile_ref?:unknown;name?:unknown}}|undefined;
+      const character=card?.character?.character_ref??card?.expression?.character_ref;
+      const profile=card?.identity?.profile_ref;
+      const name=card?.identity?.name;
+      return {...member,
+        ...(typeof profile==="string"&&!member.profile_ref?{profile_ref:profile}:{}),
+        ...(typeof name==="string"&&name.trim()?{label:name}:{}),
+        ...(typeof character==="string"&&character?{character_ref:character}:{}),card_state:"read" as const};
+    }catch{return {...member,card_state:"unavailable" as const};}
+  }));
+}
+
 /** Read the three owner surfaces and compose the document in one call. */
-export async function readAndComposeRunExpression(transport:unknown,statePath:string,runRef:string,expressionRef:string,developmentReadFn?:typeof developmentRead,attemptReadFn?:typeof attemptRead):Promise<ExpressionDocument> {
+export async function readAndComposeRunExpression(transport:unknown,statePath:string,runRef:string,expressionRef:string,developmentReadFn?:typeof developmentRead,attemptReadFn?:typeof attemptRead,readCard?:(agentRef:string)=>Promise<unknown>):Promise<ExpressionDocument> {
   const dev=developmentReadFn??developmentRead;
   const att=attemptReadFn??attemptRead;
   const [run,attempt,units]=await Promise.all([
@@ -190,5 +271,6 @@ export async function readAndComposeRunExpression(transport:unknown,statePath:st
   if(run.contract!=="factory.run-reading/v1")throw new Error("Factory returned an incompatible run reading");
   if(attempt&&attempt.contract!=="factory.attempt-reading/v1")throw new Error("Factory returned an incompatible attempt reading");
   if(units.contract!=="factory.workflow-unit-list-reading/v1")throw new Error("Factory returned an incompatible workflow-unit list reading");
-  return composeRunExpression({run,attempt,units,statePath},expressionRef);
+  const cast=readCard?await resolveRunCast(castOf({runRef:run.runRef,attempts:attempt}),readCard):undefined;
+  return composeRunExpression({run,attempt,units,statePath,...(cast?{cast}:{})},expressionRef);
 }

@@ -97,29 +97,11 @@ export interface TechneSource {
   subscribe?(listener: () => void): () => void;
 }
 
-/** Compose a source over an adapter (or any reading function). Readings are
- * contract-checked at the seam. */
-export function createTechneSource(options: { ref: string; title: string; adapter?: TechneAdapter; read?: (subjectRef: string) => Promise<TechneReading>; subscribe?: (listener: () => void) => () => void }): TechneSource {
-  if (!options.ref.trim()) throw new Error("Technē source needs a stable ref");
-  const read = options.read ?? ((subjectRef: string) => {
-    if (!options.adapter) throw new Error(`Technē source ${options.ref} needs an adapter or a read function`);
-    return options.adapter.reading(subjectRef);
-  });
-  return {
-    ref: options.ref,
-    title: options.title,
-    async reading(subjectRef: string) {
-      return assertReading(await read(subjectRef));
-    },
-    ...(options.subscribe ? { subscribe: options.subscribe } : {}),
-  };
-}
-
 /** The adapter override registry (cradle extension, 2026-09-19): an override
  * registered for a source's ref replaces the default routing-only adapter
- * whole. The cradle's kernel adapter (src/techne/kernelTechneAdapter.ts)
- * uses this to carry a routed `oi.expression.edit` across the native
- * authority seam (the kernel's expression op). Ported-law note: the default
+ * whole — the seam a desktop-side executor uses to carry a routed
+ * `oi.expression.edit` across the native authority seam (the kernel's
+ * expression op). Ported-law note: the default
  * remains routing-only; an override is the desktop side's own executor and
  * still gates itself through resolveActionRoute. */
 const adapterOverrides = new Map<string, TechneAdapter>();

@@ -30,8 +30,8 @@ import type {
   TechneTemporalFacet,
   TechneWholeRelation,
 } from "../../contract.ts";
-import { standingOf, type StandingVisual } from "./standing.ts";
-import { facetRange } from "./scale.ts";
+import { standingOf, type StandingVisual } from "./standing";
+import { facetRange } from "./scale";
 
 // ---------------------------------------------------------------------------
 // The edge model

@@ -5,6 +5,8 @@ import {agentController} from "./nativeAgentClient";
 import type {NativeAgentController,NativePrepared} from "./nativeAgent";
 import {openAgentSetup} from "./agentSetup";
 import {LiveHumanAgentCard} from "./HumanAgentCard";
+import {CharacterSection} from "./character/CharacterSection";
+import {CharacterEditor} from "./character/CharacterEditor";
 
 /** Native source creation and session selection in the existing Agent surface.
  * `controller` is a test/embed seam; production always uses the kernel owner. */
@@ -58,6 +60,7 @@ export function NativeAgentLauncher({project,onChoose,controller:injected}:{proj
 				{draft.skillRefs.filter(ref=>!state.skills?.some(row=>row.ref===ref)).map(ref=><label key={ref}><input type="checkbox" checked onChange={()=>controller.edit({skillRefs:draft.skillRefs.filter(r=>r!==ref)})}/>Unavailable selection: {ref}</label>)}
 				<p className="oi-note">Exact effective bytes are checked at preparation and sent to the parent session. Brokered children require separate admission.</p>
 			</fieldset>
+			<CharacterSection value={draft.characterRef} onChange={characterRef=>controller.edit({characterRef})}/>
 			<button type="button" className="oi-action" onClick={()=>void controller.propose()} disabled={!draft.name||!draft.purpose||!draft.scopeConfirmed}>Create native proposal</button>
 			<button type="button" className="oi-action oi-action-primary" onClick={()=>void controller.saveAndStart()} disabled={!draft.name||!draft.purpose||!draft.scopeConfirmed}>Save and start Direct work</button>
 			<p className="oi-note">Save and start runs the native save (CAS), acceptance, world-readiness check and session preparation in order, then opens the conversation. Each stage&apos;s real outcome is shown; a failure after the save keeps the source and names the failing stage.</p>
@@ -67,8 +70,9 @@ export function NativeAgentLauncher({project,onChoose,controller:injected}:{proj
 			<pre className="oi-note" style={{whiteSpace:"pre-wrap",overflowWrap:"anywhere"}}>{review.profile.intent_provenance?.intent_expression??review.profile.purpose}</pre>
 			<p className="oi-note">Scope <code>{review.scope_ref}</code> · source <code>{review.profile.ref}</code> · revision <code>{review.profile.revision}</code></p>
 			{review.profile.skill_set_refs&&review.profile.skill_set_refs.length>0&&<p className="oi-note">SkillSets: {review.profile.skill_set_refs.join(", ")}</p>}
+			{!review.accepted&&<CharacterEditor current={review.profile.expressive_character_ref} onSave={controller.setCharacter} disabled={state.busy||!!state.unknown}/>}
 			<details><summary>Show raw — exact source basis and delivery limits</summary><p><code>{review.content_digest}</code></p><pre style={{whiteSpace:"pre-wrap",overflowWrap:"anywhere"}}>{JSON.stringify(review.profile,null,2)}</pre><p>Selected Skill content is checked and delivered to the native parent session. Child activation requires its own admission and is not implied.</p></details>
-			{review.accepted&&<LiveHumanAgentCard agentRef={review.profile.agent_ref} worldRef={review.scope_ref} standing={prepared?"prepared":"accepted"}
+			{review.accepted&&<LiveHumanAgentCard agentRef={review.profile.agent_ref} worldRef={review.scope_ref} standing={prepared?"prepared":"accepted"} editableCharacter onCharacterChanged={()=>void controller.select(review.profile.ref)}
 				actions={[prepared
 					?{label:"Open conversation and choose harness",run:()=>void choose(prepared)}
 					:{label:"Save and start Direct work",run:()=>void controller.saveAndStart()}]}/>}

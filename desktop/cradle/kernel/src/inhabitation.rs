@@ -43,6 +43,16 @@ pub enum Request {
         #[serde(default)]
         position: Option<String>,
     },
+    /// Both directions of Communiques between two Positions, from the
+    /// Gateway journal (`aikit gateway conversation --position P --with W`):
+    /// the Factory Live view's message/handoff source. Both Positions are
+    /// named explicitly — the desktop is never an occupant.
+    Conversation {
+        #[serde(default)]
+        project: Option<String>,
+        position: String,
+        with: String,
+    },
     /// The nested prepared-context basis for one Position.
     Refocus {
         #[serde(default)]
@@ -55,7 +65,7 @@ pub enum Request {
 impl Request {
     pub fn project(&self) -> Option<&str> {
         match self {
-            Request::Population { project } | Request::Whoami { project, .. } | Request::Refocus { project, .. } => project.as_deref(),
+            Request::Population { project } | Request::Whoami { project, .. } | Request::Refocus { project, .. } | Request::Conversation { project, .. } => project.as_deref(),
         }
     }
     /// The schema the owner must answer with.
@@ -64,6 +74,9 @@ impl Request {
             Request::Population { .. } => "aikit.population-reading/v1",
             Request::Whoami { .. } => "aikit.inhabitation-reading/v1",
             Request::Refocus { .. } => "aikit.refocus-reading/v1",
+            // The conversation reading carries no schema of its own: its
+            // records are `aikit.communique/v1` (checked record by record).
+            Request::Conversation { .. } => "aikit.communique/v1",
         }
     }
     /// The owner command in plain words — the `source` an absence names.
@@ -72,6 +85,7 @@ impl Request {
             Request::Population { .. } => "aikit gateway who",
             Request::Whoami { .. } => "aikit whoami",
             Request::Refocus { .. } => "aikit refocus",
+            Request::Conversation { .. } => "aikit gateway conversation",
         }
     }
 }
@@ -113,6 +127,12 @@ pub fn aikit_args(request: &Request, project_world_ref: Option<&str>, suite_rout
                 args.extend(["--position".into(), position.into()]);
             }
         }
+        Request::Conversation { position, with, .. } => {
+            args.extend(["gateway".into(), "conversation".into(), "--position".into(), position.into(), "--with".into(), with.into()]);
+            if let Some(world) = project_world_ref {
+                args.extend(["--project-world".into(), world.into()]);
+            }
+        }
     }
     args.push("--json".into());
     args
@@ -148,6 +168,9 @@ pub fn read(request: &Request, ground: Option<(&Path, Option<&str>)>) -> Result<
     let args = aikit_args(request, ground.and_then(|(_, world)| world), suite_route);
     let document = run_bounded(&executable, &args, ground.map(|(cwd, _)| cwd), crate::factory::inhabitation_read_timeout(), request.source())?;
     let (data, warnings) = unwrap_envelope(document, request.source())?;
+    if matches!(request, Request::Conversation { .. }) {
+        return conversation_reading(data, request.source()).map(|data| (data, warnings));
+    }
     let schema = data.get("schema").or_else(|| data.get("contract")).and_then(Value::as_str).unwrap_or_default();
     if schema != request.schema() {
         return Err(Error {
@@ -157,6 +180,18 @@ pub fn read(request: &Request, ground: Option<(&Path, Option<&str>)>) -> Result<
         });
     }
     Ok((data, warnings))
+}
+
+/// A conversation reading is `{position_ref, with_position_ref,
+/// communiques[]}`; every record must be an `aikit.communique/v1`.
+pub fn conversation_reading(data: Value, source: &str) -> Result<Value, Error> {
+    let fail = |message: String| Error { kind: "incompatible".into(), message, operation_may_have_run: false };
+    let records = data.get("communiques").and_then(Value::as_array).ok_or_else(|| fail(format!("{source} answered without its communiques")))?;
+    if let Some(other) = records.iter().find(|record| record.get("schema").and_then(Value::as_str) != Some("aikit.communique/v1")) {
+        let schema = other.get("schema").and_then(Value::as_str).unwrap_or_default();
+        return Err(fail(format!("{source} answered an unexpected record ({schema}) where aikit.communique/v1 was asked for")));
+    }
+    Ok(data)
 }
 
 /// Drain a stream keeping at most 8 MiB, so a producer never blocks on a full
@@ -212,6 +247,13 @@ pub(crate) fn run_bounded(executable: &Path, args: &[OsString], cwd: Option<&Pat
 /// Explicit owner-home overrides are applied only to this bounded child.
 /// Callers never mutate the process environment shared by other owners.
 pub(crate) fn run_bounded_with_env(executable: &Path, args: &[OsString], cwd: Option<&Path>, timeout: Duration, source: &str, environment: &[(OsString, OsString)]) -> Result<Value, Error> {
+    let stdout = run_bounded_raw(executable, args, cwd, timeout, source, environment)?;
+    serde_json::from_slice(&stdout).map_err(|e| Error { kind: "incompatible".into(), message: format!("{source} answered without a JSON document: {e}"), operation_may_have_run: false })
+}
+
+/// The same bounded, read-only child as [`run_bounded_with_env`], returning
+/// the owner's stdout bytes as written (for owners that answer JSONL).
+pub(crate) fn run_bounded_raw(executable: &Path, args: &[OsString], cwd: Option<&Path>, timeout: Duration, source: &str, environment: &[(OsString, OsString)]) -> Result<Vec<u8>, Error> {
     let fail = |kind: &str, message: String| Error { kind: kind.into(), message, operation_may_have_run: false };
     let mut command = Command::new(executable);
     command
@@ -251,7 +293,7 @@ pub(crate) fn run_bounded_with_env(executable: &Path, args: &[OsString], cwd: Op
     if !status.success() {
         return Err(fail("owner-refused-or-failed", refusal_words(&stdout, &stderr)));
     }
-    serde_json::from_slice(&stdout).map_err(|e| fail("incompatible", format!("{source} answered without a JSON document: {e}")))
+    Ok(stdout)
 }
 
 #[cfg(test)]
@@ -260,6 +302,17 @@ mod tests {
 
     fn words(args: Vec<OsString>) -> Vec<String> {
         args.into_iter().map(|a| a.to_string_lossy().into_owned()).collect()
+    }
+
+    #[test]
+    fn the_conversation_read_names_both_positions_and_checks_its_records() {
+        let request: Request = serde_json::from_value(serde_json::json!({"kind": "conversation", "project": "O-I", "position": "central:position:project:O-I:factory-guardian", "with": "@anima-4"})).unwrap();
+        assert_eq!(words(aikit_args(&request, Some("project:O-I"), true)), ["aikit", "gateway", "conversation", "--position", "central:position:project:O-I:factory-guardian", "--with", "@anima-4", "--project-world", "project:O-I", "--json"]);
+        assert_eq!(request.source(), "aikit gateway conversation");
+        let ok = serde_json::json!({"position_ref": "p", "with_position_ref": "w", "communiques": [{"schema": "aikit.communique/v1", "communique_ref": "aikit:communique:1"}]});
+        assert!(conversation_reading(ok, "aikit gateway conversation").is_ok());
+        assert!(conversation_reading(serde_json::json!({"communiques": [{"schema": "other/v1"}]}), "s").is_err());
+        assert!(conversation_reading(serde_json::json!({"positions": []}), "s").is_err());
     }
 
     #[test]
