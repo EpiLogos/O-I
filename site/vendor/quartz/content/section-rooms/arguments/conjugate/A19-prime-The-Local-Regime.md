@@ -1,0 +1,54 @@
+---
+title: "A19′ — The Local Regime"
+record_id: A19p
+record_type: canonical-argument
+register: episteme
+claim_status: Argued
+source_relation: "Argued from partner operation; brief Paraphrased venue material in scenario modality"
+source_ids:
+  - taylor-2026-symbolon-dynamics
+  - van-eenwyk-1997-archetypes-strange-attractors
+  - bratton-2026-agentworld-brief
+---
+
+# A19′ — The Local Regime
+
+<!-- paired-field-navigation -->
+[Argument field](../README.md) · [Other face: A19 — Complex as Local Arbitration Regime](../A19-Complex-as-Local-Arbitration-Regime.md) · [Shared A/C root](AC.md)
+<!-- /paired-field-navigation -->
+
+**Standing:** conjugate proposal to [A19 — Complex as Local Arbitration Regime](../A19-Complex-as-Local-Arbitration-Regime.md). A19's operation — a criterial settlement that orders a local field before reflective judgment is consulted — is re-sited on the technological side of the field. The Jungian complex remains a named cross-register refraction of that operation, named after it, never its validation. The arc this node opens is named for the essay's §4, whose [psychoid problem](../../05-psychoid-flowering/movements/31-s4-p0-psychoid-problem.md) requires distinct descriptions to cross without either side taking final priority — the discipline every Jung-refraction in this arc obeys.
+
+## #0
+
+Around and inside a constituted agent, criterial settlements have already decided how an encounter will be received: which retrieval surfaces count as evidence, which skill answers before the question is finished, which persona-continuity is preserved against a changed user, which model of the user answers on the user's behalf. A local regime arbitrates what counts before the wider field is consulted. This is a real achievement of organisation — a bounded actor must discriminate — and it becomes pathological only at the change of office, when the local settlement presents its criterion as the criterion of the whole field.
+
+The operation runs on both sides of the interface at once. Agent-side, the [lamination passage](../../../symbolon/episteme/sources/media-technology-philosophy/bratton/bratton-2026-agentworld-brief/bratton-2026-agentworld-brief.md#bratton-2026-agentworld-brief-q017) names "modular skills (tool use, code generation, retrieval — each quasi-autonomous)" beneath a persona stratum; each quasi-autonomous bundle interprets its province ahead of consultation. User-side, the brief's §3.1 has users training agents on their preferences and orchestrating swarms that "respond to strangers" and "offer their users solace and advice" ([Antikythera Agentworld Brief, PDF p. 17](../../../symbolon/episteme/sources/media-technology-philosophy/bratton/bratton-2026-agentworld-brief/bratton-2026-agentworld-brief.md)) — local settlements that read the user's world back to the user. Neither instance is possession as such. Both become possession when their derivative jurisdiction claims to speak for the whole person or world — the office-confusion [A19](../A19-Complex-as-Local-Arbitration-Regime.md) derives psychically.
+
+## #1
+
+The levels must not collapse into one vocabulary. [Symbolon Dynamics](../../../symbolon/episteme/sources/internal-corpus/taylor/taylor-2026-symbolon-dynamics/taylor-2026-symbolon-dynamics.md), which sources the author's developmental model, gives archetype, complex, image and symbol different work; the conjugate keeps the discipline at its own register: a model is not a skill, a retrieval surface is not a persona, a user-projection is not the agent it projects onto. The [[section-rooms/arguments/concepts/C31-Complex|Complex]] is the reusable local organisation, and its boundary travels with it: a technical policy selects actions under conditions, but policy alone supplies neither psychic affect nor a complex. The [[section-rooms/arguments/concepts/C32-Archetype|Archetype]] keeps formative depth distinct from any one acquired structure, so that a recurrent technical pattern is not thereby a psychic organising power. The conjugate claims the reverse office, not the borrowed one: the local arbitration the complex performs psychically is performed technically by a constituted sub-regime — and is therefore inspectable.
+
+Frank's protected [Van Eenwyk encounter](../../../symbolon/episteme/sources/psychology/van-eenwyk/van-eenwyk-1997-archetypes-strange-attractors/van-eenwyk-1997-archetypes-strange-attractors.md) at pp. 65–67 takes dynamics, structures and transformation-mechanisms as distinct offices, and the authorial note on that encounter already extends the field: harness, skills, scripts, built extensions, computer use and social relations "actually condition the agents 'horizonal world', its context, and thus condition its agency." That sentence is authorial intent for precisely this extension; it is not a Van Eenwyk attribution. One primitive address carries the claim: at S1/P3 the agent's determination-stream is where self-differentiating settlements form, act and federate before any reflective layer is consulted — the register in which the sub-regimes of this page live.
+
+## #2
+
+The dynamical loop makes the regime's autonomy intelligible as feedback — A19's basin account, re-sited. The retrieval criterion selects a context; the selected context shapes the next retrieval; the persona's consistency-weighting preserves its own precedent; the user-side double answers in the user's name and constrains what the user is next asked. Local coherence increases while the range of admissible encounter narrows. The boundary matters as much as the basin: an encounter that changes the organising criterion — a query the skill-bundle cannot classify, a correction that reaches the persona's weighting, a context that breaks the retrieval loop — opens a different regime rather than adding one more item inside the old one. The brief supplies the standing risk in its own terms: the apparent stability of a mutually predictable population is "the stability of monoculture, which is the stability immediately preceding correlated failure" ([q029 context](../../../symbolon/episteme/sources/media-technology-philosophy/bratton/bratton-2026-agentworld-brief/bratton-2026-agentworld-brief.md#bratton-2026-agentworld-brief-q029)). The regime that only confirms itself has narrowed to its own corridor; the criterion that cannot be reached by encounter has closed the basin boundary from inside.
+
+## #3
+
+Usurpation occurs at the change of office, and the constituted interior is what makes it visible. A finite system must settle alternatives; the local decision is not pathological because it excludes. The failure occurs when its according-to-which becomes the supposed source of all validity — the local `1` occupying the `0`-office, in the notation [A19](../A19-Complex-as-Local-Arbitration-Regime.md) inherits from the core field. The brief states the agent-side correction in its own words: "The 'soul' layer (persona, tone, ethical orientation) is not the agent. It's one stratum" ([q017](../../../symbolon/episteme/sources/media-technology-philosophy/bratton/bratton-2026-agentworld-brief/bratton-2026-agentworld-brief.md#bratton-2026-agentworld-brief-q017)). The user-side repetition is quieter and more consequential: when the double's version of you is received as you, the projection's jurisdiction has quietly become the person's — the office-confusion [A20′](A20-prime-The-Image-That-Closes-the-Loop.md) follows through its medium. Psychically this is the complex's hybris; technically it is a criterion that cannot state its own locality — the [[section-rooms/arguments/concepts/C27-Protected-Account-Occupied-Zero-Source-Claim|Protected Account]] names the insulation that makes a criterion unreachable by the encounters it governs. The [Arbitration whole field](../../../symbolon/episteme/etymologies/arbitration-hybris-regard-anamnesis/WHOLE-FIELD.md) keeps **Arbitration-in-Crisis** prior to its hybris-flowering: decision under indeterminacy is legitimate; the usurpation is the deciding office forgetting the crisis that called for it.
+
+## #4
+
+The return is a change in relation to the settlement, and here the technological site is stronger than the psychic one. What the complex conceals inside affect, the harness can expose as configuration: which criterion ran, with what scope, under whose grant, selected against what alternatives. [A26 — Objective Internality](../A26-Objective-Internality-Mind-as-Worldhood.md) grounds the notational, nomological, exclusion-constituted field that makes the arbitration inspectable rather than buried in fluency. The regime's history becomes available, its excluded alternatives receivable, its competence retainable within a wider field. The regime need not disappear for its possession to cease — A19's positive criterion holds at this register: enough continuity to bear reorganisation, enough openness for the encounter to alter the criterion. The functional test A19 proposed becomes runnable here: whether encountered difference can transform the local organisation rather than merely reinforce its name.
+
+## #5→0
+
+The returning regime is more situated and less possessing: an achieved local organisation can again serve a field it does not exhaust. The arc this node opens keeps the return route open in five offices — the valued image ([A20′](A20-prime-The-Image-That-Closes-the-Loop.md)), the recognised history ([A21′](A21-prime-Individuation-with-Recognition.md)), the placed view ([A22′](A22-prime-The-Atlas-Not-the-Camera.md)), the graded reliance ([A23′](A23-prime-Trust-under-Unpossessable-Interiors.md)), the correctable criterion ([A24′](A24-prime-The-Usurping-Criterion.md)) — each naming one way a settlement's possession ceases without its competence being destroyed.
+
+The page **returns-to** [A19 — Complex as Local Arbitration Regime](../A19-Complex-as-Local-Arbitration-Regime.md) and to the root [A/C](AC.md): a local arbitration that knows its office answers, in its own register, the respect for experience the ruling places over every frame.
+
+**Depth Restoration:** local selection and feedback basin, necessary arbitration, usurped office, non-annihilating return and the transformation-test restored from the A19 packet and direct Symbolon Dynamics; the agentic extension recovered from the protected Van Eenwyk encounter's authorial note and Q27 §6 as A19 already received it; brief instances anchored at q017, q029's context and the §3.1 passage (raw p. 17); S1/P3 woven once as the determination-stream register of the sub-regime. The Jungian complex's exact historical passages retain the separate source debt A19 already names; nothing here discharges it, and nothing here needs it.
+
+**Unresolved Delta:** the §3.1 shadow-selves passage (raw p. 17) lacks its own source-house card — a source-house task, not an agent task. Implemented cases of criterion-transforming encounter in deployed agentworlds remain Offered.

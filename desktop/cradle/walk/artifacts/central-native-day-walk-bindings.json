@@ -1,0 +1,15 @@
+{
+  "bridge": "http://127.0.0.1:64759",
+  "source_ref": "central:source:control:root:Control/user/day/2026-09-25/day.md",
+  "document_id": "document:source-walk",
+  "root": "/var/folders/q0/g_91z7355tb58425qwg3xcy80000gn/T/oi-central-native-walk-pjr_pozu",
+  "ctrl": "/Users/admin/Library/Application Support/OI/products/central/9388641a772edb8328a1cfffe6df93ae1647bdc012c1f461849aa480cba07048/bin/ctrl",
+  "now_ref": "central:now:control:root:5caacea77f0da47f272d900f8688c7ec0d753abda5aeb3e028f8621b364a603f",
+  "return_ref": "central:return:control:root:f89a2cc1cf41259c8c0acb73fa15b5551e1e8b53b83135616248d36e1c2cc2e7",
+  "form_location": {
+    "path": "Work/material/original.html",
+    "ref": "central:path:/private/var/folders/q0/g_91z7355tb58425qwg3xcy80000gn/T/oi-central-native-walk-pjr_pozu:Work/material/original.html",
+    "root": "/private/var/folders/q0/g_91z7355tb58425qwg3xcy80000gn/T/oi-central-native-walk-pjr_pozu",
+    "schema": "central.path-ref/v1"
+  }
+}

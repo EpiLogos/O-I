@@ -56,3 +56,12 @@
 .flow-decision input { min-width: 0; }
 .flow-decision-numbers { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 14rem), 1fr)); gap: var(--oi-space-2); }
 .flow-decision pre { max-height: 20rem; overflow: auto; white-space: pre-wrap; overflow-wrap: anywhere; }
+
+/* Answering with a live agent: the binding row, the declared identities. */
+details.flow-answer{margin:10px 0 0;border:1px solid var(--rule,#C9C9C4);border-radius:3px;padding:8px 12px;font:14px/1.5 var(--sans,Helvetica,Arial,sans-serif)}
+details.flow-answer summary{cursor:pointer;color:var(--mid,#6E6E6A)}
+details.flow-answer[open] summary{color:inherit}
+details.flow-answer .oi-note{margin:8px 0}
+.flow-identity{display:flex;gap:18px;align-items:baseline;margin:6px 0 10px;flex-wrap:wrap}
+.flow-identity input{font:inherit;border:1px solid var(--rule,#C9C9C4);border-radius:2px;padding:2px 6px;background:var(--field,#FAFAF8)}
+.flow-answer-initial input{width:2.2em;text-transform:uppercase;font:inherit;border:1px solid var(--rule,#C9C9C4);border-radius:2px;padding:1px 4px;background:var(--field,#FAFAF8)}

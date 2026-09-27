@@ -102,7 +102,7 @@ export async function createFormInPlace(transport: KernelTransportStatus, form: 
     if (existing) throw new Error(`${ground.project} already has a vision page at ${existing.location.path}; open it instead.`);
   }
   let template: string;
-  if (form.kind === "document-01") template = mintBlankInstance(now);
+  if (form.kind === "document-01") template = mintBlankInstance(undefined, now);
   else template = (await readFile(transport, await resolveDocumentForm(transport, form, options.projects))).content;
   const stamp = localStamp(now);
   let lastError: unknown;
