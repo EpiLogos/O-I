@@ -64,7 +64,10 @@ try {
     assert.equal(await page.locator('#lens-studio, #research-hud, #native-work, #techne-world').count(), 0, 'no bolted-on instrument chrome exists');
     if (['canvas', 'timeline', 'place'].includes(id)) {
       await page.waitForFunction(() => /unavailable|not been announced|open a native scene/i.test(document.querySelector('.research-instrument-status')?.textContent ?? ''));
-      assert.equal(await page.locator('#app > .masthead #instrument-tools').count(), 1, 'instrument tools join the masthead rail');
+      // The instrument's tools moved to their own compact dock (instruments
+      // carry different tool counts; the fixed rail slot misaligned the
+      // masthead) — the dock is present while a research instrument is open.
+      assert.equal(await page.locator('#instrument-tools-dock #instrument-tools').count(), 1, 'instrument tools stand in their dock while the instrument is open');
       assert.equal(await page.locator('.research-instrument-body .react-flow__node').count(), 0, 'missing owner never becomes demo graph data');
     } else if (id === 'journey') {
       assert.equal(await page.locator('#timeline-panel:not([hidden])').count(), 1, 'Journey opens the existing Scene strip');
