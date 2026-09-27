@@ -46,11 +46,25 @@ oi dev world status         # compact readout: SessionSpace + active providers +
 oi dev world focus pi       # resume/focus the parent Pi AgentSession (no new Pi minted)
 ```
 
-`oi dev world` now resolves `@project/*` and `@parent` tokens against the
-machine-state file, writes the token-resolved spec to a temp file, and prints
-the delegated `aikit session up <resolved>` — it observes and resolves, never
-mutates. Provider materialisation (`--provider herdr|tmux|desktop`) and
-`focus pi` remain the next launcher increments.
+`oi dev world` resolves `@project/*` and `@parent` tokens against the
+machine-state file. `status` observes and resolves only, printing the
+delegated `aikit session up <resolved>`.
+
+`oi dev world up` is the ordinary entry (27 September 2026 amendment): it
+ensures the Herdr daemon, creates the SessionSpace from the carrier seed when
+absent, binds and opens the Herdr parent working surface through the
+SessionSpace application contract, and delegates the tmux floor to
+`aikit session up`. Every materialising step is the AIKit-owned verb an agent
+would run; O:I resolves machine facts and composes the order. Re-running is
+the warm entry — existing state is reused, a dead provider place is recovered
+through the same open that created it, and nothing duplicates. `--json`
+reports the canonical identities and created/reused facts for agents.
+`oi dev world focus parent` raises the parent surface through the native
+focus verb.
+
+Desktop materialisation remains a later increment; the Herdr provider's
+multi-surface seam (one live workspace, several canonical surfaces) is an
+openFactory undertaking (commission:herdr-omarchy-multisurface-158).
 
 Re-running any launcher form is idempotent and non-destructive: it never creates
 `oi-2`, a second Pi, a duplicate desktop session, or duplicate panes.

@@ -6,6 +6,7 @@ pub mod context_frames;
 pub mod current_world;
 pub mod desktop_install;
 pub mod dev_world;
+pub mod dev_world_up;
 pub mod development_field;
 pub mod fixture_surface;
 pub mod guardian;
