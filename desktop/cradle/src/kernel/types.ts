@@ -88,6 +88,11 @@ export interface KernelReceipt {
 
 /** The operation payloads (the Rust `KernelOp`, tagged snake_case). */
 export interface CentralLocation { schema: "central.path-ref/v1"; ref: string; root: string; path: string }
+/** QL composes the K² binding; the consumer names only texture, scale, sky and an optional event. */
+export interface NativeComposeRequest { texture: [number, number]; units_per_metre: number; sky: "none" | "now" | {epoch: string}; event?: Record<string, unknown> }
+export type NativeExpressionRequest = {operation: "open"; path: string; expected_revision: string} | {operation: "compose"; request: NativeComposeRequest} | {operation: "exchange"; lease: string; request: unknown} | {operation: "close"; lease: string};
+/** Provenance of a composed open (`source` in `oi.native-expression-open/v1`). */
+export interface NativeComposedSource { schema: "oi.native-expression-composed-source/v1"; ql_executable: string; ql_selection: "installed" | "operator-override"; ql_revision: string | null; sky: {mode: "current" | "historical"; epoch: string; snapshot_ref: string; receipt_unix_ms: number} | null; request_sha256: string; composed_at_unix_ms: number }
 export interface NativeFileEntry { name: string; location: CentralLocation; kind: "file" | "directory" | "symlink" | "other"; byte_len: number; retrieval_allowed: boolean }
 export interface NativeDirectory { schema: "central.directory-reading/v1"; location: CentralLocation; entries: NativeFileEntry[]; automatic_agent_or_model_invocation: false }
 export interface NativeFileReading { schema: "central.file-reading/v1"; location: CentralLocation; revision: string; byte_len: number; content_encoding: "utf-8"; content: string; project: {name:string;path:string;project_ref:string|null} | null; source: ListedSource | null; operations?:Record<"write"|"history"|"restore",{available:boolean;reason:string|null}>; automatic_agent_or_model_invocation: false }
@@ -204,7 +209,7 @@ export type KernelOp =
   | {op:"theme_revert"}
   | {op:"theme_remove";id:string}
   | {op:"nara_decision_record";decision:import("../nara/session").SpeechToolDecision}
-  | {op: "native_expression"; request: {operation: "open"; path: string; expected_revision: string} | {operation: "exchange"; lease: string; request: unknown} | {operation: "close"; lease: string}}
+  | {op: "native_expression"; request: NativeExpressionRequest}
   | {op: "setup"; request: import("../configuration/adoptionController").AdoptionRequest}
   | {op:"being_encounter";request:Record<string,unknown>}
   | {op:"expression";request:import("../expression/types").ExpressionRequest}

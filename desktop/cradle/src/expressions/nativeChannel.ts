@@ -3,10 +3,9 @@
  */
 import {kernelOp} from '../kernel/bridge';
 import {listFiles,readFile} from '../files/client';
-import type {KernelTransportStatus} from '../kernel/types';
+import type {KernelTransportStatus,NativeExpressionRequest} from '../kernel/types';
 export const NATIVE_CHANNEL = 'oi.native-expression/v1';
-type Request = {operation:'open';path:string;expected_revision:string} |
-  {operation:'exchange';lease:string;request:unknown} | {operation:'close';lease:string};
+type Request = NativeExpressionRequest;
 export type NativeCall = (request:Request) => Promise<any>;
 
 /** Exported for a controlled protocol test; production always uses kernelOp. */
@@ -43,11 +42,13 @@ export function relayNativeChannel(frame: HTMLIFrameElement, transport:KernelTra
         if(reading.byte_len>32*1024*1024)throw new Error('binding source exceeds 32 MiB');
         respond({ok:true,data:{path,location:reading.location,revision:reading.revision,content:reading.content}});return;
       }
-      if(!request || !['open','exchange','close'].includes(request.operation))throw new Error('unsupported native-expression operation');
-      if(request.operation==='open'){
+      if(!request || !['open','compose','exchange','close'].includes(request.operation))throw new Error('unsupported native-expression operation');
+      // Compose is an open whose binding QL writes: same lease law. Only the
+      // consumer request travels; the kernel validates it strictly.
+      if(request.operation==='open' || request.operation==='compose'){
         if(lease || opening)throw new Error('this frame already owns or is opening a native driver');
         opening=true;
-        const result=await call(request);
+        const result=await call(request.operation==='compose'?{operation:'compose',request:request.request}:request);
         if(!result || result.schema!=='oi.native-expression-open/v1' || typeof result.lease!=='string')throw new Error('invalid native open receipt');
         if(!live || basis!==epoch){close(result.lease);return;}
         lease=result.lease;respond({ok:true,data:result});
@@ -59,7 +60,7 @@ export function relayNativeChannel(frame: HTMLIFrameElement, transport:KernelTra
         respond({ok:true,data:result});
       }
     }catch(error){respond({ok:false,error:String(error)});}
-    finally{if(basis===epoch&&request?.operation==='open')opening=false;}
+    finally{if(basis===epoch&&(request?.operation==='open'||request?.operation==='compose'))opening=false;}
   };
   const visibility=new IntersectionObserver(entries=>{
     if(live)send({kind:'visibility',visible:entries.some(e=>e.isIntersecting && e.intersectionRatio>0)});
