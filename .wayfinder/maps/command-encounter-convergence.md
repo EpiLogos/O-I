@@ -409,5 +409,3 @@ Probe Agent and probe agent-set removed by CAS after proof.
 3. Cradle walk scenarios `rest`/`modes`/`kernel-cas` fail at expressions-substrate selectors (`.xg-navigator`, `.warm-tree-host … pane-tool-pin`) and the pre-existing shell-host check — present before #527 (receipts last green #482, 22 Sep); owned by the expressions/world-substrate lane.
 4. Factory/Workcell/QL CLI help treatment, packet A3 (executable praxis support), `oi ui` composed-World handoff, and in-TUI SkillSet-first picker (needs the headless prepare contract moved below the CLI/TUI split) remain open on this map's frontier.
 5. X-matrix items X7 (Factory Commission), X9 (edit-while-running), X12 (four-surface same-identity), X13/X15/X16 at full depth remain for the next pass with the desktop app installed.
-=======
->>>>>>> origin/design/command-encounter-convergence
