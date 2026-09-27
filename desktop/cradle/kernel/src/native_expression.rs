@@ -5,6 +5,7 @@ use crate::{files, CentralClient};
 use serde::{Deserialize, Serialize};
 use serde_json::{json, Value};
 use std::{
+    collections::BTreeMap,
     fs::{self, OpenOptions},
     io::{BufRead, BufReader, Read, Write},
     path::PathBuf,
@@ -131,6 +132,197 @@ fn presentation(value: &Value) -> Result<(), String> {
         return Err("invalid or incomplete presentation correspondence".into());
     }
     Ok(())
+}
+
+/// The host/worker pair. The operator override names both, absolutely, or
+/// neither; otherwise the installed suite answers where QL's companions sit
+/// (one content-addressed cut, so the pair cannot mix revisions).
+fn native_executables() -> Result<(PathBuf, PathBuf), String> {
+    let var = |key| std::env::var_os(key).filter(|value| !value.is_empty());
+    match (var("OI_QL_FIELD_HOST_BIN"), var("OI_QL_FIELD_WORKER_BIN")) {
+        (Some(host), Some(worker)) => {
+            let (host, worker) = (PathBuf::from(host), PathBuf::from(worker));
+            if !host.is_absolute() || !worker.is_absolute() {
+                return Err("native executable bindings must be absolute installed paths".into());
+            }
+            Ok((host, worker))
+        }
+        (None, None) => {
+            let mut pair = InstalledQl::discover()?.require(&["ql-field-host", "ql-field-worker"])?;
+            let worker = pair.pop().expect("two companions required");
+            let host = pair.pop().expect("two companions required");
+            Ok((host, worker))
+        }
+        _ => Err("native-expression.unavailable: OI_QL_FIELD_HOST_BIN and OI_QL_FIELD_WORKER_BIN override together; set both or neither".into()),
+    }
+}
+
+/// Where the installed suite says QL is: the product executable and every
+/// companion its catalogue declares, each an absolute installed path or the
+/// named reason it is not usable. Only installed configuration answers this;
+/// a binding or the webview never does.
+#[derive(Clone, Debug, PartialEq)]
+pub struct InstalledQl {
+    pub executable: Result<PathBuf, String>,
+    pub companions: BTreeMap<String, Result<PathBuf, String>>,
+}
+
+impl InstalledQl {
+    /// Ask the installed suite (`$OI_BIN`, else `oi`), bounded.
+    pub fn discover() -> Result<Self, String> {
+        Self::parse(&installed_where()?)
+    }
+
+    /// Read an `oi.product-location/v1` reading. A primary is usable when it
+    /// is absolute and the suite digested it; a companion when it is
+    /// absolute and reported present.
+    pub fn parse(reading: &[u8]) -> Result<Self, String> {
+        let reading: Value = serde_json::from_slice(reading).map_err(|e| {
+            format!(
+                "native-expression.unavailable: `oi where quaternal-logic --json` is not JSON: {e}"
+            )
+        })?;
+        if reading["schema"] != "oi.product-location/v1" {
+            return Err("native-expression.unavailable: `oi where quaternal-logic --json` is not an oi.product-location/v1 reading".into());
+        }
+        let absolute = |name: &str, path: Option<&str>| match path.filter(|path| nonempty(path)) {
+            None => Err(format!("{name} has no executable path")),
+            Some(path) if !PathBuf::from(path).is_absolute() => {
+                Err(format!("{name} path {path} is not absolute"))
+            }
+            Some(path) => Ok(PathBuf::from(path)),
+        };
+        let executable =
+            absolute("quaternal-logic", reading["executable"].as_str()).and_then(|path| {
+                if reading["sha256"].is_string() {
+                    Ok(path)
+                } else {
+                    Err(format!(
+                        "quaternal-logic is not installed at {}",
+                        path.display()
+                    ))
+                }
+            });
+        let mut companions = BTreeMap::new();
+        for (name, entry) in reading["companions"].as_object().into_iter().flatten() {
+            let resolved = absolute(name, entry["executable"].as_str()).and_then(|path| {
+                if entry["present"] == true {
+                    Ok(path)
+                } else {
+                    Err(format!(
+                        "{name} is not installed at {} (oi update --apply --rebuild quaternal-logic)",
+                        path.display()
+                    ))
+                }
+            });
+            companions.insert(name.clone(), resolved);
+        }
+        Ok(Self {
+            executable,
+            companions,
+        })
+    }
+
+    /// The installed `ql` itself.
+    pub fn executable(&self) -> Result<PathBuf, String> {
+        self.executable
+            .clone()
+            .map_err(|why| format!("native-expression.unavailable: {why}"))
+    }
+
+    /// One named companion.
+    pub fn companion(&self, name: &str) -> Result<PathBuf, String> {
+        self.require(&[name]).map(|mut paths| paths.remove(0))
+    }
+
+    /// Every named companion in order, or one error naming each shortfall.
+    pub fn require(&self, names: &[&str]) -> Result<Vec<PathBuf>, String> {
+        let mut paths = Vec::with_capacity(names.len());
+        let mut missing = Vec::new();
+        for name in names {
+            match self.companions.get(*name) {
+                Some(Ok(path)) => paths.push(path.clone()),
+                Some(Err(why)) => missing.push(why.clone()),
+                None => missing.push(format!(
+                    "installed quaternal-logic declares no {name} (update O:I and QL: oi update --apply quaternal-logic)"
+                )),
+            }
+        }
+        if missing.is_empty() {
+            Ok(paths)
+        } else {
+            Err(format!(
+                "native-expression.unavailable: {}",
+                missing.join("; ")
+            ))
+        }
+    }
+}
+
+const WHERE_TIMEOUT: Duration = Duration::from_secs(10);
+const MAX_WHERE: u64 = 1024 * 1024;
+
+/// `oi where quaternal-logic --json`, bounded: a suite that does not answer
+/// within the budget is unavailable, never waited on.
+fn installed_where() -> Result<Vec<u8>, String> {
+    let oi = std::env::var_os("OI_BIN")
+        .filter(|value| !value.is_empty())
+        .unwrap_or_else(|| "oi".into());
+    run_where(&oi, WHERE_TIMEOUT)
+}
+
+fn run_where(oi: &std::ffi::OsStr, timeout: Duration) -> Result<Vec<u8>, String> {
+    let unavailable = |why: String| {
+        format!(
+            "native-expression.unavailable: `{} where quaternal-logic --json` {why}",
+            PathBuf::from(oi).display()
+        )
+    };
+    let mut child = Command::new(oi)
+        .args(["where", "quaternal-logic", "--json"])
+        .stdin(Stdio::null())
+        .stdout(Stdio::piped())
+        .stderr(Stdio::null())
+        .spawn()
+        .map_err(|e| unavailable(format!("cannot start: {e}")))?;
+    let mut stdout = child
+        .stdout
+        .take()
+        .ok_or_else(|| unavailable("has no stdout".into()))?;
+    let (tx, rx) = mpsc::channel();
+    thread::spawn(move || {
+        let mut bytes = Vec::new();
+        let read = (&mut stdout).take(MAX_WHERE).read_to_end(&mut bytes);
+        let _ = tx.send(read.map(|_| bytes).map_err(|e| e.to_string()));
+    });
+    let deadline = std::time::Instant::now() + timeout;
+    let status = loop {
+        match child.try_wait() {
+            Ok(Some(status)) => break status,
+            Ok(None) if std::time::Instant::now() < deadline => {
+                thread::sleep(Duration::from_millis(10))
+            }
+            outcome => {
+                let _ = child.kill();
+                let _ = child.wait();
+                return Err(unavailable(match outcome {
+                    Err(e) => e.to_string(),
+                    _ => format!("did not answer within {}ms", timeout.as_millis()),
+                }));
+            }
+        }
+    };
+    let remaining = deadline
+        .saturating_duration_since(std::time::Instant::now())
+        .max(Duration::from_millis(100));
+    let bytes = rx
+        .recv_timeout(remaining)
+        .map_err(|_| unavailable("held its output open".into()))?
+        .map_err(|e| unavailable(format!("output unreadable: {e}")))?;
+    if !status.success() {
+        return Err(unavailable(format!("exited {status}")));
+    }
+    Ok(bytes)
 }
 
 impl Owner {
@@ -302,15 +494,7 @@ impl Manager {
         }
         // Only installed/operator configuration chooses executable paths. The
         // binding and webview cannot supply shell strings, flags or programs.
-        let host = std::env::var_os("OI_QL_FIELD_HOST_BIN")
-            .map(PathBuf::from)
-            .ok_or("native-expression.unavailable: OI_QL_FIELD_HOST_BIN is not configured")?;
-        let worker = std::env::var_os("OI_QL_FIELD_WORKER_BIN")
-            .map(PathBuf::from)
-            .ok_or("native-expression.unavailable: OI_QL_FIELD_WORKER_BIN is not configured")?;
-        if !host.is_absolute() || !worker.is_absolute() {
-            return Err("native executable bindings must be absolute installed paths".into());
-        }
+        let (host, worker) = native_executables()?;
         self.sequence = self
             .sequence
             .checked_add(1)
@@ -537,6 +721,139 @@ for line in sys.stdin: time.sleep(60)
             started.elapsed() < Duration::from_secs(3),
             "owned descendant kept native pipes alive"
         );
+        fs::remove_dir_all(dir).unwrap();
+    }
+    fn where_reading(companions: Value) -> Vec<u8> {
+        serde_json::to_vec(&json!({"schema":"oi.product-location/v1","product":"quaternal-logic",
+            "executable":"/oi/products/quaternal-logic/abc/bin/ql","sha256":"q","companions":companions})).unwrap()
+    }
+    #[test]
+    fn installed_ql_resolves_the_executable_and_every_present_companion() {
+        let installed = InstalledQl::parse(&where_reading(json!({
+            "ql-field-host":{"executable":"/oi/products/quaternal-logic/abc/bin/ql-field-host","present":true,"sha256":"a"},
+            "ql-focused-host":{"executable":"/oi/products/quaternal-logic/abc/bin/ql-focused-host","present":false,"sha256":null},
+            "ql-field-worker":{"executable":"/oi/products/quaternal-logic/abc/bin/ql-field-worker","present":true,"sha256":"b"},
+            "ql-sky":{"executable":"/oi/products/quaternal-logic/abc/bin/ql-sky","present":true,"sha256":"c"}
+        }))).unwrap();
+        let bin = PathBuf::from("/oi/products/quaternal-logic/abc/bin");
+        assert_eq!(installed.executable().unwrap(), bin.join("ql"));
+        assert_eq!(
+            installed
+                .require(&["ql-field-host", "ql-field-worker"])
+                .unwrap(),
+            vec![bin.join("ql-field-host"), bin.join("ql-field-worker")]
+        );
+        assert_eq!(installed.companion("ql-sky").unwrap(), bin.join("ql-sky"));
+        assert_eq!(installed.companions.len(), 4);
+        assert!(installed.companions["ql-focused-host"].is_err());
+    }
+    #[test]
+    fn installed_ql_names_exactly_what_is_missing() {
+        let installed = InstalledQl::parse(&where_reading(json!({
+            "ql-field-host":{"executable":"/oi/bin/ql-field-host","present":true,"sha256":"a"},
+            "ql-field-worker":{"executable":"/oi/bin/ql-field-worker","present":false,"sha256":null},
+            "ql-sky":{"executable":"bin/ql-sky","present":true,"sha256":"c"},
+            "ql-focused-host":{"present":true}
+        }))).unwrap();
+        let absent = installed
+            .require(&["ql-field-host", "ql-field-worker"])
+            .unwrap_err();
+        assert!(
+            absent.starts_with("native-expression.unavailable: "),
+            "{absent}"
+        );
+        assert!(
+            absent.contains("ql-field-worker is not installed at /oi/bin/ql-field-worker"),
+            "{absent}"
+        );
+        assert!(!absent.contains("ql-field-host"), "{absent}");
+        let relative = installed.companion("ql-sky").unwrap_err();
+        assert!(
+            relative.contains("ql-sky path bin/ql-sky is not absolute"),
+            "{relative}"
+        );
+        let pathless = installed.companion("ql-focused-host").unwrap_err();
+        assert!(
+            pathless.contains("ql-focused-host has no executable path"),
+            "{pathless}"
+        );
+
+        // A suite that predates companions declares none: each asked-for name is named.
+        let legacy = InstalledQl::parse(
+            br#"{"schema":"oi.product-location/v1","executable":"/x/ql","sha256":"q"}"#,
+        )
+        .unwrap();
+        assert_eq!(legacy.executable().unwrap(), PathBuf::from("/x/ql"));
+        let undeclared = legacy
+            .require(&["ql-field-host", "ql-field-worker"])
+            .unwrap_err();
+        assert!(
+            undeclared.contains("declares no ql-field-host")
+                && undeclared.contains("declares no ql-field-worker"),
+            "{undeclared}"
+        );
+
+        // The primary needs an absolute, digested install.
+        let unfound = InstalledQl::parse(
+            br#"{"schema":"oi.product-location/v1","executable":"ql","sha256":null}"#,
+        )
+        .unwrap();
+        assert!(unfound
+            .executable()
+            .unwrap_err()
+            .contains("quaternal-logic path ql is not absolute"));
+        let undigested = InstalledQl::parse(
+            br#"{"schema":"oi.product-location/v1","executable":"/x/ql","sha256":null}"#,
+        )
+        .unwrap();
+        assert!(undigested
+            .executable()
+            .unwrap_err()
+            .contains("quaternal-logic is not installed at /x/ql"));
+
+        let malformed = InstalledQl::parse(b"not json").unwrap_err();
+        assert!(
+            malformed.starts_with("native-expression.unavailable: ")
+                && malformed.contains("not JSON"),
+            "{malformed}"
+        );
+        let foreign = InstalledQl::parse(br#"{"schema":"other/v1"}"#).unwrap_err();
+        assert!(foreign.contains("oi.product-location/v1"), "{foreign}");
+    }
+    #[cfg(unix)]
+    #[test]
+    fn the_where_query_is_bounded_and_its_failures_are_unavailable() {
+        use std::os::unix::fs::PermissionsExt;
+        let dir = std::env::temp_dir().join(format!("native-where-test-{}", std::process::id()));
+        fs::create_dir_all(&dir).unwrap();
+        let script = |name: &str, body: &str| {
+            let path = dir.join(name);
+            fs::write(&path, format!("#!/bin/sh\n{body}\n")).unwrap();
+            fs::set_permissions(&path, fs::Permissions::from_mode(0o700)).unwrap();
+            crate::test_stub::settle_stub(&path);
+            path
+        };
+        let answers = script(
+            "answers",
+            r#"[ "$*" = "where quaternal-logic --json" ] && echo '{"schema":"oi.product-location/v1"}'"#,
+        );
+        assert_eq!(
+            run_where(answers.as_os_str(), Duration::from_secs(10)).unwrap(),
+            b"{\"schema\":\"oi.product-location/v1\"}\n"
+        );
+        let fails = script("fails", "exit 3");
+        let error = run_where(fails.as_os_str(), Duration::from_secs(10)).unwrap_err();
+        assert!(
+            error.starts_with("native-expression.unavailable: ") && error.contains("exited"),
+            "{error}"
+        );
+        let hangs = script("hangs", "exec sleep 30");
+        let started = std::time::Instant::now();
+        let error = run_where(hangs.as_os_str(), Duration::from_millis(300)).unwrap_err();
+        assert!(error.contains("did not answer within 300ms"), "{error}");
+        assert!(started.elapsed() < Duration::from_secs(5));
+        let error = run_where(dir.join("absent").as_os_str(), Duration::from_secs(1)).unwrap_err();
+        assert!(error.contains("cannot start"), "{error}");
         fs::remove_dir_all(dir).unwrap();
     }
     #[test]
