@@ -15,7 +15,7 @@ const controller=new NativeAgentController(async request=>{
  if(request.action==='scope')return {schema:'aikit.direct-agent-scope/v1',project_ref:'control:root',world_readiness:{ready:true,world_ref:'control:root'},provider_started:false,execution_authority_granted:false};
  if(request.action==='skills')return {schema:'aikit.direct-agent-skills/v1',rows:[{ref:'skill/test/reader',name:'Native reader',description:'Reads the selected source.',revision:'r1',source:null,eligible:true,reason_code:null},{ref:'skill/test/disabled',name:'Disabled native skill',description:'Unavailable source.',revision:'r1',source:null,eligible:false,reason_code:'skill.disabled'}],activation_performed:false,brokered_child_activation_observed:false};
  if(request.action==='roster')return {schema:'central.agent-profile-roster/v1',scope_ref:'control:root',profiles:stored?[review()]:[],execution_authority_granted:false};
- if(request.action==='propose'){stored=true;Object.assign(profile,{skill_refs:request.skill_refs});return review();}
+ if(request.action==='propose'){accepted=false;stored=true;Object.assign(profile,{skill_refs:request.skill_refs});return review();}
  if(request.action==='accept'){accepted=true;if(lose)throw Error('controlled lost acceptance reply');return review();}
  if(request.action==='review')return review();
  if(request.action==='prepare')return {schema:'aikit.direct-agent-session/v1',profile_ref:profile.ref,profile_revision:profile.revision,request_id:request.request_id,agent_ref:profile.agent_ref,agent_session:'agent-session/browser-created',space:'session-space/browser-created',project_ref:'control:root',acceptance_ref:'acceptance:browser',prepared:true,provider_started:false,execution_authority_granted:false,brokered_child_context:'not established'};

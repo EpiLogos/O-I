@@ -219,6 +219,102 @@ mod unix {
     }
 
     #[test]
+    fn act_invoke_accepts_the_documented_structured_flag_and_bare_act_lists_the_field() {
+        let home = TempDir::new().expect("home");
+        let bin = TempDir::new().expect("bin");
+        fs::write(
+            bin.path().join("ctrl"),
+            "#!/bin/sh\nif [ \"$1\" = \"actions\" ]; then\n  printf '%s\\n' '{\"ok\":true,\"data\":{\"actions\":[{\"id\":\"central.doctor\",\"title\":\"Doctor\",\"mutation_class\":\"read\",\"inputs\":[]},{\"id\":\"central.now.return\",\"title\":\"Record a NOW return\",\"mutation_class\":\"write\",\"inputs\":[]}]}}'\n  exit 0\nfi\nprintf 'argv:%s|%s|%s|%s|%s\\n' \"$1\" \"$2\" \"$3\" \"$4\" \"$5\"\nexit 14\n",
+        )
+        .expect("write fake ctrl");
+        let mut permissions = fs::metadata(bin.path().join("ctrl")).expect("metadata").permissions();
+        permissions.set_mode(0o755);
+        fs::set_permissions(bin.path().join("ctrl"), permissions).expect("chmod fake ctrl");
+
+        // The documented `--json` invocation is accepted and forwarded to the
+        // owner as the structured flag, not mistaken for a second positional.
+        let structured = run_oi_args(
+            &home,
+            &bin,
+            &["act", "invoke", "central.doctor", "--input", "{}", "--json"],
+        );
+        assert_eq!(structured.status.code(), Some(14), "native exit is preserved");
+        assert_eq!(
+            String::from_utf8_lossy(&structured.stdout),
+            "argv:action|run|central.doctor|{}|--json\n"
+        );
+
+        // Bare `oi act` is the read-only field listing, not bare help.
+        let listed = run_oi_args(&home, &bin, &["act"]);
+        assert!(listed.status.success());
+        let text = String::from_utf8_lossy(&listed.stdout);
+        assert!(text.starts_with("Central native Action field (2 actions"), "{text}");
+        assert!(text.contains("central.doctor"), "{text}");
+        assert!(text.contains("central.now.return"), "{text}");
+
+        let listed_json = run_oi_args(&home, &bin, &["act", "--json"]);
+        assert!(listed_json.status.success());
+        let value: serde_json::Value =
+            serde_json::from_slice(&listed_json.stdout).expect("field listing parses");
+        assert_eq!(value["schema"], "oi.action-field/v1");
+        assert_eq!(value["actions"].as_array().map(Vec::len), Some(2));
+    }
+
+    #[test]
+    fn act_invoke_large_input_reaches_the_owner_through_native_stdin_intact() {
+        let home = TempDir::new().expect("home");
+        let bin = TempDir::new().expect("bin");
+        fs::write(
+            bin.path().join("ctrl"),
+            "#!/bin/sh\nif [ \"$1\" = \"actions\" ]; then\n  printf '%s\\n' '{\"ok\":true,\"data\":{\"actions\":[]}}'\n  exit 0\nfi\n/bin/cat > \"$0.payload\"\nprintf 'argv:%s|%s|%s|%s\\n' \"$1\" \"$2\" \"$3\" \"$4\"\nexit 14\n",
+        )
+        .expect("write fake ctrl");
+        let mut permissions = fs::metadata(bin.path().join("ctrl")).expect("metadata").permissions();
+        permissions.set_mode(0o755);
+        fs::set_permissions(bin.path().join("ctrl"), permissions).expect("chmod fake ctrl");
+
+        // One stable key holding well past the 64 KiB argv threshold: the
+        // wrapper re-encodes compact JSON, so the canonical form is exact.
+        let note = "a".repeat(80_000);
+        let input_file = home.path().join("large-input.json");
+        fs::write(&input_file, format!("{{\"note\":\"{note}\"}}")).expect("write input file");
+
+        let invoked = run_oi_args(
+            &home,
+            &bin,
+            &[
+                "act",
+                "invoke",
+                "central.doctor",
+                "--input",
+                &format!("@{}", input_file.to_str().expect("utf-8")),
+            ],
+        );
+        assert_eq!(
+            invoked.status.code(),
+            Some(14),
+            "native exit is preserved; stdout: {} stderr: {}",
+            String::from_utf8_lossy(&invoked.stdout),
+            String::from_utf8_lossy(&invoked.stderr)
+        );
+        // The explicit `-` input argument is what tells Central to read the
+        // payload on stdin; without it Central parses the invocation as `{}`.
+        assert_eq!(
+            String::from_utf8_lossy(&invoked.stdout),
+            "argv:action|run|central.doctor|-\n"
+        );
+
+        let delivered =
+            fs::read(bin.path().join("ctrl.payload")).expect("fake ctrl captured the stdin payload");
+        let expected = format!("{{\"note\":\"{note}\"}}");
+        assert_eq!(
+            String::from_utf8(delivered).expect("payload utf-8"),
+            expected,
+            "the exact submitted input reached the owner"
+        );
+    }
+
+    #[test]
     fn agent_roster_routes_the_exact_native_central_action() {
         let home = TempDir::new().expect("home");
         let bin = TempDir::new().expect("bin");

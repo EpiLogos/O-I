@@ -294,9 +294,11 @@ export class NativeAgentController {
   * failing stage and leaves the per-stage affordances standing. It never
   * rewrites a running session (preparation is idempotent by the retained
   * request), never mints Factory ancestry and never grants authority. The
-  * final open-conversation step stays in the surface: its outcome is the
-  * opened conversation or the surface's own open error. */
- saveAndStart = async () => {
+  * final open-conversation step stays in the surface: on success the
+  * prepared session is returned so the surface can open the conversation
+  * (its outcome is the opened conversation or the surface's own open
+  * error), and `undefined` is returned when the journey stopped early. */
+ saveAndStart = async (): Promise<NativePrepared | undefined> => {
   const {busy,unknown,review} = this.state;
   if (busy || unknown) return;
   const stages: CompoundStages = {
@@ -327,6 +329,7 @@ export class NativeAgentController {
    stages.readiness="ok"; this.set({compound:{...stages}});
    await this.stagePrepare();
    this.set({busy:false,compound:{...stages,prepare:"ok"}});
+   return this.state.prepared;
   } catch (error) {
    const stage = stages.propose==="pending"?"propose":stages.accept==="pending"?"accept":stages.readiness==="pending"?"readiness":"prepare";
    if (error instanceof StagePrecondition) fail(stage,error.message,false);

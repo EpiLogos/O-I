@@ -12,7 +12,7 @@ try{
  const checkbox=page.getByRole('checkbox',{name:/I choose the disclosed native scope/});await checkbox.check();
  await page.getByRole('checkbox',{name:'Skill Native reader',exact:true}).check();
  assert.equal(await page.getByRole('checkbox',{name:'Skill Disabled native skill',exact:true}).isDisabled(),true);
- assert.equal(await page.evaluate(()=>window.creation.calls.filter(c=>!['roster','scope','skills'].includes(c.action)).length),0);
+ assert.equal(await page.evaluate(()=>window.creation.calls.filter(c=>!['roster','scope','skills','skillsets'].includes(c.action)).length),0);
  await page.getByRole('button',{name:'Open native Agent/session setup',exact:true}).click();
  await page.getByRole('heading',{name:'Harnesses',exact:true}).waitFor();
  await page.locator('[data-settings-section="credentials"]').click();
@@ -22,9 +22,18 @@ try{
  await page.getByRole('button',{name:'Return to preserved composer and re-read readiness',exact:true}).click();
  assert.equal(await page.getByRole('textbox',{name:'Human purpose',exact:true}).inputValue(),'Read the permitted source.');
  checks.push('Setup excursion preserves the exact held purpose and only refreshes owner readings on return.');
- await page.getByRole('button',{name:'Create native proposal',exact:true}).click();
+ await page.getByRole('button',{name:'Save and start Direct work',exact:true}).click();
+ const compoundRow=await page.evaluate(()=>window.creation.opened());assert.equal(compoundRow.ref,'agent-session/browser-created');assert.equal(compoundRow.space,'session-space/browser-created');assert.equal(compoundRow.project,'');
+ assert.equal(await page.evaluate(()=>window.creation.calls.filter(c=>c.action==='prepare').length),1);
+ assert.equal(await page.evaluate(()=>window.creation.calls.some(c=>c.action==='accept')),true);
+ checks.push('Save and start completes the reviewed journey by itself — save, acceptance, readiness and preparation in order, then the conversation opens with the native identities; no separate manual relay.');
+ await page.getByRole('button',{name:'Back to held draft',exact:true}).click();
+ assert.equal(await page.getByRole('textbox',{name:'Human purpose',exact:true}).inputValue(),'Read the permitted source.');
+ checks.push('Returning to the held draft preserves the exact purpose; the prepared session is cleared with it.');
+ await page.getByRole('button',{name:'Save as native proposal only',exact:true}).click();
+ await page.getByText('Stage-by-stage native operations',{exact:true}).click();
  await page.getByRole('button',{name:'Accept this exact Agent definition',exact:true}).waitFor();
- assert.equal(await page.evaluate(()=>window.creation.calls.some(c=>c.action==='accept')),false);
+ assert.equal(await page.evaluate(()=>window.creation.calls.filter(c=>c.action==='accept').length),1);
  assert.deepEqual(await page.evaluate(()=>window.creation.calls.find(c=>c.action==='propose').skill_refs),['skill/test/reader']);
  checks.push('The actual native Skill catalogue constrains selectable context; selected references survive proposal and exact review before any acceptance or launch.');
  await page.evaluate(()=>window.creation.loseAcceptance());
@@ -33,7 +42,7 @@ try{
  assert.equal(await page.getByRole('button',{name:'Accept this exact Agent definition',exact:true}).isDisabled(),true);
  await page.getByRole('button',{name:'Inspect original outcome — no replay',exact:true}).click();
  await page.getByRole('button',{name:'Prepare Direct session',exact:true}).waitFor();
- assert.equal(await page.evaluate(()=>window.creation.calls.filter(c=>c.action==='accept').length),1);
+ assert.equal(await page.evaluate(()=>window.creation.calls.filter(c=>c.action==='accept').length),2);
  checks.push('Lost acknowledgement becomes unknown; explicit source read recovers acceptance without a second write.');
  await page.getByRole('button',{name:'Prepare Direct session',exact:true}).click();
  await page.getByRole('button',{name:'Open conversation and choose harness',exact:true}).click();

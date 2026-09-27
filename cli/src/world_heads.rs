@@ -216,13 +216,18 @@ fn resolve_owner_executable(namespace: &str) -> Result<PathBuf, String> {
     resolve_product_executable(product)
 }
 
-const ACT_USAGE: &str = "oi act                                     list the Central native Action field (read-only)\n       oi act describe <action> [--json]          the exact input/output/effect contract of one Action\n       oi act invoke <action> --input <json>|@file [--json]\n                                                  one explicit invocation; exact subject and input required";
+const ACT_USAGE: &str = "oi act [--json]                               list the Central native Action field (read-only)\n       oi act describe <action> [--json]          the exact input/output/effect contract of one Action\n       oi act invoke <action> --input <json>|@file [--json]\n                                                  one explicit invocation; exact subject and input required";
 
 fn command_act(args: &[OsString]) -> Result<i32, String> {
     let verb = args.first().and_then(|value| value.to_str());
     let rest = args.get(1..).unwrap_or_default();
     match verb {
-        None | Some("help" | "--help" | "-h") => {
+        None => act_list(false),
+        Some("--json") if rest.is_empty() => act_list(true),
+        Some("--json") => Err(format!(
+            "`oi act --json` takes no further arguments; usage:\n{ACT_USAGE}"
+        )),
+        Some("help" | "--help" | "-h") => {
             println!("{ACT_USAGE}");
             Ok(0)
         }
@@ -232,19 +237,10 @@ fn command_act(args: &[OsString]) -> Result<i32, String> {
     }
 }
 
-fn act_describe(args: &[OsString]) -> Result<i32, String> {
-    let mut json = false;
-    let mut positional: Vec<&str> = Vec::new();
-    for argument in args.iter().map(|value| value.to_str().ok_or("act arguments must be UTF-8")) {
-        let argument = argument?;
-        match argument {
-            "--json" => json = true,
-            other => positional.push(other),
-        }
-    }
-    let [reference] = positional.as_slice() else {
-        return Err(format!("usage: oi act describe <action> [--json] — one exact Action ref is required"));
-    };
+/// One bounded read of Central's native Action field. Both the read-only
+/// listing and `describe` consume exactly this owner answer; the doorway
+/// never keeps its own copy of the field.
+fn read_central_action_field() -> Result<Vec<serde_json::Value>, String> {
     let executable = resolve_owner_executable("central")?;
     let output = Command::new(&executable)
         .args(["actions", "--json"])
@@ -254,9 +250,62 @@ fn act_describe(args: &[OsString]) -> Result<i32, String> {
     let stdout = String::from_utf8_lossy(&output.stdout);
     let parsed: serde_json::Value = serde_json::from_str(stdout.trim())
         .map_err(|_| "Central answered without a readable Action field".to_owned())?;
-    let actions = parsed["data"]["actions"]
+    parsed["data"]["actions"]
         .as_array()
-        .ok_or_else(|| "Central's native Action field has no action list".to_owned())?;
+        .cloned()
+        .ok_or_else(|| "Central's native Action field has no action list".to_owned())
+}
+
+/// The read-only field listing: what is callable at all, before any choice
+/// of one Action to describe or invoke.
+fn act_list(json: bool) -> Result<i32, String> {
+    let actions = read_central_action_field()?;
+    if json {
+        let document = json!({
+            "schema": "oi.action-field/v1",
+            "actions": actions,
+        });
+        println!(
+            "{}",
+            serde_json::to_string_pretty(&document)
+                .map_err(|error| format!("cannot encode Action field: {error}"))?
+        );
+        return Ok(0);
+    }
+    println!(
+        "Central native Action field ({} actions, read-only):",
+        actions.len()
+    );
+    for action in &actions {
+        let id = action["id"].as_str().unwrap_or("?");
+        let title = action["title"].as_str().unwrap_or("");
+        let mutation = action["mutation_class"].as_str().unwrap_or("");
+        println!("  {id:<44} {mutation:<10} {title}");
+    }
+    println!(
+        "`oi act describe <action>` names the exact input contract; `oi act invoke <action> --input '<json>'` performs one explicit act."
+    );
+    Ok(0)
+}
+
+fn act_describe(args: &[OsString]) -> Result<i32, String> {
+    let mut json = false;
+    let mut positional: Vec<&str> = Vec::new();
+    for argument in args.iter().map(|value| value.to_str().ok_or("act arguments must be UTF-8")) {
+        let argument = argument?;
+        match argument {
+            "--json" => json = true,
+            "--help" | "-h" => {
+                println!("{ACT_USAGE}");
+                return Ok(0);
+            }
+            other => positional.push(other),
+        }
+    }
+    let [reference] = positional.as_slice() else {
+        return Err("usage: oi act describe <action> [--json] — one exact Action ref is required".to_owned());
+    };
+    let actions = read_central_action_field()?;
     let Some(descriptor) = actions
         .iter()
         .find(|action| action["id"].as_str() == Some(reference))
@@ -296,6 +345,7 @@ fn act_describe(args: &[OsString]) -> Result<i32, String> {
 fn act_invoke(args: &[OsString]) -> Result<i32, String> {
     let mut positional: Vec<OsString> = Vec::new();
     let mut input: Option<String> = None;
+    let mut structured = false;
     let mut passthrough: Vec<OsString> = Vec::new();
     let mut iter = args.iter();
     while let Some(argument) = iter.next() {
@@ -311,6 +361,11 @@ fn act_invoke(args: &[OsString]) -> Result<i32, String> {
                         .ok_or("act invoke input must be UTF-8")?
                         .to_owned(),
                 );
+            }
+            "--json" => structured = true,
+            "--help" | "-h" => {
+                println!("{ACT_USAGE}");
+                return Ok(0);
             }
             other => {
                 if positional.len() < 2 {
@@ -340,21 +395,36 @@ fn act_invoke(args: &[OsString]) -> Result<i32, String> {
     let parsed: serde_json::Value = serde_json::from_str(encoded.trim())
         .map_err(|error| format!("Action input must be one JSON value: {error}"))?;
     let executable = resolve_owner_executable("central")?;
+    let encoded = serde_json::to_vec(&parsed)
+        .map_err(|error| format!("cannot encode Action input: {error}"))?;
+    if encoded.len() > 64 * 1024 {
+        // Large native inputs exceed OS argv limits; the explicit `-` input
+        // argument tells Central to read the same JSON object on stdin (the
+        // same rule the O:I kernel's Central dispatch applies). Without `-`
+        // Central would parse the invocation as `{}` and silently lose the
+        // submitted input.
+        let mut argv = vec![
+            OsString::from("action"),
+            OsString::from("run"),
+            OsString::from(reference),
+            OsString::from("-"),
+        ];
+        argv.extend(passthrough);
+        if structured {
+            argv.push(OsString::from("--json"));
+        }
+        return exec_native_with_stdin(&executable, argv, &encoded);
+    }
     let mut argv = vec![
         OsString::from("action"),
         OsString::from("run"),
         OsString::from(reference),
+        OsString::from(String::from_utf8(encoded).map_err(|_| "Action input is not valid UTF-8")?),
     ];
-    let encoded = serde_json::to_vec(&parsed)
-        .map_err(|error| format!("cannot encode Action input: {error}"))?;
-    if encoded.len() > 64 * 1024 {
-        // Large native inputs exceed OS argv limits; the explicit native
-        // stdin transport retains the same owner validation (the same rule
-        // the O:I kernel's Central dispatch applies).
-        return exec_native_with_stdin(&executable, argv, &encoded);
-    }
-    argv.push(OsString::from(String::from_utf8(encoded).map_err(|_| "Action input is not valid UTF-8")?));
     argv.extend(passthrough);
+    if structured {
+        argv.push(OsString::from("--json"));
+    }
     exec_native(&executable, argv)
 }
 
@@ -369,12 +439,16 @@ fn exec_native_with_stdin(
         .stdin(Stdio::piped())
         .spawn()
         .map_err(|error| format!("cannot launch native command `{}`: {error}", executable.display()))?;
-    child
+    // An owner that closes stdin early has already said so on its own
+    // stderr; its exit status is the invocation outcome, never our
+    // broken pipe. A silently truncated payload still cannot parse as the
+    // owner's JSON object, so transport fidelity is not lost.
+    let _ = child
         .stdin
         .as_mut()
         .expect("stdin piped")
-        .write_all(stdin)
-        .map_err(|error| format!("cannot send Action input: {error}"))?;
+        .write_all(stdin);
+    drop(child.stdin.take());
     let status = child
         .wait()
         .map_err(|error| format!("native command ended unreadably: {error}"))?;
