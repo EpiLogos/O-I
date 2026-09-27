@@ -29,6 +29,9 @@ jobs:
       - name: Install the existing public build dependencies
         working-directory: site
         run: npm install --no-audit --no-fund
+      - name: Install the expression engine's own deps (headless admission imports it by real path)
+        working-directory: site
+        run: npm install --prefix ../packages/oi-design-system --no-audit --no-fund
       - name: Native and public receiving behaviour
         working-directory: site
         run: |
