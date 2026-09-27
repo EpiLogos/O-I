@@ -80,7 +80,33 @@ test('Context canvas no longer advertises git status or Automations', () => {
   assert.doesNotMatch(body, /RepositoryContext/);
   assert.doesNotMatch(body, /openAutomations/);
   assert.doesNotMatch(body, />Automations</);
-  assert.match(body, /PreparedContextView/);
+});
+
+test('Context selection and preparation ride in the strip control, not a standing stack', () => {
+  // The approved Factory study (2026-09-26 amendment, owner-accepted): the
+  // material pane fills the plane; Situation, prepared context and active
+  // material open from the strip's compact Context control — first-class,
+  // but no longer stacked above and below the canvas.
+  const body = src('agent/panel/ContextCanvas.tsx');
+  assert.doesNotMatch(body, /<SituationView\/>/);
+  assert.doesNotMatch(body, /<ActiveContext\b/);
+  const prep = src('agent/panel/ContextPreparation.tsx');
+  assert.match(prep, /PreparedContextView/);
+  assert.match(prep, /SituationView/);
+  assert.match(prep, /ActiveContext/);
+  const frame = src('CradleFrame.tsx');
+  assert.match(frame, /ContextPreparationButton/);
+  assert.match(frame, /insertMenu=\{close=>contextInsertMenu\(close\)\}/);
+  assert.match(frame, /contextInsertMenu/);
+});
+
+test('the panel top row carries expand/restore and no close button; the shell sidebar icon is the one toggle', () => {
+  const top = src('agent/panel/PanelTop.tsx');
+  assert.match(top, /panel-expand/);
+  assert.match(top, /Glyph name=\{full\?"restore":"expand"\}/);
+  assert.doesNotMatch(top, /Collapse the panel|onCollapse/);
+  const shell = src('workspace/DesktopShell.tsx');
+  assert.match(shell, /shell-agent-toggle/);
 });
 
 test('Automations live on the Activity tab, not the left foot', () => {

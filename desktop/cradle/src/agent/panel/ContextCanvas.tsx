@@ -1,26 +1,25 @@
 import {useEffect,useRef,useState,type KeyboardEvent} from "react";
 import {Glyph} from "../../workspace/Glyph";
 import {FileTree} from "../../files/FileTree";
-import {PreparedContextView} from "../../context/PreparedContextView";
-import {SituationView} from "../../context/SituationView";
-import {ActiveContext} from "../../expressions/ActiveContext";
 import type {TaPaneOpens} from "../../expressions/TaOntaSide";
 import type {CentralLocation} from "../../kernel/types";
-// The canvas's own layout (pane room, Active Context strip) — loaded with the
+// The canvas's own layout (pane room, strip popovers) — loaded with the
 // plane exactly as before, when the Ta-Onta side module carried it.
 import "../../contributions/factory/sidebar/sidebar.css";
 
 /**
- * The Context tab for modes that keep a side pane canvas (Factory, Expressions,
- * Technè — 10-SIDEBARS §4.6). Files, terminals and browser pages insert here.
- * Prepared selections ride at the top through the same native context system
- * the centre editor uses for highlight / save.
+ * The Context plane for the modes that keep a side pane canvas (Factory,
+ * Expressions, Technè — 10-SIDEBARS §4.6). The pane host IS the plane: open
+ * material fills the space beneath the strip, edge to edge (the approved
+ * Factory study's material workspace). Selection and preparation live in the
+ * strip's compact Context control (ContextPreparationButton); insertion in
+ * the strip's + menu; neither stands between the person and the material.
  *
  * Central (base) mode does not mount this body: its Context plane is the
  * prepared-context view alone, because the pane canvas belongs in the middle
  * workspace there — not as a second copy in the right panel.
  */
-export function ContextCanvas({opens,dataPlane,project,session,onOpenSubject}:{opens?:TaPaneOpens;dataPlane:string;project?:string;session?:string;onOpenSubject?:(subject:{ref?:string;title:string;location?:CentralLocation})=>void}) {
+export function ContextCanvas({opens,dataPlane,project}:{opens?:TaPaneOpens;dataPlane:string;project?:string;session?:string;onOpenSubject?:(subject:{ref?:string;title:string;location?:CentralLocation})=>void}) {
  const tabs=opens?.sideTabs??[];
  const empty=tabs.length===0;
  const [picking,setPicking]=useState(false);
@@ -46,9 +45,15 @@ export function ContextCanvas({opens,dataPlane,project,session,onOpenSubject}:{o
   try{await opens.insertFile(location);setPicking(false);}catch(reason){setError(String(reason instanceof Error?reason.message:reason));}
  };
  const host=useRef<HTMLDivElement>(null);
- // ⌘T is the frame's own key; inside this canvas the frame hands it here.
+ // The strip's + menu and the canvas's own keys converge on the same native
+ // opening routes (the one insertion law): both speak `oi:context-insert`.
  useEffect(()=>{
-  const take=(event:Event)=>{if(!host.current?.contains(document.activeElement))return;if((event as CustomEvent<{kind?:string}>).detail?.kind==="browser")insert("browser");};
+  const take=(event:Event)=>{
+   const kind=(event as CustomEvent<{kind?:string}>).detail?.kind;
+   if(kind==="terminal")insert("terminal");
+   else if(kind==="browser")insert("browser");
+   else if(kind==="file")setPicking(value=>!value);
+  };
   window.addEventListener("oi:context-insert",take);return()=>window.removeEventListener("oi:context-insert",take);
  });
  const keys=(event:KeyboardEvent)=>{
@@ -59,19 +64,16 @@ export function ContextCanvas({opens,dataPlane,project,session,onOpenSubject}:{o
   else if(event.key==="Escape"&&picking){event.preventDefault();setPicking(false);}
  };
  return <div ref={host} className="desk-plane oi-side-plane ta-context-plane context-canvas" data-plane={dataPlane} data-empty={empty?"true":undefined} onKeyDown={keys}>
-  <SituationView/>
-  {project&&<PreparedContextView project={project} session={session} onOpenSubject={onOpenSubject}/>}
   {empty&&<div className="context-launcher" aria-label="Insert into context">
-   <p className="context-launcher-line">Bring material into this conversation&apos;s context.</p>
+   <p className="context-launcher-line">Open material beside your work.</p>
    <button type="button" className="context-launch" aria-expanded={picking} onClick={()=>setPicking(value=>!value)}><Glyph name="file" size={14}/><span>File</span><kbd>⌘P</kbd></button>
-   {picking&&<div className="context-file-picker" role="group" aria-label="Choose a file">
-    <FileTree path={project?`Work/${project}`:""} onOpen={insertFile} refresh={0} expanded={expanded} onExpansion={setExpanded} onRootRef={()=>{}}/>
-   </div>}
    <button type="button" className="context-launch" onClick={()=>insert("terminal")}><Glyph name="terminal" size={14}/><span>Terminal</span><kbd>⌃`</kbd></button>
    <button type="button" className="context-launch" onClick={()=>insert("browser")}><Glyph name="explore" size={14}/><span>Browser page</span><kbd>⌘T</kbd></button>
    {error&&<p className="oi-note" role="alert">{error}</p>}
   </div>}
+  {picking&&<div className="context-file-picker context-picker-pop" role="group" aria-label="Choose a file">
+   <FileTree path={project?`Work/${project}`:""} onOpen={insertFile} refresh={0} expanded={expanded} onExpansion={setExpanded} onRootRef={()=>{}}/>
+  </div>}
   {opens?.sideHost??<p className="oi-empty">The pane host is not wired for this mode yet.</p>}
-  <ActiveContext tabs={opens?.sideTabs} onActivate={opens?.activateTab}/>
  </div>;
 }

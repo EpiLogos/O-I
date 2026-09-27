@@ -1,0 +1,12 @@
+{
+  "results": [
+    {
+      "name": "native browser acceptance",
+      "ok": false,
+      "error": "Assertion failed"
+    }
+  ],
+  "passed": 0,
+  "browserErrors": [],
+  "environment": "Chromium software WebGL, 2048-particle fixtures; inline local content; explicit in-memory origin storage test double. Video decoded by Chromium."
+}

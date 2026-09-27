@@ -35,7 +35,7 @@ export default defineConfig(() => {
         'three': path.resolve(__dirname, 'node_modules/three'),
       },
     },
-    build: {rollupOptions: {input: {main:path.resolve(__dirname,'index.html'),legacy:path.resolve(__dirname,'legacy.html'),render:path.resolve(__dirname,'render.html')}}},
+    build: {rollupOptions: {input: {main:path.resolve(__dirname,'index.html'),legacy:path.resolve(__dirname,'legacy.html'),render:path.resolve(__dirname,'render.html'),library:path.resolve(__dirname,'library.html')}}},
     server: {
       // HMR can be disabled via DISABLE_HMR (the retired AI Studio hosting
       // path); file watching is disabled with it to prevent flicker during

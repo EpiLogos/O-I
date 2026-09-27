@@ -182,11 +182,11 @@ Recognition controls sit at the top of the tab when recognition is the applicabl
 - The **left TASKS rows** are the conversations in scope (10-SIDEBARS §3.4 row anatomy), including the **Run** they belong to as a meta word: `TASK · Builder · Native conversation identity`.
 - The **centre** is the selected conversation at full size. The header is avatar · title · a **Run chip** only when truly joined · `⋯`. The Run chip opens the Run page; hovering it shows the run's state.
 - **The join is repaired.** A conversation belongs to a run when its session appears in the run's executions, attempts or journey sessions, not only in its trajectories. Today it can never join on real data (`deskModel.ts:142-159`). Otherwise the conversation is **Direct**, and says so once in the header.
-- **Composer** (10-SIDEBARS §4.1): To: · Insert context · dictation · **permission mode** · **harness** · **model** · Send/Stop. Harness and model are separate chips; a model picker never lists a connection (Amendment A1).
-  - The **harness chip** replaces the plain-text "Connect with …" list. It opens a picker **grouped by harness name** (Pi, Hermes, Gemini CLI, Codex …).
-  - Each row is the provider's cleaned label, its model, and badges such as *sandboxed*. Campaign names like "(AG campaign)" become a quiet second line.
+- **Composer** (10-SIDEBARS §4.1, as amended 26 Sep 2026 — model-first): To: · Insert context · dictation · **permission mode** · **model** · Send/Stop. The composer shows model names; harnesses and their routes are managed in Settings → Harnesses (10-SIDEBARS §4.1 amendment). A model picker never lists a connection (Amendment A1).
+  - The **model control** is one chip, always present — a fresh conversation included, where it reads the native model roster and the held choice rides first-send provisioning into the conversation's own model-select route. The former harness chip in this row, and the plain-text "Connect with …" list before it, are retired; route switching, resume and setup fold into the model control's menu.
+  - Each route row inside the menu keeps the provider's cleaned label and badges such as *sandboxed*; campaign names like "(AG campaign)" stay a quiet second line.
   - The first Send provisions the session (#454).
-  - Once connected, the harness chip reads `Pi ▾` and the **model chip** beside it reads `deepseek-v4-pro ▾`, listing only the session's real available models and switching where the provider allows it.
+  - Once connected, the model control reads `deepseek-v4-pro ▾`, listing only the session's real available models and switching where the provider allows it.
 - Messages, work marks, permission cards and completion lines follow the v2 conversation spec (10-SIDEBARS §4.3). A work mark's **Open activity** opens the right Run tape at that event.
 
 ## 5. The right panel in Factory — Run · Agents · Context
@@ -245,7 +245,7 @@ Factory's centre is full-page, so each opens **in place** with `← back`, or po
 | Header shows raw run and project refs, "live · owner build revision 4" | Title, purpose, facts line; refs behind *Copy* and *Show raw* |
 | Agents tab dumps a Guardian's markdown | Position rows with their occupancy and current work; the Position's page opens in the canvas (A7) |
 | "The conversation is in the centre." note, "Situated in Central", "Observed 15m ago" | Removed |
-| Composer's plain "Connect with …" list | Harness-grouped connection picker |
+| Composer's plain "Connect with …" list | The model-first control (26 Sep 2026): one always-present model chip; routes grouped by harness inside its menu; harness families in Settings → Harnesses |
 | Hand-typed Desk sources | `factory project locate` discovery |
 | Separate Desk "All Projects" filter | The one scope (10-SIDEBARS §3.6) |
 

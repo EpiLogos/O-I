@@ -36,7 +36,22 @@ export async function hostedAppUrl(transport: KernelTransportStatus, query = "")
   if (transport.kind !== "bridge") throw new Error("The Expressions application requires the native desktop or an explicit material bridge.");
   const directory = await listFiles(transport, EXPRESSIONS_APP_DIST);
   const found = directory.entries.find(candidate => candidate.name === EXPRESSIONS_APP_ENTRY);
-  if (!found) throw new Error(`The material bridge has no Expressions build at ${EXPRESSIONS_APP_DIST}`);
+  if (!found) throw new Error("The material bridge has no Expressions build at " + EXPRESSIONS_APP_DIST);
+  return `${transport.url}/material/${encodeURIComponent(JSON.stringify(found.location))}/${query}`;
+}
+
+/** The Library's own hosted page (`library.html` beside the instrument's
+ * index — owner direction 2026-09-25: the Library opens as an ordinary
+ * canvas tab WITHOUT booting the field engine). Same material seam, same
+ * origin as the instrument, so both read one saved library. */
+export async function hostedLibraryUrl(transport: KernelTransportStatus, query = ""): Promise<string> {
+  if (transport.kind === "tauri") {
+    return `${convertFileSrc("", "oi-material").replace(/\/$/, "")}/__application/expressions/library.html${query}`;
+  }
+  if (transport.kind !== "bridge") throw new Error("The Library requires the native desktop or an explicit material bridge.");
+  const directory = await listFiles(transport, EXPRESSIONS_APP_DIST);
+  const found = directory.entries.find(candidate => candidate.name === "library.html");
+  if (!found) throw new Error("This candidate's hosted application has no Library page. Build the expressions app and reopen.");
   return `${transport.url}/material/${encodeURIComponent(JSON.stringify(found.location))}/${query}`;
 }
 
@@ -54,9 +69,11 @@ export function materialUrl(location: CentralLocation, relative = "", query = ""
  * traffic-lights corner (the shell's window reserve — which follows the live
  * lights-visible condition — minus the left side region, over the pane tab
  * bar); `right` is the far corner's open icon space (shell.css
- * --window-cutout-right: the 52.5px icon reserve — keep in step with that
- * rule — minus the right side region). Null when the frame does not sit
- * inside the desktop shell's corner. */
+ * --window-cutout-right: the floating functions menu's own right offset plus
+ * its tabbar-wide glyph, one gap, less the surface host's 6px card inset,
+ * yielding to panel width that floats over the corner — keep in step with
+ * that rule). Null when the frame does not sit inside the desktop shell's
+ * corner. */
 export function shellCutout(from: HTMLElement): {width: number; height: number; right: number; coveredRight: number} | null {
   const corner = from.closest("[data-window-corner]");
   if (!corner) return null;
@@ -67,8 +84,12 @@ export function shellCutout(from: HTMLElement): {width: number; height: number; 
   };
   const reserve = read(shell, "--shell-window-reserve", 42);
   const left = read(shell, "--desktop-left-width", 0);
-  const right = Math.max(0, 52.5 - read(shell, "--desktop-right-width", 0));
+  const rightWidth = read(shell, "--desktop-right-width", 0);
+  const floatWidth = Math.max(0, rightWidth - read(shell, "--desktop-right-space", 0));
   const height = read(corner, "--oi-shell-tabbar", 32);
+  // shell.css --window-cutout-right with the tokens resolved (gutter 4,
+  // menu offset 48, one --oi-space-2 gap, 6px card inset).
+  const right = Math.max(0, Math.max(4, 48 - rightWidth) + height + 12 - 6 - floatWidth);
   const frame = from.getBoundingClientRect();
   // The field remains full size beneath a floating panel, while its controls
   // need the actual uncovered area. A panel in normal flow overlaps by zero.

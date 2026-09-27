@@ -1,8 +1,9 @@
 import type {NativeModelActions} from "../../encounter/NativeModelControls";
-import {connectionLabel,type NativeModelState} from "../../encounter/nativeModel";
+import type {NativeModelState} from "../../encounter/nativeModel";
 import type {NativeModeState} from "../../encounter/nativeMode";
-import {HarnessChip,ModeChip,ModelChip} from "./ComposerChips";
-import {harnessChip,type ConnectionFacts} from "./harness";
+import {ConnectionChip,FreshModelChip,ModeChip,ModelChip,type ModelIntent} from "./ComposerChips";
+import {HarnessPicker} from "./HarnessPicker";
+import type {ConnectionFacts} from "./harness";
 import {useEffect,useLayoutEffect,useMemo,useRef,useState,type ClipboardEvent} from "react";
 import type {EncounterReading,EncounterStatus} from "../../encounter/client";
 import {parseContextItems,removeContextItem,type ContextItem} from "../../context/contextItems";
@@ -50,6 +51,10 @@ export interface ComposerConnection {
   mode?:NativeModeState;
   onMode?:(id:string)=>void;
   onSetup?:()=>void;onRefreshProviders?:()=>void;
+  /** The held model choice for a conversation that does not exist yet and
+   *  its chooser (the approved model-first composer; A1). */
+  modelIntent?:ModelIntent;
+  onModelIntent?:(intent:ModelIntent)=>void;
 }
 
 export function ChatComposer({reading,draft,pending,busy,error,editable,promptAllowed,promptReason,cancelAllowed,onDraft,onSend,onCancel,connection,tools,draftFailed,onRecover,paged,onLatest,focusToken,drafting,provisionProject,agentName="World",sendState,onRetry,unreachable}:{
@@ -114,14 +119,7 @@ export function ChatComposer({reading,draft,pending,busy,error,editable,promptAl
         <span className="chat-connect-label"><Glyph name="link" size={11}/> New conversation</span>
         {provisionProject&&<span className="oi-note">First send opens it in {provisionProject}.</span>}
       </div>
-      :!connected&&!unreachable&&<div className="chat-connect" data-fact="disconnected">
-      {status&&status.state!=="Disconnected"&&<span className="oi-note" role="status">{connectionLabel(status)}</span>}
-      <span className="chat-connect-label"><Glyph name="link" size={11}/> Connect with</span>
-      {connection.providers.map(provider=><button key={provider.id} className="chat-provider oi-chip" data-provider={provider.id} disabled={pending||!connection.openAllowed} title={connection.openReason??harnessChip(provider)} aria-label={harnessChip(provider)} onClick={()=>connection.onProvider(provider.id)}>{harnessChip(provider)}</button>)}
-      {!connection.providers.length&&<span className="oi-note">No encounter harness is configured. Configure an eligible native harness in System, then refresh here; your draft stays.</span>}
-      {connection.onSetup&&<button type="button" className="oi-menu-item" onClick={connection.onSetup}>Repair native harness / model / credentials</button>}{connection.onRefreshProviders&&<button type="button" className="chat-provider oi-chip" disabled={pending} onClick={connection.onRefreshProviders}>Refresh harnesses</button>}
-      {connection.resume&&<button className="chat-provider oi-chip" data-resume="true" disabled={pending} title="The owner holds a recorded native session for this conversation; reconnecting resumes that exact identity." onClick={()=>connection.onReconnect(connection.resume!.provider)}><Glyph name="refresh" size={10}/>Reconnect</button>}
-    </div>}
+      :null}
     {selected.length>0&&<div className="chat-attachments" aria-label="Attached context">{selected.map(chip)}</div>}
     <textarea ref={input} disabled={!editable} aria-label="Message" placeholder={drafting?"Write the first message…":unreachable?"Agents are out of reach for now":!reading?"Reading…":connected?"Message the agent…":"Connect a provider, then write…"} value={message} rows={3}
       onChange={event=>setMessage(event.target.value)} onPaste={onPaste}
@@ -137,10 +135,18 @@ export function ChatComposer({reading,draft,pending,busy,error,editable,promptAl
       <button type="button" className="oi-tool chat-voice" aria-pressed={voice.listening} aria-label={voice.listening?"Stop voice input":"Voice input"} title={voice.supported?(voice.listening?"Stop dictation":"Dictate into the message"):(voice.error??"Voice input is not available in this webview yet")} data-listening={voice.listening||undefined} disabled={voice.transcribing||(!editable&&!voice.listening)} onClick={voice.toggle}><Glyph name="mic" size={14}/></button>
       {connection.mode&&connection.onMode&&<ModeChip mode={connection.mode} agentName={agentName} onSelect={connection.onMode} disabled={pending} turnRunning={running}/>}
       <span className="chat-composer-status" role="status">{voice.notice??(pending?"Updating…":busy?"Saving…":drafting?"First send opens the conversation":paged?<button className="oi-action" onClick={onLatest}>Latest</button>:null)}</span>
-      {connected&&currentFacts&&<div className="chat-composer-chips" role="group" aria-label="Harness and model">
-        <HarnessChip current={currentFacts} picker={{connections:connection.providers,onChoose:connection.onProvider,disabled:pending||!connection.openAllowed,reason:connection.openReason,resume:connection.resume?{provider:connection.resume.provider,onResume:()=>connection.onReconnect(connection.resume!.provider)}:undefined}}/>
-        {connection.model&&connection.modelActions&&<ModelChip project={connection.project} model={connection.model} actions={connection.modelActions} disabled={pending||running}/>}
-      </div>}
+      <div className="chat-composer-chips" role="group" aria-label="Model and route">
+        {drafting
+          ?<FreshModelChip intent={connection.modelIntent} onChoose={intent=>connection.onModelIntent?.(intent)} onSetup={connection.onSetup} disabled={pending} project={connection.project}/>
+          :connected&&currentFacts&&connection.model&&connection.modelActions
+            ?<ModelChip project={connection.project} model={connection.model} actions={connection.modelActions} disabled={pending||running} onSetup={connection.onSetup}
+              route={<div className="chat-model-route">
+                <p className="harness-group-name">Harness route</p>
+                <HarnessPicker connections={connection.providers} currentId={currentFacts.id} onChoose={connection.onProvider} disabled={pending||!connection.openAllowed} reason={connection.openReason}
+                  resume={connection.resume?{provider:connection.resume.provider,onResume:()=>connection.onReconnect(connection.resume!.provider)}:undefined}/>
+              </div>}/>
+            :!unreachable&&<ConnectionChip status={status} providers={connection.providers} resume={connection.resume} onProvider={connection.onProvider} onReconnect={connection.onReconnect} onSetup={connection.onSetup} disabled={pending} reason={connection.openReason}/>}
+      </div>
       {running
         ?<button className="chat-stop" disabled={pending||stopping||!cancelAllowed} aria-label={stopping?"Stopping":"Stop"} title="Stop the provider turn" onClick={()=>{setStopAsked(true);onCancel();}}><Glyph name="stop" size={12}/><span>{stopping?"Stopping…":"Stop"}</span></button>
         :<button className="chat-send" disabled={!canSend} aria-label="Send" title={drafting?"Send — opens a new conversation":promptReason??"Send (Enter)"} onClick={onSend}><Glyph name="arrow" size={13}/><span className="sr-only">Send</span></button>}

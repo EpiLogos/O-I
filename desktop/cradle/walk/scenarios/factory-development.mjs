@@ -90,7 +90,9 @@ export default async function run({page, baseUrl, check, shot, channel, log, pro
 
   // Context: the preserved canvas plus Factory's slice, no raw record.
   await page.getByRole("button", {name: "Context", exact: true}).click().catch(() => page.getByRole("tab", {name: "Context"}).click());
-  const contextPlane = page.locator('div[data-plane="factory-context"]');
+  // The plane carries the canonical plane id ("context"); "factory-context"
+  // is a legacy persisted alias (planeRegistry.canonicalPlane).
+  const contextPlane = page.locator('div[data-plane="context"]');
   await contextPlane.waitFor();
   // Factory's slice is the canvas's sibling in the Context plane (since the
   // #492 panel rework the canvas div carries data-plane, the slice sits

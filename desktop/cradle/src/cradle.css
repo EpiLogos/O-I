@@ -1042,3 +1042,11 @@
    only element the boundary ever renders, so a dead shell still has a
    clickable reload. Nothing else, no bar, no page. */
 .oi-frame-revive{ position: fixed; right: 10px; bottom: 10px; z-index: 100; width: 24px; height: 24px; border-radius: 6px; font-size: 13px; line-height: 1; }
+
+/* An empty pane's hint centres in the pane room (the approved study's
+   empty-material state) instead of hugging the top edge above dead space. */
+.surface-body[data-empty="true"]{display:grid;place-items:center}
+.surface-body[data-empty="true"]>.source-note{margin:0;text-align:center}
+/* The active tab's indicator follows the strip's orientation: a left edge
+   in the pinned-vertical list — never a heavy bottom bar under the row. */
+.icon-tab-strip[aria-orientation="vertical"] .icon-tab:is([aria-selected="true"],[aria-checked="true"]){box-shadow:inset 2px 0 var(--oi-accent-ink)}

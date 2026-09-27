@@ -71,6 +71,14 @@ aside.world-navigator button:focus-visible { outline-offset: calc(0px - var(--oi
 .world-navigator .central-root-space > button[aria-expanded="true"] > svg,
 .world-navigator .world-root[aria-current="true"] > svg { color: var(--oi-accent-ink); }
 .world-navigator .central-root-space > button[aria-expanded="true"] { color: var(--oi-accent-ink); }
+/* Owner correction 2026-09-25: the destination column is one shape. The
+   shared top-level row above only ever caught the rows carrying
+   .world-root/.today-open/.explore-open; the plain .left-destination rows
+   (Central, Library) fell back to the design-system's 4px row inset, so
+   icons and labels bounced between two indents down the column. Every
+   destination row takes the 8px inset; padding-right stays with the
+   central-mode-row rule that reserves the mode strip's space. */
+.world-navigator .left-destinations .left-row { padding-left: 8px; }
 
 /* ===== Search ===== */
 .central-actions { display: flex; align-items: center; gap: 3px; margin: 0 0 10px; }

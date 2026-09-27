@@ -4,7 +4,7 @@
   "owner": "oi",
   "revision": 1,
   "entry": "descriptor.tsx",
-  "entry_sha256": "c26e4337df803f0d103638cae0be660c3d2da8dfa66ba313b4dd224c36f350df",
+  "entry_sha256": "277fd059a5a5168721880e3921af1536e6e2b89fc781e8563c4a97c21d29d7df",
   "surfaces": [
     {
       "descriptor_ref": "oi.surface/expressions",
@@ -17,7 +17,7 @@
     {
       "descriptor_ref": "oi.surface/techne",
       "kind": "techne",
-      "title": "Technè",
+      "title": "Techn\u00e8",
       "mount_export": "TechneHostedSurface",
       "retention": "mounted",
       "region": "canvas"
@@ -35,6 +35,14 @@
       "kind": "system",
       "title": "Settings",
       "mount_export": "SystemHostedSurface",
+      "retention": "mounted",
+      "region": "canvas"
+    },
+    {
+      "descriptor_ref": "oi.surface/library",
+      "kind": "library",
+      "title": "Library",
+      "mount_export": "LibraryHostedSurface",
       "retention": "mounted",
       "region": "canvas"
     }
