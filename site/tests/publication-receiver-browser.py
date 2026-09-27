@@ -30,7 +30,11 @@ with sync_playwright() as pw:
         path=urlparse(interception.request.url).path
         if path.endswith('/published.json'):interception.fulfill(json=fixture['seed'])
         elif path.endswith('/edition-manifests.json'):interception.fulfill(json=fixture['manifests'])
-        else:interception.continue_()
+        else:
+            for edition in fixture['editions']:
+                if edition.get('native_body') and path.endswith('/editions/' + edition['directory'] + '/native-body.journey.json'):
+                    return interception.fulfill(body=edition['native_body']['bytes'],content_type='application/json')
+            interception.continue_()
     context.route('**/data/library/**',receive)
     page.goto(route(collection_ref=collection,q='Record',page='79'))
     expect(page.locator('.publication-cards article')).to_have_count(3)

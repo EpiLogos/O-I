@@ -331,3 +331,35 @@ Merge only the reviewed/tested result through the local integration workflow.
 Report source/build/install/running standing separately and retain the physical
 form-output, outer-host continuity, real device/provider, corpus and independent
 acceptance obligations above. No web-lane merge, deployment or machine mutation.
+
+
+## T5→public Expression fidelity return — 25 September 2026
+
+T5 corpus production and the O:I public receiver now have an explicit joining
+gate. A produced `oi.journey` is the authored Expression body. The
+`oi.expression-composition/v1` six-parameter SharedField document is only a
+portable projection/index representation; it cannot replace the body at the
+site, desktop or any other consumer.
+
+For Return-of-Zero publication, the selected field is A + A′ + A/C + C, the
+sovereign reading and eight section rooms, plus the complete S0–S5 product
+Expression source set. Legacy field-study/demo/starter journeys are not part of
+that current authored field and must be separately named if ever exposed as an
+archive.
+
+Publication acceptance must preserve, rather than infer, the source scene's
+background/palette/material and complete particle parameters; native
+shape/text/image-or-ASCII source; transforms/tints/forces/stations; sequences;
+composition and morph laws; automation; engine/view settings; and authored text
+blocks. Exact journey bytes, digest and Scene mapping are the executable
+criterion. The qualitative corpus criterion remains source-bound symbolic
+composition: a valid file with default particles or arbitrary glyphs is not
+accepted merely because it renders. Family Profiles/bindings and real-engine
+visual review must make the relation between represented content and its
+material/glyphic treatment inspectable.
+
+The regression behind this gate was concrete: the site producer collapsed
+non-text forms to `O`, retained only `glyph/x/y/z/scale/share`, and the browser
+then hard-coded an 8,192-particle monochrome field. This violated the earlier
+publication law against lossy conversion despite green pixel tests. Future
+acceptance must fail on that class of substitution.

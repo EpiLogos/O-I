@@ -30,7 +30,14 @@ with sync_playwright() as pw:
     page.goto(BASE + '/library.html')
     actual = json.loads(Path('dist/data/library/published.json').read_text())
     if actual['entries']:
-        expect(page.locator('.published-shelf .publication-cards article')).to_have_count(len(actual['entries']))
+        collections = [entry for entry in actual['entries'] if entry.get('kind') == 'wiki-space']
+        if collections:
+            collection_ref = collections[0]['ref']
+            members = {rel['to'] for rel in actual.get('relations', []) if rel.get('from') == collection_ref and rel.get('relation') == 'wiki.contains'}
+            expected_cards = min(24, len(members))
+        else:
+            expected_cards = min(24, len(actual['entries']))
+        expect(page.locator('.published-shelf .publication-cards article')).to_have_count(expected_cards)
     else:
         expect(page.get_by_text('The corpus has not been published to this edition yet.', exact=True)).to_be_visible()
     assert not page.get_by_text('Fixture collection', exact=True).count()
@@ -51,6 +58,8 @@ with sync_playwright() as pw:
                     return route.fulfill(body=edition['html'], content_type='text/html')
                 if path.endswith('/editions/' + edition['directory'] + '/projection.json'):
                     return route.fulfill(json=edition['projection'])
+                if edition.get('native_body') and path.endswith('/editions/' + edition['directory'] + '/native-body.journey.json'):
+                    return route.fulfill(body=edition['native_body']['bytes'], content_type='application/json')
             route.continue_()
     context.route('**/data/library/**', receive)
     page.reload()
