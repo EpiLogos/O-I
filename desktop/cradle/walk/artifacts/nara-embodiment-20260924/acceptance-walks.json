@@ -1,6 +1,6 @@
 {
   "schema": "oi.nara-embodiment-acceptance/v1",
-  "started_at": "2026-09-26T23:49:03.067Z",
+  "started_at": "2026-09-27T14:21:55.987Z",
   "walks": {
     "generic_builder": {
       "status": "passed",
@@ -43,6 +43,6 @@
       "shared_nara_ref": "nara:desktop"
     }
   },
-  "finished_at": "2026-09-26T23:49:03.114Z",
+  "finished_at": "2026-09-27T14:21:56.020Z",
   "standing": "D-grade automated walks for commission §9; Mac GPU/audio physical acceptance is separate"
 }
