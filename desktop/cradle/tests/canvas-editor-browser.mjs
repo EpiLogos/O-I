@@ -65,6 +65,10 @@ try{
  await page.getByRole('button',{name:'Undo',exact:true}).click();await page.waitForFunction(doc=>canvasTest.document()===doc,original);checks.push('undo restores exact source');
  await page.getByRole('tab',{name:'Split',exact:true}).click();await page.locator('.material-preview-pane').getByRole('tab',{name:'Rendered',exact:true}).waitFor();check('split keeps one editor',await page.locator('.cm-editor').count()===1);
  await page.evaluate(start=>canvasTest.select(start,start+7),start);await page.getByRole('button',{name:'Add selected text to context',exact:true}).click();
+ // The Context plane redesign (owner direction 2026-09-25): selection and
+ // preparation live in the strip's compact Context control; open it to read
+ // the prepared item.
+ await page.getByRole('button',{name:'Choose and prepare context'}).click();
  await page.locator('.prepared-context-item').waitFor();check('ordinary add has no modal',await page.getByRole('dialog').count()===0);
  await page.locator('.prepared-context-item summary').click();
  const nativeExpression=getContext('demo','agent-session/test').items[0].canonical_expression;
@@ -111,14 +115,14 @@ try{
  await page.getByText('Journal pages (1)',{exact:true}).click();check('Journal remains a distinct rich collection',await page.locator('[data-journal-page="journal-1"] em').textContent()==='Journal stays separate.');
  check('Flow preview cannot activate scripts, handlers, SVG or remote tracking media',!await page.evaluate(()=>window.__flowUnsafe)&&await page.locator('.flow-thread :is(script,svg,[onerror],[onload],[href^="javascript:"])').count()===0&&!requests.some(url=>url.includes('example.invalid/private-tracker')));
  await page.getByRole('textbox',{name:'New entry',exact:true}).fill('An unsaved Flow entry 🙂');
- await page.evaluate(()=>canvasTest.select(3,10));await page.getByRole('button',{name:'Add selected text to context',exact:true}).click();
+ await page.evaluate(()=>canvasTest.select(3,10));await page.getByRole('button',{name:'Add selected text to context',exact:true}).click();await page.getByRole('button',{name:'Choose and prepare context'}).click();
  await page.locator('.prepared-context-item').waitFor();
  const flowPrepared=getContext('demo','agent-session/test');
  check('Flow new-entry range is a revision-carrying unsaved observation, not raw HTML offsets',flowPrepared.items[0].selection.anchor.kind==='observation'&&flowPrepared.items[0].selection.anchor.document_id==='controlled-flow'&&flowPrepared.items[0].selection.working_copy&&flowPrepared.items[0].selection.source_revision==='f1'&&flowPrepared.items[0].selection.text==='unsaved');
  await page.waitForFunction(()=>document.querySelector('.context-prepared-highlight'));checks.push('Flow draft retains a view-only cue');
  await page.getByRole('button',{name:'Clear prepared context',exact:true}).click();await page.waitForFunction(()=>document.querySelectorAll('.prepared-context-item').length===0);
  await page.locator('[data-flow-entry="entry-2"] .flow-thread-body > p').evaluate(node=>{const range=document.createRange();range.selectNodeContents(node);const s=window.getSelection();s.removeAllRanges();s.addRange(range);});
- await page.getByRole('button',{name:'Add selected text to context',exact:true}).click();await page.locator('.prepared-context-item').waitFor();
+ await page.getByRole('button',{name:'Add selected text to context',exact:true}).click();await page.getByRole('button',{name:'Choose and prepare context'}).click();await page.locator('.prepared-context-item').waitFor();
  const rendered=getContext('demo','agent-session/test').items[0].selection;
  check('ordinary rendered Flow selection keeps the second entry identity',rendered.anchor.kind==='observation'&&rendered.anchor.document_id==='controlled-flow'&&rendered.anchor.node_ref==='entry-2'&&rendered.text==='Repeated authored passage.');
  check('rendered Flow selection opens no modal',await page.getByRole('dialog').count()===0);

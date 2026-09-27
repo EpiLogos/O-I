@@ -59,5 +59,15 @@ export const hostedSurfaceDescriptors = [
     "retention": "mounted",
     "revision": 1,
     "title": "Factory"
+  },
+  {
+    "contribution_ref": "oi.contribution/automations",
+    "descriptor_ref": "oi.surface/automations",
+    "kind": "automations",
+    "owner": "ai-kit",
+    "region": "canvas",
+    "retention": "mounted",
+    "revision": 1,
+    "title": "Automations"
   }
 ];

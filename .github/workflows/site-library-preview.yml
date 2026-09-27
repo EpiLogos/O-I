@@ -28,6 +28,9 @@ jobs:
       - name: Install browser-build dependencies
         working-directory: site
         run: npm install --no-audit --no-fund
+      - name: Install the expression engine's own deps (headless admission imports it by real path)
+        working-directory: site
+        run: npm install --prefix ../packages/oi-design-system --no-audit --no-fund
       - name: Verify source, native publication and public browser build
         working-directory: site
         run: |
