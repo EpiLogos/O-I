@@ -29,7 +29,7 @@ export class InstrumentSession {
   #block; #lookahead; #maxBlocks; #maxBytes; #timeout; #queue = []; #bytes = 0;
   #views = new Set(); #maxViews; #busy = false; #held = false; #uncertain = false;
   #disposed = false; #reason = null; #presented; #timer = null; #running = false;
-  #generation = 0; #coalesced = 0;
+  #generation = 0; #coalesced = 0; #influence = null;
 
   constructor({ context, owner, transport, initialReceipt, fieldBinding,
     blockFrames = 512, lookaheadSeconds = 0.1, maxBlocks = 16,
@@ -61,6 +61,9 @@ export class InstrumentSession {
     this.#presented = { generation: this.#native.generation, samples_elapsed: this.#native.samples_elapsed };
     OWNERS.add(owner);
   }
+
+  /** The influence reading the last K² determinant acknowledgement carried. */
+  get lastInfluence() { return this.#influence === null ? null : structuredClone(this.#influence); }
 
   get reading() {
     return { schema: 'ql.instrument-reading/v1', instance_ref: this.#instance,
@@ -145,6 +148,8 @@ export class InstrumentSession {
       // The native operation is now acknowledged even if presentation later
       // fails. Recovery reads this cursor; no claim of rolling native state back.
       this.#native = withoutAudio(frame);
+      // A K² determinant acknowledgement carries its own influence reading.
+      if (reply.influence !== undefined) this.#influence = structuredClone(reply.influence);
       return { frame, sources: reply.sources, influence: reply.influence, personal: reply.personal };
     } catch (error) {
       this.#unknown(String(error)); throw error;
@@ -245,7 +250,7 @@ export class InstrumentSession {
     need(!this.#busy && !this.#held, 'inspection requires an idle admitted owner'); this.#busy = true;
     try {
       const reply = await this.#exchange({ operation: 'influence' });
-      need(!reply.refused, String(reply.error)); return reply.influence;
+      need(!reply.refused, String(reply.error)); this.#influence = structuredClone(reply.influence); return reply.influence;
     } finally { this.#busy = false; }
   }
 

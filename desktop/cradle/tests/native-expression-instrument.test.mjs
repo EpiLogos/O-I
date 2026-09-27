@@ -57,14 +57,15 @@ test('the physical form pose is reported not-actuated: nothing reads a rotation'
  }finally{await c.dispose();}
 });
 
-test('a native M1 advance goes to the same owner while following; influence is re-read, sources refreshed at human cadence',async()=>{
+test('a native M1 advance goes to the same owner while following; its acknowledgement carries the influence, sources refresh at human cadence',async()=>{
  const {owner,audio,c}=await open();
  try{
   const before=c.reading.instrument.acting.voices[0].frequency_hz;
   await c.m1Advance(1);
   assert.equal(ops(owner,'m1-advance').length,1);assert.deepEqual(ops(owner,'m1-advance')[0].request.command,{operation:'m1-advance',ticks:1});
   assert.equal(c.status,'following','a live determinant event does not hold the field');
-  assert.equal(ops(owner,'influence').length,2);assert.notEqual(c.reading.instrument.acting.voices[0].frequency_hz,before);
+  // One exchange per tick: no second influence read while the audio waits.
+  assert.equal(ops(owner,'influence').length,1);assert.notEqual(c.reading.instrument.acting.voices[0].frequency_hz,before);
   assert.equal(c.reading.instrument.sources_stale,true);
   drain(c,audio);assert.equal(c.inspectTargets().target_a[2],Math.fround(Math.fround(8/12)*120),'re-read targets present behind scheduled sound');
   await wait(1600);assert.equal(await c.refreshSources(),true);

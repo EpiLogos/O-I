@@ -101,7 +101,8 @@ export class ControlledK2Owner {
     if(e.m2.resonator!==null||e.frequency_bindings.length)throw new Error('controlled: provider owns the voices');
     Object.assign(s,{tick12:e.m1.tick12,cycle:Number(e.m1.cycle),revision:Number(e.m1.revision),lens12:e.m1.lens12,context_frame:e.m1.context_frame,harmonic:structuredClone(e.harmonic_source),rna:e.m3.rna});s.m2++;this.bump(command.strike?2n:1n);}
    else if(!['read','inspect','influence'].includes(command.operation))throw new Error('controlled: unsupported '+command.operation);
-   return reply(command.operation==='inspect'?{sources:this.sources(),influence:this.influence(),event:this.event()}:command.operation==='influence'?{influence:this.influence()}:{});
+   // Like the real K² host, a determinant acknowledgement carries its influence.
+   return reply(command.operation==='inspect'?{sources:this.sources(),influence:this.influence(),event:this.event()}:['influence','m1-advance','replace-event'].includes(command.operation)?{influence:this.influence()}:{});
   }finally{this.inFlight--;}
  }
  bump(step){this.frame.generation=String(BigInt(this.frame.generation)+step);this.frame.m2_identity={event_ref:'controlled:k2',profile_generation:this.state.m2};this.frame.targets[0].position[2]=this.state.tick12/12;}

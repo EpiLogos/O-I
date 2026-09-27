@@ -9,6 +9,7 @@ export class InstrumentSession {
  operate(command: any): Promise<any>;
  inspect(): Promise<any>;
  influence(): Promise<any>;
+ readonly lastInfluence: any;
  personal(input?: any): Promise<any>;
  setMuted(muted: boolean): any;
  dispose(): void;

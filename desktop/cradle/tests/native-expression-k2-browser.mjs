@@ -143,15 +143,22 @@ async function cadence(){
   await frame.locator('[data-ni="open-default"]').click();
   await frame.waitForFunction(()=>window.__FIELD_STUDIES__.native().status==='following'&&window.__FIELD_STUDIES__.native().instrument?.influence,null,{timeout:60000});
   const result={};
+  // Idle baseline: no determinant events. Device re-syncs here belong to the
+  // page (main-thread render cost), not to the instrument's events.
+  {const e0=await frame.evaluate(()=>window.__FIELD_STUDIES__.native().native.audio?.device_epoch);await settle(8000);
+   const e1=await frame.evaluate(()=>window.__FIELD_STUDIES__.native().native.audio?.device_epoch);result.idle_baseline={seconds:8,device_epoch_before:e0,device_epoch_after:e1};}
   for(const rate of ['1','12']){
    const m1=await frame.evaluate(()=>window.__FIELD_STUDIES__.native().instrument.influence.m1_revision);
+   const epoch0=await frame.evaluate(()=>window.__FIELD_STUDIES__.native().native.audio?.device_epoch);
+   await frame.evaluate(()=>{const log=window.__epochLog=[];let last=null;let lastApplied=null,minAhead=9;window.__epochWatch=setInterval(()=>{const n=window.__FIELD_STUDIES__.native(),a=n.native?.audio,applied=n.instrument?.cadence?.applied;if(!a)return;const ahead=a.target_context_seconds-a.observed_context_seconds;minAhead=Math.min(minAhead,ahead);if(a.device_epoch!==last||applied!==lastApplied){log.push({t:performance.now()|0,epoch:a.device_epoch,applied,status:a.status,ahead:+ahead.toFixed(3),min_ahead_since_last:+minAhead.toFixed(3)});last=a.device_epoch;lastApplied=applied;minAhead=9;}},5);});
    await frame.locator(`[data-ni-set="cadence"][data-value="${rate}"]`).click();
    await settle(8000);
+   const epochLog=await frame.evaluate(()=>{clearInterval(window.__epochWatch);return window.__epochLog;});
    await frame.locator('[data-ni-set="cadence"][data-value="hold"]').click();
    // A beat already in flight lands and counts; wait for the owner to settle.
    await frame.waitForFunction(m1=>{const n=window.__FIELD_STUDIES__.native(),c=n.instrument.cadence;return BigInt(n.instrument.influence.m1_revision)-BigInt(m1)===BigInt(c.applied)&&!n.native.in_flight;},m1,{timeout:10000}).catch(()=>{});
    const r=await frame.evaluate(()=>{const n=window.__FIELD_STUDIES__.native();return{status:n.status,reason:n.reason,cadence:n.instrument.cadence,refusal:n.instrument.refusal,m1_revision:n.instrument.influence.m1_revision,audio:n.native.audio};});
-   result[`${rate}_per_second`]={status:r.status,m1_revision_before:m1,m1_revision_after:r.m1_revision,applied:r.cadence.applied,skipped:r.cadence.skipped,beats:r.cadence.beats,achieved_ticks_per_second:r.cadence.achieved_ticks_per_second,refusal:r.refusal,audio_device_epoch:r.audio?.device_epoch,audio_scheduled_blocks:r.audio?.scheduled_blocks};
+   result[`${rate}_per_second`]={status:r.status,m1_revision_before:m1,m1_revision_after:r.m1_revision,applied:r.cadence.applied,skipped:r.cadence.skipped,beats:r.cadence.beats,achieved_ticks_per_second:r.cadence.achieved_ticks_per_second,last_event_ms:r.cadence.last_event_ms,last_event_timing:r.cadence.last_event_timing,max_event_ms:r.cadence.max_event_ms,refusal:r.refusal,audio_device_epoch_before:epoch0,epoch_log:epochLog,audio_device_epoch:r.audio?.device_epoch,audio_scheduled_blocks:r.audio?.scheduled_blocks,audio_receipt:r.audio};
    assert.equal(r.status,'following',`cadence ${rate}/s keeps the field following: ${r.reason}`);
    assert.equal(r.refusal,null);assert.ok(r.cadence.applied>=1);
    assert.equal(BigInt(r.m1_revision)-BigInt(m1),BigInt(r.cadence.applied),'every applied beat is one M1 revision; none replayed');

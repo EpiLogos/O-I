@@ -33,7 +33,7 @@ export const PRESENTATION_LEVEL=Object.freeze({min:0,max:4,initial:1,
 /** Owner busy, held mid-beat, or presentation capacity full: a skipped beat. */
 const TRANSIENT=/owner busy|held before the event|presentation capacity|requires idle admitted owner/;
 type Cadence={rate:number;period:number;source:string;timer:ReturnType<typeof setInterval>;started:number;
- beats:number;issued:number;applied:number;skipped:number;suspended:number;inFlight:boolean;stopped?:string;stopped_at?:number};
+ beats:number;issued:number;applied:number;skipped:number;suspended:number;inFlight:boolean;lastEventMs?:number;maxEventMs?:number;stopped?:string;stopped_at?:number};
 /** The QL driver schedules PCM/targets; the app remains the sole GPU stage.
  * The controller owns admission/lifetime only, never native math or a second clock.
  * Determinant events (M1 advance, a changed event) go to the same serial owner;
@@ -51,7 +51,7 @@ export class NativeFieldController {
  private suspension:{tokens:Set<symbol>;epoch:number;revision:number;restore:boolean;reason:string}|null=null;
  private restoring:{epoch:number;revision:number}|null=null;
  private k2=false;private influenceReading:any=null;private acting:K2Acting|null=null;
- private event:any=null;private opening:any=null;private sourcesStale=false;private lastInspect=0;
+ private event:any=null;private opening:any=null;private sourcesStale=false;private influenceStale=false;private timing:any=null;private timingStart=0;private lastInspect=0;
  private operating=0;private cadence:Cadence|null=null;private lastCadence:Cadence|null=null;
  private refusal:{operation:string;reason:string;at:number}|null=null;
  private level:GainNode|null=null;private levelValue:number=PRESENTATION_LEVEL.initial;
@@ -74,9 +74,12 @@ export class NativeFieldController {
  private async readInfluence(session:InstrumentSession){
   const influence=await session.influence();
   if(this.session!==session||this.dead)throw new Error('native influence reply belongs to a released lifetime');
-  this.influenceReading=influence;
-  if(this.sources)this.acting=readK2(this.sources,influence,this.opened?.source);
+  this.admitInfluence(influence);
   return influence;
+ }
+ private admitInfluence(influence:any){
+  this.influenceReading=influence;this.influenceStale=false;
+  if(this.sources)this.acting=readK2(this.sources,influence,this.opened?.source);
  }
  status:NativeStatus='manual';reason:string|null=null;
  onChange:()=>void=()=>{};
@@ -90,7 +93,7 @@ export class NativeFieldController {
   const c=this.cadence??this.lastCadence;if(!c)return{playing:false,rate:null,source:null};
   const elapsed=((c.stopped_at??performance.now())-c.started)/1000;
   return{playing:!!this.cadence,rate:c.rate,source:c.source,beats:c.beats,issued:c.issued,applied:c.applied,skipped:c.skipped,suspended:c.suspended,
-   achieved_ticks_per_second:elapsed>0?c.applied/elapsed:0,stopped:c.stopped??null,
+   achieved_ticks_per_second:elapsed>0?c.applied/elapsed:0,stopped:c.stopped??null,last_event_ms:c.lastEventMs??null,max_event_ms:c.maxEventMs??null,last_event_timing:this.timing,
    law:'serial m1-advance through the one native owner; a beat is skipped, never queued, while the owner is busy'};
  }
  get reading(){
@@ -123,7 +126,7 @@ export class NativeFieldController {
   native:this.session?.reading??this.lastNative,muted:this.muted,
   domain:this.domain,source_currentness:this.domain?(this.sourcesStale?'inspected before the latest determinant event; influence is current':following?'inspected-native-basis; continuous cursor reported separately':'held-last-inspected-basis'):'unavailable',
   presented_clock:clock,
-  instrument:this.k2?{schema:'oi.k2-instrument-reading/v1',acting:this.acting,influence:this.influenceReading,
+  instrument:this.k2?{schema:'oi.k2-instrument-reading/v1',acting:this.acting,influence:this.influenceReading,influence_stale:this.influenceStale,
    opening_event_available:!!this.opening,sources_stale:this.sourcesStale,cadence:this.cadenceReading(),refusal:this.refusal,
    presentation:INSTRUMENT_PRESENTATION}:null,
   checkpoint:this.checkpoint?{supported:true,scope:'same live GPU and unchanged native cursor',receipt:this.checkpoint.receipt}:null,
@@ -312,11 +315,26 @@ export class NativeFieldController {
      if(!(await this.waitIdle(session,cadence?Math.min(900,this.cadence?.period??250):5000)))throw new Error('native owner busy; the event was not sent');
      if(needsEvent&&this.sourcesStale){await this.readSources(session);if(!(await this.waitIdle(session,5000)))throw new Error('native owner busy; the event was not sent');}
      if(this.status!=='following'||this.suspension||!this.current(session))throw new Error('instrument held before the event was sent');
+     this.timingStart=performance.now();
+     // The event holds the one owner while sound waits: send it on a full
+     // lookahead so its latency spends buffered sound, not an underrun.
+     for(let block=0;block<8;block++){
+      const before=session.reading.acknowledged?.samples_elapsed;
+      await session.pump();
+      if(session.reading.acknowledged?.samples_elapsed===before||this.status!=='following')break;
+     }
      const command=build();
+     const sent=performance.now();
      await session.operate(command);
+     this.timing={fill_ms:sent-this.timingStart,operate_ms:performance.now()-sent};
      if(!this.current(session))return;
-     this.checkpoint=null;this.sourcesStale=true;this.refusal=null;
-     if(await this.waitIdle(session,5000))await this.readInfluence(session);
+     // The owner acknowledged: the event happened. A busy follow-up read only
+     // leaves the influence stale for the next refresh; it never un-counts it.
+     this.checkpoint=null;this.sourcesStale=true;this.influenceStale=true;this.refusal=null;
+     // The acknowledgement carried the new influence; take it without a
+     // second exchange (the audio pump must not wait on another read).
+     const carried=session.lastInfluence;
+     if(carried&&carried.generation===session.reading.acknowledged?.generation)this.admitInfluence(carried);
      this.changed();
     }catch(error){if(!(cadence&&TRANSIENT.test(String(error))))this.refused(operation,error,session);throw error;}
     finally{this.operating--;}
@@ -386,6 +404,11 @@ export class NativeFieldController {
   const session=this.session;
   // A complete source read is large (the whole coupled basis); while a cadence
   // plays it yields to the ticks and runs at most every 5 s.
+  if(session&&this.k2&&this.influenceStale&&this.status==='following'&&!this.suspension&&!this.operating&&!this.serialDepth){
+   this.operating++;
+   try{if(await this.waitIdle(session,100)&&this.status==='following'){await this.readInfluence(session);this.changed();}}
+   catch{}finally{this.operating--;}
+  }
   if(!session||!this.k2||!this.sourcesStale||this.status!=='following'||this.suspension||this.operating||this.serialDepth||performance.now()-this.lastInspect<(this.cadence?5000:1500))return false;
   this.operating++;
   try{if(!(await this.waitIdle(session,100))||this.status!=='following')return false;await this.readSources(session);this.changed();return true;}
@@ -417,7 +440,9 @@ export class NativeFieldController {
   cadence.inFlight=true;
   try{
    cadence.issued++;
+   const t0=performance.now();
    await this.determinant('M1 advance (cadence)',()=>({operation:'m1-advance',ticks:1}),false,true);
+   cadence.lastEventMs=performance.now()-t0;cadence.maxEventMs=Math.max(cadence.maxEventMs??0,cadence.lastEventMs);
    cadence.applied++;if(this.cadence!==cadence)this.changed();
   }catch(error){
    cadence.issued--;
