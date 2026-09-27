@@ -3,8 +3,8 @@ import assert from 'node:assert/strict';
 import { createHash } from 'node:crypto';
 import { readFileSync } from 'node:fs';
 import { compilePublications } from './build-publications.mjs';
-import { openPublication, publicationHref, publicationRoute, publicAssetUrl } from './src/library/publication-model.mjs';
-import { producerFixtures, SUBJECT, COLLECTION } from './tests/publication-fixtures.mjs';
+import { openPublication, publicationHref, publicationRoute, publicAssetUrl, canonicalLocator, canonicalHref } from './src/library/publication-model.mjs';
+import { producerFixtures, SUBJECT, COLLECTION, CANONICAL } from './tests/publication-fixtures.mjs';
 const clone=v=>JSON.parse(JSON.stringify(v));
 test('empty native publication remains empty; no fixture fallback',()=>{
  const result=compilePublications([{schema:'oi.explore-browser-seed/v1',entries:[],relations:[],presentation_projections:[]}]);
@@ -17,6 +17,46 @@ test('native subject identities, source revisions and collection membership surv
  const subject=model.select(SUBJECT);assert.equal(subject.projection.source.revision,'fixture-r1');assert.equal(subject.projection.projection_revision,3);
  assert.equal(subject.relations[0].relation,'wiki.contains');assert.equal(model.expressions(SUBJECT).length,1);
  const stage=model.stage(model.expressions(SUBJECT)[0]);assert.equal(stage.admission.state,'live');assert.equal(stage.edition.entry.expression_ref,'expression:fixture:subject');assert.equal(stage.edition.entry.revision,2);
+});
+test('the optional canonical locator survives admission, the seed, the compiled manifests and the model',()=>{
+ const {seed,editions}=compilePublications(producerFixtures());
+ const world=seed.presentation_projections.find(p=>p.subject.kind==='world');
+ const lede=world.representation.payload.regions.flatMap(r=>r.bindings).find(b=>b.binding_ref==='subject');
+ assert.deepEqual(lede.props.canonical,CANONICAL);
+ const expression=seed.presentation_projections.find(p=>p.subject.kind==='expression');
+ assert.deepEqual(expression.source.canonical,CANONICAL);
+ for(const edition of editions)if(edition.projection.subject.kind==='expression')assert.deepEqual(edition.manifest.source.canonical,CANONICAL);
+ const model=openPublication(seed,editions.map(e=>e.manifest));
+ const subject=model.select(SUBJECT);
+ assert.deepEqual(canonicalLocator(subject,model.expressions(SUBJECT)),CANONICAL);
+ assert.deepEqual(canonicalLocator(model.select('expression:fixture:subject')),CANONICAL);
+});
+test('the canonical deep-link composes from the Publish base and hides without one',()=>{
+ assert.equal(canonicalHref(CANONICAL,'https://publish.example.com/zero/'),'https://publish.example.com/zero/symbolon/episteme/arguments/A03-Immutable-Gap-Formal-Limit');
+ assert.equal(canonicalHref({...CANONICAL,vault_path:'submission-package/essay/section-rooms/00-integral-threshold/ROOM.md'},'https://publish.example.com'),'https://publish.example.com/section-rooms/00-integral-threshold/ROOM');
+ for(const [locator,base] of [[CANONICAL,''],[CANONICAL,undefined],[CANONICAL,'http://publish.example.com'],[null,'https://publish.example.com'],[{...CANONICAL,vault_path:'/Users/a/secret.md'},'https://publish.example.com'],[{...CANONICAL,vault_path:'symbolon/episteme/../..//etc.md'},'https://publish.example.com'],[{...CANONICAL,record_id:''},'https://publish.example.com']])assert.equal(canonicalHref(locator,base),null,JSON.stringify(locator)+' @ '+(base??''));
+});
+test('a malformed canonical locator fails public admission instead of shipping',()=>{
+ for(const mutate of [
+  fixture=>{delete fixture.record_id;},
+  fixture=>{fixture.extra='field';},
+  fixture=>{fixture.vault_path='symbolon/episteme/arguments/A03';},
+  fixture=>{fixture.vault_path='';},
+ ]) {
+  const inputs=producerFixtures();
+  const find=value=>{if(!value||typeof value!=='object')return false;if(value.canonical&&value.canonical.vault_path!==undefined&&value.canonical.source_revision==='fixture-r1'){mutate(value.canonical);return true;}return Object.values(value).some(find);};
+  assert.ok(find(inputs[0].projection.representation.payload));assert.throws(()=>compilePublications(inputs),/public admission/);
+ }
+});
+test('publications without the optional locator admit unchanged and expose no canonical link',()=>{
+ const strip=value=>{if(Array.isArray(value))value.forEach(strip);else if(value&&typeof value==='object'){delete value.canonical;Object.values(value).forEach(strip);}return value;};
+ const inputs=producerFixtures().map(entry=>strip(clone(entry)));
+ const {seed,editions}=compilePublications(inputs);
+ assert.ok(!JSON.stringify(seed).includes('canonical'));assert.ok(!JSON.stringify(editions.map(e=>e.manifest)).includes('canonical'));
+ const model=openPublication(seed,editions.map(e=>e.manifest));
+ const subject=model.select(SUBJECT);
+ assert.equal(canonicalLocator(subject,model.expressions(SUBJECT)),null);
+ assert.equal(canonicalHref(canonicalLocator(subject,model.expressions(SUBJECT)),'https://publish.example.com'),null);
 });
 test('private objects, raw row copy, metadata, fields and wrappers never enter any outward payload',()=>{
  const inputs=producerFixtures();const privateWorld=clone(inputs[0]);privateWorld.projection.audience.visibility='private';privateWorld.entries=privateWorld.entries.map(e=>({...e,ref:e.ref+':PRIVATE_SUBJECT_SENTINEL',label:'PRIVATE_TITLE_SENTINEL'}));privateWorld.field={field_ref:'field:private',visibility:'private',title:'PRIVATE_FIELD_SENTINEL'};privateWorld.relations=[];

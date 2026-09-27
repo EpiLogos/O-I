@@ -91,6 +91,26 @@ jobs:
           VITE_OI_SPACETIMEDB_URI: ${{ vars.OI_SPACETIMEDB_URI }}
           VITE_OI_SPACETIMEDB_DATABASE: ${{ vars.OI_SPACETIMEDB_DATABASE }}
         run: npm run build
+      - name: Produce the Return-of-Zero publications when the committed envelope is present
+        # Env-gated receiving lane: only when the committed collection envelope
+        # and the pinned essay checkout it reconciles against are available does
+        # the producer run and hand its outputs to the admission build below.
+        # Without them the public build runs exactly as it does today.
+        working-directory: .
+        shell: bash
+        run: |
+          envelope="desktop/cradle/expressions-app/collections/return-of-zero/PUBLICATION.json"
+          if [ ! -f "$envelope" ]; then
+            echo "No committed Return-of-Zero envelope; admitting the empty public seed only."
+            exit 0
+          fi
+          if [ ! -d "Antykathera-Essay-Work/.git" ]; then
+            echo "Envelope present but the pinned essay checkout is unavailable; producer outputs are not regenerated."
+            exit 0
+          fi
+          node site/build-return-of-zero-publications.mjs
+          # Admission takes the producer's publication documents only; the receipt is not an admittable publication.
+          echo "OI_LIBRARY_PUBLICATIONS=$(node -e "const fs=require('fs');const dir='site/publications/return-of-zero';process.stdout.write(JSON.stringify(fs.readdirSync(dir).filter(f=>f.endsWith('.json')&&f!=='PRODUCER-RECEIPT.json').sort().map(f=>'publications/return-of-zero/'+f)))")" >> "$GITHUB_ENV"
       - name: Build the admitted public reading edition for deployment
         # No live-service variables, author-machine endpoint or raw public/data
         # folder enters this separate build. Track 3 inputs must be native

@@ -1,6 +1,6 @@
 import { lazy, Suspense, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { Icon, SourceText } from './ui';
-import { openPublication, publicationRoute, publicationHref, publicAssetUrl, type PublicationRoute, type PublicModel, type PublicSubject, type PublicForm, type PublicStage } from './publication-model.mjs';
+import { openPublication, publicationRoute, publicationHref, publicAssetUrl, canonicalLocator, canonicalHref, type PublicationRoute, type PublicModel, type PublicSubject, type PublicForm, type PublicStage } from './publication-model.mjs';
 import './publication.css';
 import { PublicationStanding } from './PublicationStanding';
 const NativeStage=lazy(()=>import('./NativeStage').then(m=>({default:m.NativeStage})));
@@ -39,9 +39,9 @@ export function PublishedShelf({query=''}:{query?:string}) {
  {model&&<PublicationStanding model={model}/>}
  </section>;
 }
-function EditionLinks({subject}:{subject:PublicSubject}) {
- const p=subject.projection,m=subject.manifest;
- return <dl className="publication-basis"><dt>Subject</dt><dd>{subject.resource.ref}</dd><dt>Publication</dt><dd>{p.projection_ref} · revision {p.projection_revision}</dd><dt>Native source</dt><dd>{p.source.system} · {p.source.ref} · {p.source.revision}</dd><dt>Published</dt><dd>{p.published_at}</dd><dt>Delivery</dt><dd>Deliberately published edition, not a live subscription. Reading does not contact an author’s machine.</dd>{m&&<><dt>Edition bytes</dt><dd>SHA-256 {m.digest.value}</dd><dt>Source depth</dt><dd>{manifestLink(m.page)&&<a href={m.page} target="_blank" rel="noreferrer">Standalone native reading</a>}{manifestLink(m.projection_file)&&<a href={m.projection_file} target="_blank" rel="noreferrer">Exact public Projection JSON</a>}</dd></>}</dl>;
+function EditionLinks({subject,expressions=[]}:{subject:PublicSubject;expressions?:PublicForm[]}) {
+ const p=subject.projection,m=subject.manifest,canonical=canonicalHref(canonicalLocator(subject,expressions));
+ return <dl className="publication-basis"><dt>Subject</dt><dd>{subject.resource.ref}</dd><dt>Publication</dt><dd>{p.projection_ref} · revision {p.projection_revision}</dd><dt>Native source</dt><dd>{p.source.system} · {p.source.ref} · {p.source.revision}</dd>{canonical&&<><dt>Canonical record</dt><dd><a href={canonical} target="_blank" rel="noreferrer">Open the canonical record <Icon name="external"/></a></dd></>}<dt>Published</dt><dd>{p.published_at}</dd><dt>Delivery</dt><dd>Deliberately published edition, not a live subscription. Reading does not contact an author’s machine.</dd>{m&&<><dt>Edition bytes</dt><dd>SHA-256 {m.digest.value}</dd><dt>Source depth</dt><dd>{manifestLink(m.page)&&<a href={m.page} target="_blank" rel="noreferrer">Standalone native reading</a>}{manifestLink(m.projection_file)&&<a href={m.projection_file} target="_blank" rel="noreferrer">Exact public Projection JSON</a>}</dd></>}</dl>;
 }
 function ExpressionBody({model,form,route,navigate,active}:{active:boolean;model:PublicModel;form:PublicForm;route:PublicationRoute;navigate:(patch:Partial<PublicationRoute>)=>void}) {
  const [playing,setPlaying]=useState(()=>!matchMedia('(prefers-reduced-motion: reduce)').matches);
@@ -106,7 +106,7 @@ export default function PublicLibrary() {
  {form&&(route.depth==='expression'||resident===formKey)&&<section hidden={route.depth!=='expression'} className="publication-resident"><ExpressionBody key={formKey} model={model} form={form} route={route} navigate={navigate} active={route.depth==='expression'}/></section>}
  {route.depth==='expression'&&!form&&<section className="publication-empty"><h2>{forms.length?'Choose an exact Expression edition.':'No native Expression is published for this subject yet.'}</h2><p>Sandbox journeys and generated sample scenes are not substituted for native publication.</p>{forms.map(f=><a key={f.projection.projection_ref} href={publicationHref({...route,expression:f.binding.props.expression.expression_ref,expression_revision:String(f.binding.props.expression.expression_revision),expression_projection:f.projection.projection_ref,expression_projection_revision:String(f.projection.projection_revision),scene:''})}>{f.presentation.title} · Expression revision {f.binding.props.expression.expression_revision} · Projection {f.projection.projection_revision}</a>)}</section>}
  {route.depth==='relations'&&<section className="publication-relations"><h2>Declared graph neighbourhood</h2>{record.relations.length?record.relations.map((r,i)=>{const ref=r.from===record!.resource.ref?r.to:r.from;return <a key={r.relation_ref||i} href={subjectAddress(publicationRoute(location.hash),ref)}><span>{r.from===record!.resource.ref?'Outgoing':'Incoming'} · {r.relation}</span>{model.model.open(ref)?.resource.label||ref}</a>;}):<p>No eligible relations were published for this subject. Visual proximity is not a semantic edge.</p>}<p>This is the existing Explore relation model, not a separately authored graph. No local or private neighbourhood is requested.</p></section>}
- {route.depth==='source'&&<section><h2>Source, edition and permissions</h2><EditionLinks subject={record}/><p>The public Projection is read-only. Inspecting it grants no authority to edit its native source or to invoke the publisher’s Actions. No agent credentials, raw runtime evidence or private machine data are included here.</p></section>}
+ {route.depth==='source'&&<section><h2>Source, edition and permissions</h2><EditionLinks subject={record} expressions={forms}/><p>The public Projection is read-only. Inspecting it grants no authority to edit its native source or to invoke the publisher’s Actions. No agent credentials, raw runtime evidence or private machine data are included here.</p></section>}
  </>}
  </div></main>;
 }

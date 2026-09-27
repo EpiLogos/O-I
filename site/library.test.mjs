@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import {readFile} from 'node:fs/promises';
 import {compileLibrary,PRODUCT_IDS} from './build-library.mjs';
 import {parseRoute,routeHref,sceneCapacity,filterEntries,readIndex,readEdition,exactScene,safeUrl,readPosition,writePosition} from './src/library/model.mjs';
+import {canonicalHref} from './src/library/publication-model.mjs';
 const source=await readFile(new URL('./content/public-site.md',import.meta.url),'utf8');
 const built=compileLibrary(source,'d6d92503a1d25e38c93aa0f5e11a306be2adb093');
 const first=built.editions[0];
@@ -66,4 +67,14 @@ test('membership links name source structure; geometry creates no new semantic e
 });
 test('published source never acquires authoring actions or mutable private state',()=>{
  for(const e of built.editions){assert.ok(!('refinements' in e.publication.composition));for(const entity of Object.values(e.publication.composition.entities)){assert.ok(!('actions' in entity.subject));assert.ok(!('readings' in entity.subject));}}
+});
+test('an optional canonical locator rides the edition projection into the Reader provenance slot',()=>{
+ const withCanonical=structuredClone(first);
+ withCanonical.publication.projection.source.canonical={record_id:'central',vault_path:'submission-package/essay/symbolon/episteme/arguments/A03-Immutable-Gap-Formal-Limit.md',source_revision:withCanonical.entry.source_revision};
+ const read=readEdition(withCanonical,first.entry);
+ assert.deepEqual(read.publication.projection.source.canonical,withCanonical.publication.projection.source.canonical);
+ assert.equal(canonicalHref(read.publication.projection.source.canonical,'https://publish.example.com'),'https://publish.example.com/symbolon/episteme/arguments/A03-Immutable-Gap-Formal-Limit');
+ // Editions without the locator (the default here) resolve no canonical link.
+ assert.equal(readEdition(structuredClone(first),first.entry).publication.projection.source.canonical,undefined);
+ assert.equal(canonicalHref(undefined,'https://publish.example.com'),null);
 });

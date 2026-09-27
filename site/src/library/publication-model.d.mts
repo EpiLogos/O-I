@@ -1,6 +1,7 @@
 import type { Edition, NativeScene } from './model.mjs';
 export type PublicationRoute=Record<'ref'|'collection_ref'|'projection'|'revision'|'expression'|'expression_revision'|'expression_projection'|'expression_projection_revision'|'scene'|'depth'|'q'|'at'|'offset'|'page'|'focus_ref',string>;
-export interface PublicProjection {projection_ref:string;projection_revision:number;state:string;audience:{visibility:string};subject:{kind:string;ref:string};source:{ref:string;revision:string;system:string};published_at:string}
+export interface CanonicalLocator {record_id:string;vault_path:string;source_revision:string}
+export interface PublicProjection {projection_ref:string;projection_revision:number;state:string;audience:{visibility:string};subject:{kind:string;ref:string};source:{ref:string;revision:string;system:string;canonical?:CanonicalLocator};published_at:string}
 export interface PublicBinding {binding_ref:string;subject_ref?:string;portable_renderer?:string;component_ref:string;props:Record<string,any>;fallback:Record<string,any>}
 export interface PublicPresentation {title:string;summary?:string;presentation_ref:string;revision:number;regions:{bindings:PublicBinding[]}[]}
 export interface PublicResource {ref:string;kind:string;world_ref:string;label:string;summary?:string;revision?:string;locators?:{surface:string;locator:string}[]}
@@ -14,4 +15,7 @@ export function publicationRoute(hash:string):PublicationRoute;
 export function publicationHref(route?:Partial<PublicationRoute>):string;
 export function isPublicationRoute(hash:string):boolean;
 export function publicAssetUrl(value:unknown):string|null;
+export const PUBLISH_BASE:string;
+export function canonicalLocator(record:{projection?:PublicProjection;readings?:PublicBinding[]}|null|undefined,forms?:PublicForm[]):CanonicalLocator|null;
+export function canonicalHref(locator:unknown,base?:string):string|null;
 export function openPublication(seed:unknown,manifests?:PublicManifest[]):PublicModel;
