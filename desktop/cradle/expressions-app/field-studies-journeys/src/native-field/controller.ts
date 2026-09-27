@@ -4,6 +4,7 @@ import {NativeProjection} from './projection';
 import type {NativePort} from './channel';
 import {applyPhysicalFormPose} from '../physicalFormActuator';
 import {nativeActuatorStanding} from '../nativeActuatorStanding';
+import {isK2,eventFromSources,readK2,editK2Event,k2CausalTrace,type K2Acting,type K2Edit} from './k2';
 export interface NativeRenderer {
  retainedTargetPort():any;releaseRetainedField():void;
  retainedTopology?():{tex_width:number;tex_height:number;particle_count:number;slot_count:number}|null;
@@ -14,20 +15,46 @@ export interface NativeRenderer {
 export interface NativePlaybackPolicy {blockFrames:number;leadSeconds:number;lookaheadSeconds:number;}
 export const EMBEDDED_NATIVE_PLAYBACK:Readonly<NativePlaybackPolicy>=Object.freeze({blockFrames:8192,leadSeconds:.5,lookaheadSeconds:.5});
 export type NativeStatus='manual'|'opening'|'following'|'held'|'unavailable';
+export type NativeSky='none'|'now'|{epoch:string};
+/** Presentation, not source: the K² torus (|x|,|y| ≤ 25/9 m at QL's declared
+ * 1 m per torus unit) spans ±333 engine units — 0.83 of the 400-unit stage
+ * radius (WORLD_SCALE), leaving the body whole on stage with modal headroom. */
+export const INSTRUMENT_PRESENTATION=Object.freeze({units_per_metre:120,
+ standing:'presentation scale: ±25/9 m torus → ±333 engine units (0.83 of the 400-unit stage radius); not a source value'});
+/** QL k2.rs `default_field`: the composed owner's device rate. */
+export const K2_SAMPLE_RATE=48000;
+/** Both source-cited tick rates; neither is fixed by the M1 contract (K2-EXPRESSION-BINDING). */
+export const CADENCES=Object.freeze([
+ Object.freeze({id:'world',ticks_per_second:1,label:'1 tick/s',source:'M3/M4′ world clock, 1 Hz'}),
+ Object.freeze({id:'user',ticks_per_second:12,label:'12 ticks/s',source:'PPS user-facing tick, 12 per second'}),
+]);
+export const PRESENTATION_LEVEL=Object.freeze({min:0,max:4,initial:1,
+ standing:'presentation gain after the native PCM (× the audio receiver\'s 0.1); not a source value'});
+/** Owner busy, held mid-beat, or presentation capacity full: a skipped beat. */
+const TRANSIENT=/owner busy|held before the event|presentation capacity|requires idle admitted owner/;
+type Cadence={rate:number;period:number;source:string;timer:ReturnType<typeof setInterval>;started:number;
+ beats:number;issued:number;applied:number;skipped:number;suspended:number;inFlight:boolean;stopped?:string;stopped_at?:number};
 /** The QL driver schedules PCM/targets; the app remains the sole GPU stage.
  * The controller owns admission/lifetime only, never native math or a second clock.
+ * Determinant events (M1 advance, a changed event) go to the same serial owner;
+ * the cadence is a request rate, never a local oscillator or tick model.
  */
 export class NativeFieldController {
  private session:InstrumentSession|null=null;private projection:NativeProjection|null=null;
  private context:AudioContext|null=null;private opened:any=null;private epoch=0;private dead=false;
  private recovery:(()=>void)|null=null;private checkpoint:any=null;private contextLost=false;
- private pending:Promise<unknown>=Promise.resolve();private muted=true;
+ private pending:Promise<unknown>=Promise.resolve();private muted=true;private serialDepth=0;
  private sources:any=null;private domain:NativeDomainReading|null=null;
  private openingHold:string|null=null;private closing:Promise<void>|null=null;
  private lastNative:any=null;private holdRevision=0;
  private admitting:number|null=null;
  private suspension:{tokens:Set<symbol>;epoch:number;revision:number;restore:boolean;reason:string}|null=null;
  private restoring:{epoch:number;revision:number}|null=null;
+ private k2=false;private influenceReading:any=null;private acting:K2Acting|null=null;
+ private event:any=null;private opening:any=null;private sourcesStale=false;private lastInspect=0;
+ private operating=0;private cadence:Cadence|null=null;private lastCadence:Cadence|null=null;
+ private refusal:{operation:string;reason:string;at:number}|null=null;
+ private level:GainNode|null=null;private levelValue:number=PRESENTATION_LEVEL.initial;
  private closeOwner(opened:any){
   if(!opened)return Promise.resolve();
   if(opened.closing)return opened.closing as Promise<void>;
@@ -39,7 +66,17 @@ export class NativeFieldController {
   const sources=await session.inspect(),reading=session.reading;
   if(this.session!==session||this.dead)throw new Error('native source reply belongs to a released lifetime');
   const domain=projectNativeSources(sources,{event_ref:reading.event_ref,subject_ref:reading.subject_ref,generation:reading.acknowledged.generation});
-  this.sources=sources;this.domain=domain;return sources;
+  this.sources=sources;this.domain=domain;this.k2=isK2(sources);
+  if(this.k2){this.event=eventFromSources(sources);this.acting=readK2(sources,this.influenceReading,this.opened?.source);}
+  this.sourcesStale=false;this.lastInspect=performance.now();
+  return sources;
+ }
+ private async readInfluence(session:InstrumentSession){
+  const influence=await session.influence();
+  if(this.session!==session||this.dead)throw new Error('native influence reply belongs to a released lifetime');
+  this.influenceReading=influence;
+  if(this.sources)this.acting=readK2(this.sources,influence,this.opened?.source);
+  return influence;
  }
  status:NativeStatus='manual';reason:string|null=null;
  onChange:()=>void=()=>{};
@@ -49,63 +86,100 @@ export class NativeFieldController {
   this.playback=Object.freeze({...this.playback});
   port.onHold=reason=>{this.hold(reason);};
  }
-  get reading(){
+ private cadenceReading(){
+  const c=this.cadence??this.lastCadence;if(!c)return{playing:false,rate:null,source:null};
+  const elapsed=((c.stopped_at??performance.now())-c.started)/1000;
+  return{playing:!!this.cadence,rate:c.rate,source:c.source,beats:c.beats,issued:c.issued,applied:c.applied,skipped:c.skipped,suspended:c.suspended,
+   achieved_ticks_per_second:elapsed>0?c.applied/elapsed:0,stopped:c.stopped??null,
+   law:'serial m1-advance through the one native owner; a beat is skipped, never queued, while the owner is busy'};
+ }
+ get reading(){
   const physical=this.domain?.m3.physical_form;
-  const unavailable=physical
-    ?['material model replacement beyond the existing modal owner requires a new binding']
-    :['arbitrary M3 glyph mesh/physical pose is not supplied by this native output','material model replacement beyond the existing modal owner requires a new binding'];
+  const following=this.status==='following';
+  const physical_form_actuator=applyPhysicalFormPose(physical??null,following&&!!physical);
+  const unavailable=[
+   physical_form_actuator.applied?null:`M3 physical form pose: ${'reason' in physical_form_actuator?physical_form_actuator.reason:'unavailable'}`,
+   'material model replacement beyond the existing modal owner requires a new binding'].filter((x):x is string=>!!x);
+  const clock=this.projection?.inspect().native?.clock??null;
+  const trace=this.k2&&this.influenceReading
+   ?{...k2CausalTrace(this.influenceReading,this.acting,{following,muted:this.muted,targetsConnected:!!this.projection,clock}),
+     physical_form:physical_form_actuator}
+   :this.domain?{
+    schema:'oi.native-causal-trace/v1',
+    layers:[
+      {layer:'M1',source_ref:this.domain.m1.coordinate,generation:this.domain.m1.revision,target:'carrier quadrature / harmonic row',actuator:'native domain overlay + continuous topology',observable:'SVG carrier lines / retained topology'},
+      {layer:'M2',source_ref:this.domain.m2.modes[0]?.ref??'—',generation:String(this.domain.m2.generation),target:'modal frequency / damping / PCM',actuator:'NativeAudioBinding + material modes',observable:'audio device + modal standing'},
+      {layer:'M3',source_ref:this.domain.m3.codon_ref,generation:String(this.domain.m3.generation),target:'transcription + codon (entering the M2 Vimarśā reading)',actuator:'coupled composer; no physical-form pose consumer',observable:'transcription overlay; pose not actuated'},
+    ],
+    physical_form:physical_form_actuator,
+   }:null;
   return{schema:'oi.native-expression-reading/v1',status:this.status,reason:this.reason,
   source:this.opened?.source??null,lease:this.opened?.lease??null,
   playback_policy:{...this.playback,owner:'QL InstrumentSession / explicit application buffering; no sample-rate change'},
   renderer_requirements:this.renderer.retainedTopology?.()??null,
   presentation_mode:!this.projection?'manual':this.projection.scale===this.opened.presentation.units_per_metre?'domain-follow':'manual-presentation-override',
   presentation_units_per_metre:this.projection?.scale??null,
+  presentation_level:{value:this.levelValue,...PRESENTATION_LEVEL},
   native:this.session?.reading??this.lastNative,muted:this.muted,
-  domain:this.domain,source_currentness:this.domain?(this.status==='following'?'inspected-native-basis; continuous cursor reported separately':'held-last-inspected-basis'):'unavailable',
-  presented_clock:this.projection?.inspect().native?.clock??null,
+  domain:this.domain,source_currentness:this.domain?(this.sourcesStale?'inspected before the latest determinant event; influence is current':following?'inspected-native-basis; continuous cursor reported separately':'held-last-inspected-basis'):'unavailable',
+  presented_clock:clock,
+  instrument:this.k2?{schema:'oi.k2-instrument-reading/v1',acting:this.acting,influence:this.influenceReading,
+   opening_event_available:!!this.opening,sources_stale:this.sourcesStale,cadence:this.cadenceReading(),refusal:this.refusal,
+   presentation:INSTRUMENT_PRESENTATION}:null,
   checkpoint:this.checkpoint?{supported:true,scope:'same live GPU and unchanged native cursor',receipt:this.checkpoint.receipt}:null,
   exact_seek:false,restart:'explicit new native process; no implicit rewind',
   domain_owned:['M1/M2/M3 native targets','native PCM','native clock'],
-  presentation_owned:['resident particle mechanics','camera','presentation scale'],
+  presentation_owned:['resident particle mechanics','camera','presentation scale','presentation level'],
   presentation_changes_requiring_rebind:['scene membership','target topology or density','authored scene configuration while leased'],
   unavailable_consumers:unavailable,
-  causal_trace:this.domain?{
-    schema:'oi.native-causal-trace/v1',
-    layers:[
-      {layer:'M1',source_ref:this.domain.m1.coordinate,generation:this.domain.m1.revision,target:'carrier quadrature / harmonic row',actuator:'native domain overlay + continuous topology',observable:'SVG carrier lines / retained topology'},
-      {layer:'M2',source_ref:this.domain.m2.modes[0]?.ref??'—',generation:String(this.domain.m2.generation),target:'modal frequency / damping / PCM',actuator:'NativeAudioBinding + material modes',observable:'audio device + modal standing'},
-      {layer:'M3',source_ref:this.domain.m3.codon_ref,generation:String(this.domain.m3.generation),target:physical?'physical_form fold-pose':'transcription + source angles (non-pose)',actuator:physical?'Expression form/glyph pose consumer':'unavailable — do not infer pose from angles',observable:physical?`pose ${physical.pose_ordinal}/${physical.state_count}`:'transcription overlay only'},
-    ],
-  }:null,
-  physical_form_actuator:applyPhysicalFormPose(
-    physical??null,
-    this.status==='following'&&!!physical,
-  ),
-  actuator_standing:nativeActuatorStanding({status:this.status,domain:this.domain as any,causal_trace:this.domain?{layers:[]}:null}),
+  causal_trace:trace,
+  physical_form_actuator,
+  actuator_standing:nativeActuatorStanding({status:this.status,domain:this.domain as any,instrument:this.k2?{voices:this.acting?.voices??null}:null}),
  } as const;}
  private changed(){this.onChange();}
+ /** The instrument's primary opening: QL composes a K² binding for this stage's
+  * own retained texture; the kernel supplies the dated sky. No path, no file. */
+ async compose(options:{sky?:NativeSky;event?:unknown}={}){
+  const topology=this.renderer.retainedTopology?.();
+  if(!topology)throw new Error('The retained GPU field must be live before the instrument opens');
+  const sky=options.sky??'now';
+  if(!(sky==='none'||sky==='now'||(typeof sky==='object'&&typeof sky?.epoch==='string')))throw new Error('sky must be none, now or a dated epoch');
+  const request={texture:[topology.tex_width,topology.tex_height],units_per_metre:INSTRUMENT_PRESENTATION.units_per_metre,sky,...(options.event!==undefined?{event:options.event}:{})};
+  return this.admit(K2_SAMPLE_RATE,()=>this.port.request({operation:'compose',request}));
+ }
+ /** Inspect depth: an explicit Central binding document. */
  async connect(path:string,revision:string,sampleRate:number){
+  return this.admit(sampleRate,()=>this.port.request({operation:'open',path,expected_revision:revision}));
+ }
+ private stage(context:AudioContext){
+  // One presentation gain stage between the native receiver and the device.
+  // The receiver keeps its own gain and clip law; nothing is synthesised here.
+  const level=context.createGain();level.gain.value=this.levelValue;level.connect(context.destination);this.level=level;
+  return new Proxy(context,{get:(target,key)=>{if(key==='destination')return level;const value=Reflect.get(target,key);return typeof value==='function'?value.bind(target):value;}}) as AudioContext;
+ }
+ private async admit(sampleRate:number,open:()=>Promise<any>){
   if(this.dead||this.status==='opening'||this.session||this.closing||this.suspension)throw new Error('release the current native owner and instrument suspension before opening another');
   if(!Number.isInteger(sampleRate)||sampleRate<8000||sampleRate>192000)throw new Error('native binding must supply its actual sample rate');
-  const epoch=++this.epoch;this.admitting=epoch;this.status='opening';this.reason=null;this.openingHold=null;this.lastNative=null;this.changed();
+  const epoch=++this.epoch;this.admitting=epoch;this.status='opening';this.reason=null;this.openingHold=null;this.lastNative=null;this.refusal=null;this.changed();
   let context:AudioContext|null=null;
   try{
-   // This is invoked directly by the Connect button; no microphone and no
+   // This is invoked directly by the person's open action; no microphone and no
    // autoplay on mode entry. A failed audio device prevents opening native work.
    context=this.audio(sampleRate);this.context=context;await context.resume();
    if(epoch!==this.epoch||this.dead){if(context.state!=='closed')await context.close();return;}
    if(context.sampleRate!==sampleRate||context.state!=='running')throw new Error('audio device/native rate or activation mismatch');
-   const opened=await this.port.request({operation:'open',path,expected_revision:revision});
+   const opened=await open();
    if(epoch!==this.epoch||this.dead){await this.closeOwner(opened);return;}
    this.opened=opened;
    if(opened.schema!=='oi.native-expression-open/v1'||opened.receipt?.field?.sample_rate!==sampleRate)throw new Error('native open receipt/sample rate mismatch');
    const stage=this.renderer.retainedTargetPort();
    this.projection=new NativeProjection(stage,opened.receipt.field,opened.presentation);
    this.renderer.setNativeDomain(true);
-   this.session=new InstrumentSession({...this.playback,context:this.context,owner:this.renderer,initialReceipt:opened.receipt,
+   this.session=new InstrumentSession({...this.playback,context:this.stage(context),owner:this.renderer,initialReceipt:opened.receipt,
     transport:{request:(request:any)=>this.port.request({operation:'exchange',lease:opened.lease,request}),close:()=>{void this.closeOwner(opened).catch(()=>{});}},fieldBinding:this.projection,muted:true});
    this.recovery=this.renderer.onRetainedRecoveryRequired(state=>{this.contextLost=state==='lost';this.hold(`GPU context ${state}; explicit same-state checkpoint recovery or disconnect required`);});
-   await this.readSources(this.session);
+   const sources=await this.readSources(this.session);
+   if(this.k2){await this.readInfluence(this.session);this.opening=eventFromSources(sources);}
    await this.session.recover('complete native sources admitted; rebase device only');
    if(epoch!==this.epoch||this.dead)return;
    // Reassert an existing admission hold without issuing a new controller hold:
@@ -132,7 +206,7 @@ export class NativeFieldController {
   if(paused&&!this.suspension&&this.session&&this.status==='following')this.hold('application paused or hidden');
   if(this.session){
    const reading=this.session.reading;
-   if(!reading.available&&this.status!=='unavailable'){this.status='unavailable';this.reason=reading.reason??'native acknowledgement unavailable';this.changed();}
+   if(!reading.available&&this.status!=='unavailable'){this.status='unavailable';this.reason=reading.reason??'native acknowledgement unavailable';this.pause('owner unavailable');this.changed();}
    else if(reading.held&&this.status==='following'){this.status='held';this.reason=reading.reason??'native/audio owner held';this.changed();}
    if(this.status==='following'){try{this.session.present();}catch(error){this.hold(String(error));}}
   }
@@ -140,7 +214,9 @@ export class NativeFieldController {
  }
  hold(reason='manual hold'){
   this.holdRevision++;
-  if(this.admitting===this.epoch)this.openingHold=reason;
+  // During admission the hold is recorded, not applied: the owner is not yet
+  // pumping, its source reads must complete, and admission reasserts the hold.
+  if(this.admitting===this.epoch){this.openingHold=reason;return;}
   if(!this.session)return;
   this.session.hold(reason);this.status='held';this.reason=reason;this.changed();
  }
@@ -172,10 +248,17 @@ export class NativeFieldController {
   const deadline=performance.now()+6500;while(session.reading.in_flight){if(performance.now()>deadline)throw new Error('native operation still in flight; not retried');await new Promise(r=>setTimeout(r,8));}
   return session;
  }
+ /** Wait for the one serial owner to be between exchanges; never interrupt one. */
+ private async waitIdle(session:InstrumentSession,ms:number){
+  const deadline=performance.now()+ms;
+  while(session.reading.in_flight){if(performance.now()>deadline||!this.current(session))return false;await new Promise(r=>setTimeout(r,4));}
+  return this.current(session);
+ }
  private serial<T>(action:()=>Promise<T>):Promise<T>{
-  const epoch=this.epoch;
+  const epoch=this.epoch;this.serialDepth++;
   const result=this.pending.then(async()=>{if(epoch!==this.epoch||this.dead)throw new Error('native operation cancelled by lifetime change');return action();});
-  this.pending=result.catch(()=>{});return result;
+  const done=result.finally(()=>{this.serialDepth--;});
+  this.pending=done.catch(()=>{});return done;
  }
  private current(session:InstrumentSession){return this.session===session&&!this.dead;}
  private finishCommand(session:InstrumentSession,following:boolean,revision:number,reason:string){
@@ -204,10 +287,144 @@ export class NativeFieldController {
   const session=await this.idle();
   try{
    await session.recover('native operation admission');const result=await session.operate(command);
-   await this.readSources(session);await session.recover('native operation readback admitted; rebase device only');
+   await this.readSources(session);if(this.k2)await this.readInfluence(session);
+   await session.recover('native operation readback admitted; rebase device only');
    this.finishCommand(session,following,revision,'native operation applied while held; resume explicitly');return result;
   }catch(error){if(this.current(session))this.hold(String(error));throw error;}
  });}
+ /** A refused determinant leaves the owner and its standing unchanged. */
+ private refused(operation:string,error:unknown,session:InstrumentSession){
+  if(!this.current(session)||!session.reading.available)return false;
+  this.refusal={operation,reason:String(error instanceof Error?error.message:error),at:Date.now()};this.changed();return true;
+ }
+ /** A K² determinant event through the one serial owner. While following, the
+  * re-read targets queue behind already scheduled sound (no hold, no rebase);
+  * while held, the event commits and the owner stays held. */
+ private determinant(operation:string,build:()=>any,needsEvent:boolean,cadence=false):Promise<void>{
+  const session=this.session;
+  if(!session||!this.k2)return Promise.reject(new Error('Open the live instrument first: determinant events belong to a K² owner'));
+  if(this.status==='following'&&!this.suspension){
+   const live=async()=>{
+    this.operating++;
+    try{
+     // A beat may wait for the pump's exchange to finish, never past its own
+     // period: later beats are skipped meanwhile, never queued behind it.
+     if(!(await this.waitIdle(session,cadence?Math.min(900,this.cadence?.period??250):5000)))throw new Error('native owner busy; the event was not sent');
+     if(needsEvent&&this.sourcesStale){await this.readSources(session);if(!(await this.waitIdle(session,5000)))throw new Error('native owner busy; the event was not sent');}
+     if(this.status!=='following'||this.suspension||!this.current(session))throw new Error('instrument held before the event was sent');
+     const command=build();
+     await session.operate(command);
+     if(!this.current(session))return;
+     this.checkpoint=null;this.sourcesStale=true;this.refusal=null;
+     if(await this.waitIdle(session,5000))await this.readInfluence(session);
+     this.changed();
+    }catch(error){if(!(cadence&&TRANSIENT.test(String(error))))this.refused(operation,error,session);throw error;}
+    finally{this.operating--;}
+   };
+   return cadence?live():this.serial(live);
+  }
+  return this.serial(async()=>{
+   const following=this.status==='following',prior=this.reason;this.hold('native determinant event');const revision=this.holdRevision;
+   const held=await this.idle();
+   this.operating++;
+   try{
+    await held.recover('native determinant admission');
+    if(needsEvent&&this.sourcesStale)await this.readSources(held);
+    await held.operate(build());
+    this.refusal=null;
+    await this.readSources(held);await this.readInfluence(held);
+    await held.recover('native determinant readback admitted; rebase device only');
+    this.reason=following?null:prior;
+    this.finishCommand(held,following,revision,'determinant applied while held; resume explicitly');
+   }catch(error){
+    if(this.refused(operation,error,held)){held.hold(prior??'determinant refused');this.status='held';this.reason=prior??'determinant refused';this.changed();}
+    else if(this.current(held))this.hold(String(error));
+    throw error;
+   }finally{this.operating--;}
+  });
+ }
+ /** M1's own advance on the owner (M1Engine::advance), then the whole event re-read. */
+ m1Advance(ticks=1){
+  if(!Number.isInteger(ticks)||ticks<1||ticks>1_000_000)return Promise.reject(new Error('M1 advance must be 1..1000000 ticks'));
+  return this.determinant('M1 advance',()=>({operation:'m1-advance',ticks}),false);
+ }
+ replaceEvent(event:unknown,strike:boolean){
+  if(typeof strike!=='boolean')return Promise.reject(new Error('strike must be explicit'));
+  return this.determinant('replace event',()=>({operation:'replace-event',event:structuredClone(event),strike}),false);
+ }
+ /** One determinant changed on the owner's current event. Strike follows the
+  * owner's declared `strike_on_event` policy, as its own M1 advance does. */
+ edit(edit:K2Edit){
+  const label=edit.kind==='lens'?'lens':edit.kind==='context-frame'?'Context Frame':edit.kind==='harmonic'?'harmonic basis':'transcription';
+  try{if(this.event)editK2Event(this.event,edit);}catch(error){if(this.session)this.refusal={operation:label,reason:String(error instanceof Error?error.message:error),at:Date.now()};this.changed();return Promise.reject(error);}
+  return this.determinant(label,()=>({operation:'replace-event',event:editK2Event(this.event,edit),strike:this.influenceReading?.material?.strike_on_event!==false}),true);
+ }
+ /** Re-excite the same voices from the declared strike amplitude. */
+ strike(){return this.determinant('strike',()=>({operation:'replace-event',event:structuredClone(this.event),strike:true}),true);}
+ /** The first admitted event, carried under the owner's next M1 revision so M1's
+  * revision never runs backwards; M2/M3 generations are re-issued by the owner. */
+ restoreOpening(){
+  if(!this.opening)return Promise.reject(new Error('no opening event admitted'));
+  return this.determinant('return to opening event',()=>{
+   const event=structuredClone(this.opening),revision=this.influenceReading?.m1_revision??this.event?.m1?.revision;
+   if(typeof revision!=='string'||!/^(0|[1-9][0-9]{0,19})$/.test(revision))throw new Error('current M1 revision unavailable');
+   event.m1.revision=String(BigInt(revision)+1n);return{operation:'replace-event',event,strike:true};
+  },true);
+ }
+ get currentEvent(){return this.event?structuredClone(this.event):null;}
+ get openingEvent(){return this.opening?structuredClone(this.opening):null;}
+ influence(){return this.serial(async()=>{
+  const session=this.session;if(!session||!this.k2)throw new Error('influence belongs to a K² owner');
+  if(this.status==='following'){if(!(await this.waitIdle(session,5000)))throw new Error('native owner busy');return this.readInfluence(session);}
+  this.hold('native influence reading');const held=await this.idle();
+  try{await held.recover('native influence reading');return await this.readInfluence(held);}
+  finally{if(this.current(held))this.hold('influence reading complete; resume explicitly');}
+ });}
+ /** Human-cadence source refresh after determinant events; never while an event
+  * is in flight, never while held. */
+ async refreshSources(){
+  const session=this.session;
+  // A complete source read is large (the whole coupled basis); while a cadence
+  // plays it yields to the ticks and runs at most every 5 s.
+  if(!session||!this.k2||!this.sourcesStale||this.status!=='following'||this.suspension||this.operating||this.serialDepth||performance.now()-this.lastInspect<(this.cadence?5000:1500))return false;
+  this.operating++;
+  try{if(!(await this.waitIdle(session,100))||this.status!=='following')return false;await this.readSources(session);this.changed();return true;}
+  catch{return false;}
+  finally{this.operating--;}
+ }
+ /** Explicit cadence: serial m1-advance requests at a source-cited rate. A beat
+  * is skipped while the owner is busy, suspended while held/hidden/unavailable,
+  * and the cadence stops on release or refusal. */
+ play(ticksPerSecond:number){
+  if(!this.k2||!this.session)throw new Error('Open the live instrument first');
+  if(!(Number.isFinite(ticksPerSecond)&&ticksPerSecond>0&&ticksPerSecond<=12))throw new Error('cadence must be within (0, 12] ticks per second');
+  this.pause('rate changed');
+  const period=1000/ticksPerSecond;
+  const cadence:Cadence={rate:ticksPerSecond,period,source:CADENCES.find(c=>c.ticks_per_second===ticksPerSecond)?.source??'explicit rate',
+   timer:setInterval(()=>{void this.beat(cadence);},period),started:performance.now(),beats:0,issued:0,applied:0,skipped:0,suspended:0,inFlight:false};
+  this.cadence=cadence;this.changed();
+ }
+ pause(reason='held'){
+  const cadence=this.cadence;if(!cadence)return;
+  // The same record: a beat already in flight still counts when it lands.
+  clearInterval(cadence.timer);this.cadence=null;cadence.stopped=reason;cadence.stopped_at=performance.now();this.lastCadence=cadence;this.changed();
+ }
+ private async beat(cadence:Cadence){
+  if(this.cadence!==cadence)return;
+  cadence.beats++;
+  if(!this.session||this.status!=='following'||this.suspension||this.dead){cadence.suspended++;return;}
+  if(cadence.inFlight||this.operating||this.serialDepth){cadence.skipped++;return;}
+  cadence.inFlight=true;
+  try{
+   cadence.issued++;
+   await this.determinant('M1 advance (cadence)',()=>({operation:'m1-advance',ticks:1}),false,true);
+   cadence.applied++;if(this.cadence!==cadence)this.changed();
+  }catch(error){
+   cadence.issued--;
+   if(TRANSIENT.test(String(error)))cadence.skipped++;
+   else if(this.cadence===cadence)this.pause(`refused: ${String(error instanceof Error?error.message:error)}`);
+  }finally{cadence.inFlight=false;}
+ }
  inspectSources(){return this.serial(async()=>{
   this.hold('native source inspection');const session=await this.idle();
   try{await session.recover('native source inspection');return await this.readSources(session);}
@@ -228,6 +445,13 @@ export class NativeFieldController {
  setScale(scale:number){if(!this.projection)throw new Error('native presentation unavailable');this.projection.setScale(scale);this.changed();}
  followDomain(){this.setScale(this.opened?.presentation.units_per_metre);}
  setMuted(muted:boolean){if(!this.session)throw new Error('native audio unavailable');this.session.setMuted(muted);this.muted=muted;this.changed();}
+ /** Presentation level only; the native PCM and its receiver gain are unchanged. */
+ setLevel(value:number){
+  if(!Number.isFinite(value)||value<PRESENTATION_LEVEL.min||value>PRESENTATION_LEVEL.max)throw new Error(`level must be within ${PRESENTATION_LEVEL.min}–${PRESENTATION_LEVEL.max}`);
+  this.levelValue=value;const gain=this.level?.gain,context=this.context;
+  if(gain&&context&&typeof gain.setTargetAtTime==='function')gain.setTargetAtTime(value,context.currentTime,.02);else if(gain)gain.value=value;
+  this.changed();
+ }
  saveCheckpoint(){return this.serial(async()=>{
   this.hold('checkpoint hold');const session=await this.idle();await session.recover('checkpoint current cursor');this.hold('checkpoint hold');
   if(!this.current(session))throw new Error('checkpoint belongs to a released lifetime');
@@ -239,13 +463,15 @@ export class NativeFieldController {
  });}
  inspectTargets(){return this.projection?.inspect()??null;}
  async release(manual=true){
+  this.pause('released');
   const epoch=++this.epoch;const session=this.session;this.lastNative=session?.reading??this.lastNative;
   this.session=null;session?.dispose();this.recovery?.();this.recovery=null;
   this.renderer.releaseRetainedField();this.renderer.setNativeDomain(false);this.projection?.dispose();this.projection=null;
   const context=this.context;this.context=null;const opened=this.opened;this.opened=null;this.checkpoint=null;this.contextLost=false;
   this.sources=null;this.domain=null;this.openingHold=null;
+  this.k2=false;this.influenceReading=null;this.acting=null;this.event=null;this.opening=null;this.sourcesStale=false;this.level=null;
   this.admitting=null;this.suspension=null;this.restoring=null;
-  if(manual){this.status='manual';this.lastNative=null;this.reason=null;this.changed();}
+  if(manual){this.status='manual';this.lastNative=null;this.reason=null;this.refusal=null;this.lastCadence=null;this.changed();}
   const close=async()=>{
    const results=await Promise.allSettled([context&&context.state!=='closed'?context.close():Promise.resolve(),this.closeOwner(opened)]);
    const failure=results.find((r):r is PromiseRejectedResult=>r.status==='rejected');
