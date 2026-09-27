@@ -96,8 +96,9 @@ test('M1/M2/M3 WALK: causal actuators available when following; refuse on discon
   });
   assert.equal(connected.connected,true);
   assert.equal(connected.layers.every(l=>l.available),true);
-  assert.equal(connected.physical_form.applied,true);
-  if(connected.physical_form.applied)assert.equal(connected.physical_form.rotationDegrees,90);
+  // A pose nothing reads is not actuation: reported, never claimed.
+  assert.equal(connected.physical_form.applied,false);
+  assert.equal(connected.physical_form.status,'not-actuated');
 
   const heldM1=nativeActuatorStanding({
     status:'following',
@@ -114,7 +115,7 @@ test('M1/M2/M3 WALK: causal actuators available when following; refuse on discon
     status:'passed',
     connected_layers:connected.layers.map(l=>({layer:l.layer,available:l.available})),
     disconnect_refuses:true,
-    physical_form_pose_degrees:connected.physical_form.applied?connected.physical_form.rotationDegrees:null,
+    physical_form_pose:connected.physical_form.status,
   };
 });
 

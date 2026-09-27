@@ -418,7 +418,7 @@ export function relayKernelChannel(frame: HTMLIFrameElement, transport: KernelTr
 // grammar as the kernel channel — same-origin material frame, explicit kind
 // discrimination, no ambient authority:
 //
-//   host → frame  `{v:1, kind:"host-mode", mode:"expressions"|"techne"}`
+//   host → frame  `{v:1, kind:"host-mode", mode:"expressions"|"techne", world?}`
 //     — the cut the hosting surface stands in. The application suppresses
 //       its authoring chrome in the "techne" cut and restores it in
 //       "expressions"; it answers every host-mode with a fresh app-state
@@ -470,10 +470,12 @@ export const isHostedTechneLens = (value: unknown): value is HostedTechneLens =>
  * every frame load (the trackShellCutout law — the frame may boot after the
  * ask). Returns the teardown. Call from an effect keyed on the mode so every
  * change re-posts. */
-export function postHostMode(frame: HTMLIFrameElement | null, mode: HostedAppMode): () => void {
+export function postHostMode(frame: HTMLIFrameElement | null, mode: HostedAppMode, world?: string): () => void {
   if (!frame) return () => {};
+  // The world lens the host stands in rides with the mode; the application
+  // opens its Epi-Logos defaults (the live instrument) only when told.
   const post = () => {
-    if (isHostedAppMode(mode)) frame.contentWindow?.postMessage({v: KERNEL_CHANNEL_VERSION, kind: "host-mode", mode}, "*");
+    if (isHostedAppMode(mode)) frame.contentWindow?.postMessage({v: KERNEL_CHANNEL_VERSION, kind: "host-mode", mode, ...(world ? {world} : {})}, "*");
   };
   frame.addEventListener("load", post);
   post();

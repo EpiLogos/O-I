@@ -25,6 +25,7 @@ import {useEffect, useRef, useState} from "react";
 import {ActStrip} from "../expression/ActStrip";
 import {consumeExpressionRequest, getExpressionSelectionState, registerExpressionCentre, subscribeExpressionSelection} from "./selection";
 import {useKernel} from "../kernel/KernelProvider";
+import {useEpiLens} from "../workspace/lens";
 import {
   hostedAppUrl,
   CAPTURE_INSERTION_EVENT,INSERT_SOURCE_EVENT,postSourceInsertion,
@@ -190,10 +191,11 @@ export function PointCloudHost({mode = "expressions", deepLink, bindingId, onHos
   // binding's kind IS the cut — the Technē centre presents this application
   // in its deep state, the Expressions centre in its lived state. Each
   // centre's instance parks suspended in the warm park across switches.
+  const epiLens = useEpiLens();
   useEffect(() => {
     const node = frame.current;
-    return node ? postHostMode(node, mode) : undefined;
-  }, [mode, src]);
+    return node ? postHostMode(node, mode, epiLens.on ? "epi-logos" : undefined) : undefined;
+  }, [mode, src, epiLens.on]);
 
   // The Technē cut's summon answer: a constellation constructed in the Wiki
   // opens IN this same living field, not a second renderer and not the panel's

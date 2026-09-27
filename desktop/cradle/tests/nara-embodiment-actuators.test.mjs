@@ -20,10 +20,19 @@ function form(pose=2,states=6){
   };
 }
 
-test('physical form actuator maps fold-pose onto degrees when connected',()=>{
+test('physical form pose is not actuated while no engine consumer reads it',()=>{
   const result=applyPhysicalFormPose(form(3,6),true);
+  assert.equal(result.applied,false);
+  assert.equal(result.status,'not-actuated');
+  assert.match(result.reason,/no Expression engine consumer/);
+});
+
+test('physical form actuator maps fold-pose onto degrees only for a consumer that reads it',()=>{
+  const read=[];
+  const result=applyPhysicalFormPose(form(3,6),true,{name:'test pose consumer',apply:(degrees)=>read.push(degrees)});
   assert.equal(result.applied,true);
   if(result.applied)assert.equal(result.rotationDegrees,180);
+  assert.deepEqual(read,[180],'applied means the consumer actually received the pose');
 });
 
 test('physical form actuator refuses disconnected consumer and angle collapse',()=>{
@@ -41,7 +50,7 @@ test('M1/M2/M3 actuators name unavailable on disconnect — no demo fallback',()
   assert.equal(standing.physical_form.applied,false);
 });
 
-test('connected reading with physical_form exposes M3 pose consumer',()=>{
+test('connected reading with physical_form names the pose read but not actuated',()=>{
   const standing=nativeActuatorStanding({
     status:'following',
     domain:{
@@ -52,22 +61,26 @@ test('connected reading with physical_form exposes M3 pose consumer',()=>{
   });
   assert.equal(standing.connected,true);
   assert.equal(standing.layers.every(l=>l.available),true);
-  assert.equal(standing.physical_form.applied,true);
+  assert.match(standing.layers[2].actuator,/Vimarśā/);
+  assert.equal(standing.physical_form.applied,false);
+  assert.equal(standing.physical_form.status,'not-actuated');
 });
 
-test('connected reading without physical_form keeps M3 pose unavailable',()=>{
+test('connected reading without physical_form or codon keeps M3 unavailable',()=>{
   const standing=nativeActuatorStanding({
     status:'following',
     domain:{
       m1:{coordinate:'M1.0',revision:'1'},
       m2:{modes:[{ref:'mode:1',frequency_hz:110}],generation:2},
-      m3:{physical_form:null,codon_ref:'codon:1'},
+      m3:{physical_form:null},
     },
   });
   assert.equal(standing.layers[0].available,true);
   assert.equal(standing.layers[1].available,true);
   assert.equal(standing.layers[2].available,false);
-  assert.match(standing.layers[2].reason,/physical form/);
+  assert.match(standing.layers[2].reason,/codon/);
+  assert.equal(standing.physical_form.applied,false);
+  assert.match(standing.physical_form.reason,/not supplied/);
 });
 
 function profile(){
