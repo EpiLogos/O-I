@@ -67,16 +67,14 @@ fn real_native_owner_admission_effects_refusals_restart_and_release() {
         std::env::var_os("NATIVE_EXPRESSION_INPUT").expect("explicit native input required"),
     );
     let input: Value = serde_json::from_slice(&fs::read(&input_path).unwrap()).unwrap();
-    let scratch = Scratch(
-        std::env::temp_dir().join(format!(
+    let scratch = Scratch(std::env::temp_dir().join(format!(
             "oi-native-test-{}-{}",
             std::process::id(),
             SystemTime::now()
                 .duration_since(UNIX_EPOCH)
                 .unwrap()
                 .as_nanos()
-        )),
-    );
+        )));
     fs::create_dir(&scratch.0).unwrap();
     let config = json!({"schema":"oi.native-expression-binding/v1",
       "host":{"instance_ref":"controlled:oi-native-test", "basis":input["basis"], "field":input["field"]},
