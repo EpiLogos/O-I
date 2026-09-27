@@ -28,6 +28,20 @@
  * `member_root` resolve their journey files relative to that directory; member
  * bodies generalise to the journey's own scene editorial/prose texts, or a
  * disclosed formation-only reading when a journey carries no scene prose.
+ *
+ * Canonical locator (deep-link lane, 2026-09-24): each member with pinned
+ * source bindings also emits the OPTIONAL canonical locator
+ * {record_id, vault_path, source_revision} — exactly what the envelope's
+ * `source_bindings` already carry, normalised, with no second subject
+ * identity invented. The member's primary canonical record is its first
+ * pinned source (the envelope's declared order: the sovereign essay document
+ * for the essay member, the room's own ROOM.md node for each room). It rides
+ * `props.canonical` on the member's lede binding in the world publication,
+ * `projection.source.canonical` on the member's Expression publication, and
+ * `sources[].canonical` per member in PRODUCER-RECEIPT.json. It is additive
+ * and optional, so the publication contract schemas (/v1) are extended, not
+ * bumped; members whose manifest carries no pinned bindings (the E0 corpus
+ * families and the legacy collections) publish no locator at all.
  */
 import { readFile, writeFile, mkdir } from 'node:fs/promises';
 import { execFile } from 'node:child_process';
@@ -105,6 +119,15 @@ const MEMBER_REVISION = sourceCommit;
 const manifestRevision = (member) => envelope.manifests.find((manifest) => manifest.manifest === member.manifest)?.source_revision?.commit ?? null;
 const publisherIdentity = 'human:frank-sovereign'; // the envelope's declared ownership
 const provenance = [{ kind: 'collection-publication', ref: 'desktop/cradle/expressions-app/collections/return-of-zero', source_system: 'o-i', revision: 'track3-2026-09-19' }];
+// The member's own pinned source bindings, in the envelope's declared order.
+const memberBindings = (member) => (envelope.manifests.find((manifest) => manifest.manifest === member.manifest)?.source_bindings ?? [])
+  .filter((binding) => binding.artifact === member.file);
+// The optional canonical locator, normalised from what the binding carries.
+const canonicalLocator = (member, vaultPath) => ({
+  record_id: member.id,
+  vault_path: vaultPath,
+  source_revision: manifestRevision(member) ?? MEMBER_REVISION,
+});
 
 const members = [];
 for (const manifest of envelope.manifests) {
@@ -207,6 +230,8 @@ for (const member of members) {
   const journey = JSON.parse(await readFile(memberFile(member), 'utf8'));
   const body = await readingBody(member);
   const memberRevision = manifestRevision(member) ?? MEMBER_REVISION;
+  const bindings = memberBindings(member);
+  const canonical = bindings.length ? canonicalLocator(member, bindings[0].path) : null;
 
   readingBindings.push({
     schema: 'oi.presentation-binding/v1',
@@ -214,7 +239,7 @@ for (const member of members) {
     component_ref: 'oi.presentation/lede/v1',
     portable_renderer: 'oi.presentation/lede/v1',
     subject_ref: ref,
-    props: { title: member.name, text: body.text },
+    props: { title: member.name, text: body.text, ...(canonical ? { canonical } : {}) },
     fallback: { title: member.name },
     provenance,
   });
@@ -282,6 +307,8 @@ for (const member of members) {
     publisher: { identity_ref: publisherIdentity },
     published_at: publishedAt,
   });
+  // The outbound deep-link to the canonical record this Expression expresses.
+  if (canonical) publication.projection.source.canonical = canonical;
   await writeFile(resolve(outDir, `expression-${member.id}.json`), JSON.stringify(publication, null, 1));
   corpusReceipt.members.push({
     id: member.id, ref, expression_ref: expressionRef,
@@ -289,6 +316,7 @@ for (const member of members) {
     reading_chars: body.text.length,
     expression_scenes: scenes.length, expression_entities: entityRefs.length,
     omissions: publication.omissions,
+    ...(bindings.length ? { sources: bindings.map((binding) => ({ canonical: canonicalLocator(member, binding.path) })) } : {}),
   });
 }
 

@@ -1,5 +1,6 @@
 import { lazy, Suspense, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { exactScene, routeHref, safeUrl, type Edition, type Route, type Reading, type NativeScene } from './model.mjs';
+import { canonicalHref } from './publication-model.mjs';
 import type { Camera } from './native-player.mjs';
 import { Icon, SourceText, Tool } from './ui';
 const NativeStage=lazy(()=>import('./NativeStage').then(m=>({default:m.NativeStage})));
@@ -25,6 +26,8 @@ function ReaderBody({edition,route,visible,onChange,onLibrary,scene}:ReaderProps
  const detached=useRef<Window|null>(null);
 
  const composition=edition.publication.composition;
+ // The optional outbound deep-link to the canonical record this edition expresses.
+ const canonical=canonicalHref((edition.publication.projection as {source?:{canonical?:unknown}}).source?.canonical);
  const selected=scene.entity_refs.find(r=>composition.entities[r].subject?.subject_ref===route.subject)||'';
  const subject=route.subject||composition.entities[scene.entity_refs[0]].subject?.subject_ref||edition.entry.source_ref;
  const reading=edition.readings[subject];
@@ -57,7 +60,7 @@ function ReaderBody({edition,route,visible,onChange,onLibrary,scene}:ReaderProps
   {r?<SourceText body={r.body}/>:<p>This exact subject has no disclosed text in this publication. No other source has been substituted.</p>}
   <section className="source-navigation"><h3>In this Expression</h3>{edition.entry.scenes.map(s=><button key={s.ref} aria-current={s.ref===selectedScene?'step':undefined} onClick={()=>openScene(s.ref)}>{s.title}<Icon name="arrowRight"/></button>)}</section>
   {selected&&<section className="source-navigation"><h3>Declared source relations</h3>{Object.values(composition.relations).filter(r=>r.from_entity_ref===selected||r.to_entity_ref===selected).map(r=>{const other=composition.entities[r.from_entity_ref===selected?r.to_entity_ref:r.from_entity_ref];return <button key={r.binding_ref} onClick={()=>onChange({subject:other.subject?.subject_ref??'',face:'verso'})}>{r.from_entity_ref===selected?'Contains section: ':'Section of: '}{other.title}<Icon name="arrowRight"/></button>;})}<p>These relations follow source heading membership, not spatial proximity.</p></section>}
-  <details className="source-provenance"><summary>Source, edition and publication</summary><dl><dt>Subject</dt><dd>{subject}</dd><dt>Expression</dt><dd>{ref}</dd><dt>Scene</dt><dd>{selectedScene}</dd><dt>Edition</dt><dd>{edition.entry.revision}</dd><dt>Source</dt><dd>{r?.source_path} / {r?.source_heading}</dd><dt>Source revision</dt><dd>{r?.source_revision??edition.source_basis.revision}</dd></dl><p>{edition.standing}</p>{r?.source_url&&safeUrl(r.source_url)&&<a href={r.source_url} target="_blank" rel="noreferrer">Open the source file <Icon name="external"/></a>}<a href="./data/library/public-site.md" target="_blank" rel="noreferrer">Read the public-source snapshot</a><a href={edition.entry.url} download={`${edition.entry.id}-publication.json`}>Published edition · JSON</a></details>
+  <details className="source-provenance"><summary>Source, edition and publication</summary><dl><dt>Subject</dt><dd>{subject}</dd><dt>Expression</dt><dd>{ref}</dd><dt>Scene</dt><dd>{selectedScene}</dd><dt>Edition</dt><dd>{edition.entry.revision}</dd><dt>Source</dt><dd>{r?.source_path} / {r?.source_heading}</dd><dt>Source revision</dt><dd>{r?.source_revision??edition.source_basis.revision}</dd></dl><p>{edition.standing}</p>{r?.source_url&&safeUrl(r.source_url)&&<a href={r.source_url} target="_blank" rel="noreferrer">Open the source file <Icon name="external"/></a>}{canonical&&<a href={canonical} target="_blank" rel="noreferrer">Open the canonical record <Icon name="external"/></a>}<a href="./data/library/public-site.md" target="_blank" rel="noreferrer">Read the public-source snapshot</a><a href={edition.entry.url} download={`${edition.entry.id}-publication.json`}>Published edition · JSON</a></details>
  </>;
  const sourceHeader=<header className="source-toolbar"><span>Read & sources</span><Tool name="layers" label={portal==='beside'?'Read in overlay':'Read beside the field'} onClick={()=>setPortal(portal==='beside'?'overlay':'beside')}/><Tool name="expand" label="Full source reading" onClick={()=>onChange({face:'full'})}/><Tool name="external" label="Open source in a separate window" onClick={detach}/><Tool name="close" label="Return to the field" onClick={closeSource}/></header>;
  return <div className={`expression-reader ${readingFace?'is-reading':''} ${route.face==='full'||route.face==='detached'?'is-full-reading':''}`} ref={reader} id={visible?"main-content":undefined} role="main" tabIndex={-1} hidden={!visible} data-expression-ref={ref} data-edition={edition.entry.revision}>

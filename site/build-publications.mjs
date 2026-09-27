@@ -12,12 +12,13 @@ import { createExploreSurfaceModel } from '../shared-field/explore-surface.mjs';
 import { validateExpressionComposition, isProtectedRef } from '../shared-field/expression-projection.mjs';
 import { validateExpressionPresentation } from '../shared-field/expression-presentation.mjs';
 import { renderWorldEdition, worldEditionManifest } from '../shared-field/world-edition.mjs';
+import { isCanonicalLocator } from '../shared-field/canonical-locator.mjs';
 import { publicAssetUrl } from './src/library/publication-model.mjs';
 
 const digest = value => createHash('sha256').update(value).digest('hex');
 const failure = () => new Error('A native publication failed public admission. No replacement or fixture publication was supplied.');
 const same = (a,b) => JSON.stringify(a) === JSON.stringify(b);
-const permittedTextProps = new Set(['title','text','refs']);
+const permittedTextProps = new Set(['title','text','refs','canonical']);
 const sensitiveKey = key => /^(?:token(?!s$)|apikey|accesskey|accesstoken|refreshtoken|authorization|cookie|password|credential|secret|private|internal(?:evidence|context)|machinefacts|dialogue|omissions|readings|actions|context)/i.test(key.replace(/[^a-z0-9]/gi,''));
 // Encoded native refs are still private refs. Decode conservatively before
 // inspection, not only when a browser follows the eventual link.
@@ -43,6 +44,9 @@ function assertPublic(value, key = '', depth = 0) {
 }
 function admittedProjection(raw, deniedRefs) {
  const projection = validateProjection(raw);
+ // The optional canonical locator must be exactly the normalised subject
+ // identity when present; a malformed one fails admission rather than shipping.
+ if (projection.source.canonical !== undefined && !isCanonicalLocator(projection.source.canonical)) throw failure();
  const presentation = worldPresentationFromProjection(projection);
  for (const region of presentation.regions) for (const b of region.bindings || []) {
   const renderer = b.portable_renderer || b.component_ref;
@@ -55,7 +59,7 @@ function admittedProjection(raw, deniedRefs) {
    // Unknown native bodies need an explicitly reviewed portable renderer; never
    // copy arbitrary HTML/application props into the browser as a shortcut.
    throw failure();
-  }
+  } else if (b.props?.canonical !== undefined && !isCanonicalLocator(b.props.canonical)) throw failure();
  }
  assertPublic(projection);
  // Do not surgically edit a native edition to conceal a denied member. The
@@ -147,7 +151,9 @@ export function compilePublications(inputs = []) {
  createExploreSurfaceModel(seed);
  const editions = [...records.values()].map(({projection}) => {
   const path = `./data/library/editions/${digest(projection.projection_ref+'@'+projection.projection_revision)}`;
-  const html = renderWorldEdition(projection, {explore_base:'../../../../library.html'});
+  // An OI_PUBLISH_BASE build variable lets the standalone edition carry the
+  // outbound canonical link; unset, the editions render without it.
+  const html = renderWorldEdition(projection, {explore_base:'../../../../library.html', ...(process.env.OI_PUBLISH_BASE ? {publish_base:process.env.OI_PUBLISH_BASE} : {})});
   const manifest = worldEditionManifest(projection,html,{page:path+'/index.html',projection_file:path+'/projection.json'});
   return {projection,html,manifest,directory:path.split('/').pop()};
  });

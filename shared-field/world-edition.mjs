@@ -1,6 +1,7 @@
 import { createHash } from 'node:crypto';
 import { validateProjection } from './index.mjs';
 import { worldPresentationFromProjection } from './presentation-projection.mjs';
+import { canonicalPublishHref } from './canonical-locator.mjs';
 
 /**
  * Standalone HTML edition of a projected WorldPresentation.
@@ -27,25 +28,33 @@ function refLink(ref, exploreBase) {
   return `<a class="ref" href="${escapeHtml(href)}">${escapeHtml(ref)}</a>`;
 }
 
-function renderBinding(binding, exploreBase) {
+function canonicalLink(locator, publishBase) {
+  const href = canonicalPublishHref(locator, publishBase);
+  // No configured Publish base, no link: the locator never renders as a dead link.
+  return href ? `<a class="ref canonical-link" href="${escapeHtml(href)}" target="_blank" rel="noreferrer">Open the canonical record</a>` : '';
+}
+
+function renderBinding(binding, exploreBase, publishBase) {
   const title = binding.props.title ?? binding.fallback.title ?? binding.component_ref;
   const body = binding.props.text ?? binding.fallback.text ?? '';
   const refs = Array.isArray(binding.props.refs) ? binding.props.refs : [];
   const renderer = binding.portable_renderer ?? binding.component_ref;
   const subject = binding.subject_ref ? `<div class="subject">${refLink(binding.subject_ref, exploreBase)}</div>` : '';
   const list = refs.length ? `<ul class="refs">${refs.map((ref) => `<li>${refLink(ref, exploreBase)}</li>`).join('')}</ul>` : '';
+  const canonical = binding.props.canonical ? canonicalLink(binding.props.canonical, publishBase) : '';
   return `<section class="binding" data-renderer="${escapeHtml(renderer)}" data-binding="${escapeHtml(binding.binding_ref)}">` +
-    `<h3>${escapeHtml(title)}</h3>${body ? `<p>${escapeHtml(body)}</p>` : ''}${subject}${list}</section>`;
+    `<h3>${escapeHtml(title)}</h3>${body ? `<p>${escapeHtml(body)}</p>` : ''}${subject}${list}${canonical}</section>`;
 }
 
 export function renderWorldEdition(projectionValue, options = {}) {
   const projection = validateProjection(projectionValue);
   const presentation = worldPresentationFromProjection(projection);
   const exploreBase = typeof options.explore_base === 'string' ? options.explore_base : '/explore.html';
+  const publishBase = typeof options.publish_base === 'string' ? options.publish_base : '';
   const regions = presentation.regions.map((region) =>
     `<section class="region" data-region="${escapeHtml(region.region_ref)}" data-role="${escapeHtml(region.role)}">` +
     (region.label ? `<h2>${escapeHtml(region.label)}</h2>` : '') +
-    region.bindings.map((binding) => renderBinding(binding, exploreBase)).join('') +
+    region.bindings.map((binding) => renderBinding(binding, exploreBase, publishBase)).join('') +
     '</section>').join('');
   const embedded = JSON.stringify(projection).replace(/</g, '\\u003c');
   return `<!doctype html>
@@ -76,6 +85,7 @@ header.edition small{display:block;opacity:.7;font-family:ui-monospace,monospace
 <h1>${escapeHtml(presentation.title)}</h1>
 ${presentation.summary ? `<p>${escapeHtml(presentation.summary)}</p>` : ''}
 <small>${escapeHtml(projection.projection_ref)} · revision ${projection.projection_revision} · source ${escapeHtml(projection.source.system)} ${escapeHtml(projection.source.revision)}</small>
+${projection.source.canonical ? `<small>${canonicalLink(projection.source.canonical, publishBase)}</small>` : ''}
 <small>${refLink(presentation.world_ref, exploreBase)}</small>
 </header>
 ${regions}
@@ -88,6 +98,9 @@ ${regions}
 }
 
 export function worldEditionManifest(projectionValue, html, options = {}) {
+  // `source` spreads the whole validated Projection source, so an optional
+  // canonical locator (projection.source.canonical) rides into the compiled
+  // edition manifest unchanged — no manifest schema change.
   const projection = validateProjection(projectionValue);
   const presentation = worldPresentationFromProjection(projection);
   return {

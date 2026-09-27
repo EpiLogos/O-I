@@ -4,6 +4,7 @@ import { createExploreSurfaceModel } from '../../../shared-field/explore-surface
 import { worldPresentationFromProjection } from '../../../shared-field/presentation-projection.mjs';
 import { validateExpressionComposition } from '../../../shared-field/expression-projection.mjs';
 import { resolveExpressionPresentation } from '../../../shared-field/expression-presentation.mjs';
+import { canonicalPublishHref } from '../../../shared-field/canonical-locator.mjs';
 
 const fields = ['ref','collection_ref','projection','revision','expression','expression_revision','expression_projection','expression_projection_revision','scene','depth','q','at','offset','page','focus_ref'];
 export function publicationRoute(hash) {
@@ -38,6 +39,21 @@ export function publicAssetUrl(value) {
   if (u.protocol !== 'https:' || u.username || u.password || !host.includes('.') || /^[\d.]+$/.test(host) || host.includes(':') || /(?:^|\.)(?:localhost|local|internal|lan|home|test|invalid)$/.test(host)) return null;
   return u.href;
  } catch { return null; }
+}
+/** Build-time Publish base for the outbound canonical links, following the
+ * site's other VITE_ build variables. Empty by default: without a configured
+ * Publish site the receiver renders no canonical link at all. */
+export const PUBLISH_BASE = import.meta.env?.VITE_OI_PUBLISH_BASE || '';
+/** The locator a published subject carries: its own Projection's, else a
+ * reading binding's, else its published Expressions'. Absent → null. */
+export function canonicalLocator(record, forms = []) {
+ const candidates = [record?.projection?.source?.canonical, ...(record?.readings || []).map(b => b?.props?.canonical), ...forms.map(f => f?.projection?.source?.canonical)];
+ return candidates.find(candidate => candidate) || null;
+}
+/** The outbound deep-link target: the one canonicalPublishHref derivation with
+ * the receiver's build-time base. Null when there is no locator or no base. */
+export function canonicalHref(locator, base = PUBLISH_BASE) {
+ return canonicalPublishHref(locator, base);
 }
 export function openPublication(seed, manifests) {
  if (seed?.schema !== 'oi.explore-browser-seed/v1') throw new Error('The published Library has an unsupported format.');
