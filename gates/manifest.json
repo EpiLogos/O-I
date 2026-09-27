@@ -17,7 +17,9 @@
       ],
       "commands": [
         "npm --prefix desktop/cradle install --no-audit --no-fund",
-        "npm --prefix packages/oi-design-system install --no-audit --no-fund"
+        "npm --prefix packages/oi-design-system install --no-audit --no-fund",
+        "node desktop/cradle/scripts/ensure-expressions-app.mjs --build",
+        "node desktop/cradle/documents/build-personal.mjs"
       ]
     },
     {
