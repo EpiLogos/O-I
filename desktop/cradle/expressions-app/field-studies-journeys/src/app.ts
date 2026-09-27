@@ -25,7 +25,7 @@ import {applyPalette,applyBackground,invertPalette,applyChain,applyGlyph,applyKu
 import {COLOR_PALETTES,hexToRgb,isLightHex} from '../../src/engine/colorPalettes';
 import {CHAKRA_PROFILE_ID} from '../../src/engine/semantics/chakraProfile';
 import type {SemanticBinding,SemanticColorCoupling,SemanticFieldConfig} from '../../src/engine/semantics/semanticTypes';
-import {Journey,Scene,Entity,EntityLayer,TextLayer,Tool,Shape,Vec3,clone,uid,clamp,fieldStudies,oiMark,sevenCentres,smallLanguage,blankJourney,blankScene,entity,pin,chakraEntities,validateJourney,AutomationLane} from './model.js';
+import {Journey,Scene,Entity,EntityLayer,TextLayer,Tool,Shape,Vec3,clone,uid,clamp,fieldStudies,oiMark,rethemeMark,sevenCentres,smallLanguage,blankJourney,blankScene,entity,pin,chakraEntities,validateJourney,AutomationLane,type MarkThemeReading} from './model.js';
 import {DocumentStore,readLibrary,readLibraryDetailed,saveToLibrary,removeFromLibrary} from './store.js';
 import {defaultCamera,project,unproject,facePlane,stageScale,stageCentre,basis,Camera} from './camera.js';
 import {FieldEngineAdapter,EngineFrame} from './engine.js';
@@ -806,6 +806,7 @@ function setHostMode(mode:'expressions'|'techne'){
 // that announce, exactly as the boot ?expression= deep link does. Refs only —
 // the kernel document is the store, and a bad ref is refused by the owner.
 let pendingHostOpen:string|null=null,hostOpenArmed=false;
+let hostThemeReadingKey='';
 function openHostExpression(ref:string){
  if(typeof ref!=='string'||!ref.startsWith('expression:'))return;
  if(kernelExpressionsAvailable()){void nativeWorkspace?.open(ref);return;}
@@ -817,9 +818,15 @@ function openHostExpression(ref:string){
  hostOpenArmed=true;
  window.addEventListener('message',function ready(event){if(event.source===window.parent&&event.data?.v===1&&event.data?.kind==='oi-kernel-channel'){window.removeEventListener('message',ready);hostOpenArmed=false;const r=pendingHostOpen;pendingHostOpen=null;if(r)void nativeWorkspace?.open(r);}});
 }
-window.addEventListener('message',ev=>{if(ev.source!==window.parent)return;const d=ev.data as {type?:string;width?:number;height?:number;right?:number;coveredRight?:number;appearance?:unknown;v?:unknown;kind?:unknown;mode?:unknown;command?:unknown;ref?:unknown;req?:unknown;target?:unknown;source?:unknown}|null;
+window.addEventListener('message',ev=>{if(ev.source!==window.parent)return;const d=ev.data as {type?:string;width?:number;height?:number;right?:number;coveredRight?:number;appearance?:unknown;theme?:unknown;v?:unknown;kind?:unknown;mode?:unknown;command?:unknown;ref?:unknown;req?:unknown;target?:unknown;source?:unknown}|null;
  if(d&&d.type==='oi-shell-cutout'&&typeof d.width==='number'&&typeof d.height==='number'){
   if(d.appearance==='dark'||d.appearance==='light'){hostedAppearance=d.appearance;theme();}
+  // The host's resolved theme reading re-derives the default expression's
+  // colours (background and particle palette) — the theme→expression
+  // relation. Presentation derivation: never persisted as authored change.
+  // A reading unchanged since the last post (geometry-only updates) applies
+  // nothing: the recolour follows the theme, not the shell's movement.
+  if(d.theme){const reading=JSON.stringify(d.theme);if(reading!==hostThemeReadingKey){hostThemeReadingKey=reading;if(rethemeMark(store.document,d.theme as MarkThemeReading))renderAll();}}
   document.documentElement.style.setProperty('--shell-cutout-w',Math.max(0,d.width)+'px');
   document.documentElement.style.setProperty('--shell-cutout-h',Math.max(24,d.height)+'px');
   document.documentElement.style.setProperty('--shell-cutout-r',Math.max(0,typeof d.right==='number'?d.right:0)+'px');
