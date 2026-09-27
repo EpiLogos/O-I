@@ -77,11 +77,20 @@ function cmdRun(selectedTier) {
   for (const gate of gates) {
     bootstrap(gate.area);
     process.stdout.write(`▶ ${gate.name} … `);
-    const r = runGate(gate);
+    const retries = gate.retry ?? 0;
+    let attempts = [];
+    let r, flaked = false;
+    for (let attempt = 0; attempt <= retries; attempt++) {
+      r = runGate(gate);
+      attempts.push({ exit: r.exit, duration_ms: r.duration_ms });
+      if (r.exit === 0) break;
+      if (attempt < retries) { flaked = true; process.stdout.write(`attempt ${attempt + 1} failed, retrying (load-sensitive) … `); }
+    }
+    const duration_ms = attempts.reduce((a, x) => a + x.duration_ms, 0);
     const log = r.stdout + (r.stderr ? `\n--- stderr ---\n${r.stderr}` : '');
-    const entry = { name: gate.name, exit: r.exit, duration_ms: r.duration_ms, provenance: gate.provenance };
+    const entry = { name: gate.name, exit: r.exit, duration_ms, attempts, flaked, provenance: gate.provenance };
     results.push({ ...entry, ok: r.exit === 0 });
-    console.log(r.exit === 0 ? `ok (${(r.duration_ms / 1000).toFixed(1)}s)` : `FAIL (${(r.duration_ms / 1000).toFixed(1)}s)`);
+    console.log(r.exit === 0 ? `ok (${(duration_ms / 1000).toFixed(1)}s${flaked ? ', after retry' : ''})` : `FAIL (${(duration_ms / 1000).toFixed(1)}s)`);
     if (r.exit !== 0) {
       failed++;
       const logDir = join(LOGS, started.slice(0, 19).replaceAll(':', ''));
@@ -102,6 +111,7 @@ function cmdRun(selectedTier) {
     started, finished: new Date().toISOString(),
     pass: failed === 0,
     failed_count: failed,
+    flaked_count: results.filter((r) => r.flaked).length,
     gates: results,
     deferred_to_ci: deferred,
   };
