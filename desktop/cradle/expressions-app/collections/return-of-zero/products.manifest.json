@@ -1,0 +1,358 @@
+{
+  "schema": "oi.legacy-collections/v1",
+  "exported_at": "2026-09-25T12:55:00.000Z",
+  "source": "Return of Zero — S0–S5 product Expression corpus",
+  "provenance": {
+    "schema": "oi.collection-provenance/v1",
+    "register": "project",
+    "root": "EpiLogos/Point-Cloud-Demo",
+    "paths": [
+      "production/s-products"
+    ],
+    "ground": "S-register product field from Antykathera-Essay-Work; exact authored oi.journey bodies from EpiLogos/Point-Cloud-Demo production/s-products.",
+    "exported_at": "2026-09-25T12:55:00.000Z",
+    "generator": {
+      "name": "O:I native-publication fidelity repair",
+      "revision": "2026-09-25"
+    },
+    "production_revision": {
+      "repo": "EpiLogos/Point-Cloud-Demo",
+      "commit": "e875344c04c14228840665a91823edc42b078fb2"
+    },
+    "member_count": 83
+  },
+  "featured": [
+    {
+      "file": "actuation/sp-actuation-docs.journey.json",
+      "group": "S1 Actuation"
+    },
+    {
+      "file": "actuation/sp-actuation-now-day-2026-09-11-1.journey.json",
+      "group": "S1 Actuation"
+    },
+    {
+      "file": "actuation/sp-actuation-now-day-2026-09-11-2.journey.json",
+      "group": "S1 Actuation"
+    },
+    {
+      "file": "actuation/sp-actuation-now-day-2026-09-12-1.journey.json",
+      "group": "S1 Actuation"
+    },
+    {
+      "file": "actuation/sp-actuation-now-day-2026-09-12-2.journey.json",
+      "group": "S1 Actuation"
+    },
+    {
+      "file": "actuation/sp-actuation-product.journey.json",
+      "group": "S1 Actuation"
+    },
+    {
+      "file": "actuation/sp-actuation-projectcentral-governance.journey.json",
+      "group": "S1 Actuation"
+    },
+    {
+      "file": "actuation/sp-actuation-ql-runtime-comparison.journey.json",
+      "group": "S1 Actuation"
+    },
+    {
+      "file": "actuation/sp-actuation-ql-runtime-deep-prime.journey.json",
+      "group": "S1 Actuation"
+    },
+    {
+      "file": "actuation/sp-actuation-ql-runtime-experiment-trees-1.journey.json",
+      "group": "S1 Actuation"
+    },
+    {
+      "file": "actuation/sp-actuation-ql-runtime-experiment-trees-2.journey.json",
+      "group": "S1 Actuation"
+    },
+    {
+      "file": "actuation/sp-actuation-ql-runtime-foundations.journey.json",
+      "group": "S1 Actuation"
+    },
+    {
+      "file": "actuation/sp-actuation-ql-runtime-protocols.journey.json",
+      "group": "S1 Actuation"
+    },
+    {
+      "file": "actuation/sp-actuation-ql-runtime-reviews-1.journey.json",
+      "group": "S1 Actuation"
+    },
+    {
+      "file": "actuation/sp-actuation-ql-runtime-reviews-2.journey.json",
+      "group": "S1 Actuation"
+    },
+    {
+      "file": "actuation/sp-actuation-rust-refoundation-1.journey.json",
+      "group": "S1 Actuation"
+    },
+    {
+      "file": "actuation/sp-actuation-rust-refoundation-2.journey.json",
+      "group": "S1 Actuation"
+    },
+    {
+      "file": "actuation/sp-actuation-skills.journey.json",
+      "group": "S1 Actuation"
+    },
+    {
+      "file": "actuation/sp-actuation.journey.json",
+      "group": "S1 Actuation"
+    },
+    {
+      "file": "aikit/sp-aikit-fd-adr-implementation.journey.json",
+      "group": "S2 AIKit"
+    },
+    {
+      "file": "aikit/sp-aikit-fd-docs-p1.journey.json",
+      "group": "S2 AIKit"
+    },
+    {
+      "file": "aikit/sp-aikit-fd-docs-p2.journey.json",
+      "group": "S2 AIKit"
+    },
+    {
+      "file": "aikit/sp-aikit-fd-ground.journey.json",
+      "group": "S2 AIKit"
+    },
+    {
+      "file": "aikit/sp-aikit-fd-periphery.journey.json",
+      "group": "S2 AIKit"
+    },
+    {
+      "file": "aikit/sp-aikit-fd-plans.journey.json",
+      "group": "S2 AIKit"
+    },
+    {
+      "file": "aikit/sp-aikit-fd-skills-p1.journey.json",
+      "group": "S2 AIKit"
+    },
+    {
+      "file": "aikit/sp-aikit-fd-skills-p2.journey.json",
+      "group": "S2 AIKit"
+    },
+    {
+      "file": "aikit/sp-aikit-fd-v2-p1.journey.json",
+      "group": "S2 AIKit"
+    },
+    {
+      "file": "aikit/sp-aikit-fd-v2-p2.journey.json",
+      "group": "S2 AIKit"
+    },
+    {
+      "file": "aikit/sp-aikit.journey.json",
+      "group": "S2 AIKit"
+    },
+    {
+      "file": "central/sp-central-ctrl-defaults.journey.json",
+      "group": "S0 Central"
+    },
+    {
+      "file": "central/sp-central-docs-connectors.journey.json",
+      "group": "S0 Central"
+    },
+    {
+      "file": "central/sp-central-docs-governance.journey.json",
+      "group": "S0 Central"
+    },
+    {
+      "file": "central/sp-central-docs-operations.journey.json",
+      "group": "S0 Central"
+    },
+    {
+      "file": "central/sp-central-docs-vision.journey.json",
+      "group": "S0 Central"
+    },
+    {
+      "file": "central/sp-central-projectcentral.journey.json",
+      "group": "S0 Central"
+    },
+    {
+      "file": "central/sp-central-root-and-connectors.journey.json",
+      "group": "S0 Central"
+    },
+    {
+      "file": "central/sp-central-skills.journey.json",
+      "group": "S0 Central"
+    },
+    {
+      "file": "central/sp-central-surfaces.journey.json",
+      "group": "S0 Central"
+    },
+    {
+      "file": "central/sp-central.journey.json",
+      "group": "S0 Central"
+    },
+    {
+      "file": "factory/sp-factory-fd-docs-canon-modules.journey.json",
+      "group": "S3 Software Factory"
+    },
+    {
+      "file": "factory/sp-factory-fd-docs-canon.journey.json",
+      "group": "S3 Software Factory"
+    },
+    {
+      "file": "factory/sp-factory-fd-docs-program-research.journey.json",
+      "group": "S3 Software Factory"
+    },
+    {
+      "file": "factory/sp-factory-fd-inkwell-claude-front.journey.json",
+      "group": "S3 Software Factory"
+    },
+    {
+      "file": "factory/sp-factory-fd-inkwell-orchestrator.journey.json",
+      "group": "S3 Software Factory"
+    },
+    {
+      "file": "factory/sp-factory-fd-inkwell-overview-appdocs.journey.json",
+      "group": "S3 Software Factory"
+    },
+    {
+      "file": "factory/sp-factory-fd-inkwell-prompts.journey.json",
+      "group": "S3 Software Factory"
+    },
+    {
+      "file": "factory/sp-factory-fd-inkwell-specs.journey.json",
+      "group": "S3 Software Factory"
+    },
+    {
+      "file": "factory/sp-factory-fd-inkwell-sssf-1.journey.json",
+      "group": "S3 Software Factory"
+    },
+    {
+      "file": "factory/sp-factory-fd-inkwell-sssf-2.journey.json",
+      "group": "S3 Software Factory"
+    },
+    {
+      "file": "factory/sp-factory-fd-inkwell-templates-adws.journey.json",
+      "group": "S3 Software Factory"
+    },
+    {
+      "file": "factory/sp-factory-fd-product-root.journey.json",
+      "group": "S3 Software Factory"
+    },
+    {
+      "file": "factory/sp-factory-fd-ql-core.journey.json",
+      "group": "S3 Software Factory"
+    },
+    {
+      "file": "factory/sp-factory-fd-ql-experiments.journey.json",
+      "group": "S3 Software Factory"
+    },
+    {
+      "file": "factory/sp-factory-fd-seed-docs.journey.json",
+      "group": "S3 Software Factory"
+    },
+    {
+      "file": "factory/sp-factory-fd-sites.journey.json",
+      "group": "S3 Software Factory"
+    },
+    {
+      "file": "factory/sp-factory-fd-skills.journey.json",
+      "group": "S3 Software Factory"
+    },
+    {
+      "file": "factory/sp-factory-fd-sssf-1.journey.json",
+      "group": "S3 Software Factory"
+    },
+    {
+      "file": "factory/sp-factory-fd-sssf-2.journey.json",
+      "group": "S3 Software Factory"
+    },
+    {
+      "file": "factory/sp-factory.journey.json",
+      "group": "S3 Software Factory"
+    },
+    {
+      "file": "ql/sp-ql.journey.json",
+      "group": "S5 Quaternal Logic — root"
+    },
+    {
+      "file": "quaternal-logic/sp-ql-fd-craft.journey.json",
+      "group": "S5 Quaternal Logic — full depth"
+    },
+    {
+      "file": "quaternal-logic/sp-ql-fd-docs-p1.journey.json",
+      "group": "S5 Quaternal Logic — full depth"
+    },
+    {
+      "file": "quaternal-logic/sp-ql-fd-docs-p2.journey.json",
+      "group": "S5 Quaternal Logic — full depth"
+    },
+    {
+      "file": "quaternal-logic/sp-ql-fd-epi-logos-p1.journey.json",
+      "group": "S5 Quaternal Logic — full depth"
+    },
+    {
+      "file": "quaternal-logic/sp-ql-fd-epi-logos-p2.journey.json",
+      "group": "S5 Quaternal Logic — full depth"
+    },
+    {
+      "file": "quaternal-logic/sp-ql-fd-epi-logos-p3.journey.json",
+      "group": "S5 Quaternal Logic — full depth"
+    },
+    {
+      "file": "quaternal-logic/sp-ql-fd-epi-logos-p4.journey.json",
+      "group": "S5 Quaternal Logic — full depth"
+    },
+    {
+      "file": "quaternal-logic/sp-ql-fd-fixtures.journey.json",
+      "group": "S5 Quaternal Logic — full depth"
+    },
+    {
+      "file": "quaternal-logic/sp-ql-fd-geometry.journey.json",
+      "group": "S5 Quaternal Logic — full depth"
+    },
+    {
+      "file": "quaternal-logic/sp-ql-fd-ground.journey.json",
+      "group": "S5 Quaternal Logic — full depth"
+    },
+    {
+      "file": "quaternal-logic/sp-ql-fd-kernel-rebuild-p1.journey.json",
+      "group": "S5 Quaternal Logic — full depth"
+    },
+    {
+      "file": "quaternal-logic/sp-ql-fd-kernel-rebuild-p2.journey.json",
+      "group": "S5 Quaternal Logic — full depth"
+    },
+    {
+      "file": "quaternal-logic/sp-ql-fd-kernel-rebuild-p3.journey.json",
+      "group": "S5 Quaternal Logic — full depth"
+    },
+    {
+      "file": "quaternal-logic/sp-ql-fd-periphery.journey.json",
+      "group": "S5 Quaternal Logic — full depth"
+    },
+    {
+      "file": "quaternal-logic/sp-ql-fd-skills.journey.json",
+      "group": "S5 Quaternal Logic — full depth"
+    },
+    {
+      "file": "workcell/sp-workcell-docs-connectivity.journey.json",
+      "group": "S4 Workcell"
+    },
+    {
+      "file": "workcell/sp-workcell-docs-operations.journey.json",
+      "group": "S4 Workcell"
+    },
+    {
+      "file": "workcell/sp-workcell-docs-platform.journey.json",
+      "group": "S4 Workcell"
+    },
+    {
+      "file": "workcell/sp-workcell-docs-sources.journey.json",
+      "group": "S4 Workcell"
+    },
+    {
+      "file": "workcell/sp-workcell-projectcentral.journey.json",
+      "group": "S4 Workcell"
+    },
+    {
+      "file": "workcell/sp-workcell-sdk-and-skills.journey.json",
+      "group": "S4 Workcell"
+    },
+    {
+      "file": "workcell/sp-workcell.journey.json",
+      "group": "S4 Workcell"
+    }
+  ]
+}
