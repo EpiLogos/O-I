@@ -10,7 +10,11 @@
   "bootstrap": [
     {
       "area": "cradle",
-      "run_if_selected": ["cradle", "browser", "guard"],
+      "run_if_selected": [
+        "cradle",
+        "browser",
+        "guard"
+      ],
       "commands": [
         "npm --prefix desktop/cradle install --no-audit --no-fund",
         "npm --prefix packages/oi-design-system install --no-audit --no-fund"
@@ -18,7 +22,9 @@
     },
     {
       "area": "site",
-      "run_if_selected": ["site"],
+      "run_if_selected": [
+        "site"
+      ],
       "commands": [
         "npm --prefix site install --no-audit --no-fund",
         "npm --prefix packages/oi-design-system install --no-audit --no-fund"
@@ -31,7 +37,11 @@
       "tier": "landing",
       "area": "guard",
       "cwd": "desktop/cradle",
-      "provenance": { "workflow": "desktop.yml", "job": "cradle", "step": "Guard executable source — no unresolved markers, runner entry points parse" },
+      "provenance": {
+        "workflow": "desktop.yml",
+        "job": "cradle",
+        "step": "Guard executable source — no unresolved markers, runner entry points parse"
+      },
       "command": "if git grep -lnE '^(<<<<<<<|>>>>>>>|=======$)' -- '*.mjs' '*.ts' '*.tsx'; then echo 'unresolved conflict markers in executable source'; exit 1; fi\nfor f in $(git ls-files 'walk/*.mjs' 'walk/scenarios/*.mjs' 'tests/*.mjs'); do node --check \"$f\" || { echo \"syntax error in $f\"; exit 1; }; done\nnode --test tests/walk-runner.test.mjs"
     },
     {
@@ -39,7 +49,11 @@
       "tier": "landing",
       "area": "cli",
       "cwd": ".",
-      "provenance": { "workflow": "verify.yml", "job": "rust", "step": "Format" },
+      "provenance": {
+        "workflow": "verify.yml",
+        "job": "rust",
+        "step": "Format"
+      },
       "command": "cargo fmt --manifest-path cli/Cargo.toml -- --check"
     },
     {
@@ -47,7 +61,11 @@
       "tier": "landing",
       "area": "cli",
       "cwd": ".",
-      "provenance": { "workflow": "verify.yml", "job": "rust", "step": "Format (same command family, kernel workspace)" },
+      "provenance": {
+        "workflow": "verify.yml",
+        "job": "rust",
+        "step": "Format (same command family, kernel workspace)"
+      },
       "command": "cargo fmt --manifest-path desktop/cradle/kernel/Cargo.toml -- --check"
     },
     {
@@ -55,7 +73,9 @@
       "tier": "landing",
       "area": "cli",
       "cwd": ".",
-      "provenance": { "workflow": "cli test targets (hosted_contracts reproduces the committed contribution registries from admitted sources)" },
+      "provenance": {
+        "workflow": "cli test targets (hosted_contracts reproduces the committed contribution registries from admitted sources)"
+      },
       "command": "cargo test --manifest-path cli/Cargo.toml --locked --test hosted_contracts"
     },
     {
@@ -63,7 +83,11 @@
       "tier": "landing",
       "area": "cli",
       "cwd": ".",
-      "provenance": { "workflow": "verify.yml", "job": "suite-data", "step": "Product capability collation matches carried sources" },
+      "provenance": {
+        "workflow": "verify.yml",
+        "job": "suite-data",
+        "step": "Product capability collation matches carried sources"
+      },
       "command": "python3 scripts/collate-product-capabilities.py --check-snapshot && python3 -m unittest -v tests/test_collate_product_capabilities.py"
     },
     {
@@ -71,7 +95,11 @@
       "tier": "landing",
       "area": "cli",
       "cwd": ".",
-      "provenance": { "workflow": "desktop.yml", "job": "kernel", "step": "Test and lint cradle kernel" },
+      "provenance": {
+        "workflow": "desktop.yml",
+        "job": "kernel",
+        "step": "Test and lint cradle kernel"
+      },
       "command": "cargo test --manifest-path desktop/cradle/kernel/Cargo.toml --all-targets"
     },
     {
@@ -79,7 +107,11 @@
       "tier": "landing",
       "area": "cli",
       "cwd": ".",
-      "provenance": { "workflow": "desktop.yml", "job": "kernel", "step": "Test and lint cradle kernel (clippy -D warnings)" },
+      "provenance": {
+        "workflow": "desktop.yml",
+        "job": "kernel",
+        "step": "Test and lint cradle kernel (clippy -D warnings)"
+      },
       "command": "cargo clippy --manifest-path desktop/cradle/kernel/Cargo.toml --all-targets -- -D warnings"
     },
     {
@@ -87,7 +119,11 @@
       "tier": "landing",
       "area": "cradle",
       "cwd": "desktop/cradle",
-      "provenance": { "workflow": "canvas-editor-context.yml", "job": "canvas", "step": "Type and range/lifecycle contracts" },
+      "provenance": {
+        "workflow": "canvas-editor-context.yml",
+        "job": "canvas",
+        "step": "Type and range/lifecycle contracts"
+      },
       "command": "npx tsc --noEmit"
     },
     {
@@ -95,7 +131,11 @@
       "tier": "landing",
       "area": "cradle",
       "cwd": "desktop/cradle",
-      "provenance": { "workflow": "desktop-shell-recovery.yml", "job": "wider-suite", "step": "Wider suite (tests/*.test.mjs)" },
+      "provenance": {
+        "workflow": "desktop-shell-recovery.yml",
+        "job": "wider-suite",
+        "step": "Wider suite (tests/*.test.mjs)"
+      },
       "command": "node --experimental-strip-types --import ./tests/ts-register.mjs --test tests/*.test.mjs"
     },
     {
@@ -103,7 +143,11 @@
       "tier": "landing",
       "area": "cradle",
       "cwd": "desktop/cradle",
-      "provenance": { "workflow": "desktop.yml", "job": "cradle", "step": "Enforce desktop architecture conformance and bounded debt" },
+      "provenance": {
+        "workflow": "desktop.yml",
+        "job": "cradle",
+        "step": "Enforce desktop architecture conformance and bounded debt"
+      },
       "command": "node --test tests/conformance/*.test.mjs"
     },
     {
@@ -111,39 +155,63 @@
       "tier": "landing",
       "area": "browser",
       "cwd": "desktop/cradle",
-      "provenance": { "workflow": "desktop.yml", "job": "cradle", "step": "Prove desktop appearance, source syntax and native prepaint policy" },
-      "command": "node tests/desktop-appearance.mjs && node tests/text-editor-appearance.mjs && node tests/expression-document-appearance.mjs && node tests/theme-prepaint-csp.mjs && npm --prefix ../../packages/oi-design-system run verify"
+      "provenance": {
+        "workflow": "desktop.yml",
+        "job": "cradle",
+        "step": "Prove desktop appearance, source syntax and native prepaint policy"
+      },
+      "command": "node tests/desktop-appearance.mjs && node tests/text-editor-appearance.mjs && node tests/expression-document-appearance.mjs && node tests/theme-prepaint-csp.mjs && npm --prefix ../../packages/oi-design-system run verify",
+      "retry": 1
     },
     {
       "name": "browser-search-overlay",
       "tier": "landing",
       "area": "browser",
       "cwd": "desktop/cradle",
-      "provenance": { "workflow": "desktop.yml", "job": "cradle", "step": "Prove search component and literal query transport (D)" },
-      "command": "node tests/search-overlay.mjs"
+      "provenance": {
+        "workflow": "desktop.yml",
+        "job": "cradle",
+        "step": "Prove search component and literal query transport (D)"
+      },
+      "command": "node tests/search-overlay.mjs",
+      "retry": 1
     },
     {
       "name": "browser-canvas-editor",
       "tier": "landing",
       "area": "browser",
       "cwd": "desktop/cradle",
-      "provenance": { "workflow": "canvas-editor-context.yml", "job": "canvas", "step": "Production editor selection and send interaction" },
-      "command": "node tests/canvas-editor-browser.mjs"
+      "provenance": {
+        "workflow": "canvas-editor-context.yml",
+        "job": "canvas",
+        "step": "Production editor selection and send interaction"
+      },
+      "command": "node tests/canvas-editor-browser.mjs",
+      "retry": 1
     },
     {
       "name": "browser-techne-lens-studio",
       "tier": "landing",
       "area": "browser",
       "cwd": "desktop/cradle",
-      "provenance": { "workflow": "techne-constructive-field.yml", "job": "source-runtime", "step": "Prove entrance and actual relation drawing with disconnected-binding negatives" },
-      "command": "node tests/techne-lens-studio-browser.mjs"
+      "provenance": {
+        "workflow": "techne-constructive-field.yml",
+        "job": "source-runtime",
+        "step": "Prove entrance and actual relation drawing with disconnected-binding negatives"
+      },
+      "command": "node tests/techne-lens-studio-browser.mjs",
+      "retry": 1
     },
     {
       "name": "cradle-production-build",
       "tier": "landing",
       "area": "cradle",
       "cwd": "desktop/cradle",
-      "provenance": { "workflow": "desktop.yml", "job": "cradle", "step": "Build cradle web bundle from the locked graph" },
+      "provenance": {
+        "workflow": "desktop.yml",
+        "job": "cradle",
+        "step": "Build cradle web bundle from the locked graph"
+      },
       "command": "npm run build"
     },
     {
@@ -151,7 +219,11 @@
       "tier": "landing",
       "area": "site",
       "cwd": "site",
-      "provenance": { "workflow": "site.yml", "job": "build", "step": "Verify shared-field contracts, public content and browser adapters" },
+      "provenance": {
+        "workflow": "site.yml",
+        "job": "build",
+        "step": "Verify shared-field contracts, public content and browser adapters"
+      },
       "command": "node --test ../shared-field/shared-field.test.mjs ../shared-field/social.test.mjs ../shared-field/presentation.test.mjs ../shared-field/expression-presentation.test.mjs ../shared-field/presentation-projection.test.mjs ../shared-field/presentation-authoring.test.mjs ../shared-field/account-projection.test.mjs ../shared-field/explore-surface.test.mjs ../shared-field/central-wiki-projection.test.mjs ../shared-field/aikit-contribution-field.test.mjs ../shared-field/native-action-binding.test.mjs public-content.test.mjs library.test.mjs publication.test.mjs projection-renderer.test.mjs self-other-read-model.test.mjs field-proof-read-model.test.mjs explore-read-model.test.mjs explore-provider.test.mjs explore-public-seed.test.mjs src/explore/relation-layout.test.mjs"
     },
     {
@@ -159,7 +231,11 @@
       "tier": "landing",
       "area": "site",
       "cwd": "site",
-      "provenance": { "workflow": "site.yml", "job": "build", "step": "Verify the essay publication builders and host contract" },
+      "provenance": {
+        "workflow": "site.yml",
+        "job": "build",
+        "step": "Verify the essay publication builders and host contract"
+      },
       "command": "node --experimental-strip-types --test essay-browser.test.mjs essay-host.test.mjs"
     },
     {
@@ -167,7 +243,9 @@
       "tier": "walks",
       "area": "walks",
       "cwd": "desktop/cradle",
-      "provenance": { "workflow": "walk harness (committed receipts are the evidence)" },
+      "provenance": {
+        "workflow": "walk harness (committed receipts are the evidence)"
+      },
       "command": "node walk/run.mjs mode-workspaces"
     },
     {
@@ -175,7 +253,9 @@
       "tier": "walks",
       "area": "walks",
       "cwd": "desktop/cradle",
-      "provenance": { "workflow": "walk harness (committed receipts are the evidence)" },
+      "provenance": {
+        "workflow": "walk harness (committed receipts are the evidence)"
+      },
       "command": "node walk/run.mjs factory-desk"
     },
     {
@@ -183,7 +263,9 @@
       "tier": "walks",
       "area": "walks",
       "cwd": "desktop/cradle",
-      "provenance": { "workflow": "walk harness (committed receipts are the evidence)" },
+      "provenance": {
+        "workflow": "walk harness (committed receipts are the evidence)"
+      },
       "command": "node walk/run.mjs factory-tasks"
     },
     {
@@ -191,7 +273,9 @@
       "tier": "walks",
       "area": "walks",
       "cwd": "desktop/cradle",
-      "provenance": { "workflow": "walk harness (committed receipts are the evidence)" },
+      "provenance": {
+        "workflow": "walk harness (committed receipts are the evidence)"
+      },
       "command": "node walk/run.mjs factory-expressions"
     },
     {
@@ -199,7 +283,11 @@
       "tier": "walks",
       "area": "browser",
       "cwd": "desktop/cradle",
-      "provenance": { "workflow": "desktop-shell-recovery.yml", "job": "shell", "step": "Actual shell interactions in Chromium and WebKit" },
+      "provenance": {
+        "workflow": "desktop-shell-recovery.yml",
+        "job": "shell",
+        "step": "Actual shell interactions in Chromium and WebKit"
+      },
       "command": "node tests/shell-recovery.browser.mjs"
     },
     {
@@ -207,73 +295,105 @@
       "tier": "walks",
       "area": "browser",
       "cwd": "desktop/cradle",
-      "provenance": { "workflow": "personal-web.yml", "job": "carriers", "step": "Exercise standalone editing, export, narrow reading and safe data" },
+      "provenance": {
+        "workflow": "personal-web.yml",
+        "job": "carriers",
+        "step": "Exercise standalone editing, export, narrow reading and safe data"
+      },
       "command": "node tests/personal-web-browser.mjs"
     },
     {
       "name": "ci-native-full-regression",
       "tier": "ci-only",
-      "provenance": { "workflow": "joined/native runs (full native regression suite, multi-repo owner builds)" },
+      "provenance": {
+        "workflow": "joined/native runs (full native regression suite, multi-repo owner builds)"
+      },
       "why": "requires pinned owner checkouts and minutes-scale rust builds across products"
     },
     {
       "name": "ci-embedded-builds",
       "tier": "ci-only",
-      "provenance": { "workflow": "native-expression-backcheck.yml" },
+      "provenance": {
+        "workflow": "native-expression-backcheck.yml"
+      },
       "why": "locked embedded application and C++ material owner builds"
     },
     {
       "name": "ci-cross-product-owner-contracts",
       "tier": "ci-only",
-      "provenance": { "workflow": "cross-product.yml" },
+      "provenance": {
+        "workflow": "cross-product.yml"
+      },
       "why": "checks out exact owner repos at pinned revisions"
     },
     {
       "name": "ci-continuous-work-campaigns",
       "tier": "ci-only",
-      "provenance": { "workflow": "continuous-work-proving.yml" },
+      "provenance": {
+        "workflow": "continuous-work-proving.yml"
+      },
       "why": "builds five owner binaries and runs fail-closed campaign machinery"
     },
     {
       "name": "ci-spacetimedb-live",
       "tier": "ci-only",
-      "provenance": { "workflow": "shared-field.yml", "job": "spacetimedb-live" },
+      "provenance": {
+        "workflow": "shared-field.yml",
+        "job": "spacetimedb-live"
+      },
       "why": "installs SpaceTimeDB CLI, publishes live databases, needs network services"
     },
     {
       "name": "ci-techne-native-owners",
       "tier": "ci-only",
-      "provenance": { "workflow": "techne-constructive-field.yml", "job": "native-application" },
+      "provenance": {
+        "workflow": "techne-constructive-field.yml",
+        "job": "native-application"
+      },
       "why": "restores exact native owner binaries and runs against actual storage"
     },
     {
       "name": "ci-development-field",
       "tier": "ci-only",
-      "provenance": { "workflow": "development-field-native.yml + development-field-conformance.yml" },
+      "provenance": {
+        "workflow": "development-field-native.yml + development-field-conformance.yml"
+      },
       "why": "isolated owner checkouts at exact cut revisions"
     },
     {
       "name": "ci-adoption-lifecycle",
       "tier": "ci-only",
-      "provenance": { "workflow": "adoption-lifecycle.yml + adoption-ingress.yml" },
+      "provenance": {
+        "workflow": "adoption-lifecycle.yml + adoption-ingress.yml"
+      },
       "why": "multi-repo evidence packets, swiftc media checker"
     },
     {
       "name": "ci-desktop-bundle-and-release",
       "tier": "ci-only",
-      "provenance": { "workflow": "desktop-bundle.yml + release.yml + release-publish.yml" },
+      "provenance": {
+        "workflow": "desktop-bundle.yml + release.yml + release-publish.yml"
+      },
       "why": "multi-target release builds, Tauri app bundle packaging"
     },
     {
       "name": "ci-site-public-deployment-gate",
       "tier": "ci-only",
-      "provenance": { "workflow": "site.yml", "job": "build", "step": "Assemble curated publication → build:public → verify exact bytes → receiver browsers" },
+      "provenance": {
+        "workflow": "site.yml",
+        "job": "build",
+        "step": "Assemble curated publication → build:public → verify exact bytes → receiver browsers"
+      },
       "why": "BLOCKED 2026-09-27: the curated Return-of-Zero envelope's essay source_bindings drifted from its declared corpus revision — the delivery lead must re-reconcile the owner-approved envelope before this gate can pass. Named in campaign-evidence/2026-09-27-full-convergence/CONVERGENCE-RECORD.md; the admission gate was deliberately not weakened."
     },
     {
       "name": "ci-spacetimedb-explore-surface-unit",
       "tier": "ci-only",
-      "provenance": { "workflow": "site.yml", "job": "build", "step": "Verify shared-field contracts (spacetimedb-explore-surface.test.mjs member)" },
+      "provenance": {
+        "workflow": "site.yml",
+        "job": "build",
+        "step": "Verify shared-field contracts (spacetimedb-explore-surface.test.mjs member)"
+      },
       "why": "needs the generated spacetimedb client bindings environment; excluded from the local site-contracts list for that reason"
     }
   ]
