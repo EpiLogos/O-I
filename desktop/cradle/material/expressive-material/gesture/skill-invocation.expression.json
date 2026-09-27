@@ -1,0 +1,422 @@
+{
+  "presentation": {
+    "schema": "oi.journey-properties/v1",
+    "description": "Reusable gesture: a skill is invoked on the bound object while the current Scene continues.",
+    "loop": false
+  },
+  "schema": "oi.expression/v1",
+  "expression_ref": "expression:fx-gesture-skill-invocation",
+  "revision": 1,
+  "title": "Skill invocation",
+  "scenes": [
+    {
+      "presentation": {
+        "schema": "oi.journey-scene/v1",
+        "scene": {
+          "automation": [
+            {
+              "blend": "replace",
+              "delay": 0,
+              "duration": 1.4,
+              "easing": "whip",
+              "enabled": true,
+              "firedAt": null,
+              "id": "skill-ring",
+              "loop": "once",
+              "max": 1,
+              "min": 0.2,
+              "phase": 0,
+              "rate": 1,
+              "target": "field.excitation",
+              "type": "ramp",
+              "wave": "smooth"
+            }
+          ],
+          "character": "A skill is invoked: the bearer's body flares through its skill forms while the field rings once.",
+          "composition": {
+            "carryStation": false,
+            "carryTint": true,
+            "focus": "parallel",
+            "focusDuration": 4,
+            "frequencyDriver": "manual",
+            "layout": "free",
+            "plane": "XY"
+          },
+          "duration": 4,
+          "engine": {
+            "autoFitSizes": true,
+            "autoOscillate": true,
+            "autoSweep": false,
+            "backgroundMode": "vignette",
+            "collisionEnabled": false,
+            "collisionMode": "obstacle",
+            "colorEnabled": true,
+            "colorMode": "linearGradient",
+            "dotShape": "circle",
+            "driveShape": "sine",
+            "focusOrder": "listed",
+            "fontFamily": "system-ui, -apple-system, sans-serif",
+            "fontWeight": 900,
+            "grainProfile": true,
+            "inkMode": "blackOnWhite",
+            "mediumDimension": "2D",
+            "mediumEnabled": false,
+            "mediumPlane": "vertical",
+            "morphEnabled": true,
+            "pairwiseEnabled": false,
+            "paletteSource": "custom",
+            "pointerClick": "pulse",
+            "pointerClickRadius": 0.45,
+            "pointerClickStrength": 2.2,
+            "pointerMode": "repel",
+            "relationalEnabled": false,
+            "relationalMode": "orbital",
+            "resonanceEnabled": true,
+            "resonatorMode": "resonator",
+            "sweepDirection": "ascent",
+            "trajectory": "vortexSpiral"
+          },
+          "entities": [
+            {
+              "force": {
+                "kind": "attract",
+                "radius": 0.38,
+                "spin": 0.05,
+                "strength": 0.3
+              },
+              "id": "expression:fx-gesture-skill-invocation:entity:self",
+              "kind": "formation",
+              "locked": false,
+              "name": "Invoking agent",
+              "position": {
+                "x": 0,
+                "y": 0,
+                "z": 0
+              },
+              "role": "self",
+              "rotation": 0,
+              "sequence": {
+                "clock": "seconds",
+                "easing": "whip",
+                "enabled": true,
+                "impulse": 1.4,
+                "order": "loop",
+                "steps": [
+                  {
+                    "hold": 0.2,
+                    "id": "skill-0",
+                    "objectState": {
+                      "force": {
+                        "kind": "attract",
+                        "radius": 0.38,
+                        "spin": 0.1,
+                        "strength": 0.5
+                      },
+                      "rotation": 0,
+                      "scale": 1,
+                      "size": {
+                        "x": 0.62,
+                        "y": 0.72
+                      },
+                      "tint": "#b0643c",
+                      "tintWeight": 1
+                    },
+                    "position": null,
+                    "shape": "text",
+                    "text": "✧",
+                    "transition": 0.2
+                  },
+                  {
+                    "hold": 0.3,
+                    "id": "skill-1",
+                    "name": "kindle",
+                    "objectState": {
+                      "force": {
+                        "kind": "vortex",
+                        "radius": 0.5,
+                        "spin": 1.5,
+                        "strength": 1.6
+                      },
+                      "rotation": 60,
+                      "scale": 1,
+                      "size": {
+                        "x": 0.8,
+                        "y": 0.9
+                      },
+                      "tint": "#b0643c",
+                      "tintWeight": 1
+                    },
+                    "position": null,
+                    "shape": "text",
+                    "text": "⚘",
+                    "transition": 0.3
+                  },
+                  {
+                    "hold": 0.4,
+                    "id": "skill-2",
+                    "name": "form",
+                    "objectState": {
+                      "force": {
+                        "kind": "repel",
+                        "radius": 0.6,
+                        "spin": 0.6,
+                        "strength": 1.2
+                      },
+                      "rotation": 120,
+                      "scale": 1,
+                      "size": {
+                        "x": 1.1,
+                        "y": 1.1
+                      },
+                      "tint": "#d9a36a",
+                      "tintWeight": 1
+                    },
+                    "position": null,
+                    "shape": "yantra",
+                    "text": "",
+                    "transition": 0.4,
+                    "yantraId": "manipura"
+                  },
+                  {
+                    "hold": 0.5,
+                    "id": "skill-3",
+                    "name": "settle",
+                    "objectState": {
+                      "force": {
+                        "kind": "attract",
+                        "radius": 0.38,
+                        "spin": 0.05,
+                        "strength": 0.3
+                      },
+                      "rotation": 360,
+                      "scale": 1,
+                      "size": {
+                        "x": 0.62,
+                        "y": 0.72
+                      },
+                      "tint": "#8a7f6c",
+                      "tintWeight": 0.6
+                    },
+                    "position": null,
+                    "shape": "text",
+                    "text": "✧",
+                    "transition": 0.6
+                  }
+                ]
+              },
+              "shape": "text",
+              "share": 1,
+              "size": {
+                "x": 0.62,
+                "y": 0.72
+              },
+              "station": null,
+              "text": "✧",
+              "tint": "#8a7f6c",
+              "tintWeight": 0.5
+            }
+          ],
+          "field": {
+            "background": "#ebe7dc",
+            "material": "print",
+            "palette": [
+              "#2a2d33",
+              "#6f7d8c",
+              "#b0643c"
+            ],
+            "params": {
+              "circulation": 1,
+              "contrast": 0.74,
+              "count": 40000,
+              "curlDepth": 0.2,
+              "densityPhase": 0.3,
+              "densityScale": 1,
+              "densityTether": 1,
+              "depth": 0.12,
+              "dispersion": 0.05,
+              "dominance": 0,
+              "edgeWeight": 0,
+              "elongation": 0.04,
+              "excitation": 0.6,
+              "frequency": 220,
+              "grain": 0.035,
+              "gravityFalloff": 2,
+              "gravitySoftening": 0.1,
+              "gravityX": 0,
+              "gravityY": 0,
+              "gravityZ": 0,
+              "halo": 0.13,
+              "irregularity": 0.35,
+              "opacity": 0.88,
+              "orientation": 0,
+              "pointerFalloff": 2,
+              "pointerRadius": 0.23,
+              "pointerStrength": 0.8,
+              "quadraticDrag": 0.2,
+              "recovery": 1.1,
+              "roundness": 0.3,
+              "size": 3.2,
+              "sizeBias": 1.6,
+              "snapRigidity": 1,
+              "softness": 0.15,
+              "speed": 0.5,
+              "speedLimit": 3,
+              "swirlRadius": 0.4,
+              "thermalJitter": 0,
+              "timeScale": 1,
+              "turbulence": 0.12,
+              "turbulenceScale": 1.2,
+              "vortexRadius": 0.4,
+              "zConfinement": 1
+            }
+          },
+          "id": "expression:fx-gesture-skill-invocation:scene:skill-invocation",
+          "morph": {
+            "depth": 1,
+            "dwell": 0.3,
+            "law": "theta",
+            "phiOffset": 0,
+            "phiRate": 0.13,
+            "thetaOffset": 0,
+            "thetaRate": 0.08
+          },
+          "name": "Skill invocation",
+          "text": [
+            {
+              "align": "left",
+              "body": "",
+              "id": "t-skill",
+              "italic": "",
+              "kicker": "SKILL",
+              "role": "caption",
+              "size": 20,
+              "title": "",
+              "visible": true,
+              "width": 520,
+              "x": 0.55,
+              "y": 0.25
+            }
+          ],
+          "toolbelt": [
+            {
+              "id": "speed",
+              "key": "timeScale",
+              "scope": "field"
+            },
+            {
+              "id": "spring",
+              "key": "recovery",
+              "scope": "field"
+            },
+            {
+              "id": "viscosity",
+              "key": "native_fluid__viscosity",
+              "scope": "field"
+            },
+            {
+              "id": "flow",
+              "key": "turbulence",
+              "scope": "field"
+            },
+            {
+              "id": "transition",
+              "key": "sequence.transition",
+              "scope": "selected"
+            },
+            {
+              "id": "blend",
+              "key": "native_morphProgress",
+              "scope": "field"
+            }
+          ],
+          "transition": 0.4,
+          "view": {
+            "mode": "2d",
+            "panX": 0,
+            "panY": 0,
+            "pitch": 0,
+            "yaw": 0,
+            "zoom": 1
+          }
+        }
+      },
+      "scene_ref": "expression:fx-gesture-skill-invocation:scene:skill-invocation",
+      "revision": 1,
+      "title": "Skill invocation",
+      "entity_refs": [
+        "expression:fx-gesture-skill-invocation:entity:self"
+      ],
+      "body": null,
+      "triggers": []
+    }
+  ],
+  "entities": {
+    "expression:fx-gesture-skill-invocation:entity:self": {
+      "entity_ref": "expression:fx-gesture-skill-invocation:entity:self",
+      "revision": 1,
+      "title": "Invoking agent",
+      "subject": null,
+      "parameters": {}
+    }
+  },
+  "relations": {},
+  "selection": {
+    "scene_ref": "expression:fx-gesture-skill-invocation:scene:skill-invocation",
+    "entity_ref": null
+  },
+  "provenance": [
+    {
+      "ref": "oi:desktop/cradle/material/factory-expressions",
+      "revision": "curated-2026-09-26",
+      "availability": "available"
+    }
+  ],
+  "representations": [],
+  "refinements": [],
+  "collections": [
+    "factory-expressions"
+  ],
+  "profiles": [],
+  "reuse": {
+    "schema": "oi.expression-reuse/v1",
+    "kind": "gesture",
+    "title": "Skill invocation",
+    "roles": [
+      {
+        "role": "self",
+        "accepts": "agent",
+        "entity_ref": "expression:fx-gesture-skill-invocation:entity:self"
+      },
+      {
+        "role": "caption",
+        "accepts": "text",
+        "text_id": "t-skill"
+      }
+    ],
+    "entry_scene_ref": "expression:fx-gesture-skill-invocation:scene:skill-invocation",
+    "gestures": {
+      "invoke-skill": {
+        "scene_ref": "expression:fx-gesture-skill-invocation:scene:skill-invocation",
+        "role": "self"
+      },
+      "operate": {
+        "scene_ref": "expression:fx-gesture-skill-invocation:scene:skill-invocation",
+        "role": "self"
+      }
+    },
+    "playback": [
+      "expression:fx-gesture-skill-invocation:scene:skill-invocation"
+    ],
+    "associations": {
+      "workflow_keys": [],
+      "task_types": [],
+      "skill_set_refs": [],
+      "skill_refs": [],
+      "event_families": [
+        "skill-invocation",
+        "tool-operation"
+      ]
+    },
+    "authored_by": "agent:factory-expressions-lane-c"
+  }
+}

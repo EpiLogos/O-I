@@ -1,0 +1,604 @@
+{
+  "presentation": {
+    "schema": "oi.journey-properties/v1",
+    "description": "Reusable Scene: Work passage (A → B).",
+    "loop": false
+  },
+  "schema": "oi.expression/v1",
+  "expression_ref": "expression:fx-scene-work-passage",
+  "revision": 1,
+  "title": "Work passage (A → B)",
+  "scenes": [
+    {
+      "presentation": {
+        "schema": "oi.journey-scene/v1",
+        "scene": {
+          "automation": [
+            {
+              "blend": "replace",
+              "delay": 0.5,
+              "duration": 8,
+              "easing": "smoothstep",
+              "enabled": true,
+              "firedAt": null,
+              "id": "artifact-a-b",
+              "loop": "once",
+              "max": 0.9,
+              "min": -0.9,
+              "phase": 0,
+              "rate": 1,
+              "target": "entity:expression%3Afx-scene-work-passage%3Aentity%3Aartifact:x",
+              "type": "ramp",
+              "wave": "smooth"
+            },
+            {
+              "blend": "replace",
+              "delay": 0.8,
+              "duration": 8.4,
+              "easing": "smoothstep",
+              "enabled": true,
+              "firedAt": null,
+              "id": "bearer-a-b",
+              "loop": "once",
+              "max": 0.75,
+              "min": -0.9,
+              "phase": 0,
+              "rate": 1,
+              "target": "entity:expression%3Afx-scene-work-passage%3Aentity%3Aself:x",
+              "type": "ramp",
+              "wave": "smooth"
+            },
+            {
+              "blend": "replace",
+              "delay": 0,
+              "duration": 0,
+              "enabled": true,
+              "firedAt": null,
+              "id": "passage-turbulence",
+              "loop": "loop",
+              "max": 0.24,
+              "min": 0.1,
+              "phase": 0,
+              "rate": 0.08,
+              "target": "field.turbulence",
+              "type": "lfo",
+              "wave": "sine"
+            }
+          ],
+          "character": "Work moves from A to B: the object travels between stations while its bearer keeps pace.",
+          "composition": {
+            "carryStation": false,
+            "carryTint": true,
+            "focus": "travelling",
+            "focusDuration": 6,
+            "frequencyDriver": "manual",
+            "layout": "free",
+            "plane": "XY"
+          },
+          "duration": 12,
+          "engine": {
+            "autoFitSizes": true,
+            "autoOscillate": true,
+            "autoSweep": false,
+            "backgroundMode": "vignette",
+            "collisionEnabled": false,
+            "collisionMode": "obstacle",
+            "colorEnabled": true,
+            "colorMode": "linearGradient",
+            "dotShape": "circle",
+            "driveShape": "sine",
+            "focusOrder": "listed",
+            "fontFamily": "system-ui, -apple-system, sans-serif",
+            "fontWeight": 900,
+            "grainProfile": true,
+            "inkMode": "blackOnWhite",
+            "mediumDimension": "2D",
+            "mediumEnabled": false,
+            "mediumPlane": "vertical",
+            "morphEnabled": true,
+            "pairwiseEnabled": false,
+            "paletteSource": "custom",
+            "pointerClick": "pulse",
+            "pointerClickRadius": 0.45,
+            "pointerClickStrength": 2.2,
+            "pointerMode": "repel",
+            "relationalEnabled": false,
+            "relationalMode": "orbital",
+            "resonanceEnabled": true,
+            "resonatorMode": "resonator",
+            "sweepDirection": "ascent",
+            "trajectory": "vortexSpiral"
+          },
+          "entities": [
+            {
+              "force": {
+                "kind": "attract",
+                "radius": 0.38,
+                "spin": 0.05,
+                "strength": 0.3
+              },
+              "id": "expression:fx-scene-work-passage:entity:self",
+              "kind": "formation",
+              "locked": false,
+              "name": "Working agent",
+              "position": {
+                "x": -0.9,
+                "y": -0.28,
+                "z": 0
+              },
+              "role": "self",
+              "rotation": 0,
+              "sequence": {
+                "clock": "seconds",
+                "enabled": false,
+                "steps": [
+                  {
+                    "hold": 3,
+                    "id": "expression:fx-scene-work-passage:entity:self:rest",
+                    "position": null,
+                    "shape": "text",
+                    "text": "◯",
+                    "transition": 1
+                  }
+                ]
+              },
+              "shape": "text",
+              "share": 1,
+              "size": {
+                "x": 0.62,
+                "y": 0.72
+              },
+              "station": null,
+              "text": "◯",
+              "tint": "#8a7f6c",
+              "tintWeight": 0.5
+            },
+            {
+              "force": {
+                "kind": "attract",
+                "radius": 0.45,
+                "spin": 0,
+                "strength": 0
+              },
+              "id": "expression:fx-scene-work-passage:entity:artifact",
+              "kind": "formation",
+              "locked": false,
+              "name": "Work object",
+              "position": {
+                "x": -0.9,
+                "y": 0.12,
+                "z": 0
+              },
+              "role": "artifact",
+              "rotation": 0,
+              "sequence": {
+                "clock": "seconds",
+                "easing": "smoothstep",
+                "enabled": true,
+                "order": "loop",
+                "steps": [
+                  {
+                    "hold": 2,
+                    "id": "work-object-a",
+                    "objectState": {
+                      "force": {
+                        "kind": "attract",
+                        "radius": 0.3,
+                        "spin": 0,
+                        "strength": 0.3
+                      },
+                      "rotation": 0,
+                      "scale": 1,
+                      "size": {
+                        "x": 0.48,
+                        "y": 0.52
+                      },
+                      "tint": "#6f7d8c",
+                      "tintWeight": 0.7
+                    },
+                    "position": null,
+                    "shape": "text",
+                    "text": "▤",
+                    "transition": 1.4
+                  },
+                  {
+                    "hold": 2,
+                    "id": "work-object-b",
+                    "name": "in progress",
+                    "objectState": {
+                      "force": {
+                        "kind": "vortex",
+                        "radius": 0.32,
+                        "spin": 0.3,
+                        "strength": 0.5
+                      },
+                      "rotation": 0,
+                      "scale": 1,
+                      "size": {
+                        "x": 0.52,
+                        "y": 0.56
+                      },
+                      "tint": "#6f7d8c",
+                      "tintWeight": 0.9
+                    },
+                    "position": null,
+                    "shape": "text",
+                    "text": "▦",
+                    "transition": 1.4
+                  }
+                ]
+              },
+              "shape": "text",
+              "share": 0.6,
+              "size": {
+                "x": 0.48,
+                "y": 0.52
+              },
+              "station": null,
+              "text": "▤",
+              "tint": "#6f7d8c",
+              "tintWeight": 0.7
+            },
+            {
+              "force": {
+                "kind": "attract",
+                "radius": 0.45,
+                "spin": 0,
+                "strength": 0
+              },
+              "id": "expression:fx-scene-work-passage:entity:goal",
+              "kind": "formation",
+              "locked": false,
+              "name": "Goal",
+              "position": {
+                "x": 1.1,
+                "y": 0.45,
+                "z": 0
+              },
+              "role": "goal",
+              "rotation": 0,
+              "sequence": {
+                "clock": "seconds",
+                "enabled": false,
+                "steps": [
+                  {
+                    "hold": 3,
+                    "id": "expression:fx-scene-work-passage:entity:goal:rest",
+                    "position": null,
+                    "shape": "text",
+                    "text": "◎",
+                    "transition": 1
+                  }
+                ]
+              },
+              "shape": "ring",
+              "share": 0.6,
+              "size": {
+                "x": 0.5,
+                "y": 0.5
+              },
+              "station": null,
+              "text": "◎",
+              "tint": "#c9a24e",
+              "tintWeight": 0.6
+            },
+            {
+              "force": {
+                "kind": "attract",
+                "radius": 0.3,
+                "spin": 0,
+                "strength": 0.8
+              },
+              "id": "expression:fx-scene-work-passage:entity:station-a",
+              "kind": "pin",
+              "locked": false,
+              "name": "Station A",
+              "position": {
+                "x": -0.9,
+                "y": 0.12,
+                "z": 0
+              },
+              "rotation": 0,
+              "sequence": {
+                "clock": "seconds",
+                "enabled": false,
+                "steps": [
+                  {
+                    "hold": 3,
+                    "id": "step-09120b36-8010-4f89-90fb-6157a9a4fbb1",
+                    "position": null,
+                    "shape": "text",
+                    "text": "",
+                    "transition": 1
+                  }
+                ]
+              },
+              "shape": "text",
+              "share": 0,
+              "size": {
+                "x": 0.1,
+                "y": 0.1
+              },
+              "station": null,
+              "text": "",
+              "tint": "#252720",
+              "tintWeight": 0
+            },
+            {
+              "force": {
+                "kind": "attract",
+                "radius": 0.3,
+                "spin": 0,
+                "strength": 0.8
+              },
+              "id": "expression:fx-scene-work-passage:entity:station-b",
+              "kind": "pin",
+              "locked": false,
+              "name": "Station B",
+              "position": {
+                "x": 0.9,
+                "y": 0.12,
+                "z": 0
+              },
+              "rotation": 0,
+              "sequence": {
+                "clock": "seconds",
+                "enabled": false,
+                "steps": [
+                  {
+                    "hold": 3,
+                    "id": "step-482fca39-f3ff-4f63-9128-5218f0686a71",
+                    "position": null,
+                    "shape": "text",
+                    "text": "",
+                    "transition": 1
+                  }
+                ]
+              },
+              "shape": "text",
+              "share": 0,
+              "size": {
+                "x": 0.1,
+                "y": 0.1
+              },
+              "station": null,
+              "text": "",
+              "tint": "#252720",
+              "tintWeight": 0
+            }
+          ],
+          "field": {
+            "background": "#ebe7dc",
+            "material": "print",
+            "palette": [
+              "#2a2d33",
+              "#6f7d8c",
+              "#b0643c"
+            ],
+            "params": {
+              "circulation": 1,
+              "contrast": 0.74,
+              "count": 40000,
+              "curlDepth": 0.2,
+              "densityPhase": 0.3,
+              "densityScale": 1,
+              "densityTether": 1,
+              "depth": 0.12,
+              "dispersion": 0.05,
+              "dominance": 0,
+              "edgeWeight": 0,
+              "elongation": 0.04,
+              "excitation": 0.6,
+              "frequency": 220,
+              "grain": 0.035,
+              "gravityFalloff": 2,
+              "gravitySoftening": 0.1,
+              "gravityX": 0,
+              "gravityY": 0,
+              "gravityZ": 0,
+              "halo": 0.13,
+              "irregularity": 0.35,
+              "opacity": 0.88,
+              "orientation": 0,
+              "pointerFalloff": 2,
+              "pointerRadius": 0.23,
+              "pointerStrength": 0.8,
+              "quadraticDrag": 0.2,
+              "recovery": 1.1,
+              "roundness": 0.3,
+              "size": 3.2,
+              "sizeBias": 1.6,
+              "snapRigidity": 1,
+              "softness": 0.15,
+              "speed": 0.5,
+              "speedLimit": 3,
+              "swirlRadius": 0.4,
+              "thermalJitter": 0,
+              "timeScale": 1,
+              "turbulence": 0.12,
+              "turbulenceScale": 1.2,
+              "vortexRadius": 0.4,
+              "zConfinement": 1
+            }
+          },
+          "id": "expression:fx-scene-work-passage:scene:work-passage",
+          "morph": {
+            "depth": 1,
+            "dwell": 0.3,
+            "law": "theta",
+            "phiOffset": 0,
+            "phiRate": 0.13,
+            "thetaOffset": 0,
+            "thetaRate": 0.08
+          },
+          "name": "Work passage",
+          "text": [
+            {
+              "align": "left",
+              "body": "",
+              "id": "t-progress",
+              "italic": "",
+              "kicker": "IN PROGRESS",
+              "role": "progressText",
+              "size": 22,
+              "title": "",
+              "visible": true,
+              "width": 520,
+              "x": 0.07,
+              "y": 0.84
+            }
+          ],
+          "toolbelt": [
+            {
+              "id": "speed",
+              "key": "timeScale",
+              "scope": "field"
+            },
+            {
+              "id": "spring",
+              "key": "recovery",
+              "scope": "field"
+            },
+            {
+              "id": "viscosity",
+              "key": "native_fluid__viscosity",
+              "scope": "field"
+            },
+            {
+              "id": "flow",
+              "key": "turbulence",
+              "scope": "field"
+            },
+            {
+              "id": "transition",
+              "key": "sequence.transition",
+              "scope": "selected"
+            },
+            {
+              "id": "blend",
+              "key": "native_morphProgress",
+              "scope": "field"
+            }
+          ],
+          "transition": 1.2,
+          "view": {
+            "mode": "2d",
+            "panX": 0,
+            "panY": 0,
+            "pitch": 0,
+            "yaw": 0,
+            "zoom": 1
+          }
+        }
+      },
+      "scene_ref": "expression:fx-scene-work-passage:scene:work-passage",
+      "revision": 1,
+      "title": "Work passage",
+      "entity_refs": [
+        "expression:fx-scene-work-passage:entity:self",
+        "expression:fx-scene-work-passage:entity:artifact",
+        "expression:fx-scene-work-passage:entity:goal",
+        "expression:fx-scene-work-passage:entity:station-a",
+        "expression:fx-scene-work-passage:entity:station-b"
+      ],
+      "body": null,
+      "triggers": []
+    }
+  ],
+  "entities": {
+    "expression:fx-scene-work-passage:entity:artifact": {
+      "entity_ref": "expression:fx-scene-work-passage:entity:artifact",
+      "revision": 1,
+      "title": "Work object",
+      "subject": null,
+      "parameters": {}
+    },
+    "expression:fx-scene-work-passage:entity:goal": {
+      "entity_ref": "expression:fx-scene-work-passage:entity:goal",
+      "revision": 1,
+      "title": "Goal",
+      "subject": null,
+      "parameters": {}
+    },
+    "expression:fx-scene-work-passage:entity:self": {
+      "entity_ref": "expression:fx-scene-work-passage:entity:self",
+      "revision": 1,
+      "title": "Working agent",
+      "subject": null,
+      "parameters": {}
+    },
+    "expression:fx-scene-work-passage:entity:station-a": {
+      "entity_ref": "expression:fx-scene-work-passage:entity:station-a",
+      "revision": 1,
+      "title": "Station A",
+      "subject": null,
+      "parameters": {}
+    },
+    "expression:fx-scene-work-passage:entity:station-b": {
+      "entity_ref": "expression:fx-scene-work-passage:entity:station-b",
+      "revision": 1,
+      "title": "Station B",
+      "subject": null,
+      "parameters": {}
+    }
+  },
+  "relations": {},
+  "selection": {
+    "scene_ref": "expression:fx-scene-work-passage:scene:work-passage",
+    "entity_ref": null
+  },
+  "provenance": [
+    {
+      "ref": "oi:desktop/cradle/material/factory-expressions",
+      "revision": "curated-2026-09-26",
+      "availability": "available"
+    }
+  ],
+  "representations": [],
+  "refinements": [],
+  "collections": [
+    "factory-expressions"
+  ],
+  "profiles": [],
+  "reuse": {
+    "schema": "oi.expression-reuse/v1",
+    "kind": "scene",
+    "title": "Work passage (A → B)",
+    "roles": [
+      {
+        "role": "self",
+        "accepts": "agent",
+        "entity_ref": "expression:fx-scene-work-passage:entity:self"
+      },
+      {
+        "role": "artifact",
+        "accepts": "object",
+        "entity_ref": "expression:fx-scene-work-passage:entity:artifact"
+      },
+      {
+        "role": "goal",
+        "accepts": "object",
+        "entity_ref": "expression:fx-scene-work-passage:entity:goal"
+      },
+      {
+        "role": "progressText",
+        "accepts": "text",
+        "text_id": "t-progress"
+      }
+    ],
+    "entry_scene_ref": "expression:fx-scene-work-passage:scene:work-passage",
+    "playback": [
+      "expression:fx-scene-work-passage:scene:work-passage"
+    ],
+    "associations": {
+      "workflow_keys": [],
+      "task_types": [],
+      "skill_set_refs": [],
+      "skill_refs": [],
+      "event_families": [
+        "activity"
+      ]
+    },
+    "authored_by": "agent:factory-expressions-lane-c"
+  }
+}

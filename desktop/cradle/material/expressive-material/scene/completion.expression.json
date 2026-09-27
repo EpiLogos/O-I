@@ -1,0 +1,519 @@
+{
+  "presentation": {
+    "schema": "oi.journey-properties/v1",
+    "description": "Reusable Scene: Completion.",
+    "loop": false
+  },
+  "schema": "oi.expression/v1",
+  "expression_ref": "expression:fx-scene-completion",
+  "revision": 1,
+  "title": "Completion",
+  "scenes": [
+    {
+      "presentation": {
+        "schema": "oi.journey-scene/v1",
+        "scene": {
+          "automation": [
+            {
+              "blend": "replace",
+              "delay": 0.3,
+              "duration": 5,
+              "easing": "smoothstep",
+              "enabled": true,
+              "firedAt": null,
+              "id": "completion-bloom",
+              "loop": "once",
+              "max": 1.25,
+              "min": 0.7,
+              "phase": 0,
+              "rate": 1,
+              "target": "entity:expression%3Afx-scene-completion%3Aentity%3Agoal:scale",
+              "type": "ramp",
+              "wave": "smooth"
+            },
+            {
+              "blend": "replace",
+              "delay": 0,
+              "duration": 4,
+              "easing": "smoothstep",
+              "enabled": true,
+              "firedAt": null,
+              "id": "completion-gather-l",
+              "loop": "once",
+              "max": -0.55,
+              "min": -1.1,
+              "phase": 0,
+              "rate": 1,
+              "target": "entity:expression%3Afx-scene-completion%3Aentity%3Alead:x",
+              "type": "ramp",
+              "wave": "smooth"
+            },
+            {
+              "blend": "replace",
+              "delay": 0,
+              "duration": 4,
+              "easing": "smoothstep",
+              "enabled": true,
+              "firedAt": null,
+              "id": "completion-gather-r",
+              "loop": "once",
+              "max": 0.55,
+              "min": 1.1,
+              "phase": 0,
+              "rate": 1,
+              "target": "entity:expression%3Afx-scene-completion%3Aentity%3Aparticipant-0:x",
+              "type": "ramp",
+              "wave": "smooth"
+            }
+          ],
+          "character": "The cast gathers at the goal; the goal opens and the result is written beneath it.",
+          "composition": {
+            "carryStation": false,
+            "carryTint": true,
+            "focus": "parallel",
+            "focusDuration": 4,
+            "frequencyDriver": "manual",
+            "layout": "free",
+            "plane": "XY"
+          },
+          "duration": 12,
+          "engine": {
+            "autoFitSizes": true,
+            "autoOscillate": true,
+            "autoSweep": false,
+            "backgroundMode": "vignette",
+            "collisionEnabled": false,
+            "collisionMode": "obstacle",
+            "colorEnabled": true,
+            "colorMode": "linearGradient",
+            "dotShape": "circle",
+            "driveShape": "sine",
+            "focusOrder": "listed",
+            "fontFamily": "system-ui, -apple-system, sans-serif",
+            "fontWeight": 900,
+            "grainProfile": true,
+            "inkMode": "blackOnWhite",
+            "mediumDimension": "2D",
+            "mediumEnabled": false,
+            "mediumPlane": "vertical",
+            "morphEnabled": true,
+            "pairwiseEnabled": false,
+            "paletteSource": "custom",
+            "pointerClick": "pulse",
+            "pointerClickRadius": 0.45,
+            "pointerClickStrength": 2.2,
+            "pointerMode": "repel",
+            "relationalEnabled": false,
+            "relationalMode": "orbital",
+            "resonanceEnabled": true,
+            "resonatorMode": "resonator",
+            "sweepDirection": "ascent",
+            "trajectory": "vortexSpiral"
+          },
+          "entities": [
+            {
+              "force": {
+                "kind": "vortex",
+                "radius": 0.6,
+                "spin": 0.5,
+                "strength": 0.9
+              },
+              "id": "expression:fx-scene-completion:entity:goal",
+              "kind": "formation",
+              "locked": false,
+              "name": "Goal",
+              "position": {
+                "x": 0,
+                "y": 0.12,
+                "z": 0
+              },
+              "role": "goal",
+              "rotation": 0,
+              "sequence": {
+                "clock": "seconds",
+                "enabled": false,
+                "steps": [
+                  {
+                    "hold": 3,
+                    "id": "expression:fx-scene-completion:entity:goal:rest",
+                    "position": null,
+                    "shape": "text",
+                    "text": "✺",
+                    "transition": 1
+                  }
+                ]
+              },
+              "shape": "yantra",
+              "share": 1.6,
+              "size": {
+                "x": 1.1,
+                "y": 1.1
+              },
+              "station": null,
+              "text": "✺",
+              "tint": "#d9a36a",
+              "tintWeight": 1,
+              "yantraId": "sahasrara"
+            },
+            {
+              "force": {
+                "kind": "attract",
+                "radius": 0.38,
+                "spin": 0.05,
+                "strength": 0.3
+              },
+              "id": "expression:fx-scene-completion:entity:lead",
+              "kind": "formation",
+              "locked": false,
+              "name": "Lead",
+              "position": {
+                "x": -0.7,
+                "y": -0.35,
+                "z": 0
+              },
+              "role": "lead",
+              "rotation": 0,
+              "sequence": {
+                "clock": "seconds",
+                "enabled": false,
+                "steps": [
+                  {
+                    "hold": 3,
+                    "id": "expression:fx-scene-completion:entity:lead:rest",
+                    "position": null,
+                    "shape": "text",
+                    "text": "◯",
+                    "transition": 1
+                  }
+                ]
+              },
+              "shape": "text",
+              "share": 1,
+              "size": {
+                "x": 0.62,
+                "y": 0.72
+              },
+              "station": null,
+              "text": "◯",
+              "tint": "#8a7f6c",
+              "tintWeight": 0.5
+            },
+            {
+              "force": {
+                "kind": "attract",
+                "radius": 0.38,
+                "spin": 0.05,
+                "strength": 0.3
+              },
+              "id": "expression:fx-scene-completion:entity:participant-0",
+              "kind": "formation",
+              "locked": false,
+              "name": "Participant",
+              "position": {
+                "x": 0.7,
+                "y": -0.35,
+                "z": 0
+              },
+              "role": "participants.0",
+              "rotation": 0,
+              "sequence": {
+                "clock": "seconds",
+                "enabled": false,
+                "steps": [
+                  {
+                    "hold": 3,
+                    "id": "expression:fx-scene-completion:entity:participant-0:rest",
+                    "position": null,
+                    "shape": "text",
+                    "text": "◯",
+                    "transition": 1
+                  }
+                ]
+              },
+              "shape": "text",
+              "share": 1,
+              "size": {
+                "x": 0.62,
+                "y": 0.72
+              },
+              "station": null,
+              "text": "◯",
+              "tint": "#8a7f6c",
+              "tintWeight": 0.5
+            },
+            {
+              "force": {
+                "kind": "attract",
+                "radius": 0.38,
+                "spin": 0.05,
+                "strength": 0.3
+              },
+              "id": "expression:fx-scene-completion:entity:participant-1",
+              "kind": "formation",
+              "locked": false,
+              "name": "Participant",
+              "position": {
+                "x": 0,
+                "y": -0.6,
+                "z": 0
+              },
+              "role": "participants.1",
+              "rotation": 0,
+              "sequence": {
+                "clock": "seconds",
+                "enabled": false,
+                "steps": [
+                  {
+                    "hold": 3,
+                    "id": "expression:fx-scene-completion:entity:participant-1:rest",
+                    "position": null,
+                    "shape": "text",
+                    "text": "◯",
+                    "transition": 1
+                  }
+                ]
+              },
+              "shape": "text",
+              "share": 1,
+              "size": {
+                "x": 0.62,
+                "y": 0.72
+              },
+              "station": null,
+              "text": "◯",
+              "tint": "#8a7f6c",
+              "tintWeight": 0.5
+            }
+          ],
+          "field": {
+            "background": "#ebe7dc",
+            "material": "print",
+            "palette": [
+              "#2a2d33",
+              "#6f7d8c",
+              "#b0643c"
+            ],
+            "params": {
+              "circulation": 1,
+              "contrast": 0.74,
+              "count": 40000,
+              "curlDepth": 0.2,
+              "densityPhase": 0.3,
+              "densityScale": 1,
+              "densityTether": 1,
+              "depth": 0.12,
+              "dispersion": 0.05,
+              "dominance": 0,
+              "edgeWeight": 0,
+              "elongation": 0.04,
+              "excitation": 0.6,
+              "frequency": 220,
+              "grain": 0.035,
+              "gravityFalloff": 2,
+              "gravitySoftening": 0.1,
+              "gravityX": 0,
+              "gravityY": 0,
+              "gravityZ": 0,
+              "halo": 0.13,
+              "irregularity": 0.35,
+              "opacity": 0.88,
+              "orientation": 0,
+              "pointerFalloff": 2,
+              "pointerRadius": 0.23,
+              "pointerStrength": 0.8,
+              "quadraticDrag": 0.2,
+              "recovery": 1.1,
+              "roundness": 0.3,
+              "size": 3.2,
+              "sizeBias": 1.6,
+              "snapRigidity": 1,
+              "softness": 0.15,
+              "speed": 0.5,
+              "speedLimit": 3,
+              "swirlRadius": 0.4,
+              "thermalJitter": 0,
+              "timeScale": 1,
+              "turbulence": 0.12,
+              "turbulenceScale": 1.2,
+              "vortexRadius": 0.4,
+              "zConfinement": 1
+            }
+          },
+          "id": "expression:fx-scene-completion:scene:completion",
+          "morph": {
+            "depth": 1.4,
+            "dwell": 0.3,
+            "law": "beat",
+            "phiOffset": 0,
+            "phiRate": 0.21,
+            "thetaOffset": 0,
+            "thetaRate": 0.12
+          },
+          "name": "Completion",
+          "text": [
+            {
+              "align": "center",
+              "body": "",
+              "id": "t-result",
+              "italic": "",
+              "kicker": "RETURNED",
+              "role": "resultText",
+              "size": 22,
+              "title": "",
+              "visible": true,
+              "width": 640,
+              "x": 0.22,
+              "y": 0.86
+            }
+          ],
+          "toolbelt": [
+            {
+              "id": "speed",
+              "key": "timeScale",
+              "scope": "field"
+            },
+            {
+              "id": "spring",
+              "key": "recovery",
+              "scope": "field"
+            },
+            {
+              "id": "viscosity",
+              "key": "native_fluid__viscosity",
+              "scope": "field"
+            },
+            {
+              "id": "flow",
+              "key": "turbulence",
+              "scope": "field"
+            },
+            {
+              "id": "transition",
+              "key": "sequence.transition",
+              "scope": "selected"
+            },
+            {
+              "id": "blend",
+              "key": "native_morphProgress",
+              "scope": "field"
+            }
+          ],
+          "transition": 2,
+          "view": {
+            "mode": "2d",
+            "panX": 0,
+            "panY": 0,
+            "pitch": 0,
+            "yaw": 0,
+            "zoom": 1
+          }
+        }
+      },
+      "scene_ref": "expression:fx-scene-completion:scene:completion",
+      "revision": 1,
+      "title": "Completion",
+      "entity_refs": [
+        "expression:fx-scene-completion:entity:goal",
+        "expression:fx-scene-completion:entity:lead",
+        "expression:fx-scene-completion:entity:participant-0",
+        "expression:fx-scene-completion:entity:participant-1"
+      ],
+      "body": null,
+      "triggers": []
+    }
+  ],
+  "entities": {
+    "expression:fx-scene-completion:entity:goal": {
+      "entity_ref": "expression:fx-scene-completion:entity:goal",
+      "revision": 1,
+      "title": "Goal",
+      "subject": null,
+      "parameters": {}
+    },
+    "expression:fx-scene-completion:entity:lead": {
+      "entity_ref": "expression:fx-scene-completion:entity:lead",
+      "revision": 1,
+      "title": "Lead",
+      "subject": null,
+      "parameters": {}
+    },
+    "expression:fx-scene-completion:entity:participant-0": {
+      "entity_ref": "expression:fx-scene-completion:entity:participant-0",
+      "revision": 1,
+      "title": "Participant",
+      "subject": null,
+      "parameters": {}
+    },
+    "expression:fx-scene-completion:entity:participant-1": {
+      "entity_ref": "expression:fx-scene-completion:entity:participant-1",
+      "revision": 1,
+      "title": "Participant",
+      "subject": null,
+      "parameters": {}
+    }
+  },
+  "relations": {},
+  "selection": {
+    "scene_ref": "expression:fx-scene-completion:scene:completion",
+    "entity_ref": null
+  },
+  "provenance": [
+    {
+      "ref": "oi:desktop/cradle/material/factory-expressions",
+      "revision": "curated-2026-09-26",
+      "availability": "available"
+    }
+  ],
+  "representations": [],
+  "refinements": [],
+  "collections": [
+    "factory-expressions"
+  ],
+  "profiles": [],
+  "reuse": {
+    "schema": "oi.expression-reuse/v1",
+    "kind": "scene",
+    "title": "Completion",
+    "roles": [
+      {
+        "role": "goal",
+        "accepts": "object",
+        "entity_ref": "expression:fx-scene-completion:entity:goal"
+      },
+      {
+        "role": "lead",
+        "accepts": "agent",
+        "entity_ref": "expression:fx-scene-completion:entity:lead"
+      },
+      {
+        "role": "participants.0",
+        "accepts": "agent",
+        "entity_ref": "expression:fx-scene-completion:entity:participant-0"
+      },
+      {
+        "role": "participants.1",
+        "accepts": "agent",
+        "entity_ref": "expression:fx-scene-completion:entity:participant-1"
+      },
+      {
+        "role": "resultText",
+        "accepts": "text",
+        "text_id": "t-result"
+      }
+    ],
+    "entry_scene_ref": "expression:fx-scene-completion:scene:completion",
+    "playback": [
+      "expression:fx-scene-completion:scene:completion"
+    ],
+    "associations": {
+      "workflow_keys": [],
+      "task_types": [],
+      "skill_set_refs": [],
+      "skill_refs": [],
+      "event_families": [
+        "completion"
+      ]
+    },
+    "authored_by": "agent:factory-expressions-lane-c"
+  }
+}

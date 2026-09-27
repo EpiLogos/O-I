@@ -1,0 +1,610 @@
+{
+  "presentation": {
+    "schema": "oi.journey-properties/v1",
+    "description": "Reusable Scene: Explanation.",
+    "loop": false
+  },
+  "schema": "oi.expression/v1",
+  "expression_ref": "expression:explanation-contrast",
+  "revision": 3,
+  "title": "Explanation — contrast (claim and verdict)",
+  "scenes": [
+    {
+      "presentation": {
+        "schema": "oi.journey-scene/v1",
+        "scene": {
+          "automation": [],
+          "character": "Two voices in contrast: the claim speaks on the left, the verdict answers on the right, and the subject unfolds above between them.",
+          "composition": {
+            "carryStation": false,
+            "carryTint": true,
+            "focus": "parallel",
+            "focusDuration": 4,
+            "frequencyDriver": "manual",
+            "layout": "free",
+            "plane": "XY"
+          },
+          "duration": 14,
+          "engine": {
+            "autoFitSizes": true,
+            "autoOscillate": true,
+            "autoSweep": false,
+            "backgroundMode": "vignette",
+            "collisionEnabled": false,
+            "collisionMode": "obstacle",
+            "colorEnabled": true,
+            "colorMode": "linearGradient",
+            "dotShape": "circle",
+            "driveShape": "sine",
+            "focusOrder": "listed",
+            "fontFamily": "system-ui, -apple-system, sans-serif",
+            "fontWeight": 900,
+            "grainProfile": true,
+            "inkMode": "blackOnWhite",
+            "mediumDimension": "2D",
+            "mediumEnabled": false,
+            "mediumPlane": "vertical",
+            "morphEnabled": true,
+            "pairwiseEnabled": false,
+            "paletteSource": "custom",
+            "pointerClick": "pulse",
+            "pointerClickRadius": 0.45,
+            "pointerClickStrength": 2.2,
+            "pointerMode": "repel",
+            "relationalEnabled": false,
+            "relationalMode": "orbital",
+            "resonanceEnabled": true,
+            "resonatorMode": "resonator",
+            "sweepDirection": "ascent",
+            "trajectory": "vortexSpiral"
+          },
+          "entities": [
+            {
+              "force": {
+                "kind": "attract",
+                "radius": 0.38,
+                "spin": 0.05,
+                "strength": 0.3
+              },
+              "id": "expression:explanation-contrast:entity:lead",
+              "kind": "formation",
+              "locked": false,
+              "name": "Explainer",
+              "position": {
+                "x": -0.95,
+                "y": -0.18,
+                "z": 0
+              },
+              "role": "lead",
+              "rotation": 0,
+              "sequence": {
+                "clock": "seconds",
+                "easing": "smoothstep",
+                "enabled": true,
+                "order": "loop",
+                "steps": [
+                  {
+                    "hold": 2.5,
+                    "id": "claim-posed",
+                    "objectState": {
+                      "force": {
+                        "kind": "attract",
+                        "radius": 0.42,
+                        "spin": 0.05,
+                        "strength": 0.45
+                      },
+                      "rotation": 0,
+                      "scale": 1.1,
+                      "size": {
+                        "x": 0.72,
+                        "y": 0.82
+                      },
+                      "tint": "#b0643c",
+                      "tintWeight": 0.95
+                    },
+                    "position": null,
+                    "shape": "text",
+                    "text": "◯",
+                    "transition": 1
+                  },
+                  {
+                    "hold": 3.5,
+                    "id": "claim-held",
+                    "objectState": {
+                      "force": {
+                        "kind": "attract",
+                        "radius": 0.38,
+                        "spin": 0.05,
+                        "strength": 0.25
+                      },
+                      "rotation": 0,
+                      "scale": 1,
+                      "size": {
+                        "x": 0.62,
+                        "y": 0.72
+                      },
+                      "tint": "#b0643c",
+                      "tintWeight": 0.55
+                    },
+                    "position": null,
+                    "shape": "text",
+                    "text": "◯",
+                    "transition": 1
+                  }
+                ]
+              },
+              "shape": "text",
+              "share": 1,
+              "size": {
+                "x": 0.62,
+                "y": 0.72
+              },
+              "station": null,
+              "text": "◯",
+              "tint": "#b0643c",
+              "tintWeight": 0.9
+            },
+            {
+              "force": {
+                "kind": "attract",
+                "radius": 0.45,
+                "spin": 0,
+                "strength": 0
+              },
+              "id": "expression:explanation-contrast:entity:goal",
+              "kind": "formation",
+              "layers": [
+                {
+                  "id": "outer",
+                  "scale": 1.6,
+                  "text": "◯",
+                  "z": -0.1
+                },
+                {
+                  "id": "inner",
+                  "scale": 0.4,
+                  "text": "·",
+                  "z": 0.1
+                }
+              ],
+              "locked": false,
+              "name": "Subject",
+              "position": {
+                "x": 0,
+                "y": 0.42,
+                "z": 0
+              },
+              "role": "goal",
+              "rotation": 0,
+              "sequence": {
+                "clock": "seconds",
+                "easing": "smoothstep",
+                "enabled": true,
+                "order": "loop",
+                "steps": [
+                  {
+                    "hold": 3,
+                    "id": "subject-closed",
+                    "objectState": {
+                      "force": {
+                        "kind": "attract",
+                        "radius": 0.4,
+                        "spin": 0.1,
+                        "strength": 0.4
+                      },
+                      "rotation": 0,
+                      "scale": 1,
+                      "size": {
+                        "x": 0.9,
+                        "y": 0.9
+                      },
+                      "tint": "#9fb7b0",
+                      "tintWeight": 0.7
+                    },
+                    "position": null,
+                    "shape": "text",
+                    "text": "◇",
+                    "transition": 1.5
+                  },
+                  {
+                    "hold": 3,
+                    "id": "subject-open",
+                    "name": "unfolded",
+                    "objectState": {
+                      "force": {
+                        "kind": "vortex",
+                        "radius": 0.5,
+                        "spin": 0.35,
+                        "strength": 0.6
+                      },
+                      "rotation": 45,
+                      "scale": 1,
+                      "size": {
+                        "x": 1.1,
+                        "y": 1.1
+                      },
+                      "tint": "#9fb7b0",
+                      "tintWeight": 0.9
+                    },
+                    "position": null,
+                    "shape": "text",
+                    "text": "◈",
+                    "transition": 1.5
+                  }
+                ]
+              },
+              "shape": "text",
+              "share": 1.2,
+              "size": {
+                "x": 0.9,
+                "y": 0.9
+              },
+              "station": null,
+              "text": "◇",
+              "tint": "#9fb7b0",
+              "tintWeight": 0.7
+            },
+            {
+              "force": {
+                "kind": "attract",
+                "radius": 0.38,
+                "spin": -0.05,
+                "strength": 0.3
+              },
+              "id": "expression:explanation-contrast:entity:participant-0",
+              "kind": "formation",
+              "locked": false,
+              "name": "Verifier",
+              "position": {
+                "x": 0.95,
+                "y": -0.18,
+                "z": 0
+              },
+              "role": "participants.0",
+              "rotation": 0,
+              "sequence": {
+                "clock": "seconds",
+                "easing": "smoothstep",
+                "enabled": true,
+                "order": "loop",
+                "steps": [
+                  {
+                    "hold": 3.5,
+                    "id": "verdict-listening",
+                    "objectState": {
+                      "force": {
+                        "kind": "attract",
+                        "radius": 0.38,
+                        "spin": -0.05,
+                        "strength": 0.2
+                      },
+                      "rotation": 0,
+                      "scale": 1,
+                      "size": {
+                        "x": 0.56,
+                        "y": 0.66
+                      },
+                      "tint": "#6f7d8c",
+                      "tintWeight": 0.35
+                    },
+                    "position": null,
+                    "shape": "text",
+                    "text": "▽",
+                    "transition": 1
+                  },
+                  {
+                    "hold": 2.5,
+                    "id": "verdict-given",
+                    "objectState": {
+                      "force": {
+                        "kind": "attract",
+                        "radius": 0.42,
+                        "spin": -0.05,
+                        "strength": 0.45
+                      },
+                      "rotation": 0,
+                      "scale": 1.1,
+                      "size": {
+                        "x": 0.72,
+                        "y": 0.82
+                      },
+                      "tint": "#6f7d8c",
+                      "tintWeight": 0.95
+                    },
+                    "position": null,
+                    "shape": "text",
+                    "text": "▼",
+                    "transition": 1
+                  }
+                ]
+              },
+              "shape": "text",
+              "share": 1,
+              "size": {
+                "x": 0.62,
+                "y": 0.72
+              },
+              "station": null,
+              "text": "▽",
+              "tint": "#6f7d8c",
+              "tintWeight": 0.6
+            }
+          ],
+          "field": {
+            "background": "#ebe7dc",
+            "material": "print",
+            "palette": [
+              "#2a2d33",
+              "#6f7d8c",
+              "#b0643c"
+            ],
+            "params": {
+              "circulation": 1,
+              "contrast": 0.74,
+              "count": 40000,
+              "curlDepth": 0.2,
+              "densityPhase": 0.3,
+              "densityScale": 1,
+              "densityTether": 1,
+              "depth": 0.12,
+              "dispersion": 0.05,
+              "dominance": 0,
+              "edgeWeight": 0,
+              "elongation": 0.04,
+              "excitation": 0.6,
+              "frequency": 220,
+              "grain": 0.035,
+              "gravityFalloff": 2,
+              "gravitySoftening": 0.1,
+              "gravityX": 0,
+              "gravityY": 0,
+              "gravityZ": 0,
+              "halo": 0.13,
+              "irregularity": 0.35,
+              "opacity": 0.88,
+              "orientation": 0,
+              "pointerFalloff": 2,
+              "pointerRadius": 0.23,
+              "pointerStrength": 0.8,
+              "quadraticDrag": 0.2,
+              "recovery": 1.1,
+              "roundness": 0.3,
+              "size": 3.2,
+              "sizeBias": 1.6,
+              "snapRigidity": 1,
+              "softness": 0.15,
+              "speed": 0.5,
+              "speedLimit": 3,
+              "swirlRadius": 0.4,
+              "thermalJitter": 0,
+              "timeScale": 1,
+              "turbulence": 0.12,
+              "turbulenceScale": 1.2,
+              "vortexRadius": 0.4,
+              "zConfinement": 1
+            }
+          },
+          "id": "expression:explanation-contrast:scene:explanation",
+          "morph": {
+            "depth": 1,
+            "dwell": 0.3,
+            "law": "theta",
+            "phiOffset": 0,
+            "phiRate": 0.13,
+            "thetaOffset": 0,
+            "thetaRate": 0.08
+          },
+          "name": "Explanation — contrast",
+          "text": [
+            {
+              "align": "left",
+              "body": "",
+              "id": "t-caption",
+              "italic": "",
+              "kicker": "CONTRAST — CLAIM AND VERDICT",
+              "role": "caption",
+              "size": 24,
+              "title": "",
+              "visible": true,
+              "width": 560,
+              "x": 0.07,
+              "y": 0.1
+            },
+            {
+              "align": "left",
+              "body": "",
+              "id": "t-claim",
+              "italic": "",
+              "kicker": "CLAIM — ANIMA",
+              "role": "claimText",
+              "size": 20,
+              "title": "",
+              "visible": true,
+              "width": 460,
+              "x": 0.06,
+              "y": 0.6
+            },
+            {
+              "align": "left",
+              "body": "",
+              "id": "t-verdict",
+              "italic": "",
+              "kicker": "VERDICT — ALETHEIA",
+              "role": "verdictText",
+              "size": 20,
+              "title": "",
+              "visible": true,
+              "width": 460,
+              "x": 0.54,
+              "y": 0.6
+            }
+          ],
+          "toolbelt": [
+            {
+              "id": "speed",
+              "key": "timeScale",
+              "scope": "field"
+            },
+            {
+              "id": "spring",
+              "key": "recovery",
+              "scope": "field"
+            },
+            {
+              "id": "viscosity",
+              "key": "native_fluid__viscosity",
+              "scope": "field"
+            },
+            {
+              "id": "flow",
+              "key": "turbulence",
+              "scope": "field"
+            },
+            {
+              "id": "transition",
+              "key": "sequence.transition",
+              "scope": "selected"
+            },
+            {
+              "id": "blend",
+              "key": "native_morphProgress",
+              "scope": "field"
+            }
+          ],
+          "transition": 1.5,
+          "view": {
+            "mode": "2d",
+            "panX": 0,
+            "panY": 0,
+            "pitch": 0,
+            "yaw": 0,
+            "zoom": 1
+          }
+        }
+      },
+      "scene_ref": "expression:explanation-contrast:scene:explanation",
+      "revision": 2,
+      "title": "Explanation — contrast",
+      "entity_refs": [
+        "expression:explanation-contrast:entity:lead",
+        "expression:explanation-contrast:entity:goal",
+        "expression:explanation-contrast:entity:participant-0"
+      ],
+      "body": null,
+      "triggers": []
+    }
+  ],
+  "entities": {
+    "expression:explanation-contrast:entity:goal": {
+      "entity_ref": "expression:explanation-contrast:entity:goal",
+      "revision": 1,
+      "title": "Subject",
+      "subject": null,
+      "parameters": {}
+    },
+    "expression:explanation-contrast:entity:lead": {
+      "entity_ref": "expression:explanation-contrast:entity:lead",
+      "revision": 1,
+      "title": "Explainer",
+      "subject": null,
+      "parameters": {}
+    },
+    "expression:explanation-contrast:entity:participant-0": {
+      "entity_ref": "expression:explanation-contrast:entity:participant-0",
+      "revision": 2,
+      "title": "Verifier",
+      "subject": null,
+      "parameters": {
+        "glyph": {
+          "value": "O",
+          "automation": null
+        }
+      }
+    }
+  },
+  "relations": {},
+  "selection": {
+    "scene_ref": "expression:explanation-contrast:scene:explanation",
+    "entity_ref": null
+  },
+  "provenance": [
+    {
+      "ref": "oi:desktop/cradle/material/factory-expressions",
+      "revision": "curated-2026-09-26",
+      "availability": "available"
+    },
+    {
+      "ref": "expression:fx-scene-explanation",
+      "revision": "1",
+      "availability": "available"
+    }
+  ],
+  "representations": [],
+  "refinements": [],
+  "collections": [
+    "factory-expressions"
+  ],
+  "profiles": [],
+  "reuse": {
+    "schema": "oi.expression-reuse/v1",
+    "kind": "scene",
+    "title": "Explanation — contrast (claim and verdict)",
+    "roles": [
+      {
+        "role": "lead",
+        "accepts": "agent",
+        "entity_ref": "expression:explanation-contrast:entity:lead"
+      },
+      {
+        "role": "participants.0",
+        "accepts": "agent",
+        "entity_ref": "expression:explanation-contrast:entity:participant-0"
+      },
+      {
+        "role": "goal",
+        "accepts": "object",
+        "entity_ref": "expression:explanation-contrast:entity:goal"
+      },
+      {
+        "role": "caption",
+        "accepts": "text",
+        "text_id": "t-caption"
+      },
+      {
+        "role": "claimText",
+        "accepts": "text",
+        "text_id": "t-claim"
+      },
+      {
+        "role": "verdictText",
+        "accepts": "text",
+        "text_id": "t-verdict"
+      }
+    ],
+    "entry_scene_ref": "expression:explanation-contrast:scene:explanation",
+    "playback": [
+      "expression:explanation-contrast:scene:explanation"
+    ],
+    "associations": {
+      "workflow_keys": [
+        "expression-development"
+      ],
+      "task_types": [
+        "explanation"
+      ],
+      "skill_set_refs": [],
+      "skill_refs": [
+        "skill/ql/anima-expressive-composition"
+      ],
+      "event_families": [
+        "message",
+        "review"
+      ]
+    },
+    "variation_of": {
+      "file_ref": "central:path:/Users/admin/Central:Work/O-I/desktop/cradle/material/expressive-material/scene/explanation.expression.json",
+      "revision": "central.content-fnv1a64/v1:12298:bea2f9ef88bfd3b9"
+    },
+    "authored_by": "agent:anima"
+  }
+}
