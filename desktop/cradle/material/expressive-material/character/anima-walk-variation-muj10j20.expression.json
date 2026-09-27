@@ -1,0 +1,1785 @@
+{
+  "presentation": {
+    "schema": "oi.journey-properties/v1",
+    "description": "A layered star-flame: a ✧ core inside a slow heart-yantra halo. It gathers when idle, spins into a vortex when working, and flickers between ✧ and ❋ when it speaks.",
+    "loop": true
+  },
+  "schema": "oi.expression/v1",
+  "expression_ref": "expression:fx-walk-anima-variation-muj10j1f",
+  "revision": 3,
+  "title": "Anima — the composer's flame",
+  "scenes": [
+    {
+      "presentation": {
+        "schema": "oi.journey-scene/v1",
+        "scene": {
+          "automation": [
+            {
+              "blend": "replace",
+              "delay": 0,
+              "duration": 0,
+              "enabled": true,
+              "firedAt": null,
+              "id": "anima-idle-breath",
+              "loop": "loop",
+              "max": 0.3,
+              "min": 0.16,
+              "phase": 0,
+              "rate": 0.12,
+              "target": "field.halo",
+              "type": "lfo",
+              "wave": "sine"
+            }
+          ],
+          "character": "Anima — the composer's flame at rest: gathered, breathing.",
+          "composition": {
+            "carryStation": false,
+            "carryTint": true,
+            "focus": "parallel",
+            "focusDuration": 4,
+            "frequencyDriver": "manual",
+            "layout": "free",
+            "plane": "XY"
+          },
+          "duration": 12,
+          "engine": {
+            "autoFitSizes": true,
+            "autoOscillate": true,
+            "autoSweep": false,
+            "backgroundMode": "ambientGlow",
+            "collisionEnabled": false,
+            "collisionMode": "obstacle",
+            "colorEnabled": true,
+            "colorMode": "linearGradient",
+            "dotShape": "circle",
+            "driveShape": "sine",
+            "focusOrder": "listed",
+            "fontFamily": "system-ui, -apple-system, sans-serif",
+            "fontWeight": 900,
+            "grainProfile": true,
+            "inkMode": "whiteOnBlack",
+            "mediumDimension": "2D",
+            "mediumEnabled": false,
+            "mediumPlane": "vertical",
+            "morphEnabled": true,
+            "pairwiseEnabled": false,
+            "paletteSource": "custom",
+            "pointerClick": "pulse",
+            "pointerClickRadius": 0.45,
+            "pointerClickStrength": 2.2,
+            "pointerMode": "repel",
+            "relationalEnabled": false,
+            "relationalMode": "orbital",
+            "resonanceEnabled": true,
+            "resonatorMode": "resonator",
+            "sweepDirection": "ascent",
+            "trajectory": "toroidalHopf"
+          },
+          "entities": [
+            {
+              "force": {
+                "kind": "attract",
+                "radius": 0.5,
+                "spin": 0.04,
+                "strength": 0.35
+              },
+              "id": "expression:fx-walk-anima-variation-muj10j1f:entity:self",
+              "kind": "formation",
+              "layers": [
+                {
+                  "id": "halo",
+                  "scale": 1.7,
+                  "text": "◌",
+                  "z": -0.12
+                },
+                {
+                  "id": "core",
+                  "scale": 0.55,
+                  "text": "✦",
+                  "z": 0.08
+                }
+              ],
+              "locked": false,
+              "name": "Anima",
+              "position": {
+                "x": 0,
+                "y": 0.02,
+                "z": 0
+              },
+              "role": "self",
+              "rotation": 0,
+              "sequence": {
+                "clock": "seconds",
+                "easing": "smoothstep",
+                "enabled": true,
+                "order": "pingpong",
+                "steps": [
+                  {
+                    "hold": 3.5,
+                    "id": "anima-idle-a",
+                    "objectState": {
+                      "force": {
+                        "kind": "attract",
+                        "radius": 0.5,
+                        "spin": 0.04,
+                        "strength": 0.35
+                      },
+                      "rotation": 0,
+                      "scale": 1,
+                      "size": {
+                        "x": 0.9,
+                        "y": 1.02
+                      },
+                      "tint": "#d98c5f",
+                      "tintWeight": 0.8
+                    },
+                    "position": null,
+                    "shape": "text",
+                    "text": "✧",
+                    "transition": 2.2
+                  },
+                  {
+                    "hold": 3.5,
+                    "id": "anima-idle-b",
+                    "name": "breathe",
+                    "objectState": {
+                      "force": {
+                        "kind": "attract",
+                        "radius": 0.56,
+                        "spin": 0.06,
+                        "strength": 0.45
+                      },
+                      "rotation": 4,
+                      "scale": 1,
+                      "size": {
+                        "x": 0.98,
+                        "y": 1.1
+                      },
+                      "tint": "#d98c5f",
+                      "tintWeight": 0.9
+                    },
+                    "position": null,
+                    "shape": "text",
+                    "text": "✧",
+                    "transition": 2.2
+                  }
+                ]
+              },
+              "shape": "text",
+              "share": 1,
+              "size": {
+                "x": 0.9,
+                "y": 1.02
+              },
+              "station": null,
+              "text": "✧",
+              "tint": "#d98c5f",
+              "tintWeight": 0.85
+            }
+          ],
+          "field": {
+            "background": "#12161a",
+            "material": "round",
+            "palette": [
+              "#efe6d2",
+              "#9fb7b0",
+              "#d9a36a"
+            ],
+            "params": {
+              "circulation": 1,
+              "contrast": 0.82,
+              "count": 54000,
+              "curlDepth": 0.2,
+              "densityPhase": 1.7,
+              "densityScale": 1,
+              "densityTether": 1,
+              "depth": 0.12,
+              "dispersion": 0.07,
+              "dominance": 0,
+              "edgeWeight": 0,
+              "elongation": 0.04,
+              "excitation": 0.6,
+              "frequency": 220,
+              "grain": 0.035,
+              "gravityFalloff": 2,
+              "gravitySoftening": 0.1,
+              "gravityX": 0,
+              "gravityY": 0,
+              "gravityZ": 0,
+              "halo": 0.22,
+              "irregularity": 0.35,
+              "opacity": 0.9,
+              "orientation": 0,
+              "pointerFalloff": 2,
+              "pointerRadius": 0.23,
+              "pointerStrength": 0.8,
+              "quadraticDrag": 0.2,
+              "recovery": 1.1,
+              "roundness": 0.95,
+              "size": 2.2,
+              "sizeBias": 1.6,
+              "snapRigidity": 1,
+              "softness": 0.15,
+              "speed": 0.62,
+              "speedLimit": 3,
+              "swirlRadius": 0.4,
+              "thermalJitter": 0,
+              "timeScale": 1,
+              "turbulence": 0.18,
+              "turbulenceScale": 1.2,
+              "vortexRadius": 0.4,
+              "zConfinement": 1
+            }
+          },
+          "id": "expression:fx-walk-anima-variation-muj10j1f:scene:idle",
+          "morph": {
+            "depth": 1,
+            "dwell": 0.3,
+            "law": "theta",
+            "phiOffset": 0,
+            "phiRate": 0.13,
+            "thetaOffset": 0,
+            "thetaRate": 0.08
+          },
+          "name": "Idle",
+          "text": [
+            {
+              "align": "left",
+              "body": "",
+              "id": "t-label",
+              "italic": "",
+              "kicker": "ANIMA",
+              "role": "caption",
+              "size": 18,
+              "title": "Idle",
+              "visible": true,
+              "width": 520,
+              "x": 0.06,
+              "y": 0.86
+            }
+          ],
+          "toolbelt": [
+            {
+              "id": "speed",
+              "key": "timeScale",
+              "scope": "field"
+            },
+            {
+              "id": "spring",
+              "key": "recovery",
+              "scope": "field"
+            },
+            {
+              "id": "viscosity",
+              "key": "native_fluid__viscosity",
+              "scope": "field"
+            },
+            {
+              "id": "flow",
+              "key": "turbulence",
+              "scope": "field"
+            },
+            {
+              "id": "transition",
+              "key": "sequence.transition",
+              "scope": "selected"
+            },
+            {
+              "id": "blend",
+              "key": "native_morphProgress",
+              "scope": "field"
+            }
+          ],
+          "transition": 1.5,
+          "view": {
+            "mode": "2d",
+            "panX": 0,
+            "panY": 0,
+            "pitch": 0,
+            "yaw": 0,
+            "zoom": 1
+          }
+        }
+      },
+      "scene_ref": "expression:fx-walk-anima-variation-muj10j1f:scene:idle",
+      "revision": 1,
+      "title": "Idle",
+      "entity_refs": [
+        "expression:fx-walk-anima-variation-muj10j1f:entity:self"
+      ],
+      "body": null,
+      "triggers": []
+    },
+    {
+      "presentation": {
+        "schema": "oi.journey-scene/v1",
+        "scene": {
+          "automation": [
+            {
+              "blend": "replace",
+              "delay": 0,
+              "duration": 0,
+              "enabled": true,
+              "firedAt": null,
+              "id": "anima-work-spin",
+              "loop": "loop",
+              "max": 1.4,
+              "min": 0.6,
+              "phase": 0,
+              "rate": 0.25,
+              "target": "entity:expression%3Afx-character-anima%3Aentity%3Aself:forces.spin",
+              "type": "lfo",
+              "wave": "sine"
+            }
+          ],
+          "character": "Anima — the composer's flame at work: a turning vortex, the body resonating.",
+          "composition": {
+            "carryStation": false,
+            "carryTint": true,
+            "focus": "parallel",
+            "focusDuration": 4,
+            "frequencyDriver": "manual",
+            "layout": "free",
+            "plane": "XY"
+          },
+          "duration": 17,
+          "engine": {
+            "autoFitSizes": true,
+            "autoOscillate": true,
+            "autoSweep": false,
+            "backgroundMode": "ambientGlow",
+            "collisionEnabled": false,
+            "collisionMode": "obstacle",
+            "colorEnabled": true,
+            "colorMode": "linearGradient",
+            "dotShape": "circle",
+            "driveShape": "sine",
+            "focusOrder": "listed",
+            "fontFamily": "system-ui, -apple-system, sans-serif",
+            "fontWeight": 900,
+            "grainProfile": true,
+            "inkMode": "whiteOnBlack",
+            "mediumDimension": "2D",
+            "mediumEnabled": false,
+            "mediumPlane": "vertical",
+            "morphEnabled": true,
+            "pairwiseEnabled": false,
+            "paletteSource": "custom",
+            "pointerClick": "pulse",
+            "pointerClickRadius": 0.45,
+            "pointerClickStrength": 2.2,
+            "pointerMode": "repel",
+            "relationalEnabled": false,
+            "relationalMode": "orbital",
+            "resonanceEnabled": true,
+            "resonatorMode": "template",
+            "sweepDirection": "ascent",
+            "templateGeometry": "circular",
+            "trajectory": "toroidalHopf"
+          },
+          "entities": [
+            {
+              "force": {
+                "kind": "vortex",
+                "radius": 0.42,
+                "spin": 1.7,
+                "strength": 1.9
+              },
+              "id": "expression:fx-walk-anima-variation-muj10j1f:entity:self",
+              "kind": "formation",
+              "layers": [
+                {
+                  "id": "halo",
+                  "scale": 1.7,
+                  "text": "◌",
+                  "z": -0.12
+                },
+                {
+                  "id": "core",
+                  "scale": 0.55,
+                  "text": "✦",
+                  "z": 0.08
+                }
+              ],
+              "locked": false,
+              "name": "Anima",
+              "position": {
+                "x": 0,
+                "y": 0.02,
+                "z": 0
+              },
+              "role": "self",
+              "rotation": 0,
+              "sequence": {
+                "clock": "seconds",
+                "easing": "kineticSnap",
+                "enabled": true,
+                "order": "loop",
+                "rateMul": 1.4,
+                "steps": [
+                  {
+                    "hold": 2.25,
+                    "id": "anima-work-a",
+                    "objectState": {
+                      "force": {
+                        "kind": "vortex",
+                        "radius": 0.42,
+                        "spin": 0.9,
+                        "strength": 1.1
+                      },
+                      "rotation": 0,
+                      "scale": 1,
+                      "size": {
+                        "x": 0.9,
+                        "y": 1
+                      },
+                      "tint": "#d98c5f",
+                      "tintWeight": 1
+                    },
+                    "position": null,
+                    "shape": "text",
+                    "text": "✧",
+                    "transition": 1.35
+                  },
+                  {
+                    "hold": 1.2,
+                    "id": "anima-work-b",
+                    "name": "yantra",
+                    "objectState": {
+                      "force": {
+                        "kind": "vortex",
+                        "radius": 0.48,
+                        "spin": 1.3,
+                        "strength": 1.4
+                      },
+                      "rotation": 45,
+                      "scale": 1,
+                      "size": {
+                        "x": 1.05,
+                        "y": 1.05
+                      },
+                      "tint": "#d98c5f",
+                      "tintWeight": 1
+                    },
+                    "position": null,
+                    "shape": "yantra",
+                    "text": "",
+                    "transition": 0.9,
+                    "yantraId": "anahata"
+                  },
+                  {
+                    "hold": 1.4,
+                    "id": "anima-work-c",
+                    "name": "resonance",
+                    "objectState": {
+                      "force": {
+                        "kind": "repel",
+                        "radius": 0.5,
+                        "spin": 0.4,
+                        "strength": 0.6
+                      },
+                      "rotation": 90,
+                      "scale": 1,
+                      "size": {
+                        "x": 1.2,
+                        "y": 1.2
+                      },
+                      "tint": "#d98c5f",
+                      "tintWeight": 0.9
+                    },
+                    "position": null,
+                    "shape": "cymatic",
+                    "templateDimension": "2D",
+                    "templateFrequency": 432,
+                    "templateGeometry": "circular",
+                    "text": "",
+                    "transition": 1
+                  }
+                ]
+              },
+              "shape": "yantra",
+              "share": 1,
+              "size": {
+                "x": 0.9,
+                "y": 1.02
+              },
+              "sound": {
+                "attack": 0.12,
+                "enabled": true,
+                "followCymatic": false,
+                "frequencyHz": 330,
+                "gain": 0.3,
+                "pan": -0.2,
+                "release": 1.1,
+                "waveform": "triangle"
+              },
+              "station": null,
+              "text": "✧",
+              "tint": "#3f8fd2",
+              "tintWeight": 0.95,
+              "yantraId": "anahata"
+            }
+          ],
+          "field": {
+            "background": "#12161a",
+            "material": "round",
+            "palette": [
+              "#efe6d2",
+              "#9fb7b0",
+              "#d9a36a"
+            ],
+            "params": {
+              "circulation": 1,
+              "contrast": 0.82,
+              "count": 54000,
+              "curlDepth": 0.2,
+              "densityPhase": 1.7,
+              "densityScale": 1,
+              "densityTether": 1,
+              "depth": 0.12,
+              "dispersion": 0.07,
+              "dominance": 0,
+              "edgeWeight": 0,
+              "elongation": 0.04,
+              "excitation": 0.9,
+              "frequency": 639,
+              "grain": 0.035,
+              "gravityFalloff": 2,
+              "gravitySoftening": 0.1,
+              "gravityX": 0,
+              "gravityY": 0,
+              "gravityZ": 0,
+              "halo": 0.22,
+              "irregularity": 0.35,
+              "opacity": 0.9,
+              "orientation": 0,
+              "pointerFalloff": 2,
+              "pointerRadius": 0.23,
+              "pointerStrength": 0.8,
+              "quadraticDrag": 0.2,
+              "recovery": 1.1,
+              "roundness": 0.95,
+              "size": 2.2,
+              "sizeBias": 1.6,
+              "snapRigidity": 1,
+              "softness": 0.15,
+              "speed": 0.9,
+              "speedLimit": 3,
+              "swirlRadius": 0.4,
+              "thermalJitter": 0,
+              "timeScale": 1,
+              "turbulence": 0.26,
+              "turbulenceScale": 1.2,
+              "vortexRadius": 0.4,
+              "zConfinement": 1
+            }
+          },
+          "id": "expression:fx-walk-anima-variation-muj10j1f:scene:working",
+          "morph": {
+            "depth": 1.6,
+            "dwell": 0.3,
+            "law": "product",
+            "phiOffset": 0,
+            "phiRate": 0.13,
+            "thetaOffset": 0,
+            "thetaRate": 0.31
+          },
+          "name": "Working",
+          "resonanceDrive": {
+            "direction": "pingpong",
+            "dwellS": 2,
+            "glideS": 6,
+            "kind": "sweep"
+          },
+          "text": [
+            {
+              "align": "left",
+              "body": "",
+              "id": "t-label",
+              "italic": "",
+              "kicker": "ANIMA",
+              "role": "caption",
+              "size": 18,
+              "title": "Working",
+              "visible": true,
+              "width": 520,
+              "x": 0.06,
+              "y": 0.86
+            }
+          ],
+          "toolbelt": [
+            {
+              "id": "speed",
+              "key": "timeScale",
+              "scope": "field"
+            },
+            {
+              "id": "spring",
+              "key": "recovery",
+              "scope": "field"
+            },
+            {
+              "id": "viscosity",
+              "key": "native_fluid__viscosity",
+              "scope": "field"
+            },
+            {
+              "id": "flow",
+              "key": "turbulence",
+              "scope": "field"
+            },
+            {
+              "id": "transition",
+              "key": "sequence.transition",
+              "scope": "selected"
+            },
+            {
+              "id": "blend",
+              "key": "native_morphProgress",
+              "scope": "field"
+            }
+          ],
+          "transition": 2.5,
+          "view": {
+            "mode": "2d",
+            "panX": 0,
+            "panY": 0,
+            "pitch": 0,
+            "yaw": 0,
+            "zoom": 1
+          }
+        }
+      },
+      "scene_ref": "expression:fx-walk-anima-variation-muj10j1f:scene:working",
+      "revision": 2,
+      "title": "Working",
+      "entity_refs": [
+        "expression:fx-walk-anima-variation-muj10j1f:entity:self"
+      ],
+      "body": null,
+      "triggers": []
+    },
+    {
+      "presentation": {
+        "schema": "oi.journey-scene/v1",
+        "scene": {
+          "automation": [
+            {
+              "blend": "replace",
+              "delay": 0,
+              "duration": 0,
+              "enabled": true,
+              "firedAt": null,
+              "id": "anima-speak-pulse",
+              "loop": "loop",
+              "max": 0.95,
+              "min": 0.4,
+              "phase": 0,
+              "rate": 2.2,
+              "target": "field.excitation",
+              "type": "lfo",
+              "wave": "square"
+            }
+          ],
+          "character": "Anima — the composer's flame speaking: the inscription flickers between forms.",
+          "composition": {
+            "carryStation": false,
+            "carryTint": true,
+            "focus": "parallel",
+            "focusDuration": 4,
+            "frequencyDriver": "manual",
+            "layout": "free",
+            "plane": "XY"
+          },
+          "duration": 12,
+          "engine": {
+            "autoFitSizes": true,
+            "autoOscillate": true,
+            "autoSweep": false,
+            "backgroundMode": "ambientGlow",
+            "collisionEnabled": false,
+            "collisionMode": "obstacle",
+            "colorEnabled": true,
+            "colorMode": "linearGradient",
+            "dotShape": "circle",
+            "driveShape": "sine",
+            "focusOrder": "listed",
+            "fontFamily": "system-ui, -apple-system, sans-serif",
+            "fontWeight": 900,
+            "grainProfile": true,
+            "inkMode": "whiteOnBlack",
+            "mediumDimension": "2D",
+            "mediumEnabled": false,
+            "mediumPlane": "vertical",
+            "morphEnabled": true,
+            "pairwiseEnabled": false,
+            "paletteSource": "custom",
+            "pointerClick": "pulse",
+            "pointerClickRadius": 0.45,
+            "pointerClickStrength": 2.2,
+            "pointerMode": "repel",
+            "relationalEnabled": false,
+            "relationalMode": "orbital",
+            "resonanceEnabled": true,
+            "resonatorMode": "resonator",
+            "sweepDirection": "ascent",
+            "trajectory": "toroidalHopf"
+          },
+          "entities": [
+            {
+              "force": {
+                "kind": "repel",
+                "radius": 0.38,
+                "spin": 0.2,
+                "strength": 0.5
+              },
+              "id": "expression:fx-walk-anima-variation-muj10j1f:entity:self",
+              "kind": "formation",
+              "layers": [
+                {
+                  "id": "halo",
+                  "scale": 1.7,
+                  "text": "◌",
+                  "z": -0.12
+                },
+                {
+                  "id": "core",
+                  "scale": 0.55,
+                  "text": "✦",
+                  "z": 0.08
+                }
+              ],
+              "locked": false,
+              "name": "Anima",
+              "position": {
+                "x": 0,
+                "y": 0.02,
+                "z": 0
+              },
+              "role": "self",
+              "rotation": 0,
+              "sequence": {
+                "clock": "seconds",
+                "easing": "whip",
+                "enabled": true,
+                "impulse": 0.8,
+                "jitter": 0.15,
+                "order": "loop",
+                "steps": [
+                  {
+                    "hold": 0.45,
+                    "id": "anima-speak-a",
+                    "objectState": {
+                      "force": {
+                        "kind": "repel",
+                        "radius": 0.38,
+                        "spin": 0.2,
+                        "strength": 0.5
+                      },
+                      "rotation": 0,
+                      "scale": 1,
+                      "size": {
+                        "x": 0.95,
+                        "y": 1.05
+                      },
+                      "tint": "#d98c5f",
+                      "tintWeight": 1
+                    },
+                    "position": null,
+                    "shape": "text",
+                    "text": "✧",
+                    "transition": 0.25
+                  },
+                  {
+                    "hold": 0.35,
+                    "id": "anima-speak-b",
+                    "name": "utter",
+                    "objectState": {
+                      "force": {
+                        "kind": "repel",
+                        "radius": 0.42,
+                        "spin": 0.3,
+                        "strength": 0.8
+                      },
+                      "rotation": -6,
+                      "scale": 1,
+                      "size": {
+                        "x": 1.02,
+                        "y": 1.1
+                      },
+                      "tint": "#d98c5f",
+                      "tintWeight": 1
+                    },
+                    "position": null,
+                    "shape": "text",
+                    "text": "❋",
+                    "transition": 0.2
+                  }
+                ]
+              },
+              "shape": "text",
+              "share": 1,
+              "size": {
+                "x": 0.9,
+                "y": 1.02
+              },
+              "station": null,
+              "text": "✧",
+              "tint": "#d98c5f",
+              "tintWeight": 0.85
+            }
+          ],
+          "field": {
+            "background": "#12161a",
+            "material": "round",
+            "palette": [
+              "#efe6d2",
+              "#9fb7b0",
+              "#d9a36a"
+            ],
+            "params": {
+              "circulation": 1,
+              "contrast": 0.82,
+              "count": 54000,
+              "curlDepth": 0.2,
+              "densityPhase": 1.7,
+              "densityScale": 1,
+              "densityTether": 1,
+              "depth": 0.12,
+              "dispersion": 0.07,
+              "dominance": 0,
+              "edgeWeight": 0,
+              "elongation": 0.04,
+              "excitation": 0.6,
+              "frequency": 220,
+              "grain": 0.035,
+              "gravityFalloff": 2,
+              "gravitySoftening": 0.1,
+              "gravityX": 0,
+              "gravityY": 0,
+              "gravityZ": 0,
+              "halo": 0.22,
+              "irregularity": 0.35,
+              "opacity": 0.9,
+              "orientation": 0,
+              "pointerFalloff": 2,
+              "pointerRadius": 0.23,
+              "pointerStrength": 0.8,
+              "quadraticDrag": 0.2,
+              "recovery": 1.1,
+              "roundness": 0.95,
+              "size": 2.2,
+              "sizeBias": 1.6,
+              "snapRigidity": 1,
+              "softness": 0.15,
+              "speed": 0.62,
+              "speedLimit": 3,
+              "swirlRadius": 0.4,
+              "thermalJitter": 0,
+              "timeScale": 1,
+              "turbulence": 0.18,
+              "turbulenceScale": 1.2,
+              "vortexRadius": 0.4,
+              "zConfinement": 1
+            }
+          },
+          "id": "expression:fx-walk-anima-variation-muj10j1f:scene:speaking",
+          "morph": {
+            "depth": 1,
+            "dwell": 0.3,
+            "law": "theta",
+            "phiOffset": 0,
+            "phiRate": 0.13,
+            "thetaOffset": 0,
+            "thetaRate": 0.08
+          },
+          "name": "Speaking",
+          "text": [
+            {
+              "align": "left",
+              "body": "",
+              "id": "t-label",
+              "italic": "",
+              "kicker": "ANIMA",
+              "role": "caption",
+              "size": 18,
+              "title": "Speaking",
+              "visible": true,
+              "width": 520,
+              "x": 0.06,
+              "y": 0.86
+            }
+          ],
+          "toolbelt": [
+            {
+              "id": "speed",
+              "key": "timeScale",
+              "scope": "field"
+            },
+            {
+              "id": "spring",
+              "key": "recovery",
+              "scope": "field"
+            },
+            {
+              "id": "viscosity",
+              "key": "native_fluid__viscosity",
+              "scope": "field"
+            },
+            {
+              "id": "flow",
+              "key": "turbulence",
+              "scope": "field"
+            },
+            {
+              "id": "transition",
+              "key": "sequence.transition",
+              "scope": "selected"
+            },
+            {
+              "id": "blend",
+              "key": "native_morphProgress",
+              "scope": "field"
+            }
+          ],
+          "transition": 1.5,
+          "view": {
+            "mode": "2d",
+            "panX": 0,
+            "panY": 0,
+            "pitch": 0,
+            "yaw": 0,
+            "zoom": 1
+          }
+        }
+      },
+      "scene_ref": "expression:fx-walk-anima-variation-muj10j1f:scene:speaking",
+      "revision": 1,
+      "title": "Speaking",
+      "entity_refs": [
+        "expression:fx-walk-anima-variation-muj10j1f:entity:self"
+      ],
+      "body": null,
+      "triggers": []
+    },
+    {
+      "presentation": {
+        "schema": "oi.journey-scene/v1",
+        "scene": {
+          "automation": [
+            {
+              "blend": "replace",
+              "delay": 0,
+              "duration": 1.2,
+              "easing": "whip",
+              "enabled": true,
+              "firedAt": null,
+              "id": "anima-invoke-skill-burst",
+              "loop": "once",
+              "max": 1,
+              "min": 0.2,
+              "phase": 0,
+              "rate": 1,
+              "target": "field.excitation",
+              "type": "ramp",
+              "wave": "smooth"
+            }
+          ],
+          "character": "Anima — the composer's flame: invoke skill while the current Scene continues.",
+          "composition": {
+            "carryStation": false,
+            "carryTint": true,
+            "focus": "parallel",
+            "focusDuration": 4,
+            "frequencyDriver": "manual",
+            "layout": "free",
+            "plane": "XY"
+          },
+          "duration": 4,
+          "engine": {
+            "autoFitSizes": true,
+            "autoOscillate": true,
+            "autoSweep": false,
+            "backgroundMode": "ambientGlow",
+            "collisionEnabled": false,
+            "collisionMode": "obstacle",
+            "colorEnabled": true,
+            "colorMode": "linearGradient",
+            "dotShape": "circle",
+            "driveShape": "sine",
+            "focusOrder": "listed",
+            "fontFamily": "system-ui, -apple-system, sans-serif",
+            "fontWeight": 900,
+            "grainProfile": true,
+            "inkMode": "whiteOnBlack",
+            "mediumDimension": "2D",
+            "mediumEnabled": false,
+            "mediumPlane": "vertical",
+            "morphEnabled": true,
+            "pairwiseEnabled": false,
+            "paletteSource": "custom",
+            "pointerClick": "pulse",
+            "pointerClickRadius": 0.45,
+            "pointerClickStrength": 2.2,
+            "pointerMode": "repel",
+            "relationalEnabled": false,
+            "relationalMode": "orbital",
+            "resonanceEnabled": true,
+            "resonatorMode": "resonator",
+            "sweepDirection": "ascent",
+            "trajectory": "toroidalHopf"
+          },
+          "entities": [
+            {
+              "force": {
+                "kind": "attract",
+                "radius": 0.45,
+                "spin": 0,
+                "strength": 0
+              },
+              "id": "expression:fx-walk-anima-variation-muj10j1f:entity:self",
+              "kind": "formation",
+              "layers": [
+                {
+                  "id": "halo",
+                  "scale": 1.7,
+                  "text": "◌",
+                  "z": -0.12
+                },
+                {
+                  "id": "core",
+                  "scale": 0.55,
+                  "text": "✦",
+                  "z": 0.08
+                }
+              ],
+              "locked": false,
+              "name": "Anima",
+              "position": {
+                "x": 0,
+                "y": 0.02,
+                "z": 0
+              },
+              "role": "self",
+              "rotation": 0,
+              "sequence": {
+                "clock": "seconds",
+                "easing": "whip",
+                "enabled": true,
+                "impulse": 1.2,
+                "manual": false,
+                "order": "loop",
+                "steps": [
+                  {
+                    "hold": 0.2,
+                    "id": "anima-invoke-skill-0",
+                    "objectState": {
+                      "force": {
+                        "kind": "attract",
+                        "radius": 0.4,
+                        "spin": 0.2,
+                        "strength": 0.6
+                      },
+                      "rotation": 0,
+                      "scale": 1,
+                      "size": {
+                        "x": 0.9,
+                        "y": 1
+                      },
+                      "tint": "#d98c5f",
+                      "tintWeight": 1
+                    },
+                    "position": null,
+                    "shape": "text",
+                    "text": "✧",
+                    "transition": 0.25
+                  },
+                  {
+                    "hold": 0.3,
+                    "id": "anima-invoke-skill-1",
+                    "name": "invoke-skill 1",
+                    "objectState": {
+                      "force": {
+                        "kind": "vortex",
+                        "radius": 0.45,
+                        "spin": 1.2,
+                        "strength": 1
+                      },
+                      "rotation": 30,
+                      "scale": 1,
+                      "size": {
+                        "x": 1,
+                        "y": 1
+                      },
+                      "tint": "#d98c5f",
+                      "tintWeight": 1
+                    },
+                    "position": null,
+                    "shape": "text",
+                    "text": "⚘",
+                    "transition": 0.35
+                  },
+                  {
+                    "hold": 0.3,
+                    "id": "anima-invoke-skill-2",
+                    "name": "invoke-skill 2",
+                    "objectState": {
+                      "force": {
+                        "kind": "repel",
+                        "radius": 0.5,
+                        "spin": 1.2,
+                        "strength": 1.5
+                      },
+                      "rotation": 60,
+                      "scale": 1,
+                      "size": {
+                        "x": 1.15,
+                        "y": 1.15
+                      },
+                      "tint": "#d98c5f",
+                      "tintWeight": 1
+                    },
+                    "position": null,
+                    "shape": "text",
+                    "text": "✺",
+                    "transition": 0.35
+                  },
+                  {
+                    "hold": 0.3,
+                    "id": "anima-invoke-skill-3",
+                    "name": "invoke-skill 3",
+                    "objectState": {
+                      "force": {
+                        "kind": "vortex",
+                        "radius": 0.55,
+                        "spin": 1.2,
+                        "strength": 2
+                      },
+                      "rotation": 90,
+                      "scale": 1,
+                      "size": {
+                        "x": 1.3,
+                        "y": 1.3
+                      },
+                      "tint": "#d98c5f",
+                      "tintWeight": 1
+                    },
+                    "position": null,
+                    "shape": "text",
+                    "text": "❂",
+                    "transition": 0.35
+                  },
+                  {
+                    "hold": 0.5,
+                    "id": "anima-invoke-skill-end",
+                    "objectState": {
+                      "force": {
+                        "kind": "attract",
+                        "radius": 0.5,
+                        "spin": 0.04,
+                        "strength": 0.35
+                      },
+                      "rotation": 360,
+                      "scale": 1,
+                      "size": {
+                        "x": 0.9,
+                        "y": 1
+                      },
+                      "tint": "#d98c5f",
+                      "tintWeight": 0.85
+                    },
+                    "position": null,
+                    "shape": "text",
+                    "text": "✧",
+                    "transition": 0.6
+                  }
+                ]
+              },
+              "shape": "text",
+              "share": 1,
+              "size": {
+                "x": 0.9,
+                "y": 1.02
+              },
+              "station": null,
+              "text": "✧",
+              "tint": "#d98c5f",
+              "tintWeight": 0.85
+            }
+          ],
+          "field": {
+            "background": "#12161a",
+            "material": "round",
+            "palette": [
+              "#efe6d2",
+              "#9fb7b0",
+              "#d9a36a"
+            ],
+            "params": {
+              "circulation": 1,
+              "contrast": 0.82,
+              "count": 54000,
+              "curlDepth": 0.2,
+              "densityPhase": 1.7,
+              "densityScale": 1,
+              "densityTether": 1,
+              "depth": 0.12,
+              "dispersion": 0.07,
+              "dominance": 0,
+              "edgeWeight": 0,
+              "elongation": 0.04,
+              "excitation": 0.6,
+              "frequency": 220,
+              "grain": 0.035,
+              "gravityFalloff": 2,
+              "gravitySoftening": 0.1,
+              "gravityX": 0,
+              "gravityY": 0,
+              "gravityZ": 0,
+              "halo": 0.22,
+              "irregularity": 0.35,
+              "opacity": 0.9,
+              "orientation": 0,
+              "pointerFalloff": 2,
+              "pointerRadius": 0.23,
+              "pointerStrength": 0.8,
+              "quadraticDrag": 0.2,
+              "recovery": 1.1,
+              "roundness": 0.95,
+              "size": 2.2,
+              "sizeBias": 1.6,
+              "snapRigidity": 1,
+              "softness": 0.15,
+              "speed": 0.62,
+              "speedLimit": 3,
+              "swirlRadius": 0.4,
+              "thermalJitter": 0,
+              "timeScale": 1,
+              "turbulence": 0.18,
+              "turbulenceScale": 1.2,
+              "vortexRadius": 0.4,
+              "zConfinement": 1
+            }
+          },
+          "id": "expression:fx-walk-anima-variation-muj10j1f:scene:invoke-skill",
+          "morph": {
+            "depth": 1,
+            "dwell": 0.3,
+            "law": "theta",
+            "phiOffset": 0,
+            "phiRate": 0.13,
+            "thetaOffset": 0,
+            "thetaRate": 0.08
+          },
+          "name": "Invoke skill",
+          "text": [
+            {
+              "align": "left",
+              "body": "",
+              "id": "t-label",
+              "italic": "",
+              "kicker": "ANIMA",
+              "role": "caption",
+              "size": 18,
+              "title": "Invoke skill",
+              "visible": true,
+              "width": 520,
+              "x": 0.06,
+              "y": 0.86
+            }
+          ],
+          "toolbelt": [
+            {
+              "id": "speed",
+              "key": "timeScale",
+              "scope": "field"
+            },
+            {
+              "id": "spring",
+              "key": "recovery",
+              "scope": "field"
+            },
+            {
+              "id": "viscosity",
+              "key": "native_fluid__viscosity",
+              "scope": "field"
+            },
+            {
+              "id": "flow",
+              "key": "turbulence",
+              "scope": "field"
+            },
+            {
+              "id": "transition",
+              "key": "sequence.transition",
+              "scope": "selected"
+            },
+            {
+              "id": "blend",
+              "key": "native_morphProgress",
+              "scope": "field"
+            }
+          ],
+          "transition": 0.4,
+          "view": {
+            "mode": "2d",
+            "panX": 0,
+            "panY": 0,
+            "pitch": 0,
+            "yaw": 0,
+            "zoom": 1
+          }
+        }
+      },
+      "scene_ref": "expression:fx-walk-anima-variation-muj10j1f:scene:invoke-skill",
+      "revision": 1,
+      "title": "Invoke skill",
+      "entity_refs": [
+        "expression:fx-walk-anima-variation-muj10j1f:entity:self"
+      ],
+      "body": null,
+      "triggers": []
+    },
+    {
+      "presentation": {
+        "schema": "oi.journey-scene/v1",
+        "scene": {
+          "automation": [
+            {
+              "blend": "replace",
+              "delay": 0,
+              "duration": 1.2,
+              "easing": "whip",
+              "enabled": true,
+              "firedAt": null,
+              "id": "anima-operate-burst",
+              "loop": "once",
+              "max": 1,
+              "min": 0.2,
+              "phase": 0,
+              "rate": 1,
+              "target": "field.excitation",
+              "type": "ramp",
+              "wave": "smooth"
+            }
+          ],
+          "character": "Anima — the composer's flame: operate while the current Scene continues.",
+          "composition": {
+            "carryStation": false,
+            "carryTint": true,
+            "focus": "parallel",
+            "focusDuration": 4,
+            "frequencyDriver": "manual",
+            "layout": "free",
+            "plane": "XY"
+          },
+          "duration": 4,
+          "engine": {
+            "autoFitSizes": true,
+            "autoOscillate": true,
+            "autoSweep": false,
+            "backgroundMode": "ambientGlow",
+            "collisionEnabled": false,
+            "collisionMode": "obstacle",
+            "colorEnabled": true,
+            "colorMode": "linearGradient",
+            "dotShape": "circle",
+            "driveShape": "sine",
+            "focusOrder": "listed",
+            "fontFamily": "system-ui, -apple-system, sans-serif",
+            "fontWeight": 900,
+            "grainProfile": true,
+            "inkMode": "whiteOnBlack",
+            "mediumDimension": "2D",
+            "mediumEnabled": false,
+            "mediumPlane": "vertical",
+            "morphEnabled": true,
+            "pairwiseEnabled": false,
+            "paletteSource": "custom",
+            "pointerClick": "pulse",
+            "pointerClickRadius": 0.45,
+            "pointerClickStrength": 2.2,
+            "pointerMode": "repel",
+            "relationalEnabled": false,
+            "relationalMode": "orbital",
+            "resonanceEnabled": true,
+            "resonatorMode": "resonator",
+            "sweepDirection": "ascent",
+            "trajectory": "toroidalHopf"
+          },
+          "entities": [
+            {
+              "force": {
+                "kind": "attract",
+                "radius": 0.45,
+                "spin": 0,
+                "strength": 0
+              },
+              "id": "expression:fx-walk-anima-variation-muj10j1f:entity:self",
+              "kind": "formation",
+              "layers": [
+                {
+                  "id": "halo",
+                  "scale": 1.7,
+                  "text": "◌",
+                  "z": -0.12
+                },
+                {
+                  "id": "core",
+                  "scale": 0.55,
+                  "text": "✦",
+                  "z": 0.08
+                }
+              ],
+              "locked": false,
+              "name": "Anima",
+              "position": {
+                "x": 0,
+                "y": 0.02,
+                "z": 0
+              },
+              "role": "self",
+              "rotation": 0,
+              "sequence": {
+                "clock": "seconds",
+                "easing": "kineticSnap",
+                "enabled": true,
+                "impulse": 1.2,
+                "manual": false,
+                "order": "loop",
+                "steps": [
+                  {
+                    "hold": 0.2,
+                    "id": "anima-operate-0",
+                    "objectState": {
+                      "force": {
+                        "kind": "attract",
+                        "radius": 0.4,
+                        "spin": 0.2,
+                        "strength": 0.6
+                      },
+                      "rotation": 0,
+                      "scale": 1,
+                      "size": {
+                        "x": 0.9,
+                        "y": 1
+                      },
+                      "tint": "#d98c5f",
+                      "tintWeight": 1
+                    },
+                    "position": null,
+                    "shape": "text",
+                    "text": "✧",
+                    "transition": 0.25
+                  },
+                  {
+                    "hold": 0.3,
+                    "id": "anima-operate-1",
+                    "name": "operate 1",
+                    "objectState": {
+                      "force": {
+                        "kind": "vortex",
+                        "radius": 0.45,
+                        "spin": 1.2,
+                        "strength": 1
+                      },
+                      "rotation": 30,
+                      "scale": 1,
+                      "size": {
+                        "x": 1,
+                        "y": 1
+                      },
+                      "tint": "#d98c5f",
+                      "tintWeight": 1
+                    },
+                    "position": null,
+                    "shape": "text",
+                    "text": "▣",
+                    "transition": 0.35
+                  },
+                  {
+                    "hold": 0.3,
+                    "id": "anima-operate-2",
+                    "name": "operate 2",
+                    "objectState": {
+                      "force": {
+                        "kind": "repel",
+                        "radius": 0.5,
+                        "spin": 1.2,
+                        "strength": 1.5
+                      },
+                      "rotation": 60,
+                      "scale": 1,
+                      "size": {
+                        "x": 1.15,
+                        "y": 1.15
+                      },
+                      "tint": "#d98c5f",
+                      "tintWeight": 1
+                    },
+                    "position": null,
+                    "shape": "text",
+                    "text": "◇",
+                    "transition": 0.35
+                  },
+                  {
+                    "hold": 0.5,
+                    "id": "anima-operate-end",
+                    "objectState": {
+                      "force": {
+                        "kind": "attract",
+                        "radius": 0.5,
+                        "spin": 0.04,
+                        "strength": 0.35
+                      },
+                      "rotation": 360,
+                      "scale": 1,
+                      "size": {
+                        "x": 0.9,
+                        "y": 1
+                      },
+                      "tint": "#d98c5f",
+                      "tintWeight": 0.85
+                    },
+                    "position": null,
+                    "shape": "text",
+                    "text": "✧",
+                    "transition": 0.6
+                  }
+                ]
+              },
+              "shape": "text",
+              "share": 1,
+              "size": {
+                "x": 0.9,
+                "y": 1.02
+              },
+              "station": null,
+              "text": "✧",
+              "tint": "#d98c5f",
+              "tintWeight": 0.85
+            }
+          ],
+          "field": {
+            "background": "#12161a",
+            "material": "round",
+            "palette": [
+              "#efe6d2",
+              "#9fb7b0",
+              "#d9a36a"
+            ],
+            "params": {
+              "circulation": 1,
+              "contrast": 0.82,
+              "count": 54000,
+              "curlDepth": 0.2,
+              "densityPhase": 1.7,
+              "densityScale": 1,
+              "densityTether": 1,
+              "depth": 0.12,
+              "dispersion": 0.07,
+              "dominance": 0,
+              "edgeWeight": 0,
+              "elongation": 0.04,
+              "excitation": 0.6,
+              "frequency": 220,
+              "grain": 0.035,
+              "gravityFalloff": 2,
+              "gravitySoftening": 0.1,
+              "gravityX": 0,
+              "gravityY": 0,
+              "gravityZ": 0,
+              "halo": 0.22,
+              "irregularity": 0.35,
+              "opacity": 0.9,
+              "orientation": 0,
+              "pointerFalloff": 2,
+              "pointerRadius": 0.23,
+              "pointerStrength": 0.8,
+              "quadraticDrag": 0.2,
+              "recovery": 1.1,
+              "roundness": 0.95,
+              "size": 2.2,
+              "sizeBias": 1.6,
+              "snapRigidity": 1,
+              "softness": 0.15,
+              "speed": 0.62,
+              "speedLimit": 3,
+              "swirlRadius": 0.4,
+              "thermalJitter": 0,
+              "timeScale": 1,
+              "turbulence": 0.18,
+              "turbulenceScale": 1.2,
+              "vortexRadius": 0.4,
+              "zConfinement": 1
+            }
+          },
+          "id": "expression:fx-walk-anima-variation-muj10j1f:scene:operate",
+          "morph": {
+            "depth": 1,
+            "dwell": 0.3,
+            "law": "theta",
+            "phiOffset": 0,
+            "phiRate": 0.13,
+            "thetaOffset": 0,
+            "thetaRate": 0.08
+          },
+          "name": "Operate",
+          "text": [
+            {
+              "align": "left",
+              "body": "",
+              "id": "t-label",
+              "italic": "",
+              "kicker": "ANIMA",
+              "role": "caption",
+              "size": 18,
+              "title": "Operate",
+              "visible": true,
+              "width": 520,
+              "x": 0.06,
+              "y": 0.86
+            }
+          ],
+          "toolbelt": [
+            {
+              "id": "speed",
+              "key": "timeScale",
+              "scope": "field"
+            },
+            {
+              "id": "spring",
+              "key": "recovery",
+              "scope": "field"
+            },
+            {
+              "id": "viscosity",
+              "key": "native_fluid__viscosity",
+              "scope": "field"
+            },
+            {
+              "id": "flow",
+              "key": "turbulence",
+              "scope": "field"
+            },
+            {
+              "id": "transition",
+              "key": "sequence.transition",
+              "scope": "selected"
+            },
+            {
+              "id": "blend",
+              "key": "native_morphProgress",
+              "scope": "field"
+            }
+          ],
+          "transition": 0.4,
+          "view": {
+            "mode": "2d",
+            "panX": 0,
+            "panY": 0,
+            "pitch": 0,
+            "yaw": 0,
+            "zoom": 1
+          }
+        }
+      },
+      "scene_ref": "expression:fx-walk-anima-variation-muj10j1f:scene:operate",
+      "revision": 1,
+      "title": "Operate",
+      "entity_refs": [
+        "expression:fx-walk-anima-variation-muj10j1f:entity:self"
+      ],
+      "body": null,
+      "triggers": []
+    }
+  ],
+  "entities": {
+    "expression:fx-walk-anima-variation-muj10j1f:entity:self": {
+      "entity_ref": "expression:fx-walk-anima-variation-muj10j1f:entity:self",
+      "revision": 1,
+      "title": "Anima",
+      "subject": null,
+      "parameters": {}
+    }
+  },
+  "relations": {},
+  "selection": {
+    "scene_ref": "expression:fx-walk-anima-variation-muj10j1f:scene:idle",
+    "entity_ref": null
+  },
+  "provenance": [
+    {
+      "ref": "oi:desktop/cradle/material/factory-expressions",
+      "revision": "curated-2026-09-26",
+      "availability": "available"
+    },
+    {
+      "ref": "expression:fx-character-anima",
+      "revision": "1",
+      "availability": "available"
+    }
+  ],
+  "representations": [],
+  "refinements": [],
+  "collections": [
+    "factory-expressions"
+  ],
+  "profiles": [],
+  "reuse": {
+    "schema": "oi.expression-reuse/v1",
+    "kind": "character",
+    "title": "Anima (walk variation)",
+    "roles": [
+      {
+        "role": "self",
+        "accepts": "agent",
+        "entity_ref": "expression:fx-walk-anima-variation-muj10j1f:entity:self"
+      },
+      {
+        "role": "caption",
+        "accepts": "text",
+        "text_id": "t-label"
+      }
+    ],
+    "entry_scene_ref": "expression:fx-walk-anima-variation-muj10j1f:scene:idle",
+    "states": {
+      "idle": "expression:fx-walk-anima-variation-muj10j1f:scene:idle",
+      "speaking": "expression:fx-walk-anima-variation-muj10j1f:scene:speaking",
+      "working": "expression:fx-walk-anima-variation-muj10j1f:scene:working"
+    },
+    "gestures": {
+      "invoke-skill": {
+        "scene_ref": "expression:fx-walk-anima-variation-muj10j1f:scene:invoke-skill",
+        "role": "self"
+      },
+      "operate": {
+        "scene_ref": "expression:fx-walk-anima-variation-muj10j1f:scene:operate",
+        "role": "self"
+      }
+    },
+    "playback": [
+      "expression:fx-walk-anima-variation-muj10j1f:scene:idle",
+      "expression:fx-walk-anima-variation-muj10j1f:scene:working",
+      "expression:fx-walk-anima-variation-muj10j1f:scene:speaking"
+    ],
+    "preview_state": "idle",
+    "associations": {
+      "workflow_keys": [],
+      "task_types": [],
+      "skill_set_refs": [],
+      "skill_refs": [],
+      "event_families": [
+        "arrival",
+        "activity",
+        "skill-invocation",
+        "tool-operation"
+      ]
+    },
+    "variation_of": {
+      "file_ref": "central:path:/Users/admin/Central:Work/O-I/desktop/cradle/material/expressive-material/character/anima.expression.json",
+      "revision": "central.content-fnv1a64/v1:53482:f5136dbe8c37925c"
+    },
+    "authored_by": "human:fx-walk"
+  }
+}

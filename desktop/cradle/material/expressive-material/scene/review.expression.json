@@ -1,0 +1,427 @@
+{
+  "presentation": {
+    "schema": "oi.journey-properties/v1",
+    "description": "Reusable Scene: Review.",
+    "loop": false
+  },
+  "schema": "oi.expression/v1",
+  "expression_ref": "expression:fx-scene-review",
+  "revision": 1,
+  "title": "Review",
+  "scenes": [
+    {
+      "presentation": {
+        "schema": "oi.journey-scene/v1",
+        "scene": {
+          "automation": [
+            {
+              "blend": "replace",
+              "delay": 0,
+              "duration": 0,
+              "enabled": true,
+              "firedAt": null,
+              "id": "review-ring",
+              "loop": "loop",
+              "max": 1.12,
+              "min": 0.9,
+              "phase": 0,
+              "rate": 0.5,
+              "target": "entity:expression%3Afx-scene-review%3Aentity%3Aplate:scale",
+              "type": "lfo",
+              "wave": "sine"
+            }
+          ],
+          "character": "The work is held up to its checks: a resonant plate rings under the artifact; the outcome settles its colour.",
+          "composition": {
+            "carryStation": false,
+            "carryTint": true,
+            "focus": "parallel",
+            "focusDuration": 4,
+            "frequencyDriver": "manual",
+            "layout": "free",
+            "plane": "XY"
+          },
+          "duration": 10,
+          "engine": {
+            "autoFitSizes": true,
+            "autoOscillate": true,
+            "autoSweep": false,
+            "backgroundMode": "vignette",
+            "collisionEnabled": false,
+            "collisionMode": "obstacle",
+            "colorEnabled": true,
+            "colorMode": "linearGradient",
+            "dotShape": "circle",
+            "driveShape": "sine",
+            "focusOrder": "listed",
+            "fontFamily": "system-ui, -apple-system, sans-serif",
+            "fontWeight": 900,
+            "grainProfile": true,
+            "inkMode": "blackOnWhite",
+            "mediumDimension": "2D",
+            "mediumEnabled": false,
+            "mediumPlane": "vertical",
+            "morphEnabled": true,
+            "pairwiseEnabled": false,
+            "paletteSource": "custom",
+            "pointerClick": "pulse",
+            "pointerClickRadius": 0.45,
+            "pointerClickStrength": 2.2,
+            "pointerMode": "repel",
+            "relationalEnabled": false,
+            "relationalMode": "orbital",
+            "resonanceEnabled": true,
+            "resonatorMode": "template",
+            "sweepDirection": "ascent",
+            "trajectory": "vortexSpiral"
+          },
+          "entities": [
+            {
+              "force": {
+                "kind": "attract",
+                "radius": 0.38,
+                "spin": 0.05,
+                "strength": 0.3
+              },
+              "id": "expression:fx-scene-review:entity:lead",
+              "kind": "formation",
+              "locked": false,
+              "name": "Reviewer",
+              "position": {
+                "x": -0.8,
+                "y": -0.1,
+                "z": 0
+              },
+              "role": "lead",
+              "rotation": 0,
+              "sequence": {
+                "clock": "seconds",
+                "enabled": false,
+                "steps": [
+                  {
+                    "hold": 3,
+                    "id": "expression:fx-scene-review:entity:lead:rest",
+                    "position": null,
+                    "shape": "text",
+                    "text": "◯",
+                    "transition": 1
+                  }
+                ]
+              },
+              "shape": "text",
+              "share": 1,
+              "size": {
+                "x": 0.62,
+                "y": 0.72
+              },
+              "station": null,
+              "text": "◯",
+              "tint": "#8a7f6c",
+              "tintWeight": 0.5
+            },
+            {
+              "force": {
+                "kind": "attract",
+                "radius": 0.45,
+                "spin": 0,
+                "strength": 0
+              },
+              "id": "expression:fx-scene-review:entity:artifact",
+              "kind": "formation",
+              "locked": false,
+              "name": "Under review",
+              "position": {
+                "x": 0.25,
+                "y": 0.1,
+                "z": 0
+              },
+              "role": "artifact",
+              "rotation": 0,
+              "sequence": {
+                "clock": "seconds",
+                "enabled": false,
+                "steps": [
+                  {
+                    "hold": 3,
+                    "id": "expression:fx-scene-review:entity:artifact:rest",
+                    "position": null,
+                    "shape": "text",
+                    "text": "▣",
+                    "transition": 1
+                  }
+                ]
+              },
+              "shape": "text",
+              "share": 0.6,
+              "size": {
+                "x": 0.48,
+                "y": 0.52
+              },
+              "station": null,
+              "text": "▣",
+              "tint": "#6f7d8c",
+              "tintWeight": 0.8
+            },
+            {
+              "force": {
+                "kind": "repel",
+                "radius": 0.7,
+                "spin": 0,
+                "strength": 0.4
+              },
+              "id": "expression:fx-scene-review:entity:plate",
+              "kind": "formation",
+              "locked": false,
+              "name": "Resonant plate",
+              "position": {
+                "x": 0.25,
+                "y": 0.1,
+                "z": -0.1
+              },
+              "rotation": 0,
+              "sequence": {
+                "clock": "seconds",
+                "enabled": false,
+                "steps": [
+                  {
+                    "hold": 3,
+                    "id": "expression:fx-scene-review:entity:plate:rest",
+                    "position": null,
+                    "shape": "text",
+                    "text": "",
+                    "transition": 1
+                  }
+                ]
+              },
+              "shape": "cymatic",
+              "share": 1.4,
+              "size": {
+                "x": 1.4,
+                "y": 1.4
+              },
+              "station": null,
+              "templateDimension": "2D",
+              "templateFrequency": 396,
+              "templateGeometry": "circular",
+              "text": "",
+              "tint": "#9fb7b0",
+              "tintWeight": 0.5
+            }
+          ],
+          "field": {
+            "background": "#ebe7dc",
+            "material": "print",
+            "palette": [
+              "#2a2d33",
+              "#6f7d8c",
+              "#b0643c"
+            ],
+            "params": {
+              "circulation": 1,
+              "contrast": 0.74,
+              "count": 40000,
+              "curlDepth": 0.2,
+              "densityPhase": 0.3,
+              "densityScale": 1,
+              "densityTether": 1,
+              "depth": 0.12,
+              "dispersion": 0.05,
+              "dominance": 0,
+              "edgeWeight": 0,
+              "elongation": 0.04,
+              "excitation": 0.7,
+              "frequency": 396,
+              "grain": 0.035,
+              "gravityFalloff": 2,
+              "gravitySoftening": 0.1,
+              "gravityX": 0,
+              "gravityY": 0,
+              "gravityZ": 0,
+              "halo": 0.13,
+              "irregularity": 0.35,
+              "opacity": 0.88,
+              "orientation": 0,
+              "pointerFalloff": 2,
+              "pointerRadius": 0.23,
+              "pointerStrength": 0.8,
+              "quadraticDrag": 0.2,
+              "recovery": 1.1,
+              "roundness": 0.3,
+              "size": 3.2,
+              "sizeBias": 1.6,
+              "snapRigidity": 1,
+              "softness": 0.15,
+              "speed": 0.5,
+              "speedLimit": 3,
+              "swirlRadius": 0.4,
+              "thermalJitter": 0,
+              "timeScale": 1,
+              "turbulence": 0.12,
+              "turbulenceScale": 1.2,
+              "vortexRadius": 0.4,
+              "zConfinement": 1
+            }
+          },
+          "id": "expression:fx-scene-review:scene:review",
+          "morph": {
+            "depth": 1,
+            "dwell": 0.3,
+            "law": "theta",
+            "phiOffset": 0,
+            "phiRate": 0.13,
+            "thetaOffset": 0,
+            "thetaRate": 0.08
+          },
+          "name": "Review",
+          "resonanceDrive": {
+            "kind": "frequency"
+          },
+          "text": [
+            {
+              "align": "left",
+              "body": "",
+              "id": "t-caption",
+              "italic": "",
+              "kicker": "REVIEW",
+              "role": "caption",
+              "size": 22,
+              "title": "",
+              "visible": true,
+              "width": 520,
+              "x": 0.07,
+              "y": 0.82
+            }
+          ],
+          "toolbelt": [
+            {
+              "id": "speed",
+              "key": "timeScale",
+              "scope": "field"
+            },
+            {
+              "id": "spring",
+              "key": "recovery",
+              "scope": "field"
+            },
+            {
+              "id": "viscosity",
+              "key": "native_fluid__viscosity",
+              "scope": "field"
+            },
+            {
+              "id": "flow",
+              "key": "turbulence",
+              "scope": "field"
+            },
+            {
+              "id": "transition",
+              "key": "sequence.transition",
+              "scope": "selected"
+            },
+            {
+              "id": "blend",
+              "key": "native_morphProgress",
+              "scope": "field"
+            }
+          ],
+          "transition": 1.2,
+          "view": {
+            "mode": "2d",
+            "panX": 0,
+            "panY": 0,
+            "pitch": 0,
+            "yaw": 0,
+            "zoom": 1
+          }
+        }
+      },
+      "scene_ref": "expression:fx-scene-review:scene:review",
+      "revision": 1,
+      "title": "Review",
+      "entity_refs": [
+        "expression:fx-scene-review:entity:lead",
+        "expression:fx-scene-review:entity:artifact",
+        "expression:fx-scene-review:entity:plate"
+      ],
+      "body": null,
+      "triggers": []
+    }
+  ],
+  "entities": {
+    "expression:fx-scene-review:entity:artifact": {
+      "entity_ref": "expression:fx-scene-review:entity:artifact",
+      "revision": 1,
+      "title": "Under review",
+      "subject": null,
+      "parameters": {}
+    },
+    "expression:fx-scene-review:entity:lead": {
+      "entity_ref": "expression:fx-scene-review:entity:lead",
+      "revision": 1,
+      "title": "Reviewer",
+      "subject": null,
+      "parameters": {}
+    },
+    "expression:fx-scene-review:entity:plate": {
+      "entity_ref": "expression:fx-scene-review:entity:plate",
+      "revision": 1,
+      "title": "Resonant plate",
+      "subject": null,
+      "parameters": {}
+    }
+  },
+  "relations": {},
+  "selection": {
+    "scene_ref": "expression:fx-scene-review:scene:review",
+    "entity_ref": null
+  },
+  "provenance": [
+    {
+      "ref": "oi:desktop/cradle/material/factory-expressions",
+      "revision": "curated-2026-09-26",
+      "availability": "available"
+    }
+  ],
+  "representations": [],
+  "refinements": [],
+  "collections": [
+    "factory-expressions"
+  ],
+  "profiles": [],
+  "reuse": {
+    "schema": "oi.expression-reuse/v1",
+    "kind": "scene",
+    "title": "Review",
+    "roles": [
+      {
+        "role": "lead",
+        "accepts": "agent",
+        "entity_ref": "expression:fx-scene-review:entity:lead"
+      },
+      {
+        "role": "artifact",
+        "accepts": "object",
+        "entity_ref": "expression:fx-scene-review:entity:artifact"
+      },
+      {
+        "role": "caption",
+        "accepts": "text",
+        "text_id": "t-caption"
+      }
+    ],
+    "entry_scene_ref": "expression:fx-scene-review:scene:review",
+    "playback": [
+      "expression:fx-scene-review:scene:review"
+    ],
+    "associations": {
+      "workflow_keys": [],
+      "task_types": [],
+      "skill_set_refs": [],
+      "skill_refs": [],
+      "event_families": [
+        "review"
+      ]
+    },
+    "authored_by": "agent:factory-expressions-lane-c"
+  }
+}

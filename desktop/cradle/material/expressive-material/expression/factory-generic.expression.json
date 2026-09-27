@@ -1,0 +1,3242 @@
+{
+  "presentation": {
+    "schema": "oi.journey-properties/v1",
+    "description": "The generic Factory composition for any Run without its own workflow material: ink on paper, the same passages.",
+    "loop": false
+  },
+  "schema": "oi.expression/v1",
+  "expression_ref": "expression:fx-factory-generic",
+  "revision": 1,
+  "title": "Factory — generic Run composition",
+  "scenes": [
+    {
+      "presentation": {
+        "schema": "oi.journey-scene/v1",
+        "scene": {
+          "automation": [
+            {
+              "blend": "replace",
+              "delay": 0.2,
+              "duration": 3.2,
+              "easing": "smoothstep",
+              "enabled": true,
+              "firedAt": null,
+              "id": "arrive-x",
+              "loop": "once",
+              "max": -0.4,
+              "min": -1.25,
+              "phase": 0,
+              "rate": 1,
+              "target": "entity:expression%3Afx-factory-generic%3Aentity%3Aself:x",
+              "type": "ramp",
+              "wave": "smooth"
+            },
+            {
+              "blend": "replace",
+              "delay": 0,
+              "duration": 3,
+              "easing": "smoothstep",
+              "enabled": true,
+              "firedAt": null,
+              "id": "arrive-halo",
+              "loop": "once",
+              "max": 0.24,
+              "min": 0.08,
+              "phase": 0,
+              "rate": 1,
+              "target": "field.halo",
+              "type": "ramp",
+              "wave": "smooth"
+            }
+          ],
+          "character": "An agent enters the field and takes up the work: its character arrives beside the goal.",
+          "composition": {
+            "carryStation": false,
+            "carryTint": true,
+            "focus": "parallel",
+            "focusDuration": 4,
+            "frequencyDriver": "manual",
+            "layout": "free",
+            "plane": "XY"
+          },
+          "duration": 9,
+          "engine": {
+            "autoFitSizes": true,
+            "autoOscillate": true,
+            "autoSweep": false,
+            "backgroundMode": "solid",
+            "collisionEnabled": false,
+            "collisionMode": "obstacle",
+            "colorEnabled": true,
+            "colorMode": "linearGradient",
+            "dotShape": "circle",
+            "driveShape": "sine",
+            "focusOrder": "listed",
+            "fontFamily": "system-ui, -apple-system, sans-serif",
+            "fontWeight": 900,
+            "grainProfile": true,
+            "inkMode": "blackOnWhite",
+            "mediumDimension": "2D",
+            "mediumEnabled": false,
+            "mediumPlane": "vertical",
+            "morphEnabled": false,
+            "pairwiseEnabled": false,
+            "paletteSource": "custom",
+            "pointerClick": "pulse",
+            "pointerClickRadius": 0.45,
+            "pointerClickStrength": 2.2,
+            "pointerMode": "repel",
+            "relationalEnabled": false,
+            "relationalMode": "orbital",
+            "resonanceEnabled": true,
+            "resonatorMode": "resonator",
+            "sweepDirection": "ascent",
+            "trajectory": "linear"
+          },
+          "entities": [
+            {
+              "force": {
+                "kind": "attract",
+                "radius": 0.38,
+                "spin": 0.05,
+                "strength": 0.3
+              },
+              "id": "expression:fx-factory-generic:entity:self",
+              "kind": "formation",
+              "locked": false,
+              "name": "Arriving agent",
+              "position": {
+                "x": -1.25,
+                "y": 0,
+                "z": 0
+              },
+              "role": "self",
+              "rotation": 0,
+              "sequence": {
+                "clock": "seconds",
+                "enabled": false,
+                "steps": [
+                  {
+                    "hold": 3,
+                    "id": "expression:fx-factory-generic:entity:self:rest",
+                    "position": null,
+                    "shape": "text",
+                    "text": "◯",
+                    "transition": 1
+                  }
+                ]
+              },
+              "shape": "text",
+              "share": 1,
+              "size": {
+                "x": 0.62,
+                "y": 0.72
+              },
+              "station": null,
+              "text": "◯",
+              "tint": "#8a7f6c",
+              "tintWeight": 0.5
+            },
+            {
+              "force": {
+                "kind": "vortex",
+                "radius": 0.5,
+                "spin": 0.25,
+                "strength": 0.5
+              },
+              "id": "expression:fx-factory-generic:entity:goal",
+              "kind": "formation",
+              "locked": false,
+              "name": "Goal",
+              "position": {
+                "x": 0.55,
+                "y": 0.05,
+                "z": 0
+              },
+              "role": "goal",
+              "rotation": 0,
+              "sequence": {
+                "clock": "seconds",
+                "enabled": false,
+                "steps": [
+                  {
+                    "hold": 3,
+                    "id": "expression:fx-factory-generic:entity:goal:rest",
+                    "position": null,
+                    "shape": "text",
+                    "text": "◎",
+                    "transition": 1
+                  }
+                ]
+              },
+              "shape": "ring",
+              "share": 0.6,
+              "size": {
+                "x": 0.9,
+                "y": 0.9
+              },
+              "station": null,
+              "text": "◎",
+              "tint": "#c9a24e",
+              "tintWeight": 0.8
+            },
+            {
+              "force": {
+                "kind": "attract",
+                "radius": 0.3,
+                "spin": 0,
+                "strength": 0.6
+              },
+              "id": "expression:fx-factory-generic:entity:threshold",
+              "kind": "pin",
+              "locked": false,
+              "name": "Threshold",
+              "position": {
+                "x": -0.35,
+                "y": 0,
+                "z": 0
+              },
+              "rotation": 0,
+              "sequence": {
+                "clock": "seconds",
+                "enabled": false,
+                "steps": [
+                  {
+                    "hold": 3,
+                    "id": "step-f1baaf9a-235a-4db2-b5b2-69a96e6a36a9",
+                    "position": null,
+                    "shape": "text",
+                    "text": "",
+                    "transition": 1
+                  }
+                ]
+              },
+              "shape": "text",
+              "share": 0,
+              "size": {
+                "x": 0.1,
+                "y": 0.1
+              },
+              "station": null,
+              "text": "",
+              "tint": "#252720",
+              "tintWeight": 0
+            }
+          ],
+          "field": {
+            "background": "#f3f0e7",
+            "material": "ink",
+            "palette": [
+              "#23261f",
+              "#5c665a"
+            ],
+            "params": {
+              "circulation": 1,
+              "contrast": 0.9,
+              "count": 48000,
+              "curlDepth": 0.2,
+              "densityPhase": 0.3,
+              "densityScale": 1,
+              "densityTether": 1,
+              "depth": 0.12,
+              "dispersion": 0.06,
+              "dominance": 0,
+              "edgeWeight": 0,
+              "elongation": 0.04,
+              "excitation": 0.6,
+              "frequency": 220,
+              "grain": 0.035,
+              "gravityFalloff": 2,
+              "gravitySoftening": 0.1,
+              "gravityX": 0,
+              "gravityY": 0,
+              "gravityZ": 0,
+              "halo": 0.13,
+              "irregularity": 0.35,
+              "opacity": 0.92,
+              "orientation": 0,
+              "pointerFalloff": 2,
+              "pointerRadius": 0.23,
+              "pointerStrength": 0.8,
+              "quadraticDrag": 0.2,
+              "recovery": 1.1,
+              "roundness": 0.95,
+              "size": 2.4,
+              "sizeBias": 1.6,
+              "snapRigidity": 1,
+              "softness": 0.15,
+              "speed": 0.55,
+              "speedLimit": 3,
+              "swirlRadius": 0.4,
+              "thermalJitter": 0,
+              "timeScale": 1,
+              "turbulence": 0.14,
+              "turbulenceScale": 1.2,
+              "vortexRadius": 0.4,
+              "zConfinement": 1
+            }
+          },
+          "id": "expression:fx-factory-generic:scene:arrival",
+          "morph": {
+            "depth": 1,
+            "dwell": 0.3,
+            "law": "theta",
+            "phiOffset": 0,
+            "phiRate": 0.13,
+            "thetaOffset": 0,
+            "thetaRate": 0.08
+          },
+          "name": "Arrival",
+          "text": [
+            {
+              "align": "left",
+              "body": "",
+              "id": "t-caption",
+              "italic": "",
+              "kicker": "ARRIVAL",
+              "role": "caption",
+              "size": 22,
+              "title": "",
+              "visible": true,
+              "width": 520,
+              "x": 0.07,
+              "y": 0.8
+            },
+            {
+              "align": "left",
+              "body": "",
+              "id": "t-goal",
+              "italic": "",
+              "kicker": "",
+              "role": "goalText",
+              "size": 18,
+              "title": "",
+              "visible": true,
+              "width": 360,
+              "x": 0.6,
+              "y": 0.2
+            }
+          ],
+          "toolbelt": [
+            {
+              "id": "speed",
+              "key": "timeScale",
+              "scope": "field"
+            },
+            {
+              "id": "spring",
+              "key": "recovery",
+              "scope": "field"
+            },
+            {
+              "id": "viscosity",
+              "key": "native_fluid__viscosity",
+              "scope": "field"
+            },
+            {
+              "id": "flow",
+              "key": "turbulence",
+              "scope": "field"
+            },
+            {
+              "id": "transition",
+              "key": "sequence.transition",
+              "scope": "selected"
+            },
+            {
+              "id": "blend",
+              "key": "native_morphProgress",
+              "scope": "field"
+            }
+          ],
+          "transition": 1.6,
+          "view": {
+            "mode": "2d",
+            "panX": 0,
+            "panY": 0,
+            "pitch": 0,
+            "yaw": 0,
+            "zoom": 1
+          }
+        }
+      },
+      "scene_ref": "expression:fx-factory-generic:scene:arrival",
+      "revision": 1,
+      "title": "Arrival",
+      "entity_refs": [
+        "expression:fx-factory-generic:entity:self",
+        "expression:fx-factory-generic:entity:goal",
+        "expression:fx-factory-generic:entity:threshold"
+      ],
+      "body": null,
+      "triggers": []
+    },
+    {
+      "presentation": {
+        "schema": "oi.journey-scene/v1",
+        "scene": {
+          "automation": [
+            {
+              "blend": "replace",
+              "delay": 0.5,
+              "duration": 8,
+              "easing": "smoothstep",
+              "enabled": true,
+              "firedAt": null,
+              "id": "artifact-a-b",
+              "loop": "once",
+              "max": 0.9,
+              "min": -0.9,
+              "phase": 0,
+              "rate": 1,
+              "target": "entity:expression%3Afx-factory-generic%3Aentity%3Aartifact:x",
+              "type": "ramp",
+              "wave": "smooth"
+            },
+            {
+              "blend": "replace",
+              "delay": 0.8,
+              "duration": 8.4,
+              "easing": "smoothstep",
+              "enabled": true,
+              "firedAt": null,
+              "id": "bearer-a-b",
+              "loop": "once",
+              "max": 0.75,
+              "min": -0.9,
+              "phase": 0,
+              "rate": 1,
+              "target": "entity:expression%3Afx-factory-generic%3Aentity%3Aself:x",
+              "type": "ramp",
+              "wave": "smooth"
+            },
+            {
+              "blend": "replace",
+              "delay": 0,
+              "duration": 0,
+              "enabled": true,
+              "firedAt": null,
+              "id": "passage-turbulence",
+              "loop": "loop",
+              "max": 0.24,
+              "min": 0.1,
+              "phase": 0,
+              "rate": 0.08,
+              "target": "field.turbulence",
+              "type": "lfo",
+              "wave": "sine"
+            }
+          ],
+          "character": "Work moves from A to B: the object travels between stations while its bearer keeps pace.",
+          "composition": {
+            "carryStation": false,
+            "carryTint": true,
+            "focus": "travelling",
+            "focusDuration": 6,
+            "frequencyDriver": "manual",
+            "layout": "free",
+            "plane": "XY"
+          },
+          "duration": 12,
+          "engine": {
+            "autoFitSizes": true,
+            "autoOscillate": true,
+            "autoSweep": false,
+            "backgroundMode": "solid",
+            "collisionEnabled": false,
+            "collisionMode": "obstacle",
+            "colorEnabled": true,
+            "colorMode": "linearGradient",
+            "dotShape": "circle",
+            "driveShape": "sine",
+            "focusOrder": "listed",
+            "fontFamily": "system-ui, -apple-system, sans-serif",
+            "fontWeight": 900,
+            "grainProfile": true,
+            "inkMode": "blackOnWhite",
+            "mediumDimension": "2D",
+            "mediumEnabled": false,
+            "mediumPlane": "vertical",
+            "morphEnabled": false,
+            "pairwiseEnabled": false,
+            "paletteSource": "custom",
+            "pointerClick": "pulse",
+            "pointerClickRadius": 0.45,
+            "pointerClickStrength": 2.2,
+            "pointerMode": "repel",
+            "relationalEnabled": false,
+            "relationalMode": "orbital",
+            "resonanceEnabled": true,
+            "resonatorMode": "resonator",
+            "sweepDirection": "ascent",
+            "trajectory": "linear"
+          },
+          "entities": [
+            {
+              "force": {
+                "kind": "attract",
+                "radius": 0.38,
+                "spin": 0.05,
+                "strength": 0.3
+              },
+              "id": "expression:fx-factory-generic:entity:self",
+              "kind": "formation",
+              "locked": false,
+              "name": "Working agent",
+              "position": {
+                "x": -0.9,
+                "y": -0.28,
+                "z": 0
+              },
+              "role": "self",
+              "rotation": 0,
+              "sequence": {
+                "clock": "seconds",
+                "enabled": false,
+                "steps": [
+                  {
+                    "hold": 3,
+                    "id": "expression:fx-factory-generic:entity:self:rest",
+                    "position": null,
+                    "shape": "text",
+                    "text": "◯",
+                    "transition": 1
+                  }
+                ]
+              },
+              "shape": "text",
+              "share": 1,
+              "size": {
+                "x": 0.62,
+                "y": 0.72
+              },
+              "station": null,
+              "text": "◯",
+              "tint": "#8a7f6c",
+              "tintWeight": 0.5
+            },
+            {
+              "force": {
+                "kind": "attract",
+                "radius": 0.45,
+                "spin": 0,
+                "strength": 0
+              },
+              "id": "expression:fx-factory-generic:entity:artifact",
+              "kind": "formation",
+              "locked": false,
+              "name": "Work object",
+              "position": {
+                "x": -0.9,
+                "y": 0.12,
+                "z": 0
+              },
+              "role": "artifact",
+              "rotation": 0,
+              "sequence": {
+                "clock": "seconds",
+                "easing": "smoothstep",
+                "enabled": true,
+                "order": "loop",
+                "steps": [
+                  {
+                    "hold": 2,
+                    "id": "work-object-a",
+                    "objectState": {
+                      "force": {
+                        "kind": "attract",
+                        "radius": 0.3,
+                        "spin": 0,
+                        "strength": 0.3
+                      },
+                      "rotation": 0,
+                      "scale": 1,
+                      "size": {
+                        "x": 0.48,
+                        "y": 0.52
+                      },
+                      "tint": "#6f7d8c",
+                      "tintWeight": 0.7
+                    },
+                    "position": null,
+                    "shape": "text",
+                    "text": "▤",
+                    "transition": 1.4
+                  },
+                  {
+                    "hold": 2,
+                    "id": "work-object-b",
+                    "name": "in progress",
+                    "objectState": {
+                      "force": {
+                        "kind": "vortex",
+                        "radius": 0.32,
+                        "spin": 0.3,
+                        "strength": 0.5
+                      },
+                      "rotation": 0,
+                      "scale": 1,
+                      "size": {
+                        "x": 0.52,
+                        "y": 0.56
+                      },
+                      "tint": "#6f7d8c",
+                      "tintWeight": 0.9
+                    },
+                    "position": null,
+                    "shape": "text",
+                    "text": "▦",
+                    "transition": 1.4
+                  }
+                ]
+              },
+              "shape": "text",
+              "share": 0.6,
+              "size": {
+                "x": 0.48,
+                "y": 0.52
+              },
+              "station": null,
+              "text": "▤",
+              "tint": "#6f7d8c",
+              "tintWeight": 0.7
+            },
+            {
+              "force": {
+                "kind": "attract",
+                "radius": 0.45,
+                "spin": 0,
+                "strength": 0
+              },
+              "id": "expression:fx-factory-generic:entity:goal",
+              "kind": "formation",
+              "locked": false,
+              "name": "Goal",
+              "position": {
+                "x": 1.1,
+                "y": 0.45,
+                "z": 0
+              },
+              "role": "goal",
+              "rotation": 0,
+              "sequence": {
+                "clock": "seconds",
+                "enabled": false,
+                "steps": [
+                  {
+                    "hold": 3,
+                    "id": "expression:fx-factory-generic:entity:goal:rest",
+                    "position": null,
+                    "shape": "text",
+                    "text": "◎",
+                    "transition": 1
+                  }
+                ]
+              },
+              "shape": "ring",
+              "share": 0.6,
+              "size": {
+                "x": 0.5,
+                "y": 0.5
+              },
+              "station": null,
+              "text": "◎",
+              "tint": "#c9a24e",
+              "tintWeight": 0.6
+            },
+            {
+              "force": {
+                "kind": "attract",
+                "radius": 0.3,
+                "spin": 0,
+                "strength": 0.8
+              },
+              "id": "expression:fx-factory-generic:entity:station-a",
+              "kind": "pin",
+              "locked": false,
+              "name": "Station A",
+              "position": {
+                "x": -0.9,
+                "y": 0.12,
+                "z": 0
+              },
+              "rotation": 0,
+              "sequence": {
+                "clock": "seconds",
+                "enabled": false,
+                "steps": [
+                  {
+                    "hold": 3,
+                    "id": "step-8e660fe4-96a3-42d3-b84e-7ffa0a7e1ef9",
+                    "position": null,
+                    "shape": "text",
+                    "text": "",
+                    "transition": 1
+                  }
+                ]
+              },
+              "shape": "text",
+              "share": 0,
+              "size": {
+                "x": 0.1,
+                "y": 0.1
+              },
+              "station": null,
+              "text": "",
+              "tint": "#252720",
+              "tintWeight": 0
+            },
+            {
+              "force": {
+                "kind": "attract",
+                "radius": 0.3,
+                "spin": 0,
+                "strength": 0.8
+              },
+              "id": "expression:fx-factory-generic:entity:station-b",
+              "kind": "pin",
+              "locked": false,
+              "name": "Station B",
+              "position": {
+                "x": 0.9,
+                "y": 0.12,
+                "z": 0
+              },
+              "rotation": 0,
+              "sequence": {
+                "clock": "seconds",
+                "enabled": false,
+                "steps": [
+                  {
+                    "hold": 3,
+                    "id": "step-4b8010fa-131b-4ebb-adc7-4ec225c1ef0a",
+                    "position": null,
+                    "shape": "text",
+                    "text": "",
+                    "transition": 1
+                  }
+                ]
+              },
+              "shape": "text",
+              "share": 0,
+              "size": {
+                "x": 0.1,
+                "y": 0.1
+              },
+              "station": null,
+              "text": "",
+              "tint": "#252720",
+              "tintWeight": 0
+            }
+          ],
+          "field": {
+            "background": "#f3f0e7",
+            "material": "ink",
+            "palette": [
+              "#23261f",
+              "#5c665a"
+            ],
+            "params": {
+              "circulation": 1,
+              "contrast": 0.9,
+              "count": 48000,
+              "curlDepth": 0.2,
+              "densityPhase": 0.3,
+              "densityScale": 1,
+              "densityTether": 1,
+              "depth": 0.12,
+              "dispersion": 0.06,
+              "dominance": 0,
+              "edgeWeight": 0,
+              "elongation": 0.04,
+              "excitation": 0.6,
+              "frequency": 220,
+              "grain": 0.035,
+              "gravityFalloff": 2,
+              "gravitySoftening": 0.1,
+              "gravityX": 0,
+              "gravityY": 0,
+              "gravityZ": 0,
+              "halo": 0.13,
+              "irregularity": 0.35,
+              "opacity": 0.92,
+              "orientation": 0,
+              "pointerFalloff": 2,
+              "pointerRadius": 0.23,
+              "pointerStrength": 0.8,
+              "quadraticDrag": 0.2,
+              "recovery": 1.1,
+              "roundness": 0.95,
+              "size": 2.4,
+              "sizeBias": 1.6,
+              "snapRigidity": 1,
+              "softness": 0.15,
+              "speed": 0.55,
+              "speedLimit": 3,
+              "swirlRadius": 0.4,
+              "thermalJitter": 0,
+              "timeScale": 1,
+              "turbulence": 0.14,
+              "turbulenceScale": 1.2,
+              "vortexRadius": 0.4,
+              "zConfinement": 1
+            }
+          },
+          "id": "expression:fx-factory-generic:scene:work-passage",
+          "morph": {
+            "depth": 1,
+            "dwell": 0.3,
+            "law": "theta",
+            "phiOffset": 0,
+            "phiRate": 0.13,
+            "thetaOffset": 0,
+            "thetaRate": 0.08
+          },
+          "name": "Work passage",
+          "text": [
+            {
+              "align": "left",
+              "body": "",
+              "id": "t-progress",
+              "italic": "",
+              "kicker": "IN PROGRESS",
+              "role": "progressText",
+              "size": 22,
+              "title": "",
+              "visible": true,
+              "width": 520,
+              "x": 0.07,
+              "y": 0.84
+            }
+          ],
+          "toolbelt": [
+            {
+              "id": "speed",
+              "key": "timeScale",
+              "scope": "field"
+            },
+            {
+              "id": "spring",
+              "key": "recovery",
+              "scope": "field"
+            },
+            {
+              "id": "viscosity",
+              "key": "native_fluid__viscosity",
+              "scope": "field"
+            },
+            {
+              "id": "flow",
+              "key": "turbulence",
+              "scope": "field"
+            },
+            {
+              "id": "transition",
+              "key": "sequence.transition",
+              "scope": "selected"
+            },
+            {
+              "id": "blend",
+              "key": "native_morphProgress",
+              "scope": "field"
+            }
+          ],
+          "transition": 1.2,
+          "view": {
+            "mode": "2d",
+            "panX": 0,
+            "panY": 0,
+            "pitch": 0,
+            "yaw": 0,
+            "zoom": 1
+          }
+        }
+      },
+      "scene_ref": "expression:fx-factory-generic:scene:work-passage",
+      "revision": 1,
+      "title": "Work passage",
+      "entity_refs": [
+        "expression:fx-factory-generic:entity:self",
+        "expression:fx-factory-generic:entity:artifact",
+        "expression:fx-factory-generic:entity:goal",
+        "expression:fx-factory-generic:entity:station-a",
+        "expression:fx-factory-generic:entity:station-b"
+      ],
+      "body": null,
+      "triggers": []
+    },
+    {
+      "presentation": {
+        "schema": "oi.journey-scene/v1",
+        "scene": {
+          "automation": [
+            {
+              "blend": "replace",
+              "delay": 0,
+              "duration": 1.4,
+              "easing": "whip",
+              "enabled": true,
+              "firedAt": null,
+              "id": "factory-generic-skill-ring",
+              "loop": "once",
+              "max": 1,
+              "min": 0.2,
+              "phase": 0,
+              "rate": 1,
+              "target": "field.excitation",
+              "type": "ramp",
+              "wave": "smooth"
+            }
+          ],
+          "character": "A skill flares through the bearer while the passage continues.",
+          "composition": {
+            "carryStation": false,
+            "carryTint": true,
+            "focus": "parallel",
+            "focusDuration": 4,
+            "frequencyDriver": "manual",
+            "layout": "free",
+            "plane": "XY"
+          },
+          "duration": 4,
+          "engine": {
+            "autoFitSizes": true,
+            "autoOscillate": true,
+            "autoSweep": false,
+            "backgroundMode": "solid",
+            "collisionEnabled": false,
+            "collisionMode": "obstacle",
+            "colorEnabled": true,
+            "colorMode": "linearGradient",
+            "dotShape": "circle",
+            "driveShape": "sine",
+            "focusOrder": "listed",
+            "fontFamily": "system-ui, -apple-system, sans-serif",
+            "fontWeight": 900,
+            "grainProfile": true,
+            "inkMode": "blackOnWhite",
+            "mediumDimension": "2D",
+            "mediumEnabled": false,
+            "mediumPlane": "vertical",
+            "morphEnabled": false,
+            "pairwiseEnabled": false,
+            "paletteSource": "custom",
+            "pointerClick": "pulse",
+            "pointerClickRadius": 0.45,
+            "pointerClickStrength": 2.2,
+            "pointerMode": "repel",
+            "relationalEnabled": false,
+            "relationalMode": "orbital",
+            "resonanceEnabled": true,
+            "resonatorMode": "resonator",
+            "sweepDirection": "ascent",
+            "trajectory": "linear"
+          },
+          "entities": [
+            {
+              "force": {
+                "kind": "attract",
+                "radius": 0.38,
+                "spin": 0.05,
+                "strength": 0.3
+              },
+              "id": "expression:fx-factory-generic:entity:skill-self",
+              "kind": "formation",
+              "locked": false,
+              "name": "Invoking agent",
+              "position": {
+                "x": 0,
+                "y": 0,
+                "z": 0
+              },
+              "role": "self",
+              "rotation": 0,
+              "sequence": {
+                "clock": "seconds",
+                "easing": "whip",
+                "enabled": true,
+                "impulse": 1.4,
+                "order": "loop",
+                "steps": [
+                  {
+                    "hold": 0.2,
+                    "id": "factory-generic-skill-0",
+                    "objectState": {
+                      "force": {
+                        "kind": "attract",
+                        "radius": 0.38,
+                        "spin": 0.1,
+                        "strength": 0.5
+                      },
+                      "rotation": 0,
+                      "scale": 1,
+                      "size": {
+                        "x": 0.62,
+                        "y": 0.72
+                      },
+                      "tint": "#d9a36a",
+                      "tintWeight": 1
+                    },
+                    "position": null,
+                    "shape": "text",
+                    "text": "✧",
+                    "transition": 0.2
+                  },
+                  {
+                    "hold": 0.3,
+                    "id": "factory-generic-skill-1",
+                    "name": "kindle",
+                    "objectState": {
+                      "force": {
+                        "kind": "vortex",
+                        "radius": 0.52,
+                        "spin": 1.6,
+                        "strength": 1.8
+                      },
+                      "rotation": 72,
+                      "scale": 1,
+                      "size": {
+                        "x": 0.85,
+                        "y": 0.95
+                      },
+                      "tint": "#d9a36a",
+                      "tintWeight": 1
+                    },
+                    "position": null,
+                    "shape": "text",
+                    "text": "✺",
+                    "transition": 0.3
+                  },
+                  {
+                    "hold": 0.5,
+                    "id": "factory-generic-skill-2",
+                    "name": "ring",
+                    "objectState": {
+                      "force": {
+                        "kind": "repel",
+                        "radius": 0.62,
+                        "spin": 0.5,
+                        "strength": 1.1
+                      },
+                      "rotation": 144,
+                      "scale": 1,
+                      "size": {
+                        "x": 1.2,
+                        "y": 1.2
+                      },
+                      "tint": "#efe6d2",
+                      "tintWeight": 1
+                    },
+                    "position": null,
+                    "shape": "cymatic",
+                    "templateDimension": "2D",
+                    "templateFrequency": 639,
+                    "templateGeometry": "circular",
+                    "text": "",
+                    "transition": 0.4
+                  },
+                  {
+                    "hold": 0.5,
+                    "id": "factory-generic-skill-3",
+                    "name": "settle",
+                    "objectState": {
+                      "force": {
+                        "kind": "attract",
+                        "radius": 0.38,
+                        "spin": 0.05,
+                        "strength": 0.3
+                      },
+                      "rotation": 360,
+                      "scale": 1,
+                      "size": {
+                        "x": 0.62,
+                        "y": 0.72
+                      },
+                      "tint": "#8a7f6c",
+                      "tintWeight": 0.6
+                    },
+                    "position": null,
+                    "shape": "text",
+                    "text": "✧",
+                    "transition": 0.6
+                  }
+                ]
+              },
+              "shape": "text",
+              "share": 1,
+              "size": {
+                "x": 0.62,
+                "y": 0.72
+              },
+              "station": null,
+              "text": "✧",
+              "tint": "#8a7f6c",
+              "tintWeight": 0.5
+            }
+          ],
+          "field": {
+            "background": "#f3f0e7",
+            "material": "ink",
+            "palette": [
+              "#23261f",
+              "#5c665a"
+            ],
+            "params": {
+              "circulation": 1,
+              "contrast": 0.9,
+              "count": 48000,
+              "curlDepth": 0.2,
+              "densityPhase": 0.3,
+              "densityScale": 1,
+              "densityTether": 1,
+              "depth": 0.12,
+              "dispersion": 0.06,
+              "dominance": 0,
+              "edgeWeight": 0,
+              "elongation": 0.04,
+              "excitation": 0.6,
+              "frequency": 220,
+              "grain": 0.035,
+              "gravityFalloff": 2,
+              "gravitySoftening": 0.1,
+              "gravityX": 0,
+              "gravityY": 0,
+              "gravityZ": 0,
+              "halo": 0.13,
+              "irregularity": 0.35,
+              "opacity": 0.92,
+              "orientation": 0,
+              "pointerFalloff": 2,
+              "pointerRadius": 0.23,
+              "pointerStrength": 0.8,
+              "quadraticDrag": 0.2,
+              "recovery": 1.1,
+              "roundness": 0.95,
+              "size": 2.4,
+              "sizeBias": 1.6,
+              "snapRigidity": 1,
+              "softness": 0.15,
+              "speed": 0.55,
+              "speedLimit": 3,
+              "swirlRadius": 0.4,
+              "thermalJitter": 0,
+              "timeScale": 1,
+              "turbulence": 0.14,
+              "turbulenceScale": 1.2,
+              "vortexRadius": 0.4,
+              "zConfinement": 1
+            }
+          },
+          "id": "expression:fx-factory-generic:scene:skill-invocation",
+          "morph": {
+            "depth": 1,
+            "dwell": 0.3,
+            "law": "theta",
+            "phiOffset": 0,
+            "phiRate": 0.13,
+            "thetaOffset": 0,
+            "thetaRate": 0.08
+          },
+          "name": "Skill invocation",
+          "text": [
+            {
+              "align": "left",
+              "body": "",
+              "id": "t-skill",
+              "italic": "",
+              "kicker": "SKILL",
+              "role": "caption",
+              "size": 20,
+              "title": "",
+              "visible": true,
+              "width": 520,
+              "x": 0.55,
+              "y": 0.25
+            }
+          ],
+          "toolbelt": [
+            {
+              "id": "speed",
+              "key": "timeScale",
+              "scope": "field"
+            },
+            {
+              "id": "spring",
+              "key": "recovery",
+              "scope": "field"
+            },
+            {
+              "id": "viscosity",
+              "key": "native_fluid__viscosity",
+              "scope": "field"
+            },
+            {
+              "id": "flow",
+              "key": "turbulence",
+              "scope": "field"
+            },
+            {
+              "id": "transition",
+              "key": "sequence.transition",
+              "scope": "selected"
+            },
+            {
+              "id": "blend",
+              "key": "native_morphProgress",
+              "scope": "field"
+            }
+          ],
+          "transition": 0.4,
+          "view": {
+            "mode": "2d",
+            "panX": 0,
+            "panY": 0,
+            "pitch": 0,
+            "yaw": 0,
+            "zoom": 1
+          }
+        }
+      },
+      "scene_ref": "expression:fx-factory-generic:scene:skill-invocation",
+      "revision": 1,
+      "title": "Skill invocation",
+      "entity_refs": [
+        "expression:fx-factory-generic:entity:skill-self"
+      ],
+      "body": null,
+      "triggers": []
+    },
+    {
+      "presentation": {
+        "schema": "oi.journey-scene/v1",
+        "scene": {
+          "automation": [
+            {
+              "blend": "replace",
+              "delay": 0.6,
+              "duration": 4,
+              "easing": "smoothstep",
+              "enabled": true,
+              "firedAt": null,
+              "id": "handoff-arc-x",
+              "loop": "once",
+              "max": 0.55,
+              "min": -0.55,
+              "phase": 0,
+              "rate": 1,
+              "target": "entity:expression%3Afx-factory-generic%3Aentity%3Aartifact:x",
+              "type": "ramp",
+              "wave": "smooth"
+            },
+            {
+              "blend": "replace",
+              "delay": 0.6,
+              "duration": 2,
+              "easing": "whip",
+              "enabled": true,
+              "firedAt": null,
+              "id": "handoff-arc-y",
+              "loop": "once",
+              "max": 0.42,
+              "min": 0.22,
+              "phase": 0,
+              "rate": 1,
+              "target": "entity:expression%3Afx-factory-generic%3Aentity%3Aartifact:y",
+              "type": "ramp",
+              "wave": "smooth"
+            },
+            {
+              "blend": "replace",
+              "delay": 2.6,
+              "duration": 2,
+              "easing": "smoothstep",
+              "enabled": true,
+              "firedAt": null,
+              "id": "handoff-settle-y",
+              "loop": "once",
+              "max": 0.2,
+              "min": 0.42,
+              "phase": 0,
+              "rate": 1,
+              "target": "entity:expression%3Afx-factory-generic%3Aentity%3Aartifact:y",
+              "type": "ramp",
+              "wave": "smooth"
+            }
+          ],
+          "character": "A sender passes an artifact to a recipient with a caption: the object crosses between them.",
+          "composition": {
+            "carryStation": false,
+            "carryTint": true,
+            "focus": "parallel",
+            "focusDuration": 4,
+            "frequencyDriver": "manual",
+            "layout": "free",
+            "plane": "XY"
+          },
+          "duration": 10,
+          "engine": {
+            "autoFitSizes": true,
+            "autoOscillate": true,
+            "autoSweep": false,
+            "backgroundMode": "solid",
+            "collisionEnabled": false,
+            "collisionMode": "obstacle",
+            "colorEnabled": true,
+            "colorMode": "linearGradient",
+            "dotShape": "circle",
+            "driveShape": "sine",
+            "focusOrder": "listed",
+            "fontFamily": "system-ui, -apple-system, sans-serif",
+            "fontWeight": 900,
+            "grainProfile": true,
+            "inkMode": "blackOnWhite",
+            "mediumDimension": "2D",
+            "mediumEnabled": false,
+            "mediumPlane": "vertical",
+            "morphEnabled": false,
+            "pairwiseEnabled": false,
+            "paletteSource": "custom",
+            "pointerClick": "pulse",
+            "pointerClickRadius": 0.45,
+            "pointerClickStrength": 2.2,
+            "pointerMode": "repel",
+            "relationalEnabled": false,
+            "relationalMode": "orbital",
+            "resonanceEnabled": true,
+            "resonatorMode": "resonator",
+            "sweepDirection": "ascent",
+            "trajectory": "linear"
+          },
+          "entities": [
+            {
+              "force": {
+                "kind": "attract",
+                "radius": 0.38,
+                "spin": 0.05,
+                "strength": 0.3
+              },
+              "id": "expression:fx-factory-generic:entity:sender",
+              "kind": "formation",
+              "locked": false,
+              "name": "Sender",
+              "position": {
+                "x": -0.85,
+                "y": 0,
+                "z": 0
+              },
+              "role": "sender",
+              "rotation": 0,
+              "sequence": {
+                "clock": "seconds",
+                "enabled": false,
+                "steps": [
+                  {
+                    "hold": 3,
+                    "id": "expression:fx-factory-generic:entity:sender:rest",
+                    "position": null,
+                    "shape": "text",
+                    "text": "◯",
+                    "transition": 1
+                  }
+                ]
+              },
+              "shape": "text",
+              "share": 1,
+              "size": {
+                "x": 0.62,
+                "y": 0.72
+              },
+              "station": null,
+              "text": "◯",
+              "tint": "#8a7f6c",
+              "tintWeight": 0.5
+            },
+            {
+              "force": {
+                "kind": "attract",
+                "radius": 0.38,
+                "spin": 0.05,
+                "strength": 0.3
+              },
+              "id": "expression:fx-factory-generic:entity:recipient",
+              "kind": "formation",
+              "locked": false,
+              "name": "Recipient",
+              "position": {
+                "x": 0.85,
+                "y": 0,
+                "z": 0
+              },
+              "role": "recipient",
+              "rotation": 0,
+              "sequence": {
+                "clock": "seconds",
+                "enabled": false,
+                "steps": [
+                  {
+                    "hold": 3,
+                    "id": "expression:fx-factory-generic:entity:recipient:rest",
+                    "position": null,
+                    "shape": "text",
+                    "text": "◯",
+                    "transition": 1
+                  }
+                ]
+              },
+              "shape": "text",
+              "share": 1,
+              "size": {
+                "x": 0.62,
+                "y": 0.72
+              },
+              "station": null,
+              "text": "◯",
+              "tint": "#8a7f6c",
+              "tintWeight": 0.5
+            },
+            {
+              "force": {
+                "kind": "vortex",
+                "radius": 0.26,
+                "spin": 0.8,
+                "strength": 0.7
+              },
+              "id": "expression:fx-factory-generic:entity:artifact",
+              "kind": "formation",
+              "locked": false,
+              "name": "Artifact",
+              "position": {
+                "x": -0.55,
+                "y": 0.22,
+                "z": 0
+              },
+              "role": "artifact",
+              "rotation": 0,
+              "sequence": {
+                "clock": "seconds",
+                "enabled": false,
+                "steps": [
+                  {
+                    "hold": 3,
+                    "id": "expression:fx-factory-generic:entity:artifact:rest",
+                    "position": null,
+                    "shape": "text",
+                    "text": "✉",
+                    "transition": 1
+                  }
+                ]
+              },
+              "shape": "text",
+              "share": 0.6,
+              "size": {
+                "x": 0.48,
+                "y": 0.52
+              },
+              "station": null,
+              "text": "✉",
+              "tint": "#b0643c",
+              "tintWeight": 0.9
+            }
+          ],
+          "field": {
+            "background": "#f3f0e7",
+            "material": "ink",
+            "palette": [
+              "#23261f",
+              "#5c665a"
+            ],
+            "params": {
+              "circulation": 1,
+              "contrast": 0.9,
+              "count": 48000,
+              "curlDepth": 0.2,
+              "densityPhase": 0.3,
+              "densityScale": 1,
+              "densityTether": 1,
+              "depth": 0.12,
+              "dispersion": 0.06,
+              "dominance": 0,
+              "edgeWeight": 0,
+              "elongation": 0.04,
+              "excitation": 0.6,
+              "frequency": 220,
+              "grain": 0.035,
+              "gravityFalloff": 2,
+              "gravitySoftening": 0.1,
+              "gravityX": 0,
+              "gravityY": 0,
+              "gravityZ": 0,
+              "halo": 0.13,
+              "irregularity": 0.35,
+              "opacity": 0.92,
+              "orientation": 0,
+              "pointerFalloff": 2,
+              "pointerRadius": 0.23,
+              "pointerStrength": 0.8,
+              "quadraticDrag": 0.2,
+              "recovery": 1.1,
+              "roundness": 0.95,
+              "size": 2.4,
+              "sizeBias": 1.6,
+              "snapRigidity": 1,
+              "softness": 0.15,
+              "speed": 0.55,
+              "speedLimit": 3,
+              "swirlRadius": 0.4,
+              "thermalJitter": 0,
+              "timeScale": 1,
+              "turbulence": 0.14,
+              "turbulenceScale": 1.2,
+              "vortexRadius": 0.4,
+              "zConfinement": 1
+            }
+          },
+          "id": "expression:fx-factory-generic:scene:handoff",
+          "morph": {
+            "depth": 1,
+            "dwell": 0.3,
+            "law": "theta",
+            "phiOffset": 0,
+            "phiRate": 0.13,
+            "thetaOffset": 0,
+            "thetaRate": 0.08
+          },
+          "name": "Handoff",
+          "text": [
+            {
+              "align": "center",
+              "body": "",
+              "id": "t-caption",
+              "italic": "",
+              "kicker": "HANDOFF",
+              "role": "caption",
+              "size": 22,
+              "title": "",
+              "visible": true,
+              "width": 560,
+              "x": 0.3,
+              "y": 0.78
+            }
+          ],
+          "toolbelt": [
+            {
+              "id": "speed",
+              "key": "timeScale",
+              "scope": "field"
+            },
+            {
+              "id": "spring",
+              "key": "recovery",
+              "scope": "field"
+            },
+            {
+              "id": "viscosity",
+              "key": "native_fluid__viscosity",
+              "scope": "field"
+            },
+            {
+              "id": "flow",
+              "key": "turbulence",
+              "scope": "field"
+            },
+            {
+              "id": "transition",
+              "key": "sequence.transition",
+              "scope": "selected"
+            },
+            {
+              "id": "blend",
+              "key": "native_morphProgress",
+              "scope": "field"
+            }
+          ],
+          "transition": 1.4,
+          "view": {
+            "mode": "2d",
+            "panX": 0,
+            "panY": 0,
+            "pitch": 0,
+            "yaw": 0,
+            "zoom": 1
+          }
+        }
+      },
+      "scene_ref": "expression:fx-factory-generic:scene:handoff",
+      "revision": 1,
+      "title": "Handoff",
+      "entity_refs": [
+        "expression:fx-factory-generic:entity:sender",
+        "expression:fx-factory-generic:entity:recipient",
+        "expression:fx-factory-generic:entity:artifact"
+      ],
+      "body": null,
+      "triggers": []
+    },
+    {
+      "presentation": {
+        "schema": "oi.journey-scene/v1",
+        "scene": {
+          "automation": [
+            {
+              "blend": "replace",
+              "delay": 0,
+              "duration": 0,
+              "enabled": true,
+              "firedAt": null,
+              "id": "review-ring",
+              "loop": "loop",
+              "max": 1.12,
+              "min": 0.9,
+              "phase": 0,
+              "rate": 0.5,
+              "target": "entity:expression%3Afx-factory-generic%3Aentity%3Aplate:scale",
+              "type": "lfo",
+              "wave": "sine"
+            }
+          ],
+          "character": "The work is held up to its checks: a resonant plate rings under the artifact; the outcome settles its colour.",
+          "composition": {
+            "carryStation": false,
+            "carryTint": true,
+            "focus": "parallel",
+            "focusDuration": 4,
+            "frequencyDriver": "manual",
+            "layout": "free",
+            "plane": "XY"
+          },
+          "duration": 10,
+          "engine": {
+            "autoFitSizes": true,
+            "autoOscillate": true,
+            "autoSweep": false,
+            "backgroundMode": "solid",
+            "collisionEnabled": false,
+            "collisionMode": "obstacle",
+            "colorEnabled": true,
+            "colorMode": "linearGradient",
+            "dotShape": "circle",
+            "driveShape": "sine",
+            "focusOrder": "listed",
+            "fontFamily": "system-ui, -apple-system, sans-serif",
+            "fontWeight": 900,
+            "grainProfile": true,
+            "inkMode": "blackOnWhite",
+            "mediumDimension": "2D",
+            "mediumEnabled": false,
+            "mediumPlane": "vertical",
+            "morphEnabled": false,
+            "pairwiseEnabled": false,
+            "paletteSource": "custom",
+            "pointerClick": "pulse",
+            "pointerClickRadius": 0.45,
+            "pointerClickStrength": 2.2,
+            "pointerMode": "repel",
+            "relationalEnabled": false,
+            "relationalMode": "orbital",
+            "resonanceEnabled": true,
+            "resonatorMode": "template",
+            "sweepDirection": "ascent",
+            "trajectory": "linear"
+          },
+          "entities": [
+            {
+              "force": {
+                "kind": "attract",
+                "radius": 0.38,
+                "spin": 0.05,
+                "strength": 0.3
+              },
+              "id": "expression:fx-factory-generic:entity:lead",
+              "kind": "formation",
+              "locked": false,
+              "name": "Reviewer",
+              "position": {
+                "x": -0.8,
+                "y": -0.1,
+                "z": 0
+              },
+              "role": "lead",
+              "rotation": 0,
+              "sequence": {
+                "clock": "seconds",
+                "enabled": false,
+                "steps": [
+                  {
+                    "hold": 3,
+                    "id": "expression:fx-factory-generic:entity:lead:rest",
+                    "position": null,
+                    "shape": "text",
+                    "text": "◯",
+                    "transition": 1
+                  }
+                ]
+              },
+              "shape": "text",
+              "share": 1,
+              "size": {
+                "x": 0.62,
+                "y": 0.72
+              },
+              "station": null,
+              "text": "◯",
+              "tint": "#8a7f6c",
+              "tintWeight": 0.5
+            },
+            {
+              "force": {
+                "kind": "attract",
+                "radius": 0.45,
+                "spin": 0,
+                "strength": 0
+              },
+              "id": "expression:fx-factory-generic:entity:artifact",
+              "kind": "formation",
+              "locked": false,
+              "name": "Under review",
+              "position": {
+                "x": 0.25,
+                "y": 0.1,
+                "z": 0
+              },
+              "role": "artifact",
+              "rotation": 0,
+              "sequence": {
+                "clock": "seconds",
+                "enabled": false,
+                "steps": [
+                  {
+                    "hold": 3,
+                    "id": "expression:fx-factory-generic:entity:artifact:rest",
+                    "position": null,
+                    "shape": "text",
+                    "text": "▣",
+                    "transition": 1
+                  }
+                ]
+              },
+              "shape": "text",
+              "share": 0.6,
+              "size": {
+                "x": 0.48,
+                "y": 0.52
+              },
+              "station": null,
+              "text": "▣",
+              "tint": "#6f7d8c",
+              "tintWeight": 0.8
+            },
+            {
+              "force": {
+                "kind": "repel",
+                "radius": 0.7,
+                "spin": 0,
+                "strength": 0.4
+              },
+              "id": "expression:fx-factory-generic:entity:plate",
+              "kind": "formation",
+              "locked": false,
+              "name": "Resonant plate",
+              "position": {
+                "x": 0.25,
+                "y": 0.1,
+                "z": -0.1
+              },
+              "rotation": 0,
+              "sequence": {
+                "clock": "seconds",
+                "enabled": false,
+                "steps": [
+                  {
+                    "hold": 3,
+                    "id": "expression:fx-factory-generic:entity:plate:rest",
+                    "position": null,
+                    "shape": "text",
+                    "text": "",
+                    "transition": 1
+                  }
+                ]
+              },
+              "shape": "cymatic",
+              "share": 1.4,
+              "size": {
+                "x": 1.4,
+                "y": 1.4
+              },
+              "station": null,
+              "templateDimension": "2D",
+              "templateFrequency": 396,
+              "templateGeometry": "circular",
+              "text": "",
+              "tint": "#9fb7b0",
+              "tintWeight": 0.5
+            }
+          ],
+          "field": {
+            "background": "#f3f0e7",
+            "material": "ink",
+            "palette": [
+              "#23261f",
+              "#5c665a"
+            ],
+            "params": {
+              "circulation": 1,
+              "contrast": 0.9,
+              "count": 48000,
+              "curlDepth": 0.2,
+              "densityPhase": 0.3,
+              "densityScale": 1,
+              "densityTether": 1,
+              "depth": 0.12,
+              "dispersion": 0.06,
+              "dominance": 0,
+              "edgeWeight": 0,
+              "elongation": 0.04,
+              "excitation": 0.7,
+              "frequency": 396,
+              "grain": 0.035,
+              "gravityFalloff": 2,
+              "gravitySoftening": 0.1,
+              "gravityX": 0,
+              "gravityY": 0,
+              "gravityZ": 0,
+              "halo": 0.13,
+              "irregularity": 0.35,
+              "opacity": 0.92,
+              "orientation": 0,
+              "pointerFalloff": 2,
+              "pointerRadius": 0.23,
+              "pointerStrength": 0.8,
+              "quadraticDrag": 0.2,
+              "recovery": 1.1,
+              "roundness": 0.95,
+              "size": 2.4,
+              "sizeBias": 1.6,
+              "snapRigidity": 1,
+              "softness": 0.15,
+              "speed": 0.55,
+              "speedLimit": 3,
+              "swirlRadius": 0.4,
+              "thermalJitter": 0,
+              "timeScale": 1,
+              "turbulence": 0.14,
+              "turbulenceScale": 1.2,
+              "vortexRadius": 0.4,
+              "zConfinement": 1
+            }
+          },
+          "id": "expression:fx-factory-generic:scene:review",
+          "morph": {
+            "depth": 1,
+            "dwell": 0.3,
+            "law": "theta",
+            "phiOffset": 0,
+            "phiRate": 0.13,
+            "thetaOffset": 0,
+            "thetaRate": 0.08
+          },
+          "name": "Review",
+          "resonanceDrive": {
+            "kind": "frequency"
+          },
+          "text": [
+            {
+              "align": "left",
+              "body": "",
+              "id": "t-caption",
+              "italic": "",
+              "kicker": "REVIEW",
+              "role": "caption",
+              "size": 22,
+              "title": "",
+              "visible": true,
+              "width": 520,
+              "x": 0.07,
+              "y": 0.82
+            }
+          ],
+          "toolbelt": [
+            {
+              "id": "speed",
+              "key": "timeScale",
+              "scope": "field"
+            },
+            {
+              "id": "spring",
+              "key": "recovery",
+              "scope": "field"
+            },
+            {
+              "id": "viscosity",
+              "key": "native_fluid__viscosity",
+              "scope": "field"
+            },
+            {
+              "id": "flow",
+              "key": "turbulence",
+              "scope": "field"
+            },
+            {
+              "id": "transition",
+              "key": "sequence.transition",
+              "scope": "selected"
+            },
+            {
+              "id": "blend",
+              "key": "native_morphProgress",
+              "scope": "field"
+            }
+          ],
+          "transition": 1.2,
+          "view": {
+            "mode": "2d",
+            "panX": 0,
+            "panY": 0,
+            "pitch": 0,
+            "yaw": 0,
+            "zoom": 1
+          }
+        }
+      },
+      "scene_ref": "expression:fx-factory-generic:scene:review",
+      "revision": 1,
+      "title": "Review",
+      "entity_refs": [
+        "expression:fx-factory-generic:entity:lead",
+        "expression:fx-factory-generic:entity:artifact",
+        "expression:fx-factory-generic:entity:plate"
+      ],
+      "body": null,
+      "triggers": []
+    },
+    {
+      "presentation": {
+        "schema": "oi.journey-scene/v1",
+        "scene": {
+          "automation": [
+            {
+              "blend": "replace",
+              "delay": 0.3,
+              "duration": 5,
+              "easing": "smoothstep",
+              "enabled": true,
+              "firedAt": null,
+              "id": "completion-bloom",
+              "loop": "once",
+              "max": 1.25,
+              "min": 0.7,
+              "phase": 0,
+              "rate": 1,
+              "target": "entity:expression%3Afx-factory-generic%3Aentity%3Agoal:scale",
+              "type": "ramp",
+              "wave": "smooth"
+            },
+            {
+              "blend": "replace",
+              "delay": 0,
+              "duration": 4,
+              "easing": "smoothstep",
+              "enabled": true,
+              "firedAt": null,
+              "id": "completion-gather-l",
+              "loop": "once",
+              "max": -0.55,
+              "min": -1.1,
+              "phase": 0,
+              "rate": 1,
+              "target": "entity:expression%3Afx-factory-generic%3Aentity%3Alead:x",
+              "type": "ramp",
+              "wave": "smooth"
+            },
+            {
+              "blend": "replace",
+              "delay": 0,
+              "duration": 4,
+              "easing": "smoothstep",
+              "enabled": true,
+              "firedAt": null,
+              "id": "completion-gather-r",
+              "loop": "once",
+              "max": 0.55,
+              "min": 1.1,
+              "phase": 0,
+              "rate": 1,
+              "target": "entity:expression%3Afx-factory-generic%3Aentity%3Aparticipant-0:x",
+              "type": "ramp",
+              "wave": "smooth"
+            }
+          ],
+          "character": "The cast gathers at the goal; the goal opens and the result is written beneath it.",
+          "composition": {
+            "carryStation": false,
+            "carryTint": true,
+            "focus": "parallel",
+            "focusDuration": 4,
+            "frequencyDriver": "manual",
+            "layout": "free",
+            "plane": "XY"
+          },
+          "duration": 12,
+          "engine": {
+            "autoFitSizes": true,
+            "autoOscillate": true,
+            "autoSweep": false,
+            "backgroundMode": "solid",
+            "collisionEnabled": false,
+            "collisionMode": "obstacle",
+            "colorEnabled": true,
+            "colorMode": "linearGradient",
+            "dotShape": "circle",
+            "driveShape": "sine",
+            "focusOrder": "listed",
+            "fontFamily": "system-ui, -apple-system, sans-serif",
+            "fontWeight": 900,
+            "grainProfile": true,
+            "inkMode": "blackOnWhite",
+            "mediumDimension": "2D",
+            "mediumEnabled": false,
+            "mediumPlane": "vertical",
+            "morphEnabled": false,
+            "pairwiseEnabled": false,
+            "paletteSource": "custom",
+            "pointerClick": "pulse",
+            "pointerClickRadius": 0.45,
+            "pointerClickStrength": 2.2,
+            "pointerMode": "repel",
+            "relationalEnabled": false,
+            "relationalMode": "orbital",
+            "resonanceEnabled": true,
+            "resonatorMode": "resonator",
+            "sweepDirection": "ascent",
+            "trajectory": "linear"
+          },
+          "entities": [
+            {
+              "force": {
+                "kind": "vortex",
+                "radius": 0.6,
+                "spin": 0.5,
+                "strength": 0.9
+              },
+              "id": "expression:fx-factory-generic:entity:goal",
+              "kind": "formation",
+              "locked": false,
+              "name": "Goal",
+              "position": {
+                "x": 0,
+                "y": 0.12,
+                "z": 0
+              },
+              "role": "goal",
+              "rotation": 0,
+              "sequence": {
+                "clock": "seconds",
+                "enabled": false,
+                "steps": [
+                  {
+                    "hold": 3,
+                    "id": "expression:fx-factory-generic:entity:goal:rest",
+                    "position": null,
+                    "shape": "text",
+                    "text": "✺",
+                    "transition": 1
+                  }
+                ]
+              },
+              "shape": "yantra",
+              "share": 1.6,
+              "size": {
+                "x": 1.1,
+                "y": 1.1
+              },
+              "station": null,
+              "text": "✺",
+              "tint": "#d9a36a",
+              "tintWeight": 1,
+              "yantraId": "sahasrara"
+            },
+            {
+              "force": {
+                "kind": "attract",
+                "radius": 0.38,
+                "spin": 0.05,
+                "strength": 0.3
+              },
+              "id": "expression:fx-factory-generic:entity:lead",
+              "kind": "formation",
+              "locked": false,
+              "name": "Lead",
+              "position": {
+                "x": -0.7,
+                "y": -0.35,
+                "z": 0
+              },
+              "role": "lead",
+              "rotation": 0,
+              "sequence": {
+                "clock": "seconds",
+                "enabled": false,
+                "steps": [
+                  {
+                    "hold": 3,
+                    "id": "expression:fx-factory-generic:entity:lead:rest",
+                    "position": null,
+                    "shape": "text",
+                    "text": "◯",
+                    "transition": 1
+                  }
+                ]
+              },
+              "shape": "text",
+              "share": 1,
+              "size": {
+                "x": 0.62,
+                "y": 0.72
+              },
+              "station": null,
+              "text": "◯",
+              "tint": "#8a7f6c",
+              "tintWeight": 0.5
+            },
+            {
+              "force": {
+                "kind": "attract",
+                "radius": 0.38,
+                "spin": 0.05,
+                "strength": 0.3
+              },
+              "id": "expression:fx-factory-generic:entity:participant-0",
+              "kind": "formation",
+              "locked": false,
+              "name": "Participant",
+              "position": {
+                "x": 0.7,
+                "y": -0.35,
+                "z": 0
+              },
+              "role": "participants.0",
+              "rotation": 0,
+              "sequence": {
+                "clock": "seconds",
+                "enabled": false,
+                "steps": [
+                  {
+                    "hold": 3,
+                    "id": "expression:fx-factory-generic:entity:participant-0:rest",
+                    "position": null,
+                    "shape": "text",
+                    "text": "◯",
+                    "transition": 1
+                  }
+                ]
+              },
+              "shape": "text",
+              "share": 1,
+              "size": {
+                "x": 0.62,
+                "y": 0.72
+              },
+              "station": null,
+              "text": "◯",
+              "tint": "#8a7f6c",
+              "tintWeight": 0.5
+            },
+            {
+              "force": {
+                "kind": "attract",
+                "radius": 0.38,
+                "spin": 0.05,
+                "strength": 0.3
+              },
+              "id": "expression:fx-factory-generic:entity:participant-1",
+              "kind": "formation",
+              "locked": false,
+              "name": "Participant",
+              "position": {
+                "x": 0,
+                "y": -0.6,
+                "z": 0
+              },
+              "role": "participants.1",
+              "rotation": 0,
+              "sequence": {
+                "clock": "seconds",
+                "enabled": false,
+                "steps": [
+                  {
+                    "hold": 3,
+                    "id": "expression:fx-factory-generic:entity:participant-1:rest",
+                    "position": null,
+                    "shape": "text",
+                    "text": "◯",
+                    "transition": 1
+                  }
+                ]
+              },
+              "shape": "text",
+              "share": 1,
+              "size": {
+                "x": 0.62,
+                "y": 0.72
+              },
+              "station": null,
+              "text": "◯",
+              "tint": "#8a7f6c",
+              "tintWeight": 0.5
+            }
+          ],
+          "field": {
+            "background": "#f3f0e7",
+            "material": "ink",
+            "palette": [
+              "#23261f",
+              "#5c665a"
+            ],
+            "params": {
+              "circulation": 1,
+              "contrast": 0.9,
+              "count": 48000,
+              "curlDepth": 0.2,
+              "densityPhase": 0.3,
+              "densityScale": 1,
+              "densityTether": 1,
+              "depth": 0.12,
+              "dispersion": 0.06,
+              "dominance": 0,
+              "edgeWeight": 0,
+              "elongation": 0.04,
+              "excitation": 0.6,
+              "frequency": 220,
+              "grain": 0.035,
+              "gravityFalloff": 2,
+              "gravitySoftening": 0.1,
+              "gravityX": 0,
+              "gravityY": 0,
+              "gravityZ": 0,
+              "halo": 0.13,
+              "irregularity": 0.35,
+              "opacity": 0.92,
+              "orientation": 0,
+              "pointerFalloff": 2,
+              "pointerRadius": 0.23,
+              "pointerStrength": 0.8,
+              "quadraticDrag": 0.2,
+              "recovery": 1.1,
+              "roundness": 0.95,
+              "size": 2.4,
+              "sizeBias": 1.6,
+              "snapRigidity": 1,
+              "softness": 0.15,
+              "speed": 0.55,
+              "speedLimit": 3,
+              "swirlRadius": 0.4,
+              "thermalJitter": 0,
+              "timeScale": 1,
+              "turbulence": 0.14,
+              "turbulenceScale": 1.2,
+              "vortexRadius": 0.4,
+              "zConfinement": 1
+            }
+          },
+          "id": "expression:fx-factory-generic:scene:completion",
+          "morph": {
+            "depth": 1.4,
+            "dwell": 0.3,
+            "law": "beat",
+            "phiOffset": 0,
+            "phiRate": 0.21,
+            "thetaOffset": 0,
+            "thetaRate": 0.12
+          },
+          "name": "Completion",
+          "text": [
+            {
+              "align": "center",
+              "body": "",
+              "id": "t-result",
+              "italic": "",
+              "kicker": "RETURNED",
+              "role": "resultText",
+              "size": 22,
+              "title": "",
+              "visible": true,
+              "width": 640,
+              "x": 0.22,
+              "y": 0.86
+            }
+          ],
+          "toolbelt": [
+            {
+              "id": "speed",
+              "key": "timeScale",
+              "scope": "field"
+            },
+            {
+              "id": "spring",
+              "key": "recovery",
+              "scope": "field"
+            },
+            {
+              "id": "viscosity",
+              "key": "native_fluid__viscosity",
+              "scope": "field"
+            },
+            {
+              "id": "flow",
+              "key": "turbulence",
+              "scope": "field"
+            },
+            {
+              "id": "transition",
+              "key": "sequence.transition",
+              "scope": "selected"
+            },
+            {
+              "id": "blend",
+              "key": "native_morphProgress",
+              "scope": "field"
+            }
+          ],
+          "transition": 2,
+          "view": {
+            "mode": "2d",
+            "panX": 0,
+            "panY": 0,
+            "pitch": 0,
+            "yaw": 0,
+            "zoom": 1
+          }
+        }
+      },
+      "scene_ref": "expression:fx-factory-generic:scene:completion",
+      "revision": 1,
+      "title": "Completion",
+      "entity_refs": [
+        "expression:fx-factory-generic:entity:goal",
+        "expression:fx-factory-generic:entity:lead",
+        "expression:fx-factory-generic:entity:participant-0",
+        "expression:fx-factory-generic:entity:participant-1"
+      ],
+      "body": null,
+      "triggers": []
+    },
+    {
+      "presentation": {
+        "schema": "oi.journey-scene/v1",
+        "scene": {
+          "automation": [
+            {
+              "blend": "replace",
+              "delay": 0.4,
+              "duration": 5,
+              "easing": "smoothstep",
+              "enabled": true,
+              "firedAt": null,
+              "id": "return-x",
+              "loop": "once",
+              "max": -0.6,
+              "min": 0.8,
+              "phase": 0,
+              "rate": 1,
+              "target": "entity:expression%3Afx-factory-generic%3Aentity%3Aartifact:x",
+              "type": "ramp",
+              "wave": "smooth"
+            },
+            {
+              "blend": "replace",
+              "delay": 0.6,
+              "duration": 5.4,
+              "easing": "smoothstep",
+              "enabled": true,
+              "firedAt": null,
+              "id": "return-bearer",
+              "loop": "once",
+              "max": -0.4,
+              "min": 0.8,
+              "phase": 0,
+              "rate": 1,
+              "target": "entity:expression%3Afx-factory-generic%3Aentity%3Aself:x",
+              "type": "ramp",
+              "wave": "smooth"
+            }
+          ],
+          "character": "The same cast returns to the work: the passage runs back through the station it left.",
+          "composition": {
+            "carryStation": false,
+            "carryTint": true,
+            "focus": "parallel",
+            "focusDuration": 4,
+            "frequencyDriver": "manual",
+            "layout": "free",
+            "plane": "XY"
+          },
+          "duration": 10,
+          "engine": {
+            "autoFitSizes": true,
+            "autoOscillate": true,
+            "autoSweep": false,
+            "backgroundMode": "solid",
+            "collisionEnabled": false,
+            "collisionMode": "obstacle",
+            "colorEnabled": true,
+            "colorMode": "linearGradient",
+            "dotShape": "circle",
+            "driveShape": "sine",
+            "focusOrder": "listed",
+            "fontFamily": "system-ui, -apple-system, sans-serif",
+            "fontWeight": 900,
+            "grainProfile": true,
+            "inkMode": "blackOnWhite",
+            "mediumDimension": "2D",
+            "mediumEnabled": false,
+            "mediumPlane": "vertical",
+            "morphEnabled": false,
+            "pairwiseEnabled": false,
+            "paletteSource": "custom",
+            "pointerClick": "pulse",
+            "pointerClickRadius": 0.45,
+            "pointerClickStrength": 2.2,
+            "pointerMode": "repel",
+            "relationalEnabled": false,
+            "relationalMode": "orbital",
+            "resonanceEnabled": true,
+            "resonatorMode": "resonator",
+            "sweepDirection": "ascent",
+            "trajectory": "linear"
+          },
+          "entities": [
+            {
+              "force": {
+                "kind": "attract",
+                "radius": 0.38,
+                "spin": 0.05,
+                "strength": 0.3
+              },
+              "id": "expression:fx-factory-generic:entity:self",
+              "kind": "formation",
+              "locked": false,
+              "name": "Continuing agent",
+              "position": {
+                "x": 0.8,
+                "y": -0.2,
+                "z": 0
+              },
+              "role": "self",
+              "rotation": 0,
+              "sequence": {
+                "clock": "seconds",
+                "enabled": false,
+                "steps": [
+                  {
+                    "hold": 3,
+                    "id": "expression:fx-factory-generic:entity:self:rest",
+                    "position": null,
+                    "shape": "text",
+                    "text": "◯",
+                    "transition": 1
+                  }
+                ]
+              },
+              "shape": "text",
+              "share": 1,
+              "size": {
+                "x": 0.62,
+                "y": 0.72
+              },
+              "station": null,
+              "text": "◯",
+              "tint": "#8a7f6c",
+              "tintWeight": 0.5
+            },
+            {
+              "force": {
+                "kind": "attract",
+                "radius": 0.45,
+                "spin": 0,
+                "strength": 0
+              },
+              "id": "expression:fx-factory-generic:entity:artifact",
+              "kind": "formation",
+              "locked": false,
+              "name": "Work object",
+              "position": {
+                "x": 0.8,
+                "y": 0.15,
+                "z": 0
+              },
+              "role": "artifact",
+              "rotation": 0,
+              "sequence": {
+                "clock": "seconds",
+                "enabled": false,
+                "steps": [
+                  {
+                    "hold": 3,
+                    "id": "expression:fx-factory-generic:entity:artifact:rest",
+                    "position": null,
+                    "shape": "text",
+                    "text": "▤",
+                    "transition": 1
+                  }
+                ]
+              },
+              "shape": "text",
+              "share": 0.6,
+              "size": {
+                "x": 0.48,
+                "y": 0.52
+              },
+              "station": null,
+              "text": "▤",
+              "tint": "#6f7d8c",
+              "tintWeight": 0.7
+            },
+            {
+              "force": {
+                "kind": "attract",
+                "radius": 0.3,
+                "spin": 0,
+                "strength": 0.8
+              },
+              "id": "expression:fx-factory-generic:entity:return-station",
+              "kind": "pin",
+              "locked": false,
+              "name": "Return station",
+              "position": {
+                "x": -0.6,
+                "y": 0.15,
+                "z": 0
+              },
+              "rotation": 0,
+              "sequence": {
+                "clock": "seconds",
+                "enabled": false,
+                "steps": [
+                  {
+                    "hold": 3,
+                    "id": "step-81e0282f-2fff-4ce1-951c-764d0b887c08",
+                    "position": null,
+                    "shape": "text",
+                    "text": "",
+                    "transition": 1
+                  }
+                ]
+              },
+              "shape": "text",
+              "share": 0,
+              "size": {
+                "x": 0.1,
+                "y": 0.1
+              },
+              "station": null,
+              "text": "",
+              "tint": "#252720",
+              "tintWeight": 0
+            }
+          ],
+          "field": {
+            "background": "#f3f0e7",
+            "material": "ink",
+            "palette": [
+              "#23261f",
+              "#5c665a"
+            ],
+            "params": {
+              "circulation": 1,
+              "contrast": 0.9,
+              "count": 48000,
+              "curlDepth": 0.2,
+              "densityPhase": 0.3,
+              "densityScale": 1,
+              "densityTether": 1,
+              "depth": 0.12,
+              "dispersion": 0.06,
+              "dominance": 0,
+              "edgeWeight": 0,
+              "elongation": 0.04,
+              "excitation": 0.6,
+              "frequency": 220,
+              "grain": 0.035,
+              "gravityFalloff": 2,
+              "gravitySoftening": 0.1,
+              "gravityX": 0,
+              "gravityY": 0,
+              "gravityZ": 0,
+              "halo": 0.13,
+              "irregularity": 0.35,
+              "opacity": 0.92,
+              "orientation": 0,
+              "pointerFalloff": 2,
+              "pointerRadius": 0.23,
+              "pointerStrength": 0.8,
+              "quadraticDrag": 0.2,
+              "recovery": 1.1,
+              "roundness": 0.95,
+              "size": 2.4,
+              "sizeBias": 1.6,
+              "snapRigidity": 1,
+              "softness": 0.15,
+              "speed": 0.55,
+              "speedLimit": 3,
+              "swirlRadius": 0.4,
+              "thermalJitter": 0,
+              "timeScale": 1,
+              "turbulence": 0.14,
+              "turbulenceScale": 1.2,
+              "vortexRadius": 0.4,
+              "zConfinement": 1
+            }
+          },
+          "id": "expression:fx-factory-generic:scene:continuation",
+          "morph": {
+            "depth": 1,
+            "dwell": 0.3,
+            "law": "theta",
+            "phiOffset": 0,
+            "phiRate": 0.13,
+            "thetaOffset": 0,
+            "thetaRate": 0.08
+          },
+          "name": "Continuation",
+          "text": [
+            {
+              "align": "left",
+              "body": "",
+              "id": "t-caption",
+              "italic": "",
+              "kicker": "AGAIN",
+              "role": "caption",
+              "size": 22,
+              "title": "",
+              "visible": true,
+              "width": 520,
+              "x": 0.07,
+              "y": 0.84
+            }
+          ],
+          "toolbelt": [
+            {
+              "id": "speed",
+              "key": "timeScale",
+              "scope": "field"
+            },
+            {
+              "id": "spring",
+              "key": "recovery",
+              "scope": "field"
+            },
+            {
+              "id": "viscosity",
+              "key": "native_fluid__viscosity",
+              "scope": "field"
+            },
+            {
+              "id": "flow",
+              "key": "turbulence",
+              "scope": "field"
+            },
+            {
+              "id": "transition",
+              "key": "sequence.transition",
+              "scope": "selected"
+            },
+            {
+              "id": "blend",
+              "key": "native_morphProgress",
+              "scope": "field"
+            }
+          ],
+          "transition": 1.2,
+          "view": {
+            "mode": "2d",
+            "panX": 0,
+            "panY": 0,
+            "pitch": 0,
+            "yaw": 0,
+            "zoom": 1
+          }
+        }
+      },
+      "scene_ref": "expression:fx-factory-generic:scene:continuation",
+      "revision": 1,
+      "title": "Continuation",
+      "entity_refs": [
+        "expression:fx-factory-generic:entity:self",
+        "expression:fx-factory-generic:entity:artifact",
+        "expression:fx-factory-generic:entity:return-station"
+      ],
+      "body": null,
+      "triggers": []
+    },
+    {
+      "presentation": {
+        "schema": "oi.journey-scene/v1",
+        "scene": {
+          "automation": [],
+          "character": "One agent explains: it speaks beside the subject while the subject unfolds its layers and the words build up.",
+          "composition": {
+            "carryStation": false,
+            "carryTint": true,
+            "focus": "parallel",
+            "focusDuration": 4,
+            "frequencyDriver": "manual",
+            "layout": "free",
+            "plane": "XY"
+          },
+          "duration": 14,
+          "engine": {
+            "autoFitSizes": true,
+            "autoOscillate": true,
+            "autoSweep": false,
+            "backgroundMode": "solid",
+            "collisionEnabled": false,
+            "collisionMode": "obstacle",
+            "colorEnabled": true,
+            "colorMode": "linearGradient",
+            "dotShape": "circle",
+            "driveShape": "sine",
+            "focusOrder": "listed",
+            "fontFamily": "system-ui, -apple-system, sans-serif",
+            "fontWeight": 900,
+            "grainProfile": true,
+            "inkMode": "blackOnWhite",
+            "mediumDimension": "2D",
+            "mediumEnabled": false,
+            "mediumPlane": "vertical",
+            "morphEnabled": false,
+            "pairwiseEnabled": false,
+            "paletteSource": "custom",
+            "pointerClick": "pulse",
+            "pointerClickRadius": 0.45,
+            "pointerClickStrength": 2.2,
+            "pointerMode": "repel",
+            "relationalEnabled": false,
+            "relationalMode": "orbital",
+            "resonanceEnabled": true,
+            "resonatorMode": "resonator",
+            "sweepDirection": "ascent",
+            "trajectory": "linear"
+          },
+          "entities": [
+            {
+              "force": {
+                "kind": "attract",
+                "radius": 0.38,
+                "spin": 0.05,
+                "strength": 0.3
+              },
+              "id": "expression:fx-factory-generic:entity:lead",
+              "kind": "formation",
+              "locked": false,
+              "name": "Explainer",
+              "position": {
+                "x": -0.95,
+                "y": -0.1,
+                "z": 0
+              },
+              "role": "lead",
+              "rotation": 0,
+              "sequence": {
+                "clock": "seconds",
+                "enabled": false,
+                "steps": [
+                  {
+                    "hold": 3,
+                    "id": "expression:fx-factory-generic:entity:lead:rest",
+                    "position": null,
+                    "shape": "text",
+                    "text": "◯",
+                    "transition": 1
+                  }
+                ]
+              },
+              "shape": "text",
+              "share": 1,
+              "size": {
+                "x": 0.62,
+                "y": 0.72
+              },
+              "station": null,
+              "text": "◯",
+              "tint": "#8a7f6c",
+              "tintWeight": 0.5
+            },
+            {
+              "force": {
+                "kind": "attract",
+                "radius": 0.45,
+                "spin": 0,
+                "strength": 0
+              },
+              "id": "expression:fx-factory-generic:entity:goal",
+              "kind": "formation",
+              "layers": [
+                {
+                  "id": "outer",
+                  "scale": 1.6,
+                  "text": "◯",
+                  "z": -0.1
+                },
+                {
+                  "id": "inner",
+                  "scale": 0.4,
+                  "text": "·",
+                  "z": 0.1
+                }
+              ],
+              "locked": false,
+              "name": "Subject",
+              "position": {
+                "x": 0.45,
+                "y": 0.12,
+                "z": 0
+              },
+              "role": "goal",
+              "rotation": 0,
+              "sequence": {
+                "clock": "seconds",
+                "easing": "smoothstep",
+                "enabled": true,
+                "order": "loop",
+                "steps": [
+                  {
+                    "hold": 3,
+                    "id": "subject-closed",
+                    "objectState": {
+                      "force": {
+                        "kind": "attract",
+                        "radius": 0.4,
+                        "spin": 0.1,
+                        "strength": 0.4
+                      },
+                      "rotation": 0,
+                      "scale": 1,
+                      "size": {
+                        "x": 0.9,
+                        "y": 0.9
+                      },
+                      "tint": "#9fb7b0",
+                      "tintWeight": 0.7
+                    },
+                    "position": null,
+                    "shape": "text",
+                    "text": "◇",
+                    "transition": 1.5
+                  },
+                  {
+                    "hold": 3,
+                    "id": "subject-open",
+                    "name": "unfolded",
+                    "objectState": {
+                      "force": {
+                        "kind": "vortex",
+                        "radius": 0.5,
+                        "spin": 0.35,
+                        "strength": 0.6
+                      },
+                      "rotation": 45,
+                      "scale": 1,
+                      "size": {
+                        "x": 1.1,
+                        "y": 1.1
+                      },
+                      "tint": "#9fb7b0",
+                      "tintWeight": 0.9
+                    },
+                    "position": null,
+                    "shape": "text",
+                    "text": "◈",
+                    "transition": 1.5
+                  }
+                ]
+              },
+              "shape": "text",
+              "share": 1.2,
+              "size": {
+                "x": 0.9,
+                "y": 0.9
+              },
+              "station": null,
+              "text": "◇",
+              "tint": "#9fb7b0",
+              "tintWeight": 0.7
+            }
+          ],
+          "field": {
+            "background": "#f3f0e7",
+            "material": "ink",
+            "palette": [
+              "#23261f",
+              "#5c665a"
+            ],
+            "params": {
+              "circulation": 1,
+              "contrast": 0.9,
+              "count": 48000,
+              "curlDepth": 0.2,
+              "densityPhase": 0.3,
+              "densityScale": 1,
+              "densityTether": 1,
+              "depth": 0.12,
+              "dispersion": 0.06,
+              "dominance": 0,
+              "edgeWeight": 0,
+              "elongation": 0.04,
+              "excitation": 0.6,
+              "frequency": 220,
+              "grain": 0.035,
+              "gravityFalloff": 2,
+              "gravitySoftening": 0.1,
+              "gravityX": 0,
+              "gravityY": 0,
+              "gravityZ": 0,
+              "halo": 0.13,
+              "irregularity": 0.35,
+              "opacity": 0.92,
+              "orientation": 0,
+              "pointerFalloff": 2,
+              "pointerRadius": 0.23,
+              "pointerStrength": 0.8,
+              "quadraticDrag": 0.2,
+              "recovery": 1.1,
+              "roundness": 0.95,
+              "size": 2.4,
+              "sizeBias": 1.6,
+              "snapRigidity": 1,
+              "softness": 0.15,
+              "speed": 0.55,
+              "speedLimit": 3,
+              "swirlRadius": 0.4,
+              "thermalJitter": 0,
+              "timeScale": 1,
+              "turbulence": 0.14,
+              "turbulenceScale": 1.2,
+              "vortexRadius": 0.4,
+              "zConfinement": 1
+            }
+          },
+          "id": "expression:fx-factory-generic:scene:explanation",
+          "morph": {
+            "depth": 1,
+            "dwell": 0.3,
+            "law": "theta",
+            "phiOffset": 0,
+            "phiRate": 0.13,
+            "thetaOffset": 0,
+            "thetaRate": 0.08
+          },
+          "name": "Explanation",
+          "text": [
+            {
+              "align": "left",
+              "body": "",
+              "id": "t-caption",
+              "italic": "",
+              "kicker": "EXPLANATION",
+              "role": "caption",
+              "size": 26,
+              "title": "",
+              "visible": true,
+              "width": 520,
+              "x": 0.07,
+              "y": 0.12
+            },
+            {
+              "align": "left",
+              "body": "",
+              "id": "t-progress",
+              "italic": "",
+              "kicker": "",
+              "role": "progressText",
+              "size": 18,
+              "title": "",
+              "visible": true,
+              "width": 420,
+              "x": 0.55,
+              "y": 0.7
+            }
+          ],
+          "toolbelt": [
+            {
+              "id": "speed",
+              "key": "timeScale",
+              "scope": "field"
+            },
+            {
+              "id": "spring",
+              "key": "recovery",
+              "scope": "field"
+            },
+            {
+              "id": "viscosity",
+              "key": "native_fluid__viscosity",
+              "scope": "field"
+            },
+            {
+              "id": "flow",
+              "key": "turbulence",
+              "scope": "field"
+            },
+            {
+              "id": "transition",
+              "key": "sequence.transition",
+              "scope": "selected"
+            },
+            {
+              "id": "blend",
+              "key": "native_morphProgress",
+              "scope": "field"
+            }
+          ],
+          "transition": 1.5,
+          "view": {
+            "mode": "2d",
+            "panX": 0,
+            "panY": 0,
+            "pitch": 0,
+            "yaw": 0,
+            "zoom": 1
+          }
+        }
+      },
+      "scene_ref": "expression:fx-factory-generic:scene:explanation",
+      "revision": 1,
+      "title": "Explanation",
+      "entity_refs": [
+        "expression:fx-factory-generic:entity:lead",
+        "expression:fx-factory-generic:entity:goal"
+      ],
+      "body": null,
+      "triggers": []
+    }
+  ],
+  "entities": {
+    "expression:fx-factory-generic:entity:artifact": {
+      "entity_ref": "expression:fx-factory-generic:entity:artifact",
+      "revision": 1,
+      "title": "Work object",
+      "subject": null,
+      "parameters": {}
+    },
+    "expression:fx-factory-generic:entity:goal": {
+      "entity_ref": "expression:fx-factory-generic:entity:goal",
+      "revision": 1,
+      "title": "Goal",
+      "subject": null,
+      "parameters": {}
+    },
+    "expression:fx-factory-generic:entity:lead": {
+      "entity_ref": "expression:fx-factory-generic:entity:lead",
+      "revision": 1,
+      "title": "Reviewer",
+      "subject": null,
+      "parameters": {}
+    },
+    "expression:fx-factory-generic:entity:participant-0": {
+      "entity_ref": "expression:fx-factory-generic:entity:participant-0",
+      "revision": 1,
+      "title": "Participant",
+      "subject": null,
+      "parameters": {}
+    },
+    "expression:fx-factory-generic:entity:participant-1": {
+      "entity_ref": "expression:fx-factory-generic:entity:participant-1",
+      "revision": 1,
+      "title": "Participant",
+      "subject": null,
+      "parameters": {}
+    },
+    "expression:fx-factory-generic:entity:plate": {
+      "entity_ref": "expression:fx-factory-generic:entity:plate",
+      "revision": 1,
+      "title": "Resonant plate",
+      "subject": null,
+      "parameters": {}
+    },
+    "expression:fx-factory-generic:entity:recipient": {
+      "entity_ref": "expression:fx-factory-generic:entity:recipient",
+      "revision": 1,
+      "title": "Recipient",
+      "subject": null,
+      "parameters": {}
+    },
+    "expression:fx-factory-generic:entity:return-station": {
+      "entity_ref": "expression:fx-factory-generic:entity:return-station",
+      "revision": 1,
+      "title": "Return station",
+      "subject": null,
+      "parameters": {}
+    },
+    "expression:fx-factory-generic:entity:self": {
+      "entity_ref": "expression:fx-factory-generic:entity:self",
+      "revision": 1,
+      "title": "Arriving agent",
+      "subject": null,
+      "parameters": {}
+    },
+    "expression:fx-factory-generic:entity:sender": {
+      "entity_ref": "expression:fx-factory-generic:entity:sender",
+      "revision": 1,
+      "title": "Sender",
+      "subject": null,
+      "parameters": {}
+    },
+    "expression:fx-factory-generic:entity:skill-self": {
+      "entity_ref": "expression:fx-factory-generic:entity:skill-self",
+      "revision": 1,
+      "title": "Invoking agent",
+      "subject": null,
+      "parameters": {}
+    },
+    "expression:fx-factory-generic:entity:station-a": {
+      "entity_ref": "expression:fx-factory-generic:entity:station-a",
+      "revision": 1,
+      "title": "Station A",
+      "subject": null,
+      "parameters": {}
+    },
+    "expression:fx-factory-generic:entity:station-b": {
+      "entity_ref": "expression:fx-factory-generic:entity:station-b",
+      "revision": 1,
+      "title": "Station B",
+      "subject": null,
+      "parameters": {}
+    },
+    "expression:fx-factory-generic:entity:threshold": {
+      "entity_ref": "expression:fx-factory-generic:entity:threshold",
+      "revision": 1,
+      "title": "Threshold",
+      "subject": null,
+      "parameters": {}
+    }
+  },
+  "relations": {},
+  "selection": {
+    "scene_ref": "expression:fx-factory-generic:scene:arrival",
+    "entity_ref": null
+  },
+  "provenance": [
+    {
+      "ref": "oi:desktop/cradle/material/factory-expressions",
+      "revision": "curated-2026-09-26",
+      "availability": "available"
+    }
+  ],
+  "representations": [],
+  "refinements": [],
+  "collections": [
+    "factory-expressions"
+  ],
+  "profiles": [],
+  "reuse": {
+    "schema": "oi.expression-reuse/v1",
+    "kind": "expression",
+    "title": "Factory — generic Run composition",
+    "roles": [
+      {
+        "role": "lead",
+        "accepts": "agent",
+        "entity_ref": "expression:fx-factory-generic:entity:lead"
+      },
+      {
+        "role": "self",
+        "accepts": "agent",
+        "entity_ref": "expression:fx-factory-generic:entity:self"
+      },
+      {
+        "role": "sender",
+        "accepts": "agent",
+        "entity_ref": "expression:fx-factory-generic:entity:sender"
+      },
+      {
+        "role": "recipient",
+        "accepts": "agent",
+        "entity_ref": "expression:fx-factory-generic:entity:recipient"
+      },
+      {
+        "role": "participants.0",
+        "accepts": "agent",
+        "entity_ref": "expression:fx-factory-generic:entity:participant-0"
+      },
+      {
+        "role": "participants.1",
+        "accepts": "agent",
+        "entity_ref": "expression:fx-factory-generic:entity:participant-1"
+      },
+      {
+        "role": "goal",
+        "accepts": "object",
+        "entity_ref": "expression:fx-factory-generic:entity:goal"
+      },
+      {
+        "role": "artifact",
+        "accepts": "object",
+        "entity_ref": "expression:fx-factory-generic:entity:artifact"
+      },
+      {
+        "role": "caption",
+        "accepts": "text",
+        "text_id": "t-caption"
+      },
+      {
+        "role": "progressText",
+        "accepts": "text",
+        "text_id": "t-progress"
+      },
+      {
+        "role": "resultText",
+        "accepts": "text",
+        "text_id": "t-result"
+      }
+    ],
+    "entry_scene_ref": "expression:fx-factory-generic:scene:arrival",
+    "states": {
+      "arrival": "expression:fx-factory-generic:scene:arrival",
+      "completion": "expression:fx-factory-generic:scene:completion",
+      "continuation": "expression:fx-factory-generic:scene:continuation",
+      "explanation": "expression:fx-factory-generic:scene:explanation",
+      "handoff": "expression:fx-factory-generic:scene:handoff",
+      "review": "expression:fx-factory-generic:scene:review",
+      "skill-invocation": "expression:fx-factory-generic:scene:skill-invocation",
+      "work-passage": "expression:fx-factory-generic:scene:work-passage"
+    },
+    "gestures": {
+      "invoke-skill": {
+        "scene_ref": "expression:fx-factory-generic:scene:skill-invocation",
+        "role": "self"
+      },
+      "operate": {
+        "scene_ref": "expression:fx-factory-generic:scene:skill-invocation",
+        "role": "self"
+      }
+    },
+    "playback": [
+      "expression:fx-factory-generic:scene:arrival",
+      "expression:fx-factory-generic:scene:work-passage",
+      "expression:fx-factory-generic:scene:skill-invocation",
+      "expression:fx-factory-generic:scene:handoff",
+      "expression:fx-factory-generic:scene:review",
+      "expression:fx-factory-generic:scene:completion"
+    ],
+    "preview_state": "arrival",
+    "associations": {
+      "workflow_keys": [
+        "factory:generic"
+      ],
+      "task_types": [],
+      "skill_set_refs": [],
+      "skill_refs": [],
+      "event_families": [
+        "arrival",
+        "activity",
+        "skill-invocation",
+        "tool-operation",
+        "message",
+        "artifact",
+        "review",
+        "continuation",
+        "completion"
+      ]
+    },
+    "authored_by": "agent:factory-expressions-lane-c"
+  }
+}

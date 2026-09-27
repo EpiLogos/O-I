@@ -1,0 +1,421 @@
+{
+  "presentation": {
+    "schema": "oi.journey-properties/v1",
+    "description": "Reusable Scene: Explanation.",
+    "loop": false
+  },
+  "schema": "oi.expression/v1",
+  "expression_ref": "expression:fx-scene-explanation",
+  "revision": 1,
+  "title": "Explanation",
+  "scenes": [
+    {
+      "presentation": {
+        "schema": "oi.journey-scene/v1",
+        "scene": {
+          "automation": [],
+          "character": "One agent explains: it speaks beside the subject while the subject unfolds its layers and the words build up.",
+          "composition": {
+            "carryStation": false,
+            "carryTint": true,
+            "focus": "parallel",
+            "focusDuration": 4,
+            "frequencyDriver": "manual",
+            "layout": "free",
+            "plane": "XY"
+          },
+          "duration": 14,
+          "engine": {
+            "autoFitSizes": true,
+            "autoOscillate": true,
+            "autoSweep": false,
+            "backgroundMode": "vignette",
+            "collisionEnabled": false,
+            "collisionMode": "obstacle",
+            "colorEnabled": true,
+            "colorMode": "linearGradient",
+            "dotShape": "circle",
+            "driveShape": "sine",
+            "focusOrder": "listed",
+            "fontFamily": "system-ui, -apple-system, sans-serif",
+            "fontWeight": 900,
+            "grainProfile": true,
+            "inkMode": "blackOnWhite",
+            "mediumDimension": "2D",
+            "mediumEnabled": false,
+            "mediumPlane": "vertical",
+            "morphEnabled": true,
+            "pairwiseEnabled": false,
+            "paletteSource": "custom",
+            "pointerClick": "pulse",
+            "pointerClickRadius": 0.45,
+            "pointerClickStrength": 2.2,
+            "pointerMode": "repel",
+            "relationalEnabled": false,
+            "relationalMode": "orbital",
+            "resonanceEnabled": true,
+            "resonatorMode": "resonator",
+            "sweepDirection": "ascent",
+            "trajectory": "vortexSpiral"
+          },
+          "entities": [
+            {
+              "force": {
+                "kind": "attract",
+                "radius": 0.38,
+                "spin": 0.05,
+                "strength": 0.3
+              },
+              "id": "expression:fx-scene-explanation:entity:lead",
+              "kind": "formation",
+              "locked": false,
+              "name": "Explainer",
+              "position": {
+                "x": -0.95,
+                "y": -0.1,
+                "z": 0
+              },
+              "role": "lead",
+              "rotation": 0,
+              "sequence": {
+                "clock": "seconds",
+                "enabled": false,
+                "steps": [
+                  {
+                    "hold": 3,
+                    "id": "expression:fx-scene-explanation:entity:lead:rest",
+                    "position": null,
+                    "shape": "text",
+                    "text": "◯",
+                    "transition": 1
+                  }
+                ]
+              },
+              "shape": "text",
+              "share": 1,
+              "size": {
+                "x": 0.62,
+                "y": 0.72
+              },
+              "station": null,
+              "text": "◯",
+              "tint": "#8a7f6c",
+              "tintWeight": 0.5
+            },
+            {
+              "force": {
+                "kind": "attract",
+                "radius": 0.45,
+                "spin": 0,
+                "strength": 0
+              },
+              "id": "expression:fx-scene-explanation:entity:goal",
+              "kind": "formation",
+              "layers": [
+                {
+                  "id": "outer",
+                  "scale": 1.6,
+                  "text": "◯",
+                  "z": -0.1
+                },
+                {
+                  "id": "inner",
+                  "scale": 0.4,
+                  "text": "·",
+                  "z": 0.1
+                }
+              ],
+              "locked": false,
+              "name": "Subject",
+              "position": {
+                "x": 0.45,
+                "y": 0.12,
+                "z": 0
+              },
+              "role": "goal",
+              "rotation": 0,
+              "sequence": {
+                "clock": "seconds",
+                "easing": "smoothstep",
+                "enabled": true,
+                "order": "loop",
+                "steps": [
+                  {
+                    "hold": 3,
+                    "id": "subject-closed",
+                    "objectState": {
+                      "force": {
+                        "kind": "attract",
+                        "radius": 0.4,
+                        "spin": 0.1,
+                        "strength": 0.4
+                      },
+                      "rotation": 0,
+                      "scale": 1,
+                      "size": {
+                        "x": 0.9,
+                        "y": 0.9
+                      },
+                      "tint": "#9fb7b0",
+                      "tintWeight": 0.7
+                    },
+                    "position": null,
+                    "shape": "text",
+                    "text": "◇",
+                    "transition": 1.5
+                  },
+                  {
+                    "hold": 3,
+                    "id": "subject-open",
+                    "name": "unfolded",
+                    "objectState": {
+                      "force": {
+                        "kind": "vortex",
+                        "radius": 0.5,
+                        "spin": 0.35,
+                        "strength": 0.6
+                      },
+                      "rotation": 45,
+                      "scale": 1,
+                      "size": {
+                        "x": 1.1,
+                        "y": 1.1
+                      },
+                      "tint": "#9fb7b0",
+                      "tintWeight": 0.9
+                    },
+                    "position": null,
+                    "shape": "text",
+                    "text": "◈",
+                    "transition": 1.5
+                  }
+                ]
+              },
+              "shape": "text",
+              "share": 1.2,
+              "size": {
+                "x": 0.9,
+                "y": 0.9
+              },
+              "station": null,
+              "text": "◇",
+              "tint": "#9fb7b0",
+              "tintWeight": 0.7
+            }
+          ],
+          "field": {
+            "background": "#ebe7dc",
+            "material": "print",
+            "palette": [
+              "#2a2d33",
+              "#6f7d8c",
+              "#b0643c"
+            ],
+            "params": {
+              "circulation": 1,
+              "contrast": 0.74,
+              "count": 40000,
+              "curlDepth": 0.2,
+              "densityPhase": 0.3,
+              "densityScale": 1,
+              "densityTether": 1,
+              "depth": 0.12,
+              "dispersion": 0.05,
+              "dominance": 0,
+              "edgeWeight": 0,
+              "elongation": 0.04,
+              "excitation": 0.6,
+              "frequency": 220,
+              "grain": 0.035,
+              "gravityFalloff": 2,
+              "gravitySoftening": 0.1,
+              "gravityX": 0,
+              "gravityY": 0,
+              "gravityZ": 0,
+              "halo": 0.13,
+              "irregularity": 0.35,
+              "opacity": 0.88,
+              "orientation": 0,
+              "pointerFalloff": 2,
+              "pointerRadius": 0.23,
+              "pointerStrength": 0.8,
+              "quadraticDrag": 0.2,
+              "recovery": 1.1,
+              "roundness": 0.3,
+              "size": 3.2,
+              "sizeBias": 1.6,
+              "snapRigidity": 1,
+              "softness": 0.15,
+              "speed": 0.5,
+              "speedLimit": 3,
+              "swirlRadius": 0.4,
+              "thermalJitter": 0,
+              "timeScale": 1,
+              "turbulence": 0.12,
+              "turbulenceScale": 1.2,
+              "vortexRadius": 0.4,
+              "zConfinement": 1
+            }
+          },
+          "id": "expression:fx-scene-explanation:scene:explanation",
+          "morph": {
+            "depth": 1,
+            "dwell": 0.3,
+            "law": "theta",
+            "phiOffset": 0,
+            "phiRate": 0.13,
+            "thetaOffset": 0,
+            "thetaRate": 0.08
+          },
+          "name": "Explanation",
+          "text": [
+            {
+              "align": "left",
+              "body": "",
+              "id": "t-caption",
+              "italic": "",
+              "kicker": "EXPLANATION",
+              "role": "caption",
+              "size": 26,
+              "title": "",
+              "visible": true,
+              "width": 520,
+              "x": 0.07,
+              "y": 0.12
+            },
+            {
+              "align": "left",
+              "body": "",
+              "id": "t-progress",
+              "italic": "",
+              "kicker": "",
+              "role": "progressText",
+              "size": 18,
+              "title": "",
+              "visible": true,
+              "width": 420,
+              "x": 0.55,
+              "y": 0.7
+            }
+          ],
+          "toolbelt": [
+            {
+              "id": "speed",
+              "key": "timeScale",
+              "scope": "field"
+            },
+            {
+              "id": "spring",
+              "key": "recovery",
+              "scope": "field"
+            },
+            {
+              "id": "viscosity",
+              "key": "native_fluid__viscosity",
+              "scope": "field"
+            },
+            {
+              "id": "flow",
+              "key": "turbulence",
+              "scope": "field"
+            },
+            {
+              "id": "transition",
+              "key": "sequence.transition",
+              "scope": "selected"
+            },
+            {
+              "id": "blend",
+              "key": "native_morphProgress",
+              "scope": "field"
+            }
+          ],
+          "transition": 1.5,
+          "view": {
+            "mode": "2d",
+            "panX": 0,
+            "panY": 0,
+            "pitch": 0,
+            "yaw": 0,
+            "zoom": 1
+          }
+        }
+      },
+      "scene_ref": "expression:fx-scene-explanation:scene:explanation",
+      "revision": 1,
+      "title": "Explanation",
+      "entity_refs": [
+        "expression:fx-scene-explanation:entity:lead",
+        "expression:fx-scene-explanation:entity:goal"
+      ],
+      "body": null,
+      "triggers": []
+    }
+  ],
+  "entities": {
+    "expression:fx-scene-explanation:entity:goal": {
+      "entity_ref": "expression:fx-scene-explanation:entity:goal",
+      "revision": 1,
+      "title": "Subject",
+      "subject": null,
+      "parameters": {}
+    },
+    "expression:fx-scene-explanation:entity:lead": {
+      "entity_ref": "expression:fx-scene-explanation:entity:lead",
+      "revision": 1,
+      "title": "Explainer",
+      "subject": null,
+      "parameters": {}
+    }
+  },
+  "relations": {},
+  "selection": {
+    "scene_ref": "expression:fx-scene-explanation:scene:explanation",
+    "entity_ref": null
+  },
+  "provenance": [
+    {
+      "ref": "oi:desktop/cradle/material/factory-expressions",
+      "revision": "curated-2026-09-26",
+      "availability": "available"
+    }
+  ],
+  "representations": [],
+  "refinements": [],
+  "collections": [
+    "factory-expressions"
+  ],
+  "profiles": [],
+  "reuse": {
+    "schema": "oi.expression-reuse/v1",
+    "kind": "scene",
+    "title": "Explanation",
+    "roles": [
+      {
+        "role": "lead",
+        "accepts": "agent",
+        "entity_ref": "expression:fx-scene-explanation:entity:lead"
+      },
+      {
+        "role": "goal",
+        "accepts": "object",
+        "entity_ref": "expression:fx-scene-explanation:entity:goal"
+      },
+      {
+        "role": "caption",
+        "accepts": "text",
+        "text_id": "t-caption"
+      },
+      {
+        "role": "progressText",
+        "accepts": "text",
+        "text_id": "t-progress"
+      }
+    ],
+    "entry_scene_ref": "expression:fx-scene-explanation:scene:explanation",
+    "playback": [
+      "expression:fx-scene-explanation:scene:explanation"
+    ],
+    "authored_by": "agent:factory-expressions-lane-c"
+  }
+}
