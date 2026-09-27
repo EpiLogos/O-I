@@ -46,17 +46,49 @@ impl PreparedRead {
                     Some(world) => world.clone(),
                     None => crate::world::read_world(&self.client)?,
                 };
-                world["work"]["projects"].as_array()
-                    .and_then(|rows| rows.iter().find(|row| row["name"].as_str() == Some(project.as_str())))
+                world["work"]["projects"]
+                    .as_array()
+                    .and_then(|rows| {
+                        rows.iter()
+                            .find(|row| row["name"].as_str() == Some(project.as_str()))
+                    })
                     .ok_or("Project is outside Central's disclosed ground")?;
             }
-            let data = self.client.receiving(project.as_deref(), request).map_err(|error| error.to_string())?;
-            return Ok(KernelOpOutcome { receipts: vec![], result: KernelOpResult::ReceivingReading { data } });
+            let data = self
+                .client
+                .receiving(project.as_deref(), request)
+                .map_err(|error| error.to_string())?;
+            return Ok(KernelOpOutcome {
+                receipts: vec![],
+                result: KernelOpResult::ReceivingReading { data },
+            });
         }
-        if let KernelOp::FactoryOwner { request: crate::factory::OwnerRequest::TelemetryWatch { state_path, resume, duration_secs, max_events, run_ref } } = &self.op {
-            let data = crate::factory::telemetry_watch(state_path, resume.as_ref(), *duration_secs, *max_events, run_ref.as_deref())
-                .map_err(|e| serde_json::to_string(&e).unwrap_or_else(|_| "factory telemetry watch failed".into()))?;
-            return Ok(KernelOpOutcome { receipts: vec![], result: KernelOpResult::FactoryDevelopmentReading { data } });
+        if let KernelOp::FactoryOwner {
+            request:
+                crate::factory::OwnerRequest::TelemetryWatch {
+                    state_path,
+                    resume,
+                    duration_secs,
+                    max_events,
+                    run_ref,
+                },
+        } = &self.op
+        {
+            let data = crate::factory::telemetry_watch(
+                state_path,
+                resume.as_ref(),
+                *duration_secs,
+                *max_events,
+                run_ref.as_deref(),
+            )
+            .map_err(|e| {
+                serde_json::to_string(&e)
+                    .unwrap_or_else(|_| "factory telemetry watch failed".into())
+            })?;
+            return Ok(KernelOpOutcome {
+                receipts: vec![],
+                result: KernelOpResult::FactoryDevelopmentReading { data },
+            });
         }
         let git_reading = match &self.op {
             KernelOp::GitRepositoryRead { project } => Some(KernelOpResult::GitRepositoryReading {

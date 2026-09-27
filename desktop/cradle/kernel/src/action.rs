@@ -91,9 +91,15 @@ pub enum ActionDispatch {
     UnknownOwner { action: String },
     /// The owner answered, and the answer was no — the owner's message,
     /// verbatim.
-    OwnerRefused { owner_operation: String, message: String },
+    OwnerRefused {
+        owner_operation: String,
+        message: String,
+    },
     /// The owner executable could not be launched — absence, not an error.
-    OwnerUnavailable { owner_operation: String, detail: String },
+    OwnerUnavailable {
+        owner_operation: String,
+        detail: String,
+    },
 }
 
 /// The AIKit knowledge Actions that take a typed Knowledge address: the
@@ -125,22 +131,38 @@ pub fn invoke(
     let action = invocation.action.as_str();
     if action.is_empty() || action.chars().any(|c| c.is_whitespace() || c.is_control()) {
         return ActionDispatch::MalformedRef {
-            detail: format!("Action spelling `{}` is empty or contains whitespace/control characters", invocation.action),
+            detail: format!(
+                "Action spelling `{}` is empty or contains whitespace/control characters",
+                invocation.action
+            ),
         };
     }
     if invocation.target_ref.trim().is_empty() {
-        return ActionDispatch::MalformedRef { detail: "target ref is empty".into() };
+        return ActionDispatch::MalformedRef {
+            detail: "target ref is empty".into(),
+        };
     }
     if action.starts_with("central.") || action.starts_with("projectcentral.") {
         return invoke_central(client, action, default_project, invocation);
     }
-    if matches!(action, crate::construction::APPLY | crate::construction::APPLY_FACTS) {
+    if matches!(
+        action,
+        crate::construction::APPLY | crate::construction::APPLY_FACTS
+    ) {
         return crate::construction::invoke(client, cwd, default_project, invocation);
     }
     if action == AIKIT_ACTION_OPEN {
         return invoke_aikit_open(cwd, &invocation.target_ref);
     }
-    if [AIKIT_ACTION_READ, AIKIT_ACTION_SOURCES, AIKIT_ACTION_RELATIONS, AIKIT_ACTION_EXPLAIN, AIKIT_ACTION_ROUTE].contains(&action) {
+    if [
+        AIKIT_ACTION_READ,
+        AIKIT_ACTION_SOURCES,
+        AIKIT_ACTION_RELATIONS,
+        AIKIT_ACTION_EXPLAIN,
+        AIKIT_ACTION_ROUTE,
+    ]
+    .contains(&action)
+    {
         return unsupported(OWNER_AIKIT, ADDRESS_ACTION_REASON);
     }
     if action == AIKIT_ACTION_RUN {
@@ -152,22 +174,41 @@ pub fn invoke(
     if action == AIKIT_ACTION_CONTEMPLATE_FLOW {
         // W4-D binding: preflight-first, record-gated execution through the
         // AIKit Flow cognition owner operations (`flow_cognition.rs`).
-        return flow_cognition::dispatch_contemplate(cwd, &invocation.target_ref, invocation.input.as_ref());
+        return flow_cognition::dispatch_contemplate(
+            cwd,
+            &invocation.target_ref,
+            invocation.input.as_ref(),
+        );
     }
     if action == AIKIT_ACTION_CONTEMPLATE_NOW {
         // The re-aimed subject (Central #175 cell 2): contemplate a NOW
         // clearing's raw T stream. The kernel reads the stream from
         // Central's own Action and supplies it as the AIKit seam.
-        return flow_cognition::dispatch_contemplate_now(client, cwd, &invocation.target_ref, invocation.input.as_ref());
+        return flow_cognition::dispatch_contemplate_now(
+            client,
+            cwd,
+            &invocation.target_ref,
+            invocation.input.as_ref(),
+        );
     }
-    ActionDispatch::UnknownOwner { action: action.to_owned() }
+    ActionDispatch::UnknownOwner {
+        action: action.to_owned(),
+    }
 }
 
 fn unsupported(owner: &str, detail: &str) -> ActionDispatch {
-    ActionDispatch::UnsupportedAction { owner: owner.into(), detail: detail.into() }
+    ActionDispatch::UnsupportedAction {
+        owner: owner.into(),
+        detail: detail.into(),
+    }
 }
 
-fn invoke_central(client: &CentralClient, action: &str, default_project: Option<&str>, invocation: &ActionInvocation) -> ActionDispatch {
+fn invoke_central(
+    client: &CentralClient,
+    action: &str,
+    default_project: Option<&str>,
+    invocation: &ActionInvocation,
+) -> ActionDispatch {
     let mut input = match invocation.input.clone() {
         Some(Value::Object(_)) | None => invocation
             .input
@@ -188,33 +229,45 @@ fn invoke_central(client: &CentralClient, action: &str, default_project: Option<
             .or_insert_with(|| Value::String(project.to_owned()));
     }
     match client.run(action, input) {
-        Ok(data) => ActionDispatch::Invoked { owner_operation: action.to_owned(), data },
-        Err(OwnerCallError::Refused { message }) => {
-            ActionDispatch::OwnerRefused { owner_operation: action.to_owned(), message }
-        }
-        Err(OwnerCallError::Unavailable { detail }) => {
-            ActionDispatch::OwnerUnavailable { owner_operation: action.to_owned(), detail }
-        }
+        Ok(data) => ActionDispatch::Invoked {
+            owner_operation: action.to_owned(),
+            data,
+        },
+        Err(OwnerCallError::Refused { message }) => ActionDispatch::OwnerRefused {
+            owner_operation: action.to_owned(),
+            message,
+        },
+        Err(OwnerCallError::Unavailable { detail }) => ActionDispatch::OwnerUnavailable {
+            owner_operation: action.to_owned(),
+            detail,
+        },
         // The owner answered something the contract cannot parse: the owner
         // error detail is carried verbatim rather than reclassified.
-        Err(OwnerCallError::Malformed { detail }) => {
-            ActionDispatch::OwnerRefused { owner_operation: action.to_owned(), message: detail }
-        }
+        Err(OwnerCallError::Malformed { detail }) => ActionDispatch::OwnerRefused {
+            owner_operation: action.to_owned(),
+            message: detail,
+        },
     }
 }
 
 fn invoke_aikit_open(cwd: &Path, target_ref: &str) -> ActionDispatch {
     let owner_operation = "aikit knowledge open".to_owned();
     match knowledge::run(cwd, &["knowledge", "open", "--", target_ref]) {
-        Ok(data) => ActionDispatch::Invoked { owner_operation, data },
-        Err(knowledge::CallError::Refused { message }) => {
-            ActionDispatch::OwnerRefused { owner_operation, message }
-        }
-        Err(knowledge::CallError::Unavailable { detail }) => {
-            ActionDispatch::OwnerUnavailable { owner_operation, detail }
-        }
-        Err(knowledge::CallError::Malformed { detail }) => {
-            ActionDispatch::OwnerRefused { owner_operation, message: detail }
-        }
+        Ok(data) => ActionDispatch::Invoked {
+            owner_operation,
+            data,
+        },
+        Err(knowledge::CallError::Refused { message }) => ActionDispatch::OwnerRefused {
+            owner_operation,
+            message,
+        },
+        Err(knowledge::CallError::Unavailable { detail }) => ActionDispatch::OwnerUnavailable {
+            owner_operation,
+            detail,
+        },
+        Err(knowledge::CallError::Malformed { detail }) => ActionDispatch::OwnerRefused {
+            owner_operation,
+            message: detail,
+        },
     }
 }

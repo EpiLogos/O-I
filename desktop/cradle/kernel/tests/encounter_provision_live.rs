@@ -26,19 +26,33 @@ fn provisions_a_central_chat_and_lands_one_turn() {
     // 1. Provision: SessionSpace, project context, agent session, agency
     //    binding, provider open — the owner's own CLI sequence, one op.
     let outcome = kernel
-        .apply(KernelOp::EncounterProvision { project: PROJECT.into(), preferred_body_ref: None })
+        .apply(KernelOp::EncounterProvision {
+            project: PROJECT.into(),
+            preferred_body_ref: None,
+        })
         .expect("provision a fresh Central chat conversation");
     let KernelOpResult::EncounterProvisioned { data } = outcome.result else {
         panic!("provision returned the wrong result variant");
     };
     let space = data["space"].as_str().expect("space ref").to_owned();
-    let agent_session = data["agent_session"].as_str().expect("agent session ref").to_owned();
-    let provider = data["provider"].as_str().expect("default provider").to_owned();
+    let agent_session = data["agent_session"]
+        .as_str()
+        .expect("agent session ref")
+        .to_owned();
+    let provider = data["provider"]
+        .as_str()
+        .expect("default provider")
+        .to_owned();
     assert!(space.starts_with("session-space/"), "{space}");
-    assert!(agent_session.starts_with("agent-session/"), "{agent_session}");
+    assert!(
+        agent_session.starts_with("agent-session/"),
+        "{agent_session}"
+    );
     assert!(
         data["open"]["resident"].as_bool().unwrap_or(false)
-            || data["open"]["resident"].as_str().is_some_and(|v| v == "true"),
+            || data["open"]["resident"]
+                .as_str()
+                .is_some_and(|v| v == "true"),
         "the open result must name a live resident: {}",
         data["open"]
     );
@@ -66,7 +80,10 @@ fn provisions_a_central_chat_and_lands_one_turn() {
     kernel
         .apply(KernelOp::Encounter {
             project: PROJECT.into(),
-            request: EncounterRequest::Prompt { agent_session: agent_session.clone(), draft_revision: revision },
+            request: EncounterRequest::Prompt {
+                agent_session: agent_session.clone(),
+                draft_revision: revision,
+            },
         })
         .expect("submit the first prompt");
     println!("prompt accepted; waiting for the turn to land");
@@ -83,7 +100,10 @@ fn provisions_a_central_chat_and_lands_one_turn() {
         let outcome = kernel
             .apply(KernelOp::Encounter {
                 project: PROJECT.into(),
-                request: EncounterRequest::View { agent_session: agent_session.clone(), before: None },
+                request: EncounterRequest::View {
+                    agent_session: agent_session.clone(),
+                    before: None,
+                },
             })
             .expect("view the transcript");
         let KernelOpResult::EncounterReading { data } = outcome.result else {
@@ -94,7 +114,9 @@ fn provisions_a_central_chat_and_lands_one_turn() {
                 // The recorded USER turn carries the same words as the prompt;
                 // the proof is the assistant's own answer block.
                 block["kind"].as_str() == Some("assistant")
-                    && block["text"].as_str().is_some_and(|text| text.to_lowercase().contains("central chat ready"))
+                    && block["text"]
+                        .as_str()
+                        .is_some_and(|text| text.to_lowercase().contains("central chat ready"))
             })
         });
         last = data.clone();
@@ -103,12 +125,18 @@ fn provisions_a_central_chat_and_lands_one_turn() {
                 .as_array()
                 .unwrap()
                 .iter()
-                .find(|block| block["kind"].as_str() == Some("assistant")
-                    && block["text"].as_str().is_some_and(|t| t.to_lowercase().contains("central chat ready")))
+                .find(|block| {
+                    block["kind"].as_str() == Some("assistant")
+                        && block["text"]
+                            .as_str()
+                            .is_some_and(|t| t.to_lowercase().contains("central chat ready"))
+                })
                 .cloned()
                 .unwrap();
-            println!("LANDPROOF session={agent_session} block={} kind={} text={}",
-                answer["id"], answer["kind"], answer["text"]);
+            println!(
+                "LANDPROOF session={agent_session} block={} kind={} text={}",
+                answer["id"], answer["kind"], answer["text"]
+            );
             break;
         }
     }

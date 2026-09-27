@@ -394,24 +394,61 @@ impl Client {
         let composition_reading = registry_composition(&census);
         // Independent owner processes run together, then join in canonical
         // order. A slow or unavailable owner does not serialize its siblings.
-        let mut requests = vec![("oi".to_owned(), Ok(vec!["config-contribution".to_owned(), "--json".to_owned()]), MountComposition { standing: MountStanding::Unpositioned, position: None })];
-        for position in census.positions.iter().filter(|position| position.product_id != "oi") {
+        let mut requests = vec![(
+            "oi".to_owned(),
+            Ok(vec!["config-contribution".to_owned(), "--json".to_owned()]),
+            MountComposition {
+                standing: MountStanding::Unpositioned,
+                position: None,
+            },
+        )];
+        for position in census
+            .positions
+            .iter()
+            .filter(|position| position.product_id != "oi")
+        {
             let product_id = &position.product_id;
-            requests.push((product_id.clone(), namespace_for(&census, product_id).map(|namespace| vec![namespace, "config-contribution".to_owned(), "--json".to_owned()]), mount_composition(&census, product_id)));
+            requests.push((
+                product_id.clone(),
+                namespace_for(&census, product_id).map(|namespace| {
+                    vec![
+                        namespace,
+                        "config-contribution".to_owned(),
+                        "--json".to_owned(),
+                    ]
+                }),
+                mount_composition(&census, product_id),
+            ));
         }
         let mounts = std::thread::scope(|scope| {
-            let handles: Vec<_> = requests.into_iter().map(|(product_id, args, composition)| {
-                scope.spawn(move || {
-                    match args {
+            let handles: Vec<_> = requests
+                .into_iter()
+                .map(|(product_id, args, composition)| {
+                    scope.spawn(move || match args {
                         Ok(args) => {
-                            let displayed = std::iter::once(self.executable.display().to_string()).chain(args.iter().cloned()).collect::<Vec<_>>();
-                            mount(&product_id, &displayed, self.invoke(cwd, &args, None), composition)
+                            let displayed = std::iter::once(self.executable.display().to_string())
+                                .chain(args.iter().cloned())
+                                .collect::<Vec<_>>();
+                            mount(
+                                &product_id,
+                                &displayed,
+                                self.invoke(cwd, &args, None),
+                                composition,
+                            )
                         }
-                        Err(error) => mount(&product_id, &[], InvokeOutcome::SpawnFailed(error), composition),
-                    }
+                        Err(error) => mount(
+                            &product_id,
+                            &[],
+                            InvokeOutcome::SpawnFailed(error),
+                            composition,
+                        ),
+                    })
                 })
-            }).collect();
-            handles.into_iter().map(|handle| handle.join().expect("configuration mount thread panicked")).collect()
+                .collect();
+            handles
+                .into_iter()
+                .map(|handle| handle.join().expect("configuration mount thread panicked"))
+                .collect()
         });
         RegistryReading {
             schema: "oi.cradle.config-registry/v1".to_owned(),
@@ -429,25 +466,77 @@ impl Client {
     /// back as a resolution whose reconciliation names the refusal —
     /// unsupported pairings are data (the source contract: never omitted).
     pub fn resolutions_read(&self, cwd: &Path, pairs: &[ConfigPair]) -> Vec<Value> {
-        if pairs.is_empty() { return Vec::new(); }
-        let args = vec!["config".to_owned(), "resolve".to_owned(), "--request-file".to_owned(), "-".to_owned(), "--json".to_owned()];
+        if pairs.is_empty() {
+            return Vec::new();
+        }
+        let args = vec![
+            "config".to_owned(),
+            "resolve".to_owned(),
+            "--request-file".to_owned(),
+            "-".to_owned(),
+            "--json".to_owned(),
+        ];
         let request = serde_json::to_value(pairs).expect("configuration pairs are serializable");
         match self.answer(cwd, &args, Some(&request)) {
             Ok(document) if document["schema"] == "oi.config-resolutions/v1" => {
                 let rows = document["resolutions"].as_array();
-                pairs.iter().enumerate().map(|(index, pair)| {
-                    let row = rows.and_then(|rows| rows.get(index));
-                    if let Some(row) = row.filter(|row| row["schema"] == RESOLUTION_SCHEMA) {
-                        if row["setting_ref"] == pair.setting_ref && row["scope"] == serde_json::to_value(&pair.scope).expect("scope is serializable") { return row.clone(); }
-                        return degraded_resolution(pair, "unknown", "the batch resolution names a different setting or scope");
-                    }
-                    let (code, message) = error_parts(row.unwrap_or(&Value::Null), "The batch returned no resolution for this address");
-                    let status = if matches!(code.as_str(), "unsupported_setting" | "unsupported_scope" | "unknown_scope_kind") { "unsupported" } else { "blocked" };
-                    degraded_resolution(pair, status, &format!("{code}: {message}"))
-                }).collect()
+                pairs
+                    .iter()
+                    .enumerate()
+                    .map(|(index, pair)| {
+                        let row = rows.and_then(|rows| rows.get(index));
+                        if let Some(row) = row.filter(|row| row["schema"] == RESOLUTION_SCHEMA) {
+                            if row["setting_ref"] == pair.setting_ref
+                                && row["scope"]
+                                    == serde_json::to_value(&pair.scope)
+                                        .expect("scope is serializable")
+                            {
+                                return row.clone();
+                            }
+                            return degraded_resolution(
+                                pair,
+                                "unknown",
+                                "the batch resolution names a different setting or scope",
+                            );
+                        }
+                        let (code, message) = error_parts(
+                            row.unwrap_or(&Value::Null),
+                            "The batch returned no resolution for this address",
+                        );
+                        let status = if matches!(
+                            code.as_str(),
+                            "unsupported_setting" | "unsupported_scope" | "unknown_scope_kind"
+                        ) {
+                            "unsupported"
+                        } else {
+                            "blocked"
+                        };
+                        degraded_resolution(pair, status, &format!("{code}: {message}"))
+                    })
+                    .collect()
             }
-            Ok(_) => pairs.iter().map(|pair| degraded_resolution(pair, "unknown", "the engine answered with a document that is not a resolution batch")).collect(),
-            Err(error) => pairs.iter().map(|pair| degraded_resolution(pair, "blocked", error["message"].as_str().unwrap_or("the engine could not resolve settings"))).collect(),
+            Ok(_) => pairs
+                .iter()
+                .map(|pair| {
+                    degraded_resolution(
+                        pair,
+                        "unknown",
+                        "the engine answered with a document that is not a resolution batch",
+                    )
+                })
+                .collect(),
+            Err(error) => pairs
+                .iter()
+                .map(|pair| {
+                    degraded_resolution(
+                        pair,
+                        "blocked",
+                        error["message"]
+                            .as_str()
+                            .unwrap_or("the engine could not resolve settings"),
+                    )
+                })
+                .collect(),
         }
     }
 
@@ -455,10 +544,16 @@ impl Client {
     /// (`oi config diff --json`): what Settings shows as staged.
     pub fn diff(&self, cwd: &Path) -> Result<Vec<Value>, String> {
         let args = vec!["config".to_owned(), "diff".to_owned(), "--json".to_owned()];
-        let document = self
-            .answer(cwd, &args, None)
-            .map_err(|error| error["message"].as_str().unwrap_or("the engine could not diff the held settings").to_owned())?;
-        Ok(document["resolutions"].as_array().cloned().unwrap_or_default())
+        let document = self.answer(cwd, &args, None).map_err(|error| {
+            error["message"]
+                .as_str()
+                .unwrap_or("the engine could not diff the held settings")
+                .to_owned()
+        })?;
+        Ok(document["resolutions"]
+            .as_array()
+            .cloned()
+            .unwrap_or_default())
     }
 
     // -----------------------------------------------------------------------
@@ -1029,7 +1124,12 @@ fn registry_composition(census: &composition::Reading) -> RegistryComposition {
         present_positions: context_frame
             .get("present_positions")
             .and_then(Value::as_array)
-            .map(|rows| rows.iter().filter_map(Value::as_u64).map(|v| v as u8).collect())
+            .map(|rows| {
+                rows.iter()
+                    .filter_map(Value::as_u64)
+                    .map(|v| v as u8)
+                    .collect()
+            })
             .unwrap_or_default(),
         warnings: data
             .get("warnings")
@@ -1356,7 +1456,10 @@ esac
                 error: None,
             }
         );
-        assert_eq!(reading.mounts[0].composition.standing, MountStanding::Unpositioned);
+        assert_eq!(
+            reading.mounts[0].composition.standing,
+            MountStanding::Unpositioned
+        );
         for mount in &reading.mounts[1..] {
             assert_eq!(
                 mount.composition.standing,
@@ -1397,9 +1500,11 @@ esac
         );
         assert_eq!(reading.composition.present_positions, vec![0, 1]);
         assert!(
-            reading.composition.warnings.iter().any(|warning| {
-                warning.contains("0/1/2") && warning.contains("AIKit")
-            }),
+            reading
+                .composition
+                .warnings
+                .iter()
+                .any(|warning| { warning.contains("0/1/2") && warning.contains("AIKit") }),
             "{:?}",
             reading.composition.warnings
         );
@@ -1433,7 +1538,11 @@ esac
             census = census_body_prev2(),
         ));
         let reading = scene.client().registry_read(&scene.dir);
-        assert!(reading.composition.error.is_some(), "{:?}", reading.composition);
+        assert!(
+            reading.composition.error.is_some(),
+            "{:?}",
+            reading.composition
+        );
         assert!(reading.composition.requested_mode.is_none());
         for mount in &reading.mounts[1..] {
             assert_eq!(
@@ -1894,9 +2003,9 @@ esac
         assert!(calls.iter().any(|call| {
             call == "profile edit dev --remove ai-kit:resolution:model.default project:p --json"
         }));
-        assert!(calls.iter().any(|call| {
-            call == "profile edit dev --title Staging --clear-description --json"
-        }));
+        assert!(calls
+            .iter()
+            .any(|call| { call == "profile edit dev --title Staging --clear-description --json" }));
 
         // An empty operation set is refused kernel-side, before any spawn.
         assert!(client.profile_edit(&scene.dir, "dev", &[]).is_err());

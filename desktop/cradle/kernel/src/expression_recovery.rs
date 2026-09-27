@@ -273,40 +273,84 @@ fn validate(kind: Kind, id: &str, value: &Value) -> Result<(), String> {
                     let intent = &pending["intent"];
                     if intent["expression_ref"].as_str() != Some(doc.expression_ref.as_str())
                         || intent["revision"].as_u64() != Some(doc.revision)
-                        || !intent["scene_ref"].as_str().is_some_and(|reference|doc.scenes.iter().any(|scene|scene.scene_ref==reference))
-                        || !matches!(intent["operation"].as_str(),Some("bind"|"transform"|"release")) {
-                        return Err("Pending blueprint disagrees with its exact native basis".into());
+                        || !intent["scene_ref"].as_str().is_some_and(|reference| {
+                            doc.scenes.iter().any(|scene| scene.scene_ref == reference)
+                        })
+                        || !matches!(
+                            intent["operation"].as_str(),
+                            Some("bind" | "transform" | "release")
+                        )
+                    {
+                        return Err(
+                            "Pending blueprint disagrees with its exact native basis".into()
+                        );
                     }
                     if intent["operation"] == "bind" {
-                        serde_json::from_value::<crate::expression_blueprint::Binding>(intent["binding"].clone())
-                            .map_err(|e|format!("Invalid pending blueprint binding: {e}"))?;
+                        serde_json::from_value::<crate::expression_blueprint::Binding>(
+                            intent["binding"].clone(),
+                        )
+                        .map_err(|e| format!("Invalid pending blueprint binding: {e}"))?;
                     }
                 }
                 if pending["kind"] == "occurrence" {
                     let intent = &pending["intent"];
-                    let scene_ref = intent["scene_ref"].as_str().ok_or("Occurrence intent has no Scene")?;
-                    let scene = doc.scenes.iter().find(|scene| scene.scene_ref == scene_ref)
+                    let scene_ref = intent["scene_ref"]
+                        .as_str()
+                        .ok_or("Occurrence intent has no Scene")?;
+                    let scene = doc
+                        .scenes
+                        .iter()
+                        .find(|scene| scene.scene_ref == scene_ref)
                         .ok_or("Occurrence intent addresses an absent Scene")?;
-                    let new_ref = intent["new_entity_ref"].as_str().ok_or("Occurrence intent has no new identity")?;
+                    let new_ref = intent["new_entity_ref"]
+                        .as_str()
+                        .ok_or("Occurrence intent has no new identity")?;
                     crate::expression::id(new_ref, &format!("{}:entity:", doc.expression_ref))?;
-                    if !new_ref.starts_with(&format!("{}:entity:occurrence-", doc.expression_ref)) || doc.entities.contains_key(new_ref) {
-                        return Err("Occurrence intent does not create a fresh native identity".into());
+                    if !new_ref.starts_with(&format!("{}:entity:occurrence-", doc.expression_ref))
+                        || doc.entities.contains_key(new_ref)
+                    {
+                        return Err(
+                            "Occurrence intent does not create a fresh native identity".into()
+                        );
                     }
                     match intent["operation"].as_str() {
                         Some("duplicate") => {
-                            let original = intent["entity_ref"].as_str().ok_or("Duplicate has no original occurrence")?;
-                            if !scene.entity_refs.iter().any(|reference| reference == original)
-                                || !doc.entities.get(original).is_some_and(|entity| entity.subject.is_some()) {
-                                return Err("Duplicate does not address a source occurrence in its Scene".into());
+                            let original = intent["entity_ref"]
+                                .as_str()
+                                .ok_or("Duplicate has no original occurrence")?;
+                            if !scene
+                                .entity_refs
+                                .iter()
+                                .any(|reference| reference == original)
+                                || !doc
+                                    .entities
+                                    .get(original)
+                                    .is_some_and(|entity| entity.subject.is_some())
+                            {
+                                return Err(
+                                    "Duplicate does not address a source occurrence in its Scene"
+                                        .into(),
+                                );
                             }
                         }
                         Some("insert-source") => {
-                            let binding: crate::expression::SubjectBinding = serde_json::from_value(intent["binding"].clone())
-                                .map_err(|e| format!("Invalid inserted source binding: {e}"))?;
-                            if !intent["title"].as_str().is_some_and(|title| !title.trim().is_empty() && title.len() <= 640)
+                            let binding: crate::expression::SubjectBinding =
+                                serde_json::from_value(intent["binding"].clone())
+                                    .map_err(|e| format!("Invalid inserted source binding: {e}"))?;
+                            if !intent["title"]
+                                .as_str()
+                                .is_some_and(|title| !title.trim().is_empty() && title.len() <= 640)
                                 || binding.subject_ref.starts_with("expression:")
-                                || !binding.readings.iter().any(|reading| reading.r#ref == binding.subject_ref && !reading.revision.is_empty() && reading.availability == crate::expression::Availability::Available) {
-                                return Err("Inserted source has no exact available owner reading".into());
+                                || !binding.readings.iter().any(|reading| {
+                                    reading.r#ref == binding.subject_ref
+                                        && !reading.revision.is_empty()
+                                        && reading.availability
+                                            == crate::expression::Availability::Available
+                                })
+                            {
+                                return Err(
+                                    "Inserted source has no exact available owner reading".into()
+                                );
                             }
                         }
                         _ => return Err("Unsupported native occurrence intent".into()),

@@ -202,7 +202,10 @@ impl AssetIndex {
             return Err("Asset index budget exceeded".into());
         }
         let entry = self.entries.entry(key).or_insert_with(|| IndexedAsset {
-            asset: AdmittedAsset { occurrences: Vec::new(), ..asset.clone() },
+            asset: AdmittedAsset {
+                occurrences: Vec::new(),
+                ..asset.clone()
+            },
             occurrences: Vec::new(),
             admitted_by: actor.to_owned(),
         });
@@ -239,9 +242,7 @@ impl AssetIndex {
         let matches: Vec<(&String, &IndexedAsset)> = self
             .entries
             .iter()
-            .filter_map(|((r, revision), entry)| {
-                (r == asset_ref).then_some((revision, entry))
-            })
+            .filter_map(|((r, revision), entry)| (r == asset_ref).then_some((revision, entry)))
             .collect();
         if matches.is_empty() {
             return Err("Asset is not admitted".into());
@@ -265,13 +266,7 @@ impl AssetIndex {
         let assets: Vec<Value> = self
             .entries
             .iter()
-            .filter(|((_, _), entry)| {
-                entry
-                    .asset
-                    .subject_refs
-                    .iter()
-                    .any(|s| s == subject_ref)
-            })
+            .filter(|((_, _), entry)| entry.asset.subject_refs.iter().any(|s| s == subject_ref))
             .map(|((asset_ref, revision), entry)| {
                 json!({
                     "asset_ref":asset_ref,

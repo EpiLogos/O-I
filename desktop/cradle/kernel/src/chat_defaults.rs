@@ -26,7 +26,8 @@ fn state_path() -> Result<PathBuf, String> {
     if let Some(path) = std::env::var_os("OI_CRADLE_STATE") {
         return Ok(PathBuf::from(path));
     }
-    let home = std::env::var_os("HOME").ok_or("No home directory is resolvable, so the desktop cannot hold a chat default")?;
+    let home = std::env::var_os("HOME")
+        .ok_or("No home directory is resolvable, so the desktop cannot hold a chat default")?;
     Ok(PathBuf::from(home).join(".local/state/oi-cradle/chat-defaults.json"))
 }
 
@@ -51,7 +52,9 @@ pub fn read() -> Result<Option<Value>, String> {
 
 /// The held provider id, when a readable choice with a non-empty value exists.
 pub fn held_provider() -> Option<String> {
-    read().ok().flatten()
+    read()
+        .ok()
+        .flatten()
         .and_then(|document| document["value"].as_str().map(str::to_owned))
         .filter(|value| !value.trim().is_empty())
 }
@@ -78,11 +81,23 @@ pub fn hold(provider: &str) -> Result<Value, String> {
     }
     let stamp = now_ms();
     let temp = path.with_extension(format!("json.{stamp}.tmp"));
-    std::fs::write(&temp, serde_json::to_vec_pretty(&document)
-        .map_err(|error| format!("The chat default is not serialisable: {error}"))?)
-        .map_err(|error| format!("Could not stage the chat default at {}: {error}", temp.display()))?;
-    std::fs::rename(&temp, &path)
-        .map_err(|error| format!("Could not hold the chat default at {}: {error}", path.display()))?;
+    std::fs::write(
+        &temp,
+        serde_json::to_vec_pretty(&document)
+            .map_err(|error| format!("The chat default is not serialisable: {error}"))?,
+    )
+    .map_err(|error| {
+        format!(
+            "Could not stage the chat default at {}: {error}",
+            temp.display()
+        )
+    })?;
+    std::fs::rename(&temp, &path).map_err(|error| {
+        format!(
+            "Could not hold the chat default at {}: {error}",
+            path.display()
+        )
+    })?;
     Ok(document)
 }
 
@@ -96,12 +111,16 @@ pub fn discard() -> Result<Value, String> {
         Err(error) if error.kind() == std::io::ErrorKind::NotFound => false,
         Err(error) => return Err(format!("Could not withdraw the chat default: {error}")),
     };
-    Ok(json!({"schema": "oi.cradle.chat-default/v1", "setting_ref": SETTING_REF, "removed": removed}))
+    Ok(
+        json!({"schema": "oi.cradle.chat-default/v1", "setting_ref": SETTING_REF, "removed": removed}),
+    )
 }
 
 fn now_ms() -> u64 {
-    std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH)
-        .map(|d| d.as_millis() as u64).unwrap_or(0)
+    std::time::SystemTime::now()
+        .duration_since(std::time::UNIX_EPOCH)
+        .map(|d| d.as_millis() as u64)
+        .unwrap_or(0)
 }
 
 #[cfg(test)]
@@ -120,14 +139,21 @@ mod tests {
 
         assert_eq!(read().unwrap(), None, "nothing held is an honest absence");
         assert_eq!(held_provider(), None);
-        assert_eq!(discard().unwrap()["removed"], false, "withdrawing nothing stays honest");
+        assert_eq!(
+            discard().unwrap()["removed"],
+            false,
+            "withdrawing nothing stays honest"
+        );
 
         let held = hold("pi-openrouter-alpha").unwrap();
         assert_eq!(held["schema"], json!("oi.cradle.chat-default/v1"));
         assert_eq!(held["setting_ref"], json!(SETTING_REF));
         assert_eq!(held["value"], json!("pi-openrouter-alpha"));
         assert_eq!(held["scope"]["scope_kind"], json!("machine"));
-        assert_eq!(read().unwrap().unwrap()["value"], json!("pi-openrouter-alpha"));
+        assert_eq!(
+            read().unwrap().unwrap()["value"],
+            json!("pi-openrouter-alpha")
+        );
         assert_eq!(held_provider().as_deref(), Some("pi-openrouter-alpha"));
 
         // Re-holding replaces, never appends.
@@ -142,7 +168,10 @@ mod tests {
         std::fs::write(dir.join("chat-defaults.json"), b"not json").unwrap();
         assert!(read().is_err());
 
-        assert!(hold("   ").is_err(), "a blank provider is refused, never held");
+        assert!(
+            hold("   ").is_err(),
+            "a blank provider is refused, never held"
+        );
         let _ = std::fs::remove_dir_all(&dir);
         std::env::remove_var("OI_CRADLE_STATE");
     }

@@ -21,7 +21,10 @@ impl Serialize for Request {
             Request::World(request) => {
                 let mut value = serde_json::to_value(request).map_err(serde::ser::Error::custom)?;
                 if let Some(map) = value.as_object_mut() {
-                    map.insert("schema".into(), crate::expression_world::WORLD_SCHEMA.into());
+                    map.insert(
+                        "schema".into(),
+                        crate::expression_world::WORLD_SCHEMA.into(),
+                    );
                 }
                 value.serialize(serializer)
             }
@@ -224,7 +227,10 @@ pub fn default_socket_path() -> Result<std::path::PathBuf, String> {
 /// hashed endpoint under the given directory. The hash covers the real
 /// per-identity directory, so distinct grounds never share a socket.
 #[cfg(unix)]
-fn choose_endpoint(directory: &std::path::Path, short_root: &std::path::Path) -> std::path::PathBuf {
+fn choose_endpoint(
+    directory: &std::path::Path,
+    short_root: &std::path::Path,
+) -> std::path::PathBuf {
     let endpoint = directory.join("expression.sock");
     if endpoint.as_os_str().len() < 100 {
         return endpoint;
@@ -252,12 +258,21 @@ mod request_tests {
 
     #[test]
     fn schema_routes_world_requests_and_round_trips() {
-        let world: Request = serde_json::from_value(json!({"schema":"oi.expression-world/v1","operation":"act_inspect","act_ref":"act:1"})).unwrap();
+        let world: Request = serde_json::from_value(
+            json!({"schema":"oi.expression-world/v1","operation":"act_inspect","act_ref":"act:1"}),
+        )
+        .unwrap();
         assert!(matches!(world, Request::World(_)));
-        assert_eq!(serde_json::to_value(&world).unwrap()["schema"], "oi.expression-world/v1");
+        assert_eq!(
+            serde_json::to_value(&world).unwrap()["schema"],
+            "oi.expression-world/v1"
+        );
         let expression: Request = serde_json::from_value(json!({"operation":"list"})).unwrap();
         assert!(matches!(expression, Request::Expression(_)));
-        assert!(serde_json::from_value::<Request>(json!({"schema":"other/v1","operation":"list"})).is_err());
+        assert!(
+            serde_json::from_value::<Request>(json!({"schema":"other/v1","operation":"list"}))
+                .is_err()
+        );
         // Unknown fields still fail closed under either face.
         assert!(serde_json::from_value::<Request>(json!({"schema":"oi.expression-world/v1","operation":"act_inspect","act_ref":"a","extra":1})).is_err());
     }

@@ -187,16 +187,14 @@ fn commission_lands_as_owner_revision_carrying_the_composition_verbatim() {
     // owner's own read proves it — the kernel composed nothing.
     let read = fixture
         .client()
-        .run(
-            "central.files.read",
-            json!({"location": fixture.instance}),
-        )
+        .run("central.files.read", json!({"location": fixture.instance}))
         .unwrap();
     assert_eq!(read["content"], COMPOSED_INSTANCE);
     assert_eq!(read["revision"], *revision);
 
     // A further commission against the new revision keeps the loop going.
-    let next_instance = "<html><script type=\"application/json\" id=\"ql-doc\">{\"revision\":3}</script></html>\n";
+    let next_instance =
+        "<html><script type=\"application/json\" id=\"ql-doc\">{\"revision\":3}</script></html>\n";
     let follow_up = fixture.commission(revision, next_instance, None);
     let CommissionOutcome::Commissioned {
         previous_revision,
@@ -249,10 +247,7 @@ fn stale_expected_revision_is_the_owner_structured_conflict() {
     // The owner preserved the concurrent bytes; nothing was overwritten.
     let read = fixture
         .client()
-        .run(
-            "central.files.read",
-            json!({"location": fixture.instance}),
-        )
+        .run("central.files.read", json!({"location": fixture.instance}))
         .unwrap();
     assert!(read["content"]
         .as_str()
@@ -296,8 +291,7 @@ fn agent_session_binds_as_the_write_actor() {
         .unwrap();
     assert_eq!(history["schema"], "central.file-history/v1");
     assert_eq!(
-        history["entries"][0]["actor"],
-        "session:w4d-commission-1",
+        history["entries"][0]["actor"], "session:w4d-commission-1",
         "{history}"
     );
     assert_eq!(history["entries"][0]["actor_kind"], "agent");

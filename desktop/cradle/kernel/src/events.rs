@@ -49,24 +49,54 @@ pub const KERNEL_EVENT_TOPIC: &str = "oi:kernel-event";
 // nature; boxing one arm would change how every emitter constructs it.
 #[allow(clippy::large_enum_variant)]
 pub enum KernelEvent {
-    DictationChanged { revision: u64, stt_url: String },
-    WorkingSurfaceDriving {agent_session:String,binding:String,client_id:String,driving:bool,observed_at_unix_ms:u64},
-    DecisionRecorded { receipt: serde_json::Value },
-    DecisionEpisodeChanged { episode: serde_json::Value },
+    DictationChanged {
+        revision: u64,
+        stt_url: String,
+    },
+    WorkingSurfaceDriving {
+        agent_session: String,
+        binding: String,
+        client_id: String,
+        driving: bool,
+        observed_at_unix_ms: u64,
+    },
+    DecisionRecorded {
+        receipt: serde_json::Value,
+    },
+    DecisionEpisodeChanged {
+        episode: serde_json::Value,
+    },
     /// An actual native action response; a returned failed/unreturned run is
     /// preserved verbatim and must not be represented as completion.
-    RoutineActionReturned { action: String, routine_ref: String, data: serde_json::Value },
-    PresentationChanged { revision: u64, theme: crate::presentation::ThemeChoice },
-    NaraDecisionRecorded { decision: serde_json::Value },
-    ConfigurationChanged { operation: String, references: Vec<String> },
+    RoutineActionReturned {
+        action: String,
+        routine_ref: String,
+        data: serde_json::Value,
+    },
+    PresentationChanged {
+        revision: u64,
+        theme: crate::presentation::ThemeChoice,
+    },
+    NaraDecisionRecorded {
+        decision: serde_json::Value,
+    },
+    ConfigurationChanged {
+        operation: String,
+        references: Vec<String>,
+    },
 
-    ExpressionChanged { expression_ref: String, revision: u64, actor: String,
+    ExpressionChanged {
+        expression_ref: String,
+        revision: u64,
+        actor: String,
         /// Caller-supplied Activity correlation. It is unverified here and
         /// never authenticates the caller or grants Action authority.
         #[serde(default, skip_serializing_if = "Option::is_none")]
         activity_ref: Option<String>,
     },
-    WorldChanged { summary: String },
+    WorldChanged {
+        summary: String,
+    },
     /// The one global focus relation moved (02 §7, 03 §B).
     FocusChanged {
         focus: GlobalFocus,
@@ -117,7 +147,10 @@ pub enum KernelEvent {
     /// tree's workspace-keyed cache) invalidates on. Emitted only when the
     /// owner recorded an actual change; an unchanged write mutates nothing
     /// and emits nothing, exactly as a source save does.
-    FileChanged { path: String, summary: String },
+    FileChanged {
+        path: String,
+        summary: String,
+    },
 }
 
 impl KernelEvent {
@@ -126,7 +159,15 @@ impl KernelEvent {
     pub fn subject(&self) -> Option<&SemanticRef> {
         match self {
             Self::WorkingSurfaceDriving { .. } | Self::RoutineActionReturned { .. } => None,
-            Self::DictationChanged { .. } | Self::DecisionRecorded { .. } | Self::DecisionEpisodeChanged { .. } | Self::PresentationChanged { .. } | Self::NaraDecisionRecorded { .. } | Self::ConfigurationChanged { .. } | Self::WorldChanged { .. } | Self::ExpressionChanged { .. } | Self::FileChanged { .. } => None,
+            Self::DictationChanged { .. }
+            | Self::DecisionRecorded { .. }
+            | Self::DecisionEpisodeChanged { .. }
+            | Self::PresentationChanged { .. }
+            | Self::NaraDecisionRecorded { .. }
+            | Self::ConfigurationChanged { .. }
+            | Self::WorldChanged { .. }
+            | Self::ExpressionChanged { .. }
+            | Self::FileChanged { .. } => None,
             Self::FocusChanged { focus } => focus.subject_ref(),
             Self::SurfaceChanged { surface_ref, .. } => surface_ref.as_ref(),
             Self::SourceOpened { source, .. }
@@ -165,27 +206,71 @@ impl KernelEvent {
     /// is refused here.
     pub fn validate(&self) -> Result<(), String> {
         match self {
-            Self::WorkingSurfaceDriving {agent_session,binding,client_id,..} => {
-                non_empty("agent_session",agent_session)?;non_empty("binding",binding)?;non_empty("client_id",client_id)
-            },
-            Self::RoutineActionReturned { action, routine_ref, data } => crate::routine::validate_return(action, routine_ref, data),
-            Self::DictationChanged { revision, stt_url } => { if *revision==0 {return Err("Dictation revision must be positive".into());} non_empty("stt_url",stt_url) },
+            Self::WorkingSurfaceDriving {
+                agent_session,
+                binding,
+                client_id,
+                ..
+            } => {
+                non_empty("agent_session", agent_session)?;
+                non_empty("binding", binding)?;
+                non_empty("client_id", client_id)
+            }
+            Self::RoutineActionReturned {
+                action,
+                routine_ref,
+                data,
+            } => crate::routine::validate_return(action, routine_ref, data),
+            Self::DictationChanged { revision, stt_url } => {
+                if *revision == 0 {
+                    return Err("Dictation revision must be positive".into());
+                }
+                non_empty("stt_url", stt_url)
+            }
             Self::DecisionRecorded { receipt } => {
-                if receipt["schema"]!=crate::decision::RECEIPT_SCHEMA {return Err("Invalid decision receipt schema".into());}
-                non_empty("decision_ref",receipt["decision_ref"].as_str().unwrap_or(""))?;
-                non_empty("authority_ref",receipt["authority_ref"].as_str().unwrap_or(""))
-            },
-            Self::DecisionEpisodeChanged { episode } => non_empty("episode_ref",episode["episode_ref"].as_str().unwrap_or("")),
+                if receipt["schema"] != crate::decision::RECEIPT_SCHEMA {
+                    return Err("Invalid decision receipt schema".into());
+                }
+                non_empty(
+                    "decision_ref",
+                    receipt["decision_ref"].as_str().unwrap_or(""),
+                )?;
+                non_empty(
+                    "authority_ref",
+                    receipt["authority_ref"].as_str().unwrap_or(""),
+                )
+            }
+            Self::DecisionEpisodeChanged { episode } => {
+                non_empty("episode_ref", episode["episode_ref"].as_str().unwrap_or(""))
+            }
             Self::PresentationChanged { revision, theme } => {
-                if *revision == 0 || !["light","dark","system"].contains(&theme.appearance.as_str()) { Err("Invalid appearance event".into()) } else { Ok(()) }
-            },
-            Self::NaraDecisionRecorded { decision } => crate::presentation::validate_decision(decision),
-            Self::ConfigurationChanged { operation, references } => {
-                non_empty("configuration operation",operation)?;
-                for reference in references { non_empty("configuration reference",reference)?; }
+                if *revision == 0
+                    || !["light", "dark", "system"].contains(&theme.appearance.as_str())
+                {
+                    Err("Invalid appearance event".into())
+                } else {
+                    Ok(())
+                }
+            }
+            Self::NaraDecisionRecorded { decision } => {
+                crate::presentation::validate_decision(decision)
+            }
+            Self::ConfigurationChanged {
+                operation,
+                references,
+            } => {
+                non_empty("configuration operation", operation)?;
+                for reference in references {
+                    non_empty("configuration reference", reference)?;
+                }
                 Ok(())
-            },
-            Self::ExpressionChanged { expression_ref, revision, actor, activity_ref } => {
+            }
+            Self::ExpressionChanged {
+                expression_ref,
+                revision,
+                actor,
+                activity_ref,
+            } => {
                 non_empty("expression_ref", expression_ref)?;
                 non_empty("actor", actor)?;
                 if let Some(activity_ref) = activity_ref {
@@ -196,7 +281,7 @@ impl KernelEvent {
                 } else {
                     Ok(())
                 }
-            },
+            }
             Self::WorldChanged { summary } => non_empty("WorldChanged.summary", summary),
             Self::FocusChanged { focus } => {
                 let relation = |name: &str| format!("FocusChanged.focus.{name}");
@@ -238,9 +323,7 @@ impl KernelEvent {
                 non_empty("SourceOpened.summary", summary)
             }
             Self::BufferDirty {
-                source,
-                summary,
-                ..
+                source, summary, ..
             } => {
                 whole_ref("BufferDirty.source", source)?;
                 non_empty("BufferDirty.summary", summary)
@@ -450,7 +533,12 @@ mod tests {
 
     fn focus_changed() -> KernelEvent {
         let mut focus = GlobalFocus::unfocused();
-        focus.focus_subject(reference("central:source:project:project:o-i:x.md", "source")).unwrap();
+        focus
+            .focus_subject(reference(
+                "central:source:project:project:o-i:x.md",
+                "source",
+            ))
+            .unwrap();
         KernelEvent::FocusChanged { focus }
     }
 
@@ -533,7 +621,10 @@ mod tests {
 
         let stale = r#"{"schema":"oi.kernel-event/v1","version":0,"event":"focus_changed"}"#;
         let error = KernelEventEnvelope::parse(stale).unwrap_err();
-        assert!(error.contains("version 0"), "refused for the version: {error}");
+        assert!(
+            error.contains("version 0"),
+            "refused for the version: {error}"
+        );
 
         let unversioned = r#"{"schema":"oi.kernel-event/v1","event":"focus_changed"}"#;
         let error = KernelEventEnvelope::parse(unversioned).unwrap_err();
@@ -558,7 +649,12 @@ mod tests {
     #[test]
     fn focus_changed_carries_the_whole_relation_not_a_copy_of_selection() {
         let mut focus = GlobalFocus::unfocused();
-        focus.focus_subject(reference("central:source:project:project:o-i:x.md", "source")).unwrap();
+        focus
+            .focus_subject(reference(
+                "central:source:project:project:o-i:x.md",
+                "source",
+            ))
+            .unwrap();
         let event = KernelEvent::FocusChanged { focus };
         assert_eq!(event.tag(), "focus_changed");
         assert_eq!(

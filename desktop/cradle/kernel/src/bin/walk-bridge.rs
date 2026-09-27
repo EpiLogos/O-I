@@ -31,7 +31,9 @@ fn main() {
         .nth(1)
         .unwrap_or_else(|| "127.0.0.1:4179".to_owned());
     let listener = TcpListener::bind(&bind).expect("bind the walk bridge");
-    let bound = listener.local_addr().expect("read the bound bridge address");
+    let bound = listener
+        .local_addr()
+        .expect("read the bound bridge address");
     let kernel = Arc::new(Mutex::new(Kernel::discover()));
     println!("oi-cradle walk bridge listening on http://{bound} (topic {KERNEL_EVENT_TOPIC})");
     for stream in listener.incoming() {
@@ -44,8 +46,16 @@ fn main() {
             // discarding them wedged the connection forever.
             let mut leftover: Vec<u8> = Vec::new();
             loop {
-                let Some(request) = read_request(&mut stream, &mut leftover) else { eprintln!("[bridge] conn end ({})", std::process::id()); return };
-                eprintln!("[bridge] {} {} ({} bytes)", request.method, request.path, request.body.len());
+                let Some(request) = read_request(&mut stream, &mut leftover) else {
+                    eprintln!("[bridge] conn end ({})", std::process::id());
+                    return;
+                };
+                eprintln!(
+                    "[bridge] {} {} ({} bytes)",
+                    request.method,
+                    request.path,
+                    request.body.len()
+                );
                 let outcome = handle(&kernel, &request);
                 eprintln!("[bridge] -> answered {} {}", request.method, request.path);
                 respond(&mut stream, outcome);
@@ -73,8 +83,7 @@ fn read_request(stream: &mut TcpStream, leftover: &mut Vec<u8>) -> Option<Reques
             let head_text = String::from_utf8_lossy(&head[..split]).to_string();
             let mut lines = head_text.split("\r\n");
             let request_line = lines.next()?.to_owned();
-            
-            
+
             let mut content_length = 0usize;
             // HTTP/1.1 keeps connections alive by default; only an explicit
             // `Connection: close` ends them (HTTP/1.0 keeps the old default).
@@ -84,7 +93,9 @@ fn read_request(stream: &mut TcpStream, leftover: &mut Vec<u8>) -> Option<Reques
             // on a dying connection never came back.
             let mut keep_alive = !request_line.ends_with("HTTP/1.0");
             for header in lines {
-                let Some((name, value)) = header.split_once(':') else { continue };
+                let Some((name, value)) = header.split_once(':') else {
+                    continue;
+                };
                 let name = name.trim().to_ascii_lowercase();
                 let value = value.trim();
                 if name == "content-length" {
@@ -113,7 +124,12 @@ fn read_request(stream: &mut TcpStream, leftover: &mut Vec<u8>) -> Option<Reques
             // keep it for the next iteration, never drop it on the floor.
             *leftover = body[content_length.min(body.len())..].to_vec();
             body.truncate(content_length);
-            return Some(Request { method, path, body, keep_alive });
+            return Some(Request {
+                method,
+                path,
+                body,
+                keep_alive,
+            });
         }
         let read = stream.read(&mut buffer).ok()?;
         if read == 0 {
@@ -136,9 +152,18 @@ fn find_head_end(bytes: &[u8]) -> Option<usize> {
 /// the F-01 finding ("Bad control character in string literal") this
 /// bridge previously produced on a real owner error.
 enum BridgeResponse {
-    Json { status: u16, body: serde_json::Value },
-    Binary { status: u16, content_type: String, body: Vec<u8> },
-    Empty { status: u16 },
+    Json {
+        status: u16,
+        body: serde_json::Value,
+    },
+    Binary {
+        status: u16,
+        content_type: String,
+        body: Vec<u8>,
+    },
+    Empty {
+        status: u16,
+    },
 }
 fn json_ok(fields: serde_json::Value) -> BridgeResponse {
     let mut body = serde_json::json!({"ok": true});
@@ -148,7 +173,10 @@ fn json_ok(fields: serde_json::Value) -> BridgeResponse {
     BridgeResponse::Json { status: 200, body }
 }
 fn json_error(status: u16, message: impl Into<String>) -> BridgeResponse {
-    BridgeResponse::Json { status, body: serde_json::json!({"ok": false, "error": message.into()}) }
+    BridgeResponse::Json {
+        status,
+        body: serde_json::json!({"ok": false, "error": message.into()}),
+    }
 }
 
 fn handle(kernel: &Mutex<Kernel>, request: &Request) -> BridgeResponse {
@@ -181,27 +209,84 @@ fn handle(kernel: &Mutex<Kernel>, request: &Request) -> BridgeResponse {
                 Ok(op) => op,
                 Err(error) => return json_error(400, format!("unreadable op: {error}")),
             };
-            let execute=||->Result<oi_cradle_kernel::KernelOpOutcome,String>{
+            let execute = || -> Result<oi_cradle_kernel::KernelOpOutcome, String> {
                 if let KernelOp::ExpressionRecovery { request } = op {
                     return oi_cradle_kernel::expression_recovery::execute(request);
                 }
-                let read=kernel.lock().expect("kernel mutex").prepare_owner_read(&op);
-                if let Some(read)=read{return read.execute();}
-                let dictation=kernel.lock().expect("kernel mutex").prepare_dictation(&op)?;
-                if let Some(read)=dictation{return read.execute();}
-                let knowledge=kernel.lock().expect("kernel mutex").prepare_knowledge(&op)?;
-                if let Some(read)=knowledge{let completed=read.execute()?;return kernel.lock().expect("kernel mutex").finish_knowledge(completed);}
-                let working=match &op {
-                    KernelOp::WorkingSurfaceRead{project,agent_session,binding}=>Some(kernel.lock().expect("kernel mutex").prepare_working_surface_read(project,agent_session.clone(),binding.clone(),false)?),
-                    KernelOp::WorkingSurfaceAttachment{project,agent_session,binding}=>Some(kernel.lock().expect("kernel mutex").prepare_working_surface_read(project,agent_session.clone(),Some(binding.clone()),true)?),
-                    _=>None,
+                let read = kernel.lock().expect("kernel mutex").prepare_owner_read(&op);
+                if let Some(read) = read {
+                    return read.execute();
+                }
+                let dictation = kernel
+                    .lock()
+                    .expect("kernel mutex")
+                    .prepare_dictation(&op)?;
+                if let Some(read) = dictation {
+                    return read.execute();
+                }
+                let knowledge = kernel
+                    .lock()
+                    .expect("kernel mutex")
+                    .prepare_knowledge(&op)?;
+                if let Some(read) = knowledge {
+                    let completed = read.execute()?;
+                    return kernel
+                        .lock()
+                        .expect("kernel mutex")
+                        .finish_knowledge(completed);
+                }
+                let working = match &op {
+                    KernelOp::WorkingSurfaceRead {
+                        project,
+                        agent_session,
+                        binding,
+                    } => Some(
+                        kernel
+                            .lock()
+                            .expect("kernel mutex")
+                            .prepare_working_surface_read(
+                                project,
+                                agent_session.clone(),
+                                binding.clone(),
+                                false,
+                            )?,
+                    ),
+                    KernelOp::WorkingSurfaceAttachment {
+                        project,
+                        agent_session,
+                        binding,
+                    } => Some(
+                        kernel
+                            .lock()
+                            .expect("kernel mutex")
+                            .prepare_working_surface_read(
+                                project,
+                                agent_session.clone(),
+                                Some(binding.clone()),
+                                true,
+                            )?,
+                    ),
+                    _ => None,
                 };
-                if let Some(read)=working{return Ok(oi_cradle_kernel::KernelOpOutcome{receipts:vec![],result:KernelOpResult::WorkingSurfaceReading{document:read.execute()?}});}
-                let prepared=kernel.lock().expect("kernel mutex").prepare_decision(&op)?;
-                if let Some(decision)=prepared{let receipt=decision.execute()?;return kernel.lock().expect("kernel mutex").finish_decision(receipt,matches!(&op,KernelOp::InvokeAction{..}));}
+                if let Some(read) = working {
+                    return Ok(oi_cradle_kernel::KernelOpOutcome {
+                        receipts: vec![],
+                        result: KernelOpResult::WorkingSurfaceReading {
+                            document: read.execute()?,
+                        },
+                    });
+                }
+                let prepared = kernel.lock().expect("kernel mutex").prepare_decision(&op)?;
+                if let Some(decision) = prepared {
+                    let receipt = decision.execute()?;
+                    return kernel
+                        .lock()
+                        .expect("kernel mutex")
+                        .finish_decision(receipt, matches!(&op, KernelOp::InvokeAction { .. }));
+                }
                 kernel.lock().expect("kernel mutex").apply(op)
             };
-            let result=execute();
+            let result = execute();
             match result {
                 Ok(outcome) => match serde_json::to_value(&outcome) {
                     Ok(outcome) => json_ok(serde_json::json!({"outcome": outcome})),
@@ -226,8 +311,13 @@ fn material(kernel: &Mutex<Kernel>, rest: &str) -> BridgeResponse {
     let Some(encoded_location) = segments.next() else {
         return json_error(404, "No material location in the request");
     };
-    let Some(location) = percent_decode(encoded_location).and_then(|json| serde_json::from_str(&json).ok()) else {
-        return json_error(404, "Material location is not a valid Central path reference");
+    let Some(location) =
+        percent_decode(encoded_location).and_then(|json| serde_json::from_str(&json).ok())
+    else {
+        return json_error(
+            404,
+            "Material location is not a valid Central path reference",
+        );
     };
     let mut relative = Vec::new();
     for raw in segments {
@@ -237,15 +327,26 @@ fn material(kernel: &Mutex<Kernel>, rest: &str) -> BridgeResponse {
         }
     }
     let mut kernel = kernel.lock().expect("kernel mutex");
-    let target = match oi_cradle_kernel::files::resolve_material(&mut kernel, &location, &relative) {
+    let target = match oi_cradle_kernel::files::resolve_material(&mut kernel, &location, &relative)
+    {
         Ok(resolved) => resolved,
         Err(MaterialRouteError::Forbidden(message)) => return json_error(403, message),
         Err(MaterialRouteError::NotFound(message)) => return json_error(404, message),
     };
-    match kernel.apply(KernelOp::FileBytes { location: target.clone() }) {
+    match kernel.apply(KernelOp::FileBytes {
+        location: target.clone(),
+    }) {
         Ok(outcome) => match outcome.result {
-            KernelOpResult::FileBytes { mime_hint, content_base64, .. } => match base64_decode(&content_base64) {
-                Some(body) => BridgeResponse::Binary { status: 200, content_type: content_type_for(mime_hint.as_deref(), &target.path), body },
+            KernelOpResult::FileBytes {
+                mime_hint,
+                content_base64,
+                ..
+            } => match base64_decode(&content_base64) {
+                Some(body) => BridgeResponse::Binary {
+                    status: 200,
+                    content_type: content_type_for(mime_hint.as_deref(), &target.path),
+                    body,
+                },
                 None => json_error(404, "Central returned an unreadable material encoding"),
             },
             _ => json_error(404, "Central returned an unsupported material reading"),
@@ -314,8 +415,16 @@ fn content_type_for(mime_hint: Option<&str>, path: &str) -> String {
 
 fn respond(stream: &mut TcpStream, response: BridgeResponse) {
     let (status, content_type, body): (u16, String, Vec<u8>) = match response {
-        BridgeResponse::Json { status, body } => (status, "application/json".into(), body.to_string().into_bytes()),
-        BridgeResponse::Binary { status, content_type, body } => (status, content_type, body),
+        BridgeResponse::Json { status, body } => (
+            status,
+            "application/json".into(),
+            body.to_string().into_bytes(),
+        ),
+        BridgeResponse::Binary {
+            status,
+            content_type,
+            body,
+        } => (status, content_type, body),
         BridgeResponse::Empty { status } => (status, "text/plain".into(), Vec::new()),
     };
     let reason = match status {

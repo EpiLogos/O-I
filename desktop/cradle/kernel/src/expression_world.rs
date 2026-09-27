@@ -380,7 +380,9 @@ pub struct EventBasis {
 
 fn optional_transition(value: &Option<Transition>) -> Result<(), String> {
     if let Some(t) = value {
-        if t.duration.is_some_and(|d| !d.is_finite() || !(0.0..=3600.0).contains(&d)) {
+        if t.duration
+            .is_some_and(|d| !d.is_finite() || !(0.0..=3600.0).contains(&d))
+        {
             return Err("Transition duration is outside [0, 3600] seconds".into());
         }
         optional_text(&t.easing)?;
@@ -494,7 +496,10 @@ impl Passage {
     fn sets_scene(&self) -> bool {
         self.scene_ref.is_some()
             && self.role.is_none()
-            && matches!(self.kind, PassageKind::Scene | PassageKind::State | PassageKind::Return)
+            && matches!(
+                self.kind,
+                PassageKind::Scene | PassageKind::State | PassageKind::Return
+            )
     }
 }
 
@@ -576,7 +581,13 @@ fn unix_ms() -> u64 {
 }
 
 impl Act {
-    fn new(act_ref: String, expression_ref: String, summary: String, actor: String, mode: ActMode) -> Self {
+    fn new(
+        act_ref: String,
+        expression_ref: String,
+        summary: String,
+        actor: String,
+        mode: ActMode,
+    ) -> Self {
         Act {
             act_ref,
             expression_ref,
@@ -1293,7 +1304,10 @@ impl WorldState {
     /// then ended acts, up to the budget. Ended acts beyond it are archived
     /// (loaded lazily by ref later); live acts beyond it stay stored and are
     /// disclosed.
-    pub fn attach_store(&mut self, store: crate::expression_act_store::ActStore) -> Result<(), String> {
+    pub fn attach_store(
+        &mut self,
+        store: crate::expression_act_store::ActStore,
+    ) -> Result<(), String> {
         let (mut acts, mut errors) = store.load_all()?;
         acts.sort_by(|a, b| {
             a.phase
@@ -1314,7 +1328,10 @@ impl WorldState {
                     .write(&act, Some(previous))
                     .and_then(|_| store.archive(&act.act_ref));
                 if let Err(error) = archived {
-                    errors.push(format!("Act {} could not be archived: {error}", act.act_ref));
+                    errors.push(format!(
+                        "Act {} could not be archived: {error}",
+                        act.act_ref
+                    ));
                 }
             } else {
                 errors.push(format!(
@@ -1623,13 +1640,22 @@ impl Kernel {
                 }
                 let precheck = {
                     let probe = self.world.acts.get(&act_ref).cloned().unwrap_or_else(|| {
-                        Act::new(act_ref.clone(), expression_ref.clone(), summary.clone(), actor.clone(), ActMode::Expressions)
+                        Act::new(
+                            act_ref.clone(),
+                            expression_ref.clone(),
+                            summary.clone(),
+                            actor.clone(),
+                            ActMode::Expressions,
+                        )
                     });
                     let existing = self.world.acts.contains_key(&act_ref);
                     self.act_precheck(&probe, 0, false, existing)?
                 };
                 if let Some(refusal) = precheck {
-                    return Ok(KernelOpOutcome { receipts, result: KernelOpResult::ExpressionWorld { data: refusal } });
+                    return Ok(KernelOpOutcome {
+                        receipts,
+                        result: KernelOpResult::ExpressionWorld { data: refusal },
+                    });
                 }
                 let snapshot = self.act_snapshot(&expression_ref).ok();
                 // The act's edit is an ordinary atomic Expression edit: exact
@@ -1660,7 +1686,13 @@ impl Kernel {
                 let previous = self.world.acts.get(&act_ref).cloned();
                 let previous_revision = previous.as_ref().map(|a| a.revision);
                 let mut act = previous.unwrap_or_else(|| {
-                    Act::new(act_ref.clone(), expression_ref.clone(), summary.clone(), actor.clone(), ActMode::Expressions)
+                    Act::new(
+                        act_ref.clone(),
+                        expression_ref.clone(),
+                        summary.clone(),
+                        actor.clone(),
+                        ActMode::Expressions,
+                    )
                 });
                 act.summary = summary;
                 act.actor = actor;
@@ -1674,7 +1706,10 @@ impl Kernel {
                     }
                 }
                 if let Err(conflict) = committed? {
-                    return Ok(KernelOpOutcome { receipts, result: KernelOpResult::ExpressionWorld { data: conflict } });
+                    return Ok(KernelOpOutcome {
+                        receipts,
+                        result: KernelOpResult::ExpressionWorld { data: conflict },
+                    });
                 }
                 json!({"state":"act_running","act":self.world.acts.get(&act_ref)})
             }
@@ -1699,7 +1734,9 @@ impl Kernel {
                     let mut held = act;
                     held.phase = ActPhase::Held;
                     match self.act_commit(held, Some(previous))? {
-                        Ok(act) => json!({"state":"act_held","act":act,"detail":"The act is held; nothing reverted and nothing advanced"}),
+                        Ok(act) => {
+                            json!({"state":"act_held","act":act,"detail":"The act is held; nothing reverted and nothing advanced"})
+                        }
                         Err(conflict) => conflict,
                     }
                 } else {
@@ -1925,13 +1962,27 @@ impl Kernel {
                     "staleness":whole.staleness(),
                 })
             }
-            Request::MaterialList { kind, association, register } => {
-                let register = register.unwrap_or_else(|| crate::expression_material::MATERIAL_REGISTER.into());
+            Request::MaterialList {
+                kind,
+                association,
+                register,
+            } => {
+                let register = register
+                    .unwrap_or_else(|| crate::expression_material::MATERIAL_REGISTER.into());
                 text(&register)?;
-                if register.starts_with('/') || register.split('/').any(|p| p.is_empty() || p == "..") {
-                    return Err("The material register is a Central-relative path without traversal".into());
+                if register.starts_with('/')
+                    || register.split('/').any(|p| p.is_empty() || p == "..")
+                {
+                    return Err(
+                        "The material register is a Central-relative path without traversal".into(),
+                    );
                 }
-                crate::expression_material::list(&self.client, &register, kind, association.as_ref())
+                crate::expression_material::list(
+                    &self.client,
+                    &register,
+                    kind,
+                    association.as_ref(),
+                )
             }
             request @ (Request::ActOpen { .. }
             | Request::ActSelect { .. }
@@ -2002,26 +2053,43 @@ impl Kernel {
         let mut occurrences = Vec::new();
         for scene in &document.scenes {
             for entity_ref in &scene.entity_refs {
-                if document.entities.get(entity_ref).and_then(|e| e.subject.as_ref())
-                    .is_some_and(|b| b.subject_ref == subject_ref) {
+                if document
+                    .entities
+                    .get(entity_ref)
+                    .and_then(|e| e.subject.as_ref())
+                    .is_some_and(|b| b.subject_ref == subject_ref)
+                {
                     occurrences.push((entity_ref.clone(), scene.scene_ref.clone()));
                 }
             }
         }
         let selected = document.selection.entity_ref.as_ref().and_then(|r| {
-            occurrences.iter().find(|(entity, scene)| entity == r && scene == &document.selection.scene_ref).cloned()
+            occurrences
+                .iter()
+                .find(|(entity, scene)| entity == r && scene == &document.selection.scene_ref)
+                .cloned()
         });
-        let in_scene: Vec<_> = occurrences.iter().filter(|(_, scene)| scene == &document.selection.scene_ref).cloned().collect();
+        let in_scene: Vec<_> = occurrences
+            .iter()
+            .filter(|(_, scene)| scene == &document.selection.scene_ref)
+            .cloned()
+            .collect();
         let target = selected.or_else(|| {
-            if in_scene.len() == 1 { in_scene.first().cloned() }
-            else if occurrences.len() == 1 { occurrences.first().cloned() }
-            else { None }
+            if in_scene.len() == 1 {
+                in_scene.first().cloned()
+            } else if occurrences.len() == 1 {
+                occurrences.first().cloned()
+            } else {
+                None
+            }
         });
         if target.is_none() && occurrences.len() > 1 {
-            return Ok(json!({"state":"ambiguous_occurrence", "expression_ref":expression_ref,
+            return Ok(
+                json!({"state":"ambiguous_occurrence", "expression_ref":expression_ref,
                 "subject_ref":subject_ref, "occurrences":occurrences.iter().map(|(entity,scene)|
                     json!({"entity_ref":entity,"scene_ref":scene})).collect::<Vec<_>>(),
-                "detail":"Select an exact scene occurrence; native subject identity is not occurrence identity"}));
+                "detail":"Select an exact scene occurrence; native subject identity is not occurrence identity"}),
+            );
         }
         let Some((entity_ref, scene_ref)) = target else {
             return Ok(json!({
@@ -2125,7 +2193,10 @@ fn act_summary(act: &Act) -> Value {
 
 /// The duration a Scene's authored material gives its entry transition.
 fn scene_transition(scene: &Value) -> Option<Transition> {
-    scene["transition"].as_f64().map(|duration| Transition { duration: Some(duration), easing: None })
+    scene["transition"].as_f64().map(|duration| Transition {
+        duration: Some(duration),
+        easing: None,
+    })
 }
 
 impl Kernel {
@@ -2150,7 +2221,13 @@ impl Kernel {
     /// Everything a commit needs, checked BEFORE the Expression is edited:
     /// passage budget (a Return may exceed it by one), the act's stored
     /// revision and the store's writability.
-    fn act_precheck(&mut self, act: &Act, add: usize, returning: bool, stored: bool) -> Result<Option<Value>, String> {
+    fn act_precheck(
+        &mut self,
+        act: &Act,
+        add: usize,
+        returning: bool,
+        stored: bool,
+    ) -> Result<Option<Value>, String> {
         let limit = MAX_PASSAGES + usize::from(returning);
         if act.sequence.len() + add > limit {
             return Ok(Some(json!({
@@ -2180,7 +2257,10 @@ impl Kernel {
     }
 
     fn act_snapshot(&mut self, target: &str) -> Result<Snapshot, String> {
-        Ok(Snapshot { target: target.to_owned(), document: self.world_document(target)? })
+        Ok(Snapshot {
+            target: target.to_owned(),
+            document: self.world_document(target)?,
+        })
     }
 
     /// Return the live target to its pre-edit document (an explicit restore:
@@ -2215,7 +2295,11 @@ impl Kernel {
     /// Commit an act mutation: bump its CAS revision and persist it. A store
     /// conflict reloads the stored act and returns the structured refusal.
     /// An archived act is written back to the archive, not held in memory.
-    fn act_commit(&mut self, mut act: Act, previous: Option<u64>) -> Result<Result<Act, Value>, String> {
+    fn act_commit(
+        &mut self,
+        mut act: Act,
+        previous: Option<u64>,
+    ) -> Result<Result<Act, Value>, String> {
         act.revision = previous.map_or(1, |r| r + 1);
         act.updated_at_unix_ms = unix_ms().max(act.updated_at_unix_ms);
         if act.sequence.len() > MAX_PASSAGES + 1 {
@@ -2245,7 +2329,14 @@ impl Kernel {
     }
 
     /// Commit after edits; on any failure restore the pre-edit document.
-    fn act_finish(&mut self, act: Act, previous: u64, extra: Value, snapshot: Option<Snapshot>, receipts: &mut Receipts) -> Result<Value, String> {
+    fn act_finish(
+        &mut self,
+        act: Act,
+        previous: u64,
+        extra: Value,
+        snapshot: Option<Snapshot>,
+        receipts: &mut Receipts,
+    ) -> Result<Value, String> {
         let committed = self.act_commit(act, Some(previous));
         if !matches!(committed, Ok(Ok(_))) {
             if let Some(snapshot) = snapshot {
@@ -2293,12 +2384,20 @@ impl Kernel {
             .acts
             .values()
             .filter(|a| a.phase.ended())
-            .min_by(|a, b| a.updated_at_unix_ms.cmp(&b.updated_at_unix_ms).then(a.act_ref.cmp(&b.act_ref)))
+            .min_by(|a, b| {
+                a.updated_at_unix_ms
+                    .cmp(&b.updated_at_unix_ms)
+                    .then(a.act_ref.cmp(&b.act_ref))
+            })
             .cloned()
-            .ok_or(format!("Live act budget exceeded ({MAX_ACTS} running/held acts)"))?;
+            .ok_or(format!(
+                "Live act budget exceeded ({MAX_ACTS} running/held acts)"
+            ))?;
         match self.act_archive_one(oldest)? {
             Ok(_) => Ok(()),
-            Err(conflict) => Err(format!("Could not archive an ended act to make room: {conflict}")),
+            Err(conflict) => Err(format!(
+                "Could not archive an ended act to make room: {conflict}"
+            )),
         }
     }
 
@@ -2308,12 +2407,21 @@ impl Kernel {
         if let Some(act) = self.world.acts.get(act_ref) {
             return Ok(Some(act.clone()));
         }
-        let Some(stored) = self.world.store.as_ref().map(|s| s.read(act_ref)).transpose()?.flatten() else {
+        let Some(stored) = self
+            .world
+            .store
+            .as_ref()
+            .map(|s| s.read(act_ref))
+            .transpose()?
+            .flatten()
+        else {
             return Ok(None);
         };
         if !stored.archived {
             self.act_make_room()?;
-            self.world.acts.insert(stored.act_ref.clone(), stored.clone());
+            self.world
+                .acts
+                .insert(stored.act_ref.clone(), stored.clone());
         }
         Ok(Some(stored))
     }
@@ -2321,7 +2429,9 @@ impl Kernel {
     fn world_document(&mut self, expression_ref: &str) -> Result<expression::Document, String> {
         let (inspected, _) = self.expressions.apply(
             &self.client,
-            expression::Request::Inspect { expression_ref: expression_ref.to_owned() },
+            expression::Request::Inspect {
+                expression_ref: expression_ref.to_owned(),
+            },
         )?;
         serde_json::from_value(inspected["document"].clone())
             .map_err(|e| format!("Expression document unreadable: {e}"))
@@ -2329,7 +2439,11 @@ impl Kernel {
 
     /// Load material: an open Expression (`expression:` ref) or a Central
     /// material file.
-    fn world_material(&mut self, file_ref: Option<&str>, expression_ref: Option<&str>) -> Result<crate::expression_material::Loaded, String> {
+    fn world_material(
+        &mut self,
+        file_ref: Option<&str>,
+        expression_ref: Option<&str>,
+    ) -> Result<crate::expression_material::Loaded, String> {
         let open = expression_ref.or(file_ref.filter(|r| r.starts_with("expression:")));
         if let Some(r) = open {
             let document = self.world_document(r)?;
@@ -2345,7 +2459,11 @@ impl Kernel {
 
     /// A bound character's body in a state (its `self` entity material) and
     /// the exact revision it was read at.
-    fn world_character_body(&mut self, character_ref: &str, state: Option<&str>) -> Result<(Value, String), String> {
+    fn world_character_body(
+        &mut self,
+        character_ref: &str,
+        state: Option<&str>,
+    ) -> Result<(Value, String), String> {
         let loaded = self.world_material(Some(character_ref), None)?;
         let state = state.or(loaded.reuse().and_then(|r| r.preview_state.as_deref()));
         let scene = crate::expression_material::resolve_scene(&loaded.document, None, state)?;
@@ -2357,16 +2475,27 @@ impl Kernel {
     /// labels, glyphs and texts; captions fill text roles. Each bound
     /// character's revision is recorded into `bindings`; a pinned revision
     /// that drifted is refused (unless `accept_drift`).
-    fn world_fills(&mut self, bindings: &mut BTreeMap<String, Binding>, captions: &BTreeMap<String, String>, accept_drift: bool) -> Result<Result<Fills, Value>, String> {
+    fn world_fills(
+        &mut self,
+        bindings: &mut BTreeMap<String, Binding>,
+        captions: &BTreeMap<String, String>,
+        accept_drift: bool,
+    ) -> Result<Result<Fills, Value>, String> {
         use crate::expression_material::RoleFill;
         let mut fills = BTreeMap::new();
         for (role, binding) in bindings.iter_mut() {
             let material = match binding.character_ref.clone() {
                 Some(character) => {
-                    let (body, revision) = self.world_character_body(&character, binding.state.as_deref())?;
+                    let (body, revision) =
+                        self.world_character_body(&character, binding.state.as_deref())?;
                     if let Some(pinned) = &binding.character_revision {
                         if pinned != &revision && !accept_drift {
-                            return Ok(Err(drift("character", &binding.character_ref, pinned, &revision)));
+                            return Ok(Err(drift(
+                                "character",
+                                &binding.character_ref,
+                                pinned,
+                                &revision,
+                            )));
                         }
                     }
                     binding.character_revision = Some(revision);
@@ -2374,13 +2503,28 @@ impl Kernel {
                 }
                 None => None,
             };
-            let text = binding.text.clone().or_else(|| binding.value.map(|v| v.to_string()));
-            fills.insert(role.clone(), RoleFill { material, label: binding.label.clone(), glyph: binding.glyph.clone(), text, field: None });
+            let text = binding
+                .text
+                .clone()
+                .or_else(|| binding.value.map(|v| v.to_string()));
+            fills.insert(
+                role.clone(),
+                RoleFill {
+                    material,
+                    label: binding.label.clone(),
+                    glyph: binding.glyph.clone(),
+                    text,
+                    field: None,
+                },
+            );
         }
         for (role, caption) in captions {
             expression::role_name(role)?;
             text(caption)?;
-            fills.entry(role.clone()).or_insert_with(RoleFill::default).text = Some(caption.clone());
+            fills
+                .entry(role.clone())
+                .or_insert_with(RoleFill::default)
+                .text = Some(caption.clone());
         }
         Ok(Ok(fills))
     }
@@ -2388,14 +2532,26 @@ impl Kernel {
     /// One ordinary Expression edit on behalf of an act (exact expected
     /// revision when the caller names one; else the kernel's current one —
     /// one kernel mutex, no concurrent editor).
-    fn world_edit(&mut self, expression_ref: &str, expected: Option<u64>, actor: &str, changes: Vec<Change>, receipts: &mut Receipts) -> Result<Result<u64, Value>, String> {
+    fn world_edit(
+        &mut self,
+        expression_ref: &str,
+        expected: Option<u64>,
+        actor: &str,
+        changes: Vec<Change>,
+        receipts: &mut Receipts,
+    ) -> Result<Result<u64, Value>, String> {
         let expected = match expected {
             Some(r) => r,
             None => self.world_document(expression_ref)?.revision,
         };
         let (data, changed) = self.expressions.apply(
             &self.client,
-            expression::Request::Edit { expression_ref: expression_ref.to_owned(), expected_revision: expected, actor: actor.to_owned(), changes },
+            expression::Request::Edit {
+                expression_ref: expression_ref.to_owned(),
+                expected_revision: expected,
+                actor: actor.to_owned(),
+                changes,
+            },
         )?;
         if data["state"] == "revision_conflict" {
             return Ok(Err(data));
@@ -2408,7 +2564,9 @@ impl Kernel {
                 activity_ref: change.activity_ref,
             }));
         }
-        Ok(Ok(data["document"]["revision"].as_u64().unwrap_or(expected)))
+        Ok(Ok(data["document"]["revision"]
+            .as_u64()
+            .unwrap_or(expected)))
     }
 
     /// Perform one material Scene into a live target Scene: graft role fills,
@@ -2433,31 +2591,51 @@ impl Kernel {
         let target = self.world_document(target_ref)?;
         if let Some(expected) = expected_revision {
             if expected != target.revision {
-                return Ok(Performed::Refused(json!({"state":"revision_conflict","expression_ref":target_ref,"expected_revision":expected,"current_revision":target.revision})));
+                return Ok(Performed::Refused(
+                    json!({"state":"revision_conflict","expression_ref":target_ref,"expected_revision":expected,"current_revision":target.revision}),
+                ));
             }
         }
-        let scene_ref = target_scene.map(str::to_owned).unwrap_or_else(|| target.selection.scene_ref.clone());
-        let scene = target.scenes.iter().find(|s| s.scene_ref == scene_ref).ok_or("The target Scene is absent")?;
+        let scene_ref = target_scene
+            .map(str::to_owned)
+            .unwrap_or_else(|| target.selection.scene_ref.clone());
+        let scene = target
+            .scenes
+            .iter()
+            .find(|s| s.scene_ref == scene_ref)
+            .ok_or("The target Scene is absent")?;
         let mut authored = m::scene_material(&material.document, material_scene)?;
         m::graft(&mut authored, fills);
         let mut map: BTreeMap<String, String> = BTreeMap::new();
         let mut adds: Vec<(String, String)> = Vec::new();
         for entity in authored["entities"].as_array().cloned().unwrap_or_default() {
-            let Some(id) = entity["id"].as_str() else { continue };
+            let Some(id) = entity["id"].as_str() else {
+                continue;
+            };
             let target_entity = match entity["role"].as_str() {
                 Some(role) => bindings
                     .get(role)
                     .and_then(|b| b.entity_ref.clone())
                     .or_else(|| act.role_entities.get(role).cloned())
                     .unwrap_or_else(|| format!("{target_ref}:entity:role.{role}")),
-                None => format!("{target_ref}:entity:{}", m::local_suffix(&material.document.expression_ref, id)),
+                None => format!(
+                    "{target_ref}:entity:{}",
+                    m::local_suffix(&material.document.expression_ref, id)
+                ),
             };
             expression::id(&target_entity, &format!("{target_ref}:entity:"))?;
             if let Some(role) = entity["role"].as_str() {
-                act.role_entities.insert(role.to_owned(), target_entity.clone());
+                act.role_entities
+                    .insert(role.to_owned(), target_entity.clone());
             }
-            if !target.entities.contains_key(&target_entity) && !adds.iter().any(|(r, _)| r == &target_entity) {
-                let title = entity["name"].as_str().or(entity["role"].as_str()).unwrap_or("Material").to_owned();
+            if !target.entities.contains_key(&target_entity)
+                && !adds.iter().any(|(r, _)| r == &target_entity)
+            {
+                let title = entity["name"]
+                    .as_str()
+                    .or(entity["role"].as_str())
+                    .unwrap_or("Material")
+                    .to_owned();
                 adds.push((target_entity.clone(), title));
             }
             map.insert(id.to_owned(), target_entity);
@@ -2465,16 +2643,30 @@ impl Kernel {
         let material_scene_owned = material_scene.to_owned();
         let scene_ref_owned = scene_ref.clone();
         crate::expression_scene::remap_refs(&mut authored, &|r: &str| {
-            if r == material_scene_owned { Some(scene_ref_owned.clone()) } else { map.get(r).cloned() }
+            if r == material_scene_owned {
+                Some(scene_ref_owned.clone())
+            } else {
+                map.get(r).cloned()
+            }
         });
         authored["id"] = json!(scene_ref);
         authored["name"] = json!(scene.title);
         // The target's blueprint binding changes only through its own ops.
-        let blueprint = scene.presentation.as_ref().and_then(|p| p.scene["composition"].get("blueprint").cloned());
-        if let Some(composition) = authored.get_mut("composition").and_then(Value::as_object_mut) {
+        let blueprint = scene
+            .presentation
+            .as_ref()
+            .and_then(|p| p.scene["composition"].get("blueprint").cloned());
+        if let Some(composition) = authored
+            .get_mut("composition")
+            .and_then(Value::as_object_mut)
+        {
             match blueprint {
-                Some(b) => { composition.insert("blueprint".into(), b); }
-                None => { composition.remove("blueprint"); }
+                Some(b) => {
+                    composition.insert("blueprint".into(), b);
+                }
+                None => {
+                    composition.remove("blueprint");
+                }
             }
         }
         // A state change replaces the previous performance's unroled material
@@ -2489,28 +2681,58 @@ impl Kernel {
             .collect();
         let mut changes: Vec<Change> = Vec::new();
         for entity_ref in &stale {
-            let elsewhere = target.scenes.iter().any(|s| s.scene_ref != scene_ref && s.entity_refs.contains(entity_ref));
+            let elsewhere = target
+                .scenes
+                .iter()
+                .any(|s| s.scene_ref != scene_ref && s.entity_refs.contains(entity_ref));
             if !elsewhere {
-                changes.push(Change::EntityRemove { entity_ref: entity_ref.clone() });
+                changes.push(Change::EntityRemove {
+                    entity_ref: entity_ref.clone(),
+                });
             }
         }
-        let mut members: Vec<String> = scene.entity_refs.iter().filter(|r| !stale.contains(r)).cloned().collect();
+        let mut members: Vec<String> = scene
+            .entity_refs
+            .iter()
+            .filter(|r| !stale.contains(r))
+            .cloned()
+            .collect();
         for r in map.values() {
             if !members.contains(r) {
                 members.push(r.clone());
             }
         }
-        changes.extend(adds.into_iter().map(|(entity_ref, title)| Change::EntityAdd { scene_ref: scene_ref.clone(), entity_ref, title }));
-        changes.push(Change::SceneCompose { scene_ref: scene_ref.clone(), entity_refs: members });
+        changes.extend(
+            adds.into_iter()
+                .map(|(entity_ref, title)| Change::EntityAdd {
+                    scene_ref: scene_ref.clone(),
+                    entity_ref,
+                    title,
+                }),
+        );
+        changes.push(Change::SceneCompose {
+            scene_ref: scene_ref.clone(),
+            entity_refs: members,
+        });
         changes.push(Change::SceneMaterialSet {
             scene_ref: scene_ref.clone(),
-            presentation: crate::expression_scene::Presentation { schema: crate::expression_scene::SCHEMA.into(), scene: authored, saved: None },
+            presentation: crate::expression_scene::Presentation {
+                schema: crate::expression_scene::SCHEMA.into(),
+                scene: authored,
+                saved: None,
+            },
         });
         if target.selection.scene_ref != scene_ref {
-            changes.push(Change::Focus { scene_ref: scene_ref.clone(), entity_ref: None });
+            changes.push(Change::Focus {
+                scene_ref: scene_ref.clone(),
+                entity_ref: None,
+            });
         }
         match self.world_edit(target_ref, Some(target.revision), actor, changes, receipts)? {
-            Ok(revision) => Ok(Performed::Done { revision, scene_ref }),
+            Ok(revision) => Ok(Performed::Done {
+                revision,
+                scene_ref,
+            }),
             Err(conflict) => Ok(Performed::Refused(conflict)),
         }
     }
@@ -2532,65 +2754,127 @@ impl Kernel {
         let target = self.world_document(target_ref)?;
         if let Some(expected) = expected_revision {
             if expected != target.revision {
-                return Ok(Performed::Refused(json!({"state":"revision_conflict","expression_ref":target_ref,"expected_revision":expected,"current_revision":target.revision})));
+                return Ok(Performed::Refused(
+                    json!({"state":"revision_conflict","expression_ref":target_ref,"expected_revision":expected,"current_revision":target.revision}),
+                ));
             }
         }
-        let scene_ref = target_scene.map(str::to_owned).unwrap_or_else(|| target.selection.scene_ref.clone());
-        let scene = target.scenes.iter().find(|s| s.scene_ref == scene_ref).ok_or("The target Scene is absent")?;
-        let mut presentation = scene.presentation.clone().ok_or("The current Scene carries no authored material to perform on")?;
-        let entities = presentation.scene["entities"].as_array_mut().ok_or("Scene entities are absent")?;
+        let scene_ref = target_scene
+            .map(str::to_owned)
+            .unwrap_or_else(|| target.selection.scene_ref.clone());
+        let scene = target
+            .scenes
+            .iter()
+            .find(|s| s.scene_ref == scene_ref)
+            .ok_or("The target Scene is absent")?;
+        let mut presentation = scene
+            .presentation
+            .clone()
+            .ok_or("The current Scene carries no authored material to perform on")?;
+        let entities = presentation.scene["entities"]
+            .as_array_mut()
+            .ok_or("Scene entities are absent")?;
         let occupant = entities
             .iter_mut()
             .find(|e| e["id"].as_str() == Some(entity_ref))
             .ok_or("The role's entity is not presented in the current Scene")?;
         let name = occupant.get("name").cloned();
-        let mut grafted = crate::expression_material::graft_entity(occupant, &crate::expression_material::RoleFill { material: Some(body), ..Default::default() });
+        let mut grafted = crate::expression_material::graft_entity(
+            occupant,
+            &crate::expression_material::RoleFill {
+                material: Some(body),
+                ..Default::default()
+            },
+        );
         if let Some(name) = name {
             grafted["name"] = name;
         }
         *occupant = grafted;
-        let changes = vec![Change::SceneMaterialSet { scene_ref: scene_ref.clone(), presentation }];
+        let changes = vec![Change::SceneMaterialSet {
+            scene_ref: scene_ref.clone(),
+            presentation,
+        }];
         match self.world_edit(target_ref, Some(target.revision), actor, changes, receipts)? {
-            Ok(revision) => Ok(Performed::Done { revision, scene_ref }),
+            Ok(revision) => Ok(Performed::Done {
+                revision,
+                scene_ref,
+            }),
             Err(conflict) => Ok(Performed::Refused(conflict)),
         }
     }
 
     /// Fill one text role in the current Scene. `None` when no layer carries it.
     #[allow(clippy::too_many_arguments)]
-    fn world_perform_text(&mut self, target_ref: &str, target_scene: Option<&str>, role: &str, field: &str, value: &str, expected_revision: Option<u64>, actor: &str, receipts: &mut Receipts) -> Result<Option<Performed>, String> {
+    fn world_perform_text(
+        &mut self,
+        target_ref: &str,
+        target_scene: Option<&str>,
+        role: &str,
+        field: &str,
+        value: &str,
+        expected_revision: Option<u64>,
+        actor: &str,
+        receipts: &mut Receipts,
+    ) -> Result<Option<Performed>, String> {
         let target = self.world_document(target_ref)?;
         if let Some(expected) = expected_revision {
             if expected != target.revision {
-                return Ok(Some(Performed::Refused(json!({"state":"revision_conflict","expression_ref":target_ref,"expected_revision":expected,"current_revision":target.revision}))));
+                return Ok(Some(Performed::Refused(
+                    json!({"state":"revision_conflict","expression_ref":target_ref,"expected_revision":expected,"current_revision":target.revision}),
+                )));
             }
         }
-        let scene_ref = target_scene.map(str::to_owned).unwrap_or_else(|| target.selection.scene_ref.clone());
-        let Some(mut presentation) = target.scenes.iter().find(|s| s.scene_ref == scene_ref).and_then(|s| s.presentation.clone()) else {
+        let scene_ref = target_scene
+            .map(str::to_owned)
+            .unwrap_or_else(|| target.selection.scene_ref.clone());
+        let Some(mut presentation) = target
+            .scenes
+            .iter()
+            .find(|s| s.scene_ref == scene_ref)
+            .and_then(|s| s.presentation.clone())
+        else {
             return Ok(None);
         };
         if !crate::expression_material::fill_text(&mut presentation.scene, role, field, value) {
             return Ok(None);
         }
-        let changes = vec![Change::SceneMaterialSet { scene_ref: scene_ref.clone(), presentation }];
+        let changes = vec![Change::SceneMaterialSet {
+            scene_ref: scene_ref.clone(),
+            presentation,
+        }];
         match self.world_edit(target_ref, Some(target.revision), actor, changes, receipts)? {
-            Ok(revision) => Ok(Some(Performed::Done { revision, scene_ref })),
+            Ok(revision) => Ok(Some(Performed::Done {
+                revision,
+                scene_ref,
+            })),
             Err(conflict) => Ok(Some(Performed::Refused(conflict))),
         }
     }
 
     /// The material a gesture performs: explicit material, or the role's
     /// bound character.
-    fn world_gesture_material(&mut self, act: &Act, role: Option<&str>, material: Option<&MaterialSelect>) -> Result<crate::expression_material::Loaded, String> {
+    fn world_gesture_material(
+        &mut self,
+        act: &Act,
+        role: Option<&str>,
+        material: Option<&MaterialSelect>,
+    ) -> Result<crate::expression_material::Loaded, String> {
         match material {
-            Some(select) => self.world_material(select.file_ref.as_deref(), select.expression_ref.as_deref()),
+            Some(select) => {
+                self.world_material(select.file_ref.as_deref(), select.expression_ref.as_deref())
+            }
             None => {
                 let role = role.ok_or("A gesture names material or a bound role")?;
                 let character = act
                     .bindings
                     .get(role)
                     .and_then(|b| b.character_ref.clone())
-                    .or_else(|| act.cast.iter().find(|c| c.role == role).and_then(|c| c.character_ref.clone()))
+                    .or_else(|| {
+                        act.cast
+                            .iter()
+                            .find(|c| c.role == role)
+                            .and_then(|c| c.character_ref.clone())
+                    })
                     .ok_or("The role has no bound character to gesture with")?;
                 self.world_material(Some(&character), None)
             }
@@ -2598,10 +2882,19 @@ impl Kernel {
     }
 
     /// The gesture Scene and the role whose body it moves.
-    fn gesture_scene(loaded: &crate::expression_material::Loaded, gesture: &str, scene_ref: Option<&str>) -> Result<(String, String), String> {
-        let reuse = loaded.reuse().ok_or("Gesture material carries no reuse index")?;
+    fn gesture_scene(
+        loaded: &crate::expression_material::Loaded,
+        gesture: &str,
+        scene_ref: Option<&str>,
+    ) -> Result<(String, String), String> {
+        let reuse = loaded
+            .reuse()
+            .ok_or("Gesture material carries no reuse index")?;
         match reuse.gestures.get(gesture) {
-            Some(g) => Ok((g.scene_ref.clone(), g.role.clone().unwrap_or_else(|| "self".into()))),
+            Some(g) => Ok((
+                g.scene_ref.clone(),
+                g.role.clone().unwrap_or_else(|| "self".into()),
+            )),
             None if reuse.kind == expression::ReuseKind::Gesture => Ok((
                 crate::expression_material::resolve_scene(&loaded.document, scene_ref, None)?,
                 "self".into(),
@@ -2614,7 +2907,10 @@ impl Kernel {
     /// and every bound character) against its current revisions.
     fn passage_drift(&mut self, passage: &Passage) -> Result<Option<Value>, String> {
         if passage.file_ref.is_some() || passage.expression_ref.is_some() {
-            let current = self.world_material(passage.file_ref.as_deref(), passage.expression_ref.as_deref())?;
+            let current = self.world_material(
+                passage.file_ref.as_deref(),
+                passage.expression_ref.as_deref(),
+            )?;
             if let Some(expected) = &passage.revision {
                 if expected != &current.revision {
                     let reference = passage.file_ref.clone().or(passage.expression_ref.clone());
@@ -2625,10 +2921,17 @@ impl Kernel {
             }
         }
         for binding in passage.bindings.values() {
-            if let (Some(character), Some(expected)) = (&binding.character_ref, &binding.character_revision) {
+            if let (Some(character), Some(expected)) =
+                (&binding.character_ref, &binding.character_revision)
+            {
                 let current = self.world_material(Some(character), None)?;
                 if expected != &current.revision {
-                    let mut value = drift("character", &binding.character_ref, expected, &current.revision);
+                    let mut value = drift(
+                        "character",
+                        &binding.character_ref,
+                        expected,
+                        &current.revision,
+                    );
                     value["position"] = json!(passage.index);
                     return Ok(Some(value));
                 }
@@ -2638,39 +2941,101 @@ impl Kernel {
     }
 
     /// Re-perform one recorded passage into its recorded target.
-    fn replay_passage(&mut self, act: &mut Act, passage: &Passage, expected: Option<u64>, actor: &str, receipts: &mut Receipts) -> Result<Option<Performed>, String> {
-        let target_ref = passage.target_ref.clone().unwrap_or_else(|| act.expression_ref.clone());
+    fn replay_passage(
+        &mut self,
+        act: &mut Act,
+        passage: &Passage,
+        expected: Option<u64>,
+        actor: &str,
+        receipts: &mut Receipts,
+    ) -> Result<Option<Performed>, String> {
+        let target_ref = passage
+            .target_ref
+            .clone()
+            .unwrap_or_else(|| act.expression_ref.clone());
         let target_scene = passage.target_scene_ref.as_deref();
         if passage.sets_scene() {
-            let material = self.world_material(passage.file_ref.as_deref(), passage.expression_ref.as_deref())?;
-            let scene = passage.scene_ref.clone().ok_or("Scene passage names no Scene")?;
+            let material = self.world_material(
+                passage.file_ref.as_deref(),
+                passage.expression_ref.as_deref(),
+            )?;
+            let scene = passage
+                .scene_ref
+                .clone()
+                .ok_or("Scene passage names no Scene")?;
             let mut bindings = passage.bindings.clone();
             let fills = match self.world_fills(&mut bindings, &passage.captions, true)? {
                 Ok(fills) => fills,
                 Err(refusal) => return Ok(Some(Performed::Refused(refusal))),
             };
-            return Ok(Some(self.world_perform_scene(act, &material, &scene, &target_ref, target_scene, &fills, &bindings, expected, actor, receipts)?));
+            return Ok(Some(self.world_perform_scene(
+                act,
+                &material,
+                &scene,
+                &target_ref,
+                target_scene,
+                &fills,
+                &bindings,
+                expected,
+                actor,
+                receipts,
+            )?));
         }
-        let local = passage.kind == PassageKind::Gesture || (passage.kind == PassageKind::State && passage.role.is_some());
+        let local = passage.kind == PassageKind::Gesture
+            || (passage.kind == PassageKind::State && passage.role.is_some());
         if local {
-            let material = self.world_material(passage.file_ref.as_deref(), passage.expression_ref.as_deref())?;
+            let material = self.world_material(
+                passage.file_ref.as_deref(),
+                passage.expression_ref.as_deref(),
+            )?;
             let scene = passage.scene_ref.clone().ok_or("Passage names no Scene")?;
             let body_role = match (&passage.gesture, material.reuse()) {
-                (Some(g), Some(r)) => r.gestures.get(g).and_then(|g| g.role.clone()).unwrap_or_else(|| "self".into()),
+                (Some(g), Some(r)) => r
+                    .gestures
+                    .get(g)
+                    .and_then(|g| g.role.clone())
+                    .unwrap_or_else(|| "self".into()),
                 _ => "self".into(),
             };
-            let body = crate::expression_material::body_material(&material.document, &scene, &body_role)?;
+            let body =
+                crate::expression_material::body_material(&material.document, &scene, &body_role)?;
             let occupant = passage
                 .native_ref
                 .clone()
                 .filter(|_| passage.kind == PassageKind::Gesture)
-                .or_else(|| passage.role.as_ref().and_then(|r| act.role_entities.get(r).cloned()))
+                .or_else(|| {
+                    passage
+                        .role
+                        .as_ref()
+                        .and_then(|r| act.role_entities.get(r).cloned())
+                })
                 .ok_or("The passage's occupant is unknown")?;
-            return Ok(Some(self.world_perform_local(&target_ref, target_scene, &occupant, body, expected, actor, receipts)?));
+            return Ok(Some(self.world_perform_local(
+                &target_ref,
+                target_scene,
+                &occupant,
+                body,
+                expected,
+                actor,
+                receipts,
+            )?));
         }
         if let (Some(role), Some(field)) = (&passage.role, &passage.field) {
-            let shown = passage.text.clone().or_else(|| passage.value.map(|v| v.to_string())).unwrap_or_default();
-            return self.world_perform_text(&target_ref, target_scene, role, field, &shown, expected, actor, receipts);
+            let shown = passage
+                .text
+                .clone()
+                .or_else(|| passage.value.map(|v| v.to_string()))
+                .unwrap_or_default();
+            return self.world_perform_text(
+                &target_ref,
+                target_scene,
+                role,
+                field,
+                &shown,
+                expected,
+                actor,
+                receipts,
+            );
         }
         Ok(None)
     }
@@ -2679,7 +3044,9 @@ impl Kernel {
         macro_rules! guard {
             ($act_ref:expr, $expected:expr) => {{
                 text(&$act_ref)?;
-                let act = self.act_lookup(&$act_ref)?.ok_or("no act with this ref exists")?;
+                let act = self
+                    .act_lookup(&$act_ref)?
+                    .ok_or("no act with this ref exists")?;
                 if let Some(expected) = $expected {
                     if expected != act.revision {
                         return Ok(act_conflict(&act, expected));
@@ -2705,7 +3072,10 @@ impl Kernel {
         macro_rules! performed {
             ($outcome:expr, $snapshot:expr) => {
                 match $outcome {
-                    Performed::Done { revision, scene_ref } => (revision, scene_ref),
+                    Performed::Done {
+                        revision,
+                        scene_ref,
+                    } => (revision, scene_ref),
                     Performed::Refused(v) => {
                         self.act_rollback($snapshot, receipts)?;
                         return Ok(v);
@@ -2714,7 +3084,20 @@ impl Kernel {
             };
         }
         match request {
-            Request::ActOpen { act_ref, expression_ref, mode, actor, summary, cast, subject_ref, instrument_ref, selection, bindings, expected_act_revision, activity_ref } => {
+            Request::ActOpen {
+                act_ref,
+                expression_ref,
+                mode,
+                actor,
+                summary,
+                cast,
+                subject_ref,
+                instrument_ref,
+                selection,
+                bindings,
+                expected_act_revision,
+                activity_ref,
+            } => {
                 text(&act_ref)?;
                 text(&expression_ref)?;
                 text(&actor)?;
@@ -2734,7 +3117,13 @@ impl Kernel {
                 if self.act_lookup(&act_ref)?.is_none() {
                     // An act addresses a live target: the Expression is open.
                     let document = self.world_document(&expression_ref)?;
-                    let mut act = Act::new(act_ref, expression_ref, summary.unwrap_or_else(|| "Expressive act".into()), actor, mode);
+                    let mut act = Act::new(
+                        act_ref,
+                        expression_ref,
+                        summary.unwrap_or_else(|| "Expressive act".into()),
+                        actor,
+                        mode,
+                    );
                     act.activity_ref = activity_ref;
                     act.basis_revision = document.revision;
                     act.subject_ref = subject_ref;
@@ -2742,9 +3131,13 @@ impl Kernel {
                     act.selection = selection;
                     act.bindings = bindings;
                     for member in cast {
-                        if !act.cast.contains(&member) { act.cast.push(member); }
+                        if !act.cast.contains(&member) {
+                            act.cast.push(member);
+                        }
                     }
-                    if act.cast.len() > MAX_CAST { return Err("Cast budget exceeded".into()); }
+                    if act.cast.len() > MAX_CAST {
+                        return Err("Cast budget exceeded".into());
+                    }
                     self.act_make_room()?;
                     if let Some(refusal) = self.act_precheck(&act, 0, false, false)? {
                         return Ok(refusal);
@@ -2757,44 +3150,92 @@ impl Kernel {
                 let act = guard!(act_ref, expected_act_revision);
                 live!(act);
                 if act.expression_ref != expression_ref {
-                    return Err("Act ref already names another Expression; carry it with act_continue".into());
+                    return Err(
+                        "Act ref already names another Expression; carry it with act_continue"
+                            .into(),
+                    );
                 }
                 let previous = act.revision;
                 let mut next = act.clone();
                 for member in cast {
-                    if !next.cast.iter().any(|c| c.role == member.role && c.participant_ref == member.participant_ref) {
+                    if !next.cast.iter().any(|c| {
+                        c.role == member.role && c.participant_ref == member.participant_ref
+                    }) {
                         next.cast.push(member);
                     }
                 }
-                if next.cast.len() > MAX_CAST { return Err("Cast budget exceeded".into()); }
-                if subject_ref.is_some() { next.subject_ref = subject_ref; }
-                if instrument_ref.is_some() { next.instrument_ref = instrument_ref; }
-                if selection.is_some() { next.selection = selection; }
-                if let Some(summary) = summary { next.summary = summary; }
-                for (role, binding) in bindings { next.bindings.insert(role, binding); }
-                if next.bindings.len() > MAX_BINDINGS { return Err("Binding budget exceeded".into()); }
-                if next.phase == ActPhase::Held { next.phase = ActPhase::Running; }
+                if next.cast.len() > MAX_CAST {
+                    return Err("Cast budget exceeded".into());
+                }
+                if subject_ref.is_some() {
+                    next.subject_ref = subject_ref;
+                }
+                if instrument_ref.is_some() {
+                    next.instrument_ref = instrument_ref;
+                }
+                if selection.is_some() {
+                    next.selection = selection;
+                }
+                if let Some(summary) = summary {
+                    next.summary = summary;
+                }
+                for (role, binding) in bindings {
+                    next.bindings.insert(role, binding);
+                }
+                if next.bindings.len() > MAX_BINDINGS {
+                    return Err("Binding budget exceeded".into());
+                }
+                if next.phase == ActPhase::Held {
+                    next.phase = ActPhase::Running;
+                }
                 let mode_differs = next.mode != mode;
                 if next == act {
-                    return Ok(json!({"state":"act_opened","act":act,"resumed":true,"changed":false,"mode_differs":mode_differs}));
+                    return Ok(
+                        json!({"state":"act_opened","act":act,"resumed":true,"changed":false,"mode_differs":mode_differs}),
+                    );
                 }
                 self.act_finish(next, previous, json!({"state":"act_opened","resumed":true,"changed":true,"mode_differs":mode_differs}), None, receipts)
             }
-            Request::ActSelect { act_ref, actor, material, role, state, kind, bindings, captions, transition, event_basis, summary, expected_revision, expected_act_revision, activity_ref: _ } => {
+            Request::ActSelect {
+                act_ref,
+                actor,
+                material,
+                role,
+                state,
+                kind,
+                bindings,
+                captions,
+                transition,
+                event_basis,
+                summary,
+                expected_revision,
+                expected_act_revision,
+                activity_ref: _,
+            } => {
                 text(&actor)?;
                 bindings_valid(&bindings)?;
                 optional_transition(&transition)?;
                 optional_basis(&event_basis)?;
                 optional_text(&summary)?;
-                if let Some(r) = &role { expression::role_name(r)?; }
-                if let Some(s) = &state { expression::role_name(s)?; }
-                if captions.len() > MAX_BINDINGS { return Err("Caption budget exceeded".into()); }
+                if let Some(r) = &role {
+                    expression::role_name(r)?;
+                }
+                if let Some(s) = &state {
+                    expression::role_name(s)?;
+                }
+                if captions.len() > MAX_BINDINGS {
+                    return Err("Caption budget exceeded".into());
+                }
                 let state = state.or_else(|| material.as_ref().and_then(|m| m.state.clone()));
                 let scene_named = material.as_ref().is_some_and(|m| m.scene_ref.is_some());
                 let object_local = role.is_some() && state.is_some() && !scene_named;
                 // The passage kind follows the request's shape; a contradicting
                 // caller-supplied kind is refused, never recorded.
-                let shaped = if state.is_some() && !scene_named { PassageKind::State } else { PassageKind::Scene };
+                let shaped = if state.is_some() && !scene_named {
+                    PassageKind::State
+                } else {
+                    PassageKind::Scene
+                };
                 let kind = match kind {
                     None => shaped,
                     Some(k) if k == shaped => k,
@@ -2808,9 +3249,15 @@ impl Kernel {
                 let mut next = act.clone();
                 // A new performance reads each bound character at its current
                 // revision; only a revision this request pins is enforced.
-                for binding in next.bindings.values_mut() { binding.character_revision = None; }
-                for (r, b) in &bindings { next.bindings.insert(r.clone(), b.clone()); }
-                if next.bindings.len() > MAX_BINDINGS { return Err("Binding budget exceeded".into()); }
+                for binding in next.bindings.values_mut() {
+                    binding.character_revision = None;
+                }
+                for (r, b) in &bindings {
+                    next.bindings.insert(r.clone(), b.clone());
+                }
+                if next.bindings.len() > MAX_BINDINGS {
+                    return Err("Binding budget exceeded".into());
+                }
                 let target_ref = next.expression_ref.clone();
                 let snapshot = self.act_snapshot(&target_ref)?;
                 let mut passage = Passage::new(next.sequence.len(), kind, next.mode);
@@ -2823,8 +3270,17 @@ impl Kernel {
                     let character = material
                         .as_ref()
                         .and_then(|m| m.file_ref.clone().or_else(|| m.expression_ref.clone()))
-                        .or_else(|| next.bindings.get(&role).and_then(|b| b.character_ref.clone()))
-                        .or_else(|| next.cast.iter().find(|c| c.role == role).and_then(|c| c.character_ref.clone()))
+                        .or_else(|| {
+                            next.bindings
+                                .get(&role)
+                                .and_then(|b| b.character_ref.clone())
+                        })
+                        .or_else(|| {
+                            next.cast
+                                .iter()
+                                .find(|c| c.role == role)
+                                .and_then(|c| c.character_ref.clone())
+                        })
                         .ok_or("The role has no bound character for this state")?;
                     let loaded = self.world_material(Some(&character), None)?;
                     if let Some(pin) = material.as_ref().and_then(|m| m.revision.as_ref()) {
@@ -2832,15 +3288,31 @@ impl Kernel {
                             return Ok(drift("character", &Some(character), pin, &loaded.revision));
                         }
                     }
-                    let scene_ref = crate::expression_material::resolve_scene(&loaded.document, None, Some(&state))?;
-                    let body = crate::expression_material::body_material(&loaded.document, &scene_ref, "self")?;
+                    let scene_ref = crate::expression_material::resolve_scene(
+                        &loaded.document,
+                        None,
+                        Some(&state),
+                    )?;
+                    let body = crate::expression_material::body_material(
+                        &loaded.document,
+                        &scene_ref,
+                        "self",
+                    )?;
                     let entity_ref = next
                         .bindings
                         .get(&role)
                         .and_then(|b| b.entity_ref.clone())
                         .or_else(|| next.role_entities.get(&role).cloned())
                         .ok_or("The role has no occupant in the live Expression yet; perform a Scene first")?;
-                    let outcome = self.world_perform_local(&target_ref, None, &entity_ref, body, expected_revision, &actor, receipts)?;
+                    let outcome = self.world_perform_local(
+                        &target_ref,
+                        None,
+                        &entity_ref,
+                        body,
+                        expected_revision,
+                        &actor,
+                        receipts,
+                    )?;
                     let (revision, target_scene) = performed!(outcome, snapshot);
                     if let Some(b) = next.bindings.get_mut(&role) {
                         b.state = Some(state.clone());
@@ -2851,61 +3323,128 @@ impl Kernel {
                     passage.role = Some(role);
                     passage.state = Some(state);
                     passage.file_ref = loaded.file_ref.clone();
-                    passage.expression_ref = loaded.file_ref.is_none().then(|| loaded.document.expression_ref.clone());
+                    passage.expression_ref = loaded
+                        .file_ref
+                        .is_none()
+                        .then(|| loaded.document.expression_ref.clone());
                     passage.revision = Some(loaded.revision.clone());
                     passage.scene_ref = Some(scene_ref);
                     passage.target_scene_ref = Some(target_scene);
                     next.basis_revision = revision;
                 } else {
-                    let select = material.ok_or("act_select names material (a Scene or state), or a role and state")?;
-                    let loaded = self.world_material(select.file_ref.as_deref(), select.expression_ref.as_deref())?;
+                    let select = material.ok_or(
+                        "act_select names material (a Scene or state), or a role and state",
+                    )?;
+                    let loaded = self.world_material(
+                        select.file_ref.as_deref(),
+                        select.expression_ref.as_deref(),
+                    )?;
                     if let Some(pin) = &select.revision {
                         if pin != &loaded.revision {
-                            let reference = select.file_ref.clone().or(select.expression_ref.clone());
+                            let reference =
+                                select.file_ref.clone().or(select.expression_ref.clone());
                             return Ok(drift("scene", &reference, pin, &loaded.revision));
                         }
                     }
-                    let scene_ref = crate::expression_material::resolve_scene(&loaded.document, select.scene_ref.as_deref(), state.as_deref())?;
+                    let scene_ref = crate::expression_material::resolve_scene(
+                        &loaded.document,
+                        select.scene_ref.as_deref(),
+                        state.as_deref(),
+                    )?;
                     let mut all_bindings = next.bindings.clone();
                     let fills = match self.world_fills(&mut all_bindings, &captions, false)? {
                         Ok(fills) => fills,
                         Err(refusal) => return Ok(refusal),
                     };
-                    let outcome = self.world_perform_scene(&mut next, &loaded, &scene_ref, &target_ref, None, &fills, &all_bindings, expected_revision, &actor, receipts)?;
+                    let outcome = self.world_perform_scene(
+                        &mut next,
+                        &loaded,
+                        &scene_ref,
+                        &target_ref,
+                        None,
+                        &fills,
+                        &all_bindings,
+                        expected_revision,
+                        &actor,
+                        receipts,
+                    )?;
                     let (revision, target_scene) = performed!(outcome, snapshot);
                     passage.state = state;
                     passage.file_ref = loaded.file_ref.clone();
-                    passage.expression_ref = loaded.file_ref.is_none().then(|| loaded.document.expression_ref.clone());
+                    passage.expression_ref = loaded
+                        .file_ref
+                        .is_none()
+                        .then(|| loaded.document.expression_ref.clone());
                     passage.revision = Some(loaded.revision.clone());
                     passage.scene_ref = Some(scene_ref.clone());
                     passage.target_scene_ref = Some(target_scene);
                     next.bindings = all_bindings.clone();
                     passage.bindings = all_bindings;
                     passage.captions = captions;
-                    next.material = Some(ActMaterial { file_ref: loaded.file_ref.clone(), expression_ref: passage.expression_ref.clone(), revision: Some(loaded.revision), scene_ref: Some(scene_ref) });
+                    next.material = Some(ActMaterial {
+                        file_ref: loaded.file_ref.clone(),
+                        expression_ref: passage.expression_ref.clone(),
+                        revision: Some(loaded.revision),
+                        scene_ref: Some(scene_ref),
+                    });
                     next.basis_revision = revision;
                 }
                 next.position = Some(passage.index);
                 next.sequence.push(passage.clone());
-                if next.phase == ActPhase::Held { next.phase = ActPhase::Running; }
-                self.act_finish(next, previous, json!({"state":"act_performed","passage":passage}), Some(snapshot), receipts)
+                if next.phase == ActPhase::Held {
+                    next.phase = ActPhase::Running;
+                }
+                self.act_finish(
+                    next,
+                    previous,
+                    json!({"state":"act_performed","passage":passage}),
+                    Some(snapshot),
+                    receipts,
+                )
             }
-            Request::ActPlay { act_ref, actor, material, bindings, captions, from, expected_revision, expected_act_revision, activity_ref: _ } => {
+            Request::ActPlay {
+                act_ref,
+                actor,
+                material,
+                bindings,
+                captions,
+                from,
+                expected_revision,
+                expected_act_revision,
+                activity_ref: _,
+            } => {
                 text(&actor)?;
                 bindings_valid(&bindings)?;
-                if captions.len() > MAX_BINDINGS { return Err("Caption budget exceeded".into()); }
+                if captions.len() > MAX_BINDINGS {
+                    return Err("Caption budget exceeded".into());
+                }
                 let act = guard!(act_ref, expected_act_revision);
                 live!(act);
-                let loaded = self.world_material(material.file_ref.as_deref(), material.expression_ref.as_deref())?;
+                let loaded = self.world_material(
+                    material.file_ref.as_deref(),
+                    material.expression_ref.as_deref(),
+                )?;
                 if let Some(pin) = &material.revision {
                     if pin != &loaded.revision {
-                        let reference = material.file_ref.clone().or(material.expression_ref.clone());
+                        let reference = material
+                            .file_ref
+                            .clone()
+                            .or(material.expression_ref.clone());
                         return Ok(drift("scene", &reference, pin, &loaded.revision));
                     }
                 }
-                let order: Vec<String> = match loaded.reuse().map(|r| r.playback.clone()).filter(|p| !p.is_empty()) {
+                let order: Vec<String> = match loaded
+                    .reuse()
+                    .map(|r| r.playback.clone())
+                    .filter(|p| !p.is_empty())
+                {
                     Some(playback) => playback,
-                    None => loaded.document.scenes.iter().map(|s| s.scene_ref.clone()).collect(),
+                    None => loaded
+                        .document
+                        .scenes
+                        .iter()
+                        .map(|s| s.scene_ref.clone())
+                        .collect(),
                 };
                 let from = from.unwrap_or(0);
                 let scenes: Vec<String> = order.into_iter().skip(from).collect();
@@ -2917,9 +3456,15 @@ impl Kernel {
                 let mut next = act.clone();
                 // A new performance reads each bound character at its current
                 // revision; only a revision this request pins is enforced.
-                for binding in next.bindings.values_mut() { binding.character_revision = None; }
-                for (r, b) in &bindings { next.bindings.insert(r.clone(), b.clone()); }
-                if next.bindings.len() > MAX_BINDINGS { return Err("Binding budget exceeded".into()); }
+                for binding in next.bindings.values_mut() {
+                    binding.character_revision = None;
+                }
+                for (r, b) in &bindings {
+                    next.bindings.insert(r.clone(), b.clone());
+                }
+                if next.bindings.len() > MAX_BINDINGS {
+                    return Err("Binding budget exceeded".into());
+                }
                 let mut all_bindings = next.bindings.clone();
                 let fills = match self.world_fills(&mut all_bindings, &captions, false)? {
                     Ok(fills) => fills,
@@ -2931,19 +3476,38 @@ impl Kernel {
                 let mut expected = expected_revision;
                 let mut played = Vec::new();
                 for scene_ref in scenes {
-                    let authored = crate::expression_material::scene_material(&loaded.document, &scene_ref)?;
-                    let outcome = self.world_perform_scene(&mut next, &loaded, &scene_ref, &target_ref, None, &fills, &all_bindings, expected, &actor, receipts)?;
+                    let authored =
+                        crate::expression_material::scene_material(&loaded.document, &scene_ref)?;
+                    let outcome = self.world_perform_scene(
+                        &mut next,
+                        &loaded,
+                        &scene_ref,
+                        &target_ref,
+                        None,
+                        &fills,
+                        &all_bindings,
+                        expected,
+                        &actor,
+                        receipts,
+                    )?;
                     let (revision, target_scene) = match outcome {
-                        Performed::Done { revision, scene_ref } => (revision, scene_ref),
+                        Performed::Done {
+                            revision,
+                            scene_ref,
+                        } => (revision, scene_ref),
                         Performed::Refused(v) => {
                             self.act_rollback(snapshot, receipts)?;
                             return Ok(v);
                         }
                     };
                     expected = None;
-                    let mut passage = Passage::new(next.sequence.len(), PassageKind::Scene, next.mode);
+                    let mut passage =
+                        Passage::new(next.sequence.len(), PassageKind::Scene, next.mode);
                     passage.file_ref = loaded.file_ref.clone();
-                    passage.expression_ref = loaded.file_ref.is_none().then(|| loaded.document.expression_ref.clone());
+                    passage.expression_ref = loaded
+                        .file_ref
+                        .is_none()
+                        .then(|| loaded.document.expression_ref.clone());
                     passage.revision = Some(loaded.revision.clone());
                     passage.scene_ref = Some(scene_ref.clone());
                     passage.target_ref = Some(target_ref.clone());
@@ -2953,17 +3517,44 @@ impl Kernel {
                     passage.transition = scene_transition(&authored);
                     next.basis_revision = revision;
                     next.position = Some(passage.index);
-                    next.material = Some(ActMaterial { file_ref: loaded.file_ref.clone(), expression_ref: passage.expression_ref.clone(), revision: Some(loaded.revision.clone()), scene_ref: Some(scene_ref) });
+                    next.material = Some(ActMaterial {
+                        file_ref: loaded.file_ref.clone(),
+                        expression_ref: passage.expression_ref.clone(),
+                        revision: Some(loaded.revision.clone()),
+                        scene_ref: Some(scene_ref),
+                    });
                     next.sequence.push(passage.clone());
                     played.push(passage);
                 }
-                if next.phase == ActPhase::Held { next.phase = ActPhase::Running; }
-                self.act_finish(next, previous, json!({"state":"act_played","passages":played}), Some(snapshot), receipts)
+                if next.phase == ActPhase::Held {
+                    next.phase = ActPhase::Running;
+                }
+                self.act_finish(
+                    next,
+                    previous,
+                    json!({"state":"act_played","passages":played}),
+                    Some(snapshot),
+                    receipts,
+                )
             }
-            Request::ActGesture { act_ref, actor, gesture, role, entity_ref, material, transition, event_basis, expected_revision, expected_act_revision, activity_ref: _ } => {
+            Request::ActGesture {
+                act_ref,
+                actor,
+                gesture,
+                role,
+                entity_ref,
+                material,
+                transition,
+                event_basis,
+                expected_revision,
+                expected_act_revision,
+                activity_ref: _,
+            } => {
                 text(&actor)?;
                 expression::role_name(&gesture)?;
-                if let Some(r) = &role { expression::role_name(r)?; }
+                if let Some(r) = &role {
+                    expression::role_name(r)?;
+                }
                 optional_text(&entity_ref)?;
                 optional_transition(&transition)?;
                 optional_basis(&event_basis)?;
@@ -2972,9 +3563,18 @@ impl Kernel {
                 precheck!(act, 1, false);
                 let previous = act.revision;
                 let mut next = act.clone();
-                let loaded = self.world_gesture_material(&next, role.as_deref(), material.as_ref())?;
-                let (scene_ref, body_role) = Self::gesture_scene(&loaded, &gesture, material.as_ref().and_then(|m| m.scene_ref.as_deref()))?;
-                let body = crate::expression_material::body_material(&loaded.document, &scene_ref, &body_role)?;
+                let loaded =
+                    self.world_gesture_material(&next, role.as_deref(), material.as_ref())?;
+                let (scene_ref, body_role) = Self::gesture_scene(
+                    &loaded,
+                    &gesture,
+                    material.as_ref().and_then(|m| m.scene_ref.as_deref()),
+                )?;
+                let body = crate::expression_material::body_material(
+                    &loaded.document,
+                    &scene_ref,
+                    &body_role,
+                )?;
                 let occupant = entity_ref
                     .clone()
                     .or_else(|| role.as_ref().and_then(|r| next.bindings.get(r).and_then(|b| b.entity_ref.clone())))
@@ -2982,13 +3582,25 @@ impl Kernel {
                     .ok_or("A gesture names an entity or a role with an occupant in the live Expression")?;
                 let target_ref = next.expression_ref.clone();
                 let snapshot = self.act_snapshot(&target_ref)?;
-                let outcome = self.world_perform_local(&target_ref, None, &occupant, body, expected_revision, &actor, receipts)?;
+                let outcome = self.world_perform_local(
+                    &target_ref,
+                    None,
+                    &occupant,
+                    body,
+                    expected_revision,
+                    &actor,
+                    receipts,
+                )?;
                 let (revision, target_scene) = performed!(outcome, snapshot);
-                let mut passage = Passage::new(next.sequence.len(), PassageKind::Gesture, next.mode);
+                let mut passage =
+                    Passage::new(next.sequence.len(), PassageKind::Gesture, next.mode);
                 passage.gesture = Some(gesture);
                 passage.role = role;
                 passage.file_ref = loaded.file_ref.clone();
-                passage.expression_ref = loaded.file_ref.is_none().then(|| loaded.document.expression_ref.clone());
+                passage.expression_ref = loaded
+                    .file_ref
+                    .is_none()
+                    .then(|| loaded.document.expression_ref.clone());
                 passage.revision = Some(loaded.revision.clone());
                 passage.scene_ref = Some(scene_ref);
                 passage.target_ref = Some(target_ref);
@@ -2999,32 +3611,67 @@ impl Kernel {
                 next.basis_revision = revision;
                 next.position = Some(passage.index);
                 next.sequence.push(passage.clone());
-                self.act_finish(next, previous, json!({"state":"act_performed","passage":passage}), Some(snapshot), receipts)
+                self.act_finish(
+                    next,
+                    previous,
+                    json!({"state":"act_performed","passage":passage}),
+                    Some(snapshot),
+                    receipts,
+                )
             }
-            Request::ActText { act_ref, actor, role, text: value_text, value, field, event_basis, expected_revision, expected_act_revision, activity_ref: _ } => {
+            Request::ActText {
+                act_ref,
+                actor,
+                role,
+                text: value_text,
+                value,
+                field,
+                event_basis,
+                expected_revision,
+                expected_act_revision,
+                activity_ref: _,
+            } => {
                 text(&actor)?;
                 expression::role_name(&role)?;
                 optional_text(&value_text)?;
                 optional_basis(&event_basis)?;
                 let field = field.unwrap_or_else(|| "body".into());
                 crate::expression_material::text_field(&field)?;
-                if value.is_some_and(|v| !v.is_finite()) { return Err("Value must be finite".into()); }
-                if value_text.is_none() && value.is_none() { return Err("act_text fills text or a value".into()); }
+                if value.is_some_and(|v| !v.is_finite()) {
+                    return Err("Value must be finite".into());
+                }
+                if value_text.is_none() && value.is_none() {
+                    return Err("act_text fills text or a value".into());
+                }
                 let act = guard!(act_ref, expected_act_revision);
                 live!(act);
                 // A fill of the same text role/field as the immediately
                 // preceding passage updates that passage in place.
                 let coalesce = act.sequence.last().is_some_and(|p| {
-                    p.kind == PassageKind::Text && p.role.as_deref() == Some(role.as_str()) && p.field.as_deref() == Some(field.as_str())
+                    p.kind == PassageKind::Text
+                        && p.role.as_deref() == Some(role.as_str())
+                        && p.field.as_deref() == Some(field.as_str())
                         && act.position == Some(p.index)
                 });
                 precheck!(act, usize::from(!coalesce), false);
                 let previous = act.revision;
                 let mut next = act.clone();
-                let shown = value_text.clone().or_else(|| value.map(|v| v.to_string())).unwrap_or_default();
+                let shown = value_text
+                    .clone()
+                    .or_else(|| value.map(|v| v.to_string()))
+                    .unwrap_or_default();
                 let target_ref = next.expression_ref.clone();
                 let snapshot = self.act_snapshot(&target_ref)?;
-                let outcome = self.world_perform_text(&target_ref, None, &role, &field, &shown, expected_revision, &actor, receipts)?;
+                let outcome = self.world_perform_text(
+                    &target_ref,
+                    None,
+                    &role,
+                    &field,
+                    &shown,
+                    expected_revision,
+                    &actor,
+                    receipts,
+                )?;
                 let mut passage = Passage::new(next.sequence.len(), PassageKind::Text, next.mode);
                 let presented = match outcome {
                     Some(outcome) => {
@@ -3036,12 +3683,29 @@ impl Kernel {
                     None => false,
                 };
                 let binding = next.bindings.entry(role.clone()).or_insert(Binding {
-                    kind: if value.is_some() { BindingKind::Value } else { BindingKind::Text },
-                    agent_ref: None, profile_ref: None, character_ref: None, subject_ref: None, state: None,
-                    label: None, glyph: None, text: None, value: None, entity_ref: None, character_revision: None,
+                    kind: if value.is_some() {
+                        BindingKind::Value
+                    } else {
+                        BindingKind::Text
+                    },
+                    agent_ref: None,
+                    profile_ref: None,
+                    character_ref: None,
+                    subject_ref: None,
+                    state: None,
+                    label: None,
+                    glyph: None,
+                    text: None,
+                    value: None,
+                    entity_ref: None,
+                    character_revision: None,
                 });
-                if value_text.is_some() { binding.text = value_text.clone(); }
-                if value.is_some() { binding.value = value; }
+                if value_text.is_some() {
+                    binding.text = value_text.clone();
+                }
+                if value.is_some() {
+                    binding.value = value;
+                }
                 passage.role = Some(role);
                 passage.text = value_text;
                 passage.value = value;
@@ -3053,7 +3717,9 @@ impl Kernel {
                     passage.index = last.index;
                     passage.coalesced = last.coalesced.saturating_add(1);
                     passage.transition = last.transition.clone();
-                    if passage.target_scene_ref.is_none() { passage.target_scene_ref = last.target_scene_ref.clone(); }
+                    if passage.target_scene_ref.is_none() {
+                        passage.target_scene_ref = last.target_scene_ref.clone();
+                    }
                     *last = passage.clone();
                 } else {
                     next.sequence.push(passage.clone());
@@ -3061,7 +3727,17 @@ impl Kernel {
                 next.position = Some(passage.index);
                 self.act_finish(next, previous, json!({"state":"act_performed","passage":passage,"presented":presented,"coalesced":coalesce}), Some(snapshot), receipts)
             }
-            Request::ActOperate { act_ref, actor, operation_kind, native_ref, mode, summary, event_basis, expected_act_revision, activity_ref: _ } => {
+            Request::ActOperate {
+                act_ref,
+                actor,
+                operation_kind,
+                native_ref,
+                mode,
+                summary,
+                event_basis,
+                expected_act_revision,
+                activity_ref: _,
+            } => {
                 text(&actor)?;
                 text(&operation_kind)?;
                 text(&native_ref)?;
@@ -3072,7 +3748,11 @@ impl Kernel {
                 precheck!(act, 1, false);
                 let previous = act.revision;
                 let mut next = act.clone();
-                let mut passage = Passage::new(next.sequence.len(), PassageKind::Operate, mode.unwrap_or(next.mode));
+                let mut passage = Passage::new(
+                    next.sequence.len(),
+                    PassageKind::Operate,
+                    mode.unwrap_or(next.mode),
+                );
                 passage.operation = Some(operation_kind);
                 passage.native_ref = Some(native_ref);
                 passage.summary = summary;
@@ -3080,9 +3760,24 @@ impl Kernel {
                 passage.target_ref = Some(next.expression_ref.clone());
                 next.position = Some(passage.index);
                 next.sequence.push(passage.clone());
-                self.act_finish(next, previous, json!({"state":"act_operated","passage":passage}), None, receipts)
+                self.act_finish(
+                    next,
+                    previous,
+                    json!({"state":"act_operated","passage":passage}),
+                    None,
+                    receipts,
+                )
             }
-            Request::ActContinue { act_ref, actor, to, instrument_ref, expression_ref, summary, expected_act_revision, activity_ref: _ } => {
+            Request::ActContinue {
+                act_ref,
+                actor,
+                to,
+                instrument_ref,
+                expression_ref,
+                summary,
+                expected_act_revision,
+                activity_ref: _,
+            } => {
                 text(&actor)?;
                 optional_text(&instrument_ref)?;
                 optional_text(&summary)?;
@@ -3095,21 +3790,49 @@ impl Kernel {
                 }
                 let previous = act.revision;
                 let mut next = act.clone();
-                let continuation = Continuation { from: next.mode, to, instrument_ref: instrument_ref.clone(), expression_ref: expression_ref.clone(), at: next.sequence.len() };
+                let continuation = Continuation {
+                    from: next.mode,
+                    to,
+                    instrument_ref: instrument_ref.clone(),
+                    expression_ref: expression_ref.clone(),
+                    at: next.sequence.len(),
+                };
                 next.continuations.push(continuation.clone());
                 next.mode = to;
-                if instrument_ref.is_some() { next.instrument_ref = instrument_ref.clone(); }
-                if let Some(target) = expression_ref { next.expression_ref = target; }
+                if instrument_ref.is_some() {
+                    next.instrument_ref = instrument_ref.clone();
+                }
+                if let Some(target) = expression_ref {
+                    next.expression_ref = target;
+                }
                 let mut passage = Passage::new(next.sequence.len(), PassageKind::Continue, to);
                 passage.native_ref = instrument_ref;
                 passage.summary = summary;
                 passage.target_ref = Some(next.expression_ref.clone());
                 next.position = Some(passage.index);
                 next.sequence.push(passage.clone());
-                if next.phase == ActPhase::Held { next.phase = ActPhase::Running; }
-                self.act_finish(next, previous, json!({"state":"act_continued","continuation":continuation,"passage":passage}), None, receipts)
+                if next.phase == ActPhase::Held {
+                    next.phase = ActPhase::Running;
+                }
+                self.act_finish(
+                    next,
+                    previous,
+                    json!({"state":"act_continued","continuation":continuation,"passage":passage}),
+                    None,
+                    receipts,
+                )
             }
-            Request::ActComplete { act_ref, actor, return_ref, result, result_role, cancelled, expected_revision, expected_act_revision, activity_ref: _ } => {
+            Request::ActComplete {
+                act_ref,
+                actor,
+                return_ref,
+                result,
+                result_role,
+                cancelled,
+                expected_revision,
+                expected_act_revision,
+                activity_ref: _,
+            } => {
                 text(&actor)?;
                 optional_text(&return_ref)?;
                 optional_text(&result)?;
@@ -3125,7 +3848,16 @@ impl Kernel {
                 let mut passage = Passage::new(next.sequence.len(), PassageKind::Return, next.mode);
                 let mut presented = false;
                 if let Some(result) = &result {
-                    if let Some(outcome) = self.world_perform_text(&target_ref, None, &role, "body", result, expected_revision, &actor, receipts)? {
+                    if let Some(outcome) = self.world_perform_text(
+                        &target_ref,
+                        None,
+                        &role,
+                        "body",
+                        result,
+                        expected_revision,
+                        &actor,
+                        receipts,
+                    )? {
                         let (revision, scene_ref) = performed!(outcome, snapshot);
                         next.basis_revision = revision;
                         passage.target_scene_ref = Some(scene_ref);
@@ -3137,14 +3869,26 @@ impl Kernel {
                 passage.text = result.clone();
                 passage.field = presented.then(|| "body".to_owned());
                 passage.target_ref = Some(target_ref);
-                next.phase = if cancelled { ActPhase::Cancelled } else { ActPhase::Completed };
+                next.phase = if cancelled {
+                    ActPhase::Cancelled
+                } else {
+                    ActPhase::Completed
+                };
                 next.return_ref = return_ref;
                 next.result = result;
                 next.position = Some(passage.index);
                 next.sequence.push(passage.clone());
                 self.act_finish(next, previous, json!({"state": if cancelled {"act_cancelled"} else {"act_completed"}, "passage":passage, "presented":presented}), Some(snapshot), receipts)
             }
-            Request::ActSeek { act_ref, actor, position, accept_drift, expected_revision, expected_act_revision, activity_ref: _ } => {
+            Request::ActSeek {
+                act_ref,
+                actor,
+                position,
+                accept_drift,
+                expected_revision,
+                expected_act_revision,
+                activity_ref: _,
+            } => {
                 text(&actor)?;
                 let act = guard!(act_ref, expected_act_revision);
                 if position >= act.sequence.len() {
@@ -3159,9 +3903,21 @@ impl Kernel {
                 let (start, incremental) = match act.position {
                     Some(current) if position > current => {
                         let from = current + 1;
-                        (act.sequence[from..=position].iter().rposition(Passage::sets_scene).map_or(from, |i| from + i), true)
+                        (
+                            act.sequence[from..=position]
+                                .iter()
+                                .rposition(Passage::sets_scene)
+                                .map_or(from, |i| from + i),
+                            true,
+                        )
                     }
-                    _ => (act.sequence[..=position].iter().rposition(Passage::sets_scene).unwrap_or(0), false),
+                    _ => (
+                        act.sequence[..=position]
+                            .iter()
+                            .rposition(Passage::sets_scene)
+                            .unwrap_or(0),
+                        false,
+                    ),
                 };
                 let replay: Vec<Passage> = act.sequence[start..=position].to_vec();
                 // Refuse drift before any edit (unless the caller accepts it).
@@ -3186,14 +3942,24 @@ impl Kernel {
                             self.act_rollback(snapshot, receipts)?;
                             return Ok(v);
                         }
-                        Some(Performed::Done { revision, .. }) => { next.basis_revision = revision; expected = None; performed_any = true; }
+                        Some(Performed::Done { revision, .. }) => {
+                            next.basis_revision = revision;
+                            expected = None;
+                            performed_any = true;
+                        }
                         None => {}
                     }
                 }
                 next.position = Some(position);
-                self.act_finish(next, previous, json!({"state":"act_sought","position":position,"performed":performed_any,
+                self.act_finish(
+                    next,
+                    previous,
+                    json!({"state":"act_sought","position":position,"performed":performed_any,
                     "replayed":{"from":start,"to":position,"incremental":incremental},
-                    "passage":act.sequence[position]}), Some(snapshot), receipts)
+                    "passage":act.sequence[position]}),
+                    Some(snapshot),
+                    receipts,
+                )
             }
             Request::ActArchive { act_ref, actor } => {
                 text(&actor)?;
@@ -3210,18 +3976,28 @@ impl Kernel {
                 Some(act) => Ok(json!({"state":"act","act":act})),
                 None => Ok(json!({"state":"unknown_act","act_ref":act_ref})),
             },
-            Request::ActList { mode, expression_ref, phase } => {
+            Request::ActList {
+                mode,
+                expression_ref,
+                phase,
+            } => {
                 let acts: Vec<Value> = self
                     .world
                     .acts
                     .values()
                     .filter(|a| mode.is_none_or(|m| a.mode == m))
-                    .filter(|a| expression_ref.as_ref().is_none_or(|r| &a.expression_ref == r))
+                    .filter(|a| {
+                        expression_ref
+                            .as_ref()
+                            .is_none_or(|r| &a.expression_ref == r)
+                    })
                     .filter(|a| phase.is_none_or(|p| a.phase == p))
                     .map(act_summary)
                     .collect();
-                Ok(json!({"state":"acts","acts":acts,"persistent":self.world.store.is_some(),"store_errors":self.world.store_errors,
-                    "archive":"archived acts are not listed; act_inspect reads one by ref"}))
+                Ok(
+                    json!({"state":"acts","acts":acts,"persistent":self.world.store.is_some(),"store_errors":self.world.store_errors,
+                    "archive":"archived acts are not listed; act_inspect reads one by ref"}),
+                )
             }
             _ => Err("not an act operation".into()),
         }

@@ -85,9 +85,15 @@ fn scene_body_carries_the_exact_native_subject_and_degrades_honestly() {
                 "provenance":[],"actions":[],"presentation":"live",
                 "capability":{"state":"degrades_to_thing","reason":"no renderer"}}}]}),
     );
-    assert!(error.contains("presentation must match disclosed capability"), "{error}");
+    assert!(
+        error.contains("presentation must match disclosed capability"),
+        "{error}"
+    );
     // The atomic edit never left a fake live body behind.
-    assert_eq!(inspect(&mut app, "expression:test")["document"]["scenes"][0]["body"]["presentation"], "preview");
+    assert_eq!(
+        inspect(&mut app, "expression:test")["document"]["scenes"][0]["body"]["presentation"],
+        "preview"
+    );
 
     // Native carriers keep native subjects: an Expression ref is not a file.
     let error = refused(
@@ -238,7 +244,9 @@ fn triggers_open_the_exact_native_subject_and_refuse_script_bodies() {
     let raw = json!({"trigger_ref":"t","occasion":"activate","script":"doEvil()"});
     let error = oi_cradle_kernel::expression_trigger::refuse_script_body(&raw).unwrap_err();
     assert!(error.contains("script_body_refused"), "{error}");
-    assert!(oi_cradle_kernel::expression_trigger::refuse_script_body(&json!("harmless string")).is_ok());
+    assert!(
+        oi_cradle_kernel::expression_trigger::refuse_script_body(&json!("harmless string")).is_ok()
+    );
 }
 
 // ——— ES3: profiles, editions and the Library-as-view index ————————————
@@ -263,7 +271,10 @@ fn base_profile() -> Value {
 fn profiles_define_lineage_resolution_editions_and_index() {
     let mut app = Application::default();
     let base = base_profile();
-    let defined = apply(&mut app, json!({"operation":"profile_define","profile":base,"actor":"human:author"}));
+    let defined = apply(
+        &mut app,
+        json!({"operation":"profile_define","profile":base,"actor":"human:author"}),
+    );
     assert_eq!(defined["state"], "profile");
     // A child profile narrows the grammar; parents must exist first.
     let child = json!({
@@ -274,7 +285,10 @@ fn profiles_define_lineage_resolution_editions_and_index() {
         "fallback_policy":"capture",
         "provenance":[]
     });
-    let defined = apply(&mut app, json!({"operation":"profile_define","profile":child,"actor":"human:author"}));
+    let defined = apply(
+        &mut app,
+        json!({"operation":"profile_define","profile":child,"actor":"human:author"}),
+    );
     // Parents-first resolution: the child inherits share and overrides scale.
     assert_eq!(defined["resolved_defaults"]["share"]["value"], 1);
     assert_eq!(defined["resolved_defaults"]["scale"]["value"], 1.0);
@@ -283,7 +297,10 @@ fn profiles_define_lineage_resolution_editions_and_index() {
         "profile_ref":"profile:orphan","revision":1,"title":"Orphan",
         "parent_profile_refs":["profile:ghost"],"accepted_binding_kinds":["text_source"],"provenance":[]
     });
-    let error = refused(&mut app, json!({"operation":"profile_define","profile":orphan,"actor":"human:author"}));
+    let error = refused(
+        &mut app,
+        json!({"operation":"profile_define","profile":orphan,"actor":"human:author"}),
+    );
     assert!(error.contains("not defined"), "{error}");
     // Profile resolution against ordinary subject kinds.
     let resolved = apply(
@@ -308,9 +325,18 @@ fn profiles_define_lineage_resolution_editions_and_index() {
             "overridden_parameters":{"scale":{"value":2.0,"automation":null}}}},
             {"change":"collections_set","collections":["library","lessons"]}]),
     );
-    assert_eq!(data["document"]["profiles"][0]["profile_ref"], "profile:editorial");
-    assert_eq!(data["document"]["profiles"][0]["overridden_parameters"]["scale"]["value"], 2.0);
-    assert_eq!(data["document"]["collections"], json!(["library","lessons"]));
+    assert_eq!(
+        data["document"]["profiles"][0]["profile_ref"],
+        "profile:editorial"
+    );
+    assert_eq!(
+        data["document"]["profiles"][0]["overridden_parameters"]["scale"]["value"],
+        2.0
+    );
+    assert_eq!(
+        data["document"]["collections"],
+        json!(["library", "lessons"])
+    );
 
     // A portable edition names the open Expression's current revision.
     let edition = json!({
@@ -325,16 +351,28 @@ fn profiles_define_lineage_resolution_editions_and_index() {
     });
     let mut stale_edition = edition.clone();
     stale_edition["expression_revision"] = json!(1);
-    let stale = refused(&mut app, json!({"operation":"edition_create","edition":stale_edition,"actor":"human:author"}));
+    let stale = refused(
+        &mut app,
+        json!({"operation":"edition_create","edition":stale_edition,"actor":"human:author"}),
+    );
     assert!(stale.contains("current revision"), "{stale}");
-    let created = apply(&mut app, json!({"operation":"edition_create","edition":edition,"actor":"human:author"}));
+    let created = apply(
+        &mut app,
+        json!({"operation":"edition_create","edition":edition,"actor":"human:author"}),
+    );
     assert_eq!(created["state"], "edition");
     assert_eq!(created["expression_opened"], false);
     // Re-opening an edition never opens or rewrites the Expression.
-    let opened = apply(&mut app, json!({"operation":"edition_inspect","edition_ref":"edition:lesson-1"}));
+    let opened = apply(
+        &mut app,
+        json!({"operation":"edition_inspect","edition_ref":"edition:lesson-1"}),
+    );
     assert_eq!(opened["state"], "edition");
     assert_eq!(opened["expression_opened"], false);
-    assert_eq!(inspect(&mut app, "expression:lesson")["document"]["revision"], 2);
+    assert_eq!(
+        inspect(&mut app, "expression:lesson")["document"]["revision"],
+        2
+    );
 
     // Library-as-view: one index reading over the same refs the Library reads.
     let index = apply(&mut app, json!({"operation":"index"}));
@@ -345,9 +383,12 @@ fn profiles_define_lineage_resolution_editions_and_index() {
         .iter()
         .find(|e| e["expression_ref"] == "expression:lesson")
         .unwrap();
-    assert_eq!(entry["collections"], json!(["library","lessons"]));
+    assert_eq!(entry["collections"], json!(["library", "lessons"]));
     assert_eq!(entry["profiles"][0]["profile_ref"], "profile:editorial");
-    assert_eq!(index["collections"]["lessons"], json!(["expression:lesson"]));
+    assert_eq!(
+        index["collections"]["lessons"],
+        json!(["expression:lesson"])
+    );
     assert_eq!(index["editions"][0]["edition_ref"], "edition:lesson-1");
 }
 
@@ -362,7 +403,10 @@ fn profile_domains_and_automation_stay_inside_the_bounded_vocabulary() {
         "automation_defaults":{"scale":{"min":0.5,"max":1.5,"rate_hz":0.2,"waveform":"sine"}},
         "provenance":[]
     });
-    let error = refused(&mut app, json!({"operation":"profile_define","profile":wild,"actor":"human:author"}));
+    let error = refused(
+        &mut app,
+        json!({"operation":"profile_define","profile":wild,"actor":"human:author"}),
+    );
     // "mood" is outside the bounded parameter vocabulary: unsupported
     // parameters fail closed.
     assert!(error.contains("parameter vocabulary"), "{error}");
@@ -373,7 +417,10 @@ fn profile_domains_and_automation_stay_inside_the_bounded_vocabulary() {
         "permitted_parameter_domains":{"scale":{"min":0.0001,"max":50}},
         "provenance":[]
     });
-    let error = refused(&mut app, json!({"operation":"profile_define","profile":domain,"actor":"human:author"}));
+    let error = refused(
+        &mut app,
+        json!({"operation":"profile_define","profile":domain,"actor":"human:author"}),
+    );
     assert!(error.contains("must sit inside"), "{error}");
     let mut app = Application::default();
     let glyph_automation = json!({
@@ -382,7 +429,10 @@ fn profile_domains_and_automation_stay_inside_the_bounded_vocabulary() {
         "automation_defaults":{"glyph":{"min":0.0,"max":1.0,"rate_hz":0.2,"waveform":"sine"}},
         "provenance":[]
     });
-    let error = refused(&mut app, json!({"operation":"profile_define","profile":glyph_automation,"actor":"human:author"}));
+    let error = refused(
+        &mut app,
+        json!({"operation":"profile_define","profile":glyph_automation,"actor":"human:author"}),
+    );
     assert!(error.contains("numeric parameters"), "{error}");
 }
 
@@ -419,34 +469,66 @@ fn profiles_carry_the_full_authoring_material_and_refuse_unknown_keys() {
         },
         "provenance":[]
     });
-    let defined = apply(&mut app, json!({"operation":"profile_define","profile":profile,"actor":"human:author"}));
+    let defined = apply(
+        &mut app,
+        json!({"operation":"profile_define","profile":profile,"actor":"human:author"}),
+    );
     assert_eq!(defined["state"], "profile");
-    assert_eq!(defined["resolved_defaults"]["material"]["value"]["sound"]["frequencyHz"], 432);
-    assert_eq!(defined["resolved_defaults"]["material"]["value"]["force"]["kind"], "vortex");
-    assert_eq!(defined["resolved_defaults"]["material"]["value"]["layers"][0]["tint"], "#88aaff");
+    assert_eq!(
+        defined["resolved_defaults"]["material"]["value"]["sound"]["frequencyHz"],
+        432
+    );
+    assert_eq!(
+        defined["resolved_defaults"]["material"]["value"]["force"]["kind"],
+        "vortex"
+    );
+    assert_eq!(
+        defined["resolved_defaults"]["material"]["value"]["layers"][0]["tint"],
+        "#88aaff"
+    );
     // Rich material rotation is in degrees (the authoring Entity's unit).
-    assert_eq!(defined["resolved_defaults"]["material"]["value"]["rotation"], 90);
+    assert_eq!(
+        defined["resolved_defaults"]["material"]["value"]["rotation"],
+        90
+    );
 
     // An Expression adopts it with a rich material override.
     create(&mut app, "expression:cast");
     let mut variation = rich_material();
     variation["tint"] = json!("#ff0066");
-    let data = edit(&mut app, "expression:cast", 1, json!([{"change":"profile_adopt","adoption":{
+    let data = edit(
+        &mut app,
+        "expression:cast",
+        1,
+        json!([{"change":"profile_adopt","adoption":{
         "profile_ref":"profile:character","revision":1,
-        "overridden_parameters":{"material":{"value":variation,"automation":null}}}}]));
-    assert_eq!(data["document"]["profiles"][0]["overridden_parameters"]["material"]["value"]["tint"], "#ff0066");
+        "overridden_parameters":{"material":{"value":variation,"automation":null}}}}]),
+    );
+    assert_eq!(
+        data["document"]["profiles"][0]["overridden_parameters"]["material"]["value"]["tint"],
+        "#ff0066"
+    );
 
     // Genuinely unknown or unsafe material fails closed.
     for (bad, needle) in [
         (json!({"mood":"dark"}), "Unsupported material field"),
         (json!({"sound":{"enabled":true,"gain":4}}), "gain"),
-        (json!({"sound":{"enabled":true,"script":"x"}}), "Unsupported sound field"),
-        (json!({"force":{"kind":"explode","strength":1}}), "Force kind"),
+        (
+            json!({"sound":{"enabled":true,"script":"x"}}),
+            "Unsupported sound field",
+        ),
+        (
+            json!({"force":{"kind":"explode","strength":1}}),
+            "Force kind",
+        ),
         (json!({"tint":"red"}), "hex colour"),
         (json!({"rotation":40000}), "rotation"),
         (json!({"native":{"__proto__":{}}}), "Unsafe"),
         (json!({"native":"engine"}), "native"),
-        (json!({"source":{"kind":"image","image":{"dataUrl":"https://example.com/x.png"}}}), "embedded"),
+        (
+            json!({"source":{"kind":"image","image":{"dataUrl":"https://example.com/x.png"}}}),
+            "embedded",
+        ),
         (json!({"layers":[{"__proto__":{}}]}), "Unsafe"),
     ] {
         let mut app = Application::default();
@@ -456,7 +538,10 @@ fn profiles_carry_the_full_authoring_material_and_refuse_unknown_keys() {
             "material_defaults":{"material":{"value":bad,"automation":null}},
             "provenance":[]
         });
-        let error = refused(&mut app, json!({"operation":"profile_define","profile":profile,"actor":"human:author"}));
+        let error = refused(
+            &mut app,
+            json!({"operation":"profile_define","profile":profile,"actor":"human:author"}),
+        );
         assert!(error.contains(needle), "{needle}: {error}");
     }
     // Material automation belongs to the material's own sequence.
@@ -467,7 +552,10 @@ fn profiles_carry_the_full_authoring_material_and_refuse_unknown_keys() {
         "material_defaults":{"material":{"value":rich_material(),"automation":{"min":0.0,"max":1.0,"rate_hz":0.2,"waveform":"sine"}}},
         "provenance":[]
     });
-    let error = refused(&mut app, json!({"operation":"profile_define","profile":automated,"actor":"human:author"}));
+    let error = refused(
+        &mut app,
+        json!({"operation":"profile_define","profile":automated,"actor":"human:author"}),
+    );
     assert!(error.contains("sequence"), "{error}");
 }
 
@@ -518,7 +606,10 @@ fn assets_index_real_use_and_never_pre_decide_it() {
         ])),"actor":"human:b"}),
     );
     assert_eq!(readmitted["new_occurrences"], 1);
-    let traversal = apply(&mut app, json!({"operation":"asset_traverse","asset_ref":"asset:lesson-glyph"}));
+    let traversal = apply(
+        &mut app,
+        json!({"operation":"asset_traverse","asset_ref":"asset:lesson-glyph"}),
+    );
     assert_eq!(traversal["state"], "asset");
     assert_eq!(traversal["readings"].as_array().unwrap().len(), 1);
     let reading = &traversal["readings"][0];
@@ -531,8 +622,14 @@ fn assets_index_real_use_and_never_pre_decide_it() {
     // The same ref with a different digest is a different claim, refused.
     let mut forged = asset(json!([]));
     forged["digest"] = json!("ffffffffffffffff");
-    let error = refused(&mut app, json!({"operation":"asset_admit","asset":forged,"actor":"human:a"}));
-    assert!(error.contains("different kind, source or digest"), "{error}");
+    let error = refused(
+        &mut app,
+        json!({"operation":"asset_admit","asset":forged,"actor":"human:a"}),
+    );
+    assert!(
+        error.contains("different kind, source or digest"),
+        "{error}"
+    );
     // subject/ref → available visual assets → every occurrence.
     let by_subject = apply(
         &mut app,
@@ -540,7 +637,13 @@ fn assets_index_real_use_and_never_pre_decide_it() {
     );
     assert_eq!(by_subject["state"], "asset_subjects");
     assert_eq!(by_subject["assets"].as_array().unwrap().len(), 1);
-    assert_eq!(by_subject["assets"][0]["occurrences"].as_array().unwrap().len(), 2);
+    assert_eq!(
+        by_subject["assets"][0]["occurrences"]
+            .as_array()
+            .unwrap()
+            .len(),
+        2
+    );
     let none = apply(
         &mut app,
         json!({"operation":"asset_subject","subject_ref":"central:file:other.md"}),
@@ -595,8 +698,14 @@ fn substrate_edits_are_atomic_and_fork_remaps_local_refs_only() {
         json!({"operation":"fork","expression_ref":"expression:test","expected_revision":3,"new_expression_ref":"expression:fork","actor":"human:author"}),
     );
     let scene = &fork["document"]["scenes"][0];
-    assert_eq!(scene["body"]["subject_ref"], "central:file:lessons/lesson.md");
-    assert_eq!(scene["triggers"][0]["trigger_ref"], "expression:fork:trigger:open");
+    assert_eq!(
+        scene["body"]["subject_ref"],
+        "central:file:lessons/lesson.md"
+    );
+    assert_eq!(
+        scene["triggers"][0]["trigger_ref"],
+        "expression:fork:trigger:open"
+    );
     assert_eq!(
         scene["triggers"][0]["target"]["target_ref"],
         "central:file:lessons/lesson.md"
@@ -611,7 +720,9 @@ fn substrate_edits_are_atomic_and_fork_remaps_local_refs_only() {
     let reopened = fresh
         .apply(
             &CentralClient::discover(),
-            request(json!({"operation":"open","document":export["document"],"actor":"human:author"})),
+            request(
+                json!({"operation":"open","document":export["document"],"actor":"human:author"}),
+            ),
         )
         .unwrap()
         .0;

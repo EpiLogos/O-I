@@ -249,7 +249,12 @@ pub enum ReuseKind {
     Gesture,
 }
 impl ReuseKind {
-    pub const ALL: [ReuseKind; 4] = [Self::Character, Self::Scene, Self::Expression, Self::Gesture];
+    pub const ALL: [ReuseKind; 4] = [
+        Self::Character,
+        Self::Scene,
+        Self::Expression,
+        Self::Gesture,
+    ];
     pub fn as_str(self) -> &'static str {
         match self {
             Self::Character => "character",
@@ -355,7 +360,9 @@ pub struct Reuse {
 pub fn role_name(value: &str) -> Result<(), String> {
     if value.is_empty()
         || value.len() > 64
-        || !value.bytes().all(|c| c.is_ascii_alphanumeric() || b"-_.".contains(&c))
+        || !value
+            .bytes()
+            .all(|c| c.is_ascii_alphanumeric() || b"-_.".contains(&c))
     {
         return Err(format!("Invalid role/state/gesture name {value:?}"));
     }
@@ -466,9 +473,18 @@ impl Reuse {
     /// playback entries (and an entry/preview pointing at it) are dropped, as
     /// are text roles whose layer no remaining Scene carries.
     pub fn forget_scene(&mut self, scene_ref: &str, remaining: &[Scene]) {
-        let dropped: Vec<String> = self.states.iter().filter(|(_, r)| r.as_str() == scene_ref).map(|(n, _)| n.clone()).collect();
+        let dropped: Vec<String> = self
+            .states
+            .iter()
+            .filter(|(_, r)| r.as_str() == scene_ref)
+            .map(|(n, _)| n.clone())
+            .collect();
         self.states.retain(|_, r| r != scene_ref);
-        if self.preview_state.as_ref().is_some_and(|p| dropped.contains(p)) {
+        if self
+            .preview_state
+            .as_ref()
+            .is_some_and(|p| dropped.contains(p))
+        {
             self.preview_state = None;
         }
         self.gestures.retain(|_, g| g.scene_ref != scene_ref);
@@ -483,7 +499,8 @@ impl Reuse {
             .flatten()
             .filter_map(|t| t["id"].as_str().map(str::to_owned))
             .collect();
-        self.roles.retain(|r| r.text_id.as_ref().is_none_or(|t| text_ids.contains(t)));
+        self.roles
+            .retain(|r| r.text_id.as_ref().is_none_or(|t| text_ids.contains(t)));
     }
 
     /// Remap Expression-local refs on a native fork (the same rule the fork
@@ -516,19 +533,41 @@ impl Reuse {
 #[derive(Clone, Debug, Deserialize, Serialize, PartialEq)]
 #[serde(tag = "change", rename_all = "snake_case", deny_unknown_fields)]
 pub enum Change {
-    Rename { title: String },
-    CompositionSet { presentation: crate::expression_scene::Composition },
+    Rename {
+        title: String,
+    },
+    CompositionSet {
+        presentation: crate::expression_scene::Composition,
+    },
     SceneCreate {
         scene_ref: String,
         title: String,
     },
-    SceneRename { scene_ref: String, title: String },
-    SceneRemove { scene_ref: String },
-    SceneMaterialSet { scene_ref: String, presentation: crate::expression_scene::Presentation },
-    SceneMaterialClear { scene_ref: String },
-    SceneBlueprintBind { scene_ref: String, binding: crate::expression_blueprint::Binding },
-    SceneBlueprintTransform { scene_ref: String, transform: crate::expression_blueprint::Transform },
-    SceneBlueprintRelease { scene_ref: String },
+    SceneRename {
+        scene_ref: String,
+        title: String,
+    },
+    SceneRemove {
+        scene_ref: String,
+    },
+    SceneMaterialSet {
+        scene_ref: String,
+        presentation: crate::expression_scene::Presentation,
+    },
+    SceneMaterialClear {
+        scene_ref: String,
+    },
+    SceneBlueprintBind {
+        scene_ref: String,
+        binding: crate::expression_blueprint::Binding,
+    },
+    SceneBlueprintTransform {
+        scene_ref: String,
+        transform: crate::expression_blueprint::Transform,
+    },
+    SceneBlueprintRelease {
+        scene_ref: String,
+    },
     SceneReorder {
         scene_refs: Vec<String>,
     },
@@ -879,22 +918,61 @@ pub(crate) fn bounds(key: &str) -> Option<(f64, f64)> {
     }
 }
 pub(crate) fn parameter(key: &str, p: &Parameter) -> Result<(), String> {
-    if matches!(key, "shape" | "kind" | "yantra" | "force_mode" | "ascii" | "image") {
-        if p.automation.is_some() { return Err("Text/material carrier automation is unsupported".into()); }
+    if matches!(
+        key,
+        "shape" | "kind" | "yantra" | "force_mode" | "ascii" | "image"
+    ) {
+        if p.automation.is_some() {
+            return Err("Text/material carrier automation is unsupported".into());
+        }
         let value = p.value.as_str().ok_or("Material carrier must be text")?;
         let valid = match key {
-            "shape" => matches!(value, "glyph" | "ring" | "disc" | "square" | "triangle" | "yantra" | "cymatic"),
+            "shape" => matches!(
+                value,
+                "glyph" | "ring" | "disc" | "square" | "triangle" | "yantra" | "cymatic"
+            ),
             "kind" => matches!(value, "formation" | "pin"),
-            "yantra" => matches!(value, "muladhara" | "svadhisthana" | "manipura" | "anahata" | "vishuddha" | "ajna" | "sahasrara"),
+            "yantra" => matches!(
+                value,
+                "muladhara"
+                    | "svadhisthana"
+                    | "manipura"
+                    | "anahata"
+                    | "vishuddha"
+                    | "ajna"
+                    | "sahasrara"
+            ),
             "force_mode" => matches!(value, "none" | "attract" | "repel" | "vortex"),
-            "ascii" => value.len() <= 32_768 && !value.chars().any(|c| c.is_control() && c != '\n' && c != '\r' && c != '\t'),
-            "image" => value.is_empty() || (value.len() <= 384 * 1024 &&
-                ["data:image/png;base64,", "data:image/jpeg;base64,", "data:image/webp;base64,"].iter()
-                    .any(|prefix| value.strip_prefix(prefix).is_some_and(|bytes|
-                        !bytes.is_empty() && bytes.len() % 4 == 0 && bytes.bytes().all(|b| b.is_ascii_alphanumeric() || b"+/=".contains(&b))))),
+            "ascii" => {
+                value.len() <= 32_768
+                    && !value
+                        .chars()
+                        .any(|c| c.is_control() && c != '\n' && c != '\r' && c != '\t')
+            }
+            "image" => {
+                value.is_empty()
+                    || (value.len() <= 384 * 1024
+                        && [
+                            "data:image/png;base64,",
+                            "data:image/jpeg;base64,",
+                            "data:image/webp;base64,",
+                        ]
+                        .iter()
+                        .any(|prefix| {
+                            value.strip_prefix(prefix).is_some_and(|bytes| {
+                                !bytes.is_empty()
+                                    && bytes.len() % 4 == 0
+                                    && bytes
+                                        .bytes()
+                                        .all(|b| b.is_ascii_alphanumeric() || b"+/=".contains(&b))
+                            })
+                        }))
+            }
             _ => false,
         };
-        if !valid { return Err(format!("Invalid or unsupported {key} material")); }
+        if !valid {
+            return Err(format!("Invalid or unsupported {key} material"));
+        }
     } else if key == "glyph" {
         if !p
             .value
@@ -941,7 +1019,9 @@ impl Document {
         id(&self.expression_ref, "expression:")?;
         text(&self.title)?;
         readings(&self.provenance)?;
-        if let Some(presentation) = &self.presentation { presentation.validate()?; }
+        if let Some(presentation) = &self.presentation {
+            presentation.validate()?;
+        }
         if self.scenes.is_empty()
             || self.scenes.len() > 64
             || self.entities.len() > DOCUMENT_MEMBERS
@@ -1033,7 +1113,9 @@ impl Document {
                 &format!("{}:relation:", self.expression_ref),
             )?;
             reading(&r.relation)?;
-            if let Some(owner) = &r.native_owner { text(owner)?; }
+            if let Some(owner) = &r.native_owner {
+                text(owner)?;
+            }
             readings(&r.provenance)?;
             if key != &r.binding_ref
                 || !self.entities.contains_key(&r.from_entity_ref)
@@ -1059,9 +1141,13 @@ impl Document {
             if self.selection.entity_ref.is_some() {
                 return Err("Select one entity or relation occurrence, not both".into());
             }
-            let relation = self.relations.get(binding_ref).ok_or("Selected relation is absent")?;
+            let relation = self
+                .relations
+                .get(binding_ref)
+                .ok_or("Selected relation is absent")?;
             if !scene.entity_refs.contains(&relation.from_entity_ref)
-                || !scene.entity_refs.contains(&relation.to_entity_ref) {
+                || !scene.entity_refs.contains(&relation.to_entity_ref)
+            {
                 return Err("Selected relation endpoints are outside selected scene".into());
             }
         }
@@ -1132,8 +1218,14 @@ impl Document {
     }
     fn change(&mut self, c: Change) -> Result<(), String> {
         match c {
-            Change::Rename { title } => { text(&title)?; self.title = title; }
-            Change::CompositionSet { presentation } => { presentation.validate()?; self.presentation = Some(presentation); }
+            Change::Rename { title } => {
+                text(&title)?;
+                self.title = title;
+            }
+            Change::CompositionSet { presentation } => {
+                presentation.validate()?;
+                self.presentation = Some(presentation);
+            }
             Change::SceneCreate { scene_ref, title } => {
                 if self.scenes.iter().any(|s| s.scene_ref == scene_ref) {
                     return Err("Scene already exists".into());
@@ -1151,33 +1243,57 @@ impl Document {
             Change::SceneRename { scene_ref, title } => {
                 text(&title)?;
                 let scene = self.scene(&scene_ref)?;
-                if let Some(presentation) = &mut scene.presentation { presentation.scene["name"] = json!(title); }
+                if let Some(presentation) = &mut scene.presentation {
+                    presentation.scene["name"] = json!(title);
+                }
                 scene.title = title;
             }
             Change::SceneRemove { scene_ref } => {
                 self.scene(&scene_ref)?;
-                if self.scenes.len() == 1 { return Err("An Expression retains at least one Scene".into()); }
+                if self.scenes.len() == 1 {
+                    return Err("An Expression retains at least one Scene".into());
+                }
                 self.scenes.retain(|scene| scene.scene_ref != scene_ref);
                 if let Some(reuse) = &mut self.reuse {
                     reuse.forget_scene(&scene_ref, &self.scenes);
                 }
                 if self.selection.scene_ref == scene_ref {
-                    self.selection = Selection { scene_ref: self.scenes[0].scene_ref.clone(), entity_ref: None, relation_ref: None };
+                    self.selection = Selection {
+                        scene_ref: self.scenes[0].scene_ref.clone(),
+                        entity_ref: None,
+                        relation_ref: None,
+                    };
                 }
                 // Referencing triggers remain subject to document validation:
                 // remove/reconnect them explicitly in the same atomic edit.
             }
-            Change::SceneMaterialSet { scene_ref, presentation } => {
-                crate::expression_blueprint::preserve(self.scene(&scene_ref)?.presentation.as_ref(), Some(&presentation))?;
+            Change::SceneMaterialSet {
+                scene_ref,
+                presentation,
+            } => {
+                crate::expression_blueprint::preserve(
+                    self.scene(&scene_ref)?.presentation.as_ref(),
+                    Some(&presentation),
+                )?;
                 self.scene(&scene_ref)?.presentation = Some(presentation);
             }
             Change::SceneMaterialClear { scene_ref } => {
-                crate::expression_blueprint::preserve(self.scene(&scene_ref)?.presentation.as_ref(), None)?;
+                crate::expression_blueprint::preserve(
+                    self.scene(&scene_ref)?.presentation.as_ref(),
+                    None,
+                )?;
                 self.scene(&scene_ref)?.presentation = None;
             }
-            Change::SceneBlueprintBind { scene_ref, binding } => crate::expression_blueprint::bind(self, &scene_ref, binding)?,
-            Change::SceneBlueprintTransform { scene_ref, transform } => crate::expression_blueprint::transform(self, &scene_ref, transform)?,
-            Change::SceneBlueprintRelease { scene_ref } => crate::expression_blueprint::release(self, &scene_ref)?,
+            Change::SceneBlueprintBind { scene_ref, binding } => {
+                crate::expression_blueprint::bind(self, &scene_ref, binding)?
+            }
+            Change::SceneBlueprintTransform {
+                scene_ref,
+                transform,
+            } => crate::expression_blueprint::transform(self, &scene_ref, transform)?,
+            Change::SceneBlueprintRelease { scene_ref } => {
+                crate::expression_blueprint::release(self, &scene_ref)?
+            }
             Change::SceneReorder { scene_refs } => {
                 if scene_refs.len() != self.scenes.len()
                     || scene_refs.iter().collect::<BTreeSet<_>>().len() != scene_refs.len()
@@ -1201,12 +1317,16 @@ impl Document {
             } => {
                 let scene = self.scene(&scene_ref)?;
                 if let Some(presentation) = &mut scene.presentation {
-                    for reference in scene.entity_refs.iter().filter(|reference| !entity_refs.contains(reference)) {
+                    for reference in scene
+                        .entity_refs
+                        .iter()
+                        .filter(|reference| !entity_refs.contains(reference))
+                    {
                         crate::expression_scene::remove_entity(presentation, reference);
                     }
                 }
                 scene.entity_refs = entity_refs;
-            },
+            }
             Change::EntityAdd {
                 scene_ref,
                 entity_ref,
@@ -1243,7 +1363,9 @@ impl Document {
                 }
                 for s in &mut self.scenes {
                     s.entity_refs.retain(|r| r != &entity_ref);
-                    if let Some(presentation) = &mut s.presentation { crate::expression_scene::remove_entity(presentation, &entity_ref); }
+                    if let Some(presentation) = &mut s.presentation {
+                        crate::expression_scene::remove_entity(presentation, &entity_ref);
+                    }
                 }
                 self.relations.retain(|_, r| {
                     r.from_entity_ref != entity_ref && r.to_entity_ref != entity_ref
@@ -1251,7 +1373,12 @@ impl Document {
                 if self.selection.entity_ref.as_ref() == Some(&entity_ref) {
                     self.selection.entity_ref = None;
                 }
-                if self.selection.relation_ref.as_ref().is_some_and(|r| !self.relations.contains_key(r)) {
+                if self
+                    .selection
+                    .relation_ref
+                    .as_ref()
+                    .is_some_and(|r| !self.relations.contains_key(r))
+                {
                     self.selection.relation_ref = None;
                 }
             }
@@ -1271,8 +1398,15 @@ impl Document {
                     self.selection.relation_ref = None;
                 }
             }
-            Change::RelationFocus { scene_ref, binding_ref } => {
-                self.selection = Selection { scene_ref, entity_ref: None, relation_ref: Some(binding_ref) };
+            Change::RelationFocus {
+                scene_ref,
+                binding_ref,
+            } => {
+                self.selection = Selection {
+                    scene_ref,
+                    entity_ref: None,
+                    relation_ref: Some(binding_ref),
+                };
             }
             Change::Focus {
                 scene_ref,
@@ -1298,11 +1432,19 @@ impl Document {
                 }
                 e.parameters.insert(
                     key.clone(),
-                    Parameter { value: value.clone(), automation: None },
+                    Parameter {
+                        value: value.clone(),
+                        automation: None,
+                    },
                 );
                 for scene in &mut self.scenes {
                     if let Some(presentation) = &mut scene.presentation {
-                        crate::expression_scene::set_parameter(presentation, &entity_ref, &key, &value);
+                        crate::expression_scene::set_parameter(
+                            presentation,
+                            &entity_ref,
+                            &key,
+                            &value,
+                        );
                     }
                 }
             }
@@ -1341,12 +1483,14 @@ impl Document {
             Change::SceneTriggerAttach { scene_ref, trigger } => {
                 {
                     let scene = self.scene(&scene_ref)?;
-                    if scene.triggers.iter().any(|t| t.trigger_ref == trigger.trigger_ref) {
+                    if scene
+                        .triggers
+                        .iter()
+                        .any(|t| t.trigger_ref == trigger.trigger_ref)
+                    {
                         return Err("Scene trigger already exists".into());
                     }
-                    if scene.triggers.len()
-                        >= crate::expression_trigger::MAX_TRIGGERS_PER_SCENE
-                    {
+                    if scene.triggers.len() >= crate::expression_trigger::MAX_TRIGGERS_PER_SCENE {
                         return Err("Scene trigger budget exceeded".into());
                     }
                     scene.triggers.push(trigger);
@@ -1368,7 +1512,8 @@ impl Document {
             }
             Change::ProfileAdopt { adoption } => {
                 adoption.validate()?;
-                self.profiles.retain(|p| p.profile_ref != adoption.profile_ref);
+                self.profiles
+                    .retain(|p| p.profile_ref != adoption.profile_ref);
                 self.profiles.push(adoption);
             }
             Change::ProfileRelease { profile_ref } => {
@@ -1406,11 +1551,19 @@ impl Application {
     }
     pub fn selected_subject(&self, expression_ref: &str) -> Option<crate::refs::SemanticRef> {
         let d = self.documents.get(expression_ref)?;
-        if let Some(relation) = d.selection.relation_ref.as_ref().and_then(|r| d.relations.get(r)) {
+        if let Some(relation) = d
+            .selection
+            .relation_ref
+            .as_ref()
+            .and_then(|r| d.relations.get(r))
+        {
             return Some(crate::refs::SemanticRef {
                 ref_id: relation.relation.r#ref.clone(),
                 kind: "relation".into(),
-                native_owner: relation.native_owner.clone().unwrap_or_else(|| "unknown".into()),
+                native_owner: relation
+                    .native_owner
+                    .clone()
+                    .unwrap_or_else(|| "unknown".into()),
                 provenance: crate::refs::RefProvenance {
                     source: relation.binding_ref.clone(),
                     revision: Some(relation.relation.revision.clone()),
@@ -1456,7 +1609,9 @@ impl Application {
                 // the Expressions panel present, now disclosed rather than
                 // invented from ref order.
                 let mut entries: Vec<&Document> = self.documents.values().collect();
-                entries.sort_by_key(|d| std::cmp::Reverse(self.touched.get(&d.expression_ref).copied().unwrap_or(0)));
+                entries.sort_by_key(|d| {
+                    std::cmp::Reverse(self.touched.get(&d.expression_ref).copied().unwrap_or(0))
+                });
                 json!({"schema":"oi.expression-list/v1","expressions":entries.iter().map(|d|json!({"expression_ref":d.expression_ref,"revision":d.revision,"title":d.title,"dirty":self.saved.get(&d.expression_ref)!=Some(&d.revision),"last_touched_unix":self.touched.get(&d.expression_ref).copied().unwrap_or(0)})).collect::<Vec<_>>()})
             }
             Request::Inspect { expression_ref } => self.inspect(&expression_ref)?,
@@ -1556,12 +1711,19 @@ impl Application {
                     for t in &mut s.triggers {
                         t.trigger_ref = map(&t.trigger_ref);
                         match &mut t.target {
-                            crate::expression_trigger::TriggerTarget::ExpressionOperation { expression_ref: referenced, .. } => {
+                            crate::expression_trigger::TriggerTarget::ExpressionOperation {
+                                expression_ref: referenced,
+                                ..
+                            } => {
                                 if let Some(remapped) = local(referenced) {
                                     *referenced = remapped;
                                 }
                             }
-                            crate::expression_trigger::TriggerTarget::Portal { subject_ref, scene_ref, .. } => {
+                            crate::expression_trigger::TriggerTarget::Portal {
+                                subject_ref,
+                                scene_ref,
+                                ..
+                            } => {
                                 if let Some(remapped) = local(subject_ref) {
                                     *subject_ref = remapped;
                                 }
@@ -1571,7 +1733,10 @@ impl Application {
                                     }
                                 }
                             }
-                            crate::expression_trigger::TriggerTarget::Navigate { scene_ref, entity_ref } => {
+                            crate::expression_trigger::TriggerTarget::Navigate {
+                                scene_ref,
+                                entity_ref,
+                            } => {
                                 if let Some(scene) = scene_ref {
                                     if let Some(remapped) = local(scene) {
                                         *scene = remapped;
@@ -1609,11 +1774,19 @@ impl Application {
                     .collect();
                 for scene in &mut d.scenes {
                     if let Some(presentation) = &mut scene.presentation {
-                        crate::expression_scene::fork(presentation, &expression_ref, &new_expression_ref);
+                        crate::expression_scene::fork(
+                            presentation,
+                            &expression_ref,
+                            &new_expression_ref,
+                        );
                     }
                 }
-                if let Some(presentation) = &mut d.presentation { presentation.fork(&expression_ref, &new_expression_ref); }
-                if let Some(reuse) = &mut d.reuse { reuse.fork(&expression_ref, &new_expression_ref); }
+                if let Some(presentation) = &mut d.presentation {
+                    presentation.fork(&expression_ref, &new_expression_ref);
+                }
+                if let Some(reuse) = &mut d.reuse {
+                    reuse.fork(&expression_ref, &new_expression_ref);
+                }
                 d.selection.scene_ref = map(&d.selection.scene_ref);
                 d.selection.entity_ref = d.selection.entity_ref.map(|r| map(&r));
                 d.selection.relation_ref = d.selection.relation_ref.map(|r| map(&r));
@@ -1736,7 +1909,7 @@ impl Application {
                 });
                 d.validate()?;
                 self.documents.insert(expression_ref.clone(), d);
-                    self.touched.insert(expression_ref.clone(), unix_now());
+                self.touched.insert(expression_ref.clone(), unix_now());
                 changed = Some(Changed {
                     expression_ref: expression_ref.clone(),
                     revision: expected_revision + 1,
@@ -1827,7 +2000,7 @@ impl Application {
                 });
                 d.validate()?;
                 self.documents.insert(expression_ref.clone(), d);
-                    self.touched.insert(expression_ref.clone(), unix_now());
+                self.touched.insert(expression_ref.clone(), unix_now());
                 changed = Some(Changed {
                     expression_ref: expression_ref.clone(),
                     revision: expected_revision + 1,
@@ -1845,11 +2018,23 @@ impl Application {
                 }
                 json!({"state":"exported","audience":"local_private","document":self.document(&expression_ref)?,"dynamic_checkpoint":false})
             }
-            Request::SaveAs { expression_ref, expected_revision, parent, name, operation_ref, actor, actor_kind } => {
+            Request::SaveAs {
+                expression_ref,
+                expected_revision,
+                parent,
+                name,
+                operation_ref,
+                actor,
+                actor_kind,
+            } => {
                 text(&actor)?;
                 text(&operation_ref)?;
-                if !["human", "agent"].contains(&actor_kind.as_str()) { return Err("actor_kind must be human or agent".into()); }
-                if let Some(conflict) = self.conflict(&expression_ref, expected_revision)? { return Ok((conflict, None)); }
+                if !["human", "agent"].contains(&actor_kind.as_str()) {
+                    return Err("actor_kind must be human or agent".into());
+                }
+                if let Some(conflict) = self.conflict(&expression_ref, expected_revision)? {
+                    return Ok((conflict, None));
+                }
                 let document = self.document(&expression_ref)?.clone();
                 let content = serde_json::to_string_pretty(&document).map_err(|e| e.to_string())?;
                 // The explicit directory already supplies root identity. Suppress the
@@ -1907,7 +2092,13 @@ impl Application {
                             && data["revision"].as_str().is_some_and(|r| !r.is_empty())
                         {
                             let document = self.document(&expression_ref)?.clone();
-                            self.accept_saved(client, &document, location, "central.files.write", data)
+                            self.accept_saved(
+                                client,
+                                &document,
+                                location,
+                                "central.files.write",
+                                data,
+                            )
                         } else {
                             json!({"state":"save_refused","owner_operation":"central.files.write","data":data})
                         }
@@ -1993,7 +2184,8 @@ impl Application {
                 } else if self.profiles.len() >= 64 {
                     return Err("Profile budget exceeded".into());
                 }
-                self.profiles.insert(profile.profile_ref.clone(), profile.clone());
+                self.profiles
+                    .insert(profile.profile_ref.clone(), profile.clone());
                 let resolved = crate::expression_profile::resolve_lineage(
                     &self.profiles,
                     &profile.profile_ref,
@@ -2005,21 +2197,26 @@ impl Application {
                     .profiles
                     .get(&profile_ref)
                     .ok_or("Profile is not defined")?;
-                let resolved = crate::expression_profile::resolve_lineage(
-                    &self.profiles,
-                    &profile_ref,
-                )?;
+                let resolved =
+                    crate::expression_profile::resolve_lineage(&self.profiles, &profile_ref)?;
                 json!({"state":"profile","profile":profile,"resolved_defaults":resolved})
             }
-            Request::ProfileResolve { native_owner, carrier } => {
+            Request::ProfileResolve {
+                native_owner,
+                carrier,
+            } => {
                 text(&native_owner)?;
                 let admitted = self
                     .profiles
                     .values()
                     .find(|p| p.admits(&native_owner, carrier));
                 match admitted {
-                    Some(profile) => json!({"state":"resolved","profile_ref":profile.profile_ref,"revision":profile.revision}),
-                    None => json!({"state":"unresolved","detail":"No defined profile admits this subject kind"}),
+                    Some(profile) => {
+                        json!({"state":"resolved","profile_ref":profile.profile_ref,"revision":profile.revision})
+                    }
+                    None => {
+                        json!({"state":"unresolved","detail":"No defined profile admits this subject kind"})
+                    }
                 }
             }
             Request::EditionCreate { edition, actor } => {
@@ -2029,7 +2226,9 @@ impl Application {
                 // the portable relation is truthful at creation.
                 let current = self.document(&edition.expression_ref)?.revision;
                 if current != edition.expression_revision {
-                    return Err("An edition must name the current revision of an open Expression".into());
+                    return Err(
+                        "An edition must name the current revision of an open Expression".into(),
+                    );
                 }
                 if let Some(profile_ref) = &edition.profile_ref {
                     let profile = self
@@ -2047,7 +2246,8 @@ impl Application {
                 } else if self.editions.len() >= 64 {
                     return Err("Edition budget exceeded".into());
                 }
-                self.editions.insert(edition.edition_ref.clone(), edition.clone());
+                self.editions
+                    .insert(edition.edition_ref.clone(), edition.clone());
                 json!({"state":"edition","edition":edition,"expression_opened":false})
             }
             Request::EditionInspect { edition_ref } => {
@@ -2092,13 +2292,19 @@ impl Application {
             }
             Request::AssetTraverse { asset_ref } => self.assets.traverse(&asset_ref)?,
             Request::AssetSubject { subject_ref } => self.assets.for_subject(&subject_ref),
-            Request::Close { expression_ref, actor } => {
+            Request::Close {
+                expression_ref,
+                actor,
+            } => {
                 text(&actor)?;
                 let revision = self.document(&expression_ref)?.revision;
                 let saved = self.saved.get(&expression_ref).copied();
                 if saved != Some(revision) {
-                    return Ok((json!({"state":"dirty","expression_ref":expression_ref,"revision":revision,"saved_revision":saved,
-                        "detail":"The Expression has unsaved work; save it before closing (close never discards work)"}), None));
+                    return Ok((
+                        json!({"state":"dirty","expression_ref":expression_ref,"revision":revision,"saved_revision":saved,
+                        "detail":"The Expression has unsaved work; save it before closing (close never discards work)"}),
+                        None,
+                    ));
                 }
                 self.documents.remove(&expression_ref);
                 self.saved.remove(&expression_ref);
@@ -2148,7 +2354,7 @@ impl Application {
                     activity_ref: None,
                 });
                 self.documents.insert(expression_ref.clone(), d);
-                    self.touched.insert(expression_ref.clone(), unix_now());
+                self.touched.insert(expression_ref.clone(), unix_now());
                 self.inspect(&expression_ref)?
             }
         };
@@ -2156,23 +2362,39 @@ impl Application {
     }
     /// A native save receipt is not readback. Keep acknowledged effects legible
     /// on a lost read; never replay the write or mark a different revision saved.
-    fn accept_saved(&mut self, client: &CentralClient, document: &Document, location: files::Location, operation: &str, data: Value) -> Value {
+    fn accept_saved(
+        &mut self,
+        client: &CentralClient,
+        document: &Document,
+        location: files::Location,
+        operation: &str,
+        data: Value,
+    ) -> Value {
         let file = json!({"location":location,"revision":data["revision"]});
-        let proof = (|| -> Result<(),String> {
+        let proof = (|| -> Result<(), String> {
             let current = files::read(client, &location)?;
-            if data["revision"] != current.revision { return Err("Native source changed before readback".into()); }
-            let read: Document = serde_json::from_str(&current.content).map_err(|e| e.to_string())?;
+            if data["revision"] != current.revision {
+                return Err("Native source changed before readback".into());
+            }
+            let read: Document =
+                serde_json::from_str(&current.content).map_err(|e| e.to_string())?;
             read.validate()?;
-            if &read != document { return Err("Native readback differs from the saved Expression".into()); }
+            if &read != document {
+                return Err("Native readback differs from the saved Expression".into());
+            }
             Ok(())
         })();
         match proof {
             Ok(()) => {
-                self.saved.insert(document.expression_ref.clone(),document.revision);
-                self.file_bindings.insert(document.expression_ref.clone(),file.clone());
+                self.saved
+                    .insert(document.expression_ref.clone(), document.revision);
+                self.file_bindings
+                    .insert(document.expression_ref.clone(), file.clone());
                 json!({"state":"saved","persisted":true,"readback_verified":true,"owner_operation":operation,"data":data,"expression_revision":document.revision,"file":file})
-            },
-            Err(error) => json!({"state":"saved_readback_failed","persisted":true,"readback_verified":false,"owner_operation":operation,"data":data,"expression_revision":document.revision,"file":file,"error":error}),
+            }
+            Err(error) => {
+                json!({"state":"saved_readback_failed","persisted":true,"readback_verified":false,"owner_operation":operation,"data":data,"expression_revision":document.revision,"file":file,"error":error})
+            }
         }
     }
     fn open(&mut self, d: Document, actor: String) -> Result<(Value, Option<Changed>), String> {
@@ -2211,8 +2433,15 @@ mod close_tests {
     fn close_refuses_unsaved_work_and_frees_a_saved_slot() {
         let client = CentralClient::with("/nonexistent/oi".into(), None, String::new());
         let mut app = Application::default();
-        let create = |r: &str| Request::Create { expression_ref: r.into(), title: "T".into(), actor: "a".into() };
-        let close = |r: &str| Request::Close { expression_ref: r.into(), actor: "a".into() };
+        let create = |r: &str| Request::Create {
+            expression_ref: r.into(),
+            title: "T".into(),
+            actor: "a".into(),
+        };
+        let close = |r: &str| Request::Close {
+            expression_ref: r.into(),
+            actor: "a".into(),
+        };
         app.apply(&client, create("expression:c")).unwrap();
         let (dirty, _) = app.apply(&client, close("expression:c")).unwrap();
         assert_eq!(dirty["state"], "dirty", "never-saved work is kept");
@@ -2223,13 +2452,30 @@ mod close_tests {
         assert_eq!(closed["state"], "closed");
         assert!(changed.is_none());
         assert!(app.document("expression:c").is_err(), "the slot is free");
-        assert!(app.apply(&client, close("expression:c")).is_err(), "closing an unknown Expression is an error");
+        assert!(
+            app.apply(&client, close("expression:c")).is_err(),
+            "closing an unknown Expression is an error"
+        );
         // Edited after its save: dirty again.
         app.apply(&client, create("expression:d")).unwrap();
         app.saved.insert("expression:d".into(), 1);
-        app.apply(&client, Request::Edit { expression_ref: "expression:d".into(), expected_revision: 1, actor: "a".into(),
-            changes: vec![Change::Rename { title: "U".into() }] }).unwrap();
-        assert_eq!(app.apply(&client, close("expression:d")).unwrap().0["state"], "dirty");
-        assert!(capabilities()["operations"].as_array().unwrap().contains(&json!("close")));
+        app.apply(
+            &client,
+            Request::Edit {
+                expression_ref: "expression:d".into(),
+                expected_revision: 1,
+                actor: "a".into(),
+                changes: vec![Change::Rename { title: "U".into() }],
+            },
+        )
+        .unwrap();
+        assert_eq!(
+            app.apply(&client, close("expression:d")).unwrap().0["state"],
+            "dirty"
+        );
+        assert!(capabilities()["operations"]
+            .as_array()
+            .unwrap()
+            .contains(&json!("close")));
     }
 }

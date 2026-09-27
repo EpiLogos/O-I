@@ -38,8 +38,16 @@ fn task_scoped_attempt_reads_dispatch_to_the_owner_cli_and_verify_the_contract()
     let args_file = dir.join("argv.txt");
     let fake = write_fake(&dir, &args_file);
     let state = dir.join("state");
-    let read_args = || fs::read_to_string(&args_file).unwrap_or_default().lines().map(str::to_string).collect::<Vec<_>>();
-    let reset = || { let _ = fs::remove_file(&args_file); };
+    let read_args = || {
+        fs::read_to_string(&args_file)
+            .unwrap_or_default()
+            .lines()
+            .map(str::to_string)
+            .collect::<Vec<_>>()
+    };
+    let reset = || {
+        let _ = fs::remove_file(&args_file);
+    };
 
     // Preserve and own the process-global owner-executable environment.
     let prior_factory = std::env::var_os("OI_FACTORY_BIN");
@@ -51,7 +59,10 @@ fn task_scoped_attempt_reads_dispatch_to_the_owner_cli_and_verify_the_contract()
     // product namespace, and the payload comes back verbatim.
     reset();
     let list = Kernel::new(CentralClient::discover())
-        .apply(KernelOp::FactoryAttemptTaskListRead { state_path: state.clone(), run_ref: "run:1".into() })
+        .apply(KernelOp::FactoryAttemptTaskListRead {
+            state_path: state.clone(),
+            run_ref: "run:1".into(),
+        })
         .expect("attempt list dispatches");
     match list.result {
         KernelOpResult::FactoryAttemptTaskListReading { data } => {
@@ -61,8 +72,16 @@ fn task_scoped_attempt_reads_dispatch_to_the_owner_cli_and_verify_the_contract()
         other => panic!("unexpected result: {other:?}"),
     }
     let argv = read_args();
-    assert_eq!(argv.first().map(String::as_str), Some("attempt"), "direct route adds no 'factory' prefix");
-    assert!(argv.contains(&"list".to_string()) && argv.contains(&"run:1".to_string()) && argv.contains(&"--json".to_string()));
+    assert_eq!(
+        argv.first().map(String::as_str),
+        Some("attempt"),
+        "direct route adds no 'factory' prefix"
+    );
+    assert!(
+        argv.contains(&"list".to_string())
+            && argv.contains(&"run:1".to_string())
+            && argv.contains(&"--json".to_string())
+    );
 
     // The task read carries the owner's pagination grammar verbatim.
     reset();
@@ -75,19 +94,36 @@ fn task_scoped_attempt_reads_dispatch_to_the_owner_cli_and_verify_the_contract()
             cursor: Some(json!({ "after": "attempt:x" })),
         })
         .expect("attempt task dispatches");
-    assert!(matches!(task.result, KernelOpResult::FactoryAttemptTaskReading { .. }));
+    assert!(matches!(
+        task.result,
+        KernelOpResult::FactoryAttemptTaskReading { .. }
+    ));
     let argv = read_args();
-    for expected in ["attempt", "task", "task:a", "--json", "--limit", "5", "--cursor"] {
-        assert!(argv.contains(&expected.to_string()), "task argv missing {expected}: {argv:?}");
+    for expected in [
+        "attempt", "task", "task:a", "--json", "--limit", "5", "--cursor",
+    ] {
+        assert!(
+            argv.contains(&expected.to_string()),
+            "task argv missing {expected}: {argv:?}"
+        );
     }
-    assert!(argv.iter().any(|a| a.contains("attempt:x")), "cursor JSON carried: {argv:?}");
+    assert!(
+        argv.iter().any(|a| a.contains("attempt:x")),
+        "cursor JSON carried: {argv:?}"
+    );
 
     // An incompatible contract is refused, not presented.
     reset();
     std::env::set_var("FAKE_FACTORY_BAD", "1");
-    let refused = Kernel::new(CentralClient::discover())
-        .apply(KernelOp::FactoryAttemptTaskListRead { state_path: state.clone(), run_ref: "run:1".into() });
-    assert!(refused.is_err() && refused.unwrap_err().contains("incompatible"), "a wrong contract must refuse");
+    let refused =
+        Kernel::new(CentralClient::discover()).apply(KernelOp::FactoryAttemptTaskListRead {
+            state_path: state.clone(),
+            run_ref: "run:1".into(),
+        });
+    assert!(
+        refused.is_err() && refused.unwrap_err().contains("incompatible"),
+        "a wrong contract must refuse"
+    );
     std::env::remove_var("FAKE_FACTORY_BAD");
 
     // Suite route: through `oi` the product namespace names the route once.
@@ -95,14 +131,31 @@ fn task_scoped_attempt_reads_dispatch_to_the_owner_cli_and_verify_the_contract()
     std::env::remove_var("OI_FACTORY_BIN");
     std::env::set_var("OI_BIN", &fake);
     Kernel::new(CentralClient::discover())
-        .apply(KernelOp::FactoryAttemptTaskListRead { state_path: state.clone(), run_ref: "run:1".into() })
+        .apply(KernelOp::FactoryAttemptTaskListRead {
+            state_path: state.clone(),
+            run_ref: "run:1".into(),
+        })
         .expect("suite-route attempt list dispatches");
     let argv = read_args();
-    assert_eq!(argv.first().map(String::as_str), Some("factory"), "suite route names the product namespace once");
-    assert_eq!(argv.iter().filter(|a| a.as_str() == "factory").count(), 1, "never twice");
+    assert_eq!(
+        argv.first().map(String::as_str),
+        Some("factory"),
+        "suite route names the product namespace once"
+    );
+    assert_eq!(
+        argv.iter().filter(|a| a.as_str() == "factory").count(),
+        1,
+        "never twice"
+    );
 
     // Restore the owner-executable environment.
-    match prior_factory { Some(v) => std::env::set_var("OI_FACTORY_BIN", v), None => std::env::remove_var("OI_FACTORY_BIN") }
-    match prior_oi { Some(v) => std::env::set_var("OI_BIN", v), None => std::env::remove_var("OI_BIN") }
+    match prior_factory {
+        Some(v) => std::env::set_var("OI_FACTORY_BIN", v),
+        None => std::env::remove_var("OI_FACTORY_BIN"),
+    }
+    match prior_oi {
+        Some(v) => std::env::set_var("OI_BIN", v),
+        None => std::env::remove_var("OI_BIN"),
+    }
     let _ = fs::remove_dir_all(&dir);
 }

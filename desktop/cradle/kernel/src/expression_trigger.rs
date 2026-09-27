@@ -4,7 +4,7 @@
 //! Arbitrary executable script bodies are refused with a typed error — both
 //! here and structurally, because every type in this module is
 //! `deny_unknown_fields`, so a script body cannot even enter a document.
-use crate::expression::{text, id, Document};
+use crate::expression::{id, text, Document};
 use serde::{Deserialize, Serialize};
 
 /// When a trigger may fire. Authored sequence transitions are explicit edits,
@@ -63,14 +63,31 @@ pub enum TriggerTarget {
     /// A bounded `oi.expression/v1` read operation (see
     /// [`TRIGGER_OPERATIONS`]). Triggers present information; they never
     /// mutate documents silently.
-    ExpressionOperation { operation: String, expression_ref: String },
+    ExpressionOperation {
+        operation: String,
+        expression_ref: String,
+    },
     /// A SurfacePortal placement for an exactly-named disclosed subject.
-    Portal { placement: PortalPlacement, subject_ref: String, #[serde(default)] scene_ref: Option<String> },
+    Portal {
+        placement: PortalPlacement,
+        subject_ref: String,
+        #[serde(default)]
+        scene_ref: Option<String>,
+    },
     /// A canonical native ActionRef that must already be disclosed on a bound
     /// subject or scene body in this document.
-    NativeAction { action_ref: String, target_ref: String, authority_requirement: String },
+    NativeAction {
+        action_ref: String,
+        target_ref: String,
+        authority_requirement: String,
+    },
     /// Focus/selection/navigation over exact refs (never invokes an Action).
-    Navigate { #[serde(default)] scene_ref: Option<String>, #[serde(default)] entity_ref: Option<String> },
+    Navigate {
+        #[serde(default)]
+        scene_ref: Option<String>,
+        #[serde(default)]
+        entity_ref: Option<String>,
+    },
 }
 
 /// Read-only `oi.expression/v1` operations a trigger may name.
@@ -154,7 +171,10 @@ fn validate_target(
     target: &TriggerTarget,
 ) -> Result<(), String> {
     match target {
-        TriggerTarget::ExpressionOperation { operation, expression_ref } => {
+        TriggerTarget::ExpressionOperation {
+            operation,
+            expression_ref,
+        } => {
             if !TRIGGER_OPERATIONS.contains(&operation.as_str()) {
                 return Err(format!(
                     "Trigger operations are limited to {TRIGGER_OPERATIONS:?}; triggers never mutate documents silently"
@@ -164,7 +184,11 @@ fn validate_target(
                 return Err("Trigger must name a valid Expression ref".into());
             }
         }
-        TriggerTarget::Portal { placement: _, subject_ref, scene_ref } => {
+        TriggerTarget::Portal {
+            placement: _,
+            subject_ref,
+            scene_ref,
+        } => {
             text(subject_ref)?;
             // The portal subject must be disclosed in this scene: the scene
             // body's subject or a bound entity of this exact scene.
@@ -181,7 +205,10 @@ fn validate_target(
                         .is_some_and(|b| b.subject_ref == *subject_ref)
                 });
             if !disclosed {
-                return Err("Portal trigger subject must be disclosed on this scene's body or entities".into());
+                return Err(
+                    "Portal trigger subject must be disclosed on this scene's body or entities"
+                        .into(),
+                );
             }
             if let Some(target_scene) = scene_ref {
                 if !document.scenes.iter().any(|s| &s.scene_ref == target_scene) {
@@ -189,7 +216,11 @@ fn validate_target(
                 }
             }
         }
-        TriggerTarget::NativeAction { action_ref, target_ref, authority_requirement } => {
+        TriggerTarget::NativeAction {
+            action_ref,
+            target_ref,
+            authority_requirement,
+        } => {
             text(action_ref)?;
             text(target_ref)?;
             text(authority_requirement)?;
@@ -207,10 +238,16 @@ fn validate_target(
                 })
             });
             if !disclosed {
-                return Err("Trigger native Action must be disclosed on a bound subject or scene body".into());
+                return Err(
+                    "Trigger native Action must be disclosed on a bound subject or scene body"
+                        .into(),
+                );
             }
         }
-        TriggerTarget::Navigate { scene_ref, entity_ref } => {
+        TriggerTarget::Navigate {
+            scene_ref,
+            entity_ref,
+        } => {
             if scene_ref.is_none() && entity_ref.is_none() {
                 return Err("Navigate trigger must name a scene or entity".into());
             }
@@ -220,7 +257,10 @@ fn validate_target(
                 }
             }
             if let Some(entity_ref) = entity_ref {
-                let entity = document.entities.get(entity_ref).ok_or("Navigate trigger names an absent entity")?;
+                let entity = document
+                    .entities
+                    .get(entity_ref)
+                    .ok_or("Navigate trigger names an absent entity")?;
                 if let Some(scene_ref) = scene_ref {
                     let scene = document
                         .scenes

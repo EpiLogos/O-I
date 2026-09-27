@@ -28,9 +28,18 @@ impl Client {
         Self { executable }
     }
     pub fn project_sources(&self) -> Result<Value, Error> {
-        let data = invoke(&self.executable, &["factory-projects".into(), "--json".into()], None)?;
-        if data["contract"] != "oi.factory-project-sources/v1" || !data["sources"].is_array() || !data["errors"].is_array() {
-            return Err(incompatible("Unsupported Factory project locations reading"));
+        let data = invoke(
+            &self.executable,
+            &["factory-projects".into(), "--json".into()],
+            None,
+        )?;
+        if data["contract"] != "oi.factory-project-sources/v1"
+            || !data["sources"].is_array()
+            || !data["errors"].is_array()
+        {
+            return Err(incompatible(
+                "Unsupported Factory project locations reading",
+            ));
         }
         Ok(data)
     }
@@ -110,7 +119,6 @@ impl Client {
         }
         Ok(data)
     }
-
 }
 
 /// The `factory development <read>` verbs the desktop may issue — one list,
@@ -120,8 +128,16 @@ impl Client {
 /// (WORLD-INHABITATION-V1 §3); they take typed flags and go through
 /// [`OwnerRequest::Inhabitation`] / [`OwnerRequest::CurrentWork`].
 pub const DEVELOPMENT_READS: &[&str] = &[
-    "project", "journey", "run", "build", "workflow-units", "workflow-unit", "execution-telemetry", "commission-read",
-    "inhabitation", "current-work",
+    "project",
+    "journey",
+    "run",
+    "build",
+    "workflow-units",
+    "workflow-unit",
+    "execution-telemetry",
+    "commission-read",
+    "inhabitation",
+    "current-work",
 ];
 /// Whether `read` is a development read the desktop may issue.
 pub fn is_development_read(read: &str) -> bool {
@@ -204,7 +220,10 @@ pub enum OwnerRequest {
     /// `factory telemetry status <state>`.
     TelemetryStatus { state_path: PathBuf },
     /// `factory telemetry inspect <state> <telemetry-ref>`.
-    TelemetryInspect { state_path: PathBuf, telemetry_ref: String },
+    TelemetryInspect {
+        state_path: PathBuf,
+        telemetry_ref: String,
+    },
     /// `factory telemetry watch <state> [--resume <cursor>] --duration S
     /// --max-events N --interval I` — the owner's resumable bounded stream
     /// of execution correlations (JSONL), for the Factory Live producer loop.
@@ -227,7 +246,10 @@ pub enum OwnerRequest {
     TelemetryField { state_path: PathBuf },
     /// Try AIKit's bounded hot projection for this exact ProjectWorld, then
     /// read the Factory owner when it is missing, stale or unavailable.
-    TelemetryCurrent { state_path: PathBuf, project_world_ref: String },
+    TelemetryCurrent {
+        state_path: PathBuf,
+        project_world_ref: String,
+    },
     /// One source-qualified signal and its original observation.
     TelemetrySignal {
         state_path: PathBuf,
@@ -256,12 +278,25 @@ pub enum OwnerRequest {
         through_day: Option<String>,
     },
     /// `factory attempt return <state> <run-ref> <attempt-ref>` — the readable Return.
-    AttemptReturn { state_path: PathBuf, run_ref: String, attempt_ref: String },
+    AttemptReturn {
+        state_path: PathBuf,
+        run_ref: String,
+        attempt_ref: String,
+    },
     /// `factory action list <state> <project-ref> <run-ref>`.
-    ActionList { state_path: PathBuf, project_ref: String, run_ref: String },
+    ActionList {
+        state_path: PathBuf,
+        project_ref: String,
+        run_ref: String,
+    },
     /// `factory action invoke <state> <project-ref> <run-ref> -` with the
     /// owner's own `factory.action-projection/v1` request document.
-    ActionInvoke { state_path: PathBuf, project_ref: String, run_ref: String, request: Value },
+    ActionInvoke {
+        state_path: PathBuf,
+        project_ref: String,
+        run_ref: String,
+        request: Value,
+    },
     /// `factory development inhabitation <state> [--run R] [--position P]`
     /// → `factory.inhabitation-reading/v1` (WORLD-INHABITATION-V1 §3): per
     /// Run, the Positions in custody and the occupant relations Factory
@@ -276,7 +311,10 @@ pub enum OwnerRequest {
     /// `factory development current-work <state> --position P` →
     /// `factory.current-work/v1`: none | one | ambiguous, derived by the owner
     /// over every in-progress custody — never a display page.
-    CurrentWork { state_path: PathBuf, position_ref: String },
+    CurrentWork {
+        state_path: PathBuf,
+        position_ref: String,
+    },
     /// The person's Recognition of a returned subject, recorded through the
     /// owner's own developmental mutation (`factory development mutate`,
     /// `record-owner-recognition`). The owner's receipt is the result.
@@ -302,7 +340,9 @@ pub fn owner_executable() -> (PathBuf, bool) {
     match std::env::var_os("OI_FACTORY_BIN").map(PathBuf::from) {
         Some(path) => (path, false),
         None => (
-            std::env::var_os("OI_BIN").map(PathBuf::from).unwrap_or_else(|| "oi".into()),
+            std::env::var_os("OI_BIN")
+                .map(PathBuf::from)
+                .unwrap_or_else(|| "oi".into()),
             true,
         ),
     }
@@ -332,19 +372,29 @@ fn owner_call(args: &[std::ffi::OsString], input: Option<&[u8]>) -> Result<Value
     }
     let mut child = std::process::Command::new(&executable)
         .args(&argv)
-        .stdin(if input.is_some() { std::process::Stdio::piped() } else { std::process::Stdio::null() })
+        .stdin(if input.is_some() {
+            std::process::Stdio::piped()
+        } else {
+            std::process::Stdio::null()
+        })
         .stdout(std::process::Stdio::piped())
         .stderr(std::process::Stdio::piped())
         .spawn()
-        .map_err(|e| Error { kind: "unavailable".into(), message: e.to_string(), operation_may_have_run: false })?;
+        .map_err(|e| Error {
+            kind: "unavailable".into(),
+            message: e.to_string(),
+            operation_may_have_run: false,
+        })?;
     if let Some(input) = input {
         if let Some(mut stdin) = child.stdin.take() {
             let _ = stdin.write_all(input);
         }
     }
-    let output = child
-        .wait_with_output()
-        .map_err(|e| Error { kind: "process-error".into(), message: e.to_string(), operation_may_have_run: true })?;
+    let output = child.wait_with_output().map_err(|e| Error {
+        kind: "process-error".into(),
+        message: e.to_string(),
+        operation_may_have_run: true,
+    })?;
     let parsed: Option<Value> = serde_json::from_slice(&output.stdout).ok();
     if !output.status.success() {
         let diagnostic = parsed
@@ -365,14 +415,20 @@ fn owner_call(args: &[std::ffi::OsString], input: Option<&[u8]>) -> Result<Value
 
 fn is_inhabitation_read(args: &[std::ffi::OsString]) -> bool {
     args.first().is_some_and(|verb| verb == "development")
-        && args.get(1).is_some_and(|read| read == "inhabitation" || read == "current-work")
+        && args
+            .get(1)
+            .is_some_and(|read| read == "inhabitation" || read == "current-work")
 }
 
 /// The owner's grammar for the two inhabitation reads (the state path first,
 /// as every `factory development` read takes it; typed flags after).
 pub fn inhabitation_args(request: &OwnerRequest) -> Option<Vec<std::ffi::OsString>> {
     let (read, state_path, flags): (&str, &Path, Vec<(&str, &str)>) = match request {
-        OwnerRequest::Inhabitation { state_path, run_ref, position_ref } => {
+        OwnerRequest::Inhabitation {
+            state_path,
+            run_ref,
+            position_ref,
+        } => {
             let mut flags = Vec::new();
             if let Some(run) = run_ref {
                 flags.push(("--run", run.as_str()));
@@ -382,11 +438,19 @@ pub fn inhabitation_args(request: &OwnerRequest) -> Option<Vec<std::ffi::OsStrin
             }
             ("inhabitation", state_path, flags)
         }
-        OwnerRequest::CurrentWork { state_path, position_ref } => ("current-work", state_path, vec![("--position", position_ref.as_str())]),
+        OwnerRequest::CurrentWork {
+            state_path,
+            position_ref,
+        } => (
+            "current-work",
+            state_path,
+            vec![("--position", position_ref.as_str())],
+        ),
         _ => return None,
     };
     debug_assert!(is_development_read(read));
-    let mut args: Vec<std::ffi::OsString> = vec!["development".into(), read.into(), path_arg(state_path)];
+    let mut args: Vec<std::ffi::OsString> =
+        vec!["development".into(), read.into(), path_arg(state_path)];
     for (flag, value) in flags {
         args.push(flag.into());
         args.push(value.into());
@@ -398,7 +462,10 @@ pub fn inhabitation_args(request: &OwnerRequest) -> Option<Vec<std::ffi::OsStrin
 /// A reading's contract id, whether the owner names it `schema` (the
 /// inhabitation contract's spelling) or `contract` (Factory's existing one).
 fn reading_contract(data: &Value) -> &str {
-    data.get("schema").or_else(|| data.get("contract")).and_then(Value::as_str).unwrap_or_default()
+    data.get("schema")
+        .or_else(|| data.get("contract"))
+        .and_then(Value::as_str)
+        .unwrap_or_default()
 }
 
 fn path_arg(path: &Path) -> std::ffi::OsString {
@@ -410,7 +477,9 @@ fn expect_contract(data: Value, accepted: &[&str]) -> Result<Value, Error> {
     if accepted.contains(&contract) {
         Ok(data)
     } else {
-        Err(incompatible(format!("Factory answered an unexpected contract ({contract})")))
+        Err(incompatible(format!(
+            "Factory answered an unexpected contract ({contract})"
+        )))
     }
 }
 
@@ -457,14 +526,23 @@ pub fn telemetry_watch_args(
 ) -> Result<Vec<std::ffi::OsString>, Error> {
     let duration = duration_secs.unwrap_or(2.0);
     if !duration.is_finite() {
-        return Err(incompatible("The watch duration must be a finite number of seconds"));
+        return Err(incompatible(
+            "The watch duration must be a finite number of seconds",
+        ));
     }
     let duration = duration.clamp(0.0, WATCH_WINDOW_MAX_SECS);
     let max_events = max_events.unwrap_or(100).clamp(1, 500);
-    let mut args: Vec<std::ffi::OsString> = vec!["telemetry".into(), "watch".into(), path_arg(state_path)];
+    let mut args: Vec<std::ffi::OsString> =
+        vec!["telemetry".into(), "watch".into(), path_arg(state_path)];
     if let Some(cursor) = resume {
-        if cursor.get("stateRevision").and_then(Value::as_u64).is_none() {
-            return Err(incompatible("A watch cursor must carry the owner's stateRevision"));
+        if cursor
+            .get("stateRevision")
+            .and_then(Value::as_u64)
+            .is_none()
+        {
+            return Err(incompatible(
+                "A watch cursor must carry the owner's stateRevision",
+            ));
         }
         args.extend(["--resume".into(), cursor.to_string().into()]);
     }
@@ -489,7 +567,13 @@ pub const WATCH_WINDOW_MAX_SECS: f64 = 4.0;
 /// One bounded watch: the owner process is killed if it outlives its own
 /// window by more than two seconds. Runs outside the kernel lock (it is a
 /// prepared owner read, owner_read.rs).
-pub fn telemetry_watch(state_path: &Path, resume: Option<&Value>, duration_secs: Option<f64>, max_events: Option<u32>, run_ref: Option<&str>) -> Result<Value, Error> {
+pub fn telemetry_watch(
+    state_path: &Path,
+    resume: Option<&Value>,
+    duration_secs: Option<f64>,
+    max_events: Option<u32>,
+    run_ref: Option<&str>,
+) -> Result<Value, Error> {
     let args = telemetry_watch_args(state_path, resume, duration_secs, max_events)?;
     let (executable, suite_route) = owner_executable();
     let mut argv: Vec<std::ffi::OsString> = Vec::new();
@@ -497,9 +581,18 @@ pub fn telemetry_watch(state_path: &Path, resume: Option<&Value>, duration_secs:
         argv.push("factory".into());
     }
     argv.extend(args);
-    let window = duration_secs.unwrap_or(2.0).clamp(0.0, WATCH_WINDOW_MAX_SECS);
+    let window = duration_secs
+        .unwrap_or(2.0)
+        .clamp(0.0, WATCH_WINDOW_MAX_SECS);
     let timeout = std::time::Duration::from_secs_f64(window + 2.0);
-    let stdout = crate::inhabitation::run_bounded_raw(&executable, &argv, None, timeout, "factory telemetry watch", &[])?;
+    let stdout = crate::inhabitation::run_bounded_raw(
+        &executable,
+        &argv,
+        None,
+        timeout,
+        "factory telemetry watch",
+        &[],
+    )?;
     watch_reading(&String::from_utf8_lossy(&stdout), run_ref)
 }
 
@@ -510,22 +603,29 @@ pub fn watch_reading(stdout: &str, run_ref: Option<&str>) -> Result<Value, Error
     let mut lines = Vec::new();
     let mut cursor = None;
     let mut emitted = None;
-    for raw in stdout.lines().map(str::trim).filter(|line| !line.is_empty()) {
-        let line: Value = serde_json::from_str(raw).map_err(|e| incompatible(format!("The owner's watch line is not JSON: {e}")))?;
+    for raw in stdout
+        .lines()
+        .map(str::trim)
+        .filter(|line| !line.is_empty())
+    {
+        let line: Value = serde_json::from_str(raw)
+            .map_err(|e| incompatible(format!("The owner's watch line is not JSON: {e}")))?;
         match line.get("type").and_then(Value::as_str) {
             Some("cursor") => {
                 cursor = line.get("cursor").cloned();
                 emitted = line.get("emitted").cloned();
             }
             Some(_) => {
-                if run_ref.is_none_or(|run| line.get("runRef").and_then(Value::as_str) == Some(run)) {
+                if run_ref.is_none_or(|run| line.get("runRef").and_then(Value::as_str) == Some(run))
+                {
                     lines.push(line);
                 }
             }
             None => return Err(incompatible("The owner's watch line names no type")),
         }
     }
-    let cursor = cursor.ok_or_else(|| incompatible("The owner's watch ended without its resume cursor"))?;
+    let cursor =
+        cursor.ok_or_else(|| incompatible("The owner's watch ended without its resume cursor"))?;
     Ok(serde_json::json!({
         "contract": "oi.factory-telemetry-watch/v1",
         "lines": lines,
@@ -542,7 +642,10 @@ fn native_sensing_field(state_path: &Path) -> Result<Value, Error> {
         let project = root.join("ProjectCentral/user/factory-policy.json");
         let control = root.join("Control/user/factory-policy.json");
         if let Some(policy) = [project, control].into_iter().find(|path| path.is_file()) {
-            args.splice(args.len()-1..args.len()-1, ["--policy".into(), path_arg(&policy)]);
+            args.splice(
+                args.len() - 1..args.len() - 1,
+                ["--policy".into(), path_arg(&policy)],
+            );
         }
     }
     expect_contract(owner_call(&args, None)?, &["factory.telemetry-field/v1"])
@@ -552,38 +655,83 @@ fn native_sensing_field(state_path: &Path) -> Result<Value, Error> {
 // the owner's persisted source, not a World scan or a second field projection.
 // Older states without a sensing scope fall through to the native read below.
 fn state_sensing_world(state_path: &Path) -> Result<Option<String>, Error> {
-    let bytes = std::fs::read(state_path).map_err(|error| incompatible(format!("Factory state unavailable for sensing scope: {error}")))?;
-    let state: Value = serde_json::from_slice(&bytes).map_err(|error| incompatible(format!("Factory state unreadable for sensing scope: {error}")))?;
+    let bytes = std::fs::read(state_path).map_err(|error| {
+        incompatible(format!(
+            "Factory state unavailable for sensing scope: {error}"
+        ))
+    })?;
+    let state: Value = serde_json::from_slice(&bytes).map_err(|error| {
+        incompatible(format!(
+            "Factory state unreadable for sensing scope: {error}"
+        ))
+    })?;
     if state["schema"] != "factory.developmental-local-provider/v1" {
         return Ok(None);
     }
-    Ok(state["state"]["sensing"]["project_world_ref"].as_str().map(str::to_owned))
+    Ok(state["state"]["sensing"]["project_world_ref"]
+        .as_str()
+        .map(str::to_owned))
 }
 
 fn current_sensing_field(state_path: &Path, project_world_ref: &str) -> Result<Value, Error> {
     if project_world_ref != "control:root" && !project_world_ref.starts_with("project:") {
-        return Err(incompatible("A ProjectWorld ref is required for the current sensing read"));
+        return Err(incompatible(
+            "A ProjectWorld ref is required for the current sensing read",
+        ));
     }
     let bound_world = state_sensing_world(state_path)?;
-    if bound_world.as_deref().is_some_and(|world| world != project_world_ref) {
-        return Err(incompatible("Factory state belongs to another ProjectWorld"));
+    if bound_world
+        .as_deref()
+        .is_some_and(|world| world != project_world_ref)
+    {
+        return Err(incompatible(
+            "Factory state belongs to another ProjectWorld",
+        ));
     }
-    let config = std::env::var_os("OI_REDIS_NOW_CONFIG_FILE").map(PathBuf::from)
-        .or_else(|| std::env::var_os("HOME").map(|home| PathBuf::from(home).join(".aikit/redis-now.json")));
+    let config = std::env::var_os("OI_REDIS_NOW_CONFIG_FILE")
+        .map(PathBuf::from)
+        .or_else(|| {
+            std::env::var_os("HOME").map(|home| PathBuf::from(home).join(".aikit/redis-now.json"))
+        });
     let mut hot_absence = "AIKit Redis NOW config is not installed".to_owned();
     if let Some(config) = config.filter(|path| path.is_file()) {
         let (executable, suite_route) = crate::inhabitation::aikit_executable();
         let mut args: Vec<std::ffi::OsString> = Vec::new();
-        if suite_route { args.push("aikit".into()); }
-        args.extend(["now-context".into(), "factory-sensing".into(), "--config-file".into(), path_arg(&config), "--project-world-ref".into(), project_world_ref.into(), "--json".into()]);
-        let hot = crate::inhabitation::run_bounded(&executable, &args, None, std::time::Duration::from_secs(5), "aikit now-context factory-sensing")
-            .and_then(|document| crate::inhabitation::unwrap_envelope(document, "aikit now-context factory-sensing").map(|(data, _)| data));
+        if suite_route {
+            args.push("aikit".into());
+        }
+        args.extend([
+            "now-context".into(),
+            "factory-sensing".into(),
+            "--config-file".into(),
+            path_arg(&config),
+            "--project-world-ref".into(),
+            project_world_ref.into(),
+            "--json".into(),
+        ]);
+        let hot = crate::inhabitation::run_bounded(
+            &executable,
+            &args,
+            None,
+            std::time::Duration::from_secs(5),
+            "aikit now-context factory-sensing",
+        )
+        .and_then(|document| {
+            crate::inhabitation::unwrap_envelope(document, "aikit now-context factory-sensing")
+                .map(|(data, _)| data)
+        });
         match hot {
-            Ok(data) if data["schema"] == "aikit.factory-sensing-reading/v1" && data["project_world_ref"] == project_world_ref => {
+            Ok(data)
+                if data["schema"] == "aikit.factory-sensing-reading/v1"
+                    && data["project_world_ref"] == project_world_ref =>
+            {
                 if data["available"] == true {
                     let projection = &data["projection"];
                     let field = &projection["field"];
-                    let now_ms = std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).map(|t| t.as_millis() as u64).unwrap_or(0);
+                    let now_ms = std::time::SystemTime::now()
+                        .duration_since(std::time::UNIX_EPOCH)
+                        .map(|t| t.as_millis() as u64)
+                        .unwrap_or(0);
                     let published = projection["published_at_unix_ms"].as_u64().unwrap_or(0);
                     let observed = field["observed_at_unix_ms"].as_u64().unwrap_or(0);
                     if projection["schema"] == "aikit.factory-sensing-projection/v1"
@@ -598,8 +746,11 @@ fn current_sensing_field(state_path: &Path, project_world_ref: &str) -> Result<V
                         // publication and the owner's actual observation age.
                         && now_ms.saturating_sub(published) <= 360_000
                         && now_ms.saturating_sub(observed) <= 360_000
-                        && bound_world.as_deref() == Some(project_world_ref) {
-                        return Ok(serde_json::json!({"schema":"oi.factory-sensing-current/v1","basis":"aikit-hot","field":field,"published_at_unix_ms":published,"projection_version":projection["version"]}));
+                        && bound_world.as_deref() == Some(project_world_ref)
+                    {
+                        return Ok(
+                            serde_json::json!({"schema":"oi.factory-sensing-current/v1","basis":"aikit-hot","field":field,"published_at_unix_ms":published,"projection_version":projection["version"]}),
+                        );
                     }
                     hot_absence = "AIKit hot Factory field was stale or incompatible".into();
                 } else {
@@ -612,9 +763,13 @@ fn current_sensing_field(state_path: &Path, project_world_ref: &str) -> Result<V
     }
     let field = native_sensing_field(state_path)?;
     if field["project_world_ref"] != project_world_ref {
-        return Err(incompatible("Factory fallback belongs to another ProjectWorld"));
+        return Err(incompatible(
+            "Factory fallback belongs to another ProjectWorld",
+        ));
     }
-    Ok(serde_json::json!({"schema":"oi.factory-sensing-current/v1","basis":"factory-native","field":field,"hot_absence":hot_absence}))
+    Ok(
+        serde_json::json!({"schema":"oi.factory-sensing-current/v1","basis":"factory-native","field":field,"hot_absence":hot_absence}),
+    )
 }
 
 /// RFC 3339 UTC for "now", without a date crate (civil-from-days).
@@ -649,17 +804,33 @@ fn act_suffix() -> String {
         .duration_since(std::time::UNIX_EPOCH)
         .map(|d| d.as_nanos())
         .unwrap_or(0);
-    format!("{nanos:x}-{}-{}", std::process::id(), COUNTER.fetch_add(1, Ordering::Relaxed))
+    format!(
+        "{nanos:x}-{}-{}",
+        std::process::id(),
+        COUNTER.fetch_add(1, Ordering::Relaxed)
+    )
 }
 
 /// The roots discovery reads: Central's own root and its Work projects, from
 /// the world reading (`root`, `work.projects[].{name,path}`).
-fn locate_roots(world: &Value, project: Option<&str>, all: bool) -> Result<Vec<(Option<String>, PathBuf)>, Error> {
-    let root = world["root"].as_str().ok_or_else(|| incompatible("Central root location unavailable"))?;
+fn locate_roots(
+    world: &Value,
+    project: Option<&str>,
+    all: bool,
+) -> Result<Vec<(Option<String>, PathBuf)>, Error> {
+    let root = world["root"]
+        .as_str()
+        .ok_or_else(|| incompatible("Central root location unavailable"))?;
     let root = PathBuf::from(root);
-    let projects = world["work"]["projects"].as_array().cloned().unwrap_or_default();
+    let projects = world["work"]["projects"]
+        .as_array()
+        .cloned()
+        .unwrap_or_default();
     let project_root = |row: &Value| -> Option<(Option<String>, PathBuf)> {
-        Some((Some(row["name"].as_str()?.to_owned()), root.join(row["path"].as_str()?)))
+        Some((
+            Some(row["name"].as_str()?.to_owned()),
+            root.join(row["path"].as_str()?),
+        ))
     };
     if all {
         let mut out = vec![(None, root.clone())];
@@ -682,7 +853,9 @@ fn locate_roots(world: &Value, project: Option<&str>, all: bool) -> Result<Vec<(
 pub fn owner(request: OwnerRequest, world: Option<&Value>) -> Result<Value, Error> {
     match request {
         OwnerRequest::Locate { project, all } => {
-            let world = world.ok_or_else(|| incompatible("Central's world reading is required to locate Factory sources"))?;
+            let world = world.ok_or_else(|| {
+                incompatible("Central's world reading is required to locate Factory sources")
+            })?;
             let roots = locate_roots(world, project.as_deref(), all)?;
             // One locate per root, concurrently; each answer stands on its
             // own — an absent source (no Factory state set up there) is not a
@@ -691,10 +864,17 @@ pub fn owner(request: OwnerRequest, world: Option<&Value>) -> Result<Value, Erro
                 .into_iter()
                 .map(|(project, root)| {
                     std::thread::spawn(move || {
-                        let args: Vec<std::ffi::OsString> = vec!["project".into(), "locate".into(), path_arg(&root), "--json".into()];
-                        let answer = owner_call(&args, None)
-                            .and_then(|data| expect_contract(data, &["factory.project-location/v1"]));
-                        let mut row = serde_json::json!({"project": project, "root": root.to_string_lossy()});
+                        let args: Vec<std::ffi::OsString> = vec![
+                            "project".into(),
+                            "locate".into(),
+                            path_arg(&root),
+                            "--json".into(),
+                        ];
+                        let answer = owner_call(&args, None).and_then(|data| {
+                            expect_contract(data, &["factory.project-location/v1"])
+                        });
+                        let mut row =
+                            serde_json::json!({"project": project, "root": root.to_string_lossy()});
                         match answer {
                             Ok(location) => {
                                 row["state"] = "located".into();
@@ -719,10 +899,24 @@ pub fn owner(request: OwnerRequest, world: Option<&Value>) -> Result<Value, Erro
                 .into_iter()
                 .map(|handle| handle.join().unwrap_or_else(|_| serde_json::json!({"state": "refused", "error": "locate worker failed"})))
                 .collect();
-            Ok(serde_json::json!({"contract": "oi.factory-source-discovery/v1", "locations": locations}))
+            Ok(
+                serde_json::json!({"contract": "oi.factory-source-discovery/v1", "locations": locations}),
+            )
         }
-        OwnerRequest::WorkflowInspect { state_path, run_ref, unit, attempt, limit, cursor } => {
-            let mut args: Vec<std::ffi::OsString> = vec!["workflow".into(), "inspect".into(), path_arg(&state_path), run_ref.into()];
+        OwnerRequest::WorkflowInspect {
+            state_path,
+            run_ref,
+            unit,
+            attempt,
+            limit,
+            cursor,
+        } => {
+            let mut args: Vec<std::ffi::OsString> = vec![
+                "workflow".into(),
+                "inspect".into(),
+                path_arg(&state_path),
+                run_ref.into(),
+            ];
             if let Some(unit) = unit {
                 args.extend(["--unit".into(), unit.into()]);
             }
@@ -736,27 +930,62 @@ pub fn owner(request: OwnerRequest, world: Option<&Value>) -> Result<Value, Erro
                 args.extend(["--cursor".into(), cursor.to_string().into()]);
             }
             args.push("--json".into());
-            expect_contract(owner_call(&args, None)?, &["factory.workflow-inspection/v1"])
+            expect_contract(
+                owner_call(&args, None)?,
+                &["factory.workflow-inspection/v1"],
+            )
         }
         OwnerRequest::TelemetryStatus { state_path } => {
-            let args: Vec<std::ffi::OsString> = vec!["telemetry".into(), "status".into(), path_arg(&state_path), "--json".into()];
+            let args: Vec<std::ffi::OsString> = vec![
+                "telemetry".into(),
+                "status".into(),
+                path_arg(&state_path),
+                "--json".into(),
+            ];
             expect_contract(owner_call(&args, None)?, &["factory.telemetry-status/v1"])
         }
-        OwnerRequest::TelemetryInspect { state_path, telemetry_ref } => {
-            let args: Vec<std::ffi::OsString> = vec!["telemetry".into(), "inspect".into(), path_arg(&state_path), telemetry_ref.into(), "--json".into()];
+        OwnerRequest::TelemetryInspect {
+            state_path,
+            telemetry_ref,
+        } => {
+            let args: Vec<std::ffi::OsString> = vec![
+                "telemetry".into(),
+                "inspect".into(),
+                path_arg(&state_path),
+                telemetry_ref.into(),
+                "--json".into(),
+            ];
             let data = owner_call(&args, None)?;
-            let contract = data.get("contract").and_then(Value::as_str).unwrap_or_default();
+            let contract = data
+                .get("contract")
+                .and_then(Value::as_str)
+                .unwrap_or_default();
             if contract.starts_with("factory.telemetry") {
                 Ok(data)
             } else {
-                Err(incompatible("Factory answered an unexpected telemetry contract"))
+                Err(incompatible(
+                    "Factory answered an unexpected telemetry contract",
+                ))
             }
         }
-        OwnerRequest::TelemetryWatch { state_path, resume, duration_secs, max_events, run_ref } => {
-            telemetry_watch(&state_path, resume.as_ref(), duration_secs, max_events, run_ref.as_deref())
-        }
+        OwnerRequest::TelemetryWatch {
+            state_path,
+            resume,
+            duration_secs,
+            max_events,
+            run_ref,
+        } => telemetry_watch(
+            &state_path,
+            resume.as_ref(),
+            duration_secs,
+            max_events,
+            run_ref.as_deref(),
+        ),
         OwnerRequest::TelemetryField { state_path } => native_sensing_field(&state_path),
-        OwnerRequest::TelemetryCurrent { state_path, project_world_ref } => current_sensing_field(&state_path, &project_world_ref),
+        OwnerRequest::TelemetryCurrent {
+            state_path,
+            project_world_ref,
+        } => current_sensing_field(&state_path, &project_world_ref),
         OwnerRequest::TelemetrySignal {
             state_path,
             signal_ref,
@@ -812,22 +1041,62 @@ pub fn owner(request: OwnerRequest, world: Option<&Value>) -> Result<Value, Erro
             )?,
             &["factory.telemetry-day/v1"],
         ),
-        OwnerRequest::AttemptReturn { state_path, run_ref, attempt_ref } => {
-            let args: Vec<std::ffi::OsString> = vec!["attempt".into(), "return".into(), path_arg(&state_path), run_ref.into(), attempt_ref.into(), "--json".into()];
+        OwnerRequest::AttemptReturn {
+            state_path,
+            run_ref,
+            attempt_ref,
+        } => {
+            let args: Vec<std::ffi::OsString> = vec![
+                "attempt".into(),
+                "return".into(),
+                path_arg(&state_path),
+                run_ref.into(),
+                attempt_ref.into(),
+                "--json".into(),
+            ];
             let data = owner_call(&args, None)?;
-            let contract = data.get("contract").and_then(Value::as_str).unwrap_or_default();
+            let contract = data
+                .get("contract")
+                .and_then(Value::as_str)
+                .unwrap_or_default();
             if contract.starts_with("factory.attempt") {
                 Ok(data)
             } else {
-                Err(incompatible("Factory answered an unexpected attempt Return contract"))
+                Err(incompatible(
+                    "Factory answered an unexpected attempt Return contract",
+                ))
             }
         }
-        OwnerRequest::ActionList { state_path, project_ref, run_ref } => {
-            let args: Vec<std::ffi::OsString> = vec!["action".into(), "list".into(), path_arg(&state_path), project_ref.into(), run_ref.into(), "--json".into()];
+        OwnerRequest::ActionList {
+            state_path,
+            project_ref,
+            run_ref,
+        } => {
+            let args: Vec<std::ffi::OsString> = vec![
+                "action".into(),
+                "list".into(),
+                path_arg(&state_path),
+                project_ref.into(),
+                run_ref.into(),
+                "--json".into(),
+            ];
             owner_call(&args, None)
         }
-        OwnerRequest::ActionInvoke { state_path, project_ref, run_ref, request } => {
-            let args: Vec<std::ffi::OsString> = vec!["action".into(), "invoke".into(), path_arg(&state_path), project_ref.into(), run_ref.into(), "-".into(), "--json".into()];
+        OwnerRequest::ActionInvoke {
+            state_path,
+            project_ref,
+            run_ref,
+            request,
+        } => {
+            let args: Vec<std::ffi::OsString> = vec![
+                "action".into(),
+                "invoke".into(),
+                path_arg(&state_path),
+                project_ref.into(),
+                run_ref.into(),
+                "-".into(),
+                "--json".into(),
+            ];
             let body = serde_json::to_vec(&request).map_err(|e| incompatible(e.to_string()))?;
             owner_call(&args, Some(&body))
         }
@@ -837,7 +1106,8 @@ pub fn owner(request: OwnerRequest, world: Option<&Value>) -> Result<Value, Erro
             } else {
                 "factory.current-work/v1"
             };
-            let args = inhabitation_args(&request).expect("an inhabitation request builds its grammar");
+            let args =
+                inhabitation_args(&request).expect("an inhabitation request builds its grammar");
             let data = owner_call(&args, None)?;
             let contract = reading_contract(&data);
             if contract == expected {
@@ -846,11 +1116,20 @@ pub fn owner(request: OwnerRequest, world: Option<&Value>) -> Result<Value, Erro
                 Err(incompatible(format!("Factory answered an unexpected reading ({contract}) where {expected} was asked for")))
             }
         }
-        OwnerRequest::Recognise { state_path, journey_ref, subject_ref, basis_refs } => {
+        OwnerRequest::Recognise {
+            state_path,
+            journey_ref,
+            subject_ref,
+            basis_refs,
+        } => {
             let suffix = act_suffix();
             let recognition_ref = format!("recognition:desk-{suffix}");
             let mut basis = vec![recognition_ref.clone()];
-            basis.extend(basis_refs.into_iter().filter(|entry| entry != &recognition_ref));
+            basis.extend(
+                basis_refs
+                    .into_iter()
+                    .filter(|entry| entry != &recognition_ref),
+            );
             let request = serde_json::json!({
                 "contract": "factory.developmental-mutation-request/v1",
                 "mutationRef": format!("mutation:desk-recognise-{suffix}"),
@@ -866,8 +1145,17 @@ pub fn owner(request: OwnerRequest, world: Option<&Value>) -> Result<Value, Erro
                 },
             });
             let body = serde_json::to_vec(&request).map_err(|e| incompatible(e.to_string()))?;
-            let args: Vec<std::ffi::OsString> = vec!["development".into(), "mutate".into(), path_arg(&state_path), "-".into(), "--json".into()];
-            expect_contract(owner_call(&args, Some(&body))?, &["factory.developmental-mutation-receipt/v1"])
+            let args: Vec<std::ffi::OsString> = vec![
+                "development".into(),
+                "mutate".into(),
+                path_arg(&state_path),
+                "-".into(),
+                "--json".into(),
+            ];
+            expect_contract(
+                owner_call(&args, Some(&body))?,
+                &["factory.developmental-mutation-receipt/v1"],
+            )
         }
     }
 }
@@ -891,38 +1179,125 @@ mod owner_tests {
         assert_eq!(all.len(), 3);
         assert_eq!(all[0], (None, PathBuf::from("/ground")));
         assert_eq!(all[2], (Some("B".into()), PathBuf::from("/ground/Work/B")));
-        assert_eq!(locate_roots(&world, Some("A"), false).unwrap(), vec![(Some("A".into()), PathBuf::from("/ground/Work/A"))]);
-        assert_eq!(locate_roots(&world, None, false).unwrap(), vec![(None, PathBuf::from("/ground"))]);
-        assert!(locate_roots(&world, Some("Z"), false).is_err(), "a project outside the ground is refused");
+        assert_eq!(
+            locate_roots(&world, Some("A"), false).unwrap(),
+            vec![(Some("A".into()), PathBuf::from("/ground/Work/A"))]
+        );
+        assert_eq!(
+            locate_roots(&world, None, false).unwrap(),
+            vec![(None, PathBuf::from("/ground"))]
+        );
+        assert!(
+            locate_roots(&world, Some("Z"), false).is_err(),
+            "a project outside the ground is refused"
+        );
     }
 
     #[test]
     fn inhabitation_reads_follow_the_owner_grammar_and_the_allowlist() {
-        let request = OwnerRequest::Inhabitation { state_path: "/s.json".into(), run_ref: Some("run:1".into()), position_ref: None };
-        let args: Vec<String> = inhabitation_args(&request).unwrap().into_iter().map(|a| a.to_string_lossy().into_owned()).collect();
-        assert_eq!(args, ["development", "inhabitation", "/s.json", "--run", "run:1", "--json"]);
-        let request = OwnerRequest::CurrentWork { state_path: "/s.json".into(), position_ref: "central:position:project:O-I:oi-root-agency".into() };
-        let args: Vec<String> = inhabitation_args(&request).unwrap().into_iter().map(|a| a.to_string_lossy().into_owned()).collect();
-        assert_eq!(args, ["development", "current-work", "/s.json", "--position", "central:position:project:O-I:oi-root-agency", "--json"]);
-        assert!(inhabitation_args(&OwnerRequest::TelemetryStatus { state_path: "/s.json".into() }).is_none());
-        assert!(is_development_read("inhabitation") && is_development_read("current-work") && is_development_read("run"));
-        assert!(!is_development_read("mutate") && !is_development_read("custody"), "a mutation or an unlisted verb is never a read");
+        let request = OwnerRequest::Inhabitation {
+            state_path: "/s.json".into(),
+            run_ref: Some("run:1".into()),
+            position_ref: None,
+        };
+        let args: Vec<String> = inhabitation_args(&request)
+            .unwrap()
+            .into_iter()
+            .map(|a| a.to_string_lossy().into_owned())
+            .collect();
+        assert_eq!(
+            args,
+            [
+                "development",
+                "inhabitation",
+                "/s.json",
+                "--run",
+                "run:1",
+                "--json"
+            ]
+        );
+        let request = OwnerRequest::CurrentWork {
+            state_path: "/s.json".into(),
+            position_ref: "central:position:project:O-I:oi-root-agency".into(),
+        };
+        let args: Vec<String> = inhabitation_args(&request)
+            .unwrap()
+            .into_iter()
+            .map(|a| a.to_string_lossy().into_owned())
+            .collect();
+        assert_eq!(
+            args,
+            [
+                "development",
+                "current-work",
+                "/s.json",
+                "--position",
+                "central:position:project:O-I:oi-root-agency",
+                "--json"
+            ]
+        );
+        assert!(inhabitation_args(&OwnerRequest::TelemetryStatus {
+            state_path: "/s.json".into()
+        })
+        .is_none());
+        assert!(
+            is_development_read("inhabitation")
+                && is_development_read("current-work")
+                && is_development_read("run")
+        );
+        assert!(
+            !is_development_read("mutate") && !is_development_read("custody"),
+            "a mutation or an unlisted verb is never a read"
+        );
         let wire: OwnerRequest = serde_json::from_value(serde_json::json!({"kind": "current-work", "state_path": "/s.json", "position_ref": "p"})).unwrap();
         assert!(matches!(wire, OwnerRequest::CurrentWork { .. }));
-        assert_eq!(reading_contract(&serde_json::json!({"schema": "factory.current-work/v1"})), "factory.current-work/v1");
-        assert_eq!(reading_contract(&serde_json::json!({"contract": "factory.inhabitation-reading/v1"})), "factory.inhabitation-reading/v1");
+        assert_eq!(
+            reading_contract(&serde_json::json!({"schema": "factory.current-work/v1"})),
+            "factory.current-work/v1"
+        );
+        assert_eq!(
+            reading_contract(&serde_json::json!({"contract": "factory.inhabitation-reading/v1"})),
+            "factory.inhabitation-reading/v1"
+        );
     }
 
     #[test]
     fn telemetry_watch_is_bounded_and_resumable() {
-        let args = telemetry_watch_args(Path::new("/s.json"), Some(&serde_json::json!({"stateRevision": 21})), Some(60.0), Some(9000)).unwrap();
-        let words: Vec<String> = args.iter().map(|a| a.to_string_lossy().into_owned()).collect();
+        let args = telemetry_watch_args(
+            Path::new("/s.json"),
+            Some(&serde_json::json!({"stateRevision": 21})),
+            Some(60.0),
+            Some(9000),
+        )
+        .unwrap();
+        let words: Vec<String> = args
+            .iter()
+            .map(|a| a.to_string_lossy().into_owned())
+            .collect();
         assert_eq!(&words[..3], &["telemetry", "watch", "/s.json"]);
-        assert_eq!(words[words.iter().position(|w| w == "--resume").unwrap() + 1], r#"{"stateRevision":21}"#);
-        assert_eq!(words[words.iter().position(|w| w == "--duration").unwrap() + 1], "4");
-        assert_eq!(words[words.iter().position(|w| w == "--max-events").unwrap() + 1], "500");
+        assert_eq!(
+            words[words.iter().position(|w| w == "--resume").unwrap() + 1],
+            r#"{"stateRevision":21}"#
+        );
+        assert_eq!(
+            words[words.iter().position(|w| w == "--duration").unwrap() + 1],
+            "4"
+        );
+        assert_eq!(
+            words[words.iter().position(|w| w == "--max-events").unwrap() + 1],
+            "500"
+        );
         assert_eq!(words.last().unwrap(), "--json");
-        assert!(telemetry_watch_args(Path::new("/s.json"), Some(&serde_json::json!({"revision": 1})), None, None).is_err(), "a cursor without the owner's key is refused");
+        assert!(
+            telemetry_watch_args(
+                Path::new("/s.json"),
+                Some(&serde_json::json!({"revision": 1})),
+                None,
+                None
+            )
+            .is_err(),
+            "a cursor without the owner's key is refused"
+        );
         assert!(telemetry_watch_args(Path::new("/s.json"), None, Some(f64::NAN), None).is_err());
         let wire: OwnerRequest = serde_json::from_value(serde_json::json!({"kind": "telemetry-watch", "state_path": "/s.json", "duration_secs": 1.5, "run_ref": "run:A"})).unwrap();
         assert!(matches!(wire, OwnerRequest::TelemetryWatch { .. }));
@@ -932,16 +1307,27 @@ mod owner_tests {
     fn watch_reading_filters_to_the_run_and_carries_the_cursor() {
         // The owner's real output (factory telemetry watch on the specimen ground).
         let stdout = concat!(
-            r#"{"childNowRef":null,"correlationRef":"execution-correlation:CR01","runRef":"run:A","stateRevision":21,"telemetryRef":"telemetry:TM01","type":"execution-correlation"}"#, "\n",
-            r#"{"childNowRef":null,"correlationRef":"execution-correlation:CR02","runRef":"run:B","stateRevision":21,"telemetryRef":"telemetry:TM02","type":"execution-correlation"}"#, "\n",
+            r#"{"childNowRef":null,"correlationRef":"execution-correlation:CR01","runRef":"run:A","stateRevision":21,"telemetryRef":"telemetry:TM01","type":"execution-correlation"}"#,
+            "\n",
+            r#"{"childNowRef":null,"correlationRef":"execution-correlation:CR02","runRef":"run:B","stateRevision":21,"telemetryRef":"telemetry:TM02","type":"execution-correlation"}"#,
+            "\n",
             r#"{"cursor":{"stateRevision":21},"emitted":2,"resumeWith":"--resume","type":"cursor"}"#,
         );
         let reading = watch_reading(stdout, Some("run:A")).unwrap();
         assert_eq!(reading["contract"], "oi.factory-telemetry-watch/v1");
         assert_eq!(reading["lines"].as_array().unwrap().len(), 1);
         assert_eq!(reading["cursor"]["stateRevision"], 21);
-        assert_eq!(watch_reading(stdout, None).unwrap()["lines"].as_array().unwrap().len(), 2);
-        assert!(watch_reading(r#"{"type":"execution-correlation"}"#, None).is_err(), "no cursor line → no honest resume");
+        assert_eq!(
+            watch_reading(stdout, None).unwrap()["lines"]
+                .as_array()
+                .unwrap()
+                .len(),
+            2
+        );
+        assert!(
+            watch_reading(r#"{"type":"execution-correlation"}"#, None).is_err(),
+            "no cursor line → no honest resume"
+        );
     }
 
     /// The curated Factory Expressions starter material (FX-C4) is ordinary
@@ -950,7 +1336,8 @@ mod owner_tests {
     /// included.
     #[test]
     fn curated_factory_expression_material_is_valid_native_material() {
-        let root = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("../material/factory-expressions");
+        let root = std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
+            .join("../material/factory-expressions");
         let mut files = Vec::new();
         for kind in ["character", "scene", "gesture", "expression"] {
             for entry in std::fs::read_dir(root.join(kind)).expect("material directory") {
@@ -960,13 +1347,29 @@ mod owner_tests {
                 }
             }
         }
-        assert!(files.len() >= 12, "curated material present ({})", files.len());
+        assert!(
+            files.len() >= 12,
+            "curated material present ({})",
+            files.len()
+        );
         for path in files {
             let value: Value = serde_json::from_slice(&std::fs::read(&path).unwrap()).unwrap();
-            assert_eq!(value["reuse"]["schema"], "oi.expression-reuse/v1", "{}", path.display());
-            let document: crate::expression::Document = serde_json::from_value(value).unwrap_or_else(|e| panic!("{}: {e}", path.display()));
-            assert!(document.reuse.is_some(), "{}: the reuse block survives", path.display());
-            document.validate().unwrap_or_else(|e| panic!("{}: {e}", path.display()));
+            assert_eq!(
+                value["reuse"]["schema"],
+                "oi.expression-reuse/v1",
+                "{}",
+                path.display()
+            );
+            let document: crate::expression::Document =
+                serde_json::from_value(value).unwrap_or_else(|e| panic!("{}: {e}", path.display()));
+            assert!(
+                document.reuse.is_some(),
+                "{}: the reuse block survives",
+                path.display()
+            );
+            document
+                .validate()
+                .unwrap_or_else(|e| panic!("{}: {e}", path.display()));
         }
     }
 
@@ -974,7 +1377,8 @@ mod owner_tests {
     fn owner_requests_deserialise_from_the_desktop_wire() {
         let request: OwnerRequest = serde_json::from_value(serde_json::json!({"kind": "workflow-inspect", "state_path": "/s.json", "run_ref": "run:1"})).unwrap();
         assert!(matches!(request, OwnerRequest::WorkflowInspect { .. }));
-        let request: OwnerRequest = serde_json::from_value(serde_json::json!({"kind": "locate", "all": true})).unwrap();
+        let request: OwnerRequest =
+            serde_json::from_value(serde_json::json!({"kind": "locate", "all": true})).unwrap();
         assert!(request.needs_world());
     }
 }

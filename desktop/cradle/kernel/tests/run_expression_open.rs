@@ -8,9 +8,12 @@ use oi_cradle_kernel::{expression::Application, CentralClient};
 use serde_json::{json, Value};
 
 fn apply_ok(app: &mut Application, value: Value) -> Value {
-    app.apply(&CentralClient::discover(), serde_json::from_value(value).unwrap())
-        .unwrap()
-        .0
+    app.apply(
+        &CentralClient::discover(),
+        serde_json::from_value(value).unwrap(),
+    )
+    .unwrap()
+    .0
 }
 
 fn run_document() -> Value {
@@ -140,7 +143,9 @@ fn a_composed_run_expression_opens_through_the_kernel() {
         json!({"operation":"open","document":run_document(),"actor":"agent:factory-adapter"}),
     );
     assert_eq!(data["state"], "ready");
-    let document = data["document"].as_object().expect("open returns the document");
+    let document = data["document"]
+        .as_object()
+        .expect("open returns the document");
     assert_eq!(document["entities"].as_object().unwrap().len(), 5);
     // Every edge kind survives verbatim as a relation.
     assert_eq!(document["relations"].as_object().unwrap().len(), 1);
@@ -152,8 +157,12 @@ fn a_composed_run_expression_opens_through_the_kernel() {
     let run = &document["entities"]["expression:factory-run-nrh:entity:run"];
     assert_eq!(run["subject"]["presentation_role"], "being");
     assert_eq!(run["subject"]["native_owner"], "software-factory");
-    let node = &document["entities"]["expression:factory-run-nrh:entity:work-harden-now-record-law"];
-    assert_eq!(node["subject"]["readings"][0]["ref"], "factory.run-node/work");
+    let node =
+        &document["entities"]["expression:factory-run-nrh:entity:work-harden-now-record-law"];
+    assert_eq!(
+        node["subject"]["readings"][0]["ref"],
+        "factory.run-node/work"
+    );
 }
 
 #[test]
@@ -171,7 +180,10 @@ fn semantic_parameters_and_expression_prefixed_subjects_are_refused() {
     let mut app = Application::default();
     let result = app.apply(
         &CentralClient::discover(),
-        serde_json::from_value(json!({"operation":"open","document":document,"actor":"agent:factory-adapter"})).unwrap(),
+        serde_json::from_value(
+            json!({"operation":"open","document":document,"actor":"agent:factory-adapter"}),
+        )
+        .unwrap(),
     );
     assert!(result.is_err(), "semantic parameters must be refused");
 
@@ -187,7 +199,13 @@ fn semantic_parameters_and_expression_prefixed_subjects_are_refused() {
     let mut app = Application::default();
     let result = app.apply(
         &CentralClient::discover(),
-        serde_json::from_value(json!({"operation":"open","document":document,"actor":"agent:factory-adapter"})).unwrap(),
+        serde_json::from_value(
+            json!({"operation":"open","document":document,"actor":"agent:factory-adapter"}),
+        )
+        .unwrap(),
     );
-    assert!(result.is_err(), "expression-prefixed subjects must be refused");
+    assert!(
+        result.is_err(),
+        "expression-prefixed subjects must be refused"
+    );
 }

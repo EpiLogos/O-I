@@ -6,9 +6,7 @@
 //! re-opens without becoming canonical source. Neither is a second semantic
 //! store, and the Library remains one collection/index view over Expression
 //! refs (`collections` on the document), never the identity boundary.
-use crate::expression::{
-    bounds, id, parameter, readings, text, Automation, Parameter, ReadingRef,
-};
+use crate::expression::{bounds, id, parameter, readings, text, Automation, Parameter, ReadingRef};
 use crate::expression_carrier::CarrierKind;
 use serde::{Deserialize, Serialize};
 use serde_json::{json, Value};
@@ -21,10 +19,26 @@ use std::collections::BTreeMap;
 /// Profiles tighten, never widen, that domain: unknown keys fail closed.
 pub const PROFILE_PARAMETER_KEYS: &[&str] = &[
     // text/material carriers
-    "glyph", "shape", "kind", "yantra", "force_mode", "ascii", "image",
+    "glyph",
+    "shape",
+    "kind",
+    "yantra",
+    "force_mode",
+    "ascii",
+    "image",
     // numeric parameters (bounded by `expression::bounds`)
-    "x", "y", "z", "scale", "share", "width", "height", "rotation", "frequency",
-    "force_strength", "force_spin", "force_radius",
+    "x",
+    "y",
+    "z",
+    "scale",
+    "share",
+    "width",
+    "height",
+    "rotation",
+    "frequency",
+    "force_strength",
+    "force_spin",
+    "force_radius",
     // the rich Entity material body
     MATERIAL_KEY,
 ];
@@ -37,9 +51,27 @@ pub const MATERIAL_KEY: &str = "material";
 /// occurrence identity. `id`, `position` and `role` belong to the placeholder
 /// that a material is grafted onto and are never part of reusable material.
 pub const MATERIAL_FIELDS: &[&str] = &[
-    "name", "kind", "shape", "text", "source", "layers", "sequence", "force", "tint",
-    "tintWeight", "size", "scale", "share", "rotation", "sound", "yantraId",
-    "templateFrequency", "templateGeometry", "templateDimension", "enabled", "locked",
+    "name",
+    "kind",
+    "shape",
+    "text",
+    "source",
+    "layers",
+    "sequence",
+    "force",
+    "tint",
+    "tintWeight",
+    "size",
+    "scale",
+    "share",
+    "rotation",
+    "sound",
+    "yantraId",
+    "templateFrequency",
+    "templateGeometry",
+    "templateDimension",
+    "enabled",
+    "locked",
     "station",
     // The engine's own embedded entity parameters (model.ts `native`); held
     // under the same data guard, interpreted only by the engine.
@@ -48,7 +80,14 @@ pub const MATERIAL_FIELDS: &[&str] = &[
 
 /// Fields of the per-object `sound` block.
 pub const SOUND_FIELDS: &[&str] = &[
-    "enabled", "frequencyHz", "followCymatic", "gain", "waveform", "attack", "release", "pan",
+    "enabled",
+    "frequencyHz",
+    "followCymatic",
+    "gain",
+    "waveform",
+    "attack",
+    "release",
+    "pan",
 ];
 
 const MAX_MATERIAL_BYTES: usize = 768 * 1024;
@@ -151,7 +190,9 @@ pub struct ExpressionProfile {
 fn formation_token(value: &str) -> Result<(), String> {
     if value.is_empty()
         || value.len() > 32
-        || !value.bytes().all(|c| c.is_ascii_alphanumeric() || b"-_.".contains(&c))
+        || !value
+            .bytes()
+            .all(|c| c.is_ascii_alphanumeric() || b"-_.".contains(&c))
     {
         return Err("Formation names are bounded tokens".into());
     }
@@ -174,10 +215,15 @@ pub fn profile_parameter(key: &str, p: &Parameter) -> Result<(), String> {
 }
 
 fn finite(value: &Value, low: f64, high: f64, name: &str) -> Result<(), String> {
-    if value.as_f64().is_some_and(|n| n.is_finite() && n >= low && n <= high) {
+    if value
+        .as_f64()
+        .is_some_and(|n| n.is_finite() && n >= low && n <= high)
+    {
         Ok(())
     } else {
-        Err(format!("{name} is outside its material bounds [{low}, {high}]"))
+        Err(format!(
+            "{name} is outside its material bounds [{low}, {high}]"
+        ))
     }
 }
 
@@ -211,17 +257,24 @@ pub fn material(value: &Value) -> Result<(), String> {
         return Err(format!("Unsupported material field {key}"));
     }
     if let Some(v) = body.get("name") {
-        v.as_str().filter(|s| s.len() <= 640).ok_or("Material name is bounded text")?;
+        v.as_str()
+            .filter(|s| s.len() <= 640)
+            .ok_or("Material name is bounded text")?;
     }
     if let Some(v) = body.get("kind") {
         one_of(v, &["formation", "pin"], "Material kind")?;
     }
     if let Some(v) = body.get("shape") {
-        v.as_str().filter(|s| !s.is_empty() && s.len() <= 64).ok_or("Material shape is a bounded token")?;
+        v.as_str()
+            .filter(|s| !s.is_empty() && s.len() <= 64)
+            .ok_or("Material shape is a bounded token")?;
     }
     if let Some(v) = body.get("text") {
         v.as_str()
-            .filter(|s| s.chars().count() <= 4096 && !s.chars().any(|c| c.is_control() && c != '\n' && c != '\t'))
+            .filter(|s| {
+                s.chars().count() <= 4096
+                    && !s.chars().any(|c| c.is_control() && c != '\n' && c != '\t')
+            })
             .ok_or("Material text is bounded text")?;
     }
     if let Some(v) = body.get("tint") {
@@ -235,7 +288,12 @@ pub fn material(value: &Value) -> Result<(), String> {
     // Authoring material carries the field-studies Entity's own units:
     // `rotation` is in DEGREES (validateJourney admits ±36000). The radian
     // bound belongs only to the scalar `rotation` parameter (expression.rs).
-    for (key, low, high) in [("scale", 0.05, 4.), ("share", 0., 1000.), ("rotation", -36_000., 36_000.), ("templateFrequency", 1., 20_000.)] {
+    for (key, low, high) in [
+        ("scale", 0.05, 4.),
+        ("share", 0., 1000.),
+        ("rotation", -36_000., 36_000.),
+        ("templateFrequency", 1., 20_000.),
+    ] {
         if let Some(v) = body.get(key) {
             finite(v, low, high, key)?;
         }
@@ -250,10 +308,17 @@ pub fn material(value: &Value) -> Result<(), String> {
     }
     if let Some(v) = body.get("force") {
         let force = v.as_object().ok_or("Material force must be an object")?;
-        if force.keys().any(|k| !["kind", "strength", "radius", "spin"].contains(&k.as_str())) {
+        if force
+            .keys()
+            .any(|k| !["kind", "strength", "radius", "spin"].contains(&k.as_str()))
+        {
             return Err("Unsupported material force field".into());
         }
-        one_of(&v["kind"], &["none", "attract", "repel", "vortex"], "Force kind")?;
+        one_of(
+            &v["kind"],
+            &["none", "attract", "repel", "vortex"],
+            "Force kind",
+        )?;
         for key in ["strength", "spin"] {
             if let Some(n) = force.get(key) {
                 finite(n, -20., 20., key)?;
@@ -267,14 +332,23 @@ pub fn material(value: &Value) -> Result<(), String> {
         let source = v.as_object().ok_or("Material source must be an object")?;
         match v["kind"].as_str() {
             Some("image") => {
-                source.get("image").and_then(Value::as_object).ok_or("Image source requires its image configuration")?;
+                source
+                    .get("image")
+                    .and_then(Value::as_object)
+                    .ok_or("Image source requires its image configuration")?;
             }
             Some("ascii") => {
-                source.get("ascii").and_then(Value::as_object).ok_or("ASCII source requires its ascii configuration")?;
+                source
+                    .get("ascii")
+                    .and_then(Value::as_object)
+                    .ok_or("ASCII source requires its ascii configuration")?;
             }
             _ => return Err("Material source kind must be image or ascii".into()),
         }
-        if source.keys().any(|k| !["kind", "image", "ascii"].contains(&k.as_str())) {
+        if source
+            .keys()
+            .any(|k| !["kind", "image", "ascii"].contains(&k.as_str()))
+        {
             return Err("Unsupported material source field".into());
         }
     }
@@ -284,7 +358,9 @@ pub fn material(value: &Value) -> Result<(), String> {
             return Err("Material layer budget exceeded".into());
         }
         for layer in layers {
-            let layer_body = layer.as_object().ok_or("Material layer must be an object")?;
+            let layer_body = layer
+                .as_object()
+                .ok_or("Material layer must be an object")?;
             if let Some(tint) = layer_body.get("tint") {
                 if !colour(tint) {
                     return Err("Layer tint must be a hex colour".into());
@@ -299,13 +375,24 @@ pub fn material(value: &Value) -> Result<(), String> {
                 return Err("Material sequence step budget exceeded".into());
             }
         }
-        for (key, low, high) in [("hold", 0., 3600.), ("transition", 0., 3600.), ("jitter", 0., 10.), ("impulse", -100., 100.), ("rateMul", 0., 100.), ("phaseOffset", -1000., 1000.)] {
+        for (key, low, high) in [
+            ("hold", 0., 3600.),
+            ("transition", 0., 3600.),
+            ("jitter", 0., 10.),
+            ("impulse", -100., 100.),
+            ("rateMul", 0., 100.),
+            ("phaseOffset", -1000., 1000.),
+        ] {
             if let Some(n) = sequence.get(key) {
                 finite(n, low, high, key)?;
             }
         }
         if let Some(e) = sequence.get("easing") {
-            one_of(e, &["linear", "smoothstep", "kineticSnap", "whip"], "Sequence easing")?;
+            one_of(
+                e,
+                &["linear", "smoothstep", "kineticSnap", "whip"],
+                "Sequence easing",
+            )?;
         }
     }
     if let Some(v) = body.get("native") {
@@ -314,7 +401,11 @@ pub fn material(value: &Value) -> Result<(), String> {
         }
     }
     if let Some(v) = body.get("templateGeometry") {
-        one_of(v, &["square", "circular", "volumetric3D"], "templateGeometry")?;
+        one_of(
+            v,
+            &["square", "circular", "volumetric3D"],
+            "templateGeometry",
+        )?;
     }
     if let Some(v) = body.get("templateDimension") {
         one_of(v, &["2D", "3D"], "templateDimension")?;
@@ -347,7 +438,11 @@ pub fn sound(value: &Value) -> Result<(), String> {
         finite(v, 0., 1., "gain")?;
     }
     if let Some(v) = sound.get("waveform") {
-        one_of(v, &["sine", "triangle", "square", "sawtooth"], "Sound waveform")?;
+        one_of(
+            v,
+            &["sine", "triangle", "square", "sawtooth"],
+            "Sound waveform",
+        )?;
     }
     if let Some(v) = sound.get("attack") {
         finite(v, 0., 10., "attack")?;
@@ -397,8 +492,9 @@ impl ExpressionProfile {
             return Err("Profile material-default budget exceeded".into());
         }
         for (key, p) in &self.material_defaults {
-            profile_parameter(key, p)
-                .map_err(|e| format!("Profile material defaults stay inside the parameter vocabulary: {e}"))?;
+            profile_parameter(key, p).map_err(|e| {
+                format!("Profile material defaults stay inside the parameter vocabulary: {e}")
+            })?;
         }
         if self.formation_vocabulary.len() > MAX_FORMATIONS {
             return Err("Profile formation vocabulary budget exceeded".into());
@@ -425,28 +521,33 @@ impl ExpressionProfile {
             return Err("Profile automation-default budget exceeded".into());
         }
         for (key, automation) in &self.automation_defaults {
-            let (min, max) = bounds(key)
-                .ok_or("Profile automation defaults stay inside numeric parameters")?;
+            let (min, max) =
+                bounds(key).ok_or("Profile automation defaults stay inside numeric parameters")?;
             // Reuse the parameter law: glyph automation is unsupported, and
             // numeric automation must sit inside the global bounds.
             parameter(
                 key,
-                &Parameter { value: json!((min + max) / 2.), automation: Some(automation.clone()) },
+                &Parameter {
+                    value: json!((min + max) / 2.),
+                    automation: Some(automation.clone()),
+                },
             )?;
         }
         if self.permitted_parameter_domains.len() > MAX_DEFAULTS {
             return Err("Profile parameter-domain budget exceeded".into());
         }
         for (key, domain) in &self.permitted_parameter_domains {
-            let (min, max) = bounds(key)
-                .ok_or("Profile parameter domains stay inside numeric parameters")?;
+            let (min, max) =
+                bounds(key).ok_or("Profile parameter domains stay inside numeric parameters")?;
             if !domain.min.is_finite()
                 || !domain.max.is_finite()
                 || domain.min < min
                 || domain.max > max
                 || domain.min > domain.max
             {
-                return Err(format!("Profile domain for {key} must sit inside [{min}, {max}]"));
+                return Err(format!(
+                    "Profile domain for {key} must sit inside [{min}, {max}]"
+                ));
             }
         }
         if self.scene_seeds.len() > MAX_SEEDS {
@@ -469,7 +570,10 @@ impl ExpressionProfile {
     pub fn admits(&self, native_owner: &str, carrier: CarrierKind) -> bool {
         self.accepted_binding_kinds.contains(&carrier)
             && (self.accepted_native_owners.is_empty()
-                || self.accepted_native_owners.iter().any(|o| o == native_owner))
+                || self
+                    .accepted_native_owners
+                    .iter()
+                    .any(|o| o == native_owner))
     }
 }
 
@@ -494,8 +598,9 @@ impl ProfileAdoption {
             return Err("Profile override budget exceeded".into());
         }
         for (key, p) in &self.overridden_parameters {
-            profile_parameter(key, p)
-                .map_err(|e| format!("Profile overrides stay inside the parameter vocabulary: {e}"))?;
+            profile_parameter(key, p).map_err(|e| {
+                format!("Profile overrides stay inside the parameter vocabulary: {e}")
+            })?;
         }
         Ok(())
     }
@@ -591,7 +696,9 @@ impl ExpressionEdition {
         if self.revision == 0 || self.revision > crate::expression::MAX_REVISION {
             return Err("Invalid edition revision".into());
         }
-        if self.expression_revision == 0 || self.expression_revision > crate::expression::MAX_REVISION {
+        if self.expression_revision == 0
+            || self.expression_revision > crate::expression::MAX_REVISION
+        {
             return Err("Invalid edition expression revision".into());
         }
         if let Some(profile_ref) = &self.profile_ref {

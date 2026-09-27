@@ -110,21 +110,24 @@ pub struct SourceListing {
 
 /// List the participating sources of one project through the owner's own
 /// disclosures: horizon primary, ground fallback, honest unavailable floor.
-pub fn participating_sources(
-    client: &CentralClient,
-    project: Option<&str>,
-) -> SourceListing {
+pub fn participating_sources(client: &CentralClient, project: Option<&str>) -> SourceListing {
     let project = project
         .map(str::to_owned)
         .unwrap_or_else(|| client.configured_project().to_owned());
-    match client.run("projectcentral.change.horizon", json!({ "project": project })) {
+    match client.run(
+        "projectcentral.change.horizon",
+        json!({ "project": project }),
+    ) {
         Ok(data) => match serde_json::from_value::<ChangeHorizon>(data) {
             Ok(horizon) => {
                 if horizon.schema != HORIZON_SCHEMA {
                     return degraded_ground(
                         client,
                         &project,
-                        format!("horizon schema `{}` is not {HORIZON_SCHEMA}", horizon.schema),
+                        format!(
+                            "horizon schema `{}` is not {HORIZON_SCHEMA}",
+                            horizon.schema
+                        ),
                     );
                 }
                 if horizon.automatic_agent_or_model_invocation {
@@ -164,7 +167,10 @@ pub fn participating_sources(
 
 fn degraded_ground(client: &CentralClient, project: &str, reason: String) -> SourceListing {
     match client
-        .run("projectcentral.ground.inspect", json!({ "project": project }))
+        .run(
+            "projectcentral.ground.inspect",
+            json!({ "project": project }),
+        )
         .and_then(|data| {
             serde_json::from_value::<GroundInspection>(data).map_err(|error| {
                 OwnerCallError::Malformed {
@@ -246,7 +252,9 @@ pub struct NavigatorReading {
 }
 
 pub fn read_world(client: &CentralClient) -> Result<serde_json::Value, String> {
-    let data = client.run("central.world", json!({})).map_err(|e| e.to_string())?;
+    let data = client
+        .run("central.world", json!({}))
+        .map_err(|e| e.to_string())?;
     if data["schema"] != "central.world-map/v1" || !data["work"]["projects"].is_array() {
         return Err("Central world mapping has an unsupported shape".into());
     }
@@ -254,8 +262,13 @@ pub fn read_world(client: &CentralClient) -> Result<serde_json::Value, String> {
 }
 
 pub fn read_project(client: &CentralClient, project: &str) -> Result<serde_json::Value, String> {
-    let data = client.run("central.world.project", json!({"project": project})).map_err(|e| e.to_string())?;
-    if data["schema"] != "central.world-map/v1" || data["projection"] != "project" || !data["project"]["path"].is_string() {
+    let data = client
+        .run("central.world.project", json!({"project": project}))
+        .map_err(|e| e.to_string())?;
+    if data["schema"] != "central.world-map/v1"
+        || data["projection"] != "project"
+        || !data["project"]["path"].is_string()
+    {
         return Err("Central project mapping has an unsupported shape".into());
     }
     Ok(data)

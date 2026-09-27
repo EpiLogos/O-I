@@ -113,12 +113,22 @@ enum Mount {
 /// A product's command namespace is an owner-supplied catalogue fact. No
 /// desktop fallback table may invent a route absent from the composition.
 pub fn namespace_for(census: &composition::Reading, product_id: &str) -> Result<String, String> {
-    census.positions.iter().find(|position| position.product_id == product_id)
+    census
+        .positions
+        .iter()
+        .find(|position| position.product_id == product_id)
         .and_then(|position| position.current_world["canonical_namespace"].as_str())
-        .filter(|namespace| !namespace.is_empty() && !namespace.starts_with('-')
-            && namespace.chars().all(|character| character.is_ascii_alphanumeric() || character == '-' || character == '_'))
+        .filter(|namespace| {
+            !namespace.is_empty()
+                && !namespace.starts_with('-')
+                && namespace.chars().all(|character| {
+                    character.is_ascii_alphanumeric() || character == '-' || character == '_'
+                })
+        })
         .map(str::to_owned)
-        .ok_or_else(|| format!("The native composition discloses no command namespace for {product_id}"))
+        .ok_or_else(|| {
+            format!("The native composition discloses no command namespace for {product_id}")
+        })
 }
 
 impl Client {
@@ -147,24 +157,52 @@ impl Client {
         let mut owners = Vec::with_capacity(census.positions.len() + 1);
         owners.push(self.oi_owner(&census, observed));
         let mounted: Vec<OwnerMount> = std::thread::scope(|scope| {
-            let handles: Vec<_> = census.positions.iter().filter(|position| position.product_id != "oi")
+            let handles: Vec<_> = census
+                .positions
+                .iter()
+                .filter(|position| position.product_id != "oi")
                 .map(|position| {
                     let product_id = position.product_id.as_str();
                     let namespace = namespace_for(&census, product_id);
-                    (product_id, scope.spawn(move || {
-                        match namespace {
+                    (
+                        product_id,
+                        scope.spawn(move || match namespace {
                             Ok(namespace) => {
                                 let command: Vec<String> = std::iter::once(namespace)
-                                    .chain(SYSTEM_VERB.iter().map(|value| value.to_string())).collect();
-                                mount_owner(product_id, &command, self.invoke(cwd, &command), observed)
+                                    .chain(SYSTEM_VERB.iter().map(|value| value.to_string()))
+                                    .collect();
+                                mount_owner(
+                                    product_id,
+                                    &command,
+                                    self.invoke(cwd, &command),
+                                    observed,
+                                )
                             }
-                            Err(error) => mount_owner(product_id, &[], InvokeOutcome::SpawnFailed(error), observed),
-                        }
-                    }))
-                }).collect();
-            handles.into_iter().map(|(product_id, handle)| handle.join().unwrap_or_else(|_| {
-                mount_owner(product_id, &[], InvokeOutcome::SpawnFailed("the owner read stopped unexpectedly".into()), observed)
-            })).collect()
+                            Err(error) => mount_owner(
+                                product_id,
+                                &[],
+                                InvokeOutcome::SpawnFailed(error),
+                                observed,
+                            ),
+                        }),
+                    )
+                })
+                .collect();
+            handles
+                .into_iter()
+                .map(|(product_id, handle)| {
+                    handle.join().unwrap_or_else(|_| {
+                        mount_owner(
+                            product_id,
+                            &[],
+                            InvokeOutcome::SpawnFailed(
+                                "the owner read stopped unexpectedly".into(),
+                            ),
+                            observed,
+                        )
+                    })
+                })
+                .collect()
         });
         owners.extend(mounted);
 
@@ -583,34 +621,71 @@ impl Client {
     /// action the owner discloses as available, exposes to a UI and needs no
     /// argument runs; anything else is refused in plain words. The owner's
     /// answer returns verbatim (it renders only behind "Show raw").
-    pub fn run_action(&self, cwd: &Path, product_id: &str, action_ref: &str) -> Result<Value, String> {
+    pub fn run_action(
+        &self,
+        cwd: &Path,
+        product_id: &str,
+        action_ref: &str,
+    ) -> Result<Value, String> {
         let census = composition::Client::with(self.executable.clone()).read(cwd);
         let namespace = namespace_for(&census, product_id)?;
-        let reading: Vec<String> = std::iter::once(namespace.clone()).chain(SYSTEM_VERB.iter().map(|s| s.to_string())).collect();
+        let reading: Vec<String> = std::iter::once(namespace.clone())
+            .chain(SYSTEM_VERB.iter().map(|s| s.to_string()))
+            .collect();
         let descriptor = match self.invoke(cwd, &reading) {
-            InvokeOutcome::Completed { exit_code: 0, stdout, .. } => serde_json::from_str::<Value>(&stdout).map_err(|_| "The product's settings disclosure is unreadable")?,
-            InvokeOutcome::Completed { stderr, .. } => return Err(format!("The product's settings disclosure could not be read: {}", stderr.trim())),
-            InvokeOutcome::SpawnFailed(error) => return Err(format!("The suite is unavailable: {error}")),
+            InvokeOutcome::Completed {
+                exit_code: 0,
+                stdout,
+                ..
+            } => serde_json::from_str::<Value>(&stdout)
+                .map_err(|_| "The product's settings disclosure is unreadable")?,
+            InvokeOutcome::Completed { stderr, .. } => {
+                return Err(format!(
+                    "The product's settings disclosure could not be read: {}",
+                    stderr.trim()
+                ))
+            }
+            InvokeOutcome::SpawnFailed(error) => {
+                return Err(format!("The suite is unavailable: {error}"))
+            }
         };
-        let action = descriptor["actions"].as_array().and_then(|rows| rows.iter().find(|row| row["action_ref"] == action_ref))
+        let action = descriptor["actions"]
+            .as_array()
+            .and_then(|rows| rows.iter().find(|row| row["action_ref"] == action_ref))
             .ok_or("The product does not disclose that action")?;
         if action["availability"] != "disclosed" {
-            return Err(action["unavailable_reason"].as_str().unwrap_or("The product has no native operation for this action yet").to_owned());
+            return Err(action["unavailable_reason"]
+                .as_str()
+                .unwrap_or("The product has no native operation for this action yet")
+                .to_owned());
         }
         if action["exposure"]["ui"] == false {
             return Err("The product does not offer this action to the app".into());
         }
-        let native = action["native_path"].as_str().ok_or("The action names no native command")?;
+        let native = action["native_path"]
+            .as_str()
+            .ok_or("The action names no native command")?;
         let mut words = native.split_whitespace();
         let _owner = words.next().ok_or("The action names no native command")?;
         let args: Vec<String> = words.map(str::to_owned).collect();
-        if args.iter().any(|word| word.starts_with('<') || word.starts_with('[')) {
-            return Err("This action needs something to act on, which the settings page does not choose".into());
+        if args
+            .iter()
+            .any(|word| word.starts_with('<') || word.starts_with('['))
+        {
+            return Err(
+                "This action needs something to act on, which the settings page does not choose"
+                    .into(),
+            );
         }
         let command: Vec<String> = std::iter::once(namespace).chain(args).collect();
         match self.invoke(cwd, &command) {
-            InvokeOutcome::Completed { exit_code, stdout, stderr } => {
-                let output = serde_json::from_str::<Value>(&stdout).unwrap_or(Value::String(stdout));
+            InvokeOutcome::Completed {
+                exit_code,
+                stdout,
+                stderr,
+            } => {
+                let output =
+                    serde_json::from_str::<Value>(&stdout).unwrap_or(Value::String(stdout));
                 Ok(serde_json::json!({
                     "action_ref": action_ref,
                     "ok": exit_code == 0,
@@ -629,22 +704,30 @@ impl Client {
 /// in the system file manager. Only a path under the person's home that
 /// exists; nothing is read or written.
 pub fn reveal(path: &str) -> Result<Value, String> {
-    let home = std::env::var_os("HOME").map(PathBuf::from).ok_or("No home directory is resolvable")?;
+    let home = std::env::var_os("HOME")
+        .map(PathBuf::from)
+        .ok_or("No home directory is resolvable")?;
     let expanded = match path.strip_prefix("~/") {
         Some(rest) => home.join(rest),
         None => PathBuf::from(path),
     };
-    let target = expanded.canonicalize().map_err(|_| format!("{path} doesn't exist on this machine"))?;
+    let target = expanded
+        .canonicalize()
+        .map_err(|_| format!("{path} doesn't exist on this machine"))?;
     if !target.starts_with(home.canonicalize().unwrap_or(home)) {
         return Err("Only files in your home folder are opened from Settings".into());
     }
     let status = if cfg!(target_os = "macos") {
         Command::new("open").arg("-R").arg(&target).status()
     } else {
-        Command::new("xdg-open").arg(target.parent().unwrap_or(&target)).status()
+        Command::new("xdg-open")
+            .arg(target.parent().unwrap_or(&target))
+            .status()
     };
     match status {
-        Ok(status) if status.success() => Ok(serde_json::json!({"revealed": target.display().to_string()})),
+        Ok(status) if status.success() => {
+            Ok(serde_json::json!({"revealed": target.display().to_string()}))
+        }
         Ok(status) => Err(format!("The file manager refused to open it ({status})")),
         Err(error) => Err(format!("No file manager is available: {error}")),
     }
@@ -751,7 +834,15 @@ mod tests {
     fn discovery_is_uniform_across_all_six_owners() {
         // The reading command is derived by one rule for every owner:
         // `<canonical_namespace> system --json`. Prove the suffix is identical.
-        for product_id in ["central", "actuation", "ai-kit", "software-factory", "workcell", "quaternal-logic", "seventh-owner"] {
+        for product_id in [
+            "central",
+            "actuation",
+            "ai-kit",
+            "software-factory",
+            "workcell",
+            "quaternal-logic",
+            "seventh-owner",
+        ] {
             let mount = mount_owner(
                 product_id,
                 &["X".into(), "system".into(), "--json".into()],
@@ -796,7 +887,17 @@ esac
             .iter()
             .map(|o| o.product_id.as_str())
             .collect();
-        assert_eq!(product_ids, ["central", "actuation", "ai-kit", "software-factory", "workcell", "quaternal-logic"]);
+        assert_eq!(
+            product_ids,
+            [
+                "central",
+                "actuation",
+                "ai-kit",
+                "software-factory",
+                "workcell",
+                "quaternal-logic"
+            ]
+        );
         // Every product is either honestly degraded or unavailable — never an
         // empty success, never a fabricated descriptor.
         for owner in &reading.owners[1..] {

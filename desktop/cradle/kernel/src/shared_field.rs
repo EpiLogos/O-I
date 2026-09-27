@@ -67,7 +67,9 @@ pub fn client_executable() -> PathBuf {
                 .join("..")
                 .join("..")
         });
-    repo.join("shared-field").join("spacetimedb").join("field.sh")
+    repo.join("shared-field")
+        .join("spacetimedb")
+        .join("field.sh")
 }
 
 /// Send one request to the SharedField client and return the owner `data`.
@@ -81,16 +83,27 @@ fn call_with_executable(request: &Value, executable: &OsString) -> Result<Value,
         .stdout(Stdio::piped())
         .stderr(Stdio::piped())
         .spawn()
-        .map_err(|e| CallError::Unavailable { detail: format!("SharedField client could not be launched ({}): {e}", executable.to_string_lossy()) })?;
+        .map_err(|e| CallError::Unavailable {
+            detail: format!(
+                "SharedField client could not be launched ({}): {e}",
+                executable.to_string_lossy()
+            ),
+        })?;
     {
-        let mut stdin = child.stdin.take().ok_or_else(|| CallError::Unavailable { detail: "SharedField client accepted no request on stdin".into() })?;
+        let mut stdin = child.stdin.take().ok_or_else(|| CallError::Unavailable {
+            detail: "SharedField client accepted no request on stdin".into(),
+        })?;
         stdin
             .write_all(request.to_string().as_bytes())
-            .map_err(|e| CallError::Unavailable { detail: format!("SharedField client refused the request bytes: {e}") })?;
+            .map_err(|e| CallError::Unavailable {
+                detail: format!("SharedField client refused the request bytes: {e}"),
+            })?;
     }
     let output = child
         .wait_with_output()
-        .map_err(|e| CallError::Unavailable { detail: format!("SharedField client did not complete: {e}") })?;
+        .map_err(|e| CallError::Unavailable {
+            detail: format!("SharedField client did not complete: {e}"),
+        })?;
     decode_envelope(&output)
 }
 
@@ -108,13 +121,25 @@ pub fn decode_envelope(output: &std::process::Output) -> Result<Value, CallError
             },
         });
     }
-    let envelope: Value = serde_json::from_slice(&output.stdout).map_err(|e| CallError::Malformed {
-        detail: format!("SharedField client returned an unreadable envelope ({e}): {}", String::from_utf8_lossy(&output.stderr).trim()),
-    })?;
+    let envelope: Value =
+        serde_json::from_slice(&output.stdout).map_err(|e| CallError::Malformed {
+            detail: format!(
+                "SharedField client returned an unreadable envelope ({e}): {}",
+                String::from_utf8_lossy(&output.stderr).trim()
+            ),
+        })?;
     if envelope["ok"] == true {
-        return envelope.get("data").cloned().ok_or_else(|| CallError::Malformed { detail: "SharedField envelope is missing its reading".into() });
+        return envelope
+            .get("data")
+            .cloned()
+            .ok_or_else(|| CallError::Malformed {
+                detail: "SharedField envelope is missing its reading".into(),
+            });
     }
-    let message = envelope["error"]["message"].as_str().unwrap_or("SharedField client refused this request").to_owned();
+    let message = envelope["error"]["message"]
+        .as_str()
+        .unwrap_or("SharedField client refused this request")
+        .to_owned();
     Err(match envelope["error"]["kind"].as_str() {
         Some("unbound") => CallError::Unbound { message },
         Some("unavailable") => CallError::Unavailable { detail: message },
@@ -133,8 +158,12 @@ pub fn decode_envelope(output: &std::process::Output) -> Result<Value, CallError
 pub fn reading(request: &Value) -> Result<Value, String> {
     match call(request) {
         Ok(data) => Ok(data),
-        Err(CallError::Unbound { message }) => Ok(serde_json::json!({ "state": "unavailable", "owner_operation": OWNER_OPERATION, "detail": message })),
-        Err(CallError::Unavailable { detail }) => Ok(serde_json::json!({ "state": "unavailable", "owner_operation": OWNER_OPERATION, "detail": detail })),
+        Err(CallError::Unbound { message }) => Ok(
+            serde_json::json!({ "state": "unavailable", "owner_operation": OWNER_OPERATION, "detail": message }),
+        ),
+        Err(CallError::Unavailable { detail }) => Ok(
+            serde_json::json!({ "state": "unavailable", "owner_operation": OWNER_OPERATION, "detail": detail }),
+        ),
         Err(CallError::Refused { message }) => Err(message),
         Err(CallError::Malformed { detail }) => Err(detail),
     }
@@ -183,7 +212,10 @@ pub fn a2a_exchange(request: &Value) -> Result<Value, String> {
     let mut composed = request.clone();
     let operation_id = composed
         .get("message")
-        .and_then(|m| m.get("exchange_operation_id").or_else(|| m.get("message_id")))
+        .and_then(|m| {
+            m.get("exchange_operation_id")
+                .or_else(|| m.get("message_id"))
+        })
         .and_then(|v| v.as_str())
         .unwrap_or("a2a-exchange")
         .to_string();
@@ -200,9 +232,17 @@ pub fn a2a_exchange(request: &Value) -> Result<Value, String> {
         .stdout(Stdio::piped())
         .stderr(Stdio::piped())
         .spawn()
-        .map_err(|e| format!("the A2A runner could not be launched via node ({}): {e}", node.display()))?;
+        .map_err(|e| {
+            format!(
+                "the A2A runner could not be launched via node ({}): {e}",
+                node.display()
+            )
+        })?;
     {
-        let stdin = child.stdin.as_mut().ok_or_else(|| "the A2A runner accepted no request".to_string())?;
+        let stdin = child
+            .stdin
+            .as_mut()
+            .ok_or_else(|| "the A2A runner accepted no request".to_string())?;
         stdin
             .write_all(composed.to_string().as_bytes())
             .map_err(|e| format!("the A2A runner refused the request bytes: {e}"))?;
@@ -216,7 +256,10 @@ pub fn a2a_exchange(request: &Value) -> Result<Value, String> {
         return Err(format!("the A2A floor refused the exchange: {message}"));
     }
     if parsed.get("schema").and_then(|v| v.as_str()) != Some("oi.a2a-difference/v1") {
-        return Err("the A2A runner returned something that is not an oi.a2a-difference/v1 document".to_string());
+        return Err(
+            "the A2A runner returned something that is not an oi.a2a-difference/v1 document"
+                .to_string(),
+        );
     }
     Ok(parsed)
 }
@@ -264,17 +307,36 @@ mod a2a_tests {
         assert_eq!(reading["schema"], "oi.a2a-difference/v1");
         assert_eq!(reading["transport_result"]["ref"], "t1");
         let argv = std::fs::read_to_string(dir.join("argv.txt")).unwrap();
-        assert_eq!(argv.trim(), runner.to_string_lossy().to_string(), "the runner path is the sole argument");
-        let sent: serde_json::Value = serde_json::from_str(&std::fs::read_to_string(&stdin_file).unwrap()).unwrap();
+        assert_eq!(
+            argv.trim(),
+            runner.to_string_lossy().to_string(),
+            "the runner path is the sole argument"
+        );
+        let sent: serde_json::Value =
+            serde_json::from_str(&std::fs::read_to_string(&stdin_file).unwrap()).unwrap();
         assert_eq!(sent["authority"]["allowed"], serde_json::json!(true));
-        assert_eq!(sent["authority"]["grant_ref"], serde_json::json!("exchange-grant:operator-send:a2a-m1"));
-        assert_eq!(sent["message"]["message_id"], serde_json::json!("a2a-m1"), "the message travels verbatim");
+        assert_eq!(
+            sent["authority"]["grant_ref"],
+            serde_json::json!("exchange-grant:operator-send:a2a-m1")
+        );
+        assert_eq!(
+            sent["message"]["message_id"],
+            serde_json::json!("a2a-m1"),
+            "the message travels verbatim"
+        );
 
         // A reply that is not a difference document is refused, never carried.
-        std::fs::write(&fake, "#!/bin/sh\ncat > /dev/null\necho '{\"unexpected\":true}'\n").unwrap();
+        std::fs::write(
+            &fake,
+            "#!/bin/sh\ncat > /dev/null\necho '{\"unexpected\":true}'\n",
+        )
+        .unwrap();
         std::fs::set_permissions(&fake, std::fs::Permissions::from_mode(0o755)).unwrap();
         crate::test_stub::settle_stub(&fake);
-        assert!(a2a_exchange(&request).is_err(), "a non-contract reply is refused");
+        assert!(
+            a2a_exchange(&request).is_err(),
+            "a non-contract reply is refused"
+        );
 
         match prior_node {
             Some(value) => std::env::set_var("OI_NODE", value),
@@ -294,7 +356,11 @@ mod tests {
     use std::process::{ExitStatus, Output};
 
     fn output(code: i32, stdout: &str, stderr: &str) -> Output {
-        Output { status: ExitStatus::from_raw(code << 8), stdout: stdout.as_bytes().to_vec(), stderr: stderr.as_bytes().to_vec() }
+        Output {
+            status: ExitStatus::from_raw(code << 8),
+            stdout: stdout.as_bytes().to_vec(),
+            stderr: stderr.as_bytes().to_vec(),
+        }
     }
 
     #[test]
@@ -307,26 +373,68 @@ mod tests {
     #[test]
     fn unbound_envelope_is_absence_not_refusal() {
         let error = decode_envelope(&output(1, r#"{"ok":false,"error":{"kind":"unbound","message":"no SharedField target bound: set OI_SHARED_FIELD_TARGET"}}"#, "")).unwrap_err();
-        assert_eq!(error, CallError::Unbound { message: "no SharedField target bound: set OI_SHARED_FIELD_TARGET".into() });
-        assert_eq!(error.detail(), "no SharedField target bound: set OI_SHARED_FIELD_TARGET");
+        assert_eq!(
+            error,
+            CallError::Unbound {
+                message: "no SharedField target bound: set OI_SHARED_FIELD_TARGET".into()
+            }
+        );
+        assert_eq!(
+            error.detail(),
+            "no SharedField target bound: set OI_SHARED_FIELD_TARGET"
+        );
     }
 
     #[test]
     fn every_client_failure_kind_is_carried_distinctly() {
         let unavailable = decode_envelope(&output(1, r#"{"ok":false,"error":{"kind":"unavailable","message":"SharedField db at ws://x is unavailable: timeout"}}"#, "")).unwrap_err();
-        assert!(matches!(unavailable, CallError::Unavailable { ref detail } if detail.contains("timeout")));
-        let refused = decode_envelope(&output(1, r#"{"ok":false,"error":{"kind":"refused","message":"the owner said no"}}"#, "")).unwrap_err();
-        assert_eq!(refused, CallError::Refused { message: "the owner said no".into() });
-        let malformed = decode_envelope(&output(1, r#"{"ok":false,"error":{"kind":"malformed","message":"read requires a string `ref`"}}"#, "")).unwrap_err();
-        assert_eq!(malformed, CallError::Malformed { detail: "read requires a string `ref`".into() });
-        let unknown_kind = decode_envelope(&output(1, r#"{"ok":false,"error":{"kind":"surprise","message":"carried verbatim"}}"#, "")).unwrap_err();
-        assert_eq!(unknown_kind, CallError::Refused { message: "carried verbatim".into() });
+        assert!(
+            matches!(unavailable, CallError::Unavailable { ref detail } if detail.contains("timeout"))
+        );
+        let refused = decode_envelope(&output(
+            1,
+            r#"{"ok":false,"error":{"kind":"refused","message":"the owner said no"}}"#,
+            "",
+        ))
+        .unwrap_err();
+        assert_eq!(
+            refused,
+            CallError::Refused {
+                message: "the owner said no".into()
+            }
+        );
+        let malformed = decode_envelope(&output(
+            1,
+            r#"{"ok":false,"error":{"kind":"malformed","message":"read requires a string `ref`"}}"#,
+            "",
+        ))
+        .unwrap_err();
+        assert_eq!(
+            malformed,
+            CallError::Malformed {
+                detail: "read requires a string `ref`".into()
+            }
+        );
+        let unknown_kind = decode_envelope(&output(
+            1,
+            r#"{"ok":false,"error":{"kind":"surprise","message":"carried verbatim"}}"#,
+            "",
+        ))
+        .unwrap_err();
+        assert_eq!(
+            unknown_kind,
+            CallError::Refused {
+                message: "carried verbatim".into()
+            }
+        );
     }
 
     #[test]
     fn empty_stdout_on_failure_is_unavailable_and_unreadable_stdout_is_malformed() {
         let launch_fault = decode_envelope(&output(127, "", "tsx: not found")).unwrap_err();
-        assert!(matches!(launch_fault, CallError::Unavailable { ref detail } if detail.contains("tsx: not found")));
+        assert!(
+            matches!(launch_fault, CallError::Unavailable { ref detail } if detail.contains("tsx: not found"))
+        );
         let unreadable = decode_envelope(&output(0, "not json", "")).unwrap_err();
         assert!(matches!(unreadable, CallError::Malformed { .. }));
         let missing_data = decode_envelope(&output(0, r#"{"ok":true}"#, "")).unwrap_err();
@@ -335,7 +443,11 @@ mod tests {
 
     #[test]
     fn a_missing_client_executable_is_absence_not_a_panic() {
-        let error = call_with_executable(&serde_json::json!({"kind":"status"}), &OsString::from("/nonexistent/oi-shared-field-client")).unwrap_err();
+        let error = call_with_executable(
+            &serde_json::json!({"kind":"status"}),
+            &OsString::from("/nonexistent/oi-shared-field-client"),
+        )
+        .unwrap_err();
         assert!(matches!(error, CallError::Unavailable { .. }));
     }
 }

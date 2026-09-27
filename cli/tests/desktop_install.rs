@@ -262,7 +262,9 @@ fn install(sandbox: &Sandbox, archive: &Path, extra: &[&str]) -> Output {
 
 fn expected_executable(sandbox: &Sandbox) -> PathBuf {
     if host_target().ends_with("darwin") {
-        sandbox.home.join("Applications/O-I.app/Contents/MacOS/oi-cradle")
+        sandbox
+            .home
+            .join("Applications/O-I.app/Contents/MacOS/oi-cradle")
     } else {
         sandbox.data_home.join("bin/oi-cradle")
     }
