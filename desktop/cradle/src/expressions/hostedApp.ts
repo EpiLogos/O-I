@@ -89,6 +89,25 @@ export function shellCutout(from: HTMLElement): {width: number; height: number; 
   return {width, height, right, coveredRight};
 }
 
+/** The active theme's resolved colour reading for the hosted application:
+ * the canvas ground/ink this appearance carries, plus the inverse pair, so
+ * the app can re-derive its theme-bound default expression (the O:I mark)
+ * from the live theme — house or theme-library entry. Null when the host
+ * carries no hex tokens (bare pages outside the desktop). */
+export function hostThemeReading(): {ground:string;ink:string;inverseGround:string;inverseInk:string} | null {
+  try {
+    const style = getComputedStyle(document.body);
+    const read = (name: string) => style.getPropertyValue(name).trim();
+    const reading = {
+      ground: read("--oi-canvas-ground"),
+      ink: read("--oi-foreground"),
+      inverseGround: read("--oi-inverse-canvas-ground"),
+      inverseInk: read("--oi-inverse-foreground"),
+    };
+    return Object.values(reading).every(value => /^#[0-9a-fA-F]{6}$/.test(value)) ? reading : null;
+  } catch { return null; }
+}
+
 /** Align a hosted application frame with the shell's corner cutout (owner
  * addendum 2026-09-19; right-side accommodation and the lights watcher
  * 2026-09-20, gated by tests/window-lights-contract.test.mjs): post the live
@@ -98,7 +117,10 @@ export function shellCutout(from: HTMLElement): {width: number; height: number; 
  * the attribute that carries it). The application turns the message into its
  * masthead height, its first-icon inset and its far-end inset, so the
  * shell's cut corners and the app's header row read as one continuous
- * aligned edge. */
+ * aligned edge. The message also carries the host's resolved theme reading,
+ * posted on the same triggers plus theme changes (data-theme and
+ * data-oi-theme), so the app's theme-bound default expression follows the
+ * live theme. */
 export function trackShellCutout(frame: HTMLIFrameElement): () => void {
   let previous = "", scheduled = 0;
   const shell = frame.closest(".desktop-shell");
@@ -106,10 +128,11 @@ export function trackShellCutout(frame: HTMLIFrameElement): () => void {
   const post = () => {
     const cutout = shellCutout(frame);
     const appearance = document.body.dataset.theme === 'dark' ? 'dark' : 'light';
-    const key = JSON.stringify({cutout,appearance});
+    const theme = hostThemeReading();
+    const key = JSON.stringify({cutout,appearance,theme});
     if (cutout && key !== previous) {
       previous = key;
-      frame.contentWindow?.postMessage({type: "oi-shell-cutout", ...cutout, appearance}, "*");
+      frame.contentWindow?.postMessage({type: "oi-shell-cutout", ...cutout, appearance, ...(theme && {theme})}, "*");
     }
   };
   const observed = new Set<Element>();
@@ -134,7 +157,7 @@ export function trackShellCutout(frame: HTMLIFrameElement): () => void {
   if (shell && observer) observer.observe(shell, {attributes: true, attributeFilter: ["style", "class", "data-native", "data-window-lights"]});
   const headerObserver = header ? new MutationObserver(schedule) : null;
   const appearanceObserver = new MutationObserver(schedule);
-  appearanceObserver.observe(document.body, {attributes:true,attributeFilter:['data-theme']});
+  appearanceObserver.observe(document.body, {attributes:true,attributeFilter:['data-theme','data-oi-theme']});
   if (header && headerObserver) headerObserver.observe(header, {childList: true, subtree: true, characterData: true, attributes: true, attributeFilter: ["style", "class", "hidden"]});
   frame.addEventListener("load", loaded);
   window.addEventListener("resize", schedule);

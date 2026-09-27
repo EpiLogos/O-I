@@ -111,6 +111,26 @@ export function oiMark():Journey {
  night.field.background='#1d231f';night.field.palette=['#eee9d9','#a9b399'];Object.assign(night.field.params,{opacity:.9,densityPhase:1.9});
  return {schema:'oi.journey',version:1,id:'oi-mark',name:'O:I — the mark',description:'One expression, two scenes: the base O:I image in day and night.',loop:true,scenes:[day,night],updatedAt:new Date().toISOString()};
 }
+/** A resolved theme reading from the host: the active theme's canvas
+ * ground/ink and the same roles for the opposite appearance. */
+export interface MarkThemeReading {ground:string;ink:string;inverseGround:string;inverseInk:string}
+/** The mark is theme-bound: wherever the instrument's default expression
+ * stands, it takes the host theme's ground and ink (the day scene) and the
+ * theme's inverse pair (the night scene), so every theme instantiates its
+ * own version of the mark. The authored day/night colours above are the
+ * fallback when no host theme reaches the app. Presentation derivation —
+ * never an authored change, never persisted as one. Returns whether the
+ * journey is the mark and was recoloured. */
+export function rethemeMark(journey:Journey,theme:MarkThemeReading):boolean {
+ if(journey?.id!=='oi-mark'||!theme)return false;
+ const hex=(v:unknown):v is string=>typeof v==='string'&&/^#[0-9a-fA-F]{6}$/.test(v);
+ if(![theme.ground,theme.ink,theme.inverseGround,theme.inverseInk].every(hex))return false;
+ for(const s of journey.scenes){
+  if(s.id==='mark-day'){s.field.background=theme.ground;s.field.palette=[theme.ink,theme.ink];}
+  else if(s.id==='mark-night'){s.field.background=theme.inverseGround;s.field.palette=[theme.inverseInk,theme.inverseInk];}
+ }
+ return true;
+}
 export function chakraEntities():Entity[]{return ['Root','Sacral','Solar','Heart','Throat','Brow','Crown'].map((name,i)=>{const e=entity(name,['△','◯','△','✧','◯','∞','✧'][i],{x:.18,y:-.82+i*.274,z:0});e.size={x:.235,y:.235};e.tint=['#a94138','#c67c46','#c2a852','#638c69','#5898a4','#737599','#a590b0'][i];e.tintWeight=1;e.station=i;e.force={kind:'vortex',strength:.3,radius:.27,spin:.12};return e;});}
 export function sevenCentres():Journey{const s=blankScene('Seven centres');s.entities=chakraEntities();s.field.params.count=42000;s.field.params.contrast=.5;s.composition.layout='column';const t=clone(s);t.id=uid('scene');t.name='A rising attention';t.composition.focus='travelling';return {schema:'oi.journey',version:1,id:'seven-centres',name:'Seven centres',description:'A spatial composition; not seven isolated simulations.',loop:true,scenes:[s,t],updatedAt:new Date().toISOString()};}
 export function smallLanguage():Journey {const j=fieldStudies();j.id='small-language';j.name='A small language';j.description='Three characters, and the intervals between them.';j.scenes=[j.scenes[0],j.scenes[4],j.scenes[6]].map((s,i)=>{s.id=uid('scene');s.name=['A beginning','And','An opening'][i];return s;});return j;}
