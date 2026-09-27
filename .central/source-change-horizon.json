@@ -1,11 +1,11 @@
 {
   "schema": "central.source-change-horizon/v1",
-  "world_ref": "project:project:o-i",
-  "cursor": 191,
+  "world_ref": "project:O-I",
+  "cursor": 204,
   "sources": {
-    "central:source:project:project:o-i:ProjectCentral/agents/governance/repo-content.md": {
+    "central:source:project:O-I:ProjectCentral/agents/governance/repo-content.md": {
       "binding": {
-        "ref": "central:source:project:project:o-i:ProjectCentral/agents/governance/repo-content.md",
+        "ref": "central:source:project:O-I:ProjectCentral/agents/governance/repo-content.md",
         "path": "ProjectCentral/agents/governance/repo-content.md",
         "roles": [
           "agent-governance-source"
@@ -20,9 +20,9 @@
         "byte_len": 547
       }
     },
-    "central:source:project:project:o-i:ProjectCentral/agents/governance/repo-structure.md": {
+    "central:source:project:O-I:ProjectCentral/agents/governance/repo-structure.md": {
       "binding": {
-        "ref": "central:source:project:project:o-i:ProjectCentral/agents/governance/repo-structure.md",
+        "ref": "central:source:project:O-I:ProjectCentral/agents/governance/repo-structure.md",
         "path": "ProjectCentral/agents/governance/repo-structure.md",
         "roles": [
           "agent-governance-source"
@@ -37,9 +37,26 @@
         "byte_len": 606
       }
     },
-    "central:source:project:project:o-i:ProjectCentral/agents/wiki/wiki.json": {
+    "central:source:project:O-I:ProjectCentral/agents/wiki/returns/oi-65-settings-kernel-starvation-2026-09-22.json": {
       "binding": {
-        "ref": "central:source:project:project:o-i:ProjectCentral/agents/wiki/wiki.json",
+        "ref": "central:source:project:O-I:ProjectCentral/agents/wiki/returns/oi-65-settings-kernel-starvation-2026-09-22.json",
+        "path": "ProjectCentral/agents/wiki/returns/oi-65-settings-kernel-starvation-2026-09-22.json",
+        "roles": [
+          "agent-wiki-source"
+        ],
+        "provenance": "agent-maintained",
+        "standing": "unspecified",
+        "treatment": "projectcentral-agent-wiki",
+        "agent_retrieval_allowed": true
+      },
+      "revision": {
+        "revision": "central.content-fnv1a64/v1:2459:e6619829329f2011",
+        "byte_len": 2459
+      }
+    },
+    "central:source:project:O-I:ProjectCentral/agents/wiki/wiki.json": {
+      "binding": {
+        "ref": "central:source:project:O-I:ProjectCentral/agents/wiki/wiki.json",
         "path": "ProjectCentral/agents/wiki/wiki.json",
         "roles": [
           "agent-wiki-source"
@@ -50,13 +67,13 @@
         "agent_retrieval_allowed": true
       },
       "revision": {
-        "revision": "central.content-fnv1a64/v1:861:c94015435f6d17eb",
-        "byte_len": 861
+        "revision": "central.content-fnv1a64/v1:837:919e0d2d596a7eb6",
+        "byte_len": 837
       }
     },
-    "central:source:project:project:o-i:ProjectCentral/user/learnings/2026-08-21-oi97-false-convergence.md": {
+    "central:source:project:O-I:ProjectCentral/user/learnings/2026-08-21-oi97-false-convergence.md": {
       "binding": {
-        "ref": "central:source:project:project:o-i:ProjectCentral/user/learnings/2026-08-21-oi97-false-convergence.md",
+        "ref": "central:source:project:O-I:ProjectCentral/user/learnings/2026-08-21-oi97-false-convergence.md",
         "path": "ProjectCentral/user/learnings/2026-08-21-oi97-false-convergence.md",
         "roles": [
           "project-human-source-aperture"
@@ -71,9 +88,9 @@
         "byte_len": 13659
       }
     },
-    "central:source:project:project:o-i:ProjectCentral/user/learnings/2026-08-23-physical-gate-is-not-branch-parking.md": {
+    "central:source:project:O-I:ProjectCentral/user/learnings/2026-08-23-physical-gate-is-not-branch-parking.md": {
       "binding": {
-        "ref": "central:source:project:project:o-i:ProjectCentral/user/learnings/2026-08-23-physical-gate-is-not-branch-parking.md",
+        "ref": "central:source:project:O-I:ProjectCentral/user/learnings/2026-08-23-physical-gate-is-not-branch-parking.md",
         "path": "ProjectCentral/user/learnings/2026-08-23-physical-gate-is-not-branch-parking.md",
         "roles": [
           "project-human-source-aperture"
@@ -88,9 +105,9 @@
         "byte_len": 2682
       }
     },
-    "central:source:project:project:o-i:ProjectCentral/user/learnings/README.md": {
+    "central:source:project:O-I:ProjectCentral/user/learnings/README.md": {
       "binding": {
-        "ref": "central:source:project:project:o-i:ProjectCentral/user/learnings/README.md",
+        "ref": "central:source:project:O-I:ProjectCentral/user/learnings/README.md",
         "path": "ProjectCentral/user/learnings/README.md",
         "roles": [
           "project-human-source-aperture"
@@ -4194,9 +4211,269 @@
       "kind": "added",
       "observed_at_unix_seconds": 1788838324,
       "provider": "central.filesystem-reconcile/v1"
+    },
+    {
+      "schema": "central.source-change/v1",
+      "change_ref": "central:change:project:O-I:192",
+      "cursor": 192,
+      "world_ref": "project:O-I",
+      "source_ref": "central:source:project:O-I:ProjectCentral/agents/governance/repo-content.md",
+      "source_path": "ProjectCentral/agents/governance/repo-content.md",
+      "source_roles": [
+        "agent-governance-source"
+      ],
+      "provenance": "unresolved",
+      "standing": "unspecified",
+      "treatment": "projectcentral-agent-governance",
+      "agent_retrieval_allowed": true,
+      "before_revision": null,
+      "after_revision": "central.content-fnv1a64/v1:547:8e32b268cd6ccd6a",
+      "kind": "added",
+      "observed_at_unix_seconds": 1790454710,
+      "provider": "central.filesystem-reconcile/v1"
+    },
+    {
+      "schema": "central.source-change/v1",
+      "change_ref": "central:change:project:O-I:193",
+      "cursor": 193,
+      "world_ref": "project:O-I",
+      "source_ref": "central:source:project:O-I:ProjectCentral/agents/governance/repo-structure.md",
+      "source_path": "ProjectCentral/agents/governance/repo-structure.md",
+      "source_roles": [
+        "agent-governance-source"
+      ],
+      "provenance": "unresolved",
+      "standing": "unspecified",
+      "treatment": "projectcentral-agent-governance",
+      "agent_retrieval_allowed": true,
+      "before_revision": null,
+      "after_revision": "central.content-fnv1a64/v1:606:003b52ee32f98548",
+      "kind": "added",
+      "observed_at_unix_seconds": 1790454710,
+      "provider": "central.filesystem-reconcile/v1"
+    },
+    {
+      "schema": "central.source-change/v1",
+      "change_ref": "central:change:project:O-I:194",
+      "cursor": 194,
+      "world_ref": "project:O-I",
+      "source_ref": "central:source:project:O-I:ProjectCentral/agents/wiki/returns/oi-65-settings-kernel-starvation-2026-09-22.json",
+      "source_path": "ProjectCentral/agents/wiki/returns/oi-65-settings-kernel-starvation-2026-09-22.json",
+      "source_roles": [
+        "agent-wiki-source"
+      ],
+      "provenance": "agent-maintained",
+      "standing": "unspecified",
+      "treatment": "projectcentral-agent-wiki",
+      "agent_retrieval_allowed": true,
+      "before_revision": null,
+      "after_revision": "central.content-fnv1a64/v1:2459:e6619829329f2011",
+      "kind": "added",
+      "observed_at_unix_seconds": 1790454710,
+      "provider": "central.filesystem-reconcile/v1"
+    },
+    {
+      "schema": "central.source-change/v1",
+      "change_ref": "central:change:project:O-I:195",
+      "cursor": 195,
+      "world_ref": "project:O-I",
+      "source_ref": "central:source:project:O-I:ProjectCentral/agents/wiki/wiki.json",
+      "source_path": "ProjectCentral/agents/wiki/wiki.json",
+      "source_roles": [
+        "agent-wiki-source"
+      ],
+      "provenance": "agent-maintained",
+      "standing": "unspecified",
+      "treatment": "projectcentral-agent-wiki",
+      "agent_retrieval_allowed": true,
+      "before_revision": null,
+      "after_revision": "central.content-fnv1a64/v1:837:919e0d2d596a7eb6",
+      "kind": "added",
+      "observed_at_unix_seconds": 1790454710,
+      "provider": "central.filesystem-reconcile/v1"
+    },
+    {
+      "schema": "central.source-change/v1",
+      "change_ref": "central:change:project:O-I:196",
+      "cursor": 196,
+      "world_ref": "project:O-I",
+      "source_ref": "central:source:project:O-I:ProjectCentral/user/learnings/2026-08-21-oi97-false-convergence.md",
+      "source_path": "ProjectCentral/user/learnings/2026-08-21-oi97-false-convergence.md",
+      "source_roles": [
+        "project-human-source-aperture"
+      ],
+      "provenance": "unresolved",
+      "standing": "unspecified",
+      "treatment": "projectcentral-user",
+      "agent_retrieval_allowed": true,
+      "before_revision": null,
+      "after_revision": "central.content-fnv1a64/v1:13659:dcc45ee7a47e23d8",
+      "kind": "added",
+      "observed_at_unix_seconds": 1790454710,
+      "provider": "central.filesystem-reconcile/v1"
+    },
+    {
+      "schema": "central.source-change/v1",
+      "change_ref": "central:change:project:O-I:197",
+      "cursor": 197,
+      "world_ref": "project:O-I",
+      "source_ref": "central:source:project:O-I:ProjectCentral/user/learnings/2026-08-23-physical-gate-is-not-branch-parking.md",
+      "source_path": "ProjectCentral/user/learnings/2026-08-23-physical-gate-is-not-branch-parking.md",
+      "source_roles": [
+        "project-human-source-aperture"
+      ],
+      "provenance": "unresolved",
+      "standing": "unspecified",
+      "treatment": "projectcentral-user",
+      "agent_retrieval_allowed": true,
+      "before_revision": null,
+      "after_revision": "central.content-fnv1a64/v1:2682:b39c1d0afa4ae52f",
+      "kind": "added",
+      "observed_at_unix_seconds": 1790454710,
+      "provider": "central.filesystem-reconcile/v1"
+    },
+    {
+      "schema": "central.source-change/v1",
+      "change_ref": "central:change:project:O-I:198",
+      "cursor": 198,
+      "world_ref": "project:O-I",
+      "source_ref": "central:source:project:O-I:ProjectCentral/user/learnings/README.md",
+      "source_path": "ProjectCentral/user/learnings/README.md",
+      "source_roles": [
+        "project-human-source-aperture"
+      ],
+      "provenance": "unresolved",
+      "standing": "unspecified",
+      "treatment": "projectcentral-user",
+      "agent_retrieval_allowed": true,
+      "before_revision": null,
+      "after_revision": "central.content-fnv1a64/v1:2389:0aed651ab4539664",
+      "kind": "added",
+      "observed_at_unix_seconds": 1790454710,
+      "provider": "central.filesystem-reconcile/v1"
+    },
+    {
+      "schema": "central.source-change/v1",
+      "change_ref": "central:change:project:O-I:199",
+      "cursor": 199,
+      "world_ref": "project:O-I",
+      "source_ref": "central:source:project:project:o-i:ProjectCentral/agents/governance/repo-content.md",
+      "source_path": "ProjectCentral/agents/governance/repo-content.md",
+      "source_roles": [
+        "agent-governance-source"
+      ],
+      "provenance": "unresolved",
+      "standing": "unspecified",
+      "treatment": "projectcentral-agent-governance",
+      "agent_retrieval_allowed": true,
+      "before_revision": "central.content-fnv1a64/v1:547:8e32b268cd6ccd6a",
+      "after_revision": null,
+      "kind": "removed",
+      "observed_at_unix_seconds": 1790454710,
+      "provider": "central.filesystem-reconcile/v1"
+    },
+    {
+      "schema": "central.source-change/v1",
+      "change_ref": "central:change:project:O-I:200",
+      "cursor": 200,
+      "world_ref": "project:O-I",
+      "source_ref": "central:source:project:project:o-i:ProjectCentral/agents/governance/repo-structure.md",
+      "source_path": "ProjectCentral/agents/governance/repo-structure.md",
+      "source_roles": [
+        "agent-governance-source"
+      ],
+      "provenance": "unresolved",
+      "standing": "unspecified",
+      "treatment": "projectcentral-agent-governance",
+      "agent_retrieval_allowed": true,
+      "before_revision": "central.content-fnv1a64/v1:606:003b52ee32f98548",
+      "after_revision": null,
+      "kind": "removed",
+      "observed_at_unix_seconds": 1790454710,
+      "provider": "central.filesystem-reconcile/v1"
+    },
+    {
+      "schema": "central.source-change/v1",
+      "change_ref": "central:change:project:O-I:201",
+      "cursor": 201,
+      "world_ref": "project:O-I",
+      "source_ref": "central:source:project:project:o-i:ProjectCentral/agents/wiki/wiki.json",
+      "source_path": "ProjectCentral/agents/wiki/wiki.json",
+      "source_roles": [
+        "agent-wiki-source"
+      ],
+      "provenance": "agent-maintained",
+      "standing": "unspecified",
+      "treatment": "projectcentral-agent-wiki",
+      "agent_retrieval_allowed": true,
+      "before_revision": "central.content-fnv1a64/v1:861:c94015435f6d17eb",
+      "after_revision": null,
+      "kind": "removed",
+      "observed_at_unix_seconds": 1790454710,
+      "provider": "central.filesystem-reconcile/v1"
+    },
+    {
+      "schema": "central.source-change/v1",
+      "change_ref": "central:change:project:O-I:202",
+      "cursor": 202,
+      "world_ref": "project:O-I",
+      "source_ref": "central:source:project:project:o-i:ProjectCentral/user/learnings/2026-08-21-oi97-false-convergence.md",
+      "source_path": "ProjectCentral/user/learnings/2026-08-21-oi97-false-convergence.md",
+      "source_roles": [
+        "project-human-source-aperture"
+      ],
+      "provenance": "unresolved",
+      "standing": "unspecified",
+      "treatment": "projectcentral-user",
+      "agent_retrieval_allowed": true,
+      "before_revision": "central.content-fnv1a64/v1:13659:dcc45ee7a47e23d8",
+      "after_revision": null,
+      "kind": "removed",
+      "observed_at_unix_seconds": 1790454710,
+      "provider": "central.filesystem-reconcile/v1"
+    },
+    {
+      "schema": "central.source-change/v1",
+      "change_ref": "central:change:project:O-I:203",
+      "cursor": 203,
+      "world_ref": "project:O-I",
+      "source_ref": "central:source:project:project:o-i:ProjectCentral/user/learnings/2026-08-23-physical-gate-is-not-branch-parking.md",
+      "source_path": "ProjectCentral/user/learnings/2026-08-23-physical-gate-is-not-branch-parking.md",
+      "source_roles": [
+        "project-human-source-aperture"
+      ],
+      "provenance": "unresolved",
+      "standing": "unspecified",
+      "treatment": "projectcentral-user",
+      "agent_retrieval_allowed": true,
+      "before_revision": "central.content-fnv1a64/v1:2682:b39c1d0afa4ae52f",
+      "after_revision": null,
+      "kind": "removed",
+      "observed_at_unix_seconds": 1790454710,
+      "provider": "central.filesystem-reconcile/v1"
+    },
+    {
+      "schema": "central.source-change/v1",
+      "change_ref": "central:change:project:O-I:204",
+      "cursor": 204,
+      "world_ref": "project:O-I",
+      "source_ref": "central:source:project:project:o-i:ProjectCentral/user/learnings/README.md",
+      "source_path": "ProjectCentral/user/learnings/README.md",
+      "source_roles": [
+        "project-human-source-aperture"
+      ],
+      "provenance": "unresolved",
+      "standing": "unspecified",
+      "treatment": "projectcentral-user",
+      "agent_retrieval_allowed": true,
+      "before_revision": "central.content-fnv1a64/v1:2389:0aed651ab4539664",
+      "after_revision": null,
+      "kind": "removed",
+      "observed_at_unix_seconds": 1790454710,
+      "provider": "central.filesystem-reconcile/v1"
     }
   ],
   "consumer_cursors": {},
   "provider": "central.filesystem-reconcile/v1",
-  "reconciled_at_unix_seconds": 1789336635
+  "reconciled_at_unix_seconds": 1790520606
 }

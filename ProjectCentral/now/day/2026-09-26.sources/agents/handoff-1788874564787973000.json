@@ -1,0 +1,14 @@
+{
+  "schema": "central.project-now.handoff/v1",
+  "id": "handoff-1788874564787973000",
+  "provenance": "agent-authored-bounded-return",
+  "actor": "codex-cradle-refinement-20260908",
+  "kind": "handoff",
+  "recorded_at_unix_seconds": 1788874564,
+  "subject": "Shell refinement, elemental showcase and browser-rendering review",
+  "result": "Three agents delivered shell cleanup, elemental animation showcase and source-cited Self/Other surface recovery. Main task repaired real native material module/data MIME/CORS failures, added persistent preview zoom/reload/retry and explicitly scoped native command ACL. Rich reference page runs through real Central; no full browser/computer/provider capability asserted. Evidence desktop/cradle/walk/artifacts/review/browser-canvas/REVIEW.md; live showcase localhost4288. Final cross-iframe menu dismissal check and commit pending. System and programme tasks preserved.",
+  "status": "resolved",
+  "preserve_refs": [
+    "ProjectCentral/now/agents/handoff-1788874734956344000.json"
+  ]
+}

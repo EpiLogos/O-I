@@ -1,0 +1,13 @@
+{
+  "clearings": [
+    {
+      "clearing": "0b8155ede2d947c7620f76538aff94954092e9e9f156eb069867cd1d2126aab9",
+      "fixtures": 412,
+      "learnings": 0,
+      "schema": "central.t-day-snapshot/v1",
+      "snapshot_dir": "clearings/0b8155ede2d947c7620f76538aff94954092e9e9f156eb069867cd1d2126aab9"
+    }
+  ],
+  "day": "2026-09-26",
+  "schema": "central.t-day-snapshot/v1"
+}

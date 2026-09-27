@@ -1,0 +1,11 @@
+{
+  "schema": "central.project-now.handoff/v1",
+  "id": "factory-expressions-commission-spec-placed-2026-09-26",
+  "provenance": "agent-authored-bounded-return",
+  "actor": "claude-code:expressions-engine-8a670c",
+  "kind": "note",
+  "recorded_at_unix_seconds": 1790447576,
+  "subject": "Factory Expressions commission — spec placed locally",
+  "result": "EXPRESSION-DEVELOPMENT-SPEC.md (blob 658437169d67, sha256 ee65147c…) and START-HERE.md retrieved from EpiLogos/O-I@925f96a7 (PR #542) and saved at /Users/admin/Central/worktrees/env-1/o-i/docs/cradle/handovers/factory-expressions-2026-09-26/. Wayfinder map: env-1/o-i/.wayfinder/maps/factory-expressions.md. Lead session 8a670c; lanes A/B/C executing in env-1.",
+  "status": "active"
+}
