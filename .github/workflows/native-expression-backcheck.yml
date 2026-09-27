@@ -24,10 +24,14 @@ jobs:
         with:
           ref: ${{ github.event.pull_request.head.sha || github.sha }}
           persist-credentials: false
+      # The vendored clients name the exact QL cut they were copied from; the
+      # owner is checked out there, so identity and behaviour have one pin.
+      - id: ql
+        run: echo "revision=$(jq -r .revision desktop/cradle/expressions-app/field-studies-journeys/src/native-field/ql/PROVENANCE.json)" >> "$GITHUB_OUTPUT"
       - uses: actions/checkout@v4
         with:
           repository: EpiLogos/QL-MEF
-          ref: 56921a5e70b1385dbc7afe159a1d1fad4c9798fe
+          ref: ${{ steps.ql.outputs.revision }}
           path: .native-owner/QL-MEF
           persist-credentials: false
       - uses: actions/setup-node@v4
@@ -109,7 +113,7 @@ jobs:
           sudo apt-get update -qq
           sudo apt-get install -y libjson-c-dev
           make -C .native-owner/QL-MEF/cpp test 2>&1 | tee /tmp/w5-checks/native/cpp.log
-          cargo build --locked --release --manifest-path .native-owner/QL-MEF/Cargo.toml -p ql-mef --bin ql-field-host 2>&1 | tee /tmp/w5-checks/native/build.log
+          cargo build --locked --release --manifest-path .native-owner/QL-MEF/Cargo.toml -p ql-mef --bin ql-field-host -p ql-cli --bin ql 2>&1 | tee /tmp/w5-checks/native/build.log
           cp .native-owner/QL-MEF/cpp/build/ql-field-worker /tmp/w5-checks/native/
           cp .native-owner/QL-MEF/target/release/ql-field-host /tmp/w5-checks/native/
           sha256sum /tmp/w5-checks/native/ql-field-* > /tmp/w5-checks/native/binaries.sha256
@@ -139,6 +143,22 @@ jobs:
             --bridge "$NATIVE_EXPRESSION_BRIDGE" --input "$NATIVE_EXPRESSION_INPUT" \
             --output /tmp/w5-checks/local-join --run-browser-join \
             2>&1 | tee /tmp/w5-checks/native-browser.log
+      - name: K² causal trace and deliberately disconnected consumer
+        if: always()
+        env:
+          NATIVE_EXPRESSION_BRIDGE: ${{ github.workspace }}/desktop/cradle/kernel/target/debug/walk-bridge
+          OI_QL_BIN: ${{ github.workspace }}/.native-owner/QL-MEF/target/release/ql
+          OI_QL_FIELD_HOST_BIN: ${{ github.workspace }}/.native-owner/QL-MEF/target/release/ql-field-host
+          OI_QL_FIELD_WORKER_BIN: ${{ github.workspace }}/.native-owner/QL-MEF/cpp/build/ql-field-worker
+        run: |
+          set -o pipefail
+          cd desktop/cradle
+          NATIVE_EXPRESSION_OUT=/tmp/w5-checks/k2 node tests/native-expression-k2-browser.mjs 2>&1 | tee /tmp/w5-checks/k2.log
+          # A consumer that receives no targets must fail the same trace.
+          if K2_DISCONNECT_TARGETS=1 NATIVE_EXPRESSION_OUT=/tmp/w5-checks/k2-disconnected \
+            node tests/native-expression-k2-browser.mjs > /tmp/w5-checks/k2-disconnected.log 2>&1; then
+            echo "disconnected consumer passed the causal trace" >&2; exit 1
+          fi
       - name: Exact source and toolchain receipt
         if: always()
         run: |
