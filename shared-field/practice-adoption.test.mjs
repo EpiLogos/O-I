@@ -7,7 +7,7 @@ import { sha256Digest } from './world-constituents.mjs';
 /*
  * The reader's side of an offered practice. The hosted reading mirrors
  * `field.sh read <ref>` (oi.shared-field.reading/v1); AIKit is a stub that
- * models what the real `system source add-directory|show|sync|promote`,
+ * models what the real `source add-directory|show|sync|promote` (root spelling),
  * `explain` and `skill overlay show|set` answer: content-addressed snapshots,
  * a revision per promoted snapshot, and overlays per scope.
  */
@@ -63,8 +63,10 @@ function stubAikit(fs) {
   const snapshotOf = (dir) => digest(JSON.stringify([...fs.files.entries()].filter(([path]) => path.startsWith(`${dir}/`)).sort()));
   const run = (words) => {
     calls.push(words.join(' '));
-    const [head, second, verb, id, dir] = words;
-    if (head === 'system' && second === 'source') {
+    const [head, second] = words;
+    // The root spelling (`aikit source …`) both AIKit generations accept.
+    const [, verb, id, dir] = words;
+    if (head === 'source') {
       if (verb === 'show') return sources.has(id) ? { data: { id, kind: 'directory', active_snapshot: sources.get(id).active ?? null } } : { refused: { code: 'source.unknown', message: `no source ${id}` } };
       if (verb === 'add-directory') { sources.set(id, { dir }); return { data: { id, kind: 'directory' } }; }
       if (verb === 'sync') { const source = sources.get(id); source.candidate = snapshotOf(source.dir); return { data: { id, candidate_snapshot: source.candidate, skills: 1 } }; }
@@ -145,10 +147,10 @@ test('adoption retains the original identity, version and publication provenance
   assert.deepEqual(result.original, { source_ref: 'skill/ql/darshana', source_revision: REVISION, body_digest: sha256Digest(BODY) });
   // Registered through AIKit's own lifecycle, in order.
   assert.deepEqual(aikit.calls, [
-    'system source show adopted-darshana-f3d55f2f9ec7',
-    `system source add-directory adopted-darshana-f3d55f2f9ec7 ${DIR}`,
-    'system source sync adopted-darshana-f3d55f2f9ec7',
-    'system source promote adopted-darshana-f3d55f2f9ec7',
+    'source show adopted-darshana-f3d55f2f9ec7',
+    `source add-directory adopted-darshana-f3d55f2f9ec7 ${DIR}`,
+    'source sync adopted-darshana-f3d55f2f9ec7',
+    'source promote adopted-darshana-f3d55f2f9ec7',
     'explain skill/adopted-darshana-f3d55f2f9ec7/darshana',
   ]);
   assert.equal(result.aikit.capability_ref, 'skill/adopted-darshana-f3d55f2f9ec7/darshana');

@@ -214,8 +214,8 @@ function readOfferedPracticeBodies(selection, documents, cwd) {
       if (held.has(ref) || !praxis.has(ref)) continue;
       const source = ref.match(/^skill\/([A-Za-z0-9._-]+)\/[^/]+$/)?.[1];
       if (!source) throw new Error(`offered practice ${ref} is not an AIKit skill ref (skill/<source>/<name>); its body cannot be read`);
-      const shown = aikitRead(['system', 'source', 'show', source], cwd);
-      if (shown.refused) throw new Error(`aikit system source show ${source} refused: ${shown.refused.code ?? ''} ${shown.refused.message ?? ''}`.trim());
+      const shown = aikitRead(['source', 'show', source], cwd);
+      if (shown.refused) throw new Error(`aikit source show ${source} refused: ${shown.refused.code ?? ''} ${shown.refused.message ?? ''}`.trim());
       if (!shown.data.active_registry || !shown.data.active_snapshot) throw new Error(`AIKit source ${source} has no active snapshot to read ${ref} from`);
       const capsule = capsuleFiles(join(shown.data.active_registry, 'capsules', ...ref.split('/')));
       bodies.push(practiceOfferBody({ practice_ref: ref, source_revision: praxis.get(ref), source_id: source, snapshot: shown.data.active_snapshot, capsule }));

@@ -3,7 +3,7 @@
  * Adopt an offered Skill or Method into this reader's own AIKit.
  *
  *   # from a hosted reading of the practice in your own field view
- *   OI_SHARED_FIELD_TARGET=… shared-field/spacetimedb/field.sh <<<'{"op":"read","ref":"<practice ref>"}' > practice.json
+ *   OI_SHARED_FIELD_TARGET=… shared-field/spacetimedb/field.sh <<<'{"kind":"read","ref":"<practice ref>"}' > practice.json
  *   node shared-field/scripts/adopt-practice.mjs --reading practice.json --adopter participant:…
  *
  *   # or from a publication bundle (publish-world.mjs --out)

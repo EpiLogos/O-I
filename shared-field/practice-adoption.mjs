@@ -214,11 +214,11 @@ export function adoptPractice(input, options, effects) {
 
   // Register through the reader's own AIKit: a machine-local directory source,
   // an immutable candidate snapshot, then promotion.
-  const shown = aikit(['system', 'source', 'show', plan.source_id]);
-  const add = shown.refused ? aikitStep(aikit(['system', 'source', 'add-directory', plan.source_id, plan.dir]), 'system source add-directory') : null;
+  const shown = aikit(['source', 'show', plan.source_id]);
+  const add = shown.refused ? aikitStep(aikit(['source', 'add-directory', plan.source_id, plan.dir]), 'source add-directory') : null;
   const before = shown.refused ? null : shown.data.active_snapshot ?? null;
-  const sync = aikitStep(aikit(['system', 'source', 'sync', plan.source_id]), 'system source sync');
-  const promote = sync.candidate_snapshot && sync.candidate_snapshot === before ? null : aikitStep(aikit(['system', 'source', 'promote', plan.source_id]), 'system source promote');
+  const sync = aikitStep(aikit(['source', 'sync', plan.source_id]), 'source sync');
+  const promote = sync.candidate_snapshot && sync.candidate_snapshot === before ? null : aikitStep(aikit(['source', 'promote', plan.source_id]), 'source promote');
   const explained = aikitStep(aikit(['explain', plan.capability_ref]), 'explain');
   if (explained.id !== plan.capability_ref || typeof explained.revision !== 'string') throw new TypeError(`AIKit does not catalogue ${plan.capability_ref} after promotion`);
 
