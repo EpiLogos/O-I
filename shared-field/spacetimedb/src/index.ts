@@ -1032,15 +1032,18 @@ function callerCanSeeExploreEntry(ctx: any, row: any): boolean {
     const latest = latestProjectionRowsForField(ctx, row.fieldRef);
     return Array.from(lineages).some(projectionRef => {
       const current = latest.find(projectionRow => projectionRow.projectionRef === projectionRef);
-      if (!current || current.state !== 'published' || !callerCanSeeProjection(ctx, current)) return false;
+      if (!current || !callerCanSeeProjection(ctx, current)) return false;
       const contract = parseStoredJson(current.contractJson, 'Projection contractJson');
-      if (contract.projection_ref === row.semanticRef || contract.representation?.ref === row.semanticRef) return true;
       // An entry a World publication carries names that publication's
       // Projection directly: it is served exactly to that Projection's
       // current audience, so a private or narrowed publication narrows every
-      // entry it carries. The binding holds only for the Projection whose
-      // subject is the entry's own world.
-      return projectionRef === directProjectionRef && contract.subject?.ref === row.worldRef;
+      // entry it carries. Withdrawal withdraws the representation, not the
+      // world's addressability, so it binds whatever the latest state. The
+      // binding holds only for the Projection whose subject is the entry's
+      // own world.
+      if (projectionRef === directProjectionRef && projectionRef !== row.semanticRef && contract.subject?.ref === row.worldRef) return true;
+      if (current.state !== 'published') return false;
+      return contract.projection_ref === row.semanticRef || contract.representation?.ref === row.semanticRef;
     });
   }
 
