@@ -9,6 +9,7 @@ import {
 } from './central-wiki-projection.mjs';
 import { renderWorldEdition, worldEditionManifest } from './world-edition.mjs';
 import { structuredProjectionReading } from './projection-reading.mjs';
+import { aikitCapsuleRevision, blake3Hex, practiceOfferBody, sha256Digest } from './world-constituents.mjs';
 
 /*
  * Workcells, Agent repertoire (practices) and activity, published through the
@@ -91,7 +92,25 @@ function workcellDiscovery({ publicAffordances = ['workspace:read-only', 'persis
   };
 }
 
-function participation({ darshanaRevision = 'f3d55f2f9ec70f44ff661623c7a931f299dcf296', privateRevision = 'aaaa0000', gateRevision = 'd89f52812b61b498' } = {}) {
+const DARSHANA_BODY = '---\nname: darshana\ndescription: The structural gaze.\n---\n\n# Darshana\n\nScout a long Markdown source before reading it whole.\n';
+/** One capsule as AIKit's active snapshot holds it (manifest + payload files). */
+function darshanaCapsule(body = DARSHANA_BODY) {
+  const bytes = (value) => new TextEncoder().encode(value);
+  return {
+    manifest: { bytes: bytes('schema = 1\nid = "skill/ql/darshana"\nkind = "skill"\nname = "darshana"\n\n[skill]\nroot = "payload"\n'), mode: 0o644 },
+    files: [
+      { path: 'payload/scripts/darshana.py', mode: 0o755, bytes: bytes('print("gaze")\n') },
+      { path: 'payload/SKILL.md', mode: 0o644, bytes: bytes(body) },
+    ],
+  };
+}
+const DARSHANA_REVISION = aikitCapsuleRevision(darshanaCapsule());
+function darshanaBody(body = DARSHANA_BODY) {
+  const capsule = darshanaCapsule(body);
+  return practiceOfferBody({ practice_ref: 'skill/ql/darshana', source_revision: aikitCapsuleRevision(capsule), source_id: 'ql', snapshot: 'f'.repeat(64), capsule });
+}
+
+function participation({ darshanaRevision = DARSHANA_REVISION, privateRevision = 'aaaa0000', gateRevision = 'd89f52812b61b498' } = {}) {
   const praxis = (id, form, revision, available = true) => ({ available, carried: true, form, id, name: id.split('/').at(-1), revision, via: ['direct'], withheld_reason: available ? null : 'not-in-scope' });
   return {
     schema: 'oi.agent-world-participation/v1', agent_ref: 'agent/aletheia', world_ref: 'project:O-I',
@@ -125,7 +144,8 @@ function runReading({ revision = 6, lifecycle = 'seeded', agencies = [] } = {}) 
 }
 
 function readings(overrides = {}) {
-  return [rootReading(), projectReading(), positionListing(), population(overrides.population), machineDeclaration(), workcellDiscovery(overrides.workcell), participation(overrides.participation), runReading(overrides.run)];
+  const body = overrides.body === null ? [] : [overrides.body ?? darshanaBody()];
+  return [rootReading(), projectReading(), positionListing(), population(overrides.population), machineDeclaration(), workcellDiscovery(overrides.workcell), participation(overrides.participation), runReading(overrides.run), ...body];
 }
 
 function selection(overrides = {}) {
@@ -182,12 +202,51 @@ test('each constituent appears only when the selection names it', () => {
   assert.deepEqual(relationsOf(activityOnly, 'oi.activity/works-on').map((relation) => relation.to), [HOSTED(NODE)]);
 });
 
-test('a Skill page refers to the practice and its source revision; its text is never copied and nothing is granted', () => {
+test('a Skill page refers to the practice and its source revision; only an offer carries its body, and nothing is granted', () => {
   const bundle = publish(FULL);
   const practice = entry(bundle, 'skill/ql/darshana');
   assert.equal(practice.kind, 'practice');
-  assert.deepEqual(practice.meta, { standing: 'practice', presentation: 'thing', native_owner: 'ai-kit', local_ref: 'skill/ql/darshana', practice_kind: 'skill', source_ref: 'skill/ql/darshana', source_revision: 'f3d55f2f9ec70f44ff661623c7a931f299dcf296', availability: 'offered', grant: 'none' });
-  assert.equal(entry(bundle, 'skill/ql/aletheia-m-gate').meta.practice_kind, 'method');
+  const { offer, ...meta } = practice.meta;
+  assert.deepEqual(meta, { standing: 'practice', presentation: 'thing', native_owner: 'ai-kit', local_ref: 'skill/ql/darshana', practice_kind: 'skill', source_ref: 'skill/ql/darshana', source_revision: DARSHANA_REVISION, availability: 'offered', grant: 'none' });
+  assert.deepEqual(offer, {
+    body_digest: sha256Digest(DARSHANA_BODY), media_type: 'text/markdown', body_bytes: new TextEncoder().encode(DARSHANA_BODY).length,
+    revision_basis: 'aikit-capsule-revision-v2', payload_files_not_carried: ['payload/scripts/darshana.py'], text: DARSHANA_BODY,
+  });
+  const inspectable = entry(bundle, 'skill/ql/aletheia-m-gate');
+  assert.equal(inspectable.meta.practice_kind, 'method');
+  assert.equal(inspectable.meta.offer, undefined, 'an inspectable practice never carries a body');
+  // The body travels in the same publication: the hosted entry row carries it.
+  const hostedRow = hostedPublicationArgs(bundle).putExploreEntries.find((row) => row.semanticRef === HOSTED('skill/ql/darshana'));
+  assert.equal(JSON.parse(hostedRow.entryJson).meta.offer.text, DARSHANA_BODY);
+  // Selected but not offered: the body reading is ignored, not published.
+  const notOffered = publish({ ...FULL, offers: { 'workcell:mac': [OFFER_PUBLIC] } });
+  assert.equal(entry(notOffered, 'skill/ql/darshana').meta.availability, 'inspectable');
+  assert.equal(entry(notOffered, 'skill/ql/darshana').meta.offer, undefined);
+  assert.ok(!JSON.stringify(outward(notOffered)).includes('Scout a long Markdown source'), 'an inspectable practice body never travels');
+});
+
+test('an offered body is proved against the disclosed AIKit revision and refused otherwise', () => {
+  assert.equal(blake3Hex(''), 'af1349b9f5f9a1a6a0404dea36dcc9499bcb25c9adc112b7cc9a93cae41f3262');
+  assert.equal(blake3Hex('abc'), '6437b3ac38465133ffb63b75273a8db548c558465d79db03fd359c6cd5bd9d85');
+  assert.equal(blake3Hex(Uint8Array.from({ length: 1025 }, (_, index) => index % 251)), 'd00278ae47eb27b34faecf67b4fe263f82d5412916c1ffd97c8cb7fb814b8444');
+  const modeMoved = darshanaCapsule();
+  modeMoved.files[0].mode = 0o644;
+  assert.notEqual(aikitCapsuleRevision(modeMoved), DARSHANA_REVISION, 'file permissions are part of the AIKit revision');
+
+  // The active snapshot holds another revision than the Agent discloses.
+  assert.throws(() => practiceOfferBody({ practice_ref: 'skill/ql/darshana', source_revision: DARSHANA_REVISION, capsule: darshanaCapsule('# changed on disk\n') }), /refusing to publish its body/);
+  // A body read at another revision than the participation discloses.
+  assert.throws(() => publish(FULL, { body: darshanaBody('# the next revision\n') }), /its body was read at/);
+  // Offered with no body at all.
+  assert.throws(() => publish(FULL, { body: null }), /no oi.practice-offer-body\/v1 reading carries its body/);
+  // A tampered body reading (text no longer matches its digest).
+  assert.throws(() => publish(FULL, { body: { ...darshanaBody(), text: `${DARSHANA_BODY}extra` } }), /body_digest does not match/);
+  // Script-capable content is not curated text data.
+  assert.throws(() => darshanaBody('# gaze\n<script>alert(1)</script>\n'), /not curated text data \(script-element\)/);
+  assert.throws(() => darshanaBody('# gaze\n<a href="javascript:void(0)">x</a>\n'), /script-url/);
+  // Local paths and tokens inside the body refuse the publication, naming the practice.
+  const leaky = darshanaBody('# gaze\nSee /Users/someone/notes/private.md\n');
+  assert.throws(() => publish(FULL, { body: leaky, participation: { darshanaRevision: leaky.source_revision } }), /offered practice skill\/ql\/darshana body would carry protected material \(local-home-path\)/);
 });
 
 test('offered is not inspectable: an offer travels only when the selection lists it', () => {
@@ -243,7 +302,8 @@ test('composite source revision moves with a selected Workcell, practice or acti
   const base = publish(FULL);
   const moved = (readingOverrides) => reprojectCentralWikiWorld(base, { readings: readings(readingOverrides), selection: selection(FULL), published_at: '2026-09-28T10:00:00.000Z' });
 
-  const practice = moved({ participation: { darshanaRevision: 'f3d55f2f-next' } });
+  const next = darshanaBody('# Darshana, revised\n');
+  const practice = moved({ participation: { darshanaRevision: next.source_revision }, body: next });
   assert.equal(practice.source_moved, true);
   assert.deepEqual(practice.moved_sources.map((source) => source.kind), ['aikit-agent-repertoire']);
 

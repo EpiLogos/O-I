@@ -10,6 +10,8 @@
  *   workcell --json --workcell-ref <ref> discover                    the Workcell's offers (no schema field; recognised by shape)
  *   oi agent participation --agent <ref> --world <W> --json          oi.agent-world-participation/v1
  *   factory development run <state> <run-ref> --json                 factory.run-reading/v1 (in `contract`)
+ *   aikit system source show <source> --json → active snapshot capsule oi.practice-offer-body/v1 (offered practices only; proved
+ *                                                                     against the disclosed AIKit capsule revision)
  *
  * Published ≠ offered ≠ granted. A Workcell or practice selected for
  * `address` / inspection is addressable and nothing more; an offer travels
@@ -17,12 +19,24 @@
  * anything to a visitor. Nothing that is not selected contributes to entries,
  * meta, relations or counts.
  */
+import { createHash } from 'node:crypto';
+
 export const AGENT_PARTICIPATION_SCHEMA = 'oi.agent-world-participation/v1';
 export const FACTORY_RUN_READING_CONTRACT = 'factory.run-reading/v1';
 export const CENTRAL_MACHINE_SCHEMA = 'central.machine';
 /** Label for `workcell discover --json`, which carries no schema of its own. */
 export const WORKCELL_DISCOVERY_KIND = 'workcell.discover';
 export const PRACTICE_KINDS = Object.freeze(['skill', 'method', 'skillset']);
+/**
+ * The body of an offered practice, read from AIKit's active content-addressed
+ * snapshot and proved against the revision the Agent's participation
+ * discloses (see `practiceOfferBody`). Only an offered practice carries one.
+ */
+export const PRACTICE_OFFER_BODY_SCHEMA = 'oi.practice-offer-body/v1';
+/** AIKit's capsule content revision (`aikit_store::registry::compute_revision`). */
+export const AIKIT_CAPSULE_REVISION_BASIS = 'aikit-capsule-revision-v2';
+export const PRACTICE_BODY_MEDIA_TYPE = 'text/markdown';
+export const PRACTICE_BODY_MAX_BYTES = 256 * 1024;
 
 function record(value, name) {
   if (value === null || typeof value !== 'object' || Array.isArray(value)) throw new TypeError(`${name} must be an object`);
@@ -70,6 +84,201 @@ export function readingKind(reading) {
   if (reading.declaration && reading.declaration.schema === CENTRAL_MACHINE_SCHEMA) return CENTRAL_MACHINE_SCHEMA;
   if (typeof reading.workcell_ref === 'string' && Array.isArray(reading.offers)) return WORKCELL_DISCOVERY_KIND;
   return undefined;
+}
+
+// ── AIKit capsule revision (BLAKE3) ─────────────────────────────────────
+// AIKit's Skill revision is BLAKE3 over the capsule directory: a domain line,
+// the manifest (length, bytes, mode) and then every other regular file sorted
+// by relative path (path length, path, mode, content length, content). The
+// hash is recomputed here so an offered body is proved to be the exact
+// revision the Agent discloses, not merely found beside it.
+const B3_IV = new Uint32Array([0x6a09e667, 0xbb67ae85, 0x3c6ef372, 0xa54ff53a, 0x510e527f, 0x9b05688c, 0x1f83d9ab, 0x5be0cd19]);
+const B3_PERMUTATION = [2, 6, 3, 10, 7, 0, 4, 13, 1, 11, 12, 5, 9, 14, 15, 8];
+const B3_CHUNK_START = 1;
+const B3_CHUNK_END = 2;
+const B3_PARENT = 4;
+const B3_ROOT = 8;
+const rotr = (x, n) => ((x >>> n) | (x << (32 - n))) >>> 0;
+
+function b3g(s, a, b, c, d, x, y) {
+  s[a] = (s[a] + s[b] + x) >>> 0; s[d] = rotr(s[d] ^ s[a], 16);
+  s[c] = (s[c] + s[d]) >>> 0; s[b] = rotr(s[b] ^ s[c], 12);
+  s[a] = (s[a] + s[b] + y) >>> 0; s[d] = rotr(s[d] ^ s[a], 8);
+  s[c] = (s[c] + s[d]) >>> 0; s[b] = rotr(s[b] ^ s[c], 7);
+}
+
+function b3compress(cv, block, counter, length, flags) {
+  const s = new Uint32Array(16);
+  s.set(cv);
+  s.set(B3_IV.subarray(0, 4), 8);
+  s[12] = counter >>> 0;
+  s[13] = Math.floor(counter / 0x100000000) >>> 0;
+  s[14] = length;
+  s[15] = flags;
+  let m = Uint32Array.from(block);
+  for (let round = 0; round < 7; round += 1) {
+    b3g(s, 0, 4, 8, 12, m[0], m[1]); b3g(s, 1, 5, 9, 13, m[2], m[3]); b3g(s, 2, 6, 10, 14, m[4], m[5]); b3g(s, 3, 7, 11, 15, m[6], m[7]);
+    b3g(s, 0, 5, 10, 15, m[8], m[9]); b3g(s, 1, 6, 11, 12, m[10], m[11]); b3g(s, 2, 7, 8, 13, m[12], m[13]); b3g(s, 3, 4, 9, 14, m[14], m[15]);
+    const held = m;
+    m = Uint32Array.from(B3_PERMUTATION, (index) => held[index]);
+  }
+  const out = new Uint32Array(8);
+  for (let index = 0; index < 8; index += 1) out[index] = (s[index] ^ s[index + 8]) >>> 0;
+  return out;
+}
+
+function b3block(bytes, offset, length) {
+  const block = new Uint8Array(64);
+  block.set(bytes.subarray(offset, offset + length));
+  const words = new Uint32Array(16);
+  for (let index = 0; index < 16; index += 1) words[index] = (block[index * 4] | (block[index * 4 + 1] << 8) | (block[index * 4 + 2] << 16) | (block[index * 4 + 3] << 24)) >>> 0;
+  return words;
+}
+
+function b3chunk(bytes, chunk, root) {
+  const start = chunk * 1024;
+  const end = Math.min(bytes.length, start + 1024);
+  const blocks = Math.max(1, Math.ceil((end - start) / 64));
+  let cv = B3_IV;
+  for (let index = 0; index < blocks; index += 1) {
+    const offset = start + index * 64;
+    const length = Math.max(0, Math.min(64, end - offset));
+    let flags = index === 0 ? B3_CHUNK_START : 0;
+    if (index === blocks - 1) flags |= B3_CHUNK_END | (root ? B3_ROOT : 0);
+    cv = b3compress(cv, b3block(bytes, offset, length), chunk, length, flags);
+  }
+  return cv;
+}
+
+function b3subtree(bytes, first, count, root) {
+  if (count === 1) return b3chunk(bytes, first, root);
+  let left = 1;
+  while (left * 2 < count) left *= 2;
+  const block = new Uint32Array(16);
+  block.set(b3subtree(bytes, first, left, false));
+  block.set(b3subtree(bytes, first + left, count - left, false), 8);
+  return b3compress(B3_IV, block, 0, 64, B3_PARENT | (root ? B3_ROOT : 0));
+}
+
+/** BLAKE3-256 of bytes (or UTF-8 text), lowercase hex. */
+export function blake3Hex(input) {
+  const bytes = typeof input === 'string' ? new TextEncoder().encode(input) : input;
+  if (!(bytes instanceof Uint8Array)) throw new TypeError('blake3Hex takes bytes or text');
+  const cv = b3subtree(bytes, 0, Math.max(1, Math.ceil(bytes.length / 1024)), true);
+  const out = new Uint8Array(32);
+  for (let index = 0; index < 8; index += 1) for (let byte = 0; byte < 4; byte += 1) out[index * 4 + byte] = (cv[index] >>> (8 * byte)) & 0xff;
+  return [...out].map((value) => value.toString(16).padStart(2, '0')).join('');
+}
+
+function le64(value) { const out = new Uint8Array(8); new DataView(out.buffer).setBigUint64(0, BigInt(value), true); return out; }
+function le32(value) { const out = new Uint8Array(4); new DataView(out.buffer).setUint32(0, value >>> 0, true); return out; }
+const utf8 = (value) => new TextEncoder().encode(value);
+function byteOrder(left, right) {
+  const a = utf8(left); const b = utf8(right);
+  for (let index = 0; index < Math.min(a.length, b.length); index += 1) if (a[index] !== b[index]) return a[index] - b[index];
+  return a.length - b.length;
+}
+
+/**
+ * AIKit's capsule revision over one capsule directory's contents:
+ * `{manifest: {bytes, mode}, files: [{path, mode, bytes}]}` where `path` is
+ * relative to the capsule directory (`/`-separated) and `mode` is the
+ * permission bits. `files` excludes the top-level manifest and symlinks.
+ */
+export function aikitCapsuleRevision(capsule) {
+  const { manifest, files } = record(capsule, 'capsule');
+  record(manifest, 'capsule.manifest');
+  if (!Array.isArray(files)) throw new TypeError('capsule.files must be an array');
+  const parts = [utf8(`${AIKIT_CAPSULE_REVISION_BASIS}\n`), le64(manifest.bytes.length), manifest.bytes, le32(manifest.mode & 0o7777)];
+  for (const file of [...files].sort((left, right) => byteOrder(left.path, right.path))) {
+    const path = utf8(file.path);
+    parts.push(le64(path.length), path, le32(file.mode & 0o7777), le64(file.bytes.length), file.bytes);
+  }
+  const total = new Uint8Array(parts.reduce((sum, part) => sum + part.length, 0));
+  let offset = 0;
+  for (const part of parts) { total.set(part, offset); offset += part.length; }
+  return blake3Hex(total);
+}
+
+export function sha256Digest(text) {
+  return `sha256:${createHash('sha256').update(text, 'utf8').digest('hex')}`;
+}
+
+/**
+ * A practice body is carried as Markdown text data, never as markup to run:
+ * anything script-capable or embedding-capable refuses the offer.
+ */
+const SCRIPT_CAPABLE = [
+  { name: 'script-element', pattern: /<\s*\/?\s*(script|iframe|object|embed|style|link|meta|base|form|frame|frameset|applet|svg|math|template)\b/i },
+  { name: 'event-handler', pattern: /<[^>]*\son[a-z]+\s*=/i },
+  { name: 'script-url', pattern: /(javascript|vbscript)\s*:|data\s*:\s*text\/html/i },
+];
+
+export function practiceBodyRefusals(text) {
+  const refusals = [];
+  if (typeof text !== 'string') return ['not-text'];
+  if (new TextEncoder().encode(text).length > PRACTICE_BODY_MAX_BYTES) refusals.push('too-large');
+  if (/[\u0000-\u0008\u000b\u000c\u000e-\u001f\u007f]/.test(text)) refusals.push('control-characters');
+  for (const { name, pattern } of SCRIPT_CAPABLE) if (pattern.test(text)) refusals.push(name);
+  return refusals;
+}
+
+function manifestSkillRoot(bytes) {
+  const textValue = new TextDecoder().decode(bytes);
+  const section = textValue.split(/^\[skill\]\s*$/m)[1];
+  const match = section?.split(/^\[/m)[0].match(/^\s*root\s*=\s*"([^"]+)"\s*$/m);
+  return match ? match[1] : 'payload';
+}
+
+/**
+ * Build the offered body reading from one capsule as AIKit's active snapshot
+ * holds it. The capsule's recomputed AIKit revision must equal the revision
+ * the Agent's participation discloses for the practice; otherwise nothing is
+ * read. Only the Skill's `SKILL.md` travels; other payload files are named
+ * (relative to the capsule) so a reader knows what the text alone lacks.
+ */
+export function practiceOfferBody({ practice_ref: practiceRef, source_revision: sourceRevision, source_id: sourceId, snapshot, capsule }) {
+  text(practiceRef, 'practice_ref');
+  text(sourceRevision, 'source_revision');
+  const revision = aikitCapsuleRevision(capsule);
+  if (revision !== sourceRevision) throw new TypeError(`practice ${practiceRef}: AIKit's active snapshot holds revision ${revision.slice(0, 12)}, not the disclosed ${sourceRevision.slice(0, 12)}; refusing to publish its body`);
+  const root = manifestSkillRoot(capsule.manifest.bytes);
+  const skillPath = `${root}/SKILL.md`;
+  const skill = capsule.files.find((file) => file.path === skillPath);
+  if (!skill) throw new TypeError(`practice ${practiceRef}: the capsule carries no ${skillPath}`);
+  let body;
+  try { body = new TextDecoder('utf-8', { fatal: true }).decode(skill.bytes); } catch { throw new TypeError(`practice ${practiceRef}: SKILL.md is not UTF-8 text`); }
+  const refusals = practiceBodyRefusals(body);
+  if (refusals.length) throw new TypeError(`practice ${practiceRef}: the body is not curated text data (${refusals.join(', ')})`);
+  return {
+    schema: PRACTICE_OFFER_BODY_SCHEMA,
+    practice_ref: practiceRef,
+    source_revision: sourceRevision,
+    revision_basis: AIKIT_CAPSULE_REVISION_BASIS,
+    ...(sourceId ? { aikit_source: sourceId } : {}),
+    ...(snapshot ? { aikit_snapshot: snapshot } : {}),
+    media_type: PRACTICE_BODY_MEDIA_TYPE,
+    text: body,
+    body_digest: sha256Digest(body),
+    body_bytes: skill.bytes.length,
+    payload_files_not_carried: capsule.files.map((file) => file.path).filter((path) => path !== skillPath).sort(byteOrder),
+  };
+}
+
+export function validatePracticeOfferBody(value) {
+  const reading = record(value, 'practice offer body');
+  if (reading.schema !== PRACTICE_OFFER_BODY_SCHEMA) throw new TypeError(`Unsupported practice offer body schema: ${reading.schema}`);
+  text(reading.practice_ref, 'practice offer body.practice_ref');
+  text(reading.source_revision, 'practice offer body.source_revision');
+  if (reading.revision_basis !== AIKIT_CAPSULE_REVISION_BASIS) throw new TypeError(`practice offer body ${reading.practice_ref} is not proved against ${AIKIT_CAPSULE_REVISION_BASIS}`);
+  if (reading.media_type !== PRACTICE_BODY_MEDIA_TYPE) throw new TypeError(`practice offer body ${reading.practice_ref} must be ${PRACTICE_BODY_MEDIA_TYPE}`);
+  if (typeof reading.text !== 'string') throw new TypeError(`practice offer body ${reading.practice_ref}.text must be a string`);
+  if (sha256Digest(reading.text) !== reading.body_digest) throw new TypeError(`practice offer body ${reading.practice_ref}: body_digest does not match its text`);
+  if (new TextEncoder().encode(reading.text).length !== reading.body_bytes) throw new TypeError(`practice offer body ${reading.practice_ref}: body_bytes does not match its text`);
+  const refusals = practiceBodyRefusals(reading.text);
+  if (refusals.length) throw new TypeError(`practice offer body ${reading.practice_ref} is not curated text data (${refusals.join(', ')})`);
+  strings(reading.payload_files_not_carried ?? [], `practice offer body ${reading.practice_ref}.payload_files_not_carried`);
+  return reading;
 }
 
 export function validateMachineDeclaration(value) {
@@ -273,10 +482,26 @@ export function buildConstituents(context) {
       const offered = offeredRefs.has(practiceRef);
       if (offered && praxis.available !== true) throw new TypeError(`practice ${practiceRef} is offered but its Agent does not have it available (${praxis.withheld_reason ? 'withheld' : 'unavailable'})`);
       const availability = offered ? 'offered' : 'inspectable';
-      basis.push([practiceRef, practiceKind, praxis.revision, availability]);
+      // An offer carries the practice's own body, proved against this
+      // revision; an inspectable practice never carries one.
+      let offer;
+      if (offered) {
+        const body = (sorted.practiceBodies ?? []).find((reading) => reading.practice_ref === practiceRef);
+        if (!body) throw new TypeError(`practice ${practiceRef} is offered but no ${PRACTICE_OFFER_BODY_SCHEMA} reading carries its body (read from AIKit's active snapshot by publish-world.mjs)`);
+        if (body.source_revision !== praxis.revision) throw new TypeError(`practice ${practiceRef} is offered at revision ${praxis.revision.slice(0, 12)} but its body was read at ${body.source_revision.slice(0, 12)}`);
+        offer = {
+          body_digest: body.body_digest,
+          media_type: body.media_type,
+          body_bytes: body.body_bytes,
+          revision_basis: body.revision_basis,
+          payload_files_not_carried: [...(body.payload_files_not_carried ?? [])],
+          text: body.text,
+        };
+      }
+      basis.push([practiceRef, practiceKind, praxis.revision, availability, ...(offer ? [offer.body_digest] : [])]);
       const held = practiceEntries.get(practiceRef);
       if (held && held.meta.source_revision !== praxis.revision) throw new TypeError(`practice ${practiceRef} is disclosed at two revisions by the selected Positions' Agents`);
-      if (held) { if (offered) held.meta.availability = 'offered'; }
+      if (held) { if (offered) { held.meta.availability = 'offered'; held.meta.offer = offer; } }
       else {
         practiceEntries.set(practiceRef, {
           ref: hosted(practiceRef),
@@ -288,7 +513,7 @@ export function buildConstituents(context) {
           revision: praxis.revision,
           provenance: [{ kind: 'aikit-praxis', ref: practiceRef, source_system: 'ai-kit', revision: praxis.revision }],
           locators: locator(hosted(practiceRef)),
-          meta: { standing: 'practice', presentation: 'thing', native_owner: 'ai-kit', local_ref: practiceRef, practice_kind: practiceKind, source_ref: practiceRef, source_revision: praxis.revision, availability, grant: 'none' },
+          meta: { standing: 'practice', presentation: 'thing', native_owner: 'ai-kit', local_ref: practiceRef, practice_kind: practiceKind, source_ref: practiceRef, source_revision: praxis.revision, availability, grant: 'none', ...(offer ? { offer } : {}) },
         });
       }
       const relationRef = `${hosted(positionRef)}#oi.world/practises#${hosted(practiceRef)}`;

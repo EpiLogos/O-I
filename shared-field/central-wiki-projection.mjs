@@ -5,9 +5,9 @@ import { WORLD_PRESENTATION_SCHEMA, createWorldPresentation } from './presentati
 import { createWorldPresentationProjection, refineWorldPresentationProjection, worldPresentationFromProjection } from './presentation-projection.mjs';
 import { projectionStorageKey, relationStorageRef } from './spacetimedb.mjs';
 import {
-  AGENT_PARTICIPATION_SCHEMA, CENTRAL_MACHINE_SCHEMA, FACTORY_RUN_READING_CONTRACT, WORKCELL_DISCOVERY_KIND,
+  AGENT_PARTICIPATION_SCHEMA, CENTRAL_MACHINE_SCHEMA, FACTORY_RUN_READING_CONTRACT, PRACTICE_OFFER_BODY_SCHEMA, WORKCELL_DISCOVERY_KIND,
   buildConstituents, fnv1a64, readingKind, token, validateAgentParticipation, validateConstituentSelection,
-  validateFactoryRunReading, validateMachineDeclaration, validateWorkcellDiscovery, workcellRef,
+  validateFactoryRunReading, validateMachineDeclaration, validatePracticeOfferBody, validateWorkcellDiscovery, workcellRef,
 } from './world-constituents.mjs';
 
 /**
@@ -193,7 +193,7 @@ export function validateConstellationReading(value) {
  */
 export function classifyWorldReadings(documents) {
   if (!Array.isArray(documents)) throw new TypeError('readings must be an array');
-  const sorted = { wiki: [], positions: undefined, population: undefined, constellations: [], workcells: [], machines: [], participations: [], runs: [] };
+  const sorted = { wiki: [], positions: undefined, population: undefined, constellations: [], workcells: [], machines: [], participations: [], runs: [], practiceBodies: [] };
   for (const [index, document] of documents.entries()) {
     const reading = unwrapOwnerReading(document);
     const kind = readingKind(reading);
@@ -230,6 +230,12 @@ export function classifyWorldReadings(documents) {
         const run = validateFactoryRunReading(reading);
         if (sorted.runs.some((held) => held.runRef === run.runRef)) throw new TypeError(`factory run ${run.runRef} was supplied twice`);
         sorted.runs.push(run);
+        break;
+      }
+      case PRACTICE_OFFER_BODY_SCHEMA: {
+        const body = validatePracticeOfferBody(reading);
+        if (sorted.practiceBodies.some((held) => held.practice_ref === body.practice_ref)) throw new TypeError(`practice ${body.practice_ref} body was supplied twice`);
+        sorted.practiceBodies.push(body);
         break;
       }
       default: throw new TypeError(`Unsupported reading schema at readings[${index}]: ${kind}`);
@@ -869,6 +875,13 @@ export function projectCentralWikiWorld(input) {
     relations: projectedRelations,
     excluded,
   };
+  // An offered practice's body is authored text travelling whole: scan it on
+  // its own first, so a refusal names the practice rather than the bundle.
+  for (const entry of entries) {
+    if (entry.kind !== 'practice' || !entry.meta?.offer) continue;
+    const bodyLeaks = worldPublicationLeaks({ body: entry.meta.offer.text }, documents);
+    if (bodyLeaks.length) throw new TypeError(`offered practice ${entry.meta.local_ref} body would carry protected material (${bodyLeaks.map((leak) => leak.slice('body:'.length)).join(', ')}); nothing was built`);
+  }
   // The allow-lists above are the guard; this is the proof. A bundle that
   // would carry any protected inhabitation value or shape is refused whole.
   const leaks = worldPublicationLeaks({ bundle, hosted_args: hostedPublicationArgs(bundle), explore_seed: exploreSeedFromPublication(bundle) }, documents);

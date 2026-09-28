@@ -19,6 +19,9 @@
  *   oi agent participation --agent A --world W --json oi.agent-world-participation/v1 (per Agent whose practices are selected)
  *   factory project locate <project> --json          factory.project-location/v1   (when activity is selected; its state path is used, never published)
  *   factory development run <state> <run> --json     factory.run-reading/v1        (per selected activity)
+ *   aikit system source show <source> --json          active snapshot of the source (per offered practice; its body is
+ *                                                                                  read from that snapshot and proved against the
+ *                                                                                  disclosed AIKit revision → oi.practice-offer-body/v1)
  *
  * AIKit is the joiner of Actuation and Factory; this step never reads them
  * directly. It performs no network publication; `shared-field/spacetimedb/publish-world.ts`
@@ -29,9 +32,10 @@
  *   ... --previous out/bundle.json      # re-project an existing lineage (P n+1)
  */
 import { spawnSync } from 'node:child_process';
-import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { lstatSync, mkdirSync, readdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { isAbsolute, join, resolve } from 'node:path';
-import { projectCentralWikiWorld, reprojectCentralWikiWorld, hostedPublicationArgs, exploreSeedFromPublication, worldPublicationLeaks } from '../central-wiki-projection.mjs';
+import { projectCentralWikiWorld, reprojectCentralWikiWorld, hostedPublicationArgs, exploreSeedFromPublication, worldPublicationLeaks, unwrapOwnerReading } from '../central-wiki-projection.mjs';
+import { AGENT_PARTICIPATION_SCHEMA, PRACTICE_OFFER_BODY_SCHEMA, practiceOfferBody, workcellRef } from '../world-constituents.mjs';
 import { renderWorldEdition, worldEditionManifest } from '../world-edition.mjs';
 
 function parseArgs(argv) {
@@ -171,6 +175,58 @@ if (args.fromCtrl) {
   }
 }
 
+/**
+ * One AIKit capsule directory as bytes and permission bits: the manifest and
+ * every other regular file (symlinks are not part of AIKit's revision).
+ */
+function capsuleFiles(dir) {
+  const files = [];
+  const walk = (relative) => {
+    for (const item of readdirSync(join(dir, relative), { withFileTypes: true })) {
+      const path = relative ? `${relative}/${item.name}` : item.name;
+      if (item.isDirectory()) walk(path);
+      else if (item.isFile() && path !== 'manifest.toml') files.push({ path, mode: lstatSync(join(dir, path)).mode, bytes: new Uint8Array(readFileSync(join(dir, path))) });
+    }
+  };
+  walk('');
+  return { manifest: { bytes: new Uint8Array(readFileSync(join(dir, 'manifest.toml'))), mode: lstatSync(join(dir, 'manifest.toml')).mode }, files };
+}
+
+/**
+ * An offered practice travels with its body. AIKit names the source's active,
+ * immutable, content-addressed snapshot (`aikit system source show`); the
+ * capsule is read from it and its AIKit revision recomputed, so the body is
+ * published only when it is exactly the revision the Agent's participation
+ * discloses. Bodies already supplied as `--reading` files are kept.
+ */
+function readOfferedPracticeBodies(selection, documents, cwd) {
+  const unwrapped = documents.map((document) => { try { return unwrapOwnerReading(document); } catch { return undefined; } });
+  const held = new Set(unwrapped.filter((reading) => reading?.schema === PRACTICE_OFFER_BODY_SCHEMA).map((reading) => reading.practice_ref));
+  const praxis = new Map();
+  for (const reading of unwrapped) {
+    if (reading?.schema !== AGENT_PARTICIPATION_SCHEMA) continue;
+    for (const row of reading.repertoire?.praxis ?? []) if (typeof row?.id === 'string') praxis.set(row.id, row.revision);
+  }
+  const bodies = [];
+  for (const [subject, refs] of Object.entries(selection.offers ?? {})) {
+    if (workcellRef(subject)) continue;
+    for (const ref of refs) {
+      if (held.has(ref) || !praxis.has(ref)) continue;
+      const source = ref.match(/^skill\/([A-Za-z0-9._-]+)\/[^/]+$/)?.[1];
+      if (!source) throw new Error(`offered practice ${ref} is not an AIKit skill ref (skill/<source>/<name>); its body cannot be read`);
+      const shown = aikitRead(['system', 'source', 'show', source], cwd);
+      if (shown.refused) throw new Error(`aikit system source show ${source} refused: ${shown.refused.code ?? ''} ${shown.refused.message ?? ''}`.trim());
+      if (!shown.data.active_registry || !shown.data.active_snapshot) throw new Error(`AIKit source ${source} has no active snapshot to read ${ref} from`);
+      const capsule = capsuleFiles(join(shown.data.active_registry, 'capsules', ...ref.split('/')));
+      bodies.push(practiceOfferBody({ practice_ref: ref, source_revision: praxis.get(ref), source_id: source, snapshot: shown.data.active_snapshot, capsule }));
+      held.add(ref);
+    }
+  }
+  return bodies;
+}
+
+readings.push(...readOfferedPracticeBodies(selection, readings, args.central ?? process.env.CENTRAL_HOME ?? process.cwd()));
+
 const publishedAt = args.publishedAt ?? new Date().toISOString();
 const bundle = args.previous
   ? reprojectCentralWikiWorld(readJson(args.previous), { readings, selection, published_at: publishedAt })
@@ -213,6 +269,7 @@ console.log(JSON.stringify({
   entry_kinds: bundle.entries.reduce((counts, entry) => ({ ...counts, [entry.kind]: (counts[entry.kind] ?? 0) + 1 }), {}),
   relations: bundle.relations.length,
   excluded: bundle.excluded,
+  offered_bodies: bundle.entries.filter((entry) => entry.kind === 'practice' && entry.meta?.offer).map((entry) => ({ ref: entry.ref, source_revision: entry.meta.source_revision, body_digest: entry.meta.offer.body_digest, body_bytes: entry.meta.offer.body_bytes })),
   edition_digest: manifest.digest.value,
   sentinels_checked: args.sentinels.length,
 }, null, 2));
