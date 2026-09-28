@@ -2,7 +2,6 @@
 from pathlib import Path
 import importlib.util
 import json
-import shutil
 import tempfile
 import unittest
 ROOT = Path(__file__).resolve().parents[2]
@@ -13,20 +12,27 @@ spec.loader.exec_module(em)
 
 class PersonalWebTests(unittest.TestCase):
     def test_additive_source_preserves_every_inherited_story_and_obligation(self):
+        # Reproduce the complete declared source field, including module
+        # dependencies outside docs/experience and docs/cradle.
+        complete = em.load_sources(ROOT)
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
-            shutil.copytree(ROOT / "docs/experience", root / "docs/experience")
-            shutil.copytree(ROOT / "docs/cradle", root / "docs/cradle")
-            # The declared executable-test relation is a source dependency too.
-            config = json.loads((ROOT / "docs/experience/campaign.json").read_text())
-            bindings = config.get("executable_test_bindings") or {}
-            if bindings.get("path"):
-                target = root / bindings["path"]
+            for relative, source in complete["source_documents"].items():
+                target = root / relative
                 target.parent.mkdir(parents=True, exist_ok=True)
-                shutil.copy2(ROOT / bindings["path"], target)
-            current = em.load_sources(root)
+                target.write_text(source["text"], encoding="utf-8")
             config_path = root / "docs/experience/campaign.json"
             config = json.loads(config_path.read_text())
+            # This test compares the original Personal-Web addition with its
+            # preceding field. The later shared-world extension deliberately
+            # depends on PW stories, so exclude it from BOTH sides of this
+            # historical comparison. Its full integrated propagation is tested
+            # separately by test_shared_field_world_participation.py.
+            config["source_modules"].remove(
+                "docs/experience/shared-field-world-participation.json"
+            )
+            config_path.write_text(json.dumps(config))
+            current = em.load_sources(root)
             config["source_modules"].remove("docs/experience/personal-web.json")
             config_path.write_text(json.dumps(config))
             before = em.load_sources(root)
