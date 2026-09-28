@@ -1050,6 +1050,27 @@
         "stale"
       ],
       "note": "A Run completes in the owner's world while the person is focused elsewhere: the arrival marks only its own card, the Run view's owner build revision advances by content, acknowledge is the person's own answer, and scope, selection, focus, regions and the kernel log do not move; the adverse face renders the owner's read-refusal as the Run's own line with the held view standing and no global takeover."
+    },
+    "web65-explore-world": {
+      "kind": "walk",
+      "serves": [
+        "web65:WORLD",
+        "web65:EXPLORE",
+        "web65:ACTIVITY",
+        "web65:CONTINUITY",
+        "UI01",
+        "UI03"
+      ],
+      "branches": {
+        "web65:WORLD": [
+          1
+        ]
+      },
+      "negatives": [
+        "missing"
+      ],
+      "claims_grade": "C",
+      "note": "Read-only walk of the hosted World A field and the owner's private a04-mask undertaking through the real kernel's SharedField client (OI_SHARED_FIELD_TARGET=hosted, default owner state home): rail entry to Explore, same-label Positions told apart by World, search 'agents' to the Aletheia 5 Position as a Being (Carried by Workcell mac once, Practises, Relations depth summoned/dismissed), Workcell Thing with nothing offered, darshana practice with its source revision and 'publication is not permission', the Factory run activity live from the owner-side producer row, the undertaking's Shared NOW revision 1 (workcell:mac root + child NOW, A04/A04'/A05/A05' artifacts, contemplation nodes, wiki.edge/re-sites), back/forward over subjects and the field page, and a 420x800 reduced-motion Being without page overflow. Negative 'missing': the real snapshot delivered with its activity_liveness rows removed reads 'disconnected', never the publication's 'live'. Not proved here: EXPLORE branch 1's static/replay availability and keyboard-only entry, ACTIVITY branch 1's actual producer disconnect and local-vs-hosted comparison, CONTINUITY's second Workcell/World, and any write (the walk issues none)."
     }
   }
 }

@@ -127,6 +127,7 @@ const SCENARIOS = {
   "shared-field-hosted": {module:"scenarios/shared-field-hosted.mjs",kernel:true,aliases:["lane-c5","u-sf1"]},
   "explore-sf1": {module:"scenarios/explore-sf1.mjs",kernel:true,aliases:["sf1","explore"]},
   "explore-sf2": {module:"scenarios/explore-sf2.mjs",kernel:true,aliases:["sf2","knowledge-encounter"]},
+  "web65-explore-world": {module:"scenarios/web65-explore-world.mjs",kernel:true,aliases:["web65"]},
   "workspace-continuity": {module:"scenarios/workspace-continuity.mjs",kernel:true,aliases:["ws-continuity"]},
   "html-continuity": {module:"scenarios/html-continuity.mjs",kernel:true,aliases:["html-cont"]},
   "mode-engine-state": {module:"scenarios/mode-engine-state.mjs",kernel:true,aliases:["mode-engine"]},
