@@ -409,3 +409,55 @@ Probe Agent and probe agent-set removed by CAS after proof.
 3. Cradle walk scenarios `rest`/`modes`/`kernel-cas` fail at expressions-substrate selectors (`.xg-navigator`, `.warm-tree-host … pane-tool-pin`) and the pre-existing shell-host check — present before #527 (receipts last green #482, 22 Sep); owned by the expressions/world-substrate lane.
 4. Factory/Workcell/QL CLI help treatment, packet A3 (executable praxis support), `oi ui` composed-World handoff, and in-TUI SkillSet-first picker (needs the headless prepare contract moved below the CLI/TUI split) remain open on this map's frontier.
 5. X-matrix items X7 (Factory Commission), X9 (edit-while-running), X12 (four-surface same-identity), X13/X15/X16 at full depth remain for the next pass with the desktop app installed.
+
+---
+
+## 7. The lost delivery reunited, verified on the installed cut (coordinator, 28 September 2026)
+
+### The install-flip regression, repaired
+
+The §6 delivery never landed on origin/main and had left the installed cut when
+the `guidance/development-world-shape` lane (Herdr/Gateway development world,
+36 commits) was built and installed over it: `act` did not exist on the
+installed binary while this map still recorded it delivered. The two lanes are
+now united on ai-kit `integration/command-encounter-oi527`
+(worktrees/oi527-integration/ai-kit, seat-claimed): origin/main + guidance +
+the convergence lane + the surface-custody WIP found finished-but-unproven in
+the primary checkout (committed with provenance, proven 3/3). Merge
+resolutions preserved both sides' scoping disciplines, and the convergence
+branch's own porting note for the Conversation aperture was consumed as its
+note intended (`event_dirties_frame` consults `conversation.is_open()`
+again). Focused suites from both lanes pass on the join; the workspace gate
+runs green except one environment flake (`client_roster_real`, passes in
+isolation) and one pre-existing GitNexus degradation proven pre-existing by
+pristine-HEAD replay.
+
+### Installed and independently verified
+
+`oi update --apply --candidate aikit=07ce5861bbd9 --candidate
+ctrl=d10a2882332b` swapped both atomically. A fresh independent verifier ran
+the §5 matrix on that cut: **X1/X2/X4/X5/X6/X8/X9/X10/X11/X13/X16 PASS —
+real provider execution, owner readback, no duplicate launch, live/next-session
+distinction proven (X9), Saved-not-running proven against a real broken
+provider (X10)**. Degraded, with named owners: X3 (no authored alias family
+to exercise; `z` non-TTY now seated to answer with bounded candidates), X7
+(Commission created and read back; workflow-unit execution to Return unproven),
+X12 (3 of 4 surfaces identical; desktop leg undriven), X14 (`method run`
+refuses despite enable+active — the A3 seam, reproduced), X15 (inertness
+proven; latency budgets unmet under machine load 60–96). Full verdicts with
+command-level evidence:
+`Control/agents/now/flows/oi527-command-work-journey-20260927/VERIFIER-X1-X16.md`.
+
+### New defects the verification surfaced
+
+1. TUI search field does not echo typed text; idle TUI burns 20–35% CPU.
+2. Method enable→run seam broken (`method.not_runnable` despite enabled+active) — A3's open core.
+3. `aikit z` non-TTY raw-mode death (bounded-candidates repair seated on the integration branch).
+Runners-up: `agent/` vs `agent:` ref-form split; `encounter send` demanding
+agency-grade addressing with the ordinary Direct route undocumented; search
+latency. These join gap 4's remainders (A3 postconditions, in-TUI SkillSet
+picker on the shared headless prepare binding, `oi ui` composed-World
+handoff) and gap 5's X7-execution/X12-desktop as the next pass's exact
+frontier. Both candidate branches await PR landing (origin gh token invalid —
+the owner's credential); seats `oi527-integration/ai-kit` and `env-3/central`
+stay claimed until landed.
