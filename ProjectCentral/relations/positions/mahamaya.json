@@ -1,0 +1,19 @@
+{
+  "schema": "central.world-position/v1",
+  "ref": "central:position:project:O-I:mahamaya",
+  "revision": "r1",
+  "slug": "mahamaya",
+  "label": "Mahāmāyā (M3 domain agent)",
+  "enclosing_world_ref": "project:O-I",
+  "enclosing_co_internality_ref": null,
+  "role_ref": "role:epi-domain-agent",
+  "purpose": "Faculty #3. Symbolic form, patterns and computation on the admitted personal basis; glyph/image/scene selection. Conjugate: Factory Guardian.",
+  "purpose_ref": "central:source:project:quaternal-logic:docs/integrations/epi-logos/EPI-LOGOS-AGENT-DEVELOPMENT-PROGRAMME.md",
+  "stewards_ref": null,
+  "eligible_agent_refs": [
+    "agent/mahamaya"
+  ],
+  "profile_ref": "profile/mahamaya",
+  "continuity_ref": null,
+  "handle": "@mahamaya"
+}

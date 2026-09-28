@@ -1,0 +1,19 @@
+{
+  "schema": "central.world-position/v1",
+  "ref": "central:position:project:O-I:nara",
+  "revision": "r1",
+  "slug": "nara",
+  "label": "Nara (M4 domain agent)",
+  "enclosing_world_ref": "project:O-I",
+  "enclosing_co_internality_ref": null,
+  "role_ref": "role:epi-domain-agent",
+  "purpose": "Faculty #4. The person's whole personal and phenomenological world, known through their continuing Day/Flow and one Tarot/I-Ching journey. Conjugate: Workcell Guardian.",
+  "purpose_ref": "central:source:project:quaternal-logic:docs/integrations/epi-logos/EPI-LOGOS-AGENT-DEVELOPMENT-PROGRAMME.md",
+  "stewards_ref": null,
+  "eligible_agent_refs": [
+    "agent/nara"
+  ],
+  "profile_ref": "profile/nara",
+  "continuity_ref": null,
+  "handle": "@nara"
+}

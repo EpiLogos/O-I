@@ -1,0 +1,19 @@
+{
+  "schema": "central.world-position/v1",
+  "ref": "central:position:project:O-I:paramasiva",
+  "revision": "r1",
+  "slug": "paramasiva",
+  "label": "Paramaśiva (M1 domain agent)",
+  "enclosing_world_ref": "project:O-I",
+  "enclosing_co_internality_ref": null,
+  "role_ref": "role:epi-domain-agent",
+  "purpose": "Faculty #1. QL structure, harmonics, topology and toroidal formal interpretation and computation. Conjugate: Actuation Guardian.",
+  "purpose_ref": "central:source:project:quaternal-logic:docs/integrations/epi-logos/EPI-LOGOS-AGENT-DEVELOPMENT-PROGRAMME.md",
+  "stewards_ref": null,
+  "eligible_agent_refs": [
+    "agent/paramasiva"
+  ],
+  "profile_ref": "profile/paramasiva",
+  "continuity_ref": null,
+  "handle": "@paramasiva"
+}
