@@ -90,3 +90,22 @@ test('Explore carries disclosed semantic relation identity through every surface
   assert.equal(app.open('wiki:a').relations.edges[0].provenance[0].revision,'source-r17');
   assert.throws(()=>createExploreApplication({entries:[entry('wiki:a')],relations:[{...relation,relation_ref:''}]}),/relation_ref/);
 });
+
+test('ordinary kind words find world constituents, below any name match, and every word must hold', () => {
+  const provenance = [{ kind: 'test', ref: 'test:source', source_system: 'test', revision: 'r1' }];
+  const entry = (ref, kind, label, summary) => ({ schema: 'oi.explore-entry/v1', ref, kind, world_ref: 'world:a', label, summary, aliases: [], provenance, locators: [] });
+  const app = createExploreApplication({ entries: [
+    entry('world:a/position:aletheia', 'world-position', 'Aletheia 5', 'World Position · occupied'),
+    entry('world:a/workcell:mac', 'workcell', 'Workcell mac', 'Workcell · machine:current'),
+    entry('world:a/skill/darshana', 'practice', 'darshana', 'skill · inspectable'),
+    entry('world:a/run:1', 'activity', 'Factory run 1', 'activity · seeded'),
+    entry('world:a/agents-note', 'wiki-node', 'Notes on agents', 'a wiki page'),
+  ], relations: [] });
+  const refs = (query) => app.search(query, { limit: 10 }).map((row) => row.ref);
+  assert.deepEqual(refs('agents'), ['world:a/agents-note', 'world:a/position:aletheia']);
+  assert.deepEqual(refs('skills'), ['world:a/skill/darshana']);
+  assert.deepEqual(refs('machines'), ['world:a/workcell:mac']);
+  assert.deepEqual(refs('runs'), ['world:a/run:1']);
+  assert.deepEqual(refs('aletheia agent'), ['world:a/position:aletheia']);
+  assert.deepEqual(refs('darshana agent'), []);
+});

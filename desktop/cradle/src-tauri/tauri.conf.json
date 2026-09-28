@@ -16,7 +16,10 @@
     ],
     "icon": [
       "icons/icon.png"
-    ]
+    ],
+    "resources": {
+      "../../../shared-field/dist-client/": "shared-field/"
+    }
   },
   "app": {
     "windows": [

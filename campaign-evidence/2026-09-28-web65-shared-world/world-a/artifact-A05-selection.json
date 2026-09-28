@@ -1,0 +1,34 @@
+{
+ "schema": "oi.curated-artifact-selection/v1",
+ "artifact_ref": "artifact:central:corpus:A05",
+ "world_ref": "world:central:project:O-I:region:a04-mask",
+ "field_ref": "oi:field:central:project:O-I:undertaking:a04-mask",
+ "projection_ref": "projection:central:project:O-I:region:a04-mask:artifact:A05",
+ "presentation_ref": "presentation:central:project:O-I:region:a04-mask:artifact:A05",
+ "summary": "The argument record as authored, shared for the A05 \u2194 A05\u2032 undertaking.",
+ "audience": {
+  "visibility": "private",
+  "refs": [
+   "participant:central:owner:a04-mask",
+   "participant:world-b:omarchy:a04-mask"
+  ]
+ },
+ "publisher": {
+  "participant_ref": "participant:central:owner:a04-mask",
+  "identity_ref": "human:central:owner",
+  "chosen_name": "Central owner"
+ },
+ "entry_ids": [
+  "opening",
+  "section:0",
+  "section:1",
+  "section:2",
+  "section:3",
+  "section:4",
+  "section:5-0"
+ ],
+ "relate_to_node": {
+  "node_ref": "wiki:node:record/A05"
+ },
+ "disclose_source_refs": true
+}

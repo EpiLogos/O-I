@@ -35,7 +35,10 @@ ownership.
 |---|---|
 | `central-wiki-projection.mjs` | readings + selection → publication bundle; `hostedPublicationArgs`; `exploreSeedFromPublication`; `reprojectCentralWikiWorld`; `publicationSentinelLeaks`; `worldPublicationLeaks` |
 | `world-edition.mjs` | standalone edition HTML + manifest, rendered only from the Projection |
-| `scripts/publish-world.mjs` | local step: `--selection`, `--reading`/`--from-ctrl` (wiki, Positions, population, constellations), `--sentinel`, `--out` |
+| `world-constituents.mjs` | Workcell / practice / activity recognition, validation and allow-listed builders; the offered practice body (`oi.practice-offer-body/v1`) with its capsule (from `aikit praxis read`) or, as fallback, AIKit's capsule revision recomputed |
+| `scripts/publish-world.mjs` | local step: `--selection`, `--reading`/`--from-ctrl` (wiki, Positions, population, constellations, Workcells, repertoire, activity), offered practices through `aikit praxis read` (capsule) or AIKit's active snapshot (body-only fallback), `--sentinel`, `--out` |
+| `practice-adoption.mjs` | reader side: an offered capsule → `aikit source add-capsule` under its original id (or, fallback, verbatim `SKILL.md` + `ADOPTED.json` → `add-directory`) → the reader's AIKit; adaptation as an overlay |
+| `scripts/adopt-practice.mjs` | local step: `--reading` (hosted `field.sh read`) or `--bundle --ref`, `--adopter`, `--root`, `--adapt`/`--adapt-file`, `--scope` |
 | `expression-projection.mjs` | one Expression → Projection; World relations to a hosted Position / constellation |
 | `spacetimedb/publish-world.ts` | hosted push through the generated client; owner token outside the repo |
 | `spacetimedb/two-world-live-acceptance.ts` | two independently grounded worlds meet, contribute, return, re-project |
@@ -160,6 +163,249 @@ the constructive frames a register holds. The AIKit read this lane needs is a
 register-addressed `aikit wiki-construct list|inspect --project-world <W>`
 (root when absent) emitting `aikit.constellation/v1` records; until it lands,
 the selection names constellation refs the owner already knows.
+
+## Workcells, repertoire and activity in the same bundle
+
+`world-constituents.mjs` adds three constituents to the same selection, bundle
+and Projection. Each enters only when the selection names it; offered ≠
+inspectable ≠ granted, and a publication never grants anything to a visitor.
+
+```text
+ctrl machine.declaration {role: current}          central.machine                   Central: which Workcell this machine binds (identity attestation)
+workcell --json --workcell-ref R discover         (no schema; recognised by shape)  Workcell: the cell's offers
+oi agent participation --agent A --world W --json oi.agent-world-participation/v1   O:I over Central/Actuation/AIKit: repertoire.praxis {id, form, revision, available}
+factory project locate <project> --json           factory.project-location/v1       Factory: the state path (used as an argument, never published)
+factory development run <state> <run> --json      factory.run-reading/v1            Factory: runRef, revision, lifecycle, agencies
+```
+
+```json
+{
+  "positions": { "central:position:project:O-I:aletheia-5": "occupancy" },
+  "workcells": { "workcell:mac": "offer" },
+  "practices": { "central:position:project:O-I:aletheia-5": ["skill/ql/darshana"] },
+  "offers": { "workcell:mac": ["offer:provider:…"], "central:position:project:O-I:aletheia-5": ["skill/ql/darshana"] },
+  "activity": { "run:01M3…": "live" }
+}
+```
+
+A Position mode may also be `repertoire` (address + practices, no occupancy).
+`workcells` values may be `{mode, label}`; `practices` values may be
+`{agent_ref, refs}`; `activity` values may be `{liveness, purpose_summary}` —
+the summary is the owner's authored public text, never Factory's labels.
+
+| Selected | Entry | Relations |
+|---|---|---|
+| Workcell, `address` | `workcell` at `<world>/<workcell_ref>`; `meta {label, material_role, disclosure, presentation: thing}` — `material_role` is `machine:<role>` from the binding declaration, else `remote`/`local` from the population | `oi.world/workcell` World → Workcell; `oi.world/carried-by` occupancy-mode Position → Workcell when its `workcell_ref` matches |
+| Workcell, `offer` | the same, plus `meta.offers [{offer_ref, port, affordances}]` — only offers listed under `offers[<workcell_ref>]`, each present and available; needs the discovery reading and the machine binding | as above |
+| practices of an `occupancy`/`repertoire` Position | `practice` at `<world>/<practice id>`; `meta {practice_kind: skill\|method\|skillset, source_ref, source_revision, availability: inspectable\|offered, grant: none}`, plus `meta.offer` for an offered practice (below); the Position gains `meta.agent_ref`, `meta.practices` | `oi.world/practises` Position → practice, carrying `availability` |
+| activity | `activity` at `<world>/<run or custody ref>`; `meta {state, run_ref, custody_ref?, purpose_summary?, participants, liveness}` | `oi.world/activity` World → activity; `oi.activity/participant` → occupancy-mode Positions attested by the population (current work names the run/custody) or by the run (its Agency is the occupant's); `oi.activity/works-on` → a selected node/constellation from that attested work |
+
+An inspectable practice carries its native ref and content revision and never
+its text. An offer requires the practice to be `available` natively, and an
+offered practice carries its body (see *Offered practices and adoption*). Nothing about the
+unselected repertoire, unlisted offers or other Workcell material is counted
+(no `excluded` keys for them; a WikiSpace counts only its selected nodes and a
+constellation only its selected participations). Offer metadata (service
+endpoints, workspace roots, manifests, status commands), a profile's
+`source_path`, its `intent_expression`, and remote reachability `detail` are
+protected keys; `workcell-endpoint` (loopback/IP URLs) and `local-home-path`
+are protected shapes. Sources gain `workcell`, `aikit-agent-repertoire` and
+`factory-run`, each revised only from what the publication carries, so the
+composite revision moves when a selected Workcell's carried offers, a selected
+practice's revision, or a selected run's revision/state/participants move — and
+not for unselected practices, unlisted offers or endpoints.
+
+**Native gaps.** Workcell emits no schema name and no self-description of its
+bound identity (`--workcell-ref` relabels the local cell; identity is attested
+by Central's binding). No `aikit wiki-construct list` exists to discover
+constructive frames. Factory run readings carry Agencies, not Positions, and the
+population's `current_work` is the only Position ↔ run attestation.
+
+### Activity liveness is evidence, not a publication claim
+
+An activity entry's `meta.liveness` (`liveness_basis: 'publication'`) records
+what the publisher claimed at publication time. It is never read as live. Only an
+owner-side producer (`scripts/activity-producer.mjs`) makes an activity live. The
+producer reads its run read-only through `factory development run … --json` and
+keeps one `activity_liveness` row per field and activity. The row holds the run's
+lifecycle and revision and a server-stamped heartbeat, and it is bound to the
+producer's connection. Only the field owner, or a live contributor or admitter
+participant, may put a row, and only for an `activity` entry in that field. The
+owner revision never goes backwards. SIGTERM clears the row. A dropped connection
+or `kill -9` clears it too, through the module's client-disconnect lifecycle.
+`activityReading` (`activity-liveness.mjs`) resolves the row to one of four
+readings. With a producer row, a fresh heartbeat reads `live` and an old one
+reads `stale`. With no producer row, the entry reads `disconnected` if the
+publication claimed live, and `static` otherwise. `activityEdition` freezes a
+run reading with its `factory.run-reading/v1` revision basis. `replayActivity`
+turns the frozen edition into render steps only. It records no Action and runs
+no tool. **Native gap:** the run reading has no event list and no timestamps.
+An edition therefore records lifecycle, RunMap node states and execution
+statuses in reading order, and says so. Continuing a run live is a separate
+operation that Factory admits.
+Proof: `spacetimedb/activity-liveness-live-acceptance.ts`.
+
+## Offered practices and adoption
+
+A Skill page refers to the actual practice and its source revision; it never
+creates a second capability. An *offer* additionally carries the practice's
+body so another world can inspect it and deliberately adopt it. Publication is
+not trust and not execution: the body is text data, and adoption is the
+reader's own act through the reader's own AIKit.
+
+**Publishing the body.** For each practice listed under `offers[<Position>]`,
+`publish-world.mjs` takes one of two paths and says which in its output
+(`offered_bodies[].read_via` / `carried`):
+
+- **Capsule** (`read_via: "aikit-praxis-read"`), when the publishing machine's
+  AIKit answers `aikit praxis read --help` (AIKit ≥ #455, `eeaab031`). AIKit
+  itself reads the practice at the revision the Agent's participation discloses
+  (`aikit praxis read <id> --revision <rev> --json` →
+  `aikit.practice-reading/v1`) and refuses a revision it cannot prove
+  (`praxis.revision_unproven`, `praxis.revision_not_retained`). O:I composes no
+  snapshot path and recomputes no hash; it checks that the reading names this
+  practice at this revision and that each file is what it declares, then
+  carries the **whole capsule** as data.
+- **Body-only fallback** (`read_via: "aikit-snapshot-blake3"`), for an older
+  AIKit (for example Omarchy's `f1fb7c1c`). It asks AIKit which snapshot the
+  practice's source holds (`aikit system source show <source> --json`), reads
+  the capsule from that active, immutable snapshot, and recomputes AIKit's
+  capsule revision in JS (`aikit-capsule-revision-v2`: BLAKE3 over the manifest
+  and every file with its path and permission bits). The body is published only
+  when that revision matches the disclosed one. Only `SKILL.md` travels; the
+  other files are named in `payload_files_not_carried`.
+
+Either path yields an `oi.practice-offer-body/v1` reading, which is also
+accepted as a `--reading` file. The snapshot's local path never enters it. The
+practice entry gains:
+
+```json
+"offer": {
+  "body_digest": "sha256:…", "media_type": "text/markdown", "body_bytes": 2611,
+  "revision_basis": "aikit-capsule-revision-v2",
+  "payload_files_not_carried": [],
+  "text": "---\nname: darshana\n…",
+  "capsule": {
+    "schema": "aikit.practice-capsule/v1", "id": "skill/ql/darshana", "name": "darshana", "form": "skill",
+    "revision": "f3d55f2f…", "revision_basis": "aikit-capsule-revision-v2",
+    "exported_from": { "source_id": "ql", "snapshot": "43fb89f0…" },
+    "files": [
+      { "path": "manifest.toml", "mode": 420, "bytes": 468, "sha256": "sha256:…", "text": "…" },
+      { "path": "payload/SKILL.md", "mode": 420, "bytes": 2611, "sha256": "sha256:…", "text": "…" },
+      { "path": "payload/scripts/darshana.py", "mode": 493, "bytes": 6672, "sha256": "sha256:…", "text": "…" }
+    ]
+  }
+}
+```
+
+`capsule` is present only on the capsule path, and it is an
+`aikit.practice-capsule/v1` archive as data. `text` and `body_digest` remain
+the `SKILL.md` body, so readers that handle only the body keep working. The
+Markdown body is curated in both paths. Script-capable or embedding-capable
+content refuses the offer: `<script>`, `<iframe>`, `<style>`, `<svg>`, event
+handler attributes, `javascript:` or `data:text/html` URLs, control
+characters, or a body over 256 KiB.
+
+On the capsule path, every file is refused unless AIKit would accept it:
+
+- the path is relative and canonical, with no `..`, `.`, empty segment or
+  backslash, and it does not collide case-insensitively with another file;
+- the mode carries permission bits only (≤ `0o777`, so no setuid, setgid or
+  sticky bit);
+- the file carries exactly one of `text` or `base64`, and its declared length
+  and sha256 match.
+
+A binary (base64) file over 256 KiB refuses the offer. **Every text file is
+leak-scanned on its own** before anything is built: protected values from the
+readings, local home paths, endpoints and tokens. A hit names the practice and
+the file. The `SKILL.md` body is scanned again, naming the practice, and the
+whole-bundle scan still runs, so it also catches a payload leak in a bundle
+built from supplied readings. An inspectable practice never carries a body,
+even when a body reading was supplied. The repertoire source revision includes
+the offered body digest.
+
+**Adopting it.** `scripts/adopt-practice.mjs` takes a hosted reading of the
+practice (`field.sh read <ref>` in the reader's own field view,
+`oi.shared-field.reading/v1`) or a publication bundle and ref. It refuses
+anything that is not an offered practice whose text matches its published
+digest and length. When the offer carries a capsule, it also refuses the offer
+unless every capsule file matches its declared sha256 and length, the paths
+and modes pass AIKit's rules, and the capsule's `SKILL.md` is the offered
+text. The result's `path` says which way the adoption ran:
+
+- **`capsule`**, when the offer carries a capsule and the reader's AIKit
+  answers `source add-capsule --help`:
+  1. writes `<root>/capsules/<slug>@<short-revision>/capsule.json`, the offered
+     archive verbatim, and, beside it, `provenance.json`
+     (`{world_ref, entry_ref, practice_id, revision}`). Neither goes inside the
+     capsule, and no `ADOPTED.json` is written;
+  2. `aikit source add-capsule <archive> --world-ref <world> --upstream-ref
+     <entry ref> --provenance @provenance.json`. AIKit re-verifies the archive
+     and records the upstream (`world_ref`, `entry_ref`, `practice_id`,
+     `revision`, `archive_sha256`, and `exported_from`, marked as an
+     unverified claim) in the registration. The practice keeps its
+     **original id and revision** (`skill/ql/darshana`), and the source is
+     AIKit's default `capsule-<slug>-<revision12>`;
+  3. `source sync` → `promote`, then `explain` must report the offered
+     revision. If another source in that AIKit home already has the id active,
+     promote refuses `source.capsule_identity_active`. The result is then
+     `state: "identity-already-active"`, naming `active_source`: the capsule
+     stays registered but unpromoted, and nothing is overwritten;
+  4. with `--adapt`/`--adapt-file`, it sets an AIKit Skill Usage Overlay on
+     the original id, recorded in the result's `adopted.local_differences`.
+- **`body-only`** (declared fallback, with `fallback_reason`), for an older
+  AIKit or an offer without a capsule:
+  1. materialises `<root>/<slug>@<short-revision>/` (default root
+     `${OI_STATE_HOME:-~/.local/state/oi}/adopted-practices`), holding the
+     verbatim `SKILL.md` and `ADOPTED.json`:
+
+     ```json
+     { "schema": "oi.adopted-practice/v1",
+       "adopted_from": { "world_ref", "entry_ref", "field_ref", "projection_ref", "projection_revision",
+                         "source_ref", "source_revision", "body_digest" },
+       "adopted_at", "adopter_participant_ref",
+       "aikit": { "source_id": "adopted-<slug>-<short-revision>", "capability_ref": "skill/adopted-…/<name>" },
+       "payload_files_not_carried": [ … ],
+       "local_differences": [ { "kind": "aikit-skill-overlay", "overlay_ref", "capability_ref", "scope",
+                                "guidance", "guidance_digest", "adapts": { "source_ref", "source_revision" } } ] }
+     ```
+
+     A capsule the fallback cannot carry is named file by file in
+     `payload_files_not_carried`;
+  2. registers it through AIKit: `system source add-directory` → `sync` →
+     `promote`, then reads the adopted capsule's revision with `explain`;
+  3. applies `--adapt` as an overlay on `skill/adopted-…/<name>`, as in step 4
+     of the capsule path.
+
+Either way it returns `oi.practice-adoption-result/v1`. The result carries the
+AIKit source, snapshot and adopted revision, each step's AIKit answer, and how
+to use the practice: `aikit enable <capability> --scope <scope> --apply`.
+Adoption promotes the capability; enabling it is the reader's next deliberate
+act. Each source revision gets its own source, so the original identity and
+version are never overwritten. Re-adopting the same revision is idempotent: on
+the capsule path, AIKit's `add-capsule` reports `already_registered`, and on
+the body-only path the first `adopted_at` is kept. A locally edited `SKILL.md`
+or archive is refused rather than replaced. AIKit runs with the caller's
+environment (`AIKIT_HOME` selects which home adopts) and with the adoption
+root as its working directory.
+
+Proof on this Mac, 28 Sep 2026, with AIKit `eeaab031` and a disposable
+`HOME`/`AIKIT_HOME`:
+
+- `publish-world --out` offered `skill/ql/darshana` through `praxis read`.
+  Three files travelled, including `payload/scripts/darshana.py` at `0755`.
+- `adopt-practice --bundle` then adopted it by the capsule path as
+  `capsule-ql-darshana-f3d55f2f9ec7`. In the temp home,
+  `aikit praxis read skill/ql/darshana` returned revision `f3d55f2f9ec7…`, the
+  same as the origin, with every file's sha256 and mode equal. The script on
+  disk is byte-identical (`0755`).
+- A second home that already had `skill/ql/darshana` active through source
+  `ql` got `identity-already-active`, and its active revision was unchanged.
+- An older AIKit adopted by the body-only fallback.
+
+**Native gaps (AIKit).** `exported_from` is the archive's own claim:
+nothing yet verifies it against the exporting World. An older AIKit on either
+side forces the body-only path.
 
 ## Technè: Expressions related to their World
 

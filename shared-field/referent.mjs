@@ -143,6 +143,10 @@ function visibleSubject(entry) {
 function projectionEntry(entryByRef, projection) {
   const direct = entryByRef.get(projection.projection_ref);
   if (direct && (direct.kind === 'projection' || direct.projection_ref === projection.projection_ref)) return direct;
+  // Every entry of a World publication names its Projection; the one that
+  // stands for the Projection is its subject, then any other named entry.
+  const subject = projection.subject?.ref ? entryByRef.get(projection.subject.ref) : undefined;
+  if (subject && subject.projection_ref === projection.projection_ref) return subject;
   for (const entry of entryByRef.values()) {
     if (entry.projection_ref === projection.projection_ref) return entry;
   }

@@ -76,12 +76,12 @@
   ],
   "native_capability_sources": [
     {"repository":"EpiLogos/Central","path":"ProjectCentral/user/capability-matrix.csv","binding":"inspect exact current IDs; never mint replicas"},
-    {"repository":"EpiLogos/ai-kit","path":"ProjectCentral/user/capability-matrix.csv","binding":"inspect exact current IDs; never mint replicas"},
+    {"repository":"EpiLogos/ai-kit","path":"ProjectCentral/user/telos/capability-matrix.csv","binding":"inspect exact current IDs; never mint replicas"},
     {"repository":"EpiLogos/Factory","path":"ProjectCentral/user/capability-matrix.csv","binding":"inspect exact current IDs; never mint replicas"},
     {"repository":"EpiLogos/Workcell","path":"ProjectCentral/user/capability-matrix.csv","binding":"inspect exact current IDs; never mint replicas"},
     {"repository":"EpiLogos/Actuation","path":"ProjectCentral/user/capability-matrix.csv","binding":"verify current declared matrix path and exact IDs before use"},
     {"repository":"EpiLogos/QL-MEF","path":"docs/integrations/epi-logos/EPI-CAPABILITY-MATRIX-FIELD-INDEX.md","binding":"enumerate every registered native matrix, not only the product synopsis"},
-    {"repository":"EpiLogos/O-I","path":"docs/CAPABILITY-MATRIX.md","binding":"use host source inventory and actual current native command/application account"}
+    {"repository":"EpiLogos/O-I","path":"suite/capability-matrix.json","binding":"use host source inventory and actual current native command/application account"}
   ],
   "delegated_ql": {
     "repository":"EpiLogos/QL-MEF",

@@ -10,7 +10,7 @@ const corpus=JSON.parse(readFileSync(resolve(root,'tests/fixtures/wiki-native.js
 const out=resolve(root,'tests/artifacts/wiki');mkdirSync(out,{recursive:true});
 const receipt={scope:'production KnowledgeSurface and WikiReader, real CLI-produced corpus, controlled kernel transport',native:corpus.receipt,checks:[],browsers:[],passed:false};
 const check=(value,label)=>{assert.ok(value,label);receipt.checks.push(label);};
-const server=await createServer({root,configFile:false,plugins:[react()],resolve:{alias:{three:resolve(root,'node_modules/three')}},define:{__CRADLE_WALK__:'false'},server:{host:'127.0.0.1',port:1446,strictPort:true,fs:{allow:[root,resolve(root,'../../packages/oi-design-system')]}}});
+const server=await createServer({root,configFile:false,plugins:[react()],resolve:{alias:{three:resolve(root,'node_modules/three')}},define:{__CRADLE_WALK__:'false'},optimizeDeps:{include:['d3-force']},server:{host:'127.0.0.1',port:1446,strictPort:true,fs:{allow:[root,resolve(root,'../../packages/oi-design-system')]}}});
 await server.listen();
 function graph(input){
  const native=corpus.graph;

@@ -33,13 +33,24 @@ After the operator has established the real checkout paths, use a **new** output
 python3 scripts/experience_map.py \
   --ql-root "$QL_ROOT" \
   --matrix "EpiLogos/Central=$CENTRAL_ROOT/ProjectCentral/user/capability-matrix.csv" \
-  --matrix "EpiLogos/ai-kit=$AIKIT_ROOT/ProjectCentral/user/capability-matrix.csv" \
+  --matrix "EpiLogos/ai-kit=$AIKIT_ROOT/ProjectCentral/user/telos/capability-matrix.csv" \
   --matrix "EpiLogos/Factory=$FACTORY_ROOT/ProjectCentral/user/capability-matrix.csv" \
   --matrix "EpiLogos/Workcell=$WORKCELL_ROOT/ProjectCentral/user/capability-matrix.csv" \
+  --matrix "EpiLogos/Actuation=$ACTUATION_ROOT/ProjectCentral/user/capability-matrix.csv" \
+  --matrix-slice "EpiLogos/O-I=$OI_ROOT/suite/capability-matrix.json" \
   --output-dir "$EVIDENCE_ROOT/experience-source-reading"
 ```
 
 The variables must name the inspected actual paths; they are not commands for discovering or creating a private World. Check each owner's current inventory location. Add further real CSV inventories with repeated `--matrix OWNER=PATH`. An owner with a different registry/Markdown source needs its actual source-specific reading, not an invented CSV. In particular, enumerate QL's registered deeper matrices rather than assume its product summary exhausts them. O:I's host capabilities and Actuation's current inventory also remain required coverage inputs at C0; the example command is not the whole seven-owner inventory.
+
+### Inventory readers and owner checks
+
+`--matrix OWNER=PATH` files every capability it reads under `OWNER`, so the reader checks that the source agrees:
+
+- **`ql-capability-matrix/1` CSV.** When the CSV carries its own owner column (`owner_ref`/`owner_id`, as the suite catalogue `suite/product-capabilities.csv` does), every capability row must belong to `OWNER`. Otherwise the run stops with `OWNER: N capability row(s) of PATH belong to other owners by the source's own owner_ref column (…); refusing to file them under OWNER …`. A CSV without an owner column must use one `cap.<namespace>.` namespace, and that namespace must be `OWNER`'s native namespace in `suite/product-capabilities.json` (`… capability namespace 'factory' is not EpiLogos/Central's native namespace ['central']`). Owner aliases come from `suite/manifest.json` and the catalogue. The script declares only O:I's own aliases (`O-I`, `Suite`, `desktop`), because the manifest lists O:I as a desktop bundle, not as a product.
+- **O:I recovery ledger `suite/capability-matrix.json`** (`epilogos-recovery/capability-matrix/v1`). This is a cross-product ledger, and each record names its own `product`. Only O:I's records (`O-I` and `Suite`, 38 of the 166 at this cut) belong to O:I. Read them with `--matrix-slice EpiLogos/O-I=…/suite/capability-matrix.json`. Each record keeps its real `id`, the file's sha256 digest and the complete record. `native_view` maps only the fields that correspond: `claim` is the claimed outcome, `standing` is the ledger's conservative verdict and not a native standing, and file evidence becomes the code refs. The ledger has no need, operation or test-ref field, so those stay `null`.
+- **`--matrix-slice OWNER=PATH`** reads only the rows that a multi-owner source assigns to `OWNER`. The counts of excluded rows per owner are recorded on each inventory row as `excluded_foreign_records`. Use it only for sources that really hold several owners, never to silence a mismatch in a single-owner matrix.
+- **Other JSON.** A JSON source that declares a `matrix_projection`, such as QL's `epi-capability-readiness`, `epi-ta-onta-agent-world-capabilities` and `epi-m-capability-field` (with its partitions), is refused. Those sources already name `epi-ta-onta-m-relational-field.csv` as their canonical `ql-capability-matrix/1` projection, so read that CSV instead; a second reading would duplicate the same capability ids. Any other JSON schema is refused by name. QL's `epi.aw-field-projection/v1` (AW0 field) and `epi.deep-subsystem-capability-matrix.v2` (M1–M4 deep coordinate matrices) have no reader yet: they carry coordinate and field projections, not capability records with ids. QL's `epi-relational-field.csv` and `epi-ssprime-relational-field.csv` contain relations only, and `--matrix` reports that it read no capability definitions from them.
 
 Outputs:
 
@@ -67,6 +78,29 @@ The first inventory gives every actual capability an explicit `uncovered` dispos
   }
 ]
 ```
+
+A binding **may** name the proving obligation and branch it serves. Put them in two typed fields beside `story_ids`:
+
+```json
+{ "obligation_id": "web65:WORLD", "branch": 0 }
+```
+
+`obligation_id` must be declared by a loaded obligation module, meaning a `source_modules` entry with `required_obligation_ids`/`obligations` such as `shared-field-world-participation.json`. `branch` is a **0-based** index into that obligation's `required_branches`, the same convention as `branches` in `scenario-bindings.json`. Every local story the binding names must be one the obligation constrains. The compiler refuses the following:
+
+- `unknown obligation_id 'web65:NOPE'; not declared by any loaded obligation module`
+- `branch 3 out of range for web65:WORLD (3 required branches, indices 0..2)`
+- `branch requires obligation_id`
+- `stories ['GV02'] are not constrained by obligation web65:WORLD`
+- an obligation or branch placed inside `extensions.<ns>`: `… inside extensions.web65 is untyped and unvalidated; move it to the binding's obligation_id and branch fields`
+
+Bindings without `obligation_id` behave as before. Valid links produce these outputs:
+
+- `capability_view` on the obligation in `ux-reading.json`, listing capabilities per branch plus `branches_without_capability`;
+- `capability_refs` and `capability_bindings` on the matching **story-obligation** rows;
+- a new **obligation-branch-capability** view, with rows `OBLIGATION#branch` and columns `repository:capability_id`;
+- a `capability_view` per obligation in the `--coverage-out` reading, with `obligations_with_capability_binding` and `branches_with_capability_binding` in its summary.
+
+Each of these is a reviewed source link, not executed evidence.
 
 Run the same reading with `--bindings "$BINDINGS_FILE"` and another new output directory. Stale digest, fabricated capability, unknown story and unsupported coverage disposition are rejected. `transitive` additionally requires the support path; `deferred` requires reason, owner and re-entry. The complete proposed binding batch is validated before any binding is applied. Extra native columns/metadata and binding extensions are preserved. A QL story is qualified as `QL-MEF:UX01` and is only accepted when the actual QL source was supplied.
 

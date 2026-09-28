@@ -229,3 +229,6 @@
 .explore-stage-focus button { padding: 6px 12px; border: var(--oi-shell-edge) solid var(--oi-hairline); border-radius: var(--oi-radius-pill); color: var(--oi-accent-ink); font: inherit; font-size: var(--oi-shell-type-meta); }
 .explore-stage-focus button:hover:not(:disabled) { border-color: var(--oi-gold); }
 .explore-stage-focus button:disabled { opacity: .4; cursor: default; }
+/* A world constituent's Being/Thing page: the World it stands in is one step away. */
+.world-constituent__world { margin-top: var(--oi-space-2); padding: 0; border: 0; background: none; color: var(--oi-world-muted); font: inherit; font-size: var(--oi-shell-type-prose); cursor: pointer; text-align: left; }
+.world-constituent__world:hover, .world-constituent__world:focus-visible { color: inherit; text-decoration: underline; }

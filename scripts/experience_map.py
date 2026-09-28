@@ -235,25 +235,223 @@ def include_ql(result: dict[str, Any], root: Path) -> None:
         "trace": trace, "publication_standing": standing}
 
 
-def read_matrix(owner: str, path: Path) -> list[dict[str, Any]]:
-    data = path.read_bytes()
-    reader = csv.DictReader(io.StringIO(data.decode("utf-8-sig")))
-    if not {"id", "record_type"}.issubset(reader.fieldnames or []):
-        raise ValueError(f"{owner}: not a native capability CSV: {path}")
+def norm_owner(value: str) -> str:
+    return re.sub(r"[^a-z0-9]", "", value.lower())
+
+
+# O:I's own suite-level records ("Suite", cap.suite.*) are sourced from O-I
+# issues; the suite manifest has no product row for O:I itself, only its
+# desktop bundle, so these aliases are declared here rather than inferred.
+HOST_ALIASES = {"epilogos/o-i": {"oi", "suite", "desktop", "oidesktop"}}
+CAPABILITY_NAMESPACE = re.compile(r"cap\.([a-z0-9-]+)\.")
+
+
+def owner_registry(root: Path) -> dict[str, dict[str, set[str]]]:
+    """Owner aliases and native namespaces from O:I's own suite source.
+
+    Keys are lowercased repository names ("epilogos/central"). Absent suite
+    files yield an empty registry; owners then match on their repository name
+    alone. Nothing here is invented: every alias is a field of the manifest or
+    catalogue, except the declared HOST_ALIASES above."""
+    registry: dict[str, dict[str, set[str]]] = {}
+    manifest_path = root / "suite/manifest.json"
+    catalogue_path = root / "suite/product-capabilities.json"
+    if not manifest_path.is_file():
+        return registry
+    manifest = read_json(manifest_path)
+    catalogue = {p["id"]: p for p in read_json(catalogue_path).get("products", [])} if catalogue_path.is_file() else {}
+    entries = [dict(p) for p in manifest.get("products", [])]
+    if manifest.get("desktop_bundle"):
+        entries.append(dict(manifest["desktop_bundle"]))
+    for product in entries:
+        repositories = {product[k].rstrip("/").split("github.com/")[-1].lower()
+                        for k in ("repository", "canonical_repository") if product.get(k)}
+        described = catalogue.get(product.get("id"), {})
+        aliases = {norm_owner(x) for x in [product.get("id", ""), product.get("checkout", ""), product.get("public_name", ""),
+                                           described.get("public_name", ""), *[r.split("/")[-1] for r in repositories]] if x}
+        namespaces = {described["native_routing"]["namespace"]} if described.get("native_routing", {}).get("namespace") else set()
+        for repository in repositories:
+            aliases |= HOST_ALIASES.get(repository, set())
+        for repository in repositories:
+            entry = registry.setdefault(repository, {"aliases": set(), "namespaces": set()})
+            entry["aliases"] |= aliases
+            entry["namespaces"] |= namespaces
+    return registry
+
+
+def owner_identity(owner: str, registry: dict[str, dict[str, set[str]]]) -> dict[str, set[str]]:
+    known = registry.get(owner.lower())
+    if known:
+        return known
+    return {"aliases": {norm_owner(owner.split("/")[-1])}, "namespaces": set()}
+
+
+def owned(value: str, identity: dict[str, set[str]]) -> bool:
+    normal = norm_owner(value.removeprefix("product:"))
+    return normal in identity["aliases"] or normal in {norm_owner(n) for n in identity["namespaces"]}
+
+
+def refuse_foreign(owner: str, path: Path, column: str, foreign: dict[str, int]) -> None:
+    summary = ", ".join(f"{name}: {count}" for name, count in sorted(foreign.items()))
+    raise ValueError(
+        f"{owner}: {sum(foreign.values())} capability row(s) of {path} belong to other owners by the source's own "
+        f"{column} ({summary}); refusing to file them under {owner} — pass that owner's own matrix, or "
+        f"--matrix-slice {owner}=PATH to read only the rows the source attributes to {owner}")
+
+
+def read_recovery_ledger(owner: str, path: Path, data: bytes, document: dict[str, Any],
+                         identity: dict[str, set[str]], slice_only: bool) -> list[dict[str, Any]]:
+    """O:I's inter-S0-S5 recovery ledger (suite/capability-matrix.json).
+
+    Each record names its own product. Only fields with a genuine counterpart
+    are normalised: id, product (owner), claim (the claimed outcome), standing
+    (the ledger's conservative verdict, not a native standing) and file
+    evidence (code refs). The ledger has no need, operation or test-ref
+    fields; those stay null rather than being inferred from prose."""
+    records = document.get("records")
+    if not isinstance(records, list) or document.get("record_count") != len(records):
+        raise ValueError(f"{owner}: recovery ledger record_count disagrees with its records: {path}")
+    foreign: dict[str, int] = {}
     result, seen = [], set()
+    for record in records:
+        if record.get("schema") != "epilogos-recovery/capability-entry/v1":
+            raise ValueError(f"{owner}: unknown recovery ledger record schema {record.get('schema')!r} in {path}")
+        product = record.get("product") or ""
+        if not owned(product, identity):
+            foreign[product] = foreign.get(product, 0) + 1
+            continue
+        key = (record.get("id") or "").strip()
+        if not key or key in seen:
+            raise ValueError(f"{owner}: empty/duplicate native capability {key}")
+        seen.add(key)
+        result.append({"repository": owner, "capability_id": key, "source_path": str(path),
+                       "source_digest": digest(data), "source_format": document["schema"],
+                       "native_record": record,
+                       "native_view": {"owner": product, "need": None, "operation": None,
+                                       "outcome": record.get("claim"), "standing": record.get("standing"),
+                                       "standing_vocabulary": "epilogos-recovery conservative verdict",
+                                       "code_refs": [e["ref"] for e in record.get("evidence", []) if e.get("kind") == "file"],
+                                       "test_refs": None,
+                                       "unmapped": "the ledger carries no need, operation or test-ref field"},
+                       "coverage_disposition": "uncovered"})
+    if foreign and not slice_only:
+        refuse_foreign(owner, path, "product field", foreign)
+    for row in result:
+        row["excluded_foreign_records"] = dict(sorted(foreign.items()))
+    return result
+
+
+def read_matrix(owner: str, path: Path, registry: dict[str, dict[str, set[str]]] | None = None,
+                slice_only: bool = False) -> list[dict[str, Any]]:
+    data = path.read_bytes()
+    identity = owner_identity(owner, registry or {})
+    if path.suffix.lower() == ".json":
+        document = json.loads(data)
+        schema = document.get("schema") or document.get("schema_version") if isinstance(document, dict) else None
+        if schema == "epilogos-recovery/capability-matrix/v1":
+            result = read_recovery_ledger(owner, path, data, document, identity, slice_only)
+        elif isinstance(document, dict) and isinstance(document.get("matrix_projection"), dict):
+            projection = document["matrix_projection"]
+            raise ValueError(f"{owner}: {path} ({schema}) is a registered source whose canonical matrix is its declared "
+                             f"{projection.get('protocol')} projection {projection.get('csv')}; read that CSV, not a second "
+                             "reading that would duplicate its capability identities")
+        else:
+            raise ValueError(f"{owner}: unsupported JSON capability source schema {schema!r}: {path}; "
+                             "add a source-specific reader rather than inferring capability records")
+        if not result:
+            raise ValueError(f"{owner}: no capability definitions read from {path}; use its actual source-specific inventory")
+        return result
+    reader = csv.DictReader(io.StringIO(data.decode("utf-8-sig")))
+    fields = reader.fieldnames or []
+    if not {"id", "record_type"}.issubset(fields):
+        raise ValueError(f"{owner}: not a native capability CSV: {path}")
+    owner_column = next((c for c in ("owner_ref", "owner_id") if c in fields), None)
+    result, seen = [], set()
+    foreign: dict[str, int] = {}
+    namespaces: set[str] = set()
     for row in reader:
         if row.get("record_type") != "capability":
             continue
         key = row.get("id", "").strip()
+        if owner_column:
+            if not owned(row.get(owner_column) or "", identity):
+                name = row.get(owner_column) or "(empty)"
+                foreign[name] = foreign.get(name, 0) + 1
+                continue
+        else:
+            found = CAPABILITY_NAMESPACE.match(key)
+            if found:
+                namespaces.add(found.group(1))
         if not key or key in seen:
             raise ValueError(f"{owner}: empty/duplicate native capability {key}")
         seen.add(key)
         result.append({"repository": owner, "capability_id": key,
                        "source_path": str(path), "source_digest": digest(data),
                        "native_record": row, "coverage_disposition": "uncovered"})
+    if foreign and not slice_only:
+        refuse_foreign(owner, path, f"{owner_column} column", foreign)
+    if len(namespaces) > 1:
+        raise ValueError(f"{owner}: {path} mixes capability namespaces {sorted(namespaces)}; a native matrix names one owner")
+    if namespaces and identity["namespaces"] and not any(owned(ns, identity) for ns in namespaces):
+        raise ValueError(f"{owner}: {path} capability namespace {sorted(namespaces)[0]!r} is not {owner}'s "
+                         f"native namespace {sorted(identity['namespaces'])}")
+    if foreign:
+        for row in result:
+            row["excluded_foreign_records"] = dict(sorted(foreign.items()))
     if not result:
         raise ValueError(f"{owner}: no capability definitions read from {path}; use its actual source-specific inventory")
     return result
+
+
+def obligation_links(result: dict[str, Any], binding: dict[str, Any], stories: dict[str, Any]) -> None:
+    """Validate a binding's typed obligation/branch fields against the loaded
+    obligation modules. Bindings without obligation_id keep their behaviour."""
+    for namespace, value in (binding.get("extensions") or {}).items():
+        if isinstance(value, dict) and {"obligation_id", "branch", "branch_index"} & set(value):
+            raise ValueError(f"binding {binding['capability_id']}: obligation/branch inside extensions.{namespace} is "
+                             "untyped and unvalidated; move it to the binding's obligation_id and branch fields")
+    if "branch" in binding and "obligation_id" not in binding:
+        raise ValueError(f"binding {binding['capability_id']}: branch requires obligation_id")
+    if "obligation_id" not in binding:
+        return
+    obligations = {o["id"]: o for o in result["inherited_obligations"]}
+    key = binding["obligation_id"]
+    if key not in obligations:
+        raise ValueError(f"binding {binding['capability_id']}: unknown obligation_id {key!r}; "
+                         "not declared by any loaded obligation module")
+    obligation = obligations[key]
+    if "branch" in binding:
+        branch, total = binding["branch"], len(obligation.get("required_branches", []))
+        if not isinstance(branch, int) or isinstance(branch, bool) or not 0 <= branch < total:
+            raise ValueError(f"binding {binding['capability_id']}: branch {branch!r} out of range for {key} "
+                             f"({total} required branches, indices 0..{total - 1})")
+    outside = [s for s in binding.get("story_ids", []) if s in stories and s not in obligation["story_ids"]]
+    if outside:
+        raise ValueError(f"binding {binding['capability_id']}: stories {outside} are not constrained by obligation {key}")
+
+
+def attach_obligation_capabilities(result: dict[str, Any]) -> None:
+    linked = [b for b in result["capability_bindings"] if "obligation_id" in b]
+    if not linked:
+        return
+    for obligation in result["inherited_obligations"]:
+        mine = [b for b in linked if b["obligation_id"] == obligation["id"]]
+        if not mine:
+            continue
+
+        def ref(b: dict[str, Any]) -> dict[str, Any]:
+            return {k: copy.deepcopy(b[k]) for k in ("repository", "capability_id", "source_digest",
+                                                     "disposition", "story_ids", "reason") if k in b}
+        branches = obligation.get("required_branches", [])
+        obligation["capability_view"] = {
+            "standing": "reviewed source links; not executed evidence",
+            "branches": [{"index": i, "requirement": text,
+                          "capabilities": [ref(b) for b in mine if b.get("branch") == i]}
+                         for i, text in enumerate(branches)],
+            "obligation_level": [ref(b) for b in mine if "branch" not in b],
+            "branches_without_capability": [i for i in range(len(branches))
+                                            if not any(b.get("branch") == i for b in mine)],
+        }
 
 
 def apply_bindings(result: dict[str, Any], bindings: list[dict[str, Any]]) -> None:
@@ -287,6 +485,7 @@ def apply_bindings(result: dict[str, Any], bindings: list[dict[str, Any]]) -> No
             raise ValueError("non-executed disposition requires its reason")
         if disposition == "deferred" and not (binding.get("owner") and binding.get("reentry_condition")):
             raise ValueError("deferment requires owner and re-entry condition")
+        obligation_links(result, binding, stories)
     for binding in bindings:
         native = inventory[(binding["repository"], binding["capability_id"])]
         native.setdefault("coverage_relations", []).append(copy.deepcopy(binding))
@@ -297,6 +496,7 @@ def apply_bindings(result: dict[str, Any], bindings: list[dict[str, Any]]) -> No
                 req = stories[story_id]["extensions"]["agent_ux"]["capability_requirements"]
                 req["native_refs"].append(copy.deepcopy(binding))
                 req["binding_status"] = "partial-source-links-require-episode-review"
+    attach_obligation_capabilities(result)
 
 
 NEGATIVE_CLASSES = {
@@ -473,9 +673,19 @@ def coverage_reading(result: dict[str, Any]) -> dict[str, Any]:
             "latest_performed": latest,
             "negatives_exercised": coverage["negatives_exercised"],
         })
+        if "capability_view" in obligation:
+            obligations[-1]["capability_view"] = copy.deepcopy(obligation["capability_view"])
     negative = {name: sorted({b["test"] for b in bindings["tests"].values() if name in b["negatives"]})
                 for name in bindings["negative_vocabulary"]}
     bound_ids = {o["id"] for o in obligations if o["tests"]}
+    summary_extra = {}
+    if any("capability_view" in o for o in obligations):
+        summary_extra = {
+            "obligations_with_capability_binding": sum("capability_view" in o for o in obligations),
+            "branches_with_capability_binding": sum(
+                1 for o in obligations if "capability_view" in o
+                for b in o["capability_view"]["branches"] if b["capabilities"]),
+        }
     return {
         "schema": "oi.experience.coverage-reading/v1",
         "standing": "generated reading from declared source and committed receipts; planning-only; the source retains authority and no verdict is conferred",
@@ -503,6 +713,7 @@ def coverage_reading(result: dict[str, Any]) -> dict[str, Any]:
                 1 for o in result["inherited_obligations"]
                 for g in o["executable_coverage"]["remaining_grades"] if g in {"P", "M", "H"}),
             "stories_with_executable_test": sum(1 for s in result["stories"] if s["extensions"]["executable_tests"]),
+            **summary_extra,
         },
         "unbound_obligations": sorted({o["id"] for o in obligations} - bound_ids),
         "negative_coverage": negative,
@@ -580,13 +791,16 @@ def relation_projection(result: dict[str, Any]) -> tuple[dict[str, Any], list[di
             "row_axis": copy.deepcopy(story_axis), "column_axis": {"id": "obligations", "label": "Original source obligations",
                 "members": [{"id": o["id"], "label": o["native_locator"], "source_ref": o["source_basis"]["source_ref"]} for o in obligations]}})
         story_map = {s["id"]: s for s in result["stories"]}
+        linked = [b for b in result["capability_bindings"] if "obligation_id" in b]
         for obligation in obligations:
             for story_id in obligation["story_ids"]:
                 story = story_map[story_id]
+                bound = [b for b in linked if b["obligation_id"] == obligation["id"] and story_id in b.get("story_ids", [])]
                 row = dict.fromkeys(COLUMNS, "")
                 row.update({"id": f"rel.{story_id}.{obligation['id']}", "record_type": "relation",
                     "view_id": "story-obligation", "row_id": story_id, "column_id": obligation["id"],
-                    "capability_refs": "[]", "need": story["story"], "outcome": story["experienced_outcome"],
+                    "capability_refs": json.dumps(list(dict.fromkeys(f"{b['repository']}:{b['capability_id']}" for b in bound))),
+                    "need": story["story"], "outcome": story["experienced_outcome"],
                     "implementation_status": "not-assessed; source requirement only", "standing": "specified",
                     "source_refs": ";".join([story["extensions"]["source_locator"]["path"], obligation["source_basis"]["source_ref"]]),
                     "test_refs": obligation["id"], "account_ref": story["extensions"]["source_locator"]["path"],
@@ -594,9 +808,43 @@ def relation_projection(result: dict[str, Any]) -> tuple[dict[str, Any], list[di
                     "extensions": json.dumps({"ux": {"story_ref": story_id,
                         "story_revision": story["extensions"]["source_locator"]["digest"],
                         "perspective": "human-and-agent", "relation_kind": "tested-by",
-                        "binding_status": "binding-required", "existing_proof_refs": [copy.deepcopy(obligation)],
+                        "binding_status": "source-bound-not-executed" if bound else "binding-required",
+                        "existing_proof_refs": [copy.deepcopy(obligation)],
+                        "capability_bindings": [{"repository": b["repository"], "capability_id": b["capability_id"],
+                                                 "source_digest": b["source_digest"], "disposition": b["disposition"],
+                                                 "branch": b.get("branch")} for b in bound],
                         "evidence": []}}, ensure_ascii=False)})
                 rows.append(row)
+        viewed = [o for o in obligations if "capability_view" in o]
+        if viewed:
+            branch_members, capability_members = [], {}
+            for obligation in viewed:
+                view = obligation["capability_view"]
+                groups = [(f"{obligation['id']}#{b['index']}", b["requirement"], b["index"], b["capabilities"]) for b in view["branches"]]
+                if view["obligation_level"]:
+                    groups.append((f"{obligation['id']}#*", "Obligation-level (no branch named)", None, view["obligation_level"]))
+                for member, label, index, capabilities in groups:
+                    branch_members.append({"id": member, "label": label, "source_ref": obligation["source_basis"]["source_ref"]})
+                    for cap in capabilities:
+                        cap_ref = f"{cap['repository']}:{cap['capability_id']}"
+                        capability_members[cap_ref] = {"id": cap_ref, "label": cap["capability_id"], "source_ref": cap["repository"]}
+                        row = dict.fromkeys(COLUMNS, "")
+                        row.update({"id": f"rel.{member}.{cap_ref}", "record_type": "relation",
+                            "view_id": "obligation-branch-capability", "row_id": member, "column_id": cap_ref,
+                            "capability_refs": json.dumps([cap_ref]), "need": label,
+                            "implementation_status": "not-assessed; reviewed source link only", "standing": "specified",
+                            "source_refs": obligation["source_basis"]["source_ref"], "test_refs": obligation["id"],
+                            "relation": cap["disposition"], "coverage": "unexercised",
+                            "extensions": json.dumps({"ux": {"obligation_ref": obligation["id"], "branch": index,
+                                "capability": cap, "binding_status": "source-bound-not-executed", "evidence": []}},
+                                ensure_ascii=False)})
+                        rows.append(row)
+            manifest["views"].append({"id": "obligation-branch-capability",
+                "title": "Which native capability is bound to this obligation branch?",
+                "semantics": "Reviewed, digest-checked source links from obligation branches to native capabilities. Not executed evidence; an absent cell is an unbound branch, never coverage.",
+                "row_axis": {"id": "obligation-branches", "label": "Obligation required branches", "members": branch_members},
+                "column_axis": {"id": "capabilities", "label": "Repository-qualified native capabilities",
+                                "members": list(capability_members.values())}})
     return manifest, rows
 
 
@@ -606,6 +854,8 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--output-dir", type=Path, help="New directory for derived planning files; never overwrites")
     parser.add_argument("--ql-root", type=Path, help="Read the complete current QL trace and publication standing")
     parser.add_argument("--matrix", action="append", default=[], metavar="OWNER=PATH", help="Read native capability CSV; repeat for real owner inventories")
+    parser.add_argument("--matrix-slice", action="append", default=[], metavar="OWNER=PATH",
+                        help="Read only the rows a multi-owner source attributes to OWNER; excluded counts are recorded")
     parser.add_argument("--bindings", type=Path, help="Explicit reviewed source-qualified coverage links; not test results")
     parser.add_argument("--coverage-out", type=Path, help="Write the generated executable-coverage reading as PREFIX.json and PREFIX.md")
     args = parser.parse_args(argv)
@@ -614,11 +864,12 @@ def main(argv: list[str] | None = None) -> int:
         if args.ql_root:
             include_ql(result, args.ql_root)
         load_coverage(result, args.root)
-        for item in args.matrix:
+        registry = owner_registry(args.root)
+        for item, slice_only in [*[(m, False) for m in args.matrix], *[(m, True) for m in args.matrix_slice]]:
             owner, sep, path = item.partition("=")
             if not sep or not owner or not path:
                 raise ValueError("--matrix requires OWNER=PATH")
-            result["capability_inventory"].extend(read_matrix(owner, Path(path)))
+            result["capability_inventory"].extend(read_matrix(owner, Path(path), registry, slice_only))
         if args.bindings:
             apply_bindings(result, read_json(args.bindings))
         manifest, rows = relation_projection(result)
@@ -640,13 +891,15 @@ def main(argv: list[str] | None = None) -> int:
             "ql": result["external_ql"]["binding_status"],
             "native_capabilities_read": len(result["capability_inventory"]),
             "uncovered_native_capabilities": sum(r["coverage_disposition"] == "uncovered" for r in result["capability_inventory"]),
+            "obligation_capability_links": sum("obligation_id" in b for b in result["capability_bindings"]),
+            "obligation_branch_capability_relations": sum(r["view_id"] == "obligation-branch-capability" for r in rows),
             "executable_test_bindings": len(result.get("executable_bindings", {}).get("tests", {})),
             "obligations_with_passing_receipt": sum(
                 1 for o in result["inherited_obligations"]
                 if any(p["passed"] for p in o.get("executable_coverage", {}).get("performed", []))),
             "feature_verdict": None, "runtime_readiness": "not-assessed"}))
         return 0
-    except (OSError, ValueError, KeyError, TypeError, csv.Error) as error:
+    except (OSError, ValueError, KeyError, TypeError, csv.Error, json.JSONDecodeError) as error:
         print(json.dumps({"planning_source_valid": False, "error": str(error), "feature_verdict": None}), file=sys.stderr)
         return 1
 

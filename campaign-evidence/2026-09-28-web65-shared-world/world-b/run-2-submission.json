@@ -1,0 +1,32 @@
+{
+  "schema": "oi.participant-submission/v1",
+  "field_ref": "oi:field:central:project:O-I:undertaking:a04-mask",
+  "participant_ref": "participant:world-b:omarchy:a04-mask",
+  "agent_ref": "agent:world-b:claude-code@workcell:omarchy",
+  "receipts": [
+    {
+      "contribution_ref": "contribution:participant-world-b-omarchy-a04-mask:prose:70d2a31e",
+      "body_kind": "prose",
+      "ok": true,
+      "result": {
+        "schema": "oi.shared-field.contribution-result/v1",
+        "contribution_ref": "contribution:participant-world-b-omarchy-a04-mask:prose:70d2a31e",
+        "ingress_ref": "ingress:ed32876ac3c9a61a",
+        "field_ref": "oi:field:central:project:O-I:undertaking:a04-mask",
+        "state": "quarantined"
+      }
+    },
+    {
+      "contribution_ref": "contribution:participant-world-b-omarchy-a04-mask:relation-proposal:57d53f17",
+      "body_kind": "relation-proposal",
+      "ok": true,
+      "result": {
+        "schema": "oi.shared-field.contribution-result/v1",
+        "contribution_ref": "contribution:participant-world-b-omarchy-a04-mask:relation-proposal:57d53f17",
+        "ingress_ref": "ingress:c9a9ec19df17bdfd",
+        "field_ref": "oi:field:central:project:O-I:undertaking:a04-mask",
+        "state": "quarantined"
+      }
+    }
+  ]
+}

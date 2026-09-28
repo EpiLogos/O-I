@@ -1,0 +1,380 @@
+{
+ "schema": "oi.cradle.walk.scenario/v1",
+ "scenario": "web65-explore-world",
+ "spec_ref": "docs/cradle/05-EXECUTION.md \u00a73",
+ "grade": "B",
+ "binding": null,
+ "generated_at": "2026-09-28T19:40:38.339Z",
+ "environment": {
+  "base_url": "http://localhost:4173",
+  "bridge_url": "http://127.0.0.1:4179",
+  "viewport": "1280x820",
+  "browser_engine": "chromium",
+  "bundle": "walk (WALK=1) served by vite preview",
+  "build_input": {
+   "mode": "fresh-build",
+   "bundle_fingerprint": "4c229b28652f0bdcc7c2a1dfbc6a99429ac41d4063283e4e5d337cae0bbf43cc"
+  },
+  "node": "v24.16.0",
+  "platform": "darwin",
+  "source": {
+   "repository_root": "<local>",
+   "repository_head": "d6cdfa2ca25e92075e262ae9121a2d3d5c9f0519",
+   "tracked_changes": [
+    "desktop/cradle/walk/run.mjs"
+   ],
+   "dirty_digest": "0e4b80f483045163c0f4e7d212aa89258bb10334640a5d0e17c4e9ef37b976c9",
+   "engine_provenance_path": "<local>",
+   "engine_source": "EpiLogos/Point-Cloud-Demo",
+   "engine_revision": "91db8428fc9dfba06cd258ec5a58e7dd9eef5313"
+  }
+ },
+ "passed": true,
+ "error": null,
+ "duration_ms": 22382,
+ "checks": [
+  {
+   "ok": true,
+   "label": "The walk reads the hosted target through the default state home (owner transport); the renderer never sees a target or token",
+   "data": {
+    "target": "hosted",
+    "state_home_overridden": false
+   }
+  },
+  {
+   "ok": true,
+   "label": "(1) Kernel shared_field status is bound to the `hosted` target, with no token in the reading",
+   "data": {
+    "bound": true,
+    "target": {
+     "database": "epilogos-oi-shared-field",
+     "name": "hosted",
+     "uri": "wss://maincloud.spacetimedb.com"
+    }
+   }
+  },
+  {
+   "ok": true,
+   "label": "(1) The owner snapshot holds World A's Position, Workcell, practice and activity, the public field and the private undertaking",
+   "data": {
+    "counts": {
+     "entries": 42,
+     "field_day": 0,
+     "field_now": 1,
+     "fields": 2,
+     "participants": 3,
+     "projections": 7,
+     "relations": 59
+    },
+    "fields": [
+     "oi:field:central:project:O-I (public)",
+     "oi:field:central:project:O-I:undertaking:a04-mask (private)"
+    ]
+   }
+  },
+  {
+   "ok": true,
+   "label": "(1) Explore, opened from the World navigator rail, shows the field available at `hosted`",
+   "data": {
+    "signal": "hosted"
+   }
+  },
+  {
+   "ok": true,
+   "label": "The same-labelled Position in World A and in the undertaking region are two results, told apart by their World",
+   "data": {
+    "twins": [
+     {
+      "ref": "world:central:project:O-I:region:a04-mask/central:position:project:O-I:aletheia-5",
+      "label": "Aletheia 5 (M5 Epii \u00d7 S5\u2032 Aletheia)",
+      "world": "Undertaking \u2014 A04 Diaphaneity and A04\u2032 The Mask as Document \u00b7 1 field"
+     },
+     {
+      "ref": "world:central:project:O-I/central:position:project:O-I:aletheia-5",
+      "label": "Aletheia 5 (M5 Epii \u00d7 S5\u2032 Aletheia)",
+      "world": "O-I \u2014 a ProjectCentral world \u00b7 1 field"
+     }
+    ]
+   }
+  },
+  {
+   "ok": true,
+   "label": "(2) Searching `agents` finds the Aletheia 5 Agent Position of World A",
+   "data": {
+    "label": "Aletheia 5 (M5 Epii \u00d7 S5\u2032 Aletheia)",
+    "world": "O-I \u2014 a ProjectCentral world \u00b7 1 field"
+   }
+  },
+  {
+   "ok": true,
+   "label": "(3) Selecting it opens the Position itself as a Being (not the World page)",
+   "data": {
+    "role": "being",
+    "standing": "AGENT POSITION \u00b7 BEING"
+   }
+  },
+  {
+   "ok": true,
+   "label": "(3) Carried by names Workcell mac exactly once",
+   "data": {
+    "carried_by": [
+     "world:central:project:O-I/workcell:mac"
+    ]
+   }
+  },
+  {
+   "ok": true,
+   "label": "(3) Practises lists the field's practices once each, darshana among them",
+   "data": {
+    "rendered": 17,
+    "field": 17
+   }
+  },
+  {
+   "ok": true,
+   "label": "(3) Relations depth opens beside the Being with its typed relations (carried-by, practises)",
+   "data": {
+    "relations_listed": 38
+   }
+  },
+  {
+   "ok": true,
+   "label": "(3) Relations depth dismisses back to the Being"
+  },
+  {
+   "ok": true,
+   "label": "(4) Workcell mac opens as a Thing that says nothing is offered",
+   "data": {
+    "facts": {
+     "Workcell": "workcell:mac",
+     "Material role": "machine:current",
+     "Disclosure": "address",
+     "Offered": "nothing offered \u2014 inspectable only"
+    }
+   }
+  },
+  {
+   "ok": true,
+   "label": "(8) Back restores the Aletheia Being",
+   "data": {
+    "selected": "world:central:project:O-I/central:position:project:O-I:aletheia-5"
+   }
+  },
+  {
+   "ok": true,
+   "label": "(8) Forward returns to the Workcell Thing",
+   "data": {
+    "selected": "world:central:project:O-I/workcell:mac"
+   }
+  },
+  {
+   "ok": true,
+   "label": "(5) The darshana practice Thing shows its exact source revision (f3d55f2f\u2026)",
+   "data": {
+    "source_revision": "f3d55f2f9ec70f44ff661623c7a931f299dcf29659d00df835446c997ee7ef99",
+    "availability": "inspectable"
+   }
+  },
+  {
+   "ok": true,
+   "label": "(5) The practice says publication is not permission (granted use: none)",
+   "data": {
+    "granted_use": "none \u2014 publication is not permission"
+   }
+  },
+  {
+   "ok": true,
+   "label": "(6) The field holds an owner-side producer row for the run (and the publication claims live)",
+   "data": {
+    "owner_state": "seeded",
+    "owner_revision": 6,
+    "heartbeat_at_micros": "1790624437677312"
+   }
+  },
+  {
+   "ok": true,
+   "label": "(6) The activity Thing reads data-liveness=live with the producer's owner state and revision",
+   "data": {
+    "liveness": "live \u2014 owner state seeded at revision 6",
+    "state": "seeded"
+   }
+  },
+  {
+   "ok": true,
+   "label": "(6) Negative: with the producer's liveness rows removed from the real snapshot the same Thing reads `disconnected` \u2014 the renderer does not synthesise liveness from the publication",
+   "data": {
+    "rows_removed": 1,
+    "liveness": "disconnected \u2014 published as live, but no producer holds it now"
+   }
+  },
+  {
+   "ok": true,
+   "label": "(6) Restoring the real reading returns the activity to live"
+  },
+  {
+   "ok": true,
+   "label": "(7) The private undertaking opens as a field page within the owner's own membership",
+   "data": {
+    "visibility": "private",
+    "membership": "contributor"
+   }
+  },
+  {
+   "ok": true,
+   "label": "(7) The field page shows Shared NOW revision 1",
+   "data": {
+    "revision": "1"
+   }
+  },
+  {
+   "ok": true,
+   "label": "(7) workcell:mac carries its projected root NOW",
+   "data": {
+    "root_now": "central:now:control:root:06cca2f04e1a408f451f36263de0d3c1dda2aa8547a27d3ed163c222bc711dea",
+    "world_ref": "control:root"
+   }
+  },
+  {
+   "ok": true,
+   "label": "(7) The child NOW sits under that root",
+   "data": {
+    "child_now": "central:now:project:O-I:e4b628b8de5b5dae4bc28ff4a28dbc4d0a462ebc28c08a318d7ca4530845dcf8",
+    "state": "active"
+   }
+  },
+  {
+   "ok": true,
+   "label": "(7) The undertaking carries the curated A04/A04\u2032/A05/A05\u2032 artifacts and both contemplation nodes",
+   "data": {
+    "artifacts": [
+     "A04 \u2014 Diaphaneity / Contextual Transparency",
+     "A04\u2032 \u2014 The Mask as Document",
+     "A05 \u2014 Prak\u0101\u015ba\u2013Vimar\u015ba",
+     "A05\u2032 \u2014 Lights, Camera, Action"
+    ],
+    "contemplations": [
+     "A04\u2032 re-sites A04 \u2014 how The Mask as Document stands to Diaphaneity (2026-09-28)",
+     "A05\u2032 re-sites A05 \u2014 how Lights, Camera, Action stands to Prak\u0101\u015ba\u2013Vimar\u015ba (2026-09-28)"
+    ]
+   }
+  },
+  {
+   "ok": true,
+   "label": "(7) The typed relation wiki.edge/re-sites is listed among the field's relations",
+   "data": {}
+  },
+  {
+   "ok": true,
+   "label": "(8) Back/forward also restores the field page",
+   "data": {
+    "selected": "oi:field:central:project:O-I:undertaking:a04-mask"
+   }
+  },
+  {
+   "ok": true,
+   "label": "(9) At 420\u00d7800 with reduced motion the page body does not overflow horizontally",
+   "data": {
+    "reduced": true,
+    "inner": 420,
+    "doc": 420,
+    "body": 420
+   }
+  },
+  {
+   "ok": true,
+   "label": "(9) The Being's title and Carried by group stay within the narrow viewport",
+   "data": {
+    "heading": {
+     "x": 49,
+     "y": 268,
+     "width": 306,
+     "height": 60.8125
+    },
+    "carried_by": {
+     "x": 49,
+     "y": 587.8125,
+     "width": 322,
+     "height": 60.1875
+    }
+   }
+  },
+  {
+   "ok": true,
+   "label": "The walk issued no Shared Field write (no publish, contribute, admit, watch, enter or stage act)",
+   "data": {
+    "writes": []
+   }
+  }
+ ],
+ "ops": [
+  {
+   "op": "info",
+   "redacted": true
+  },
+  {
+   "op": "invoke.shared_field",
+   "redacted": true
+  },
+  {
+   "op": "invoke.shared_field",
+   "redacted": true
+  },
+  {
+   "op": "capture.screenshot",
+   "redacted": true
+  },
+  {
+   "op": "capture.screenshot",
+   "redacted": true
+  },
+  {
+   "op": "capture.screenshot",
+   "redacted": true
+  },
+  {
+   "op": "capture.screenshot",
+   "redacted": true
+  },
+  {
+   "op": "capture.screenshot",
+   "redacted": true
+  },
+  {
+   "op": "capture.screenshot",
+   "redacted": true
+  },
+  {
+   "op": "capture.screenshot",
+   "redacted": true
+  },
+  {
+   "op": "capture.screenshot",
+   "redacted": true
+  },
+  {
+   "op": "capture.screenshot",
+   "redacted": true
+  },
+  {
+   "op": "read.events",
+   "redacted": true
+  }
+ ],
+ "metrics": {
+  "explore_open_ms": 1398,
+  "being_open_ms": 1318,
+  "kernel_events_total": 2
+ },
+ "screenshots": [
+  "web65-explore-world-field.png",
+  "web65-explore-world-being-relations.png",
+  "web65-explore-world-being.png",
+  "web65-explore-world-workcell.png",
+  "web65-explore-world-practice.png",
+  "web65-explore-world-activity-live.png",
+  "web65-explore-world-activity-disconnected.png",
+  "web65-explore-world-undertaking-field-now.png",
+  "web65-explore-world-being-narrow-reduced-motion.png"
+ ],
+ "ops_redaction": "Op payloads (full hosted snapshots, including team-visible argument text) are withheld from this public repository; the full receipt is kept in the undertaking NOW T destination."
+}

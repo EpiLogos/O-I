@@ -107,6 +107,12 @@ SpaceTimeDB documents one-shot schedule tables for timed execution, but the exac
 
 See `docs/ENCOUNTER-SECURITY.md` for the six primitives and `docs/ENCOUNTER-SECURITY-IMPLEMENTATION.md` for the ES0 threat/responsibility matrix, primary-source lock and residual-risk ledger.
 
+## Collective temporal projection (FieldNow / FieldDay)
+
+`field-now.mjs` defines `oi.field-now/v1` (projected Workcell root NOW refs, child NOW refs, presence/activity/contribution cursors, audience, provenance, revision) and `oi.field-day/v1` (a field-owned aggregation interval and policy provenance, projected source Day refs, NOW refs, cursors). Both carry refs and native revisions only; the validators refuse paths, session refs, gateway addresses, tokens and undeclared keys, and `advanceFieldNow`/`advanceFieldDay` are compare-and-swap (`expected_revision` → revision + 1). SharedField projects selected local NOW/DAY relations without acquiring their identity: Central keeps the NOW; the hosted row is a projection of it.
+
+The module keeps one current `field_now_backing` row per field and one `field_day_backing` row per field interval, each with immutable revision history, served through the caller-filtered `field_now`/`field_day` Views (field visibility ∩ contract audience). `put_field_now`/`put_field_day` enforce: the owner (`actorParticipantRef = ''`) may change anything; a `contributor` may add, change or withdraw only child NOW / FieldDay entries attributed to itself (`projected_by`) and advance cursors; root NOW refs and the envelope are owner-only, because the Participant contract declares no Workcell a contributor could be bound to. Revoking a Participant withdraws its entries in a server-authored next revision. `field.sh` exposes `field-now`, `field-now-put`, `field-day`, `field-day-put` (and `grant-read`/`revoke-read` for private-field read admission); `snapshot` includes `field_now`/`field_day`. Live proof: `spacetimedb/field-now-live-acceptance.ts` (non-production targets only).
+
 ## Local SharedField state
 
 `state.mjs` turns the contracts into a small transport-free business-logic layer. It is deliberately an index/state view rather than canonical persistence.

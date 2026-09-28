@@ -1,0 +1,159 @@
+[
+  {
+    "id": "C0-P01",
+    "kind": "inventory-reading",
+    "owner": "EpiLogos/O-I",
+    "obligations": [
+      "web65:WORLD",
+      "web65:EXPLORE",
+      "web65:MATRIX"
+    ],
+    "needed_operation": "Give O:I's host capability inventory (suite/capability-matrix.json, epilogos-recovery/capability-matrix/v1, 166 records incl. cap.o-i.shared-field-front-door, cap.suite.shared-field-grammar, cap.suite.shared-field-projection-contract, cap.o-i.search-aperture, cap.o-i.session-observatory) a ql-capability-matrix/1 records carrier, or teach scripts/experience_map.py a source-specific reader for it.",
+    "intended_outcome": "O:I-owned branches (Being/Thing presentation, desktop Explore rail, SharedField projection) can be bound to O:I's own capability IDs with an exact digest instead of being unbindable.",
+    "evidence": "experience_map.py --matrix EpiLogos/O-I=suite/capability-matrix.json -> 'not a native capability CSV'"
+  },
+  {
+    "id": "C0-P02",
+    "kind": "implementation",
+    "owner": "EpiLogos/O-I",
+    "obligations": [
+      "web65:WORLD"
+    ],
+    "branch": 1,
+    "needed_operation": "Project a selected region (Workcell offer, Agent+practice, knowledge constellation, authored HTML, activity) into the SharedField as independently addressable constituents with outward revision; another authorised World resolves each constituent back to its native source identity.",
+    "intended_outcome": "Each constituent has a projected identity + outward revision tied to its native owner ref; no native row in Central/ai-kit/Workcell/Actuation publishes outward.",
+    "native_inputs_bound": [
+      "cap.workcell.discovery",
+      "cap.actuation.world-binding",
+      "cap.aikit.methods",
+      "cap.central.world-map",
+      "cap.central.source-reading",
+      "cap.aikit.knowledge-navigation",
+      "cap.actuation.activity"
+    ]
+  },
+  {
+    "id": "C0-P03",
+    "kind": "implementation",
+    "owner": "EpiLogos/Workcell",
+    "obligations": [
+      "web65:WORLD"
+    ],
+    "branch": 1,
+    "needed_operation": "An outward Workcell description/offer operation (shareable, audience-filtered subset of discover/providers output) distinct from local discovery; today discover/providers are local reads and placement is source-inspected only.",
+    "intended_outcome": "A Workcell offer can be published into a shared World without exposing private provider configuration."
+  },
+  {
+    "id": "C0-P04",
+    "kind": "implementation",
+    "owner": "EpiLogos/O-I",
+    "obligations": [
+      "web65:WORLD"
+    ],
+    "branch": 2,
+    "needed_operation": "Being/Thing presentation over typed constituent relations, keeping presentation separate from native subject; distinguish publication from offered/granted operation.",
+    "intended_outcome": "Presentation never stands for the subject; a published Skill/Workcell is visibly not a granted operation.",
+    "note": "Grant of offered operation has no native row; Actuation cap.actuation.metagency (authority to act on agency) is the nearest candidate, not bound."
+  },
+  {
+    "id": "C0-P05",
+    "kind": "implementation",
+    "owner": "EpiLogos/O-I",
+    "co_owner": "EpiLogos/ai-kit",
+    "obligations": [
+      "web65:WORLD"
+    ],
+    "branch": 3,
+    "needed_operation": "Audience filter applied to assets, embedded data, relation expansion (bounded neighbourhood), metadata and counts, not only source content eligibility.",
+    "intended_outcome": "Partial composition shares its useful field; adjacent private config, neighbour counts and embedded data do not leak. cap.aikit.source-horizon / cap.central.source-reading cover content eligibility only; cap.aikit.knowledge-navigation expansion has no audience filter."
+  },
+  {
+    "id": "C0-P06",
+    "kind": "implementation",
+    "owner": "EpiLogos/O-I",
+    "obligations": [
+      "web65:EXPLORE"
+    ],
+    "branch": 1,
+    "needed_operation": "Desktop Explore rail/button + keyboard entry wiring search, bounded graph, Being/Thing, native source, knowledge/activity Expression, back/forward and Workspace restoration to the bound native operations with owner readback per visible operation.",
+    "intended_outcome": "No no-op or metadata-only surface; each visible operation has a native owner effect."
+  },
+  {
+    "id": "C0-P07",
+    "kind": "implementation",
+    "owner": "EpiLogos/ai-kit",
+    "co_owner": "EpiLogos/O-I",
+    "obligations": [
+      "web65:EXPLORE",
+      "web65:RESOLVE"
+    ],
+    "branch": "EXPLORE:2, RESOLVE:1",
+    "needed_operation": "World/SharedField qualifier carried in ResourceRef/resolution rows and preserved through traversal, so same-label subjects from different Worlds stay distinguishable; resolve Projection/presentation occurrences, not only native sources.",
+    "intended_outcome": "cap.aikit.resource-index owner+revision identity extended with World scope; wrong-world/same-label cases resolve correctly."
+  },
+  {
+    "id": "C0-P08",
+    "kind": "implementation",
+    "owner": "EpiLogos/O-I",
+    "obligations": [
+      "web65:EXPLORE"
+    ],
+    "branch": "2,3",
+    "needed_operation": "Show live/static/replay availability; narrow and reduced-motion operability; real node/entity selection, renderer lifecycle, interactive assets in the Explore surface.",
+    "intended_outcome": "Presentation-layer branches owned by the O:I desktop; Actuation stream replay supplies the underlying availability."
+  },
+  {
+    "id": "C0-P09",
+    "kind": "matrix-account",
+    "owner": "EpiLogos/ai-kit",
+    "obligations": [
+      "web65:RESOLVE"
+    ],
+    "branch": 2,
+    "needed_operation": "Add/reconcile a capability row for the operative Resolve syntax (aikit.operative-resolve/v1 in crates/aikit-core/src/resource/operative.rs: AddressHorizon H0-H5, relation operators, parse_or_search_expression). It currently appears only as a code_ref of cap.aikit.methods.",
+    "intended_outcome": "The six-horizon/relation-operator branch can bind an actual capability ID; code exists, the matrix account does not. Not bound to cap.aikit.methods (its need/outcome is repertoire classification)."
+  },
+  {
+    "id": "C0-P10",
+    "kind": "implementation",
+    "owner": "EpiLogos/QL-MEF",
+    "obligations": [
+      "web65:RESOLVE"
+    ],
+    "branch": 2,
+    "needed_operation": "Full QL binding of the operative syntax (QL-MEF#83) via ql service readings; cap.ql.service-readings/negotiation are contracts only, provider/runtime not exercised.",
+    "intended_outcome": "Separately provable QL resolution when selected; general O:I path bound via cap.ql.client-modes."
+  },
+  {
+    "id": "C0-P11",
+    "kind": "implementation",
+    "owner": "EpiLogos/ai-kit",
+    "co_owner": "EpiLogos/O-I",
+    "obligations": [
+      "web65:RESOLVE"
+    ],
+    "branch": 3,
+    "needed_operation": "Private-neighbour and revoked-cache cases in resolution: withdrawn shared subjects invalidate cached resolution rows and declare incomplete coverage while preserving eligible scope.",
+    "intended_outcome": "Stale-index (bound: living-knowledge, source-change, knowledge-navigation) extends to shared-world revocation, which no native row covers."
+  },
+  {
+    "id": "C0-P12",
+    "kind": "source-defect",
+    "owner": "EpiLogos/O-I",
+    "obligations": [
+      "web65:MATRIX"
+    ],
+    "needed_operation": "campaign.json native_capability_sources: ai-kit path ProjectCentral/user/capability-matrix.csv does not exist at ai-kit origin/main 1a426e42 (actual ProjectCentral/user/telos/capability-matrix.csv). O:I path docs/CAPABILITY-MATRIX.md is a rendering; machine companion is suite/capability-matrix.json. suite/product-capabilities.csv collation is stale for Central (5206de5c.. vs actual 3ae46e71..) and ai-kit (old path, 0846e946..).",
+    "intended_outcome": "Declared inventory sources match actual native carriers; O:I collation re-run."
+  },
+  {
+    "id": "C0-P13",
+    "kind": "tool-defect",
+    "owner": "EpiLogos/O-I",
+    "obligations": [
+      "web65:MATRIX"
+    ],
+    "needed_operation": "scripts/experience_map.py: (a) bindings carry no validated obligation/branch relation (extensions.web65.obligation_id='web65:NOPE' accepted); obligation records get no capability view; (b) --matrix OWNER is not checked against the CSV's owner (suite/product-capabilities.csv accepted as EpiLogos/O-I, attributing 138 other-product capabilities to O:I); (c) only CSV readers: QL's non-CSV registered matrices (aw0-field, readiness, ta-onta agent world, m-capability-field + m0-m5, M1-M4 deep coordinate v2) and O:I host JSON cannot be read; relation-only QL CSVs are refused.",
+    "intended_outcome": "Obligation->branch->capability trace validated in-tool per SHARED-FIELD-DESKTOP 18.1."
+  }
+]

@@ -51,25 +51,72 @@ impl CallError {
     }
 }
 
-/// The client executable: `OI_SHARED_FIELD_CLIENT`, else the repository's
-/// own doorway `<repo>/shared-field/spacetimedb/field.sh` where the
-/// repository root is `OI_REPO_ROOT` or this crate's manifest directory
-/// climbed three levels (`desktop/cradle/kernel` → the O:I repository).
+/// Where an installed desktop carries its bundled SharedField client (the
+/// app resource `shared-field/`, built by
+/// `shared-field/spacetimedb/build-client.mjs`). The native shell names it
+/// once at startup; the kernel never guesses an application layout.
+static BUNDLED_CLIENT_HOME: std::sync::OnceLock<PathBuf> = std::sync::OnceLock::new();
+
+/// Record the bundled client directory the native shell found. Only a
+/// directory carrying the launcher is accepted; the first binding wins.
+pub fn bind_bundled_client_home(home: PathBuf) -> bool {
+    home.join(BUNDLED_LAUNCHER).is_file() && BUNDLED_CLIENT_HOME.set(home).is_ok()
+}
+
+const BUNDLED_LAUNCHER: &str = "field-client.sh";
+
+/// The client executable, in order: `OI_SHARED_FIELD_CLIENT`; the bundled
+/// client an installed desktop carries; and, for a development build only,
+/// the repository's own doorway `<repo>/shared-field/spacetimedb/field.sh`
+/// (`OI_REPO_ROOT`, else this crate's manifest directory climbed to the
+/// O:I repository). A release build never reaches into the checkout it was
+/// compiled from.
 pub fn client_executable() -> PathBuf {
-    if let Some(explicit) = std::env::var_os("OI_SHARED_FIELD_CLIENT") {
+    resolve_client(
+        std::env::var_os("OI_SHARED_FIELD_CLIENT"),
+        BUNDLED_CLIENT_HOME.get().map(PathBuf::as_path),
+        development_repository(),
+    )
+}
+
+fn resolve_client(
+    explicit: Option<OsString>,
+    bundled: Option<&std::path::Path>,
+    development: Option<PathBuf>,
+) -> PathBuf {
+    if let Some(explicit) = explicit {
         return PathBuf::from(explicit);
     }
-    let repo = std::env::var_os("OI_REPO_ROOT")
-        .map(PathBuf::from)
-        .unwrap_or_else(|| {
+    if let Some(home) = bundled {
+        return home.join(BUNDLED_LAUNCHER);
+    }
+    match development {
+        Some(repo) => repo
+            .join("shared-field")
+            .join("spacetimedb")
+            .join("field.sh"),
+        None => PathBuf::from(NO_CLIENT),
+    }
+}
+
+/// Launching this path fails with the reason in the Unavailable detail.
+const NO_CLIENT: &str =
+    "<no SharedField client: this installed desktop carries no bundled shared-field/ resource>";
+
+/// The source checkout a development build may fall back to.
+fn development_repository() -> Option<PathBuf> {
+    if let Some(repo) = std::env::var_os("OI_REPO_ROOT") {
+        return Some(PathBuf::from(repo));
+    }
+    if cfg!(debug_assertions) {
+        return Some(
             PathBuf::from(env!("CARGO_MANIFEST_DIR"))
                 .join("..")
                 .join("..")
-                .join("..")
-        });
-    repo.join("shared-field")
-        .join("spacetimedb")
-        .join("field.sh")
+                .join(".."),
+        );
+    }
+    None
 }
 
 /// Send one request to the SharedField client and return the owner `data`.
@@ -170,23 +217,35 @@ pub fn reading(request: &Value) -> Result<Value, String> {
 }
 
 /// The owner A2A runner beside the floor (`shared-field/a2a-runner.mjs`):
-/// the same repository-relative doorway discipline as `client_executable` —
-/// `OI_A2A_RUNNER` overrides, else `OI_REPO_ROOT`, else this crate's
-/// manifest directory climbed to the O:I repository root.
-fn a2a_runner_path() -> PathBuf {
-    if let Some(explicit) = std::env::var_os("OI_A2A_RUNNER") {
-        return PathBuf::from(explicit);
-    }
-    let repo = std::env::var_os("OI_REPO_ROOT")
-        .map(PathBuf::from)
-        .unwrap_or_else(|| {
-            PathBuf::from(env!("CARGO_MANIFEST_DIR"))
-                .join("..")
-                .join("..")
-                .join("..")
-        });
-    repo.join("shared-field").join("a2a-runner.mjs")
+/// `OI_A2A_RUNNER` overrides; an installed desktop runs the bundled
+/// `a2a-runner.mjs` beside its SharedField client; a development build
+/// falls back to the repository's own file. A release build with neither a
+/// bundle nor `OI_REPO_ROOT` has no runner — never a path relative to
+/// wherever the application happened to be launched.
+fn a2a_runner_path() -> Option<PathBuf> {
+    resolve_a2a_runner(
+        std::env::var_os("OI_A2A_RUNNER"),
+        BUNDLED_CLIENT_HOME.get().map(PathBuf::as_path),
+        development_repository(),
+    )
 }
+
+fn resolve_a2a_runner(
+    explicit: Option<OsString>,
+    bundled: Option<&std::path::Path>,
+    development: Option<PathBuf>,
+) -> Option<PathBuf> {
+    if let Some(explicit) = explicit {
+        return Some(PathBuf::from(explicit));
+    }
+    if let Some(home) = bundled {
+        return Some(home.join("a2a-runner.mjs"));
+    }
+    development.map(|repo| repo.join("shared-field").join("a2a-runner.mjs"))
+}
+
+/// Why an exchange cannot run when no runner resolves.
+const NO_A2A_RUNNER: &str = "the A2A owner floor is unavailable: this installed desktop carries no bundled shared-field/ resource and names no OI_A2A_RUNNER";
 
 /// One A2A HTTP+JSON v1 exchange through the owner floor. The request
 /// (binding, presence, initiator, message) travels verbatim; the kernel
@@ -198,7 +257,7 @@ pub fn a2a_exchange(request: &Value) -> Result<Value, String> {
     use std::io::Write;
     use std::process::{Command, Stdio};
 
-    let runner = a2a_runner_path();
+    let runner = a2a_runner_path().ok_or_else(|| NO_A2A_RUNNER.to_string())?;
     if !runner.is_file() {
         return Err(format!(
             "the A2A owner floor is not present at {} — the desktop bundle carries the renderer contracts only; run against the repository checkout or set OI_A2A_RUNNER",
@@ -226,8 +285,27 @@ pub fn a2a_exchange(request: &Value) -> Result<Value, String> {
         "basis": "operator send — the desktop's own exchange-authority decision",
     });
 
-    let mut child = Command::new(&node)
-        .arg(&runner)
+    // The bundled runner shares the launcher's node resolution: an installed
+    // application's PATH rarely names a node runtime.
+    let bundled_launcher = BUNDLED_CLIENT_HOME
+        .get()
+        .filter(|home| {
+            std::env::var_os("OI_NODE").is_none() && runner == home.join("a2a-runner.mjs")
+        })
+        .map(|home| home.join(BUNDLED_LAUNCHER));
+    let mut command = match &bundled_launcher {
+        Some(launcher) => {
+            let mut command = Command::new(launcher);
+            command.env("OI_SHARED_FIELD_ENTRY", "a2a-runner.mjs");
+            command
+        }
+        None => {
+            let mut command = Command::new(&node);
+            command.arg(&runner);
+            command
+        }
+    };
+    let mut child = command
         .stdin(Stdio::piped())
         .stdout(Stdio::piped())
         .stderr(Stdio::piped())
@@ -351,6 +429,69 @@ mod a2a_tests {
 
 #[cfg(test)]
 mod tests {
+    #[test]
+    fn an_installed_client_wins_over_the_checkout_and_a_release_has_no_checkout() {
+        let home = std::path::Path::new("/Applications/O-I.app/Contents/Resources/shared-field");
+        let repo = PathBuf::from("/src/o-i");
+        assert_eq!(
+            resolve_client(None, Some(home), Some(repo.clone())),
+            home.join("field-client.sh")
+        );
+        assert_eq!(
+            resolve_client(Some("/x/field".into()), Some(home), Some(repo.clone())),
+            PathBuf::from("/x/field")
+        );
+        assert_eq!(
+            resolve_client(None, None, Some(repo)),
+            PathBuf::from("/src/o-i/shared-field/spacetimedb/field.sh")
+        );
+        assert_eq!(resolve_client(None, None, None), PathBuf::from(NO_CLIENT));
+    }
+
+    #[test]
+    fn a_release_without_bundle_or_repository_has_no_a2a_runner_never_a_relative_one() {
+        let home = std::path::Path::new("/Applications/O-I.app/Contents/Resources/shared-field");
+        let repo = PathBuf::from("/src/o-i");
+        assert_eq!(resolve_a2a_runner(None, None, None), None);
+        assert_eq!(
+            resolve_a2a_runner(None, None, Some(repo.clone())),
+            Some(PathBuf::from("/src/o-i/shared-field/a2a-runner.mjs"))
+        );
+        assert_eq!(
+            resolve_a2a_runner(None, Some(home), Some(repo.clone())),
+            Some(home.join("a2a-runner.mjs"))
+        );
+        assert_eq!(
+            resolve_a2a_runner(Some("/x/runner.mjs".into()), Some(home), Some(repo)),
+            Some(PathBuf::from("/x/runner.mjs"))
+        );
+        assert!(NO_A2A_RUNNER.contains("unavailable"));
+    }
+
+    #[test]
+    fn a_resource_directory_without_the_launcher_is_not_bound() {
+        let empty = std::env::temp_dir().join(format!("oi-sf-empty-{}", std::process::id()));
+        std::fs::create_dir_all(&empty).unwrap();
+        assert!(!bind_bundled_client_home(empty.clone()));
+        let _ = std::fs::remove_dir_all(empty);
+    }
+
+    #[test]
+    fn a_missing_client_is_unavailable_with_its_reason() {
+        let error = call_with_executable(
+            &serde_json::json!({"kind":"status"}),
+            &OsString::from(NO_CLIENT),
+        )
+        .unwrap_err();
+        match error {
+            CallError::Unavailable { detail } => assert!(
+                detail.contains("carries no bundled shared-field/"),
+                "{detail}"
+            ),
+            other => panic!("expected Unavailable, got {other:?}"),
+        }
+    }
+
     use super::*;
     use std::os::unix::process::ExitStatusExt;
     use std::process::{ExitStatus, Output};

@@ -1,0 +1,57 @@
+{
+ "schema": "oi.central-wiki-selection/v1",
+ "project": "O-I",
+ "world_ref": "world:central:project:O-I:region:a04-mask",
+ "subject_world_ref": "project:O-I",
+ "publisher": {
+  "participant_ref": "participant:central:owner:a04-mask",
+  "identity_ref": "human:central:owner"
+ },
+ "disclose_source_refs": true,
+ "field_ref": "oi:field:central:project:O-I:undertaking:a04-mask",
+ "projection_ref": "projection:central:project:O-I:region:a04-mask",
+ "presentation_ref": "presentation:central:project:O-I:region:a04-mask",
+ "title": "Undertaking \u2014 A04 Diaphaneity and A04\u2032 The Mask as Document",
+ "audience": {
+  "visibility": "private",
+  "refs": [
+   "participant:central:owner:a04-mask",
+   "participant:world-b:omarchy:a04-mask"
+  ]
+ },
+ "spaces": {
+  "central:wiki:root": "address",
+  "central:wiki:project:O-I": "nodes",
+  "wiki:space:room/section-rooms/arguments": "nodes"
+ },
+ "node_refs": [
+  "wiki:node:contemplation/a04p-re-sites-a04-2026-09-28",
+  "wiki:node:contemplation/a05p-re-sites-a05-2026-09-28",
+  "wiki:node:record/A04",
+  "wiki:node:record/A04p",
+  "wiki:node:record/A05",
+  "wiki:node:record/A05p"
+ ],
+ "positions": {
+  "central:position:project:O-I:aletheia-5": "occupancy"
+ },
+ "workcells": {
+  "workcell:mac": {
+   "mode": "address",
+   "label": "Workcell mac"
+  }
+ },
+ "practices": {
+  "central:position:project:O-I:aletheia-5": {
+   "agent_ref": "agent/aletheia",
+   "refs": [
+    "skill/ql/darshana"
+   ]
+  }
+ },
+ "offers": {
+  "central:position:project:O-I:aletheia-5": [
+   "skill/ql/darshana"
+  ]
+ }
+}
