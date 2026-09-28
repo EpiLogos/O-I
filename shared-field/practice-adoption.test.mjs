@@ -226,3 +226,133 @@ test('a publication bundle entry is adoptable the same way as a hosted reading',
   assert.equal(offered.projection_revision, 3);
   assert.throws(() => offeredPractice(bundle, 'skill/ql/absent'), /carries no entry/);
 });
+
+// ── The capsule path: the reader's AIKit has `source add-capsule` (AIKit ≥ #455) ──
+const SCRIPT = 'print("gaze")\n';
+const MANIFEST = 'schema = 1\nid = "skill/ql/darshana"\nkind = "skill"\nname = "darshana"\n\n[skill]\nroot = "payload"\n';
+function capsuleOf(body = BODY, revision = REVISION) {
+  const row = (path, mode, text) => ({ path, mode, bytes: Buffer.byteLength(text), sha256: `sha256:${createHash('sha256').update(text).digest('hex')}`, text });
+  return {
+    schema: 'aikit.practice-capsule/v1', id: 'skill/ql/darshana', name: 'darshana', form: 'skill', revision, revision_basis: 'aikit-capsule-revision-v2',
+    exported_from: { source_id: 'ql', snapshot: 'e'.repeat(64) },
+    files: [row('manifest.toml', 0o644, MANIFEST), row('payload/SKILL.md', 0o644, body), row('payload/scripts/darshana.py', 0o755, SCRIPT)],
+  };
+}
+const capsuleReading = ({ body = BODY, revision = REVISION, projectionRevision = 3 } = {}) => hostedReading({ body, revision, projectionRevision, offer: { ...offerOf(body), payload_files_not_carried: [], capsule: capsuleOf(body, revision) } });
+
+/** A stub of AIKit #455's capsule sources beside the directory stub above. */
+function capsuleWorld({ supports = true, activeElsewhere = false } = {}) {
+  const fs = memoryFs();
+  const base = stubAikit(fs);
+  const capsules = new Map();
+  if (activeElsewhere) capsules.set('ql', { capsule_id: 'skill/ql/darshana', revision: 'older', active: 'snap-ql' });
+  const run = (words) => {
+    const [head, verb, id] = words;
+    if (head === 'source' && verb === 'add-capsule') {
+      base.calls.push(words.join(' '));
+      const archive = JSON.parse(fs.read(id));
+      const option = (flag) => words[words.indexOf(flag) + 1];
+      const provenance = JSON.parse(fs.read(option('--provenance').slice(1)));
+      if (provenance.practice_id !== archive.id || provenance.revision !== archive.revision) return { refused: { code: 'source.provenance_mismatch', message: 'x' } };
+      const sourceId = `capsule-${archive.id.replace(/[^a-z0-9]+/gi, '-').toLowerCase()}-${archive.revision.slice(0, 12)}`;
+      const upstream = { world_ref: option('--world-ref'), entry_ref: option('--upstream-ref'), practice_id: archive.id, revision: archive.revision, archive_sha256: `sha256:${createHash('sha256').update(fs.read(id)).digest('hex')}` };
+      const already = capsules.has(sourceId);
+      if (!already) capsules.set(sourceId, { capsule_id: archive.id, revision: archive.revision, archive: fs.read(id) });
+      return { data: { id: sourceId, kind: 'capsule', capsule: { id: archive.id, revision: archive.revision }, upstream, already_registered: already, next: 'sync and promote' } };
+    }
+    if (head === 'source' && capsules.has(id)) {
+      base.calls.push(words.join(' '));
+      const source = capsules.get(id);
+      if (verb === 'show') return { data: { id, kind: 'capsule', active_snapshot: source.active ?? null } };
+      if (verb === 'sync') { source.candidate = createHash('sha256').update(source.archive).digest('hex'); return { data: { id, candidate_snapshot: source.candidate, skills: 1 } }; }
+      if (verb === 'promote') {
+        const other = [...capsules.entries()].find(([otherId, held]) => otherId !== id && held.active && held.capsule_id === source.capsule_id);
+        if (other) return { refused: { code: 'source.capsule_identity_active', message: `\`${source.capsule_id}\` is already active through source \`${other[0]}\``, details: { capability: source.capsule_id, active_source: other[0] } } };
+        source.active = source.candidate;
+        return { data: { id, active_snapshot: source.active, skills: 1 } };
+      }
+    }
+    if (head === 'explain') {
+      const active = [...capsules.values()].find((held) => held.active && held.capsule_id === verb);
+      if (active) { base.calls.push(words.join(' ')); return { data: { id: verb, revision: active.revision } }; }
+    }
+    return base.run(words);
+  };
+  const aikit = { ...base, run, capsules };
+  const adopt = (input, options = {}) => adoptPractice(input, { root: ROOT, adopter_participant_ref: ADOPTER, adopted_at: '2026-09-28T12:00:00.000Z', ...options }, { fs, aikit: aikit.run, supports: (words) => supports && words.join(' ') === 'source add-capsule' });
+  return { fs, aikit, adopt };
+}
+
+const CAPSULE_DIR = `${ROOT}/capsules/darshana@f3d55f2f9ec7`;
+const CAPSULE_SOURCE = 'capsule-skill-ql-darshana-f3d55f2f9ec7';
+
+test('capsule path: chosen when AIKit supports add-capsule; files, modes and the payload script travel under the original id', () => {
+  const { adopt, fs, aikit } = capsuleWorld();
+  const result = adopt(capsuleReading());
+  assert.equal(result.path, 'capsule');
+  assert.equal(result.state, 'adopted');
+  assert.equal(result.adopted_dir, CAPSULE_DIR);
+  const archive = JSON.parse(fs.read(`${CAPSULE_DIR}/capsule.json`));
+  assert.deepEqual(archive, capsuleOf(), 'the archive is the offered capsule verbatim');
+  assert.deepEqual(archive.files.find((file) => file.path === 'payload/scripts/darshana.py'), { path: 'payload/scripts/darshana.py', mode: 0o755, bytes: SCRIPT.length, sha256: `sha256:${createHash('sha256').update(SCRIPT).digest('hex')}`, text: SCRIPT });
+  assert.equal(fs.read(`${CAPSULE_DIR}/ADOPTED.json`), undefined, 'provenance lives in AIKit\'s registration, not beside or inside the capsule as ADOPTED.json');
+  assert.deepEqual(JSON.parse(fs.read(`${CAPSULE_DIR}/provenance.json`)), { world_ref: WORLD, entry_ref: PRACTICE, practice_id: 'skill/ql/darshana', revision: REVISION });
+  assert.deepEqual(aikit.calls, [
+    `source add-capsule ${CAPSULE_DIR}/capsule.json --world-ref ${WORLD} --upstream-ref ${PRACTICE} --provenance @${CAPSULE_DIR}/provenance.json`,
+    `source show ${CAPSULE_SOURCE}`,
+    `source sync ${CAPSULE_SOURCE}`,
+    `source promote ${CAPSULE_SOURCE}`,
+    'explain skill/ql/darshana',
+  ]);
+  assert.equal(result.aikit.capability_ref, 'skill/ql/darshana', 'the original id is retained');
+  assert.equal(result.aikit.adopted_revision, REVISION, 'and its original revision');
+  assert.deepEqual(result.aikit.upstream, { world_ref: WORLD, entry_ref: PRACTICE, practice_id: 'skill/ql/darshana', revision: REVISION, archive_sha256: `sha256:${createHash('sha256').update(fs.read(`${CAPSULE_DIR}/capsule.json`)).digest('hex')}` });
+  assert.equal(result.adopted.adopted_from.files, 3);
+  assert.deepEqual(result.adopted.local_differences, []);
+  // Adapting: an overlay over the original id, recorded in the result.
+  const adapted = adopt(capsuleReading(), { adaptation: 'Scout docs/ only.' });
+  assert.equal(adapted.adopted.local_differences[0].capability_ref, 'skill/ql/darshana');
+  assert.deepEqual(aikit.overlays.get('skill/ql/darshana'), [{ scope: 'global', guidance: 'Scout docs/ only.', reviewed_against: REVISION }]);
+  // Idempotent.
+  const again = adopt(capsuleReading(), { adaptation: 'Scout docs/ only.' });
+  assert.equal(again.state, 'already-adopted');
+  assert.deepEqual(again.wrote, []);
+});
+
+test('capsule path: an id already active through another source is refused as identity-already-active, never overwritten', () => {
+  const { adopt, aikit } = capsuleWorld({ activeElsewhere: true });
+  const result = adopt(capsuleReading());
+  assert.equal(result.path, 'capsule');
+  assert.equal(result.state, 'identity-already-active');
+  assert.equal(result.active_source, 'ql');
+  assert.equal(result.capability_ref, 'skill/ql/darshana');
+  assert.match(result.message, /already active in this AIKit home through source ql/);
+  assert.equal(aikit.capsules.get('ql').active, 'snap-ql', 'the active source is untouched');
+  assert.equal(aikit.capsules.get(CAPSULE_SOURCE).active, undefined, 'the adopted capsule is registered but not promoted');
+  assert.ok(!aikit.calls.includes('explain skill/ql/darshana'));
+});
+
+test('capsule path: a tampered capsule file in the offer is refused before anything is written', () => {
+  const { adopt, fs } = capsuleWorld();
+  const reading = capsuleReading();
+  reading.data.entry.meta.offer.capsule.files[2].text = 'import os\n';
+  assert.throws(() => adopt(reading), /does not match its declared length and sha256/);
+  assert.equal(fs.files.size, 0);
+  const mode = capsuleReading();
+  mode.data.entry.meta.offer.capsule.files[2].mode = 0o4755;
+  assert.throws(() => adopt(mode), /beyond rwx/);
+});
+
+test('fallback path: an older AIKit adopts the body only and names what it could not carry', () => {
+  const { adopt, fs, aikit } = capsuleWorld({ supports: false });
+  const result = adopt(capsuleReading());
+  assert.equal(result.path, 'body-only');
+  assert.match(result.fallback_reason, /no `source add-capsule`/);
+  assert.equal(fs.read(`${DIR}/SKILL.md`), BODY);
+  assert.deepEqual(JSON.parse(fs.read(`${DIR}/ADOPTED.json`)).payload_files_not_carried, ['payload/scripts/darshana.py']);
+  assert.ok(!aikit.calls.some((call) => call.includes('add-capsule')));
+  assert.equal(result.aikit.capability_ref, 'skill/adopted-darshana-f3d55f2f9ec7/darshana');
+  // An offer without a capsule takes the fallback even on a capable AIKit.
+  const capable = capsuleWorld();
+  assert.equal(capable.adopt(hostedReading()).path, 'body-only');
+});

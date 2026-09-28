@@ -19,11 +19,27 @@
  * revision stands beside the old one, and re-adopting the same revision is
  * idempotent.
  *
+ * Two paths, chosen by what the reader's AIKit can do:
+ *
+ *   capsule    the offer carries the whole capsule (`meta.offer.capsule`, an
+ *              `aikit.practice-capsule/v1` archive as data) and the reader's
+ *              AIKit has `system source add-capsule` (AIKit ≥ #455): the
+ *              archive is written beside a provenance file and registered with
+ *              `source add-capsule <archive> --world-ref --upstream-ref
+ *              --provenance @file` → sync → promote. The practice keeps its
+ *              ORIGINAL id and revision; provenance lives in AIKit's
+ *              registration, never inside the capsule. If another source in
+ *              this AIKit home already has that id active, promotion is
+ *              refused and the result is `identity-already-active`, naming it.
+ *   body-only  the declared fallback (an older AIKit, or an offer without a
+ *              capsule): the verbatim SKILL.md and ADOPTED.json in a
+ *              directory registered as `adopted-<slug>-<short-revision>`.
+ *
  * This module holds no I/O of its own: `adoptPractice` takes injected file and
  * AIKit effects; `scripts/adopt-practice.mjs` supplies the real ones.
  */
 import { join } from 'node:path';
-import { PRACTICE_BODY_MEDIA_TYPE, practiceBodyRefusals, sha256Digest } from './world-constituents.mjs';
+import { PRACTICE_BODY_MEDIA_TYPE, practiceBodyRefusals, sha256Digest, validateOfferedCapsule } from './world-constituents.mjs';
 
 export const ADOPTED_PRACTICE_SCHEMA = 'oi.adopted-practice/v1';
 export const PRACTICE_ADOPTION_RESULT_SCHEMA = 'oi.practice-adoption-result/v1';
@@ -87,6 +103,7 @@ export function offeredPractice(input, ref) {
   const refusals = practiceBodyRefusals(offer.text);
   if (refusals.length) throw new TypeError(`${entry.ref}: the offered body is not curated text data (${refusals.join(', ')})`);
   if (!projection) throw new TypeError(`${entry.ref}: the reading carries no Projection of ${entry.world_ref} to cite as the adoption's source`);
+  const capsule = offer.capsule === undefined ? null : validateOfferedCapsule(offer.capsule, { practice_ref: meta.source_ref, source_revision: meta.source_revision, text: offer.text });
   return {
     world_ref: text(entry.world_ref, 'entry.world_ref'),
     entry_ref: entry.ref,
@@ -98,6 +115,7 @@ export function offeredPractice(input, ref) {
     practice_kind: meta.practice_kind ?? null,
     label: entry.label,
     body: { text: offer.text, media_type: offer.media_type, body_digest: offer.body_digest, body_bytes: offer.body_bytes, payload_files_not_carried: [...(offer.payload_files_not_carried ?? [])] },
+    capsule,
   };
 }
 
@@ -188,13 +206,148 @@ function aikitStep(result, what) {
   return result.data;
 }
 
+/** Where the capsule path keeps its archive and provenance: outside any capsule. */
+export function capsuleAdoptionPlan(offered, options) {
+  record(options, 'adoption options');
+  text(options.root, 'root');
+  text(options.adopter_participant_ref, 'adopter_participant_ref');
+  const slug = slugOf(offered.source_ref);
+  const short = offered.source_revision.replace(/^[a-z0-9-]+:/, '').slice(0, SHORT_REVISION);
+  if (!/^[A-Za-z0-9]+$/.test(short)) throw new TypeError(`source revision ${offered.source_revision} cannot name a local directory`);
+  const dir = join(options.root, 'capsules', `${slug}@${short}`);
+  const capabilityRef = offered.source_ref;
+  const scope = options.scope ?? 'global';
+  const adaptation = options.adaptation === undefined || options.adaptation === null ? null : text(options.adaptation, 'adaptation');
+  return {
+    dir,
+    archive: join(dir, 'capsule.json'),
+    provenance: join(dir, 'provenance.json'),
+    capability_ref: capabilityRef,
+    scope,
+    difference: adaptation === null ? null : {
+      kind: 'aikit-skill-overlay',
+      overlay_ref: `aikit:skill-overlay:${scope}:${capabilityRef}`,
+      capability_ref: capabilityRef,
+      scope,
+      guidance: adaptation,
+      guidance_digest: sha256Digest(adaptation),
+      adapts: { source_ref: offered.source_ref, source_revision: offered.source_revision },
+      note: 'additive guidance applied through AIKit; the adopted capsule stays the verbatim offered archive',
+    },
+  };
+}
+
 /**
  * Adopt an offered practice. `effects`:
  *   fs.read(path) → string | undefined, fs.write(path, text), fs.mkdir(path)
- *   aikit(words) → {data} | {refused: {code, message}}   (words exclude `--json`)
+ *   aikit(words) → {data} | {refused: {code, message, details}}   (words exclude `--json`)
+ *   supports(words) → boolean   whether this AIKit answers `words --help`
+ *                               (absent: treated as an older AIKit)
  */
 export function adoptPractice(input, options, effects) {
   const offered = offeredPractice(input, options.ref);
+  const canAddCapsule = typeof effects.supports === 'function' && effects.supports(['source', 'add-capsule']);
+  if (offered.capsule && canAddCapsule) return adoptCapsule(offered, options, effects);
+  const fallback = offered.capsule
+    ? 'this AIKit has no `source add-capsule`; only SKILL.md is adopted, the other capsule files are not'
+    : 'the offer carries SKILL.md only (published by an AIKit without `praxis read`)';
+  // What the body-only path leaves behind is named, never silently dropped.
+  const notCarried = offered.capsule
+    ? offered.capsule.files.map((file) => file.path).filter((path) => path !== 'manifest.toml' && !path.endsWith('/SKILL.md')).sort()
+    : offered.body.payload_files_not_carried;
+  const bodyOnly = { ...offered, body: { ...offered.body, payload_files_not_carried: notCarried } };
+  return { ...adoptBody(bodyOnly, options, effects), path: 'body-only', fallback_reason: fallback };
+}
+
+function adoptCapsule(offered, options, effects) {
+  const plan = capsuleAdoptionPlan(offered, options);
+  const { fs, aikit } = effects;
+  const archiveText = `${JSON.stringify(offered.capsule, null, 2)}\n`;
+  const provenance = { world_ref: offered.world_ref, entry_ref: offered.entry_ref, practice_id: offered.source_ref, revision: offered.source_revision };
+  const provenanceText = `${JSON.stringify(provenance, null, 2)}\n`;
+  const heldArchive = fs.read(plan.archive);
+  const heldProvenance = fs.read(plan.provenance);
+  if (heldArchive !== undefined && heldArchive !== archiveText) throw new TypeError(`${plan.archive} holds a different archive; the adopted original is never overwritten`);
+  if (heldProvenance !== undefined && heldProvenance !== provenanceText) throw new TypeError(`${plan.provenance} holds a different provenance; the adopted original is never overwritten`);
+  const wrote = [];
+  fs.mkdir(plan.dir);
+  if (heldArchive === undefined) { fs.write(plan.archive, archiveText); wrote.push('capsule.json'); }
+  if (heldProvenance === undefined) { fs.write(plan.provenance, provenanceText); wrote.push('provenance.json'); }
+
+  // AIKit verifies the archive (paths, modes, sha256, revision) and records
+  // the upstream provenance in the registration. Re-adding is idempotent.
+  const add = aikitStep(aikit(['source', 'add-capsule', plan.archive, '--world-ref', offered.world_ref, '--upstream-ref', offered.entry_ref, '--provenance', `@${plan.provenance}`]), 'source add-capsule');
+  const sourceId = text(add.id, 'add-capsule id');
+  if (add.capsule?.id !== offered.source_ref || add.capsule?.revision !== offered.source_revision) throw new TypeError(`AIKit registered ${add.capsule?.id}@${add.capsule?.revision}, not the offered ${offered.source_ref}@${offered.source_revision}`);
+  const shown = aikitStep(aikit(['source', 'show', sourceId]), 'source show');
+  const before = shown.active_snapshot ?? null;
+  const sync = aikitStep(aikit(['source', 'sync', sourceId]), 'source sync');
+  let promote = null;
+  if (!(sync.candidate_snapshot && sync.candidate_snapshot === before)) {
+    const promoted = aikit(['source', 'promote', sourceId]);
+    if (promoted.refused?.code === 'source.capsule_identity_active') {
+      const details = promoted.refused.details ?? {};
+      return {
+        schema: PRACTICE_ADOPTION_RESULT_SCHEMA,
+        path: 'capsule',
+        state: 'identity-already-active',
+        adopted_dir: plan.dir,
+        wrote,
+        original: { source_ref: offered.source_ref, source_revision: offered.source_revision, body_digest: offered.body.body_digest },
+        active_source: details.active_source ?? null,
+        capability_ref: details.capability ?? plan.capability_ref,
+        aikit: { source_id: sourceId, capability_ref: plan.capability_ref, snapshot: sync.candidate_snapshot ?? null, promoted: false, upstream: add.upstream ?? null, steps: { add, sync, promote: { refused: promoted.refused } } },
+        message: `${plan.capability_ref} is already active in this AIKit home through source ${details.active_source ?? '(unnamed)'}; the adopted capsule is registered as ${sourceId} but not promoted. Nothing was overwritten — roll back or remove that source first if this revision should speak for the id.`,
+      };
+    }
+    promote = aikitStep(promoted, 'source promote');
+  }
+  const explained = aikitStep(aikit(['explain', plan.capability_ref]), 'explain');
+  if (explained.id !== plan.capability_ref || explained.revision !== offered.source_revision) throw new TypeError(`AIKit does not catalogue ${plan.capability_ref} at the offered revision after promotion (it holds ${explained.revision ?? 'none'})`);
+
+  let overlay = null;
+  if (plan.difference) {
+    const current = aikit(['skill', 'overlay', 'show', plan.capability_ref]);
+    const applied = !current.refused && (current.data.overlays ?? []).some((row) => row.scope === plan.scope && row.guidance === plan.difference.guidance && row.reviewed_against === explained.revision);
+    overlay = applied
+      ? { state: 'unchanged' }
+      : { state: 'set', result: aikitStep(aikit(['skill', 'overlay', 'set', plan.capability_ref, '--scope', plan.scope, '--guidance', plan.difference.guidance, '--reviewed-against', explained.revision]), 'skill overlay set') };
+  }
+
+  const already = wrote.length === 0 && add.already_registered === true && !promote && (!overlay || overlay.state === 'unchanged');
+  return {
+    schema: PRACTICE_ADOPTION_RESULT_SCHEMA,
+    path: 'capsule',
+    state: already ? 'already-adopted' : 'adopted',
+    adopted_dir: plan.dir,
+    wrote,
+    adopted: {
+      adopted_from: { ...adoptedFrom(offered), files: offered.capsule.files.length },
+      adopted_at: text(options.adopted_at ?? new Date().toISOString(), 'adopted_at'),
+      adopter_participant_ref: options.adopter_participant_ref,
+      practice_kind: offered.practice_kind,
+      label: offered.label,
+      local_differences: plan.difference ? [plan.difference] : [],
+    },
+    original: { source_ref: offered.source_ref, source_revision: offered.source_revision, body_digest: offered.body.body_digest },
+    aikit: {
+      source_id: sourceId,
+      capability_ref: plan.capability_ref,
+      snapshot: sync.candidate_snapshot ?? null,
+      adopted_revision: explained.revision,
+      upstream: add.upstream ?? null,
+      steps: { add, sync, promote, overlay },
+    },
+    invoke: {
+      capability_ref: plan.capability_ref,
+      enable: `aikit enable ${plan.capability_ref} --scope ${plan.scope} --apply`,
+      read: `aikit praxis read ${plan.capability_ref} --json`,
+      note: 'adopted and promoted under its original id, not yet enabled: enabling it in a scope is the reader\'s next deliberate act',
+    },
+  };
+}
+
+function adoptBody(offered, options, effects) {
   const plan = adoptionPlan(offered, options);
   const { fs, aikit } = effects;
 

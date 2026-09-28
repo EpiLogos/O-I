@@ -9,7 +9,8 @@ import {
 } from './central-wiki-projection.mjs';
 import { renderWorldEdition, worldEditionManifest } from './world-edition.mjs';
 import { structuredProjectionReading } from './projection-reading.mjs';
-import { aikitCapsuleRevision, blake3Hex, practiceOfferBody, sha256Digest } from './world-constituents.mjs';
+import { createHash } from 'node:crypto';
+import { aikitCapsuleRevision, base64Bytes, blake3Hex, practiceOfferBody, practiceOfferFromReading, sha256Digest, validatePracticeOfferBody } from './world-constituents.mjs';
 
 /*
  * Workcells, Agent repertoire (practices) and activity, published through the
@@ -366,4 +367,78 @@ test('the renderer-safe sha256 agrees with node:crypto', async () => {
   for (const text of ['', 'abc', 'a'.repeat(55), 'a'.repeat(56), 'a'.repeat(64), 'darshana — ∞/dx · #5→0\n'.repeat(300)]) {
     assert.equal(sha256Digest(text), `sha256:${createHash('sha256').update(text, 'utf8').digest('hex')}`);
   }
+});
+
+// ── The capsule path: AIKit (≥ #455) proves the practice and the whole capsule travels ──
+const nodeSha = (bytes) => `sha256:${createHash('sha256').update(bytes).digest('hex')}`;
+/** `aikit praxis read skill/ql/darshana --json` data, as AIKit #455 prints it. */
+function darshanaReading({ body = DARSHANA_BODY, script = 'print("gaze")\n', scriptMode = 0o755, extra = [] } = {}) {
+  const capsule = darshanaCapsule(body);
+  capsule.files[0].bytes = new TextEncoder().encode(script);
+  capsule.files[0].mode = scriptMode;
+  const row = (path, mode, bytes) => ({ path, mode, bytes: bytes.length, sha256: nodeSha(bytes), text: new TextDecoder().decode(bytes) });
+  return {
+    schema: 'aikit.practice-reading/v1', id: 'skill/ql/darshana', name: 'darshana', form: 'skill',
+    revision: aikitCapsuleRevision(capsule), revision_basis: 'aikit-capsule-revision-v2', source_id: 'ql', snapshot: 'e'.repeat(64),
+    files: [row('manifest.toml', 0o644, capsule.manifest.bytes), ...capsule.files.map((file) => row(file.path, file.mode, file.bytes)).sort((a, b) => (a.path < b.path ? -1 : 1)), ...extra],
+  };
+}
+const capsuleBody = (options) => { const reading = darshanaReading(options); return practiceOfferFromReading({ practice_ref: 'skill/ql/darshana', source_revision: reading.revision, reading }); };
+
+test('capsule path: the offer carries AIKit\'s proven capsule — every file, its mode and the payload script — under the original id', () => {
+  const body = capsuleBody();
+  assert.equal(body.read_via, 'aikit-praxis-read');
+  assert.equal(body.source_revision, DARSHANA_REVISION, 'the revision is AIKit\'s own, the same one the BLAKE3 fallback recomputes');
+  const bundle = publish(FULL, { body });
+  const { offer } = entry(bundle, 'skill/ql/darshana').meta;
+  assert.equal(offer.text, DARSHANA_BODY, 'SKILL.md still travels as the body for continuity');
+  assert.equal(offer.body_digest, sha256Digest(DARSHANA_BODY));
+  assert.deepEqual(offer.payload_files_not_carried, []);
+  assert.equal(offer.capsule.schema, 'aikit.practice-capsule/v1');
+  assert.equal(offer.capsule.id, 'skill/ql/darshana', 'the capsule keeps its original id');
+  assert.equal(offer.capsule.revision, DARSHANA_REVISION);
+  assert.deepEqual(offer.capsule.exported_from, { source_id: 'ql', snapshot: 'e'.repeat(64) });
+  const script = offer.capsule.files.find((file) => file.path === 'payload/scripts/darshana.py');
+  assert.deepEqual(script, { path: 'payload/scripts/darshana.py', mode: 0o755, bytes: 14, sha256: nodeSha(new TextEncoder().encode('print("gaze")\n')), text: 'print("gaze")\n' });
+  assert.deepEqual(offer.capsule.files.map((file) => file.path), ['manifest.toml', 'payload/SKILL.md', 'payload/scripts/darshana.py']);
+  // The hosted row carries the capsule; a hosted reading re-validates it.
+  const hostedRow = hostedPublicationArgs(bundle).putExploreEntries.find((row) => row.semanticRef === HOSTED('skill/ql/darshana'));
+  assert.deepEqual(JSON.parse(hostedRow.entryJson).meta.offer.capsule, offer.capsule);
+  assert.doesNotThrow(() => validatePracticeOfferBody(body));
+});
+
+test('capsule path refusals: another revision, modes and paths AIKit refuses, oversized binaries, tampered files', () => {
+  const reading = darshanaReading();
+  assert.throws(() => practiceOfferFromReading({ practice_ref: 'skill/ql/darshana', source_revision: 'f'.repeat(64), reading }), /refusing to publish its body/);
+  assert.throws(() => practiceOfferFromReading({ practice_ref: 'skill/ql/other', source_revision: reading.revision, reading }), /AIKit read skill\/ql\/darshana instead/);
+  assert.throws(() => capsuleBody({ scriptMode: 0o4755 }), /beyond rwx; AIKit refuses it/);
+  const row = (path, text) => ({ path, mode: 0o644, bytes: new TextEncoder().encode(text).length, sha256: nodeSha(new TextEncoder().encode(text)), text });
+  assert.throws(() => capsuleBody({ extra: [row('payload/../escape.md', 'x')] }), /unsafe capsule path/);
+  assert.throws(() => capsuleBody({ extra: [row('payload/./dot.md', 'x')] }), /unsafe capsule path/);
+  assert.throws(() => capsuleBody({ extra: [row('payload/skill.md', 'x')] }), /duplicate capsule path/);
+  const big = new Uint8Array(256 * 1024 + 1);
+  const b64 = Buffer.from(big).toString('base64');
+  assert.throws(() => capsuleBody({ extra: [{ path: 'payload/assets/big.bin', mode: 0o644, bytes: big.length, sha256: nodeSha(big), base64: b64 }] }), /over the 262144-byte cap/);
+  const small = Uint8Array.from([0, 255, 1, 254, 7]);
+  assert.deepEqual([...base64Bytes(Buffer.from(small).toString('base64'))], [...small], 'the renderer-safe base64 decoder agrees with Buffer');
+  assert.doesNotThrow(() => capsuleBody({ extra: [{ path: 'payload/assets/icon.bin', mode: 0o644, bytes: small.length, sha256: nodeSha(small), base64: Buffer.from(small).toString('base64') }] }));
+  const tampered = capsuleBody();
+  tampered.capsule.files[2].text = 'print("other")\n';
+  assert.throws(() => validatePracticeOfferBody(tampered), /does not match its declared length and sha256/);
+  assert.throws(() => capsuleBody({ body: '# gaze\n<script>alert(1)</script>\n' }), /not curated text data \(script-element\)/);
+});
+
+test('capsule path: a protected value inside a payload file refuses the whole publication', () => {
+  const leaky = capsuleBody({ script: 'NOTES = "/Users/someone/notes/private.md"\n' });
+  assert.throws(() => publish(FULL, { body: leaky, participation: { darshanaRevision: leaky.source_revision } }), /protected inhabitation material .*local-home-path/);
+  const endpoint = capsuleBody({ script: 'URL = "redis://127.0.0.1:6381"\n' });
+  assert.throws(() => publish(FULL, { body: endpoint, participation: { darshanaRevision: endpoint.source_revision } }), /protected inhabitation material/);
+});
+
+test('fallback path: an older AIKit\'s snapshot read carries SKILL.md only and says so', () => {
+  const body = darshanaBody();
+  assert.equal(body.read_via, 'aikit-snapshot-blake3');
+  assert.equal(body.capsule, undefined);
+  assert.deepEqual(body.payload_files_not_carried, ['payload/scripts/darshana.py']);
+  assert.equal(entry(publish(FULL, { body }), 'skill/ql/darshana').meta.offer.capsule, undefined);
 });

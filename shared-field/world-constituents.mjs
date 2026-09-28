@@ -10,8 +10,10 @@
  *   workcell --json --workcell-ref <ref> discover                    the Workcell's offers (no schema field; recognised by shape)
  *   oi agent participation --agent <ref> --world <W> --json          oi.agent-world-participation/v1
  *   factory development run <state> <run-ref> --json                 factory.run-reading/v1 (in `contract`)
- *   aikit system source show <source> --json → active snapshot capsule oi.practice-offer-body/v1 (offered practices only; proved
- *                                                                     against the disclosed AIKit capsule revision)
+ *   aikit praxis read <id> --revision <rev> --json                   aikit.practice-reading/v1 → oi.practice-offer-body/v1 carrying the
+ *                                                                     whole capsule (offered practices only; AIKit proves the revision)
+ *   aikit system source show <source> --json → active snapshot capsule the fallback for an AIKit without `praxis read`: SKILL.md only,
+ *                                                                     revision recomputed here (BLAKE3)
  *
  * Published ≠ offered ≠ granted. A Workcell or practice selected for
  * `address` / inspection is addressable and nothing more; an offer travels
@@ -240,6 +242,12 @@ export function sha256Digest(text) {
   return `sha256:${sha256Hex(new TextEncoder().encode(text))}`;
 }
 
+/** `sha256:<hex>` of raw bytes (AIKit's capsule file digest). */
+export function sha256BytesDigest(bytes) {
+  if (!(bytes instanceof Uint8Array)) throw new TypeError('sha256BytesDigest takes bytes');
+  return `sha256:${sha256Hex(bytes)}`;
+}
+
 /**
  * A practice body is carried as Markdown text data, never as markup to run:
  * anything script-capable or embedding-capable refuses the offer.
@@ -291,6 +299,7 @@ export function practiceOfferBody({ practice_ref: practiceRef, source_revision: 
     practice_ref: practiceRef,
     source_revision: sourceRevision,
     revision_basis: AIKIT_CAPSULE_REVISION_BASIS,
+    read_via: OFFER_READ_VIA.fallback,
     ...(sourceId ? { aikit_source: sourceId } : {}),
     ...(snapshot ? { aikit_snapshot: snapshot } : {}),
     media_type: PRACTICE_BODY_MEDIA_TYPE,
@@ -299,6 +308,165 @@ export function practiceOfferBody({ practice_ref: practiceRef, source_revision: 
     body_bytes: skill.bytes.length,
     payload_files_not_carried: capsule.files.map((file) => file.path).filter((path) => path !== skillPath).sort(byteOrder),
   };
+}
+
+// ── Offered practice capsule (AIKit ≥ #455) ───────────────────────────────
+// When the publishing machine's AIKit can read a practice as it proves it
+// (`aikit praxis read <id> --revision <rev> --json` → aikit.practice-reading/v1),
+// the offer carries the whole capsule as data — every file with its path,
+// permission bits, length, sha256 and text or base64 — in the shape of an
+// `aikit.practice-capsule/v1` archive, so the reader's AIKit can adopt it
+// (`system source add-capsule`) under its original id and revision. The
+// revision is AIKit's proof; this module only checks that each file is what
+// it declares and that nothing AIKit would refuse (paths, modes) travels.
+export const AIKIT_PRACTICE_READING_SCHEMA = 'aikit.practice-reading/v1';
+export const AIKIT_PRACTICE_CAPSULE_SCHEMA = 'aikit.practice-capsule/v1';
+/** How an offer's body was read: through AIKit's proof, or recomputed here for an older AIKit. */
+export const OFFER_READ_VIA = Object.freeze({ capsule: 'aikit-praxis-read', fallback: 'aikit-snapshot-blake3' });
+/** A binary (base64) payload file larger than this refuses the offer. */
+export const PRACTICE_BINARY_FILE_MAX_BYTES = 256 * 1024;
+const CAPSULE_MANIFEST = 'manifest.toml';
+const CAPSULE_MAX_FILES = 4096;
+
+const B64 = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/';
+/** Strict standard base64 → bytes (renderer-safe; no Buffer/atob). */
+export function base64Bytes(value) {
+  if (typeof value !== 'string' || value.length % 4 !== 0 || !/^[A-Za-z0-9+/]*={0,2}$/.test(value)) throw new TypeError('not valid base64');
+  const pad = value.endsWith('==') ? 2 : value.endsWith('=') ? 1 : 0;
+  const out = new Uint8Array((value.length / 4) * 3 - pad);
+  let at = 0;
+  for (let index = 0; index < value.length; index += 4) {
+    const n = [0, 1, 2, 3].map((offset) => (value[index + offset] === '=' ? 0 : B64.indexOf(value[index + offset])));
+    const triple = (n[0] << 18) | (n[1] << 12) | (n[2] << 6) | n[3];
+    for (const shift of [16, 8, 0]) if (at < out.length) out[at++] = (triple >> shift) & 0xff;
+  }
+  return out;
+}
+
+/** Why AIKit would refuse this archive path (`verify_archive`), or null. */
+function capsulePathRefusal(path) {
+  if (typeof path !== 'string' || path === '') return 'empty path';
+  if (path.includes('\\')) return 'backslash in path';
+  if (path.startsWith('/')) return 'absolute path';
+  if (path.split('/').some((part) => part === '' || part === '.' || part === '..')) return 'non-canonical or escaping path';
+  if (/[\u0000]/.test(path)) return 'NUL in path';
+  return null;
+}
+
+/**
+ * Verify capsule file rows as AIKit's `verify_archive` would, and more
+ * strictly for publication: canonical relative paths, no case-folded
+ * duplicates, permission bits only (≤ 0o777), exactly one of text/base64,
+ * declared length and sha256 matching, and no binary file over
+ * PRACTICE_BINARY_FILE_MAX_BYTES. Returns the rows' bytes by path.
+ */
+export function verifyPracticeCapsuleFiles(files, name = 'practice capsule') {
+  if (!Array.isArray(files) || files.length === 0) throw new TypeError(`${name}.files must be a non-empty array`);
+  if (files.length > CAPSULE_MAX_FILES) throw new TypeError(`${name} carries more than ${CAPSULE_MAX_FILES} files`);
+  const seen = new Map();
+  const bytesByPath = new Map();
+  for (const [index, row] of files.entries()) {
+    record(row, `${name}.files[${index}]`);
+    const refusal = capsulePathRefusal(row.path);
+    if (refusal) throw new TypeError(`${name}: unsafe capsule path ${JSON.stringify(row.path)} (${refusal})`);
+    const folded = row.path.toLowerCase();
+    if (seen.has(folded)) throw new TypeError(`${name}: duplicate capsule path ${row.path} (collides with ${seen.get(folded)})`);
+    seen.set(folded, row.path);
+    if (!Number.isSafeInteger(row.mode) || row.mode < 0 || (row.mode & ~0o777) !== 0) throw new TypeError(`${name}: ${row.path} declares mode ${row.mode}, which carries bits beyond rwx; AIKit refuses it`);
+    const hasText = typeof row.text === 'string';
+    const hasBase64 = typeof row.base64 === 'string';
+    if (hasText === hasBase64) throw new TypeError(`${name}: ${row.path} must carry exactly one of text or base64`);
+    let bytes;
+    if (hasText) bytes = new TextEncoder().encode(row.text);
+    else {
+      try { bytes = base64Bytes(row.base64); } catch { throw new TypeError(`${name}: ${row.path} is not valid base64`); }
+      if (bytes.length > PRACTICE_BINARY_FILE_MAX_BYTES) throw new TypeError(`${name}: binary file ${row.path} is ${bytes.length} bytes, over the ${PRACTICE_BINARY_FILE_MAX_BYTES}-byte cap for an offered binary`);
+    }
+    if (row.bytes !== bytes.length || row.sha256 !== sha256BytesDigest(bytes)) throw new TypeError(`${name}: ${row.path} does not match its declared length and sha256`);
+    bytesByPath.set(row.path, bytes);
+  }
+  if (!bytesByPath.has(CAPSULE_MANIFEST)) throw new TypeError(`${name} carries no ${CAPSULE_MANIFEST}`);
+  return bytesByPath;
+}
+
+/** The capsule's SKILL.md path (the manifest's `[skill] root`, default `payload`). */
+export function practiceCapsuleSkillPath(files) {
+  const manifest = files.find((file) => file.path === CAPSULE_MANIFEST);
+  if (!manifest || typeof manifest.text !== 'string') throw new TypeError(`practice capsule ${CAPSULE_MANIFEST} must be text`);
+  return `${manifestSkillRoot(new TextEncoder().encode(manifest.text))}/SKILL.md`;
+}
+
+function capsuleRow(row) {
+  return { path: row.path, mode: row.mode, bytes: row.bytes, sha256: row.sha256, ...(typeof row.text === 'string' ? { text: row.text } : { base64: row.base64 }) };
+}
+
+/**
+ * Build the offered body reading from AIKit's own proof of the practice
+ * (`aikit.practice-reading/v1`): the reading must name this practice at the
+ * revision the Agent's participation discloses. The whole capsule travels as
+ * an `aikit.practice-capsule/v1`-shaped archive; `text`/`body_digest` stay the
+ * SKILL.md body, for continuity with body-only readers.
+ */
+export function practiceOfferFromReading({ practice_ref: practiceRef, source_revision: sourceRevision, reading }) {
+  text(practiceRef, 'practice_ref');
+  text(sourceRevision, 'source_revision');
+  record(reading, 'practice reading');
+  if (reading.schema !== AIKIT_PRACTICE_READING_SCHEMA) throw new TypeError(`practice ${practiceRef}: not an ${AIKIT_PRACTICE_READING_SCHEMA} reading (${reading.schema})`);
+  if (reading.id !== practiceRef) throw new TypeError(`practice ${practiceRef}: AIKit read ${reading.id} instead`);
+  if (reading.revision_basis !== AIKIT_CAPSULE_REVISION_BASIS) throw new TypeError(`practice ${practiceRef}: AIKit's reading is not proved against ${AIKIT_CAPSULE_REVISION_BASIS}`);
+  if (reading.revision !== sourceRevision) throw new TypeError(`practice ${practiceRef}: AIKit proves revision ${String(reading.revision).slice(0, 12)}, not the disclosed ${sourceRevision.slice(0, 12)}; refusing to publish its body`);
+  const capsule = {
+    schema: AIKIT_PRACTICE_CAPSULE_SCHEMA,
+    id: reading.id,
+    name: text(reading.name, `practice ${practiceRef} reading.name`),
+    form: text(reading.form, `practice ${practiceRef} reading.form`),
+    revision: reading.revision,
+    revision_basis: reading.revision_basis,
+    exported_from: { source_id: typeof reading.source_id === 'string' ? reading.source_id : '', snapshot: typeof reading.snapshot === 'string' ? reading.snapshot : null },
+    files: (Array.isArray(reading.files) ? reading.files : []).map(capsuleRow),
+  };
+  return practiceOfferBodyOfCapsule(practiceRef, capsule);
+}
+
+function practiceOfferBodyOfCapsule(practiceRef, capsule) {
+  verifyPracticeCapsuleFiles(capsule.files, `practice ${practiceRef} capsule`);
+  const skillPath = practiceCapsuleSkillPath(capsule.files);
+  const skill = capsule.files.find((file) => file.path === skillPath);
+  if (!skill) throw new TypeError(`practice ${practiceRef}: the capsule carries no ${skillPath}`);
+  if (typeof skill.text !== 'string') throw new TypeError(`practice ${practiceRef}: SKILL.md is not UTF-8 text`);
+  const refusals = practiceBodyRefusals(skill.text);
+  if (refusals.length) throw new TypeError(`practice ${practiceRef}: the body is not curated text data (${refusals.join(', ')})`);
+  return {
+    schema: PRACTICE_OFFER_BODY_SCHEMA,
+    practice_ref: practiceRef,
+    source_revision: capsule.revision,
+    revision_basis: AIKIT_CAPSULE_REVISION_BASIS,
+    read_via: OFFER_READ_VIA.capsule,
+    ...(capsule.exported_from.source_id ? { aikit_source: capsule.exported_from.source_id } : {}),
+    ...(capsule.exported_from.snapshot ? { aikit_snapshot: capsule.exported_from.snapshot } : {}),
+    media_type: PRACTICE_BODY_MEDIA_TYPE,
+    text: skill.text,
+    body_digest: sha256Digest(skill.text),
+    body_bytes: skill.bytes,
+    payload_files_not_carried: [],
+    capsule,
+  };
+}
+
+/**
+ * Validate an offered capsule as data: an `aikit.practice-capsule/v1` archive
+ * of `practiceRef` at `revision` whose files are what they declare and whose
+ * SKILL.md is the offered body text.
+ */
+export function validateOfferedCapsule(capsule, { practice_ref: practiceRef, source_revision: revision, text: body }) {
+  record(capsule, `practice ${practiceRef} capsule`);
+  if (capsule.schema !== AIKIT_PRACTICE_CAPSULE_SCHEMA) throw new TypeError(`practice ${practiceRef} capsule is not ${AIKIT_PRACTICE_CAPSULE_SCHEMA}`);
+  if (capsule.id !== practiceRef) throw new TypeError(`practice ${practiceRef} capsule names ${capsule.id}`);
+  if (capsule.revision !== revision) throw new TypeError(`practice ${practiceRef} capsule declares revision ${String(capsule.revision).slice(0, 12)}, not ${String(revision).slice(0, 12)}`);
+  if (capsule.revision_basis !== AIKIT_CAPSULE_REVISION_BASIS) throw new TypeError(`practice ${practiceRef} capsule is not proved against ${AIKIT_CAPSULE_REVISION_BASIS}`);
+  const rebuilt = practiceOfferBodyOfCapsule(practiceRef, { ...capsule, exported_from: record(capsule.exported_from ?? {}, `practice ${practiceRef} capsule.exported_from`) });
+  if (rebuilt.text !== body) throw new TypeError(`practice ${practiceRef}: the capsule's SKILL.md is not the offered body text`);
+  return capsule;
 }
 
 export function validatePracticeOfferBody(value) {
@@ -314,6 +482,7 @@ export function validatePracticeOfferBody(value) {
   const refusals = practiceBodyRefusals(reading.text);
   if (refusals.length) throw new TypeError(`practice offer body ${reading.practice_ref} is not curated text data (${refusals.join(', ')})`);
   strings(reading.payload_files_not_carried ?? [], `practice offer body ${reading.practice_ref}.payload_files_not_carried`);
+  if (reading.capsule !== undefined) validateOfferedCapsule(reading.capsule, reading);
   return reading;
 }
 
@@ -532,6 +701,7 @@ export function buildConstituents(context) {
           revision_basis: body.revision_basis,
           payload_files_not_carried: [...(body.payload_files_not_carried ?? [])],
           text: body.text,
+          ...(body.capsule ? { capsule: body.capsule } : {}),
         };
       }
       basis.push([practiceRef, practiceKind, praxis.revision, availability, ...(offer ? [offer.body_digest] : [])]);

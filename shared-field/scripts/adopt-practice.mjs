@@ -18,6 +18,11 @@
  * AIKit runs as `${OI_AIKIT_BIN:-aikit}` with this process's environment, so
  * `AIKIT_HOME` selects which AIKit home adopts it, and with `--root` as its
  * working directory so no project scope is picked up by accident.
+ *
+ * Path: when the offer carries its capsule and this AIKit answers `source
+ * add-capsule --help`, the capsule is adopted under its original id through
+ * `source add-capsule` (provenance in AIKit's registration); otherwise the
+ * declared body-only fallback. The result's `path` says which ran.
  */
 import { spawnSync } from 'node:child_process';
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
@@ -60,6 +65,11 @@ function aikit(words, cwd) {
   return { data: envelope.data };
 }
 
+function aikitSupports(words, cwd) {
+  const result = spawnSync(process.env.OI_AIKIT_BIN ?? 'aikit', [...words, '--help'], { cwd, encoding: 'utf8', env: process.env });
+  return !result.error && result.status === 0;
+}
+
 try {
   const args = parseArgs(process.argv.slice(2));
   const root = resolve(args.root ?? join(process.env.OI_STATE_HOME ?? join(homedir(), '.local', 'state', 'oi'), 'adopted-practices'));
@@ -79,6 +89,7 @@ try {
       mkdir: (path) => mkdirSync(path, { recursive: true }),
     },
     aikit: (words) => aikit(words, root),
+    supports: (words) => aikitSupports(words, root),
   });
   console.log(JSON.stringify({ ok: true, ...result }, null, 2));
 } catch (error) {

@@ -19,9 +19,11 @@
  *   oi agent participation --agent A --world W --json oi.agent-world-participation/v1 (per Agent whose practices are selected)
  *   factory project locate <project> --json          factory.project-location/v1   (when activity is selected; its state path is used, never published)
  *   factory development run <state> <run> --json     factory.run-reading/v1        (per selected activity)
- *   aikit system source show <source> --json          active snapshot of the source (per offered practice; its body is
- *                                                                                  read from that snapshot and proved against the
- *                                                                                  disclosed AIKit revision → oi.practice-offer-body/v1)
+ *   aikit praxis read <id> --revision <rev> --json   aikit.practice-reading/v1     (per offered practice, when this AIKit has
+ *                                                                                  `praxis read`: AIKit proves the disclosed revision
+ *                                                                                  and the whole capsule travels → oi.practice-offer-body/v1)
+ *   aikit system source show <source> --json          active snapshot of the source (fallback for an older AIKit: SKILL.md only,
+ *                                                                                  read from that snapshot and its revision recomputed)
  *
  * AIKit is the joiner of Actuation and Factory; this step never reads them
  * directly. It performs no network publication; `shared-field/spacetimedb/publish-world.ts`
@@ -35,7 +37,7 @@ import { spawnSync } from 'node:child_process';
 import { lstatSync, mkdirSync, readdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { isAbsolute, join, resolve } from 'node:path';
 import { projectCentralWikiWorld, reprojectCentralWikiWorld, hostedPublicationArgs, exploreSeedFromPublication, worldPublicationLeaks, unwrapOwnerReading } from '../central-wiki-projection.mjs';
-import { AGENT_PARTICIPATION_SCHEMA, PRACTICE_OFFER_BODY_SCHEMA, practiceOfferBody, workcellRef } from '../world-constituents.mjs';
+import { AGENT_PARTICIPATION_SCHEMA, PRACTICE_OFFER_BODY_SCHEMA, practiceOfferBody, practiceOfferFromReading, workcellRef } from '../world-constituents.mjs';
 import { renderWorldEdition, worldEditionManifest } from '../world-edition.mjs';
 
 function parseArgs(argv) {
@@ -95,6 +97,12 @@ function aikitRead(words, cwd) {
   try { envelope = JSON.parse(result.stdout); } catch { throw new Error(`aikit ${words.slice(0, 2).join(' ')} returned non-JSON: ${result.stdout.slice(0, 200)} ${result.stderr.slice(0, 200)}`); }
   if (envelope.ok !== true) return { refused: envelope.error ?? { message: 'refused without an error body' } };
   return { data: envelope.data };
+}
+
+/** Whether this machine's AIKit answers `words --help` (a subcommand an older AIKit lacks exits non-zero). */
+function aikitSupports(words, cwd) {
+  const result = spawnSync(process.env.OI_AIKIT_BIN ?? 'aikit', [...words, '--help'], { cwd, encoding: 'utf8' });
+  return !result.error && result.status === 0;
 }
 
 const args = parseArgs(process.argv.slice(2));
@@ -193,11 +201,14 @@ function capsuleFiles(dir) {
 }
 
 /**
- * An offered practice travels with its body. AIKit names the source's active,
- * immutable, content-addressed snapshot (`aikit system source show`); the
- * capsule is read from it and its AIKit revision recomputed, so the body is
- * published only when it is exactly the revision the Agent's participation
- * discloses. Bodies already supplied as `--reading` files are kept.
+ * An offered practice travels with its body. When this AIKit has `praxis
+ * read`, AIKit itself reads the practice at the revision the Agent's
+ * participation discloses and proves it (`aikit.practice-reading/v1`); the
+ * whole capsule — payload scripts and references with their modes — travels
+ * as data. Otherwise (an older AIKit) the declared fallback: AIKit names the
+ * source's active, immutable, content-addressed snapshot (`aikit system source
+ * show`), the capsule is read from it and its revision recomputed here, and
+ * only SKILL.md travels. Bodies already supplied as `--reading` files are kept.
  */
 function readOfferedPracticeBodies(selection, documents, cwd) {
   const unwrapped = documents.map((document) => { try { return unwrapOwnerReading(document); } catch { return undefined; } });
@@ -208,10 +219,19 @@ function readOfferedPracticeBodies(selection, documents, cwd) {
     for (const row of reading.repertoire?.praxis ?? []) if (typeof row?.id === 'string') praxis.set(row.id, row.revision);
   }
   const bodies = [];
+  let canRead;
   for (const [subject, refs] of Object.entries(selection.offers ?? {})) {
     if (workcellRef(subject)) continue;
     for (const ref of refs) {
       if (held.has(ref) || !praxis.has(ref)) continue;
+      canRead ??= aikitSupports(['praxis', 'read'], cwd);
+      if (canRead) {
+        const read = aikitRead(['praxis', 'read', ref, '--revision', praxis.get(ref)], cwd);
+        if (read.refused) throw new Error(`aikit praxis read ${ref} refused: ${read.refused.code ?? ''} ${read.refused.message ?? ''}`.trim());
+        bodies.push(practiceOfferFromReading({ practice_ref: ref, source_revision: praxis.get(ref), reading: read.data }));
+        held.add(ref);
+        continue;
+      }
       const source = ref.match(/^skill\/([A-Za-z0-9._-]+)\/[^/]+$/)?.[1];
       if (!source) throw new Error(`offered practice ${ref} is not an AIKit skill ref (skill/<source>/<name>); its body cannot be read`);
       const shown = aikitRead(['source', 'show', source], cwd);
@@ -226,6 +246,22 @@ function readOfferedPracticeBodies(selection, documents, cwd) {
 }
 
 readings.push(...readOfferedPracticeBodies(selection, readings, args.central ?? process.env.CENTRAL_HOME ?? process.cwd()));
+
+// Every text file an offered capsule carries is scanned on its own before
+// anything is built, so a refusal names the practice and the file; the
+// whole-bundle scan below still runs. Binary files are bounded by the cap
+// `verifyPracticeCapsuleFiles` enforces.
+for (const reading of readings) {
+  if (reading?.schema !== PRACTICE_OFFER_BODY_SCHEMA || !reading.capsule) continue;
+  for (const file of reading.capsule.files) {
+    if (typeof file.text !== 'string') continue;
+    const fileLeaks = worldPublicationLeaks({ [file.path]: file.text }, readings, args.sentinels);
+    if (fileLeaks.length) {
+      console.error(JSON.stringify({ ok: false, error: `offered practice ${reading.practice_ref} file ${file.path} would carry protected material`, leaks: fileLeaks }));
+      process.exit(2);
+    }
+  }
+}
 
 const publishedAt = args.publishedAt ?? new Date().toISOString();
 const bundle = args.previous
@@ -269,7 +305,16 @@ console.log(JSON.stringify({
   entry_kinds: bundle.entries.reduce((counts, entry) => ({ ...counts, [entry.kind]: (counts[entry.kind] ?? 0) + 1 }), {}),
   relations: bundle.relations.length,
   excluded: bundle.excluded,
-  offered_bodies: bundle.entries.filter((entry) => entry.kind === 'practice' && entry.meta?.offer).map((entry) => ({ ref: entry.ref, source_revision: entry.meta.source_revision, body_digest: entry.meta.offer.body_digest, body_bytes: entry.meta.offer.body_bytes })),
+  offered_bodies: bundle.entries.filter((entry) => entry.kind === 'practice' && entry.meta?.offer).map((entry) => ({
+    ref: entry.ref,
+    source_revision: entry.meta.source_revision,
+    body_digest: entry.meta.offer.body_digest,
+    body_bytes: entry.meta.offer.body_bytes,
+    // Which path read it: the whole capsule through `aikit praxis read`, or the SKILL.md-only fallback.
+    read_via: readings.find((reading) => reading?.schema === PRACTICE_OFFER_BODY_SCHEMA && reading.practice_ref === entry.meta.local_ref)?.read_via ?? null,
+    carried: entry.meta.offer.capsule ? 'capsule' : 'body-only',
+    files: entry.meta.offer.capsule ? entry.meta.offer.capsule.files.map((file) => ({ path: file.path, mode: `0${file.mode.toString(8)}`, bytes: file.bytes })) : undefined,
+  })),
   edition_digest: manifest.digest.value,
   sentinels_checked: args.sentinels.length,
 }, null, 2));
