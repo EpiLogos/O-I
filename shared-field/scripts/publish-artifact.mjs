@@ -20,7 +20,7 @@ import { spawnSync } from 'node:child_process';
 import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 import {
-  curatedArtifactFromFlowInstance, curatedArtifactFromCentralDocument, projectCuratedArtifact, reprojectCuratedArtifact,
+  curatedArtifactFromFlowInstance, curatedArtifactFromCentralDocument, curatedArtifactFromWikiSource, projectCuratedArtifact, reprojectCuratedArtifact,
   hostedArtifactArgs, artifactExploreSeed, renderArtifactEdition, artifactEditionManifest, artifactPublicationPayloads, publicationSentinelLeaks,
 } from '../curated-html-projection.mjs';
 
@@ -34,6 +34,7 @@ function parseArgs(argv) {
       case '--flow': args.flow = value; index += 1; break;
       case '--document': args.document = value; index += 1; break;
       case '--document-id': args.documentId = value; index += 1; break;
+      case '--wiki-source': args.wikiSource = value; index += 1; break;
       case '--project': args.project = value; index += 1; break;
       case '--central': args.central = value; index += 1; break;
       case '--wiki-reading': args.wikiReading = value; index += 1; break;
@@ -48,14 +49,14 @@ function parseArgs(argv) {
   }
   if (!args.selection) throw new Error('--selection is required');
   if (!args.out) throw new Error('--out is required');
-  if (!args.flow && !(args.document && args.documentId)) throw new Error('supply --flow <Central-relative path> or --document <source_ref> --document-id <id>');
+  if (!args.flow && !(args.document && args.documentId) && !(args.wikiSource && args.project)) throw new Error('supply --flow <Central-relative path>, --document <source_ref> --document-id <id>, or --wiki-source <corpus source_ref> --project <P>');
   return args;
 }
 
 const readJson = (path) => JSON.parse(readFileSync(path, 'utf8'));
 
 function ctrlAction(action, input, cwd) {
-  const result = spawnSync('ctrl', ['--json', 'action', 'run', action, JSON.stringify(input)], { cwd, encoding: 'utf8' });
+  const result = spawnSync(process.env.CTRL_BIN ?? 'ctrl', ['--json', 'action', 'run', action, JSON.stringify(input)], { cwd, encoding: 'utf8' });
   if (result.error) throw new Error(`ctrl could not run: ${result.error.message}`);
   let envelope;
   try { envelope = JSON.parse(result.stdout); } catch { throw new Error(`ctrl ${action} returned non-JSON: ${result.stdout.slice(0, 200)} ${result.stderr.slice(0, 200)}`); }
@@ -74,6 +75,8 @@ if (args.flow) {
   const location = { schema: 'central.path-ref/v1', ref: `central:path:${root}:${args.flow}`, root, path: args.flow };
   const reading = ctrlAction('central.files.read', { location }, cwd);
   artifact = curatedArtifactFromFlowInstance(reading.content, { ref: reading.location?.ref ?? location.ref, path: args.flow, revision: reading.revision });
+} else if (args.wikiSource) {
+  artifact = curatedArtifactFromWikiSource(ctrlAction('projectcentral.wiki.source.read', { project: args.project, source_ref: args.wikiSource }, cwd));
 } else {
   const reading = ctrlAction('central.document.read', { ...(args.project ? { project: args.project } : {}), source_ref: args.document, document_id: args.documentId }, cwd);
   artifact = curatedArtifactFromCentralDocument(reading);
