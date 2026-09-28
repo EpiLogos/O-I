@@ -359,3 +359,11 @@ test('repertoire mode publishes practices without any occupancy', () => {
   assert.equal(relationsOf(bundle, 'oi.world/practises').length, 1);
   assert.ok(bundle.presentation.regions.some((region) => region.region_ref === 'practices'));
 });
+
+test('the renderer-safe sha256 agrees with node:crypto', async () => {
+  const { createHash } = await import('node:crypto');
+  const { sha256Digest } = await import('./world-constituents.mjs');
+  for (const text of ['', 'abc', 'a'.repeat(55), 'a'.repeat(56), 'a'.repeat(64), 'darshana — ∞/dx · #5→0\n'.repeat(300)]) {
+    assert.equal(sha256Digest(text), `sha256:${createHash('sha256').update(text, 'utf8').digest('hex')}`);
+  }
+});
