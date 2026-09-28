@@ -344,6 +344,72 @@ const stageFollower = table(
   }
 );
 
+/*
+ * The collective temporal projection (WORKCELL-NOW-TEMPORAL-FIELD §9):
+ *
+ * a participant's local NOW/DAY truth (Central, on its own Workcell)
+ *      ↓ explicit, audience-scoped, revision-checked put_field_now / put_field_day
+ * PRIVATE current FieldNow row (one per field) + immutable revision history
+ * PRIVATE current FieldDay rows (one per field interval) + immutable history
+ *      ↓
+ * caller-filtered field_now / field_day Views
+ *
+ * These rows carry refs and native revisions only. They are the first
+ * material host of the collective live projection, never the owner of local
+ * Central time or NOW identity: no column and no contract field can hold a
+ * path, session ref, gateway address or token, and the server refuses
+ * contracts that try to smuggle one into a string.
+ */
+const fieldNowBacking = table(
+  { name: 'field_now_backing', public: false },
+  {
+    fieldRef: t.string().primaryKey(),
+    revision: t.u64(),
+    contractJson: t.string(),
+    updatedByParticipantRef: t.string(),
+    updatedAtMicros: t.u64(),
+  }
+);
+
+const fieldNowRevision = table(
+  { name: 'field_now_revision', public: false },
+  {
+    revisionKey: t.string().primaryKey(),
+    fieldRef: t.string().index('btree'),
+    revision: t.u64(),
+    contractJson: t.string(),
+    writtenByParticipantRef: t.string(),
+    writtenAtMicros: t.u64(),
+  }
+);
+
+const fieldDayBacking = table(
+  { name: 'field_day_backing', public: false },
+  {
+    dayKey: t.string().primaryKey(),
+    fieldRef: t.string().index('btree'),
+    intervalStart: t.string(),
+    intervalEnd: t.string(),
+    revision: t.u64(),
+    contractJson: t.string(),
+    updatedByParticipantRef: t.string(),
+    updatedAtMicros: t.u64(),
+  }
+);
+
+const fieldDayRevision = table(
+  { name: 'field_day_revision', public: false },
+  {
+    revisionKey: t.string().primaryKey(),
+    dayKey: t.string().index('btree'),
+    fieldRef: t.string().index('btree'),
+    revision: t.u64(),
+    contractJson: t.string(),
+    writtenByParticipantRef: t.string(),
+    writtenAtMicros: t.u64(),
+  }
+);
+
 const contact = table(
   { public: false },
   {
@@ -477,6 +543,10 @@ const spacetimedb = schema({
   fieldPresence,
   sharedStageBacking,
   stageFollower,
+  fieldNowBacking,
+  fieldNowRevision,
+  fieldDayBacking,
+  fieldDayRevision,
   contact,
   contactPolicy,
   contactRate,
@@ -1113,6 +1183,280 @@ export const my_stage_follow = spacetimedb.view(
   (ctx) => Array.from(ctx.db.stageFollower.actorIdentity.filter(ctx.sender))
 );
 
+/* ---------- FieldNow / FieldDay: shape, leak refusal, audience ---------- */
+
+const FIELD_NOW_SCHEMA = 'oi.field-now/v1';
+const FIELD_DAY_SCHEMA = 'oi.field-day/v1';
+const FIELD_TIME_MAX_BYTES = 32 * 1024;
+const CHILD_NOW_STATES = new Set(['active', 'waiting', 'blocked', 'quiescent', 'resolved', 'archived']);
+const NOW_REF_PATTERN = /^central:now:[a-z][a-z0-9-]*(?::[A-Za-z0-9._-]+)+$/;
+const DAY_REF_PATTERN = /^central:day:[a-z][a-z0-9-]*(?::[A-Za-z0-9._-]+)+$/;
+const WORKCELL_REF_PATTERN = /^workcell:[a-z0-9][a-z0-9.-]*$/;
+const WORLD_REF_PATTERN = /^(?:control:root|project:[A-Za-z0-9._-]+|world:[A-Za-z0-9._:-]+)$/;
+/* Mirrors shared-field/field-now.mjs FIELD_TIME_LEAK_PATTERNS: local-only
+ * identity beyond refs is refused server-side too, whatever the client did. */
+const FIELD_TIME_LEAKS: [string, RegExp][] = [
+  ['agent-session-ref', /(^|[^A-Za-z0-9])agent-session[:/]|[a-z0-9-]+:session:[0-9a-f]{8}/],
+  ['session-ref', /(?:^|[^A-Za-z0-9])(?:session-space|agent-session|session)[:/][A-Za-z0-9]/],
+  ['gateway-address', /\bwss?:\/\/|\b(?:\d{1,3}\.){3}\d{1,3}:\d{2,5}\b/],
+  ['gateway-token', /AIKIT_GATEWAY_TOKEN|\bBearer\s+\S{8,}/],
+  ['workcell-endpoint', /\b(?:redis|https?|tcp|grpc|postgres(?:ql)?):\/\/(?:localhost|127\.|\[?::1|(?:\d{1,3}\.){3}\d{1,3})/],
+  ['local-home-path', /\/(?:Users|home)\/[A-Za-z0-9._-]+\//],
+  ['local-absolute-path', /(?:^|[\s"'(=])(?:~\/|\/(?:Users|home|private|tmp|var|etc|mnt|opt|Volumes)\/)/],
+  ['file-url', /\bfile:\/\//],
+  ['central-token-path', /\.central\/|native-token|owner-token/],
+];
+
+function refuseFieldTimeLeaks(value: unknown, schemaName: string, path = '$'): void {
+  if (typeof value === 'string') {
+    for (const [name, pattern] of FIELD_TIME_LEAKS) {
+      if (pattern.test(value)) fail(`${schemaName} refuses local-only material: ${name} at ${path}`);
+    }
+    return;
+  }
+  if (Array.isArray(value)) {
+    value.forEach((entry, index) => refuseFieldTimeLeaks(entry, schemaName, `${path}[${index}]`));
+    return;
+  }
+  if (value !== null && typeof value === 'object') {
+    for (const [key, entry] of Object.entries(value as Record<string, unknown>)) refuseFieldTimeLeaks(entry, schemaName, `${path}.${key}`);
+  }
+}
+
+function requireExactKeysOf(value: any, allowed: string[], name: string): void {
+  if (value === null || typeof value !== 'object' || Array.isArray(value)) fail(`${name} must be an object`);
+  for (const key of Object.keys(value)) if (!allowed.includes(key)) fail(`${name}.${key} is not part of the contract`);
+}
+
+function requireRef(value: unknown, pattern: RegExp, name: string): string {
+  if (typeof value !== 'string') fail(`${name} must be a string`);
+  requireString(value, name, 512);
+  if (!pattern.test(value)) fail(`${name} is not a well-formed ref`);
+  return value;
+}
+
+function requireFieldTimeAudience(ctx: any, fieldRef: string, audience: any, name: string): void {
+  requireExactKeysOf(audience, ['visibility', 'refs'], name);
+  if (!PROJECTION_VISIBILITIES.has(String(audience.visibility))) fail(`${name}.visibility is unsupported`);
+  const refs = audience.refs ?? [];
+  if (!Array.isArray(refs) || refs.length > 32) fail(`${name}.refs must be an array of at most 32 refs`);
+  for (const ref of refs) {
+    if (typeof ref !== 'string') fail(`${name}.refs must be strings`);
+    requireParticipantInField(ctx, ref, fieldRef);
+  }
+  if (audience.visibility === 'private' && refs.length === 0) fail(`${name}: a private audience must name its participant refs`);
+}
+
+function requireFieldTimeEnvelope(contractJson: string, schemaName: string, fieldRef: string, revision: bigint): Record<string, any> {
+  if (utf8Bytes(contractJson) > FIELD_TIME_MAX_BYTES) fail(`${schemaName} exceeds ${FIELD_TIME_MAX_BYTES} byte limit`);
+  const contract = requireJsonObject(contractJson, schemaName, FIELD_TIME_MAX_BYTES);
+  enforceJsonBounds(contract, schemaName);
+  requireEqual(contract.schema, schemaName, `${schemaName} schema`);
+  requireEqual(contract.field_ref, fieldRef, `${schemaName} fieldRef`);
+  if (!Number.isSafeInteger(contract.revision) || BigInt(contract.revision) !== revision) {
+    fail(`${schemaName} contract must carry revision ${revision}`);
+  }
+  refuseFieldTimeLeaks(contract, schemaName);
+  return contract;
+}
+
+function requireFieldNowShape(ctx: any, contract: Record<string, any>): void {
+  requireExactKeysOf(contract, ['schema', 'field_ref', 'revision', 'projected_root_now_refs', 'projected_child_now_refs', 'presence_cursor', 'activity_cursor', 'contribution_cursor', 'audience', 'provenance'], 'FieldNow');
+  const roots = contract.projected_root_now_refs;
+  const children = contract.projected_child_now_refs;
+  if (!Array.isArray(roots) || roots.length > 32) fail('FieldNow projected_root_now_refs must be an array of at most 32');
+  if (!Array.isArray(children) || children.length > CONTRIBUTION_MAX_COLLECTION) fail(`FieldNow projected_child_now_refs must be an array of at most ${CONTRIBUTION_MAX_COLLECTION}`);
+  const seen = new Set<string>();
+  const rootWorkcell = new Map<string, string>();
+  const workcells = new Set<string>();
+  roots.forEach((root: any, index: number) => {
+    const name = `FieldNow projected_root_now_refs[${index}]`;
+    requireExactKeysOf(root, ['now_ref', 'workcell_ref', 'world_ref', 'revision', 'projected_by'], name);
+    const nowRef = requireRef(root.now_ref, NOW_REF_PATTERN, `${name}.now_ref`);
+    const workcell = requireRef(root.workcell_ref, WORKCELL_REF_PATTERN, `${name}.workcell_ref`);
+    requireRef(root.world_ref, WORLD_REF_PATTERN, `${name}.world_ref`);
+    requireString(String(root.revision ?? ''), `${name}.revision`, 512);
+    requireString(String(root.projected_by ?? ''), `${name}.projected_by`, 512);
+    if (seen.has(nowRef)) fail(`FieldNow projects ${nowRef} more than once`);
+    if (workcells.has(workcell)) fail(`FieldNow projects two root NOWs for ${workcell}`);
+    seen.add(nowRef);
+    workcells.add(workcell);
+    rootWorkcell.set(nowRef, workcell);
+  });
+  children.forEach((child: any, index: number) => {
+    const name = `FieldNow projected_child_now_refs[${index}]`;
+    requireExactKeysOf(child, ['now_ref', 'parent_now_ref', 'workcell_ref', 'purpose_summary', 'state', 'projected_by'], name);
+    const nowRef = requireRef(child.now_ref, NOW_REF_PATTERN, `${name}.now_ref`);
+    const parent = requireRef(child.parent_now_ref, NOW_REF_PATTERN, `${name}.parent_now_ref`);
+    const workcell = requireRef(child.workcell_ref, WORKCELL_REF_PATTERN, `${name}.workcell_ref`);
+    if (child.purpose_summary !== undefined) requireString(String(child.purpose_summary), `${name}.purpose_summary`, 280);
+    if (!CHILD_NOW_STATES.has(String(child.state))) fail(`${name}.state is unsupported`);
+    requireString(String(child.projected_by ?? ''), `${name}.projected_by`, 512);
+    if (nowRef === parent) fail(`${name} cannot be its own parent`);
+    if (seen.has(nowRef)) fail(`FieldNow projects ${nowRef} more than once`);
+    seen.add(nowRef);
+    const parentWorkcell = rootWorkcell.get(parent);
+    if (parentWorkcell && parentWorkcell !== workcell) fail(`child NOW ${nowRef} is situated on ${workcell} but its projected root is on ${parentWorkcell}`);
+  });
+  for (const cursor of ['presence_cursor', 'activity_cursor', 'contribution_cursor']) {
+    if (contract[cursor] !== undefined) requireString(String(contract[cursor]), `FieldNow ${cursor}`, 512);
+  }
+  requireFieldTimeAudience(ctx, contract.field_ref, contract.audience, 'FieldNow audience');
+  if (!Array.isArray(contract.provenance) || contract.provenance.length === 0) fail('FieldNow provenance must be a non-empty array');
+}
+
+function requireFieldDayShape(ctx: any, contract: Record<string, any>): void {
+  requireExactKeysOf(contract, ['schema', 'field_ref', 'revision', 'interval', 'temporal_policy_provenance', 'projected_source_day_refs', 'projected_now_refs', 'cursors', 'audience'], 'FieldDay');
+  requireExactKeysOf(contract.interval, ['start', 'end', 'policy'], 'FieldDay interval');
+  const start = Date.parse(String(contract.interval.start));
+  const end = Date.parse(String(contract.interval.end));
+  if (Number.isNaN(start) || Number.isNaN(end) || end <= start) fail('FieldDay interval must be two ISO-8601 instants with end after start');
+  requireString(String(contract.interval.policy ?? ''), 'FieldDay interval.policy', 128);
+  requireExactKeysOf(contract.temporal_policy_provenance, ['source_system', 'ref', 'revision'], 'FieldDay temporal_policy_provenance');
+  for (const key of ['source_system', 'ref', 'revision']) requireString(String(contract.temporal_policy_provenance[key] ?? ''), `FieldDay temporal_policy_provenance.${key}`, 512);
+  const seen = new Set<string>();
+  const dayRefs = contract.projected_source_day_refs;
+  const nowRefs = contract.projected_now_refs;
+  if (!Array.isArray(dayRefs) || dayRefs.length > CONTRIBUTION_MAX_COLLECTION) fail('FieldDay projected_source_day_refs must be a bounded array');
+  if (!Array.isArray(nowRefs) || nowRefs.length > CONTRIBUTION_MAX_COLLECTION) fail('FieldDay projected_now_refs must be a bounded array');
+  dayRefs.forEach((entry: any, index: number) => {
+    const name = `FieldDay projected_source_day_refs[${index}]`;
+    requireExactKeysOf(entry, ['day_ref', 'workcell_ref', 'projected_by'], name);
+    const ref = requireRef(entry.day_ref, DAY_REF_PATTERN, `${name}.day_ref`);
+    if (entry.workcell_ref !== undefined) requireRef(entry.workcell_ref, WORKCELL_REF_PATTERN, `${name}.workcell_ref`);
+    requireString(String(entry.projected_by ?? ''), `${name}.projected_by`, 512);
+    if (seen.has(ref)) fail(`FieldDay projects ${ref} more than once`);
+    seen.add(ref);
+  });
+  nowRefs.forEach((entry: any, index: number) => {
+    const name = `FieldDay projected_now_refs[${index}]`;
+    requireExactKeysOf(entry, ['now_ref', 'projected_by'], name);
+    const ref = requireRef(entry.now_ref, NOW_REF_PATTERN, `${name}.now_ref`);
+    requireString(String(entry.projected_by ?? ''), `${name}.projected_by`, 512);
+    if (seen.has(ref)) fail(`FieldDay projects ${ref} more than once`);
+    seen.add(ref);
+  });
+  requireExactKeysOf(contract.cursors, ['activity_cursor', 'contribution_cursor', 'encounter_cursor'], 'FieldDay cursors');
+  for (const [key, cursor] of Object.entries(contract.cursors)) requireString(String(cursor), `FieldDay cursors.${key}`, 512);
+  requireFieldTimeAudience(ctx, contract.field_ref, contract.audience, 'FieldDay audience');
+}
+
+/* Every attributed entry a step added, withdrew or changed, with each
+ * Participant it was attributed to before and after. */
+function attributedDelta(priorEntries: any[], nextEntries: any[], key: string): { ref: string; attributed: string[] }[] {
+  const prior = new Map(priorEntries.map((entry: any) => [String(entry[key]), entry]));
+  const next = new Map(nextEntries.map((entry: any) => [String(entry[key]), entry]));
+  const changed: { ref: string; attributed: string[] }[] = [];
+  for (const ref of new Set([...prior.keys(), ...next.keys()])) {
+    const before = prior.get(ref);
+    const after = next.get(ref);
+    if (JSON.stringify(before) === JSON.stringify(after)) continue;
+    changed.push({ ref, attributed: [before?.projected_by, after?.projected_by].filter((value): value is string => typeof value === 'string') });
+  }
+  return changed;
+}
+
+/*
+ * FieldNow/FieldDay projection authority — the rule chosen, and why:
+ *
+ * The Participant contract (oi.participant/v1) declares no Workcell, so the
+ * module cannot bind a caller to "its own" Workcell from registration data.
+ * Ownership of a projected entry is therefore carried by attribution: every
+ * entry names the Participant that projected it (`projected_by`).
+ *
+ * - The field owner (actorParticipantRef '') may project, change or withdraw
+ *   any entry and the envelope (audience, provenance, FieldDay policy); every
+ *   entry it writes must still be attributed to a Participant of the field.
+ * - A Participant holding a live `contributor` grant bound to the caller may
+ *   add, change or withdraw only CHILD NOW entries (and FieldDay source Day /
+ *   NOW entries) attributed to itself — before and after the step — and may
+ *   advance cursors. It may not touch root NOW entries, another Participant's
+ *   entries, or the envelope.
+ * - Root NOW entries are owner-only: a root NOW is a Workcell's persistent
+ *   horizon, and with no declared Workcell binding on the Participant nothing
+ *   here could prove a contributor speaks for that Workcell. A child NOW is a
+ *   bounded undertaking the contributor itself projects and is answerable for.
+ * - Observers/contacts/admitters and non-participants project nothing.
+ */
+function requireFieldTimeProjectionAuthority(
+  ctx: any,
+  fieldRef: string,
+  actorParticipantRef: string,
+  rootDelta: { ref: string; attributed: string[] }[],
+  entryDeltas: { ref: string; attributed: string[] }[],
+  envelopeChanged: boolean,
+  schemaName: string
+): void {
+  if (!ctx.db.sharedFieldBacking.fieldRef.find(fieldRef)) fail(`Unknown SharedField semantic ref: ${fieldRef}`);
+  if (actorParticipantRef === '') {
+    requireFieldOwner(ctx, fieldRef);
+    for (const change of [...rootDelta, ...entryDeltas]) {
+      for (const participantRef of change.attributed) requireParticipantInField(ctx, participantRef, fieldRef);
+    }
+    return;
+  }
+  requireParticipantInField(ctx, actorParticipantRef, fieldRef);
+  requireParticipantAuthority(ctx, fieldRef, actorParticipantRef, ['contributor']);
+  if (isFieldOwner(ctx, fieldRef)) {
+    for (const change of [...rootDelta, ...entryDeltas]) {
+      for (const participantRef of change.attributed) requireParticipantInField(ctx, participantRef, fieldRef);
+    }
+    return;
+  }
+  if (envelopeChanged) fail(`Only the field owner may change the ${schemaName} audience, provenance or policy`);
+  if (rootDelta.length > 0) fail(`Only the field owner may project or withdraw root NOW refs (${rootDelta.map(change => change.ref).join(', ')})`);
+  for (const change of entryDeltas) {
+    if (change.attributed.some(participantRef => participantRef !== actorParticipantRef)) {
+      fail(`Participant ${actorParticipantRef} may only project or withdraw its own entries; ${change.ref} is attributed to ${change.attributed.join(', ')}`);
+    }
+  }
+}
+
+function callerAdmittedToFieldTime(ctx: any, fieldRef: string, contractJson: string): boolean {
+  const field = ctx.db.sharedFieldBacking.fieldRef.find(fieldRef);
+  if (!field || !callerCanSeeField(ctx, field)) return false;
+  if (isFieldOwner(ctx, fieldRef)) return true;
+  const contract = parseStoredJson(contractJson, 'field time contractJson');
+  const audience = projectionAudience(contract);
+  const callerRefs = callerPersistentParticipantRefs(ctx, fieldRef);
+  if (audience.visibility === 'public') return audience.refs.length === 0 || audience.refs.some(ref => callerRefs.has(ref));
+  if (audience.visibility === 'restricted') {
+    if (callerRefs.size === 0) return false;
+    return audience.refs.length === 0 || audience.refs.some(ref => callerRefs.has(ref));
+  }
+  if (audience.visibility === 'private') return callerRefs.size > 0 && audience.refs.some(ref => callerRefs.has(ref));
+  return false;
+}
+
+/* The current FieldNow of every caller-visible field whose audience admits
+ * the caller — filtered exactly as Projections/Explore entries are. */
+export const field_now = spacetimedb.view(
+  { name: 'field_now', public: true },
+  t.array(fieldNowBacking.rowType),
+  (ctx) => {
+    const rows: any[] = [];
+    for (const field of visibleFieldRows(ctx)) {
+      const row = ctx.db.fieldNowBacking.fieldRef.find(field.fieldRef);
+      if (row && callerAdmittedToFieldTime(ctx, row.fieldRef, row.contractJson)) rows.push(row);
+    }
+    return rows;
+  }
+);
+
+export const field_day = spacetimedb.view(
+  { name: 'field_day', public: true },
+  t.array(fieldDayBacking.rowType),
+  (ctx) => {
+    const rows: any[] = [];
+    for (const field of visibleFieldRows(ctx)) {
+      for (const row of ctx.db.fieldDayBacking.fieldRef.filter(field.fieldRef)) {
+        if (callerAdmittedToFieldTime(ctx, row.fieldRef, row.contractJson)) rows.push(row);
+      }
+    }
+    return rows;
+  }
+);
+
 function requireParticipantAuthority(ctx: any, fieldRef: string, participantRef: string, roles: string[]): any {
   const key = authorityKey(fieldRef, participantRef);
   const grant = ctx.db.fieldAuthority.authorityKey.find(key);
@@ -1650,6 +1994,7 @@ export const revoke_participant_authority = spacetimedb.reducer(
       if (follow.fieldRef === args.fieldRef) ctx.db.stageFollower.followKey.delete(follow.followKey);
     }
     ctx.db.fieldAuthority.authorityKey.delete(key);
+    withdrawParticipantFieldTime(ctx, args.fieldRef, args.participantRef);
     const readKey = audienceKey(args.fieldRef, args.participantRef);
     if (ctx.db.fieldReadGrant.audienceKey.find(readKey)) ctx.db.fieldReadGrant.audienceKey.delete(readKey);
   }
@@ -2637,3 +2982,107 @@ export const unfollow_shared_stage = spacetimedb.reducer(
     if (ctx.db.stageFollower.followKey.find(key)) ctx.db.stageFollower.followKey.delete(key);
   }
 );
+
+/* ---------- FieldNow / FieldDay reducers ---------- */
+
+function recordFieldNow(ctx: any, fieldRef: string, revision: bigint, contractJson: string, participantRef: string): void {
+  const now = nowMicros(ctx);
+  const row = { fieldRef, revision, contractJson, updatedByParticipantRef: participantRef, updatedAtMicros: now };
+  if (ctx.db.fieldNowBacking.fieldRef.find(fieldRef)) ctx.db.fieldNowBacking.fieldRef.update(row);
+  else ctx.db.fieldNowBacking.insert(row);
+  ctx.db.fieldNowRevision.insert({ revisionKey: `${fieldRef}@${revision}`, fieldRef, revision, contractJson, writtenByParticipantRef: participantRef, writtenAtMicros: now });
+}
+
+function recordFieldDay(ctx: any, dayKey: string, fieldRef: string, interval: any, revision: bigint, contractJson: string, participantRef: string): void {
+  const now = nowMicros(ctx);
+  const row = { dayKey, fieldRef, intervalStart: String(interval.start), intervalEnd: String(interval.end), revision, contractJson, updatedByParticipantRef: participantRef, updatedAtMicros: now };
+  if (ctx.db.fieldDayBacking.dayKey.find(dayKey)) ctx.db.fieldDayBacking.dayKey.update(row);
+  else ctx.db.fieldDayBacking.insert(row);
+  ctx.db.fieldDayRevision.insert({ revisionKey: `${dayKey}@${revision}`, dayKey, fieldRef, revision, contractJson, writtenByParticipantRef: participantRef, writtenAtMicros: now });
+}
+
+/* The revision-checked FieldNow projection. `expectedRevision` must equal the
+ * current revision (0 for a field's first FieldNow) and the contract must be
+ * exactly the next revision, so a stale projector is refused instead of
+ * silently replacing the collective reading. Every revision is kept as
+ * immutable history; the current row is what the View serves. */
+export const put_field_now = spacetimedb.reducer(
+  { fieldRef: t.string(), actorParticipantRef: t.string(), expectedRevision: t.u64(), contractJson: t.string() },
+  (ctx, args) => {
+    const current = ctx.db.fieldNowBacking.fieldRef.find(args.fieldRef);
+    const currentRevision = current ? current.revision : 0n;
+    if (currentRevision !== args.expectedRevision) {
+      fail(`FieldNow moved on: field is at revision ${currentRevision}, writer expected ${args.expectedRevision}`);
+    }
+    const nextRevision = currentRevision + 1n;
+    const contract = requireFieldTimeEnvelope(args.contractJson, FIELD_NOW_SCHEMA, args.fieldRef, nextRevision);
+    requireFieldNowShape(ctx, contract);
+    const prior = current ? parseStoredJson(current.contractJson, 'FieldNow contractJson') : null;
+    const rootDelta = attributedDelta(prior?.projected_root_now_refs ?? [], contract.projected_root_now_refs, 'now_ref');
+    const childDelta = attributedDelta(prior?.projected_child_now_refs ?? [], contract.projected_child_now_refs, 'now_ref');
+    const envelopeChanged = !prior
+      || JSON.stringify(prior.audience) !== JSON.stringify(contract.audience)
+      || JSON.stringify(prior.provenance) !== JSON.stringify(contract.provenance);
+    requireFieldTimeProjectionAuthority(ctx, args.fieldRef, args.actorParticipantRef, rootDelta, childDelta, envelopeChanged, FIELD_NOW_SCHEMA);
+    recordFieldNow(ctx, args.fieldRef, nextRevision, args.contractJson, args.actorParticipantRef);
+  }
+);
+
+/* One FieldDay per field interval; its interval and policy are the field's
+ * own aggregation relation and never rewrite a participant's local civil Day,
+ * which travels only as a projected source Day ref. */
+export const put_field_day = spacetimedb.reducer(
+  { fieldRef: t.string(), actorParticipantRef: t.string(), expectedRevision: t.u64(), contractJson: t.string() },
+  (ctx, args) => {
+    const probe = requireJsonObject(args.contractJson, FIELD_DAY_SCHEMA, FIELD_TIME_MAX_BYTES);
+    const interval = probe.interval ?? {};
+    const dayKey = `${args.fieldRef}|${String(interval.start ?? '')}|${String(interval.end ?? '')}`;
+    const current = ctx.db.fieldDayBacking.dayKey.find(dayKey);
+    const currentRevision = current ? current.revision : 0n;
+    if (currentRevision !== args.expectedRevision) {
+      fail(`FieldDay moved on: interval is at revision ${currentRevision}, writer expected ${args.expectedRevision}`);
+    }
+    const nextRevision = currentRevision + 1n;
+    const contract = requireFieldTimeEnvelope(args.contractJson, FIELD_DAY_SCHEMA, args.fieldRef, nextRevision);
+    requireFieldDayShape(ctx, contract);
+    const prior = current ? parseStoredJson(current.contractJson, 'FieldDay contractJson') : null;
+    const entryDelta = [
+      ...attributedDelta(prior?.projected_source_day_refs ?? [], contract.projected_source_day_refs, 'day_ref'),
+      ...attributedDelta(prior?.projected_now_refs ?? [], contract.projected_now_refs, 'now_ref'),
+    ];
+    const envelopeChanged = !prior
+      || JSON.stringify(prior.interval) !== JSON.stringify(contract.interval)
+      || JSON.stringify(prior.temporal_policy_provenance) !== JSON.stringify(contract.temporal_policy_provenance)
+      || JSON.stringify(prior.audience) !== JSON.stringify(contract.audience);
+    requireFieldTimeProjectionAuthority(ctx, args.fieldRef, args.actorParticipantRef, [], entryDelta, envelopeChanged, FIELD_DAY_SCHEMA);
+    recordFieldDay(ctx, dayKey, args.fieldRef, contract.interval, nextRevision, args.contractJson, args.actorParticipantRef);
+  }
+);
+
+/* Revocation removes shared availability without deleting local source: a
+ * revoked Participant's projected entries leave the current FieldNow/FieldDay
+ * in a server-authored next revision (history keeps what was projected). */
+function withdrawParticipantFieldTime(ctx: any, fieldRef: string, participantRef: string): void {
+  const keep = (entries: any[]) => entries.filter((entry: any) => entry.projected_by !== participantRef);
+  const now = ctx.db.fieldNowBacking.fieldRef.find(fieldRef);
+  if (now) {
+    const contract = parseStoredJson(now.contractJson, 'FieldNow contractJson');
+    const roots = keep(contract.projected_root_now_refs ?? []);
+    const children = keep(contract.projected_child_now_refs ?? []);
+    if (roots.length !== contract.projected_root_now_refs.length || children.length !== contract.projected_child_now_refs.length) {
+      const nextRevision = now.revision + 1n;
+      const next = { ...contract, revision: Number(nextRevision), projected_root_now_refs: roots, projected_child_now_refs: children };
+      recordFieldNow(ctx, fieldRef, nextRevision, JSON.stringify(next), '');
+    }
+  }
+  for (const day of Array.from(ctx.db.fieldDayBacking.fieldRef.filter(fieldRef)) as any[]) {
+    const contract = parseStoredJson(day.contractJson, 'FieldDay contractJson');
+    const dayRefs = keep(contract.projected_source_day_refs ?? []);
+    const nowRefs = keep(contract.projected_now_refs ?? []);
+    if (dayRefs.length !== contract.projected_source_day_refs.length || nowRefs.length !== contract.projected_now_refs.length) {
+      const nextRevision = day.revision + 1n;
+      const next = { ...contract, revision: Number(nextRevision), projected_source_day_refs: dayRefs, projected_now_refs: nowRefs };
+      recordFieldDay(ctx, day.dayKey, fieldRef, contract.interval, nextRevision, JSON.stringify(next), '');
+    }
+  }
+}

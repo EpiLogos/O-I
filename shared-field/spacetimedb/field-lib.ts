@@ -35,6 +35,8 @@ export const SUBSCRIPTION = [
   'SELECT * FROM shared_stage',
   'SELECT * FROM my_stage_follow',
   'SELECT * FROM field_presence',
+  'SELECT * FROM field_now',
+  'SELECT * FROM field_day',
 ];
 const TIMEOUT_MS = Number(process.env.OI_SHARED_FIELD_TIMEOUT_MS ?? 15_000);
 export const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
@@ -171,12 +173,40 @@ export function fieldSnapshot(client: Client) {
     stages: rows(db.sharedStage).map(stageReading),
     my_stage_follows: rows(db.myStageFollow).map((row: any) => ({ stage_ref: row.stageRef, field_ref: row.fieldRef, follower_participant_ref: row.followerParticipantRef, followed_at_revision: Number(row.followedAtRevision) })),
     presence: rows(db.fieldPresence).map((row: any) => ({ field_ref: row.fieldRef, participant_ref: row.participantRef, state: row.state, updated_at_micros: String(row.updatedAtMicros) })),
-    counts: { fields: hosted.fields.length, participants: hosted.participants.length, projections: hosted.projections.length, entries: hosted.entries.length, relations: hosted.relations.length },
+    field_now: rows(db.fieldNow).map(fieldNowReading),
+    field_day: rows(db.fieldDay).map(fieldDayReading),
+    counts: { fields: hosted.fields.length, participants: hosted.participants.length, projections: hosted.projections.length, entries: hosted.entries.length, relations: hosted.relations.length, field_now: rows(db.fieldNow).length, field_day: rows(db.fieldDay).length },
     // The SharedField each Explore entry is hosted in (the row's fieldRef;
     // the entry contract itself carries no field) — what a Watch or a
     // membership reading is scoped to. Keyed by the entry's semantic ref.
     entry_fields: Object.fromEntries(rows(db.exploreEntry).map((row: any) => [row.semanticRef, row.fieldRef])),
     relation_fields: Object.fromEntries(rows(db.exploreRelation).flatMap((row: any) => { const relation = parse(row.relationJson); return relation?.relation_ref ? [[relation.relation_ref, row.fieldRef]] : []; })),
+  };
+}
+
+/** The collective FieldNow of one field as the caller reads it: server
+ * revision/attribution plus the `oi.field-now/v1` contract (refs only). */
+export function fieldNowReading(row: any) {
+  return {
+    schema: 'oi.shared-field.field-now-reading/v1',
+    field_ref: row.fieldRef,
+    revision: Number(row.revision),
+    contract: parse(row.contractJson),
+    updated_by_participant_ref: row.updatedByParticipantRef || null,
+    updated_at_micros: String(row.updatedAtMicros),
+  };
+}
+
+/** One FieldDay aggregation interval as the caller reads it. */
+export function fieldDayReading(row: any) {
+  return {
+    schema: 'oi.shared-field.field-day-reading/v1',
+    field_ref: row.fieldRef,
+    interval: { start: row.intervalStart, end: row.intervalEnd },
+    revision: Number(row.revision),
+    contract: parse(row.contractJson),
+    updated_by_participant_ref: row.updatedByParticipantRef || null,
+    updated_at_micros: String(row.updatedAtMicros),
   };
 }
 

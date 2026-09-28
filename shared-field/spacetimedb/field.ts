@@ -34,8 +34,14 @@
  *   stage-close   {stage, expected_revision, actor_participant_ref?}   close the open stage
  *   stage-follow  {field_ref, stage_ref, follower_participant_ref}      follow the open stage now
  *   stage-unfollow {field_ref, stage_ref, follower_participant_ref}     unfollow and keep a local view
+ *   field-now     {field_ref}           the field's collective FieldNow (or null) as the caller may read it
+ *   field-now-put {field_now, expected_revision, actor_participant_ref?}  project one revision-checked `oi.field-now/v1` step ('' / absent actor = field owner)
+ *   field-day     {field_ref}           the field's FieldDay intervals as the caller may read them
+ *   field-day-put {field_day, expected_revision?, actor_participant_ref?} project one revision-checked `oi.field-day/v1` step
+ *   grant-read    {field_ref, participant_ref}   owner: admit a persistently-authorised Participant to read a PRIVATE field
+ *   revoke-read   {field_ref, participant_ref}   owner: withdraw that read admission
  */
-import { bindingFile, close, fieldSnapshot, hostingTargets, open, publishArgs, readRef, resolveTarget, rows, stageReading, stageView, waitUntil } from './field-lib';
+import { bindingFile, close, fieldDayReading, fieldNowReading, fieldSnapshot, hostingTargets, open, publishArgs, readRef, resolveTarget, rows, stageReading, stageView, waitUntil } from './field-lib';
 import { mkdirSync, rmSync, writeFileSync } from 'node:fs';
 import { dirname } from 'node:path';
 import { createProjection } from '../index.mjs';
@@ -228,6 +234,44 @@ try {
       await reducers.unfollowSharedStage({ fieldRef: request.field_ref, stageRef: request.stage_ref, followerParticipantRef: request.follower_participant_ref });
       await waitUntil(() => !rows(db.myStageFollow).some((candidate: any) => candidate.stageRef === request.stage_ref && candidate.followerParticipantRef === request.follower_participant_ref), 'the follow row to clear');
       await emit({ ok: true, data: { schema: 'oi.shared-field.stage-follow-result/v1', stage_ref: request.stage_ref, field_ref: request.field_ref, follower_participant_ref: request.follower_participant_ref, followed_at_revision: null, following: false } });
+    }
+    case 'field-now': {
+      if (typeof request.field_ref !== 'string' || !request.field_ref) await emit({ ok: false, error: { kind: 'malformed', message: 'field-now requires `field_ref`' } });
+      const row = rows(db.fieldNow).find((candidate: any) => candidate.fieldRef === request.field_ref);
+      await emit({ ok: true, data: row ? fieldNowReading(row) : { schema: 'oi.shared-field.field-now-reading/v1', field_ref: request.field_ref, revision: 0, contract: null } });
+    }
+    case 'field-now-put': {
+      const { validateFieldNow } = await import('../field-now.mjs');
+      const fieldNow = validateFieldNow(request.field_now);
+      if (!Number.isInteger(request.expected_revision)) await emit({ ok: false, error: { kind: 'malformed', message: 'field-now-put requires the integer `expected_revision` the projector read (0 for a first FieldNow)' } });
+      if (fieldNow.revision !== request.expected_revision + 1) await emit({ ok: false, error: { kind: 'malformed', message: `field-now-put contract must be revision ${request.expected_revision + 1}` } });
+      await reducers.putFieldNow({ fieldRef: fieldNow.field_ref, actorParticipantRef: request.actor_participant_ref ?? '', expectedRevision: BigInt(request.expected_revision), contractJson: JSON.stringify(fieldNow) });
+      const row = await waitUntil(() => rows(db.fieldNow).find((candidate: any) => candidate.fieldRef === fieldNow.field_ref && Number(candidate.revision) >= fieldNow.revision), `FieldNow ${fieldNow.field_ref} at revision ${fieldNow.revision}`);
+      await emit({ ok: true, data: { ...fieldNowReading(row), schema: 'oi.shared-field.field-now-result/v1' } });
+    }
+    case 'field-day': {
+      if (typeof request.field_ref !== 'string' || !request.field_ref) await emit({ ok: false, error: { kind: 'malformed', message: 'field-day requires `field_ref`' } });
+      await emit({ ok: true, data: { schema: 'oi.shared-field.field-day-list/v1', field_ref: request.field_ref, days: rows(db.fieldDay).filter((candidate: any) => candidate.fieldRef === request.field_ref).map(fieldDayReading) } });
+    }
+    case 'field-day-put': {
+      const { validateFieldDay, fieldDayKey } = await import('../field-now.mjs');
+      const fieldDay = validateFieldDay(request.field_day);
+      const expected = request.expected_revision ?? fieldDay.revision - 1;
+      if (!Number.isInteger(expected) || fieldDay.revision !== expected + 1) await emit({ ok: false, error: { kind: 'malformed', message: 'field-day-put contract must be exactly expected_revision + 1' } });
+      await reducers.putFieldDay({ fieldRef: fieldDay.field_ref, actorParticipantRef: request.actor_participant_ref ?? '', expectedRevision: BigInt(expected), contractJson: JSON.stringify(fieldDay) });
+      const key = fieldDayKey(fieldDay);
+      const row = await waitUntil(() => rows(db.fieldDay).find((candidate: any) => candidate.dayKey === key && Number(candidate.revision) >= fieldDay.revision), `FieldDay ${key} at revision ${fieldDay.revision}`);
+      await emit({ ok: true, data: { ...fieldDayReading(row), schema: 'oi.shared-field.field-day-result/v1' } });
+    }
+    case 'grant-read':
+    case 'revoke-read': {
+      if (typeof request.field_ref !== 'string' || typeof request.participant_ref !== 'string') await emit({ ok: false, error: { kind: 'malformed', message: `${request.kind} requires \`field_ref\` and \`participant_ref\`` } });
+      // The read-audience table is deliberately unsubscribable (no View), so
+      // the owner reducer's successful completion is the native receipt —
+      // as with `withdraw`. The grantee's own views are what change.
+      if (request.kind === 'grant-read') await reducers.grantFieldRead({ fieldRef: request.field_ref, participantRef: request.participant_ref });
+      else await reducers.revokeFieldRead({ fieldRef: request.field_ref, participantRef: request.participant_ref });
+      await emit({ ok: true, data: { schema: 'oi.shared-field.read-grant-result/v1', field_ref: request.field_ref, participant_ref: request.participant_ref, state: request.kind === 'grant-read' ? 'granted' : 'revoked' } });
     }
     default:
       await emit({ ok: false, error: { kind: 'malformed', message: `unknown request kind: ${request.kind}` } });
