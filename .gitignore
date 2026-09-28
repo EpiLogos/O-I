@@ -40,3 +40,7 @@ packages/oi-design-system/node_modules/
 
 # Landing gate receipts are machine-local evidence
 gates/receipts/
+
+# NOW clearings are machine-local generated state (and may hold team-visible
+# material); they never enter this public repository.
+ProjectCentral/agents/now/

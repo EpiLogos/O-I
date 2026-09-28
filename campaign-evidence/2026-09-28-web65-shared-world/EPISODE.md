@@ -60,3 +60,52 @@ packets: [c0/packets.json](c0/packets.json). Experience suite 94/94.
 Still open: the window reopens at a ~125×184 frame and needs Window ▸ Zoom;
 `oi desktop install` has no in-place upgrade (remove + install used,
 receipted); narrow layout and reduced-motion not yet walked.
+
+## 5. B — discover and enter from World B (Omarchy)
+
+World B is an independently authorised test World on workcell:omarchy:
+its own transport identity (`c2003b57…`, state home separate from the
+Mac's), its own AIKit home, Participant `participant:world-b:omarchy:a04-mask`.
+A third identity on Omarchy (`c200f11b…`) is the control.
+
+| | World B | third identity |
+|---|---|---|
+| public World A | 25 entries / 26 relations | 25 / 26 |
+| private undertaking `oi:field:central:project:O-I:undertaking:a04-mask` (after grant-read) | fields 2, projections 4 (+FieldNow r1), entries 35 | fields 1, projections 1, no undertaking entries, relations or counts |
+
+Repairs this step needed, each followed by replay: `ed6a2c5b` (wiki space
+membership from either side), `ee2dc13e` (re-projection keeps an audience
+change), region qualification after the hosted module refused one entry in
+two fields (`publish` is not atomic across reducers — orphaned r1 withdrawn
+with its reason).
+
+## 6. C — World B joins with its own Agent and does useful work
+
+| | |
+|---|---|
+| Undertaking NOW | `central:now:project:O-I:e4b628b8…` (child of the workcell:mac root NOW), projected as FieldNow r1 of the private field |
+| Shared sources | A04 @`4d3e93cce1d87aa1`, A04′ @`d3a083e0ed98c235` via `projectcentral.wiki.source.read` (EpiLogos/Central#234) → curated artifacts `ebfbe859` |
+| Prepared context | `participant-context.mjs` from B's own transport only (purpose, 2 sources × 7 sections, 8 constituents, contribution law; no verifier expectations) |
+| Body | Claude Code on Omarchy, GLM Coding Plan route, served model `glm-5.3-flash`, session `fe893569…`, 16 turns ([task](world-b/run-1-TASK.md)) |
+| Work | 718-word source-grounded account of A04′ ↔ A04 and the relation `A04′ —re-sites→ A04` (full text kept in the undertaking's NOW T destination, not in this public repository — the sources are team-visible) |
+| Submission | two Contributions through B's transport, basis-pinned, agency = the Agent + session ([receipts](world-b/run-1-submission.json)) → quarantined |
+
+## 7. E — review, native Return, reprojection
+
+| | |
+|---|---|
+| Review (World A Agent) | every genuine quotation verbatim in the revisioned sources; one paraphrase quoted as source corrected ("disclosure of the viewer" → "… situated viewer" [A04 #0]) |
+| Admission | both admitted into the private audience with the review as evidence; B's own receipts read `admitted` |
+| Native Return | `aikit wiki maintenance` (CAS + readback) upserted `wiki:node:contemplation/a04p-re-sites-a04-2026-09-28` and edges `A04′ —re-sites→ A04`, `—explains→` both, origin `inferred`, provenance = corpus revisions + Contribution refs + contributor/Agent/session + review standing (agent-reviewed; human recognition pending) |
+| Owner defect found | Central's wiki reading carried no WikiEdges at all (3,711 `references` + typed edges invisible) → `knowledge_edges` (EpiLogos/Central#234, `bffa9f6`), O:I projects them between selected nodes (`4c1f69de`) |
+| Reprojection | region r4: refinement node + `wiki.edge/re-sites` (edge_origin_ref = the admitted Contribution) + `explains` + authored `references`; World B reads it |
+
+## 8. E — practice adoption and fresh-body uptake
+
+| | |
+|---|---|
+| Offer | region r5 offers `skill/ql/darshana` to the undertaking audience only; body `sha256:6072bc7c…` published only because AIKit's capsule revision `f3d55f2f…` was recomputed and matched |
+| Adoption (World B) | `adopt-practice.mjs` into World B's own AIKit home: source `adopted-darshana-f3d55f2f9ec7`, original identity/revision/Projection r5 retained, World B adaptation as an AIKit overlay under `local_differences` ([record](world-b/adoption.json)); root spellings repaired for World B's older AIKit (`695544d3`) |
+| Fresh body | new session `8b8c0d0c…` bound to the AIKit generation projection (`--add-dir`, AIKit's own Claude binding) on the related input A05 ↔ A05′ (shared in region r6) ([task](world-b/run-2-TASK.md)) |
+| Uptake observed | the session invoked `Skill(darshana)`, applied World B's adaptation as its reading discipline, looked for the uncarried `darshana.py` and applied the practice as method; used the accepted A04 work as its pattern and relation vocabulary; proposed `A05′ —re-sites→ A05` with its own qualifications (784 words) → two new Contributions quarantined ([receipts](world-b/run-2-submission.json)) |
+| Owner gap now built | payload scripts did not travel → `aikit praxis read` / `skill export` / `source add-capsule` preserving revision, mode and upstream provenance (EpiLogos/ai-kit#455) |
