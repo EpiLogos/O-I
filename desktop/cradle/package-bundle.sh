@@ -128,12 +128,18 @@ if [ "${SKIP_BUILD}" -eq 0 ]; then
   fi
 fi
 
+# Paths are tested directly, never word-split: a target root such as the
+# managed cache under "Application Support" contains spaces.
+MACOS_APP=""
+APPIMAGE=""
 if [ "${TARGET}" = "aarch64-apple-darwin" ]; then
-  MACOS_APP="$(ls -d ${MACOS_APP_PATH} 2>/dev/null | head -1 || true)"
+  [ -d "${MACOS_APP_PATH}" ] && MACOS_APP="${MACOS_APP_PATH}"
   [ -n "${MACOS_APP}" ] || die "no .app found at ${MACOS_APP_PATH}; run the tauri build first (or drop --skip-build)"
+  [ -f "${MACOS_APP}/Contents/Resources/shared-field/field-client.sh" ] || die "${MACOS_APP} carries no shared-field/ client resource; the installed Explore would have no SharedField client"
 else
-  MACOS_APP=""
-  APPIMAGE="$(ls ${APPIMAGE_GLOB} 2>/dev/null | head -1 || true)"
+  for candidate in "${TARGET_ROOT}"/release/bundle/appimage/*.AppImage; do
+    if [ -f "${candidate}" ]; then APPIMAGE="${candidate}"; break; fi
+  done
   [ -n "${APPIMAGE}" ] || die "no AppImage found at ${APPIMAGE_GLOB}; run the tauri build first (or drop --skip-build)"
 fi
 
@@ -147,6 +153,11 @@ if [ -n "${MACOS_APP}" ]; then
   cp -R "${MACOS_APP}" "${BUNDLE_ROOT}/app/O-I.app"
 else
   cp "${APPIMAGE}" "${BUNDLE_ROOT}/app/oi-cradle.AppImage"
+fi
+if [ -n "${MACOS_APP}" ]; then
+  [ -n "$(find "${BUNDLE_ROOT}/app/O-I.app/Contents/MacOS" -type f -perm -u+x 2>/dev/null | head -1)" ] || die "the staged O-I.app has no executable; refusing to package an empty application"
+else
+  [ -s "${BUNDLE_ROOT}/app/oi-cradle.AppImage" ] || die "the staged AppImage is empty"
 fi
 cp "${TAURI_DIR}/icons/icon.png" "${BUNDLE_ROOT}/app/icon.png"
 cp "${FOOTPRINT}" "${BUNDLE_ROOT}/footprint.json"
