@@ -11,6 +11,8 @@ import type {ReactNode} from "react";
 import type {HostedProjection,HostedRelation,SharedFieldReading} from "../knowledge/shared-field";
 import {WorldPresentationView,type WorldPresentation} from "./presentation";
 import {KnowledgeEncounter} from "./KnowledgeEncounter";
+import {ConstituentEncounter,constituentOf} from "./ConstituentEncounter";
+import type {HostedEntry} from "../knowledge/shared-field";
 // @ts-ignore -- language-neutral desktop reading over the field client's contracts.
 import {primaryProjection,relationsOf} from "./field.mjs";
 
@@ -33,7 +35,7 @@ function RepresentationFallback({projection}:{projection:HostedProjection}) {
   </article>;
 }
 
-export function PresentationBody({reading,relations,onOpenRef,depth,onDepth,watch,strip}:{reading:SharedFieldReading;relations:HostedRelation[];onOpenRef:(ref:string)=>void;depth:DepthState;onDepth:(change:DepthState)=>void;watch?:WatchControl;strip?:ReactNode}) {
+export function PresentationBody({reading,relations,entries=[],onOpenRef,depth,onDepth,watch,strip}:{reading:SharedFieldReading;relations:HostedRelation[];entries?:HostedEntry[];onOpenRef:(ref:string)=>void;depth:DepthState;onDepth:(change:DepthState)=>void;watch?:WatchControl;strip?:ReactNode}) {
   if(reading.state==="unavailable")return <section className="presentation-body" data-presentation-state="unavailable">{strip}<p role="status" className="explore-unavailable">{reading.owner_operation} is unavailable — {reading.detail}</p></section>;
   if(reading.state==="absent")return <section className="presentation-body" data-presentation-state="absent">{strip}<p role="status" className="explore-absent">The field at {reading.target.uri}/{reading.target.database} holds no entry for <code>{reading.ref}</code>.</p></section>;
   const projection=primaryProjection(reading) as HostedProjection|null;
@@ -45,7 +47,11 @@ export function PresentationBody({reading,relations,onOpenRef,depth,onDepth,watc
   const touching=relationsOf([...relations,...reading.relations.filter(relation=>!relations.some(known=>known.from===relation.from&&known.to===relation.to&&known.relation===relation.relation))],reading.entry.ref) as {relation:string;origin:string;direction:string;other:string}[];
   const neighbourhood=reading.neighbourhood as {resource?:unknown;relations?:{nodes?:{ref:string;label?:string;kind?:string}[];edges?:{from:string;to:string;relation:string}[]};actions?:string[];error?:string}|null;
   const knowledge=reading.entry.kind==="wiki-node"||reading.entry.kind==="wiki-space";
-  const primary=<>
+  // A chosen world constituent is the primary material; its World page is
+  // one step away, never a stand-in for it.
+  const constituent=constituentOf(reading.entry,[...relations,...reading.relations],entries.length?entries:[reading.entry]);
+  const worldLabel=entries.find(entry=>entry.ref===reading.entry.world_ref)?.label;
+  const primary=constituent?<ConstituentEncounter reading={constituent} worldLabel={worldLabel} onOpenRef={onOpenRef}/>:<>
     {!projection&&<article className="world-presentation world-presentation--fallback" data-renderer-state="no-projection"><header className="world-presentation__masthead"><div><div className="world-component__eyebrow">Projected subject</div><h1>{reading.entry.label}</h1></div></header><section className="world-region"><div className="world-region__components"><article className="world-component world-component--text"><p>{reading.entry.summary??"No published Projection names this entry or its world yet."}</p></article></div></section></article>}
     {projection&&projection.state!=="published"&&<article className="world-presentation world-presentation--fallback" data-renderer-state="withdrawn"><header className="world-presentation__masthead"><div><div className="world-component__eyebrow">Projection withdrawn</div><h1>{reading.entry.label}</h1></div></header><section className="world-region"><div className="world-region__components"><article className="world-component world-component--text"><p>This shared presentation is no longer available.</p></article></div></section></article>}
     {current&&presentation&&<WorldPresentationView presentation={presentation} onOpenRef={onOpenRef}/>}

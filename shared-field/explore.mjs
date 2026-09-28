@@ -102,9 +102,38 @@ function subsequenceScore(query, candidate) {
   return qi === query.length ? Math.max(1, 30 - Math.max(0, candidate.length - query.length)) : 0;
 }
 
+// The ordinary words a person uses for a kind of projected subject. A kind
+// word ranks below every name/summary match: it finds the subject, it never
+// outranks one that names the words.
+const KIND_WORDS = {
+  'world-position': ['agent', 'agents', 'position', 'positions', 'being', 'beings', 'occupant'],
+  workcell: ['workcell', 'workcells', 'machine', 'machines', 'place'],
+  practice: ['practice', 'practices', 'skill', 'skills', 'method', 'methods', 'repertoire'],
+  activity: ['activity', 'activities', 'run', 'runs', 'work', 'undertaking'],
+  constellation: ['constellation', 'constellations', 'knowledge'],
+  'wiki-node': ['wiki', 'knowledge', 'page'],
+  'wiki-space': ['wiki', 'knowledge'],
+  'central-world': ['world', 'worlds'],
+  'curated-artifact': ['artifact', 'artifacts', 'page'],
+};
+
+function wordScore(word, entry, fields) {
+  if (fields.some((field) => field.includes(word))) return 60;
+  return (KIND_WORDS[entry.kind] ?? []).includes(word) ? 40 : 0;
+}
+
 function scoreCandidate(query, entry) {
   const q = normalize(query);
   if (!q) return 1;
+  const whole = scoreWhole(q, entry);
+  if (whole > 0) return whole;
+  const words = q.split(/\s+/).filter(Boolean);
+  const fields = [entry.ref, entry.label, ...entry.aliases, entry.summary ?? ''].map(normalize);
+  const scores = words.map((word) => wordScore(word, entry, fields));
+  return scores.every((score) => score > 0) ? Math.min(...scores) : 0;
+}
+
+function scoreWhole(q, entry) {
   const fields = [entry.ref, entry.label, ...entry.aliases].map(normalize);
   let score = 0;
   for (const [index, field] of fields.entries()) {
