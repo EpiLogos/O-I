@@ -165,3 +165,30 @@ gateway on the same build (next).
 | Omarchy → Aletheia-5 (durable) | held with `unanswered: workcell:mac` |
 | Cause | TCP to the Mac gateway opens but the WebSocket upgrade is never answered: the macOS application firewall queues inbound connections to the newly installed ad-hoc-signed `aikit` (the allowance is keyed to the content-addressed binary path and lapses on every update) |
 | Owner action | allow `…/Application Support/OI/products/ai-kit/<eeaab031 hash>/bin/aikit` for incoming connections, or front the gateway with a stable path (Tailscale serve to loopback / a stable signing identity). Mac → Omarchy is unaffected. |
+
+## 13. Independent review of the lane, hardening, republication
+
+An independent read-only review of EpiLogos/O-I#550 found two medium and
+five low defects; all were fixed with tests that fail without the fix
+(`b8a213df`…`139e484f`, `a339db28`, `cc3dac33`, `78cba60a`, `440be931`,
+`e80ce038`), proved live on `frank-acceptance`, then deployed to `hosted`:
+
+- a contributor could overwrite the owner's activity-liveness row and probe
+  private entries → only the row's own producer (or the owner) may write it;
+  invisible and absent entries return the same refusal;
+- constituent entries (Workcell, practice + capsule, activity) ignored the
+  Projection audience → every World-publication entry names its Projection
+  and is served to that Projection's audience;
+- capsule leak scan: full local-path set, base64 files decoded and scanned;
+- release A2A runner never resolves a relative path; participant context
+  bases a contribution only on this field's Projection; knowledge-edge
+  provenance carries no foreign refs; a local path redacted from this ledger
+  and its first screenshot.
+
+Republished on the hardened module: World A r3, undertaking region r8,
+artifacts A04/A04′/A05/A05′ r2. After republication: owner 42 entries /
+59 relations; World B identical, including the offered capsule and the
+activity liveness row; the ungranted identity sees only the public world.
+Remaining: curated-artifact entries still carry no `projection_ref` (their
+Projection's subject is the artifact, which the module's lineage rule does
+not yet cover); their audience currently equals the field's read grants.
