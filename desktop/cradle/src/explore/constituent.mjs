@@ -10,6 +10,8 @@
  * Projection never carries (`grant: none`).
  */
 
+import { activityReading } from '../../../../shared-field/activity-liveness.mjs';
+
 export const CONSTITUENT_KINDS = new Set(['world-position', 'workcell', 'practice', 'activity']);
 
 const text = (value) => (typeof value === 'string' && value ? value : undefined);
@@ -30,7 +32,7 @@ function related(entry, relations, entries, relation, direction) {
 }
 
 /** @returns {null | {role: 'being'|'thing', kind: string, ref: string, title: string, facts: {label: string, value: string}[], groups: {title: string, items: {ref: string, label: string, kind: string, note?: string}[]}[], world_ref: string, standing: string}} */
-export function constituentReading(entry, relations = [], entryList = []) {
+export function constituentReading(entry, relations = [], entryList = [], live = {}) {
   if (!entry || !CONSTITUENT_KINDS.has(entry.kind)) return null;
   const entries = new Map(entryList.map((row) => [row.ref, row]));
   const meta = record(entry.meta);
@@ -75,12 +77,15 @@ export function constituentReading(entry, relations = [], entryList = []) {
   }
   fact('Run', text(meta.run_ref));
   fact('Custody', text(meta.custody_ref));
-  fact('State', text(meta.state));
-  fact('Liveness', text(meta.liveness));
+  // Liveness is what the owner-side producer holds in the field now, never
+  // the publication's claim (activity-liveness.mjs).
+  const reading = activityReading({ entry, liveness_rows: live.activity_liveness ?? [], now_ms: live.now_ms ?? Date.now() });
+  fact('Liveness', reading.liveness === 'live' ? `live — owner state ${reading.owner_state ?? '?'} at revision ${reading.owner_revision ?? '?'}` : reading.liveness === 'stale' ? 'stale — its producer stopped heartbeating' : reading.liveness === 'disconnected' ? 'disconnected — published as live, but no producer holds it now' : 'static — a publication reading');
+  fact('State', text(reading.owner_state) ?? text(meta.state));
   fact('Purpose', text(meta.purpose_summary));
   const participants = related(entry, relations, entries, 'oi.activity/participant', 'out');
   group('Participants', participants, (item) => text(item.meta.handle));
   if (!participants.length) fact('Participants', 'none attested by the owner');
   group('Works on', related(entry, relations, entries, 'oi.activity/works-on', 'out'));
-  return { role: 'thing', kind: entry.kind, ref: entry.ref, title: entry.label, facts, groups, world_ref: entry.world_ref, standing: 'Activity' };
+  return { role: 'thing', kind: entry.kind, ref: entry.ref, title: entry.label, facts, groups, world_ref: entry.world_ref, standing: 'Activity', liveness: reading.liveness };
 }

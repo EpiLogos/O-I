@@ -52,3 +52,12 @@ test('a relation carried by both the field view and the reading is one item', ()
   const reading = constituentReading(entries[0], [...relations, ...relations], entries);
   assert.deepEqual(reading.groups[0].items.map((i) => i.ref), [entries[1].ref]);
 });
+
+test('an activity reads liveness from its hosted producer, never from the publication claim', () => {
+  const claimed = { ...entries[3], meta: { ...entries[3].meta, liveness: 'live', liveness_basis: 'publication' } };
+  const none = constituentReading(claimed, relations, entries, { activity_liveness: [], now_ms: 1_000_000 });
+  assert.equal(none.liveness, 'disconnected');
+  const held = constituentReading(claimed, relations, entries, { now_ms: 1_000_000, activity_liveness: [{ activity_ref: claimed.ref, field_ref: 'oi:field:x', owner_state: 'running', owner_revision: 4, heartbeat_at_micros: String(999_000 * 1000), observed_at_micros: String(999_000 * 1000) }] });
+  assert.equal(held.liveness, 'live', JSON.stringify(held.facts));
+  assert.match(held.facts.find((f) => f.label === 'Liveness').value, /running/);
+});

@@ -11,12 +11,12 @@ import {constituentReading} from "./constituent.mjs";
 
 interface Reading {role:"being"|"thing";kind:string;ref:string;title:string;standing:string;world_ref:string;facts:{label:string;value:string}[];groups:{title:string;items:{ref:string;label:string;kind:string;note?:string}[]}[]}
 
-export function constituentOf(entry:HostedEntry,relations:HostedRelation[],entries:HostedEntry[]):Reading|null {
-  return constituentReading(entry,relations,entries) as Reading|null;
+export function constituentOf(entry:HostedEntry,relations:HostedRelation[],entries:HostedEntry[],activityLiveness:unknown[]=[]):Reading|null {
+  return constituentReading(entry,relations,entries,{activity_liveness:activityLiveness,now_ms:Date.now()}) as Reading|null;
 }
 
 export function ConstituentEncounter({reading,worldLabel,onOpenRef}:{reading:Reading;worldLabel?:string;onOpenRef:(ref:string)=>void}) {
-  return <article className="world-presentation world-constituent" data-constituent-role={reading.role} data-constituent-kind={reading.kind} data-subject-ref={reading.ref}>
+  return <article className="world-presentation world-constituent" data-liveness={(reading as {liveness?:string}).liveness} data-constituent-role={reading.role} data-constituent-kind={reading.kind} data-subject-ref={reading.ref}>
     <header className="world-presentation__masthead"><div>
       <div className="world-component__eyebrow">{reading.standing}</div>
       <h1>{reading.title}</h1>

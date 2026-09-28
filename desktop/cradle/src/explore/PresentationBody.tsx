@@ -35,7 +35,7 @@ function RepresentationFallback({projection}:{projection:HostedProjection}) {
   </article>;
 }
 
-export function PresentationBody({reading,relations,entries=[],onOpenRef,depth,onDepth,watch,strip}:{reading:SharedFieldReading;relations:HostedRelation[];entries?:HostedEntry[];onOpenRef:(ref:string)=>void;depth:DepthState;onDepth:(change:DepthState)=>void;watch?:WatchControl;strip?:ReactNode}) {
+export function PresentationBody({reading,relations,entries=[],activityLiveness=[],onOpenRef,depth,onDepth,watch,strip}:{reading:SharedFieldReading;relations:HostedRelation[];entries?:HostedEntry[];activityLiveness?:unknown[];onOpenRef:(ref:string)=>void;depth:DepthState;onDepth:(change:DepthState)=>void;watch?:WatchControl;strip?:ReactNode}) {
   if(reading.state==="unavailable")return <section className="presentation-body" data-presentation-state="unavailable">{strip}<p role="status" className="explore-unavailable">{reading.owner_operation} is unavailable — {reading.detail}</p></section>;
   if(reading.state==="absent")return <section className="presentation-body" data-presentation-state="absent">{strip}<p role="status" className="explore-absent">The field at {reading.target.uri}/{reading.target.database} holds no entry for <code>{reading.ref}</code>.</p></section>;
   const projection=primaryProjection(reading) as HostedProjection|null;
@@ -49,7 +49,7 @@ export function PresentationBody({reading,relations,entries=[],onOpenRef,depth,o
   const knowledge=reading.entry.kind==="wiki-node"||reading.entry.kind==="wiki-space";
   // A chosen world constituent is the primary material; its World page is
   // one step away, never a stand-in for it.
-  const constituent=constituentOf(reading.entry,[...relations,...reading.relations],entries.length?entries:[reading.entry]);
+  const constituent=constituentOf(reading.entry,[...relations,...reading.relations],entries.length?entries:[reading.entry],activityLiveness);
   const worldLabel=entries.find(entry=>entry.ref===reading.entry.world_ref)?.label;
   const primary=constituent?<ConstituentEncounter reading={constituent} worldLabel={worldLabel} onOpenRef={onOpenRef}/>:<>
     {!projection&&<article className="world-presentation world-presentation--fallback" data-renderer-state="no-projection"><header className="world-presentation__masthead"><div><div className="world-component__eyebrow">Projected subject</div><h1>{reading.entry.label}</h1></div></header><section className="world-region"><div className="world-region__components"><article className="world-component world-component--text"><p>{reading.entry.summary??"No published Projection names this entry or its world yet."}</p></article></div></section></article>}
