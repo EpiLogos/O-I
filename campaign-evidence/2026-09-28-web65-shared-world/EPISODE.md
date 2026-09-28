@@ -16,7 +16,7 @@ here claims H.
 | Installed | oi `76af402b`; desktop bundle `source_revision 9905eac4` (built in env-3, 2026-09-27) |
 | Driven with | cua-driver 0.28 against `org.epilogos.oi.cradle` (pid-scoped click/screenshot) |
 | Act | Welcome → rail **Explore** |
-| Observed | Explore Surface opens with query `agents`, status `unavailable`: "SharedField client failed (exit status: 1): /Users/admin/Central/worktrees/env-3/o-i/desktop/cradle/kernel/../../../shared-field/spacetimedb/field.sh: line 7: …/node_modules/.bin/tsx: No such file or directory" ([observation](observations/01-installed-explore-unavailable.png)) |
+| Observed | Explore Surface opens with query `agents`, status `unavailable`: "SharedField client failed (exit status: 1): `<env-3 checkout>`/desktop/cradle/kernel/../../../shared-field/spacetimedb/field.sh: line 7: …/node_modules/.bin/tsx: No such file or directory" ([observation](observations/01-installed-explore-unavailable.png); the local checkout path is redacted in the text and the image) |
 | First missing relation | The release kernel resolved its SharedField client through `CARGO_MANIFEST_DIR` into the checkout it was compiled in; the GUI process also had no `OI_SHARED_FIELD_TARGET`. The installed app carried no client and no binding. |
 | Same defect on Omarchy | no desktop installed; its checkout's `field.sh` fails (`module_bindings/` generated-only, no `spacetime` CLI) |
 | Repair | `a77e0891` — bundled client resource `shared-field/` (field + A2A runner + hosting.json + node-finding launcher), kernel order explicit → bundled → development-only checkout, machine binding `OI_STATE_HOME/shared-field/binding.json` (`bind`/`unbind`) |
