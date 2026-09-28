@@ -43,6 +43,14 @@ export function participantContext({ snapshot, field_ref, participant_ref, prepa
   });
   const constituents = entries.filter((entry) => entry.kind !== 'curated-artifact').map((entry) => ({ ref: entry.ref, kind: entry.kind, label: entry.label, summary: entry.summary ?? null }));
   const relations = (snapshot.relations ?? []).filter((relation) => inField(relation.from) || inField(relation.to)).map((relation) => ({ from: relation.from, to: relation.to, relation: relation.relation }));
+  // Admitted work in this field is part of what it shares: a later
+  // participant meets what earlier participants contributed and the owner
+  // accepted, with its contributor and basis.
+  const accepted = (snapshot.contributions ?? []).map((row) => row.contract ?? row).filter((contract) => contract?.field_ref === field_ref).map((contract) => {
+    const body = contract.representation?.payload ?? {};
+    const content = body.kind === 'prose' ? String(body.content ?? '') : body.kind === 'relation-proposal' ? `${body.content?.from?.ref} —${body.content?.relation?.ref}→ ${body.content?.to?.ref}${body.content?.summary ? `: ${body.content.summary}` : ''}` : JSON.stringify(body.content ?? null);
+    return { contribution_ref: contract.contribution_ref, contributor: contract.contributor_participant_ref, agent: contract.agency?.ref ?? null, body_kind: body.kind ?? null, target: contract.target?.ref ?? null, basis: body.basis ?? null, content };
+  });
   const undertaking = (now?.projected_child_now_refs ?? []).map((child) => ({ now_ref: child.now_ref, workcell_ref: child.workcell_ref, state: child.state, purpose: child.purpose_summary ?? null, projected_by: child.projected_by }));
   return {
     schema: PARTICIPANT_CONTEXT_SCHEMA,
@@ -56,6 +64,7 @@ export function participantContext({ snapshot, field_ref, participant_ref, prepa
     sources,
     constituents,
     relations,
+    accepted,
     contribution: {
       body_kinds: ['prose', 'relation-proposal'],
       law: 'A contribution is an attributable difference proposed to a source at the revision you read; it enters quarantine and the source owner decides.',
@@ -77,6 +86,9 @@ export function participantContextMarkdown(context) {
   for (const item of context.constituents) lines.push(`- ${item.kind}: ${item.label} (\`${item.ref}\`)${item.summary ? ` — ${item.summary}` : ''}`);
   lines.push('', '## Relations', '');
   for (const item of context.relations) lines.push(`- \`${item.from}\` —${item.relation}→ \`${item.to}\``);
+  lines.push('', '## Accepted work in this undertaking', '');
+  for (const item of context.accepted ?? []) lines.push(`### ${item.body_kind} by ${item.contributor}${item.agent ? ` (${item.agent})` : ''} → \`${item.target}\``, '', item.content, '');
+  if (!(context.accepted ?? []).length) lines.push('Nothing has been accepted here yet.', '');
   lines.push('', '## Contributing', '', context.contribution.law, `Body kinds you can offer here: ${context.contribution.body_kinds.join(', ')}.`, '');
   return `${lines.join('\n')}\n`;
 }

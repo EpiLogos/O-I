@@ -16,6 +16,7 @@ const snapshot = {
   ],
   projections: ['A04', 'A04p'].map((id) => ({ projection_ref: `p:${id}`, projection_revision: 1, state: 'published', source: { ref: `central:source:corpus:${id}`, revision: `rev-${id}` }, representation: { payload: { regions: [{ bindings: [{ component_ref: 'oi.presentation/prose/v1', subject_ref: `w/artifact:central:corpus:${id}#section:0`, props: { title: '#0', html: `<p>${id} text &amp; more</p>` } }] }] } } })),
   relations: [],
+  contributions: [{ contract: { contribution_ref: 'c:1', field_ref: F, contributor_participant_ref: 'participant:b', agency: { ref: 'agent:b' }, target: { ref: 'wiki:node:record/A04p' }, representation: { payload: { kind: 'prose', content: 'An accepted reading.' } } } }, { contract: { contribution_ref: 'c:2', field_ref: 'oi:field:other', representation: { payload: { kind: 'prose', content: 'ELSEWHERE' } } } }],
   field_now: [{ field_ref: F, contract: { revision: 1, projected_child_now_refs: [{ now_ref: 'central:now:project:O-I:x', workcell_ref: 'workcell:mac', state: 'active', purpose_summary: 'Explain A04 ↔ A04′', projected_by: 'participant:a' }] } }],
 };
 
@@ -24,6 +25,8 @@ test('the context carries only the participant field, its purpose and sources wi
   assert.deepEqual(context.sources.map((s) => [s.source_ref, s.source_revision, s.sections[0].text]), [['central:source:corpus:A04', 'rev-A04', 'A04 text & more'], ['central:source:corpus:A04p', 'rev-A04p', 'A04p text & more']]);
   assert.deepEqual(context.undertaking.map((u) => u.purpose), ['Explain A04 ↔ A04′']);
   assert.ok(!JSON.stringify(context).includes('NOT IN THIS FIELD'));
+  assert.deepEqual(context.accepted.map((a) => [a.contribution_ref, a.content]), [['c:1', 'An accepted reading.']]);
+  assert.ok(!JSON.stringify(context).includes('ELSEWHERE'));
   assert.throws(() => participantContext({ snapshot, field_ref: F, participant_ref: 'participant:c', prepared_at: 'x' }), /holds no authority/);
 });
 

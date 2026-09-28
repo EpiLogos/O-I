@@ -25,9 +25,11 @@
   "wiki:space:room/section-rooms/arguments": "nodes"
  },
  "node_refs": [
+  "wiki:node:contemplation/a04p-re-sites-a04-2026-09-28",
   "wiki:node:record/A04",
   "wiki:node:record/A04p",
-  "wiki:node:contemplation/a04p-re-sites-a04-2026-09-28"
+  "wiki:node:record/A05",
+  "wiki:node:record/A05p"
  ],
  "positions": {
   "central:position:project:O-I:aletheia-5": "occupancy"
