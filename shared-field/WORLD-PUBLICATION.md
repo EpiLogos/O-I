@@ -35,7 +35,8 @@ ownership.
 |---|---|
 | `central-wiki-projection.mjs` | readings + selection → publication bundle; `hostedPublicationArgs`; `exploreSeedFromPublication`; `reprojectCentralWikiWorld`; `publicationSentinelLeaks`; `worldPublicationLeaks` |
 | `world-edition.mjs` | standalone edition HTML + manifest, rendered only from the Projection |
-| `scripts/publish-world.mjs` | local step: `--selection`, `--reading`/`--from-ctrl` (wiki, Positions, population, constellations), `--sentinel`, `--out` |
+| `world-constituents.mjs` | Workcell / practice / activity recognition, validation and allow-listed builders |
+| `scripts/publish-world.mjs` | local step: `--selection`, `--reading`/`--from-ctrl` (wiki, Positions, population, constellations, Workcells, repertoire, activity), `--sentinel`, `--out` |
 | `expression-projection.mjs` | one Expression → Projection; World relations to a hosted Position / constellation |
 | `spacetimedb/publish-world.ts` | hosted push through the generated client; owner token outside the repo |
 | `spacetimedb/two-world-live-acceptance.ts` | two independently grounded worlds meet, contribute, return, re-project |
@@ -160,6 +161,62 @@ the constructive frames a register holds. The AIKit read this lane needs is a
 register-addressed `aikit wiki-construct list|inspect --project-world <W>`
 (root when absent) emitting `aikit.constellation/v1` records; until it lands,
 the selection names constellation refs the owner already knows.
+
+## Workcells, repertoire and activity in the same bundle
+
+`world-constituents.mjs` adds three constituents to the same selection, bundle
+and Projection. Each enters only when the selection names it; offered ≠
+inspectable ≠ granted, and a publication never grants anything to a visitor.
+
+```text
+ctrl machine.declaration {role: current}          central.machine                   Central: which Workcell this machine binds (identity attestation)
+workcell --json --workcell-ref R discover         (no schema; recognised by shape)  Workcell: the cell's offers
+oi agent participation --agent A --world W --json oi.agent-world-participation/v1   O:I over Central/Actuation/AIKit: repertoire.praxis {id, form, revision, available}
+factory project locate <project> --json           factory.project-location/v1       Factory: the state path (used as an argument, never published)
+factory development run <state> <run> --json      factory.run-reading/v1            Factory: runRef, revision, lifecycle, agencies
+```
+
+```json
+{
+  "positions": { "central:position:project:O-I:aletheia-5": "occupancy" },
+  "workcells": { "workcell:mac": "offer" },
+  "practices": { "central:position:project:O-I:aletheia-5": ["skill/ql/darshana"] },
+  "offers": { "workcell:mac": ["offer:provider:…"], "central:position:project:O-I:aletheia-5": ["skill/ql/darshana"] },
+  "activity": { "run:01M3…": "live" }
+}
+```
+
+A Position mode may also be `repertoire` (address + practices, no occupancy).
+`workcells` values may be `{mode, label}`; `practices` values may be
+`{agent_ref, refs}`; `activity` values may be `{liveness, purpose_summary}` —
+the summary is the owner's authored public text, never Factory's labels.
+
+| Selected | Entry | Relations |
+|---|---|---|
+| Workcell, `address` | `workcell` at `<world>/<workcell_ref>`; `meta {label, material_role, disclosure, presentation: thing}` — `material_role` is `machine:<role>` from the binding declaration, else `remote`/`local` from the population | `oi.world/workcell` World → Workcell; `oi.world/carried-by` occupancy-mode Position → Workcell when its `workcell_ref` matches |
+| Workcell, `offer` | the same, plus `meta.offers [{offer_ref, port, affordances}]` — only offers listed under `offers[<workcell_ref>]`, each present and available; needs the discovery reading and the machine binding | as above |
+| practices of an `occupancy`/`repertoire` Position | `practice` at `<world>/<practice id>`; `meta {practice_kind: skill\|method\|skillset, source_ref, source_revision, availability: inspectable\|offered, grant: none}`; the Position gains `meta.agent_ref`, `meta.practices` | `oi.world/practises` Position → practice, carrying `availability` |
+| activity | `activity` at `<world>/<run or custody ref>`; `meta {state, run_ref, custody_ref?, purpose_summary?, participants, liveness}` | `oi.world/activity` World → activity; `oi.activity/participant` → occupancy-mode Positions attested by the population (current work names the run/custody) or by the run (its Agency is the occupant's); `oi.activity/works-on` → a selected node/constellation from that attested work |
+
+The Skill's text is never copied; its native ref and content revision are.
+An offer requires the practice to be `available` natively. Nothing about the
+unselected repertoire, unlisted offers or other Workcell material is counted
+(no `excluded` keys for them; a WikiSpace counts only its selected nodes and a
+constellation only its selected participations). Offer metadata (service
+endpoints, workspace roots, manifests, status commands), a profile's
+`source_path`, its `intent_expression`, and remote reachability `detail` are
+protected keys; `workcell-endpoint` (loopback/IP URLs) and `local-home-path`
+are protected shapes. Sources gain `workcell`, `aikit-agent-repertoire` and
+`factory-run`, each revised only from what the publication carries, so the
+composite revision moves when a selected Workcell's carried offers, a selected
+practice's revision, or a selected run's revision/state/participants move — and
+not for unselected practices, unlisted offers or endpoints.
+
+**Native gaps.** Workcell emits no schema name and no self-description of its
+bound identity (`--workcell-ref` relabels the local cell; identity is attested
+by Central's binding). No `aikit wiki-construct list` exists to discover
+constructive frames. Factory run readings carry Agencies, not Positions, and the
+population's `current_work` is the only Position ↔ run attestation.
 
 ## Technè: Expressions related to their World
 

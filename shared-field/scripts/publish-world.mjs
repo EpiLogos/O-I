@@ -14,6 +14,11 @@
  *   aikit gateway who --project-world P --json       aikit.population-reading/v1   (when a Position is selected in "occupancy" mode)
  *   aikit wiki-construct inspect --file W <ref>      aikit.constellation/v1        (per selected constellation; W is each wiki
  *                                                                                  register central.world.here discloses)
+ *   ctrl machine.declaration {role: current}         central.machine               (when Workcells are selected: which Workcell this machine binds)
+ *   workcell --json --workcell-ref R discover        Workcell offers               (per bound Workcell selected in "offer" mode)
+ *   oi agent participation --agent A --world W --json oi.agent-world-participation/v1 (per Agent whose practices are selected)
+ *   factory project locate <project> --json          factory.project-location/v1   (when activity is selected; its state path is used, never published)
+ *   factory development run <state> <run> --json     factory.run-reading/v1        (per selected activity)
  *
  * AIKit is the joiner of Actuation and Factory; this step never reads them
  * directly. It performs no network publication; `shared-field/spacetimedb/publish-world.ts`
@@ -66,6 +71,17 @@ function ctrlAction(action, input, cwd) {
   return envelope.data;
 }
 
+/** One owner read that prints a bare JSON document (oi, workcell, factory). */
+function ownerRead(envName, fallback, words, cwd) {
+  const program = process.env[envName] ?? fallback;
+  const result = spawnSync(program, words, { cwd, encoding: 'utf8' });
+  if (result.error) throw new Error(`${program} could not run (${result.error.message}); put it on PATH or name it with ${envName}`);
+  let document;
+  try { document = JSON.parse(result.stdout); } catch { throw new Error(`${program} ${words.slice(0, 3).join(' ')} returned non-JSON (exit ${result.status}): ${result.stdout.slice(0, 200)} ${result.stderr.slice(0, 200)}`); }
+  if (result.status !== 0 || document.ok === false) throw new Error(`${program} ${words.slice(0, 3).join(' ')} refused (exit ${result.status}): ${JSON.stringify(document.error ?? document).slice(0, 300)}`);
+  return document;
+}
+
 /** One AIKit read through its `--json` envelope; a refusal comes back as `{refused}` in AIKit's own words. */
 function aikitRead(words, cwd) {
   const program = process.env.OI_AIKIT_BIN ?? 'aikit';
@@ -87,10 +103,51 @@ if (args.fromCtrl) {
   if (selection.project) readings.push(ctrlAction('projectcentral.wiki.read', { project: selection.project }, cwd));
   const modes = Object.values(selection.positions ?? {});
   if (modes.length) readings.push(ctrlAction('central.position.list', scope, cwd));
-  if (modes.includes('occupancy')) {
+  const workcells = selection.workcells ?? {};
+  const practices = selection.practices ?? {};
+  const activity = selection.activity ?? {};
+  let population;
+  if (modes.includes('occupancy') || Object.keys(workcells).length || Object.keys(practices).length || Object.keys(activity).length) {
     const who = aikitRead(['gateway', 'who', ...(selection.project ? ['--project-world', `project:${selection.project}`] : [])], cwd);
     if (who.refused) throw new Error(`aikit gateway who refused: ${who.refused.code ?? ''} ${who.refused.message ?? ''}`.trim());
+    population = who.data;
     readings.push(who.data);
+  }
+  if (Object.keys(workcells).length) {
+    // Central says which Workcell this machine binds; the Workcell product
+    // describes itself under that identity. Offers are read only for a bound
+    // Workcell selected in "offer" mode.
+    const machine = ctrlAction('machine.declaration', { role: 'current' }, cwd);
+    readings.push(machine);
+    const bound = new Set((machine.declaration?.bindings ?? []).filter((binding) => binding.kind === 'workcell').map((binding) => binding.reference));
+    for (const [ref, value] of Object.entries(workcells)) {
+      const mode = typeof value === 'string' ? value : value?.mode;
+      if (mode === 'offer' && bound.has(ref)) readings.push(ownerRead('OI_WORKCELL_BIN', 'workcell', ['--json', '--workcell-ref', ref, 'discover'], cwd));
+    }
+  }
+  if (Object.keys(practices).length) {
+    const world = selection.project ? `project:${selection.project}` : 'control:root';
+    const agents = new Set();
+    for (const [positionRef, value] of Object.entries(practices)) {
+      const agent = (!Array.isArray(value) && value.agent_ref) || population?.positions?.find((row) => row.position_ref === positionRef)?.occupancy?.agent_ref;
+      if (!agent) throw new Error(`practices for ${positionRef}: the Position has no occupant Agent in the population reading; name agent_ref in the selection`);
+      agents.add(agent);
+    }
+    for (const agent of agents) readings.push(ownerRead('OI_BIN', 'oi', ['agent', 'participation', '--agent', agent, '--world', world, '--json'], cwd));
+  }
+  if (Object.keys(activity).length) {
+    const here = ctrlAction('central.world.here', scope, cwd);
+    const projectRoot = here.project_world?.path ? join(here.local_world.root, here.project_world.path) : here.local_world?.root;
+    const location = ownerRead('OI_FACTORY_BIN', 'factory', ['project', 'locate', projectRoot, '--json'], cwd);
+    if (!location.statePath) throw new Error(`factory project locate disclosed no state for ${here.project_world?.ref ?? here.local_world?.ref}`);
+    const runs = new Set();
+    for (const ref of Object.keys(activity)) {
+      if (ref.startsWith('run:')) { runs.add(ref); continue; }
+      const run = population?.positions?.find((row) => row.current_work?.custody_ref === ref)?.current_work?.run_ref;
+      if (!run) throw new Error(`activity ${ref}: the population reading attests no run for this custody`);
+      runs.add(run);
+    }
+    for (const run of runs) readings.push(ownerRead('OI_FACTORY_BIN', 'factory', ['development', 'run', location.statePath, run, '--json'], cwd));
   }
   if ((selection.constellations ?? []).length) {
     // Central discloses where each register's wiki lives; AIKit reads the

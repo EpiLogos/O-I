@@ -397,7 +397,7 @@ test('selection refusals: an unknown Position, occupancy without a population re
   assert.throws(() => publishInhabited({}, [rootReading(), projectReading(), positionListing(), constellation()]), /need an aikit.population-reading\/v1/);
   assert.throws(() => publishInhabited({ positions: { [ALETHEIA]: 'address' } }, [rootReading(), projectReading(), constellation()]), /need a central.position-listing\/v1/);
   assert.throws(() => publishInhabited({ constellations: ['wiki:frame:absent'] }), /not present in any AIKit constellation reading/);
-  assert.throws(() => publishInhabited({ positions: { [ANIMA]: 'everything' } }), /must be address or occupancy/);
+  assert.throws(() => publishInhabited({ positions: { [ANIMA]: 'everything' } }), /must be address, occupancy or repertoire/);
   const refused = { ok: false, schema: 1, error: { code: 'knowledge.constellation_refused', message: 'the native frame is absent' } };
   assert.throws(() => publishInhabited({}, [rootReading(), projectReading(), positionListing(), population(), refused]), /refusal: knowledge.constellation_refused/);
 });
@@ -454,7 +454,7 @@ test('a constellation is one entry, related to the World and to its selected wik
   assert.equal(entry.kind, 'constellation');
   assert.equal(entry.label, 'What grounds O-I?');
   assert.equal(entry.revision, '1');
-  assert.deepEqual(entry.meta, { standing: 'aikit-constellation', native_owner: 'ai-kit', local_ref: FRAME, participations: 2 });
+  assert.deepEqual(entry.meta, { standing: 'aikit-constellation', native_owner: 'ai-kit', local_ref: FRAME, participations: 1 });
   assert.ok(bundle.relations.some((relation) => relation.from === 'world:central:project:O-I' && relation.to === HOSTED(FRAME) && relation.relation === 'oi.world/constellation' && relation.origin === 'projection'));
   const participations = bundle.relations.filter((relation) => relation.relation === 'aikit.constellation/participation');
   assert.deepEqual(participations.map((relation) => [relation.from, relation.to, relation.origin]), [[HOSTED(FRAME), NODE, 'aikit-knowledge']]);

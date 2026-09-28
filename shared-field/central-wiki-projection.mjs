@@ -4,6 +4,11 @@ import { createExploreEntry, createExploreApplication } from './explore.mjs';
 import { WORLD_PRESENTATION_SCHEMA, createWorldPresentation } from './presentation.mjs';
 import { createWorldPresentationProjection, refineWorldPresentationProjection, worldPresentationFromProjection } from './presentation-projection.mjs';
 import { projectionStorageKey, relationStorageRef } from './spacetimedb.mjs';
+import {
+  AGENT_PARTICIPATION_SCHEMA, CENTRAL_MACHINE_SCHEMA, FACTORY_RUN_READING_CONTRACT, WORKCELL_DISCOVERY_KIND,
+  buildConstituents, fnv1a64, readingKind, token, validateAgentParticipation, validateConstituentSelection,
+  validateFactoryRunReading, validateMachineDeclaration, validateWorkcellDiscovery, workcellRef,
+} from './world-constituents.mjs';
 
 /**
  * Central wiki → Projection provider.
@@ -31,7 +36,9 @@ import { projectionStorageKey, relationStorageRef } from './spacetimedb.mjs';
  * provider never re-joins them), and constellations from AIKit's own read
  * (`aikit wiki-construct inspect`, `aikit.constellation/v1`). Each is selected
  * explicitly; an occupancy detail travels only for a Position selected in
- * `occupancy` mode, and only the allow-listed fields ever leave.
+ * `occupancy` mode, and only the allow-listed fields ever leave. Workcells,
+ * an Agent's published practices and current Factory activity join the same
+ * bundle through `world-constituents.mjs`.
  */
 export const CENTRAL_WIKI_READING_SCHEMA = 'central.wiki-reading/v1';
 export const CENTRAL_WIKI_SELECTION_SCHEMA = 'oi.central-wiki-selection/v1';
@@ -50,12 +57,20 @@ export const WORLD_SOURCES_REVISION_PREFIX = 'oi.world-sources/v1:';
  * Communique bodies. Their values become default sentinels for every
  * publication built from these readings.
  */
-export const WORLD_PROTECTED_KEYS = Object.freeze(['agent_session_ref', 'session_space_ref', 'gateway_address', 'address', 'ws', 'ws_token', 'token', 'attention', 'body']);
+export const WORLD_PROTECTED_KEYS = Object.freeze([
+  'agent_session_ref', 'session_space_ref', 'gateway_address', 'address', 'ws', 'ws_token', 'token', 'attention', 'body',
+  // Workcell material: service endpoints, state and workspace roots, manifests
+  // and status commands; an Agent's profile path and authored intent text;
+  // remote reachability detail.
+  'endpoint', 'state_root', 'root', 'manifest', 'status_command', 'source_path', 'intent_expression', 'detail',
+]);
 /** Shapes that must never appear in any outward payload of a World publication. */
 export const WORLD_PROTECTED_PATTERNS = Object.freeze([
   { name: 'agent-session-ref', pattern: /(^|[^A-Za-z0-9])agent-session[:/]|[a-z0-9-]+:session:[0-9a-f]{8}/ },
   { name: 'gateway-address', pattern: /\bwss?:\/\/|\b(?:\d{1,3}\.){3}\d{1,3}:\d{2,5}\b/ },
   { name: 'gateway-token', pattern: /AIKIT_GATEWAY_TOKEN|\bBearer\s+\S{8,}/ },
+  { name: 'workcell-endpoint', pattern: /\b(?:redis|https?|tcp|grpc|postgres(?:ql)?):\/\/(?:localhost|127\.|\[?::1|(?:\d{1,3}\.){3}\d{1,3})/ },
+  { name: 'local-home-path', pattern: /\/(?:Users|home)\/[A-Za-z0-9._-]+\// },
 ]);
 const EXPRESSIONS_PATH = /Control\/agents\/expressions(\/|$)/;
 
@@ -84,27 +99,7 @@ function slug(value) {
   return value.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
 }
 
-/** FNV-1a 64 over UTF-8, hex. Identifies a set of source revisions; it is not a secret. */
-function fnv1a64(input) {
-  let hash = 0xcbf29ce484222325n;
-  for (const byte of new TextEncoder().encode(input)) {
-    hash ^= BigInt(byte);
-    hash = (hash * 0x100000001b3n) & 0xffffffffffffffffn;
-  }
-  return hash.toString(16).padStart(16, '0');
-}
-
-/** A short lowercase vocabulary token (`occupied`, `none`, …) or undefined. */
-function token(value) {
-  return typeof value === 'string' && /^[a-z][a-z0-9-]{0,31}$/.test(value) ? value : undefined;
-}
-
 const LOOKS_LIKE_ADDRESS = /:\/\/|(?:\d{1,3}\.){3}\d{1,3}|:\d{2,5}(\/|$)|\s|@/;
-
-/** `workcell:<label>` — a name, never a host or address. */
-function workcellRef(value) {
-  return typeof value === 'string' && /^workcell:[A-Za-z0-9._-]{1,64}$/.test(value) ? value : null;
-}
 
 /** `local` or `gateway:<gateway_ref>` — the gateway's name, never its address. */
 function observedVia(value) {
@@ -122,6 +117,8 @@ function observedVia(value) {
 export function unwrapOwnerReading(document) {
   let value = record(document, 'owner reading');
   if (typeof value.ok === 'boolean') {
+    // `workcell --json` answers `{ok: true, …}` with the reading inline.
+    if (value.ok === true && value.data === undefined) return value;
     if (value.ok !== true) throw new TypeError(`owner reading is a refusal: ${value.error?.code ?? 'unknown'}${value.error?.message ? ` — ${value.error.message}` : ''}`);
     value = record(value.data, 'owner reading.data');
   }
@@ -196,10 +193,11 @@ export function validateConstellationReading(value) {
  */
 export function classifyWorldReadings(documents) {
   if (!Array.isArray(documents)) throw new TypeError('readings must be an array');
-  const sorted = { wiki: [], positions: undefined, population: undefined, constellations: [] };
+  const sorted = { wiki: [], positions: undefined, population: undefined, constellations: [], workcells: [], machines: [], participations: [], runs: [] };
   for (const [index, document] of documents.entries()) {
     const reading = unwrapOwnerReading(document);
-    switch (reading.schema) {
+    const kind = readingKind(reading);
+    switch (kind) {
       case CENTRAL_WIKI_READING_SCHEMA: sorted.wiki.push(validateCentralWikiReading(reading)); break;
       case CENTRAL_POSITION_LISTING_SCHEMA:
         if (sorted.positions) throw new TypeError('more than one position listing was supplied');
@@ -215,7 +213,26 @@ export function classifyWorldReadings(documents) {
         sorted.constellations.push(constellation);
         break;
       }
-      default: throw new TypeError(`Unsupported reading schema at readings[${index}]: ${reading.schema}`);
+      case WORKCELL_DISCOVERY_KIND: {
+        const discovery = validateWorkcellDiscovery(reading);
+        if (sorted.workcells.some((held) => held.workcell_ref === discovery.workcell_ref)) throw new TypeError(`Workcell ${discovery.workcell_ref} discovery was supplied twice`);
+        sorted.workcells.push(discovery);
+        break;
+      }
+      case CENTRAL_MACHINE_SCHEMA: sorted.machines.push(validateMachineDeclaration(reading)); break;
+      case AGENT_PARTICIPATION_SCHEMA: {
+        const participation = validateAgentParticipation(reading);
+        if (sorted.participations.some((held) => held.agent_ref === participation.agent_ref && held.world_ref === participation.world_ref)) throw new TypeError(`agent participation ${participation.agent_ref} in ${participation.world_ref} was supplied twice`);
+        sorted.participations.push(participation);
+        break;
+      }
+      case FACTORY_RUN_READING_CONTRACT: {
+        const run = validateFactoryRunReading(reading);
+        if (sorted.runs.some((held) => held.runRef === run.runRef)) throw new TypeError(`factory run ${run.runRef} was supplied twice`);
+        sorted.runs.push(run);
+        break;
+      }
+      default: throw new TypeError(`Unsupported reading schema at readings[${index}]: ${kind}`);
     }
   }
   return sorted;
@@ -319,8 +336,9 @@ export function validateCentralWikiSelection(value) {
   strings(selection.node_refs ?? [], 'central wiki selection.node_refs');
   const positions = record(selection.positions ?? {}, 'central wiki selection.positions');
   for (const [ref, mode] of Object.entries(positions)) {
-    if (!['address', 'occupancy'].includes(mode)) throw new TypeError(`central wiki selection.positions[${ref}] must be address or occupancy`);
+    if (!['address', 'occupancy', 'repertoire'].includes(mode)) throw new TypeError(`central wiki selection.positions[${ref}] must be address, occupancy or repertoire`);
   }
+  validateConstituentSelection(selection);
   strings(selection.constellations ?? [], 'central wiki selection.constellations');
   if (selection.disclose_source_refs !== undefined && typeof selection.disclose_source_refs !== 'boolean') throw new TypeError('central wiki selection.disclose_source_refs must be boolean');
   return selection;
@@ -452,6 +470,9 @@ export function projectCentralWikiWorld(input) {
     }
   }
 
+  // Workcells, practices and activity: allow-listed, selected-only.
+  const constituents = buildConstituents({ selection, sorted, hosted, locator, projectionRelationProvenance, positionModes, occupancyByRef, workTargets });
+
   // Every source this publication stands on, with its revision. The wiki
   // readings keep the owner's own revision; the Position listing, the
   // population and the constellations contribute a revision derived only
@@ -467,6 +488,7 @@ export function projectCentralWikiWorld(input) {
     sources.push({ kind: 'aikit-population-reading', ref: `aikit:population:${sorted.population.project_world_ref}`, source_system: 'ai-kit', revision: `population:${fnv1a64(JSON.stringify(basis))}` });
   }
   for (const ref of selectedConstellationRefs) sources.push({ kind: 'aikit-constellation', ref, source_system: 'ai-kit', revision: String(constellationByRef.get(ref).frame.revision) });
+  sources.push(...constituents.sources);
   const composite = sources.length > readings.length;
   const sourceRevision = composite
     ? `${WORLD_SOURCES_REVISION_PREFIX}${fnv1a64(JSON.stringify(sources.map((source) => [source.kind, source.ref, source.revision])))}`
@@ -499,7 +521,7 @@ export function projectCentralWikiWorld(input) {
       label: space.title,
       aliases: [ref],
       summary: mode === 'nodes'
-        ? `WikiSpace at the ${reading.register} register · ${selectedHere.length} of ${(space.node_refs ?? []).length} nodes selected`
+        ? `WikiSpace at the ${reading.register} register · ${selectedHere.length} node${selectedHere.length === 1 ? '' : 's'} selected`
         : `WikiSpace at the ${reading.register} register · addressable only; no nodes selected`,
       revision: String(space.revision ?? reading.source.revision),
       provenance: bindingProvenance(reading, ref),
@@ -538,11 +560,11 @@ export function projectCentralWikiWorld(input) {
       world_ref: worldRef,
       label: construction.title,
       aliases: [ref],
-      summary: `constellation · ${members.length} participation${members.length === 1 ? '' : 's'} · ${selectedMembers.length} in this World · revision ${reading.frame.revision}`,
+      summary: `constellation · ${selectedMembers.length} participation${selectedMembers.length === 1 ? '' : 's'} in this World · revision ${reading.frame.revision}`,
       revision: String(reading.frame.revision),
       provenance: constellationProvenance(ref),
       locators: locator(hosted(ref)),
-      meta: { standing: 'aikit-constellation', native_owner: 'ai-kit', local_ref: ref, participations: members.length },
+      meta: { standing: 'aikit-constellation', native_owner: 'ai-kit', local_ref: ref, participations: selectedMembers.length },
     }));
   }
 
@@ -584,9 +606,11 @@ export function projectCentralWikiWorld(input) {
         enclosing_world_ref: position.enclosing_world_ref ?? null,
         inherited,
         ...(occupancy ? clone(occupancy) : {}),
+        ...(constituents.positionMeta.has(ref) ? clone(constituents.positionMeta.get(ref)) : {}),
       },
     }));
   }
+  for (const entry of constituents.entries) entries.push(createExploreEntry(entry));
 
   const projectedRelations = [];
   let excludedRelations = 0;
@@ -670,6 +694,7 @@ export function projectCentralWikiWorld(input) {
       ],
     });
   }
+  projectedRelations.push(...constituents.relations);
   createExploreApplication({ entries, relations: projectedRelations });
 
   const bindingBase = (ref, reading) => ({ schema: 'oi.presentation-binding/v1', provenance: bindingProvenance(reading, ref) });
@@ -738,8 +763,8 @@ export function projectCentralWikiWorld(input) {
       bindings: selectedConstellationRefs.map((ref) => {
         const reading = constellationByRef.get(ref);
         const title = (reading.construction ?? reading.frame[AIKIT_CONSTELLATION_SCHEMA]).title;
-        const members = participationsOf(ref);
-        const text = `constellation · ${members.length} participation${members.length === 1 ? '' : 's'} · revision ${reading.frame.revision}`;
+        const members = participationsOf(ref).filter((member) => selectedNodeRefs.includes(member.ref));
+        const text = `constellation · ${members.length} participation${members.length === 1 ? '' : 's'} in this World · revision ${reading.frame.revision}`;
         return {
           schema: 'oi.presentation-binding/v1',
           provenance: constellationProvenance(ref),
@@ -772,6 +797,7 @@ export function projectCentralWikiWorld(input) {
         };
       }),
     },
+    ...constituents.regions,
   ].filter((region) => region.bindings.length > 0);
 
   const presentation = createWorldPresentation({
