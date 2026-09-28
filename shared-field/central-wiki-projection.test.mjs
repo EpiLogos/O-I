@@ -523,3 +523,26 @@ test('typed wiki edges travel between selected nodes only, with their own origin
   const one = publish({ node_refs: [a] }, [rootReading(), project]);
   assert.ok(!one.relations.some((relation) => relation.relation.startsWith('wiki.edge/')));
 });
+
+test('a knowledge edge carries no foreign ref: relation validated, edge ref dropped, origin ref only a Contribution or selected material', () => {
+  const project = projectReading();
+  const [a, b] = project.nodes.slice(0, 2).map((node) => node.ref);
+  project.knowledge_edges = [
+    { ref: 'wiki:edge:PRIVATE_SENTINEL_EDGE_REF', from_ref: a, relation: 'explains', to_ref: b, origin: 'authored', origin_ref: 'wiki:node:PRIVATE_SENTINEL_UNSELECTED' },
+    { ref: 'wiki:edge:x', from_ref: b, relation: 'contemplates', to_ref: a, origin: 'Evil Origin!', origin_ref: a },
+    { from_ref: a, relation: 're-sites', to_ref: b, origin: 'inferred', origin_ref: 'contribution:web65:1' },
+    { from_ref: a, relation: 'Bad Relation/../x', to_ref: b, origin: 'authored' },
+    { from_ref: b, relation: `x${'y'.repeat(64)}`, to_ref: a, origin: 'authored' },
+  ];
+  const bundle = publish({ node_refs: [a, b] }, [rootReading(), project]);
+  const edges = bundle.relations.filter((relation) => relation.relation.startsWith('wiki.edge/'));
+  assert.deepEqual(edges.map((edge) => edge.relation).sort(), ['wiki.edge/contemplates', 'wiki.edge/explains', 'wiki.edge/re-sites'], 'an unsafe relation token never becomes a hosted relation');
+  for (const edge of edges) assert.equal(edge.provenance[0].ref, edge.relation_ref, 'the provenance names the hosted relation, never the local edge ref');
+  const byRelation = Object.fromEntries(edges.map((edge) => [edge.relation, edge.provenance[0]]));
+  assert.equal(byRelation['wiki.edge/explains'].edge_origin_ref, undefined, 'an origin naming unselected material is omitted');
+  assert.equal(byRelation['wiki.edge/contemplates'].edge_origin_ref, `world:central:project:O-I/${a}`, 'an origin naming selected material travels as its hosted ref');
+  assert.equal(byRelation['wiki.edge/contemplates'].edge_origin, undefined, 'an unsafe origin kind is omitted');
+  assert.equal(byRelation['wiki.edge/re-sites'].edge_origin_ref, 'contribution:web65:1');
+  const serialised = JSON.stringify(hostedPublicationArgs(bundle));
+  for (const leak of ['PRIVATE_SENTINEL_EDGE_REF', 'PRIVATE_SENTINEL_UNSELECTED', 'Bad Relation', 'Evil Origin']) assert.ok(!serialised.includes(leak), leak);
+});

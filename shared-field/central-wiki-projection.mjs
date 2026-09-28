@@ -85,6 +85,10 @@ export const WORLD_LOCAL_LEAK_PATTERNS = Object.freeze([
   { name: 'session-ref', pattern: /(?:^|[^A-Za-z0-9])(?:session-space|agent-session|session)[:/][A-Za-z0-9]/ },
   { name: 'central-token-path', pattern: /\.central\/|native-token|owner-token/ },
 ]);
+/** A knowledge-edge relation (and origin kind) that may name a hosted relation. */
+const KNOWLEDGE_EDGE_TOKEN = /^[a-z][a-z0-9-]{0,63}$/;
+/** A Contribution ref an accepted edge may name as its origin. */
+const CONTRIBUTION_ORIGIN_REF = /^contribution:[A-Za-z0-9._:\/-]{1,256}$/;
 /** Printable ASCII runs this long or longer are what a binary file can carry as text. */
 export const BINARY_STRING_MIN_RUN = 6;
 const EXPRESSIONS_PATH = /Control\/agents\/expressions(\/|$)/;
@@ -703,6 +707,12 @@ export function projectCentralWikiWorld(input) {
       provenance: [{ kind: 'wiki-relation', ref: relationRef, source_system: 'central', revision: reading.source.revision }],
     });
   }
+  const edgeOriginRef = (ref) => {
+    if (typeof ref !== 'string') return {};
+    if (CONTRIBUTION_ORIGIN_REF.test(ref)) return { edge_origin_ref: ref };
+    if (projected.has(ref)) return { edge_origin_ref: hosted(ref) };
+    return {};
+  };
   // The wiki's own typed knowledge edges (references, contemplates, explains,
   // an accepted re-sites …) travel only between selected endpoints, named by
   // their wiki relation under `wiki.edge/`, with the edge's own origin.
@@ -710,6 +720,7 @@ export function projectCentralWikiWorld(input) {
     for (const edge of Array.isArray(reading.knowledge_edges) ? reading.knowledge_edges : []) {
       if (!edge || typeof edge.from_ref !== 'string' || typeof edge.to_ref !== 'string' || typeof edge.relation !== 'string') { excludedRelations += 1; continue; }
       if (!projected.has(edge.from_ref) || !projected.has(edge.to_ref)) { excludedRelations += 1; continue; }
+      if (!KNOWLEDGE_EDGE_TOKEN.test(edge.relation)) { excludedRelations += 1; continue; }
       const kind = `wiki.edge/${edge.relation}`;
       const relationRef = `${hosted(edge.from_ref)}#${kind}#${hosted(edge.to_ref)}`;
       if (seenRelation.has(relationRef)) continue;
@@ -721,7 +732,10 @@ export function projectCentralWikiWorld(input) {
         relation: kind,
         origin: 'wiki',
         direction: 'forward',
-        provenance: [{ kind: 'wiki-edge', ref: typeof edge.ref === 'string' ? edge.ref : relationRef, source_system: 'central', revision: reading.source.revision, ...(typeof edge.origin === 'string' ? { edge_origin: edge.origin } : {}), ...(typeof edge.origin_ref === 'string' ? { edge_origin_ref: edge.origin_ref } : {}) }],
+        // The edge's own ref and an origin naming unselected material stay
+        // home: the provenance names the hosted relation, the edge's origin
+        // kind, and an origin ref only when it is a Contribution or selected.
+        provenance: [{ kind: 'wiki-edge', ref: relationRef, source_system: 'central', revision: reading.source.revision, ...(typeof edge.origin === 'string' && KNOWLEDGE_EDGE_TOKEN.test(edge.origin) ? { edge_origin: edge.origin } : {}), ...edgeOriginRef(edge.origin_ref) }],
       });
     }
   }
