@@ -45,16 +45,38 @@ export interface Target { name: string; server: string; uri: string; database: s
  * target; `SPACETIMEDB_URI`/`SPACETIMEDB_DATABASE` override it. An unbound
  * target is an honest state the caller reports as Unavailable, never an error
  * the caller invents a default for. */
-export function resolveTarget(): { bound: true; target: Target } | { bound: false; reason: string } {
+/** The machine-local, non-secret SharedField binding an installed desktop
+ * reads when no environment names a target: `{schema, target}` under the
+ * same state home as the owner transport tokens. Written by `field bind`. */
+export function bindingFile() {
+  const state = process.env.OI_STATE_HOME ?? join(homedir(), '.local', 'state', 'oi');
+  return join(state, 'shared-field', 'binding.json');
+}
+
+export function hostingTargets(): Record<string, Omit<Target, 'name'>> {
+  return JSON.parse(readFileSync(join(here, 'hosting.json'), 'utf8')).targets ?? {};
+}
+
+export function resolveTarget(): { bound: true; target: Target; source: 'env' | 'binding' } | { bound: false; reason: string } {
   const uri = process.env.SPACETIMEDB_URI;
   const database = process.env.SPACETIMEDB_DATABASE;
-  if (uri && database) return { bound: true, target: { name: 'env', server: 'env', uri, database } };
-  const name = process.env.OI_SHARED_FIELD_TARGET;
-  if (!name) return { bound: false, reason: 'no SharedField target bound: set OI_SHARED_FIELD_TARGET to a target named in shared-field/spacetimedb/hosting.json' };
-  const hosting = JSON.parse(readFileSync(join(here, 'hosting.json'), 'utf8'));
-  const target = hosting.targets?.[name];
-  if (!target) return { bound: false, reason: `SharedField target "${name}" is not named in hosting.json (${Object.keys(hosting.targets ?? {}).join(', ')})` };
-  return { bound: true, target: { name, ...target } };
+  if (uri && database) return { bound: true, source: 'env', target: { name: 'env', server: 'env', uri, database } };
+  let name = process.env.OI_SHARED_FIELD_TARGET;
+  let source: 'env' | 'binding' = 'env';
+  if (!name) {
+    const file = bindingFile();
+    if (existsSync(file)) {
+      try {
+        const binding = JSON.parse(readFileSync(file, 'utf8'));
+        if (binding?.schema === 'oi.shared-field-binding/v1' && typeof binding.target === 'string') { name = binding.target; source = 'binding'; }
+      } catch { return { bound: false, reason: `the SharedField binding at ${file} is not readable JSON` }; }
+    }
+  }
+  if (!name) return { bound: false, reason: `no SharedField target bound: set OI_SHARED_FIELD_TARGET, or bind one for this machine with {"kind":"bind","target":"<name>"} (targets in hosting.json)` };
+  const targets = hostingTargets();
+  const target = targets[name];
+  if (!target) return { bound: false, reason: `SharedField target "${name}" is not named in hosting.json (${Object.keys(targets).join(', ')})` };
+  return { bound: true, source, target: { name, ...target } };
 }
 
 export function tokenFile(database: string, label = 'owner') {

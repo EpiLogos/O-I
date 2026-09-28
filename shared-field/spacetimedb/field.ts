@@ -11,6 +11,8 @@
  *
  * Requests:
  *   status                              target binding only; no network
+ *   bind      {target}                  bind this machine's SharedField target (non-secret; no network)
+ *   unbind                              clear this machine's binding
  *   identity                            the caller's transport identity only
  *   snapshot                            the caller-visible field
  *   identity                            the caller's transport identity only
@@ -33,7 +35,9 @@
  *   stage-follow  {field_ref, stage_ref, follower_participant_ref}      follow the open stage now
  *   stage-unfollow {field_ref, stage_ref, follower_participant_ref}     unfollow and keep a local view
  */
-import { close, fieldSnapshot, open, publishArgs, readRef, resolveTarget, rows, stageReading, stageView, waitUntil } from './field-lib';
+import { bindingFile, close, fieldSnapshot, hostingTargets, open, publishArgs, readRef, resolveTarget, rows, stageReading, stageView, waitUntil } from './field-lib';
+import { mkdirSync, rmSync, writeFileSync } from 'node:fs';
+import { dirname } from 'node:path';
 import { createProjection } from '../index.mjs';
 import { projectionStorageKey } from '../spacetimedb.mjs';
 
@@ -61,9 +65,19 @@ let request: any;
 try { request = raw ? JSON.parse(raw) : { kind: 'status' }; } catch (error: any) { await emit({ ok: false, error: { kind: 'malformed', message: `request is not JSON: ${error.message}` } }); }
 if (!request || typeof request !== 'object' || typeof request.kind !== 'string') await emit({ ok: false, error: { kind: 'malformed', message: 'request must be an object with a string `kind`' } });
 
+if (request.kind === 'bind') {
+  const targets = hostingTargets();
+  if (typeof request.target !== 'string' || !targets[request.target]) await emit({ ok: false, error: { kind: 'malformed', message: `bind requires a \`target\` named in hosting.json (${Object.keys(targets).join(', ')})` } });
+  const file = bindingFile();
+  mkdirSync(dirname(file), { recursive: true });
+  writeFileSync(file, `${JSON.stringify({ schema: 'oi.shared-field-binding/v1', target: request.target, bound_at: new Date().toISOString() }, null, 2)}\n`);
+}
+if (request.kind === 'unbind') {
+  rmSync(bindingFile(), { force: true });
+}
 const binding = resolveTarget();
-if (request.kind === 'status') {
-  await emit({ ok: true, data: binding.bound ? { schema: 'oi.shared-field.status/v1', bound: true, target: { name: binding.target.name, uri: binding.target.uri, database: binding.target.database } } : { schema: 'oi.shared-field.status/v1', bound: false, reason: binding.reason } });
+if (request.kind === 'status' || request.kind === 'bind' || request.kind === 'unbind') {
+  await emit({ ok: true, data: binding.bound ? { schema: 'oi.shared-field.status/v1', bound: true, binding_source: binding.source, binding_file: bindingFile(), target: { name: binding.target.name, uri: binding.target.uri, database: binding.target.database } } : { schema: 'oi.shared-field.status/v1', bound: false, binding_file: bindingFile(), reason: binding.reason } });
 }
 const target = binding.bound ? binding.target : await emit({ ok: false, error: { kind: 'unbound', message: binding.reason } });
 

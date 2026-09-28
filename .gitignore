@@ -31,6 +31,7 @@ __pycache__/
 # SpaceTimeDB module build/codegen products are generated from src/index.ts
 shared-field/spacetimedb/dist/
 shared-field/spacetimedb/module_bindings/
+shared-field/dist-client/
 shared-field/spacetimedb/node_modules/
 shared-field/spacetimedb/package-lock.json
 

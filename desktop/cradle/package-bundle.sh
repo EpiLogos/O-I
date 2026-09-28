@@ -82,6 +82,7 @@ MACOS_APP_PATH="${TARGET_ROOT}/release/bundle/macos/O-I.app"
 
 if [ "${DRY_RUN}" -eq 1 ]; then
   log "dry-run plan:"
+  log "  0. bundle the SharedField client into shared-field/dist-client (app resource shared-field/)"
   log "  1. npm ci --prefix desktop/cradle"
   log "  2. npx --prefix desktop/cradle tauri build (frontend + native shell + bundle)"
   if [ "${TARGET}" = "aarch64-apple-darwin" ]; then
@@ -101,7 +102,21 @@ fi
 # ---------------------------------------------------------------------------
 [ -n "${TARGET}" ] || die "no bundle target for ${OS} ${ARCH}"
 
+# The installed desktop carries its own SharedField client (app resource
+# shared-field/): the kernel never reaches back into this checkout.
+build_shared_field_client() {
+  local module="${REPO_ROOT}/shared-field/spacetimedb"
+  log "bundling the SharedField client (shared-field/dist-client)"
+  npm install --prefix "${module}" --no-audit --no-fund --no-package-lock >/dev/null
+  if [ ! -f "${module}/module_bindings/index.ts" ]; then
+    command -v spacetime >/dev/null || die "the SharedField bindings are not generated and the spacetime CLI is absent (see shared-field/spacetimedb/HOSTING.md)"
+    (cd "${REPO_ROOT}" && spacetime generate --lang typescript --out-dir shared-field/spacetimedb/module_bindings --module-path shared-field/spacetimedb -y >/dev/null)
+  fi
+  node "${module}/build-client.mjs"
+}
+
 if [ "${SKIP_BUILD}" -eq 0 ]; then
+  build_shared_field_client
   if [ "${TARGET}" = "aarch64-apple-darwin" ]; then
     log "building the cradle web bundle and native shell (macOS .app)"
     npm ci --prefix "${REPO_ROOT}/desktop/cradle" --no-audit --no-fund
