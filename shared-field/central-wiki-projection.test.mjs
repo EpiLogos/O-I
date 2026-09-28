@@ -506,3 +506,20 @@ test('re-projecting with a changed audience carries the owner\'s new audience in
   assert.equal(same.audience_changed, false);
   assert.deepEqual(same.projection.audience, named.projection.audience);
 });
+
+test('typed wiki edges travel between selected nodes only, with their own origin', () => {
+  const project = projectReading();
+  const [a, b] = project.nodes.slice(0, 2).map((node) => node.ref);
+  project.knowledge_edges = [
+    { ref: `${a}|re-sites|${b}`, from_ref: a, relation: 're-sites', to_ref: b, origin: 'inferred', origin_ref: 'contribution:x' },
+    { ref: `${a}|references|wiki:node:elsewhere`, from_ref: a, relation: 'references', to_ref: 'wiki:node:elsewhere', origin: 'authored' },
+  ];
+  const both = publish({ node_refs: [a, b] }, [rootReading(), project]);
+  const edge = both.relations.find((relation) => relation.relation === 'wiki.edge/re-sites');
+  assert.ok(edge, 'the selected pair carries its typed edge');
+  assert.equal(edge.origin, 'wiki');
+  assert.equal(edge.provenance[0].edge_origin_ref, 'contribution:x');
+  assert.ok(!both.relations.some((relation) => relation.relation === 'wiki.edge/references'), 'an edge to an unselected node stays home');
+  const one = publish({ node_refs: [a] }, [rootReading(), project]);
+  assert.ok(!one.relations.some((relation) => relation.relation.startsWith('wiki.edge/')));
+});

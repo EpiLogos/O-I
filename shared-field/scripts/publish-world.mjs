@@ -67,7 +67,7 @@ function readJson(path) {
 }
 
 function ctrlAction(action, input, cwd) {
-  const result = spawnSync('ctrl', ['--json', 'action', 'run', action, JSON.stringify(input)], { cwd, encoding: 'utf8' });
+  const result = spawnSync(process.env.CTRL_BIN ?? 'ctrl', ['--json', 'action', 'run', action, JSON.stringify(input)], { cwd, encoding: 'utf8' });
   if (result.error) throw new Error(`ctrl could not run: ${result.error.message}`);
   let envelope;
   try { envelope = JSON.parse(result.stdout); } catch { throw new Error(`ctrl ${action} returned non-JSON: ${result.stdout.slice(0, 200)} ${result.stderr.slice(0, 200)}`); }

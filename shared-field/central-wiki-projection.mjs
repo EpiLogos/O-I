@@ -644,6 +644,28 @@ export function projectCentralWikiWorld(input) {
       provenance: [{ kind: 'wiki-relation', ref: relationRef, source_system: 'central', revision: reading.source.revision }],
     });
   }
+  // The wiki's own typed knowledge edges (references, contemplates, explains,
+  // an accepted re-sites …) travel only between selected endpoints, named by
+  // their wiki relation under `wiki.edge/`, with the edge's own origin.
+  for (const reading of readings) {
+    for (const edge of Array.isArray(reading.knowledge_edges) ? reading.knowledge_edges : []) {
+      if (!edge || typeof edge.from_ref !== 'string' || typeof edge.to_ref !== 'string' || typeof edge.relation !== 'string') { excludedRelations += 1; continue; }
+      if (!projected.has(edge.from_ref) || !projected.has(edge.to_ref)) { excludedRelations += 1; continue; }
+      const kind = `wiki.edge/${edge.relation}`;
+      const relationRef = `${hosted(edge.from_ref)}#${kind}#${hosted(edge.to_ref)}`;
+      if (seenRelation.has(relationRef)) continue;
+      seenRelation.add(relationRef);
+      projectedRelations.push({
+        relation_ref: relationRef,
+        from: hosted(edge.from_ref),
+        to: hosted(edge.to_ref),
+        relation: kind,
+        origin: 'wiki',
+        direction: 'forward',
+        provenance: [{ kind: 'wiki-edge', ref: typeof edge.ref === 'string' ? edge.ref : relationRef, source_system: 'central', revision: reading.source.revision, ...(typeof edge.origin === 'string' ? { edge_origin: edge.origin } : {}), ...(typeof edge.origin_ref === 'string' ? { edge_origin_ref: edge.origin_ref } : {}) }],
+      });
+    }
+  }
   for (const ref of selectedSpaceRefs) {
     const relationRef = `${worldRef}#oi.world/wiki-space#${hosted(ref)}`;
     projectedRelations.push({
