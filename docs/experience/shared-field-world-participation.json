@@ -1,0 +1,137 @@
+{
+  "purpose": "Owner-directed O:I-world participation refinement within the existing O-I#65 C0–C5 campaign and #220 integration. Projectable Workcells, agents and practices join knowledge, live activity and authored Beings/Things; no new story family, runtime or capability registry.",
+  "story_source": "docs/experience/SHARED-FIELD-DESKTOP.md",
+  "document_operations_source": "docs/SHARED-FIELD-STATE-DISCOVERY.md",
+  "families": [],
+  "standing": "Owner-directed intended experience and implementation/testing commission, 28 September 2026. Completed #18 carrier evidence is retained; this module claims no installed or human acceptance.",
+  "runtime_or_human_acceptance": false,
+  "implementation_wayfinder": "docs/SHARED-FIELD-QL-EPI-INTEGRATION-WAYFINDER.md",
+  "temporal_source": "docs/experience/WORKCELL-NOW-TEMPORAL-FIELD.md",
+  "source_reading_note": "campaign.json imports this module. The existing compiler hashes the module, story_source and document_operations_source. Other linked sources and actual native matrix digests must be resolved at C0; linked filenames are not evidence of execution or recursive hashing.",
+  "obligation_sources": {
+    "web65": {
+      "source_ref": "docs/experience/SHARED-FIELD-DESKTOP.md#0-purpose--share-and-participate-in-oi-worlds",
+      "issue": "https://github.com/EpiLogos/O-I/issues/65",
+      "consumer_issues": [220, 375, 335, 366, 279, 154],
+      "policy": "Preserve the complete current SharedField/temporal/Personal-Web/Expression/Resolve/Gateway sources and their independent meanings. These obligations amend the existing SH/KN/AG/PX/MC/DV/UI/GW/PW stories. Current public-operation and capability identities come from native source and the selected cut, not names invented in this module."
+    }
+  },
+  "required_obligation_ids": ["web65:WORLD", "web65:EXPLORE", "web65:RESOLVE", "web65:PARTICIPATE", "web65:ACTIVITY", "web65:RETURN", "web65:CONTINUITY", "web65:MATRIX"],
+  "obligations": [
+    {
+      "id": "web65:WORLD", "source": "web65",
+      "native_locator": "SHARED-FIELD-DESKTOP sections 0, 2, 3, 7 and 18.2; Personal Web #279; #18 naming amendment 5718300149",
+      "requirement": "People share a coherent region of their O:I world and participate in artificial-plus-human agency: eligible Workcells, agents/repertoires, Skills/Methods, projects, knowledge and activity become independently inspectable through Beings/Things and the existing Projection contracts.",
+      "story_ids": ["SH01", "SH03", "SH06", "MC01", "AG01", "PX01", "PW01", "PW02", "PW09"],
+      "required_evidence": ["D", "C", "P", "M", "H"],
+      "required_branches": [
+        "Project one actual Workcell description/offer, one Agent and its practice, a source-backed project/knowledge constellation, authored HTML and meaningful current activity; another authorised World resolves each source identity and outward revision.",
+        "Typed constituent relations explain the working World. Being/Thing is presentation, declared availability differs from observed current occurrence, and publication differs from offered or granted operation.",
+        "Partial compositions share their actual useful field. Audience filtering covers content, assets, embedded data, relation expansion, metadata and counts without publishing adjacent private configuration."
+      ],
+      "test_refs": ["SH01", "SH03", "SH06", "PW01", "PW02", "PW09", "O-I#65:G", "O-I#279:PW5"]
+    },
+    {
+      "id": "web65:EXPLORE", "source": "web65",
+      "native_locator": "SHARED-FIELD-DESKTOP sections 1–4, 8, 12, 15–18; O-I#375 and current desktop consumer",
+      "requirement": "Ordinary Explore entry opens an explorable shared world whose knowledge constellation, agent-act Expression and authored Beings/Things are complementary presentations of the same native subjects.",
+      "story_ids": ["UI01", "UI02", "UI03", "UI04", "UI05", "UI06", "KN01", "KN02", "SH01", "PW06"],
+      "required_evidence": ["D", "C", "P", "M", "H"],
+      "required_branches": [
+        "Use the actual installed rail/button and keyboard entry: search, bounded graph, Being/Thing, native source, knowledge/activity Expression, back/forward and local Workspace restoration. Each visible operation has an actual owner effect/readback.",
+        "Different Worlds with the same labels remain distinguishable; live, static and replay availability are shown; narrow and reduced-motion use remains operable.",
+        "Selected activity remains the primary material, with participant/source/repertoire depth opened contextually. Real node/entity selection, source actions, renderer lifecycle and interactive assets replace no-op or metadata-only surfaces."
+      ],
+      "test_refs": ["UI01", "UI02", "UI03", "UI04", "UI05", "UI06", "O-I#375", "O-I#335:ES5"]
+    },
+    {
+      "id": "web65:RESOLVE", "source": "web65",
+      "native_locator": "SHARED-FIELD-DESKTOP sections 2 and 8; AIKit#142; QL-MEF#83 operative syntax",
+      "requirement": "The existing AIKit Resolve/Search and Śiva–Śakti-derived syntax resolve shared subjects, practices, participating worlds and activity through one typed reference field.",
+      "story_ids": ["KN01", "KN02", "KN03", "KN09", "PX01", "SH01", "SH06", "UI01", "UI06"],
+      "required_evidence": ["D", "C", "P", "M"],
+      "required_branches": [
+        "Human normal-language search and structured Agent resolution co-refer to exact source/subject/presentation/Projection/field occurrences; World/SharedField scope survives resolution and traversal.",
+        "The six address horizons and relation operators change the actual resolution request. Use the current native parser/AST and Explain/History; general O:I works without QL and the full QL binding is separately proven when selected.",
+        "Exact/ref/fuzzy discovery remains useful without optional deep providers. Wrong-world/same-label, private-neighbour, stale-index and revoked-cache cases preserve eligible scope and declare incomplete coverage. Resolving an Action is not executing it."
+      ],
+      "test_refs": ["KN01", "KN02", "KN03", "KN09", "UI01", "UI06", "ai-kit#142", "QL-MEF#83"]
+    },
+    {
+      "id": "web65:PARTICIPATE", "source": "web65",
+      "native_locator": "SHARED-FIELD-DESKTOP sections 4–6 and 9; O-I#154; AIKit#275; Workcell#72",
+      "requirement": "A participant brings a real Agent into a shared NOW, the actual body receives relevant shared context and performs useful work, and messages can address the field, a durable responsibility or a precise instance at its Workcell.",
+      "story_ids": ["SH02", "SH03", "AG06", "AG09", "MC02", "MC03", "GW03", "GW06", "UI04", "UI06"],
+      "required_evidence": ["D", "C", "P", "M", "H"],
+      "required_branches": [
+        "Observe membership, selected Agent/Agency/AgentSession or occupancy generation, prepared and delivered field context, actual material binding, substantive work and attributed response/Contribution separately.",
+        "Field/Position addressing follows declared routing; exact-instance plus required-Workcell targeting cannot silently select a successor, local-first substitute or same-named remote peer. Exercise replacement, duplicate/out-of-order delivery and unavailable recipient.",
+        "Joining from the participant's existing Workcell differs from deliberate relocation. Communique, Contribution, delegation and Factory developmental custody retain their actual effects; a personal/shared conversation need not become a Run."
+      ],
+      "test_refs": ["SH02", "SH03", "AG06", "AG09", "GW03", "GW06", "CAW:P10", "CAW:P12", "ai-kit#275"]
+    },
+    {
+      "id": "web65:ACTIVITY", "source": "web65",
+      "native_locator": "SHARED-FIELD-DESKTOP sections 0.1, 9–13; current RunExpressionBody and native activity/Expression owners",
+      "requirement": "Local and shared activity Expressions make actual human-and-agent work inspectable in live, frozen and replay readings, with knowledge and authored pages connected to its cast, work and results.",
+      "story_ids": ["SH03", "UI02", "UI04", "UI05", "DV03", "DV04", "DV05", "PW08"],
+      "required_evidence": ["D", "C", "P", "M", "H"],
+      "required_branches": [
+        "A genuine developmental Run uses the current Factory Expression; other activity uses its own native lineage. Actual owner events and artifacts drive the presented cast, purpose, communication, work and Return.",
+        "Disconnect or freeze the owner producer and verify liveness degrades rather than being synthesised by the renderer. Compare local and hosted views of the same activity refs and revisions.",
+        "Retain a frozen edition and supported event/scene/artifact replay with its source and asset basis. Replay has no historical tool side effects; a live continuation or re-execution is a separate admitted operation."
+      ],
+      "test_refs": ["UI04", "UI05", "DV03", "DV04", "DV05", "O-I#335:ES3", "O-I#154:ActuationStream"]
+    },
+    {
+      "id": "web65:RETURN", "source": "web65",
+      "native_locator": "SHARED-FIELD-DESKTOP sections 6, 7, 18.1 and 18.2; existing Wiki/constellation and praxis Return",
+      "requirement": "Shared participation leaves a useful artifact, knowledge or practice which returns through its native owner, is encounterable in the field and helps later work in another participant's world.",
+      "story_ids": ["SH04", "SH06", "KN05", "KN06", "KN08", "PX05", "DV08", "PW11"],
+      "required_evidence": ["D", "C", "P", "M", "H"],
+      "required_branches": [
+        "Develop and review a substantive source-backed Expression/knowledge refinement, apply through actual native source/Wiki/Expression operations, and reproject the resulting revision with contribution lineage.",
+        "Inspect a shared Skill/Method, explicitly adopt/adapt it locally or invoke an offered capability, then use it in a real task. Retain original identity/version and intentional local differences; publication alone is not trust or execution.",
+        "Exercise correction and stale source/Projection bases. A fresh participant uses the changed knowledge/practice on a related but different input; saved lesson, ack or summary alone is insufficient uptake."
+      ],
+      "test_refs": ["SH04", "SH06", "KN05", "KN08", "PX05", "DV08", "O-I#65:E", "O-I#65:G"]
+    },
+    {
+      "id": "web65:CONTINUITY", "source": "web65",
+      "native_locator": "SHARED-FIELD-DESKTOP sections 0.2, 9, 12, 13 and 18.2; WORKCELL-NOW-TEMPORAL-FIELD; #220",
+      "requirement": "One grounded world across Workcells and independently authorised shared worlds remain usable through time, disconnection, revocation and fresh-body re-entry, with shared and local state correctly related.",
+      "story_ids": ["SH02", "SH03", "SH05", "MC03", "MC04", "MC05", "MC06", "GW06", "GW08", "WR06", "UI02", "UI05", "PW10"],
+      "required_evidence": ["D", "C", "P", "M", "H"],
+      "required_branches": [
+        "On Mac and Omarchy, test first one World with two actual root NOW/Workcell horizons and then separately authorised test Worlds with distinct source roots and participants. Two windows with one credential do not prove independent participant boundaries.",
+        "Reconcile shared Central/root and meta-Workcell composition, regional shared NOWs, FieldNow/FieldDay and exact execution location without replacing local source or personal Day identity.",
+        "Exercise source-offline hosting, service/gateway interruption, duplicate/late output, source changes, withdrawal/cache invalidation, body replacement and optional Shared Stage follow/unfollow. Preserve drafts, ongoing local work, current target and exact occurrence/receipt lineage."
+      ],
+      "test_refs": ["SH05", "MC03", "MC05", "MC06", "GW06", "GW08", "WR06", "CAW:P17", "O-I#65:G", "Workcell#72"]
+    },
+    {
+      "id": "web65:MATRIX", "source": "web65",
+      "native_locator": "SHARED-FIELD-DESKTOP section 18.1; TOOLS.md native capability binding; Central CAPABILITY-MATRIX-PROTOCOL",
+      "requirement": "Development and testing are anchored in reviewed native capability matrices, full UX obligations and real operation/praxis/source evidence, with improvements returned into that same field.",
+      "story_ids": ["SH01", "SH02", "SH03", "SH04", "SH05", "SH06", "KN08", "PX01", "PX05", "DV01", "DV03", "DV08", "UI06"],
+      "required_evidence": ["D", "C", "P", "M"],
+      "required_branches": [
+        "At C0 bind each required branch to repository-qualified native capability IDs, exact matrix digests and account units, current public operations and practice/provider/authority/material conditions using the existing --matrix and --bindings path.",
+        "Required but absent capability or unsupported operation is an explicit owner implementation packet, not dropped scope or fabricated evidence. Retain complete selected QL trace/deeper matrices where used; ordinary SharedField remains usable without QL.",
+        "Executable tests enter existing scenario-bindings/native suites and retain failed episodes. The verifier holds source-derived expectations and disconnected/wrong-target controls; actors receive meaningful situated work and normal discoverable powers. Repair, replay and update warranted native matrix/Wiki/Skill/code/test links, then verify later use."
+      ],
+      "test_refs": ["scripts/experience_map.py", "tests/experience", "desktop/cradle/walk/scenario-bindings.json", "O-I#65:C0-C5", "O-I#220", "O-I#205"]
+    }
+  ],
+  "matrix_binding_requirements": {
+    "protocol": "ql-capability-matrix/1",
+    "protocol_source": "https://github.com/EpiLogos/Central/blob/main/docs/CAPABILITY-MATRIX-PROTOCOL.md",
+    "inventory_source": "docs/experience/campaign.json#native_capability_sources",
+    "operator_source": "docs/experience/TOOLS.md",
+    "required_before_claiming_branch_coverage": ["repository-qualified capability identity", "exact native matrix source digest and governing account", "need/operation/outcome and actual standing", "actual public operation and schema revision", "relevant SkillSet/Method/Methodology and delivered repertoire", "provider/authority/Workcell and target binding", "independent source-derived positive and boundary test", "source/build/installed/running and evidence refs", "warranted native Return and later use"],
+    "native_ids": "Resolve at the actual incoming cut; this source module does not mint or clone capabilities.",
+    "documentation_relations": ["develops", "requires", "implements", "verified-by", "returns-to", "presented-by", "participates-in"],
+    "runtime_bindings": [],
+    "execution_evidence": []
+  }
+}
