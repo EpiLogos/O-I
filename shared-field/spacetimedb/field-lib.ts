@@ -166,7 +166,7 @@ export function fieldSnapshot(client: Client) {
     relations: hosted.relations,
     relation_errors: hosted.relation_errors,
     contributions: rows(db.contribution).map((row: any) => ({ contribution_ref: row.contributionRef, field_ref: row.fieldRef, contributor_participant_ref: row.contributorParticipantRef, ingress_ref: row.ingressRef ?? null, contract: parse(row.contractJson) })),
-    my_authority: rows(db.myFieldAuthority).map((row: any) => ({ field_ref: row.fieldRef, participant_ref: row.participantRef, role: row.role, revoked: Boolean(row.revoked) })),
+    my_authority: rows(db.myFieldAuthority).map((row: any) => ({ field_ref: row.fieldRef, participant_ref: row.participantRef, role: row.role, revoked: Boolean(row.revoked), expires_at_micros: String(row.expiresAtMicros ?? 0) })),
     my_contribution_receipts: rows(db.myContributionReceipt).map((row: any) => ({ contribution_ref: row.contributionRef, ingress_ref: row.ingressRef, field_ref: row.fieldRef, state: row.state })),
     owner_pending_contributions: rows(db.ownerPendingContribution).map((row: any) => ({ ingress_ref: row.ingressRef, field_ref: row.fieldRef, contribution_ref: row.claimedContributionRef, contributor_participant_ref: row.contributorParticipantRef, received_at_micros: String(row.receivedAtMicros), payload_fingerprint: row.payloadFingerprint, contract: parse(row.contractJson) })),
     my_watches: rows(db.myWatch).map((row: any) => ({ watch_ref: row.watchRef, field_ref: row.fieldRef, target_kind: row.targetKind, target_ref: row.targetRef, state: row.state })),
@@ -182,6 +182,8 @@ export function fieldSnapshot(client: Client) {
     // the entry contract itself carries no field) — what a Watch or a
     // membership reading is scoped to. Keyed by the entry's semantic ref.
     entry_fields: Object.fromEntries(rows(db.exploreEntry).map((row: any) => [row.semanticRef, row.fieldRef])),
+    // A Projection never moves between fields, so its ref names one field.
+    projection_fields: Object.fromEntries(rows(db.projection).map((row: any) => [row.projectionRef, row.fieldRef])),
     relation_fields: Object.fromEntries(rows(db.exploreRelation).flatMap((row: any) => { const relation = parse(row.relationJson); return relation?.relation_ref ? [[relation.relation_ref, row.fieldRef]] : []; })),
   };
 }

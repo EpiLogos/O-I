@@ -21,14 +21,36 @@ const text = (html) => String(html ?? '')
 export function participantContext({ snapshot, field_ref, participant_ref, prepared_at }) {
   const field = (snapshot.fields ?? []).find((row) => row.field_ref === field_ref);
   if (!field) throw new TypeError(`the field ${field_ref} is not in this participant's reading`);
-  const authority = (snapshot.my_authority ?? []).find((row) => row.field_ref === field_ref && row.participant_ref === participant_ref && !row.revoked);
+  const preparedMs = Date.parse(prepared_at);
+  const nowMicros = BigInt(Number.isFinite(preparedMs) ? preparedMs : Date.now()) * 1000n;
+  const live = (row) => {
+    const expires = row.expires_at_micros === undefined || row.expires_at_micros === null ? 0n : BigInt(row.expires_at_micros);
+    return expires === 0n || nowMicros < expires;
+  };
+  const authority = (snapshot.my_authority ?? []).find((row) => row.field_ref === field_ref && row.participant_ref === participant_ref && !row.revoked && live(row));
   if (!authority) throw new TypeError(`${participant_ref} holds no authority in ${field_ref}`);
   const inField = (ref) => snapshot.entry_fields?.[ref] === field_ref;
   const entries = (snapshot.entries ?? []).filter((entry) => inField(entry.ref));
   const now = (snapshot.field_now ?? []).find((row) => row.field_ref === field_ref)?.contract ?? null;
-  const projections = (snapshot.projections ?? []).filter((projection) => projection.state === 'published');
+  // Only this field's Projections can be a source's basis: by the field the
+  // hosted row names, else by the field of its publisher. Each lineage is read
+  // at its latest revision, and a withdrawn latest revision is no basis.
+  const publisherFields = new Map((snapshot.participants ?? []).map((row) => [row.participant_ref, row.field_ref]));
+  const projectionInField = (projection) => (snapshot.projection_fields
+    ? snapshot.projection_fields[projection.projection_ref] === field_ref
+    : publisherFields.get(projection.publisher_participant_ref) === field_ref);
+  const latestByRef = new Map();
+  for (const projection of snapshot.projections ?? []) {
+    if (!projectionInField(projection)) continue;
+    const prior = latestByRef.get(projection.projection_ref);
+    if (!prior || Number(projection.projection_revision) > Number(prior.projection_revision)) latestByRef.set(projection.projection_ref, projection);
+  }
+  const projections = [...latestByRef.values()].filter((projection) => projection.state === 'published');
   const sources = entries.filter((entry) => entry.kind === 'curated-artifact').map((entry) => {
-    const projection = projections.find((row) => row.projection_ref === entry.meta?.projection_ref) ?? projections.find((row) => row.subject?.ref === entry.ref);
+    const named = entry.meta?.projection_ref ?? entry.projection_ref;
+    const projection = named
+      ? projections.find((row) => row.projection_ref === named)
+      : projections.find((row) => row.subject?.ref === entry.ref);
     const regions = projection?.representation?.payload?.regions ?? [];
     const sections = regions.flatMap((region) => region.bindings ?? []).filter((binding) => binding.component_ref === 'oi.presentation/prose/v1').map((binding) => ({ ref: binding.subject_ref, title: binding.props?.title ?? '', text: text(binding.props?.html ?? binding.fallback?.text) }));
     return {
