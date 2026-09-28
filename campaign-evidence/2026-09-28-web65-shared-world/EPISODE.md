@@ -120,3 +120,38 @@ with its reason).
 | Production proof | hosted module deployed (additive); producer for `run:01M3FNY3P0E4H7JGN0BARSRQ8R` → World B reads `live`, owner state `seeded`, revision 6 (the run's current revision, not the publication's), heartbeat 3 s; `kill -9` → World B reads `disconnected` (0 rows, basis publication) |
 | Left running | the producer on workcell:mac (`~/.local/state/oi/web65/activity-producer.pid`, log beside it); stop with `kill $(cat …pid)` — it clears its row |
 | Honest limit | Factory's run reading has no event list or timestamps, so replay is lifecycle + node states + execution statuses in reading order, labelled as not a time sequence |
+
+## 10. PARTICIPATE — durable Position route vs exact instance (installed)
+
+EpiLogos/ai-kit#454 merged (`03a5c1db`) after an independent review whose
+findings (older-gateway binding loss; relay-pass abort) were fixed with
+tests that fail without the fixes. Installed on workcell:mac through the
+managed updater's integration-lead path (`oi update --apply --candidate
+ai-kit=main ai-kit` → `aikit 0.1.0 (03a5c1db8f88)`), without moving any
+checkout's branch.
+
+| Probe (installed) | Result |
+|---|---|
+| New CLI, gateway service still the old binary (`protocol.features = []`) | `send --instance …` refused `gateway.exact_instance_unsupported` — "Nothing was handed to it" |
+| Gateway restarted (`launchctl kickstart -k gui/$UID/ai.aikit.gateway`) | `protocol.features = ["communique-exact-instance"]` |
+| Exact → Aletheia-5 generation `actuation:generation:73ecbe3e…` on workcell:mac | `pending` for that instance |
+| Exact → a generation Actuation never issued | `held: instance-absent` |
+| Exact → right generation, required workcell:omarchy | `held: workcell-mismatch` |
+| Durable Position route → @aletheia-5 | `pending` for whoever occupies it |
+
+Successor and same-named-peer refusal across two gateways is proved by the
+PR's real-binary integration tests; the two-machine replay needs Omarchy's
+gateway on the same build (next).
+
+## 11. CONTINUITY probes on the hosted field
+
+| Probe | Result |
+|---|---|
+| `revoke-read` World B on the private undertaking | B: fields 2→1, projections 6→1, entries 42→25, relations 59→26, FieldNow 1→0 — public world intact |
+| `grant-read` again | B back to 2 / 6 / 42 / 59 / 1 exactly |
+| Changed payload under an existing contribution ref + message id | refused: "Contribution transport replay key conflicts…" |
+| Exact resend (same message id) and late resend (new message id) of an admitted contribution | both return the same ingress `3a5cad37…`, state `admitted`; contributions stay 4 (one extra per-delivery receipt row) |
+| Producer hard-killed (§9) | liveness degrades to `disconnected` for B |
+| Source offline for B | B reads the hosted field directly from maincloud; nothing on the Mac is on B's read path |
+| Fresh body re-entry (§8) | a new session continued from the field alone and produced accepted work |
+| Relaunch/reinstall of the installed desktop | Explore restored its last subject and depth exactly |
