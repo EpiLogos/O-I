@@ -45,7 +45,7 @@ try{
  check(actual.result==='knowledge'&&actual.data.document?.schema==='aikit.markdown-reading/v1','The actual native owner supplies the Markdown reading');
  const warm=[];for(let i=0;i<8;i++){const start=performance.now(),value=await op(readRequest);assert.equal(value.data.resource,actual.data.resource);assert.equal(value.data.revision,actual.data.revision);warm.push(performance.now()-start);}
  warm.sort((a,b)=>a-b);receipt.timings.warmSourceP95Ms=warm.at(-1);receipt.timings.warmSamples=warm.length;
- server=await createServer({root,configFile:false,plugins:[react()],resolve:{alias:{three:resolve(root,'node_modules/three')}},define:{__CRADLE_WALK__:'false'},server:{host:'127.0.0.1',port:0,fs:{allow:[root,resolve(root,'../../packages/oi-design-system')]}}});await server.listen();
+ server=await createServer({root,configFile:false,plugins:[react()],resolve:{alias:{three:resolve(root,'node_modules/three')}},define:{__CRADLE_WALK__:'false'},optimizeDeps:{include:['d3-force']},server:{host:'127.0.0.1',port:0,fs:{allow:[root,resolve(root,'../../packages/oi-design-system')]}}});await server.listen();
  const url=`http://127.0.0.1:${server.httpServer.address().port}/tests/wiki-constructive.html?bridge=${encodeURIComponent(bridgeUrl)}`;
  browser=await (engineName==='webkit'?webkit:chromium).launch({headless:true});receipt.browser={name:engineName,version:browser.version()};page=await browser.newPage({viewport:{width:1360,height:960},reducedMotion:'reduce'});page.setDefaultTimeout(20000);
  page.on('pageerror',error=>errors.push(String(error)));
