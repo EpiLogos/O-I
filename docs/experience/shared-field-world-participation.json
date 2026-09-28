@@ -22,20 +22,20 @@
       "id": "web65:WORLD", "source": "web65",
       "native_locator": "SHARED-FIELD-DESKTOP sections 0, 2, 3, 7 and 18.2; Personal Web #279; #18 naming amendment 5718300149",
       "requirement": "People share a coherent region of their O:I world and participate in artificial-plus-human agency: eligible Workcells, agents/repertoires, Skills/Methods, projects, knowledge and activity become independently inspectable through Beings/Things and the existing Projection contracts.",
-      "story_ids": ["SH01", "SH03", "SH06", "MC01", "AG01", "PX01", "PW01", "PW02", "PW09"],
+      "story_ids": ["SH01", "SH03", "SH06", "MC01", "AG01", "PX01", "PW01", "PW09", "PW10"],
       "required_evidence": ["D", "C", "P", "M", "H"],
       "required_branches": [
         "Project one actual Workcell description/offer, one Agent and its practice, a source-backed project/knowledge constellation, authored HTML and meaningful current activity; another authorised World resolves each source identity and outward revision.",
         "Typed constituent relations explain the working World. Being/Thing is presentation, declared availability differs from observed current occurrence, and publication differs from offered or granted operation.",
         "Partial compositions share their actual useful field. Audience filtering covers content, assets, embedded data, relation expansion, metadata and counts without publishing adjacent private configuration."
       ],
-      "test_refs": ["SH01", "SH03", "SH06", "PW01", "PW02", "PW09", "O-I#65:G", "O-I#279:PW5"]
+      "test_refs": ["SH01", "SH03", "SH06", "PW01", "PW09", "PW10", "O-I#65:G", "O-I#279:PW5"]
     },
     {
       "id": "web65:EXPLORE", "source": "web65",
       "native_locator": "SHARED-FIELD-DESKTOP sections 1–4, 8, 12, 15–18; O-I#375 and current desktop consumer",
       "requirement": "Ordinary Explore entry opens an explorable shared world whose knowledge constellation, agent-act Expression and authored Beings/Things are complementary presentations of the same native subjects.",
-      "story_ids": ["UI01", "UI02", "UI03", "UI04", "UI05", "UI06", "KN01", "KN02", "SH01", "PW06"],
+      "story_ids": ["UI01", "UI02", "UI03", "UI04", "UI05", "UI06", "KN01", "KN02", "SH01", "PW05"],
       "required_evidence": ["D", "C", "P", "M", "H"],
       "required_branches": [
         "Use the actual installed rail/button and keyboard entry: search, bounded graph, Being/Thing, native source, knowledge/activity Expression, back/forward and local Workspace restoration. Each visible operation has an actual owner effect/readback.",
@@ -74,7 +74,7 @@
       "id": "web65:ACTIVITY", "source": "web65",
       "native_locator": "SHARED-FIELD-DESKTOP sections 0.1, 9–13; current RunExpressionBody and native activity/Expression owners",
       "requirement": "Local and shared activity Expressions make actual human-and-agent work inspectable in live, frozen and replay readings, with knowledge and authored pages connected to its cast, work and results.",
-      "story_ids": ["SH03", "UI02", "UI04", "UI05", "DV03", "DV04", "DV05", "PW08"],
+      "story_ids": ["SH03", "UI02", "UI04", "UI05", "DV03", "DV04", "DV05", "PW11"],
       "required_evidence": ["D", "C", "P", "M", "H"],
       "required_branches": [
         "A genuine developmental Run uses the current Factory Expression; other activity uses its own native lineage. Actual owner events and artifacts drive the presented cast, purpose, communication, work and Return.",
@@ -87,7 +87,7 @@
       "id": "web65:RETURN", "source": "web65",
       "native_locator": "SHARED-FIELD-DESKTOP sections 6, 7, 18.1 and 18.2; existing Wiki/constellation and praxis Return",
       "requirement": "Shared participation leaves a useful artifact, knowledge or practice which returns through its native owner, is encounterable in the field and helps later work in another participant's world.",
-      "story_ids": ["SH04", "SH06", "KN05", "KN06", "KN08", "PX05", "DV08", "PW11"],
+      "story_ids": ["SH04", "SH06", "KN05", "KN06", "KN08", "PX05", "DV08", "PW10"],
       "required_evidence": ["D", "C", "P", "M", "H"],
       "required_branches": [
         "Develop and review a substantive source-backed Expression/knowledge refinement, apply through actual native source/Wiki/Expression operations, and reproject the resulting revision with contribution lineage.",
@@ -100,7 +100,7 @@
       "id": "web65:CONTINUITY", "source": "web65",
       "native_locator": "SHARED-FIELD-DESKTOP sections 0.2, 9, 12, 13 and 18.2; WORKCELL-NOW-TEMPORAL-FIELD; #220",
       "requirement": "One grounded world across Workcells and independently authorised shared worlds remain usable through time, disconnection, revocation and fresh-body re-entry, with shared and local state correctly related.",
-      "story_ids": ["SH02", "SH03", "SH05", "MC03", "MC04", "MC05", "MC06", "GW06", "GW08", "WR06", "UI02", "UI05", "PW10"],
+      "story_ids": ["SH02", "SH03", "SH05", "MC03", "MC04", "MC05", "MC06", "GW06", "GW08", "WR06", "UI02", "UI05", "PW10", "PW11"],
       "required_evidence": ["D", "C", "P", "M", "H"],
       "required_branches": [
         "On Mac and Omarchy, test first one World with two actual root NOW/Workcell horizons and then separately authorised test Worlds with distinct source roots and participants. Two windows with one credential do not prove independent participant boundaries.",
