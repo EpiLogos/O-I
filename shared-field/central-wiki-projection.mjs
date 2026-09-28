@@ -6,7 +6,7 @@ import { createWorldPresentationProjection, refineWorldPresentationProjection, w
 import { projectionStorageKey, relationStorageRef } from './spacetimedb.mjs';
 import {
   AGENT_PARTICIPATION_SCHEMA, CENTRAL_MACHINE_SCHEMA, FACTORY_RUN_READING_CONTRACT, PRACTICE_OFFER_BODY_SCHEMA, WORKCELL_DISCOVERY_KIND,
-  buildConstituents, fnv1a64, readingKind, token, validateAgentParticipation, validateConstituentSelection,
+  base64Bytes, buildConstituents, fnv1a64, readingKind, token, validateAgentParticipation, validateConstituentSelection,
   validateFactoryRunReading, validateMachineDeclaration, validatePracticeOfferBody, validateWorkcellDiscovery, workcellRef,
 } from './world-constituents.mjs';
 
@@ -72,6 +72,21 @@ export const WORLD_PROTECTED_PATTERNS = Object.freeze([
   { name: 'workcell-endpoint', pattern: /\b(?:redis|https?|tcp|grpc|postgres(?:ql)?):\/\/(?:localhost|127\.|\[?::1|(?:\d{1,3}\.){3}\d{1,3})/ },
   { name: 'local-home-path', pattern: /\/(?:Users|home)\/[A-Za-z0-9._-]+\// },
 ]);
+/**
+ * Local-only material beyond the World shapes: local filesystem paths, file
+ * URLs, session refs and Central token paths. Authored text that travels whole
+ * (an offered practice's body and every file of its capsule) is scanned
+ * against these too; field-now.mjs refuses the same set at field time.
+ */
+export const WORLD_LOCAL_LEAK_PATTERNS = Object.freeze([
+  ...WORLD_PROTECTED_PATTERNS,
+  { name: 'local-absolute-path', pattern: /(?:^|[\s"'(=`])(?:~\/|\/(?:Users|home|private|tmp|var|etc|mnt|opt|Volumes)\/)/ },
+  { name: 'file-url', pattern: /\bfile:\/\// },
+  { name: 'session-ref', pattern: /(?:^|[^A-Za-z0-9])(?:session-space|agent-session|session)[:/][A-Za-z0-9]/ },
+  { name: 'central-token-path', pattern: /\.central\/|native-token|owner-token/ },
+]);
+/** Printable ASCII runs this long or longer are what a binary file can carry as text. */
+export const BINARY_STRING_MIN_RUN = 6;
 const EXPRESSIONS_PATH = /Control\/agents\/expressions(\/|$)/;
 
 const HUMAN_AUTHORED_PREFIXES = ['Control/user/', 'Control/relations/', 'ProjectCentral/user/'];
@@ -283,6 +298,43 @@ export function worldPublicationLeaks(payloads, documents, extraSentinels = []) 
     const serialised = typeof payload === 'string' ? payload : JSON.stringify(payload);
     for (const { key, value } of sentinels) if (serialised.includes(value)) leaks.push(`${name}:${key}`);
     for (const { name: label, pattern } of WORLD_PROTECTED_PATTERNS) if (pattern.test(serialised)) leaks.push(`${name}:${label}`);
+  }
+  return [...new Set(leaks)];
+}
+
+/** Printable-ASCII runs (>= BINARY_STRING_MIN_RUN) of a byte array, one per line — `strings(1)`. */
+export function printableStrings(bytes, minRun = BINARY_STRING_MIN_RUN) {
+  const runs = [];
+  let current = '';
+  for (const byte of bytes) {
+    if ((byte >= 0x20 && byte < 0x7f) || byte === 0x09) { current += String.fromCharCode(byte); continue; }
+    if (current.length >= minRun) runs.push(current);
+    current = '';
+  }
+  if (current.length >= minRun) runs.push(current);
+  return runs.join('\n');
+}
+
+/**
+ * Protected-material scan over one offered practice: its body text and every
+ * capsule file — text files whole, binary (base64) files through their
+ * printable strings — against the reading sentinels, any extra sentinels and
+ * the full local leak set. Returns `path:label`, never the value.
+ */
+export function offeredPracticeLeaks(offer, documents, extraSentinels = []) {
+  const payloads = {};
+  if (typeof offer?.text === 'string') payloads.body = offer.text;
+  for (const file of offer?.capsule?.files ?? []) {
+    if (typeof file.text === 'string') payloads[file.path] = file.text;
+    else if (typeof file.base64 === 'string') {
+      let bytes;
+      try { bytes = base64Bytes(file.base64); } catch { payloads[file.path] = file.base64; continue; }
+      payloads[file.path] = printableStrings(bytes);
+    }
+  }
+  const leaks = worldPublicationLeaks(payloads, documents, extraSentinels);
+  for (const [name, payload] of Object.entries(payloads)) {
+    for (const { name: label, pattern } of WORLD_LOCAL_LEAK_PATTERNS) if (pattern.test(payload)) leaks.push(`${name}:${label}`);
   }
   return [...new Set(leaks)];
 }
@@ -908,8 +960,13 @@ export function projectCentralWikiWorld(input) {
   // its own first, so a refusal names the practice rather than the bundle.
   for (const entry of entries) {
     if (entry.kind !== 'practice' || !entry.meta?.offer) continue;
-    const bodyLeaks = worldPublicationLeaks({ body: entry.meta.offer.text }, documents);
-    if (bodyLeaks.length) throw new TypeError(`offered practice ${entry.meta.local_ref} body would carry protected material (${bodyLeaks.map((leak) => leak.slice('body:'.length)).join(', ')}); nothing was built`);
+    const offerLeaks = offeredPracticeLeaks(entry.meta.offer, documents);
+    if (offerLeaks.length) {
+      const where = [...new Set(offerLeaks.map((leak) => leak.slice(0, leak.lastIndexOf(':'))))];
+      const labels = [...new Set(offerLeaks.map((leak) => leak.slice(leak.lastIndexOf(':') + 1)))];
+      const named = where.length === 1 && where[0] === 'body' ? 'body' : `file${where.length === 1 ? '' : 's'} ${where.join(', ')}`;
+      throw new TypeError(`offered practice ${entry.meta.local_ref} ${named} would carry protected material (${labels.join(', ')}); nothing was built`);
+    }
   }
   // The allow-lists above are the guard; this is the proof. A bundle that
   // would carry any protected inhabitation value or shape is refused whole.

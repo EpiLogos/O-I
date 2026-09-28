@@ -5,6 +5,7 @@ import {
   hostedPublicationArgs,
   projectCentralWikiWorld,
   reprojectCentralWikiWorld,
+  printableStrings,
   worldPublicationLeaks,
 } from './central-wiki-projection.mjs';
 import { renderWorldEdition, worldEditionManifest } from './world-edition.mjs';
@@ -247,7 +248,7 @@ test('an offered body is proved against the disclosed AIKit revision and refused
   assert.throws(() => darshanaBody('# gaze\n<a href="javascript:void(0)">x</a>\n'), /script-url/);
   // Local paths and tokens inside the body refuse the publication, naming the practice.
   const leaky = darshanaBody('# gaze\nSee /Users/someone/notes/private.md\n');
-  assert.throws(() => publish(FULL, { body: leaky, participation: { darshanaRevision: leaky.source_revision } }), /offered practice skill\/ql\/darshana body would carry protected material \(local-home-path\)/);
+  assert.throws(() => publish(FULL, { body: leaky, participation: { darshanaRevision: leaky.source_revision } }), /offered practice skill\/ql\/darshana body would carry protected material \(local-home-path/);
 });
 
 test('offered is not inspectable: an offer travels only when the selection lists it', () => {
@@ -430,9 +431,35 @@ test('capsule path refusals: another revision, modes and paths AIKit refuses, ov
 
 test('capsule path: a protected value inside a payload file refuses the whole publication', () => {
   const leaky = capsuleBody({ script: 'NOTES = "/Users/someone/notes/private.md"\n' });
-  assert.throws(() => publish(FULL, { body: leaky, participation: { darshanaRevision: leaky.source_revision } }), /protected inhabitation material .*local-home-path/);
+  assert.throws(() => publish(FULL, { body: leaky, participation: { darshanaRevision: leaky.source_revision } }), /offered practice skill\/ql\/darshana file payload\/scripts\/darshana\.py would carry protected material \(.*local-home-path/);
   const endpoint = capsuleBody({ script: 'URL = "redis://127.0.0.1:6381"\n' });
-  assert.throws(() => publish(FULL, { body: endpoint, participation: { darshanaRevision: endpoint.source_revision } }), /protected inhabitation material/);
+  assert.throws(() => publish(FULL, { body: endpoint, participation: { darshanaRevision: endpoint.source_revision } }), /file payload\/scripts\/darshana\.py would carry protected material/);
+});
+
+test('capsule path: every local leak shape field time refuses is refused in a capsule text file too', () => {
+  const cases = {
+    'local-absolute-path': ['DATA = "/mnt/hdd/vm/private"', 'DATA = "/private/var/folders/x"', 'DATA = "/tmp/scratch/x"', 'DATA = "/Volumes/Backup/x"', 'DATA = "~/notes/private.md"'],
+    'file-url': ['SEE = "file://somewhere/x"'],
+    'central-token-path': ['TOKEN = open(".central/native-token")', 'TOKEN_FILE = "native-token"'],
+  };
+  for (const [label, scripts] of Object.entries(cases)) {
+    for (const script of scripts) {
+      const body = capsuleBody({ script: `${script}\n` });
+      assert.throws(() => publish(FULL, { body, participation: { darshanaRevision: body.source_revision } }), new RegExp(`file payload/scripts/darshana\\.py would carry protected material \\(.*${label}`), script);
+    }
+  }
+});
+
+test('capsule path: a binary (base64) capsule file is scanned through its printable strings and refused naming the file', () => {
+  const binary = (text) => { const bytes = Uint8Array.from([0, 1, 2, ...new TextEncoder().encode(text), 0, 255]); return { path: 'payload/assets/blob.bin', mode: 0o644, bytes: bytes.length, sha256: nodeSha(bytes), base64: Buffer.from(bytes).toString('base64') }; };
+  const clean = capsuleBody({ extra: [binary('harmless glyph table')] });
+  assert.doesNotThrow(() => publish(FULL, { body: clean, participation: { darshanaRevision: clean.source_revision } }));
+  for (const [text, label] of [['/Users/someone/secret', 'local-home-path'], [' /mnt/hdd/vm/state', 'local-absolute-path'], ['redis://127.0.0.1:6381', 'workcell-endpoint'], ['.central/native-token', 'central-token-path']]) {
+    const body = capsuleBody({ extra: [binary(text)] });
+    assert.throws(() => publish(FULL, { body, participation: { darshanaRevision: body.source_revision } }), new RegExp(`file payload/assets/blob\\.bin would carry protected material \\(.*${label}`), text);
+  }
+  // Runs shorter than six printable bytes are noise, not strings.
+  assert.equal(printableStrings(Uint8Array.from([0x2f, 0x74, 0x6d, 0x70, 0, 0x61, 0x62, 0x63, 0x64, 0x65, 0x66])), 'abcdef');
 });
 
 test('fallback path: an older AIKit\'s snapshot read carries SKILL.md only and says so', () => {

@@ -36,7 +36,7 @@
 import { spawnSync } from 'node:child_process';
 import { lstatSync, mkdirSync, readdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { isAbsolute, join, resolve } from 'node:path';
-import { projectCentralWikiWorld, reprojectCentralWikiWorld, hostedPublicationArgs, exploreSeedFromPublication, worldPublicationLeaks, unwrapOwnerReading } from '../central-wiki-projection.mjs';
+import { projectCentralWikiWorld, reprojectCentralWikiWorld, hostedPublicationArgs, exploreSeedFromPublication, offeredPracticeLeaks, worldPublicationLeaks, unwrapOwnerReading } from '../central-wiki-projection.mjs';
 import { AGENT_PARTICIPATION_SCHEMA, PRACTICE_OFFER_BODY_SCHEMA, practiceOfferBody, practiceOfferFromReading, workcellRef } from '../world-constituents.mjs';
 import { renderWorldEdition, worldEditionManifest } from '../world-edition.mjs';
 
@@ -247,19 +247,17 @@ function readOfferedPracticeBodies(selection, documents, cwd) {
 
 readings.push(...readOfferedPracticeBodies(selection, readings, args.central ?? process.env.CENTRAL_HOME ?? process.cwd()));
 
-// Every text file an offered capsule carries is scanned on its own before
-// anything is built, so a refusal names the practice and the file; the
-// whole-bundle scan below still runs. Binary files are bounded by the cap
-// `verifyPracticeCapsuleFiles` enforces.
+// Every file an offered capsule carries — text whole, binary through its
+// printable strings — is scanned on its own against the full local leak set
+// before anything is built, so a refusal names the practice and the file; the
+// whole-bundle scan below still runs.
 for (const reading of readings) {
-  if (reading?.schema !== PRACTICE_OFFER_BODY_SCHEMA || !reading.capsule) continue;
-  for (const file of reading.capsule.files) {
-    if (typeof file.text !== 'string') continue;
-    const fileLeaks = worldPublicationLeaks({ [file.path]: file.text }, readings, args.sentinels);
-    if (fileLeaks.length) {
-      console.error(JSON.stringify({ ok: false, error: `offered practice ${reading.practice_ref} file ${file.path} would carry protected material`, leaks: fileLeaks }));
-      process.exit(2);
-    }
+  if (reading?.schema !== PRACTICE_OFFER_BODY_SCHEMA) continue;
+  const offerLeaks = offeredPracticeLeaks(reading, readings, args.sentinels);
+  if (offerLeaks.length) {
+    const files = [...new Set(offerLeaks.map((leak) => leak.slice(0, leak.lastIndexOf(':'))))];
+    console.error(JSON.stringify({ ok: false, error: `offered practice ${reading.practice_ref} ${files.length === 1 && files[0] === 'body' ? 'body' : `file ${files.join(', ')}`} would carry protected material`, leaks: offerLeaks }));
+    process.exit(2);
   }
 }
 

@@ -19,7 +19,7 @@
  * the `expected_revision` the writer read and produce exactly revision + 1.
  * A stale writer is refused instead of silently winning.
  */
-import { WORLD_PROTECTED_KEYS, WORLD_PROTECTED_PATTERNS } from './central-wiki-projection.mjs';
+import { WORLD_LOCAL_LEAK_PATTERNS, WORLD_PROTECTED_KEYS } from './central-wiki-projection.mjs';
 
 export const FIELD_NOW_SCHEMA = 'oi.field-now/v1';
 export const FIELD_DAY_SCHEMA = 'oi.field-day/v1';
@@ -36,13 +36,7 @@ export const WORLD_REF_PATTERN = /^(?:control:root|project:[A-Za-z0-9._-]+|world
 
 /** Local-only material beyond refs: the shared World leak shapes plus local
  * filesystem paths and session/SessionSpace refs. */
-export const FIELD_TIME_LEAK_PATTERNS = Object.freeze([
-  ...WORLD_PROTECTED_PATTERNS,
-  { name: 'local-absolute-path', pattern: /(?:^|[\s"'(=])(?:~\/|\/(?:Users|home|private|tmp|var|etc|mnt|opt|Volumes)\/)/ },
-  { name: 'file-url', pattern: /\bfile:\/\// },
-  { name: 'session-ref', pattern: /(?:^|[^A-Za-z0-9])(?:session-space|agent-session|session)[:/][A-Za-z0-9]/ },
-  { name: 'central-token-path', pattern: /\.central\/|native-token|owner-token/ },
-]);
+export const FIELD_TIME_LEAK_PATTERNS = WORLD_LOCAL_LEAK_PATTERNS;
 
 const ROOT_KEYS = new Set(['now_ref', 'workcell_ref', 'world_ref', 'revision', 'projected_by']);
 const CHILD_KEYS = new Set(['now_ref', 'parent_now_ref', 'workcell_ref', 'purpose_summary', 'state', 'projected_by']);
