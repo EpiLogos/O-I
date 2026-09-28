@@ -31,8 +31,10 @@ const here = dirname(fileURLToPath(import.meta.url));
 const outFlag = process.argv.indexOf('--out');
 const out = resolve(outFlag > 0 ? process.argv[outFlag + 1] : join(here, '..', 'dist-client'));
 
-rmSync(out, { recursive: true, force: true });
+// The directory itself stays (it is a declared Tauri resource and carries a
+// tracked README); only this builder's own outputs are replaced.
 mkdirSync(out, { recursive: true });
+for (const name of ['field-client.mjs', 'a2a-runner.mjs', 'hosting.json', 'field-client.sh', 'CLIENT.json']) rmSync(join(out, name), { force: true });
 
 // Bundled output keeps `import.meta.url` pointing at the bundle's own
 // directory, so field-lib's `here` resolves hosting.json beside it.
