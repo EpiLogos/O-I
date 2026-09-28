@@ -172,12 +172,16 @@ steps.push('a one-shot connection under the same owner identity connected and le
 const refusals: Record<string, string> = {};
 refusals.non_participant = await refused(() => rc.putActivityLiveness({ fieldRef: FIELD, activityRef: ACTIVITY, producerParticipantRef: '', ownerState: 'running', ownerRevision: BigInt(ownerNow.revision + 1) }), 'C (not owner, no participant) put', /not owner/);
 refusals.unbound_participant = await refused(() => rc.putActivityLiveness({ fieldRef: FIELD, activityRef: ACTIVITY, producerParticipantRef: PB, ownerState: 'running', ownerRevision: BigInt(ownerNow.revision + 1) }), 'C speaking for B', /not bound/);
-refusals.state_without_revision = await refused(() => rb.putActivityLiveness({ fieldRef: FIELD, activityRef: ACTIVITY, producerParticipantRef: PB, ownerState: 'fabricated', ownerRevision: BigInt(ownerNow.revision) }), 'a changed state at the same revision', /without an owner revision advance/);
+refusals.state_without_revision = await refused(() => ra.putActivityLiveness({ fieldRef: FIELD, activityRef: ACTIVITY, producerParticipantRef: '', ownerState: 'fabricated', ownerRevision: BigInt(ownerNow.revision) }), 'a changed state at the same revision', /without an owner revision advance/);
+// B is a live contributor, but the row is the owner producer's: B can neither
+// forge its state, push its revision to the ceiling, nor take the producer seat.
+refusals.contributor_overwrites_owner_row = await refused(() => rb.putActivityLiveness({ fieldRef: FIELD, activityRef: ACTIVITY, producerParticipantRef: PB, ownerState: 'fabricated', ownerRevision: 18446744073709551615n }), 'B overwriting the owner producer row', /held by another producer/);
+assert.equal(liveRowForB()?.producerIdentity.toHexString(), a.identityHex, 'the owner producer still holds the row');
 refusals.not_an_activity = await refused(() => ra.putActivityLiveness({ fieldRef: FIELD, activityRef: NOT_ACTIVITY, producerParticipantRef: '', ownerState: 'running', ownerRevision: 1n }), 'liveness for a non-activity entry', /No activity entry/);
 refusals.clear_by_outsider = await refused(() => rc.clearActivityLiveness({ fieldRef: FIELD, activityRef: ACTIVITY }), 'C clearing the owner producer', /Only the producing identity or the field owner/);
 assert.equal(readingForB().owner_state, ownerNow.lifecycle, 'no refused put changed the served owner state');
 out.refusals = refusals;
-steps.push('refused server-side: non-participant put; put for a participant the caller is not bound to; state change without revision advance; liveness for a non-activity entry; clear by a non-producer');
+steps.push('refused server-side: non-participant put; put for a participant the caller is not bound to; state change without revision advance; a contributor taking over the owner producer row (forged state, u64-max revision); liveness for a non-activity entry; clear by a non-producer');
 
 /* ---------- graceful stop ---------- */
 
@@ -227,6 +231,62 @@ assert.equal(effectCalls, 0);
 out.edition = { schema: edition.schema, owner_state: edition.owner_state, owner_revision: edition.owner_revision, basis: edition.basis, events: edition.events, events_note: edition.events_note, scene_nodes: edition.scene.nodes.length, executions: edition.executions.length };
 out.replay = { mode: replay.mode, live: replay.live, ordering: replay.ordering, steps: replay.steps.map((step: any) => step.kind), effect_calls: effectCalls };
 steps.push(`frozen edition of ${RUN_REF}@${edition.owner_revision} replayed as ${replay.steps.length} render steps; effect runner calls: ${effectCalls}`);
+
+/* ---------- a private publication narrows its entries (and their liveness) ---------- */
+
+// D is read-granted (observer) and named in the private audience; B is a
+// read-granted contributor left out of it. Entries name the publication's
+// Projection exactly as the World publication path emits them.
+const PD = `participant:acceptance:activity-live:${RUN}:d`;
+const PRIVATE_WORLD = `${WORLD}:private`;
+const PRIVATE_PROJECTION = `projection:acceptance:activity-live:${RUN}:private`;
+const HIDDEN_ACTIVITY = `${PRIVATE_WORLD}/${RUN_REF}`;
+const HIDDEN_PRACTICE = `${PRIVATE_WORLD}/skill/acceptance/offered`;
+const NONEXISTENT = `${PRIVATE_WORLD}/run:does-not-exist`;
+const OFFER_TEXT = `# Offered capsule ${RUN}\n`;
+const d = await open(target, 'activity-d');
+const rd: any = d.conn.reducers;
+await ra.putParticipant(participantArgs(participant(PD, 'd')));
+await ra.grantParticipantAuthority({ fieldRef: FIELD, participantRef: PD, targetIdentity: d.identity, role: 'observer', contactable: false, ttlSeconds: 0 });
+const privateProjection = (revision: number, refs: string[]) => ({
+  schema: 'oi.projection/v1', projection_ref: PRIVATE_PROJECTION, projection_revision: revision, state: 'published',
+  subject: { kind: 'central-world', ref: PRIVATE_WORLD }, source: { system: 'central', ref: `central:source:${RUN}`, revision: `r${revision}` },
+  publisher_participant_ref: PA, published_at: new Date().toISOString(), audience: { visibility: 'private', refs },
+  provenance: [{ kind: 'human-publication', ref: PA, source_system: 'central', revision: `r${revision}` }],
+});
+const projectionArgs = (value: any) => ({ projectionKey: `${value.projection_ref}@${value.projection_revision}`, fieldRef: FIELD, projectionRef: value.projection_ref, projectionRevision: value.projection_revision, sourceRevision: value.source.revision, publisherParticipantRef: value.publisher_participant_ref, state: value.state, contractJson: JSON.stringify(value) });
+await ra.putProjection(projectionArgs(privateProjection(1, [PD])));
+await ra.putExploreEntry(entryArgs(createExploreEntry({ ref: HIDDEN_ACTIVITY, kind: 'activity', world_ref: PRIVATE_WORLD, label: 'Private run', projection_ref: PRIVATE_PROJECTION, provenance, meta: { standing: 'activity', local_ref: RUN_REF, state: run.lifecycle, run_ref: RUN_REF, participants: [], liveness: 'live', liveness_basis: 'publication' } })));
+await ra.putExploreEntry(entryArgs(createExploreEntry({ ref: HIDDEN_PRACTICE, kind: 'practice', world_ref: PRIVATE_WORLD, label: 'Offered practice', projection_ref: PRIVATE_PROJECTION, provenance: [{ kind: 'aikit-practice', ref: 'skill/acceptance/offered', source_system: 'ai-kit', revision: '1' }], meta: { standing: 'practice', availability: 'offered', offer: { media_type: 'text/markdown', text: OFFER_TEXT } } })));
+const seesEntry = (session: any, ref: string) => rows(session.conn.db.exploreEntry).find((row: any) => row.semanticRef === ref);
+await waitUntil(() => seesEntry(d, HIDDEN_PRACTICE) && seesEntry(d, HIDDEN_ACTIVITY), 'D (in the audience) to see the private publication');
+assert.equal(JSON.parse(seesEntry(d, HIDDEN_PRACTICE).entryJson).meta.offer.text, OFFER_TEXT, 'D reads the offered capsule');
+await sleep(1_500);
+assert.equal(seesEntry(b, HIDDEN_PRACTICE), undefined, 'B (read-granted, not in audience.refs) never receives the offered practice');
+assert.equal(seesEntry(b, HIDDEN_ACTIVITY), undefined, 'B never receives the private activity');
+assert.ok(seesEntry(b, ACTIVITY), 'B still sees the unscoped activity');
+const privateOut: Record<string, unknown> = { audience_refs: [PD] };
+
+// B probes the invisible entry: the refusal is exactly the nonexistent one.
+const probeHidden = await refused(() => rb.putActivityLiveness({ fieldRef: FIELD, activityRef: HIDDEN_ACTIVITY, producerParticipantRef: PB, ownerState: 'running', ownerRevision: 1n }), 'B probing a private activity', /No activity entry/);
+const probeMissing = await refused(() => rb.putActivityLiveness({ fieldRef: FIELD, activityRef: NONEXISTENT, producerParticipantRef: PB, ownerState: 'running', ownerRevision: 1n }), 'B probing a nonexistent activity', /No activity entry/);
+assert.equal(probeHidden.replace(HIDDEN_ACTIVITY, '<ref>'), probeMissing.replace(NONEXISTENT, '<ref>'), 'invisible and nonexistent refuse identically');
+privateOut.probe = { hidden: probeHidden.replace(HIDDEN_ACTIVITY, '<ref>'), missing: probeMissing.replace(NONEXISTENT, '<ref>') };
+
+// The owner may speak for it; D reads the liveness row, B does not.
+await ra.putActivityLiveness({ fieldRef: FIELD, activityRef: HIDDEN_ACTIVITY, producerParticipantRef: '', ownerState: run.lifecycle, ownerRevision: BigInt(run.revision) });
+await waitUntil(() => rows(d.conn.db.activityLiveness).some((row: any) => row.activityRef === HIDDEN_ACTIVITY), 'D to see the private liveness row');
+await sleep(1_000);
+assert.ok(!rows(b.conn.db.activityLiveness).some((row: any) => row.activityRef === HIDDEN_ACTIVITY), 'B never sees the private liveness row');
+
+// A narrowing re-projection (audience → B only) narrows the same entries at once.
+await ra.putProjection(projectionArgs(privateProjection(2, [PB])));
+await waitUntil(() => seesEntry(b, HIDDEN_PRACTICE) && !seesEntry(d, HIDDEN_PRACTICE), 'the re-projection to move the audience from D to B');
+assert.equal(seesEntry(d, HIDDEN_ACTIVITY), undefined, 'D loses the activity with the narrowed audience');
+await ra.clearActivityLiveness({ fieldRef: FIELD, activityRef: HIDDEN_ACTIVITY });
+out.private_publication = privateOut;
+steps.push('a private publication (audience D) → D reads the practice, its offered capsule and the activity liveness; read-granted B receives none of them; B probing the private activity gets the nonexistent-entry refusal verbatim; re-projecting to audience B moves every entry with it');
+close(d);
 
 close(a); close(b); close(c);
 console.log(JSON.stringify({ schema: 'oi.activity-liveness-acceptance/v1', ok: true, ...out, steps }, null, 2));

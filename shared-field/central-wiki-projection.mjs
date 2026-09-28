@@ -622,6 +622,13 @@ export function projectCentralWikiWorld(input) {
     }));
   }
   for (const entry of constituents.entries) entries.push(createExploreEntry(entry));
+  // Every entry this publication carries names its Projection, so the hosted
+  // field serves it exactly to that Projection's current audience: a private
+  // publication, or a narrowing re-projection, narrows the world, its wiki,
+  // workcells, practices (and their offered capsules) and activity alike.
+  for (let index = 0; index < entries.length; index += 1) {
+    entries[index] = createExploreEntry({ ...entries[index], projection_ref: selection.projection_ref });
+  }
 
   const projectedRelations = [];
   let excludedRelations = 0;

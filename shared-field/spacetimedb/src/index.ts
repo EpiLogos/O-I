@@ -1034,7 +1034,13 @@ function callerCanSeeExploreEntry(ctx: any, row: any): boolean {
       const current = latest.find(projectionRow => projectionRow.projectionRef === projectionRef);
       if (!current || current.state !== 'published' || !callerCanSeeProjection(ctx, current)) return false;
       const contract = parseStoredJson(current.contractJson, 'Projection contractJson');
-      return contract.projection_ref === row.semanticRef || contract.representation?.ref === row.semanticRef;
+      if (contract.projection_ref === row.semanticRef || contract.representation?.ref === row.semanticRef) return true;
+      // An entry a World publication carries names that publication's
+      // Projection directly: it is served exactly to that Projection's
+      // current audience, so a private or narrowed publication narrows every
+      // entry it carries. The binding holds only for the Projection whose
+      // subject is the entry's own world.
+      return projectionRef === directProjectionRef && contract.subject?.ref === row.worldRef;
     });
   }
 
@@ -2926,7 +2932,8 @@ function activityProducerStillAuthorised(ctx: any, row: any): boolean {
 
 /* Only the field owner, or a caller bound to a live contributor/admitter
  * participant of that field, may speak for an activity entry that exists in
- * that field; the owner revision it reports never goes backwards, and a
+ * that field and that the caller can see; a non-owner never takes over a row
+ * another producer (or the owner) holds; the owner revision it reports never goes backwards, and a
  * changed owner state must arrive with a revision advance. */
 export const put_activity_liveness = spacetimedb.reducer(
   { fieldRef: t.string(), activityRef: t.string(), producerParticipantRef: t.string(), ownerState: t.string(), ownerRevision: t.u64() },
@@ -2936,21 +2943,31 @@ export const put_activity_liveness = spacetimedb.reducer(
     if (!ACTIVITY_STATE_PATTERN.test(args.ownerState)) fail(`Unsupported activity owner state: ${args.ownerState}`);
     if (args.ownerRevision < 1n) fail('Activity owner revision must be >= 1');
     if (!ctx.db.sharedFieldBacking.fieldRef.find(args.fieldRef)) fail(`Unknown SharedField ${args.fieldRef}`);
-    if (isFieldOwner(ctx, args.fieldRef)) {
+    const owner = isFieldOwner(ctx, args.fieldRef);
+    if (owner) {
       if (args.producerParticipantRef !== '') requireParticipantInField(ctx, args.producerParticipantRef, args.fieldRef);
     } else {
       if (args.producerParticipantRef === '') fail(`Caller is not owner of SharedField ${args.fieldRef}; name the producing Participant`);
       requireParticipantInField(ctx, args.producerParticipantRef, args.fieldRef);
       requireParticipantAuthority(ctx, args.fieldRef, args.producerParticipantRef, ['contributor', 'admitter']);
     }
+    // A missing entry and an entry the caller cannot see refuse identically,
+    // so a put never probes private entry existence.
     const entry = ctx.db.exploreEntryBacking.semanticRef.find(args.activityRef);
-    if (!entry || entry.fieldRef !== args.fieldRef || entry.kind !== 'activity') {
+    if (!entry || entry.fieldRef !== args.fieldRef || entry.kind !== 'activity' || (!owner && !callerCanSeeExploreEntry(ctx, entry))) {
       fail(`No activity entry ${args.activityRef} in SharedField ${args.fieldRef}`);
     }
     const now = nowMicros(ctx);
     const key = activityKey(args.fieldRef, args.activityRef);
     const existing = ctx.db.activityLivenessBacking.activityKey.find(key);
     if (existing) {
+      // A non-owner may only continue its own account: the producing
+      // identity, or the same Participant it is bound to (authority checked
+      // above). The owner's row and another producer's row are not its to take.
+      if (!owner && !ctx.sender.isEqual(existing.producerIdentity)
+        && (existing.producerParticipantRef === '' || existing.producerParticipantRef !== args.producerParticipantRef)) {
+        fail(`Activity liveness for ${args.activityRef} is held by another producer`);
+      }
       if (args.ownerRevision < existing.ownerRevision) {
         fail(`Activity owner revision must not go backwards (${args.ownerRevision} < ${existing.ownerRevision})`);
       }

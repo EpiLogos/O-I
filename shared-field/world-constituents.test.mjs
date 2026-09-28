@@ -442,3 +442,25 @@ test('fallback path: an older AIKit\'s snapshot read carries SKILL.md only and s
   assert.deepEqual(body.payload_files_not_carried, ['payload/scripts/darshana.py']);
   assert.equal(entry(publish(FULL, { body }), 'skill/ql/darshana').meta.offer.capsule, undefined);
 });
+
+test('every hosted entry of a publication names its Projection, so a private or narrowed audience narrows workcells, practices, offered capsules and activity alike', () => {
+  const PROJECTION = 'projection:central:project:O-I';
+  const privateAudience = { visibility: 'private', refs: ['participant:central:owner'] };
+  const bundle = publish({ ...FULL, audience: privateAudience });
+  const args = hostedPublicationArgs(bundle);
+  assert.ok(args.putExploreEntries.length > 0);
+  for (const row of args.putExploreEntries) {
+    assert.equal(JSON.parse(row.entryJson).projection_ref, PROJECTION, `${row.kind} ${row.semanticRef} carries the publication's projection_ref`);
+  }
+  for (const kind of ['central-world', 'wiki-node', 'workcell', 'practice', 'activity']) {
+    assert.ok(args.putExploreEntries.some((row) => row.kind === kind), `${kind} present in the fixture`);
+  }
+  const offered = args.putExploreEntries.find((row) => row.semanticRef === HOSTED('skill/ql/darshana'));
+  assert.equal(JSON.parse(offered.entryJson).meta.offer.text, DARSHANA_BODY, 'the offered capsule rides the lineage-bound entry');
+  assert.deepEqual(JSON.parse(args.putProjection.contractJson).audience, privateAudience);
+  // A narrowing re-projection keeps every entry on the same lineage, whose
+  // latest revision now carries the narrower audience.
+  const narrowed = reprojectCentralWikiWorld(publish(FULL), { readings: readings(), selection: selection({ ...FULL, audience: privateAudience }), published_at: '2026-09-28T10:00:00.000Z' });
+  assert.equal(narrowed.audience_changed, true);
+  for (const row of hostedPublicationArgs(narrowed).putExploreEntries) assert.equal(JSON.parse(row.entryJson).projection_ref, PROJECTION);
+});
