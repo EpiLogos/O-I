@@ -22,3 +22,24 @@ here claims H.
 | Repair | `a77e0891` — bundled client resource `shared-field/` (field + A2A runner + hosting.json + node-finding launcher), kernel order explicit → bundled → development-only checkout, machine binding `OI_STATE_HOME/shared-field/binding.json` (`bind`/`unbind`) |
 | Owner verification | kernel `cargo test --lib shared_field` 9/9 (3 new: resolution order, launcher-less resource refused, missing client Unavailable with reason); bundled client reads hosted `epilogos-oi-shared-field` from Mac and from Omarchy under a bare `PATH` (distinct transport identities `c200cd…` / `c2003b…`) |
 | Replay | pending: rebuilt bundle → `oi desktop install` → same Explore act |
+
+## 2. Matrix anchors (C0)
+
+`5de143e2`: bindings carry typed `obligation_id`/`branch` (0-based) validated
+against the obligation modules; `--matrix` is owner-checked; O:I's ledger is
+read through `--matrix-slice`. Reviewed batch in [c0/bindings.json](c0/bindings.json):
+31 bindings, WORLD/EXPLORE/RESOLVE, all 9 branches bound, over Central
+`8918a3b`, ai-kit `1a426e42` (telos matrix), Factory `6a24587`, Workcell
+`c6a55af`, Actuation `8ad34cb`, QL-MEF `bea2eba`, O:I `33bb2e5a`. Owner
+packets: [c0/packets.json](c0/packets.json). Experience suite 94/94.
+
+## 3. A — World A shared (web65:WORLD)
+
+| | |
+|---|---|
+| Selection | [world-a/selection.json](world-a/selection.json) — O-I world; workcell:mac (address); Aletheia-5 in occupancy with its 17 practices (3 skills, 14 methods) inspectable; @oi address; wiki spaces/node; Factory run `run:01M3FNY3P0E4H7JGN0BARSRQ8R` |
+| Native reads | `machine.declaration`, `workcell discover`, `oi agent participation` (`oi.agent-world-participation/v1`), `factory development run` (`factory.run-reading/v1`), `central.position.list`, `aikit gateway who` |
+| Publication | `projection:central:project:O-I@2` on hosted `epilogos-oi-shared-field` (revision 1 of 2026-09-14 kept as lineage), source `oi.world-sources/v1:4222ef77eb6a5f7a`, 25 entries / 26 relations, leak scan clean |
+| Independent readback | Omarchy, World B transport `c2003b57…`: same 25/26; `workcell:mac@workcell:a936b0740f80389d`, `skill/ql/darshana@f3d55f2f…` resolve with native provenance |
+| Not offered | no Workcell offer is read-only (the workspace offer is writable); the agent card declares `public_basis: none-declared` — so nothing is offered, everything is inspectable only |
+| Absent natively | constellations (no constructive frame in the O-I register; no `wiki-construct list`), run → Position participants, public run purpose |
