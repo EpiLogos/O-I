@@ -155,3 +155,13 @@ gateway on the same build (next).
 | Source offline for B | B reads the hosted field directly from maincloud; nothing on the Mac is on B's read path |
 | Fresh body re-entry (§8) | a new session continued from the field alone and produced accepted work |
 | Relaunch/reinstall of the installed desktop | Explore restored its last subject and depth exactly |
+
+## 12. Two machines on the same AIKit
+
+| | |
+|---|---|
+| Installs | ai-kit `eeaab031` (#454 + #455) on both machines via `oi update --apply --candidate ai-kit=main ai-kit` (Omarchy needed `~/.cargo/bin` on the non-interactive PATH — the updater said so); Central `9b17daca` on the Mac the same way; both gateways restarted and advertise `communique-exact-instance` |
+| Omarchy → Aletheia-5 (exact, required workcell:mac) | `held: instance-absent`, basis "this Workcell's Actuation never knew … could not ask workcell:mac (read gateway upgrade status: Resource temporarily unavailable); held" — no substitution |
+| Omarchy → Aletheia-5 (durable) | held with `unanswered: workcell:mac` |
+| Cause | TCP to the Mac gateway opens but the WebSocket upgrade is never answered: the macOS application firewall queues inbound connections to the newly installed ad-hoc-signed `aikit` (the allowance is keyed to the content-addressed binary path and lapses on every update) |
+| Owner action | allow `…/Application Support/OI/products/ai-kit/<eeaab031 hash>/bin/aikit` for incoming connections, or front the gateway with a stable path (Tailscale serve to loopback / a stable signing identity). Mac → Omarchy is unaffected. |
