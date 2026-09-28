@@ -67,7 +67,7 @@ function readJson(path) {
 }
 
 function ctrlAction(action, input, cwd) {
-  const result = spawnSync(process.env.CTRL_BIN ?? 'ctrl', ['--json', 'action', 'run', action, JSON.stringify(input)], { cwd, encoding: 'utf8' });
+  const result = spawnSync(process.env.CTRL_BIN ?? 'ctrl', ['--json', 'action', 'run', action, JSON.stringify(input)], { cwd, encoding: 'utf8', maxBuffer: 512 * 1024 * 1024 });
   if (result.error) throw new Error(`ctrl could not run: ${result.error.message}`);
   let envelope;
   try { envelope = JSON.parse(result.stdout); } catch { throw new Error(`ctrl ${action} returned non-JSON: ${result.stdout.slice(0, 200)} ${result.stderr.slice(0, 200)}`); }
@@ -78,7 +78,7 @@ function ctrlAction(action, input, cwd) {
 /** One owner read that prints a bare JSON document (oi, workcell, factory). */
 function ownerRead(envName, fallback, words, cwd) {
   const program = process.env[envName] ?? fallback;
-  const result = spawnSync(program, words, { cwd, encoding: 'utf8' });
+  const result = spawnSync(program, words, { cwd, encoding: 'utf8', maxBuffer: 512 * 1024 * 1024 });
   if (result.error) throw new Error(`${program} could not run (${result.error.message}); put it on PATH or name it with ${envName}`);
   let document;
   try { document = JSON.parse(result.stdout); } catch { throw new Error(`${program} ${words.slice(0, 3).join(' ')} returned non-JSON (exit ${result.status}): ${result.stdout.slice(0, 200)} ${result.stderr.slice(0, 200)}`); }
@@ -89,7 +89,7 @@ function ownerRead(envName, fallback, words, cwd) {
 /** One AIKit read through its `--json` envelope; a refusal comes back as `{refused}` in AIKit's own words. */
 function aikitRead(words, cwd) {
   const program = process.env.OI_AIKIT_BIN ?? 'aikit';
-  const result = spawnSync(program, [...words, '--json'], { cwd, encoding: 'utf8' });
+  const result = spawnSync(program, [...words, '--json'], { cwd, encoding: 'utf8', maxBuffer: 512 * 1024 * 1024 });
   if (result.error) throw new Error(`${program} could not run (${result.error.message}); the Position, occupancy and constellation reads come from AIKit — put aikit on PATH or name it with OI_AIKIT_BIN`);
   let envelope;
   try { envelope = JSON.parse(result.stdout); } catch { throw new Error(`aikit ${words.slice(0, 2).join(' ')} returned non-JSON: ${result.stdout.slice(0, 200)} ${result.stderr.slice(0, 200)}`); }

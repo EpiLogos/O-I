@@ -21,12 +21,13 @@
  },
  "spaces": {
   "central:wiki:root": "address",
-  "central:wiki:project:O-I": "address",
+  "central:wiki:project:O-I": "nodes",
   "wiki:space:room/section-rooms/arguments": "nodes"
  },
  "node_refs": [
   "wiki:node:record/A04",
-  "wiki:node:record/A04p"
+  "wiki:node:record/A04p",
+  "wiki:node:contemplation/a04p-re-sites-a04-2026-09-28"
  ],
  "positions": {
   "central:position:project:O-I:aletheia-5": "occupancy"
