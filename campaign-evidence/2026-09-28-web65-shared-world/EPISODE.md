@@ -109,3 +109,14 @@ with its reason).
 | Fresh body | new session `8b8c0d0c…` bound to the AIKit generation projection (`--add-dir`, AIKit's own Claude binding) on the related input A05 ↔ A05′ (shared in region r6) ([task](world-b/run-2-TASK.md)) |
 | Uptake observed | the session invoked `Skill(darshana)`, applied World B's adaptation as its reading discipline, looked for the uncarried `darshana.py` and applied the practice as method; used the accepted A04 work as its pattern and relation vocabulary; proposed `A05′ —re-sites→ A05` with its own qualifications (784 words) → two new Contributions quarantined ([receipts](world-b/run-2-submission.json)) |
 | Owner gap now built | payload scripts did not travel → `aikit praxis read` / `skill export` / `source add-capsule` preserving revision, mode and upstream provenance (EpiLogos/ai-kit#455) |
+
+## 9. D — activity liveness, frozen edition, replay (web65:ACTIVITY)
+
+| | |
+|---|---|
+| Before | World A's activity entry said `liveness: live` — a publication-time claim the renderer displayed as fact |
+| Native repair | `d1aaf3ef`: hosted `activity_liveness` held by an owner-side producer over one persistent connection (reads the run through `factory development run`), cleared on SIGTERM and by the connection-scoped disconnect lifecycle; `activityReading` = live / stale / disconnected / static with its basis; frozen `oi.activity-edition/v1` replays as render steps with no effect path; desktop reads it (`2f082b58`) |
+| Non-production proof | frank-acceptance live acceptance: disconnected → live (owner state/revision = Factory) → stale at 120 s → disconnected after SIGTERM and after kill -9 (52 ms); six server refusals; edition replay 4 steps, 0 effect calls |
+| Production proof | hosted module deployed (additive); producer for `run:01M3FNY3P0E4H7JGN0BARSRQ8R` → World B reads `live`, owner state `seeded`, revision 6 (the run's current revision, not the publication's), heartbeat 3 s; `kill -9` → World B reads `disconnected` (0 rows, basis publication) |
+| Left running | the producer on workcell:mac (`~/.local/state/oi/web65/activity-producer.pid`, log beside it); stop with `kill $(cat …pid)` — it clears its row |
+| Honest limit | Factory's run reading has no event list or timestamps, so replay is lifecycle + node states + execution statuses in reading order, labelled as not a time sequence |
