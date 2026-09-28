@@ -47,3 +47,8 @@ test('an activity with no attested participants says so rather than inventing th
 test('other kinds keep their own renderer', () => {
   assert.equal(constituentReading(entries[4], relations, entries), null);
 });
+
+test('a relation carried by both the field view and the reading is one item', () => {
+  const reading = constituentReading(entries[0], [...relations, ...relations], entries);
+  assert.deepEqual(reading.groups[0].items.map((i) => i.ref), [entries[1].ref]);
+});

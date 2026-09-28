@@ -43,3 +43,20 @@ packets: [c0/packets.json](c0/packets.json). Experience suite 94/94.
 | Independent readback | Omarchy, World B transport `c2003b57…`: same 25/26; `workcell:mac@workcell:a936b0740f80389d`, `skill/ql/darshana@f3d55f2f…` resolve with native provenance |
 | Not offered | no Workcell offer is read-only (the workspace offer is writable); the agent card declares `public_basis: none-declared` — so nothing is offered, everything is inspectable only |
 | Absent natively | constellations (no constructive frame in the O-I register; no `wiki-construct list`), run → Position participants, public run purpose |
+
+## 4. Explore on installed software (web65:EXPLORE)
+
+| Step | Installed | Observed | Result |
+|---|---|---|---|
+| Replay of §1 (rail → Explore) | `273c1b1e` | status **hosted**, World A graph ([02](observations/02-installed-explore-hosted-world-a.png)) | repaired |
+| Search "aletheia" | `273c1b1e` | Position (occupied, gen #2, workcell:mac) then 17 practices with revisions ([03](observations/03-installed-explore-search-aletheia.png)); macOS autocorrect popped "Althea" | autocorrect off in `168ccffe` |
+| Search "agents" | `273c1b1e` | nothing, in a field of Agents | kind words in `168ccffe` |
+| Select the Position | `273c1b1e` | the whole World page stood in for the Agent ([04](observations/04-position-opens-world-page.png)); typed relations correct in Relations depth | Being/Thing encounter `168ccffe` |
+| Relaunch | `168ccffe` | Explore restored the prior selection and Relations depth | ✓ |
+| Position → Being | `168ccffe` | handle, role, agent, occupancy, carried-by, practises ([05](observations/05-installed-agent-being-page.png)) | ✓; each related subject listed twice → deduped (next build) |
+| → Workcell mac | `168ccffe` | Thing: material role, "nothing offered — inspectable only", carries Aletheia ([06](observations/06-installed-workcell-thing-page.png)) | ✓ |
+| Back → darshana | `168ccffe` | Skill Thing: `skill/ql/darshana`, full source revision, owner ai-kit, "Granted use: none — publication is not permission" ([07](observations/07-installed-practice-thing-page.png)) | ✓; no adopt/adapt action yet (RETURN) |
+
+Still open: the window reopens at a ~125×184 frame and needs Window ▸ Zoom;
+`oi desktop install` has no in-place upgrade (remove + install used,
+receipted); narrow layout and reduced-motion not yet walked.

@@ -21,9 +21,12 @@ function neighbour(ref, entries) {
 }
 
 function related(entry, relations, entries, relation, direction) {
+  const seen = new Set();
   return relations
     .filter((row) => row.relation === relation && (direction === 'out' ? row.from === entry.ref : row.to === entry.ref))
-    .map((row) => ({ ...neighbour(direction === 'out' ? row.to : row.from, entries), availability: text(row.availability) }));
+    .map((row) => ({ ...neighbour(direction === 'out' ? row.to : row.from, entries), availability: text(row.availability) }))
+    // The field view and the subject reading both carry the relation; one subject is one item.
+    .filter((item) => !seen.has(item.ref) && seen.add(item.ref));
 }
 
 /** @returns {null | {role: 'being'|'thing', kind: string, ref: string, title: string, facts: {label: string, value: string}[], groups: {title: string, items: {ref: string, label: string, kind: string, note?: string}[]}[], world_ref: string, standing: string}} */
