@@ -197,7 +197,7 @@ test('each constituent appears only when the selection names it', () => {
   const activityOnly = publish({ activity: { [RUN]: 'static' } });
   assert.deepEqual(kinds(activityOnly).filter((kind) => ['workcell', 'practice', 'activity'].includes(kind)), ['activity']);
   const activity = entry(activityOnly, RUN);
-  assert.deepEqual(activity.meta, { standing: 'activity', local_ref: RUN, state: 'seeded', run_ref: RUN, participants: [HOSTED(ALETHEIA)], liveness: 'static' });
+  assert.deepEqual(activity.meta, { standing: 'activity', local_ref: RUN, state: 'seeded', run_ref: RUN, participants: [HOSTED(ALETHEIA)], liveness: 'static', liveness_basis: 'publication' });
   assert.deepEqual(relationsOf(activityOnly, 'oi.activity/participant').map((relation) => relation.to), [HOSTED(ALETHEIA)]);
   assert.deepEqual(relationsOf(activityOnly, 'oi.activity/works-on').map((relation) => relation.to), [HOSTED(NODE)]);
 });

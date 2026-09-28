@@ -221,6 +221,30 @@ by Central's binding). No `aikit wiki-construct list` exists to discover
 constructive frames. Factory run readings carry Agencies, not Positions, and the
 population's `current_work` is the only Position ↔ run attestation.
 
+### Activity liveness is evidence, not a publication claim
+
+An activity entry's `meta.liveness` (`liveness_basis: 'publication'`) records
+what the publisher claimed at publication time. It is never read as live. Only an
+owner-side producer (`scripts/activity-producer.mjs`) makes an activity live. The
+producer reads its run read-only through `factory development run … --json` and
+keeps one `activity_liveness` row per field and activity. The row holds the run's
+lifecycle and revision and a server-stamped heartbeat, and it is bound to the
+producer's connection. Only the field owner, or a live contributor or admitter
+participant, may put a row, and only for an `activity` entry in that field. The
+owner revision never goes backwards. SIGTERM clears the row. A dropped connection
+or `kill -9` clears it too, through the module's client-disconnect lifecycle.
+`activityReading` (`activity-liveness.mjs`) resolves the row to one of four
+readings. With a producer row, a fresh heartbeat reads `live` and an old one
+reads `stale`. With no producer row, the entry reads `disconnected` if the
+publication claimed live, and `static` otherwise. `activityEdition` freezes a
+run reading with its `factory.run-reading/v1` revision basis. `replayActivity`
+turns the frozen edition into render steps only. It records no Action and runs
+no tool. **Native gap:** the run reading has no event list and no timestamps.
+An edition therefore records lifecycle, RunMap node states and execution
+statuses in reading order, and says so. Continuing a run live is a separate
+operation that Factory admits.
+Proof: `spacetimedb/activity-liveness-live-acceptance.ts`.
+
 ## Offered practices and adoption
 
 A Skill page refers to the actual practice and its source revision; it never

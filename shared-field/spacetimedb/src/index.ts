@@ -311,6 +311,35 @@ const fieldPresence = table(
   }
 );
 
+/*
+ * Activity liveness: the owner-side producer's live account of one published
+ * activity entry, held only while that producer stays connected.
+ *
+ * owner-side producer (reads its Factory run read-only) → put_activity_liveness
+ *      ↓ PRIVATE row, one per (field, activity entry), bound to the producing
+ *        identity AND its connection; heartbeat refreshed every interval
+ * caller-filtered activity_liveness View
+ *
+ * A publication-time `meta.liveness` is a claim; this row is the evidence.
+ * clear_activity_liveness (graceful stop) or the producing connection's
+ * disconnect removes it, so liveness degrades instead of being synthesised.
+ */
+const activityLivenessBacking = table(
+  { name: 'activity_liveness_backing', public: false },
+  {
+    activityKey: t.string().primaryKey(),
+    fieldRef: t.string().index('btree'),
+    activityRef: t.string().index('btree'),
+    producerParticipantRef: t.string(),
+    producerIdentity: t.identity().index('btree'),
+    producerConnection: t.string().index('btree'),
+    ownerState: t.string(),
+    ownerRevision: t.u64(),
+    observedAtMicros: t.u64(),
+    heartbeatAtMicros: t.u64(),
+  }
+);
+
 const sharedStageBacking = table(
   { name: 'shared_stage_backing', public: false },
   {
@@ -541,6 +570,7 @@ const spacetimedb = schema({
   exploreRelationBacking,
   watch,
   fieldPresence,
+  activityLivenessBacking,
   sharedStageBacking,
   stageFollower,
   fieldNowBacking,
@@ -1154,6 +1184,29 @@ export const field_presence = spacetimedb.view(
     const rows: any[] = [];
     for (const field of visibleFieldRows(ctx)) {
       for (const row of ctx.db.fieldPresence.fieldRef.filter(field.fieldRef)) rows.push(row);
+    }
+    return rows;
+  }
+);
+
+/* The live account of each caller-visible activity entry. A row is served
+ * only while its activity entry is visible to the caller and its producer is
+ * still the field owner or a live contributor+ participant of the field. */
+export const activity_liveness = spacetimedb.view(
+  { name: 'activity_liveness', public: true },
+  t.array(activityLivenessBacking.rowType),
+  (ctx) => {
+    const rows: any[] = [];
+    for (const field of visibleFieldRows(ctx)) {
+      const owner = ctx.db.fieldOwner.fieldRef.find(field.fieldRef);
+      for (const row of ctx.db.activityLivenessBacking.fieldRef.filter(field.fieldRef)) {
+        const entry = ctx.db.exploreEntryBacking.semanticRef.find(row.activityRef);
+        if (!entry || entry.fieldRef !== row.fieldRef || entry.kind !== 'activity') continue;
+        if (!callerCanSeeExploreEntry(ctx, entry)) continue;
+        const producerIsOwner = Boolean(owner && owner.ownerIdentity.isEqual(row.producerIdentity));
+        if (!producerIsOwner && !activityProducerStillAuthorised(ctx, row)) continue;
+        rows.push(row);
+      }
     }
     return rows;
   }
@@ -2838,7 +2891,104 @@ export const client_disconnected = spacetimedb.clientDisconnected((ctx) => {
   for (const row of ctx.db.fieldPresence.actorIdentity.filter(ctx.sender)) {
     ctx.db.fieldPresence.presenceKey.delete(row.presenceKey);
   }
+  // Activity liveness belongs to the producing connection, not merely the
+  // identity: an owner's one-shot reads under the same token must not clear a
+  // running producer, and a producer's own dropped connection always does.
+  const connection = callerConnection(ctx);
+  const held = connection === ''
+    ? Array.from(ctx.db.activityLivenessBacking.producerIdentity.filter(ctx.sender))
+    : Array.from(ctx.db.activityLivenessBacking.producerConnection.filter(connection));
+  for (const row of held) ctx.db.activityLivenessBacking.activityKey.delete(row.activityKey);
 });
+
+/* ---------- Activity liveness (owner-side producer evidence) ---------- */
+
+const ACTIVITY_STATE_PATTERN = /^[a-z][a-z0-9_-]{0,63}$/;
+
+function activityKey(fieldRef: string, activityRef: string): string {
+  return `${fieldRef}|${activityRef}`;
+}
+
+function callerConnection(ctx: any): string {
+  return ctx.connectionId ? ctx.connectionId.toHexString() : '';
+}
+
+function activityProducerStillAuthorised(ctx: any, row: any): boolean {
+  if (row.producerParticipantRef === '') return false;
+  const key = authorityKey(row.fieldRef, row.producerParticipantRef);
+  for (const grant of ctx.db.fieldAuthority.actorIdentity.filter(row.producerIdentity)) {
+    if (grant.authorityKey !== key || grant.revoked) continue;
+    if (grant.expiresAtMicros !== 0n && nowMicros(ctx) >= grant.expiresAtMicros) continue;
+    if (grant.role === 'contributor' || grant.role === 'admitter') return true;
+  }
+  return false;
+}
+
+/* Only the field owner, or a caller bound to a live contributor/admitter
+ * participant of that field, may speak for an activity entry that exists in
+ * that field; the owner revision it reports never goes backwards, and a
+ * changed owner state must arrive with a revision advance. */
+export const put_activity_liveness = spacetimedb.reducer(
+  { fieldRef: t.string(), activityRef: t.string(), producerParticipantRef: t.string(), ownerState: t.string(), ownerRevision: t.u64() },
+  (ctx, args) => {
+    requireString(args.fieldRef, 'fieldRef');
+    requireString(args.activityRef, 'activityRef');
+    if (!ACTIVITY_STATE_PATTERN.test(args.ownerState)) fail(`Unsupported activity owner state: ${args.ownerState}`);
+    if (args.ownerRevision < 1n) fail('Activity owner revision must be >= 1');
+    if (!ctx.db.sharedFieldBacking.fieldRef.find(args.fieldRef)) fail(`Unknown SharedField ${args.fieldRef}`);
+    if (isFieldOwner(ctx, args.fieldRef)) {
+      if (args.producerParticipantRef !== '') requireParticipantInField(ctx, args.producerParticipantRef, args.fieldRef);
+    } else {
+      if (args.producerParticipantRef === '') fail(`Caller is not owner of SharedField ${args.fieldRef}; name the producing Participant`);
+      requireParticipantInField(ctx, args.producerParticipantRef, args.fieldRef);
+      requireParticipantAuthority(ctx, args.fieldRef, args.producerParticipantRef, ['contributor', 'admitter']);
+    }
+    const entry = ctx.db.exploreEntryBacking.semanticRef.find(args.activityRef);
+    if (!entry || entry.fieldRef !== args.fieldRef || entry.kind !== 'activity') {
+      fail(`No activity entry ${args.activityRef} in SharedField ${args.fieldRef}`);
+    }
+    const now = nowMicros(ctx);
+    const key = activityKey(args.fieldRef, args.activityRef);
+    const existing = ctx.db.activityLivenessBacking.activityKey.find(key);
+    if (existing) {
+      if (args.ownerRevision < existing.ownerRevision) {
+        fail(`Activity owner revision must not go backwards (${args.ownerRevision} < ${existing.ownerRevision})`);
+      }
+      if (args.ownerRevision === existing.ownerRevision && args.ownerState !== existing.ownerState) {
+        fail('Activity owner state changed without an owner revision advance');
+      }
+    }
+    const changed = !existing || existing.ownerRevision !== args.ownerRevision || existing.ownerState !== args.ownerState;
+    const row = {
+      activityKey: key,
+      fieldRef: args.fieldRef,
+      activityRef: args.activityRef,
+      producerParticipantRef: args.producerParticipantRef,
+      producerIdentity: ctx.sender,
+      producerConnection: callerConnection(ctx),
+      ownerState: args.ownerState,
+      ownerRevision: args.ownerRevision,
+      observedAtMicros: changed ? now : existing.observedAtMicros,
+      heartbeatAtMicros: now,
+    };
+    if (existing) ctx.db.activityLivenessBacking.activityKey.update(row);
+    else ctx.db.activityLivenessBacking.insert(row);
+  }
+);
+
+/* A producer's graceful stop. The producing identity or the field owner may
+ * clear; clearing an absent row is a no-op so a racing stop stays idempotent. */
+export const clear_activity_liveness = spacetimedb.reducer(
+  { fieldRef: t.string(), activityRef: t.string() },
+  (ctx, args) => {
+    const existing = ctx.db.activityLivenessBacking.activityKey.find(activityKey(args.fieldRef, args.activityRef));
+    if (!existing) return;
+    if (!ctx.sender.isEqual(existing.producerIdentity) && !isFieldOwner(ctx, args.fieldRef)) {
+      fail('Only the producing identity or the field owner may clear activity liveness');
+    }
+    ctx.db.activityLivenessBacking.activityKey.delete(existing.activityKey);
+  }
+);
 
 export const open_shared_stage = spacetimedb.reducer(
   { fieldRef: t.string(), stageRef: t.string(), presenterParticipantRef: t.string(), subjectRef: t.string(), contractJson: t.string() },

@@ -625,7 +625,11 @@ export function buildConstituents(context) {
     const revision = String(run.revision);
     out.sources.push({ kind: 'factory-run', ref, source_system: 'factory', revision: `activity:${fnv1a64(JSON.stringify([runRef, run.revision, state, participants, worksOn, liveness, purpose ?? null]))}` });
     const label = purpose ? purpose : `Factory run ${runRef.slice('run:'.length, 'run:'.length + 10)}`;
-    const summary = `activity · ${state} · ${liveness} · ${participants.length} participant${participants.length === 1 ? '' : 's'}`;
+    // `liveness` here is the publisher's claim at publication time, never
+    // evidence: a reader resolves live/stale/disconnected from the hosted
+    // `activity_liveness` producer row (activity-liveness.mjs).
+    const claim = liveness === 'live' ? 'live at publication' : 'static';
+    const summary = `activity · ${state} · ${claim} · ${participants.length} participant${participants.length === 1 ? '' : 's'}`;
     out.entries.push({
       ref: hosted(ref),
       kind: 'activity',
@@ -639,7 +643,7 @@ export function buildConstituents(context) {
       meta: {
         standing: 'activity', local_ref: ref, state, run_ref: runRef, ...(custodyRef ? { custody_ref: custodyRef } : {}),
         ...(purpose ? { purpose_summary: purpose } : {}),
-        participants: participants.map(hosted), liveness,
+        participants: participants.map(hosted), liveness, liveness_basis: 'publication',
       },
     });
     const worldRelation = `${worldRef}#oi.world/activity#${hosted(ref)}`;

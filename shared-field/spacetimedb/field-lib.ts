@@ -35,6 +35,7 @@ export const SUBSCRIPTION = [
   'SELECT * FROM shared_stage',
   'SELECT * FROM my_stage_follow',
   'SELECT * FROM field_presence',
+  'SELECT * FROM activity_liveness',
   'SELECT * FROM field_now',
   'SELECT * FROM field_day',
 ];
@@ -173,6 +174,7 @@ export function fieldSnapshot(client: Client) {
     stages: rows(db.sharedStage).map(stageReading),
     my_stage_follows: rows(db.myStageFollow).map((row: any) => ({ stage_ref: row.stageRef, field_ref: row.fieldRef, follower_participant_ref: row.followerParticipantRef, followed_at_revision: Number(row.followedAtRevision) })),
     presence: rows(db.fieldPresence).map((row: any) => ({ field_ref: row.fieldRef, participant_ref: row.participantRef, state: row.state, updated_at_micros: String(row.updatedAtMicros) })),
+    activity_liveness: rows(db.activityLiveness).map(activityLivenessRow),
     field_now: rows(db.fieldNow).map(fieldNowReading),
     field_day: rows(db.fieldDay).map(fieldDayReading),
     counts: { fields: hosted.fields.length, participants: hosted.participants.length, projections: hosted.projections.length, entries: hosted.entries.length, relations: hosted.relations.length, field_now: rows(db.fieldNow).length, field_day: rows(db.fieldDay).length },
@@ -181,6 +183,23 @@ export function fieldSnapshot(client: Client) {
     // membership reading is scoped to. Keyed by the entry's semantic ref.
     entry_fields: Object.fromEntries(rows(db.exploreEntry).map((row: any) => [row.semanticRef, row.fieldRef])),
     relation_fields: Object.fromEntries(rows(db.exploreRelation).flatMap((row: any) => { const relation = parse(row.relationJson); return relation?.relation_ref ? [[relation.relation_ref, row.fieldRef]] : []; })),
+  };
+}
+
+/** One activity-liveness row as the caller reads it, in the snake_case shape
+ * `activity-liveness.mjs` consumes. Server facts only: who produced it, the
+ * owner state/revision it reported, and when (server microseconds). */
+export function activityLivenessRow(row: any) {
+  return {
+    activity_key: row.activityKey,
+    field_ref: row.fieldRef,
+    activity_ref: row.activityRef,
+    producer_participant_ref: row.producerParticipantRef || null,
+    producer_identity: row.producerIdentity?.toHexString ? row.producerIdentity.toHexString() : String(row.producerIdentity),
+    owner_state: row.ownerState,
+    owner_revision: Number(row.ownerRevision),
+    observed_at_micros: String(row.observedAtMicros),
+    heartbeat_at_micros: String(row.heartbeatAtMicros),
   };
 }
 

@@ -38,10 +38,15 @@
  *   field-now-put {field_now, expected_revision, actor_participant_ref?}  project one revision-checked `oi.field-now/v1` step ('' / absent actor = field owner)
  *   field-day     {field_ref}           the field's FieldDay intervals as the caller may read them
  *   field-day-put {field_day, expected_revision?, actor_participant_ref?} project one revision-checked `oi.field-day/v1` step
+ *   activity-liveness-put   {field_ref, activity_ref, owner_state, owner_revision, producer_participant_ref?}
+ *                                        one liveness beat for a published activity entry; the row is bound to THIS
+ *                                        connection, so a one-shot put is cleared again when field.sh exits —
+ *                                        a standing producer is scripts/activity-producer.mjs
+ *   activity-liveness-clear {field_ref, activity_ref}   clear a liveness row (producer identity or field owner)
  *   grant-read    {field_ref, participant_ref}   owner: admit a persistently-authorised Participant to read a PRIVATE field
  *   revoke-read   {field_ref, participant_ref}   owner: withdraw that read admission
  */
-import { bindingFile, close, fieldDayReading, fieldNowReading, fieldSnapshot, hostingTargets, open, publishArgs, readRef, resolveTarget, rows, stageReading, stageView, waitUntil } from './field-lib';
+import { activityLivenessRow, bindingFile, close, fieldDayReading, fieldNowReading, fieldSnapshot, hostingTargets, open, publishArgs, readRef, resolveTarget, rows, stageReading, stageView, waitUntil } from './field-lib';
 import { mkdirSync, rmSync, writeFileSync } from 'node:fs';
 import { dirname } from 'node:path';
 import { createProjection } from '../index.mjs';
@@ -262,6 +267,18 @@ try {
       const key = fieldDayKey(fieldDay);
       const row = await waitUntil(() => rows(db.fieldDay).find((candidate: any) => candidate.dayKey === key && Number(candidate.revision) >= fieldDay.revision), `FieldDay ${key} at revision ${fieldDay.revision}`);
       await emit({ ok: true, data: { ...fieldDayReading(row), schema: 'oi.shared-field.field-day-result/v1' } });
+    }
+    case 'activity-liveness-put': {
+      if (typeof request.field_ref !== 'string' || typeof request.activity_ref !== 'string' || typeof request.owner_state !== 'string' || !Number.isSafeInteger(request.owner_revision)) await emit({ ok: false, error: { kind: 'malformed', message: 'activity-liveness-put requires `field_ref`, `activity_ref`, `owner_state` and integer `owner_revision`' } });
+      await reducers.putActivityLiveness({ fieldRef: request.field_ref, activityRef: request.activity_ref, producerParticipantRef: request.producer_participant_ref ?? '', ownerState: request.owner_state, ownerRevision: BigInt(request.owner_revision) });
+      const row = await waitUntil(() => rows(db.activityLiveness).find((candidate: any) => candidate.fieldRef === request.field_ref && candidate.activityRef === request.activity_ref && Number(candidate.ownerRevision) === request.owner_revision), 'the activity liveness row in the caller-visible view');
+      await emit({ ok: true, data: { schema: 'oi.shared-field.activity-liveness-result/v1', ...activityLivenessRow(row), connection_scoped: true } });
+    }
+    case 'activity-liveness-clear': {
+      if (typeof request.field_ref !== 'string' || typeof request.activity_ref !== 'string') await emit({ ok: false, error: { kind: 'malformed', message: 'activity-liveness-clear requires `field_ref` and `activity_ref`' } });
+      await reducers.clearActivityLiveness({ fieldRef: request.field_ref, activityRef: request.activity_ref });
+      await waitUntil(() => !rows(db.activityLiveness).some((candidate: any) => candidate.fieldRef === request.field_ref && candidate.activityRef === request.activity_ref), 'the activity liveness row to clear');
+      await emit({ ok: true, data: { schema: 'oi.shared-field.activity-liveness-result/v1', field_ref: request.field_ref, activity_ref: request.activity_ref, cleared: true } });
     }
     case 'grant-read':
     case 'revoke-read': {
