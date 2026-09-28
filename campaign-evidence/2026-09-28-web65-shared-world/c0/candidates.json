@@ -1,0 +1,143 @@
+{
+  "standing": "candidates only, not bound; read at the same origin/main commits as run1",
+  "obligations": {
+    "web65:PARTICIPATE": {
+      "EpiLogos/ai-kit": [
+        "cap.aikit.encounters",
+        "cap.aikit.context-resolution",
+        "cap.aikit.gateway",
+        "cap.aikit.sessions",
+        "cap.aikit.session-lifecycle",
+        "cap.aikit.harness-admission",
+        "cap.aikit.continuity"
+      ],
+      "EpiLogos/Workcell": [
+        "cap.workcell.instance-registry",
+        "cap.workcell.remote-control",
+        "cap.workcell.placement"
+      ],
+      "EpiLogos/Actuation": [
+        "cap.actuation.world-binding",
+        "cap.actuation.determination",
+        "cap.actuation.metagency",
+        "cap.actuation.instantiation",
+        "cap.actuation.harness-self"
+      ],
+      "EpiLogos/Central": [
+        "cap.central.bounded-relations",
+        "cap.central.now"
+      ],
+      "EpiLogos/Factory": [
+        "cap.factory.journey-commission",
+        "cap.factory.action-projection"
+      ],
+      "likely_gaps": [
+        "exact-instance + required-Workcell addressing without successor/local substitute (Workcell#72)",
+        "field/Position routing and duplicate/out-of-order delivery for shared NOW messages (ai-kit#275)",
+        "membership in a shared NOW (O-I SharedField host inventory, unreadable)"
+      ]
+    },
+    "web65:ACTIVITY": {
+      "EpiLogos/Actuation": [
+        "cap.actuation.stream",
+        "cap.actuation.activity",
+        "cap.actuation.model-usage",
+        "cap.actuation.continuity"
+      ],
+      "EpiLogos/Factory": [
+        "cap.factory.run-map",
+        "cap.factory.build-reading",
+        "cap.factory.build-evidence",
+        "cap.factory.journey-continuity",
+        "cap.factory.run-thought"
+      ],
+      "EpiLogos/ai-kit": [
+        "cap.aikit.encounters",
+        "cap.aikit.session-lifecycle"
+      ],
+      "EpiLogos/QL-MEF": [
+        "M4P-ACTIVITY"
+      ],
+      "likely_gaps": [
+        "frozen edition + side-effect-free replay for non-Actuation lineages",
+        "producer-disconnect liveness degradation and local-vs-hosted comparison (O-I RunExpressionBody, host inventory)",
+        "Actuation stream harness-boundary forwarding not wired (row status)"
+      ]
+    },
+    "web65:RETURN": {
+      "EpiLogos/Central": [
+        "cap.central.control-proposals",
+        "cap.central.source-editing",
+        "cap.central.remembered-note",
+        "cap.central.skills",
+        "cap.central.day-rollover",
+        "cap.central.wiki-reading"
+      ],
+      "EpiLogos/ai-kit": [
+        "cap.aikit.wiki-write",
+        "cap.aikit.adoption",
+        "cap.aikit.reflection",
+        "cap.aikit.living-knowledge",
+        "cap.aikit.flow-changed-since",
+        "cap.aikit.methods",
+        "cap.aikit.routines"
+      ],
+      "EpiLogos/Factory": [
+        "cap.factory.owner-return",
+        "cap.factory.intent-return",
+        "cap.factory.praxis-fitness"
+      ],
+      "EpiLogos/Actuation": [
+        "cap.actuation.return"
+      ],
+      "EpiLogos/QL-MEF": [
+        "M4P-PROMOTION-SEAM",
+        "M5P-CANON"
+      ],
+      "likely_gaps": [
+        "cross-World Skill/Method adoption retaining original identity/version and local difference (cap.aikit.adoption is local-material only)",
+        "contribution lineage through reprojection of shared Expression"
+      ]
+    },
+    "web65:CONTINUITY": {
+      "EpiLogos/Central": [
+        "cap.central.now",
+        "cap.central.day-rollover",
+        "cap.central.source-change",
+        "cap.central.source-history"
+      ],
+      "EpiLogos/ai-kit": [
+        "cap.aikit.continuity",
+        "cap.aikit.gateway",
+        "cap.aikit.encounters",
+        "cap.aikit.sessions"
+      ],
+      "EpiLogos/Workcell": [
+        "cap.workcell.remote-control",
+        "cap.workcell.placement",
+        "cap.workcell.connectivity",
+        "cap.workcell.reconciliation",
+        "cap.workcell.instance-registry",
+        "cap.workcell.release"
+      ],
+      "EpiLogos/Actuation": [
+        "cap.actuation.continuity",
+        "cap.actuation.stream"
+      ],
+      "EpiLogos/Factory": [
+        "cap.factory.journey-continuity",
+        "cap.factory.development-persistence"
+      ],
+      "EpiLogos/QL-MEF": [
+        "M4P-DAY-EPISODE",
+        "M3P-WORLD-CLOCK",
+        "M0P-TIME-COMMUNITY"
+      ],
+      "likely_gaps": [
+        "FieldNow/FieldDay regional shared NOW beside personal Day (Central)",
+        "withdrawal/cache invalidation and Shared Stage follow/unfollow (O-I shared field)",
+        "live Tailscale/multi-host placement unrun (Workcell rows source-inspected)"
+      ]
+    }
+  }
+}
