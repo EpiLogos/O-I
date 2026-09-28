@@ -407,7 +407,12 @@ export function projectCentralWikiWorld(input) {
   for (const ref of selection.node_refs ?? []) {
     const found = nodeByRef.get(ref);
     if (!found) throw new TypeError(`selected WikiNode not present in any reading: ${ref}`);
-    const inSelectedSpace = (found.node.space_refs ?? []).some((spaceRef) => selectedSpaceMode(selection, spaceRef) === 'nodes');
+    // Membership is the node's own space_refs or the space's node_refs: a
+    // Central reading can carry it on either side (room nodes list their
+    // members while the member's space_refs stays empty).
+    const memberOf = new Set(found.node.space_refs ?? []);
+    for (const space of spaceByRef.values()) if ((space.node_refs ?? []).includes(ref)) memberOf.add(space.ref);
+    const inSelectedSpace = [...memberOf].some((spaceRef) => selectedSpaceMode(selection, spaceRef) === 'nodes');
     if (!inSelectedSpace) throw new TypeError(`selected WikiNode ${ref} is not inside a WikiSpace selected with mode "nodes"`);
     selectedNodeRefs.push(ref);
   }

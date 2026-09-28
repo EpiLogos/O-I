@@ -484,3 +484,14 @@ test('works-on appears only when current work is one attested custody naming a s
   const unselected = publishInhabited({ node_refs: [], constellations: [] });
   assert.ok(!unselected.relations.some((relation) => relation.relation === 'oi.world/works-on'));
 });
+
+test('a node listed only by its space node_refs is a member of that space, and address-only still refuses it', () => {
+  const project = projectReading();
+  const node = project.nodes.find((row) => row.ref === 'wiki:node:project-root/o-i');
+  const holding = project.spaces.find((space) => (node.space_refs ?? []).includes(space.ref));
+  node.space_refs = [];
+  holding.node_refs = [...new Set([...(holding.node_refs ?? []), node.ref])];
+  const bundle = publish({}, [rootReading(), project]);
+  assert.ok(bundle.entries.some((entry) => entry.ref === NODE), 'membership read from the space side');
+  assert.throws(() => publish({ spaces: { 'central:wiki:root': 'address', [holding.ref]: 'address' } }, [rootReading(), project]), /not inside a WikiSpace selected with mode "nodes"/);
+});

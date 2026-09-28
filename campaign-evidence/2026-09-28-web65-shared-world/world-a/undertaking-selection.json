@@ -1,0 +1,36 @@
+{
+ "schema": "oi.central-wiki-selection/v1",
+ "project": "O-I",
+ "world_ref": "world:central:project:O-I",
+ "subject_world_ref": "project:O-I",
+ "publisher": {
+  "participant_ref": "participant:central:owner",
+  "identity_ref": "human:central:owner"
+ },
+ "disclose_source_refs": true,
+ "field_ref": "oi:field:central:project:O-I:undertaking:a04-mask",
+ "projection_ref": "projection:central:project:O-I:undertaking:a04-mask",
+ "presentation_ref": "presentation:central:project:O-I:undertaking:a04-mask",
+ "title": "Undertaking \u2014 A04 Diaphaneity and A04\u2032 The Mask as Document",
+ "audience": {
+  "visibility": "private"
+ },
+ "spaces": {
+  "central:wiki:root": "address",
+  "central:wiki:project:O-I": "address",
+  "wiki:space:room/section-rooms/arguments": "nodes"
+ },
+ "node_refs": [
+  "wiki:node:record/A04",
+  "wiki:node:record/A04p"
+ ],
+ "positions": {
+  "central:position:project:O-I:aletheia-5": "occupancy"
+ },
+ "workcells": {
+  "workcell:mac": {
+   "mode": "address",
+   "label": "Workcell mac"
+  }
+ }
+}
