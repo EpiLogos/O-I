@@ -1,19 +1,23 @@
 {
  "schema": "oi.central-wiki-selection/v1",
  "project": "O-I",
- "world_ref": "world:central:project:O-I",
+ "world_ref": "world:central:project:O-I:region:a04-mask",
  "subject_world_ref": "project:O-I",
  "publisher": {
-  "participant_ref": "participant:central:owner",
+  "participant_ref": "participant:central:owner:a04-mask",
   "identity_ref": "human:central:owner"
  },
  "disclose_source_refs": true,
  "field_ref": "oi:field:central:project:O-I:undertaking:a04-mask",
- "projection_ref": "projection:central:project:O-I:undertaking:a04-mask",
- "presentation_ref": "presentation:central:project:O-I:undertaking:a04-mask",
+ "projection_ref": "projection:central:project:O-I:region:a04-mask",
+ "presentation_ref": "presentation:central:project:O-I:region:a04-mask",
  "title": "Undertaking \u2014 A04 Diaphaneity and A04\u2032 The Mask as Document",
  "audience": {
-  "visibility": "private"
+  "visibility": "private",
+  "refs": [
+   "participant:central:owner:a04-mask",
+   "participant:world-b:omarchy:a04-mask"
+  ]
  },
  "spaces": {
   "central:wiki:root": "address",

@@ -903,8 +903,12 @@ export function reprojectCentralWikiWorld(previousBundle, input) {
   // so comparing it compares each of them; a wiki-only publication keeps its
   // subject wiki revision exactly as before. `moved_sources` names which moved.
   const sourceMoved = next.projection.source.revision !== previous.source.revision;
-  const projection = sourceMoved
+  // An audience change is a publication decision: it is a new revision that
+  // carries the owner's new audience, never a refinement that keeps the old one.
+  const audienceChanged = JSON.stringify(next.projection.audience) !== JSON.stringify(previous.audience);
+  const projection = sourceMoved || audienceChanged
     ? reviseProjection(previous, {
+        audience: next.projection.audience,
         source_revision: next.projection.source.revision,
         published_at: next.projection.published_at,
         representation: { kind: WORLD_PRESENTATION_SCHEMA, payload: next.presentation },
@@ -915,7 +919,7 @@ export function reprojectCentralWikiWorld(previousBundle, input) {
         published_at: next.projection.published_at,
         provenance: input.editor_provenance ?? [{ kind: 'human-refinement', ref: next.projection.publisher_participant_ref, source_system: 'central', revision: next.projection.source.revision }],
       });
-  return { ...next, projection, presentation: worldPresentationFromProjection(projection), source_moved: sourceMoved, moved_sources: movedSources };
+  return { ...next, projection, presentation: worldPresentationFromProjection(projection), source_moved: sourceMoved, audience_changed: audienceChanged, moved_sources: movedSources };
 }
 
 /** Hosted reducer arguments derived from a publication bundle, in publish order. */

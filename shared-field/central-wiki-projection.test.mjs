@@ -495,3 +495,14 @@ test('a node listed only by its space node_refs is a member of that space, and a
   assert.ok(bundle.entries.some((entry) => entry.ref === NODE), 'membership read from the space side');
   assert.throws(() => publish({ spaces: { 'central:wiki:root': 'address', [holding.ref]: 'address' } }, [rootReading(), project]), /not inside a WikiSpace selected with mode "nodes"/);
 });
+
+test('re-projecting with a changed audience carries the owner\'s new audience in a new revision', () => {
+  const first = publish({ audience: { visibility: 'private' } });
+  const named = reprojectCentralWikiWorld(first, { readings: [rootReading(), projectReading()], selection: selection({ audience: { visibility: 'private', refs: ['participant:second-world'] } }), published_at: '2026-09-14T21:00:00.000Z' });
+  assert.equal(named.audience_changed, true);
+  assert.deepEqual(named.projection.audience, { visibility: 'private', refs: ['participant:second-world'] });
+  assert.equal(named.projection.projection_revision, 2);
+  const same = reprojectCentralWikiWorld(named, { readings: [rootReading(), projectReading()], selection: selection({ audience: { visibility: 'private', refs: ['participant:second-world'] }, summary: 'Same audience, new words.' }), published_at: '2026-09-14T22:00:00.000Z' });
+  assert.equal(same.audience_changed, false);
+  assert.deepEqual(same.projection.audience, named.projection.audience);
+});
