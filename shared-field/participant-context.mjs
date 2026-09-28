@@ -7,6 +7,9 @@
  * contribution basis each source offers. Nothing the participant cannot
  * read enters it; nothing about how its work will be judged enters it.
  */
+import * as CONTRIBUTION_MODULE from './contribution-return.mjs';
+import * as SOCIAL_MODULE from './social.mjs';
+
 export const PARTICIPANT_CONTEXT_SCHEMA = 'oi.shared-field-participant-context/v1';
 
 const text = (html) => String(html ?? '')
@@ -76,4 +79,58 @@ export function participantContextMarkdown(context) {
   for (const item of context.relations) lines.push(`- \`${item.from}\` —${item.relation}→ \`${item.to}\``);
   lines.push('', '## Contributing', '', context.contribution.law, `Body kinds you can offer here: ${context.contribution.body_kinds.join(', ')}.`, '');
   return `${lines.join('\n')}\n`;
+}
+
+/**
+ * A participant Agent's result as attributable Contributions (quarantined on
+ * submission): the explanation as `prose` proposed to the `from` record, and
+ * the typed relation as `relation-proposal` between the two records. Each is
+ * pinned to the basis the Agent read — the source revision and the artifact
+ * Projection revision from the prepared context — and names the Agent
+ * (agency.ref) and its session (agency.execution_ref) that did the work.
+ */
+export function participantContributions({ context, result, agent_ref, execution_ref, created_at }) {
+  const { createContributionBody } = CONTRIBUTION_MODULE;
+  const { createContribution } = SOCIAL_MODULE;
+  const byRecord = (id) => {
+    const source = context.sources.find((row) => row.source_ref === `central:source:corpus:${id}` || row.artifact_ref.endsWith(`corpus:${id}`));
+    if (!source) throw new TypeError(`the result names ${id}, which is not a source shared in this context`);
+    return source;
+  };
+  const proposal = result.relation_proposal ?? {};
+  if (typeof result.explanation_markdown !== 'string' || !result.explanation_markdown.trim()) throw new TypeError('the result carries no explanation_markdown');
+  if (!/^[a-z][a-z0-9-]{1,40}$/.test(String(proposal.relation_kind ?? ''))) throw new TypeError('relation_proposal.relation_kind must be a short kebab-case kind');
+  const from = byRecord(proposal.from);
+  const to = byRecord(proposal.to);
+  const basis = (source) => ({ source_ref: source.source_ref, source_revision: source.source_revision, projection_ref: source.projection_ref, projection_revision: source.projection_revision });
+  const node = (id) => ({ kind: 'central.wiki-node', ref: `wiki:node:record/${id}` });
+  const slug = String(context.participant_ref).replace(/[^a-z0-9]+/gi, '-').replace(/^-+|-+$/g, '').toLowerCase();
+  const digest = (value) => { let h = 2166136261; for (const ch of JSON.stringify(value)) { h ^= ch.codePointAt(0); h = Math.imul(h, 16777619) >>> 0; } return h.toString(16).padStart(8, '0'); };
+  const provenance = [{ kind: 'participant-agent', ref: agent_ref, source_system: 'shared-field', ...(execution_ref ? { revision: execution_ref } : {}) }];
+  const agency = { ref: agent_ref, ...(execution_ref ? { execution_ref } : {}) };
+  const make = (kind, target, relation, content, sourceBasis, attachments) => {
+    const body = createContributionBody({ kind, basis: basis(sourceBasis), content, attachments });
+    return createContribution({
+      contribution_ref: `contribution:${slug}:${kind}:${digest([kind, target, content])}`,
+      field_ref: context.field_ref,
+      contributor_participant_ref: context.participant_ref,
+      created_at,
+      mode: kind === 'prose' ? 'reply' : 'correction',
+      target: { ...target, revision: sourceBasis.source_revision },
+      relation: { kind: relation },
+      representation: { kind: 'oi.contribution-body/v1', payload: body },
+      provenance,
+      agency,
+    });
+  };
+  const read = (Array.isArray(result.sections_read) ? result.sections_read : []).filter((ref) => typeof ref === 'string').map((ref) => ({ kind: 'artifact-section', ref }));
+  return [
+    make('prose', node(proposal.from), 'proposes_difference_to', result.explanation_markdown.trim(), from, read),
+    make('relation-proposal', node(proposal.from), 'proposes_difference_to', {
+      relation: { kind: 'wiki-relation-kind', ref: proposal.relation_kind },
+      from: { kind: 'central.wiki-node', ref: `wiki:node:record/${proposal.from}`, revision: from.source_revision },
+      to: { kind: 'central.wiki-node', ref: `wiki:node:record/${proposal.to}`, revision: to.source_revision },
+      ...(proposal.summary ? { summary: String(proposal.summary) } : {}),
+    }, from, []),
+  ];
 }
