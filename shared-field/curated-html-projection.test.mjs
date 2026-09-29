@@ -164,3 +164,19 @@ test('a Central document is read through the same artifact shape: fields become 
   assert.deepEqual(publicationSentinelLeaks(artifactPublicationPayloads(bundle), SENTINELS), []);
   assert.ok(renderArtifactEdition(bundle.projection).includes('why it exists'));
 });
+
+test('a wiki-bank corpus source becomes a curated artifact of escaped sections without its frontmatter', async () => {
+  const { curatedArtifactFromWikiSource } = await import('./curated-html-projection.mjs');
+  const artifact = curatedArtifactFromWikiSource({
+    schema: 'central.wiki-source-reading/v1', source_ref: 'central:source:corpus:A04', revision: '4d3e93cce1d87aa1', title: 'A04 — Diaphaneity', media_type: 'text/markdown', visibility: 'team',
+    body: '---\ntitle: A04\nsource_ids:\n  - private-note\n---\n# A04 — Diaphaneity\nOpening words <script>x</script>.\n\n## Claim\nThe mask *is* the document.\n- one\n\n## Warrant\nBecause.\n',
+  });
+  assert.equal(artifact.carrier, 'central.wiki-source');
+  assert.deepEqual(artifact.source, { system: 'central', ref: 'central:source:corpus:A04', revision: '4d3e93cce1d87aa1' });
+  assert.deepEqual(artifact.entries.map((entry) => entry.id), ['opening', 'section:claim', 'section:warrant']);
+  const html = artifact.entries.map((entry) => entry.html).join('');
+  assert.ok(!html.includes('<script>'), 'text is escaped');
+  assert.ok(html.includes('&lt;script&gt;'));
+  assert.ok(!JSON.stringify(artifact).includes('private-note'), 'frontmatter stays home');
+  assert.throws(() => curatedArtifactFromWikiSource({ schema: 'central.document-reading/v1' }), /unsupported wiki source reading schema/);
+});

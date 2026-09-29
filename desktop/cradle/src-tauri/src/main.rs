@@ -122,6 +122,12 @@ fn main() {
             app.manage(windows::Windows::default());
             app.manage(browser::Browsers::default());
             app.manage(terminal::Terminals::default());
+            // An installed desktop carries its own SharedField client (the
+            // `shared-field/` resource); a development build without it falls
+            // back to the checkout inside the kernel.
+            if let Ok(resources) = app.path().resource_dir() {
+                oi_cradle_kernel::shared_field::bind_bundled_client_home(resources.join("shared-field"));
+            }
             let mut kernel = Kernel::discover();
             // Expressive acts survive restart ($OI_HOME/desktop/expression-acts).
             if let Err(error) = kernel.attach_default_act_store() {

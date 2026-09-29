@@ -1,0 +1,27 @@
+{
+  "schema": "oi.central-wiki-selection/v1",
+  "project": "O-I",
+  "world_ref": "world:central:project:O-I",
+  "subject_world_ref": "project:O-I",
+  "field_ref": "oi:field:central:project:O-I",
+  "projection_ref": "projection:central:project:O-I",
+  "presentation_ref": "presentation:central:project:O-I",
+  "title": "O-I — a ProjectCentral world",
+  "audience": { "visibility": "public" },
+  "publisher": { "participant_ref": "participant:central:owner", "identity_ref": "human:central:owner" },
+  "spaces": { "central:wiki:root": "address", "central:wiki:project:O-I": "nodes" },
+  "node_refs": ["wiki:node:project-root/o-i"],
+  "disclose_source_refs": true,
+  "positions": {
+    "central:position:project:O-I:aletheia-5": "occupancy",
+    "central:position:project:O-I:oi-root-agency": "address"
+  },
+  "workcells": { "workcell:mac": { "mode": "address", "label": "Workcell mac" } },
+  "practices": {
+    "central:position:project:O-I:aletheia-5": {
+      "agent_ref": "agent/aletheia",
+      "refs": ["skill/ql/darshana", "skill/ql/ql-evidence-report", "skill/ql/repl", "skill/ql/aletheia-collab-gate", "skill/ql/aletheia-improvement-propose", "skill/ql/aletheia-m-gate", "skill/ql/aletheia-m-prime-gate", "skill/ql/aletheia-module-audit", "skill/ql/aletheia-plugin-integrate", "skill/ql/aletheia-ql-gate", "skill/ql/aletheia-rupa-gate", "skill/ql/aletheia-s-gate", "skill/ql/aletheia-self-extend", "skill/ql/aletheia-stack-traverse", "skill/ql/anansi", "skill/ql/gnosis-retrieve", "skill/ql/thought-distil"]
+    }
+  },
+  "activity": { "run:01M3FNY3P0E4H7JGN0BARSRQ8R": "live" }
+}

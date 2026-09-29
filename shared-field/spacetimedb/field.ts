@@ -11,6 +11,8 @@
  *
  * Requests:
  *   status                              target binding only; no network
+ *   bind      {target}                  bind this machine's SharedField target (non-secret; no network)
+ *   unbind                              clear this machine's binding
  *   identity                            the caller's transport identity only
  *   snapshot                            the caller-visible field
  *   identity                            the caller's transport identity only
@@ -32,8 +34,21 @@
  *   stage-close   {stage, expected_revision, actor_participant_ref?}   close the open stage
  *   stage-follow  {field_ref, stage_ref, follower_participant_ref}      follow the open stage now
  *   stage-unfollow {field_ref, stage_ref, follower_participant_ref}     unfollow and keep a local view
+ *   field-now     {field_ref}           the field's collective FieldNow (or null) as the caller may read it
+ *   field-now-put {field_now, expected_revision, actor_participant_ref?}  project one revision-checked `oi.field-now/v1` step ('' / absent actor = field owner)
+ *   field-day     {field_ref}           the field's FieldDay intervals as the caller may read them
+ *   field-day-put {field_day, expected_revision?, actor_participant_ref?} project one revision-checked `oi.field-day/v1` step
+ *   activity-liveness-put   {field_ref, activity_ref, owner_state, owner_revision, producer_participant_ref?}
+ *                                        one liveness beat for a published activity entry; the row is bound to THIS
+ *                                        connection, so a one-shot put is cleared again when field.sh exits —
+ *                                        a standing producer is scripts/activity-producer.mjs
+ *   activity-liveness-clear {field_ref, activity_ref}   clear a liveness row (producer identity or field owner)
+ *   grant-read    {field_ref, participant_ref}   owner: admit a persistently-authorised Participant to read a PRIVATE field
+ *   revoke-read   {field_ref, participant_ref}   owner: withdraw that read admission
  */
-import { close, fieldSnapshot, open, publishArgs, readRef, resolveTarget, rows, stageReading, stageView, waitUntil } from './field-lib';
+import { activityLivenessRow, bindingFile, close, fieldDayReading, fieldNowReading, fieldSnapshot, hostingTargets, open, publishArgs, readRef, resolveTarget, rows, stageReading, stageView, waitUntil } from './field-lib';
+import { mkdirSync, rmSync, writeFileSync } from 'node:fs';
+import { dirname } from 'node:path';
 import { createProjection } from '../index.mjs';
 import { projectionStorageKey } from '../spacetimedb.mjs';
 
@@ -61,9 +76,19 @@ let request: any;
 try { request = raw ? JSON.parse(raw) : { kind: 'status' }; } catch (error: any) { await emit({ ok: false, error: { kind: 'malformed', message: `request is not JSON: ${error.message}` } }); }
 if (!request || typeof request !== 'object' || typeof request.kind !== 'string') await emit({ ok: false, error: { kind: 'malformed', message: 'request must be an object with a string `kind`' } });
 
+if (request.kind === 'bind') {
+  const targets = hostingTargets();
+  if (typeof request.target !== 'string' || !targets[request.target]) await emit({ ok: false, error: { kind: 'malformed', message: `bind requires a \`target\` named in hosting.json (${Object.keys(targets).join(', ')})` } });
+  const file = bindingFile();
+  mkdirSync(dirname(file), { recursive: true });
+  writeFileSync(file, `${JSON.stringify({ schema: 'oi.shared-field-binding/v1', target: request.target, bound_at: new Date().toISOString() }, null, 2)}\n`);
+}
+if (request.kind === 'unbind') {
+  rmSync(bindingFile(), { force: true });
+}
 const binding = resolveTarget();
-if (request.kind === 'status') {
-  await emit({ ok: true, data: binding.bound ? { schema: 'oi.shared-field.status/v1', bound: true, target: { name: binding.target.name, uri: binding.target.uri, database: binding.target.database } } : { schema: 'oi.shared-field.status/v1', bound: false, reason: binding.reason } });
+if (request.kind === 'status' || request.kind === 'bind' || request.kind === 'unbind') {
+  await emit({ ok: true, data: binding.bound ? { schema: 'oi.shared-field.status/v1', bound: true, binding_source: binding.source, binding_file: bindingFile(), target: { name: binding.target.name, uri: binding.target.uri, database: binding.target.database } } : { schema: 'oi.shared-field.status/v1', bound: false, binding_file: bindingFile(), reason: binding.reason } });
 }
 const target = binding.bound ? binding.target : await emit({ ok: false, error: { kind: 'unbound', message: binding.reason } });
 
@@ -214,6 +239,56 @@ try {
       await reducers.unfollowSharedStage({ fieldRef: request.field_ref, stageRef: request.stage_ref, followerParticipantRef: request.follower_participant_ref });
       await waitUntil(() => !rows(db.myStageFollow).some((candidate: any) => candidate.stageRef === request.stage_ref && candidate.followerParticipantRef === request.follower_participant_ref), 'the follow row to clear');
       await emit({ ok: true, data: { schema: 'oi.shared-field.stage-follow-result/v1', stage_ref: request.stage_ref, field_ref: request.field_ref, follower_participant_ref: request.follower_participant_ref, followed_at_revision: null, following: false } });
+    }
+    case 'field-now': {
+      if (typeof request.field_ref !== 'string' || !request.field_ref) await emit({ ok: false, error: { kind: 'malformed', message: 'field-now requires `field_ref`' } });
+      const row = rows(db.fieldNow).find((candidate: any) => candidate.fieldRef === request.field_ref);
+      await emit({ ok: true, data: row ? fieldNowReading(row) : { schema: 'oi.shared-field.field-now-reading/v1', field_ref: request.field_ref, revision: 0, contract: null } });
+    }
+    case 'field-now-put': {
+      const { validateFieldNow } = await import('../field-now.mjs');
+      const fieldNow = validateFieldNow(request.field_now);
+      if (!Number.isInteger(request.expected_revision)) await emit({ ok: false, error: { kind: 'malformed', message: 'field-now-put requires the integer `expected_revision` the projector read (0 for a first FieldNow)' } });
+      if (fieldNow.revision !== request.expected_revision + 1) await emit({ ok: false, error: { kind: 'malformed', message: `field-now-put contract must be revision ${request.expected_revision + 1}` } });
+      await reducers.putFieldNow({ fieldRef: fieldNow.field_ref, actorParticipantRef: request.actor_participant_ref ?? '', expectedRevision: BigInt(request.expected_revision), contractJson: JSON.stringify(fieldNow) });
+      const row = await waitUntil(() => rows(db.fieldNow).find((candidate: any) => candidate.fieldRef === fieldNow.field_ref && Number(candidate.revision) >= fieldNow.revision), `FieldNow ${fieldNow.field_ref} at revision ${fieldNow.revision}`);
+      await emit({ ok: true, data: { ...fieldNowReading(row), schema: 'oi.shared-field.field-now-result/v1' } });
+    }
+    case 'field-day': {
+      if (typeof request.field_ref !== 'string' || !request.field_ref) await emit({ ok: false, error: { kind: 'malformed', message: 'field-day requires `field_ref`' } });
+      await emit({ ok: true, data: { schema: 'oi.shared-field.field-day-list/v1', field_ref: request.field_ref, days: rows(db.fieldDay).filter((candidate: any) => candidate.fieldRef === request.field_ref).map(fieldDayReading) } });
+    }
+    case 'field-day-put': {
+      const { validateFieldDay, fieldDayKey } = await import('../field-now.mjs');
+      const fieldDay = validateFieldDay(request.field_day);
+      const expected = request.expected_revision ?? fieldDay.revision - 1;
+      if (!Number.isInteger(expected) || fieldDay.revision !== expected + 1) await emit({ ok: false, error: { kind: 'malformed', message: 'field-day-put contract must be exactly expected_revision + 1' } });
+      await reducers.putFieldDay({ fieldRef: fieldDay.field_ref, actorParticipantRef: request.actor_participant_ref ?? '', expectedRevision: BigInt(expected), contractJson: JSON.stringify(fieldDay) });
+      const key = fieldDayKey(fieldDay);
+      const row = await waitUntil(() => rows(db.fieldDay).find((candidate: any) => candidate.dayKey === key && Number(candidate.revision) >= fieldDay.revision), `FieldDay ${key} at revision ${fieldDay.revision}`);
+      await emit({ ok: true, data: { ...fieldDayReading(row), schema: 'oi.shared-field.field-day-result/v1' } });
+    }
+    case 'activity-liveness-put': {
+      if (typeof request.field_ref !== 'string' || typeof request.activity_ref !== 'string' || typeof request.owner_state !== 'string' || !Number.isSafeInteger(request.owner_revision)) await emit({ ok: false, error: { kind: 'malformed', message: 'activity-liveness-put requires `field_ref`, `activity_ref`, `owner_state` and integer `owner_revision`' } });
+      await reducers.putActivityLiveness({ fieldRef: request.field_ref, activityRef: request.activity_ref, producerParticipantRef: request.producer_participant_ref ?? '', ownerState: request.owner_state, ownerRevision: BigInt(request.owner_revision) });
+      const row = await waitUntil(() => rows(db.activityLiveness).find((candidate: any) => candidate.fieldRef === request.field_ref && candidate.activityRef === request.activity_ref && Number(candidate.ownerRevision) === request.owner_revision), 'the activity liveness row in the caller-visible view');
+      await emit({ ok: true, data: { schema: 'oi.shared-field.activity-liveness-result/v1', ...activityLivenessRow(row), connection_scoped: true } });
+    }
+    case 'activity-liveness-clear': {
+      if (typeof request.field_ref !== 'string' || typeof request.activity_ref !== 'string') await emit({ ok: false, error: { kind: 'malformed', message: 'activity-liveness-clear requires `field_ref` and `activity_ref`' } });
+      await reducers.clearActivityLiveness({ fieldRef: request.field_ref, activityRef: request.activity_ref });
+      await waitUntil(() => !rows(db.activityLiveness).some((candidate: any) => candidate.fieldRef === request.field_ref && candidate.activityRef === request.activity_ref), 'the activity liveness row to clear');
+      await emit({ ok: true, data: { schema: 'oi.shared-field.activity-liveness-result/v1', field_ref: request.field_ref, activity_ref: request.activity_ref, cleared: true } });
+    }
+    case 'grant-read':
+    case 'revoke-read': {
+      if (typeof request.field_ref !== 'string' || typeof request.participant_ref !== 'string') await emit({ ok: false, error: { kind: 'malformed', message: `${request.kind} requires \`field_ref\` and \`participant_ref\`` } });
+      // The read-audience table is deliberately unsubscribable (no View), so
+      // the owner reducer's successful completion is the native receipt —
+      // as with `withdraw`. The grantee's own views are what change.
+      if (request.kind === 'grant-read') await reducers.grantFieldRead({ fieldRef: request.field_ref, participantRef: request.participant_ref });
+      else await reducers.revokeFieldRead({ fieldRef: request.field_ref, participantRef: request.participant_ref });
+      await emit({ ok: true, data: { schema: 'oi.shared-field.read-grant-result/v1', field_ref: request.field_ref, participant_ref: request.participant_ref, state: request.kind === 'grant-read' ? 'granted' : 'revoked' } });
     }
     default:
       await emit({ ok: false, error: { kind: 'malformed', message: `unknown request kind: ${request.kind}` } });

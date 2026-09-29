@@ -175,6 +175,59 @@ export function curatedArtifactFromCentralDocument(reading) {
   };
 }
 
+/** Markdown prose as escaped, script-free HTML: headings, paragraphs and
+ * list items only; every character of text is escaped. */
+function markdownProseHtml(markdown) {
+  const blocks = [];
+  let paragraph = [];
+  const flush = () => { if (paragraph.length) { blocks.push(`<p>${escapeHtml(paragraph.join(' '))}</p>`); paragraph = []; } };
+  for (const line of String(markdown).split(/\r?\n/)) {
+    const heading = /^(#{1,6})\s+(.*)$/.exec(line);
+    const item = /^\s*[-*]\s+(.*)$/.exec(line);
+    if (heading) { flush(); blocks.push(`<h${Math.min(6, heading[1].length + 1)}>${escapeHtml(heading[2])}</h${Math.min(6, heading[1].length + 1)}>`); }
+    else if (item) { flush(); blocks.push(`<p>• ${escapeHtml(item[1])}</p>`); }
+    else if (!line.trim()) flush();
+    else paragraph.push(line.trim());
+  }
+  flush();
+  return blocks.join('');
+}
+
+/** Read one cited corpus source from a wiki's own source bank
+ * (`central.wiki-source-reading/v1`, `projectcentral.wiki.source.read`):
+ * the frontmatter stays home except the disclosable meta; the body's
+ * `##` sections become selectable entries (the text before the first one is
+ * the `opening`). Authorship is the owner's authored source. */
+export function curatedArtifactFromWikiSource(reading) {
+  record(reading, 'wiki source reading');
+  if (reading.schema !== 'central.wiki-source-reading/v1') throw new TypeError(`unsupported wiki source reading schema: ${reading.schema}`);
+  const body = String(text(reading.body, 'body'));
+  const withoutFrontmatter = body.replace(/^---\r?\n[\s\S]*?\r?\n---\r?\n?/, '');
+  const sections = [];
+  let current = { id: 'opening', label: 'Opening', lines: [] };
+  for (const line of withoutFrontmatter.split(/\r?\n/)) {
+    const heading = /^##\s+(.*)$/.exec(line);
+    if (heading) {
+      if (current.lines.join('').trim()) sections.push(current);
+      current = { id: `section:${slug(heading[1]) || sections.length + 1}`, label: heading[1].trim(), lines: [] };
+    } else current.lines.push(line);
+  }
+  if (current.lines.join('').trim()) sections.push(current);
+  return {
+    schema: CURATED_ARTIFACT_SCHEMA,
+    carrier: 'central.wiki-source',
+    document_id: text(reading.source_ref, 'source_ref'),
+    title: String(reading.title ?? reading.source_ref),
+    created: null,
+    template: reading.media_type ?? null,
+    revision: text(reading.revision, 'revision'),
+    source: { system: 'central', ref: text(reading.source_ref, 'source_ref'), revision: text(reading.revision, 'revision') },
+    entries: sections.map((section) => ({ id: section.id, author: 'H', at: '', kind: 'field', label: section.label, html: markdownProseHtml(section.lines.join('\n')) })),
+    withheld: { contributions: 0, operations: 0, meta_fields: ['frontmatter', 'locator', 'owners', 'tags'] },
+    collections: {},
+  };
+}
+
 // ---------------------------------------------------------------------------
 // Selection
 // ---------------------------------------------------------------------------

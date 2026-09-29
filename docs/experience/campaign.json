@@ -11,7 +11,7 @@
     "receipts": "desktop/cradle/walk/artifacts/",
     "standing": "declared source relations between executable frontend tests and the obligation field; the compiler validates them, receipts carry them as executed evidence; not an acceptance database"
   },
-  "source_modules": ["docs/experience/developer-field.json", "docs/experience/personal-web.json", "docs/experience/factory-agency.json", "docs/experience/session-grounding.json", "docs/experience/harness-first-adoption.json", "docs/experience/vak-expression-craft.json", "docs/experience/wiki-constellation.json"],
+  "source_modules": ["docs/experience/developer-field.json", "docs/experience/personal-web.json", "docs/experience/factory-agency.json", "docs/experience/session-grounding.json", "docs/experience/harness-first-adoption.json", "docs/experience/vak-expression-craft.json", "docs/experience/wiki-constellation.json", "docs/experience/shared-field-world-participation.json"],
   "document_operations_source": "docs/experience/DOCUMENT-OPERATIONS.md",
   "jev_redis_now_integration_source": "docs/experience/JEV-REDIS-NOW-INTEGRATION.md",
   "jev_redis_now_local_handoff": "docs/experience/JEV-REDIS-NOW-LOCAL-INTEGRATION-PROMPT.md",
@@ -69,19 +69,19 @@
     {"id":"PX","ids":["PX01","PX02","PX03","PX04","PX05","PX06"],"title":"Make useful practice and intelligence reusable","owners":["ai-kit","Central","Factory","Actuation","QL-MEF"],"proof_refs":["O-I#65:B","O-I#65:C","Central#164","ai-kit#299:accepted-procedure","CAW:P01","CAW:P07-P08","CAW:P25-P28"],"source_refs":["https://github.com/EpiLogos/Central/issues/164","https://github.com/EpiLogos/ai-kit/blob/main/registry/README.md"]},
     {"id":"WR","ids":["WR01","WR02","WR03","WR04","WR05","WR06","WR07"],"title":"Write, receive useful help and continue through time","owners":["Central","ai-kit","Actuation","Factory","O-I"],"proof_refs":["O-I#201","CAW:P02-P06","CAW:P15-P16","CAW:P19"],"source_refs":["https://github.com/EpiLogos/Factory/issues/195#issuecomment-5620703383","https://github.com/EpiLogos/Central/issues/74"]},
     {"id":"MC","ids":["MC01","MC02","MC03","MC04","MC05","MC06","MC07","MC08"],"title":"Choose where work runs and keep it usable","owners":["Workcell","Central","ai-kit","Actuation"],"proof_refs":["O-I#65:H","O-I#268:CF6","Workcell#20","Workcell#22","Workcell#24","Workcell#26","Workcell#27","Workcell#72","CAW:P14-P17"],"source_refs":["https://github.com/EpiLogos/Workcell/blob/main/docs/MATERIALISATION-SPEC.md","https://github.com/EpiLogos/Workcell/blob/main/docs/CONNECTIVITY-FABRIC.md","docs/experience/INSTALLATION-VARIANTS.md"]},
-    {"id":"SH","ids":["SH01","SH02","SH03","SH04","SH05","SH06"],"title":"Collaborate without giving away the whole personal setup","owners":["O-I","Central","ai-kit","Actuation"],"proof_refs":["O-I#65:G","O-I#91","CAW:P10","CAW:P12"],"source_refs":["docs/SHARED-FIELD.md","https://github.com/EpiLogos/O-I/issues/65"]},
+    {"id":"SH","ids":["SH01","SH02","SH03","SH04","SH05","SH06"],"title":"Share O:I worlds and participate in human-and-agent work","owners":["O-I","Central","ai-kit","Actuation"],"proof_refs":["O-I#65:G","O-I#91","CAW:P10","CAW:P12"],"source_refs":["docs/SHARED-FIELD.md","https://github.com/EpiLogos/O-I/issues/65","docs/experience/SHARED-FIELD-DESKTOP.md"]},
     {"id":"EX","ids":["EX01","EX02","EX03","EX04","EX05"],"title":"Extend a useful system through public interfaces","owners":["O-I","Central","ai-kit","Workcell","Actuation"],"proof_refs":["O-I#65:D","O-I#173","ai-kit#114","Workcell#23"],"source_refs":["docs/EXISTING-WORLD-ADOPTION.md","https://github.com/EpiLogos/O-I/issues/65"]},
     {"id":"DV","ids":["DV01","DV02","DV03","DV04","DV05","DV06","DV07","DV08"],"title":"Develop, compare alternatives, upgrade and recover","owners":["Factory","Central","ai-kit","Workcell","Actuation","O-I"],"proof_refs":["O-I#65:C","O-I#97","O-I#268:lifecycle","O-I#220","Factory#195","CAW:P13-P14","CAW:P18-P19","CAW:P21-P24","CAW:P26-P28"],"source_refs":["https://github.com/EpiLogos/Factory/issues/195","docs/cradle/04-VERIFICATION.md","docs/experience/INSTALLATION-VARIANTS.md"]},
     {"id":"UI","ids":["UI01","UI02","UI03","UI04","UI05","UI06","UI07"],"title":"Exercise actual human controls","owners":["O-I","ai-kit"],"proof_refs":["O-I#65:F","O-I#190","ai-kit#211","ai-kit#282","CAW:P21-P22","CAW:P28"],"source_refs":["docs/cradle/03-UX-STATES.md","docs/OI-DESKTOP-CONTINUOUS-WORK-WAYFINDER.md","https://github.com/EpiLogos/ai-kit/blob/main/docs/v2/23-TUI-HUMAN-EXPERIENCE-SPEC.md"]}
   ],
   "native_capability_sources": [
     {"repository":"EpiLogos/Central","path":"ProjectCentral/user/capability-matrix.csv","binding":"inspect exact current IDs; never mint replicas"},
-    {"repository":"EpiLogos/ai-kit","path":"ProjectCentral/user/capability-matrix.csv","binding":"inspect exact current IDs; never mint replicas"},
+    {"repository":"EpiLogos/ai-kit","path":"ProjectCentral/user/telos/capability-matrix.csv","binding":"inspect exact current IDs; never mint replicas"},
     {"repository":"EpiLogos/Factory","path":"ProjectCentral/user/capability-matrix.csv","binding":"inspect exact current IDs; never mint replicas"},
     {"repository":"EpiLogos/Workcell","path":"ProjectCentral/user/capability-matrix.csv","binding":"inspect exact current IDs; never mint replicas"},
     {"repository":"EpiLogos/Actuation","path":"ProjectCentral/user/capability-matrix.csv","binding":"verify current declared matrix path and exact IDs before use"},
     {"repository":"EpiLogos/QL-MEF","path":"docs/integrations/epi-logos/EPI-CAPABILITY-MATRIX-FIELD-INDEX.md","binding":"enumerate every registered native matrix, not only the product synopsis"},
-    {"repository":"EpiLogos/O-I","path":"docs/CAPABILITY-MATRIX.md","binding":"use host source inventory and actual current native command/application account"}
+    {"repository":"EpiLogos/O-I","path":"suite/capability-matrix.json","binding":"use host source inventory and actual current native command/application account"}
   ],
   "delegated_ql": {
     "repository":"EpiLogos/QL-MEF",

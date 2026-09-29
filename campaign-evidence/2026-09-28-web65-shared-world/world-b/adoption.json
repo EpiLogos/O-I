@@ -1,0 +1,125 @@
+{
+  "ok": true,
+  "schema": "oi.practice-adoption-result/v1",
+  "state": "adopted",
+  "adopted_dir": "~/.cache/oi-web65/world-b-adopted/darshana@f3d55f2f9ec7",
+  "wrote": [],
+  "adopted": {
+    "schema": "oi.adopted-practice/v1",
+    "adopted_from": {
+      "world_ref": "world:central:project:O-I:region:a04-mask",
+      "entry_ref": "world:central:project:O-I:region:a04-mask/skill/ql/darshana",
+      "field_ref": "oi:field:central:project:O-I:undertaking:a04-mask",
+      "projection_ref": "projection:central:project:O-I:region:a04-mask",
+      "projection_revision": 5,
+      "source_ref": "skill/ql/darshana",
+      "source_revision": "f3d55f2f9ec70f44ff661623c7a931f299dcf29659d00df835446c997ee7ef99",
+      "body_digest": "sha256:6072bc7cda8ed1be3aa74c922317c9abbcb5d780e122fd56d5ec7f44ee9b2ec3"
+    },
+    "adopted_at": "2026-09-28T18:27:21.718Z",
+    "adopter_participant_ref": "participant:world-b:omarchy:a04-mask",
+    "practice_kind": "skill",
+    "label": "darshana",
+    "aikit": {
+      "source_id": "adopted-darshana-f3d55f2f9ec7",
+      "capability_ref": "skill/adopted-darshana-f3d55f2f9ec7/darshana"
+    },
+    "payload_files_not_carried": [
+      "payload/scripts/darshana.py"
+    ],
+    "local_differences": [
+      {
+        "kind": "aikit-skill-overlay",
+        "overlay_ref": "aikit:skill-overlay:global:skill/adopted-darshana-f3d55f2f9ec7/darshana",
+        "capability_ref": "skill/adopted-darshana-f3d55f2f9ec7/darshana",
+        "scope": "global",
+        "guidance": "World B adaptation: when scouting an Epi-Logos argument record, treat the #0 to #5 to 0 markers as its QL positions and read a record together with its conjugate prime (Axx and Axx′) section by section, citing as [Axx #n].",
+        "guidance_digest": "sha256:dac9346b3185c9583f63700baabb4192befdafa8c2c60d407424e9edf028291f",
+        "adapts": {
+          "source_ref": "skill/ql/darshana",
+          "source_revision": "f3d55f2f9ec70f44ff661623c7a931f299dcf29659d00df835446c997ee7ef99"
+        },
+        "note": "additive guidance applied through AIKit; the adopted SKILL.md stays the verbatim offered body"
+      }
+    ]
+  },
+  "original": {
+    "source_ref": "skill/ql/darshana",
+    "source_revision": "f3d55f2f9ec70f44ff661623c7a931f299dcf29659d00df835446c997ee7ef99",
+    "body_digest": "sha256:6072bc7cda8ed1be3aa74c922317c9abbcb5d780e122fd56d5ec7f44ee9b2ec3"
+  },
+  "aikit": {
+    "source_id": "adopted-darshana-f3d55f2f9ec7",
+    "capability_ref": "skill/adopted-darshana-f3d55f2f9ec7/darshana",
+    "snapshot": "f28e117ddfdbe50d5382f37c3a6057020d54b36358533767eb980b95ba729e0f",
+    "adopted_revision": "bb211b093cc22411a02ac02ed6b782adf5815af45c615422ace57d8806b630dc",
+    "steps": {
+      "add": {
+        "control_ground": false,
+        "id": "adopted-darshana-f3d55f2f9ec7",
+        "kind": "directory",
+        "portable": false
+      },
+      "sync": {
+        "active_snapshot": null,
+        "candidate_snapshot": "f28e117ddfdbe50d5382f37c3a6057020d54b36358533767eb980b95ba729e0f",
+        "git_commit": null,
+        "id": "adopted-darshana-f3d55f2f9ec7",
+        "owner_revision": null,
+        "rejected": [],
+        "skills": 1
+      },
+      "promote": {
+        "active_snapshot": "f28e117ddfdbe50d5382f37c3a6057020d54b36358533767eb980b95ba729e0f",
+        "id": "adopted-darshana-f3d55f2f9ec7",
+        "skills": 1,
+        "trusted_skills": 1
+      },
+      "overlay": {
+        "state": "set",
+        "result": {
+          "capability": "skill/adopted-darshana-f3d55f2f9ec7/darshana",
+          "effects": [
+            {
+              "effect": "shell bin/",
+              "target": "shell"
+            },
+            {
+              "effect": "restart Claude",
+              "target": "claude-code"
+            },
+            {
+              "effect": "next session only — plain Codex discovers project-stable skills at task start",
+              "target": "codex"
+            },
+            {
+              "effect": "brokered — DSH composition/preset projection is brokered in this adapter revision; capabilities are reached through AIKit's broker rather than a fixed tree",
+              "target": "deepseek-harness"
+            }
+          ],
+          "generation": "gen_5a278893885a25b3",
+          "overlays": [
+            {
+              "description": null,
+              "guidance": "World B adaptation: when scouting an Epi-Logos argument record, treat the #0 to #5 to 0 markers as its QL positions and read a record together with its conjugate prime (Axx and Axx′) section by section, citing as [Axx #n].",
+              "origin": {
+                "label": "~/.cache/oi-web65/world-b-aikit/scopes/global/profile.toml",
+                "line": null
+              },
+              "reviewed_against": "bb211b093cc22411a02ac02ed6b782adf5815af45c615422ace57d8806b630dc",
+              "scope": "global",
+              "via_profile": null
+            }
+          ],
+          "scope": "global"
+        }
+      }
+    }
+  },
+  "invoke": {
+    "capability_ref": "skill/adopted-darshana-f3d55f2f9ec7/darshana",
+    "enable": "aikit enable skill/adopted-darshana-f3d55f2f9ec7/darshana --scope global --apply",
+    "read": "aikit capabilities read skill/adopted-darshana-f3d55f2f9ec7/darshana --json",
+    "note": "adopted and promoted, not yet enabled: enabling it in a scope is the reader's next deliberate act"
+  }
+}

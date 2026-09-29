@@ -31,6 +31,8 @@ __pycache__/
 # SpaceTimeDB module build/codegen products are generated from src/index.ts
 shared-field/spacetimedb/dist/
 shared-field/spacetimedb/module_bindings/
+shared-field/dist-client/*
+!shared-field/dist-client/README.md
 shared-field/spacetimedb/node_modules/
 shared-field/spacetimedb/package-lock.json
 
@@ -39,3 +41,7 @@ packages/oi-design-system/node_modules/
 
 # Landing gate receipts are machine-local evidence
 gates/receipts/
+
+# NOW clearings are machine-local generated state (and may hold team-visible
+# material); they never enter this public repository.
+ProjectCentral/agents/now/

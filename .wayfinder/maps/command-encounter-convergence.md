@@ -461,3 +461,39 @@ handoff) and gap 5's X7-execution/X12-desktop as the next pass's exact
 frontier. Both candidate branches await PR landing (origin gh token invalid —
 the owner's credential); seats `oi527-integration/ai-kit` and `env-3/central`
 stay claimed until landed.
+
+---
+
+## 8. Frontier review and the work still owed (owner review, 29 September 2026)
+
+Standing: owner-directed review of the installed cut against §1–§5. Findings are from executed `--help` / `--json` probes on the installed `oi c698b727`, `aikit eeaab031` and the other four owner binaries, plus the merged mains. The order below is the order of work.
+
+### 8.1 What the review found
+
+- **Only AIKit has a generated command reference** (`aikit system commands --json`, walked from the real parser). ctrl, actuation, factory, workcell and ql have none; each has `system --json`, an owner disclosure of Actions, which is not the parser tree. O:I therefore cannot collate the six CLIs from live sources.
+- **`oi act` lists only Central's Action field** on the installed cut. #547 (open, CI red) adds AIKit; Factory, Workcell, Actuation and QL are named there as "the next step" and are still absent.
+- **`oi capabilities` is a static catalogue** (460 records, `verified_at` 2026-09-14, derived from the capability-matrix CSVs). It is a source snapshot, not installed availability; §2.1 requires these to stay distinct and bans a handwritten parallel catalogue.
+- **O:I carries 7 of the 11 classified heads** (`world search act agent work explain ui`); `knowledge praxis history system` are absent and the first `oi --help` screen is still the install/dev list (classification §7).
+- **Uneven owner help.** aikit, factory and workcell have grouped help; ctrl, actuation and ql print flat `Usage:` lists. The other lane's returns (A3 `aikit method run`, TUI SkillSet picker, Factory/Workcell/QL help lanes) landed via ai-kit #450, Factory #273, Workcell #106, QL-MEF #250: verify each against the installed binary before counting it done.
+- **Four discovery spellings persist**: `aikit act describe`, `ctrl action run`, `factory action list` (needs state/project/run), `oi act describe`.
+- **Capability-matrix drift**: ai-kit #398 (23 Sep) moved its matrix and `aikit.html` under `ProjectCentral/user/telos/`; other products still hold them at `ProjectCentral/user/`. Links and `source_refs` were not carried, the product-ground checker path was not updated, and the checker has been failing on it, hiding everything else (≈377 unmapped commands, undiscoverable commands, stale grokbot refs on `cap.aikit.harness-admission`, code-drift entries).
+
+### 8.2 Work packets
+
+**W0 — One machine-walked command inventory per product.** Each of ctrl, actuation, factory, workcell, ql and oi emits its complete command tree (folded surfaces and dynamic Action discovery included) from its own parser or command table, in one schema modelled on `aikit system commands --json`. No handwritten list. Blocks W1, W2, W4.
+
+**W1 — Coverage gate.** A test that every leaf in every inventory is placed in the classification or explicitly waived, and that every old spelling still reaches its original handler. This is the guard against a claimed-done state that is not.
+
+**W2 — O:I as the collating surface.** `oi act` lists, describes and invokes across all six owners with attribution; a missing owner is a named degradation. Land #547 as the first two owners, then add Central, Actuation, Factory, Workcell, QL. Make `oi capabilities` a live installed reading with the static snapshot labelled as such. Add the missing heads and shorten the first help screen. Keep transparent `oi <product> …` passthrough (stdin/stdout/stderr/exit/signal parity) and `oi setup` without AIKit.
+
+**W3 — Per-owner treatment against classification §2–§6.** ctrl, actuation, ql first (flat help); verify factory, workcell, aikit against their tables; nothing lost — flags, envelopes, exit semantics unchanged.
+
+**W4 — Capability-matrix reconciliation.** Fix the ai-kit path/links/`source_refs` and the checker; map commands from W0 inventories; repair stale grokbot refs; resolve code-drift entries. Requires reading all of q0–q5 before applying (use the `capability-matrix` skill).
+
+**W5 — Remaining frontier from §6.4:** confirm A3 method-run, the TUI SkillSet picker and `oi ui` composed-World supply against the installed cut; the cradle walk failures (`rest`/`modes`/`kernel-cas`) belong to the substrate lane.
+
+**W6 — Independent verification.** Install with `oi update --apply`, restart the resident owner, and have a fresh verifier run X1–X16 (X7, X9, X12, X13, X15, X16 at full depth), recording every extra hint needed.
+
+### 8.3 Closure
+
+Closed only when W1's gate is green on the installed cut, `oi act` returns all six owners' fields live, the matrix checker passes on current paths, and W6's verifier completed the matrix without hints. Unit tests, schemas or a merged PR alone close nothing.

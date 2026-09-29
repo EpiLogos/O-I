@@ -1,0 +1,140 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://o-i.dev/schemas/field-now-v1.json",
+  "title": "O:I FieldNow / FieldDay v1",
+  "description": "The collective temporal projection of one SharedField. Refs and native revisions only; field-now.mjs additionally refuses local-only material (paths, session refs, gateway addresses, tokens) inside any string and enforces one root NOW per Workcell.",
+  "oneOf": [{"$ref": "#/$defs/field_now"}, {"$ref": "#/$defs/field_day"}],
+  "$defs": {
+    "now_ref": {"type": "string", "pattern": "^central:now:[a-z][a-z0-9-]*(?::[A-Za-z0-9._-]+)+$"},
+    "day_ref": {"type": "string", "pattern": "^central:day:[a-z][a-z0-9-]*(?::[A-Za-z0-9._-]+)+$"},
+    "workcell_ref": {"type": "string", "pattern": "^workcell:[a-z0-9][a-z0-9.-]*$"},
+    "world_ref": {"type": "string", "pattern": "^(?:control:root|project:[A-Za-z0-9._-]+|world:[A-Za-z0-9._:-]+)$"},
+    "participant_ref": {"type": "string", "minLength": 1, "maxLength": 512},
+    "cursor": {"type": "string", "minLength": 1, "maxLength": 512},
+    "audience": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["visibility"],
+      "properties": {
+        "visibility": {"enum": ["public", "restricted", "private"]},
+        "refs": {"type": "array", "maxItems": 32, "uniqueItems": true, "items": {"$ref": "#/$defs/participant_ref"}}
+      }
+    },
+    "field_now": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["schema", "field_ref", "revision", "projected_root_now_refs", "projected_child_now_refs", "audience", "provenance"],
+      "properties": {
+        "schema": {"const": "oi.field-now/v1"},
+        "field_ref": {"type": "string", "minLength": 1},
+        "revision": {"type": "integer", "minimum": 1},
+        "projected_root_now_refs": {
+          "type": "array", "maxItems": 32,
+          "items": {
+            "type": "object", "additionalProperties": false,
+            "required": ["now_ref", "workcell_ref", "world_ref", "revision", "projected_by"],
+            "properties": {
+              "now_ref": {"$ref": "#/$defs/now_ref"},
+              "workcell_ref": {"$ref": "#/$defs/workcell_ref"},
+              "world_ref": {"$ref": "#/$defs/world_ref"},
+              "revision": {"type": "string", "minLength": 1},
+              "projected_by": {"$ref": "#/$defs/participant_ref"}
+            }
+          }
+        },
+        "projected_child_now_refs": {
+          "type": "array", "maxItems": 64,
+          "items": {
+            "type": "object", "additionalProperties": false,
+            "required": ["now_ref", "parent_now_ref", "workcell_ref", "state", "projected_by"],
+            "properties": {
+              "now_ref": {"$ref": "#/$defs/now_ref"},
+              "parent_now_ref": {"$ref": "#/$defs/now_ref"},
+              "workcell_ref": {"$ref": "#/$defs/workcell_ref"},
+              "purpose_summary": {"type": "string", "minLength": 1, "maxLength": 280},
+              "state": {"enum": ["active", "waiting", "blocked", "quiescent", "resolved", "archived"]},
+              "projected_by": {"$ref": "#/$defs/participant_ref"}
+            }
+          }
+        },
+        "presence_cursor": {"$ref": "#/$defs/cursor"},
+        "activity_cursor": {"$ref": "#/$defs/cursor"},
+        "contribution_cursor": {"$ref": "#/$defs/cursor"},
+        "audience": {"$ref": "#/$defs/audience"},
+        "provenance": {
+          "type": "array", "minItems": 1, "maxItems": 16,
+          "items": {
+            "type": "object", "additionalProperties": false,
+            "required": ["kind", "ref", "source_system"],
+            "properties": {
+              "kind": {"type": "string", "minLength": 1},
+              "ref": {"type": "string", "minLength": 1},
+              "source_system": {"type": "string", "minLength": 1},
+              "revision": {"type": "string", "minLength": 1}
+            }
+          }
+        }
+      }
+    },
+    "field_day": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["schema", "field_ref", "revision", "interval", "temporal_policy_provenance", "projected_source_day_refs", "projected_now_refs", "cursors", "audience"],
+      "properties": {
+        "schema": {"const": "oi.field-day/v1"},
+        "field_ref": {"type": "string", "minLength": 1},
+        "revision": {"type": "integer", "minimum": 1},
+        "interval": {
+          "type": "object", "additionalProperties": false,
+          "required": ["start", "end", "policy"],
+          "properties": {
+            "start": {"type": "string", "format": "date-time"},
+            "end": {"type": "string", "format": "date-time"},
+            "policy": {"type": "string", "minLength": 1, "maxLength": 128}
+          }
+        },
+        "temporal_policy_provenance": {
+          "type": "object", "additionalProperties": false,
+          "required": ["source_system", "ref", "revision"],
+          "properties": {
+            "source_system": {"type": "string", "minLength": 1},
+            "ref": {"type": "string", "minLength": 1},
+            "revision": {"type": "string", "minLength": 1}
+          }
+        },
+        "projected_source_day_refs": {
+          "type": "array", "maxItems": 64,
+          "items": {
+            "type": "object", "additionalProperties": false,
+            "required": ["day_ref", "projected_by"],
+            "properties": {
+              "day_ref": {"$ref": "#/$defs/day_ref"},
+              "workcell_ref": {"$ref": "#/$defs/workcell_ref"},
+              "projected_by": {"$ref": "#/$defs/participant_ref"}
+            }
+          }
+        },
+        "projected_now_refs": {
+          "type": "array", "maxItems": 64,
+          "items": {
+            "type": "object", "additionalProperties": false,
+            "required": ["now_ref", "projected_by"],
+            "properties": {
+              "now_ref": {"$ref": "#/$defs/now_ref"},
+              "projected_by": {"$ref": "#/$defs/participant_ref"}
+            }
+          }
+        },
+        "cursors": {
+          "type": "object", "additionalProperties": false,
+          "properties": {
+            "activity_cursor": {"$ref": "#/$defs/cursor"},
+            "contribution_cursor": {"$ref": "#/$defs/cursor"},
+            "encounter_cursor": {"$ref": "#/$defs/cursor"}
+          }
+        },
+        "audience": {"$ref": "#/$defs/audience"}
+      }
+    }
+  }
+}

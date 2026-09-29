@@ -397,7 +397,7 @@ test('selection refusals: an unknown Position, occupancy without a population re
   assert.throws(() => publishInhabited({}, [rootReading(), projectReading(), positionListing(), constellation()]), /need an aikit.population-reading\/v1/);
   assert.throws(() => publishInhabited({ positions: { [ALETHEIA]: 'address' } }, [rootReading(), projectReading(), constellation()]), /need a central.position-listing\/v1/);
   assert.throws(() => publishInhabited({ constellations: ['wiki:frame:absent'] }), /not present in any AIKit constellation reading/);
-  assert.throws(() => publishInhabited({ positions: { [ANIMA]: 'everything' } }), /must be address or occupancy/);
+  assert.throws(() => publishInhabited({ positions: { [ANIMA]: 'everything' } }), /must be address, occupancy or repertoire/);
   const refused = { ok: false, schema: 1, error: { code: 'knowledge.constellation_refused', message: 'the native frame is absent' } };
   assert.throws(() => publishInhabited({}, [rootReading(), projectReading(), positionListing(), population(), refused]), /refusal: knowledge.constellation_refused/);
 });
@@ -454,7 +454,7 @@ test('a constellation is one entry, related to the World and to its selected wik
   assert.equal(entry.kind, 'constellation');
   assert.equal(entry.label, 'What grounds O-I?');
   assert.equal(entry.revision, '1');
-  assert.deepEqual(entry.meta, { standing: 'aikit-constellation', native_owner: 'ai-kit', local_ref: FRAME, participations: 2 });
+  assert.deepEqual(entry.meta, { standing: 'aikit-constellation', native_owner: 'ai-kit', local_ref: FRAME, participations: 1 });
   assert.ok(bundle.relations.some((relation) => relation.from === 'world:central:project:O-I' && relation.to === HOSTED(FRAME) && relation.relation === 'oi.world/constellation' && relation.origin === 'projection'));
   const participations = bundle.relations.filter((relation) => relation.relation === 'aikit.constellation/participation');
   assert.deepEqual(participations.map((relation) => [relation.from, relation.to, relation.origin]), [[HOSTED(FRAME), NODE, 'aikit-knowledge']]);
@@ -483,4 +483,66 @@ test('works-on appears only when current work is one attested custody naming a s
   // Dropping the node from the selection drops the relation with it.
   const unselected = publishInhabited({ node_refs: [], constellations: [] });
   assert.ok(!unselected.relations.some((relation) => relation.relation === 'oi.world/works-on'));
+});
+
+test('a node listed only by its space node_refs is a member of that space, and address-only still refuses it', () => {
+  const project = projectReading();
+  const node = project.nodes.find((row) => row.ref === 'wiki:node:project-root/o-i');
+  const holding = project.spaces.find((space) => (node.space_refs ?? []).includes(space.ref));
+  node.space_refs = [];
+  holding.node_refs = [...new Set([...(holding.node_refs ?? []), node.ref])];
+  const bundle = publish({}, [rootReading(), project]);
+  assert.ok(bundle.entries.some((entry) => entry.ref === NODE), 'membership read from the space side');
+  assert.throws(() => publish({ spaces: { 'central:wiki:root': 'address', [holding.ref]: 'address' } }, [rootReading(), project]), /not inside a WikiSpace selected with mode "nodes"/);
+});
+
+test('re-projecting with a changed audience carries the owner\'s new audience in a new revision', () => {
+  const first = publish({ audience: { visibility: 'private' } });
+  const named = reprojectCentralWikiWorld(first, { readings: [rootReading(), projectReading()], selection: selection({ audience: { visibility: 'private', refs: ['participant:second-world'] } }), published_at: '2026-09-14T21:00:00.000Z' });
+  assert.equal(named.audience_changed, true);
+  assert.deepEqual(named.projection.audience, { visibility: 'private', refs: ['participant:second-world'] });
+  assert.equal(named.projection.projection_revision, 2);
+  const same = reprojectCentralWikiWorld(named, { readings: [rootReading(), projectReading()], selection: selection({ audience: { visibility: 'private', refs: ['participant:second-world'] }, summary: 'Same audience, new words.' }), published_at: '2026-09-14T22:00:00.000Z' });
+  assert.equal(same.audience_changed, false);
+  assert.deepEqual(same.projection.audience, named.projection.audience);
+});
+
+test('typed wiki edges travel between selected nodes only, with their own origin', () => {
+  const project = projectReading();
+  const [a, b] = project.nodes.slice(0, 2).map((node) => node.ref);
+  project.knowledge_edges = [
+    { ref: `${a}|re-sites|${b}`, from_ref: a, relation: 're-sites', to_ref: b, origin: 'inferred', origin_ref: 'contribution:x' },
+    { ref: `${a}|references|wiki:node:elsewhere`, from_ref: a, relation: 'references', to_ref: 'wiki:node:elsewhere', origin: 'authored' },
+  ];
+  const both = publish({ node_refs: [a, b] }, [rootReading(), project]);
+  const edge = both.relations.find((relation) => relation.relation === 'wiki.edge/re-sites');
+  assert.ok(edge, 'the selected pair carries its typed edge');
+  assert.equal(edge.origin, 'wiki');
+  assert.equal(edge.provenance[0].edge_origin_ref, 'contribution:x');
+  assert.ok(!both.relations.some((relation) => relation.relation === 'wiki.edge/references'), 'an edge to an unselected node stays home');
+  const one = publish({ node_refs: [a] }, [rootReading(), project]);
+  assert.ok(!one.relations.some((relation) => relation.relation.startsWith('wiki.edge/')));
+});
+
+test('a knowledge edge carries no foreign ref: relation validated, edge ref dropped, origin ref only a Contribution or selected material', () => {
+  const project = projectReading();
+  const [a, b] = project.nodes.slice(0, 2).map((node) => node.ref);
+  project.knowledge_edges = [
+    { ref: 'wiki:edge:PRIVATE_SENTINEL_EDGE_REF', from_ref: a, relation: 'explains', to_ref: b, origin: 'authored', origin_ref: 'wiki:node:PRIVATE_SENTINEL_UNSELECTED' },
+    { ref: 'wiki:edge:x', from_ref: b, relation: 'contemplates', to_ref: a, origin: 'Evil Origin!', origin_ref: a },
+    { from_ref: a, relation: 're-sites', to_ref: b, origin: 'inferred', origin_ref: 'contribution:web65:1' },
+    { from_ref: a, relation: 'Bad Relation/../x', to_ref: b, origin: 'authored' },
+    { from_ref: b, relation: `x${'y'.repeat(64)}`, to_ref: a, origin: 'authored' },
+  ];
+  const bundle = publish({ node_refs: [a, b] }, [rootReading(), project]);
+  const edges = bundle.relations.filter((relation) => relation.relation.startsWith('wiki.edge/'));
+  assert.deepEqual(edges.map((edge) => edge.relation).sort(), ['wiki.edge/contemplates', 'wiki.edge/explains', 'wiki.edge/re-sites'], 'an unsafe relation token never becomes a hosted relation');
+  for (const edge of edges) assert.equal(edge.provenance[0].ref, edge.relation_ref, 'the provenance names the hosted relation, never the local edge ref');
+  const byRelation = Object.fromEntries(edges.map((edge) => [edge.relation, edge.provenance[0]]));
+  assert.equal(byRelation['wiki.edge/explains'].edge_origin_ref, undefined, 'an origin naming unselected material is omitted');
+  assert.equal(byRelation['wiki.edge/contemplates'].edge_origin_ref, `world:central:project:O-I/${a}`, 'an origin naming selected material travels as its hosted ref');
+  assert.equal(byRelation['wiki.edge/contemplates'].edge_origin, undefined, 'an unsafe origin kind is omitted');
+  assert.equal(byRelation['wiki.edge/re-sites'].edge_origin_ref, 'contribution:web65:1');
+  const serialised = JSON.stringify(hostedPublicationArgs(bundle));
+  for (const leak of ['PRIVATE_SENTINEL_EDGE_REF', 'PRIVATE_SENTINEL_UNSELECTED', 'Bad Relation', 'Evil Origin']) assert.ok(!serialised.includes(leak), leak);
 });

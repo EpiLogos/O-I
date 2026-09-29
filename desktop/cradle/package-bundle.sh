@@ -82,6 +82,7 @@ MACOS_APP_PATH="${TARGET_ROOT}/release/bundle/macos/O-I.app"
 
 if [ "${DRY_RUN}" -eq 1 ]; then
   log "dry-run plan:"
+  log "  0. bundle the SharedField client into shared-field/dist-client (app resource shared-field/)"
   log "  1. npm ci --prefix desktop/cradle"
   log "  2. npx --prefix desktop/cradle tauri build (frontend + native shell + bundle)"
   if [ "${TARGET}" = "aarch64-apple-darwin" ]; then
@@ -101,7 +102,21 @@ fi
 # ---------------------------------------------------------------------------
 [ -n "${TARGET}" ] || die "no bundle target for ${OS} ${ARCH}"
 
+# The installed desktop carries its own SharedField client (app resource
+# shared-field/): the kernel never reaches back into this checkout.
+build_shared_field_client() {
+  local module="${REPO_ROOT}/shared-field/spacetimedb"
+  log "bundling the SharedField client (shared-field/dist-client)"
+  npm install --prefix "${module}" --no-audit --no-fund --no-package-lock >/dev/null
+  if [ ! -f "${module}/module_bindings/index.ts" ]; then
+    command -v spacetime >/dev/null || die "the SharedField bindings are not generated and the spacetime CLI is absent (see shared-field/spacetimedb/HOSTING.md)"
+    (cd "${REPO_ROOT}" && spacetime generate --lang typescript --out-dir shared-field/spacetimedb/module_bindings --module-path shared-field/spacetimedb -y >/dev/null)
+  fi
+  node "${module}/build-client.mjs"
+}
+
 if [ "${SKIP_BUILD}" -eq 0 ]; then
+  build_shared_field_client
   if [ "${TARGET}" = "aarch64-apple-darwin" ]; then
     log "building the cradle web bundle and native shell (macOS .app)"
     npm ci --prefix "${REPO_ROOT}/desktop/cradle" --no-audit --no-fund
@@ -113,12 +128,18 @@ if [ "${SKIP_BUILD}" -eq 0 ]; then
   fi
 fi
 
+# Paths are tested directly, never word-split: a target root such as the
+# managed cache under "Application Support" contains spaces.
+MACOS_APP=""
+APPIMAGE=""
 if [ "${TARGET}" = "aarch64-apple-darwin" ]; then
-  MACOS_APP="$(ls -d ${MACOS_APP_PATH} 2>/dev/null | head -1 || true)"
+  [ -d "${MACOS_APP_PATH}" ] && MACOS_APP="${MACOS_APP_PATH}"
   [ -n "${MACOS_APP}" ] || die "no .app found at ${MACOS_APP_PATH}; run the tauri build first (or drop --skip-build)"
+  [ -f "${MACOS_APP}/Contents/Resources/shared-field/field-client.sh" ] || die "${MACOS_APP} carries no shared-field/ client resource; the installed Explore would have no SharedField client"
 else
-  MACOS_APP=""
-  APPIMAGE="$(ls ${APPIMAGE_GLOB} 2>/dev/null | head -1 || true)"
+  for candidate in "${TARGET_ROOT}"/release/bundle/appimage/*.AppImage; do
+    if [ -f "${candidate}" ]; then APPIMAGE="${candidate}"; break; fi
+  done
   [ -n "${APPIMAGE}" ] || die "no AppImage found at ${APPIMAGE_GLOB}; run the tauri build first (or drop --skip-build)"
 fi
 
@@ -132,6 +153,11 @@ if [ -n "${MACOS_APP}" ]; then
   cp -R "${MACOS_APP}" "${BUNDLE_ROOT}/app/O-I.app"
 else
   cp "${APPIMAGE}" "${BUNDLE_ROOT}/app/oi-cradle.AppImage"
+fi
+if [ -n "${MACOS_APP}" ]; then
+  [ -n "$(find "${BUNDLE_ROOT}/app/O-I.app/Contents/MacOS" -type f -perm -u+x 2>/dev/null | head -1)" ] || die "the staged O-I.app has no executable; refusing to package an empty application"
+else
+  [ -s "${BUNDLE_ROOT}/app/oi-cradle.AppImage" ] || die "the staged AppImage is empty"
 fi
 cp "${TAURI_DIR}/icons/icon.png" "${BUNDLE_ROOT}/app/icon.png"
 cp "${FOOTPRINT}" "${BUNDLE_ROOT}/footprint.json"

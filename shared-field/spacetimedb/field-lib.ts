@@ -35,6 +35,9 @@ export const SUBSCRIPTION = [
   'SELECT * FROM shared_stage',
   'SELECT * FROM my_stage_follow',
   'SELECT * FROM field_presence',
+  'SELECT * FROM activity_liveness',
+  'SELECT * FROM field_now',
+  'SELECT * FROM field_day',
 ];
 const TIMEOUT_MS = Number(process.env.OI_SHARED_FIELD_TIMEOUT_MS ?? 15_000);
 export const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
@@ -45,16 +48,38 @@ export interface Target { name: string; server: string; uri: string; database: s
  * target; `SPACETIMEDB_URI`/`SPACETIMEDB_DATABASE` override it. An unbound
  * target is an honest state the caller reports as Unavailable, never an error
  * the caller invents a default for. */
-export function resolveTarget(): { bound: true; target: Target } | { bound: false; reason: string } {
+/** The machine-local, non-secret SharedField binding an installed desktop
+ * reads when no environment names a target: `{schema, target}` under the
+ * same state home as the owner transport tokens. Written by `field bind`. */
+export function bindingFile() {
+  const state = process.env.OI_STATE_HOME ?? join(homedir(), '.local', 'state', 'oi');
+  return join(state, 'shared-field', 'binding.json');
+}
+
+export function hostingTargets(): Record<string, Omit<Target, 'name'>> {
+  return JSON.parse(readFileSync(join(here, 'hosting.json'), 'utf8')).targets ?? {};
+}
+
+export function resolveTarget(): { bound: true; target: Target; source: 'env' | 'binding' } | { bound: false; reason: string } {
   const uri = process.env.SPACETIMEDB_URI;
   const database = process.env.SPACETIMEDB_DATABASE;
-  if (uri && database) return { bound: true, target: { name: 'env', server: 'env', uri, database } };
-  const name = process.env.OI_SHARED_FIELD_TARGET;
-  if (!name) return { bound: false, reason: 'no SharedField target bound: set OI_SHARED_FIELD_TARGET to a target named in shared-field/spacetimedb/hosting.json' };
-  const hosting = JSON.parse(readFileSync(join(here, 'hosting.json'), 'utf8'));
-  const target = hosting.targets?.[name];
-  if (!target) return { bound: false, reason: `SharedField target "${name}" is not named in hosting.json (${Object.keys(hosting.targets ?? {}).join(', ')})` };
-  return { bound: true, target: { name, ...target } };
+  if (uri && database) return { bound: true, source: 'env', target: { name: 'env', server: 'env', uri, database } };
+  let name = process.env.OI_SHARED_FIELD_TARGET;
+  let source: 'env' | 'binding' = 'env';
+  if (!name) {
+    const file = bindingFile();
+    if (existsSync(file)) {
+      try {
+        const binding = JSON.parse(readFileSync(file, 'utf8'));
+        if (binding?.schema === 'oi.shared-field-binding/v1' && typeof binding.target === 'string') { name = binding.target; source = 'binding'; }
+      } catch { return { bound: false, reason: `the SharedField binding at ${file} is not readable JSON` }; }
+    }
+  }
+  if (!name) return { bound: false, reason: `no SharedField target bound: set OI_SHARED_FIELD_TARGET, or bind one for this machine with {"kind":"bind","target":"<name>"} (targets in hosting.json)` };
+  const targets = hostingTargets();
+  const target = targets[name];
+  if (!target) return { bound: false, reason: `SharedField target "${name}" is not named in hosting.json (${Object.keys(targets).join(', ')})` };
+  return { bound: true, source, target: { name, ...target } };
 }
 
 export function tokenFile(database: string, label = 'owner') {
@@ -141,7 +166,7 @@ export function fieldSnapshot(client: Client) {
     relations: hosted.relations,
     relation_errors: hosted.relation_errors,
     contributions: rows(db.contribution).map((row: any) => ({ contribution_ref: row.contributionRef, field_ref: row.fieldRef, contributor_participant_ref: row.contributorParticipantRef, ingress_ref: row.ingressRef ?? null, contract: parse(row.contractJson) })),
-    my_authority: rows(db.myFieldAuthority).map((row: any) => ({ field_ref: row.fieldRef, participant_ref: row.participantRef, role: row.role, revoked: Boolean(row.revoked) })),
+    my_authority: rows(db.myFieldAuthority).map((row: any) => ({ field_ref: row.fieldRef, participant_ref: row.participantRef, role: row.role, revoked: Boolean(row.revoked), expires_at_micros: String(row.expiresAtMicros ?? 0) })),
     my_contribution_receipts: rows(db.myContributionReceipt).map((row: any) => ({ contribution_ref: row.contributionRef, ingress_ref: row.ingressRef, field_ref: row.fieldRef, state: row.state })),
     owner_pending_contributions: rows(db.ownerPendingContribution).map((row: any) => ({ ingress_ref: row.ingressRef, field_ref: row.fieldRef, contribution_ref: row.claimedContributionRef, contributor_participant_ref: row.contributorParticipantRef, received_at_micros: String(row.receivedAtMicros), payload_fingerprint: row.payloadFingerprint, contract: parse(row.contractJson) })),
     my_watches: rows(db.myWatch).map((row: any) => ({ watch_ref: row.watchRef, field_ref: row.fieldRef, target_kind: row.targetKind, target_ref: row.targetRef, state: row.state })),
@@ -149,12 +174,60 @@ export function fieldSnapshot(client: Client) {
     stages: rows(db.sharedStage).map(stageReading),
     my_stage_follows: rows(db.myStageFollow).map((row: any) => ({ stage_ref: row.stageRef, field_ref: row.fieldRef, follower_participant_ref: row.followerParticipantRef, followed_at_revision: Number(row.followedAtRevision) })),
     presence: rows(db.fieldPresence).map((row: any) => ({ field_ref: row.fieldRef, participant_ref: row.participantRef, state: row.state, updated_at_micros: String(row.updatedAtMicros) })),
-    counts: { fields: hosted.fields.length, participants: hosted.participants.length, projections: hosted.projections.length, entries: hosted.entries.length, relations: hosted.relations.length },
+    activity_liveness: rows(db.activityLiveness).map(activityLivenessRow),
+    field_now: rows(db.fieldNow).map(fieldNowReading),
+    field_day: rows(db.fieldDay).map(fieldDayReading),
+    counts: { fields: hosted.fields.length, participants: hosted.participants.length, projections: hosted.projections.length, entries: hosted.entries.length, relations: hosted.relations.length, field_now: rows(db.fieldNow).length, field_day: rows(db.fieldDay).length },
     // The SharedField each Explore entry is hosted in (the row's fieldRef;
     // the entry contract itself carries no field) — what a Watch or a
     // membership reading is scoped to. Keyed by the entry's semantic ref.
     entry_fields: Object.fromEntries(rows(db.exploreEntry).map((row: any) => [row.semanticRef, row.fieldRef])),
+    // A Projection never moves between fields, so its ref names one field.
+    projection_fields: Object.fromEntries(rows(db.projection).map((row: any) => [row.projectionRef, row.fieldRef])),
     relation_fields: Object.fromEntries(rows(db.exploreRelation).flatMap((row: any) => { const relation = parse(row.relationJson); return relation?.relation_ref ? [[relation.relation_ref, row.fieldRef]] : []; })),
+  };
+}
+
+/** One activity-liveness row as the caller reads it, in the snake_case shape
+ * `activity-liveness.mjs` consumes. Server facts only: who produced it, the
+ * owner state/revision it reported, and when (server microseconds). */
+export function activityLivenessRow(row: any) {
+  return {
+    activity_key: row.activityKey,
+    field_ref: row.fieldRef,
+    activity_ref: row.activityRef,
+    producer_participant_ref: row.producerParticipantRef || null,
+    producer_identity: row.producerIdentity?.toHexString ? row.producerIdentity.toHexString() : String(row.producerIdentity),
+    owner_state: row.ownerState,
+    owner_revision: Number(row.ownerRevision),
+    observed_at_micros: String(row.observedAtMicros),
+    heartbeat_at_micros: String(row.heartbeatAtMicros),
+  };
+}
+
+/** The collective FieldNow of one field as the caller reads it: server
+ * revision/attribution plus the `oi.field-now/v1` contract (refs only). */
+export function fieldNowReading(row: any) {
+  return {
+    schema: 'oi.shared-field.field-now-reading/v1',
+    field_ref: row.fieldRef,
+    revision: Number(row.revision),
+    contract: parse(row.contractJson),
+    updated_by_participant_ref: row.updatedByParticipantRef || null,
+    updated_at_micros: String(row.updatedAtMicros),
+  };
+}
+
+/** One FieldDay aggregation interval as the caller reads it. */
+export function fieldDayReading(row: any) {
+  return {
+    schema: 'oi.shared-field.field-day-reading/v1',
+    field_ref: row.fieldRef,
+    interval: { start: row.intervalStart, end: row.intervalEnd },
+    revision: Number(row.revision),
+    contract: parse(row.contractJson),
+    updated_by_participant_ref: row.updatedByParticipantRef || null,
+    updated_at_micros: String(row.updatedAtMicros),
   };
 }
 

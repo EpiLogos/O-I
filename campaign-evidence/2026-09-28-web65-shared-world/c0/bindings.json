@@ -1,0 +1,692 @@
+[
+ {
+  "repository": "EpiLogos/Workcell",
+  "capability_id": "cap.workcell.discovery",
+  "source_digest": "sha256:69d23352f942eeb2870e85586eb166e65ef056da73290d52c5b48f8bb780f10f",
+  "disposition": "direct",
+  "story_ids": [
+   "MC01"
+  ],
+  "reason": "The Workcell description/offer to be projected is the structured provider offers and readiness this operation returns.",
+  "operation_binding": "Native operation as the row states it: discover; providers; status; doctor Record actual Action/command ids and contract revisions at episode preparation.",
+  "extensions": {
+   "web65": {
+    "branch_coverage": "partial",
+    "matrix_commit": "c6a55af47a66",
+    "account_ref": "workcell.html#q0/need",
+    "native_standing": "agent-inference",
+    "implementation_status": "Observed in selected native CLI tests"
+   }
+  },
+  "obligation_id": "web65:WORLD",
+  "branch": 0
+ },
+ {
+  "repository": "EpiLogos/Actuation",
+  "capability_id": "cap.actuation.world-binding",
+  "source_digest": "sha256:6f1f22709915ea76b6b2531f919bbe5ed376d4309380f6582a41a7e85e53f388",
+  "disposition": "direct",
+  "story_ids": [
+   "AG01"
+  ],
+  "reason": "The projected Agent needs its validated Agent/Agency-in-World binding as the identity another World reads.",
+  "operation_binding": "Native operation as the row states it: actuation agency; actuation agency actualise; validateWorldBinding; isRootAgency Record actual Action/command ids and contract revisions at episode preparation.",
+  "extensions": {
+   "web65": {
+    "branch_coverage": "partial",
+    "matrix_commit": "8ad34cb3df3c",
+    "account_ref": "actuation.html#q1/agency",
+    "native_standing": "agent-inference",
+    "implementation_status": "contract-tested read and public actualisation binding; no material provisioning claimed"
+   }
+  },
+  "obligation_id": "web65:WORLD",
+  "branch": 0
+ },
+ {
+  "repository": "EpiLogos/ai-kit",
+  "capability_id": "cap.aikit.methods",
+  "source_digest": "sha256:ac69966e9669cef046b3bbd6b49f5a5e6524afe978a027dbb9a04d5b8ae2c5ad",
+  "disposition": "direct",
+  "story_ids": [
+   "PX01",
+   "SH06"
+  ],
+  "reason": "The Agent's practice (Skill/METHOD and SkillSet participation) is inspectable through this classification without identity change.",
+  "operation_binding": "Native operation as the row states it: Classify Skills by METHOD: without changing identity and inspect direct/transitive nested SkillSet relations Record actual Action/command ids and contract revisions at episode preparation.",
+  "extensions": {
+   "web65": {
+    "branch_coverage": "partial",
+    "matrix_commit": "1a426e42c2b0",
+    "account_ref": "aikit.html#q1/praxis",
+    "native_standing": "implementation-fact",
+    "implementation_status": "Implemented source contract; full repository verification passed on 2026-09-08 with 1833 tests"
+   }
+  },
+  "obligation_id": "web65:WORLD",
+  "branch": 0
+ },
+ {
+  "repository": "EpiLogos/Central",
+  "capability_id": "cap.central.world-map",
+  "source_digest": "sha256:3ae46e7139b4f9562bb851e04322f38d507e638032011fa3c21042c23e90d6a8",
+  "disposition": "direct",
+  "story_ids": [
+   "SH01"
+  ],
+  "reason": "Selecting a coherent region starts from the structured root/project map of source relations, Flow, NOW and wiki state.",
+  "operation_binding": "Native operation as the row states it: central.world and central.world.project read Control, projects, source relations, Flow, NOW and related wiki-space state. Record actual Action/command ids and contract revisions at episode preparation.",
+  "extensions": {
+   "web65": {
+    "branch_coverage": "partial",
+    "matrix_commit": "8918a3bb50e3",
+    "account_ref": "central.html#q1/entry",
+    "native_standing": "agent-inference",
+    "implementation_status": "source-inspected; Selected native suites passed 2026-09-06: world_map. Other referenced tests were not rerun; physical desktop and owner-machine effects remain outside this selection."
+   }
+  },
+  "obligation_id": "web65:WORLD",
+  "branch": 0
+ },
+ {
+  "repository": "EpiLogos/Central",
+  "capability_id": "cap.central.source-reading",
+  "source_digest": "sha256:3ae46e7139b4f9562bb851e04322f38d507e638032011fa3c21042c23e90d6a8",
+  "disposition": "direct",
+  "story_ids": [
+   "SH01",
+   "PW10"
+  ],
+  "reason": "Another World resolving a source identity needs content, exact revision and provenance, with refusal for non-participating sources.",
+  "operation_binding": "Native operation as the row states it: read_world_source resolves one participating SourceRef and checks retrieval eligibility. Record actual Action/command ids and contract revisions at episode preparation.",
+  "extensions": {
+   "web65": {
+    "branch_coverage": "partial",
+    "matrix_commit": "8918a3bb50e3",
+    "account_ref": "central.html#q1/ground",
+    "native_standing": "agent-inference",
+    "implementation_status": "source-inspected; Selected native suites passed 2026-09-06: world_source_actions. Other referenced tests were not rerun; physical desktop and owner-machine effects remain outside this selection."
+   }
+  },
+  "obligation_id": "web65:WORLD",
+  "branch": 0
+ },
+ {
+  "repository": "EpiLogos/ai-kit",
+  "capability_id": "cap.aikit.knowledge-navigation",
+  "source_digest": "sha256:ac69966e9669cef046b3bbd6b49f5a5e6524afe978a027dbb9a04d5b8ae2c5ad",
+  "disposition": "direct",
+  "story_ids": [
+   "PW10"
+  ],
+  "reason": "The source-backed knowledge constellation is a bounded neighbourhood expansion across knowledge providers.",
+  "operation_binding": "Native operation as the row states it: Search providers and expand a bounded neighbourhood; knowledge code exposes status, index, search, context, impact, trace, changes and check through the existing GitNexus CodeIndexProvider. Record actual Action/command ids and contract revisions at episode preparation.",
+  "extensions": {
+   "web65": {
+    "branch_coverage": "partial",
+    "matrix_commit": "1a426e42c2b0",
+    "account_ref": "aikit.html#q2/investigate",
+    "native_standing": "agent-inference",
+    "implementation_status": "Implemented provider contract and deletable SQLite Wiki materialisation; 11 navigation unit tests passed on 2026-09-08, including the SourcePool tag filter PR #411 (7e79bda9) adds the eight native kno"
+   }
+  },
+  "obligation_id": "web65:WORLD",
+  "branch": 0
+ },
+ {
+  "repository": "EpiLogos/Actuation",
+  "capability_id": "cap.actuation.activity",
+  "source_digest": "sha256:6f1f22709915ea76b6b2531f919bbe5ed376d4309380f6582a41a7e85e53f388",
+  "disposition": "direct",
+  "story_ids": [
+   "SH03"
+  ],
+  "reason": "Meaningful current activity is the semantic subject/phase/outcome with reversible Stream references.",
+  "operation_binding": "Native operation as the row states it: actuation activity; activityFromActuationStream; activityFromStreamEvent Record actual Action/command ids and contract revisions at episode preparation.",
+  "extensions": {
+   "web65": {
+    "branch_coverage": "partial",
+    "matrix_commit": "8ad34cb3df3c",
+    "account_ref": "actuation.html#q1/observation",
+    "native_standing": "agent-inference",
+    "implementation_status": "contract-tested: selected 36-test run, 2026-09-06"
+   }
+  },
+  "obligation_id": "web65:WORLD",
+  "branch": 0
+ },
+ {
+  "repository": "EpiLogos/Central",
+  "capability_id": "cap.central.bounded-relations",
+  "source_digest": "sha256:3ae46e7139b4f9562bb851e04322f38d507e638032011fa3c21042c23e90d6a8",
+  "disposition": "direct",
+  "story_ids": [
+   "SH03",
+   "AG01"
+  ],
+  "reason": "Typed AgentSet/world relations with per-hop provenance; resolve partitions authored membership against declared availability, which is the declared-vs-available distinction.",
+  "operation_binding": "Native operation as the row states it: central.agent-set.* and central.world-relations.* persist and resolve central.agent-set/v1 and central.world-relations/v1 records under compare-and-swap revisions; central.agent-set.resolve partitions authored membership against declared av Record actual Action/command ids and contract revisions at episode preparation.",
+  "extensions": {
+   "web65": {
+    "branch_coverage": "partial",
+    "matrix_commit": "8918a3bb50e3",
+    "account_ref": "central.html#q3/interaction",
+    "native_standing": "agent-inference",
+    "implementation_status": "source-inspected; exercised by unit, integration and live Action runs during the authoring session."
+   }
+  },
+  "obligation_id": "web65:WORLD",
+  "branch": 1
+ },
+ {
+  "repository": "EpiLogos/Actuation",
+  "capability_id": "cap.actuation.realised",
+  "source_digest": "sha256:6f1f22709915ea76b6b2531f919bbe5ed376d4309380f6582a41a7e85e53f388",
+  "disposition": "direct",
+  "story_ids": [
+   "AG01"
+  ],
+  "reason": "Observed current acting condition (realised) is kept distinct from the declared world binding.",
+  "operation_binding": "Native operation as the row states it: actuation realised; realisedActuationReadModel Record actual Action/command ids and contract revisions at episode preparation.",
+  "extensions": {
+   "web65": {
+    "branch_coverage": "partial",
+    "matrix_commit": "8ad34cb3df3c",
+    "account_ref": "actuation.html#q1/observation",
+    "native_standing": "agent-inference",
+    "implementation_status": "contract-tested: selected 36-test run, 2026-09-06"
+   }
+  },
+  "obligation_id": "web65:WORLD",
+  "branch": 1
+ },
+ {
+  "repository": "EpiLogos/Workcell",
+  "capability_id": "cap.workcell.observation",
+  "source_digest": "sha256:69d23352f942eeb2870e85586eb166e65ef056da73290d52c5b48f8bb780f10f",
+  "disposition": "direct",
+  "story_ids": [
+   "MC01"
+  ],
+  "reason": "Observed material occurrence of an existing world/provider allocation, distinct from the declared offer.",
+  "operation_binding": "Native operation as the row states it: observe existing world and provider allocations Record actual Action/command ids and contract revisions at episode preparation.",
+  "extensions": {
+   "web65": {
+    "branch_coverage": "partial",
+    "matrix_commit": "c6a55af47a66",
+    "account_ref": "workcell.html#q0/experience",
+    "native_standing": "agent-inference",
+    "implementation_status": "Observed local workspace/world paths; wider health cases source-inspected"
+   }
+  },
+  "obligation_id": "web65:WORLD",
+  "branch": 1
+ },
+ {
+  "repository": "EpiLogos/ai-kit",
+  "capability_id": "cap.aikit.source-horizon",
+  "source_digest": "sha256:ac69966e9669cef046b3bbd6b49f5a5e6524afe978a027dbb9a04d5b8ae2c5ad",
+  "disposition": "direct",
+  "story_ids": [
+   "SH01"
+  ],
+  "reason": "Lists eligible descriptors before explicit retrieval with disclosure state: covers content eligibility only, not assets/embedded data/relation expansion/metadata/counts (see packets).",
+  "operation_binding": "Native operation as the row states it: List eligible descriptors then explicitly retrieve Record actual Action/command ids and contract revisions at episode preparation.",
+  "extensions": {
+   "web65": {
+    "branch_coverage": "partial",
+    "matrix_commit": "1a426e42c2b0",
+    "account_ref": "aikit.html#q2/investigate",
+    "native_standing": "agent-inference",
+    "implementation_status": "Implemented source contract; the SourcePool tag filter and its native baseline were exercised on 2026-09-08 against real corpus material"
+   }
+  },
+  "obligation_id": "web65:WORLD",
+  "branch": 2
+ },
+ {
+  "repository": "EpiLogos/ai-kit",
+  "capability_id": "cap.aikit.knowledge-resolution",
+  "source_digest": "sha256:ac69966e9669cef046b3bbd6b49f5a5e6524afe978a027dbb9a04d5b8ae2c5ad",
+  "disposition": "direct",
+  "story_ids": [
+   "UI01",
+   "KN01"
+  ],
+  "reason": "Search rows stay native-owner refs; open forwards to the owning Action and records one use, giving an owner effect/readback per visible open.",
+  "operation_binding": "Native operation as the row states it: aikit knowledge resolve lists typed resolution rows with their owner and canonical Actions; aikit knowledge open forwards one row to its owning Action and records exactly one successful-use familiarity observation. Record actual Action/command ids and contract revisions at episode preparation.",
+  "extensions": {
+   "web65": {
+    "branch_coverage": "partial",
+    "matrix_commit": "1a426e42c2b0",
+    "account_ref": "aikit.html#q1/knowledge",
+    "native_standing": "implementation-fact",
+    "implementation_status": "Implemented source contract; aikit.knowledge-resolution/v1 seam in aikit-core with CLI wiring and open acceptance coverage."
+   }
+  },
+  "obligation_id": "web65:EXPLORE",
+  "branch": 0
+ },
+ {
+  "repository": "EpiLogos/ai-kit",
+  "capability_id": "cap.aikit.knowledge-navigation",
+  "source_digest": "sha256:ac69966e9669cef046b3bbd6b49f5a5e6524afe978a027dbb9a04d5b8ae2c5ad",
+  "disposition": "direct",
+  "story_ids": [
+   "KN02"
+  ],
+  "reason": "Bounded graph expansion from a focus with inspectable routes.",
+  "operation_binding": "Native operation as the row states it: Search providers and expand a bounded neighbourhood; knowledge code exposes status, index, search, context, impact, trace, changes and check through the existing GitNexus CodeIndexProvider. Record actual Action/command ids and contract revisions at episode preparation.",
+  "extensions": {
+   "web65": {
+    "branch_coverage": "partial",
+    "matrix_commit": "1a426e42c2b0",
+    "account_ref": "aikit.html#q2/investigate",
+    "native_standing": "agent-inference",
+    "implementation_status": "Implemented provider contract and deletable SQLite Wiki materialisation; 11 navigation unit tests passed on 2026-09-08, including the SourcePool tag filter PR #411 (7e79bda9) adds the eight native kno"
+   }
+  },
+  "obligation_id": "web65:EXPLORE",
+  "branch": 0
+ },
+ {
+  "repository": "EpiLogos/Central",
+  "capability_id": "cap.central.wiki-reading",
+  "source_digest": "sha256:3ae46e7139b4f9562bb851e04322f38d507e638032011fa3c21042c23e90d6a8",
+  "disposition": "direct",
+  "story_ids": [
+   "KN02"
+  ],
+  "reason": "A selected knowledge node opens as typed, revisioned wiki reading, not raw text.",
+  "operation_binding": "Native operation as the row states it: central.wiki.read resolves one wiki node address and returns its typed reading; projectcentral.wiki.read scopes the same seam to a project wiki. Record actual Action/command ids and contract revisions at episode preparation.",
+  "extensions": {
+   "web65": {
+    "branch_coverage": "partial",
+    "matrix_commit": "8918a3bb50e3",
+    "account_ref": "central.html#q1/ground",
+    "native_standing": "agent-inference",
+    "implementation_status": "source-inspected; native suite verified by the orchestrator on the landing tree (cargo test -p ctrl 320 passed)."
+   }
+  },
+  "obligation_id": "web65:EXPLORE",
+  "branch": 0
+ },
+ {
+  "repository": "EpiLogos/Central",
+  "capability_id": "cap.central.source-reading",
+  "source_digest": "sha256:3ae46e7139b4f9562bb851e04322f38d507e638032011fa3c21042c23e90d6a8",
+  "disposition": "direct",
+  "story_ids": [
+   "UI02"
+  ],
+  "reason": "Native source action opens the exact revision with provenance.",
+  "operation_binding": "Native operation as the row states it: read_world_source resolves one participating SourceRef and checks retrieval eligibility. Record actual Action/command ids and contract revisions at episode preparation.",
+  "extensions": {
+   "web65": {
+    "branch_coverage": "partial",
+    "matrix_commit": "8918a3bb50e3",
+    "account_ref": "central.html#q1/ground",
+    "native_standing": "agent-inference",
+    "implementation_status": "source-inspected; Selected native suites passed 2026-09-06: world_source_actions. Other referenced tests were not rerun; physical desktop and owner-machine effects remain outside this selection."
+   }
+  },
+  "obligation_id": "web65:EXPLORE",
+  "branch": 0
+ },
+ {
+  "repository": "EpiLogos/Actuation",
+  "capability_id": "cap.actuation.stream",
+  "source_digest": "sha256:6f1f22709915ea76b6b2531f919bbe5ed376d4309380f6582a41a7e85e53f388",
+  "disposition": "direct",
+  "story_ids": [
+   "UI04"
+  ],
+  "reason": "Activity Expression reads and resumes attributable unfolding work from the Stream journal.",
+  "operation_binding": "Native operation as the row states it: actuation stream; actuation stream open; actuation stream record; actuation stream replay; actuation stream close; actuationStreamReadModel; ActuationStreamJournal; openDurableStream; recordBoundaryOccurrence; replayDurableStream; closeDura Record actual Action/command ids and contract revisions at episode preparation.",
+  "extensions": {
+   "web65": {
+    "branch_coverage": "partial",
+    "matrix_commit": "8ad34cb3df3c",
+    "account_ref": "actuation.html#q2/follow",
+    "native_standing": "agent-inference",
+    "implementation_status": "contract-tested incl. the durable store (17 tests, 2026-09-06); harness-boundary forwarding not wired yet; cross-surface deployment not exercised"
+   }
+  },
+  "obligation_id": "web65:EXPLORE",
+  "branch": 0
+ },
+ {
+  "repository": "EpiLogos/ai-kit",
+  "capability_id": "cap.aikit.resource-index",
+  "source_digest": "sha256:ac69966e9669cef046b3bbd6b49f5a5e6524afe978a027dbb9a04d5b8ae2c5ad",
+  "disposition": "direct",
+  "story_ids": [
+   "UI01"
+  ],
+  "reason": "Resources are addressable with owners and revisions, the base for distinguishing same labels; World qualification itself is a packet.",
+  "operation_binding": "Native operation as the row states it: Build and search typed provider descriptors Record actual Action/command ids and contract revisions at episode preparation.",
+  "extensions": {
+   "web65": {
+    "branch_coverage": "partial",
+    "matrix_commit": "1a426e42c2b0",
+    "account_ref": "aikit.html#q1/product",
+    "native_standing": "agent-inference",
+    "implementation_status": "Implemented source contract; linked tests not freshly executed in this documentation pass"
+   }
+  },
+  "obligation_id": "web65:EXPLORE",
+  "branch": 1
+ },
+ {
+  "repository": "EpiLogos/Actuation",
+  "capability_id": "cap.actuation.stream",
+  "source_digest": "sha256:6f1f22709915ea76b6b2531f919bbe5ed376d4309380f6582a41a7e85e53f388",
+  "disposition": "direct",
+  "story_ids": [
+   "UI04"
+  ],
+  "reason": "Stream open/record/replay/close gives the live-versus-replay availability the view must show.",
+  "operation_binding": "Native operation as the row states it: actuation stream; actuation stream open; actuation stream record; actuation stream replay; actuation stream close; actuationStreamReadModel; ActuationStreamJournal; openDurableStream; recordBoundaryOccurrence; replayDurableStream; closeDura Record actual Action/command ids and contract revisions at episode preparation.",
+  "extensions": {
+   "web65": {
+    "branch_coverage": "partial",
+    "matrix_commit": "8ad34cb3df3c",
+    "account_ref": "actuation.html#q2/follow",
+    "native_standing": "agent-inference",
+    "implementation_status": "contract-tested incl. the durable store (17 tests, 2026-09-06); harness-boundary forwarding not wired yet; cross-surface deployment not exercised"
+   }
+  },
+  "obligation_id": "web65:EXPLORE",
+  "branch": 1
+ },
+ {
+  "repository": "EpiLogos/Actuation",
+  "capability_id": "cap.actuation.activity",
+  "source_digest": "sha256:6f1f22709915ea76b6b2531f919bbe5ed376d4309380f6582a41a7e85e53f388",
+  "disposition": "direct",
+  "story_ids": [
+   "UI04"
+  ],
+  "reason": "Selected activity summary with a route back to trace evidence is the primary material.",
+  "operation_binding": "Native operation as the row states it: actuation activity; activityFromActuationStream; activityFromStreamEvent Record actual Action/command ids and contract revisions at episode preparation.",
+  "extensions": {
+   "web65": {
+    "branch_coverage": "partial",
+    "matrix_commit": "8ad34cb3df3c",
+    "account_ref": "actuation.html#q1/observation",
+    "native_standing": "agent-inference",
+    "implementation_status": "contract-tested: selected 36-test run, 2026-09-06"
+   }
+  },
+  "obligation_id": "web65:EXPLORE",
+  "branch": 2
+ },
+ {
+  "repository": "EpiLogos/Actuation",
+  "capability_id": "cap.actuation.world-binding",
+  "source_digest": "sha256:6f1f22709915ea76b6b2531f919bbe5ed376d4309380f6582a41a7e85e53f388",
+  "disposition": "direct",
+  "story_ids": [
+   "UI04"
+  ],
+  "reason": "Participant depth: which Agent/Agency acts in which World and scope.",
+  "operation_binding": "Native operation as the row states it: actuation agency; actuation agency actualise; validateWorldBinding; isRootAgency Record actual Action/command ids and contract revisions at episode preparation.",
+  "extensions": {
+   "web65": {
+    "branch_coverage": "partial",
+    "matrix_commit": "8ad34cb3df3c",
+    "account_ref": "actuation.html#q1/agency",
+    "native_standing": "agent-inference",
+    "implementation_status": "contract-tested read and public actualisation binding; no material provisioning claimed"
+   }
+  },
+  "obligation_id": "web65:EXPLORE",
+  "branch": 2
+ },
+ {
+  "repository": "EpiLogos/ai-kit",
+  "capability_id": "cap.aikit.activation",
+  "source_digest": "sha256:ac69966e9669cef046b3bbd6b49f5a5e6524afe978a027dbb9a04d5b8ae2c5ad",
+  "disposition": "direct",
+  "story_ids": [
+   "UI04"
+  ],
+  "reason": "Repertoire/context depth: evidence-bearing activation receipts of what the target made operative.",
+  "operation_binding": "Native operation as the row states it: Carry evidence-bearing activation receipts in ContextResolution Record actual Action/command ids and contract revisions at episode preparation.",
+  "extensions": {
+   "web65": {
+    "branch_coverage": "partial",
+    "matrix_commit": "1a426e42c2b0",
+    "account_ref": "aikit.html#q2/start",
+    "native_standing": "agent-inference",
+    "implementation_status": "Implemented source contract; linked tests not freshly executed in this documentation pass"
+   }
+  },
+  "obligation_id": "web65:EXPLORE",
+  "branch": 2
+ },
+ {
+  "repository": "EpiLogos/ai-kit",
+  "capability_id": "cap.aikit.knowledge-resolution",
+  "source_digest": "sha256:ac69966e9669cef046b3bbd6b49f5a5e6524afe978a027dbb9a04d5b8ae2c5ad",
+  "disposition": "direct",
+  "story_ids": [
+   "UI01",
+   "KN01"
+  ],
+  "reason": "One canonical owner-side resolution: every row stays a native-owned ref for both human search and structured agent resolution.",
+  "operation_binding": "Native operation as the row states it: aikit knowledge resolve lists typed resolution rows with their owner and canonical Actions; aikit knowledge open forwards one row to its owning Action and records exactly one successful-use familiarity observation. Record actual Action/command ids and contract revisions at episode preparation.",
+  "extensions": {
+   "web65": {
+    "branch_coverage": "partial",
+    "matrix_commit": "1a426e42c2b0",
+    "account_ref": "aikit.html#q1/knowledge",
+    "native_standing": "implementation-fact",
+    "implementation_status": "Implemented source contract; aikit.knowledge-resolution/v1 seam in aikit-core with CLI wiring and open acceptance coverage."
+   }
+  },
+  "obligation_id": "web65:RESOLVE",
+  "branch": 0
+ },
+ {
+  "repository": "EpiLogos/ai-kit",
+  "capability_id": "cap.aikit.resource-index",
+  "source_digest": "sha256:ac69966e9669cef046b3bbd6b49f5a5e6524afe978a027dbb9a04d5b8ae2c5ad",
+  "disposition": "direct",
+  "story_ids": [
+   "UI01",
+   "KN01"
+  ],
+  "reason": "Typed provider descriptors give the exact addressable subject with owner and revision.",
+  "operation_binding": "Native operation as the row states it: Build and search typed provider descriptors Record actual Action/command ids and contract revisions at episode preparation.",
+  "extensions": {
+   "web65": {
+    "branch_coverage": "partial",
+    "matrix_commit": "1a426e42c2b0",
+    "account_ref": "aikit.html#q1/product",
+    "native_standing": "agent-inference",
+    "implementation_status": "Implemented source contract; linked tests not freshly executed in this documentation pass"
+   }
+  },
+  "obligation_id": "web65:RESOLVE",
+  "branch": 0
+ },
+ {
+  "repository": "EpiLogos/Central",
+  "capability_id": "cap.central.source-reading",
+  "source_digest": "sha256:3ae46e7139b4f9562bb851e04322f38d507e638032011fa3c21042c23e90d6a8",
+  "disposition": "direct",
+  "story_ids": [
+   "SH01"
+  ],
+  "reason": "Resolved source refs are read under participation eligibility, preserving the source scope.",
+  "operation_binding": "Native operation as the row states it: read_world_source resolves one participating SourceRef and checks retrieval eligibility. Record actual Action/command ids and contract revisions at episode preparation.",
+  "extensions": {
+   "web65": {
+    "branch_coverage": "partial",
+    "matrix_commit": "8918a3bb50e3",
+    "account_ref": "central.html#q1/ground",
+    "native_standing": "agent-inference",
+    "implementation_status": "source-inspected; Selected native suites passed 2026-09-06: world_source_actions. Other referenced tests were not rerun; physical desktop and owner-machine effects remain outside this selection."
+   }
+  },
+  "obligation_id": "web65:RESOLVE",
+  "branch": 0
+ },
+ {
+  "repository": "EpiLogos/ai-kit",
+  "capability_id": "cap.aikit.explain",
+  "source_digest": "sha256:ac69966e9669cef046b3bbd6b49f5a5e6524afe978a027dbb9a04d5b8ae2c5ad",
+  "disposition": "direct",
+  "story_ids": [
+   "UI01"
+  ],
+  "reason": "Explain/History: causal explanation and recorded changes of how the effective resolution arose.",
+  "operation_binding": "Native operation as the row states it: Read causal explanation and recorded changes Record actual Action/command ids and contract revisions at episode preparation.",
+  "extensions": {
+   "web65": {
+    "branch_coverage": "partial",
+    "matrix_commit": "1a426e42c2b0",
+    "account_ref": "aikit.html#q3/resolution",
+    "native_standing": "agent-inference",
+    "implementation_status": "Implemented source contract; linked tests not freshly executed in this documentation pass"
+   }
+  },
+  "obligation_id": "web65:RESOLVE",
+  "branch": 1
+ },
+ {
+  "repository": "EpiLogos/QL-MEF",
+  "capability_id": "cap.ql.client-modes",
+  "source_digest": "sha256:0a0fd90223d831f9b3bcd7b994c43e129c7caf6feb3cc3446b13d3a9bb67d125",
+  "disposition": "direct",
+  "story_ids": [
+   "UI01",
+   "KN01"
+  ],
+  "reason": "Disabled/Optional/Required adapter modes preserve the native subject so general resolution works without QL.",
+  "operation_binding": "Native operation as the row states it: Disabled Optional Required adapter modes Record actual Action/command ids and contract revisions at episode preparation.",
+  "extensions": {
+   "web65": {
+    "branch_coverage": "partial",
+    "matrix_commit": "bea2eba340a1",
+    "account_ref": "ql.html#q1/services",
+    "native_standing": "agent-inference",
+    "implementation_status": "implemented contracts; source-inspected 2026-09-06; provider/runtime acceptance not exercised"
+   }
+  },
+  "obligation_id": "web65:RESOLVE",
+  "branch": 1
+ },
+ {
+  "repository": "EpiLogos/ai-kit",
+  "capability_id": "cap.aikit.knowledge-resolution",
+  "source_digest": "sha256:ac69966e9669cef046b3bbd6b49f5a5e6524afe978a027dbb9a04d5b8ae2c5ad",
+  "disposition": "direct",
+  "story_ids": [
+   "UI06",
+   "PX01"
+  ],
+  "reason": "Resolution is deliberately inert: querying and display record nothing; only explicit open acts. Resolving an Action is not executing it.",
+  "operation_binding": "Native operation as the row states it: aikit knowledge resolve lists typed resolution rows with their owner and canonical Actions; aikit knowledge open forwards one row to its owning Action and records exactly one successful-use familiarity observation. Record actual Action/command ids and contract revisions at episode preparation.",
+  "extensions": {
+   "web65": {
+    "branch_coverage": "partial",
+    "matrix_commit": "1a426e42c2b0",
+    "account_ref": "aikit.html#q1/knowledge",
+    "native_standing": "implementation-fact",
+    "implementation_status": "Implemented source contract; aikit.knowledge-resolution/v1 seam in aikit-core with CLI wiring and open acceptance coverage."
+   }
+  },
+  "obligation_id": "web65:RESOLVE",
+  "branch": 2
+ },
+ {
+  "repository": "EpiLogos/Central",
+  "capability_id": "cap.central.action-discovery",
+  "source_digest": "sha256:3ae46e7139b4f9562bb851e04322f38d507e638032011fa3c21042c23e90d6a8",
+  "disposition": "direct",
+  "story_ids": [
+   "PX01"
+  ],
+  "reason": "Discovering an Action and its inputs from the registry is separate from invoking it.",
+  "operation_binding": "Native operation as the row states it: ctrl capabilities and action.list expose the native Action registry; the guided picker helps select an operation and its inputs. Record actual Action/command ids and contract revisions at episode preparation.",
+  "extensions": {
+   "web65": {
+    "branch_coverage": "partial",
+    "matrix_commit": "8918a3bb50e3",
+    "account_ref": "central.html#q3/interaction",
+    "native_standing": "agent-inference",
+    "implementation_status": "source-inspected; Source and test definitions inspected; these tests were not executed in this documentation pass. Desktop and owner-machine acceptance is not established here."
+   }
+  },
+  "obligation_id": "web65:RESOLVE",
+  "branch": 2
+ },
+ {
+  "repository": "EpiLogos/ai-kit",
+  "capability_id": "cap.aikit.knowledge-navigation",
+  "source_digest": "sha256:ac69966e9669cef046b3bbd6b49f5a5e6524afe978a027dbb9a04d5b8ae2c5ad",
+  "disposition": "direct",
+  "story_ids": [
+   "KN09"
+  ],
+  "reason": "Provider availability and index state are disclosed conditions: lost provider or rebuilt index declares incomplete coverage.",
+  "operation_binding": "Native operation as the row states it: Search providers and expand a bounded neighbourhood; knowledge code exposes status, index, search, context, impact, trace, changes and check through the existing GitNexus CodeIndexProvider. Record actual Action/command ids and contract revisions at episode preparation.",
+  "extensions": {
+   "web65": {
+    "branch_coverage": "partial",
+    "matrix_commit": "1a426e42c2b0",
+    "account_ref": "aikit.html#q2/investigate",
+    "native_standing": "agent-inference",
+    "implementation_status": "Implemented provider contract and deletable SQLite Wiki materialisation; 11 navigation unit tests passed on 2026-09-08, including the SourcePool tag filter PR #411 (7e79bda9) adds the eight native kno"
+   }
+  },
+  "obligation_id": "web65:RESOLVE",
+  "branch": 2
+ },
+ {
+  "repository": "EpiLogos/ai-kit",
+  "capability_id": "cap.aikit.living-knowledge",
+  "source_digest": "sha256:ac69966e9669cef046b3bbd6b49f5a5e6524afe978a027dbb9a04d5b8ae2c5ad",
+  "disposition": "direct",
+  "story_ids": [
+   "KN09"
+  ],
+  "reason": "Tracks which readings depend on changed source: the stale-index case.",
+  "operation_binding": "Native operation as the row states it: Track dependencies and inspect affected readings Record actual Action/command ids and contract revisions at episode preparation.",
+  "extensions": {
+   "web65": {
+    "branch_coverage": "partial",
+    "matrix_commit": "1a426e42c2b0",
+    "account_ref": "aikit.html#q2/maintain",
+    "native_standing": "agent-inference",
+    "implementation_status": "Implemented source contract; linked tests not freshly executed in this documentation pass"
+   }
+  },
+  "obligation_id": "web65:RESOLVE",
+  "branch": 2
+ },
+ {
+  "repository": "EpiLogos/Central",
+  "capability_id": "cap.central.source-change",
+  "source_digest": "sha256:3ae46e7139b4f9562bb851e04322f38d507e638032011fa3c21042c23e90d6a8",
+  "disposition": "direct",
+  "story_ids": [
+   "KN09"
+  ],
+  "reason": "Ordered source-change horizon since a consumer cursor supplies the stale-basis signal.",
+  "operation_binding": "Native operation as the row states it: Project and Control reconciliation observes content revisions; horizon reads expose ordered changes since a consumer cursor and recover offline edits. Record actual Action/command ids and contract revisions at episode preparation.",
+  "extensions": {
+   "web65": {
+    "branch_coverage": "partial",
+    "matrix_commit": "8918a3bb50e3",
+    "account_ref": "central.html#q3/contracts",
+    "native_standing": "agent-inference",
+    "implementation_status": "source-inspected; Selected native suites passed 2026-09-06: source_change_horizon. Other referenced tests were not rerun; physical desktop and owner-machine effects remain outside this selection."
+   }
+  },
+  "obligation_id": "web65:RESOLVE",
+  "branch": 2
+ }
+]

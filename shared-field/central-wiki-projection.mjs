@@ -4,6 +4,11 @@ import { createExploreEntry, createExploreApplication } from './explore.mjs';
 import { WORLD_PRESENTATION_SCHEMA, createWorldPresentation } from './presentation.mjs';
 import { createWorldPresentationProjection, refineWorldPresentationProjection, worldPresentationFromProjection } from './presentation-projection.mjs';
 import { projectionStorageKey, relationStorageRef } from './spacetimedb.mjs';
+import {
+  AGENT_PARTICIPATION_SCHEMA, CENTRAL_MACHINE_SCHEMA, FACTORY_RUN_READING_CONTRACT, PRACTICE_OFFER_BODY_SCHEMA, WORKCELL_DISCOVERY_KIND,
+  base64Bytes, buildConstituents, fnv1a64, readingKind, token, validateAgentParticipation, validateConstituentSelection,
+  validateFactoryRunReading, validateMachineDeclaration, validatePracticeOfferBody, validateWorkcellDiscovery, workcellRef,
+} from './world-constituents.mjs';
 
 /**
  * Central wiki → Projection provider.
@@ -31,7 +36,9 @@ import { projectionStorageKey, relationStorageRef } from './spacetimedb.mjs';
  * provider never re-joins them), and constellations from AIKit's own read
  * (`aikit wiki-construct inspect`, `aikit.constellation/v1`). Each is selected
  * explicitly; an occupancy detail travels only for a Position selected in
- * `occupancy` mode, and only the allow-listed fields ever leave.
+ * `occupancy` mode, and only the allow-listed fields ever leave. Workcells,
+ * an Agent's published practices and current Factory activity join the same
+ * bundle through `world-constituents.mjs`.
  */
 export const CENTRAL_WIKI_READING_SCHEMA = 'central.wiki-reading/v1';
 export const CENTRAL_WIKI_SELECTION_SCHEMA = 'oi.central-wiki-selection/v1';
@@ -50,13 +57,40 @@ export const WORLD_SOURCES_REVISION_PREFIX = 'oi.world-sources/v1:';
  * Communique bodies. Their values become default sentinels for every
  * publication built from these readings.
  */
-export const WORLD_PROTECTED_KEYS = Object.freeze(['agent_session_ref', 'session_space_ref', 'gateway_address', 'address', 'ws', 'ws_token', 'token', 'attention', 'body']);
+export const WORLD_PROTECTED_KEYS = Object.freeze([
+  'agent_session_ref', 'session_space_ref', 'gateway_address', 'address', 'ws', 'ws_token', 'token', 'attention', 'body',
+  // Workcell material: service endpoints, state and workspace roots, manifests
+  // and status commands; an Agent's profile path and authored intent text;
+  // remote reachability detail.
+  'endpoint', 'state_root', 'root', 'manifest', 'status_command', 'source_path', 'intent_expression', 'detail',
+]);
 /** Shapes that must never appear in any outward payload of a World publication. */
 export const WORLD_PROTECTED_PATTERNS = Object.freeze([
   { name: 'agent-session-ref', pattern: /(^|[^A-Za-z0-9])agent-session[:/]|[a-z0-9-]+:session:[0-9a-f]{8}/ },
   { name: 'gateway-address', pattern: /\bwss?:\/\/|\b(?:\d{1,3}\.){3}\d{1,3}:\d{2,5}\b/ },
   { name: 'gateway-token', pattern: /AIKIT_GATEWAY_TOKEN|\bBearer\s+\S{8,}/ },
+  { name: 'workcell-endpoint', pattern: /\b(?:redis|https?|tcp|grpc|postgres(?:ql)?):\/\/(?:localhost|127\.|\[?::1|(?:\d{1,3}\.){3}\d{1,3})/ },
+  { name: 'local-home-path', pattern: /\/(?:Users|home)\/[A-Za-z0-9._-]+\// },
 ]);
+/**
+ * Local-only material beyond the World shapes: local filesystem paths, file
+ * URLs, session refs and Central token paths. Authored text that travels whole
+ * (an offered practice's body and every file of its capsule) is scanned
+ * against these too; field-now.mjs refuses the same set at field time.
+ */
+export const WORLD_LOCAL_LEAK_PATTERNS = Object.freeze([
+  ...WORLD_PROTECTED_PATTERNS,
+  { name: 'local-absolute-path', pattern: /(?:^|[\s"'(=`])(?:~\/|\/(?:Users|home|private|tmp|var|etc|mnt|opt|Volumes)\/)/ },
+  { name: 'file-url', pattern: /\bfile:\/\// },
+  { name: 'session-ref', pattern: /(?:^|[^A-Za-z0-9])(?:session-space|agent-session|session)[:/][A-Za-z0-9]/ },
+  { name: 'central-token-path', pattern: /\.central\/|native-token|owner-token/ },
+]);
+/** A knowledge-edge relation (and origin kind) that may name a hosted relation. */
+const KNOWLEDGE_EDGE_TOKEN = /^[a-z][a-z0-9-]{0,63}$/;
+/** A Contribution ref an accepted edge may name as its origin. */
+const CONTRIBUTION_ORIGIN_REF = /^contribution:[A-Za-z0-9._:\/-]{1,256}$/;
+/** Printable ASCII runs this long or longer are what a binary file can carry as text. */
+export const BINARY_STRING_MIN_RUN = 6;
 const EXPRESSIONS_PATH = /Control\/agents\/expressions(\/|$)/;
 
 const HUMAN_AUTHORED_PREFIXES = ['Control/user/', 'Control/relations/', 'ProjectCentral/user/'];
@@ -84,27 +118,7 @@ function slug(value) {
   return value.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
 }
 
-/** FNV-1a 64 over UTF-8, hex. Identifies a set of source revisions; it is not a secret. */
-function fnv1a64(input) {
-  let hash = 0xcbf29ce484222325n;
-  for (const byte of new TextEncoder().encode(input)) {
-    hash ^= BigInt(byte);
-    hash = (hash * 0x100000001b3n) & 0xffffffffffffffffn;
-  }
-  return hash.toString(16).padStart(16, '0');
-}
-
-/** A short lowercase vocabulary token (`occupied`, `none`, …) or undefined. */
-function token(value) {
-  return typeof value === 'string' && /^[a-z][a-z0-9-]{0,31}$/.test(value) ? value : undefined;
-}
-
 const LOOKS_LIKE_ADDRESS = /:\/\/|(?:\d{1,3}\.){3}\d{1,3}|:\d{2,5}(\/|$)|\s|@/;
-
-/** `workcell:<label>` — a name, never a host or address. */
-function workcellRef(value) {
-  return typeof value === 'string' && /^workcell:[A-Za-z0-9._-]{1,64}$/.test(value) ? value : null;
-}
 
 /** `local` or `gateway:<gateway_ref>` — the gateway's name, never its address. */
 function observedVia(value) {
@@ -122,6 +136,8 @@ function observedVia(value) {
 export function unwrapOwnerReading(document) {
   let value = record(document, 'owner reading');
   if (typeof value.ok === 'boolean') {
+    // `workcell --json` answers `{ok: true, …}` with the reading inline.
+    if (value.ok === true && value.data === undefined) return value;
     if (value.ok !== true) throw new TypeError(`owner reading is a refusal: ${value.error?.code ?? 'unknown'}${value.error?.message ? ` — ${value.error.message}` : ''}`);
     value = record(value.data, 'owner reading.data');
   }
@@ -196,10 +212,11 @@ export function validateConstellationReading(value) {
  */
 export function classifyWorldReadings(documents) {
   if (!Array.isArray(documents)) throw new TypeError('readings must be an array');
-  const sorted = { wiki: [], positions: undefined, population: undefined, constellations: [] };
+  const sorted = { wiki: [], positions: undefined, population: undefined, constellations: [], workcells: [], machines: [], participations: [], runs: [], practiceBodies: [] };
   for (const [index, document] of documents.entries()) {
     const reading = unwrapOwnerReading(document);
-    switch (reading.schema) {
+    const kind = readingKind(reading);
+    switch (kind) {
       case CENTRAL_WIKI_READING_SCHEMA: sorted.wiki.push(validateCentralWikiReading(reading)); break;
       case CENTRAL_POSITION_LISTING_SCHEMA:
         if (sorted.positions) throw new TypeError('more than one position listing was supplied');
@@ -215,7 +232,32 @@ export function classifyWorldReadings(documents) {
         sorted.constellations.push(constellation);
         break;
       }
-      default: throw new TypeError(`Unsupported reading schema at readings[${index}]: ${reading.schema}`);
+      case WORKCELL_DISCOVERY_KIND: {
+        const discovery = validateWorkcellDiscovery(reading);
+        if (sorted.workcells.some((held) => held.workcell_ref === discovery.workcell_ref)) throw new TypeError(`Workcell ${discovery.workcell_ref} discovery was supplied twice`);
+        sorted.workcells.push(discovery);
+        break;
+      }
+      case CENTRAL_MACHINE_SCHEMA: sorted.machines.push(validateMachineDeclaration(reading)); break;
+      case AGENT_PARTICIPATION_SCHEMA: {
+        const participation = validateAgentParticipation(reading);
+        if (sorted.participations.some((held) => held.agent_ref === participation.agent_ref && held.world_ref === participation.world_ref)) throw new TypeError(`agent participation ${participation.agent_ref} in ${participation.world_ref} was supplied twice`);
+        sorted.participations.push(participation);
+        break;
+      }
+      case FACTORY_RUN_READING_CONTRACT: {
+        const run = validateFactoryRunReading(reading);
+        if (sorted.runs.some((held) => held.runRef === run.runRef)) throw new TypeError(`factory run ${run.runRef} was supplied twice`);
+        sorted.runs.push(run);
+        break;
+      }
+      case PRACTICE_OFFER_BODY_SCHEMA: {
+        const body = validatePracticeOfferBody(reading);
+        if (sorted.practiceBodies.some((held) => held.practice_ref === body.practice_ref)) throw new TypeError(`practice ${body.practice_ref} body was supplied twice`);
+        sorted.practiceBodies.push(body);
+        break;
+      }
+      default: throw new TypeError(`Unsupported reading schema at readings[${index}]: ${kind}`);
     }
   }
   return sorted;
@@ -260,6 +302,43 @@ export function worldPublicationLeaks(payloads, documents, extraSentinels = []) 
     const serialised = typeof payload === 'string' ? payload : JSON.stringify(payload);
     for (const { key, value } of sentinels) if (serialised.includes(value)) leaks.push(`${name}:${key}`);
     for (const { name: label, pattern } of WORLD_PROTECTED_PATTERNS) if (pattern.test(serialised)) leaks.push(`${name}:${label}`);
+  }
+  return [...new Set(leaks)];
+}
+
+/** Printable-ASCII runs (>= BINARY_STRING_MIN_RUN) of a byte array, one per line — `strings(1)`. */
+export function printableStrings(bytes, minRun = BINARY_STRING_MIN_RUN) {
+  const runs = [];
+  let current = '';
+  for (const byte of bytes) {
+    if ((byte >= 0x20 && byte < 0x7f) || byte === 0x09) { current += String.fromCharCode(byte); continue; }
+    if (current.length >= minRun) runs.push(current);
+    current = '';
+  }
+  if (current.length >= minRun) runs.push(current);
+  return runs.join('\n');
+}
+
+/**
+ * Protected-material scan over one offered practice: its body text and every
+ * capsule file — text files whole, binary (base64) files through their
+ * printable strings — against the reading sentinels, any extra sentinels and
+ * the full local leak set. Returns `path:label`, never the value.
+ */
+export function offeredPracticeLeaks(offer, documents, extraSentinels = []) {
+  const payloads = {};
+  if (typeof offer?.text === 'string') payloads.body = offer.text;
+  for (const file of offer?.capsule?.files ?? []) {
+    if (typeof file.text === 'string') payloads[file.path] = file.text;
+    else if (typeof file.base64 === 'string') {
+      let bytes;
+      try { bytes = base64Bytes(file.base64); } catch { payloads[file.path] = file.base64; continue; }
+      payloads[file.path] = printableStrings(bytes);
+    }
+  }
+  const leaks = worldPublicationLeaks(payloads, documents, extraSentinels);
+  for (const [name, payload] of Object.entries(payloads)) {
+    for (const { name: label, pattern } of WORLD_LOCAL_LEAK_PATTERNS) if (pattern.test(payload)) leaks.push(`${name}:${label}`);
   }
   return [...new Set(leaks)];
 }
@@ -319,8 +398,9 @@ export function validateCentralWikiSelection(value) {
   strings(selection.node_refs ?? [], 'central wiki selection.node_refs');
   const positions = record(selection.positions ?? {}, 'central wiki selection.positions');
   for (const [ref, mode] of Object.entries(positions)) {
-    if (!['address', 'occupancy'].includes(mode)) throw new TypeError(`central wiki selection.positions[${ref}] must be address or occupancy`);
+    if (!['address', 'occupancy', 'repertoire'].includes(mode)) throw new TypeError(`central wiki selection.positions[${ref}] must be address, occupancy or repertoire`);
   }
+  validateConstituentSelection(selection);
   strings(selection.constellations ?? [], 'central wiki selection.constellations');
   if (selection.disclose_source_refs !== undefined && typeof selection.disclose_source_refs !== 'boolean') throw new TypeError('central wiki selection.disclose_source_refs must be boolean');
   return selection;
@@ -389,7 +469,12 @@ export function projectCentralWikiWorld(input) {
   for (const ref of selection.node_refs ?? []) {
     const found = nodeByRef.get(ref);
     if (!found) throw new TypeError(`selected WikiNode not present in any reading: ${ref}`);
-    const inSelectedSpace = (found.node.space_refs ?? []).some((spaceRef) => selectedSpaceMode(selection, spaceRef) === 'nodes');
+    // Membership is the node's own space_refs or the space's node_refs: a
+    // Central reading can carry it on either side (room nodes list their
+    // members while the member's space_refs stays empty).
+    const memberOf = new Set(found.node.space_refs ?? []);
+    for (const space of spaceByRef.values()) if ((space.node_refs ?? []).includes(ref)) memberOf.add(space.ref);
+    const inSelectedSpace = [...memberOf].some((spaceRef) => selectedSpaceMode(selection, spaceRef) === 'nodes');
     if (!inSelectedSpace) throw new TypeError(`selected WikiNode ${ref} is not inside a WikiSpace selected with mode "nodes"`);
     selectedNodeRefs.push(ref);
   }
@@ -452,6 +537,9 @@ export function projectCentralWikiWorld(input) {
     }
   }
 
+  // Workcells, practices and activity: allow-listed, selected-only.
+  const constituents = buildConstituents({ selection, sorted, hosted, locator, projectionRelationProvenance, positionModes, occupancyByRef, workTargets });
+
   // Every source this publication stands on, with its revision. The wiki
   // readings keep the owner's own revision; the Position listing, the
   // population and the constellations contribute a revision derived only
@@ -467,6 +555,7 @@ export function projectCentralWikiWorld(input) {
     sources.push({ kind: 'aikit-population-reading', ref: `aikit:population:${sorted.population.project_world_ref}`, source_system: 'ai-kit', revision: `population:${fnv1a64(JSON.stringify(basis))}` });
   }
   for (const ref of selectedConstellationRefs) sources.push({ kind: 'aikit-constellation', ref, source_system: 'ai-kit', revision: String(constellationByRef.get(ref).frame.revision) });
+  sources.push(...constituents.sources);
   const composite = sources.length > readings.length;
   const sourceRevision = composite
     ? `${WORLD_SOURCES_REVISION_PREFIX}${fnv1a64(JSON.stringify(sources.map((source) => [source.kind, source.ref, source.revision])))}`
@@ -499,7 +588,7 @@ export function projectCentralWikiWorld(input) {
       label: space.title,
       aliases: [ref],
       summary: mode === 'nodes'
-        ? `WikiSpace at the ${reading.register} register · ${selectedHere.length} of ${(space.node_refs ?? []).length} nodes selected`
+        ? `WikiSpace at the ${reading.register} register · ${selectedHere.length} node${selectedHere.length === 1 ? '' : 's'} selected`
         : `WikiSpace at the ${reading.register} register · addressable only; no nodes selected`,
       revision: String(space.revision ?? reading.source.revision),
       provenance: bindingProvenance(reading, ref),
@@ -538,11 +627,11 @@ export function projectCentralWikiWorld(input) {
       world_ref: worldRef,
       label: construction.title,
       aliases: [ref],
-      summary: `constellation · ${members.length} participation${members.length === 1 ? '' : 's'} · ${selectedMembers.length} in this World · revision ${reading.frame.revision}`,
+      summary: `constellation · ${selectedMembers.length} participation${selectedMembers.length === 1 ? '' : 's'} in this World · revision ${reading.frame.revision}`,
       revision: String(reading.frame.revision),
       provenance: constellationProvenance(ref),
       locators: locator(hosted(ref)),
-      meta: { standing: 'aikit-constellation', native_owner: 'ai-kit', local_ref: ref, participations: members.length },
+      meta: { standing: 'aikit-constellation', native_owner: 'ai-kit', local_ref: ref, participations: selectedMembers.length },
     }));
   }
 
@@ -584,8 +673,17 @@ export function projectCentralWikiWorld(input) {
         enclosing_world_ref: position.enclosing_world_ref ?? null,
         inherited,
         ...(occupancy ? clone(occupancy) : {}),
+        ...(constituents.positionMeta.has(ref) ? clone(constituents.positionMeta.get(ref)) : {}),
       },
     }));
+  }
+  for (const entry of constituents.entries) entries.push(createExploreEntry(entry));
+  // Every entry this publication carries names its Projection, so the hosted
+  // field serves it exactly to that Projection's current audience: a private
+  // publication, or a narrowing re-projection, narrows the world, its wiki,
+  // workcells, practices (and their offered capsules) and activity alike.
+  for (let index = 0; index < entries.length; index += 1) {
+    entries[index] = createExploreEntry({ ...entries[index], projection_ref: selection.projection_ref });
   }
 
   const projectedRelations = [];
@@ -608,6 +706,38 @@ export function projectCentralWikiWorld(input) {
       direction: 'forward',
       provenance: [{ kind: 'wiki-relation', ref: relationRef, source_system: 'central', revision: reading.source.revision }],
     });
+  }
+  const edgeOriginRef = (ref) => {
+    if (typeof ref !== 'string') return {};
+    if (CONTRIBUTION_ORIGIN_REF.test(ref)) return { edge_origin_ref: ref };
+    if (projected.has(ref)) return { edge_origin_ref: hosted(ref) };
+    return {};
+  };
+  // The wiki's own typed knowledge edges (references, contemplates, explains,
+  // an accepted re-sites …) travel only between selected endpoints, named by
+  // their wiki relation under `wiki.edge/`, with the edge's own origin.
+  for (const reading of readings) {
+    for (const edge of Array.isArray(reading.knowledge_edges) ? reading.knowledge_edges : []) {
+      if (!edge || typeof edge.from_ref !== 'string' || typeof edge.to_ref !== 'string' || typeof edge.relation !== 'string') { excludedRelations += 1; continue; }
+      if (!projected.has(edge.from_ref) || !projected.has(edge.to_ref)) { excludedRelations += 1; continue; }
+      if (!KNOWLEDGE_EDGE_TOKEN.test(edge.relation)) { excludedRelations += 1; continue; }
+      const kind = `wiki.edge/${edge.relation}`;
+      const relationRef = `${hosted(edge.from_ref)}#${kind}#${hosted(edge.to_ref)}`;
+      if (seenRelation.has(relationRef)) continue;
+      seenRelation.add(relationRef);
+      projectedRelations.push({
+        relation_ref: relationRef,
+        from: hosted(edge.from_ref),
+        to: hosted(edge.to_ref),
+        relation: kind,
+        origin: 'wiki',
+        direction: 'forward',
+        // The edge's own ref and an origin naming unselected material stay
+        // home: the provenance names the hosted relation, the edge's origin
+        // kind, and an origin ref only when it is a Contribution or selected.
+        provenance: [{ kind: 'wiki-edge', ref: relationRef, source_system: 'central', revision: reading.source.revision, ...(typeof edge.origin === 'string' && KNOWLEDGE_EDGE_TOKEN.test(edge.origin) ? { edge_origin: edge.origin } : {}), ...edgeOriginRef(edge.origin_ref) }],
+      });
+    }
   }
   for (const ref of selectedSpaceRefs) {
     const relationRef = `${worldRef}#oi.world/wiki-space#${hosted(ref)}`;
@@ -670,6 +800,7 @@ export function projectCentralWikiWorld(input) {
       ],
     });
   }
+  projectedRelations.push(...constituents.relations);
   createExploreApplication({ entries, relations: projectedRelations });
 
   const bindingBase = (ref, reading) => ({ schema: 'oi.presentation-binding/v1', provenance: bindingProvenance(reading, ref) });
@@ -738,8 +869,8 @@ export function projectCentralWikiWorld(input) {
       bindings: selectedConstellationRefs.map((ref) => {
         const reading = constellationByRef.get(ref);
         const title = (reading.construction ?? reading.frame[AIKIT_CONSTELLATION_SCHEMA]).title;
-        const members = participationsOf(ref);
-        const text = `constellation · ${members.length} participation${members.length === 1 ? '' : 's'} · revision ${reading.frame.revision}`;
+        const members = participationsOf(ref).filter((member) => selectedNodeRefs.includes(member.ref));
+        const text = `constellation · ${members.length} participation${members.length === 1 ? '' : 's'} in this World · revision ${reading.frame.revision}`;
         return {
           schema: 'oi.presentation-binding/v1',
           provenance: constellationProvenance(ref),
@@ -772,6 +903,7 @@ export function projectCentralWikiWorld(input) {
         };
       }),
     },
+    ...constituents.regions,
   ].filter((region) => region.bindings.length > 0);
 
   const presentation = createWorldPresentation({
@@ -838,6 +970,18 @@ export function projectCentralWikiWorld(input) {
     relations: projectedRelations,
     excluded,
   };
+  // An offered practice's body is authored text travelling whole: scan it on
+  // its own first, so a refusal names the practice rather than the bundle.
+  for (const entry of entries) {
+    if (entry.kind !== 'practice' || !entry.meta?.offer) continue;
+    const offerLeaks = offeredPracticeLeaks(entry.meta.offer, documents);
+    if (offerLeaks.length) {
+      const where = [...new Set(offerLeaks.map((leak) => leak.slice(0, leak.lastIndexOf(':'))))];
+      const labels = [...new Set(offerLeaks.map((leak) => leak.slice(leak.lastIndexOf(':') + 1)))];
+      const named = where.length === 1 && where[0] === 'body' ? 'body' : `file${where.length === 1 ? '' : 's'} ${where.join(', ')}`;
+      throw new TypeError(`offered practice ${entry.meta.local_ref} ${named} would carry protected material (${labels.join(', ')}); nothing was built`);
+    }
+  }
   // The allow-lists above are the guard; this is the proof. A bundle that
   // would carry any protected inhabitation value or shape is refused whole.
   const leaks = worldPublicationLeaks({ bundle, hosted_args: hostedPublicationArgs(bundle), explore_seed: exploreSeedFromPublication(bundle) }, documents);
@@ -872,8 +1016,12 @@ export function reprojectCentralWikiWorld(previousBundle, input) {
   // so comparing it compares each of them; a wiki-only publication keeps its
   // subject wiki revision exactly as before. `moved_sources` names which moved.
   const sourceMoved = next.projection.source.revision !== previous.source.revision;
-  const projection = sourceMoved
+  // An audience change is a publication decision: it is a new revision that
+  // carries the owner's new audience, never a refinement that keeps the old one.
+  const audienceChanged = JSON.stringify(next.projection.audience) !== JSON.stringify(previous.audience);
+  const projection = sourceMoved || audienceChanged
     ? reviseProjection(previous, {
+        audience: next.projection.audience,
         source_revision: next.projection.source.revision,
         published_at: next.projection.published_at,
         representation: { kind: WORLD_PRESENTATION_SCHEMA, payload: next.presentation },
@@ -884,7 +1032,7 @@ export function reprojectCentralWikiWorld(previousBundle, input) {
         published_at: next.projection.published_at,
         provenance: input.editor_provenance ?? [{ kind: 'human-refinement', ref: next.projection.publisher_participant_ref, source_system: 'central', revision: next.projection.source.revision }],
       });
-  return { ...next, projection, presentation: worldPresentationFromProjection(projection), source_moved: sourceMoved, moved_sources: movedSources };
+  return { ...next, projection, presentation: worldPresentationFromProjection(projection), source_moved: sourceMoved, audience_changed: audienceChanged, moved_sources: movedSources };
 }
 
 /** Hosted reducer arguments derived from a publication bundle, in publish order. */

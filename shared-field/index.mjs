@@ -244,6 +244,7 @@ export function reviseProjection(previous, update) {
     published_at: update.published_at,
     representation: update.representation ?? prior.representation,
     provenance: update.provenance ?? prior.provenance,
+    audience: update.audience ?? prior.audience,
     supersedes: {
       projection_ref: prior.projection_ref,
       projection_revision: prior.projection_revision,
