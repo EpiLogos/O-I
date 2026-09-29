@@ -1,7 +1,7 @@
 // narrow-title-clear: with the left region collapsed, its scope title (the
 // topbar's "Central") and the first tab of the tab strip never share pixels at
 // the narrow widths, where the window row is not shared with the tab row
-// (420×800, 360×740). At the 1280×820 desktop the default (left open) frame is
+// (420×800, 360×740), and at 1280×820 where the row is shared. At the 1280×820 desktop the default (left open) frame is
 // recorded as a screenshot for the before/after comparison and asserted to
 // carry no topbar title and a first tab clear of the corner toggle.
 import {setup as sourceSetup} from "./editor.mjs";
@@ -29,6 +29,11 @@ export default async function run({page, baseUrl, check, shot, channel, provisio
   const scope = page.locator("[data-shell-scope]");
   if (await scope.count() === 0) await page.keyboard.press("Meta+b");
   await scope.waitFor();
+  // Desktop, left collapsed: the title shares the window row with the first tab
+  // row, so the strip's own padding must clear the content-dependent title.
+  const [wide] = await readTitleVsFirstTabAt(page, [[1280, 820]]);
+  check(Boolean(wide.title && wide.tab) && !wide.overlap, "At 1280×820 with the left region collapsed the scope title and the first tab share no pixels", wide);
+  await shot("collapsed-1280");
   for (const [width, height] of [[420, 800], [360, 740]]) {
     const [reading] = await readTitleVsFirstTabAt(page, [[width, height]]);
     check(Boolean(reading.title && reading.tab) && !reading.overlap, `At ${width}×${height} the scope title and the first tab share no pixels`, reading);

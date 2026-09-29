@@ -4,28 +4,29 @@
   "spec_ref": "docs/cradle/10-SIDEBARS.md §5.1 L2 (collapsed scope title) at narrow widths",
   "grade": "B",
   "binding": null,
-  "generated_at": "2026-09-29T09:37:39.706Z",
+  "generated_at": "2026-09-29T10:14:48.530Z",
   "environment": {
-    "base_url": "http://localhost:4173",
-    "bridge_url": "http://127.0.0.1:4179",
+    "base_url": "http://localhost:4573",
+    "bridge_url": "http://127.0.0.1:4579",
     "viewport": "1280x820",
     "browser_engine": "chromium",
     "bundle": "walk (WALK=1) served by vite preview",
     "build_input": {
       "mode": "fresh-build",
-      "bundle_fingerprint": "5959e076468e9f7fead8d640860a56d15820d88febe746311eb60a13d9c69876"
+      "bundle_fingerprint": "bd93410c7bbfedc2037f37428ca0c82845b351357ff85f792d45210808878a37"
     },
     "node": "v24.16.0",
     "platform": "darwin",
     "source": {
       "repository_root": "/Users/admin/Central/worktrees/env-1/o-i",
-      "repository_head": "c698b727107472731c065e9af62120ee9b2cb16e",
+      "repository_head": "8a64355a1c7c55effcbac85feeb978f8e98c6ff7",
       "tracked_changes": [
+        "desktop/cradle/src/workspace/DesktopShell.tsx",
         "desktop/cradle/src/workspace/shell.css",
-        "desktop/cradle/walk/run.mjs",
-        "desktop/cradle/walk/scenarios/web65-explore-world.mjs"
+        "desktop/cradle/walk/artifacts/narrow-title-clear.json",
+        "desktop/cradle/walk/scenarios/narrow-title-clear.mjs"
       ],
-      "dirty_digest": "c9a9536e57868fe8197087361fd4ec77a45190b0df41d1b11ab976fdaf6c486d",
+      "dirty_digest": "6cdb2fe81ea808c93c6efc26b576d43da030e895f5d6236548d97c579ce94279",
       "engine_provenance_path": "/Users/admin/Central/worktrees/env-1/o-i/packages/oi-design-system/expressions-engine/PROVENANCE.json",
       "engine_source": "EpiLogos/Point-Cloud-Demo",
       "engine_revision": "91db8428fc9dfba06cd258ec5a58e7dd9eef5313"
@@ -33,7 +34,7 @@
   },
   "passed": true,
   "error": null,
-  "duration_ms": 2356,
+  "duration_ms": 2631,
   "checks": [
     {
       "ok": true,
@@ -45,6 +46,26 @@
           "width": 105.859375,
           "height": 32
         }
+      }
+    },
+    {
+      "ok": true,
+      "label": "At 1280×820 with the left region collapsed the scope title and the first tab share no pixels",
+      "data": {
+        "viewport": "1280×820",
+        "title": {
+          "x": 51,
+          "y": 5,
+          "width": 43.546875,
+          "height": 18
+        },
+        "tab": {
+          "x": 104,
+          "y": 0.5,
+          "width": 105.859375,
+          "height": 32
+        },
+        "overlap": false
       }
     },
     {
@@ -131,18 +152,18 @@
       "duration_ms": 0,
       "data": {
         "schema": "oi.cradle.walk/v1",
-        "mounted_at": "2026-09-29T09:37:39.921Z",
+        "mounted_at": "2026-09-29T10:14:48.781Z",
         "transport": {
           "kind": "bridge",
-          "url": "http://127.0.0.1:4179"
+          "url": "http://127.0.0.1:4579"
         },
-        "url": "http://localhost:4173/"
+        "url": "http://localhost:4573/"
       }
     },
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 36,
+      "duration_ms": 41,
       "data": {
         "file": "narrow-title-clear-desktop-1280.png"
       }
@@ -150,7 +171,15 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 39,
+      "duration_ms": 31,
+      "data": {
+        "file": "narrow-title-clear-collapsed-1280.png"
+      }
+    },
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 40,
       "data": {
         "file": "narrow-title-clear-title-clear-420.png"
       }
@@ -158,7 +187,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 41,
+      "duration_ms": 39,
       "data": {
         "file": "narrow-title-clear-title-clear-360.png"
       }
@@ -167,6 +196,7 @@
   "metrics": {},
   "screenshots": [
     "narrow-title-clear-desktop-1280.png",
+    "narrow-title-clear-collapsed-1280.png",
     "narrow-title-clear-title-clear-420.png",
     "narrow-title-clear-title-clear-360.png"
   ]

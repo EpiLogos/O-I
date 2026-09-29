@@ -426,7 +426,7 @@
     visible and clickable in every mode, exactly as in Factory. */
  .desktop-shell .shell-topbar{position:relative;z-index:calc(var(--oi-z-drawer) + 1);pointer-events:none}
  .desktop-shell .shell-topbar button,.desktop-shell .shell-topbar select{pointer-events:auto}
- .desktop-shell .desktop-centre [data-window-corner-left="true"] > .tab-strip{padding-left:max(4px,calc(var(--shell-window-reserve) - var(--desktop-left-width)))}
+ .desktop-shell .desktop-centre [data-window-corner-left="true"] > .tab-strip{padding-left:max(4px,calc(var(--shell-window-reserve) - var(--desktop-left-width)),calc(var(--shell-scope-reserve,0px) - var(--desktop-left-width)))}
 
 }
 .desktop-shell{background:linear-gradient(to right,transparent 0,transparent var(--desktop-left-width),var(--oi-shell-ground) var(--desktop-left-width),var(--oi-shell-ground) calc(100% - var(--desktop-right-width)),transparent calc(100% - var(--desktop-right-width)))}
