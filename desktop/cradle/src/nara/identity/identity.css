@@ -58,8 +58,8 @@
 .nara-id-data-list > li { margin-bottom: 6px; }
 .nara-id-composition { border-top: 1px solid var(--oi-hairline); padding-top: 10px; margin-top: 8px; }
 .nara-id-chart { display: block; width: 100%; height: auto; margin: 16px 0; border: 1px solid var(--oi-hairline); border-radius: 4px; }
-.nara-id-chart-dialog { width: min(96vw, 1500px); max-width: 96vw; max-height: 94vh; box-sizing: border-box; padding: 20px; color: var(--oi-foreground); background: var(--oi-background, #111110); border: 1px solid var(--oi-hairline); }
-.nara-id-chart-dialog::backdrop { background: rgb(0 0 0 / .7); }
+.nara-id-chart-dialog { width: min(96vw, 1500px); max-width: 96vw; max-height: 94vh; box-sizing: border-box; padding: 20px; color: var(--oi-foreground); background: var(--oi-canvas-ground); border: 1px solid var(--oi-hairline); }
+.nara-id-chart-dialog::backdrop { background: color-mix(in srgb, var(--oi-black) 70%, transparent); }
 .nara-id-chart-dialog header { display: flex; justify-content: space-between; align-items: center; gap: 16px; margin-bottom: 16px; }
 .nara-id-chart-dialog header h3 { margin: 0; }
 .nara-id-chart-scroll { overflow: auto; max-height: calc(94vh - 100px); }

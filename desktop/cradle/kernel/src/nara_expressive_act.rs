@@ -51,8 +51,8 @@ pub struct Prepared {
 }
 pub enum PreparedOutcome {
     Read(Value),
-    Focus(PreparedFocus),
-    Restore(PreparedRestore),
+    Focus(Box<PreparedFocus>),
+    Restore(Box<PreparedRestore>),
 }
 pub struct PreparedRestore {
     pub binding: nara_dialogue::Request,
@@ -137,14 +137,14 @@ impl Prepared {
             ..
         } = &self.request
         {
-            return Ok(PreparedOutcome::Restore(PreparedRestore {
+            return Ok(PreparedOutcome::Restore(Box::new(PreparedRestore {
                 binding: binding.clone(),
                 captured_document: self.document,
                 captured_profile: self.profile,
                 agent_session_ref: native.agent_session,
                 act_ref: act_ref.clone(),
                 expected_revision: *expected_revision,
-            }));
+            })));
         }
         let answer = crate::nara_voice_answer::read(
             &self.agency,
@@ -203,7 +203,7 @@ impl Prepared {
                         "reason":"The cited target is already selected; no checkpoint was created"}),
                     ));
                 }
-                Ok(PreparedOutcome::Focus(PreparedFocus {
+                Ok(PreparedOutcome::Focus(Box::new(PreparedFocus {
                     context_state: self.context_state.clone(),
                     binding: binding.clone(),
                     captured_document: self.document,
@@ -219,7 +219,7 @@ impl Prepared {
                         actor: native.agent_session,
                         changes: vec![change],
                     },
-                }))
+                })))
             }
             Request::Restore { .. } | Request::Status { .. } => unreachable!(),
         }

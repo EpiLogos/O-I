@@ -178,31 +178,7 @@ fn same_input(left: &Value, right: &Value) -> bool {
     }
 }
 
-#[cfg(test)]
-mod input_roundtrip_tests {
-    use super::*;
 
-    #[test]
-    fn typed_float_roundtrip_preserves_input_without_relaxing_identity() {
-        let entered = json!({"person_ref":"controlled:one","encoding_policy":{"lens_element_factor":0,"role_weights":[1,0,2]}});
-        let returned = json!({"person_ref":"controlled:one","encoding_policy":{"lens_element_factor":0.0,"role_weights":[1.0,0.0,2.0]}});
-        assert!(same_input(&entered, &returned));
-        let mut changed = returned.clone();
-        changed["person_ref"] = json!("controlled:two");
-        assert!(!same_input(&entered, &changed));
-        changed = returned.clone();
-        changed["encoding_policy"]["role_weights"][0] = json!(1.000000000000001);
-        assert!(!same_input(&entered, &changed));
-        changed = returned;
-        changed["encoding_policy"]["unexpected"] = Value::Null;
-        assert!(!same_input(&entered, &changed));
-        assert!(!same_input(
-            &json!(9007199254740993_u64),
-            &json!(9007199254740992.0)
-        ));
-        assert!(!same_input(&json!(i64::MAX), &json!(i64::MAX as f64)));
-    }
-}
 
 fn ql(operation: &str, profile: &Value) -> Result<Value, String> {
     let reading = run_ql_nara(operation, profile)?;
@@ -363,5 +339,31 @@ pub fn apply(client: &CentralClient, request: Request) -> Result<Value, String> 
             }
             Ok(result(reading, Some(&saved)))
         }
+    }
+}
+
+#[cfg(test)]
+mod input_roundtrip_tests {
+    use super::*;
+
+    #[test]
+    fn typed_float_roundtrip_preserves_input_without_relaxing_identity() {
+        let entered = json!({"person_ref":"controlled:one","encoding_policy":{"lens_element_factor":0,"role_weights":[1,0,2]}});
+        let returned = json!({"person_ref":"controlled:one","encoding_policy":{"lens_element_factor":0.0,"role_weights":[1.0,0.0,2.0]}});
+        assert!(same_input(&entered, &returned));
+        let mut changed = returned.clone();
+        changed["person_ref"] = json!("controlled:two");
+        assert!(!same_input(&entered, &changed));
+        changed = returned.clone();
+        changed["encoding_policy"]["role_weights"][0] = json!(1.000000000000001);
+        assert!(!same_input(&entered, &changed));
+        changed = returned;
+        changed["encoding_policy"]["unexpected"] = Value::Null;
+        assert!(!same_input(&entered, &changed));
+        assert!(!same_input(
+            &json!(9007199254740993_u64),
+            &json!(9007199254740992.0)
+        ));
+        assert!(!same_input(&json!(i64::MAX), &json!(i64::MAX as f64)));
     }
 }

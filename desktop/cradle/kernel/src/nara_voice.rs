@@ -108,83 +108,7 @@ fn native_basis(reading: &Value) -> Value {
         "runtime":reading["runtime"],"composition":reading["composition"]})
 }
 
-#[cfg(test)]
-mod profile_invalidation_tests {
-    use super::*;
 
-    #[test]
-    fn changed_inherited_profile_invalidates_pending_voice_but_retries_do_not() {
-        let mut kernel = crate::Kernel::new(CentralClient::discover());
-        let mut apply = |request: Value| {
-            kernel.apply(
-                serde_json::from_value(json!({"op":"expression","request":request})).unwrap(),
-            )
-        };
-        let parent = json!({"profile_ref":"profile:voice-parent","revision":1,"title":"Parent",
-            "accepted_binding_kinds":["engine_composition"],"parent_profile_refs":[],"provenance":[]});
-        let child = json!({"profile_ref":"profile:voice-child","revision":1,"title":"Child",
-            "accepted_binding_kinds":["engine_composition"],"parent_profile_refs":["profile:voice-parent"],"provenance":[]});
-        for profile in [&parent, &child] {
-            apply(json!({"operation":"profile_define","profile":profile,"actor":"human:test"}))
-                .unwrap();
-        }
-        apply(json!({"operation":"create","expression_ref":"expression:voice-profile-test","title":"Voice profile test","actor":"human:test"})).unwrap();
-        let document = apply(json!({"operation":"edit","expression_ref":"expression:voice-profile-test","expected_revision":1,"actor":"human:test",
-            "changes":[{"change":"profile_adopt","adoption":{"profile_ref":"profile:voice-child","revision":1,"overridden_parameters":{}}}]})).unwrap();
-        let document = match document.result {
-            crate::KernelOpResult::Expression { data } => data["document"].clone(),
-            _ => unreachable!(),
-        };
-        let binding = nara_dialogue::Request {
-            operation: nara_dialogue::Operation::Resolve,
-            source_ref: "central:source:controlled".into(),
-            expected_revision: "r1".into(),
-            person_ref: "person:controlled".into(),
-            nara_ref: "nara:controlled".into(),
-            expression_ref: "expression:voice-profile-test".into(),
-            role: nara_dialogue::Role::Nara,
-        };
-        // Preparation is the real in-flight boundary before provider IO.
-        let pending = kernel
-            .nara_voice
-            .prepare(
-                kernel.client.clone(),
-                kernel.agency.clone(),
-                PathBuf::from("."),
-                String::new(),
-                Request::Open {
-                    binding,
-                    context: Value::Null,
-                },
-                document,
-                None,
-            )
-            .unwrap();
-        let define = |profile: Value| {
-            serde_json::from_value(json!({"op":"expression","request":{"operation":"profile_define","profile":profile,"actor":"human:test"}})).unwrap()
-        };
-        kernel.apply(define(parent.clone())).unwrap();
-        assert_eq!(
-            pending.generation.load(Ordering::SeqCst),
-            pending.expected_generation
-        );
-        let mut invalid = parent.clone();
-        invalid["title"] = json!("Invalid same revision");
-        assert!(kernel.apply(define(invalid)).is_err());
-        assert_eq!(
-            pending.generation.load(Ordering::SeqCst),
-            pending.expected_generation
-        );
-        let mut advanced = parent;
-        advanced["revision"] = json!(2);
-        advanced["title"] = json!("Reviewed parent");
-        kernel.apply(define(advanced)).unwrap();
-        assert_ne!(
-            pending.generation.load(Ordering::SeqCst),
-            pending.expected_generation
-        );
-    }
-}
 impl Session {
     fn reset_actor(&mut self, constitution: &Value, context: &Value) -> Result<Value, String> {
         let closed = self.actor.call(json!({"operation":"close"}))?;
@@ -256,6 +180,9 @@ impl Store {
             .cloned()
             .ok_or_else(|| "Native voice lease is closed or unavailable".into())
     }
+    // Each argument is a distinct capability or captured basis of the one host
+    // preparation seam; bundling them would hide which the voice act consumes.
+    #[allow(clippy::too_many_arguments)]
     pub fn prepare(
         &self,
         client: CentralClient,
@@ -683,5 +610,83 @@ impl Prepared {
             }
             _ => Err("Invalid native voice operation".into()),
         }
+    }
+}
+
+#[cfg(test)]
+mod profile_invalidation_tests {
+    use super::*;
+
+    #[test]
+    fn changed_inherited_profile_invalidates_pending_voice_but_retries_do_not() {
+        let mut kernel = crate::Kernel::new(CentralClient::discover());
+        let mut apply = |request: Value| {
+            kernel.apply(
+                serde_json::from_value(json!({"op":"expression","request":request})).unwrap(),
+            )
+        };
+        let parent = json!({"profile_ref":"profile:voice-parent","revision":1,"title":"Parent",
+            "accepted_binding_kinds":["engine_composition"],"parent_profile_refs":[],"provenance":[]});
+        let child = json!({"profile_ref":"profile:voice-child","revision":1,"title":"Child",
+            "accepted_binding_kinds":["engine_composition"],"parent_profile_refs":["profile:voice-parent"],"provenance":[]});
+        for profile in [&parent, &child] {
+            apply(json!({"operation":"profile_define","profile":profile,"actor":"human:test"}))
+                .unwrap();
+        }
+        apply(json!({"operation":"create","expression_ref":"expression:voice-profile-test","title":"Voice profile test","actor":"human:test"})).unwrap();
+        let document = apply(json!({"operation":"edit","expression_ref":"expression:voice-profile-test","expected_revision":1,"actor":"human:test",
+            "changes":[{"change":"profile_adopt","adoption":{"profile_ref":"profile:voice-child","revision":1,"overridden_parameters":{}}}]})).unwrap();
+        let document = match document.result {
+            crate::KernelOpResult::Expression { data } => data["document"].clone(),
+            _ => unreachable!(),
+        };
+        let binding = nara_dialogue::Request {
+            operation: nara_dialogue::Operation::Resolve,
+            source_ref: "central:source:controlled".into(),
+            expected_revision: "r1".into(),
+            person_ref: "person:controlled".into(),
+            nara_ref: "nara:controlled".into(),
+            expression_ref: "expression:voice-profile-test".into(),
+            role: nara_dialogue::Role::Nara,
+        };
+        // Preparation is the real in-flight boundary before provider IO.
+        let pending = kernel
+            .nara_voice
+            .prepare(
+                kernel.client.clone(),
+                kernel.agency.clone(),
+                PathBuf::from("."),
+                String::new(),
+                Request::Open {
+                    binding,
+                    context: Value::Null,
+                },
+                document,
+                None,
+            )
+            .unwrap();
+        let define = |profile: Value| {
+            serde_json::from_value(json!({"op":"expression","request":{"operation":"profile_define","profile":profile,"actor":"human:test"}})).unwrap()
+        };
+        kernel.apply(define(parent.clone())).unwrap();
+        assert_eq!(
+            pending.generation.load(Ordering::SeqCst),
+            pending.expected_generation
+        );
+        let mut invalid = parent.clone();
+        invalid["title"] = json!("Invalid same revision");
+        assert!(kernel.apply(define(invalid)).is_err());
+        assert_eq!(
+            pending.generation.load(Ordering::SeqCst),
+            pending.expected_generation
+        );
+        let mut advanced = parent;
+        advanced["revision"] = json!(2);
+        advanced["title"] = json!("Reviewed parent");
+        kernel.apply(define(advanced)).unwrap();
+        assert_ne!(
+            pending.generation.load(Ordering::SeqCst),
+            pending.expected_generation
+        );
     }
 }

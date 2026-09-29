@@ -33,7 +33,9 @@ try {
   assert.deepEqual(readback,presentation);
   const bundle=join(temporary,'render.cjs');
   await build({stdin:{contents:`import React from 'react'; import {renderToStaticMarkup} from 'react-dom/server'; import {WorldPresentationView} from './src/explore/presentation'; export const render = presentation => renderToStaticMarkup(React.createElement(WorldPresentationView,{presentation,hosting:'preview'}));`,resolveDir:cradle,loader:'tsx'},
-    bundle:true,platform:'node',format:'cjs',outfile:bundle,jsx:'automatic',nodePaths:[join(cradle,'node_modules')],loader:{'.css':'empty'},logLevel:'error'});
+    bundle:true,platform:'node',format:'cjs',outfile:bundle,jsx:'automatic',nodePaths:[join(cradle,'node_modules')],loader:{'.css':'empty'},logLevel:'error',
+    // Vite's `?raw` import is the file's text; the app itself builds with Vite.
+    plugins:[{name:'vite-raw',setup(b){b.onResolve({filter:/\?raw$/},a=>({path:join(a.resolveDir,a.path.slice(0,-4)),namespace:'raw'}));b.onLoad({filter:/.*/,namespace:'raw'},async a=>({contents:await (await import('node:fs/promises')).readFile(a.path,'utf8'),loader:'text'}));}}]});
   const html=createRequire(import.meta.url)(bundle).render(readback);
   assert.ok(html.includes('Registration preserves the native subject reference.'));
   assert.ok(html.includes('data-presentation-ref="presentation:host-integration"'));

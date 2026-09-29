@@ -1,6 +1,6 @@
-.scene-source-portal{position:fixed;z-index:90;display:flex;flex-direction:column;background:var(--bg,#f6f4ee);color:var(--fg,#252522);border:1px solid var(--line,#bbb);box-shadow:0 12px 45px #0003;border-radius:8px;overflow:hidden}
+.scene-source-portal{position:fixed;z-index:90;display:flex;flex-direction:column;background:var(--oi-canvas-ground);color:var(--oi-foreground);border:1px solid var(--oi-hairline);box-shadow:var(--oi-shadow-overlay);border-radius:8px;overflow:hidden}
 .scene-source-portal.preview{right:24px;bottom:42px;width:min(560px,calc(100vw - 48px));height:min(480px,calc(100vh - 100px))}
 .scene-source-portal.overlay{inset:70px max(32px,12vw) 55px}
-.scene-source-portal>header{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:10px 14px;border-bottom:1px solid var(--line,#bbb)}
+.scene-source-portal>header{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:10px 14px;border-bottom:1px solid var(--oi-hairline)}
 .scene-source-portal>header strong{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .scene-source-portal-body{flex:1;min-height:0;position:relative;overflow:auto}

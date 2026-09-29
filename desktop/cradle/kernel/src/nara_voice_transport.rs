@@ -318,10 +318,8 @@ fn wav_format(bytes: &[u8]) -> Result<Value, String> {
                 }
                 format = Some((channels, rate, align, bits));
             }
-            b"data" => {
-                if data_size.replace(size).is_some() {
-                    return Err("WAV data is ambiguous".into());
-                }
+            b"data" if data_size.replace(size).is_some() => {
+                return Err("WAV data is ambiguous".into());
             }
             _ => {}
         }

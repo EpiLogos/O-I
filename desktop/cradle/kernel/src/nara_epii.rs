@@ -50,7 +50,7 @@ pub struct Prepared {
 }
 pub enum PreparedOutcome {
     Read(Value),
-    Accept(ReviewedEnrichment),
+    Accept(Box<ReviewedEnrichment>),
 }
 /// The host must compare the complete captured document and profile lineage
 /// under its mutex, then propose and accept on one cloned Application.
@@ -292,7 +292,7 @@ impl Prepared {
                             availability: expression::Availability::Available,
                         },
                     ];
-                    Ok(PreparedOutcome::Accept(ReviewedEnrichment {
+                    Ok(PreparedOutcome::Accept(Box::new(ReviewedEnrichment {
                         context_state: self.context_state.clone(),
                         origin_binding: origin_binding.clone(),
                         origin_session_ref: origin_session.clone(),
@@ -318,7 +318,7 @@ impl Prepared {
                         provenance,
                         captured_document: self.document,
                         captured_profile: self.profile?,
-                    }))
+                    })))
                 } else {
                     Ok(PreparedOutcome::Read(
                         json!({"schema":"oi.nara-epii-review/v1","provenance":provenance,

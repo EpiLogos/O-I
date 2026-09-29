@@ -1631,7 +1631,7 @@ impl Kernel {
                     result: KernelOpResult::NaraEpii { data },
                 })
             }
-            nara_epii::PreparedOutcome::Accept(reviewed) => reviewed,
+            nara_epii::PreparedOutcome::Accept(reviewed) => *reviewed,
         };
         let document = self
             .expressions
