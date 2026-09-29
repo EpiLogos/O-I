@@ -59,10 +59,10 @@ async fn kernel_op(app: AppHandle, op: KernelOp) -> Result<KernelOpOutcome, Stri
             let completed=prepared.execute()?;
             return host.0.lock().map_err(|_|"kernel lock unavailable")?.finish_nara_presence(completed);
         }
-        let m3=host.0.lock().map_err(|_|"kernel lock unavailable")?.prepare_nara_m3(&op)?;
+        let m3=host.0.lock().map_err(|_|"kernel lock unavailable")?.prepare_m3_reception(&op)?;
         if let Some(prepared)=m3 {
             let completed=prepared.execute()?;
-            return host.0.lock().map_err(|_|"kernel lock unavailable")?.finish_nara_m3(completed);
+            return host.0.lock().map_err(|_|"kernel lock unavailable")?.finish_m3_reception(completed);
         }
         let current=host.0.lock().map_err(|_|"kernel lock unavailable")?.prepare_nara_current(&op)?;
         if let Some(prepared)=current {
