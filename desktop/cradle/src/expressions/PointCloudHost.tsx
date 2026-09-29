@@ -44,6 +44,7 @@ import {consumeTechneFieldOpen, peekTechneFieldLens, peekTechneFieldOpen, peekTe
 import "./point-cloud-host.css";
 import {verifyInsertionSource} from "./sourceInsertion";
 import {resolveHostedSource} from "./sourceHandoff";
+import {resolveScenePortal} from "./scenePortal";
 import {resolveSceneConstellation} from "../techne/wikiReadingProvider";
 import {relateSceneConstellation} from "../techne/sceneConstellationRelation";
 import {relayNaraChannel} from "./naraChannel";
@@ -263,7 +264,7 @@ export function PointCloudHost({mode = "expressions", deepLink, bindingId, onHos
   // the seams that already exist.
   useEffect(() => {
     const handler = (event: MessageEvent) => {
-      const data = event.data as {v?: number; kind?: string; request?: string; mode?: string; kind2?: string; detail?: {kind?: string; lens?: string; ref?: unknown; subject?: unknown;context?: unknown}} | null;
+      const data = event.data as {v?: number; kind?: string; request?: string; request_id?: unknown; mode?: string; kind2?: string; detail?: {kind?: string; lens?: string; ref?: unknown; subject?: unknown;context?: unknown; trigger_ref?: unknown}} | null;
       if (!data || data.v !== 1 || data.kind !== "host-request") return;
       if (event.source !== frame.current?.contentWindow) return;
       if (data.request === "workspace-mode" && (data.mode === "expressions" || data.mode === "techne")) {
@@ -273,6 +274,19 @@ export function PointCloudHost({mode = "expressions", deepLink, bindingId, onHos
         // An empty Canvas asks for construction: the navigator's own
         // Project-scoped creation row answers it (one creation path).
         window.dispatchEvent(new CustomEvent("oi:techne-new-constellation"));
+        return;
+      }
+      if (data.request === "scene-portal") {
+        const node=frame.current,requestId=data.request_id;
+        if(typeof requestId!=="string"||!requestId||requestId.length>128)return;
+        const request=++sourceRequest.current,at=hostedState.current;
+        const current=()=>sourceRequest.current===request&&frame.current===node&&!!node?.getClientRects().length&&!node.closest('[hidden],[inert]')&&hostedState.current?.document?.id===at?.document?.id&&hostedState.current?.sceneIndex===at?.sceneIndex;
+        const complete=(error?:string)=>node?.contentWindow?.postMessage({v:1,kind:"scene-portal-result",request_id:requestId,ok:!error,...(error?{error}:{})},"*");
+        if(!current()){complete("The Scene is no longer presented.");return;}
+        void resolveScenePortal(kernel.transport,data.detail).then(portal=>{
+          if(!current())throw Error("The Scene changed while its portal was opening.");
+          window.dispatchEvent(new CustomEvent("oi:open-scene-source",{detail:{target:portal.target,portal,complete}}));
+        }).catch(error=>complete(error instanceof Error?error.message:String(error)));
         return;
       }
       if (data.request === "summon" && data.detail?.kind === "source") {

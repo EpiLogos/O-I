@@ -35,8 +35,40 @@ async fn kernel_op(app: AppHandle, op: KernelOp) -> Result<KernelOpOutcome, Stri
         if let KernelOp::ExpressionRecovery { request } = op {
             return oi_cradle_kernel::expression_recovery::execute(request);
         }
+        if let KernelOp::NaraCoordinate { request } = op {
+            return oi_cradle_kernel::nara_coordinate::execute(request);
+        }
         let host = app.state::<KernelHost>();
+        let epii = host.0.lock().map_err(|_| "kernel lock unavailable")?.prepare_nara_epii(&op)?;
+        if let Some(prepared) = epii {
+            let completed = prepared.execute()?;
+            let outcome = host.0.lock().map_err(|_| "kernel lock unavailable")?.finish_nara_epii(completed)?;
+            for receipt in &outcome.receipts { let _ = app.emit(KERNEL_EVENT_TOPIC, receipt); }
+            return Ok(outcome);
+        }
         let voice = host.0.lock().map_err(|_| "kernel lock unavailable")?.prepare_nara_voice(&op)?;
+        let act = host.0.lock().map_err(|_| "kernel lock unavailable")?.prepare_nara_expressive_act(&op)?;
+        if let Some(prepared) = act {
+            let completed = prepared.execute()?;
+            let outcome = host.0.lock().map_err(|_| "kernel lock unavailable")?.finish_nara_expressive_act(completed)?;
+            for receipt in &outcome.receipts { let _ = app.emit(KERNEL_EVENT_TOPIC, receipt); }
+            return Ok(outcome);
+        }
+        let presence=host.0.lock().map_err(|_|"kernel lock unavailable")?.prepare_nara_presence(&op)?;
+        if let Some(prepared)=presence {
+            let completed=prepared.execute()?;
+            return host.0.lock().map_err(|_|"kernel lock unavailable")?.finish_nara_presence(completed);
+        }
+        let m3=host.0.lock().map_err(|_|"kernel lock unavailable")?.prepare_nara_m3(&op)?;
+        if let Some(prepared)=m3 {
+            let completed=prepared.execute()?;
+            return host.0.lock().map_err(|_|"kernel lock unavailable")?.finish_nara_m3(completed);
+        }
+        let current=host.0.lock().map_err(|_|"kernel lock unavailable")?.prepare_nara_current(&op)?;
+        if let Some(prepared)=current {
+            let completed=prepared.execute()?;
+            return host.0.lock().map_err(|_|"kernel lock unavailable")?.finish_nara_current(completed);
+        }
         if let Some(prepared) = voice { return prepared.execute(); }
         let dialogue = host
             .0
@@ -200,7 +232,7 @@ fn main() {
             Ok(())
         })
         .on_menu_event(|app, event| menus::dispatch(app, event.id().as_ref()))
-        .invoke_handler(tauri::generate_handler![walk_diagnostics::expression_walk_observation,working_surface_lease::working_surface_takeover,working_surface_lease::working_surface_client_poll,working_surface_lease::working_surface_client_input,working_surface_lease::working_surface_client_resize,working_surface_lease::working_surface_release,terminal::terminal_attach,terminal::terminal_poll,terminal::terminal_input,terminal::terminal_resize,terminal::terminal_checkpoint,terminal::terminal_reconcile,browser::browser_attach, browser::browser_control, browser::browser_reconcile, ground_dialog::choose_central_folder, menus::arrangement_menu, decision_episode_authorise, kernel_op, kernel_event_log, windows::window_detach, windows::window_binding, windows::window_redock, windows::window_focus_subject, windows::window_focus_main])
+        .invoke_handler(tauri::generate_handler![walk_diagnostics::expression_walk_observation,working_surface_lease::working_surface_takeover,working_surface_lease::working_surface_client_poll,working_surface_lease::working_surface_client_input,working_surface_lease::working_surface_client_resize,working_surface_lease::working_surface_release,terminal::terminal_attach,terminal::terminal_poll,terminal::terminal_input,terminal::terminal_resize,terminal::terminal_checkpoint,terminal::terminal_reconcile,browser::browser_attach, browser::browser_control, browser::browser_reconcile, ground_dialog::choose_central_folder, menus::arrangement_menu, decision_episode_authorise, kernel_op, kernel_event_log, windows::window_detach, windows::window_binding, windows::window_redock, windows::window_redock_surface, windows::window_focus_subject, windows::window_focus_main])
         .run(context)
         .expect("error while running the cradle");
 }

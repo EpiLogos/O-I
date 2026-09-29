@@ -146,9 +146,20 @@ function CompositionReading({value}: {value: NatalComposition}) {
     <p><strong>Natal quaternion</strong> <code className="nara-id-quaternion">({number(value.q_natal.w)}, {number(value.q_natal.x)}, {number(value.q_natal.y)}, {number(value.q_natal.z)})</code></p>
     <p className="nara-id-muted">Components follow {value.basis_order.join(', ')}. This is the natal contribution. The other identity constituents have not yet been combined with it into a full identity.</p>
     <details><summary>Planetary weighting</summary><div className="nara-id-table-scroll"><table><caption>Retained model weights, adjusted by the source dignity rule</caption><thead><tr><th scope="col">Body / sign</th><th scope="col">Element</th><th scope="col">Weight</th><th scope="col">Dignity</th><th scope="col">Contribution</th></tr></thead><tbody>{value.planetary_contributions.map(p => <tr key={p.native_planet_id}><th scope="row">{p.body}<small className="nara-id-table-note">{p.sign}</small></th><td>{p.element}</td><td>{number(p.keplerian_weight)}</td><td>{p.dignity} × {p.dignity_multiplier}</td><td>{number(p.weighted_contribution)}</td></tr>)}</tbody></table></div></details>
-    <h4>Seven-centre evidence distribution</h4><p className="nara-id-muted">Planetary evidence follows the native body relationships. The Sun remains the parent, and Earth remains the grounding anchor.</p>
+    <h4>Seven-centre evidence distribution</h4><p className="nara-id-muted">Planetary evidence follows the graph’s planetary resonance relationships: Saturn, Jupiter, Mars, Venus, Mercury, Moon and Sun from root to crown. Earth remains the distinct grounding anchor. The Sun’s separate relation to all seven centres does not duplicate its natal evidence in every centre.</p>
     <div className="nara-id-table-scroll"><table><caption>Independent evidence totals in {value.basis_order.join(', ')} order</caption><thead><tr><th scope="col">Centre</th><th scope="col">Related bodies</th><th scope="col">Evidence</th></tr></thead><tbody>{value.centre_evidence.map(c => <tr key={c.ordinal}><th scope="row">{c.label}</th><td>{c.planet_ids.map(id => value.planetary_contributions.find(p => p.native_planet_id === id)?.body ?? `Native body ${id}`).join(', ') || 'No mapped planetary evidence'}</td><td>{c.raw_efwa_evidence.map(number).join(' · ')}</td></tr>)}</tbody></table></div>
     <p className="nara-id-muted">These evidence totals do not yet determine how each centre moves, sounds or couples to the others. A personal Expression cannot be activated from this reading alone.</p>
+    <details><summary>Planet-to-centre sources</summary>
+      {value.planetary_contributions.map(planet => <div key={planet.native_planet_id}>
+        <h5>{planet.body}</h5>
+        {planet.planetary_chakra_route ? <dl className="nara-id-provenance">
+          <div><dt>Planet → centre</dt><dd>{planet.planetary_chakra_route.planet_coordinate} → {planet.planetary_chakra_route.chakra_coordinate}</dd></div>
+          <div><dt>Graph revision</dt><dd>{planet.planetary_chakra_route.registry_revision}</dd></div>
+          <div><dt>Source revision</dt><dd>{planet.planetary_chakra_route.source_revision}</dd></div>
+          <div><dt>Source assertions</dt><dd>{planet.planetary_chakra_route.relations.map(relation => <div key={relation.relation_ref}>{relation.source_kind} · {relation.relation_ref}</div>)}</dd></div>
+        </dl> : <p className="nara-id-muted">{planet.planetary_chakra_route === null ? 'Included in the global natal balance. The graph has no planetary resonance route from this planet to a centre.' : 'This native reading predates graph-attributed routing. Recalculate with the current native owner to inspect its route.'}</p>}
+      </div>)}
+    </details>
     <details><summary>Composition source</summary><dl className="nara-id-provenance"><div><dt>Policy</dt><dd>{value.policy}</dd></div><div><dt>Repository</dt><dd>{value.policy_source.repository}</dd></div><div><dt>Source</dt><dd>{value.policy_source.path}</dd></div><div><dt>Revision</dt><dd>{value.policy_source.revision}</dd></div></dl><p className="nara-id-muted">{value.policy_source.standing}</p><p className="nara-id-muted">{value.dynamics_standing}</p></details>
   </div>;
 }

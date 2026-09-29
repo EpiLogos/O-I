@@ -12,6 +12,26 @@ use std::{
     },
 };
 
+/// Keep native refusal detail without exposing a successful payload. A process
+/// killed before writing stderr must still disclose its operation and status.
+fn owner_process_failure(operation: &str, output: &std::process::Output) -> String {
+    let stderr = String::from_utf8_lossy(&output.stderr);
+    if !stderr.trim().is_empty() {
+        return stderr.trim().to_owned();
+    }
+    if let Ok(response) = serde_json::from_slice::<Value>(&output.stdout) {
+        if response["ok"] == false {
+            if let Some(message) = response["error"]["message"].as_str().filter(|s| !s.trim().is_empty()) {
+                return match response["error"]["code"].as_str() {
+                    Some(code) => format!("{message} [{code}]"),
+                    None => message.to_owned(),
+                };
+            }
+        }
+    }
+    format!("AIKit {operation} failed ({}) without an owner diagnostic", output.status)
+}
+
 #[derive(Clone, Debug)]
 pub struct Client {
     executable: PathBuf,
@@ -212,7 +232,7 @@ impl Client {
             .output()
             .map_err(|e| format!("Native Agent owner unavailable: {e}"))?;
         if !output.status.success() {
-            return Err(String::from_utf8_lossy(&output.stderr).trim().to_owned());
+            return Err(owner_process_failure(operation, &output));
         }
         if output.stdout.len() > 1024 * 1024 {
             return Err("Native Agent response exceeds the bounded reading size".into());
@@ -300,7 +320,7 @@ impl Client {
             .output()
             .map_err(|e| format!("AIKit SessionSpace is unavailable: {e}"))?;
         if !output.status.success() {
-            return Err(String::from_utf8_lossy(&output.stderr).trim().to_owned());
+            return Err(owner_process_failure("encounter-task-read", &output));
         }
         let mut data: Value = serde_json::from_slice(&output.stdout)
             .map_err(|e| format!("AIKit SessionSpace returned an unreadable task reading: {e}"))?;
@@ -354,7 +374,7 @@ fn read_project_with(
         .output()
         .map_err(|e| format!("AIKit SessionSpace is unavailable: {e}"))?;
     if !output.status.success() {
-        return Err(String::from_utf8_lossy(&output.stderr).trim().to_owned());
+        return Err(owner_process_failure("discover", &output));
     }
     let data: Value = serde_json::from_slice(&output.stdout)
         .map_err(|e| format!("AIKit SessionSpace returned an unreadable reading: {e}"))?;
@@ -639,7 +659,7 @@ impl Client {
             .output()
             .map_err(|error| format!("AIKit encounter owner unavailable: {error}"))?;
         if !output.status.success() {
-            return Err(String::from_utf8_lossy(&output.stderr).trim().into());
+            return Err(owner_process_failure("encounter", &output));
         }
         let response: Value = serde_json::from_slice(&output.stdout)
             .map_err(|error| format!("Unreadable AIKit encounter response: {error}"))?;
@@ -950,7 +970,7 @@ impl Client {
             if mint_verb_absent(&stderr) {
                 self.mint_support.store(2, Ordering::Relaxed);
             }
-            return Err(stderr);
+            return Err(owner_process_failure("encounter-agency-mint", &output));
         }
         self.mint_support.store(1, Ordering::Relaxed);
         let mut data: Value = serde_json::from_slice(&output.stdout)
@@ -987,7 +1007,7 @@ impl Client {
             .output()
             .map_err(|error| format!("AIKit client status is unavailable: {error}"))?;
         if !output.status.success() {
-            return Err(String::from_utf8_lossy(&output.stderr).trim().to_owned());
+            return Err(owner_process_failure("client status", &output));
         }
         let mut data: Value = serde_json::from_slice(&output.stdout)
             .map_err(|error| format!("AIKit client status returned unreadable JSON: {error}"))?;
@@ -1017,7 +1037,7 @@ impl Client {
             .output()
             .map_err(|error| format!("AIKit model catalogue is unavailable: {error}"))?;
         if !output.status.success() {
-            return Err(String::from_utf8_lossy(&output.stderr).trim().to_owned());
+            return Err(owner_process_failure("model-catalogue show", &output));
         }
         let mut data: Value = serde_json::from_slice(&output.stdout)
             .map_err(|error| format!("AIKit model catalogue returned unreadable JSON: {error}"))?;
@@ -1087,7 +1107,7 @@ impl Client {
             .output()
             .map_err(|error| format!("AIKit SessionSpace is unavailable: {error}"))?;
         if !output.status.success() {
-            return Err(String::from_utf8_lossy(&output.stderr).trim().to_owned());
+            return Err(owner_process_failure(args.first().copied().unwrap_or("session-space"), &output));
         }
         Ok(String::from_utf8_lossy(&output.stdout).trim().to_owned())
     }
@@ -1314,6 +1334,22 @@ fn with_temp_json<T>(json: &str, run: impl FnOnce(&str) -> Result<T, String>) ->
 
 #[cfg(test)]
 mod tests {
+    #[cfg(unix)]
+    #[test]
+    fn killed_owner_process_keeps_a_nonempty_operation_and_signal_diagnostic() {
+        use std::os::unix::process::ExitStatusExt;
+        // Exercise an actual child dying before it can write a diagnostic.
+        let output = std::process::Command::new("/bin/sh")
+            .args(["-c", "kill -KILL $$"])
+            .output()
+            .unwrap();
+        assert_eq!(output.status.signal(), Some(9));
+        assert!(output.stderr.is_empty());
+        let message = super::owner_process_failure("encounter", &output);
+        assert!(message.contains("AIKit encounter failed"), "{message}");
+        assert!(message.contains("9"), "{message}");
+        assert!(message.contains("without an owner diagnostic"), "{message}");
+    }
     use super::*;
 
     #[test]

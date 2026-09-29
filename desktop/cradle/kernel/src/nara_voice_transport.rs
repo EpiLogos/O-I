@@ -194,7 +194,12 @@ impl LocalSpeechTransport {
             "inference_observed":true,"playback_observed":false,"provider_cancellation_performed":false,
             "standing":"Actual HTTP inference response; model/voice identity remains the native configured declaration"})
     }
-    pub fn transcribe(&self, wav: &[u8], request_ref: &str) -> Result<Value, String> {
+    pub fn transcribe(
+        &self,
+        wav: &[u8],
+        request_ref: &str,
+        cancelled: impl Fn() -> bool,
+    ) -> Result<Value, String> {
         text(&json!(request_ref), "request reference")?;
         let format = wav_format(wav)?;
         if format["sample_rate"] != 16000
@@ -212,6 +217,7 @@ impl LocalSpeechTransport {
             &format!("multipart/form-data; boundary={boundary}"),
             &body,
             MAX_TRANSCRIPT,
+            cancelled,
         )?;
         if http.content_type.split(';').next().map(str::trim) != Some("application/json") {
             return Err("Native transcription returned an unexpected content type".into());
@@ -228,7 +234,12 @@ impl LocalSpeechTransport {
             "receipt":self.receipt(&self.stt,wav,transcript.as_bytes(),&body,&http)}),
         )
     }
-    pub fn synthesize(&self, spoken_text: &str, request_ref: &str) -> Result<Value, String> {
+    pub fn synthesize(
+        &self,
+        spoken_text: &str,
+        request_ref: &str,
+        cancelled: impl Fn() -> bool,
+    ) -> Result<Value, String> {
         text(&json!(request_ref), "request reference")?;
         if spoken_text.trim().is_empty()
             || spoken_text.len() > MAX_TEXT
@@ -241,7 +252,13 @@ impl LocalSpeechTransport {
         let body = serde_json::to_vec(&json!({"model":self.tts.model,"input":spoken_text,
             "voice":self.tts.voice,"response_format":"wav"}))
         .map_err(|e| e.to_string())?;
-        let http = post(&self.tts.endpoint, "application/json", &body, MAX_WAV)?;
+        let http = post(
+            &self.tts.endpoint,
+            "application/json",
+            &body,
+            MAX_WAV,
+            cancelled,
+        )?;
         if !matches!(
             http.content_type.split(';').next().map(str::trim),
             Some("audio/wav" | "audio/x-wav" | "audio/wave")
@@ -367,7 +384,11 @@ fn post(
     content_type: &str,
     body: &[u8],
     limit: usize,
+    cancelled: impl Fn() -> bool,
 ) -> Result<HttpReply, String> {
+    if cancelled() {
+        return Err("Native speech request was stopped before dispatch".into());
+    }
     let start = Instant::now();
     let mut process = Process(
         Command::new("curl")
@@ -430,6 +451,13 @@ fn post(
         );
     });
     let status = loop {
+        if cancelled() {
+            // Drop terminates and reaps our HTTP client. The provider has no
+            // cancellation protocol: do not claim its computation has stopped.
+            return Err(
+                "Native speech HTTP transport stopped; no inference result admitted".into(),
+            );
+        }
         match process
             .0
             .try_wait()
@@ -442,6 +470,9 @@ fn post(
             None => return Err("Native speech HTTP request exceeded its deadline".into()),
         }
     };
+    if cancelled() {
+        return Err("Native speech response was stopped; no inference result admitted".into());
+    }
     rx.recv_timeout(Duration::from_secs(2))
         .map_err(|_| "Native speech request writer did not finish")??;
     let bytes = stdout
@@ -487,4 +518,51 @@ fn post(
         body: bytes[..split].to_vec(),
         elapsed: start.elapsed(),
     })
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::{
+        net::TcpListener,
+        sync::{
+            atomic::{AtomicBool, Ordering},
+            Arc,
+        },
+    };
+
+    #[test]
+    fn stop_terminates_real_pending_http_io() {
+        // Exercise the real curl process and TCP connection. This peer never
+        // returns an inference result; it is a deliberately stalled transport,
+        // not a substitute speech provider or a claimed voice acceptance.
+        let listener = TcpListener::bind("127.0.0.1:0").unwrap();
+        let endpoint = format!("http://{}/pending", listener.local_addr().unwrap());
+        let cancelled = Arc::new(AtomicBool::new(false));
+        let observed = cancelled.clone();
+        let peer = std::thread::spawn(move || {
+            let (mut stream, _) = listener.accept().unwrap();
+            stream
+                .set_read_timeout(Some(Duration::from_secs(10)))
+                .unwrap();
+            let mut data = [0; 4096];
+            assert!(stream.read(&mut data).unwrap() > 0);
+            observed.store(true, Ordering::SeqCst);
+            loop {
+                match stream.read(&mut data) {
+                    Ok(0) => break,
+                    Ok(_) => {}
+                    Err(error) if error.kind() == std::io::ErrorKind::ConnectionReset => break,
+                    Err(error) => panic!("Stopped HTTP client left its connection open: {error}"),
+                }
+            }
+        });
+        let started = Instant::now();
+        let result = post(&endpoint, "application/json", b"{}", 1024, || {
+            cancelled.load(Ordering::SeqCst)
+        });
+        assert!(matches!(result, Err(ref error) if error.contains("transport stopped")));
+        assert!(started.elapsed() < Duration::from_secs(10));
+        peer.join().unwrap();
+    }
 }

@@ -1,6 +1,6 @@
 /** Conversation gestures within the Expressions instrument. The parent channel
  * retains native authority and all document/session handles. */
-import React, {useEffect, useRef, useState} from 'react';
+import React, {forwardRef, useEffect, useImperativeHandle, useRef, useState} from 'react';
 import {naraInstrumentRequest} from './kernelExpressions.js';
 import {VoiceCapture} from '../../../src/nara/voiceCapture';
 import type {InstrumentBasis, InstrumentReturnState, InstrumentVoiceRequest, InstrumentVoiceResult, NaraInstrumentRequest} from '../../../src/nara/instrumentProtocol';
@@ -44,10 +44,19 @@ interface VoiceProps extends BasisProps {
   answerBlockId: number | null;
   composerEmpty: boolean;
   receiveTranscript: (text: string) => void;
+  onActivityChange: (active: boolean) => void;
+  onSpeechAdmitted?: (answerBlockId: number, responseRef: string) => void;
+  onSpeechCompleted?: (answerBlockId: number) => Promise<void>;
+  onSpeechInterrupted?: () => void;
 }
 interface VoiceLease {basis: InstrumentBasis; reading: InstrumentVoiceResult}
+export interface NaraVoiceHandle {
+  /** Synchronously invalidate pending audio, then acknowledge local teardown.
+   * Native lease closure and text cancellation belong to the host channel. */
+  stopLocal: () => Promise<void>;
+}
 
-export function NaraVoiceTools(props: VoiceProps) {
+export const NaraVoiceTools = forwardRef<NaraVoiceHandle, VoiceProps>(function NaraVoiceTools(props, ref) {
   const [voice, setVoice] = useState<InstrumentVoiceResult | null>(null);
   const [busy, setBusy] = useState(''), [error, setError] = useState('');
   const [recording, setRecording] = useState(false), [playing, setPlaying] = useState(false);
@@ -59,22 +68,58 @@ export function NaraVoiceTools(props: VoiceProps) {
   const output = useRef<{context: AudioContext; source?: AudioBufferSourceNode} | null>(null);
   const key = keyFor(props);
   const [viewKey, setViewKey] = useState(key);
-  const closeHeld = async () => {
-    const current = held.current; held.current = null;
-    capture.current?.recorder.discard(); capture.current = null;
+  useEffect(() => {
+    props.onActivityChange(recording || playing || !!busy);
+    return () => props.onActivityChange(false);
+  }, [recording, playing, busy, props.onActivityChange]);
+  const localCleanup=useRef<Promise<void>|null>(null);
+  const stopAudioNow = async () => {
+    const recorder = capture.current; capture.current = null;
     const audio = output.current; output.current = null;
+    const failures: string[] = [];
+    const recordingStopped=recorder?.recorder.discard().catch(failure=>{
+      if(!capture.current)capture.current=recorder;
+      failures.push(`Recording could not be stopped: ${message(failure)}`);
+    });
     if (audio) {
-      if (audio.source) {audio.source.onended = null; try {audio.source.stop();} catch {/* Already ended. */}}
-      if (audio.context.state !== 'closed') await audio.context.close();
+      if (audio.source) {
+        audio.source.onended = null;
+        try {audio.source.stop();} catch (failure) {
+          if (!(failure instanceof DOMException && failure.name === 'InvalidStateError')) failures.push(`Playback could not be stopped: ${message(failure)}`);
+        }
+      }
+      try {if (audio.context.state !== 'closed') await audio.context.close();}
+      catch (failure) {if(!output.current)output.current=audio;failures.push(`Audio output could not be closed: ${message(failure)}`);}
     }
-    if (current) await voiceRequest(current.basis, {operation: 'close', voice_ref: current.reading.voice_ref});
+    await recordingStopped;
+    if (failures.length) throw Error(failures.join(' '));
+  };
+  const stopAudio=()=>{
+    const task=localCleanup.current??stopAudioNow();localCleanup.current=task;
+    return task.finally(()=>{if(localCleanup.current===task)localCleanup.current=null;});
+  };
+  useImperativeHandle(ref, () => ({stopLocal: () => {
+    const at = ++generation.current; pending.current = false; held.current = null;
+    setBusy(''); setPlaying(false); setRecording(false); setVoice(null); setTranscript('');
+    setNotice('Stopping voice and the response…');
+    return stopAudio().then(() => {
+      if (mounted.current && generation.current === at) setNotice('Local recording and playback stopped.');
+    });
+  }}));
+  const closeHeld = async () => {
+    latest.current.onSpeechInterrupted?.();
+    const current = held.current; held.current = null;
+    const results = await Promise.allSettled([stopAudio(), current
+      ? voiceRequest(current.basis, {operation: 'close', voice_ref: current.reading.voice_ref}) : Promise.resolve()]);
+    const failures = results.flatMap(result => result.status === 'rejected' ? [message(result.reason)] : []);
+    if (failures.length) throw Error(failures.join(' '));
   };
   useEffect(() => {
     mounted.current = true; generation.current++; pending.current = false; setViewKey(key);
     setVoice(null); setBusy(''); setError(''); setTranscript(''); setNotice(''); setPlaying(false); setRecording(false);
     return () => {
       mounted.current = false; generation.current++;
-      void closeHeld().catch(() => console.warn('Nara voice cleanup could not be acknowledged by the native owner. Local capture and playback were stopped.'));
+      void closeHeld().catch(() => console.warn('Nara voice cleanup could not be acknowledged by the native owner. Local and native closure must be checked before another voice is opened.'));
     };
   }, [key]);
   const run = async (label: string, operation: (check: () => void) => Promise<void>) => {
@@ -92,6 +137,7 @@ export function NaraVoiceTools(props: VoiceProps) {
     } finally {if (current()) {pending.current = false; setBusy('');}}
   };
   const open = () => void run('Checking the speech connection…', async check => {
+    await stopAudio();check();
     const basis = latest.current.basis; if (!basis) throw Error('Select a saved identity first.');
     const result = await voiceRequest(basis, {operation: 'open'});
     try {check();} catch (failure) {await voiceRequest(basis, {operation: 'close', voice_ref: result.voice_ref}); throw failure;}
@@ -100,7 +146,8 @@ export function NaraVoiceTools(props: VoiceProps) {
   const finish = () => void run('Transcribing your recording…', async check => {
     const lease = held.current, recording = capture.current;
     if (!lease || !recording) throw Error('There is no current recording.');
-    const bytes = await recording.recorder.finish(); capture.current = null; setRecording(false); check();
+    const bytes = await recording.recorder.finish(); check();
+    if (capture.current === recording) capture.current = null; setRecording(false);
     const result = await voiceRequest(lease.basis, {operation: 'transcribe', voice_ref: lease.reading.voice_ref,
       capture_ref: recording.ref, wav_base64: encodeAudio(new Uint8Array(bytes))}); check();
     if (typeof result.transcription?.text !== 'string') throw Error('The speech service returned no transcript.');
@@ -112,12 +159,19 @@ export function NaraVoiceTools(props: VoiceProps) {
     const lease = held.current; if (!lease) throw Error('Open voice first.');
     const result = await voiceRequest(lease.basis, {operation: 'listen', voice_ref: lease.reading.voice_ref}); check();
     if (!result.capture_ref) throw Error('The native owner did not return a recording reference.');
-    const recorder = await VoiceCapture.start(() => finishRef.current());
-    try {check();} catch (failure) {recorder.discard(); throw failure;}
+    const at=generation.current;
+    const recorder = await VoiceCapture.start(failure=>{
+      if(generation.current!==at)return;
+      if(failure)void run('Closing the recording…',async()=>{throw failure;});else finishRef.current();
+    });
+    try {check();} catch (failure) {
+      try{await recorder.discard();}catch(cleanup){throw Error(`${message(failure)} Recording cleanup: ${message(cleanup)}`);}throw failure;
+    }
     capture.current = {recorder, ref: result.capture_ref}; setRecording(true); setTranscript('');
   });
   const speak = () => {
     if (pending.current || props.disabled || !props.visible || playing || recording || !held.current || props.answerBlockId === null) return;
+    if(output.current){setError('Close the previous audio output before starting another answer.');return;}
     // Audio activation occurs during the human gesture, before native TTS IO.
     let context: AudioContext;
     try {context = new AudioContext();} catch (failure) {setError(`Audio output is unavailable: ${message(failure)}`); return;}
@@ -134,16 +188,19 @@ export function NaraVoiceTools(props: VoiceProps) {
       output.current = {context, source}; const at = generation.current, contextKey = keyFor(latest.current);
       source.onended = () => {
         if (output.current?.source !== source) return;
-        output.current = null; void context.close();
+
         if (!mounted.current || at !== generation.current || contextKey !== keyFor(latest.current)) return;
         setPlaying(false);
         // Only natural completion arrives here; stop/cleanup detaches onended.
         void run('Confirming playback finished…', async check => {
+          await context.close();check();if(output.current?.context===context)output.current=null;
           await voiceRequest(lease.basis, {operation: 'complete', voice_ref: lease.reading.voice_ref, response_ref: result.response_ref!}); check();
           setNotice('Playback finished.');
+          await latest.current.onSpeechCompleted?.(block);
         });
       };
       source.start(); setPlaying(true);
+      latest.current.onSpeechAdmitted?.(block, result.response_ref);
     });
   };
   const close = () => {
@@ -177,7 +234,7 @@ export function NaraVoiceTools(props: VoiceProps) {
     </div>}
     {voice && <details className="nara-personal-depth"><summary>About this voice connection</summary><p>Capture, transcription and speech are separate steps. Closing voice stops local audio and releases this connection; it does not cancel a model’s text response. Use the conversation’s interruption control for that request.</p><dl><dt>Native connection</dt><dd>{voice.voice_ref}</dd></dl></details>}
   </section>;
-}
+});
 
 interface ReturnProps extends BasisProps {answerBlockId: number | null}
 export function NaraAnswerReturnTools(props: ReturnProps) {

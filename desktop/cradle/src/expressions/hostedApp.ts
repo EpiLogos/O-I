@@ -216,7 +216,7 @@ export function trackShellCutout(frame: HTMLIFrameElement): () => void {
 //   {v:1, kind:"oi-kernel-channel", channel:"kernel-expression"}.
 
 /** Kernel expression operations the hosted frame may relay. */
-export const FRAME_EXPRESSION_OPERATIONS: ReadonlySet<string> = new Set(["list", "inspect", "create", "edit", "open", "open_file", "save_as", "save", "export", "fork", "index", "close"]);
+export const FRAME_EXPRESSION_OPERATIONS: ReadonlySet<string> = new Set(["profile_define", "profile_inspect", "list", "inspect", "create", "edit", "open", "open_file", "save_as", "save", "export", "fork", "index", "close"]);
 
 /** The relay's envelope version. Bump only with a paired app-side change. */
 export const KERNEL_CHANNEL_VERSION = 1;
@@ -384,13 +384,23 @@ export function relayKernelChannel(frame: HTMLIFrameElement, transport: KernelTr
         return;
       }
       try {
-        const location = await resolveFileLocation(transport, ref);
+        // Opaque refs keep the resolver's exact-identity law. A human path is
+        // resolved by the existing native directory owner, never encoded here.
+        let location;
+        if (ref.startsWith("central:")) location = await resolveFileLocation(transport, ref);
+        else {
+          const slash=ref.lastIndexOf("/"), parent=slash<0?".":ref.slice(0,slash)||"/", name=ref.slice(slash+1);
+          const directory=await listFiles(transport,parent,true);
+          const entry=directory.entries.find(row=>row.name===name&&row.kind==="file");
+          if(!entry||!entry.retrieval_allowed)throw new Error("The native owner does not admit this file path for retrieval");
+          location=entry.location;
+        }
         if (kind === "central-subject-text") {
           const reading = await readFile(transport, location);
-          reply(`${kind}-result`, req, {ok: true, data: {ref, revision: reading.revision, byte_len: reading.byte_len, content: reading.content}});
+          reply(`${kind}-result`, req, {ok: true, data: {requested_ref: ref, ref: reading.location.ref, location: reading.location, native_owner: "central", revision: reading.revision, byte_len: reading.byte_len, content: reading.content}});
         } else {
           const bytes = await readFileBytes(transport, location);
-          reply(`${kind}-result`, req, {ok: true, data: {ref, revision: bytes.revision, byte_len: bytes.byte_len, mime_hint: bytes.mime_hint, content_base64: bytes.content_base64}});
+          reply(`${kind}-result`, req, {ok: true, data: {requested_ref: ref, ref: bytes.location.ref, location: bytes.location, native_owner: "central", revision: bytes.revision, byte_len: bytes.byte_len, mime_hint: bytes.mime_hint, content_base64: bytes.content_base64}});
         }
       } catch (cause) {
         refuse(kind, req, cause instanceof Error ? cause.message : String(cause));

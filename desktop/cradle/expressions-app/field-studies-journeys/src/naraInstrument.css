@@ -21,3 +21,7 @@
 
 body.nara-depth-open .entry-gate{visibility:hidden;pointer-events:none}
 .nara-constituent-editor .nara-id-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.nara-constituent-editor label.nara-id-check{display:flex;align-items:center;gap:8px}.nara-constituent-editor fieldset{padding:14px 0;border-top:1px solid var(--line)}.nara-history-actions{display:flex;gap:20px;font-size:12px;margin-top:18px}
+
+/* The personal instrument remains reachable when the older narrow masthead
+   hides its first text action. This is the real app entry, not overflow. */
+#app .header-actions > .nara-instrument-trigger{display:inline-flex;align-items:center;white-space:nowrap}

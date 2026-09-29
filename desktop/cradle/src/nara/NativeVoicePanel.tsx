@@ -24,17 +24,29 @@ export function NativeVoicePanel(props: Props) {
   const capture = useRef<VoiceCapture | null>(null); const captureRef = useRef<string | null>(null);
   const output = useRef<{context: AudioContext; source?: AudioBufferSourceNode} | null>(null);
   const propsRef = useRef(props); propsRef.current = props;
-  const closeHeld = async () => {
-    capture.current?.discard(); capture.current = null; captureRef.current = null;
-    const current = held.current; held.current = null;
-    const audio = output.current; output.current = null;
-    if (audio) {if (audio.source) {audio.source.onended = null; audio.source.stop();} await audio.context.close();}
-    if (current) await nativeVoice(props.transport, props.project, {operation: 'close', voice_ref: current.voice_ref});
+  const cleanupPending=useRef<Promise<void>|null>(null);
+  const closeHeldNow = async () => {
+    const recorder=capture.current,recordingRef=captureRef.current;capture.current=null;captureRef.current=null;
+    const current=held.current;held.current=null;
+    const audio=output.current;output.current=null;
+    const failures:string[]=[];
+    const recordingStopped=recorder?.discard().catch(failure=>{if(!capture.current){capture.current=recorder;captureRef.current=recordingRef;}failures.push(String(failure));});
+    if(audio?.source){audio.source.onended=null;try{audio.source.stop();}catch(failure){if(!(failure instanceof DOMException&&failure.name==='InvalidStateError'))failures.push(String(failure));}}
+    const results=await Promise.allSettled([recordingStopped,
+      audio&&audio.context.state!=='closed'?audio.context.close().catch(failure=>{if(!output.current)output.current=audio;throw failure;}):Promise.resolve(),
+      current?nativeVoice(props.transport,props.project,{operation:'close',voice_ref:current.voice_ref}).catch(failure=>{if(!held.current)held.current=current;throw failure;}):Promise.resolve(),
+    ]);
+    failures.push(...results.flatMap(result=>result.status==='rejected'?[String(result.reason)]:[]));
+    if(failures.length)throw Error(`Voice cleanup was not fully acknowledged: ${failures.join(' ')}`);
+  };
+  const closeHeld=()=>{
+    const task=cleanupPending.current??closeHeldNow();cleanupPending.current=task;
+    return task.finally(()=>{if(cleanupPending.current===task)cleanupPending.current=null;});
   };
   useEffect(() => {
     generation.current++; pending.current = false;
     setVoice(null); setBusy(''); setError(''); setRecording(false); setPlaying(false); setTranscript(''); setReceipt(null);
-    return () => {generation.current++; void closeHeld().catch(() => {/* The native owner closes the actor on kernel exit; no audio remains active. */});};
+    return () => {generation.current++; void closeHeld().catch(failure=>console.warn('Native voice cleanup was not fully acknowledged',String(failure)));};
   }, [props.selectionKey, props.project, props.transport]);
   const run = async (label: string, operation: (check: () => void) => Promise<void>) => {
     if (pending.current) return;
@@ -43,12 +55,13 @@ export function NativeVoicePanel(props: Props) {
     try {await operation(check);} catch (failure) {
       if (generation.current === started) {
         setError(failure instanceof Error ? failure.message : String(failure));
-        await closeHeld().catch(() => {});
-        setVoice(null); setRecording(false); setPlaying(false);
+        await closeHeld().catch(cleanup=>{if(generation.current===started)setError(`${failure instanceof Error?failure.message:String(failure)} ${String(cleanup)}`);});
+        if(generation.current===started){setVoice(null); setRecording(false); setPlaying(false);}
       }
     } finally {if (generation.current === started) {pending.current = false; setBusy('');}}
   };
   const open = () => void run('Checking the native speech route', async check => {
+    await closeHeld();check();
     const {dialogue, basis} = await props.prepare(); check();
     const result = await nativeVoice(props.transport, props.project, {operation: 'open', binding: {...dialogue.binding, operation: 'lookup'}, context: basis.context});
     try {check();} catch (failure) {await nativeVoice(props.transport, props.project, {operation: 'close', voice_ref: result.voice_ref}); throw failure;}
@@ -57,7 +70,7 @@ export function NativeVoicePanel(props: Props) {
   const finish = () => void run('Transcribing the recording', async check => {
     const current = held.current, recordingRef = captureRef.current, recorder = capture.current;
     if (!current || !recordingRef || !recorder) throw new Error('There is no current native recording.');
-    const bytes = await recorder.finish(); capture.current = null; captureRef.current = null; setRecording(false); check();
+    const bytes = await recorder.finish(); check();if(capture.current===recorder){capture.current=null;captureRef.current=null;}setRecording(false);
     const result = await nativeVoice(props.transport, props.project, {operation: 'transcribe', voice_ref: current.voice_ref, capture_ref: recordingRef, wav_base64: encodeAudio(new Uint8Array(bytes))}); check();
     if (typeof result.transcription?.text !== 'string') throw new Error('The native speech service did not return a transcript.');
     setTranscript(result.transcription.text); setReceipt(result.transcription);
@@ -67,14 +80,20 @@ export function NativeVoicePanel(props: Props) {
     const current = held.current; if (!current) throw new Error('Open the native voice route first.');
     const result = await nativeVoice(props.transport, props.project, {operation: 'listen', voice_ref: current.voice_ref}); check();
     if (!result.capture_ref) throw new Error('The native owner did not grant a recording lease.');
-    const recorder = await VoiceCapture.start(() => finishRef.current());
-    try {check();} catch (failure) {recorder.discard(); throw failure;}
+    const at=generation.current;
+    const recorder=await VoiceCapture.start(failure=>{
+      if(generation.current!==at)return;
+      if(failure)void run('Closing the recording',async()=>{throw failure;});else finishRef.current();
+    });
+    try{check();}catch(failure){try{await recorder.discard();}catch(cleanup){throw Error(`${String(failure)} ${String(cleanup)}`);}throw failure;}
     capture.current = recorder; captureRef.current = result.capture_ref; setRecording(true); setReceipt(result.receipt);
   });
   const runs = nativeTextRuns(props.reading?.blocks ?? []);
   const answer = [...runs].reverse().find(run => run.kind === 'assistant'
     && runs.slice(runs.indexOf(run) + 1).find(row => ['user', 'completed', 'cancelled', 'error'].includes(row.kind))?.kind === 'completed');
   const speak = () => {
+    if(pending.current||props.disabled||playing||recording||!held.current)return;
+    if(output.current){setError('Close the previous audio output before starting another answer.');return;}
     // Resume output directly inside the user's gesture, before native IO.
     const context = new AudioContext(); output.current = {context};
     const resumed = context.resume();
@@ -88,10 +107,11 @@ export function NativeVoicePanel(props: Props) {
       output.current = {context, source};
       const started = generation.current;
       source.onended = () => {
-        output.current = null; void context.close();
+        if(output.current?.source!==source)return;
         if (generation.current !== started) return;
         setPlaying(false);
         void run('Confirming playback completion', async currentCheck => {
+          await context.close();currentCheck();if(output.current?.context===context)output.current=null;
           const complete = await nativeVoice(props.transport, props.project, {operation: 'complete', voice_ref: current.voice_ref, response_ref: result.response_ref!}); currentCheck(); setReceipt(complete);
         });
       };

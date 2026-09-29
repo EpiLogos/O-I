@@ -183,7 +183,7 @@ export function installNativeField(engine:FieldEngineAdapter,onResumeApplication
    if(instrument.refusal)setText('refusal',`Refused (${instrument.refusal.operation}): ${instrument.refusal.reason}`);
    effects(reading.causal_trace,instrument.acting);
    const pose=reading.physical_form_actuator;
-   setText('pose',pose?.applied?`M3 physical form pose actuated by ${pose.consumer}.`:`M3 physical form pose: not actuated — ${pose?.reason??'unavailable'}`);
+   setText('pose',`M3 physical form pose: not actuated — ${pose?.reason??'unavailable'}`);
   }
   const sound=query<HTMLButtonElement>('[data-ni="sound"]');sound.setAttribute('aria-pressed',String(!reading.muted));sound.textContent=reading.muted?'Sound on':'Sound off';
   const audio=reading.native?.audio;

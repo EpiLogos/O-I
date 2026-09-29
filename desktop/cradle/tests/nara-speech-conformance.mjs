@@ -46,6 +46,19 @@ test("fixture dialogue context round-trips byte-exactly through the desktop vali
   assert.deepEqual(validated,dialogueFixture);
 });
 
+test("shared reading validates the native reference-only contract without admitting its contents",()=>{
+  const reading={session_ref:"ql.techne:session:1",reading_ref:"ql.techne:reading:1",reading_revision:"tb0-1"};
+  const context=buildDialogueContext({...structuredClone(dialogueFixture),shared_reading:reading});
+  assert.deepEqual(context.shared_reading,reading);
+  assert.equal(isAdmitted(context,reading.session_ref),true);
+  assert.equal(isAdmitted(context,reading.reading_ref),true);
+  assert.equal(isAdmitted(context,"source:inside-the-reading"),false);
+  assert.throws(()=>admitRefs(context,["source:inside-the-reading"]),/not admitted/);
+  assert.equal(validateDialogueContext({...context,shared_reading:null}).shared_reading,null);
+  assert.throws(()=>validateDialogueContext({...context,shared_reading:{...reading,reading_revision:""}}),/shared reading revision/);
+  assert.throws(()=>validateDialogueContext({...context,shared_reading:{...reading,source_refs:["source:inside-the-reading"]}}),/unknown/);
+});
+
 test("desktop construction from the fixture's own facts reproduces the fixture context",()=>{
   const source=dialogueFixture;
   const built=buildDialogueContext({

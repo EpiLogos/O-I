@@ -138,9 +138,20 @@ class Replay:
         assert all(math.isclose(a, b, abs_tol=1e-8) for a, b in zip(raw, composition['raw_efwa']))
         assert math.isclose(sum(composition['elemental_balance_l1']), 1, abs_tol=1e-12)
         assert math.isclose(sum(v * v for v in composition['q_natal'].values()), 1, abs_tol=1e-12)
-        for centre in composition['centre_evidence']:
+        # Assert the authored graph membership independently of the returned
+        # evidence totals: summing any supplied membership would also accept
+        # the obsolete frozen catalogue's Sun-none/Moon-sacral routing.
+        canonical_bodies = ['Saturn', 'Jupiter', 'Mars', 'Venus', 'Mercury', 'Moon', 'Sun']
+        for ordinal, centre in enumerate(composition['centre_evidence']):
+            assert centre['ordinal'] == ordinal
+            mapped = [body for body in contributions if body['native_planet_id'] in centre['planet_ids']]
+            assert [body['body'] for body in mapped] == [canonical_bodies[ordinal]]
+            assert mapped[0]['planetary_chakra_route']['chakra_coordinate'] == f'#2-5-0/1-{ordinal + 1}'
+            assert mapped[0]['planetary_chakra_route']['relations']
             expected = [sum(body['raw_efwa'][axis] for body in contributions if body['native_planet_id'] in centre['planet_ids']) for axis in range(4)]
             assert all(math.isclose(a, b, abs_tol=1e-8) for a, b in zip(expected, centre['raw_efwa_evidence']))
+        assert all(body['receiving_centre_ordinal'] is None and body['planetary_chakra_route'] is None
+                   for body in contributions if body['body'] in ['Uranus', 'Neptune', 'Pluto'])
         assert reading['private'] is True and reading['public_export'] is False
         return reading
 
@@ -167,7 +178,20 @@ class Replay:
         repeated = self.calculated(self.op('recalculate-reopened-one', 'calculate', profile=reopened['reading']['profile']), one)
         # Each astronomical observation has its own snapshot receipt. That
         # receipt is not a change to the retained source or mathematical result.
-        stable_composition = lambda reading: {key: value for key, value in reading['natal_composition'].items() if key != 'snapshot_ref'}
+        def stable_composition(reading):
+            composition = reading['natal_composition']
+            snapshot = composition['snapshot_ref']
+            # Recalculation has a new native receipt identity. Compare every
+            # numeric value and source/method field while substituting only
+            # occurrences of that exact receipt ref, including centre/decan
+            # provenance. This does not erase source revision differences.
+            def canonical(value):
+                if isinstance(value, dict):
+                    return {key: canonical(item) for key, item in value.items()}
+                if isinstance(value, list):
+                    return [canonical(item) for item in value]
+                return '<current-calculation-receipt>' if value == snapshot else value
+            return canonical(composition)
         self.check('reopened source recomputes identical chart and natal composition', repeated['natal']['chart']['sha256'] == first['natal']['chart']['sha256'] and stable_composition(repeated) == stable_composition(first))
 
         two = copy.deepcopy(one)
@@ -216,6 +240,45 @@ class Replay:
         finally:
             damaged.write_bytes(original)
         self.check('restored source returns to native listing', len(self.op('list-after-source-repair', 'list')['profiles']) == 2)
+
+        # Exercise a real selected calculation policy through Central, then a
+        # fresh kernel. A draft preview must never acquire selected standing
+        # merely because a native reading was requested.
+        self.check('default encoding is an explicitly unselected draft preview',
+                   first['birthdate_encoding']['selected'] is False)
+        calibrated = copy.deepcopy(corrected)
+        calibrated['encoding_policy'] = copy.deepcopy(first['birthdate_encoding']['policy'])
+        calibrated['encoding_policy']['policy_ref'] = 'controlled:encoding-policy:calibration-one'
+        calibrated['encoding_policy']['lens_element_factor'] = 0
+        calibrated['jungian'] = {
+            'source': {'source_ref': 'controlled:assessment:one', 'revision': 'assessment-one', 'standing_ref': 'reported'},
+            'method': 'Controlled comparable function strengths on one ratio scale', 'route': 'import',
+            'data': {'system': 'jungian', 'type': 'INTJ',
+                     'questionnaire_score_basis': 'Comparable measured strengths on the same ratio scale',
+                     'questionnaire_scores': {'sensation': 0, 'intuition': 3, 'feeling': 0, 'thinking': 4}},
+        }
+        native = self.op('inspect-selected-policy', 'inspect', profile=calibrated)['reading']
+        self.check('selected policy changes the actual native name/date calculation',
+                   native['birthdate_encoding']['selected'] is True
+                   and native['birthdate_encoding']['elemental']['raw_efwa'] != first['birthdate_encoding']['elemental']['raw_efwa'])
+        q = native['derived_identity_contributions']['jungian']['quaternion']
+        self.check('reported strengths reach the exact independently expected EFWA quaternion',
+                   all(math.isclose(q[k], value, abs_tol=1e-12) for k, value in zip(['w', 'x', 'y', 'z'], [0, .6, 0, .8])))
+        policy_source = self.op('save-selected-policy', 'save', profile=calibrated,
+                                source_ref=source['source_ref'], expected_revision=corrected_saved['source']['revision'])['source']
+        self.stop()
+        self.start()
+        policy_open = self.op('restart-open-selected-policy', 'open', source_ref=policy_source['source_ref'])
+        self.check('fresh native owner retains selected policy, report, exact revision and derived reading',
+                   policy_open['source'] == policy_source and policy_open['reading']['profile'] == calibrated
+                   and policy_open['reading']['birthdate_encoding'] == native['birthdate_encoding']
+                   and policy_open['reading']['derived_identity_contributions'] == native['derived_identity_contributions'])
+        partial = copy.deepcopy(calibrated)
+        del partial['jungian']['data']['questionnaire_scores']['feeling']
+        partial_read = self.op('inspect-partial-reported-functions', 'inspect', profile=partial)['reading']
+        self.check('partial questionnaire evidence remains unavailable instead of zero-filled',
+                   partial_read['derived_identity_contributions']['jungian']['quaternion'] is None
+                   and partial_read['derived_identity_contributions']['jungian']['missing_functions'] == ['feeling'])
 
 
 def main():

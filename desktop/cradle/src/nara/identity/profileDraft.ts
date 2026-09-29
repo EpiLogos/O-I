@@ -20,6 +20,8 @@ export interface IdentityDraft {
   precision: TimePrecision; uncertainty: string; fold: string;
   place: {label: string; latitude: string; longitude: string; timezone: string; source: string};
   reports: Record<ReportKey, ReportDraft>;
+  encoding_policy?: IdentityProfile['encoding_policy'];
+  composition_policy?: IdentityProfile['composition_policy'];
 }
 export function reportDraft(report: IdentityReport | null): ReportDraft {
   return {enabled: report !== null, route: report?.route ?? 'import',
@@ -38,6 +40,8 @@ export function draftFromProfile(profile: IdentityProfile): IdentityDraft {
     fold: b.fold === null ? '' : String(b.fold),
     place: {label: b.place?.label ?? '', latitude: b.place ? String(b.place.latitude_degrees) : '',
       longitude: b.place ? String(b.place.longitude_degrees) : '', timezone: b.place?.timezone ?? '', source: b.place?.source_ref ?? ''},
+    ...(profile.encoding_policy ? {encoding_policy: structuredClone(profile.encoding_policy)} : {}),
+    ...(profile.composition_policy ? {composition_policy: profile.composition_policy} : {}),
     reports: {jungian: reportDraft(profile.jungian), gene_keys: reportDraft(profile.gene_keys),
       human_design: reportDraft(profile.human_design), quintessence: reportDraft(profile.quintessence)}};
 }
@@ -81,6 +85,8 @@ export function profileFromDraft(draft: IdentityDraft): IdentityProfile {
   }
   const hasPlace = Object.values(draft.place).some(value => value.trim() !== '');
   return {schema: 'ql.nara-identity-profile/v1', person_ref: draft.person_ref, nara_ref: draft.nara_ref,
+    ...(draft.encoding_policy ? {encoding_policy: structuredClone(draft.encoding_policy)} : {}),
+    ...(draft.composition_policy ? {composition_policy: draft.composition_policy} : {}),
     name: draft.name, birth: {date: draft.date || null,
       time: draft.precision === 'unknown' ? null : draft.time || null, precision: draft.precision,
       uncertainty_minutes: draft.precision === 'approximate' ? numberInput(draft.uncertainty, 'the time uncertainty in minutes') : null,

@@ -2,7 +2,6 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {applyPhysicalFormPose} from '../expressions-app/field-studies-journeys/src/physicalFormActuator';
 import {nativeActuatorStanding} from '../expressions-app/field-studies-journeys/src/nativeActuatorStanding';
-import {planAnimaStageActuators} from '../src/nara/animaStageActuators.ts';
 import {bindPersonalProjection,NARA_ANIMA_PROFILE_SCHEMA} from '../src/nara/personalProjection.ts';
 import {stageFocusPlan} from '../src/nara/stageFocus.ts';
 
@@ -25,14 +24,6 @@ test('physical form pose is not actuated while no engine consumer reads it',()=>
   assert.equal(result.applied,false);
   assert.equal(result.status,'not-actuated');
   assert.match(result.reason,/no Expression engine consumer/);
-});
-
-test('physical form actuator maps fold-pose onto degrees only for a consumer that reads it',()=>{
-  const read=[];
-  const result=applyPhysicalFormPose(form(3,6),true,{name:'test pose consumer',apply:(degrees)=>read.push(degrees)});
-  assert.equal(result.applied,true);
-  if(result.applied)assert.equal(result.rotationDegrees,180);
-  assert.deepEqual(read,[180],'applied means the consumer actually received the pose');
 });
 
 test('physical form actuator refuses disconnected consumer and angle collapse',()=>{
@@ -108,43 +99,6 @@ function profile(){
     standing:'live projection',
   };
 }
-
-test('Anima stage actuators drive existing centre entities by locus/title',()=>{
-  const binding=bindPersonalProjection({
-    nara_ref:'nara:desktop',
-    subject_ref:'subject:1',
-    expression_ref:'expression:1',
-    expression_revision:'12',
-    profile:profile(),
-  });
-  const entities=[
-    ...profile().centres.map(c=>({entity_ref:`entity:centre-${c.ordinal}`,title:c.label,subject_ref:c.locus_ref})),
-    {entity_ref:'entity:earth',title:'EarthBody',subject_ref:'ql:nara:subject:1:earth-body'},
-  ];
-  const plan=planAnimaStageActuators(binding,entities);
-  assert.equal(plan.centres.filter(c=>c.applied).length,7);
-  assert.equal(plan.earth_body.applied,true);
-  const first=plan.centres[0];
-  assert.equal(first.applied,true);
-  if(first.applied){
-    assert.ok(first.tintWeight>=0&&first.tintWeight<=1);
-    assert.ok(first.sizeScale>0.8&&first.sizeScale<1.3);
-  }
-});
-
-test('Anima actuators refuse inventing unbound centres or eighth EarthBody peer',()=>{
-  const binding=bindPersonalProjection({
-    nara_ref:'nara:desktop',
-    subject_ref:'subject:1',
-    expression_ref:'expression:1',
-    expression_revision:'12',
-    profile:profile(),
-  });
-  const plan=planAnimaStageActuators(binding,[]);
-  assert.equal(plan.centres.every(c=>!c.applied),true);
-  assert.equal(plan.earth_body.applied,false);
-  assert.match(plan.earth_body.reason,/not invented/);
-});
 
 test('stage focus resolves personal centre locus through co-ref binding',()=>{
   const binding=bindPersonalProjection({

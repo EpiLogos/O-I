@@ -1,0 +1,14 @@
+{
+  "schema": "oi.evidence-supersession/v1",
+  "superseded_artifact": "acceptance-walks.json",
+  "sha256": "b91bfe5aa65388669f42cbc7384fa624fca173a01da838bff54fe14a8a9cbcf7",
+  "standing": "historical synthetic planner checks; not native producer, engine effect, installed UI or commission acceptance",
+  "reason": "The walk supplied fixed centre amplitudes and asserted an unused arbitrary size/tint plan. It did not observe a native identity or actual consumer. The unsupported planner and synthetic acceptance generator are removed. Original receipt bytes remain solely as provenance for earlier reports.",
+  "replacements": [
+    "tests/nara-localized-production-native.mjs",
+    "tests/nara-coordinate-native.mjs",
+    "tests/nara-act-native.mjs",
+    "tests/nara-epii-native.mjs"
+  ],
+  "replacement_standing": "Executable native verification paths; each executed receipt identifies its exact source cut. This supersession does not claim full completion."
+}

@@ -29,7 +29,7 @@ export function ReportFields({kind, raw, onChange}: {kind: ReportKey; raw: strin
       if (e.target.value) set('identity', e.target.value);
       else { const next = {...data}; delete next.identity; onChange(JSON.stringify(next, null, 2)); }
     }}><option value="">Not supplied</option>{typeof data.identity === 'string' && !['A', 'T', ''].includes(data.identity) && <option value={data.identity}>{data.identity} — imported value</option>}<option value="A">A — Assertive</option><option value="T">T — Turbulent</option></select><small>A / T belongs only to a 16-personalities report.</small></Field>}
-  </div></section>;
+  </div><FunctionScores data={data} onChange={onChange}/></section>;
   if (kind === 'gene_keys') {
     const spheres = data.spheres;
     return <section aria-label="Gene Keys report fields">
@@ -72,6 +72,16 @@ export function ReportFields({kind, raw, onChange}: {kind: ReportKey; raw: strin
   </section>;
   if (kind === 'quintessence') return <AuthoredFields data={data} set={set}/>;
   return null;
+}
+function FunctionScores({data, onChange}: {data: Data; onChange: (raw: string) => void}) {
+  const scores = data.questionnaire_scores === undefined ? {} : record(data.questionnaire_scores);
+  const replace = (next: Data) => onChange(JSON.stringify(next, null, 2));
+  return <details><summary>Actual questionnaire function strengths</summary>
+    <p>Use measured function strengths from one comparable scale. A type label or a percentage preference between two traits does not supply these magnitudes.</p>
+    <Field label="Function-strength scale and basis"><input className="oi-input" value={shown(data.questionnaire_score_basis)} onChange={e => {const next = {...data};if (e.target.value) next.questionnaire_score_basis = e.target.value;else delete next.questionnaire_score_basis;replace(next);}}/></Field>
+    {scores ? <div className="nara-id-grid">{['sensation', 'intuition', 'feeling', 'thinking', 'introversion', 'extroversion'].map(name => <Field key={name} label={`Reported ${name} strength`}><input className="oi-input" type="number" min={0} step="any" value={shown(scores[name])} onChange={e => {const next = {...scores};if (e.target.value === '') delete next[name];else if (Number.isFinite(e.target.valueAsNumber)) next[name] = e.target.valueAsNumber;else return;replace({...data, questionnaire_scores: next});}}/></Field>)}</div> : <p>The imported scores are not an object. Correct the source report; the original value is retained.</p>}
+    <p>Leave unmeasured functions empty. All four elemental functions are required; introversion and extroversion remain separate cap readings.</p>
+  </details>;
 }
 function GateList({name, value, onChange}: {name: string; value: JsonValue | undefined; onChange: (value: JsonValue) => void}) {
   if (value === undefined) return <div><p>{name}: not supplied.</p><button type="button" className="oi-action" onClick={() => onChange([])}>Record {name.toLowerCase()} from my report</button></div>;

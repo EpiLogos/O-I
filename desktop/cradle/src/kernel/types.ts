@@ -87,7 +87,8 @@ export interface KernelReceipt {
 }
 
 /** The operation payloads (the Rust `KernelOp`, tagged snake_case). */
-export interface CentralLocation { schema: "central.path-ref/v1"; ref: string; root: string; path: string }
+export type {CentralLocation} from "./location";
+import type {CentralLocation} from "./location";
 /** QL composes the K² binding; the consumer names only texture, scale, sky and an optional event. */
 export interface NativeComposeRequest { texture: [number, number]; units_per_metre: number; sky: "none" | "now" | {epoch: string}; event?: Record<string, unknown> }
 export type NativeExpressionRequest = {operation: "open"; path: string; expected_revision: string} | {operation: "compose"; request: NativeComposeRequest} | {operation: "exchange"; lease: string; request: unknown} | {operation: "close"; lease: string};
@@ -209,6 +210,12 @@ export type KernelOp =
   | {op:"theme_revert"}
   | {op:"theme_remove";id:string}
   | {op:"nara_decision_record";decision:import("../nara/session").SpeechToolDecision}
+  | {op:"nara_epii";project:string;request:import("../nara/epiiTypes").NativeEpiiRequest}
+  | {op:"nara_expressive_act";project:string;request:import("../nara/nativeExpressiveAct").NativeExpressiveActRequest}
+  | {op:"nara_current";project:string;request:import("../nara/nativeCurrent").NativeCurrentRequest}
+  | {op:"m3_reception";project:string;request:import("../nara/nativeM3").NativeM3Request}
+  | {op:"nara_presence";project:string;request:import("../nara/nativePresence").NativePresenceRequest}
+  | {op:"nara_coordinate";request:import("../nara/coordinateExpression").CoordinateRequest}
   | {op:"nara_identity";request:import("../nara/identity/types").NaraIdentityRequest}
   | {op:"nara_voice";project:string;request:import("../nara/nativeVoice").NativeVoiceRequest}
   | {op:"nara_dialogue";project:string;request:import("../nara/nativeDialogue").NativeDialogueRequest}
@@ -373,9 +380,15 @@ export type KernelOpResult =
   | {result:"presentation_reading";document:PresentationDocument}
   | {result:"nara_decision_recorded";decision:unknown}
   | {result: "native_expression"; data: unknown}
+  | {result:"nara_epii";data:import("../nara/epiiTypes").NativeEpiiResult}
+  | {result:"nara_expressive_act";data:import("../nara/nativeExpressiveAct").NativeActReview|import("../nara/nativeExpressiveAct").NativeActEffect|import("../nara/nativeExpressiveAct").NativeActStatus}
+  | {result:"nara_current";data:import("../nara/nativeCurrent").NativeCurrentReading}
+  | {result:"m3_reception";data:import("../nara/nativeM3").NativeM3Reading}
+  | {result:"nara_presence";data:import("../nara/nativePresence").NativePresenceReading}
+  | {result:"nara_coordinate";data:import("../nara/coordinateExpression").CoordinateExpressionResult}
   | {result: "nara_identity"; data: import("../nara/identity/types").NaraIdentityResult}
   | {result:"nara_voice";data:import("../nara/nativeVoice").NativeVoiceResult}
-  | {result:"nara_dialogue";data:import("../nara/nativeDialogue").NativeDialogueResult}
+  | {result:"nara_dialogue";data:import("../nara/nativeDialogue").NativeDialogueResult|import("../nara/nativeDialogue").NativeCoordinateContextResult}
   | {result: "setup_reading"; data: unknown}
   | {result:"being_encounter";data:unknown}
   | {result:"expression";data:import("../expression/types").ExpressionResult}

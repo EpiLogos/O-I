@@ -8,6 +8,8 @@ import {dayRead, type DayReading} from '../day/client';
 import {receiving, type DocumentReading, type ReceivingPage, type ReceivingRequest, type ReturnReading} from '../receiving/client';
 import type {NativeDialogue} from './nativeDialogue';
 import {nativeTextRuns} from './nativeTranscript';
+import {nativeEpii} from './nativeEpii';
+import type {NativeEpiiReview} from './epiiTypes';
 
 type ObjectValue = Record<string, unknown>;
 function object(value: unknown): ObjectValue {
@@ -26,6 +28,9 @@ export interface NativeAnswer {
   questionBlockIds: number[];
   answer: string;
   question: string;
+  /** Set only from the original native inquiry; interpretation comes from its native review owner. */
+  structuredEpii?: boolean;
+  epii?: Pick<NativeEpiiReview, 'enrichment' | 'provenance'>;
   /** Exact submitted basis, deliberately excludes the full private identity matrix. */
   basis: {context: ObjectValue; selected: ObjectValue; identity_source: ObjectValue;
     input_revision: string; expression: ObjectValue};
@@ -47,8 +52,13 @@ export function nativeAnswer(dialogue: NativeDialogue, reading: EncounterReading
   if (!binding || context.subject_ref !== binding.person_ref || context.nara_ref !== binding.nara_ref
     || source.source_ref !== binding.source_ref || expression.ref !== binding.expression_ref
     || input.role !== binding.role) throw new Error('The recorded question does not match the native session’s bound person and Expression.');
-  if (context.agent_session_ref !== reading.agent_session || context.profile_ref !== source.source_ref
-    || context.profile_revision !== source.revision || context.expression_ref !== expression.ref
+  const identityDisclosed = Array.isArray(context.disclosed) && context.disclosed.some((entry: unknown) => {
+    const disclosure = object(entry);return disclosure.ref_id === source.source_ref && disclosure.revision === source.revision
+      && disclosure.disclosure === 'personal-consent';
+  });
+  const profile = expression.profile ? object(expression.profile) : {ref: source.source_ref, revision: source.revision};
+  if (context.agent_session_ref !== reading.agent_session || !identityDisclosed
+    || context.profile_ref !== profile.ref || context.profile_revision !== profile.revision || context.expression_ref !== expression.ref
     || context.expression_revision !== String(expression.revision)) throw new Error('The recorded question has conflicting session, profile or Expression references.');
   // EncounterStore projects HostEvent::TurnEnded as completed/cancelled/error.
   // A later idle connection says nothing about this answer's original turn.
@@ -63,6 +73,7 @@ export function nativeAnswer(dialogue: NativeDialogue, reading: EncounterReading
     questionBlockId: prompt.id, questionBlockIds: prompt.blockIds, answer: blocks[index].text,
     question: text(input.question), basis: {context, selected: object(input.selected), identity_source: source,
       input_revision: text(identity.input_revision), expression}};
+  if (dialogue.role === 'epii' && input.epii_delegation) result.structuredEpii = true;
   if (new TextEncoder().encode(JSON.stringify(result)).length > 256 * 1024) throw new Error('This answer and its basis exceed the bounded retention size.');
   return result;
 }
@@ -96,7 +107,23 @@ export async function readNativeAnswer(transport: KernelTransportStatus, dialogu
         while (start > 0 && blocks[start - 1].kind === 'user') start--;
         // A page starting inside a user text run cannot prove its full basis.
         // Load until the preceding boundary or the beginning of native history.
-        if (start > 0 || !reading.more) return nativeAnswer(dialogue, {...reading, blocks}, blockId);
+        if (start > 0 || !reading.more) {
+          const answer = nativeAnswer(dialogue, {...reading, blocks}, blockId);
+          if (answer.structuredEpii) {
+            const review = await nativeEpii(transport, dialogue.project,
+              {operation:'inspect',binding:dialogue.binding,answer_block_id:answer.blockId});
+            if (review.schema !== 'oi.nara-epii-review/v1') throw new Error('The native Epii review did not return the selected answer.');
+            const provenance = object(review.provenance);
+            if (provenance.agent_session_ref !== dialogue.provisioning.agent_session
+              || JSON.stringify(provenance.answer_block_ids) !== JSON.stringify(answer.answerBlockIds)
+              || JSON.stringify(provenance.question_block_ids) !== JSON.stringify(answer.questionBlockIds)) throw new Error('The native Epii review belongs to another recorded turn.');
+            // Current application permission is deliberately not copied: this
+            // is attributed retention, not permission to apply a proposal.
+            answer.epii = {enrichment:review.enrichment,provenance:review.provenance};
+          }
+          if (new TextEncoder().encode(JSON.stringify(answer)).length > 256 * 1024) throw new Error('This answer, its reviewed reading and basis exceed the bounded retention size.');
+          return answer;
+        }
       }
     }
     const next = reading.blocks[0]?.id;
@@ -107,10 +134,13 @@ export async function readNativeAnswer(transport: KernelTransportStatus, dialogu
 }
 export async function verifyNativeAnswer(transport: KernelTransportStatus, answer: NativeAnswer): Promise<void> {
   const fresh = await readNativeAnswer(transport, answer.dialogue, answer.blockId);
-  if (JSON.stringify([fresh.answer, fresh.question, fresh.basis, fresh.answerBlockIds, fresh.questionBlockIds]) !== JSON.stringify([answer.answer, answer.question, answer.basis, answer.answerBlockIds, answer.questionBlockIds])) throw new Error('The native answer or its original basis changed. Review the transcript again.');
+  if (JSON.stringify([fresh.answer, fresh.question, fresh.basis, fresh.answerBlockIds, fresh.questionBlockIds, fresh.structuredEpii, fresh.epii]) !== JSON.stringify([answer.answer, answer.question, answer.basis, answer.answerBlockIds, answer.questionBlockIds, answer.structuredEpii, answer.epii])) throw new Error('The native answer, its original basis or its reviewed reading changed. Review the transcript again.');
 }
 function escaped(value: string): string {return value.replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]!));}
 export function answerHtml(answer: NativeAnswer, destination: 'flow' | 'day'): string {
+  return renderAnswerHtml(answer, destination, destination === 'flow');
+}
+function renderAnswerHtml(answer: NativeAnswer, destination: 'flow' | 'day', curated: boolean): string {
   const name = answer.dialogue.role === 'epii' ? 'Epii' : 'Nara';
   const explanation = destination === 'day'
     ? `Explicitly retained quotation of ${name} by the person. The quoted agent remains the author of the answer; Central records the authenticated submitter of this quotation separately.`
@@ -121,7 +151,12 @@ export function answerHtml(answer: NativeAnswer, destination: 'flow' | 'day'): s
     question_block_ids: answer.questionBlockIds, original_answer_occurred_at: null,
     occurrence_note: 'The native transcript view exposes no occurrence timestamp; retention time is not substituted for it.',
     ...answer.basis};
-  return `<p>${escaped(explanation)}</p><p><strong>Question</strong> ${escaped(answer.question)}</p>${textToHtml(answer.answer)}<details><summary>Original person, Expression and source basis</summary><pre>${escaped(JSON.stringify(provenance, null, 2))}</pre></details>`;
+  const reviewed = curated ? answer.epii : undefined;
+  const proposal = reviewed?.enrichment.factory_commission_proposal;
+  const content = reviewed
+    ? `${textToHtml(reviewed.enrichment.synthesis)}${proposal ? `<h4>Proposed development work</h4>${textToHtml(proposal.discrepancy)}<p>Proposed for Factory review. Retaining this return does not start the work.</p>` : ''}<details><summary>Source Inspect — original Epii answer</summary>${textToHtml(answer.answer)}<pre>${escaped(JSON.stringify(reviewed, null, 2))}</pre></details>`
+    : textToHtml(answer.answer);
+  return `<p>${escaped(explanation)}</p><p><strong>Question</strong> ${escaped(answer.question)}</p>${content}<details><summary>Original person, Expression and source basis</summary><pre>${escaped(JSON.stringify(provenance, null, 2))}</pre></details>`;
 }
 function participant(instance: FlowInstance, answer: NativeAnswer): QlDocParticipant {
   const session = answer.dialogue.provisioning.agent_session;
@@ -144,7 +179,7 @@ export async function composeFlowAnswer(instance: FlowInstance, answer: NativeAn
   const entryId = await answerId(answer), html = answerHtml(answer, 'flow');
   const existing = instance.doc.entries.find(e => e.id === entryId);
   if (existing) {
-    if (existing.html !== html) throw new Error('The retained answer was edited in this Flow. Its authored version is preserved.');
+    if (existing.html !== html && existing.html !== renderAnswerHtml(answer, 'flow', false)) throw new Error('The retained answer was edited in this Flow. Its authored version is preserved.');
     return {html: instance.html, entryId, already: true};
   }
   const appended = appendEntry(instance.html, answer.answer, {participant: participant(instance, answer)});

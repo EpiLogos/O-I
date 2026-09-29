@@ -92,6 +92,27 @@ test('filtering keeps the selected scene, the material vocabulary and admitted s
   assert.deepEqual(omissions.provenance.map((entry) => entry.ref), ['central:path:/home/f/Central:Control/user/PRIVATE_SENTINEL_PROVENANCE.md', 'agent-session/PRIVATE_SENTINEL_PROVENANCE']);
 });
 
+test('canonical personal Nara source refs are withheld before outward serialization', () => {
+  const personalRefs = [
+    'central:source:control:root:Control/self/nara/identities/private-profile.json',
+    'central:path:/home/f/Central:Control/self/nara/identities/private-profile.json',
+    'Control/self/nara/activity/private-reading.json',
+  ];
+  const native = document();
+  native.entities['expression:sf1-walk:entity:sun'].subject.sources = personalRefs.map(ref => ({ref, revision:'r1', availability:'available'}));
+  native.provenance = personalRefs.map(ref => ({ref, revision:'r1', availability:'available'}));
+  const bundle = projectExpression(input({document:native}));
+  const outward = expressionPublicationPayloads(bundle);
+  for (const ref of personalRefs) {
+    assert.equal(isProtectedRef(ref), true);
+    assert.equal(JSON.stringify(outward).includes(ref), false);
+  }
+  assert.equal(isProtectedRef('Control/self/nara-public/guide.md'), false);
+  const filtered = filterExpressionComposition(native);
+  assert.equal(filtered.omissions.sources.protected.length, personalRefs.length);
+  assert.deepEqual(filtered.omissions.provenance.filter(value => personalRefs.includes(value.ref)).map(value => value.ref), personalRefs);
+});
+
 test('a protected ref travels only when the selection admits that exact ref; disclose_sources none withholds all', () => {
   const admitted = filterExpressionComposition(document(), { scene_refs: ['expression:sf1-walk:scene:open'], include_source_refs: ['central:path:/home/f/Central:Control/user/journal/PRIVATE_SENTINEL_PROTECTED.md'] });
   assert.deepEqual(admitted.composition.entities['expression:sf1-walk:entity:sun'].subject.sources.map((source) => source.ref), ['central:source:project:O-I:ProjectCentral/user/vision.md', 'central:path:/home/f/Central:Control/user/journal/PRIVATE_SENTINEL_PROTECTED.md']);

@@ -27,6 +27,14 @@ pub enum Request {
     Calculate {
         profile: Value,
     },
+    Transit {
+        request: Value,
+    },
+    PersonalCurrent {
+        source_ref: String,
+        expected_revision: String,
+        sky_request: Value,
+    },
     List,
     Open {
         source_ref: String,
@@ -84,18 +92,26 @@ fn reader<R: Read + Send + 'static>(pipe: R) -> mpsc::Receiver<Result<Vec<u8>, S
 }
 
 /// Only configured native executables run. A profile cannot supply a command.
-fn ql(operation: &str, profile: &Value) -> Result<Value, String> {
-    let bytes = profile_bytes(profile)?;
+pub(crate) fn run_ql_nara(operation: &str, input: &Value) -> Result<Value, String> {
+    run_ql_owner("nara", operation, input)
+}
+
+pub(crate) fn run_ql_m3(input: &Value) -> Result<Value, String> {
+    run_ql_owner("kernel", "m3", input)
+}
+
+fn run_ql_owner(family: &str, operation: &str, input: &Value) -> Result<Value, String> {
+    let bytes = profile_bytes(input)?;
     let executable = std::env::var_os("OI_BIN")
         .map(PathBuf::from)
         .unwrap_or_else(|| "oi".into());
     let mut child = Command::new(executable)
-        .args(["ql", "nara", operation, "-", "--json"])
+        .args(["ql", family, operation, "-", "--json"])
         .stdin(Stdio::piped())
         .stdout(Stdio::piped())
         .stderr(Stdio::piped())
         .spawn()
-        .map_err(|e| format!("QL identity owner unavailable: {e}"))?;
+        .map_err(|e| format!("QL Nara owner unavailable: {e}"))?;
     let stdout = reader(child.stdout.take().ok_or("QL stdout unavailable")?);
     let stderr = reader(child.stderr.take().ok_or("QL stderr unavailable")?);
     // A bounded writer also lets a broken owner that never reads stdin time out.
@@ -114,7 +130,7 @@ fn ql(operation: &str, profile: &Value) -> Result<Value, String> {
                 let _ = child.wait();
                 return Err(match result {
                     Err(e) => e.to_string(),
-                    _ => "QL identity calculation exceeded 60 seconds".into(),
+                    _ => "QL Nara operation exceeded 60 seconds".into(),
                 });
             }
         }
@@ -129,14 +145,69 @@ fn ql(operation: &str, profile: &Value) -> Result<Value, String> {
         .map_err(|e| e.to_string())??;
     if !status.success() {
         return Err(format!(
-            "QL identity refused: {}",
+            "QL Nara refused: {}",
             String::from_utf8_lossy(&errors)
         ));
     }
-    let reading: Value =
-        serde_json::from_slice(&output).map_err(|e| format!("QL identity response: {e}"))?;
+    serde_json::from_slice(&output).map_err(|e| format!("QL Nara response: {e}"))
+}
+
+/// QL's typed float fields can serialize an entered JSON integer as `0.0`.
+/// Preserve exact values and object shape while accepting that representation
+/// change. Large integers never pass through a lossy floating conversion.
+fn same_input(left: &Value, right: &Value) -> bool {
+    match (left, right) {
+        (Value::Object(a), Value::Object(b)) => {
+            a.len() == b.len()
+                && a.iter()
+                    .all(|(key, value)| b.get(key).is_some_and(|other| same_input(value, other)))
+        }
+        (Value::Array(a), Value::Array(b)) => {
+            a.len() == b.len() && a.iter().zip(b).all(|(a, b)| same_input(a, b))
+        }
+        (Value::Number(a), Value::Number(b)) if a.is_f64() != b.is_f64() => {
+            let (integer, float) = if a.is_f64() { (b, a) } else { (a, b) };
+            const EXACT_LIMIT: u64 = 1_u64 << 53;
+            let exact = integer
+                .as_i64()
+                .is_some_and(|n| n.unsigned_abs() <= EXACT_LIMIT)
+                || integer.as_u64().is_some_and(|n| n <= EXACT_LIMIT);
+            exact && integer.as_f64() == float.as_f64()
+        }
+        _ => left == right,
+    }
+}
+
+#[cfg(test)]
+mod input_roundtrip_tests {
+    use super::*;
+
+    #[test]
+    fn typed_float_roundtrip_preserves_input_without_relaxing_identity() {
+        let entered = json!({"person_ref":"controlled:one","encoding_policy":{"lens_element_factor":0,"role_weights":[1,0,2]}});
+        let returned = json!({"person_ref":"controlled:one","encoding_policy":{"lens_element_factor":0.0,"role_weights":[1.0,0.0,2.0]}});
+        assert!(same_input(&entered, &returned));
+        let mut changed = returned.clone();
+        changed["person_ref"] = json!("controlled:two");
+        assert!(!same_input(&entered, &changed));
+        changed = returned.clone();
+        changed["encoding_policy"]["role_weights"][0] = json!(1.000000000000001);
+        assert!(!same_input(&entered, &changed));
+        changed = returned;
+        changed["encoding_policy"]["unexpected"] = Value::Null;
+        assert!(!same_input(&entered, &changed));
+        assert!(!same_input(
+            &json!(9007199254740993_u64),
+            &json!(9007199254740992.0)
+        ));
+        assert!(!same_input(&json!(i64::MAX), &json!(i64::MAX as f64)));
+    }
+}
+
+fn ql(operation: &str, profile: &Value) -> Result<Value, String> {
+    let reading = run_ql_nara(operation, profile)?;
     if reading["schema"] != "ql.nara-identity-reading/v1"
-        || reading["profile"] != *profile
+        || !same_input(&reading["profile"], profile)
         || reading["person_ref"] != profile["person_ref"]
     {
         return Err("QL identity returned a different input or unsupported reading".into());
@@ -193,6 +264,33 @@ pub fn apply(client: &CentralClient, request: Request) -> Result<Value, String> 
     match request {
         Request::Inspect { profile } => Ok(result(ql("inspect", &profile)?, None)),
         Request::Calculate { profile } => Ok(result(ql("calculate", &profile)?, None)),
+        Request::Transit { request } => {
+            let transit = run_ql_nara("transit", &request)?;
+            if transit["schema"] != "ql.nara-transit/v1" {
+                return Err("QL returned an unsupported transit reading".into());
+            }
+            Ok(json!({"schema":"oi.nara-identity/v1","transit":transit}))
+        }
+        Request::PersonalCurrent { source_ref, expected_revision, sky_request } => {
+            let (source, profile) = read(client, &source_ref)?;
+            if source.revision.revision != expected_revision {
+                return Err("The identity changed; reopen its current revision before reading the present field".into());
+            }
+            let current = run_ql_nara("personal-current", &json!({
+                "schema":"ql.nara-personal-current-request/v1","profile":profile,"sky_request":sky_request
+            }))?;
+            if current["schema"] != "ql.nara-personal-current/v1"
+                || !same_input(&current["identity"]["profile"], &profile)
+                || current["identity"]["person_ref"] != profile["person_ref"]
+                || current["identity"]["nara_ref"] != profile["nara_ref"] {
+                return Err("QL returned a different personal current basis".into());
+            }
+            let (confirmed, _) = read(client, &source_ref)?;
+            if confirmed.revision.revision != expected_revision {
+                return Err("The saved identity changed while the current field was calculated".into());
+            }
+            Ok(json!({"schema":"oi.nara-identity/v1","source":{"source_ref":source_ref,"revision":expected_revision},"personal_current":current}))
+        }
         Request::Open { source_ref } => {
             let (source, profile) = read(client, &source_ref)?;
             Ok(result(ql("inspect", &profile)?, Some(&source)))

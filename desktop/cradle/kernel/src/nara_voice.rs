@@ -5,15 +5,15 @@ use crate::{
     agency, flow::CentralClient, nara_dialogue, nara_voice_actor::Actor,
     nara_voice_transport::LocalSpeechTransport,
 };
-use base64::{engine::general_purpose::STANDARD, Engine};
+use base64::{Engine, engine::general_purpose::STANDARD};
 use serde::{Deserialize, Serialize};
-use serde_json::{json, Value};
+use serde_json::{Value, json};
 use std::{
     collections::BTreeMap,
     path::PathBuf,
     sync::{
-        atomic::{AtomicU64, Ordering},
         Arc, Mutex,
+        atomic::{AtomicU64, Ordering},
     },
     time::{SystemTime, UNIX_EPOCH},
 };
@@ -94,6 +94,8 @@ pub struct Prepared {
     project: String,
     request: Request,
     document: Value,
+    profile: Option<nara_dialogue::ProfileBasis>,
+    context_state: nara_dialogue::ContextState,
     entry: Option<Arc<Entry>>,
     generation: Arc<AtomicU64>,
     expected_generation: u64,
@@ -104,6 +106,84 @@ fn native_basis(reading: &Value) -> Value {
         "world_binding_ref":reading["world_binding_ref"],"native_session_id":reading["native_session_id"],
         "acting_body":reading["acting_body"],"configuration_revision":reading["configuration_revision"],
         "runtime":reading["runtime"],"composition":reading["composition"]})
+}
+
+#[cfg(test)]
+mod profile_invalidation_tests {
+    use super::*;
+
+    #[test]
+    fn changed_inherited_profile_invalidates_pending_voice_but_retries_do_not() {
+        let mut kernel = crate::Kernel::new(CentralClient::discover());
+        let mut apply = |request: Value| {
+            kernel.apply(
+                serde_json::from_value(json!({"op":"expression","request":request})).unwrap(),
+            )
+        };
+        let parent = json!({"profile_ref":"profile:voice-parent","revision":1,"title":"Parent",
+            "accepted_binding_kinds":["engine_composition"],"parent_profile_refs":[],"provenance":[]});
+        let child = json!({"profile_ref":"profile:voice-child","revision":1,"title":"Child",
+            "accepted_binding_kinds":["engine_composition"],"parent_profile_refs":["profile:voice-parent"],"provenance":[]});
+        for profile in [&parent, &child] {
+            apply(json!({"operation":"profile_define","profile":profile,"actor":"human:test"}))
+                .unwrap();
+        }
+        apply(json!({"operation":"create","expression_ref":"expression:voice-profile-test","title":"Voice profile test","actor":"human:test"})).unwrap();
+        let document = apply(json!({"operation":"edit","expression_ref":"expression:voice-profile-test","expected_revision":1,"actor":"human:test",
+            "changes":[{"change":"profile_adopt","adoption":{"profile_ref":"profile:voice-child","revision":1,"overridden_parameters":{}}}]})).unwrap();
+        let document = match document.result {
+            crate::KernelOpResult::Expression { data } => data["document"].clone(),
+            _ => unreachable!(),
+        };
+        let binding = nara_dialogue::Request {
+            operation: nara_dialogue::Operation::Resolve,
+            source_ref: "central:source:controlled".into(),
+            expected_revision: "r1".into(),
+            person_ref: "person:controlled".into(),
+            nara_ref: "nara:controlled".into(),
+            expression_ref: "expression:voice-profile-test".into(),
+            role: nara_dialogue::Role::Nara,
+        };
+        // Preparation is the real in-flight boundary before provider IO.
+        let pending = kernel
+            .nara_voice
+            .prepare(
+                kernel.client.clone(),
+                kernel.agency.clone(),
+                PathBuf::from("."),
+                String::new(),
+                Request::Open {
+                    binding,
+                    context: Value::Null,
+                },
+                document,
+                None,
+            )
+            .unwrap();
+        let define = |profile: Value| {
+            serde_json::from_value(json!({"op":"expression","request":{"operation":"profile_define","profile":profile,"actor":"human:test"}})).unwrap()
+        };
+        kernel.apply(define(parent.clone())).unwrap();
+        assert_eq!(
+            pending.generation.load(Ordering::SeqCst),
+            pending.expected_generation
+        );
+        let mut invalid = parent.clone();
+        invalid["title"] = json!("Invalid same revision");
+        assert!(kernel.apply(define(invalid)).is_err());
+        assert_eq!(
+            pending.generation.load(Ordering::SeqCst),
+            pending.expected_generation
+        );
+        let mut advanced = parent;
+        advanced["revision"] = json!(2);
+        advanced["title"] = json!("Reviewed parent");
+        kernel.apply(define(advanced)).unwrap();
+        assert_ne!(
+            pending.generation.load(Ordering::SeqCst),
+            pending.expected_generation
+        );
+    }
 }
 impl Session {
     fn reset_actor(&mut self, constitution: &Value, context: &Value) -> Result<Value, String> {
@@ -184,6 +264,7 @@ impl Store {
         project: String,
         request: Request,
         document: Value,
+        profile: Option<nara_dialogue::ProfileBasis>,
     ) -> Result<Prepared, String> {
         let entry = request.voice_ref().map(|r| self.entry(r)).transpose()?;
         if entry.as_ref().is_some_and(|e| e.project != project) {
@@ -206,6 +287,7 @@ impl Store {
             (generation, expected)
         };
         Ok(Prepared {
+            context_state: nara_dialogue::ContextState::default(),
             store: self.clone(),
             client,
             agency,
@@ -213,6 +295,7 @@ impl Store {
             project,
             request,
             document,
+            profile,
             entry,
             generation,
             expected_generation,
@@ -254,6 +337,7 @@ fn validate_context(
         "occasion",
         "bimba",
         "shared_field",
+        "shared_reading",
         "c_prime",
         "expressive_act",
         "hovered_ref",
@@ -325,6 +409,10 @@ fn validate_context(
     Ok(())
 }
 impl Prepared {
+    pub(crate) fn with_context_state(mut self, state: nara_dialogue::ContextState) -> Self {
+        self.context_state = state;
+        self
+    }
     fn require_current(&self, binding: &nara_dialogue::Request) -> Result<(), String> {
         if self.generation.load(Ordering::SeqCst) != self.expected_generation {
             return Err(
@@ -355,7 +443,8 @@ impl Prepared {
                 .0
                 .lock()
                 .map_err(|_| "Voice registry unavailable")?
-                .remove(voice_ref)
+                .get(voice_ref)
+                .cloned()
                 .ok_or("Voice lease already closed")?;
             entry.generation.fetch_add(1, Ordering::SeqCst);
             let mut session = entry
@@ -363,6 +452,13 @@ impl Prepared {
                 .lock()
                 .map_err(|_| "Voice session unavailable")?;
             let receipt = session.actor.call(json!({"operation":"close"}))?;
+            // Retain an unacknowledged closure for retry. Invalidation above
+            // already prevents another operation from using this old lease.
+            self.store
+                .0
+                .lock()
+                .map_err(|_| "Voice registry unavailable")?
+                .remove(voice_ref);
             return Ok(
                 json!({"schema":"oi.nara-voice/v1","voice_ref":voice_ref,"closed":true,"receipt":receipt}),
             );
@@ -385,7 +481,27 @@ impl Prepared {
                     })
                 })
                 .transpose()?;
-        validate_context(&self.document, binding, context, &self.project)?;
+        if binding.role != nara_dialogue::Role::Nara {
+            return Err(
+                "Foreground voice belongs to the canonical Nara, not the Epii inquiry session"
+                    .into(),
+            );
+        }
+        if let Some(profile) = &self.profile {
+            let current = nara_dialogue::read_context_with_state(
+                &self.client,
+                &self.project,
+                binding,
+                &self.document,
+                profile,
+                &self.context_state,
+            )?;
+            if context != &current["context"] {
+                return Err("Native voice context differs from the current resolved coordinate, profile, identity or selection".into());
+            }
+        } else {
+            validate_context(&self.document, binding, context, &self.project)?;
+        }
         self.require_current(binding)?;
         if let Request::Open { .. } = &self.request {
             if self
@@ -501,7 +617,9 @@ impl Prepared {
                     .decode(wav_base64)
                     .map_err(|_| "Voice recording is not valid encoded WAV")?;
                 session.capture = None;
-                let result = session.transport.transcribe(&wav, capture_ref);
+                let result = session.transport.transcribe(&wav, capture_ref, || {
+                    self.generation.load(Ordering::SeqCst) != self.expected_generation
+                });
                 self.require_current(binding)?;
                 let lifecycle = session.reset_actor(&constitution, context)?;
                 let result = result?;
@@ -535,6 +653,7 @@ impl Prepared {
                 let audio = session.transport.synthesize(
                     answer["text"].as_str().ok_or("Native answer text absent")?,
                     &response,
+                    || self.generation.load(Ordering::SeqCst) != self.expected_generation,
                 );
                 self.require_current(binding)?;
                 let audio = match audio {

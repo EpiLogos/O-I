@@ -1,25 +1,43 @@
+import type {NativeCurrentReading} from '../../../src/nara/nativeCurrent';
 /** Personal depth inside the existing Expression application. The native
  * document and engine remain with the host; no private readings enter a
  * Journey, localStorage, export, or a second presentation runtime. */
 import React,{useEffect,useRef,useState} from 'react';
 import {createRoot} from 'react-dom/client';
-import {kernelExpressionsAvailable,naraInstrumentRequest} from './kernelExpressions.js';
+import {kernelExpressionsAvailable,naraInstrumentRequest,nativeExpressionRequest} from './kernelExpressions.js';
 import type {KernelConversion} from './kernelDocumentBridge.js';
-import type {IdentityReading,IdentitySource,NaraIdentityResult,SavedIdentity,ReportKey} from '../../../src/nara/identity/types';
+import type {IdentityReading,IdentitySource,NaraIdentityResult,SavedIdentity,ReportKey,PersonalCurrentReading} from '../../../src/nara/identity/types';
 import {REPORTS,OFFICE_NAMES,newDraft,draftFromProfile,profileFromDraft,changeReportRoute} from '../../../src/nara/identity/profileDraft';
 import type {IdentityDraft} from '../../../src/nara/identity/profileDraft';
 import {ReportFields} from '../../../src/nara/identity/ReportFields';
 import type {NaraInstrumentRequest,NaraInstrumentState,InstrumentIdentity} from '../../../src/nara/instrumentProtocol';
 import {nativeTextRuns} from '../../../src/nara/nativeTranscript';
+import {EpiiReview} from './EpiiReview';
+import {CoordinateAtlas} from './CoordinateAtlas';
 import {IdentityMatrix} from './IdentityMatrix';
-import {NaraVoiceTools,NaraAnswerReturnTools} from './naraConversationTools';
+import {IdentityComposition} from './IdentityComposition';
+import {NaraCurrentSky} from './NaraCurrentSky';
+import {NaraM3} from './NaraM3';
+import type {NativeM3Reading} from '../../../src/nara/nativeM3';
+import {NaraVoiceTools,NaraAnswerReturnTools,type NaraVoiceHandle} from './naraConversationTools';
+import {NaraExpressiveActTools,type NaraActHandle} from './NaraExpressiveActTools';
 import './naraInstrument.css';
+import type {EvidencePresentation} from './naraEvidenceField';
+import type {NatalEvidenceChannel} from '../../../src/nara/identity/evidencePartition';
+import {preparePersonalBodyBindings} from './naraPersonalBody';
+import {validateCoordinateExpression} from '../../../src/nara/coordinateExpression';
+import type {ExpressionResult} from '../../../src/expression/types';
+import type {ChakraId} from '../../src/engine/semantics/chakraSemantics';
 
 export interface NaraInstrumentHost {
  nativeView:()=>KernelConversion|undefined;
  sceneId:()=>string;
+ acceptNativeDocument:(document:unknown)=>Promise<void>|void;
+ presentEvidence?:(presentation:EvidencePresentation|null)=>void;
+ presentForm?:(reading:NativeM3Reading|null)=>void;
 }
-type View='identity'|'matrix'|'composition'|'conversation';
+type View='identity'|'matrix'|'composition'|'form'|'atlas'|'conversation';
+function answerText(text:string){try{const value=JSON.parse(text);return value.schema==='ql.epii-enrichment/v1'&&typeof value.synthesis==='string'?value.synthesis:text;}catch{return text;}}
 const failureText=(text:string)=>{try{const value=JSON.parse(text);return typeof value==='string'?value:value?.Failed?.reason??text;}catch{return text;}};
 function questionText(text:string){try{const value=JSON.parse(text);return value.schema==='oi.nara-dialogue-input/v1'?value.question:text;}catch{return /"(?:profile_ref|natal_composition|subject_ref|agent_session_ref)"\s*:/.test(text)?'Choose Earlier messages to read the complete recorded question.':text;}}
 function Chart({reading}:{reading:IdentityReading|null}){
@@ -65,32 +83,111 @@ function ConstituentEditor({kind,draft,change,error}:{kind:ReportKey;draft:Ident
   <label className="nara-personal-check"><input type="checkbox" checked={r.enabled} onChange={e=>set({...r,enabled:e.target.checked})}/> Include this material</label>
   {r.enabled&&<>
    {(kind==='jungian'||kind==='quintessence')&&<Input label="How this was supplied"><select value={r.route} onChange={e=>{try{set(changeReportRoute(kind,r,e.target.value as 'import'|'self-report'));}catch(e){error(String(e));}}}><option value="import">Imported report</option><option value="self-report">My own report</option></select></Input>}
-   {kind==='jungian'&&r.route==='self-report'?<><Input label="System"><select value={r.system} onChange={e=>set({...r,system:e.target.value,identity:''})}><option value="">Choose a system</option><option value="jungian">Jungian</option><option value="mbti">MBTI</option><option value="16-personalities">16-personalities</option></select></Input><Input label="Four-letter type"><input value={r.type} maxLength={4} onChange={e=>set({...r,type:e.target.value.toUpperCase()})}/></Input>{r.system==='16-personalities'&&<Input label="Identity"><select value={r.identity} onChange={e=>set({...r,identity:e.target.value})}><option value="">Not supplied</option><option value="assertive">Assertive</option><option value="turbulent">Turbulent</option></select></Input>}</>:<ReportFields kind={kind} raw={r.data} onChange={data=>set({...r,data})}/>}
+   {kind==='jungian'&&r.route==='self-report'?<><Input label="System"><select value={r.system} onChange={e=>set({...r,system:e.target.value,identity:''})}><option value="">Choose a system</option><option value="jungian">Jungian</option><option value="mbti">MBTI</option><option value="16-personalities">16-personalities</option></select></Input><Input label="Four-letter type"><input value={r.type} maxLength={4} onChange={e=>set({...r,type:e.target.value.toUpperCase()})}/></Input>{r.system==='16-personalities'&&<Input label="Identity"><select value={r.identity} onChange={e=>set({...r,identity:e.target.value})}><option value="">Not supplied</option><option value="A">Assertive</option><option value="T">Turbulent</option></select></Input>}</>:<ReportFields kind={kind} raw={r.data} onChange={data=>set({...r,data})}/>}
    <details className="nara-personal-depth"><summary>Attribution and method</summary>{([['source','Source'],['revision','Source revision'],['standing','Standing'],['method','Method']] as const).map(([key,label])=><Input key={key} label={label}><input value={r[key]} onChange={e=>set({...r,[key]:e.target.value})}/></Input>)}</details>
   </>}
  </section>;
-}
-function Composition({reading}:{reading:IdentityReading|null}){
- const c=reading?.natal_composition;
- if(!c)return <div className="nara-personal-empty"><h2>Understand the composition.</h2><p>Calculate the natal chart to inspect its actual elemental contributions. Other identity constituents retain their own source and route.</p></div>;
- return <article className="nara-composition-reading"><header><p className="nara-personal-caption">Natal composition</p><h2>What contributes to this reading</h2><p>This is the natal contribution. It is not yet the complete integrated identity.</p></header>
-  <div className="nara-element-reading" aria-label="Calculated elemental proportions">{c.basis_order.map((name,i)=><div key={name}><div><span>{name}</span><strong>{c.elemental_balance_l1[i]>0&&c.elemental_balance_l1[i]<0.001?'<0.1':(c.elemental_balance_l1[i]*100).toFixed(1)}%</strong></div><meter min={0} max={1} value={c.elemental_balance_l1[i]} aria-label={`${name} natal proportion`}/></div>)}</div>
-  <section><h3>Seven receiving centres</h3><p className="nara-personal-muted">Planetary evidence assigned by the native source. These are not live centre amplitudes.</p><div className="nara-centre-evidence">{c.centre_evidence.map(centre=><div key={centre.ordinal}><strong>{centre.label}</strong><section><span>{centre.planet_ids.map(id=>c.planetary_contributions.find(p=>p.native_planet_id===id)?.body??String(id)).join(', ')||'No assigned natal planet'}</span>{centre.natal_orientation&&<details><summary>Natal elemental direction</summary>{centre.natal_orientation.quaternion?<dl>{(['w','x','y','z'] as const).map(k=><React.Fragment key={k}><dt>{centre.natal_orientation!.derivation.mapping[k]}</dt><dd>{centre.natal_orientation!.quaternion![k].toFixed(6)}</dd></React.Fragment>)}</dl>:<p>{centre.natal_orientation.reason}</p>}<p>{centre.natal_orientation.role}</p></details>}</section></div>)}</div></section>
-  <details className="nara-personal-depth"><summary>Weights and quaternion</summary><div className="nara-table-scroll"><table><thead><tr><th>Planet</th><th>Element</th><th>Weight</th><th>Dignity</th><th>Contribution</th></tr></thead><tbody>{c.planetary_contributions.map(p=><tr key={p.native_planet_id}><td>{p.body}</td><td>{p.element}</td><td>{p.keplerian_weight}</td><td>{p.dignity_multiplier}</td><td>{p.weighted_contribution}</td></tr>)}</tbody></table></div><p className="nara-math">q natal = ({c.q_natal.w}, {c.q_natal.x}, {c.q_natal.y}, {c.q_natal.z})</p><p>{c.quaternion_role}</p></details>
-  <details className="nara-personal-depth"><summary>Source and calculation policy</summary><p>{c.policy_source.standing}</p><dl><dt>Policy</dt><dd>{c.policy}</dd><dt>Source</dt><dd>{c.policy_source.repository} / {c.policy_source.path}</dd><dt>Revision</dt><dd>{c.policy_source.revision}</dd></dl></details>
- </article>;
 }
 function NaraInstrument({host,close,visible}:{host:NaraInstrumentHost;close:()=>void;visible:boolean}){
  const [view,setView]=useState<View>('identity'),[draft,setDraft]=useState(newDraft),[reading,setReading]=useState<IdentityReading|null>(null),[source,setSource]=useState<IdentitySource|null>(null);
  const [profiles,setProfiles]=useState<SavedIdentity[]>([]),[selected,setSelected]=useState<InstrumentIdentity|null>(null),[state,setState]=useState<NaraInstrumentState|null>(null);
  const [editor,setEditor]=useState<'birth'|ReportKey>('birth'),[editing,setEditing]=useState(true),[ready,setReady]=useState(kernelExpressionsAvailable),[busy,setBusy]=useState(''),[error,setError]=useState(''),[notice,setNotice]=useState(''),[question,setQuestion]=useState(''),[role,setRole]=useState<'nara'|'epii'>('nara');
  const active=useRef(false),mounted=useRef(true),epoch=useRef(0);
+ const voiceTools=useRef<NaraVoiceHandle>(null),stopPending=useRef(false);
+ const expressiveActTools=useRef<NaraActHandle>(null);
+ const [stopping,setStopping]=useState(false),[stopFailed,setStopFailed]=useState(false);
+ const [voiceActive,setVoiceActive]=useState(false);
+ const [evidenceChannel,setEvidenceChannel]=useState<NatalEvidenceChannel|null>(null);
+ const [evidenceSound,setEvidenceSound]=useState(false);
+ const [evidenceWaves,setEvidenceWaves]=useState(false);
+ const [nativeCurrent,setNativeCurrent]=useState<NativeCurrentReading|null>(null);
+ const [formReading,setFormReading]=useState<NativeM3Reading|null>(null);
+ const formRef=useRef<NativeM3Reading|null>(null);
+ const presentForm=(value:NativeM3Reading|null)=>{
+  try{if(value&&(!selected||value.person_ref!==selected.reading.person_ref||value.identity_source_ref!==selected.source.source_ref||value.identity_revision!==selected.source.revision))throw Error('Select this form’s saved identity before presenting it.');host.presentForm?.(value);formRef.current=value;setFormReading(value);}
+  catch(e){host.presentForm?.(null);formRef.current=null;setFormReading(null);setError(e instanceof Error?e.message:String(e));}
+ };
+ const [includeEarth,setIncludeEarth]=useState(true);
+ const [personalCurrent,setPersonalCurrent]=useState<PersonalCurrentReading|null>(null);
+ useEffect(()=>{setPersonalCurrent(null);setNativeCurrent(null);setEvidenceWaves(false);presentForm(null);},[selected]);
+ useEffect(()=>{
+  const released=(event:MessageEvent)=>{
+   if(event.source!==window.parent||event.data?.v!==1||event.data?.kind!=='oi-nara-identity-released')return;
+   host.presentEvidence?.(null);setEvidenceChannel(null);setSelected(null);setState(null);
+  };
+  window.addEventListener('message',released);return()=>window.removeEventListener('message',released);
+ },[host]);
+ useEffect(()=>{host.presentEvidence?.(null);setEvidenceChannel(null);return()=>host.presentEvidence?.(null);},[selected,host]);
+ const presentEvidence=(channel:NatalEvidenceChannel|null,sound=evidenceSound,waves=evidenceWaves)=>{
+  try{if(channel&&!selected)throw Error('Save and select your identity first.');host.presentEvidence?.(channel&&selected?{identity:selected,channel,sound,waves,current:nativeCurrent}:null);setEvidenceChannel(channel);setEvidenceSound(sound);setEvidenceWaves(!!channel&&waves);setError('');}
+  catch(e){setError(e instanceof Error?e.message:String(e));}
+ };
+ useEffect(()=>{
+  if(!evidenceChannel||!selected||!evidenceWaves)return;
+  try{host.presentEvidence?.({identity:selected,channel:evidenceChannel,sound:evidenceSound,waves:true,current:nativeCurrent});}
+  catch(failure){host.presentEvidence?.(null);setEvidenceChannel(null);setEvidenceWaves(false);setError(failure instanceof Error?failure.message:String(failure));}
+ },[nativeCurrent]);
  const [before,setBefore]=useState<number>();
  const [profileErrors,setProfileErrors]=useState<{source_ref:string;error:string}[]>([]);
  useEffect(()=>{mounted.current=true;const announce=(e:MessageEvent)=>{if(e.source===window.parent&&e.data?.v===1&&e.data?.kind==='oi-kernel-channel')setReady(true);};window.addEventListener('message',announce);setReady(kernelExpressionsAvailable());if(window.parent!==window)window.parent.postMessage({v:1,kind:'oi-kernel-hello'},'*');return()=>{mounted.current=false;epoch.current++;window.removeEventListener('message',announce);};},[]);
  const act=async(label:string,operation:()=>Promise<void>)=>{if(active.current)return;active.current=true;setBusy(label);setError('');setNotice('');try{await operation();}catch(e){if(mounted.current)setError(e instanceof Error?e.message:String(e));}finally{active.current=false;if(mounted.current)setBusy('');}};
  const identity=async(request:Parameters<typeof naraInstrumentRequest>[0]&{operation:'identity'})=>{const r=await naraInstrumentRequest(request);if(r.schema!=='oi.nara-identity/v1')throw Error('The identity owner returned another reading.');return r;};
  const refreshProfiles=async()=>{const r=await identity({operation:'identity',request:{operation:'list'}});if(mounted.current){setProfiles(r.profiles??[]);setProfileErrors(r.errors??[]);}};
+ useEffect(()=>{
+  if(!selected||!evidenceChannel)return;
+  let disposed=false,timer:number;
+  const check=async()=>{
+   try{
+    const result=await identity({operation:'identity',request:{operation:'open',source_ref:selected.source.source_ref}});
+    if(disposed)return;
+    if(result.source?.revision!==selected.source.revision||result.reading?.input_revision!==selected.reading.input_revision)throw Error('Your identity changed. Reopen it to continue its live presentation.');
+    if(evidenceWaves){
+     const expression_ref=host.nativeView()?.document.expression_ref;
+     if(!expression_ref)throw Error('The personal field no longer has its native Expression.');
+     const current=await naraInstrumentRequest({operation:'current_read',basis:{expression_ref,source:selected.source},role:'nara'});
+     if(disposed)return;
+     if(current.schema!=='oi.nara-personal-current-context/v1'||!current.reading||!current.context)throw Error('The native occasion is no longer available. Read its sky again to continue.');
+     if(current.context.reading_ref!==nativeCurrent?.context?.reading_ref){setNativeCurrent(current);setPersonalCurrent(current.reading);}
+    }
+   }catch(cause){
+    if(disposed)return;
+    host.presentEvidence?.(null);setEvidenceChannel(null);setSelected(null);setError(cause instanceof Error?cause.message:String(cause));return;
+   }
+   if(!disposed)timer=window.setTimeout(check,2000);
+  };
+  void check();return()=>{disposed=true;clearTimeout(timer);};
+ },[selected,evidenceChannel,evidenceWaves,nativeCurrent?.context?.reading_ref,host]);
+ const bindPersonalBody=()=>void act('Binding your seven centres',async()=>{
+  if(!selected)throw Error('Save and select your identity first.');
+  const at=epoch.current,current=host.nativeView(),material=current?.journey.scenes.find(scene=>scene.id===host.sceneId());
+  const sceneBinding=current?.bindings[host.sceneId()];
+  if(!current||!material||!sceneBinding)throw Error('Open and save the retained seven-centre Expression first.');
+  const saved=await identity({operation:'identity',request:{operation:'open',source_ref:selected.source.source_ref}});
+  if(saved.source?.revision!==selected.source.revision||saved.reading?.input_revision!==selected.reading.input_revision)throw Error('Your identity changed. Reopen it before binding the centres.');
+  const calculated=await identity({operation:'identity',request:{operation:'calculate',profile:saved.reading.profile}});
+  if(calculated.reading?.input_revision!==selected.reading.input_revision||calculated.reading.person_ref!==selected.reading.person_ref)throw Error('The calculated body does not match your selected identity.');
+  const basis=(await nativeExpressionRequest({operation:'inspect',expression_ref:current.document.expression_ref}) as ExpressionResult).document;
+  if(!basis||basis.revision!==current.document.revision)throw Error('The Expression changed. Reopen its current revision before binding.');
+  const template_bindings=material.entities.filter(entity=>entity.native?.chakraId).map(entity=>{
+   const occurrences=sceneBinding.occurrences.filter(occurrence=>occurrence.view_entity_id===entity.id);
+   if(occurrences.length!==1)throw Error('A centre has no unique native occurrence.');
+   return {entity_ref:occurrences[0].entity_ref,chakraId:entity.native!.chakraId as ChakraId};
+  });
+  const prepared=await preparePersonalBodyBindings(async request=>validateCoordinateExpression(await naraInstrumentRequest({operation:'coordinate',request})),{
+   document:basis,scene_ref:sceneBinding.scene_ref,centre_evidence:calculated.reading.natal_composition?.centre_evidence??[],template_bindings,
+   ...(includeEarth?{create_earth:{entity_ref:`${basis.expression_ref}:entity:occurrence-${crypto.randomUUID()}`}}:{}),
+  });
+  if(!mounted.current||epoch.current!==at||host.nativeView()?.document.expression_ref!==basis.expression_ref||host.sceneId()!==material.id)throw Error('The encounter changed while its sources were read. No bindings were applied.');
+  const latest=await identity({operation:'identity',request:{operation:'open',source_ref:selected.source.source_ref}});
+  if(latest.source?.revision!==selected.source.revision)throw Error('Your identity changed while its sources were read. No bindings were applied.');
+  if(prepared.changes.length){
+   const result=await nativeExpressionRequest({operation:'edit',expression_ref:basis.expression_ref,expected_revision:basis.revision,actor:'human:nara-personal-body',changes:prepared.changes}) as ExpressionResult;
+   if(!result.document)throw Error('The Expression changed before its centres could be bound. Read its current revision and try again.');
+   host.presentEvidence?.(null);setEvidenceChannel(null);
+   await host.acceptNativeDocument(result.document);
+  }
+  setNotice(includeEarth?'Your seven centres and Earth grounding are bound to their native sources. Select a centre or relation in the field to work with Nara about it.':'Your seven centres are bound to their native body sources. Select a centre or relation in the field to work with Nara about it.');
+ });
  useEffect(()=>{if(ready)void act('Reading saved profiles',refreshProfiles);},[ready]);
  const change=(next:IdentityDraft)=>{
   if(active.current){setError('Wait for the current operation, then apply this correction again.');return;}
@@ -128,20 +225,57 @@ function NaraInstrument({host,close,visible}:{host:NaraInstrumentHost;close:()=>
   setSelected(result.identity);setReading(result.identity.reading);setState(result);setNotice('Saved. This identity is selected for the Expression.');await refreshProfiles();
  });
  const basis=()=>{const expression_ref=host.nativeView()?.document.expression_ref;if(!selected||!expression_ref)throw Error('Select a saved identity and open its native Expression to continue.');return {expression_ref,source:selected.source};};
- const dialogue=async(operation:'read'|'send'|'reconnect'|'interrupt',cursor?:number)=>{const at=epoch.current,request={operation,basis:basis(),role,...(operation==='send'?{question}:{}),...(cursor===undefined?{}:{before:cursor})} as NaraInstrumentRequest;const r=await naraInstrumentRequest(request);if(r.schema!=='oi.nara-instrument-state/v1')throw Error('The native conversation returned another reading.');if(mounted.current&&epoch.current===at)setState(r);return r;};
+ const dialogue=async(operation:'read'|'send'|'reconnect',cursor?:number)=>{const at=epoch.current,request={operation:operation==='send'&&role==='epii'?'epii_delegate':operation,basis:basis(),role,...(operation==='send'?{question}:{}),...(cursor===undefined?{}:{before:cursor})} as NaraInstrumentRequest;const r=await naraInstrumentRequest(request);if(r.schema!=='oi.nara-instrument-state/v1')throw Error('The native conversation returned another reading.');if(mounted.current&&epoch.current===at)setState(r);return r;};
+ const stopResponse=async()=>{
+  expressiveActTools.current?.cancelPending();
+  if(stopPending.current)return;stopPending.current=true;setStopping(true);setStopFailed(false);setError('');setNotice('');
+  const at=epoch.current;
+  // Local teardown begins synchronously, even while send/transcription/TTS is
+  // awaiting its owner. Neither failure may prevent the other stop operation.
+  const local=role==='nara'?voiceTools.current?.stopLocal()??Promise.resolve():Promise.resolve();
+  let cancellationRequested=false;
+  const nativeStop=(async()=>{
+   const result=await naraInstrumentRequest({operation:'interrupt',basis:basis(),role});
+   if(result.schema!=='oi.nara-instrument-interruption/v1')throw Error('The native stop operation was not acknowledged.');
+   cancellationRequested=result.cancellation_requested;
+  })();
+  const results=await Promise.allSettled([local,nativeStop]);
+  if(mounted.current){
+   const failures=results.flatMap((result,index)=>result.status==='rejected'?[`${index===0?'Local audio stop':'Native stop'}: ${result.reason instanceof Error?result.reason.message:String(result.reason)}`]:[]);
+   if(failures.length){setError((epoch.current===at?'':'Stopping the previous conversation failed. ')+failures.join(' '));setStopFailed(epoch.current===at);}
+   else if(epoch.current===at)setNotice(cancellationRequested?(role==='nara'?'Local voice stopped. Native cancellation requested; the conversation will confirm its state.':'Native cancellation requested; the conversation will confirm its state.'):role==='nara'?'Voice stopped. No native response was in flight.':'No native response was in flight.');
+  }
+  stopPending.current=false;if(mounted.current)setStopping(false);
+ };
  useEffect(()=>{if(!visible||view!=='conversation'||!selected||!ready||before!==undefined)return;let disposed=false;const current=epoch.current;let timer:number;const poll=async()=>{try{if(!active.current){const r=await naraInstrumentRequest({operation:'read',basis:basis(),role});if(!disposed&&epoch.current===current&&r.schema==='oi.nara-instrument-state/v1')setState(r);}}catch(e){if(!disposed)setError(e instanceof Error?e.message:String(e));}if(!disposed)timer=window.setTimeout(poll,1800);};void poll();return()=>{disposed=true;clearTimeout(timer);};},[visible,view,selected,role,ready,before]);
  const chooseRole=(next:'nara'|'epii')=>{if(role===next)return;epoch.current++;setRole(next);setState(null);setBefore(undefined);};
  const runs=nativeTextRuns(state?.conversation?.blocks??[]),native=state?.conversation?.connection;
  const hostDocument=host.nativeView()?.document;
  const toolBasis=selected&&hostDocument?{expression_ref:hostDocument.expression_ref,source:selected.source}:null;
  const toolSelectionKey=JSON.stringify([hostDocument?.expression_ref,hostDocument?.revision,hostDocument?.selection,selected?.source]);
+ useEffect(()=>{
+  if(!formReading||!toolBasis)return;
+  let disposed=false,timer:number;
+  const check=async()=>{
+   const before=formRef.current;
+   try{
+    const result=await naraInstrumentRequest({operation:'m3',basis:toolBasis,role:'nara',request:{operation:'read'}});
+   if(disposed)return;
+   if(formRef.current!==before){timer=window.setTimeout(check,2000);return;}
+    if(result.schema!=='oi.nara-m3-context/v1'||result.status!=='available'||result.event_ref!==nativeCurrent?.context?.event_ref)throw Error('The native form is no longer current for this encounter.');
+    presentForm(result);
+   }catch(e){if(!disposed){presentForm(null);setError(e instanceof Error?e.message:String(e));return;}}
+   if(!disposed)timer=window.setTimeout(check,2000);
+  };
+  void check();return()=>{disposed=true;clearTimeout(timer);};
+ },[!!formReading,toolSelectionKey,nativeCurrent?.context?.event_ref]);
  const completedAnswers=new Set(runs.filter((run,index)=>run.kind==='assistant'&&runs.slice(index+1).find(next=>['user','completed','cancelled','error'].includes(next.kind))?.kind==='completed').map(run=>run.id));
  const latestAnswer=[...completedAnswers].at(-1)??null;
  const nativeSelection=state?.expression?.selection,entity=nativeSelection?.entity_ref?state?.expression?.entities[nativeSelection.entity_ref]:null;
  const send=()=>void act('Sending to '+(role==='nara'?'Nara':'Epii'),async()=>{if(!question.trim())return;const submitted=question,at=epoch.current;await dialogue('send');if(mounted.current&&epoch.current===at){setBefore(undefined);setQuestion(current=>current===submitted?'':current);}});
  return <section className="nara-personal" aria-label="Nara Expression instrument">
-  <header className="nara-personal-header"><div><p className="nara-personal-caption">Personal Expression</p><h1>{reading?.profile.name||'Nara'}</h1></div><div className="nara-personal-header-actions"><label><span className="nara-sr-only">Saved profiles</span><select aria-label="Saved profiles" value={source?.source_ref??''} disabled={!!busy||!ready} onChange={e=>openProfile(e.target.value)}><option value="">New identity</option>{profiles.map(p=><option value={p.source_ref} key={p.source_ref}>{p.name}</option>)}</select></label><button type="button" onClick={close} aria-label="Return to the Expression">Return to field</button></div></header>
-  <nav className="nara-personal-nav" aria-label="Nara depth">{(['identity','matrix','composition','conversation'] as const).map(v=><button key={v} type="button" aria-current={view===v?'page':undefined} onClick={()=>setView(v)}>{v==='identity'?'Identity':v==='matrix'?'Identity matrix':v==='composition'?'Composition':'With Nara'}</button>)}</nav>
+  <header className="nara-personal-header"><div><p className="nara-personal-caption">Personal Expression</p><h1>{reading?.profile.name||'Nara'}</h1></div><div className="nara-personal-header-actions"><label><span className="nara-sr-only">Saved profiles</span><select aria-label="Saved profiles" value={source?.source_ref??''} disabled={!!busy||stopping||!ready} onChange={e=>openProfile(e.target.value)}><option value="">New identity</option>{profiles.map(p=><option value={p.source_ref} key={p.source_ref}>{p.name}</option>)}</select></label><button type="button" onClick={close} aria-label="Return to the Expression">Return to field</button></div></header>
+  <nav className="nara-personal-nav" aria-label="Nara depth">{(['identity','matrix','composition','form','atlas','conversation'] as const).map(v=><button key={v} type="button" aria-current={view===v?'page':undefined} onClick={()=>setView(v)}>{v==='identity'?'Identity':v==='matrix'?'Identity matrix':v==='composition'?'Composition':v==='form'?'Form and clock':v==='atlas'?'Coordinate Atlas':'With Nara'}</button>)}</nav>
   {!ready&&<p className="nara-personal-status" role="status">Connecting to the native identity owner…</p>}{busy&&<p className="nara-personal-status" role="status">{busy}…</p>}{error&&<p className="nara-personal-error" role="alert">{error}</p>}{notice&&<p className="nara-personal-status" role="status">{notice}</p>}
   {profileErrors.length>0&&<details className="nara-personal-depth"><summary role="status">{profileErrors.length} saved {profileErrors.length===1?'profile could':'profiles could'} not be opened</summary>{profileErrors.map(p=><p key={p.source_ref}>{p.error}<br/><small>{p.source_ref}</small></p>)}</details>}
   <div className="nara-personal-content" aria-busy={!!busy}>
@@ -151,15 +285,18 @@ function NaraInstrument({host,close,visible}:{host:NaraInstrumentHost;close:()=>
     <div className="nara-personal-actions"><button className="nara-primary" type="button" disabled={!!busy||!ready} onClick={calculate}>{reading?'Recalculate chart':'Calculate and review'}</button><button type="button" disabled={!!busy||!reading||!ready} onClick={save}>Save and use identity</button></div>
    </aside><div className="nara-identity-sky"><Chart reading={reading}/></div></div>}
    {view==='matrix'&&<IdentityMatrix reading={reading} onShowNatal={()=>setView('identity')}/>}
-   {view==='composition'&&<Composition reading={reading}/>}
-   {view==='conversation'&&<div className="nara-conversation-layout"><aside><p className="nara-personal-caption">Here, in this Expression</p><h2>{selected?.reading.profile.name||'Choose your identity'}</h2><p>{entity?`Selected: ${entity.title}`:'No centre is selected.'}</p><p className="nara-personal-muted">{selected?'The conversation follows the saved person and actual selected subject.':'Calculate, review and save your identity to continue.'}</p><div className="nara-personal-actions"><button aria-pressed={role==='nara'} disabled={!!busy} onClick={()=>chooseRole('nara')}>Nara</button><button aria-pressed={role==='epii'} disabled={!!busy} onClick={()=>chooseRole('epii')}>Ask Epii</button></div></aside><section className="nara-conversation" aria-label={`${role==='nara'?'Nara':'Epii'} conversation`}>
+   {view==='composition'&&<><NaraCurrentSky basis={toolBasis} identity={selected} reading={personalCurrent} onReading={setPersonalCurrent} onNativeReading={setNativeCurrent} disabled={!!busy||stopping}/><section aria-label="Natal evidence in the living field"><h2>Experience the natal contributions</h2><label><input type="checkbox" checked={includeEarth} disabled={!!busy||stopping} onChange={event=>setIncludeEarth(event.target.checked)}/> Include Earth grounding</label><button type="button" disabled={!!busy||stopping||!selected} onClick={bindPersonalBody}>Bind my seven centres</button><p>Use the computed share reaching each centre to shape its forces in this Expression. Choose one correspondence route; the original reading and authored field remain available.</p><label>Force presentation<select aria-label="Natal force presentation" value={evidenceChannel??''} disabled={!!busy||stopping||!selected||!host.presentEvidence} onChange={e=>presentEvidence((e.target.value||null) as NatalEvidenceChannel|null)}><option value="">Authored field</option><option value="direct-planetary-resonance">Direct planetary resonance</option><option value="decan-ruler-reception">Decan ruler reception</option></select></label><label><input type="checkbox" checked={evidenceSound} disabled={!evidenceChannel||!!busy||stopping} onChange={e=>presentEvidence(evidenceChannel,e.target.checked)}/> Sound the native planetary frequencies</label><label><input type="checkbox" checked={evidenceWaves} disabled={!evidenceChannel||!nativeCurrent?.reading?.baseline_available||!!busy||stopping} onChange={event=>presentEvidence(evidenceChannel,evidenceSound,event.target.checked)}/> Enter the current standing-wave field</label><p>The retained modal physics gives each centre its native planetary drive. The pinned identity and transit reading orients the wave fields around their fixed centres. When you enable the activity policy in Form and clock, its native composition participates too.</p><details><summary>Presentation rule and limits</summary><p>This selected presentation multiplies evaluated force strength and spin by each centre’s share of the original ten-planet total. Unrouted and unresolved shares remain unassigned. Zero-share emitters are absent. The standing-wave option keeps independent resident modes using the authored medium and this selected drive-share policy. It sums time-averaged vibration forces in the existing particle medium; it does not claim audio-rate phase, chakra activation, inter-oscillator energy transfer, or a canonical personal material law. Activity joins only through an explicitly selected native policy and source-bound successful operations.</p></details>{evidenceChannel&&<button onClick={close}>Return to the living field</button>}</section><IdentityComposition reading={reading} disabled={!!busy||stopping} onUsePolicy={policy=>{change({...draft,encoding_policy:policy});setEditing(true);setView('identity');}} onUseComposition={policy=>{change({...draft,composition_policy:policy});setEditing(true);setView('identity');}}/></>}
+   {view==='form'&&<NaraM3 onPresent={presentForm} presented={!!formReading} basis={toolBasis} selectionKey={toolSelectionKey} current={nativeCurrent} disabled={!!busy||stopping||!ready} onCurrent={value=>{setNativeCurrent(value);setPersonalCurrent(value.reading);}}/>}
+   {view==='atlas'&&<CoordinateAtlas host={host} disabled={!!busy||stopping||!ready} identity={selected}/>}
+   {view==='conversation'&&<div className="nara-conversation-layout"><aside><p className="nara-personal-caption">Here, in this Expression</p><h2>{selected?.reading.profile.name||'Choose your identity'}</h2><p>{entity?`Selected: ${entity.title}`:'No centre is selected.'}</p><p className="nara-personal-muted">{selected?'The conversation follows the saved person and actual selected subject.':'Calculate, review and save your identity to continue.'}</p><div className="nara-personal-actions"><button aria-pressed={role==='nara'} disabled={!!busy||stopping} onClick={()=>chooseRole('nara')}>Nara</button><button aria-pressed={role==='epii'} disabled={!!busy||stopping} onClick={()=>chooseRole('epii')}>Ask Epii</button></div></aside><section className="nara-conversation" aria-label={`${role==='nara'?'Nara':'Epii'} conversation`}>
     <p role="status">{native?.state==='TurnInFlight'?'Responding…':native?.state==='Resident'?'Connected':state?.dialogue?'Recorded conversation':'Conversation opens on first send'}</p>
     {state?.dialogue&&native?.state==='Disconnected'&&<button onClick={()=>void act('Reconnecting',async()=>{await dialogue('reconnect');})}>Reconnect this conversation</button>}
     <div className="nara-history-actions">{state?.conversation?.more&&<button disabled={!!busy} onClick={()=>void act('Reading earlier messages',async()=>{const cursor=Math.min(...state.conversation!.blocks.map(b=>b.id));await dialogue('read',cursor);setBefore(cursor);})}>Earlier messages</button>}{before!==undefined&&<button disabled={!!busy} onClick={()=>void act('Reading latest messages',async()=>{await dialogue('read');setBefore(undefined);})}>Latest messages</button>}</div>
-    <ol>{runs.map(b=>b.kind==='user'||b.kind==='assistant'?<li key={b.id} className={b.kind==='user'?'from-person':'from-nara'}><span>{b.kind==='user'?'You':role==='nara'?'Nara':'Epii'}</span><p>{b.kind==='user'?questionText(b.text):b.text}</p>{completedAnswers.has(b.id)&&<NaraAnswerReturnTools basis={toolBasis} role={role} selectionKey={toolSelectionKey} visible={visible&&view==='conversation'} disabled={!!busy} answerBlockId={b.id}/>}</li>:b.kind==='error'||b.kind==='cancelled'?<li key={b.id} className="nara-turn-outcome" role={failureText(b.text)==='Cancelled'?'status':'alert'}>{failureText(b.text)==='Cancelled'?'You stopped this response.':failureText(b.text)}</li>:null)}</ol>
-    <form onSubmit={e=>{e.preventDefault();send();}}><label htmlFor="nara-instrument-question" className="nara-sr-only">Message {role==='nara'?'Nara':'Epii'}</label><textarea id="nara-instrument-question" value={question} onChange={e=>setQuestion(e.target.value)} placeholder={entity?`Ask about ${entity.title}`:'Ask about your identity or this Expression'} rows={3}/><div className="nara-personal-actions"><button className="nara-primary" disabled={!!busy||!selected||!question.trim()||native?.state==='TurnInFlight'}>Send</button>{native?.state==='TurnInFlight'&&<button type="button" onClick={()=>void act('Stopping the response',async()=>{await dialogue('interrupt');})}>Stop response</button>}</div></form>
-    <NaraVoiceTools basis={toolBasis} role={role} selectionKey={toolSelectionKey} visible={visible&&view==='conversation'} disabled={!!busy} running={native?.state==='TurnInFlight'} answerBlockId={latestAnswer} composerEmpty={!question.trim()} receiveTranscript={setQuestion}/>
+    <ol>{runs.map(b=>b.kind==='user'||b.kind==='assistant'?<li key={b.id} className={b.kind==='user'?'from-person':'from-nara'}><span>{b.kind==='user'?'You':role==='nara'?'Nara':'Epii'}</span>{b.kind==='assistant'&&role==='epii'?<details><summary>Source Inspect</summary><pre>{b.text}</pre></details>:<p>{b.kind==='user'?questionText(b.text):answerText(b.text)}</p>}{completedAnswers.has(b.id)&&role==='epii'&&<EpiiReview basis={toolBasis} answerBlockId={b.id} selectionKey={toolSelectionKey} disabled={!!busy||stopping} acceptNativeDocument={host.acceptNativeDocument}/>}{completedAnswers.has(b.id)&&<NaraAnswerReturnTools basis={toolBasis} role={role} selectionKey={toolSelectionKey} visible={visible&&view==='conversation'} disabled={!!busy} answerBlockId={b.id}/>}</li>:b.kind==='error'||b.kind==='cancelled'?<li key={b.id} className="nara-turn-outcome" role={failureText(b.text)==='Cancelled'?'status':'alert'}>{failureText(b.text)==='Cancelled'?'You stopped this response.':failureText(b.text)}</li>:null)}</ol>
+    {role==='epii'&&<p>Investigate the adopted coordinate with Epii. This sends the selected scene’s native subject and relation references for a source-bearing proposal; review any focus change before accepting it. Choose a profile in Coordinates first.</p>}<form onSubmit={e=>{e.preventDefault();if(!stopping)send();}}><label htmlFor="nara-instrument-question" className="nara-sr-only">Message {role==='nara'?'Nara':'Epii'}</label><textarea id="nara-instrument-question" value={question} onChange={e=>setQuestion(e.target.value)} placeholder={entity?`Ask about ${entity.title}`:'Ask about your identity or this Expression'} rows={3}/><div className="nara-personal-actions"><button className="nara-primary" disabled={!!busy||stopping||!selected||!question.trim()||native?.state==='TurnInFlight'}>{role==='epii'?'Request inquiry':'Send'}</button>{(voiceActive||native?.state==='TurnInFlight'||native?.state==='InterruptRequested'||busy.startsWith('Sending to')||stopping||stopFailed)&&<button type="button" disabled={stopping} onClick={()=>void stopResponse()}>{stopping?'Stopping…':stopFailed?'Retry stop':'Stop response'}</button>}</div></form>
+    <NaraVoiceTools ref={voiceTools} basis={toolBasis} role={role} selectionKey={toolSelectionKey} visible={visible&&view==='conversation'} disabled={!!busy||stopping} running={native?.state==='TurnInFlight'} answerBlockId={latestAnswer} composerEmpty={!question.trim()} receiveTranscript={setQuestion} onActivityChange={setVoiceActive} onSpeechAdmitted={(block,response)=>expressiveActTools.current?.speechAdmitted(block,response)} onSpeechCompleted={async block=>{await expressiveActTools.current?.speechCompleted(block);}} onSpeechInterrupted={()=>expressiveActTools.current?.cancelPending()}/>
    </section></div>}
+   <NaraExpressiveActTools ref={expressiveActTools} basis={toolBasis} naraRef={selected?.reading.profile.nara_ref??null} answerBlockId={latestAnswer} selectionKey={toolSelectionKey} visible={visible&&view==='conversation'&&role==='nara'} disabled={!!busy||stopping||native?.state==='TurnInFlight'} acceptNativeDocument={host.acceptNativeDocument} stopSpeech={stopResponse}/>
   </div>
  </section>;
 }
@@ -167,7 +304,7 @@ function NaraInstrument({host,close,visible}:{host:NaraInstrumentHost;close:()=>
 /** One private instrument aperture over the one existing live Expression. */
 export function installNaraInstrument(host:NaraInstrumentHost){
  const container=document.createElement('div');container.className='nara-instrument-aperture';container.hidden=true;document.body.append(container);
- const trigger=document.createElement('button');trigger.type='button';trigger.className='text-button';trigger.textContent='Nara';trigger.setAttribute('aria-expanded','false');trigger.setAttribute('aria-controls','nara-instrument');container.id='nara-instrument';document.querySelector('.header-actions')?.prepend(trigger);
+ const trigger=document.createElement('button');trigger.type='button';trigger.className='text-button nara-instrument-trigger';trigger.textContent='Nara';trigger.setAttribute('aria-expanded','false');trigger.setAttribute('aria-controls','nara-instrument');container.id='nara-instrument';document.querySelector('#app .header-actions')?.prepend(trigger);
  const root=createRoot(container);let visible=false;
  const app=document.getElementById('app'),wasInert=app?.inert??false;
  const render=()=>root.render(<NaraInstrument host={host} close={close} visible={visible}/>);
@@ -175,5 +312,5 @@ export function installNaraInstrument(host:NaraInstrumentHost){
  const open=()=>{visible=true;container.hidden=false;if(app)app.inert=true;trigger.setAttribute('aria-expanded','true');document.body.classList.add('nara-depth-open');render();requestAnimationFrame(()=>container.querySelector<HTMLElement>('select,button')?.focus());};
  render();trigger.addEventListener('click',()=>visible?close():open());
  const key=(e:KeyboardEvent)=>{if(e.key==='Escape'&&visible){e.preventDefault();e.stopPropagation();close();}};container.addEventListener('keydown',key);
- return {open,close,destroy(){root.unmount();if(app)app.inert=wasInert;container.remove();trigger.remove();document.body.classList.remove('nara-depth-open');}};
+ return {open,close,destroy(){root.unmount();host.presentForm?.(null);if(app)app.inert=wasInert;container.remove();trigger.remove();document.body.classList.remove('nara-depth-open');}};
 }

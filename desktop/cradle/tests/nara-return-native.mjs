@@ -22,6 +22,7 @@ const destination = JSON.parse(await readFile(config.destination_receipt, 'utf8'
 assert.equal(destination.world, config.world);
 const checks = [], server = await createServer({configFile: false, root: process.cwd(),
   cacheDir: path.join(config.output, 'vite-ssr-cache', 'initial'), server: {middlewareMode: true, hmr: false, ws: false}, appType: 'custom'});
+let closeOpened;
 try {
   const {kernelOp} = await server.ssrLoadModule('/src/kernel/bridge.ts');
   const owner = await server.ssrLoadModule('/src/nara/nativeReturn.ts');
@@ -29,6 +30,20 @@ try {
   const {receiving} = await server.ssrLoadModule('/src/receiving/client.ts');
   const {htmlToText, textToHtml} = await server.ssrLoadModule('/src/flow/instance.ts');
   const transport = {kind: 'bridge', url: config.bridge};
+  if(config.file_path){
+    assert.match(config.binding.expression_ref,/^expression:controlled-epii-/);
+    const listed=await kernelOp(transport,{op:'expression',request:{operation:'list'}});
+    assert.ok(listed.outcome?.data?.expressions);
+    const wasOpen=listed.outcome.data.expressions.some(value=>value.expression_ref===config.binding.expression_ref);
+    const {hostedCompositionFile}=await server.ssrLoadModule('/src/expressions/hostedComposition.ts');
+    const opened=await hostedCompositionFile(transport,{operation:'open',path:config.file_path});
+    assert.equal(opened.document.expression_ref,config.binding.expression_ref);
+    if(!wasOpen)closeOpened=async()=>{
+      const closed=await kernelOp(transport,{op:'expression',request:{operation:'close',expression_ref:config.binding.expression_ref,actor:'agent:nara-native-verification'}});
+      assert.ok(!closed.error,closed.error);
+      await writeFile(path.join(config.output,'closed-expression.json'),JSON.stringify(closed,null,2));
+    };
+  }
   const result = await kernelOp(transport, {op: 'nara_dialogue', project: config.project,
     request: {...config.binding, operation: 'lookup'}});
   assert.ok(!result.error, result.error);
@@ -37,6 +52,11 @@ try {
   assert.ok(native.provisioning?.agent_session, 'The native owner must disclose an existing session');
   const dialogue = {key: JSON.stringify(native.binding), role: native.binding.role,
     project: config.project, provisioning: native.provisioning, binding: Object.freeze({...native.binding})};
+  if(config.reconnect===true){
+    const connected=await kernelOp(transport,{op:'encounter',project:config.project,request:{action:'reconnect',agent_session:native.provisioning.agent_session,space:native.provisioning.space,provider:native.provisioning.provider}});
+    assert.ok(!connected.error,connected.error);
+    if(config.expected_native_session_id)assert.equal(connected.outcome.data.native_session_id,config.expected_native_session_id);
+  }
   const answer = await owner.readNativeAnswer(transport, dialogue, config.block_id);
   checks.push('Read actual idle native assistant block and original identity/Expression question basis');
   const basis = await instances.readFlowInstance(transport, destination.location);
@@ -46,7 +66,18 @@ try {
   const reopened = await instances.readFlowInstance(transport, destination.location);
   const entry = reopened.doc.entries.find(entry => entry.id === written.entryId);
   assert.ok(entry);
-  assert.equal(entry.html, owner.answerHtml(answer, 'flow'));
+  if(written.already)assert.equal(entry.html,basis.doc.entries.find(e=>e.id===written.entryId).html,'Existing native quotations must not be rewritten by a presentation upgrade');
+  else assert.equal(entry.html, owner.answerHtml(answer, 'flow'));
+  if(config.require_curated===true){
+    assert.ok(answer.epii,'A curated Epii Return must come from actual native typed review');
+    const [primary,inspect]=entry.html.split('<details><summary>Source Inspect — original Epii answer</summary>');
+    assert.ok(inspect,'The raw native answer must be retained in Source Inspect');
+    assert.ok(primary.includes(textToHtml(answer.epii.enrichment.synthesis)));
+    assert.ok(!primary.includes(textToHtml(answer.answer)));
+    assert.ok(inspect.includes(textToHtml(answer.answer)));
+    if(answer.epii.enrichment.factory_commission_proposal)assert.ok(primary.includes(textToHtml(answer.epii.enrichment.factory_commission_proposal.discrepancy)));
+    checks.push('Actual Central Flow primary content contains typed native synthesis/proposal; exact raw answer and native provenance remain in Source Inspect');
+  }
   assert.ok(reopened.doc.meta.participants.some(participant => participant.initial === entry.author
     && participant.kind === 'agent' && participant.ref === dialogue.provisioning.agent_session));
   assert.deepEqual(reopened.doc.entries.filter(entry => entry.id !== written.entryId), basis.doc.entries.filter(entry => entry.id !== written.entryId));
@@ -58,13 +89,14 @@ try {
   assert.equal(twice.doc.entries.filter(entry => entry.id === written.entryId).length, 1);
   assert.equal(twice.revision, reopened.revision);
   checks.push('Repeated retention reads the exact existing entry without a second write');
+  if(answer.epii){
+    const altered={...answer,epii:{...answer.epii,enrichment:{...answer.epii.enrichment,synthesis:answer.epii.enrichment.synthesis+' Not part of the native return.'}}};
+    await assert.rejects(()=>owner.retainAnswerInFlow(transport,twice,altered),/reviewed reading changed/);
+    assert.equal((await instances.readFlowInstance(transport,destination.location)).revision,twice.revision);
+    checks.push('Tampering with the actual typed owner synthesis is refused before any Central write');
+  }
   const other = {...dialogue, binding: {...dialogue.binding, person_ref: 'controlled:wrong-person'}};
-  const nativeReading = {agent_session: dialogue.provisioning.agent_session,
-    blocks: [{id: answer.questionBlockId, kind: 'user', text: JSON.stringify({schema: 'oi.nara-dialogue-input/v1', role: dialogue.role,
-      question: answer.question, context: answer.basis.context, selected: answer.basis.selected,
-      identity: {source: answer.basis.identity_source, input_revision: answer.basis.input_revision}, expression: answer.basis.expression})},
-      {id: answer.blockId, kind: 'assistant', text: answer.answer}], more: false, draft: {text: '', revision: 0}};
-  assert.throws(() => owner.nativeAnswer(other, nativeReading, answer.blockId), /bound person/);
+  await assert.rejects(() => owner.readNativeAnswer(transport, other, answer.blockId), /bound person/);
   checks.push('Different-person native binding refuses the actual retained answer basis before any write');
   let day;
   if (config.day_preparation) {
@@ -189,4 +221,4 @@ try {
     recorded_at: new Date().toISOString(), checks, world: config.world, block_id: config.block_id,
     error: String(error), stack: error?.stack}, null, 2) + '\n');
   throw error;
-} finally {await server.close();}
+} finally {try{await closeOpened?.();}finally{await server.close();}}

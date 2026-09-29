@@ -63,6 +63,7 @@ export const PORTABLE_REPRESENTATION_KINDS = Object.freeze(['image', 'video', 'h
 /** Refs naming protected ground: withheld unless the selection admits the exact ref. */
 export const PROTECTED_REF_PATTERNS = Object.freeze([
   /Control\/user(\/|$)/,
+  /Control\/self\/nara(\/|$)/,
   /Control\/relations(\/|$)/,
   /Control\/machines(\/|$)/,
   /Control\/agents\/expressions(\/|$)/,

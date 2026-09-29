@@ -52,11 +52,22 @@ export interface InstrumentReturnState {
   proposal?: {return_ref: string; revision: string; status: string; included: boolean};
 }
 export type NaraInstrumentRequest =
+  | {operation: 'coordinate'; request: import('./coordinateExpression').CoordinateRequest}
   | {operation: 'identity'; request: NaraIdentityRequest}
   | {operation: 'select_identity'; source: IdentitySource; input_revision: string}
   | {operation: 'release_identity'}
   | {operation: 'read'; basis: InstrumentBasis; role: DialogueRole; before?: number}
-  | {operation: 'send'; basis: InstrumentBasis; role: DialogueRole; question: string}
+  | {operation: 'send' | 'epii_delegate'; basis: InstrumentBasis; role: DialogueRole; question: string}
+  | {operation: 'epii_inspect'; basis: InstrumentBasis; role: 'epii'; answer_block_id: number}
+  | {operation: 'epii_accept'; basis: InstrumentBasis; role: 'epii'; answer_block_id: number; focus_ref: string}
+  | {operation:'act_inspect';basis:InstrumentBasis;role:'nara';answer_block_id:number}
+  | {operation:'act_status';basis:InstrumentBasis;role:'nara'}
+  | {operation:'current_pin';basis:InstrumentBasis;role:'nara';sky_request:import('./identity/types').SkyRequest}
+  | {operation:'current_read';basis:InstrumentBasis;role:'nara'}
+  | {operation:'readiness';basis:InstrumentBasis;role:'nara'}
+  | {operation:'m3';basis:InstrumentBasis;role:'nara';request:import('./nativeM3').M3Gesture}
+  | {operation:'act_focus';basis:InstrumentBasis;role:'nara';answer_block_id:number;target_ref:string}
+  | {operation:'act_restore';basis:InstrumentBasis;role:'nara';act_ref:string;expected_revision:number}
   | {operation: 'reconnect' | 'interrupt'; basis: InstrumentBasis; role: DialogueRole}
   | {operation: 'return_inspect'; basis: InstrumentBasis; role: DialogueRole; answer_block_id: number}
   | {operation: 'return_flow_read'; basis: InstrumentBasis; role: DialogueRole; review_ref: string; flow_ref: string}
@@ -71,4 +82,11 @@ export interface NaraInstrumentState {
   dialogue: InstrumentDialogue | null;
   conversation: InstrumentConversation | null;
 }
-export type NaraInstrumentReply = NaraIdentityResult | NaraInstrumentState | InstrumentReturnState | InstrumentVoiceResult;
+export interface InstrumentInterruptionResult {
+  schema: 'oi.nara-instrument-interruption/v1';
+  agent_session: string | null;
+  /** A cancellation request is not proof the provider has finished stopping. */
+  cancellation_requested: boolean;
+  voice_closed: boolean;
+}
+export type NaraInstrumentReply = import('./nativeM3').NativeM3Reading | import('./runtimeReadiness').RuntimeReadiness | import('./nativeCurrent').NativeCurrentReading | import('./nativeExpressiveAct').NativeActStatus | import('./nativeExpressiveAct').NativeActReview | import('./nativeExpressiveAct').NativeActEffect | import('./epiiTypes').NativeEpiiResult | import('./coordinateExpression').CoordinateExpressionResult | NaraIdentityResult | NaraInstrumentState | InstrumentReturnState | InstrumentVoiceResult | InstrumentInterruptionResult;

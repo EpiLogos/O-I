@@ -256,6 +256,18 @@ pub fn window_redock(window: Window) -> Result<(), String> {
     }
     window.close().map_err(|e| e.to_string())
 }
+/// A Scene portal may return only its exact admitted detached Surface.
+/// Closing follows the existing Destroyed -> window-redock lifecycle.
+#[tauri::command]
+pub fn window_redock_surface(app: AppHandle, window: Window, workspace_id: String, surface_id: String) -> Result<(), String> {
+    if window.label() != "main" { return Err("Portal re-dock belongs to the workspace window".into()); }
+    let label = app.state::<Windows>().0.lock().map_err(|_| "Window state unavailable")?
+        .iter().find(|(_, detached)| detached.workspace_id == workspace_id && detached.binding.id == surface_id)
+        .map(|(label, _)| label.clone()).ok_or("This workspace has no matching detached Surface")?;
+    let target = app.get_webview_window(&label).ok_or("The detached Surface window is no longer available")?;
+    target.close().map_err(|error| error.to_string())
+}
+
 #[tauri::command]
 pub fn window_focus_subject(app: AppHandle, reference: String) -> Result<bool, String> {
     let label = app
