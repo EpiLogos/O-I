@@ -141,6 +141,12 @@
       "spec_ref": "docs/cradle/02-ARCHITECTURE.md \u00a75/\u00a712; canonical plan Lane A \u00a72"
     },
     {
+      "command": "windows::window_redock_surface",
+      "classification": "window-lifecycle",
+      "rationale": "A Scene portal re-docks only its exact admitted detached Surface of the same workspace; closing follows the existing Destroyed -> window-redock lifecycle.",
+      "spec_ref": "docs/cradle/02-ARCHITECTURE.md \u00a75/\u00a712; canonical plan Lane A \u00a72"
+    },
+    {
       "command": "windows::window_focus_subject",
       "classification": "window-lifecycle",
       "rationale": "Native window identity, placement and lifecycle projection.",

@@ -185,6 +185,10 @@ const maxAbs=(x,y,n)=>{let m=0;for(let i=0;i<n;i++)m=Math.max(m,Math.abs(x[i]-y[
 /** Cosine between the control→varied particle displacement and the target change. */
 function alignment(a,v,t0,t1,count){let dot=0,na=0,nb=0;for(let p=0;p<count;p++)for(let k=0;k<3;k++){const i=p*4+k,x=v[i]-a[i],y=t1[i]-t0[i];dot+=x*y;na+=x*x;nb+=y*y;}return dot/Math.sqrt(na*nb||1);}
 function meanDistance(positions,targets,count){let s=0;for(let p=0;p<count;p++){const i=p*4;s+=Math.hypot(positions[i]-targets[i],positions[i+1]-targets[i+1],positions[i+2]-targets[i+2]);}return s/count;}
+/** Particles whose target moved most (top tenth): the scene's skin change is
+ * local on the torus, so nearness is judged where the targets actually moved. */
+function moved(t0,t1,count){const d=Array.from({length:count},(_,p)=>{const i=p*4;return[p,Math.hypot(t1[i]-t0[i],t1[i+1]-t0[i+1],t1[i+2]-t0[i+2])];}).sort((a,b)=>b[1]-a[1]);return d.slice(0,Math.max(1,Math.floor(count/10))).map(x=>x[0]);}
+function meanDistanceAt(positions,targets,particles){let s=0;for(const p of particles){const i=p*4;s+=Math.hypot(positions[i]-targets[i],positions[i+1]-targets[i+1],positions[i+2]-targets[i+2]);}return s/particles.length;}
 function check(ok,text,detail){(ok?report.checks:report.failures).push(detail?{check:text,...detail}:text);}
 try{
  const a=await run('control-a',false),b=await run('control-b',false),v=await run('varied',true);
@@ -209,10 +213,11 @@ try{
  // The intended targets are the admitted frames at the presentation scale,
  // whether or not the GPU-bound textures received them.
  const intendedOld=a.admitted1.map(x=>x*a.scale),intendedNew=v.admitted1.map(x=>x*v.scale);
- const toward={displacement_target_change_cosine:alignment(a.gpu.positions,v.gpu.positions,intendedOld,intendedNew,a.particles),varied_to_new_targets:meanDistance(v.gpu.positions,intendedNew,a.particles),control_to_new_targets:meanDistance(a.gpu.positions,intendedNew,a.particles),control_to_own_targets:meanDistance(a.gpu.positions,intendedOld,a.particles)};
+ const movedSlots=moved(intendedOld,intendedNew,a.particles);
+ const toward={displacement_target_change_cosine:alignment(a.gpu.positions,v.gpu.positions,intendedOld,intendedNew,a.particles),moved_particles:movedSlots.length,varied_to_new_targets:meanDistanceAt(v.gpu.positions,intendedNew,movedSlots),control_to_new_targets:meanDistanceAt(a.gpu.positions,intendedNew,movedSlots),control_to_own_targets:meanDistanceAt(a.gpu.positions,intendedOld,movedSlots),all_particles:{varied_to_new_targets:meanDistance(v.gpu.positions,intendedNew,a.particles),control_to_new_targets:meanDistance(a.gpu.positions,intendedNew,a.particles)}};
  report.gpu={steps:{control:a.gpu.steps,varied:v.gpu.steps},baseline_max_abs_difference:baseline,tolerance,effect_mean_abs_difference:effect,effect_max_abs_difference:effectMax,toward};
  check(effect>tolerance,'GPU: particle positions after N fixed steps differ from control beyond the determinism baseline',{effect,tolerance});
- check(toward.displacement_target_change_cosine>0.1&&toward.varied_to_new_targets<toward.control_to_new_targets,'GPU: particles move toward the new targets (displacement aligned with the target change; nearer the new targets than control)',toward);
+ check(toward.displacement_target_change_cosine>0.1&&toward.varied_to_new_targets<toward.control_to_new_targets,'GPU: particles move toward the new targets (displacement aligned with the target change; where the targets moved most, nearer the new targets than control)',toward);
  // 4. Presentation: canvas pixels and scheduled PCM.
  const pixelBaseline=a.pixels.reduce((s,x,i)=>s+(x!==b.pixels[i]?1:0),0),pixelEffect=a.pixels.reduce((s,x,i)=>s+(x!==v.pixels[i]?1:0),0);
  report.pixels={baseline_differing_channels:pixelBaseline,effect_differing_channels:pixelEffect,total_channels:a.pixels.length};
