@@ -18,6 +18,7 @@
 // `liveness: live` claim. Removing the interception restores `live`.
 import {setup as sourceSetup} from "./editor.mjs";
 import {bindDefaultCentral} from "../editor-doc.mjs";
+import {readTitleVsFirstTabAt} from "../lib/topbar-title-clear.mjs";
 
 const WORLD = "world:central:project:O-I";
 const POSITION = `${WORLD}/central:position:project:O-I:aletheia-5`;
@@ -223,6 +224,8 @@ export default async function run({page, baseUrl, check, metric, shot, channel, 
   const carriedBox = await constituent.locator('[data-relation-group="Carried by"]').boundingBox();
   check(narrow.reduced && narrow.doc <= narrow.inner && narrow.body <= narrow.inner, "(9) At 420×800 with reduced motion the page body does not overflow horizontally", narrow);
   check(Boolean(heading && carriedBox) && heading.width > 0 && heading.x >= 0 && heading.x + heading.width <= narrow.inner + 1 && carriedBox.x >= 0 && carriedBox.x + carriedBox.width <= narrow.inner + 1 && await constituent.locator('[data-relation-group="Carried by"] button').count() === 1, "(9) The Being's title and Carried by group stay within the narrow viewport", {heading, carried_by: carriedBox});
+  const titleClear = await readTitleVsFirstTabAt(page, [[360, 740], [420, 800]]);
+  check(titleClear.every((r) => r.title && r.tab && !r.overlap), "(9) At 420×800 and 360×740 the collapsed scope title and the first tab (Explore) share no pixels", titleClear);
   await shot("being-narrow-reduced-motion");
   await page.setViewportSize({width: 1280, height: 820});
   await page.emulateMedia({reducedMotion: null});

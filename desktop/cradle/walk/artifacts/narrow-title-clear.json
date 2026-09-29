@@ -1,0 +1,173 @@
+{
+  "schema": "oi.cradle.walk.scenario/v1",
+  "scenario": "narrow-title-clear",
+  "spec_ref": "docs/cradle/10-SIDEBARS.md §5.1 L2 (collapsed scope title) at narrow widths",
+  "grade": "B",
+  "binding": null,
+  "generated_at": "2026-09-29T09:37:39.706Z",
+  "environment": {
+    "base_url": "http://localhost:4173",
+    "bridge_url": "http://127.0.0.1:4179",
+    "viewport": "1280x820",
+    "browser_engine": "chromium",
+    "bundle": "walk (WALK=1) served by vite preview",
+    "build_input": {
+      "mode": "fresh-build",
+      "bundle_fingerprint": "5959e076468e9f7fead8d640860a56d15820d88febe746311eb60a13d9c69876"
+    },
+    "node": "v24.16.0",
+    "platform": "darwin",
+    "source": {
+      "repository_root": "/Users/admin/Central/worktrees/env-1/o-i",
+      "repository_head": "c698b727107472731c065e9af62120ee9b2cb16e",
+      "tracked_changes": [
+        "desktop/cradle/src/workspace/shell.css",
+        "desktop/cradle/walk/run.mjs",
+        "desktop/cradle/walk/scenarios/web65-explore-world.mjs"
+      ],
+      "dirty_digest": "c9a9536e57868fe8197087361fd4ec77a45190b0df41d1b11ab976fdaf6c486d",
+      "engine_provenance_path": "/Users/admin/Central/worktrees/env-1/o-i/packages/oi-design-system/expressions-engine/PROVENANCE.json",
+      "engine_source": "EpiLogos/Point-Cloud-Demo",
+      "engine_revision": "91db8428fc9dfba06cd258ec5a58e7dd9eef5313"
+    }
+  },
+  "passed": true,
+  "error": null,
+  "duration_ms": 2356,
+  "checks": [
+    {
+      "ok": true,
+      "label": "At 1280×820 the first tab still shares the window row (desktop layout unchanged)",
+      "data": {
+        "tab": {
+          "x": 245,
+          "y": 0.5,
+          "width": 105.859375,
+          "height": 32
+        }
+      }
+    },
+    {
+      "ok": true,
+      "label": "At 420×800 the scope title and the first tab share no pixels",
+      "data": {
+        "viewport": "420×800",
+        "title": {
+          "x": 51,
+          "y": 5,
+          "width": 43.546875,
+          "height": 18
+        },
+        "tab": {
+          "x": 5,
+          "y": 32.5,
+          "width": 105.859375,
+          "height": 32
+        },
+        "overlap": false
+      }
+    },
+    {
+      "ok": true,
+      "label": "At 420×800 the first tab sits below the corner toggle",
+      "data": {
+        "toggle": {
+          "x": 12,
+          "y": 5.5,
+          "width": 21,
+          "height": 21
+        },
+        "tab": {
+          "x": 5,
+          "y": 32.5,
+          "width": 105.859375,
+          "height": 32
+        }
+      }
+    },
+    {
+      "ok": true,
+      "label": "At 360×740 the scope title and the first tab share no pixels",
+      "data": {
+        "viewport": "360×740",
+        "title": {
+          "x": 51,
+          "y": 5,
+          "width": 43.546875,
+          "height": 18
+        },
+        "tab": {
+          "x": 5,
+          "y": 32.5,
+          "width": 105.859375,
+          "height": 32
+        },
+        "overlap": false
+      }
+    },
+    {
+      "ok": true,
+      "label": "At 360×740 the first tab sits below the corner toggle",
+      "data": {
+        "toggle": {
+          "x": 12,
+          "y": 5.5,
+          "width": 21,
+          "height": 21
+        },
+        "tab": {
+          "x": 5,
+          "y": 32.5,
+          "width": 105.859375,
+          "height": 32
+        }
+      }
+    }
+  ],
+  "ops": [
+    {
+      "ok": true,
+      "op": "info",
+      "duration_ms": 0,
+      "data": {
+        "schema": "oi.cradle.walk/v1",
+        "mounted_at": "2026-09-29T09:37:39.921Z",
+        "transport": {
+          "kind": "bridge",
+          "url": "http://127.0.0.1:4179"
+        },
+        "url": "http://localhost:4173/"
+      }
+    },
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 36,
+      "data": {
+        "file": "narrow-title-clear-desktop-1280.png"
+      }
+    },
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 39,
+      "data": {
+        "file": "narrow-title-clear-title-clear-420.png"
+      }
+    },
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 41,
+      "data": {
+        "file": "narrow-title-clear-title-clear-360.png"
+      }
+    }
+  ],
+  "metrics": {},
+  "screenshots": [
+    "narrow-title-clear-desktop-1280.png",
+    "narrow-title-clear-title-clear-420.png",
+    "narrow-title-clear-title-clear-360.png"
+  ]
+}
