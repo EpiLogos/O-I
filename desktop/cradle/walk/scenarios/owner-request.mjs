@@ -57,6 +57,14 @@ export async function setup(args) {
     }
     writeFileSync(relationsPath, JSON.stringify(relations, null, 2));
 
+    // Who carries a commissioned Run: the O:I guardian and its family, as
+    // Central records them (the owner's arrangement, proposed the same way).
+    const open = as("");
+    open("central.agent-set.propose", {scope: "root", ref: "suite-guardians", revision: "r1", reason: "walk fixture of the owner's guardian family",
+      members: ["central", "aikit", "actuation", "factory", "workcell", "ql"].map(name => ({kind: "agent", agent_ref: `agent/${name}-guardian`}))});
+    open("central.agent-set.propose", {scope: "root", ref: "oi-guardians", revision: "r1", reason: "walk fixture of the owner's guardian family",
+      orchestrator_agent_ref: "agent/oi-field-guardian", members: [{kind: "agent", agent_ref: "agent/oi-field-guardian"}, {kind: "agent-set", agent_set_ref: "suite-guardians"}]});
+
     // The project's own Factory source, set up by the owner CLI.
     const factorySource = JSON.parse(execFileSync(factory, ["project", "setup", join(source.root, "Work", project), "central-project:Editor", "--json"], {encoding: "utf8"}));
 
@@ -135,8 +143,11 @@ export default async function run({page, baseUrl, check, shot, channel, provisio
   check(proposal.record.status === "included" && proposal.record.realisation?.ref === run && proposal.record.realisation.owner_ref === "factory" && proposal.record.review.note === "Verification only — no patch.",
     "Central records the acceptance, the person's note and Factory's Run as distinct facts");
   const commission = JSON.parse(execFileSync(p.factory, ["development", "commission-read", p.factorySource.statePath, `commission:inbox-${p.proposal.return_ref.split(":").pop()}`, "--json"], {encoding: "utf8"}));
-  check(commission.commission?.runRef === run && commission.commission.request.participantRequirements[0].sourceRef === p.proposal.return_ref,
+  const commissioned_ = commission.commission?.request;
+  check(commission.commission?.runRef === run && commissioned_.participantRequirements[0].sourceRef === p.proposal.return_ref,
     "Factory's own reading holds the Run, commissioned from exactly the accepted item");
+  check(commissioned_.rootAct.agentRef === "agent/oi-field-guardian" && commissioned_.participantRequirements.some(r => r.ref === "agent-set/oi-guardians" && r.sourceRevision === "r1"),
+    "The O:I guardian carries the Run, with the family it calls on named from Central's record");
   const nowReading = read("central.now.read", {project: p.project, now_ref: p.now.now_ref});
   const back = Object.fromEntries(nowReading.returns.map(row => [row.return_ref, row]));
   check(back[p.question.return_ref]?.decision?.answer === "Omarchy now; state plainly that it cannot claim Mac Metal." && back[p.question.return_ref].settled === true,

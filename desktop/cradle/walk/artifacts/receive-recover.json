@@ -20,7 +20,7 @@
     ],
     "claims_grade": "D"
   },
-  "generated_at": "2026-09-29T10:14:39.071Z",
+  "generated_at": "2026-09-29T12:08:08.825Z",
   "environment": {
     "base_url": "http://localhost:4173",
     "bridge_url": "http://127.0.0.1:4179",
@@ -29,39 +29,22 @@
     "bundle": "walk (WALK=1) served by vite preview",
     "build_input": {
       "mode": "fresh-build",
-      "bundle_fingerprint": "d13f99a49622a76c9d747ed7879fbdcd2999d6d85cd39db04fb6ccde73a7aeb8"
+      "bundle_fingerprint": "f93ec8a1604bd6117b79a2a58d79ab7cf4c2b75d481cfbb9cf7fc35ce6eb8806"
     },
     "node": "v24.16.0",
     "platform": "darwin",
     "source": {
       "repository_root": "/Users/admin/Central/worktrees/env-2/o-i",
-      "repository_head": "c698b727107472731c065e9af62120ee9b2cb16e",
+      "repository_head": "b10d6ebf4c9f0ed2ad49bd754125b26dc2459af2",
       "tracked_changes": [
-        "desktop/cradle/kernel/src/decision.rs",
-        "desktop/cradle/kernel/src/factory.rs",
-        "desktop/cradle/kernel/src/flow.rs",
-        "desktop/cradle/src/contributions/factory/desk/factoryReads.ts",
-        "desktop/cradle/src/explore/ContributionPanel.tsx",
+        "desktop/cradle/kernel/src/central.rs",
+        "desktop/cradle/src/central/client.ts",
         "desktop/cradle/src/receiving/ReceivingTray.tsx",
-        "desktop/cradle/src/receiving/client.ts",
-        "desktop/cradle/src/receiving/receiving.css",
-        "desktop/cradle/walk/artifacts/receive-include-accepted-on-current-basis.png",
-        "desktop/cradle/walk/artifacts/receive-include-failure.png",
-        "desktop/cradle/walk/artifacts/receive-include-included-with-attribution.png",
-        "desktop/cradle/walk/artifacts/receive-include-return-expanded-before-review.png",
-        "desktop/cradle/walk/artifacts/receive-include-stale-basis-refusal.png",
-        "desktop/cradle/walk/artifacts/receive-include.json",
-        "desktop/cradle/walk/artifacts/receive-recover-failure.png",
-        "desktop/cradle/walk/artifacts/receive-recover-inclusion-recovered.png",
-        "desktop/cradle/walk/artifacts/receive-recover-inclusion-uncertain.png",
-        "desktop/cradle/walk/artifacts/receive-recover-rejected-beside-document.png",
-        "desktop/cradle/walk/artifacts/receive-recover-return-beside-open-document.png",
-        "desktop/cradle/walk/artifacts/receive-recover.json",
-        "desktop/cradle/walk/run.mjs",
-        "desktop/cradle/walk/scenario-bindings.json",
-        "desktop/cradle/walk/scenarios/receive-include.mjs"
+        "desktop/cradle/src/receiving/commission.ts",
+        "desktop/cradle/tests/inbox-owner-requests.test.mjs",
+        "desktop/cradle/walk/scenarios/owner-request.mjs"
       ],
-      "dirty_digest": "89707ccff8b7197356a6821abed1dcb47f312ebb4f1f8085ea472570bef7520a",
+      "dirty_digest": "d9a3e95c631a412aa095b9b60186316967114b3335c4dbb7c8052c80849602da",
       "engine_provenance_path": "/Users/admin/Central/worktrees/env-2/o-i/packages/oi-design-system/expressions-engine/PROVENANCE.json",
       "engine_source": "EpiLogos/Point-Cloud-Demo",
       "engine_revision": "91db8428fc9dfba06cd258ec5a58e7dd9eef5313"
@@ -69,7 +52,7 @@
   },
   "passed": true,
   "error": null,
-  "duration_ms": 4134,
+  "duration_ms": 2434,
   "checks": [
     {
       "ok": true,
@@ -158,10 +141,10 @@
     {
       "ok": true,
       "op": "info",
-      "duration_ms": 0,
+      "duration_ms": 0.1,
       "data": {
         "schema": "oi.cradle.walk/v1",
-        "mounted_at": "2026-09-29T10:14:39.391Z",
+        "mounted_at": "2026-09-29T12:08:08.980Z",
         "transport": {
           "kind": "bridge",
           "url": "http://127.0.0.1:4179"
@@ -172,7 +155,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 75,
+      "duration_ms": 31,
       "data": {
         "file": "receive-recover-return-beside-open-document.png"
       }
@@ -180,7 +163,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 60,
+      "duration_ms": 29,
       "data": {
         "file": "receive-recover-rejected-beside-document.png"
       }
@@ -188,7 +171,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 73,
+      "duration_ms": 58,
       "data": {
         "file": "receive-recover-inclusion-uncertain.png"
       }
@@ -196,7 +179,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 48,
+      "duration_ms": 50,
       "data": {
         "file": "receive-recover-inclusion-recovered.png"
       }

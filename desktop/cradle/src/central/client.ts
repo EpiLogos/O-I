@@ -9,7 +9,10 @@ export type CentralRequest =
  | {kind:"source-location";source_ref:string}
  | {kind:"open-day";day_ref?:string}
  | {kind:"ensure-day";expected_time_policy_revision:string}
- | {kind:"initialise-day";day_ref:string;document_id:string;expected_revision:string;expected_policy_revision:string;form:CentralLocation;expected_form_revision:string};
+ | {kind:"initialise-day";day_ref:string;document_id:string;expected_revision:string;expected_policy_revision:string;form:CentralLocation;expected_form_revision:string}
+ | {kind:"agent-set";agent_set_ref:string};
+/** One authored root agent-set, as `central.agent-set.read` returns it. */
+export interface AgentSetReading {kind:"agent-set";ref:string;revision:string;source_path:string;record:{orchestrator_agent_ref?:string|null;members:{kind:string;agent_ref?:string;agent_set_ref?:string}[]}}
 export interface Reading<T> {state:"ready"|"failed"|"stale"|"denied"|"unavailable";action:string;data?:T;error?:{message?:string;code?:string};native_status?:string}
 export interface SourceRow {binding:{ref:string;path:string;provenance:string;standing:string;treatment:string;roles:string[];agent_retrieval_allowed:boolean};revision:{revision:string}}
 export interface TimeReading {schema:"central.civil-time-reading/v1";civil_date:string;local_time:string;revision:string;source_ref:string;policy:{timezone:string;day_boundary_minutes:number;automatic_day_rollover:boolean}}

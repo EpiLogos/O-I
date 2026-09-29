@@ -1,7 +1,8 @@
 import {useCallback,useEffect,useRef,useState} from "react";
 import {useKernel} from "../kernel/KernelProvider";
 import {isRequest,receiving,type DocumentReading,type ReceivingPage,type ReceivingRequest,type ReturnReading,type ReturnRow} from "./client";
-import {awaitsFactory,commissionRequest} from "./commission";
+import {awaitsFactory,CARRYING_FAMILY,commissionRequest} from "./commission";
+import {central,type AgentSetReading} from "../central/client";
 import {commission,discoverSources} from "../contributions/factory/desk/factoryReads";
 import {CENTRAL_SCOPE} from "../workspace/scope";
 import {htmlToText} from "../flow/instance";
@@ -190,7 +191,8 @@ export function ReceivingTray({inbox,onOpenMaterial}:{inbox:InboxReading&{reload
   const discovery=await discoverSources(kernel.transport,register.project?{kind:"project",project:register.project}:CENTRAL_SCOPE);
   const source=discovery.sources[0];
   if(!source?.projectKey)throw new Error(`Factory has no development source for ${register.label}`);
-  const receipt=await commission(kernel.transport,source.statePath,commissionRequest(reading,{statePath:source.statePath,projectKey:source.projectKey},register.project));
+  const family=await central<AgentSetReading>(kernel.transport,null,{kind:"agent-set",agent_set_ref:CARRYING_FAMILY});
+  const receipt=await commission(kernel.transport,source.statePath,commissionRequest(reading,{statePath:source.statePath,projectKey:source.projectKey},register.project,family));
   return call<ReturnReading>(register,{kind:"include",return_ref:reading.return_ref,expected_return_revision:reading.revision,
    realisation_ref:receipt.commission.runRef,realisation_owner_ref:"factory"});
  };

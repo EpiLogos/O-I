@@ -11,11 +11,13 @@
  * interruption replays in Factory (`already-applied`) instead of minting a
  * second Run. */
 import type {ReturnReading} from "./client";
+import type {AgentSetReading} from "../central/client";
 
-/** Factory's standing developmental Agency — the same default the owner's
- * own commissions use. The proposing Agent asked for the work; it is not
- * thereby the Agent that carries it. */
-export const COMMISSIONED_AGENT="agent/factory-guardian";
+/** Who carries a commissioned Run: the O:I guardian and the family under it
+ * (Central's root agent-set `oi-guardians`), which calls on the Factory
+ * guardian where needed — the owner's standing arrangement (2026-09-29).
+ * The proposing Agent asked for the work; it is not thereby its carrier. */
+export const CARRYING_FAMILY="oi-guardians";
 
 export interface FactorySource {statePath:string;projectKey:string}
 
@@ -36,9 +38,11 @@ export const acceptedAt=(reading:ReturnReading)=>new Date((reading.record.review
  * characters; an Agent's paragraphs are joined, never refused downstream. */
 export const oneLine=(text:string)=>text.replace(/[\s\p{Cc}]+/gu," ").trim();
 
-export function commissionRequest(reading:ReturnReading,source:FactorySource,project:string|null|undefined){
+export function commissionRequest(reading:ReturnReading,source:FactorySource,project:string|null|undefined,family:AgentSetReading){
  const record=reading.record,request=record.request;
  if(!awaitsFactory(reading)||!request||!record.review)throw new Error("Only an accepted proposal for Factory can be commissioned");
+ const carrier=family.record.orchestrator_agent_ref;
+ if(family.kind!=="agent-set"||!carrier||!family.source_path.startsWith("Control/"))throw new Error(`The carrying family ${family.ref} has no orchestrator to carry the Run`);
  const identity=reading.return_ref.slice(reading.return_ref.lastIndexOf(":")+1);
  if(!/^[0-9a-f]{16,}$/i.test(identity))throw new Error("The Return has no stable identity to commission from");
  const requestRef=`commission:inbox-${identity}`;
@@ -53,10 +57,14 @@ export function commissionRequest(reading:ReturnReading,source:FactorySource,pro
   runDestination:oneLine(`The accepted proposal ${reading.return_ref}${request.proposal_ref?` (${request.proposal_ref})`:""}; its evidence: ${(record.evidence_refs??[]).join(", ")||"none named"}`),
   writeOwner:"factory",
   commissionedAt:acceptedAt(reading),
-  rootAct:{actRef:`act:inbox-${identity}`,agentRef:COMMISSIONED_AGENT,purpose:oneLine(request.subject),
+  rootAct:{actRef:`act:inbox-${identity}`,agentRef:carrier,purpose:oneLine(request.subject),
    scopeRefs:[registerScope(project)],standing:"commissioned-not-executed"},
-  participantRequirements:[{ref:COMMISSIONED_AGENT,
-   description:oneLine(`Carries the proposal ${producer} made and the person accepted; returns actual evidence through the existing Factory Return.`),
-   sourceOwner:"central",sourceRef:reading.return_ref,sourceRevision:reading.revision}],
+  participantRequirements:[
+   {ref:carrier,
+    description:oneLine(`Carries the proposal ${producer} made and the person accepted; returns actual evidence through the existing Factory Return.`),
+    sourceOwner:"central",sourceRef:reading.return_ref,sourceRevision:reading.revision},
+   {ref:`agent-set/${family.ref}`,
+    description:oneLine(`The family ${carrier} orchestrates and calls on where needed, as Central records it.`),
+    sourceOwner:"central",sourceRef:`central:source:control:root:${family.source_path}`,sourceRevision:family.revision}],
  };
 }
