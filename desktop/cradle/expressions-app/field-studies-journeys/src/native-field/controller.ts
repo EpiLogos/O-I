@@ -4,7 +4,7 @@ import {NativeProjection} from './projection';
 import type {NativePort} from './channel';
 import {applyPhysicalFormPose} from '../physicalFormActuator';
 import {nativeActuatorStanding} from '../nativeActuatorStanding';
-import {isK2,eventFromSources,readK2,editK2Event,k2CausalTrace,type K2Acting,type K2Edit} from './k2';
+import {isScene,eventFromSources,readScene,editSceneEvent,sceneCausalTrace,type SceneActing,type SceneEdit} from './scene';
 export interface NativeRenderer {
  retainedTargetPort():any;releaseRetainedField():void;
  retainedTopology?():{tex_width:number;tex_height:number;particle_count:number;slot_count:number}|null;
@@ -16,14 +16,14 @@ export interface NativePlaybackPolicy {blockFrames:number;leadSeconds:number;loo
 export const EMBEDDED_NATIVE_PLAYBACK:Readonly<NativePlaybackPolicy>=Object.freeze({blockFrames:8192,leadSeconds:.5,lookaheadSeconds:.5});
 export type NativeStatus='manual'|'opening'|'following'|'held'|'unavailable';
 export type NativeSky='none'|'now'|{epoch:string};
-/** Presentation, not source: the K² torus (|x|,|y| ≤ 25/9 m at QL's declared
+/** Presentation, not source: the M1 torus (|x|,|y| ≤ 25/9 m at QL's declared
  * 1 m per torus unit) spans ±333 engine units — 0.83 of the 400-unit stage
  * radius (WORLD_SCALE), leaving the body whole on stage with modal headroom. */
 export const INSTRUMENT_PRESENTATION=Object.freeze({units_per_metre:120,
  standing:'presentation scale: ±25/9 m torus → ±333 engine units (0.83 of the 400-unit stage radius); not a source value'});
-/** QL k2.rs `default_field`: the composed owner's device rate. */
-export const K2_SAMPLE_RATE=48000;
-/** Both source-cited tick rates; neither is fixed by the M1 contract (K2-EXPRESSION-BINDING). */
+/** QL scene_field.rs `default_field`: the composed owner's device rate. */
+export const SCENE_SAMPLE_RATE=48000;
+/** Both source-cited tick rates; neither is fixed by the M1 contract (QL scene_field.rs). */
 export const CADENCES=Object.freeze([
  Object.freeze({id:'world',ticks_per_second:1,label:'1 tick/s',source:'M3/M4′ world clock, 1 Hz'}),
  Object.freeze({id:'user',ticks_per_second:12,label:'12 ticks/s',source:'PPS user-facing tick, 12 per second'}),
@@ -50,7 +50,7 @@ export class NativeFieldController {
  private admitting:number|null=null;
  private suspension:{tokens:Set<symbol>;epoch:number;revision:number;restore:boolean;reason:string}|null=null;
  private restoring:{epoch:number;revision:number}|null=null;
- private k2=false;private influenceReading:any=null;private acting:K2Acting|null=null;
+ private scene=false;private influenceReading:any=null;private acting:SceneActing|null=null;
  private event:any=null;private opening:any=null;private sourcesStale=false;private influenceStale=false;private timing:any=null;private timingStart=0;private lastInspect=0;
  private operating=0;private cadence:Cadence|null=null;private lastCadence:Cadence|null=null;
  private refusal:{operation:string;reason:string;at:number}|null=null;
@@ -66,8 +66,8 @@ export class NativeFieldController {
   const sources=await session.inspect(),reading=session.reading;
   if(this.session!==session||this.dead)throw new Error('native source reply belongs to a released lifetime');
   const domain=projectNativeSources(sources,{event_ref:reading.event_ref,subject_ref:reading.subject_ref,generation:reading.acknowledged.generation});
-  this.sources=sources;this.domain=domain;this.k2=isK2(sources);
-  if(this.k2){this.event=eventFromSources(sources);this.acting=readK2(sources,this.influenceReading,this.opened?.source);}
+  this.sources=sources;this.domain=domain;this.scene=isScene(sources);
+  if(this.scene){this.event=eventFromSources(sources);this.acting=readScene(sources,this.influenceReading,this.opened?.source);}
   this.sourcesStale=false;this.lastInspect=performance.now();
   return sources;
  }
@@ -79,7 +79,7 @@ export class NativeFieldController {
  }
  private admitInfluence(influence:any){
   this.influenceReading=influence;this.influenceStale=false;
-  if(this.sources)this.acting=readK2(this.sources,influence,this.opened?.source);
+  if(this.sources)this.acting=readScene(this.sources,influence,this.opened?.source);
  }
  status:NativeStatus='manual';reason:string|null=null;
  onChange:()=>void=()=>{};
@@ -104,8 +104,8 @@ export class NativeFieldController {
    physical_form_actuator.applied?null:`M3 physical form pose: ${'reason' in physical_form_actuator?physical_form_actuator.reason:'unavailable'}`,
    'material model replacement beyond the existing modal owner requires a new binding'].filter((x):x is string=>!!x);
   const clock=this.projection?.inspect().native?.clock??null;
-  const trace=this.k2&&this.influenceReading
-   ?{...k2CausalTrace(this.influenceReading,this.acting,{following,muted:this.muted,targetsConnected:!!this.projection,clock}),
+  const trace=this.scene&&this.influenceReading
+   ?{...sceneCausalTrace(this.influenceReading,this.acting,{following,muted:this.muted,targetsConnected:!!this.projection,clock}),
      physical_form:physical_form_actuator}
    :this.domain?{
     schema:'oi.native-causal-trace/v1',
@@ -126,7 +126,7 @@ export class NativeFieldController {
   native:this.session?.reading??this.lastNative,muted:this.muted,
   domain:this.domain,source_currentness:this.domain?(this.sourcesStale?'inspected before the latest determinant event; influence is current':following?'inspected-native-basis; continuous cursor reported separately':'held-last-inspected-basis'):'unavailable',
   presented_clock:clock,
-  instrument:this.k2?{schema:'oi.k2-instrument-reading/v1',acting:this.acting,influence:this.influenceReading,influence_stale:this.influenceStale,
+  instrument:this.scene?{schema:'oi.scene-instrument-reading/v1',acting:this.acting,influence:this.influenceReading,influence_stale:this.influenceStale,
    opening_event_available:!!this.opening,sources_stale:this.sourcesStale,cadence:this.cadenceReading(),refusal:this.refusal,
    presentation:INSTRUMENT_PRESENTATION}:null,
   checkpoint:this.checkpoint?{supported:true,scope:'same live GPU and unchanged native cursor',receipt:this.checkpoint.receipt}:null,
@@ -137,10 +137,10 @@ export class NativeFieldController {
   unavailable_consumers:unavailable,
   causal_trace:trace,
   physical_form_actuator,
-  actuator_standing:nativeActuatorStanding({status:this.status,domain:this.domain as any,instrument:this.k2?{voices:this.acting?.voices??null}:null}),
+  actuator_standing:nativeActuatorStanding({status:this.status,domain:this.domain as any,instrument:this.scene?{voices:this.acting?.voices??null}:null}),
  } as const;}
  private changed(){this.onChange();}
- /** The instrument's primary opening: QL composes a K² binding for this stage's
+ /** The instrument's primary opening: QL composes a scene binding (`ql scene binding`) for this stage's
   * own retained texture; the kernel supplies the dated sky. No path, no file. */
  async compose(options:{sky?:NativeSky;event?:unknown}={}){
   const topology=this.renderer.retainedTopology?.();
@@ -148,7 +148,7 @@ export class NativeFieldController {
   const sky=options.sky??'now';
   if(!(sky==='none'||sky==='now'||(typeof sky==='object'&&typeof sky?.epoch==='string')))throw new Error('sky must be none, now or a dated epoch');
   const request={texture:[topology.tex_width,topology.tex_height],units_per_metre:INSTRUMENT_PRESENTATION.units_per_metre,sky,...(options.event!==undefined?{event:options.event}:{})};
-  return this.admit(K2_SAMPLE_RATE,()=>this.port.request({operation:'compose',request}));
+  return this.admit(SCENE_SAMPLE_RATE,()=>this.port.request({operation:'compose',request}));
  }
  /** Inspect depth: an explicit Central binding document. */
  async connect(path:string,revision:string,sampleRate:number){
@@ -182,7 +182,7 @@ export class NativeFieldController {
     transport:{request:(request:any)=>this.port.request({operation:'exchange',lease:opened.lease,request}),close:()=>{void this.closeOwner(opened).catch(()=>{});}},fieldBinding:this.projection,muted:true});
    this.recovery=this.renderer.onRetainedRecoveryRequired(state=>{this.contextLost=state==='lost';this.hold(`GPU context ${state}; explicit same-state checkpoint recovery or disconnect required`);});
    const sources=await this.readSources(this.session);
-   if(this.k2){await this.readInfluence(this.session);this.opening=eventFromSources(sources);}
+   if(this.scene){await this.readInfluence(this.session);this.opening=eventFromSources(sources);}
    await this.session.recover('complete native sources admitted; rebase device only');
    if(epoch!==this.epoch||this.dead)return;
    // Reassert an existing admission hold without issuing a new controller hold:
@@ -290,7 +290,7 @@ export class NativeFieldController {
   const session=await this.idle();
   try{
    await session.recover('native operation admission');const result=await session.operate(command);
-   await this.readSources(session);if(this.k2)await this.readInfluence(session);
+   await this.readSources(session);if(this.scene)await this.readInfluence(session);
    await session.recover('native operation readback admitted; rebase device only');
    this.finishCommand(session,following,revision,'native operation applied while held; resume explicitly');return result;
   }catch(error){if(this.current(session))this.hold(String(error));throw error;}
@@ -300,12 +300,12 @@ export class NativeFieldController {
   if(!this.current(session)||!session.reading.available)return false;
   this.refusal={operation,reason:String(error instanceof Error?error.message:error),at:Date.now()};this.changed();return true;
  }
- /** A K² determinant event through the one serial owner. While following, the
+ /** A scene determinant event through the one serial owner. While following, the
   * re-read targets queue behind already scheduled sound (no hold, no rebase);
   * while held, the event commits and the owner stays held. */
  private determinant(operation:string,build:()=>any,needsEvent:boolean,cadence=false):Promise<void>{
   const session=this.session;
-  if(!session||!this.k2)return Promise.reject(new Error('Open the live instrument first: determinant events belong to a K² owner'));
+  if(!session||!this.scene)return Promise.reject(new Error('Open the live instrument first: determinant events belong to a scene owner'));
   if(this.status==='following'&&!this.suspension){
    const live=async()=>{
     this.operating++;
@@ -372,10 +372,10 @@ export class NativeFieldController {
  }
  /** One determinant changed on the owner's current event. Strike follows the
   * owner's declared `strike_on_event` policy, as its own M1 advance does. */
- edit(edit:K2Edit){
+ edit(edit:SceneEdit){
   const label=edit.kind==='lens'?'lens':edit.kind==='context-frame'?'Context Frame':edit.kind==='harmonic'?'harmonic basis':'transcription';
-  try{if(this.event)editK2Event(this.event,edit);}catch(error){if(this.session)this.refusal={operation:label,reason:String(error instanceof Error?error.message:error),at:Date.now()};this.changed();return Promise.reject(error);}
-  return this.determinant(label,()=>({operation:'replace-event',event:editK2Event(this.event,edit),strike:this.influenceReading?.material?.strike_on_event!==false}),true);
+  try{if(this.event)editSceneEvent(this.event,edit);}catch(error){if(this.session)this.refusal={operation:label,reason:String(error instanceof Error?error.message:error),at:Date.now()};this.changed();return Promise.reject(error);}
+  return this.determinant(label,()=>({operation:'replace-event',event:editSceneEvent(this.event,edit),strike:this.influenceReading?.material?.strike_on_event!==false}),true);
  }
  /** Re-excite the same voices from the declared strike amplitude. */
  strike(){return this.determinant('strike',()=>({operation:'replace-event',event:structuredClone(this.event),strike:true}),true);}
@@ -392,7 +392,7 @@ export class NativeFieldController {
  get currentEvent(){return this.event?structuredClone(this.event):null;}
  get openingEvent(){return this.opening?structuredClone(this.opening):null;}
  influence(){return this.serial(async()=>{
-  const session=this.session;if(!session||!this.k2)throw new Error('influence belongs to a K² owner');
+  const session=this.session;if(!session||!this.scene)throw new Error('influence belongs to a scene owner');
   if(this.status==='following'){if(!(await this.waitIdle(session,5000)))throw new Error('native owner busy');return this.readInfluence(session);}
   this.hold('native influence reading');const held=await this.idle();
   try{await held.recover('native influence reading');return await this.readInfluence(held);}
@@ -404,12 +404,12 @@ export class NativeFieldController {
   const session=this.session;
   // A complete source read is large (the whole coupled basis); while a cadence
   // plays it yields to the ticks and runs at most every 5 s.
-  if(session&&this.k2&&this.influenceStale&&this.status==='following'&&!this.suspension&&!this.operating&&!this.serialDepth){
+  if(session&&this.scene&&this.influenceStale&&this.status==='following'&&!this.suspension&&!this.operating&&!this.serialDepth){
    this.operating++;
    try{if(await this.waitIdle(session,100)&&this.status==='following'){await this.readInfluence(session);this.changed();}}
    catch{}finally{this.operating--;}
   }
-  if(!session||!this.k2||!this.sourcesStale||this.status!=='following'||this.suspension||this.operating||this.serialDepth||performance.now()-this.lastInspect<(this.cadence?5000:1500))return false;
+  if(!session||!this.scene||!this.sourcesStale||this.status!=='following'||this.suspension||this.operating||this.serialDepth||performance.now()-this.lastInspect<(this.cadence?5000:1500))return false;
   this.operating++;
   try{if(!(await this.waitIdle(session,100))||this.status!=='following')return false;await this.readSources(session);this.changed();return true;}
   catch{return false;}
@@ -419,7 +419,7 @@ export class NativeFieldController {
   * is skipped while the owner is busy, suspended while held/hidden/unavailable,
   * and the cadence stops on release or refusal. */
  play(ticksPerSecond:number){
-  if(!this.k2||!this.session)throw new Error('Open the live instrument first');
+  if(!this.scene||!this.session)throw new Error('Open the live instrument first');
   if(!(Number.isFinite(ticksPerSecond)&&ticksPerSecond>0&&ticksPerSecond<=12))throw new Error('cadence must be within (0, 12] ticks per second');
   this.pause('rate changed');
   const period=1000/ticksPerSecond;
@@ -494,7 +494,7 @@ export class NativeFieldController {
   this.renderer.releaseRetainedField();this.renderer.setNativeDomain(false);this.projection?.dispose();this.projection=null;
   const context=this.context;this.context=null;const opened=this.opened;this.opened=null;this.checkpoint=null;this.contextLost=false;
   this.sources=null;this.domain=null;this.openingHold=null;
-  this.k2=false;this.influenceReading=null;this.acting=null;this.event=null;this.opening=null;this.sourcesStale=false;this.level=null;
+  this.scene=false;this.influenceReading=null;this.acting=null;this.event=null;this.opening=null;this.sourcesStale=false;this.level=null;
   this.admitting=null;this.suspension=null;this.restoring=null;
   if(manual){this.status='manual';this.lastNative=null;this.reason=null;this.refusal=null;this.lastCadence=null;this.changed();}
   const close=async()=>{

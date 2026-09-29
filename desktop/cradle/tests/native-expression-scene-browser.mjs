@@ -1,5 +1,5 @@
-/** One K² determinant, traced end to end through the real owners:
- * QL `ql kernel k2-binding` → O:I kernel compose (walk-bridge) → ql-field-host +
+/** One scene determinant, traced end to end through the real owners:
+ * QL `ql scene binding` → O:I kernel compose (walk-bridge) → ql-field-host +
  * C++ worker → iframe relay → InstrumentSession → NativeProjection → WebGL GPU
  * simulation → canvas pixels and scheduled PCM.
  *
@@ -10,7 +10,7 @@
  * The positive claim needs every layer: producer influence changes, transferred
  * targets change, GPU positions after N steps differ from control beyond the
  * A/B baseline and lie nearer the new targets, pixels differ, and scheduled PCM
- * carries the new top voice. K2_DISCONNECT_TARGETS=1 cuts GPU target delivery
+ * carries the sky's top voice at its held pitch. K2_DISCONNECT_TARGETS=1 cuts GPU target delivery
  * (test-only projection flag) before the determinant: that run must FAIL.
  * Only Central disclosure is controlled; no fake field, PCM, M1, M2 or M3. */
 import assert from 'node:assert/strict';
@@ -26,9 +26,9 @@ const paths={bridge:process.env.NATIVE_EXPRESSION_BRIDGE,ql:process.env.OI_QL_BI
 for(const [name,path] of Object.entries(paths))assert.ok(path&&path.startsWith('/'),`Explicit absolute ${name} path required; no PATH or fixture fallback`);
 const disconnect=process.env.K2_DISCONNECT_TARGETS==='1';
 const STEPS=Number(process.env.K2_PROBE_STEPS??120),DT=1/60;
-const out=resolve(process.env.NATIVE_EXPRESSION_OUT??'walk/artifacts/native-expression-k2');await mkdir(out,{recursive:true});
-const temp=await mkdtemp(join(tmpdir(),'native-expression-k2-'));
-const report={schema:'oi.native-expression-k2-trace/v1',mode:disconnect?'negative: GPU target delivery disconnected before the determinant':'positive',
+const out=resolve(process.env.NATIVE_EXPRESSION_OUT??'walk/artifacts/native-expression-scene');await mkdir(out,{recursive:true});
+const temp=await mkdtemp(join(tmpdir(),'native-expression-scene-'));
+const report={schema:'oi.native-expression-scene-trace/v1',mode:disconnect?'negative: GPU target delivery disconnected before the determinant':'positive',
  standing:'real QL compose, K8 C++ owner, O:I kernel relay and WebGL; controlled Central disclosure; sky none (QL default event); SwiftShader unless hardware requested; not installed-app, speaker or listening evidence',
  checks:[],failures:[],sources:{},machine:{platform:platform(),logical_cpus:cpus().length},probe:{steps:STEPS,dt:DT},pass:false};
 for(const [name,path] of Object.entries(paths))report.sources[name]={path,sha256:createHash('sha256').update(await readFile(path)).digest('hex')};
@@ -194,7 +194,7 @@ try{
  const shape0=a.influence1.voices.map(x=>`${x.m}x${x.n}`),shape1=v.influence1.voices.map(x=>`${x.m}x${x.n}`);
  report.producer={control:{m1_revision:a.influence1.m1_revision,address72:a.influence1.address72,voices_hz:hz0,nodal:shape0},varied:{m1_revision:v.influence1.m1_revision,address72:v.influence1.address72,voices_hz:hz1,nodal:shape1}};
  assert.deepEqual(a.influence0.voices,v.influence0.voices,'every run opens the same owner state');
- check(hz0.some((f,i)=>f!==hz1[i])&&shape0.join()!==shape1.join(),'producer: one M1 advance retunes and reshapes the same eight voices',{hz_changed:hz0.filter((f,i)=>f!==hz1[i]).length});
+ check(hz0.length===9&&hz0.every((f,i)=>f===hz1[i])&&shape0.join()!==shape1.join(),'producer: one M1 advance reshapes the skin of the same nine planet voices; the sky keeps their pitch',{nodal_changed:shape0.filter((s,i)=>s!==shape1[i]).length});
  // 2. Transfer: the admitted native frame (metres, at slots) changed in the page;
  // 3. delivery: the GPU-bound target textures (presentation units) changed.
  const admittedSame=maxAbs(a.admitted0,v.admitted0,n),admittedDelta=maxAbs(a.admitted1,v.admitted1,n);
@@ -224,7 +224,7 @@ try{
   control_measured_hz:heardA.frequency_hz,varied_measured_hz:heardV.frequency_hz,varied_relative_error:error,
   control_relative_error:Math.abs(heardA.frequency_hz-topA.frequency_hz)/topA.frequency_hz,
   standing:'frequency of PCM blocks the page scheduled on its Web Audio graph (muted); not speaker output'};
- check(error<0.01&&Math.abs(heardV.frequency_hz-topV.frequency_hz)<Math.abs(heardV.frequency_hz-topA.frequency_hz),'audio: scheduled PCM carries the new top voice within 1%, nearer it than the old',{measured:heardV.frequency_hz,expected:topV.frequency_hz,error});
+ check(error<0.01&&topA.frequency_hz===topV.frequency_hz&&report.audio.control_relative_error<0.01,'audio: both runs\' scheduled PCM carries the sky\'s top voice within 1%; the determinant left its pitch held',{measured:heardV.frequency_hz,expected:topV.frequency_hz,error});
  report.requests={opens,closes};
  report.measurement={latency_by_operation:Object.fromEntries([...new Set(timings.map(t=>t.operation))].map(op=>{const values=timings.filter(t=>t.operation===op).map(t=>t.elapsed).sort((x,y)=>x-y);return[op,{count:values.length,mean_ms:values.reduce((s,x)=>s+x,0)/values.length,max_ms:values.at(-1)}];}))};
  if(!disconnect){report.cadence=await cadence();check(true,'cadence: 1 and 12 ticks/s on the real owner stay following; applied beats equal M1 revisions; busy beats skipped',report.cadence);}
@@ -234,6 +234,6 @@ try{
  assert.deepEqual(report.failures,[],'every layer must carry the determinant');
 }catch(error){report.failure=String(error);throw error;}
 finally{
- await writeFile(join(out,disconnect?'k2-trace-disconnected.json':'k2-trace.json'),JSON.stringify(report,null,2)+'\n');await writeFile(join(out,'kernel.log'),bridgeLog+'\n'+bridgeErr);
+ await writeFile(join(out,disconnect?'scene-trace-disconnected.json':'scene-trace.json'),JSON.stringify(report,null,2)+'\n');await writeFile(join(out,'kernel.log'),bridgeLog+'\n'+bridgeErr);
  await browser.close();await new Promise(r=>server.close(r));bridge.kill();await rm(temp,{recursive:true,force:true});
 }

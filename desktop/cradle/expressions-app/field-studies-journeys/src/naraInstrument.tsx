@@ -262,7 +262,7 @@ function NaraInstrument({host,close,visible}:{host:NaraInstrumentHost;close:()=>
     const result=await naraInstrumentRequest({operation:'m3',basis:toolBasis,role:'nara',request:{operation:'read'}});
    if(disposed)return;
    if(formRef.current!==before){timer=window.setTimeout(check,2000);return;}
-    if(result.schema!=='oi.nara-m3-context/v1'||result.status!=='available'||result.event_ref!==nativeCurrent?.context?.event_ref)throw Error('The native form is no longer current for this encounter.');
+    if(result.schema!=='oi.m3-reception-context/v1'||result.status!=='available'||result.event_ref!==nativeCurrent?.context?.event_ref)throw Error('The native form is no longer current for this encounter.');
     presentForm(result);
    }catch(e){if(!disposed){presentForm(null);setError(e instanceof Error?e.message:String(e));return;}}
    if(!disposed)timer=window.setTimeout(check,2000);

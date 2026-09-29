@@ -28,7 +28,7 @@ export function NaraM3({basis,selectionKey,current,disabled,onCurrent,onPresent,
   try{
    const result=await naraInstrumentRequest({operation:'m3',basis,role:'nara',request});
    if(!live.current||at!==epoch.current)return;
-   if(result.schema!=='oi.nara-m3-context/v1'||result.expression_ref!==basis.expression_ref||result.identity_revision!==basis.source.revision||result.event_ref!==event)throw Error('The native form belongs to another occasion.');
+   if(result.schema!=='oi.m3-reception-context/v1'||result.expression_ref!==basis.expression_ref||result.identity_revision!==basis.source.revision||result.event_ref!==event)throw Error('The native form belongs to another occasion.');
    setReading(result);
    if(presented)onPresent(result.status==='available'?result:null);
    if(request.operation==='apply'||request.operation==='select_activity_policy'){

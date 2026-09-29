@@ -1,4 +1,4 @@
-//! QL composes the K² binding; the production manager opens it through the
+//! QL composes the scene binding; the production manager opens it through the
 //! same path as a Central-read binding. Real QL executables, no Central.
 #![cfg(unix)]
 use oi_cradle_kernel::{

@@ -1157,7 +1157,7 @@ impl PreparedCompose {
             snapshot = Some(reading);
         }
         let [width, height] = self.request.texture;
-        let mut binding_request = json!({"schema":"ql.k2-binding-request/v1",
+        let mut binding_request = json!({"schema":"ql.scene-binding-request/v1",
             "instance_ref":format!("oi:native-expression/{}", self.token),
             "texture":[width, height],"units_per_metre":self.request.units_per_metre});
         if let Some(event) = self.request.event {
@@ -1171,13 +1171,13 @@ impl PreparedCompose {
             return Err("native-expression.invalid_compose: request exceeds 32 MiB".into());
         }
         let request_sha256 = sha256_hex(&bytes);
-        let file = PrivateFile::create(&format!("{}-k2.json", self.token), &bytes)?;
+        let file = PrivateFile::create(&format!("{}-scene.json", self.token), &bytes)?;
         let refused = |why: String| format!("native-expression.compose_refused: {why}");
         let ran = run_bounded(
             executables.ql.as_os_str(),
             &[
-                "kernel".as_ref(),
-                "k2-binding".as_ref(),
+                "scene".as_ref(),
+                "binding".as_ref(),
                 file.0.as_os_str(),
                 "--json".as_ref(),
             ],
@@ -1186,7 +1186,7 @@ impl PreparedCompose {
         )
         .map_err(|e| {
             format!(
-                "native-expression.unavailable: `{} kernel k2-binding` {}",
+                "native-expression.unavailable: `{} scene binding` {}",
                 executables.ql.display(),
                 e.describe(BINDING_TIMEOUT, MAX_REQUEST)
             )
@@ -1194,13 +1194,13 @@ impl PreparedCompose {
         drop(file);
         if !ran.status.success() {
             return Err(refused(format!(
-                "ql kernel k2-binding exited {}: {}",
+                "ql scene binding exited {}: {}",
                 ran.status,
                 diagnostic_text(&ran.stderr)
             )));
         }
         let content = String::from_utf8(ran.stdout)
-            .map_err(|_| refused("ql kernel k2-binding output is not UTF-8".into()))?;
+            .map_err(|_| refused("ql scene binding output is not UTF-8".into()))?;
         let source = json!({"schema":"oi.native-expression-composed-source/v1",
             "ql_executable":executables.ql,"ql_selection":executables.selection,
             "ql_revision":executables.revision,"sky":sky_provenance,
@@ -1663,7 +1663,7 @@ for line in sys.stdin: time.sleep(60)
         assert_eq!(sky_error(b""), "no diagnostic");
     }
     #[test]
-    fn exchange_admits_k2_determinant_operations_only_by_name() {
+    fn exchange_admits_scene_determinant_operations_only_by_name() {
         for op in EXCHANGE_OPERATIONS {
             assert!(
                 exchange_admits(&json!({"command":{"operation":op}})),
@@ -1842,13 +1842,13 @@ for line in sys.stdin:
             .execute()
             .unwrap_err();
             assert!(
-                error.starts_with("native-expression.compose_refused: ql kernel k2-binding exited"),
+                error.starts_with("native-expression.compose_refused: ql scene binding exited"),
                 "{error}"
             );
             assert!(error.contains("no event"), "{error}");
             let argv = fs::read_to_string(&log).unwrap();
             let argv: Vec<&str> = argv.lines().collect();
-            assert_eq!(&argv[..2], ["kernel", "k2-binding"]);
+            assert_eq!(&argv[..2], ["scene", "binding"]);
             assert_eq!(argv[3], "--json");
             assert!(
                 !std::path::Path::new(argv[2]).exists(),
@@ -1857,7 +1857,7 @@ for line in sys.stdin:
             let sent: Value =
                 serde_json::from_slice(&fs::read(format!("{}.request", log.display())).unwrap())
                     .unwrap();
-            assert_eq!(sent["schema"], "ql.k2-binding-request/v1");
+            assert_eq!(sent["schema"], "ql.scene-binding-request/v1");
             assert_eq!(sent["texture"], json!([2, 3]));
             assert_eq!(sent["units_per_metre"], 400.0);
             assert_eq!(sent["event"], json!({"m1":{"row12":3}}));

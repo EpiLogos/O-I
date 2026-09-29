@@ -62,7 +62,7 @@ export class InstrumentSession {
     OWNERS.add(owner);
   }
 
-  /** The influence reading the last K² determinant acknowledgement carried. */
+  /** The influence reading the last scene determinant acknowledgement carried. */
   get lastInfluence() { return this.#influence === null ? null : structuredClone(this.#influence); }
 
   get reading() {
@@ -135,7 +135,7 @@ export class InstrumentSession {
         return { refused: true, error: reply.error ?? 'native command refused' };
       }
       const changing = command.operation === 'set-axis' || command.operation === 'replace';
-      // A K² event re-reads the whole basis: an optional strike and an explicit
+      // A scene event re-reads the whole basis: an optional strike and an explicit
       // reshape each commit one generation, so the owner states how many.
       const event = EVENT_OPERATIONS.includes(command.operation);
       const frames = command.operation === 'advance' ? command.frames : 0;
@@ -148,7 +148,7 @@ export class InstrumentSession {
       // The native operation is now acknowledged even if presentation later
       // fails. Recovery reads this cursor; no claim of rolling native state back.
       this.#native = withoutAudio(frame);
-      // A K² determinant acknowledgement carries its own influence reading.
+      // A scene determinant acknowledgement carries its own influence reading.
       if (reply.influence !== undefined) this.#influence = structuredClone(reply.influence);
       return { frame, sources: reply.sources, influence: reply.influence, personal: reply.personal };
     } catch (error) {
@@ -245,7 +245,7 @@ export class InstrumentSession {
     } finally { this.#busy = false; }
   }
 
-  /** The K² owner's acting-influence reading; never advances or resets. */
+  /** The scene owner's acting-influence reading; never advances or resets. */
   async influence() {
     need(!this.#busy && !this.#held, 'inspection requires an idle admitted owner'); this.#busy = true;
     try {
@@ -254,7 +254,7 @@ export class InstrumentSession {
     } finally { this.#busy = false; }
   }
 
-  /** A Nara-constituted K² owner's reception: `input` (seven supplied centre
+  /** A Nara-constituted scene owner's reception: `input` (seven supplied centre
    * inputs citing the current event) receives; without it, reads. The material
    * field never changes. Protected state stays with the calling host. */
   async personal(input) {

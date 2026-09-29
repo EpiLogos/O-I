@@ -1,12 +1,14 @@
-/** The live instrument: the K² played torus as a person meets it. One native
+/** The live instrument: the dated sky on the M1 torus clock as a person meets it. One native
  * owner supplies sound and targets; this surface shows what is acting and sends
  * determinant events to that owner. No sample session, fallback input, hidden
  * microphone, local oscillator or browser synthesis of native music. */
 import {NativeDomainView} from './native-field/domainView';
 import {NativeChannel} from './native-field/channel';
 import {NativeFieldController,NativeRenderer,EMBEDDED_NATIVE_PLAYBACK,CADENCES,INSTRUMENT_PRESENTATION,PRESENTATION_LEVEL,type NativeSky} from './native-field/controller';
-import {LENSES,CONTEXT_FRAMES,type K2Acting} from './native-field/k2';
+import {LENSES,CONTEXT_FRAMES,type SceneActing} from './native-field/scene';
 import type {FieldEngineAdapter} from './engine';
+/** scene_field.rs `PLANETS`, in scalar-degree order: the map's own names. */
+const PLANET_NAMES=['Sun','Venus','Mercury','Moon','Saturn','Jupiter','Mars','Neptune','Pluto'];
 const esc=(v:unknown)=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]!));
 const when=(ms:number|null)=>ms==null?'—':new Date(ms).toISOString().replace('T',' ').replace(/\.\d+Z$/,' UTC');
 export function installNativeField(engine:FieldEngineAdapter,onResumeApplication:()=>void){
@@ -21,7 +23,7 @@ export function installNativeField(engine:FieldEngineAdapter,onResumeApplication
  const panel=document.createElement('div');panel.dataset.nativeField='';panel.className='native-field-panel';
  const seg=(name:string,items:Array<{value:string;label:string;title?:string}>,label:string)=>`<div class="segmented ni-seg" role="group" aria-label="${esc(label)}" data-ni-group="${name}">${items.map(i=>`<button type="button" data-ni-set="${name}" data-value="${esc(i.value)}" aria-pressed="false"${i.title?` title="${esc(i.title)}"`:''}>${esc(i.label)}</button>`).join('')}</div>`;
  panel.innerHTML=`<div class="ni">
- <p class="control-note ni-lede">The K² played torus: QL's native M1 torus body sounding M2's eight Vimarśā voices. One native owner supplies sound, targets and clock; this field presents them.</p>
+ <p class="control-note ni-lede">The dated sky on the clock: QL's native M1 torus sounding the planets of M2-5 at their just octave, each voice at its ecliptic degree. One native owner supplies sound, targets and clock; this field presents them.</p>
  <output class="ni-status" role="status" aria-live="polite" data-ni-v="status">Not open.</output>
  <div data-ni-closed>
   <button type="button" class="primary ni-open" data-ni="open">Open live instrument (dated sky now)</button>
@@ -46,8 +48,8 @@ export function installNativeField(engine:FieldEngineAdapter,onResumeApplication
     <dt>72-address</dt><dd data-ni-v="address">—</dd>
     <dt>Generation</dt><dd data-ni-v="generation">—</dd>
    </dl>
-   <table class="ni-voices"><caption>Eight Vimarśā voices</caption><thead><tr><th scope="col">Voice</th><th scope="col">Hz</th><th scope="col">m×n</th><th scope="col">Helix</th></tr></thead>
-   <tbody>${Array.from({length:8},(_,i)=>`<tr data-ni-voice="${i}"><th scope="row">${i+1}</th><td>—</td><td>—</td><td>—</td></tr>`).join('')}</tbody></table>
+   <table class="ni-voices"><caption>The sky's nine voices (M2-5, just octave)</caption><thead><tr><th scope="col">Planet</th><th scope="col">λ</th><th scope="col">Hz</th><th scope="col">m×n</th></tr></thead>
+   <tbody>${PLANET_NAMES.map((name,i)=>`<tr data-ni-voice="${i}"><th scope="row">${name}</th><td>—</td><td>—</td><td>—</td></tr>`).join('')}</tbody></table>
   </section>
   <section class="ni-block" aria-label="Play">
    <h4>Play</h4>
@@ -95,7 +97,7 @@ export function installNativeField(engine:FieldEngineAdapter,onResumeApplication
   <label class="control"><span>Presentation units per metre</span><input name="native-scale" type="number" min="0.000001" max="1000000" step="any" value="400"></label>
   <div class="ni-row"><button type="button" class="secondary" data-native="scale">Override presentation scale</button><button type="button" class="secondary" data-native="follow">Follow binding scale</button></div>
   <details><summary>Native domain controls</summary>
-   <p class="control-note">For a supplied (non-K²) owner: these replace its basis. Source generations, continuous time and presentation remain separate.</p>
+   <p class="control-note">For a supplied (non-scene) owner: these replace its basis. Source generations, continuous time and presentation remain separate.</p>
    <label class="control"><span>M1 carrier tick (0–11)</span><input name="native-tick" type="number" min="0" max="11" step="1" value="0"></label>
    <button type="button" class="secondary" data-native="tick">Apply native carrier tick</button>
    <label class="control"><span>M1 harmonic row (0–11)</span><input name="native-row" type="number" min="0" max="11" step="1" value="0"></label>
@@ -134,7 +136,7 @@ export function installNativeField(engine:FieldEngineAdapter,onResumeApplication
   if(s==='held')return `Held — ${reading.reason??'explicit hold'}. Resume field to continue.`;
   return `Unavailable — ${reading.reason??'native owner unavailable'}`;
  };
- const acting=(a:K2Acting|null,instrument:any,reading:any)=>{
+ const acting=(a:SceneActing|null,instrument:any,reading:any)=>{
   if(!a)return;
   setText('event',`${a.event_ref} · ${a.subject_ref}`);
   setText('sky',a.sky.kind==='dated'?`${a.sky.label}${a.observations_unix_ms!=null?` · bodies at ${when(a.observations_unix_ms)}`:''}`:`No dated sky — the event's own world observations (${when(a.observations_unix_ms)})`);
@@ -146,12 +148,12 @@ export function installNativeField(engine:FieldEngineAdapter,onResumeApplication
   setText('m3',`${a.m3.rna?'RNA':'DNA'} · ${a.m3.sequence} · ${a.m3.codon_ref}`);
   setText('address',a.address72==null?'—':`${a.address72} of 72`);
   setText('generation',`${a.generation??reading.native?.acknowledged?.generation??'—'} (native), M1 revision ${a.influence_m1_revision??a.m1.revision}`);
-  a.voices.forEach((v,i)=>{const row=query(`[data-ni-voice="${i}"]`),cells=row.querySelectorAll('td'),values=[v.frequency_hz.toFixed(2),`${v.m}×${v.n}`,v.helix];values.forEach((t,j)=>{if(cells[j].textContent!==t)cells[j].textContent=t;});});
+  a.voices.forEach((v,i)=>{const row=query(`[data-ni-voice="${i}"]`),cells=row.querySelectorAll('td'),values=[`${v.longitude_degrees.toFixed(1)}°`,v.frequency_hz.toFixed(2),`${v.m}×${v.n}`];values.forEach((t,j)=>{if(cells[j].textContent!==t)cells[j].textContent=t;});});
   press('lens',String(a.m1.lens12));press('cf',String(a.m1.context_frame));
   press('harmonic',a.harmonic.source.selection==='canonical-basis'?String(a.harmonic.source.index):'row');press('rna',String(a.m3.rna));
   if(a.ratio_basis.length===8)for(const b of panel.querySelectorAll<HTMLButtonElement>('[data-ni-set="harmonic"]')){const r=b.dataset.value==='row'?null:a.ratio_basis[Number(b.dataset.value)];if(r){const t=`${r[0]}:${r[1]}`;if(b.textContent!==t){b.textContent=t;b.title=`Native harmonic basis ${Number(b.dataset.value)+1} of 8 (${t})`;}}}
  };
- const effects=(trace:any,a:K2Acting|null)=>{
+ const effects=(trace:any,a:SceneActing|null)=>{
   const stamp=JSON.stringify([trace?.effects,a?.material]);if(stamp===effectsStamp)return;effectsStamp=stamp;
   const node=query('[data-ni-v="effects"]');
   if(!trace?.effects){node.textContent='The influence reading appears once the instrument is open.';return;}
@@ -165,7 +167,7 @@ export function installNativeField(engine:FieldEngineAdapter,onResumeApplication
   setText('status',statusLine(reading));
   query('[data-ni-closed]').hidden=open;query('[data-ni-open]').hidden=!instrument&&!(composing&&reading.status==='opening');
   for(const b of panel.querySelectorAll<HTMLButtonElement>('[data-ni="open"],[data-ni="open-default"],[data-ni="open-dated"]'))b.disabled=busy||open;
-  // The stage overlay is the supplied-owner reading; the K² surface reads here.
+  // The stage overlay is the supplied-owner reading; the scene surface reads here.
   domainView.update(instrument?null:reading.domain,reading.presented_clock,reading.status,reading.native?.presented?.generation);
   const live=!!instrument&&(reading.status==='following'||reading.status==='held');
   for(const b of panel.querySelectorAll<HTMLButtonElement>('[data-ni-set],[data-ni="step"],[data-ni="strike"],[data-ni="restore-opening"]'))b.disabled=!live||(busy&&b.dataset.niSet!=='cadence')||(reducedMotion&&b.dataset.niSet==='cadence'&&Number(b.dataset.value)>1);

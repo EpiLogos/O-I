@@ -1,4 +1,4 @@
-/** The live K² instrument's controller law against a controlled protocol owner:
+/** The live scene instrument's controller law against a controlled protocol owner:
  * compose admission, determinant events through the one serial owner, the
  * explicit cadence (serial, skip-not-queue, suspended on hold, stopped on
  * release), restore-opening, and honest refusals. Not numerical evidence. */
@@ -10,12 +10,12 @@ import {join,resolve} from 'node:path';
 import {pathToFileURL} from 'node:url';
 import {build} from 'esbuild';
 import * as THREE from 'three';
-import {ControlledAudio,ControlledK2Owner} from './native-expression-fixture.mjs';
+import {ControlledAudio,ControlledSceneOwner} from './native-expression-fixture.mjs';
 const src=resolve('expressions-app/field-studies-journeys/src');
 const temp=await mkdtemp(join(tmpdir(),'native-instrument-tests-'));
-await build({entryPoints:[join(src,'native-field/controller.ts'),join(src,'native-field/k2.ts')],bundle:true,platform:'node',format:'esm',outdir:temp,outExtension:{'.js':'.mjs'}});
+await build({entryPoints:[join(src,'native-field/controller.ts'),join(src,'native-field/scene.ts')],bundle:true,platform:'node',format:'esm',outdir:temp,outExtension:{'.js':'.mjs'}});
 const {NativeFieldController,INSTRUMENT_PRESENTATION,CADENCES}=await import(pathToFileURL(join(temp,'controller.mjs')));
-const {editK2Event,lensLabel}=await import(pathToFileURL(join(temp,'k2.mjs')));
+const {editSceneEvent,lensLabel}=await import(pathToFileURL(join(temp,'scene.mjs')));
 test.after(()=>rm(temp,{recursive:true,force:true}));
 function renderer(){
  const texture=()=>new THREE.DataTexture(new Float32Array(16),2,2,THREE.RGBAFormat,THREE.FloatType);
@@ -25,13 +25,13 @@ function renderer(){
 const wait=ms=>new Promise(r=>setTimeout(r,ms));
 const ops=(owner,name)=>owner.calls.filter(c=>c.request?.command?.operation===name);
 async function open(options={}){
- const owner=new ControlledK2Owner(),audio=new ControlledAudio(),r=renderer(),c=new NativeFieldController(owner,r,()=>audio);
+ const owner=new ControlledSceneOwner(),audio=new ControlledAudio(),r=renderer(),c=new NativeFieldController(owner,r,()=>audio);
  await c.compose({sky:'none',...options});return{owner,audio,r,c};
 }
 /** Let presented time follow scheduled time, as a running device would. */
 function drain(c,audio){audio.currentTime=c.reading.native.audio.target_context_seconds+1;c.frame(0,false);}
 
-test('compose asks QL for this stage\'s texture at the declared presentation scale and admits a K² owner',async()=>{
+test('compose asks QL for this stage\'s texture at the declared presentation scale and admits a scene owner',async()=>{
  const {owner,c,r}=await open();
  try{
   const compose=owner.calls.find(x=>x.operation==='compose');
@@ -39,7 +39,7 @@ test('compose asks QL for this stage\'s texture at the declared presentation sca
   assert.equal(INSTRUMENT_PRESENTATION.units_per_metre,120);
   assert.equal(c.status,'following');assert.equal(r.native,true);
   const instrument=c.reading.instrument;
-  assert.equal(instrument.acting.m1.lens,'L5′');assert.equal(instrument.acting.voices.length,8);
+  assert.equal(instrument.acting.m1.lens,'L5′');assert.equal(instrument.acting.voices.length,9);assert.equal(instrument.acting.voices[3].planet_ref,'#2-5-4');
   assert.equal(instrument.acting.sky.kind,'none');assert.equal(instrument.opening_event_available,true);
   assert.equal(c.openingEvent.m1.lens12,11);assert.equal(c.openingEvent.m2.resonator,null,'the provider owns the voices');
   assert.equal(ops(owner,'influence').length,1,'the influence reading is read on admission');
@@ -60,12 +60,13 @@ test('the physical form pose is reported not-actuated: nothing reads a rotation'
 test('a native M1 advance goes to the same owner while following; its acknowledgement carries the influence, sources refresh at human cadence',async()=>{
  const {owner,audio,c}=await open();
  try{
-  const before=c.reading.instrument.acting.voices[0].frequency_hz;
+  const before=c.reading.instrument.acting.voices[0];
   await c.m1Advance(1);
   assert.equal(ops(owner,'m1-advance').length,1);assert.deepEqual(ops(owner,'m1-advance')[0].request.command,{operation:'m1-advance',ticks:1});
   assert.equal(c.status,'following','a live determinant event does not hold the field');
   // One exchange per tick: no second influence read while the audio waits.
-  assert.equal(ops(owner,'influence').length,1);assert.notEqual(c.reading.instrument.acting.voices[0].frequency_hz,before);
+  assert.equal(ops(owner,'influence').length,1);const after=c.reading.instrument.acting.voices[0];
+  assert.notEqual(after.m,before.m,'the tick re-reads the skin');assert.equal(after.frequency_hz,before.frequency_hz,'the sky keeps its pitch');
   assert.equal(c.reading.instrument.sources_stale,true);
   drain(c,audio);assert.equal(c.inspectTargets().target_a[2],Math.fround(Math.fround(8/12)*120),'re-read targets present behind scheduled sound');
   await wait(1600);assert.equal(await c.refreshSources(),true);
@@ -102,8 +103,8 @@ test('refusals are shown, not simulated: nothing is sent for an acting value; an
   assert.equal(c.reading.native.available,true);
   owner.refuse=null;await c.m1Advance(1);assert.equal(c.reading.instrument.refusal,null);
  }finally{await c.dispose();}
- assert.throws(()=>editK2Event({m1:{lens12:0,revision:'0'},m3:{}},{kind:'lens',lens12:12}),/twelve/);
- assert.throws(()=>editK2Event({m1:{context_frame:1,revision:'0'},m3:{}},{kind:'context-frame',context_frame:8}),/1–7/);
+ assert.throws(()=>editSceneEvent({m1:{lens12:0,revision:'0'},m3:{}},{kind:'lens',lens12:12}),/twelve/);
+ assert.throws(()=>editSceneEvent({m1:{context_frame:1,revision:'0'},m3:{}},{kind:'context-frame',context_frame:8}),/1–7/);
  assert.equal(lensLabel(0),'L0');assert.equal(lensLabel(11),'L5′');
 });
 
@@ -175,7 +176,7 @@ test('presentation level is a gain stage after the native receiver, never a sour
 });
 
 test('a paused application during admission (reduced motion) still admits, then holds without pumping',async()=>{
- const owner=new ControlledK2Owner(),audio=new ControlledAudio(),c=new NativeFieldController(owner,renderer(),()=>audio),request=owner.request.bind(owner);
+ const owner=new ControlledSceneOwner(),audio=new ControlledAudio(),c=new NativeFieldController(owner,renderer(),()=>audio),request=owner.request.bind(owner);
  // The app frame reports "paused" on every frame, including between the owner's
  // construction and its source reads.
  owner.request=async packet=>{if(packet.request?.command?.operation==='inspect')c.frame(0,true);return request(packet);};

@@ -6,7 +6,7 @@ import type {FormationGeometryProjection} from '../../src/engine/formationGeomet
  * rule exists in this receiver. The selected formation supplies only its
  * existing placement, scale and particle allocation. */
 export function naraFormGeometry(reading:NativeM3Reading,view:KernelConversion|undefined,sceneId:string):FormationGeometryProjection{
- if(!view||reading.schema!=='oi.nara-m3-context/v1'||reading.status!=='available'||!reading.state||!reading.revision
+ if(!view||reading.schema!=='oi.m3-reception-context/v1'||reading.status!=='available'||!reading.state||!reading.revision
    ||reading.expression_ref!==view.document.expression_ref||reading.expression_revision!==view.document.revision
    ||reading.state.subject_ref!==reading.person_ref||reading.state.identity.event_ref!==reading.event_ref)
    throw Error('Read the native form for this current Expression before presenting it.');
