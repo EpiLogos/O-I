@@ -310,10 +310,7 @@ mod unix {
         // An absent optional owner is a NAMED degradation, never a silent
         // collapse: the doorway still lists Central and says why AIKit is
         // not listed.
-        assert!(
-            text.contains("AIKit (ai-kit): unavailable"),
-            "{text}"
-        );
+        assert!(text.contains("AIKit (ai-kit): unavailable"), "{text}");
         assert!(text.contains("central.doctor"), "{text}");
         assert!(text.contains("central.now.return"), "{text}");
 
