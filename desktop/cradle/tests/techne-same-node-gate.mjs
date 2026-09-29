@@ -302,6 +302,7 @@ try {
   // Central file save: the Library's file bar opens the app's own modal.
   await frame.evaluate(() => document.querySelector('[data-action="library"]').click());
   await frame.locator('#library-page:not([hidden])').waitFor();
+  check(await frame.evaluate(() => document.body.classList.contains('research-active') && getComputedStyle(document.getElementById('instrument-tools-dock')).display === 'none'), 'The open instrument’s tools stand down under the full-page Library — they never cover its return control');
   await frame.locator('#library-page [data-action="native-save-file"]').first().click();
   await frame.locator('#confirm-dialog[open] input[name="folder"]').fill('Work/Notes');
   await frame.locator('#confirm-dialog[open] input[name="name"]').fill('gate.expression.json');

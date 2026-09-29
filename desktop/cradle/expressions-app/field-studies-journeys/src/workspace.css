@@ -496,6 +496,10 @@ body.oi-host-techne #app>.masthead>.header-actions{flex:none;margin-left:auto}
 #instrument-tools-dock{position:fixed;z-index:74;top:calc(var(--shell-cutout-h,32px) + 10px);left:max(12px,calc(var(--shell-cutout-w,0px) + 12px));max-width:min(400px,calc(100vw - 24px));max-height:calc(100vh - 170px);overflow:auto;display:flex;flex-direction:column;gap:4px;padding:7px;background:var(--hud-glass);border:1px solid var(--ui-line);border-radius:12px;backdrop-filter:blur(18px);box-shadow:0 8px 28px rgba(0,0,0,.12)}
 #instrument-tools-dock[hidden],body:not(.research-active) #instrument-tools-dock{display:none}
 body.research-active.research-preview #instrument-tools-dock{visibility:hidden;pointer-events:none}
+/* The Library is a whole-page takeover: the instrument beneath it stands down,
+   so its tools must not float over the Library's own return control (the
+   former research HUD was chrome and hid with it). */
+body.library-open #instrument-tools-dock{display:none!important}
 #native-status{display:flex;flex-wrap:wrap;align-items:center;gap:8px;font-size:10px;color:var(--ui-muted)}
 #native-status:empty{display:none}#native-status.failed{color:var(--accent)}
 #native-status .link-button{border:0;background:none;padding:0;font:inherit;color:var(--ui-ink);text-decoration:underline;cursor:pointer}
