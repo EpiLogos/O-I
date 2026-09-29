@@ -325,6 +325,12 @@ pub enum OwnerRequest {
         #[serde(default)]
         basis_refs: Vec<String>,
     },
+    /// The person's commission of an accepted proposal: `factory development
+    /// commission <state> -` with the caller's own
+    /// `factory.commission-request/v1` document, carried verbatim. Factory
+    /// validates it, derives the Journey/Run and replays an identical request
+    /// as `already-applied`; its receipt is the result.
+    Commission { state_path: PathBuf, request: Value },
 }
 
 impl OwnerRequest {
@@ -1157,12 +1163,44 @@ pub fn owner(request: OwnerRequest, world: Option<&Value>) -> Result<Value, Erro
                 &["factory.developmental-mutation-receipt/v1"],
             )
         }
+        OwnerRequest::Commission {
+            state_path,
+            request,
+        } => {
+            if request["contract"] != "factory.commission-request/v1" {
+                return Err(incompatible(
+                    "A commission carries a factory.commission-request/v1 document",
+                ));
+            }
+            let body = serde_json::to_vec(&request).map_err(|e| incompatible(e.to_string()))?;
+            let args: Vec<std::ffi::OsString> = vec![
+                "development".into(),
+                "commission".into(),
+                path_arg(&state_path),
+                "-".into(),
+                "--json".into(),
+            ];
+            expect_contract(
+                owner_call(&args, Some(&body))?,
+                &["factory.commission-receipt/v1"],
+            )
+        }
     }
 }
 
 #[cfg(test)]
 mod owner_tests {
     use super::*;
+
+    #[test]
+    fn a_commission_carries_only_a_factory_commission_request() {
+        let wire: OwnerRequest = serde_json::from_value(serde_json::json!({
+            "kind":"commission","state_path":"/ground/.factory/development-state.json",
+            "request":{"contract":"factory.developmental-mutation-request/v1"}}))
+        .unwrap();
+        let error = owner(wire, None).unwrap_err();
+        assert!(format!("{error:?}").contains("factory.commission-request/v1"), "{error:?}");
+    }
 
     #[test]
     fn rfc3339_is_well_formed() {
