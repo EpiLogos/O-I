@@ -137,6 +137,28 @@ export function switchWorkspaceMode(workspace: Workspace, next: WorkspaceMode): 
   const context: WorldContext | undefined = next === "epi-logos" ? { ...workspace.context, world: "epi-logos" } : workspace.context;
   return { ...workspace, layout, modeLayouts: rest, context };
 }
+/** Move one already-held Surface to the active mode's canvas. Its binding,
+ * native buffer and per-binding view state survive; no second host is minted. */
+export function moveWorkspaceSurface(workspace:Workspace,surfaceId:string,into:'tree'|'side'):Workspace {
+  const layouts=[workspace.layout,...Object.values(workspace.modeLayouts??{})];
+  const owners=layouts.filter(layout=>groupsOf(layout.root).some(group=>group.tabs.includes(surfaceId))||layout.sidePane?.tabs.includes(surfaceId)||layout.detached?.some(row=>row.surfaceId===surfaceId));
+  if(owners.length!==1)throw Error('The Surface does not have exactly one retained workspace host.');
+  const owner=owners[0],binding=owner.surfaces[surfaceId];
+  if(!binding||owner.detached?.some(row=>row.surfaceId===surfaceId))throw Error('Return the actual detached Surface before moving its tab.');
+  const stripPane=(pane:import('../surface/types').Pane):import('../surface/types').Pane=>pane.type==='split'?{...pane,children:pane.children.map(stripPane)}:{...pane,tabs:pane.tabs.filter(id=>id!==surfaceId),pinned:pane.pinned.filter(id=>id!==surfaceId),active:pane.active===surfaceId?(pane.tabs.filter(id=>id!==surfaceId)[0]??null):pane.active};
+  const strip=(layout:LayoutState):LayoutState=>{
+    if(layout!==owner)return layout;
+    const surfaces={...layout.surfaces};delete surfaces[surfaceId];
+    return {...layout,surfaces,root:layout.root?stripPane(layout.root):null,sidePane:layout.sidePane?stripPane(layout.sidePane) as typeof layout.sidePane:undefined,closedStack:layout.closedStack.filter(id=>id!==surfaceId)};
+  };
+  let layout=strip(workspace.layout);
+  if(into==='tree')layout=openBinding(layout,binding);
+  else{
+    const pane=layout.sidePane??{type:'group' as const,id:'side-panel',tabs:[],pinned:[],active:null};
+    layout={...layout,surfaces:{...layout.surfaces,[binding.id]:binding},sidePane:{...pane,tabs:[...pane.tabs,binding.id],active:binding.id},rightDepth:'panel'};
+  }
+  return {...workspace,layout,modeLayouts:Object.fromEntries(Object.entries(workspace.modeLayouts??{}).map(([mode,saved])=>[mode,strip(saved)]))};
+}
 /**
  * Book versions. v1: one pane tree per workspace (`layout`), with optional
  * presentation fields decoded leniently. v2 (this writer): per-mode trees —
@@ -427,6 +449,7 @@ export function useWorkspaces() {
   /** The one scope's writer (scope.ts): Central, a project, or Factory's All projects. */
   const browseAll = () => update(w => ({ ...w, allProjects: true }));
   const switchMode = (next: WorkspaceMode) => update(w => switchWorkspaceMode(w, next));
+  const moveSurface=(surfaceId:string,into:"tree"|"side")=>update(w=>moveWorkspaceSurface(w,surfaceId,into));
   /** The world-context layer's one writer. `trail` pushes are bounded. */
   const setContext = (change: (context: WorldContext) => WorldContext) => update(w => { const next = change(w.context ?? {}); return { ...w, context: { ...next, trail: next.trail?.slice(-TRAIL_LIMIT) } }; });
   /** Presentation writes name the workspace they were made in: a disclosure
@@ -485,5 +508,5 @@ export function useWorkspaces() {
   };
   const showRecovery=()=>{const saved=latestRecovery();if(saved)setRecovery({reason:saved.reason,key:saved.key});else setNotice("There is no retained workspace recovery record on this device.");};
   const error=[quarantine,saveError,notice].filter(Boolean).join(" ")||null;
-  return { switchMode, setContext, replaceSurface, surfaceView, surfaceEngine, showRecovery,recovery,reload,startFresh,recoverAvailable, setCentralFiles, rememberPlace, setProjectNavigation, browseAll, windowBounds, redock, current, setWritingMode, workspaces: book.workspaces, setLayout, setWriting, activate, browse, create, rename, error, dismissError: () => { setQuarantine(null); setSaveError(null); setNotice(null); } };
+  return { switchMode, moveSurface, setContext, replaceSurface, surfaceView, surfaceEngine, showRecovery,recovery,reload,startFresh,recoverAvailable, setCentralFiles, rememberPlace, setProjectNavigation, browseAll, windowBounds, redock, current, setWritingMode, workspaces: book.workspaces, setLayout, setWriting, activate, browse, create, rename, error, dismissError: () => { setQuarantine(null); setSaveError(null); setNotice(null); } };
 }

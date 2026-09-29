@@ -33,6 +33,11 @@ struct ManagedProduct {
     #[serde(default)]
     gate: String,
     installed_at_unix_seconds: u64,
+    /// Companion executables staged beside `managed` in the same
+    /// content-addressed directory, by name to sha256. Absent on receipts
+    /// written before companions existed.
+    #[serde(default, skip_serializing_if = "BTreeMap::is_empty")]
+    companions: BTreeMap<String, String>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -384,6 +389,7 @@ fn plan_product(
     data_root: &Path,
     force_rebuild: bool,
     version_command: &[String],
+    companions: &[String],
 ) -> (PlanAction, String) {
     let Some(desired) = desired else {
         return (PlanAction::Absent, "no checkout under the ground's Work/; nothing to update".to_owned());
@@ -398,7 +404,8 @@ fn plan_product(
                 let healthy = is_executable(managed)
                     && sha256_file(managed).map(|digest| digest == entry.sha256).unwrap_or(false)
                     && is_executable(Path::new(&entry.bin))
-                    && is_executable(Path::new(&entry.activation));
+                    && is_executable(Path::new(&entry.activation))
+                    && companions_verify(managed, entry, companions);
                 if healthy {
                     return (PlanAction::Skip, format!("receipt already names cut {} and the managed binary verifies", short_rev(&entry.revision)));
                 }
@@ -435,12 +442,89 @@ fn plan_product(
 
 fn short_rev(revision: &str) -> String { revision.get(..12).unwrap_or(revision).to_owned() }
 
+/// Every declared companion is receipted and still hashes to its digest
+/// beside the managed primary. A receipt from before the product declared
+/// companions does not verify, so the cut is rebuilt to carry them.
+fn companions_verify(managed: &Path, entry: &ManagedProduct, declared: &[String]) -> bool {
+    let Some(dir) = managed.parent() else { return false };
+    declared.iter().all(|name| {
+        let path = dir.join(name);
+        entry.companions.get(name).is_some_and(|sha256| {
+            is_executable(&path) && sha256_file(&path).map(|digest| &digest == sha256).unwrap_or(false)
+        })
+    })
+}
+
+/// A built companion resolves exactly like the primary's executable_path:
+/// the declared `target/` prefix is the build cache's target dir.
+fn built_companions(id: &str, target: &UpdateTarget, target_dir: &Path) -> Result<Vec<(String, PathBuf)>, String> {
+    target.companions.iter().map(|(name, executable_path)| {
+        let relative = executable_path.strip_prefix("target/")
+            .ok_or_else(|| format!("{id}: unsupported companion executable_path {executable_path}"))?;
+        let built = target_dir.join(relative);
+        if !is_executable(&built) {
+            return Err(format!("{id}: build did not produce companion {name} at {}", built.display()));
+        }
+        Ok((name.clone(), built))
+    }).collect()
+}
+
+/// An adopted primary brings its companions from its own directory; a
+/// primary whose siblings are missing is not adopted piecemeal.
+fn adopted_companions(id: &str, target: &UpdateTarget, discovered: &Path) -> Result<Vec<(String, PathBuf)>, String> {
+    let resolved = fs::canonicalize(discovered).unwrap_or_else(|_| discovered.to_path_buf());
+    let dir = resolved.parent().ok_or_else(|| format!("{id}: adoption source has no directory"))?;
+    let mut found = Vec::new();
+    let mut missing = Vec::new();
+    for name in target.companions.keys() {
+        let path = dir.join(name);
+        if is_executable(&path) { found.push((name.clone(), path)); } else { missing.push(name.as_str()); }
+    }
+    if !missing.is_empty() {
+        return Err(format!(
+            "{id}: cannot adopt {} without its companion(s) {} beside it in {}; run 'oi update --apply --rebuild {id}' to build the cut with them",
+            discovered.display(), missing.join(", "), dir.display(),
+        ));
+    }
+    Ok(found)
+}
+
+/// Stage companions into the primary's content-addressed directory with the
+/// same stage-beside-then-rename discipline. They are not linked into bin/
+/// and never activated: only the product itself spawns them.
+fn stage_companions(data_root: &Path, id: &str, sha256: &str, companions: &[(String, PathBuf)]) -> Result<BTreeMap<String, String>, String> {
+    let managed_dir = data_root.join("products").join(id).join(sha256).join("bin");
+    fs::create_dir_all(&managed_dir).map_err(|error| format!("cannot create {}: {error}", managed_dir.display()))?;
+    let mut digests = BTreeMap::new();
+    for (name, source) in companions {
+        let digest = sha256_file(source)?;
+        let staged = managed_dir.join(name);
+        let temp = managed_dir.join(format!(".{name}.tmp-{}", std::process::id()));
+        fs::copy(source, &temp).map_err(|error| format!("cannot stage {id} companion {name}: {error}"))?;
+        #[cfg(unix)]
+        {
+            use std::os::unix::fs::PermissionsExt;
+            let mut permissions = fs::metadata(&temp).map_err(|error| error.to_string())?.permissions();
+            permissions.set_mode(0o755);
+            fs::set_permissions(&temp, permissions).map_err(|error| error.to_string())?;
+        }
+        fs::rename(&temp, &staged).map_err(|error| format!("cannot promote staged {id} companion {name}: {error}"))?;
+        if sha256_file(&staged)? != digest {
+            return Err(format!("{id}: staged companion {name} digest changed during staging"));
+        }
+        digests.insert(name.clone(), digest);
+    }
+    Ok(digests)
+}
+
 struct UpdateTarget {
     id: String,
     exe: String,
     version_command: Vec<String>,
     build_command: Vec<String>,
     executable_path: String,
+    /// Companion name to its declared `target/...` build output.
+    companions: BTreeMap<String, String>,
 }
 
 /// The flow's product registry: `oi` itself plus the six suite products,
@@ -457,6 +541,7 @@ fn update_targets(manifest: &SuiteManifest) -> Result<Vec<UpdateTarget>, String>
             "--locked".to_owned(), "--release".to_owned(), "--bin".to_owned(), "oi".to_owned(),
         ],
         executable_path: "cli/target/release/oi".to_owned(),
+        companions: BTreeMap::new(),
     }];
     for id in manifest.products.iter().map(|product| product.id.clone()) {
         let descriptor = catalogue.products.iter().find(|descriptor| descriptor.id == id)
@@ -467,6 +552,9 @@ fn update_targets(manifest: &SuiteManifest) -> Result<Vec<UpdateTarget>, String>
             version_command: descriptor.version_command.clone(),
             build_command: descriptor.source_install.build.clone(),
             executable_path: descriptor.source_install.executable_path.clone(),
+            companions: descriptor.source_install.companions.iter()
+                .map(|companion| (companion.executable.clone(), companion.executable_path.clone()))
+                .collect(),
         });
     }
     Ok(targets)
@@ -532,8 +620,9 @@ fn build_plan(
                 target.id,
             ));
         }
+        let companion_names: Vec<String> = target.companions.keys().cloned().collect();
         let (action, detail) = plan_product(
-            entry, desired.as_ref(), discovered.as_deref(), data_root, force_rebuild, &target.version_command,
+            entry, desired.as_ref(), discovered.as_deref(), data_root, force_rebuild, &target.version_command, &companion_names,
         );
         entries.push(PlanEntry {
             id: target.id.clone(),
@@ -674,10 +763,11 @@ fn apply_entry(
 ) -> Result<ManagedProduct, String> {
     let id = entry.id.as_str();
     let desired = entry.desired.as_ref().ok_or_else(|| format!("{id}: nothing to apply"))?;
-    let (built, provenance, build_command, gate_path) = match entry.action {
+    let (built, companion_sources, provenance, build_command, gate_path) = match entry.action {
         PlanAction::Adopt => {
             let discovered = entry.discovered.clone().ok_or_else(|| format!("{id}: adoption source vanished"))?;
-            (discovered, "adopted".to_owned(), Vec::new(), None)
+            let companions = adopted_companions(id, target, &discovered)?;
+            (discovered, companions, "adopted".to_owned(), Vec::new(), None)
         }
         PlanAction::Build => {
             let gate_root = update_gates_dir(data_root).join(format!(
@@ -722,11 +812,15 @@ fn apply_entry(
             if !is_executable(&built) {
                 return Err(format!("{id}: build did not produce {}", built.display()));
             }
-            (built, "built".to_owned(), target.build_command.clone(), Some(gate_root))
+            let companions = built_companions(id, target, &target_dir)?;
+            (built, companions, "built".to_owned(), target.build_command.clone(), Some(gate_root))
         }
         PlanAction::Skip | PlanAction::Absent => return Err(format!("{id}: nothing to apply for action {}", entry.action.as_str())),
     };
     let sha256 = sha256_file(&built)?;
+    // Companions land first: once bin/<exe> flips, the primary it names
+    // already has every sibling it spawns at the same cut.
+    let companions = stage_companions(data_root, id, &sha256, &companion_sources)?;
     let managed = stage_and_link(data_root, id, &entry.exe, &sha256, &built)?;
     let staged = managed_artifact_path(data_root, id, &sha256, &entry.exe);
     if sha256_file(&staged)? != sha256 {
@@ -758,6 +852,7 @@ fn apply_entry(
                 "provenance": provenance,
                 "build_command": build_command,
                 "sha256": sha256,
+                "companions": companions,
                 "managed": managed,
                 "result": "passed",
             }),
@@ -779,6 +874,7 @@ fn apply_entry(
         build_command,
         gate: gate_ref,
         installed_at_unix_seconds: unix_seconds_now(),
+        companions,
     })
 }
 
@@ -1294,6 +1390,7 @@ mod update_flow_tests {
             build_command: vec!["cargo".to_owned(), "build".to_owned()],
             gate: String::new(),
             installed_at_unix_seconds: 0,
+            companions: BTreeMap::new(),
         }
     }
 
@@ -1405,12 +1502,12 @@ mod update_flow_tests {
             branch: Some("main".into()),
             dirty: false,
         };
-        let (action, detail) = plan_product(Some(&entry), Some(&desired), None, &data_root, false, &["--version".to_owned()]);
+        let (action, detail) = plan_product(Some(&entry), Some(&desired), None, &data_root, false, &["--version".to_owned()], &[]);
         assert_eq!(action, PlanAction::Skip, "{detail}");
         // A drifted managed artifact breaks the skip: the receipt still names
         // the cut, but the bytes no longer verify.
         script_executable(&artifact, "#!/bin/sh\nexit 2\n");
-        let (action, _) = plan_product(Some(&entry), Some(&desired), None, &data_root, false, &["--version".to_owned()]);
+        let (action, _) = plan_product(Some(&entry), Some(&desired), None, &data_root, false, &["--version".to_owned()], &[]);
         assert_eq!(action, PlanAction::Build);
     }
 
@@ -1426,12 +1523,12 @@ mod update_flow_tests {
         };
         // Receipt names an older cut.
         let stale = receipt_entry(&data_root, &temp.path().join("home"), "b".repeat(40).as_str(), &"a".repeat(64));
-        let (action, detail) = plan_product(Some(&stale), Some(&desired), None, &data_root, false, &[]);
+        let (action, detail) = plan_product(Some(&stale), Some(&desired), None, &data_root, false, &[], &[]);
         assert_eq!(action, PlanAction::Build);
         assert!(detail.contains("dirty checkout is untouched"), "{detail}");
         // Receipt names the cut but the managed artifact no longer verifies.
         let entry = receipt_entry(&data_root, &temp.path().join("home"), &desired.revision, &"a".repeat(64));
-        let (action, _) = plan_product(Some(&entry), Some(&desired), None, &data_root, false, &[]);
+        let (action, _) = plan_product(Some(&entry), Some(&desired), None, &data_root, false, &[], &[]);
         assert_eq!(action, PlanAction::Build);
         // --rebuild forces a build even when everything verifies.
         let staged = script_executable(&temp.path().join("staged/tool"), "#!/bin/sh\nexit 0\n");
@@ -1440,7 +1537,7 @@ mod update_flow_tests {
         fs::create_dir_all(artifact.parent().unwrap()).unwrap();
         fs::copy(&staged, &artifact).unwrap();
         let healthy = receipt_entry(&data_root, &temp.path().join("home"), &desired.revision, &sha);
-        let (action, _) = plan_product(Some(&healthy), Some(&desired), None, &data_root, true, &[]);
+        let (action, _) = plan_product(Some(&healthy), Some(&desired), None, &data_root, true, &[], &[]);
         assert_eq!(action, PlanAction::Build);
     }
 
@@ -1459,20 +1556,20 @@ mod update_flow_tests {
             &temp.path().join("elsewhere/tool"),
             &format!("#!/bin/sh\necho \"tool 0.1.0 ({})\"\n", &revision[..12]),
         );
-        let (action, _) = plan_product(None, Some(&desired), Some(&discovered), &data_root, false, &["--version".to_owned()]);
+        let (action, _) = plan_product(None, Some(&desired), Some(&discovered), &data_root, false, &["--version".to_owned()], &[]);
         assert_eq!(action, PlanAction::Adopt);
         // A binary that names some other cut is never adopted.
         let stranger = script_executable(
             &temp.path().join("elsewhere/stranger"),
             "#!/bin/sh\necho \"tool 0.1.0 (0123456789ab)\"\n",
         );
-        let (action, _) = plan_product(None, Some(&desired), Some(&stranger), &data_root, false, &["--version".to_owned()]);
+        let (action, _) = plan_product(None, Some(&desired), Some(&stranger), &data_root, false, &["--version".to_owned()], &[]);
         assert_eq!(action, PlanAction::Build);
         // --rebuild escapes adoption.
-        let (action, _) = plan_product(None, Some(&desired), Some(&discovered), &data_root, true, &["--version".to_owned()]);
+        let (action, _) = plan_product(None, Some(&desired), Some(&discovered), &data_root, true, &["--version".to_owned()], &[]);
         assert_eq!(action, PlanAction::Build);
         // A missing checkout stays absent even with a discovered binary.
-        let (action, _) = plan_product(None, None, Some(&discovered), &data_root, false, &["--version".to_owned()]);
+        let (action, _) = plan_product(None, None, Some(&discovered), &data_root, false, &["--version".to_owned()], &[]);
         assert_eq!(action, PlanAction::Absent);
     }
 
@@ -1654,7 +1751,7 @@ mod update_flow_tests {
             branch: Some("origin/main".into()),
             dirty: false,
         };
-        let (action, detail) = plan_product(None, Some(&desired), None, &data_root, false, &[]);
+        let (action, detail) = plan_product(None, Some(&desired), None, &data_root, false, &[], &[]);
         assert_eq!(action, PlanAction::Build);
         assert!(detail.contains("origin/main"), "{detail}");
         assert!(!detail.contains("dirty"), "a committed ref must not read as dirty work: {detail}");
@@ -1666,7 +1763,7 @@ mod update_flow_tests {
         fs::create_dir_all(artifact.parent().unwrap()).unwrap();
         fs::copy(&staged, &artifact).unwrap();
         let entry = receipt_entry(&data_root, &temp.path().join("home"), &desired.revision, &sha);
-        let (action, _) = plan_product(Some(&entry), Some(&desired), None, &data_root, false, &[]);
+        let (action, _) = plan_product(Some(&entry), Some(&desired), None, &data_root, false, &[], &[]);
         assert_eq!(action, PlanAction::Skip);
     }
 
@@ -1686,6 +1783,142 @@ mod update_flow_tests {
         fs::write(active_update_receipt_path(&data_root), legacy).unwrap();
         let receipt = load_active_update_receipt(&data_root).unwrap().expect("legacy receipt loads");
         assert!(receipt.products["tool"].channel.is_none(), "the channel field is optional and absent on legacy entries");
+        assert!(receipt.products["tool"].companions.is_empty(), "receipts from before companions load with none");
+        // And an entry without companions writes none: old readers see the old shape.
+        let written = serde_json::to_value(&receipt.products["tool"]).unwrap();
+        assert!(written.get("companions").is_none());
+    }
+
+    /// A repository whose declared build writes a primary and one companion
+    /// into `$CARGO_TARGET_DIR/release`, the shape QL's source install has.
+    fn companion_repo(dir: &Path, label: &str) -> (PathBuf, String) {
+        let repo = dir.join("tool");
+        fs::create_dir_all(&repo).unwrap();
+        if !repo.join(".git").exists() {
+            git(&repo, &["init", "-b", "main"]);
+        }
+        fs::write(repo.join("build.sh"), format!(
+            "set -eu\nmkdir -p \"$CARGO_TARGET_DIR/release\"\n\
+             printf '#!/bin/sh\\necho \"tool {label}\"\\n' > \"$CARGO_TARGET_DIR/release/tool\"\n\
+             printf '#!/bin/sh\\necho \"host {label}\"\\n' > \"$CARGO_TARGET_DIR/release/tool-host\"\n\
+             chmod 755 \"$CARGO_TARGET_DIR/release/tool\" \"$CARGO_TARGET_DIR/release/tool-host\"\n"
+        )).unwrap();
+        let revision = commit_all(&repo, label);
+        (repo, revision)
+    }
+
+    fn companion_target(build: &[&str]) -> UpdateTarget {
+        UpdateTarget {
+            id: "tool".to_owned(),
+            exe: "tool".to_owned(),
+            version_command: vec!["--version".to_owned()],
+            build_command: build.iter().map(|part| (*part).to_owned()).collect(),
+            executable_path: "target/release/tool".to_owned(),
+            companions: BTreeMap::from([("tool-host".to_owned(), "target/release/tool-host".to_owned())]),
+        }
+    }
+
+    fn build_entry(checkout: &Path, revision: &str, action: PlanAction, discovered: Option<PathBuf>) -> PlanEntry {
+        PlanEntry {
+            id: "tool".to_owned(),
+            exe: "tool".to_owned(),
+            checkout: checkout.to_path_buf(),
+            action,
+            desired: Some(DesiredCut { revision: revision.to_owned(), tree: revision.to_owned(), branch: Some("main".into()), dirty: false }),
+            installed_revision: None,
+            discovered,
+            detail: String::new(),
+            origin_main: None,
+            behind_main: None,
+            ahead_of_main: None,
+        }
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn a_build_stages_companions_beside_the_primary_and_rollback_keeps_pairs() {
+        let temp = tempfile::tempdir().unwrap();
+        let data_root = temp.path().join("data");
+        let activation = temp.path().join("home/.local/bin");
+        let target = companion_target(&["sh", "build.sh"]);
+
+        let (repo, first_rev) = companion_repo(temp.path(), "one");
+        let first = apply_entry(&build_entry(&repo, &first_rev, PlanAction::Build, None), &target, &data_root, &activation, UpdateChannel::DeveloperSource).unwrap();
+        let first_dir = PathBuf::from(&first.managed).parent().unwrap().to_path_buf();
+        assert_eq!(first_dir, managed_artifact_path(&data_root, "tool", &first.sha256, "tool").parent().unwrap());
+        let first_host = first_dir.join("tool-host");
+        assert!(is_executable(&first_host), "the companion is staged in the primary's generation");
+        assert_eq!(first.companions, BTreeMap::from([("tool-host".to_owned(), sha256_file(&first_host).unwrap())]));
+        // Only the primary is linked and activated.
+        assert!(fs::symlink_metadata(data_root.join("bin/tool-host")).is_err());
+        assert!(fs::symlink_metadata(activation.join("tool-host")).is_err());
+        assert!(fs::symlink_metadata(activation.join("tool")).is_ok());
+        // The receipt entry carries the companion digests.
+        let written = serde_json::to_value(&first).unwrap();
+        assert_eq!(written["companions"]["tool-host"], first.companions["tool-host"]);
+
+        // A receipted, verifying companion keeps the cut current; a declared
+        // companion the receipt lacks forces a rebuild.
+        let desired = build_entry(&repo, &first_rev, PlanAction::Build, None).desired.unwrap();
+        let declared = vec!["tool-host".to_owned()];
+        assert_eq!(plan_product(Some(&first), Some(&desired), None, &data_root, false, &[], &declared).0, PlanAction::Skip);
+        let without = ManagedProduct { companions: BTreeMap::new(), ..first.clone() };
+        assert_eq!(plan_product(Some(&without), Some(&desired), None, &data_root, false, &[], &declared).0, PlanAction::Build);
+
+        // A second cut gets its own generation with its own companion.
+        let (_, second_rev) = companion_repo(temp.path(), "two");
+        let second = apply_entry(&build_entry(&repo, &second_rev, PlanAction::Build, None), &target, &data_root, &activation, UpdateChannel::DeveloperSource).unwrap();
+        assert_ne!(second.sha256, first.sha256);
+        let resolved = fs::canonicalize(data_root.join("bin/tool")).unwrap();
+        assert_eq!(fs::read_to_string(resolved.parent().unwrap().join("tool-host")).unwrap(), "#!/bin/sh\necho \"host two\"\n");
+
+        // Rollback re-points bin/<exe> into the previous generation, and the
+        // companion found beside it is the previous cut's: pairs never mix.
+        atomic_symlink(&data_root.join("bin/tool"), &Path::new("../products/tool").join(&first.sha256).join("bin/tool")).unwrap();
+        let resolved = fs::canonicalize(data_root.join("bin/tool")).unwrap();
+        assert_eq!(fs::read_to_string(resolved.parent().unwrap().join("tool-host")).unwrap(), "#!/bin/sh\necho \"host one\"\n");
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn a_build_that_omits_a_companion_links_nothing() {
+        let temp = tempfile::tempdir().unwrap();
+        let data_root = temp.path().join("data");
+        let activation = temp.path().join("home/.local/bin");
+        let (repo, revision) = companion_repo(temp.path(), "one");
+        let mut target = companion_target(&["sh", "build.sh"]);
+        target.companions.insert("tool-worker".to_owned(), "target/release/tool-worker".to_owned());
+        let error = apply_entry(&build_entry(&repo, &revision, PlanAction::Build, None), &target, &data_root, &activation, UpdateChannel::DeveloperSource).unwrap_err();
+        assert!(error.contains("companion tool-worker"), "{error}");
+        assert!(fs::symlink_metadata(data_root.join("bin/tool")).is_err());
+        assert!(fs::symlink_metadata(activation.join("tool")).is_err());
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn adoption_takes_companions_from_the_primary_directory_or_refuses() {
+        let temp = tempfile::tempdir().unwrap();
+        let data_root = temp.path().join("data");
+        let activation = temp.path().join("home/.local/bin");
+        let target = companion_target(&[]);
+        let revision = "d".repeat(40);
+        let install = temp.path().join("elsewhere/release");
+        script_executable(&install.join("tool"), &format!("#!/bin/sh\necho \"tool 0.1.0 ({})\"\n", &revision[..12]));
+        // PATH names a link; the siblings live beside what it resolves to.
+        let path_dir = temp.path().join("path");
+        fs::create_dir_all(&path_dir).unwrap();
+        std::os::unix::fs::symlink(install.join("tool"), path_dir.join("tool")).unwrap();
+        let entry = build_entry(temp.path(), &revision, PlanAction::Adopt, Some(path_dir.join("tool")));
+
+        let error = apply_entry(&entry, &target, &data_root, &activation, UpdateChannel::DeveloperSource).unwrap_err();
+        assert!(error.contains("tool-host") && error.contains("--rebuild"), "{error}");
+        assert!(fs::symlink_metadata(data_root.join("bin/tool")).is_err(), "nothing is linked without its companions");
+
+        script_executable(&install.join("tool-host"), "#!/bin/sh\necho host\n");
+        let adopted = apply_entry(&entry, &target, &data_root, &activation, UpdateChannel::DeveloperSource).unwrap();
+        assert_eq!(adopted.provenance, "adopted");
+        let staged = PathBuf::from(&adopted.managed).parent().unwrap().join("tool-host");
+        assert_eq!(adopted.companions["tool-host"], sha256_file(&staged).unwrap());
     }
 
     #[test]

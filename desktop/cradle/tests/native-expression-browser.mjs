@@ -43,8 +43,8 @@ try{
   await dismiss.click();
   await frame.waitForFunction(()=>document.querySelector('#entry-gate')?.hasAttribute('hidden'),null,{timeout:5000});
  }
- // Native field is Studio-section content, not a floating pill: open Studio
- // and select its "Native field" section before its controls exist in the DOM.
+ // The live instrument is Studio-section content, not a floating pill: open
+ // Studio and select its "Live instrument" section before its controls exist.
  // At this viewport the workspace header cluster is in its compact form
  // (the "Studio" button rides the collapsed "•••" menu, per the 1100px
  // breakpoint in workspace.css), so open that menu first when present.
@@ -59,6 +59,9 @@ try{
   // no-op click on the section tab).
   if(await section.getAttribute('aria-current')!=='page')await section.click();
   await frame.locator('.native-field-panel').waitFor();
+  // A supplied binding document is the section's Inspect depth; the live
+  // K² instrument (compose) is its primary action.
+  if(!(await frame.locator('[data-ni-depth]').evaluate(d=>d.open)))await frame.locator('[data-ni-depth]>summary').click();
  };
  // The panel is now ordinary Studio-section content, not its own small
  // fixed popup with its own internal 75vh scroll — its controls live in
@@ -85,7 +88,7 @@ try{
  await page.evaluate(()=>document.querySelector('iframe').contentWindow.postMessage({v:1,kind:'host-mode',mode:'expressions'},'*'));
  // Entering Technè's M0 project lens closes the Studio (activateInstrument's
  // 'project' branch sets inspectorOpen=false); the return to Expressions
- // does not reopen it, so the Native field section is reselected here —
+ // does not reopen it, so the Live instrument section is reselected here —
  // same product control, reached fresh after the round trip.
  await openNativeSection();
  await clickNative(domainSummary);

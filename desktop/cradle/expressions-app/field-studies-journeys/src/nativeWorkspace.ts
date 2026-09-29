@@ -398,8 +398,22 @@ export function installNativeWorkspace(host:NativeWorkspaceHost){
    const snapshot=clone(host.snapshot()),version=host.version();
    return mutate(async()=>{
     await retainSubmitted(snapshot);
-    const doc=await work.commit(snapshot);
-    status(`Saved · native revision ${doc.revision} — ${doc.scenes.length} scene${doc.scenes.length===1?'':'s'}, ${Object.keys(doc.entities).length} member${Object.keys(doc.entities).length===1?'':'s'} in the native Expression.${host.version()!==version?' Newer local edits remain a separate draft.':''}`);
+    let destination=work.state?.file;
+    // Following a native tree entry can have no local file checkpoint. The
+    // owner still knows its file; keep Save on that exact existing binding.
+    const reference=work.state?.view?.document.expression_ref;
+    if(!destination&&reference){
+     const inspected=await nativeExpressionRequest({operation:'inspect',expression_ref:reference}) as {document?:KernelExpressionDocument;file?:Omit<NativeFile,'expression_ref'>|null};
+     if(inspected.document?.expression_ref!==reference)throw Error('The owner returned a different Expression before saving.');
+     if(inspected.file)destination={...inspected.file,expression_ref:reference};
+    }
+    if(destination){
+     const file=await work.saveFile(snapshot,{location:destination.location,revision:destination.revision});
+     status(`Saved and read back ${file.location.path}.${host.version()!==version?' Newer local edits remain a separate draft.':''}`);
+    }else{
+     const doc=await work.commit(snapshot);
+     status(`Saved · native revision ${doc.revision} — ${doc.scenes.length} scene${doc.scenes.length===1?'':'s'}, ${Object.keys(doc.entities).length} member${Object.keys(doc.entities).length===1?'':'s'} in the native Expression.${host.version()!==version?' Newer local edits remain a separate draft.':''}`);
+    }
    });
   },
  };

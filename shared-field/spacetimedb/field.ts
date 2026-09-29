@@ -51,10 +51,10 @@ import { mkdirSync, rmSync, writeFileSync } from 'node:fs';
 import { dirname } from 'node:path';
 import { createProjection } from '../index.mjs';
 import { projectionStorageKey } from '../spacetimedb.mjs';
+import {createNaraPresenceConsent,projectNaraExpression,hostedNaraExpressionArgs,validateCanonicalNaraCues} from '../nara-expression-projection.mjs';
 
 // stdout carries exactly one envelope; the SDK's own console chatter goes to stderr.
 for (const level of ['log', 'info', 'warn', 'debug', 'error'] as const) console[level] = (...parts: unknown[]) => { process.stderr.write(`${parts.map(String).join(' ')}\n`); };
-const { close, fieldSnapshot, open, publishArgs, readRef, resolveTarget, rows, waitUntil } = await import('./field-lib');
 
 type Envelope = { ok: true; data: unknown } | { ok: false; error: { kind: 'unbound' | 'unavailable' | 'refused' | 'malformed'; message: string } };
 
@@ -107,6 +107,36 @@ try {
   const reducers: any = client!.conn.reducers;
   const db: any = client!.conn.db;
   switch (request.kind) {
+    // Reserved host seam: the native kernel supplies a freshly validated safe
+    // document. Its generic SharedField operation refuses these request kinds.
+    case 'preview_nara':
+    case 'publish_nara': {
+      validateCanonicalNaraCues(request.input?.document);
+      const consent=createNaraPresenceConsent(request.input?.consent);
+      if(Date.parse(consent.granted_at)!==request.consent_granted_at_unix_ms)throw new Error('Presence consent timestamps disagree');
+      if(Date.parse(consent.granted_at)>Date.now())throw new Error('Presence consent is not yet granted');
+      if(request.input?.audience?.visibility!=='restricted')throw new Error('Native Nara presence requires a restricted audience');
+      const bundle=projectNaraExpression({...request.input,consent,published_at:consent.granted_at});
+      if(request.kind==='publish_nara') {
+        const history=rows(db.projection).filter((row:any)=>row.projectionRef===bundle.projection.projection_ref)
+          .sort((a:any,b:any)=>Number(b.projectionRevision)-Number(a.projectionRevision));
+        const prior=history[0];
+        const entry=rows(db.exploreEntry).find((row:any)=>row.semanticRef===bundle.entry.ref);
+        if(entry&&entry.fieldRef!==bundle.field_ref)throw new Error('This Expression already belongs to another SharedField; use its existing field or explicitly fork it before publishing');
+        if(prior&&(prior.state!=='withdrawn'||Number(prior.projectionRevision)+1!==bundle.projection.projection_revision))
+          throw new Error('Native Nara presence already has a hosted revision; recover it and withdraw before a new consented entry');
+        if(!prior&&bundle.projection.projection_revision!==1)throw new Error('First native Nara presence revision must be 1');
+        if(prior){
+          const withdrawn=JSON.parse(prior.contractJson);
+          const previousGrants=history.flatMap((row:any)=>JSON.parse(row.contractJson).relation_hints??[])
+            .filter((hint:any)=>hint.kind==='consented-presence').map((hint:any)=>hint.consent_ref);
+          if(previousGrants.includes(consent.consent_ref)||!(Date.parse(consent.granted_at)>Date.parse(withdrawn.published_at)))
+            throw new Error('Re-entry requires a fresh consent reference granted after the hosted withdrawal');
+        }
+      }
+      const publication=request.kind==='publish_nara'?await publishArgs(client!,hostedNaraExpressionArgs(bundle)):null;
+      await emit({ok:true,data:{schema:'oi.nara-presence/v1',bundle,publication,private_state_exported:false}});
+    }
     case 'identity':
       await emit({ ok: true, data: { schema: 'oi.shared-field.identity/v1', transport_identity: client!.identityHex } });
     case 'receipt': {
