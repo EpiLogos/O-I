@@ -39,10 +39,13 @@ export class NativeProjection {
    for(let i=0;i<input.length;i+=4){data[i]=input[i]*this._scale;data[i+1]=input[i+1]*this._scale;data[i+2]=input[i+2]*this._scale;data[i+3]=input[i+3];}
    texture.needsUpdate=true;return texture;
   };
+  // Negative acceptance only: admitted frames stop short of the GPU-bound
+  // textures. Nothing in the application sets this; a cut consumer must fail.
+  if((globalThis as any).__OI_TEST_DISCONNECT_NATIVE_TARGETS__===true&&this.a&&this.b)return;
   this.a=fill(this.inputA,this.a);this.b=fill(this.inputB,this.b);this.port.setTargetTextures(this.a,this.b,this.centre);
  }
  checkpoint(renderer:any){return this.native.checkpoint(renderer);}
  restore(renderer:any,checkpoint:any){this.native.restore(renderer,checkpoint);this.sync();}
- inspect(){return{native:this.native.lastReceipt,presentation_units_per_metre:this._scale,target_a:this.a?.image.data,target_b:this.b?.image.data};}
+ inspect(){return{native:this.native.lastReceipt,presentation_units_per_metre:this._scale,target_a:this.a?.image.data,target_b:this.b?.image.data,admitted_a:this.inputA?.image.data};}
  dispose(){if(this.dead)return;this.dead=true;this.native.dispose();this.a?.dispose();this.b?.dispose();}
 }

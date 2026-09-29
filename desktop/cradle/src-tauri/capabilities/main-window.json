@@ -12,6 +12,7 @@
     "allow-window-detach",
     "allow-window-binding",
     "allow-window-redock",
+    "allow-window-redock-surface",
     "allow-window-focus-subject",
     "allow-window-focus-main",
     "allow-browser-attach",

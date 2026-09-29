@@ -34,7 +34,9 @@
   .desktop-centre .pane.group:not(.focused):not([data-maximized="true"]), .desktop-centre .split-resizer { display: none !important; }
 }
 @media (pointer: coarse) { .shell-topbar { height: 44px; } .shell-topbar button { width: 40px; height: 40px; } }
-.desktop-shell button, .desktop-shell select, .desktop-shell input { font: inherit; color: var(--oi-accent-ink); background: transparent; border: 0; }
+/* Shell defaults must stay below the shared control classes. Otherwise the
+ * reset erases action padding and makes primary-button ink match its ground. */
+:where(.desktop-shell) button, :where(.desktop-shell) select, :where(.desktop-shell) input { font: inherit; color: var(--oi-accent-ink); background: transparent; border: 0; }
 /* Finding 1: this used to be `padding: var(--oi-space-2)` — a descendant
  * rule that ties on specificity with every single-class control rule
  * elsewhere (agent.css, cradle.css…) and, depending on stylesheet order,
@@ -42,7 +44,7 @@
  * 24×24 instead of 21×21, its svg crushed to width 0). Controls own their
  * sizes; this rule contributes nothing but cursor + a safety net so an
  * icon's svg never shrinks inside a tight control body. */
-.desktop-shell button { padding: 0; cursor: pointer; }
+:where(.desktop-shell) button { padding: 0; cursor: pointer; }
 .desktop-shell button svg { flex: none; }
 /* Finding 2: a blanket `:focus-visible` on every descendant tied on
  * specificity with rest.css's `.canvas-surface:focus-visible` and won by

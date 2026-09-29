@@ -268,6 +268,108 @@ fn base_profile() -> Value {
 }
 
 #[test]
+fn profile_revision_and_refused_lineage_preserve_adopted_content() {
+    let mut app = Application::default();
+    let base = base_profile();
+    apply(
+        &mut app,
+        json!({"operation":"profile_define","profile":base,"actor":"human:author"}),
+    );
+    // An exact replay is idempotent; changed content needs another revision.
+    apply(
+        &mut app,
+        json!({"operation":"profile_define","profile":base,"actor":"human:author"}),
+    );
+    let mut changed = base.clone();
+    changed["title"] = json!("Changed without a revision");
+    assert!(refused(
+        &mut app,
+        json!({"operation":"profile_define","profile":changed,"actor":"human:author"})
+    )
+    .contains("different content"));
+    let child = json!({"profile_ref":"profile:child","revision":1,"title":"Child",
+        "parent_profile_refs":["profile:base"],"accepted_binding_kinds":["text_source"],"provenance":[]});
+    apply(
+        &mut app,
+        json!({"operation":"profile_define","profile":child,"actor":"human:author"}),
+    );
+    let mut cycle = base.clone();
+    cycle["revision"] = json!(2);
+    cycle["parent_profile_refs"] = json!(["profile:child"]);
+    assert!(refused(
+        &mut app,
+        json!({"operation":"profile_define","profile":cycle,"actor":"human:author"})
+    )
+    .contains("circular"));
+    let retained = apply(
+        &mut app,
+        json!({"operation":"profile_inspect","profile_ref":"profile:base"}),
+    );
+    assert_eq!(retained["profile"]["revision"], 1);
+    assert_eq!(retained["profile"]["title"], base["title"]);
+    assert_eq!(retained["profile"]["parent_profile_refs"], json!([]));
+    assert_eq!(
+        apply(
+            &mut app,
+            json!({"operation":"profile_inspect","profile_ref":"profile:child"})
+        )["resolved_defaults"]["scale"]["value"],
+        base["material_defaults"]["scale"]["value"]
+    );
+}
+
+#[test]
+fn extending_an_ancestor_cannot_poison_an_existing_descendant() {
+    let mut app = Application::default();
+    for (reference, parent) in [("profile:older", None), ("profile:base", None)] {
+        let mut profile = base_profile();
+        profile["profile_ref"] = json!(reference);
+        profile["parent_profile_refs"] = json!(parent.into_iter().collect::<Vec<&str>>());
+        apply(
+            &mut app,
+            json!({"operation":"profile_define","profile":profile,"actor":"human:author"}),
+        );
+    }
+    let mut parent = "profile:base".to_owned();
+    for index in 1..=8 {
+        let reference = format!("profile:descendant-{index}");
+        let mut profile = base_profile();
+        profile["profile_ref"] = json!(reference);
+        profile["parent_profile_refs"] = json!([parent]);
+        apply(
+            &mut app,
+            json!({"operation":"profile_define","profile":profile,"actor":"human:author"}),
+        );
+        parent = reference;
+    }
+    let before = apply(
+        &mut app,
+        json!({"operation":"profile_inspect","profile_ref":parent}),
+    );
+    let mut extended = base_profile();
+    extended["revision"] = json!(2);
+    extended["parent_profile_refs"] = json!(["profile:older"]);
+    assert!(refused(
+        &mut app,
+        json!({"operation":"profile_define","profile":extended,"actor":"human:author"})
+    )
+    .contains("too deep"));
+    assert_eq!(
+        apply(
+            &mut app,
+            json!({"operation":"profile_inspect","profile_ref":parent})
+        ),
+        before
+    );
+    assert_eq!(
+        apply(
+            &mut app,
+            json!({"operation":"profile_inspect","profile_ref":"profile:base"})
+        )["profile"]["revision"],
+        1
+    );
+}
+
+#[test]
 fn profiles_define_lineage_resolution_editions_and_index() {
     let mut app = Application::default();
     let base = base_profile();

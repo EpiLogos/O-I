@@ -266,7 +266,7 @@ void main() {
   // Entity tint: which partition is this particle in?
   float pIndex = floor(uv.y * uTexSize.y) * uTexSize.x + floor(uv.x * uTexSize.x);
   int eIdx = 0;
-  for (int i = 0; i < 10; i++) {
+  for (int i = 0; i < ${MAX_FORMATIONS}; i++) {
     if (i >= uEntityCount) break;
     eIdx = i;
     if (pIndex < uEntityBounds[i]) break;

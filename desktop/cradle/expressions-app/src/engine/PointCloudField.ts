@@ -30,11 +30,14 @@ import { CymaticResonator, ResonatorTelemetry, type ResonanceState, type Resonan
 import { PinMarkerLayer, PinGhostState } from './pinMarkers';
 import { EntityRuntime, EntityFrame } from './entityRuntime';
 import type { EvaluatedEntityPose } from './entityPose';
-import { compileEntityForceEmitters, relationalCarrierStates, type ForceEmitterState, type RelationalCarrierState } from './forceRuntime';
+import { compileEntityForceEmitters, relationalCarrierStates, type ForceEmitterState, type RelationalCarrierState, type ForceEmitterProjection } from './forceRuntime';
 import { SemanticFieldRuntime } from './semantics/semanticFieldRuntime';
 import type { SemanticFieldState } from './semantics/semanticTypes';
 import { CHAKRA_BY_ID } from './semantics/chakraSemantics';
 import { mapChakrasToAnchors, CHAKRA_PROFILE_ID } from './semantics/chakraProfile';
+import {LocalizedResonanceBank,type LocalizedResonanceFrame} from './LocalizedResonanceBank';
+import type {LocalizedResonanceProjection} from './localizedResonanceProjection';
+import {DEFAULT_RESONATOR_PARAMS} from './cymaticResonator';
 import { semanticFocusTarget, type ResonanceDriveConfig, type ResolvedResonanceDrive } from './resonanceDrive';
 import type { SourceAnalysis } from './sourceSampling';
 import {
@@ -49,6 +52,7 @@ import {
   makeLink,
   resolveFocus,
   MAX_FORMATIONS,
+  MAX_PINS,
 } from './fieldModel';
 
 /** A retained image/ASCII source, kept so the pool can be re-derived against a new true-3D law. */
@@ -330,9 +334,60 @@ export class PointCloudField {
   private activeEntityId: string | null = null;
   private lastPoses: EvaluatedEntityPose[] = [];
   private lastForceEmitters: ForceEmitterState[] = [];
+  private forceEmitterProjection: ForceEmitterProjection | null = null;
+  public setFormationGeometryProjection(value:import('./formationGeometryProjection').FormationGeometryProjection|null){
+    if(value&&!this.formations().some(entity=>entity.id===value.entityId))throw Error('The geometry target is not an enabled formation.');
+    this.entities.setGeometryProjection(value);
+  }
+
+  public setForceEmitterProjection(projection: ForceEmitterProjection | null) {
+    this.forceEmitterProjection = projection;
+  }
+  private projectForceEmitters(emitters: ForceEmitterState[]): ForceEmitterState[] {
+    return this.forceEmitterProjection ? [...this.forceEmitterProjection(emitters)] : emitters;
+  }
   private lastRelationalCarriers: RelationalCarrierState[] = [];
   private semanticRuntime = new SemanticFieldRuntime();
   private latestSemanticState: SemanticFieldState = { nodes: [], colorFields: [] };
+  private localizedProjection:LocalizedResonanceProjection|null=null;
+  private localizedBank=new LocalizedResonanceBank();
+  private localizedFrames:readonly LocalizedResonanceFrame[]=[];
+  public setLocalizedResonanceProjection(value:LocalizedResonanceProjection|null){
+    if(value){
+      const q=value.orientation,norm=Math.hypot(q.w,q.x,q.y,q.z);
+      if(!value.scope||!Number.isFinite(norm)||Math.abs(norm-1)>1e-6||value.drivers.length>MAX_FORMATIONS
+        ||new Set(value.drivers.map(d=>d.entityId)).size!==value.drivers.length
+        ||value.drivers.some(d=>!d.entityId||!Number.isFinite(d.frequencyHz)||d.frequencyHz<=0||!Number.isFinite(d.driveShare)||d.driveShare<0))
+        throw Error('Invalid localized resonance admission');
+    }
+    if(value?.scope!==this.localizedProjection?.scope)this.localizedBank.configure([]);
+    this.localizedProjection=value;
+  }
+  private tickLocalizedResonance(delta:number):boolean{
+    const projection=this.localizedProjection,cym=this.config.cymatics;
+    if(!projection){
+      if(this.localizedFrames.length){this.localizedBank.configure([]);this.localizedFrames=[];this.simulator.setLocalizedResonanceState([],{w:1,x:0,y:0,z:0},0,0);}
+      return false;
+    }
+    const params={...DEFAULT_RESONATOR_PARAMS,
+      plateSize:cym?.plateSize??700,baseFrequency:cym?.baseFrequency??40,
+      dampingQ:cym?.dampingQFactor??4.5,driveStrength:cym?.driveStrength??1,
+      modeCount:Math.max(1,Math.min(64,Math.round(cym?.modeCount??64))),
+      dimension:cym?.dimension==='3D'||cym?.plateGeometry==='volumetric3D'?'3D' as const:'2D' as const};
+    const drivers=projection.drivers.filter(d=>d.driveShare>0).map(driver=>{
+      const pose=this.lastPoses.find(p=>p.entityId===driver.entityId);
+      if(!pose)throw Error('A localized resonance driver has no current evaluated entity');
+      return {entityId:driver.entityId,frequencyHz:driver.frequencyHz,
+        position:[pose.x,pose.y,pose.z] as const,params:{...params,driveStrength:params.driveStrength*driver.driveShare}};
+    });
+    // A user's explicit dimension edit changes the modal basis. Release that
+    // basis; frequency/position/material changes within it retain envelopes.
+    if(this.localizedFrames.some(f=>f.params.dimension!==params.dimension))this.localizedBank.configure([]);
+    this.localizedBank.configure(drivers);this.localizedFrames=this.localizedBank.step(delta);
+    this.simulator.setLocalizedResonanceState(this.localizedFrames,projection.orientation,cym?.transportGain??1,cym?.driveScale??1);
+    this.simulator.setResonatorDominance(cym?.dominance??1);
+    return true;
+  }
   private lastResonanceDrive: ResolvedResonanceDrive = { kind: 'frequency', targetHz: 396, bound: true };
 
   // Cymatic medium: one continuously driven resonator (see cymaticResonator.ts)
@@ -518,7 +573,7 @@ export class PointCloudField {
     const resolved = this.entities.update(cfg.entities || [], comp, this.simTime, this.lastDrive?.theta ?? 0, this.morphProgress, cfg.toroidalMorph?.holdRatio ?? 0, cfg.fontFamily, cfg.fontWeight);
     this.lastPoses = resolved.poses;
     const depthForms = !!(cfg.glyphVolume?.enabled && (cfg.glyphVolume?.depth ?? 0) > 0);
-    this.lastForceEmitters = compileEntityForceEmitters(cfg.entities || [], resolved.poses, cfg.interaction.placedPoints || [], depthForms ? 'world3d' : 'compositionPlane');
+    this.lastForceEmitters = this.projectForceEmitters(compileEntityForceEmitters(cfg.entities || [], resolved.poses, cfg.interaction.placedPoints || [], depthForms ? 'world3d' : 'compositionPlane'));
     this.simulator.setTargetTextures(this.entities.textureA!, this.entities.textureB!, this.entities.fieldCentre(), this.entities.noiseTexture!);
     this.simulator.setEntityState(this.entities.uniforms);
     this.simulator.setCollisionState(this.entities.collisionTiles, this.entities.collisionTexture);
@@ -549,7 +604,7 @@ export class PointCloudField {
   public getEntityCentre(id: string): { x: number; y: number; z: number } | null {
     const parts = this.entities.getPartitions();
     const i = parts.findIndex((p) => p.entityId === id);
-    if (i >= 0 && i < 10) {
+    if (i >= 0 && i < MAX_FORMATIONS) {
       const c = this.entities.uniforms.centers[i];
       return { x: c.x, y: c.y, z: c.z };
     }
@@ -1526,8 +1581,10 @@ export class PointCloudField {
   public inspectState(readParticles = false) {
     const result = { simTime: this.simTime, steps: this.simulator.stepCount, seeds: this.seedGeneration,
       bakes: this.entities.bakeGeneration, particleCount: this.simulator.particleCount,
-      connections: {...this.entities.connections.inspect(),nodeFormations:this.entities.getPartitions().length,maxNodeFormations:10},
+      partitions:this.entities.getPartitions().map(partition=>({...partition})),
+      connections: {...this.entities.connections.inspect(),nodeFormations:this.entities.getPartitions().length,maxNodeFormations:MAX_FORMATIONS},
       drive: this.lastDrive, composition: this.getCompositionTelemetry(),
+      localizedResonance:this.localizedFrames.map(f=>({entityId:f.entityId,frequencyHz:f.frequencyHz,position:f.position,params:f.params,re:Array.from(f.re),im:Array.from(f.im)})),
       positions: [] as number[], velocities: [] as number[] };
     if (readParticles) {
       const n = this.simulator.texWidth * this.simulator.texHeight * 4;
@@ -1549,7 +1606,7 @@ export class PointCloudField {
   public setSelection(ids: readonly string[]) {
     const u=this.particleMaterial.uniforms,parts=this.entities.getPartitions();
     const mask=u.uEditSelected.value as Float32Array;mask.fill(0);
-    let any=false;parts.forEach((p,i)=>{if(i<10&&ids.includes(p.entityId)){mask[i]=1;any=true;}});
+    let any=false;parts.forEach((p,i)=>{if(i<MAX_FORMATIONS&&ids.includes(p.entityId)){mask[i]=1;any=true;}});
     u.uEditHasSelection.value=any||this.entities.connections.selected.size?1:0;
   }
   /** Copy a clean live framebuffer without readback, stepping, or changing the authoring frame. */
@@ -1781,7 +1838,7 @@ export class PointCloudField {
       (u.uEntityBounds.value as Float32Array).set(eu.bounds);
       (u.uEntityTintWeight.value as Float32Array).set(eu.tintWeights);
       const tints = u.uEntityTint.value as THREE.Color[];
-      for (let i = 0; i < 10; i++) tints[i].copy(eu.tints[i]);
+      for (let i = 0; i < MAX_FORMATIONS; i++) tints[i].copy(eu.tints[i]);
       (u.uTexSize.value as THREE.Vector2).set(this.simulator.texWidth, this.simulator.texHeight);
       (u.uFocusTint.value as THREE.Color).copy(this.focusTint);
       u.uFocusTintWeight.value = focusWeight;
@@ -1800,7 +1857,7 @@ export class PointCloudField {
     this.lastRelationalCarriers = [];
     if (cfg.relational?.enabled) {
       const rel = cfg.relational;
-      const count = Math.max(1, Math.min(10, rel.attractorCount ?? 3));
+      const count = Math.max(1, Math.min(MAX_PINS, rel.attractorCount ?? 3));
       const eu = this.entities.uniforms;
       const baseCenters: Array<{x:number;y:number;z:number}> = [];
       for (let i = 0; i < Math.max(1, eu.count); i++) baseCenters.push({x: eu.centers[i].x, y: eu.centers[i].y, z: eu.centers[i].z});
@@ -1812,7 +1869,7 @@ export class PointCloudField {
       const dynamicAttractors: THREE.Vector4[] = [];
       const dynamicSpins: number[] = [];
       const carrierPositions: Array<{x:number;y:number;z:number}> = [];
-      for (let i = 0; i < 10; i++) {
+      for (let i = 0; i < MAX_PINS; i++) {
         if (i < count) {
           const basePt = baseCenters[i % baseCenters.length] || {x: 0, y: 0, z: 0};
           const initialAngle = (i / count) * Math.PI * 2;
@@ -1859,7 +1916,7 @@ export class PointCloudField {
     // 6. All first-class entity forces compile through one physical emitter table. Formation
     // forces keep their composition-plane metric; pins keep their full-3D metric. Legacy placed
     // points are accepted only as migration input and compile into the same table.
-    this.lastForceEmitters = compileEntityForceEmitters(cfg.entities || [], this.lastPoses, cfg.interaction.placedPoints || []);
+    this.lastForceEmitters = this.projectForceEmitters(compileEntityForceEmitters(cfg.entities || [], this.lastPoses, cfg.interaction.placedPoints || []));
     this.simulator.setForceEmitters(this.lastForceEmitters);
 
     // 7. Semantic interpretation consumes physical resonance + evaluated carriers, then emits
@@ -1923,6 +1980,7 @@ export class PointCloudField {
    */
   private tickCymaticMedium(delta: number, comp: Composition, forms: Entity[], focus: FocusState | null) {
     const cym = this.config.cymatics;
+    if(this.tickLocalizedResonance(delta)){this.stopResonator();return;}
     if (!cym || !cym.enabled || cym.engine === 'template') {
       this.stopResonator();
       this.lastResonanceDrive = { kind:'frequency', targetHz:cym?.frequencyHz ?? this.cymaticFreqCurrent, bound:true };

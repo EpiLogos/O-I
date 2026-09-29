@@ -383,13 +383,28 @@
         "command_standing": "accepted-main",
         "source_install": {
           "build": [
-            "cargo",
-            "build",
-            "--workspace",
-            "--locked",
-            "--release"
+            "sh",
+            "scripts/oi-source-install.sh"
           ],
-          "executable_path": "target/release/ql"
+          "executable_path": "target/release/ql",
+          "companions": [
+            {
+              "executable": "ql-field-host",
+              "executable_path": "target/release/ql-field-host"
+            },
+            {
+              "executable": "ql-focused-host",
+              "executable_path": "target/release/ql-focused-host"
+            },
+            {
+              "executable": "ql-field-worker",
+              "executable_path": "target/release/ql-field-worker"
+            },
+            {
+              "executable": "ql-sky",
+              "executable_path": "target/release/ql-sky"
+            }
+          ]
         },
         "version_manifest": "crates/ql-cli/Cargo.toml"
       },

@@ -515,6 +515,36 @@ fn command_development_suite_rollback_s0(args: &[std::ffi::OsString]) -> Result<
     Ok(0)
 }
 
+/// Declared companions sit beside the primary at the same cut: resolve the
+/// primary through its links (a managed `bin/<exe>` points into its
+/// content-addressed generation) and read each sibling there. Absence is
+/// reported, never substituted from PATH.
+fn s0_companion_locations(
+    product: &oi_cli::product_command::ProductCommandDescriptor,
+    executable: &std::path::Path,
+) -> Result<serde_json::Map<String, serde_json::Value>, String> {
+    let resolved = std::fs::canonicalize(executable).unwrap_or_else(|_| executable.to_path_buf());
+    let dir = resolved.parent().map(std::path::Path::to_path_buf);
+    let mut companions = serde_json::Map::new();
+    for companion in &product.source_install.companions {
+        let path = dir
+            .as_ref()
+            .map(|dir| dir.join(&companion.executable))
+            .unwrap_or_else(|| std::path::PathBuf::from(&companion.executable));
+        let present = is_executable(&path);
+        let sha256 = present.then(|| sha256_file(&path)).transpose()?;
+        companions.insert(
+            companion.executable.clone(),
+            serde_json::json!({
+                "executable": path,
+                "present": present,
+                "sha256": sha256,
+            }),
+        );
+    }
+    Ok(companions)
+}
+
 fn command_development_where_s0(args: &[std::ffi::OsString]) -> Result<i32, String> {
     let (name, json_mode) = match args {
         [name] => (name, false),
@@ -604,6 +634,7 @@ fn command_development_where_s0(args: &[std::ffi::OsString]) -> Result<i32, Stri
             )
         };
 
+    let companions = s0_companion_locations(product, &executable)?;
     let reading = serde_json::json!({
         "schema": "oi.product-location/v1",
         "product": product.id,
@@ -616,6 +647,7 @@ fn command_development_where_s0(args: &[std::ffi::OsString]) -> Result<i32, Stri
         "expected_revision": product.command_revision,
         "sha256": sha256,
         "executable": executable,
+        "companions": companions,
     });
     if json_mode {
         println!(
@@ -638,3 +670,55 @@ fn command_development_where_s0(args: &[std::ffi::OsString]) -> Result<i32, Stri
 }
 
 include!("development_field_source_package.rs");
+
+#[cfg(test)]
+mod development_field_hardening_tests {
+    use super::*;
+
+    fn executable(path: &std::path::Path, body: &str) {
+        use std::os::unix::fs::PermissionsExt;
+        std::fs::create_dir_all(path.parent().unwrap()).unwrap();
+        std::fs::write(path, body).unwrap();
+        std::fs::set_permissions(path, std::fs::Permissions::from_mode(0o755)).unwrap();
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn where_companions_resolve_beside_the_linked_primary() {
+        let catalogue = oi_cli::product_command::product_command_catalogue_from_json(
+            crate::catalog_source::embedded_catalogue_json(),
+            "test-embedded",
+        )
+        .unwrap();
+        let ql = catalogue.resolve("quaternal-logic").unwrap();
+        let temp = tempfile::tempdir().unwrap();
+        let generation = temp.path().join("products/quaternal-logic/abc/bin");
+        executable(&generation.join("ql"), "#!/bin/sh\n");
+        executable(&generation.join("ql-field-host"), "#!/bin/sh\nhost\n");
+        executable(&generation.join("ql-field-worker"), "#!/bin/sh\nworker\n");
+        let bin = temp.path().join("bin");
+        std::fs::create_dir_all(&bin).unwrap();
+        std::os::unix::fs::symlink("../products/quaternal-logic/abc/bin/ql", bin.join("ql")).unwrap();
+
+        let companions = s0_companion_locations(ql, &bin.join("ql")).unwrap();
+        let generation = std::fs::canonicalize(&generation).unwrap();
+        assert_eq!(
+            companions.keys().collect::<Vec<_>>(),
+            vec!["ql-field-host", "ql-field-worker", "ql-focused-host", "ql-sky"]
+        );
+        let host = &companions["ql-field-host"];
+        assert_eq!(host["present"], true);
+        assert_eq!(host["executable"], generation.join("ql-field-host").display().to_string());
+        assert_eq!(
+            host["sha256"],
+            sha256_file(&generation.join("ql-field-host")).unwrap()
+        );
+        let focused = &companions["ql-focused-host"];
+        assert_eq!(focused["present"], false);
+        assert!(focused["sha256"].is_null());
+        assert_eq!(focused["executable"], generation.join("ql-focused-host").display().to_string());
+        // A product that declares none reads an empty map.
+        let central = catalogue.resolve("central").unwrap();
+        assert!(s0_companion_locations(central, &bin.join("ql")).unwrap().is_empty());
+    }
+}

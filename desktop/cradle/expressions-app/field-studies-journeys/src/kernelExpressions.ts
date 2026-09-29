@@ -94,6 +94,11 @@ function call<T>(kind:string,body:Record<string,unknown>,timeoutMs=20000):Promis
  });
 }
 
+/** Personal readings stay on this session channel, outside Journey data. */
+export function naraInstrumentRequest(request:import('../../../src/nara/instrumentProtocol').NaraInstrumentRequest):Promise<import('../../../src/nara/instrumentProtocol').NaraInstrumentReply>{
+ return call('nara-instrument',{request},90000);
+}
+
 export interface KernelExpressionListing {expression_ref:string;title:string;revision:number;dirty?:boolean;last_touched_unix?:number}
 
 /** The kernel's own expression listing (oi.expression-list/v1) — most
@@ -268,8 +273,9 @@ export async function nativeFileRequest(request:Record<string,unknown>):Promise<
  * cradle relay, `relayKernelChannel` in desktop/cradle/src/expressions/
  * hostedApp.ts): UTF-8 text for `text_source` bodies, base64 + mime hint for
  * `image_media` bodies (the same binary-safe seam FND-04 already defines). */
-export interface NativeSubjectText {ref:string;revision:string;byte_len:number;content:string}
-export interface NativeSubjectBytes {ref:string;revision:string;byte_len:number;mime_hint:string|null;content_base64:string}
+export interface NativeSubjectLocation {schema:'central.path-ref/v1';ref:string;root:string;path:string}
+export interface NativeSubjectText {requested_ref:string;location:NativeSubjectLocation;native_owner:'central';ref:string;revision:string;byte_len:number;content:string}
+export interface NativeSubjectBytes {requested_ref:string;location:NativeSubjectLocation;native_owner:'central';ref:string;revision:string;byte_len:number;mime_hint:string|null;content_base64:string}
 export async function nativeSubjectTextRequest(ref:string):Promise<NativeSubjectText>{
  if(typeof ref!=='string'||!ref)throw new Error('nativeSubjectTextRequest needs a native subject ref');
  const data=await call<NativeSubjectText>('central-subject-text',{ref});
