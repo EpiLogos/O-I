@@ -27,6 +27,7 @@ import {useEncounterSession} from "./encounter/session";
 import {AgentChat} from "./agent/chat/AgentChat";
 import {EncounterList,type EncounterRow} from "./encounter/EncounterList";
 import {AgentLayer} from "./agent/AgentLayer";
+import {useAgentPresence} from "./agent/presence";
 import {navigateExplore,type PresentationMeta} from "./explore/navigate";
 import {MODE_CURATION,isWorkspaceMode,WORKSPACE_MODES,type WorkspaceMode} from "./workspace/mode";
 import {modeDefaultAgentBody} from "./workspace/agentBody";
@@ -1776,6 +1777,11 @@ export function CradleFrame({onComposed}:{onComposed?:()=>void}) {
     log.push(warmTrees.map(t => t.key + (t.presented ? '!' : '')));
   }, [warmTrees]);
   const curation=MODE_CURATION[mode];
+  // P1 (10-SIDEBARS §5.3): the Status face — while the panel is collapsed the
+  // frame still observes the session (one more subscriber on the SAME shared
+  // observer, never a second poll loop) and carries the agent's state as the
+  // corner companion mark on the shell's right-region toggle.
+  const agentPresence=useAgentPresence(state.accompanying, state.rightDepth==="panel"||state.rightDepth==="full");
   // Owner correction 2026-09-18: Base keeps the pane/tab workbench; every
   // other mode DEDICATES its view — the mode's own surface, full screen, no
   // tab chrome. The base tree is preserved in the store and simply not
@@ -1999,6 +2005,7 @@ export function CradleFrame({onComposed}:{onComposed?:()=>void}) {
         arrangementActions={<ArrangementActions state={state} execute={execute} openFrameMenu={openFrameMenu} nativeWindows={kernel.transport.kind==="tauri"}/>}
         subject={{ref:subjectRef,title:subjectTitle,context:<><h2>{subjectTitle}</h2>{subjectBinding?.flow&&<p data-subject-flow-ref={subjectBinding.flow.flowRef}>Working through <code>{subjectBinding.flow.flowRef}</code></p>}{subjectBuffer ? <p>{subjectBuffer.project} · {subjectBuffer.dirty ? "Unsaved changes" : "Saved"}</p> : subjectBinding?.project ? <p>{subjectBinding.project}</p> : <p>Select a surface to inspect its context.</p>}</>,history:subjectHistory}}
         right={agentLayer}
+        agentPresence={agentPresence}
         layout={state} setLayout={setState} workspace={workspace.current} workspaces={workspace.workspaces} activate={workspace.activate} create={workspace.create} rename={workspace.rename} onRecover={workspace.showRecovery} error={workspace.error ?? windowError ?? kernel.opError ?? null} onErrorDismiss={()=>{setWindowError(undefined); workspace.dismissError(); kernel.dismissOpError();}}
         recovery={workspace.recovery} onRecoverAvailable={workspace.recoverAvailable} onStartFresh={workspace.startFresh} onReload={()=>workspace.reload()}
         navigator={workspaceSelector => curation.left==="factory" ? <FactoryNavigator project={workspace.current.project} accompanying={state.accompanying} onProjectChange={workspace.browse} onOpenEncounter={row=>factoryChoose(row)} activeEncounterRef={state.accompanying?.ref??activeEncounterRef} onMessage={message=>setWindowError(message)}/> : curation.left!=="world" ? <ModeLeftBody mode={mode} onOpenPlace={()=>void openModeSurface("epi-logos").catch(report)} project={workspace.current.project} onOpenExpressions={()=>void openModeSurface("expressions").catch(report)} onOpenTechne={()=>enterMode("techne")} onOpenFile={openFile} onOpenWiki={(ref,title,project)=>void openKnowledge({kind:"wiki",value:ref},title,project).catch(report)} onMessage={message=>setWindowError(message)}/> : worldNavigator(workspaceSelector)}>
