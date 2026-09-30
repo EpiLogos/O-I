@@ -272,6 +272,21 @@ export function DesktopShell(p: Props) {
     }}>{resizeFeedback?.side === side && <span className="region-resize-badge" role="status" aria-label={`${resizeFeedback.width} pixels wide`}>{resizeFeedback.width}</span>}</div>;
   const ref = p.subject.ref;
   const left = depth("left"), right = depth("right");
+  // The collapsed scope title is content-dependent and, on the shared window
+  // row, sits over the tab strip's corner. Publish its right edge (from the
+  // shell's left) so the strip's padding clears it; absent when there is no title.
+  const scopeShown = !(left === "panel" || left === "full");
+  const scopeText = scopeLabel(scope);
+  useLayoutEffect(() => {
+    const shell = host.current;
+    const title = shell?.querySelector<HTMLElement>(".shell-topbar > .shell-scope-name");
+    if (!shell || !title) { shell?.style.removeProperty("--shell-scope-reserve"); return; }
+    const publish = () => shell.style.setProperty("--shell-scope-reserve", `${Math.ceil(title.getBoundingClientRect().right - shell.getBoundingClientRect().left + 8)}px`);
+    publish();
+    const observer = new ResizeObserver(publish);
+    observer.observe(title); observer.observe(shell);
+    return () => { observer.disconnect(); shell.style.removeProperty("--shell-scope-reserve"); };
+  }, [scopeShown, scopeText, lens.on]);
   const leftOpen=left==="panel"||left==="full";
   const rightOpen=right==="panel"||right==="full";
   const stopGeometry=useShellGeometry(host,[leftOpen?leftWidth:0,rightOpen?(right==="full"?Math.max(240,width-(leftOpen?leftWidth:0)):rightWidth):0,rightOpen&&!overlayRight&&!canvasCentre?rightWidth:0]);

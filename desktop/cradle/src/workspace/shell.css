@@ -387,9 +387,10 @@
  * planes are continuous grounds of their own (see the depth-panel rules —
  * edge-to-edge, exact ground, no box). The window row stays free of heavy
  * chrome in every state; the corner cutouts do the only top-edge work. */
-.shell-topbar { height: 28px; border-bottom: 0; background: transparent; }
+.desktop-shell { --shell-topbar-height: 28px; }
+.shell-topbar { height: var(--shell-topbar-height); border-bottom: 0; background: transparent; }
 .shell-topbar button { width: 26px; height: 26px; }
-@media (pointer: coarse) { .shell-topbar { height: 38px; } .shell-topbar button { width: 34px; height: 34px; } }
+@media (pointer: coarse) { .desktop-shell { --shell-topbar-height: 38px; } .shell-topbar button { width: 34px; height: 34px; } }
 
 @media (prefers-reduced-motion: reduce) {
   .desktop-side, .desktop-centre, .region-resizer::after { transition-duration: 0.01ms; }
@@ -424,7 +425,7 @@
     visible and clickable in every mode, exactly as in Factory. */
  .desktop-shell .shell-topbar{position:relative;z-index:calc(var(--oi-z-drawer) + 1);pointer-events:none}
  .desktop-shell .shell-topbar button,.desktop-shell .shell-topbar select{pointer-events:auto}
- .desktop-shell .desktop-centre [data-window-corner-left="true"] > .tab-strip{padding-left:max(4px,calc(var(--shell-window-reserve) - var(--desktop-left-width)))}
+ .desktop-shell .desktop-centre [data-window-corner-left="true"] > .tab-strip{padding-left:max(4px,calc(var(--shell-window-reserve) - var(--desktop-left-width)),calc(var(--shell-scope-reserve,0px) - var(--desktop-left-width)))}
 
 }
 .desktop-shell{background:linear-gradient(to right,transparent 0,transparent var(--desktop-left-width),var(--oi-shell-ground) var(--desktop-left-width),var(--oi-shell-ground) calc(100% - var(--desktop-right-width)),transparent calc(100% - var(--desktop-right-width)))}
@@ -444,6 +445,11 @@
 .central-heading{gap:12px;align-items:center}.central-heading>svg{align-self:center}.central-heading>div{min-width:0}
 .shell-topbar{padding-right:var(--oi-shell-gutter)}.shell-agent-toggle{margin-left:5px}
 @media(min-width:760px) and (pointer:fine){.desktop-shell .desktop-centre:has(.tab-strip){margin-top:0}.desktop-shell .desktop-centre:has(.mode-stage){margin-top:0;position:relative;z-index:1}}
+/* Where the window row is not shared with the first tab row (everything the
+ * min-width:760px + fine-pointer block above does not cover), the topbar —
+ * corner toggles and the collapsed scope title — is absolute over the shell.
+ * The centre starts below it, so the tab strip never sits under either. */
+@media not all and (min-width:760px) and (pointer:fine){.desktop-shell .desktop-centre{padding-top:var(--shell-topbar-height);box-sizing:border-box}}
 /* The window controls and region toggles occupy actual open corners, not an
    inset tab cell. Both corners are cut — left follows the window-control
    reserve (traffic lights when native, the navigator toggle otherwise),
