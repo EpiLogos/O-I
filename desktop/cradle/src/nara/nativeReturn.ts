@@ -2,7 +2,7 @@
  * AIKit owns the original transcript. No current UI selection rewrites its basis. */
 import {encounter, type EncounterReading} from '../encounter/client';
 import type {KernelTransportStatus} from '../kernel/types';
-import {appendEntry, embedDocument, parseInstance, textToHtml, type QlDocParticipant} from '../flow/instance';
+import {appendEntry, textToHtml, type QlDocParticipant} from '../flow/instance';
 import {readFlowInstance, writeFlowInstance, type FlowInstance} from '../flow/instances';
 import {dayRead, type DayReading} from '../day/client';
 import {receiving, type DocumentReading, type ReceivingPage, type ReceivingRequest, type ReturnReading} from '../receiving/client';
@@ -182,10 +182,10 @@ export async function composeFlowAnswer(instance: FlowInstance, answer: NativeAn
     if (existing.html !== html && existing.html !== renderAnswerHtml(answer, 'flow', false)) throw new Error('The retained answer was edited in this Flow. Its authored version is preserved.');
     return {html: instance.html, entryId, already: true};
   }
-  const appended = appendEntry(instance.html, answer.answer, {participant: participant(instance, answer)});
-  const doc = parseInstance(appended.html), entry = doc.entries.find(e => e.id === appended.entry.id)!;
-  entry.id = entryId; entry.html = html;
-  return {html: embedDocument(instance.html, doc), entryId, already: false};
+  // The prepared rich body and the deterministic id go in with the append, so a
+  // v0.4 document's request digest describes the bytes actually retained.
+  const appended = appendEntry(instance.html, answer.answer, {participant: participant(instance, answer), html, entryId, operationRef: `nara-retain:${entryId}`});
+  return {html: appended.html, entryId, already: false};
 }
 const busy = new Set<string>();
 const uncertainFlow = new Set<string>();

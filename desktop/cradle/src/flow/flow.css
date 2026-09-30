@@ -65,3 +65,17 @@ details.flow-answer .oi-note{margin:8px 0}
 .flow-identity{display:flex;gap:18px;align-items:baseline;margin:6px 0 10px;flex-wrap:wrap}
 .flow-identity input{font:inherit;border:1px solid var(--oi-hairline);border-radius:2px;padding:2px 6px;background:var(--oi-wash)}
 .flow-answer-initial input{width:2.2em;text-transform:uppercase;font:inherit;border:1px solid var(--oi-hairline);border-radius:2px;padding:1px 4px;background:var(--oi-wash)}
+.flow-thread-relations{list-style:none;margin:var(--oi-desktop-gap-sm) 0;padding:0;font-size:var(--oi-shell-type-meta);color:var(--oi-muted-2)}
+.flow-relation-link{background:none;border:0;padding:0;font:inherit;color:inherit;text-decoration:underline;text-underline-offset:3px;cursor:pointer}
+.flow-thread-attribution{margin-inline-start:var(--oi-desktop-gap-sm)}
+.flow-thread-children{list-style:none;margin:var(--oi-desktop-gap-sm) 0 0;padding-inline-start:var(--oi-desktop-gap-lg);border-inline-start:var(--oi-shell-edge) solid var(--oi-hairline-soft);display:grid;gap:var(--oi-desktop-gap-lg)}
+.flow-thread-entry[data-focused=true]{outline:var(--oi-shell-edge) solid var(--oi-hairline);outline-offset:4px}
+.flow-participants,.flow-compose-controls{margin:var(--oi-desktop-gap-sm) var(--oi-desktop-gap-lg)}
+.flow-participant-list,.flow-bring-in ul{list-style:none;padding:0;margin:var(--oi-desktop-gap-sm) 0;display:grid;gap:var(--oi-desktop-gap-xs)}
+.flow-compose-controls{display:flex;flex-wrap:wrap;gap:var(--oi-desktop-gap-sm);align-items:center;border:0;padding:0}
+.flow-address{display:inline-flex;flex-wrap:wrap;gap:var(--oi-desktop-gap-sm);align-items:center}
+.flow-view-toggle{display:inline-flex;gap:var(--oi-desktop-gap-xs);margin-inline-start:var(--oi-desktop-gap-sm)}
+.flow-view-toggle [aria-pressed=true]{font-weight:600}
+@media (max-width:640px){.flow-thread-children{padding-inline-start:var(--oi-desktop-gap-sm)}}
+.flow-thread-who[data-flow-author-kind=agent]::after{content:" · agent";font-weight:400}
+.flow-thread-who[data-flow-author-kind=unknown]::after{content:" · author not established";font-weight:400}

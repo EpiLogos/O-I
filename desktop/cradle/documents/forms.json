@@ -23,7 +23,7 @@
       "hint": "Dialogue \u00b7 Flow \u00b7 Journal (0/1)",
       "file": "ql-flow.html",
       "templateRef": "ql-template:dialogue-flow",
-      "version": "0.3",
+      "version": "0.4",
       "standing": "authored-current"
     },
     {
