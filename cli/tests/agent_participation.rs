@@ -645,7 +645,7 @@ fn both_agent_ref_spellings_resolve_to_one_canonical_reading() {
 fn the_stored_spelling_is_canonical_in_both_directions() {
     // A profile stored in the colon spelling answers the slash spelling the
     // same way: resolved, and reported under the stored ref.
-    let mut fake = Fake::new();
+    let fake = Fake::new();
     fake.profile.borrow_mut()["agent_ref"] = json!("agent:aletheia");
     let scratch = tempfile::tempdir().unwrap();
     let p = compose_participation(
