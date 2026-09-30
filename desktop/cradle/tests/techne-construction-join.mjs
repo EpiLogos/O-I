@@ -7,8 +7,13 @@
  * transport fixtures, no mocked summon, no owner machine or model.
  *
  * §41 negative: the same summon in the Expressions cut (where the Technē
- * open-expression relay is not bound) must NOT reach the field — the join is
- * load-bearing, not a coincidence of a shared kernel. */
+ * open-expression relay is not bound) must NOT be carried by that relay — the
+ * join is load-bearing, not a coincidence of a shared kernel. Since Factory
+ * Expressions (7a4c5a7d) the Expressions cut's host IS the Expressions centre:
+ * a summon is recorded as an Expression selection request (selection.ts) and
+ * the centre opens it in its frame. So the field does reach the Expression
+ * there, by the centre's own path, while the Technē field-open request stays
+ * unconsumed — that pair is what proves the Technē relay is mode-gated. */
 import assert from 'node:assert/strict';
 import {execFileSync, spawn} from 'node:child_process';
 import {readFileSync, writeFileSync, mkdirSync, mkdtempSync, realpathSync, cpSync} from 'node:fs';
@@ -186,19 +191,27 @@ try {
 
   // ——— §41 negative: the Expressions cut does not bind the relay ———
   // Remove the load-bearing binding by standing in the lived cut, then summon
-  // the very same saved constellation. The field must NOT receive it.
+  // the very same saved constellation. The Technē relay must NOT carry it.
   await gotoMode('expressions');
   check((await frame.evaluate(() => window.__FIELD_STUDIES__.getState())).hostMode === 'expressions', 'The negative control stands the app in the Expressions cut');
   await page.getByRole('button', {name: 'Constellations', exact: true}).click();
   await drawer().getByLabel('Open saved constellation').selectOption(savedRef);
   await openLiveThenSummon();
-  // Give the summon a real window to be (wrongly) honoured before asserting absence.
+  // The Expressions centre answers the summon (Factory Expressions, 7a4c5a7d:
+  // PointCloudHost in the Expressions cut registers as the centre and opens a
+  // selection request in its frame through the app's follow path). Waited for
+  // deterministically, rather than asserting absence inside a timing window.
+  await frame.waitForFunction(ref => window.__FIELD_STUDIES__.nativeWorking()?.native_ref === ref, expectedRef, {timeout: 60000});
+  check(true, 'In the Expressions cut the summon opens through the Expressions centre (its selection request), the accepted Factory Expressions behaviour');
+  // Give the Technē relay a real window to (wrongly) consume the buffered ref.
   await page.waitForTimeout(1500);
-  check(await frame.evaluate(ref => window.__FIELD_STUDIES__.nativeWorking()?.native_ref !== ref, expectedRef), 'Without the Technē open-expression relay the summon does NOT reach the field — the join is load-bearing, not a shared-kernel coincidence');
-  // Sharp production-severing proof: the summon WAS recorded (the composition
-  // root ran), yet the Expressions-cut field never consumed it — PointCloudHost's
-  // own mode==="techne" gate is exactly what carries the constellation.
-  check(await page.evaluate(ref => window.__TECHNE_FIELD_OPEN__.peek() === ref, expectedRef), 'The summon was recorded but the Expressions-cut field left it unconsumed — the field mode gate is the relay, severed here');
+  // Sharp production-severing proof: the summon WAS recorded into the Technē
+  // field-open store (the composition root ran), and the field DID open the
+  // Expression — yet the Technē store was left unconsumed. The open therefore
+  // came from the Expressions centre, not the relay: PointCloudHost's own
+  // mode==="techne" gate is exactly what carries a constellation into the
+  // Technē field, and it is severed here.
+  check(await page.evaluate(ref => window.__TECHNE_FIELD_OPEN__.peek() === ref, expectedRef), 'Without the Technē open-expression relay the summon is NOT consumed by it — the field opened through the Expressions centre and left the Technē request standing; the join is load-bearing, not a shared-kernel coincidence');
 
   check(errors.length === 0, `No uncaught application errors (${errors.join('; ')})`);
   receipt.passed = true;
