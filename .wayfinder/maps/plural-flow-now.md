@@ -186,3 +186,29 @@ One disposable world per run (own Central root, AIKit home, resident owner, cred
 | Across Workcells | Ash (Omarchy) runs on `workcell:omarchy` under its own Agency; one entry asked Ada (Mac) and Ash (Omarchy); the route between them was broken for 30 s while the remote agent was answering and restored; the reply was read from the remote owner, snapshotted durably, and included once, attributed `verified` with `workcell:omarchy` |
 
 Not shown yet: installed-app use by a person with real pointer and keyboard; an independent verifier's MP01–MP18 account; a SharedField hosted projection; a Gateway-native remote transport (the `ssh`/`exec` routes are the first routes).
+
+## 9. Independent verification — 30 September 2026
+
+A verifier who did not build the feature read §3 and the specification before the builder's tests, then ran its own probes (wrong-author controls, cross-request traps, changed basis, scope, legacy, idempotency, membership, crash) against the real binaries, on Mac and Omarchy, with real agents on `zai/glm-5.3-flash`. Its findings were repaired at their owners and it re-verified against the **installed** build.
+
+| Finding | Owner and repair | Result on re-verification |
+|---|---|---|
+| D1 an authenticated agent could author as another agent's seat and rewrite its binding | Central#251, cradle#563 | fixed |
+| D2 AIKit answered a participant from another agent's session and recorded it verified | ai-kit#473 (refused at send, before any record or turn) | fixed on the real stack |
+| D3 export copied journal, notes, packet, media and restricted entries | cradle#563 (a separate "Save a copy to share"), #565 (marks itself a projection, keeps no session ids, digest follows a dropped relation) | fixed; the complete copy is still the person's own |
+| D4 a request queued behind a composer turn never drained | ai-kit#473 | fixed on the real stack |
+| D5 after an owner crash a delivery read `delivered` forever and blocked the session | ai-kit#473 (`uncertain`, exact continuation named, slot released, never replayed) | fixed on the real stack |
+| D6 a participant who had left was still dispatched | ai-kit#473; Central#254 (asking a departed participant is refused) | fixed |
+| D7 reads failed open (missing horizon, departed reader, unrecognised audience, no reader) | Central#251, cradle#563 | fixed for all four |
+| D8 `onBehalfOf` stored unchecked; TS and Rust disagreed | Central#251/#254, cradle#563/#565 (declared claim naming a participant still here) | TS and Rust agree on 1,400 fuzz cases (were 18 divergences in 1,550) |
+| D9 loose validation | Central#251, cradle#563 | unknown relation types, unreached/negative basis revisions, empty and unrecognised-audience writes refused |
+| D10 native writer re-serialises island key order; integers beyond 2^53 in unknown metadata round | — | **open** |
+
+Deliberately unchanged: a read's `participant_key` is not authenticated — the Flow is a file in the owner's ground and the scoped reading is what participants receive, not access control.
+
+The verifier's classification of the cases, as it stood before repair: MP06, MP08, MP12, MP13 and MP14 shown with real owners and actors (MP14 at controlled-driver level, not two independent humans); MP04 shown; MP03 relations shown, navigation at component level; MP02 and MP05 at component level; MP01, MP07, MP09 and MP16 were broken (D1–D7 above, now repaired); MP10, the non-addressed half of MP11, MP15 and MP17 **not shown**; MP18 shown in part — a participant new to the conversation used the retained result on a different case, with no disconnected-producer negative and only the `plural-flow` walk bound to a #65 obligation.
+
+The same activity then ran through the installed `aikit` (02395f05) and `ctrl` (fe269e19): a person and three agents, independent replies, a side inquiry and joined result, a changed question, a fresh body across a real Day roll, a participant new to the conversation, and an independent second world whose person is verified, refused as the other's seat, and sees no private material, with its own Day.
+
+Not shown: installed-app use by a person with real pointer and keyboard (MP17); two independent humans (MP14); facilitated/team exchange, budgets and cancellation (MP11); exact generation/required-Workcell/succession routing (MP10); timezone and Nara intake (MP15); a hosted SharedField projection; a Gateway-native remote transport.
+
