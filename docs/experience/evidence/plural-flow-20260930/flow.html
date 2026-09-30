@@ -1,0 +1,1118 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="ql-template" content="dialogue-flow v0.4">
+<title>Flow</title>
+<style>
+:root{
+  --paper:#EFEFED; --field:#FAFAF8; --ink:#000; --mid:#6E6E6A; --faint:#A3A39E; --rule:#C9C9C4; --hl:#FFE97A;
+  --sans:"Helvetica Neue",Helvetica,"Inter",Arial,sans-serif;
+  --serif:Charter,"Iowan Old Style","Palatino Linotype",Palatino,Georgia,serif;
+  --mono:"SF Mono",Menlo,Consolas,"Liberation Mono",monospace;
+  --gap:28px; --w:1180px;
+}
+*{box-sizing:border-box}
+html{background:var(--paper);color:var(--ink);-webkit-text-size-adjust:100%}
+body{margin:0;font:17px/1.55 var(--serif);min-height:100vh}
+a{color:inherit}
+::selection{background:#000;color:#fff}
+button{font:inherit;color:inherit;background:none;border:0;padding:0;cursor:pointer}
+:focus-visible{outline:2px solid #000;outline-offset:3px}
+[hidden]{display:none!important}
+svg.defs{position:absolute;width:0;height:0}
+.doc{max-width:var(--w);margin:0 auto;padding:0 clamp(18px,4vw,56px) 24vh}
+
+/* masthead */
+.mast{padding:9vh 0 7vh;display:grid;grid-template-columns:repeat(12,minmax(0,1fr));column-gap:var(--gap);align-items:end}
+.mast .title{grid-column:1/8;font:400 clamp(30px,4.2vw,52px)/1.08 var(--serif);letter-spacing:-.015em;min-height:1.1em;outline:0}
+.mast .title:empty::before{content:attr(data-placeholder);color:var(--faint)}
+.mast .views{grid-column:1/8;margin-top:26px;font:15px/1.6 var(--sans);display:flex;gap:26px;align-items:baseline}
+.mast .views button{color:var(--mid);padding-bottom:4px;border-bottom:2px solid transparent}
+.mast .views button[aria-pressed=true]{color:var(--ink);border-color:var(--ink)}
+.mast .views i{font:italic 14px/1.5 var(--serif);color:var(--faint)}
+.mast .acts{grid-column:8/13;display:flex;justify-content:flex-end;align-items:center}
+.ib{width:36px;height:36px;display:grid;place-items:center;border-radius:50%;color:var(--mid);position:relative}
+.ib:hover,.ib[aria-expanded=true]{color:var(--ink);background:rgba(0,0,0,.05)}
+.ib svg{width:18px;height:18px;stroke:currentColor;fill:none;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round}
+.ib .n{position:absolute;right:3px;top:3px;font:600 9px/1 var(--sans);background:var(--ink);color:#fff;border-radius:99px;padding:3px 4px;min-width:14px;text-align:center}
+.ib.sm{width:28px;height:28px}
+.ib.sm svg{width:15px;height:15px}
+.pop{position:fixed;z-index:9;background:var(--field);box-shadow:0 12px 40px rgba(0,0,0,.16),0 0 0 1px rgba(0,0,0,.06);border-radius:3px;padding:8px;display:grid;font:14px/1.5 var(--sans);min-width:200px}
+.pop button{text-align:left;padding:8px 12px;border-radius:2px;display:flex;justify-content:space-between;gap:16px}
+.pop button:hover{background:rgba(0,0,0,.05)}
+.pop button[aria-current=true]{font-weight:600}
+.pop button.danger:hover{background:#f6e3e0}
+.pop .sep{height:1px;background:var(--rule);margin:6px 4px}
+.pop small{display:block;color:var(--faint);padding:4px 12px;font:12px/1.5 var(--sans);font-variant-numeric:tabular-nums}
+.pop .big{font:800 34px/1 var(--sans);letter-spacing:-.06em;padding:6px 14px}
+
+/* shared: author initial. F is set solid; H dissolves into points. Declared attribution, made visible. */
+.ini{font:800 1em/0.8 var(--sans);letter-spacing:-.06em;position:relative;display:inline-block;user-select:none}
+.ini::before,.ini::after{content:attr(data-a);position:absolute;left:0;top:0}
+.ini[data-a=H]::before,.ini[data-k=agent]::before{-webkit-mask-image:linear-gradient(#000 38%,transparent 82%);mask-image:linear-gradient(#000 38%,transparent 82%)}
+.ini[data-a=H]::after,.ini[data-k=agent]::after{filter:url(#stipple);-webkit-mask-image:linear-gradient(transparent 18%,#000 55%,transparent 102%);mask-image:linear-gradient(transparent 18%,#000 55%,transparent 102%)}
+.ini[data-a=F]::after,.ini[data-k=person]::after{display:none}
+.ini span{visibility:hidden}
+
+/* ---------- Dialogue view: the same entries read as a conversation ---------- */
+.dlg{display:grid;row-gap:54px}
+.entry{display:grid;grid-template-columns:repeat(12,minmax(0,1fr));column-gap:var(--gap);row-gap:12px}
+.entry .lead{grid-column:1/3;display:grid;align-content:start;row-gap:10px}
+.entry .lead .ini{font-size:clamp(54px,7vw,92px);height:.8em}
+.entry .lead .meta{font:12px/1.6 var(--sans);color:var(--mid)}
+.lead .ini,.flow .head .ini{cursor:pointer;border-radius:4px}
+.lead .ini:hover,.flow .head .ini:hover{background:rgba(0,0,0,.04)}
+.entry .bodycol{grid-column:3/10;display:grid;row-gap:10px;min-width:0}
+.entry[data-k=agent] .bodycol{grid-column:3/11}
+.entry .margin{grid-column:10/13;display:grid;row-gap:10px;align-content:start}
+.entry[data-k=agent] .margin{grid-column:11/13}
+.entry .margin:empty{display:none}
+.reply{font:14px/1.5 var(--serif);color:var(--mid);padding:8px 14px;border-left:2px solid var(--rule)}
+.reply q{quotes:"“" "”";font-style:italic}
+.reply a{font:12px var(--sans);text-decoration:none;color:var(--ink);margin-left:8px;text-decoration:underline;text-underline-offset:3px;text-decoration-color:var(--rule)}
+.reply+.reply{margin-top:4px}
+.to{font:12px/1.5 var(--sans);color:var(--mid);padding:2px 14px}
+.to b{font-weight:600;color:var(--ink)}
+.attr{font:11px/1.4 var(--sans);color:var(--faint);padding:0 14px}
+.attr.verified{color:var(--mid)}
+.legacy{font:13px/1.5 var(--sans);padding:8px 14px;border:1px dashed var(--mid);border-radius:3px;margin:8px 0}
+.people{list-style:none;margin:0;padding:0;display:grid;row-gap:8px}
+.people li{display:flex;gap:10px;align-items:baseline;font:14px/1.4 var(--sans)}
+.people small{color:var(--mid)}
+.reply .changed{display:inline-block;font:12px/1 var(--sans);padding:4px 7px;border:1px dashed var(--mid);border-radius:99px;color:var(--ink);margin-left:8px}
+.body{background:var(--field);padding:18px 22px;min-height:5em;font:17px/1.6 var(--serif);border-radius:2px;outline:0;transition:box-shadow .15s;box-shadow:inset 0 0 0 1px transparent}
+.body:hover{box-shadow:inset 0 0 0 1px var(--rule)}
+.body:focus{box-shadow:inset 0 0 0 1px var(--ink)}
+.body:empty::before{content:attr(data-placeholder);color:var(--faint);font-style:italic;pointer-events:none}
+.body p{margin:0 0 .7em}.body p:last-child{margin:0}
+.body mark{background:var(--hl);padding:0 .08em;border-radius:1px}
+.body a{text-underline-offset:2px}
+.body table{border-collapse:collapse;font:14px/1.4 var(--sans)}
+.body td,.body th{border:1px solid var(--rule);padding:4px 8px}
+.body code,.body pre{font:14px/1.5 var(--mono)}
+.body pre{background:#f0f0ee;padding:10px 12px;overflow:auto}
+.body img,.body video{max-width:100%;height:auto}
+.body blockquote{margin:0 0 .7em;padding-left:14px;border-left:2px solid var(--rule);color:var(--mid)}
+.entry.touched .lead .meta::after{content:"written or revised by F";display:block;font-style:italic;color:var(--faint)}
+.bodywrap{position:relative}
+.bodywrap .more{position:absolute;right:6px;bottom:6px;opacity:0;transition:opacity .15s}
+.bodywrap:hover .more,.bodywrap:focus-within .more,.bodywrap .more[aria-expanded=true],.bodywrap .more:focus-visible{opacity:1}
+.between{grid-column:3/10;display:flex;justify-content:center;margin:-14px 0 -24px}
+.between .ib{opacity:0}
+.entry:hover .between .ib,.between .ib:focus-visible,.between .ib[aria-expanded=true]{opacity:.7}
+.between .ib:hover{opacity:1}
+.attach{display:grid;row-gap:8px}
+.attach figure{margin:0;display:grid;row-gap:6px}
+.attach img,.attach video{max-width:100%;height:auto;display:block}
+.attach audio{width:100%}
+.attach figcaption{font:14px/1.5 var(--serif);color:var(--mid);outline:0;min-height:1.4em}
+.attach figcaption:empty::before{content:"Caption, if any.";color:var(--faint);font-style:italic}
+.attach .fm{font:12px/1.6 var(--sans);color:var(--faint);display:flex;gap:14px}
+.attach .fm button{text-decoration:underline;color:var(--mid)}
+.empty{grid-column:3/10;font:italic 17px/1.6 var(--serif);color:var(--mid);max-width:44ch}
+.empty button{text-decoration:underline;text-underline-offset:3px;font-style:normal;font:15px var(--sans);color:var(--ink);display:block;margin-top:12px}
+
+/* ---------- Flow view: one entry as a full writing page ---------- */
+.flow{display:grid;grid-template-columns:repeat(12,minmax(0,1fr));column-gap:var(--gap);row-gap:22px}
+.flow .head{grid-column:1/13;display:flex;align-items:flex-end;gap:22px;flex-wrap:wrap}
+.flow .head .ini{font-size:clamp(120px,18vw,230px);height:.8em}
+.flow .head .meta{font:13px/1.7 var(--sans);color:var(--mid);display:grid;flex:1}
+.flow .head .more{margin-left:auto;align-self:flex-start}
+
+.flow .reply{grid-column:1/10}
+.flow .page{grid-column:1/10;min-width:0}
+.flow .page .body{font-size:20px;line-height:1.6;min-height:52vh;padding:34px 40px;max-width:70ch}
+.flow .margin{grid-column:10/13;display:grid;row-gap:10px;align-content:start}
+.flow .margin:empty{display:none}
+.flow .attach{grid-column:1/10}
+
+.flow .nav{grid-column:1/10;display:flex;justify-content:space-between;font:12px/1.6 var(--sans);color:var(--faint);padding-top:12px}
+.flow .nav button{color:var(--faint)}
+.flow .nav button:hover{color:var(--ink)}
+.flow .nav button:disabled{color:var(--rule);cursor:default}
+.flow .nav button.new{color:var(--faint)}
+
+/* ---------- Journal: one person, one page at a time ---------- */
+.journal{display:grid;grid-template-columns:repeat(12,minmax(0,1fr));column-gap:var(--gap);row-gap:18px}
+.journal .when{grid-column:1/13;font:13px/1.6 var(--sans);color:var(--mid);display:flex;gap:18px;align-items:baseline}
+.journal .when b{font:400 22px/1.2 var(--serif);color:var(--ink)}
+.journal .when .more{margin-left:auto}
+.journal .page{grid-column:1/13}
+.journal .page .body{font-size:20px;line-height:1.65;min-height:60vh;padding:36px 44px;max-width:72ch;margin:0 auto}
+.journal .earlier{grid-column:1/13;display:flex;flex-wrap:wrap;gap:6px 18px;font:12px/1.8 var(--sans);color:var(--faint);padding-top:14px;justify-content:center}
+.journal .earlier button{color:var(--faint)}
+.journal .earlier button:hover{color:var(--ink)}
+.journal .earlier button[aria-current=true]{color:var(--ink);border-bottom:1px solid var(--ink)}
+.journal .earlier .new{color:var(--faint)}
+
+/* notes (marginalia) */
+.note{font:14px/1.5 var(--serif);padding:10px 12px 10px 16px;position:relative;background:var(--field);border-radius:2px}
+.note::before{content:"";position:absolute;left:0;top:0;bottom:0;width:6px;border-radius:2px 0 0 2px;background:var(--hl)}
+.note[data-a=H]::before{background:repeating-linear-gradient(180deg,var(--ink) 0 2px,transparent 2px 5px)}
+.note .who{font:12px/1.5 var(--sans);color:var(--mid);display:flex;gap:10px;flex-wrap:wrap;align-items:baseline;margin-bottom:4px}
+.note .who button{color:var(--mid);border-bottom:1px dotted var(--rule)}
+.note .who button:hover{color:var(--ink);border-color:var(--ink)}
+.note q{display:block;font-style:italic;color:var(--mid);quotes:"“" "”";margin:0 0 6px}
+.note q.stale::after{content:" — anchor not found, review";font:12px var(--sans);color:var(--ink)}
+.note .text{outline:0;min-height:1.5em}
+.note .text:empty::before{content:"Note…";color:var(--faint);font-style:italic}
+.note .replies{margin:8px 0 0;padding:0 0 0 10px;border-left:1px solid var(--rule);display:grid;row-gap:6px}
+.note .replies .r .who{margin:0}
+.note .replies .r .text{font-size:13px}
+.note .acts{margin-top:6px;font:12px/1.6 var(--sans);display:flex;gap:12px;color:var(--faint)}
+.note .acts button{color:var(--mid);text-decoration:underline;text-underline-offset:3px}
+
+/* selection toolbar */
+.seltool{position:absolute;z-index:5;display:flex;background:var(--ink);color:#fff;border-radius:3px;font:13px/1 var(--sans);padding:3px;transform:translate(-50%,-100%) translateY(-10px);box-shadow:0 6px 20px rgba(0,0,0,.18)}
+.seltool button{color:#fff;padding:8px 11px;border-radius:2px}
+.seltool button:hover{background:#333}
+.seltool::after{content:"";position:absolute;left:50%;bottom:-5px;width:10px;height:10px;background:var(--ink);transform:translateX(-50%) rotate(45deg)}
+
+/* dialogs */
+dialog{border:0;border-radius:3px;background:var(--field);color:var(--ink);padding:0;max-width:min(760px,92vw);width:100%;box-shadow:0 30px 80px rgba(0,0,0,.25)}
+dialog::backdrop{background:rgba(20,20,20,.35)}
+dialog .in{padding:28px 30px 26px;display:grid;row-gap:16px}
+dialog h2{margin:0;font:400 26px/1.2 var(--serif)}
+dialog p{margin:0;font:15px/1.5 var(--serif);color:var(--mid);max-width:60ch}
+dialog textarea,dialog select{font:14px/1.5 var(--mono);width:100%;padding:12px 14px;border:1px solid var(--rule);border-radius:2px;background:#fff;color:var(--ink)}
+dialog select{font-family:var(--sans)}
+dialog textarea{min-height:12em;resize:vertical}
+dialog .row{display:flex;gap:16px;align-items:center;flex-wrap:wrap;font:14px/1.5 var(--sans)}
+dialog .row .grow{flex:1}
+dialog .btn{font:500 14px/1 var(--sans);padding:12px 18px;border:1px solid var(--ink);border-radius:2px;background:var(--ink);color:#fff}
+dialog .btn.ghost{background:none;color:var(--ink)}
+dialog .btn:disabled{opacity:.35;cursor:not-allowed}
+dialog .msg{font:14px/1.5 var(--sans)}
+dialog .msg.err{color:#8a1f11}
+dialog .preview{border:1px solid var(--rule);padding:14px 16px;max-height:40vh;overflow:auto;font:15px/1.5 var(--serif);background:#fff}
+dialog .preview:empty{display:none}
+dialog .packet{list-style:none;margin:0;padding:0;display:grid;row-gap:8px;max-height:44vh;overflow:auto}
+dialog .packet li{border:1px solid var(--rule);padding:10px 12px;font:15px/1.5 var(--serif);background:#fff}
+dialog .packet li small{display:block;font:12px/1.5 var(--sans);color:var(--mid);margin-bottom:4px}
+dialog .packet li button{float:right;color:var(--faint);font-size:16px}
+dialog .packet:empty::before{content:"Nothing in the packet yet. Select a passage, or choose “Whole entry to packet” on an entry.";font:italic 15px/1.5 var(--serif);color:var(--faint)}
+
+noscript .snap{max-width:72ch;margin:60px auto;font:17px/1.6 var(--serif);padding:0 24px}
+noscript .snap h2{font:600 15px var(--sans);margin:2.4em 0 .6em}
+
+@media (max-width:900px){
+  .mast .title,.mast .views,.mast .acts{grid-column:1/-1}
+  .mast .acts{text-align:left;margin-top:14px}
+  .entry .lead,.entry .bodycol,.entry .margin,.entry[data-k=agent] .bodycol,.entry[data-k=agent] .margin,.between,.empty,
+  .flow .reply,.flow .page,.flow .margin,.flow .attach,.flow .acts,.flow .nav{grid-column:1/-1}
+  .journal .page .body{padding:22px;min-height:50vh}
+  .entry .lead{grid-template-columns:auto 1fr;align-items:end;column-gap:14px}
+  .entry .lead .ini{font-size:54px}
+  .flow .head .ini{font-size:110px}
+  .flow .page .body{padding:22px;min-height:40vh}
+}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<svg class="defs" aria-hidden="true">
+  <filter id="stipple" x="0" y="0" width="1" height="1" color-interpolation-filters="sRGB">
+    <feTurbulence type="fractalNoise" baseFrequency="1.6" numOctaves="2" seed="9" result="n"/>
+    <feColorMatrix in="n" type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 11 -4.6" result="dots"/>
+    <feComposite in="SourceGraphic" in2="dots" operator="in"/>
+  </filter>
+</svg>
+<noscript id="snapshot"><div class="snap"><p>This copy has not been written to yet. Open it with scripting enabled to write.</p></div></noscript>
+
+<dialog id="dlg-media"><form method="dialog" class="in">
+  <h2>Add media</h2>
+  <p>Embedded into this document, up to 12 MB per file. Nothing is uploaded anywhere.</p>
+  <div class="row"><label class="grow">Attach to <select id="media-entry"></select></label></div>
+  <div class="row"><input type="file" id="media-file" accept="image/*,video/*,audio/*"></div>
+  <div class="msg" id="media-msg"></div>
+  <div class="row"><button class="btn ghost" value="cancel">Close</button></div>
+</form></dialog>
+
+<dialog id="dlg-packet"><div class="in">
+  <h2>Context packet</h2>
+  <p>Only what you explicitly chose: selected passages, or whole entries you opted in. Copying puts it on your clipboard as JSON; nothing is sent.</p>
+  <ul class="packet" id="packet-list"></ul>
+  <div class="msg" id="packet-msg"></div>
+  <div class="row"><button class="btn" id="packet-copy" type="button">Copy as JSON</button><button class="btn ghost" id="packet-clear" type="button">Clear</button><span class="grow"></span><button class="btn ghost" type="button" onclick="this.closest('dialog').close()">Close</button></div>
+</div></dialog>
+
+<dialog id="dlg-people"><div class="in">
+  <h2>Participants</h2>
+  <p>Who is in this exchange. A participant is a person or an agent; declaring one here does not start anything and is not authentication. Native attribution appears only when the desktop records it.</p>
+  <ul class="people" id="people-list"></ul>
+  <div class="row"><label class="grow">Name <input id="people-name" type="text"></label><label>Initial <input id="people-initial" type="text" maxlength="1" size="2"></label><label>Is <select id="people-kind"><option value="agent">an agent</option><option value="person">a person</option></select></label><button class="btn" id="people-add" type="button">Add</button></div>
+  <div class="msg" id="people-msg"></div>
+  <div class="row"><span class="grow"></span><button class="btn ghost" type="button" onclick="this.closest('dialog').close()">Close</button></div>
+</div></dialog>
+
+<main class="doc" id="app" hidden></main>
+<!--ql-plural:begin-->
+<script id="ql-plural">
+var QlPlural = (() => {
+  var __defProp = Object.defineProperty;
+  var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
+  var __getOwnPropNames = Object.getOwnPropertyNames;
+  var __hasOwnProp = Object.prototype.hasOwnProperty;
+  var __export = (target, all) => {
+    for (var name in all)
+      __defProp(target, name, { get: all[name], enumerable: true });
+  };
+  var __copyProps = (to, from, except, desc) => {
+    if (from && typeof from === "object" || typeof from === "function") {
+      for (let key of __getOwnPropNames(from))
+        if (!__hasOwnProp.call(to, key) && key !== except)
+          __defProp(to, key, { get: () => from[key], enumerable: !(desc = __getOwnPropDesc(from, key)) || desc.enumerable });
+    }
+    return to;
+  };
+  var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
+  var stdin_exports = {};
+  __export(stdin_exports, {
+    FORMAT_VERSION: () => FORMAT_VERSION,
+    RELATION_TYPES: () => RELATION_TYPES,
+    Refusal: () => Refusal,
+    TEMPLATE_V4: () => TEMPLATE_V4,
+    activeParticipants: () => activeParticipants,
+    addParticipant: () => addParticipant,
+    appendContribution: () => appendContribution,
+    authorOf: () => authorOf,
+    buildThreads: () => buildThreads,
+    canonicalJson: () => canonicalJson,
+    defaultParticipants: () => defaultParticipants,
+    describeRelation: () => describeRelation,
+    draftEntry: () => draftEntry,
+    entryIdForOperation: () => entryIdForOperation,
+    formatVersionOf: () => formatVersionOf,
+    isCurrentFormat: () => isCurrentFormat,
+    leaveParticipant: () => leaveParticipant,
+    legacyParticipantKey: () => legacyParticipantKey,
+    portableCopy: () => portableCopy,
+    readableEntries: () => readableEntries,
+    relationsOf: () => relationsOf,
+    requestDigest: () => requestDigest,
+    sha256: () => sha256,
+    upgradeDocument: () => upgradeDocument,
+    validateDocument: () => validateDocument,
+    withSession: () => withSession
+  });
+  const FORMAT_VERSION = 4;
+  const TEMPLATE_V4 = "ql-dialogue-flow v0.4";
+  const RELATION_TYPES = ["reply", "branch", "converge", "correct", "source", "artifact"];
+  class Refusal extends Error {
+    code;
+    constructor(code, message) {
+      super(message);
+      this.name = "Refusal";
+      this.code = code;
+    }
+  }
+  function canonicalJson(value) {
+    if (Array.isArray(value)) return "[" + value.map(canonicalJson).join(",") + "]";
+    if (value && typeof value === "object") {
+      const object = value;
+      return "{" + Object.keys(object).filter((key) => object[key] !== void 0).sort().map((key) => JSON.stringify(key) + ":" + canonicalJson(object[key])).join(",") + "}";
+    }
+    return JSON.stringify(value) ?? "null";
+  }
+  const K = new Uint32Array([
+    1116352408,
+    1899447441,
+    3049323471,
+    3921009573,
+    961987163,
+    1508970993,
+    2453635748,
+    2870763221,
+    3624381080,
+    310598401,
+    607225278,
+    1426881987,
+    1925078388,
+    2162078206,
+    2614888103,
+    3248222580,
+    3835390401,
+    4022224774,
+    264347078,
+    604807628,
+    770255983,
+    1249150122,
+    1555081692,
+    1996064986,
+    2554220882,
+    2821834349,
+    2952996808,
+    3210313671,
+    3336571891,
+    3584528711,
+    113926993,
+    338241895,
+    666307205,
+    773529912,
+    1294757372,
+    1396182291,
+    1695183700,
+    1986661051,
+    2177026350,
+    2456956037,
+    2730485921,
+    2820302411,
+    3259730800,
+    3345764771,
+    3516065817,
+    3600352804,
+    4094571909,
+    275423344,
+    430227734,
+    506948616,
+    659060556,
+    883997877,
+    958139571,
+    1322822218,
+    1537002063,
+    1747873779,
+    1955562222,
+    2024104815,
+    2227730452,
+    2361852424,
+    2428436474,
+    2756734187,
+    3204031479,
+    3329325298
+  ]);
+  function sha256(text) {
+    const bytes = new TextEncoder().encode(text);
+    const bitLength = bytes.length * 8;
+    const padded = new Uint8Array(bytes.length + 9 + 63 >> 6 << 6);
+    padded.set(bytes);
+    padded[bytes.length] = 128;
+    const view = new DataView(padded.buffer);
+    view.setUint32(padded.length - 8, Math.floor(bitLength / 2 ** 32));
+    view.setUint32(padded.length - 4, bitLength >>> 0);
+    const h = new Uint32Array([1779033703, 3144134277, 1013904242, 2773480762, 1359893119, 2600822924, 528734635, 1541459225]);
+    const w = new Uint32Array(64);
+    const rotr = (x, n) => x >>> n | x << 32 - n;
+    for (let offset = 0; offset < padded.length; offset += 64) {
+      for (let i = 0; i < 16; i++) w[i] = view.getUint32(offset + i * 4);
+      for (let i = 16; i < 64; i++) {
+        const s0 = rotr(w[i - 15], 7) ^ rotr(w[i - 15], 18) ^ w[i - 15] >>> 3;
+        const s1 = rotr(w[i - 2], 17) ^ rotr(w[i - 2], 19) ^ w[i - 2] >>> 10;
+        w[i] = w[i - 16] + s0 + w[i - 7] + s1 >>> 0;
+      }
+      let [a, b, c, d, e, f, g, hh] = h;
+      for (let i = 0; i < 64; i++) {
+        const S1 = rotr(e, 6) ^ rotr(e, 11) ^ rotr(e, 25);
+        const ch = e & f ^ ~e & g;
+        const t1 = hh + S1 + ch + K[i] + w[i] >>> 0;
+        const S0 = rotr(a, 2) ^ rotr(a, 13) ^ rotr(a, 22);
+        const maj = a & b ^ a & c ^ b & c;
+        const t2 = S0 + maj >>> 0;
+        hh = g;
+        g = f;
+        f = e;
+        e = d + t1 >>> 0;
+        d = c;
+        c = b;
+        b = a;
+        a = t1 + t2 >>> 0;
+      }
+      h[0] = h[0] + a >>> 0;
+      h[1] = h[1] + b >>> 0;
+      h[2] = h[2] + c >>> 0;
+      h[3] = h[3] + d >>> 0;
+      h[4] = h[4] + e >>> 0;
+      h[5] = h[5] + f >>> 0;
+      h[6] = h[6] + g >>> 0;
+      h[7] = h[7] + hh >>> 0;
+    }
+    return Array.from(h, (word) => word.toString(16).padStart(8, "0")).join("");
+  }
+  const participantsOf = (doc) => doc.meta.participants ?? [];
+  function formatVersionOf(doc) {
+    return doc.meta.format?.version ?? 3;
+  }
+  const isCurrentFormat = (doc) => formatVersionOf(doc) >= FORMAT_VERSION;
+  function relationsOf(entry) {
+    if (entry.relations?.length) return entry.relations;
+    return entry.replyTo ? [{ type: "reply", entryId: entry.replyTo.entryId, anchor: entry.replyTo.anchor }] : [];
+  }
+  function authorOf(doc, entry) {
+    const participants = participantsOf(doc);
+    if (entry.authorKey) return participants.find((p) => p.key === entry.authorKey);
+    const matches = participants.filter((p) => p.initial === entry.author);
+    return matches.length === 1 ? matches[0] : void 0;
+  }
+  function activeParticipants(doc) {
+    return participantsOf(doc).filter((p) => !p.left);
+  }
+  const CAUSAL = ["reply", "branch", "converge", "correct"];
+  function validateDocument(doc) {
+    const issues = [];
+    const entries = doc.entries;
+    const participants = participantsOf(doc);
+    const ids = /* @__PURE__ */ new Set();
+    entries.forEach((entry, i) => {
+      if (ids.has(entry.id)) issues.push({ code: "duplicate-entry-id", path: `entries[${i}].id` });
+      ids.add(entry.id);
+    });
+    const keys = /* @__PURE__ */ new Set();
+    participants.forEach((participant, i) => {
+      if (!participant.key) return;
+      if (keys.has(participant.key)) issues.push({ code: "duplicate-participant-key", path: `meta.participants[${i}].key` });
+      keys.add(participant.key);
+    });
+    const current = isCurrentFormat(doc);
+    entries.forEach((entry, i) => {
+      const at = `entries[${i}]`;
+      if (entry.authorKey) {
+        const author = participants.find((p) => p.key === entry.authorKey);
+        if (!author) issues.push({ code: "unknown-author-key", path: `${at}.authorKey` });
+        else if (author.initial !== entry.author) issues.push({ code: "author-initial-mismatch", path: `${at}.author` });
+      }
+      (entry.addressees ?? []).forEach((key) => {
+        if (!keys.has(key)) issues.push({ code: "unknown-addressee", path: `${at}.addressees`, detail: key });
+      });
+      if (entry.audience !== void 0 && entry.audience !== "group" && !(typeof entry.audience === "object" && entry.audience && Array.isArray(entry.audience.keys))) issues.push({ code: "invalid-audience", path: `${at}.audience` });
+      else if (entry.audience && entry.audience !== "group") entry.audience.keys.forEach((key) => {
+        if (!keys.has(key)) issues.push({ code: "unknown-audience-key", path: `${at}.audience`, detail: key });
+      });
+      const relations = relationsOf(entry);
+      relations.forEach((relation, r) => {
+        if (relation.entryId !== void 0 && !ids.has(relation.entryId)) issues.push({ code: "relation-target-missing", path: `${at}.relations[${r}]`, detail: relation.entryId });
+        if (relation.type === "source" || relation.type === "artifact" ? !relation.ref : !relation.entryId) issues.push({ code: "relation-shape", path: `${at}.relations[${r}]` });
+      });
+      if (relations.filter((r) => r.type === "reply").length > 1) issues.push({ code: "reply-multiple", path: `${at}.relations` });
+      const converge = relations.filter((r) => r.type === "converge").length;
+      if (converge === 1) issues.push({ code: "converge-needs-two", path: `${at}.relations` });
+      if (entry.request) {
+        const { digest: stored } = entry.request;
+        if (stored !== requestDigest(entry)) issues.push({ code: "request-digest-mismatch", path: `${at}.request` });
+      }
+    });
+    const parent = /* @__PURE__ */ new Map();
+    entries.forEach((entry) => parent.set(entry.id, relationsOf(entry).filter((r) => CAUSAL.includes(r.type) && r.entryId).map((r) => r.entryId)));
+    const state = /* @__PURE__ */ new Map();
+    const visit = (id) => {
+      if (state.get(id) === 2) return false;
+      if (state.get(id) === 1) return true;
+      state.set(id, 1);
+      for (const next of parent.get(id) ?? []) if (parent.has(next) && visit(next)) return true;
+      state.set(id, 2);
+      return false;
+    };
+    entries.forEach((entry, i) => {
+      if (visit(entry.id)) issues.push({ code: "relation-cycle", path: `entries[${i}]` });
+    });
+    if (!current) issues.push({ code: "legacy-format", path: "meta.format", detail: `format v${formatVersionOf(doc)}` });
+    return issues;
+  }
+  const fnv = (text) => {
+    let hash = 0xcbf29ce484222325n;
+    for (const byte of new TextEncoder().encode(text)) hash = BigInt.asUintN(64, (hash ^ BigInt(byte)) * 0x100000001b3n);
+    return hash.toString(16).padStart(16, "0");
+  };
+  const legacyParticipantKey = (documentId, initial, ordinal) => `p-${fnv(`${documentId ?? ""}\0${initial}\0${ordinal}`)}`;
+  function upgradeDocument(doc, at) {
+    if (isCurrentFormat(doc)) return doc;
+    const original = JSON.parse(JSON.stringify(doc));
+    const next = JSON.parse(JSON.stringify(doc));
+    const declared = participantsOf(next);
+    const base = declared.length ? declared : [
+      { initial: "F", kind: "person", name: "the person" },
+      { initial: "H", kind: "agent", name: "the agent" }
+    ];
+    const counts = /* @__PURE__ */ new Map();
+    base.forEach((p) => counts.set(p.initial, (counts.get(p.initial) ?? 0) + 1));
+    base.forEach((participant, ordinal) => {
+      participant.key ??= legacyParticipantKey(next.meta.documentId, participant.initial, ordinal);
+      participant.binding ??= { owner: "document", ref: participant.ref ?? "", basis: participant.ref ? "declared" : "unknown" };
+      if (!participant.binding.ref) delete participant.binding.ref;
+      participant.role ??= "contributor";
+    });
+    next.meta.participants = base;
+    next.entries.forEach((entry) => {
+      const matches = base.filter((p) => p.initial === entry.author);
+      if (matches.length === 1 && !entry.authorKey) entry.authorKey = matches[0].key;
+      entry.attribution ??= { basis: matches.length === 1 ? "declared" : "unknown" };
+      if (entry.replyTo && !entry.relations) entry.relations = [{ type: "reply", entryId: entry.replyTo.entryId, anchor: entry.replyTo.anchor }];
+    });
+    next.meta.template = TEMPLATE_V4;
+    next.meta.format = { version: FORMAT_VERSION, minReader: FORMAT_VERSION };
+    const originalDigest = sha256(canonicalJson(original));
+    next.meta.upgrade = { from: original.meta.template, at, originalDigest, receipt: sha256(`${originalDigest}\0${TEMPLATE_V4}`) };
+    return next;
+  }
+  function requestDigest(entry) {
+    return sha256(canonicalJson({
+      authorKey: entry.authorKey,
+      html: entry.html,
+      addressees: entry.addressees ?? [],
+      audience: entry.audience ?? "group",
+      intent: entry.intent ?? "contribution",
+      relations: relationsOf(entry),
+      basisRevision: entry.basisRevision ?? null,
+      ref: entry.request?.ref
+    }));
+  }
+  const entryIdForOperation = (operationRef) => `e-${sha256(operationRef).slice(0, 24)}`;
+  function checkCaller(author, caller, request, participants) {
+    if (author.left) throw new Refusal("participant-left", `${author.name ?? author.initial} has left this flow`);
+    if ((author.role ?? "contributor") === "observer") throw new Refusal("observer-cannot-contribute", `${author.name ?? author.initial} is an observer`);
+    const claimed = request.attribution?.basis;
+    const bound = author.binding && author.binding.basis === "verified" ? author.binding : void 0;
+    if (caller.kind === "agent") {
+      if (author.kind !== "agent") throw new Refusal("impersonation", "an agent cannot author as a person");
+      const identity = caller.session ?? caller.ref;
+      if (!identity) throw new Refusal("author-not-caller", "the native caller carries no agent identity");
+      if (bound && !caller.authenticated) throw new Refusal("authentication-required", `${author.name ?? author.initial} is bound; only an authenticated caller may write as them`);
+      if (bound && bound.ref !== identity && bound.ref !== caller.agent) throw new Refusal("author-not-caller", `${author.name ?? author.initial} is bound to another agent`);
+      if (caller.authenticated) {
+        const mine = new Set([caller.agent, caller.session, caller.ref].filter((x) => !!x));
+        const declared = author.binding?.ref;
+        if (declared && !mine.has(declared)) throw new Refusal("impersonation", `${author.name ?? author.initial} is declared for another agent`);
+        const ownSeat = participants.find((p) => p.key !== author.key && p.kind === "agent" && p.binding?.ref && mine.has(p.binding.ref));
+        if (ownSeat) throw new Refusal("impersonation", `this credential is ${ownSeat.name ?? ownSeat.initial}'s; it cannot write as ${author.name ?? author.initial}`);
+      }
+      return { basis: caller.authenticated ? "verified" : "declared", agency: caller.agent, session: caller.session, generation: caller.generation, workcell: caller.workcell };
+    }
+    if (caller.kind === "human") {
+      if (author.kind === "agent") {
+        if (claimed === "verified") throw new Refusal("attribution-overclaim", "a human caller cannot produce verified agent attribution");
+        return { basis: "declared" };
+      }
+      if (bound && !caller.authenticated) throw new Refusal("authentication-required", `${author.name ?? author.initial} is bound; only an authenticated caller may write as them`);
+      if (bound && caller.ref && bound.ref !== caller.ref) throw new Refusal("impersonation", `${author.name ?? author.initial} is bound to another person`);
+      if (caller.authenticated && caller.ref) {
+        const declared = author.binding?.ref;
+        if (declared && declared !== caller.ref) throw new Refusal("impersonation", `${author.name ?? author.initial} is declared for another identity`);
+        const ownSeat = participants.find((p) => p.key !== author.key && p.kind === "person" && p.binding?.ref === caller.ref);
+        if (ownSeat) throw new Refusal("impersonation", `this credential is ${ownSeat.name ?? ownSeat.initial}'s; it cannot write as ${author.name ?? author.initial}`);
+        if (declared === caller.ref) return { basis: "verified" };
+      }
+      return { basis: bound && caller.ref ? "verified" : "declared" };
+    }
+    if (bound && !caller.authenticated) throw new Refusal("authentication-required", `${author.name ?? author.initial} is bound; only an authenticated caller may write as them`);
+    if (claimed === "verified") throw new Refusal("attribution-overclaim", "a system caller cannot verify an author");
+    return { basis: "declared" };
+  }
+  function appendContribution(doc, request, caller) {
+    if (!request.operationRef) throw new Refusal("empty-operation", "a native operation reference is required");
+    if (formatVersionOf(doc) > FORMAT_VERSION) throw new Refusal("unsupported-format", `flow format v${formatVersionOf(doc)} needs a newer writer`);
+    if (!isCurrentFormat(doc)) throw new Refusal("legacy-format", "this document is a legacy form; upgrade it explicitly before contributing");
+    const participants = participantsOf(doc);
+    const author = participants.find((p) => p.key === request.authorKey);
+    if (!author) throw new Refusal("unknown-author", `no participant ${request.authorKey}`);
+    const relations = (request.relations ?? []).map((r) => ({ ...r }));
+    const probe = {
+      id: request.entryId ?? entryIdForOperation(request.operationRef),
+      author: author.initial,
+      authorKey: author.key,
+      at: request.at,
+      html: request.html,
+      replyTo: null,
+      touched: false,
+      addressees: request.addressees,
+      audience: request.audience,
+      intent: request.intent,
+      relations,
+      basisRevision: request.basisRevision,
+      request: { ref: request.operationRef, digest: "" }
+    };
+    const digest = requestDigest(probe);
+    const existing = doc.entries.find((e) => e.request?.ref === request.operationRef);
+    if (existing) {
+      if (existing.request.digest !== digest) throw new Refusal("request-conflict", `operation ${request.operationRef} already recorded with a different payload`);
+      return { doc, entry: existing, outcome: "recovered" };
+    }
+    if (!String(request.html ?? "").replace(/<[^>]*>/g, "").replace(/&nbsp;/g, " ").trim() && !/<(img|video|audio|iframe|object|embed)\b/i.test(request.html ?? "")) throw new Refusal("empty-contribution", "a contribution needs content");
+    if (request.basisRevision !== void 0 && (!Number.isInteger(request.basisRevision) || request.basisRevision < 0 || request.basisRevision > doc.meta.revision)) throw new Refusal("invalid-basis-revision", "the basis revision must be a revision this document has reached");
+    if (request.audience !== void 0 && request.audience !== "group" && !(request.audience && Array.isArray(request.audience.keys))) throw new Refusal("invalid-audience", 'an audience is "group" or a list of participant keys');
+    const claimedBehalf = request.attribution?.onBehalfOf;
+    if (claimedBehalf && (!participants.some((p) => p.key === claimedBehalf.key) || claimedBehalf.key === author.key || !String(claimedBehalf.authority ?? "").trim())) throw new Refusal("unknown-behalf-of", "on behalf of names another participant and the authority claimed");
+    const behalf = claimedBehalf ? { key: claimedBehalf.key, authority: claimedBehalf.authority } : void 0;
+    const attribution = checkCaller(author, caller, request, participants);
+    const ids = new Set(doc.entries.map((e) => e.id));
+    if (ids.has(probe.id)) throw new Refusal("duplicate-entry-id", `entry ${probe.id} already exists`);
+    const keys = new Set(participants.map((p) => p.key));
+    (request.addressees ?? []).forEach((key) => {
+      if (!keys.has(key)) throw new Refusal("unknown-addressee", `no participant ${key}`);
+    });
+    if (request.audience && request.audience !== "group") request.audience.keys.forEach((key) => {
+      if (!keys.has(key)) throw new Refusal("unknown-audience-key", `no participant ${key}`);
+    });
+    relations.forEach((relation) => {
+      if (!RELATION_TYPES.includes(relation.type)) throw new Refusal("invalid-relation-type", `${String(relation.type)} is not a relation this form knows`);
+      if (relation.type === "source" || relation.type === "artifact") {
+        if (!relation.ref) throw new Refusal("relation-shape", `${relation.type} relation needs a ref`);
+        return;
+      }
+      if (!relation.entryId) throw new Refusal("relation-shape", `${relation.type} relation needs an entry`);
+      if (!ids.has(relation.entryId)) throw new Refusal("relation-target-missing", `entry ${relation.entryId} is not in this document`);
+      if (relation.revision !== void 0 && relation.revision > doc.meta.revision) throw new Refusal("relation-revision-ahead", "relation names a revision the document has not reached");
+    });
+    if (relations.filter((r) => r.type === "reply").length > 1) throw new Refusal("reply-multiple", "an entry replies to one entry; use converge to relate several");
+    if (relations.filter((r) => r.type === "converge").length === 1) throw new Refusal("converge-needs-two", "a convergence relates at least two entries");
+    const entry = { ...probe, attribution: { ...attribution, ...behalf ? { onBehalfOf: behalf } : {} }, request: { ref: request.operationRef, digest } };
+    const reply = relations.find((r) => r.type === "reply");
+    entry.replyTo = reply ? { entryId: reply.entryId, anchor: reply.anchor ?? null } : null;
+    for (const key of ["addressees", "audience", "intent", "basisRevision"]) if (entry[key] === void 0) delete entry[key];
+    if (!relations.length) delete entry.relations;
+    const next = JSON.parse(JSON.stringify(doc));
+    next.entries.push(entry);
+    next.meta.revision = doc.meta.revision + 1;
+    if (attribution.basis === "verified") {
+      const held = next.meta.participants.find((p) => p.key === author.key);
+      const identity = caller.kind === "agent" ? caller.agent ?? caller.session ?? caller.ref : caller.ref;
+      if (identity && (!held.binding || held.binding.basis !== "verified")) held.binding = { owner: caller.kind === "agent" ? "actuation" : "central", ref: identity, basis: "verified" };
+    }
+    return { doc: next, entry, outcome: "appended" };
+  }
+  function draftEntry(doc, authorKey, at, id, options) {
+    const author = participantsOf(doc).find((p) => p.key === authorKey);
+    const relations = options?.relations?.map((r) => ({ ...r }));
+    const reply = relations?.find((r) => r.type === "reply");
+    const entry = { id, author: author?.initial ?? "", at, html: "", replyTo: reply ? { entryId: reply.entryId, anchor: reply.anchor ?? null } : null, touched: false };
+    if (author) {
+      entry.authorKey = author.key;
+      entry.attribution = { basis: "declared" };
+    }
+    if (relations?.length) entry.relations = relations;
+    if (options?.addressees?.length) entry.addressees = [...options.addressees];
+    if (options?.intent) entry.intent = options.intent;
+    return entry;
+  }
+  function defaultParticipants(documentId) {
+    return [
+      { key: legacyParticipantKey(documentId, "F", 0), initial: "F", kind: "person", name: "the person", role: "contributor", binding: { owner: "document", basis: "unknown", ref: "" } },
+      { key: legacyParticipantKey(documentId, "H", 1), initial: "H", kind: "agent", name: "the agent", role: "contributor", binding: { owner: "document", basis: "unknown", ref: "" } }
+    ];
+  }
+  function describeRelation(doc, relation) {
+    const entries = doc.entries;
+    const number = (id) => {
+      const i = entries.findIndex((e) => e.id === id);
+      return i < 0 ? "an entry no longer here" : `entry ${i + 1}`;
+    };
+    switch (relation.type) {
+      case "reply":
+        return `Answers ${number(relation.entryId)}`;
+      case "branch":
+        return `Branches from ${number(relation.entryId)}`;
+      case "converge":
+        return `Brings together ${number(relation.entryId)}`;
+      case "correct":
+        return `Corrects ${number(relation.entryId)}`;
+      case "source":
+        return `Source ${relation.ref ?? ""}`;
+      default:
+        return `Artifact ${relation.ref ?? ""}`;
+    }
+  }
+  function addParticipant(doc, participant, at) {
+    if (!isCurrentFormat(doc)) throw new Refusal("legacy-format", "upgrade the document before adding participants");
+    const next = JSON.parse(JSON.stringify(doc));
+    const list = next.meta.participants ??= [];
+    const key = participant.key ?? `p-${fnv(`${next.meta.documentId}\0${participant.initial}\0${list.length}\0${at}`)}`;
+    if (list.some((p) => p.key === key)) return doc;
+    list.push({ role: "contributor", ...participant, key, joined: { at, revision: next.meta.revision } });
+    next.meta.revision += 1;
+    return next;
+  }
+  function withSession(doc, key, session) {
+    const next = JSON.parse(JSON.stringify(doc));
+    const held = next.meta.participants?.find((p) => p.key === key);
+    if (!held || held.left || held.ref === session) return doc;
+    held.ref = session;
+    next.meta.revision += 1;
+    return next;
+  }
+  function leaveParticipant(doc, key, at) {
+    const next = JSON.parse(JSON.stringify(doc));
+    const held = next.meta.participants?.find((p) => p.key === key);
+    if (!held || held.left) return doc;
+    held.left = { at, revision: next.meta.revision };
+    next.meta.revision += 1;
+    return next;
+  }
+  function buildThreads(doc) {
+    const entries = doc.entries;
+    const nodes = new Map(entries.map((entry) => [entry.id, { entry, children: [], converges: [] }]));
+    const roots = [];
+    for (const entry of entries) {
+      const node = nodes.get(entry.id);
+      const relations = relationsOf(entry);
+      node.converges = relations.filter((r) => r.type === "converge" && r.entryId).map((r) => r.entryId);
+      const parent = relations.find((r) => (r.type === "reply" || r.type === "branch" || r.type === "correct") && r.entryId && nodes.has(r.entryId));
+      if (parent) nodes.get(parent.entryId).children.push(node);
+      else roots.push(node);
+    }
+    return roots;
+  }
+  function readableEntries(doc, key) {
+    const participant = key ? participantsOf(doc).find((p) => p.key === key) : void 0;
+    const entries = doc.entries;
+    if (!participant) return entries.filter((e) => audienceOf(e) === "group");
+    let from = 0;
+    if (participant.historyFrom) {
+      from = entries.findIndex((e) => e.id === participant.historyFrom);
+      if (from < 0) return [];
+    }
+    let last = entries.length;
+    if (participant.left) {
+      const gone = Date.parse(participant.left.at);
+      last = Number.isNaN(gone) ? 0 : entries.findIndex((e) => {
+        const at = Date.parse(e.at);
+        return Number.isNaN(at) || at > gone;
+      });
+      if (last < 0) last = entries.length;
+    }
+    return entries.slice(from, last).filter((entry) => {
+      const a = audienceOf(entry);
+      return a === "group" || a.includes(key) || entry.authorKey === key;
+    });
+  }
+  function audienceOf(entry) {
+    const a = entry.audience;
+    if (a === void 0 || a === null || a === "group") return "group";
+    if (typeof a === "object" && Array.isArray(a.keys)) return a.keys.filter((k) => typeof k === "string");
+    return [];
+  }
+  function portableCopy(doc) {
+    const next = JSON.parse(JSON.stringify(doc));
+    const open = new Set(next.entries.filter((e) => audienceOf(e) === "group").map((e) => e.id));
+    next.entries = next.entries.filter((e) => open.has(e.id)).map((e) => {
+      if (e.relations) {
+        e.relations = e.relations.filter((r) => !r.entryId || open.has(r.entryId));
+        if (!e.relations.length) delete e.relations;
+      }
+      if (e.replyTo && !open.has(e.replyTo.entryId)) e.replyTo = null;
+      return e;
+    });
+    next.journal = [];
+    next.notes = [];
+    next.packet = [];
+    next.media = [];
+    next.meta.current = null;
+    next.meta.journalCurrent = null;
+    return next;
+  }
+  return __toCommonJS(stdin_exports);
+})();
+</script>
+<!--ql-plural:end-->
+<script type="application/json" id="ql-doc">{"entries":[{"addressees":["p-61ab857bdef81096","p-90bde904c1b08a6b"],"at":"2026-09-30T19:00:04.484Z","attribution":{"basis":"declared"},"author":"A","authorKey":"p-e4948043523a790e","basisRevision":4,"html":"<p>Please read <code>docs/passage.md</code> in your working directory. Ada: recover the argument — state its premises and its conclusion exactly as the passage gives them. Ash: test the passage's claim on one concrete example of your own choosing, with numbers, and say whether the example supports step 3. Keep your answer under 150 words.</p>","id":"e-1f6cac2b4b4895cfd4df5e15","intent":"response","replyTo":null,"request":{"digest":"09be285bd547ae0fd20b4667b952c8cc6f791d5ad11e8fe0e1431846a8a30f72","ref":"conv-entry:conversation/pf-ask-1790794804484"},"touched":false},{"addressees":["p-e4948043523a790e"],"at":"2026-09-30T19:00:22.000Z","attribution":{"agency":"agent/ada-lin","basis":"verified","generation":"01M3SV03GZ91DFN5SHY64K45FJ","session":"agent-session/pf-ada"},"author":"D","authorKey":"p-61ab857bdef81096","basisRevision":5,"html":"<p>**Ada — recovery of the argument (docs/passage.md)**</p><p>Premise 1 — To cross any distance, a traveller must first cross half of it.<br>Premise 2 — After that, half of what remains, and again half of what remains, without end.<br>Premise 3 — A task made of endlessly many steps, each requiring some time, can never be completed.<br>Conclusion (4) — Therefore the traveller never arrives: motion across a distance is impossible.</p><p>Structure: 1 and 2 together make crossing an endless sequence of half-steps; 3 rules out ever finishing such a sequence; 4 follows that arrival — hence motion — is impossible. The load-bearing premise is 3: it quietly assumes that infinitely many steps must take infinite time, which is exactly where Ash's numerical test should press.</p>","id":"e-7c6660426d413a141be5c9ac","intent":"contribution","relations":[{"anchor":null,"entryId":"e-1f6cac2b4b4895cfd4df5e15","revision":5,"type":"reply"}],"replyTo":{"anchor":null,"entryId":"e-1f6cac2b4b4895cfd4df5e15"},"request":{"digest":"c5a866047a0e469728a50e82c1c4ee758fe2e2ca874a0215290388e289b1ecff","ref":"conv-reply:conversation/pf-ask-1790794804484:p-61ab857bdef81096"},"touched":false},{"addressees":["p-e4948043523a790e"],"at":"2026-09-30T19:00:23.000Z","attribution":{"agency":"agent/ash-kay","basis":"verified","generation":"01M3SV081ABJDCSM4NRQKVZWG4","session":"agent-session/pf-ash"},"author":"S","authorKey":"p-90bde904c1b08a6b","basisRevision":5,"html":"<p>I'll take the 2-metre walk to the door at a steady 1 m/s. The steps are 1 m, then 0.5 m, then 0.25 m, 0.125 m… — endlessly many, exactly as step 2 says. At constant speed their durations are 1 s, 0.5 s, 0.25 s, 0.125 s… The total time is 1 + ½ + ¼ + … = 2 s. You're at the door in two seconds.</p><p>So my example does not support step 3. Step 3 needs a hidden extra premise — that endlessly many steps must take endlessly much time, e.g. that each step costs the same duration. But if each successive step is half the distance, it needs half the time, and a geometric series of durations sums to a finite total. Endlessly many steps, finite time: step 3 is false, and step 4 loses its ground.</p>","id":"e-cf7580a360c2067aeabeae51","intent":"contribution","relations":[{"anchor":null,"entryId":"e-1f6cac2b4b4895cfd4df5e15","revision":5,"type":"reply"}],"replyTo":{"anchor":null,"entryId":"e-1f6cac2b4b4895cfd4df5e15"},"request":{"digest":"19c6fba1b51b23f91abd8eaf24e951c652451cb4d24e877360949c91f6f24423","ref":"conv-reply:conversation/pf-ask-1790794804484:p-90bde904c1b08a6b"},"touched":false},{"addressees":["p-61ab857bdef81096"],"at":"2026-09-30T19:00:26.403Z","attribution":{"basis":"declared"},"author":"A","authorKey":"p-e4948043523a790e","basisRevision":7,"html":"<p>Ada — a side question on your answer: what exactly would have to be true of the steps for step 3 to hold? Under 80 words.</p>","id":"e-348323be0999c5aedf126a8a","intent":"response","relations":[{"anchor":null,"entryId":"e-7c6660426d413a141be5c9ac","revision":7,"type":"branch"}],"replyTo":null,"request":{"digest":"837ede0b2351684e0c1d7ff0a45445ebd326bfd4f7eb6ecad58da96682e27701","ref":"conv-entry:conversation/pf-side-1790794826341"},"touched":false},{"addressees":["p-e4948043523a790e"],"at":"2026-09-30T19:00:39.000Z","attribution":{"agency":"agent/ada-lin","basis":"verified","generation":"01M3SV03GZ91DFN5SHY64K45FJ","session":"agent-session/pf-ada"},"author":"D","authorKey":"p-61ab857bdef81096","basisRevision":8,"html":"<p>**Ada — on what step 3 requires**</p><p>For step 3 to hold, the steps' durations must sum to infinity. A clean sufficient condition: every step costs at least some fixed positive time (a positive lower bound, ε &gt; 0). Then endlessly many steps take at least endlessly much time, and 3 is true. Equality of durations is one such case, but any duration sequence with a divergent sum (e.g. 1, ½, ⅓, ¼, …) works too. The half-shrinking steps Ash used fail this — their sum converges.</p>","id":"e-4301f2ffb2dba7781d18dd51","intent":"contribution","relations":[{"anchor":null,"entryId":"e-348323be0999c5aedf126a8a","revision":8,"type":"reply"}],"replyTo":{"anchor":null,"entryId":"e-348323be0999c5aedf126a8a"},"request":{"digest":"ab6dc82a16d809cd540ddd82777644639e16b0b3d50c54ed1050c19c3a1b49fc","ref":"conv-reply:conversation/pf-side-1790794826341:p-61ab857bdef81096"},"touched":false},{"addressees":["p-90bde904c1b08a6b"],"at":"2026-09-30T19:00:42.174Z","attribution":{"basis":"declared"},"author":"A","authorKey":"p-e4948043523a790e","basisRevision":9,"html":"<p>Ash — using Ada's recovered argument, your own test and Ada's side answer together, say in under 100 words exactly where the passage's argument fails.</p>","id":"e-5663aa2d69c49be618eb348d","intent":"response","relations":[{"entryId":"e-7c6660426d413a141be5c9ac","revision":9,"type":"converge"},{"entryId":"e-cf7580a360c2067aeabeae51","revision":9,"type":"converge"},{"entryId":"e-4301f2ffb2dba7781d18dd51","revision":9,"type":"converge"}],"replyTo":null,"request":{"digest":"c670eb5cbf55471ad8692d9571f59310200ede9ebb8b7d24d023b75433403bfe","ref":"conv-entry:conversation/pf-join-1790794842174"},"touched":false},{"addressees":["p-e4948043523a790e"],"at":"2026-09-30T19:00:52.000Z","attribution":{"agency":"agent/ash-kay","basis":"verified","generation":"01M3SV081ABJDCSM4NRQKVZWG4","session":"agent-session/pf-ash"},"author":"S","authorKey":"p-90bde904c1b08a6b","basisRevision":10,"html":"<p>**Ash — where the argument fails**</p><p>It fails at step 3. Premises 1–2 only establish that the crossing divides into endlessly many *distances*; they say nothing about how much *time* the steps take. Step 3 smuggles in the extra claim that the durations must sum to infinity. As Ada's side answer shows, that holds only if the durations have a positive lower bound (or otherwise diverge, like 1 + ½ + ⅓ + …). But the actual half-steps take 1 + ½ + ¼ + … = 2 s — convergent. So step 3 is a false independent assertion, not a consequence of 1–2, and step 4 collapses with it.</p>","id":"e-fefc82d165494b35436242c4","intent":"contribution","relations":[{"anchor":null,"entryId":"e-5663aa2d69c49be618eb348d","revision":10,"type":"reply"}],"replyTo":{"anchor":null,"entryId":"e-5663aa2d69c49be618eb348d"},"request":{"digest":"db336bf5fcd82279664de124b74ce4df851780ae6b3c5e68b6b78986666adfbc","ref":"conv-reply:conversation/pf-join-1790794842174:p-90bde904c1b08a6b"},"touched":false},{"addressees":["p-90bde904c1b08a6b"],"at":"2026-09-30T19:00:55.448Z","attribution":{"basis":"declared"},"author":"A","authorKey":"p-e4948043523a790e","basisRevision":11,"html":"<p>Ash — assume a traveller crosses 2 metres at 1 metre per second. Work through the halving steps for the first six steps, showing each step's distance and time, then say what the six steps add up to. Show all arithmetic.</p>","id":"e-4e222c444fc245061d4dad2a","intent":"response","replyTo":null,"request":{"digest":"21a7acc73f1ddca58ab890364248eb6cda3876d367c43e643f2dc2887fca93b0","ref":"conv-entry:conversation/pf-changed-1790794855448"},"touched":false},{"at":"2026-09-30T19:00:56.119Z","attribution":{"basis":"declared"},"author":"A","authorKey":"p-e4948043523a790e","basisRevision":12,"html":"<p>Correction: the traveller moves at 2 metres per second, not 1.</p>","id":"e-2334a5385ac90c7bdd04021d","intent":"contribution","relations":[{"entryId":"e-4e222c444fc245061d4dad2a","revision":12,"type":"correct"}],"replyTo":null,"request":{"digest":"631a3bee055d3b52e875c8dfb8abeefb163ab536b82ca8113195587e7c84ad1b","ref":"pf-correct-1790794856119"},"touched":false},{"addressees":["p-e4948043523a790e"],"at":"2026-09-30T19:01:11.000Z","attribution":{"agency":"agent/ash-kay","basis":"verified","generation":"01M3SV081ABJDCSM4NRQKVZWG4","session":"agent-session/pf-ash"},"author":"S","authorKey":"p-90bde904c1b08a6b","basisRevision":12,"html":"<p>**Ash — the six halving steps for a 2 m crossing at 1 m/s**</p><p>Each step covers half of what remains; time = distance ÷ 1 m/s.</p><p>| Step | Distance | Arithmetic | Time | Remaining after step |<br>|---|---|---|---|---|<br>| 1 | 1 m | 2 × ½ = 1 | 1 s | 2 − 1 = 1 m |<br>| 2 | 0.5 m | 1 × ½ = ½ | 0.5 s | 1 − 0.5 = 0.5 m |<br>| 3 | 0.25 m | 0.5 × ½ = ¼ | 0.25 s | 0.5 − 0.25 = 0.25 m |<br>| 4 | 0.125 m | 0.25 × ½ = ⅛ | 0.125 s | 0.25 − 0.125 = 0.125 m |<br>| 5 | 0.0625 m | 0.125 × ½ = 1/16 | 0.0625 s | 0.125 − 0.0625 = 0.0625 m |<br>| 6 | 0.03125 m | 0.0625 × ½ = 1/32 | 0.03125 s | 0.0625 − 0.03125 = 0.03125 m |</p><p>Running totals:<br>- Distances: 1 + 0.5 = 1.5; 1.5 + 0.25 = 1.75; 1.75 + 0.125 = 1.875; 1.875 + 0.0625 = 1.9375; 1.9375 + 0.03125 = **1.96875 m**<br>- Times (1 m/s, so identical numbers): 1 + 0.5 + 0.25 + 0.125 + 0.0625 + 0.03125 = **1.96875 s**</p><p>Check: distance left = 2 − 1.96875 = 0.03125 m = 1/32 m, matching the remaining column.</p><p>So six endless-sequence steps add up to 1.96875 m in 1.96875 s — and the entire untraversed tail is just that last 1/32 m, which the continuing halving series (1/32 + 1/64 + … = 1/32) covers exactly, landing at 2 m in 2 s.</p>","id":"e-1cae9ec1009029a1ddaa3a48","intent":"contribution","relations":[{"anchor":null,"entryId":"e-4e222c444fc245061d4dad2a","revision":12,"type":"reply"}],"replyTo":{"anchor":null,"entryId":"e-4e222c444fc245061d4dad2a"},"request":{"digest":"ed9d339cfb80b2c68e596d2303d5784cec12ad69cc0b1b0d6b9c4c2c6263fec2","ref":"conv-reply:conversation/pf-changed-1790794855448:p-90bde904c1b08a6b"},"touched":false},{"addressees":["p-61ab857bdef81096"],"at":"2026-09-30T19:01:21.098Z","attribution":{"basis":"declared"},"author":"A","authorKey":"p-e4948043523a790e","basisRevision":15,"html":"<p>Ada — you have just joined this conversation afresh. Using what the earlier entries established about where the argument fails, apply the same analysis to a different case: a runner who covers half the remaining distance each step but doubles speed at every step. Does the argument fail in the same place? Under 100 words.</p>","id":"e-2ea2660c56183aa7e91e4ba4","intent":"response","replyTo":null,"request":{"digest":"7009f83df550dfe3357882f8c5d24eab602d6193764c118dc5b33640681e1328","ref":"conv-entry:conversation/pf-fresh-1790794881098"},"touched":false},{"addressees":["p-e4948043523a790e"],"at":"2026-09-30T19:01:40.000Z","attribution":{"agency":"agent/ada-lin","basis":"verified","generation":"01M3SV2F9NH2V5BZVH5DNG31QM","session":"agent-session/pf-ada-fresh"},"author":"D","authorKey":"p-61ab857bdef81096","basisRevision":16,"html":"<p>**Ada — the doubled-speed runner**</p><p>Distances still halve exactly as before: 1, ½, ¼ … m. But time = distance ÷ speed, and speed doubles each step: 1 s, ¼ s, 1/16 s… Sum = 1 + ¼ + 1/16 + … = 4/3 s — finite, converging even faster than Ash's 2 s.</p><p>So yes: it fails at exactly the same place, step 3. Premises 1–2 fix only the *distances*; they leave the *durations* undetermined, and step 3's smuggled claim — endless steps must take endless time — is false again. Step 4 collapses identically; this runner merely arrives sooner.</p>","id":"e-6c56f5d3fb41298fdc5fad84","intent":"contribution","relations":[{"anchor":null,"entryId":"e-2ea2660c56183aa7e91e4ba4","revision":16,"type":"reply"}],"replyTo":{"anchor":null,"entryId":"e-2ea2660c56183aa7e91e4ba4"},"request":{"digest":"3b6dc94dce643e8844a59a5ce689f015021e61ce687752faa033b196398a9ab8","ref":"conv-reply:conversation/pf-fresh-1790794881098:p-61ab857bdef81096"},"touched":false},{"addressees":["p-f5e1c4d530515563"],"at":"2026-09-30T19:01:45.052Z","attribution":{"basis":"declared"},"author":"A","authorKey":"p-e4948043523a790e","basisRevision":19,"html":"<p>Cy — you are new to this conversation. Earlier entries already settled something about step 3 of the passage in <code>docs/passage.md</code>. Use that, not a fresh start, on this different case: each step covers half of what remains but takes one and a half times as long as the step before. Does step 3 fail here as it did before? Say why, with the numbers, in under 120 words.</p>","id":"e-88caeeaec76d7971dd35b269","intent":"response","replyTo":null,"request":{"digest":"567fe7250b135ccf0d07f1e4d40b23c629cd57991e8284ec234a8e68ec5fedbb","ref":"conv-entry:conversation/pf-fresh-participant-1790794905052"},"touched":false},{"addressees":["p-e4948043523a790e"],"at":"2026-09-30T19:02:16.000Z","attribution":{"agency":"agent/cy-wren","basis":"verified","generation":"01M3SV3AM6SWA9AE3HPVTHHH30","session":"agent-session/pf-cy"},"author":"Y","authorKey":"p-f5e1c4d530515563","basisRevision":20,"html":"<p>**Cy — the slowing traveller: step 3 holds here**</p><p>No — this case flips the earlier verdict. Distances still halve (1, ½, ¼ … m), but durations now *grow*: if the first step takes 1 s, the next take 1.5 s, 2.25 s, 3.375 s, 5.0625 s… — each 3/2 of the last. A geometric series with ratio 3/2 &gt; 1 diverges; the running total is already 8.125 s after four steps and climbs without bound (any positive first duration behaves the same). So the durations sum to infinity — precisely the condition Ada named for step 3 to be true. Step 3 doesn't fail; it holds, and this traveller genuinely never covers the 2 m. The earlier failure came from *converging* durations, not from endlessness itself.</p>","id":"e-630cd2fecd17f434198e3e61","intent":"contribution","relations":[{"anchor":null,"entryId":"e-88caeeaec76d7971dd35b269","revision":20,"type":"reply"}],"replyTo":{"anchor":null,"entryId":"e-88caeeaec76d7971dd35b269"},"request":{"digest":"3d24441d710ee22bb57da94f7527a866023022388134b00c668cd9df182fc0ff","ref":"conv-reply:conversation/pf-fresh-participant-1790794905052:p-f5e1c4d530515563"},"touched":false},{"at":"2026-09-30T19:02:20.938Z","attribution":{"basis":"verified"},"author":"B","authorKey":"p-bfbe588184f90711","basisRevision":24,"html":"<p>Bea here, from my own world. I have read the question and I would like Bo to look at it too.</p>","id":"e-a79af2d9908d4512b9e13b16","intent":"contribution","replyTo":null,"request":{"digest":"5d04ce8e2c43ceecc6f4c6a5ad18b0404d67f5d2ca9edbaba6b099f38155b349","ref":"bea-1790794940938"},"touched":false},{"addressees":["p-29baddb760479ea5"],"at":"2026-09-30T19:02:21.177Z","attribution":{"basis":"declared"},"author":"A","authorKey":"p-e4948043523a790e","basisRevision":25,"html":"<p>Bo — Bea asked you to look at this too. Read <code>docs/passage.md</code> in your working directory and say in under 80 words what the passage is arguing. Tell me only what the conversation and your own working directory give you.</p>","id":"e-f684b20bbc271297b84b5c39","intent":"response","replyTo":null,"request":{"digest":"e47ee3f3b287d578b7fc6519f9a1e11fa5e5859ff3afe9d178437f459848e054","ref":"conv-entry:conversation/pf-worldb-1790794941177"},"touched":false},{"addressees":["p-e4948043523a790e"],"at":"2026-09-30T19:02:31.000Z","attribution":{"agency":"agent/bo-ray","basis":"verified","generation":"01M3SV4F728K145H0EP4A67TW5","session":"agent-session/pf-bo","workcell":"workcell:mac"},"author":"O","authorKey":"p-29baddb760479ea5","basisRevision":26,"html":"<p>**Bo — what the passage argues**</p><p>It's a Zeno-style dilemma about a 2 m crossing: premises 1–2 split the journey into endlessly many halving steps (1, ½, ¼ … m); premise 3 claims endlessly many time-costing steps can never complete; premise 4 concludes arrival is impossible, so motion is impossible. As the conversation showed, the load-bearing step is 3 — true only for diverging durations (Cy's slowing case), false for converging ones (Ash's 2 s, Ada's 4/3 s).</p>","id":"e-25d5deb50884b9a9afb1a323","intent":"contribution","relations":[{"anchor":null,"entryId":"e-f684b20bbc271297b84b5c39","revision":26,"type":"reply"}],"replyTo":{"anchor":null,"entryId":"e-f684b20bbc271297b84b5c39"},"request":{"digest":"f2b9e8be7bd60ed31c48b1223d6bacb9cf9b28c2e0cff17d175c951c9c6fd056","ref":"conv-reply:conversation/pf-worldb-1790794941177:p-29baddb760479ea5"},"touched":false},{"addressees":["p-61ab857bdef81096","p-a5be7dbb21b1e69e"],"at":"2026-09-30T19:56:14.052Z","attribution":{"basis":"declared"},"author":"A","authorKey":"p-e4948043523a790e","basisRevision":29,"html":"<p>Please read <code>docs/passage.md</code> in your working directory. Ada: say in under 80 words which single premise the argument depends on. Ash: give one concrete numeric example that bears on that premise, in under 80 words. You are on different machines; answer from your own reading.</p>","id":"e-84fac721229a3ea650302c93","intent":"response","replyTo":null,"request":{"digest":"4815853f75b402a2ae9213db1c61d877a50a7abf06b7abd81081f1688a5dbcec","ref":"conv-entry:conversation/pf-remote-1790798174051"},"touched":false},{"addressees":["p-e4948043523a790e"],"at":"2026-09-30T19:56:23.000Z","attribution":{"agency":"agent/ada-lin","basis":"verified","generation":"01M3SV2F9NH2V5BZVH5DNG31QM","session":"agent-session/pf-ada-fresh"},"author":"D","authorKey":"p-61ab857bdef81096","basisRevision":30,"html":"<p>**Ada — the premise it depends on**</p><p>I've read docs/passage.md. Premises 1–2 merely divide the crossing into endlessly many halving distances — innocent bookkeeping. Everything turns on **premise 3**: &quot;a task made of endlessly many steps, each requiring some time, can never be completed.&quot; Only if 3 is true does 4 follow. But 3 is an independent assertion about *time*, not a consequence of endless steps: it holds only when the durations diverge, and fails whenever their sum converges. Drop 3, and the argument for impossible motion collapses.</p>","id":"e-47c9a92c94a445cfa9171c03","intent":"contribution","relations":[{"anchor":null,"entryId":"e-84fac721229a3ea650302c93","revision":30,"type":"reply"}],"replyTo":{"anchor":null,"entryId":"e-84fac721229a3ea650302c93"},"request":{"digest":"5b59bb66884430849be7ce16e7e8f96dfeeaf8957da795b67d2e9c1ce7780d93","ref":"conv-reply:conversation/pf-remote-1790798174051:p-61ab857bdef81096"},"touched":false},{"addressees":["p-e4948043523a790e"],"at":"2026-09-30T19:56:50.000Z","attribution":{"agency":"agent/ash-omarchy","basis":"verified","generation":"01M3S8EAVTFWV7GP4SW5R5X39E","session":"agent-session/pf-ash-o","workcell":"workcell:omarchy"},"author":"O","authorKey":"p-a5be7dbb21b1e69e","basisRevision":30,"html":"<p>**Ash** — Premise 3 says endlessly many timed steps can never complete. Counterexample: crossing 8 m at 2 m/s. Steps of 4, 2, 1, ½… metres take 2, 1, ½, ¼… seconds — infinitely many positive durations summing to 2 + 1 + ½ + ¼ + … = 4 s exactly. The traveller completes every one of the endless steps by t = 4 s. The premise's inference from &quot;endless steps&quot; to &quot;endless time&quot; is therefore false.</p>","id":"e-73d24e88c60703e65d3cad18","intent":"contribution","relations":[{"anchor":null,"entryId":"e-84fac721229a3ea650302c93","revision":30,"type":"reply"}],"replyTo":{"anchor":null,"entryId":"e-84fac721229a3ea650302c93"},"request":{"digest":"43794ef32bb269b1065954a4b59a3abac9db9d081c13ceb64261ed86335c4fbb","ref":"conv-reply:conversation/pf-remote-1790798174051:p-a5be7dbb21b1e69e"},"touched":false}],"journal":[{"at":"2026-09-30T19:02:20.758Z","html":"<p>PRIVATE-JOURNAL-OF-ANN: not for the other world.</p>","id":"j-private"}],"media":[],"meta":{"created":"2026-09-30T18:59:54.795Z","current":null,"documentId":"flow-acceptance-4e9d9a648faf","exported":null,"format":{"minReader":4,"version":4},"journalCurrent":null,"participants":[{"binding":{"basis":"unknown","owner":"document"},"initial":"A","key":"p-e4948043523a790e","kind":"person","name":"Ann","role":"contributor"},{"binding":{"basis":"verified","owner":"actuation","ref":"agent/ada-lin"},"initial":"D","joined":{"at":"2026-09-30T18:59:59.412Z","revision":0},"key":"p-61ab857bdef81096","kind":"agent","name":"Ada","ref":"agent-session/pf-ada-fresh","role":"contributor"},{"binding":{"basis":"verified","owner":"actuation","ref":"agent/ash-kay"},"initial":"S","joined":{"at":"2026-09-30T19:00:04.104Z","revision":2},"key":"p-90bde904c1b08a6b","kind":"agent","name":"Ash","ref":"agent-session/pf-ash","role":"contributor"},{"binding":{"basis":"verified","owner":"actuation","ref":"agent/cy-wren"},"initial":"Y","joined":{"at":"2026-09-30T19:01:44.845Z","revision":17},"key":"p-f5e1c4d530515563","kind":"agent","name":"Cy","ref":"agent-session/pf-cy","role":"contributor"},{"binding":{"basis":"verified","owner":"central","ref":"human:bea"},"initial":"B","joined":{"at":"2026-09-30T19:02:20.758Z","revision":21},"key":"p-bfbe588184f90711","kind":"person","name":"Bea","role":"contributor"},{"binding":{"basis":"verified","owner":"actuation","ref":"agent/bo-ray"},"initial":"O","joined":{"at":"2026-09-30T19:02:20.758Z","revision":22},"key":"p-29baddb760479ea5","kind":"agent","name":"Bo","ref":"agent-session/pf-bo","role":"contributor"},{"binding":{"basis":"verified","owner":"actuation","ref":"agent/ash-omarchy"},"initial":"O","joined":{"at":"2026-09-30T19:56:13.946Z","revision":27},"key":"p-a5be7dbb21b1e69e","kind":"agent","name":"Ash (Omarchy)","ref":"agent-session/pf-ash-o","role":"contributor"}],"revision":32,"template":"ql-dialogue-flow v0.4","title":"On crossing a distance","view":"dialogue"},"notes":[{"at":"2026-09-30T19:02:20.758Z","entryId":"e-1f6cac2b4b4895cfd4df5e15","id":"n-private","replies":[],"text":"<p>PRIVATE-NOTE-OF-ANN</p>"}],"packet":[]}</script>
+<script>
+(function(){
+'use strict';
+const SHELL = '<!doctype html>\n' + document.documentElement.outerHTML;
+const $ = (s,el=document)=>el.querySelector(s), $$=(s,el=document)=>[...el.querySelectorAll(s)];
+const app = $('#app');
+let D = JSON.parse($('#ql-doc').textContent);
+let dirty=false, revTimer=null;
+const uid = ()=> (crypto.randomUUID ? crypto.randomUUID() : 'x'+Math.random().toString(36).slice(2)+Date.now().toString(36));
+const esc = s => String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const now = ()=>new Date().toISOString();
+
+(function init(){
+  const m=D.meta;
+  if(!m.documentId){ m.documentId=uid(); m.created=now(); }
+  m.revision ||= 0; m.view ||= 'dialogue';
+  D.entries ||= []; D.notes ||= []; D.packet ||= []; D.media ||= []; D.journal ||= []; m.journalCurrent ||= null;
+  if(!m.current || !D.entries.find(e=>e.id===m.current)) m.current=D.entries[0]?D.entries[0].id:null;
+  if(QlPlural.isCurrentFormat(D) && !(m.participants&&m.participants.length)) m.participants=QlPlural.defaultParticipants(m.documentId);
+})();
+const isPlural = ()=>QlPlural.isCurrentFormat(D);
+function touch(){ dirty=true; clearTimeout(revTimer); revTimer=setTimeout(()=>{ D.meta.revision++;  },900); }
+
+function clean(html){
+  const doc=new DOMParser().parseFromString('<div>'+String(html||'')+'</div>','text/html'); const root=doc.body.firstChild;
+  root.querySelectorAll('script,style,iframe,object,embed,link,meta,form,input,button,textarea,select,base').forEach(n=>n.remove());
+  root.querySelectorAll('*').forEach(el=>{
+    [...el.attributes].forEach(a=>{ const n=a.name.toLowerCase(), v=a.value.trim().toLowerCase();
+      if(n.startsWith('on')||n==='style'||n==='srcdoc') el.removeAttribute(a.name);
+      else if((n==='href'||n==='xlink:href')&&/^(javascript|data|vbscript):/.test(v)) el.removeAttribute(a.name);
+      else if((n==='src'||n==='srcset'||n==='poster')&&!v.startsWith('data:')) el.removeAttribute(a.name); });
+    if(/^(img|video|audio|source)$/i.test(el.tagName)&&!el.getAttribute('src')&&!el.querySelector('source[src]')) el.remove();
+  });
+  return root.innerHTML;
+}
+function h(tag,attrs={},...kids){
+  const el=document.createElement(tag);
+  for(const [k,v] of Object.entries(attrs)){ if(v===false||v==null) continue; if(k==='html') el.innerHTML=v; else if(k==='text') el.textContent=v; else if(k.startsWith('on')) el.addEventListener(k.slice(2),v); else el.setAttribute(k,v===true?'':v); }
+  kids.flat().forEach(k=>{ if(k==null) return; el.append(k.nodeType?k:document.createTextNode(k)); });
+  return el;
+}
+const svg=d=>{ const el=document.createElementNS('http://www.w3.org/2000/svg','svg'); el.setAttribute('viewBox','0 0 24 24'); el.setAttribute('aria-hidden','true'); el.innerHTML=d; return el; };
+const ICON={more:'<circle cx="12" cy="5" r="1.4" fill="currentColor" stroke="none"/><circle cx="12" cy="12" r="1.4" fill="currentColor" stroke="none"/><circle cx="12" cy="19" r="1.4" fill="currentColor" stroke="none"/>',plus:'<path d="M12 5v14M5 12h14"/>'};
+let pop=null; function closePop(){ if(pop){ const a=pop._anchor; pop.remove(); pop=null; if(a) a.setAttribute('aria-expanded','false'); } }
+document.addEventListener('mousedown',ev=>{ if(pop&&!pop.contains(ev.target)&&ev.target!==pop._anchor&&!pop._anchor.contains(ev.target)) closePop(); });
+document.addEventListener('keydown',ev=>{ if(ev.key==='Escape') closePop(); });
+window.addEventListener('scroll',closePop,{passive:true});
+function menu(anchor,items,opts={}){
+  if(pop&&pop._anchor===anchor){ closePop(); return; } closePop();
+  pop=h('div',{class:'pop',role:'menu'}); pop._anchor=anchor;
+  items.forEach(it=>{ if(it==='sep') pop.append(h('div',{class:'sep'})); else if(it.small) pop.append(h('small',{text:it.small})); else pop.append(h('button',{role:'menuitem',class:it.cls||'','aria-current':it.current?'true':null,onclick:()=>{ closePop(); it.run(); }},it.label,it.hint?h('small',{text:it.hint}):null)); });
+  document.body.append(pop); anchor.setAttribute('aria-expanded','true');
+  const r=anchor.getBoundingClientRect(), pw=pop.offsetWidth, ph=pop.offsetHeight;
+  let left=opts.align==='right'? r.right-pw : r.left, top=r.bottom+6;
+  if(left+pw>innerWidth-8) left=innerWidth-8-pw; if(left<8) left=8; if(top+ph>innerHeight-8) top=r.top-6-ph;
+  pop.style.left=left+'px'; pop.style.top=top+'px'; const first=pop.querySelector('button'); if(first) first.focus();
+}
+const entryOf = id => D.entries.find(e=>e.id===id);
+const participantOf = a => (D.meta.participants||[]).find(p=>p.initial===a)
+  || {initial:a,kind:a==='F'?'person':'agent',name:a==='F'?'the person':a==='H'?'the agent':''};
+/* an entry's author: exact by key; else by initial, but an initial two participants share is ambiguous and stays an unassigned declaration */
+const authorP = e => QlPlural.authorOf(D,e) || (((D.meta.participants||[]).filter(p=>p.initial===e.author).length>1)?{initial:e.author,kind:'agent',name:'',ambiguous:true}:participantOf(e.author));
+const writer = ()=>{ const ps=(D.meta.participants||[]).filter(p=>!p.left&&(p.role||'contributor')==='contributor'); return (ps.find(p=>p.kind==='person')||ps[0]||{}).key; };
+const idx = id => D.entries.findIndex(e=>e.id===id);
+const plain = html => { const t=document.createElement('div'); t.innerHTML=html||''; return t.textContent; };
+const when = iso => iso? new Date(iso).toLocaleString('en-GB',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'}) : '';
+const num = e => 'entry '+(idx(e.id)+1);
+
+/* ---------- pieces ---------- */
+function ini(e){ const p=authorP(e); const verified=e.attribution&&e.attribution.basis==='verified';
+  const choices=(D.meta.participants&&D.meta.participants.length)?D.meta.participants:[participantOf('F'),participantOf('H')];
+  const el=h('button',{class:'ini','data-a':e.author,'data-k':p.kind,'aria-label':(verified?'Attributed author ':'Declared author ')+e.author+(p.name?', '+p.name:'')+(verified?'':', click to change'),title:(verified?'Attributed by the desktop: ':'Declared author: ')+e.author+(p.name?' ('+p.name+')':'')+(verified?' - recorded by the native owner; correct it with a correction entry':' - declared, not authenticated'),onclick:ev=>{ if(verified) return; menu(ev.currentTarget,choices.map(x=>({
+    label:x.initial,current:e.authorKey?e.authorKey===x.key:e.author===x.initial,hint:(x.name||'')+(x.kind==='agent'?' - agent':' - the person'),
+    run:()=>{ e.author=x.initial; if(x.key){ e.authorKey=x.key; e.attribution={basis:'declared'}; } else delete e.authorKey; if(x.kind==='agent'&&!e.touched){ e.touched=true; } touch(); render(); }}))); }},h('span',{text:e.author})); return el; }
+function moreBtn(e,inFlow){ return h('button',{class:'ib sm more','aria-label':'Entry actions','aria-haspopup':'menu',onclick:ev=>menu(ev.currentTarget,entryMenu(e,inFlow),{align:'right'})},svg(ICON.more)); }
+function relationsEl(e){
+  const rs=QlPlural.relationsOf(e); if(!rs.length&&!(e.addressees&&e.addressees.length)&&!e.attribution) return null;
+  const box=h('div',{class:'rels'});
+  rs.forEach(r=>{
+    if(r.type==='reply'){ const one=replyEl({replyTo:{entryId:r.entryId,anchor:r.anchor||null}}); if(one) box.append(one); return; }
+    if(r.type==='source'||r.type==='artifact'){ box.append(h('div',{class:'reply'},QlPlural.describeRelation(D,r))); return; }
+    const t=entryOf(r.entryId);
+    box.append(h('div',{class:'reply'},QlPlural.describeRelation(D,r).replace(/ entry \d+| an entry no longer here/,''),' ',t?h('a',{href:'#e-'+t.id,text:num(t),onclick:ev=>{ if(D.meta.view==='flow'){ ev.preventDefault(); open(t.id); } }}):h('span',{text:'an entry no longer here'})));
+  });
+  const to=(e.addressees||[]).map(k=>(D.meta.participants||[]).find(p=>p.key===k)).filter(Boolean);
+  if(to.length) box.append(h('div',{class:'to'},'To ',to.map((p,i)=>[i?', ':'',h('b',{text:p.name||p.initial})]).flat(),e.intent==='response'||e.intent==='work'?' — a response is asked for':''));
+  const a=e.attribution; if(a&&(a.basis!=='declared'||a.session)) box.append(h('div',{class:'attr '+a.basis,text:a.basis==='verified'?('Recorded by the native owner'+(a.session?' from '+a.session:'')+(a.workcell?' on '+a.workcell:'')):a.basis==='unknown'?'Author not established':a.basis}));
+  return box.children.length?box:null;
+}
+function replyEl(e){
+  if(!e.replyTo) return null;
+  const t=entryOf(e.replyTo.entryId); const changed = !t || (e.replyTo.anchor && !plain(t.html).includes(e.replyTo.anchor));
+  return h('div',{class:'reply'},'Answers ',t?h('a',{href:'#e-'+t.id,text:num(t),onclick:ev=>{ if(D.meta.view==='flow'){ ev.preventDefault(); open(t.id); } }}):h('span',{text:'an entry no longer here'}),
+    e.replyTo.anchor? [' at ',h('q',{text:e.replyTo.anchor})] : null,
+    changed? h('span',{class:'changed',text:t?'target text changed, review':'target missing, review'}) : null);
+}
+function bodyEl(e,ph){
+  return h('div',{class:'body',contenteditable:'true','data-entry':e.id,'data-placeholder':ph,role:'textbox','aria-label':num(e)+' by '+e.author,html:clean(e.html),
+    oninput:ev=>{ e.html=ev.target.innerHTML; if(authorP(e).kind==='agent'&&!e.touched){ e.touched=true; ev.target.closest('.entry,.flow')?.classList.add('touched'); } touch(); }});
+}
+function attachEl(e){
+  const items=D.media.filter(m=>m.entry===e.id); if(!items.length) return null;
+  const w=h('div',{class:'attach'});
+  items.forEach(m=>{ const fig=h('figure',{});
+    if(m.mime.startsWith('image/')) fig.append(h('img',{src:m.data,alt:m.name})); else if(m.mime.startsWith('video/')) fig.append(h('video',{src:m.data,controls:true,playsinline:true})); else fig.append(h('audio',{src:m.data,controls:true}));
+    fig.append(h('figcaption',{contenteditable:'true',html:clean(m.caption||''),oninput:ev=>{ m.caption=ev.target.innerHTML; touch(); }}),
+      h('div',{class:'fm'},h('span',{text:m.name}),h('button',{text:'Remove',onclick:()=>{ D.media=D.media.filter(x=>x!==m); touch(); render(); }})));
+    w.append(fig); });
+  return w;
+}
+function noteEl(n){
+  const t=entryOf(n.entryId); const stale = n.anchor && (!t || !plain(t.html).includes(n.anchor));
+  const a=h('button',{text:n.author||'F',title:'Note author, click to change',onclick:()=>{ n.author=n.author==='H'?'F':'H'; touch(); render(); }});
+  const s=h('button',{text:n.timing||'during',title:'During or after, click to change',onclick:ev=>{ n.timing=n.timing==='after'?'during':'after'; ev.target.textContent=n.timing; touch(); }});
+  const reps=h('div',{class:'replies'});
+  (n.replies||[]).forEach(r=>reps.append(h('div',{class:'r'},h('div',{class:'who'},h('b',{text:r.author}),h('span',{text:when(r.at)})),h('div',{class:'text',contenteditable:'true',html:clean(r.text),oninput:ev=>{ r.text=ev.target.innerHTML; touch(); }}))));
+  if(!(n.replies||[]).length) reps.hidden=true;
+  return h('div',{class:'note','data-a':n.author||'F','data-note':n.id},
+    h('div',{class:'who'},a,s,h('span',{text:n.anchor?'on a passage':'on the whole entry'})),
+    n.anchor?h('q',{class:stale?'stale':'',text:n.anchor}):null,
+    h('div',{class:'text',contenteditable:'true',html:clean(n.text),oninput:ev=>{ n.text=ev.target.innerHTML; touch(); }}),
+    reps,
+    h('div',{class:'acts'},h('button',{text:'Reply',onclick:()=>{ (n.replies ||= []).push({id:uid(),author:'F',at:now(),text:''}); touch(); render(); const el=$('[data-note="'+n.id+'"] .replies .r:last-child .text'); if(el) el.focus(); }}),h('button',{text:'Remove',onclick:()=>{ D.notes=D.notes.filter(x=>x!==n); touch(); render(); }})));
+}
+function marginEl(e){ const m=h('div',{class:'margin'}); D.notes.filter(n=>n.entryId===e.id).forEach(n=>m.append(noteEl(n))); return m; }
+function entryMenu(e,inFlow){
+  const items=[
+    inFlow? {label:'Read as dialogue',run:()=>{ D.meta.view='dialogue'; render(); location.hash='e-'+e.id; }} : {label:'Open as a page',run:()=>open(e.id)},
+    {label:'Answer on a page',run:()=>answer(e.id,null)},
+    isPlural()?{label:'Branch from this entry',hint:'a side inquiry',run:()=>answer(e.id,null,'branch')}:null,
+    isPlural()?{label:'Correct this entry',hint:'keeps what was said',run:()=>answer(e.id,null,'correct')}:null,
+    'sep',
+    {label:'Note on this entry',run:()=>{ const n={id:uid(),entryId:e.id,anchor:null,author:'F',timing:'during',text:'',at:now(),replies:[]}; D.notes.push(n); touch(); render(); const el=$('[data-note="'+n.id+'"] .text'); if(el) el.focus(); }},
+    {label:'Whole entry to packet',run:()=>{ D.packet.push({id:uid(),entryId:e.id,scope:'whole entry',label:num(e)+' ('+e.author+')',text:plain(e.html),at:now()}); touch(); syncPk(); }},
+    {label:'Attach media',run:()=>openMedia(e.id)}];
+  if(D.entries.length>1) items.push('sep',{label:'Remove entry',cls:'danger',run:()=>{ if(plain(e.html).trim()&&!confirm('Remove '+num(e)+' and its notes? This cannot be undone in the open page.')) return; D.entries=D.entries.filter(x=>x!==e); D.notes=D.notes.filter(n=>n.entryId!==e.id); if(D.meta.current===e.id) D.meta.current=D.entries[0]?D.entries[0].id:null; touch(); render(); }});
+  return items.filter(Boolean);
+}
+function syncPk(){ $$('.pk .n').forEach(n=>{ n.textContent=String(D.packet.length); n.hidden=!D.packet.length; }); }
+function betweenEl(e){ return h('div',{class:'between'},h('button',{class:'ib sm','aria-label':'Write between entries','aria-haspopup':'menu',onclick:ev=>menu(ev.currentTarget,[
+  {label:'Write here',hint:'as F',run:()=>{ const n=insertAfter(e.id,'F'); render(); $('[data-entry="'+n.id+'"]').focus(); }},
+  {label:'Record an agent return',hint:'written by you, declared for the agent',run:()=>{ const agent=(D.meta.participants||[]).find(p=>p.kind==='agent')||participantOf('H'); const n=insertAfter(e.id,agent.initial); render(); $('[data-entry="'+n.id+'"]').focus(); }}])},svg(ICON.plus))); }
+function fresh(authorInitial,opts){
+  if(isPlural()){ const p=(D.meta.participants||[]).find(x=>x.initial===authorInitial&&!x.left)||(D.meta.participants||[]).find(x=>x.key===writer()); return QlPlural.draftEntry(D,p.key,now(),uid(),opts); }
+  const rel=opts&&opts.relations&&opts.relations.find(r=>r.type==='reply');
+  return {id:uid(),author:authorInitial,at:now(),html:'',replyTo:rel?{entryId:rel.entryId,anchor:rel.anchor||null}:null,touched:false};
+}
+function insertAfter(id,author){
+  const e=fresh(author); D.entries.splice(idx(id)+1,0,e); touch(); return e;
+}
+function answer(targetId,anchor,type){
+  const t=entryOf(targetId); const e=fresh('F',{relations:[{type:type||'reply',entryId:targetId,revision:D.meta.revision,anchor:anchor||null}]});
+  D.entries.splice(idx(targetId)+1,0,e); touch(); open(e.id);
+}
+function open(id){ D.meta.current=id; D.meta.view='flow'; render(); window.scrollTo(0,0); const b=$('.flow .page .body'); if(b) b.focus(); }
+
+/* ---------- render ---------- */
+function render(){
+  const y=window.scrollY; app.innerHTML=''; const m=D.meta;
+  const mast=h('header',{class:'mast'},
+    h('div',{class:'title',contenteditable:'true','data-placeholder':'Untitled exchange','aria-label':'Title',html:clean(m.title||''),oninput:ev=>{ m.title=ev.target.innerHTML; touch(); }}),
+    h('div',{class:'views'},
+      h('button',{'aria-pressed':String(m.view==='flow'),text:'Flow',onclick:()=>{ m.view='flow'; render(); }}),
+      h('button',{'aria-pressed':String(m.view==='dialogue'),text:'Dialogue',onclick:()=>{ m.view='dialogue'; render(); }}),
+      h('button',{'aria-pressed':String(m.view==='journal'),text:'Journal',onclick:()=>{ m.view='journal'; render(); }}),
+      h('i',{text:m.view==='flow'?'one entry as a full page':m.view==='journal'?'one person, one page at a time':'the same entries, read as a conversation'})),
+    h('div',{class:'acts'},h('button',{class:'ib pk','aria-label':'Document menu','aria-haspopup':'menu',onclick:ev=>menu(ev.currentTarget,[
+      {label:'Save complete copy',hint:'Ctrl/Cmd+S · yours, with journal and notes',run:()=>exportCopy()},
+      {label:'Save a copy to share',hint:'without journal, notes, packet or private entries',run:()=>exportCopy(true)},
+      {label:'Add media',run:()=>openMedia()},
+      {label:'Context packet',hint:String(D.packet.length),run:openPacket},
+      isPlural()?{label:'Participants',hint:String((D.meta.participants||[]).filter(p=>!p.left).length),run:openPeople}:{label:'Upgrade to the plural form',hint:'keeps every entry',run:upgradeNow},
+      'sep',
+      {small:D.entries.length+' entr'+(D.entries.length===1?'y':'ies')+', '+D.notes.length+' note'+(D.notes.length===1?'':'s')+', '+D.journal.length+' journal page'+(D.journal.length===1?'':'s')},
+      {small:'revision '+D.meta.revision},
+      {small:'document '+D.meta.documentId.slice(0,8)+', created '+(D.meta.created||'').slice(0,10)}],{align:'right'})},svg(ICON.more),h('span',{class:'n',hidden:!D.packet.length,text:String(D.packet.length)}))));
+  app.append(mast);
+  if(!isPlural()) app.append(h('div',{class:'legacy',role:'note'},'This is an earlier form of the flow. It reads and writes as before; choose ',h('b',{text:'Upgrade to the plural form'}),' in the document menu to add participants and relations. Every entry is kept.'));
+  if(m.view==='flow') renderFlow(); else if(m.view==='journal') renderJournal(); else renderDialogue();
+  app.hidden=false; window.scrollTo(0,y);
+}
+function renderDialogue(){
+  const list=h('div',{class:'dlg'});
+  D.entries.forEach(e=>{
+    const el=h('article',{class:'entry'+(e.touched?' touched':''),'data-a':e.author,'data-k':authorP(e).kind,id:'e-'+e.id},
+      h('div',{class:'lead'},ini(e),h('div',{class:'meta'},h('div',{text:num(e)}),h('div',{text:when(e.at)}))),
+      h('div',{class:'bodycol'},relationsEl(e),h('div',{class:'bodywrap'},bodyEl(e,authorP(e).kind==='person'?'Begin here. An empty entry is allowed.':'Recorded for '+(authorP(e).name||'the agent')+(e.attribution&&e.attribution.basis==='verified'?'; attributed by the native owner.':'; declared, not authenticated.')),moreBtn(e,false)),attachEl(e)),
+      marginEl(e),
+      betweenEl(e));
+    list.append(el);
+  });
+  app.append(list);
+}
+function journalEntry(){ let j=D.journal.find(x=>x.id===D.meta.journalCurrent); if(!j){ if(!D.journal.length){ j={id:uid(),at:now(),html:''}; D.journal.push(j); } else j=D.journal[D.journal.length-1]; D.meta.journalCurrent=j.id; } return j; }
+function renderJournal(){
+  const j=journalEntry(); const i=D.journal.indexOf(j);
+  const dayOf=iso=>new Date(iso).toLocaleDateString('en-GB',{weekday:'long',day:'numeric',month:'long'});
+  const sec=h('section',{class:'journal'},
+    h('div',{class:'when'},h('b',{text:dayOf(j.at)}),h('span',{text:new Date(j.at).toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'})}),
+      h('button',{class:'ib sm more','aria-label':'Journal page actions','aria-haspopup':'menu',onclick:ev=>menu(ev.currentTarget,[
+        {label:'New page',run:()=>{ const n={id:uid(),at:now(),html:''}; D.journal.push(n); D.meta.journalCurrent=n.id; touch(); render(); $('.journal .body').focus(); }},
+        {label:'Bring this page into the dialogue',hint:'as an F entry',run:()=>{ D.entries.push(Object.assign(fresh('F'),{html:j.html,fromJournal:j.id})); touch(); D.meta.view='dialogue'; render(); }},
+        {label:'Whole page to packet',run:()=>{ D.packet.push({id:uid(),entryId:j.id,scope:'journal page',label:'journal, '+dayOf(j.at),text:plain(j.html),at:now()}); touch(); syncPk(); }},
+        'sep',
+        {label:'Remove page',cls:'danger',run:()=>{ if(plain(j.html).trim()&&!confirm('Remove this journal page? This cannot be undone in the open page.')) return; D.journal=D.journal.filter(x=>x!==j); D.meta.journalCurrent=null; touch(); render(); }}],{align:'right'})},svg(ICON.more))),
+    h('div',{class:'page'},h('div',{class:'body',contenteditable:'true','data-journal':j.id,'data-placeholder':'Write. One person, one page. It stays yours unless you bring it into the dialogue.',role:'textbox','aria-label':'Journal page',html:clean(j.html),oninput:ev=>{ j.html=ev.target.innerHTML; touch(); }})),
+    h('div',{class:'earlier'},
+      D.journal.map((x,k)=>h('button',{'aria-current':x===j?'true':null,text:(k+1)+', '+dayOf(x.at)+(plain(x.html).trim()?'':' (blank)'),onclick:()=>{ D.meta.journalCurrent=x.id; render(); }})),
+      h('button',{class:'new',text:'new page',onclick:()=>{ const n={id:uid(),at:now(),html:''}; D.journal.push(n); D.meta.journalCurrent=n.id; touch(); render(); $('.journal .body').focus(); }})));
+  app.append(sec);
+}
+function renderFlow(){
+  const e=entryOf(D.meta.current)||D.entries[0];
+  if(!e){ app.append(h('section',{class:'flow'},
+    h('div',{class:'page',style:'text-align:center;padding:18vh 0'},
+      h('p',{style:'font-style:italic;color:var(--faint)',text:'The flow is open. Nothing has been written yet.'}),
+      h('button',{class:'btn',text:'Write the first entry',onclick:()=>{ const n=fresh('F'); D.entries.push(n); D.meta.current=n.id; touch(); render(); const b=$('.flow .page .body'); if(b) b.focus(); }}))));
+    return; }
+  const i=idx(e.id);
+  const f=h('section',{class:'flow'+(e.touched?' touched':'')},
+    h('div',{class:'head'},ini(e),h('div',{class:'meta'},h('span',{text:num(e)+' of '+D.entries.length}),h('span',{text:when(e.at)})),moreBtn(e,true)),
+    relationsEl(e),
+    h('div',{class:'page'},bodyEl(e,authorP(e).kind==='person'?'Write. The page is yours; it need not become anything.':'Recorded for '+(authorP(e).name||'the agent')+(e.attribution&&e.attribution.basis==='verified'?'; attributed by the native owner.':'; declared, not authenticated.'))),
+    marginEl(e),
+    attachEl(e),
+    h('div',{class:'nav'},
+      h('button',{disabled:i<=0,text:i>0?'← '+num(D.entries[i-1])+' ('+D.entries[i-1].author+')':'← start',onclick:()=>open(D.entries[i-1].id)}),
+      i<D.entries.length-1? h('button',{text:num(D.entries[i+1])+' ('+D.entries[i+1].author+') →',onclick:()=>open(D.entries[i+1].id)}) : h('button',{class:'new',text:'new entry after this →',onclick:()=>{ const n=insertAfter(e.id,'F'); open(n.id); }})));
+  app.append(f);
+}
+
+/* paste: clean, never active */
+app.addEventListener('paste',ev=>{ const t=ev.target.closest&&ev.target.closest('[contenteditable]'); if(!t) return; ev.preventDefault();
+  const html=ev.clipboardData.getData('text/html'), text=ev.clipboardData.getData('text/plain');
+  document.execCommand('insertHTML',false, html? clean(html) : esc(text).replace(/\n/g,'<br>')); });
+
+/* ---------- selection: highlight, note, packet, answer ---------- */
+const tool=h('div',{class:'seltool',hidden:true},h('button',{text:'Highlight',onclick:()=>act('hl')}),h('button',{text:'Note',onclick:()=>act('note')}),h('button',{text:'To packet',onclick:()=>act('packet')}),h('button',{text:'Answer this',onclick:()=>act('answer')}));
+tool.addEventListener('mousedown',ev=>ev.preventDefault()); document.body.append(tool);
+function currentSel(){
+  const s=window.getSelection(); if(!s||!s.rangeCount||s.isCollapsed) return null; const r=s.getRangeAt(0);
+  const a=r.commonAncestorContainer.nodeType===1?r.commonAncestorContainer:r.commonAncestorContainer.parentNode; const f=a.closest('.body[data-entry]'); if(!f) return null;
+  if(!f.contains(r.startContainer)||!f.contains(r.endContainer)) return null; return {r,f,text:s.toString().trim()};
+}
+function placeTool(){ const c=currentSel(); if(!c||!c.text){ tool.hidden=true; return; } const b=c.r.getBoundingClientRect(); tool.hidden=false; tool.style.left=(b.left+b.width/2+window.scrollX)+'px'; tool.style.top=(b.top+window.scrollY)+'px'; }
+document.addEventListener('selectionchange',()=>{ clearTimeout(placeTool._t); placeTool._t=setTimeout(placeTool,120); });
+function act(kind){
+  const c=currentSel(); if(!c) return; const e=entryOf(c.f.dataset.entry); const anchor=c.text.slice(0,240);
+  if(kind==='hl'){ const mark=document.createElement('mark'); try{ c.r.surroundContents(mark); }catch(err){ mark.append(c.r.extractContents()); c.r.insertNode(mark); } e.html=c.f.innerHTML; if(e.author==='H') e.touched=true; touch(); }
+  else if(kind==='note'){ const n={id:uid(),entryId:e.id,anchor,author:'F',timing:'during',text:'',at:now(),replies:[]}; D.notes.push(n); touch(); render(); const el=$('[data-note="'+n.id+'"] .text'); if(el) el.focus(); }
+  else if(kind==='packet'){ D.packet.push({id:uid(),entryId:e.id,scope:'selection',label:num(e)+' ('+e.author+')',text:c.text,at:now()}); touch(); syncPk(); }
+  else if(kind==='answer'){ answer(e.id,anchor); }
+  window.getSelection().removeAllRanges(); tool.hidden=true;
+}
+
+/* ---------- media ---------- */
+const LIMIT=12*1024*1024;
+function openMedia(entryId){ const s=$('#media-entry'); s.innerHTML=''; D.entries.forEach(e=>s.append(h('option',{value:e.id,text:num(e)+' ('+e.author+')'+(plain(e.html).trim()?': '+plain(e.html).trim().slice(0,40):'')}))); s.value=entryId||D.meta.current; $('#media-msg').textContent=''; $('#dlg-media').showModal(); }
+$('#media-file').addEventListener('change',ev=>{
+  const msg=$('#media-msg'); const file=ev.target.files[0]; if(!file) return;
+  if(file.size>LIMIT){ msg.className='msg err'; msg.textContent='That file is '+(file.size/1048576).toFixed(1)+' MB. The limit is 12 MB per file.'; ev.target.value=''; return; }
+  if(!/^(image|video|audio)\//.test(file.type)){ msg.className='msg err'; msg.textContent='Only image, video and audio files can be embedded.'; ev.target.value=''; return; }
+  const rd=new FileReader(); rd.onload=()=>{ D.media.push({id:uid(),entry:$('#media-entry').value,name:file.name,mime:file.type,data:rd.result,caption:''}); touch(); render(); $('#dlg-media').close(); ev.target.value=''; }; rd.readAsDataURL(file);
+});
+
+/* ---------- packet ---------- */
+function openPacket(){ const ul=$('#packet-list'); ul.innerHTML='';
+  D.packet.forEach(p=>ul.append(h('li',{},h('button',{text:'×','aria-label':'Remove',onclick:()=>{ D.packet=D.packet.filter(x=>x!==p); touch(); openPacket(); syncPk(); }}),h('small',{text:p.label+', '+p.scope+', '+p.at.slice(0,16).replace('T',' ')}),p.text)));
+  $('#packet-msg').textContent=''; $('#dlg-packet').showModal(); }
+$('#packet-copy').addEventListener('click',()=>{ const out={documentId:D.meta.documentId,revision:D.meta.revision,scope:'explicit selection',items:D.packet.map(p=>({entryId:p.entryId,scope:p.scope,text:p.text,at:p.at}))};
+  navigator.clipboard.writeText(JSON.stringify(out,null,2)).then(()=>{ $('#packet-msg').textContent='Copied '+D.packet.length+' item'+(D.packet.length===1?'':'s')+' as JSON.'; }); });
+$('#packet-clear').addEventListener('click',()=>{ D.packet=[]; touch(); openPacket(); syncPk(); });
+
+/* ---------- participants ---------- */
+function upgradeNow(){ D=QlPlural.upgradeDocument(D,now()); D.meta.participants=D.meta.participants||QlPlural.defaultParticipants(D.meta.documentId); touch(); render(); }
+function openPeople(){ const ul=$('#people-list'); ul.innerHTML='';
+  (D.meta.participants||[]).forEach(p=>ul.append(h('li',{},h('b',{text:p.name||p.initial}),h('small',{text:p.initial+' - '+(p.kind==='agent'?'agent':'person')+(p.role==='observer'?' - observer':'')+(p.left?' - left':'')+(p.binding&&p.binding.basis==='verified'?' - attributed':'')}),
+    p.left?null:h('button',{text:'Mark as left',onclick:()=>{ D=QlPlural.leaveParticipant(D,p.key,now()); touch(); openPeople(); render(); }}))));
+  $('#people-msg').textContent=''; $('#dlg-people').showModal(); }
+$('#people-add').addEventListener('click',()=>{
+  const name=$('#people-name').value.trim(), ini=($('#people-initial').value||name[0]||'').toUpperCase().slice(0,1), msg=$('#people-msg');
+  if(!name||!ini){ msg.className='msg err'; msg.textContent='A name and an initial are needed.'; return; }
+  D=QlPlural.addParticipant(D,{initial:ini,name,kind:$('#people-kind').value,binding:{owner:'document',ref:'',basis:'unknown'}},now());
+  $('#people-name').value=''; $('#people-initial').value=''; touch(); openPeople(); render(); });
+
+/* ---------- export ---------- */
+function snapshot(d){
+  let out='<div class="snap"><h1>'+(clean(d.meta.title)||'Untitled exchange')+'</h1>';
+  d.entries.forEach((e,i)=>{ out+='<h2>Entry '+(i+1)+', '+esc(e.author)+', '+esc(e.at)+'</h2>'+QlPlural.relationsOf(e).filter(r=>r.entryId).map(r=>'<p><i>'+esc(QlPlural.describeRelation(d,r))+(r.anchor?' at “'+esc(r.anchor)+'”':'')+'</i></p>').join('')+(clean(e.html)||'<p>—</p>');
+    d.notes.filter(n=>n.entryId===e.id).forEach(n=>{ out+='<p><b>Note ('+esc(n.author)+', '+esc(n.timing)+')</b>'+(n.anchor?' on “'+esc(n.anchor)+'”':'')+': '+clean(n.text)+(n.replies||[]).map(r=>'<br>↳ '+esc(r.author)+': '+clean(r.text)).join('')+'</p>'; });
+    d.media.filter(m=>m.entry===e.id&&m.mime.startsWith('image/')).forEach(m=>{ out+='<p><img src="'+m.data+'" alt="'+esc(m.name)+'" style="max-width:100%">'+(m.caption?'<br>'+clean(m.caption):'')+'</p>'; }); });
+  (d.journal||[]).forEach((j,i)=>{ out+='<h2>Journal page '+(i+1)+', '+esc(j.at)+'</h2>'+(clean(j.html)||'<p>—</p>'); });
+  return out+'</div>';
+}
+function exportCopy(shared){
+  clearTimeout(revTimer); let d=JSON.parse(JSON.stringify(D)); if(shared===true) d=QlPlural.portableCopy(d);
+  d.meta.title=clean(d.meta.title||''); d.entries.forEach(e=>e.html=clean(e.html)); (d.journal||[]).forEach(j=>j.html=clean(j.html)); d.notes.forEach(n=>{ n.text=clean(n.text); (n.replies||[]).forEach(r=>r.text=clean(r.text)); }); d.media.forEach(m=>m.caption=clean(m.caption||''));
+  d.meta.exported=now();
+  const json=JSON.stringify(d).replace(/<\/script/gi,'<\\/script').replace(/<!--/g,'<\\u0021--');
+  const html=SHELL.replace(/<script type="application\/json" id="ql-doc">[\s\S]*?<\/script>/,()=>'<script type="application/json" id="ql-doc">'+json+'</script>')
+    .replace(/<noscript id="snapshot">[\s\S]*?<\/noscript>/,()=>'<noscript id="snapshot">'+snapshot(d)+'</noscript>')
+    .replace(/<title>[\s\S]*?<\/title>/,'<title>'+esc(plain(d.meta.title)||'Dialogue')+'</title>');
+  const blob=new Blob([html],{type:'text/html'}); const a=h('a',{href:URL.createObjectURL(blob),download:(plain(d.meta.title).trim().replace(/[^\w]+/g,'-').toLowerCase()||'dialogue')+(shared===true?'-shared':'')+'.html'}); document.body.append(a); a.click(); a.remove(); setTimeout(()=>URL.revokeObjectURL(a.href),4000); dirty=false;
+}
+document.addEventListener('keydown',ev=>{ if((ev.metaKey||ev.ctrlKey)&&ev.key.toLowerCase()==='s'){ ev.preventDefault(); exportCopy(); } });
+window.addEventListener('beforeunload',ev=>{ if(dirty){ ev.preventDefault(); ev.returnValue=''; } });
+$$('dialog').forEach(d=>d.addEventListener('click',ev=>{ if(ev.target===d) d.close(); }));
+render();
+})();
+
+</script>
+</body>
+</html>
