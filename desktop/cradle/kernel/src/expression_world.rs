@@ -1298,7 +1298,8 @@ pub struct WorldState {
 
 impl WorldState {
     pub(crate) fn surface_closed(&mut self, surface_id: &str) {
-        self.portals.retain(|_, portal| portal.surface_id != surface_id);
+        self.portals
+            .retain(|_, portal| portal.surface_id != surface_id);
     }
 
     /// Attach the durable act store and load its acts. Unreadable records

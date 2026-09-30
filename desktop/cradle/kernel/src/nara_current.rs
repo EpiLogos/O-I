@@ -3,7 +3,7 @@
 //! only after comparing the captured source, document and adopted profile.
 use crate::{flow::CentralClient, nara_dialogue, nara_identity};
 use serde::{Deserialize, Serialize};
-use serde_json::{Value, json};
+use serde_json::{json, Value};
 use sha2::{Digest, Sha256};
 
 #[derive(Clone, Debug, Deserialize, Serialize, PartialEq)]

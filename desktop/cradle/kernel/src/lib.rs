@@ -66,21 +66,21 @@ pub mod history;
 pub mod inhabitation;
 pub mod knowledge;
 pub mod knowledge_prepared;
+pub mod m3_reception;
 pub mod material;
 pub mod nara_coordinate;
+pub mod nara_current;
 pub mod nara_dialogue;
-pub mod nara_world_readiness;
 pub mod nara_epii;
 pub mod nara_expressive_act;
-pub mod nara_current;
-pub mod m3_reception;
-pub mod nara_presence;
 pub mod nara_identity;
+pub mod nara_presence;
 pub mod nara_voice;
 mod nara_voice_actor;
 mod nara_voice_answer;
 mod nara_voice_constitution;
 mod nara_voice_transport;
+pub mod nara_world_readiness;
 pub mod native_expression;
 pub mod owner_read;
 pub mod presentation;
@@ -1340,120 +1340,318 @@ impl Kernel {
         }
     }
 
-    fn nara_context_key(project:&str,binding:&nara_dialogue::Request)->Result<String,String> {
-        let mut nara=binding.clone(); nara.role=nara_dialogue::Role::Nara;
-        let native=nara_dialogue::Binding::new(project,&nara)?;
-        serde_json::to_string(&(native.agent_session,&binding.expression_ref)).map_err(|e|e.to_string())
+    fn nara_context_key(project: &str, binding: &nara_dialogue::Request) -> Result<String, String> {
+        let mut nara = binding.clone();
+        nara.role = nara_dialogue::Role::Nara;
+        let native = nara_dialogue::Binding::new(project, &nara)?;
+        serde_json::to_string(&(native.agent_session, &binding.expression_ref))
+            .map_err(|e| e.to_string())
     }
 
-    fn nara_context_state(&self,project:&str,binding:&nara_dialogue::Request,document:&serde_json::Value,
-        profile:&nara_dialogue::ProfileBasis)->Result<nara_dialogue::ContextState,String> {
-        Ok(self.nara_context_state_at(&Self::nara_context_key(project,binding)?,binding,document,profile))
+    fn nara_context_state(
+        &self,
+        project: &str,
+        binding: &nara_dialogue::Request,
+        document: &serde_json::Value,
+        profile: &nara_dialogue::ProfileBasis,
+    ) -> Result<nara_dialogue::ContextState, String> {
+        Ok(self.nara_context_state_at(
+            &Self::nara_context_key(project, binding)?,
+            binding,
+            document,
+            profile,
+        ))
     }
-    fn nara_context_state_at(&self,key:&str,binding:&nara_dialogue::Request,document:&serde_json::Value,
-        profile:&nara_dialogue::ProfileBasis)->nara_dialogue::ContextState {
-        let mut state=nara_dialogue::ContextState::default();
-        if let Some(entry)=self.nara_contexts.get(key) {
-            state.expressive_act=entry.checkpoint.as_ref().and_then(|c|c.context_state(binding,document,profile)).unwrap_or_default();
-            if let Some(pin)=entry.personal_current.as_ref().filter(|p|p.current(binding,profile)) {
-                state.personal_current=pin.context(); state.personal_current_reading=pin.reading();
+    fn nara_context_state_at(
+        &self,
+        key: &str,
+        binding: &nara_dialogue::Request,
+        document: &serde_json::Value,
+        profile: &nara_dialogue::ProfileBasis,
+    ) -> nara_dialogue::ContextState {
+        let mut state = nara_dialogue::ContextState::default();
+        if let Some(entry) = self.nara_contexts.get(key) {
+            state.expressive_act = entry
+                .checkpoint
+                .as_ref()
+                .and_then(|c| c.context_state(binding, document, profile))
+                .unwrap_or_default();
+            if let Some(pin) = entry
+                .personal_current
+                .as_ref()
+                .filter(|p| p.current(binding, profile))
+            {
+                state.personal_current = pin.context();
+                state.personal_current_reading = pin.reading();
             }
         }
         state
     }
 
-    pub fn prepare_nara_presence(&mut self,op:&KernelOp)->Result<Option<nara_presence::Prepared>,String> {
-        let KernelOp::NaraPresence{project,request}=op else{return Ok(None)};
-        let binding=&request.binding;
-        let document=self.expressions.apply(&self.client,expression::Request::Inspect{expression_ref:binding.expression_ref.clone()})?.0["document"].clone();
-        let profile=self.nara_expression_profile(&document)?;
-        let cwd=self.agent_location((!project.is_empty()).then_some(project.as_str()))?;
-        let project_ref=self.agent_project_ref(project,&cwd)?;
-        Ok(Some(nara_presence::Prepared::new(self.client.clone(),self.agency.clone(),cwd,project_ref,request.clone(),document,profile)))
+    pub fn prepare_nara_presence(
+        &mut self,
+        op: &KernelOp,
+    ) -> Result<Option<nara_presence::Prepared>, String> {
+        let KernelOp::NaraPresence { project, request } = op else {
+            return Ok(None);
+        };
+        let binding = &request.binding;
+        let document = self
+            .expressions
+            .apply(
+                &self.client,
+                expression::Request::Inspect {
+                    expression_ref: binding.expression_ref.clone(),
+                },
+            )?
+            .0["document"]
+            .clone();
+        let profile = self.nara_expression_profile(&document)?;
+        let cwd = self.agent_location((!project.is_empty()).then_some(project.as_str()))?;
+        let project_ref = self.agent_project_ref(project, &cwd)?;
+        Ok(Some(nara_presence::Prepared::new(
+            self.client.clone(),
+            self.agency.clone(),
+            cwd,
+            project_ref,
+            request.clone(),
+            document,
+            profile,
+        )))
     }
-    pub fn finish_nara_presence(&mut self,completed:nara_presence::Completed)->Result<KernelOpOutcome,String> {
-        let binding=&completed.request.binding;
-        let document=self.expressions.apply(&self.client,expression::Request::Inspect{expression_ref:binding.expression_ref.clone()})?.0["document"].clone();
-        if document!=completed.document||self.nara_expression_profile(&document)?!=completed.profile {
-            return Err("The Expression or adopted profile changed during presence admission".into())
+    pub fn finish_nara_presence(
+        &mut self,
+        completed: nara_presence::Completed,
+    ) -> Result<KernelOpOutcome, String> {
+        let binding = &completed.request.binding;
+        let document = self
+            .expressions
+            .apply(
+                &self.client,
+                expression::Request::Inspect {
+                    expression_ref: binding.expression_ref.clone(),
+                },
+            )?
+            .0["document"]
+            .clone();
+        if document != completed.document
+            || self.nara_expression_profile(&document)? != completed.profile
+        {
+            return Err(
+                "The Expression or adopted profile changed during presence admission".into(),
+            );
         }
-        let(source,identity)=nara_identity::read(&self.client,&binding.source_ref)?;
-        if source.revision.revision!=binding.expected_revision||identity["person_ref"]!=binding.person_ref||identity["nara_ref"]!=binding.nara_ref {
-            return Err("The saved identity changed during presence admission".into())
+        let (source, identity) = nara_identity::read(&self.client, &binding.source_ref)?;
+        if source.revision.revision != binding.expected_revision
+            || identity["person_ref"] != binding.person_ref
+            || identity["nara_ref"] != binding.nara_ref
+        {
+            return Err("The saved identity changed during presence admission".into());
         }
         // Serialize publication with native Expression changes. No renderer
         // bundle or captured personal reading is accepted at this commit seam.
-        let mut data=shared_field::call(&completed.transport_request()).map_err(|e|e.detail())?;
-        data["consent_reading"]=completed.consent_reading;
-        Ok(KernelOpOutcome{receipts:vec![],result:KernelOpResult::NaraPresence{data}})
+        let mut data =
+            shared_field::call(&completed.transport_request()).map_err(|e| e.detail())?;
+        data["consent_reading"] = completed.consent_reading;
+        Ok(KernelOpOutcome {
+            receipts: vec![],
+            result: KernelOpResult::NaraPresence { data },
+        })
     }
 
-    pub fn prepare_m3_reception(&mut self,op:&KernelOp)->Result<Option<m3_reception::Prepared>,String> {
-        let KernelOp::M3Reception{project,request}=op else{return Ok(None)};
-        let binding=request.binding();
-        let document=self.expressions.apply(&self.client,expression::Request::Inspect{expression_ref:binding.expression_ref.clone()})?.0["document"].clone();
-        let profile=self.nara_expression_profile(&document)?;
-        let cwd=self.agent_location((!project.is_empty()).then_some(project.as_str()))?;
-        let project_ref=self.agent_project_ref(project,&cwd)?;
-        let entry=self.nara_contexts.get(&Self::nara_context_key(&project_ref,binding)?);
-        Ok(Some(m3_reception::Prepared::new(self.client.clone(),project_ref,request.clone(),document,profile,
-            entry.and_then(|e|e.personal_current.clone()),entry.and_then(|e|e.m3.clone()))))
+    pub fn prepare_m3_reception(
+        &mut self,
+        op: &KernelOp,
+    ) -> Result<Option<m3_reception::Prepared>, String> {
+        let KernelOp::M3Reception { project, request } = op else {
+            return Ok(None);
+        };
+        let binding = request.binding();
+        let document = self
+            .expressions
+            .apply(
+                &self.client,
+                expression::Request::Inspect {
+                    expression_ref: binding.expression_ref.clone(),
+                },
+            )?
+            .0["document"]
+            .clone();
+        let profile = self.nara_expression_profile(&document)?;
+        let cwd = self.agent_location((!project.is_empty()).then_some(project.as_str()))?;
+        let project_ref = self.agent_project_ref(project, &cwd)?;
+        let entry = self
+            .nara_contexts
+            .get(&Self::nara_context_key(&project_ref, binding)?);
+        Ok(Some(m3_reception::Prepared::new(
+            self.client.clone(),
+            project_ref,
+            request.clone(),
+            document,
+            profile,
+            entry.and_then(|e| e.personal_current.clone()),
+            entry.and_then(|e| e.m3.clone()),
+        )))
     }
-    pub fn finish_m3_reception(&mut self,completed:m3_reception::Completed)->Result<KernelOpOutcome,String> {
-        let binding=&completed.binding;
-        let document=self.expressions.apply(&self.client,expression::Request::Inspect{expression_ref:binding.expression_ref.clone()})?.0["document"].clone();
-        if document!=completed.document||self.nara_expression_profile(&document)?!=completed.profile{return Err("The Expression or profile changed during M3 reception".into())}
-        let(source,identity)=nara_identity::read(&self.client,&binding.source_ref)?;
-        if source.revision.revision!=binding.expected_revision||identity["person_ref"]!=binding.person_ref||identity["nara_ref"]!=binding.nara_ref{return Err("The saved identity changed during M3 reception".into())}
-        let key=serde_json::to_string(&(&completed.agent_session_ref,&binding.expression_ref)).map_err(|e|e.to_string())?;
-        let entry=self.nara_contexts.get(&key);
-        let current=entry.and_then(|e|e.personal_current.as_ref()).filter(|p|p.current(binding,&completed.profile)).map(|p|p.context()).unwrap_or_default();
-        if current!=completed.current_context||entry.and_then(|e|e.m3.as_ref()).map(|r|r.revision().to_owned())!=completed.expected_revision{return Err("The native event or M3 generation changed during reception".into())}
-        if let Some(candidate)=completed.candidate {
-            if self.nara_contexts.len()>=64&&!self.nara_contexts.contains_key(&key){return Err("This native host has reached its Nara context bound".into())}
-            if let Some(current)=completed.current_candidate {
-                self.nara_voice.invalidate_expression(&binding.expression_ref);
-                self.nara_contexts.entry(key.clone()).or_default().personal_current=Some(current);
+    pub fn finish_m3_reception(
+        &mut self,
+        completed: m3_reception::Completed,
+    ) -> Result<KernelOpOutcome, String> {
+        let binding = &completed.binding;
+        let document = self
+            .expressions
+            .apply(
+                &self.client,
+                expression::Request::Inspect {
+                    expression_ref: binding.expression_ref.clone(),
+                },
+            )?
+            .0["document"]
+            .clone();
+        if document != completed.document
+            || self.nara_expression_profile(&document)? != completed.profile
+        {
+            return Err("The Expression or profile changed during M3 reception".into());
+        }
+        let (source, identity) = nara_identity::read(&self.client, &binding.source_ref)?;
+        if source.revision.revision != binding.expected_revision
+            || identity["person_ref"] != binding.person_ref
+            || identity["nara_ref"] != binding.nara_ref
+        {
+            return Err("The saved identity changed during M3 reception".into());
+        }
+        let key = serde_json::to_string(&(&completed.agent_session_ref, &binding.expression_ref))
+            .map_err(|e| e.to_string())?;
+        let entry = self.nara_contexts.get(&key);
+        let current = entry
+            .and_then(|e| e.personal_current.as_ref())
+            .filter(|p| p.current(binding, &completed.profile))
+            .map(|p| p.context())
+            .unwrap_or_default();
+        if current != completed.current_context
+            || entry
+                .and_then(|e| e.m3.as_ref())
+                .map(|r| r.revision().to_owned())
+                != completed.expected_revision
+        {
+            return Err("The native event or M3 generation changed during reception".into());
+        }
+        if let Some(candidate) = completed.candidate {
+            if self.nara_contexts.len() >= 64 && !self.nara_contexts.contains_key(&key) {
+                return Err("This native host has reached its Nara context bound".into());
             }
-            self.nara_contexts.entry(key).or_default().m3=Some(candidate);
+            if let Some(current) = completed.current_candidate {
+                self.nara_voice
+                    .invalidate_expression(&binding.expression_ref);
+                self.nara_contexts
+                    .entry(key.clone())
+                    .or_default()
+                    .personal_current = Some(current);
+            }
+            self.nara_contexts.entry(key).or_default().m3 = Some(candidate);
         }
-        Ok(KernelOpOutcome{receipts:vec![],result:KernelOpResult::M3Reception{data:completed.data}})
+        Ok(KernelOpOutcome {
+            receipts: vec![],
+            result: KernelOpResult::M3Reception {
+                data: completed.data,
+            },
+        })
     }
 
-    pub fn prepare_nara_current(&mut self,op:&KernelOp)->Result<Option<nara_current::Prepared>,String> {
-        let KernelOp::NaraCurrent{project,request}=op else {return Ok(None)};
-        let binding=request.binding();
-        let document=self.expressions.apply(&self.client,expression::Request::Inspect{expression_ref:binding.expression_ref.clone()})?.0["document"].clone();
-        let profile=self.nara_expression_profile(&document)?;
-        let cwd=self.agent_location((!project.is_empty()).then_some(project.as_str()))?;
-        let project_ref=self.agent_project_ref(project,&cwd)?;
-        let existing=self.nara_contexts.get(&Self::nara_context_key(&project_ref,binding)?).and_then(|e|e.personal_current.clone());
-        Ok(Some(nara_current::Prepared::new(self.client.clone(),project_ref,request.clone(),document,profile,existing)))
+    pub fn prepare_nara_current(
+        &mut self,
+        op: &KernelOp,
+    ) -> Result<Option<nara_current::Prepared>, String> {
+        let KernelOp::NaraCurrent { project, request } = op else {
+            return Ok(None);
+        };
+        let binding = request.binding();
+        let document = self
+            .expressions
+            .apply(
+                &self.client,
+                expression::Request::Inspect {
+                    expression_ref: binding.expression_ref.clone(),
+                },
+            )?
+            .0["document"]
+            .clone();
+        let profile = self.nara_expression_profile(&document)?;
+        let cwd = self.agent_location((!project.is_empty()).then_some(project.as_str()))?;
+        let project_ref = self.agent_project_ref(project, &cwd)?;
+        let existing = self
+            .nara_contexts
+            .get(&Self::nara_context_key(&project_ref, binding)?)
+            .and_then(|e| e.personal_current.clone());
+        Ok(Some(nara_current::Prepared::new(
+            self.client.clone(),
+            project_ref,
+            request.clone(),
+            document,
+            profile,
+            existing,
+        )))
     }
 
-    pub fn finish_nara_current(&mut self,completed:nara_current::Completed)->Result<KernelOpOutcome,String> {
-        let binding=&completed.binding;
-        let document=self.expressions.apply(&self.client,expression::Request::Inspect{expression_ref:binding.expression_ref.clone()})?.0["document"].clone();
-        if document!=completed.document || self.nara_expression_profile(&document)?!=completed.profile {
-            return Err("The Expression or adopted profile changed during the personal current reading".into());
+    pub fn finish_nara_current(
+        &mut self,
+        completed: nara_current::Completed,
+    ) -> Result<KernelOpOutcome, String> {
+        let binding = &completed.binding;
+        let document = self
+            .expressions
+            .apply(
+                &self.client,
+                expression::Request::Inspect {
+                    expression_ref: binding.expression_ref.clone(),
+                },
+            )?
+            .0["document"]
+            .clone();
+        if document != completed.document
+            || self.nara_expression_profile(&document)? != completed.profile
+        {
+            return Err(
+                "The Expression or adopted profile changed during the personal current reading"
+                    .into(),
+            );
         }
-        let (source,identity)=nara_identity::read(&self.client,&binding.source_ref)?;
-        if source.revision.revision!=binding.expected_revision || identity["person_ref"]!=binding.person_ref || identity["nara_ref"]!=binding.nara_ref {
+        let (source, identity) = nara_identity::read(&self.client, &binding.source_ref)?;
+        if source.revision.revision != binding.expected_revision
+            || identity["person_ref"] != binding.person_ref
+            || identity["nara_ref"] != binding.nara_ref
+        {
             return Err("The saved identity changed during the personal current reading".into());
         }
-        let key=serde_json::to_string(&(&completed.agent_session_ref,&binding.expression_ref)).map_err(|e|e.to_string())?;
-        let current=self.nara_contexts.get(&key).and_then(|entry|entry.personal_current.as_ref().map(|pin|pin.context()));
-        if current!=completed.expected_current {return Err("The pinned personal current changed while this reading was prepared; read its current native basis".into())}
-        if let Some(pin)=completed.candidate {
-            if self.nara_contexts.len()>=64 && !self.nara_contexts.contains_key(&key) {return Err("This native host has reached its Nara context bound".into())}
-            let entry=self.nara_contexts.entry(key).or_default();
-            if entry.personal_current.as_ref().map(|old|old.context())!=Some(pin.context()) {
-                self.nara_voice.invalidate_expression(&binding.expression_ref);
-            }
-            if entry.personal_current.as_ref().map(|old|old.context())!=Some(pin.context()) {entry.m3=None;}
-            entry.personal_current=Some(pin);
+        let key = serde_json::to_string(&(&completed.agent_session_ref, &binding.expression_ref))
+            .map_err(|e| e.to_string())?;
+        let current = self
+            .nara_contexts
+            .get(&key)
+            .and_then(|entry| entry.personal_current.as_ref().map(|pin| pin.context()));
+        if current != completed.expected_current {
+            return Err("The pinned personal current changed while this reading was prepared; read its current native basis".into());
         }
-        Ok(KernelOpOutcome{receipts:vec![],result:KernelOpResult::NaraCurrent{data:completed.data}})
+        if let Some(pin) = completed.candidate {
+            if self.nara_contexts.len() >= 64 && !self.nara_contexts.contains_key(&key) {
+                return Err("This native host has reached its Nara context bound".into());
+            }
+            let entry = self.nara_contexts.entry(key).or_default();
+            if entry.personal_current.as_ref().map(|old| old.context()) != Some(pin.context()) {
+                self.nara_voice
+                    .invalidate_expression(&binding.expression_ref);
+            }
+            if entry.personal_current.as_ref().map(|old| old.context()) != Some(pin.context()) {
+                entry.m3 = None;
+            }
+            entry.personal_current = Some(pin);
+        }
+        Ok(KernelOpOutcome {
+            receipts: vec![],
+            result: KernelOpResult::NaraCurrent {
+                data: completed.data,
+            },
+        })
     }
 
     pub fn prepare_nara_voice(
@@ -1489,9 +1687,11 @@ impl Kernel {
         };
         let cwd = self.agent_location((!project.is_empty()).then_some(project.as_str()))?;
         let project_ref = self.agent_project_ref(project, &cwd)?;
-        let context_state=match (self.nara_voice.binding(request)?,profile.as_ref()) {
-            (Some(binding),Some(profile))=>self.nara_context_state(&project_ref,&binding,&document,profile)?,
-            _=>nara_dialogue::ContextState::default(),
+        let context_state = match (self.nara_voice.binding(request)?, profile.as_ref()) {
+            (Some(binding), Some(profile)) => {
+                self.nara_context_state(&project_ref, &binding, &document, profile)?
+            }
+            _ => nara_dialogue::ContextState::default(),
         };
         self.nara_voice
             .prepare(
@@ -1503,7 +1703,7 @@ impl Kernel {
                 document,
                 profile,
             )
-            .map(|prepared|Some(prepared.with_context_state(context_state)))
+            .map(|prepared| Some(prepared.with_context_state(context_state)))
     }
 
     fn nara_expression_profile(
@@ -1569,23 +1769,33 @@ impl Kernel {
             )?
             .0["document"]
             .clone();
-        let profile = if matches!(request.operation, nara_dialogue::Operation::Context | nara_dialogue::Operation::Readiness) {
+        let profile = if matches!(
+            request.operation,
+            nara_dialogue::Operation::Context | nara_dialogue::Operation::Readiness
+        ) {
             Some(self.nara_expression_profile(&document)?)
         } else {
             None
         };
         let cwd = self.agent_location((!project.is_empty()).then_some(project.as_str()))?;
         let project_ref = self.agent_project_ref(project, &cwd)?;
-        let context_state=profile.as_ref().map(|profile|self.nara_context_state(&project_ref,request,&document,profile)).transpose()?.unwrap_or_default();
-        Ok(Some(nara_dialogue::Prepared::new(
-            self.client.clone(),
-            self.agency.clone(),
-            cwd,
-            project_ref,
-            request.clone(),
-            document,
-            profile,
-        ).with_context_state(context_state)))
+        let context_state = profile
+            .as_ref()
+            .map(|profile| self.nara_context_state(&project_ref, request, &document, profile))
+            .transpose()?
+            .unwrap_or_default();
+        Ok(Some(
+            nara_dialogue::Prepared::new(
+                self.client.clone(),
+                self.agency.clone(),
+                cwd,
+                project_ref,
+                request.clone(),
+                document,
+                profile,
+            )
+            .with_context_state(context_state),
+        ))
     }
 
     pub fn prepare_nara_epii(
@@ -1608,16 +1818,26 @@ impl Kernel {
         let profile = self.nara_expression_profile(&document);
         let cwd = self.agent_location((!project.is_empty()).then_some(project.as_str()))?;
         let project_ref = self.agent_project_ref(project, &cwd)?;
-        let context_state=profile.as_ref().ok().map(|profile|self.nara_context_state(&project_ref,request.binding(),&document,profile)).transpose()?.unwrap_or_default();
-        Ok(Some(nara_epii::Prepared::new(
-            self.client.clone(),
-            self.agency.clone(),
-            cwd,
-            project_ref,
-            request.clone(),
-            document,
-            profile,
-        ).with_context_state(context_state)))
+        let context_state = profile
+            .as_ref()
+            .ok()
+            .map(|profile| {
+                self.nara_context_state(&project_ref, request.binding(), &document, profile)
+            })
+            .transpose()?
+            .unwrap_or_default();
+        Ok(Some(
+            nara_epii::Prepared::new(
+                self.client.clone(),
+                self.agency.clone(),
+                cwd,
+                project_ref,
+                request.clone(),
+                document,
+                profile,
+            )
+            .with_context_state(context_state),
+        ))
     }
 
     pub fn finish_nara_epii(
@@ -1652,9 +1872,15 @@ impl Kernel {
         {
             return Err("The coordinate profile changed during Epii review".into());
         }
-        let context_key=serde_json::to_string(&(&reviewed.origin_session_ref,&reviewed.expression_ref)).map_err(|e|e.to_string())?;
-        if self.nara_context_state_at(&context_key,&reviewed.origin_binding,&document,&profile)!=reviewed.context_state {
-            return Err("The personal occasion or expressive state changed during Epii review".into());
+        let context_key =
+            serde_json::to_string(&(&reviewed.origin_session_ref, &reviewed.expression_ref))
+                .map_err(|e| e.to_string())?;
+        if self.nara_context_state_at(&context_key, &reviewed.origin_binding, &document, &profile)
+            != reviewed.context_state
+        {
+            return Err(
+                "The personal occasion or expressive state changed during Epii review".into(),
+            );
         }
         let (source, _) = nara_identity::read(&self.client, &reviewed.identity_source_ref)?;
         if source.revision.revision != reviewed.identity_revision {
@@ -1713,88 +1939,193 @@ impl Kernel {
         })
     }
 
-    pub fn prepare_nara_expressive_act(&mut self, op: &KernelOp) -> Result<Option<nara_expressive_act::Prepared>, String> {
-        let KernelOp::NaraExpressiveAct { project, request } = op else { return Ok(None); };
-        let document = self.expressions.apply(&self.client, expression::Request::Inspect {
-            expression_ref:request.binding().expression_ref.clone(),
-        })?.0["document"].clone();
+    pub fn prepare_nara_expressive_act(
+        &mut self,
+        op: &KernelOp,
+    ) -> Result<Option<nara_expressive_act::Prepared>, String> {
+        let KernelOp::NaraExpressiveAct { project, request } = op else {
+            return Ok(None);
+        };
+        let document = self
+            .expressions
+            .apply(
+                &self.client,
+                expression::Request::Inspect {
+                    expression_ref: request.binding().expression_ref.clone(),
+                },
+            )?
+            .0["document"]
+            .clone();
         let profile = self.nara_expression_profile(&document)?;
         let cwd = self.agent_location((!project.is_empty()).then_some(project.as_str()))?;
         let project_ref = self.agent_project_ref(project, &cwd)?;
-        let context_state=self.nara_context_state(&project_ref,request.binding(),&document,&profile)?;
-        Ok(Some(nara_expressive_act::Prepared::new(self.client.clone(),self.agency.clone(),cwd,
-            project_ref,request.clone(),document,profile).with_context_state(context_state)))
+        let context_state =
+            self.nara_context_state(&project_ref, request.binding(), &document, &profile)?;
+        Ok(Some(
+            nara_expressive_act::Prepared::new(
+                self.client.clone(),
+                self.agency.clone(),
+                cwd,
+                project_ref,
+                request.clone(),
+                document,
+                profile,
+            )
+            .with_context_state(context_state),
+        ))
     }
 
-    pub fn finish_nara_expressive_act(&mut self, result:nara_expressive_act::PreparedOutcome) -> Result<KernelOpOutcome,String> {
+    pub fn finish_nara_expressive_act(
+        &mut self,
+        result: nara_expressive_act::PreparedOutcome,
+    ) -> Result<KernelOpOutcome, String> {
         use nara_expressive_act::PreparedOutcome;
-        let (binding,captured,profile,session) = match &result {
-            PreparedOutcome::Read(data) => return Ok(KernelOpOutcome { receipts:vec![],result:KernelOpResult::NaraExpressiveAct { data:data.clone() } }),
-            PreparedOutcome::Focus(f) => (&f.binding,&f.captured_document,&f.captured_profile,&f.agent_session_ref),
-            PreparedOutcome::Restore(r) => (&r.binding,&r.captured_document,&r.captured_profile,&r.agent_session_ref),
+        let (binding, captured, profile, session) = match &result {
+            PreparedOutcome::Read(data) => {
+                return Ok(KernelOpOutcome {
+                    receipts: vec![],
+                    result: KernelOpResult::NaraExpressiveAct { data: data.clone() },
+                })
+            }
+            PreparedOutcome::Focus(f) => (
+                &f.binding,
+                &f.captured_document,
+                &f.captured_profile,
+                &f.agent_session_ref,
+            ),
+            PreparedOutcome::Restore(r) => (
+                &r.binding,
+                &r.captured_document,
+                &r.captured_profile,
+                &r.agent_session_ref,
+            ),
         };
         let reference = binding.expression_ref.clone();
-        let document = self.expressions.apply(&self.client,expression::Request::Inspect { expression_ref:reference.clone() })?.0["document"].clone();
-        if &document != captured { return Err("The Expression changed during the expressive act; inspect the current answer basis".into()); }
+        let document = self
+            .expressions
+            .apply(
+                &self.client,
+                expression::Request::Inspect {
+                    expression_ref: reference.clone(),
+                },
+            )?
+            .0["document"]
+            .clone();
+        if &document != captured {
+            return Err("The Expression changed during the expressive act; inspect the current answer basis".into());
+        }
         let current_profile = self.nara_expression_profile(&document)?;
-        if current_profile.profile != profile.profile || current_profile.lineage != profile.lineage {
+        if current_profile.profile != profile.profile || current_profile.lineage != profile.lineage
+        {
             return Err("The adopted profile changed during the expressive act".into());
         }
-        let (source,identity) = nara_identity::read(&self.client,&binding.source_ref)?;
-        if source.revision.revision != binding.expected_revision || identity["nara_ref"] != binding.nara_ref || identity["person_ref"] != binding.person_ref {
+        let (source, identity) = nara_identity::read(&self.client, &binding.source_ref)?;
+        if source.revision.revision != binding.expected_revision
+            || identity["nara_ref"] != binding.nara_ref
+            || identity["person_ref"] != binding.person_ref
+        {
             return Err("The saved identity changed during the expressive act".into());
         }
         // One ephemeral checkpoint for this exact native AgentSession and
         // Expression, never another profile, document store or saved identity.
-        let key = serde_json::to_string(&(session,&reference)).map_err(|e|e.to_string())?;
-        let (data,changed,act_ref,checkpoint_ref,operation) = match result {
+        let key = serde_json::to_string(&(session, &reference)).map_err(|e| e.to_string())?;
+        let (data, changed, act_ref, checkpoint_ref, operation) = match result {
             PreparedOutcome::Focus(focus) => {
-                if self.nara_context_state_at(&key,&focus.binding,&document,&current_profile)!=focus.context_state {
+                if self.nara_context_state_at(&key, &focus.binding, &document, &current_profile)
+                    != focus.context_state
+                {
                     return Err("The personal occasion or expressive state changed during the expressive act".into());
                 }
                 if self.nara_contexts.len() >= 64 && !self.nara_contexts.contains_key(&key) {
-                    return Err("This native host has reached its expressive checkpoint bound".into());
+                    return Err(
+                        "This native host has reached its expressive checkpoint bound".into(),
+                    );
                 }
-                let (data,changed) = self.expressions.apply(&self.client,focus.request.clone())?;
-                if changed.is_none() { return Err("The reviewed focus did not change the native selection".into()); }
+                let (data, changed) = self
+                    .expressions
+                    .apply(&self.client, focus.request.clone())?;
+                if changed.is_none() {
+                    return Err("The reviewed focus did not change the native selection".into());
+                }
                 let after = data["document"].clone();
-                let checkpoint = nara_expressive_act::Checkpoint::committed(&focus,after)?;
-                self.nara_contexts.entry(key).or_default().checkpoint=Some(checkpoint);
-                (data,changed,focus.act_ref,focus.checkpoint_ref,"focus")
-            },
+                let checkpoint = nara_expressive_act::Checkpoint::committed(&focus, after)?;
+                self.nara_contexts.entry(key).or_default().checkpoint = Some(checkpoint);
+                (data, changed, focus.act_ref, focus.checkpoint_ref, "focus")
+            }
             PreparedOutcome::Restore(restore) => {
-                let checkpoint = self.nara_contexts.get(&key).and_then(|entry|entry.checkpoint.as_ref()).ok_or("This native host has no retained checkpoint for that Nara and Expression")?;
-                if current_profile.profile != checkpoint.captured_profile.profile || current_profile.lineage != checkpoint.captured_profile.lineage {
-                    return Err("The checkpoint's adopted profile lineage is no longer current".into());
+                let checkpoint = self
+                    .nara_contexts
+                    .get(&key)
+                    .and_then(|entry| entry.checkpoint.as_ref())
+                    .ok_or(
+                        "This native host has no retained checkpoint for that Nara and Expression",
+                    )?;
+                if current_profile.profile != checkpoint.captured_profile.profile
+                    || current_profile.lineage != checkpoint.captured_profile.lineage
+                {
+                    return Err(
+                        "The checkpoint's adopted profile lineage is no longer current".into(),
+                    );
                 }
-                let request = checkpoint.restore_request(&restore.binding,&restore.act_ref,restore.expected_revision,&document)?;
-                let checkpoint_ref = checkpoint.reading()["checkpoint_ref"].as_str().ok_or("Native checkpoint reference absent")?.to_owned();
-                let (data,changed) = self.expressions.apply(&self.client,request)?;
-                if let Some(entry)=self.nara_contexts.get_mut(&key) {entry.checkpoint=None;}
-                if self.nara_contexts.get(&key).is_some_and(|entry|entry.personal_current.is_none() && entry.m3.is_none()) {self.nara_contexts.remove(&key);}
-                (data,changed,restore.act_ref,checkpoint_ref,"restore")
-            },
+                let request = checkpoint.restore_request(
+                    &restore.binding,
+                    &restore.act_ref,
+                    restore.expected_revision,
+                    &document,
+                )?;
+                let checkpoint_ref = checkpoint.reading()["checkpoint_ref"]
+                    .as_str()
+                    .ok_or("Native checkpoint reference absent")?
+                    .to_owned();
+                let (data, changed) = self.expressions.apply(&self.client, request)?;
+                if let Some(entry) = self.nara_contexts.get_mut(&key) {
+                    entry.checkpoint = None;
+                }
+                if self
+                    .nara_contexts
+                    .get(&key)
+                    .is_some_and(|entry| entry.personal_current.is_none() && entry.m3.is_none())
+                {
+                    self.nara_contexts.remove(&key);
+                }
+                (data, changed, restore.act_ref, checkpoint_ref, "restore")
+            }
             PreparedOutcome::Read(_) => unreachable!(),
         };
         let applied = changed.is_some();
         let mut receipts = Vec::new();
         if let Some(change) = changed {
             self.nara_voice.invalidate_expression(&reference);
-            receipts.push(self.log.record(KernelEvent::ExpressionChanged { expression_ref:change.expression_ref,
-                revision:change.revision,actor:change.actor,activity_ref:change.activity_ref }));
+            receipts.push(self.log.record(KernelEvent::ExpressionChanged {
+                expression_ref: change.expression_ref,
+                revision: change.revision,
+                actor: change.actor,
+                activity_ref: change.activity_ref,
+            }));
             if let Some(subject) = self.expressions.selected_subject(&reference) {
                 let before = self.focus.clone();
-                self.focus.focus_subject(subject.clone()).map_err(|e|e.to_string())?;
-                if before != self.focus { receipts.push(self.log.record(KernelEvent::FocusChanged { focus:self.focus.clone() })); }
-                self.world.record_expression_selection(&reference,&subject);
+                self.focus
+                    .focus_subject(subject.clone())
+                    .map_err(|e| e.to_string())?;
+                if before != self.focus {
+                    receipts.push(self.log.record(KernelEvent::FocusChanged {
+                        focus: self.focus.clone(),
+                    }));
+                }
+                self.world.record_expression_selection(&reference, &subject);
             }
         }
-        Ok(KernelOpOutcome { receipts,result:KernelOpResult::NaraExpressiveAct { data:serde_json::json!({
-            "schema":"oi.nara-expressive-act-effect/v1","operation":operation,"act_ref":act_ref,
-            "checkpoint_ref":checkpoint_ref,"nara_ref":identity["nara_ref"],"expression_ref":reference,
-            "expression_revision":data["document"]["revision"],"document":data["document"],
-            "effect_applied":applied,"dynamic_checkpoint":false,
-        }) } })
+        Ok(KernelOpOutcome {
+            receipts,
+            result: KernelOpResult::NaraExpressiveAct {
+                data: serde_json::json!({
+                    "schema":"oi.nara-expressive-act-effect/v1","operation":operation,"act_ref":act_ref,
+                    "checkpoint_ref":checkpoint_ref,"nara_ref":identity["nara_ref"],"expression_ref":reference,
+                    "expression_revision":data["document"]["revision"],"document":data["document"],
+                    "effect_applied":applied,"dynamic_checkpoint":false,
+                }),
+            },
+        })
     }
 
     /// The ordered event log — the observable seam the host exposes by
@@ -2072,19 +2403,31 @@ impl Kernel {
                 self.finish_nara_epii(result)
             }
             op @ KernelOp::NaraExpressiveAct { .. } => {
-                let result = self.prepare_nara_expressive_act(&op)?.ok_or("Native act preparation unavailable")?.execute()?;
+                let result = self
+                    .prepare_nara_expressive_act(&op)?
+                    .ok_or("Native act preparation unavailable")?
+                    .execute()?;
                 self.finish_nara_expressive_act(result)
             }
             op @ KernelOp::NaraPresence { .. } => {
-                let completed=self.prepare_nara_presence(&op)?.ok_or("Native presence preparation unavailable")?.execute()?;
+                let completed = self
+                    .prepare_nara_presence(&op)?
+                    .ok_or("Native presence preparation unavailable")?
+                    .execute()?;
                 self.finish_nara_presence(completed)
             }
             op @ KernelOp::M3Reception { .. } => {
-                let completed=self.prepare_m3_reception(&op)?.ok_or("Native M3 preparation unavailable")?.execute()?;
+                let completed = self
+                    .prepare_m3_reception(&op)?
+                    .ok_or("Native M3 preparation unavailable")?
+                    .execute()?;
                 self.finish_m3_reception(completed)
             }
             op @ KernelOp::NaraCurrent { .. } => {
-                let completed=self.prepare_nara_current(&op)?.ok_or("Native personal current preparation unavailable")?.execute()?;
+                let completed = self
+                    .prepare_nara_current(&op)?
+                    .ok_or("Native personal current preparation unavailable")?
+                    .execute()?;
                 self.finish_nara_current(completed)
             }
             KernelOp::NaraIdentity { request } => {
@@ -2122,26 +2465,52 @@ impl Kernel {
                     }
                     _ => None,
                 };
-                let closed_ref = match &request { expression::Request::Close { expression_ref, .. } => Some(expression_ref.clone()), _ => None };
+                let closed_ref = match &request {
+                    expression::Request::Close { expression_ref, .. } => {
+                        Some(expression_ref.clone())
+                    }
+                    _ => None,
+                };
                 let (data, changed) = self.expressions.apply(&self.client, request)?;
                 if data["state"] == "closed" {
-                    if let Some(reference) = closed_ref { self.nara_contexts.retain(|_,entry| {
-                        entry.checkpoint.as_ref().is_none_or(|checkpoint|checkpoint.expression_ref()!=reference)
-                            && entry.personal_current.as_ref().is_none_or(|pin|pin.expression_ref()!=reference)
-                            && entry.m3.as_ref().is_none_or(|state|state.expression_ref()!=reference)
-                    }); }
+                    if let Some(reference) = closed_ref {
+                        self.nara_contexts.retain(|_, entry| {
+                            entry
+                                .checkpoint
+                                .as_ref()
+                                .is_none_or(|checkpoint| checkpoint.expression_ref() != reference)
+                                && entry
+                                    .personal_current
+                                    .as_ref()
+                                    .is_none_or(|pin| pin.expression_ref() != reference)
+                                && entry
+                                    .m3
+                                    .as_ref()
+                                    .is_none_or(|state| state.expression_ref() != reference)
+                        });
+                    }
                 }
                 for expression_ref in profile_dependents {
                     self.nara_voice.invalidate_expression(&expression_ref);
                     for entry in self.nara_contexts.values_mut() {
-                        if entry.m3.as_ref().is_some_and(|state| state.expression_ref() == expression_ref) { entry.m3 = None; }
+                        if entry
+                            .m3
+                            .as_ref()
+                            .is_some_and(|state| state.expression_ref() == expression_ref)
+                        {
+                            entry.m3 = None;
+                        }
                     }
                 }
                 let mut receipts = Vec::new();
                 if let Some(change) = changed {
                     if !selection_only {
                         for entry in self.nara_contexts.values_mut() {
-                            if entry.m3.as_ref().is_some_and(|state| state.expression_ref() == change.expression_ref) { entry.m3 = None; }
+                            if entry.m3.as_ref().is_some_and(|state| {
+                                state.expression_ref() == change.expression_ref
+                            }) {
+                                entry.m3 = None;
+                            }
                         }
                     }
                     self.nara_voice

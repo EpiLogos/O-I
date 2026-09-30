@@ -92,54 +92,25 @@ try{
  assert.equal(after.html,appended.html);
  assert.equal(after.doc.entries.length,retained.doc.entries.length+1);
  assert.deepEqual(after.doc.entries.filter(e=>e.id!==appended.entry.id),retained.doc.entries);
- // The standing destination: when the config names the commission intake
- // document, the structured proposal lands in that register's receiving
- // field — the Inbox's own queue — as a typed proposal the person can
- // accept or reject. Submission never edits the document; inclusion stays
- // the person's own act through the same revision-checked review.
+ // The standing destination: the person is asked through Central receiving
+ // — the Inbox's own queue — with a proposal request, not a document edit.
+ // Accepting it commissions the Run through Factory's intake (carried by the
+ // O:I guardian family) and records that Run back on the request; nothing
+ // here fills Factory authority fields for the person.
  let receivingSubmission;
  if(config.receiving_destination){
-  const dest=config.receiving_destination;
-  const basis=await native({op:'receiving',project:config.project||null,request:{Document:{source_ref:dest.source_ref,document_id:dest.document_id}}});
-  const proposalBody={
-   // The receiving proposal IS a native document operation: the inclusion
-   // the person's acceptance applies to the standing intake. Structured
-   // commission fields ride beside it for the Inbox's reading.
-   schema:'oi.factory-commission-proposal/v1',
-   operation:'entry.add',
-   entry_id:`factory-commission-${randomUUID()}`,
-   contribution_id:`factory-commission-contribution-${randomUUID()}`,
-   html:`<p><strong>Factory commission proposal</strong> — <code>${proposal.proposal_ref}</code></p><p>${proposal.discrepancy}</p>`,
-   proposal_ref:proposal.proposal_ref,
-   discrepancy:proposal.discrepancy,
-   diagnosis_refs:proposal.diagnosis_refs,
-   proposed_owner_ref:proposal.proposed_owner_ref,
-   expression_ref,answer_block_id:block.id,agent_session_ref:dialogue.provisioning.agent_session,
-   flow:{location:after.location,answer_entry_id:kept.entryId,commission_entry_id:appended.entry.id},
-   factory_intake:'proposed',
-   // Everything the Factory owner's `factory development commission`
-   // contract can derive from this inquiry. The authority fields stay
-   // deliberately null — project key, run destination, write owner and the
-   // acting agent are the person's own commissioning decisions, never the
-   // inquiry's.
-   suggested_factory_request:{
-    contract:'factory.commission-request/v1',
-    requestRef:proposal.proposal_ref,
-    projectKey:null,
-    purpose:'(the discrepancy carried in this proposal)',
-    frontier:'(the discrepancy carried in this proposal)',
-    runDestination:null,
-    writeOwner:'factory',
-    commissionedAt:new Date().toISOString(),
-    rootAct:{actRef:proposal.proposal_ref,agentRef:null,purpose:'(the discrepancy carried in this proposal)',scopeRefs:proposal.diagnosis_refs,standing:'proposed-independent-verification'},
-   },
-  };
+  const subject=`Commission: ${proposal.proposal_ref}`.slice(0,280);
   const submitted=await native({op:'receiving',project:config.project||null,request:{Submit:{
-   producer_key:`epii-development-commission:${proposal.proposal_ref}`,source_ref:dest.source_ref,document_id:dest.document_id,
-   expected_source_revision:basis.revision.revision,occurred_at_unix_seconds:Math.floor(Date.now()/1000),
-   task_ref:expression_ref,proposal:proposalBody}}});
-  receivingSubmission={destination:{source_ref:dest.source_ref,document_id:dest.document_id},return_ref:submitted.return_ref??null,schema:submitted.schema??null};
-  assert.ok(receivingSubmission.return_ref,'The receiving owner must acknowledge the submitted proposal with a return reference');
+   producer_key:`epii-development-commission:${proposal.proposal_ref}`,
+   occurred_at_unix_seconds:Math.floor(Date.now()/1000),task_ref:expression_ref,
+   request:{kind:'proposal',subject,body:proposal.discrepancy,proposed_owner_ref:'factory',proposal_ref:proposal.proposal_ref},
+   summary:proposal.discrepancy.slice(0,8192),
+   evidence_refs:proposal.diagnosis_refs,
+   declared_producer:{ref:dialogue.provisioning.agent_session,actor_kind:'agent',attribution:'claimed'},
+  }}});
+  receivingSubmission={return_ref:submitted.return_ref??null,schema:submitted.schema??null,kind:submitted.record?.kind??null};
+  assert.ok(receivingSubmission.return_ref,'The receiving owner must acknowledge the proposal request with a return reference');
+  assert.equal(receivingSubmission.kind,'request','The proposal reaches the person as a request, not a document edit');
  }
  await writeFile(path.join(config.output,'receipt.json'),JSON.stringify({schema:'oi.nara-development-handoff/v1',expression_ref,binding:dialogue.binding,agent_session_ref:dialogue.provisioning.agent_session,answer_block_id:block.id,review,proposal,flow:{location:after.location,revision:after.revision,answer_entry_id:kept.entryId,commission_entry_id:appended.entry.id,participant},instance_commission:committed.outcome.outcome,receiving:receivingSubmission??null,factory_intake:receivingSubmission?'submitted-to-receiving':'not-yet-performed',limits:['Controlled native inquiry, Flow commission and receiving submission only; the Factory Commission itself is the person\'s own accept-and-commission act through the Factory owner','No human Day mutation or Expression proposal applied']},null,2));
  process.stdout.write(JSON.stringify({ok:true,expression_ref,answer_block_id:block.id,receipt:path.join(config.output,'receipt.json')})+'\n');

@@ -3,7 +3,7 @@
 //! retains no profile, projection, consent registry or alternate Expression.
 use crate::{agency, flow::CentralClient, nara_dialogue, nara_identity};
 use serde::{Deserialize, Serialize};
-use serde_json::{Value, json};
+use serde_json::{json, Value};
 use std::{
     collections::BTreeSet,
     path::PathBuf,

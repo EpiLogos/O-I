@@ -224,9 +224,9 @@ type Submission = Extract<ReceivingRequest, {kind: 'submit'}>;
 const daySubmissions = new Map<string, Submission>();
 function validateDayQuotation(result: ReturnReading, target: NativeDayTarget, fieldId: string, id: string, html: string): ReturnReading {
   if (result.schema !== 'central.receiving-reading/v1' || result.record.source_ref !== target.document.source.ref
-    || result.record.document_id !== target.document.document_id || result.record.proposal.contribution_id !== id
-    || result.record.proposal.operation !== 'field.append' || result.record.proposal.field_id !== fieldId
-    || result.record.proposal.html !== html || result.source_changed_by_arrival_or_review !== false) throw new Error('This answer already has a different retained quotation or target field in the Day. Review its existing item in Inbox.');
+    || result.record.document_id !== target.document.document_id || result.record.proposal?.contribution_id !== id
+    || result.record.proposal?.operation !== 'field.append' || result.record.proposal?.field_id !== fieldId
+    || result.record.proposal?.html !== html || result.source_changed_by_arrival_or_review !== false) throw new Error('This answer already has a different retained quotation or target field in the Day. Review its existing item in Inbox.');
   return result;
 }
 /** Native receipt discovery survives component remount and app restart. A

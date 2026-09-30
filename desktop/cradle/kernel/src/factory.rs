@@ -325,11 +325,12 @@ pub enum OwnerRequest {
         #[serde(default)]
         basis_refs: Vec<String>,
     },
-    /// The person's accept-and-commission act on one proposal from the
-    /// standing receiving intake: the caller supplies the exact
-    /// `FactoryCommissionRequest` (the desktop maps no fields, invents no
-    /// authority) and the Factory owner's own contract validates it. The
-    /// receipt names the commissioned project/journey/run.
+    /// The person's commission of an accepted proposal: `factory development
+    /// commission <state> -` with the caller's own
+    /// `factory.commission-request/v1` document, carried verbatim; the desktop
+    /// maps no authority. Factory validates it, derives the Journey/Run and
+    /// replays an identical request as `already-applied`; its receipt names the
+    /// commissioned project/journey/run.
     DevelopmentCommission {
         state_path: PathBuf,
         #[serde(default)]
@@ -1167,7 +1168,15 @@ pub fn owner(request: OwnerRequest, world: Option<&Value>) -> Result<Value, Erro
                 &["factory.developmental-mutation-receipt/v1"],
             )
         }
-        OwnerRequest::DevelopmentCommission { state_path, request } => {
+        OwnerRequest::DevelopmentCommission {
+            state_path,
+            request,
+        } => {
+            if request["contract"] != "factory.commission-request/v1" {
+                return Err(incompatible(
+                    "A commission carries a factory.commission-request/v1 document",
+                ));
+            }
             let body = serde_json::to_vec(&request).map_err(|e| incompatible(e.to_string()))?;
             let args: Vec<std::ffi::OsString> = vec![
                 "development".into(),
@@ -1187,6 +1196,19 @@ pub fn owner(request: OwnerRequest, world: Option<&Value>) -> Result<Value, Erro
 #[cfg(test)]
 mod owner_tests {
     use super::*;
+
+    #[test]
+    fn a_commission_carries_only_a_factory_commission_request() {
+        let wire: OwnerRequest = serde_json::from_value(serde_json::json!({
+            "kind":"development-commission","state_path":"/ground/.factory/development-state.json",
+            "request":{"contract":"factory.developmental-mutation-request/v1"}}))
+        .unwrap();
+        let error = owner(wire, None).unwrap_err();
+        assert!(
+            format!("{error:?}").contains("factory.commission-request/v1"),
+            "{error:?}"
+        );
+    }
 
     #[test]
     fn rfc3339_is_well_formed() {
@@ -1405,6 +1427,9 @@ mod owner_tests {
             serde_json::from_value(serde_json::json!({"kind": "locate", "all": true})).unwrap();
         assert!(request.needs_world());
         let request: OwnerRequest = serde_json::from_value(serde_json::json!({"kind": "development-commission", "state_path": "/s.json", "request": {"contract": "factory.commission/v1"}})).unwrap();
-        assert!(matches!(request, OwnerRequest::DevelopmentCommission { .. }));
+        assert!(matches!(
+            request,
+            OwnerRequest::DevelopmentCommission { .. }
+        ));
     }
 }

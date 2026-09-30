@@ -178,8 +178,6 @@ fn same_input(left: &Value, right: &Value) -> bool {
     }
 }
 
-
-
 fn ql(operation: &str, profile: &Value) -> Result<Value, String> {
     let reading = run_ql_nara(operation, profile)?;
     if reading["schema"] != "ql.nara-identity-reading/v1"
@@ -247,25 +245,37 @@ pub fn apply(client: &CentralClient, request: Request) -> Result<Value, String> 
             }
             Ok(json!({"schema":"oi.nara-identity/v1","transit":transit}))
         }
-        Request::PersonalCurrent { source_ref, expected_revision, sky_request } => {
+        Request::PersonalCurrent {
+            source_ref,
+            expected_revision,
+            sky_request,
+        } => {
             let (source, profile) = read(client, &source_ref)?;
             if source.revision.revision != expected_revision {
                 return Err("The identity changed; reopen its current revision before reading the present field".into());
             }
-            let current = run_ql_nara("personal-current", &json!({
-                "schema":"ql.nara-personal-current-request/v1","profile":profile,"sky_request":sky_request
-            }))?;
+            let current = run_ql_nara(
+                "personal-current",
+                &json!({
+                    "schema":"ql.nara-personal-current-request/v1","profile":profile,"sky_request":sky_request
+                }),
+            )?;
             if current["schema"] != "ql.nara-personal-current/v1"
                 || !same_input(&current["identity"]["profile"], &profile)
                 || current["identity"]["person_ref"] != profile["person_ref"]
-                || current["identity"]["nara_ref"] != profile["nara_ref"] {
+                || current["identity"]["nara_ref"] != profile["nara_ref"]
+            {
                 return Err("QL returned a different personal current basis".into());
             }
             let (confirmed, _) = read(client, &source_ref)?;
             if confirmed.revision.revision != expected_revision {
-                return Err("The saved identity changed while the current field was calculated".into());
+                return Err(
+                    "The saved identity changed while the current field was calculated".into(),
+                );
             }
-            Ok(json!({"schema":"oi.nara-identity/v1","source":{"source_ref":source_ref,"revision":expected_revision},"personal_current":current}))
+            Ok(
+                json!({"schema":"oi.nara-identity/v1","source":{"source_ref":source_ref,"revision":expected_revision},"personal_current":current}),
+            )
         }
         Request::Open { source_ref } => {
             let (source, profile) = read(client, &source_ref)?;

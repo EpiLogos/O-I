@@ -2,7 +2,7 @@
 //! Optional activity uses an explicitly selected source policy; no closure or rendering law is inferred.
 use crate::{flow::CentralClient, nara_current, nara_dialogue, nara_identity};
 use serde::{Deserialize, Serialize};
-use serde_json::{Value, json};
+use serde_json::{json, Value};
 use sha2::{Digest, Sha256};
 
 #[derive(Clone, Debug, Deserialize, Serialize, PartialEq)]
@@ -232,7 +232,9 @@ impl Prepared {
                                 .map(str::to_string)
                         })
                         .filter(|v| !v.is_empty())
-                        .ok_or("The pinned personal current carries no native M registry revision")?;
+                        .ok_or(
+                            "The pinned personal current carries no native M registry revision",
+                        )?;
                     let coordinate_revision = context["world"]["registry_revision"]
                         .as_str()
                         .ok_or("Native M3 coordinate registry revision unavailable")?;

@@ -1,24 +1,17 @@
 {
   "schema": "oi.cradle.walk.scenario/v1",
-  "scenario": "receive-include",
+  "scenario": "owner-request",
   "spec_ref": "docs/cradle/05-EXECUTION.md §3",
   "grade": "B",
   "binding": {
     "serves": [
-      "oi97:human-return",
-      "wc65:WC08"
+      "oi97:human-return"
     ],
-    "branches": {
-      "wc65:WC08": [
-        1
-      ]
-    },
-    "negatives": [
-      "stale"
-    ],
+    "branches": {},
+    "negatives": [],
     "claims_grade": "D"
   },
-  "generated_at": "2026-09-30T08:53:42.996Z",
+  "generated_at": "2026-09-30T08:53:37.882Z",
   "environment": {
     "base_url": "http://localhost:4173",
     "bridge_url": "http://127.0.0.1:4179",
@@ -247,51 +240,63 @@
   },
   "passed": true,
   "error": null,
-  "duration_ms": 1737,
+  "duration_ms": 2325,
   "checks": [
     {
       "ok": true,
-      "label": "A pending Return is visible in the project's receiving field before any human act"
+      "label": "The Inbox badge counts the two requests waiting for the person"
     },
     {
       "ok": true,
-      "label": "The return presents its real producer attribution"
+      "label": "Each request is named by what it asks, not by a document it would edit"
     },
     {
       "ok": true,
-      "label": "The exact proposed operation and content are shown before any decision"
+      "label": "The question names the Agent asking it"
     },
     {
       "ok": true,
-      "label": "The return shows the exact basis revision it was proposed against"
+      "label": "The question carries its context"
     },
     {
       "ok": true,
-      "label": "Explicit acceptance records the human reviewer and the exact reviewed basis"
+      "label": "The recorded answer is shown where it was given"
     },
     {
       "ok": true,
-      "label": "Inclusion completes through the owner's revision-checked operation"
+      "label": "The proposal says what acceptance does and on what evidence"
     },
     {
       "ok": true,
-      "label": "The document holds exactly the reviewed contribution"
+      "label": "The item shows the Run Factory made for it"
     },
     {
       "ok": true,
-      "label": "Producer attribution and human review are carried as distinct native facts"
+      "label": "Nothing waits once both are decided; the badge is gone"
     },
     {
       "ok": true,
-      "label": "The document source revision advanced through inclusion"
+      "label": "Central records the acceptance, the person's note and Factory's Run as distinct facts"
     },
     {
       "ok": true,
-      "label": "Accepting a stale basis is refused by the owner's exact revision check"
+      "label": "Factory's own reading holds the Run, commissioned from exactly the accepted item"
     },
     {
       "ok": true,
-      "label": "A refused acceptance changes no document bytes"
+      "label": "The O:I guardian carries the Run, with the family it calls on named from Central's record"
+    },
+    {
+      "ok": true,
+      "label": "The asking NOW reads the person's answer"
+    },
+    {
+      "ok": true,
+      "label": "The asking NOW reads the acceptance, the note and the Run"
+    },
+    {
+      "ok": true,
+      "label": "With nothing it asked still waiting, the NOW can archive"
     }
   ],
   "ops": [
@@ -301,7 +306,7 @@
       "duration_ms": 0,
       "data": {
         "schema": "oi.cradle.walk/v1",
-        "mounted_at": "2026-09-30T08:53:43.251Z",
+        "mounted_at": "2026-09-30T08:53:38.155Z",
         "transport": {
           "kind": "bridge",
           "url": "http://127.0.0.1:4179"
@@ -312,41 +317,41 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 43,
+      "duration_ms": 69,
       "data": {
-        "file": "receive-include-return-expanded-before-review.png"
+        "file": "owner-request-two-requests-waiting.png"
       }
     },
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 58,
+      "duration_ms": 52,
       "data": {
-        "file": "receive-include-accepted-on-current-basis.png"
+        "file": "owner-request-question-answered.png"
       }
     },
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 51,
+      "duration_ms": 41,
       "data": {
-        "file": "receive-include-included-with-attribution.png"
+        "file": "owner-request-proposal-before-decision.png"
       }
     },
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 28,
+      "duration_ms": 47,
       "data": {
-        "file": "receive-include-stale-basis-refusal.png"
+        "file": "owner-request-proposal-commissioned.png"
       }
     }
   ],
   "metrics": {},
   "screenshots": [
-    "receive-include-return-expanded-before-review.png",
-    "receive-include-accepted-on-current-basis.png",
-    "receive-include-included-with-attribution.png",
-    "receive-include-stale-basis-refusal.png"
+    "owner-request-two-requests-waiting.png",
+    "owner-request-question-answered.png",
+    "owner-request-proposal-before-decision.png",
+    "owner-request-proposal-commissioned.png"
   ]
 }

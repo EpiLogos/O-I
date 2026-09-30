@@ -21,7 +21,10 @@ fn owner_process_failure(operation: &str, output: &std::process::Output) -> Stri
     }
     if let Ok(response) = serde_json::from_slice::<Value>(&output.stdout) {
         if response["ok"] == false {
-            if let Some(message) = response["error"]["message"].as_str().filter(|s| !s.trim().is_empty()) {
+            if let Some(message) = response["error"]["message"]
+                .as_str()
+                .filter(|s| !s.trim().is_empty())
+            {
                 return match response["error"]["code"].as_str() {
                     Some(code) => format!("{message} [{code}]"),
                     None => message.to_owned(),
@@ -29,7 +32,10 @@ fn owner_process_failure(operation: &str, output: &std::process::Output) -> Stri
             }
         }
     }
-    format!("AIKit {operation} failed ({}) without an owner diagnostic", output.status)
+    format!(
+        "AIKit {operation} failed ({}) without an owner diagnostic",
+        output.status
+    )
 }
 
 #[derive(Clone, Debug)]
@@ -45,8 +51,21 @@ pub struct Client {
 }
 
 impl Client {
-    pub(crate) fn local_speech_read(&self, cwd: &Path, agent_session: &str) -> Result<Value, String> {
-        self.disclosure(cwd, &["session-space", "encounter-speech-read", "--agent-session", agent_session], "aikit.local-speech-reading/v1")
+    pub(crate) fn local_speech_read(
+        &self,
+        cwd: &Path,
+        agent_session: &str,
+    ) -> Result<Value, String> {
+        self.disclosure(
+            cwd,
+            &[
+                "session-space",
+                "encounter-speech-read",
+                "--agent-session",
+                agent_session,
+            ],
+            "aikit.local-speech-reading/v1",
+        )
     }
 
     /// Read-only protocol currency comes from the same owner and isolated home
@@ -1107,7 +1126,10 @@ impl Client {
             .output()
             .map_err(|error| format!("AIKit SessionSpace is unavailable: {error}"))?;
         if !output.status.success() {
-            return Err(owner_process_failure(args.first().copied().unwrap_or("session-space"), &output));
+            return Err(owner_process_failure(
+                args.first().copied().unwrap_or("session-space"),
+                &output,
+            ));
         }
         Ok(String::from_utf8_lossy(&output.stdout).trim().to_owned())
     }

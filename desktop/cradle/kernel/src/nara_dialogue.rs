@@ -2,7 +2,7 @@
 //! Central retains identity; Expression retains the selected body document.
 use crate::{agency, flow::CentralClient};
 use serde::{Deserialize, Serialize};
-use serde_json::{Value, json};
+use serde_json::{json, Value};
 use sha2::{Digest, Sha256};
 use std::path::Path;
 
@@ -85,12 +85,21 @@ impl Prepared {
         self
     }
     pub fn execute(self) -> Result<crate::KernelOpOutcome, String> {
-        if matches!(self.request.operation, Operation::Context | Operation::Readiness) {
+        if matches!(
+            self.request.operation,
+            Operation::Context | Operation::Readiness
+        ) {
             let mut data = read_context_with_state(&self.client, &self.project, &self.request, &self.document,
                 self.profile.as_ref().ok_or("Select an adopted native Expression profile before resolving a coordinate dialogue")?, &self.context_state)?;
             if self.request.operation == Operation::Readiness {
-                data["runtime_readiness"] = crate::nara_world_readiness::read(&self.agency, &self.cwd, &self.project,
-                    &self.request, &data, &self.document)?;
+                data["runtime_readiness"] = crate::nara_world_readiness::read(
+                    &self.agency,
+                    &self.cwd,
+                    &self.project,
+                    &self.request,
+                    &data,
+                    &self.document,
+                )?;
             }
             return Ok(crate::KernelOpOutcome {
                 receipts: Vec::new(),

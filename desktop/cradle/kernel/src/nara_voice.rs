@@ -5,15 +5,15 @@ use crate::{
     agency, flow::CentralClient, nara_dialogue, nara_voice_actor::Actor,
     nara_voice_transport::LocalSpeechTransport,
 };
-use base64::{Engine, engine::general_purpose::STANDARD};
+use base64::{engine::general_purpose::STANDARD, Engine};
 use serde::{Deserialize, Serialize};
-use serde_json::{Value, json};
+use serde_json::{json, Value};
 use std::{
     collections::BTreeMap,
     path::PathBuf,
     sync::{
-        Arc, Mutex,
         atomic::{AtomicU64, Ordering},
+        Arc, Mutex,
     },
     time::{SystemTime, UNIX_EPOCH},
 };
@@ -107,7 +107,6 @@ fn native_basis(reading: &Value) -> Value {
         "acting_body":reading["acting_body"],"configuration_revision":reading["configuration_revision"],
         "runtime":reading["runtime"],"composition":reading["composition"]})
 }
-
 
 impl Session {
     fn reset_actor(&mut self, constitution: &Value, context: &Value) -> Result<Value, String> {
