@@ -47,7 +47,13 @@ export function FlowSurface({binding}:{binding:SurfaceBinding}){
  const liveSelection=useRef({text,instance});liveSelection.current={text,instance};
  const documentId=useRef(crypto.randomUUID());const observationKeys=useRef(new Set<string>());
  const [identity,setIdentity]=useWritingIdentity();
- const project=binding.project??scopeProject(scope)??"";
+ const scoped=binding.project??scopeProject(scope)??"";
+ // A flow in the personal ground belongs to no project, but agents work in one:
+ // the person says where, and a single project is the obvious default.
+ const projects=kernel.snapshot.navigator?.root?.work.projects??[];
+ const projectKey=`oi-flow-work-project:${binding.id}`;
+ const [chosenProject,setChosenProject]=useState(()=>{try{return localStorage.getItem(projectKey)??"";}catch{return "";}});
+ const project=scoped||(projects.some(p=>p.name===chosenProject)?chosenProject:projects.length===1?projects[0].name:"");
  const [chosenAgentRef]=useChosenAgent(project||undefined);
  const roster=useAgentRoster(project||undefined);
  const [answerWith,setAnswerWith]=useState<AnswerBinding>();
@@ -192,7 +198,7 @@ export function FlowSurface({binding}:{binding:SurfaceBinding}){
   * starts an agent's session, and only for an agent the person addressed. */
  const askForResponse=async()=>{
   if(!loaded||!instance||busy||asking||!text.trim()||!flowRef||!binding.location)return;
-  if(!project){setError("Open this flow inside a project to ask an agent.");return;}
+  if(!project){setError("Choose the project the agents should work in, then ask again.");return;}
   const plural=isCurrentFormat(instance.doc);
   if(!plural){setError("Upgrade this flow to the plural form to ask agents in it.");return;}
   setAsking(true);setError(undefined);
@@ -265,7 +271,7 @@ export function FlowSurface({binding}:{binding:SurfaceBinding}){
    <button title={text.trim()?"Append this entry to the document":"Write an entry first"} disabled={!loaded||busy||!text.trim()} onClick={()=>void save()}>Save · ⌘S</button></>}
  >
   {error&&<p role="alert" className="flow-error">{error}</p>}
-  {loaded&&doc&&<FlowParticipants doc={doc} project={project} disabled={!!conflict} onChange={commitDocument}/>}
+  {loaded&&doc&&<FlowParticipants doc={doc} project={project} disabled={!!conflict||busy||asking} onChange={commitDocument}/>}
   {loaded&&doc&&isCurrentFormat(doc)&&<FlowConversations doc={doc} requests={conversations.requests} onOpenEntry={openEntry} onReconcile={async requestRef=>{try{await conversationReconcile(kernel.transport,project,requestRef);await conversations.refresh();}catch(reason){setError(String(reason));}}}/>}
   {loaded&&doc&&(view==="threads"&&isCurrentFormat(doc)
    ?<FlowThreads doc={doc} focusId={focusId} onOpenEntry={openEntry}/>
@@ -279,6 +285,7 @@ export function FlowSurface({binding}:{binding:SurfaceBinding}){
     {doc.entries.map((entry,index)=><option key={entry.id} value={entry.id}>{`entry ${index+1} · ${(entry.html.replace(/<[^>]*>/g,"").trim()||"(empty)").slice(0,48)}`}</option>)}
    </select></label>
    {replyTarget&&<label>as <select aria-label="Relation" value={relationType} onChange={event=>setRelationType(event.target.value as "reply"|"branch"|"correct")}><option value="reply">an answer</option><option value="branch">a side inquiry</option><option value="correct">a correction</option></select></label>}
+   {!scoped&&projects.length>1&&<label>Agents work in <select aria-label="Agents work in" value={project} onChange={event=>{setChosenProject(event.target.value);try{localStorage.setItem(projectKey,event.target.value);}catch{/* in-window choice still applies */}}}><option value="">choose a project</option>{projects.map(p=><option key={p.path} value={p.name}>{p.name}</option>)}</select></label>}
    <span role="group" aria-label="Address" className="flow-address">To {activeParticipants(doc).filter(p=>p.key&&p.key!==writerOf(doc)?.key).map(p=><label key={p.key}><input type="checkbox" aria-label={`Address ${(p as PluralParticipant).name||p.initial}`} checked={addressees.includes((p as PluralParticipant).key as string)} onChange={event=>setAddressees(current=>event.target.checked?[...current,(p as PluralParticipant).key as string]:current.filter(key=>key!==(p as PluralParticipant).key))}/> {(p as PluralParticipant).name||p.initial}</label>)}</span>
    <span className="flow-compose-acts" role="group" aria-label="What to do with this entry">
     <button type="button" className="oi-action" disabled={busy||asking||!text.trim()} title="Add this entry to the flow without asking anyone to respond" onClick={()=>void save()}>Add to the flow</button>

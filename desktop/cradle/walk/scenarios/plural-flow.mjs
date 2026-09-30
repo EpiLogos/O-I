@@ -83,6 +83,16 @@ export async function setup() {
 
 export default async function run({page, baseUrl, check, shot, channel, provision: p}) {
   const sleep = ms => new Promise(r => setTimeout(r, ms));
+  const wire = [];
+  page.on("response", async response => {
+    if (!response.url().endsWith("/op")) return;
+    try {
+      const sent = response.request().postDataJSON();
+      if (sent.op !== "file_operation" && sent.op !== "file_read") return;
+      const body = await response.json();
+      wire.push([sent.op, sent.request?.action, String(sent.request?.expected_revision ?? "").slice(-8), sent.location?.path?.split("/").pop(), body.outcome?.data?.outcome ?? body.outcome?.result, String(body.outcome?.data?.revision ?? body.outcome?.reading?.revision ?? body.outcome?.data?.current?.revision ?? "").slice(-8), body.error ?? ""]);
+    } catch { /* teardown */ }
+  });
   await page.goto(baseUrl); await channel("info");
   await bindDefaultCentral(page, p.root);
   await page.locator('[data-project-path="Work/Flowlab"]').click();
@@ -96,6 +106,8 @@ export default async function run({page, baseUrl, check, shot, channel, provisio
   // The footer is an auto-hiding strip; the composer row carries the acts in plain view.
   await page.getByRole("button", {name: "Add to the flow", exact: true}).click();
   await page.locator("[data-flow-participants]").waitFor({timeout: 30000});
+  // The entry is in the thread (saved and re-read) before anything else is done to the flow.
+  await page.locator(".flow-thread-entry").first().waitFor({timeout: 30000});
   check("the writing is placed as one real flow through Central", p.flowFiles().length === 1);
   const flowName = p.flowFiles()[0];
   check("a new flow is the plural form, with the person declared as a keyed participant", (() => { const d = p.readFlow(flowName); return d.meta.format?.version === 4 && d.meta.participants.some(x => x.kind === "person" && x.key); })());
@@ -108,6 +120,7 @@ export default async function run({page, baseUrl, check, shot, channel, provisio
     const history = p.call("central.files.history", {location: {schema: "central.path-ref/v1", ref: `central:path:${p.root}:Control/user/flows/${flowName}`, root: p.root, path: `Control/user/flows/${flowName}`}});
     console.log("  FLOW FILE HISTORY:", JSON.stringify(history.entries.map(e => [e.cursor, e.actor, e.actor_kind, e.previous_revision?.slice(-8), e.revision?.slice(-8)])));
     console.log("  ALERT:", await page.getByRole("alert").allInnerTexts());
+    console.log("  WIRE:", JSON.stringify(wire.slice(-14)));
     throw error;
   }
   await page.locator(".flow-bring-in li", {hasText: "Ash"}).getByRole("button", {name: "Bring in"}).click();
