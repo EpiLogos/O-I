@@ -6,7 +6,10 @@ import {setContextCues,getContextCues} from "../context/selectionPresentation";
 import {useKernel} from "../kernel/KernelProvider";
 import type {SurfaceBinding} from "../surface/types";
 import {readFlowInstance,writeFlowInstance,type FlowInstance} from "./instances";
-import {appendEntry,type QlDocParticipant} from "./instance";
+import {appendEntry,embedDocument,type QlDoc,type QlDocParticipant} from "./instance";
+import {activeParticipants,isCurrentFormat,type PluralParticipant,type Relation} from "./plural";
+import {FlowThreads} from "./FlowThreads";
+import {FlowParticipants} from "./FlowParticipants";
 import {FlowEntryBody,FlowRichBody} from "./FlowEntryBody";
 import {FlowCognition} from "./contemplate";
 import {EncounterList,type EncounterRow} from "../encounter/EncounterList";
@@ -47,6 +50,11 @@ export function FlowSurface({binding}:{binding:SurfaceBinding}){
  const roster=useAgentRoster(project||undefined);
  const [answerWith,setAnswerWith]=useState<AnswerBinding>();
  const [answerBusy,setAnswerBusy]=useState(false);
+ const [view,setView]=useState<"chronological"|"threads">("chronological");
+ const [focusId,setFocusId]=useState<string>();
+ const [replyTarget,setReplyTarget]=useState("");
+ const [relationType,setRelationType]=useState<"reply"|"branch"|"correct">("reply");
+ const [addressees,setAddressees]=useState<string[]>([]);
  useEffect(()=>{try{const raw=localStorage.getItem(answerKey(binding.id));if(raw){const parsed:unknown=JSON.parse(raw);if(parsed&&typeof parsed==="object"&&typeof (parsed as {ref?:unknown}).ref==="string")setAnswerWith(parsed as AnswerBinding);}}catch{/* an unreadable binding leaves the document unbound */}},[binding.id]);
  const bindAnswer=(row:EncounterRow)=>{
   const named=roster.agents?.find(a=>a.ref===chosenAgentRef);
@@ -74,6 +82,25 @@ export function FlowSurface({binding}:{binding:SurfaceBinding}){
  },[binding.id]);
  const change=(value:string)=>{setText(value);try{localStorage.setItem(key,JSON.stringify({text:value}));}catch{setError("Draft recovery storage is unavailable; save your writing to Central.");}};
  const writeEntries=async(nextInstance:FlowInstance,html:string)=>writeFlowInstance(kernel.transport,nextInstance.location,nextInstance.revision,html);
+ /** A membership or upgrade change to the document, through the same
+  * revision-checked write as an entry: a stale revision keeps both sides. */
+ const commitDocument=async(next:QlDoc)=>{
+  if(!instance)return;
+  setBusy(true);setError(undefined);
+  try{
+   const result=await writeEntries(instance,embedDocument(instance.html,next));
+   if(result.outcome==="conflict"){setConflict({current:await readFlowInstance(kernel.transport,instance.location)});return;}
+   setInstance(await readFlowInstance(kernel.transport,instance.location));
+  }catch(reason){setError(String(reason));}finally{setBusy(false);}
+ };
+ const openEntry=(entryId:string)=>{
+  setFocusId(entryId);
+  requestAnimationFrame(()=>{const el=document.querySelector<HTMLElement>(`[data-flow-entry="${CSS.escape(entryId)}"]`);el?.scrollIntoView({block:"center"});el?.focus();});
+ };
+ const writerOf=(doc:QlDoc):PluralParticipant|undefined=>{
+  const people=((doc.meta.participants??[]) as PluralParticipant[]).filter(p=>p.kind==="person"&&!p.left);
+  return people.find(p=>p.initial===identity.initial)??people[0];
+ };
  /** The agent's returned words are appended as the agent's own declared
   * entry. A conflict is retried once on the current bytes; a second conflict
   * keeps the answer visible in the error — the words are never dropped. */
@@ -109,14 +136,16 @@ export function FlowSurface({binding}:{binding:SurfaceBinding}){
   if(!loaded||!instance||busy||!text.trim())return;
   setBusy(true);setError(undefined);
   try{
-   const {html}=appendEntry(instance.html,text);
+   const plural=isCurrentFormat(instance.doc);
+   const relations:Relation[]=plural&&replyTarget?[{type:relationType,entryId:replyTarget,revision:instance.doc.meta.revision,anchor:null}]:[];
+   const {html}=appendEntry(instance.html,text,plural?{participant:writerOf(instance.doc),relations,addressees:addressees.length?addressees:undefined,basisRevision:instance.doc.meta.revision}:undefined);
    const result=await writeEntries(instance,html);
    if(result.outcome==="conflict"){
     const current=await readFlowInstance(kernel.transport,instance.location);
     setConflict({current});return;
    }
    const next=await readFlowInstance(kernel.transport,instance.location);
-   setInstance(next);setText("");
+   setInstance(next);setText("");setReplyTarget("");setRelationType("reply");setAddressees([]);
    try{localStorage.removeItem(key);}catch{setError("Saved. Local draft recovery storage could not be cleared.");}
   }catch(reason){setError(String(reason));}finally{setBusy(false);}
  };
@@ -174,17 +203,28 @@ export function FlowSurface({binding}:{binding:SurfaceBinding}){
  const status=!loaded?(error?"Unavailable":"Loading…"):busy?"Saving…":conflict?"Conflict":error?"Needs attention":answerBusy?"Waiting for the agent…":text.trim()?"Unsaved entry":"Saved";
  const doc=instance?.doc;
  return <EditorFrame className="flow-surface" label="Flow document" data={{"source-ref":binding.ref??binding.location?.ref,"source-revision":instance?.revision,"document-id":instance?.doc.meta.documentId??undefined}}
-  toolbar={<EditorCommands editor={input} markdown readOnly={!loaded||!!conflict}/>}
+  toolbar={<><EditorCommands editor={input} markdown readOnly={!loaded||!!conflict}/>{loaded&&doc&&isCurrentFormat(doc)&&<span className="flow-view-toggle" role="group" aria-label="Reading order"><button type="button" aria-pressed={view==="chronological"} onClick={()=>setView("chronological")}>In order</button><button type="button" aria-pressed={view==="threads"} onClick={()=>setView("threads")}>Threads</button></span>}</>}
   footer={<><span className="editor-path" title={binding.location?.ref}>{binding.flow?.path??"Flow"}</span><span role="status">{status}</span>
    <label className="flow-answer-initial" title="The declared initial the agent's answers carry">agent initial <input aria-label="Agent initial" value={answerWith?.initial??""} maxLength={1} onChange={event=>{if(!answerWith)return;const updated={...answerWith,initial:event.target.value.toUpperCase()};setAnswerWith(updated);try{localStorage.setItem(answerKey(binding.id),JSON.stringify(updated));}catch{/* in-window binding still applies */}}}/></label>
    <button title={text.trim()&&answerWith?"Send this entry to the bound live session; its answer returns into this file":!answerWith?"Bind a live session below, then send":text.trim()?"Send this entry to the live session":"Write an entry first"} disabled={!loaded||busy||answerBusy||!text.trim()||!answerWith} onClick={()=>void sendToAgent()}>Send to agent</button>
    <button title={text.trim()?"Append this entry to the document":"Write an entry first"} disabled={!loaded||busy||!text.trim()} onClick={()=>void save()}>Save · ⌘S</button></>}
  >
   {error&&<p role="alert" className="flow-error">{error}</p>}
-  {loaded&&doc&&<ol className="flow-thread" aria-label="Document thread">
-    {doc.entries.map(entry=><FlowEntryBody key={entry.id} entry={entry} entries={doc.entries} notes={doc.notes} media={doc.media}/>)}
-  </ol>}
+  {loaded&&doc&&<FlowParticipants doc={doc} project={project} disabled={!!conflict} onChange={commitDocument}/>}
+  {loaded&&doc&&(view==="threads"&&isCurrentFormat(doc)
+   ?<FlowThreads doc={doc} focusId={focusId} onOpenEntry={openEntry}/>
+   :<ol className="flow-thread" aria-label="Document thread">
+    {doc.entries.map(entry=><FlowEntryBody key={entry.id} entry={entry} entries={doc.entries} notes={doc.notes} media={doc.media} doc={doc} onOpenEntry={openEntry} focused={focusId===entry.id}/>)}
+  </ol>)}
   {loaded&&doc&&!!doc.journal.length&&<details className="flow-journal-note"><summary>Journal pages ({doc.journal.length})</summary><p className="oi-note">Journal pages remain a distinct collection in this document.</p><ol className="flow-journal-pages">{doc.journal.map(page=><li key={page.id} data-journal-page={page.id}><time>{page.at}</time><div className="flow-thread-body"><FlowRichBody html={page.html}/></div></li>)}</ol></details>}
+  {loaded&&doc&&isCurrentFormat(doc)&&<fieldset className="flow-compose-controls" aria-label="Address this entry">
+   <label>Reply to <select aria-label="Reply to" value={replyTarget} onChange={event=>setReplyTarget(event.target.value)}>
+    <option value="">a new contribution</option>
+    {doc.entries.map((entry,index)=><option key={entry.id} value={entry.id}>{`entry ${index+1} · ${(entry.html.replace(/<[^>]*>/g,"").trim()||"(empty)").slice(0,48)}`}</option>)}
+   </select></label>
+   {replyTarget&&<label>as <select aria-label="Relation" value={relationType} onChange={event=>setRelationType(event.target.value as "reply"|"branch"|"correct")}><option value="reply">an answer</option><option value="branch">a side inquiry</option><option value="correct">a correction</option></select></label>}
+   <span role="group" aria-label="Address" className="flow-address">To {activeParticipants(doc).filter(p=>p.key&&p.key!==writerOf(doc)?.key).map(p=><label key={p.key}><input type="checkbox" aria-label={`Address ${(p as PluralParticipant).name||p.initial}`} checked={addressees.includes((p as PluralParticipant).key as string)} onChange={event=>setAddressees(current=>event.target.checked?[...current,(p as PluralParticipant).key as string]:current.filter(key=>key!==(p as PluralParticipant).key))}/> {(p as PluralParticipant).name||p.initial}</label>)}</span>
+  </fieldset>}
   {loaded?<TextEditor ref={input} binding={binding} filename="New entry" aria-label="New entry" value={text} readOnly={!loaded||busy||!!conflict} sourceRevision={instance?.revision} workingCopy onChange={change} onSave={()=>void save()} onAttach={attach}/>:<p className="flow-error" role="status">Opening the flow document…</p>}
   <details className="flow-answer" open={!answerWith}>
    <summary>{answerWith?`Answering with · ${answerWith.title} (declared as ${answerWith.initial})`:"Answer with a live agent session"}</summary>

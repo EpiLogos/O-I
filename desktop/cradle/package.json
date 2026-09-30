@@ -19,7 +19,7 @@
     "test:canvas-editor": "node --experimental-strip-types --import ./tests/ts-register.mjs --test tests/canvas-editor-contract.test.mjs tests/material-html-lifecycle.test.mjs && node tests/canvas-editor-browser.mjs",
     "test:chat-settings-live": "node --experimental-strip-types --import ./tests/ts-register.mjs --test tests/chat-settings.live.mjs",
     "test:situation": "node --experimental-strip-types --import ./tests/ts-register.mjs --test tests/situation-frame.test.mjs",
-    "test:plural-flow": "node documents/embed-plural.mjs --check && node --experimental-strip-types --import ./tests/ts-register.mjs --test tests/plural-flow.test.mjs && node tests/plural-flow-instance.mjs && node tests/plural-flow-browser.mjs"
+    "test:plural-flow": "node documents/embed-plural.mjs --check && node --experimental-strip-types --import ./tests/ts-register.mjs --test tests/plural-flow.test.mjs && node tests/plural-flow-instance.mjs && node tests/plural-flow-browser.mjs && node tests/plural-flow-surface-browser.mjs"
   },
   "dependencies": {
     "@codemirror/commands": "^6.11.0",
