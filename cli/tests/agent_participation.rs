@@ -618,6 +618,77 @@ fn unknown_agent_is_a_three_part_refusal_not_an_invented_identity() {
 }
 
 #[test]
+fn both_agent_ref_spellings_resolve_to_one_canonical_reading() {
+    // The fixture stores `agent/aletheia`; the colon spelling is an accepted
+    // input alias, and the answer is byte-identical, canonical spelling out.
+    let fake = Fake::new();
+    let exact = participation(&fake, Some("project:O-I"));
+    let scratch = tempfile::tempdir().unwrap();
+    let alias = compose_participation(
+        &fake,
+        &ParticipationRequest {
+            agent_ref: "agent:aletheia",
+            world_ref: Some("project:O-I"),
+            scratch_dir: scratch.path(),
+        },
+    )
+    .unwrap();
+    assert_eq!(alias, exact);
+    assert_eq!(alias["agent_ref"], "agent/aletheia");
+    assert_eq!(
+        alias["participation_ref"],
+        "oi:participation:agent/aletheia@project:O-I#profile/aletheia@r3"
+    );
+}
+
+#[test]
+fn the_stored_spelling_is_canonical_in_both_directions() {
+    // A profile stored in the colon spelling answers the slash spelling the
+    // same way: resolved, and reported under the stored ref.
+    let fake = Fake::new();
+    fake.profile.borrow_mut()["agent_ref"] = json!("agent:aletheia");
+    let scratch = tempfile::tempdir().unwrap();
+    let p = compose_participation(
+        &fake,
+        &ParticipationRequest {
+            agent_ref: "agent/aletheia",
+            world_ref: None,
+            scratch_dir: scratch.path(),
+        },
+    )
+    .unwrap();
+    assert_eq!(p["agent_ref"], "agent:aletheia");
+    assert_eq!(p["profile"]["ref"], "profile/aletheia");
+    assert_eq!(
+        p["participation_ref"],
+        "oi:participation:agent:aletheia@control:root#profile/aletheia@r3"
+    );
+}
+
+#[test]
+fn unknown_slug_refuses_identically_under_both_spellings() {
+    let fake = Fake::new();
+    let scratch = tempfile::tempdir().unwrap();
+    let refused = |agent_ref: &str| {
+        compose_participation(
+            &fake,
+            &ParticipationRequest {
+                agent_ref,
+                world_ref: None,
+                scratch_dir: scratch.path(),
+            },
+        )
+        .unwrap_err()
+    };
+    let slash = refused("agent/nobody");
+    let colon = refused("agent:nobody");
+    assert_eq!(slash.code, "participation.agent_not_found");
+    assert_eq!(colon.code, slash.code);
+    assert_eq!(colon.consequence, slash.consequence);
+    assert_eq!(colon.action, slash.action);
+}
+
+#[test]
 fn participation_carries_the_exact_fields_aikit_a2a_builder_reads() {
     let fake = Fake::new();
     fake.profile.borrow_mut()["public_skill_refs"] = json!(["skill/ql/aletheia-ql-gate"]);
