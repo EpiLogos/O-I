@@ -2,9 +2,9 @@
   "schema": "oi.native-source-contribution/v1",
   "contribution_ref": "oi.contribution/core",
   "owner": "oi",
-  "revision": 1,
+  "revision": 2,
   "entry": "descriptor.tsx",
-  "entry_sha256": "277fd059a5a5168721880e3921af1536e6e2b89fc781e8563c4a97c21d29d7df",
+  "entry_sha256": "6b258f82c41d820bcf388bdff5c6bf1c47b619c2b2c279bfc31efd152b889ecf",
   "surfaces": [
     {
       "descriptor_ref": "oi.surface/expressions",
@@ -43,6 +43,14 @@
       "kind": "library",
       "title": "Library",
       "mount_export": "LibraryHostedSurface",
+      "retention": "mounted",
+      "region": "canvas"
+    },
+    {
+      "descriptor_ref": "oi.surface/nara-identity",
+      "kind": "nara-identity",
+      "title": "Identity \u00b7 Nara",
+      "mount_export": "PersonalHostedSurface",
       "retention": "mounted",
       "region": "canvas"
     }

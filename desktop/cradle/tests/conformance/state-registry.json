@@ -46,6 +46,7 @@
     "oi:open-agency",
     "oi:open-encounter",
     "oi:open-explore",
+    "oi:open-personal-expression",
     "oi:open-scene-constellation",
     "oi:open-scene-source",
     "oi:open-settings",
@@ -54,6 +55,7 @@
     "oi:place-draft",
     "oi:place-draft-result",
     "oi:recover-device-copy",
+    "oi:scene-source-redocked",
     "oi:surface-view",
     "oi:techne-open-file",
     "oi:terminal-attached",
@@ -2211,8 +2213,7 @@
      "basis": [
       "KEY = \"oi-cradle.workspaces.v1\"",
       "legacyRaw = localStorage.getItem(\"oi-cradle.layout.v1\")",
-      "raw = localStorage.getItem(KEY)",
-      "record = preservePresentation(localStorage.getItem(KEY) ? KEY : \"oi-cradle.layout.v1\", String(error))"
+      "raw = localStorage.getItem(KEY)"
      ]
     },
     {

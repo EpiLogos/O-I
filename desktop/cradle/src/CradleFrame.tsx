@@ -1,4 +1,6 @@
-import type {HostedSourceTarget} from "./expressions/sourceHandoff";
+import {associateScenePortal,type SceneSourceOpen} from "./expressions/scenePortal";
+import {worldOp} from "./expression/world";
+import {SceneSourcePortal} from "./expressions/SceneSourcePortal";
 import {hostedSurfaceFor, withHostedDescriptor} from "./contributions/registry";
 import {useChosenAgent} from "./agency/selection";
 import {useAgentRoster} from "./agency/roster";
@@ -203,6 +205,16 @@ export function CradleFrame({onComposed}:{onComposed?:()=>void}) {
   const workspace = useWorkspaces();
   const workspaceRef=useRef(workspace);workspaceRef.current=workspace;
   const [windowError,setWindowError]=useState<string>();
+  const [sourcePortalSlot,setSourcePortalSlot]=useState<{binding:SurfaceBinding;portal:NonNullable<SceneSourceOpen['portal']>;workspaceId:string;mode:WorkspaceMode}>();
+  const sourcePortalSlotRef=useRef(sourcePortalSlot);sourcePortalSlotRef.current=sourcePortalSlot;
+  const sourcePortalSurface=useRef<string>();
+  const closeSourcePortal=async()=>{
+    const held=sourcePortalSlotRef.current;if(!held)return;
+    const closed=await worldOp(kernel.transport,{operation:'portal_close',portal_ref:held.portal.portal_ref,actor:'human:scene-portal'}) as {state?:string};
+    if(closed.state!=='portal_closed')throw Error('The native portal did not close.');
+    sourcePortalSurface.current=undefined;setSourcePortalSlot(undefined);
+  };
+  const closeSourcePortalRef=useRef(closeSourcePortal);closeSourcePortalRef.current=closeSourcePortal;
   // BOOT-09: a per-surface owner open failure, shown where that binding's
   // tab would otherwise render, with Retry re-running the same mount.
   const [surfaceErrors,setSurfaceErrors]=useState<Record<string,string>>({});
@@ -212,6 +224,10 @@ export function CradleFrame({onComposed}:{onComposed?:()=>void}) {
   // fields so no persisted workspace is destroyed on restore, but nothing
   // renders them any more: writing is a real Flow in a NOW register now.
   const state = workspace.current.layout;
+  useEffect(()=>{
+    const held=sourcePortalSlotRef.current;
+    if(held&&(held.workspaceId!==workspace.current.id||held.mode!==(state.mode??'base')))void closeSourcePortalRef.current().catch(reason=>setWindowError(String(reason)));
+  },[workspace.current.id,state.mode]);
   const setState = workspace.setLayout;
   // Broker invalidation (WF2): kernel `file_changed` receipts drop the
   // broker's resident readings for the changed file, so the next acquire is
@@ -406,12 +422,15 @@ export function CradleFrame({onComposed}:{onComposed?:()=>void}) {
     // workspaces stay logically open without being eagerly read or admitted.
     const openIds = new Set<SurfaceId>();
     const demanded = new Set<SurfaceId>();
-    const bindings={...Object.assign({},...workspace.workspaces.map(w=>w.layout.surfaces)),...state.surfaces} as typeof state.surfaces;
-    for (const w of workspace.workspaces) {
-      for (const group of groupsOf(w.layout.root)) for (const tab of group.tabs) openIds.add(tab);
-      for (const d of w.layout.detached ?? []) { openIds.add(d.surfaceId); demanded.add(d.surfaceId); }
+    const bindings={...Object.assign({},...workspace.workspaces.flatMap(w=>[w.layout.surfaces,...Object.values(w.modeLayouts??{}).map(layout=>layout.surfaces)])),...state.surfaces} as typeof state.surfaces;
+    for (const w of workspace.workspaces)for(const layout of [w.layout,...Object.values(w.modeLayouts??{})]) {
+      for (const group of groupsOf(layout.root)) for (const tab of group.tabs) openIds.add(tab);
+      for(const tab of layout.sidePane?.tabs??[])openIds.add(tab);
+      for (const d of layout.detached ?? []) { openIds.add(d.surfaceId); demanded.add(d.surfaceId); }
     }
     for (const group of groupsOf(state.root)) for (const tab of group.tabs) demanded.add(tab);
+    for(const tab of state.sidePane?.tabs??[]){openIds.add(tab);demanded.add(tab);}
+    if(sourcePortalSurface.current)openIds.add(sourcePortalSurface.current);
     for (const surfaceId of openIds) {
       const binding = bindings[surfaceId];
       if (!binding || binding.pending) continue;
@@ -568,13 +587,13 @@ export function CradleFrame({onComposed}:{onComposed?:()=>void}) {
   };
   const openEncounterRef=useRef(openEncounter);openEncounterRef.current=openEncounter;
 
-  const openFileRef=useRef<(location:CentralLocation,opts?:{current?:()=>boolean})=>Promise<void>>(async()=>{});
+  const openFileRef=useRef<(location:CentralLocation,opts?:{into?:"side"|"portal"|"tree";current?:()=>boolean;onOpened?:(binding:SurfaceBinding)=>void|Promise<void>})=>Promise<void>>(async()=>{});
   /** Open a real file. Two canvas refinements (owner, 2026-09-19):
    * `replaceId` — a fresh tab's own opener-page choice replaces THAT tab in
    * place, in whatever canvas it lives, never a second tab; `into:"side"` —
    * the open lands in the sidebar's own pane canvas, the canvas the request
    * came from. */
-  const openFile = async (location:CentralLocation, opts?:{replaceId?:SurfaceId;into?:"side";current?:()=>boolean}) => {
+  const openFile = async (location:CentralLocation, opts?:{replaceId?:SurfaceId;into?:"side"|"portal"|"tree";current?:()=>boolean;onOpened?:(binding:SurfaceBinding)=>void|Promise<void>}) => {
     if(opts?.current&&!opts.current())throw Error("The source destination changed; open it again from the current Scene.");
     // FND-04: a binary material format (image/pdf/an unsupported disposition)
     // reads through the binary-safe `FileBytes` op; text/HTML/Markdown read
@@ -591,6 +610,8 @@ export function CradleFrame({onComposed}:{onComposed?:()=>void}) {
     // own pane canvas, never the hidden tree behind the stage.
     const into = replaceId ? undefined : (opts?.into ?? personCanvasAsk());
     const id = replaceId ?? crypto.randomUUID();
+    const temporary=into==='portal';
+    if(temporary&&sourcePortalSurface.current)throw Error("Close the current source preview before opening another.");
     if (!replaceId) {
       // A known binding opens by activation alone — never a second read; and
       // the activation is canvas-scoped, so a side-hosted copy activates in
@@ -599,24 +620,32 @@ export function CradleFrame({onComposed}:{onComposed?:()=>void}) {
       const currentAt = stateRef.current;
       // A file may already be hosted as kind "file" or, once its reading
       // yielded a bound source, as kind "source" — the ref is the identity.
-      const known = location.ref ? Object.values(currentAt.surfaces).find(binding => (binding.kind === "file" || binding.kind === "source") && binding.ref === location.ref) : undefined;
+      const known = location.ref ? Object.values(currentAt.surfaces).find(binding => (binding.kind === "file" || binding.kind === "source") && (binding.ref === location.ref||binding.location?.ref===location.ref)) : undefined;
       const sideTabs = currentAt.sidePane?.tabs;
+      if(temporary&&known)throw Error("This source already has a native tab. Use its existing tab or close it before opening a temporary preview.");
       if (known && sideTabs?.includes(known.id)) {
-        setState(s => activateInHostCanvas(s, known.id));
+        if(into==='tree')setState(s=>openBinding({...s,sidePane:s.sidePane?{...s.sidePane,tabs:s.sidePane.tabs.filter(ref=>ref!==known.id),pinned:s.sidePane.pinned.filter(ref=>ref!==known.id),active:s.sidePane.active===known.id?(s.sidePane.tabs.filter(ref=>ref!==known.id)[0]??null):s.sidePane.active}:s.sidePane},known));
+        else setState(s => activateInHostCanvas(s, known.id));
+        await opts?.onOpened?.(known);
         return;
       }
       if (known && groupsOf(currentAt.root).some(g => g.tabs.includes(known.id))) {
         if (into !== "side") {
           setState(s => executeFrameAction(s, "surface.activate", { surfaceId: known.id }));
+          await opts?.onOpened?.(known);
           return;
         }
         setState(s => moveTreeTabToSide(s, known.id));
+        await opts?.onOpened?.(known);
         return;
       }
       if (kernel.transport.kind === "tauri" && location.ref) {
         const {invoke} = await import("@tauri-apps/api/core");
         if (opts?.current&&!opts.current())throw Error("The source destination changed; open it again from the current Scene.");
-        if (await invoke<boolean>("window_focus_subject",{reference:location.ref}))return;
+        if (await invoke<boolean>("window_focus_subject",{reference:location.ref})){
+          if(opts?.onOpened)throw Error("This source is already in a detached native window. Return it with Re-dock before choosing another portal placement.");
+          return;
+        }
       }
     }
     // The destination is acknowledged BEFORE any owner round trip (WF2): a
@@ -628,11 +657,13 @@ export function CradleFrame({onComposed}:{onComposed?:()=>void}) {
     // replaced fresh tab becomes the pending destination where it stands; a
     // new tab opens into the named canvas — the sidebar's own pane canvas
     // when the open came from there.
-    if (replaceId) setState(s => ({...s, surfaces: {...s.surfaces, [id]: {id, kind: "file", title, pending: true}}}));
+    if(temporary)sourcePortalSurface.current=id;
+    else if (replaceId) setState(s => ({...s, surfaces: {...s.surfaces, [id]: {id, kind: "file", title, pending: true}}}));
     else if (into === "side") await openInSidePane({id, kind: "file", title, pending: true}, "none");
     else setState(s => openBinding({...s, closedStack: s.closedStack.filter(x => x !== id)}, {id, kind: "file", title, pending: true}));
     const originMode=stateRef.current.mode??"base";
     const stillAtFile=()=>workspaceRef.current.current.id===originWorkspaceId&&(stateRef.current.mode??"base")===originMode;
+    let admitted=false;
     try {
       const reading = isBinaryMaterial
         ? await acquireFileBytes(kernel.transport, location)
@@ -643,21 +674,34 @@ export function CradleFrame({onComposed}:{onComposed?:()=>void}) {
       // project (the open-source law). The pending file tab yields in place:
       // same tab, now a source binding, in the origin workspace.
       if (textReading?.source) {
-        workspace.replaceSurface(originWorkspaceId, {id, kind: "source", ref: textReading.source.ref, title: textReading.source.path.split("/").pop() ?? title, project: textReading.project?.name});
-        if (stillAtFile()) setState(s => activateInHostCanvas(s, id));
+        const binding:SurfaceBinding={id, kind:"source", ref:textReading.source.ref,title:textReading.source.path.split("/").pop()??title,project:textReading.project?.name,location:reading.location};
+        if(opts?.onOpened){
+          const opened=await kernel.apply({op:"source_open",source_ref:binding.ref!,project:binding.project});
+          if(opened?.result!=="source_opened")throw Error("Central did not return the bound source reading.");
+          const surface=await kernel.apply({op:"surface_open",surface_id:id,kind:"source",source_ref:binding.ref,title:binding.title});
+          if(surface?.result!=="surface_opened")throw Error("The bound source Surface could not be opened.");
+        }
+        if(!temporary)workspace.replaceSurface(originWorkspaceId,binding);admitted=true;
+        if (!temporary&&stillAtFile()) setState(s => activateInHostCanvas(s, id));
+        await opts?.onOpened?.(binding);
         return;
       }
       const ref = reading.location.ref;
       const opened = await kernel.apply({op:"surface_open",surface_id:id,kind:"file",source_ref:ref,title});
       if(opened?.result!=="surface_opened")throw new Error("Central file surface could not be opened");
-      workspace.replaceSurface(originWorkspaceId, {id, kind: "file", ref, title, project: textReading?.project?.name, location: reading.location});
-      if (stillAtFile()) setState(s => activateInHostCanvas(s, id));
+      const binding:SurfaceBinding={id,kind:"file",ref,title,project:textReading?.project?.name,location:reading.location};
+      if(!temporary)workspace.replaceSurface(originWorkspaceId,binding);admitted=true;
+      if (!temporary&&stillAtFile()) setState(s => activateInHostCanvas(s, id));
+      await opts?.onOpened?.(binding);
     } catch (error) {
+      if(admitted){if(temporary&&sourcePortalSurface.current===id){sourcePortalSurface.current=undefined;await kernel.surfaceClose(id);if(sourcePortalSlotRef.current?.binding.id===id)setSourcePortalSlot(undefined);}throw error;}
+      if(temporary){sourcePortalSurface.current=undefined;throw error;}
       // The pending tab becomes the failure's place (BOOT-09): the location
       // is kept, the error overlay + Retry render where the tab is, and
       // Retry re-acquires through the ordinary mount path.
       setSurfaceErrors(held => ({ ...held, [id]: error instanceof Error ? error.message : String(error) }));
       workspace.replaceSurface(originWorkspaceId, {id, kind: "file", title, location});
+      if(opts?.onOpened)throw error;
     }
   };
 
@@ -702,7 +746,7 @@ export function CradleFrame({onComposed}:{onComposed?:()=>void}) {
     await openSource({ref: buffer.source_ref, path: buffer.path ?? "", treatment: "projectcentral-user", agent_retrieval_allowed: true, revision: buffer.base_revision}, undefined);
   };
 
-  const openKnowledge = async (address: KnowledgeAddress, title: string, project?: string, placement: "tab"|"page"|"window" = "tab", graphOrigin?:string, intoArg?: "side", stillCurrent?:()=>boolean) => {
+  const openKnowledge = async (address: KnowledgeAddress, title: string, project?: string, placement: "tab"|"page"|"window" = "tab", graphOrigin?:string, intoArg?: "side"|"portal"|"tree", stillCurrent?:()=>boolean,onOpened?:(binding:SurfaceBinding)=>void|Promise<void>) => {
     const requireCurrent=()=>{if(stillCurrent&&!stillCurrent())throw new Error("Navigation changed while the source was opening; open it again from its Scene.");};
     requireCurrent();
     if(placement==="window"&&kernel.transport.kind!=="tauri")throw new Error("Native popout is available in the desktop app");
@@ -723,25 +767,39 @@ export function CradleFrame({onComposed}:{onComposed?:()=>void}) {
     // Single-host law: one knowledge page, one tab — activate where it is,
     // move it to the asking canvas, or open it there fresh.
     const same=(b:SurfaceBinding)=>b.kind==="knowledge"&&b.ref===read.resource&&b.project===project&&(!graphOrigin||b.view?.graphOrigin===graphOrigin)&&(b.view?.knowledgePlane==="page")===(placement!=="tab");
-    if(into==="side"){
+    if(into==="portal"){
+      if(sourcePortalSurface.current)throw Error("Close the current source preview before opening another.");
+      if(Object.values(current.surfaces).some(same))throw Error("This knowledge source already has a native tab. Use that tab or close it before opening a temporary preview.");
+      const binding:SurfaceBinding={id:crypto.randomUUID(),kind:"knowledge",ref:read.resource,title,project,address,view:{knowledgePlane:"page"}};
+      sourcePortalSurface.current=binding.id;
+      try{
+        const opened=await kernel.apply({op:"surface_open",surface_id:binding.id,kind:binding.kind,source_ref:binding.ref,title:binding.title});
+        if(opened?.result!=="surface_opened")throw Error("The native knowledge Surface could not be opened.");
+        requireCurrent();await onOpened?.(binding);
+      }catch(error){sourcePortalSurface.current=undefined;await kernel.surfaceClose(binding.id).catch(()=>{});throw error;}
+    }else if(into==="side"){
       const twins=twinsByCanvas(same);
-      if(twins.side){setState(s=>activateInHostCanvas(s,twins.side!.id));}
-      else if(twins.tree){setState(s=>moveTreeTabToSide(s,twins.tree!.id));}
+      if(twins.side){setState(s=>activateInHostCanvas(s,twins.side!.id));await onOpened?.(twins.side);}
+      else if(twins.tree){setState(s=>moveTreeTabToSide(s,twins.tree!.id));await onOpened?.(twins.tree);}
       else{
         const binding:SurfaceBinding={id:crypto.randomUUID(),kind:"knowledge",ref:read.resource,title,project,address,...(placement!=="tab"?{view:{knowledgePlane:"page" as const,graphOrigin}}:{})};
         const opened = await kernel.apply({op:"surface_open",surface_id:binding.id,kind:"knowledge",source_ref:binding.ref,title:binding.title});
         if (opened?.result !== "surface_opened") throw new Error("The native knowledge surface could not be opened");
         requireCurrent();
         setState(s=>openInSidePlace(s,binding.id,binding));
+        await onOpened?.(binding);
       }
     } else {
       // A side-hosted tab is never re-hosted here: a tree ask mints its own.
-      const existing = Object.values(current.surfaces).find(b=>same(b)&&!current.sidePane?.tabs.includes(b.id));
+      const existing = Object.values(current.surfaces).find(b=>same(b)&&(into==='tree'||!current.sidePane?.tabs.includes(b.id)));
       const binding:SurfaceBinding = existing ?? {id:crypto.randomUUID(),kind:"knowledge",ref:read.resource,title,project,address,...(placement!=="tab"?{view:{knowledgePlane:"page" as const,graphOrigin}}:{})};
       const opened = await kernel.apply({op:"surface_open",surface_id:binding.id,kind:"knowledge",source_ref:binding.ref,title:binding.title});
       if (opened?.result !== "surface_opened") throw new Error("The native knowledge surface could not be opened");
       requireCurrent();
-      setState(s=>groupsOf(s.root).some(g=>g.tabs.includes(binding.id)) ? executeFrameAction(s,"surface.activate",{surfaceId:binding.id}) : openBinding({...s,closedStack:s.closedStack.filter(id=>id!==binding.id)},binding));
+      setState(s=>{
+        const base=into==='tree'&&s.sidePane?.tabs.includes(binding.id)?{...s,sidePane:{...s.sidePane,tabs:s.sidePane.tabs.filter(id=>id!==binding.id),pinned:s.sidePane.pinned.filter(id=>id!==binding.id),active:s.sidePane.active===binding.id?(s.sidePane.tabs.filter(id=>id!==binding.id)[0]??null):s.sidePane.active}}:s;
+        return groupsOf(base.root).some(g=>g.tabs.includes(binding.id))?executeFrameAction(base,"surface.activate",{surfaceId:binding.id}):openBinding({...base,closedStack:base.closedStack.filter(id=>id!==binding.id)},binding);
+      });
       if(placement==="window") {
         try {
           const {invoke}=await import("@tauri-apps/api/core");
@@ -750,6 +808,7 @@ export function CradleFrame({onComposed}:{onComposed?:()=>void}) {
           setState(s=>detachBinding(s,binding.id));
         }catch(error){setWindowError(String(error));throw error;}
       }
+      await onOpened?.(binding);
     }
     // Explicit successful navigation only. Refresh, restore and display do
     // not execute AIKit's route-use operation.
@@ -848,8 +907,8 @@ export function CradleFrame({onComposed}:{onComposed?:()=>void}) {
    * binding in the ordinary pane system, opened or focused like System and
    * Explore. It holds no owner identity of its own — what it shows is read
    * through its own owners. */
-  const openModeSurface = async (kind:"expressions"|"techne"|"epi-logos") => {
-    const title = kind==="expressions" ? "Expressions" : kind==="techne" ? "Technè" : "Epi-Logos";
+  const openModeSurface = async (kind:"expressions"|"techne"|"epi-logos"|"nara-identity") => {
+    const title = kind==="expressions" ? "Expressions" : kind==="techne" ? "Technè" : kind==="nara-identity" ? "Identity · Nara" : "Epi-Logos";
     const existing = Object.values(stateRef.current.surfaces).find(b=>b.kind===kind);
     const binding = existing ?? {id:crypto.randomUUID(),kind,title};
     if(!kernel.snapshot.surfaces[binding.id]){
@@ -967,13 +1026,62 @@ export function CradleFrame({onComposed}:{onComposed?:()=>void}) {
       }).catch(fail);
     };
     const sceneSourceOpen=(event:Event)=>{
-      const target=detail<{target?:HostedSourceTarget}>(event)?.target;
-      if((!target?.address?.value&&!target?.location)||!target.returnTo?.place?.ref)return;
-      leave("Scene",target.returnTo);enterModeRef.current("base");
-      const workspaceId=workspaceRef.current.current.id,root=stateRef.current.root;
-      const current=()=>workspaceRef.current.current.id===workspaceId&&(stateRef.current.mode??"base")==="base"&&stateRef.current.root===root;
-      if(target.location)void openFileRef.current(target.location,{current}).catch(fail);
-      else if(target.address)void openKnowledgeRef.current(target.address,target.title,target.project,"tab",undefined,undefined,current).catch(fail);
+      const request=detail<SceneSourceOpen>(event),target=request?.target,portal=request?.portal;
+      if((!target?.address?.value&&!target?.location)||!target.returnTo?.place?.ref){request?.complete?.("No verified native source was supplied.");return;}
+      void (async()=>{
+        if(portal)await portal.current();
+        const temporary=portal?.placement==='preview'||portal?.placement==='overlay';
+        if(portal?.placement==='re_dock'){
+          if(kernel.transport.kind!=='tauri')throw Error("Re-dock requires the native desktop window owner.");
+          const reading=await worldOp(kernel.transport,{operation:'portal_inspect'}) as {portals?:{portal_ref:string;surface_id:string;placement:string}[]};
+          const held=reading.portals?.find(row=>row.portal_ref===portal.portal_ref&&row.placement==='detached');
+          if(!held)throw Error("This Scene has no detached source portal to return.");
+          const {invoke}=await import("@tauri-apps/api/core");
+          const workspaceId=workspaceRef.current.current.id;
+          let dispose=()=>{};
+          const restored=new Promise<void>((resolve,reject)=>{
+            const handler=(event:Event)=>{const data=(event as CustomEvent).detail;if(data?.workspaceId===workspaceId&&data.surfaceId===held.surface_id){dispose();data.error?reject(Error(data.error)):resolve();}};
+            const timer=setTimeout(()=>{dispose();reject(Error("The detached owner did not acknowledge its UI return."));},20000);
+            dispose=()=>{clearTimeout(timer);window.removeEventListener('oi:scene-source-redocked',handler);};
+            window.addEventListener('oi:scene-source-redocked',handler);
+          });
+          try{await invoke("window_redock_surface",{workspaceId,surfaceId:held.surface_id});await restored;}catch(error){dispose();throw error;}
+          request.complete?.();return;
+        }
+        if(portal?.placement==='detached'&&kernel.transport.kind!=='tauri')throw Error("A detached portal requires the native desktop window owner.");
+        const beside=portal?.placement==='beside';
+        if(!beside&&!temporary){leave("Scene",target.returnTo);enterModeRef.current("base");}
+        if(portal&&!temporary){
+          const sourceRef=target.location?.ref??target.address?.value;
+          const at=workspaceRef.current.current,layouts=[at.layout,...Object.values(at.modeLayouts??{})];
+          const held=layouts.flatMap(layout=>Object.values(layout.surfaces).filter(binding=>(binding.ref===sourceRef||binding.location?.ref===sourceRef)&&(layout.sidePane?.tabs.includes(binding.id)||groupsOf(layout.root).some(group=>group.tabs.includes(binding.id)))));
+          if(held.length>1)throw Error("This source has multiple retained tabs. Resolve the duplicate placements before moving its portal.");
+          if(held[0])flushSync(()=>workspaceRef.current.moveSurface(held[0].id,beside?'side':'tree'));
+        }
+        const workspaceId=workspaceRef.current.current.id,originMode=stateRef.current.mode??"base";
+        const current=()=>workspaceRef.current.current.id===workspaceId&&(stateRef.current.mode??"base")===originMode;
+        const onOpened=async(binding:SurfaceBinding)=>{
+          if(!current())throw Error("Navigation changed while the source was opening.");
+          if(!portal)return;
+          await portal.current();
+          if(portal.placement==='detached'){
+            const {invoke}=await import("@tauri-apps/api/core");
+            await invoke("window_detach",{workspaceId,binding,bounds:stateRef.current.windowBounds?.[binding.id]??null});
+            detachedRequests.current.add(`${workspaceId}:${binding.id}`);
+            setState(s=>detachBinding(s,binding.id));
+          }
+          await associateScenePortal(kernel.transport,portal,binding);
+          if(temporary)setSourcePortalSlot({binding,portal,workspaceId,mode:originMode});
+        };
+        if(target.location)await openFileRef.current(target.location,{current,into:temporary?'portal':beside?'side':'tree',onOpened:portal?onOpened:undefined});
+        else if(target.address)await openKnowledgeRef.current(target.address,target.title,target.project,"tab",undefined,temporary?'portal':beside?'side':'tree',current,portal?onOpened:undefined);
+        // A beside portal lands in the side pane, and the side pane lives in
+        // the panel's Context plane — surface that plane at panel depth, as
+        // the sidebar's own open-beside route does, or the tab stands in a
+        // pane the resting Chat plane never presents.
+        if(beside){const context=MODE_CURATION[originMode].panel.planes.find(plane=>/context/i.test(plane));if(context)setState(s=>({...s,rightDepth:s.rightDepth==="full"?"full":"panel",panelPlanes:{...s.panelPlanes,[originMode]:context}}));}
+        request.complete?.();
+      })().catch(error=>{request.complete?.(error instanceof Error?error.message:String(error));fail(error);});
     };
     const constellationOpen=(event:Event)=>{
       const d=detail<{target?:{frame_ref:string;title:string;project?:string};returnTo?:unknown;complete?:(error?:string)=>void}>(event),target=d?.target;
@@ -1035,6 +1143,7 @@ export function CradleFrame({onComposed}:{onComposed?:()=>void}) {
     };
     const pairs:[string,(event:Event)=>void][]=[["oi:enter-mode",enterModeEvent],["oi:open-encounter",openEncounterEvent],["oi:open-agency",agencyOpen],["oi:panel-open-subject",openSubject],["oi:workspace-message",message],["oi:open-settings",settings],["oi:close-settings",closeSettings],["oi:agent-setup-return",agentSetupReturn],["oi:library-open",libraryOpen],["oi:epi-open-expression",expression],["oi:epi-examine",examine],["oi:epi-open-source",source],["oi:epi-open-knowledge",knowledgeOpen],["oi:context-return",back]];
     pairs.push([OPEN_AUTOMATIONS_EVENT,automationsOpen],["oi:open-scene-constellation",constellationOpen],["oi:open-scene-source",sceneSourceOpen]);
+    pairs.push(["oi:open-personal-expression",()=>{leave("Epi-Logos",undefined);void openModeSurfaceRef.current("nara-identity").catch(fail);}]);
     for(const [name,handler] of pairs)window.addEventListener(name,handler);
     return()=>{for(const [name,handler] of pairs)window.removeEventListener(name,handler);};
   },[]);
@@ -1493,6 +1602,15 @@ export function CradleFrame({onComposed}:{onComposed?:()=>void}) {
         workspaceRef.current.activate(e.payload.workspace_id);
         workspaceRef.current.redock(e.payload.workspace_id,e.payload.binding.id);
         setRedockFocus(e.payload.binding.id);
+        try{
+          const reading=await worldOp(kernel.transport,{operation:'portal_inspect'}) as {portals?:import('./expression/world').WorldPortal[]};
+          for(const portal of reading.portals??[])if(portal.surface_id===e.payload.binding.id&&portal.placement==='detached'){
+            // The existing window owner restores the tab to its canvas. Its
+            // actual placement is full, not the historical state-only preview.
+            await worldOp(kernel.transport,{operation:'portal_open',portal_ref:portal.portal_ref,target_ref:portal.target_ref,surface_id:portal.surface_id,surface_kind:portal.surface_kind,title:portal.title,placement:'full',actor:'human:scene-portal'});
+          }
+          window.dispatchEvent(new CustomEvent('oi:scene-source-redocked',{detail:{workspaceId:e.payload.workspace_id,surfaceId:e.payload.binding.id}}));
+        }catch(error){setWindowError(String(error));window.dispatchEvent(new CustomEvent('oi:scene-source-redocked',{detail:{workspaceId:e.payload.workspace_id,surfaceId:e.payload.binding.id,error:String(error)}}));}
         try { const {invoke}=await import("@tauri-apps/api/core"); await invoke("window_focus_main"); }
         catch (reason) { setWindowError(`The view returned; focus the main window to continue: ${String(reason)}`); }
       });
@@ -1878,7 +1996,7 @@ export function CradleFrame({onComposed}:{onComposed?:()=>void}) {
     onCreateForm:async kind=>{const form=DOCUMENT_FORMS.find(candidate=>candidate.kind===kind);if(!form)throw new Error(`The ${kind} form is not offered by the document roster`);const created=await createFormInPlace(kernel.transport,form,{project:workspace.current.project,projects:kernel.snapshot.navigator?.root?.work.projects});await openFile(created.location);window.dispatchEvent(new CustomEvent("oi:form-created",{detail:{path:created.location.path}}));},
     onMessage:message=>setWindowError(message),
   };
-  const worldNavigator=(workspaceSelector:ReactNode)=><WorldNavigator onAgent={summonAgent} onMessage={message=>setWindowError(message)} onExplore={()=>void openExplore().catch(e=>setWindowError(String(e)))} mode={mode} onMode={enterMode} onOpenEncounter={openEncounter} centralFiles={workspace.current.centralFiles??false} onCentralFilesChange={workspace.setCentralFiles} workspaceSelector={workspaceSelector} searchShortcut={leader.label} key={workspace.current.id} projectNavigation={workspace.current.projectNavigation ?? {}} onNavigationChange={(ref,change)=>workspace.setProjectNavigation(ref,change,workspace.current.id)} onOpenFile={openFile} onProjectChange={workspace.browse} onOpenToday={openToday} onOpenWiki={(ref,title,project)=>openKnowledge({kind:"wiki",value:ref},title,project)} onSearch={()=>setSearchOpen(true)} activeEncounterRef={activeEncounterRef} onOpenFlowInstance={row=>openFlowInstance(row)} onNewFlow={()=>startWriting()} />;
+  const worldNavigator=(workspaceSelector:ReactNode)=><WorldNavigator onOpenIdentity={()=>void openModeSurface("nara-identity").catch(report)} onAgent={summonAgent} onMessage={message=>setWindowError(message)} onExplore={()=>void openExplore().catch(e=>setWindowError(String(e)))} mode={mode} onMode={enterMode} onOpenEncounter={openEncounter} centralFiles={workspace.current.centralFiles??false} onCentralFilesChange={workspace.setCentralFiles} workspaceSelector={workspaceSelector} searchShortcut={leader.label} key={workspace.current.id} projectNavigation={workspace.current.projectNavigation ?? {}} onNavigationChange={(ref,change)=>workspace.setProjectNavigation(ref,change,workspace.current.id)} onOpenFile={openFile} onProjectChange={workspace.browse} onOpenToday={openToday} onOpenWiki={(ref,title,project)=>openKnowledge({kind:"wiki",value:ref},title,project)} onSearch={()=>setSearchOpen(true)} activeEncounterRef={activeEncounterRef} onOpenFlowInstance={row=>openFlowInstance(row)} onNewFlow={()=>startWriting()} />;
 
   return (
     <SituationProvider value={situation}>
@@ -1971,6 +2089,7 @@ export function CradleFrame({onComposed}:{onComposed?:()=>void}) {
       ))}
       <ObjectCentreLayer fullPage={modeSoloStage} yields={object=>factoryCentreOwns(mode,object.kind)}/>
       </DesktopShell></ActiveEncounterContext.Provider>
+      {sourcePortalSlot&&<SceneSourcePortal binding={sourcePortalSlot.binding} placement={sourcePortalSlot.portal.placement as 'preview'|'overlay'} treeMode={sourcePortalSlot.mode} onView={(id,view)=>setSourcePortalSlot(held=>held?.binding.id===id?{...held,binding:{...held.binding,view}}:held)} openSource={source=>void openSource(source).catch(report)} openKnowledge={openKnowledge} onClose={()=>void closeSourcePortalRef.current().catch(report)}/>}
       {WalkChannel&&<WalkChannel layout={state}/>}
       <ContextTray bindings={{...Object.assign({},...workspace.workspaces.flatMap(w=>[w.layout.surfaces,...Object.values(w.modeLayouts??{}).map(layout=>layout.surfaces)])),...state.surfaces}} accompanying={state.accompanying}/>
       {/* T2 summon seam: answers "oi:techne-summon" (library / verso / search)

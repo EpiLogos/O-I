@@ -213,6 +213,50 @@ fn handle(kernel: &Mutex<Kernel>, request: &Request) -> BridgeResponse {
                 if let KernelOp::ExpressionRecovery { request } = op {
                     return oi_cradle_kernel::expression_recovery::execute(request);
                 }
+                if let KernelOp::NaraCoordinate { request } = op {
+                    return oi_cradle_kernel::nara_coordinate::execute(request);
+                }
+                let epii = kernel.lock().expect("kernel mutex").prepare_nara_epii(&op)?;
+                if let Some(prepared) = epii {
+                    let completed = prepared.execute()?;
+                    return kernel.lock().expect("kernel mutex").finish_nara_epii(completed);
+                }
+                let act = kernel.lock().expect("kernel mutex").prepare_nara_expressive_act(&op)?;
+                if let Some(prepared) = act {
+                    let completed = prepared.execute()?;
+                    return kernel.lock().expect("kernel mutex").finish_nara_expressive_act(completed);
+                }
+                let presence=kernel.lock().expect("kernel mutex").prepare_nara_presence(&op)?;
+                if let Some(prepared)=presence {
+                    let completed=prepared.execute()?;
+                    return kernel.lock().expect("kernel mutex").finish_nara_presence(completed);
+                }
+                let m3=kernel.lock().expect("kernel mutex").prepare_m3_reception(&op)?;
+                if let Some(prepared)=m3 {
+                    let completed=prepared.execute()?;
+                    return kernel.lock().expect("kernel mutex").finish_m3_reception(completed);
+                }
+                let current=kernel.lock().expect("kernel mutex").prepare_nara_current(&op)?;
+                if let Some(prepared)=current {
+                    let completed=prepared.execute()?;
+                    return kernel.lock().expect("kernel mutex").finish_nara_current(completed);
+                }
+                let voice = kernel.lock().expect("kernel mutex").prepare_nara_voice(&op)?;
+                if let Some(prepared) = voice { return prepared.execute(); }
+                let dialogue = kernel
+                    .lock()
+                    .expect("kernel mutex")
+                    .prepare_nara_dialogue(&op)?;
+                if let Some(prepared) = dialogue {
+                    return prepared.execute();
+                }
+                let identity = kernel
+                    .lock()
+                    .expect("kernel mutex")
+                    .prepare_nara_identity(&op);
+                if let Some(prepared) = identity {
+                    return prepared.execute();
+                }
                 let read = kernel.lock().expect("kernel mutex").prepare_owner_read(&op);
                 if let Some(read) = read {
                     return read.execute();

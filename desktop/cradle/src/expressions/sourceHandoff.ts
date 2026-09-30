@@ -14,6 +14,18 @@ export async function resolveHostedSource(transport:KernelTransportStatus,value:
  if(node&&node.graphNodeId!==requested||field&&field.subjectGraphNodeId!==requested)throw Error('The Timeline selection changed; open its current source again.');
  const request={expression_ref:subject.ref,revision:subject.revision,scene_ref:subject.sceneRef};
  const {document,scene}=await inspectWikiScene(transport,request);
+ // A primary scene body is itself a native source occurrence; it need not
+ // also appear among that scene's particle/entity members.
+ if(scene.body?.subject_ref===requested){
+  const body=scene.body;
+  if(node||field)throw Error('A scene body source cannot inherit a Timeline neighbourhood.');
+  if(body.native_owner!=='central'||body.reading.ref!==requested||body.reading.availability!=='available'||!body.reading.revision)throw Error('This scene body has no available Central-owned source basis.');
+  if(!body.provenance.some(row=>row.ref===requested&&row.revision===body.reading.revision&&row.availability==='available'))throw Error('The scene body has no exact source provenance.');
+  const location=await resolveFileLocation(transport,requested),reading=await readFileBytes(transport,location);
+  if(reading.location.ref!==requested||reading.revision!==body.reading.revision)throw Error('The scene body source changed; review its current revision before opening it.');
+  await inspectWikiScene(transport,request);
+  return {location:reading.location,title:scene.title,returnTo:{place:{ref:document.expression_ref,title:scene.title},passageId:scene.scene_ref}};
+ }
  const members=scene.entity_refs.flatMap(ref=>document.entities[ref]?.subject?[document.entities[ref]]:[]);
  const memberRefs=new Set(members.map(entity=>entity.subject!.subject_ref));
  const sceneRefs=new Set(scene.entity_refs),relations=Object.values(document.relations).filter(row=>sceneRefs.has(row.from_entity_ref)&&sceneRefs.has(row.to_entity_ref)&&row.native_owner!=='oi'&&row.relation.availability==='available');

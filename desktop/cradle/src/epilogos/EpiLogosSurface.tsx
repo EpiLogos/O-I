@@ -50,6 +50,7 @@ export function EpiLogosSurface({binding}: {binding: SurfaceBinding}) {
   const families = useEpiFamilyStates(generation);
 
   const [familyView, setFamilyView] = useState<EpiFamily | null>(null);
+  const openIdentity = () => window.dispatchEvent(new CustomEvent('oi:open-personal-expression'));
   const place = useEpiPlace();
 
   const [reading, setReading] = useState<EpiReading>();
@@ -129,6 +130,11 @@ export function EpiLogosSurface({binding}: {binding: SurfaceBinding}) {
 
   return (
     <section className="epi-surface oi-scroll" aria-label="Epi-Logos">
+      <nav aria-label="Personal Epi-Logos">
+        <button type="button" className="oi-action" onClick={openIdentity}>
+          My personal Expression · Nara
+        </button>
+      </nav>
       {!place && !familyView && <Threshold families={families} onEnter={setFamilyView}/>}
       {!place && familyView && (
         <FamilyEntrances family={familyView} title={DOORWAYS.find(d => d.family === familyView)!.title} state={families[familyView]}
@@ -152,7 +158,7 @@ export function EpiLogosSurface({binding}: {binding: SurfaceBinding}) {
               ))}
               <section className="epi-holdings epi-holdings-nara">
                 <h3>Nara's personal material</h3>
-                <p className="oi-note">Nara's personal material is held separately and is not connected here yet.</p>
+                <button type="button" className="oi-action" onClick={openIdentity}>Open my personal Expression</button>
               </section>
             </>
           )}

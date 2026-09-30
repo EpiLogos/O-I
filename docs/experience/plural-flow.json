@@ -1,0 +1,145 @@
+{
+  "purpose": "Plural Flow is fundamental local and cross-world participation within O-I#65/#220, not a second messaging or story system.",
+  "story_source": "docs/experience/PLURAL-FLOW-SPEC.md",
+  "document_operations_source": ".wayfinder/maps/plural-flow-now.md",
+  "implementation_wayfinder": ".wayfinder/maps/plural-flow-now.md",
+  "families": [],
+  "standing": "Owner-commissioned specification and implementation plan, 29 September 2026; no runtime or human acceptance claimed.",
+  "runtime_or_human_acceptance": false,
+  "obligation_sources": {
+    "plural65": {
+      "source_ref": "docs/experience/PLURAL-FLOW-SPEC.md",
+      "issue": "https://github.com/EpiLogos/O-I/issues/558",
+      "consumer_issues": [65, 220, 154, 375],
+      "policy": "Retain full source and Wayfinder cases MP01-MP18. This adds obligations to existing WR/AG/WK/MC/SH/UI/GW/DO/PX/KN stories. Native operations, capability IDs and runtime bindings come from current owners; these planning labels do not mint them."
+    }
+  },
+  "required_obligation_ids": ["plural65:FORM", "plural65:DELIVERY", "plural65:RECOVERY", "plural65:PARTICIPATION", "plural65:RESPONSE", "plural65:SHARED", "plural65:CONTINUITY", "plural65:UI", "plural65:MATRIX"],
+  "obligations": [
+    {
+      "id": "plural65:FORM", "source": "plural65",
+      "native_locator": "PLURAL-FLOW-SPEC section 2; Wayfinder PF1, MP01-MP03",
+      "requirement": "Flow retains complete rich writing while expressing actual participants, addressed contributions, branching and convergence with stable identities and compatibility.",
+      "story_ids": ["WR01", "WR02", "WR03", "AG06", "UI03", "DO01"],
+      "required_evidence": ["D", "C", "P", "M", "H"],
+      "required_branches": [
+        "Distinct people/agents sharing a name or initial and one agent using successive sessions retain correct author and exact producing occurrence; native caller attribution differs from imported declaration.",
+        "Original F/H and v0.3 documents preserve document/entry identity and full entries/journal/notes/packet/media across read-only opening, explicit upgrade, export/reimport and incompatible-writer refusal.",
+        "Replies, passage selectors, side threads, multiple contributing parents and corrections retain exact source bases; readable chronological and focused views agree without copying conversations or inventing a runtime fork."
+      ],
+      "test_refs": ["MP01", "MP02", "MP03", "WR01", "WR02", "DO01"]
+    },
+    {
+      "id": "plural65:DELIVERY", "source": "plural65",
+      "native_locator": "PLURAL-FLOW-SPEC sections 3.1-3.3; Wayfinder PF2, MP04-MP06",
+      "requirement": "Native correlation carries each accepted Flow request through actual recipient context and provider output to the right returned contribution independently of the UI.",
+      "story_ids": ["WR03", "WR04", "AG06", "WK04", "GW03", "UI06"],
+      "required_evidence": ["D", "C", "P", "M"],
+      "required_branches": [
+        "Concurrent/crossed requests and unrelated assistant events retain entry/request/recipient/turn/output identity. Per-recipient group states preserve successful siblings; unsupported provider concurrency serializes instead of guessing.",
+        "Streaming updates one attributed live result; complete, interrupted, failed and uncertain results retain full output or exact source continuation. A first fragment/latest block is not a completed answer.",
+        "Close every Flow UI before a response. Native receipt, source inclusion and re-open recover the actual answer once, without another send, turn or React-owned pending state."
+      ],
+      "test_refs": ["MP04", "MP05", "MP06", "GW03", "WR03"]
+    },
+    {
+      "id": "plural65:RECOVERY", "source": "plural65",
+      "native_locator": "PLURAL-FLOW-SPEC section 3; Wayfinder PF1/PF2, MP06-MP08",
+      "requirement": "Independent native effects are recoverable and attributable through concurrent source edits, crashes and replay without losing writing or duplicating work.",
+      "story_ids": ["WR02", "WR04", "WR06", "GW06", "UI05", "DO05"],
+      "required_evidence": ["D", "C", "P", "M"],
+      "required_branches": [
+        "Interrupt at document commit, queue acceptance, dispatch/delivery, provider completion, inclusion and acknowledgement. Inspect existing journals to reconcile the same operation; changed payload under the same identity refuses.",
+        "Concurrent human/external edits and two independent replies preserve current bytes and rich collections. A late reply keeps its historical question basis; a stale source-edit proposal requires reconciliation.",
+        "Unknown external dispatch is reported rather than blindly retried; partial output and known effects survive. Reopening/relay/retry recovers an existing contribution rather than minting another authorial act."
+      ],
+      "test_refs": ["MP06", "MP07", "MP08", "WR06", "GW06", "CAW:P19"]
+    },
+    {
+      "id": "plural65:PARTICIPATION", "source": "plural65",
+      "native_locator": "PLURAL-FLOW-SPEC sections 1, 2.1, 2.3 and 4.1; Wayfinder PF3, MP01/MP09/MP10/MP14/MP16",
+      "requirement": "Humans and agents participate through real identity, bounded history, authority, SessionSpace and material relations, with readership distinct from addressing or invocation.",
+      "story_ids": ["AG01", "AG06", "AG09", "MC02", "MC03", "SH02", "SH03", "GW03"],
+      "required_evidence": ["D", "C", "P", "M", "H"],
+      "required_branches": [
+        "Late join/observer/leave/revocation and body replacement alter actual delivered history and allowed effects. Each body receives its own eligible context; peer messages do not masquerade as its own assistant history or governing instructions.",
+        "Registered unembodied agents remain addressable. Durable identity/Position succession and exact generation/required-Workcell routes retain distinct outcomes, including same-named peers and stale leases.",
+        "Shared/exported content, embedded state, assets and derivatives respect real audience and caller authority. Private aside/notes use an appropriately scoped source rather than visual hiding; independent human worlds retain identity and attribution."
+      ],
+      "test_refs": ["MP01", "MP09", "MP10", "MP14", "MP16", "web65:PARTICIPATE"]
+    },
+    {
+      "id": "plural65:RESPONSE", "source": "plural65",
+      "native_locator": "PLURAL-FLOW-SPEC section 4.2; Wayfinder PF3, MP11",
+      "requirement": "An admitted addressed, facilitated or bounded team exchange advances useful work without repeated human continuation and ends or waits for a meaningful reason.",
+      "story_ids": ["WK04", "WK05", "AG06", "AG09", "PX03", "GW03", "GW06"],
+      "required_evidence": ["D", "C", "P", "M", "H"],
+      "required_branches": [
+        "A direct requested response or selected standing arrangement wakes the eligible idle body through existing dispatch; reading, selection and presence alone do not invoke models. Busy sessions use their supported queue/interrupt path.",
+        "Facilitated and team exchanges use actual members and contributions, bounded purpose/participant/turn/time/tool policies and causal request identity. Self echoes, duplicate delivery and cross-face relay cannot reset reply budgets.",
+        "Resolved work, cancellation, reached budgets or a meaningful human question stops further unsent turns and leaves a usable continuation with actual completed effects. Message receipt alone does not count as useful response."
+      ],
+      "test_refs": ["MP11", "WK04", "WK05", "AG06"]
+    },
+    {
+      "id": "plural65:SHARED", "source": "plural65",
+      "native_locator": "PLURAL-FLOW-SPEC sections 1.2, 3.5 and 4.3; Wayfinder PF4, MP12-MP14/MP16",
+      "requirement": "Local plural Flow, cross-Workcell participation and independently grounded SharedFields use the same conversational relations with explicit native source and hosted projection ownership.",
+      "story_ids": ["SH01", "SH02", "SH03", "SH04", "SH05", "MC03", "MC05", "GW06", "WR03"],
+      "required_evidence": ["D", "C", "P", "M", "H"],
+      "required_branches": [
+        "Complete one human/two-agent source-dependent inquiry locally with hosted SharedField/SpaceTimeDB and optional QL/Factory absent; ordinary writing and short contact remain independently useful.",
+        "Repeat across Mac/Omarchy with actual root/child NOW, sessions and material locations, then with two separately authorised human worlds. The same logical exchange maps to native Contribution and source refs; controlled accounts are not misreported as two-human evidence.",
+        "Source owner/CAS and hosted participation remain explicit. Offline drafts reconcile instead of claiming unsupported multi-writer merge; no raw shared HTML or context exposes private embedded journal/notes/assets. Preserve existing connector-group provenance and tests without claiming all external faces complete."
+      ],
+      "test_refs": ["MP12", "MP13", "MP14", "MP16", "web65:PARTICIPATE", "web65:CONTINUITY"]
+    },
+    {
+      "id": "plural65:CONTINUITY", "source": "plural65",
+      "native_locator": "PLURAL-FLOW-SPEC sections 4.5 and 5; Wayfinder PF2/PF4/PF5, MP15/MP18",
+      "requirement": "The shared undertaking survives Day/session boundaries and returns useful, correctly attributed history to each person and later agent encounter.",
+      "story_ids": ["WR04", "WR05", "WR06", "WR07", "KN05", "KN08", "SH04", "SH05"],
+      "required_evidence": ["D", "C", "P", "M", "H"],
+      "required_branches": [
+        "Personal Days, FieldDay and shared Flow/NOW stay distinct across timezones, rollover and offline late receipt; live work and pending contributions continue with actual occurrence/source relations.",
+        "Nara and historical intake preserve speaker, addressee, producer, source revision and correction: something said to the person does not become their authored belief. The same oracle journey/deck continues.",
+        "A fresh body uses a corrected retained source-backed result on a different example, with the relevant actual prepared/delivered context. A stored summary or Return envelope alone is not learning or useful continuation."
+      ],
+      "test_refs": ["MP15", "MP18", "CAW:P15", "CAW:P16", "CAW:P19", "QL-MEF#258", "Central#242"]
+    },
+    {
+      "id": "plural65:UI", "source": "plural65",
+      "native_locator": "PLURAL-FLOW-SPEC section 4.4; Wayfinder PF4, MP03/MP05/MP17",
+      "requirement": "The existing Flow, standalone rich form and shared Expression experience make plural participation readable and operable through the same native actions.",
+      "story_ids": ["UI01", "UI02", "UI03", "UI04", "UI05", "UI06", "WR01", "WR03", "SH03", "DO03"],
+      "required_evidence": ["D", "C", "P", "M", "H"],
+      "required_branches": [
+        "Real bring-in, address, reply, branch/rejoin, stop, source/deep-open, pending/recovery and close/reopen controls have native effects and readback. Inspecting a participant does not replace the person's own session.",
+        "Writing remains primary; names/roles/audience, changed source basis and pending outcomes are understandable without JSON. Preserve drafts, keyboard/narrow/reduced-motion use and complete rich media/presentation.",
+        "Flow, graph/constellation and activity Expression co-refer to actual source and contributions. Disconnect the producer and verify liveness changes; frozen/replay is read-only and does not repeat historical tool/model effects."
+      ],
+      "test_refs": ["MP03", "MP05", "MP17", "UI01", "UI02", "UI05", "web65:ACTIVITY"]
+    },
+    {
+      "id": "plural65:MATRIX", "source": "plural65",
+      "native_locator": "PLURAL-FLOW-SPEC section 5; Wayfinder PF0/PF5 and section 4; TOOLS.md",
+      "requirement": "The feature is developed and verified through existing capability/UX/practice and source-bound test relations with independent expected outcomes.",
+      "story_ids": ["WR03", "AG06", "SH03", "KN08", "PX01", "PX05", "DV01", "DV08", "UI06"],
+      "required_evidence": ["D", "C", "P", "M"],
+      "required_branches": [
+        "Bind each selected branch to current repository-qualified capability, exact matrix digest/account, actual schema/effect, practice/loading, source/context and provider/authority/material basis through the existing compiler and binding path.",
+        "Required missing owner operations become implementation packets. New executable tests enter existing native suites/scenario bindings; preserved legacy stories/web65/CAW/QL meanings are not replaced by shorter test labels.",
+        "Ordinary actors receive meaningful tasks and discoverable powers; independent verifiers retain held-out source expectations and disconnected/wrong-target controls. Repair, replay, install and prove fresh-participant use, then return warranted source/practice changes."
+      ],
+      "test_refs": ["MP18", "scripts/experience_map.py", "tests/experience", "desktop/cradle/walk/scenario-bindings.json", "O-I#65:C0-C5", "O-I#558"]
+    }
+  ],
+  "matrix_binding_requirements": {
+    "protocol": "ql-capability-matrix/1",
+    "operator_source": "docs/experience/TOOLS.md",
+    "inventory_source": "docs/experience/campaign.json#native_capability_sources",
+    "native_ids": "Resolve actual current owner IDs and schemas; the planning module creates none.",
+    "runtime_bindings": [],
+    "execution_evidence": []
+  }
+}

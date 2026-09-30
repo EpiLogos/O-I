@@ -584,6 +584,10 @@ impl ExpressionProfile {
 pub struct ProfileAdoption {
     pub profile_ref: String,
     pub revision: u64,
+    /// Exact source basis selected for this instantiation. It survives
+    /// reopening without replacing any entity's own native subject.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub source_basis: Option<ReadingRef>,
     #[serde(default)]
     pub overridden_parameters: BTreeMap<String, Parameter>,
 }
@@ -593,6 +597,9 @@ impl ProfileAdoption {
         id(&self.profile_ref, "profile:")?;
         if self.revision == 0 || self.revision > crate::expression::MAX_REVISION {
             return Err("Invalid adopted profile revision".into());
+        }
+        if let Some(basis) = &self.source_basis {
+            readings(std::slice::from_ref(basis))?;
         }
         if self.overridden_parameters.len() > MAX_OVERRIDES {
             return Err("Profile override budget exceeded".into());

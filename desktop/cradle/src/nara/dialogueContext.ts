@@ -38,10 +38,13 @@ export type ExpressiveActPhase="composing"|"active"|"interrupted"|"completed"|"c
 const LIVE_PHASES:ExpressiveActPhase[]=["composing","active"];
 
 export interface AdmittedOccasion {day_ref:string;day_revision:string;now_ref:string;now_revision:string;admitted_via_ref:string}
+export interface PersonalCurrentContext {reading_ref:string;reading_revision:string;event_ref:string;identity_source_ref:string;identity_revision:string}
 export interface DisclosedRef {ref_id:string;revision:string;standing:EvidenceStanding;disclosure:DisclosureKind;disclosed_via_ref:string}
 export interface BimbaSelectionBinding {owner_contract_ref:string;registry_revision:string;selected_source_ref:string;direct_canonical_ref:string;conjugate_canonical_ref:string}
 export interface CPrimeDialogueBinding {participation:"dialogical"|"authorised-undertaking";content_type:string;position:string;frame:DialogueFrame;thread_form:string;sequence:string;composition_ref:string;composition_revision:string}
 export interface SharedFieldRelation {shared_field_ref:string;consent_ref:string;participant_subject_refs:string[]}
+/** Only the disclosure frame is structural; its contents still require admission. */
+export interface SharedReadingState {session_ref:string;reading_ref:string;reading_revision:string|null}
 export interface ExpressiveActCheckpoint {checkpoint_ref:string;checkpoint_expression_revision:string}
 export interface ExpressiveActState {
   expressive_act_ref:string;
@@ -70,14 +73,16 @@ export interface NaraDialogueContext {
   hovered_ref:string|null;
   pinned_refs:string[];
   occasion:AdmittedOccasion|null;
+  personal_current?:PersonalCurrentContext|null;
   disclosed:DisclosedRef[];
   available_action_refs:string[];
   c_prime:CPrimeDialogueBinding|null;
   shared_field:SharedFieldRelation|null;
+  shared_reading?:SharedReadingState|null;
   expressive_act:ExpressiveActState|null;
 }
 
-const CONTEXT_KEYS=["schema","context_ref","nara_ref","subject_ref","agent_session_ref","m4_branch","coordinate_ref","bimba","expression_ref","expression_revision","profile_ref","profile_revision","scene_ref","active_m_focus","pointed_ref","hovered_ref","pinned_refs","occasion","disclosed","available_action_refs","c_prime","shared_field","expressive_act"] as const;
+const CONTEXT_KEYS=["schema","context_ref","nara_ref","subject_ref","agent_session_ref","m4_branch","coordinate_ref","bimba","expression_ref","expression_revision","profile_ref","profile_revision","scene_ref","active_m_focus","pointed_ref","hovered_ref","pinned_refs","occasion","personal_current","disclosed","available_action_refs","c_prime","shared_field","shared_reading","expressive_act"] as const;
 const STANDINGS:EvidenceStanding[]=["source","authored-architecture","implementation","observed","derived","reported","proposed","unavailable"];
 const DISCLOSURES:DisclosureKind[]=["khora-entry","hen-disclosure","personal-consent","shared-projection"];
 const MFOCUSES:MFocus[]=["m0","m1","m2","m3","m4","m5"];
@@ -138,6 +143,14 @@ export function validateDialogueContext(value:unknown):NaraDialogueContext {
     seen.add(entry.ref_id);
   }
   v.available_action_refs=wireRefs(v.available_action_refs,"available action reference",MAX_ACTION_REFS);
+  if(v.personal_current!=null){
+    const current=v.personal_current;
+    exactKeys(current,['reading_ref','reading_revision','event_ref','identity_source_ref','identity_revision'],'personal current context');
+    for(const [key,value]of Object.entries(current))wireText(value,key);
+    if(!current.reading_ref.startsWith('personal:nara-current:'))throw Error('Personal current requires a protected native reading reference.');
+    for(const [ref,revision]of [[current.reading_ref,current.reading_revision],[current.identity_source_ref,current.identity_revision]])
+      if(!v.disclosed.some(entry=>entry.ref_id===ref&&entry.revision===revision&&entry.disclosure==='personal-consent'))throw Error('Personal current requires exact saved identity and reading disclosure.');
+  }
   if(v.c_prime!=null){
     exactKeys(v.c_prime,["participation","content_type","position","frame","thread_form","sequence","composition_ref","composition_revision"],"C′ dialogue binding");
     wireText(v.c_prime.composition_ref,"C′ composition reference");
@@ -153,6 +166,12 @@ export function validateDialogueContext(value:unknown):NaraDialogueContext {
     wireText(v.shared_field.shared_field_ref,"SharedField reference");
     wireText(v.shared_field.consent_ref,"shared-presence consent reference");
     v.shared_field.participant_subject_refs=wireRefs(v.shared_field.participant_subject_refs,"shared participant subject",64);
+  }
+  if(v.shared_reading!=null){
+    exactKeys(v.shared_reading,["session_ref","reading_ref","reading_revision"],"shared reading state");
+    wireText(v.shared_reading.session_ref,"shared reading session reference");
+    wireText(v.shared_reading.reading_ref,"shared reading reference");
+    if(v.shared_reading.reading_revision!=null)wireText(v.shared_reading.reading_revision,"shared reading revision");
   }
   if(v.expressive_act!=null){
     validateExpressiveActState(v.expressive_act);
@@ -216,11 +235,13 @@ export interface DialogueContextInput {
   hovered_ref?:string|null;
   pinned_refs?:string[];
   occasion?:AdmittedOccasion|null;
+  personal_current?:PersonalCurrentContext|null;
   /** Only refs actually disclosed, each with its disclosure receipt. */
   disclosed:DisclosedRef[];
   available_action_refs?:string[];
   c_prime?:CPrimeDialogueBinding|null;
   shared_field?:SharedFieldRelation|null;
+  shared_reading?:SharedReadingState|null;
   expressive_act?:ExpressiveActState|null;
 }
 
@@ -244,10 +265,12 @@ export function buildDialogueContext(input:DialogueContextInput):NaraDialogueCon
     hovered_ref:input.hovered_ref??null,
     pinned_refs:input.pinned_refs??[],
     occasion:input.occasion??null,
+    ...(input.personal_current===undefined?{}:{personal_current:input.personal_current}),
     disclosed:input.disclosed,
     available_action_refs:input.available_action_refs??[],
     c_prime:input.c_prime??null,
     shared_field:input.shared_field??null,
+    ...(input.shared_reading===undefined?{}:{shared_reading:input.shared_reading}),
     expressive_act:input.expressive_act??null,
   });
 }
@@ -261,6 +284,7 @@ function isStructural(context:NaraDialogueContext,refId:string):boolean {
     ||refId===context.expression_ref
     ||refId===context.profile_ref
     ||context.scene_ref===refId
+    ||(context.shared_reading!=null&&(context.shared_reading.session_ref===refId||context.shared_reading.reading_ref===refId))
     ||(context.bimba!=null&&(context.bimba.selected_source_ref===refId||context.bimba.direct_canonical_ref===refId||context.bimba.conjugate_canonical_ref===refId));
 }
 

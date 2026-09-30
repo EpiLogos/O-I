@@ -223,3 +223,100 @@ fn source_suite_activation_is_atomic_incremental_dispatch_authority_and_rollback
     assert_eq!(checked_json["ok"], true);
     assert_eq!(checked_json["active_checks"].as_array().unwrap().len(), 6);
 }
+
+/// `oi where` discloses a product's companions beside the resolved primary:
+/// a managed `bin/<exe>` link reaches its content-addressed generation, and
+/// the siblings there are the same cut's. An explicit override resolves the
+/// same way relative to the override.
+#[cfg(unix)]
+#[test]
+fn where_discloses_companions_beside_the_resolved_executable() {
+    let config = TempDir::new().unwrap();
+    let data = TempDir::new().unwrap();
+    let bin = TempDir::new().unwrap();
+    write_source_composition(config.path(), bin.path(), "central");
+    let generation = data.path().join("products/quaternal-logic/abc/bin");
+    fake_executable(
+        &{
+            fs::create_dir_all(&generation).unwrap();
+            generation.clone()
+        },
+        "ql",
+        "ql",
+    );
+    fake_executable(&generation, "ql-field-host", "host");
+    fake_executable(&generation, "ql-field-worker", "worker");
+    fs::create_dir_all(data.path().join("bin")).unwrap();
+    std::os::unix::fs::symlink(
+        "../products/quaternal-logic/abc/bin/ql",
+        data.path().join("bin/ql"),
+    )
+    .unwrap();
+    let composition_path = config.path().join("composition.json");
+    let mut composition: Value =
+        serde_json::from_slice(&fs::read(&composition_path).unwrap()).unwrap();
+    composition["modules"]["quaternal-logic"]["native_executable"] =
+        json!(data.path().join("bin/ql"));
+    fs::write(
+        &composition_path,
+        serde_json::to_vec_pretty(&composition).unwrap(),
+    )
+    .unwrap();
+
+    let location = output(
+        oi(config.path(), data.path(), bin.path())
+            .env_remove("OI_QL_BIN")
+            .args(["where", "quaternal-logic", "--json"]),
+    );
+    assert!(location.status.success(), "{}", stderr(&location));
+    let reading: Value = serde_json::from_slice(&location.stdout).unwrap();
+    assert_eq!(reading["schema"], "oi.product-location/v1");
+    assert_eq!(reading["authority"], "legacy-fallback-no-active-receipt");
+    let generation = fs::canonicalize(&generation).unwrap();
+    let companions = reading["companions"].as_object().unwrap();
+    assert_eq!(companions.len(), 4);
+    for (name, present) in [
+        ("ql-field-host", true),
+        ("ql-field-worker", true),
+        ("ql-focused-host", false),
+        ("ql-sky", false),
+    ] {
+        let companion = &companions[name];
+        assert_eq!(
+            companion["executable"],
+            json!(generation.join(name)),
+            "{name}"
+        );
+        assert_eq!(companion["present"], present, "{name}");
+        assert_eq!(companion["sha256"].is_string(), present, "{name}");
+    }
+
+    // An explicit override resolves its companions beside the override.
+    let other = TempDir::new().unwrap();
+    let override_ql = fake_executable(other.path(), "ql", "override");
+    fake_executable(other.path(), "ql-focused-host", "focused");
+    let overridden = output(
+        oi(config.path(), data.path(), bin.path())
+            .env("OI_QL_BIN", &override_ql)
+            .args(["where", "ql", "--json"]),
+    );
+    assert!(overridden.status.success(), "{}", stderr(&overridden));
+    let reading: Value = serde_json::from_slice(&overridden.stdout).unwrap();
+    assert_eq!(reading["authority"], "explicit-source-override");
+    let root = fs::canonicalize(other.path()).unwrap();
+    assert_eq!(reading["companions"]["ql-focused-host"]["present"], true);
+    assert_eq!(
+        reading["companions"]["ql-focused-host"]["executable"],
+        json!(root.join("ql-focused-host"))
+    );
+    assert_eq!(reading["companions"]["ql-field-host"]["present"], false);
+
+    // A product that declares no companions reads an empty object.
+    let central = output(
+        oi(config.path(), data.path(), bin.path())
+            .env_remove("OI_CENTRAL_CTRL_BIN")
+            .args(["where", "central", "--json"]),
+    );
+    let reading: Value = serde_json::from_slice(&central.stdout).unwrap();
+    assert_eq!(reading["companions"], json!({}));
+}
