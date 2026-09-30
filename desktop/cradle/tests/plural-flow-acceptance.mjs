@@ -27,7 +27,11 @@ const CTRL = need("PF_CTRL");
 const PI = process.env.PF_PI ?? join(homedir(), ".local/bin/pi");
 const TEMPLATE = process.env.PF_TEMPLATE ?? join(homedir(), "Central/Work/O-I/.aikit/sf6-agency/agency-request.json");
 const S = resolve(process.env.PF_SCRATCH ?? "/private/tmp/plural-flow-lab");
-const dirs = {central: join(S, "central"), home: join(S, "home"), project: join(S, "project")};
+const dirs = {central: join(S, "central"), home: join(S, "home"), project: join(S, "project"), shim: join(S, "shim")};
+const REMOTE = process.env.PF_REMOTE; // e.g. frank@100.92.62.101 — a second Workcell's owner
+const REMOTE_ROOT = process.env.PF_REMOTE_ROOT ?? "/home/frank/pf-lab";
+const REMOTE_BIN = process.env.PF_REMOTE_BIN ?? "/home/frank/pf-lab/bin";
+const INTERRUPT = join(S, "route-interrupted");
 const env = {
   ...process.env, AIKIT_HOME: dirs.home, CENTRAL_ROOT: dirs.central, AIKIT_CENTRAL_ROOT: dirs.central,
   CENTRAL_CTRL_BIN: CTRL, AIKIT_AGENCY_MINT_TEMPLATE: TEMPLATE,
@@ -105,8 +109,12 @@ const phases = {
     state.timePolicyRevision = policy.data.revision;
     say("day boundary falls at", state.dayBoundaryAtUtc);
     ss("encounter-configure", "--provider-json", JSON.stringify({protocol: "pi-rpc", id: "pi", label: "Pi (acceptance)", argv: [PI, "--mode", "rpc"]}));
+    // The transport to the other Workcell can be broken on demand by a flag file,
+    // so a route interruption is real: the owner's own ssh fails and recovers.
+    mkdirSync(dirs.shim, {recursive: true});
+    writeFileSync(join(dirs.shim, "ssh"), `#!/bin/sh\nif [ -f "${INTERRUPT}" ]; then echo "ssh: connect to host: Connection timed out (route interrupted for the acceptance)" >&2; exit 255; fi\nexec /usr/bin/ssh "$@"\n`, {mode: 0o755});
     // The owner carries its granted credential; nothing else here does.
-    sh(SS, ["-C", dirs.project, "encounter-start"], {env: {CENTRAL_NATIVE_TOKEN: minted.service}});
+    sh(SS, ["-C", dirs.project, "encounter-start"], {env: {CENTRAL_NATIVE_TOKEN: minted.service, PATH: `${dirs.shim}:${process.env.PATH}`}});
     await sleep(1500);
     say("owner health:", JSON.stringify(encounter({action: "health"})));
     // The Flow, from the real v0.4 template, with the person declared.
@@ -270,6 +278,176 @@ const phases = {
     state.dayAfter = r.data.day_ref ?? r.data; save();
     say("day after the boundary:", JSON.stringify(state.dayAfter).slice(0, 160));
     say("distinct Days:", JSON.stringify(state.dayBefore) !== JSON.stringify(state.dayAfter));
+  },
+
+  /** The other Workcell: its own owner, its own session and admission, its own
+   * provider body. Nothing of the agent lives on this machine. Needs the
+   * candidate binaries already built there (PF_REMOTE_BIN). */
+  async "remote-setup-and-bring-in"() {
+    if (!REMOTE) throw new Error("PF_REMOTE is required for the cross-Workcell phases");
+    const rsh = (cmd, input) => { const r = spawnSync("ssh", ["-o", "BatchMode=yes", REMOTE, cmd], {encoding: "utf8", input, maxBuffer: 16 * 1024 * 1024}); if (r.status !== 0) throw new Error(`ssh: ${(r.stderr || r.stdout).slice(-600)}`); return r.stdout; };
+    rsh(`pkill -f '${REMOTE_ROOT}/home' 2>/dev/null; rm -rf ${REMOTE_ROOT}/home ${REMOTE_ROOT}/project ${REMOTE_ROOT}/central; mkdir -p ${REMOTE_ROOT}/home ${REMOTE_ROOT}/project/docs ${REMOTE_ROOT}/central; cat > ${REMOTE_ROOT}/template.json`, readFileSync(TEMPLATE, "utf8"));
+    rsh(`cat > ${REMOTE_ROOT}/project/docs/passage.md`, PASSAGE);
+    const session = "agent-session/pf-ash-o", space = "session-space/pf-ash-o", agentRef = "agent/ash-omarchy";
+    const flowRef = flowLoc().ref;
+    const script = `
+set -euo pipefail
+R=${REMOTE_ROOT}
+export PATH=${REMOTE_BIN}:/home/frank/.cargo/bin:/home/frank/.local/bin:/home/frank/.local/share/mise/shims:/usr/bin:/bin
+export AIKIT_HOME=$R/home CENTRAL_ROOT=$R/central AIKIT_CENTRAL_ROOT=$R/central AIKIT_AGENCY_MINT_TEMPLATE=$R/template.json
+SS="aikit-session-space -C $R/project"
+ctrl --json --root $R/central action run central.init '{}' >/dev/null
+aikit --json -C $R/project project bind flowlab-remote --directory $R/project --no-default-skill-sets >/dev/null
+$SS encounter-configure --provider-json '{"protocol":"pi-rpc","id":"pi","label":"Pi (remote acceptance)","argv":["/home/frank/.local/share/mise/shims/pi","--mode","rpc"]}' >/dev/null
+$SS encounter-start >/dev/null
+sleep 3
+apply() { $SS apply --preview-json "$1" >/dev/null; }
+apply "$($SS create ${space} --label 'Plural Flow · Ash (Omarchy)')"
+apply "$($SS stage --space ${space} --intent-json "{\"operation\":\"bind-project-context\",\"binding\":$($SS project-context)}")"
+apply "$($SS stage --space ${space} --intent-json '{"operation":"attach-agent-session","attachment":{"agent_session":"${session}","purpose":"Plural Flow participant Ash (Omarchy)","provenance":["acceptance"]}}')"
+$SS encounter-agency-mint --agent-session ${session} --project-cwd $R/project --agent-ref ${agentRef} >/dev/null
+$SS encounter --request-json '{"action":"open","space":"${space}","agent_session":"${session}","provider":"pi","cwd":"'$R'/project"}' >/dev/null
+$SS encounter-agency-admit --agent-session ${session} --sender human:${state.annKey} --source-ref '${flowRef}'
+`;
+    console.log(rsh("bash -s", script).trim().slice(0, 600));
+    const basis = readFlow();
+    let doc = addParticipant(basis.doc, {initial: "O", name: "Ash (Omarchy)", kind: "agent", binding: {owner: "central", ref: agentRef, basis: "declared"}}, new Date().toISOString());
+    const key = doc.meta.participants.at(-1).key;
+    doc = withSession(doc, key, session);
+    writeFlow(basis, doc);
+    state.participants.AshO = {key, session, space, agentRef, workcell: "workcell:omarchy", route: {
+      kind: "ssh", target: REMOTE, cwd: `${REMOTE_ROOT}/project`, aikit: `${REMOTE_BIN}/aikit`, workcell: "workcell:omarchy",
+      env: {AIKIT_HOME: `${REMOTE_ROOT}/home`, CENTRAL_ROOT: `${REMOTE_ROOT}/central`, AIKIT_CENTRAL_ROOT: `${REMOTE_ROOT}/central`, PATH: `${REMOTE_BIN}:/home/frank/.cargo/bin:/home/frank/.local/bin:/home/frank/.local/share/mise/shims:/usr/bin:/bin`}}};
+    save();
+    say("Ash (Omarchy) key", key, "session", session);
+  },
+  /** One entry to a person's agent here and another agent on the other Workcell,
+   * with the route between them broken while the remote agent is answering. */
+  async "remote-ask"() {
+    const {Ada, AshO} = state.participants;
+    const basis = readFlow();
+    const request = {
+      request_ref: `conversation/pf-remote-${Date.now()}`, flow_location: flowLoc(), sender: `human:${state.annKey}`, actor: `human:${state.annKey}`,
+      entry: {author_key: state.annKey, at: new Date().toISOString(), basis_revision: basis.doc.meta.revision, relations: [],
+        html: "<p>Please read <code>docs/passage.md</code> in your working directory. Ada: say in under 80 words which single premise the argument depends on. Ash: give one concrete numeric example that bears on that premise, in under 80 words. You are on different machines; answer from your own reading.</p>"},
+      recipients: [{participant_key: Ada.key, agent_session: Ada.session}, {participant_key: AshO.key, agent_session: AshO.session, route: AshO.route, agent_ref: AshO.agentRef}],
+    };
+    const sent = encounter({action: "conversation-send", request});
+    say("sent:", JSON.stringify(sent.request.recipients.map(r => [r.participant_key.slice(-6), r.workcell ?? "local", r.state])));
+    // Break the route while the remote agent works, then restore it.
+    writeFileSync(INTERRUPT, "1");
+    say("  route interrupted for 30 s");
+    await sleep(30000);
+    rmSync(INTERRUPT, {force: true});
+    say("  route restored");
+    await waitIncluded(request.request_ref, [Ada.key, AshO.key], 300000);
+    state.remoteAsk = request.request_ref; save();
+  },
+
+  /** A second, independently authorised world: its own Central root, AIKit home,
+   * owner, credentials, person, agent and Day. It shares one flow with the first
+   * through authorised native routes; nothing about it is inferred from sharing a
+   * machine, a label or an initial. */
+  async "world-b-setup"() {
+    const B = {root: join(S, "worldB/central"), home: join(S, "worldB/home"), project: join(S, "worldB/project")};
+    for (const d of Object.values(B)) mkdirSync(d, {recursive: true});
+    mkdirSync(join(B.project, "docs"), {recursive: true});
+    writeFileSync(join(B.project, "docs/passage.md"), PASSAGE);
+    const benv = {...env, AIKIT_HOME: B.home, CENTRAL_ROOT: B.root, AIKIT_CENTRAL_ROOT: B.root};
+    delete benv.CENTRAL_NATIVE_TOKEN;
+    const run = (bin, args, extra = {}) => { const r = spawnSync(bin, args, {encoding: "utf8", env: {...benv, ...extra}, cwd: B.project, maxBuffer: 64 * 1024 * 1024}); if (r.status !== 0) throw new Error(`${bin} ${args.slice(0, 3).join(" ")}: ${r.stderr || r.stdout}`); return r.stdout; };
+    const cb = (action, input, extra = {}) => JSON.parse(run(CTRL, ["--json", "--root", B.root, "action", "run", action, JSON.stringify(input)], extra));
+    if (!cb("central.init", {}).ok) throw new Error("world B init");
+    // World B's own civil-time policy and Day: a personal Day is B's, not a copy of A's.
+    const bea = randomBytes(32).toString("hex");
+    mkdirSync(join(B.root, "Control/user"), {recursive: true});
+    const digest = t => createHash("sha256").update(t).digest("hex");
+    writeFileSync(join(B.root, "Control/user/native-action-authority.json"), JSON.stringify({schema: "central.native-action-authority/v1", scope_ref: "control:root", grants: [{principal_ref: "human:bea", actor_kind: "human", token_sha256: digest(bea), scope_refs: ["control:root"], actions: ["central.day.ensure"], expires_at_unix_seconds: Math.floor(Date.now() / 1000) + 86400}]}));
+    writeFileSync(join(B.root, "Control/user/civil-time-policy.json"), JSON.stringify({schema: "central.civil-time-policy/v1", scope_ref: "control:root", timezone: "Pacific/Auckland", day_boundary_minutes: 0, automatic_day_rollover: true}));
+    const relation = (path, role) => ({ref: `central:source:control:root:${path}`, path, roles: [role], provenance: "human-adopted", standing: "architecture-contract", treatment: "projectcentral-user", recognition: "controlled-acceptance-world-not-personal-adoption", recorded_at_unix_seconds: 1});
+    mkdirSync(join(B.root, "Control/relations"), {recursive: true});
+    writeFileSync(join(B.root, "Control/relations/source-relations.json"), JSON.stringify({schema: "central.control.ground-relations/v1", project_id: "control:root", relations: [relation("Control/user/native-action-authority.json", "native-action-authority"), relation("Control/user/civil-time-policy.json", "civil-time-policy")]}));
+    const policy = cb("central.time.policy", {});
+    if (!policy.ok) throw new Error("world B time policy: " + JSON.stringify(policy));
+    const day = cb("central.day.ensure", {expected_time_policy_revision: policy.data.revision}, {CENTRAL_NATIVE_TOKEN: bea});
+    if (!day.ok) throw new Error("world B day: " + JSON.stringify(day));
+    const aikit = SS.replace(/aikit-session-space$/, "aikit");
+    run(aikit, ["--json", "-C", B.project, "project", "bind", "flowlab-b", "--directory", B.project, "--no-default-skill-sets"]);
+    run(SS, ["-C", B.project, "encounter-configure", "--provider-json", JSON.stringify({protocol: "pi-rpc", id: "pi", label: "Pi (world B)", argv: [PI, "--mode", "rpc"]})]);
+    run(SS, ["-C", B.project, "encounter-start"], {CENTRAL_NATIVE_TOKEN: ""});
+    await sleep(1500);
+    // Ann's world grants Bea exactly one right: to append to this flow. Nothing else.
+    const fresh = tokens();
+    const beaFlow = randomBytes(32).toString("hex");
+    const authPath = join(dirs.central, "Control/user/native-action-authority.json");
+    const auth = JSON.parse(readFileSync(authPath, "utf8"));
+    auth.grants.push({principal_ref: "human:bea", actor_kind: "human", token_sha256: digest(beaFlow), scope_refs: ["control:root"], actions: ["central.flow.append"], expires_at_unix_seconds: Math.floor(Date.now() / 1000) + 86400});
+    writeFileSync(authPath, JSON.stringify(auth, null, 1));
+    writeFileSync(tokensPath, JSON.stringify({...fresh, beaFlow}), {mode: 0o600});
+    // B's person, in B's world, and B's agent: a session minted in B's owner for exactly that agent.
+    const slug = "bo", space = "session-space/pf-bo", session = "agent-session/pf-bo", agentRef = "agent/bo-ray";
+    const apply = preview => run(SS, ["-C", B.project, "apply", "--preview-json", JSON.stringify(preview)]);
+    const native = (...a) => JSON.parse(run(SS, ["-C", B.project, ...a]));
+    apply(native("create", space, "--label", "Plural Flow · Bo (world B)"));
+    apply(native("stage", "--space", space, "--intent-json", JSON.stringify({operation: "bind-project-context", binding: native("project-context")})));
+    apply(native("stage", "--space", space, "--intent-json", JSON.stringify({operation: "attach-agent-session", attachment: {agent_session: session, purpose: "Plural Flow participant Bo (world B)", provenance: ["acceptance"]}})));
+    run(SS, ["-C", B.project, "encounter-agency-mint", "--agent-session", session, "--project-cwd", B.project, "--agent-ref", agentRef]);
+    run(SS, ["-C", B.project, "encounter", "--request-json", JSON.stringify({action: "open", space, agent_session: session, provider: "pi", cwd: B.project})]);
+    run(SS, ["-C", B.project, "encounter-agency-admit", "--agent-session", session, "--sender", `human:${state.annKey}`, "--source-ref", flowLoc().ref]);
+    state.worldB = {root: B.root, home: B.home, project: B.project, dayB: day.data.day_ref ?? day.data, session, space, agentRef};
+    save();
+    say("world B day:", JSON.stringify(state.worldB.dayB), "· world A day:", JSON.stringify(state.dayAfter ?? state.dayBefore ?? "—"));
+  },
+  async "world-b-join"() {
+    const W = state.worldB;
+    // Private material in A's flow that must not reach B's agent or B's person's rights.
+    const basis = readFlow();
+    const doc = JSON.parse(JSON.stringify(basis.doc));
+    doc.journal = [{id: "j-private", at: new Date().toISOString(), html: "<p>PRIVATE-JOURNAL-OF-ANN: not for the other world.</p>"}];
+    doc.notes = [{id: "n-private", entryId: doc.entries[0]?.id ?? "x", text: "<p>PRIVATE-NOTE-OF-ANN</p>", at: new Date().toISOString(), replies: []}];
+    let next = addParticipant(doc, {initial: "B", name: "Bea", kind: "person", binding: {owner: "world-b", ref: "human:bea", basis: "declared"}}, new Date().toISOString());
+    next = addParticipant(next, {initial: "O", name: "Bo", kind: "agent", binding: {owner: "central", ref: W.agentRef, basis: "declared"}}, new Date().toISOString());
+    const bea = next.meta.participants.find(p => p.name === "Bea").key, bo = next.meta.participants.find(p => p.name === "Bo").key;
+    next = withSession(next, bo, W.session);
+    writeFlow(basis, next);
+    state.beaKey = bea; state.boKey = bo; save();
+    // Bea writes into A's flow from her own world with the credential A's world granted her.
+    const live = readFlow();
+    const wrote = ctrl("central.flow.append", {location: flowLoc(), operation_ref: `bea-${Date.now()}`, author_key: bea, at: new Date().toISOString(), html: "<p>Bea here, from my own world. I have read the question and I would like Bo to look at it too.</p>", intent: "contribution", relations: [], basis_revision: live.doc.meta.revision, actor: "human:bea", actor_kind: "human"}, {env: {CENTRAL_NATIVE_TOKEN: tokens().beaFlow}});
+    say("Bea's entry:", wrote.ok ? `${wrote.data.outcome} attribution=${wrote.data.entry.attribution.basis}` : JSON.stringify(wrote.error));
+    // Her grant is one right, on one flow, as herself: writing as Ann is refused, and any other action is refused.
+    const asAnn = ctrl("central.flow.append", {location: flowLoc(), operation_ref: `bea-as-ann-${Date.now()}`, author_key: state.annKey, at: new Date().toISOString(), html: "<p>impersonation</p>", actor: "human:bea", actor_kind: "human"}, {env: {CENTRAL_NATIVE_TOKEN: tokens().beaFlow}});
+    say("Bea writing as Ann:", asAnn.ok ? "ALLOWED (defect)" : `refused: ${asAnn.error?.code}`);
+    const other = ctrl("central.day.ensure", {expected_time_policy_revision: state.timePolicyRevision}, {env: {CENTRAL_NATIVE_TOKEN: tokens().beaFlow}});
+    say("Bea using another action in Ann's world:", other.ok ? "ALLOWED (defect)" : `refused: ${other.error?.message?.slice(0, 80)}`);
+    state.beaChecks = {firstEntryVerified: wrote.ok && wrote.data.entry.attribution.basis === "verified", asAnnRefused: !asAnn.ok, otherActionRefused: !other.ok}; save();
+  },
+  async "world-b-ask"() {
+    const W = state.worldB;
+    const route = {kind: "exec", aikit: SS.replace(/aikit-session-space$/, "aikit"), cwd: W.project, workcell: "workcell:mac", env: {AIKIT_HOME: W.home, CENTRAL_ROOT: W.root, AIKIT_CENTRAL_ROOT: W.root}};
+    const basis = readFlow();
+    const request = {
+      request_ref: `conversation/pf-worldb-${Date.now()}`, flow_location: flowLoc(), sender: `human:${state.annKey}`, actor: `human:${state.annKey}`,
+      entry: {author_key: state.annKey, at: new Date().toISOString(), basis_revision: basis.doc.meta.revision, relations: [],
+        html: "<p>Bo — Bea asked you to look at this too. Read <code>docs/passage.md</code> in your working directory and say in under 80 words what the passage is arguing. Tell me only what the conversation and your own working directory give you.</p>"},
+      recipients: [{participant_key: state.boKey, agent_session: W.session, route, agent_ref: W.agentRef}],
+    };
+    encounter({action: "conversation-send", request});
+    await waitIncluded(request.request_ref, [state.boKey], 300000);
+    state.worldBAsk = request.request_ref; save();
+    // What Bo was actually sent: read it from B's own owner journal.
+    const r = spawnSync("sqlite3", [join(W.home, "state/encounters.sqlite3"), `select event from encounter_events where session='${W.session}'`], {encoding: "utf8", maxBuffer: 64 * 1024 * 1024});
+    const journal = r.stdout ?? "";
+    const leaked = ["PRIVATE-JOURNAL-OF-ANN", "PRIVATE-NOTE-OF-ANN"].filter(t => journal.includes(t));
+    state.worldBLeak = leaked; save();
+    say("private material in what World B's agent received:", leaked.length ? "LEAKED " + leaked.join(",") : "none");
+  },
+  async "world-b-days"() {
+    const W = state.worldB;
+    const dayB = JSON.parse(spawnSync(CTRL, ["--json", "--root", W.root, "action", "run", "central.day.read", "{}"], {encoding: "utf8", env: {...env, CENTRAL_ROOT: W.root}}).stdout);
+    const dayA = ctrl("central.day.read", {});
+    say("World A Day:", JSON.stringify(dayA.data?.day_ref ?? dayA.data ?? dayA.error).slice(0, 140));
+    say("World B Day:", JSON.stringify(dayB.data?.day_ref ?? dayB.data ?? dayB.error).slice(0, 140));
   },
 
   async report() { report(); },
