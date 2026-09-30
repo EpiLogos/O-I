@@ -203,6 +203,9 @@ pub fn decode_envelope(output: &std::process::Output) -> Result<Value, CallError
 /// `Err`); the owner's own refusal or a malformed envelope is the error
 /// the caller surfaces in the owner's words.
 pub fn reading(request: &Value) -> Result<Value, String> {
+    if matches!(request["kind"].as_str(),Some("preview_nara"|"publish_nara")) {
+        return Err("Native Nara presence requires the saved identity and Expression admission route".into());
+    }
     match call(request) {
         Ok(data) => Ok(data),
         Err(CallError::Unbound { message }) => Ok(

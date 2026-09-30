@@ -10,9 +10,10 @@
  * exactly as CradleFrame names the presented techne binding. In the Technē cut
  * a SECOND, concealed Technē host stands mounted (`techne-concealed`): it reads
  * the ref but must leave it, so the constellation opens in exactly one host —
- * the presented one. Whether ANY field opens is PointCloudHost's own
- * `mode==="techne"` gate — the §41 negative severs that by standing the
- * presented host in the Expressions cut. */
+ * the presented one. Whether the Technē relay carries it is PointCloudHost's
+ * own `mode==="techne"` gate — the §41 negative severs that by standing the
+ * presented host in the Expressions cut, where the host is instead the
+ * Expressions centre and opens the summon through its selection request. */
 import {createRoot} from 'react-dom/client';
 import {KernelProvider} from '../src/kernel/KernelProvider';
 import {VisualsProvider} from '../src/visuals/ParticleExpression';

@@ -53,11 +53,17 @@ import {installNativeWorkspace,type NativeSubject} from './nativeWorkspace.js';
 import {installLensStudio,type LensId} from './lensStudio.js';
 import {installResearchInstruments} from './researchInstruments.js';
 import {installPalaceInstrument} from './palaceInstrument.js';
+import {installNaraInstrument} from './naraInstrument.js';
+import {naraFormGeometry} from './naraFormField.js';
+import type {NativeM3Reading} from '../../../src/nara/nativeM3';
+import {createEvidenceField,type PrivateEvidenceField} from './naraEvidenceField.js';
 import type {PalaceDocumentSnapshot} from '../../../src/techne/m0m5/palace/composition';
 import {applyResearchMaterial,pruneResearchOccurrence,type ResearchMaterialAction} from './researchMaterial.js';
 import type {ConnectionBinding} from '../../../../../packages/oi-design-system/expressions-engine/oi/expressionBindings.mjs';
 import type {KernelConversion,KernelSceneBody} from './kernelDocumentBridge.js';
 import {installSceneBodies} from './sceneBodies.js';
+import {prepareNativeSceneBody} from './nativeSceneBody.js';
+import {openScenePortal} from './scenePortal.js';
 import {installActPanel} from './actPanel.js';
 import {presentAdoption,followedPanels} from './nativeFollow.js';
 import {applyEasing} from '../../src/engine/fieldModel';
@@ -198,7 +204,7 @@ function renderInspector(){const content=$('inspector-content');if(!inspectorOpe
  // instrument changes the selection before the edit commits.
  if(selected[0]&&scene().entities.some(e=>e.id===selected[0]))content.dataset.entityId=selected[0];else delete content.dataset.entityId;
  content.querySelectorAll('.motion-tabs').forEach(el=>el.remove());if(studioSection==='formations')content.querySelector('[data-detail="arrange"]')?.remove();if(studioSection==='scene')content.querySelector('[data-detail="page-text"]')?.remove();if(studioSection==='automation')content.insertAdjacentHTML('beforeend',`<details class="recorded-tracks" data-detail="recorded-takes"><summary>Recorded property takes · ${(scene().propertyTracks??[]).length}</summary><p class="control-note">Recorded base settings follow expression time. Enabled LFO and ramp layers still apply.</p><button class="secondary" data-action="preview-tracks">${trackPreview?'Stop preview':'Preview from scene start'}</button>${(scene().propertyTracks??[]).map(t=>`<div>${esc(t.bind)} · ${t.points.length} keys <button data-action="delete-property-track" data-id="${esc(t.id)}" aria-label="Remove recorded ${esc(t.bind)}">×</button></div>`).join('')||'<p>Record toolbelt properties to create a take here.</p>'}</details>`);if(!search){const groups:Record<string,string[]>={physics:['physics'],pointer:['pointer'],relational:['relational'],collision:['medium','collision','pairwise'],appearance:['palette','material'],volume:['volume'],resonance:['resonance'],layout:['arrange'],text:['page-text']};const ids=groups[studioSection];if(ids&&((tab==='field')||studioSection==='layout'||studioSection==='text')){const extras=studioSection==='appearance'?Array.from(content.querySelectorAll<HTMLElement>('.material-cards,[data-control="field.params.size"],[data-control="field.params.opacity"]')):[];const nodes=[...extras,...ids.flatMap(id=>Array.from(content.querySelectorAll<HTMLElement>('[data-detail="'+id+'"]')))];if(nodes.length)content.replaceChildren(...nodes);nodes.forEach(n=>(n as HTMLDetailsElement).open=true);}}content.querySelectorAll<HTMLDetailsElement>('details[data-detail]').forEach(d=>{if(detailState.has(d.dataset.detail!))d.open=detailState.get(d.dataset.detail!)!;});content.scrollTop=studioScroll;
-// The Native field section mounts the live producer panel itself (owner
+// The Live instrument section mounts the live producer panel itself (owner
 // addendum: re-parent, never re-render via innerHTML — it owns live
 // listeners), replacing the generic detail-groups content above.
 if(studioSection==='native'&&nativeField)content.replaceChildren(nativeField.panel);
@@ -401,6 +407,8 @@ function collectImported(documents:Journey[]){
  }
 }
 let nativeWorkspace:ReturnType<typeof installNativeWorkspace>|undefined;
+let privateEvidenceField:PrivateEvidenceField|null=null;
+let privateFormReading:NativeM3Reading|null=null;
 let sceneBodies:ReturnType<typeof installSceneBodies>|undefined;
 let blueprintHUD:ReturnType<typeof installBlueprintHUD>|undefined;
 // Studio-owned homes for instrument controls (re-parented, never re-rendered).
@@ -426,6 +434,9 @@ async function loadJourney(j:Journey){
  if(!deletedLibraryIds.has(previous.id))await writeDraft(previous);
  if(generation!==journeyNavigation||version!==store.revision)throw new Error('The open request was superseded by newer work. Your current Expression was retained.');
  applyJourney(j);
+ // A successful explicit open is the person's entry into the instrument.
+ // Keep the gate and departing work intact if backup or navigation fails.
+ closeEntryGate();
 }
 function applyJourney(j:Journey,native=false){journeyNavigation++;if(!native){awaitingNativeBoot=false;void nativeWorkspace?.changed(j);}if(propertyTake)finishPropertyTake();trackPreview=false;rememberWork(j.id);studioOpen=false;j.scenes.forEach(checkNativeLimits);sessionExpressions.set(store.document.id,clone(store.document));sessionExpressions.set(j.id,clone(j));try{if(!deletedLibraryIds.has(store.document.id))saveToLibrary(store.document);}catch{toast('The previous expression is retained in Undo; browser storage is unavailable. Export it before closing this page.',6500);}store.replace(initialiseSceneSaves(initialiseBelts(j)));store.document.updatedAt=j.updatedAt;sceneIndex=0;selected=[];camera=defaultCamera();applySceneView();transitionDuration=0;$('transition-canvas').hidden=true;sceneElapsed=0;journeyPlaying=false;editing=false;inspectorOpen=false;timelineOpen=false;cursorTool='interact';tool='interact';railKey='interact';railExpanded=false;shapePickerOpen=false;closeDialogs();libraryOpen=false;modesOpen=false;try{history.replaceState(null,'',location.pathname+location.search);}catch{}markSaved();renderAll();}
 function openKeep(){captureOpen=!captureOpen;modesOpen=false;pointer.active=false;
@@ -457,13 +468,13 @@ async function action(name:string,el:HTMLElement,event?:Event){const s=scene(),s
  case 'take-mode':appendTake=!appendTake;renderAll();break;
  case 'delete-property-track':changed(()=>{s.propertyTracks=s.propertyTracks?.filter(t=>t.id!==el.dataset.id);});break;
  case 'preview-tracks':trackPreview=!trackPreview;sceneElapsed=0;scenePlaying=trackPreview;if(trackPreview)fieldPaused=false;renderAll();break;
- case 'studio':contextKind='';beltPickerOpen=false;timelineOpen=false;modesOpen=false;captureOpen=false;setStudio(!studioOpen);break;
+ case 'studio':contextKind='';beltPickerOpen=false;timelineOpen=false;modesOpen=false;captureOpen=false;if(!studioOpen&&worldLens==='epi-logos'&&nativeField&&!instrumentOffered){instrumentOffered=true;studioSection='native';tab='field';}setStudio(!studioOpen);break;
  case 'close-studio':setStudio(false);break;
  case 'dock-studio':{const insp=$('inspector'),mutate=()=>{studioDocked=!studioDocked;if(studioDocked){studioSizeMemo={width:insp.style.getPropertyValue('--panel-width'),height:insp.style.getPropertyValue('--panel-height')};insp.style.removeProperty('--panel-width');insp.style.removeProperty('--panel-height');}else if(studioSizeMemo){if(studioSizeMemo.width)insp.style.setProperty('--panel-width',studioSizeMemo.width);else insp.style.removeProperty('--panel-width');if(studioSizeMemo.height)insp.style.setProperty('--panel-height',studioSizeMemo.height);else insp.style.removeProperty('--panel-height');}renderAll();};if(matchMedia('(prefers-reduced-motion: reduce)').matches)mutate();else flipPanel(insp,mutate);break;}
  case 'automation-play':{const s2=scene();changed(()=>{for(const g of automationGroups(s2.automation))s2.automation.find(l=>l.id===g.leader.id)!.enabled=true;});fireAutomations();break;}
  case 'automation-pause':{const s2=scene();changed(()=>{for(const g of automationGroups(s2.automation))if(resolvedAutomation(s2.automation,g.leader).enabled)s2.automation.find(l=>l.id===g.leader.id)!.enabled=false;});automationPhase='idle';renderAll();toast('Automations paused — every group holds at its base. Play restarts them.');break;}
  case 'automation-loop':automationLoop=!automationLoop;if(automationLoop&&!fieldPaused&&!automationRunning())fireAutomations(true);renderAll();break;
- case 'studio-section':studioSection=el.dataset.value!;tab=['formations','layout'].includes(studioSection)?'objects':['sequence','motion','focus','automation'].includes(studioSection)?'motion':['scene','text'].includes(studioSection)?'scene':'field';motionTab=studioSection==='automation'?'automation':studioSection==='motion'?'morph':studioSection==='focus'?'focus':'sequence';search='';$<HTMLInputElement>('control-search').value='';renderAll();$('inspector-content').scrollTop=0;break;
+ case 'studio-section':studioSection=el.dataset.value!;instrumentOffered=true;tab=['formations','layout'].includes(studioSection)?'objects':['sequence','motion','focus','automation'].includes(studioSection)?'motion':['scene','text'].includes(studioSection)?'scene':'field';motionTab=studioSection==='automation'?'automation':studioSection==='motion'?'morph':studioSection==='focus'?'focus':'sequence';search='';$<HTMLInputElement>('control-search').value='';renderAll();$('inspector-content').scrollTop=0;break;
  case 'quick-guide':$<HTMLDialogElement>('guide-dialog').showModal();break;
  case 'sequence-panel':timelineOpen=false;beltPickerOpen=false;modesOpen=false;captureOpen=false;sequenceOpen=!sequenceOpen;if(sequenceOpen){inspectorOpen=false;contextKind='';}renderAll();break;
  case 'save-scene':case 'save-next':{if(propertyTake)finishPropertyTake();const name=$<HTMLInputElement>('scene-save-name').value;if(name.trim().length===0){toast('Give the scene a name first.');break;}if(el.dataset.action==='save-next'&&store.document.scenes.length>=64){toast('An expression can contain up to 64 scenes.');break;}changed(()=>{s.view={...s.view,mode:camera.mode,yaw:camera.yaw,pitch:camera.pitch,zoom:camera.zoom,panX:camera.panX/width,panY:camera.panY/height};delete s.view.nativeCamera;saveScene(store.document,s,name);sceneNames.delete(s.id);if(el.dataset.action==='save-next'){const next=nextSceneFrom(store.document,s);sceneIndex=store.document.scenes.indexOf(next);}});toast('Scene saved to your browser library'+(el.dataset.action==='save-next'?' · next draft ready.':'.'));break;}
@@ -518,23 +529,18 @@ async function action(name:string,el:HTMLElement,event?:Event){const s=scene(),s
  // Rust-exact kernel Change grammar, sent through the app's existing native
  // edit path (nativeWorkspace.edit → the kernel's own `edit` operation);
  // there is no second, presentation-only copy of a body or trigger.
- case 'scene-body-image':{
+ case 'scene-body-image':case 'scene-body-text':{
   const view=nativeWorkspace?.nativeView(),binding=view?.bindings[scene().id];
   if(!view||!binding){toast('Open this Scene as a native Expression before setting its body.');break;}
-  const path=$<HTMLInputElement>('scene-body-image-path').value.trim();
-  if(!path){toast('Name the native image file first.');break;}
-  await nativeWorkspace?.edit([{change:'scene_body_set',scene_ref:binding.scene_ref,body:{carrier:'image_media',subject_ref:path,native_owner:'oi',reading:{ref:path,revision:'1',availability:'available'},provenance:[],actions:[],presentation:'inline',capability:{state:'renderable'},span:null,recursion:null}}]);
-  toast('Scene body set to this image.');break;
- }
- case 'scene-body-text':{
-  const view=nativeWorkspace?.nativeView(),binding=view?.bindings[scene().id];
-  if(!view||!binding){toast('Open this Scene as a native Expression before setting its body.');break;}
-  const path=$<HTMLInputElement>('scene-body-text-path').value.trim();
-  if(!path){toast('Name the native text file first.');break;}
-  const start=Number($<HTMLInputElement>('scene-body-text-start').value)||0,end=Number($<HTMLInputElement>('scene-body-text-end').value)||0;
-  const span=end>start?{start,end}:null;
-  await nativeWorkspace?.edit([{change:'scene_body_set',scene_ref:binding.scene_ref,body:{carrier:'text_source',subject_ref:path,native_owner:'oi',reading:{ref:path,revision:'1',availability:'available'},provenance:[],actions:[],presentation:'inline',capability:{state:'renderable'},span,recursion:null}}]);
-  toast('Scene body set to this text.');break;
+  const image=name==='scene-body-image',path=$<HTMLInputElement>(image?'scene-body-image-path':'scene-body-text-path').value.trim();
+  if(!path){toast(`Name the native ${image?'image':'text'} file first.`);break;}
+  const revision=store.revision,sceneId=scene().id;
+  const start=image?0:Number($<HTMLInputElement>('scene-body-text-start').value),end=image?0:Number($<HTMLInputElement>('scene-body-text-end').value);
+  const body=await prepareNativeSceneBody(image?'image_media':'text_source',path,start===0&&end===0?null:{start,end});
+  const current=nativeWorkspace?.nativeView();
+  if(store.revision!==revision||scene().id!==sceneId||current?.document.expression_ref!==view.document.expression_ref||current.document.revision!==view.document.revision)throw Error('The Scene changed while its source was read. Review the current Scene and choose the body again.');
+  await nativeWorkspace!.edit([{change:'scene_body_set',scene_ref:binding.scene_ref,body}]);
+  toast(`Scene body set to the current native ${image?'image':'text'}.`);break;
  }
  case 'scene-body-clear':{
   const view=nativeWorkspace?.nativeView(),binding=view?.bindings[scene().id];
@@ -812,7 +818,10 @@ function frameData(delta:number):EngineFrame{const base=activeScene();
  // actually changes instead of hashing the whole document every frame.
  const tracksActive=(journeyPlaying||trackPreview)&&!propertyTake&&!!base.propertyTracks?.length;
  const current=effectiveScene(store.document,tracksActive?evaluateTracks(base,sceneElapsed):base);
- return {connections:nativeConnectionRows[base.id],selectedConnection:nativeSelectedRelation,scene:current,scaffold:editing&&!presenting&&guidesVisible?current.view.nativeScaffold??'off':'off',simTime,delta,params:(()=>{const p=engine.capabilities.kind==='production'?current.field.params:evaluateParameters(current,simTime);return physisParticleCap&&p.count>physisParticleCap?{...p,count:physisParticleCap}:p;})(),camera,pointer,selectedIds:editing&&!presenting&&guidesVisible?selected:[],authoringRevision:store.revision*1e7+(tracksActive?1+Math.floor(sceneElapsed*60):0)};}
+ const evidenceProjection=privateEvidenceField?.project(nativeWorkspace?.nativeView(),base.id)??null;
+ let formationGeometryProjection:import('../../src/engine/formationGeometryProjection').FormationGeometryProjection|null=null;
+ if(privateFormReading){try{formationGeometryProjection=naraFormGeometry(privateFormReading,nativeWorkspace?.nativeView(),base.id);}catch{privateFormReading=null;}}
+ return {formationGeometryProjection,localizedResonanceProjection:evidenceProjection?privateEvidenceField?.resonance:null,forceEmitterProjection:evidenceProjection,entitySoundProjection:evidenceProjection?privateEvidenceField?.sound:undefined,connections:nativeConnectionRows[base.id],selectedConnection:nativeSelectedRelation,scene:current,scaffold:editing&&!presenting&&guidesVisible?current.view.nativeScaffold??'off':'off',simTime,delta,params:(()=>{const p=engine.capabilities.kind==='production'?current.field.params:evaluateParameters(current,simTime);return physisParticleCap&&p.count>physisParticleCap?{...p,count:physisParticleCap}:p;})(),camera,pointer,selectedIds:editing&&!presenting&&guidesVisible?selected:[],authoringRevision:store.revision*1e7+(tracksActive?1+Math.floor(sceneElapsed*60):0)};}
 function recordableTracks(){return workspace.entries.flatMap(entry=>{const subject=entry.scope==='selected'?(selectedEntity()??scene().entities.find(e=>e.kind==='formation')):scene().entities.find(e=>e.id===entry.entityId);const bind=entry.scope==='field'?PARAMETERS.find(p=>p.key===entry.key)?.bind:subject?entityTargets(scene()).find(t=>t.entityId===subject.id&&t.key===entry.key)?.bind:undefined;if(!bind)return [];const track:PropertyTrack={id:uid('track'),bind,entityId:entry.scope==='field'?undefined:subject?.id,points:[]};return isShared(store.document,scene(),bind)||readTrackValue(scene(),track)===undefined?[]:[track];});}
 function finishPropertyTake(){if(!propertyTake)return;const take=propertyTake;propertyTake=null;if(take.elapsed>0){const end=Math.min(3600,take.start+take.elapsed);for(const t of take.tracks){const value=readTrackValue(scene(),t);if(value!==undefined&&t.points.at(-1)?.time!==end)t.points.push({time:end,value});}changed(()=>{scene().propertyTakeRange={start:take.start,end};scene().propertyTracks=mergeTake(scene().propertyTracks??[],take.tracks,take.start,end);scene().duration=Math.max(scene().duration,end);});takeWindows.set(scene().id,{start:take.start,end});sceneElapsed=take.start;trackPreview=true;scenePlaying=false;toast('Property take recorded · save the scene to keep this version.');}renderAll();}
 function updatePropertyTake(now:number){const t=propertyTake;if(!t)return;if(t.sceneId!==scene().id){finishPropertyTake();return;}const remaining=Math.max(0,Math.ceil((t.armed-now)/1000));$('take-status').hidden=false;$('take-status').textContent=remaining?'Recording in '+remaining+'…':'Recording '+t.elapsed.toFixed(1)+'s · click record to stop';if(remaining)return;const elapsed=Math.min((now-t.armed)/1000,3600-t.start,t.limit??Infinity);t.elapsed=elapsed;sceneElapsed=t.start+elapsed;scenePlaying=true;if(elapsed-t.lastSample>=.05||t.lastSample<0){for(const track of t.tracks){const value=readTrackValue(scene(),track);if(value===undefined)continue;sampleTrack(track,t.start+elapsed,value,t.start+Math.max(0,t.lastSample));}t.lastSample=elapsed;}if(t.start+elapsed>=3600||t.limit!==undefined&&elapsed>=t.limit)finishPropertyTake();}
@@ -851,6 +860,10 @@ window.addEventListener('resize',()=>{if(recorder.active){recorder.stop();toast(
 // Every host-mode message is answered with a fresh oi-app-state announcement
 // (hostedApp.trackHostedAppState), which is also the race-free initial read.
 let hostMode:'expressions'|'techne'=new URLSearchParams(location.search).get('mode')==='techne'?'techne':'expressions';
+// The world lens the host stands in (workspace.current.context.world). Read
+// from ?world= or an optional host-mode `world`; the Epi-Logos world opens the
+// Studio on the live instrument the first time, never overriding a choice.
+let worldLens:string|null=new URLSearchParams(location.search).get('world');let instrumentOffered=false;
 let livedRailHTML='';
 // One rail in both modes: Technē keeps the Expressions tools; the active
 // instrument's own tools sit beside them in #instrument-tools.
@@ -913,7 +926,7 @@ window.addEventListener('message',ev=>{if(ev.source!==window.parent)return;const
   document.documentElement.style.setProperty('--shell-covered-right',(Number.isFinite(d.coveredRight)?Math.max(0,d.coveredRight!):0)+'px');
   return;
  }
- if(d&&d.v===1&&d.kind==='host-mode'&&(d.mode==='expressions'||d.mode==='techne')){setHostMode(d.mode);announceHostState();return;}
+ if(d&&d.v===1&&d.kind==='host-mode'&&(d.mode==='expressions'||d.mode==='techne')){const world=(d as {world?:unknown}).world;if(typeof world==='string'&&world.length<=64)worldLens=world;setHostMode(d.mode);announceHostState();return;}
  if(d&&d.v===1&&d.kind==='host-command'){
   if(d.command==='interact'||d.command==='select')activateRail(d.command);
   else if(d.command==='open-expression'&&typeof d.ref==='string'){if((d as {refresh?:unknown}).refresh===true&&kernelExpressionsAvailable())void nativeWorkspace?.refreshReference(d.ref);else openHostExpression(d.ref);}
@@ -938,9 +951,12 @@ window.addEventListener('message',ev=>{if(ev.source!==window.parent)return;const
 window.addEventListener('pagehide',()=>{if(propertyTake)finishPropertyTake();recorder.stop();lastLibraryWrite=0;void flushDraft();});
 const nativeField=installNativeField(engine,()=>{fieldPaused=false;needsFrame=true;renderAll();});
 // Without a retaining engine there is no native producer to present; the
-// Studio nav offers no dead "Native field" entry for it.
+// Studio nav offers no dead "Live instrument" entry for it.
 if(!nativeField)document.querySelector('[data-action="studio-section"][data-value="native"]')?.remove();
-window.__FIELD_STUDIES__={getDocument:()=>clone(store.document),getState:()=>({studioOpen,beltOpen,needsFrame,libraryOpen,librarySection,modesOpen,captureOpen,railKey,railExpanded,sceneIndex,selected:[...selected],textId,editing,inspectorOpen,timelineOpen,tool,simTime,sceneElapsed,playing:scenePlaying,scenePlaying,fieldPaused,journeyPlaying,automationLoop,camera:{...camera},fps,recording:recorder.active,pointerActive:pointer.active,engine:engine.capabilities.name,hostMode,activeLens:lensStudio.active()}),project:(v:Vec3)=>project(v,camera,width,height),unproject:(x:number,y:number)=>unproject(x,y,camera,width,height),selectEntity:(id:string)=>selectEntity(id),setScene:(i:number)=>setScene(i),openEditor:(t:InspectorContext['tab'])=>edit(true,t),pause:()=>{fieldPaused=true;needsFrame=true;renderAll();},play:()=>{fieldPaused=false;needsFrame=true;renderAll();},native:()=>nativeField?.controller.reading,nativeTargets:()=>nativeField?.controller.inspectTargets(),dispose:()=>{researchInstruments?.destroy();nativeField?.dispose();cancelAnimationFrame(rafId);coverObserver?.disconnect();engine.dispose();},command:(cmd:any)=>{engine.command?.(cmd);needsFrame=true;},capabilities:engine.capabilities,inspect:(read=false)=>engine.inspect?.(read),telemetry:()=>engine.telemetry?.(),nativeProject:(v:Vec3)=>engine.projectNative?.(v),capture:(w:number,h:number)=>engine.capture?.(w,h)};
+window.__FIELD_STUDIES__={getDocument:()=>clone(store.document),getState:()=>({studioOpen,beltOpen,needsFrame,libraryOpen,librarySection,modesOpen,captureOpen,railKey,railExpanded,sceneIndex,selected:[...selected],textId,editing,inspectorOpen,timelineOpen,tool,simTime,sceneElapsed,playing:scenePlaying,scenePlaying,fieldPaused,journeyPlaying,automationLoop,camera:{...camera},fps,recording:recorder.active,pointerActive:pointer.active,engine:engine.capabilities.name,hostMode,activeLens:lensStudio.active()}),project:(v:Vec3)=>project(v,camera,width,height),unproject:(x:number,y:number)=>unproject(x,y,camera,width,height),selectEntity:(id:string)=>selectEntity(id),setScene:(i:number)=>setScene(i),openEditor:(t:InspectorContext['tab'])=>edit(true,t),pause:()=>{fieldPaused=true;needsFrame=true;renderAll();},play:()=>{fieldPaused=false;needsFrame=true;renderAll();},native:()=>nativeField?.controller.reading,nativeTargets:()=>nativeField?.controller.inspectTargets(),
+ // Acceptance probe: advance resident particle mechanics by fixed steps against
+ // the targets already presented. No native request, clock or target write.
+ probeSteps:(frames:number,dt:number)=>{if(!Number.isInteger(frames)||frames<1||frames>2000||!(dt>0&&dt<=.1))throw new Error('probe steps: 1–2000 frames of (0, 0.1] s');for(let i=0;i<frames;i++)engine.render(frameData(dt));needsFrame=true;return frames;},dispose:()=>{researchInstruments?.destroy();nativeField?.dispose();cancelAnimationFrame(rafId);coverObserver?.disconnect();engine.dispose();},command:(cmd:any)=>{engine.command?.(cmd);needsFrame=true;},capabilities:engine.capabilities,inspect:(read=false)=>engine.inspect?.(read),telemetry:()=>engine.telemetry?.(),nativeProject:(v:Vec3)=>engine.projectNative?.(v),capture:(w:number,h:number)=>engine.capture?.(w,h)};
 function applyNativeView(view:KernelConversion,preservePosition=false){
  awaitingNativeBoot=false;
  // An opened native Expression is what the frame stands on: the entry gate
@@ -1026,6 +1042,8 @@ installActPanel({journey:()=>store.document,scene,selected:()=>selected,changed:
 sceneBodies=installSceneBodies({
  nativeView:()=>nativeWorkspace?.nativeView(),
  sceneId:()=>scene().id,
+ portal:(trigger,basis)=>openScenePortal(trigger.trigger_ref,basis),
+ report:message=>toast(message),
  open:ref=>{const view=nativeWorkspace?.nativeView(),binding=view?.bindings[scene().id];if(!view||!binding){toast('Open a native Scene before opening its source.');return;}hostRequest({request:'summon',detail:{kind:'source',ref,subject:{ref:view.document.expression_ref,kind:'expression',nativeOwner:'oi',revision:view.document.revision,title:view.document.title,sceneRef:binding.scene_ref,entityRef:null,relationRef:null}}});},
  jumpToScene:sceneRef=>{const view=nativeWorkspace?.nativeView();if(!view){toast('Open a native Scene before jumping to another one.');return;}const entry=Object.entries(view.bindings).find(([,b])=>b.scene_ref===sceneRef);if(!entry){toast('That native Scene is not currently loaded in this view.');return;}const index=store.document.scenes.findIndex(s=>s.id===entry[0]);if(index<0)return;setScene(index);},
 });
@@ -1101,6 +1119,20 @@ lensStudio.setMode(hostMode);
 (document.querySelector('#app .header-actions') as HTMLElement)?.insertAdjacentHTML('afterbegin',ib('native-save','save','Save (⌘S)','id="native-save"'));
 Object.assign(window.__FIELD_STUDIES__,{nativeWorking:()=>nativeWorkspace?.inspect(),nativeConnections:()=>engine.inspectConnections?.(),openNative:(reference:string)=>nativeWorkspace?.open(reference),openNativeFile:(path:string)=>nativeWorkspace?.openFile(path)});
 const qs=new URLSearchParams(location.search);
+const naraInstrument=installNaraInstrument({nativeView:()=>nativeWorkspace?.nativeView(),sceneId:()=>scene().id,
+ presentForm:reading=>{if(reading)naraFormGeometry(reading,nativeWorkspace?.nativeView(),scene().id);privateFormReading=reading;needsFrame=true;},
+ presentEvidence:input=>{privateEvidenceField=input?createEvidenceField(input,nativeWorkspace?.nativeView(),scene().id):null;needsFrame=true;},
+ acceptNativeDocument:async(document:unknown)=>{
+  const native=document as {expression_ref?:unknown;revision?:unknown};
+  const showing=nativeWorkspace?.nativeView()?.document;
+  if(typeof native.expression_ref!=='string'||typeof native.revision!=='number'||showing?.expression_ref!==native.expression_ref)throw Error('The coordinate was adopted natively; reopen its Expression to view it. Your current work was retained.');
+  await nativeWorkspace?.refreshReference(native.expression_ref);
+  const applied=nativeWorkspace?.nativeView()?.document;
+  if(applied?.expression_ref!==native.expression_ref||applied.revision!==native.revision)throw Error('The coordinate was adopted natively; resolve the retained local draft before displaying the new revision.');
+ }});
+if(qs.get('nara')==='1')naraInstrument.open();
+const disposeFieldStudies=window.__FIELD_STUDIES__.dispose;
+window.__FIELD_STUDIES__.dispose=()=>{naraInstrument.destroy();disposeFieldStudies();};
 // A hosted deep link (the app's own ?journey/?scene idiom): open a named
 // expression from the browser library, the featured set or the starters —
 // the Technè M0 instrument opens onto the Epii face this way
@@ -1113,7 +1145,7 @@ if(window.__START_PRESENTATION__||qs.has('present')){presenting=true;fieldPaused
 // composition to its native Expression (the same owner operation the former
 // native panel used); otherwise it keeps the draft in this browser.
 async function saveNative(){
- if(kernelExpressionsAvailable()&&(hostMode==='techne'||nativeWorkspace?.nativeView())){if(propertyTake)finishPropertyTake();const ok=await nativeWorkspace?.commit();if(ok)toast('Saved.');return;}
+ if(kernelExpressionsAvailable()&&nativeWorkspace){if(propertyTake)finishPropertyTake();const ok=await nativeWorkspace.commit();if(ok){closeEntryGate();toast('Saved.');}return;}
  deletedLibraryIds.delete(store.document.id);saveToLibrary(store.document);if(libraryOpen)renderLibrary();toast('Saved in this browser.');
 }
 let nativeState:import('./nativeWorkspace.js').NativeStatus|null=null;

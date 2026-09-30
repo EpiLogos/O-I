@@ -17,6 +17,7 @@ import {ConnectionRuntime} from "../../../../../packages/oi-design-system/expres
 
 import * as THREE from 'three';
 import { GlyphSampler } from './GlyphSampler';
+import {geometryCandidates,type FormationGeometryProjection} from './formationGeometryProjection';
 import {
   SDF_ATLAS_WIDTH,
   SDF_ATLAS_HEIGHT,
@@ -66,14 +67,14 @@ export interface EntityFrame {
 export interface EntityUniformSet {
   count: number;
   connectionStart: number;
-  bounds: Float32Array; // 10 — exclusive end particle index
-  centers: THREE.Vector4[]; // 10 — xyz centre, w force radius
-  morph: Float32Array; // 10
+  bounds: Float32Array; // MAX_FORMATIONS — exclusive end particle index
+  centers: THREE.Vector4[]; // MAX_FORMATIONS — xyz centre, w force radius
+  morph: Float32Array; // MAX_FORMATIONS
   transforms: THREE.Vector3[]; // x/y scale and rotation radians
   depthScales: Float32Array;
   normalized: Float32Array;
-  tints: THREE.Color[]; // 10
-  tintWeights: Float32Array; // 10
+  tints: THREE.Color[]; // MAX_FORMATIONS
+  tintWeights: Float32Array; // MAX_FORMATIONS
 }
 
 export class EntityRuntime {
@@ -96,6 +97,7 @@ export class EntityRuntime {
   private bakeSig = new Map<string, string>();
   private lastStep = new Map<string, number>();
   private customCandidates = new Map<string, Candidate[]>();
+  private geometryProjection: {key:string;entityId:string;candidates:Candidate[]}|null=null;
   private candidateCache = new Map<string, Candidate[]>();
   private baseSig = '';
   private templateGeometry: 'square'|'circular'|'volumetric3D' = 'square';
@@ -103,7 +105,7 @@ export class EntityRuntime {
   /** Active true-3D letterform law; mirrored onto the sampler that builds pools. */
   private volume: GlyphVolumeConfig = DEFAULT_GLYPH_VOLUME;
 
-  // Glyph SDF atlas: 2 columns (state A|B) x 10 rows (stable entity slots), RGBA float.
+  // Glyph SDF atlas: 2 columns (state A|B) x MAX_FORMATIONS rows (stable entity slots), RGBA float.
   // Uploaded alongside the targets at bake time; never rewritten during steady-state frames.
   public collisionTexture: THREE.DataTexture | null = null;
   /** Per-partition tile rect (uv origin x/y, tile width u, enabled) pushed to the simulator. */
@@ -170,6 +172,7 @@ export class EntityRuntime {
   public dispose() {
     this.disposeTextures();
     this.candidateCache.clear();
+    this.geometryProjection=null;
   }
 
   public getPartitions(): Partition[] {
@@ -206,6 +209,16 @@ export class EntityRuntime {
 
   public getVolume(): GlyphVolumeConfig {
     return this.volume;
+  }
+
+  /** Reversible source geometry; authored image/layer pools remain intact. */
+  public setGeometryProjection(value:FormationGeometryProjection|null){
+    const key=value?JSON.stringify(value):'';
+    if(key===(this.geometryProjection?.key??''))return;
+    const candidate=value?{key,entityId:value.entityId,candidates:geometryCandidates(value)}:null;
+    if(this.geometryProjection)this.bakeSig.delete(this.geometryProjection.entityId);
+    this.geometryProjection=candidate;
+    if(candidate)this.bakeSig.delete(candidate.entityId);
   }
 
   /** Image / ASCII sources: override a formation's shape with an explicit candidate pool. */
@@ -367,6 +380,19 @@ export class EntityRuntime {
   }
 
   private bakePartition(p: Partition, e: Entity, linkIndex: number, nextIndex: number, plane: Composition['plane'], fontFamily?: string, fontWeight?: string | number) {
+    const geometry=this.geometryProjection?.entityId===e.id?this.geometryProjection:null;
+    if(geometry){
+      this.bakeGeneration++;
+      const scale=e.extent&&e.extent.normalized!==false?1:BASE_SCALE;
+      // Preserve the owner's angles and aspect; never stretch the local
+      // geometry to its own bounding box. Outer authored transforms still apply.
+      for(const channel of [0,2] as const)this.writeCandidates(channel===0?this.dataA:this.dataB,p.start,p.end,geometry.candidates,scale,plane,0,channel);
+      if(this.noiseTexture)this.noiseTexture.needsUpdate=true;
+      if(this.textureA)this.textureA.needsUpdate=true;
+      if(this.textureB)this.textureB.needsUpdate=true;
+      if(this.collisionTexture){const slot=this.collisionSlot(e.id);if(slot>=0){for(const channel of [0,1] as const)writeSdfTile(this.collisionData,slot,channel,buildSdfTile(geometry.candidates,scale));this.collisionTexture.needsUpdate=true;}}
+      return;
+    }
     const links = effectiveLinks(e);
     if (e.layers?.length) {
       this.bakeLayers(p, e, plane, fontFamily, fontWeight);
@@ -449,7 +475,7 @@ export class EntityRuntime {
     }
   }
 
-  /** Stable atlas row per entity id; -1 when all 10 rows are taken. */
+  /** Stable atlas row per entity id; -1 when all formation rows are taken. */
   private collisionSlot(entityId: string): number {
     let slot = this.collisionSlots.get(entityId);
     if (slot === undefined) {
@@ -528,7 +554,7 @@ export class EntityRuntime {
       }
       frames.push({ entityId: e.id, index: i, state });
     });
-    for (let i = u.count; i < 10; i++) {
+    for (let i = u.count; i < MAX_FORMATIONS; i++) {
       u.bounds[i] = this.particleCount;
       u.tintWeights[i] = 0;
       u.morph[i] = 0;
