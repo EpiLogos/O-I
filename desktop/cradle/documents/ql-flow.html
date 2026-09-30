@@ -630,14 +630,15 @@ var QlPlural = (() => {
     if (request.basisRevision !== void 0 && (!Number.isInteger(request.basisRevision) || request.basisRevision < 0 || request.basisRevision > doc.meta.revision)) throw new Refusal("invalid-basis-revision", "the basis revision must be a revision this document has reached");
     if (request.audience !== void 0 && request.audience !== "group" && !(request.audience && Array.isArray(request.audience.keys))) throw new Refusal("invalid-audience", 'an audience is "group" or a list of participant keys');
     const claimedBehalf = request.attribution?.onBehalfOf;
-    if (claimedBehalf && (!participants.some((p) => p.key === claimedBehalf.key) || claimedBehalf.key === author.key || !String(claimedBehalf.authority ?? "").trim())) throw new Refusal("unknown-behalf-of", "on behalf of names another participant and the authority claimed");
-    const behalf = claimedBehalf ? { key: claimedBehalf.key, authority: claimedBehalf.authority } : void 0;
+    if (claimedBehalf && (!participants.some((p) => p.key === claimedBehalf.key && !p.left) || claimedBehalf.key === author.key || !String(claimedBehalf.authority ?? "").trim())) throw new Refusal("unknown-behalf-of", "on behalf of names another participant who is still here, and the authority claimed");
+    const behalf = claimedBehalf ? { key: claimedBehalf.key, authority: claimedBehalf.authority, basis: "declared" } : void 0;
     const attribution = checkCaller(author, caller, request, participants);
     const ids = new Set(doc.entries.map((e) => e.id));
     if (ids.has(probe.id)) throw new Refusal("duplicate-entry-id", `entry ${probe.id} already exists`);
     const keys = new Set(participants.map((p) => p.key));
     (request.addressees ?? []).forEach((key) => {
       if (!keys.has(key)) throw new Refusal("unknown-addressee", `no participant ${key}`);
+      if (participants.find((p) => p.key === key)?.left) throw new Refusal("addressee-left", `${key} has left this flow and cannot be asked`);
     });
     if (request.audience && request.audience !== "group") request.audience.keys.forEach((key) => {
       if (!keys.has(key)) throw new Refusal("unknown-audience-key", `no participant ${key}`);
@@ -779,23 +780,38 @@ var QlPlural = (() => {
     if (typeof a === "object" && Array.isArray(a.keys)) return a.keys.filter((k) => typeof k === "string");
     return [];
   }
-  function portableCopy(doc) {
+  function portableCopy(doc, at) {
     const next = JSON.parse(JSON.stringify(doc));
+    const total = next.entries.length;
+    const withheld = { entries: 0, journal: (next.journal ?? []).length, notes: (next.notes ?? []).length, packet: (next.packet ?? []).length, media: (next.media ?? []).length };
     const open = new Set(next.entries.filter((e) => audienceOf(e) === "group").map((e) => e.id));
+    withheld.entries = total - open.size;
     next.entries = next.entries.filter((e) => open.has(e.id)).map((e) => {
+      const relationsBefore = JSON.stringify(relationsOf(e));
       if (e.relations) {
         e.relations = e.relations.filter((r) => !r.entryId || open.has(r.entryId));
         if (!e.relations.length) delete e.relations;
       }
       if (e.replyTo && !open.has(e.replyTo.entryId)) e.replyTo = null;
+      if (e.request && JSON.stringify(relationsOf(e)) !== relationsBefore) e.request = { ...e.request, digest: requestDigest(e) };
+      if (e.attribution) {
+        delete e.attribution.session;
+        delete e.attribution.generation;
+      }
       return e;
+    });
+    next.meta.participants?.forEach((p) => {
+      delete p.ref;
     });
     next.journal = [];
     next.notes = [];
     next.packet = [];
     next.media = [];
+    const known = ["documentId", "created", "title", "revision", "view", "current", "journalCurrent", "exported", "template", "format", "participants", "upgrade"];
+    for (const key of Object.keys(next.meta)) if (!known.includes(key)) delete next.meta[key];
     next.meta.current = null;
     next.meta.journalCurrent = null;
+    next.meta.projection = { kind: "shared-copy", sourceDocumentId: doc.meta.documentId ?? null, sourceRevision: doc.meta.revision, at: at ?? null, withheld };
     return next;
   }
   return __toCommonJS(stdin_exports);
@@ -981,6 +997,7 @@ function render(){
       {small:'document '+D.meta.documentId.slice(0,8)+', created '+(D.meta.created||'').slice(0,10)}],{align:'right'})},svg(ICON.more),h('span',{class:'n',hidden:!D.packet.length,text:String(D.packet.length)}))));
   app.append(mast);
   if(!isPlural()) app.append(h('div',{class:'legacy',role:'note'},'This is an earlier form of the flow. It reads and writes as before; choose ',h('b',{text:'Upgrade to the plural form'}),' in the document menu to add participants and relations. Every entry is kept.'));
+  if(D.meta.projection&&D.meta.projection.kind==='shared-copy'){ const w=D.meta.projection.withheld||{}; app.append(h('div',{class:'legacy',role:'note'},'This is a copy made to share: it holds only what the whole group may read. Withheld from it: '+(w.entries||0)+' restricted entr'+((w.entries||0)===1?'y':'ies')+', '+(w.journal||0)+' journal page'+((w.journal||0)===1?'':'s')+', '+(w.notes||0)+' note'+((w.notes||0)===1?'':'s')+', the context packet and media. It is not the complete document.')); }
   if(m.view==='flow') renderFlow(); else if(m.view==='journal') renderJournal(); else renderDialogue();
   app.hidden=false; window.scrollTo(0,y);
 }
@@ -1090,7 +1107,7 @@ $('#people-add').addEventListener('click',()=>{
 
 /* ---------- export ---------- */
 function snapshot(d){
-  let out='<div class="snap"><h1>'+(clean(d.meta.title)||'Untitled exchange')+'</h1>';
+  let out='<div class="snap"><h1>'+(clean(d.meta.title)||'Untitled exchange')+'</h1>'+(d.meta.projection&&d.meta.projection.kind==='shared-copy'?'<p><i>A copy made to share: only what the whole group may read. It is not the complete document.</i></p>':'');
   d.entries.forEach((e,i)=>{ out+='<h2>Entry '+(i+1)+', '+esc(e.author)+', '+esc(e.at)+'</h2>'+QlPlural.relationsOf(e).filter(r=>r.entryId).map(r=>'<p><i>'+esc(QlPlural.describeRelation(d,r))+(r.anchor?' at “'+esc(r.anchor)+'”':'')+'</i></p>').join('')+(clean(e.html)||'<p>—</p>');
     d.notes.filter(n=>n.entryId===e.id).forEach(n=>{ out+='<p><b>Note ('+esc(n.author)+', '+esc(n.timing)+')</b>'+(n.anchor?' on “'+esc(n.anchor)+'”':'')+': '+clean(n.text)+(n.replies||[]).map(r=>'<br>↳ '+esc(r.author)+': '+clean(r.text)).join('')+'</p>'; });
     d.media.filter(m=>m.entry===e.id&&m.mime.startsWith('image/')).forEach(m=>{ out+='<p><img src="'+m.data+'" alt="'+esc(m.name)+'" style="max-width:100%">'+(m.caption?'<br>'+clean(m.caption):'')+'</p>'; }); });
@@ -1098,7 +1115,7 @@ function snapshot(d){
   return out+'</div>';
 }
 function exportCopy(shared){
-  clearTimeout(revTimer); let d=JSON.parse(JSON.stringify(D)); if(shared===true) d=QlPlural.portableCopy(d);
+  clearTimeout(revTimer); let d=JSON.parse(JSON.stringify(D)); if(shared===true) d=QlPlural.portableCopy(d,now());
   d.meta.title=clean(d.meta.title||''); d.entries.forEach(e=>e.html=clean(e.html)); (d.journal||[]).forEach(j=>j.html=clean(j.html)); d.notes.forEach(n=>{ n.text=clean(n.text); (n.replies||[]).forEach(r=>r.text=clean(r.text)); }); d.media.forEach(m=>m.caption=clean(m.caption||''));
   d.meta.exported=now();
   const json=JSON.stringify(d).replace(/<\/script/gi,'<\\/script').replace(/<!--/g,'<\\u0021--');

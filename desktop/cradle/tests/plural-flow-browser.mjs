@@ -97,6 +97,11 @@ try {
   const shared = await saved("Save a copy to share");
   for (const text of ["SECRET-JOURNAL", "SECRET-NOTE", "PRIVATE-ASIDE"]) assert.ok(!shared.includes(text), `a copy to share leaves out ${text}, in the data and in the readable snapshot`);
   assert.ok(shared.includes("Both answers together"), "what the whole group may read is kept");
+  assert.match(shared, /A copy made to share: only what the whole group may read/, "the copy says what it is, in the readable snapshot");
+  const sharedPath = join(dir, "reopened-share.html"); writeFileSync(sharedPath, shared);
+  await page.goto("file://" + sharedPath);
+  await page.waitForSelector("article.entry");
+  assert.match(await page.locator("#app").innerText(), /copy made to share.*not the complete document/s, "and on the page");
 } finally {
   await browser.close();
 }
