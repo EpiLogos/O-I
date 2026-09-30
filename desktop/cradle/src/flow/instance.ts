@@ -1,4 +1,5 @@
 import templateHtml from "../../documents/ql-flow.html?raw";
+import {appendContribution, defaultParticipants, isCurrentFormat, legacyParticipantKey, type PluralEntry, type PluralParticipant, type Relation} from "./plural";
 /** The ratified flow carrier (PROPOSAL-FLOW-DAY-LOGICS-2026-09-13-2): a flow
  * file is one self-contained instance of the 0/1 form — `entries` (the
  * conversational thread), `journal` pages, `notes`, `packet`, `media` — with
@@ -26,6 +27,8 @@ export interface QlDocParticipant {
   kind: "person" | "agent";
   /** Where a live agent identity came from: the session ref that answered. */
   ref?: string;
+  /** v0.4: stable document-local key, independent of initial and name. */
+  key?: string;
 }
 export interface QlDoc {
   meta: {
@@ -87,6 +90,20 @@ export function htmlToText(html: string): string {
     .replace(/&#39;/g, "'")
     .trim();
 }
+/** Declared participants become v0.4 participants: each gets its stable
+ * key (deterministic from the document identity), contributor role and an
+ * honest binding — `declared` when a session ref came with it, else
+ * `unknown`. Nothing here claims authentication. */
+export function keyedParticipants(documentId: string | null, participants?: QlDocParticipant[]): PluralParticipant[] {
+  if (!participants?.length) return defaultParticipants(documentId);
+  return participants.map((participant, ordinal) => ({
+    ...participant,
+    key: participant.key ?? legacyParticipantKey(documentId, participant.initial, ordinal),
+    role: "contributor" as const,
+    binding: {owner: "document", ref: participant.ref ?? "", basis: participant.ref ? "declared" as const : "unknown" as const},
+  }));
+}
+
 /** Mint a fresh instance from the pristine template: the typed writing
  * becomes the first F entry, verbatim in its paragraph form; the document
  * mints its own identity now rather than at first open. */
@@ -95,14 +112,17 @@ export function mintInstance(draft: string, participants?: QlDocParticipant[], n
   const at = now.toISOString();
   doc.meta.documentId = crypto.randomUUID();
   doc.meta.created = at;
-  if (participants?.length) doc.meta.participants = participants;
-  const entry: QlDocEntry = {
+  if (isCurrentFormat(doc)) doc.meta.participants = keyedParticipants(doc.meta.documentId, participants);
+  else if (participants?.length) doc.meta.participants = participants;
+  const writer = isCurrentFormat(doc) ? ((doc.meta.participants ?? []) as PluralParticipant[]).find(p => p.kind === "person") : undefined;
+  const entry: PluralEntry = {
     id: crypto.randomUUID(),
-    author: "F",
+    author: writer?.initial ?? "F",
     at,
     html: textToHtml(draft),
     replyTo: null,
     touched: false,
+    ...(writer?.key ? {authorKey: writer.key, attribution: {basis: "declared" as const}} : {}),
   };
   // The placed draft's writing becomes the first F entry; v0.2 opens with
   // empty collections and no seeded entry, so this is the whole thread.
@@ -118,7 +138,8 @@ export function mintBlankInstance(participants?: QlDocParticipant[], now = new D
   const doc = parseInstance(templateHtml);
   doc.meta.documentId = crypto.randomUUID();
   doc.meta.created = now.toISOString();
-  if (participants?.length) doc.meta.participants = participants;
+  if (isCurrentFormat(doc)) doc.meta.participants = keyedParticipants(doc.meta.documentId, participants);
+  else if (participants?.length) doc.meta.participants = participants;
   return embedDocument(templateHtml, doc);
 }
 /** Append one entry to an existing instance through the template's own
@@ -127,18 +148,19 @@ export function mintBlankInstance(participants?: QlDocParticipant[], now = new D
  * authored by the person's identity unless a declared participant is given —
  * an answering agent's entry declares the live agent's own initial and the
  * session ref it answered from. */
-export function appendEntry(instanceHtml: string, text: string, opts?: {participant?: QlDocParticipant; replyTo?: {entryId: string; anchor: string | null}}, now = new Date()): { html: string; documentId: string | null; entry: QlDocEntry } {
+export function appendEntry(instanceHtml: string, text: string, opts?: {participant?: QlDocParticipant; replyTo?: {entryId: string; anchor: string | null}; relations?: Relation[]; addressees?: string[]; operationRef?: string; html?: string; entryId?: string; basisRevision?: number}, now = new Date()): { html: string; documentId: string | null; entry: QlDocEntry } {
   const doc = parseInstance(instanceHtml);
+  if (isCurrentFormat(doc)) return appendPlural(instanceHtml, doc, text, opts, now);
   const declared = opts?.participant;
   const initial = declared?.initial ?? doc.meta.participants?.find(p => p.kind === "person")?.initial ?? "F";
   if (declared && !(doc.meta.participants ?? []).some(p => p.initial === declared.initial)) {
     doc.meta.participants = [...(doc.meta.participants ?? []), declared];
   }
   const entry: QlDocEntry = {
-    id: crypto.randomUUID(),
+    id: opts?.entryId ?? crypto.randomUUID(),
     author: initial,
     at: now.toISOString(),
-    html: textToHtml(text),
+    html: opts?.html ?? textToHtml(text),
     replyTo: opts?.replyTo ?? null,
     touched: false,
   };
@@ -146,6 +168,38 @@ export function appendEntry(instanceHtml: string, text: string, opts?: {particip
   doc.meta.revision = doc.meta.revision + 1;
   return { html: embedDocument(instanceHtml, doc), documentId: doc.meta.documentId, entry };
 }
+/** v0.4 documents append through the shared validated path. This process is
+ * not a native owner, so the attribution it records is `declared`; native
+ * owners call `appendContribution` with the caller they themselves verified.
+ * The composing basis (`basisRevision`) belongs to the request: a caller that
+ * wants replay safety passes it, and it is never guessed from the current
+ * document, which moves. */
+function appendPlural(instanceHtml: string, doc: QlDoc, text: string, opts: Parameters<typeof appendEntry>[2], now: Date): { html: string; documentId: string | null; entry: QlDocEntry } {
+  let next = doc;
+  // A v0.4 form copied from the template declares nobody yet; like the page
+  // itself on open, materialise its keyed default participants.
+  if (!next.meta.participants?.length) next = {...next, meta: {...next.meta, participants: defaultParticipants(next.meta.documentId)}};
+  const declared = opts?.participant;
+  let author: PluralParticipant | undefined;
+  if (declared) {
+    const list = (next.meta.participants ?? []) as PluralParticipant[];
+    author = list.find(p => declared.key ? p.key === declared.key : declared.ref ? p.ref === declared.ref || p.binding?.ref === declared.ref : p.initial === declared.initial && list.filter(q => q.initial === declared.initial).length === 1);
+    if (!author) {
+      const keyed = keyedParticipants(next.meta.documentId, [declared])[0];
+      keyed.key = legacyParticipantKey(next.meta.documentId, declared.initial, list.length);
+      next = {...next, meta: {...next.meta, participants: [...list, keyed]}};
+      author = keyed;
+    }
+  } else author = ((next.meta.participants ?? []) as PluralParticipant[]).find(p => p.kind === "person" && !p.left);
+  if (!author?.key) throw new Error("This flow has no participant to author the entry as.");
+  const relations: Relation[] = opts?.relations ?? (opts?.replyTo ? [{type: "reply", entryId: opts.replyTo.entryId, anchor: opts.replyTo.anchor, ...(opts.basisRevision !== undefined ? {revision: opts.basisRevision} : {})}] : []);
+  const operationRef = opts?.operationRef ?? `ui:${crypto.randomUUID()}`;
+  const result = appendContribution(next, {
+    operationRef, authorKey: author.key, html: opts?.html ?? textToHtml(text), at: now.toISOString(), relations, addressees: opts?.addressees, basisRevision: opts?.basisRevision, entryId: opts?.entryId,
+  }, {kind: "system"});
+  return {html: embedDocument(instanceHtml, result.doc), documentId: result.doc.meta.documentId, entry: result.entry};
+}
+
 /** Flow instance file names are date and time stamped in local civil time;
  * a same-minute collision takes a numeric suffix, never a clock rewind. */
 export function instanceFileName(stamp: string, suffix = 0): string {

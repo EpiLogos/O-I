@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<meta name="ql-template" content="dialogue-flow v0.3">
+<meta name="ql-template" content="dialogue-flow v0.4">
 <title>Flow</title>
 <style>
 :root{
@@ -65,13 +65,22 @@ svg.defs{position:absolute;width:0;height:0}
 .lead .ini,.flow .head .ini{cursor:pointer;border-radius:4px}
 .lead .ini:hover,.flow .head .ini:hover{background:rgba(0,0,0,.04)}
 .entry .bodycol{grid-column:3/10;display:grid;row-gap:10px;min-width:0}
-.entry[data-a=H] .bodycol{grid-column:3/11}
+.entry[data-k=agent] .bodycol{grid-column:3/11}
 .entry .margin{grid-column:10/13;display:grid;row-gap:10px;align-content:start}
-.entry[data-a=H] .margin{grid-column:11/13}
+.entry[data-k=agent] .margin{grid-column:11/13}
 .entry .margin:empty{display:none}
 .reply{font:14px/1.5 var(--serif);color:var(--mid);padding:8px 14px;border-left:2px solid var(--rule)}
 .reply q{quotes:"“" "”";font-style:italic}
 .reply a{font:12px var(--sans);text-decoration:none;color:var(--ink);margin-left:8px;text-decoration:underline;text-underline-offset:3px;text-decoration-color:var(--rule)}
+.reply+.reply{margin-top:4px}
+.to{font:12px/1.5 var(--sans);color:var(--mid);padding:2px 14px}
+.to b{font-weight:600;color:var(--ink)}
+.attr{font:11px/1.4 var(--sans);color:var(--faint);padding:0 14px}
+.attr.verified{color:var(--mid)}
+.legacy{font:13px/1.5 var(--sans);padding:8px 14px;border:1px dashed var(--mid);border-radius:3px;margin:8px 0}
+.people{list-style:none;margin:0;padding:0;display:grid;row-gap:8px}
+.people li{display:flex;gap:10px;align-items:baseline;font:14px/1.4 var(--sans)}
+.people small{color:var(--mid)}
 .reply .changed{display:inline-block;font:12px/1 var(--sans);padding:4px 7px;border:1px dashed var(--mid);border-radius:99px;color:var(--ink);margin-left:8px}
 .body{background:var(--field);padding:18px 22px;min-height:5em;font:17px/1.6 var(--serif);border-radius:2px;outline:0;transition:box-shadow .15s;box-shadow:inset 0 0 0 1px transparent}
 .body:hover{box-shadow:inset 0 0 0 1px var(--rule)}
@@ -191,7 +200,7 @@ noscript .snap h2{font:600 15px var(--sans);margin:2.4em 0 .6em}
 @media (max-width:900px){
   .mast .title,.mast .views,.mast .acts{grid-column:1/-1}
   .mast .acts{text-align:left;margin-top:14px}
-  .entry .lead,.entry .bodycol,.entry .margin,.entry[data-a=H] .bodycol,.entry[data-a=H] .margin,.between,.empty,
+  .entry .lead,.entry .bodycol,.entry .margin,.entry[data-k=agent] .bodycol,.entry[data-k=agent] .margin,.between,.empty,
   .flow .reply,.flow .page,.flow .margin,.flow .attach,.flow .acts,.flow .nav{grid-column:1/-1}
   .journal .page .body{padding:22px;min-height:50vh}
   .entry .lead{grid-template-columns:auto 1fr;align-items:end;column-gap:14px}
@@ -229,8 +238,492 @@ noscript .snap h2{font:600 15px var(--sans);margin:2.4em 0 .6em}
   <div class="row"><button class="btn" id="packet-copy" type="button">Copy as JSON</button><button class="btn ghost" id="packet-clear" type="button">Clear</button><span class="grow"></span><button class="btn ghost" type="button" onclick="this.closest('dialog').close()">Close</button></div>
 </div></dialog>
 
+<dialog id="dlg-people"><div class="in">
+  <h2>Participants</h2>
+  <p>Who is in this exchange. A participant is a person or an agent; declaring one here does not start anything and is not authentication. Native attribution appears only when the desktop records it.</p>
+  <ul class="people" id="people-list"></ul>
+  <div class="row"><label class="grow">Name <input id="people-name" type="text"></label><label>Initial <input id="people-initial" type="text" maxlength="1" size="2"></label><label>Is <select id="people-kind"><option value="agent">an agent</option><option value="person">a person</option></select></label><button class="btn" id="people-add" type="button">Add</button></div>
+  <div class="msg" id="people-msg"></div>
+  <div class="row"><span class="grow"></span><button class="btn ghost" type="button" onclick="this.closest('dialog').close()">Close</button></div>
+</div></dialog>
+
 <main class="doc" id="app" hidden></main>
-<script type="application/json" id="ql-doc">{"meta": {"documentId": null, "created": null, "title": "", "revision": 0, "view": "dialogue", "current": null, "journalCurrent": null, "exported": null, "template": "ql-dialogue-flow v0.3"}, "entries": [], "notes": [], "packet": [], "media": [], "journal": []}</script>
+<!--ql-plural:begin-->
+<script id="ql-plural">
+var QlPlural = (() => {
+  var __defProp = Object.defineProperty;
+  var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
+  var __getOwnPropNames = Object.getOwnPropertyNames;
+  var __hasOwnProp = Object.prototype.hasOwnProperty;
+  var __export = (target, all) => {
+    for (var name in all)
+      __defProp(target, name, { get: all[name], enumerable: true });
+  };
+  var __copyProps = (to, from, except, desc) => {
+    if (from && typeof from === "object" || typeof from === "function") {
+      for (let key of __getOwnPropNames(from))
+        if (!__hasOwnProp.call(to, key) && key !== except)
+          __defProp(to, key, { get: () => from[key], enumerable: !(desc = __getOwnPropDesc(from, key)) || desc.enumerable });
+    }
+    return to;
+  };
+  var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
+  var stdin_exports = {};
+  __export(stdin_exports, {
+    FORMAT_VERSION: () => FORMAT_VERSION,
+    Refusal: () => Refusal,
+    TEMPLATE_V4: () => TEMPLATE_V4,
+    activeParticipants: () => activeParticipants,
+    addParticipant: () => addParticipant,
+    appendContribution: () => appendContribution,
+    authorOf: () => authorOf,
+    buildThreads: () => buildThreads,
+    canonicalJson: () => canonicalJson,
+    defaultParticipants: () => defaultParticipants,
+    describeRelation: () => describeRelation,
+    draftEntry: () => draftEntry,
+    entryIdForOperation: () => entryIdForOperation,
+    formatVersionOf: () => formatVersionOf,
+    isCurrentFormat: () => isCurrentFormat,
+    leaveParticipant: () => leaveParticipant,
+    legacyParticipantKey: () => legacyParticipantKey,
+    readableEntries: () => readableEntries,
+    relationsOf: () => relationsOf,
+    requestDigest: () => requestDigest,
+    sha256: () => sha256,
+    upgradeDocument: () => upgradeDocument,
+    validateDocument: () => validateDocument
+  });
+  const FORMAT_VERSION = 4;
+  const TEMPLATE_V4 = "ql-dialogue-flow v0.4";
+  class Refusal extends Error {
+    code;
+    constructor(code, message) {
+      super(message);
+      this.name = "Refusal";
+      this.code = code;
+    }
+  }
+  function canonicalJson(value) {
+    if (Array.isArray(value)) return "[" + value.map(canonicalJson).join(",") + "]";
+    if (value && typeof value === "object") {
+      const object = value;
+      return "{" + Object.keys(object).filter((key) => object[key] !== void 0).sort().map((key) => JSON.stringify(key) + ":" + canonicalJson(object[key])).join(",") + "}";
+    }
+    return JSON.stringify(value) ?? "null";
+  }
+  const K = new Uint32Array([
+    1116352408,
+    1899447441,
+    3049323471,
+    3921009573,
+    961987163,
+    1508970993,
+    2453635748,
+    2870763221,
+    3624381080,
+    310598401,
+    607225278,
+    1426881987,
+    1925078388,
+    2162078206,
+    2614888103,
+    3248222580,
+    3835390401,
+    4022224774,
+    264347078,
+    604807628,
+    770255983,
+    1249150122,
+    1555081692,
+    1996064986,
+    2554220882,
+    2821834349,
+    2952996808,
+    3210313671,
+    3336571891,
+    3584528711,
+    113926993,
+    338241895,
+    666307205,
+    773529912,
+    1294757372,
+    1396182291,
+    1695183700,
+    1986661051,
+    2177026350,
+    2456956037,
+    2730485921,
+    2820302411,
+    3259730800,
+    3345764771,
+    3516065817,
+    3600352804,
+    4094571909,
+    275423344,
+    430227734,
+    506948616,
+    659060556,
+    883997877,
+    958139571,
+    1322822218,
+    1537002063,
+    1747873779,
+    1955562222,
+    2024104815,
+    2227730452,
+    2361852424,
+    2428436474,
+    2756734187,
+    3204031479,
+    3329325298
+  ]);
+  function sha256(text) {
+    const bytes = new TextEncoder().encode(text);
+    const bitLength = bytes.length * 8;
+    const padded = new Uint8Array(bytes.length + 9 + 63 >> 6 << 6);
+    padded.set(bytes);
+    padded[bytes.length] = 128;
+    const view = new DataView(padded.buffer);
+    view.setUint32(padded.length - 8, Math.floor(bitLength / 2 ** 32));
+    view.setUint32(padded.length - 4, bitLength >>> 0);
+    const h = new Uint32Array([1779033703, 3144134277, 1013904242, 2773480762, 1359893119, 2600822924, 528734635, 1541459225]);
+    const w = new Uint32Array(64);
+    const rotr = (x, n) => x >>> n | x << 32 - n;
+    for (let offset = 0; offset < padded.length; offset += 64) {
+      for (let i = 0; i < 16; i++) w[i] = view.getUint32(offset + i * 4);
+      for (let i = 16; i < 64; i++) {
+        const s0 = rotr(w[i - 15], 7) ^ rotr(w[i - 15], 18) ^ w[i - 15] >>> 3;
+        const s1 = rotr(w[i - 2], 17) ^ rotr(w[i - 2], 19) ^ w[i - 2] >>> 10;
+        w[i] = w[i - 16] + s0 + w[i - 7] + s1 >>> 0;
+      }
+      let [a, b, c, d, e, f, g, hh] = h;
+      for (let i = 0; i < 64; i++) {
+        const S1 = rotr(e, 6) ^ rotr(e, 11) ^ rotr(e, 25);
+        const ch = e & f ^ ~e & g;
+        const t1 = hh + S1 + ch + K[i] + w[i] >>> 0;
+        const S0 = rotr(a, 2) ^ rotr(a, 13) ^ rotr(a, 22);
+        const maj = a & b ^ a & c ^ b & c;
+        const t2 = S0 + maj >>> 0;
+        hh = g;
+        g = f;
+        f = e;
+        e = d + t1 >>> 0;
+        d = c;
+        c = b;
+        b = a;
+        a = t1 + t2 >>> 0;
+      }
+      h[0] = h[0] + a >>> 0;
+      h[1] = h[1] + b >>> 0;
+      h[2] = h[2] + c >>> 0;
+      h[3] = h[3] + d >>> 0;
+      h[4] = h[4] + e >>> 0;
+      h[5] = h[5] + f >>> 0;
+      h[6] = h[6] + g >>> 0;
+      h[7] = h[7] + hh >>> 0;
+    }
+    return Array.from(h, (word) => word.toString(16).padStart(8, "0")).join("");
+  }
+  const participantsOf = (doc) => doc.meta.participants ?? [];
+  function formatVersionOf(doc) {
+    return doc.meta.format?.version ?? 3;
+  }
+  const isCurrentFormat = (doc) => formatVersionOf(doc) >= FORMAT_VERSION;
+  function relationsOf(entry) {
+    if (entry.relations?.length) return entry.relations;
+    return entry.replyTo ? [{ type: "reply", entryId: entry.replyTo.entryId, anchor: entry.replyTo.anchor }] : [];
+  }
+  function authorOf(doc, entry) {
+    const participants = participantsOf(doc);
+    if (entry.authorKey) return participants.find((p) => p.key === entry.authorKey);
+    const matches = participants.filter((p) => p.initial === entry.author);
+    return matches.length === 1 ? matches[0] : void 0;
+  }
+  function activeParticipants(doc) {
+    return participantsOf(doc).filter((p) => !p.left);
+  }
+  const CAUSAL = ["reply", "branch", "converge", "correct"];
+  function validateDocument(doc) {
+    const issues = [];
+    const entries = doc.entries;
+    const participants = participantsOf(doc);
+    const ids = /* @__PURE__ */ new Set();
+    entries.forEach((entry, i) => {
+      if (ids.has(entry.id)) issues.push({ code: "duplicate-entry-id", path: `entries[${i}].id` });
+      ids.add(entry.id);
+    });
+    const keys = /* @__PURE__ */ new Set();
+    participants.forEach((participant, i) => {
+      if (!participant.key) return;
+      if (keys.has(participant.key)) issues.push({ code: "duplicate-participant-key", path: `meta.participants[${i}].key` });
+      keys.add(participant.key);
+    });
+    const current = isCurrentFormat(doc);
+    entries.forEach((entry, i) => {
+      const at = `entries[${i}]`;
+      if (entry.authorKey) {
+        const author = participants.find((p) => p.key === entry.authorKey);
+        if (!author) issues.push({ code: "unknown-author-key", path: `${at}.authorKey` });
+        else if (author.initial !== entry.author) issues.push({ code: "author-initial-mismatch", path: `${at}.author` });
+      }
+      (entry.addressees ?? []).forEach((key) => {
+        if (!keys.has(key)) issues.push({ code: "unknown-addressee", path: `${at}.addressees`, detail: key });
+      });
+      if (entry.audience && entry.audience !== "group") entry.audience.keys.forEach((key) => {
+        if (!keys.has(key)) issues.push({ code: "unknown-audience-key", path: `${at}.audience`, detail: key });
+      });
+      const relations = relationsOf(entry);
+      relations.forEach((relation, r) => {
+        if (relation.entryId !== void 0 && !ids.has(relation.entryId)) issues.push({ code: "relation-target-missing", path: `${at}.relations[${r}]`, detail: relation.entryId });
+        if (relation.type === "source" || relation.type === "artifact" ? !relation.ref : !relation.entryId) issues.push({ code: "relation-shape", path: `${at}.relations[${r}]` });
+      });
+      if (relations.filter((r) => r.type === "reply").length > 1) issues.push({ code: "reply-multiple", path: `${at}.relations` });
+      const converge = relations.filter((r) => r.type === "converge").length;
+      if (converge === 1) issues.push({ code: "converge-needs-two", path: `${at}.relations` });
+      if (entry.request) {
+        const { digest: stored } = entry.request;
+        if (stored !== requestDigest(entry)) issues.push({ code: "request-digest-mismatch", path: `${at}.request` });
+      }
+    });
+    const parent = /* @__PURE__ */ new Map();
+    entries.forEach((entry) => parent.set(entry.id, relationsOf(entry).filter((r) => CAUSAL.includes(r.type) && r.entryId).map((r) => r.entryId)));
+    const state = /* @__PURE__ */ new Map();
+    const visit = (id) => {
+      if (state.get(id) === 2) return false;
+      if (state.get(id) === 1) return true;
+      state.set(id, 1);
+      for (const next of parent.get(id) ?? []) if (parent.has(next) && visit(next)) return true;
+      state.set(id, 2);
+      return false;
+    };
+    entries.forEach((entry, i) => {
+      if (visit(entry.id)) issues.push({ code: "relation-cycle", path: `entries[${i}]` });
+    });
+    if (!current) issues.push({ code: "legacy-format", path: "meta.format", detail: `format v${formatVersionOf(doc)}` });
+    return issues;
+  }
+  const fnv = (text) => {
+    let hash = 0xcbf29ce484222325n;
+    for (const byte of new TextEncoder().encode(text)) hash = BigInt.asUintN(64, (hash ^ BigInt(byte)) * 0x100000001b3n);
+    return hash.toString(16).padStart(16, "0");
+  };
+  const legacyParticipantKey = (documentId, initial, ordinal) => `p-${fnv(`${documentId ?? ""}\0${initial}\0${ordinal}`)}`;
+  function upgradeDocument(doc, at) {
+    if (isCurrentFormat(doc)) return doc;
+    const original = JSON.parse(JSON.stringify(doc));
+    const next = JSON.parse(JSON.stringify(doc));
+    const declared = participantsOf(next);
+    const base = declared.length ? declared : [
+      { initial: "F", kind: "person", name: "the person" },
+      { initial: "H", kind: "agent", name: "the agent" }
+    ];
+    const counts = /* @__PURE__ */ new Map();
+    base.forEach((p) => counts.set(p.initial, (counts.get(p.initial) ?? 0) + 1));
+    base.forEach((participant, ordinal) => {
+      participant.key ??= legacyParticipantKey(next.meta.documentId, participant.initial, ordinal);
+      participant.binding ??= { owner: "document", ref: participant.ref ?? "", basis: participant.ref ? "declared" : "unknown" };
+      if (!participant.binding.ref) delete participant.binding.ref;
+      participant.role ??= "contributor";
+    });
+    next.meta.participants = base;
+    next.entries.forEach((entry) => {
+      const matches = base.filter((p) => p.initial === entry.author);
+      if (matches.length === 1 && !entry.authorKey) entry.authorKey = matches[0].key;
+      entry.attribution ??= { basis: matches.length === 1 ? "declared" : "unknown" };
+      if (entry.replyTo && !entry.relations) entry.relations = [{ type: "reply", entryId: entry.replyTo.entryId, anchor: entry.replyTo.anchor }];
+    });
+    next.meta.template = TEMPLATE_V4;
+    next.meta.format = { version: FORMAT_VERSION, minReader: FORMAT_VERSION };
+    const originalDigest = sha256(canonicalJson(original));
+    next.meta.upgrade = { from: original.meta.template, at, originalDigest, receipt: sha256(`${originalDigest}\0${TEMPLATE_V4}`) };
+    return next;
+  }
+  function requestDigest(entry) {
+    return sha256(canonicalJson({
+      authorKey: entry.authorKey,
+      html: entry.html,
+      addressees: entry.addressees ?? [],
+      audience: entry.audience ?? "group",
+      intent: entry.intent ?? "contribution",
+      relations: relationsOf(entry),
+      basisRevision: entry.basisRevision ?? null,
+      ref: entry.request?.ref
+    }));
+  }
+  const entryIdForOperation = (operationRef) => `e-${sha256(operationRef).slice(0, 24)}`;
+  function checkCaller(author, caller, request) {
+    if (author.left) throw new Refusal("participant-left", `${author.name ?? author.initial} has left this flow`);
+    if ((author.role ?? "contributor") === "observer") throw new Refusal("observer-cannot-contribute", `${author.name ?? author.initial} is an observer`);
+    const claimed = request.attribution?.basis;
+    const bound = author.binding && author.binding.basis === "verified" ? author.binding : void 0;
+    if (caller.kind === "agent") {
+      if (author.kind !== "agent") throw new Refusal("impersonation", "an agent cannot author as a person");
+      const identity = caller.session ?? caller.ref;
+      if (!identity) throw new Refusal("author-not-caller", "the native caller carries no agent identity");
+      if (bound && bound.ref !== identity && bound.ref !== caller.agent) throw new Refusal("author-not-caller", `${author.name ?? author.initial} is bound to another agent`);
+      return { basis: "verified", agency: caller.agent, session: caller.session, generation: caller.generation, workcell: caller.workcell, ...request.attribution?.onBehalfOf ? { onBehalfOf: request.attribution.onBehalfOf } : {} };
+    }
+    if (caller.kind === "human") {
+      if (author.kind === "agent") {
+        if (claimed === "verified") throw new Refusal("attribution-overclaim", "a human caller cannot produce verified agent attribution");
+        return { basis: "declared" };
+      }
+      if (bound && caller.ref && bound.ref !== caller.ref) throw new Refusal("impersonation", `${author.name ?? author.initial} is bound to another person`);
+      return { basis: bound && caller.ref ? "verified" : "declared" };
+    }
+    if (claimed === "verified") throw new Refusal("attribution-overclaim", "a system caller cannot verify an author");
+    return { basis: "declared" };
+  }
+  function appendContribution(doc, request, caller) {
+    if (!request.operationRef) throw new Refusal("empty-operation", "a native operation reference is required");
+    if (formatVersionOf(doc) > FORMAT_VERSION) throw new Refusal("unsupported-format", `flow format v${formatVersionOf(doc)} needs a newer writer`);
+    if (!isCurrentFormat(doc)) throw new Refusal("legacy-format", "this document is a legacy form; upgrade it explicitly before contributing");
+    const participants = participantsOf(doc);
+    const author = participants.find((p) => p.key === request.authorKey);
+    if (!author) throw new Refusal("unknown-author", `no participant ${request.authorKey}`);
+    const relations = (request.relations ?? []).map((r) => ({ ...r }));
+    const probe = {
+      id: request.entryId ?? entryIdForOperation(request.operationRef),
+      author: author.initial,
+      authorKey: author.key,
+      at: request.at,
+      html: request.html,
+      replyTo: null,
+      touched: false,
+      addressees: request.addressees,
+      audience: request.audience,
+      intent: request.intent,
+      relations,
+      basisRevision: request.basisRevision,
+      request: { ref: request.operationRef, digest: "" }
+    };
+    const digest = requestDigest(probe);
+    const existing = doc.entries.find((e) => e.request?.ref === request.operationRef);
+    if (existing) {
+      if (existing.request.digest !== digest) throw new Refusal("request-conflict", `operation ${request.operationRef} already recorded with a different payload`);
+      return { doc, entry: existing, outcome: "recovered" };
+    }
+    const attribution = checkCaller(author, caller, request);
+    const ids = new Set(doc.entries.map((e) => e.id));
+    if (ids.has(probe.id)) throw new Refusal("duplicate-entry-id", `entry ${probe.id} already exists`);
+    const keys = new Set(participants.map((p) => p.key));
+    (request.addressees ?? []).forEach((key) => {
+      if (!keys.has(key)) throw new Refusal("unknown-addressee", `no participant ${key}`);
+    });
+    if (request.audience && request.audience !== "group") request.audience.keys.forEach((key) => {
+      if (!keys.has(key)) throw new Refusal("unknown-audience-key", `no participant ${key}`);
+    });
+    relations.forEach((relation) => {
+      if (relation.type === "source" || relation.type === "artifact") {
+        if (!relation.ref) throw new Refusal("relation-shape", `${relation.type} relation needs a ref`);
+        return;
+      }
+      if (!relation.entryId) throw new Refusal("relation-shape", `${relation.type} relation needs an entry`);
+      if (!ids.has(relation.entryId)) throw new Refusal("relation-target-missing", `entry ${relation.entryId} is not in this document`);
+      if (relation.revision !== void 0 && relation.revision > doc.meta.revision) throw new Refusal("relation-revision-ahead", "relation names a revision the document has not reached");
+    });
+    if (relations.filter((r) => r.type === "reply").length > 1) throw new Refusal("reply-multiple", "an entry replies to one entry; use converge to relate several");
+    if (relations.filter((r) => r.type === "converge").length === 1) throw new Refusal("converge-needs-two", "a convergence relates at least two entries");
+    const entry = { ...probe, attribution: { ...attribution, ...request.attribution?.onBehalfOf ? { onBehalfOf: request.attribution.onBehalfOf } : {} }, request: { ref: request.operationRef, digest } };
+    const reply = relations.find((r) => r.type === "reply");
+    entry.replyTo = reply ? { entryId: reply.entryId, anchor: reply.anchor ?? null } : null;
+    for (const key of ["addressees", "audience", "intent", "basisRevision"]) if (entry[key] === void 0) delete entry[key];
+    if (!relations.length) delete entry.relations;
+    const next = JSON.parse(JSON.stringify(doc));
+    next.entries.push(entry);
+    next.meta.revision = doc.meta.revision + 1;
+    if (attribution.basis === "verified") {
+      const held = next.meta.participants.find((p) => p.key === author.key);
+      const identity = caller.kind === "agent" ? caller.session ?? caller.ref : caller.ref;
+      if (identity && (!held.binding || held.binding.basis !== "verified")) held.binding = { owner: caller.kind === "agent" ? "actuation" : "central", ref: identity, basis: "verified" };
+    }
+    return { doc: next, entry, outcome: "appended" };
+  }
+  function draftEntry(doc, authorKey, at, id, options) {
+    const author = participantsOf(doc).find((p) => p.key === authorKey);
+    const relations = options?.relations?.map((r) => ({ ...r }));
+    const reply = relations?.find((r) => r.type === "reply");
+    const entry = { id, author: author?.initial ?? "", at, html: "", replyTo: reply ? { entryId: reply.entryId, anchor: reply.anchor ?? null } : null, touched: false };
+    if (author) {
+      entry.authorKey = author.key;
+      entry.attribution = { basis: "declared" };
+    }
+    if (relations?.length) entry.relations = relations;
+    if (options?.addressees?.length) entry.addressees = [...options.addressees];
+    if (options?.intent) entry.intent = options.intent;
+    return entry;
+  }
+  function defaultParticipants(documentId) {
+    return [
+      { key: legacyParticipantKey(documentId, "F", 0), initial: "F", kind: "person", name: "the person", role: "contributor", binding: { owner: "document", basis: "unknown", ref: "" } },
+      { key: legacyParticipantKey(documentId, "H", 1), initial: "H", kind: "agent", name: "the agent", role: "contributor", binding: { owner: "document", basis: "unknown", ref: "" } }
+    ];
+  }
+  function describeRelation(doc, relation) {
+    const entries = doc.entries;
+    const number = (id) => {
+      const i = entries.findIndex((e) => e.id === id);
+      return i < 0 ? "an entry no longer here" : `entry ${i + 1}`;
+    };
+    switch (relation.type) {
+      case "reply":
+        return `Answers ${number(relation.entryId)}`;
+      case "branch":
+        return `Branches from ${number(relation.entryId)}`;
+      case "converge":
+        return `Brings together ${number(relation.entryId)}`;
+      case "correct":
+        return `Corrects ${number(relation.entryId)}`;
+      case "source":
+        return `Source ${relation.ref ?? ""}`;
+      default:
+        return `Artifact ${relation.ref ?? ""}`;
+    }
+  }
+  function addParticipant(doc, participant, at) {
+    if (!isCurrentFormat(doc)) throw new Refusal("legacy-format", "upgrade the document before adding participants");
+    const next = JSON.parse(JSON.stringify(doc));
+    const list = next.meta.participants ??= [];
+    const key = participant.key ?? `p-${fnv(`${next.meta.documentId}\0${participant.initial}\0${list.length}\0${at}`)}`;
+    if (list.some((p) => p.key === key)) return doc;
+    list.push({ role: "contributor", ...participant, key, joined: { at, revision: next.meta.revision } });
+    next.meta.revision += 1;
+    return next;
+  }
+  function leaveParticipant(doc, key, at) {
+    const next = JSON.parse(JSON.stringify(doc));
+    const held = next.meta.participants?.find((p) => p.key === key);
+    if (!held || held.left) return doc;
+    held.left = { at, revision: next.meta.revision };
+    next.meta.revision += 1;
+    return next;
+  }
+  function buildThreads(doc) {
+    const entries = doc.entries;
+    const nodes = new Map(entries.map((entry) => [entry.id, { entry, children: [], converges: [] }]));
+    const roots = [];
+    for (const entry of entries) {
+      const node = nodes.get(entry.id);
+      const relations = relationsOf(entry);
+      node.converges = relations.filter((r) => r.type === "converge" && r.entryId).map((r) => r.entryId);
+      const parent = relations.find((r) => (r.type === "reply" || r.type === "branch" || r.type === "correct") && r.entryId && nodes.has(r.entryId));
+      if (parent) nodes.get(parent.entryId).children.push(node);
+      else roots.push(node);
+    }
+    return roots;
+  }
+  function readableEntries(doc, key) {
+    const participant = participantsOf(doc).find((p) => p.key === key);
+    const entries = doc.entries;
+    const from = participant?.historyFrom ? entries.findIndex((e) => e.id === participant.historyFrom) : 0;
+    return entries.slice(Math.max(from, 0)).filter((entry) => !entry.audience || entry.audience === "group" || entry.audience.keys.includes(key) || entry.authorKey === key);
+  }
+  return __toCommonJS(stdin_exports);
+})();
+</script>
+<!--ql-plural:end-->
+<script type="application/json" id="ql-doc">{"meta": {"documentId": null, "created": null, "title": "", "revision": 0, "view": "dialogue", "current": null, "journalCurrent": null, "exported": null, "template": "ql-dialogue-flow v0.4", "format": {"version": 4, "minReader": 4}}, "entries": [], "notes": [], "packet": [], "media": [], "journal": []}</script>
 <script>
 (function(){
 'use strict';
@@ -249,7 +742,9 @@ const now = ()=>new Date().toISOString();
   m.revision ||= 0; m.view ||= 'dialogue';
   D.entries ||= []; D.notes ||= []; D.packet ||= []; D.media ||= []; D.journal ||= []; m.journalCurrent ||= null;
   if(!m.current || !D.entries.find(e=>e.id===m.current)) m.current=D.entries[0]?D.entries[0].id:null;
+  if(QlPlural.isCurrentFormat(D) && !(m.participants&&m.participants.length)) m.participants=QlPlural.defaultParticipants(m.documentId);
 })();
+const isPlural = ()=>QlPlural.isCurrentFormat(D);
 function touch(){ dirty=true; clearTimeout(revTimer); revTimer=setTimeout(()=>{ D.meta.revision++;  },900); }
 
 function clean(html){
@@ -289,18 +784,35 @@ function menu(anchor,items,opts={}){
 const entryOf = id => D.entries.find(e=>e.id===id);
 const participantOf = a => (D.meta.participants||[]).find(p=>p.initial===a)
   || {initial:a,kind:a==='F'?'person':'agent',name:a==='F'?'the person':a==='H'?'the agent':''};
+/* an entry's author: exact by key; else by initial, but an initial two participants share is ambiguous and stays an unassigned declaration */
+const authorP = e => QlPlural.authorOf(D,e) || (((D.meta.participants||[]).filter(p=>p.initial===e.author).length>1)?{initial:e.author,kind:'agent',name:'',ambiguous:true}:participantOf(e.author));
+const writer = ()=>{ const ps=(D.meta.participants||[]).filter(p=>!p.left&&(p.role||'contributor')==='contributor'); return (ps.find(p=>p.kind==='person')||ps[0]||{}).key; };
 const idx = id => D.entries.findIndex(e=>e.id===id);
 const plain = html => { const t=document.createElement('div'); t.innerHTML=html||''; return t.textContent; };
 const when = iso => iso? new Date(iso).toLocaleString('en-GB',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'}) : '';
 const num = e => 'entry '+(idx(e.id)+1);
 
 /* ---------- pieces ---------- */
-function ini(e){ const p=participantOf(e.author);
+function ini(e){ const p=authorP(e); const verified=e.attribution&&e.attribution.basis==='verified';
   const choices=(D.meta.participants&&D.meta.participants.length)?D.meta.participants:[participantOf('F'),participantOf('H')];
-  const el=h('button',{class:'ini','data-a':e.author,'data-k':p.kind,'aria-label':'Declared author '+e.author+(p.name?', '+p.name:'')+', click to change',title:'Declared author: '+e.author+(p.name?' ('+p.name+')':'')+' - declared, not authenticated',onclick:ev=>menu(ev.currentTarget,choices.map(x=>({
-    label:x.initial,current:e.author===x.initial,hint:(x.name||'')+(x.kind==='agent'?' - agent':' - the person'),
-    run:()=>{ e.author=x.initial; if(x.kind==='agent'&&!e.touched){ e.touched=true; } touch(); render(); }})))},h('span',{text:e.author})); return el; }
+  const el=h('button',{class:'ini','data-a':e.author,'data-k':p.kind,'aria-label':(verified?'Attributed author ':'Declared author ')+e.author+(p.name?', '+p.name:'')+(verified?'':', click to change'),title:(verified?'Attributed by the desktop: ':'Declared author: ')+e.author+(p.name?' ('+p.name+')':'')+(verified?' - recorded by the native owner; correct it with a correction entry':' - declared, not authenticated'),onclick:ev=>{ if(verified) return; menu(ev.currentTarget,choices.map(x=>({
+    label:x.initial,current:e.authorKey?e.authorKey===x.key:e.author===x.initial,hint:(x.name||'')+(x.kind==='agent'?' - agent':' - the person'),
+    run:()=>{ e.author=x.initial; if(x.key){ e.authorKey=x.key; e.attribution={basis:'declared'}; } else delete e.authorKey; if(x.kind==='agent'&&!e.touched){ e.touched=true; } touch(); render(); }}))); }},h('span',{text:e.author})); return el; }
 function moreBtn(e,inFlow){ return h('button',{class:'ib sm more','aria-label':'Entry actions','aria-haspopup':'menu',onclick:ev=>menu(ev.currentTarget,entryMenu(e,inFlow),{align:'right'})},svg(ICON.more)); }
+function relationsEl(e){
+  const rs=QlPlural.relationsOf(e); if(!rs.length&&!(e.addressees&&e.addressees.length)&&!e.attribution) return null;
+  const box=h('div',{class:'rels'});
+  rs.forEach(r=>{
+    if(r.type==='reply'){ const one=replyEl({replyTo:{entryId:r.entryId,anchor:r.anchor||null}}); if(one) box.append(one); return; }
+    if(r.type==='source'||r.type==='artifact'){ box.append(h('div',{class:'reply'},QlPlural.describeRelation(D,r))); return; }
+    const t=entryOf(r.entryId);
+    box.append(h('div',{class:'reply'},QlPlural.describeRelation(D,r).replace(/ entry \d+| an entry no longer here/,''),' ',t?h('a',{href:'#e-'+t.id,text:num(t),onclick:ev=>{ if(D.meta.view==='flow'){ ev.preventDefault(); open(t.id); } }}):h('span',{text:'an entry no longer here'})));
+  });
+  const to=(e.addressees||[]).map(k=>(D.meta.participants||[]).find(p=>p.key===k)).filter(Boolean);
+  if(to.length) box.append(h('div',{class:'to'},'To ',to.map((p,i)=>[i?', ':'',h('b',{text:p.name||p.initial})]).flat(),e.intent==='response'||e.intent==='work'?' — a response is asked for':''));
+  const a=e.attribution; if(a&&(a.basis!=='declared'||a.session)) box.append(h('div',{class:'attr '+a.basis,text:a.basis==='verified'?('Recorded by the native owner'+(a.session?' from '+a.session:'')+(a.workcell?' on '+a.workcell:'')):a.basis==='unknown'?'Author not established':a.basis}));
+  return box.children.length?box:null;
+}
 function replyEl(e){
   if(!e.replyTo) return null;
   const t=entryOf(e.replyTo.entryId); const changed = !t || (e.replyTo.anchor && !plain(t.html).includes(e.replyTo.anchor));
@@ -310,7 +822,7 @@ function replyEl(e){
 }
 function bodyEl(e,ph){
   return h('div',{class:'body',contenteditable:'true','data-entry':e.id,'data-placeholder':ph,role:'textbox','aria-label':num(e)+' by '+e.author,html:clean(e.html),
-    oninput:ev=>{ e.html=ev.target.innerHTML; if(participantOf(e.author).kind==='agent'&&!e.touched){ e.touched=true; ev.target.closest('.entry,.flow')?.classList.add('touched'); } touch(); }});
+    oninput:ev=>{ e.html=ev.target.innerHTML; if(authorP(e).kind==='agent'&&!e.touched){ e.touched=true; ev.target.closest('.entry,.flow')?.classList.add('touched'); } touch(); }});
 }
 function attachEl(e){
   const items=D.media.filter(m=>m.entry===e.id); if(!items.length) return null;
@@ -341,22 +853,29 @@ function entryMenu(e,inFlow){
   const items=[
     inFlow? {label:'Read as dialogue',run:()=>{ D.meta.view='dialogue'; render(); location.hash='e-'+e.id; }} : {label:'Open as a page',run:()=>open(e.id)},
     {label:'Answer on a page',run:()=>answer(e.id,null)},
+    isPlural()?{label:'Branch from this entry',hint:'a side inquiry',run:()=>answer(e.id,null,'branch')}:null,
+    isPlural()?{label:'Correct this entry',hint:'keeps what was said',run:()=>answer(e.id,null,'correct')}:null,
     'sep',
     {label:'Note on this entry',run:()=>{ const n={id:uid(),entryId:e.id,anchor:null,author:'F',timing:'during',text:'',at:now(),replies:[]}; D.notes.push(n); touch(); render(); const el=$('[data-note="'+n.id+'"] .text'); if(el) el.focus(); }},
     {label:'Whole entry to packet',run:()=>{ D.packet.push({id:uid(),entryId:e.id,scope:'whole entry',label:num(e)+' ('+e.author+')',text:plain(e.html),at:now()}); touch(); syncPk(); }},
     {label:'Attach media',run:()=>openMedia(e.id)}];
   if(D.entries.length>1) items.push('sep',{label:'Remove entry',cls:'danger',run:()=>{ if(plain(e.html).trim()&&!confirm('Remove '+num(e)+' and its notes? This cannot be undone in the open page.')) return; D.entries=D.entries.filter(x=>x!==e); D.notes=D.notes.filter(n=>n.entryId!==e.id); if(D.meta.current===e.id) D.meta.current=D.entries[0]?D.entries[0].id:null; touch(); render(); }});
-  return items;
+  return items.filter(Boolean);
 }
 function syncPk(){ $$('.pk .n').forEach(n=>{ n.textContent=String(D.packet.length); n.hidden=!D.packet.length; }); }
 function betweenEl(e){ return h('div',{class:'between'},h('button',{class:'ib sm','aria-label':'Write between entries','aria-haspopup':'menu',onclick:ev=>menu(ev.currentTarget,[
   {label:'Write here',hint:'as F',run:()=>{ const n=insertAfter(e.id,'F'); render(); $('[data-entry="'+n.id+'"]').focus(); }},
   {label:'Record an agent return',hint:'written by you, declared for the agent',run:()=>{ const agent=(D.meta.participants||[]).find(p=>p.kind==='agent')||participantOf('H'); const n=insertAfter(e.id,agent.initial); render(); $('[data-entry="'+n.id+'"]').focus(); }}])},svg(ICON.plus))); }
-function insertAfter(id,author){
-  const e={id:uid(),author,at:now(),html:'',replyTo:null,touched:false}; D.entries.splice(idx(id)+1,0,e); touch(); return e;
+function fresh(authorInitial,opts){
+  if(isPlural()){ const p=(D.meta.participants||[]).find(x=>x.initial===authorInitial&&!x.left)||(D.meta.participants||[]).find(x=>x.key===writer()); return QlPlural.draftEntry(D,p.key,now(),uid(),opts); }
+  const rel=opts&&opts.relations&&opts.relations.find(r=>r.type==='reply');
+  return {id:uid(),author:authorInitial,at:now(),html:'',replyTo:rel?{entryId:rel.entryId,anchor:rel.anchor||null}:null,touched:false};
 }
-function answer(targetId,anchor){
-  const t=entryOf(targetId); const e={id:uid(),author:'F',at:now(),html:'',replyTo:{entryId:targetId,anchor:anchor||null},touched:false};
+function insertAfter(id,author){
+  const e=fresh(author); D.entries.splice(idx(id)+1,0,e); touch(); return e;
+}
+function answer(targetId,anchor,type){
+  const t=entryOf(targetId); const e=fresh('F',{relations:[{type:type||'reply',entryId:targetId,revision:D.meta.revision,anchor:anchor||null}]});
   D.entries.splice(idx(targetId)+1,0,e); touch(); open(e.id);
 }
 function open(id){ D.meta.current=id; D.meta.view='flow'; render(); window.scrollTo(0,0); const b=$('.flow .page .body'); if(b) b.focus(); }
@@ -375,20 +894,22 @@ function render(){
       {label:'Save HTML copy',hint:'Ctrl/Cmd+S',run:exportCopy},
       {label:'Add media',run:()=>openMedia()},
       {label:'Context packet',hint:String(D.packet.length),run:openPacket},
+      isPlural()?{label:'Participants',hint:String((D.meta.participants||[]).filter(p=>!p.left).length),run:openPeople}:{label:'Upgrade to the plural form',hint:'keeps every entry',run:upgradeNow},
       'sep',
       {small:D.entries.length+' entr'+(D.entries.length===1?'y':'ies')+', '+D.notes.length+' note'+(D.notes.length===1?'':'s')+', '+D.journal.length+' journal page'+(D.journal.length===1?'':'s')},
       {small:'revision '+D.meta.revision},
       {small:'document '+D.meta.documentId.slice(0,8)+', created '+(D.meta.created||'').slice(0,10)}],{align:'right'})},svg(ICON.more),h('span',{class:'n',hidden:!D.packet.length,text:String(D.packet.length)}))));
   app.append(mast);
+  if(!isPlural()) app.append(h('div',{class:'legacy',role:'note'},'This is an earlier form of the flow. It reads and writes as before; choose ',h('b',{text:'Upgrade to the plural form'}),' in the document menu to add participants and relations. Every entry is kept.'));
   if(m.view==='flow') renderFlow(); else if(m.view==='journal') renderJournal(); else renderDialogue();
   app.hidden=false; window.scrollTo(0,y);
 }
 function renderDialogue(){
   const list=h('div',{class:'dlg'});
   D.entries.forEach(e=>{
-    const el=h('article',{class:'entry'+(e.touched?' touched':''),'data-a':e.author,id:'e-'+e.id},
+    const el=h('article',{class:'entry'+(e.touched?' touched':''),'data-a':e.author,'data-k':authorP(e).kind,id:'e-'+e.id},
       h('div',{class:'lead'},ini(e),h('div',{class:'meta'},h('div',{text:num(e)}),h('div',{text:when(e.at)}))),
-      h('div',{class:'bodycol'},replyEl(e),h('div',{class:'bodywrap'},bodyEl(e,participantOf(e.author).kind==='person'?'Begin here. An empty entry is allowed.':'Recorded for '+(participantOf(e.author).name||'the agent')+'; declared, not authenticated.'),moreBtn(e,false)),attachEl(e)),
+      h('div',{class:'bodycol'},relationsEl(e),h('div',{class:'bodywrap'},bodyEl(e,authorP(e).kind==='person'?'Begin here. An empty entry is allowed.':'Recorded for '+(authorP(e).name||'the agent')+(e.attribution&&e.attribution.basis==='verified'?'; attributed by the native owner.':'; declared, not authenticated.')),moreBtn(e,false)),attachEl(e)),
       marginEl(e),
       betweenEl(e));
     list.append(el);
@@ -403,7 +924,7 @@ function renderJournal(){
     h('div',{class:'when'},h('b',{text:dayOf(j.at)}),h('span',{text:new Date(j.at).toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'})}),
       h('button',{class:'ib sm more','aria-label':'Journal page actions','aria-haspopup':'menu',onclick:ev=>menu(ev.currentTarget,[
         {label:'New page',run:()=>{ const n={id:uid(),at:now(),html:''}; D.journal.push(n); D.meta.journalCurrent=n.id; touch(); render(); $('.journal .body').focus(); }},
-        {label:'Bring this page into the dialogue',hint:'as an F entry',run:()=>{ D.entries.push({id:uid(),author:'F',at:now(),html:j.html,replyTo:null,touched:false,fromJournal:j.id}); touch(); D.meta.view='dialogue'; render(); }},
+        {label:'Bring this page into the dialogue',hint:'as an F entry',run:()=>{ D.entries.push(Object.assign(fresh('F'),{html:j.html,fromJournal:j.id})); touch(); D.meta.view='dialogue'; render(); }},
         {label:'Whole page to packet',run:()=>{ D.packet.push({id:uid(),entryId:j.id,scope:'journal page',label:'journal, '+dayOf(j.at),text:plain(j.html),at:now()}); touch(); syncPk(); }},
         'sep',
         {label:'Remove page',cls:'danger',run:()=>{ if(plain(j.html).trim()&&!confirm('Remove this journal page? This cannot be undone in the open page.')) return; D.journal=D.journal.filter(x=>x!==j); D.meta.journalCurrent=null; touch(); render(); }}],{align:'right'})},svg(ICON.more))),
@@ -418,13 +939,13 @@ function renderFlow(){
   if(!e){ app.append(h('section',{class:'flow'},
     h('div',{class:'page',style:'text-align:center;padding:18vh 0'},
       h('p',{style:'font-style:italic;color:var(--faint)',text:'The flow is open. Nothing has been written yet.'}),
-      h('button',{class:'btn',text:'Write the first entry',onclick:()=>{ const n={id:uid(),author:'F',at:now(),html:'',replyTo:null,touched:false}; D.entries.push(n); D.meta.current=n.id; touch(); render(); const b=$('.flow .page .body'); if(b) b.focus(); }}))));
+      h('button',{class:'btn',text:'Write the first entry',onclick:()=>{ const n=fresh('F'); D.entries.push(n); D.meta.current=n.id; touch(); render(); const b=$('.flow .page .body'); if(b) b.focus(); }}))));
     return; }
   const i=idx(e.id);
   const f=h('section',{class:'flow'+(e.touched?' touched':'')},
     h('div',{class:'head'},ini(e),h('div',{class:'meta'},h('span',{text:num(e)+' of '+D.entries.length}),h('span',{text:when(e.at)})),moreBtn(e,true)),
-    replyEl(e),
-    h('div',{class:'page'},bodyEl(e,participantOf(e.author).kind==='person'?'Write. The page is yours; it need not become anything.':'Recorded for '+(participantOf(e.author).name||'the agent')+'; declared, not authenticated.')),
+    relationsEl(e),
+    h('div',{class:'page'},bodyEl(e,authorP(e).kind==='person'?'Write. The page is yours; it need not become anything.':'Recorded for '+(authorP(e).name||'the agent')+(e.attribution&&e.attribution.basis==='verified'?'; attributed by the native owner.':'; declared, not authenticated.'))),
     marginEl(e),
     attachEl(e),
     h('div',{class:'nav'},
@@ -475,10 +996,22 @@ $('#packet-copy').addEventListener('click',()=>{ const out={documentId:D.meta.do
   navigator.clipboard.writeText(JSON.stringify(out,null,2)).then(()=>{ $('#packet-msg').textContent='Copied '+D.packet.length+' item'+(D.packet.length===1?'':'s')+' as JSON.'; }); });
 $('#packet-clear').addEventListener('click',()=>{ D.packet=[]; touch(); openPacket(); syncPk(); });
 
+/* ---------- participants ---------- */
+function upgradeNow(){ D=QlPlural.upgradeDocument(D,now()); D.meta.participants=D.meta.participants||QlPlural.defaultParticipants(D.meta.documentId); touch(); render(); }
+function openPeople(){ const ul=$('#people-list'); ul.innerHTML='';
+  (D.meta.participants||[]).forEach(p=>ul.append(h('li',{},h('b',{text:p.name||p.initial}),h('small',{text:p.initial+' - '+(p.kind==='agent'?'agent':'person')+(p.role==='observer'?' - observer':'')+(p.left?' - left':'')+(p.binding&&p.binding.basis==='verified'?' - attributed':'')}),
+    p.left?null:h('button',{text:'Mark as left',onclick:()=>{ D=QlPlural.leaveParticipant(D,p.key,now()); touch(); openPeople(); render(); }}))));
+  $('#people-msg').textContent=''; $('#dlg-people').showModal(); }
+$('#people-add').addEventListener('click',()=>{
+  const name=$('#people-name').value.trim(), ini=($('#people-initial').value||name[0]||'').toUpperCase().slice(0,1), msg=$('#people-msg');
+  if(!name||!ini){ msg.className='msg err'; msg.textContent='A name and an initial are needed.'; return; }
+  D=QlPlural.addParticipant(D,{initial:ini,name,kind:$('#people-kind').value,binding:{owner:'document',ref:'',basis:'unknown'}},now());
+  $('#people-name').value=''; $('#people-initial').value=''; touch(); openPeople(); render(); });
+
 /* ---------- export ---------- */
 function snapshot(d){
   let out='<div class="snap"><h1>'+(clean(d.meta.title)||'Untitled exchange')+'</h1>';
-  d.entries.forEach((e,i)=>{ out+='<h2>Entry '+(i+1)+', '+esc(e.author)+', '+esc(e.at)+'</h2>'+(e.replyTo?'<p><i>answers entry '+(d.entries.findIndex(x=>x.id===e.replyTo.entryId)+1)+(e.replyTo.anchor?' at “'+esc(e.replyTo.anchor)+'”':'')+'</i></p>':'')+(clean(e.html)||'<p>—</p>');
+  d.entries.forEach((e,i)=>{ out+='<h2>Entry '+(i+1)+', '+esc(e.author)+', '+esc(e.at)+'</h2>'+QlPlural.relationsOf(e).filter(r=>r.entryId).map(r=>'<p><i>'+esc(QlPlural.describeRelation(d,r))+(r.anchor?' at “'+esc(r.anchor)+'”':'')+'</i></p>').join('')+(clean(e.html)||'<p>—</p>');
     d.notes.filter(n=>n.entryId===e.id).forEach(n=>{ out+='<p><b>Note ('+esc(n.author)+', '+esc(n.timing)+')</b>'+(n.anchor?' on “'+esc(n.anchor)+'”':'')+': '+clean(n.text)+(n.replies||[]).map(r=>'<br>↳ '+esc(r.author)+': '+clean(r.text)).join('')+'</p>'; });
     d.media.filter(m=>m.entry===e.id&&m.mime.startsWith('image/')).forEach(m=>{ out+='<p><img src="'+m.data+'" alt="'+esc(m.name)+'" style="max-width:100%">'+(m.caption?'<br>'+clean(m.caption):'')+'</p>'; }); });
   (d.journal||[]).forEach((j,i)=>{ out+='<h2>Journal page '+(i+1)+', '+esc(j.at)+'</h2>'+(clean(j.html)||'<p>—</p>'); });
