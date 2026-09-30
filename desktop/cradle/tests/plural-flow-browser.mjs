@@ -78,6 +78,25 @@ try {
   await page.click('button[role="menuitem"]:has-text("Branch from this entry")');
   await page.waitForSelector("section.flow");
   assert.match(await page.locator("section.flow").innerText(), /Branches from\s*entry 1/);
+
+  // A copy to share carries no journal, notes, packet, media or entries restricted to some of the group;
+  // the complete copy stays the person's own, with everything.
+  const withPrivate = JSON.parse(JSON.stringify(plural));
+  withPrivate.entries.push({id: "e-priv", author: "A", authorKey: "p-ann", at: "2026-09-30T09:40:00.000Z", html: "<p>PRIVATE-ASIDE</p>", replyTo: null, touched: false, audience: {keys: ["p-ann"]}});
+  withPrivate.journal = [{id: "j1", at: "2026-09-30T09:00:00.000Z", html: "<p>SECRET-JOURNAL</p>"}];
+  withPrivate.notes = [{id: "n1", entryId: "e-a1", text: "<p>SECRET-NOTE</p>", at: "x", replies: [], author: "A", timing: "x"}];
+  await page.goto(withDoc("plural-share.html", withPrivate));
+  await page.waitForSelector("article.entry");
+  const saved = async label => {
+    await page.click('button[aria-label="Document menu"]');
+    const [download] = await Promise.all([page.waitForEvent("download"), page.click(`button[role="menuitem"]:has-text("${label}")`)]);
+    const target = join(dir, label.replace(/\W+/g, "-") + ".html"); await download.saveAs(target); return readFileSync(target, "utf8");
+  };
+  const complete = await saved("Save complete copy");
+  for (const text of ["SECRET-JOURNAL", "SECRET-NOTE", "PRIVATE-ASIDE"]) assert.ok(complete.includes(text), `the person's own complete copy keeps ${text}`);
+  const shared = await saved("Save a copy to share");
+  for (const text of ["SECRET-JOURNAL", "SECRET-NOTE", "PRIVATE-ASIDE"]) assert.ok(!shared.includes(text), `a copy to share leaves out ${text}, in the data and in the readable snapshot`);
+  assert.ok(shared.includes("Both answers together"), "what the whole group may read is kept");
 } finally {
   await browser.close();
 }

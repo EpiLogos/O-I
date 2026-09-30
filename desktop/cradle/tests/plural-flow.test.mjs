@@ -2,7 +2,7 @@ import {test} from "node:test";
 import assert from "node:assert/strict";
 import {readFile} from "node:fs/promises";
 import {
-  appendContribution, upgradeDocument, validateDocument, readableEntries, buildThreads, relationsOf,
+  appendContribution, upgradeDocument, validateDocument, readableEntries, buildThreads, relationsOf, portableCopy,
   canonicalJson, sha256, Refusal, FORMAT_VERSION,
 } from "../src/flow/plural.ts";
 
@@ -99,4 +99,33 @@ test("reading a legacy document never mutates it", () => {
   relationsOf(legacy.entries[1]);
   buildThreads(legacy);
   assert.equal(canonicalJson(legacy), before);
+});
+
+test("a portable copy carries only what the whole group may read and leaves the source untouched", () => {
+  const doc = {meta: {documentId: "d", title: "t", revision: 3, current: "e2", journalCurrent: "j1", format: {version: 4, minReader: 4},
+    participants: [{key: "a", initial: "A", kind: "person", name: "Ann"}, {key: "b", initial: "B", kind: "person", name: "Bea"}]},
+    entries: [
+      {id: "e1", author: "A", authorKey: "a", at: "2026-09-30T08:00:00.000Z", html: "<p>open</p>", replyTo: null, touched: false},
+      {id: "e2", author: "A", authorKey: "a", at: "2026-09-30T08:01:00.000Z", html: "<p>PRIVATE</p>", replyTo: null, touched: false, audience: {keys: ["a"]}},
+      {id: "e3", author: "B", authorKey: "b", at: "2026-09-30T08:02:00.000Z", html: "<p>answer</p>", replyTo: {entryId: "e2", anchor: null}, relations: [{type: "reply", entryId: "e2"}, {type: "source", ref: "central:source:x"}], touched: false},
+      {id: "e4", author: "B", authorKey: "b", at: "2026-09-30T08:03:00.000Z", html: "<p>odd</p>", replyTo: null, touched: false, audience: "private"},
+    ],
+    notes: [{id: "n1", entryId: "e1", text: "<p>NOTE</p>"}], packet: [{id: "p1"}], media: [{id: "m1", entry: "e1"}], journal: [{id: "j1", html: "<p>JOURNAL</p>"}]};
+  const before = clone(doc);
+  const copy = portableCopy(doc);
+  assert.deepEqual(doc, before, "the source is untouched");
+  assert.deepEqual(copy.entries.map(e => e.id), ["e1", "e3"]);
+  assert.deepEqual([copy.notes, copy.packet, copy.media, copy.journal], [[], [], [], []]);
+  assert.equal(copy.entries[1].replyTo, null, "no reply left pointing at a withheld entry");
+  assert.deepEqual(copy.entries[1].relations, [{type: "source", ref: "central:source:x"}]);
+  assert.ok(!JSON.stringify(copy).match(/PRIVATE|NOTE|JOURNAL/));
+  assert.deepEqual(validateDocument(copy).filter(i => i.code !== "legacy-format"), []);
+});
+
+test("reading a document with an audience this form does not know never throws and never publishes it", () => {
+  const doc = {meta: {documentId: "d", revision: 1, format: {version: 4, minReader: 4}, participants: [{key: "a", initial: "A", kind: "person"}, {key: "b", initial: "B", kind: "person"}]},
+    entries: [{id: "e1", author: "A", authorKey: "a", at: "2026-09-30T08:00:00.000Z", html: "<p>x</p>", replyTo: null, touched: false, audience: "private"}], notes: [], packet: [], media: [], journal: []};
+  assert.deepEqual(readableEntries(doc, "b").map(e => e.id), []);
+  assert.deepEqual(readableEntries(doc, "a").map(e => e.id), ["e1"]);
+  assert.deepEqual(validateDocument(doc).map(i => i.code).filter(c => c === "invalid-audience"), ["invalid-audience"]);
 });

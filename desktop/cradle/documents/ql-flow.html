@@ -271,6 +271,7 @@ var QlPlural = (() => {
   var stdin_exports = {};
   __export(stdin_exports, {
     FORMAT_VERSION: () => FORMAT_VERSION,
+    RELATION_TYPES: () => RELATION_TYPES,
     Refusal: () => Refusal,
     TEMPLATE_V4: () => TEMPLATE_V4,
     activeParticipants: () => activeParticipants,
@@ -287,6 +288,7 @@ var QlPlural = (() => {
     isCurrentFormat: () => isCurrentFormat,
     leaveParticipant: () => leaveParticipant,
     legacyParticipantKey: () => legacyParticipantKey,
+    portableCopy: () => portableCopy,
     readableEntries: () => readableEntries,
     relationsOf: () => relationsOf,
     requestDigest: () => requestDigest,
@@ -297,6 +299,7 @@ var QlPlural = (() => {
   });
   const FORMAT_VERSION = 4;
   const TEMPLATE_V4 = "ql-dialogue-flow v0.4";
+  const RELATION_TYPES = ["reply", "branch", "converge", "correct", "source", "artifact"];
   class Refusal extends Error {
     code;
     constructor(code, message) {
@@ -471,7 +474,8 @@ var QlPlural = (() => {
       (entry.addressees ?? []).forEach((key) => {
         if (!keys.has(key)) issues.push({ code: "unknown-addressee", path: `${at}.addressees`, detail: key });
       });
-      if (entry.audience && entry.audience !== "group") entry.audience.keys.forEach((key) => {
+      if (entry.audience !== void 0 && entry.audience !== "group" && !(typeof entry.audience === "object" && entry.audience && Array.isArray(entry.audience.keys))) issues.push({ code: "invalid-audience", path: `${at}.audience` });
+      else if (entry.audience && entry.audience !== "group") entry.audience.keys.forEach((key) => {
         if (!keys.has(key)) issues.push({ code: "unknown-audience-key", path: `${at}.audience`, detail: key });
       });
       const relations = relationsOf(entry);
@@ -564,7 +568,14 @@ var QlPlural = (() => {
       if (!identity) throw new Refusal("author-not-caller", "the native caller carries no agent identity");
       if (bound && !caller.authenticated) throw new Refusal("authentication-required", `${author.name ?? author.initial} is bound; only an authenticated caller may write as them`);
       if (bound && bound.ref !== identity && bound.ref !== caller.agent) throw new Refusal("author-not-caller", `${author.name ?? author.initial} is bound to another agent`);
-      return { basis: caller.authenticated ? "verified" : "declared", agency: caller.agent, session: caller.session, generation: caller.generation, workcell: caller.workcell, ...request.attribution?.onBehalfOf ? { onBehalfOf: request.attribution.onBehalfOf } : {} };
+      if (caller.authenticated) {
+        const mine = new Set([caller.agent, caller.session, caller.ref].filter((x) => !!x));
+        const declared = author.binding?.ref;
+        if (declared && !mine.has(declared)) throw new Refusal("impersonation", `${author.name ?? author.initial} is declared for another agent`);
+        const ownSeat = participants.find((p) => p.key !== author.key && p.kind === "agent" && p.binding?.ref && mine.has(p.binding.ref));
+        if (ownSeat) throw new Refusal("impersonation", `this credential is ${ownSeat.name ?? ownSeat.initial}'s; it cannot write as ${author.name ?? author.initial}`);
+      }
+      return { basis: caller.authenticated ? "verified" : "declared", agency: caller.agent, session: caller.session, generation: caller.generation, workcell: caller.workcell };
     }
     if (caller.kind === "human") {
       if (author.kind === "agent") {
@@ -615,6 +626,12 @@ var QlPlural = (() => {
       if (existing.request.digest !== digest) throw new Refusal("request-conflict", `operation ${request.operationRef} already recorded with a different payload`);
       return { doc, entry: existing, outcome: "recovered" };
     }
+    if (!String(request.html ?? "").replace(/<[^>]*>/g, "").replace(/&nbsp;/g, " ").trim() && !/<(img|video|audio|iframe|object|embed)\b/i.test(request.html ?? "")) throw new Refusal("empty-contribution", "a contribution needs content");
+    if (request.basisRevision !== void 0 && (!Number.isInteger(request.basisRevision) || request.basisRevision < 0 || request.basisRevision > doc.meta.revision)) throw new Refusal("invalid-basis-revision", "the basis revision must be a revision this document has reached");
+    if (request.audience !== void 0 && request.audience !== "group" && !(request.audience && Array.isArray(request.audience.keys))) throw new Refusal("invalid-audience", 'an audience is "group" or a list of participant keys');
+    const claimedBehalf = request.attribution?.onBehalfOf;
+    if (claimedBehalf && (!participants.some((p) => p.key === claimedBehalf.key) || claimedBehalf.key === author.key || !String(claimedBehalf.authority ?? "").trim())) throw new Refusal("unknown-behalf-of", "on behalf of names another participant and the authority claimed");
+    const behalf = claimedBehalf ? { key: claimedBehalf.key, authority: claimedBehalf.authority } : void 0;
     const attribution = checkCaller(author, caller, request, participants);
     const ids = new Set(doc.entries.map((e) => e.id));
     if (ids.has(probe.id)) throw new Refusal("duplicate-entry-id", `entry ${probe.id} already exists`);
@@ -626,6 +643,7 @@ var QlPlural = (() => {
       if (!keys.has(key)) throw new Refusal("unknown-audience-key", `no participant ${key}`);
     });
     relations.forEach((relation) => {
+      if (!RELATION_TYPES.includes(relation.type)) throw new Refusal("invalid-relation-type", `${String(relation.type)} is not a relation this form knows`);
       if (relation.type === "source" || relation.type === "artifact") {
         if (!relation.ref) throw new Refusal("relation-shape", `${relation.type} relation needs a ref`);
         return;
@@ -636,7 +654,7 @@ var QlPlural = (() => {
     });
     if (relations.filter((r) => r.type === "reply").length > 1) throw new Refusal("reply-multiple", "an entry replies to one entry; use converge to relate several");
     if (relations.filter((r) => r.type === "converge").length === 1) throw new Refusal("converge-needs-two", "a convergence relates at least two entries");
-    const entry = { ...probe, attribution: { ...attribution, ...request.attribution?.onBehalfOf ? { onBehalfOf: request.attribution.onBehalfOf } : {} }, request: { ref: request.operationRef, digest } };
+    const entry = { ...probe, attribution: { ...attribution, ...behalf ? { onBehalfOf: behalf } : {} }, request: { ref: request.operationRef, digest } };
     const reply = relations.find((r) => r.type === "reply");
     entry.replyTo = reply ? { entryId: reply.entryId, anchor: reply.anchor ?? null } : null;
     for (const key of ["addressees", "audience", "intent", "basisRevision"]) if (entry[key] === void 0) delete entry[key];
@@ -733,10 +751,52 @@ var QlPlural = (() => {
     return roots;
   }
   function readableEntries(doc, key) {
-    const participant = participantsOf(doc).find((p) => p.key === key);
+    const participant = key ? participantsOf(doc).find((p) => p.key === key) : void 0;
     const entries = doc.entries;
-    const from = participant?.historyFrom ? entries.findIndex((e) => e.id === participant.historyFrom) : 0;
-    return entries.slice(Math.max(from, 0)).filter((entry) => !entry.audience || entry.audience === "group" || entry.audience.keys.includes(key) || entry.authorKey === key);
+    if (!participant) return entries.filter((e) => audienceOf(e) === "group");
+    let from = 0;
+    if (participant.historyFrom) {
+      from = entries.findIndex((e) => e.id === participant.historyFrom);
+      if (from < 0) return [];
+    }
+    let last = entries.length;
+    if (participant.left) {
+      const gone = Date.parse(participant.left.at);
+      last = Number.isNaN(gone) ? 0 : entries.findIndex((e) => {
+        const at = Date.parse(e.at);
+        return Number.isNaN(at) || at > gone;
+      });
+      if (last < 0) last = entries.length;
+    }
+    return entries.slice(from, last).filter((entry) => {
+      const a = audienceOf(entry);
+      return a === "group" || a.includes(key) || entry.authorKey === key;
+    });
+  }
+  function audienceOf(entry) {
+    const a = entry.audience;
+    if (a === void 0 || a === null || a === "group") return "group";
+    if (typeof a === "object" && Array.isArray(a.keys)) return a.keys.filter((k) => typeof k === "string");
+    return [];
+  }
+  function portableCopy(doc) {
+    const next = JSON.parse(JSON.stringify(doc));
+    const open = new Set(next.entries.filter((e) => audienceOf(e) === "group").map((e) => e.id));
+    next.entries = next.entries.filter((e) => open.has(e.id)).map((e) => {
+      if (e.relations) {
+        e.relations = e.relations.filter((r) => !r.entryId || open.has(r.entryId));
+        if (!e.relations.length) delete e.relations;
+      }
+      if (e.replyTo && !open.has(e.replyTo.entryId)) e.replyTo = null;
+      return e;
+    });
+    next.journal = [];
+    next.notes = [];
+    next.packet = [];
+    next.media = [];
+    next.meta.current = null;
+    next.meta.journalCurrent = null;
+    return next;
   }
   return __toCommonJS(stdin_exports);
 })();
@@ -910,7 +970,8 @@ function render(){
       h('button',{'aria-pressed':String(m.view==='journal'),text:'Journal',onclick:()=>{ m.view='journal'; render(); }}),
       h('i',{text:m.view==='flow'?'one entry as a full page':m.view==='journal'?'one person, one page at a time':'the same entries, read as a conversation'})),
     h('div',{class:'acts'},h('button',{class:'ib pk','aria-label':'Document menu','aria-haspopup':'menu',onclick:ev=>menu(ev.currentTarget,[
-      {label:'Save HTML copy',hint:'Ctrl/Cmd+S',run:exportCopy},
+      {label:'Save complete copy',hint:'Ctrl/Cmd+S · yours, with journal and notes',run:()=>exportCopy()},
+      {label:'Save a copy to share',hint:'without journal, notes, packet or private entries',run:()=>exportCopy(true)},
       {label:'Add media',run:()=>openMedia()},
       {label:'Context packet',hint:String(D.packet.length),run:openPacket},
       isPlural()?{label:'Participants',hint:String((D.meta.participants||[]).filter(p=>!p.left).length),run:openPeople}:{label:'Upgrade to the plural form',hint:'keeps every entry',run:upgradeNow},
@@ -1036,15 +1097,15 @@ function snapshot(d){
   (d.journal||[]).forEach((j,i)=>{ out+='<h2>Journal page '+(i+1)+', '+esc(j.at)+'</h2>'+(clean(j.html)||'<p>—</p>'); });
   return out+'</div>';
 }
-function exportCopy(){
-  clearTimeout(revTimer); const d=JSON.parse(JSON.stringify(D));
+function exportCopy(shared){
+  clearTimeout(revTimer); let d=JSON.parse(JSON.stringify(D)); if(shared===true) d=QlPlural.portableCopy(d);
   d.meta.title=clean(d.meta.title||''); d.entries.forEach(e=>e.html=clean(e.html)); (d.journal||[]).forEach(j=>j.html=clean(j.html)); d.notes.forEach(n=>{ n.text=clean(n.text); (n.replies||[]).forEach(r=>r.text=clean(r.text)); }); d.media.forEach(m=>m.caption=clean(m.caption||''));
   d.meta.exported=now();
   const json=JSON.stringify(d).replace(/<\/script/gi,'<\\/script').replace(/<!--/g,'<\\u0021--');
   const html=SHELL.replace(/<script type="application\/json" id="ql-doc">[\s\S]*?<\/script>/,()=>'<script type="application/json" id="ql-doc">'+json+'</script>')
     .replace(/<noscript id="snapshot">[\s\S]*?<\/noscript>/,()=>'<noscript id="snapshot">'+snapshot(d)+'</noscript>')
     .replace(/<title>[\s\S]*?<\/title>/,'<title>'+esc(plain(d.meta.title)||'Dialogue')+'</title>');
-  const blob=new Blob([html],{type:'text/html'}); const a=h('a',{href:URL.createObjectURL(blob),download:(plain(d.meta.title).trim().replace(/[^\w]+/g,'-').toLowerCase()||'dialogue')+'.html'}); document.body.append(a); a.click(); a.remove(); setTimeout(()=>URL.revokeObjectURL(a.href),4000); dirty=false;
+  const blob=new Blob([html],{type:'text/html'}); const a=h('a',{href:URL.createObjectURL(blob),download:(plain(d.meta.title).trim().replace(/[^\w]+/g,'-').toLowerCase()||'dialogue')+(shared===true?'-shared':'')+'.html'}); document.body.append(a); a.click(); a.remove(); setTimeout(()=>URL.revokeObjectURL(a.href),4000); dirty=false;
 }
 document.addEventListener('keydown',ev=>{ if((ev.metaKey||ev.ctrlKey)&&ev.key.toLowerCase()==='s'){ ev.preventDefault(); exportCopy(); } });
 window.addEventListener('beforeunload',ev=>{ if(dirty){ ev.preventDefault(); ev.returnValue=''; } });
