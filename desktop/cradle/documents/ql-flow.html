@@ -639,7 +639,7 @@ var QlPlural = (() => {
     next.meta.revision = doc.meta.revision + 1;
     if (attribution.basis === "verified") {
       const held = next.meta.participants.find((p) => p.key === author.key);
-      const identity = caller.kind === "agent" ? caller.session ?? caller.ref : caller.ref;
+      const identity = caller.kind === "agent" ? caller.agent ?? caller.session ?? caller.ref : caller.ref;
       if (identity && (!held.binding || held.binding.basis !== "verified")) held.binding = { owner: caller.kind === "agent" ? "actuation" : "central", ref: identity, basis: "verified" };
     }
     return { doc: next, entry, outcome: "appended" };

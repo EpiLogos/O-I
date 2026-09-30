@@ -405,7 +405,9 @@ export function appendContribution(doc: QlDoc, request: AppendRequest, caller: C
   // A caller the owner identified binds its participant on first contribution.
   if (attribution.basis === "verified") {
     const held = (next.meta.participants as PluralParticipant[]).find(p => p.key === author.key)!;
-    const identity = caller.kind === "agent" ? (caller.session ?? caller.ref) : caller.ref;
+    // An agent is bound as the enduring agent, not as the session it first used:
+    // a fresh body for the same agent must still be that participant.
+    const identity = caller.kind === "agent" ? (caller.agent ?? caller.session ?? caller.ref) : caller.ref;
     if (identity && (!held.binding || held.binding.basis !== "verified")) held.binding = {owner: caller.kind === "agent" ? "actuation" : "central", ref: identity, basis: "verified"};
   }
   return {doc: next, entry, outcome: "appended"};
