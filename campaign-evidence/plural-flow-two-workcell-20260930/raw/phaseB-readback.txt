@@ -1,0 +1,50 @@
+== B1: all delivery rows created by this episode (frank)
+                 session                            delivery           phase    first_cursor  terminal_cursor
+------------------------------------------  ------------------------  --------  ------------  ---------------
+agent-session/oi203-pf-omarchy-participant  delivery/oi203-pf-q1      returned          5132             5148
+agent-session/oi203-pf-s3                   delivery/oi203-pf-qx      returned          5151             5169
+agent-session/oi203-pf-s3                   delivery/oi203-pf-qx2     returned          5170             5187
+agent-session/oi203-pf-omarchy-participant  delivery/oi203-pf-group1  returned          5188             5425
+agent-session/oi203-pf-omarchy-peer         delivery/oi203-pf-group1  returned          5192             5685
+agent-session/oi203-pf-s3                   delivery/oi203-pf-qx3     returned          5426             5442
+
+== B2: verbatim reply bodies reconstructed from agent-message-segment events inside each row's cursors
+--- ROW session=agent-session/oi203-pf-omarchy-participant delivery=delivery/oi203-pf-q1
+OI203-PONG-ALPHA
+
+--- ROW session=agent-session/oi203-pf-omarchy-participant delivery=delivery/oi203-pf-group1
+In a multi-recipient conversation, reply correlation must rest on durable delivery identity: a stable identifier that binds each prompt to the specific session that received it — a delivery or session ID, a receipt, a source revision — carried with the message and echoed in the reply. Attribution should follow that binding end to end, not the position of a message in a shared transcript. Ordering and timestamps are observations about the transcript, not proof of who produced a block.
+
+If an owner infers an answer from recency — grabbing the newest assistant block instead of the one bound to a known delivery identity — misattribution follows immediately. Interleaved or near-simultaneous replies get credited to the wrong session; a slow but correctly delivered answer is silently dropped; a session's contribution can be claimed by another agent that merely happened to write last. Correlation becomes a guess about timing rather than a record of delivery, and any downstream decision built on "who answered" inherits that error. Attributed properly, this reply belongs to the session that received this request and echoes its token here: GROUPSIG-OI203-4F7Q
+
+--- ROW session=agent-session/oi203-pf-omarchy-peer delivery=delivery/oi203-pf-group1
+Reply correlation must rest on durable delivery identity: stable, verifiable identifiers — a recipient/session key, a request or message ID, and an explicit binding between the request and the reply — carried in the message itself. Those identifiers are what let an owner say "this reply came from this session, answering that specific request," independent of arrival order or timing.
+
+Recency is not identity. In a concurrent multi-recipient conversation, assistant blocks interleave, arrive out of order, or land near-simultaneously; the newest block may belong to a different session entirely, or several replies may be in flight at once. If an owner infers authorship from "the latest assistant block," several things break: attribution (a reply is credited to the wrong agent), provenance and audit trails (records no longer reflect who actually answered), routing (follow-ups go to the wrong recipient), and deduplication or idempotency (one reply counted twice, another ignored). Correlation errors then compound silently — a reply can be delivered yet never attributed to the session that produced it, which is exactly what this test must not allow.
+
+GROUPSIG-OI203-4F7Q
+
+--- ROW session=agent-session/oi203-pf-s3 delivery=delivery/oi203-pf-qx
+QX-INTERLEAVE-9K2D
+
+--- ROW session=agent-session/oi203-pf-s3 delivery=delivery/oi203-pf-qx2
+QX-INTERLEAVE-B3E8
+
+--- ROW session=agent-session/oi203-pf-s3 delivery=delivery/oi203-pf-qx3
+QX-INTERLEAVE-C5A1
+
+== B3: TurnEnded count inside each group row (exactly-once check)
+agent-session/oi203-pf-omarchy-participant group1 row 5188-5425: TurnEnded=1
+agent-session/oi203-pf-omarchy-peer group1 row 5192-5685: TurnEnded=1
+
+== B4: correlation verdict probes
+agent-session/oi203-pf-omarchy-participant group1 [5188-5425]: GROUPSIG=6 interleave-tokens=0 pong-tokens=0
+agent-session/oi203-pf-omarchy-peer group1 [5192-5685]: GROUPSIG=6 interleave-tokens=0 pong-tokens=0
+s3 qx3 [5426-5442]: own token C5A1 present=6
+
+== B5: does the s3 interleave cursor sit inside each group row's span?
+s3 cursor 5426 outside agent-session/oi203-pf-omarchy-participant group span [5188-5425]
+s3 cursor 5426 INSIDE agent-session/oi203-pf-omarchy-peer group span [5192-5685]
+
+== B6: owner health after reconnect
+owner pid 1923289 protocol aikit-encounter-v1

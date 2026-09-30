@@ -1,0 +1,86 @@
+{
+  "data": {
+    "atomic_fanout": false,
+    "delivery_ref": "delivery/oi203-pf-group1",
+    "recipients": [
+      {
+        "agent_session": "agent-session/oi203-pf-omarchy-participant",
+        "result": {
+          "delivery": {
+            "agent_session": "agent-session/oi203-pf-omarchy-participant",
+            "delivery_ref": "delivery/oi203-pf-group1",
+            "detail": null,
+            "first_cursor": 5188,
+            "phase": "submitted",
+            "request": {
+              "connection_generation": "01M3S28APPBK2NW1Q1E7ZS0JD7",
+              "submission": {
+                "agency_ref": "agency:aikit-mint-o-i-744f0a98",
+                "agent_ref": "agent/oh-i",
+                "turn": {
+                  "delivery_ref": "delivery/oi203-pf-group1",
+                  "expected_binding_revision": "rev/aikit-mint-1790768449-be20",
+                  "packet": {
+                    "audience": [
+                      "agent/oh-i"
+                    ],
+                    "source_refs": [],
+                    "text": "You are one recipient session in a live multi-recipient correlation test on this machine. Answer in about 170 words: in a multi-recipient conversation, what must reply correlation rest on, and what breaks if an owner infers an answer from recency (the newest assistant block) instead of durable delivery identity? Answer plainly from the position of a session whose reply is being attributed. End your reply with the exact token GROUPSIG-OI203-4F7Q and nothing after it."
+                  },
+                  "sender": "human:owner"
+                },
+                "world_binding_ref": "binding:aikit-mint-o-i-744f0a98"
+              }
+            },
+            "sender": "human:owner",
+            "terminal_cursor": null
+          },
+          "duplicate": false,
+          "recognition": "not-performed",
+          "task_completion": "not-inferred",
+          "transport_accepted": true
+        }
+      },
+      {
+        "agent_session": "agent-session/oi203-pf-omarchy-peer",
+        "result": {
+          "delivery": {
+            "agent_session": "agent-session/oi203-pf-omarchy-peer",
+            "delivery_ref": "delivery/oi203-pf-group1",
+            "detail": null,
+            "first_cursor": 5192,
+            "phase": "submitted",
+            "request": {
+              "connection_generation": "01M3S28QWR8J45SX77SG2A97GD",
+              "submission": {
+                "agency_ref": "agency:aikit-mint-o-i-744f0a98",
+                "agent_ref": "agent/oh-i",
+                "turn": {
+                  "delivery_ref": "delivery/oi203-pf-group1",
+                  "expected_binding_revision": "rev/aikit-mint-1790768495-4d1c",
+                  "packet": {
+                    "audience": [
+                      "agent/oh-i"
+                    ],
+                    "source_refs": [],
+                    "text": "You are one recipient session in a live multi-recipient correlation test on this machine. Answer in about 170 words: in a multi-recipient conversation, what must reply correlation rest on, and what breaks if an owner infers an answer from recency (the newest assistant block) instead of durable delivery identity? Answer plainly from the position of a session whose reply is being attributed. End your reply with the exact token GROUPSIG-OI203-4F7Q and nothing after it."
+                  },
+                  "sender": "human:owner"
+                },
+                "world_binding_ref": "binding:aikit-mint-o-i-744f0a98"
+              }
+            },
+            "sender": "human:owner",
+            "terminal_cursor": null
+          },
+          "duplicate": false,
+          "recognition": "not-performed",
+          "task_completion": "not-inferred",
+          "transport_accepted": true
+        }
+      }
+    ],
+    "standing": "individually durable dispatch; no automatic replay of uncertain recipients"
+  },
+  "ok": true
+}

@@ -1,0 +1,8 @@
+aikit 0.1.0 (eeaab031bd94)
+{
+  "data": {
+    "pid": 61168,
+    "protocol": "aikit-encounter-v1"
+  },
+  "ok": true
+}
