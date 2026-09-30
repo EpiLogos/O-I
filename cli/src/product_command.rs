@@ -45,11 +45,29 @@ struct SourceInstallSource {
     #[serde(default)]
     build: Vec<String>,
     executable_path: Option<String>,
+    #[serde(default)]
+    companions: Vec<CompanionSource>,
+}
+
+#[derive(Debug, Clone, Deserialize)]
+struct CompanionSource {
+    executable: String,
+    executable_path: String,
 }
 
 #[derive(Debug, Clone, Serialize, PartialEq, Eq)]
 pub struct SourceInstallDescriptor {
     pub build: Vec<String>,
+    pub executable_path: String,
+    /// Executables the same build produces for the product's own use (native
+    /// owners it spawns). They are staged beside the primary executable in one
+    /// content-addressed directory and are never activated on PATH.
+    pub companions: Vec<CompanionDescriptor>,
+}
+
+#[derive(Debug, Clone, Serialize, PartialEq, Eq)]
+pub struct CompanionDescriptor {
+    pub executable: String,
     pub executable_path: String,
 }
 
@@ -184,6 +202,33 @@ pub fn product_command_catalogue_from_json(
             ));
         }
 
+        let mut companions = Vec::with_capacity(source_install.companions.len());
+        for companion in source_install.companions {
+            let name = companion.executable.trim();
+            if name.is_empty()
+                || name.contains('/')
+                || name == executable
+                || companions
+                    .iter()
+                    .any(|seen: &CompanionDescriptor| seen.executable == name)
+            {
+                return Err(format!(
+                    "{} native.source_install.companions has an invalid or repeated executable '{}'",
+                    surface.id, companion.executable
+                ));
+            }
+            if !companion.executable_path.starts_with("target/") {
+                return Err(format!(
+                    "{} companion {} must be a build output under target/",
+                    surface.id, name
+                ));
+            }
+            companions.push(CompanionDescriptor {
+                executable: name.to_owned(),
+                executable_path: companion.executable_path,
+            });
+        }
+
         let mut aliases = surface.native.aliases;
         if let Some(legacy) = surface.native.alias {
             if legacy != namespace && !aliases.iter().any(|alias| alias == &legacy) {
@@ -229,6 +274,7 @@ pub fn product_command_catalogue_from_json(
             source_install: SourceInstallDescriptor {
                 build: source_install.build,
                 executable_path,
+                companions,
             },
         });
     }
@@ -317,5 +363,93 @@ mod tests {
             );
         }
         assert!(catalogue.resolve("nonsense").is_none());
+    }
+
+    fn with_ql_companions(
+        companions: serde_json::Value,
+    ) -> Result<ProductCommandCatalogue, String> {
+        let mut value: serde_json::Value =
+            serde_json::from_str(crate::catalog_source::embedded_catalogue_json()).unwrap();
+        let ql = value["surfaces"]
+            .as_array_mut()
+            .unwrap()
+            .iter_mut()
+            .find(|surface| surface["id"] == "quaternal-logic")
+            .unwrap();
+        ql["native"]["source_install"]["companions"] = companions;
+        product_command_catalogue_from_json(&value.to_string(), "test-companions")
+    }
+
+    #[test]
+    fn quaternal_logic_declares_its_native_expression_companions() {
+        let catalogue = product_command_catalogue_from_json(
+            crate::catalog_source::embedded_catalogue_json(),
+            "test-embedded",
+        )
+        .unwrap();
+        let install = &catalogue.resolve("ql").unwrap().source_install;
+        assert_eq!(install.build, vec!["sh", "scripts/oi-source-install.sh"]);
+        assert_eq!(install.executable_path, "target/release/ql");
+        let companions = install
+            .companions
+            .iter()
+            .map(|companion| {
+                (
+                    companion.executable.as_str(),
+                    companion.executable_path.as_str(),
+                )
+            })
+            .collect::<Vec<_>>();
+        assert_eq!(
+            companions,
+            vec![
+                ("ql-field-host", "target/release/ql-field-host"),
+                ("ql-focused-host", "target/release/ql-focused-host"),
+                ("ql-field-worker", "target/release/ql-field-worker"),
+                ("ql-sky", "target/release/ql-sky"),
+            ]
+        );
+        assert!(catalogue
+            .products
+            .iter()
+            .filter(|product| product.id != "quaternal-logic")
+            .all(|product| product.source_install.companions.is_empty()));
+    }
+
+    #[test]
+    fn companion_declarations_are_validated() {
+        for (companions, fragment) in [
+            (
+                serde_json::json!([{"executable": "", "executable_path": "target/release/x"}]),
+                "invalid or repeated",
+            ),
+            (
+                serde_json::json!([{"executable": "bin/x", "executable_path": "target/release/x"}]),
+                "invalid or repeated",
+            ),
+            (
+                serde_json::json!([{"executable": "ql", "executable_path": "target/release/ql"}]),
+                "invalid or repeated",
+            ),
+            (
+                serde_json::json!([
+                    {"executable": "x", "executable_path": "target/release/x"},
+                    {"executable": "x", "executable_path": "target/release/y"}
+                ]),
+                "invalid or repeated",
+            ),
+            (
+                serde_json::json!([{"executable": "x", "executable_path": "/usr/bin/x"}]),
+                "under target/",
+            ),
+            (
+                serde_json::json!([{"executable": "x", "executable_path": "release/x"}]),
+                "under target/",
+            ),
+        ] {
+            let error = with_ql_companions(companions.clone()).unwrap_err();
+            assert!(error.contains(fragment), "{companions}: {error}");
+        }
+        assert!(with_ql_companions(serde_json::json!([])).is_ok());
     }
 }

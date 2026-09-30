@@ -56,7 +56,14 @@ try {
  await page.keyboard.press('Escape');
  await page.evaluate(()=>window.controlled.disconnect());
  await page.locator('.chat-composer[data-connection="disconnected"]').waitFor();
+ // The route state lives in the connection chip's menu (composer chips,
+ // #492); the chip itself must never read as connected.
+ const connection=page.locator('button[data-chip="connection"]');
+ await connection.waitFor();
+ assert.doesNotMatch((await connection.innerText()).trim(),/^Connected$/);
+ if(await connection.getAttribute('aria-expanded')!=='true')await connection.click();
  await page.getByText('Connection FutureUnknownState',{exact:true}).waitFor();
+ await page.keyboard.press('Escape');
  assert.equal(await page.getByRole('textbox',{name:'Message',exact:true}).inputValue(),draft);
  evidence.push('Unknown connection states never become a green connected badge; draft survives the fault.');
  assert.deepEqual(errors,[]);

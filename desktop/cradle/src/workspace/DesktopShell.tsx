@@ -338,9 +338,9 @@ export function DesktopShell(p: Props) {
       {!(left === "panel" || left === "full") && <span className="shell-scope-name" data-shell-scope="true" title={`Scope: ${scopeLabel(scope)}`}>{scopeLabel(scope)}{lens.on && <span className="shell-scope-lens"> · Epi-Logos</span>}</span>}
       <div className="shell-focus" data-tauri-drag-region>{width < 640 && groupCount > 1 ? <select aria-label="Focused pane" value={l.focusedGroupId ?? ""} onChange={event => { const id=event.target.value; p.setLayout(state => focusGroup(state,id)); }}>{groupsOf(l.root).map((group,index) => <option key={group.id} value={group.id}>{index+1}/{groupCount} · {group.active ? l.surfaces[group.active]?.title : "Empty pane"}</option>)}</select> : null}</div>
       {/* Status → Preview: while the panel is collapsed the frame carries the
-        * agent's observed state as a dot and a state line; opening it is the
-        * one action, so the chip IS the way to the pinned panel. */}
-      <button className="shell-region-toggle shell-agent-toggle oi-tool" aria-label="Toggle right region" aria-expanded={right === "panel" || right === "full"} onClick={() => toggle("right")} title="Show / hide accompanying agent (⌘⇧B)"><Glyph name="sidebar"/></button>
+        * agent's observed state as the corner companion mark on this, the one
+        * open/close control (P1); opening it is the one action. */}
+      <button className="shell-region-toggle shell-agent-toggle oi-tool" aria-label="Toggle right region" aria-expanded={right === "panel" || right === "full"} onClick={() => toggle("right")} title="Show / hide accompanying agent (⌘⇧B)"><Glyph name="sidebar"/>{p.agentPresence && right !== "panel" && right !== "full" && (p.agentPresence.state === "attention" || p.agentPresence.state === "working" || p.agentPresence.state === "stopping" || p.agentPresence.state === "arrived") && <span className="shell-agent-companion" data-presence-state={p.agentPresence.state} role="status" aria-label={p.agentPresence.label}>{p.agentPresence.state === "attention" ? "!" : ""}</span>}</button>
     </header>
     {naming && <form className="workspace-name" onSubmit={e => { e.preventDefault(); if (!name.trim()) return; if (naming === "create") p.create(name); else p.rename(name); setNaming(null); }}>
       <input aria-label="Workspace name" autoFocus value={name} onChange={e => setName(e.target.value)} />

@@ -78,21 +78,46 @@ pub enum ReceivingRequest {
         after: Option<u64>,
         #[serde(default)]
         limit: Option<u64>,
+        /// Only what still waits for the person; the page's `open_total`
+        /// is then the owner's exact count.
+        #[serde(default)]
+        open: Option<bool>,
     },
     Read {
         return_ref: String,
     },
     /// An attributable external difference enters through Central's native
     /// proposal doorway. Central owns validation, authority and CAS arrival.
+    ///
+    /// Either a contribution (a document operation: `source_ref`,
+    /// `document_id`, `expected_source_revision`, `proposal`) or a request the
+    /// person decides (`request` with no document target). The optional
+    /// fields are carried only when present; Central owns which shape is valid.
     Submit {
         producer_key: String,
-        source_ref: String,
-        document_id: String,
-        expected_source_revision: String,
+        #[serde(default)]
+        source_ref: Option<String>,
+        #[serde(default)]
+        document_id: Option<String>,
+        #[serde(default)]
+        expected_source_revision: Option<String>,
         occurred_at_unix_seconds: u64,
         #[serde(default)]
         task_ref: Option<String>,
-        proposal: Value,
+        #[serde(default)]
+        proposal: Option<Value>,
+        #[serde(default)]
+        request: Option<Value>,
+        #[serde(default)]
+        summary: Option<String>,
+        #[serde(default)]
+        evidence_refs: Option<Vec<String>>,
+        #[serde(default)]
+        declared_producer: Option<Value>,
+        #[serde(default)]
+        now_ref: Option<String>,
+        #[serde(default)]
+        reply_to: Option<String>,
     },
     /// The document's current native basis (the exact source revision the
     /// human would accept) — `central.document.read`.
@@ -104,15 +129,29 @@ pub enum ReceivingRequest {
         return_ref: String,
         expected_return_revision: String,
         disposition: String,
-        /// Required for `accepted`: the exact current source revision the
-        /// human actually reviewed. Omitted for `rejected`.
+        /// Required for `accepted` contributions: the exact current source
+        /// revision the human actually reviewed. Omitted otherwise.
         #[serde(default)]
         expected_source_revision: Option<String>,
+        /// The person's words back to the producing NOW.
+        #[serde(default)]
+        note: Option<String>,
+        /// A question's answer (`disposition: answered`).
+        #[serde(default)]
+        answer: Option<String>,
     },
+    /// A contribution is included into its document at the reviewed basis; an
+    /// accepted proposal is included with its proposed owner by recording
+    /// that owner's realisation (e.g. the Factory Run its commission made).
     Include {
         return_ref: String,
         expected_return_revision: String,
-        expected_source_revision: String,
+        #[serde(default)]
+        expected_source_revision: Option<String>,
+        #[serde(default)]
+        realisation_ref: Option<String>,
+        #[serde(default)]
+        realisation_owner_ref: Option<String>,
     },
     /// Resume an interrupted inclusion from its recorded native intent
     /// (`central.receiving.recover`); only the owner decides what may replay.
@@ -381,12 +420,15 @@ impl CentralClient {
             project.map(|p| json!(p)).unwrap_or(Value::Null),
         );
         let action: &str = match request {
-            ReceivingRequest::List { after, limit } => {
+            ReceivingRequest::List { after, limit, open } => {
                 if let Some(after) = after {
                     input.insert("after".to_owned(), json!(after));
                 }
                 if let Some(limit) = limit {
                     input.insert("limit".to_owned(), json!(limit));
+                }
+                if let Some(open) = open {
+                    input.insert("open".to_owned(), json!(open));
                 }
                 "central.receiving.list"
             }
@@ -402,22 +444,38 @@ impl CentralClient {
                 occurred_at_unix_seconds,
                 task_ref,
                 proposal,
+                request,
+                summary,
+                evidence_refs,
+                declared_producer,
+                now_ref,
+                reply_to,
             } => {
                 input.insert("producer_key".to_owned(), json!(producer_key));
-                input.insert("source_ref".to_owned(), json!(source_ref));
-                input.insert("document_id".to_owned(), json!(document_id));
-                input.insert(
-                    "expected_source_revision".to_owned(),
-                    json!(expected_source_revision),
-                );
                 input.insert(
                     "occurred_at_unix_seconds".to_owned(),
                     json!(occurred_at_unix_seconds),
                 );
-                if let Some(task_ref) = task_ref {
-                    input.insert("task_ref".to_owned(), json!(task_ref));
+                for (key, value) in [
+                    ("source_ref", source_ref.as_ref().map(|v| json!(v))),
+                    ("document_id", document_id.as_ref().map(|v| json!(v))),
+                    (
+                        "expected_source_revision",
+                        expected_source_revision.as_ref().map(|v| json!(v)),
+                    ),
+                    ("task_ref", task_ref.as_ref().map(|v| json!(v))),
+                    ("proposal", proposal.clone()),
+                    ("request", request.clone()),
+                    ("summary", summary.as_ref().map(|v| json!(v))),
+                    ("evidence_refs", evidence_refs.as_ref().map(|v| json!(v))),
+                    ("declared_producer", declared_producer.clone()),
+                    ("now_ref", now_ref.as_ref().map(|v| json!(v))),
+                    ("reply_to", reply_to.as_ref().map(|v| json!(v))),
+                ] {
+                    if let Some(value) = value {
+                        input.insert(key.to_owned(), value);
+                    }
                 }
-                input.insert("proposal".to_owned(), proposal.clone());
                 "central.receiving.submit"
             }
             ReceivingRequest::Document {
@@ -433,6 +491,8 @@ impl CentralClient {
                 expected_return_revision,
                 disposition,
                 expected_source_revision,
+                note,
+                answer,
             } => {
                 input.insert("return_ref".to_owned(), json!(return_ref));
                 input.insert(
@@ -440,10 +500,16 @@ impl CentralClient {
                     json!(expected_return_revision),
                 );
                 input.insert("disposition".to_owned(), json!(disposition));
-                // `accepted` requires the exact reviewed source revision; a
-                // rejected review carries no source basis at all.
-                if let Some(revision) = expected_source_revision {
-                    input.insert("expected_source_revision".to_owned(), json!(revision));
+                // An accepted contribution requires the exact reviewed source
+                // revision; every other decision carries no source basis.
+                for (key, value) in [
+                    ("expected_source_revision", expected_source_revision),
+                    ("note", note),
+                    ("answer", answer),
+                ] {
+                    if let Some(value) = value {
+                        input.insert(key.to_owned(), json!(value));
+                    }
                 }
                 "central.receiving.review"
             }
@@ -451,16 +517,23 @@ impl CentralClient {
                 return_ref,
                 expected_return_revision,
                 expected_source_revision,
+                realisation_ref,
+                realisation_owner_ref,
             } => {
                 input.insert("return_ref".to_owned(), json!(return_ref));
                 input.insert(
                     "expected_return_revision".to_owned(),
                     json!(expected_return_revision),
                 );
-                input.insert(
-                    "expected_source_revision".to_owned(),
-                    json!(expected_source_revision),
-                );
+                for (key, value) in [
+                    ("expected_source_revision", expected_source_revision),
+                    ("realisation_ref", realisation_ref),
+                    ("realisation_owner_ref", realisation_owner_ref),
+                ] {
+                    if let Some(value) = value {
+                        input.insert(key.to_owned(), json!(value));
+                    }
+                }
                 "central.receiving.include"
             }
             ReceivingRequest::Recover {
@@ -1085,5 +1158,53 @@ mod tests {
             serde_json::json!({"kind":"document","source_ref":"source:1","document_id":"doc:1"})
         )
         .is_err());
+    }
+
+    #[test]
+    fn owner_requests_carry_decisions_and_realisations_without_a_document_basis() {
+        let decided: ReceivingRequest = serde_json::from_value(serde_json::json!({"Review":{
+            "return_ref":"return:1","expected_return_revision":"r1","disposition":"answered","answer":"Omarchy now"}}))
+        .unwrap();
+        let realised: ReceivingRequest = serde_json::from_value(serde_json::json!({"Include":{
+            "return_ref":"return:1","expected_return_revision":"r2","realisation_ref":"run:01","realisation_owner_ref":"factory"}}))
+        .unwrap();
+        let open: ReceivingRequest =
+            serde_json::from_value(serde_json::json!({"List":{"limit":20,"open":true}})).unwrap();
+        assert_eq!(
+            decided,
+            ReceivingRequest::Review {
+                return_ref: "return:1".into(),
+                expected_return_revision: "r1".into(),
+                disposition: "answered".into(),
+                expected_source_revision: None,
+                note: None,
+                answer: Some("Omarchy now".into()),
+            }
+        );
+        assert!(
+            matches!(realised, ReceivingRequest::Include { expected_source_revision: None, realisation_ref: Some(ref r), .. } if r == "run:01")
+        );
+        assert!(matches!(
+            open,
+            ReceivingRequest::List {
+                open: Some(true),
+                ..
+            }
+        ));
+        let asked: ReceivingRequest = serde_json::from_value(serde_json::json!({"Submit":{
+            "producer_key":"epii:proposal","occurred_at_unix_seconds":1,
+            "request":{"kind":"proposal","subject":"Verify","proposed_owner_ref":"factory"},
+            "evidence_refs":["central:path:/w:T/e.json"],
+            "declared_producer":{"ref":"agent-session/epii","actor_kind":"agent","attribution":"claimed"}}}))
+        .unwrap();
+        assert!(matches!(
+            asked,
+            ReceivingRequest::Submit {
+                source_ref: None,
+                proposal: None,
+                request: Some(_),
+                ..
+            }
+        ));
     }
 }

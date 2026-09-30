@@ -996,6 +996,7 @@ impl crate::Kernel {
                             &crate::flow::ReceivingRequest::List {
                                 after: None,
                                 limit: Some(50),
+                                open: None,
                             },
                         )
                         .map_err(|e| e.to_string())?;

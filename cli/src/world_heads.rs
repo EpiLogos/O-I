@@ -123,7 +123,7 @@ fn world_orientation_document() -> Result<serde_json::Value, String> {
         "next_actions": [
             "oi world current --json",
             "oi search <words>            (inert: finds, never executes)",
-            "oi act describe <action>     (the Central native Action field)",
+            "oi act describe <action>     (the unified Action doorway: Central, AIKit, whichever owner holds the ref)",
             "oi agent roster --json       (native Agent roster; `oi agent card` composes one card)",
             "oi work direct|factory       (choose the work relation explicitly)",
             "oi explain <subject>",
@@ -206,7 +206,7 @@ fn command_world_orientation(json: bool) -> Result<i32, String> {
     println!("Next actions:");
     println!("  oi world current --json — the situated six-product reading");
     println!("  oi search <words> — inert search through the installed AIKit");
-    println!("  oi act describe <action> — the Central native Action doorway");
+    println!("  oi act describe <action> — the unified Action doorway");
     println!("  oi agent roster --json — the native Agent roster");
     println!("  oi work direct|factory — choose Direct session work or an explicit Factory Commission");
     println!("  oi ui — the native AIKit terminal over this World");
@@ -281,7 +281,7 @@ fn resolve_owner_executable(namespace: &str) -> Result<PathBuf, String> {
     resolve_product_executable(product)
 }
 
-const ACT_USAGE: &str = "oi act [--json]                               list the Central native Action field (read-only)\n       oi act describe <action> [--json]          the exact input/output/effect contract of one Action\n       oi act invoke <action> --input <json>|@file [--json]\n                                                  one explicit invocation; exact subject and input required";
+const ACT_USAGE: &str = "oi act [--json]                               the unified Action doorway: every owner's callable field, one listing\n       oi act describe <action> [--json]          the exact input/output/effect contract of one Action, whichever owner holds it\n       oi act invoke <action> --input <json>|@file [--json]\n                                                  one explicit invocation, routed to the owning product; exact subject and input required";
 
 fn command_act(args: &[OsString]) -> Result<i32, String> {
     let verb = args.first().and_then(|value| value.to_str());
@@ -300,6 +300,55 @@ fn command_act(args: &[OsString]) -> Result<i32, String> {
         Some("invoke") => act_invoke(rest),
         Some(other) => Err(format!("unknown `oi act` doorway `{other}`; usage:\n{ACT_USAGE}")),
     }
+}
+
+/// The AIKit executable, resolved exactly as the folded AIKit verbs resolve
+/// it: explicit override, then the active suite receipt, then the
+/// composition registration, then PATH. An invalid active receipt is never
+/// traded for a stale PATH executable.
+fn resolve_aikit_executable() -> Result<PathBuf, String> {
+    let product_override = env::var_os("OI_AIKIT_BIN").filter(|value| !value.is_empty());
+    let active = if product_override.is_none() {
+        active_suite_executable_s0("ai-kit")?
+    } else {
+        None
+    };
+    let composition = load_composition()?;
+    Ok(product_override
+        .map(PathBuf::from)
+        .or(active)
+        .or_else(|| {
+            composition
+                .modules
+                .get("ai-kit")
+                .and_then(|registration| registration.native_executable.as_ref())
+                .map(PathBuf::from)
+        })
+        .unwrap_or_else(|| "aikit".into()))
+}
+
+/// One bounded read of AIKit's contextual Action field for the current
+/// scope: what the AIKit owner can perform here, before any choice of one
+/// act. An empty field is an honest answer (a scope may bind nothing),
+/// never an error; an unreadable field is named, not collapsed.
+fn read_aikit_act_field() -> Result<Vec<serde_json::Value>, String> {
+    let executable = resolve_aikit_executable()?;
+    let output = Command::new(&executable)
+        .args(["act", "discover", "--limit", "200", "--json"])
+        .stdin(Stdio::null())
+        .output()
+        .map_err(|error| format!("cannot read AIKit's Action field: {error}"))?;
+    let stdout = String::from_utf8_lossy(&output.stdout);
+    if !output.status.success() {
+        return Err(format!(
+            "AIKit answered its Action field with exit {}: {}",
+            output.status.code().unwrap_or(1),
+            stdout.trim().chars().take(200).collect::<String>()
+        ));
+    }
+    let parsed: serde_json::Value = serde_json::from_str(stdout.trim())
+        .map_err(|_| "AIKit answered without a readable Action field".to_owned())?;
+    Ok(parsed["data"]["rows"].as_array().cloned().unwrap_or_default())
 }
 
 /// One bounded read of Central's native Action field. Both the read-only
@@ -325,9 +374,35 @@ fn read_central_action_field() -> Result<Vec<serde_json::Value>, String> {
 /// of one Action to describe or invoke.
 fn act_list(json: bool) -> Result<i32, String> {
     let actions = read_central_action_field()?;
+    // AIKit's field is contextual; an unreadable field is named, never
+    // silently dropped, and an empty one is an honest scope answer.
+    let aikit_field = read_aikit_act_field();
     if json {
+        let mut fields = vec![json!({
+            "owner": "central",
+            "count": actions.len(),
+            "actions": actions,
+        })];
+        match &aikit_field {
+            Ok(rows) => fields.push(json!({
+                "owner": "ai-kit",
+                "count": rows.len(),
+                "scope_note": if rows.is_empty() {
+                    "AIKit resolves no acts for this scope; describe still answers for any AIKit ref"
+                } else {
+                    "AIKit's contextual field for the current scope"
+                },
+                "actions": rows,
+            })),
+            Err(error) => fields.push(json!({
+                "owner": "ai-kit",
+                "unavailable": error,
+            })),
+        }
         let document = json!({
-            "schema": "oi.action-field/v1",
+            "schema": "oi.action-field/v2",
+            "fields": fields,
+            // Compatibility: existing consumers read the Central field here.
             "actions": actions,
         });
         println!(
@@ -338,7 +413,7 @@ fn act_list(json: bool) -> Result<i32, String> {
         return Ok(0);
     }
     println!(
-        "Central native Action field ({} actions, read-only):",
+        "Unified Action doorway ({} Central actions, read-only):",
         actions.len()
     );
     for action in &actions {
@@ -347,8 +422,25 @@ fn act_list(json: bool) -> Result<i32, String> {
         let mutation = action["mutation_class"].as_str().unwrap_or("");
         println!("  {id:<44} {mutation:<10} {title}");
     }
+    match &aikit_field {
+        Ok(rows) if rows.is_empty() => println!(
+            "AIKit (ai-kit): resolves no acts for this scope; `oi act describe <ref>` still answers for any AIKit ref"
+        ),
+        Ok(rows) => {
+            println!("AIKit (ai-kit, {} contextual acts):", rows.len());
+            for action in rows.iter().take(24) {
+                let id = action["id"].as_str().or(action["resource"].as_str()).unwrap_or("?");
+                let kind = action["kind"].as_str().unwrap_or("");
+                println!("  {id:<44} act        {kind}");
+            }
+            if rows.len() > 24 {
+                println!("  … {} more (aikit act discover --limit 200 --json lists the field)", rows.len() - 24);
+            }
+        }
+        Err(error) => println!("AIKit (ai-kit): unavailable — {error}"),
+    }
     println!(
-        "`oi act describe <action>` names the exact input contract; `oi act invoke <action> --input '<json>'` performs one explicit act."
+        "`oi act describe <action>` names the exact input contract, whichever owner holds the ref; `oi act invoke <action> --input '<json>'` performs one explicit act through the owning product."
     );
     Ok(0)
 }
@@ -371,14 +463,25 @@ fn act_describe(args: &[OsString]) -> Result<i32, String> {
         return Err("usage: oi act describe <action> [--json] — one exact Action ref is required".to_owned());
     };
     let actions = read_central_action_field()?;
-    let Some(descriptor) = actions
+    let descriptor = actions
         .iter()
-        .find(|action| action["id"].as_str() == Some(reference))
-    else {
-        return Err(format!(
-            "Central's native Action field names no `{reference}`; `oi act` lists the field (read-only), and native owners keep direct access to their own operations"
-        ));
-    };
+        .find(|action| action["id"].as_str() == Some(reference));
+    if descriptor.is_none() {
+        // Not Central's: ask the AIKit owner before refusing. Its describe
+        // is the native answer for any ref it holds (skills, capabilities,
+        // acts); a refusal there is the aggregate answer.
+        let aikit = resolve_aikit_executable()?;
+        let mut argv: Vec<OsString> = vec![
+            OsString::from("act"),
+            OsString::from("describe"),
+            OsString::from(reference),
+        ];
+        if json {
+            argv.push(OsString::from("--json"));
+        }
+        return exec_native(&aikit, argv);
+    }
+    let descriptor = descriptor.unwrap();
     if json {
         println!(
             "{}",
@@ -459,6 +562,40 @@ fn act_invoke(args: &[OsString]) -> Result<i32, String> {
     };
     let parsed: serde_json::Value = serde_json::from_str(encoded.trim())
         .map_err(|error| format!("Action input must be one JSON value: {error}"))?;
+    let central_holds = read_central_action_field()?
+        .iter()
+        .any(|action| action["id"].as_str() == Some(reference));
+    if !central_holds {
+        // Not Central's ref. Delegate only when the AIKit owner actually
+        // holds it; otherwise the aggregate answer names both fields
+        // searched and their list routes — never a blind exec.
+        let aikit = resolve_aikit_executable()?;
+        let known_to_aikit = Command::new(&aikit)
+            .args(["act", "describe", reference, "--json"])
+            .stdin(Stdio::null())
+            .stdout(Stdio::null())
+            .stderr(Stdio::null())
+            .status()
+            .map(|status| status.success())
+            .unwrap_or(false);
+        if !known_to_aikit {
+            return Err(format!(
+                "`{reference}` is in neither Central's Action field nor AIKit's capability field (AIKit's own answer decided that); `oi act` lists both fields"
+            ));
+        }
+        let mut argv: Vec<OsString> = vec![
+            OsString::from("act"),
+            OsString::from("invoke"),
+            OsString::from(reference),
+            OsString::from("--input"),
+            OsString::from(encoded.trim().to_owned()),
+        ];
+        if structured {
+            argv.push(OsString::from("--json"));
+        }
+        argv.extend(passthrough);
+        return exec_native(&aikit, argv);
+    }
     let executable = resolve_owner_executable("central")?;
     let encoded = serde_json::to_vec(&parsed)
         .map_err(|error| format!("cannot encode Action input: {error}"))?;

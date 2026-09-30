@@ -27,6 +27,11 @@ pub enum Request {
         form: files::Location,
         expected_form_revision: String,
     },
+    /// One authored root agent-set (`central.agent-set.read`), verbatim: who
+    /// carries commissioned work is Central's record, never a desktop constant.
+    AgentSet {
+        agent_set_ref: String,
+    },
 }
 
 fn reading(client: &CentralClient, project: Option<&str>, action: &str, schema: &str) -> Value {
@@ -194,6 +199,7 @@ pub fn operate(
             let location=source_location(client,project,reference)?;
             Ok(json!({"schema":"oi.central-day-open/v1","project":project,"day":value,"location":location}))
         }
+        Request::AgentSet{agent_set_ref} => client.run("central.agent-set.read",json!({"scope":"root","ref":agent_set_ref})).map_err(|e|e.to_string()),
         Request::EnsureDay{expected_time_policy_revision} => client.run("central.day.ensure",json!({"project":project,"expected_time_policy_revision":expected_time_policy_revision})).map_err(|e|e.to_string()),
         Request::InitialiseDay{day_ref,document_id,expected_revision,expected_policy_revision,form,expected_form_revision} => {
             let original=files::read(client,form)?;
