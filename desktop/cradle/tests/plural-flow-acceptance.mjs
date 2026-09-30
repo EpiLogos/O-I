@@ -286,7 +286,9 @@ const phases = {
   async "remote-setup-and-bring-in"() {
     if (!REMOTE) throw new Error("PF_REMOTE is required for the cross-Workcell phases");
     const rsh = (cmd, input) => { const r = spawnSync("ssh", ["-o", "BatchMode=yes", REMOTE, cmd], {encoding: "utf8", input, maxBuffer: 16 * 1024 * 1024}); if (r.status !== 0) throw new Error(`ssh: ${(r.stderr || r.stdout).slice(-600)}`); return r.stdout; };
-    rsh(`pkill -f '${REMOTE_ROOT}/home' 2>/dev/null; rm -rf ${REMOTE_ROOT}/home ${REMOTE_ROOT}/project ${REMOTE_ROOT}/central; mkdir -p ${REMOTE_ROOT}/home ${REMOTE_ROOT}/project/docs ${REMOTE_ROOT}/central; cat > ${REMOTE_ROOT}/template.json`, readFileSync(TEMPLATE, "utf8"));
+    // The cleanup goes over stdin: a pkill pattern in an ssh command line would match the shell running it.
+    rsh("bash -s", `pkill -f '${REMOTE_ROOT}/home' 2>/dev/null; rm -rf ${REMOTE_ROOT}/home ${REMOTE_ROOT}/project ${REMOTE_ROOT}/central; mkdir -p ${REMOTE_ROOT}/home ${REMOTE_ROOT}/project/docs ${REMOTE_ROOT}/central\n`);
+    rsh(`cat > ${REMOTE_ROOT}/template.json`, readFileSync(TEMPLATE, "utf8"));
     rsh(`cat > ${REMOTE_ROOT}/project/docs/passage.md`, PASSAGE);
     const session = "agent-session/pf-ash-o", space = "session-space/pf-ash-o", agentRef = "agent/ash-omarchy";
     const flowRef = flowLoc().ref;
@@ -303,7 +305,7 @@ $SS encounter-start >/dev/null
 sleep 3
 apply() { $SS apply --preview-json "$1" >/dev/null; }
 apply "$($SS create ${space} --label 'Plural Flow · Ash (Omarchy)')"
-apply "$($SS stage --space ${space} --intent-json "{\"operation\":\"bind-project-context\",\"binding\":$($SS project-context)}")"
+apply "$($SS stage --space ${space} --intent-json "{\\"operation\\":\\"bind-project-context\\",\\"binding\\":$($SS project-context)}")"
 apply "$($SS stage --space ${space} --intent-json '{"operation":"attach-agent-session","attachment":{"agent_session":"${session}","purpose":"Plural Flow participant Ash (Omarchy)","provenance":["acceptance"]}}')"
 $SS encounter-agency-mint --agent-session ${session} --project-cwd $R/project --agent-ref ${agentRef} >/dev/null
 $SS encounter --request-json '{"action":"open","space":"${space}","agent_session":"${session}","provider":"pi","cwd":"'$R'/project"}' >/dev/null

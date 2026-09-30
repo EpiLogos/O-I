@@ -167,6 +167,22 @@ State of the packets against §2, what each rests on, and what is not yet shown.
 | PF2 request/response | [ai-kit#469](https://github.com/EpiLogos/ai-kit/pull/469): conversation requests, owner-side worker, `encounter-agency-admit` | store tests; four end-to-end tests with the real `EncounterService`, resident ACP fixture processes, Central's real `ctrl`, a real Flow file (independent replies land once with no client attached; restarted owner finishes the work; busy recipient holds its turn, refused one named; replay/conflict) | real model output; crash at every boundary (only owner restart and replay are exercised); cancellation and stop policy |
 | PF3 participation | per-recipient scoped context (Central read + prompt); enduring-agent binding; owner-side admission of exactly one sender and one Flow | as above | wake of an *idle* eligible agent under a standing arrangement; facilitated/team exchange with budgets; Workcell routing; revocation/late-join revalidation of queued work |
 | PF4 surface | [O-I#560](https://github.com/EpiLogos/O-I/pull/560): participants, addressing, relations, threads, ask, plain-words recipient standing, find-on-reopen | real `FlowSurface` in headless Chromium against a CAS kernel and a contract-following fake owner (35 checks) | the installed app with real pointer/keyboard (MP17), reduced motion, frozen/replay, Expression deep-open |
-| PF5 verification | — | — | independent verifier, MP01–MP18 account, matrix bindings, cross-Workcell, independent worlds |
+| PF5 verification | — | real-stack Flow runs, §8 | independent verifier, MP01–MP18 account, matrix bindings |
 
 Open decisions made here, for revision if evidence says so: a recipient's `delivery_ref` is derived from the request and participant, so a replayed request re-uses rather than re-asks; the authored entry is committed *before* dispatch and stays if dispatch later fails (the readback says so; it is not undone); a reply longer than 512 KiB is included with its bound disclosed; an empty completed turn is refused inclusion rather than written as an empty answer.
+
+## 8. Real-stack evidence — 30 September 2026
+
+One disposable world per run (own Central root, AIKit home, resident owner, credentials), candidate AIKit ([ai-kit#469](https://github.com/EpiLogos/ai-kit/pull/469)), Central `ctrl` carrying `central.flow.*`, the real Actuation owner minting each agent's own Agency, and real `pi` agent bodies on `zai/glm-5.3-flash`. The driver is `desktop/cradle/tests/plural-flow-acceptance.mjs`; it speaks for no agent. Receipts (Flow document, attribution, request/recipient readbacks) are retained with the run.
+
+| Activity | Result |
+|---|---|
+| One human, two agents, source-based complementary work | Ada recovered the argument from `docs/passage.md`; Ash tested step 3 with a numeric example; two independent replies, each `verified` from its own Agency session, each attached as `reply` to the question revision it answered |
+| Side inquiry and joined result | `branch` + `converge` relations; the converged entry names both sources |
+| Changed question | the reply's `basisRevision` is the historical question revision (r12), not the Flow's revision at reply time (r14) |
+| UI closure before response | walk `plural-flow` (real `FlowSurface`, real kernel bridge): 10/10; the surface is closed before the answers exist and reopened once to find them |
+| Fresh-body continuation across a Day | Day rolled between turns; a new agent body under the same enduring agent ref replied as the same participant, `verified` |
+| Independent worlds | World B (own root, home, Day, person Bea, agent Bo) shares one Flow through authorised routes. Bea's entry is `verified`; Bea authoring as Ann is refused `impersonation`; Bea using another action in Ann's world is refused for scope; no private material appears in what Bo received; the two worlds hold separate Days. Found and repaired by this run: a first version let Bea write as the unbound seat Ann ([Central#249](https://github.com/EpiLogos/Central/pull/249), same 41 conformance cases in the cradle) |
+| Across Workcells | Ash (Omarchy) runs on `workcell:omarchy` under its own Agency; one entry asked Ada (Mac) and Ash (Omarchy); the route between them was broken for 30 s while the remote agent was answering and restored; the reply was read from the remote owner, snapshotted durably, and included once, attributed `verified` with `workcell:omarchy` |
+
+Not shown yet: installed-app use by a person with real pointer and keyboard; an independent verifier's MP01–MP18 account; a SharedField hosted projection; a Gateway-native remote transport (the `ssh`/`exec` routes are the first routes).
