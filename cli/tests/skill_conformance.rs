@@ -723,8 +723,11 @@ mod unix {
 
     /// A backticked span that claims to be a repository-relative path.
     /// GitHub owner/repo refs, ground paths (non-lowercase heads), protocol
-    /// and contract names ("workcell.control/v1"), typed cross-product refs
-    /// ("skill/factory-native/..."), media types and placeholders are not
+    /// and contract names ("workcell.control/v1"), typed cross-product
+    /// refs ("skill/factory-native/..."), live-ground AIKit refs
+    /// ("session-space/oi-development" — materialised World state created
+    /// through `aikit session-space create` from an authored carrier seed,
+    /// never checkout material), media types and placeholders are not
     /// repository paths.
     fn as_repo_path(unit: &str) -> Option<String> {
         if unit.contains(char::is_whitespace)
@@ -767,6 +770,12 @@ mod unix {
             "context",
             "knowledge",
             "capability",
+            // Live-ground AIKit ref space: the checkout holds the authored
+            // carrier seed (dev-world/session-space.json) that declares the
+            // ref, not the materialised space itself. No checkout directory
+            // of this name exists, so excluding the head never masks a real
+            // repository path.
+            "session-space",
         ];
         let media_heads = [
             "application",
@@ -1226,7 +1235,8 @@ mod unix {
         assert!(!inventory.admits(&["development".into(), "unknown".into()]));
 
         // Non-path spans: protocol names, GitHub refs, ground paths, typed
-        // refs, media types, placeholders, trailing-slash dir stems.
+        // refs, live-ground session-space refs, media types, placeholders,
+        // trailing-slash dir stems.
         assert_eq!(as_repo_path("workcell.control/v1"), None);
         assert_eq!(as_repo_path("actuation.agency/v1"), None);
         assert_eq!(as_repo_path("EpiLogos/QL-MEF"), None);
@@ -1239,6 +1249,7 @@ mod unix {
             as_repo_path("skill/factory-native/factory-bounded-work"),
             None
         );
+        assert_eq!(as_repo_path("session-space/oi-development"), None);
         assert_eq!(as_repo_path("application/json"), None);
         assert_eq!(as_repo_path("okf-wiki/spaces/:project-wiki"), None);
         assert_eq!(as_repo_path("user/"), None);
@@ -1246,10 +1257,79 @@ mod unix {
             as_repo_path("docs/CONTROL-CONTENT-PROTOCOL.md").as_deref(),
             Some("docs/CONTROL-CONTENT-PROTOCOL.md")
         );
+        // A genuinely phantom checkout-relative path still classifies as a
+        // repository path, so R4 keeps failing skills that invent paths.
+        assert_eq!(
+            as_repo_path("docs/phantom-path-probe.md").as_deref(),
+            Some("docs/phantom-path-probe.md")
+        );
         assert_eq!(
             as_repo_path("crates/actuation-core/src/agency.rs").as_deref(),
             Some("crates/actuation-core/src/agency.rs")
         );
         assert_eq!(as_repo_path("desktop/ui").as_deref(), Some("desktop/ui"));
+    }
+
+    /// R4's negative case, end to end: a skill naming a genuinely phantom
+    /// checkout path fails the audit, while naming the live-ground
+    /// session-space ref (`session-space/oi-development`, materialised from
+    /// the carrier seed `dev-world/session-space.json`) does not.
+    #[test]
+    fn r4_fails_phantom_paths_but_accepts_live_ground_session_space_refs() {
+        let spec = PRODUCTS
+            .iter()
+            .find(|candidate| candidate.id == "oi")
+            .unwrap();
+        let probe_dir = std::env::temp_dir().join(format!(
+            "oi-r4-probe-{}-{}",
+            std::process::id(),
+            std::time::SystemTime::now()
+                .duration_since(std::time::UNIX_EPOCH)
+                .expect("clock")
+                .as_nanos()
+        ));
+        std::fs::create_dir_all(&probe_dir).expect("create probe dir");
+
+        let skill_body = "---\n\
+name: r4-probe\n\
+description: Conformance probe naming one phantom checkout path and one live-ground session-space ref for audit verification.\n\
+---\n\
+\n\
+Use when checking R4 behaviour. The body names `docs/phantom-path-probe.md`,\n\
+which the checkout has never declared, and `session-space/oi-development`,\n\
+which the live ground materialises from the carrier seed. Verification is\n\
+this audit itself.\n";
+
+        let skill_path = probe_dir.join("SKILL.md");
+        std::fs::write(&skill_path, skill_body).expect("write probe skill");
+
+        let audit = audit_skill(&skill_path, &probe_dir, spec, &[], None);
+        let r4_failures: Vec<&String> = audit
+            .failures
+            .iter()
+            .filter(|failure| failure.contains("(R4)"))
+            .collect();
+        assert_eq!(
+            r4_failures.len(),
+            1,
+            "the phantom checkout path must fail R4 exactly once; failures: {:?}, residuals: {:?}",
+            audit.failures,
+            audit.residuals
+        );
+        assert!(
+            r4_failures[0].contains("docs/phantom-path-probe.md"),
+            "the R4 failure must name the phantom path, got: {}",
+            r4_failures[0]
+        );
+        assert!(
+            !audit
+                .failures
+                .iter()
+                .any(|failure| failure.contains("session-space/oi-development")),
+            "the live-ground session-space ref must not fail R4; got: {:?}",
+            audit.failures
+        );
+
+        std::fs::remove_dir_all(&probe_dir).expect("clean probe dir");
     }
 }
