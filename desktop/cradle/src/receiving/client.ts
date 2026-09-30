@@ -6,19 +6,22 @@ export type ReceivingRequest =
   | {kind:"list";after?:number;limit?:number;open?:boolean}
   | {kind:"read";return_ref:string}
   | {kind:"submit";producer_key:string;source_ref:string;document_id:string;expected_source_revision:string;occurred_at_unix_seconds:number;task_ref?:string;proposal:Record<string,unknown>}
+  /** Ask the person to decide: a request Return with no document target. */
+  | {kind:"ask";producer_key:string;occurred_at_unix_seconds:number;request:OwnerRequest;summary?:string;evidence_refs?:string[];declared_producer?:DeclaredProducer;now_ref?:string;task_ref?:string}
   | {kind:"document";source_ref:string;document_id:string}
   | {kind:"review";return_ref:string;expected_return_revision:string;disposition:ReviewDisposition;expected_source_revision?:string;note?:string;answer?:string}
   | {kind:"include";return_ref:string;expected_return_revision:string;expected_source_revision?:string;realisation_ref?:string;realisation_owner_ref?:string}
   | {kind:"recover";return_ref:string;expected_return_revision:string}
   | {kind:"mutate-field";source_ref:string;document_id:string;expected_revision:string;request_id:string;field_id:string;value:unknown};
 export type ReceivingWireRequest=
- | {List:{after?:number;limit?:number;open?:boolean}}|{Read:{return_ref:string}}|{Submit:{producer_key:string;source_ref:string;document_id:string;expected_source_revision:string;occurred_at_unix_seconds:number;task_ref?:string;proposal:Record<string,unknown>}}
+ | {List:{after?:number;limit?:number;open?:boolean}}|{Read:{return_ref:string}}|{Submit:{producer_key:string;source_ref?:string;document_id?:string;expected_source_revision?:string;occurred_at_unix_seconds:number;task_ref?:string;proposal?:Record<string,unknown>;request?:OwnerRequest;summary?:string;evidence_refs?:string[];declared_producer?:DeclaredProducer;now_ref?:string}}
  | {Document:{source_ref:string;document_id:string}}|{Review:{return_ref:string;expected_return_revision:string;disposition:ReviewDisposition;expected_source_revision?:string;note?:string;answer?:string}}|{Include:{return_ref:string;expected_return_revision:string;expected_source_revision?:string;realisation_ref?:string;realisation_owner_ref?:string}}
  | {Recover:{return_ref:string;expected_return_revision:string}}|{MutateField:{source_ref:string;document_id:string;expected_revision:string;request_id:string;field_id:string;value:unknown}};
 export function receivingWire(request:ReceivingRequest):ReceivingWireRequest{switch(request.kind){
  case"list":return {List:{after:request.after,limit:request.limit,open:request.open}};
  case"read":return {Read:{return_ref:request.return_ref}};
  case"submit":return {Submit:{producer_key:request.producer_key,source_ref:request.source_ref,document_id:request.document_id,expected_source_revision:request.expected_source_revision,occurred_at_unix_seconds:request.occurred_at_unix_seconds,task_ref:request.task_ref,proposal:request.proposal}};
+ case"ask":return {Submit:{producer_key:request.producer_key,occurred_at_unix_seconds:request.occurred_at_unix_seconds,request:request.request,summary:request.summary,evidence_refs:request.evidence_refs,declared_producer:request.declared_producer,now_ref:request.now_ref,task_ref:request.task_ref}};
  case"document":return {Document:{source_ref:request.source_ref,document_id:request.document_id}};
  case"review":return {Review:{return_ref:request.return_ref,expected_return_revision:request.expected_return_revision,disposition:request.disposition,expected_source_revision:request.expected_source_revision,note:request.note,answer:request.answer}};
  case"include":return {Include:{return_ref:request.return_ref,expected_return_revision:request.expected_return_revision,expected_source_revision:request.expected_source_revision,realisation_ref:request.realisation_ref,realisation_owner_ref:request.realisation_owner_ref}};

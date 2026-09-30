@@ -88,15 +88,36 @@ pub enum ReceivingRequest {
     },
     /// An attributable external difference enters through Central's native
     /// proposal doorway. Central owns validation, authority and CAS arrival.
+    ///
+    /// Either a contribution (a document operation: `source_ref`,
+    /// `document_id`, `expected_source_revision`, `proposal`) or a request the
+    /// person decides (`request` with no document target). The optional
+    /// fields are carried only when present; Central owns which shape is valid.
     Submit {
         producer_key: String,
-        source_ref: String,
-        document_id: String,
-        expected_source_revision: String,
+        #[serde(default)]
+        source_ref: Option<String>,
+        #[serde(default)]
+        document_id: Option<String>,
+        #[serde(default)]
+        expected_source_revision: Option<String>,
         occurred_at_unix_seconds: u64,
         #[serde(default)]
         task_ref: Option<String>,
-        proposal: Value,
+        #[serde(default)]
+        proposal: Option<Value>,
+        #[serde(default)]
+        request: Option<Value>,
+        #[serde(default)]
+        summary: Option<String>,
+        #[serde(default)]
+        evidence_refs: Option<Vec<String>>,
+        #[serde(default)]
+        declared_producer: Option<Value>,
+        #[serde(default)]
+        now_ref: Option<String>,
+        #[serde(default)]
+        reply_to: Option<String>,
     },
     /// The document's current native basis (the exact source revision the
     /// human would accept) — `central.document.read`.
@@ -423,22 +444,38 @@ impl CentralClient {
                 occurred_at_unix_seconds,
                 task_ref,
                 proposal,
+                request,
+                summary,
+                evidence_refs,
+                declared_producer,
+                now_ref,
+                reply_to,
             } => {
                 input.insert("producer_key".to_owned(), json!(producer_key));
-                input.insert("source_ref".to_owned(), json!(source_ref));
-                input.insert("document_id".to_owned(), json!(document_id));
-                input.insert(
-                    "expected_source_revision".to_owned(),
-                    json!(expected_source_revision),
-                );
                 input.insert(
                     "occurred_at_unix_seconds".to_owned(),
                     json!(occurred_at_unix_seconds),
                 );
-                if let Some(task_ref) = task_ref {
-                    input.insert("task_ref".to_owned(), json!(task_ref));
+                for (key, value) in [
+                    ("source_ref", source_ref.as_ref().map(|v| json!(v))),
+                    ("document_id", document_id.as_ref().map(|v| json!(v))),
+                    (
+                        "expected_source_revision",
+                        expected_source_revision.as_ref().map(|v| json!(v)),
+                    ),
+                    ("task_ref", task_ref.as_ref().map(|v| json!(v))),
+                    ("proposal", proposal.clone()),
+                    ("request", request.clone()),
+                    ("summary", summary.as_ref().map(|v| json!(v))),
+                    ("evidence_refs", evidence_refs.as_ref().map(|v| json!(v))),
+                    ("declared_producer", declared_producer.clone()),
+                    ("now_ref", now_ref.as_ref().map(|v| json!(v))),
+                    ("reply_to", reply_to.as_ref().map(|v| json!(v))),
+                ] {
+                    if let Some(value) = value {
+                        input.insert(key.to_owned(), value);
+                    }
                 }
-                input.insert("proposal".to_owned(), proposal.clone());
                 "central.receiving.submit"
             }
             ReceivingRequest::Document {
@@ -1144,7 +1181,30 @@ mod tests {
                 answer: Some("Omarchy now".into()),
             }
         );
-        assert!(matches!(realised, ReceivingRequest::Include { expected_source_revision: None, realisation_ref: Some(ref r), .. } if r == "run:01"));
-        assert!(matches!(open, ReceivingRequest::List { open: Some(true), .. }));
+        assert!(
+            matches!(realised, ReceivingRequest::Include { expected_source_revision: None, realisation_ref: Some(ref r), .. } if r == "run:01")
+        );
+        assert!(matches!(
+            open,
+            ReceivingRequest::List {
+                open: Some(true),
+                ..
+            }
+        ));
+        let asked: ReceivingRequest = serde_json::from_value(serde_json::json!({"Submit":{
+            "producer_key":"epii:proposal","occurred_at_unix_seconds":1,
+            "request":{"kind":"proposal","subject":"Verify","proposed_owner_ref":"factory"},
+            "evidence_refs":["central:path:/w:T/e.json"],
+            "declared_producer":{"ref":"agent-session/epii","actor_kind":"agent","attribution":"claimed"}}}))
+        .unwrap();
+        assert!(matches!(
+            asked,
+            ReceivingRequest::Submit {
+                source_ref: None,
+                proposal: None,
+                request: Some(_),
+                ..
+            }
+        ));
     }
 }

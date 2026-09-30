@@ -74,7 +74,7 @@ export async function hostedCompositionFile(transport:KernelTransportStatus,raw:
   if(!entry||!entry.retrieval_allowed)throw new Error('The owner does not disclose that Expression file for reading');
   const file=await readFile(transport,entry.location),basis=document(JSON.parse(file.content));
   if(!sameComposition(file.location,entry.location)||!file.revision)throw new Error('Native file readback was redirected or has no revision');
-  const opened=await expressionOperation(transport,{operation:'open',document:basis,actor:'human:expressions-app'});
+  const opened=await expressionOperation(transport,{operation:'open_file',location:file.location,actor:'human:expressions-app'});
   if(!opened.document||!sameComposition(opened.document,basis))throw new Error('The file differs from the current native working composition; no live work was overwritten');
   return {document:opened.document,file};
  }

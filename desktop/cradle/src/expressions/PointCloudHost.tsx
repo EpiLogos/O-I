@@ -25,6 +25,7 @@ import {useEffect, useRef, useState} from "react";
 import {ActStrip} from "../expression/ActStrip";
 import {consumeExpressionRequest, getExpressionSelectionState, registerExpressionCentre, subscribeExpressionSelection} from "./selection";
 import {useKernel} from "../kernel/KernelProvider";
+import {useEpiLens} from "../workspace/lens";
 import {
   hostedAppUrl,
   CAPTURE_INSERTION_EVENT,INSERT_SOURCE_EVENT,postSourceInsertion,
@@ -43,10 +44,14 @@ import {consumeTechneFieldOpen, peekTechneFieldLens, peekTechneFieldOpen, peekTe
 import "./point-cloud-host.css";
 import {verifyInsertionSource} from "./sourceInsertion";
 import {resolveHostedSource} from "./sourceHandoff";
+import {resolveScenePortal} from "./scenePortal";
 import {resolveSceneConstellation} from "../techne/wikiReadingProvider";
 import {relateSceneConstellation} from "../techne/sceneConstellationRelation";
+import {relayNaraChannel} from "./naraChannel";
+import {readScope, scopeProject} from "../workspace/scope";
+import {chatProvisionTarget} from "../agent/chat/firstSend";
 
-export function PointCloudHost({mode = "expressions", deepLink, bindingId, onHostedState, readTechne, techneWorld, refreshToken, followsOwnRef = false}: {mode?: HostedAppMode; deepLink?: string; bindingId?: string; onHostedState?: (state: HostedAppState) => void; readTechne?: (request: unknown) => Promise<unknown>; techneWorld?: (request: unknown) => Promise<unknown>; /** A changed token re-opens `deepLink` in place (refresh, no reload): an act performed elsewhere moved the kernel document. */ refreshToken?: number; /** A fixed act host (Factory Live, a Run page) presents its own Expression and is never the Expressions centre a navigator row opens into. */ followsOwnRef?: boolean}) {
+export function PointCloudHost({mode = "expressions", deepLink, bindingId, onHostedState, readTechne, techneWorld, refreshToken, followsOwnRef = false, entryInstrument, project}: {mode?: HostedAppMode; deepLink?: string; bindingId?: string; onHostedState?: (state: HostedAppState) => void; readTechne?: (request: unknown) => Promise<unknown>; techneWorld?: (request: unknown) => Promise<unknown>; /** A changed token re-opens `deepLink` in place (refresh, no reload): an act performed elsewhere moved the kernel document. */ refreshToken?: number; /** A fixed act host (Factory Live, a Run page) presents its own Expression and is never the Expressions centre a navigator row opens into. */ followsOwnRef?: boolean; entryInstrument?: 'nara'; project?: string}) {
   const kernel = useKernel();
   const [src, setSrc] = useState<string | undefined>();
   const [state, setState] = useState<"reading" | "ready" | "refused">("reading");
@@ -56,8 +61,8 @@ export function PointCloudHost({mode = "expressions", deepLink, bindingId, onHos
   const [hostedRevision,setHostedRevision]=useState<number|undefined>();
   const sourceRequest=useRef(0);
   const insertionEpoch=useRef(0);
-  const owner = useRef({readTechne, techneWorld});
-  owner.current = {readTechne, techneWorld};
+  const owner = useRef({readTechne, techneWorld, project});
+  owner.current = {readTechne, techneWorld, project};
   // The restart checkpoint's deep link (MODE-ENGINE-STATE-PERSISTENCE
   // §7.2), minted ONCE at mount: the checkpoint may keep changing while the
   // application is mounted, but the frame's URL must never change after
@@ -65,7 +70,7 @@ export function PointCloudHost({mode = "expressions", deepLink, bindingId, onHos
   // this track exists to prevent. A mount-time capture is a boot-time hint
   // only; the application applies it after its own boot recovery and is
   // free to ignore it.
-  const [bootQuery] = useState(() => (`?mode=${mode}${deepLink ? `&expression=${encodeURIComponent(deepLink)}` : ""}`));
+  const [bootQuery] = useState(() => (`?mode=${mode}${deepLink ? `&expression=${encodeURIComponent(deepLink)}` : ""}${entryInstrument === 'nara' ? '&nara=1' : ''}`));
 
   useEffect(() => {
     let alive = true;
@@ -132,6 +137,15 @@ export function PointCloudHost({mode = "expressions", deepLink, bindingId, onHos
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [src, kernel.transport]);
 
+  useEffect(() => {
+    const node = frame.current;
+    if (!node) return;
+    return relayNaraChannel(node, kernel.transport, {
+      project: () => chatProvisionTarget(owner.current.project ?? scopeProject(readScope())),
+      expression: () => hostedState.current?.nativeScene ?? null,
+    });
+  }, [src, kernel.transport]);
+
   // The checkpoint channel: the application's oi-app-state announcements
   // (current expression, scene, selection — its own position, in its own
   // grammar) reach the stage slot's checkpoint effect when one is mounted.
@@ -178,10 +192,11 @@ export function PointCloudHost({mode = "expressions", deepLink, bindingId, onHos
   // binding's kind IS the cut — the Technē centre presents this application
   // in its deep state, the Expressions centre in its lived state. Each
   // centre's instance parks suspended in the warm park across switches.
+  const epiLens = useEpiLens();
   useEffect(() => {
     const node = frame.current;
-    return node ? postHostMode(node, mode) : undefined;
-  }, [mode, src]);
+    return node ? postHostMode(node, mode, epiLens.on ? "epi-logos" : undefined) : undefined;
+  }, [mode, src, epiLens.on]);
 
   // The Technē cut's summon answer: a constellation constructed in the Wiki
   // opens IN this same living field, not a second renderer and not the panel's
@@ -249,7 +264,7 @@ export function PointCloudHost({mode = "expressions", deepLink, bindingId, onHos
   // the seams that already exist.
   useEffect(() => {
     const handler = (event: MessageEvent) => {
-      const data = event.data as {v?: number; kind?: string; request?: string; mode?: string; kind2?: string; detail?: {kind?: string; lens?: string; ref?: unknown; subject?: unknown;context?: unknown}} | null;
+      const data = event.data as {v?: number; kind?: string; request?: string; request_id?: unknown; mode?: string; kind2?: string; detail?: {kind?: string; lens?: string; ref?: unknown; subject?: unknown;context?: unknown; trigger_ref?: unknown}} | null;
       if (!data || data.v !== 1 || data.kind !== "host-request") return;
       if (event.source !== frame.current?.contentWindow) return;
       if (data.request === "workspace-mode" && (data.mode === "expressions" || data.mode === "techne")) {
@@ -259,6 +274,19 @@ export function PointCloudHost({mode = "expressions", deepLink, bindingId, onHos
         // An empty Canvas asks for construction: the navigator's own
         // Project-scoped creation row answers it (one creation path).
         window.dispatchEvent(new CustomEvent("oi:techne-new-constellation"));
+        return;
+      }
+      if (data.request === "scene-portal") {
+        const node=frame.current,requestId=data.request_id;
+        if(typeof requestId!=="string"||!requestId||requestId.length>128)return;
+        const request=++sourceRequest.current,at=hostedState.current;
+        const current=()=>sourceRequest.current===request&&frame.current===node&&!!node?.getClientRects().length&&!node.closest('[hidden],[inert]')&&hostedState.current?.document?.id===at?.document?.id&&hostedState.current?.sceneIndex===at?.sceneIndex;
+        const complete=(error?:string)=>node?.contentWindow?.postMessage({v:1,kind:"scene-portal-result",request_id:requestId,ok:!error,...(error?{error}:{})},"*");
+        if(!current()){complete("The Scene is no longer presented.");return;}
+        void resolveScenePortal(kernel.transport,data.detail).then(portal=>{
+          if(!current())throw Error("The Scene changed while its portal was opening.");
+          window.dispatchEvent(new CustomEvent("oi:open-scene-source",{detail:{target:portal.target,portal,complete}}));
+        }).catch(error=>complete(error instanceof Error?error.message:String(error)));
         return;
       }
       if (data.request === "summon" && data.detail?.kind === "source") {

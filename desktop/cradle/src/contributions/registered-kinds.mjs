@@ -7,7 +7,7 @@ export const hostedSurfaceDescriptors = [
     "owner": "oi",
     "region": "canvas",
     "retention": "mounted",
-    "revision": 1,
+    "revision": 2,
     "title": "Expressions"
   },
   {
@@ -17,7 +17,7 @@ export const hostedSurfaceDescriptors = [
     "owner": "oi",
     "region": "canvas",
     "retention": "mounted",
-    "revision": 1,
+    "revision": 2,
     "title": "Technè"
   },
   {
@@ -27,7 +27,7 @@ export const hostedSurfaceDescriptors = [
     "owner": "oi",
     "region": "canvas",
     "retention": "mounted",
-    "revision": 1,
+    "revision": 2,
     "title": "Epi-Logos"
   },
   {
@@ -37,7 +37,7 @@ export const hostedSurfaceDescriptors = [
     "owner": "oi",
     "region": "canvas",
     "retention": "mounted",
-    "revision": 1,
+    "revision": 2,
     "title": "Settings"
   },
   {
@@ -47,8 +47,18 @@ export const hostedSurfaceDescriptors = [
     "owner": "oi",
     "region": "canvas",
     "retention": "mounted",
-    "revision": 1,
+    "revision": 2,
     "title": "Library"
+  },
+  {
+    "contribution_ref": "oi.contribution/core",
+    "descriptor_ref": "oi.surface/nara-identity",
+    "kind": "nara-identity",
+    "owner": "oi",
+    "region": "canvas",
+    "retention": "mounted",
+    "revision": 2,
+    "title": "Identity · Nara"
   },
   {
     "contribution_ref": "oi.contribution/factory",

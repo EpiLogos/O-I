@@ -219,6 +219,7 @@ export function ReceivingTray({inbox,onOpenMaterial}:{inbox:InboxReading&{reload
  };
  const current=open?.reading;
  const proposal=current?.record.proposal??undefined;
+ const legacyCommission=proposal?.schema==="oi.factory-commission-proposal/v1"?proposal as {schema:string;proposal_ref:string;discrepancy:string;diagnosis_refs?:string[];suggested_factory_request?:Record<string,unknown>;factory_intake?:string}:undefined;
  const document=basis?.document as (DocumentReading["document"]&{fields?:{id:string;label?:string}[];entries?:{id:string;title?:string;label?:string}[]})|undefined;
  const field=document?.fields?.find(item=>item.id===proposal?.field_id);
  const entry=document?.entries?.find(item=>item.id===proposal?.entry_id);
@@ -246,6 +247,7 @@ export function ReceivingTray({inbox,onOpenMaterial}:{inbox:InboxReading&{reload
     decide={decide} acceptAndCommission={()=>void acceptAndCommission()}/>}
   {current&&current.record.kind!=="request"&&<div className="receiving-detail">
     <p className="receiving-origin">{current.record.author.actor_kind==="human"?"Human":"Agent"} contribution</p>
+    {legacyCommission&&<p className="receiving-target">Factory commission proposal · <code>{legacyCommission.proposal_ref}</code>{Array.isArray(legacyCommission.diagnosis_refs)&&legacyCommission.diagnosis_refs.length?` · ${legacyCommission.diagnosis_refs.length} evidence ref${legacyCommission.diagnosis_refs.length===1?"":"s"}`:""}</p>}
     {target&&<p className="receiving-target">For {target}</p>}
     {proposal&&"html" in proposal&&<div className="receiving-proposal">{htmlToText(String(proposal.html))}</div>}
     <p className="receiving-review" role="status">{reviewStatus(current.record.status)}</p>
@@ -260,6 +262,7 @@ export function ReceivingTray({inbox,onOpenMaterial}:{inbox:InboxReading&{reload
       {(current.record.status==="including"||current.record.status==="uncertain")&&<button className="receiving-recover" disabled={pending} onClick={recover}>Recover inclusion</button>}
     </div>}
     {current.record.last_error&&<p className="receiving-last-error" role="status">The owner recorded: {current.record.last_error}</p>}
+    {legacyCommission&&current.record.status==="accepted"&&<p className="oi-note receiving-commission">An earlier commission proposal made as a document edit. New proposals arrive as requests, and accepting one commissions the Run in Factory directly.</p>}
     {current.included&&<p role="status" className="receiving-included">Included into the document.</p>}
     <details className="receiving-raw"><summary>Show raw</summary><pre className="oi-scroll-quiet">{JSON.stringify(current.record,null,2)}</pre></details>
   </div>}

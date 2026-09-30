@@ -20,7 +20,29 @@ export function isNaraBoundExpression(document) {
   if(!document||document.schema!=='oi.expression/v1')return false;
   if(/^Nara(?:\s|\s*·|$)/i.test(String(document.title??'')))return true;
   if(Object.values(document.entities??{}).some(entity=>String(entity?.subject?.subject_ref??'').startsWith('ql:nara:')))return true;
+  if(isCanonicalNaraBody(document))return true;
   return (document.provenance??[]).some(reading=>String(reading?.ref??'').startsWith('ql:nara:'));
+}
+
+/** A source-bound centre/anchor triggers native admission even when the scene
+ * has an ordinary authored title. Detection never grants publication. */
+export function isCanonicalNaraBody(document) {
+  return Object.values(document?.entities??{}).some(entity=>/^ql:m-coordinate:bimba:M2-5-0\/1-[0-7]$/.test(String(entity?.subject?.subject_ref??'')));
+}
+
+/** Validate the native coordinate-only projection using the retained neutral
+ * SF5 cue vocabulary. The normalized value is validation-only, never emitted. */
+export function validateCanonicalNaraCues(document) {
+  const normalized=clone(document);
+  for(const entity of Object.values(normalized?.entities??{})) {
+    const match=entity?.subject?.subject_ref?.match(/^ql:m-coordinate:bimba:M2-5-0\/1-([0-7])$/);
+    if(!match||entity.subject.native_owner!=='ql-mef')throw new TypeError('Native canonical Nara cues require actual QL centre/anchor subjects');
+    const index=Number(match[1]);
+    entity.subject.subject_ref=`ql:nara:canonical:${index===0?'earth-body':`centre:${index-1}`}`;
+    entity.subject.native_owner='ql';
+  }
+  validateNaraCueExpression(normalized);
+  return document;
 }
 
 const forbidden=/identity|journal|activity|bioquaternion|personal|agent.session|private|credential|scalar|resonance/i;
@@ -83,7 +105,8 @@ export function validateNaraPresenceConsent(value) {
 }
 
 export function projectNaraExpression(input) {
-  validateNaraCueExpression(input?.document);
+  if(isCanonicalNaraBody(input?.document))validateCanonicalNaraCues(input?.document);
+  else validateNaraCueExpression(input?.document);
   const consent=validateNaraPresenceConsent(input.consent);
   if (consent.state !== 'granted') throw new TypeError('Current explicit Nara presence consent is required at publication time');
   if (consent.expression_ref !== input.document.expression_ref) throw new TypeError('Nara presence consent belongs to another Expression');

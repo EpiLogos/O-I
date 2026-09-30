@@ -706,3 +706,34 @@ fn subject_handoff_never_chooses_an_arbitrary_repeated_occurrence() {
         "expression:lesson:entity:b"
     );
 }
+
+#[test]
+fn ordinary_surface_close_releases_only_its_portals_and_allows_source_reopen() {
+    let mut k = Kernel::discover();
+    for (portal, surface) in [("portal:closed", "s-closed"), ("portal:other", "s-other")] {
+        let opened = world(
+            &mut k,
+            json!({"operation":"portal_open", "portal_ref":portal,
+            "target_ref":SUBJECT, "surface_kind":"source", "surface_id":surface,
+            "placement":"beside", "title":"Source", "actor":"human:author"}),
+        );
+        assert_eq!(opened["state"], "portal_open");
+    }
+    k.apply(KernelOp::SurfaceClose {
+        surface_id: "s-closed".into(),
+    })
+    .unwrap();
+    let inspected = world(&mut k, json!({"operation":"portal_inspect"}));
+    let remaining = inspected["portals"].as_array().unwrap();
+    assert_eq!(remaining.len(), 1);
+    assert_eq!(remaining[0]["portal_ref"], "portal:other");
+    assert!(k.snapshot().surfaces.contains_key("s-other"));
+    let reopened = world(
+        &mut k,
+        json!({"operation":"portal_open", "portal_ref":"portal:closed",
+        "target_ref":SUBJECT, "surface_kind":"source", "surface_id":"s-reopened",
+        "placement":"full", "title":"Source", "actor":"human:author"}),
+    );
+    assert_eq!(reopened["state"], "portal_open");
+    assert_eq!(reopened["portal"]["surface_id"], "s-reopened");
+}

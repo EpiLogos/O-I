@@ -1534,6 +1534,117 @@ impl Document {
     }
 }
 impl Application {
+    /// An explicitly reviewed focus return enters proposal and decision history
+    /// together. Reuse the normal validators on a private document candidate;
+    /// a refusal cannot leave a proposal behind in the live Expression.
+    pub(crate) fn apply_reviewed_focus(
+        &mut self,
+        client: &CentralClient,
+        proposal: Request,
+        reviewer: String,
+        reason: String,
+    ) -> Result<(Value, Vec<Changed>), String> {
+        let (reference, revision, proposal_ref) = match &proposal {
+            Request::Propose {
+                expression_ref,
+                expected_revision,
+                proposal_ref,
+                changes,
+                ..
+            } if changes.len() == 1
+                && matches!(
+                    changes[0],
+                    Change::Focus { .. } | Change::RelationFocus { .. }
+                ) =>
+            {
+                (
+                    expression_ref.clone(),
+                    *expected_revision,
+                    proposal_ref.clone(),
+                )
+            }
+            _ => return Err("Reviewed focus requires one exact native focus proposal".into()),
+        };
+        if self.document(&reference)?.revision != revision {
+            return Err("The Expression changed before the reviewed return could apply".into());
+        }
+        let mut candidate = Self::default();
+        candidate
+            .documents
+            .insert(reference.clone(), self.document(&reference)?.clone());
+        let (_, proposed) = candidate.apply(client, proposal)?;
+        let proposed = proposed.ok_or("The reviewed proposal did not advance its exact basis")?;
+        let (_, accepted) = candidate.apply(
+            client,
+            Request::Review {
+                expression_ref: reference.clone(),
+                expected_revision: proposed.revision,
+                proposal_ref,
+                actor: reviewer,
+                decision: RefinementState::Accepted,
+                reason,
+                corrections: vec![],
+            },
+        )?;
+        let accepted =
+            accepted.ok_or("The reviewed proposal could not be accepted at its exact basis")?;
+        let document = candidate
+            .documents
+            .remove(&reference)
+            .ok_or("Reviewed Expression disappeared")?;
+        self.documents.insert(reference.clone(), document);
+        self.touched.insert(reference.clone(), unix_now());
+        Ok((self.inspect(&reference)?, vec![proposed, accepted]))
+    }
+
+    pub(crate) fn profile_lineage_snapshot(
+        &self,
+        profile_ref: &str,
+    ) -> Result<Vec<crate::expression_profile::ExpressionProfile>, String> {
+        crate::expression_profile::resolve_lineage(&self.profiles, profile_ref)?;
+        let mut pending = vec![profile_ref.to_owned()];
+        let mut visited = std::collections::BTreeSet::new();
+        let mut result = Vec::new();
+        while let Some(reference) = pending.pop() {
+            if !visited.insert(reference.clone()) {
+                continue;
+            }
+            let profile = self
+                .profiles
+                .get(&reference)
+                .ok_or("Profile is not defined")?;
+            pending.extend(profile.parent_profile_refs.iter().cloned());
+            result.push(profile.clone());
+        }
+        Ok(result)
+    }
+
+    /// A parent change also changes the basis of every adopting descendant.
+    /// Exact retries leave in-flight encounters alone; refused writes never
+    /// reach the invalidation performed by the kernel after a successful apply.
+    pub(crate) fn profile_definition_dependents(
+        &self,
+        profile: &crate::expression_profile::ExpressionProfile,
+    ) -> Vec<String> {
+        if self.profiles.get(&profile.profile_ref) == Some(profile) {
+            return Vec::new();
+        }
+        self.documents
+            .values()
+            .filter(|document| {
+                document.profiles.iter().any(|adoption| {
+                    self.profile_lineage_snapshot(&adoption.profile_ref)
+                        .is_ok_and(|lineage| {
+                            lineage
+                                .iter()
+                                .any(|ancestor| ancestor.profile_ref == profile.profile_ref)
+                        })
+                })
+            })
+            .map(|document| document.expression_ref.clone())
+            .collect()
+    }
+
     fn document(&self, r: &str) -> Result<&Document, String> {
         self.documents
             .get(r)
@@ -2181,15 +2292,22 @@ impl Application {
                     if profile.revision < existing.revision {
                         return Err("Profile revisions are monotonic per ref".into());
                     }
+                    if profile.revision == existing.revision && &profile != existing {
+                        return Err("A profile revision cannot name different content".into());
+                    }
                 } else if self.profiles.len() >= 64 {
                     return Err("Profile budget exceeded".into());
                 }
-                self.profiles
-                    .insert(profile.profile_ref.clone(), profile.clone());
-                let resolved = crate::expression_profile::resolve_lineage(
-                    &self.profiles,
-                    &profile.profile_ref,
-                )?;
+                // Refused lineage changes must not leave an invalid profile
+                // behind in the owner's live registry.
+                let mut candidate = self.profiles.clone();
+                candidate.insert(profile.profile_ref.clone(), profile.clone());
+                let resolved =
+                    crate::expression_profile::resolve_lineage(&candidate, &profile.profile_ref)?;
+                for reference in candidate.keys() {
+                    crate::expression_profile::resolve_lineage(&candidate, reference)?;
+                }
+                self.profiles = candidate;
                 json!({"state":"profile","profile":profile,"resolved_defaults":resolved})
             }
             Request::ProfileInspect { profile_ref } => {
@@ -2428,6 +2546,69 @@ impl Application {
 #[cfg(test)]
 mod close_tests {
     use super::*;
+
+    #[test]
+    fn reviewed_focus_commits_both_revisions_or_preserves_the_document() {
+        let client = CentralClient::discover();
+        let mut app = Application::default();
+        let decode = |v: Value| serde_json::from_value::<Request>(v).unwrap();
+        app.apply(&client, decode(json!({"operation":"create","expression_ref":"expression:review","title":"Review","actor":"human:test"}))).unwrap();
+        app.apply(&client, decode(json!({"operation":"edit","expression_ref":"expression:review","expected_revision":1,"actor":"human:test","changes":[{"change":"entity_add","scene_ref":"expression:review:scene:main","entity_ref":"expression:review:entity:a","title":"Selected subject"}]}))).unwrap();
+        let before = app.document("expression:review").unwrap().clone();
+        let proposal = |target: &str| {
+            decode(
+                json!({"operation":"propose","expression_ref":"expression:review","expected_revision":2,"proposal_ref":"expression:review:proposal:inquiry","actor":"agent-session:epii","activity_ref":"agent-session:epii#answer","summary":"Focus the cited subject","changes":[{"change":"focus","scene_ref":"expression:review:scene:main","entity_ref":target}],"method_refs":[],"evidence_refs":[]}),
+            )
+        };
+        for (target, reason) in [
+            ("expression:review:entity:absent", "Reviewed"),
+            ("expression:review:entity:a", ""),
+        ] {
+            assert!(app
+                .apply_reviewed_focus(
+                    &client,
+                    proposal(target),
+                    "human:test".into(),
+                    reason.into()
+                )
+                .is_err());
+            assert_eq!(
+                serde_json::to_value(app.document("expression:review").unwrap()).unwrap(),
+                serde_json::to_value(&before).unwrap(),
+                "a failed acceptance must not leave an unreviewed proposal"
+            );
+        }
+        let (accepted, changes) = app
+            .apply_reviewed_focus(
+                &client,
+                proposal("expression:review:entity:a"),
+                "human:test".into(),
+                "Reviewed the source and selected this subject".into(),
+            )
+            .unwrap();
+        assert_eq!(
+            changes.iter().map(|c| c.revision).collect::<Vec<_>>(),
+            vec![3, 4]
+        );
+        assert_eq!(accepted["document"]["revision"], 4);
+        assert_eq!(
+            accepted["document"]["selection"]["entity_ref"],
+            "expression:review:entity:a"
+        );
+        assert_eq!(
+            accepted["document"]["entities"],
+            serde_json::to_value(&before).unwrap()["entities"]
+        );
+        assert!(app
+            .apply_reviewed_focus(
+                &client,
+                proposal("expression:review:entity:a"),
+                "human:test".into(),
+                "Repeated".into()
+            )
+            .is_err());
+        assert_eq!(app.document("expression:review").unwrap().revision, 4);
+    }
 
     #[test]
     fn close_refuses_unsaved_work_and_frees_a_saved_slot() {

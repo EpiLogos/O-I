@@ -29,7 +29,7 @@ export type FactoryOwnerRequest =
   | {kind: "action-list"; state_path: string; project_ref: string; run_ref: string}
   | {kind: "action-invoke"; state_path: string; project_ref: string; run_ref: string; request: unknown}
   | {kind: "recognise"; state_path: string; journey_ref: string; subject_ref: string; basis_refs?: string[]}
-  | {kind: "commission"; state_path: string; request: unknown}
+  | {kind: "development-commission"; state_path: string; request: unknown}
   | {kind: "inhabitation"; state_path: string; run_ref?: string; position_ref?: string}
   | {kind: "current-work"; state_path: string; position_ref: string};
 
@@ -140,4 +140,4 @@ export interface CommissionReceipt {contract: "factory.commission-receipt/v1"; s
 /** Commission one developmental Run through Factory's own intake; the
  * request document is the caller's, carried verbatim and validated by Factory. */
 export const commission = (transport: KernelTransportStatus, statePath: string, request: unknown) =>
-  factoryOwner<CommissionReceipt>(transport, {kind: "commission", state_path: statePath, request});
+  factoryOwner<CommissionReceipt>(transport, {kind: "development-commission", state_path: statePath, request});

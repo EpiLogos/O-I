@@ -2826,6 +2826,7 @@ mod tests {
                 build_command: vec!["cargo".to_owned(), "build".to_owned()],
                 gate: String::new(),
                 installed_at_unix_seconds: 1,
+                companions: BTreeMap::new(),
             })]),
         }).unwrap();
         (temp, new_sha, old_sha)

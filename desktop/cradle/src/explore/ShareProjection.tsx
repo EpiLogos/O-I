@@ -40,7 +40,11 @@ import {LIVE_RENDERER_REF,hostedExpressionArgs,isProtectedRef,projectExpression}
 // @ts-ignore -- the language-neutral shared-field contracts are the executable spec.
 import {structuredProjectionReading} from "../../../../shared-field/projection-reading.mjs";
 // @ts-ignore -- protected Nara publication specializes the same Projection seam.
-import {createNaraPresenceConsent,hostedNaraExpressionArgs,isNaraBoundExpression,projectNaraExpression,withdrawNaraProjection} from "../../../../shared-field/nara-expression-projection.mjs";
+import {createNaraPresenceConsent,hostedNaraExpressionArgs,isNaraBoundExpression,isCanonicalNaraBody,projectNaraExpression,withdrawNaraProjection} from "../../../../shared-field/nara-expression-projection.mjs";
+import {currentIdentity,useCurrentIdentity} from '../nara/identity/current';
+import {nativePresence,type NativePresenceRequest} from '../nara/nativePresence';
+import {readScope,scopeProject} from '../workspace/scope';
+import {chatProvisionTarget} from '../agent/chat/firstSend';
 import "./explore.css";
 
 interface Bundle {schema:string;expression_ref:string;expression_revision:number;world_ref:string;field_ref:string;composition:unknown;expression:{live_renderer_ref:string;representations:{kind:string}[]};presentation:WorldPresentation;projection:{projection_ref:string;projection_revision:number;state:string;subject:{kind:string;ref:string};source:{system:string;ref?:string;revision:string};publisher_participant_ref:string;audience:{visibility:string;refs?:string[]}};entry:{ref:string;kind:string;world_ref:string;label:string};field:unknown;participant:unknown;live:{renderer_ref:string;fallback_kinds:string[]};relations?:{relation:string;to:string}[];omissions:{world_relations?:{relation:string;ref:string;reason:string}[];readings:number;actions:number;scenes:{scene_ref:string;title:string}[];entities:{entity_ref:string;title:string}[];parameters:{entity_ref:string;parameter:string}[];representations:{kind:string;ref?:string}[];sources:{withheld:{ref:string;availability:string;subject:string}[];protected:{ref:string;subject:string}[];unavailable:{ref:string;availability:string;subject:string}[]};provenance:{ref:string;of:string}[]}}
@@ -65,6 +69,8 @@ export function ShareProjection({document,onClose}:{document:ExpressionDocument;
   const [hosted,setHosted]=useState<SharedFieldHostedResult>();
   const [busy,setBusy]=useState(false);
   const nara=isNaraBoundExpression(document);
+  const canonicalNara=isCanonicalNaraBody(document),identity=useCurrentIdentity();
+  const [nativePrepared,setNativePrepared]=useState<{request:NativePresenceRequest;project:string;selection_ref:string}>();
   const [naraConsent,setNaraConsent]=useState(false);
   const [naraCycle,setNaraCycle]=useState(0);
   const [naraTargetIdentity,setNaraTargetIdentity]=useState("");
@@ -91,6 +97,7 @@ export function ShareProjection({document,onClose}:{document:ExpressionDocument;
   const applyRecoveredScope=(item:RecoveredPresence)=>{setPublisher(item.publisher_identity_ref??"");setAudienceRefs(item.target_ref??"");setVisibility(item.projection.audience?.visibility??"restricted");setNaraTargetIdentity(item.target_identity_ref??"");};
   const refs=audienceRefs.split(/[\s,]+/).filter(Boolean);
   const preview=useMemo<{bundle?:Bundle;error?:string}>(()=>{
+    if(canonicalNara)return {error:identity?'Create the consented preview from the current native Nara and canonical body.':'Select a saved identity and resolve its Nara before sharing this canonical body.'};
     try{
       const fieldRef=placed?.field_ref??`oi:field:desktop:${slug(document.expression_ref)}`,identity=publisher.trim()||"human:unnamed",participantRef=`participant:${slug(fieldRef)}:${slug(identity)}`;
       const prior=recovered?.projection,priorPresentation=prior?.representation?.kind==="oi.world-presentation/v1"?prior.representation.payload?.presentation_ref:undefined;
@@ -98,7 +105,8 @@ export function ShareProjection({document,onClose}:{document:ExpressionDocument;
       const bundle=((nara?projectNaraExpression({...base,consent:createNaraPresenceConsent({consent_ref:`consent:${slug(document.expression_ref)}:${stamp}:${naraCycle}`,participant_ref:participantRef,expression_ref:document.expression_ref,target_ref:refs[0]??"",target_identity_ref:naraTargetIdentity,granted_at:new Date().toISOString(),source_refs:document.provenance.map(item=>item.ref)})}):projectExpression(base)) as unknown) as Bundle;
       return {bundle};
     }catch(cause){return {error:String(cause instanceof Error?cause.message:cause)};}
-  },[document,sceneRefs,summary,discloseSources,admitted,publisher,visibility,audienceRefs,stamp,nara,naraCycle,naraTargetIdentity,recovered,placed,authored,authoring,fieldEntries]);
+  },[document,sceneRefs,summary,discloseSources,admitted,publisher,visibility,audienceRefs,stamp,nara,naraCycle,naraTargetIdentity,recovered,placed,authored,authoring,fieldEntries,canonicalNara,identity]);
+  useEffect(()=>{setNativePrepared(undefined);if(canonicalNara&&!hosted)setCreated(undefined);},[canonicalNara,identity?.selection_ref,document.revision,publisher,audienceRefs,naraTargetIdentity,naraConsent,hosted]);
   useEffect(()=>{if(!hosted&&recovered?.projection.state!=="published"){setCreated(undefined);setHosted(undefined);}},[document.expression_ref,document.revision,sceneRefs,summary,discloseSources,admitted,publisher,visibility,audienceRefs,naraTargetIdentity,naraConsent,hosted,recovered,placed,authoring]);
   useEffect(()=>{if(nara)setNaraConsent(false);},[nara,document.expression_ref,document.revision,sceneRefs,publisher,visibility,audienceRefs,naraTargetIdentity]);
   useEffect(()=>{
@@ -135,19 +143,47 @@ export function ShareProjection({document,onClose}:{document:ExpressionDocument;
     return()=>{active=false;};
   };
   useEffect(()=>{const cancel=recoverHostedPresence();return cancel;},[nara,transport,document.expression_ref]);
-  const bundle=preview.bundle;
+  const bundle=canonicalNara?created:preview.bundle;
   const locked=busy||Boolean(hosted)||recoveries.length>0||(nara&&recoveryState!=="complete");
   const liveHere=visuals.enabled&&!stage.error;
-  const create=()=>{
+  const create=async()=>{
     setError(undefined);
     if(!publisher.trim()){setError("Name the publishing identity — publication carries its attribution.");return;}
     if(nara&&!naraConsent){setError("Explicit consent is required for this Nara presence relation.");return;}
+    if(canonicalNara){
+      if(!identity){setError('Select the saved identity whose Nara will share this body.');return;}
+      if(refs.length!==1||!naraTargetIdentity.trim()){setError('Name exactly one target Participant and its identity.');return;}
+      setBusy(true);
+      try {
+        const field_ref=recovered?.field_ref??`oi:field:desktop:${slug(document.expression_ref)}`;
+        const participant_ref=`participant:${slug(field_ref)}:${slug(publisher.trim())}`,at=new Date();
+        const project=chatProvisionTarget(scopeProject(readScope()));
+        const request:NativePresenceRequest={operation:'prepare',binding:{operation:'context',source_ref:identity.source.source_ref,
+          expected_revision:identity.source.revision,person_ref:identity.reading.person_ref,nara_ref:identity.reading.nara_ref,
+          expression_ref:document.expression_ref,role:'nara'},expected_expression_revision:document.revision,
+          publication:{field_ref,world_ref:`world:desktop:${slug(document.expression_ref)}`,
+            projection_ref:recovered?.projection.projection_ref??`projection:desktop:${slug(document.expression_ref)}:${stamp}`,
+            presentation_ref:`presentation:desktop:${slug(document.expression_ref)}:${stamp}`,
+            projection_revision:recovered?.projection.state==='withdrawn'?recovered.projection.projection_revision+1:1+naraCycle*2,
+            publisher_identity_ref:publisher.trim(),publisher_participant_ref:participant_ref,target_ref:refs[0]!,target_identity_ref:naraTargetIdentity.trim(),
+            consent_ref:`consent:${slug(document.expression_ref)}:${stamp}:${naraCycle}`,granted_at:at.toISOString(),granted_at_unix_ms:at.getTime()}};
+        const reading=await nativePresence(transport,project,request);
+        if(currentIdentity()?.selection_ref!==identity.selection_ref)throw Error('Identity selection changed during presence preparation.');
+        setNativePrepared({request,project,selection_ref:identity.selection_ref});setCreated(reading.bundle as Bundle);
+      }catch(cause){setError(String(cause instanceof Error?cause.message:cause));}finally{setBusy(false);}
+      return;
+    }
     if(!bundle){setError(preview.error??"The preview could not be composed");return;}
     setCreated(bundle);
   };
   const publishHosted=async()=>{
     if(!created)return;setBusy(true);setError(undefined);
     try{
+      if(canonicalNara){
+        if(!naraConsent||!nativePrepared||currentIdentity()?.selection_ref!==nativePrepared.selection_ref)throw Error('The native presence basis changed; prepare it again.');
+        const reading=await nativePresence(transport,nativePrepared.project,{...nativePrepared.request,operation:'publish'});
+        setHosted(reading.publication as SharedFieldHostedResult);return;
+      }
       if(nara){
         const granted=(created as Bundle&{nara_presence?:{consent?:{participant_ref?:string;expression_ref?:string;target_ref?:string;target_identity_ref?:string}}}).nara_presence?.consent;
         const current=(bundle as Bundle&{nara_presence?:{consent?:{participant_ref?:string;expression_ref?:string;target_ref?:string;target_identity_ref?:string}}}|undefined)?.nara_presence?.consent;
@@ -177,7 +213,7 @@ export function ShareProjection({document,onClose}:{document:ExpressionDocument;
   const o=bundle?.omissions;
   return <section className="share-projection" aria-label="Share / Project" data-expression-ref={document.expression_ref} data-expression-revision={document.revision} data-preview-projection-ref={bundle?.projection.projection_ref} data-created={Boolean(created)} data-hosted={Boolean(hosted)} data-acting-position={actingPosition??""} data-constellation-ref={constellationRef??""} data-world-relations={(bundle?.relations??[]).map(relation=>relation.relation).join(",")}>
     <header className="share-head"><div><small>Share / Project</small><strong>{document.title}</strong><span>{document.expression_ref} · revision {document.revision}</span></div><button type="button" aria-label="Close share" disabled={busy} onClick={onClose}>×</button></header>
-    {preview.error&&<p role="alert">{preview.error}</p>}
+    {preview.error&&!bundle&&<p role="status">{preview.error}</p>}
     <div className="share-columns">
       <div className="share-preview-column">
         <h3>Outward preview <small>exactly what another world receives</small></h3>
@@ -203,19 +239,21 @@ export function ShareProjection({document,onClose}:{document:ExpressionDocument;
         </section>
         <section className="share-selection" aria-label="Selection">
           <h3>Selection</h3>
+          {canonicalNara?<p>The selected canonical scene is shared as neutral centre and Earth cues. Personal state and source records stay in this World.</p>:<>
           <div className="share-scenes">{document.scenes.map(scene=><label key={scene.scene_ref}><input type="checkbox" disabled={locked} checked={sceneRefs.includes(scene.scene_ref)} onChange={e=>setSceneRefs(current=>e.target.checked?[...current,scene.scene_ref].filter((r,i,a)=>a.indexOf(r)===i):current.filter(r=>r!==scene.scene_ref))}/>{scene.title}</label>)}</div>
           <label>Source refs<select aria-label="Disclose source refs" disabled={locked} value={discloseSources} onChange={e=>setDiscloseSources(e.target.value as "available"|"none")}><option value="available">available, non-protected</option><option value="none">none</option></select></label>
           {protectedCandidates.length>0&&<div className="share-admit"><span>Admit protected refs explicitly</span>{protectedCandidates.map(ref=><label key={ref}><input type="checkbox" disabled={locked} checked={admitted.includes(ref)} onChange={e=>setAdmitted(current=>e.target.checked?[...current,ref]:current.filter(r=>r!==ref))}/><code>{ref}</code></label>)}</div>}
           <label>Summary<input aria-label="Projection summary" disabled={locked} value={summary} onChange={e=>setSummary(e.target.value)} placeholder="one line another world reads first" autoComplete="off" spellCheck={false}/></label>
+          </>}
         </section>
         <section className="share-audience" aria-label="Audience">
           <h3>Audience</h3>
-          <label>Visibility<select aria-label="Projection visibility" disabled={locked} value={visibility} onChange={e=>setVisibility(e.target.value)}>{["public","unlisted","restricted","private"].map(v=><option key={v} value={v}>{v}</option>)}</select></label>
+          <label>Visibility<select aria-label="Projection visibility" disabled={locked||canonicalNara} value={canonicalNara?"restricted":visibility} onChange={e=>setVisibility(e.target.value)}>{["public","unlisted","restricted","private"].map(v=><option key={v} value={v}>{v}</option>)}</select></label>
           <label>Audience participants<input aria-label="Audience participants" disabled={locked} value={audienceRefs} onChange={e=>setAudienceRefs(e.target.value)} placeholder="comma-separated participant refs (restricted / private)" autoComplete="off" spellCheck={false}/></label>
           <label>Publish as<input aria-label="Publisher identity" disabled={locked} value={publisher} onChange={e=>setPublisher(e.target.value)} placeholder="your identity ref (e.g. human:…) — the field-scoped participant is derived" autoComplete="off" spellCheck={false}/></label>
           {nara&&<div className="share-nara-consent" data-nara-protected="true" data-consent-state={withdrawn?"withdrawn":naraConsent?"granted":"absent"}>
             <strong>Protected Nara presence</strong>
-            <p>This publishes the authored seven-centre and distinct EarthBody cues, source/Epi refs and fallback. Personal readings, resonance values, body state, journal/activity, Agent context and renderer state remain withheld.</p>
+            <p>{canonicalNara?"This publishes the canonical centre and Earth references in the neutral cue layout, with a fallback reading.":"This publishes the authored seven-centre and distinct EarthBody cues, source/Epi refs and fallback."} Personal readings, resonance values, body state, journal/activity, Agent context and renderer state remain withheld.</p>
             <label><input type="checkbox" checked={naraConsent||recoveries.length>0} disabled={Boolean(withdrawn)||locked} onChange={event=>setNaraConsent(event.target.checked)}/>I explicitly consent to share this Expression presence with <code>{refs[0]||"the named target Participant"}</code>.</label>
             <label>Target identity<input aria-label="Nara target identity" disabled={locked} value={naraTargetIdentity} onChange={event=>setNaraTargetIdentity(event.target.value)} placeholder="the Human identity behind the target Participant"/></label>
           </div>}
@@ -223,7 +261,7 @@ export function ShareProjection({document,onClose}:{document:ExpressionDocument;
           {bundle&&<p className="share-destination">World <code>{bundle.world_ref}</code> · field <code>{bundle.field_ref}</code> · projection <code>{bundle.projection.projection_ref}</code>{bundle.relations?.length?<> · {bundle.relations.map(relation=>relation.relation).join(", ")}</>:null}</p>}
         </section>
         <div className="share-actions">
-          <button type="button" className="share-create" disabled={!bundle||!!created||locked} onClick={create}>Create Projection</button>
+          <button type="button" className="share-create" disabled={(!bundle&&!canonicalNara)||!!created||locked} onClick={()=>void create()}>Create Projection</button>
           {created&&<div className="share-created" data-projection-ref={created.projection.projection_ref} data-projection-revision={created.projection.projection_revision} data-projection-state={created.projection.state} data-presentation-ref={created.presentation.presentation_ref} data-presentation-revision={created.presentation.revision} data-source-revision={created.projection.source.revision} data-projection={JSON.stringify(created.projection)}>
             <p role="status">Projection <code>{created.projection.projection_ref}</code> · revision {created.projection.projection_revision} · {created.projection.state} — subject <code>{created.projection.subject.ref}</code> at source revision {created.projection.source.revision}; presentation <code>{created.presentation.presentation_ref}</code> revision {created.presentation.revision}; audience {created.projection.audience.visibility}{created.projection.audience.refs?`: ${created.projection.audience.refs.join(", ")}`:""}; published by {created.projection.publisher_participant_ref} (identity {publisher.trim()}). The Expression itself is unchanged at revision {created.expression_revision}.</p>
             {agentSummary&&<details className="share-agent-reading"><summary>Structured reading (what an Agent receives)</summary><pre data-agent-reading={JSON.stringify(agentSummary)}>{JSON.stringify(agentSummary,null,2)}</pre></details>}

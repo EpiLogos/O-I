@@ -327,10 +327,15 @@ pub enum OwnerRequest {
     },
     /// The person's commission of an accepted proposal: `factory development
     /// commission <state> -` with the caller's own
-    /// `factory.commission-request/v1` document, carried verbatim. Factory
-    /// validates it, derives the Journey/Run and replays an identical request
-    /// as `already-applied`; its receipt is the result.
-    Commission { state_path: PathBuf, request: Value },
+    /// `factory.commission-request/v1` document, carried verbatim; the desktop
+    /// maps no authority. Factory validates it, derives the Journey/Run and
+    /// replays an identical request as `already-applied`; its receipt names the
+    /// commissioned project/journey/run.
+    DevelopmentCommission {
+        state_path: PathBuf,
+        #[serde(default)]
+        request: Value,
+    },
 }
 
 impl OwnerRequest {
@@ -1163,7 +1168,7 @@ pub fn owner(request: OwnerRequest, world: Option<&Value>) -> Result<Value, Erro
                 &["factory.developmental-mutation-receipt/v1"],
             )
         }
-        OwnerRequest::Commission {
+        OwnerRequest::DevelopmentCommission {
             state_path,
             request,
         } => {
@@ -1195,11 +1200,14 @@ mod owner_tests {
     #[test]
     fn a_commission_carries_only_a_factory_commission_request() {
         let wire: OwnerRequest = serde_json::from_value(serde_json::json!({
-            "kind":"commission","state_path":"/ground/.factory/development-state.json",
+            "kind":"development-commission","state_path":"/ground/.factory/development-state.json",
             "request":{"contract":"factory.developmental-mutation-request/v1"}}))
         .unwrap();
         let error = owner(wire, None).unwrap_err();
-        assert!(format!("{error:?}").contains("factory.commission-request/v1"), "{error:?}");
+        assert!(
+            format!("{error:?}").contains("factory.commission-request/v1"),
+            "{error:?}"
+        );
     }
 
     #[test]
@@ -1418,5 +1426,10 @@ mod owner_tests {
         let request: OwnerRequest =
             serde_json::from_value(serde_json::json!({"kind": "locate", "all": true})).unwrap();
         assert!(request.needs_world());
+        let request: OwnerRequest = serde_json::from_value(serde_json::json!({"kind": "development-commission", "state_path": "/s.json", "request": {"contract": "factory.commission/v1"}})).unwrap();
+        assert!(matches!(
+            request,
+            OwnerRequest::DevelopmentCommission { .. }
+        ));
     }
 }

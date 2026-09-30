@@ -21,12 +21,15 @@ function sameState(a, b) {
     JSON.stringify(a.m2_identity) === JSON.stringify(b.m2_identity);
 }
 
+const EVENT_OPERATIONS = ['m1-advance', 'replace-event'];
+const READ_OPERATIONS = ['read', 'inspect', 'influence', 'personal', 'receive-personal'];
+
 export class InstrumentSession {
   #context; #owner; #port; #field; #audio; #native; #instance; #sequence;
   #block; #lookahead; #maxBlocks; #maxBytes; #timeout; #queue = []; #bytes = 0;
   #views = new Set(); #maxViews; #busy = false; #held = false; #uncertain = false;
   #disposed = false; #reason = null; #presented; #timer = null; #running = false;
-  #generation = 0; #coalesced = 0;
+  #generation = 0; #coalesced = 0; #influence = null;
 
   constructor({ context, owner, transport, initialReceipt, fieldBinding,
     blockFrames = 512, lookaheadSeconds = 0.1, maxBlocks = 16,
@@ -58,6 +61,9 @@ export class InstrumentSession {
     this.#presented = { generation: this.#native.generation, samples_elapsed: this.#native.samples_elapsed };
     OWNERS.add(owner);
   }
+
+  /** The influence reading the last scene determinant acknowledgement carried. */
+  get lastInfluence() { return this.#influence === null ? null : structuredClone(this.#influence); }
 
   get reading() {
     return { schema: 'ql.instrument-reading/v1', instance_ref: this.#instance,
@@ -129,16 +135,22 @@ export class InstrumentSession {
         return { refused: true, error: reply.error ?? 'native command refused' };
       }
       const changing = command.operation === 'set-axis' || command.operation === 'replace';
+      // A scene event re-reads the whole basis: an optional strike and an explicit
+      // reshape each commit one generation, so the owner states how many.
+      const event = EVENT_OPERATIONS.includes(command.operation);
       const frames = command.operation === 'advance' ? command.frames : 0;
-      need(cursor(frame.generation) === cursor(this.#native.generation) + (changing ? 1n : 0n) &&
+      const before = cursor(this.#native.generation), after = cursor(frame.generation);
+      need((event ? after > before && after <= before + 2n : after === before + (changing ? 1n : 0n)) &&
         cursor(frame.samples_elapsed) === cursor(this.#native.samples_elapsed) + BigInt(frames) &&
         frame.audio.length === frames, 'host operation and native cursor disagree');
-      if (command.operation === 'read' || command.operation === 'inspect') need(unchanged, 'native read advanced or reset state');
+      if (READ_OPERATIONS.includes(command.operation)) need(unchanged, 'native read advanced or reset state');
       this.#sequence = next;
       // The native operation is now acknowledged even if presentation later
       // fails. Recovery reads this cursor; no claim of rolling native state back.
       this.#native = withoutAudio(frame);
-      return { frame, sources: reply.sources };
+      // A scene determinant acknowledgement carries its own influence reading.
+      if (reply.influence !== undefined) this.#influence = structuredClone(reply.influence);
+      return { frame, sources: reply.sources, influence: reply.influence, personal: reply.personal };
     } catch (error) {
       this.#unknown(String(error)); throw error;
     } finally { clearTimeout(timer); }
@@ -219,7 +231,7 @@ export class InstrumentSession {
    * It changes the existing native owner; no UI-local clock or second composer. */
   async operate(command) {
     need(!this.#busy && !this.#held && !this.#disposed &&
-      ['set-axis', 'replace'].includes(command?.operation), 'domain operation requires idle admitted owner');
+      ['set-axis', 'replace', ...EVENT_OPERATIONS].includes(command?.operation), 'domain operation requires idle admitted owner');
     this.present();
     need(this.#queue.length < this.#maxBlocks &&
       this.#bytes + JSON.stringify(this.#native).length * 2 <= this.#maxBytes, 'wait for bounded presentation capacity');
@@ -230,6 +242,26 @@ export class InstrumentSession {
       if (generation !== this.#generation || this.#held || this.#disposed) return this.reading;
       try { this.#enqueue(reply.frame); } catch (error) { this.hold(`presentation-admission-failed: ${String(error)}`); throw error; }
       this.present(); return this.reading;
+    } finally { this.#busy = false; }
+  }
+
+  /** The scene owner's acting-influence reading; never advances or resets. */
+  async influence() {
+    need(!this.#busy && !this.#held, 'inspection requires an idle admitted owner'); this.#busy = true;
+    try {
+      const reply = await this.#exchange({ operation: 'influence' });
+      need(!reply.refused, String(reply.error)); this.#influence = structuredClone(reply.influence); return reply.influence;
+    } finally { this.#busy = false; }
+  }
+
+  /** A Nara-constituted scene owner's reception: `input` (seven supplied centre
+   * inputs citing the current event) receives; without it, reads. The material
+   * field never changes. Protected state stays with the calling host. */
+  async personal(input) {
+    need(!this.#busy && !this.#held, 'inspection requires an idle admitted owner'); this.#busy = true;
+    try {
+      const reply = await this.#exchange(input === undefined ? { operation: 'personal' } : { operation: 'receive-personal', input });
+      need(!reply.refused, String(reply.error)); return reply.personal;
     } finally { this.#busy = false; }
   }
 
