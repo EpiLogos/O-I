@@ -1,0 +1,3 @@
+session                                 delivery                  phase     first_cursor  terminal_cursor
+--------------------------------------  ------------------------  --------  ------------  ---------------
+agent-session/oi203-pf-mac-participant  delivery/oi203-pf-mac-a1  returned  17680         18008          
