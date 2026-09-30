@@ -12,6 +12,32 @@ use std::{
     },
 };
 
+/// Keep native refusal detail without exposing a successful payload. A process
+/// killed before writing stderr must still disclose its operation and status.
+fn owner_process_failure(operation: &str, output: &std::process::Output) -> String {
+    let stderr = String::from_utf8_lossy(&output.stderr);
+    if !stderr.trim().is_empty() {
+        return stderr.trim().to_owned();
+    }
+    if let Ok(response) = serde_json::from_slice::<Value>(&output.stdout) {
+        if response["ok"] == false {
+            if let Some(message) = response["error"]["message"]
+                .as_str()
+                .filter(|s| !s.trim().is_empty())
+            {
+                return match response["error"]["code"].as_str() {
+                    Some(code) => format!("{message} [{code}]"),
+                    None => message.to_owned(),
+                };
+            }
+        }
+    }
+    format!(
+        "AIKit {operation} failed ({}) without an owner diagnostic",
+        output.status
+    )
+}
+
 #[derive(Clone, Debug)]
 pub struct Client {
     executable: PathBuf,
@@ -25,6 +51,23 @@ pub struct Client {
 }
 
 impl Client {
+    pub(crate) fn local_speech_read(
+        &self,
+        cwd: &Path,
+        agent_session: &str,
+    ) -> Result<Value, String> {
+        self.disclosure(
+            cwd,
+            &[
+                "session-space",
+                "encounter-speech-read",
+                "--agent-session",
+                agent_session,
+            ],
+            "aikit.local-speech-reading/v1",
+        )
+    }
+
     /// Read-only protocol currency comes from the same owner and isolated home
     /// as this client's SessionSpace calls. These verbs never open a provider.
     fn disclosure(&self, cwd: &Path, verb: &[&str], schema: &str) -> Result<Value, String> {
@@ -156,6 +199,12 @@ impl Client {
         }
     }
     pub fn discover() -> Self {
+        // The trusted host's explicit owner cut must also govern sessions,
+        // matching the native disclosure and lifecycle clients. The renderer
+        // never supplies this executable or the inherited AIKIT_HOME.
+        if let Some(executable) = std::env::var_os("OI_AIKIT_BIN") {
+            return Self::with(PathBuf::from(executable), None);
+        }
         Self {
             executable: std::env::var_os("OI_BIN")
                 .map(PathBuf::from)
@@ -202,7 +251,7 @@ impl Client {
             .output()
             .map_err(|e| format!("Native Agent owner unavailable: {e}"))?;
         if !output.status.success() {
-            return Err(String::from_utf8_lossy(&output.stderr).trim().to_owned());
+            return Err(owner_process_failure(operation, &output));
         }
         if output.stdout.len() > 1024 * 1024 {
             return Err("Native Agent response exceeds the bounded reading size".into());
@@ -290,7 +339,7 @@ impl Client {
             .output()
             .map_err(|e| format!("AIKit SessionSpace is unavailable: {e}"))?;
         if !output.status.success() {
-            return Err(String::from_utf8_lossy(&output.stderr).trim().to_owned());
+            return Err(owner_process_failure("encounter-task-read", &output));
         }
         let mut data: Value = serde_json::from_slice(&output.stdout)
             .map_err(|e| format!("AIKit SessionSpace returned an unreadable task reading: {e}"))?;
@@ -344,7 +393,7 @@ fn read_project_with(
         .output()
         .map_err(|e| format!("AIKit SessionSpace is unavailable: {e}"))?;
     if !output.status.success() {
-        return Err(String::from_utf8_lossy(&output.stderr).trim().to_owned());
+        return Err(owner_process_failure("discover", &output));
     }
     let data: Value = serde_json::from_slice(&output.stdout)
         .map_err(|e| format!("AIKit SessionSpace returned an unreadable reading: {e}"))?;
@@ -465,6 +514,28 @@ pub enum EncounterRequest {
         agent_session: String,
         delivery_ref: String,
     },
+    /// One authored Flow entry put to several recipients (O:I #558). The
+    /// request is the owner's own wire contract (`ConversationSendRequest` in
+    /// the bound ai-kit revision), carried verbatim and never re-keyed: the
+    /// owner records it, commits the entry through Central, dispatches each
+    /// recipient as its own delivery and — with no desktop involved — appends
+    /// each returned reply to the Flow. The attachment gate covers every
+    /// recipient session before the owner sees the request.
+    ConversationSend {
+        request: Value,
+    },
+    /// One request's per-recipient standing, reply so far and inclusion.
+    ConversationRead {
+        request_ref: String,
+    },
+    /// The requests bound to one Flow source, newest first.
+    ConversationList {
+        flow_ref: String,
+    },
+    /// Bring one request forward now; never replays an uncertain delivery.
+    ConversationReconcile {
+        request_ref: String,
+    },
     /// Resume the actually recorded native session identity. The owner refuses
     /// contradictory provider/space/cwd/command bases; a plain open with a
     /// recorded binding is refused first (`encounter.resume_required`).
@@ -515,7 +586,20 @@ pub enum PermissionDecision {
 impl EncounterRequest {
     fn sessions(&self) -> Vec<&str> {
         match self {
-            Self::Start | Self::Providers | Self::Health => Vec::new(),
+            Self::Start
+            | Self::Providers
+            | Self::Health
+            | Self::ConversationRead { .. }
+            | Self::ConversationList { .. }
+            | Self::ConversationReconcile { .. } => Vec::new(),
+            Self::ConversationSend { request } => request["recipients"]
+                .as_array()
+                .map(|rows| {
+                    rows.iter()
+                        .filter_map(|row| row["agent_session"].as_str())
+                        .collect()
+                })
+                .unwrap_or_default(),
             Self::Context { agent_session, .. } => {
                 agent_session.iter().map(String::as_str).collect()
             }
@@ -629,7 +713,7 @@ impl Client {
             .output()
             .map_err(|error| format!("AIKit encounter owner unavailable: {error}"))?;
         if !output.status.success() {
-            return Err(String::from_utf8_lossy(&output.stderr).trim().into());
+            return Err(owner_process_failure("encounter", &output));
         }
         let response: Value = serde_json::from_slice(&output.stdout)
             .map_err(|error| format!("Unreadable AIKit encounter response: {error}"))?;
@@ -697,6 +781,74 @@ impl Client {
         project_ref: &str,
         preferred_body_ref: Option<&str>,
     ) -> Result<Value, String> {
+        self.provision_named(cwd, project_ref, preferred_body_ref, None)
+    }
+
+    /// Bring a named roster agent into a shared Flow (O:I #558): a fresh
+    /// Agency session minted for exactly that agent, its resident opened, and
+    /// then the one sender and the one Flow source admitted to it. The
+    /// admission is the owner-side half of the person's "bring in" — it widens
+    /// nothing else, and a session that cannot be minted for the named agent
+    /// is refused rather than replaced by a generic chat.
+    pub fn provision_flow_participant(
+        &self,
+        cwd: &Path,
+        project_ref: &str,
+        agent_ref: &str,
+        preferred_body_ref: Option<&str>,
+        sender: &str,
+        flow_ref: &str,
+    ) -> Result<Value, String> {
+        let mut data =
+            self.provision_inner(cwd, project_ref, preferred_body_ref, None, Some(agent_ref))?;
+        let session = data["agent_session"]
+            .as_str()
+            .ok_or("Provisioning returned no AgentSession")?
+            .to_owned();
+        let admitted = self.session_space(
+            cwd,
+            &[
+                "encounter-agency-admit",
+                "--agent-session",
+                &session,
+                "--sender",
+                sender,
+                "--source-ref",
+                flow_ref,
+            ],
+        )?;
+        let admitted: Value = serde_json::from_str(&admitted)
+            .map_err(|error| format!("Unreadable AIKit admission response: {error}"))?;
+        let admitted = admitted.get("data").cloned().unwrap_or(admitted);
+        data["admission"] = admitted;
+        data["flow_ref"] = Value::String(flow_ref.to_owned());
+        data["sender"] = Value::String(sender.to_owned());
+        data["requested_agent_ref"] = Value::String(agent_ref.to_owned());
+        Ok(data)
+    }
+
+    /// Exact native attachment identity lets a personal dialogue reopen without
+    /// a renderer-owned session registry. Existing owner admission still applies.
+    pub(crate) fn provision_named(
+        &self,
+        cwd: &Path,
+        project_ref: &str,
+        preferred_body_ref: Option<&str>,
+        named: Option<&crate::nara_dialogue::Binding>,
+    ) -> Result<Value, String> {
+        self.provision_inner(cwd, project_ref, preferred_body_ref, named, None)
+    }
+
+    /// `agent_ref` names the roster Agent to mint the Agency for (a Flow
+    /// participant); `named` names a personal dialogue's exact binding.
+    fn provision_inner(
+        &self,
+        cwd: &Path,
+        project_ref: &str,
+        preferred_body_ref: Option<&str>,
+        named: Option<&crate::nara_dialogue::Binding>,
+        agent_ref_override: Option<&str>,
+    ) -> Result<Value, String> {
         let context = self.session_space(cwd, &["project-context"])?;
         let binding: Value = serde_json::from_str(&context)
             .map_err(|error| format!("Unreadable AIKit project-context reading: {error}"))?;
@@ -705,57 +857,105 @@ impl Client {
             .filter(|p| !p.trim().is_empty())
             .ok_or("AIKit project-context disclosed no Project")?
             .to_owned();
-        let (space, agent_session) = mint_chat_refs(&project);
-        let label = format!("{project} chat (desktop-provisioned)");
+        let (space, agent_session) = named
+            .map(|n| (n.space.clone(), n.agent_session.clone()))
+            .unwrap_or_else(|| mint_chat_refs(&project));
+        let label = named
+            .map(|n| n.label())
+            .unwrap_or_else(|| format!("{project} chat (desktop-provisioned)"));
+        let attachment = named.map(|n| n.attachment()).unwrap_or_else(|| serde_json::json!({"agent_session":agent_session,"purpose":"Desktop chat conversation","provenance":[]}));
+        let mut exists = false;
+        if let Some(named) = named {
+            let rows: Value = serde_json::from_str(&self.session_space(cwd, &["list"])?)
+                .map_err(|e| e.to_string())?;
+            let rows = rows
+                .as_array()
+                .ok_or("AIKit SessionSpace list is not an array")?;
+            if let Some(state) = rows.iter().find(|s| s["definition"]["id"] == space) {
+                named.validate_state(state, project_ref)?;
+                exists = true;
+            }
+        }
 
         // Create the space, then stage+apply the context binding and the
         // session attachment against it. Stage requires the space to exist
         // (apply create first); previews travel by temp file because the
         // context evidence is owner-sized.
-        let preview = self.session_space(cwd, &["create", &space, "--label", &label])?;
-        self.apply_preview(cwd, &preview)?;
+        if !exists {
+            let preview = self.session_space(cwd, &["create", &space, "--label", &label])?;
+            self.apply_preview(cwd, &preview)?;
+        }
         let intent = serde_json::json!({"operation":"bind-project-context","binding":binding});
         let staged = self.stage_intent(cwd, &space, &intent)?;
         self.apply_preview(cwd, &staged)?;
-        let intent = serde_json::json!({"operation":"attach-agent-session","attachment":{
-            "agent_session":agent_session,"purpose":"Desktop chat conversation","provenance":[]}});
+        let intent =
+            serde_json::json!({"operation":"attach-agent-session","attachment":attachment});
         let staged = self.stage_intent(cwd, &space, &intent)?;
         self.apply_preview(cwd, &staged)?;
 
         // The session's native Agency binding — mint first, disclosed reuse
         // as the fallback (see the doc comment). Both arms keep the real
         // admission effect; neither fakes a mint.
-        let (agent_ref, agency) = match self.mint_agency(cwd, &agent_session) {
-            Ok(data) => (
-                data["agent_ref"]
-                    .as_str()
-                    .unwrap_or(agent_session.as_str())
-                    .to_owned(),
-                "minted-per-project",
-            ),
-            Err(_mint_refused) => {
-                let stamp = chat_stamp();
-                let reference = find_reference_binding(&agencies_state_dir())?;
-                let binding = compose_chat_binding(reference, &format!("rev/desktop-chat-{stamp}"));
-                let agent_ref = binding["agent_ref"]
-                    .as_str()
-                    .unwrap_or(agent_session.as_str())
-                    .to_owned();
-                let binding_json = serde_json::to_string(&binding)
-                    .map_err(|error| format!("Agency binding is not serialisable: {error}"))?;
-                with_temp_json(&binding_json, |path| {
-                    self.session_space(
-                        cwd,
-                        &[
-                            "encounter-agency-configure",
-                            "--agent-session",
-                            &agent_session,
-                            "--binding-json",
-                            &format!("@{path}"),
-                        ],
-                    )
-                })?;
-                (agent_ref, "reused-admitted-source")
+        // A recorded binding belongs to the existing AgentSession. Its native
+        // authority is revalidated by open/reconnect, never reminted on reopen.
+        let recorded = if exists {
+            self.recorded_encounter_binding(cwd, project_ref, &agent_session)?
+                .is_some()
+        } else {
+            false
+        };
+        let (agent_ref, agency) = if recorded {
+            (agent_session.clone(), "retained-native-binding")
+        } else {
+            let minted = match named {
+                Some(binding) => {
+                    self.mint_agency_as(cwd, &agent_session, Some(&binding.expected_agent_ref))
+                }
+                None => self.mint_agency_as(cwd, &agent_session, agent_ref_override),
+            };
+            match minted {
+                Ok(data) => (
+                    data["agent_ref"]
+                        .as_str()
+                        .unwrap_or(agent_session.as_str())
+                        .to_owned(),
+                    "minted-per-project",
+                ),
+                Err(mint_refused) if named.is_some() => {
+                    return Err(format!(
+                        "The named personal Agent was not admitted: {mint_refused}"
+                    ));
+                }
+                Err(mint_refused) if agent_ref_override.is_some() => {
+                    return Err(format!(
+                        "The named Agent was not admitted to this Flow: {mint_refused}"
+                    ));
+                }
+                Err(_mint_refused) => {
+                    let stamp = chat_stamp();
+                    let reference = find_reference_binding(&agencies_state_dir())?;
+                    let binding =
+                        compose_chat_binding(reference, &format!("rev/desktop-chat-{stamp}"));
+                    let agent_ref = binding["agent_ref"]
+                        .as_str()
+                        .unwrap_or(agent_session.as_str())
+                        .to_owned();
+                    let binding_json = serde_json::to_string(&binding)
+                        .map_err(|error| format!("Agency binding is not serialisable: {error}"))?;
+                    with_temp_json(&binding_json, |path| {
+                        self.session_space(
+                            cwd,
+                            &[
+                                "encounter-agency-configure",
+                                "--agent-session",
+                                &agent_session,
+                                "--binding-json",
+                                &format!("@{path}"),
+                            ],
+                        )
+                    })?;
+                    (agent_ref, "reused-admitted-source")
+                }
             }
         };
 
@@ -799,7 +999,7 @@ impl Client {
 
         // The ordinary open — and the ordinary gate: discover runs again and
         // must now see the new space carrying this Project and this session.
-        let opened = self.encounter(
+        let opening = self.encounter(
             cwd,
             project_ref,
             &EncounterRequest::Open {
@@ -807,8 +1007,15 @@ impl Client {
                 agent_session: agent_session.clone(),
                 provider: provider.clone(),
             },
-        )?;
-        if let Some(expected) = resolved_body.as_ref() {
+        );
+        let (opened, resume_required) = match opening {
+            Ok(value) => (value, false),
+            Err(error) if named.is_some() && error.ends_with("[encounter.resume_required]") => {
+                (Value::Null, true)
+            }
+            Err(error) => return Err(error),
+        };
+        if let Some(expected) = resolved_body.as_ref().filter(|_| !resume_required) {
             if opened["body_ref"] != expected["body_ref"]
                 || opened["body_revision"] != expected["body_revision"]
             {
@@ -819,13 +1026,15 @@ impl Client {
             "project":project,
             "space":space,
             "agent_session":agent_session,
-            "agent_ref":agent_ref,
+            "agent_ref":if recorded {Value::Null} else {Value::String(agent_ref)},
             "agency":agency,
             "provider":provider,
             "provider_default":provider_default,
             "preferred_body_ref":preferred_body_ref,
             "resolved_body":resolved_body,
             "open":opened,
+            "resume_required":resume_required,
+            "continuation":if recorded {"recorded-agent-session"} else {"new-native-session"},
         }))
     }
 
@@ -836,7 +1045,17 @@ impl Client {
     /// A stderr naming an unknown subcommand is the suite saying the verb
     /// does not exist in this installed cut — that verdict is cached for
     /// this process so later provisions fall back without re-probing.
+    #[cfg(test)]
     fn mint_agency(&self, cwd: &Path, agent_session: &str) -> Result<Value, String> {
+        self.mint_agency_as(cwd, agent_session, None)
+    }
+
+    fn mint_agency_as(
+        &self,
+        cwd: &Path,
+        agent_session: &str,
+        agent_ref: Option<&str>,
+    ) -> Result<Value, String> {
         if self.mint_support.load(Ordering::Relaxed) == 2 {
             return Err("the installed suite has no encounter-agency-mint verb (cached)".into());
         }
@@ -856,6 +1075,9 @@ impl Client {
                 "--project-cwd",
             ])
             .arg(cwd);
+        if let Some(agent_ref) = agent_ref {
+            command.args(["--agent-ref", agent_ref]);
+        }
         let output = command
             .output()
             .map_err(|error| format!("AIKit SessionSpace is unavailable: {error}"))?;
@@ -864,13 +1086,20 @@ impl Client {
             if mint_verb_absent(&stderr) {
                 self.mint_support.store(2, Ordering::Relaxed);
             }
-            return Err(stderr);
+            return Err(owner_process_failure("encounter-agency-mint", &output));
         }
         self.mint_support.store(1, Ordering::Relaxed);
         let mut data: Value = serde_json::from_slice(&output.stdout)
             .map_err(|error| format!("Unreadable AIKit agency mint response: {error}"))?;
         if data.get("ok").and_then(Value::as_bool) == Some(true) {
             data = data.get("data").cloned().unwrap_or(Value::Null);
+        }
+        if let Some(expected) = agent_ref {
+            if data["agent_ref"].as_str() != Some(expected) {
+                return Err(
+                    "Native Agency admission returned a different personal Agent identity".into(),
+                );
+            }
         }
         Ok(data)
     }
@@ -894,7 +1123,7 @@ impl Client {
             .output()
             .map_err(|error| format!("AIKit client status is unavailable: {error}"))?;
         if !output.status.success() {
-            return Err(String::from_utf8_lossy(&output.stderr).trim().to_owned());
+            return Err(owner_process_failure("client status", &output));
         }
         let mut data: Value = serde_json::from_slice(&output.stdout)
             .map_err(|error| format!("AIKit client status returned unreadable JSON: {error}"))?;
@@ -924,7 +1153,7 @@ impl Client {
             .output()
             .map_err(|error| format!("AIKit model catalogue is unavailable: {error}"))?;
         if !output.status.success() {
-            return Err(String::from_utf8_lossy(&output.stderr).trim().to_owned());
+            return Err(owner_process_failure("model-catalogue show", &output));
         }
         let mut data: Value = serde_json::from_slice(&output.stdout)
             .map_err(|error| format!("AIKit model catalogue returned unreadable JSON: {error}"))?;
@@ -935,6 +1164,46 @@ impl Client {
             return Err("AIKit model catalogue carried no entries reading".into());
         }
         Ok(data)
+    }
+
+    /// The latest owner-observed native binding, across journal pages. Refuse
+    /// an oversized reading rather than reconnect through an obsolete provider.
+    pub(crate) fn recorded_encounter_binding(
+        &self,
+        cwd: &Path,
+        project: &str,
+        agent_session: &str,
+    ) -> Result<Option<Value>, String> {
+        let mut after = 0;
+        let mut binding = None;
+        for _ in 0..100 {
+            let page = self.encounter(
+                cwd,
+                project,
+                &EncounterRequest::Read {
+                    agent_session: agent_session.into(),
+                    after,
+                    limit: 256,
+                },
+            )?;
+            let events = page["events"]
+                .as_array()
+                .ok_or("AIKit journal returned no events reading")?;
+            for entry in events {
+                if entry["event"]["kind"] == "binding" {
+                    binding = Some(entry["event"].clone());
+                }
+            }
+            if page["more"] == false {
+                return Ok(binding);
+            }
+            let next = page["next_cursor"]
+                .as_u64()
+                .filter(|next| *next > after)
+                .ok_or("AIKit journal cursor did not advance")?;
+            after = next;
+        }
+        Err("Native dialogue journal exceeds the bounded continuation read; no older provider binding was substituted".into())
     }
 
     /// Run one `session-space` verb and return its stdout (the folded CLI
@@ -954,7 +1223,10 @@ impl Client {
             .output()
             .map_err(|error| format!("AIKit SessionSpace is unavailable: {error}"))?;
         if !output.status.success() {
-            return Err(String::from_utf8_lossy(&output.stderr).trim().to_owned());
+            return Err(owner_process_failure(
+                args.first().copied().unwrap_or("session-space"),
+                &output,
+            ));
         }
         Ok(String::from_utf8_lossy(&output.stdout).trim().to_owned())
     }
@@ -1181,6 +1453,22 @@ fn with_temp_json<T>(json: &str, run: impl FnOnce(&str) -> Result<T, String>) ->
 
 #[cfg(test)]
 mod tests {
+    #[cfg(unix)]
+    #[test]
+    fn killed_owner_process_keeps_a_nonempty_operation_and_signal_diagnostic() {
+        use std::os::unix::process::ExitStatusExt;
+        // Exercise an actual child dying before it can write a diagnostic.
+        let output = std::process::Command::new("/bin/sh")
+            .args(["-c", "kill -KILL $$"])
+            .output()
+            .unwrap();
+        assert_eq!(output.status.signal(), Some(9));
+        assert!(output.stderr.is_empty());
+        let message = super::owner_process_failure("encounter", &output);
+        assert!(message.contains("AIKit encounter failed"), "{message}");
+        assert!(message.contains("9"), "{message}");
+        assert!(message.contains("without an owner diagnostic"), "{message}");
+    }
     use super::*;
 
     #[test]
@@ -1297,6 +1585,35 @@ mod tests {
 
     /// The mint success shape (`{"ok":true,"data":{...}}`) and the absent-verb
     /// verdict cache, against stub executables (configuration.rs's pattern).
+    #[test]
+    fn conversation_requests_are_the_owner_wire_contract_and_gate_every_recipient() {
+        let send = EncounterRequest::ConversationSend {
+            request: serde_json::json!({
+                "request_ref": "conversation/q",
+                "recipients": [
+                    {"participant_key": "p-ada", "agent_session": "agent-session/ada"},
+                    {"participant_key": "p-ash", "agent_session": "agent-session/ash"}
+                ]
+            }),
+        };
+        let wire = serde_json::to_value(&send).unwrap();
+        assert_eq!(wire["action"], "conversation-send");
+        assert_eq!(wire["request"]["request_ref"], "conversation/q", "carried verbatim, never re-keyed");
+        assert_eq!(
+            send.sessions(),
+            vec!["agent-session/ada", "agent-session/ash"],
+            "the attachment gate covers every recipient session before the owner sees the request"
+        );
+        for request in [
+            EncounterRequest::ConversationRead { request_ref: "conversation/q".into() },
+            EncounterRequest::ConversationList { flow_ref: "central:path:/x:Control/user/flows/f.html".into() },
+            EncounterRequest::ConversationReconcile { request_ref: "conversation/q".into() },
+        ] {
+            assert!(request.sessions().is_empty(), "a record read names no session to gate");
+        }
+        let back: EncounterRequest = serde_json::from_value(wire).unwrap();
+        assert_eq!(back, send);
+    }
     #[test]
     fn mint_agency_parses_success_and_caches_the_absent_verb() {
         let dir = std::env::temp_dir().join(format!("oi-mint-test-{}", std::process::id()));

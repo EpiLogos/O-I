@@ -8,7 +8,7 @@ import {mkdtemp,mkdir,rm,writeFile} from 'node:fs/promises';
 import {tmpdir} from 'node:os';
 import {join} from 'node:path';
 import {kernelOp} from '../src/kernel/bridge.ts';
-import {listFiles} from '../src/files/client.ts';
+import {listFiles,readFile} from '../src/files/client.ts';
 import {knowledge} from '../src/knowledge/client.ts';
 import {verifyInsertionSource} from '../src/expressions/sourceInsertion.ts';
 import {resolveHostedSource} from '../src/expressions/sourceHandoff.ts';
@@ -80,7 +80,28 @@ test('native authored directions resolve by exact relation revision and particip
   assert.equal(reopened.address,undefined,'ordinary file does not enter Wiki navigation');
   assert.equal(reopened.returnTo.passageId,plainScene);
   assert.deepEqual(await expr({operation:'inspect',expression_ref:inserted.expression_ref}),inserted,'opening source leaves native authored Scene untouched');
+  // The primary body is an actual file occurrence even with zero entities.
+  // Exercise the production source-qualified builder against the native read.
+  const bodyModule=await build({stdin:{contents:"export {bodyFromNativeReading,validateNativeBodyReading} from './nativeSceneBody.ts';",resolveDir:fileURLToPath(new URL('../expressions-app/field-studies-journeys/src/',import.meta.url)),loader:'ts'},bundle:true,platform:'node',format:'esm',target:'node22',write:false,logLevel:'silent'});
+  const {bodyFromNativeReading,validateNativeBodyReading}=await import('data:text/javascript;base64,'+Buffer.from(bodyModule.outputFiles[0].text).toString('base64'));
+  const bodyReading=await readFile(transport,ordinary.location);
+  const qualified={...bodyReading,ref:bodyReading.location.ref,requested_ref:bodyReading.location.ref,native_owner:'central'};
+  const body=bodyFromNativeReading('text_source',qualified,{start:0,end:6});
+  assert.equal(body.reading.revision,bodyReading.revision);assert.notEqual(body.reading.revision,'1');
+  assert.throws(()=>bodyFromNativeReading('text_source',qualified,{start:0,end:[...qualified.content].length+1}),/span/);
+  const bodyDoc=await expr({operation:'create',expression_ref:'expression:ordinary-scene-body-return',title:'Native source body',actor:'human:native-source-return'});
+  const bodyScene=bodyDoc.scenes[0].scene_ref;
+  const adoptedBody=await expr({operation:'edit',expression_ref:bodyDoc.expression_ref,expected_revision:bodyDoc.revision,actor:'human:native-source-return',changes:[{change:'scene_body_set',scene_ref:bodyScene,body}]});
+  assert.equal(Object.keys(adoptedBody.entities).length,0);
+  const bodyRequest={ref:body.subject_ref,subject:{ref:adoptedBody.expression_ref,revision:adoptedBody.revision,sceneRef:bodyScene}};
+  const bodyTarget=await resolveHostedSource(transport,bodyRequest);
+  assert.deepEqual(bodyTarget.location,ordinary.location);assert.equal(bodyTarget.returnTo.passageId,bodyScene);
+  assert.deepEqual(await expr({operation:'inspect',expression_ref:adoptedBody.expression_ref}),adoptedBody);
+  await assert.rejects(resolveHostedSource(transport,{...bodyRequest,subject:{...bodyRequest.subject,revision:adoptedBody.revision-1}}),/revision/);
   await writeFile(ordinaryPath,'Changed after occurrence insertion\n');
+  const changedBody=await readFile(transport,ordinary.location);
+  assert.throws(()=>validateNativeBodyReading({...changedBody,ref:changedBody.location.ref,requested_ref:changedBody.location.ref,native_owner:'central'},body.subject_ref,body.reading.revision),/changed/);
+  await assert.rejects(resolveHostedSource(transport,bodyRequest),/scene body source changed/);
   await assert.rejects(resolveHostedSource(transport,ordinaryRequest),/file source changed/);
   await assert.rejects(resolveHostedSource(transport,{...ordinaryRequest,ref:'outside-scene'}),/no single source/);
   publishWikiNativeRegisters([]);

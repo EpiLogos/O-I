@@ -4,6 +4,10 @@ import type {ConnectionBinding} from '../../../../../packages/oi-design-system/e
 import {Camera} from './camera.js';
 /** All document writes belong to the shell. Adapters never create their own clock or UI. */
 export interface EngineFrame {
+ formationGeometryProjection?:import('../../src/engine/formationGeometryProjection').FormationGeometryProjection|null;
+ localizedResonanceProjection?:import('../../src/engine/localizedResonanceProjection').LocalizedResonanceProjection|null;
+ forceEmitterProjection?:import('../../src/engine/forceRuntime').ForceEmitterProjection|null;
+ entitySoundProjection?:(scene:Readonly<Scene>)=>Readonly<Scene>;
  connections?:readonly ConnectionBinding[];selectedConnection?:string|null;
  scene:Readonly<Scene>;scaffold?:'off'|'axis'|'grid';authoringRevision?:number;simTime:number;delta:number;params:Readonly<Record<string,number>>;
  camera:Readonly<Camera>;pointer:{active:boolean;world:Vec3};selectedIds:ReadonlyArray<string>;

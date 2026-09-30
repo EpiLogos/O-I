@@ -304,9 +304,13 @@ mod unix {
         assert!(listed.status.success());
         let text = String::from_utf8_lossy(&listed.stdout);
         assert!(
-            text.starts_with("Central native Action field (2 actions"),
+            text.starts_with("Unified Action doorway (2 Central actions"),
             "{text}"
         );
+        // An absent optional owner is a NAMED degradation, never a silent
+        // collapse: the doorway still lists Central and says why AIKit is
+        // not listed.
+        assert!(text.contains("AIKit (ai-kit): unavailable"), "{text}");
         assert!(text.contains("central.doctor"), "{text}");
         assert!(text.contains("central.now.return"), "{text}");
 
@@ -314,8 +318,18 @@ mod unix {
         assert!(listed_json.status.success());
         let value: serde_json::Value =
             serde_json::from_slice(&listed_json.stdout).expect("field listing parses");
-        assert_eq!(value["schema"], "oi.action-field/v1");
+        assert_eq!(value["schema"], "oi.action-field/v2");
         assert_eq!(value["actions"].as_array().map(Vec::len), Some(2));
+        let fields = value["fields"].as_array().expect("owner fields");
+        assert_eq!(fields[0]["owner"], "central");
+        assert_eq!(fields[0]["count"], 2);
+        assert_eq!(fields[1]["owner"], "ai-kit");
+        let aikit_field = &fields[1];
+        assert!(
+            aikit_field["unavailable"].as_str().is_some(),
+            "the absent owner's condition is named, not collapsed: {}",
+            aikit_field
+        );
     }
 
     #[test]
@@ -324,7 +338,7 @@ mod unix {
         let bin = TempDir::new().expect("bin");
         fs::write(
             bin.path().join("ctrl"),
-            "#!/bin/sh\nif [ \"$1\" = \"actions\" ]; then\n  printf '%s\\n' '{\"ok\":true,\"data\":{\"actions\":[]}}'\n  exit 0\nfi\n/bin/cat > \"$0.payload\"\nprintf 'argv:%s|%s|%s|%s\\n' \"$1\" \"$2\" \"$3\" \"$4\"\nexit 14\n",
+            "#!/bin/sh\nif [ \"$1\" = \"actions\" ]; then\n  printf '%s\\n' '{\"ok\":true,\"data\":{\"actions\":[{\"id\":\"central.doctor\",\"title\":\"Doctor\",\"mutation_class\":\"read\",\"inputs\":[]}]}}'\n  exit 0\nfi\n/bin/cat > \"$0.payload\"\nprintf 'argv:%s|%s|%s|%s\\n' \"$1\" \"$2\" \"$3\" \"$4\"\nexit 14\n",
         )
         .expect("write fake ctrl");
         let mut permissions = fs::metadata(bin.path().join("ctrl"))

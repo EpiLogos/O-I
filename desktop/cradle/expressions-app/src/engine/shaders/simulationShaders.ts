@@ -12,6 +12,20 @@ import {
   SDF_TILE_V,
 } from '../sdfField';
 
+// Dynamic tables are textures so the full formation/pin budget fits native
+// WebGL implementations with 1024 fragment-uniform vectors. These are exact
+// float uploads of the existing parameters, not an alternate physical model.
+export const SIMULATION_PARAMETER_ROWS = {
+  forceCenter: 0, forceParams: 1, localCenter: 2, localDimension: 3, resonator: 4,
+} as const;
+export const SIMULATION_PARAMETER_HEIGHT = 5;
+const parameterSamplingGLSL = /* glsl */ `
+uniform sampler2D uSimulationParameters;
+vec4 simulationParameter(int index, int row) {
+  return texture2D(uSimulationParameters, vec2((float(index)+0.5)/float(${MAX_FORCE_EMITTERS}), (float(row)+0.5)/float(${SIMULATION_PARAMETER_HEIGHT})));
+}
+`;
+
 /**
  * Shared glyph-SDF boundary sampling for the velocity and position passes.
  * Tiles: uCollisionTile = (uv origin x, uv origin y, tile width in u, enabled);
@@ -187,7 +201,7 @@ void main() {
   if (uCollisionEnabled > 0.5 && uEntityCount > 0 && (floor(vUv.y * uTexSize.y) * uTexSize.x + floor(vUv.x * uTexSize.x)) < uConnectionStart) {
     float pIndex = floor(vUv.y * uTexSize.y) * uTexSize.x + floor(vUv.x * uTexSize.x);
     int eIdx = 0;
-    for (int i = 0; i < 10; i++) {
+    for (int i = 0; i < ${MAX_FORMATIONS}; i++) {
       if (i >= uEntityCount) break;
       eIdx = i;
       if (pIndex < uEntityBounds[i]) break;
@@ -259,6 +273,7 @@ export const velocitySimulationShader = /* glsl */ `
 precision highp float;
 
 ${curlNoiseGLSL}
+${parameterSamplingGLSL}
 
 uniform sampler2D uPositionTexture;
 uniform sampler2D uVelocityTexture;
@@ -318,10 +333,15 @@ uniform vec2 uTexSize;
 
 // Unified persistent force emitters (formations + pins). w in params = metric: 0 composition plane, 1 world 3D.
 uniform int uForceEmitterCount;
-uniform vec4 uForceEmitterCenter[${MAX_FORCE_EMITTERS}]; // xyz centre, w radius
-uniform vec4 uForceEmitterParams[${MAX_FORCE_EMITTERS}]; // x strength, y mode 1 attract 2 repel 3 vortex, z spin, w metric              // simulation texture size (particle index reconstruction)
 uniform float uCompPlane;           // 0 = vertical (XY), 1 = horizontal (XZ)
 uniform float uResDominance;        // 0 = formation springs only … 1 = resonator transport only
+// Independently driven local modal fields, inside this same simulation.
+uniform int uLocalResCount;
+uniform sampler2D uLocalResModes;
+uniform vec4 uLocalResOrientation; // xyz vector, w scalar; unit quaternion
+uniform float uLocalResTransport;
+uniform float uLocalResDriveScale;
+
 
 // Free Relational System & Multi-Attractor Orbits
 uniform float uRelationalEnabled;
@@ -342,8 +362,6 @@ uniform float uChaosFactor;       // strange attractor turbulence
 // regions, not from snapping to stored target coordinates.
 uniform float uResEnabled;      // 0.0 = off, 1.0 = on
 uniform int uResModeCount;      // number of participating modes this frame (<=64)
-uniform float uResRe[64];       // per-mode complex envelope, real part
-uniform float uResIm[64];       // per-mode complex envelope, imaginary part
 uniform float uResPlateSize;    // plate side L, world px
 uniform float uResTransport;    // gain on -grad(intensity): slides particles toward nodal lines
 uniform float uResAgitation;    // random kick amplitude, scaled by sqrt(local intensity)
@@ -436,7 +454,7 @@ void main() {
   // Which entity partition does this particle belong to?
   float pIndex = floor(vUv.y * uTexSize.y) * uTexSize.x + floor(vUv.x * uTexSize.x);
   int eIdx = 0;
-  for (int i = 0; i < 10; i++) {
+  for (int i = 0; i < ${MAX_FORMATIONS}; i++) {
     if (i >= uEntityCount) break;
     eIdx = i;
     if (pIndex < uEntityBounds[i]) break;
@@ -547,7 +565,7 @@ void main() {
   vec3 fSpring = toTarget * (uReturnSpeed * returnMultiplier * densityTether * uSnapRigidity);
   // The continuous modal resonator transports particles itself; geometry must emerge from
   // that transport, not from a spring toward stored target coordinates.
-  fSpring *= 1.0 - uResEnabled * clamp(uResDominance, 0.0, 1.0);
+  fSpring *= 1.0 - max(uResEnabled,uLocalResCount>0?1.0:0.0) * clamp(uResDominance, 0.0, 1.0);
 
   if(uEntityCount == 0) fSpring = vec3(0.0);
   // --- 2. Divergence-Free Curl Noise Advection ---
@@ -590,10 +608,10 @@ void main() {
 
   // --- 3B. Unified persistent force emitters: formations and pins share one physical path ---
   vec3 fEntity = vec3(0.0);
-  for (int i = 0; i < 18; i++) {
+  for (int i = 0; i < ${MAX_FORCE_EMITTERS}; i++) {
     if (i >= uForceEmitterCount) break;
-    vec4 centre = uForceEmitterCenter[i];
-    vec4 params = uForceEmitterParams[i];
+    vec4 centre = simulationParameter(i, ${SIMULATION_PARAMETER_ROWS.forceCenter});
+    vec4 params = simulationParameter(i, ${SIMULATION_PARAMETER_ROWS.forceParams});
     float radius = max(5.0, centre.w);
     vec3 d = pos - centre.xyz;
     bool world3d = params.w > 0.5;
@@ -650,7 +668,7 @@ void main() {
   // --- 5. Free Relational System: Multi-Attractor Gravity & Orbital Whirlpools ---
   vec3 fRelational = vec3(0.0);
   if (uRelationalEnabled > 0.5) {
-    for (int i = 0; i < 10; i++) {
+    for (int i = 0; i < ${MAX_PINS}; i++) {
       if (i >= uAttractorCount) break;
       vec3 aPos = uAttractors[i].xyz;
       float aMass = uAttractors[i].w;
@@ -758,7 +776,7 @@ void main() {
 
       for (int i = 0; i < 64; i++) {
         // Sparse addressed modes are not a contiguous prefix. Inspect all 64 slots.
-        if (abs(uResRe[i]) + abs(uResIm[i]) < 0.00000001) continue;
+        if (abs(simulationParameter(i, ${SIMULATION_PARAMETER_ROWS.resonator}).x) + abs(simulationParameter(i, ${SIMULATION_PARAMETER_ROWS.resonator}).y) < 0.00000001) continue;
         int mi = i / 16;
         int ni = (i - mi * 16) / 4;
         int qi = i - mi * 16 - ni * 4;
@@ -782,8 +800,8 @@ void main() {
         float dphi_dv = -nPiL * cosMu * sinNv * cosPw;
         float dphi_dw = -pPiL * cosMu * cosNv * sinPw;
 
-        float re = uResRe[i];
-        float im = uResIm[i];
+        float re = simulationParameter(i, ${SIMULATION_PARAMETER_ROWS.resonator}).x;
+        float im = simulationParameter(i, ${SIMULATION_PARAMETER_ROWS.resonator}).y;
 
         Wre += re * phi;
         Wim += im * phi;
@@ -841,7 +859,7 @@ void main() {
 
     for (int i = 0; i < 64; i++) {
       // Sparse addressed modes are not a contiguous prefix. Inspect all 64 slots.
-      if (abs(uResRe[i]) + abs(uResIm[i]) < 0.00000001) continue;
+      if (abs(simulationParameter(i, ${SIMULATION_PARAMETER_ROWS.resonator}).x) + abs(simulationParameter(i, ${SIMULATION_PARAMETER_ROWS.resonator}).y) < 0.00000001) continue;
       int mi = i / 8;
       int ni = i - mi * 8;
       float m = float(mi + 1);
@@ -864,8 +882,8 @@ void main() {
       float dphi_du = -mPiL * sinMu * cosNv - s * nPiL * sinNu * cosMv;
       float dphi_dv = -nPiL * cosMu * sinNv - s * mPiL * cosNu * sinMv;
 
-      float re = uResRe[i];
-      float im = uResIm[i];
+      float re = simulationParameter(i, ${SIMULATION_PARAMETER_ROWS.resonator}).x;
+      float im = simulationParameter(i, ${SIMULATION_PARAMETER_ROWS.resonator}).y;
 
       Wre += re * phi;
       Wim += im * phi;
@@ -1132,7 +1150,45 @@ void main() {
   fPointer.xy += uBurstVelocity * burstFalloff * 0.85;
   fPointer += radialDir * (uBurstRadial * burstFalloff);
   fPointer += mix(vec3(-radialDir.y, radialDir.x, 0.0), cross(burstAxis, radialDir), uDepthGeometry) * (uBurstSpin * burstFalloff);
-  vec3 accel = fSpring + fCurl + fVortex + fEntity + fDisperse + fRelational + fPointer + fHopf + fResonator + fMedium + fCollision + fPairwise;
+  // Local fields use the retained plate/cavity eigenfunctions. Different
+  // drive frequencies contribute additive time-averaged intensities. This is
+  // envelope-domain transport, not audio-rate phase or inter-oscillator transfer.
+  vec3 fLocalResonance=vec3(0.0);
+  for(int driver=0;driver<${MAX_FORMATIONS};driver++){
+    if(driver>=uLocalResCount)break;
+    vec3 qv=uLocalResOrientation.xyz;float qw=uLocalResOrientation.w;
+    vec3 offset=pos-simulationParameter(driver, ${SIMULATION_PARAMETER_ROWS.localCenter}).xyz;
+    vec3 local=offset+2.0*cross(-qv,cross(-qv,offset)+qw*offset);
+    float L=max(10.0,simulationParameter(driver, ${SIMULATION_PARAMETER_ROWS.localCenter}).w);
+    vec2 W=vec2(0.0);vec3 dRe=vec3(0.0),dIm=vec3(0.0);
+    for(int mode=0;mode<64;mode++){
+      vec2 A=texture2D(uLocalResModes,vec2((float(mode)+0.5)/64.0,(float(driver)+0.5)/float(${MAX_FORMATIONS}))).rg;
+      if(abs(A.x)+abs(A.y)<0.00000001)continue;
+      float phi;vec3 gradient;
+      if(simulationParameter(driver, ${SIMULATION_PARAMETER_ROWS.localDimension}).x>0.5){
+        int mi=mode/16;int ni=(mode-mi*16)/4;int pi=mode-mi*16-ni*4;
+        vec3 k=vec3(float(mi+1),float(ni+1),float(pi+1))*3.14159265358979;
+        vec3 angle=k*(local/L+0.5),c=cos(angle),sn=sin(angle);
+        phi=c.x*c.y*c.z;
+        gradient=-(k/L)*vec3(sn.x*c.y*c.z,c.x*sn.y*c.z,c.x*c.y*sn.z);
+      }else{
+        int mi=mode/8;int ni=mode-mi*8;
+        float m=float(mi+1),n=float(ni+1),signMode=mod(m+n,2.0)<0.5?1.0:-1.0;
+        float x=local.x/L,y=(uCompPlane>0.5?local.z:local.y)/L;
+        float mp=m*3.14159265358979,np=n*3.14159265358979;
+        phi=cos(mp*x)*cos(np*y)+signMode*cos(np*x)*cos(mp*y);
+        float dx=(-mp*sin(mp*x)*cos(np*y)-signMode*np*sin(np*x)*cos(mp*y))/L;
+        float dy=(-np*cos(mp*x)*sin(np*y)-signMode*mp*cos(np*x)*sin(mp*y))/L;
+        gradient=uCompPlane>0.5?vec3(dx,0.0,dy):vec3(dx,dy,0.0);
+      }
+      W+=A*phi;dRe+=A.x*gradient;dIm+=A.y*gradient;
+    }
+    vec3 gradient=2.0*(W.x*dRe+W.y*dIm)*uLocalResDriveScale;
+    vec3 worldGradient=gradient+2.0*cross(qv,cross(qv,gradient)+qw*gradient);
+    fLocalResonance-=worldGradient*uLocalResTransport*clamp(uResDominance,0.0,1.0);
+  }
+
+  vec3 accel = fSpring + fCurl + fVortex + fEntity + fDisperse + fRelational + fPointer + fHopf + fResonator + fLocalResonance + fMedium + fCollision + fPairwise;
 
   // Constant body force (gravity / wind)
   accel += uGravity * 120.0;

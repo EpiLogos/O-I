@@ -661,17 +661,64 @@ mod unix {
         files
     }
 
+    /// One frontmatter field's text. YAML block scalars (`>`, `>-`, `|`,
+    /// `|-`, ...) are valid Skill frontmatter and are read as their indented
+    /// continuation lines — folded with spaces for `>`, kept as lines for `|` —
+    /// rather than as the two-character indicator.
     fn frontmatter_field(frontmatter: &str, field: &str) -> Option<String> {
         let needle = format!("{field}:");
-        frontmatter.lines().find_map(|line| {
-            line.strip_prefix(&needle).map(|value| {
-                value
-                    .trim()
-                    .trim_matches('"')
-                    .trim_matches('\'')
-                    .to_string()
-            })
-        })
+        let lines: Vec<&str> = frontmatter.lines().collect();
+        let index = lines.iter().position(|line| line.starts_with(&needle))?;
+        let value = lines[index][needle.len()..].trim();
+        let block = value
+            .strip_prefix('>')
+            .map(|rest| (" ", rest))
+            .or_else(|| value.strip_prefix('|').map(|rest| ("\n", rest)));
+        match block {
+            Some((joiner, chomp)) if chomp.trim_start_matches(['-', '+']).trim().is_empty() => {
+                let body: Vec<&str> = lines[index + 1..]
+                    .iter()
+                    .take_while(|line| {
+                        line.trim().is_empty() || line.starts_with(char::is_whitespace)
+                    })
+                    .map(|line| line.trim())
+                    .collect();
+                Some(body.join(joiner).trim().to_string())
+            }
+            _ => Some(value.trim_matches('"').trim_matches('\'').to_string()),
+        }
+    }
+
+    #[test]
+    fn agent_refs_and_coordinates_are_not_repository_paths() {
+        assert_eq!(as_repo_path("agent/aletheia"), None);
+        assert_eq!(as_repo_path("agent-set/oi-guardians"), None);
+        assert_eq!(as_repo_path("0/1"), None);
+        assert_eq!(as_repo_path("5/0"), None);
+        assert_eq!(
+            as_repo_path("scripts/darshana.py").as_deref(),
+            Some("scripts/darshana.py")
+        );
+    }
+
+    #[test]
+    fn frontmatter_reads_single_line_and_yaml_block_descriptions() {
+        let folded = "name: factory\ndescription: >-\n  World-rooted workflow.\n  Use when choosing gates.\nother: x";
+        assert_eq!(
+            frontmatter_field(folded, "description").as_deref(),
+            Some("World-rooted workflow. Use when choosing gates.")
+        );
+        let literal = "description: |\n  line one\n  line two";
+        assert_eq!(
+            frontmatter_field(literal, "description").as_deref(),
+            Some("line one\nline two")
+        );
+        let quoted = "description: \"Use for review triage.\"";
+        assert_eq!(
+            frontmatter_field(quoted, "description").as_deref(),
+            Some("Use for review triage.")
+        );
+        assert_eq!(frontmatter_field(quoted, "name"), None);
     }
 
     /// A backticked span that claims to be a repository-relative path.
@@ -700,7 +747,17 @@ mod unix {
         if !lowercase_head {
             return None;
         }
+        // Coordinates such as `0/1` or `5/0` are notation, not paths.
+        if parts
+            .iter()
+            .all(|part| part.chars().all(|c| c.is_ascii_digit()))
+        {
+            return None;
+        }
         let typed_ref_heads = [
+            // Central Agent and agent-set refs (`agent/<slug>`).
+            "agent",
+            "agent-set",
             "skill",
             "skills",
             "profile",

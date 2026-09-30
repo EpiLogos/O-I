@@ -20,11 +20,12 @@ test("identity: every retained ql-doc family classifies from its own island", as
   const flowV3 = readDocumentIdentity(await read("ql-flow.html"));
   assert.equal(flowV3.family, "flow");
   assert.equal(flowV3.payload, "ql-doc");
-  assert.equal(flowV3.templateRef, "ql-dialogue-flow v0.3");
+  assert.equal(flowV3.templateRef, "ql-dialogue-flow v0.4");
   const flowV3Source = await read("ql-flow.html");
   assert.ok(!/dlg-agent|agent-json/.test(flowV3Source), "the form carries no paste-an-agent-return intake");
   assert.ok(/data-k=agent/.test(flowV3Source), "attribution styling keys on the declared kind");
   assert.ok(/participantOf/.test(flowV3Source), "authorship resolves through declared participants");
+  assert.ok(/QlPlural\.authorOf/.test(flowV3Source), "v0.4 authorship resolves through participant keys, not initials alone");
   const day = readDocumentIdentity(await read("ql-daily-die.html"));
   assert.equal(day.family, "day");
   assert.equal(day.payload, "ql-doc");

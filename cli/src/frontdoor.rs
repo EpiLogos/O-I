@@ -28,7 +28,7 @@ pub fn cli_main() -> ExitCode {
                 println!("Whole-World heads:");
                 println!("  oi world [--json]              whole-World orientation over the current-world, composition, ground and mode readings; old routes preserved (`oi world status|current|ground|mode|profile`)");
                 println!("  oi search WORDS...             inert search through the installed AIKit over the composed field; search finds, never executes");
-                println!("  oi act                         the Central native Action doorway: `oi act` lists (read-only), `oi act describe <action>`, `oi act invoke <action> --input <json>|@file`");
+                println!("  oi act                         the unified Action doorway over every owner: `oi act` lists, `oi act describe <action>`, `oi act invoke <action> --input <json>|@file`");
                 println!("  oi agent roster [--project P] [--json]");
                 println!("                                 read the native Agent roster; `oi agent participation|card` compose one Agent in one World");
                 println!("  oi work direct|factory ...     choose the work relation explicitly: Direct session work (native SessionSpace) or an explicit Factory Commission");

@@ -6,10 +6,13 @@
 import * as THREE from 'three';
 import { PointCloudConfig, MediumConfig } from './types';
 import type { ForceEmitterState } from './forceRuntime';
+import type {LocalizedResonanceFrame} from './LocalizedResonanceBank';
 import {
   simulationVertexShader,
   positionSimulationShader,
   velocitySimulationShader,
+  SIMULATION_PARAMETER_ROWS,
+  SIMULATION_PARAMETER_HEIGHT,
 } from './shaders/simulationShaders';
 import {
   mediumSplatVertexShader,
@@ -38,6 +41,15 @@ import {
 import { MAX_FORMATIONS, MAX_PINS, MAX_FORCE_EMITTERS } from './fieldModel';
 
 export class GPGPUSimulator {
+  private localModeData = new Float32Array(64 * MAX_FORMATIONS * 4);
+  private localModeTexture = new THREE.DataTexture(this.localModeData,64,MAX_FORMATIONS,THREE.RGBAFormat,THREE.FloatType);
+  private parameterData = new Float32Array(MAX_FORCE_EMITTERS * SIMULATION_PARAMETER_HEIGHT * 4);
+  private parameterTexture = new THREE.DataTexture(this.parameterData,MAX_FORCE_EMITTERS,SIMULATION_PARAMETER_HEIGHT,THREE.RGBAFormat,THREE.FloatType);
+  private writeParameter(row:number,index:number,x:number,y=0,z=0,w=0){
+    const at=(row*MAX_FORCE_EMITTERS+index)*4;
+    this.parameterData[at]=x;this.parameterData[at+1]=y;this.parameterData[at+2]=z;this.parameterData[at+3]=w;
+    this.parameterTexture.needsUpdate=true;
+  }
   private renderer: THREE.WebGLRenderer;
   public texWidth: number;
   public texHeight: number;
@@ -271,16 +283,18 @@ export class GPGPUSimulator {
         uEntityTransform: { value: Array.from({length:MAX_FORMATIONS},()=>new THREE.Vector3(1,1,0)) },
         uTexSize: { value: new THREE.Vector2(1, 1) },
         uForceEmitterCount: { value: 0 },
-        uForceEmitterCenter: { value: Array.from({ length: MAX_FORCE_EMITTERS }, () => new THREE.Vector4(-99999, -99999, 0, 1)) },
-        uForceEmitterParams: { value: Array.from({ length: MAX_FORCE_EMITTERS }, () => new THREE.Vector4(0, 0, 0, 0)) },
+        uSimulationParameters: {value:this.parameterTexture},
         uCompPlane: { value: 0.0 },
         uResDominance: { value: 1.0 },
 
         // Continuous modal cymatic resonator (live per-mode complex envelopes)
+        uLocalResCount: {value:0},
+        uLocalResModes: {value:this.localModeTexture},
+        uLocalResOrientation: {value:new THREE.Vector4(0,0,0,1)},
+        uLocalResTransport: {value:0},
+        uLocalResDriveScale: {value:0},
         uResEnabled: { value: 0.0 },
         uResModeCount: { value: 0 },
-        uResRe: { value: new Float32Array(64) },
-        uResIm: { value: new Float32Array(64) },
         uResPlateSize: { value: 700.0 },
         uResTransport: { value: 1.0 },
         uResAgitation: { value: 0.3 },
@@ -618,13 +632,13 @@ export class GPGPUSimulator {
     const vU = this.velMaterial.uniforms;
     vU.uConnectionStart.value = u.connectionStart ?? this.particleCount;
     for (const material of [this.posMaterial,this.pairCellIdMaterial,this.pairForceMaterial,this.mediumSplatMaterial]) material.uniforms.uConnectionStart.value = vU.uConnectionStart.value;
-    vU.uEntityCount.value = Math.min(10, u.count);
-    (vU.uEntityBounds.value as Float32Array).set(u.bounds.subarray(0, 10));
-    (vU.uEntityMorph.value as Float32Array).set(u.morph.subarray(0, 10));
+    vU.uEntityCount.value = Math.min(MAX_FORMATIONS, u.count);
+    (vU.uEntityBounds.value as Float32Array).set(u.bounds.subarray(0, MAX_FORMATIONS));
+    (vU.uEntityMorph.value as Float32Array).set(u.morph.subarray(0, MAX_FORMATIONS));
     (vU.uEntityDepthScale.value as Float32Array).set(u.depthScales ?? new Float32Array(MAX_FORMATIONS).fill(1));
     (vU.uEntityNormalized.value as Float32Array).set(u.normalized ?? new Float32Array(MAX_FORMATIONS));
     const cU = vU.uEntityCenter.value as THREE.Vector4[];
-    for (let i = 0; i < 10; i++) {
+    for (let i = 0; i < MAX_FORMATIONS; i++) {
       cU[i].copy(u.centers[i]);
       vU.uEntityTransform.value[i].copy(u.transforms[i]);
     }
@@ -632,11 +646,11 @@ export class GPGPUSimulator {
     // The position pass resolves partitions for the SDF hard projection (no depth/normalization need).
     const pU = this.posMaterial.uniforms;
     pU.uEntityCount.value = vU.uEntityCount.value;
-    (pU.uEntityBounds.value as Float32Array).set(u.bounds.subarray(0, 10));
-    (pU.uEntityMorph.value as Float32Array).set(u.morph.subarray(0, 10));
+    (pU.uEntityBounds.value as Float32Array).set(u.bounds.subarray(0, MAX_FORMATIONS));
+    (pU.uEntityMorph.value as Float32Array).set(u.morph.subarray(0, MAX_FORMATIONS));
     (pU.uEntityDepthScale.value as Float32Array).set(u.depthScales ?? new Float32Array(MAX_FORMATIONS).fill(1));
     const pC = pU.uEntityCenter.value as THREE.Vector4[];
-    for (let i = 0; i < 10; i++) {
+    for (let i = 0; i < MAX_FORMATIONS; i++) {
       pC[i].copy(u.centers[i]);
       pU.uEntityTransform.value[i].copy(u.transforms[i]);
     }
@@ -653,7 +667,7 @@ export class GPGPUSimulator {
     const pU = this.posMaterial.uniforms;
     const vTiles = vU.uCollisionTile.value as THREE.Vector4[];
     const pTiles = pU.uCollisionTile.value as THREE.Vector4[];
-    for (let i = 0; i < 10; i++) {
+    for (let i = 0; i < MAX_FORMATIONS; i++) {
       vTiles[i].fromArray(tiles, i * 4);
       pTiles[i].copy(vTiles[i]);
     }
@@ -663,12 +677,10 @@ export class GPGPUSimulator {
 
   public setForceEmitters(emitters: readonly ForceEmitterState[]) {
     const u=this.velMaterial.uniforms;
-    const centers=u.uForceEmitterCenter.value as THREE.Vector4[];
-    const params=u.uForceEmitterParams.value as THREE.Vector4[];
     const count=Math.min(MAX_FORCE_EMITTERS,emitters.length);u.uForceEmitterCount.value=count;
-    for(let i=0;i<18;i++){const e=emitters[i];if(!e||!e.enabled){centers[i].set(-99999,-99999,0,1);params[i].set(0,0,0,0);continue;}
-      centers[i].set(e.position.x,e.position.y,e.position.z,Math.max(5,e.radius));
-      const mode=e.law==='vortex'?3:e.polarity==='repel'?2:1;params[i].set(e.strength,mode,e.spin,e.metric==='world3d'?1:0);
+    for(let i=0;i<count;i++){const e=emitters[i];if(!e.enabled){this.writeParameter(SIMULATION_PARAMETER_ROWS.forceCenter,i,-99999,-99999,0,1);this.writeParameter(SIMULATION_PARAMETER_ROWS.forceParams,i,0);continue;}
+      this.writeParameter(SIMULATION_PARAMETER_ROWS.forceCenter,i,e.position.x,e.position.y,e.position.z,Math.max(5,e.radius));
+      const mode=e.law==='vortex'?3:e.polarity==='repel'?2:1;this.writeParameter(SIMULATION_PARAMETER_ROWS.forceParams,i,e.strength,mode,e.spin,e.metric==='world3d'?1:0);
     }
   }
 
@@ -703,8 +715,7 @@ export class GPGPUSimulator {
     const vU = this.velMaterial.uniforms;
     vU.uResEnabled.value = enabled ? 1.0 : 0.0;
     vU.uResModeCount.value = Math.max(0, Math.min(64, Math.round(modeCount)));
-    (vU.uResRe.value as Float32Array).set(re.subarray(0, 64));
-    (vU.uResIm.value as Float32Array).set(im.subarray(0, 64));
+    for(let i=0;i<64;i++)this.writeParameter(SIMULATION_PARAMETER_ROWS.resonator,i,re[i]??0,im[i]??0);
     vU.uResPlateSize.value = plateSize;
     vU.uResTransport.value = transport;
     vU.uResAgitation.value = agitation;
@@ -712,6 +723,24 @@ export class GPGPUSimulator {
     vU.uResPlane.value = plane;
     vU.uResDriveScale.value = driveScale;
     vU.uRes3D.value = threeD ? 1.0 : 0.0;
+  }
+
+  /** Each independent frequency retains its own complex modes. The shader
+   * adds time-averaged vibration-intensity gradients; it claims no carrier beats. */
+  public setLocalizedResonanceState(frames:readonly LocalizedResonanceFrame[],
+    orientation:{w:number;x:number;y:number;z:number},transport:number,driveScale:number) {
+    if(frames.length>MAX_FORMATIONS)throw Error('Too many localized resonance drivers');
+    const u=this.velMaterial.uniforms;
+    this.localModeData.fill(0);
+    for(let i=0;i<frames.length;i++){
+      const f=frames[i];this.writeParameter(SIMULATION_PARAMETER_ROWS.localCenter,i,...f.position,f.params.plateSize);
+      this.writeParameter(SIMULATION_PARAMETER_ROWS.localDimension,i,f.params.dimension==='3D'?1:0);
+      for(let mode=0;mode<64;mode++){const at=(i*64+mode)*4;this.localModeData[at]=f.re[mode];this.localModeData[at+1]=f.im[mode];}
+    }
+    this.localModeTexture.needsUpdate=true;
+    u.uLocalResCount.value=frames.length;
+    u.uLocalResOrientation.value.set(orientation.x,orientation.y,orientation.z,orientation.w);
+    u.uLocalResTransport.value=transport;u.uLocalResDriveScale.value=driveScale;
   }
 
   public setToroidalMorphParams(
@@ -972,7 +1001,7 @@ export class GPGPUSimulator {
     // Relational system uniforms
     const rel = config.relational;
     vUniforms.uRelationalEnabled.value = rel?.enabled ? 1.0 : 0.0;
-    vUniforms.uAttractorCount.value = Math.max(1, Math.min(10, rel?.attractorCount ?? 2));
+    vUniforms.uAttractorCount.value = Math.max(1, Math.min(MAX_PINS, rel?.attractorCount ?? 2));
     vUniforms.uRelationalGravity.value = rel?.attractorGravity ?? 1.5;
     vUniforms.uRelationalSpin.value = rel?.relationalSpin ?? 1.2;
     vUniforms.uChaosFactor.value = rel?.chaosFactor ?? 0.0;
@@ -1236,6 +1265,8 @@ export class GPGPUSimulator {
   }
 
   public destroy() {
+    this.localModeTexture.dispose();
+    this.parameterTexture.dispose();
     this.posTarget0.dispose();
     this.posTarget1.dispose();
     this.velTarget0.dispose();

@@ -1,5 +1,6 @@
 import {ExpressionConnectionLayer,type ConnectionBinding} from '../../../../../packages/oi-design-system/expressions-engine/oi/expressionBindings.mjs';
 import {withRetainedField} from "../../../../../packages/oi-design-system/expressions-engine/oi/retained-capability.mjs";
+import {MAX_FORMATIONS,MAX_PINS} from '../../src/engine/fieldModel';
 import {TransportState} from '../../src/engine/transportState';
 import {stateSource} from './sourceState';
 import {PointCloudField} from '../../src/engine/PointCloudField';
@@ -19,7 +20,7 @@ function color(a:string,b:string,t:number){return '#'+new Color(a).lerp(new Colo
 /** Production engine adapter. Only PointCloudField integrates physics and time. */
 class EmbeddedProductionAdapter implements FieldEngineAdapter {
  readonly capabilities={name:'Native particle field',kind:'production' as const,parameters:[...NATIVE_BINDINGS.map(p=>p.key),...MATERIAL_KEYS,'grain'],physicalResonance:true,runtimeCheckpoints:false,exactSeek:false,
- notes:['GPU particle dynamics and continuous modal resonance. One simulation clock.','10 formations / 8 pins. Configuration saves are not runtime checkpoints.','Live video and native-resolution PNG. Offline controlled clip rendering is not available.']};
+ notes:['GPU particle dynamics and continuous modal resonance. One simulation clock.',`${MAX_FORMATIONS} formations / ${MAX_PINS} pins. Configuration saves are not runtime checkpoints.`,'Live video and native-resolution PNG. Offline controlled clip rendering is not available.']};
  private engine:PointCloudField|null=null;
  private contextOwner:PointCloudField|null=null;
  private connections:ExpressionConnectionLayer|null=null;
@@ -84,6 +85,7 @@ class EmbeddedProductionAdapter implements FieldEngineAdapter {
   const config=this.nativeConfig(this.configuration(frame));
   if(!this.engine){this.engine=new PointCloudField(this.canvas,config,true);this.contextOwner=this.engine;this.connections=new ExpressionConnectionLayer(this.engine);this.connectionRows=undefined;this.selectedConnection=undefined;this.seedRecoveredSources=true;}
   else if(config!==this.applied)this.engine.replaceConfig(config);
+  this.engine.setForceEmitterProjection(frame.forceEmitterProjection??null);this.engine.setLocalizedResonanceProjection(frame.localizedResonanceProjection??null);this.engine.setFormationGeometryProjection(frame.formationGeometryProjection??null);
   if(config!==this.applied){this.syncSources(frame.scene);this.soundScene=frame.scene.entities.some(e=>e.sound?.enabled)?frame.scene:null;}this.applied=config;
   if(frame.connections!==this.connectionRows||frame.selectedConnection!==this.selectedConnection){
    this.connectionRows=frame.connections;this.selectedConnection=frame.selectedConnection;
@@ -101,7 +103,7 @@ class EmbeddedProductionAdapter implements FieldEngineAdapter {
  /** Object sound follows the present Scene and the engine's real focus
   * (travelling compositions sound the focused entity only). ~10 Hz. */
  private followSound(frame:EngineFrame){
-  const scene=this.soundScene;
+  const scene=frame.entitySoundProjection?frame.entitySoundProjection(frame.scene):this.soundScene;
   if(!scene){if(this.soundAt!==-2){this.entitySound.sync({entities:[]});this.soundAt=-2;}return;}
   const now=performance.now();if(this.soundAt>=0&&now-this.soundAt<100)return;this.soundAt=now;
   const focus=scene.composition.focus==='travelling'?this.engine?.getCompositionTelemetry().focus:null;

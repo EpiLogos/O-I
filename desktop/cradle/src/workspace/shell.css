@@ -16,25 +16,24 @@
 .shell-focus span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: var(--oi-shell-type-ui); color: var(--oi-muted); }
 .shell-focus select { min-width: 0; max-width: 100%; text-overflow: ellipsis; font-size: var(--oi-shell-type-ui); }
 .shell-agent-toggle svg { transform: scaleX(-1); }
-/* Status face of the agent-work gradient (Status → Preview → Takeover): the
-   observed encounter state carried in the frame while the panel is collapsed.
-   A dot and a state line, coloured only by the real state; static by design —
-   no animation without a state change, never a whole-pane effect. */
-.shell-agent-presence { width: auto !important; gap: 6px; padding: 0 10px; font-size: var(--oi-shell-type-ui); }
-.shell-agent-presence-label { white-space: nowrap; }
-.shell-agent-presence-dot { width: 8px; height: 8px; border-radius: 50%; flex: none; background: var(--oi-muted-2, var(--oi-muted)); }
-.shell-agent-presence[data-presence-state="working"] .shell-agent-presence-dot,
-.shell-agent-presence[data-presence-state="stopping"] .shell-agent-presence-dot,
-.shell-agent-presence[data-presence-state="arrived"] .shell-agent-presence-dot { background: var(--oi-accent-ink); }
-.shell-agent-presence[data-presence-state="attention"] .shell-agent-presence-dot { background: var(--oi-gold); }
-.shell-agent-presence[data-presence-state="attention"] { color: var(--oi-foreground); }
-.shell-agent-presence[data-presence-state="disconnected"] .shell-agent-presence-dot { background: transparent; box-shadow: inset 0 0 0 1.5px var(--oi-muted-2, var(--oi-muted)); }
+/* P1 (10-SIDEBARS §5.3): with the panel collapsed, the corner toggle carries
+ * the companion mark — the agent's observed state as the mockup's companion
+ * dot: ● while a turn is in flight (stopping, or a completion that arrived
+ * while the panel was away), ! when the agent needs the person. Idle states
+ * stay silent; the mark is on the one open/close control, so the mark IS the
+ * way back to the panel. Static by design — no animation without a real
+ * state change. */
+.shell-agent-toggle { position: relative; }
+.shell-agent-companion { position: absolute; top: 0; right: -1px; width: 7px; height: 7px; border-radius: 50%; background: var(--oi-accent-ink); box-shadow: 0 0 0 2px var(--oi-shell-ground); pointer-events: none; }
+.shell-agent-companion[data-presence-state="attention"] { width: auto; height: auto; border-radius: 4px; background: var(--oi-gold); color: var(--oi-foreground); font: 700 8.5px/1 var(--oi-font-sans); padding: 1px 3px; }
 @media (max-width: 639px) {
   .desktop-centre .pane.split { display: contents; }
   .desktop-centre .pane.group:not(.focused):not([data-maximized="true"]), .desktop-centre .split-resizer { display: none !important; }
 }
 @media (pointer: coarse) { .shell-topbar { height: 44px; } .shell-topbar button { width: 40px; height: 40px; } }
-.desktop-shell button, .desktop-shell select, .desktop-shell input { font: inherit; color: var(--oi-accent-ink); background: transparent; border: 0; }
+/* Shell defaults must stay below the shared control classes. Otherwise the
+ * reset erases action padding and makes primary-button ink match its ground. */
+:where(.desktop-shell) button, :where(.desktop-shell) select, :where(.desktop-shell) input { font: inherit; color: var(--oi-accent-ink); background: transparent; border: 0; }
 /* Finding 1: this used to be `padding: var(--oi-space-2)` — a descendant
  * rule that ties on specificity with every single-class control rule
  * elsewhere (agent.css, cradle.css…) and, depending on stylesheet order,
@@ -42,7 +41,7 @@
  * 24×24 instead of 21×21, its svg crushed to width 0). Controls own their
  * sizes; this rule contributes nothing but cursor + a safety net so an
  * icon's svg never shrinks inside a tight control body. */
-.desktop-shell button { padding: 0; cursor: pointer; }
+:where(.desktop-shell) button { padding: 0; cursor: pointer; }
 .desktop-shell button svg { flex: none; }
 /* Finding 2: a blanket `:focus-visible` on every descendant tied on
  * specificity with rest.css's `.canvas-surface:focus-visible` and won by
@@ -487,7 +486,17 @@
     step with hostedApp.ts shellCutout. */
  .desktop-shell{--desktop-right-float-width:max(calc(var(--desktop-right-width,0px) - var(--desktop-right-space,0px)),0px)}
  .desktop-shell .desktop-centre [data-window-corner="true"]{--window-cutout-right:max(0px,calc(max(var(--oi-shell-gutter),48px - var(--desktop-right-width,0px)) + var(--oi-shell-tabbar) + var(--oi-space-2) - 6px - var(--desktop-right-float-width)))}
- .desktop-shell .desktop-centre [data-window-corner="true"] > .tab-strip{padding-right:max(4px,var(--window-cutout-right))}
+ /* The cut is the canvas yielding its top-right corner to the window chrome —
+    owed only while the canvas reaches the window edge (panel closed). An open
+    panel occupies that corner — in-flow beside the canvas, or floating over
+    it — so the cut closes and the canvas card keeps its corner; the HUD "…"
+    keeps its gutter offset inside the card. This is the same yield the
+    lights' corner already makes when the left sidebar stands there. */
+ .desktop-shell:has(.desktop-side.right.depth-panel) .desktop-centre [data-window-corner="true"]{--window-cutout-right:0px}
+ /* The strip clears the floating HUD chip by a constant floor; the cut only
+    ever ADDS room (panel closed). A 4px floor here let the strip slide under
+    the HUD whenever the panel opened. */
+ .desktop-shell .desktop-centre [data-window-corner="true"] > .tab-strip{padding-right:max(38px,var(--window-cutout-right))}
 }
 
 /* Navigator content scrolls above a structural bottom row; no sticky overlay. */
@@ -495,9 +504,9 @@
 .world-scroll{flex:1;min-height:0;overflow:auto}
 .shell-topbar .shell-region-toggle{transform:translateY(2px)}
 .desktop-regions[data-right-full="true"] .desktop-centre{visibility:hidden;pointer-events:none}
-@media(min-width:760px) and (pointer:fine){
- .desktop-shell .desktop-side.right.depth-full{top:0;padding-top:var(--oi-shell-tabbar);box-sizing:border-box}
-}
+/* (The depth-full box padding-top was superseded: the right side-content
+   pads below the window band in every depth — see the side-content rules at
+   the foot of this file.) */
 .desktop-shell:has(.desktop-regions[data-right-full="true"]) .shell-topbar{z-index:calc(var(--oi-z-drawer) + 2)}
 
 /* ---------------------------------------------------------------------------
@@ -657,8 +666,11 @@ html, body, #root, .desktop-shell { overflow: clip; }
 }
 /* The agent plane floats only where floating is the design — canvas modes
    (expressions, techne) and the ≤760px drawer. Everywhere else it takes
-   layout room: the centre yields to the panel, never the reverse. */
-.desktop-shell .desktop-side.right { position: relative; inset: auto; width: var(--desktop-right-width) !important; z-index: auto; }
+   layout room: the centre yields to the panel, never the reverse. The panel
+   stands above the centre card (same z, later sibling): its menus and
+   popovers may cross the seam and must never open beneath the canvas. The
+   topbar (drawer + 1) still sits above the panel. */
+.desktop-shell .desktop-side.right { position: relative; inset: auto; width: var(--desktop-right-width) !important; z-index: 1; }
 /* Full is a float in every mode: it expands OVER the centre (the base
    depth-full inset/left rules above carry its geometry — this regime's
    relative + width var must not pin it back into the row). */
@@ -763,4 +775,10 @@ html.tauri .desktop-shell { background-color: transparent; }
 .desktop-shell .canvas-host{margin:0;min-width:0}
 .desktop-shell>.workspace-footer-edge{position:absolute;inset:auto 0 0;z-index:20}
 .desktop-side.left>.desktop-side-content{padding-top:var(--oi-shell-tabbar);box-sizing:border-box}
-.desktop-side.right .panel-top{padding-right:calc(var(--oi-shell-tabbar) + var(--oi-space-2))}
+/* The right region pads below the window band by the same law, in every
+   depth that shows the panel — panel, canvas-glass, drawer, full. Its one
+   head row (avatar · tabs · ⤢ · functions) renders below the band's corner
+   chrome, exactly as full mode always did; without this the head rendered
+   up inside the band, avatar clipped under the topbar. The depth-full box
+   padding and the old panel-top right pad are superseded by this one rule. */
+.desktop-side.right>.desktop-side-content{padding-top:var(--oi-shell-tabbar);box-sizing:border-box}

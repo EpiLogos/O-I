@@ -130,7 +130,7 @@ oi dev world focus parent
 ```
 
 `up` ensures the Herdr daemon, creates the SessionSpace from the carrier seed
-when absent (`session-space/oi-development`), binds and opens the Herdr parent
+when absent (the session space named `oi-development`), binds and opens the Herdr parent
 working surface through the SessionSpace application contract, and delegates
 the tmux floor to `aikit session up`. Every materialising step is an
 AIKit-owned verb; O:I resolves machine facts and composes the order. Re-running

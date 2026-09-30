@@ -749,6 +749,15 @@
       ],
       "note": "The human inspects the exact proposal, basis revision and producer before deciding, inclusion lands through the owner's revision-checked operation with author and reviewer as distinct native facts, and an externally advanced revision makes the stale acceptance refused verbatim with no document bytes changed."
     },
+    "owner-request": {
+      "kind": "walk",
+      "serves": [
+        "oi97:human-return"
+      ],
+      "branches": {},
+      "negatives": [],
+      "note": "An Agent's question and Factory proposal arrive from its NOW as request Returns; the person answers one and accepts the other with a note in the one Inbox, acceptance commissions the Run through Factory's own intake and is recorded back on the item, and the asking NOW reads the answer, note and Run before it can archive."
+    },
     "receive-recover": {
       "kind": "walk",
       "serves": [
@@ -1071,6 +1080,22 @@
       ],
       "claims_grade": "C",
       "note": "Read-only walk of the hosted World A field and the owner's private a04-mask undertaking through the real kernel's SharedField client (OI_SHARED_FIELD_TARGET=hosted, default owner state home): rail entry to Explore, same-label Positions told apart by World, search 'agents' to the Aletheia 5 Position as a Being (Carried by Workcell mac once, Practises, Relations depth summoned/dismissed), Workcell Thing with nothing offered, darshana practice with its source revision and 'publication is not permission', the Factory run activity live from the owner-side producer row, the undertaking's Shared NOW revision 1 (workcell:mac root + child NOW, A04/A04'/A05/A05' artifacts, contemplation nodes, wiki.edge/re-sites), back/forward over subjects and the field page, and a 420x800 reduced-motion Being without page overflow. Negative 'missing': the real snapshot delivered with its activity_liveness rows removed reads 'disconnected', never the publication's 'live'. Not proved here: EXPLORE branch 1's static/replay availability and keyboard-only entry, ACTIVITY branch 1's actual producer disconnect and local-vs-hosted comparison, CONTINUITY's second Workcell/World, and any write (the walk issues none)."
+    },
+    "plural-flow": {
+      "kind": "walk",
+      "serves": [
+        "plural65:DELIVERY"
+      ],
+      "branches": {
+        "plural65:DELIVERY": [
+          2
+        ]
+      },
+      "negatives": [
+        "late",
+        "partial-return"
+      ],
+      "note": "The actual FlowSurface over the real kernel, a candidate AIKit resident owner, Central's real ctrl and real agent bodies: a person brings two registered agents into a flow, addresses both and asks; the view is closed before either answer exists, the owner carries each answer into the flow, and reopening shows each recipient answered once with the flow unchanged by the view. Bring-in/address/ask/close/reopen only: reply-with-branch, stop, retry and Expression deep-open are not exercised here."
     }
   }
 }

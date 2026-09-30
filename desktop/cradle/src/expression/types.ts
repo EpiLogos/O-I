@@ -1,4 +1,4 @@
-import type {CentralLocation} from "../kernel/types";
+import type {CentralLocation} from "../kernel/location";
 export interface ReadingRef {ref:string;revision:string;availability:"available"|"unavailable"|"withheld"|"stale"}
 export interface SubjectBinding {subject_ref:string;native_owner:string;presentation_role:"being"|"thing";sources:ReadingRef[];readings:ReadingRef[];actions:{action_ref:string;target_ref:string;authority_requirement:string}[]}
 export interface Automation {min:number;max:number;rate_hz:number;waveform:"sine"|"triangle"|"square"|"saw"}
@@ -19,7 +19,7 @@ export type TriggerTarget =
 export type TriggerOccasion = "scene_enter"|"scene_leave"|"activate"|"select"|"sequence_transition";
 export interface SceneTrigger {trigger_ref:string;occasion:TriggerOccasion;target:TriggerTarget}
 /** ES3 profile adoption with explicit, legible overrides. */
-export interface ProfileAdoption {profile_ref:string;revision:number;overridden_parameters?:Record<string,Parameter>}
+export interface ProfileAdoption {profile_ref:string;revision:number;source_basis?:ReadingRef|null;overridden_parameters?:Record<string,Parameter>}
 export interface ScenePresentation {schema:"oi.journey-scene/v1";scene:Record<string,unknown>;saved?:Record<string,unknown>|null}
 export interface CompositionPresentation {schema:"oi.journey-properties/v1";description:string;loop:boolean;shared?:Record<string,unknown>}
 export interface Scene {presentation?:ScenePresentation|null;scene_ref:string;revision:number;title:string;entity_refs:string[];body?:SceneBody|null;triggers?:SceneTrigger[]}

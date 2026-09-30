@@ -46,6 +46,7 @@
     "oi:open-agency",
     "oi:open-encounter",
     "oi:open-explore",
+    "oi:open-personal-expression",
     "oi:open-scene-constellation",
     "oi:open-scene-source",
     "oi:open-settings",
@@ -54,6 +55,7 @@
     "oi:place-draft",
     "oi:place-draft-result",
     "oi:recover-device-copy",
+    "oi:scene-source-redocked",
     "oi:surface-view",
     "oi:techne-open-file",
     "oi:terminal-attached",
@@ -838,6 +840,15 @@
     {
      "owner": "src/flow/FlowSurface.tsx",
      "receiver": "localStorage",
+     "method": "getItem",
+     "key": "projectKey",
+     "basis": [
+      "projectKey = `oi-flow-work-project:${binding.id}`"
+     ]
+    },
+    {
+     "owner": "src/flow/FlowSurface.tsx",
+     "receiver": "localStorage",
      "method": "removeItem",
      "key": "answerKey(binding.id)",
      "basis": [
@@ -869,23 +880,41 @@
      "key": "key",
      "basis": [
       "key = `oi-flow-instance-draft:${binding.id}`"
+     ]
+    },
+    {
+     "owner": "src/flow/FlowSurface.tsx",
+     "receiver": "localStorage",
+     "method": "setItem",
+     "key": "projectKey",
+     "basis": [
+      "projectKey = `oi-flow-work-project:${binding.id}`"
      ]
     }
    ],
    "key_literals": [
+    "oi-action",
+    "oi-action oi-action-primary",
     "oi-flow-answer:${…}",
     "oi-flow-instance-draft:${…}",
+    "oi-flow-work-project:${…}",
     "oi-note",
     "oi:context-candidate",
     "oi:file-draft-changed"
    ],
    "spec_ref": "docs/cradle/02-ARCHITECTURE.md §6; canonical conformance plan Lane A §1 / Lane B §1",
-   "rationale": "Unsaved Flow instance draft; owner save remains the durable mutation.",
+   "rationale": "Unsaved Flow instance draft and the working project chosen for asking agents from a personal-ground flow; owner save and owner sessions remain the durable state.",
    "keys": [
     {
      "family": "key",
      "classification": "device-draft",
      "rationale": "Unsaved Flow instance draft; owner save remains the durable mutation.",
+     "review": "provisional; Lane B ratifies scope without converting source truth into browser state"
+    },
+    {
+     "family": "`oi-flow-work-project:${binding.id}`",
+     "classification": "presentation-local",
+     "rationale": "The project a person last chose to work in for this flow's asks; the flow, its participants and their sessions stay with the native owners.",
      "review": "provisional; Lane B ratifies scope without converting source truth into browser state"
     }
    ]
@@ -2211,8 +2240,7 @@
      "basis": [
       "KEY = \"oi-cradle.workspaces.v1\"",
       "legacyRaw = localStorage.getItem(\"oi-cradle.layout.v1\")",
-      "raw = localStorage.getItem(KEY)",
-      "record = preservePresentation(localStorage.getItem(KEY) ? KEY : \"oi-cradle.layout.v1\", String(error))"
+      "raw = localStorage.getItem(KEY)"
      ]
     },
     {

@@ -1,8 +1,8 @@
-import type { Entity } from './fieldModel';
+import {MAX_FORCE_EMITTERS, type Entity} from './fieldModel';
 import type { EvaluatedEntityPose } from './entityPose';
 import type { PlacedInteractionPoint, PointCloudRelationalConfig } from './types';
 
-export const MAX_FORCE_EMITTERS = 18;
+export {MAX_FORCE_EMITTERS} from './fieldModel';
 export type ForceEmitterLaw = 'radial' | 'vortex';
 export type ForceEmitterPolarity = 'attract' | 'repel';
 export type ForceEmitterMetric = 'compositionPlane' | 'world3d';
@@ -19,6 +19,9 @@ export interface ForceEmitterState {
   metric: ForceEmitterMetric;
   enabled: boolean;
 }
+
+/** A private host projection over evaluated forces; never authored material. */
+export type ForceEmitterProjection = (emitters: readonly ForceEmitterState[]) => readonly ForceEmitterState[];
 
 export function compileEntityForceEmitters(
   entities: Entity[],
