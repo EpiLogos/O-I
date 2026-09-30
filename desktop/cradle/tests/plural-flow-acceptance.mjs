@@ -13,6 +13,7 @@
 // Required: PF_SESSION_SPACE (candidate aikit-session-space), PF_CTRL (Central
 // ctrl with central.flow.*). Optional: PF_PI, PF_TEMPLATE, PF_SCRATCH.
 import {execFileSync, spawnSync} from "node:child_process";
+import {createHash, randomBytes} from "node:crypto";
 import {existsSync, mkdirSync, readFileSync, writeFileSync, rmSync} from "node:fs";
 import {join, resolve} from "node:path";
 import {homedir} from "node:os";
@@ -33,13 +34,15 @@ const env = {
 };
 delete env.CENTRAL_NATIVE_TOKEN;
 const sh = (bin, args, options = {}) => {
-  const r = spawnSync(bin, args, {encoding: "utf8", env, cwd: options.cwd ?? dirs.project, maxBuffer: 64 * 1024 * 1024});
+  const r = spawnSync(bin, args, {encoding: "utf8", env: {...env, ...(options.env ?? {})}, cwd: options.cwd ?? dirs.project, maxBuffer: 64 * 1024 * 1024});
   if (r.status !== 0 && !options.allowFail) throw new Error(`${bin} ${args.slice(0, 4).join(" ")}: ${r.stderr || r.stdout}`);
   return r;
 };
 const json = r => JSON.parse(r.stdout);
 const ss = (...args) => sh(SS, ["-C", dirs.project, ...args]);
-const ctrl = (action, input) => json(sh(CTRL, ["--json", "--root", dirs.central, "action", "run", action, JSON.stringify(input)], {allowFail: true}));
+const ctrl = (action, input, options = {}) => json(sh(CTRL, ["--json", "--root", dirs.central, "action", "run", action, JSON.stringify(input)], {allowFail: true, ...options}));
+const tokensPath = join(S, "tokens.json");
+const tokens = () => JSON.parse(readFileSync(tokensPath, "utf8"));
 const encounter = request => { const r = sh(SS, ["-C", dirs.project, "encounter", "--request-json", JSON.stringify(request)], {allowFail: true}); const out = JSON.parse(r.stdout || "{}"); if (out.ok === false) throw new Error(`${request.action}: ${out.error?.code} ${out.error?.message}`); return out.data ?? out; };
 const sleep = ms => new Promise(r => setTimeout(r, ms));
 const say = (...a) => console.log(...a);
@@ -79,8 +82,31 @@ const phases = {
     if (!ctrl("central.init", {}).ok) throw new Error("central init");
     mkdirSync(join(dirs.central, "Control/user/flows"), {recursive: true});
     sh(SS.replace(/aikit-session-space$/, "aikit"), ["--json", "-C", dirs.project, "project", "bind", "flowlab", "--directory", dirs.project, "--no-default-skill-sets"]);
+    // A real authority source and civil-time policy in this scratch Central: the
+    // owner's resident gets a credential granted for exactly one action, and the
+    // Day boundary falls a few minutes into the run so a Day really rolls.
+    const minted = {service: randomBytes(32).toString("hex"), ann: randomBytes(32).toString("hex")};
+    writeFileSync(tokensPath, JSON.stringify(minted), {mode: 0o600});
+    const digest = t => createHash("sha256").update(t).digest("hex");
+    const grant = (token, principal, kind, actions) => ({principal_ref: principal, actor_kind: kind, token_sha256: digest(token), scope_refs: ["control:root"], actions, expires_at_unix_seconds: Math.floor(Date.now() / 1000) + 86400});
+    writeFileSync(join(dirs.central, "Control/user/native-action-authority.json"), JSON.stringify({schema: "central.native-action-authority/v1", scope_ref: "control:root", grants: [
+      grant(minted.service, "native-service:aikit-owner", "native-service", ["central.flow.append"]),
+      grant(minted.ann, "human:ann", "human", ["central.flow.append", "central.day.ensure", "central.day.lifecycle"]),
+    ]}, null, 1));
+    const now = new Date();
+    const boundary = (now.getUTCHours() * 60 + now.getUTCMinutes() + (Number(process.env.PF_DAY_IN_MINUTES) || 14)) % 1440;
+    state.dayBoundaryAtUtc = new Date(now.getTime() + (Number(process.env.PF_DAY_IN_MINUTES) || 14) * 60000).toISOString();
+    writeFileSync(join(dirs.central, "Control/user/civil-time-policy.json"), JSON.stringify({schema: "central.civil-time-policy/v1", scope_ref: "control:root", timezone: "UTC", day_boundary_minutes: boundary, automatic_day_rollover: true}, null, 1));
+    const relation = (path, role) => ({ref: `central:source:control:root:${path}`, path, roles: [role], provenance: "human-adopted", standing: "architecture-contract", treatment: "projectcentral-user", recognition: "controlled-acceptance-world-not-personal-adoption", recorded_at_unix_seconds: 1});
+    mkdirSync(join(dirs.central, "Control/relations"), {recursive: true});
+    writeFileSync(join(dirs.central, "Control/relations/source-relations.json"), JSON.stringify({schema: "central.control.ground-relations/v1", project_id: "control:root", relations: [relation("Control/user/native-action-authority.json", "native-action-authority"), relation("Control/user/civil-time-policy.json", "civil-time-policy")]}, null, 1));
+    const policy = ctrl("central.time.policy", {});
+    if (!policy.ok) throw new Error("civil-time policy not recognised: " + JSON.stringify(policy));
+    state.timePolicyRevision = policy.data.revision;
+    say("day boundary falls at", state.dayBoundaryAtUtc);
     ss("encounter-configure", "--provider-json", JSON.stringify({protocol: "pi-rpc", id: "pi", label: "Pi (acceptance)", argv: [PI, "--mode", "rpc"]}));
-    sh(SS, ["-C", dirs.project, "encounter-start"]);
+    // The owner carries its granted credential; nothing else here does.
+    sh(SS, ["-C", dirs.project, "encounter-start"], {env: {CENTRAL_NATIVE_TOKEN: minted.service}});
     await sleep(1500);
     say("owner health:", JSON.stringify(encounter({action: "health"})));
     // The Flow, from the real v0.4 template, with the person declared.
@@ -225,6 +251,25 @@ const phases = {
       recipients: [{participant_key: Ada.key, agent_session: session}]}});
     await waitIncluded(ref, [Ada.key], 240000);
     state.fresh = ref; save();
+  },
+
+  /** The Day the work began in, read through Central's own Day machinery. */
+  async "day-before"() {
+    const r = ctrl("central.day.ensure", {expected_time_policy_revision: state.timePolicyRevision}, {env: {CENTRAL_NATIVE_TOKEN: tokens().ann}});
+    if (!r.ok) throw new Error("day ensure: " + JSON.stringify(r));
+    state.dayBefore = r.data.day_ref ?? r.data; save();
+    say("day before the boundary:", JSON.stringify(state.dayBefore).slice(0, 160));
+  },
+  /** Wait for the civil Day to roll, then read the new Day: a distinct Day, with the
+   * flow, its pending conversations and the agents' enduring identity unaffected. */
+  async "day-after"() {
+    const at = new Date(state.dayBoundaryAtUtc).getTime() + 15000;
+    while (Date.now() < at) { say("  waiting for the Day boundary…", Math.ceil((at - Date.now()) / 1000), "s"); await sleep(Math.min(20000, at - Date.now() + 500)); }
+    const r = ctrl("central.day.ensure", {expected_time_policy_revision: state.timePolicyRevision}, {env: {CENTRAL_NATIVE_TOKEN: tokens().ann}});
+    if (!r.ok) throw new Error("day ensure: " + JSON.stringify(r));
+    state.dayAfter = r.data.day_ref ?? r.data; save();
+    say("day after the boundary:", JSON.stringify(state.dayAfter).slice(0, 160));
+    say("distinct Days:", JSON.stringify(state.dayBefore) !== JSON.stringify(state.dayAfter));
   },
 
   async report() { report(); },

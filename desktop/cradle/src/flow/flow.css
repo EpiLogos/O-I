@@ -83,3 +83,4 @@ details.flow-answer .oi-note{margin:8px 0}
 .flow-conversation ul{list-style:none;margin:var(--oi-desktop-gap-xs) 0 0;padding:0;display:grid;gap:var(--oi-desktop-gap-xs)}
 .flow-conversation[data-open=true]{border-inline-start:var(--oi-shell-edge) solid var(--oi-hairline);padding-inline-start:var(--oi-desktop-gap-sm)}
 .flow-conversation-reply{white-space:pre-wrap;overflow-wrap:anywhere;margin:var(--oi-desktop-gap-xs) 0}
+.flow-compose-acts{display:inline-flex;gap:var(--oi-desktop-gap-sm);margin-inline-start:auto}
