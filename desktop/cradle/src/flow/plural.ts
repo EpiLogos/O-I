@@ -39,6 +39,7 @@ export interface Attribution {
   onBehalfOf?: {key: string; authority: string};
 }
 export type RelationType = "reply" | "branch" | "converge" | "correct" | "source" | "artifact";
+export const RELATION_TYPES: readonly string[] = ["reply", "branch", "converge", "correct", "source", "artifact"];
 export interface Relation {
   type: RelationType;
   entryId?: string;
@@ -68,14 +69,15 @@ export interface PluralMeta {
 export type IssueCode =
   | "duplicate-entry-id" | "duplicate-participant-key" | "unknown-author-key" | "author-initial-mismatch"
   | "unknown-addressee" | "unknown-audience-key" | "relation-target-missing" | "relation-cycle"
-  | "relation-shape" | "reply-multiple" | "converge-needs-two" | "request-digest-mismatch" | "legacy-format";
+  | "relation-shape" | "reply-multiple" | "converge-needs-two" | "request-digest-mismatch" | "legacy-format" | "invalid-audience";
 export interface Issue {code: IssueCode; path: string; detail?: string}
 
 export type RefusalCode =
   | "legacy-format" | "unsupported-format" | "unknown-author" | "author-not-caller" | "impersonation"
   | "observer-cannot-contribute" | "participant-left" | "unknown-addressee" | "unknown-audience-key"
   | "relation-target-missing" | "relation-revision-ahead" | "relation-shape" | "reply-multiple" | "converge-needs-two"
-  | "request-conflict" | "duplicate-entry-id" | "empty-operation" | "attribution-overclaim" | "authentication-required";
+  | "request-conflict" | "duplicate-entry-id" | "empty-operation" | "attribution-overclaim" | "authentication-required"
+  | "invalid-relation-type" | "invalid-basis-revision" | "empty-contribution" | "unknown-behalf-of" | "invalid-audience";
 export class Refusal extends Error {
   code: RefusalCode;
   constructor(code: RefusalCode, message: string) {
@@ -213,7 +215,8 @@ export function validateDocument(doc: QlDoc): Issue[] {
       else if (author.initial !== entry.author) issues.push({code: "author-initial-mismatch", path: `${at}.author`});
     }
     (entry.addressees ?? []).forEach(key => { if (!keys.has(key)) issues.push({code: "unknown-addressee", path: `${at}.addressees`, detail: key}); });
-    if (entry.audience && entry.audience !== "group") entry.audience.keys.forEach(key => { if (!keys.has(key)) issues.push({code: "unknown-audience-key", path: `${at}.audience`, detail: key}); });
+    if (entry.audience !== undefined && entry.audience !== "group" && !(typeof entry.audience === "object" && entry.audience && Array.isArray((entry.audience as {keys?: unknown}).keys))) issues.push({code: "invalid-audience", path: `${at}.audience`});
+    else if (entry.audience && entry.audience !== "group") entry.audience.keys.forEach(key => { if (!keys.has(key)) issues.push({code: "unknown-audience-key", path: `${at}.audience`, detail: key}); });
     const relations = relationsOf(entry);
     relations.forEach((relation, r) => {
       if (relation.entryId !== undefined && !ids.has(relation.entryId)) issues.push({code: "relation-target-missing", path: `${at}.relations[${r}]`, detail: relation.entryId});
@@ -337,7 +340,17 @@ function checkCaller(author: PluralParticipant, caller: Caller, request: AppendR
     if (!identity) throw new Refusal("author-not-caller", "the native caller carries no agent identity");
     if (bound && !caller.authenticated) throw new Refusal("authentication-required", `${author.name ?? author.initial} is bound; only an authenticated caller may write as them`);
     if (bound && bound.ref !== identity && bound.ref !== caller.agent) throw new Refusal("author-not-caller", `${author.name ?? author.initial} is bound to another agent`);
-    return {basis: caller.authenticated ? "verified" : "declared", agency: caller.agent, session: caller.session, generation: caller.generation, workcell: caller.workcell, ...(request.attribution?.onBehalfOf ? {onBehalfOf: request.attribution.onBehalfOf} : {})};
+    if (caller.authenticated) {
+      // The credential says which agent this is. It writes as the seat declared
+      // for that agent, never as another agent's seat — bound or not — and never
+      // as another seat while it holds its own.
+      const mine = new Set([caller.agent, caller.session, caller.ref].filter((x): x is string => !!x));
+      const declared = author.binding?.ref;
+      if (declared && !mine.has(declared)) throw new Refusal("impersonation", `${author.name ?? author.initial} is declared for another agent`);
+      const ownSeat = participants.find(p => p.key !== author.key && p.kind === "agent" && p.binding?.ref && mine.has(p.binding.ref));
+      if (ownSeat) throw new Refusal("impersonation", `this credential is ${ownSeat.name ?? ownSeat.initial}'s; it cannot write as ${author.name ?? author.initial}`);
+    }
+    return {basis: caller.authenticated ? "verified" : "declared", agency: caller.agent, session: caller.session, generation: caller.generation, workcell: caller.workcell};
   }
   if (caller.kind === "human") {
     if (author.kind === "agent") {
@@ -388,6 +401,12 @@ export function appendContribution(doc: QlDoc, request: AppendRequest, caller: C
     if (existing.request!.digest !== digest) throw new Refusal("request-conflict", `operation ${request.operationRef} already recorded with a different payload`);
     return {doc, entry: existing, outcome: "recovered"};
   }
+  if (!String(request.html ?? "").replace(/<[^>]*>/g, "").replace(/&nbsp;/g, " ").trim() && !/<(img|video|audio|iframe|object|embed)\b/i.test(request.html ?? "")) throw new Refusal("empty-contribution", "a contribution needs content");
+  if (request.basisRevision !== undefined && (!Number.isInteger(request.basisRevision) || request.basisRevision < 0 || request.basisRevision > doc.meta.revision)) throw new Refusal("invalid-basis-revision", "the basis revision must be a revision this document has reached");
+  if (request.audience !== undefined && request.audience !== "group" && !(request.audience && Array.isArray((request.audience as {keys?: unknown}).keys))) throw new Refusal("invalid-audience", "an audience is \"group\" or a list of participant keys");
+  const claimedBehalf = request.attribution?.onBehalfOf;
+  if (claimedBehalf && (!participants.some(p => p.key === claimedBehalf.key) || claimedBehalf.key === author.key || !String(claimedBehalf.authority ?? "").trim())) throw new Refusal("unknown-behalf-of", "on behalf of names another participant and the authority claimed");
+  const behalf = claimedBehalf ? {key: claimedBehalf.key, authority: claimedBehalf.authority} : undefined;
   const attribution = checkCaller(author, caller, request, participants);
   const ids = new Set(doc.entries.map(e => e.id));
   if (ids.has(probe.id)) throw new Refusal("duplicate-entry-id", `entry ${probe.id} already exists`);
@@ -395,6 +414,7 @@ export function appendContribution(doc: QlDoc, request: AppendRequest, caller: C
   (request.addressees ?? []).forEach(key => { if (!keys.has(key)) throw new Refusal("unknown-addressee", `no participant ${key}`); });
   if (request.audience && request.audience !== "group") request.audience.keys.forEach(key => { if (!keys.has(key)) throw new Refusal("unknown-audience-key", `no participant ${key}`); });
   relations.forEach(relation => {
+    if (!RELATION_TYPES.includes(relation.type)) throw new Refusal("invalid-relation-type", `${String(relation.type)} is not a relation this form knows`);
     if (relation.type === "source" || relation.type === "artifact") {
       if (!relation.ref) throw new Refusal("relation-shape", `${relation.type} relation needs a ref`);
       return;
@@ -405,7 +425,7 @@ export function appendContribution(doc: QlDoc, request: AppendRequest, caller: C
   });
   if (relations.filter(r => r.type === "reply").length > 1) throw new Refusal("reply-multiple", "an entry replies to one entry; use converge to relate several");
   if (relations.filter(r => r.type === "converge").length === 1) throw new Refusal("converge-needs-two", "a convergence relates at least two entries");
-  const entry: PluralEntry = {...probe, attribution: {...attribution, ...(request.attribution?.onBehalfOf ? {onBehalfOf: request.attribution.onBehalfOf} : {})}, request: {ref: request.operationRef, digest}};
+  const entry: PluralEntry = {...probe, attribution: {...attribution, ...(behalf ? {onBehalfOf: behalf} : {})}, request: {ref: request.operationRef, digest}};
   const reply = relations.find(r => r.type === "reply");
   entry.replyTo = reply ? {entryId: reply.entryId as string, anchor: reply.anchor ?? null} : null;
   for (const key of ["addressees", "audience", "intent", "basisRevision"] as const) if (entry[key] === undefined) delete entry[key];
@@ -520,9 +540,48 @@ export function buildThreads(doc: QlDoc): ThreadNode[] {
 
 /** Readable history for a participant: from their horizon forward, and never
  * the entries whose audience excludes them. */
-export function readableEntries(doc: QlDoc, key: string): PluralEntry[] {
-  const participant = participantsOf(doc).find(p => p.key === key);
+export function readableEntries(doc: QlDoc, key?: string): PluralEntry[] {
+  const participant = key ? participantsOf(doc).find(p => p.key === key) : undefined;
   const entries = doc.entries as PluralEntry[];
-  const from = participant?.historyFrom ? entries.findIndex(e => e.id === participant.historyFrom) : 0;
-  return entries.slice(Math.max(from, 0)).filter(entry => !entry.audience || entry.audience === "group" || entry.audience.keys.includes(key) || entry.authorKey === key);
+  // No participant, or one this flow does not know, reads only what is open to the whole group.
+  if (!participant) return entries.filter(e => audienceOf(e) === "group");
+  let from = 0;
+  if (participant.historyFrom) {
+    from = entries.findIndex(e => e.id === participant.historyFrom);
+    if (from < 0) return []; // a horizon that names nothing is not permission to read everything
+  }
+  let last = entries.length;
+  if (participant.left) {
+    // Reading ends where the participant's belonging ended. If the times cannot be compared, nothing later is theirs.
+    const gone = Date.parse(participant.left.at);
+    last = Number.isNaN(gone) ? 0 : entries.findIndex(e => { const at = Date.parse(e.at); return Number.isNaN(at) || at > gone; });
+    if (last < 0) last = entries.length;
+  }
+  return entries.slice(from, last).filter(entry => { const a = audienceOf(entry); return a === "group" || a.includes(key as string) || entry.authorKey === key; });
+}
+
+/** An entry's audience as the group or an explicit list of keys. Anything this
+ * form does not understand is restricted to its author, never public. */
+function audienceOf(entry: PluralEntry): "group" | string[] {
+  const a = entry.audience as unknown;
+  if (a === undefined || a === null || a === "group") return "group";
+  if (typeof a === "object" && Array.isArray((a as {keys?: unknown}).keys)) return (a as {keys: string[]}).keys.filter(k => typeof k === "string");
+  return [];
+}
+
+/** A copy fit to hand to someone else: the entries the whole group may read,
+ * with no journal, notes, context packet, media or derived cursors — and no
+ * relation left pointing at an entry that was withheld. The complete copy stays
+ * the person's own. */
+export function portableCopy(doc: QlDoc): QlDoc {
+  const next = JSON.parse(JSON.stringify(doc)) as Doc;
+  const open = new Set((next.entries as PluralEntry[]).filter(e => audienceOf(e) === "group").map(e => e.id));
+  next.entries = (next.entries as PluralEntry[]).filter(e => open.has(e.id)).map(e => {
+    if (e.relations) { e.relations = e.relations.filter(r => !r.entryId || open.has(r.entryId)); if (!e.relations.length) delete e.relations; }
+    if (e.replyTo && !open.has(e.replyTo.entryId)) e.replyTo = null;
+    return e;
+  });
+  next.journal = []; next.notes = []; next.packet = []; next.media = [];
+  next.meta.current = null; next.meta.journalCurrent = null;
+  return next;
 }
