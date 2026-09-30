@@ -544,6 +544,19 @@ pub enum KernelOp {
         #[serde(default, skip_serializing_if = "Option::is_none")]
         preferred_body_ref: Option<String>,
     },
+    /// Bring a named roster Agent into a shared Flow (O:I #558): a fresh
+    /// Agency session for exactly that Agent, its resident opened, and this one
+    /// sender and Flow source admitted to it. Nothing else is widened.
+    FlowParticipantProvision {
+        project: String,
+        agent_ref: String,
+        /// The Flow's native source ref (`central.path-ref/v1` `ref`).
+        flow_ref: String,
+        /// Who will be asking, as the owner's admission names them.
+        sender: String,
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        preferred_body_ref: Option<String>,
+    },
     MaterialRead {
         target: material::Target,
     },
@@ -3412,6 +3425,27 @@ impl Kernel {
                 let data =
                     self.agency
                         .provision(&cwd, &project_ref, preferred_body_ref.as_deref())?;
+                Ok(KernelOpOutcome {
+                    receipts: Vec::new(),
+                    result: KernelOpResult::EncounterProvisioned { data },
+                })
+            }
+            KernelOp::FlowParticipantProvision {
+                project,
+                agent_ref,
+                flow_ref,
+                sender,
+                preferred_body_ref,
+            } => {
+                let (cwd, project_ref) = self.project_ground(&project)?;
+                let data = self.agency.provision_flow_participant(
+                    &cwd,
+                    &project_ref,
+                    &agent_ref,
+                    preferred_body_ref.as_deref(),
+                    &sender,
+                    &flow_ref,
+                )?;
                 Ok(KernelOpOutcome {
                     receipts: Vec::new(),
                     result: KernelOpResult::EncounterProvisioned { data },

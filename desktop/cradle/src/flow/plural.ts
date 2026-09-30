@@ -326,7 +326,7 @@ export function requestDigest(entry: PluralEntry): string {
 }
 export const entryIdForOperation = (operationRef: string): string => `e-${sha256(operationRef).slice(0, 24)}`;
 
-function checkCaller(author: PluralParticipant, caller: Caller, request: AppendRequest): Attribution {
+function checkCaller(author: PluralParticipant, caller: Caller, request: AppendRequest, participants: PluralParticipant[]): Attribution {
   if (author.left) throw new Refusal("participant-left", `${author.name ?? author.initial} has left this flow`);
   if ((author.role ?? "contributor") === "observer") throw new Refusal("observer-cannot-contribute", `${author.name ?? author.initial} is an observer`);
   const claimed = request.attribution?.basis;
@@ -347,6 +347,17 @@ function checkCaller(author: PluralParticipant, caller: Caller, request: AppendR
     }
     if (bound && !caller.authenticated) throw new Refusal("authentication-required", `${author.name ?? author.initial} is bound; only an authenticated caller may write as them`);
     if (bound && caller.ref && bound.ref !== caller.ref) throw new Refusal("impersonation", `${author.name ?? author.initial} is bound to another person`);
+    if (caller.authenticated && caller.ref) {
+      // An authenticated person writes as the seat declared for their identity.
+      // Holding a seat of their own, they cannot write as another: the credential
+      // says who they are, and sharing a flow, a machine or a label does not
+      // make them the person in the next seat.
+      const declared = author.binding?.ref;
+      if (declared && declared !== caller.ref) throw new Refusal("impersonation", `${author.name ?? author.initial} is declared for another identity`);
+      const ownSeat = participants.find(p => p.key !== author.key && p.kind === "person" && p.binding?.ref === caller.ref);
+      if (ownSeat) throw new Refusal("impersonation", `this credential is ${ownSeat.name ?? ownSeat.initial}'s; it cannot write as ${author.name ?? author.initial}`);
+      if (declared === caller.ref) return {basis: "verified"};
+    }
     return {basis: bound && caller.ref ? "verified" : "declared"};
   }
   // System callers only ever declare what they carry; they bind no one, and
@@ -377,7 +388,7 @@ export function appendContribution(doc: QlDoc, request: AppendRequest, caller: C
     if (existing.request!.digest !== digest) throw new Refusal("request-conflict", `operation ${request.operationRef} already recorded with a different payload`);
     return {doc, entry: existing, outcome: "recovered"};
   }
-  const attribution = checkCaller(author, caller, request);
+  const attribution = checkCaller(author, caller, request, participants);
   const ids = new Set(doc.entries.map(e => e.id));
   if (ids.has(probe.id)) throw new Refusal("duplicate-entry-id", `entry ${probe.id} already exists`);
   const keys = new Set(participants.map(p => p.key));
@@ -405,7 +416,9 @@ export function appendContribution(doc: QlDoc, request: AppendRequest, caller: C
   // A caller the owner identified binds its participant on first contribution.
   if (attribution.basis === "verified") {
     const held = (next.meta.participants as PluralParticipant[]).find(p => p.key === author.key)!;
-    const identity = caller.kind === "agent" ? (caller.session ?? caller.ref) : caller.ref;
+    // An agent is bound as the enduring agent, not as the session it first used:
+    // a fresh body for the same agent must still be that participant.
+    const identity = caller.kind === "agent" ? (caller.agent ?? caller.session ?? caller.ref) : caller.ref;
     if (identity && (!held.binding || held.binding.basis !== "verified")) held.binding = {owner: caller.kind === "agent" ? "actuation" : "central", ref: identity, basis: "verified"};
   }
   return {doc: next, entry, outcome: "appended"};
@@ -460,6 +473,18 @@ export function addParticipant(doc: QlDoc, participant: PluralParticipant, at: s
   const key = participant.key ?? `p-${fnv(`${next.meta.documentId}\u0000${participant.initial}\u0000${list.length}\u0000${at}`)}`;
   if (list.some(p => p.key === key)) return doc;
   list.push({role: "contributor", ...participant, key, joined: {at, revision: next.meta.revision}});
+  next.meta.revision += 1;
+  return next;
+}
+/** Record the AgentSession an agent participant now answers from. The session
+ * is the body, never the identity: the participant key and its agent binding
+ * are unchanged, and a later session replaces this one without touching
+ * earlier entries' provenance. */
+export function withSession(doc: QlDoc, key: string, session: string): QlDoc {
+  const next = JSON.parse(JSON.stringify(doc)) as Doc;
+  const held = (next.meta.participants as PluralParticipant[] | undefined)?.find(p => p.key === key);
+  if (!held || held.left || held.ref === session) return doc;
+  held.ref = session;
   next.meta.revision += 1;
   return next;
 }

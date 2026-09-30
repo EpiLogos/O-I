@@ -292,7 +292,8 @@ var QlPlural = (() => {
     requestDigest: () => requestDigest,
     sha256: () => sha256,
     upgradeDocument: () => upgradeDocument,
-    validateDocument: () => validateDocument
+    validateDocument: () => validateDocument,
+    withSession: () => withSession
   });
   const FORMAT_VERSION = 4;
   const TEMPLATE_V4 = "ql-dialogue-flow v0.4";
@@ -552,7 +553,7 @@ var QlPlural = (() => {
     }));
   }
   const entryIdForOperation = (operationRef) => `e-${sha256(operationRef).slice(0, 24)}`;
-  function checkCaller(author, caller, request) {
+  function checkCaller(author, caller, request, participants) {
     if (author.left) throw new Refusal("participant-left", `${author.name ?? author.initial} has left this flow`);
     if ((author.role ?? "contributor") === "observer") throw new Refusal("observer-cannot-contribute", `${author.name ?? author.initial} is an observer`);
     const claimed = request.attribution?.basis;
@@ -572,6 +573,13 @@ var QlPlural = (() => {
       }
       if (bound && !caller.authenticated) throw new Refusal("authentication-required", `${author.name ?? author.initial} is bound; only an authenticated caller may write as them`);
       if (bound && caller.ref && bound.ref !== caller.ref) throw new Refusal("impersonation", `${author.name ?? author.initial} is bound to another person`);
+      if (caller.authenticated && caller.ref) {
+        const declared = author.binding?.ref;
+        if (declared && declared !== caller.ref) throw new Refusal("impersonation", `${author.name ?? author.initial} is declared for another identity`);
+        const ownSeat = participants.find((p) => p.key !== author.key && p.kind === "person" && p.binding?.ref === caller.ref);
+        if (ownSeat) throw new Refusal("impersonation", `this credential is ${ownSeat.name ?? ownSeat.initial}'s; it cannot write as ${author.name ?? author.initial}`);
+        if (declared === caller.ref) return { basis: "verified" };
+      }
       return { basis: bound && caller.ref ? "verified" : "declared" };
     }
     if (bound && !caller.authenticated) throw new Refusal("authentication-required", `${author.name ?? author.initial} is bound; only an authenticated caller may write as them`);
@@ -607,7 +615,7 @@ var QlPlural = (() => {
       if (existing.request.digest !== digest) throw new Refusal("request-conflict", `operation ${request.operationRef} already recorded with a different payload`);
       return { doc, entry: existing, outcome: "recovered" };
     }
-    const attribution = checkCaller(author, caller, request);
+    const attribution = checkCaller(author, caller, request, participants);
     const ids = new Set(doc.entries.map((e) => e.id));
     if (ids.has(probe.id)) throw new Refusal("duplicate-entry-id", `entry ${probe.id} already exists`);
     const keys = new Set(participants.map((p) => p.key));
@@ -638,7 +646,7 @@ var QlPlural = (() => {
     next.meta.revision = doc.meta.revision + 1;
     if (attribution.basis === "verified") {
       const held = next.meta.participants.find((p) => p.key === author.key);
-      const identity = caller.kind === "agent" ? caller.session ?? caller.ref : caller.ref;
+      const identity = caller.kind === "agent" ? caller.agent ?? caller.session ?? caller.ref : caller.ref;
       if (identity && (!held.binding || held.binding.basis !== "verified")) held.binding = { owner: caller.kind === "agent" ? "actuation" : "central", ref: identity, basis: "verified" };
     }
     return { doc: next, entry, outcome: "appended" };
@@ -691,6 +699,14 @@ var QlPlural = (() => {
     const key = participant.key ?? `p-${fnv(`${next.meta.documentId}\0${participant.initial}\0${list.length}\0${at}`)}`;
     if (list.some((p) => p.key === key)) return doc;
     list.push({ role: "contributor", ...participant, key, joined: { at, revision: next.meta.revision } });
+    next.meta.revision += 1;
+    return next;
+  }
+  function withSession(doc, key, session) {
+    const next = JSON.parse(JSON.stringify(doc));
+    const held = next.meta.participants?.find((p) => p.key === key);
+    if (!held || held.left || held.ref === session) return doc;
+    held.ref = session;
     next.meta.revision += 1;
     return next;
   }
