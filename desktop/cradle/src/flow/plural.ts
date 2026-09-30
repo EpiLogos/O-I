@@ -463,6 +463,18 @@ export function addParticipant(doc: QlDoc, participant: PluralParticipant, at: s
   next.meta.revision += 1;
   return next;
 }
+/** Record the AgentSession an agent participant now answers from. The session
+ * is the body, never the identity: the participant key and its agent binding
+ * are unchanged, and a later session replaces this one without touching
+ * earlier entries' provenance. */
+export function withSession(doc: QlDoc, key: string, session: string): QlDoc {
+  const next = JSON.parse(JSON.stringify(doc)) as Doc;
+  const held = (next.meta.participants as PluralParticipant[] | undefined)?.find(p => p.key === key);
+  if (!held || held.left || held.ref === session) return doc;
+  held.ref = session;
+  next.meta.revision += 1;
+  return next;
+}
 export function leaveParticipant(doc: QlDoc, key: string, at: string): QlDoc {
   const next = JSON.parse(JSON.stringify(doc)) as Doc;
   const held = (next.meta.participants as PluralParticipant[] | undefined)?.find(p => p.key === key);

@@ -79,3 +79,7 @@ details.flow-answer .oi-note{margin:8px 0}
 @media (max-width:640px){.flow-thread-children{padding-inline-start:var(--oi-desktop-gap-sm)}}
 .flow-thread-who[data-flow-author-kind=agent]::after{content:" · agent";font-weight:400}
 .flow-thread-who[data-flow-author-kind=unknown]::after{content:" · author not established";font-weight:400}
+.flow-conversations{margin:var(--oi-desktop-gap-sm) var(--oi-desktop-gap-lg);display:grid;gap:var(--oi-desktop-gap-sm)}
+.flow-conversation ul{list-style:none;margin:var(--oi-desktop-gap-xs) 0 0;padding:0;display:grid;gap:var(--oi-desktop-gap-xs)}
+.flow-conversation[data-open=true]{border-inline-start:var(--oi-shell-edge) solid var(--oi-hairline);padding-inline-start:var(--oi-desktop-gap-sm)}
+.flow-conversation-reply{white-space:pre-wrap;overflow-wrap:anywhere;margin:var(--oi-desktop-gap-xs) 0}

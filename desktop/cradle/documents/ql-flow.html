@@ -292,7 +292,8 @@ var QlPlural = (() => {
     requestDigest: () => requestDigest,
     sha256: () => sha256,
     upgradeDocument: () => upgradeDocument,
-    validateDocument: () => validateDocument
+    validateDocument: () => validateDocument,
+    withSession: () => withSession
   });
   const FORMAT_VERSION = 4;
   const TEMPLATE_V4 = "ql-dialogue-flow v0.4";
@@ -691,6 +692,14 @@ var QlPlural = (() => {
     const key = participant.key ?? `p-${fnv(`${next.meta.documentId}\0${participant.initial}\0${list.length}\0${at}`)}`;
     if (list.some((p) => p.key === key)) return doc;
     list.push({ role: "contributor", ...participant, key, joined: { at, revision: next.meta.revision } });
+    next.meta.revision += 1;
+    return next;
+  }
+  function withSession(doc, key, session) {
+    const next = JSON.parse(JSON.stringify(doc));
+    const held = next.meta.participants?.find((p) => p.key === key);
+    if (!held || held.left || held.ref === session) return doc;
+    held.ref = session;
     next.meta.revision += 1;
     return next;
   }

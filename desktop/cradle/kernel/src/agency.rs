@@ -514,6 +514,28 @@ pub enum EncounterRequest {
         agent_session: String,
         delivery_ref: String,
     },
+    /// One authored Flow entry put to several recipients (O:I #558). The
+    /// request is the owner's own wire contract (`ConversationSendRequest` in
+    /// the bound ai-kit revision), carried verbatim and never re-keyed: the
+    /// owner records it, commits the entry through Central, dispatches each
+    /// recipient as its own delivery and — with no desktop involved — appends
+    /// each returned reply to the Flow. The attachment gate covers every
+    /// recipient session before the owner sees the request.
+    ConversationSend {
+        request: Value,
+    },
+    /// One request's per-recipient standing, reply so far and inclusion.
+    ConversationRead {
+        request_ref: String,
+    },
+    /// The requests bound to one Flow source, newest first.
+    ConversationList {
+        flow_ref: String,
+    },
+    /// Bring one request forward now; never replays an uncertain delivery.
+    ConversationReconcile {
+        request_ref: String,
+    },
     /// Resume the actually recorded native session identity. The owner refuses
     /// contradictory provider/space/cwd/command bases; a plain open with a
     /// recorded binding is refused first (`encounter.resume_required`).
@@ -564,7 +586,20 @@ pub enum PermissionDecision {
 impl EncounterRequest {
     fn sessions(&self) -> Vec<&str> {
         match self {
-            Self::Start | Self::Providers | Self::Health => Vec::new(),
+            Self::Start
+            | Self::Providers
+            | Self::Health
+            | Self::ConversationRead { .. }
+            | Self::ConversationList { .. }
+            | Self::ConversationReconcile { .. } => Vec::new(),
+            Self::ConversationSend { request } => request["recipients"]
+                .as_array()
+                .map(|rows| {
+                    rows.iter()
+                        .filter_map(|row| row["agent_session"].as_str())
+                        .collect()
+                })
+                .unwrap_or_default(),
             Self::Context { agent_session, .. } => {
                 agent_session.iter().map(String::as_str).collect()
             }
@@ -749,6 +784,49 @@ impl Client {
         self.provision_named(cwd, project_ref, preferred_body_ref, None)
     }
 
+    /// Bring a named roster agent into a shared Flow (O:I #558): a fresh
+    /// Agency session minted for exactly that agent, its resident opened, and
+    /// then the one sender and the one Flow source admitted to it. The
+    /// admission is the owner-side half of the person's "bring in" — it widens
+    /// nothing else, and a session that cannot be minted for the named agent
+    /// is refused rather than replaced by a generic chat.
+    pub fn provision_flow_participant(
+        &self,
+        cwd: &Path,
+        project_ref: &str,
+        agent_ref: &str,
+        preferred_body_ref: Option<&str>,
+        sender: &str,
+        flow_ref: &str,
+    ) -> Result<Value, String> {
+        let mut data =
+            self.provision_inner(cwd, project_ref, preferred_body_ref, None, Some(agent_ref))?;
+        let session = data["agent_session"]
+            .as_str()
+            .ok_or("Provisioning returned no AgentSession")?
+            .to_owned();
+        let admitted = self.session_space(
+            cwd,
+            &[
+                "encounter-agency-admit",
+                "--agent-session",
+                &session,
+                "--sender",
+                sender,
+                "--source-ref",
+                flow_ref,
+            ],
+        )?;
+        let admitted: Value = serde_json::from_str(&admitted)
+            .map_err(|error| format!("Unreadable AIKit admission response: {error}"))?;
+        let admitted = admitted.get("data").cloned().unwrap_or(admitted);
+        data["admission"] = admitted;
+        data["flow_ref"] = Value::String(flow_ref.to_owned());
+        data["sender"] = Value::String(sender.to_owned());
+        data["requested_agent_ref"] = Value::String(agent_ref.to_owned());
+        Ok(data)
+    }
+
     /// Exact native attachment identity lets a personal dialogue reopen without
     /// a renderer-owned session registry. Existing owner admission still applies.
     pub(crate) fn provision_named(
@@ -757,6 +835,19 @@ impl Client {
         project_ref: &str,
         preferred_body_ref: Option<&str>,
         named: Option<&crate::nara_dialogue::Binding>,
+    ) -> Result<Value, String> {
+        self.provision_inner(cwd, project_ref, preferred_body_ref, named, None)
+    }
+
+    /// `agent_ref` names the roster Agent to mint the Agency for (a Flow
+    /// participant); `named` names a personal dialogue's exact binding.
+    fn provision_inner(
+        &self,
+        cwd: &Path,
+        project_ref: &str,
+        preferred_body_ref: Option<&str>,
+        named: Option<&crate::nara_dialogue::Binding>,
+        agent_ref_override: Option<&str>,
     ) -> Result<Value, String> {
         let context = self.session_space(cwd, &["project-context"])?;
         let binding: Value = serde_json::from_str(&context)
@@ -820,7 +911,7 @@ impl Client {
                 Some(binding) => {
                     self.mint_agency_as(cwd, &agent_session, Some(&binding.expected_agent_ref))
                 }
-                None => self.mint_agency(cwd, &agent_session),
+                None => self.mint_agency_as(cwd, &agent_session, agent_ref_override),
             };
             match minted {
                 Ok(data) => (
@@ -833,6 +924,11 @@ impl Client {
                 Err(mint_refused) if named.is_some() => {
                     return Err(format!(
                         "The named personal Agent was not admitted: {mint_refused}"
+                    ));
+                }
+                Err(mint_refused) if agent_ref_override.is_some() => {
+                    return Err(format!(
+                        "The named Agent was not admitted to this Flow: {mint_refused}"
                     ));
                 }
                 Err(_mint_refused) => {
@@ -949,6 +1045,7 @@ impl Client {
     /// A stderr naming an unknown subcommand is the suite saying the verb
     /// does not exist in this installed cut — that verdict is cached for
     /// this process so later provisions fall back without re-probing.
+    #[cfg(test)]
     fn mint_agency(&self, cwd: &Path, agent_session: &str) -> Result<Value, String> {
         self.mint_agency_as(cwd, agent_session, None)
     }
@@ -1488,6 +1585,35 @@ mod tests {
 
     /// The mint success shape (`{"ok":true,"data":{...}}`) and the absent-verb
     /// verdict cache, against stub executables (configuration.rs's pattern).
+    #[test]
+    fn conversation_requests_are_the_owner_wire_contract_and_gate_every_recipient() {
+        let send = EncounterRequest::ConversationSend {
+            request: serde_json::json!({
+                "request_ref": "conversation/q",
+                "recipients": [
+                    {"participant_key": "p-ada", "agent_session": "agent-session/ada"},
+                    {"participant_key": "p-ash", "agent_session": "agent-session/ash"}
+                ]
+            }),
+        };
+        let wire = serde_json::to_value(&send).unwrap();
+        assert_eq!(wire["action"], "conversation-send");
+        assert_eq!(wire["request"]["request_ref"], "conversation/q", "carried verbatim, never re-keyed");
+        assert_eq!(
+            send.sessions(),
+            vec!["agent-session/ada", "agent-session/ash"],
+            "the attachment gate covers every recipient session before the owner sees the request"
+        );
+        for request in [
+            EncounterRequest::ConversationRead { request_ref: "conversation/q".into() },
+            EncounterRequest::ConversationList { flow_ref: "central:path:/x:Control/user/flows/f.html".into() },
+            EncounterRequest::ConversationReconcile { request_ref: "conversation/q".into() },
+        ] {
+            assert!(request.sessions().is_empty(), "a record read names no session to gate");
+        }
+        let back: EncounterRequest = serde_json::from_value(wire).unwrap();
+        assert_eq!(back, send);
+    }
     #[test]
     fn mint_agency_parses_success_and_caches_the_absent_verb() {
         let dir = std::env::temp_dir().join(format!("oi-mint-test-{}", std::process::id()));
