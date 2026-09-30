@@ -40,6 +40,7 @@ for (const testCase of fixtures.cases) {
       assert.equal(entry.authorKey, expect.author ?? entry.authorKey);
       if (expect.attribution) assert.equal(entry.attribution.basis, expect.attribution);
       if (expect.session) assert.equal(entry.attribution.session, expect.session);
+      if (expect.onBehalfOf) assert.deepEqual(entry.attribution.onBehalfOf, expect.onBehalfOf);
       if (expect.replyTo) assert.equal(entry.replyTo.entryId, expect.replyTo);
       if (expect.basisRevision !== undefined) assert.equal(entry.basisRevision, expect.basisRevision);
       if (expect.converges) assert.deepEqual(relationsOf(entry).filter(r => r.type === "converge").map(r => r.entryId), expect.converges);
@@ -102,12 +103,12 @@ test("reading a legacy document never mutates it", () => {
 });
 
 test("a portable copy carries only what the whole group may read and leaves the source untouched", () => {
-  const doc = {meta: {documentId: "d", title: "t", revision: 3, current: "e2", journalCurrent: "j1", format: {version: 4, minReader: 4},
-    participants: [{key: "a", initial: "A", kind: "person", name: "Ann"}, {key: "b", initial: "B", kind: "person", name: "Bea"}]},
+  const doc = {meta: {documentId: "d", title: "t", revision: 3, current: "e2", journalCurrent: "j1", embeddedPrivate: "EMBEDDED-SECRET", format: {version: 4, minReader: 4},
+    participants: [{key: "a", initial: "A", kind: "person", name: "Ann"}, {key: "b", initial: "B", kind: "agent", name: "Bea", ref: "agent-session/secret"}]},
     entries: [
       {id: "e1", author: "A", authorKey: "a", at: "2026-09-30T08:00:00.000Z", html: "<p>open</p>", replyTo: null, touched: false},
       {id: "e2", author: "A", authorKey: "a", at: "2026-09-30T08:01:00.000Z", html: "<p>PRIVATE</p>", replyTo: null, touched: false, audience: {keys: ["a"]}},
-      {id: "e3", author: "B", authorKey: "b", at: "2026-09-30T08:02:00.000Z", html: "<p>answer</p>", replyTo: {entryId: "e2", anchor: null}, relations: [{type: "reply", entryId: "e2"}, {type: "source", ref: "central:source:x"}], touched: false},
+      {id: "e3", author: "B", authorKey: "b", at: "2026-09-30T08:02:00.000Z", html: "<p>answer</p>", replyTo: {entryId: "e2", anchor: null}, relations: [{type: "reply", entryId: "e2"}, {type: "source", ref: "central:source:x"}], touched: false, attribution: {basis: "verified", agency: "agent/bea", session: "agent-session/secret", generation: "g1"}, request: {ref: "op-e3", digest: "stale"}},
       {id: "e4", author: "B", authorKey: "b", at: "2026-09-30T08:03:00.000Z", html: "<p>odd</p>", replyTo: null, touched: false, audience: "private"},
     ],
     notes: [{id: "n1", entryId: "e1", text: "<p>NOTE</p>"}], packet: [{id: "p1"}], media: [{id: "m1", entry: "e1"}], journal: [{id: "j1", html: "<p>JOURNAL</p>"}]};
@@ -118,8 +119,10 @@ test("a portable copy carries only what the whole group may read and leaves the 
   assert.deepEqual([copy.notes, copy.packet, copy.media, copy.journal], [[], [], [], []]);
   assert.equal(copy.entries[1].replyTo, null, "no reply left pointing at a withheld entry");
   assert.deepEqual(copy.entries[1].relations, [{type: "source", ref: "central:source:x"}]);
-  assert.ok(!JSON.stringify(copy).match(/PRIVATE|NOTE|JOURNAL/));
-  assert.deepEqual(validateDocument(copy).filter(i => i.code !== "legacy-format"), []);
+  assert.ok(!JSON.stringify(copy).match(/PRIVATE|NOTE|JOURNAL|EMBEDDED-SECRET|agent-session\/secret/));
+  assert.equal(copy.entries[1].attribution.agency, "agent/bea", "who answered travels; the machine's session does not");
+  assert.deepEqual(copy.meta.projection, {kind: "shared-copy", sourceDocumentId: "d", sourceRevision: 3, at: null, withheld: {entries: 2, journal: 1, notes: 1, packet: 1, media: 1}});
+  assert.deepEqual(validateDocument(copy).filter(i => i.code !== "legacy-format"), [], "an entry that lost a relation still validates: its digest follows");
 });
 
 test("reading a document with an audience this form does not know never throws and never publishes it", () => {

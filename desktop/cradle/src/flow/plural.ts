@@ -36,7 +36,7 @@ export interface Attribution {
   generation?: string | number;
   workcell?: string;
   /** Speaker and represented party are separate facts. */
-  onBehalfOf?: {key: string; authority: string};
+  onBehalfOf?: {key: string; authority: string; basis?: "declared"};
 }
 export type RelationType = "reply" | "branch" | "converge" | "correct" | "source" | "artifact";
 export const RELATION_TYPES: readonly string[] = ["reply", "branch", "converge", "correct", "source", "artifact"];
@@ -77,7 +77,7 @@ export type RefusalCode =
   | "observer-cannot-contribute" | "participant-left" | "unknown-addressee" | "unknown-audience-key"
   | "relation-target-missing" | "relation-revision-ahead" | "relation-shape" | "reply-multiple" | "converge-needs-two"
   | "request-conflict" | "duplicate-entry-id" | "empty-operation" | "attribution-overclaim" | "authentication-required"
-  | "invalid-relation-type" | "invalid-basis-revision" | "empty-contribution" | "unknown-behalf-of" | "invalid-audience";
+  | "invalid-relation-type" | "invalid-basis-revision" | "empty-contribution" | "unknown-behalf-of" | "invalid-audience" | "addressee-left";
 export class Refusal extends Error {
   code: RefusalCode;
   constructor(code: RefusalCode, message: string) {
@@ -405,13 +405,17 @@ export function appendContribution(doc: QlDoc, request: AppendRequest, caller: C
   if (request.basisRevision !== undefined && (!Number.isInteger(request.basisRevision) || request.basisRevision < 0 || request.basisRevision > doc.meta.revision)) throw new Refusal("invalid-basis-revision", "the basis revision must be a revision this document has reached");
   if (request.audience !== undefined && request.audience !== "group" && !(request.audience && Array.isArray((request.audience as {keys?: unknown}).keys))) throw new Refusal("invalid-audience", "an audience is \"group\" or a list of participant keys");
   const claimedBehalf = request.attribution?.onBehalfOf;
-  if (claimedBehalf && (!participants.some(p => p.key === claimedBehalf.key) || claimedBehalf.key === author.key || !String(claimedBehalf.authority ?? "").trim())) throw new Refusal("unknown-behalf-of", "on behalf of names another participant and the authority claimed");
-  const behalf = claimedBehalf ? {key: claimedBehalf.key, authority: claimedBehalf.authority} : undefined;
+  if (claimedBehalf && (!participants.some(p => p.key === claimedBehalf.key && !p.left) || claimedBehalf.key === author.key || !String(claimedBehalf.authority ?? "").trim())) throw new Refusal("unknown-behalf-of", "on behalf of names another participant who is still here, and the authority claimed");
+  // The authority is the caller's own statement, never something the owner checked.
+  const behalf = claimedBehalf ? {key: claimedBehalf.key, authority: claimedBehalf.authority, basis: "declared" as const} : undefined;
   const attribution = checkCaller(author, caller, request, participants);
   const ids = new Set(doc.entries.map(e => e.id));
   if (ids.has(probe.id)) throw new Refusal("duplicate-entry-id", `entry ${probe.id} already exists`);
   const keys = new Set(participants.map(p => p.key));
-  (request.addressees ?? []).forEach(key => { if (!keys.has(key)) throw new Refusal("unknown-addressee", `no participant ${key}`); });
+  (request.addressees ?? []).forEach(key => {
+    if (!keys.has(key)) throw new Refusal("unknown-addressee", `no participant ${key}`);
+    if (participants.find(p => p.key === key)?.left) throw new Refusal("addressee-left", `${key} has left this flow and cannot be asked`);
+  });
   if (request.audience && request.audience !== "group") request.audience.keys.forEach(key => { if (!keys.has(key)) throw new Refusal("unknown-audience-key", `no participant ${key}`); });
   relations.forEach(relation => {
     if (!RELATION_TYPES.includes(relation.type)) throw new Refusal("invalid-relation-type", `${String(relation.type)} is not a relation this form knows`);
@@ -573,15 +577,30 @@ function audienceOf(entry: PluralEntry): "group" | string[] {
  * with no journal, notes, context packet, media or derived cursors — and no
  * relation left pointing at an entry that was withheld. The complete copy stays
  * the person's own. */
-export function portableCopy(doc: QlDoc): QlDoc {
+export function portableCopy(doc: QlDoc, at?: string): QlDoc {
   const next = JSON.parse(JSON.stringify(doc)) as Doc;
+  const total = (next.entries as PluralEntry[]).length;
+  const withheld = {entries: 0, journal: (next.journal ?? []).length, notes: (next.notes ?? []).length, packet: (next.packet ?? []).length, media: (next.media ?? []).length};
   const open = new Set((next.entries as PluralEntry[]).filter(e => audienceOf(e) === "group").map(e => e.id));
+  withheld.entries = total - open.size;
   next.entries = (next.entries as PluralEntry[]).filter(e => open.has(e.id)).map(e => {
+    const relationsBefore = JSON.stringify(relationsOf(e));
     if (e.relations) { e.relations = e.relations.filter(r => !r.entryId || open.has(r.entryId)); if (!e.relations.length) delete e.relations; }
     if (e.replyTo && !open.has(e.replyTo.entryId)) e.replyTo = null;
+    // What an entry is, once a withheld relation is gone, is a different request: its digest follows.
+    if (e.request && JSON.stringify(relationsOf(e)) !== relationsBefore) e.request = {...e.request, digest: requestDigest(e)};
+    // The producing session and connection belong to the owner's machine, not to a copy handed on.
+    if (e.attribution) { delete e.attribution.session; delete e.attribution.generation; }
     return e;
   });
+  (next.meta.participants as PluralParticipant[] | undefined)?.forEach(p => { delete p.ref; });
   next.journal = []; next.notes = []; next.packet = []; next.media = [];
+  // Only the form's own meta travels; unknown embedded keys may hold anything.
+  const known = ["documentId", "created", "title", "revision", "view", "current", "journalCurrent", "exported", "template", "format", "participants", "upgrade"];
+  const meta = next.meta as unknown as Record<string, unknown>;
+  for (const key of Object.keys(meta)) if (!known.includes(key)) delete meta[key];
   next.meta.current = null; next.meta.journalCurrent = null;
+  // A projection says it is one: the same document, read through what the whole group may see.
+  meta.projection = {kind: "shared-copy", sourceDocumentId: doc.meta.documentId ?? null, sourceRevision: doc.meta.revision, at: at ?? null, withheld};
   return next;
 }
