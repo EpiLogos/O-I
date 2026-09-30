@@ -1,0 +1,449 @@
+{
+ "recorded_at": "2026-09-30T19:56:51.978Z",
+ "flow": "central:path:/private/tmp/plural-flow-lab5/central:Control/user/flows/flow-acceptance.html",
+ "document_id": "flow-acceptance-4e9d9a648faf",
+ "revision": 32,
+ "digest": "c204db8cd36c70c57e16490a037163e96fa24d83691f778bdd248c048639df75",
+ "entries": [
+  {
+   "id": "e-1f6cac2b4b4895cfd4df5e15",
+   "author": "Ann",
+   "attribution": {
+    "basis": "declared"
+   },
+   "addressees": [
+    "p-61ab857bdef81096",
+    "p-90bde904c1b08a6b"
+   ],
+   "request": {
+    "digest": "09be285bd547ae0fd20b4667b952c8cc6f791d5ad11e8fe0e1431846a8a30f72",
+    "ref": "conv-entry:conversation/pf-ask-1790794804484"
+   },
+   "words": 324
+  },
+  {
+   "id": "e-7c6660426d413a141be5c9ac",
+   "author": "Ada",
+   "attribution": {
+    "agency": "agent/ada-lin",
+    "basis": "verified",
+    "generation": "01M3SV03GZ91DFN5SHY64K45FJ",
+    "session": "agent-session/pf-ada"
+   },
+   "relations": [
+    {
+     "anchor": null,
+     "entryId": "e-1f6cac2b4b4895cfd4df5e15",
+     "revision": 5,
+     "type": "reply"
+    }
+   ],
+   "addressees": [
+    "p-e4948043523a790e"
+   ],
+   "request": {
+    "digest": "c5a866047a0e469728a50e82c1c4ee758fe2e2ca874a0215290388e289b1ecff",
+    "ref": "conv-reply:conversation/pf-ask-1790794804484:p-61ab857bdef81096"
+   },
+   "words": 750
+  },
+  {
+   "id": "e-cf7580a360c2067aeabeae51",
+   "author": "Ash",
+   "attribution": {
+    "agency": "agent/ash-kay",
+    "basis": "verified",
+    "generation": "01M3SV081ABJDCSM4NRQKVZWG4",
+    "session": "agent-session/pf-ash"
+   },
+   "relations": [
+    {
+     "anchor": null,
+     "entryId": "e-1f6cac2b4b4895cfd4df5e15",
+     "revision": 5,
+     "type": "reply"
+    }
+   ],
+   "addressees": [
+    "p-e4948043523a790e"
+   ],
+   "request": {
+    "digest": "19c6fba1b51b23f91abd8eaf24e951c652451cb4d24e877360949c91f6f24423",
+    "ref": "conv-reply:conversation/pf-ask-1790794804484:p-90bde904c1b08a6b"
+   },
+   "words": 687
+  },
+  {
+   "id": "e-348323be0999c5aedf126a8a",
+   "author": "Ann",
+   "attribution": {
+    "basis": "declared"
+   },
+   "relations": [
+    {
+     "anchor": null,
+     "entryId": "e-7c6660426d413a141be5c9ac",
+     "revision": 7,
+     "type": "branch"
+    }
+   ],
+   "addressees": [
+    "p-61ab857bdef81096"
+   ],
+   "request": {
+    "digest": "837ede0b2351684e0c1d7ff0a45445ebd326bfd4f7eb6ecad58da96682e27701",
+    "ref": "conv-entry:conversation/pf-side-1790794826341"
+   },
+   "words": 121
+  },
+  {
+   "id": "e-4301f2ffb2dba7781d18dd51",
+   "author": "Ada",
+   "attribution": {
+    "agency": "agent/ada-lin",
+    "basis": "verified",
+    "generation": "01M3SV03GZ91DFN5SHY64K45FJ",
+    "session": "agent-session/pf-ada"
+   },
+   "relations": [
+    {
+     "anchor": null,
+     "entryId": "e-348323be0999c5aedf126a8a",
+     "revision": 8,
+     "type": "reply"
+    }
+   ],
+   "addressees": [
+    "p-e4948043523a790e"
+   ],
+   "request": {
+    "digest": "ab6dc82a16d809cd540ddd82777644639e16b0b3d50c54ed1050c19c3a1b49fc",
+    "ref": "conv-reply:conversation/pf-side-1790794826341:p-61ab857bdef81096"
+   },
+   "words": 475
+  },
+  {
+   "id": "e-5663aa2d69c49be618eb348d",
+   "author": "Ann",
+   "attribution": {
+    "basis": "declared"
+   },
+   "relations": [
+    {
+     "entryId": "e-7c6660426d413a141be5c9ac",
+     "revision": 9,
+     "type": "converge"
+    },
+    {
+     "entryId": "e-cf7580a360c2067aeabeae51",
+     "revision": 9,
+     "type": "converge"
+    },
+    {
+     "entryId": "e-4301f2ffb2dba7781d18dd51",
+     "revision": 9,
+     "type": "converge"
+    }
+   ],
+   "addressees": [
+    "p-90bde904c1b08a6b"
+   ],
+   "request": {
+    "digest": "c670eb5cbf55471ad8692d9571f59310200ede9ebb8b7d24d023b75433403bfe",
+    "ref": "conv-entry:conversation/pf-join-1790794842174"
+   },
+   "words": 150
+  },
+  {
+   "id": "e-fefc82d165494b35436242c4",
+   "author": "Ash",
+   "attribution": {
+    "agency": "agent/ash-kay",
+    "basis": "verified",
+    "generation": "01M3SV081ABJDCSM4NRQKVZWG4",
+    "session": "agent-session/pf-ash"
+   },
+   "relations": [
+    {
+     "anchor": null,
+     "entryId": "e-5663aa2d69c49be618eb348d",
+     "revision": 10,
+     "type": "reply"
+    }
+   ],
+   "addressees": [
+    "p-e4948043523a790e"
+   ],
+   "request": {
+    "digest": "db336bf5fcd82279664de124b74ce4df851780ae6b3c5e68b6b78986666adfbc",
+    "ref": "conv-reply:conversation/pf-join-1790794842174:p-90bde904c1b08a6b"
+   },
+   "words": 570
+  },
+  {
+   "id": "e-4e222c444fc245061d4dad2a",
+   "author": "Ann",
+   "attribution": {
+    "basis": "declared"
+   },
+   "addressees": [
+    "p-90bde904c1b08a6b"
+   ],
+   "request": {
+    "digest": "21a7acc73f1ddca58ab890364248eb6cda3876d367c43e643f2dc2887fca93b0",
+    "ref": "conv-entry:conversation/pf-changed-1790794855448"
+   },
+   "words": 219
+  },
+  {
+   "id": "e-2334a5385ac90c7bdd04021d",
+   "author": "Ann",
+   "attribution": {
+    "basis": "declared"
+   },
+   "relations": [
+    {
+     "entryId": "e-4e222c444fc245061d4dad2a",
+     "revision": 12,
+     "type": "correct"
+    }
+   ],
+   "request": {
+    "digest": "631a3bee055d3b52e875c8dfb8abeefb163ab536b82ca8113195587e7c84ad1b",
+    "ref": "pf-correct-1790794856119"
+   },
+   "words": 62
+  },
+  {
+   "id": "e-1cae9ec1009029a1ddaa3a48",
+   "author": "Ash",
+   "attribution": {
+    "agency": "agent/ash-kay",
+    "basis": "verified",
+    "generation": "01M3SV081ABJDCSM4NRQKVZWG4",
+    "session": "agent-session/pf-ash"
+   },
+   "relations": [
+    {
+     "anchor": null,
+     "entryId": "e-4e222c444fc245061d4dad2a",
+     "revision": 12,
+     "type": "reply"
+    }
+   ],
+   "addressees": [
+    "p-e4948043523a790e"
+   ],
+   "request": {
+    "digest": "ed9d339cfb80b2c68e596d2303d5784cec12ad69cc0b1b0d6b9c4c2c6263fec2",
+    "ref": "conv-reply:conversation/pf-changed-1790794855448:p-90bde904c1b08a6b"
+   },
+   "words": 1137
+  },
+  {
+   "id": "e-2ea2660c56183aa7e91e4ba4",
+   "author": "Ann",
+   "attribution": {
+    "basis": "declared"
+   },
+   "addressees": [
+    "p-61ab857bdef81096"
+   ],
+   "request": {
+    "digest": "7009f83df550dfe3357882f8c5d24eab602d6193764c118dc5b33640681e1328",
+    "ref": "conv-entry:conversation/pf-fresh-1790794881098"
+   },
+   "words": 322
+  },
+  {
+   "id": "e-6c56f5d3fb41298fdc5fad84",
+   "author": "Ada",
+   "attribution": {
+    "agency": "agent/ada-lin",
+    "basis": "verified",
+    "generation": "01M3SV2F9NH2V5BZVH5DNG31QM",
+    "session": "agent-session/pf-ada-fresh"
+   },
+   "relations": [
+    {
+     "anchor": null,
+     "entryId": "e-2ea2660c56183aa7e91e4ba4",
+     "revision": 16,
+     "type": "reply"
+    }
+   ],
+   "addressees": [
+    "p-e4948043523a790e"
+   ],
+   "request": {
+    "digest": "3b6dc94dce643e8844a59a5ce689f015021e61ce687752faa033b196398a9ab8",
+    "ref": "conv-reply:conversation/pf-fresh-1790794881098:p-61ab857bdef81096"
+   },
+   "words": 526
+  },
+  {
+   "id": "e-88caeeaec76d7971dd35b269",
+   "author": "Ann",
+   "attribution": {
+    "basis": "declared"
+   },
+   "addressees": [
+    "p-f5e1c4d530515563"
+   ],
+   "request": {
+    "digest": "567fe7250b135ccf0d07f1e4d40b23c629cd57991e8284ec234a8e68ec5fedbb",
+    "ref": "conv-entry:conversation/pf-fresh-participant-1790794905052"
+   },
+   "words": 365
+  },
+  {
+   "id": "e-630cd2fecd17f434198e3e61",
+   "author": "Cy",
+   "attribution": {
+    "agency": "agent/cy-wren",
+    "basis": "verified",
+    "generation": "01M3SV3AM6SWA9AE3HPVTHHH30",
+    "session": "agent-session/pf-cy"
+   },
+   "relations": [
+    {
+     "anchor": null,
+     "entryId": "e-88caeeaec76d7971dd35b269",
+     "revision": 20,
+     "type": "reply"
+    }
+   ],
+   "addressees": [
+    "p-e4948043523a790e"
+   ],
+   "request": {
+    "digest": "3d24441d710ee22bb57da94f7527a866023022388134b00c668cd9df182fc0ff",
+    "ref": "conv-reply:conversation/pf-fresh-participant-1790794905052:p-f5e1c4d530515563"
+   },
+   "words": 690
+  },
+  {
+   "id": "e-a79af2d9908d4512b9e13b16",
+   "author": "Bea",
+   "attribution": {
+    "basis": "verified"
+   },
+   "request": {
+    "digest": "5d04ce8e2c43ceecc6f4c6a5ad18b0404d67f5d2ca9edbaba6b099f38155b349",
+    "ref": "bea-1790794940938"
+   },
+   "words": 92
+  },
+  {
+   "id": "e-f684b20bbc271297b84b5c39",
+   "author": "Ann",
+   "attribution": {
+    "basis": "declared"
+   },
+   "addressees": [
+    "p-29baddb760479ea5"
+   ],
+   "request": {
+    "digest": "e47ee3f3b287d578b7fc6519f9a1e11fa5e5859ff3afe9d178437f459848e054",
+    "ref": "conv-entry:conversation/pf-worldb-1790794941177"
+   },
+   "words": 217
+  },
+  {
+   "id": "e-25d5deb50884b9a9afb1a323",
+   "author": "Bo",
+   "attribution": {
+    "agency": "agent/bo-ray",
+    "basis": "verified",
+    "generation": "01M3SV4F728K145H0EP4A67TW5",
+    "session": "agent-session/pf-bo",
+    "workcell": "workcell:mac"
+   },
+   "relations": [
+    {
+     "anchor": null,
+     "entryId": "e-f684b20bbc271297b84b5c39",
+     "revision": 26,
+     "type": "reply"
+    }
+   ],
+   "addressees": [
+    "p-e4948043523a790e"
+   ],
+   "request": {
+    "digest": "f2b9e8be7bd60ed31c48b1223d6bacb9cf9b28c2e0cff17d175c951c9c6fd056",
+    "ref": "conv-reply:conversation/pf-worldb-1790794941177:p-29baddb760479ea5"
+   },
+   "words": 463
+  },
+  {
+   "id": "e-84fac721229a3ea650302c93",
+   "author": "Ann",
+   "attribution": {
+    "basis": "declared"
+   },
+   "addressees": [
+    "p-61ab857bdef81096",
+    "p-a5be7dbb21b1e69e"
+   ],
+   "request": {
+    "digest": "4815853f75b402a2ae9213db1c61d877a50a7abf06b7abd81081f1688a5dbcec",
+    "ref": "conv-entry:conversation/pf-remote-1790798174051"
+   },
+   "words": 274
+  },
+  {
+   "id": "e-47c9a92c94a445cfa9171c03",
+   "author": "Ada",
+   "attribution": {
+    "agency": "agent/ada-lin",
+    "basis": "verified",
+    "generation": "01M3SV2F9NH2V5BZVH5DNG31QM",
+    "session": "agent-session/pf-ada-fresh"
+   },
+   "relations": [
+    {
+     "anchor": null,
+     "entryId": "e-84fac721229a3ea650302c93",
+     "revision": 30,
+     "type": "reply"
+    }
+   ],
+   "addressees": [
+    "p-e4948043523a790e"
+   ],
+   "request": {
+    "digest": "5b59bb66884430849be7ce16e7e8f96dfeeaf8957da795b67d2e9c1ce7780d93",
+    "ref": "conv-reply:conversation/pf-remote-1790798174051:p-61ab857bdef81096"
+   },
+   "words": 555
+  },
+  {
+   "id": "e-73d24e88c60703e65d3cad18",
+   "author": "Ash (Omarchy)",
+   "attribution": {
+    "agency": "agent/ash-omarchy",
+    "basis": "verified",
+    "generation": "01M3S8EAVTFWV7GP4SW5R5X39E",
+    "session": "agent-session/pf-ash-o",
+    "workcell": "workcell:omarchy"
+   },
+   "relations": [
+    {
+     "anchor": null,
+     "entryId": "e-84fac721229a3ea650302c93",
+     "revision": 30,
+     "type": "reply"
+    }
+   ],
+   "addressees": [
+    "p-e4948043523a790e"
+   ],
+   "request": {
+    "digest": "43794ef32bb269b1065954a4b59a3abac9db9d081c13ceb64261ed86335c4fbb",
+    "ref": "conv-reply:conversation/pf-remote-1790798174051:p-a5be7dbb21b1e69e"
+   },
+   "words": 414
+  }
+ ]
+}
