@@ -808,10 +808,11 @@ var QlPlural = (() => {
     next.packet = [];
     next.media = [];
     const known = ["documentId", "created", "title", "revision", "view", "current", "journalCurrent", "exported", "template", "format", "participants", "upgrade"];
-    for (const key of Object.keys(next.meta)) if (!known.includes(key)) delete next.meta[key];
+    const meta = next.meta;
+    for (const key of Object.keys(meta)) if (!known.includes(key)) delete meta[key];
     next.meta.current = null;
     next.meta.journalCurrent = null;
-    next.meta.projection = { kind: "shared-copy", sourceDocumentId: doc.meta.documentId ?? null, sourceRevision: doc.meta.revision, at: at ?? null, withheld };
+    meta.projection = { kind: "shared-copy", sourceDocumentId: doc.meta.documentId ?? null, sourceRevision: doc.meta.revision, at: at ?? null, withheld };
     return next;
   }
   return __toCommonJS(stdin_exports);

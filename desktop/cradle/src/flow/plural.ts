@@ -597,9 +597,10 @@ export function portableCopy(doc: QlDoc, at?: string): QlDoc {
   next.journal = []; next.notes = []; next.packet = []; next.media = [];
   // Only the form's own meta travels; unknown embedded keys may hold anything.
   const known = ["documentId", "created", "title", "revision", "view", "current", "journalCurrent", "exported", "template", "format", "participants", "upgrade"];
-  for (const key of Object.keys(next.meta)) if (!known.includes(key)) delete (next.meta as Record<string, unknown>)[key];
+  const meta = next.meta as unknown as Record<string, unknown>;
+  for (const key of Object.keys(meta)) if (!known.includes(key)) delete meta[key];
   next.meta.current = null; next.meta.journalCurrent = null;
   // A projection says it is one: the same document, read through what the whole group may see.
-  (next.meta as Record<string, unknown>).projection = {kind: "shared-copy", sourceDocumentId: doc.meta.documentId ?? null, sourceRevision: doc.meta.revision, at: at ?? null, withheld};
+  meta.projection = {kind: "shared-copy", sourceDocumentId: doc.meta.documentId ?? null, sourceRevision: doc.meta.revision, at: at ?? null, withheld};
   return next;
 }
