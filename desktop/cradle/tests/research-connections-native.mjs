@@ -41,7 +41,11 @@ try{
  loseNext=true;await assert.rejects(()=>work.editConnections([{change:'relation_bind',binding:changed}]),/Reply lost/);
  const saved=JSON.parse(await readFile(checkpoint,'utf8'));assert.equal(saved.pending.kind,'connections');
  const recovered=new NativeWorking(ports);recovered.restore(saved,first.journey);const callsBeforeInspect=calls;
- assert.match(await recovered.inspectPending(),/Recovered the exact native connection/);assert.equal(calls-callsBeforeInspect,1,'recovery reads without replaying mutation');
+ // Accepted recovery policy (Factory Expressions commission, 2026-09-27): an
+ // interrupted edit settles on the owner's current document — read once,
+ // never replayed; the lost edit is present because the owner applied it.
+ assert.match(await recovered.inspectPending(),/owner’s current document is now the working basis\. Nothing was replayed/);assert.equal(calls-callsBeforeInspect,1,'recovery reads without replaying mutation');
+ assert.equal(recovered.state.pending,undefined,'recovery settles the interrupted intent');
  assert.deepEqual(recovered.state.view.document.relations[binding.binding_ref],changed);
  await recovered.select({scene_ref:recovered.state.view.document.scenes[0].scene_ref,binding_ref:binding.binding_ref});
  const removed=await recovered.editConnections([{change:'relation_remove',binding_ref:binding.binding_ref}]);
@@ -55,11 +59,17 @@ try{
  const stale=new NativeWorking(ports);stale.restore(recovered.state,recovered.state.view.journey);
  await native({operation:'edit',expression_ref:stable.expression_ref,expected_revision:stable.revision,actor:'human:concurrent-proof',changes:[{change:'rename',title:'Concurrent native title'}]});
  await assert.rejects(()=>stale.editConnections([{change:'relation_remove',binding_ref:binding.binding_ref}]));
- assert.equal(stale.state.pending.kind,'connections');await assert.rejects(()=>stale.inspectPending(),/revision_conflict/);
+ // A concurrent owner edit is adopted as the basis, never overwritten and
+ // never replayed over; the refused local edit is not re-sent.
+ assert.equal(stale.state.pending.kind,'connections');
+ const staleCheckpoint=clone(stale.state);
+ const beforeStale=calls;assert.match(await stale.inspectPending(),/owner’s current document is now the working basis/);
+ assert.equal(calls-beforeStale,1,'stale recovery reads once and replays nothing');
+ assert.equal(stale.state.view.document.title,'Concurrent native title','the concurrent owner edit is the adopted basis');
  assert.equal((await native({operation:'inspect',expression_ref:stable.expression_ref})).document.title,'Concurrent native title');
  // A real owner process restart forgets its open drafts. Reopen the exact
  // acknowledged checkpoint, preserving local unsaved material and pending intent.
- const restartRecord=stale.state,localDraft=clone(restartRecord.view.journey);
+ const restartRecord=staleCheckpoint,localDraft=clone(restartRecord.view.journey);
  localDraft.scenes[0].entities[0].text='Uncommitted local text retained through restart';
  await assert.rejects(()=>new NativeWorking(ports).reopenCheckpoint(restartRecord,localDraft),'a recovery checkpoint cannot replace independently changed open native work');
  assert.equal((await native({operation:'inspect',expression_ref:stable.expression_ref})).document.title,'Concurrent native title');

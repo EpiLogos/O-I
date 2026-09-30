@@ -163,9 +163,14 @@ export function installNativeWorkspace(host:NativeWorkspaceHost){
   if(recovered?.record?.view&&(recovered.record.pending||prepareCompositionEdit(recovered.record.view,recovered.journey).changes.length)){
    await writeDraft({...clone(recovered.journey),id:retainedDraftId(recovered.journey.id,Date.now()),name:`${recovered.journey.name} (unsaved)`.slice(0,160)});
   }
+  // Whether an act performs this Expression is read BEFORE the basis moves:
+  // adopting the native basis and loading it into the field are one step, as
+  // in `adopt`. Awaiting between them left the frame reporting (and saving
+  // against) the new Expression while it still showed the previous document.
+  const performing=await actPerforms(reference);
   if(generation!==followGeneration)return;
   const view=await work.adopt(raw,undefined,()=>generation===followGeneration);
-  readThrough=await actPerforms(reference)?reference:null;
+  readThrough=performing?reference:null;
   restoreGeneration++;selections.cancel();host.load(view);markLoaded();host.followed?.(reference,!!readThrough);
   status(`${readThrough?'Following':'Opened'} ${raw.title} at revision ${raw.revision}.${readThrough?' An act is performing it: this view reads through and never commits into it.':''}`);update();
  };
