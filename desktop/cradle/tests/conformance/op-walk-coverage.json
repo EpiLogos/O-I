@@ -525,6 +525,15 @@
       "reason": "No directly attributable executed native walk is recorded here for flow_changed_since; retain explicit operation-specific coverage debt until its owner supplies a receipt."
     },
     {
+      "op": "flow_participant_provision",
+      "native_owner": "kernel/src/agency.rs",
+      "spec_ref": "docs/cradle/02-ARCHITECTURE.md §5; docs/cradle/04-VERIFICATION.md; canonical plan Lane A §3",
+      "status": "referenced",
+      "scenarios": ["walk/scenarios/plural-flow.mjs"],
+      "owner_lane": "A/native verification",
+      "reason": "The plural-flow walk brings two registered agents into a flow through this operation over the real kernel and a candidate AIKit owner, then reads their answers back."
+    },
+    {
       "op": "git_diff_read",
       "native_owner": "kernel/src/git.rs",
       "spec_ref": "cradle-ui-research-video-computer-diff-2026-09-23-1028.md \u00a73",
