@@ -118,6 +118,9 @@ impl Refusal {
 }
 
 pub struct ParticipationRequest<'a> {
+    /// The Agent to read, as `agent:<slug>` or `agent/<slug>` — both
+    /// spellings are accepted and resolve to the ref Central stores, which
+    /// is the canonical form used in the returned reading.
     pub agent_ref: &'a str,
     pub world_ref: Option<&'a str>,
     /// Where the praxis profile input is written for `aikit praxis disclose`.
@@ -224,6 +227,15 @@ fn project_of(world_ref: &str) -> Option<&str> {
     world_ref.strip_prefix("project:")
 }
 
+/// The slug an Agent ref names under either accepted spelling:
+/// `agent:<slug>` and `agent/<slug>` are two spellings of one ref. `None`
+/// for a ref in neither form.
+fn agent_ref_slug(agent_ref: &str) -> Option<&str> {
+    agent_ref
+        .strip_prefix("agent:")
+        .or_else(|| agent_ref.strip_prefix("agent/"))
+}
+
 fn dimension(state: &str, basis: Vec<String>, reading: impl Into<String>) -> Value {
     json!({"state": state, "basis": basis, "reading": reading.into()})
 }
@@ -247,13 +259,27 @@ pub const CITIZENSHIP_DIMENSIONS: [&str; 11] = [
     "continuity",
 ];
 
+/// The profile rows a roster carries; an envelope without `profiles` reads
+/// as an empty roster rather than a failure.
+fn roster_profiles(roster: &Value) -> std::slice::Iter<'_, Value> {
+    roster["profiles"]
+        .as_array()
+        .map(Vec::as_slice)
+        .unwrap_or(&[])
+        .iter()
+}
+
 /// Locate the Agent's Central roster entry: the personal register first,
-/// then the selected World's Project register.
+/// then the selected World's Project register. An agent ref is accepted in
+/// either spelling (`agent:<slug>` or `agent/<slug>`); the exact stored
+/// spelling matches first, then the same slug under the other spelling.
+/// The returned ref is Central's stored spelling — the canonical form every
+/// downstream read and displayed ref uses.
 fn find_profile(
     reader: &mut Reader<'_>,
     agent_ref: &str,
     world_ref: Option<&str>,
-) -> Result<(Value, &'static str, Option<String>), Refusal> {
+) -> Result<(Value, &'static str, Option<String>, String), Refusal> {
     let mut scopes: Vec<(Value, &'static str, Option<String>)> =
         vec![(json!({"scope": "root"}), "root", None)];
     if let Some(project) = world_ref.and_then(project_of) {
@@ -264,17 +290,37 @@ fn find_profile(
         ));
     }
     let mut failures = Vec::new();
+    let mut rosters: Vec<(Value, &'static str, Option<String>)> = Vec::new();
     for (input, scope, project) in scopes {
         match reader.central("agent-profile.roster", input) {
-            Ok(roster) => {
-                if let Some(entry) = roster["profiles"].as_array().and_then(|rows| {
-                    rows.iter()
-                        .find(|row| row["profile"]["agent_ref"].as_str() == Some(agent_ref))
-                }) {
-                    return Ok((entry.clone(), scope, project));
-                }
-            }
+            Ok(roster) => rosters.push((roster, scope, project)),
             Err(failure) => failures.push(failure),
+        }
+    }
+    let profiles = roster_profiles;
+    // The spelling Central stores is authoritative ...
+    for (roster, scope, project) in &rosters {
+        if let Some(entry) =
+            profiles(roster).find(|row| row["profile"]["agent_ref"].as_str() == Some(agent_ref))
+        {
+            return Ok((entry.clone(), scope, project.clone(), agent_ref.to_owned()));
+        }
+    }
+    // ... then the same slug under the other spelling of the ref.
+    if let Some(slug) = agent_ref_slug(agent_ref) {
+        for (roster, scope, project) in &rosters {
+            if let Some(entry) = profiles(roster).find(|row| {
+                row["profile"]["agent_ref"]
+                    .as_str()
+                    .and_then(agent_ref_slug)
+                    == Some(slug)
+            }) {
+                let canonical = entry["profile"]["agent_ref"]
+                    .as_str()
+                    .unwrap_or(agent_ref)
+                    .to_owned();
+                return Ok((entry.clone(), scope, project.clone(), canonical));
+            }
         }
     }
     if let Some(failure) = failures.first() {
@@ -303,9 +349,11 @@ pub fn compose_participation(
         runner,
         facets: Vec::new(),
     };
-    let agent_ref = request.agent_ref;
-    let (entry, register, register_project) =
-        find_profile(&mut reader, agent_ref, request.world_ref)?;
+    // The ref as Central stores it: the request may have spelled it the
+    // other way (`agent/x` for a stored `agent:x`, or vice versa), and every
+    // downstream read and displayed ref keeps the canonical spelling.
+    let (entry, register, register_project, agent_ref) =
+        find_profile(&mut reader, request.agent_ref, request.world_ref)?;
     let roster_profile = entry["profile"].clone();
     let profile_ref = text(&roster_profile["ref"]).unwrap_or_default();
 
@@ -351,7 +399,7 @@ pub fn compose_participation(
         let record = &position["record"];
         strings(&record["eligible_agent_refs"])
             .iter()
-            .any(|a| a == agent_ref)
+            .any(|a| a == &agent_ref)
             || (!profile_ref.is_empty() && record["profile_ref"].as_str() == Some(&profile_ref))
     };
     let eligible: Vec<Value> = world_positions
@@ -402,13 +450,15 @@ pub fn compose_participation(
     let held: Vec<&Value> = listed
         .iter()
         .filter(|p| {
-            p["state"] == "occupied" && p["current"]["agent_ref"].as_str() == Some(agent_ref)
+            p["state"] == "occupied"
+                && p["current"]["agent_ref"].as_str() == Some(agent_ref.as_str())
         })
         .collect();
     let others: Vec<&Value> = listed
         .iter()
         .filter(|p| {
-            p["state"] == "occupied" && p["current"]["agent_ref"].as_str() != Some(agent_ref)
+            p["state"] == "occupied"
+                && p["current"]["agent_ref"].as_str() != Some(agent_ref.as_str())
         })
         .collect();
     let occupied: Vec<Value> = held
@@ -460,7 +510,7 @@ pub fn compose_participation(
     // ---- AIKit: praxis disclosure over the exact profile -------------------
     let profile_file = request
         .scratch_dir
-        .join(format!("agent-profile-{}.json", sanitize(agent_ref)));
+        .join(format!("agent-profile-{}.json", sanitize(&agent_ref)));
     let disclosure = match std::fs::write(
         &profile_file,
         serde_json::to_vec_pretty(&read).unwrap_or_default(),
