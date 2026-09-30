@@ -43,6 +43,7 @@ for (const testCase of fixtures.cases) {
       if (expect.replyTo) assert.equal(entry.replyTo.entryId, expect.replyTo);
       if (expect.basisRevision !== undefined) assert.equal(entry.basisRevision, expect.basisRevision);
       if (expect.converges) assert.deepEqual(relationsOf(entry).filter(r => r.type === "converge").map(r => r.entryId), expect.converges);
+      for (const key of expect.noBinding ?? []) assert.notEqual(next.meta.participants.find(p => p.key === key).binding?.basis, "verified", "an unauthenticated caller binds no one");
       for (const [key, ref] of Object.entries(expect.binds ?? {})) assert.equal(next.meta.participants.find(p => p.key === key).binding.ref, ref);
       assert.equal(next.meta.revision, doc.meta.revision + 1);
       // Every other entry and collection survives byte for byte.

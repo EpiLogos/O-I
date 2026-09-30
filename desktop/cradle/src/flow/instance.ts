@@ -63,11 +63,11 @@ const QL_DOC = /<script type="application\/json" id="ql-doc">([\s\S]*?)<\/script
 export function parseInstance(html: string): QlDoc {
   const match = html.match(QL_DOC);
   if (!match) throw new Error("This file is not a 0/1 dialogue/flow document — its embedded document state is missing.");
-  return JSON.parse(match[1].replace(/<\\\/script/gi, "</script")) as QlDoc;
+  return JSON.parse(match[1].replace(/<\\\/script/gi, "</script").replace(/<\\!--/g, "<!--")) as QlDoc;
 }
 export function embedDocument(shell: string, doc: QlDoc): string {
   if (!QL_DOC.test(shell)) throw new Error("This file is not a 0/1 dialogue/flow document — its embedded document state is missing.");
-  const json = JSON.stringify(doc).replace(/<\/script/gi, "<\\/script").replace(/<!--/g, "<\\!--");
+  const json = JSON.stringify(doc).replace(/<\/script/gi, "<\\/script").replace(/<!--/g, "<\\u0021--");
   return shell.replace(QL_DOC, () => '<script type="application/json" id="ql-doc">' + json + "</script>");
 }
 const escapeHtml = (s: string) => s.replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c] as string);

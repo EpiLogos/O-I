@@ -75,7 +75,7 @@ export type RefusalCode =
   | "legacy-format" | "unsupported-format" | "unknown-author" | "author-not-caller" | "impersonation"
   | "observer-cannot-contribute" | "participant-left" | "unknown-addressee" | "unknown-audience-key"
   | "relation-target-missing" | "relation-revision-ahead" | "relation-shape" | "reply-multiple" | "converge-needs-two"
-  | "request-conflict" | "duplicate-entry-id" | "empty-operation" | "attribution-overclaim";
+  | "request-conflict" | "duplicate-entry-id" | "empty-operation" | "attribution-overclaim" | "authentication-required";
 export class Refusal extends Error {
   code: RefusalCode;
   constructor(code: RefusalCode, message: string) {
@@ -95,6 +95,11 @@ export interface Caller {
   session?: string;
   generation?: string | number;
   workcell?: string;
+  /** True only when the native owner authenticated this caller (a host-held
+   * credential), never because a request body says who it is. Only an
+   * authenticated caller can produce `verified` attribution or write a
+   * participant whose binding is verified. */
+  authenticated?: boolean;
 }
 
 // ---------- canonical digest (shared with the native owners) ----------
@@ -330,8 +335,9 @@ function checkCaller(author: PluralParticipant, caller: Caller, request: AppendR
     if (author.kind !== "agent") throw new Refusal("impersonation", "an agent cannot author as a person");
     const identity = caller.session ?? caller.ref;
     if (!identity) throw new Refusal("author-not-caller", "the native caller carries no agent identity");
+    if (bound && !caller.authenticated) throw new Refusal("authentication-required", `${author.name ?? author.initial} is bound; only an authenticated caller may write as them`);
     if (bound && bound.ref !== identity && bound.ref !== caller.agent) throw new Refusal("author-not-caller", `${author.name ?? author.initial} is bound to another agent`);
-    return {basis: "verified", agency: caller.agent, session: caller.session, generation: caller.generation, workcell: caller.workcell, ...(request.attribution?.onBehalfOf ? {onBehalfOf: request.attribution.onBehalfOf} : {})};
+    return {basis: caller.authenticated ? "verified" : "declared", agency: caller.agent, session: caller.session, generation: caller.generation, workcell: caller.workcell, ...(request.attribution?.onBehalfOf ? {onBehalfOf: request.attribution.onBehalfOf} : {})};
   }
   if (caller.kind === "human") {
     if (author.kind === "agent") {
@@ -339,10 +345,13 @@ function checkCaller(author: PluralParticipant, caller: Caller, request: AppendR
       if (claimed === "verified") throw new Refusal("attribution-overclaim", "a human caller cannot produce verified agent attribution");
       return {basis: "declared"};
     }
+    if (bound && !caller.authenticated) throw new Refusal("authentication-required", `${author.name ?? author.initial} is bound; only an authenticated caller may write as them`);
     if (bound && caller.ref && bound.ref !== caller.ref) throw new Refusal("impersonation", `${author.name ?? author.initial} is bound to another person`);
     return {basis: bound && caller.ref ? "verified" : "declared"};
   }
-  // System callers only ever declare what they carry; they bind no one.
+  // System callers only ever declare what they carry; they bind no one, and
+  // cannot write as a participant whose binding the owner verified.
+  if (bound && !caller.authenticated) throw new Refusal("authentication-required", `${author.name ?? author.initial} is bound; only an authenticated caller may write as them`);
   if (claimed === "verified") throw new Refusal("attribution-overclaim", "a system caller cannot verify an author");
   return {basis: "declared"};
 }

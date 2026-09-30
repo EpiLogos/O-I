@@ -90,7 +90,8 @@
     "session": "agent-session/ada-1",
     "agent": "agent/ada",
     "generation": "g1",
-    "workcell": "workcell:mac"
+    "workcell": "workcell:mac",
+    "authenticated": true
    },
    "request": {
     "operationRef": "op-1",
@@ -203,7 +204,8 @@
     "session": "agent-session/ada-1",
     "agent": "agent/ada",
     "generation": "g1",
-    "workcell": "workcell:mac"
+    "workcell": "workcell:mac",
+    "authenticated": true
    },
    "request": {
     "operationRef": "op-2",
@@ -289,7 +291,8 @@
     "session": "agent-session/other",
     "agent": "agent/other",
     "generation": "g1",
-    "workcell": "workcell:mac"
+    "workcell": "workcell:mac",
+    "authenticated": true
    },
    "request": {
     "operationRef": "op-3",
@@ -368,7 +371,8 @@
     "session": "agent-session/ada-2",
     "agent": "agent/ada",
     "generation": "g1",
-    "workcell": "workcell:mac"
+    "workcell": "workcell:mac",
+    "authenticated": true
    },
    "request": {
     "operationRef": "op-4",
@@ -660,7 +664,8 @@
    },
    "caller": {
     "kind": "human",
-    "ref": "human:mallory"
+    "ref": "human:mallory",
+    "authenticated": true
    },
    "request": {
     "operationRef": "op-7",
@@ -759,7 +764,8 @@
     "session": "agent-session/obs",
     "agent": "agent/obs",
     "generation": "g1",
-    "workcell": "workcell:mac"
+    "workcell": "workcell:mac",
+    "authenticated": true
    },
    "request": {
     "operationRef": "op-8",
@@ -858,7 +864,8 @@
     "session": "agent-session/gone",
     "agent": "agent/gone",
     "generation": "g1",
-    "workcell": "workcell:mac"
+    "workcell": "workcell:mac",
+    "authenticated": true
    },
    "request": {
     "operationRef": "op-9",
@@ -1095,7 +1102,8 @@
    },
    "caller": {
     "kind": "human",
-    "ref": "human:ann"
+    "ref": "human:ann",
+    "authenticated": true
    },
    "request": {
     "operationRef": "op-12",
@@ -1436,7 +1444,8 @@
    },
    "caller": {
     "kind": "human",
-    "ref": "human:ann"
+    "ref": "human:ann",
+    "authenticated": true
    },
    "request": {
     "operationRef": "op-13",
@@ -1546,7 +1555,8 @@
    },
    "caller": {
     "kind": "human",
-    "ref": "human:ann"
+    "ref": "human:ann",
+    "authenticated": true
    },
    "request": {
     "operationRef": "op-14",
@@ -1647,7 +1657,8 @@
    },
    "caller": {
     "kind": "human",
-    "ref": "human:ann"
+    "ref": "human:ann",
+    "authenticated": true
    },
    "request": {
     "operationRef": "op-15",
@@ -1752,7 +1763,8 @@
    },
    "caller": {
     "kind": "human",
-    "ref": "human:ann"
+    "ref": "human:ann",
+    "authenticated": true
    },
    "request": {
     "operationRef": "op-16",
@@ -1853,7 +1865,8 @@
    },
    "caller": {
     "kind": "human",
-    "ref": "human:ann"
+    "ref": "human:ann",
+    "authenticated": true
    },
    "request": {
     "operationRef": "op-17",
@@ -1945,7 +1958,8 @@
     "session": "agent-session/ada-1",
     "agent": "agent/ada",
     "generation": "g1",
-    "workcell": "workcell:mac"
+    "workcell": "workcell:mac",
+    "authenticated": true
    },
    "request": {
     "operationRef": "op-18",
@@ -2054,7 +2068,8 @@
     "session": "agent-session/ada-1",
     "agent": "agent/ada",
     "generation": "g1",
-    "workcell": "workcell:mac"
+    "workcell": "workcell:mac",
+    "authenticated": true
    },
    "request": {
     "operationRef": "op-19",
@@ -2164,7 +2179,8 @@
     "session": "agent-session/ada-1",
     "agent": "agent/ada",
     "generation": "g1",
-    "workcell": "workcell:mac"
+    "workcell": "workcell:mac",
+    "authenticated": true
    },
    "request": {
     "operationRef": "op-20",
@@ -2266,7 +2282,8 @@
     "session": "agent-session/ada-1",
     "agent": "agent/ada",
     "generation": "g1",
-    "workcell": "workcell:mac"
+    "workcell": "workcell:mac",
+    "authenticated": true
    },
    "request": {
     "operationRef": "op-21",
@@ -2376,7 +2393,8 @@
       "session": "agent-session/ada-1",
       "agent": "agent/ada",
       "generation": "g1",
-      "workcell": "workcell:mac"
+      "workcell": "workcell:mac",
+      "authenticated": true
      },
      "request": {
       "operationRef": "op-22",
@@ -2398,7 +2416,8 @@
       "session": "agent-session/ash-1",
       "agent": "agent/ash",
       "generation": "g1",
-      "workcell": "workcell:mac"
+      "workcell": "workcell:mac",
+      "authenticated": true
      },
      "request": {
       "operationRef": "op-23",
@@ -2797,6 +2816,476 @@
     "readable": [
      "e3"
     ]
+   }
+  },
+  {
+   "name": "unauthenticated-agent-is-declared-never-verified",
+   "op": "append",
+   "doc": {
+    "meta": {
+     "documentId": "doc-0001",
+     "created": "2026-09-30T08:00:00.000Z",
+     "title": "",
+     "revision": 0,
+     "view": "dialogue",
+     "current": null,
+     "journalCurrent": null,
+     "exported": null,
+     "template": "ql-dialogue-flow v0.4",
+     "format": {
+      "version": 4,
+      "minReader": 4
+     },
+     "participants": [
+      {
+       "key": "p-ann",
+       "initial": "A",
+       "kind": "person",
+       "name": "Ann",
+       "role": "contributor",
+       "binding": {
+        "owner": "central",
+        "ref": "human:ann",
+        "basis": "verified"
+       }
+      },
+      {
+       "key": "p-ada",
+       "initial": "A",
+       "kind": "agent",
+       "name": "Ada",
+       "role": "contributor"
+      },
+      {
+       "key": "p-ash",
+       "initial": "S",
+       "kind": "agent",
+       "name": "Ash",
+       "role": "contributor"
+      },
+      {
+       "key": "p-obs",
+       "initial": "O",
+       "kind": "agent",
+       "name": "Obs",
+       "role": "observer"
+      },
+      {
+       "key": "p-gone",
+       "initial": "G",
+       "kind": "agent",
+       "name": "Gone",
+       "role": "contributor",
+       "left": {
+        "at": "2026-09-30T08:30:00.000Z",
+        "revision": 3
+       }
+      }
+     ]
+    },
+    "entries": [
+     {
+      "id": "e-q",
+      "author": "A",
+      "at": "2026-09-30T08:00:00.000Z",
+      "html": "<p>What does the passage claim?</p>",
+      "replyTo": null,
+      "touched": false,
+      "authorKey": "p-ann"
+     }
+    ],
+    "notes": [],
+    "packet": [],
+    "media": [],
+    "journal": []
+   },
+   "caller": {
+    "kind": "agent",
+    "ref": "agent-session/ada-1",
+    "session": "agent-session/ada-1",
+    "agent": "agent/ada",
+    "generation": "g1",
+    "workcell": "workcell:mac",
+    "authenticated": false
+   },
+   "request": {
+    "operationRef": "op-30",
+    "authorKey": "p-ada",
+    "html": "<p>reply</p>",
+    "at": "2026-09-30T09:00:00.000Z",
+    "relations": [
+     {
+      "type": "reply",
+      "entryId": "e-q"
+     }
+    ]
+   },
+   "expect": {
+    "outcome": "appended",
+    "attribution": "declared",
+    "noBinding": [
+     "p-ada"
+    ]
+   }
+  },
+  {
+   "name": "bound-participant-requires-authenticated-caller",
+   "op": "append",
+   "doc": {
+    "meta": {
+     "documentId": "doc-0001",
+     "created": "2026-09-30T08:00:00.000Z",
+     "title": "",
+     "revision": 0,
+     "view": "dialogue",
+     "current": null,
+     "journalCurrent": null,
+     "exported": null,
+     "template": "ql-dialogue-flow v0.4",
+     "format": {
+      "version": 4,
+      "minReader": 4
+     },
+     "participants": [
+      {
+       "key": "p-ann",
+       "initial": "A",
+       "kind": "person",
+       "name": "Ann",
+       "role": "contributor",
+       "binding": {
+        "owner": "central",
+        "ref": "human:ann",
+        "basis": "verified"
+       }
+      },
+      {
+       "key": "p-ada",
+       "initial": "A",
+       "kind": "agent",
+       "name": "Ada",
+       "role": "contributor",
+       "binding": {
+        "owner": "actuation",
+        "ref": "agent-session/ada-1",
+        "basis": "verified"
+       }
+      },
+      {
+       "key": "p-ash",
+       "initial": "S",
+       "kind": "agent",
+       "name": "Ash",
+       "role": "contributor"
+      }
+     ]
+    },
+    "entries": [
+     {
+      "id": "e-q",
+      "author": "A",
+      "at": "2026-09-30T08:00:00.000Z",
+      "html": "<p>x</p>",
+      "replyTo": null,
+      "touched": false,
+      "authorKey": "p-ann"
+     }
+    ],
+    "notes": [],
+    "packet": [],
+    "media": [],
+    "journal": []
+   },
+   "caller": {
+    "kind": "agent",
+    "ref": "agent-session/ada-1",
+    "session": "agent-session/ada-1",
+    "agent": "agent/ada",
+    "generation": "g1",
+    "workcell": "workcell:mac",
+    "authenticated": false
+   },
+   "request": {
+    "operationRef": "op-31",
+    "authorKey": "p-ada",
+    "html": "<p>x</p>",
+    "at": "2026-09-30T09:00:00.000Z"
+   },
+   "expect": {
+    "refusal": "authentication-required"
+   }
+  },
+  {
+   "name": "unauthenticated-human-cannot-write-as-bound-person",
+   "op": "append",
+   "doc": {
+    "meta": {
+     "documentId": "doc-0001",
+     "created": "2026-09-30T08:00:00.000Z",
+     "title": "",
+     "revision": 0,
+     "view": "dialogue",
+     "current": null,
+     "journalCurrent": null,
+     "exported": null,
+     "template": "ql-dialogue-flow v0.4",
+     "format": {
+      "version": 4,
+      "minReader": 4
+     },
+     "participants": [
+      {
+       "key": "p-ann",
+       "initial": "A",
+       "kind": "person",
+       "name": "Ann",
+       "role": "contributor",
+       "binding": {
+        "owner": "central",
+        "ref": "human:ann",
+        "basis": "verified"
+       }
+      },
+      {
+       "key": "p-ada",
+       "initial": "A",
+       "kind": "agent",
+       "name": "Ada",
+       "role": "contributor"
+      },
+      {
+       "key": "p-ash",
+       "initial": "S",
+       "kind": "agent",
+       "name": "Ash",
+       "role": "contributor"
+      },
+      {
+       "key": "p-obs",
+       "initial": "O",
+       "kind": "agent",
+       "name": "Obs",
+       "role": "observer"
+      },
+      {
+       "key": "p-gone",
+       "initial": "G",
+       "kind": "agent",
+       "name": "Gone",
+       "role": "contributor",
+       "left": {
+        "at": "2026-09-30T08:30:00.000Z",
+        "revision": 3
+       }
+      }
+     ]
+    },
+    "entries": [
+     {
+      "id": "e-q",
+      "author": "A",
+      "at": "2026-09-30T08:00:00.000Z",
+      "html": "<p>What does the passage claim?</p>",
+      "replyTo": null,
+      "touched": false,
+      "authorKey": "p-ann"
+     }
+    ],
+    "notes": [],
+    "packet": [],
+    "media": [],
+    "journal": []
+   },
+   "caller": {
+    "kind": "human",
+    "ref": "human:ann"
+   },
+   "request": {
+    "operationRef": "op-32",
+    "authorKey": "p-ann",
+    "html": "<p>x</p>",
+    "at": "2026-09-30T09:00:00.000Z"
+   },
+   "expect": {
+    "refusal": "authentication-required"
+   }
+  },
+  {
+   "name": "authenticated-human-writes-as-bound-person-verified",
+   "op": "append",
+   "doc": {
+    "meta": {
+     "documentId": "doc-0001",
+     "created": "2026-09-30T08:00:00.000Z",
+     "title": "",
+     "revision": 0,
+     "view": "dialogue",
+     "current": null,
+     "journalCurrent": null,
+     "exported": null,
+     "template": "ql-dialogue-flow v0.4",
+     "format": {
+      "version": 4,
+      "minReader": 4
+     },
+     "participants": [
+      {
+       "key": "p-ann",
+       "initial": "A",
+       "kind": "person",
+       "name": "Ann",
+       "role": "contributor",
+       "binding": {
+        "owner": "central",
+        "ref": "human:ann",
+        "basis": "verified"
+       }
+      },
+      {
+       "key": "p-ada",
+       "initial": "A",
+       "kind": "agent",
+       "name": "Ada",
+       "role": "contributor"
+      },
+      {
+       "key": "p-ash",
+       "initial": "S",
+       "kind": "agent",
+       "name": "Ash",
+       "role": "contributor"
+      },
+      {
+       "key": "p-obs",
+       "initial": "O",
+       "kind": "agent",
+       "name": "Obs",
+       "role": "observer"
+      },
+      {
+       "key": "p-gone",
+       "initial": "G",
+       "kind": "agent",
+       "name": "Gone",
+       "role": "contributor",
+       "left": {
+        "at": "2026-09-30T08:30:00.000Z",
+        "revision": 3
+       }
+      }
+     ]
+    },
+    "entries": [
+     {
+      "id": "e-q",
+      "author": "A",
+      "at": "2026-09-30T08:00:00.000Z",
+      "html": "<p>What does the passage claim?</p>",
+      "replyTo": null,
+      "touched": false,
+      "authorKey": "p-ann"
+     }
+    ],
+    "notes": [],
+    "packet": [],
+    "media": [],
+    "journal": []
+   },
+   "caller": {
+    "kind": "human",
+    "ref": "human:ann",
+    "authenticated": true
+   },
+   "request": {
+    "operationRef": "op-33",
+    "authorKey": "p-ann",
+    "html": "<p>x</p>",
+    "at": "2026-09-30T09:00:00.000Z"
+   },
+   "expect": {
+    "outcome": "appended",
+    "attribution": "verified"
+   }
+  },
+  {
+   "name": "system-caller-cannot-write-as-bound-participant",
+   "op": "append",
+   "doc": {
+    "meta": {
+     "documentId": "doc-0001",
+     "created": "2026-09-30T08:00:00.000Z",
+     "title": "",
+     "revision": 0,
+     "view": "dialogue",
+     "current": null,
+     "journalCurrent": null,
+     "exported": null,
+     "template": "ql-dialogue-flow v0.4",
+     "format": {
+      "version": 4,
+      "minReader": 4
+     },
+     "participants": [
+      {
+       "key": "p-ann",
+       "initial": "A",
+       "kind": "person",
+       "name": "Ann",
+       "role": "contributor",
+       "binding": {
+        "owner": "central",
+        "ref": "human:ann",
+        "basis": "verified"
+       }
+      },
+      {
+       "key": "p-ada",
+       "initial": "A",
+       "kind": "agent",
+       "name": "Ada",
+       "role": "contributor",
+       "binding": {
+        "owner": "actuation",
+        "ref": "agent-session/ada-1",
+        "basis": "verified"
+       }
+      },
+      {
+       "key": "p-ash",
+       "initial": "S",
+       "kind": "agent",
+       "name": "Ash",
+       "role": "contributor"
+      }
+     ]
+    },
+    "entries": [
+     {
+      "id": "e-q",
+      "author": "A",
+      "at": "2026-09-30T08:00:00.000Z",
+      "html": "<p>x</p>",
+      "replyTo": null,
+      "touched": false,
+      "authorKey": "p-ann"
+     }
+    ],
+    "notes": [],
+    "packet": [],
+    "media": [],
+    "journal": []
+   },
+   "caller": {
+    "kind": "system"
+   },
+   "request": {
+    "operationRef": "op-34",
+    "authorKey": "p-ada",
+    "html": "<p>x</p>",
+    "at": "2026-09-30T09:00:00.000Z"
+   },
+   "expect": {
+    "refusal": "authentication-required"
    }
   }
  ]

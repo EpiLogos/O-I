@@ -49,6 +49,11 @@ try {
   assert.equal(after.meta.revision, 3, "a recovered replay does not advance the revision");
   assert.deepEqual(plural.validateDocument(after), []);
 
+  // Entry bodies with HTML comments and script text survive the island round trip.
+  const hostile = instance.appendEntry(html, "a <!-- comment --> and </script> text", {html: "<p>a <!-- comment --> and &lt;/script&gt; <script>x</script> text</p>"});
+  assert.ok(!hostile.html.includes("<!-- comment -->"), "no raw comment inside the island");
+  assert.equal(instance.parseInstance(hostile.html).entries.at(-1).html, "<p>a <!-- comment --> and &lt;/script&gt; <script>x</script> text</p>");
+
   // A blank template copy with no participants gets its keyed defaults, like the page itself.
   const blank = instance.mintBlankInstance(undefined, new Date("2026-09-30T08:00:00Z"));
   const written = instance.parseInstance(instance.appendEntry(blank, "hello").html);

@@ -561,17 +561,20 @@ var QlPlural = (() => {
       if (author.kind !== "agent") throw new Refusal("impersonation", "an agent cannot author as a person");
       const identity = caller.session ?? caller.ref;
       if (!identity) throw new Refusal("author-not-caller", "the native caller carries no agent identity");
+      if (bound && !caller.authenticated) throw new Refusal("authentication-required", `${author.name ?? author.initial} is bound; only an authenticated caller may write as them`);
       if (bound && bound.ref !== identity && bound.ref !== caller.agent) throw new Refusal("author-not-caller", `${author.name ?? author.initial} is bound to another agent`);
-      return { basis: "verified", agency: caller.agent, session: caller.session, generation: caller.generation, workcell: caller.workcell, ...request.attribution?.onBehalfOf ? { onBehalfOf: request.attribution.onBehalfOf } : {} };
+      return { basis: caller.authenticated ? "verified" : "declared", agency: caller.agent, session: caller.session, generation: caller.generation, workcell: caller.workcell, ...request.attribution?.onBehalfOf ? { onBehalfOf: request.attribution.onBehalfOf } : {} };
     }
     if (caller.kind === "human") {
       if (author.kind === "agent") {
         if (claimed === "verified") throw new Refusal("attribution-overclaim", "a human caller cannot produce verified agent attribution");
         return { basis: "declared" };
       }
+      if (bound && !caller.authenticated) throw new Refusal("authentication-required", `${author.name ?? author.initial} is bound; only an authenticated caller may write as them`);
       if (bound && caller.ref && bound.ref !== caller.ref) throw new Refusal("impersonation", `${author.name ?? author.initial} is bound to another person`);
       return { basis: bound && caller.ref ? "verified" : "declared" };
     }
+    if (bound && !caller.authenticated) throw new Refusal("authentication-required", `${author.name ?? author.initial} is bound; only an authenticated caller may write as them`);
     if (claimed === "verified") throw new Refusal("attribution-overclaim", "a system caller cannot verify an author");
     return { basis: "declared" };
   }
@@ -1021,7 +1024,7 @@ function exportCopy(){
   clearTimeout(revTimer); const d=JSON.parse(JSON.stringify(D));
   d.meta.title=clean(d.meta.title||''); d.entries.forEach(e=>e.html=clean(e.html)); (d.journal||[]).forEach(j=>j.html=clean(j.html)); d.notes.forEach(n=>{ n.text=clean(n.text); (n.replies||[]).forEach(r=>r.text=clean(r.text)); }); d.media.forEach(m=>m.caption=clean(m.caption||''));
   d.meta.exported=now();
-  const json=JSON.stringify(d).replace(/<\/script/gi,'<\\/script').replace(/<!--/g,'<\\!--');
+  const json=JSON.stringify(d).replace(/<\/script/gi,'<\\/script').replace(/<!--/g,'<\\u0021--');
   const html=SHELL.replace(/<script type="application\/json" id="ql-doc">[\s\S]*?<\/script>/,()=>'<script type="application/json" id="ql-doc">'+json+'</script>')
     .replace(/<noscript id="snapshot">[\s\S]*?<\/noscript>/,()=>'<noscript id="snapshot">'+snapshot(d)+'</noscript>')
     .replace(/<title>[\s\S]*?<\/title>/,'<title>'+esc(plain(d.meta.title)||'Dialogue')+'</title>');
