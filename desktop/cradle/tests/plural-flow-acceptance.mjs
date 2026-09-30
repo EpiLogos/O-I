@@ -76,6 +76,31 @@ const PASSAGE = `# On crossing a distance
 The argument is old, and people still find it hard to say exactly where it fails.
 `;
 
+/** Bring a named roster agent in exactly as the desktop does: a session minted for
+ * exactly that agent, its resident opened, this one sender and this one Flow
+ * admitted to it — then the participant recorded in the Flow. */
+function bringIn(name, initial, agentRef) {
+  if (state.participants[name]) return;
+  const slug = name.toLowerCase();
+  const space = `session-space/pf-${slug}`, session = `agent-session/pf-${slug}`;
+  const apply = preview => ss("apply", "--preview-json", JSON.stringify(preview));
+  const native = (...a) => JSON.parse(ss(...a).stdout);
+  apply(native("create", space, "--label", `Plural Flow · ${name}`));
+  apply(native("stage", "--space", space, "--intent-json", JSON.stringify({operation: "bind-project-context", binding: native("project-context")})));
+  apply(native("stage", "--space", space, "--intent-json", JSON.stringify({operation: "attach-agent-session", attachment: {agent_session: session, purpose: `Plural Flow participant ${name}`, provenance: ["acceptance"]}})));
+  const mint = json(ss("encounter-agency-mint", "--agent-session", session, "--project-cwd", dirs.project, "--agent-ref", agentRef));
+  const opened = encounter({action: "open", space, agent_session: session, provider: "pi", cwd: dirs.project});
+  const admitted = json(ss("encounter-agency-admit", "--agent-session", session, "--sender", `human:${state.annKey}`, "--source-ref", flowLoc().ref));
+  const basis = readFlow();
+  let doc = addParticipant(basis.doc, {initial, name, kind: "agent", binding: {owner: "central", ref: agentRef, basis: "declared"}}, new Date().toISOString());
+  const key = doc.meta.participants.at(-1).key;
+  doc = withSession(doc, key, session);
+  writeFlow(basis, doc);
+  state.participants[name] = {key, session, space, agentRef};
+  save();
+  say(`${name}: minted=${mint.data?.standing ?? mint.standing} admitted=${JSON.stringify(admitted.data ?? admitted)} provider=${opened?.provider ?? "pi"} key=${key}`);
+}
+
 // ---------------------------------------------------------------- phases
 const phases = {
   async setup() {
@@ -135,27 +160,7 @@ const phases = {
    * minted for exactly that agent, its resident opened, and this one sender
    * and this one Flow admitted to it — then the participant recorded. */
   async "bring-in"() {
-    for (const [name, initial, agentRef] of [["Ada", "D", "agent/ada-lin"], ["Ash", "S", "agent/ash-kay"]]) {
-      if (state.participants[name]) continue;
-      const slug = name.toLowerCase();
-      const space = `session-space/pf-${slug}`, session = `agent-session/pf-${slug}`;
-      const apply = preview => ss("apply", "--preview-json", JSON.stringify(preview));
-      const native = (...a) => JSON.parse(ss(...a).stdout);
-      apply(native("create", space, "--label", `Plural Flow · ${name}`));
-      apply(native("stage", "--space", space, "--intent-json", JSON.stringify({operation: "bind-project-context", binding: native("project-context")})));
-      apply(native("stage", "--space", space, "--intent-json", JSON.stringify({operation: "attach-agent-session", attachment: {agent_session: session, purpose: `Plural Flow participant ${name}`, provenance: ["acceptance"]}})));
-      const mint = json(ss("encounter-agency-mint", "--agent-session", session, "--project-cwd", dirs.project, "--agent-ref", agentRef));
-      const opened = encounter({action: "open", space, agent_session: session, provider: "pi", cwd: dirs.project});
-      const admitted = json(ss("encounter-agency-admit", "--agent-session", session, "--sender", `human:${state.annKey}`, "--source-ref", flowLoc().ref));
-      const basis = readFlow();
-      let doc = addParticipant(basis.doc, {initial, name, kind: "agent", binding: {owner: "central", ref: agentRef, basis: "declared"}}, new Date().toISOString());
-      const key = doc.meta.participants.at(-1).key;
-      doc = withSession(doc, key, session);
-      writeFlow(basis, doc);
-      state.participants[name] = {key, session, space, agentRef};
-      save();
-      say(`${name}: minted=${mint.data?.standing ?? mint.standing} admitted=${JSON.stringify(admitted.data ?? admitted)} provider=${opened?.provider ?? "pi"} key=${key}`);
-    }
+    for (const [name, initial, agentRef] of [["Ada", "D", "agent/ada-lin"], ["Ash", "S", "agent/ash-kay"]]) bringIn(name, initial, agentRef);
   },
 
   async ask() {
@@ -259,6 +264,37 @@ const phases = {
       recipients: [{participant_key: Ada.key, agent_session: session}]}});
     await waitIncluded(ref, [Ada.key], 240000);
     state.fresh = ref; save();
+  },
+
+  /** A participant who was never in the conversation is brought in afterwards and
+   * asked to use what the flow already holds on a different case. The participant
+   * is told the task, not what a good answer contains: the expectations below are
+   * the verifier's, kept apart from the prompt. */
+  async "fresh-participant"() {
+    bringIn("Cy", "Y", "agent/cy-wren");
+    const Cy = state.participants.Cy;
+    const doc = readFlow().doc;
+    const ref = `conversation/pf-fresh-participant-${Date.now()}`;
+    encounter({action: "conversation-send", request: {
+      request_ref: ref, flow_location: flowLoc(), sender: `human:${state.annKey}`, actor: `human:${state.annKey}`,
+      entry: {author_key: state.annKey, at: new Date().toISOString(), basis_revision: doc.meta.revision, relations: [],
+        html: "<p>Cy — you are new to this conversation. Earlier entries already settled something about step 3 of the passage in <code>docs/passage.md</code>. Use that, not a fresh start, on this different case: each step covers half of what remains but takes one and a half times as long as the step before. Does step 3 fail here as it did before? Say why, with the numbers, in under 120 words.</p>"},
+      recipients: [{participant_key: Cy.key, agent_session: Cy.session}]}});
+    await waitIncluded(ref, [Cy.key], 240000);
+    state.freshParticipant = ref; save();
+    const reply = readFlow().doc.entries.find(e => (e.request?.ref ?? "") === ref || e.relations?.some(r => r.type === "reply" && r.entryId === doc.entries.at(-1)?.id && e.authorKey === Cy.key)) ?? readFlow().doc.entries.filter(e => e.authorKey === Cy.key).at(-1);
+    const text = plain(reply?.html ?? "");
+    // The verifier's held expectations (not given to the participant): the earlier
+    // result is used — convergence depends on the step-time ratio being below one;
+    // here the ratio is 1.5, so the times grow and the total does not converge.
+    const marks = {
+      "uses the earlier result (convergence / geometric series)": /converge|geometric|finite sum|sums? to/i.test(text),
+      "names the ratio 1.5 and the growing times": /1\.5|three.halves|3\/2/.test(text) && /grow|increas|diverge|unbounded|infinite/i.test(text),
+      "concludes step 3 does not fail in the same way here": /not (fail|refute)|does not fail|holds|doesn't fail|cannot finish|never (finish|complete|arrive)|infinite (total )?time/i.test(text),
+    };
+    say("\nCy's answer:\n" + text);
+    say("verifier marks:", JSON.stringify(marks, null, 1));
+    state.freshParticipantMarks = marks; save();
   },
 
   /** The Day the work began in, read through Central's own Day machinery. */
