@@ -1,0 +1,34 @@
+$ bash /tmp/pf-baseline-inv/case1-wrong-request.sh
+== step 1: send QA (expects TOKEN-ALPHA-9042)
+QA accepted: submitted 4696
+== step 2: while QA in flight, send unrelated QB to the SAME session (must serialize, not guess)
+QB refused while QA in flight: encounter.delivery_pending - This session has a queued, submitted or uncertain machine delivery; resolve or drain it be
+== step 3: wait for QA terminal state
+QA: returned 4696-4712 (poll 2)
+== step 4: now send QB for real
+QB accepted: submitted 4713
+QB: returned 4713-4729 (poll 2)
+== step 5: read back QA delivery state — must still be QA's own turn, never the newer BETA
+QA readback: returned 4696 4712
+== step 6: extract the final agent-message-segment text attributed to each delivery's own cursor range
+Traceback (most recent call last):
+  File "<string>", line 6, in <module>
+    _,_,ev=line.split("|",2)
+ValueError: not enough values to unpack (expected 3, got 1)
+QA segments [4696-4712]:
+Traceback (most recent call last):
+  File "<string>", line 6, in <module>
+    _,_,ev=line.split("|",2)
+ValueError: not enough values to unpack (expected 3, got 1)
+QB segments [4713-4729]:
+== VERDICT
+PASS: QA's recorded reply is its own TOKEN-ALPHA-9042; the newer unrelated TOKEN-BETA-5117 never satisfied QA.
+
+-- post-run direct extraction of the exact segment cursors (see raw/final-segment-events.txt):
+4707 agent-session/pf-baseline-inv-2 agent-message-segment 'TOKEN-ALPHA-9042'   (inside QA range 4696-4712)
+4724 agent-session/pf-baseline-inv-2 agent-message-segment 'TOKEN-BETA-5117'    (inside QB range 4713-4729)
+
+NOTE: the step-6 printer in the as-run script had an output-parsing bug (empty
+line in sqlite3 stream); it was patched in the committed copy (guard for short
+lines). The VERDICT logic is independent of that printer and ran clean. The
+committed script's verdict grep is what produced the PASS line above.

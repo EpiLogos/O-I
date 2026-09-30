@@ -1,0 +1,25 @@
+$ bash /tmp/pf-baseline-inv/case2-no-ui-return-once.sh
+== step 1: send the delayed question
+QD accepted: submitted first_cursor 4937
+== step 2: close every reading client (no poller stays attached). The resident owner keeps the turn.
+clients closed at 10:44:30Z; resident owner pid: 1923289
+== step 3: stay disconnected until well past expected completion (45s)
+== step 4: reconnect and read the journal back
+returned 4937-5131
+== step 5: read the delivery twice through the owner (fresh client each time)
+readback 1: returned 4937 5131
+readback 2: returned 4937 5131
+== step 6: is the full answer in the owner journal between the row's cursors?
+row cursors: 4937-5131
+segments: 1 body chars: 863
+ends with TOKEN-DELTA-3311: True
+tail: "and seabed shape then tune each port's exact timing and range.\n\nTOKEN-DELTA-3311"
+== step 7: exactly-once accounting
+delivery rows for delivery/pf-case2-qd2: 1; TurnEnded events in range: 1
+== VERDICT
+PASS: exactly one delivery row and one completed turn survived full client closure; reconnection read it without restarting.
+
+-- earlier as-run of the same script under delivery/pf-case2-qd-delayed
+   (returned 4730-4936, rows=1, TurnEnded=1, same PASS verdict); the committed
+   script is the patched clean rerun above. Both delivery rows are visible in
+   raw/delivery-rows-final.txt.
