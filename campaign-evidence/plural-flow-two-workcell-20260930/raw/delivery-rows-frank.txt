@@ -1,0 +1,8 @@
+                 session                            delivery           phase    first_cursor  terminal_cursor
+------------------------------------------  ------------------------  --------  ------------  ---------------
+agent-session/oi203-pf-omarchy-participant  delivery/oi203-pf-q1      returned          5132             5148
+agent-session/oi203-pf-s3                   delivery/oi203-pf-qx      returned          5151             5169
+agent-session/oi203-pf-s3                   delivery/oi203-pf-qx2     returned          5170             5187
+agent-session/oi203-pf-omarchy-participant  delivery/oi203-pf-group1  returned          5188             5425
+agent-session/oi203-pf-omarchy-peer         delivery/oi203-pf-group1  returned          5192             5685
+agent-session/oi203-pf-s3                   delivery/oi203-pf-qx3     returned          5426             5442
