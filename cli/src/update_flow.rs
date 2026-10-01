@@ -129,6 +129,25 @@ fn mainline_relation(checkout: &Path, cut: &str, origin_main: &str) -> Option<(u
     Some((behind, ahead))
 }
 
+/// How a planned cut relates to what is installed: `same`, `upgrade` (the
+/// installed revision is an ancestor of the planned one), `downgrade` (the
+/// planned revision is an ancestor of the installed one — the source channel
+/// on a checkout that sits behind what mainline put on the machine), or
+/// `diverged`. None when either commit is unknown to this checkout.
+fn cut_direction(checkout: &Path, installed: &str, planned: &str) -> Option<&'static str> {
+    if installed == planned { return Some("same"); }
+    let is_ancestor = |older: &str, newer: &str| -> Option<bool> {
+        let status = Command::new("git").arg("-C").arg(checkout)
+            .args(["merge-base", "--is-ancestor", older, newer])
+            .stdin(Stdio::null()).stdout(Stdio::null()).stderr(Stdio::null())
+            .status().ok()?;
+        match status.code() { Some(0) => Some(true), Some(1) => Some(false), _ => None }
+    };
+    if is_ancestor(installed, planned)? { return Some("upgrade"); }
+    if is_ancestor(planned, installed)? { return Some("downgrade"); }
+    Some("diverged")
+}
+
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 enum PlanAction {
     Skip,
@@ -160,6 +179,8 @@ struct PlanEntry {
     origin_main: Option<OriginMainFact>,
     behind_main: Option<u64>,
     ahead_of_main: Option<u64>,
+    /// `same`, `upgrade`, `downgrade`, `diverged`; None when not comparable.
+    direction: Option<&'static str>,
 }
 
 fn updates_receipts_dir(data_root: &Path) -> PathBuf { data_root.join("receipts/updates") }
@@ -282,6 +303,15 @@ fn atomic_symlink(link_path: &Path, target: &Path) -> Result<(), String> {
 /// it. The copy lands beside its final name and is renamed into place, so
 /// the store never exposes a partial binary.
 fn stage_and_link(data_root: &Path, id: &str, exe: &str, sha256: &str, source_binary: &Path) -> Result<PathBuf, String> {
+    let managed = stage_binary(data_root, id, exe, sha256, source_binary)?;
+    link_managed(data_root, id, exe, sha256)?;
+    Ok(managed)
+}
+
+/// Stage one binary into the content-addressed store. Nothing is linked: a
+/// staged generation changes what no invocation resolves, so it can be
+/// smoke-checked — and every other product built — before anything flips.
+fn stage_binary(data_root: &Path, id: &str, exe: &str, sha256: &str, source_binary: &Path) -> Result<PathBuf, String> {
     let managed_dir = data_root.join("products").join(id).join(sha256).join("bin");
     fs::create_dir_all(&managed_dir).map_err(|error| format!("cannot create {}: {error}", managed_dir.display()))?;
     let managed = managed_dir.join(exe);
@@ -295,10 +325,15 @@ fn stage_and_link(data_root: &Path, id: &str, exe: &str, sha256: &str, source_bi
         fs::set_permissions(&temp, permissions).map_err(|error| error.to_string())?;
     }
     fs::rename(&temp, &managed).map_err(|error| format!("cannot promote staged {} binary: {error}", id))?;
+    Ok(managed)
+}
+
+/// Flip `bin/<exe>` to a staged generation: the one step that changes what the
+/// next invocation resolves.
+fn link_managed(data_root: &Path, id: &str, exe: &str, sha256: &str) -> Result<(), String> {
     let bin_link = data_root.join("bin").join(exe);
     let relative = Path::new("../products").join(id).join(sha256).join("bin").join(exe);
-    atomic_symlink(&bin_link, &relative)?;
-    Ok(managed)
+    atomic_symlink(&bin_link, &relative)
 }
 
 fn point_activation(activation_root: &Path, exe: &str, data_root: &Path) -> Result<PathBuf, String> {
@@ -602,6 +637,10 @@ fn build_plan(
             _ => (None, None),
         };
         let entry = receipt.as_ref().and_then(|receipt| receipt.products.get(&target.id));
+        let direction = match (entry, desired.as_ref()) {
+            (Some(installed), Some(cut)) => cut_direction(&checkout, &installed.revision, &cut.revision),
+            _ => None,
+        };
         let discovered = {
             let resolved = resolve_executable(&target.exe);
             let inside = resolved.as_ref().is_some_and(|path| path.starts_with(data_root));
@@ -636,6 +675,7 @@ fn build_plan(
             origin_main,
             behind_main,
             ahead_of_main,
+            direction,
         });
     }
     Ok((entries, drift))
@@ -656,6 +696,9 @@ fn print_plan_report(entries: &[PlanEntry], drift: &[String], channel: UpdateCha
         let state = match entry.action {
             PlanAction::Skip => "current",
             PlanAction::Absent => "absent",
+            PlanAction::Adopt | PlanAction::Build if entry.direction == Some("downgrade") => {
+                updates = true; "DOWNGRADE"
+            }
             PlanAction::Adopt | PlanAction::Build => { updates = true; "UPDATE AVAILABLE" }
         };
         let installed = entry.installed_revision.as_deref()
@@ -664,6 +707,11 @@ fn print_plan_report(entries: &[PlanEntry], drift: &[String], channel: UpdateCha
             .unwrap_or_else(|| "—".to_owned());
         println!("  {:<18} {:<16} installed: {:<24} cut: {cut}", entry.id, state, installed);
         println!("    {}", entry.detail);
+        if entry.direction == Some("downgrade") {
+            println!(
+                "    direction: DOWNGRADE — the planned cut is older than the installed one; --apply refuses it unless --allow-downgrade is given"
+            );
+        }
         // The staleness disclosure: a checkout's cut can be current with
         // itself and still predate work that has already merged. Name the
         // gap instead of letting absence on the machine look like absence
@@ -750,17 +798,50 @@ fn acquire_update_lock(data_root: &Path) -> Result<UpdateLockGuard, String> {
     }
 }
 
-/// Apply one plan entry: build or adopt the cut's binary into the
-/// content-addressed store, flip `bin/<exe>`, point activation, return the
-/// receipt entry. On failure nothing is linked; the store and receipts keep
-/// their previous contents.
-fn apply_entry(
+/// A product built (or adopted), staged into the content-addressed store and
+/// smoke-checked — with nothing yet linked. Every product of one run is
+/// prepared before any is committed, so a build that fails at product N leaves
+/// products 1..N-1 exactly as they were.
+struct Prepared {
+    id: String,
+    exe: String,
+    sha256: String,
+    product: ManagedProduct,
+    gate_dir: Option<PathBuf>,
+    gate_receipt: serde_json::Value,
+}
+
+/// What a commit changed, so it can be put back.
+struct Flip {
+    bin_link: PathBuf,
+    bin_previous: Option<PathBuf>,
+    activation: PathBuf,
+    activation_previous: Option<PathBuf>,
+}
+
+fn restore_link(link: &Path, previous: &Option<PathBuf>) {
+    match previous {
+        Some(target) => { let _ = atomic_symlink(link, target); }
+        None => { let _ = fs::remove_file(link); }
+    }
+}
+
+fn undo_flips(flips: &[Flip]) {
+    for flip in flips.iter().rev() {
+        restore_link(&flip.activation, &flip.activation_previous);
+        restore_link(&flip.bin_link, &flip.bin_previous);
+    }
+}
+
+/// Build or adopt one cut's binary, stage it into the store, verify it, and
+/// describe its receipt entry. Changes nothing any invocation resolves.
+fn prepare_entry(
     entry: &PlanEntry,
     target: &UpdateTarget,
     data_root: &Path,
     activation_root: &Path,
     channel: UpdateChannel,
-) -> Result<ManagedProduct, String> {
+) -> Result<Prepared, String> {
     let id = entry.id.as_str();
     let desired = entry.desired.as_ref().ok_or_else(|| format!("{id}: nothing to apply"))?;
     let (built, companion_sources, provenance, build_command, gate_path) = match entry.action {
@@ -821,7 +902,9 @@ fn apply_entry(
     // Companions land first: once bin/<exe> flips, the primary it names
     // already has every sibling it spawns at the same cut.
     let companions = stage_companions(data_root, id, &sha256, &companion_sources)?;
-    let managed = stage_and_link(data_root, id, &entry.exe, &sha256, &built)?;
+    // Staged, not linked: the smoke check below runs on the generation in the
+    // store, and nothing resolves to it until every product has passed.
+    let managed = stage_binary(data_root, id, &entry.exe, &sha256, &built)?;
     let staged = managed_artifact_path(data_root, id, &sha256, &entry.exe);
     if sha256_file(&staged)? != sha256 {
         return Err(format!("{id}: staged binary digest changed during staging"));
@@ -832,33 +915,25 @@ fn apply_entry(
     if !smoke.success() {
         return Err(format!("{id}: staged binary failed its version smoke check"));
     }
-    let activation = point_activation(activation_root, &entry.exe, data_root)?;
     let gate_ref = gate_path.as_ref().map(|path| path.display().to_string()).unwrap_or_default();
-    if let Some(gate_dir) = gate_path {
-        // The exported cut is rebuildable input, not evidence; the build log
-        // and gate receipt are. Free the source, keep the evidence.
-        let _ = fs::remove_dir_all(gate_dir.join("source"));
-        let _ = prelocal_write_json(
-            &gate_dir.join("receipt.json"),
-            &json!({
-                "schema": "oi.managed-update-gate/v1",
-                "product": id,
-                "revision": desired.revision,
-                "tree": desired.tree,
-                "branch": desired.branch,
-                "source_dirty": desired.dirty,
-                "channel": channel.as_str(),
-                "checkout": entry.checkout,
-                "provenance": provenance,
-                "build_command": build_command,
-                "sha256": sha256,
-                "companions": companions,
-                "managed": managed,
-                "result": "passed",
-            }),
-        );
-    }
-    Ok(ManagedProduct {
+    let gate_receipt = json!({
+        "schema": "oi.managed-update-gate/v1",
+        "product": id,
+        "revision": desired.revision,
+        "tree": desired.tree,
+        "branch": desired.branch,
+        "source_dirty": desired.dirty,
+        "channel": channel.as_str(),
+        "checkout": entry.checkout,
+        "provenance": provenance,
+        "build_command": build_command,
+        "sha256": sha256,
+        "companions": companions,
+        "managed": managed,
+        "result": "passed",
+    });
+    let activation = activation_root.join(&entry.exe);
+    let product = ManagedProduct {
         exe: entry.exe.clone(),
         revision: desired.revision.clone(),
         tree: desired.tree.clone(),
@@ -875,7 +950,58 @@ fn apply_entry(
         gate: gate_ref,
         installed_at_unix_seconds: unix_seconds_now(),
         companions,
+    };
+    Ok(Prepared {
+        id: id.to_owned(),
+        exe: entry.exe.clone(),
+        sha256: product.sha256.clone(),
+        product,
+        gate_dir: gate_path,
+        gate_receipt,
     })
+}
+
+
+
+/// Flip one prepared product live: `bin/<exe>`, then its activation link.
+/// Returns what it replaced so a later failure can put it back.
+fn commit_prepared(prepared: &Prepared, data_root: &Path, activation_root: &Path) -> Result<Flip, String> {
+    let bin_link = data_root.join("bin").join(&prepared.exe);
+    let bin_previous = fs::read_link(&bin_link).ok();
+    let activation = activation_root.join(&prepared.exe);
+    let activation_previous = fs::read_link(&activation).ok();
+    link_managed(data_root, &prepared.id, &prepared.exe, &prepared.sha256)?;
+    if let Err(error) = point_activation(activation_root, &prepared.exe, data_root) {
+        restore_link(&bin_link, &bin_previous);
+        return Err(error);
+    }
+    Ok(Flip { bin_link, bin_previous, activation, activation_previous })
+}
+
+/// Once a product is live: its gate receipt is written and the rebuildable
+/// exported source is freed (the build log and receipt are the evidence).
+fn finish_prepared(prepared: &Prepared) {
+    if let Some(gate_dir) = &prepared.gate_dir {
+        let _ = fs::remove_dir_all(gate_dir.join("source"));
+        let _ = prelocal_write_json(&gate_dir.join("receipt.json"), &prepared.gate_receipt);
+    }
+}
+
+/// Apply one plan entry: prepare it, flip it live, return the receipt entry.
+/// On failure nothing is linked (or a partial link is put back); the store and
+/// receipts keep their previous contents. The multi-product apply prepares
+/// every product before committing any; this is the one-product form.
+fn apply_entry(
+    entry: &PlanEntry,
+    target: &UpdateTarget,
+    data_root: &Path,
+    activation_root: &Path,
+    channel: UpdateChannel,
+) -> Result<ManagedProduct, String> {
+    let prepared = prepare_entry(entry, target, data_root, activation_root, channel)?;
+    commit_prepared(&prepared, data_root, activation_root)?;
+    finish_prepared(&prepared);
+    Ok(prepared.product)
 }
 
 fn repoint_registration(
@@ -910,6 +1036,8 @@ fn command_update_apply(
     json_mode: bool,
     candidates: &BTreeMap<String, String>,
     channel: UpdateChannel,
+    allow_downgrade: bool,
+    restart_residents: bool,
 ) -> Result<i32, String> {
     let manifest = suite_manifest()?;
     let ground = configured_ground()?;
@@ -932,6 +1060,7 @@ fn command_update_apply(
             "origin_main_revision": entry.origin_main.as_ref().map(|fact| fact.revision.clone()),
             "behind_main": entry.behind_main,
             "ahead_of_main": entry.ahead_of_main,
+            "direction": entry.direction,
             "detail": entry.detail,
         })).collect();
         println!("{}", serde_json::to_string_pretty(&json!({
@@ -958,49 +1087,86 @@ fn command_update_apply(
         let previous = load_active_update_receipt(&data_root)?;
         let mut receipt = previous.clone().unwrap_or_else(empty_update_receipt);
         let mut updated = Vec::new();
+        // Phase 1 — prepare every product: build or adopt, stage into the
+        // content-addressed store, smoke-check. Nothing any invocation
+        // resolves changes, so a build that fails at product N leaves
+        // products 1..N-1 exactly as they were, and the receipts still tell
+        // the truth.
+        let mut prepared: Vec<(&PlanEntry, Prepared)> = Vec::new();
         for entry in &entries {
             match entry.action {
                 PlanAction::Skip => println!("{}: current ({})", entry.id, entry.detail),
                 PlanAction::Absent => println!("{}: absent — {}", entry.id, entry.detail),
                 PlanAction::Adopt | PlanAction::Build => {
+                    if entry.direction == Some("downgrade") && !allow_downgrade {
+                        println!(
+                            "{}: refused — the planned cut is OLDER than the installed one (a downgrade); \
+                             pass --allow-downgrade to install it, or --channel mainline to take merged main",
+                            entry.id,
+                        );
+                        continue;
+                    }
                     let target = targets.iter().find(|target| target.id == entry.id)
                         .ok_or_else(|| format!("{}: no build contract", entry.id))?;
-                    let product = apply_entry(entry, target, &data_root, &activation_root, channel)?;
-                    println!(
-                        "{}: {} {} at {} ({} -> {})",
-                        entry.id, product.provenance, short_rev(&product.revision),
-                        product.bin,
-                        entry.checkout.display(), activation_root.join(&entry.exe).display(),
-                    );
-                    receipt.products.insert(entry.id.clone(), product);
-                    updated.push(entry.id.clone());
+                    prepared.push((entry, prepare_entry(entry, target, &data_root, &activation_root, channel)?));
                 }
             }
         }
-        // Receipt order is the recovery order: the previous set is durably
-        // recorded before the active receipt names the new one.
-        receipt.updated_at_unix_seconds = unix_seconds_now();
-        receipt.channel = channel.as_str().to_owned();
-        if let Some(previous) = previous.as_ref() {
-            atomic_json(&previous_update_receipt_path(&data_root), previous)?;
-        } else {
-            let _ = fs::remove_file(previous_update_receipt_path(&data_root));
-        }
-        atomic_json(&active_update_receipt_path(&data_root), &receipt)?;
-        // Composition registrations follow the managed bin for suite
-        // products, so `oi status` / `oi doctor` live disclosure stays in
-        // step. `oi` itself is the dispatcher and is not a registered module.
-        if updated.iter().all(|id| id == "oi") {
-            return Ok(updated);
-        }
-        let catalog = catalog()?;
-        let mut composition = load_composition()?;
-        for entry in &entries {
-            if entry.id != "oi" && updated.contains(&entry.id) && entry.desired.is_some() {
-                repoint_registration(&mut composition, &catalog, &entry.id, &entry.checkout, &data_root.join("bin").join(&entry.exe), channel)?;
+        // Phase 2 — flip them live together. A flip that fails puts every
+        // earlier flip back; the receipts are written only after all of them
+        // landed, and a receipt that cannot be written puts them back too.
+        let mut flips: Vec<Flip> = Vec::new();
+        let committed = (|| -> Result<(), String> {
+            for (_, product) in &prepared {
+                flips.push(commit_prepared(product, &data_root, &activation_root)?);
             }
+            Ok(())
+        })();
+        if let Err(error) = committed {
+            undo_flips(&flips);
+            return Err(format!("{error}; every flip already made was put back and nothing was receipted"));
         }
-        save_composition(&composition)?;
+        for (entry, product) in &prepared {
+            println!(
+                "{}: {} {} at {} ({} -> {})",
+                entry.id, product.product.provenance, short_rev(&product.product.revision),
+                product.product.bin,
+                entry.checkout.display(), activation_root.join(&entry.exe).display(),
+            );
+            receipt.products.insert(entry.id.clone(), product.product.clone());
+            updated.push(entry.id.clone());
+        }
+        let receipted = (|| -> Result<(), String> {
+            // Receipt order is the recovery order: the previous set is durably
+            // recorded before the active receipt names the new one.
+            receipt.updated_at_unix_seconds = unix_seconds_now();
+            receipt.channel = channel.as_str().to_owned();
+            if let Some(previous) = previous.as_ref() {
+                atomic_json(&previous_update_receipt_path(&data_root), previous)?;
+            } else {
+                let _ = fs::remove_file(previous_update_receipt_path(&data_root));
+            }
+            atomic_json(&active_update_receipt_path(&data_root), &receipt)?;
+            // Composition registrations follow the managed bin for suite
+            // products, so `oi status` / `oi doctor` live disclosure stays in
+            // step. `oi` itself is the dispatcher and is not a registered module.
+            if !updated.iter().all(|id| id == "oi") {
+                let catalog = catalog()?;
+                let mut composition = load_composition()?;
+                for entry in &entries {
+                    if entry.id != "oi" && updated.contains(&entry.id) && entry.desired.is_some() {
+                        repoint_registration(&mut composition, &catalog, &entry.id, &entry.checkout, &data_root.join("bin").join(&entry.exe), channel)?;
+                    }
+                }
+                save_composition(&composition)?;
+            }
+            Ok(())
+        })();
+        if let Err(error) = receipted {
+            undo_flips(&flips);
+            return Err(format!("{error}; every flip was put back"));
+        }
+        for (_, product) in &prepared { finish_prepared(product); }
         Ok(updated)
     })();
     let _ = fs::remove_file(lock.path());
@@ -1010,7 +1176,38 @@ fn command_update_apply(
             channel.as_str(), updated.len(), active_update_receipt_path(&data_root).display());
         println!("Running processes kept their binaries; the next invocation resolves the new set. Roll back with 'oi update --rollback'.");
     }
-    Ok(0)
+    if updated.is_empty() { return Ok(0); }
+    // A new binary on disk is not a new process. Every resident a product owns
+    // says whether it still runs an older build, by the product's own reading;
+    // the update names it and, on request, asks the product to restart it.
+    let residents = resident_readings();
+    let stale: Vec<&ResidentReading> = residents.iter().filter(|resident| resident.stale == Some(true)).collect();
+    if json_mode {
+        println!("{}", serde_json::to_string_pretty(&json!({
+            "schema": "oi.managed-update-residents/v1",
+            "residents": residents.iter().map(ResidentReading::to_json).collect::<Vec<_>>(),
+        })).map_err(|error| error.to_string())?);
+    } else {
+        for resident in &residents { println!("{}", resident.describe()); }
+    }
+    if stale.is_empty() { return Ok(0); }
+    if !restart_residents {
+        if !json_mode {
+            for resident in &stale {
+                println!("  to restart it on the new build: {}", resident.restart_command.join(" "));
+            }
+            println!("  (or re-run with --restart-residents)");
+        }
+        return Ok(0);
+    }
+    let mut failed = false;
+    for resident in &stale {
+        println!("restarting {}: {}", resident.name, resident.restart_command.join(" "));
+        let outcome = run_resident_restart(resident)?;
+        println!("  {outcome}");
+        if !resident_restart_succeeded(&outcome) { failed = true; }
+    }
+    Ok(if failed { 1 } else { 0 })
 }
 
 fn command_update_check(json_mode: bool, selection: &[String], force_rebuild: bool, candidates: &BTreeMap<String, String>, channel: UpdateChannel) -> Result<i32, String> {
@@ -1040,6 +1237,7 @@ fn command_update_check(json_mode: bool, selection: &[String], force_rebuild: bo
             "origin_main_fetch_failed": entry.origin_main.as_ref().map(|fact| fact.fetch_failed),
             "behind_main": entry.behind_main,
             "ahead_of_main": entry.ahead_of_main,
+            "direction": entry.direction,
             "detail": entry.detail,
         })).collect();
         let pending = entries.iter().filter(|entry| matches!(entry.action, PlanAction::Adopt | PlanAction::Build)).count();
@@ -1052,6 +1250,7 @@ fn command_update_check(json_mode: bool, selection: &[String], force_rebuild: bo
             "mainline_pending_count": mainline_pending,
             "products": products,
             "drift": drift,
+            "residents": resident_readings().iter().map(ResidentReading::to_json).collect::<Vec<_>>(),
         })).map_err(|error| error.to_string())?);
         return Ok(if pending > 0 { 1 } else { 0 });
     }
@@ -1253,10 +1452,12 @@ fn command_update_flow(args: &[OsString]) -> Result<i32, String> {
     let mut check_only = false;
     let mut rollback = false;
     let mut force_rebuild = false;
+    let mut allow_downgrade = false;
+    let mut restart_residents = false;
     let mut channel = UpdateChannel::DeveloperSource;
     let mut products: Vec<OsString> = Vec::new();
     let mut candidate_specs: Vec<String> = Vec::new();
-    let usage = "oi update [--check|--apply|--rollback] [--rebuild] [--candidate PRODUCT=REVISION] [--channel source|mainline] [--json] [PRODUCT ...]";
+    let usage = "oi update [--check|--apply|--rollback] [--rebuild] [--candidate PRODUCT=REVISION] [--channel source|mainline] [--allow-downgrade] [--restart-residents] [--json] [PRODUCT ...]";
     let mut index = 0;
     while index < args.len() {
         let value = args[index].to_str()
@@ -1267,6 +1468,8 @@ fn command_update_flow(args: &[OsString]) -> Result<i32, String> {
             "--apply" => {}
             "--rollback" => rollback = true,
             "--rebuild" => force_rebuild = true,
+            "--allow-downgrade" => allow_downgrade = true,
+            "--restart-residents" => restart_residents = true,
             "--candidate" => {
                 index += 1;
                 let spec = args.get(index).and_then(|value| value.to_str())
@@ -1334,7 +1537,127 @@ fn command_update_flow(args: &[OsString]) -> Result<i32, String> {
     if check_only {
         return command_update_check(json_mode, &selection, force_rebuild, &candidates, channel);
     }
-    command_update_apply(&selection, force_rebuild, json_mode, &candidates, channel)
+    command_update_apply(&selection, force_rebuild, json_mode, &candidates, channel, allow_downgrade, restart_residents)
+}
+
+/// A long-lived process a product owns that keeps executing its old image after
+/// an update flips the binary on disk: replacing a file does not replace a
+/// process. The product reads itself (its own running build against its own
+/// installed one); this flow asks, names what is stale, and on request asks the
+/// product to restart it. It never stops or restarts a process it does not own.
+#[derive(Debug, Clone)]
+struct ResidentReading {
+    product: String,
+    name: String,
+    running_revision: Option<String>,
+    installed_revision: Option<String>,
+    /// `Some(true)`: the resident runs an older image than is installed.
+    /// `None`: there is no resident to compare, or it could not be read.
+    stale: Option<bool>,
+    detail: String,
+    restart_command: Vec<String>,
+}
+
+impl ResidentReading {
+    fn describe(&self) -> String {
+        let shown = |revision: &Option<String>| revision.as_deref().map(short_rev).unwrap_or_else(|| "unknown".to_owned());
+        match self.stale {
+            Some(true) => format!(
+                "  resident {} {}: STALE — running {}, installed {}",
+                self.product, self.name, shown(&self.running_revision), shown(&self.installed_revision),
+            ),
+            Some(false) => format!("  resident {} {}: current (running {})", self.product, self.name, shown(&self.running_revision)),
+            None => format!("  resident {} {}: {}", self.product, self.name, self.detail),
+        }
+    }
+
+    fn to_json(&self) -> serde_json::Value {
+        json!({
+            "product": self.product,
+            "resident": self.name,
+            "running_revision": self.running_revision,
+            "installed_revision": self.installed_revision,
+            "stale": self.stale,
+            "detail": self.detail,
+            "restart_command": self.restart_command,
+        })
+    }
+}
+
+/// Every resident a product reports. Today: AIKit's gateway, read through its
+/// own `aikit gateway upgrade plan` (a read-only command that names the
+/// running process's build and the installed one).
+fn resident_readings() -> Vec<ResidentReading> {
+    let mut readings = Vec::new();
+    if let Some(aikit) = resolve_executable("aikit") {
+        readings.push(aikit_gateway_reading(&aikit));
+    }
+    readings
+}
+
+fn aikit_gateway_reading(aikit: &Path) -> ResidentReading {
+    let restart_command: Vec<String> = ["aikit", "gateway", "upgrade", "apply", "--wait"].iter().map(|part| (*part).to_owned()).collect();
+    let base = ResidentReading {
+        product: "ai-kit".to_owned(),
+        name: "gateway".to_owned(),
+        running_revision: None,
+        installed_revision: None,
+        stale: None,
+        detail: String::new(),
+        restart_command,
+    };
+    let output = Command::new(aikit).args(["gateway", "upgrade", "plan", "--json"])
+        .stdin(Stdio::null()).output();
+    let Ok(output) = output else {
+        return ResidentReading { detail: "could not run `aikit gateway upgrade plan`".to_owned(), ..base };
+    };
+    let Ok(envelope) = serde_json::from_slice::<serde_json::Value>(&output.stdout) else {
+        return ResidentReading {
+            detail: "this aikit predates `gateway upgrade plan`; its gateway's running build cannot be read".to_owned(),
+            ..base
+        };
+    };
+    if envelope["ok"] != true {
+        let why = envelope["error"]["message"].as_str().unwrap_or("the plan could not be read");
+        return ResidentReading { detail: format!("unreadable — {why}"), ..base };
+    }
+    let data = &envelope["data"];
+    let running = data["running"]["identity"]["revision"].as_str().map(str::to_owned);
+    if data["running"].is_null() {
+        return ResidentReading { detail: "no gateway is running".to_owned(), ..base };
+    }
+    ResidentReading {
+        running_revision: running,
+        installed_revision: data["installed"]["revision"].as_str().map(str::to_owned),
+        stale: data["stale"].as_bool(),
+        detail: data["action"].as_str().unwrap_or("").to_owned(),
+        ..base
+    }
+}
+
+/// Ask the product to restart one stale resident. Returns the product's own
+/// words for the outcome (`completed …`, `needs-operator …`, …).
+fn run_resident_restart(resident: &ResidentReading) -> Result<String, String> {
+    let program = resolve_executable(&resident.restart_command[0])
+        .ok_or_else(|| format!("{} is not on PATH", resident.restart_command[0]))?;
+    let mut command = Command::new(program);
+    command.args(&resident.restart_command[1..]).arg("--json").stdin(Stdio::null());
+    let output = command.output().map_err(|error| format!("could not run {}: {error}", resident.restart_command.join(" ")))?;
+    let envelope: serde_json::Value = serde_json::from_slice(&output.stdout)
+        .map_err(|_| format!("no JSON answer: {}", String::from_utf8_lossy(&output.stderr).lines().last().unwrap_or("")))?;
+    if envelope["ok"] != true {
+        return Ok(format!("failed — {}", envelope["error"]["message"].as_str().unwrap_or("the restart was refused")));
+    }
+    let outcome = &envelope["data"]["outcome"];
+    Ok(format!(
+        "{} — {}",
+        outcome["status"].as_str().unwrap_or("started"),
+        outcome["summary"].as_str().unwrap_or("the worker is running; see `aikit gateway upgrade status`"),
+    ))
+}
+
+fn resident_restart_succeeded(outcome: &str) -> bool {
+    outcome.starts_with("completed") || outcome.starts_with("no-change") || outcome.starts_with("started")
 }
 
 #[cfg(test)]
@@ -1831,6 +2154,7 @@ mod update_flow_tests {
             origin_main: None,
             behind_main: None,
             ahead_of_main: None,
+            direction: None,
         }
     }
 
@@ -1974,5 +2298,142 @@ mod update_flow_tests {
         let entries = managed_update_standing(&data_root).unwrap().unwrap();
         assert!(!entries[0].present, "a receipt whose managed artifact never existed is not present");
         assert!(entries[0].detail.clone().expect("named").contains("no longer present on disk"));
+    }
+
+
+    /// A repository whose build writes a primary that FAILS its version smoke
+    /// check (and the companion the target declares).
+    #[cfg(unix)]
+    fn broken_repo(dir: &Path) -> (PathBuf, String) {
+        let repo = dir.join("broken");
+        fs::create_dir_all(&repo).unwrap();
+        git(&repo, &["init", "-b", "main"]);
+        fs::write(repo.join("build.sh"),
+            "set -eu\nmkdir -p \"$CARGO_TARGET_DIR/release\"\n\
+             printf '#!/bin/sh\\nexit 1\\n' > \"$CARGO_TARGET_DIR/release/tool\"\n\
+             printf '#!/bin/sh\\nexit 0\\n' > \"$CARGO_TARGET_DIR/release/tool-host\"\n\
+             chmod 755 \"$CARGO_TARGET_DIR/release/tool\" \"$CARGO_TARGET_DIR/release/tool-host\"\n").unwrap();
+        let revision = commit_all(&repo, "broken");
+        (repo, revision)
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn a_prepared_product_is_staged_and_verified_but_nothing_resolves_to_it_until_it_is_committed() {
+        let temp = tempfile::tempdir().unwrap();
+        let data_root = temp.path().join("data");
+        let activation = temp.path().join("home/.local/bin");
+        let target = companion_target(&["sh", "build.sh"]);
+        let (repo, first_rev) = companion_repo(temp.path(), "one");
+
+        let prepared = prepare_entry(&build_entry(&repo, &first_rev, PlanAction::Build, None), &target, &data_root, &activation, UpdateChannel::DeveloperSource).unwrap();
+        assert!(is_executable(Path::new(&prepared.product.managed)), "staged in the content-addressed store");
+        assert!(fs::symlink_metadata(data_root.join("bin/tool")).is_err(), "no bin link yet");
+        assert!(fs::symlink_metadata(activation.join("tool")).is_err(), "no activation yet");
+
+        commit_prepared(&prepared, &data_root, &activation).unwrap();
+        finish_prepared(&prepared);
+        let first_live = fs::canonicalize(data_root.join("bin/tool")).unwrap();
+        assert_eq!(first_live, fs::canonicalize(&prepared.product.managed).unwrap());
+
+        // A second cut is prepared while the first is live: the live link does
+        // not move. Committing it moves both links; undoing that puts both back.
+        let (_, second_rev) = companion_repo(temp.path(), "two");
+        let second = prepare_entry(&build_entry(&repo, &second_rev, PlanAction::Build, None), &target, &data_root, &activation, UpdateChannel::DeveloperSource).unwrap();
+        assert_eq!(fs::canonicalize(data_root.join("bin/tool")).unwrap(), first_live, "preparing changed nothing live");
+        let flip = commit_prepared(&second, &data_root, &activation).unwrap();
+        assert_eq!(fs::canonicalize(data_root.join("bin/tool")).unwrap(), fs::canonicalize(&second.product.managed).unwrap());
+        assert_eq!(fs::canonicalize(activation.join("tool")).unwrap(), fs::canonicalize(&second.product.managed).unwrap());
+        undo_flips(&[flip]);
+        assert_eq!(fs::canonicalize(data_root.join("bin/tool")).unwrap(), first_live, "the bin link is put back");
+        assert_eq!(fs::canonicalize(activation.join("tool")).unwrap(), first_live, "the activation link is put back");
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn a_build_that_fails_its_smoke_check_never_replaces_the_live_link() {
+        let temp = tempfile::tempdir().unwrap();
+        let data_root = temp.path().join("data");
+        let activation = temp.path().join("home/.local/bin");
+        let target = companion_target(&["sh", "build.sh"]);
+        let (repo, first_rev) = companion_repo(temp.path(), "one");
+        let first = apply_entry(&build_entry(&repo, &first_rev, PlanAction::Build, None), &target, &data_root, &activation, UpdateChannel::DeveloperSource).unwrap();
+        let live = fs::canonicalize(data_root.join("bin/tool")).unwrap();
+
+        let (broken, broken_rev) = broken_repo(temp.path());
+        let error = match prepare_entry(&build_entry(&broken, &broken_rev, PlanAction::Build, None), &target, &data_root, &activation, UpdateChannel::DeveloperSource) {
+            Ok(_) => panic!("a binary that fails its smoke check must not be prepared"),
+            Err(error) => error,
+        };
+        assert!(error.contains("smoke"), "{error}");
+        // The exact defect this repairs: the link used to flip BEFORE the
+        // smoke check, leaving `~/.local/bin/<exe>` on the broken binary.
+        assert_eq!(fs::canonicalize(data_root.join("bin/tool")).unwrap(), live);
+        assert_eq!(fs::canonicalize(activation.join("tool")).unwrap(), live);
+        assert_eq!(first.sha256, sha256_file(&live).unwrap());
+        // The one-product form keeps its contract: nothing linked on failure.
+        let error = apply_entry(&build_entry(&broken, &broken_rev, PlanAction::Build, None), &target, &data_root, &activation, UpdateChannel::DeveloperSource).unwrap_err();
+        assert!(error.contains("smoke"), "{error}");
+        assert_eq!(fs::canonicalize(data_root.join("bin/tool")).unwrap(), live);
+    }
+
+    #[test]
+    fn a_planned_cut_is_named_an_upgrade_a_downgrade_or_diverged_against_what_is_installed() {
+        let temp = tempfile::tempdir().unwrap();
+        let repo = temp.path().join("repo");
+        fs::create_dir_all(&repo).unwrap();
+        git(&repo, &["init", "-b", "main"]);
+        fs::write(repo.join("a"), "1").unwrap();
+        let c1 = commit_all(&repo, "one");
+        fs::write(repo.join("a"), "2").unwrap();
+        let c2 = commit_all(&repo, "two");
+        fs::write(repo.join("a"), "3").unwrap();
+        let c3 = commit_all(&repo, "three");
+        git(&repo, &["checkout", "-b", "side", &c1]);
+        fs::write(repo.join("b"), "x").unwrap();
+        let side = commit_all(&repo, "side");
+
+        assert_eq!(cut_direction(&repo, &c2, &c3), Some("upgrade"));
+        assert_eq!(cut_direction(&repo, &c3, &c1), Some("downgrade"), "an older planned cut is a downgrade, not 'update available'");
+        assert_eq!(cut_direction(&repo, &c3, &side), Some("diverged"));
+        assert_eq!(cut_direction(&repo, &c2, &c2), Some("same"));
+        assert_eq!(cut_direction(&repo, &"0".repeat(40), &c3), None, "an installed commit this checkout never saw is not comparable");
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn a_resident_is_read_through_its_products_own_plan_and_a_stale_one_names_the_restart() {
+        let temp = tempfile::tempdir().unwrap();
+        let stale = script_executable(&temp.path().join("stale/aikit"), r#"#!/bin/sh
+echo '{"ok":true,"data":{"running":{"identity":{"revision":"aaaaaaaaaaaaaaaa"}},"installed":{"revision":"bbbbbbbbbbbbbbbb"},"stale":true,"action":"restart"}}'
+"#);
+        let reading = aikit_gateway_reading(&stale);
+        assert_eq!(reading.stale, Some(true));
+        let line = reading.describe();
+        assert!(line.contains("STALE") && line.contains("aaaaaaaaaaaa") && line.contains("bbbbbbbbbbbb"), "{line}");
+        assert_eq!(reading.restart_command.join(" "), "aikit gateway upgrade apply --wait");
+
+        let current = script_executable(&temp.path().join("current/aikit"), r#"#!/bin/sh
+echo '{"ok":true,"data":{"running":{"identity":{"revision":"cccccccccccccccc"}},"installed":{"revision":"cccccccccccccccc"},"stale":false,"action":"none"}}'
+"#);
+        assert_eq!(aikit_gateway_reading(&current).stale, Some(false));
+
+        let not_running = script_executable(&temp.path().join("off/aikit"), r#"#!/bin/sh
+echo '{"ok":true,"data":{"running":null,"installed":{"revision":"cccccccccccccccc"},"stale":null,"action":"start"}}'
+"#);
+        let reading = aikit_gateway_reading(&not_running);
+        assert_eq!(reading.stale, None);
+        assert!(reading.describe().contains("no gateway is running"));
+
+        // An aikit that predates the plan cannot be read: said, not assumed current.
+        let old = script_executable(&temp.path().join("old/aikit"), "#!/bin/sh\necho 'unrecognized subcommand' >&2\nexit 2\n");
+        let reading = aikit_gateway_reading(&old);
+        assert_eq!(reading.stale, None);
+        assert!(reading.detail.contains("predates"), "{}", reading.detail);
+
+        assert!(resident_restart_succeeded("completed — now running x"));
+        assert!(resident_restart_succeeded("no-change — already the installed build"));
+        assert!(!resident_restart_succeeded("needs-operator — nothing would start it"));
+        assert!(!resident_restart_succeeded("failed — refused"));
     }
 }
