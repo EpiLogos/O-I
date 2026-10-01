@@ -16,7 +16,7 @@ use std::fmt;
 pub const SCHEMA: &str = "oi.expression-storage/v1";
 pub const IMAGE_REF_SCHEMA: &str = "oi.expression-image-ref/v1";
 pub const FILE_BYTES: usize = 4 * 1024 * 1024;
-const MAX_IMAGES: usize = 4096;
+pub(crate) const MAX_IMAGES: usize = 4096;
 // Native rich material admits forty levels from its own material root. The
 // Document and storage envelope add containers around that unchanged root.
 const MAX_FILE_DEPTH: usize = 48;
@@ -32,9 +32,9 @@ struct StoredExpression {
 }
 #[derive(Debug, Deserialize, Serialize)]
 #[serde(deny_unknown_fields)]
-struct StoredImage {
-    r#ref: String,
-    data_url: String,
+pub(crate) struct StoredImage {
+    pub(crate) r#ref: String,
+    pub(crate) data_url: String,
 }
 #[derive(Debug, Deserialize)]
 #[serde(deny_unknown_fields)]
@@ -44,7 +44,7 @@ struct ImageRef {
 }
 // Preserve typed duplicate-field admission through the envelope's Value
 // carrier too, including rich material objects.
-struct UniqueValue(Value);
+pub(crate) struct UniqueValue(pub(crate) Value);
 impl<'de> Deserialize<'de> for UniqueValue {
     fn deserialize<D: Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
         struct UniqueVisitor;
@@ -101,10 +101,10 @@ impl<'de> Deserialize<'de> for UniqueValue {
         deserializer.deserialize_any(UniqueVisitor)
     }
 }
-fn digest(bytes: &[u8]) -> String {
+pub(crate) fn digest(bytes: &[u8]) -> String {
     format!("sha256:{:x}", Sha256::digest(bytes))
 }
-fn digest_ref(value: &str) -> bool {
+pub(crate) fn digest_ref(value: &str) -> bool {
     value.strip_prefix("sha256:").is_some_and(|hex| {
         hex.len() == 64
             && hex
@@ -112,7 +112,7 @@ fn digest_ref(value: &str) -> bool {
                 .all(|b| b.is_ascii_digit() || (b'a'..=b'f').contains(&b))
     })
 }
-fn png(value: &str) -> bool {
+pub(crate) fn png(value: &str) -> bool {
     value.strip_prefix(PNG).is_some_and(|bytes| {
         !bytes.is_empty()
             && bytes.len() % 4 == 0
@@ -150,7 +150,7 @@ fn safe(value: &Value, depth: usize) -> Result<(), String> {
         _ => Ok(()),
     }
 }
-fn count_images<'a>(value: &'a Value, counts: &mut BTreeMap<&'a str, usize>) {
+pub(crate) fn count_images<'a>(value: &'a Value, counts: &mut BTreeMap<&'a str, usize>) {
     match value {
         Value::Object(values) => {
             for (key, value) in values {
@@ -170,7 +170,7 @@ fn count_images<'a>(value: &'a Value, counts: &mut BTreeMap<&'a str, usize>) {
         _ => {}
     }
 }
-fn intern(value: &mut Value, refs: &BTreeMap<String, String>) {
+pub(crate) fn intern(value: &mut Value, refs: &BTreeMap<String, String>) {
     match value {
         Value::Object(values) => {
             for (key, value) in values {
@@ -241,7 +241,7 @@ pub fn encode(document: &Document) -> Result<String, String> {
 /// Validate every local image reference and account for its entire expanded
 /// size BEFORE any repeated image String is cloned. A literal-only image
 /// dictionary makes reference cycles structurally impossible.
-fn expansion_delta(
+pub(crate) fn expansion_delta(
     value: &Value,
     key: Option<&str>,
     images: &BTreeMap<String, String>,
@@ -284,7 +284,7 @@ fn expansion_delta(
     }
     Ok(delta)
 }
-fn expand(value: &mut Value, images: &BTreeMap<String, String>) {
+pub(crate) fn expand(value: &mut Value, images: &BTreeMap<String, String>) {
     if value.is_object() && value["schema"] == IMAGE_REF_SCHEMA {
         // Every reference was qualified by expansion_delta before this pass.
         let reference = value["ref"].as_str().unwrap();

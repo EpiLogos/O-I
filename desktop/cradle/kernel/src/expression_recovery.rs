@@ -5,13 +5,17 @@
 use serde::{Deserialize, Serialize};
 use serde_json::{json, Value};
 use sha2::{Digest, Sha256};
-use std::{collections::BTreeSet, path::PathBuf};
+use std::{
+    collections::{BTreeMap, BTreeSet},
+    path::PathBuf,
+};
 
 pub const MAX_RECORD_BYTES: usize = 8 * 1024 * 1024;
 const MAX_SCOPE_BYTES: usize = 64 * 1024 * 1024;
 const MAX_RECORDS: usize = 256;
 const MAX_REVISION: u64 = crate::expression::MAX_REVISION;
 const SCHEMA: &str = "oi.expression-recovery/v1";
+const STORAGE_SCHEMA: &str = "oi.expression-recovery-storage/v1";
 
 /// Recovery has its own filesystem lock and compare-and-set revisions. It
 /// does not access Kernel memory or emit semantic events, so hosts execute
@@ -82,6 +86,16 @@ struct Record {
     id: String,
     revision: u64,
     value: Value,
+}
+/// Private storage only. Public recovery values remain the complete ordinary
+/// checkpoint, including its independent acknowledged, local and pending bases.
+#[derive(Debug, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+struct StoredRecord {
+    schema: String,
+    record: Record,
+    images: Vec<crate::expression_file::StoredImage>,
+    expanded_value_sha256: String,
 }
 impl Record {
     fn public(&self) -> Value {
@@ -185,10 +199,10 @@ fn journey(value: &Value, id: &str) -> Result<(), String> {
 }
 fn validate(kind: Kind, id: &str, value: &Value) -> Result<(), String> {
     safe_id(id)?;
-    if serde_json::to_vec(value).map_err(|e| e.to_string())?.len() > MAX_RECORD_BYTES {
-        return Err("Recovery record exceeds 8 MiB".into());
-    }
     data(value, 0)?;
+    // Refuse an oversized public component before typed Document/request
+    // conversion can clone its material, not only before storage interning.
+    preflight_components(kind, value)?;
     if kind == Kind::Draft {
         return journey(value, id);
     }
@@ -371,6 +385,212 @@ fn validate(kind: Kind, id: &str, value: &Value) -> Result<(), String> {
     }
     Ok(())
 }
+
+/// Measure serialized UTF8 through a borrowed writer. This allocates neither
+/// a serialized payload nor a cloned Value/image String.
+fn serialized_size(value: &Value) -> Result<usize, String> {
+    #[derive(Default)]
+    struct Counter(usize);
+    impl std::io::Write for Counter {
+        fn write(&mut self, bytes: &[u8]) -> std::io::Result<usize> {
+            self.0 = self
+                .0
+                .checked_add(bytes.len())
+                .ok_or_else(|| std::io::Error::other("Recovery size overflow"))?;
+            Ok(bytes.len())
+        }
+        fn flush(&mut self) -> std::io::Result<()> {
+            Ok(())
+        }
+    }
+    let mut counter = Counter::default();
+    serde_json::to_writer(&mut counter, value).map_err(|e| e.to_string())?;
+    Ok(counter.0)
+}
+
+fn component_budgets(
+    kind: Kind,
+    value: &Value,
+    size: impl Fn(&Value) -> Result<usize, String>,
+) -> Result<(), String> {
+    let mut removed = 0i128;
+    if kind == Kind::Checkpoint {
+        for path in [
+            "/view/document",
+            "/view/journey",
+            "/pending/request",
+            "/pending/submitted/journey",
+        ] {
+            if let Some(component) = value.pointer(path) {
+                let bytes = size(component)?;
+                if bytes > MAX_RECORD_BYTES {
+                    return Err(
+                        "Expanded recovery component exceeds 8 MiB before material cloning".into(),
+                    );
+                }
+                // Account for a null placeholder without constructing a
+                // remainder copy. The four component roots never overlap.
+                removed = removed
+                    .checked_add(bytes as i128 - 4)
+                    .ok_or("Recovery size overflow")?;
+            }
+        }
+    }
+    let remainder = (size(value)? as i128)
+        .checked_sub(removed)
+        .ok_or("Recovery size overflow")?;
+    if remainder < 0 || remainder > MAX_RECORD_BYTES as i128 {
+        return Err("Expanded recovery component exceeds 8 MiB before material cloning".into());
+    }
+    Ok(())
+}
+
+fn preflight_components(kind: Kind, value: &Value) -> Result<(), String> {
+    component_budgets(kind, value, serialized_size)
+}
+
+fn expanded_size(value: &Value, images: &BTreeMap<String, String>) -> Result<usize, String> {
+    let encoded = serialized_size(value)?;
+    let delta = crate::expression_file::expansion_delta(value, None, images, &mut BTreeSet::new())?;
+    usize::try_from(
+        (encoded as i128)
+            .checked_add(delta)
+            .ok_or("Expanded recovery size overflow")?,
+    )
+    .map_err(|_| "Expanded recovery size overflow".into())
+}
+
+/// A checkpoint carries several different snapshots, not one larger native
+/// Document. Qualify each existing component budget before cloning any PNG:
+/// acknowledged Document, authoring Journey, pending request/submitted Journey,
+/// and the remaining recovery metadata. None may use storage compression to
+/// exceed its ordinary 8 MiB bound.
+fn qualify_expansion(
+    kind: Kind,
+    value: &Value,
+    images: &BTreeMap<String, String>,
+) -> Result<(), String> {
+    data(value, 0)?;
+    let mut used = BTreeSet::new();
+    crate::expression_file::expansion_delta(value, None, images, &mut used)?;
+    if used.len() != images.len() {
+        return Err("Unused embedded recovery image reference".into());
+    }
+    component_budgets(kind, value, |component| expanded_size(component, images))
+}
+
+fn encode_record(record: &Record) -> Result<Vec<u8>, String> {
+    preflight_components(record.kind, &record.value)?;
+    let full = serde_json::to_vec(&record.value).map_err(|e| e.to_string())?;
+    let mut counts = BTreeMap::new();
+    crate::expression_file::count_images(&record.value, &mut counts);
+    let refs: BTreeMap<String, String> = counts
+        .into_iter()
+        .filter(|(_, count)| *count > 1)
+        .take(crate::expression_file::MAX_IMAGES)
+        .map(|(url, _)| {
+            (
+                url.to_owned(),
+                crate::expression_file::digest(url.as_bytes()),
+            )
+        })
+        .collect();
+    let raw = serde_json::to_vec(record).map_err(|e| e.to_string())?;
+    if refs.is_empty() {
+        if full.len() > MAX_RECORD_BYTES {
+            return Err("Recovery record exceeds 8 MiB".into());
+        }
+        return Ok(raw);
+    }
+    let mut compact = Record {
+        schema: record.schema.clone(),
+        scope: record.scope,
+        kind: record.kind,
+        id: record.id.clone(),
+        revision: record.revision,
+        value: record.value.clone(),
+    };
+    crate::expression_file::intern(&mut compact.value, &refs);
+    let mut images: Vec<_> = refs
+        .iter()
+        .map(|(url, reference)| crate::expression_file::StoredImage {
+            r#ref: reference.clone(),
+            data_url: url.clone(),
+        })
+        .collect();
+    images.sort_by(|a, b| a.r#ref.cmp(&b.r#ref));
+    qualify_expansion(
+        record.kind,
+        &compact.value,
+        &refs
+            .iter()
+            .map(|(url, reference)| (reference.clone(), url.clone()))
+            .collect(),
+    )?;
+    let stored = StoredRecord {
+        schema: STORAGE_SCHEMA.into(),
+        record: compact,
+        images,
+        expanded_value_sha256: crate::expression_file::digest(&full),
+    };
+    let encoded = serde_json::to_vec(&stored).map_err(|e| e.to_string())?;
+    if encoded.len() >= raw.len() && full.len() <= MAX_RECORD_BYTES {
+        return Ok(raw);
+    }
+    if encoded.len() > MAX_RECORD_BYTES + 2048 {
+        return Err("Recovery record exceeds 8 MiB".into());
+    }
+    Ok(encoded)
+}
+
+fn decode_record(bytes: &[u8], validate_body: bool) -> Result<Record, String> {
+    let crate::expression_file::UniqueValue(value) =
+        serde_json::from_slice(bytes).map_err(|e| format!("Invalid native recovery entry: {e}"))?;
+    if value["schema"] == SCHEMA {
+        let record: Record = serde_json::from_value(value).map_err(|e| e.to_string())?;
+        if serde_json::to_vec(&record.value)
+            .map_err(|e| e.to_string())?
+            .len()
+            > MAX_RECORD_BYTES
+        {
+            return Err("Recovery record exceeds 8 MiB".into());
+        }
+        return Ok(record);
+    }
+    if value["schema"] != STORAGE_SCHEMA {
+        return Err("Unsupported native recovery storage schema".into());
+    }
+    let mut stored: StoredRecord = serde_json::from_value(value)
+        .map_err(|e| format!("Invalid native recovery envelope: {e}"))?;
+    if !crate::expression_file::digest_ref(&stored.expanded_value_sha256)
+        || stored.images.len() > crate::expression_file::MAX_IMAGES
+    {
+        return Err("Invalid recovery digest or image dictionary budget".into());
+    }
+    let mut images = BTreeMap::new();
+    for image in stored.images {
+        if !crate::expression_file::digest_ref(&image.r#ref)
+            || !crate::expression_file::png(&image.data_url)
+            || crate::expression_file::digest(image.data_url.as_bytes()) != image.r#ref
+        {
+            return Err("Invalid embedded recovery image schema or digest".into());
+        }
+        if images.insert(image.r#ref, image.data_url).is_some() {
+            return Err("Duplicate embedded recovery image reference".into());
+        }
+    }
+    qualify_expansion(stored.record.kind, &stored.record.value, &images)?;
+    if validate_body {
+        crate::expression_file::expand(&mut stored.record.value, &images);
+        if crate::expression_file::digest(
+            &serde_json::to_vec(&stored.record.value).map_err(|e| e.to_string())?,
+        ) != stored.expanded_value_sha256
+        {
+            return Err("Expanded recovery value digest differs".into());
+        }
+    }
+    Ok(stored.record)
+}
 fn filename(kind: Kind, id: &str) -> String {
     format!(
         "{:x}.json",
@@ -476,7 +696,9 @@ impl Store {
             }
             Request::FindCheckpoint { expression_ref, .. } => {
                 reference(&expression_ref)?;
-                let records = read_records(&dir, scope, sequence, true)?;
+                // Inspect metadata without expanding every unrelated private
+                // body. Only the exact addressed checkpoint returns content.
+                let records = read_records(&dir, scope, sequence, false)?;
                 let matching = records
                     .iter()
                     .filter(|r| {
@@ -490,7 +712,20 @@ impl Store {
                 if matching.len() > 1 {
                     return Err("Several native working drafts address this Expression; choose a draft explicitly".into());
                 }
-                Ok(ready(matching.first().copied()))
+                let record = matching
+                    .first()
+                    .map(|record| {
+                        read_record(
+                            &dir,
+                            scope,
+                            &filename(record.kind, &record.id),
+                            sequence,
+                            true,
+                        )
+                    })
+                    .transpose()?
+                    .flatten();
+                Ok(ready(record.as_ref()))
             }
             Request::Write {
                 kind,
@@ -523,7 +758,7 @@ impl Store {
                     revision: sequence,
                     value,
                 };
-                let bytes = serde_json::to_vec(&record).map_err(|e| e.to_string())?;
+                let bytes = encode_record(&record)?;
                 let target = filename(kind, &record.id);
                 let total = entries
                     .iter()
@@ -630,8 +865,7 @@ fn read_record(
     if bytes.len() as u64 != len {
         return Err("Native recovery entry changed while being read".into());
     }
-    let record: Record = serde_json::from_slice(&bytes)
-        .map_err(|e| format!("Invalid native recovery entry: {e}"))?;
+    let record = decode_record(&bytes, validate_body)?;
     if record.schema != SCHEMA
         || record.scope != scope
         || record.revision == 0
@@ -958,6 +1192,283 @@ mod tests {
             .unwrap();
         assert_eq!(reply["state"], "ready");
         json!({"schema":"oi.native-working/v1","draft_id":id,"view":{"document":reply["document"],"journey":draft(id)}})
+    }
+
+    #[test]
+    fn oversized_public_component_refuses_before_image_materialisation() {
+        let home = Home::new();
+        let mut value = draft("oversized-images");
+        let png = format!(
+            "data:image/png;base64,{}",
+            "AAAA".repeat(MAX_RECORD_BYTES / 4)
+        );
+        value["retained"] = json!([
+            {"dataUrl": png}, {"dataUrl": png},
+            {"schema":"oi.expression-image-ref/v1","ref":"invalid-placement"}
+        ]);
+        // If interning or expansion qualification runs before the borrowed
+        // size preflight, the misplaced reference wins with a different error.
+        // The ordinary native write must refuse the size first, without a
+        // record or a persisted sequence, before copying either PNG String.
+        let record = Record {
+            schema: SCHEMA.into(),
+            scope: Scope::Expressions,
+            kind: Kind::Draft,
+            id: "oversized-images".into(),
+            revision: 1,
+            value,
+        };
+        let refused = encode_record(&record).unwrap_err();
+        assert!(
+            refused.contains("8 MiB before material cloning"),
+            "{refused}"
+        );
+        let refused = home
+            .store()
+            .apply(write(
+                Scope::Expressions,
+                Kind::Draft,
+                "oversized-images",
+                None,
+                record.value,
+            ))
+            .unwrap_err();
+        assert!(
+            refused.contains("8 MiB before material cloning"),
+            "{refused}"
+        );
+        assert!(!home
+            .path(Scope::Expressions, Kind::Draft, "oversized-images")
+            .exists());
+        assert!(!home.root().join(".sequence").exists());
+    }
+
+    /// The input is the retained failed public operation from the ordinary
+    /// Epi world, not a synthesized checkpoint or an owner-response fixture.
+    #[test]
+    #[ignore = "supply OI_RECOVERY_REAL_FAILURE with the retained ordinary-production refusal"]
+    fn actual_epi_checkpoint_preserves_all_material_and_pending_work_across_recovery() {
+        let path = std::env::var("OI_RECOVERY_REAL_FAILURE").unwrap();
+        let failure: Value = serde_json::from_slice(&fs::read(path).unwrap()).unwrap();
+        assert_eq!(
+            failure["response"]["error"],
+            "Recovery record exceeds 8 MiB"
+        );
+        let request = &failure["request"]["request"];
+        let original = request["value"].clone();
+        let id = request["id"].as_str().unwrap();
+        assert_eq!(request["kind"], "checkpoint");
+        assert!(serde_json::to_vec(&original).unwrap().len() > MAX_RECORD_BYTES);
+        let document: crate::expression::Document =
+            serde_json::from_value(original["view"]["document"].clone()).unwrap();
+        document.validate().unwrap();
+        let home = Home::new();
+        let written = home
+            .store()
+            .apply(write(
+                Scope::Expressions,
+                Kind::Checkpoint,
+                id,
+                None,
+                original.clone(),
+            ))
+            .expect("The complete actual checkpoint must fit by lossless native storage encoding");
+        assert_eq!(written["record"]["value"], original);
+        let stored_path = home.path(Scope::Expressions, Kind::Checkpoint, id);
+        let stored_bytes = fs::read(&stored_path).unwrap();
+        assert!(stored_bytes.len() <= MAX_RECORD_BYTES + 2048);
+        let stored: Value = serde_json::from_slice(&stored_bytes).unwrap();
+        assert_eq!(stored["schema"], "oi.expression-recovery-storage/v1");
+        assert_eq!(stored["images"].as_array().unwrap().len(), 6);
+
+        // A fresh Store has no in-memory state. Every body, source, private
+        // history, working/saved material and interrupted request must return
+        // exactly; recovery itself never executes the pending owner operation.
+        let reopened = home
+            .store()
+            .apply(read(Scope::Expressions, Kind::Checkpoint, id))
+            .unwrap();
+        assert_eq!(reopened["record"], written["record"]);
+        let found = home
+            .store()
+            .apply(Request::FindCheckpoint {
+                scope: Scope::Expressions,
+                expression_ref: document.expression_ref.clone(),
+            })
+            .unwrap();
+        assert_eq!(found["record"], written["record"]);
+        let listed = home
+            .store()
+            .apply(Request::List {
+                scope: Scope::Expressions,
+                kind: Kind::Checkpoint,
+            })
+            .unwrap();
+        assert_eq!(listed["records"].as_array().unwrap().len(), 1);
+        assert_eq!(listed["records"][0]["id"], id);
+        assert_eq!(
+            listed["records"][0]["expression_ref"],
+            document.expression_ref
+        );
+        assert!(
+            listed["records"][0].get("value").is_none(),
+            "Inventory must not materialize private body data"
+        );
+        let stale = home
+            .store()
+            .apply(write(
+                Scope::Expressions,
+                Kind::Checkpoint,
+                id,
+                Some(revision(&written) + 1),
+                original.clone(),
+            ))
+            .unwrap();
+        assert_eq!(stale["state"], "revision_conflict");
+        assert_eq!(fs::read(&stored_path).unwrap(), stored_bytes);
+
+        let mut missing = stored.clone();
+        missing["images"].as_array_mut().unwrap().pop();
+        let mut modified = stored.clone();
+        modified["images"][0]["data_url"] = json!("data:image/png;base64,AAAA");
+        let mut duplicate = stored.clone();
+        let first = duplicate["images"][0].clone();
+        duplicate["images"].as_array_mut().unwrap().push(first);
+        let mut wrong_digest = stored.clone();
+        wrong_digest["expanded_value_sha256"] = json!(format!("sha256:{}", "0".repeat(64)));
+        let mut unused = stored.clone();
+        let url = "data:image/png;base64,AAAA";
+        unused["images"].as_array_mut().unwrap().push(json!({
+            "ref": crate::expression_file::digest(url.as_bytes()), "data_url": url
+        }));
+        let mut wrong_placement = stored.clone();
+        wrong_placement["record"]["value"]["view"]["notes"] =
+            json!([{"schema":"oi.expression-image-ref/v1","ref":stored["images"][0]["ref"]}]);
+        for mutant in [
+            missing,
+            modified,
+            duplicate,
+            wrong_digest,
+            unused,
+            wrong_placement,
+        ] {
+            fs::write(&stored_path, serde_json::to_vec(&mutant).unwrap()).unwrap();
+            assert!(
+                home.store()
+                    .apply(read(Scope::Expressions, Kind::Checkpoint, id))
+                    .is_err(),
+                "A corrupted image dictionary or source envelope must refuse"
+            );
+        }
+        let mut future_schema = stored.clone();
+        future_schema["schema"] = json!("oi.expression-recovery-storage/v99");
+        let mut unknown_envelope = stored.clone();
+        unknown_envelope["unexpected"] = json!(true);
+        let mut unknown_record = stored.clone();
+        unknown_record["record"]["unexpected"] = json!(true);
+        let mut unknown_image = stored.clone();
+        unknown_image["images"][0]["unexpected"] = json!(true);
+        let mut unknown_ref = stored.clone();
+        let marker = &mut unknown_ref["record"]["value"]["view"]["journey"]["scenes"][0]
+            ["entities"][16]["source"]["image"]["dataUrl"];
+        assert_eq!(marker["schema"], "oi.expression-image-ref/v1");
+        marker["unexpected"] = json!(true);
+        for (mutant, reason) in [
+            (future_schema, "Unsupported native recovery storage schema"),
+            (unknown_envelope, "unknown field"),
+            (unknown_record, "unknown field"),
+            (unknown_image, "unknown field"),
+            (unknown_ref, "unknown field"),
+        ] {
+            fs::write(&stored_path, serde_json::to_vec(&mutant).unwrap()).unwrap();
+            let refused = home
+                .store()
+                .apply(read(Scope::Expressions, Kind::Checkpoint, id))
+                .unwrap_err();
+            assert!(refused.contains(reason), "{refused}");
+        }
+        let duplicate_key = format!(
+            "{{\"schema\":\"{}\",{}",
+            STORAGE_SCHEMA,
+            std::str::from_utf8(&stored_bytes)
+                .unwrap()
+                .strip_prefix('{')
+                .unwrap()
+        );
+        fs::write(&stored_path, duplicate_key).unwrap();
+        assert!(home
+            .store()
+            .apply(read(Scope::Expressions, Kind::Checkpoint, id))
+            .unwrap_err()
+            .contains("Duplicate"));
+
+        // Listing deliberately exposes only metadata. It is not acceptance
+        // of a checkpoint body: finding this exact Expression must verify the
+        // full expanded digest before returning any private material.
+        let mut corrupt_body = stored.clone();
+        corrupt_body["expanded_value_sha256"] = json!(format!("sha256:{}", "0".repeat(64)));
+        fs::write(&stored_path, serde_json::to_vec(&corrupt_body).unwrap()).unwrap();
+        let metadata = home
+            .store()
+            .apply(Request::List {
+                scope: Scope::Expressions,
+                kind: Kind::Checkpoint,
+            })
+            .unwrap();
+        assert_eq!(
+            metadata["records"][0]["expression_ref"],
+            document.expression_ref
+        );
+        assert!(metadata["records"][0].get("value").is_none());
+        assert!(home
+            .store()
+            .apply(Request::FindCheckpoint {
+                scope: Scope::Expressions,
+                expression_ref: document.expression_ref.clone(),
+            })
+            .unwrap_err()
+            .contains("Expanded recovery value digest differs"));
+        let mut amplified = stored.clone();
+        let largest = stored["images"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .max_by_key(|row| row["data_url"].as_str().unwrap().len())
+            .unwrap();
+        amplified["record"]["value"]["view"]["journey"]["retained"] = json!(vec![
+            json!({"dataUrl":{"schema":"oi.expression-image-ref/v1","ref":largest["ref"]}});
+            400
+        ]);
+        fs::write(&stored_path, serde_json::to_vec(&amplified).unwrap()).unwrap();
+        assert!(home
+            .store()
+            .apply(read(Scope::Expressions, Kind::Checkpoint, id))
+            .unwrap_err()
+            .contains("8 MiB before material cloning"));
+        fs::write(&stored_path, &stored_bytes).unwrap();
+        assert_eq!(
+            home.store()
+                .apply(read(Scope::Expressions, Kind::Checkpoint, id))
+                .unwrap()["record"],
+            written["record"]
+        );
+
+        // A valid material dictionary cannot bypass any expanded component's
+        // existing byte bound or make recovery evict the accepted checkpoint.
+        let mut oversized = original.clone();
+        oversized["view"]["journey"]["retained"] = json!("x".repeat(MAX_RECORD_BYTES));
+        assert!(home
+            .store()
+            .apply(write(
+                Scope::Expressions,
+                Kind::Checkpoint,
+                id,
+                Some(revision(&written)),
+                oversized
+            ))
+            .unwrap_err()
+            .contains("8 MiB"));
+        assert_eq!(fs::read(&stored_path).unwrap(), stored_bytes);
     }
 
     #[test]
