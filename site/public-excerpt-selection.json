@@ -1,6 +1,6 @@
 {
   "schema": "oi.public-excerpt-selection/v1",
-  "purpose": "Explicit public excerpts of five pinned source journeys; all native formations and members remain. Original sources stay unchanged and separately identified. Selected bytes exclude unadmitted targets and local/session references.",
+  "purpose": "Explicit public excerpts of six pinned source journeys; all native formations and members remain. Original sources stay unchanged and separately identified. Selected bytes exclude unadmitted targets and local/session references.",
   "members": [
     {
       "member_id": "sp-aikit-fd-docs-p1",
@@ -263,6 +263,42 @@
             [
               63,
               70
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "member_id": "sp-ql-fd-craft",
+      "source_file": "quaternal-logic/sp-ql-fd-craft.journey.json",
+      "source_revision": "e875344c04c14228840665a91823edc42b078fb2",
+      "source_sha256": "30d7f83f2b8c5a605522fa282983b30969186ddf82901d633b2ee1e0593c689b",
+      "fields": [
+        {
+          "pointer": "/scenes/8/character",
+          "source_sha256": "e78d7a76f50039dd57876e03d499b56a56460c3258545608e5bd592b3f86ccb0",
+          "utf8_ranges": [
+            [
+              0,
+              54
+            ],
+            [
+              130,
+              152
+            ]
+          ]
+        },
+        {
+          "pointer": "/scenes/8/text/0/body",
+          "source_sha256": "3cd34d7579eb27d4148a66fca06c2768db78bcedcd88ec679c4558b15327fafc",
+          "utf8_ranges": [
+            [
+              0,
+              57
+            ],
+            [
+              133,
+              586
             ]
           ]
         }
