@@ -17,6 +17,13 @@ uncommitted O:I source cuts and the consumed Epi audit have retained verificatio
 copies with exact hashes; those copies preserve inspection evidence and confer
 no source authority or implementation publication.
 
+O:I #567, Workcell #108 and QL-MEF #277 have landed. Central, AIKit, Actuation
+and Factory native companion corrections remain reviewed candidates under
+their named integrators; the six-product validation below records the actual
+candidate cuts, not publication in all six primary checkouts. Central's dirty
+unregistered seat and the unavailable AIKit/Actuation Git custodians have
+separate native NOW questions. Factory retains its active integration custody.
+
 ## Executed documentation checks
 
 - Real Mermaid 11.12.0 browser parsing and full-size rendering of all six

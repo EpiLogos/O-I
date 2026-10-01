@@ -37,6 +37,14 @@ Every arrow is indexed in [relations.json](relations.json). Use a later
 owner return only after reading the source it cites; a branch name is not an
 evidence revision.
 
+Publication standing on 1 October: O:I, Workcell and QL-MEF navigation has
+landed. The native `ARCHITECTURE-NAVIGATION.md` companions in Central, AIKit,
+Actuation and Factory are reviewed working-tree candidates awaiting their
+integrators. Until those companions publish, use the governing sources listed
+alongside them above; their candidate paths are not assumed present in the
+primary native checkouts. A checked candidate route is not an operative
+SourcePool route.
+
 The source manifest also names its inspected checkout locator. Central's append
 source was inspected in `Work/Central`, not an older `env-2/central` seat.
 Resolve the owner/revision first; matching product labels on two checkouts do
