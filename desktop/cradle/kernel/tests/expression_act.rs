@@ -1081,10 +1081,21 @@ fn distinct_native_text_events_keep_each_acceptance() {
             "event_basis":{"family":"message","source":"aikit-encounter","event_ref":format!("{world_ref}/agent-session/same-local-name"),"occurrence":format!("cursor:{cursor}")}})).unwrap();
         assert_eq!(result["coalesced"], false);
     }
-    let act = world(&mut k, json!({"operation":"act_inspect","act_ref":"act:text-events"})).unwrap()["act"].clone();
+    let act = world(
+        &mut k,
+        json!({"operation":"act_inspect","act_ref":"act:text-events"}),
+    )
+    .unwrap()["act"]
+        .clone();
     let sequence = act["sequence"].as_array().unwrap();
     assert_eq!(sequence.len(), 4);
-    assert_eq!(sequence[1]["event_basis"]["event_ref"], "world:ann/agent-session/same-local-name");
-    assert_eq!(sequence[2]["event_basis"]["event_ref"], "world:bea/agent-session/same-local-name");
+    assert_eq!(
+        sequence[1]["event_basis"]["event_ref"],
+        "world:ann/agent-session/same-local-name"
+    );
+    assert_eq!(
+        sequence[2]["event_basis"]["event_ref"],
+        "world:bea/agent-session/same-local-name"
+    );
     assert_eq!(sequence[3]["event_basis"]["occurrence"], "cursor:8");
 }

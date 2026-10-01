@@ -20,7 +20,10 @@ use std::{
     io::{BufRead, BufReader, Write},
     path::PathBuf,
     process::{Command, Stdio},
-    sync::{Arc, Mutex, OnceLock, mpsc, atomic::{AtomicBool, Ordering}},
+    sync::{
+        atomic::{AtomicBool, Ordering},
+        mpsc, Arc, Mutex, OnceLock,
+    },
     time::{Duration, Instant},
 };
 
@@ -125,14 +128,20 @@ fn development_repository() -> Option<PathBuf> {
 /// Send one request to the SharedField client and return the owner `data`.
 pub fn call(request: &Value) -> Result<Value, CallError> {
     if request.get("token_label").is_some() || request.get("hold_presence").is_some() {
-        return Err(CallError::Refused {message: "The native host owns the transport credential and presence connection".into()});
+        return Err(CallError::Refused {
+            message: "The native host owns the transport credential and presence connection".into(),
+        });
     }
     if matches!(request["kind"].as_str(), Some("observe" | "observe-stop")) {
         renew_presence();
         return observer_reading(request);
     }
-    if request["kind"] == "enter" { return enter_presence(request); }
-    if request["kind"] == "leave" { release_presence(request); }
+    if request["kind"] == "enter" {
+        return enter_presence(request);
+    }
+    if request["kind"] == "leave" {
+        release_presence(request);
+    }
     call_with_executable(request, &client_executable().into_os_string())
 }
 
@@ -146,8 +155,12 @@ static PRESENCE: OnceLock<Mutex<HashMap<String, Arc<PresenceLease>>>> = OnceLock
 fn presence_key(request: &Value) -> Result<String, CallError> {
     let mut refs = Vec::new();
     for name in ["field_ref", "participant_ref"] {
-        let value = request[name].as_str().filter(|v| !v.is_empty() && v.len() <= 512)
-            .ok_or_else(|| CallError::Malformed {detail: format!("Presence requires {name}")})?;
+        let value = request[name]
+            .as_str()
+            .filter(|v| !v.is_empty() && v.len() <= 512)
+            .ok_or_else(|| CallError::Malformed {
+                detail: format!("Presence requires {name}"),
+            })?;
         refs.push(value);
     }
     Ok(serde_json::json!(refs).to_string())
@@ -156,7 +169,11 @@ fn presence_key(request: &Value) -> Result<String, CallError> {
 fn renew_presence() {
     if let Some(registry) = PRESENCE.get() {
         if let Ok(leases) = registry.lock() {
-            for lease in leases.values() { if let Ok(mut last) = lease.last_poll.lock() { *last = Instant::now(); } }
+            for lease in leases.values() {
+                if let Ok(mut last) = lease.last_poll.lock() {
+                    *last = Instant::now();
+                }
+            }
         }
     }
 }
@@ -164,25 +181,41 @@ fn renew_presence() {
 fn release_presence(request: &Value) {
     if let (Ok(key), Some(registry)) = (presence_key(request), PRESENCE.get()) {
         if let Ok(mut leases) = registry.lock() {
-            if let Some(lease) = leases.remove(&key) { lease.stopped.store(true, Ordering::Release); }
+            if let Some(lease) = leases.remove(&key) {
+                lease.stopped.store(true, Ordering::Release);
+            }
         }
     }
 }
 
 fn enter_presence(request: &Value) -> Result<Value, CallError> {
     let key = presence_key(request)?;
-    let mut leases = PRESENCE.get_or_init(|| Mutex::new(HashMap::new())).lock()
-        .map_err(|_| CallError::Unavailable {detail: "Presence registry unavailable".into()})?;
+    let mut leases = PRESENCE
+        .get_or_init(|| Mutex::new(HashMap::new()))
+        .lock()
+        .map_err(|_| CallError::Unavailable {
+            detail: "Presence registry unavailable".into(),
+        })?;
     leases.retain(|_, lease| !lease.stopped.load(Ordering::Acquire));
     if let Some(lease) = leases.get(&key) {
-        if let Ok(mut last) = lease.last_poll.lock() { *last = Instant::now(); }
+        if let Ok(mut last) = lease.last_poll.lock() {
+            *last = Instant::now();
+        }
         drop(leases);
         // A retained process is not renewed authority. Re-enter through the
         // reducer: revocation/expiry is judged by its owner on every act.
         return call_with_executable(request, &client_executable().into_os_string());
     }
-    if leases.len() >= 8 { return Err(CallError::Refused {message: "Native field presence budget reached".into()}); }
-    let lease = Arc::new(PresenceLease {last_poll: Mutex::new(Instant::now()), stopped: AtomicBool::new(false), reading: Mutex::new(None)});
+    if leases.len() >= 8 {
+        return Err(CallError::Refused {
+            message: "Native field presence budget reached".into(),
+        });
+    }
+    let lease = Arc::new(PresenceLease {
+        last_poll: Mutex::new(Instant::now()),
+        stopped: AtomicBool::new(false),
+        reading: Mutex::new(None),
+    });
     leases.insert(key, Arc::clone(&lease));
     drop(leases);
     let owner_request = serde_json::json!({"kind":"enter", "field_ref":request["field_ref"], "participant_ref":request["participant_ref"], "state":request.get("state").cloned().unwrap_or_else(|| Value::String("entered".into())), "hold_presence":true});
@@ -190,12 +223,31 @@ fn enter_presence(request: &Value) -> Result<Value, CallError> {
     let worker_lease = Arc::clone(&lease);
     std::thread::spawn(move || {
         let outcome = (|| -> Result<(), CallError> {
-            let mut child = Command::new(client_executable()).stdin(Stdio::piped()).stdout(Stdio::piped()).stderr(Stdio::inherit()).spawn()
-                .map_err(|e| CallError::Unavailable {detail: format!("Presence client launch failed: {e}")})?;
-            let written = child.stdin.take().ok_or_else(|| CallError::Unavailable {detail: "Presence input unavailable".into()})?
+            let mut child = Command::new(client_executable())
+                .stdin(Stdio::piped())
+                .stdout(Stdio::piped())
+                .stderr(Stdio::inherit())
+                .spawn()
+                .map_err(|e| CallError::Unavailable {
+                    detail: format!("Presence client launch failed: {e}"),
+                })?;
+            let written = child
+                .stdin
+                .take()
+                .ok_or_else(|| CallError::Unavailable {
+                    detail: "Presence input unavailable".into(),
+                })?
                 .write_all(owner_request.to_string().as_bytes());
-            if let Err(e) = written { let _ = child.kill(); let _ = child.wait(); return Err(CallError::Unavailable {detail: e.to_string()}); }
-            let stdout = child.stdout.take().ok_or_else(|| CallError::Unavailable {detail: "Presence output unavailable".into()})?;
+            if let Err(e) = written {
+                let _ = child.kill();
+                let _ = child.wait();
+                return Err(CallError::Unavailable {
+                    detail: e.to_string(),
+                });
+            }
+            let stdout = child.stdout.take().ok_or_else(|| CallError::Unavailable {
+                detail: "Presence output unavailable".into(),
+            })?;
             let (first_send, first_receive) = mpsc::channel();
             std::thread::spawn(move || {
                 let mut line = String::new();
@@ -205,25 +257,48 @@ fn enter_presence(request: &Value) -> Result<Value, CallError> {
             let initial = first_receive.recv_timeout(Duration::from_secs(25));
             let reading = match initial {
                 Ok(Ok(line)) => decode_reply(line.as_bytes(), &[]),
-                _ => Err(CallError::Unavailable {detail: "Presence admission timed out; held connection released".into()}),
+                _ => Err(CallError::Unavailable {
+                    detail: "Presence admission timed out; held connection released".into(),
+                }),
             };
-            if let Ok(mut cached) = worker_lease.reading.lock() { *cached = Some(reading.clone()); }
-            let failed = reading.is_err(); let _ = send.send(reading);
-            while !failed && !worker_lease.stopped.load(Ordering::Acquire)
-                && worker_lease.last_poll.lock().map(|t| t.elapsed() < Duration::from_secs(120)).unwrap_or(false) {
-                if child.try_wait().map(|s| s.is_some()).unwrap_or(true) { break; }
+            if let Ok(mut cached) = worker_lease.reading.lock() {
+                *cached = Some(reading.clone());
+            }
+            let failed = reading.is_err();
+            let _ = send.send(reading);
+            while !failed
+                && !worker_lease.stopped.load(Ordering::Acquire)
+                && worker_lease
+                    .last_poll
+                    .lock()
+                    .map(|t| t.elapsed() < Duration::from_secs(120))
+                    .unwrap_or(false)
+            {
+                if child.try_wait().map(|s| s.is_some()).unwrap_or(true) {
+                    break;
+                }
                 std::thread::sleep(Duration::from_millis(250));
             }
-            let _ = child.kill(); let _ = child.wait();
+            let _ = child.kill();
+            let _ = child.wait();
             Ok(())
         })();
-        if let Err(error) = outcome { if let Ok(mut cached) = worker_lease.reading.lock() { *cached = Some(Err(error.clone())); } let _ = send.send(Err(error)); }
+        if let Err(error) = outcome {
+            if let Ok(mut cached) = worker_lease.reading.lock() {
+                *cached = Some(Err(error.clone()));
+            }
+            let _ = send.send(Err(error));
+        }
         worker_lease.stopped.store(true, Ordering::Release);
     });
-    receive.recv_timeout(Duration::from_secs(27)).unwrap_or_else(|_| {
-        lease.stopped.store(true, Ordering::Release);
-        Err(CallError::Unavailable {detail: "Native presence did not answer; inspect before entering again".into()})
-    })
+    receive
+        .recv_timeout(Duration::from_secs(27))
+        .unwrap_or_else(|_| {
+            lease.stopped.store(true, Ordering::Release);
+            Err(CallError::Unavailable {
+                detail: "Native presence did not answer; inspect before entering again".into(),
+            })
+        })
 }
 
 struct Observer {
@@ -239,46 +314,104 @@ static OBSERVERS: OnceLock<Mutex<HashMap<String, Arc<Observer>>>> = OnceLock::ne
 /// it has no reducers, document store or identity authority. Clients explicitly
 /// release their lease, and abandoned leases expire after two minutes.
 fn observer_reading(request: &Value) -> Result<Value, CallError> {
-    let id = request["observer_ref"].as_str().filter(|id| {
-        !id.is_empty() && id.len() <= 96 && id.bytes().all(|b| b.is_ascii_alphanumeric() || b"-:".contains(&b))
-    }).ok_or_else(|| CallError::Malformed { detail: "Observation requires a bounded observer_ref".into() })?;
-    let mut observers = OBSERVERS.get_or_init(|| Mutex::new(HashMap::new())).lock()
-        .map_err(|_| CallError::Unavailable { detail: "Observation registry unavailable".into() })?;
+    let id = request["observer_ref"]
+        .as_str()
+        .filter(|id| {
+            !id.is_empty()
+                && id.len() <= 96
+                && id
+                    .bytes()
+                    .all(|b| b.is_ascii_alphanumeric() || b"-:".contains(&b))
+        })
+        .ok_or_else(|| CallError::Malformed {
+            detail: "Observation requires a bounded observer_ref".into(),
+        })?;
+    let mut observers = OBSERVERS
+        .get_or_init(|| Mutex::new(HashMap::new()))
+        .lock()
+        .map_err(|_| CallError::Unavailable {
+            detail: "Observation registry unavailable".into(),
+        })?;
     observers.retain(|_, observer| {
-        let current = !observer.stopped.load(Ordering::Acquire) && observer.last_poll.lock().map(|t| t.elapsed() < Duration::from_secs(120)).unwrap_or(false);
-        if !current { observer.stopped.store(true, Ordering::Release); }
+        let current = !observer.stopped.load(Ordering::Acquire)
+            && observer
+                .last_poll
+                .lock()
+                .map(|t| t.elapsed() < Duration::from_secs(120))
+                .unwrap_or(false);
+        if !current {
+            observer.stopped.store(true, Ordering::Release);
+        }
         current
     });
     if request["kind"] == "observe-stop" {
-        if let Some(observer) = observers.remove(id) { observer.stopped.store(true, Ordering::Release); }
+        if let Some(observer) = observers.remove(id) {
+            observer.stopped.store(true, Ordering::Release);
+        }
         return Ok(serde_json::json!({"state":"released","observer_ref":id}));
     }
     let owner_request = serde_json::json!({"kind":"observe","ref":request.get("ref").cloned().unwrap_or(Value::Null)});
     if let Some(observer) = observers.get(id) {
         if observer.ref_request != owner_request {
-            return Err(CallError::Refused { message: "An observation lease cannot change its subject".into() });
+            return Err(CallError::Refused {
+                message: "An observation lease cannot change its subject".into(),
+            });
         }
-        if let Ok(mut last) = observer.last_poll.lock() { *last = Instant::now(); }
-        return observer.reading.lock().map(|reading| reading.clone().unwrap_or_else(|| Ok(serde_json::json!({"state":"observing"}))))
-            .map_err(|_| CallError::Unavailable { detail: "Observation reading unavailable".into() })?;
+        if let Ok(mut last) = observer.last_poll.lock() {
+            *last = Instant::now();
+        }
+        return observer
+            .reading
+            .lock()
+            .map(|reading| {
+                reading
+                    .clone()
+                    .unwrap_or_else(|| Ok(serde_json::json!({"state":"observing"})))
+            })
+            .map_err(|_| CallError::Unavailable {
+                detail: "Observation reading unavailable".into(),
+            })?;
     }
     if observers.len() >= 16 {
-        return Err(CallError::Refused { message: "This window has reached its native observation budget".into() });
+        return Err(CallError::Refused {
+            message: "This window has reached its native observation budget".into(),
+        });
     }
-    let observer = Arc::new(Observer {ref_request: owner_request, last_poll: Mutex::new(Instant::now()), reading: Mutex::new(None), stopped: AtomicBool::new(false)});
+    let observer = Arc::new(Observer {
+        ref_request: owner_request,
+        last_poll: Mutex::new(Instant::now()),
+        reading: Mutex::new(None),
+        stopped: AtomicBool::new(false),
+    });
     observers.insert(id.into(), Arc::clone(&observer));
     let executable = client_executable().into_os_string();
     std::thread::spawn(move || {
         let mut cursor = Value::Null;
         while !observer.stopped.load(Ordering::Acquire) {
-            if observer.last_poll.lock().map(|t| t.elapsed() >= Duration::from_secs(120)).unwrap_or(true) { break; }
+            if observer
+                .last_poll
+                .lock()
+                .map(|t| t.elapsed() >= Duration::from_secs(120))
+                .unwrap_or(true)
+            {
+                break;
+            }
             let mut next = observer.ref_request.clone();
             next["cursor"] = cursor;
             let reading = call_with_executable(&next, &executable);
             let failed = reading.is_err();
-            cursor = reading.as_ref().ok().and_then(|r| r.get("cursor")).cloned().unwrap_or(Value::Null);
-            if observer.stopped.load(Ordering::Acquire) { break; }
-            if let Ok(mut cached) = observer.reading.lock() { *cached = Some(reading); }
+            cursor = reading
+                .as_ref()
+                .ok()
+                .and_then(|r| r.get("cursor"))
+                .cloned()
+                .unwrap_or(Value::Null);
+            if observer.stopped.load(Ordering::Acquire) {
+                break;
+            }
+            if let Ok(mut cached) = observer.reading.lock() {
+                *cached = Some(reading);
+            }
             std::thread::sleep(Duration::from_millis(if failed { 2000 } else { 100 }));
         }
         observer.stopped.store(true, Ordering::Release);
@@ -334,13 +467,12 @@ pub fn decode_envelope(output: &std::process::Output) -> Result<Value, CallError
 }
 
 fn decode_reply(stdout: &[u8], stderr: &[u8]) -> Result<Value, CallError> {
-    let envelope: Value =
-        serde_json::from_slice(stdout).map_err(|e| CallError::Malformed {
-            detail: format!(
-                "SharedField client returned an unreadable envelope ({e}): {}",
-                String::from_utf8_lossy(stderr).trim()
-            ),
-        })?;
+    let envelope: Value = serde_json::from_slice(stdout).map_err(|e| CallError::Malformed {
+        detail: format!(
+            "SharedField client returned an unreadable envelope ({e}): {}",
+            String::from_utf8_lossy(stderr).trim()
+        ),
+    })?;
     if envelope["ok"] == true {
         return envelope
             .get("data")

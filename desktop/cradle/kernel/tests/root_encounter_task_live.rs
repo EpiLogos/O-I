@@ -11,17 +11,27 @@ fn root_task_read_uses_the_same_native_ground_as_encounter_view() {
         .task_read(std::path::Path::new(&root), &session)
         .expect("actual native task reading");
     let mut kernel = Kernel::discover();
-    let actual = kernel.apply(KernelOp::EncounterTaskRead {
-        project: String::new(),
-        agent_session: session.clone(),
-    }).expect("root is a native ground, not an empty named Project");
+    let actual = kernel
+        .apply(KernelOp::EncounterTaskRead {
+            project: String::new(),
+            agent_session: session.clone(),
+        })
+        .expect("root is a native ground, not an empty named Project");
     let KernelOpResult::EncounterTaskReading { data } = actual.result else {
         panic!("the native owner must return its task reading");
     };
-    assert_eq!(data, expected, "preserve actual owner absence or task bytes");
-    let refusal = kernel.apply(KernelOp::EncounterTaskRead {
-        project: "unpublished-foreign-project".into(),
-        agent_session: session,
-    }).unwrap_err();
-    assert!(refusal.contains("outside Central's disclosed ground"), "{refusal}");
+    assert_eq!(
+        data, expected,
+        "preserve actual owner absence or task bytes"
+    );
+    let refusal = kernel
+        .apply(KernelOp::EncounterTaskRead {
+            project: "unpublished-foreign-project".into(),
+            agent_session: session,
+        })
+        .unwrap_err();
+    assert!(
+        refusal.contains("outside Central's disclosed ground"),
+        "{refusal}"
+    );
 }
