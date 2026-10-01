@@ -39,8 +39,12 @@ evidence revision.
 
 Publication standing on 1 October: O:I, Workcell and QL-MEF navigation has
 landed. The native `ARCHITECTURE-NAVIGATION.md` companions in Central, AIKit,
-Actuation and Factory are reviewed working-tree candidates awaiting their
-integrators. Until those companions publish, use the governing sources listed
+Actuation and Factory are reviewed candidate corrections awaiting primary
+publication. Factory's companion is committed and pushed in
+[Factory #277](https://github.com/EpiLogos/Factory/pull/277) at
+`34b6143ce56d2384c558b30918959267e37b54a9`; its primary landing and whole
+acceptance remain with the active integrator. Until those companions land,
+use the governing sources listed
 alongside them above; their candidate paths are not assumed present in the
 primary native checkouts. A checked candidate route is not an operative
 SourcePool route.
