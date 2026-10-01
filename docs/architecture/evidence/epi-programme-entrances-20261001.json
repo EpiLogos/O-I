@@ -1,0 +1,137 @@
+{
+  "schema": "oi.architecture-consumed-programme-cut/v1",
+  "consumed_at_utc": "2026-10-01T04:12:21.882274+00:00",
+  "scope": "Dated Epi programme source successor; supplements the unchanged 62-source diagram basis",
+  "integration_receipt": {
+    "path": "/Users/admin/Central/Control/agents/now/clearings/88b16930e461ec5100d47ff9d0d233d6580e97ad31abfc40c1db6670adc7746d/T/programme-entrance-native-source-integration-2026-10-01/receipt.json",
+    "sha256": "9d35817879a230153ac28a490a22012583df6775c3580ca71e20abf420d058b7",
+    "at_utc": "2026-10-01T04:05:57.689494+00:00",
+    "strict_json": true
+  },
+  "proposal_sha256": "65f100d3257c3b46dc99ae8da44c032491842a2b50a740163148d2f5e0a0c7c0",
+  "sources": [
+    {
+      "owner": "QL-MEF",
+      "path": "docs/KERNEL-REBUILD-WAYFINDER.md",
+      "inspected_checkout": "/Users/admin/Central/worktrees/env-2/ql-mef",
+      "checkout_git_revision": "16f193162700655c9b616edce60704f051f5431e",
+      "source_sha256": "8095b6457e5ad857f957b5ad2463576526b61c15cf8cc0649eaba193d99713e8",
+      "integration_before_sha256": "3511be4433f1c00e8d7e8efe91051abb036ba3643da828519072e835286612ee",
+      "standing": "uncommitted source correction at the inspected hash; not primary publication",
+      "verification_copy": "/Users/admin/Central/Control/agents/now/clearings/746f59350bcbd0a88a231ea909ca89aac9cf950e3cf5d9584aae28535bb7296d/T/epi-programme-consumed-cut-20261001/1-KERNEL-REBUILD-WAYFINDER.md"
+    },
+    {
+      "owner": "QL-MEF",
+      "path": "docs/integrations/epi-logos/EPI-CAPABILITY-MATRIX-FIELD-INDEX.md",
+      "inspected_checkout": "/Users/admin/Central/worktrees/env-2/ql-mef",
+      "checkout_git_revision": "16f193162700655c9b616edce60704f051f5431e",
+      "source_sha256": "3ce8a67d37641e421abf121c0b14fb327edd934f629c63ba6ce0031d4ff78ec4",
+      "integration_before_sha256": "430fa34b580c22485e1ca23821661edd70600c5806032a078f05bee176fed5db",
+      "standing": "uncommitted source correction at the inspected hash; not primary publication",
+      "verification_copy": "/Users/admin/Central/Control/agents/now/clearings/746f59350bcbd0a88a231ea909ca89aac9cf950e3cf5d9584aae28535bb7296d/T/epi-programme-consumed-cut-20261001/2-EPI-CAPABILITY-MATRIX-FIELD-INDEX.md"
+    },
+    {
+      "owner": "QL-MEF",
+      "path": "docs/integrations/epi-logos/EPI-LOGOS-AGENT-DEVELOPMENT-PROGRAMME.md",
+      "inspected_checkout": "/Users/admin/Central/worktrees/env-2/ql-mef",
+      "checkout_git_revision": "16f193162700655c9b616edce60704f051f5431e",
+      "source_sha256": "f8a5ba47295a42cc8bdb3161b599bc001579563d45c577b09a1ca27eaac3a069",
+      "integration_before_sha256": "d48caeb44c1324c4e791486ac91b4277e740b3f7a1681c7e375396dc932c5e8e",
+      "standing": "uncommitted source correction at the inspected hash; not primary publication",
+      "verification_copy": "/Users/admin/Central/Control/agents/now/clearings/746f59350bcbd0a88a231ea909ca89aac9cf950e3cf5d9584aae28535bb7296d/T/epi-programme-consumed-cut-20261001/3-EPI-LOGOS-AGENT-DEVELOPMENT-PROGRAMME.md"
+    },
+    {
+      "owner": "QL-MEF",
+      "path": "docs/integrations/epi-logos/TA-ONTA-EXPRESSION-SDK-WAYFINDER.md",
+      "inspected_checkout": "/Users/admin/Central/worktrees/env-2/ql-mef",
+      "checkout_git_revision": "16f193162700655c9b616edce60704f051f5431e",
+      "source_sha256": "0c4cf903b641bc6f6a14dd6f806c4cc8d1c50ab8ba25a503fc9548644f869288",
+      "integration_before_sha256": "5b4caaa306a2a00d4f0f31eaf9290211534d2df49e8952230a10786ac5204dd3",
+      "standing": "uncommitted source correction at the inspected hash; not primary publication",
+      "verification_copy": "/Users/admin/Central/Control/agents/now/clearings/746f59350bcbd0a88a231ea909ca89aac9cf950e3cf5d9584aae28535bb7296d/T/epi-programme-consumed-cut-20261001/4-TA-ONTA-EXPRESSION-SDK-WAYFINDER.md"
+    },
+    {
+      "owner": "O:I",
+      "path": "docs/EXPRESSION-WORLD-SUBSTRATE-WAYFINDER.md",
+      "inspected_checkout": "/Users/admin/Central/worktrees/env-1/o-i",
+      "checkout_git_revision": "b3a5b0091d12a43e24e4dce00e05a3126150764c",
+      "source_sha256": "c66541996fa557cb7a5f660bc1159a059b6be1c554e9fc9dccae7ba8ab9f5ced",
+      "integration_before_sha256": "41d4d081350dfd5361655532b5107df10753071b994d2134e482082db7c99d0b",
+      "standing": "uncommitted source correction at the inspected hash; not primary publication",
+      "verification_copy": "/Users/admin/Central/Control/agents/now/clearings/746f59350bcbd0a88a231ea909ca89aac9cf950e3cf5d9584aae28535bb7296d/T/epi-programme-consumed-cut-20261001/5-EXPRESSION-WORLD-SUBSTRATE-WAYFINDER.md"
+    },
+    {
+      "owner": "O:I",
+      "path": ".wayfinder/maps/expression-production-suite.md",
+      "inspected_checkout": "/Users/admin/Central/worktrees/env-1/o-i",
+      "checkout_git_revision": "b3a5b0091d12a43e24e4dce00e05a3126150764c",
+      "source_sha256": "a366cc2fea16fa089b4283add0133e1388f2f5b6c43c274f72ec2ac4020e22f2",
+      "integration_before_sha256": "60d22d5ff6c864acc11263e4316ae97964fdeb06e685faa7dc6c1167cc8e1f7b",
+      "standing": "uncommitted source correction at the inspected hash; not primary publication",
+      "verification_copy": "/Users/admin/Central/Control/agents/now/clearings/746f59350bcbd0a88a231ea909ca89aac9cf950e3cf5d9584aae28535bb7296d/T/epi-programme-consumed-cut-20261001/6-expression-production-suite.md"
+    },
+    {
+      "owner": "O:I",
+      "path": "docs/EXPRESSION-PRODUCTION-SUITE-ALIGNMENT.md",
+      "inspected_checkout": "/Users/admin/Central/worktrees/env-1/o-i",
+      "checkout_git_revision": "b3a5b0091d12a43e24e4dce00e05a3126150764c",
+      "source_sha256": "2f21d7c058ddea994bac18ede2ec160f5d5dfea1eebe51bee94d3747de68060b",
+      "integration_before_sha256": "7e72c4090b707e3356d7fcb4dbc20e8dfcc61abb9aee04a519d35ef3d65844f6",
+      "standing": "uncommitted source correction at the inspected hash; not primary publication",
+      "verification_copy": "/Users/admin/Central/Control/agents/now/clearings/746f59350bcbd0a88a231ea909ca89aac9cf950e3cf5d9584aae28535bb7296d/T/epi-programme-consumed-cut-20261001/7-EXPRESSION-PRODUCTION-SUITE-ALIGNMENT.md"
+    }
+  ],
+  "audit_carriers_owned_by_epi": [
+    {
+      "label": "audit",
+      "path": "/Users/admin/Central/worktrees/env-2/ql-mef/docs/kernel-rebuild/EPI-WORLD-FIDELITY-AUDIT-2026-09-30.md",
+      "sha256": "d0a84d9b2cb49cab664cf0401d9731e8d6cf39414f900f56fb0d8203a5dac1cb",
+      "read_only": true
+    },
+    {
+      "label": "map",
+      "path": "/Users/admin/Central/worktrees/env-2/ql-mef/docs/kernel-rebuild/EPI-WORLD-RECOVERY-MAP-2026-09-30.json",
+      "sha256": "6022745c1b4df5e9a82a483f4459bf440efe2d579c9a40388f0f167374a39bc1",
+      "read_only": true
+    },
+    {
+      "label": "coverage",
+      "path": "/Users/admin/Central/worktrees/env-2/ql-mef/docs/kernel-rebuild/EPI-WORLD-COORDINATE-COVERAGE-2026-09-30.json",
+      "sha256": "9c8991a05c8bfd3b52c09265805fb75a00e6ccce3d2aa9369ed02ee0bacb1484",
+      "read_only": true
+    }
+  ],
+  "observed_owner_episode": {
+    "run": 28,
+    "whole_passed": false,
+    "bounded_checks": 37,
+    "scope": "Actual ordinary production application and host relay through a controlled native bridge; Chromium resident GPU; no installation or physical audio assertion",
+    "failure_phase": "native one-tick receiving",
+    "failure_boundary": "O:I refuses the qualified QL binding at the closed three-field parser before host/worker spawn",
+    "native_repair_owner": "O:I desktop/cradle/kernel/src/native_expression.rs",
+    "proofs": [
+      {
+        "label": "ordinary28",
+        "path": "/Users/admin/Central/Control/agents/now/clearings/88b16930e461ec5100d47ff9d0d233d6580e97ad31abfc40c1db6670adc7746d/T/current-material-native/ordinary-production-28/receipt.json",
+        "sha256": "51de1a0689167a3283d9e96d1461ac63656300e40d8828ea92d5d9070a3bb732"
+      },
+      {
+        "label": "native_refusal",
+        "path": "/Users/admin/Central/Control/agents/now/clearings/88b16930e461ec5100d47ff9d0d233d6580e97ad31abfc40c1db6670adc7746d/T/current-material-native/ordinary-production-28/native-refusal-117.json",
+        "sha256": "e2f25e3f3ecb9b24aa7e4ff44c4e1e001c9cb20e8754ec192867c219334467d1"
+      },
+      {
+        "label": "independent_review",
+        "path": "/Users/admin/Central/Control/agents/now/clearings/88b16930e461ec5100d47ff9d0d233d6580e97ad31abfc40c1db6670adc7746d/T/independent-review/ordinary28-native-binding-source/review.json",
+        "sha256": "4124c7763f2c68e5b8fdcf69328e24a0a408748e372d38c505219f1405abe96f"
+      }
+    ]
+  },
+  "limits": [
+    "Seven source entrances are inspected candidate corrections, not published primary routes.",
+    "Earlier audit and failed ordinary24\u201326 cuts remain history; ordinary27 is rejected as repair proof because build failed.",
+    "No new architecture arrow, numerical/domain mapping, H, installed, physical-audio or whole acceptance is derived from this note.",
+    "Root source qualification and the stable worker envelope are different boundaries; intended repair must preserve the qualified original and prove actual receiving.",
+    "Verification copies preserve inspected bytes only; native source owners retain authority."
+  ]
+}
