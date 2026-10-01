@@ -41,7 +41,7 @@ with sync_playwright() as p:
  expect(page.locator('.entrance__door')).to_have_count(2)
  expect(page.locator('.entrance__door[href="./essay/"]')).to_be_visible()
  page.locator('.entrance__door[href="#/library?published=1"]').click()
- expect(page.locator('.published-shelf')).to_be_visible()
+ expect(page.locator('.native-public-library')).to_be_visible()
  assert page.evaluate('document.documentElement.scrollWidth <= innerWidth + 1')
  checks=['Direct links pin exact edition and Scene','Paused Scene change renders every native formation','Mobile Library/source/Return icons remain visible and named','Current home opens the native published Library and exposes its exact essay door']
  (OUT/'regressions.json').write_text(json.dumps({'passed':len(checks),'failed':0,'checks':checks,'standing':'Controlled browser/pixel evidence, not owner visual acceptance'},indent=2))

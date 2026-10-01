@@ -44,7 +44,7 @@ with sync_playwright() as p:
         expect(page.locator('.entrance__door[href="./essay/"]')).to_be_visible()
         page.screenshot(path=str(OUT/'home.png'),full_page=True)
         page.locator('.entrance__door[href="#/library?published=1"]').click()
-        expect(page.locator('.published-shelf')).to_be_visible()
+        expect(page.locator('.native-public-library')).to_be_visible()
         # The site-edition reader has its own exact route; public corpus
         # navigation does not substitute these separately published editions.
         page.goto(url());expect(page.locator('.oi-library')).to_be_visible()

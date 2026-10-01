@@ -72,10 +72,13 @@ with sync_playwright() as pw:
         deadline=time.monotonic()+10
         while True:
             pixels=Image.open(io.BytesIO(canvas.screenshot())).convert('RGB')
-            dark=sum(1 for r,g,b in pixels.getdata() if max(r,g,b)<180)
-            if dark>250 or time.monotonic()>=deadline:break
+            # Native palettes can carry light ink on dark ground or coloured
+            # formations. Measure contrast from the canvas's actual ground.
+            ground=pixels.getpixel((0,0))
+            ink=sum(1 for pixel in pixels.getdata() if max(abs(c-b) for c,b in zip(pixel,ground))>40)
+            if ink>250 or time.monotonic()>=deadline:break
             page.wait_for_timeout(100)
-        assert dark>250, f'Native field is blank or off-screen after settling: only {dark} ink pixels'
+        assert ink>250, f'Native field is blank or off-screen after settling: only {ink} contrasting ink pixels'
         target=page.locator('.field-object').first.bounding_box()
         box=canvas.bounding_box()
         assert target and box and box['x']<target['x']<box['x']+box['width'] and box['y']<target['y']<box['y']+box['height'], 'Native selection target is not inside its measured field'
