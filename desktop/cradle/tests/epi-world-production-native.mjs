@@ -390,7 +390,10 @@ try{
  receipt.browser={version:browser.version(),headless:true,reduced_motion:'reduce',requested_angle:'swiftshader'};
  page=await browser.newPage({viewport:{width:1440,height:1000},reducedMotion:'reduce'});page.setDefaultTimeout(40000);page.setDefaultNavigationTimeout(60000);
  observePage(page);
- const url=`http://127.0.0.1:${server.httpServer.address().port}/__epi_parent?host=expressions&world=epi-logos&still`+(config.existing_expression_ref?'&expression='+encodeURIComponent(config.existing_expression_ref):'');
+ // The ordinary PointCloudHost supplies mode. The native recovery owner is
+ // selected by this hosted query; omitting it would test browser IndexedDB
+ // instead and could not establish a native checkpoint/restart claim.
+ const url=`http://127.0.0.1:${server.httpServer.address().port}/__epi_parent?mode=expressions&host=expressions&world=epi-logos&still`+(config.existing_expression_ref?'&expression='+encodeURIComponent(config.existing_expression_ref):'');
  phase='actual production host relay launch';await page.goto(url);await page.waitForFunction(()=>document.querySelector('#world')?.getAttribute('src')?.startsWith('/__epi_application'),null,{timeout:90000});frame=await page.locator('#world').elementHandle().then(el=>el.contentFrame());phase='actual production application launch';
  await frame.waitForFunction(()=>window.__FIELD_STUDIES__?.enterEpiWorld&&window.__OI_KERNEL_EXPRESSIONS__?.kernelExpressionsAvailable(),null,{timeout:90000});
  receipt.browser.actual_gpu=await frame.evaluate(()=>{for(const c of document.querySelectorAll('canvas')){const g=c.getContext('webgl2')??c.getContext('webgl');if(!g)continue;const e=g.getExtension('WEBGL_debug_renderer_info');return{canvas:c.id,version:g.getParameter(g.VERSION),vendor:e?g.getParameter(e.UNMASKED_VENDOR_WEBGL):g.getParameter(g.VENDOR),renderer:e?g.getParameter(e.UNMASKED_RENDERER_WEBGL):g.getParameter(g.RENDERER)};}return{unavailable:true};});
@@ -587,8 +590,18 @@ try{
  frame=await page.locator('#world').elementHandle().then(el=>el.contentFrame());
  await frame.waitForFunction(()=>window.__FIELD_STUDIES__?.epiWorld(),null,{timeout:90000});await readyCurrent(identities[0].reading.person_ref);await noAlert();
  const reopened=await snapshot('10-production-owner-reopen');
+ const checkpoint=await op({op:'expression_recovery',request:{operation:'find_checkpoint',scope:'expressions',expression_ref:a.working.native_ref}});
+ assert.equal(checkpoint.result,'expression_recovery');assert.equal(checkpoint.data.state,'ready');
+ assert.ok(checkpoint.data.record?.value?.view?.document,'The actual native recovery owner must return this saved checkpoint.');
+ const checkpointDocument=checkpoint.data.record.value.view.document;
+ assert.equal(checkpointDocument.expression_ref,a.working.native_ref);
+ assert.equal(checkpointDocument.selection.scene_ref,personal.scene_ref);
+ assert.equal(checkpointDocument.selection.entity_ref,locus);
+ check(receipt.operations.some(row=>row.op==='expression_recovery'&&row.operation==='write'&&row.ok===true),
+  'The ordinary hosted producer actually writes acknowledged native recovery material, separately from browser storage');
+ artifact('native-recovery-selected-personal-checkpoint.json',checkpoint.data);
  check(reopened.working.native_ref===a.working.native_ref&&reopened.record.world.event_ref===a.record.world.event_ref,'A fresh production iframe recovers the exact native Expression and original occasion');
- check(reopened.state.selected.includes(locus)&&reopened.document.scenes[reopened.state.sceneIndex]?.id===personal.scene_ref,'The native owner checkpoint reopens the selected personal scene and subject');
+ check(reopened.state.selected.includes(locus)&&reopened.document.scenes[reopened.state.sceneIndex]?.id===personal.scene_ref,'The acknowledged native owner checkpoint reopens the selected personal scene and subject in a fresh iframe; full process restart is separate');
  receipt.continuation={file:reopened.working.file,expression_ref:reopened.working.native_ref,person_ref:reopened.record.person_ref,event_ref:reopened.record.world.event_ref,scene_ref:personal.scene_ref,entity_ref:locus};
  await action('step');await frame.evaluate(()=>window.__FIELD_STUDIES__.pause());const reopenedNative=await snapshot('10a-production-reopen-native-receiving',true);await requireCurrentRuntime(reopenedNative,'Production reopen native receiving');await action('reset');
 
