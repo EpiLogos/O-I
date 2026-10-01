@@ -86,6 +86,7 @@ try {
       await open();
       await fill('keyboard');
       await input.press('ArrowDown');
+      await page.waitForFunction(()=>document.querySelector('.search-query input')?.getAttribute('aria-activedescendant')==='knowledge-search-1');
       check(await input.getAttribute('aria-activedescendant')==='knowledge-search-1',`${name}: arrows select the native-order row`);
       await input.press('Enter');
       await overlay.waitFor({state:'detached'});
