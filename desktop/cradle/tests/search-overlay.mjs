@@ -56,7 +56,8 @@ try {
           const actual = calls.slice(from).filter(op=>['search','resolve'].includes(op.request.action));
           assert.deepEqual(actual.map(op=>op.request.action).sort(),['resolve','search'],`${name}: ${item.name} both operations`);
           check(actual.every(op=>op.request.query===item.query && op.project===project),`${name}: ${project??'root'}: literal ${item.name}`);
-          assert.deepEqual(await overlay.locator('li strong').allTextContents(),[0,1].map(i=>`Result ${i} · ${item.query}`));
+          check(await input.inputValue()===item.query,`${name}: ${project??'root'}: ${item.name} input keeps its exact authored bytes`);
+          assert.deepEqual(await overlay.locator('li strong').allTextContents(),[0,1].map(i=>`Result ${i} · ${item.query}`.trim()));
         }
         check(calls.every(op=>['search','resolve'].includes(op.request.action)),`${name}: typing invokes no Action/history/use`);
         await page.keyboard.press('Escape');
@@ -116,7 +117,11 @@ try {
       await page.waitForFunction(()=>document.querySelector('.search-aperture ul')?.getAttribute('aria-busy')==='false' && document.querySelector('.search-aperture li strong')?.textContent==='Result 0 · 語');
       check(calls.slice(beforeIME).filter(op=>op.request.query==='語').length===2,`${name}: committed IME text reaches both operations`);
       await fill('refused');
-      check((await overlay.getByRole('alert').innerText())==='resolve.unclosed_quote: quoted Resolve subject is not closed',`${name}: owner refusal remains verbatim`);
+      check((await overlay.getByRole('alert').innerText())==='Search reading unavailable. Retry the search to read the current sources.',`${name}: owner refusal has a readable recovery action`);
+      const refusalDetails=overlay.locator('details').filter({has:page.getByText('Reading details',{exact:true})});
+      check(await refusalDetails.getAttribute('open')===null,`${name}: exact owner refusal starts in closed reading details`);
+      await refusalDetails.locator('summary').click();
+      check((await refusalDetails.locator('p').innerText())==='resolve.unclosed_quote: quoted Resolve subject is not closed',`${name}: deliberate reading details preserve the owner refusal verbatim`);
       await fill('absent');
       await overlay.getByText('Unavailable sources (1)',{exact:true}).click();
       check(await overlay.getByText('Source provider unavailable',{exact:true}).isVisible(),`${name}: unavailable provider remains inspectable`);

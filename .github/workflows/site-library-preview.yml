@@ -31,6 +31,9 @@ jobs:
       - name: Install the expression engine's own deps (headless admission imports it by real path)
         working-directory: site
         run: npm install --prefix ../packages/oi-design-system --no-audit --no-fund
+      - name: Install the locked Quartz publication builder
+        working-directory: site/vendor/quartz
+        run: npm ci --no-audit --no-fund
       - name: Verify source, native publication and public browser build
         working-directory: site
         run: |
