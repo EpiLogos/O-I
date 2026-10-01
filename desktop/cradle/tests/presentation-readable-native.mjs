@@ -8,6 +8,7 @@ import {writeFile,mkdir} from 'node:fs/promises';
 import {fileURLToPath,pathToFileURL} from 'node:url';
 import {createServer} from 'vite';
 import {chromium,webkit} from 'playwright';
+import {eventsSince,subscribeTopic} from '../src/kernel/bridge.ts';
 import {projectExpression as canonicalProjectExpression} from '../../../shared-field/expression-projection.mjs';
 
 // Independent prior-source discrimination uses the actual retained publisher
@@ -39,6 +40,15 @@ const changes=bound.flatMap((subject,index)=>[
 document=await native({operation:'edit',expression_ref:ref,expected_revision:document.revision,actor,changes});
 const readback=await native({operation:'inspect',expression_ref:ref});
 assert.deepEqual(readback,document,'The rendered source is the exact native saved document');
+const transport={kind:'bridge',url:bridge};
+assert.ok((await eventsSince(transport,1)).length>0,'The actual native saved operations produced ordered events');
+const disposedReceipts=[];
+const disposedSubscription=await subscribeTopic(transport,receipt=>disposedReceipts.push(receipt));
+assert.ok(disposedSubscription,'The actual native event subscription opened');
+disposedSubscription.unsubscribe();
+await eventsSince(transport,1);
+await new Promise(resolve=>setTimeout(resolve,250));
+assert.deepEqual(disposedReceipts,[],'Disposal cancels the pending native read and prevents late receipts');
 const bundle=projectExpression({document:readback,world_ref:`world:${ref}`,field_ref:`oi:field:${ref}`,projection_ref:`projection:${ref}`,publisher:{identity_ref:actor,chosen_name:'Presentation reviewer'},audience:{visibility:'public'}});
 if(process.env.OI_PRESENTATION_EVIDENCE){await mkdir(process.env.OI_PRESENTATION_EVIDENCE,{recursive:true});await writeFile(`${process.env.OI_PRESENTATION_EVIDENCE}/native-saved-source.json`,JSON.stringify(readback,null,2));await writeFile(`${process.env.OI_PRESENTATION_EVIDENCE}/production-publication.json`,JSON.stringify(bundle,null,2));}
 const cards=bundle.presentation.regions.flatMap(region=>region.bindings).filter(binding=>binding.component_ref==='oi.presentation/reference-card/v1');

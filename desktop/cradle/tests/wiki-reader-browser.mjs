@@ -43,6 +43,15 @@ try{
    // the 10-second assertion deadline. This is not an installed startup test.
    await page.goto('http://127.0.0.1:1446/tests/wiki-reader.html',{timeout:60000});
    await mainProse.locator('h1').waitFor();
+   // Cold dependency optimisation can reload after the first heading paints.
+   // Assert the complete native reading only after that rendered body is ready.
+   await page.waitForFunction(()=>{
+    const prose=document.querySelector('.wiki-reader > .wiki-prose');
+    return prose?.querySelector('h1')?.textContent==='Alpha'
+     &&prose.querySelector('strong')?.textContent==='Bold'
+     &&prose.querySelectorAll('.wiki-table td').length===2
+     &&prose.querySelectorAll('input[type=checkbox]').length===2;
+   });
    check(await mainProse.locator('h1').innerText()==='Alpha',`${name}: native Markdown heading, not raw text`);
    check(await mainProse.locator('strong').innerText()==='Bold',`${name}: strong text rendered`);
    check(await mainProse.locator('.wiki-table td').count()===2,`${name}: native table body rendered`);
