@@ -473,9 +473,9 @@ export function sampleImageSource(
 	};
 }
 
-/** ASCII drawings rasterize white-on-transparent; ink is alpha. Same normalization law.
- * With a `cell` size, candidates aggregate per character cell (quadrant means):
- * small rasterized glyphs survive as crisp typed marks instead of blurring. */
+/** ASCII drawings rasterize white-on-transparent; ink is alpha. Retain the
+ * actual typed contours through the same bounded raster law as image sources.
+ * Character-cell means erase sparse strokes inside otherwise empty cells. */
 export function sampleAlphaSource(
 	px: Uint8ClampedArray | Uint8Array,
 	w: number,
@@ -486,9 +486,7 @@ export function sampleAlphaSource(
 	// Characters blur together below ~1/3 alpha; a firmer floor keeps each typed
 	// mark crisp in the particle lattice.
 	const threshold = 0.3;
-	const candidates = options.cell && options.cell.w >= 3 && options.cell.h >= 3
-		? candidatesFromAlphaCells(field, options.cell, threshold, options.scale ?? 1, options.volume)
-		: candidatesFromInkField(field, { ...options, threshold, mode: 'alpha' });
+	const candidates = candidatesFromInkField(field, { ...options, threshold, mode: 'alpha' });
 	const coverage = coverageOf(field.ink, w, h, field.crop, threshold);
 	return {
 		candidates: candidates as SampledSource['candidates'],
@@ -506,81 +504,6 @@ export function sampleAlphaSource(
 			fallback: candidates.length === 0,
 		},
 	};
-}
-
-/**
- * Per-character aggregation for ASCII sources: each character cell contributes
- * up to four quadrant candidates weighted by mean alpha, anchored on the ink
- * crop so typed marks stay crisp at any raster size. Under the volume law each
- * quadrant is measured against the drawing's own distance transform, so a
- * typed stroke extrudes like a letterform of the same weight.
- */
-function candidatesFromAlphaCells(
-	field: InkField,
-	cell: { w: number; h: number },
-	threshold: number,
-	scale: number,
-	volume?: GlyphVolumeConfig
-): SourceCandidatePool {
-	const { width: w, height: h, ink, crop } = field;
-	const cw = crop.x1 - crop.x0 + 1, ch = crop.y1 - crop.y0 + 1;
-	const cx = (crop.x0 + crop.x1 + 1) / 2;
-	const cy = (crop.y0 + crop.y1 + 1) / 2;
-	const unit = (400 * scale) / Math.max(cw, ch);
-	const volumeLaw = volume?.enabled && volume.depth > 0 ? volume : null;
-	const fields = volumeLaw
-		? buildDepthFieldsFromMask(
-				Uint8Array.from(ink, (v) => (v >= threshold ? 1 : 0)),
-				w,
-				h
-			)
-		: null;
-	const out: SourceCandidatePool = Object.assign([], { norm: 'stage400' as const });
-	const cols = Math.ceil(cw / cell.w);
-	const rows = Math.ceil(ch / cell.h);
-	for (let row = 0; row < rows; row++) {
-		// Cell bounds are integral: cell.w/h are fractional (fontSize·0.6/·1.15),
-		// and a fractional pixel index would read the ink field as `undefined`
-		// and poison the quadrant mean with NaN.
-		const ry0 = crop.y0 + Math.round(row * cell.h);
-		const ry1 = Math.min(crop.y1 + 1, crop.y0 + Math.round((row + 1) * cell.h));
-		const rym = (ry0 + ry1) >> 1;
-		for (let col = 0; col < cols; col++) {
-			const cx0 = crop.x0 + Math.round(col * cell.w);
-			const cx1 = Math.min(crop.x1 + 1, crop.x0 + Math.round((col + 1) * cell.w));
-			if (cx1 <= cx0 || ry1 <= ry0) continue;
-			const cxm = (cx0 + cx1) >> 1;
-			for (const [qx0, qx1] of [[cx0, cxm], [cxm, cx1]] as const) {
-				for (const [qy0, qy1] of [[ry0, rym], [rym, ry1]] as const) {
-					let sum = 0, count = 0;
-					for (let y = qy0; y < qy1; y++) {
-						for (let x = qx0; x < qx1; x++) {
-							sum += ink[y * w + x];
-							count++;
-						}
-					}
-					if (!count) continue;
-					const mean = sum / count;
-					if (mean < threshold) continue;
-					const density = clamp01(mean * 1.6);
-					const point: SourceCandidatePoint = {
-						x: ((qx0 + qx1) / 2 - cx) * unit,
-						y: -((qy0 + qy1) / 2 - cy) * unit,
-						density,
-					};
-					if (fields && volumeLaw) {
-						const px = Math.max(0, Math.min(w - 1, Math.round((qx0 + qx1) / 2)));
-						const py = Math.max(0, Math.min(h - 1, Math.round((qy0 + qy1) / 2)));
-						const shape = cellVolumeShape(fields.distInside[py * w + px], fields.distToInk[py * w + px], fields.referenceThickness, density, volumeLaw);
-						point.hz = shape.half;
-						point.cw = shape.contourness;
-					}
-					out.push(point);
-				}
-			}
-		}
-	}
-	return out;
 }
 
 const MODE_LABEL: Record<InternalMode, string> = {

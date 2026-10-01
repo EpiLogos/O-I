@@ -2,12 +2,13 @@
 /**
  * vendor-expressions-engine.mjs
  *
- * Vendors the merged Expressions engine from EpiLogos/Point-Cloud-Demo into the
+ * Compiles the native Expressions source in this checkout into the
  * O-I design-system package as plain ES modules (.mjs).
  *
  * Usage:
  *   node scripts/vendor-expressions-engine.mjs [--source <dir>]
  *   node scripts/vendor-expressions-engine.mjs --verify
+ *   node scripts/vendor-expressions-engine.mjs --refresh-module src/engine/sourceSampling.ts
  *
  * Source layout -> output layout (flattened under the output root):
  *   src/engine/**                     -> engine/**
@@ -26,10 +27,11 @@ import path from 'node:path';
 import {execFileSync} from 'node:child_process';
 import {createRequire} from 'node:module';
 import {fileURLToPath} from 'node:url';
+import {createHash} from 'node:crypto';
 
 const scriptPath = fileURLToPath(import.meta.url);
 const worktreeRoot = path.resolve(path.dirname(scriptPath), '..');
-const DEFAULT_SOURCE = '/Users/admin/Central/Work/Point-Cloud-Demo';
+const DEFAULT_SOURCE = path.join(worktreeRoot, 'desktop/cradle/expressions-app');
 const OUT_ROOT = path.join(worktreeRoot, 'packages/oi-design-system/expressions-engine');
 
 const ENGINE_PREFIX = 'src/engine/';
@@ -150,13 +152,48 @@ function loadEsbuild() {
 /* ------------------------------- vendoring -------------------------------- */
 
 function parseArgs(argv) {
-  const args = {verify: false, source: DEFAULT_SOURCE};
+  const args = {verify: false, source: DEFAULT_SOURCE, modules: []};
   for (let i = 0; i < argv.length; i++) {
     if (argv[i] === '--verify') args.verify = true;
     else if (argv[i] === '--source') args.source = path.resolve(argv[++i]);
+    else if (argv[i] === '--refresh-module') args.modules.push(argv[++i]);
     else throw new Error(`unknown argument: ${argv[i]}`);
   }
   return args;
+}
+
+/** Refresh an explicitly selected native module and its emitted local imports.
+ * The existing engine carries O:I overlays; a bounded repair cannot overwrite
+ * those or describe the whole retained engine as a newly compiled source cut. */
+async function refreshModules(args) {
+  const {esbuild}=loadEsbuild(),provenancePath=path.join(OUT_ROOT,'PROVENANCE.json');
+  const provenance=JSON.parse(fs.readFileSync(provenancePath,'utf8'));
+  const outputs=new Map(),pending=[...args.modules],sha256=bytes=>createHash('sha256').update(bytes).digest('hex');
+  while(pending.length){
+    const source=pending.pop();
+    if(outputs.has(source))continue;
+    if(!/^(src\/engine|field-studies-journeys\/src)\/[\w./-]+\.ts$/.test(source)||source.split('/').includes('..'))throw Error('Invalid native module source: '+source);
+    const raw=readSourceFile(args.source,source),transformed=await esbuild.transform(raw,{loader:'ts',format:'esm',target:'esnext'});
+    const local=[];
+    for(const spec of extractSpecifiers(transformed.code)){
+      const r=resolveSpecifier(source,spec);
+      if(r.kind==='unresolved')throw Error('Unresolved native module import: '+spec);
+      if(r.kind==='local'){outputFor(r.target);pending.push(r.target);local.push(r.target);}
+    }
+    outputs.set(source,{raw,code:transformed.code,local});
+  }
+  const mappings=new Map([...outputs.keys()].map(source=>[source,outputFor(source)]));
+  provenance.module_refreshes??={};
+  for(const [source,{raw,code}] of outputs){
+    const output=outputFor(source),unresolved=[];
+    const generated=rewriteRelativeSpecifiers(code,output,mappings,unresolved,source);
+    if(unresolved.length)throw Error('Unresolved compiled native module: '+source);
+    const target=path.join(OUT_ROOT,output);fs.mkdirSync(path.dirname(target),{recursive:true});fs.writeFileSync(target,generated);
+    provenance.files[output]=source;
+    provenance.module_refreshes[output]={source:path.relative(worktreeRoot,path.join(args.source,source)).split(path.sep).join('/'),source_sha256:sha256(raw),output_sha256:sha256(generated),compiler:'esbuild@'+esbuild.version,standing:'Bounded compiler output from the native source; other retained modules keep their existing provenance'};
+  }
+  fs.writeFileSync(provenancePath,JSON.stringify(provenance,null,2)+'\n');
+  console.log(JSON.stringify({refreshed:[...mappings.values()],source:args.source}));
 }
 
 function gitHead(sourceDir) {
@@ -305,6 +342,13 @@ async function verify() {
   const errors = [];
   let checked = 0;
 
+  for(const [output,reading] of Object.entries(provenance.module_refreshes??{})){
+    const hash=bytes=>createHash('sha256').update(bytes).digest('hex');
+    const source=path.resolve(worktreeRoot,reading.source),generated=path.join(OUT_ROOT,output);
+    if(!source.startsWith(worktreeRoot+path.sep)||!fs.existsSync(source)||hash(fs.readFileSync(source))!==reading.source_sha256)errors.push(`${output}: native source changed; refresh this module before shipping`);
+    if(!fs.existsSync(generated)||hash(fs.readFileSync(generated))!==reading.output_sha256)errors.push(`${output}: compiled module differs from its native-source receipt`);
+  }
+
   for (const outRel of [...known].sort()) {
     const abs = path.join(OUT_ROOT, outRel);
     if (!fs.existsSync(abs)) { errors.push(`${outRel}: listed in PROVENANCE but missing on disk`); continue; }
@@ -320,7 +364,7 @@ async function verify() {
       if (!spec.startsWith('.')) continue; // bare (e.g. three) or absolute — out of scope
       if (!spec.endsWith('.mjs')) { errors.push(`${outRel}: relative specifier does not end in .mjs: '${spec}'`); continue; }
       const target = path.posix.normalize(path.posix.join(path.posix.dirname(outRel), spec));
-      if (!known.has(target)) errors.push(`${outRel}: '${spec}' -> ${target}: not in output tree`);
+      if (!known.has(target) && !(target.startsWith('oi/') && fs.existsSync(path.join(OUT_ROOT,target)))) errors.push(`${outRel}: '${spec}' -> ${target}: not in output tree`);
     }
     checked++;
   }
@@ -383,4 +427,5 @@ async function verify() {
 
 const args = parseArgs(process.argv.slice(2));
 if (args.verify) await verify();
+else if(args.modules.length) await refreshModules(args);
 else await vendor(args);
