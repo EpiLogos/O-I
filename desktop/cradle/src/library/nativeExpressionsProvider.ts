@@ -20,6 +20,7 @@ export function nativeExpressionsProvider(transport: KernelTransportStatus): Lib
       const errors: string[] = [];
       const reply = indexed.status === "fulfilled" ? indexed.value : null;
       const data = reply?.outcome?.result === "expression" ? reply.outcome.data as Record<string, unknown> : null;
+      const hasIndexedReading = indexed.status === "fulfilled" && !reply?.error && data?.schema === "oi.expression-index/v1" && Array.isArray(data.expressions);
       if (indexed.status === "rejected" || reply?.error || data?.schema !== "oi.expression-index/v1" || !Array.isArray(data.expressions)) errors.push(indexed.status === "rejected" ? String(indexed.reason) : reply?.error ?? "Native Expression index unavailable");
       for (const raw of Array.isArray(data?.expressions) ? data.expressions : []) {
         const row = raw && typeof raw === "object" ? raw as Record<string, unknown> : null;
@@ -31,6 +32,7 @@ export function nativeExpressionsProvider(transport: KernelTransportStatus): Lib
         items.push({kind: "composition", ref: row.expression_ref, expressionRef: row.expression_ref, revision: String(row.revision), title: row.title, owner: "this instance", scope: "local", provider: "expressions", nativeCollections: row.collections, summary: row.collections.length ? `In ${row.collections.length} ${row.collections.length===1?"collection":"collections"}` : "Not assigned to a collection"});
       }
       const material = saved.status === "fulfilled" ? saved.value : null;
+      const hasSavedReading = saved.status === "fulfilled" && material?.state === "materials" && material.schema === "oi.expression-material-list/v1" && Array.isArray(material.materials) && Array.isArray(material.unreadable);
       if (saved.status === "rejected" || material?.state !== "materials" || material.schema !== "oi.expression-material-list/v1" || !Array.isArray(material.materials) || !Array.isArray(material.unreadable)) errors.push(saved.status === "rejected" ? String(saved.reason) : "Native saved material reading unavailable");
       else {
         for (const row of material.materials) {
@@ -43,7 +45,7 @@ export function nativeExpressionsProvider(transport: KernelTransportStatus): Lib
         errors.push(...material.unreadable.map(row => `${row.file_ref ?? row.path ?? "Saved material"}: ${row.error}`));
         if (material.truncated) errors.push("Native saved material discovery reached its owner-defined limit");
       }
-      return {items, coverage: {provider: "expressions", state: errors.length ? items.length ? "partial" : "unavailable" : "complete", reason: errors.length ? errors.join("; ") : undefined}};
+      return {items, coverage: {provider: "expressions", state: errors.length ? hasIndexedReading || hasSavedReading ? "partial" : "unavailable" : "complete", reason: errors.length ? errors.join("; ") : undefined}};
     },
   };
 }
