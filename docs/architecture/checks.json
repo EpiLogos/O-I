@@ -1,0 +1,50 @@
+{
+  "schema": "oi.architecture-verification/v1",
+  "sources": 61,
+  "arrows": 58,
+  "diagrams": 6,
+  "documentation_references_checked": 194,
+  "native_reverse_walks": 22,
+  "errors": [],
+  "native_product_checks": [
+    {
+      "product": "Central",
+      "repository_scope_errors": [],
+      "post_apply_changed_records": [],
+      "seed_changes": []
+    },
+    {
+      "product": "AIKit",
+      "repository_scope_errors": [],
+      "post_apply_changed_records": [],
+      "seed_changes": []
+    },
+    {
+      "product": "Actuation",
+      "repository_scope_errors": [],
+      "post_apply_changed_records": [],
+      "seed_changes": []
+    },
+    {
+      "product": "Factory",
+      "repository_scope_errors": [],
+      "post_apply_changed_records": [],
+      "seed_changes": []
+    },
+    {
+      "product": "Workcell",
+      "repository_scope_errors": [],
+      "post_apply_changed_records": [],
+      "seed_changes": []
+    },
+    {
+      "product": "QL-MEF",
+      "repository_scope_errors": [],
+      "post_apply_changed_records": [],
+      "seed_changes": []
+    }
+  ],
+  "external_diagram_resolution": "Cross-product relative refs checked at the recorded O:I owner checkout; publication must preserve the canonical sibling product layout.",
+  "render_manifest": "rendered/render-manifest.json",
+  "standing": "executed documentation checks; runtime and whole-programme limits in verification.md"
+}

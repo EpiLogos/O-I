@@ -1,0 +1,932 @@
+{
+  "schema": "oi.architecture-relations/v1",
+  "standing": "agent-inference",
+  "revision": "2026-10-01",
+  "note": "Solid arrows name inspected relations, not installed acceptance; proposed joins and observed knowledge-route failure retain their standing. Human Recognition is an authored relation, not automated code.",
+  "relations": [
+    {
+      "id": "C1",
+      "diagram": "agent-context.mmd",
+      "from": "source",
+      "to": "knowledge",
+      "label": "index / read with provenance",
+      "standing": "source-inspected",
+      "basis": [
+        {
+          "source": "AIKit:crates/aikit-core/src/context_source.rs",
+          "relation": "Context-source ownership and indexed descriptors"
+        }
+      ]
+    },
+    {
+      "id": "C2",
+      "diagram": "agent-context.mmd",
+      "from": "knowledge",
+      "to": "resolve",
+      "label": "knowledge route resolves addresses",
+      "standing": "source-inspected",
+      "basis": [
+        {
+          "source": "AIKit:docs/v2/README.md",
+          "relation": "Knowledge Navigation provider authority and native traversal"
+        }
+      ]
+    },
+    {
+      "id": "C3",
+      "diagram": "agent-context.mmd",
+      "from": "matrix",
+      "to": "resolve",
+      "label": "describes / relates; does not load body",
+      "standing": "source-inspected",
+      "basis": [
+        {
+          "source": "Central:docs/CAPABILITY-MATRIX-PROTOCOL.md",
+          "relation": "extensions.documentation describes source relations, not implementation acceptance"
+        }
+      ]
+    },
+    {
+      "id": "C4",
+      "diagram": "agent-context.mmd",
+      "from": "praxis",
+      "to": "resolve",
+      "label": "resolve selected identity and revision",
+      "standing": "source-inspected",
+      "basis": [
+        {
+          "source": "AIKit:crates/aikit-core/src/praxis.rs",
+          "relation": "Revisioned praxis identity and selection"
+        },
+        {
+          "source": "AIKit:crates/aikit-core/src/agent_praxis.rs",
+          "relation": "Actor praxis determination"
+        }
+      ]
+    },
+    {
+      "id": "C5",
+      "diagram": "agent-context.mmd",
+      "from": "resolve",
+      "to": "context",
+      "label": "select scoped source bytes",
+      "standing": "source-inspected",
+      "basis": [
+        {
+          "source": "AIKit:crates/aikit-core/src/context_resolution.rs",
+          "relation": "Scoped ContextResolution"
+        }
+      ]
+    },
+    {
+      "id": "C6",
+      "diagram": "agent-context.mmd",
+      "from": "hot",
+      "to": "context",
+      "label": "selected native refs; source remains authoritative",
+      "standing": "source-inspected",
+      "basis": [
+        {
+          "source": "AIKit:crates/aikit-store/src/now_context.rs",
+          "relation": "Selected NOW continuity hot cache"
+        }
+      ]
+    },
+    {
+      "id": "C7",
+      "diagram": "agent-context.mmd",
+      "from": "context",
+      "to": "hook",
+      "label": "admitted context plan",
+      "standing": "source-inspected",
+      "basis": [
+        {
+          "source": "AIKit:crates/aikit-cli/src/wiki_projection.rs",
+          "relation": "projection_context rereads only declared source addresses and revisions"
+        }
+      ]
+    },
+    {
+      "id": "C8",
+      "diagram": "agent-context.mmd",
+      "from": "hook",
+      "to": "harness",
+      "label": "target-native emission",
+      "standing": "source-inspected",
+      "basis": [
+        {
+          "source": "AIKit:crates/aikit-adapters/src/hook_sources.rs",
+          "relation": "Native hook carrier plan"
+        },
+        {
+          "source": "AIKit:crates/aikit-cli/tests/apply_hook_seam.rs",
+          "relation": "Actual adapter/CLI seam tests"
+        }
+      ]
+    },
+    {
+      "id": "C9",
+      "diagram": "agent-context.mmd",
+      "from": "knowledge",
+      "to": "gap",
+      "label": "degraded native route retained",
+      "standing": "observed-warning",
+      "basis": [
+        {
+          "source": "O:I:docs/architecture/agent-context.md",
+          "relation": "Native 1 October search returns named degraded providers, unresolved World relation and omitted epi/legacy Wiki children; initial fatal Actuation query failure retained as history"
+        }
+      ]
+    },
+    {
+      "id": "R1",
+      "diagram": "execution-return.mmd",
+      "from": "person",
+      "to": "attempt",
+      "label": "commissions bounded attempt",
+      "standing": "source-inspected",
+      "basis": [
+        {
+          "source": "Factory:factory/src/commission.rs",
+          "relation": "Bounded Commission requirements"
+        },
+        {
+          "source": "Factory:factory/src/attempt_runtime.rs",
+          "relation": "SituatedExecutionDisposition carries obligations and Return address"
+        }
+      ]
+    },
+    {
+      "id": "R2",
+      "diagram": "execution-return.mmd",
+      "from": "occupancy",
+      "to": "custody",
+      "label": "verifies generation for custody change",
+      "standing": "source-inspected",
+      "basis": [
+        {
+          "source": "Factory:factory/src/work_custody.rs",
+          "relation": "Current generation gate and same-write successor handoff"
+        }
+      ]
+    },
+    {
+      "id": "R3",
+      "diagram": "execution-return.mmd",
+      "from": "custody",
+      "to": "attempt",
+      "label": "explicit Run / workflow-unit references",
+      "standing": "source-inspected",
+      "basis": [
+        {
+          "source": "Factory:factory/src/work_custody.rs",
+          "relation": "FactoryWorkCustody explicitly carries optional Run/Journey/workflow-unit refs; no automatic identity derivation"
+        }
+      ]
+    },
+    {
+      "id": "R4",
+      "diagram": "execution-return.mmd",
+      "from": "attempt",
+      "to": "encounter",
+      "label": "native execution body / delivery",
+      "standing": "source-inspected",
+      "basis": [
+        {
+          "source": "Factory:factory/src/attempt_runtime.rs",
+          "relation": "ExecutionBody explicitly carries AgentSession/SessionSpace and provider/harness refs"
+        }
+      ]
+    },
+    {
+      "id": "R5",
+      "diagram": "execution-return.mmd",
+      "from": "attempt",
+      "to": "material",
+      "label": "material demand / protection",
+      "standing": "source-inspected",
+      "basis": [
+        {
+          "source": "Factory:factory/src/attempt_material.rs",
+          "relation": "Native prepared material scope/operation"
+        },
+        {
+          "source": "Workcell:crates/workcell-runtime/src/run.rs",
+          "relation": "Material Run record independent from canonical Factory Run"
+        }
+      ]
+    },
+    {
+      "id": "R6",
+      "diagram": "execution-return.mmd",
+      "from": "material",
+      "to": "verification",
+      "label": "collected artifact / material evidence",
+      "standing": "source-inspected",
+      "basis": [
+        {
+          "source": "Factory:factory/src/attempt_runtime.rs",
+          "relation": "VerificationReceipt records evidence refs; material output is input, not automatic passed verification"
+        },
+        {
+          "source": "Factory:factory/tests/attempt_material.rs",
+          "relation": "Native artifact/material cases"
+        }
+      ]
+    },
+    {
+      "id": "R7",
+      "diagram": "execution-return.mmd",
+      "from": "verification",
+      "to": "receiving",
+      "label": "passed obligations enable native review / receipt",
+      "standing": "source-inspected",
+      "basis": [
+        {
+          "source": "Factory:factory/src/attempt_review.rs",
+          "relation": "Review gates passed evidence and required obligations"
+        },
+        {
+          "source": "Factory:factory/src/attempt_receiving.rs",
+          "relation": "Explicit native Central submit/readback; not automatic human acceptance"
+        }
+      ]
+    },
+    {
+      "id": "R8",
+      "diagram": "execution-return.mmd",
+      "from": "receiving",
+      "to": "human",
+      "label": "attributable source result",
+      "standing": "source-inspected",
+      "basis": [
+        {
+          "source": "Factory:factory/src/attempt_receiving.rs",
+          "relation": "Actual native receiving receipt acknowledged/read back"
+        },
+        {
+          "source": "O:I:desktop/cradle/kernel/src/owner_read.rs",
+          "relation": "Receiving reading is consumed without inventing owner state"
+        }
+      ]
+    },
+    {
+      "id": "R9",
+      "diagram": "execution-return.mmd",
+      "from": "human",
+      "to": "recognition",
+      "label": "presented for human judgement",
+      "standing": "authored-relation",
+      "basis": [
+        {
+          "source": "O:I:docs/positions/FOUNDING-POSITIONS.md",
+          "relation": "Human Return and Recognition remain distinct; desired human relation"
+        }
+      ]
+    },
+    {
+      "id": "R10",
+      "diagram": "execution-return.mmd",
+      "from": "verification",
+      "to": "reopened",
+      "label": "latest rejection invalidates current Return",
+      "standing": "source-inspected",
+      "basis": [
+        {
+          "source": "Factory-rejection-repair:factory/src/attempt_runtime.rs",
+          "relation": "RecordVerification invalidates an existing Returned leg when latest verification fails; subject advance retains historical output"
+        },
+        {
+          "source": "Factory-rejection-repair:factory/src/orchestration.rs",
+          "relation": "reject_return sets Failed and Abandoned while retaining leg attempt history"
+        },
+        {
+          "source": "O:I:evidence/factory-rejection-currency.json",
+          "relation": "Derived, hash-bound independent 10-case native replay; baseline sensitivity 7/10; whole acceptance unclaimed"
+        }
+      ]
+    },
+    {
+      "id": "F1",
+      "diagram": "plural-flow.mmd",
+      "from": "surface",
+      "to": "admission",
+      "label": "conversation-send",
+      "standing": "source-inspected",
+      "basis": [
+        {
+          "source": "O:I:desktop/cradle/src/flow/conversation.ts",
+          "relation": "conversationSend carries the actual JSON action to native encounter owner"
+        },
+        {
+          "source": "AIKit:crates/aikit-cli/src/encounter_conversation.rs",
+          "relation": "conversation_send admits actual Flow sender and recipients"
+        }
+      ]
+    },
+    {
+      "id": "F2",
+      "diagram": "plural-flow.mmd",
+      "from": "admission",
+      "to": "source",
+      "label": "commit source before dispatch",
+      "standing": "source-inspected",
+      "basis": [
+        {
+          "source": "AIKit:crates/aikit-cli/src/encounter_conversation.rs",
+          "relation": "conversation_step requires native source acknowledgement before dispatch"
+        },
+        {
+          "source": "Central:ctrl/src/flow_append.rs",
+          "relation": "Source conflict retry and operation-ref/request digest idempotency"
+        }
+      ]
+    },
+    {
+      "id": "F3",
+      "diagram": "plural-flow.mmd",
+      "from": "source",
+      "to": "request",
+      "label": "persist source acknowledgement",
+      "standing": "source-inspected",
+      "basis": [
+        {
+          "source": "AIKit:crates/aikit-store/src/encounter_conversation.rs",
+          "relation": "Durable request source acknowledgement and per-recipient state"
+        }
+      ]
+    },
+    {
+      "id": "F4",
+      "diagram": "plural-flow.mmd",
+      "from": "request",
+      "to": "packet",
+      "label": "admit each current recipient",
+      "standing": "source-inspected",
+      "basis": [
+        {
+          "source": "AIKit:crates/aikit-cli/src/encounter_conversation_tests.rs",
+          "relation": "Departed, queued and running real Central-file boundary cases; require AIKIT_TEST_CENTRAL_CTRL to run"
+        },
+        {
+          "source": "AIKit:crates/aikit-cli/src/encounter_conversation.rs",
+          "relation": "conversation_admit rechecks current membership/seat before delivery"
+        }
+      ]
+    },
+    {
+      "id": "F5",
+      "diagram": "plural-flow.mmd",
+      "from": "packet",
+      "to": "participant",
+      "label": "deliver bounded packet / native session",
+      "standing": "source-inspected",
+      "basis": [
+        {
+          "source": "AIKit:crates/aikit-cli/src/encounter_conversation.rs",
+          "relation": "Packet source read, actual agent/Agency check and local or explicit ssh/exec carrier"
+        }
+      ]
+    },
+    {
+      "id": "F6",
+      "diagram": "plural-flow.mmd",
+      "from": "participant",
+      "to": "reply",
+      "label": "record delivery completion / reply",
+      "standing": "source-inspected",
+      "basis": [
+        {
+          "source": "AIKit:crates/aikit-store/src/encounter_delivery.rs",
+          "relation": "Durable native delivery cursor/result"
+        },
+        {
+          "source": "AIKit:crates/aikit-cli/src/encounter_service.rs",
+          "relation": "Resident delivery owner"
+        }
+      ]
+    },
+    {
+      "id": "F7",
+      "diagram": "plural-flow.mmd",
+      "from": "reply",
+      "to": "incorporate",
+      "label": "revalidate and append original-request relation",
+      "standing": "source-inspected",
+      "basis": [
+        {
+          "source": "AIKit:crates/aikit-cli/src/encounter_conversation.rs",
+          "relation": "conversation_incorporate rechecks membership; completed nonempty bounded reply"
+        },
+        {
+          "source": "Central:ctrl/src/flow_append.rs",
+          "relation": "Append original request/revision relation idempotently"
+        }
+      ]
+    },
+    {
+      "id": "F8",
+      "diagram": "plural-flow.mmd",
+      "from": "incorporate",
+      "to": "reopen",
+      "label": "source acknowledgement / readback",
+      "standing": "source-inspected",
+      "basis": [
+        {
+          "source": "O:I:desktop/cradle/src/flow/FlowSurface.tsx",
+          "relation": "Source is reread on reopen and included state"
+        },
+        {
+          "source": "O:I:desktop/cradle/src/flow/instances.ts",
+          "relation": "readFlowInstance uses native readFile and parses actual source"
+        },
+        {
+          "source": "Central:ctrl/tests/flow_append.rs",
+          "relation": "Actual source CAS/race/readback integration cases"
+        },
+        {
+          "source": "O:I:.wayfinder/maps/plural-flow-now.md",
+          "relation": "Dated installed interrupted Mac/Omarchy episode and native source readback"
+        }
+      ]
+    },
+    {
+      "id": "F9",
+      "diagram": "plural-flow.mmd",
+      "from": "request",
+      "to": "reconcile",
+      "label": "retained steps / delivery cursor",
+      "standing": "source-inspected",
+      "basis": [
+        {
+          "source": "AIKit:crates/aikit-store/src/encounter_conversation.rs",
+          "relation": "Retained recipient steps and delivery refs"
+        }
+      ]
+    },
+    {
+      "id": "F10",
+      "diagram": "plural-flow.mmd",
+      "from": "reconcile",
+      "to": "request",
+      "label": "reconcile retained steps; uncertain turn is not replayed",
+      "standing": "source-inspected",
+      "basis": [
+        {
+          "source": "AIKit:crates/aikit-cli/src/encounter_conversation.rs",
+          "relation": "conversation_reconcile retries missing acknowledged steps"
+        }
+      ]
+    },
+    {
+      "id": "S1",
+      "diagram": "shared-participation.mmd",
+      "from": "now",
+      "to": "select",
+      "label": "selected temporal source refs",
+      "standing": "source-inspected",
+      "basis": [
+        {
+          "source": "Central:ctrl/src/continuous_work/placement.rs",
+          "relation": "Native Workcell-root and child NOW identity"
+        },
+        {
+          "source": "O:I:shared-field/field-now.mjs",
+          "relation": "Selected root/child refs only; native root revision"
+        }
+      ]
+    },
+    {
+      "id": "S2",
+      "diagram": "shared-participation.mmd",
+      "from": "workcell",
+      "to": "select",
+      "label": "carrier names Workcell identity",
+      "standing": "source-inspected",
+      "basis": [
+        {
+          "source": "O:I:shared-field/field-now.mjs",
+          "relation": "ROOT_KEYS/CHILD_KEYS carry declared workcell_ref; no material Run/service bodies"
+        }
+      ]
+    },
+    {
+      "id": "S3",
+      "diagram": "shared-participation.mmd",
+      "from": "select",
+      "to": "fieldnow",
+      "label": "validate allowed carrier; refuse private paths",
+      "standing": "source-inspected",
+      "basis": [
+        {
+          "source": "O:I:shared-field/field-now.mjs",
+          "relation": "exactKeys/refuseLeaks/audience validation and expected-revision CAS"
+        }
+      ]
+    },
+    {
+      "id": "S4",
+      "diagram": "shared-participation.mmd",
+      "from": "fieldnow",
+      "to": "context",
+      "label": "current audience / withdrawal checks",
+      "standing": "source-inspected",
+      "basis": [
+        {
+          "source": "O:I:shared-field/participant-context.mjs",
+          "relation": "Caller current authority, latest available projection and revoked/withdrawn refusal"
+        }
+      ]
+    },
+    {
+      "id": "S5",
+      "diagram": "shared-participation.mmd",
+      "from": "expression",
+      "to": "filter",
+      "label": "selected scenes / safe source refs",
+      "standing": "source-inspected",
+      "basis": [
+        {
+          "source": "O:I:shared-field/expression-projection.mjs",
+          "relation": "Selected scenes, safe binding refs and material whitelist"
+        },
+        {
+          "source": "O:I:shared-field/expression-material.mjs",
+          "relation": "admitSceneMaterial validates portable native Scene material"
+        }
+      ]
+    },
+    {
+      "id": "S6",
+      "diagram": "shared-participation.mmd",
+      "from": "filter",
+      "to": "hosted",
+      "label": "serialize admitted projection",
+      "standing": "source-inspected",
+      "basis": [
+        {
+          "source": "O:I:shared-field/expression-projection.mjs",
+          "relation": "Admitted composition and separate projection/presentation revisions"
+        }
+      ]
+    },
+    {
+      "id": "S7",
+      "diagram": "shared-participation.mmd",
+      "from": "hosted",
+      "to": "render",
+      "label": "subscribe and revalidate indexed identities",
+      "standing": "source-inspected",
+      "basis": [
+        {
+          "source": "O:I:shared-field/spacetimedb.mjs",
+          "relation": "Subscribed row decoding and semantic identity validation"
+        },
+        {
+          "source": "O:I:shared-field/expression-presentation.mjs",
+          "relation": "Live renderer admission and fallback"
+        }
+      ]
+    },
+    {
+      "id": "S8",
+      "diagram": "shared-participation.mmd",
+      "from": "hosted",
+      "to": "context",
+      "label": "caller-visible source basis",
+      "standing": "source-inspected",
+      "basis": [
+        {
+          "source": "O:I:shared-field/participant-context.mjs",
+          "relation": "Caller-visible curated projection/source basis, not private transcript"
+        }
+      ]
+    },
+    {
+      "id": "S9",
+      "diagram": "shared-participation.mmd",
+      "from": "context",
+      "to": "gap",
+      "label": "intended complete installed join; proof pending",
+      "standing": "proposed",
+      "basis": [
+        {
+          "source": "O:I:docs/experience/SHARED-FIELD-DESKTOP.md",
+          "relation": "Desired ordinary installed Explore/participant/encounter episode; shared repair lane owns proof"
+        }
+      ]
+    },
+    {
+      "id": "U1",
+      "diagram": "upgrade-lifecycle.mmd",
+      "from": "cuts",
+      "to": "binary",
+      "label": "archive exact committed source",
+      "standing": "source-inspected",
+      "basis": [
+        {
+          "source": "O:I:cli/src/update_flow.rs",
+          "relation": "Committed tree git archive; explicit source or fetched mainline cut"
+        }
+      ]
+    },
+    {
+      "id": "U2",
+      "diagram": "upgrade-lifecycle.mmd",
+      "from": "binary",
+      "to": "pointer",
+      "label": "stage and atomically select after success",
+      "standing": "source-inspected",
+      "basis": [
+        {
+          "source": "O:I:cli/src/update_flow.rs",
+          "relation": "stage_and_link / atomic_symlink after successful preparation"
+        }
+      ]
+    },
+    {
+      "id": "U3",
+      "diagram": "upgrade-lifecycle.mmd",
+      "from": "pointer",
+      "to": "old",
+      "label": "old process retains old inode",
+      "standing": "source-inspected",
+      "basis": [
+        {
+          "source": "O:I:cli/src/update_flow.rs",
+          "relation": "Atomic link replacement retains old executable inode; existing process is not restarted"
+        }
+      ]
+    },
+    {
+      "id": "U4",
+      "diagram": "upgrade-lifecycle.mmd",
+      "from": "pointer",
+      "to": "next",
+      "label": "future invocation resolves selection",
+      "standing": "source-inspected",
+      "basis": [
+        {
+          "source": "O:I:cli/src/update_flow.rs",
+          "relation": "Next invocation resolves selected content-addressed binary; active/previous receipt"
+        }
+      ]
+    },
+    {
+      "id": "U5",
+      "diagram": "upgrade-lifecycle.mmd",
+      "from": "old",
+      "to": "lifecycle",
+      "label": "explicit native owner lifecycle operation",
+      "standing": "source-inspected",
+      "basis": [
+        {
+          "source": "AIKit:crates/aikit-cli/src/encounter_service.rs",
+          "relation": "shutdown(expected_pid): exclusive lifecycle lease and opening/cleanup refusal"
+        }
+      ]
+    },
+    {
+      "id": "U6",
+      "diagram": "upgrade-lifecycle.mmd",
+      "from": "lifecycle",
+      "to": "sessions",
+      "label": "retain canonical session identities",
+      "standing": "source-inspected",
+      "basis": [
+        {
+          "source": "AIKit:crates/aikit-cli/src/encounter_service.rs",
+          "relation": "Native shutdown receipt canonical_sessions_retained; failures retained"
+        },
+        {
+          "source": "AIKit:crates/aikit-cli/tests/encounter_shutdown.rs",
+          "relation": "Native owner process lifecycle cases"
+        }
+      ]
+    },
+    {
+      "id": "U7",
+      "diagram": "upgrade-lifecycle.mmd",
+      "from": "sessions",
+      "to": "renewed",
+      "label": "reopen / recover explicit native continuity",
+      "standing": "source-inspected",
+      "basis": [
+        {
+          "source": "AIKit:crates/aikit-store/src/encounter.rs",
+          "relation": "Canonical session/event journal persistence"
+        },
+        {
+          "source": "AIKit:crates/aikit-cli/src/encounter_service.rs",
+          "relation": "Reopen uses native continuity/new generation, not invented hot migration"
+        }
+      ]
+    },
+    {
+      "id": "U8",
+      "diagram": "upgrade-lifecycle.mmd",
+      "from": "material",
+      "to": "recovery",
+      "label": "independently reread durable records",
+      "standing": "source-inspected",
+      "basis": [
+        {
+          "source": "Workcell:crates/workcell-runtime/src/run.rs",
+          "relation": "Reconstructed RunLedger reads durable record, derived index"
+        },
+        {
+          "source": "Workcell:crates/workcell-runtime/src/instance_registry.rs",
+          "relation": "Persistent material instance generations"
+        }
+      ]
+    },
+    {
+      "id": "U9",
+      "diagram": "upgrade-lifecycle.mmd",
+      "from": "coexist",
+      "to": "renewed",
+      "label": "startup connector conflict gate",
+      "standing": "source-inspected",
+      "basis": [
+        {
+          "source": "AIKit:crates/aikit-adapters/src/gateway_coexistence.rs",
+          "relation": "Startup conflict gate from explicit policy and recorded foreign bot ownership"
+        }
+      ]
+    },
+    {
+      "id": "W1",
+      "diagram": "world-ownership.mmd",
+      "from": "central",
+      "to": "aikit",
+      "label": "read source / temporal refs",
+      "standing": "source-inspected",
+      "basis": [
+        {
+          "source": "AIKit:crates/aikit-core/src/context_source.rs",
+          "relation": "Independently owned context-source descriptors and resolution"
+        },
+        {
+          "source": "Central:ctrl/src/continuous_work/placement.rs",
+          "relation": "Native Workcell-root/child NOW source"
+        }
+      ]
+    },
+    {
+      "id": "W2",
+      "diagram": "world-ownership.mmd",
+      "from": "actuation",
+      "to": "factory",
+      "label": "current occupancy gates custody",
+      "standing": "source-inspected",
+      "basis": [
+        {
+          "source": "Factory:factory/src/work_custody.rs",
+          "relation": "Published assign/update verifies current occupant generation"
+        },
+        {
+          "source": "Actuation:crates/actuation-stream/src/occupancy_store.rs",
+          "relation": "Append-only occupancy generations"
+        }
+      ]
+    },
+    {
+      "id": "W3",
+      "diagram": "world-ownership.mmd",
+      "from": "central",
+      "to": "kernel",
+      "label": "native World / document readings",
+      "standing": "source-inspected",
+      "basis": [
+        {
+          "source": "O:I:desktop/cradle/kernel/src/world.rs",
+          "relation": "Central horizon/ground reading; no minted source refs"
+        },
+        {
+          "source": "O:I:desktop/cradle/kernel/src/flow.rs",
+          "relation": "CentralClient source and Flow operations"
+        }
+      ]
+    },
+    {
+      "id": "W4",
+      "diagram": "world-ownership.mmd",
+      "from": "aikit",
+      "to": "kernel",
+      "label": "resolved context / encounter readings",
+      "standing": "source-inspected",
+      "basis": [
+        {
+          "source": "O:I:desktop/cradle/kernel/src/agency.rs",
+          "relation": "AIKit native disclosure and SessionSpace client"
+        }
+      ]
+    },
+    {
+      "id": "W5",
+      "diagram": "world-ownership.mmd",
+      "from": "actuation",
+      "to": "kernel",
+      "label": "native permission correlation reading",
+      "standing": "source-inspected",
+      "basis": [
+        {
+          "source": "O:I:desktop/cradle/kernel/src/encounter.rs",
+          "relation": "Actuation correlate read; retain owner refusal and correlation identity"
+        }
+      ]
+    },
+    {
+      "id": "W6",
+      "diagram": "world-ownership.mmd",
+      "from": "factory",
+      "to": "kernel",
+      "label": "developmental readings",
+      "standing": "source-inspected",
+      "basis": [
+        {
+          "source": "O:I:desktop/cradle/kernel/src/factory.rs",
+          "relation": "Native Factory development reading with schema gate"
+        }
+      ]
+    },
+    {
+      "id": "W7",
+      "diagram": "world-ownership.mmd",
+      "from": "workcell",
+      "to": "kernel",
+      "label": "material / service readings",
+      "standing": "source-inspected",
+      "basis": [
+        {
+          "source": "O:I:desktop/cradle/kernel/src/lib.rs",
+          "relation": "KernelOp::WorkcellStatusRead invokes native Workcell owner"
+        }
+      ]
+    },
+    {
+      "id": "W8",
+      "diagram": "world-ownership.mmd",
+      "from": "ql",
+      "to": "kernel",
+      "label": "native scene material / source basis",
+      "standing": "source-inspected",
+      "basis": [
+        {
+          "source": "O:I:desktop/cradle/kernel/src/expression_world.rs",
+          "relation": "QL scene-world constructor and admitted source basis"
+        },
+        {
+          "source": "QL-MEF:crates/ql-mef/src/scene.rs",
+          "relation": "Native Scene structure; audit owns domain mapping"
+        }
+      ]
+    },
+    {
+      "id": "W9",
+      "diagram": "world-ownership.mmd",
+      "from": "kernel",
+      "to": "surface",
+      "label": "compose owner readings",
+      "standing": "source-inspected",
+      "basis": [
+        {
+          "source": "O:I:desktop/cradle/src-tauri/src/main.rs",
+          "relation": "kernel_op emits each actual kernel receipt on topic"
+        },
+        {
+          "source": "O:I:desktop/cradle/kernel/src/presentation.rs",
+          "relation": "Presentation is a consumer of native readings"
+        }
+      ]
+    },
+    {
+      "id": "W10",
+      "diagram": "world-ownership.mmd",
+      "from": "surface",
+      "to": "projection",
+      "label": "explicit selected publication",
+      "standing": "source-inspected",
+      "basis": [
+        {
+          "source": "O:I:shared-field/expression-projection.mjs",
+          "relation": "Publication filters native selected scenes and admitted sources before serialization"
+        }
+      ]
+    },
+    {
+      "id": "W11",
+      "diagram": "world-ownership.mmd",
+      "from": "projection",
+      "to": "cache",
+      "label": "subscribe / revalidate semantic refs",
+      "standing": "source-inspected",
+      "basis": [
+        {
+          "source": "O:I:shared-field/spacetimedb.mjs",
+          "relation": "hostedSnapshotFromRows and createSpacetimeExploreSource revalidate semantic refs"
+        }
+      ]
+    }
+  ]
+}

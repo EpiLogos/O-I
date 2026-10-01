@@ -271,7 +271,15 @@ kernel consumes them uniformly:
 - **Authority is visible.** An action discoverable is not an action authorised;
   the UI shows which authority stands behind each mutation.
 
-## 11. Current build disposition (implementation facts)
+## 11. Current build disposition (historical census, 4 September 2026)
+
+This section preserves the implementation census at the date below. Its
+"Mount", "Add" and "Retire" lists are not today's availability reading.
+The build moved into `desktop/cradle/`; native event, encounter, document and
+SharedField paths have since developed. Follow the [current architecture
+navigation](../architecture/README.md) and each operation's named source/test
+cut before treating a listed gap as still open. This census remains here so
+earlier links and the reasons for the rebuild remain intelligible.
 
 Evidence: `desktop/core`, `desktop/src-tauri/main.rs` (39 commands, zero
 events), `desktop/ui/src` as of 2026-09-04.

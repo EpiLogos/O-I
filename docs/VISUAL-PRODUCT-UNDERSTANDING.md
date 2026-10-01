@@ -1,8 +1,13 @@
 # {O:I} Visual Product Understanding
 
 **Status:** canonical product-understanding surface  
-**Architecture status:** describes accepted `main`; open PRs are named only as developmental sources  
-**Authored source:** `docs/positions/FOUNDING-POSITIONS.md` on draft PR #71, read together with `CANONICAL-PRODUCT-FIELD.md`, `ARCHITECTURE.md`, `OBJECTIVE-CO-INTERNALITY.md`, and accepted first-suite implementation.
+**Architecture status:** the architecture picture below retains the first-suite
+accepted floor. It is historical implementation orientation, not a current
+`main` census. Current operation and owner routes are in
+[Architecture navigation and current joins](architecture/README.md).
+**Authored source:** [FOUNDING-POSITIONS.md](positions/FOUNDING-POSITIONS.md),
+read together with `CANONICAL-PRODUCT-FIELD.md`, `ARCHITECTURE.md` and
+`OBJECTIVE-CO-INTERNALITY.md`. PR #71 is original provenance, not the live entry.
 
 This document gives three visual depths different jobs. Experience shows what changes for a person or agent. Product relation shows what O:I makes possible without absorbing native ownership. Architecture shows the accepted software seams which currently realise those relations.
 
@@ -78,9 +83,11 @@ flowchart LR
 
 The essential relation is not “upload into a global world”. It is **one grounded world making a selected difference available to another while the SharedField preserves alterity, provenance, and local authority**.
 
-## 3. Architecture — accepted current seams
+## 3. Architecture — historical first-suite seams
 
-This diagram describes the accepted repository shape on `main`, not the separate Explore implementation on draft PR #72.
+This diagram describes the original accepted first-suite repository shape.
+PR #72 is historical Explore provenance. Later SharedField, Cradle and native
+owner development must be read through the current architecture route above.
 
 ```mermaid
 flowchart TB
@@ -127,7 +134,7 @@ One known drift is corrected with this visual pass: `ARCHITECTURE.md` must name 
 
 **Semantic:** none of the diagrams requires the reader to know the six internal product nouns before understanding why O:I exists. Important arrows name development, explication, projection, mediation, provenance, or native continuation.
 
-**Implementation:** the architecture diagram names only accepted repository seams present on `main`. Draft PR #71 is used as authored-position provenance; draft PR #72 is not presented as current architecture.
+**Implementation (historical first-suite cut):** this diagram recorded repository seams accepted at its original publication. It does not verify the later Cradle, plural Flow, native praxis, NOW or hosted SharedField implementation. Read the [current companions and source revisions](architecture/README.md) for those operations. PR #71 is founding-position provenance and PR #72 is the later projection history, not a current availability verdict.
 
 **Cross-product:** the diagrams deliberately do not turn the six native products into one pipeline. O:I composes and discloses the field while the products retain their own semantic centres.
 

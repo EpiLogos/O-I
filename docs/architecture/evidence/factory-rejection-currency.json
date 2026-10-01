@@ -1,0 +1,57 @@
+{
+  "schema": "oi.architecture-bounded-evidence/v1",
+  "standing": "derived-from-native-return",
+  "source_revision": "dd0765dd9596086e14ce7bef8d604759cc8daf8f",
+  "native_evidence_ref": "central:source:control:root:Control/agents/now/clearings/83e643b2633b70cd6ad9307010f0e86148005761e95aa3e71b72bfbdf398cceb/T/verification/candidate-mac-final/summary.json",
+  "native_evidence_sha256": "67ae7da38486698457d2330f9f0f34d60fb9b4fc9ab2d980574f43ecbd1f9ccc",
+  "binary_sha256": "5b709ddad461bbe63cb96b156aa6336824a9d0049827a6ba4c857f09e1a5c65b",
+  "run_ref": "run:01M3FNY3P0E4H7JGN0BARSRQ8R",
+  "retained_source_sha256": "bb45404b20aa0385e18cf7855efe67d3dddca772fb28f3be7b817989cc235a43",
+  "source_unchanged": true,
+  "scope": "Native transition probes over the exact exported historical model-backed Run. No new Agency, model output, foreign owner dispatch, installed UI, or whole Run completion is claimed.",
+  "cases": [
+    {
+      "name": "original-native-reopen",
+      "passed": true
+    },
+    {
+      "name": "post-return-failed",
+      "passed": true
+    },
+    {
+      "name": "post-return-unknown",
+      "passed": true
+    },
+    {
+      "name": "incomplete-pass-no-partial-write",
+      "passed": true
+    },
+    {
+      "name": "same-receipt-ref-cannot-change-verdict",
+      "passed": true
+    },
+    {
+      "name": "stale-verifier-no-partial-write",
+      "passed": true
+    },
+    {
+      "name": "concurrent-verifiers-retain-admitted-basis",
+      "passed": true
+    },
+    {
+      "name": "source-advance-retains-historical-return",
+      "passed": true
+    },
+    {
+      "name": "prior-pass-latest-unknown",
+      "passed": true
+    },
+    {
+      "name": "late-return-after-source-advance",
+      "passed": true
+    }
+  ],
+  "installed_baseline_result": "7/10; failed/unknown post-Return and stale-basis Return defects",
+  "candidate_result": "10/10; bounded native transitions only",
+  "installed_replay_standing": "Repair lane reports same controls passed on managed Mac and Omarchy; exact later install receipt is owned by that lane. No whole-Run acceptance inferred."
+}

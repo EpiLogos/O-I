@@ -51,7 +51,9 @@ These documents are **authored design and architecture commitments**, not
 implementation facts. Per the provenance discipline (`docs/positions/FOUNDING-POSITIONS.md`
 §5′): authored position → vision → design → architecture → implementation →
 encounter → return. Claims about what exists today are made only in
-02-ARCHITECTURE §11 (current build disposition).
+02-ARCHITECTURE §11 (historical build census, 4 September). Use the
+[current operation navigation](../architecture/README.md) for native source,
+lifecycle and verification at later cuts.
 
 Upstream sources this set derives from and must not contradict:
 
