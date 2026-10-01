@@ -48,6 +48,17 @@ pub struct ActStore {
 }
 
 impl ActStore {
+    pub(crate) fn encoded_record(act: &Act) -> Result<Vec<u8>, String> {
+        let bytes = serde_json::to_vec_pretty(&Record {
+            schema: SCHEMA.into(),
+            act: act.clone(),
+        })
+        .map_err(|e| e.to_string())?;
+        if bytes.len() as u64 > MAX_RECORD_BYTES {
+            return Err("Act record exceeds its 4 MiB bound; retain this Act and continue in a successor Act".into());
+        }
+        Ok(bytes)
+    }
     /// The store under an explicit O:I home (`<home>/desktop/expression-acts`).
     pub fn at_home(home: &Path) -> Self {
         Self {
@@ -251,14 +262,7 @@ impl ActStore {
                 "Act store holds {MAX_RECORDS} live acts; archive ended acts first"
             ));
         }
-        let bytes = serde_json::to_vec_pretty(&Record {
-            schema: SCHEMA.into(),
-            act: act.clone(),
-        })
-        .map_err(|e| e.to_string())?;
-        if bytes.len() as u64 > MAX_RECORD_BYTES {
-            return Err("Act record exceeds its 4 MiB bound".into());
-        }
+        let bytes = Self::encoded_record(act)?;
         let pending = path.with_extension("json.pending");
         {
             let mut file = fs::File::create(&pending).map_err(|e| e.to_string())?;

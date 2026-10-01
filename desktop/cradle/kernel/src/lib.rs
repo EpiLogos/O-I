@@ -298,6 +298,13 @@ pub enum KernelOp {
     BeingEncounter {
         request: being::Request,
     },
+    /// A hosted subject's explicitly qualified native owner route. The host
+    /// binds its own published World address; the renderer cannot select a
+    /// root, credential, executable or fallback owner.
+    HostedNative {
+        source_world_ref: String,
+        request: Box<KernelOp>,
+    },
     Expression {
         request: expression::Request,
     },
@@ -2451,6 +2458,17 @@ impl Kernel {
                 })
             }
             KernelOp::ExpressionRecovery { request } => expression_recovery::execute(request),
+            KernelOp::HostedNative { source_world_ref, request } => {
+                let local = std::env::var("OI_SHARED_FIELD_LOCAL_WORLD_REF")
+                    .map_err(|_| "No hosted World address is bound to this native owner".to_owned())?;
+                if source_world_ref.is_empty() || source_world_ref != local {
+                    return Err(format!("Native owner transport for {source_world_ref} is unavailable here; this host belongs to {local}"));
+                }
+                if !matches!(&*request, KernelOp::Receiving { .. } | KernelOp::Encounter { .. } | KernelOp::EncounterTaskRead { .. } | KernelOp::Expression { .. }) {
+                    return Err("This hosted route admits only native document, Expression and session operations".into());
+                }
+                return self.apply(*request);
+            }
             KernelOp::Expression { request } => {
                 let selection_only = matches!(&request, expression::Request::Edit { changes, .. }
                     if !changes.is_empty() && changes.iter().all(|change| matches!(change,

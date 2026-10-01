@@ -34,7 +34,13 @@ fn main() {
     let bound = listener
         .local_addr()
         .expect("read the bound bridge address");
-    let kernel = Arc::new(Mutex::new(Kernel::discover()));
+    let mut native_kernel = Kernel::discover();
+    // The walk must carry the installed host's durable Act owner. An in-memory
+    // walk cannot verify continuation or replay across a fresh body.
+    native_kernel
+        .attach_default_act_store()
+        .expect("attach the native Act store");
+    let kernel = Arc::new(Mutex::new(native_kernel));
     println!("oi-cradle walk bridge listening on http://{bound} (topic {KERNEL_EVENT_TOPIC})");
     for stream in listener.incoming() {
         let Ok(stream) = stream else { continue };

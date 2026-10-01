@@ -10,6 +10,90 @@ use serde_json::{json, Value};
 
 const RUN: &str = "expression:run";
 
+#[test]
+fn performed_editions_replay_after_restart_without_repeating_native_operations() {
+    let home = std::env::temp_dir().join(format!(
+        "oi-act-edition-{}-{}",
+        std::process::id(),
+        std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)
+            .unwrap()
+            .as_nanos()
+    ));
+    let mut first = kernel();
+    first.attach_act_store(&home).unwrap();
+    expression(&mut first, json!({"operation":"create","expression_ref":RUN,"title":"Two participants","actor":"human:ann"})).unwrap();
+    let scene_title = doc(&mut first, RUN)["scenes"][0]["title"]
+        .as_str()
+        .unwrap()
+        .to_owned();
+    let body = presentation(
+        &format!("{RUN}:scene:main"),
+        &scene_title,
+        json!([
+            {"id":format!("{RUN}:entity:ann"),"kind":"formation","name":"Ann","text":"A","shape":"text","position":{"x":-1,"y":0,"z":0}},
+            {"id":format!("{RUN}:entity:bea"),"kind":"formation","name":"Bea","text":"B","shape":"text","position":{"x":1,"y":0,"z":0}}
+        ]),
+        json!([]),
+    );
+    let performed = world(&mut first, json!({"operation":"act_perform","act_ref":"act:edition","expression_ref":RUN,"expected_revision":1,"actor":"human:ann","summary":"Both participants","activity_ref":"agent-session/direct:retained","changes":[
+        {"change":"entity_add","scene_ref":format!("{RUN}:scene:main"),"entity_ref":format!("{RUN}:entity:ann"),"title":"Ann"},
+        {"change":"entity_add","scene_ref":format!("{RUN}:scene:main"),"entity_ref":format!("{RUN}:entity:bea"),"title":"Bea"},
+        {"change":"scene_material_set","scene_ref":format!("{RUN}:scene:main"),"presentation":body}
+    ]})).unwrap();
+    assert_eq!(performed["act"]["sequence"][0]["kind"], "edition");
+    let present = doc(&mut first, RUN)["scenes"][0]["presentation"].clone();
+    world(&mut first, json!({"operation":"act_operate","act_ref":"act:edition","actor":"human:ann","operation_kind":"central.receiving.include","native_ref":"central:return:retained","summary":"Already included; observation only"})).unwrap();
+    world(
+        &mut first,
+        json!({"operation":"act_interrupt","act_ref":"act:edition","actor":"human:ann"}),
+    )
+    .unwrap();
+    let mut removed = present.clone();
+    removed["scene"]["entities"][1]["enabled"] = json!(false);
+    let revision = doc(&mut first, RUN)["revision"].clone();
+    world(&mut first, json!({"operation":"act_perform","act_ref":"act:edition","expression_ref":RUN,"expected_revision":revision,"actor":"human:ann","summary":"Remove required body","changes":[{"change":"scene_material_set","scene_ref":format!("{RUN}:scene:main"),"presentation":removed}]})).unwrap();
+    let retained = doc(&mut first, RUN);
+    drop(first);
+    let mut fresh = kernel();
+    fresh.attach_act_store(&home).unwrap();
+    expression(
+        &mut fresh,
+        json!({"operation":"open","document":retained,"actor":"human:ann"}),
+    )
+    .unwrap();
+    let before = doc(&mut fresh, RUN)["revision"].as_u64().unwrap();
+    let back = world(
+        &mut fresh,
+        json!({"operation":"act_seek","act_ref":"act:edition","actor":"human:ann","position":0}),
+    )
+    .unwrap();
+    assert_eq!(back["state"], "act_sought");
+    assert_eq!(doc(&mut fresh, RUN)["scenes"][0]["presentation"], present);
+    assert!(doc(&mut fresh, RUN)["revision"].as_u64().unwrap() > before);
+    let before_operation = doc(&mut fresh, RUN);
+    let operation = world(
+        &mut fresh,
+        json!({"operation":"act_seek","act_ref":"act:edition","actor":"human:ann","position":1}),
+    )
+    .unwrap();
+    assert_eq!(operation["performed"], false);
+    assert_eq!(
+        doc(&mut fresh, RUN),
+        before_operation,
+        "An operation receipt must not repeat a native effect"
+    );
+    let forward = world(
+        &mut fresh,
+        json!({"operation":"act_seek","act_ref":"act:edition","actor":"human:ann","position":2}),
+    )
+    .unwrap();
+    assert_eq!(forward["state"], "act_sought");
+    assert_eq!(doc(&mut fresh, RUN)["scenes"][0]["presentation"], removed);
+    assert_eq!(forward["act"]["sequence"].as_array().unwrap().len(), 3);
+    std::fs::remove_dir_all(home).unwrap();
+}
+
 fn kernel() -> Kernel {
     Kernel::new(oi_cradle_kernel::flow::CentralClient::with(
         "/nonexistent/oi".into(),
