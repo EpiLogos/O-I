@@ -25,7 +25,7 @@
     {
       "owner": "src/kernel/bridge.ts",
       "kind": "network",
-      "expression": "fetch(`${transport.url}/events?since=${sinceSeq}`)",
+      "expression": "fetch(`${transport.url}/events?since=${sinceSeq}`, { signal })",
       "rationale": "Declared development-only transport of the same typed KernelOp/event seam; not arbitrary owner HTTP.",
       "spec_ref": "docs/cradle/02-ARCHITECTURE.md \u00a75/\u00a712; canonical conformance plan Lane A \u00a72"
     },
