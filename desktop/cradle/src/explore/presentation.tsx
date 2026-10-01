@@ -77,7 +77,14 @@ export function PortableProse({html,title}:{html:string;title:string}) {
   const frame=useRef<HTMLIFrameElement>(null);
   const [height,setHeight]=useState(240);
   const observer=useRef<ResizeObserver>();
-  useEffect(()=>()=>observer.current?.disconnect(),[]);
+  useEffect(()=>{
+    const theme=new MutationObserver(()=>{
+      const element=frame.current,body=element?.contentDocument?.body;
+      if(element&&body)body.style.color=getComputedStyle(element).color;
+    });
+    theme.observe(document.body,{attributes:true,attributeFilter:['data-theme','data-oi-theme']});
+    return()=>{observer.current?.disconnect();theme.disconnect();};
+  },[]);
   const measure=()=>{
     observer.current?.disconnect();
     const body=frame.current?.contentDocument?.body;
