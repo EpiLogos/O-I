@@ -86,6 +86,9 @@ try{
  assert.equal(turn.selected_source_basis.source_revision,personal.selected_source_content.source_revision);
  assert.equal(turn.selected_source_basis.registry_revision,personal.selected_source_content.registry_revision);
  assert.equal(turn.selected_source_basis.identity.uuid,graph.nodes['M4.4.4.4'].properties.c_2_uuid);
+ for(const key of ['full_source_ref','full_properties_ref','properties_sha256']){
+  assert.equal(turn.selected_source_basis.identity[key],personal.selected_source_content.identity[key]);
+ }
  assert.equal(turn.selected_source_basis.relation_count,personal.selected_source_content.relations.length);
  if(Buffer.byteLength(JSON.stringify(personal.selected_source_content))<=64*1024){
   assert.equal(turn.selected_source_basis.content_in_turn,'complete');
@@ -152,8 +155,20 @@ try{
  for(const key of ['inventory','register_members','targets','identity','native_current','personal_current','clock_semantics'])assert.equal(rawBasis[key],undefined);
  assert.equal(rawBasis.current_readback.clock_semantics,undefined);assert.equal(rawBasis.current_form_process.source_rule,undefined);
  assert.equal(input.selected_source_basis.identity.uuid,context.selected_source_content.identity.uuid);
- assert.ok(input.selected_source_basis.identity.full_source_ref);
- assert.equal(input.selected_source_content?.source_revision??context.selected_source_content.source_revision,context.selected_source_content.source_revision);
+ assert.equal(input.selected_source_basis.source_revision,context.selected_source_content.source_revision);
+ assert.equal(input.selected_source_basis.registry_revision,context.selected_source_content.registry_revision);
+ for(const key of ['full_source_ref','full_properties_ref','properties_sha256']){
+  assert.equal(input.selected_source_basis.identity[key],context.selected_source_content.identity[key]);
+ }
+ assert.ok(context.selected_source_content.identity.full_source_ref,'The real canonical reading must disclose its full source entrance.');
+ assert.equal(input.selected_source_basis.relation_count,context.selected_source_content.relations.length);
+ if(Buffer.byteLength(JSON.stringify(context.selected_source_content))<=64*1024){
+  assert.equal(input.selected_source_basis.content_in_turn,'complete');
+  assert.deepEqual(input.selected_source_content,context.selected_source_content);
+ }else{
+  assert.equal(input.selected_source_basis.content_in_turn,'native-source-entrance');
+  assert.equal(input.selected_source_content,null);
+ }
  assert.deepEqual(doc.profiles,originalProfiles);
  checks.push('Production nativeTurnText carries actual selected/containing/source/scene basis under256KB without copying world inventory/assets or supplying an expected answer; no provider/fresh-body result claimed.');
 }catch(error){failure={name:error.name,message:error.message,stack:error.stack};throw error;}finally{
