@@ -20,7 +20,7 @@ import {harnessName} from "../../agent/chat/harness";
 import {modelDisplayName} from "../../agent/chat/modelPresentation";
 import {MODEL_DEFAULT_SETTING, modelDefaults} from "./harnessCapabilities";
 import {
-  expect, invalidateComposition, invalidateResolutions, loadResolutions, loadSuite, plain, plane, refreshResolution, resolutionKey, settingsSnapshot, stageDefaultConnection, watchPairsQuietly,
+  expect, invalidateComposition, invalidateResolutions, loadResolutions, loadSuite, plain, plane, resolutionKey, settingsSnapshot, stageDefaultConnection, watchPairsQuietly,
   type SettingsSnapshot,
 } from "./settingsData";
 import type {SettingsPlace} from "./settingsNav";
@@ -190,28 +190,33 @@ async function discard(setting_ref: string, scope: ScopeAddress): Promise<void> 
 /** Stage one skill on/off at a scope: the scope's held toggle map gains (or,
  * when it returns to what the owner already has, loses) this capability. */
 const skillWrites = new Map<string, Promise<void>>();
-export function stageSkill(scope: ScopeAddress, id: string, enabled: boolean): Promise<void> {
+export function stageSkill(scope: ScopeAddress, id: string, enabled: boolean, effectiveActive?: boolean): Promise<void> {
   const key = resolutionKey(CAPABILITIES_REF, scope);
   const previous = skillWrites.get(key) ?? Promise.resolve();
-  const next = previous.catch(() => {}).then(() => stageSkillOnce(scope, id, enabled));
+  const next = previous.catch(() => {}).then(() => stageSkillOnce(scope, id, enabled, effectiveActive));
   skillWrites.set(key, next);
   void next.finally(() => { if (skillWrites.get(key) === next) skillWrites.delete(key); }).catch(() => {});
   return next;
 }
 
-async function stageSkillOnce(scope: ScopeAddress, id: string, enabled: boolean): Promise<void> {
+async function stageSkillOnce(scope: ScopeAddress, id: string, enabled: boolean, effectiveActive?: boolean): Promise<void> {
   const data = settingsSnapshot();
   const resolution = data.resolutions[resolutionKey(CAPABILITIES_REF, scope)];
   const held = (resolution && isStaged(resolution) && resolution.desired?.value && typeof resolution.desired.value === "object" && !Array.isArray(resolution.desired.value))
     ? {...(resolution.desired.value as Record<string, boolean>)} : {};
-  if (activeIds(resolution).has(id) === enabled) delete held[id];
+  const baseline = effectiveActive ?? activeIds(resolution).has(id);
+  if (baseline === enabled) delete held[id];
   else held[id] = enabled;
   if (Object.keys(held).length === 0) {
     if (resolution?.desired) await discard(CAPABILITIES_REF, scope);
   } else {
     await hold({setting_ref: CAPABILITIES_REF, scope, value: held, secret_reference: null});
   }
-  await refreshResolution(CAPABILITIES_REF, scope);
+  // Re-read the desired store, not only this owner's native resolution. An
+  // external owner edit can overlap the page's background resolution round;
+  // the diff is the authoritative staged set and prevents that older round
+  // from painting the switch back to its pre-click state.
+  await loadResolutions();
 }
 
 /** Stage any ordinary owner setting (product pages). */

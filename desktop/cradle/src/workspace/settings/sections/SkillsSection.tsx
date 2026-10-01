@@ -103,7 +103,11 @@ export function SkillsSection({data}: {data: SettingsSnapshot}) {
     pendingVersions.current[key] = version;
     setError(null);
     setPending((held) => ({...held, [key]: next}));
-    void stageSkill(address, item.id, next)
+    // The switch presents the capability's effective state across scopes.
+    // Stage against that same state: a machine-local resolution may omit a
+    // capability inherited from global/project even though the person is
+    // visibly turning that effective capability off here.
+    void stageSkill(address, item.id, next, item.active)
       .catch((cause) => { if (pendingVersions.current[key] === version) setError(String(cause instanceof Error ? cause.message : cause)); })
       .finally(() => {
         if (pendingVersions.current[key] !== version) return;
