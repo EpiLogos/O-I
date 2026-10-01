@@ -31,18 +31,18 @@ jobs:
         with:
           ref: ${{ github.event.pull_request.head.sha || github.sha }}
           persist-credentials: false
-      # Same exact native owner basis as wiki-constellation.yml. The shared
-      # build helper below resolves Cargo artifacts rather than guessed targets.
+      # Published owner cut verified through GitHub's exact commit API. The
+      # shared build helper resolves Cargo artifacts rather than guessed targets.
       - uses: actions/checkout@v4
         with:
           repository: EpiLogos/ai-kit
-          ref: c4b185deb723e8eaef7d910567675bf73441a694
+          ref: 64d4e1d12fd95a331db75e1f1df21f332aebab6f
           path: .wiki-native-owner
           persist-credentials: false
       - uses: actions/checkout@v4
         with:
           repository: EpiLogos/Central
-          ref: a35f6a9455108691cd32dd6d906a608dd07a62a2
+          ref: 2a604574774c41921003ed99a2eed73b4c9f4266
           path: .wiki-central-owner
           persist-credentials: false
       - name: Retain exact source and owner revisions
@@ -53,8 +53,8 @@ jobs:
           git rev-parse HEAD > "$RUNNER_TEMP/readable-native-evidence/O-I.revision"
           git -C .wiki-native-owner rev-parse HEAD > "$RUNNER_TEMP/readable-native-evidence/ai-kit.revision"
           git -C .wiki-central-owner rev-parse HEAD > "$RUNNER_TEMP/readable-native-evidence/Central.revision"
-          test "$(cat "$RUNNER_TEMP/readable-native-evidence/ai-kit.revision")" = c4b185deb723e8eaef7d910567675bf73441a694
-          test "$(cat "$RUNNER_TEMP/readable-native-evidence/Central.revision")" = a35f6a9455108691cd32dd6d906a608dd07a62a2
+          test "$(cat "$RUNNER_TEMP/readable-native-evidence/ai-kit.revision")" = 64d4e1d12fd95a331db75e1f1df21f332aebab6f
+          test "$(cat "$RUNNER_TEMP/readable-native-evidence/Central.revision")" = 2a604574774c41921003ed99a2eed73b4c9f4266
       - uses: dtolnay/rust-toolchain@stable
       - uses: Swatinem/rust-cache@v2.9.2
         with:
@@ -95,6 +95,12 @@ jobs:
           set -euo pipefail
           npm ci --prefix desktop/cradle --no-audit --no-fund \
             2>&1 | tee "$RUNNER_TEMP/readable-native-evidence/frontend-dependencies.log"
+          # The design-system declares Three as a peer and has no separate lock.
+          # Supply that peer at its source resolution path from the cradle lock.
+          native_three_version=$(node -p "require('./desktop/cradle/package-lock.json').packages['node_modules/three'].version")
+          test "$native_three_version" = "$(node -p "require('./desktop/cradle/package.json').dependencies.three")"
+          npm install --prefix packages/oi-design-system --no-save --package-lock=false --no-audit --no-fund "three@$native_three_version" \
+            2>&1 | tee "$RUNNER_TEMP/readable-native-evidence/design-system-dependencies.log"
           npm --prefix desktop/cradle run build \
             2>&1 | tee "$RUNNER_TEMP/readable-native-evidence/frontend-build.log"
       - name: Prove native source, library, context and account readability

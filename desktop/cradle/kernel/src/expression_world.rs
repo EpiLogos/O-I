@@ -3778,6 +3778,7 @@ impl Kernel {
                     p.kind == PassageKind::Text
                         && p.role.as_deref() == Some(role.as_str())
                         && p.field.as_deref() == Some(field.as_str())
+                        && p.event_basis == event_basis
                         && act.position == Some(p.index)
                 });
                 precheck!(act, usize::from(!coalesce), false);

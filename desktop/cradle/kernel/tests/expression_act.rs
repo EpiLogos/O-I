@@ -1006,7 +1006,7 @@ fn progress_text_coalesces_and_the_passage_limit_is_a_structured_refusal() {
     select_handoff(&mut k, "act:long", "main");
     for (i, text) in ["10%", "40%", "90%"].iter().enumerate() {
         let data = world(&mut k, json!({"operation":"act_text","act_ref":"act:long","actor":"a","role":"caption","text":text,
-            "event_basis":{"family":"progress","source":"factory-attempt","event_ref":"e","occurrence":i}})).unwrap();
+            "event_basis":{"family":"progress","source":"factory-attempt","event_ref":"e","occurrence":"one-progress-reading"}})).unwrap();
         assert_eq!(data["coalesced"], i > 0);
     }
     let act = world(
@@ -1069,4 +1069,22 @@ fn removing_a_scene_prunes_the_reuse_index() {
         reuse.get("preview_state").is_none(),
         "a preview of a removed state is dropped"
     );
+}
+
+#[test]
+fn distinct_native_text_events_keep_each_acceptance() {
+    let mut k = setup();
+    open_act(&mut k, "act:text-events");
+    select_handoff(&mut k, "act:text-events", "main");
+    for (world_ref, cursor) in [("world:ann", 7), ("world:bea", 7), ("world:bea", 8)] {
+        let result = world(&mut k, json!({"operation":"act_text","act_ref":"act:text-events","actor":"a","role":"caption","text":format!("{world_ref} contribution {cursor}"),
+            "event_basis":{"family":"message","source":"aikit-encounter","event_ref":format!("{world_ref}/agent-session/same-local-name"),"occurrence":format!("cursor:{cursor}")}})).unwrap();
+        assert_eq!(result["coalesced"], false);
+    }
+    let act = world(&mut k, json!({"operation":"act_inspect","act_ref":"act:text-events"})).unwrap()["act"].clone();
+    let sequence = act["sequence"].as_array().unwrap();
+    assert_eq!(sequence.len(), 4);
+    assert_eq!(sequence[1]["event_basis"]["event_ref"], "world:ann/agent-session/same-local-name");
+    assert_eq!(sequence[2]["event_basis"]["event_ref"], "world:bea/agent-session/same-local-name");
+    assert_eq!(sequence[3]["event_basis"]["occurrence"], "cursor:8");
 }

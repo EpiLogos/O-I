@@ -2479,7 +2479,7 @@ impl Kernel {
                 if source_world_ref != local {
                     return native_owner_transport::remote(&source_world_ref, &request);
                 }
-                return self.apply(*request);
+                self.apply(*request)
             }
             KernelOp::Expression { request } => {
                 let selection_only = matches!(&request, expression::Request::Edit { changes, .. }

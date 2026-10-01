@@ -152,11 +152,12 @@ function loadEsbuild() {
 /* ------------------------------- vendoring -------------------------------- */
 
 function parseArgs(argv) {
-  const args = {verify: false, source: DEFAULT_SOURCE, modules: []};
+  const args = {verify: false, source: DEFAULT_SOURCE, modules: [], retainDependencies: false};
   for (let i = 0; i < argv.length; i++) {
     if (argv[i] === '--verify') args.verify = true;
     else if (argv[i] === '--source') args.source = path.resolve(argv[++i]);
     else if (argv[i] === '--refresh-module') args.modules.push(argv[++i]);
+    else if (argv[i] === '--retain-dependencies') args.retainDependencies = true;
     else throw new Error(`unknown argument: ${argv[i]}`);
   }
   return args;
@@ -165,10 +166,24 @@ function parseArgs(argv) {
 /** Refresh an explicitly selected native module and its emitted local imports.
  * The existing engine carries O:I overlays; a bounded repair cannot overwrite
  * those or describe the whole retained engine as a newly compiled source cut. */
+function resolveRefreshSpecifier(from, spec, sourceDir) {
+  const resolved = resolveSpecifier(from, spec);
+  if (resolved.kind !== 'unresolved' || !spec.endsWith('.mjs')) return resolved;
+  const absolute = path.resolve(sourceDir, path.dirname(from), spec);
+  const relative = path.relative(OUT_ROOT, absolute).split(path.sep).join('/');
+  // O:I overlays keep their own source and provenance; never compile or copy
+  // them as if they belonged to the native engine.
+  if (relative.startsWith('oi/') && !relative.split('/').includes('..') && fs.statSync(absolute, {throwIfNoEntry: false})?.isFile()) {
+    return {kind: 'overlay', spec, target: resolved.target, output: relative};
+  }
+  return resolved;
+}
+
 async function refreshModules(args) {
   const {esbuild}=loadEsbuild(),provenancePath=path.join(OUT_ROOT,'PROVENANCE.json');
   const provenance=JSON.parse(fs.readFileSync(provenancePath,'utf8'));
-  const outputs=new Map(),pending=[...args.modules],sha256=bytes=>createHash('sha256').update(bytes).digest('hex');
+  const outputs=new Map(),pending=[...args.modules],overlays=new Map(),sha256=bytes=>createHash('sha256').update(bytes).digest('hex');
+  const retained=new Map(Object.entries(provenance.files).map(([output,source])=>[source,output]));
   while(pending.length){
     const source=pending.pop();
     if(outputs.has(source))continue;
@@ -176,24 +191,27 @@ async function refreshModules(args) {
     const raw=readSourceFile(args.source,source),transformed=await esbuild.transform(raw,{loader:'ts',format:'esm',target:'esnext'});
     const local=[];
     for(const spec of extractSpecifiers(transformed.code)){
-      const r=resolveSpecifier(source,spec);
+      const r=resolveRefreshSpecifier(source,spec,args.source);
+      if(r.kind==='overlay'){overlays.set(r.target,r.output);continue;}
       if(r.kind==='unresolved')throw Error('Unresolved native module import: '+spec);
-      if(r.kind==='local'){outputFor(r.target);pending.push(r.target);local.push(r.target);}
+      if(r.kind==='local'){const output=outputFor(r.target);
+        if(!args.retainDependencies||!retained.has(r.target)||!fs.existsSync(path.join(OUT_ROOT,output)))pending.push(r.target);
+        local.push(r.target);}
     }
     outputs.set(source,{raw,code:transformed.code,local});
   }
-  const mappings=new Map([...outputs.keys()].map(source=>[source,outputFor(source)]));
+  const mappings=new Map([...retained,...overlays,...[...outputs.keys()].map(source=>[source,outputFor(source)])]);
   provenance.module_refreshes??={};
   for(const [source,{raw,code}] of outputs){
     const output=outputFor(source),unresolved=[];
-    const generated=rewriteRelativeSpecifiers(code,output,mappings,unresolved,source);
+    const generated=rewriteRelativeSpecifiers(code,output,mappings,unresolved,source,(from,spec)=>resolveRefreshSpecifier(from,spec,args.source));
     if(unresolved.length)throw Error('Unresolved compiled native module: '+source);
     const target=path.join(OUT_ROOT,output);fs.mkdirSync(path.dirname(target),{recursive:true});fs.writeFileSync(target,generated);
     provenance.files[output]=source;
     provenance.module_refreshes[output]={source:path.relative(worktreeRoot,path.join(args.source,source)).split(path.sep).join('/'),source_sha256:sha256(raw),output_sha256:sha256(generated),compiler:'esbuild@'+esbuild.version,standing:'Bounded compiler output from the native source; other retained modules keep their existing provenance'};
   }
   fs.writeFileSync(provenancePath,JSON.stringify(provenance,null,2)+'\n');
-  console.log(JSON.stringify({refreshed:[...mappings.values()],source:args.source}));
+  console.log(JSON.stringify({refreshed:[...outputs.keys()].map(outputFor),retained_dependencies:args.retainDependencies,source:args.source}));
 }
 
 function gitHead(sourceDir) {
@@ -242,13 +260,13 @@ function engineSuperset(sourceDir, reachable) {
   return all.filter((f) => !reachable.has(f)).sort();
 }
 
-function rewriteRelativeSpecifiers(code, fromOutRel, sourceToOutput, unresolved, fromSrcRel) {
+function rewriteRelativeSpecifiers(code, fromOutRel, sourceToOutput, unresolved, fromSrcRel, resolver = resolveSpecifier) {
   return code.replace(SPEC_RE, (m, q1, s1, q2, s2) => {
     const q = q1 ?? q2;
     const spec = s1 ?? s2;
     if (typeof spec !== 'string' || !spec.startsWith('.')) return m;
-    const r = resolveSpecifier(fromSrcRel, spec);
-    if (r.kind !== 'local' || !sourceToOutput.has(r.target)) {
+    const r = resolver(fromSrcRel, spec);
+    if (!['local', 'overlay'].includes(r.kind) || !sourceToOutput.has(r.target)) {
       unresolved.push({from: fromSrcRel, spec, target: r.target ?? r.spec});
       return m;
     }
