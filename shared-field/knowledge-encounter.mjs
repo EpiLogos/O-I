@@ -63,7 +63,7 @@ export function createKnowledgeEncounter(opened) {
     for (const endpoint of [edge.from, edge.to]) {
       if (refs.has(endpoint)) continue;
       refs.add(endpoint);
-      nodes.push({ref:endpoint,kind:'unavailable',world_ref:resource.world_ref,label:endpoint,availability:'unavailable',aliases:[],locators:[],provenance:clone(edge.provenance)});
+      nodes.push({ref:endpoint,kind:'unavailable',world_ref:resource.world_ref,label:`Unavailable related subject ${nodes.filter(node=>node.availability==='unavailable').length+1}`,availability:'unavailable',aliases:[],locators:[],provenance:clone(edge.provenance)});
     }
     return [clone(edge)];
   });

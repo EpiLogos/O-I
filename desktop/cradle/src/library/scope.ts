@@ -34,6 +34,8 @@ export interface LibraryItem {
    * fabricated author. A provider that reads no per-item owner names the
    * instance or field the read is scoped to. */
   owner: string;
+  /** Canonical owner identity when the native reading also supplies its name. */
+  ownerRef?: string;
   /** Item-level, not provider-level: a "shared" provider still tags its OWN
    * instance's entries "local" when the read discloses that — this is what
    * makes the subset relation legible in LibraryResults. */
@@ -44,7 +46,7 @@ export interface LibraryItem {
   sourceLocation?: CentralLocation;
   /** Occurrences reference this subject. They never replace its native ref. */
   collectionMemberships?: CollectionMembership[];
-  /** Native Expression index labels; not source-manifest identity. */
+  /** Exact native Expression collection identities; the index supplies no separate names. */
   nativeCollections?: string[];
   /** The owner read's own knowledge address for this item, when it carried
    * one (the wiki provider's hits) — so the verso reads the same resource

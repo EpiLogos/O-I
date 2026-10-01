@@ -14,6 +14,8 @@ import {PreparedContextView} from "../context/PreparedContextView";
 import type {SurfaceBinding} from "../surface/types";
 // @ts-ignore -- language-neutral reading over the hosted contracts.
 import {constituentReading} from "./constituent.mjs";
+// @ts-ignore -- the same admitted native subjects supply display names.
+import {subjectLabel,subjectKind} from "../../../../shared-field/presentation-text.mjs";
 
 interface Reading {role:"being"|"thing";kind:string;ref:string;title:string;standing:string;world_ref:string;facts:{label:string;value:string}[];groups:{title:string;items:{ref:string;label:string;kind:string;note?:string}[]}[];session?:{ref:string;project:string;sourceWorldRef:string}}
 
@@ -42,20 +44,23 @@ export function ConstituentEncounter({reading,worldLabel,onOpenRef}:{reading:Rea
     }catch(cause){if(started===epoch.current)setError(String(cause instanceof Error?cause.message:cause));}
     finally{if(started===epoch.current)setOpening(false);}
   };
+  const sourceLabels=new Set(["Identity","Definition","Definition revision","Native session","Agent","Source revision","Role","Workcell","Practice","Native owner","Run","Custody","Disclosure","Repertoire","Offer details"]);
+  const facts=reading.facts.filter(row=>!sourceLabels.has(row.label));
   return <article className="world-presentation world-constituent" data-liveness={(reading as {liveness?:string}).liveness} data-constituent-role={reading.role} data-constituent-kind={reading.kind} data-subject-ref={reading.ref}>
     <header className="world-presentation__masthead"><div>
-      <div className="world-component__eyebrow">{reading.standing}</div>
-      <h1>{reading.title}</h1>
-      <button type="button" className="world-constituent__world" onClick={()=>onOpenRef(reading.world_ref)}>in {worldLabel??reading.world_ref}</button>
+      <div className="world-component__eyebrow">{subjectKind(reading.kind)}</div>
+      <h1>{subjectLabel(reading,"Unnamed subject")}</h1>
+      <button type="button" className="world-constituent__world" onClick={()=>onOpenRef(reading.world_ref)}>in {subjectLabel(worldLabel,"its shared world")}</button>
     </div></header>
     <section className="world-region"><div className="world-region__components">
       <article className="world-component world-component--text">
-        <dl className="world-component__meta">{reading.facts.map(row=><div key={row.label}><dt>{row.label}</dt><dd>{row.value}</dd></div>)}</dl>
+        <dl className="world-component__meta">{facts.map(row=><div key={row.label}><dt>{row.label}</dt><dd>{row.value}</dd></div>)}</dl>
       </article>
       {reading.groups.map(group=><section key={group.title} className="world-component world-component--collection" data-relation-group={group.title}>
         <h3>{group.title}</h3>
-        <div className="world-component__collection">{group.items.map(item=><button type="button" key={item.ref} data-ref={item.ref} data-kind={item.kind} onClick={()=>onOpenRef(item.ref)}><strong>{item.label}</strong>{item.note&&<span>{item.note}</span>}</button>)}</div>
+        <div className="world-component__collection">{group.items.map(item=><button type="button" key={item.ref} data-ref={item.ref} data-kind={item.kind} onClick={()=>onOpenRef(item.ref)}><strong>{subjectLabel(item)}</strong>{item.note&&<span>{item.note}</span>}</button>)}</div>
       </section>)}
+      <details><summary>Source details</summary><dl className="world-component__meta">{reading.facts.map(row=><div key={row.label}><dt>{row.label}</dt><dd>{row.value}</dd></div>)}</dl><pre>{JSON.stringify(reading,null,2)}</pre></details>
       {reading.session&&<section className="world-component world-component--text">
         <button type="button" disabled={opening} onClick={()=>void openSession()}>{opening?"Opening…":"Open native session"}</button>
         {error&&<p role="alert">{error}</p>}

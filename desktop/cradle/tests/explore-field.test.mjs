@@ -115,7 +115,7 @@ test('travel: fresh, push, amend, back/forward, bounded, and a corrupt payload d
 test('field reading groups entries by world and presents participants as Beings; an unavailable snapshot is honest', () => {
   const reading = fieldReading(snapshot());
   assert.equal(reading.state, 'available');
-  assert.deepEqual(reading.worlds.map((world) => [world.world_ref, world.label, world.entries.length]), [['world:central:project:O-I', 'O-I — a ProjectCentral world', 1], ['world:desktop:expression-e', 'A field of glyphs', 1]]);
+  assert.deepEqual(reading.worlds.map((world) => [world.world_ref, world.label, world.entries.length]), [['world:central:project:O-I', 'O-I — a ProjectCentral world', 1], ['world:desktop:expression-e', 'Unnamed world 2', 1]]);
   assert.deepEqual(reading.beings.map((being) => being.label), ['Owner']);
   assert.deepEqual(reading.counts, { entries: 3, worlds: 2, beings: 1 });
   const gone = fieldReading({ state: 'unavailable', detail: 'no target' });

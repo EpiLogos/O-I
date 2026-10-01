@@ -36,11 +36,12 @@ import type {LibraryCoverage, LibraryItem, LibraryScopeId} from "./scope";
 import {requestWikiSelection, ensureWikiProjection, setWikiProjectionRegisters, useWikiProjectionState, type RegisterStanding} from "../techne/wikiProjectionStore";
 import {wikiRegistersFrom, type WikiRegister} from "../techne/wikiExpression";
 import {LibraryCoverageLines} from "./LibraryResults";
+import {LibraryItemDisclosure,libraryItemTitle,libraryItemOwner} from "./presentation";
+import {subjectLabel} from "../../../../shared-field/presentation-text.mjs";
 
 const KIND_GLYPH: Record<LibraryItem["kind"], GlyphName> = {
   composition: "field", world: "graph", "projected-object": "material", place: "wiki", page: "file",
 };
-const shortRevision = (revision: string | undefined) => revision && revision.length > 12 ? `${revision.slice(0, 10)}…` : revision;
 
 interface SceneChip {sceneRef: string; title: string}
 
@@ -123,12 +124,12 @@ export function LibraryBrowse({items, coverage, selectedRef, onSelect, onOpen, s
           },
           ...Object.entries(items.reduce<Record<string, LibraryItem[]>>((acc, item) => {
             if (item.scope !== "shared") return acc;
-            const world = item.owner || "the shared field";
+            const world = item.ownerRef || item.owner || "the shared field";
             (acc[world] ??= []).push(item);
             return acc;
           }, {})).map(([world, rows]) => ({
             key: `shared:${world}`,
-            label: `${world} — remote Project Web`,
+            label: `${libraryItemOwner(rows[0])} — shared material`,
             kind: "shared" as const,
             items: rows,
             readonly: true,
@@ -159,14 +160,14 @@ export function LibraryBrowse({items, coverage, selectedRef, onSelect, onOpen, s
   }, [groups, openGroups, registerByKey, kernel.transport, scope]);
 
   const zoomSelection = store.selection;
-  const admittedWorlds = scope === "shared" ? new Set(items.map(item => item.owner)).size : 0;
+  const admittedWorlds = scope === "shared" ? new Set(items.map(item => item.ownerRef??item.owner)).size : 0;
 
   return <div className="lib-browse" data-browse-view="columnar" data-scope={scope} data-last-entered-scene={lastEnteredScene}>
     {coverage.length > 0 && <div className="lib-coverage"><LibraryCoverageLines coverage={coverage}/></div>}
     <nav className="lib-zoom" aria-label="Zoom — where reading stands" data-zoom-scope={scope}>
       <span className="oi-eyebrow lib-zoom-label">Zoom</span>
       <span className="lib-zoom-position" data-zoom-node={zoomSelection.subjectRef ?? undefined}
-        title={zoomSelection.subjectRef ? `The selection stands at ${zoomSelection.subjectRef}` : "No constellation/node stands selected"}>
+        title={zoomSelection.subjectRef ? "Selected constellation or node" : "No constellation or node selected"}>
         {zoomSelection.subjectRef ? "constellation/node" : "—"}
       </span>
       <Glyph name="arrow" size={11}/>
@@ -231,8 +232,8 @@ function BrowseGroupSection({group, open, register, selectedRef, focused, onTogg
         onEnterScene={sceneRef => onEnterWikiScene(register.key, sceneRef, undefined, onEnterScene)}/>}
       {group.kind !== "shared" && register && standing?.phase === "reading" && <p className="oi-note lib-col-note" role="status">Reading the register's wiki…</p>}
       {group.kind !== "shared" && register && standing?.phase === "absent" && <p className="oi-note lib-col-note">This register discloses no wiki yet — no Web row stands here, and none is invented.</p>}
-      {group.kind !== "shared" && register && standing?.phase === "unavailable" && <p className="oi-refusal lib-col-note" role="status">Wiki reading unavailable: {standing.reason}</p>}
-      {group.items.map(item => <ItemRow key={`${item.provider}:${item.ref}`} item={item} selected={item.ref === selectedRef}
+      {group.kind !== "shared" && register && standing?.phase === "unavailable" && <div className="lib-col-note"><p className="oi-refusal" role="status">This knowledge web is unavailable.</p><details className="lib-source-detail"><summary>Reading details</summary><p>{standing.reason}</p></details></div>}
+      {group.items.map((item,index) => <ItemRow key={`${item.provider}:${item.ref}`} item={item} index={index} selected={item.ref === selectedRef}
         onSelect={onSelect} onOpen={onOpen}/>)}
     </>}
   </section>;
@@ -270,22 +271,23 @@ function WebRow({register, standing, onEnterScene}: {
     return null;
   }
   const basis = projection.document.provenance[0];
-  const scenes: SceneChip[] = document.scenes.map(scene => ({sceneRef: scene.scene_ref, title: scene.title}));
+  const registerTitle=subjectLabel(register.title,"Knowledge web");
+  const scenes: SceneChip[] = document.scenes.map((scene,index) => ({sceneRef: scene.scene_ref, title: subjectLabel(scene,`Unnamed scene ${index+1}`)}));
   return <div className="lib-col-row lib-col-web" data-row-kind="web" data-web-register={register.key}
     data-expression-ref={document.expression_ref} data-scene-count={scenes.length}>
-    <span className="lib-col-name" title={document.title}>
+    <span className="lib-col-name" title={subjectLabel(document,registerTitle)}>
       <Glyph name="wiki" size={13}/>
-      <strong>WEB</strong> · {register.title}
+      <strong>WEB</strong> · {registerTitle}
     </span>
-    <span className="lib-col-identity" title={basis ? `${basis.ref} @ ${basis.revision}` : undefined}>
-      wiki local whole{basis ? <> · <span className="oi-ref">{basis.ref.replace(/^wiki:/, "")}</span> @ {shortRevision(basis.revision)}</> : null}
-      {projection.boundRelationCount > 0 ? ` · ${projection.boundRelationCount} typed relations` : ""}
-    </span>
+    <div className="lib-col-identity">
+      Knowledge web{standing.phase==="drift"?" · source changed":""}
+      {basis&&<details className="lib-source-detail"><summary>Source and identity</summary><dl className="oi-kv"><dt>Source</dt><dd>{basis.ref}</dd><dt>Revision</dt><dd>{basis.revision}</dd><dt>Expression</dt><dd>{document.expression_ref}</dd><dt>Relations</dt><dd>{projection.boundRelationCount}</dd></dl></details>}
+    </div>
     <span className="lib-col-chipcell">
-      <SceneChipStrip scenes={scenes} ariaLabel={`${register.title} web scenes`}
+      <SceneChipStrip scenes={scenes} ariaLabel={`${registerTitle} web scenes`}
         onEnterScene={sceneRef => { onEnterScene(sceneRef); setReveal(false); }}
         reveal={reveal} onToggleReveal={() => setReveal(current => !current)}/>
-      {reveal && <span className="lib-scene-reveal-pop" ref={revealRef} role="group" aria-label={`${register.title} web scenes`}>
+      {reveal && <span className="lib-scene-reveal-pop" ref={revealRef} role="group" aria-label={`${registerTitle} web scenes`}>
         {scenes.map(scene =>
           <button key={`r:${scene.sceneRef}`} type="button" className="lib-scene-chip" data-scene-ref={scene.sceneRef}
             onClick={() => { onEnterScene(scene.sceneRef); setReveal(false); }}>
@@ -299,22 +301,21 @@ function WebRow({register, standing, onEnterScene}: {
 /** A provider item row. Scene chips render only what the owner read
  * disclosed — LibraryItem carries none today, so a page or shared entry
  * renders its honest dash, never invented scenes. */
-function ItemRow({item, selected, onSelect, onOpen}: {
+export function ItemRow({item, index, selected, onSelect, onOpen}: {
   item: LibraryItem;
+  index?:number;
   selected: boolean;
   onSelect: (item: LibraryItem) => void;
   onOpen: (item: LibraryItem, how: "page" | "expression" | "instrument" | "source") => void;
 }) {
   const openHow: "page" | "expression" = item.kind === "composition" ? "expression" : "page";
-  const identity = item.sourceLocation
-    ? <span className="oi-ref">{item.sourceLocation.path ?? item.sourceLocation.ref}</span>
-    : item.project ? <>project {item.project}</> : item.owner;
+  const title=libraryItemTitle(item,index);
   return <div className={`lib-col-row${selected ? " lib-col-row-selected" : ""}`} data-row-kind={item.kind} data-item-ref={item.ref}>
-    <button type="button" className="lib-col-name" onClick={() => onSelect(item)} title={item.title}>
+    <button type="button" className="lib-col-name" onClick={() => onSelect(item)} title={title}>
       <Glyph name={KIND_GLYPH[item.kind]} size={13}/>
-      <strong>{item.kind === "composition" ? "EXPRESSION" : item.kind === "projected-object" ? "PROJECTED" : item.kind === "page" ? "PAGE" : item.kind === "world" ? "WORLD" : "EXPRESSION"}</strong> · <span className="lib-col-title">{item.title}</span>
+      <strong>{item.kind === "composition" ? "EXPRESSION" : item.kind === "projected-object" ? "SUBJECT" : item.kind === "page" ? "PAGE" : item.kind === "world" ? "WORLD" : "PLACE"}</strong> · <span className="lib-col-title">{title}</span>
     </button>
-    <span className="lib-col-identity">{identity}{item.revision ? <> · rev {shortRevision(item.revision)}</> : null}{item.fixture ? " · fixture" : null}</span>
+    <div className="lib-col-identity">{libraryItemOwner(item)}{item.fixture ? " · fixture" : null}<LibraryItemDisclosure item={item}/></div>
     <span className="lib-col-open">
       <button type="button" className="oi-action" onClick={() => onOpen(item, openHow)}>Open</button>
       {(item.address||item.sourceLocation)&&!item.fixture&&<button type="button" className="oi-action" onClick={()=>onOpen(item,"instrument")}>Insert into current Scene</button>}

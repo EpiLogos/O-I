@@ -12,6 +12,7 @@
 import type {GlyphName} from "../workspace/Glyph";
 import {Glyph} from "../workspace/Glyph";
 import type {LibraryCoverage, LibraryItem, LibraryKind} from "./scope";
+import {LibraryItemDisclosure,libraryItemTitle,libraryItemOwner,libraryProviderName} from "./presentation";
 
 const KIND_ORDER: LibraryKind[] = ["composition", "world", "projected-object", "place", "page"];
 const KIND_LABEL: Record<LibraryKind, string> = {
@@ -34,10 +35,10 @@ export function LibraryCoverageLines({coverage}: {coverage: LibraryCoverage[]}) 
   const truncated = coverage.filter(entry => entry.state === "partial" && /truncat/i.test(entry.reason ?? ""));
   const partial = coverage.filter(entry => entry.state === "partial" && !truncated.includes(entry));
   return <>
-    {unavailable.map(entry => <p key={entry.provider} className="oi-refusal lib-coverage-line" data-coverage="unavailable">Unavailable — {entry.provider}: {entry.reason ?? "no reading available"}</p>)}
-    {stale.map(entry => <p key={entry.provider} className="oi-note lib-coverage-line" data-coverage="stale">Stale — {entry.provider}{entry.reason ? `: ${entry.reason}` : ""}</p>)}
-    {truncated.map(entry => <p key={entry.provider} className="oi-note lib-coverage-line" data-coverage="truncated">Truncated — {entry.provider}: {entry.reason}</p>)}
-    {partial.map(entry => <p key={entry.provider} className="oi-note lib-coverage-line" data-coverage="partial">Partial coverage — {entry.provider}{entry.reason ? `: ${entry.reason}` : ""}</p>)}
+    {[...unavailable,...stale,...truncated,...partial].map(entry => <div key={entry.provider} data-coverage={truncated.includes(entry)?"truncated":entry.state}>
+      <p className={`${entry.state==="unavailable"?"oi-refusal":"oi-note"} lib-coverage-line`}>{libraryProviderName(entry.provider,coverage.indexOf(entry))} — {entry.state==="unavailable"?"unavailable":entry.state==="stale"?"this reading may be out of date":truncated.includes(entry)?"more results are available":"some sources could not be read"}.</p>
+      <details><summary>Provider details</summary><p>{entry.provider}</p><p>{entry.reason??"No further reason was supplied."}</p></details>
+    </div>)}
   </>;
 }
 
@@ -56,13 +57,14 @@ export function LibraryResults({items, coverage, selectedRef, onSelect, onOpen}:
 
   const renderRow = (item: LibraryItem) => {
     const selected = item.ref === selectedRef;
+    const title=libraryItemTitle(item,items.indexOf(item));
     return <div key={`${item.provider}:${item.ref}`} className="lib-row-wrap">
       <button type="button" role="option" aria-selected={selected} className="oi-row lib-row" onClick={() => onSelect(item)}>
         <Glyph name={KIND_GLYPH[item.kind]} size={14}/>
-        <span className="oi-row-title">{item.title}{item.fixture && <span className="oi-state lib-fixture-mark">Fixture — not native data</span>}</span>
-        <span className="oi-row-meta">{item.owner} · {mixed && item.scope === "local" ? "this instance" : item.scope}{item.revision ? <span className="oi-ref"> · {item.revision}</span> : null}</span>
+        <span className="oi-row-title">{title}{item.fixture && <span className="oi-state lib-fixture-mark">Fixture — not native data</span>}</span>
+        <span className="oi-row-meta">{libraryItemOwner(item)} · {item.scope === "local" ? "your material" : "shared"}</span>
       </button>
-      {selected && <div className="lib-detail oi-kv" role="group" aria-label={`${item.title} actions`}>
+      {selected && <div className="lib-detail oi-kv" role="group" aria-label={`${title} actions`}>
         {item.summary && <p className="oi-note lib-summary">{item.summary}</p>}
         <div className="oi-action-group">
           <button type="button" className="oi-action" onClick={() => onOpen(item, "page")}>Open page</button>
@@ -70,6 +72,7 @@ export function LibraryResults({items, coverage, selectedRef, onSelect, onOpen}:
           {(item.address || item.sourceLocation) && !item.fixture && <button type="button" className="oi-action" onClick={() => onOpen(item, "instrument")}>Insert into current Scene</button>}
           {item.sourceLocation && <button type="button" className="oi-action" onClick={() => onOpen(item, "source")}>Open exact source</button>}
         </div>
+        <LibraryItemDisclosure item={item}/>
       </div>}
     </div>;
   };

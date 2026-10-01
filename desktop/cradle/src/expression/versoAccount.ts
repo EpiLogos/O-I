@@ -25,7 +25,7 @@
  */
 import {useEffect, useRef, useState} from "react";
 import {kernelOp} from "../kernel/bridge";
-import type {CentralLocation, KernelTransportStatus} from "../kernel/types";
+import type {CentralLocation, KernelTransportStatus, KnowledgeReading, NativeFileReading} from "../kernel/types";
 import {readFile} from "../files/client";
 import {knowledge} from "../knowledge/client";
 import type {ExpressionDocument, ExpressionResult} from "./types";
@@ -74,8 +74,8 @@ export interface VersoWebPosition {
 
 export interface VersoSourceRef {ref: string; revision?: string; availability?: string}
 export interface VersoAction {actionRef: string; targetRef: string; authorityRequirement?: string; entityRef?: string}
-export interface VersoPageReading {resource: string; provider: string; authority: string; revision?: string; content?: string; evidence: string[]}
-export interface VersoSourceFileReading {location: CentralLocation; revision: string; content: string}
+export type VersoPageReading = KnowledgeReading;
+export type VersoSourceFileReading = NativeFileReading;
 
 /** A local recovery checkpoint for this Expression, read through the same
  * native recovery owner the editor itself uses (`expression_recovery`,
@@ -188,7 +188,6 @@ export function resolveVersoSubject(
   return null;
 }
 
-const CONTENT_BUDGET = 4000;
 const text = (cause: unknown) => cause instanceof Error ? cause.message : String(cause);
 
 /** Read one subject's account. Every read is a live owner read through the
@@ -287,13 +286,12 @@ export async function readVersoAccount(transport: KernelTransportStatus, subject
     }
   } else {
     try {
-      const page = await knowledge<{resource: string; provider: string; authority: string; revision?: string; content?: string; evidence: string[]}>(
-        transport, subject.project, {action: "read", address: {kind: "wiki", value: subject.ref}});
-      account.page = {
-        resource: page.resource, provider: page.provider, authority: page.authority, revision: page.revision,
-        content: page.content?.slice(0, CONTENT_BUDGET),
-        evidence: page.evidence ?? [],
-      };
+      const kind = subject.ref.startsWith("source:") || subject.ref.startsWith("central:source:") ? "source" : "wiki";
+      const page = await knowledge<KnowledgeReading>(
+        transport, subject.project, {action: "read", address: {kind, value: subject.ref}});
+      // The facet binds these exact owner bytes. Display budgeting belongs in
+      // the canonical reader, never in this source/account adaptation.
+      account.page = page;
       for (const evidenceRef of account.page.evidence) account.sources.push({ref: evidenceRef, availability: "available"});
     } catch (cause) {
       notices.push(`The page read did not resolve: ${text(cause)}`);
@@ -304,7 +302,7 @@ export async function readVersoAccount(transport: KernelTransportStatus, subject
   if (subject.sourceLocation) {
     try {
       const reading = await readFile(transport, subject.sourceLocation);
-      account.sourceFile = {location: reading.location, revision: reading.revision, content: reading.content.slice(0, CONTENT_BUDGET)};
+      account.sourceFile = reading;
       account.sources.push({ref: reading.location.ref, revision: reading.revision, availability: "available"});
     } catch (cause) {
       notices.push(`The source file read did not resolve: ${text(cause)}`);

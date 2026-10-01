@@ -50,6 +50,7 @@ import { projectionStorageKey } from './spacetimedb.mjs';
 import { EXPRESSION_PRESENTATION_RENDERER, EXPRESSION_PRESENTATION_SCHEMA, validateExpressionPresentation } from './expression-presentation.mjs';
 import { publicationSentinelLeaks } from './central-wiki-projection.mjs';
 import {admitSceneMaterial} from './expression-material.mjs';
+import {subjectLabel} from './presentation-text.mjs';
 
 export const EXPRESSION_PUBLICATION_SCHEMA = 'oi.expression-publication/v1';
 export const EXPRESSION_COMPOSITION_SCHEMA = 'oi.expression-composition/v1';
@@ -301,9 +302,10 @@ export function escapeHtml(value) {
  */
 export function frozenExpressionHtml(compositionValue) {
   const composition = validateExpressionComposition(compositionValue);
-  const scenes = composition.scenes.map((scene) => {
+  const title=subjectLabel(composition,"Untitled Expression");
+  const scenes = composition.scenes.map((scene,sceneIndex) => {
     const material = scene.presentation?.scene;
-    const glyphs = scene.entity_refs.map((ref) => {
+    const glyphs = scene.entity_refs.map((ref,entityIndex) => {
       const entity = composition.entities[ref];
       const body = material?.entities.find((held) => held.id === ref);
       // The admitted native material is the renderable body. Scalar parameters
@@ -313,12 +315,12 @@ export function frozenExpressionHtml(compositionValue) {
       const left = 50 + Number(at('x', body?.position?.x ?? 0)) * 22;
       const top = 50 - Number(at('y', body?.position?.y ?? 0)) * 30;
       const subject = entity.subject ? ` data-subject-ref="${escapeHtml(entity.subject.subject_ref)}" data-presentation-role="${escapeHtml(entity.subject.presentation_role)}"` : '';
-      return `<span class="entity" data-entity-ref="${escapeHtml(ref)}"${subject} style="left:${left.toFixed(2)}%;top:${top.toFixed(2)}%;font-size:${(Math.max(0.2, Math.min(4, scale)) * 3).toFixed(2)}rem;opacity:${Math.max(0, Math.min(1, Number(at('share', body?.share ?? 1)))).toFixed(2)}" title="${escapeHtml(entity.title)}">${escapeHtml(String(at('glyph', body?.text ?? 'O')))}</span>`;
+      return `<span class="entity" data-entity-ref="${escapeHtml(ref)}"${subject} style="left:${left.toFixed(2)}%;top:${top.toFixed(2)}%;font-size:${(Math.max(0.2, Math.min(4, scale)) * 3).toFixed(2)}rem;opacity:${Math.max(0, Math.min(1, Number(at('share', body?.share ?? 1)))).toFixed(2)}" title="${escapeHtml(subjectLabel(entity,`Unnamed entity ${entityIndex+1}`))}">${escapeHtml(String(at('glyph', body?.text ?? 'O')))}</span>`;
     }).join('');
     const inscriptions = (material?.text ?? []).filter((layer) => layer.visible !== false).map((layer) => `<p data-inscription-ref="${escapeHtml(layer.id)}">${[layer.kicker, layer.title, layer.italic, layer.body].filter(Boolean).map(escapeHtml).join(' · ')}</p>`).join('');
-    return `<section class="scene" data-scene-ref="${escapeHtml(scene.scene_ref)}" aria-label="${escapeHtml(scene.title)}"><h2>${escapeHtml(scene.title)}</h2><div class="field">${glyphs}</div>${inscriptions}</section>`;
+    return `<section class="scene" data-scene-ref="${escapeHtml(scene.scene_ref)}" aria-label="${escapeHtml(subjectLabel(scene,`Unnamed scene ${sceneIndex+1}`))}"><h2>${escapeHtml(subjectLabel(scene,`Unnamed scene ${sceneIndex+1}`))}</h2><div class="field">${glyphs}</div>${inscriptions}</section>`;
   }).join('');
-  return `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'"><title>${escapeHtml(composition.title)}</title><style>html,body{margin:0;background:#0e0f12;color:#e6e2d8;font-family:ui-sans-serif,system-ui,sans-serif}main{padding:1rem}h1{font-weight:500;font-size:1rem;margin:0 0 .25rem}p{margin:0 0 1rem;font-size:.75rem;color:#8f8a80}.scene{margin-bottom:1rem}.scene h2{font-size:.72rem;text-transform:uppercase;letter-spacing:.1em;font-weight:500;color:#8f8a80;margin:0 0 .5rem}.field{position:relative;aspect-ratio:16/9;border:1px solid #2a2c33;border-radius:12px;overflow:hidden;background:radial-gradient(circle at 50% 50%,#191b21,#0e0f12)}.entity{position:absolute;transform:translate(-50%,-50%);line-height:1;color:#d8b25a;text-shadow:0 0 18px rgba(216,178,90,.35)}</style></head><body><main data-expression-ref="${escapeHtml(composition.expression_ref)}" data-expression-revision="${composition.revision}"><h1>${escapeHtml(composition.title)}</h1><p>Frozen reading of ${escapeHtml(composition.expression_ref)} at revision ${composition.revision}. The live Expression renders where the renderer is admitted.</p>${scenes}</main></body></html>`;
+  return `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'"><title>${escapeHtml(title)}</title><style>html,body{margin:0;background:#0e0f12;color:#e6e2d8;font-family:ui-sans-serif,system-ui,sans-serif}main{padding:1rem}h1{font-weight:500;font-size:1rem;margin:0 0 .25rem}p{margin:0 0 1rem;font-size:.75rem;color:#8f8a80}.scene{margin-bottom:1rem}.scene h2{font-size:.72rem;text-transform:uppercase;letter-spacing:.1em;font-weight:500;color:#8f8a80;margin:0 0 .5rem}.field{position:relative;aspect-ratio:16/9;border:1px solid #2a2c33;border-radius:12px;overflow:hidden;background:radial-gradient(circle at 50% 50%,#191b21,#0e0f12)}.entity{position:absolute;transform:translate(-50%,-50%);line-height:1;color:#d8b25a;text-shadow:0 0 18px rgba(216,178,90,.35)}</style></head><body><main data-expression-ref="${escapeHtml(composition.expression_ref)}" data-expression-revision="${composition.revision}"><h1>${escapeHtml(title)}</h1><p>Saved presentation of ${escapeHtml(title)}.</p>${scenes}</main></body></html>`;
 }
 
 // ---------------------------------------------------------------------------
@@ -360,7 +362,7 @@ export function projectExpression(input) {
   const publishedAt = text(input.published_at ?? new Date().toISOString(), 'published_at');
   const liveRendererRef = text(input.live_renderer_ref ?? LIVE_RENDERER_REF, 'live_renderer_ref');
   const sourceRevision = String(composition.revision);
-  const title = text(input.selection?.title ?? composition.title, 'title');
+  const title = subjectLabel(input.selection,subjectLabel(composition,'Untitled Expression'));
   const summary = input.selection?.summary ? text(input.selection.summary, 'selection.summary', 2048) : undefined;
 
   const expressionReading = { ref: composition.expression_ref, revision: sourceRevision, availability: 'available' };
@@ -401,16 +403,19 @@ export function projectExpression(input) {
     fallback: { title, text: `${composition.title}: a living Expression at revision ${composition.revision}. Where the live renderer is not admitted, the frozen reading of the same revision renders instead.` },
     provenance,
   };
-  const subjectBindings = subjects.map((subject) => ({
+  const subjectBindings = subjects.map((subject,index) => {
+    const entity=Object.values(composition.entities).find(entity=>entity.subject?.subject_ref===subject.ref);
+    const title=subjectLabel(entity,`Unnamed subject ${index+1}`);
+    return ({
     schema: 'oi.presentation-binding/v1',
     binding_ref: `subject:${slug(subject.ref)}`,
     component_ref: 'oi.presentation/reference-card/v1',
     portable_renderer: 'oi.presentation/reference-card/v1',
     subject_ref: subject.ref,
-    props: { title: subject.ref, text: `${Object.values(composition.entities).find((entity) => entity.subject?.subject_ref === subject.ref)?.subject?.presentation_role ?? 'thing'} · ${Object.values(composition.entities).find((entity) => entity.subject?.subject_ref === subject.ref)?.subject?.native_owner ?? 'native owner'}`, refs: subject.sources.map((source) => source.ref) },
-    fallback: { title: subject.ref },
-    provenance,
-  }));
+    props: { title, refs:[subject.ref], items:[{ref:subject.ref,label:title}], source:subject },
+    fallback: { title },
+    provenance:[...provenance,...subject.sources.map(source=>({kind:'bound-subject-source',ref:source.ref,revision:source.revision,source_system:entity?.subject?.native_owner??'native'}))],
+  });});
   const presentation = createWorldPresentation({
     schema: 'oi.world-presentation/v1',
     presentation_ref: presentationRef,

@@ -15,16 +15,31 @@ import type {KernelTransportStatus} from "../../kernel/types";
 import type {EncounterRow} from "../../encounter/EncounterList";
 import {ConversationRow} from "./rows";
 import {formatRelativeTime} from "../../shared/relativeTime";
+import {readableSessionTitle} from "../../encounter/sessionTitle";
+// @ts-ignore -- the native reading supplies names; refs remain exact targets.
+import {subjectLabel} from "../../../../../shared-field/presentation-text.mjs";
+
+/** Presentation over the owner reading; this creates no conversation state. */
+export function conversationsFromReading(spaces:unknown[],project:string):EncounterRow[] {
+  const found:EncounterRow[]=[];
+  for(const raw of spaces){
+    const space=raw as {definition:{id:string};label?:string;agent_sessions:Record<string,{purpose?:string}>};
+    const attachments=Object.entries(space.agent_sessions??{});
+    for(const [index,[ref,attachment]] of attachments.entries()){
+      const spaceName=subjectLabel(space.label,"");
+      const fallback=spaceName?`${spaceName} · Conversation ${index+1}`:`Unnamed conversation ${found.length+1}`;
+      const purpose=subjectLabel(attachment.purpose,"");
+      const named=readableSessionTitle(purpose);
+      found.push({space:space.definition.id,ref,title:(!purpose||named==="Conversation"&&purpose!=="Conversation")?fallback:named,project});
+    }
+  }
+  return found;
+}
 
 export async function readConversations(transport: KernelTransportStatus, project: string): Promise<EncounterRow[]> {
   const result = await kernelOp(transport, {op: "agency_read", project});
   if (result.error || result.outcome?.result !== "agency_reading") throw new Error(result.error ?? "AIKit SessionSpace reading unavailable");
-  const found: EncounterRow[] = [];
-  for (const raw of result.outcome.spaces) {
-    const space = raw as {definition: {id: string}; label?: string; agent_sessions: Record<string, {purpose?: string}>};
-    for (const [ref, attachment] of Object.entries(space.agent_sessions ?? {})) found.push({space: space.definition.id, ref, title: attachment.purpose || space.label || ref, project});
-  }
-  return found;
+  return conversationsFromReading(result.outcome.spaces,project);
 }
 
 export type ConversationsState =

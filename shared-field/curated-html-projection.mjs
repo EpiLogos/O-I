@@ -17,6 +17,7 @@
  * related to a Wiki node; it does not become a Wiki page.
  */
 import { createHash } from 'node:crypto';
+import {subjectLabel} from './presentation-text.mjs';
 import { createProjection, validateProjection, createParticipant, reviseProjection } from './index.mjs';
 import { createSharedField } from './social.mjs';
 import { createExploreEntry, createExploreApplication } from './explore.mjs';
@@ -43,67 +44,8 @@ const slug = (value) => String(value).replace(/[^a-z0-9]+/gi, '-').replace(/^-+|
 // HTML: escape, sanitise (allowlist), and reduce to plain text
 // ---------------------------------------------------------------------------
 
-export function escapeHtml(value) {
-  return String(value).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
-}
-
-const ALLOWED_TAGS = new Set(['article', 'section', 'header', 'p', 'br', 'em', 'strong', 'i', 'b', 'u', 's', 'a', 'ul', 'ol', 'li', 'blockquote', 'code', 'pre', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'hr', 'span', 'mark', 'sup', 'sub']);
-const DROPPED_WITH_CONTENT = new Set(['script', 'style', 'iframe', 'object', 'embed', 'template', 'noscript', 'svg', 'math', 'form', 'input', 'button', 'textarea', 'select', 'link', 'meta', 'base', 'head', 'title']);
-
-/**
- * Allowlist sanitiser for authored entry HTML. Only the tags above survive,
- * with no attributes except `href` on `<a>` (http/https/mailto), which
- * gains rel="noopener noreferrer". Dangerous elements are removed with
- * their content; unknown elements are unwrapped (content kept, tag dropped).
- */
-export function sanitiseEntryHtml(html) {
-  let out = '';
-  let index = 0;
-  const source = String(html ?? '');
-  while (index < source.length) {
-    const open = source.indexOf('<', index);
-    if (open < 0) { out += source.slice(index); break; }
-    out += source.slice(index, open);
-    const close = source.indexOf('>', open);
-    if (close < 0) { out += escapeHtml(source.slice(open)); break; }
-    const tagText = source.slice(open + 1, close);
-    if (tagText.startsWith('!--')) { const end = source.indexOf('-->', open); index = end < 0 ? source.length : end + 3; continue; }
-    const match = /^\/?\s*([a-zA-Z][a-zA-Z0-9]*)/.exec(tagText);
-    if (!match) { out += escapeHtml(source.slice(open, close + 1)); index = close + 1; continue; }
-    const name = match[1].toLowerCase();
-    const closing = tagText.startsWith('/');
-    if (DROPPED_WITH_CONTENT.has(name)) {
-      if (!closing) {
-        const endTag = new RegExp(`</${name}\\s*>`, 'i');
-        endTag.lastIndex = 0;
-        const rest = source.slice(close + 1);
-        const found = endTag.exec(rest);
-        index = found ? close + 1 + found.index + found[0].length : source.length;
-      } else index = close + 1;
-      continue;
-    }
-    if (!ALLOWED_TAGS.has(name)) { index = close + 1; continue; }
-    if (closing) { out += name === 'br' || name === 'hr' ? '' : `</${name}>`; index = close + 1; continue; }
-    if (name === 'a') {
-      const href = /\shref\s*=\s*("([^"]*)"|'([^']*)'|([^\s>]+))/i.exec(tagText);
-      const raw = href ? (href[2] ?? href[3] ?? href[4] ?? '') : '';
-      const safe = /^(https?:|mailto:)/i.test(raw.trim()) ? raw.trim() : '';
-      out += safe ? `<a href="${escapeHtml(safe)}" rel="noopener noreferrer">` : '<a>';
-    } else if (name === 'br' || name === 'hr') out += `<${name}>`;
-    else out += `<${name}>`;
-    index = close + 1;
-  }
-  return out;
-}
-
-export function htmlToText(html) {
-  return String(html ?? '')
-    .replace(/<br\s*\/?>/gi, '\n').replace(/<\/p>/gi, '\n\n').replace(/<\/li>/gi, '\n')
-    .replace(/<script[\s\S]*?<\/script>/gi, '').replace(/<style[\s\S]*?<\/style>/gi, '')
-    .replace(/<[^>]*>/g, '')
-    .replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"').replace(/&#39;/g, "'").replace(/&nbsp;/g, ' ')
-    .replace(/\n{3,}/g, '\n\n').trim();
-}
+export {escapeHtml,sanitiseEntryHtml,htmlToText} from './html-material.mjs';
+import {escapeHtml,sanitiseEntryHtml,htmlToText} from './html-material.mjs';
 
 // ---------------------------------------------------------------------------
 // Artifact readers — the two carriers, one normalised artifact
@@ -356,7 +298,7 @@ export function projectCuratedArtifact(input) {
   }
   const meta = {};
   for (const field of selection.meta_fields) if (artifact[field] !== undefined && artifact[field] !== null) meta[field] = artifact[field];
-  const title = selection.title ?? artifact.title ?? selection.artifact_ref;
+  const title = subjectLabel(selection,subjectLabel(artifact,"Untitled shared document"));
   const standing = artifact.source.path ? sourceStanding(artifact.source.path) : 'human-authored';
   const provenance = [{ kind: 'curated-artifact-source', ref: artifact.source.ref, source_system: 'central', revision: sourceRevision }];
   const bindingProvenance = (ref) => [{ kind: 'curated-artifact-entry', ref, source_system: 'central', revision: sourceRevision }];
@@ -391,8 +333,8 @@ export function projectCuratedArtifact(input) {
     { region_ref: 'lede', role: 'lede', bindings: [{ schema: 'oi.presentation-binding/v1', binding_ref: 'lede', component_ref: 'oi.presentation/lede/v1', portable_renderer: 'oi.presentation/lede/v1', subject_ref: hostedArtifactRef, props: { title, ...(selection.summary ? { text: selection.summary } : {}) }, fallback: { title }, provenance }] },
     { region_ref: 'entries', role: 'reading', label: `Selected entries · ${selected.length} of ${artifact.entries.length}`, bindings: entryBindings },
     ...(includedBindings.length ? [{ region_ref: 'included', role: 'reading', label: 'Explicitly included collections', bindings: includedBindings }] : []),
-    ...(selection.replies.length ? [{ region_ref: 'replies', role: 'relation', label: 'Replies from other worlds (admitted)', bindings: selection.replies.map((reply) => ({ schema: 'oi.presentation-binding/v1', binding_ref: `reply:${slug(reply.contribution_ref)}`, component_ref: 'oi.presentation/reference-card/v1', portable_renderer: 'oi.presentation/reference-card/v1', subject_ref: reply.contribution_ref, props: { title: reply.label ?? 'Admitted reply', text: reply.summary ?? `from ${reply.contributor_participant_ref}`, refs: [reply.contribution_ref] }, fallback: { title: reply.label ?? 'Admitted reply' }, provenance: [{ kind: 'admitted-contribution', ref: reply.contribution_ref, source_system: 'o-i', ...(reply.source_revision ? { revision: reply.source_revision } : {}) }] })) }] : []),
-    ...(metaText ? [{ region_ref: 'meta', role: 'relation', label: 'Artifact', bindings: [{ schema: 'oi.presentation-binding/v1', binding_ref: 'meta', component_ref: 'oi.presentation/reference-card/v1', portable_renderer: 'oi.presentation/reference-card/v1', subject_ref: hostedArtifactRef, props: { title: 'Artifact identity', text: metaText, refs: selection.disclose_source_refs ? [artifact.source.ref] : [] }, fallback: { title: 'Artifact identity', text: metaText }, provenance }] }] : []),
+    ...(selection.replies.length ? [{ region_ref: 'replies', role: 'relation', label: 'Replies from other worlds (admitted)', bindings: selection.replies.map((reply) => ({ schema: 'oi.presentation-binding/v1', binding_ref: `reply:${slug(reply.contribution_ref)}`, component_ref: 'oi.presentation/reference-card/v1', portable_renderer: 'oi.presentation/reference-card/v1', subject_ref: reply.contribution_ref, props: { title: reply.label ?? 'Admitted reply', text: reply.summary ?? '', refs: [reply.contribution_ref], items:[{ref:reply.contribution_ref,label:subjectLabel(reply,"Admitted reply")}] }, fallback: { title: reply.label ?? 'Admitted reply' }, provenance: [{ kind: 'admitted-contribution', ref: reply.contribution_ref, source_system: 'o-i', ...(reply.source_revision ? { revision: reply.source_revision } : {}) }] })) }] : []),
+    ...(metaText ? [{ region_ref: 'meta', role: 'relation', label: 'Artifact', bindings: [{ schema: 'oi.presentation-binding/v1', binding_ref: 'meta', component_ref: 'oi.presentation/reference-card/v1', portable_renderer: 'oi.presentation/reference-card/v1', subject_ref: hostedArtifactRef, props: { title: 'Source details', source:{...meta,...(selection.disclose_source_refs?{ref:artifact.source.ref}:{})} }, fallback: { title: 'Source details' }, provenance }] }] : []),
   ].filter((region) => region.bindings.length > 0);
 
   const presentation = createWorldPresentation({
@@ -423,14 +365,13 @@ export function projectCuratedArtifact(input) {
 
   const locators = [{ surface: 'web', locator: `/explore.html?ref=${encodeURIComponent(hostedArtifactRef)}` }];
   if (input.edition_base) locators.push({ surface: 'edition', locator: `${input.edition_base}/index.html` }, { surface: 'edition-manifest', locator: `${input.edition_base}/manifest.json` });
-  const withheldSummary = Object.entries(artifact.withheld ?? {}).filter(([key, value]) => key !== 'meta_fields' && Number(value) > 0 && !included[key]).map(([key, value]) => `${value} ${key}`).join(', ');
-  const entry = createExploreEntry({
+    const entry = createExploreEntry({
     ref: hostedArtifactRef,
     kind: 'curated-artifact',
     world_ref: worldRef,
     label: title,
     aliases: [selection.artifact_ref],
-    summary: `curated HTML artifact (${artifact.carrier}) · ${selected.length} of ${artifact.entries.length} entries selected${withheldSummary ? ` · withheld: ${withheldSummary}` : ''}`,
+    summary: selection.summary ?? htmlToText(selected[0]?.html??'').replace(/\s+/g,' ').trim().slice(0,240),
     revision: sourceRevision,
     provenance: [...provenance, { kind: standing === 'human-authored' ? 'human-authored-source' : 'agent-maintained-source', ref: artifact.source.ref, source_system: 'central', revision: sourceRevision }],
     locators,

@@ -147,7 +147,7 @@ export function LibraryBrowser({mode, onOpen, onMessage, initialScope, captureIn
         const literal = text.trim().toLowerCase();
         let nextItems = results.flatMap(result => result.items);
         if (literal) nextItems = nextItems.filter(item =>
-          item.title.toLowerCase().includes(literal) || item.summary?.toLowerCase().includes(literal) || item.ref.toLowerCase().includes(literal) || item.collectionMemberships?.some(m => [m.title, m.member_id, m.group, m.manifest_path].some(value => value.toLowerCase().includes(literal))));
+          item.title.toLowerCase().includes(literal) || item.summary?.toLowerCase().includes(literal) || item.ref.toLowerCase().includes(literal) || item.nativeCollections?.some(ref=>ref.toLowerCase().includes(literal)) || item.collectionMemberships?.some(m => [m.title, m.member_id, m.group, m.manifest_path].some(value => value.toLowerCase().includes(literal))));
         setReadingContext(contextKey);
         setItems(nextItems);
         setCoverage(results.map(result => result.coverage));
@@ -171,6 +171,7 @@ export function LibraryBrowser({mode, onOpen, onMessage, initialScope, captureIn
         item.title.toLowerCase().includes(literal)
         || item.summary?.toLowerCase().includes(literal)
         || item.ref.toLowerCase().includes(literal)
+        || item.nativeCollections?.some(ref=>ref.toLowerCase().includes(literal))
         || item.collectionMemberships?.some(m => [m.title, m.member_id, m.group, m.manifest_path].some(value => value.toLowerCase().includes(literal))))
     : eligibleItems, [eligibleItems, literal]);
 

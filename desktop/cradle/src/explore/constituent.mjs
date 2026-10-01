@@ -10,6 +10,7 @@
  * Projection never carries (`grant: none`).
  */
 
+import {subjectLabel} from '../../../../shared-field/presentation-text.mjs';
 import { activityReading } from '../../../../shared-field/activity-liveness.mjs';
 
 export const CONSTITUENT_KINDS = new Set(['world-position', 'workcell', 'practice', 'activity', 'participant', 'agent-session']);
@@ -19,7 +20,7 @@ const record = (value) => (value && typeof value === 'object' && !Array.isArray(
 
 function neighbour(ref, entries) {
   const entry = entries.get(ref);
-  return { ref, label: entry?.label ?? ref, kind: entry?.kind ?? 'unknown', summary: entry?.summary, meta: record(entry?.meta) };
+  return { ref, label: subjectLabel(entry,"Unavailable related subject"), kind: entry?.kind ?? 'unknown', summary: entry?.summary, meta: record(entry?.meta) };
 }
 
 function related(entry, relations, entries, relation, direction) {
@@ -51,7 +52,7 @@ export function constituentReading(entry, relations = [], entryList = [], live =
     fact('Repertoire', Array.isArray(meta.repertoire) && meta.repertoire.length ? meta.repertoire.join(', ') : 'no practices disclosed');
     group('Native sessions', related(entry, relations, entries, 'oi.agent/session', 'out'));
     group('Takes part in', related(entry, relations, entries, 'oi.activity/participant', 'in'));
-    return { role: 'being', kind: entry.kind, ref: entry.ref, title: entry.label, facts, groups, world_ref: entry.world_ref, standing: 'Participant · Being' };
+    return { role: 'being', kind: entry.kind, ref: entry.ref, title: subjectLabel(entry), facts, groups, world_ref: entry.world_ref, standing: 'Participant · Being' };
   }
   if (entry.kind === 'agent-session') {
     fact('Native session', text(meta.agent_session));
@@ -61,7 +62,7 @@ export function constituentReading(entry, relations = [], entryList = [], live =
     fact('Source revision', text(meta.source_revision));
     group('Agent', related(entry, relations, entries, 'oi.agent/session', 'in'));
     group('Returned material', related(entry, relations, entries, 'oi.activity/works-on', 'out'));
-    return { role: 'thing', kind: entry.kind, ref: entry.ref, title: entry.label, facts, groups, world_ref: entry.world_ref, standing: 'Native session · retained observation',
+    return { role: 'thing', kind: entry.kind, ref: entry.ref, title: subjectLabel(entry), facts, groups, world_ref: entry.world_ref, standing: 'Native session · retained observation',
       ...(typeof meta.project === 'string' && text(meta.agent_session) ? {session:{ref:meta.agent_session,project:meta.project,sourceWorldRef:text(meta.source_world_ref) ?? entry.world_ref}} : {}) };
   }
 
@@ -70,22 +71,23 @@ export function constituentReading(entry, relations = [], entryList = [], live =
     fact('Handle', text(meta.handle));
     fact('Role', text(meta.role_ref));
     fact('Agent', text(meta.agent_ref));
-    if (occupancy.state) fact('Occupancy', `${occupancy.state}${occupancy.generation_ordinal ? ` · generation #${occupancy.generation_ordinal}` : ''}${occupancy.workcell_ref ? ` · ${occupancy.workcell_ref}` : ''}`);
+    if (occupancy.state) fact('Occupancy', `${occupancy.state}${occupancy.generation_ordinal ? ` · generation #${occupancy.generation_ordinal}` : ''}`);
     fact('Current work', text(record(meta.current_work).outcome));
     fact('Disclosure', text(meta.disclosure));
     group('Carried by', related(entry, relations, entries, 'oi.world/carried-by', 'out'));
     group('Practises', related(entry, relations, entries, 'oi.world/practises', 'out'), (item) => [text(item.meta.practice_kind), item.availability ?? text(item.meta.availability)].filter(Boolean).join(' · '));
     group('Takes part in', related(entry, relations, entries, 'oi.activity/participant', 'in'), (item) => text(item.meta.state));
-    return { role: 'being', kind: entry.kind, ref: entry.ref, title: entry.label, facts, groups, world_ref: entry.world_ref, standing: 'Agent Position · Being' };
+    return { role: 'being', kind: entry.kind, ref: entry.ref, title: subjectLabel(entry), facts, groups, world_ref: entry.world_ref, standing: 'Agent Position · Being' };
   }
   if (entry.kind === 'workcell') {
     fact('Workcell', text(meta.local_ref));
     fact('Material role', text(meta.material_role));
     fact('Disclosure', text(meta.disclosure));
     const offers = Array.isArray(meta.offers) ? meta.offers.map(record) : [];
-    fact('Offered', offers.length ? offers.map((offer) => text(offer.offer_ref) ?? text(offer.port)).filter(Boolean).join(', ') : 'nothing offered — inspectable only');
+    fact('Offered', offers.length ? `${offers.length} owner-disclosed ${offers.length===1?'offer':'offers'}` : 'nothing offered — inspectable only');
+    fact('Offer details', JSON.stringify(offers));
     group('Carries', related(entry, relations, entries, 'oi.world/carried-by', 'in'), (item) => text(record(item.meta.occupancy).state));
-    return { role: 'thing', kind: entry.kind, ref: entry.ref, title: entry.label, facts, groups, world_ref: entry.world_ref, standing: 'Workcell · Thing' };
+    return { role: 'thing', kind: entry.kind, ref: entry.ref, title: subjectLabel(entry), facts, groups, world_ref: entry.world_ref, standing: 'Workcell · Thing' };
   }
   if (entry.kind === 'practice') {
     fact('Kind', text(meta.practice_kind));
@@ -95,19 +97,19 @@ export function constituentReading(entry, relations = [], entryList = [], live =
     fact('Availability', text(meta.availability));
     fact('Granted use', text(meta.grant) === 'none' ? 'none — publication is not permission' : text(meta.grant));
     group('Practised by', related(entry, relations, entries, 'oi.world/practises', 'in'), (item) => text(item.meta.handle));
-    return { role: 'thing', kind: entry.kind, ref: entry.ref, title: entry.label, facts, groups, world_ref: entry.world_ref, standing: `${text(meta.practice_kind) ?? 'Practice'} · Thing` };
+    return { role: 'thing', kind: entry.kind, ref: entry.ref, title: subjectLabel(entry), facts, groups, world_ref: entry.world_ref, standing: `${text(meta.practice_kind) ?? 'Practice'} · Thing` };
   }
   fact('Run', text(meta.run_ref));
   fact('Custody', text(meta.custody_ref));
   // Liveness is what the owner-side producer holds in the field now, never
   // the publication's claim (activity-liveness.mjs).
   const reading = activityReading({ entry, liveness_rows: live.activity_liveness ?? [], now_ms: live.now_ms ?? Date.now() });
-  fact('Liveness', reading.liveness === 'live' ? `live — owner state ${reading.owner_state ?? '?'} at revision ${reading.owner_revision ?? '?'}` : reading.liveness === 'stale' ? 'stale — its producer stopped heartbeating' : reading.liveness === 'disconnected' ? 'disconnected — published as live, but no producer holds it now' : 'static — a publication reading');
+  fact('Liveness', reading.liveness === 'live' ? 'Live' : reading.liveness === 'stale' ? 'stale — its producer stopped heartbeating' : reading.liveness === 'disconnected' ? 'disconnected — published as live, but no producer holds it now' : 'static — a publication reading');
   fact('State', text(reading.owner_state) ?? text(meta.state));
   fact('Purpose', text(meta.purpose_summary));
   const participants = related(entry, relations, entries, 'oi.activity/participant', 'out');
   group('Participants', participants, (item) => text(item.meta.handle));
   if (!participants.length) fact('Participants', 'none attested by the owner');
   group('Works on', related(entry, relations, entries, 'oi.activity/works-on', 'out'));
-  return { role: 'thing', kind: entry.kind, ref: entry.ref, title: entry.label, facts, groups, world_ref: entry.world_ref, standing: 'Activity', liveness: reading.liveness };
+  return { role: 'thing', kind: entry.kind, ref: entry.ref, title: subjectLabel(entry), facts, groups, world_ref: entry.world_ref, standing: 'Activity', liveness: reading.liveness };
 }

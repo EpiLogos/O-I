@@ -39,15 +39,13 @@ registerObjectKind({
    fields:[
     {label:"What",value:`${VERB_LABEL[row.verb]} · ${row.detail??row.object}`},
     ...(row.startedAt!==undefined?[{label:"When",value:`${formatClock(row.startedAt)}${row.durationMs!==undefined?` · took ${formatDuration(row.durationMs)}`:""}`}]:[{label:"When",value:"Not recorded — the journal carries no time for this event."}]),
-    {label:"Session",value:session},
-    ...(row.calls.some(call=>call.id)?[{label:"Provider call",value:row.calls.map(call=>call.id).filter(Boolean).join(", ")}]:[]),
-    {label:"Journal",value:`${events.length} owner event${events.length===1?"":"s"} · cursor ${cursors[0]}${cursors.length>1?`–${cursors[cursors.length-1]}`:""}`},
+    {label:"Journal",value:`${events.length} recorded event${events.length===1?"":"s"}`},
    ],
    content:<>
     {row.text!==undefined&&!tool&&<p className="object-text">{row.text}</p>}
     {row.calls.map((call,index)=><CallDetail key={call.id??index} call={call} index={index} count={row.calls.length}/>)}
    </>,
-   raw:events,
+   raw:{session,cursors,events},
   };
  },
 });
@@ -56,13 +54,13 @@ registerObjectKind({
  kind:"handed",label:"Material",glyph:"inspect",
  read:object=>{
   const held=handedMaterial(object.ref);
-  if(!held)return {kindLabel:"Material",title:object.title,state:"Not held any more",fields:[{label:"Reference",value:object.ref},{label:"Why it is empty",value:"This material was handed over in an earlier session of this window; only its reference is kept, so its page cannot show it again. Open it again from where it lives."}]};
+  if(!held)return {kindLabel:"Material",title:object.title,state:"Not held any more",fields:[{label:"Why it is empty",value:"This material was handed over in an earlier session of this window. Open it again from where it lives."}],raw:{reference:object.ref}};
   const text=typeof held.payload==="string"?held.payload:undefined;
   return {
    kindLabel:held.kindLabel,title:object.title,
-   fields:[{label:"What",value:held.kindLabel},{label:"Reference",value:object.ref},...(held.source?[{label:"Handed by",value:held.source}]:[])],
+   fields:[{label:"What",value:held.kindLabel}],
    content:text!==undefined?<p className="object-text">{text}</p>:held.payload===undefined?undefined:<p className="object-text">Structured material — in Show raw.</p>,
-   raw:text!==undefined?undefined:held.payload,
+   raw:{reference:object.ref,source:held.source,payload:held.payload},
   };
  },
 });

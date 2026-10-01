@@ -46,12 +46,12 @@
 .explore-node[data-dim="true"] circle, .explore-node[data-dim="true"] rect { pointer-events: none; }
 .explore-results { list-style: none; margin: 0; padding: var(--oi-space-2) var(--oi-space-3) var(--oi-space-4); overflow: auto; border-top: var(--oi-shell-edge) solid var(--oi-hairline-soft); }
 .explore-results li + li { border-top: var(--oi-shell-edge) solid var(--oi-hairline-soft); }
-.explore-results button { display: grid; grid-template-columns: 88px 1fr auto; column-gap: var(--oi-space-3); align-items: baseline; width: 100%; padding: 8px 6px; text-align: left; border-radius: var(--oi-radius-sm); color: var(--oi-foreground); }
+.explore-results button { display: grid; grid-template-columns: 110px minmax(0,1fr); column-gap: var(--oi-space-3); align-items: baseline; width: 100%; padding: 8px 6px; text-align: left; border-radius: var(--oi-radius-sm); color: var(--oi-foreground); }
 .explore-results button:hover, .explore-results button:focus-visible { background: var(--oi-wash); }
-.explore-results strong { font-weight: 500; color: var(--oi-accent-ink); }
-.explore-results small { color: var(--oi-muted-2); font-size: var(--oi-shell-type-meta); white-space: nowrap; }
+.explore-results strong { grid-column: 2; overflow-wrap: anywhere; min-width: 0; font-weight: 500; color: var(--oi-accent-ink); }
+.explore-results small { color: var(--oi-muted-2); font-size: var(--oi-shell-type-meta); grid-column: 2; overflow-wrap: anywhere; }
 .explore-result-summary { grid-column: 2; color: var(--oi-muted); font-size: var(--oi-shell-type-meta); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.explore-result-roles { flex: none; font-size: var(--oi-shell-type-meta); letter-spacing: var(--oi-shell-tracking); text-transform: uppercase; color: var(--oi-accent-ink); }
+.explore-result-roles { grid-column: 1; grid-row: 2; flex: none; font-size: var(--oi-shell-type-meta); letter-spacing: var(--oi-shell-tracking); text-transform: uppercase; color: var(--oi-accent-ink); }
 .explore-result-presentations { grid-column: 2; color: var(--oi-muted-2); font-size: var(--oi-shell-type-meta); white-space: nowrap; }
 .explore-muted { color: var(--oi-muted-2); font-size: var(--oi-shell-type-meta); }
 .explore-unavailable-field { padding: var(--oi-space-6) var(--oi-space-5); max-width: 62ch; }
@@ -242,3 +242,11 @@
 /* A world constituent's Being/Thing page: the World it stands in is one step away. */
 .world-constituent__world { margin-top: var(--oi-space-2); padding: 0; border: 0; background: none; color: var(--oi-world-muted); font: inherit; font-size: var(--oi-shell-type-prose); cursor: pointer; text-align: left; }
 .world-constituent__world:hover, .world-constituent__world:focus-visible { color: inherit; text-decoration: underline; }
+
+@media (max-width: 640px) { .explore-results button { grid-template-columns: 85px minmax(0,1fr); } }
+.world-component details pre, .knowledge-encounter details pre { max-height: 24rem; overflow:auto; overflow-wrap:anywhere; white-space:pre-wrap; }
+
+/* The named results remain the complete reading. Dense constellation labels
+   appear at the pointed subject instead of overprinting one another. */
+.explore-node--entry text { opacity: 0; pointer-events:none; }
+.explore-node--entry:hover text, .explore-node--entry:focus-visible text { opacity: 1; }
