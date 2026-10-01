@@ -1,10 +1,19 @@
 import {esc} from './icons';
-import {clone,Entity,Journey,SequenceStep} from './model';
+import {clone,Entity,Journey,SequenceStep,uid} from './model';
 export type GlyphSource=NonNullable<Entity['source']>;
+/** Preserve a legacy layered body on every existing state before explicitly
+ * replacing or adding a state shape. No implicit migration on document open. */
+export function preserveLayerStates(e:Entity){
+ if(e.layers?.length)for(const step of e.sequence.steps)step.layers??=e.layers.map(l=>({...clone(l),id:uid('layer')}));
+}
+export function useStateShape(e:Entity,index:number){
+ preserveLayerStates(e);
+ if(e.sequence.steps[index])e.sequence.steps[index].layers=[];
+}
 export function stateSource(e:Entity,index:number){return e.sequence.steps[index]?.source??(!e.sequence.sourcesVersion&&index===0?e.source:undefined);}
 export function stateLabel(s:Pick<SequenceStep,'text'|'shape'|'source'|'name'>){return s.name|| (s.source?.kind==='image'?s.source.image.name||'Image glyph':s.source?.kind==='ascii'?'ASCII glyph':s.shape==='text'?s.text:s.shape);}
 export function initialiseSources(j:Journey){for(const scene of [...j.scenes,...Object.values(j.savedScenes??{})])for(const e of scene.entities){if(!e.sequence.sourcesVersion&&e.source&&e.sequence.steps[0]&&!e.sequence.steps.some(k=>k.source)){e.sequence.steps[0].source=clone(e.source);e.sequence.steps[0].name=e.source.kind==='image'?e.source.image.name||e.name:e.name;}/* Only entities carrying a source need the migration marker, so reopening an exported artifact never mutates the document. */if(e.source)e.sequence.sourcesVersion=1;}return j;}
-export function captureObjectState(e:Entity):SequenceStep{return {id:'',name:e.name,text:e.text,shape:e.shape,source:e.source?clone(e.source):undefined,yantraId:e.yantraId,templateFrequency:e.templateFrequency,templateGeometry:e.templateGeometry,templateDimension:e.templateDimension,hold:e.sequence.hold??3,transition:e.sequence.transition??1,position:null,objectState:{size:clone(e.size),rotation:e.rotation,scale:e.scale??1,tint:e.tint,tintWeight:e.tintWeight,force:clone(e.force)}};}
+export function captureObjectState(e:Entity):SequenceStep{return {id:'',name:e.name,text:e.text,shape:e.shape,source:e.source?clone(e.source):undefined,yantraId:e.yantraId,templateFrequency:e.templateFrequency,templateGeometry:e.templateGeometry,templateDimension:e.templateDimension,hold:e.sequence.hold??3,transition:e.sequence.transition??1,position:null,objectState:{normalized:e.native?(e.native.extent?.normalized??!!e.native.extent):true,size:clone(e.size),rotation:e.rotation,scale:e.scale??1,tint:e.tint,tintWeight:e.tintWeight,force:clone(e.force)}};}
 
 export function stateThumbnail(e:Entity,index:number){const k=e.sequence.steps[index],source=stateSource(e,index);return source?`<img data-source-preview="${esc(e.id)}" data-source-step="${index}" alt="${esc(stateLabel({...k,source}))}">`:(k?.shape&&k.shape!=='text'?shapeMark(k.shape):esc(k?.shape==='text'?k.text:e.text));}
 /** A small drawn mark for a geometric formation shape: the preview shows the

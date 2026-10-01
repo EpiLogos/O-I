@@ -42,10 +42,18 @@ import {
 } from './fieldModel';
 import { SpatialChakraNode, type GlyphVolumeConfig } from './types';
 import { resolveEntityPose, type EvaluatedEntityPose } from './entityPose';
-import { drawVolumeZ, mulberry32, buildDepthFieldsFromMask, cellVolumeShape, DEFAULT_GLYPH_VOLUME } from './glyphVolume';
+import { drawVolumeZ, mulberry32, hashString, buildDepthFieldsFromMask, cellVolumeShape, DEFAULT_GLYPH_VOLUME } from './glyphVolume';
 
 /** World px per canvas px at entity.scale = 1 (a glyph fills ≈ 400 px) */
 const BASE_SCALE = 0.56;
+
+// Animated frequency/text inputs can produce a new pool every frame. These
+// pools are recomputable; keep recent ones within both count and memory bounds.
+const CANDIDATE_CACHE_MAX_ENTRIES = 128;
+const CANDIDATE_CACHE_MAX_BYTES = 32 * 1024 * 1024;
+// Conservative retention estimate: six numeric fields, object/array slots and
+// alignment. This is a cache budget, not a measurement of the JS heap.
+const CANDIDATE_ESTIMATED_BYTES = 128;
 
 interface Candidate {
   x: number;
@@ -98,7 +106,12 @@ export class EntityRuntime {
   private lastStep = new Map<string, number>();
   private customCandidates = new Map<string, Candidate[]>();
   private geometryProjection: {key:string;entityId:string;candidates:Candidate[]}|null=null;
-  private candidateCache = new Map<string, Candidate[]>();
+  private candidateCache = new Map<string, {candidates: Candidate[]; estimatedBytes: number}>();
+  private candidateCacheBytes = 0;
+  private candidateCacheHits = 0;
+  private candidateCacheMisses = 0;
+  private candidateCacheEvictions = 0;
+  private candidateCacheOversized = 0;
   private baseSig = '';
   private templateGeometry: 'square'|'circular'|'volumetric3D' = 'square';
   private templateDimension: '2D'|'3D' = '2D';
@@ -171,8 +184,39 @@ export class EntityRuntime {
 
   public dispose() {
     this.disposeTextures();
-    this.candidateCache.clear();
+    this.clearCandidateCache();
     this.geometryProjection=null;
+  }
+
+  private clearCandidateCache() {
+    this.candidateCache.clear();
+    this.candidateCacheBytes = 0;
+  }
+
+  /** Recomputable pools only; authored image/ASCII sources are retained separately. */
+  public getCandidateCacheStats() {
+    return {entries: this.candidateCache.size, estimatedBytes: this.candidateCacheBytes,
+      maxEntries: CANDIDATE_CACHE_MAX_ENTRIES, maxEstimatedBytes: CANDIDATE_CACHE_MAX_BYTES,
+      hits: this.candidateCacheHits, misses: this.candidateCacheMisses,
+      evictions: this.candidateCacheEvictions, oversized: this.candidateCacheOversized};
+  }
+
+  private retainCandidates(sig: string, candidates: Candidate[]) {
+    const estimatedBytes = candidates.length * CANDIDATE_ESTIMATED_BYTES + sig.length * 2 + 256;
+    if (estimatedBytes > CANDIDATE_CACHE_MAX_BYTES) {
+      this.candidateCacheOversized++;
+      return;
+    }
+    while (this.candidateCache.size >= CANDIDATE_CACHE_MAX_ENTRIES ||
+      this.candidateCacheBytes + estimatedBytes > CANDIDATE_CACHE_MAX_BYTES) {
+      const oldest = this.candidateCache.keys().next().value;
+      if (oldest === undefined) break;
+      this.candidateCacheBytes -= this.candidateCache.get(oldest)!.estimatedBytes;
+      this.candidateCache.delete(oldest);
+      this.candidateCacheEvictions++;
+    }
+    this.candidateCache.set(sig, {candidates, estimatedBytes});
+    this.candidateCacheBytes += estimatedBytes;
   }
 
   public getPartitions(): Partition[] {
@@ -185,7 +229,7 @@ export class EntityRuntime {
     const sig = `${style}|${fontFamily ?? ''}|${fontWeight ?? ''}|${plane}|${this.templateGeometry}|${this.templateDimension}`;
     if (sig !== this.baseSig) {
       this.baseSig = sig;
-      this.candidateCache.clear();
+      this.clearCandidateCache();
       this.bakeSig.clear();
     }
   }
@@ -201,7 +245,7 @@ export class EntityRuntime {
     const changed = this.sampler.setVolume(next);
     this.volume = next;
     if (changed) {
-      this.candidateCache.clear();
+      this.clearCandidateCache();
       this.bakeSig.clear();
     }
     return changed;
@@ -237,7 +281,13 @@ export class EntityRuntime {
   private candidatesFor(shape: Shape, fontFamily: string | undefined, fontWeight: string | number | undefined): Candidate[] {
     const sig = this.shapeSignature(shape);
     const cached = this.candidateCache.get(sig);
-    if (cached) return cached;
+    if (cached) {
+      this.candidateCache.delete(sig);
+      this.candidateCache.set(sig, cached);
+      this.candidateCacheHits++;
+      return cached.candidates;
+    }
+    this.candidateCacheMisses++;
 
     let out: Candidate[];
     const pseudo: SpatialChakraNode = {
@@ -283,12 +333,12 @@ export class EntityRuntime {
         }
       }
     } else if (shape.kind === 'cymatic') {
-      out = this.sampler.sampleCymaticTemplate({frequencyHz:shape.frequencyHz??396,plateGeometry:shape.plateGeometry??this.templateGeometry,dimension:shape.dimension??this.templateDimension}).candidates;
+      out = this.sampler.sampleCymaticTemplate({frequencyHz:shape.frequencyHz??396,plateGeometry:shape.plateGeometry??this.templateGeometry,dimension:shape.dimension??this.templateDimension,seed:hashString(sig)}).candidates;
     } else {
-      out = this.sampler.rasterizeSpatialNode(pseudo, shape.kind === 'glyph' ? 'symbol' : 'yantra', fontFamily, fontWeight, 'yantraA').candidates;
+      out = this.sampler.rasterizeSpatialNode(pseudo, shape.kind === 'glyph' ? 'symbol' : 'yantra', fontFamily, fontWeight, 'yantraA',hashString(sig)).candidates;
     }
     if (out.length === 0) out = [{ x: 0, y: 0, density: 1 }];
-    this.candidateCache.set(sig, out);
+    this.retainCandidates(sig, out);
     return out;
   }
 
@@ -323,14 +373,15 @@ export class EntityRuntime {
     // re-rolling it into visible flicker.
     const volume = this.volume;
     const volumeOn = volume.enabled && volume.depth > 0;
-    const rand = volumeOn ? mulberry32(this.bakeGeneration * 2654435761 + (channel + 1) * 40503) : null;
+    const rand = volumeOn ? mulberry32((start + 1) * 2654435761 + (channel + 1) * 40503 + n) : null;
+    const jitter=mulberry32((start+1)*40503+(channel+1)*2654435761+n);
     for (let i = start; i < end; i++) {
       // The raster pool is scanline ordered. A prefix would crop low-share
       // allocations to the top of a glyph. A low-discrepancy stride covers the
       // complete local shape for every allocation size without changing IDs.
       const c = cands[Math.floor(((i-start)*0.6180339887498949 % 1)*n)];
-      const jx = (Math.random() - 0.5) * jitterPx;
-      const jy = (Math.random() - 0.5) * jitterPx;
+      const jx = (jitter() - 0.5) * jitterPx;
+      const jy = (jitter() - 0.5) * jitterPx;
       this.noiseData[i*4+channel]=jx;this.noiseData[i*4+channel+1]=jy;
       const lx = c.x * scale;
       const ly = c.y * scale;
@@ -358,12 +409,15 @@ export class EntityRuntime {
   /** Stage-box normalization shared by every pool path: glyph-law pools are
    *  stretched to the 400-unit square; stage400 pools (image/ASCII) keep their
    *  true aspect. */
-  private presetPool(e: Entity, cands: Candidate[]): Candidate[] {
+  private presetPool(e: Entity, cands: Candidate[], sourcePool = false): Candidate[] {
     if (!e.extent || e.extent.normalized === false) return cands;
     const core = cands.filter(c=>c.density>.25);
     let x0=Infinity,x1=-Infinity,y0=Infinity,y1=-Infinity;
     for (const c of (core.length ? core : cands)) {x0=Math.min(x0,c.x);x1=Math.max(x1,c.x);y0=Math.min(y0,c.y);y1=Math.max(y1,c.y);}
-    const sx=400/Math.max(1,x1-x0),sy=400/Math.max(1,y1-y0);
+    let sx=400/Math.max(1,x1-x0),sy=400/Math.max(1,y1-y0);
+    // Image/ASCII sampling has already retained the source's aspect. Fit its
+    // longest axis; independently expanding both axes would distort it.
+    if(sourcePool)sx=sy=Math.min(sx,sy);
     return cands.map(c=>({...c,x:(c.x-(x0+x1)/2)*sx,y:(c.y-(y0+y1)/2)*sy}));
   }
 
@@ -394,85 +448,40 @@ export class EntityRuntime {
       return;
     }
     const links = effectiveLinks(e);
-    if (e.layers?.length) {
-      this.bakeLayers(p, e, plane, fontFamily, fontWeight);
-      return;
-    }
     const custom = this.customCandidates.get(e.id);
-    const candA = this.linkCandidates(e, links[linkIndex], linkIndex, custom, fontFamily, fontWeight);
-    const candB = this.linkCandidates(e, links[nextIndex], nextIndex, custom, fontFamily, fontWeight);
-    this.bakeGeneration++;
-    const scale = e.extent && e.extent.normalized !== false ? 1 : BASE_SCALE;
-    const poolA = this.presetPool(e, candA);
-    const poolB = this.presetPool(e, candB);
-    this.writeCandidates(this.dataA, p.start, p.end, poolA, scale, plane, 2, 0);
-    this.writeCandidates(this.dataB, p.start, p.end, poolB, scale, plane, 2, 2);
-    if (this.noiseTexture) this.noiseTexture.needsUpdate = true;
-    if (this.textureA) this.textureA.needsUpdate = true;
-    if (this.textureB) this.textureB.needsUpdate = true;
-
-    // Collision boundary: the SDF bakes from the same candidate pools the targets
-    // were baked from, so the wall always matches the visual shape. The slot is
-    // stable per entity id, so tiles never migrate between rows.
-    if (this.collisionTexture) {
-      const slot = this.collisionSlot(e.id);
-      if (slot >= 0) {
-        writeSdfTile(this.collisionData, slot, 0, buildSdfTile(poolA, scale));
-        writeSdfTile(this.collisionData, slot, 1, buildSdfTile(poolB, scale));
-        this.collisionTexture.needsUpdate = true;
+    const slot = this.collisionTexture ? this.collisionSlot(e.id) : -1;
+    for (const [index, channel] of [[linkIndex, 0], [nextIndex, 2]] as const) {
+      const link = links[index];
+      const normalized = link.state?.extent?.normalized ?? e.extent?.normalized ?? !!e.extent;
+      const body = {...e, extent: {...e.extent, width: e.extent?.width ?? 400, height: e.extent?.height ?? 400, rotation: e.extent?.rotation ?? 0, normalized}};
+      const scale = normalized ? 1 : BASE_SCALE;
+      const target = channel === 0 ? this.dataA : this.dataB;
+      const layers = link.layers ?? e.layers;
+      let union: Candidate[];
+      if (layers?.length) {
+        union = [];
+        const per = Math.floor((p.end-p.start)/layers.length);
+        const reach = Math.max(...layers.map(l=>Math.abs(l.z)),0);
+        layers.forEach((layer,k)=>{
+          const pool = this.presetPool(body,this.layerCandidates(e,layer,custom,fontFamily,fontWeight),this.customCandidates.has(e.id+':'+layer.id)).map(c=>{
+            const ls=Math.max(.001,layer.scale??1);
+            return {...c,x:c.x*ls,y:c.y*ls,...(c.hz===undefined?{}:{hz:c.hz*ls})};
+          });
+          const start=p.start+k*per,end=k===layers.length-1?p.end:start+per;
+          this.writeCandidates(target,start,end,pool,scale,plane,2,channel,layer.z);
+          union.push(...pool.map(c=>({...c,hz:Math.max(c.hz??0,reach)})));
+        });
+      } else {
+        union=this.presetPool(body,this.linkCandidates(e,link,index,custom,fontFamily,fontWeight),this.customCandidates.has(e.id+':'+link.id)||!!(custom&&index===0));
+        this.writeCandidates(target,p.start,p.end,union,scale,plane,2,channel);
       }
-    }
-  }
-
-  /**
-   * A laminated object: the entity's layers are its spatial composition, and
-   * the formation's particle allocation is subdivided across them. Layer k
-   * draws its shape — or its loaded image/ASCII pool, keyed per layer — in the
-   * depth band its z occupies, with its own in-plane scale and measured body
-   * thickness. Both channels bake the same union, so the whole layered body is
-   * one static object that the sequence then transforms as a whole (placement,
-   * size, rotation, tint, forces ride the ordinary uniforms).
-   */
-  private bakeLayers(p: Partition, e: Entity, plane: Composition['plane'], fontFamily?: string, fontWeight?: string | number) {
-    const layers = e.layers!;
-    const custom = this.customCandidates.get(e.id);
-    const baseScale = e.extent && e.extent.normalized !== false ? 1 : BASE_SCALE;
-    const K = Math.max(1, layers.length);
-    const per = Math.floor((p.end - p.start) / K);
-    // The union collision envelope reaches across the whole stack: from the
-    // outermost layer edge to the opposite one.
-    const reach = Math.max(...layers.map((l) => Math.abs(l.z)), 0);
-
-    const union: Candidate[] = [];
-    layers.forEach((layer: EntityLayer, k: number) => {
-      const pool = this.presetPool(e, this.layerCandidates(e, layer, custom, fontFamily, fontWeight)).map((c) => {
-        const ls = Math.max(0.001, layer.scale ?? 1);
-        const scaled: Candidate = {...c, x: c.x * ls, y: c.y * ls};
-        if (c.hz !== undefined) scaled.hz = c.hz * ls;
-        return scaled;
-      });
-      const start = p.start + k * per;
-      const end = k === K - 1 ? p.end : start + per;
       this.bakeGeneration++;
-      this.writeCandidates(this.dataA, start, end, pool, baseScale, plane, 2, 0, layer.z);
-      this.bakeGeneration++;
-      this.writeCandidates(this.dataB, start, end, pool, baseScale, plane, 2, 2, layer.z);
-      // Collision: one union section whose thickness envelope reaches across
-      // the whole lamination, so the wall is the bounding solid of the stack.
-      for (const c of pool) union.push({...c, hz: Math.max(c.hz ?? 0, reach)});
-    });
-    if (this.noiseTexture) this.noiseTexture.needsUpdate = true;
-    if (this.textureA) this.textureA.needsUpdate = true;
-    if (this.textureB) this.textureB.needsUpdate = true;
-    if (this.collisionTexture) {
-      const slot = this.collisionSlot(e.id);
-      if (slot >= 0) {
-          const tile = buildSdfTile(union, baseScale);
-        writeSdfTile(this.collisionData, slot, 0, tile);
-        writeSdfTile(this.collisionData, slot, 1, tile);
-        this.collisionTexture.needsUpdate = true;
-      }
+      if(slot>=0)writeSdfTile(this.collisionData,slot,channel===0?0:1,buildSdfTile(union,scale));
     }
+    if(this.noiseTexture)this.noiseTexture.needsUpdate=true;
+    if(this.textureA)this.textureA.needsUpdate=true;
+    if(this.textureB)this.textureB.needsUpdate=true;
+    if(this.collisionTexture)this.collisionTexture.needsUpdate=true;
   }
 
   /** Stable atlas row per entity id; -1 when all formation rows are taken. */
@@ -516,13 +525,13 @@ export class EntityRuntime {
       const pose = poseById.get(e.id)!;
       const state = pose.sequence;
       const links = effectiveLinks(e);
-      // A layered body bakes once from every layer, so its signature covers the
-      // whole stack — layer order, shapes, depths, scales and which layers
-      // carry custom sources — and the sequence clock never rebuilds it.
-      const layersSig = e.layers?.length
-        ? `layers|${e.layers.map((l) => `${l.id}:${l.z}:${l.scale ?? 1}:${this.shapeSignature(l.shape)}:${this.customCandidates.has(e.id + ':' + l.id) ? (this.customCandidates.get(e.id + ':' + l.id) as {length:number}).length : ''}`).join(',')}|${!!e.extent && e.extent.normalized !== false}`
-        : '';
-      const sig = layersSig || `${links[state.linkIndex].id}:${links[state.nextIndex].id}|${this.shapeSignature(links[state.linkIndex].shape)}>${this.shapeSignature(links[state.nextIndex].shape)}|${!!e.extent && e.extent.normalized !== false}|${this.customCandidates.has(e.id) ? `c:${state.linkIndex === 0}:${state.nextIndex === 0}` : ''}`;
+      const linkSig=(link:SequenceLink,index:number)=>{
+        const layers=link.layers??e.layers;
+        const shape=layers?.length?layers.map(l=>`${l.id}:${l.z}:${l.scale??1}:${this.shapeSignature(l.shape)}:${this.customCandidates.get(e.id+':'+l.id)?.length??0}`).join(','):this.shapeSignature(link.shape);
+        return `${layers?.length?'layers':link.id}:${shape}:${link.state?.extent?.normalized??e.extent?.normalized??!!e.extent}:${layers?.length?'':(this.customCandidates.get(e.id+':'+link.id)?.length??0)+':'+customSource(index)}`;
+      };
+      const customSource=(index:number)=>index===0?this.customCandidates.get(e.id)?.length??0:0;
+      const sig=linkSig(links[state.linkIndex],state.linkIndex)+'>'+linkSig(links[state.nextIndex],state.nextIndex);
       const prevStep = this.lastStep.get(e.id);
       if (this.bakeSig.get(e.id) !== sig) {
         this.bakePartition(p, e, state.linkIndex, state.nextIndex, comp.plane, fontFamily, fontWeight);
@@ -538,7 +547,7 @@ export class EntityRuntime {
       u.centers[i].set(pose.x, pose.y, pose.z, Math.max(5, pose.forces.radius));
       u.morph[i] = state.progress;
       u.depthScales[i]=Math.max(.001,pose.scale);
-      u.normalized[i]=e.extent&&e.extent.normalized!==false?1:0;
+      u.normalized[i]=pose.extent?.normalized?1:0;
       u.transforms[i].set(Math.max(.001,pose.scale)*(pose.extent?pose.extent.width/400:1),Math.max(.001,pose.scale)*(pose.extent?pose.extent.height/400:1),pose.extent?.rotation??0);
       u.tints[i].set(pose.tint);
       u.tintWeights[i] = Math.max(0, Math.min(1, pose.tintWeight * comp.entityTintWeight));

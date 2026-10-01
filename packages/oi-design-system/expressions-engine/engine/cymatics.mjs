@@ -87,7 +87,7 @@ function renderChladniPlate(ctx, width, height, plateType, m, n, a = 1, b = 1, c
   }
   ctx.restore();
 }
-function sampleVolumetric3DNodalPoints(particleCount, l, m, n, coherence = 1, chaosIntensity = 1, radius = 240) {
+function sampleVolumetric3DNodalPoints(particleCount, l, m, n, coherence = 1, chaosIntensity = 1, radius = 240, random = Math.random) {
   const points = [];
   const sigma = 0.09 + (1 - coherence) * 0.25;
   const chaosAmp = (1 - coherence) * chaosIntensity * 0.35;
@@ -95,9 +95,9 @@ function sampleVolumetric3DNodalPoints(particleCount, l, m, n, coherence = 1, ch
   const maxAttempts = particleCount * 25;
   while (points.length < particleCount && attempts < maxAttempts) {
     attempts++;
-    const u = Math.random();
-    const costheta = Math.random() * 2 - 1;
-    const phi = Math.random() * Math.PI * 2;
+    const u = random();
+    const costheta = random() * 2 - 1;
+    const phi = random() * Math.PI * 2;
     const r = Math.cbrt(u);
     const sintheta = Math.sqrt(1 - costheta * costheta);
     const nx = r * sintheta * Math.cos(phi);
@@ -105,12 +105,12 @@ function sampleVolumetric3DNodalPoints(particleCount, l, m, n, coherence = 1, ch
     const nz = r * costheta;
     let perturb = 0;
     if (chaosAmp > 1e-3) {
-      perturb = (Math.random() - 0.5) * chaosAmp;
+      perturb = (random() - 0.5) * chaosAmp;
     }
     const psi = evalChladni3D(nx, ny, nz, l, m, n) + perturb;
     const absPsi = Math.abs(psi);
     const prob = Math.exp(-(absPsi * absPsi) / (2 * sigma * sigma));
-    if (Math.random() < prob) {
+    if (random() < prob) {
       points.push({
         x: nx * radius,
         y: ny * radius,
@@ -120,9 +120,9 @@ function sampleVolumetric3DNodalPoints(particleCount, l, m, n, coherence = 1, ch
     }
   }
   while (points.length < particleCount) {
-    const ang1 = Math.random() * Math.PI * 2;
-    const ang2 = (Math.random() - 0.5) * Math.PI;
-    const rad = radius * (0.35 + Math.random() * 0.65);
+    const ang1 = random() * Math.PI * 2;
+    const ang2 = (random() - 0.5) * Math.PI;
+    const rad = radius * (0.35 + random() * 0.65);
     points.push({
       x: Math.cos(ang1) * Math.cos(ang2) * rad,
       y: Math.sin(ang2) * rad,

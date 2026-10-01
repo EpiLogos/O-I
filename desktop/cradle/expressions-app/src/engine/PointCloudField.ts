@@ -1407,6 +1407,7 @@ export class PointCloudField {
   public inspectState(readParticles = false) {
     const result = { simTime: this.simTime, steps: this.simulator.stepCount, seeds: this.seedGeneration,
       bakes: this.entities.bakeGeneration, particleCount: this.simulator.particleCount,
+      resources: {geometries:this.renderer.info.memory.geometries,textures:this.renderer.info.memory.textures,programs:this.renderer.info.programs?.length??0,candidateCache:this.entities.getCandidateCacheStats()},
       partitions:this.entities.getPartitions().map(partition=>({...partition})),
       connections: {...this.entities.connections.inspect(),nodeFormations:this.entities.getPartitions().length,maxNodeFormations:MAX_FORMATIONS},
       drive: this.lastDrive, composition: this.getCompositionTelemetry(),

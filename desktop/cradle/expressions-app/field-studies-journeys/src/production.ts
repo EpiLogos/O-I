@@ -125,7 +125,7 @@ class EmbeddedProductionAdapter implements FieldEngineAdapter {
   // regardless of any transport state — a laminated body exists whether or not
   // its sequence plays.
   const requests=scene.entities.filter(e=>e.kind==='formation').flatMap(e=>[
-   ...(e.layers??[]).flatMap(l=>l.source?[{entityId:e.id,linkId:l.id,source:l.source}]:[]),
+   ...Array.from(new Map([...(e.layers??[]),...(e.sequence.enabled||e.sequence.manual?e.sequence.steps.flatMap(k=>k.layers??[]):[])].map(l=>[l.id,l])).values()).flatMap(l=>l.source?[{entityId:e.id,linkId:l.id,source:l.source}]:[]),
    ...(e.sequence.enabled||e.sequence.manual?e.sequence.steps.flatMap((k,i)=>{const source=stateSource(e,i);return source?[{entityId:e.id,linkId:k.id,source}]:[]}):e.source?[{entityId:e.id,linkId:e.id+'_base',source:e.source}]:[]),
   ]);
   const ids=new Set(requests.map(r=>JSON.stringify([r.entityId,r.linkId])));

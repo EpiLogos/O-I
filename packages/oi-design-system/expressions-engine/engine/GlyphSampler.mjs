@@ -7,6 +7,14 @@ import * as THREE from "three";
 import { renderChladniPlate, sampleVolumetric3DNodalPoints, deriveCymaticTemplateModes } from "./cymatics.mjs";
 import { CHAKRA_CYMATIC_PROFILES } from "./legacy/chakraCymaticProfiles.mjs";
 import { sampleImageSource, sampleAlphaSource, SOURCE_WORK_MAX } from "./sourceSampling.mjs";
+import {
+  buildGlyphDepthFields,
+  cellVolumeShape,
+  applyGlyphVolume,
+  hashString,
+  mulberry32,
+  DEFAULT_GLYPH_VOLUME
+} from "./glyphVolume.mjs";
 const FALLBACK_FONT_STACK = 'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", sans-serif';
 class GlyphSampler {
   canvas;
@@ -23,6 +31,40 @@ class GlyphSampler {
       throw new Error("Failed to create offscreen 2D canvas context for glyph rasterization");
     }
     this.ctx = context;
+  }
+  /**
+   * The true-3D body law. Set by the field; when enabled, every rasterized
+   * letterform carries a real half-thickness per cell instead of z micro-noise.
+   */
+  volume = DEFAULT_GLYPH_VOLUME;
+  volumeSignature = "off";
+  depthFieldsCache = /* @__PURE__ */ new Map();
+  lastVolumeStats = null;
+  setVolume(config) {
+    const next = config ?? DEFAULT_GLYPH_VOLUME;
+    const sig = [
+      next.enabled ? 1 : 0,
+      next.depth,
+      next.profile,
+      next.referenceFalloff,
+      next.wallShare,
+      next.faceBias,
+      next.interiorFill,
+      next.jitter,
+      next.densityDepth,
+      next.surfaceThickness,
+      next.wallBand,
+      next.outsideTaper
+    ].join("|");
+    if (sig === this.volumeSignature) return false;
+    this.volumeSignature = sig;
+    this.volume = next;
+    this.depthFieldsCache.clear();
+    this.clearCache();
+    return true;
+  }
+  getVolume() {
+    return this.volume;
   }
   clearCache() {
     this.targetCache.clear();
@@ -238,6 +280,17 @@ class GlyphSampler {
         data[i * 4 + 2] = (Math.random() - 0.5) * 8;
         data[i * 4 + 3] = chosen.density;
       }
+    }
+    if (this.volume.enabled && this.volume.depth > 0) {
+      const fields = buildGlyphDepthFields(pixels, w, h);
+      this.lastVolumeStats = applyGlyphVolume(
+        data,
+        particleCount,
+        fields,
+        worldScale,
+        this.volume,
+        hashString(`${glyphText}|${particleCount}|${style}`)
+      );
     }
     const result = { data, center, subCenters };
     this.targetCache.set(cacheKey, result);
@@ -564,13 +617,14 @@ class GlyphSampler {
   /**
    * Renders a specific node enforcing the sacred yantra geometric form
    */
-  rasterizeSpatialNode(node, glyphType = "yantra", fontFamily = FALLBACK_FONT_STACK, fontWeight = 900, variant = "yantraA") {
+  rasterizeSpatialNode(node, glyphType = "yantra", fontFamily = FALLBACK_FONT_STACK, fontWeight = 900, variant = "yantraA", seed) {
     const w = this.canvas.width;
     const h = this.canvas.height;
     const ctx = this.ctx;
     ctx.clearRect(0, 0, w, h);
     const cx = w / 2;
     const cy = h / 2;
+    const shapeKey = `${node.shape}|${node.glyphText ?? ""}|${node.id}|${fontWeight}|${fontFamily}`;
     if (node.shape === "glyph") {
       const text = (node.glyphText || node.symbol || node.seedSyllable || "O").trim() || "O";
       let fontSize = Math.floor(h * 0.7);
@@ -591,23 +645,51 @@ class GlyphSampler {
     const imgData = ctx.getImageData(0, 0, w, h);
     const pixels = imgData.data;
     const candidates = [];
+    const volumeOn = this.volume.enabled && this.volume.depth > 0;
+    let fields = null;
+    if (volumeOn) {
+      const cacheKey = `${shapeKey}|${w}x${h}`;
+      fields = this.depthFieldsCache.get(cacheKey) ?? null;
+      if (!fields) {
+        fields = buildGlyphDepthFields(pixels, w, h);
+        this.depthFieldsCache.set(cacheKey, fields);
+        if (this.depthFieldsCache.size > 12) {
+          const oldest = this.depthFieldsCache.keys().next().value;
+          if (oldest !== void 0) this.depthFieldsCache.delete(oldest);
+        }
+      }
+    }
     for (let y = 0; y < h; y += 3) {
       for (let x = 0; x < w; x += 3) {
         const idx = (y * w + x) * 4;
         const alpha = pixels[idx + 3] / 255;
         if (alpha > 0.05) {
-          candidates.push({
+          const cand = {
             x: x - cx,
             y: -(y - cy),
             density: alpha
-          });
+          };
+          if (fields) {
+            const cell = y * w + x;
+            const shape = cellVolumeShape(
+              fields.distInside[cell],
+              fields.distToInk[cell],
+              fields.referenceThickness,
+              alpha,
+              this.volume
+            );
+            cand.hz = shape.half;
+            cand.cw = shape.contourness;
+          }
+          candidates.push(cand);
         }
       }
     }
     if (candidates.length === 0) {
+      const random = seed === void 0 ? Math.random : mulberry32(seed);
       for (let i = 0; i < 500; i++) {
         const ang = i / 500 * Math.PI * 2;
-        const rad = 100 + (Math.random() - 0.5) * 20;
+        const rad = 100 + (random() - 0.5) * 20;
         candidates.push({
           x: Math.cos(ang) * rad,
           y: Math.sin(ang) * rad,
@@ -623,14 +705,24 @@ class GlyphSampler {
     const m = spec.m ?? derived.m, n = spec.n ?? derived.n, l = spec.l ?? derived.l, a = spec.a ?? derived.a, b = spec.b ?? derived.b;
     const geometry = spec.plateGeometry ?? "square", dimension = spec.dimension ?? "2D";
     if (dimension === "3D" || geometry === "volumetric3D") {
-      return { candidates: sampleVolumetric3DNodalPoints(12e3, l, m, n, coherence, chaos, 280), is3D: true };
+      return { candidates: sampleVolumetric3DNodalPoints(12e3, l, m, n, coherence, chaos, 280, spec.seed === void 0 ? Math.random : mulberry32(spec.seed)), is3D: true };
     }
     const w = this.canvas.width, h = this.canvas.height, ctx = this.ctx;
     renderChladniPlate(ctx, w, h, geometry, m, n, a, b, coherence, chaos);
     const pixels = ctx.getImageData(0, 0, w, h).data, candidates = [], cx = w / 2, cy = h / 2;
+    const volumeOn = this.volume.enabled && this.volume.depth > 0;
+    const fields = volumeOn ? buildGlyphDepthFields(pixels, w, h) : null;
     for (let y = 0; y < h; y += 3) for (let x = 0; x < w; x += 3) {
       const idx = (y * w + x) * 4, alpha = pixels[idx + 3] / 255;
-      if (alpha > 0.05) candidates.push({ x: x - cx, y: -(y - cy), z: 0, density: alpha });
+      if (alpha > 0.05) {
+        const cand = { x: x - cx, y: -(y - cy), z: 0, density: alpha };
+        if (fields) {
+          const shape = cellVolumeShape(fields.distInside[y * w + x], fields.distToInk[y * w + x], fields.referenceThickness, alpha, this.volume);
+          cand.hz = shape.half;
+          cand.cw = shape.contourness;
+        }
+        candidates.push(cand);
+      }
     }
     if (!candidates.length) for (let i = 0; i < 500; i++) {
       const ang = i / 500 * Math.PI * 2;
@@ -888,10 +980,12 @@ class GlyphSampler {
   /**
    * Samples pixel density from a custom user image through the shared
    * normalization law (background estimate, polarity, crop, mode shaping).
+   * When the true-3D body law is on, candidates carry the measured thickness
+   * of the image mask, so an image extrudes exactly like a letterform.
    */
   rasterizeCustomImage(img, options = {}) {
     const { px, w, h } = this.drawToWorkBuffer(img);
-    const sampled = sampleImageSource(px, w, h, options);
+    const sampled = sampleImageSource(px, w, h, { ...options, volume: this.volume });
     return { candidates: sampled.candidates, center: new THREE.Vector2(0, 0), analysis: sampled.analysis };
   }
   /** Bounded working copy: sampling never touches raw source resolution. */
@@ -943,6 +1037,7 @@ class GlyphSampler {
     const imgData = ctx.getImageData(0, 0, w, h);
     const sampled = sampleAlphaSource(imgData.data, w, h, {
       invert: options.invert,
+      volume: this.volume,
       // Preserve the actual typed contours, including sparse strokes and spaces.
       cell: { w: charWidth, h: lineHeight }
     });

@@ -60,6 +60,8 @@ export interface Shape {
 }
 
 export interface SequenceLink {
+  /** State-local body. Empty overrides inherited entity layers with this link's shape/source. */
+  layers?: EntityLayer[];
   source?:Entity['authoringSource'];
   state?:Pick<Entity,'extent'|'scale'|'tint'|'tintWeight'|'forces'>;
   name?:string;
@@ -134,6 +136,7 @@ export interface Entity {
  * it (size, rotation, tint, forces, placement) through the ordinary uniforms.
  */
 export interface EntityLayer {
+  source?: Entity['authoringSource'];
   id: string;
   z: number;              // depth band centre, world px, relative to the entity
   shape: Shape;           // geometry when no image/ASCII source is loaded for this layer

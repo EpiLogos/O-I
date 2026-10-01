@@ -1,6 +1,14 @@
-import {Plane,Vec3} from './model.js';
+import {Plane,Vec3,type Scene} from './model.js';
 export interface Camera {mode:'2d'|'3d';yaw:number;pitch:number;zoom:number;panX:number;panY:number;plane:Plane;depth:number;grid:boolean;snap:boolean}
 export const defaultCamera=():Camera=>({mode:'2d',yaw:0,pitch:0,zoom:1,panX:0,panY:0,plane:'XY',depth:0,grid:false,snap:false});
+/** The instrument's saved Scene view, also used by hosted Scene consumers.
+ * Native legacy cameras use pixel units; authored pan uses viewport fractions. */
+export function cameraForSceneView(view:Scene['view'],width:number,height:number,base:Camera=defaultCamera()):Camera {
+ const camera={...base,mode:view.mode,yaw:view.yaw,pitch:view.pitch,zoom:view.zoom,panX:view.panX*width,panY:view.panY*height};
+ if(view.nativeCamera){const c=view.nativeCamera;camera.yaw=-c.yaw;camera.pitch=c.pitch;camera.mode=c.yaw||c.pitch?'3d':'2d';camera.zoom=c.zoom*400/stageScale(width,height);const {a,b}=basis(camera),o=stageCentre(width,height);camera.panX=width/2-o.x-c.zoom*(a[0]*c.panX+a[1]*c.panY);camera.panY=height/2-o.y+c.zoom*(b[0]*c.panX+b[1]*c.panY);}
+ if(!['2d','3d'].includes(camera.mode)||![camera.yaw,camera.pitch,camera.zoom,camera.panX,camera.panY].every(Number.isFinite)||camera.zoom<=0)throw new Error('The saved Expression camera is malformed');
+ return camera;
+}
 export function basis(c:Camera){const y=c.yaw,p=c.pitch;return {a:[Math.cos(y),0,Math.sin(y)],b:[Math.sin(y)*Math.sin(p),Math.cos(p),-Math.cos(y)*Math.sin(p)]};}
 export function stageScale(w:number,h:number){return Math.min(w*.435,h*.465);}
 export function stageCentre(w:number,h:number){return {x:w*.51,y:h*(w<650?.385:.48)};}

@@ -165,6 +165,18 @@
       "command": "node --test tests/cradle-shell-antipatterns.test.mjs"
     },
     {
+      "name": "native-formation-regressions",
+      "tier": "landing",
+      "area": "browser",
+      "cwd": "desktop/cradle",
+      "provenance": {
+        "workflow": "desktop.yml",
+        "job": "cradle",
+        "step": "Prove native formation authoring and bounded particle candidate retention"
+      },
+      "command": "node tests/formation-native-regressions.mjs"
+    },
+    {
       "name": "cradle-appearance",
       "tier": "landing",
       "area": "browser",
