@@ -46,7 +46,9 @@ try{
    check(await mainProse.locator('h1').innerText()==='Alpha',`${name}: native Markdown heading, not raw text`);
    check(await mainProse.locator('strong').innerText()==='Bold',`${name}: strong text rendered`);
    check(await mainProse.locator('.wiki-table td').count()===2,`${name}: native table body rendered`);
+   await page.waitForFunction(()=>document.querySelectorAll('.wiki-reader > .wiki-prose input[type=checkbox]').length===2);
    check(await mainProse.locator('input[type=checkbox]').count()===2,`${name}: native task items rendered`);
+   check(await mainProse.locator('input[type=checkbox]').first().isChecked()&&!(await mainProse.locator('input[type=checkbox]').last().isChecked()),`${name}: completed and incomplete native task states preserved`);
    check(await page.evaluate(()=>window.__injected===undefined),`${name}: raw source HTML does not execute`);
    check(remote.length===0,`${name}: remote image does not disclose a reader visit without an explicit request`);
    check(await page.locator('.wiki-inline-link[data-link-state=unresolved]').filter({hasText:'Missing'}).count()===1,`${name}: unresolved link stays visible`);

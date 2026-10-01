@@ -27,7 +27,11 @@ for (const member of spec.members) {
   const publication = JSON.parse(await readFile(resolve(outputs, `expression-${member.member_id}.json`), 'utf8'));
   assert.equal(publication.native_body.bytes, selected.bytes.toString('utf8'));
   assert.equal(publication.native_body.source_revision, selected.source_revision);
-  assert.ok(publication.projection.provenance.some(source => source.ref === member.source_file && source.revision === actualRevision));
+  const carriesOriginal = source => source.ref === member.source_file && source.revision === actualRevision;
+  assert.ok(publication.composition.provenance.some(carriesOriginal), 'the native composition retains its original source pin');
+  const projectedBody = publication.projection.representation.payload.regions.flatMap(region => region.bindings).find(binding => binding.binding_ref === 'expression');
+  assert.ok(projectedBody.props.composition.provenance.some(carriesOriginal), 'the public receiving body retains that same original source pin');
+  assert.equal(JSON.parse(publication.native_body.bytes).publication_excerpt.source_digest.value, member.source_sha256);
   const formed = JSON.parse(publication.native_body.bytes);
   validateJourney(formed);
   delete formed.publication_excerpt;

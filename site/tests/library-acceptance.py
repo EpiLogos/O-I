@@ -39,11 +39,15 @@ with sync_playwright() as p:
     page.on('request',lambda r:requests.append(r.url))
     page.on('request',lambda r:mutations.append(r.url) if r.method not in ['GET','HEAD','OPTIONS'] else None)
     def home():
-        page.goto(BASE);expect(page.locator('.pl')).to_be_visible();expect(page.locator('.office-tile')).to_have_count(6)
-        expect(page.locator('.band')).to_have_count(1);expect(page.locator('video')).to_have_count(0)
-        assert page.locator('.pl .vf__poster').evaluate('n=>n.naturalWidth>0')
+        page.goto(BASE);expect(page.locator('.entrance')).to_be_visible()
+        expect(page.locator('.entrance__door')).to_have_count(2)
+        expect(page.locator('.entrance__door[href="./essay/"]')).to_be_visible()
         page.screenshot(path=str(OUT/'home.png'),full_page=True)
-        page.locator('.sn__library').click();expect(page.locator('.oi-library')).to_be_visible()
+        page.locator('.entrance__door[href="#/library?published=1"]').click()
+        expect(page.locator('.published-shelf')).to_be_visible()
+        # The site-edition reader has its own exact route; public corpus
+        # navigation does not substitute these separately published editions.
+        page.goto(url());expect(page.locator('.oi-library')).to_be_visible()
     check('retained-home-to-library',home,page)
     def gallery():
         expect(page.locator('.expression-card')).to_have_count(len(INDEX['entries']))

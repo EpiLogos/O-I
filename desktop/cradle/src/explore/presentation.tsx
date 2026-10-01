@@ -82,12 +82,13 @@ export function PortableProse({html,title}:{html:string;title:string}) {
     observer.current?.disconnect();
     const body=frame.current?.contentDocument?.body;
     if(!body)return;
+    body.style.color=getComputedStyle(frame.current!).color;
     const resize=()=>setHeight(Math.min(8000,Math.max(120,Math.ceil(body.getBoundingClientRect().height)+24)));
     observer.current=new ResizeObserver(resize);observer.current.observe(body);resize();
   };
   // Only same-origin measurement is allowed. Scripts, forms and popups stay
   // sandboxed; carried prose acquires no native operation or desktop authority.
-  return <iframe ref={frame} className="world-component__html" title={title||"Projected prose"} sandbox="allow-same-origin" style={{height}} onLoad={measure} srcDoc={`<!doctype html><meta charset="utf-8"><meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'; base-uri 'none'; form-action 'none'"><style>body{margin:0;font:15px/1.6 system-ui,sans-serif;color:#252525;overflow-wrap:anywhere}header{font-size:11px;color:#666;margin:0 0 1em}p,ul,ol{margin:0 0 1em}h1,h2,h3{line-height:1.2}pre{white-space:pre-wrap}a{color:inherit}</style>${html}`}/>;
+  return <iframe ref={frame} className="world-component__html" title={title||"Projected prose"} sandbox="allow-same-origin" style={{height}} onLoad={measure} srcDoc={`<!doctype html><meta charset="utf-8"><meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'; base-uri 'none'; form-action 'none'"><style>body{margin:0;font:15px/1.6 system-ui,sans-serif;overflow-wrap:anywhere}header{font-size:11px;opacity:.65;margin:0 0 1em}p,ul,ol{margin:0 0 1em}h1,h2,h3{line-height:1.2}pre{white-space:pre-wrap}a{color:inherit}</style>${html}`}/>;
 }
 function Text({binding}:RendererProps) {
   const title=textProp(binding.props.title,textProp(binding.fallback.title));const body=textProp(binding.props.text,textProp(binding.fallback.text));const html=textProp(binding.props.html);

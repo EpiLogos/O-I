@@ -54,6 +54,9 @@ jobs:
           python tests/library-regressions.py || result=1
           python tests/publication-acceptance.py || result=1
           exit "$result"
+      - name: Archive the preview with its exact native filenames
+        if: always()
+        run: tar -czf "$RUNNER_TEMP/site-library-preview.tar.gz" -C site dist
       - name: Retain the preview and all browser evidence
         if: always()
         uses: actions/upload-artifact@v4
@@ -62,6 +65,6 @@ jobs:
           retention-days: 14
           if-no-files-found: error
           path: |
-            site/dist/
+            ${{ runner.temp }}/site-library-preview.tar.gz
             site/evidence/library/
             site/package-lock.json
