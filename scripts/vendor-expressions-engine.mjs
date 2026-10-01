@@ -308,7 +308,7 @@ async function vendor(args) {
   }
 
   const provenance = {
-    source: 'EpiLogos/Point-Cloud-Demo',
+    source: path.resolve(args.source) === path.resolve(DEFAULT_SOURCE) ? 'EpiLogos/O-I:desktop/cradle/expressions-app' : `explicit-source:${path.resolve(args.source)}`,
     sha,
     oi_overlays: [
       {path: 'oi/retained.mjs', standing: 'O:I-authored retained-field extension of shell/production.mjs; not upstream, never rewritten by this script'},

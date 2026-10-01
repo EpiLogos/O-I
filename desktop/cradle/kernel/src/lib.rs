@@ -82,6 +82,7 @@ mod nara_voice_constitution;
 mod nara_voice_transport;
 pub mod nara_world_readiness;
 pub mod native_expression;
+pub mod native_owner_transport;
 pub mod owner_read;
 pub mod presentation;
 /// Short-horizon read-through cache for the owner readings the UI re-reads
@@ -922,6 +923,13 @@ pub struct KernelOpOutcome {
 #[derive(Clone, Debug, Deserialize, PartialEq, Serialize)]
 #[serde(tag = "result", rename_all = "snake_case")]
 pub enum KernelOpResult {
+    /// Remote receipts keep their owner's generation and cursor. They never
+    /// enter this kernel's independent ordered log or local event topic.
+    HostedNative {
+        source_world_ref: String,
+        owner_generation: String,
+        outcome: Box<KernelOpOutcome>,
+    },
     FileLastReading {
         recovery: retained_files::Recovery,
     },
@@ -2458,14 +2466,18 @@ impl Kernel {
                 })
             }
             KernelOp::ExpressionRecovery { request } => expression_recovery::execute(request),
-            KernelOp::HostedNative { source_world_ref, request } => {
-                let local = std::env::var("OI_SHARED_FIELD_LOCAL_WORLD_REF")
-                    .map_err(|_| "No hosted World address is bound to this native owner".to_owned())?;
-                if source_world_ref.is_empty() || source_world_ref != local {
-                    return Err(format!("Native owner transport for {source_world_ref} is unavailable here; this host belongs to {local}"));
-                }
-                if !matches!(&*request, KernelOp::Receiving { .. } | KernelOp::Encounter { .. } | KernelOp::EncounterTaskRead { .. } | KernelOp::Expression { .. }) {
+            KernelOp::HostedNative {
+                source_world_ref,
+                request,
+            } => {
+                if !native_owner_transport::admitted(&request) {
                     return Err("This hosted route admits only native document, Expression and session operations".into());
+                }
+                let local = std::env::var("OI_SHARED_FIELD_LOCAL_WORLD_REF").map_err(|_| {
+                    "No hosted World address is bound to this native owner".to_owned()
+                })?;
+                if source_world_ref != local {
+                    return native_owner_transport::remote(&source_world_ref, &request);
                 }
                 return self.apply(*request);
             }

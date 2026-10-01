@@ -3,7 +3,7 @@ import type {SyntaxNode} from "@lezer/common";
 /** GFM preview over the same parser family as CodeMirror. Raw HTML is escaped;
  * rendering never rewrites the Markdown source. Literal runs carry exact UTF-16
  * source offsets; non-contiguous formatted selection stays a page observation. */
-export interface MarkdownOptions {resolveAsset:(path:string)=>string}
+export interface MarkdownOptions {resolveAsset:(path:string)=>string;images?:boolean}
 const markdownParser=parser.configure(GFM);
 function escape(text:string){return text.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");}
 export function renderMarkdown(source:string,options:MarkdownOptions):string{
@@ -28,7 +28,7 @@ export function renderMarkdown(source:string,options:MarkdownOptions):string{
    const target=cs.find(c=>c.name==="URL");const closing=cs.find(c=>c.name==="LinkMark"&&raw(c)==="]");
    if(!target||!closing)return span(node.from,node.to);
    const start=cs[0]?.to??node.from;const href=url(raw(target));
-   if(name==="Image")return href?`<img alt="${escape(source.slice(start,closing.from))}" src="${href}" loading="lazy" referrerpolicy="no-referrer">`:span(node.from,node.to);
+   if(name==="Image")return href&&options.images!==false?`<img alt="${escape(source.slice(start,closing.from))}" src="${href}" loading="lazy" referrerpolicy="no-referrer">`:span(node.from,node.to);
    return href?`<a href="${href}" rel="noreferrer noopener">${inline(node,start,closing.from)}</a>`:inline(node,start,closing.from);
   }
   if(name==="Autolink"){const target=raw(node).replace(/^<|>$/g,"");const href=url(target);return href?`<a href="${href}" rel="noreferrer noopener">${escape(target)}</a>`:span(node.from,node.to);}

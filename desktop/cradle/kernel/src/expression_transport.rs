@@ -111,6 +111,17 @@ mod unix {
     ) -> Result<Server, String> {
         serve_parsed(path, apply)
     }
+    /// The explicitly offered native World shares this bounded local carrier,
+    /// while its own parser and generation gate admit the operation families.
+    pub fn serve_native_owner(
+        path: &Path,
+        apply: impl Fn(crate::native_owner_transport::Request) -> Result<Value, String>
+            + Send
+            + Sync
+            + 'static,
+    ) -> Result<Server, String> {
+        serve_parsed(path, apply)
+    }
     fn serve_parsed<R: DeserializeOwned + 'static>(
         path: &Path,
         apply: impl Fn(R) -> Result<Value, String> + Send + Sync + 'static,

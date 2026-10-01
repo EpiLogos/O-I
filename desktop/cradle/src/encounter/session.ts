@@ -80,7 +80,7 @@ export interface EncounterSessionState {
  /** The last Send's outcome as the person sees it (10-SIDEBARS P8/P9):
   *  "checking" while an uncertain delivery is reconciled against the owner's
   *  record, "failed" when it was not sent (the draft is kept). */
- send?:{phase:"checking"|"failed";error?:string};
+ send?:{phase:"checking"|"unknown"|"failed";error?:string};
  /** Reads are failing: the owner was last seen at this time (P10). */
  reconnecting?:{lastSeenAt:number};
  /** The encounter owner could not be reached at all (P11). */
@@ -139,6 +139,9 @@ class EncounterSession implements EncounterSessionActions {
  /** Census for the single-observer law (dev/walk only reads it). */
  polls=0;
  private failures=0;private lastSeenAt=0;
+ private readError?:string;
+ private uncertainSend?:{submitted:string;basis:number;nativeSession?:string};
+ private reconcilingSend=false;
 
  constructor(private transport:KernelTransportStatus,binding:EncounterSessionBinding) {
   this.state={key:encounterSessionKey(binding),project:binding.project,agentSession:binding.ref,space:binding.space,sourceWorldRef:binding.sourceWorldRef,providers:[],model:{phase:"unread"},mode:{phase:"unread"},draft:"",pending:false,busy:false,draftFailed:false,dispatch:{kind:"idle"},deliveries:[],a2a:{busy:false}};
@@ -154,7 +157,7 @@ class EncounterSession implements EncounterSessionActions {
   const next={...this.state,...patch};
   next.pending=this.operations>0;
   next.draftFailed=this.failed;
-  next.busy=next.pending||this.dirty||this.saving||this.sending||this.failed;
+  next.busy=next.pending||this.dirty||this.saving||this.sending||this.failed||!!this.uncertainSend;
   this.state=next;
   for(const listener of [...this.listeners])listener();
  }
@@ -175,7 +178,10 @@ class EncounterSession implements EncounterSessionActions {
  private start() {
   const run=++this.run;this.observing=true;this.quietReads=0;this.lastFingerprint="";
   document.addEventListener("visibilitychange",this.onVisible);
-  void this.call({action:"start"}).then(()=>{
+  // A named hosted session already belongs to its native owner. Enter by
+  // reading that subject, never by bootstrapping the owner's general runtime.
+  if(this.state.sourceWorldRef)this.restartChain();
+  else void this.call({action:"start"}).then(()=>{
    if(run!==this.run)return;
    if(this.state.unreachable)this.set({unreachable:undefined});
    void this.call<{id:string;label:string}[]>({action:"providers"}).then(rows=>{if(run===this.run)this.set({providers:rows});}).catch(error=>{if(run===this.run)this.set({error:String(error)});});
@@ -186,7 +192,7 @@ class EncounterSession implements EncounterSessionActions {
   // honest absence. The last observed task stays visible while a later run
   // re-reads it, and is dropped only when that read is refused.
   taskRead(this.transport,this.state.project,this.state.agentSession,this.state.sourceWorldRef).then(value=>{if(run===this.run)this.set({task:value});}).catch(()=>{if(run===this.run)this.set({task:undefined});});
-  void this.probe();
+  if(!this.state.sourceWorldRef)void this.probe();
  }
  private stop() {
   this.run++;this.chain++;this.observing=false;clearTimeout(this.timer);
@@ -207,7 +213,15 @@ class EncounterSession implements EncounterSessionActions {
    this.polls++;
    const next=await this.read();if(chain!==this.chain)return;
    const patch:Partial<EncounterSessionState>={reading:next};
-   if(!this.dirty&&!this.saving&&!this.sending&&next.draft.revision>=this.canonical.revision){this.canonical=next.draft;this.input=next.draft.text;patch.draft=next.draft.text;}
+   const uncertain=this.uncertainSend;
+   if(uncertain&&!this.reconcilingSend){
+    const accepted=await this.sentJournalReading(next,uncertain);
+    if(chain!==this.chain)return;
+    if(accepted)this.acceptSentReading(next,uncertain);
+   }
+   if(this.state.error===this.readError)patch.error=undefined;
+   this.readError=undefined;
+   if(!this.uncertainSend&&!this.dirty&&!this.saving&&!this.sending&&next.draft.revision>=this.canonical.revision){this.canonical=next.draft;this.input=next.draft.text;patch.draft=next.draft.text;}
    this.set(patch);
    const current=next.connection ?? await this.call<EncounterStatus>({action:"status",agent_session:this.state.agentSession}).catch(()=>undefined);
    if(chain===this.chain){this.models.observe(current);this.modes.observe(current);this.failures=0;this.lastSeenAt=Date.now();this.set({status:current,reconnecting:undefined,unreachable:undefined});}
@@ -219,7 +233,8 @@ class EncounterSession implements EncounterSessionActions {
     this.failures++;
     // Two failed reads in a row: the owner is out of reach for now. The
     // draft and the last reading stay; the loop keeps trying (P10).
-    this.set({error:String(error),...(this.failures>=2&&this.lastSeenAt?{reconnecting:{lastSeenAt:this.lastSeenAt}}:{})});
+    this.readError=String(error);
+    this.set({error:this.readError,...(this.failures>=2&&this.lastSeenAt?{reconnecting:{lastSeenAt:this.lastSeenAt}}:{})});
    }
   }
   // A running provider turn is read at a streaming cadence so the transcript
@@ -232,7 +247,7 @@ class EncounterSession implements EncounterSessionActions {
 
  // --- the draft CAS machine (typing is never lost) -----------------------
  private async save() {
-  if(!this.allowed("draft")||this.sending||this.saving||this.failed||!this.dirty)return;
+  if(!this.allowed("draft")||this.sending||this.saving||this.failed||this.uncertainSend||!this.dirty)return;
   this.saving=true;this.begin();
   try{
    while(this.dirty){
@@ -245,39 +260,78 @@ class EncounterSession implements EncounterSessionActions {
  }
  change=(text:string)=>{if(!this.allowed("draft"))return;this.input=text;this.dirty=true;this.set({draft:text});void this.save();};
  send=async()=>{
-  if(this.operations>0||!this.allowed("prompt")||this.dirty||this.saving||this.sending||this.failed)return;
+  if(this.operations>0||!this.allowed("prompt")||this.dirty||this.saving||this.sending||this.failed||this.uncertainSend)return;
   this.sending=true;const submitted=this.input;const basis=this.canonical.revision;this.begin();this.set({error:undefined,send:undefined});
+  const evidence={submitted,basis,nativeSession:this.state.status?.native_session_id};
+  let attempted=false;
   try{
    const supportsContext=this.state.reading?.actions?.some(action=>action.ref==="aikit.encounter.context"&&action.enabled);
    const context=supportsContext?await reviewedContext(this.transport,this.state.project,this.state.agentSession,this.state.sourceWorldRef):undefined;
+   attempted=true;
    const response=await this.call<{draft:Draft}>(context?{action:"prompt-context",agent_session:this.state.agentSession,draft_revision:this.canonical.revision,context}:{action:"prompt",agent_session:this.state.agentSession,draft_revision:this.canonical.revision});
    clearSnapshotApprovals(this.state.sourceWorldRef);
    if(context)void nativeContext(this.transport,this.state.project,this.state.agentSession,{operation:"read"},this.state.sourceWorldRef).then(value=>announceContext(this.state.project,value,this.state.sourceWorldRef)).catch(()=>{});
    this.canonical=response.draft;
    if(this.input===submitted){this.input=response.draft.text;this.set({draft:response.draft.text});}else{this.dirty=true;}
-   this.set({status:await this.call<EncounterStatus>({action:"status",agent_session:this.state.agentSession})});
+   // The Prompt reply already confirms acceptance. A later observation fault
+   // cannot turn that accepted delivery into a failed or uncertain send.
+   try{this.set({status:await this.call<EncounterStatus>({action:"status",agent_session:this.state.agentSession})});}
+   catch(error){this.readError=String(error);this.set({error:this.readError});}
   }catch(error){
    const message=String(error);
    // An owner refusal carries its code ("… [encounter.x]"): the message was
    // not sent. Anything else (the transport broke mid-call) is uncertain:
    // the owner's own record says whether it went — never a second send.
-   if(/\[[a-z0-9_.-]+\]\s*$/i.test(message))this.set({error:message,send:{phase:"failed",error:message}});
-   else{this.set({send:{phase:"checking"}});await this.reconcileSend(submitted,basis,message);}
+   if(!attempted||(!message.includes("encounter.submission_uncertain")&&(message.includes("gateway.native_owner.owner_refused")||(!this.state.sourceWorldRef&&/\[[a-z0-9_.-]+\]\s*$/i.test(message)))))this.set({error:message,send:{phase:"failed",error:message}});
+   else{this.uncertainSend=evidence;this.set({send:{phase:"checking"}});await this.reconcileSend(evidence,message);}
   }
   finally{this.sending=false;this.end();void this.save();}
  };
  /** P9: read the owner's record to learn whether an uncertain Send landed. */
- private async reconcileSend(submitted:string,basis:number,cause:string){
-  for(let attempt=0;attempt<4;attempt++){
-   try{
-    const next=await this.read();
-    const landed=next.draft.revision>basis&&next.blocks.some(block=>block.kind==="user"&&block.text.trim()===submitted.trim());
-    if(landed){this.canonical=next.draft;if(this.input===submitted){this.input=next.draft.text;}this.set({reading:next,draft:this.input,send:undefined,error:undefined});return;}
-    if(next.draft.revision<=basis){this.set({send:{phase:"failed",error:cause},error:cause});return;}
-   }catch{/* still unreachable — try again shortly */}
-   await new Promise(resolve=>setTimeout(resolve,1200));
+ private async sentJournalReading(next:EncounterReading,evidence:NonNullable<EncounterSession["uncertainSend"]>){
+  if(!evidence.nativeSession||next.connection?.native_session_id!==evidence.nativeSession||next.draft.revision<=evidence.basis)return false;
+  // Display pages and their block ids are not acceptance receipts. The native
+  // journal binds the exact consumed draft to this owner session. If this
+  // bounded reading cannot prove acceptance, retain the unknown outcome.
+  let after=0;
+  for(let page=0;page<32;page++){
+   const journal=await this.call<JournalPage>({action:"read",agent_session:this.state.agentSession,after,limit:1000});
+   if(journal.agent_session!==this.state.agentSession)return false;
+   if(journal.events.some(row=>{
+    const event=row.event;
+    return !!event&&typeof event==="object"&&"kind" in event&&event.kind==="user-message"&&"draft_revision" in event&&event.draft_revision===evidence.basis&&"text" in event&&event.text===evidence.submitted;
+   }))return true;
+   if(!journal.more||journal.next_cursor<=after)return false;
+   after=journal.next_cursor;
   }
-  this.set({send:{phase:"failed",error:cause},error:cause});
+  return false;
+ }
+ private acceptSentReading(next:EncounterReading,evidence:NonNullable<EncounterSession["uncertainSend"]>){
+  if(this.uncertainSend!==evidence)return;
+  this.uncertainSend=undefined;this.canonical=next.draft;
+  if(this.input===evidence.submitted)this.input=next.draft.text;
+  this.dirty=this.input!==next.draft.text;
+  this.set({reading:next,draft:this.input,send:undefined,error:undefined});
+  void this.save();
+ }
+ private async reconcileSend(evidence:NonNullable<EncounterSession["uncertainSend"]>,cause:string){
+  this.reconcilingSend=true;
+  try{
+   for(let attempt=0;attempt<4;attempt++){
+    if(this.uncertainSend!==evidence)return;
+    try{
+     const next=await this.read();
+     if(await this.sentJournalReading(next,evidence)){this.acceptSentReading(next,evidence);return;}
+    }catch{/* still unreachable — try again shortly */}
+    if(this.uncertainSend!==evidence)return;
+    await new Promise(resolve=>setTimeout(resolve,1200));
+   }
+   if(this.uncertainSend!==evidence)return;
+   const message=`${cause} Outcome remains unknown; read the native owner's record before sending again.`;
+   this.set({send:{phase:"unknown",error:message},error:message});
+  }finally{
+   this.reconcilingSend=false;
+  }
  }
  /** P8 Retry: send the kept draft again, only after a confirmed failure. */
  retrySend=async()=>{if(this.state.send?.phase!=="failed")return;this.set({send:undefined});await this.send();};
@@ -301,6 +355,7 @@ class EncounterSession implements EncounterSessionActions {
  }
  selectMode=async(mode:string)=>{this.begin();try{await this.modes.select(mode);}finally{this.end();}};
  refreshProviders=async()=>{
+  if(this.state.sourceWorldRef)return;
   try{const providers=await this.call<{id:string;label:string}[]>({action:"providers"});this.set({providers,error:undefined});}
   catch(error){this.set({error:String(error)});}
  };

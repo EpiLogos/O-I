@@ -19,6 +19,11 @@ server.middlewares.use('/ascii-regression',(_q,r)=>{r.setHeader('content-type','
 await server.listen();
 const browser=await chromium.launch({headless:true,args:['--use-angle=swiftshader','--enable-unsafe-swiftshader']}),page=await browser.newPage({viewport:{width:920,height:520}});
 const pageErrors=[];page.on('pageerror',e=>pageErrors.push(String(e)));
+const loadedModules=[],moduleReads=[];
+page.on('response',response=>{
+ const url=response.url();
+ if(/expressions-engine|engineSurface|engineProjection/.test(url))moduleReads.push(response.body().then(bytes=>loadedModules.push({url,status:response.status(),sha256:createHash('sha256').update(bytes).digest('hex')})));
+});
 const evidence={schema:'oi.expression-ascii-renderer-regression/v1',source:{file,sha256:createHash('sha256').update(bytes).digest('hex'),native_revision:document.revision,body_ref:body.id},standing:'Production WebGL renderer, software GPU; retained native input; no tool effects; timed readings after 50 rendered startup frames',readings:[]};
 const read=async label=>{
  const reading=await page.evaluate(id=>{
@@ -31,12 +36,19 @@ const read=async label=>{
    if(b>r*1.25&&g>r*1.1&&g>40&&pixels[i+3]>128)bodyPixels++;
   }
   if(screen)window.bodyCentre=screen;
-  return {bodyPixels,frames:s.frameCount,nonfinite_candidates:pool?.filter(c=>Object.values(c).some(v=>typeof v==='number'&&!Number.isFinite(v))).length??0,nonfinite_targets:p?Array.from(e.entities.dataA.slice(p.start*4,p.end*4)).filter(v=>!Number.isFinite(v)).length:0,analysis:e.getSourceAnalysis(id),screen,errors:window.failures,sameCanvas:s.canvas===window.originalCanvas,sameContext:s.canvas.getContext('webgl2')===window.originalContext};
+  const sequence=e.getCompositionTelemetry().sequences.find(f=>f.entityId===id),entity=e.config.entities.find(v=>v.id===id);
+  const link=index=>{
+   const value=entity.sequence?.links?.[index]??null,key=value?id+':'+value.id:null;
+   const signature=value?s.adapter.sources.get(JSON.stringify([id,value.id])):null,candidates=key?e.entities.customCandidates.get(key):null;
+   return {index,link:value,candidateSource:signature?{source:JSON.parse(signature),candidates:candidates?.length??0}:{kind:'shape',shape:value?.shape??entity.shape}};
+  };
+  return {bodyPixels,frames:s.frameCount,nonfinite_candidates:pool?.filter(c=>Object.values(c).some(v=>typeof v==='number'&&!Number.isFinite(v))).length??0,nonfinite_targets:p?Array.from(e.entities.dataA.slice(p.start*4,p.end*4)).filter(v=>!Number.isFinite(v)).length:0,analysis:e.getSourceAnalysis(id),activeSequence:sequence?{...sequence,current:link(sequence.linkIndex),next:link(sequence.nextIndex)}:null,screen,errors:window.failures,sameCanvas:s.canvas===window.originalCanvas,sameContext:s.canvas.getContext('webgl2')===window.originalContext};
  },body.id);
  evidence.readings.push({label,...reading});if(out)await page.screenshot({path:resolve(out,label+'.png')});return reading;
 };
-// A few drifting or neighbouring particles do not constitute this lamp. The
-// retained scene must have a substantial body of ink in its own native region.
+// This predicate establishes required body presence and finiteness. Authored
+// sequence readings and screenshots qualify its shape; cached source analysis
+// alone does not prove the currently developed target is the ASCII lamp.
 const accepted=r=>r.bodyPixels>=300&&r.nonfinite_candidates===0&&r.nonfinite_targets===0&&r.errors.length===0;
 try{
  await page.goto(`http://127.0.0.1:${server.httpServer.address().port}/ascii-regression`);
@@ -46,6 +58,11 @@ try{
   window.surface.presentConfig('ascii-regression',window.config,window.sceneRef,[],'authored');window.surface.setContainer('ascii-regression',document.getElementById('stage'));
   window.originalCanvas=window.surface.canvas;window.originalContext=window.originalCanvas.getContext('webgl2');
  },document);
+ evidence.runtime=await page.evaluate(()=>{
+  const gl=window.originalContext,debug=gl.getExtension('WEBGL_debug_renderer_info');
+  return {userAgent:navigator.userAgent,viewport:{width:innerWidth,height:innerHeight,dpr:devicePixelRatio},webgl:{version:gl.getParameter(gl.VERSION),renderer:gl.getParameter(gl.RENDERER),vendor:gl.getParameter(gl.VENDOR),unmaskedRenderer:debug?gl.getParameter(debug.UNMASKED_RENDERER_WEBGL):null}};
+ });
+ evidence.runtime.browserVersion=browser.version();
  await page.waitForFunction(id=>window.surface.frameCount>=50&&window.surface.adapter.engine.getSourceAnalysis(id)?.candidates>0,body.id,{timeout:90000});
  await page.waitForTimeout(5000);const first=await read('native-5s');assert.ok(accepted(first),`Required ASCII body missing: ${JSON.stringify(first)}`);
  await page.waitForTimeout(10000);const later=await read('native-15s');assert.ok(accepted(later),`Required ASCII body disappeared: ${JSON.stringify(later)}`);
@@ -54,5 +71,6 @@ try{
  await page.evaluate(()=>window.surface.presentConfig('ascii-regression',window.config,window.sceneRef,[],'authored'));
  await page.waitForTimeout(5000);const restored=await read('same-body-restored');assert.ok(accepted(restored),`Original ASCII did not return: ${JSON.stringify(restored)}`);
  assert.ok(evidence.readings.every(r=>r.sameCanvas&&r.sameContext));assert.deepEqual(pageErrors,[]);
- evidence.acceptance={originalVisible:true,requiredRemovalFailed:true,restoredOnSameBody:true};console.log(JSON.stringify(evidence));
-}finally{if(out)await writeFile(resolve(out,'acceptance.json'),JSON.stringify({...evidence,pageErrors},null,2)+'\n');await page.evaluate(()=>window.surface?.dispose()).catch(()=>{});await browser.close();await server.close();}
+ evidence.acceptance={originalVisible:true,requiredRemovalFailed:true,restoredOnSameBody:true,claim:'Required body presence and finiteness; authored sequence and retained screenshots qualify contour identity. Browser component proof, not installed or two-human acceptance.'};
+ await Promise.all(moduleReads);evidence.loadedModules=loadedModules;console.log(JSON.stringify(evidence));
+}finally{await Promise.allSettled(moduleReads);evidence.loadedModules=loadedModules;if(out)await writeFile(resolve(out,'acceptance.json'),JSON.stringify({...evidence,pageErrors},null,2)+'\n');await page.evaluate(()=>window.surface?.dispose()).catch(()=>{});await browser.close();await server.close();}

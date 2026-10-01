@@ -9,6 +9,7 @@ import {sessionStateLabel} from "./session";
 import {parseContextItems,removeContextItem,type ContextItem} from "../context/contextItems";
 import {DictationSession,type DictationOutcome,type DictationRefusal} from "../dictation/client";
 import {dictationCopy} from "../dictation/copy";
+import {renderMarkdown} from "../material/markdown";
 
 import "./encounter.css";
 /** Rendering and interaction only; AIKit owns transcript, consent and shared draft.
@@ -149,7 +150,7 @@ export function EncounterView({title,plane,onPlane,reading,status,draft,pending,
       {blocks?.map(block=>(block.kind==="thinking"||block.kind==="provider-notice"||block.kind==="tool"||block.kind==="permission")?<details className="encounter-thinking" data-kind={block.kind} key={block.id}><summary>{block.kind==="thinking"?"Thinking":block.kind==="tool"?"Tool activity":block.kind==="permission"?"Provider consent":"Provider notice"}</summary><div>{block.text}</div></details>
         :block.kind==="error"?<div key={block.id} className="encounter-turn encounter-error" data-kind="error"><span className="encounter-avatar" aria-hidden="true"><Glyph name="chat" size={12}/></span><div><strong>Provider turn failed</strong><p>{block.text}</p></div></div>
         :block.kind==="completed"&&plane==="Conversation"?null
-        :<div key={block.id} className={`encounter-turn encounter-${block.kind}`}><span className="encounter-avatar" aria-hidden="true">{block.kind==="user"?"Y":<Glyph name="chat" size={12}/>}</span><div><strong>{block.kind==="user"?"You":block.kind==="assistant"?(status?.provider?.label??"Assistant"):block.kind==="permission"?"Native permission requested":block.kind==="cancelled"?"Stopped":"Provider report"}</strong><p>{block.text}</p>{block.kind==="assistant"&&plane==="Conversation"&&onA2aSeed?<button className="encounter-a2a-seed" disabled={a2a?.busy} onClick={()=>onA2aSeed(block.text)}>Exchange over A2A</button>:null}</div></div>)}
+        :<div key={block.id} className={`encounter-turn encounter-${block.kind}`}><span className="encounter-avatar" aria-hidden="true">{block.kind==="user"?"Y":<Glyph name="chat" size={12}/>}</span><div><strong>{block.kind==="user"?"You":block.kind==="assistant"?(status?.provider?.label??"Assistant"):block.kind==="permission"?"Native permission requested":block.kind==="cancelled"?"Stopped":"Provider report"}</strong>{block.kind==="assistant"?<EncounterMessageBody text={block.text}/>:<p>{block.text}</p>}{block.kind==="assistant"&&plane==="Conversation"&&onA2aSeed?<button className="encounter-a2a-seed" disabled={a2a?.busy} onClick={()=>onA2aSeed(block.text)}>Exchange over A2A</button>:null}</div></div>)}
       {/* Named states, static: reading, refused before any reading, and an
         * empty conversation with the next action that actually exists. */}
       {!reading&&!error&&<p className="encounter-reading oi-note" role="status">Reading encounter…</p>}
@@ -203,10 +204,16 @@ export function EncounterView({title,plane,onPlane,reading,status,draft,pending,
  * things from two owner records — what is SELECTED (blocks in the draft, not
  * sent) and what was SENT (blocks in recorded user messages on this page) —
  * and offers no upload control, because no owner operation accepts one. */
+function EncounterMessageBody({text}:{text:string}){
+  // Use the application's source-preserving Markdown renderer. Native agent
+  // output stays untrusted text; rendering it must not fetch embedded assets.
+  const html=useMemo(()=>renderMarkdown(text,{resolveAsset:()=>"",images:false}),[text]);
+  return <div className="encounter-message-body" dangerouslySetInnerHTML={{__html:html}}/>;
+}
 function ContextLedger({draft,reading,editable,onDraft}:{draft:string;reading?:EncounterReading;editable:boolean;onDraft:(text:string)=>void}) {
   const selected=useMemo(()=>parseContextItems(draft),[draft]);
   const sent=useMemo(()=>(reading?.blocks??[]).filter(block=>block.kind==="user").flatMap(block=>parseContextItems(block.text).map(item=>({...item,blockId:block.id}))),[reading]);
-  if(!selected.length&&!sent.length)return <p className="encounter-context-ledger oi-note" data-selected="0" data-sent="0">No context attached — Context mode in a surface adds a selection to this draft.</p>;
+  if(!selected.length&&!sent.length)return <p className="encounter-context-ledger oi-note" data-selected="0" data-sent="0">Review prepared selections in Context before sending.</p>;
   const chip=(item:ContextItem,state:"selected"|"used",key:string,remove?:()=>void)=><span key={key} className="encounter-context-chip oi-chip" data-state={state} title={`${item.meta}\n\n${item.quote}`}><span className="encounter-context-chip-title">{item.title}</span>{item.revision&&<small>rev {item.revision.slice(0,8)}</small>}{remove&&<button className="oi-tool" aria-label={`Remove ${item.title} from the draft`} onClick={remove}><Glyph name="close" size={9}/></button>}</span>;
   return <div className="encounter-context-ledger" data-selected={selected.length} data-sent={sent.length} aria-label="Attached context">
     {selected.length>0&&<div className="encounter-context-row" data-context="selected"><span className="oi-eyebrow">Selected · not sent</span>{selected.map((item,index)=>chip(item,"selected",`s${index}`,editable?()=>onDraft(removeContextItem(draft,item)):undefined))}</div>}

@@ -62,6 +62,13 @@ export interface KernelOpCall {
  * so every outcome carries its receipts array — an operation that changed
  * nothing honestly shows an empty list. */
 function normaliseOutcome(outcome: KernelOutcome): KernelOutcome {
+  if (outcome.result === "hosted_native") {
+    const native = outcome.outcome;
+    // Native cursor belongs to (World, owner generation). Keep it inspectable
+    // without feeding it into this body's independent kernel event stream.
+    return {...native,receipts:[],native_owner:{world_ref:outcome.source_world_ref,
+      owner_generation:outcome.owner_generation,receipts:native.receipts??[]}};
+  }
   return { ...outcome, receipts: outcome.receipts ?? [] };
 }
 

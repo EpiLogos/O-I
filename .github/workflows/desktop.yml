@@ -86,6 +86,9 @@ jobs:
       - name: Enforce desktop architecture conformance and bounded debt
         working-directory: desktop/cradle
         run: node --test tests/conformance/*.test.mjs
+      - name: Prove native Encounter material rendering and source offsets
+        working-directory: desktop/cradle
+        run: node --experimental-strip-types --import ./tests/ts-register.mjs --test tests/encounter-markdown.test.mjs tests/canvas-editor-contract.test.mjs
       - name: Prove Expression projection through the declared native engine
         working-directory: desktop/cradle
         run: node tests/expression-engine.mjs
@@ -127,7 +130,9 @@ jobs:
         run: node tests/collection-browser.mjs
       - name: Prove Expression page placement and capture on one WebGL context
         working-directory: desktop/cradle
-        run: node tests/expression-stage-placement.mjs
+        run: |
+          node tests/expression-stage-placement.mjs
+          node tests/expression-stage-ascii.mjs
       - name: Prove shared Expression ownership and sleeping lifecycle
         working-directory: desktop/cradle
         env:
