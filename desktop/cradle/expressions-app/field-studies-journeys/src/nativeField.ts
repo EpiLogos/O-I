@@ -11,7 +11,7 @@ import type {FieldEngineAdapter} from './engine';
 const PLANET_NAMES=['Sun','Venus','Mercury','Moon','Saturn','Jupiter','Mars','Neptune','Pluto'];
 const esc=(v:unknown)=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]!));
 const when=(ms:number|null)=>ms==null?'—':new Date(ms).toISOString().replace('T',' ').replace(/\.\d+Z$/,' UTC');
-export function installNativeField(engine:FieldEngineAdapter,onResumeApplication:()=>void){
+export function installNativeField(engine:FieldEngineAdapter,onResumeApplication:()=>void,onNativeChanged?:()=>void){
  const port=new NativeChannel();
  const canRetain=typeof (engine as any).retainedTargetPort==='function';
  if(!canRetain){port.dispose();return null;}
@@ -290,7 +290,7 @@ export function installNativeField(engine:FieldEngineAdapter,onResumeApplication
  const modeChange=()=>{const reading=controller.reading,ref=query<HTMLSelectElement>('[name="native-mode"]').value;query<HTMLInputElement>('[name="native-damping"]').value=String(reading.domain?.m2.modes.find(mode=>mode.ref===ref)?.damping_per_second??0);};
  query('[name="native-mode"]').addEventListener('change',modeChange);
  panel.addEventListener('click',click);panel.addEventListener('input',range);
- controller.onChange=update;
+ controller.onChange=()=>{update();onNativeChanged?.();};
  const visibility=()=>{if(document.hidden)controller.hold('document hidden');};
  document.addEventListener('visibilitychange',visibility);
  const pagehide=()=>{void controller.dispose();};window.addEventListener('pagehide',pagehide);

@@ -459,7 +459,7 @@ pub fn sound(value: &Value) -> Result<(), String> {
 impl ExpressionProfile {
     pub fn validate(&self) -> Result<(), String> {
         if serde_json::to_vec(self).map_err(|e| e.to_string())?.len() > MAX_PROFILE_BYTES {
-            return Err("Expression profile exceeds 64 KiB".into());
+            return Err("Expression profile exceeds 2 MiB".into());
         }
         id(&self.profile_ref, "profile:")?;
         text(&self.title)?;

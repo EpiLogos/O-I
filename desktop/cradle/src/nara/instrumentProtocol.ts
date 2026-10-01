@@ -53,6 +53,7 @@ export interface InstrumentReturnState {
 }
 export type NaraInstrumentRequest =
   | {operation: 'coordinate'; request: import('./coordinateExpression').CoordinateRequest}
+  | {operation: 'source'; coordinate_ref:string; inventory?:{offset:number;limit:number}}
   | {operation: 'identity'; request: NaraIdentityRequest}
   | {operation: 'select_identity'; source: IdentitySource; input_revision: string}
   | {operation: 'release_identity'}
@@ -62,7 +63,7 @@ export type NaraInstrumentRequest =
   | {operation: 'epii_accept'; basis: InstrumentBasis; role: 'epii'; answer_block_id: number; focus_ref: string}
   | {operation:'act_inspect';basis:InstrumentBasis;role:'nara';answer_block_id:number}
   | {operation:'act_status';basis:InstrumentBasis;role:'nara'}
-  | {operation:'current_pin';basis:InstrumentBasis;role:'nara';sky_request:import('./identity/types').SkyRequest}
+  | ({operation:'current_pin';basis:InstrumentBasis;role:'nara'} & import('./identity/types').NativePersonalSkySource)
   | {operation:'current_read';basis:InstrumentBasis;role:'nara'}
   | {operation:'readiness';basis:InstrumentBasis;role:'nara'}
   | {operation:'m3';basis:InstrumentBasis;role:'nara';request:import('./nativeM3').M3Gesture}
@@ -89,4 +90,5 @@ export interface InstrumentInterruptionResult {
   cancellation_requested: boolean;
   voice_closed: boolean;
 }
-export type NaraInstrumentReply = import('./nativeM3').NativeM3Reading | import('./runtimeReadiness').RuntimeReadiness | import('./nativeCurrent').NativeCurrentReading | import('./nativeExpressiveAct').NativeActStatus | import('./nativeExpressiveAct').NativeActReview | import('./nativeExpressiveAct').NativeActEffect | import('./epiiTypes').NativeEpiiResult | import('./coordinateExpression').CoordinateExpressionResult | NaraIdentityResult | NaraInstrumentState | InstrumentReturnState | InstrumentVoiceResult | InstrumentInterruptionResult;
+export type NaraSourceReading = {schema:'ql.bimba-coordinate-content/v1'|'ql.bimba-inventory/v1';source_revision:string;registry_revision:string;[key:string]:unknown};
+export type NaraInstrumentReply = NaraSourceReading | import('./nativeM3').NativeM3Reading | import('./runtimeReadiness').RuntimeReadiness | import('./nativeCurrent').NativeCurrentReading | import('./nativeExpressiveAct').NativeActStatus | import('./nativeExpressiveAct').NativeActReview | import('./nativeExpressiveAct').NativeActEffect | import('./epiiTypes').NativeEpiiResult | import('./coordinateExpression').CoordinateExpressionResult | NaraIdentityResult | NaraInstrumentState | InstrumentReturnState | InstrumentVoiceResult | InstrumentInterruptionResult;

@@ -49,7 +49,8 @@ is not an authentication credential. EX1 creates no grants or Action store.
 
 ## Requests and revisions
 
-Read requests: `capabilities`, `list`, `inspect`.
+Read requests: `capabilities`, `list`, `inspect`, and revision-fenced
+`inspect_file` (Persistence and composition below).
 Creation: `create` (new ref), `open` (validated document), explicit `fork`.
 Draft edits: `edit { expression_ref, expected_revision, actor, changes[] }`.
 The whole edit is atomic. All targets, bounds and references validate before any
@@ -97,6 +98,75 @@ against a disclosed file location and expected file revision; it does not save
 bound native subjects. EX1 supports an existing ordinary Expression file;
 creating/adopting authored source remains a separate owner operation. Save failure
 preserves the dirty draft and the owner's exact result.
+
+The canonical `oi.expression/v1` Document remains full in native API responses,
+`export`, working state and recovery checkpoints. An ordinary Central Expression
+file may contain that legacy raw Document or the file-only lossless encoding
+`oi.expression-storage/v1`, owned by
+`desktop/cradle/kernel/src/expression_file.rs`:
+
+| Stored field | Meaning |
+|---|---|
+| `schema` | Exactly `oi.expression-storage/v1` |
+| `document` | Complete native Document JSON, with file-local references replacing selected repeated PNG `dataUrl` values |
+| `images[]` | Literal `{ref, data_url}` rows containing the exact original embedded PNG data URLs |
+| `expanded_document_sha256` | `sha256:<lowercase hex>` digest of the full restored Document's native compact typed serialization |
+
+Only a PNG value at a `dataUrl` property may become
+`{"schema":"oi.expression-image-ref/v1","ref":"sha256:<lowercase hex>"}`
+inside the stored Document. Its dictionary ref hashes the exact complete UTF8
+data URL, including media prefix and base64 spelling. Restoration changes no
+pixel, authored source, occurrence, profile, working Scene, saved reset material
+or native subject binding. JPEG/WebP and other non-interned images remain
+literal. These refs are local byte references, not asset identities, source
+coordinates or public addresses; `asset_binary_storage` remains unsupported.
+
+The final encoded UTF8 file, including legacy raw form, stays within Central's
+existing **4 MiB** bound. The full expanded native Document retains its existing
+**8 MiB** bound. Encoding first validates the full Document, then interns exact
+repeated PNG strings, with at most 4,096 dictionary rows; all remaining material
+stays literal. It may retain raw form when encoding offers no reduction. Neither
+limit is increased, and material is never omitted to meet a storage limit.
+
+Decoding checks encoded size and the typed envelope, verifies exact image
+digests, qualifies every reference and checks expanded JSON size before cloning
+repeated image strings. It then verifies the full native typed Document digest
+and runs ordinary Document validation, including its serialized-size bound.
+Missing, dangling, duplicate, unused, modified or forged image refs, duplicate
+JSON keys, unsupported schemas, incomplete envelopes, markers outside `dataUrl`,
+unsafe keys, NUL and excessive nesting refuse. Dictionary values must be literal
+PNG strings; reference-valued entries and recursive cycles are not admitted.
+Image and document digests prove byte integrity, not authorship, authentication
+or authority over subjects. Native typed serialization owns the expanded digest;
+browser JSON number spelling is not its definition.
+
+`inspect_file { location, expected_file_revision }` reads and decodes an ordinary
+Expression file without opening it, replacing a working draft, changing
+Expression revisions, selection or save bindings, or replaying a write. It
+returns the full validated Document with exact file location/revision metadata.
+A changed file returns `file_revision_conflict` without a decoded Document or
+Expression mutation. Frontend file comparisons, saved-artifact recovery and
+material previews use this native reader against their previously observed
+file revision. A successful inspection fences that read; later file operations
+still require their own current basis and ordinary owner checks.
+
+`open_file` accepts an optional `expected_file_revision` and, when supplied,
+checks it before opening or inserting the decoded Document. Hosted file opening,
+saved-artifact reopening and character opening carry their observed revision.
+Hosted file opening and saved-artifact reopening compare both the returned file
+location/revision and full decoded Document; character opening verifies its
+acknowledged file basis. Legacy callers may omit the optional field; a prior
+successful inspection does not itself fence an unfenced later open.
+
+`open_file`, save-destination admission, native save readback and reusable
+material discovery/loading decode before their normal Document checks. Save
+acceptance requires actual Central CAS and independent full decoded-Document
+equality at the acknowledged file revision. Encoded byte counts, successful
+transport or a valid digest alone do not establish save, reopen, rendered
+reception or installed acceptance. Generic Files retain the actual stored bytes;
+export and native Document consumers receive the full restored Document. An
+application without this decoder cannot open the envelope, so native and
+frontend file readers must be delivered together.
 
 The desktop retains private working copies through `expression_recovery`, a
 bounded native store under `$OI_HOME/desktop/expression-recovery`. The hosted
@@ -169,13 +239,22 @@ The temporary human proving entry is **System → Visuals → Compose**. It is n
 the finished product placement. The controls belong inside the fullscreen
 Expression experience, including Nara mode, using the existing engine
 Studio/toolbelt/Library UI. EX0 owns that integration and consumes this same
-application contract. This bounded material adapter exposes glyph,
-x/y/z, scale and share on at most ten formations per scene. Numeric LFO automation
-uses the accepted engine's own clock. The engine importer/exporter validates the
-projection and preserves entity IDs and automation targets across reordering.
-Document limits: 64 open Expressions, 64 scenes, 256 entity/relation bindings,
-256 changes per atomic edit, 512 KiB per document. This is deliberately bounded
-application state, not a query/store for an entire knowledge world.
+application contract. This material adapter exposes glyph, x/y/z, scale and share. Its earlier
+ten-formation/eight-pin window is superseded by the current Expressions engine
+`fieldModel` budget of 64 formations and 64 pins per resident page.
+`kernelDocumentBridge` uses those engine constants and a current resident-page
+limit of 32 entities (`PAGE_ENTITY_LIMIT`); 64/64 is the engine maximum, not a
+claim that 64 bodies appear in one adapter page. Paging retains the full semantic
+membership and never deletes document subjects. Numeric LFO automation uses the accepted
+engine's own clock. The engine importer/exporter validates the projection and
+preserves entity IDs and automation targets across reordering.
+
+Current native bounds are 64 open Expressions, 64 scenes, 2,048 entities,
+relations, representations and members of one scene, with 256 changes per atomic
+edit. The expanded Document is bounded at 8 MiB; the portable file at 4 MiB.
+The earlier 256-binding/512 KiB description is historical and does not govern
+current production. The semantic cardinality and resident draw budget remain
+separate: every required body must be accounted for in actual receiving proof.
 
 An explicit focus edit also moves the existing global focus to the bound native
 subject (or the Expression when unbound), emitting the existing FocusChanged
@@ -227,6 +306,22 @@ Expression. Library semantics are a collection/index view:
 collection, not the identity boundary) and the `index` request reads the same
 Expression refs with their collections, profiles and editions.
 
+The shared native profile catalog is distinct from each Document's four
+adoptions and the existing eight-step lineage bound. It admits up to 4,096
+profile refs (64 open Expressions with up to 64 definitions each), subject
+also to a 16 MiB aggregate bound over compact serialized typed profile values.
+The existing 2 MiB per-profile and 768 KiB rich-material limits remain. Native
+`capabilities.profiles` discloses the count, byte bound and accounting basis.
+This is a catalog, not an evicting cache: old authored versions, exact source
+revisions, parent definitions, adopted profiles and edition refs stay present.
+Definition replacement subtracts the old value before byte admission; an
+exact replay consumes no additional count or bytes. Count/byte, immutable
+revision and lineage refusals preserve the whole catalog and all Expression
+documents and emit no `expression_changed` event. No automatic eviction,
+registry clearing or profile-revision rewrite is part of this capacity repair.
+Capacity refusal remains explicit; this bound is not unlimited lifecycle or
+whole-world acceptance.
+
 **Asset admission + occurrence index (ES3A).** `asset_admit` indexes a real
 use: an `AdmittedAsset` (ref+revision/digest, kind, native source, rights,
 subject refs it may depict, tags/roles, fallback, family refs) with
@@ -249,6 +344,7 @@ existing Surface host with the canonical target ref preserved —
 `oi.expression-world-capabilities/v1`), and the desktop's own pane grammar —
 beside, full, detach, re-dock — is that host's placement mechanism, so a page
 opened from an Expression instrument lands as a real pane in the current
-arrangement's tree. Document limits are unchanged:
-64 Expressions, 64 scenes, 256 entity/relation bindings, 256 changes per
-atomic edit, 512 KiB per document.
+arrangement's tree. Document limits follow the current native bounds above: 64 Expressions,
+64 scenes, 2,048 semantic members per collection/scene, 256 changes per atomic
+edit, 8 MiB expanded Document and 4 MiB portable file. The original
+256-binding/512 KiB values are retained only as predecessor history.

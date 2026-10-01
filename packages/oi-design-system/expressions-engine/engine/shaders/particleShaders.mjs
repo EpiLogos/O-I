@@ -41,6 +41,7 @@ uniform float uColorContrast;
 uniform int uEntityCount;
 uniform float uConnectionStart;
 uniform sampler2D uConnectionMetadata;
+uniform float uConnectionRestOpacity;
 uniform float uEditHasSelection;
 uniform float uEditSelected[10];
 uniform float uEntityBounds[10];
@@ -257,7 +258,7 @@ void main() {
   bool connection = pIndex >= uConnectionStart;
   if (connection) {
     vec4 metadata = texture2D(uConnectionMetadata, uv);
-    vEditAlpha = metadata.z * ((uEditHasSelection > 0.5 && metadata.w < 0.5) ? 0.23 : 1.0);
+    vEditAlpha = metadata.z * (metadata.w > 0.5 ? 1.0 : uConnectionRestOpacity * (uEditHasSelection > 0.5 ? 0.23 : 1.0));
   }
   float tintW = (!connection && uEntityCount > 0) ? clamp(uEntityTintWeight[eIdx], 0.0, 1.0) : 0.0;
   vTinted = max(tintW, clamp(uFocusTintWeight, 0.0, 1.0));

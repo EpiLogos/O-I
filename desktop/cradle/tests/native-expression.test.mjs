@@ -7,7 +7,7 @@ import {pathToFileURL} from 'node:url';
 import {createHash} from 'node:crypto';
 import {build} from 'esbuild';
 import * as THREE from 'three';
-import {controlledFrame,ControlledAudio,ControlledOwner} from './native-expression-fixture.mjs';
+import {controlledFrame,ControlledAudio,ControlledOwner,ControlledSceneOwner} from './native-expression-fixture.mjs';
 const src=resolve('expressions-app/field-studies-journeys/src');
 const temp=await mkdtemp(join(tmpdir(),'native-expression-tests-'));
 await build({entryPoints:[join(src,'native-field/projection.ts'),join(src,'native-field/controller.ts')],bundle:true,platform:'node',format:'esm',outdir:temp,outExtension:{'.js':'.mjs'}});
@@ -19,6 +19,21 @@ function renderer(){
  const value={texWidth:2,texHeight:2,particleCount:4,targetA:texture(),targetB:texture(),sets:0,
   setTargetTextures(a,b){this.actualA=a;this.actualB=b;this.sets++;}};
  return{port:value,native:false,released:0,retainedTopology(){return{tex_width:2,tex_height:2,particle_count:4,slot_count:4};},retainedTargetPort(){return value;},setNativeDomain(v){this.native=v;},releaseRetainedField(){this.released++;},onRetainedRecoveryRequired(cb){this.callback=cb;return()=>{this.callback=null;};},checkpointRetainedField(){throw new Error('no GPU in controlled unit test');}};
+}
+function sparseRenderer(){
+ const authored=(offset)=>{
+  const data=new Float32Array(8*4);
+  for(let slot=0;slot<8;slot++)data.set([offset+slot,offset+slot+.25,offset+slot+.5,.1+slot/100],slot*4);
+  return new THREE.DataTexture(data,4,2,THREE.RGBAFormat,THREE.FloatType);
+ };
+ const targetA=authored(10),targetB=authored(30);
+ const snapshot=()=>({schema:'oi.retained-partition-snapshot/v1',scene_signature:'scene:1',
+  partition_signature:'scene:1|8|6|halo:0-2|torus:2-6',slot_count:8,particle_count:8,connection_start:6,
+  partitions:[{entity_ref:'halo',start:0,end:2},{entity_ref:'torus',start:2,end:6}],
+  authored_target_a:targetA.image.data.slice(),authored_target_b:targetB.image.data.slice()});
+ return{texWidth:4,texHeight:2,particleCount:8,targetA,targetB,sets:0,
+  readPartitionSnapshot:snapshot,
+  setTargetTextures(a,b){this.actualA=a;this.actualB=b;this.sets++;}};
 }
 const spec={units_per_metre:400,slots_a:[0,1,0,1],slots_b:[1,0,1,0]};
 const tick=()=>new Promise(r=>setTimeout(r,25));
@@ -41,6 +56,60 @@ test('producer disconnect, stale cursor, wrong identity and overflow cannot leav
  }
  assert.throws(()=>new NativeProjection(renderer().port,frame,{...spec,slots_a:[0]}),/correspondence/);
  p.dispose();assert.throws(()=>p.apply(frame),/disposed/);
+});
+test('sparse native target map replaces one exact entity partition and preserves authored and connection slots',()=>{
+ const port=sparseRenderer(),frame=controlledFrame();
+ const beforeA=[...port.targetA.image.data],beforeB=[...port.targetB.image.data];
+ const target_map={schema:'oi.native-target-map/v1',policy:'sparse-replace',
+  partition_signature:'scene:1|8|6|halo:0-2|torus:2-6',partitions:[{
+   entity_ref:'torus',target_a:{sample_identities:[0,1]},target_b:{sample_identities:[1,0]}
+  }]};
+ const projection=new NativeProjection(port,frame,{units_per_metre:400,target_map});
+ try{
+  const actualA=[...port.actualA.image.data],actualB=[...port.actualB.image.data];
+  for(const slot of [0,1,6,7]){
+   assert.deepEqual(actualA.slice(slot*4,slot*4+4),beforeA.slice(slot*4,slot*4+4));
+   assert.deepEqual(actualB.slice(slot*4,slot*4+4),beforeB.slice(slot*4,slot*4+4));
+  }
+  const negative=Math.fround(Math.fround(-.3)*400),positive=Math.fround(Math.fround(.3)*400);
+  assert.deepEqual([2,3,4,5].map(slot=>actualA[slot*4]),[negative,negative,positive,positive]);
+  assert.deepEqual([2,3,4,5].map(slot=>actualB[slot*4]),[positive,positive,negative,negative]);
+  assert.deepEqual(actualA.filter((_,i)=>i%4===3),beforeA.filter((_,i)=>i%4===3));
+  assert.deepEqual(actualB.filter((_,i)=>i%4===3),beforeB.filter((_,i)=>i%4===3));
+  projection.setScale(200);
+  const negativeHalf=Math.fround(Math.fround(-.3)*200),positiveHalf=Math.fround(Math.fround(.3)*200);
+  assert.deepEqual([2,3,4,5].map(slot=>port.actualA.image.data[slot*4]),[negativeHalf,negativeHalf,positiveHalf,positiveHalf]);
+  assert.equal(port.actualA.image.data[0],beforeA[0],'authored positions are already stage units and must not rescale');
+ }finally{projection.dispose();}
+ for(const invalid of [
+  {...target_map,partition_signature:'stale'},
+  {...target_map,partitions:[...target_map.partitions,{...target_map.partitions[0]}]},
+  {...target_map,partitions:[{...target_map.partitions[0],entity_ref:'missing'}]},
+  {...target_map,partitions:[{...target_map.partitions[0],target_a:{sample_identities:[0]}}]},
+ ])assert.throws(()=>new NativeProjection(sparseRenderer(),frame,{units_per_metre:400,target_map:invalid}));
+ assert.throws(()=>new NativeProjection(sparseRenderer(),frame,{...spec,target_map}),/either complete slots or a sparse target map/);
+});
+test('world compose gives the producer the atomic owner world and exact retained partition before GPU admission',async()=>{
+ const owner=new ControlledSceneOwner(),request=owner.request.bind(owner),port=sparseRenderer();let audioCalls=0;
+ const sky={schema:'ql.sky-snapshot/v1',snapshot_ref:'sha256:sky',receipt_unix_ms:7,bodies:[]};
+ const world={schema:'ql.scene-world/v1',basis:{event_ref:'sha256:sky',subject_ref:'identity:person:one'},sky};
+ owner.request=async packet=>{
+  if(packet.operation==='prepare_world')return{schema:'oi.native-expression-prepared-world/v1',source:{world,sky},binding:{}};
+  const reply=await request(packet);if(packet.operation==='compose')reply.source.world=world;return reply;
+ };
+ const renderer={native:false,retainedTopology(){return{tex_width:4,tex_height:2,particle_count:8,slot_count:8};},retainedTargetPort(){return port;},setNativeDomain(value){this.native=value;},releaseRetainedField(){},onRetainedRecoveryRequired(){return()=>{};},checkpointRetainedField(){throw new Error('no GPU');}};
+ const controller=new NativeFieldController(owner,renderer,()=>{audioCalls++;return new ControlledAudio();});let received;
+ try{
+  const prepared=await controller.prepareWorld({sky:{epoch:'2026-09-30T11:44:49Z'},world:{instance_ref:'expression:native:one',subject_ref:'identity:person:one'}});
+  assert.equal(prepared.source.sky.snapshot_ref,'sha256:sky');assert.equal(audioCalls,0,'preparation must stay quiet');
+  await controller.compose({skySnapshot:prepared.source.sky,world:{instance_ref:'expression:native:one',subject_ref:'identity:person:one'},
+   entityTargetBindings:async input=>{received=input;return{schema:'oi.native-target-map/v1',policy:'sparse-replace',partition_signature:input.partition.partition_signature,
+    partitions:[{entity_ref:'torus',target_a:{sample_identities:[0,1]},target_b:{sample_identities:[1,0]}}]};}});
+  assert.equal(owner.calls[0].request.sky_snapshot.snapshot_ref,'sha256:sky');assert.equal(audioCalls,1);
+  assert.equal(received.world.schema,'ql.scene-world/v1');assert.equal(received.partition.schema,'oi.retained-partition-snapshot/v1');
+  assert.equal(renderer.native,true);assert.equal(controller.reading.source.world.basis.event_ref,'sha256:sky');
+  assert.equal(port.actualA.image.data[0],port.targetA.image.data[0],'unmapped authored entity remains untouched');
+ }finally{await controller.dispose();}
 });
 test('real driver consumes controlled producer effects, then holds GPU/audio on disconnection rather than demo fallback',async()=>{
  const port=new ControlledOwner(),audio=new ControlledAudio(),r=renderer(),c=new NativeFieldController(port,r,()=>audio);
@@ -70,8 +139,24 @@ test('pause/hidden holds one existing driver; inspect returns complete producer 
 test('late open after unmount closes its real lease and cannot become a new renderer',async()=>{
  const port=new ControlledOwner(),r=renderer(),audio=new ControlledAudio();const request=port.request.bind(port);let release;
  const delay=new Promise(resolve=>release=resolve);port.request=async packet=>{const result=await request(packet);if(packet.operation==='open')await delay;return result;};
- const c=new NativeFieldController(port,r,()=>audio);const opening=c.connect('source.json','controlled:r1',48000);await tick();await c.dispose();release();await opening;
+ const c=new NativeFieldController(port,r,()=>audio);const opening=c.connect('source.json','controlled:r1',48000);await tick();const disposing=c.dispose();release();await Promise.all([opening,disposing]);
  assert.equal(port.closed,true);assert.equal(r.native,false);assert.equal(audio.state,'closed');
+});
+test('release during an awaited entity target map closes once and cannot repopulate the released lifetime',async()=>{
+ const owner=new ControlledSceneOwner(),port=sparseRenderer(),audio=new ControlledAudio();let resolveMap,mapStarted;
+ const started=new Promise(resolve=>mapStarted=resolve),pendingMap=new Promise(resolve=>resolveMap=resolve);
+ const world={schema:'ql.scene-world/v1',basis:{event_ref:'controlled:scene',subject_ref:'controlled:subject'},sky:{schema:'ql.sky-snapshot/v1',snapshot_ref:'sha256:sky',receipt_unix_ms:7,bodies:[]}};
+ const request=owner.request.bind(owner);owner.request=async packet=>{const reply=await request(packet);if(packet.operation==='compose')reply.source.world=world;return reply;};
+ const r={native:false,released:0,retainedTopology(){return{tex_width:4,tex_height:2,particle_count:8,slot_count:8};},retainedTargetPort(){return port;},setNativeDomain(value){this.native=value;},releaseRetainedField(){this.released++;},onRetainedRecoveryRequired(){return()=>{};},checkpointRetainedField(){throw new Error('no GPU');}};
+ const c=new NativeFieldController(owner,r,()=>audio);
+ const opening=c.compose({world:{instance_ref:'expression:native:race',subject_ref:'controlled:subject'},entityTargetBindings:async input=>{mapStarted(input);return pendingMap;}});
+ const mapped=await started;assert.equal(mapped.world.schema,'ql.scene-world/v1');
+ const releasing=c.release();
+ resolveMap({schema:'oi.native-target-map/v1',policy:'sparse-replace',partition_signature:mapped.partition.partition_signature,partitions:[{entity_ref:'torus',target_a:{sample_identities:[0,1]},target_b:{sample_identities:[1,0]}}]});
+ await Promise.all([opening,releasing]);
+ assert.equal(owner.calls.filter(packet=>packet.operation==='close').length,1,'the released owner receives exactly one close');
+ assert.equal(owner.closed,true);assert.equal(audio.state,'closed');assert.equal(r.native,false);assert.equal(r.released,1);
+ assert.equal(c.status,'manual');assert.equal(c.reading.native,null);assert.equal(c.inspectTargets(),null);
 });
 test('vendored clients retain exact accepted QL byte identities, rather than another implementation',async()=>{
  const base=join(src,'native-field/ql'),provenance=JSON.parse(await readFile(join(base,'PROVENANCE.json'),'utf8'));
@@ -118,7 +203,7 @@ test('late failed open from a released epoch cannot destroy a later successful c
  const wait=new Promise((_,reject)=>fail=reject);
  owner.request=async command=>{if(command.operation==='open'&&first){first=false;return wait;}return request(command);};
  const c=new NativeFieldController(owner,r,()=>new ControlledAudio()),opening=c.connect('first.json','r1',48000);
- await tick();await c.release();await c.connect('second.json','r2',48000);fail(new Error('old transport failed'));await opening;
+ await tick();const releasing=c.release();fail(new Error('old transport failed'));await Promise.all([opening,releasing]);await c.connect('second.json','r2',48000);
  try{assert.equal(c.status,'following');assert.equal(r.native,true);assert.equal(owner.closed,false);}
  finally{await c.dispose();}
 });

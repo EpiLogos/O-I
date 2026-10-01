@@ -1,3 +1,4 @@
+import { MAX_FORMATIONS } from "./fieldModel.mjs";
 /**
  * @license
  * SPDX-License-Identifier: Apache-2.0
@@ -9,6 +10,69 @@ import {
   velocitySimulationShader
 } from "./shaders/simulationShaders.mjs";
 class GPGPUSimulator {
+  admitStationaryPositions(targets, ranges) {
+    if (!(targets instanceof Float32Array) || targets.length !== this.texWidth * this.texHeight * 4 || !ranges.length || ranges.length > MAX_FORMATIONS) throw Error("Invalid stationary position admission.");
+    let previousEnd = 0;
+    for (const range of ranges) {
+      if (!Number.isInteger(range.start) || !Number.isInteger(range.end) || range.start < previousEnd || range.end <= range.start || range.end > this.particleCount) throw Error("Invalid stationary particle range.");
+      for (let offset = range.start * 4; offset < range.end * 4; offset++) {
+        if (!Number.isFinite(targets[offset])) throw Error("Non-finite stationary target.");
+      }
+      previousEnd = range.end;
+    }
+    if (this.currentPosTarget === this.nextPosTarget) throw Error("Stationary admission cannot alias its resident target.");
+    const texture = new THREE.DataTexture(targets, this.texWidth, this.texHeight, THREE.RGBAFormat, THREE.FloatType);
+    texture.minFilter = texture.magFilter = THREE.NearestFilter;
+    texture.needsUpdate = true;
+    const material = new THREE.ShaderMaterial({
+      vertexShader: simulationVertexShader,
+      fragmentShader: (
+        /* glsl */
+        `
+        uniform sampler2D uResident;
+        uniform sampler2D uTargets;
+        uniform float uWidth;
+        uniform int uRangeCount;
+        uniform vec2 uRanges[${MAX_FORMATIONS}];
+        varying vec2 vUv;
+        void main() {
+          float index = floor(gl_FragCoord.y) * uWidth + floor(gl_FragCoord.x);
+          bool selected = false;
+          for (int i = 0; i < ${MAX_FORMATIONS}; i++) {
+            if (i < uRangeCount && index >= uRanges[i].x && index < uRanges[i].y) selected = true;
+          }
+          gl_FragColor = selected ? texture2D(uTargets,vUv) : texture2D(uResident,vUv);
+        }
+      `
+      ),
+      uniforms: {
+        uResident: { value: this.currentPosTarget.texture },
+        uTargets: { value: texture },
+        uWidth: { value: this.texWidth },
+        uRangeCount: { value: ranges.length },
+        uRanges: { value: Array.from({ length: MAX_FORMATIONS }, (_, i) => new THREE.Vector2(ranges[i]?.start ?? 0, ranges[i]?.end ?? 0)) }
+      },
+      depthTest: false,
+      depthWrite: false,
+      toneMapped: false,
+      blending: THREE.NoBlending
+    });
+    const previousTarget = this.renderer.getRenderTarget(), previousMaterial = this.quadMesh.material;
+    try {
+      this.quadMesh.material = material;
+      this.renderer.setRenderTarget(this.nextPosTarget);
+      this.renderer.render(this.quadScene, this.quadCamera);
+      const previousPositions = this.currentPosTarget;
+      this.currentPosTarget = this.nextPosTarget;
+      this.nextPosTarget = previousPositions;
+    } finally {
+      this.quadMesh.material = previousMaterial;
+      this.renderer.setRenderTarget(previousTarget);
+      material.dispose();
+      texture.dispose();
+    }
+  }
+
   renderer;
   texWidth;
   texHeight;

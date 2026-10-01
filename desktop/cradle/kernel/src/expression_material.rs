@@ -85,9 +85,8 @@ impl Loaded {
 pub fn read_file(client: &CentralClient, file_ref: &str) -> Result<Loaded, String> {
     let location = files::resolve(client, file_ref)?;
     let reading = files::read(client, &location)?;
-    let document: Document = serde_json::from_str(&reading.content)
+    let document = crate::expression_file::decode(&reading.content)
         .map_err(|e| format!("Material {file_ref} is not an Expression document: {e}"))?;
-    document.validate()?;
     Ok(Loaded {
         document,
         file_ref: Some(location.ref_id),
@@ -156,10 +155,7 @@ pub fn list(
                     continue;
                 }
             };
-            let document = match serde_json::from_str::<Document>(&reading.content)
-                .map_err(|e| e.to_string())
-                .and_then(|d| d.validate().map(|_| d))
-            {
+            let document = match crate::expression_file::decode(&reading.content) {
                 Ok(document) => document,
                 Err(error) => {
                     unreadable.push(json!({"file_ref": entry.location.ref_id, "error": error}));

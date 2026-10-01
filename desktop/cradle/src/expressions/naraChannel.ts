@@ -4,6 +4,7 @@
 import {kernelOp} from '../kernel/bridge';
 import {validateCoordinateExpression} from '../nara/coordinateExpression';
 import {validateRuntimeReadiness} from '../nara/runtimeReadiness';
+import {readNativePersonalSkyInput} from '../nara/nativeSkyInput';
 import type {KernelTransportStatus} from '../kernel/types';
 import {encounter, type EncounterReading, type EncounterStatus} from '../encounter/client';
 import {listFlowInstances, readFlowInstance, type FlowInstance, type FlowInstanceRow} from '../flow/instances';
@@ -69,10 +70,23 @@ function request(value: unknown): NaraInstrumentRequest {
   if (new TextEncoder().encode(JSON.stringify(value)).length > (isCapture ? 13 * 1024 * 1024 : 2 * 1024 * 1024)) throw new Error('The Nara request exceeds its bounded input size.');
   const v = object(value);
   switch (v.operation) {
+    case 'source': {
+      fields(v,['operation','coordinate_ref','inventory']);
+      const coordinate_ref=text(v.coordinate_ref,'exact source reference');
+      if(v.inventory===undefined)return {operation:'source',coordinate_ref};
+      const page=object(v.inventory);fields(page,['offset','limit']);
+      if(!Number.isSafeInteger(page.offset)||Number(page.offset)<0||!Number.isSafeInteger(page.limit)||Number(page.limit)<1||Number(page.limit)>256)throw Error('Source inventory needs an existing offset and 1–256 records.');
+      return {operation:'source',coordinate_ref,inventory:{offset:Number(page.offset),limit:Number(page.limit)}};
+    }
     case 'coordinate': {
-      fields(v,['operation','request']);const inner=object(v.request);fields(inner,['coordinate_ref','face']);
+      fields(v,['operation','request']);const inner=object(v.request);fields(inner,['coordinate_ref','face','include_content','related_coordinates','inventory']);
       if(inner.face!=='bimba'&&inner.face!=='pratibimba')throw Error('Choose a native coordinate face.');
-      return {operation:'coordinate',request:{coordinate_ref:text(inner.coordinate_ref,'coordinate reference'),face:inner.face}};
+      if(inner.include_content!==undefined&&typeof inner.include_content!=='boolean')throw Error('Full source disclosure must be an explicit boolean.');
+      let related_coordinates:string[]|undefined;
+      if(inner.related_coordinates!==undefined){if(!Array.isArray(inner.related_coordinates)||inner.related_coordinates.length>63)throw Error('Choose at most 63 related native coordinates.');related_coordinates=inner.related_coordinates.map(ref=>text(ref,'related coordinate'));}
+      let inventory:{offset:number;limit:number}|undefined;
+      if(inner.inventory!==undefined){const page=object(inner.inventory);fields(page,['offset','limit']);if(!Number.isSafeInteger(page.offset)||Number(page.offset)<0||!Number.isSafeInteger(page.limit)||Number(page.limit)<1||Number(page.limit)>256)throw Error('Source inventory needs an existing offset and 1–256 records.');inventory={offset:Number(page.offset),limit:Number(page.limit)};}
+      return {operation:'coordinate',request:{coordinate_ref:text(inner.coordinate_ref,'coordinate reference'),face:inner.face,...(inner.include_content!==undefined?{include_content:inner.include_content}:{}),...(related_coordinates?{related_coordinates}:{}),...(inventory?{inventory}:{})}};
     }
     case 'identity': {
       fields(v, ['operation', 'request']); const inner = object(v.request);
@@ -88,8 +102,8 @@ function request(value: unknown): NaraInstrumentRequest {
           break;
         case 'transit': fields(inner,['operation','request']); object(inner.request); break;
         case 'personal_current':
-          fields(inner,['operation','source_ref','expected_revision','sky_request']);
-          text(inner.source_ref,'saved identity source');text(inner.expected_revision,'saved source revision');object(inner.sky_request);break;
+          fields(inner,['operation','source_ref','expected_revision','sky_request','sky_snapshot','snapshot_purpose']);
+          text(inner.source_ref,'saved identity source');text(inner.expected_revision,'saved source revision');readNativePersonalSkyInput(inner);break;
         default: throw new Error('Unsupported native identity operation.');
       }
       return {operation: 'identity', request: inner as unknown as NaraIdentityRequest};
@@ -107,7 +121,7 @@ function request(value: unknown): NaraInstrumentRequest {
         : v.operation === 'act_inspect' ? ['answer_block_id']
         : v.operation === 'act_focus' ? ['answer_block_id','target_ref']
         : v.operation === 'act_restore' ? ['act_ref','expected_revision']
-        : v.operation === 'current_pin' ? ['sky_request']
+        : v.operation === 'current_pin' ? ['sky_request','sky_snapshot','snapshot_purpose']
         : v.operation === 'return_inspect' ? ['answer_block_id']
         : v.operation === 'return_flow_read' ? ['review_ref', 'flow_ref']
         : v.operation === 'return_flow' ? ['review_ref', 'flow_ref', 'expected_revision']
@@ -143,7 +157,7 @@ function request(value: unknown): NaraInstrumentRequest {
         return {operation:'m3',basis,role:'nara',request:inner as unknown as import('../nara/nativeM3').M3Gesture};
       }
       if(v.operation==='current_read')return {operation:'current_read',basis,role:'nara'};
-      if(v.operation==='current_pin')return {operation:'current_pin',basis,role:'nara',sky_request:object(v.sky_request) as unknown as import('../nara/identity/types').SkyRequest};
+      if(v.operation==='current_pin')return {operation:'current_pin',basis,role:'nara',...readNativePersonalSkyInput(v)};
       if(v.operation==='act_inspect')return {operation:'act_inspect',basis,role:'nara',answer_block_id:positiveId(v.answer_block_id)};
       if(v.operation==='act_focus')return {operation:'act_focus',basis,role:'nara',answer_block_id:positiveId(v.answer_block_id),target_ref:text(v.target_ref,'cited native focus')};
       if(v.operation==='act_restore')return {operation:'act_restore',basis,role:'nara',act_ref:text(v.act_ref,'native expressive act'),expected_revision:positiveId(v.expected_revision)};
@@ -213,6 +227,13 @@ export function relayNaraChannel(frame: HTMLIFrameElement, transport: KernelTran
   const loaded = () => {epoch++; release(); calculated.clear(); seen.clear(); mutating = false; announce();};
   const execute = async (r: NaraInstrumentRequest, requireEpoch: () => void): Promise<NaraInstrumentReply> => {
     requireEpoch();
+    if(r.operation==='source'){
+      const response=await kernelOp(transport,{op:'nara_coordinate',request:{coordinate_ref:r.coordinate_ref,face:'bimba',source_only:true,...(r.inventory?{inventory:r.inventory}:{})}});requireEpoch();
+      if(response.error||response.outcome?.result!=='nara_coordinate')throw Error(response.error??'The complete shared source owner did not return a reading.');
+      const reading=response.outcome.data as unknown as import('../nara/instrumentProtocol').NaraSourceReading;
+      if(!['ql.bimba-coordinate-content/v1','ql.bimba-inventory/v1'].includes(reading?.schema)||!reading.source_revision||!reading.registry_revision)throw Error('The native source owner returned an unsupported source reading.');
+      return reading;
+    }
     if(r.operation==='coordinate'){
       const response=await kernelOp(transport,{op:'nara_coordinate',request:r.request});requireEpoch();
       if(response.error||response.outcome?.result!=='nara_coordinate')throw Error(response.error??'The native coordinate owner did not return a reading.');
@@ -337,7 +358,7 @@ export function relayNaraChannel(frame: HTMLIFrameElement, transport: KernelTran
         person_ref:identity.reading.person_ref,nara_ref:identity.reading.nara_ref,
         expression_ref:expression.expression_ref,role:'nara'};
       const request:import('../nara/nativeCurrent').NativeCurrentRequest=r.operation==='current_pin'
-        ?{operation:'pin',binding,sky_request:r.sky_request}:{operation:'read',binding};
+        ?{operation:'pin',binding,...readNativePersonalSkyInput(r)}:{operation:'read',binding};
       requireCurrent();const reply=await kernelOp(transport,{op:'nara_current',project,request});requireCurrent();
       if(reply.error||reply.outcome?.result!=='nara_current')throw Error(reply.error??'The native personal current owner did not answer.');
       return reply.outcome.data;
@@ -502,7 +523,7 @@ export function relayNaraChannel(frame: HTMLIFrameElement, transport: KernelTran
       // Reads, interruption and release remain available during native work.
       // Release invalidates the selection immediately; outstanding operations
       // must pass their current-selection guard before publishing a result.
-      const changes = r.operation !== 'act_status' && r.operation !== 'current_read' && r.operation !== 'act_inspect' && r.operation !== 'epii_inspect' && r.operation !== 'coordinate' && r.operation !== 'read' && r.operation !== 'interrupt' && r.operation !== 'release_identity'
+      const changes = r.operation !== 'act_status' && r.operation !== 'current_read' && r.operation !== 'act_inspect' && r.operation !== 'epii_inspect' && r.operation !== 'coordinate' && r.operation !== 'source' && r.operation !== 'read' && r.operation !== 'interrupt' && r.operation !== 'release_identity'
         && !(r.operation === 'voice' && (r.request.operation === 'close' || r.request.operation === 'read'))
         && !(r.operation === 'm3' && r.request.operation === 'read')
         && !(r.operation === 'identity' && ['list', 'open'].includes(r.request.operation));

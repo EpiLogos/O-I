@@ -41,6 +41,27 @@ carrying one optional block on the document:
 }
 ```
 
+Ordinary-file encoding follows
+[Expression application v1 — Persistence and composition](EXPRESSION-APPLICATION-V1.md#persistence-and-composition).
+A reusable material file may be a legacy raw native Document or the lossless
+file-only `oi.expression-storage/v1` envelope. Native `material_list` and
+`expression_material::read_file` decode before Document/reuse-kind validation;
+character previews use the side-effect-free, revision-fenced `inspect_file`
+reader. Discovery, grafting, state/gesture selection, act performance and replay
+receive the same complete `oi.expression/v1` Document and exact original
+Central file ref/revision. File-local PNG markers are never role slots, native
+assets, source identities or renderer inputs.
+
+Exact embedded PNG interning preserves all source, layers, sequences, sound,
+profile grammar, working Scene and saved reset material. The encoded file
+remains bounded at 4 MiB and its full expanded native Document at 8 MiB. Invalid,
+missing, duplicate, unused, forged or cyclic image references, bad digests or
+schemas, unsafe/incomplete data and over-budget expansion refuse through the
+same native decoder. An unreadable material is disclosed as unreadable rather
+than silently dropped or replaced. A decoded material reading or codec test
+does not establish actual graft/act lifecycle, rendered reception or installed
+acceptance; those operations retain their own source-bound proofs.
+
 - Kernel: `Document.reuse: Option<Reuse>` (serde default, skip if none) and one
   new change `{"change":"reuse_set","reuse":{…}}` / `{"change":"reuse_clear"}`.
 - **Roles are one mechanism.** A role slot is a placeholder in the saved Scene

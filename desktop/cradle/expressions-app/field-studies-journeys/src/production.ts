@@ -26,6 +26,8 @@ class EmbeddedProductionAdapter implements FieldEngineAdapter {
  private connections:ExpressionConnectionLayer|null=null;
  private connectionRows:readonly ConnectionBinding[]|undefined;
  private selectedConnection:string|null|undefined;
+ private connectionEmphasis='';
+ private sourceBodyPicking=false;
  private width=innerWidth;private height=innerHeight;private dpr=devicePixelRatio||1;
  private dirty=false;private signature='';private sceneId='';private target:PointCloudConfig|null=null;
  private from:PointCloudConfig|null=null;private transitionStart=0;private duration=0;
@@ -44,7 +46,8 @@ class EmbeddedProductionAdapter implements FieldEngineAdapter {
    this.nativeConfigs.set(config,result);}
   return result;
  }
- private contextLost=false;private seedRecoveredSources=false;private restoredClock=false;
+ private contextLost=false;private seedRecoveredSources=false;private restoredClock=false;private allocationRestSeed=false;
+ private stationaryAdmissionKey='';
  private lost=(event:Event)=>{event.preventDefault();this.contextLost=true;this.dirty=true;};
  constructor(readonly canvas:HTMLCanvasElement){canvas.addEventListener('webglcontextlost',this.lost);}
 
@@ -54,7 +57,23 @@ class EmbeddedProductionAdapter implements FieldEngineAdapter {
   const sig=frame.authoringRevision===undefined?JSON.stringify(renderScene):frame.scene.id+':'+frame.authoringRevision;
   if(sig!==this.signature){
    const config=toNativeConfig(frame.scene);
-   if(this.engine&&this.sceneId!==frame.scene.id){this.duration=frame.delta>0?frame.scene.transition:0;this.from=this.duration>0?this.evaluated:null;this.transitionStart=this.engine.inspectState().simTime;}
+   // A material adoption can repartition the same unplayed Scene. Its resident
+   // ranges then belong to the old allocation even though all body IDs remain.
+   // Reuse the existing source-ready initial-rest admission, before any native
+   // follow or physics step. Playing edits retain their resident continuity.
+   const allocation=(value:PointCloudConfig|null)=>JSON.stringify([value?.particleCount,value?.entities?.filter(e=>e.kind==='formation'&&e.enabled).map(e=>[e.id,e.share])]);
+   const actual=this.engine?.inspectState();
+   if(this.engine&&this.sceneId===frame.scene.id&&!this.nativeDomain&&frame.delta===0&&actual?.simTime===0&&actual.steps===0&&allocation(this.target)!==allocation(config)){
+    this.seedRecoveredSources=true;this.restoredClock=true;this.allocationRestSeed=true;
+   }
+   if(this.engine&&this.sceneId!==frame.scene.id){
+    this.allocationRestSeed=false;
+    this.duration=frame.delta>0?frame.scene.transition:0;this.from=this.duration>0?this.evaluated:null;this.transitionStart=this.engine.inspectState().simTime;
+    // A newly opened held Scene must encounter its own bodies before Play.
+    // Wait for its actual image sources, then admit their baked targets once.
+    // Camera/parameter edits and playing transitions retain resident motion.
+    if(frame.delta===0){this.seedRecoveredSources=true;this.restoredClock=true;}
+   }
    this.target=config;this.signature=sig;this.sceneId=frame.scene.id;
   }
   const target=this.target!;
@@ -80,6 +99,7 @@ class EmbeddedProductionAdapter implements FieldEngineAdapter {
  }
  needsRender(){return this.dirty;}
  render(frame:EngineFrame){
+  this.sourceBodyPicking=frame.sourceBodyPicking===true;
   this.dirty=false;
   if(this.contextLost)throw new Error('GPU context was lost. Your expression is retained. Restore the field explicitly; its physical state must be reseeded.');
   const config=this.nativeConfig(this.configuration(frame));
@@ -87,15 +107,40 @@ class EmbeddedProductionAdapter implements FieldEngineAdapter {
   else if(config!==this.applied)this.engine.replaceConfig(config);
   this.engine.setForceEmitterProjection(frame.forceEmitterProjection??null);this.engine.setLocalizedResonanceProjection(frame.localizedResonanceProjection??null);this.engine.setFormationGeometryProjection(frame.formationGeometryProjection??null);
   if(config!==this.applied){this.syncSources(frame.scene);this.soundScene=frame.scene.entities.some(e=>e.sound?.enabled)?frame.scene:null;}this.applied=config;
-  if(frame.connections!==this.connectionRows||frame.selectedConnection!==this.selectedConnection){
+  const connectionEmphasis=JSON.stringify([frame.connectionFocusIds??[],frame.connectionRestOpacity??1]);
+  if(frame.connections!==this.connectionRows||frame.selectedConnection!==this.selectedConnection||connectionEmphasis!==this.connectionEmphasis){
    this.connectionRows=frame.connections;this.selectedConnection=frame.selectedConnection;
-   this.connections?.configure(frame.connections??[],frame.selectedConnection?[frame.selectedConnection]:[]);
+   this.connectionEmphasis=connectionEmphasis;
+   const focus=new Set(frame.connectionFocusIds??[]);
+   const emphasized=(frame.connections??[]).filter(row=>row.binding_ref===frame.selectedConnection||focus.has(row.from_entity_ref)||focus.has(row.to_entity_ref)).map(row=>row.binding_ref);
+   this.connections?.configure(frame.connections??[],emphasized,frame.connectionRestOpacity??1);
   }
   this.engine.setSelection(frame.selectedIds);this.engine.setGridMode(frame.scaffold??'off');
   const {a,b}=basis(frame.camera),o=stageCentre(this.width,this.height);
   this.engine.setHostView({width:this.width,height:this.height,pixelRatio:this.dpr,originX:o.x+frame.camera.panX,originY:o.y+frame.camera.panY,pixelsPerUnit:stageScale(this.width,this.height)*frame.camera.zoom/WORLD_SCALE,right:a,up:b});
   this.engine.setHostPointer(frame.pointer.active,{x:frame.pointer.world.x*WORLD_SCALE,y:frame.pointer.world.y*WORLD_SCALE,z:frame.pointer.world.z*WORLD_SCALE},frame.delta);
-  this.engine.advance(frame.delta);if(this.seedRecoveredSources&&Object.values(this.sourceStatus).every(v=>v.includes('source active'))){if(this.sources.size||this.restoredClock)this.engine.seedCurrentTargets();this.seedRecoveredSources=false;this.restoredClock=false;this.engine.advance(0);}
+  // Source decoding is asynchronous. A correction scheduled at initial rest
+  // loses that authority if Play/native follow starts before decoding ends.
+  // Cancel its pending reset before any step; never seed later into live motion.
+  if(this.allocationRestSeed){
+   const actual=this.engine.inspectState();
+   if(this.nativeDomain||frame.delta!==0||actual.simTime!==0||actual.steps!==0){
+    this.seedRecoveredSources=false;this.restoredClock=false;this.allocationRestSeed=false;
+    this.sourceStatus['material-adoption']='Initial allocation admission was interrupted; reopen the saved world at rest.';
+   }
+  }
+  this.engine.advance(frame.delta);if(this.seedRecoveredSources&&Object.values(this.sourceStatus).every(v=>v.includes('source active'))){if(this.sources.size||this.restoredClock)this.engine.seedCurrentTargets();this.seedRecoveredSources=false;this.restoredClock=false;this.allocationRestSeed=false;this.engine.advance(0);}
+  const stationary=frame.stationaryFormationAdmission;
+  if(!stationary)this.stationaryAdmissionKey='';
+  else if(frame.delta===0&&!this.seedRecoveredSources&&Object.values(this.sourceStatus).every(v=>v.includes('source active'))){
+   const fence=this.engine.stationaryFormationAdmissionState();
+   const key=frame.scene.id+':'+stationary.sourceRevision+':'+fence.partition_signature;
+   if(key!==this.stationaryAdmissionKey){
+    this.engine.admitStationaryFormations({entity_ids:stationary.entityIds,expected_revision:fence.revision,
+     partition_signature:fence.partition_signature,source_revision:stationary.sourceRevision});
+    this.stationaryAdmissionKey=key;
+   }
+  }
   this.evaluated=this.engine.getEvaluation().config;
   this.followSound(frame);
  }
@@ -109,7 +154,26 @@ class EmbeddedProductionAdapter implements FieldEngineAdapter {
   const focus=scene.composition.focus==='travelling'?this.engine?.getCompositionTelemetry().focus:null;
   this.entitySound.sync({entities:scene.entities,field:frame.scene.field},activeFromFocus(focus));
  }
- hitEntity(x:number,y:number){return this.connections?.pickEntity(x,y)??null;}
+ hitEntity(x:number,y:number){
+  if(!this.sourceBodyPicking||!this.engine)return this.connections?.pickEntity(x,y)??null;
+  // This read never steps or seeds the owner. Wide rings and image/glyph
+  // bodies can share an origin; a centre-only hit would select an unrelated
+  // occurrence. Use the same resident GPU positions and native partitions
+  // that the current field renders, keeping semantic identity on that body.
+  const resident=this.engine.inspectState(true),positions=resident.positions;
+  const enabled=new Set(this.engine.getEvaluation().config.entities?.filter(e=>e.enabled!==false).map(e=>e.id)??[]);
+  let nearest:string|null=null,distance=8;
+  for(const partition of resident.partitions){
+   if(!enabled.has(partition.entityId))continue;
+   for(let i=partition.start;i<partition.end;i++){
+    const offset=i*4;if(positions[offset+3]<=0)continue;
+    const p=this.engine.projectWorldToScreen(positions[offset],positions[offset+1],positions[offset+2]);
+    if(!p.visible)continue;const gap=Math.hypot(x-p.x,y-p.y);
+    if(gap<distance){distance=gap;nearest=partition.entityId;}
+   }
+  }
+  return nearest;
+ }
  hitConnection(x:number,y:number){return this.connections?.hitTest(x,y)??null;}
  inspectConnections(){return { ...this.connections?.inspect(),paths:this.connections?.paths.map(path=>({binding_ref:path.binding.binding_ref,points:path.points.map(p=>this.engine?.projectWorldToScreen(p.x,p.y,p.z))}))??[]};}
  transportState(){return this.engine?.getTransportState();}

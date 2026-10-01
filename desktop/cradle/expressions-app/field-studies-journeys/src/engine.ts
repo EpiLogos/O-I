@@ -4,11 +4,17 @@ import type {ConnectionBinding} from '../../../../../packages/oi-design-system/e
 import {Camera} from './camera.js';
 /** All document writes belong to the shell. Adapters never create their own clock or UI. */
 export interface EngineFrame {
+ /** Already-qualified native readback; only these held bodies receive its baked targets. */
+ stationaryFormationAdmission?:{sourceRevision:string;entityIds:readonly string[]};
  formationGeometryProjection?:import('../../src/engine/formationGeometryProjection').FormationGeometryProjection|null;
  localizedResonanceProjection?:import('../../src/engine/localizedResonanceProjection').LocalizedResonanceProjection|null;
  forceEmitterProjection?:import('../../src/engine/forceRuntime').ForceEmitterProjection|null;
  entitySoundProjection?:(scene:Readonly<Scene>)=>Readonly<Scene>;
  connections?:readonly ConnectionBinding[];selectedConnection?:string|null;
+ /** Presentation emphasis retains every exact native relation and its hit path. */
+ connectionFocusIds?:ReadonlyArray<string>;connectionRestOpacity?:number;
+ /** Pick represented glyphs/rings from their resident body, not coincident centres. */
+ sourceBodyPicking?:boolean;
  scene:Readonly<Scene>;scaffold?:'off'|'axis'|'grid';authoringRevision?:number;simTime:number;delta:number;params:Readonly<Record<string,number>>;
  camera:Readonly<Camera>;pointer:{active:boolean;world:Vec3};selectedIds:ReadonlyArray<string>;
 }

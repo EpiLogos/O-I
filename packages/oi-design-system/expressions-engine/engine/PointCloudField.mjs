@@ -1,3 +1,4 @@
+import { MAX_FORMATIONS } from "./fieldModel.mjs";
 import { validateTransport } from "./transportState.mjs";
 /**
  * @license
@@ -186,6 +187,39 @@ const DEFAULT_CONFIG = {
   positioning: "absolute"
 };
 class PointCloudField {
+  stationaryAdmissionRevision = 0;
+  lastStationaryAdmission = "";
+  stationaryFormationAdmissionState() {
+    return { revision: this.stationaryAdmissionRevision, partition_signature: JSON.stringify({
+      particleCount: this.simulator.particleCount,
+      texWidth: this.simulator.texWidth,
+      texHeight: this.simulator.texHeight,
+      partitions: this.entities.getPartitions(),
+      bakes: this.entities.bakeGeneration,
+      formations: this.formations(),
+      simTime: this.simTime
+    }) };
+  }
+  admitStationaryFormations(request) {
+    const actual = this.stationaryFormationAdmissionState();
+    if (!request || request.expected_revision !== actual.revision || request.partition_signature !== actual.partition_signature || typeof request.source_revision !== "string" || !request.source_revision.trim() || request.source_revision.length > 1024 || !Array.isArray(request.entity_ids) || !request.entity_ids.length || request.entity_ids.length > MAX_FORMATIONS || new Set(request.entity_ids).size !== request.entity_ids.length) throw Error("Stale or invalid stationary formation admission.");
+    const enabled = new Set(this.formations().map((entity) => entity.id)), partitions = this.entities.getPartitions();
+    const ranges = request.entity_ids.map((id) => {
+      const partition = partitions.find((value) => value.entityId === id);
+      if (typeof id !== "string" || !enabled.has(id) || !partition || partition.end <= partition.start) {
+        throw Error("The stationary receiving body is missing, disabled or empty.");
+      }
+      return { start: partition.start, end: partition.end };
+    }).sort((a, b) => a.start - b.start);
+    const key = JSON.stringify([request.source_revision, request.partition_signature, [...request.entity_ids].sort()]);
+    if (key === this.lastStationaryAdmission) throw Error("This stationary source revision is already received.");
+    this.simulator.admitStationaryPositions(this.entities.buildSeed(), ranges);
+    this.stationaryAdmissionRevision++;
+    this.lastStationaryAdmission = key;
+    this.particleMaterial.uniforms.uPositionTexture.value = this.simulator.currentPosTarget.texture;
+    this.renderer.render(this.scene, this.camera);
+  }
+
   constructor(canvas, options = {}, hosted = false) {
     this.hosted = hosted;
     this.canvas = canvas;
@@ -499,6 +533,7 @@ class PointCloudField {
         uEntityCount: { value: 0 },
         uConnectionStart: { value: 1e30 },
         uConnectionMetadata: { value: this.entities.noiseTexture },
+        uConnectionRestOpacity: { value: 1 },
         uEntityBounds: { value: new Float32Array(10) },
         uEntityTint: { value: Array.from({ length: 10 }, () => new THREE.Color("#ffffff")) },
         uEntityTintWeight: { value: new Float32Array(10) },
@@ -1125,7 +1160,9 @@ class PointCloudField {
     return result;
   }
   /** Editing decoration only. Neither GPU state nor the stored configuration is touched. */
-  setNativeConnections(bindings, selected = []) {
+  setNativeConnections(bindings, selected = [], restOpacity = 1) {
+    if (!Number.isFinite(restOpacity) || restOpacity < 0.01 || restOpacity > 1) throw new Error('Connection presentation opacity must be within 0.01–1.');
+    this.particleMaterial.uniforms.uConnectionRestOpacity.value = restOpacity;
     this.entities.connections.configure(bindings, selected, this.simulator.particleCount);
     this.entities.layout(this.config.entities || []);
   }

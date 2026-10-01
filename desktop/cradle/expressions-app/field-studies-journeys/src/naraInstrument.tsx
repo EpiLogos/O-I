@@ -22,7 +22,7 @@ import type {NativeM3Reading} from '../../../src/nara/nativeM3';
 import {NaraVoiceTools,NaraAnswerReturnTools,type NaraVoiceHandle} from './naraConversationTools';
 import {NaraExpressiveActTools,type NaraActHandle} from './NaraExpressiveActTools';
 import './naraInstrument.css';
-import type {EvidencePresentation} from './naraEvidenceField';
+import {personalContextKey,personalContextBasisKey,personalCurrentKey,type EvidencePresentation,type NaraPersonalContext} from './naraEvidenceField';
 import type {NatalEvidenceChannel} from '../../../src/nara/identity/evidencePartition';
 import {preparePersonalBodyBindings} from './naraPersonalBody';
 import {validateCoordinateExpression} from '../../../src/nara/coordinateExpression';
@@ -30,6 +30,10 @@ import type {ExpressionResult} from '../../../src/expression/types';
 import type {ChakraId} from '../../src/engine/semantics/chakraSemantics';
 
 export interface NaraInstrumentHost {
+ enterWorld?:(identity:InstrumentIdentity)=>Promise<void>;
+ personalContext?:()=>NaraPersonalContext|null|undefined;
+ releasePersonalContext?:(explicitIdentityIntent?:boolean)=>boolean;
+ acceptPersonalCurrent?:(current:NativeCurrentReading)=>void;
  nativeView:()=>KernelConversion|undefined;
  sceneId:()=>string;
  acceptNativeDocument:(document:unknown)=>Promise<void>|void;
@@ -88,11 +92,16 @@ function ConstituentEditor({kind,draft,change,error}:{kind:ReportKey;draft:Ident
   </>}
  </section>;
 }
-function NaraInstrument({host,close,visible}:{host:NaraInstrumentHost;close:()=>void;visible:boolean}){
+function NaraInstrument({host,close,visible,requestedView,viewRevision,hostRevision}:{host:NaraInstrumentHost;close:()=>void;visible:boolean;requestedView?:View;viewRevision:number;hostRevision:number}){
+ useEffect(()=>{if(requestedView)setView(requestedView);},[requestedView,viewRevision]);
  const [view,setView]=useState<View>('identity'),[draft,setDraft]=useState(newDraft),[reading,setReading]=useState<IdentityReading|null>(null),[source,setSource]=useState<IdentitySource|null>(null);
  const [profiles,setProfiles]=useState<SavedIdentity[]>([]),[selected,setSelected]=useState<InstrumentIdentity|null>(null),[state,setState]=useState<NaraInstrumentState|null>(null);
  const [editor,setEditor]=useState<'birth'|ReportKey>('birth'),[editing,setEditing]=useState(true),[ready,setReady]=useState(kernelExpressionsAvailable),[busy,setBusy]=useState(''),[error,setError]=useState(''),[notice,setNotice]=useState(''),[question,setQuestion]=useState(''),[role,setRole]=useState<'nara'|'epii'>('nara');
  const active=useRef(false),mounted=useRef(true),epoch=useRef(0);
+ // The initial editor is open but untouched. Only an explicit identity action
+ // makes a draft pending and gives it precedence over saved-world hydration.
+ const draftDirty=useRef(false),restoredContext=useRef<string|null>(null),restoredBasis=useRef<string|null>(null),releasedBasis=useRef<string|null>(null);
+ const admittedCurrent=useRef<string>(personalCurrentKey(null));
  const voiceTools=useRef<NaraVoiceHandle>(null),stopPending=useRef(false);
  const expressiveActTools=useRef<NaraActHandle>(null);
  const [stopping,setStopping]=useState(false),[stopFailed,setStopFailed]=useState(false);
@@ -109,24 +118,56 @@ function NaraInstrument({host,close,visible}:{host:NaraInstrumentHost;close:()=>
  };
  const [includeEarth,setIncludeEarth]=useState(true);
  const [personalCurrent,setPersonalCurrent]=useState<PersonalCurrentReading|null>(null);
- useEffect(()=>{setPersonalCurrent(null);setNativeCurrent(null);setEvidenceWaves(false);presentForm(null);},[selected]);
+ const clearPersonalPresentation=(explicitIdentityIntent=false)=>{
+  if(explicitIdentityIntent)host.releasePersonalContext?.(true);
+  host.presentEvidence?.(null);setEvidenceChannel(null);setEvidenceSound(false);setEvidenceWaves(false);
+  admittedCurrent.current=personalCurrentKey(null);setPersonalCurrent(null);setNativeCurrent(null);
+  presentForm(null);restoredContext.current=null;restoredBasis.current=null;
+ };
+ useEffect(()=>{
+  if(!ready||active.current||draftDirty.current)return;
+  const context=host.personalContext?.();
+  if(context===undefined)return;
+  if(!context){
+   if(restoredContext.current){host.presentForm?.(null);formRef.current=null;setFormReading(null);restoredContext.current=null;restoredBasis.current=null;setDraft(newDraft());setEditing(true);setSelected(null);setState(null);setSource(null);setReading(null);setNativeCurrent(null);setPersonalCurrent(null);setEvidenceChannel(null);setEvidenceSound(false);setEvidenceWaves(false);setBefore(undefined);}
+   return;
+  }
+  const key=personalContextKey(context),basisKey=personalContextBasisKey(context);
+  if(key===restoredContext.current||basisKey===releasedBasis.current)return;
+  if(basisKey!==restoredBasis.current){
+   epoch.current++;host.presentForm?.(null);setDraft(draftFromProfile(context.identity.reading.profile));setSelected(context.identity);
+   setReading(context.identity.reading);setSource(context.identity.source);setEditing(false);
+   setState(null);setBefore(undefined);setQuestion('');formRef.current=null;setFormReading(null);
+  }
+  restoredContext.current=key;restoredBasis.current=basisKey;releasedBasis.current=null;
+  admittedCurrent.current=personalCurrentKey(context.current);
+  setNativeCurrent(context.current);setPersonalCurrent(context.current.reading);
+  setEvidenceChannel(context.presentation?.channel??null);setEvidenceSound(!!context.presentation?.sound);setEvidenceWaves(!!context.presentation?.waves);
+  setError('');
+  // Restoration mirrors the host's already admitted private presentation. It
+  // does not present/release it again or reset its resident modal history.
+ },[host,hostRevision,visible,ready,busy]);
  useEffect(()=>{
   const released=(event:MessageEvent)=>{
    if(event.source!==window.parent||event.data?.v!==1||event.data?.kind!=='oi-nara-identity-released')return;
-   host.presentEvidence?.(null);setEvidenceChannel(null);setSelected(null);setState(null);
+   if(host.releasePersonalContext?.()===false)return;
+   releasedBasis.current=restoredBasis.current;clearPersonalPresentation();setSelected(null);setState(null);
   };
   window.addEventListener('message',released);return()=>window.removeEventListener('message',released);
  },[host]);
- useEffect(()=>{host.presentEvidence?.(null);setEvidenceChannel(null);return()=>host.presentEvidence?.(null);},[selected,host]);
  const presentEvidence=(channel:NatalEvidenceChannel|null,sound=evidenceSound,waves=evidenceWaves)=>{
-  try{if(channel&&!selected)throw Error('Save and select your identity first.');host.presentEvidence?.(channel&&selected?{identity:selected,channel,sound,waves,current:nativeCurrent}:null);setEvidenceChannel(channel);setEvidenceSound(sound);setEvidenceWaves(!!channel&&waves);setError('');}
+  try{if(channel&&!selected)throw Error('Save and select your identity first.');host.presentEvidence?.(channel&&selected?{identity:selected,channel,sound,waves,current:nativeCurrent}:null);admittedCurrent.current=personalCurrentKey(nativeCurrent);setEvidenceChannel(channel);setEvidenceSound(sound);setEvidenceWaves(!!channel&&waves);setError('');}
   catch(e){setError(e instanceof Error?e.message:String(e));}
  };
  useEffect(()=>{
-  if(!evidenceChannel||!selected||!evidenceWaves)return;
-  try{host.presentEvidence?.({identity:selected,channel:evidenceChannel,sound:evidenceSound,waves:true,current:nativeCurrent});}
+  if(!evidenceChannel||!selected||!evidenceWaves||personalCurrentKey(nativeCurrent)===admittedCurrent.current)return;
+  try{host.presentEvidence?.({identity:selected,channel:evidenceChannel,sound:evidenceSound,waves:true,current:nativeCurrent});admittedCurrent.current=personalCurrentKey(nativeCurrent);}
   catch(failure){host.presentEvidence?.(null);setEvidenceChannel(null);setEvidenceWaves(false);setError(failure instanceof Error?failure.message:String(failure));}
  },[nativeCurrent]);
+ const receivePersonalCurrent=(value:NativeCurrentReading|null)=>{
+  try{if(value)host.acceptPersonalCurrent?.(value);setNativeCurrent(value);setPersonalCurrent(value?.reading??null);}
+  catch(cause){setError(cause instanceof Error?cause.message:String(cause));}
+ };
  const [before,setBefore]=useState<number>();
  const [profileErrors,setProfileErrors]=useState<{source_ref:string;error:string}[]>([]);
  useEffect(()=>{mounted.current=true;const announce=(e:MessageEvent)=>{if(e.source===window.parent&&e.data?.v===1&&e.data?.kind==='oi-kernel-channel')setReady(true);};window.addEventListener('message',announce);setReady(kernelExpressionsAvailable());if(window.parent!==window)window.parent.postMessage({v:1,kind:'oi-kernel-hello'},'*');return()=>{mounted.current=false;epoch.current++;window.removeEventListener('message',announce);};},[]);
@@ -147,7 +188,7 @@ function NaraInstrument({host,close,visible}:{host:NaraInstrumentHost;close:()=>
      const current=await naraInstrumentRequest({operation:'current_read',basis:{expression_ref,source:selected.source},role:'nara'});
      if(disposed)return;
      if(current.schema!=='oi.nara-personal-current-context/v1'||!current.reading||!current.context)throw Error('The native occasion is no longer available. Read its sky again to continue.');
-     if(current.context.reading_ref!==nativeCurrent?.context?.reading_ref){setNativeCurrent(current);setPersonalCurrent(current.reading);}
+     if(current.context.reading_ref!==nativeCurrent?.context?.reading_ref){host.acceptPersonalCurrent?.(current);setNativeCurrent(current);setPersonalCurrent(current.reading);}
     }
    }catch(cause){
     if(disposed)return;
@@ -191,11 +232,12 @@ function NaraInstrument({host,close,visible}:{host:NaraInstrumentHost;close:()=>
  useEffect(()=>{if(ready)void act('Reading saved profiles',refreshProfiles);},[ready]);
  const change=(next:IdentityDraft)=>{
   if(active.current){setError('Wait for the current operation, then apply this correction again.');return;}
-  epoch.current++;
-  if(selected)void naraInstrumentRequest({operation:'release_identity'}).catch(e=>{if(mounted.current)setError(String(e));});
+  draftDirty.current=true;epoch.current++;clearPersonalPresentation(true);
+  void naraInstrumentRequest({operation:'release_identity'}).catch(e=>{if(mounted.current)setError(String(e));});
   setDraft(next);setReading(null);setSelected(null);setState(null);setBefore(undefined);setNotice('');
  };
  const openProfile=(ref:string)=>void act('Opening your profile',async()=>{
+  draftDirty.current=true;clearPersonalPresentation(true);
   const at=++epoch.current,current=()=>mounted.current&&epoch.current===at;
   setSelected(null);setState(null);setBefore(undefined);setQuestion('');setSource(null);setReading(null);
   await naraInstrumentRequest({operation:'release_identity'});if(!current())return;
@@ -208,6 +250,7 @@ function NaraInstrument({host,close,visible}:{host:NaraInstrumentHost;close:()=>
   setReading(calculated.reading);
  });
  const calculate=()=>void act('Calculating your natal chart',async()=>{
+  draftDirty.current=true;clearPersonalPresentation(true);
   const at=++epoch.current,current=()=>mounted.current&&epoch.current===at,profile=profileFromDraft(draft);
   setSelected(null);setState(null);setBefore(undefined);
   await naraInstrumentRequest({operation:'release_identity'});if(!current())return;
@@ -222,7 +265,7 @@ function NaraInstrument({host,close,visible}:{host:NaraInstrumentHost;close:()=>
   if(!r.source)throw Error(r.error??'The profile was not saved.');setSource(r.source);
   const result=await naraInstrumentRequest({operation:'select_identity',source:r.source,input_revision:reading.input_revision});if(!current())return;
   if(result.schema!=='oi.nara-instrument-state/v1'||!result.identity)throw Error('The saved identity was not selected.');
-  setSelected(result.identity);setReading(result.identity.reading);setState(result);setNotice('Saved. This identity is selected for the Expression.');await refreshProfiles();
+  releasedBasis.current=null;setSelected(result.identity);setReading(result.identity.reading);setState(result);setNotice('Saved. This identity is selected for the Expression.');await refreshProfiles();await host.enterWorld?.(result.identity);if(current()){draftDirty.current=false;restoredContext.current=null;}
  });
  const basis=()=>{const expression_ref=host.nativeView()?.document.expression_ref;if(!selected||!expression_ref)throw Error('Select a saved identity and open its native Expression to continue.');return {expression_ref,source:selected.source};};
  const dialogue=async(operation:'read'|'send'|'reconnect',cursor?:number)=>{const at=epoch.current,request={operation:operation==='send'&&role==='epii'?'epii_delegate':operation,basis:basis(),role,...(operation==='send'?{question}:{}),...(cursor===undefined?{}:{before:cursor})} as NaraInstrumentRequest;const r=await naraInstrumentRequest(request);if(r.schema!=='oi.nara-instrument-state/v1')throw Error('The native conversation returned another reading.');if(mounted.current&&epoch.current===at)setState(r);return r;};
@@ -285,8 +328,8 @@ function NaraInstrument({host,close,visible}:{host:NaraInstrumentHost;close:()=>
     <div className="nara-personal-actions"><button className="nara-primary" type="button" disabled={!!busy||!ready} onClick={calculate}>{reading?'Recalculate chart':'Calculate and review'}</button><button type="button" disabled={!!busy||!reading||!ready} onClick={save}>Save and use identity</button></div>
    </aside><div className="nara-identity-sky"><Chart reading={reading}/></div></div>}
    {view==='matrix'&&<IdentityMatrix reading={reading} onShowNatal={()=>setView('identity')}/>}
-   {view==='composition'&&<><NaraCurrentSky basis={toolBasis} identity={selected} reading={personalCurrent} onReading={setPersonalCurrent} onNativeReading={setNativeCurrent} disabled={!!busy||stopping}/><section aria-label="Natal evidence in the living field"><h2>Experience the natal contributions</h2><label><input type="checkbox" checked={includeEarth} disabled={!!busy||stopping} onChange={event=>setIncludeEarth(event.target.checked)}/> Include Earth grounding</label><button type="button" disabled={!!busy||stopping||!selected} onClick={bindPersonalBody}>Bind my seven centres</button><p>Use the computed share reaching each centre to shape its forces in this Expression. Choose one correspondence route; the original reading and authored field remain available.</p><label>Force presentation<select aria-label="Natal force presentation" value={evidenceChannel??''} disabled={!!busy||stopping||!selected||!host.presentEvidence} onChange={e=>presentEvidence((e.target.value||null) as NatalEvidenceChannel|null)}><option value="">Authored field</option><option value="direct-planetary-resonance">Direct planetary resonance</option><option value="decan-ruler-reception">Decan ruler reception</option></select></label><label><input type="checkbox" checked={evidenceSound} disabled={!evidenceChannel||!!busy||stopping} onChange={e=>presentEvidence(evidenceChannel,e.target.checked)}/> Sound the native planetary frequencies</label><label><input type="checkbox" checked={evidenceWaves} disabled={!evidenceChannel||!nativeCurrent?.reading?.baseline_available||!!busy||stopping} onChange={event=>presentEvidence(evidenceChannel,evidenceSound,event.target.checked)}/> Enter the current standing-wave field</label><p>The retained modal physics gives each centre its native planetary drive. The pinned identity and transit reading orients the wave fields around their fixed centres. When you enable the activity policy in Form and clock, its native composition participates too.</p><details><summary>Presentation rule and limits</summary><p>This selected presentation multiplies evaluated force strength and spin by each centre’s share of the original ten-planet total. Unrouted and unresolved shares remain unassigned. Zero-share emitters are absent. The standing-wave option keeps independent resident modes using the authored medium and this selected drive-share policy. It sums time-averaged vibration forces in the existing particle medium; it does not claim audio-rate phase, chakra activation, inter-oscillator energy transfer, or a canonical personal material law. Activity joins only through an explicitly selected native policy and source-bound successful operations.</p></details>{evidenceChannel&&<button onClick={close}>Return to the living field</button>}</section><IdentityComposition reading={reading} disabled={!!busy||stopping} onUsePolicy={policy=>{change({...draft,encoding_policy:policy});setEditing(true);setView('identity');}} onUseComposition={policy=>{change({...draft,composition_policy:policy});setEditing(true);setView('identity');}}/></>}
-   {view==='form'&&<NaraM3 onPresent={presentForm} presented={!!formReading} basis={toolBasis} selectionKey={toolSelectionKey} current={nativeCurrent} disabled={!!busy||stopping||!ready} onCurrent={value=>{setNativeCurrent(value);setPersonalCurrent(value.reading);}}/>}
+   {view==='composition'&&<><NaraCurrentSky basis={toolBasis} identity={selected} reading={personalCurrent} onReading={setPersonalCurrent} onNativeReading={receivePersonalCurrent} disabled={!!busy||stopping}/><section aria-label="Natal evidence in the living field"><h2>Experience the natal contributions</h2><label><input type="checkbox" checked={includeEarth} disabled={!!busy||stopping} onChange={event=>setIncludeEarth(event.target.checked)}/> Include Earth grounding</label><button type="button" disabled={!!busy||stopping||!selected} onClick={bindPersonalBody}>Bind my seven centres</button><p>Use the computed share reaching each centre to shape its forces in this Expression. Choose one correspondence route; the original reading and authored field remain available.</p><label>Force presentation<select aria-label="Natal force presentation" value={evidenceChannel??''} disabled={!!busy||stopping||!selected||!host.presentEvidence} onChange={e=>presentEvidence((e.target.value||null) as NatalEvidenceChannel|null)}><option value="">Authored field</option><option value="direct-planetary-resonance">Direct planetary resonance</option><option value="decan-ruler-reception">Decan ruler reception</option></select></label><label><input type="checkbox" checked={evidenceSound} disabled={!evidenceChannel||!!busy||stopping} onChange={e=>presentEvidence(evidenceChannel,e.target.checked)}/> Sound the native planetary frequencies</label><label><input type="checkbox" checked={evidenceWaves} disabled={!evidenceChannel||!nativeCurrent?.reading?.baseline_available||!!busy||stopping} onChange={event=>presentEvidence(evidenceChannel,evidenceSound,event.target.checked)}/> Enter the current standing-wave field</label><p>The retained modal physics gives each centre its native planetary drive. The pinned identity and transit reading orients the wave fields around their fixed centres. When you enable the activity policy in Form and clock, its native composition participates too.</p><details><summary>Presentation rule and limits</summary><p>This selected presentation multiplies evaluated force strength and spin by each centre’s share of the original ten-planet total. Unrouted and unresolved shares remain unassigned. Zero-share emitters are absent. The standing-wave option keeps independent resident modes using the authored medium and this selected drive-share policy. It sums time-averaged vibration forces in the existing particle medium; it does not claim audio-rate phase, chakra activation, inter-oscillator energy transfer, or a canonical personal material law. Activity joins only through an explicitly selected native policy and source-bound successful operations.</p></details>{evidenceChannel&&<button onClick={close}>Return to the living field</button>}</section><IdentityComposition reading={reading} disabled={!!busy||stopping} onUsePolicy={policy=>{change({...draft,encoding_policy:policy});setEditing(true);setView('identity');}} onUseComposition={policy=>{change({...draft,composition_policy:policy});setEditing(true);setView('identity');}}/></>}
+   {view==='form'&&<NaraM3 onPresent={presentForm} presented={!!formReading} basis={toolBasis} selectionKey={toolSelectionKey} current={nativeCurrent} disabled={!!busy||stopping||!ready} onCurrent={receivePersonalCurrent}/>}
    {view==='atlas'&&<CoordinateAtlas host={host} disabled={!!busy||stopping||!ready} identity={selected}/>}
    {view==='conversation'&&<div className="nara-conversation-layout"><aside><p className="nara-personal-caption">Here, in this Expression</p><h2>{selected?.reading.profile.name||'Choose your identity'}</h2><p>{entity?`Selected: ${entity.title}`:'No centre is selected.'}</p><p className="nara-personal-muted">{selected?'The conversation follows the saved person and actual selected subject.':'Calculate, review and save your identity to continue.'}</p><div className="nara-personal-actions"><button aria-pressed={role==='nara'} disabled={!!busy||stopping} onClick={()=>chooseRole('nara')}>Nara</button><button aria-pressed={role==='epii'} disabled={!!busy||stopping} onClick={()=>chooseRole('epii')}>Ask Epii</button></div></aside><section className="nara-conversation" aria-label={`${role==='nara'?'Nara':'Epii'} conversation`}>
     <p role="status">{native?.state==='TurnInFlight'?'Responding…':native?.state==='Resident'?'Connected':state?.dialogue?'Recorded conversation':'Conversation opens on first send'}</p>
@@ -305,12 +348,12 @@ function NaraInstrument({host,close,visible}:{host:NaraInstrumentHost;close:()=>
 export function installNaraInstrument(host:NaraInstrumentHost){
  const container=document.createElement('div');container.className='nara-instrument-aperture';container.hidden=true;document.body.append(container);
  const trigger=document.createElement('button');trigger.type='button';trigger.className='text-button nara-instrument-trigger';trigger.textContent='Nara';trigger.setAttribute('aria-expanded','false');trigger.setAttribute('aria-controls','nara-instrument');container.id='nara-instrument';document.querySelector('#app .header-actions')?.prepend(trigger);
- const root=createRoot(container);let visible=false;
+ const root=createRoot(container);let visible=false,requestedView:View|undefined,viewRevision=0,hostRevision=0,destroyed=false;
  const app=document.getElementById('app'),wasInert=app?.inert??false;
- const render=()=>root.render(<NaraInstrument host={host} close={close} visible={visible}/>);
+ const render=()=>root.render(<NaraInstrument host={host} close={close} visible={visible} requestedView={requestedView} viewRevision={viewRevision} hostRevision={hostRevision}/>);
  const close=()=>{visible=false;container.hidden=true;if(app)app.inert=wasInert;trigger.setAttribute('aria-expanded','false');document.body.classList.remove('nara-depth-open');render();trigger.focus();};
- const open=()=>{visible=true;container.hidden=false;if(app)app.inert=true;trigger.setAttribute('aria-expanded','true');document.body.classList.add('nara-depth-open');render();requestAnimationFrame(()=>container.querySelector<HTMLElement>('select,button')?.focus());};
+ const open=(view?:View)=>{if(view){requestedView=view;viewRevision++;}visible=true;container.hidden=false;if(app)app.inert=true;trigger.setAttribute('aria-expanded','true');document.body.classList.add('nara-depth-open');render();requestAnimationFrame(()=>container.querySelector<HTMLElement>('select,button')?.focus());};
  render();trigger.addEventListener('click',()=>visible?close():open());
  const key=(e:KeyboardEvent)=>{if(e.key==='Escape'&&visible){e.preventDefault();e.stopPropagation();close();}};container.addEventListener('keydown',key);
- return {open,close,destroy(){root.unmount();host.presentForm?.(null);if(app)app.inert=wasInert;container.remove();trigger.remove();document.body.classList.remove('nara-depth-open');}};
+ return {open,close,refresh(){if(!destroyed){hostRevision++;render();}},destroy(){destroyed=true;root.unmount();host.presentEvidence?.(null);host.presentForm?.(null);if(app)app.inert=wasInert;container.remove();trigger.remove();document.body.classList.remove('nara-depth-open');}};
 }

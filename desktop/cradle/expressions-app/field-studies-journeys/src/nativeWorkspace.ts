@@ -4,7 +4,7 @@ import type {BlueprintIntent} from './nativeBlueprint.js';
  * recover and file-save through the owner. It has no panel of its own; its
  * standing reaches the app's Save control and Studio footer via host.status. */
 import {clone,type Journey} from './model.js';
-import {NativeWorking,type NativeFile,type WorkingSnapshot} from './nativeWorking.js';
+import {NativeWorking,nativeOwnerSnapshot,type NativeFile,type WorkingSnapshot} from './nativeWorking.js';
 import {kernelExpressionsAvailable,listKernelExpressions,readKernelExpression,nativeExpressionRequest,nativeFileRequest} from './kernelExpressions.js';
 import {readWorkingCheckpoint,readWorkingDraft,writeWorkingCheckpoint,writeDraft} from './recovery.js';
 import {kernelDocumentToJourney,type KernelConversion,type KernelExpressionDocument} from './kernelDocumentBridge.js';
@@ -51,7 +51,7 @@ export interface NativeStatus {
  text:string;failed:boolean;busy:boolean;
  identity:{ref:string;title:string;revision:number}|null;
  pending:string|null;retryOpen:boolean;
- file:{path:string;revision:string|number}|null;
+ file:{path:string;revision:string|number;document_revision?:number}|null;
  page:{page:number;count:number;shown:number;total:number;hidden:number}|null;
 }
 /** Capture the visible draft and navigation generation before any owner read.
@@ -87,7 +87,7 @@ export function installNativeWorkspace(host:NativeWorkspaceHost){
   host.status?.({text:notice,failed:lastFailure,busy,
    identity:doc?{ref:doc.expression_ref,title:doc.title,revision:doc.revision}:null,
    pending:state?.pending?.kind??null,retryOpen:!!opens?.reference,
-   file:state?.file?{path:state.file.location.path,revision:state.file.revision}:null,
+   file:state?.file?{path:state.file.location.path,revision:state.file.revision,document_revision:state.file.document_revision}:null,
    page:binding?{page:binding.page,count:binding.page_count,shown:binding.occurrences.length,total:binding.member_refs.length,hidden:binding.hidden_refs.length}:null});
  };
  const run=async(task:()=>Promise<void>):Promise<boolean>=>{
@@ -151,11 +151,27 @@ export function installNativeWorkspace(host:NativeWorkspaceHost){
   catch{return false;}
  };
  const localEdits=(view:KernelConversion)=>hasLocalEdits(loadedVersion,host.version(),prepareCompositionEdit(view,host.snapshot().journey).changes.length);
+ const inspectReference=async(reference:string)=>nativeOwnerSnapshot(await nativeExpressionRequest({operation:'inspect',expression_ref:reference}),reference);
  const followOpen=async(reference:string)=>{
   if(!reference.startsWith('expression:'))throw new Error('Choose a native Expression reference');
-  const generation=++followGeneration;opens.cancel();
-  const raw=await readKernelExpression(reference) as KernelExpressionDocument;
-  if(generation!==followGeneration)return;
+  const captured=captureNativeAdoption(host,()=>restoreGeneration),generation=++followGeneration;opens.cancel();
+  const current=()=>generation===followGeneration&&captured();
+  const listed=await listKernelExpressions();requireAdoption(current);
+  // A fresh process has no in-memory graph. Reopen the exact acknowledged
+  // checkpoint through the owner before following it; retain its local draft
+  // and attached native file, rather than deriving an unrelated browser view.
+  if(!listed.some(row=>row.expression_ref===reference)){
+   const recovered=await readWorkingDraft(reference,scope);requireAdoption(current);
+   if(recovered?.record.view){
+    const performing=await actPerforms(reference);requireAdoption(current);
+    if(host.shouldRetainDraft?.()!==false)await writeDraft(clone(host.snapshot().journey));requireAdoption(current);
+    const view=await work.reopenCheckpoint(recovered.record,recovered.journey,current);requireAdoption(current);
+    readThrough=performing?reference:null;restoreGeneration++;selections.cancel();host.load(view);markLoaded();host.followed?.(reference,!!readThrough);
+    status(`Reopened ${view.document.title} through its native owner. Its Scene, selection, attached file and separate unsaved draft were retained.`);update();return;
+   }
+  }
+  const native=await inspectReference(reference),raw=native.document;
+  requireAdoption(current);
   // Nothing is discarded: the showing draft, and any unsaved checkpoint of
   // this same Expression, stay in recovery under their own identities.
   if(host.shouldRetainDraft?.()!==false)await writeDraft(clone(host.snapshot().journey));
@@ -168,8 +184,8 @@ export function installNativeWorkspace(host:NativeWorkspaceHost){
   // in `adopt`. Awaiting between them left the frame reporting (and saving
   // against) the new Expression while it still showed the previous document.
   const performing=await actPerforms(reference);
-  if(generation!==followGeneration)return;
-  const view=await work.adopt(raw,undefined,()=>generation===followGeneration);
+  requireAdoption(current);
+  const view=await work.adopt(raw,native.file,current);
   readThrough=performing?reference:null;
   restoreGeneration++;selections.cancel();host.load(view);markLoaded();host.followed?.(reference,!!readThrough);
   status(`${readThrough?'Following':'Opened'} ${raw.title} at revision ${raw.revision}.${readThrough?' An act is performing it: this view reads through and never commits into it.':''}`);update();
@@ -190,7 +206,7 @@ export function installNativeWorkspace(host:NativeWorkspaceHost){
    restoreGeneration++;selections.cancel();host.load(view);update();
    status('Working composition recovered through its native owner. Unsaved edits and interrupted operations were retained.');return;
   }
-  await adopt(await readKernelExpression(reference) as KernelExpressionDocument,current);
+  const native=await inspectReference(reference);await adopt(native.document,current,native.file);
  };
  const opens=new NativeOpenIntent({
   idle:async()=>{while(busy)await ownerIdle;},
@@ -204,7 +220,7 @@ export function installNativeWorkspace(host:NativeWorkspaceHost){
  const loadFile=async(path:string)=>{
   const current=captureNativeAdoption(host,()=>restoreGeneration),result=await nativeFileRequest({operation:'open',path}) as {document:KernelExpressionDocument;file:NativeFile};
   if(!result?.document||!result.file)throw new Error('The native file was not returned');
-  await adopt(result.document,current,{location:result.file.location,revision:result.file.revision,expression_ref:result.document.expression_ref});
+  await adopt(result.document,current,{location:result.file.location,revision:result.file.revision,expression_ref:result.document.expression_ref,document_revision:result.document.revision});
  };
  const changePage=async(delta:number)=>{
   let record=work.state;const snapshot=host.snapshot();
@@ -304,11 +320,23 @@ export function installNativeWorkspace(host:NativeWorkspaceHost){
   },
   async changed(journey:Journey){
    if(isGenuineWorkspaceSwitch(bootState)){opens.cancel();restoreGeneration++;selections.cancel();}
-   const generation=restoreGeneration;work.detach();host.correspondence({},null);
-   try{const record=await readWorkingCheckpoint(journey.id,scope);if(generation!==restoreGeneration||host.snapshot().journey.id!==journey.id)return;if(record)work.restore(record,journey);update();}
+   const generation=restoreGeneration,current=captureNativeAdoption(host,()=>restoreGeneration);work.detach();host.correspondence({},null);
+   try{
+    const record=await readWorkingCheckpoint(journey.id,scope) as import('./nativeWorking.js').NativeWorkingRecord|undefined;
+    if(!current())return;
+    if(record?.view){
+     while(busy)await ownerIdle;if(!current())return;
+     await run(async()=>{
+      const view=await work.reopenCheckpoint(record,journey,current);requireAdoption(current);
+      restoreGeneration++;selections.cancel();host.load(view,true);markLoaded();readThrough=null;
+      status('Reopened the acknowledged native world; local edits and interrupted operations were retained.');update();
+     });
+    }else{if(record)work.restore(record,journey);update();}
+   }
    catch(error){if(generation===restoreGeneration){lastFailure=true;status(`Native recovery was not adopted: ${error instanceof Error?error.message:String(error)}`);update();}}
   },
-  inspect(){const state=work.state;return {native_ref:state?.view?.document.expression_ref,revision:state?.view?.document.revision,file:state?.file,pending:state?.pending?.kind,notes:state?.view?.notes??[],bindings:state?.view?.bindings};},
+  inspect(){const state=work.state;return {native_ref:state?.view?.document.expression_ref,revision:state?.view?.document.revision,file:state?.file,pending:state?.pending?.kind,notice,failed:lastFailure,busy,notes:state?.view?.notes??[],bindings:state?.view?.bindings};},
+  idle:async()=>{while(busy)await ownerIdle;},
   /** `changes` may be computed from the flushed native view (after the
    * working draft commits) — e.g. a reuse block naming committed refs. */
   edit:async(input:Record<string,unknown>[]|((view:KernelConversion)=>Record<string,unknown>[]))=>{
@@ -377,7 +405,7 @@ export function installNativeWorkspace(host:NativeWorkspaceHost){
   refreshReference:async(reference:string):Promise<boolean>=>{while(busy)await ownerIdle;return run(async()=>{
    const current=work.state?.view;
    if(!current||current.document.expression_ref!==reference){await followOpen(reference);return;}
-   const raw=await readKernelExpression(reference) as KernelExpressionDocument;
+   const native=await inspectReference(reference),raw=native.document;
    const step=refreshStep({openRef:current.document.expression_ref,reference,localRevision:current.document.revision,kernelRevision:raw.revision,edited:localEdits(current),pending:!!work.state?.pending});
    if(step.kind==='current')return;
    if(step.kind==='follow'){await followOpen(reference);return;}
@@ -387,7 +415,7 @@ export function installNativeWorkspace(host:NativeWorkspaceHost){
     host.toast(notice,7000);return;
    }
    const generation=++followGeneration;
-   const view=await work.adopt(raw,work.state?.file,()=>generation===followGeneration);
+   const view=await work.adopt(raw,native.file??work.state?.file,()=>generation===followGeneration);
    restoreGeneration++;selections.cancel();host.load(view);markLoaded();host.followed?.(reference,readThrough===reference);update();
   });},
   nativeSubject,

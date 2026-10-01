@@ -135,6 +135,57 @@ return class RetainedProductionAdapter extends ProductionAdapter {
         // retained binding copies them before taking target ownership.
         get targetA() { return adapter.engine?.entities?.textureA ?? null; },
         get targetB() { return adapter.engine?.entities?.textureB ?? null; },
+        /** A caller-owned, point-in-time copy of the authored receiving
+         * topology. Mutating the returned arrays cannot mutate the engine.
+         * The signature binds sparse maps to this exact authored scene and
+         * partition layout; connections and texture padding are deliberately
+         * outside every entity partition. */
+        readPartitionSnapshot() {
+          if (adapter.retained !== state || adapter.contextLost || state.recoveryRequired) {
+            throw new Error("Retained partition inspection is unavailable during field recovery.");
+          }
+          const entities = adapter.engine?.entities;
+          const targetA = entities?.textureA;
+          const targetB = entities?.textureB;
+          const slotCount = state.simulator.texWidth * state.simulator.texHeight;
+          const connectionStart = entities?.connections?.start;
+          const raw = entities?.getPartitions?.();
+          if (!Array.isArray(raw) || !Number.isSafeInteger(connectionStart) || connectionStart < 0 || connectionStart > slotCount ||
+              !(targetA?.image?.data instanceof Float32Array) || !(targetB?.image?.data instanceof Float32Array) ||
+              targetA.image.data.length !== slotCount * 4 || targetB.image.data.length !== slotCount * 4) {
+            throw new Error("The authored retained partition topology is unavailable.");
+          }
+          let cursor = 0;
+          const partitions = raw.map((partition) => {
+            if (typeof partition?.entityId !== "string" || partition.entityId.length === 0 || partition.entityId.includes("\0") ||
+                !Number.isSafeInteger(partition.start) || !Number.isSafeInteger(partition.end) ||
+                partition.start !== cursor || partition.end <= partition.start || partition.end > connectionStart) {
+              throw new Error("The authored retained partition topology is invalid.");
+            }
+            cursor = partition.end;
+            return Object.freeze({ entity_ref: partition.entityId, start: partition.start, end: partition.end });
+          });
+          if (cursor !== connectionStart || new Set(partitions.map((partition) => partition.entity_ref)).size !== partitions.length) {
+            throw new Error("The authored retained partitions must cover the particle domain exactly.");
+          }
+          const partitionSignature = JSON.stringify({
+            scene_signature: state.lockedSignature,
+            slot_count: slotCount,
+            connection_start: connectionStart,
+            partitions: partitions.map(({ entity_ref, start, end }) => [entity_ref, start, end]),
+          });
+          return Object.freeze({
+            schema: "oi.retained-partition-snapshot/v1",
+            scene_signature: state.lockedSignature,
+            partition_signature: partitionSignature,
+            slot_count: slotCount,
+            particle_count: state.simulator.particleCount,
+            connection_start: connectionStart,
+            partitions: Object.freeze(partitions),
+            authored_target_a: targetA.image.data.slice(),
+            authored_target_b: targetB.image.data.slice(),
+          });
+        },
         setTargetTextures(targetA, targetB, centre) {
           if (adapter.retained !== state || adapter.contextLost || state.recoveryRequired) throw new Error("Retained target write is unavailable during field recovery.");
           state.external = true;

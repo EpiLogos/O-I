@@ -1,6 +1,6 @@
 import {projectNativeSources,editNativeBasis,NativeDomainReading,NativeBasisEdit} from './domain';
 import {InstrumentSession} from './ql/instrument-session.mjs';
-import {NativeProjection} from './projection';
+import {NativeProjection,type NativeTargetMap} from './projection';
 import type {NativePort} from './channel';
 import {applyPhysicalFormPose} from '../physicalFormActuator';
 import {nativeActuatorStanding} from '../nativeActuatorStanding';
@@ -16,6 +16,9 @@ export interface NativePlaybackPolicy {blockFrames:number;leadSeconds:number;loo
 export const EMBEDDED_NATIVE_PLAYBACK:Readonly<NativePlaybackPolicy>=Object.freeze({blockFrames:8192,leadSeconds:.5,lookaheadSeconds:.5});
 export type NativeStatus='manual'|'opening'|'following'|'held'|'unavailable';
 export type NativeSky='none'|'now'|{epoch:string};
+export type NativeSkySnapshot=Readonly<{schema:'ql.sky-snapshot/v1';snapshot_ref:string;[key:string]:unknown}>;
+export type NativeWorldInput=Readonly<{instance_ref:string;subject_ref:string;start?:Readonly<Record<string,unknown>>}>;
+export type EntityTargetBindings=(input:Readonly<{world:unknown;partition:unknown}>)=>NativeTargetMap|Promise<NativeTargetMap>;
 /** Presentation, not source: the M1 torus (|x|,|y| ≤ 25/9 m at QL's declared
  * 1 m per torus unit) spans ±333 engine units — 0.83 of the 400-unit stage
  * radius (WORLD_SCALE), leaving the body whole on stage with modal headroom. */
@@ -34,6 +37,7 @@ export const PRESENTATION_LEVEL=Object.freeze({min:0,max:4,initial:1,
 const TRANSIENT=/owner busy|held before the event|presentation capacity|requires idle admitted owner/;
 type Cadence={rate:number;period:number;source:string;timer:ReturnType<typeof setInterval>;started:number;
  beats:number;issued:number;applied:number;skipped:number;suspended:number;inFlight:boolean;lastEventMs?:number;maxEventMs?:number;stopped?:string;stopped_at?:number};
+class NativeCloseError extends Error{}
 /** The QL driver schedules PCM/targets; the app remains the sole GPU stage.
  * The controller owns admission/lifetime only, never native math or a second clock.
  * Determinant events (M1 advance, a changed event) go to the same serial owner;
@@ -46,6 +50,8 @@ export class NativeFieldController {
  private pending:Promise<unknown>=Promise.resolve();private muted=true;private serialDepth=0;
  private sources:any=null;private domain:NativeDomainReading|null=null;
  private openingHold:string|null=null;private closing:Promise<void>|null=null;
+ private admission:Promise<void>|null=null;private closeFailure:NativeCloseError|null=null;
+ private lastClose:{schema:'oi.native-expression-closed/v1';lease:string;closed:true}|null=null;
  private lastNative:any=null;private holdRevision=0;
  private admitting:number|null=null;
  private suspension:{tokens:Set<symbol>;epoch:number;revision:number;restore:boolean;reason:string}|null=null;
@@ -58,7 +64,14 @@ export class NativeFieldController {
  private closeOwner(opened:any){
   if(!opened)return Promise.resolve();
   if(opened.closing)return opened.closing as Promise<void>;
-  opened.closing=this.port.request({operation:'close',lease:opened.lease}).then(()=>{opened.closed=true;});
+  opened.closing=(async()=>{
+   try{
+    if(typeof opened.lease!=='string'||!opened.lease)throw new Error('the owned opening omitted its exact lease');
+    const receipt=await this.port.request({operation:'close',lease:opened.lease});
+    if(receipt?.schema!=='oi.native-expression-closed/v1'||receipt.lease!==opened.lease||receipt.closed!==true)throw new Error('native close did not acknowledge this exact lease');
+    opened.closed=true;this.lastClose={schema:receipt.schema,lease:receipt.lease,closed:true};
+   }catch(error){this.closeFailure=new NativeCloseError(String(error));throw this.closeFailure;}
+  })();
   // Keep the acknowledgement for release; a failed close is never reissued.
   opened.closing.catch(()=>{});return opened.closing as Promise<void>;
  }
@@ -118,6 +131,7 @@ export class NativeFieldController {
    }:null;
   return{schema:'oi.native-expression-reading/v1',status:this.status,reason:this.reason,
   source:this.opened?.source??null,lease:this.opened?.lease??null,
+  lifetime:{admission_pending:!!this.admission,close_pending:!!this.closing,operation_pending:this.serialDepth+this.operating,close_error:this.closeFailure?.message??null,last_close:this.lastClose},
   playback_policy:{...this.playback,owner:'QL InstrumentSession / explicit application buffering; no sample-rate change'},
   renderer_requirements:this.renderer.retainedTopology?.()??null,
   presentation_mode:!this.projection?'manual':this.projection.scale===this.opened.presentation.units_per_metre?'domain-follow':'manual-presentation-override',
@@ -142,13 +156,31 @@ export class NativeFieldController {
  private changed(){this.onChange();}
  /** The instrument's primary opening: QL composes a scene binding (`ql scene binding`) for this stage's
   * own retained texture; the kernel supplies the dated sky. No path, no file. */
- async compose(options:{sky?:NativeSky;event?:unknown}={}){
+ private composeRequest(topology:{tex_width:number;tex_height:number},options:{sky?:NativeSky;skySnapshot?:NativeSkySnapshot;snapshotPurpose?:import('../../../../src/nara/identity/types').SnapshotPurpose;event?:unknown;world?:NativeWorldInput}){
+  if(options.sky!==undefined&&options.skySnapshot!==undefined)throw new Error('exactly one native sky selector or admitted snapshot is allowed');
+  const sky=options.skySnapshot===undefined?(options.sky??'now'):undefined;
+  if(options.snapshotPurpose==='retained-occasion'&&options.skySnapshot===undefined)throw Error('A retained occasion requires an existing native sky snapshot');
+  if(options.snapshotPurpose==='retained-occasion'&&options.world===undefined)throw Error('Reopen the saved Epi world to play this retained occasion. A standalone field can open a requested sky.');
+  if(!(sky===undefined||sky==='none'||sky==='now'||(typeof sky==='object'&&typeof sky?.epoch==='string')))throw new Error('sky must be none, now or a dated epoch');
+  if(options.world!==undefined&&options.event!==undefined)throw new Error('world admission and legacy event compose are mutually exclusive');
+  return{texture:[topology.tex_width,topology.tex_height],units_per_metre:INSTRUMENT_PRESENTATION.units_per_metre,
+   ...(sky!==undefined?{sky}:{}),...(options.skySnapshot!==undefined?{sky_snapshot:options.skySnapshot}:{}),...(options.snapshotPurpose?{snapshot_purpose:options.snapshotPurpose}:{}),
+   ...(options.event!==undefined?{event:options.event}:{}),...(options.world!==undefined?{world:options.world}:{})};
+ }
+ /** Quiet owner preparation: no AudioContext, worker, GPU lease or pump. */
+ async prepareWorld(options:{world:NativeWorldInput;sky?:NativeSky;skySnapshot?:NativeSkySnapshot;snapshotPurpose?:import('../../../../src/nara/identity/types').SnapshotPurpose}){
+  const topology=this.renderer.retainedTopology?.();
+  if(!topology)throw new Error('The retained GPU field must be live before a native world is prepared');
+  const prepared=await this.port.request({operation:'prepare_world',request:this.composeRequest(topology,options)});
+  if(prepared?.schema!=='oi.native-expression-prepared-world/v1'||prepared.source?.world?.schema!=='ql.scene-world/v1'||prepared.source?.sky?.schema!=='ql.sky-snapshot/v1')throw new Error('native world preparation did not return one atomic owner world');
+  return prepared;
+ }
+ async compose(options:{sky?:NativeSky;skySnapshot?:NativeSkySnapshot;snapshotPurpose?:import('../../../../src/nara/identity/types').SnapshotPurpose;event?:unknown;world?:NativeWorldInput;entityTargetBindings?:EntityTargetBindings}={}){
   const topology=this.renderer.retainedTopology?.();
   if(!topology)throw new Error('The retained GPU field must be live before the instrument opens');
-  const sky=options.sky??'now';
-  if(!(sky==='none'||sky==='now'||(typeof sky==='object'&&typeof sky?.epoch==='string')))throw new Error('sky must be none, now or a dated epoch');
-  const request={texture:[topology.tex_width,topology.tex_height],units_per_metre:INSTRUMENT_PRESENTATION.units_per_metre,sky,...(options.event!==undefined?{event:options.event}:{})};
-  return this.admit(SCENE_SAMPLE_RATE,()=>this.port.request({operation:'compose',request}));
+  if(options.entityTargetBindings&&!options.world)throw new Error('entity target bindings require an admitted native world');
+  const request=this.composeRequest(topology,options);
+  return this.admit(SCENE_SAMPLE_RATE,()=>this.port.request({operation:'compose',request}),options.entityTargetBindings);
  }
  /** Inspect depth: an explicit Central binding document. */
  async connect(path:string,revision:string,sampleRate:number){
@@ -160,7 +192,13 @@ export class NativeFieldController {
   const level=context.createGain();level.gain.value=this.levelValue;level.connect(context.destination);this.level=level;
   return new Proxy(context,{get:(target,key)=>{if(key==='destination')return level;const value=Reflect.get(target,key);return typeof value==='function'?value.bind(target):value;}}) as AudioContext;
  }
- private async admit(sampleRate:number,open:()=>Promise<any>){
+ private admit(sampleRate:number,open:()=>Promise<any>,entityTargetBindings?:EntityTargetBindings){
+  if(this.admission)return Promise.reject(new Error('the previous native admission has not settled'));
+  const admission=this.admitOwner(sampleRate,open,entityTargetBindings);this.admission=admission;
+  return admission.finally(()=>{if(this.admission===admission)this.admission=null;});
+ }
+ private async admitOwner(sampleRate:number,open:()=>Promise<any>,entityTargetBindings?:EntityTargetBindings){
+  if(this.closeFailure)throw new Error('native release acknowledgement unknown: '+this.closeFailure.message);
   if(this.dead||this.status==='opening'||this.session||this.closing||this.suspension)throw new Error('release the current native owner and instrument suspension before opening another');
   if(!Number.isInteger(sampleRate)||sampleRate<8000||sampleRate>192000)throw new Error('native binding must supply its actual sample rate');
   const epoch=++this.epoch;this.admitting=epoch;this.status='opening';this.reason=null;this.openingHold=null;this.lastNative=null;this.refusal=null;this.changed();
@@ -176,7 +214,16 @@ export class NativeFieldController {
    this.opened=opened;
    if(opened.schema!=='oi.native-expression-open/v1'||opened.receipt?.field?.sample_rate!==sampleRate)throw new Error('native open receipt/sample rate mismatch');
    const stage=this.renderer.retainedTargetPort();
-   this.projection=new NativeProjection(stage,opened.receipt.field,opened.presentation);
+   let presentation=opened.presentation;
+   if(entityTargetBindings){
+    const target_map=await entityTargetBindings({world:structuredClone(opened.source?.world),partition:stage.readPartitionSnapshot()});
+    // Mapping is an asynchronous owner boundary. A release that happens while
+    // it is pending has already closed `opened`; that old completion must not
+    // recreate a projection or session in the released lifetime.
+    if(epoch!==this.epoch||this.dead)return;
+    presentation={units_per_metre:opened.presentation?.units_per_metre,target_map};
+   }
+   this.projection=new NativeProjection(stage,opened.receipt.field,presentation);
    this.renderer.setNativeDomain(true);
    this.session=new InstrumentSession({...this.playback,context:this.stage(context),owner:this.renderer,initialReceipt:opened.receipt,
     transport:{request:(request:any)=>this.port.request({operation:'exchange',lease:opened.lease,request}),close:()=>{void this.closeOwner(opened).catch(()=>{});}},fieldBinding:this.projection,muted:true});
@@ -199,8 +246,8 @@ export class NativeFieldController {
    this.changed();
   }catch(error){
    // A completion belonging to an old epoch may not close a newer owner.
-   if(epoch!==this.epoch||this.dead){if(context&&context.state!=='closed')await context.close();return;}
-   await this.release(false);this.status='unavailable';this.reason=String(error);this.changed();throw error;
+   if(epoch!==this.epoch||this.dead){if(context&&context.state!=='closed')await context.close();if(error instanceof NativeCloseError)throw error;return;}
+   await this.releaseLifetime(false,false);const closeError=this.reading.lifetime.close_error;this.status='unavailable';this.reason=closeError?'native release acknowledgement unknown: '+closeError:String(error);this.changed();throw error;
   }finally{if(this.admitting===epoch)this.admitting=null;}
  }
  /** Called by the actual app frame. A hidden/paused app cannot leave audio running. */
@@ -487,7 +534,8 @@ export class NativeFieldController {
   const session=await this.idle();if(!this.current(session))throw new Error('checkpoint belongs to a released lifetime');this.renderer.restoreRetainedField(this.projection,this.checkpoint);this.reason='checkpoint restored; resume explicitly';this.status='held';this.changed();
  });}
  inspectTargets(){return this.projection?.inspect()??null;}
- async release(manual=true){
+ release(manual=true){return this.releaseLifetime(manual,true);}
+ private async releaseLifetime(manual:boolean,settleAdmission:boolean){
   this.pause('released');
   const epoch=++this.epoch;const session=this.session;this.lastNative=session?.reading??this.lastNative;
   this.session=null;session?.dispose();this.recovery?.();this.recovery=null;
@@ -497,10 +545,14 @@ export class NativeFieldController {
   this.scene=false;this.influenceReading=null;this.acting=null;this.event=null;this.opening=null;this.sourcesStale=false;this.level=null;
   this.admitting=null;this.suspension=null;this.restoring=null;
   if(manual){this.status='manual';this.lastNative=null;this.reason=null;this.refusal=null;this.lastCadence=null;this.changed();}
+  const admission=settleAdmission?this.admission:null;
+  const pending=this.pending;
   const close=async()=>{
-   const results=await Promise.allSettled([context&&context.state!=='closed'?context.close():Promise.resolve(),this.closeOwner(opened)]);
+   const results=await Promise.allSettled([context&&context.state!=='closed'?context.close():Promise.resolve(),this.closeOwner(opened),admission??Promise.resolve()]);
+   await pending;
+   while(this.operating)await new Promise(resolve=>setTimeout(resolve,8));
    const failure=results.find((r):r is PromiseRejectedResult=>r.status==='rejected');
-   if(failure&&epoch===this.epoch){this.reason=`native release acknowledgement unknown: ${String(failure.reason)}`;this.changed();}
+   if((failure||this.closeFailure)&&epoch===this.epoch){this.reason=`native release acknowledgement unknown: ${String(failure?.reason??this.closeFailure?.message)}`;this.changed();}
   };
   const closing=close();this.closing=closing;
   try{await closing;}finally{if(this.closing===closing)this.closing=null;}

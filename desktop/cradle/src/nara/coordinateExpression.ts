@@ -1,7 +1,7 @@
 /** Native coordinate/profile reads and adoption over the existing Expression owner. */
 import type {ExpressionDocument,ExpressionRequest,ExpressionResult,SubjectBinding,ReadingRef} from '../expression/types';
 export type CoordinateFace='bimba'|'pratibimba';
-export interface CoordinateRequest {coordinate_ref:string;face:CoordinateFace}
+export interface CoordinateRequest {coordinate_ref:string;face:CoordinateFace;source_only?:boolean;include_content?:boolean;related_coordinates?:string[];inventory?:{offset:number;limit:number}}
 export interface CoordinateProfile extends Record<string,unknown> {profile_ref:string;revision:number;title:string;parent_profile_refs:string[];provenance:ReadingRef[]}
 export interface CoordinateExpressionBinding {
  schema:'ql.coordinate-expression-binding/v1';coordinate_ref:string;coordinate_id:string;face:CoordinateFace;family:string;labels:string[];branch_path:string[];
@@ -14,7 +14,10 @@ export interface CoordinateExpressionBinding {
  declared_capabilities:Record<string,unknown>[];ta_onta_faculties:{id:string;label:string;standing:string;capability_refs:string[];native_owners:string[]}[];
  property_value_standing:string;capability_standing:string;authored_variant_refs:string[];encounter_overlay_standing:string;
 }
-export interface CoordinateExpressionResult {schema:'oi.nara-coordinate/v1';binding:CoordinateExpressionBinding;profiles:CoordinateProfile[];subject_binding:SubjectBinding}
+export interface BimbaSourceIdentity {coordinate:string;native_coordinate:string|null;canonical_ref:string;uuid:string|null;title:string;aliases:string[];source_revision:string;registry_revision:string;full_source_ref:string;full_properties_ref:string;properties_sha256:string;properties?:Record<string,unknown>}
+export interface BimbaSourceContent {schema:'ql.bimba-coordinate-content/v1';source_revision:string;registry_revision:string;identity:BimbaSourceIdentity;relations:{source_index:number;relation_ref:string;from_coordinate:string;to_coordinate:string;from_ref:string;to_ref:string;kind:string;orientation:'directed';properties:Record<string,unknown>;properties_sha256:string;source_revision:string}[];standing:string}
+export interface BimbaSourceInventory {schema:'ql.bimba-inventory/v1';source_revision:string;registry_revision:string;source_ref:string;total:number;relations:number;offset:number;next_offset:number|null;items:BimbaSourceIdentity[]}
+export interface CoordinateExpressionResult {schema:'oi.nara-coordinate/v1';binding:CoordinateExpressionBinding;profiles:CoordinateProfile[];subject_binding:SubjectBinding;source_content?:BimbaSourceContent;related_readings?:CoordinateExpressionResult[];source_inventory?:BimbaSourceInventory}
 export type ExpressionOwner=(request:ExpressionRequest)=>Promise<ExpressionResult>;
 const stable=(value:unknown):string=>JSON.stringify(value,(_key,v)=>v&&typeof v==='object'&&!Array.isArray(v)?Object.fromEntries(Object.entries(v).sort(([a],[b])=>a.localeCompare(b))):v);
 export function validateCoordinateExpression(value:unknown):CoordinateExpressionResult {

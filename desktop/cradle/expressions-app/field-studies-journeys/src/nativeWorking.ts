@@ -8,7 +8,7 @@ import {clone,validateJourney,type Journey} from './model.js';
 import {kernelDocumentToJourney,type KernelConversion,type KernelExpressionDocument} from './kernelDocumentBridge.js';
 import {prepareCompositionEdit,acceptCompositionReply,rebaseCompositionView,type CompositionEdit} from './kernelComposition.js';
 export interface WorkingSnapshot {journey:Journey;sceneId:string;entityId:string|null}
-export interface NativeFile {location:{schema:'central.path-ref/v1';ref:string;root:string;path:string};revision:string;expression_ref:string}
+export interface NativeFile {location:{schema:'central.path-ref/v1';ref:string;root:string;path:string};revision:string;expression_ref:string;document_revision?:number}
 export type SaveDestination={parent_path:string;name:string}|{location:NativeFile['location'];revision:string};
 export type PendingNative =
  | {kind:'create';expression_ref:string;submitted:WorkingSnapshot}
@@ -59,6 +59,27 @@ function connectionResult(view:KernelConversion,request:ConnectionEdit):KernelEx
  const doc=clone(view.document);doc.relations??={};
  const touchedScenes=new Set<string>();
  for(const change of request.changes){
+  if(change.change==='subject_bind'){
+   const entity=typeof change.entity_ref==='string'?doc.entities[change.entity_ref]:undefined;
+   const binding=change.binding as import('./kernelDocumentBridge.js').KernelSubject|undefined;
+   if(!entity||!binding||typeof binding.subject_ref!=='string'||typeof binding.native_owner!=='string')throw new Error('A subject binding needs its exact existing native occurrence and owner');
+   entity.subject=clone(binding);continue;
+  }
+  if(change.change==='scene_material_set'){
+   const scene=doc.scenes.find(s=>s.scene_ref===change.scene_ref);
+   const material=change.presentation as NonNullable<typeof scene>['presentation'];
+   if(!scene||material?.schema!=='oi.journey-scene/v1')throw new Error('Scene material needs its existing native Scene');
+   scene.presentation=clone(material);continue;
+  }
+  if(change.change==='parameter_set'){
+   const entity=typeof change.entity_ref==='string'?doc.entities[change.entity_ref]:undefined;
+   const key=change.parameter,value=change.value;
+   if(!entity||typeof key!=='string'||!NATIVE_PARAMETERS.has(key)||(typeof value!=='string'&&typeof value!=='number')||typeof value==='number'&&!Number.isFinite(value))throw new Error('Choose an admitted native entity parameter');
+   if(entity.parameters[key]?.automation)throw new Error('Take manual control before changing an automated parameter');
+   entity.parameters[key]={value,automation:null};
+   for(const scene of doc.scenes)if(scene.presentation)applyMaterialParameter(scene.presentation.scene,String(change.entity_ref),key,value);
+   continue;
+  }
   if(SCENE_CHANGE_KINDS.has(change.change as string)){
    applySceneChange(doc,change,touchedScenes);
    continue;
@@ -95,10 +116,34 @@ function connectionResult(view:KernelConversion,request:ConnectionEdit):KernelEx
  }
  if(!same(doc,view.document)){
   doc.revision++;
-  for(const scene of doc.scenes)if(touchedScenes.has(scene.scene_ref))scene.revision=doc.revision;
+  for(const entity of Object.values(doc.entities))if(!same(entity,view.document.entities[entity.entity_ref]))entity.revision=doc.revision;
+  for(const scene of doc.scenes)if(!same(scene,view.document.scenes.find(s=>s.scene_ref===scene.scene_ref)))scene.revision=doc.revision;
  }
  kernelDocumentToJourney(doc); // complete binding and membership validation
  return doc;
+}
+const NATIVE_PARAMETERS=new Set(['glyph','shape','kind','yantra','force_mode','ascii','image','x','y','z','scale','share','width','height','rotation','frequency','force_strength','force_spin','force_radius']);
+/** Exact presentation side effects of expression_scene::set_parameter. The
+ * native owner's complete reply and a second inspect still verify the edit. */
+function applyMaterialParameter(scene:import('./model.js').Scene,ref:string,key:string,value:string|number):void{
+ for(const entity of scene.entities.filter(e=>e.id===ref)){
+  if(['x','y','z'].includes(key)&&typeof value==='number')entity.position[key as 'x'|'y'|'z']=value/400;
+  else if((key==='width'||key==='height')&&typeof value==='number')entity.size[key==='width'?'x':'y']=value/400;
+  else if(key==='rotation'&&typeof value==='number')entity.rotation=value*180/Math.PI;
+  else if(key==='scale'||key==='share'||key==='kind')(entity as unknown as Record<string,unknown>)[key]=value;
+  else if(key==='glyph')entity.text=String(value);
+  else if(key==='shape')entity.shape=(value==='glyph'?'text':value) as typeof entity.shape;
+  else if(key==='yantra')entity.yantraId=String(value);
+  else if(key==='frequency')entity.templateFrequency=Number(value);
+  else if(key==='force_mode')entity.force.kind=value as typeof entity.force.kind;
+  else if(key==='force_strength')entity.force.strength=Number(value);
+  else if(key==='force_spin')entity.force.spin=Number(value);
+  else if(key==='force_radius')entity.force.radius=Number(value)/400;
+  else if(key==='ascii'||key==='image'){
+   if(value==='')delete entity.source;
+   else entity.source=key==='ascii'?{kind:'ascii',ascii:{text:String(value)}}:{kind:'image',image:{dataUrl:String(value),mode:'luminance',threshold:.5,invert:false,scale:1}};
+  }
+ }
 }
 /** ES1A/ES1B change application, mirrored from kernel/src/expression.rs's
  * `Change::SceneBodySet/SceneBodyClear/SceneTriggerAttach/SceneTriggerDetach`
@@ -162,7 +207,15 @@ function artifact(value:unknown,reference:string):NativeFile {
  const result=value as {document?:KernelExpressionDocument;file?:NativeFile}|null,file=result?.file;
  if(result?.document?.expression_ref!==reference||file?.location?.schema!=='central.path-ref/v1'
   ||!file.location.ref||!file.location.root||!file.location.path||!file.revision)throw new Error('The owner did not confirm the exact native file and revision');
- return {location:clone(file.location),revision:file.revision,expression_ref:reference};
+ return {location:clone(file.location),revision:file.revision,expression_ref:reference,document_revision:result.document.revision};
+}
+/** Keep a reference open on the native owner's current durable file binding. */
+export function nativeOwnerSnapshot(value:unknown,reference:string):{document:KernelExpressionDocument;file?:NativeFile}{
+ const document=readDocument(value,reference),result=value as {file?:NativeFile|null;saved_revision?:number|null};
+ if(!result.file)return {document};
+ const revision=result.saved_revision;
+ if(!Number.isSafeInteger(revision)||revision!<1||revision!>document.revision)throw Error('The native file has no valid acknowledged document revision');
+ return {document,file:{...artifact(value,reference),document_revision:revision!}};
 }
 function firstView(document:KernelExpressionDocument,snapshot:WorkingSnapshot):KernelConversion {
  if(document.revision!==1||Object.keys(document.entities).length||Object.keys(document.relations??{}).length||document.scenes.length!==1||document.title!==snapshot.journey.name)throw new Error('The created native Expression has already changed; reconcile it before composing');
@@ -196,6 +249,7 @@ export function validateWorkingRecord(raw:unknown,journey:Journey):NativeWorking
  if(value.file){
   artifact({document:value.view?.document,file:value.file},value.file.expression_ref);
   if(value.file.expression_ref!==value.view?.document.expression_ref)throw new Error('Recovered file points to another work');
+  if(value.file.document_revision!==undefined&&(!Number.isSafeInteger(value.file.document_revision)||value.file.document_revision<1||value.file.document_revision>value.view.document.revision))throw Error('Recovered file has an invalid acknowledged document revision');
  }
  if(value.pending){
   const pending=value.pending;

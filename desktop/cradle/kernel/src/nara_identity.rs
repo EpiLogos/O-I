@@ -18,6 +18,43 @@ const PREFIX: &str = "Control/self/nara/identities/";
 const MAX_PROFILE: usize = 2 * 1024 * 1024;
 const MAX_OUTPUT: u64 = 16 * 1024 * 1024;
 
+/// An existing immutable occasion is distinct from asking for fresh current sky.
+#[derive(Clone, Copy, Debug, Default, Deserialize, Serialize, PartialEq)]
+#[serde(rename_all = "kebab-case")]
+pub enum SnapshotPurpose {
+    #[default]
+    Requested,
+    RetainedOccasion,
+}
+
+pub(crate) fn validate_retained_admission(
+    admission: &Value,
+    snapshot: &Value,
+) -> Result<(), String> {
+    if admission["schema"] != "ql.sky-admission/v1"
+        || admission["purpose"] != "retained-occasion"
+        || admission["snapshot_ref"] != snapshot["snapshot_ref"]
+        || admission["original_mode"] != snapshot["request"]["mode"]
+        || admission["epoch_utc"] != snapshot["epoch_utc"]
+        || admission["receipt_utc"] != snapshot["receipt_utc"]
+        || admission["fresh_current_attested"] != false
+        || admission["validation"] != "immutable-snapshot-and-current-native-source"
+        || admission["validator_source"]["source_ref"] != "providers/sky/kerykeion_snapshot.py"
+        || !admission["validator_source"]["revision"]
+            .as_str()
+            .is_some_and(|r| {
+                r.strip_prefix("sha256:")
+                    .is_some_and(|h| h.len() == 64 && h.bytes().all(|c| c.is_ascii_hexdigit()))
+            })
+    {
+        return Err(
+            "QL did not qualify the exact retained occasion separately from fresh current sky"
+                .into(),
+        );
+    }
+    Ok(())
+}
+
 #[derive(Clone, Debug, Deserialize, Serialize, PartialEq)]
 #[serde(tag = "operation", rename_all = "snake_case", deny_unknown_fields)]
 pub enum Request {
@@ -33,7 +70,12 @@ pub enum Request {
     PersonalCurrent {
         source_ref: String,
         expected_revision: String,
-        sky_request: Value,
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        sky_request: Option<Value>,
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        sky_snapshot: Option<Value>,
+        #[serde(default)]
+        snapshot_purpose: SnapshotPurpose,
     },
     List,
     Open {
@@ -234,6 +276,30 @@ fn result(reading: Value, source: Option<&SourceReading>) -> Value {
     json!({"schema":"oi.nara-identity/v1","reading":reading,"source":source.map(|s|json!({"source_ref":s.source.source_ref,"revision":s.revision.revision}))})
 }
 
+/// Select one sky input without interpreting it. QL revalidates snapshot
+/// provenance and reconstructs the personal reading from the saved identity.
+fn personal_sky_input(
+    request: Option<Value>,
+    snapshot: Option<Value>,
+) -> Result<serde_json::Map<String, Value>, String> {
+    let (key, value, schema) = match (request, snapshot) {
+        (Some(value), None) => ("sky_request", value, "ql.sky-request/v1"),
+        (None, Some(value)) => ("sky_snapshot", value, "ql.sky-snapshot/v1"),
+        _ => return Err("Choose exactly one sky request or existing native sky snapshot".into()),
+    };
+    if !value.is_object() || value["schema"] != schema {
+        return Err("The personal sky input is not a supported native sky reading".into());
+    }
+    if key == "sky_snapshot"
+        && value["snapshot_ref"]
+            .as_str()
+            .is_none_or(|reference| reference.trim().is_empty())
+    {
+        return Err("The existing native sky snapshot has no occasion reference".into());
+    }
+    Ok(serde_json::Map::from_iter([(key.to_owned(), value)]))
+}
+
 pub fn apply(client: &CentralClient, request: Request) -> Result<Value, String> {
     match request {
         Request::Inspect { profile } => Ok(result(ql("inspect", &profile)?, None)),
@@ -249,23 +315,49 @@ pub fn apply(client: &CentralClient, request: Request) -> Result<Value, String> 
             source_ref,
             expected_revision,
             sky_request,
+            sky_snapshot,
+            snapshot_purpose,
         } => {
+            if snapshot_purpose == SnapshotPurpose::RetainedOccasion && sky_snapshot.is_none() {
+                return Err("A retained occasion requires an existing native sky snapshot".into());
+            }
+            let retained_snapshot = sky_snapshot.clone();
+            let supplied_snapshot_ref = sky_snapshot
+                .as_ref()
+                .and_then(|snapshot| snapshot["snapshot_ref"].as_str())
+                .map(str::to_owned);
+            let sky = personal_sky_input(sky_request, sky_snapshot)?;
             let (source, profile) = read(client, &source_ref)?;
             if source.revision.revision != expected_revision {
                 return Err("The identity changed; reopen its current revision before reading the present field".into());
             }
-            let current = run_ql_nara(
-                "personal-current",
-                &json!({
-                    "schema":"ql.nara-personal-current-request/v1","profile":profile,"sky_request":sky_request
-                }),
-            )?;
+            let mut input =
+                json!({"schema":"ql.nara-personal-current-request/v1","profile":profile});
+            input.as_object_mut().unwrap().extend(sky);
+            if snapshot_purpose == SnapshotPurpose::RetainedOccasion {
+                input["snapshot_purpose"] = json!(snapshot_purpose);
+            }
+            let current = run_ql_nara("personal-current", &input)?;
             if current["schema"] != "ql.nara-personal-current/v1"
                 || !same_input(&current["identity"]["profile"], &profile)
                 || current["identity"]["person_ref"] != profile["person_ref"]
                 || current["identity"]["nara_ref"] != profile["nara_ref"]
             {
                 return Err("QL returned a different personal current basis".into());
+            }
+            if supplied_snapshot_ref
+                .as_deref()
+                .is_some_and(|reference| current["snapshot_ref"].as_str() != Some(reference))
+            {
+                return Err(
+                    "QL returned a different sky occasion from the supplied cosmic snapshot".into(),
+                );
+            }
+            if snapshot_purpose == SnapshotPurpose::RetainedOccasion {
+                validate_retained_admission(
+                    &current["sky_admission"],
+                    retained_snapshot.as_ref().unwrap(),
+                )?;
             }
             let (confirmed, _) = read(client, &source_ref)?;
             if confirmed.revision.revision != expected_revision {
@@ -355,6 +447,29 @@ pub fn apply(client: &CentralClient, request: Request) -> Result<Value, String> 
 #[cfg(test)]
 mod input_roundtrip_tests {
     use super::*;
+
+    #[test]
+    fn personal_sky_route_retains_one_native_input_and_refuses_ambiguous_or_forged_basis() {
+        let request = json!({"schema":"ql.sky-request/v1","epoch":"2026-09-30T12:00:00Z"});
+        let snapshot =
+            json!({"schema":"ql.sky-snapshot/v1","snapshot_ref":"sha256:existing-occasion"});
+        assert_eq!(
+            personal_sky_input(Some(request.clone()), None).unwrap(),
+            serde_json::Map::from_iter([("sky_request".to_owned(), request.clone())])
+        );
+        assert_eq!(
+            personal_sky_input(None, Some(snapshot.clone())).unwrap(),
+            serde_json::Map::from_iter([("sky_snapshot".to_owned(), snapshot.clone())])
+        );
+        assert!(personal_sky_input(None, None).is_err());
+        assert!(personal_sky_input(Some(request), Some(snapshot)).is_err());
+        assert!(personal_sky_input(
+            None,
+            Some(json!({"schema":"ql.nara-personal-current/v1","snapshot_ref":"forged"}))
+        )
+        .is_err());
+        assert!(personal_sky_input(None, Some(json!({"schema":"ql.sky-snapshot/v1"}))).is_err());
+    }
 
     #[test]
     fn typed_float_roundtrip_preserves_input_without_relaxing_identity() {

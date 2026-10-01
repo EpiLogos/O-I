@@ -42,7 +42,14 @@ export function relayNativeChannel(frame: HTMLIFrameElement, transport:KernelTra
         if(reading.byte_len>32*1024*1024)throw new Error('binding source exceeds 32 MiB');
         respond({ok:true,data:{path,location:reading.location,revision:reading.revision,content:reading.content}});return;
       }
-      if(!request || !['open','compose','exchange','close'].includes(request.operation))throw new Error('unsupported native-expression operation');
+      if(!request || !['open','compose','prepare_world','exchange','close'].includes(request.operation))throw new Error('unsupported native-expression operation');
+      // Preparation returns an admitted owner world without opening a driver.
+      // It neither acquires nor releases this frame's existing lease.
+      if(request.operation==='prepare_world'){
+        const result=await call(request);
+        if(!result || result.schema!=='oi.native-expression-prepared-world/v1' || result.source?.world?.schema!=='ql.scene-world/v1' || result.source?.sky?.schema!=='ql.sky-snapshot/v1' || result.lease!==undefined)throw new Error('invalid native world preparation receipt');
+        respond({ok:true,data:result});return;
+      }
       // Compose is an open whose binding QL writes: same lease law. Only the
       // consumer request travels; the kernel validates it strictly.
       if(request.operation==='open' || request.operation==='compose'){

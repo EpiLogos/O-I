@@ -14,7 +14,7 @@ export class ControlledOwner {
  frame=controlledFrame(); sources=controlledSources(); sequence=0n; calls=[]; closed=false; lost=false; active=false;
  async request(request){
   this.calls.push(structuredClone(request));
-  if(request.operation==='close'){this.closed=true;this.active=false;return{schema:'oi.native-expression-closed/v1',closed:true};}
+  if(request.operation==='close'){this.closed=true;this.active=false;return{schema:'oi.native-expression-closed/v1',lease:request.lease,closed:true};}
   if(request.operation==='open'){
    if(this.active)throw new Error('native-expression.owner_busy');this.active=true;this.closed=false;this.sequence=0n;this.frame=controlledFrame();this.sources=controlledSources();
    return{schema:'oi.native-expression-open/v1',lease:'controlled:lease',source:{revision:'controlled:r1'},presentation:{units_per_metre:400,slots_a:[0,1,0,1],slots_b:[1,0,1,0]},receipt:{schema:'ql.field-host-receipt/v1',status:'ready',available:true,instance_ref:'controlled:instance',last_request_id:'0',request_id:null,field:structuredClone(this.frame)}};
@@ -78,7 +78,7 @@ export class ControlledSceneOwner {
   effects:[{determinant:'the dated sky',through:'coupled sky bus: M2-5 just octave × M1 root',effect:'pitch',units:'Hz',range:'~',timing:'event',consumer:'K8',warrant:'source-defined'},{determinant:'material policy',through:'damping',effect:'decay',units:'1/s',range:'declared',timing:'instance',consumer:'K8',warrant:'declared policy — not source'}]};}
  async request(request){
   this.calls.push(structuredClone(request));
-  if(request.operation==='close'){this.closed=true;this.active=false;return{schema:'oi.native-expression-closed/v1',closed:true};}
+  if(request.operation==='close'){this.closed=true;this.active=false;return{schema:'oi.native-expression-closed/v1',lease:request.lease,closed:true};}
   if(request.operation==='compose'){
    if(this.active)throw new Error('native-expression.owner_busy');this.active=true;this.closed=false;this.sequence=0n;
    this.frame={...controlledFrame(),event_ref:'controlled:scene',m2_identity:{event_ref:'controlled:scene',profile_generation:1}};
