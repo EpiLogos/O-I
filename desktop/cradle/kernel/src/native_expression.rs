@@ -2567,13 +2567,21 @@ for line in sys.stdin:
     #[test]
     #[ignore = "requires real QL scene binding/sky/host/worker companions"]
     fn actual_legacy_sky_and_unlocated_bindings_open_without_losing_source() {
-        let mut manager = Manager::default();
         let client = CentralClient::with("/nonexistent".into(), None, String::new());
+        let mut kernel = crate::Kernel::new(client);
         let mut legacy_openings = Vec::new();
         for sky in ["none", "now"] {
             let legacy_request = json!({"texture":[8,8],"units_per_metre":120,"sky":sky});
-            let legacy = manager
-                .prepare_compose(&legacy_request)
+            // This is the ordinary frame request and Tauri's split kernel
+            // operation, not a direct call to the private binding parser.
+            let op: crate::KernelOp = serde_json::from_value(json!({
+                "op":"native_expression", "request":{
+                    "operation":"compose", "request":legacy_request}
+            }))
+            .unwrap();
+            let legacy = kernel
+                .prepare_native_compose(&op)
+                .unwrap()
                 .unwrap()
                 .execute()
                 .unwrap();
@@ -2581,6 +2589,14 @@ for line in sys.stdin:
             assert_eq!(legacy_full.as_object().unwrap().len(), 6);
             assert_eq!(legacy.source["binding"], legacy_full);
             assert_eq!(legacy.source["world"], Value::Null);
+            let projected: Value = serde_json::from_str(
+                &composed_worker_binding(&legacy.content, &legacy.source).unwrap(),
+            )
+            .unwrap();
+            assert_eq!(projected.as_object().unwrap().len(), 3);
+            for key in ["schema", "host", "presentation"] {
+                assert_eq!(projected[key], legacy_full[key]);
+            }
             // `none` skips a new acquisition. The authored default can retain a
             // dated sky; its actual qualified receipt determines scene presence.
             let has_retained_sky = legacy_full["host"]["basis"]["source_receipts"]
@@ -2590,9 +2606,54 @@ for line in sys.stdin:
                 .any(|r| r["schema"] == "ql.sky-snapshot/v1");
             assert_eq!(legacy_full["scene"].is_null(), !has_retained_sky);
             assert_eq!(legacy.source["sky"].is_null(), sky == "none");
+            if sky == "now" {
+                let acquired = &legacy.source["sky"];
+                assert_eq!(acquired["schema"], "ql.sky-snapshot/v1");
+                for input in [
+                    &legacy_full["host"]["basis"],
+                    &legacy_full["native_basis"]["input"],
+                ] {
+                    let admitted: Vec<&Value> = input["source_receipts"]
+                        .as_array()
+                        .unwrap()
+                        .iter()
+                        .filter(|receipt| receipt["schema"] == "ql.sky-snapshot/v1")
+                        .collect();
+                    assert_eq!(admitted, vec![acquired]);
+                }
+                assert_eq!(
+                    legacy_full["scene"]["snapshot_ref"],
+                    acquired["snapshot_ref"]
+                );
+            }
+            let mut mutants = Vec::new();
             let mut unknown = legacy_full.clone();
             unknown["unknown"] = json!(true);
-            assert!(composed_worker_binding(&unknown.to_string(), &legacy.source).is_err());
+            mutants.push(unknown);
+            let mut missing_basis = legacy_full.clone();
+            missing_basis
+                .as_object_mut()
+                .unwrap()
+                .remove("native_basis");
+            mutants.push(missing_basis);
+            for key in ["native_basis", "native_readback", "host"] {
+                let mut changed = legacy_full.clone();
+                changed[key]["foreign_revision"] = json!("foreign:source");
+                mutants.push(changed);
+            }
+            for mutant in mutants {
+                let sequence = kernel.native_expression.sequence;
+                let error = kernel
+                    .finish_native_compose(ComposedBinding {
+                        content: mutant.to_string(),
+                        source: legacy.source.clone(),
+                        finish: ComposeFinish::Open,
+                    })
+                    .unwrap_err();
+                assert!(error.contains("compose_refused"), "{error}");
+                assert!(kernel.native_expression.active.is_none());
+                assert_eq!(kernel.native_expression.sequence, sequence);
+            }
             if sky == "now" {
                 let mut missing = legacy_full.clone();
                 missing["scene"] = Value::Null;
@@ -2601,14 +2662,80 @@ for line in sys.stdin:
                 assert!(composed_worker_binding(&missing.to_string(), &forged).is_err());
             }
             let legacy_source = legacy.source.clone();
-            let legacy_opened = manager.finish_compose(legacy).unwrap();
+            let legacy_opened = match kernel.finish_native_compose(legacy).unwrap().result {
+                crate::KernelOpResult::NativeExpression { data } => data,
+                other => panic!("ordinary compose returned {other:?}"),
+            };
             assert_eq!(legacy_opened["source"], legacy_source);
+            assert_eq!(legacy_opened["receipt"]["status"], "ready");
             assert_eq!(legacy_opened["receipt"]["available"], true);
+            assert_eq!(legacy_opened["presentation"], legacy_full["presentation"]);
             let lease = legacy_opened["lease"].as_str().unwrap().to_owned();
-            manager.apply(&client, Request::Close { lease }).unwrap();
-            assert!(manager.active.is_none());
-            legacy_openings.push(legacy_opened);
+            let opening = &legacy_opened["receipt"];
+            let inspect = json!({"schema":"ql.field-host-request/v1",
+                "instance_ref":opening["instance_ref"],
+                "event_ref":opening["field"]["event_ref"],
+                "subject_ref":opening["field"]["subject_ref"],
+                "request_id":(opening["last_request_id"].as_str().unwrap()
+                    .parse::<u64>().unwrap()+1).to_string(),
+                "expected_generation":opening["field"]["generation"],
+                "expected_samples_elapsed":opening["field"]["samples_elapsed"],
+                "command":{"operation":"inspect"}});
+            let inspected = match kernel
+                .apply(crate::KernelOp::NativeExpression {
+                    request: Request::Exchange {
+                        lease: lease.clone(),
+                        request: inspect,
+                    },
+                })
+                .unwrap()
+                .result
+            {
+                crate::KernelOpResult::NativeExpression { data } => data,
+                other => panic!("ordinary inspect returned {other:?}"),
+            };
+            assert_eq!(inspected["status"], "ok");
+            assert_eq!(inspected["available"], true);
+            assert_eq!(inspected["field"], opening["field"]);
+            assert_eq!(
+                inspected["sources"]["original"],
+                legacy_full["native_basis"]
+            );
+            assert_eq!(inspected["sources"]["current"], legacy_full["native_basis"]);
+            let receiving = &inspected["influence"]["native_readback"];
+            assert!(receiving.is_object(), "{inspected}");
+            for (key, value) in legacy_full["native_readback"].as_object().unwrap() {
+                // The worker discloses coordinate/double-cover details beside
+                // the same admitted ClockInput. These are native derivations.
+                if key != "continuous_clock_native" {
+                    assert_eq!(receiving[key], *value, "{sky}: {key}");
+                }
+            }
+            assert_eq!(
+                receiving["continuous_clock_native"],
+                inspected["field"]["clock"]
+            );
+            let closed = kernel
+                .apply(crate::KernelOp::NativeExpression {
+                    request: Request::Close { lease },
+                })
+                .unwrap();
+            assert!(kernel.native_expression.active.is_none());
+            legacy_openings.push(json!({"request":op,"projected":projected,
+                "opened":legacy_opened,"inspected":inspected,"closed":closed}));
         }
         assert_eq!(legacy_openings.len(), 2);
+        if let Ok(output) = std::env::var("OI_NATIVE_LEGACY_REPLAY_OUTPUT") {
+            fs::write(
+                output,
+                serde_json::to_vec_pretty(&json!({
+                    "schema":"oi.native-expression-ordinary-compose-acceptance/v1",
+                    "standing":"real native owner; no rendered or installed UI claim",
+                    "openings":legacy_openings
+                }))
+                .unwrap(),
+            )
+            .unwrap();
+        }
     }
 }
