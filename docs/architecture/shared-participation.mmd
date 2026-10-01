@@ -1,0 +1,35 @@
+%% source_id: oi:architecture:shared-participation
+%% visual_question: How do local NOWs and Workcells participate in shared live Expressions?
+%% companion_doc: shared-participation.md
+%% revision: 2026-09-30
+%% provenance: relations.json S1-S9; source-basis.json; dashed join awaits installed episode
+flowchart TB
+  now["Central · LOCAL SOURCE<br/>Workcell-root / child NOW / personal Day"]
+  workcell["Workcell · MATERIAL<br/>Declared material identity"]
+  select["O:I · EGRESS SELECTION<br/>Audience / admitted refs / source revisions"]
+  fieldnow["SharedField · TEMPORAL PROJECTION<br/>FieldNow / FieldDay / separate CAS revision"]
+  context["Participant context · DERIVED<br/>Current authority / latest non-withdrawn basis"]
+  expression["O:I · RETAINED RESOURCE<br/>Native Expression / selected Scene material"]
+  filter["O:I · PUBLICATION<br/>Admitted composition / omission disclosure"]
+  hosted["SharedField · HOSTED PROJECTION<br/>Validated semantic contracts / subscription"]
+  render["Recipient · PRESENTATION<br/>Live renderer or explicit frozen fallback"]
+  gap["DESIRED JOIN · under repair<br/>Ordinary installed shared episode<br/>participant context ↔ native encounter"]
+  now -->|"S1 · selected temporal source refs"| select
+  workcell -->|"S2 · carrier names Workcell identity"| select
+  select -->|"S3 · validate allowed carrier; refuse private paths"| fieldnow
+  fieldnow -->|"S4 · current audience / withdrawal checks"| context
+  expression -->|"S5 · selected scenes / safe source refs"| filter
+  filter -->|"S6 · serialize admitted projection"| hosted
+  hosted -->|"S7 · subscribe and revalidate indexed identities"| render
+  hosted -->|"S8 · caller-visible source basis"| context
+  context -.->|"S9 · intended complete installed join; proof pending"| gap
+  classDef authority fill:#fff0d8,stroke:#8a5a20,color:#222;
+  classDef native fill:#e4efff,stroke:#376496,color:#222;
+  classDef derived fill:#eee7fb,stroke:#705494,color:#222;
+  classDef material fill:#edf0f2,stroke:#62717c,color:#222;
+  classDef gap fill:#fff0ee,stroke:#af463a,color:#642820;
+  class now authority;
+  class select,expression,filter native;
+  class fieldnow,context,hosted derived;
+  class workcell,render material;
+  class gap gap;

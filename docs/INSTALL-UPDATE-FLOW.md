@@ -44,7 +44,7 @@ happened by hand, and staleness became invisible.
 | Per-product build contract | `surfaces.json` `native.source_install` (build command, executable path, version command); `oi`'s own build in `current_main_install.rs` | The only build commands the updater runs |
 | Committed-cut export | `rolling_dev.rs` `export_rolling_source` (`git archive <revision>`) | Build inputs are a committed cut, never a dirty tree |
 | Modality vocabulary | `cli/src/modality.rs` | This flow records `developer-source` |
-| Channel machinery | `suite/channels.json`, `development_field.rs` | `source` channel = this flow; `stable`/`mainline` stay refused until published release artifacts exist. No new channel vocabulary is invented here |
+| Channel machinery | `suite/channels.json`, `development_field.rs`, `update_flow.rs` | `source` builds the selected committed checkout cut; `mainline` builds fetched `origin/main` through the route below. `stable` remains refused until published release artifacts exist. |
 | Receipt-swap precedent | `development_field_command.rs` `activate_source_suite` / `command_development_suite_rollback` | active/previous receipt swap, atomic_json, staged-then-renamed products |
 | Managed root | `oi_data_root()`: macOS `~/Library/Application Support/OI`, Linux `~/.local/share/oi` (honours `OI_DATA_HOME`) | The one place binaries, receipts and build caches live |
 | Composition state | `composition.rs` (`~/.config/oi/composition.json`) | Registrations are repointed at the managed bin by the updater |

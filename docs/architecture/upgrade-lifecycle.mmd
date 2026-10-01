@@ -1,0 +1,37 @@
+%% source_id: oi:architecture:upgrade-lifecycle
+%% visual_question: How do installation, gateway processes and sessions survive an upgrade?
+%% companion_doc: upgrade-lifecycle.md
+%% revision: 2026-10-01
+%% provenance: relations.json U1-U10; source-basis.json; install cut is not resident process cut
+flowchart TB
+  cuts["O:I · SOURCE CUT<br/>Committed checkout or fetched origin/main"]
+  binary["O:I · PREPARATION<br/>Build / gate / immutable binary + receipt"]
+  pointer["Installation · SELECTION<br/>Atomic symlink / active + previous cut"]
+  old["Existing process · MATERIAL<br/>Old executable inode / disclosed cut"]
+  next["Next launch · MATERIAL<br/>New selected binary"]
+  lifecycle["AIKit · OWNER LIFECYCLE<br/>PID-bound shutdown / exclusive lease<br/>unresolved cleanup refuses"]
+  sessions["AIKit · DURABLE NATIVE STATE<br/>Canonical sessions / journal / delivery cursors"]
+  renewed["AIKit · NEW RESIDENT<br/>Read continuity / new connection generation"]
+  material["Workcell · DURABLE RECORDS<br/>Material Runs / collapsed-local harness registry"]
+  recovery["Workcell · RECORD RECOVERY<br/>Reconstructed Run ledger / current harness scan"]
+  service_provider["Workcell · SERVICE CUSTODY<br/>Live managed provider / allocation records<br/>one-shot Preserve refuses"]
+  service_child["Workcell · MATERIAL CHILD<br/>Provider process scoped / readiness observed"]
+  coexist["AIKit · COEXISTENCE POLICY<br/>Observe foreign gateways / disclose conflict"]
+  cuts -->|"U1 · archive exact committed source"| binary
+  binary -->|"U2 · stage and atomically select after success"| pointer
+  pointer -->|"U3 · old process retains old inode"| old
+  pointer -->|"U4 · future invocation resolves selection"| next
+  old -->|"U5 · explicit native owner lifecycle operation"| lifecycle
+  lifecycle -->|"U6 · retain canonical session identities"| sessions
+  sessions -->|"U7 · reopen / recover explicit native continuity"| renewed
+  material -->|"U8 · independently reread durable records"| recovery
+  coexist -->|"U9 · startup connector conflict gate"| renewed
+  service_provider -->|"U10 · resolve / observe / release; Drop reaps"| service_child
+  classDef authority fill:#fff0d8,stroke:#8a5a20,color:#222;
+  classDef native fill:#e4efff,stroke:#376496,color:#222;
+  classDef derived fill:#eee7fb,stroke:#705494,color:#222;
+  classDef material fill:#edf0f2,stroke:#62717c,color:#222;
+  class cuts authority;
+  class binary,lifecycle,sessions,renewed,coexist,recovery,service_provider native;
+  class pointer derived;
+  class old,next,material,service_child material;

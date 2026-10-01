@@ -1,0 +1,35 @@
+%% source_id: oi:architecture:world-ownership
+%% visual_question: Which product owns the World and which parts are projections?
+%% companion_doc: world-ownership.md
+%% revision: 2026-09-30
+%% provenance: relations.json W1-W11; source-basis.json; source-inspected, no installed acceptance
+flowchart TB
+  central["Central · SOURCE<br/>Authored ground / Position<br/>local NOW / civil Day"]
+  aikit["AIKit · NATIVE<br/>Resolution / praxis<br/>canonical encounter sessions"]
+  actuation["Actuation · NATIVE<br/>Agency / WorldBinding<br/>occupancy generations"]
+  factory["Factory · NATIVE<br/>Commission / custody<br/>attempt lineage"]
+  workcell["Workcell · MATERIAL<br/>Placement / service instances<br/>material Run records"]
+  ql["QL-MEF · DOMAIN<br/>Formal operators<br/>scene-world / source basis"]
+  kernel["O:I desktop · COMPOSITION<br/>Owner readings / retained resources"]
+  surface["O:I Surface · PRESENTATION<br/>Workspace / focus / rendered reading"]
+  projection["O:I SharedField · PROJECTION<br/>Admitted audience / separate revision"]
+  cache["Subscriber · DERIVED<br/>Validated hosted reading / live renderer"]
+  central -->|"W1 · read source / temporal refs"| aikit
+  actuation -->|"W2 · current occupancy gates custody"| factory
+  central -->|"W3 · native World / document readings"| kernel
+  aikit -->|"W4 · resolved context / encounter readings"| kernel
+  actuation -->|"W5 · native permission correlation reading"| kernel
+  factory -->|"W6 · developmental readings"| kernel
+  workcell -->|"W7 · material / service readings"| kernel
+  ql -->|"W8 · native scene material / source basis"| kernel
+  kernel -->|"W9 · compose owner readings"| surface
+  surface -->|"W10 · explicit selected publication"| projection
+  projection -->|"W11 · subscribe / revalidate semantic refs"| cache
+  classDef authority fill:#fff0d8,stroke:#8a5a20,color:#222;
+  classDef native fill:#e4efff,stroke:#376496,color:#222;
+  classDef derived fill:#eee7fb,stroke:#705494,color:#222;
+  classDef material fill:#edf0f2,stroke:#62717c,color:#222;
+  class central,ql authority;
+  class aikit,actuation,factory,kernel native;
+  class projection,cache derived;
+  class workcell,surface material;

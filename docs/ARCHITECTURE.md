@@ -1,5 +1,12 @@
 # {O:I} Architecture
 
+**Reading boundary, 30 September 2026:** this document retains the whole-level
+architecture and its original conceptual account. For current native owners,
+operation routes, successor documents, source cuts and missing joins, start at
+[Architecture navigation and current joins](architecture/README.md). The
+older future-tense passages below are not an inventory of current availability;
+follow the owner implementation and dated evidence linked from that route.
+
 ## Purpose
 
 {O:I} is the shared frame around six independently useful product surfaces. It does not absorb their behaviour.

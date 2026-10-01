@@ -1,0 +1,73 @@
+{
+  "renderer": "Mermaid",
+  "version": "11.12.0",
+  "inspection": "Full-size browser rendering; visual inspection separately recorded in verification.md",
+  "diagrams": [
+    {
+      "source": "agent-context.mmd",
+      "source_sha256": "24616ad9c522a11a24140a9bbb2449b0bcfe5c1e3c027cc3f57a17a7d836ab08",
+      "output": "agent-context.svg",
+      "output_sha256": "c246f4d2c5ed36d6b7f6171ab927e960d2b880831ed4ae228df2749309f5de67",
+      "question": "How do source, Wiki, matrices, praxis and hooks become agent context?",
+      "companion": "agent-context.md",
+      "width": 1041,
+      "height": 1242,
+      "relations": 9
+    },
+    {
+      "source": "execution-return.mmd",
+      "source_sha256": "3f3af03a74f1f4c25da8ce24bb1c07c370bce89771ed1f6600e481a804312cb2",
+      "output": "execution-return.svg",
+      "output_sha256": "5dccba450c93033a527a2206a7dd4f78c3396e6bed753b1fca6fc967267edfa4",
+      "question": "How do Commission, custody, attempts, verification and human Return meet?",
+      "companion": "execution-return.md",
+      "width": 856,
+      "height": 1754,
+      "relations": 10
+    },
+    {
+      "source": "plural-flow.mmd",
+      "source_sha256": "f94e17c76e999d2559c543680e00d887e94f4ead44794744c1d2874cf9676e7d",
+      "output": "plural-flow.svg",
+      "output_sha256": "eef03bcd956890957f7dbd1f953c564eaf7343168eb9bbeb27420cf86e6a1adb",
+      "question": "How do Flow requests reach participants and return after interruption?",
+      "companion": "plural-flow.md",
+      "width": 710,
+      "height": 1878,
+      "relations": 10
+    },
+    {
+      "source": "shared-participation.mmd",
+      "source_sha256": "e4d86bf14bb4a1626fb1bcdfdf10c82e218005b738f57f09d87c90a8b9f93945",
+      "output": "shared-participation.svg",
+      "output_sha256": "3253cdb9525871e358b4b67dc7d2b146e7eef88d03e83628c285af7442a3a73f",
+      "question": "How do local NOWs and Workcells participate in shared live Expressions?",
+      "companion": "shared-participation.md",
+      "width": 1062,
+      "height": 1046,
+      "relations": 9
+    },
+    {
+      "source": "upgrade-lifecycle.mmd",
+      "source_sha256": "5eac1b2d1bda92a6f9d867256041cad8600e9904422282382989389d96c49764",
+      "output": "upgrade-lifecycle.svg",
+      "output_sha256": "73e86ce6ae05e257d35fa0dde344087142fabc56bf8b4791a022042c672498f1",
+      "question": "How do installation, gateway processes and sessions survive an upgrade?",
+      "companion": "upgrade-lifecycle.md",
+      "width": 996,
+      "height": 1462,
+      "relations": 10
+    },
+    {
+      "source": "world-ownership.mmd",
+      "source_sha256": "6185bfe435f88a48d908157903f23f1d0773f23898476b52bbf148ec3c7b5001",
+      "output": "world-ownership.svg",
+      "output_sha256": "cd17b0764d1b536ba99905cc419e31db8b582d3b2a0c4bf99a9ecb4bb9582df0",
+      "question": "Which product owns the World and which parts are projections?",
+      "companion": "world-ownership.md",
+      "width": 1537,
+      "height": 1194,
+      "relations": 11
+    }
+  ]
+}

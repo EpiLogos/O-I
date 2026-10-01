@@ -1,0 +1,47 @@
+{
+  "schema": "oi.architecture-published-native-navigation/v1",
+  "products": [
+    {
+      "product": "Workcell",
+      "git_revision": "0311effe4e65f38f115d75da4aed705ca9a94ceb",
+      "unique_tracked_routes": 13,
+      "routes": [
+        "crates/workcell-control/src/service.rs",
+        "crates/workcell-core/src/prepared.rs",
+        "crates/workcell-runtime/src/external_service.rs",
+        "crates/workcell-runtime/src/instance_registry.rs",
+        "crates/workcell-runtime/src/run.rs",
+        "crates/workcell-runtime/src/service.rs",
+        "docs/ARCHITECTURE-NAVIGATION.md#governing-source-and-successors",
+        "docs/ARCHITECTURE.md#",
+        "docs/ARCHITECTURE.md#workcell-architecture",
+        "docs/CONNECTIVITY-FABRIC.md#",
+        "docs/CONNECTIVITY-FABRIC.md#workcell-connectivity-fabric",
+        "docs/CONTROL-SERVICE-AND-AGENT-HOSTING.md#",
+        "docs/CONTROL-SERVICE-AND-AGENT-HOSTING.md#workcell-control-service-and-agent-hosting-boundary"
+      ],
+      "suite_diagram_standing": "Cross-product O:I candidate diagram is separately checked at its explicit owner cut; not asserted present in this native PR."
+    },
+    {
+      "product": "QL-MEF",
+      "git_revision": "66fd208c3a6862baa37b97af1032a2d2fd77b2ab",
+      "unique_tracked_routes": 12,
+      "routes": [
+        "crates/ql-cli/src/lib.rs",
+        "crates/ql-mef/src/context_frame.rs",
+        "crates/ql-mef/src/lib.rs",
+        "crates/ql-mef/src/scene.rs",
+        "crates/ql-mef/tests/scene_instrument.rs",
+        "docs/ARCHITECTURE-NAVIGATION.md#governing-source-and-successors",
+        "docs/KERNEL-REBUILD-WAYFINDER.md#",
+        "docs/KERNEL-REBUILD-WAYFINDER.md#ql-mef-kernel-rebuild-wayfinder",
+        "docs/kernel-rebuild/LIVING-INSTRUMENT-ARCHITECTURE.md#",
+        "docs/kernel-rebuild/LIVING-INSTRUMENT-ARCHITECTURE.md#epi-living-instrument--planetary-world-nara-and-enacted-v\u0101k",
+        "docs/kernel-rebuild/M123-SCENE-STRUCTURAL-MAP.md#",
+        "docs/kernel-rebuild/M123-SCENE-STRUCTURAL-MAP.md#m1m2m3-live-expression-scene-gate-0-structural-map"
+      ],
+      "suite_diagram_standing": "Cross-product O:I candidate diagram is separately checked at its explicit owner cut; not asserted present in this native PR."
+    }
+  ],
+  "errors": []
+}

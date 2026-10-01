@@ -1,0 +1,35 @@
+%% source_id: oi:architecture:agent-context
+%% visual_question: How do source, Wiki, matrices, praxis and hooks become agent context?
+%% companion_doc: agent-context.md
+%% revision: 2026-10-01
+%% provenance: relations.json C1-C9; source-basis.json; delivery is distinct from observed use
+flowchart TB
+  source["Independent source · AUTHORITY<br/>Authored ground / native code / decisions"]
+  knowledge["Knowledge · DISTINCT OWNERS<br/>SourcePool / SemanticWiki / code index"]
+  matrix["Native matrix · DESCRIPTION<br/>architecture / diagram / praxis refs"]
+  praxis["Praxis · REVISIONED<br/>Skill / Method / Methodology<br/>SkillSet selects and packages"]
+  resolve["AIKit · RESOLUTION<br/>Project / Profile / scope / Focus"]
+  context["ContextResolution · DERIVED<br/>Selected refs, reasons and source revisions"]
+  hook["Native adapter · DELIVERY<br/>Hook / encounter packet and receipt"]
+  harness["Harness · RECIPIENT<br/>Emitted context; observed use needs evidence"]
+  hot["Redis · CACHE<br/>Selected NOW continuity refs"]
+  gap["OPEN · native route warnings<br/>Wiki epi/legacy targets omitted<br/>SourcePool / code search degraded"]
+  source -->|"C1 · index / read with provenance"| knowledge
+  knowledge -->|"C2 · knowledge route resolves addresses"| resolve
+  matrix -->|"C3 · describes / relates; does not load body"| resolve
+  praxis -->|"C4 · resolve selected identity and revision"| resolve
+  resolve -->|"C5 · select scoped source bytes"| context
+  hot -->|"C6 · selected native refs; source remains authoritative"| context
+  context -->|"C7 · admitted context plan"| hook
+  hook -->|"C8 · target-native emission"| harness
+  knowledge -->|"C9 · degraded native route retained"| gap
+  classDef authority fill:#fff0d8,stroke:#8a5a20,color:#222;
+  classDef native fill:#e4efff,stroke:#376496,color:#222;
+  classDef derived fill:#eee7fb,stroke:#705494,color:#222;
+  classDef material fill:#edf0f2,stroke:#62717c,color:#222;
+  classDef gap fill:#fff0ee,stroke:#af463a,color:#642820;
+  class source,praxis authority;
+  class resolve,hook native;
+  class knowledge,matrix,context,hot derived;
+  class harness material;
+  class gap gap;

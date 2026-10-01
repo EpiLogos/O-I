@@ -1,0 +1,50 @@
+{
+  "schema": "oi.architecture-verification/v1",
+  "source_scope": "Named revision/hash source basis and current documentation worktrees. Exact Git publication tree checks are recorded separately.",
+  "documentation_unit_checks": "Architecture and diagram refs require file#unit-id present in the real native documentation inventory; typed relation targets must match declared refs. Praxis capsules are checked against the retained native catalogue.",
+  "sources": 62,
+  "arrows": 59,
+  "diagrams": 6,
+  "documentation_references_checked": 192,
+  "native_reverse_walks": 22,
+  "errors": [],
+  "native_product_checks": [
+    {
+      "product": "Central",
+      "repository_scope_errors": [],
+      "post_apply_changed_records": [],
+      "seed_changes": []
+    },
+    {
+      "product": "AIKit",
+      "repository_scope_errors": [],
+      "post_apply_changed_records": [],
+      "seed_changes": []
+    },
+    {
+      "product": "Actuation",
+      "repository_scope_errors": [],
+      "post_apply_changed_records": [],
+      "seed_changes": []
+    },
+    {
+      "product": "Factory",
+      "repository_scope_errors": [],
+      "post_apply_changed_records": [],
+      "seed_changes": []
+    },
+    {
+      "product": "Workcell",
+      "repository_scope_errors": [],
+      "post_apply_changed_records": [],
+      "seed_changes": []
+    },
+    {
+      "product": "QL-MEF",
+      "repository_scope_errors": [],
+      "post_apply_changed_records": [],
+      "seed_changes": []
+    }
+  ],
+  "external_diagram_resolution": "Cross-product relative refs checked at the recorded O:I owner checkout; publication must preserve the canonical sibling product layout."
+}

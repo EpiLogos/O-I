@@ -1,0 +1,36 @@
+%% source_id: oi:architecture:execution-return
+%% visual_question: How do Commission, custody, attempts, verification and human Return meet?
+%% companion_doc: execution-return.md
+%% revision: 2026-10-01
+%% provenance: relations.json R1-R10; source-basis.json; rejection repair dd0765 with bounded native replay
+flowchart TB
+  person["Person · AUTHORITY<br/>Concern / Commission / conditions"]
+  occupancy["Actuation · NATIVE<br/>Position / current generation"]
+  custody["Factory · CUSTODY<br/>Current responsibility / atomic handoff"]
+  attempt["Factory · ATTEMPT<br/>Participant, body, source basis<br/>effects / obligations / Return address"]
+  encounter["AIKit · NATIVE<br/>Canonical session / resident / journal"]
+  material["Workcell · MATERIAL<br/>Prepared scope / execute / collect"]
+  verification["Factory · VERIFICATION<br/>Owner evidence, outcome, obligations<br/>attempt identity / subject applicability"]
+  receiving["Central · RECEIVING<br/>Native submit + receipt readback"]
+  human["Human Return · PRESENTATION<br/>Artifact / evidence / open matters"]
+  recognition["Person · RECOGNITION<br/>Accept / challenge / revise"]
+  reopened["Factory · NATIVE REJECTION<br/>Failed / Unknown verification invalidates<br/>current Return; artifact/history retained"]
+  gap["OPEN · whole-Run acceptance<br/>Required units / receiving / decisions<br/>source-seat admission / replacement replay"]
+  person -->|"R1 · commissions bounded attempt"| attempt
+  occupancy -->|"R2 · verifies generation for custody change"| custody
+  custody -->|"R3 · explicit Run / workflow-unit references"| attempt
+  attempt -->|"R4 · native execution body / delivery"| encounter
+  attempt -->|"R5 · material demand / protection"| material
+  material -->|"R6 · collected artifact / material evidence"| verification
+  verification -->|"R7 · passed obligations enable native review / receipt"| receiving
+  receiving -->|"R8 · attributable source result"| human
+  human -->|"R9 · presented for human judgement"| recognition
+  verification -->|"R10 · latest rejection invalidates current Return"| reopened
+  classDef authority fill:#fff0d8,stroke:#8a5a20,color:#222;
+  classDef native fill:#e4efff,stroke:#376496,color:#222;
+  classDef material fill:#edf0f2,stroke:#62717c,color:#222;
+  classDef gap fill:#fff0ee,stroke:#af463a,color:#642820;
+  class person,recognition authority;
+  class occupancy,custody,attempt,encounter,verification,receiving,reopened native;
+  class material,human material;
+  class gap gap;

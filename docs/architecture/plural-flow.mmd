@@ -1,0 +1,32 @@
+%% source_id: oi:architecture:plural-flow
+%% visual_question: How do Flow requests reach participants and return after interruption?
+%% companion_doc: plural-flow.md
+%% revision: 2026-09-30
+%% provenance: relations.json F1-F10; source-basis.json; source inspected and dated native return
+flowchart TB
+  surface["O:I document Surface · PRESENTATION<br/>Ordinary Flow / selected recipients"]
+  admission["AIKit · ADMISSION<br/>Flow-bound sender / request digest"]
+  source["Central · SOURCE<br/>CAS append entry / operation ref<br/>native source acknowledgement"]
+  request["AIKit · DURABLE REQUEST<br/>Per-recipient step / delivery / cursor"]
+  packet["AIKit · CURRENT ADMISSION<br/>Membership + seat + attributed source slice"]
+  participant["Actual participant · SESSION<br/>Local resident or explicit SSH / exec route"]
+  reply["AIKit · DURABLE REPLY<br/>Completed turn / exact attribution"]
+  incorporate["Central · SOURCE INCORPORATION<br/>Recheck membership / idempotent reply append"]
+  reopen["O:I · PRESENTATION<br/>Reread / reopen actual source result"]
+  reconcile["AIKit · RECOVERY<br/>conversation-reconcile after interruption"]
+  surface -->|"F1 · conversation-send"| admission
+  admission -->|"F2 · commit source before dispatch"| source
+  source -->|"F3 · persist source acknowledgement"| request
+  request -->|"F4 · admit each current recipient"| packet
+  packet -->|"F5 · deliver bounded packet / native session"| participant
+  participant -->|"F6 · record delivery completion / reply"| reply
+  reply -->|"F7 · revalidate and append original-request relation"| incorporate
+  incorporate -->|"F8 · source acknowledgement / readback"| reopen
+  request -->|"F9 · retained steps / delivery cursor"| reconcile
+  reconcile -->|"F10 · reconcile retained steps; uncertain turn is not replayed"| request
+  classDef authority fill:#fff0d8,stroke:#8a5a20,color:#222;
+  classDef native fill:#e4efff,stroke:#376496,color:#222;
+  classDef material fill:#edf0f2,stroke:#62717c,color:#222;
+  class source,incorporate authority;
+  class admission,request,packet,reply,reconcile native;
+  class surface,participant,reopen material;
