@@ -97,14 +97,19 @@
 .knowledge-encounter__modes button:disabled { opacity: .35; }
 .knowledge-encounter__degraded { padding: var(--oi-space-3); border: var(--oi-shell-edge) solid var(--oi-hairline); border-left: 2px solid var(--oi-gold); }
 .knowledge-encounter__degraded p { margin: 4px 0 0; color: var(--oi-muted); }
-.knowledge-encounter__graph { width: 100%; min-height: 340px; border: var(--oi-shell-edge) solid var(--oi-hairline); border-radius: var(--oi-radius-lg); }
+.knowledge-encounter__graph { width: 100%; min-height: 340px; border: var(--oi-shell-edge) solid var(--oi-hairline); border-radius: var(--oi-radius-lg); cursor: grab; touch-action: none; user-select: none; }
+.knowledge-encounter__graph:active { cursor: grabbing; }
 .knowledge-encounter__graph line { stroke: var(--oi-hairline); stroke-width: 1; vector-effect: non-scaling-stroke; }
-.knowledge-encounter__graph > g > text { fill: var(--oi-muted-2); font-size: 9px; text-anchor: middle; }
-.knowledge-encounter__graph g[role="button"] { cursor: pointer; outline: none; }
+.knowledge-encounter__edge text { fill: var(--oi-muted-2); font-size: 9px; text-anchor: middle; pointer-events: none; }
+.knowledge-encounter__edge.is-receded { opacity: .15; }
+.knowledge-encounter__graph g[role="button"] { cursor: pointer; outline: none; transition: opacity var(--oi-motion-normal, 150ms); }
 .knowledge-encounter__graph circle { fill: var(--oi-canvas-ground); stroke: var(--oi-muted-2); }
-.knowledge-encounter__graph .is-focus circle, .knowledge-encounter__graph g[role="button"]:focus-visible circle { stroke: var(--oi-foreground); stroke-width: 2; }
+.knowledge-encounter__graph .is-focus circle, .knowledge-encounter__graph .is-selected circle, .knowledge-encounter__graph g[role="button"]:focus-visible circle { stroke: var(--oi-foreground); stroke-width: 2; }
+.knowledge-encounter__graph .is-selected circle { fill: var(--oi-foreground); }
+.knowledge-encounter__graph .is-receded { opacity: .28; }
 .knowledge-encounter__graph .is-unavailable { opacity: .45; cursor: default; }
-.knowledge-encounter__graph g[role="button"] text { fill: var(--oi-foreground); font-size: 11px; text-anchor: middle; }
+.knowledge-encounter__graph g[role="button"] text { fill: var(--oi-foreground); font-size: 11px; text-anchor: middle; pointer-events: none; }
+@media (prefers-reduced-motion: reduce) { .knowledge-encounter__graph g[role="button"] { transition: none; } }
 .knowledge-encounter__tree { display: grid; grid-template-columns: minmax(180px, 1fr) minmax(0, 2fr); gap: var(--oi-space-4); }
 .knowledge-encounter__tree article, .knowledge-encounter__tree button, .knowledge-encounter__list button { display: grid; gap: 4px; text-align: left; padding: var(--oi-space-3); border: var(--oi-shell-edge) solid var(--oi-hairline); border-radius: var(--oi-radius-md); }
 .knowledge-encounter__tree ol, .knowledge-encounter__list { list-style: none; padding: 0; margin: 0; display: grid; gap: 6px; }
