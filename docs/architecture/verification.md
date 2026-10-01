@@ -8,10 +8,14 @@ updated: 2026-10-01
 
 This return concerns the repaired documentation field. It does not close
 O:I #65/#220 or substitute documentation checks for the repair lanes' installed
-acceptance. [Source-basis](source-basis.json) identifies 61 inspected source
-objects and their named cuts; [relations](relations.json) binds all 58 arrows.
+acceptance. [Source-basis](source-basis.json) identifies 62 inspected source
+objects and their named cuts; [relations](relations.json) binds all 59 arrows.
 The Factory rejection successor is additionally pinned to an immutable Git
 blob at `dd0765dd9596086e14ce7bef8d604759cc8daf8f`.
+Committed inspected sources are bound to their immutable Git blobs. Four
+uncommitted O:I source cuts and the consumed Epi audit have retained verification
+copies with exact hashes; those copies preserve inspection evidence and confer
+no source authority or implementation publication.
 
 ## Executed documentation checks
 
@@ -39,8 +43,10 @@ blob at `dd0765dd9596086e14ce7bef8d604759cc8daf8f`.
   actual owner checkouts. Link and source-hash checks include the immutable
   Factory blobs, the active Epi audit cut and each rendered companion.
 - The existing native inventory's reverse traversal recovered the new local
-  Architecture entry for all 22 real capability records. File references are
-  relative to their CSV; cross-product diagrams are checked at the recorded
+  Architecture entry for all 22 real capability records. Architecture and
+  diagram references use `file#unit-id`, checked against the native inventory's
+  actual heading or node IDs; typed relation targets match those exact refs.
+  Paths are relative to their CSV; cross-product diagrams are checked at the recorded
   O:I owner cut and retain canonical sibling-product paths. Native praxis
   discovery resolved the three referenced `skill/central/...` capsules with
   exact revisions. Discovery does not establish later activation or use.
@@ -92,6 +98,24 @@ The task discovered and corrected an initially wrong CLI form and an ambiguous
 recovery label. Its final check confirmed the corrected operation, no-replay
 limit, withdrawn-participant refusal and all ten Flow relations.
 
+A second fresh navigation recovered Workcell's one-shot `Preserve` refusal
+and provider-replacement recovery without confusing service custody with the
+harness registry. It followed `command_recover → resume →
+CollapsedLocalWorkcell::recover → recover_service`, identified in-memory child
+handles versus `control-worlds` receipts and `instances/registry.json`, and
+located the real TCP-child recovery test. The test retains its host; provider
+replacement uses explicit resolution in a different test. Drop is inspected
+in source, with no direct live-child Drop assertion found in these tests.
+The agent executed native inventory and installed help/version only:
+installed `50c134a9cf7d` is distinct from the inspected `8d32e20` source cut.
+No installed replacement replay is claimed here.
+
+That navigation also checked what each fragment means. Workcell's service
+capability now targets U10's managed-provider node; the two formal QL records
+retain their local architecture relations and omit a misleading `described-by`
+link to the retained Expression node. A valid fragment is necessary but does
+not establish that its contents describe the linked operation.
+
 The restored local/remote driver logs and retained Flow/receipt were also read.
 The latter match the surviving original run files byte-for-byte. The driver
 creates a refusal flag, waits 30,000 ms and removes it; the remote log records
@@ -114,8 +138,11 @@ join was required to navigate the feature.
 - Does whole-Run completion require every declared unit, current verification,
   receiving and controlled decision after coordinator/worker replacement?
   The [bounded rejection proof](evidence/factory-rejection-currency.json) closes
-  only its three discriminating defects. Writable-directory Workcell admission
-  and coordinator fencing require distinct owner proof.
+  only its three discriminating defects. Workcell #109 separately reports
+  installed Mac admission on the original writable source seat with partial
+  bytes preserved. This is a bounded owner return, not whole-Run closure:
+  native Central receiving admission and coordinator fencing still require
+  their distinct proof.
 - Does the next upgrade/reconnect episode show the selected binary, old/new
   gateway process and canonical session generations separately, including the
   owner-visible interrupted result? Source shutdown tests do not replace that

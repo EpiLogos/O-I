@@ -736,7 +736,7 @@
         },
         {
           "source": "Workcell:crates/workcell-runtime/src/instance_registry.rs",
-          "relation": "Persistent material instance generations"
+          "relation": "Collapsed-local harness executable/first-seen identities and live/stale observations; not service allocation custody"
         }
       ]
     },
@@ -925,6 +925,20 @@
         {
           "source": "O:I:shared-field/spacetimedb.mjs",
           "relation": "hostedSnapshotFromRows and createSpacetimeExploreSource revalidate semantic refs"
+        }
+      ]
+    },
+    {
+      "id": "U10",
+      "diagram": "upgrade-lifecycle.mmd",
+      "from": "service_provider",
+      "to": "service_child",
+      "label": "resolve / observe / release; Drop reaps",
+      "standing": "source-inspected",
+      "basis": [
+        {
+          "source": "Workcell:crates/workcell-runtime/src/service.rs",
+          "relation": "ManagedHostServiceProvider owns child handles and in-memory allocation records. ServiceProvider resolves, observes and releases them; Drop reaps; one-shot Preserve refuses."
         }
       ]
     }

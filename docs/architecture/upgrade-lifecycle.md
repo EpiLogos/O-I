@@ -4,7 +4,7 @@ standing: agent-inference
 scope: installation cuts, resident processes and durable session continuity
 diagram_refs: ["upgrade-lifecycle.mmd"]
 design_refs: ["../INSTALL-UPDATE-FLOW.md"]
-updated: 2026-09-30
+updated: 2026-10-01
 ---
 # What survives an upgrade?
 
@@ -36,9 +36,16 @@ and reconnect must read that native continuity and disclose the actual new
 owner/connection generation. This is controlled lifecycle, not transparent
 hot replacement of every provider body.
 
-Workcell's service instance registry and material Run records have their own
-generations/storage; a provider launch receipt is not the AIKit session
-identity. Central NOW source persists independently of process replacement.
+Workcell's durable material Run ledger is separate from its collapsed-local
+harness registry (`instances/registry.json`). That registry records executable /
+first-seen identities and live/stale process observations; it does not own
+managed service allocations or canonical AIKit sessions. `service.rs` owns
+managed provider child processes and in-memory allocation records. Dropping
+the provider reaps its children: one-shot `Preserve` is refused, while a
+persistent Control Service can retain its provider. Recovery checks the
+declaration and observed child, and refuses a duplicate launch or PID-based
+takeover. A provider launch receipt therefore cannot stand in for session
+continuity. Central NOW source persists independently of process replacement.
 Together these boundaries make recovery attributable instead of allowing the
 new binary to impersonate an old active execution.
 
@@ -47,9 +54,10 @@ new binary to impersonate an old active execution.
 | O:I `stage_and_link` / `atomic_symlink`, `cli/src/update_flow.rs` | Native temporary filesystem tests of pointer replacement and old executable survival; installed companion/runtime cut still needs readback. |
 | AIKit gateway install/coexistence | `crates/aikit-cli/src/gateway_install.rs`; `crates/aikit-adapters/src/gateway_coexistence.rs`; native service and coexistence tests. |
 | AIKit native owner shutdown/reopen | `crates/aikit-cli/src/encounter_service.rs`; `crates/aikit-store/src/encounter.rs`; `crates/aikit-cli/tests/encounter_shutdown.rs`. |
-| Workcell material recovery | `crates/workcell-runtime/src/instance_registry.rs`, `run.rs`; generation, run lifecycle and reconstructed-ledger tests. |
+| Workcell durable record recovery | `crates/workcell-runtime/src/run.rs`, `instance_registry.rs`; reconstructed Run ledger and collapsed-local harness observation tests. |
+| Workcell managed service lifetime | `crates/workcell-runtime/src/service.rs`; Drop is source-inspected. `tests/managed_host_service.rs` tests real child readiness/release and explicit replacement resolution; `tests/caw_material.rs` kills and recovers a real TCP child while its host remains alive. Neither establishes provider-replacement reopen acceptance here. Persistent host retention is separate from registry persistence. |
 
-U1–U9 in [relations.json](relations.json) describe the implementation at the
+U1–U10 in [relations.json](relations.json) describe the implementation at the
 inspected cut. The configuration/Workcell lane still owns the complete
 computer-use acceptance of upgrade/reconnect/Day continuity. No source test
 here is promoted to that installed verdict.

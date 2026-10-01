@@ -73,343 +73,461 @@
       "id": "AIKit:crates/aikit-core/src/context_source.rs",
       "product": "AIKit",
       "path": "crates/aikit-core/src/context_source.rs",
-      "sha256": "5de4ec2dd1c53f93810dd840a4f36f01cbecddcd24ab0915ac2c6c5424645d94"
+      "sha256": "5de4ec2dd1c53f93810dd840a4f36f01cbecddcd24ab0915ac2c6c5424645d94",
+      "storage": "git-blob",
+      "git_revision": "64d4e1d12fd95a331db75e1f1df21f332aebab6f"
     },
     {
       "id": "AIKit:docs/v2/README.md",
       "product": "AIKit",
       "path": "docs/v2/README.md",
-      "sha256": "802883413a3cec952058c862e68f306e1d97e650377f60a0ea615cf2633b5aad"
+      "sha256": "802883413a3cec952058c862e68f306e1d97e650377f60a0ea615cf2633b5aad",
+      "storage": "git-blob",
+      "git_revision": "64d4e1d12fd95a331db75e1f1df21f332aebab6f"
     },
     {
       "id": "Central:docs/CAPABILITY-MATRIX-PROTOCOL.md",
       "product": "Central",
       "path": "docs/CAPABILITY-MATRIX-PROTOCOL.md",
-      "sha256": "492d41c304e7abdb3915b97f822252d81832867c2db709b6feda64727ccc6b1f"
+      "sha256": "492d41c304e7abdb3915b97f822252d81832867c2db709b6feda64727ccc6b1f",
+      "storage": "git-blob",
+      "git_revision": "2a604574774c41921003ed99a2eed73b4c9f4266"
     },
     {
       "id": "AIKit:crates/aikit-core/src/praxis.rs",
       "product": "AIKit",
       "path": "crates/aikit-core/src/praxis.rs",
-      "sha256": "1103715296f923c25013a0ec80b7f6fc31a786cae8ebd486b4ca5e6515a46e15"
+      "sha256": "1103715296f923c25013a0ec80b7f6fc31a786cae8ebd486b4ca5e6515a46e15",
+      "storage": "git-blob",
+      "git_revision": "64d4e1d12fd95a331db75e1f1df21f332aebab6f"
     },
     {
       "id": "AIKit:crates/aikit-core/src/agent_praxis.rs",
       "product": "AIKit",
       "path": "crates/aikit-core/src/agent_praxis.rs",
-      "sha256": "2af5ac04b3d057ae1edf42a5f662a1bdfb8f9e34d4f3e8df68fdee507ea72672"
+      "sha256": "2af5ac04b3d057ae1edf42a5f662a1bdfb8f9e34d4f3e8df68fdee507ea72672",
+      "storage": "git-blob",
+      "git_revision": "64d4e1d12fd95a331db75e1f1df21f332aebab6f"
     },
     {
       "id": "AIKit:crates/aikit-core/src/context_resolution.rs",
       "product": "AIKit",
       "path": "crates/aikit-core/src/context_resolution.rs",
-      "sha256": "59c946c225fc543b01dbe903762d89acea338171d3e4e8d20f2d6375778003db"
+      "sha256": "59c946c225fc543b01dbe903762d89acea338171d3e4e8d20f2d6375778003db",
+      "storage": "git-blob",
+      "git_revision": "64d4e1d12fd95a331db75e1f1df21f332aebab6f"
     },
     {
       "id": "AIKit:crates/aikit-store/src/now_context.rs",
       "product": "AIKit",
       "path": "crates/aikit-store/src/now_context.rs",
-      "sha256": "baec0b6638c928327b5643eae8f99e8a6db1431ba02423faf9c623e6ab512135"
+      "sha256": "baec0b6638c928327b5643eae8f99e8a6db1431ba02423faf9c623e6ab512135",
+      "storage": "git-blob",
+      "git_revision": "64d4e1d12fd95a331db75e1f1df21f332aebab6f"
     },
     {
       "id": "AIKit:crates/aikit-cli/src/wiki_projection.rs",
       "product": "AIKit",
       "path": "crates/aikit-cli/src/wiki_projection.rs",
-      "sha256": "a4b39eede80ead79b87c81a65de140176d69665a55753e19bda46937ff721d76"
+      "sha256": "a4b39eede80ead79b87c81a65de140176d69665a55753e19bda46937ff721d76",
+      "storage": "git-blob",
+      "git_revision": "64d4e1d12fd95a331db75e1f1df21f332aebab6f"
     },
     {
       "id": "AIKit:crates/aikit-adapters/src/hook_sources.rs",
       "product": "AIKit",
       "path": "crates/aikit-adapters/src/hook_sources.rs",
-      "sha256": "4c71c3edae11335bb1ede2b367d2664cece602949ec3432d6d01e8f60b2166ea"
+      "sha256": "4c71c3edae11335bb1ede2b367d2664cece602949ec3432d6d01e8f60b2166ea",
+      "storage": "git-blob",
+      "git_revision": "64d4e1d12fd95a331db75e1f1df21f332aebab6f"
     },
     {
       "id": "AIKit:crates/aikit-cli/tests/apply_hook_seam.rs",
       "product": "AIKit",
       "path": "crates/aikit-cli/tests/apply_hook_seam.rs",
-      "sha256": "a1d64c4a28b32983b139334aad05ae75ce139ee8fc571cda740a148cb7614987"
+      "sha256": "a1d64c4a28b32983b139334aad05ae75ce139ee8fc571cda740a148cb7614987",
+      "storage": "git-blob",
+      "git_revision": "64d4e1d12fd95a331db75e1f1df21f332aebab6f"
     },
     {
       "id": "O:I:docs/architecture/agent-context.md",
       "product": "O:I",
       "path": "docs/architecture/agent-context.md",
-      "sha256": "60a1fc19e4c9dc480e3784a233ee5f5b29019c1e93a31278e71ae2ee09b23df1"
+      "sha256": "60a1fc19e4c9dc480e3784a233ee5f5b29019c1e93a31278e71ae2ee09b23df1",
+      "storage": "git-blob",
+      "git_revision": "7b68056f87f2e41484ea3260f9b225a1f0195a4c"
     },
     {
       "id": "Factory:factory/src/commission.rs",
       "product": "Factory",
       "path": "factory/src/commission.rs",
-      "sha256": "740dd0c584b3b88e20f64dc0fe5bbab31118949ff80b1d5dd6f888129acc5a04"
+      "sha256": "740dd0c584b3b88e20f64dc0fe5bbab31118949ff80b1d5dd6f888129acc5a04",
+      "storage": "git-blob",
+      "git_revision": "18682ee4841bcf329265b2bea2f4509a6e8cff1b"
     },
     {
       "id": "Factory:factory/src/attempt_runtime.rs",
       "product": "Factory",
       "path": "factory/src/attempt_runtime.rs",
-      "sha256": "3f0072a2b478ae8f491184e1f811c379f714b80fb650d5eb8fa8ed897f827556"
+      "sha256": "3f0072a2b478ae8f491184e1f811c379f714b80fb650d5eb8fa8ed897f827556",
+      "storage": "git-blob",
+      "git_revision": "18682ee4841bcf329265b2bea2f4509a6e8cff1b"
     },
     {
       "id": "Factory:factory/src/work_custody.rs",
       "product": "Factory",
       "path": "factory/src/work_custody.rs",
-      "sha256": "72eab430a8e05273ac26d3285ad50d8b5423052ebb856a0f6d12ecb0e4eacced"
+      "sha256": "72eab430a8e05273ac26d3285ad50d8b5423052ebb856a0f6d12ecb0e4eacced",
+      "storage": "git-blob",
+      "git_revision": "18682ee4841bcf329265b2bea2f4509a6e8cff1b"
     },
     {
       "id": "Factory:factory/src/attempt_material.rs",
       "product": "Factory",
       "path": "factory/src/attempt_material.rs",
-      "sha256": "836e2abcb89e2a086acc561c846b18ffbb064039bc368254e566ce84112400e1"
+      "sha256": "836e2abcb89e2a086acc561c846b18ffbb064039bc368254e566ce84112400e1",
+      "storage": "git-blob",
+      "git_revision": "18682ee4841bcf329265b2bea2f4509a6e8cff1b"
     },
     {
       "id": "Workcell:crates/workcell-runtime/src/run.rs",
       "product": "Workcell",
       "path": "crates/workcell-runtime/src/run.rs",
-      "sha256": "0738d52c2d6b711b04d57c83c47a7e33b6685841207406cdfb5a5cf92536dfb0"
+      "sha256": "0738d52c2d6b711b04d57c83c47a7e33b6685841207406cdfb5a5cf92536dfb0",
+      "storage": "git-blob",
+      "git_revision": "8d32e20ba4158f3ac11ab36d8a5b2d6c9c177af0"
     },
     {
       "id": "Factory:factory/tests/attempt_material.rs",
       "product": "Factory",
       "path": "factory/tests/attempt_material.rs",
-      "sha256": "d16a2a64864e5bd7bbc018d7ed42b1e2d6aa0aa21a1d030df87c0e88e69b4938"
+      "sha256": "d16a2a64864e5bd7bbc018d7ed42b1e2d6aa0aa21a1d030df87c0e88e69b4938",
+      "storage": "git-blob",
+      "git_revision": "18682ee4841bcf329265b2bea2f4509a6e8cff1b"
     },
     {
       "id": "Factory:factory/src/attempt_review.rs",
       "product": "Factory",
       "path": "factory/src/attempt_review.rs",
-      "sha256": "ea0e64ca9a0fa7de6a7ba181f7dbf65d456ba766a63a8054e91ba7fe0469c04a"
+      "sha256": "ea0e64ca9a0fa7de6a7ba181f7dbf65d456ba766a63a8054e91ba7fe0469c04a",
+      "storage": "git-blob",
+      "git_revision": "18682ee4841bcf329265b2bea2f4509a6e8cff1b"
     },
     {
       "id": "Factory:factory/src/attempt_receiving.rs",
       "product": "Factory",
       "path": "factory/src/attempt_receiving.rs",
-      "sha256": "5e0453cbdef26b70728c1521333ff315b7a43abeb90a39df51ca0e6a72f0aa0a"
+      "sha256": "5e0453cbdef26b70728c1521333ff315b7a43abeb90a39df51ca0e6a72f0aa0a",
+      "storage": "git-blob",
+      "git_revision": "18682ee4841bcf329265b2bea2f4509a6e8cff1b"
     },
     {
       "id": "O:I:desktop/cradle/kernel/src/owner_read.rs",
       "product": "O:I",
       "path": "desktop/cradle/kernel/src/owner_read.rs",
-      "sha256": "75534e8c37b97e26b39fd77774460638bf557626d45251defdac8844bc3e787b"
+      "sha256": "75534e8c37b97e26b39fd77774460638bf557626d45251defdac8844bc3e787b",
+      "storage": "git-blob",
+      "git_revision": "17c22891e6c9dbe0828cab8822a2f3aa6d4aa205"
     },
     {
       "id": "O:I:docs/positions/FOUNDING-POSITIONS.md",
       "product": "O:I",
       "path": "docs/positions/FOUNDING-POSITIONS.md",
-      "sha256": "f41ed11c377133a579d1284d2366167298050c955dedbc61fb5971e3d523e490"
+      "sha256": "f41ed11c377133a579d1284d2366167298050c955dedbc61fb5971e3d523e490",
+      "storage": "git-blob",
+      "git_revision": "17c22891e6c9dbe0828cab8822a2f3aa6d4aa205"
     },
     {
       "id": "O:I:docs/architecture/execution-return.md",
       "product": "O:I",
       "path": "docs/architecture/execution-return.md",
-      "sha256": "ab3610d99e9bdf3a9775a3b79a1c6be61460727116e726ab49f074bd40d33cc0"
+      "sha256": "ab3610d99e9bdf3a9775a3b79a1c6be61460727116e726ab49f074bd40d33cc0",
+      "storage": "git-blob",
+      "git_revision": "7b68056f87f2e41484ea3260f9b225a1f0195a4c"
     },
     {
       "id": "O:I:desktop/cradle/src/flow/conversation.ts",
       "product": "O:I",
       "path": "desktop/cradle/src/flow/conversation.ts",
-      "sha256": "5aae2bfe11015b70795fa81cfa6a9da741ddd1d25e1fec92f44c215087e6593f"
+      "sha256": "5aae2bfe11015b70795fa81cfa6a9da741ddd1d25e1fec92f44c215087e6593f",
+      "storage": "git-blob",
+      "git_revision": "17c22891e6c9dbe0828cab8822a2f3aa6d4aa205"
     },
     {
       "id": "AIKit:crates/aikit-cli/src/encounter_conversation.rs",
       "product": "AIKit",
       "path": "crates/aikit-cli/src/encounter_conversation.rs",
-      "sha256": "d71a4f3d763a71f4182031cc40d020070e0098312baf489db0540df115053d4a"
+      "sha256": "d71a4f3d763a71f4182031cc40d020070e0098312baf489db0540df115053d4a",
+      "storage": "git-blob",
+      "git_revision": "64d4e1d12fd95a331db75e1f1df21f332aebab6f"
     },
     {
       "id": "Central:ctrl/src/flow_append.rs",
       "product": "Central",
       "path": "ctrl/src/flow_append.rs",
-      "sha256": "470e50f3c1d91c6825473edefc9d1b024ac7b306b928d4c39e41e51910aae57d"
+      "sha256": "470e50f3c1d91c6825473edefc9d1b024ac7b306b928d4c39e41e51910aae57d",
+      "storage": "git-blob",
+      "git_revision": "2a604574774c41921003ed99a2eed73b4c9f4266"
     },
     {
       "id": "AIKit:crates/aikit-store/src/encounter_conversation.rs",
       "product": "AIKit",
       "path": "crates/aikit-store/src/encounter_conversation.rs",
-      "sha256": "e415a2c2480eef31d39463a0eef9a411e643b3f96ab6b1102d7a44b3c334bffd"
+      "sha256": "e415a2c2480eef31d39463a0eef9a411e643b3f96ab6b1102d7a44b3c334bffd",
+      "storage": "git-blob",
+      "git_revision": "64d4e1d12fd95a331db75e1f1df21f332aebab6f"
     },
     {
       "id": "AIKit:crates/aikit-cli/src/encounter_conversation_tests.rs",
       "product": "AIKit",
       "path": "crates/aikit-cli/src/encounter_conversation_tests.rs",
-      "sha256": "a85976dee29a91648deec4922c70489ae6d8dd5c40f646b106b8b1322572ebfb"
+      "sha256": "a85976dee29a91648deec4922c70489ae6d8dd5c40f646b106b8b1322572ebfb",
+      "storage": "git-blob",
+      "git_revision": "64d4e1d12fd95a331db75e1f1df21f332aebab6f"
     },
     {
       "id": "AIKit:crates/aikit-store/src/encounter_delivery.rs",
       "product": "AIKit",
       "path": "crates/aikit-store/src/encounter_delivery.rs",
-      "sha256": "79e8a7eab832eeaa494b564daf68a292570ba3a4e3b38c4cba973fe71bfd5821"
+      "sha256": "79e8a7eab832eeaa494b564daf68a292570ba3a4e3b38c4cba973fe71bfd5821",
+      "storage": "git-blob",
+      "git_revision": "64d4e1d12fd95a331db75e1f1df21f332aebab6f"
     },
     {
       "id": "AIKit:crates/aikit-cli/src/encounter_service.rs",
       "product": "AIKit",
       "path": "crates/aikit-cli/src/encounter_service.rs",
-      "sha256": "3c81d4455c51aaccbba74945a9eb8d5fa4dcc2e69c079df9e66cb3945f3d906e"
+      "sha256": "3c81d4455c51aaccbba74945a9eb8d5fa4dcc2e69c079df9e66cb3945f3d906e",
+      "storage": "git-blob",
+      "git_revision": "64d4e1d12fd95a331db75e1f1df21f332aebab6f"
     },
     {
       "id": "O:I:desktop/cradle/src/flow/FlowSurface.tsx",
       "product": "O:I",
       "path": "desktop/cradle/src/flow/FlowSurface.tsx",
-      "sha256": "2bd5c65263edfadd0b41bca60fe41204f33ce4c9181a2a25d66a4f84e889a2ca"
+      "sha256": "2bd5c65263edfadd0b41bca60fe41204f33ce4c9181a2a25d66a4f84e889a2ca",
+      "storage": "git-blob",
+      "git_revision": "17c22891e6c9dbe0828cab8822a2f3aa6d4aa205"
     },
     {
       "id": "O:I:desktop/cradle/src/flow/instances.ts",
       "product": "O:I",
       "path": "desktop/cradle/src/flow/instances.ts",
-      "sha256": "a6a1886305b6192e065d71c6c811a0bd4b272129977cd318ab7c8bbc32b08367"
+      "sha256": "a6a1886305b6192e065d71c6c811a0bd4b272129977cd318ab7c8bbc32b08367",
+      "storage": "git-blob",
+      "git_revision": "17c22891e6c9dbe0828cab8822a2f3aa6d4aa205"
     },
     {
       "id": "Central:ctrl/tests/flow_append.rs",
       "product": "Central",
       "path": "ctrl/tests/flow_append.rs",
-      "sha256": "74b9c2e115e5b1c782c4f4c0e96a779e3f6c97c8d8902362521f790525a7ce38"
+      "sha256": "74b9c2e115e5b1c782c4f4c0e96a779e3f6c97c8d8902362521f790525a7ce38",
+      "storage": "git-blob",
+      "git_revision": "2a604574774c41921003ed99a2eed73b4c9f4266"
     },
     {
       "id": "O:I:.wayfinder/maps/plural-flow-now.md",
       "product": "O:I",
       "path": ".wayfinder/maps/plural-flow-now.md",
-      "sha256": "70c181c4eb1b64292933168d77c63a2e5b0f1c0190f3942d9cf2cf1cefc193eb"
+      "sha256": "70c181c4eb1b64292933168d77c63a2e5b0f1c0190f3942d9cf2cf1cefc193eb",
+      "storage": "git-blob",
+      "git_revision": "17c22891e6c9dbe0828cab8822a2f3aa6d4aa205"
     },
     {
       "id": "Central:ctrl/src/continuous_work/placement.rs",
       "product": "Central",
       "path": "ctrl/src/continuous_work/placement.rs",
-      "sha256": "16359374d8a74fd485c64fca157e47ec34ceeb307bb04ce1f0194b5ea959362c"
+      "sha256": "16359374d8a74fd485c64fca157e47ec34ceeb307bb04ce1f0194b5ea959362c",
+      "storage": "git-blob",
+      "git_revision": "2a604574774c41921003ed99a2eed73b4c9f4266"
     },
     {
       "id": "O:I:shared-field/field-now.mjs",
       "product": "O:I",
       "path": "shared-field/field-now.mjs",
-      "sha256": "fd81a48830aee4062928fbda9ca7cf3bab949463ee58ff97597c8b8d29b1b47b"
+      "sha256": "fd81a48830aee4062928fbda9ca7cf3bab949463ee58ff97597c8b8d29b1b47b",
+      "consumed_snapshot_ref": "central:source:control:root:Control/agents/now/clearings/746f59350bcbd0a88a231ea909ca89aac9cf950e3cf5d9584aae28535bb7296d/T/source-cuts/O-I/shared-field/field-now.mjs",
+      "storage": "candidate-verification-copy",
+      "snapshot_limit": "Exact inspected uncommitted bytes retained as verification evidence only; original named product/source remains the owner. Neither this copy nor the diagram adopts or publishes its implementation."
     },
     {
       "id": "O:I:shared-field/participant-context.mjs",
       "product": "O:I",
       "path": "shared-field/participant-context.mjs",
-      "sha256": "fc67d3687606609331498a7e462042ae1e28c4eaebf4f132b3ae614bc64cf2ed"
+      "sha256": "fc67d3687606609331498a7e462042ae1e28c4eaebf4f132b3ae614bc64cf2ed",
+      "storage": "git-blob",
+      "git_revision": "17c22891e6c9dbe0828cab8822a2f3aa6d4aa205"
     },
     {
       "id": "O:I:shared-field/expression-projection.mjs",
       "product": "O:I",
       "path": "shared-field/expression-projection.mjs",
-      "sha256": "94acc7dc97d70f32505b22bcfba688b806b846144cd9e1872a5f02f934e6b146"
+      "sha256": "94acc7dc97d70f32505b22bcfba688b806b846144cd9e1872a5f02f934e6b146",
+      "consumed_snapshot_ref": "central:source:control:root:Control/agents/now/clearings/746f59350bcbd0a88a231ea909ca89aac9cf950e3cf5d9584aae28535bb7296d/T/source-cuts/O-I/shared-field/expression-projection.mjs",
+      "storage": "candidate-verification-copy",
+      "snapshot_limit": "Exact inspected uncommitted bytes retained as verification evidence only; original named product/source remains the owner. Neither this copy nor the diagram adopts or publishes its implementation."
     },
     {
       "id": "O:I:shared-field/expression-material.mjs",
       "product": "O:I",
       "path": "shared-field/expression-material.mjs",
-      "sha256": "a95ab6e93ea1af95b0dcdd82e0350ecc7b52b8f2a7cd0baaa637737f8486d224"
+      "sha256": "a95ab6e93ea1af95b0dcdd82e0350ecc7b52b8f2a7cd0baaa637737f8486d224",
+      "consumed_snapshot_ref": "central:source:control:root:Control/agents/now/clearings/746f59350bcbd0a88a231ea909ca89aac9cf950e3cf5d9584aae28535bb7296d/T/source-cuts/O-I/shared-field/expression-material.mjs",
+      "storage": "candidate-verification-copy",
+      "snapshot_limit": "Exact inspected uncommitted bytes retained as verification evidence only; original named product/source remains the owner. Neither this copy nor the diagram adopts or publishes its implementation."
     },
     {
       "id": "O:I:shared-field/spacetimedb.mjs",
       "product": "O:I",
       "path": "shared-field/spacetimedb.mjs",
-      "sha256": "b7aa877cec66394368e65513d4a88d2005def9887c0f523409be15d8e671f786"
+      "sha256": "b7aa877cec66394368e65513d4a88d2005def9887c0f523409be15d8e671f786",
+      "storage": "git-blob",
+      "git_revision": "17c22891e6c9dbe0828cab8822a2f3aa6d4aa205"
     },
     {
       "id": "O:I:shared-field/expression-presentation.mjs",
       "product": "O:I",
       "path": "shared-field/expression-presentation.mjs",
-      "sha256": "a7035f2c008261f56e09ab8164160a414100027f6c6ab2416b923a458ededa99"
+      "sha256": "a7035f2c008261f56e09ab8164160a414100027f6c6ab2416b923a458ededa99",
+      "storage": "git-blob",
+      "git_revision": "17c22891e6c9dbe0828cab8822a2f3aa6d4aa205"
     },
     {
       "id": "O:I:docs/experience/SHARED-FIELD-DESKTOP.md",
       "product": "O:I",
       "path": "docs/experience/SHARED-FIELD-DESKTOP.md",
-      "sha256": "f23b6f3fad986e078fabc68726b945bd33e0a83a762d09fef46f2229d9e84af1"
+      "sha256": "f23b6f3fad986e078fabc68726b945bd33e0a83a762d09fef46f2229d9e84af1",
+      "storage": "git-blob",
+      "git_revision": "17c22891e6c9dbe0828cab8822a2f3aa6d4aa205"
     },
     {
       "id": "O:I:cli/src/update_flow.rs",
       "product": "O:I",
       "path": "cli/src/update_flow.rs",
-      "sha256": "607dc0f0755ad11f3a7b5b1b53da852bcf1373b9101cde28389abaa33921953f"
+      "sha256": "607dc0f0755ad11f3a7b5b1b53da852bcf1373b9101cde28389abaa33921953f",
+      "storage": "git-blob",
+      "git_revision": "17c22891e6c9dbe0828cab8822a2f3aa6d4aa205"
     },
     {
       "id": "AIKit:crates/aikit-cli/tests/encounter_shutdown.rs",
       "product": "AIKit",
       "path": "crates/aikit-cli/tests/encounter_shutdown.rs",
-      "sha256": "1fda91a1add78b30b3f69c0c7b73e9a3c914c4305fd15d874229a462e960eb29"
+      "sha256": "1fda91a1add78b30b3f69c0c7b73e9a3c914c4305fd15d874229a462e960eb29",
+      "storage": "git-blob",
+      "git_revision": "64d4e1d12fd95a331db75e1f1df21f332aebab6f"
     },
     {
       "id": "AIKit:crates/aikit-store/src/encounter.rs",
       "product": "AIKit",
       "path": "crates/aikit-store/src/encounter.rs",
-      "sha256": "7bb27ae2e46fe5caf51618c0b3a3afac4a0647ebdee30d31c9015fea80a501e2"
+      "sha256": "7bb27ae2e46fe5caf51618c0b3a3afac4a0647ebdee30d31c9015fea80a501e2",
+      "storage": "git-blob",
+      "git_revision": "64d4e1d12fd95a331db75e1f1df21f332aebab6f"
     },
     {
       "id": "Workcell:crates/workcell-runtime/src/instance_registry.rs",
       "product": "Workcell",
       "path": "crates/workcell-runtime/src/instance_registry.rs",
-      "sha256": "37b7397f52311c5b9664c12cc5183b9bbc291abd46fffe48273f233298d46774"
+      "sha256": "37b7397f52311c5b9664c12cc5183b9bbc291abd46fffe48273f233298d46774",
+      "storage": "git-blob",
+      "git_revision": "8d32e20ba4158f3ac11ab36d8a5b2d6c9c177af0"
     },
     {
       "id": "AIKit:crates/aikit-adapters/src/gateway_coexistence.rs",
       "product": "AIKit",
       "path": "crates/aikit-adapters/src/gateway_coexistence.rs",
-      "sha256": "29714ab50ee3c5e91fac229b877a50c6bde3dc9f47987e1d050548a8cc37d6e8"
+      "sha256": "29714ab50ee3c5e91fac229b877a50c6bde3dc9f47987e1d050548a8cc37d6e8",
+      "storage": "git-blob",
+      "git_revision": "64d4e1d12fd95a331db75e1f1df21f332aebab6f"
     },
     {
       "id": "Actuation:crates/actuation-stream/src/occupancy_store.rs",
       "product": "Actuation",
       "path": "crates/actuation-stream/src/occupancy_store.rs",
-      "sha256": "93b005ff80c9cc23005f9f1280d2145aeadd6be677d96f81af7bf8456d60c195"
+      "sha256": "93b005ff80c9cc23005f9f1280d2145aeadd6be677d96f81af7bf8456d60c195",
+      "storage": "git-blob",
+      "git_revision": "69bdc351cb355466b2575c70e22403f9b21fd480"
     },
     {
       "id": "O:I:desktop/cradle/kernel/src/world.rs",
       "product": "O:I",
       "path": "desktop/cradle/kernel/src/world.rs",
-      "sha256": "ee5b97ddf1eae15f40917619b89aaf8fca79341cb9ed85815f90da091d853e43"
+      "sha256": "ee5b97ddf1eae15f40917619b89aaf8fca79341cb9ed85815f90da091d853e43",
+      "storage": "git-blob",
+      "git_revision": "17c22891e6c9dbe0828cab8822a2f3aa6d4aa205"
     },
     {
       "id": "O:I:desktop/cradle/kernel/src/flow.rs",
       "product": "O:I",
       "path": "desktop/cradle/kernel/src/flow.rs",
-      "sha256": "0788cfb3e73431e818cd4e7938b8ff0c9b593c99733f210d33c4b5cceb68d02f"
+      "sha256": "0788cfb3e73431e818cd4e7938b8ff0c9b593c99733f210d33c4b5cceb68d02f",
+      "storage": "git-blob",
+      "git_revision": "17c22891e6c9dbe0828cab8822a2f3aa6d4aa205"
     },
     {
       "id": "O:I:desktop/cradle/kernel/src/agency.rs",
       "product": "O:I",
       "path": "desktop/cradle/kernel/src/agency.rs",
-      "sha256": "5de1b7bce7c9902abe98d89a3e30e2a5fd5fcca0c533d1ca801592dc43e93f9c"
+      "sha256": "5de1b7bce7c9902abe98d89a3e30e2a5fd5fcca0c533d1ca801592dc43e93f9c",
+      "consumed_snapshot_ref": "central:source:control:root:Control/agents/now/clearings/746f59350bcbd0a88a231ea909ca89aac9cf950e3cf5d9584aae28535bb7296d/T/source-cuts/O-I/desktop/cradle/kernel/src/agency.rs",
+      "storage": "candidate-verification-copy",
+      "snapshot_limit": "Exact inspected uncommitted bytes retained as verification evidence only; original named product/source remains the owner. Neither this copy nor the diagram adopts or publishes its implementation."
     },
     {
       "id": "O:I:desktop/cradle/kernel/src/encounter.rs",
       "product": "O:I",
       "path": "desktop/cradle/kernel/src/encounter.rs",
-      "sha256": "fd2e043e44e0b2109a616064a36f1bcc5f670734956852ed6f8160cb3946ef10"
+      "sha256": "fd2e043e44e0b2109a616064a36f1bcc5f670734956852ed6f8160cb3946ef10",
+      "storage": "git-blob",
+      "git_revision": "17c22891e6c9dbe0828cab8822a2f3aa6d4aa205"
     },
     {
       "id": "O:I:desktop/cradle/kernel/src/factory.rs",
       "product": "O:I",
       "path": "desktop/cradle/kernel/src/factory.rs",
-      "sha256": "b95fd6620c79153e480d1ab765d0de6ff8e98efc6560dc346d374edd1c24ae10"
+      "sha256": "b95fd6620c79153e480d1ab765d0de6ff8e98efc6560dc346d374edd1c24ae10",
+      "storage": "git-blob",
+      "git_revision": "17c22891e6c9dbe0828cab8822a2f3aa6d4aa205"
     },
     {
       "id": "O:I:desktop/cradle/kernel/src/lib.rs",
       "product": "O:I",
       "path": "desktop/cradle/kernel/src/lib.rs",
-      "sha256": "e0e0f1681c42ab7e6f0ae2ad87f572b1bcad4d198e0eacdd5cfaac83e2da1b2c"
+      "sha256": "e0e0f1681c42ab7e6f0ae2ad87f572b1bcad4d198e0eacdd5cfaac83e2da1b2c",
+      "storage": "git-blob",
+      "git_revision": "17c22891e6c9dbe0828cab8822a2f3aa6d4aa205"
     },
     {
       "id": "O:I:desktop/cradle/kernel/src/expression_world.rs",
       "product": "O:I",
       "path": "desktop/cradle/kernel/src/expression_world.rs",
-      "sha256": "1bda43c9340ee65aee96fb5fbca3b1b04b081f2ea3dbe1e873ba9e65f5c12e54"
+      "sha256": "1bda43c9340ee65aee96fb5fbca3b1b04b081f2ea3dbe1e873ba9e65f5c12e54",
+      "storage": "git-blob",
+      "git_revision": "17c22891e6c9dbe0828cab8822a2f3aa6d4aa205"
     },
     {
       "id": "QL-MEF:crates/ql-mef/src/scene.rs",
       "product": "QL-MEF",
       "path": "crates/ql-mef/src/scene.rs",
-      "sha256": "b188e8385917a31c991888d2409d48fb024c9e067301d8b07999ad00f9192f7b"
+      "sha256": "b188e8385917a31c991888d2409d48fb024c9e067301d8b07999ad00f9192f7b",
+      "storage": "git-blob",
+      "git_revision": "74dc6dc066fb5d9854657305045e3a786956b11a"
     },
     {
       "id": "O:I:desktop/cradle/src-tauri/src/main.rs",
       "product": "O:I",
       "path": "desktop/cradle/src-tauri/src/main.rs",
-      "sha256": "0028ab9f3d6fd5e35da9f11974d88093b61bcc96630ce989c13bc7114ee2369f"
+      "sha256": "0028ab9f3d6fd5e35da9f11974d88093b61bcc96630ce989c13bc7114ee2369f",
+      "storage": "git-blob",
+      "git_revision": "17c22891e6c9dbe0828cab8822a2f3aa6d4aa205"
     },
     {
       "id": "O:I:desktop/cradle/kernel/src/presentation.rs",
       "product": "O:I",
       "path": "desktop/cradle/kernel/src/presentation.rs",
-      "sha256": "a14f43df3e0be7cb9f6eff765a0f56a8429b5dc1537e2257db5235ea1fd39b11"
+      "sha256": "a14f43df3e0be7cb9f6eff765a0f56a8429b5dc1537e2257db5235ea1fd39b11",
+      "storage": "git-blob",
+      "git_revision": "17c22891e6c9dbe0828cab8822a2f3aa6d4aa205"
     },
     {
       "id": "QL-MEF-audit:docs/kernel-rebuild/EPI-WORLD-FIDELITY-AUDIT-2026-09-30.md",
@@ -442,8 +560,20 @@
       "id": "O:I:evidence/factory-rejection-currency.json",
       "product": "O:I",
       "path": "docs/architecture/evidence/factory-rejection-currency.json",
-      "sha256": "49487a2304d48be31cae3bb319f5306084c2537fc53c47bebcfaff3990660ef1"
+      "sha256": "49487a2304d48be31cae3bb319f5306084c2537fc53c47bebcfaff3990660ef1",
+      "storage": "git-blob",
+      "git_revision": "7b68056f87f2e41484ea3260f9b225a1f0195a4c"
+    },
+    {
+      "id": "Workcell:crates/workcell-runtime/src/service.rs",
+      "product": "Workcell",
+      "path": "crates/workcell-runtime/src/service.rs",
+      "git_revision": "8d32e20ba4158f3ac11ab36d8a5b2d6c9c177af0",
+      "storage": "git-blob",
+      "sha256": "61ab96fc0471d245fd4830d44eb030857300d5af3d84400d774e0b7573d336c6",
+      "relation": "Managed provider process lifetime, retention refusal and explicit recovery; distinct from the collapsed-local harness registry"
     }
   ],
-  "limit": "File hashes identify inspected bytes; git_revision alone does not identify dirty sources. Tests named are definitions inspected unless verification.md records an executed command. Active lanes may supersede this cut."
+  "limit": "File hashes identify inspected bytes; git_revision alone does not identify dirty sources. Tests named are definitions inspected unless verification.md records an executed command. Active lanes may supersede this cut.",
+  "source_storage_note": "Committed inspected bytes are pinned to their actual immutable Git blobs. Hash-qualified uncommitted sources remain candidate working-tree inspections; the domain audit uses its retained consumed snapshot."
 }
