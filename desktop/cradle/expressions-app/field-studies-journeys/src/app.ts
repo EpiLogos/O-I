@@ -1195,7 +1195,7 @@ lensStudio.setMode(hostMode);
 // Save is the primary act: it stays in the masthead at every width, outside
 // the history/capture overflow menu.
 (document.querySelector('#app .header-actions') as HTMLElement)?.insertAdjacentHTML('afterbegin',ib('native-save','save','Save (⌘S)','id="native-save"'));
-Object.assign(window.__FIELD_STUDIES__,{nativeWorking:()=>nativeWorkspace?.inspect(),nativeConnections:()=>engine.inspectConnections?.(),openNative:(reference:string)=>nativeWorkspace?.open(reference),openNativeFile:(path:string)=>nativeWorkspace?.openFile(path)});
+Object.assign(window.__FIELD_STUDIES__,{nativeWorking:()=>nativeWorkspace?.inspect(),nativeConnections:()=>engine.inspectConnections?.(),openNative:(reference:string)=>nativeWorkspace?.open(reference),openNativeFile:(path:string,observed?:import('./nativeWorkspace.js').NativeFileOpenBasis)=>nativeWorkspace?.openFile(path,observed)});
 const qs=new URLSearchParams(location.search);
 const naraInstrument=installNaraInstrument({enterWorld:async identity=>{if(worldLens!=='epi-logos'&&!epiWorld)return;await enterEpiWorld(identity);naraInstrument.close();},nativeView:()=>nativeWorkspace?.nativeView(),sceneId:()=>scene().id,
  personalContext:()=>readEpiPersonalContext(),

@@ -311,6 +311,7 @@ export const techneConstellationRelate = (request:TechneConstellationRelation):P
 export interface LibraryReadingEntry {
  ref:string;title:string;kind:string;owner:string;scope:'local'|'shared';
  revision?:string;project?:string;expressionRef?:string;
+ savedFile?:{location:NativeSubjectLocation;revision:string;expression_ref:string};
  scenes?:{scene_ref:string;title:string}[];collections?:string[];
  collectionMemberships?:{title:string;group:string;manifest_path:string}[];
 }

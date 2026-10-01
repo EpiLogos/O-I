@@ -15,6 +15,7 @@ import {NativeOpenIntent} from './nativeOpenIntent.js';
 import {NativeSelectionQueue} from './nativeSelectionQueue.js';
 import {refreshStep,hasLocalEdits,performedByLiveAct,retainedDraftId} from './nativeFollow.js';
 import {worldAvailable,worldRequest} from './worldChannel.js';
+export type NativeFileOpenBasis=Pick<NativeFile,'location'|'revision'|'expression_ref'>;
 
 /** The exact native work a summon carries to the cradle's verso account —
  * refs only, the pointer to the Expression / Scene / entity-or-relation
@@ -217,8 +218,8 @@ export function installNativeWorkspace(host:NativeWorkspaceHost){
   if(!reference.startsWith('expression:')){status('Choose a native Expression reference');return Promise.resolve(false);}
   return opens.submit(reference,captureNativeAdoption(host,()=>restoreGeneration));
  };
- const loadFile=async(path:string)=>{
-  const current=captureNativeAdoption(host,()=>restoreGeneration),result=await nativeFileRequest({operation:'open',path}) as {document:KernelExpressionDocument;file:NativeFile};
+ const loadFile=async(path:string,observed?:NativeFileOpenBasis)=>{
+  const current=captureNativeAdoption(host,()=>restoreGeneration),result=await nativeFileRequest({operation:'open',path,...(observed?{observed:clone(observed)}:{})}) as {document:KernelExpressionDocument;file:NativeFile};
   if(!result?.document||!result.file)throw new Error('The native file was not returned');
   await adopt(result.document,current,{location:result.file.location,revision:result.file.revision,expression_ref:result.document.expression_ref,document_revision:result.document.revision});
  };
@@ -300,7 +301,7 @@ export function installNativeWorkspace(host:NativeWorkspaceHost){
   status:()=>update(),
   open:requestOpen,
   cancelOpen:()=>{opens.cancel();update();},
-  openFile:(path:string)=>run(()=>loadFile(path)),
+  openFile:(path:string,observed?:NativeFileOpenBasis)=>run(()=>loadFile(path,observed)),
   /** Follow the same Expression to a newer owner revision when the draft is
    * clean. Resolves false (draft kept) when there is local work to reconcile. */
   advance:async():Promise<boolean>=>{
