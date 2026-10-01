@@ -456,6 +456,7 @@ fn setup_install_native(product: &str, plan: &AdoptionPlan) -> Result<Value, Str
         origin_main: None,
         behind_main: None,
         ahead_of_main: None,
+        direction: None,
     };
     let installed = apply_entry(
         &entry,
