@@ -15,6 +15,8 @@ import {ConstituentEncounter,constituentOf} from "./ConstituentEncounter";
 import type {HostedEntry} from "../knowledge/shared-field";
 // @ts-ignore -- language-neutral desktop reading over the field client's contracts.
 import {primaryProjection,relationsOf} from "./field.mjs";
+// @ts-ignore -- the shared knowledge subject grammar also owns constellation focus.
+import {isKnowledgeSubject} from "../../../../shared-field/knowledge-encounter.mjs";
 
 export interface WatchControl {available:boolean;watching?:boolean;reason?:string;busy:boolean;error?:string;onToggle:()=>void}
 export interface DepthState {relations?:boolean;source?:boolean}
@@ -46,7 +48,7 @@ export function PresentationBody({reading,relations,entries=[],activityLiveness=
   const expressionReading=expression?.props.expression as {expression_ref:string;expression_revision:number}|undefined;
   const touching=relationsOf([...relations,...reading.relations.filter(relation=>!relations.some(known=>known.from===relation.from&&known.to===relation.to&&known.relation===relation.relation))],reading.entry.ref) as {relation:string;origin:string;direction:string;other:string}[];
   const neighbourhood=reading.neighbourhood as {resource?:unknown;relations?:{nodes?:{ref:string;label?:string;kind?:string}[];edges?:{from:string;to:string;relation:string}[]};actions?:string[];error?:string}|null;
-  const knowledge=reading.entry.kind==="wiki-node"||reading.entry.kind==="wiki-space";
+  const knowledge=isKnowledgeSubject(reading.entry);
   // A chosen world constituent is the primary material; its World page is
   // one step away, never a stand-in for it.
   const constituent=constituentOf(reading.entry,[...relations,...reading.relations],entries.length?entries:[reading.entry],activityLiveness);

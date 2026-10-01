@@ -16,8 +16,8 @@
 import {useEffect,useLayoutEffect,useMemo,useRef,useState,useId,type CSSProperties,type ReactNode} from "react";
 import {useExpressionStage,type StagePresentation} from "../stage/ExpressionStage";
 import {useVisuals} from "../visuals/ParticleExpression";
-import {expressionConfig} from "../expression/engineProjection";
-import {nativeExport,type StageScene} from "@epilogos/oi-design-system/expressions-engine/shell/nativeBridge.mjs";
+import {expressionRenderConfig} from "../expression/engineProjection";
+import type {StageScene} from "@epilogos/oi-design-system/expressions-engine/shell/nativeBridge.mjs";
 import type {ExpressionDocument} from "../expression/types";
 // @ts-ignore -- the bounded live-embedding law (ES2 anti-recursion).
 import {tryAdmitLive,onLiveEmbeddingReleased} from "../expression/embedding.mjs";
@@ -166,7 +166,7 @@ function ExpressionBody({binding,presentationRef,hosting,onOpenRef}:RendererProp
     try{return validateExpressionComposition(binding.props.composition) as ExpressionDocument;}catch{return null;}
   },[binding,resolved.state]);
   const authoredScene=composition?.scenes.find(scene=>scene.scene_ref===composition.selection.scene_ref)?.presentation?.scene as (StageScene&{text:Array<{id:string;visible:boolean;x:number;y:number;width:number;size:number;align:"left"|"center"|"right";kicker:string;title:string;italic:string;body:string}>})|undefined;
-  const config=useMemo(()=>composition?(authoredScene?nativeExport(authoredScene).config as unknown as Record<string,unknown>:expressionConfig(composition)):null,[composition,authoredScene]);
+  const config=useMemo(()=>composition?expressionRenderConfig(composition):null,[composition]);
   const latestMaterial=useRef({composition,config});latestMaterial.current={composition,config};
   const [liveError,setLiveError]=useState<string>();
   const [live,setLive]=useState(false);

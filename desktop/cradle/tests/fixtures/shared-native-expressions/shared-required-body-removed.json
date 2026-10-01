@@ -1,0 +1,1199 @@
+{
+  "schema": "oi.native-expression-evidence-fixture/v1",
+  "database": "oi-shared-field",
+  "source_receipt": "factory-live-remove-native.json",
+  "source_effects_replayed": false,
+  "removed_entity_ref": "expression:shared-factory-source-20261001:entity:cast-agent-aletheia",
+  "composition": {
+    "collections": [],
+    "entities": {
+      "expression:shared-factory-source-20261001:entity:artifact-artifact-factory-expressions-20260926-201904-aletheia": {
+        "entity_ref": "expression:shared-factory-source-20261001:entity:artifact-artifact-factory-expressions-20260926-201904-aletheia",
+        "parameters": {
+          "glyph": {
+            "automation": null,
+            "value": "\u25a4"
+          },
+          "scale": {
+            "automation": null,
+            "value": 0.55
+          },
+          "share": {
+            "automation": null,
+            "value": 1
+          },
+          "x": {
+            "automation": null,
+            "value": -0.85
+          },
+          "y": {
+            "automation": null,
+            "value": -0.82
+          },
+          "z": {
+            "automation": null,
+            "value": 0
+          }
+        },
+        "revision": 1,
+        "subject": {
+          "actions": [],
+          "native_owner": "software-factory",
+          "presentation_role": "thing",
+          "readings": [
+            {
+              "availability": "available",
+              "ref": "return:factory-expressions/20260926-201904/aletheia-1",
+              "revision": "readable-return"
+            }
+          ],
+          "sources": [
+            {
+              "availability": "available",
+              "ref": "world:central:project:O-I/run:01M3FNY3P0E4H7JGN0BARSRQ8R",
+              "revision": "factory.run:6/state:46"
+            }
+          ],
+          "subject_ref": "world:central:project:O-I/artifact:factory-expressions/20260926-201904/aletheia"
+        },
+        "title": "aletheia"
+      },
+      "expression:shared-factory-source-20261001:entity:artifact-artifact-factory-expressions-20260926-201904-anima": {
+        "entity_ref": "expression:shared-factory-source-20261001:entity:artifact-artifact-factory-expressions-20260926-201904-anima",
+        "parameters": {
+          "glyph": {
+            "automation": null,
+            "value": "\u25a4"
+          },
+          "scale": {
+            "automation": null,
+            "value": 0.55
+          },
+          "share": {
+            "automation": null,
+            "value": 1
+          },
+          "x": {
+            "automation": null,
+            "value": 0.85
+          },
+          "y": {
+            "automation": null,
+            "value": -0.82
+          },
+          "z": {
+            "automation": null,
+            "value": 0
+          }
+        },
+        "revision": 1,
+        "subject": {
+          "actions": [],
+          "native_owner": "software-factory",
+          "presentation_role": "thing",
+          "readings": [
+            {
+              "availability": "available",
+              "ref": "return:factory-expressions/20260926-201904/anima-1",
+              "revision": "readable-return"
+            }
+          ],
+          "sources": [
+            {
+              "availability": "available",
+              "ref": "world:central:project:O-I/run:01M3FNY3P0E4H7JGN0BARSRQ8R",
+              "revision": "factory.run:6/state:46"
+            }
+          ],
+          "subject_ref": "world:central:project:O-I/artifact:factory-expressions/20260926-201904/anima"
+        },
+        "title": "anima"
+      },
+      "expression:shared-factory-source-20261001:entity:attempt-factory-expressions-20260926-201904-aletheia-1": {
+        "entity_ref": "expression:shared-factory-source-20261001:entity:attempt-factory-expressions-20260926-201904-aletheia-1",
+        "parameters": {},
+        "revision": 1,
+        "subject": {
+          "actions": [],
+          "native_owner": "software-factory",
+          "presentation_role": "thing",
+          "readings": [
+            {
+              "availability": "available",
+              "ref": "factory.verification/passed",
+              "revision": "verification:factory-expressions/20260926-201904/aletheia"
+            }
+          ],
+          "sources": [
+            {
+              "availability": "available",
+              "ref": "world:central:project:O-I/run:01M3FNY3P0E4H7JGN0BARSRQ8R",
+              "revision": "factory.run:6/state:46"
+            }
+          ],
+          "subject_ref": "world:central:project:O-I/attempt:factory-expressions-20260926-201904-aletheia-1"
+        },
+        "title": "task:factory-expressions/20260926-201904/aletheia"
+      },
+      "expression:shared-factory-source-20261001:entity:attempt-factory-expressions-20260926-201904-anima-1": {
+        "entity_ref": "expression:shared-factory-source-20261001:entity:attempt-factory-expressions-20260926-201904-anima-1",
+        "parameters": {},
+        "revision": 1,
+        "subject": {
+          "actions": [],
+          "native_owner": "software-factory",
+          "presentation_role": "thing",
+          "readings": [
+            {
+              "availability": "available",
+              "ref": "factory.verification/passed",
+              "revision": "verification:factory-expressions/20260926-201904/anima"
+            }
+          ],
+          "sources": [
+            {
+              "availability": "available",
+              "ref": "world:central:project:O-I/run:01M3FNY3P0E4H7JGN0BARSRQ8R",
+              "revision": "factory.run:6/state:46"
+            }
+          ],
+          "subject_ref": "world:central:project:O-I/attempt:factory-expressions-20260926-201904-anima-1"
+        },
+        "title": "task:factory-expressions/20260926-201904/anima"
+      },
+      "expression:shared-factory-source-20261001:entity:cast-agent-aletheia": {
+        "entity_ref": "expression:shared-factory-source-20261001:entity:cast-agent-aletheia",
+        "parameters": {
+          "glyph": {
+            "automation": null,
+            "value": "\u25c9"
+          },
+          "scale": {
+            "automation": null,
+            "value": 0.55
+          },
+          "share": {
+            "automation": null,
+            "value": 1
+          },
+          "x": {
+            "automation": null,
+            "value": 1.15
+          },
+          "y": {
+            "automation": null,
+            "value": 0.36
+          },
+          "z": {
+            "automation": null,
+            "value": 0
+          }
+        },
+        "revision": 1,
+        "subject": {
+          "actions": [],
+          "native_owner": "central",
+          "presentation_role": "being",
+          "readings": [
+            {
+              "availability": "available",
+              "ref": "oi.expression-cast/participants.1",
+              "revision": "attempt:factory-expressions-20260926-201904-aletheia-1"
+            },
+            {
+              "availability": "available",
+              "ref": "profile/aletheia",
+              "revision": "profile"
+            },
+            {
+              "availability": "available",
+              "ref": "central:position:project:O-I:aletheia-5",
+              "revision": "position"
+            },
+            {
+              "availability": "unavailable",
+              "ref": "oi.expression-character/none",
+              "revision": "profile-names-none"
+            }
+          ],
+          "sources": [
+            {
+              "availability": "available",
+              "ref": "world:central:project:O-I/run:01M3FNY3P0E4H7JGN0BARSRQ8R",
+              "revision": "factory.run:6/state:46"
+            }
+          ],
+          "subject_ref": "world:central:project:O-I/agent/aletheia"
+        },
+        "title": "Aletheia"
+      },
+      "expression:shared-factory-source-20261001:entity:cast-agent-anima": {
+        "entity_ref": "expression:shared-factory-source-20261001:entity:cast-agent-anima",
+        "parameters": {
+          "glyph": {
+            "automation": null,
+            "value": "\u2727"
+          },
+          "scale": {
+            "automation": null,
+            "value": 0.55
+          },
+          "share": {
+            "automation": null,
+            "value": 1
+          },
+          "x": {
+            "automation": null,
+            "value": -1.15
+          },
+          "y": {
+            "automation": null,
+            "value": 0.36
+          },
+          "z": {
+            "automation": null,
+            "value": 0
+          }
+        },
+        "revision": 1,
+        "subject": {
+          "actions": [],
+          "native_owner": "central",
+          "presentation_role": "being",
+          "readings": [
+            {
+              "availability": "available",
+              "ref": "oi.expression-cast/participants.0",
+              "revision": "attempt:factory-expressions-20260926-201904-anima-1"
+            },
+            {
+              "availability": "available",
+              "ref": "profile/anima",
+              "revision": "profile"
+            },
+            {
+              "availability": "available",
+              "ref": "central:position:project:O-I:anima-4",
+              "revision": "position"
+            },
+            {
+              "availability": "unavailable",
+              "ref": "oi.expression-character/none",
+              "revision": "profile-names-none"
+            }
+          ],
+          "sources": [
+            {
+              "availability": "available",
+              "ref": "world:central:project:O-I/run:01M3FNY3P0E4H7JGN0BARSRQ8R",
+              "revision": "factory.run:6/state:46"
+            }
+          ],
+          "subject_ref": "world:central:project:O-I/agent/anima"
+        },
+        "title": "Anima"
+      },
+      "expression:shared-factory-source-20261001:entity:destination": {
+        "entity_ref": "expression:shared-factory-source-20261001:entity:destination",
+        "parameters": {
+          "glyph": {
+            "automation": null,
+            "value": "\u25ce"
+          },
+          "scale": {
+            "automation": null,
+            "value": 0.55
+          },
+          "share": {
+            "automation": null,
+            "value": 1
+          },
+          "x": {
+            "automation": null,
+            "value": 0
+          },
+          "y": {
+            "automation": null,
+            "value": 0.82
+          },
+          "z": {
+            "automation": null,
+            "value": 0
+          }
+        },
+        "revision": 1,
+        "subject": {
+          "actions": [],
+          "native_owner": "software-factory",
+          "presentation_role": "thing",
+          "readings": [
+            {
+              "availability": "available",
+              "ref": "factory.run-node/destination",
+              "revision": "unset"
+            }
+          ],
+          "sources": [
+            {
+              "availability": "available",
+              "ref": "world:central:project:O-I/run:01M3FNY3P0E4H7JGN0BARSRQ8R",
+              "revision": "factory.run:6/state:46"
+            }
+          ],
+          "subject_ref": "world:central:project:O-I/run:01M3FNY3P0E4H7JGN0BARSRQ8R#destination"
+        },
+        "title": "factory-expressions/acceptance-20260926-201904"
+      },
+      "expression:shared-factory-source-20261001:entity:run": {
+        "entity_ref": "expression:shared-factory-source-20261001:entity:run",
+        "parameters": {},
+        "revision": 1,
+        "subject": {
+          "actions": [],
+          "native_owner": "software-factory",
+          "presentation_role": "being",
+          "readings": [
+            {
+              "availability": "available",
+              "ref": "factory.run-reading/v1",
+              "revision": "6"
+            },
+            {
+              "availability": "available",
+              "ref": "factory.attempt-reading/v1",
+              "revision": "46"
+            }
+          ],
+          "sources": [
+            {
+              "availability": "available",
+              "ref": "world:central:project:O-I/run:01M3FNY3P0E4H7JGN0BARSRQ8R",
+              "revision": "factory.run:6/state:46"
+            }
+          ],
+          "subject_ref": "world:central:project:O-I/run:01M3FNY3P0E4H7JGN0BARSRQ8R"
+        },
+        "title": "factory-expressions/acceptance-20260926-201904"
+      },
+      "expression:shared-factory-source-20261001:entity:work-aletheia-disclose-return": {
+        "entity_ref": "expression:shared-factory-source-20261001:entity:work-aletheia-disclose-return",
+        "parameters": {
+          "glyph": {
+            "automation": null,
+            "value": "\u25a3"
+          },
+          "scale": {
+            "automation": null,
+            "value": 0.55
+          },
+          "share": {
+            "automation": null,
+            "value": 1
+          },
+          "x": {
+            "automation": null,
+            "value": -0.85
+          },
+          "y": {
+            "automation": null,
+            "value": -0.12
+          },
+          "z": {
+            "automation": null,
+            "value": 0
+          }
+        },
+        "revision": 1,
+        "subject": {
+          "actions": [],
+          "native_owner": "software-factory",
+          "presentation_role": "thing",
+          "readings": [
+            {
+              "availability": "available",
+              "ref": "factory.run-node/work",
+              "revision": "returned"
+            },
+            {
+              "availability": "available",
+              "ref": "workflow-unit:35EEXBYNZ9M8Q7G9575445D7Z2",
+              "revision": "native"
+            }
+          ],
+          "sources": [
+            {
+              "availability": "available",
+              "ref": "world:central:project:O-I/run:01M3FNY3P0E4H7JGN0BARSRQ8R",
+              "revision": "factory.run:6/state:46"
+            }
+          ],
+          "subject_ref": "world:central:project:O-I/run:01M3FNY3P0E4H7JGN0BARSRQ8R#work-aletheia-disclose-return"
+        },
+        "title": "Review what Anima performed and sent, compare it with the intent, and return it"
+      },
+      "expression:shared-factory-source-20261001:entity:work-anima-conduct": {
+        "entity_ref": "expression:shared-factory-source-20261001:entity:work-anima-conduct",
+        "parameters": {
+          "glyph": {
+            "automation": null,
+            "value": "\u25a3"
+          },
+          "scale": {
+            "automation": null,
+            "value": 0.55
+          },
+          "share": {
+            "automation": null,
+            "value": 1
+          },
+          "x": {
+            "automation": null,
+            "value": 0.85
+          },
+          "y": {
+            "automation": null,
+            "value": -0.12
+          },
+          "z": {
+            "automation": null,
+            "value": 0
+          }
+        },
+        "revision": 1,
+        "subject": {
+          "actions": [],
+          "native_owner": "software-factory",
+          "presentation_role": "thing",
+          "readings": [
+            {
+              "availability": "available",
+              "ref": "factory.run-node/work",
+              "revision": "returned"
+            },
+            {
+              "availability": "available",
+              "ref": "workflow-unit:4N3MZP4J2FM5VM2ZGYAZD1ZDDG",
+              "revision": "native"
+            }
+          ],
+          "sources": [
+            {
+              "availability": "available",
+              "ref": "world:central:project:O-I/run:01M3FNY3P0E4H7JGN0BARSRQ8R",
+              "revision": "factory.run:6/state:46"
+            }
+          ],
+          "subject_ref": "world:central:project:O-I/run:01M3FNY3P0E4H7JGN0BARSRQ8R#work-anima-conduct"
+        },
+        "title": "Conduct one Expression act: read its governing contract, load the orchestration Skill and address Aletheia"
+      }
+    },
+    "expression_ref": "expression:shared-factory-source-20261001",
+    "profiles": [],
+    "provenance": [
+      {
+        "availability": "available",
+        "ref": "world:central:project:O-I/run:01M3FNY3P0E4H7JGN0BARSRQ8R",
+        "revision": "factory.run:6/state:46"
+      },
+      {
+        "availability": "available",
+        "ref": "world:shared-expression:ann/expression-source:factory-adapter",
+        "revision": "O-I@deb6aba9:composeRunExpression"
+      }
+    ],
+    "refinements": [],
+    "relations": {
+      "expression:shared-factory-source-20261001:relation:carries-agent-aletheia-attempt-factory-expressions-20260926-201904-aletheia-1": {
+        "binding_ref": "expression:shared-factory-source-20261001:relation:carries-agent-aletheia-attempt-factory-expressions-20260926-201904-aletheia-1",
+        "from_entity_ref": "expression:shared-factory-source-20261001:entity:cast-agent-aletheia",
+        "provenance": [
+          {
+            "availability": "available",
+            "ref": "factory.attempt-reading/v1",
+            "revision": "46"
+          }
+        ],
+        "relation": {
+          "availability": "available",
+          "ref": "factory.attempt/participant",
+          "revision": "46"
+        },
+        "to_entity_ref": "expression:shared-factory-source-20261001:entity:attempt-factory-expressions-20260926-201904-aletheia-1"
+      },
+      "expression:shared-factory-source-20261001:relation:carries-agent-anima-attempt-factory-expressions-20260926-201904-anima-1": {
+        "binding_ref": "expression:shared-factory-source-20261001:relation:carries-agent-anima-attempt-factory-expressions-20260926-201904-anima-1",
+        "from_entity_ref": "expression:shared-factory-source-20261001:entity:cast-agent-anima",
+        "provenance": [
+          {
+            "availability": "available",
+            "ref": "factory.attempt-reading/v1",
+            "revision": "46"
+          }
+        ],
+        "relation": {
+          "availability": "available",
+          "ref": "factory.attempt/participant",
+          "revision": "46"
+        },
+        "to_entity_ref": "expression:shared-factory-source-20261001:entity:attempt-factory-expressions-20260926-201904-anima-1"
+      },
+      "expression:shared-factory-source-20261001:relation:edge-0-branches_to": {
+        "binding_ref": "expression:shared-factory-source-20261001:relation:edge-0-branches_to",
+        "from_entity_ref": "expression:shared-factory-source-20261001:entity:destination",
+        "provenance": [
+          {
+            "availability": "available",
+            "ref": "factory.run-reading/v1",
+            "revision": "6"
+          }
+        ],
+        "relation": {
+          "availability": "available",
+          "ref": "factory.run-edge/branches_to",
+          "revision": "topology:6"
+        },
+        "to_entity_ref": "expression:shared-factory-source-20261001:entity:work-aletheia-disclose-return"
+      },
+      "expression:shared-factory-source-20261001:relation:edge-1-requires": {
+        "binding_ref": "expression:shared-factory-source-20261001:relation:edge-1-requires",
+        "from_entity_ref": "expression:shared-factory-source-20261001:entity:work-aletheia-disclose-return",
+        "provenance": [
+          {
+            "availability": "available",
+            "ref": "factory.run-reading/v1",
+            "revision": "6"
+          }
+        ],
+        "relation": {
+          "availability": "available",
+          "ref": "factory.run-edge/requires",
+          "revision": "topology:6"
+        },
+        "to_entity_ref": "expression:shared-factory-source-20261001:entity:work-anima-conduct"
+      }
+    },
+    "representations": [],
+    "revision": 5,
+    "scenes": [
+      {
+        "body": null,
+        "entity_refs": [
+          "expression:shared-factory-source-20261001:entity:cast-agent-anima",
+          "expression:shared-factory-source-20261001:entity:cast-agent-aletheia",
+          "expression:shared-factory-source-20261001:entity:destination",
+          "expression:shared-factory-source-20261001:entity:work-aletheia-disclose-return",
+          "expression:shared-factory-source-20261001:entity:work-anima-conduct",
+          "expression:shared-factory-source-20261001:entity:artifact-artifact-factory-expressions-20260926-201904-aletheia",
+          "expression:shared-factory-source-20261001:entity:artifact-artifact-factory-expressions-20260926-201904-anima"
+        ],
+        "presentation": {
+          "scene": {
+            "automation": [],
+            "character": "Retained Factory source: one conducted act, one independent review, their returned artifacts. No current execution or whole-Run completion is claimed.",
+            "composition": {
+              "carryStation": false,
+              "carryTint": true,
+              "focus": "travelling",
+              "focusDuration": 6,
+              "frequencyDriver": "manual",
+              "layout": "free",
+              "plane": "XY"
+            },
+            "duration": 12,
+            "engine": {
+              "autoFitSizes": true,
+              "autoOscillate": true,
+              "autoSweep": false,
+              "backgroundMode": "vignette",
+              "collisionEnabled": false,
+              "collisionMode": "obstacle",
+              "colorEnabled": true,
+              "colorMode": "linearGradient",
+              "dotShape": "circle",
+              "driveShape": "sine",
+              "focusOrder": "listed",
+              "fontFamily": "system-ui, -apple-system, sans-serif",
+              "fontWeight": 900,
+              "grainProfile": true,
+              "inkMode": "blackOnWhite",
+              "mediumDimension": "2D",
+              "mediumEnabled": false,
+              "mediumPlane": "vertical",
+              "morphEnabled": true,
+              "pairwiseEnabled": false,
+              "paletteSource": "custom",
+              "pointerClick": "pulse",
+              "pointerClickRadius": 0.45,
+              "pointerClickStrength": 2.2,
+              "pointerMode": "repel",
+              "relationalEnabled": false,
+              "relationalMode": "orbital",
+              "resonanceEnabled": true,
+              "resonatorMode": "resonator",
+              "sweepDirection": "ascent",
+              "trajectory": "vortexSpiral"
+            },
+            "entities": [
+              {
+                "force": {
+                  "kind": "attract",
+                  "radius": 0.5,
+                  "spin": 0.04,
+                  "strength": 0.35
+                },
+                "id": "expression:shared-factory-source-20261001:entity:cast-agent-anima",
+                "kind": "formation",
+                "layers": [
+                  {
+                    "id": "halo",
+                    "scale": 1.7,
+                    "text": "\u25cc",
+                    "z": -0.12
+                  },
+                  {
+                    "id": "core",
+                    "scale": 0.55,
+                    "text": "\u2726",
+                    "z": 0.08
+                  }
+                ],
+                "locked": false,
+                "name": "Anima",
+                "position": {
+                  "x": -1.15,
+                  "y": 0.36,
+                  "z": 0
+                },
+                "rotation": 0,
+                "sequence": {
+                  "clock": "seconds",
+                  "easing": "smoothstep",
+                  "enabled": false,
+                  "order": "pingpong",
+                  "steps": [
+                    {
+                      "hold": 3.5,
+                      "id": "anima-idle-a",
+                      "objectState": {
+                        "force": {
+                          "kind": "attract",
+                          "radius": 0.5,
+                          "spin": 0.04,
+                          "strength": 0.35
+                        },
+                        "rotation": 0,
+                        "scale": 1,
+                        "size": {
+                          "x": 0.9,
+                          "y": 1.02
+                        },
+                        "tint": "#d98c5f",
+                        "tintWeight": 0.8
+                      },
+                      "position": null,
+                      "shape": "text",
+                      "text": "\u2727",
+                      "transition": 2.2
+                    },
+                    {
+                      "hold": 3.5,
+                      "id": "anima-idle-b",
+                      "name": "breathe",
+                      "objectState": {
+                        "force": {
+                          "kind": "attract",
+                          "radius": 0.56,
+                          "spin": 0.06,
+                          "strength": 0.45
+                        },
+                        "rotation": 4,
+                        "scale": 1,
+                        "size": {
+                          "x": 0.98,
+                          "y": 1.1
+                        },
+                        "tint": "#d98c5f",
+                        "tintWeight": 0.9
+                      },
+                      "position": null,
+                      "shape": "text",
+                      "text": "\u2727",
+                      "transition": 2.2
+                    }
+                  ]
+                },
+                "shape": "text",
+                "share": 1,
+                "size": {
+                  "x": 0.55,
+                  "y": 0.62
+                },
+                "station": null,
+                "text": "\u2727",
+                "tint": "#d98c5f",
+                "tintWeight": 0.85
+              },
+              {
+                "enabled": false,
+                "force": {
+                  "kind": "attract",
+                  "radius": 0.5,
+                  "spin": 0.04,
+                  "strength": 0.35
+                },
+                "id": "expression:shared-factory-source-20261001:entity:cast-agent-aletheia",
+                "kind": "formation",
+                "locked": false,
+                "name": "Aletheia",
+                "position": {
+                  "x": 1.15,
+                  "y": 0.36,
+                  "z": 0
+                },
+                "rotation": 0,
+                "sequence": {
+                  "clock": "seconds",
+                  "easing": "smoothstep",
+                  "enabled": false,
+                  "order": "pingpong",
+                  "steps": [
+                    {
+                      "hold": 3.5,
+                      "id": "aletheia-idle-a",
+                      "objectState": {
+                        "force": {
+                          "kind": "attract",
+                          "radius": 0.5,
+                          "spin": 0.04,
+                          "strength": 0.35
+                        },
+                        "rotation": 0,
+                        "scale": 1,
+                        "size": {
+                          "x": 0.9,
+                          "y": 1.02
+                        },
+                        "tint": "#6fb3c8",
+                        "tintWeight": 0.8
+                      },
+                      "position": null,
+                      "shape": "text",
+                      "text": "\u25c9",
+                      "transition": 2.2
+                    },
+                    {
+                      "hold": 3.5,
+                      "id": "aletheia-idle-b",
+                      "name": "breathe",
+                      "objectState": {
+                        "force": {
+                          "kind": "attract",
+                          "radius": 0.56,
+                          "spin": 0.06,
+                          "strength": 0.45
+                        },
+                        "rotation": 4,
+                        "scale": 1,
+                        "size": {
+                          "x": 0.98,
+                          "y": 1.1
+                        },
+                        "tint": "#6fb3c8",
+                        "tintWeight": 0.9
+                      },
+                      "position": null,
+                      "shape": "text",
+                      "text": "\u25c9",
+                      "transition": 2.2
+                    }
+                  ]
+                },
+                "shape": "text",
+                "share": 1,
+                "size": {
+                  "x": 0.55,
+                  "y": 0.62
+                },
+                "station": null,
+                "text": "\u25c9",
+                "tint": "#6fb3c8",
+                "tintWeight": 0.85
+              },
+              {
+                "force": {
+                  "kind": "attract",
+                  "radius": 0.4,
+                  "spin": 0,
+                  "strength": 0
+                },
+                "id": "expression:shared-factory-source-20261001:entity:destination",
+                "kind": "formation",
+                "locked": false,
+                "name": "factory-expressions/acceptance-20260926-201904",
+                "position": {
+                  "x": 0,
+                  "y": 0.82,
+                  "z": 0
+                },
+                "rotation": 0,
+                "sequence": {
+                  "clock": "seconds",
+                  "enabled": false,
+                  "steps": []
+                },
+                "shape": "text",
+                "share": 1,
+                "size": {
+                  "x": 0.4,
+                  "y": 0.45
+                },
+                "station": null,
+                "text": "\u25ce",
+                "tint": "#6f7d8c",
+                "tintWeight": 0.7
+              },
+              {
+                "force": {
+                  "kind": "attract",
+                  "radius": 0.4,
+                  "spin": 0,
+                  "strength": 0
+                },
+                "id": "expression:shared-factory-source-20261001:entity:work-aletheia-disclose-return",
+                "kind": "formation",
+                "locked": false,
+                "name": "Review what Anima performed and sent, compare it with the intent, and return it",
+                "position": {
+                  "x": -0.85,
+                  "y": -0.12,
+                  "z": 0
+                },
+                "rotation": 0,
+                "sequence": {
+                  "clock": "seconds",
+                  "enabled": false,
+                  "steps": []
+                },
+                "shape": "text",
+                "share": 1,
+                "size": {
+                  "x": 0.4,
+                  "y": 0.45
+                },
+                "station": null,
+                "text": "\u25a3",
+                "tint": "#6f7d8c",
+                "tintWeight": 0.7
+              },
+              {
+                "force": {
+                  "kind": "attract",
+                  "radius": 0.4,
+                  "spin": 0,
+                  "strength": 0
+                },
+                "id": "expression:shared-factory-source-20261001:entity:work-anima-conduct",
+                "kind": "formation",
+                "locked": false,
+                "name": "Conduct one Expression act: read its governing contract, load the orchestration Skill and address Aletheia",
+                "position": {
+                  "x": 0.85,
+                  "y": -0.12,
+                  "z": 0
+                },
+                "rotation": 0,
+                "sequence": {
+                  "clock": "seconds",
+                  "enabled": false,
+                  "steps": []
+                },
+                "shape": "text",
+                "share": 1,
+                "size": {
+                  "x": 0.4,
+                  "y": 0.45
+                },
+                "station": null,
+                "text": "\u25a3",
+                "tint": "#6f7d8c",
+                "tintWeight": 0.7
+              },
+              {
+                "force": {
+                  "kind": "attract",
+                  "radius": 0.4,
+                  "spin": 0,
+                  "strength": 0
+                },
+                "id": "expression:shared-factory-source-20261001:entity:artifact-artifact-factory-expressions-20260926-201904-aletheia",
+                "kind": "formation",
+                "locked": false,
+                "name": "aletheia",
+                "position": {
+                  "x": -0.85,
+                  "y": -0.82,
+                  "z": 0
+                },
+                "rotation": 0,
+                "sequence": {
+                  "clock": "seconds",
+                  "enabled": false,
+                  "steps": []
+                },
+                "shape": "text",
+                "share": 1,
+                "size": {
+                  "x": 0.4,
+                  "y": 0.45
+                },
+                "station": null,
+                "text": "\u25a4",
+                "tint": "#6f7d8c",
+                "tintWeight": 0.7
+              },
+              {
+                "force": {
+                  "kind": "attract",
+                  "radius": 0.4,
+                  "spin": 0,
+                  "strength": 0
+                },
+                "id": "expression:shared-factory-source-20261001:entity:artifact-artifact-factory-expressions-20260926-201904-anima",
+                "kind": "formation",
+                "locked": false,
+                "name": "anima",
+                "position": {
+                  "x": 0.85,
+                  "y": -0.82,
+                  "z": 0
+                },
+                "rotation": 0,
+                "sequence": {
+                  "clock": "seconds",
+                  "enabled": false,
+                  "steps": []
+                },
+                "shape": "text",
+                "share": 1,
+                "size": {
+                  "x": 0.4,
+                  "y": 0.45
+                },
+                "station": null,
+                "text": "\u25a4",
+                "tint": "#6f7d8c",
+                "tintWeight": 0.7
+              }
+            ],
+            "field": {
+              "background": "#ebe7dc",
+              "material": "print",
+              "palette": [
+                "#2a2d33",
+                "#6f7d8c",
+                "#b0643c"
+              ],
+              "params": {
+                "circulation": 1,
+                "contrast": 0.74,
+                "count": 40000,
+                "curlDepth": 0.2,
+                "densityPhase": 0.3,
+                "densityScale": 1,
+                "densityTether": 1,
+                "depth": 0.12,
+                "dispersion": 0.05,
+                "dominance": 0,
+                "edgeWeight": 0,
+                "elongation": 0.04,
+                "excitation": 0.6,
+                "frequency": 220,
+                "grain": 0.035,
+                "gravityFalloff": 2,
+                "gravitySoftening": 0.1,
+                "gravityX": 0,
+                "gravityY": 0,
+                "gravityZ": 0,
+                "halo": 0.13,
+                "irregularity": 0.35,
+                "opacity": 0.88,
+                "orientation": 0,
+                "pointerFalloff": 2,
+                "pointerRadius": 0.23,
+                "pointerStrength": 0.8,
+                "quadraticDrag": 0.2,
+                "recovery": 1.1,
+                "roundness": 0.3,
+                "size": 3.2,
+                "sizeBias": 1.6,
+                "snapRigidity": 1,
+                "softness": 0.15,
+                "speed": 0.5,
+                "speedLimit": 3,
+                "swirlRadius": 0.4,
+                "thermalJitter": 0,
+                "timeScale": 1,
+                "turbulence": 0.12,
+                "turbulenceScale": 1.2,
+                "vortexRadius": 0.4,
+                "zConfinement": 1
+              }
+            },
+            "id": "expression:shared-factory-source-20261001:scene:live",
+            "morph": {
+              "depth": 1,
+              "dwell": 0.3,
+              "law": "theta",
+              "phiOffset": 0,
+              "phiRate": 0.13,
+              "thetaOffset": 0,
+              "thetaRate": 0.08
+            },
+            "name": "Returned Factory work \u00b7 source for this undertaking",
+            "text": [
+              {
+                "align": "center",
+                "body": "",
+                "id": "expression:shared-factory-source-20261001:scene:live:caption:0",
+                "italic": "",
+                "kicker": "",
+                "size": 18,
+                "title": "Anima conducts \u00b7 Aletheia reviews",
+                "visible": true,
+                "width": 390,
+                "x": 0.05,
+                "y": 0.025
+              },
+              {
+                "align": "center",
+                "body": "",
+                "id": "expression:shared-factory-source-20261001:scene:live:caption:1",
+                "italic": "",
+                "kicker": "",
+                "size": 15,
+                "title": "Two Returns \u00b7 Run remains seeded",
+                "visible": true,
+                "width": 390,
+                "x": 0.05,
+                "y": 0.08499999999999999
+              },
+              {
+                "align": "center",
+                "body": "",
+                "id": "expression:shared-factory-source-20261001:scene:live:caption:2",
+                "italic": "",
+                "kicker": "",
+                "size": 15,
+                "title": "Contract, evidence and addressed delivery",
+                "visible": true,
+                "width": 390,
+                "x": 0.05,
+                "y": 0.145
+              },
+              {
+                "align": "center",
+                "body": "",
+                "id": "expression:shared-factory-source-20261001:scene:live:caption:3",
+                "italic": "",
+                "kicker": "",
+                "size": 15,
+                "title": "Retained source \u00b7 no execution repeated",
+                "visible": true,
+                "width": 390,
+                "x": 0.05,
+                "y": 0.205
+              }
+            ],
+            "toolbelt": [
+              {
+                "id": "speed",
+                "key": "timeScale",
+                "scope": "field"
+              },
+              {
+                "id": "spring",
+                "key": "recovery",
+                "scope": "field"
+              },
+              {
+                "id": "viscosity",
+                "key": "native_fluid__viscosity",
+                "scope": "field"
+              },
+              {
+                "id": "flow",
+                "key": "turbulence",
+                "scope": "field"
+              },
+              {
+                "id": "transition",
+                "key": "sequence.transition",
+                "scope": "selected"
+              },
+              {
+                "id": "blend",
+                "key": "native_morphProgress",
+                "scope": "field"
+              }
+            ],
+            "transition": 1.2,
+            "view": {
+              "mode": "2d",
+              "panX": 0,
+              "panY": 0,
+              "pitch": 0,
+              "yaw": 0,
+              "zoom": 1
+            }
+          },
+          "schema": "oi.journey-scene/v1"
+        },
+        "revision": 5,
+        "scene_ref": "expression:shared-factory-source-20261001:scene:live",
+        "title": "Returned Factory work \u00b7 source for this undertaking",
+        "triggers": []
+      },
+      {
+        "body": null,
+        "entity_refs": [
+          "expression:shared-factory-source-20261001:entity:run",
+          "expression:shared-factory-source-20261001:entity:destination",
+          "expression:shared-factory-source-20261001:entity:work-aletheia-disclose-return",
+          "expression:shared-factory-source-20261001:entity:work-anima-conduct"
+        ],
+        "revision": 1,
+        "scene_ref": "expression:shared-factory-source-20261001:scene:topology-1",
+        "title": "Run map \u2014 SSSF topology",
+        "triggers": []
+      },
+      {
+        "body": null,
+        "entity_refs": [
+          "expression:shared-factory-source-20261001:entity:attempt-factory-expressions-20260926-201904-aletheia-1",
+          "expression:shared-factory-source-20261001:entity:attempt-factory-expressions-20260926-201904-anima-1"
+        ],
+        "revision": 1,
+        "scene_ref": "expression:shared-factory-source-20261001:scene:executions-1",
+        "title": "Attempts \u2014 live and returned",
+        "triggers": []
+      },
+      {
+        "body": null,
+        "entity_refs": [
+          "expression:shared-factory-source-20261001:entity:attempt-factory-expressions-20260926-201904-aletheia-1"
+        ],
+        "revision": 1,
+        "scene_ref": "expression:shared-factory-source-20261001:scene:return",
+        "title": "Return",
+        "triggers": []
+      }
+    ],
+    "schema": "oi.expression/v1",
+    "selection": {
+      "entity_ref": "expression:shared-factory-source-20261001:entity:cast-agent-anima",
+      "scene_ref": "expression:shared-factory-source-20261001:scene:live"
+    },
+    "title": "Factory source \u00b7 Anima conducts, Aletheia reviews"
+  }
+}
