@@ -301,7 +301,10 @@ fn atomic_symlink(link_path: &Path, target: &Path) -> Result<(), String> {
 
 /// Stage one binary into the content-addressed store and flip `bin/<exe>` to
 /// it. The copy lands beside its final name and is renamed into place, so
-/// the store never exposes a partial binary.
+/// the store never exposes a partial binary. The apply loop stages and links
+/// in two separate phases; this is the two steps together, for the test that
+/// pins that they publish one generation.
+#[cfg(test)]
 fn stage_and_link(data_root: &Path, id: &str, exe: &str, sha256: &str, source_binary: &Path) -> Result<PathBuf, String> {
     let managed = stage_binary(data_root, id, exe, sha256, source_binary)?;
     link_managed(data_root, id, exe, sha256)?;
