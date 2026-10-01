@@ -19,8 +19,11 @@ no source authority or implementation publication.
 
 O:I #567, Workcell #108 and QL-MEF #277 have landed. Central, AIKit, Actuation
 and Factory native companion corrections remain reviewed candidates under
-their named integrators; the six-product validation below records the actual
-candidate cuts, not publication in all six primary checkouts. Central's dirty
+their named integrators. Factory's eight corrections are committed and pushed
+in [Factory #277](https://github.com/EpiLogos/Factory/pull/277) at
+`34b6143ce56d2384c558b30918959267e37b54a9`; its primary landing remains pending.
+The six-product validation below records the actual candidate cuts, not
+publication in all six primary checkouts. Central's dirty
 unregistered seat and the unavailable AIKit/Actuation Git custodians have
 separate native NOW questions. Factory retains its active integration custody.
 
@@ -131,6 +134,34 @@ the recorded driver-controlled scenario with the timing limit stated in the
 [evidence README](../experience/evidence/plural-flow-20260930/README.md).
 It does not prove a combined live withdrawal-and-crash episode. No invented
 join was required to navigate the feature.
+
+## Consumed Epi programme successor — 1 October 2026
+
+The Epi lane's seven existing programme entrances were inspected at their
+04:05 UTC integration cut. All seven source hashes match the native owner's
+receipt and proposal; the [consumed-cut manifest](evidence/epi-programme-entrances-20261001.json)
+retains their checkout revisions, exact hashes and verification copies. These
+are uncommitted source corrections in the Epi owner's seats, distinct from the
+earlier consumed audit and the published native navigation.
+
+The entrances retain ordinary24–26 as whole failures and reject ordinary27 as
+repair proof because its build failed. The actual FULL28 receipt is still
+`passed:false` after 37 bounded checks. It records qualified source disclosure
+and Personal Pratibimba Source/Return, then fails native one-tick receiving:
+O:I's closed three-field binding parser refuses QL's additional `native_basis`,
+`scene` and `native_readback` before host/worker spawn. The source review names
+`kernel/src/native_expression.rs` as the repair owner. Admission of the original
+qualified world and projection into the worker envelope are distinct
+boundaries; accepting arbitrary unknown fields or deleting qualification would
+hide the defect. The original refusal, independent review and complete receipt
+were separately hash-checked. This lane did not rerun their private episode.
+
+The earlier run-15 file refusal remains dated history. The newer entrances
+record bounded native file-codec evidence, while continuing Library/save/restart,
+actual native determinant effect and receiving, two-person live causal return,
+fresh Nara/Epii, managed installed replay, physical audio and H remain open.
+No diagram arrow or numerical/domain mapping is changed by this consumption;
+the diagram basis retains its exact earlier cut.
 
 ## Exact questions still owned by the programme
 
