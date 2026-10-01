@@ -56,6 +56,7 @@ export function participantContext({ snapshot, field_ref, participant_ref, prepa
     return {
       artifact_ref: entry.ref,
       title: entry.label,
+      source_world_ref: projection?.source?.world_ref ?? entry.world_ref,
       source_ref: projection?.source?.ref ?? null,
       source_revision: projection?.source?.revision ?? null,
       projection_ref: projection?.projection_ref ?? null,
@@ -64,7 +65,7 @@ export function participantContext({ snapshot, field_ref, participant_ref, prepa
     };
   });
   const constituents = entries.filter((entry) => entry.kind !== 'curated-artifact').map((entry) => ({ ref: entry.ref, kind: entry.kind, label: entry.label, summary: entry.summary ?? null }));
-  const relations = (snapshot.relations ?? []).filter((relation) => inField(relation.from) || inField(relation.to)).map((relation) => ({ from: relation.from, to: relation.to, relation: relation.relation }));
+  const relations = (snapshot.relations ?? []).filter((relation) => (!snapshot.relation_fields || snapshot.relation_fields[relation.relation_ref] === field_ref) && inField(relation.from) && inField(relation.to)).map((relation) => ({ from: relation.from, to: relation.to, relation: relation.relation }));
   // Admitted work in this field is part of what it shares: a later
   // participant meets what earlier participants contributed and the owner
   // accepted, with its contributor and basis.
@@ -101,7 +102,7 @@ export function participantContextMarkdown(context) {
   if (!context.undertaking.length) lines.push('- No NOW is projected into this field.');
   lines.push('', '## Shared sources', '');
   for (const source of context.sources) {
-    lines.push(`### ${source.title}`, '', `Source \`${source.source_ref}\` at revision \`${source.source_revision}\` (Projection \`${source.projection_ref}\` r${source.projection_revision}).`, '');
+    lines.push(`### ${source.title}`, '', `Source in World \`${source.source_world_ref}\`: \`${source.source_ref}\` at revision \`${source.source_revision}\` (Projection \`${source.projection_ref}\` r${source.projection_revision}).`, '');
     for (const section of source.sections) lines.push(`#### ${section.title || section.ref}`, '', section.text, '');
   }
   lines.push('## The world around it', '');

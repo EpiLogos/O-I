@@ -27,6 +27,13 @@ export const MAX_LIVE_EMBEDDING_DEPTH = 1;
 
 /** @type {Map<string, {refs: Set<string>}>} */
 const hosts = new Map();
+const releasedListeners = new Set();
+
+/** Placements may retry when an actual live lease is released. */
+export function onLiveEmbeddingReleased(listener) {
+  releasedListeners.add(listener);
+  return () => { releasedListeners.delete(listener); };
+}
 
 const hostState = (host) => {
   const key = typeof host === "string" && host ? host : "window";
@@ -69,6 +76,7 @@ export function admitLive(expressionRef, host) {
     released = true;
     state.refs.delete(expressionRef);
     for (const [key, value] of hosts) if (value === state && value.refs.size === 0) hosts.delete(key);
+    queueMicrotask(() => { for (const listener of releasedListeners) listener(); });
   };
 }
 

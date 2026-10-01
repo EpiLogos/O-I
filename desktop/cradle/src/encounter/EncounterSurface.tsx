@@ -12,8 +12,8 @@ export type {EncounterExpressionReading} from "./session";
  * every owner action live in the shared session store (`session.ts`), keyed by
  * project + agent-session ref, so a centre tab and the accompanying panel
  * showing the same session share one network observer and one draft. */
-export function EncounterSurface({binding,onView,presentation="tab",onExpression,concealed=false}:{binding:SurfaceBinding;onView:(view:NonNullable<SurfaceBinding["view"]>)=>void;presentation?:"tab"|"side"|"full";onExpression?:(reading:EncounterExpressionReading)=>void;concealed?:boolean}) {
- const session=useEncounterSession(binding.project&&binding.ref?{project:binding.project,ref:binding.ref,space:binding.encounter?.space}:undefined);
+export function EncounterSurface({binding,onView,presentation="tab",onExpression,concealed=false,sourceWorldRef}:{binding:SurfaceBinding;onView:(view:NonNullable<SurfaceBinding["view"]>)=>void;presentation?:"tab"|"side"|"full";onExpression?:(reading:EncounterExpressionReading)=>void;concealed?:boolean;sourceWorldRef?:string}) {
+ const session=useEncounterSession(binding.project!==undefined&&binding.ref?{project:binding.project,ref:binding.ref,space:binding.encounter?.space,sourceWorldRef}:undefined);
  const state=session?.state;
  const expression=useRef(onExpression);expression.current=onExpression;
  useEffect(()=>{expression.current?.(expressionReadingOf(state));},[state?.status,state?.reading,state?.pending]);

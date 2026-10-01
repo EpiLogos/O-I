@@ -13,13 +13,14 @@
  * against THIS window's Global Expression Stage and renders the live
  * Expression when admitted, the publication's explicit fallback otherwise.
  */
-import {useEffect,useLayoutEffect,useMemo,useRef,useState,type CSSProperties,type ReactNode} from "react";
+import {useEffect,useLayoutEffect,useMemo,useRef,useState,useId,type CSSProperties,type ReactNode} from "react";
 import {useExpressionStage,type StagePresentation} from "../stage/ExpressionStage";
 import {useVisuals} from "../visuals/ParticleExpression";
 import {expressionConfig} from "../expression/engineProjection";
+import {nativeExport,type StageScene} from "@epilogos/oi-design-system/expressions-engine/shell/nativeBridge.mjs";
 import type {ExpressionDocument} from "../expression/types";
 // @ts-ignore -- the bounded live-embedding law (ES2 anti-recursion).
-import {tryAdmitLive} from "../expression/embedding.mjs";
+import {tryAdmitLive,onLiveEmbeddingReleased} from "../expression/embedding.mjs";
 // @ts-ignore -- the language-neutral shared-field contracts are the executable spec.
 import {resolveExpressionPresentation} from "../../../../shared-field/expression-presentation.mjs";
 // @ts-ignore -- the language-neutral shared-field contracts are the executable spec.
@@ -58,9 +59,25 @@ function Lede({binding}:RendererProps) {
   const title=textProp(binding.props.title,textProp(binding.fallback.title));const body=textProp(binding.props.text,textProp(binding.fallback.text));
   return <header className="world-component world-component--lede" data-component-ref={binding.component_ref}>{title&&<h2>{title}</h2>}{body&&<p>{body}</p>}</header>;
 }
+function PortableProse({html,title}:{html:string;title:string}) {
+  const frame=useRef<HTMLIFrameElement>(null);
+  const [height,setHeight]=useState(240);
+  const observer=useRef<ResizeObserver>();
+  useEffect(()=>()=>observer.current?.disconnect(),[]);
+  const measure=()=>{
+    observer.current?.disconnect();
+    const body=frame.current?.contentDocument?.body;
+    if(!body)return;
+    const resize=()=>setHeight(Math.min(8000,Math.max(120,Math.ceil(body.getBoundingClientRect().height)+24)));
+    observer.current=new ResizeObserver(resize);observer.current.observe(body);resize();
+  };
+  // Only same-origin measurement is allowed. Scripts, forms and popups stay
+  // sandboxed; carried prose acquires no native operation or desktop authority.
+  return <iframe ref={frame} className="world-component__html" title={title||"Projected prose"} sandbox="allow-same-origin" style={{height}} onLoad={measure} srcDoc={`<!doctype html><meta charset="utf-8"><meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'; base-uri 'none'; form-action 'none'"><style>body{margin:0;font:15px/1.6 system-ui,sans-serif;color:#252525;overflow-wrap:anywhere}header{font-size:11px;color:#666;margin:0 0 1em}p,ul,ol{margin:0 0 1em}h1,h2,h3{line-height:1.2}pre{white-space:pre-wrap}a{color:inherit}</style>${html}`}/>;
+}
 function Text({binding}:RendererProps) {
   const title=textProp(binding.props.title,textProp(binding.fallback.title));const body=textProp(binding.props.text,textProp(binding.fallback.text));const html=textProp(binding.props.html);
-  return <article className="world-component world-component--text" data-component-ref={binding.component_ref}>{title&&<h3>{title}</h3>}{html?<iframe className="world-component__html" title={title||"Projected prose"} sandbox="" srcDoc={`<!doctype html><meta charset="utf-8"><style>body{margin:0;font:15px/1.6 system-ui,sans-serif;color:inherit}</style>${html}`}/>:<p>{body||"No portable text representation is available."}</p>}</article>;
+  return <article className="world-component world-component--text" data-component-ref={binding.component_ref}>{title&&<h3>{title}</h3>}{html?<PortableProse html={html} title={title}/>:<p>{body||"No portable text representation is available."}</p>}</article>;
 }
 function Distinction({binding}:RendererProps) {
   const title=textProp(binding.props.title,textProp(binding.fallback.title,"Distinction"));const body=textProp(binding.props.text,textProp(binding.fallback.text));const standing=textProp(binding.props.standing,"Key distinction");
@@ -137,7 +154,7 @@ type EmbeddingReceipt={admitted:boolean;reason?:string};
  * relation"): the same subject/Expression/revision whether the live
  * renderer is admitted or the explicit fallback renders. Renderer pixels
  * are presentation; the refs on the element are the semantic address. */
-function ExpressionBody({binding,presentationRef,hosting}:RendererProps) {
+function ExpressionBody({binding,presentationRef,hosting,onOpenRef}:RendererProps) {
   const stage=useExpressionStage();const {snapshot:visuals}=useVisuals();
   const rendererAdmitted=hosting==="stage"&&visuals.enabled&&!stage.error;
   const resolved=useMemo<Resolved|{state:"malformed";reason:string}>(()=>{
@@ -148,29 +165,49 @@ function ExpressionBody({binding,presentationRef,hosting}:RendererProps) {
     if(resolved.state!=="live")return null;
     try{return validateExpressionComposition(binding.props.composition) as ExpressionDocument;}catch{return null;}
   },[binding,resolved.state]);
+  const authoredScene=composition?.scenes.find(scene=>scene.scene_ref===composition.selection.scene_ref)?.presentation?.scene as (StageScene&{text:Array<{id:string;visible:boolean;x:number;y:number;width:number;size:number;align:"left"|"center"|"right";kicker:string;title:string;italic:string;body:string}>})|undefined;
+  const config=useMemo(()=>composition?(authoredScene?nativeExport(authoredScene).config as unknown as Record<string,unknown>:expressionConfig(composition)):null,[composition,authoredScene]);
+  const latestMaterial=useRef({composition,config});latestMaterial.current={composition,config};
   const [liveError,setLiveError]=useState<string>();
   const [live,setLive]=useState(false);
   /** ES2 anti-recursion receipt: a portal instead of a second engine. */
   const [portal,setPortal]=useState<EmbeddingReceipt>();
   const inline=useRef<HTMLDivElement>(null);const presentation=useRef<HostablePresentation|null>(null);
-  const id=`explore:${presentationRef}:${binding.binding_ref}`;
+  const placement=useRef<HTMLElement>(null);
+  const [visible,setVisible]=useState(false);
+  const [leaseEpoch,setLeaseEpoch]=useState(0);
+  const placementId=useId();
+  const id=`explore:${presentationRef}:${binding.binding_ref}:${placementId}`;
+  useLayoutEffect(()=>{
+    const element=placement.current;if(!element)return;
+    const measure=()=>{const rect=element.getBoundingClientRect();setVisible(rect.width>0&&rect.height>0);};
+    const observer=new ResizeObserver(measure);observer.observe(element);measure();
+    return()=>observer.disconnect();
+  },[resolved.state]);
+  useEffect(()=>onLiveEmbeddingReleased(()=>{if(!presentation.current)setLeaseEpoch(epoch=>epoch+1);}),[]);
   useEffect(()=>{
-    if(resolved.state!=="live")return;
-    if(!composition){setLiveError("The carried composition is not admissible on this client");return;}
+    if(resolved.state!=="live"||!visible)return;
+    const material=latestMaterial.current;
+    if(!material.composition||!material.config){setLiveError("The carried composition is not admissible on this client");return;}
     // One law guards every live placement: same-expression same-host — or a
     // depth beyond the budget — resolves to a portal, never another engine.
     const embedding=tryAdmitLive(expression.expression_ref) as {admitted:boolean;resolution:{mode:string;reason?:string};release?:()=>void};
     if(!embedding.admitted){setPortal({admitted:false,reason:embedding.resolution.reason});return;}
     setPortal(undefined);
     try{
-      const handle=stage.present({id,plane:"overlay",recipe:"",config:expressionConfig(composition),appearance:"host",sceneRef:composition.selection.scene_ref}) as HostablePresentation|null;
+      const handle=stage.present({id,plane:"overlay",recipe:"",config:material.config,appearance:authoredScene?"authored":"host",sceneRef:material.composition.selection.scene_ref}) as HostablePresentation|null;
       if(!handle)throw new Error(stage.error??"The Expression stage is off, occupied by another presentation in this window, or unavailable");
       presentation.current=handle;
       if(typeof handle.setContainer==="function")handle.setContainer(inline.current);
-      setLive(true);setLiveError(undefined);
+      setLive(false);setLiveError(undefined);
+      void handle.ready().then(()=>{if(presentation.current===handle)setLive(true);}).catch(cause=>{if(presentation.current===handle){setLive(false);setLiveError(String(cause));}});
     }catch(cause){setLive(false);setLiveError(String(cause instanceof Error?cause.message:cause));}
     return()=>{embedding.release?.();presentation.current?.release();presentation.current=null;setLive(false);};
-  },[resolved.state,composition,id,stage]);
+  },[resolved.state,id,stage,visible,leaseEpoch]);
+  useEffect(()=>{
+    const handle=presentation.current;
+    if(handle&&composition&&config)handle.updateConfig(config,composition.selection.scene_ref,composition.selection.entity_ref?[composition.selection.entity_ref]:[]);
+  },[composition,config]);
   useLayoutEffect(()=>{const handle=presentation.current;if(handle&&typeof handle.setContainer==="function")handle.setContainer(inline.current);});
   if(resolved.state==="malformed")return <article className="world-component world-component--fallback" role="alert" data-expression-state="malformed"><div className="world-component__eyebrow">Expression unavailable</div><h3>{textProp(binding.fallback.title,"Expression")}</h3><p>{resolved.reason}</p></article>;
   const expression=resolved.expression;
@@ -179,15 +216,26 @@ function ExpressionBody({binding,presentationRef,hosting}:RendererProps) {
   // the depth budget is spent) — a visible portal names the live occurrence
   // instead of instantiating a second engine.
   if(portal&&!portal.admitted){
-    return <section className="world-component world-component--expression world-expression__portal" {...attributes} data-expression-state="portal" data-portal-reason={portal.reason}>
+    return <section ref={placement} className="world-component world-component--expression world-expression__portal" {...attributes} data-expression-state="portal" data-portal-reason={portal.reason}>
       <div className="world-component__eyebrow">Live elsewhere on this surface</div>
       <h3>{textProp(binding.fallback.title,expression.expression_ref)}</h3>
       <p>{portal.reason}. This placement stays a portal to the one live Expression <code>{expression.expression_ref}</code> · revision {expression.expression_revision} — this host never runs a second copy of it.</p>
     </section>;
   }
   if(resolved.state==="live"&&!liveError){
-    return <section className="world-component world-component--expression" {...attributes} data-expression-state="live" data-expression-hosting={typeof presentation.current?.setContainer==="function"?"element":"window-stage"}>
-      <div ref={inline} className="world-expression__live" aria-label={`Live Expression ${expression.expression_ref}`}>{!live&&<p role="status">Presenting on the stage…</p>}{live&&typeof presentation.current?.setContainer!=="function"&&<p className="world-expression__note">Live on this window's Expression stage · {expression.expression_ref} r{expression.expression_revision}</p>}</div>
+    return <section ref={placement} className="world-component world-component--expression" {...attributes} data-expression-state="live" data-expression-hosting={typeof presentation.current?.setContainer==="function"?"element":"window-stage"}>
+      <div ref={inline} className="world-expression__live" aria-label={`Live Expression ${expression.expression_ref}`} data-rendered={live} onClick={event=>{
+        const hit=presentation.current?.hitTest(event.clientX,event.clientY);
+        if(hit?.kind==="entity"){
+          const entity=composition?.entities[hit.entity_ref];
+          if(entity?.subject)onOpenRef?.(entity.subject.subject_ref);
+        }
+      }}>
+        {!live&&<p role="status">Presenting on the stage…</p>}
+        {authoredScene?.text.filter(layer=>layer.visible).map(layer=><article key={layer.id} className="world-expression__inscription" data-material-text-ref={layer.id} style={{left:`${layer.x*100}%`,top:`${layer.y*100}%`,width:`min(${layer.width}px, 85%)`,fontSize:layer.size,textAlign:layer.align}}>
+          {layer.kicker&&<small>{layer.kicker}</small>}{layer.title&&<strong>{layer.title}</strong>}{layer.italic&&<em>{layer.italic}</em>}{layer.body&&<p>{layer.body}</p>}
+        </article>)}
+      </div>
       <footer className="world-expression__meta"><span>live · {expression.live_renderer_ref}</span><span>{expression.expression_ref} · revision {expression.expression_revision}</span></footer>
     </section>;
   }
@@ -239,8 +287,9 @@ export function presentationThemeStyle(presentation:WorldPresentation):CSSProper
 }
 
 export function WorldPresentationView({presentation,onOpenRef,hosting="stage"}:{presentation:WorldPresentation;onOpenRef?:(ref:string)=>void;hosting?:ExpressionHosting}) {
-  return <article className="world-presentation" data-presentation-ref={presentation.presentation_ref} data-presentation-revision={presentation.revision} data-world-ref={presentation.world_ref} style={presentationThemeStyle(presentation)}>
-    <header className="world-presentation__masthead"><div><div className="world-component__eyebrow">Projected world</div><h1>{presentation.title}</h1></div><div className="world-presentation__revision">presentation {presentation.revision}</div>{presentation.summary&&<p>{presentation.summary}</p>}</header>
+  const expressionBody=presentation.regions.some(region=>region.bindings.some(binding=>(binding.portable_renderer??binding.component_ref)==="oi.presentation/expression/v1"));
+  return <article className={`world-presentation${expressionBody?" world-presentation--expression":""}`} data-presentation-ref={presentation.presentation_ref} data-presentation-revision={presentation.revision} data-world-ref={presentation.world_ref} style={presentationThemeStyle(presentation)}>
+    <header className="world-presentation__masthead"><div><div className="world-component__eyebrow">{expressionBody?"Expression":"Projected world"}</div><h1>{presentation.title}</h1></div><div className="world-presentation__revision">presentation {presentation.revision}</div>{presentation.summary&&<p>{presentation.summary}</p>}</header>
     {presentation.regions.map(region=><section key={region.region_ref} className="world-region" data-region-ref={region.region_ref} data-region-role={region.role}>
       {region.label&&<div className="world-region__label">{region.label}</div>}
       <div className="world-region__components">{region.bindings.map(binding=>{const key=binding.portable_renderer??binding.component_ref;const Renderer=portablePresentationRenderers[key]??Fallback;return <div key={binding.binding_ref} className="world-binding" data-binding-ref={binding.binding_ref} data-component-ref={binding.component_ref} data-renderer-key={key} data-renderer-available={Boolean(portablePresentationRenderers[key])}><Renderer binding={binding} presentationRef={presentation.presentation_ref} onOpenRef={onOpenRef} hosting={hosting}/></div>;})}</div>

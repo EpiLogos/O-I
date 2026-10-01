@@ -923,7 +923,7 @@ export function projectCentralWikiWorld(input) {
     projection_revision: projectionRevision,
     state: 'published',
     subject: { kind: 'central-world', ref: worldRef },
-    source: { system: 'central', ref: subjectReading.source.ref, revision: sourceRevision },
+    source: { system: 'central', world_ref: worldRef, ref: subjectReading.source.ref, revision: sourceRevision },
     publisher_participant_ref: selection.publisher.participant_ref,
     published_at: publishedAt,
     audience: clone(selection.audience),

@@ -222,6 +222,7 @@ export type KernelOp =
   | {op: "native_expression"; request: NativeExpressionRequest}
   | {op: "setup"; request: import("../configuration/adoptionController").AdoptionRequest}
   | {op:"being_encounter";request:Record<string,unknown>}
+  | {op:"hosted_native";source_world_ref:string;request:KernelOp}
   | {op:"expression";request:import("../expression/types").ExpressionRequest}
   | {op:"expression_recovery";request:import("../expressions/recoveryTypes").ExpressionRecoveryRequest}
   | {op:"graph";project?:string;query:string;options?:import("../knowledge/graph").GraphReadOptions}

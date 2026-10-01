@@ -12,7 +12,7 @@
 
 import { activityReading } from '../../../../shared-field/activity-liveness.mjs';
 
-export const CONSTITUENT_KINDS = new Set(['world-position', 'workcell', 'practice', 'activity']);
+export const CONSTITUENT_KINDS = new Set(['world-position', 'workcell', 'practice', 'activity', 'participant', 'agent-session']);
 
 const text = (value) => (typeof value === 'string' && value ? value : undefined);
 const record = (value) => (value && typeof value === 'object' && !Array.isArray(value) ? value : {});
@@ -42,6 +42,28 @@ export function constituentReading(entry, relations = [], entryList = [], live =
   const group = (title, items, note = (item) => item.summary) => {
     if (items.length) groups.push({ title, items: items.map((item) => ({ ref: item.ref, label: item.label, kind: item.kind, ...(note(item) ? { note: note(item) } : {}) })) });
   };
+
+  if (entry.kind === 'participant') {
+    fact('Identity', text(meta.identity_ref));
+    fact('Definition', text(meta.profile_ref));
+    fact('Definition revision', text(meta.profile_revision));
+    fact('Purpose', text(entry.summary));
+    fact('Repertoire', Array.isArray(meta.repertoire) && meta.repertoire.length ? meta.repertoire.join(', ') : 'no practices disclosed');
+    group('Native sessions', related(entry, relations, entries, 'oi.agent/session', 'out'));
+    group('Takes part in', related(entry, relations, entries, 'oi.activity/participant', 'in'));
+    return { role: 'being', kind: entry.kind, ref: entry.ref, title: entry.label, facts, groups, world_ref: entry.world_ref, standing: 'Participant · Being' };
+  }
+  if (entry.kind === 'agent-session') {
+    fact('Native session', text(meta.agent_session));
+    fact('Agent', text(meta.agent_ref));
+    fact('Kind', text(meta.session_kind));
+    fact('Retained observation', text(meta.owner_state));
+    fact('Source revision', text(meta.source_revision));
+    group('Agent', related(entry, relations, entries, 'oi.agent/session', 'in'));
+    group('Returned material', related(entry, relations, entries, 'oi.activity/works-on', 'out'));
+    return { role: 'thing', kind: entry.kind, ref: entry.ref, title: entry.label, facts, groups, world_ref: entry.world_ref, standing: 'Native session · retained observation',
+      ...(typeof meta.project === 'string' && text(meta.agent_session) ? {session:{ref:meta.agent_session,project:meta.project,sourceWorldRef:text(meta.source_world_ref) ?? entry.world_ref}} : {}) };
+  }
 
   if (entry.kind === 'world-position') {
     const occupancy = record(meta.occupancy);

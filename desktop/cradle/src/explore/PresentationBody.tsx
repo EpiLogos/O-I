@@ -51,10 +51,11 @@ export function PresentationBody({reading,relations,entries=[],activityLiveness=
   // one step away, never a stand-in for it.
   const constituent=constituentOf(reading.entry,[...relations,...reading.relations],entries.length?entries:[reading.entry],activityLiveness);
   const worldLabel=entries.find(entry=>entry.ref===reading.entry.world_ref)?.label;
-  const primary=constituent?<ConstituentEncounter reading={constituent} worldLabel={worldLabel} onOpenRef={onOpenRef}/>:<>
+  const primary=<>
+    {constituent&&<ConstituentEncounter reading={constituent} worldLabel={worldLabel} onOpenRef={onOpenRef}/>}
     {!projection&&<article className="world-presentation world-presentation--fallback" data-renderer-state="no-projection"><header className="world-presentation__masthead"><div><div className="world-component__eyebrow">Projected subject</div><h1>{reading.entry.label}</h1></div></header><section className="world-region"><div className="world-region__components"><article className="world-component world-component--text"><p>{reading.entry.summary??"No published Projection names this entry or its world yet."}</p></article></div></section></article>}
     {projection&&projection.state!=="published"&&<article className="world-presentation world-presentation--fallback" data-renderer-state="withdrawn"><header className="world-presentation__masthead"><div><div className="world-component__eyebrow">Projection withdrawn</div><h1>{reading.entry.label}</h1></div></header><section className="world-region"><div className="world-region__components"><article className="world-component world-component--text"><p>This shared presentation is no longer available.</p></article></div></section></article>}
-    {current&&presentation&&<WorldPresentationView presentation={presentation} onOpenRef={onOpenRef}/>}
+    {current&&presentation&&(!constituent||expressionReading)&&<WorldPresentationView presentation={presentation} onOpenRef={onOpenRef}/>}
     {current&&!presentation&&representation?.kind==="oi.sparse-representation/v1"&&<SparseBody projection={current}/>}
     {current&&!presentation&&representation?.kind!=="oi.sparse-representation/v1"&&<RepresentationFallback projection={current}/>}
   </>;

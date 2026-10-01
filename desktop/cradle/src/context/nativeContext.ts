@@ -22,12 +22,13 @@ export function assertPreparedContext(value:unknown,session?:string):asserts val
   if(s.anchor.kind!=="text"&&s.anchor.kind!=="observation")throw new Error("Unknown native selection anchor");
  }
 }
-export async function nativeContext(transport:KernelTransportStatus,project:string,session:string|undefined,request:ContextOperation={operation:"read"}):Promise<PreparedContext>{
- const response=await kernelOp(transport,{op:"encounter",project,request:{action:"context",agent_session:session,request}});
+export async function nativeContext(transport:KernelTransportStatus,project:string,session:string|undefined,request:ContextOperation={operation:"read"},sourceWorldRef?:string):Promise<PreparedContext>{
+ const op={op:"encounter" as const,project,request:{action:"context" as const,agent_session:session,request}};
+ const response=await kernelOp(transport,sourceWorldRef?{op:"hosted_native",source_world_ref:sourceWorldRef,request:op}:op);
  if(response.error||response.outcome?.result!=="encounter_reading")throw new Error(response.error??"The native prepared-context operation is unavailable");
  const data=response.outcome.data;assertPreparedContext(data,session);return data;
 }
-export function announceContext(project:string,value:PreparedContext){window.dispatchEvent(new CustomEvent(PREPARED_CONTEXT_CHANGED,{detail:{project,value}}));}
+export function announceContext(project:string,value:PreparedContext,sourceWorldRef?:string){window.dispatchEvent(new CustomEvent(PREPARED_CONTEXT_CHANGED,{detail:{project,value,sourceWorldRef}}));}
 export function contextExpectation(value:PreparedContext):ContextExpectation{return {scope:value.scope,revision:value.revision,digest:value.digest,reviewed:value.items.map(item=>item.id)};}
 
 // One validator for the current host's exact source/observation view. It
@@ -36,11 +37,11 @@ export function contextExpectation(value:PreparedContext):ContextExpectation{ret
 type Validator=(item:PreparedItem)=>Promise<void>;
 let validator:Validator|undefined;
 const snapshotApprovals=new Set<string>();
-const approvalKey=(context:PreparedContext,item:PreparedItem)=>JSON.stringify([context.scope,context.revision,context.digest,item.id]);
+const approvalKey=(context:PreparedContext,item:PreparedItem,sourceWorldRef?:string)=>JSON.stringify([sourceWorldRef??null,context.scope,context.revision,context.digest,item.id]);
 export function registerSelectionValidator(next:Validator){validator=next;return()=>{if(validator===next)validator=undefined;};}
-export function approveCapturedSnapshot(context:PreparedContext,item:PreparedItem){if(snapshotApprovals.size>=64)snapshotApprovals.clear();snapshotApprovals.add(approvalKey(context,item));}
-export async function validatePreparedItem(item:PreparedItem,context?:PreparedContext){if(context&&snapshotApprovals.has(approvalKey(context,item)))return;if(!validator)throw new Error("Open the source or explicitly review its captured snapshot in Context before sending");await validator(item);}
-export async function reviewedContext(transport:KernelTransportStatus,project:string,session:string):Promise<ContextExpectation>{
- const value=await nativeContext(transport,project,session);for(const item of value.items)await validatePreparedItem(item,value);return contextExpectation(value);
+export function approveCapturedSnapshot(context:PreparedContext,item:PreparedItem,sourceWorldRef?:string){if(snapshotApprovals.size>=64)snapshotApprovals.clear();snapshotApprovals.add(approvalKey(context,item,sourceWorldRef));}
+export async function validatePreparedItem(item:PreparedItem,context?:PreparedContext,sourceWorldRef?:string){if(context&&snapshotApprovals.has(approvalKey(context,item,sourceWorldRef)))return;if(sourceWorldRef)throw new Error("Review this captured snapshot in its source World before sending");if(!validator)throw new Error("Open the source or explicitly review its captured snapshot in Context before sending");await validator(item);}
+export async function reviewedContext(transport:KernelTransportStatus,project:string,session:string,sourceWorldRef?:string):Promise<ContextExpectation>{
+ const value=await nativeContext(transport,project,session,{operation:"read"},sourceWorldRef);for(const item of value.items)await validatePreparedItem(item,value,sourceWorldRef);return contextExpectation(value);
 }
-export function clearSnapshotApprovals(){snapshotApprovals.clear();}
+export function clearSnapshotApprovals(sourceWorldRef?:string){for(const key of snapshotApprovals)if(JSON.parse(key)[0]===(sourceWorldRef??null))snapshotApprovals.delete(key);}

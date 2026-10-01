@@ -49,6 +49,7 @@ import { createWorldPresentationProjection } from './presentation-projection.mjs
 import { projectionStorageKey } from './spacetimedb.mjs';
 import { EXPRESSION_PRESENTATION_RENDERER, EXPRESSION_PRESENTATION_SCHEMA, validateExpressionPresentation } from './expression-presentation.mjs';
 import { publicationSentinelLeaks } from './central-wiki-projection.mjs';
+import {admitSceneMaterial} from './expression-material.mjs';
 
 export const EXPRESSION_PUBLICATION_SCHEMA = 'oi.expression-publication/v1';
 export const EXPRESSION_COMPOSITION_SCHEMA = 'oi.expression-composition/v1';
@@ -114,6 +115,7 @@ export function filterExpressionComposition(document, selection = {}) {
   record(document.selection, 'expression document.selection');
   record(selection, 'expression selection');
   const discloseSources = selection.disclose_sources ?? 'available';
+  if (selection.include_scene_material !== undefined && typeof selection.include_scene_material !== 'boolean') throw new TypeError('selection.include_scene_material must be boolean');
   if (!['available', 'none'].includes(discloseSources)) throw new TypeError('selection.disclose_sources must be "available" or "none"');
   const includeSourceRefs = new Set(Array.isArray(selection.include_source_refs) ? selection.include_source_refs.map((ref, index) => text(ref, `selection.include_source_refs[${index}]`)) : []);
   const allSceneRefs = document.scenes.map((scene, index) => text(record(scene, `expression document.scenes[${index}]`).scene_ref, `expression document.scenes[${index}].scene_ref`));
@@ -134,6 +136,7 @@ export function filterExpressionComposition(document, selection = {}) {
     representations: [],
     sources: { withheld: [], protected: [], unavailable: [] },
     provenance: [],
+    material: [],
   };
   const sourceDecision = (reading, owner) => {
     if (reading.availability !== 'available') { (reading.availability === 'withheld' ? omissions.sources.withheld : omissions.sources.unavailable).push({ ref: reading.ref, availability: reading.availability, subject: owner }); return false; }
@@ -148,7 +151,13 @@ export function filterExpressionComposition(document, selection = {}) {
     if (!selectedSceneRefs.includes(scene.scene_ref)) { omissions.scenes.push({ scene_ref: scene.scene_ref, title: String(scene.title ?? '') }); continue; }
     if (!Array.isArray(scene.entity_refs)) throw new TypeError(`scene ${scene.scene_ref}.entity_refs must be an array`);
     for (const ref of scene.entity_refs) keptEntityRefs.add(text(ref, `scene ${scene.scene_ref}.entity_refs[]`));
-    scenes.push({ scene_ref: scene.scene_ref, revision: revisionNumber(scene.revision, `scene ${scene.scene_ref}.revision`), title: text(scene.title, `scene ${scene.scene_ref}.title`), entity_refs: [...scene.entity_refs] });
+    const carried = { scene_ref: scene.scene_ref, revision: revisionNumber(scene.revision, `scene ${scene.scene_ref}.revision`), title: text(scene.title, `scene ${scene.scene_ref}.title`), entity_refs: [...scene.entity_refs] };
+    if (scene.presentation && selection.include_scene_material === true) {
+      const material = admitSceneMaterial(scene.presentation, scene.scene_ref, scene.entity_refs);
+      carried.presentation = material.presentation;
+      omissions.material.push(...material.omissions.map(path => ({scene_ref: scene.scene_ref, path})));
+    } else if (scene.presentation) omissions.material.push({scene_ref: scene.scene_ref, path: 'presentation'});
+    scenes.push(carried);
   }
   if (keptEntityRefs.size > LIMITS.entities) throw new TypeError(`composition exceeds ${LIMITS.entities} entities`);
 
@@ -255,7 +264,9 @@ export function validateExpressionComposition(value) {
     record(scene, `scene[${index}]`);
     if (!Array.isArray(scene.entity_refs)) throw new TypeError(`scene[${index}].entity_refs must be an array`);
     for (const ref of scene.entity_refs) if (!entities[ref]) throw new TypeError(`scene[${index}] composes an unknown entity: ${ref}`);
-    return { scene_ref: text(scene.scene_ref, `scene[${index}].scene_ref`), revision: revisionNumber(scene.revision, `scene[${index}].revision`), title: text(scene.title, `scene[${index}].title`), entity_refs: [...scene.entity_refs] };
+    const carried = { scene_ref: text(scene.scene_ref, `scene[${index}].scene_ref`), revision: revisionNumber(scene.revision, `scene[${index}].revision`), title: text(scene.title, `scene[${index}].title`), entity_refs: [...scene.entity_refs] };
+    if (scene.presentation) carried.presentation = admitSceneMaterial(scene.presentation, carried.scene_ref, carried.entity_refs, {strict: true}).presentation;
+    return carried;
   });
   const selection = record(value.selection, 'expression composition.selection');
   if (!scenes.some((scene) => scene.scene_ref === selection.scene_ref)) throw new TypeError('expression composition.selection.scene_ref must name a carried scene');
@@ -291,16 +302,21 @@ export function escapeHtml(value) {
 export function frozenExpressionHtml(compositionValue) {
   const composition = validateExpressionComposition(compositionValue);
   const scenes = composition.scenes.map((scene) => {
+    const material = scene.presentation?.scene;
     const glyphs = scene.entity_refs.map((ref) => {
       const entity = composition.entities[ref];
-      const at = (name, fallback) => entity.parameters[name]?.value ?? fallback;
-      const scale = Number(at('scale', 1));
-      const left = 50 + Number(at('x', 0)) * 10;
-      const top = 50 - Number(at('y', 0)) * 10;
+      const body = material?.entities.find((held) => held.id === ref);
+      // The admitted native material is the renderable body. Scalar parameters
+      // belong to the legacy representation and cannot reinterpret that body.
+      const at = (name, fallback) => body ? fallback : entity.parameters[name]?.value ?? fallback;
+      const scale = Number(at('scale', body?.size?.y ?? 1));
+      const left = 50 + Number(at('x', body?.position?.x ?? 0)) * 22;
+      const top = 50 - Number(at('y', body?.position?.y ?? 0)) * 30;
       const subject = entity.subject ? ` data-subject-ref="${escapeHtml(entity.subject.subject_ref)}" data-presentation-role="${escapeHtml(entity.subject.presentation_role)}"` : '';
-      return `<span class="entity" data-entity-ref="${escapeHtml(ref)}"${subject} style="left:${left.toFixed(2)}%;top:${top.toFixed(2)}%;font-size:${(Math.max(0.2, Math.min(4, scale)) * 3).toFixed(2)}rem;opacity:${Math.max(0.15, Math.min(1, Number(at('share', 1)))).toFixed(2)}" title="${escapeHtml(entity.title)}">${escapeHtml(String(at('glyph', 'O')))}</span>`;
+      return `<span class="entity" data-entity-ref="${escapeHtml(ref)}"${subject} style="left:${left.toFixed(2)}%;top:${top.toFixed(2)}%;font-size:${(Math.max(0.2, Math.min(4, scale)) * 3).toFixed(2)}rem;opacity:${Math.max(0, Math.min(1, Number(at('share', body?.share ?? 1)))).toFixed(2)}" title="${escapeHtml(entity.title)}">${escapeHtml(String(at('glyph', body?.text ?? 'O')))}</span>`;
     }).join('');
-    return `<section class="scene" data-scene-ref="${escapeHtml(scene.scene_ref)}" aria-label="${escapeHtml(scene.title)}"><h2>${escapeHtml(scene.title)}</h2><div class="field">${glyphs}</div></section>`;
+    const inscriptions = (material?.text ?? []).filter((layer) => layer.visible !== false).map((layer) => `<p data-inscription-ref="${escapeHtml(layer.id)}">${[layer.kicker, layer.title, layer.italic, layer.body].filter(Boolean).map(escapeHtml).join(' · ')}</p>`).join('');
+    return `<section class="scene" data-scene-ref="${escapeHtml(scene.scene_ref)}" aria-label="${escapeHtml(scene.title)}"><h2>${escapeHtml(scene.title)}</h2><div class="field">${glyphs}</div>${inscriptions}</section>`;
   }).join('');
   return `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'"><title>${escapeHtml(composition.title)}</title><style>html,body{margin:0;background:#0e0f12;color:#e6e2d8;font-family:ui-sans-serif,system-ui,sans-serif}main{padding:1rem}h1{font-weight:500;font-size:1rem;margin:0 0 .25rem}p{margin:0 0 1rem;font-size:.75rem;color:#8f8a80}.scene{margin-bottom:1rem}.scene h2{font-size:.72rem;text-transform:uppercase;letter-spacing:.1em;font-weight:500;color:#8f8a80;margin:0 0 .5rem}.field{position:relative;aspect-ratio:16/9;border:1px solid #2a2c33;border-radius:12px;overflow:hidden;background:radial-gradient(circle at 50% 50%,#191b21,#0e0f12)}.entity{position:absolute;transform:translate(-50%,-50%);line-height:1;color:#d8b25a;text-shadow:0 0 18px rgba(216,178,90,.35)}</style></head><body><main data-expression-ref="${escapeHtml(composition.expression_ref)}" data-expression-revision="${composition.revision}"><h1>${escapeHtml(composition.title)}</h1><p>Frozen reading of ${escapeHtml(composition.expression_ref)} at revision ${composition.revision}. The live Expression renders where the renderer is admitted.</p>${scenes}</main></body></html>`;
 }
@@ -404,7 +420,6 @@ export function projectExpression(input) {
     ...(summary ? { summary } : {}),
     theme: { tokens: {} },
     regions: [
-      { region_ref: 'lede', role: 'lede', bindings: [{ schema: 'oi.presentation-binding/v1', binding_ref: 'lede', component_ref: 'oi.presentation/lede/v1', portable_renderer: 'oi.presentation/lede/v1', subject_ref: composition.expression_ref, props: { title, ...(summary ? { text: summary } : {}) }, fallback: { title }, provenance }] },
       { region_ref: 'body', role: 'body', bindings: [bodyBinding] },
       ...(subjectBindings.length ? [{ region_ref: 'subjects', role: 'relation', label: `Bound subjects · ${subjectBindings.length}`, bindings: subjectBindings }] : []),
     ],
@@ -417,7 +432,7 @@ export function projectExpression(input) {
       projection_revision: projectionRevision,
       state: 'published',
       subject: { kind: 'expression', ref: composition.expression_ref },
-      source: { system: 'o-i', ref: composition.expression_ref, revision: sourceRevision },
+      source: { system: 'o-i', world_ref: worldRef, ref: composition.expression_ref, revision: sourceRevision },
       publisher_participant_ref: publisherRef,
       published_at: publishedAt,
       audience,

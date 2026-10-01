@@ -40,8 +40,8 @@ import {ACTIVE_PHASES,type AddressedFields,type DeliveryHistoryEntry,type Dispat
 /** Baked by vite.config.ts: true under `vite serve` and `WALK=1` bundles only. */
 declare const __CRADLE_WALK__: boolean;
 
-export interface EncounterSessionBinding {project:string;ref:string;space?:string}
-export const encounterSessionKey=(binding:{project:string;ref:string})=>`${binding.project}:${binding.ref}`;
+export interface EncounterSessionBinding {project:string;ref:string;space?:string;sourceWorldRef?:string}
+export const encounterSessionKey=(binding:{project:string;ref:string;sourceWorldRef?:string})=>binding.sourceWorldRef?JSON.stringify([binding.sourceWorldRef,binding.project,binding.ref]):`${binding.project}:${binding.ref}`;
 
 export interface EncounterA2aState {seed?:string;busy:boolean;difference?:A2aDifference;error?:string}
 export interface EncounterServiceState {running:boolean;pid?:number;detail?:string}
@@ -49,7 +49,7 @@ export interface EncounterServiceState {running:boolean;pid?:number;detail?:stri
 /** The shared observation of one session. Every field is the owner's answer or
  * the ephemeral input buffer; nothing is derived into a claim of its own. */
 export interface EncounterSessionState {
- key:string;project:string;agentSession:string;space?:string;
+ key:string;project:string;agentSession:string;space?:string;sourceWorldRef?:string;
  reading?:EncounterReading;status?:EncounterStatus;
  /** The owner's connections with their launch facts (A1: the harness is
   *  named from protocol + command, never the label). */
@@ -141,7 +141,7 @@ class EncounterSession implements EncounterSessionActions {
  private failures=0;private lastSeenAt=0;
 
  constructor(private transport:KernelTransportStatus,binding:EncounterSessionBinding) {
-  this.state={key:encounterSessionKey(binding),project:binding.project,agentSession:binding.ref,space:binding.space,providers:[],model:{phase:"unread"},mode:{phase:"unread"},draft:"",pending:false,busy:false,draftFailed:false,dispatch:{kind:"idle"},deliveries:[],a2a:{busy:false}};
+  this.state={key:encounterSessionKey(binding),project:binding.project,agentSession:binding.ref,space:binding.space,sourceWorldRef:binding.sourceWorldRef,providers:[],model:{phase:"unread"},mode:{phase:"unread"},draft:"",pending:false,busy:false,draftFailed:false,dispatch:{kind:"idle"},deliveries:[],a2a:{busy:false}};
   this.models=new NativeModelController(binding.ref,request=>this.call(request),model=>this.set({model}));
   this.modes=new NativeModeController(binding.ref,request=>this.call(request),mode=>{this.set({mode});this.rememberModes(mode);});
  }
@@ -167,7 +167,7 @@ class EncounterSession implements EncounterSessionActions {
  retain(){this.subscribers++;clearTimeout(this.stopTimer);if(!this.observing)this.start();}
  release(){this.subscribers=Math.max(0,this.subscribers-1);if(this.subscribers>0)return;clearTimeout(this.stopTimer);this.stopTimer=setTimeout(()=>{if(this.subscribers===0)this.stop();},0);}
 
- private call<T,>(request:EncounterRequest){return encounter<T>(this.transport,this.state.project,request);}
+ private call<T,>(request:EncounterRequest){return encounter<T>(this.transport,this.state.project,request,this.state.sourceWorldRef);}
  private read(){return this.call<EncounterReading>({action:"view",agent_session:this.state.agentSession,before:this.state.before});}
  allowed=(name:string)=>this.state.reading?.actions?.some(action=>action.ref===`aikit.encounter.${name}`&&action.enabled===true)===true;
 
@@ -185,7 +185,7 @@ class EncounterSession implements EncounterSessionActions {
   // observing run through the owner's own `encounter-task-read`; null is
   // honest absence. The last observed task stays visible while a later run
   // re-reads it, and is dropped only when that read is refused.
-  taskRead(this.transport,this.state.project,this.state.agentSession).then(value=>{if(run===this.run)this.set({task:value});}).catch(()=>{if(run===this.run)this.set({task:undefined});});
+  taskRead(this.transport,this.state.project,this.state.agentSession,this.state.sourceWorldRef).then(value=>{if(run===this.run)this.set({task:value});}).catch(()=>{if(run===this.run)this.set({task:undefined});});
   void this.probe();
  }
  private stop() {
@@ -249,10 +249,10 @@ class EncounterSession implements EncounterSessionActions {
   this.sending=true;const submitted=this.input;const basis=this.canonical.revision;this.begin();this.set({error:undefined,send:undefined});
   try{
    const supportsContext=this.state.reading?.actions?.some(action=>action.ref==="aikit.encounter.context"&&action.enabled);
-   const context=supportsContext?await reviewedContext(this.transport,this.state.project,this.state.agentSession):undefined;
+   const context=supportsContext?await reviewedContext(this.transport,this.state.project,this.state.agentSession,this.state.sourceWorldRef):undefined;
    const response=await this.call<{draft:Draft}>(context?{action:"prompt-context",agent_session:this.state.agentSession,draft_revision:this.canonical.revision,context}:{action:"prompt",agent_session:this.state.agentSession,draft_revision:this.canonical.revision});
-   clearSnapshotApprovals();
-   if(context)void nativeContext(this.transport,this.state.project,this.state.agentSession).then(value=>announceContext(this.state.project,value)).catch(()=>{});
+   clearSnapshotApprovals(this.state.sourceWorldRef);
+   if(context)void nativeContext(this.transport,this.state.project,this.state.agentSession,{operation:"read"},this.state.sourceWorldRef).then(value=>announceContext(this.state.project,value,this.state.sourceWorldRef)).catch(()=>{});
    this.canonical=response.draft;
    if(this.input===submitted){this.input=response.draft.text;this.set({draft:response.draft.text});}else{this.dirty=true;}
    this.set({status:await this.call<EncounterStatus>({action:"status",agent_session:this.state.agentSession})});
@@ -508,8 +508,8 @@ const noSnapshot=()=>undefined;
  * loop runs while at least one caller is mounted. */
 export function useEncounterSession(binding:EncounterSessionBinding|undefined):EncounterSessionHandle|undefined {
  const kernel=useKernel();
- const project=binding?.project,ref=binding?.ref,space=binding?.space;
- const session=useMemo(()=>project!==undefined&&ref?acquire(kernel.transport,{project,ref,space}):undefined,[kernel.transport,project,ref]);
+ const project=binding?.project,ref=binding?.ref,space=binding?.space,sourceWorldRef=binding?.sourceWorldRef;
+ const session=useMemo(()=>project!==undefined&&ref?acquire(kernel.transport,{project,ref,space,sourceWorldRef}):undefined,[kernel.transport,sourceWorldRef,project,ref]);
  useEffect(()=>{if(session&&space)session.bind(kernel.transport,space);},[session,space,kernel.transport]);
  useEffect(()=>{if(!session)return;session.retain();return()=>session.release();},[session]);
  const state=useSyncExternalStore<EncounterSessionState|undefined>(session?session.subscribe:noSubscription,session?session.snapshot:noSnapshot);

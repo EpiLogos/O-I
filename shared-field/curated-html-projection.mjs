@@ -47,7 +47,7 @@ export function escapeHtml(value) {
   return String(value).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
 }
 
-const ALLOWED_TAGS = new Set(['p', 'br', 'em', 'strong', 'i', 'b', 'u', 's', 'a', 'ul', 'ol', 'li', 'blockquote', 'code', 'pre', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'hr', 'span', 'mark', 'sup', 'sub']);
+const ALLOWED_TAGS = new Set(['article', 'section', 'header', 'p', 'br', 'em', 'strong', 'i', 'b', 'u', 's', 'a', 'ul', 'ol', 'li', 'blockquote', 'code', 'pre', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'hr', 'span', 'mark', 'sup', 'sub']);
 const DROPPED_WITH_CONTENT = new Set(['script', 'style', 'iframe', 'object', 'embed', 'template', 'noscript', 'svg', 'math', 'form', 'input', 'button', 'textarea', 'select', 'link', 'meta', 'base', 'head', 'title']);
 
 /**
@@ -148,17 +148,85 @@ export function curatedArtifactFromFlowInstance(html, source) {
 }
 
 /** Read a Central document (`central.document-reading/v1`): fields become
- * entries of kind `field`, entries stay entries; contributions and operations
- * are withheld. */
-export function curatedArtifactFromCentralDocument(reading) {
+ * entries of kind `field`, entries stay entries. Selected contribution bodies use the exact native
+ * export; unselected bodies and the operation journal remain withheld. */
+/** Take the exact owner's rendered fragments. The retained JSON in the export
+ * is private carrier state, never publication material. Parsing only these
+ * bounded fragments avoids inventing a second contribution compositor. */
+function nativeDocumentBodies(reading, exported) {
+  record(exported, 'native document export');
+  if (exported.schema !== 'central.document-export/v1'
+      || exported.snapshot?.source_ref !== reading.source?.ref
+      || exported.snapshot?.revision?.revision !== reading.revision?.revision
+      || exported.snapshot?.document?.document_id !== reading.document?.document_id) {
+    throw new TypeError('Native export must have the same document, source and revision basis as its reading');
+  }
+  const html = text(exported.html, 'native export.html');
+  if (Buffer.byteLength(html, 'utf8') > 4 * 1024 * 1024) throw new TypeError('Native export exceeds the bounded publication size');
+  const expected = new Map();
+  for (const entry of reading.document.entries ?? []) expected.set('entry:' + escapeHtml(entry.id), 'entry:' + entry.id);
+  for (const field of reading.document.fields ?? []) expected.set('field:' + escapeHtml(field.id), 'field:' + field.id);
+  const bodies = new Map();
+  let index = 0, active;
+  while (index < html.length) {
+    const open = html.indexOf('<', index);
+    if (open < 0) break;
+    if (html.startsWith('<!--', open)) {
+      const end = html.indexOf('-->', open + 4);
+      if (end < 0) throw new TypeError('Unclosed comment in native document export');
+      index = end + 3; continue;
+    }
+    let quote, close = open + 1;
+    for (; close < html.length; close += 1) {
+      const char = html[close];
+      if (quote) { if (char === quote) quote = undefined; }
+      else if (char === '"' || char === "'") quote = char;
+      else if (char === '>') break;
+    }
+    if (close === html.length) throw new TypeError('Unclosed tag in native document export');
+    const tag = html.slice(open + 1, close);
+    const match = /^\s*(\/?)\s*([a-zA-Z][a-zA-Z0-9]*)/.exec(tag);
+    index = close + 1;
+    if (!match) continue;
+    const closing = match[1] === '/', name = match[2].toLowerCase();
+    if (!closing && (name === 'script' || name === 'style')) {
+      if (active) throw new TypeError('Executable carrier state inside a native publication body');
+      const end = new RegExp('</' + name + '\\s*>', 'i').exec(html.slice(index));
+      if (!end) throw new TypeError('Unclosed raw carrier state in native document export');
+      index += end.index + end[0].length; continue;
+    }
+    const attribute = !closing && /\sdata-(entry|field)-id="([^"]*)"/.exec(tag);
+    if (attribute) {
+      const key = expected.get(attribute[1] + ':' + attribute[2]);
+      if (!key || active || bodies.has(key)) throw new TypeError('Unknown, nested or duplicate native publication body');
+      active = { key, name, start: index, depth: 1 };
+      continue;
+    }
+    if (active && name === active.name) {
+      if (closing) active.depth -= 1;
+      else if (!/\/\s*$/.test(tag)) active.depth += 1;
+      if (active.depth === 0) {
+        bodies.set(active.key, html.slice(active.start, open)); active = undefined;
+      }
+    }
+  }
+  if (active || bodies.size !== expected.size) throw new TypeError('Missing or unclosed native publication body');
+  return bodies;
+}
+
+export function curatedArtifactFromCentralDocument(reading, nativeExport) {
   record(reading, 'central document reading');
   if (reading.schema !== 'central.document-reading/v1') throw new TypeError(`unsupported document reading schema: ${reading.schema}`);
   const document = record(reading.document, 'document');
+  const nativeBodies = nativeExport ? nativeDocumentBodies(reading, nativeExport) : undefined;
+  if (!nativeBodies && (document.contributions ?? []).some((body) => !body.removed && (body.entry_id || body.field_id))) {
+    throw new TypeError('Native contribution material requires the source owner export at the same revision');
+  }
   const payload = document.template_payload ?? {};
   const pointer = (path) => String(path ?? '').split('/').filter(Boolean).reduce((value, key) => (value && typeof value === 'object' ? value[key] : undefined), payload);
   const entries = [
-    ...(document.fields ?? []).map((field) => ({ id: `field:${field.id}`, author: 'H', at: '', kind: 'field', label: field.label ?? field.id, html: `<p>${escapeHtml(String(pointer(field.template_pointer) ?? ''))}</p>` })),
-    ...(document.entries ?? []).map((entry) => ({ id: text(entry.id, 'entry.id'), author: entry.actor_kind === 'human' ? 'H' : 'A', at: entry.occurred_at_unix_seconds ? new Date(entry.occurred_at_unix_seconds * 1000).toISOString() : '', html: String(entry.html ?? ''), reply_to: entry.reply_to ?? null })),
+    ...(document.fields ?? []).map((field) => ({ id: `field:${field.id}`, author: 'H', at: '', kind: 'field', label: field.label ?? field.id, html: nativeBodies?.get('field:' + field.id) ?? `<p>${escapeHtml(String(pointer(field.template_pointer) ?? ''))}</p>` })),
+    ...(document.entries ?? []).map((entry) => ({ id: text(entry.id, 'entry.id'), author: entry.actor_kind === 'human' ? 'H' : 'A', at: entry.occurred_at_unix_seconds ? new Date(entry.occurred_at_unix_seconds * 1000).toISOString() : '', html: nativeBodies?.get('entry:' + entry.id) ?? String(entry.html ?? ''), reply_to: entry.reply_to ?? null })),
   ];
   return {
     schema: CURATED_ARTIFACT_SCHEMA,
@@ -330,7 +398,7 @@ export function projectCuratedArtifact(input) {
   const presentation = createWorldPresentation({
     schema: 'oi.world-presentation/v1',
     presentation_ref: selection.presentation_ref,
-    world_ref: selection.artifact_ref,
+    world_ref: hostedArtifactRef,
     revision: projectionRevision,
     title,
     ...(selection.summary ? { summary: selection.summary } : {}),
@@ -344,8 +412,8 @@ export function projectCuratedArtifact(input) {
       projection_ref: selection.projection_ref,
       projection_revision: projectionRevision,
       state: 'published',
-      subject: { kind: 'curated-artifact', ref: selection.artifact_ref },
-      source: { system: 'central', ref: artifact.source.ref, revision: sourceRevision },
+      subject: { kind: 'curated-artifact', ref: hostedArtifactRef },
+      source: { system: 'central', world_ref: worldRef, ref: artifact.source.ref, revision: sourceRevision },
       publisher_participant_ref: selection.publisher.participant_ref,
       published_at: publishedAt,
       audience: clone(selection.audience),
@@ -366,7 +434,9 @@ export function projectCuratedArtifact(input) {
     revision: sourceRevision,
     provenance: [...provenance, { kind: standing === 'human-authored' ? 'human-authored-source' : 'agent-maintained-source', ref: artifact.source.ref, source_system: 'central', revision: sourceRevision }],
     locators,
-    meta: { standing, carrier: artifact.carrier, projection_ref: selection.projection_ref, local_ref: selection.artifact_ref, ...(selection.disclose_source_refs ? { source_ref: artifact.source.ref } : {}) },
+    meta: { standing, carrier: artifact.carrier, projection_ref: selection.projection_ref, local_ref: selection.artifact_ref,
+      ...(artifact.carrier === 'central.document' && meta.document_id ? { document_id: meta.document_id } : {}),
+      ...(selection.disclose_source_refs ? { source_ref: artifact.source.ref } : {}) },
   });
 
   const relations = [];
@@ -411,9 +481,21 @@ export function projectCuratedArtifact(input) {
 }
 
 export function reprojectCuratedArtifact(previousBundle, input) {
-  const previous = validateProjection(record(previousBundle, 'previous publication').projection);
+  let previous = validateProjection(record(previousBundle, 'previous publication').projection);
   const next = projectCuratedArtifact({ ...input, projection_revision: previous.projection_revision + 1 });
   if (next.projection.projection_ref !== previous.projection_ref) throw new TypeError('re-projection must keep the Projection ref');
+  // Qualify a retained local alias only from its recorded owning World and
+  // canonical hosted address. Old editions remain immutable; the next edition
+  // records the correction instead of silently retargeting another artifact.
+  if (previous.subject.ref === input.selection.artifact_ref &&
+      previous.source.world_ref === input.selection.world_ref &&
+      previousBundle.hosted_ref === next.projection.subject.ref) {
+    previous = validateProjection({ ...previous,
+      subject: { ...previous.subject, ref: next.projection.subject.ref },
+      representation: { ...previous.representation, payload: { ...previous.representation.payload, world_ref: next.projection.subject.ref } },
+      provenance: [...previous.provenance, { kind: 'qualified-artifact-address', ref: next.projection.subject.ref, source_system: 'o-i', revision: previous.source.revision }],
+    });
+  }
   if (next.projection.subject.ref !== previous.subject.ref) throw new TypeError('re-projection must keep the subject artifact');
   const sourceMoved = next.projection.source.revision !== previous.source.revision;
   const projection = sourceMoved

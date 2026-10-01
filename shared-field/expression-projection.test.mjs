@@ -143,7 +143,7 @@ test('projection, presentation and Expression revisions stay distinct and exact;
   assert.equal(projection.projection_ref, 'projection:desktop:expression:sf1-walk');
   assert.equal(projection.projection_revision, 2);
   assert.deepEqual(projection.subject, { kind: 'expression', ref: 'expression:sf1-walk' });
-  assert.deepEqual(projection.source, { system: 'o-i', ref: 'expression:sf1-walk', revision: '4' });
+  assert.deepEqual(projection.source, { system: 'o-i', world_ref: 'world:desktop:expression-sf1-walk', ref: 'expression:sf1-walk', revision: '4' });
   assert.deepEqual(projection.audience, { visibility: 'public' });
   const presentation = worldPresentationFromProjection(projection);
   assert.equal(presentation.world_ref, 'expression:sf1-walk');

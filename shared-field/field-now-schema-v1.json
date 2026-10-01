@@ -109,6 +109,7 @@
             "required": ["day_ref", "projected_by"],
             "properties": {
               "day_ref": {"$ref": "#/$defs/day_ref"},
+              "world_ref": {"type": "string", "minLength": 1},
               "workcell_ref": {"$ref": "#/$defs/workcell_ref"},
               "projected_by": {"$ref": "#/$defs/participant_ref"}
             }
