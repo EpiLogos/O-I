@@ -51,6 +51,30 @@ for (const member of spec.members) {
   assert.throws(() => selectPublicExcerpt({ id: member.member_id, file: member.source_file, sourceRevision: actualRevision }, Buffer.concat([raw, Buffer.from('\n')])), /source drift/);
   records.push({ member: member.member_id, source_digest: member.source_sha256, public_digest: publication.native_body.digest.value, source_revision: actualRevision, public_revision: publication.native_body.source_revision, selected_fields: member.fields.length });
 }
+// Reconcile the complete actual producer output, including the collection.
+// Diagnostic names identify the native input, never print refused prose.
+const inputFiles = JSON.parse(await readFile(resolve(outputs, 'inputs.json'), 'utf8'));
+const complete = [];
+for (const file of inputFiles) {
+  const input = JSON.parse(await readFile(resolve(site, file), 'utf8'));
+  try { compilePublications([input]); }
+  catch (error) {
+    console.error('Public admission refused native producer record:', file);
+    if (input.schema === 'oi.world-publication/v1') {
+      for (const region of input.projection.representation.payload.regions) for (const binding of region.bindings) {
+        const selected = structuredClone(input);
+        selected.projection.representation.payload.regions = [{...region, bindings:[binding]}];
+        try { compilePublications([selected]); }
+        catch { console.error('Refused native reading binding:', binding.binding_ref); }
+      }
+    }
+    throw error;
+  }
+  complete.push(input);
+}
+try { assert.equal(compilePublications(complete).editions.length, inputFiles.length); }
+catch (error) { console.error('Native records admitted individually but complete edition reconciliation failed.'); throw error; }
+
 await mkdir(resolve(site, 'evidence/public-excerpts'), { recursive: true });
 const receipt = { passed: true, standing: 'Actual pinned native inputs, production producer and strict receiver; source evidence, not installed or human acceptance.', members: files.length, changed_members: records.length, records };
 await writeFile(resolve(site, 'evidence/public-excerpts/native.json'), JSON.stringify(receipt, null, 2) + '\n');
