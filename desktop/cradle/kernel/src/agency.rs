@@ -14,6 +14,63 @@ use std::{
 
 /// Keep native refusal detail without exposing a successful payload. A process
 /// killed before writing stderr must still disclose its operation and status.
+/// Run one owner command with a wall-clock bound. The owner's own stdout and
+/// stderr are kept exactly (callers read its diagnostics); a timeout kills
+/// the child and says whether the effect may already have happened.
+fn output_bounded(
+    command: &mut Command,
+    timeout: std::time::Duration,
+    operation: &str,
+    mutating: bool,
+) -> Result<std::process::Output, String> {
+    use std::io::Read;
+    command
+        .stdin(std::process::Stdio::null())
+        .stdout(std::process::Stdio::piped())
+        .stderr(std::process::Stdio::piped());
+    let mut child = command
+        .spawn()
+        .map_err(|error| format!("AIKit {operation} could not start: {error}"))?;
+    let mut stdout = child.stdout.take().expect("stdout is piped");
+    let mut stderr = child.stderr.take().expect("stderr is piped");
+    let out = std::thread::spawn(move || {
+        let mut bytes = Vec::new();
+        let _ = stdout.read_to_end(&mut bytes);
+        bytes
+    });
+    let err = std::thread::spawn(move || {
+        let mut bytes = Vec::new();
+        let _ = stderr.read_to_end(&mut bytes);
+        bytes
+    });
+    let deadline = std::time::Instant::now() + timeout;
+    let status = loop {
+        match child.try_wait() {
+            Ok(Some(status)) => break status,
+            Ok(None) if std::time::Instant::now() >= deadline => {
+                let _ = child.kill();
+                let _ = child.wait();
+                return Err(format!(
+                    "AIKit {operation} did not answer within {} s{}",
+                    timeout.as_secs(),
+                    if mutating {
+                        "; its effect is uncertain — read the owner's state before retrying"
+                    } else {
+                        ""
+                    }
+                ));
+            }
+            Ok(None) => std::thread::sleep(std::time::Duration::from_millis(20)),
+            Err(error) => return Err(format!("AIKit {operation} could not be observed: {error}")),
+        }
+    };
+    Ok(std::process::Output {
+        status,
+        stdout: out.join().unwrap_or_default(),
+        stderr: err.join().unwrap_or_default(),
+    })
+}
+
 fn owner_process_failure(operation: &str, output: &std::process::Output) -> String {
     let stderr = String::from_utf8_lossy(&output.stderr);
     if !stderr.trim().is_empty() {
@@ -226,7 +283,8 @@ impl Client {
             ("agent-session-scope", None)
             | ("agent-session-skills", None)
             | ("agent-session-prepare", Some("--request-json"))
-            | ("agent-session-find", Some("--request-id")) => (),
+            | ("agent-session-find", Some("--request-id"))
+            | ("agent-session-read", Some("--agent-session")) => (),
             _ => return Err("Unsupported native Agent operation".into()),
         }
         let mut command = Command::new(&self.executable);
@@ -247,9 +305,13 @@ impl Client {
         if let Some(root) = std::env::var_os("OI_CENTRAL_ROOT") {
             command.env("CENTRAL_ROOT", root);
         }
-        let output = command
-            .output()
-            .map_err(|e| format!("Native Agent owner unavailable: {e}"))?;
+        let output = output_bounded(
+            &mut command,
+            std::time::Duration::from_secs(120),
+            operation,
+            operation == "agent-session-prepare",
+        )
+        .map_err(|e| format!("Native Agent owner unavailable: {e}"))?;
         if !output.status.success() {
             return Err(owner_process_failure(operation, &output));
         }
@@ -335,9 +397,13 @@ impl Client {
         }
         command.arg("-C").arg(cwd);
         command.args(["encounter-task-read", "--agent-session", agent_session]);
-        let output = command
-            .output()
-            .map_err(|e| format!("AIKit SessionSpace is unavailable: {e}"))?;
+        let output = output_bounded(
+            &mut command,
+            std::time::Duration::from_secs(20),
+            "encounter-task-read",
+            false,
+        )
+        .map_err(|e| format!("AIKit SessionSpace is unavailable: {e}"))?;
         if !output.status.success() {
             return Err(owner_process_failure("encounter-task-read", &output));
         }
@@ -904,6 +970,7 @@ impl Client {
         } else {
             false
         };
+        let mut reuse_reason: Option<String> = None;
         let (agent_ref, agency) = if recorded {
             (agent_session.clone(), "retained-native-binding")
         } else {
@@ -931,9 +998,21 @@ impl Client {
                         "The named Agent was not admitted to this Flow: {mint_refused}"
                     ));
                 }
-                Err(_mint_refused) => {
+                // A refusal from an owner that HAS the mint verb is the
+                // owner's answer (policy, authority, an uncertain timeout):
+                // it is surfaced, never replaced by someone else's binding.
+                Err(mint_refused) if self.mint_support.load(Ordering::Relaxed) != 2 => {
+                    return Err(format!(
+                        "This chat's Agency was not admitted: {mint_refused}"
+                    ));
+                }
+                // Only an installed suite without the mint verb falls back to
+                // disclosed reuse, and only of a binding admitted for this
+                // same Project — never another Project's Agent identity.
+                Err(mint_refused) => {
+                    reuse_reason = Some(mint_refused);
                     let stamp = chat_stamp();
-                    let reference = find_reference_binding(&agencies_state_dir())?;
+                    let reference = find_reference_binding(&agencies_state_dir(), &project)?;
                     let binding =
                         compose_chat_binding(reference, &format!("rev/desktop-chat-{stamp}"));
                     let agent_ref = binding["agent_ref"]
@@ -1028,6 +1107,7 @@ impl Client {
             "agent_session":agent_session,
             "agent_ref":if recorded {Value::Null} else {Value::String(agent_ref)},
             "agency":agency,
+            "agency_reuse_reason":reuse_reason,
             "provider":provider,
             "provider_default":provider_default,
             "preferred_body_ref":preferred_body_ref,
@@ -1078,9 +1158,13 @@ impl Client {
         if let Some(agent_ref) = agent_ref {
             command.args(["--agent-ref", agent_ref]);
         }
-        let output = command
-            .output()
-            .map_err(|error| format!("AIKit SessionSpace is unavailable: {error}"))?;
+        let output = output_bounded(
+            &mut command,
+            std::time::Duration::from_secs(60),
+            "encounter-agency-mint",
+            true,
+        )
+        .map_err(|error| format!("AIKit SessionSpace is unavailable: {error}"))?;
         if !output.status.success() {
             let stderr = String::from_utf8_lossy(&output.stderr).trim().to_owned();
             if mint_verb_absent(&stderr) {
@@ -1385,7 +1469,7 @@ fn agencies_state_dir() -> std::path::PathBuf {
 /// agency — `active`, at least one permitted sender, and an agency source file
 /// that still exists on disk. Read-only reuse of the source; nothing here
 /// edits another session's binding.
-fn find_reference_binding(dir: &std::path::Path) -> Result<Value, String> {
+fn find_reference_binding(dir: &std::path::Path, project: &str) -> Result<Value, String> {
     let entries=std::fs::read_dir(dir).map_err(|error|
         format!("No admitted Agency binding is available to reuse ({}: {error}); configure one with `aikit session-space encounter-agency-configure` first",dir.display()))?;
     let mut candidates: Vec<(std::time::SystemTime, std::path::PathBuf, Value)> = Vec::new();
@@ -1408,7 +1492,10 @@ fn find_reference_binding(dir: &std::path::Path) -> Result<Value, String> {
             .as_str()
             .map(std::path::PathBuf::from);
         let source_live = source_path.is_some_and(|p| p.is_file());
-        if binding["active"] == true && senders > 0 && source_live {
+        let same_project = binding["world_ref"].as_str().is_some_and(|world| {
+            world == project || world.strip_prefix("project:") == Some(project)
+        });
+        if binding["active"] == true && senders > 0 && source_live && same_project {
             let modified = entry
                 .metadata()
                 .and_then(|m| m.modified())
@@ -1418,7 +1505,7 @@ fn find_reference_binding(dir: &std::path::Path) -> Result<Value, String> {
     }
     candidates.sort_by_key(|(modified, _, _)| *modified);
     candidates.pop().map(|(_,_,binding)|binding)
-        .ok_or_else(||"No admitted Agency binding is available to reuse: every stored binding is inactive, sender-less, or its agency source file is gone".to_owned())
+        .ok_or_else(||format!("No admitted Agency binding for Project {project} is available to reuse: every stored binding for it is inactive, sender-less, or its agency source file is gone"))
 }
 
 /// Compose the NEW session's binding by copying the admitted identity
@@ -1598,18 +1685,30 @@ mod tests {
         };
         let wire = serde_json::to_value(&send).unwrap();
         assert_eq!(wire["action"], "conversation-send");
-        assert_eq!(wire["request"]["request_ref"], "conversation/q", "carried verbatim, never re-keyed");
+        assert_eq!(
+            wire["request"]["request_ref"], "conversation/q",
+            "carried verbatim, never re-keyed"
+        );
         assert_eq!(
             send.sessions(),
             vec!["agent-session/ada", "agent-session/ash"],
             "the attachment gate covers every recipient session before the owner sees the request"
         );
         for request in [
-            EncounterRequest::ConversationRead { request_ref: "conversation/q".into() },
-            EncounterRequest::ConversationList { flow_ref: "central:path:/x:Control/user/flows/f.html".into() },
-            EncounterRequest::ConversationReconcile { request_ref: "conversation/q".into() },
+            EncounterRequest::ConversationRead {
+                request_ref: "conversation/q".into(),
+            },
+            EncounterRequest::ConversationList {
+                flow_ref: "central:path:/x:Control/user/flows/f.html".into(),
+            },
+            EncounterRequest::ConversationReconcile {
+                request_ref: "conversation/q".into(),
+            },
         ] {
-            assert!(request.sessions().is_empty(), "a record read names no session to gate");
+            assert!(
+                request.sessions().is_empty(),
+                "a record read names no session to gate"
+            );
         }
         let back: EncounterRequest = serde_json::from_value(wire).unwrap();
         assert_eq!(back, send);
@@ -1754,7 +1853,7 @@ mod tests {
                 .set_modified(base + std::time::Duration::from_secs(index as u64))
                 .unwrap();
         }
-        let picked = find_reference_binding(&dir).unwrap();
+        let picked = find_reference_binding(&dir, "x").unwrap();
         assert_eq!(
             picked["revision"],
             serde_json::json!("rev/newer"),
@@ -1770,6 +1869,9 @@ mod tests {
         assert_eq!(composed["agency_source"], picked["agency_source"]);
         assert_eq!(composed["allowed_senders"], picked["allowed_senders"]);
         assert_eq!(composed["active"], serde_json::json!(true));
+        // Another Project's admitted binding is never a reuse candidate.
+        let refused = find_reference_binding(&dir, "elsewhere").unwrap_err();
+        assert!(refused.contains("elsewhere"), "{refused}");
         let _ = std::fs::remove_dir_all(&dir);
     }
 }
