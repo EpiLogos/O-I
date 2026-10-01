@@ -153,6 +153,37 @@ function ReferenceControl({schema, value, disabled, onCommit}: SettingControlPro
   </span>;
 }
 
+/** A structured cell is edited locally and committed once. Calling the
+ * owner-backed `onCommit` for every key races native desired-state replies
+ * against the controlled input and can splice an older value back into what
+ * the person is typing. */
+function StructuredCell({value, numeric, disabled, onCommit}: {
+  value: unknown;
+  numeric: boolean;
+  disabled?: boolean;
+  onCommit: (value: string | number) => void;
+}) {
+  const [draft, setDraft] = useState<string | null>(null);
+  const commit = () => {
+    if (draft === null) return;
+    if (draft.trim().length > 0) onCommit(numeric ? Number(draft) : draft);
+    setDraft(null);
+  };
+  const shown = draft ?? (typeof value === "string" || typeof value === "number" ? String(value) : "");
+  return <input
+    className="config-input"
+    type={numeric ? "number" : "text"}
+    disabled={disabled}
+    value={shown}
+    onChange={(event) => setDraft(event.target.value)}
+    onBlur={commit}
+    onKeyDown={(event) => {
+      if (event.key === "Enter") commit();
+      if (event.key === "Escape") setDraft(null);
+    }}
+  />;
+}
+
 /** Structured editor for tables (§2.3): columns come from the schema;
  * cells type by the column's declared type. */
 function TableControl({schema, value, disabled, onCommit}: SettingControlProps & {schema: ValueSchema & {type: "table"}}) {
@@ -166,17 +197,13 @@ function TableControl({schema, value, disabled, onCommit}: SettingControlProps &
           <tr key={index}>
             {schema.columns.map((column) => (
               <td key={column.name}>
-                <input
-                  className="config-input"
-                  type={column.type === "number" || column.type === "integer" ? "number" : "text"}
+                <StructuredCell
+                  value={row[column.name]}
+                  numeric={column.type === "number" || column.type === "integer"}
                   disabled={disabled}
-                  value={typeof row[column.name] === "string" || typeof row[column.name] === "number" ? String(row[column.name]) : ""}
-                  onChange={(event) => {
-                    const next = rows.map((candidate, candidateIndex) => candidateIndex === index
-                      ? {...candidate, [column.name]: column.type === "number" || column.type === "integer" ? Number(event.target.value) : event.target.value}
-                      : candidate);
-                    update(next);
-                  }}
+                  onCommit={(cell) => update(rows.map((candidate, candidateIndex) => candidateIndex === index
+                    ? {...candidate, [column.name]: cell}
+                    : candidate))}
                 />
               </td>
             ))}
@@ -200,17 +227,11 @@ function ListControl({schema, value, disabled, onCommit}: SettingControlProps & 
     <ul className="config-list">
       {items.map((item, index) => (
         <li key={index}>
-          <input
-            className="config-input"
-            type={itemType === "number" || itemType === "integer" ? "number" : "text"}
+          <StructuredCell
+            value={typeof item === "string" || typeof item === "number" ? item : JSON.stringify(item)}
+            numeric={itemType === "number" || itemType === "integer"}
             disabled={disabled}
-            value={typeof item === "string" || typeof item === "number" ? String(item) : JSON.stringify(item)}
-            onChange={(event) => {
-              const next = items.map((candidate, candidateIndex) => candidateIndex === index
-                ? (itemType === "number" || itemType === "integer" ? Number(event.target.value) : event.target.value)
-                : candidate);
-              onCommit({value: next});
-            }}
+            onCommit={(cell) => onCommit({value: items.map((candidate, candidateIndex) => candidateIndex === index ? cell : candidate)})}
           />
           <button type="button" className="config-mini" disabled={disabled} onClick={() => onCommit({value: items.filter((_, candidateIndex) => candidateIndex !== index)})}>remove</button>
         </li>

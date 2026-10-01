@@ -78,6 +78,7 @@ esac
 # targets); otherwise under the Tauri crate.
 TARGET_ROOT="${CARGO_TARGET_DIR:-${TAURI_DIR}/target}"
 APPIMAGE_GLOB="${TARGET_ROOT}/release/bundle/appimage/*.AppImage"
+LINUX_BIN_PATH="${TARGET_ROOT}/release/oi-cradle"
 MACOS_APP_PATH="${TARGET_ROOT}/release/bundle/macos/O-I.app"
 
 if [ "${DRY_RUN}" -eq 1 ]; then
@@ -87,7 +88,7 @@ if [ "${DRY_RUN}" -eq 1 ]; then
   if [ "${TARGET}" = "aarch64-apple-darwin" ]; then
     log "  3. adopt ${MACOS_APP_PATH} as app/O-I.app"
   else
-    log "  3. adopt ${APPIMAGE_GLOB} as app/oi-cradle.AppImage"
+    log "  3. adopt ${APPIMAGE_GLOB} as app/oi-cradle.AppImage; if linuxdeploy is unavailable, adopt ${LINUX_BIN_PATH} as app/oi-cradle"
   fi
   log "  4. copy ${TAURI_DIR}/icons/icon.png as app/icon.png"
   log "  5. stage oi-desktop-bundle/{BUNDLE.json,footprint.json,app/}"
@@ -119,7 +120,21 @@ if [ "${TARGET}" = "aarch64-apple-darwin" ]; then
 else
   MACOS_APP=""
   APPIMAGE="$(ls ${APPIMAGE_GLOB} 2>/dev/null | head -1 || true)"
-  [ -n "${APPIMAGE}" ] || die "no AppImage found at ${APPIMAGE_GLOB}; run the tauri build first (or drop --skip-build)"
+  if [ -n "${APPIMAGE}" ]; then
+    LINUX_APP="${APPIMAGE}"
+    LINUX_ENTRY="app/oi-cradle.AppImage"
+  elif [ -x "${LINUX_BIN_PATH}" ]; then
+    # `oi.desktop-bundle/v1` calls this payload a single executable; it does
+    # not require AppImage wrapping.  This keeps a successfully linked native
+    # shell installable on Linux hosts where Tauri's linuxdeploy wrapper is
+    # unavailable, while naming the ELF truthfully instead of giving it an
+    # AppImage suffix.
+    LINUX_APP="${LINUX_BIN_PATH}"
+    LINUX_ENTRY="app/oi-cradle"
+    log "note: no AppImage was produced; adopting the linked Linux executable ${LINUX_BIN_PATH}"
+  else
+    die "no AppImage found at ${APPIMAGE_GLOB} and no linked executable found at ${LINUX_BIN_PATH}; run the Tauri build first (or drop --skip-build)"
+  fi
 fi
 
 mkdir -p "${OUT_DIR:?}"
@@ -131,14 +146,14 @@ mkdir -p "${BUNDLE_ROOT}/app"
 if [ -n "${MACOS_APP}" ]; then
   cp -R "${MACOS_APP}" "${BUNDLE_ROOT}/app/O-I.app"
 else
-  cp "${APPIMAGE}" "${BUNDLE_ROOT}/app/oi-cradle.AppImage"
+  cp "${LINUX_APP}" "${BUNDLE_ROOT}/${LINUX_ENTRY}"
 fi
 cp "${TAURI_DIR}/icons/icon.png" "${BUNDLE_ROOT}/app/icon.png"
 cp "${FOOTPRINT}" "${BUNDLE_ROOT}/footprint.json"
 SOURCE_REVISION="$(git -C "${REPO_ROOT}" rev-parse HEAD 2>/dev/null || echo unknown)"
-python3 - "$VERSION" "$TARGET" "$SOURCE_REVISION" > "${BUNDLE_ROOT}/BUNDLE.json" <<'JSON'
+python3 - "$VERSION" "$TARGET" "$SOURCE_REVISION" "${LINUX_ENTRY:-app/O-I.app}" > "${BUNDLE_ROOT}/BUNDLE.json" <<'JSON'
 import datetime, json, sys
-version, target, revision = sys.argv[1], sys.argv[2], sys.argv[3]
+version, target, revision, app_entry = sys.argv[1], sys.argv[2], sys.argv[3], sys.argv[4]
 print(json.dumps({
     "schema": "oi.desktop-bundle/v1",
     "name": f"oi-cradle-{version}-{target}.tar.gz",
@@ -147,7 +162,7 @@ print(json.dumps({
     "app_id": "org.epilogos.oi.cradle",
     "source_revision": revision,
     "created_at": datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
-    "app_entry": "app/O-I.app" if target == "aarch64-apple-darwin" else "app/oi-cradle.AppImage",
+    "app_entry": app_entry,
     "app_kind": "app-bundle" if target == "aarch64-apple-darwin" else "single-executable",
 }, indent=2))
 JSON

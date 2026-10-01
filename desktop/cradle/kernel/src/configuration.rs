@@ -486,11 +486,17 @@ impl Client {
                     .map(|(index, pair)| {
                         let row = rows.and_then(|rows| rows.get(index));
                         if let Some(row) = row.filter(|row| row["schema"] == RESOLUTION_SCHEMA) {
-                            if row["setting_ref"] == pair.setting_ref
-                                && row["scope"]
-                                    == serde_json::to_value(&pair.scope)
-                                        .expect("scope is serializable")
-                            {
+                            // `scope_ref: null` and an omitted `scope_ref`
+                            // are the same compact scope. The wire struct
+                            // deliberately omits `None`, while the engine's
+                            // documents explicitly write null; comparing the
+                            // raw JSON made every machine/world resolution
+                            // look mismatched after a successful owner read.
+                            let matching_scope = serde_json::from_value::<ConfigScope>(
+                                row["scope"].clone(),
+                            )
+                            .is_ok_and(|scope| scope == pair.scope);
+                            if row["setting_ref"] == pair.setting_ref && matching_scope {
                                 return row.clone();
                             }
                             return degraded_resolution(
@@ -1589,7 +1595,7 @@ esac
 case "$*" in
   "config resolve --request-file - --json")
     cat >/dev/null
-    echo '{"schema":"oi.config-resolutions/v1","resolutions":[{"schema":"oi.config-resolution/v1","setting_ref":"ai-kit:resolution:model.default","scope":{"scope_kind":"project","scope_ref":"p"},"desired":null,"native":{"effective":{"value":"sonnet-current"}},"native_reading":{"reading_digest":"aa","observed_at_unix_ms":0},"reconciliation":{"status":"satisfied","reason":null}},{"schema":"oi.config-error/v1","error_code":"unsupported_setting","message":"`nope:section:key` is not contributed"},{"schema":"oi.config-error/v1","error_code":"owner_unavailable","message":"the owner did not answer"}]}' ;;
+    echo '{"schema":"oi.config-resolutions/v1","resolutions":[{"schema":"oi.config-resolution/v1","setting_ref":"ai-kit:resolution:model.default","scope":{"scope_kind":"project","scope_ref":"p"},"desired":null,"native":{"effective":{"value":"sonnet-current"}},"native_reading":{"reading_digest":"aa","observed_at_unix_ms":0},"reconciliation":{"status":"satisfied","reason":null}},{"schema":"oi.config-error/v1","error_code":"unsupported_setting","message":"`nope:section:key` is not contributed"},{"schema":"oi.config-resolution/v1","setting_ref":"ai-kit:session:session.provider","scope":{"scope_kind":"world","scope_ref":null},"desired":{"value":"pi"},"native":{},"native_reading":{"reading_digest":"bb","observed_at_unix_ms":0},"reconciliation":{"status":"drifted","reason":"not active"}},{"schema":"oi.config-error/v1","error_code":"owner_unavailable","message":"the owner did not answer"}]}' ;;
   *) echo "unexpected" >&2; exit 3 ;;
 esac
 "#,
@@ -1618,9 +1624,16 @@ esac
                         scope_ref: None,
                     },
                 },
+                ConfigPair {
+                    setting_ref: "ai-kit:session:session.model".into(),
+                    scope: ConfigScope {
+                        scope_kind: "world".into(),
+                        scope_ref: None,
+                    },
+                },
             ],
         );
-        assert_eq!(resolutions.len(), 3);
+        assert_eq!(resolutions.len(), 4);
         assert_eq!(
             resolutions[0]["native"]["effective"]["value"], "sonnet-current",
             "the owner's own axes pass through unmodified"
@@ -1630,9 +1643,13 @@ esac
             .as_str()
             .unwrap()
             .contains("not contributed"));
-        assert_eq!(resolutions[2]["reconciliation"]["status"], "blocked");
         assert_eq!(
-            resolutions[2]["desired"],
+            resolutions[2]["desired"]["value"], "pi",
+            "an explicit null scope ref is the same unqualified scope as omitted None"
+        );
+        assert_eq!(resolutions[3]["reconciliation"]["status"], "blocked");
+        assert_eq!(
+            resolutions[3]["desired"],
             Value::Null,
             "a degraded resolution invents no desired axis"
         );
