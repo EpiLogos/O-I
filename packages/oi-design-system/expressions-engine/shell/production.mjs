@@ -288,6 +288,9 @@ class EmbeddedProductionAdapter {
   inspect(readParticles = false) {
     return this.engine?.inspectState(readParticles);
   }
+  inspectResources() {
+    return this.engine?.inspectResources();
+  }
   projectNative(point) {
     return this.engine?.projectWorldToScreen(point.x * WORLD_SCALE, point.y * WORLD_SCALE, point.z * WORLD_SCALE);
   }
