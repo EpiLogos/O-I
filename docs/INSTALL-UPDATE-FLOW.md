@@ -94,6 +94,55 @@ answers a different question: "is the machine running the binaries this
 ground's committed cuts produce?" The receipt discloses branch and dirty
 state honestly either way.
 
+## Two phases, so a failure leaves a whole machine
+
+Apply used to flip each product's `bin/<exe>` as that product was built, before
+its smoke check, and wrote the receipts once at the end. A build that failed at
+product N left products 1..N-1 live while the receipts still named the old
+revisions; a binary that failed its smoke check stayed linked anyway
+(2026-09-30 review). Apply is now two phases:
+
+1. **Prepare** every selected product: build or adopt, stage into the
+   content-addressed store, smoke-check the *staged* generation. Nothing any
+   invocation resolves changes. Any failure returns before a link moves.
+2. **Commit** them together: flip each `bin/<exe>` and activation link,
+   recording what each replaced. A flip that fails puts every earlier flip
+   back; the receipts are written only after all flips landed, and a receipt
+   write that fails puts them back too.
+
+## Direction
+
+The plan names how each cut relates to what is installed: `upgrade`, `same`,
+`downgrade` (the planned revision is an ancestor of the installed one — the
+`source` channel on a checkout that sits behind what `mainline` put on the
+machine), or `diverged`. `--check` shows it (`direction` in `--json`); `--apply`
+**refuses a downgrade** unless `--allow-downgrade` is given, so a stale
+checkout can no longer offer an older cut as "UPDATE AVAILABLE" and install it.
+
+## Residents: a new binary is not a new process
+
+Replacing a file does not replace a process. `oi update` flips symlinks; a
+long-lived process keeps executing the inode it started from. Each product
+reads its own residents — for AIKit, `aikit gateway upgrade plan` names the
+build the running gateway executes (its own revision, pid and executable
+digest) against the build installed — and this flow reports them:
+
+```sh
+oi update --check --json               # carries `residents` (running vs installed, stale or not)
+oi update --apply                      # names each stale resident and the product's own restart command
+oi update --apply --restart-residents  # asks the product to restart it (aikit gateway upgrade apply --wait)
+oi doctor                              # a stale resident is a FAILURE, like a drifted surface
+```
+
+O:I asks, names and — on request — asks the *product* to restart what it owns.
+It never stops or restarts a process it does not own; the drain, the
+supervisor restart, the verification that a *different process* runs the
+*expected image*, the rollback and the receipt are the product's
+(`aikit gateway upgrade`; see AIKit `docs/GATEWAY-UPGRADE.md`). The product's
+own route calls back here for the install step (`oi update --apply ai-kit`,
+`oi update --rollback`), so the two never loop: the install flips, the product
+restarts.
+
 ## The single command
 
 ```sh
@@ -102,6 +151,8 @@ oi update --check            # pure report; no file is touched. exit 0 current, 
 oi update --check --json     # machine-readable report (for timers and other agents)
 oi update --apply [PRODUCT ...]   # explicit apply, optionally scoped
 oi update --apply --channel mainline [PRODUCT ...]   # apply origin/main cuts instead of the checkouts'
+oi update --apply --allow-downgrade [PRODUCT ...]   # take a cut older than the installed one (refused otherwise)
+oi update --apply --restart-residents               # …and ask each product to restart what it owns
 oi update --rollback         # receipt-driven restore of the previous binary set
 oi update timer --platform launchd|systemd [--output PATH]   # emit the scheduled-check artefact
 ```
@@ -223,4 +274,8 @@ to remove managed state; it still never touches anything it does not own.
   attestation; built binaries carry the gate log, not a cryptographic
   attestation. GitHub artifact attestation remains with the release path.
 - **Cross-machine orchestration.** Omarchy is served by the same commands
-  run on that host; there is no push mechanism.
+  run on that host; there is no push mechanism. A product may orchestrate its
+  own residents across machines over its own authenticated carrier (AIKit's
+  `aikit gateway --at <workcell> …`); `oi update` itself does not.
+- **A transactional receipt history.** Only one previous generation is kept
+  (`previous.json`), and the content-addressed store is never pruned.
