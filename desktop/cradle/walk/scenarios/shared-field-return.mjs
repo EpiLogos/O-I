@@ -104,10 +104,21 @@ export default async function run({page,baseUrl,check,shot,channel,provision:p})
   check((await editor.innerText()).includes(passage),"The native document opens and renders its own bytes — the local material state");
   check(await page.locator(".shared-field-material").count()===0,"No shared material is advertised before anything is published");
 
-  // 2 — select a passage; the tray offers the shared-field destination.
+  // 2 — select a passage and prepare it through the current Context owner.
+  // Publishing is deliberately an inspected "Other actions" branch of the
+  // prepared selection; Add to context no longer opens the legacy action tray
+  // directly.
   await selectRange(editor,start+1,start+1+passage.length);
   await page.getByRole("button",{name:"Pick component for context",exact:true}).click();
   await page.getByRole("button",{name:"Add selected text to context",exact:true}).click();
+  const right=page.getByRole("button",{name:"Toggle right region",exact:true});
+  if(await right.getAttribute("aria-expanded")!=="true")await right.click();
+  const planes=page.getByRole("tablist",{name:"Right region planes"});
+  await planes.getByRole("tab",{name:"Context",exact:true}).click();
+  const prepared=page.locator(".prepared-context-item").filter({hasText:p.doc.revision.revision});
+  await prepared.waitFor();
+  await prepared.getByText("Selection details",{exact:true}).click();
+  await prepared.getByRole("button",{name:"Other actions…",exact:true}).click();
   const dialog=page.getByRole("dialog",{name:"Include selected context"});await dialog.waitFor();
   check(await dialog.locator("pre").innerText()===passage,"The tray presents the exact selected passage — the selected-projection state begins here");
   await dialog.getByRole("button",{name:"Publish to the shared field"}).click();
@@ -229,7 +240,7 @@ export default async function run({page,baseUrl,check,shot,channel,provision:p})
   await nav.locator('[data-file-path="Work/Editor/ProjectCentral/user/00 01-DESIGN.md"]').click();
   await page.locator('.cm-content[data-source-ref]:not([data-source-ref="'+p.doc.source.ref+'"])').waitFor({timeout:15000});
   await nav.locator(`[data-file-path="Work/Editor/${p.doc.source.path}"]`).click();
-  await page.locator(`.cm-content[data-source-ref="${p.doc.source.ref}"]`).waitFor({timeout:15000});
+  await page.locator(`.cm-content[data-source-ref="${p.doc.source.ref}"]`).last().waitFor({state:"visible",timeout:15000});
   await page.waitForFunction(()=>document.querySelector(".shared-field-published")?.getAttribute("data-projection-state")==="withdrawn",null,{timeout:10000});
 
   // 10 — owner readback: the native facts behind the fourth state.
