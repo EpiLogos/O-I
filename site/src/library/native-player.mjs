@@ -58,7 +58,8 @@ export class PublicField {
  }
  setScene(composition,ref,camera,nativeJourney=null,nativeSceneMap=null,nativeEntityMap=null){
   const changed=this.scene?.id!==ref;
-  this.entityMap=nativeEntityMap?Object.fromEntries(Object.entries(nativeEntityMap).filter(([publicRef])=>publicRef.startsWith(ref+':'))):null;
+  const sceneEntities=new Set(composition.scenes.find(scene=>scene.scene_ref===ref)?.entity_refs??[]);
+  this.entityMap=nativeEntityMap?Object.fromEntries(Object.entries(nativeEntityMap).filter(([publicRef])=>sceneEntities.has(publicRef))):null;
   this.scene=projectComposition(composition,ref,nativeJourney,nativeSceneMap);this.revision=composition.revision;
   this.selected=this.selectedRef?[this.entityMap?.[this.selectedRef]??this.selectedRef]:[];
   // A paused/reduced-motion Scene choice displays that configuration immediately.

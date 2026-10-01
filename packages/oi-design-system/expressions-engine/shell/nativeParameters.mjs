@@ -1,5 +1,5 @@
 import { PARAM_REGISTRY, entityParamDefs } from "../engine/paramRegistry.mjs";
-import { DEFAULT_CONFIG } from "../engine/PointCloudField.mjs";
+import { DEFAULT_CONFIG } from "../engine/fieldDefaults.mjs";
 import { readPath } from "../engine/automation.mjs";
 import { automationGroups } from "./automationLinks.mjs";
 const WORLD_SCALE = 400;
@@ -47,7 +47,7 @@ const aliases = {
   "composition.orchestration.dwell": ["focusDwell", 1, "composition.focusDwell"],
   "composition.orchestration.glide": ["focusGlide", 1, "composition.focusDuration"]
 };
-const groups = { Fluid: "motion", "Physics+": "physics", Particles: "material", Morph: "morph", Interaction: "pointer", Relational: "relational", Color: "color", Cymatics: "resonance", Composition: "composition", Material: "material", Paper: "color" };
+const groups = { Fluid: "motion", "Physics+": "physics", Particles: "material", Morph: "morph", Interaction: "pointer", Relational: "relational", Color: "color", Cymatics: "resonance", Composition: "composition", Material: "material", Paper: "color", Medium: "medium", Collision: "collision", Pairwise: "pairwise", Volume: "volume", Depth: "depth" };
 const defaults = { "cymatics.sweep.glideS": 8, "cymatics.sweep.dwellS": 2, "cymatics.modeCount": 64, "color.cycleSpeed": 0, "color.turbulenceModulation": 0, "color.speedReactiveIntensity": 0, "color.densityWeight": 0, "composition.entityTintWeight": 1, "composition.orchestration.dwell": 0 };
 const NATIVE_BINDINGS = PARAM_REGISTRY.map((p) => {
   const a = aliases[p.path], key = a?.[0] ?? "native_" + p.path.replaceAll(".", "__"), factor = a?.[1] ?? 1;

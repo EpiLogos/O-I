@@ -105,6 +105,38 @@
     "shell/propertyTracks.mjs": "field-studies-journeys/src/propertyTracks.ts",
     "shell/sharedSettings.mjs": "field-studies-journeys/src/sharedSettings.ts",
     "shell/sourceState.mjs": "field-studies-journeys/src/sourceState.ts",
-    "shell/workspacePreferences.mjs": "field-studies-journeys/src/workspacePreferences.ts"
+    "shell/workspacePreferences.mjs": "field-studies-journeys/src/workspacePreferences.ts",
+    "engine/glyphVolume.mjs": "src/engine/glyphVolume.ts",
+    "engine/fieldDefaults.mjs": "src/engine/fieldDefaults.ts"
+  },
+  "module_refreshes": {
+    "engine/sourceSampling.mjs": {
+      "source": "desktop/cradle/expressions-app/src/engine/sourceSampling.ts",
+      "source_sha256": "8fd5fb052afa493e191d7ee118ff7eac439b9ae06094844761157eb020181f14",
+      "output_sha256": "058c9ed7a265ae58e072b2b5eaa45f48e08520153b84d4ca0ac69c732e7d64a9",
+      "compiler": "esbuild@0.25.12",
+      "standing": "Bounded compiler output from the native source; other retained modules keep their existing provenance"
+    },
+    "engine/glyphVolume.mjs": {
+      "source": "desktop/cradle/expressions-app/src/engine/glyphVolume.ts",
+      "source_sha256": "0cdbb26aec7c9f5ef3d5ed112acf74683bb3a3fdef89cb3d7d83bbacd63ee506",
+      "output_sha256": "2b1965882a957012904a7cd549fdfb4bc81593aa19855f051801272732d21ee4",
+      "compiler": "esbuild@0.25.12",
+      "standing": "Bounded compiler output from the native source; other retained modules keep their existing provenance"
+    },
+    "shell/nativeParameters.mjs": {
+      "source": "desktop/cradle/expressions-app/field-studies-journeys/src/nativeParameters.ts",
+      "source_sha256": "b1756eaf9b2d05e753137f4a950a43e3a122ccf45506a987f72b854774a0c65c",
+      "output_sha256": "f7e67e353a263fd9247ca51871408b145c973dbe3d08f4ef522beb2077f75bfc",
+      "compiler": "esbuild@0.25.12",
+      "standing": "Bounded compiler output from the native source; other retained modules keep their existing provenance"
+    },
+    "engine/fieldDefaults.mjs": {
+      "source": "desktop/cradle/expressions-app/src/engine/fieldDefaults.ts",
+      "source_sha256": "66a954cae93d816076c16486dc4e7b6657849a53fc5a2e13e374d2859ef86b85",
+      "output_sha256": "efc69eb77415877ac4a0ab07e23694db2faea1b1fdd72ce0c9144d40c90b64b4",
+      "compiler": "esbuild@0.25.12",
+      "standing": "Bounded compiler output from the native source; other retained modules keep their existing provenance"
+    }
   }
 }

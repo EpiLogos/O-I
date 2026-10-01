@@ -35,12 +35,12 @@ export function ExpressionEntityInspector({app}:{app:ExpressionApplication}){
   setBindingConflict(data?.state==="revision_conflict");
  };
  if(!document||!selected)return null;
- return <fieldset className="expression-inspector" disabled={pending}><legend>{selected.title} <span className="oi-state">{selected.subject?`${selected.subject.presentation_role} · ${selected.subject.native_owner}`:"unbound"}</span></legend>
+ return <fieldset className="expression-inspector" disabled={pending}><legend>{selected.title} <span className="oi-state">{selected.subject?selected.subject.presentation_role==="being"?"Being":"Thing":"unbound"}</span></legend>
   <div className="expression-parameters">
   <RevisionInput label="Glyph" key={`${selected.entity_ref}:glyph`} value={selected.parameters.glyph?.value??"O"} revision={document.revision} onCommit={(value,basis)=>commitParameter(selected.entity_ref,"glyph",value,basis)}/>
   {(["x","y","z","scale","share"] as const).map(key=>{const p=selected.parameters[key];return <div className="expression-parameter" key={key}><RevisionInput caption={key} label={`Entity ${key}`} numeric disabled={!!p?.automation} key={`${selected.entity_ref}:${key}`} value={p?.value??(["scale","share"].includes(key)?1:0)} revision={document.revision} onCommit={(value,basis)=>commitParameter(selected.entity_ref,key,value,basis)}/>{p?.automation?<button className="oi-action" onClick={()=>void edit([{change:"parameter_manual",entity_ref:selected.entity_ref,parameter:key}])}>Take manual control of {key}</button>:p&&key==="scale"&&<button className="oi-action" onClick={()=>void edit([{change:"parameter_automate",entity_ref:selected.entity_ref,parameter:key,automation:{min:0.5,max:1.5,rate_hz:0.2,waveform:"sine"}}])}>Animate scale</button>}</div>;})}
   </div>
-  <details className="expression-binding oi-disclosure" open={!!selected.subject||bindingDirty.current}><summary>Subject binding <span className="oi-state">{selected.subject?selected.subject.subject_ref:"none"}</span></summary>
+  <details className="expression-binding oi-disclosure" open={bindingDirty.current}><summary>Subject binding <span className="oi-state">{selected.subject?"Bound":"Unbound"}</span></summary>
    <div className="expression-binding-fields">
     <label className="oi-field">Native subject<input className="oi-input" aria-label="Native subject" value={subject} onChange={e=>{startBinding();setSubject(e.target.value);}}/></label>
     <label className="oi-field">Native owner<input className="oi-input" aria-label="Native owner" value={owner} onChange={e=>{startBinding();setOwner(e.target.value);}}/></label>

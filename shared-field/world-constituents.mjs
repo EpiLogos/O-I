@@ -715,7 +715,7 @@ export function buildConstituents(context) {
           world_ref: worldRef,
           label: typeof praxis.name === 'string' && praxis.name ? praxis.name : practiceRef,
           aliases: [practiceRef],
-          summary: `${practiceKind} · source revision ${praxis.revision.slice(0, 12)}`,
+          summary: praxis.description??(offered?'Available practice offered by its owner.':'The owner has shared this practice for inspection.'),
           revision: praxis.revision,
           provenance: [{ kind: 'aikit-praxis', ref: practiceRef, source_system: 'ai-kit', revision: praxis.revision }],
           locators: locator(hosted(practiceRef)),

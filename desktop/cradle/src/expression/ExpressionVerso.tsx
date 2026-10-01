@@ -33,7 +33,10 @@ import {IconTabStrip,IconTab} from "../workspace/primitives/IconTabStrip";
  */
 import {useMemo, useState} from "react";
 import {versoReading} from "./verso.mjs";
+// @ts-ignore -- the bound native entity supplies its human name.
+import {subjectLabel} from "../../../../shared-field/presentation-text.mjs";
 import type {ExpressionDocument} from "./types";
+import {ReadingBody} from "../knowledge/NodeDetails";
 import {useWikiProjectionState, wikiRegisterOwning, wikiProjectionOf, wikiDocumentOf} from "../techne/wikiProjectionStore";
 import type {VersoAccountReading} from "./versoAccount";
 import "./verso.css";
@@ -78,7 +81,7 @@ export function ExpressionVerso({document, account, onInvokeAction, onOpenRef, o
   const subject = account && (account.state === "reading" || account.state === "unavailable") ? account.subject
     : account?.state === "ready" ? account.account.subject : undefined;
   const ready = account?.state === "ready" ? account.account : undefined;
-  const title = verso?.title ?? ready?.subject.title ?? subject?.title ?? subject?.ref ?? "the current subject";
+  const title = subjectLabel(verso,subjectLabel(ready?.subject,subjectLabel(subject,"Unnamed subject")));
 
   return <article className="expression-verso expression-verso--depth" aria-label={`Verso of ${title}`}
     data-expression-ref={verso?.expression_ref ?? (versoDocument?.expression_ref)}
@@ -97,19 +100,18 @@ export function ExpressionVerso({document, account, onInvokeAction, onOpenRef, o
       <div className="world-component__eyebrow">Verso · the same subject, read</div>
       <h3>{title}</h3>
       <small>
-        {subject && <span className="oi-ref">{subject.ref}</span>}
-        {verso && <> · revision {verso.revision}</>}
-        {verso?.selected_scene_ref ? <> · scene <span className="oi-ref">{verso.selected_scene_ref}</span></> : null}
-        {ready?.savedFile && <> · saved at <span className="oi-ref">{ready.savedFile.ref}</span> @ {ready.savedFile.revision}</>}
+        {verso?.selected_scene_ref ? <>Scene: {subjectLabel(verso.scenes.find(scene=>scene.scene_ref===verso.selected_scene_ref),"Unnamed scene")}</> : null}
+        {ready?.savedFile && <> · saved native file</>}
       </small>
+      <details><summary>Source details</summary><pre>{JSON.stringify({subject,expression:verso?{ref:verso.expression_ref,revision:verso.revision,scene_ref:verso.selected_scene_ref}:undefined,savedFile:ready?.savedFile},null,2)}</pre></details>
       {onClose && <button type="button" className="oi-action expression-verso__close" onClick={onClose}
         title="Close the verso — the face stands exactly where it was" aria-label="Close the verso">Return to the face</button>}
     </header>
 
     {account?.state === "no-subject" && <p className="oi-note expression-verso__sparse" data-account-state="no-subject" role="status">
       No subject stands. Nothing is selected in the field yet, so the verso has nothing to read — select a subject on the face, in the Library or in the wiki map first.</p>}
-    {account?.state === "unavailable" && <p className="oi-refusal expression-verso__sparse" data-account-state="unavailable" role="status">
-      The account read did not resolve: {account.reason}</p>}
+    {account?.state === "unavailable" && <div className="oi-refusal expression-verso__sparse" data-account-state="unavailable" role="status">
+      The subject's account is unavailable.<details><summary>Source details</summary><p>{account.reason}</p></details></div>}
     {account?.state === "reading" && <p className="oi-note" data-account-state="reading" role="status">Reading the subject's account…</p>}
 
     {ready && <>
@@ -118,23 +120,23 @@ export function ExpressionVerso({document, account, onInvokeAction, onOpenRef, o
       <AccountScenes account={ready}/>
       <AccountSources account={ready} onOpenSourceRef={onOpenSourceRef}/>
       <AccountPage account={ready} onOpenPage={onOpenPage}/>
-      <AccountSourceFile account={ready}/>
+      <AccountSourceFile account={ready} onOpenSourceRef={onOpenSourceRef}/>
       {ready.editions.length > 0 && <section className="expression-verso__region" aria-label="Saved editions" data-region="editions">
         <h4>Editions · {ready.editions.length}</h4>
-        <ul className="expression-verso__relations">{ready.editions.map(edition => <li key={edition} data-edition-ref={edition}>{edition}</li>)}</ul>
+        <details><summary>Saved edition details</summary><ul className="expression-verso__relations">{ready.editions.map(edition => <li key={edition} data-edition-ref={edition}>{edition}</li>)}</ul></details>
       </section>}
       {ready.actions.length > 0 && <section className="expression-verso__region" aria-label="Eligible Actions" data-region="actions">
         <h4>Eligible Actions · {ready.actions.length}</h4>
-        <div className="expression-verso__actions oi-action-group">{ready.actions.map(action =>
+        <div className="expression-verso__actions oi-action-group">{ready.actions.map((action,index) =>
           <button key={`${action.entityRef ?? ""}:${action.actionRef}`} type="button" className="oi-action"
-            title={action.authorityRequirement ? `authority: ${action.authorityRequirement}` : "authority per caller"}
+            disabled={!action.entityRef||!onInvokeAction}
             data-action-ref={action.actionRef}
             onClick={() => { if (action.entityRef) onInvokeAction?.(action.entityRef, action.actionRef); }}>
-            {action.actionRef}</button>)}</div>
+            Action {index+1}</button>)}</div><details><summary>Action details</summary><pre>{JSON.stringify(ready.actions,null,2)}</pre></details>
       </section>}
       <AccountSaving account={ready} representations={verso?.representations}/>
       {ready.notices.length > 0 && <div className="expression-verso__notices" role="status" data-region="notices">
-        {ready.notices.map(notice => <p key={notice} className="oi-note">{notice}</p>)}
+        <p className="oi-note">Some account details could not be read.</p><details><summary>Read details</summary>{ready.notices.map(notice => <p key={notice} className="oi-note">{notice}</p>)}</details>
       </div>}
     </>}
 
@@ -142,23 +144,24 @@ export function ExpressionVerso({document, account, onInvokeAction, onOpenRef, o
       {verso.subjects.length > 0 && <section className="expression-verso__region" aria-label="Bound subjects" data-region="subjects">
         <h4>Bound subjects · {verso.subjects.length}</h4>
         {verso.subjects.map(subject => <article key={subject.ref} className="expression-verso__subject" data-subject-ref={subject.ref} data-native-owner={subject.native_owner} data-presentation-role={subject.presentation_role}>
-          <header><strong>{subject.ref}</strong><span className="oi-state">{subject.presentation_role} · {subject.native_owner || "native owner"}</span></header>
-          {subject.entities.map(ref => <button key={ref} type="button" className="oi-ref expression-verso__entity" title="Focus this entity on the front" onClick={() => onOpenRef?.(ref)}>{ref}</button>)}
-          {subject.sources.length > 0 && <dl className="expression-verso__sources">{subject.sources.map(source => <div key={`${source.ref}@${source.revision}`} data-source-ref={source.ref} data-source-availability={source.availability}><dt><code>{source.ref}</code></dt><dd>{source.availability}{source.revision ? ` · ${source.revision}` : ""}</dd></div>)}</dl>}
-          {subject.actions.length > 0 && <div className="expression-verso__actions" data-action-count={subject.actions.length}><span className="oi-eyebrow">Disclosed Actions · {subject.native_owner}</span><div className="oi-action-group">{subject.actions.map(action => <button key={action.action_ref} type="button" className="oi-action" title={action.authority_requirement || "authority per caller"} onClick={() => onInvokeAction?.(subject.entities[0], action.action_ref)}>{action.action_ref}</button>)}</div></div>}
+          <header><strong>{subjectLabel(versoDocument?.entities[subject.entities[0]],"Unnamed bound subject")}</strong></header>
+          {subject.entities.map(ref => <button key={ref} type="button" className="oi-ref expression-verso__entity" title="Focus this entity on the front" onClick={() => onOpenRef?.(ref)}>{subjectLabel(versoDocument?.entities[ref],`Unnamed entity ${subject.entities.indexOf(ref)+1}`)}</button>)}
+          {subject.sources.length > 0 && <details><summary>Source details</summary><dl className="expression-verso__sources">{subject.sources.map(source => <div key={`${source.ref}@${source.revision}`} data-source-ref={source.ref} data-source-availability={source.availability}><dt><code>{source.ref}</code></dt><dd>{source.availability}{source.revision ? ` · ${source.revision}` : ""}</dd></div>)}</dl></details>}
+          {subject.actions.length > 0 && <div className="expression-verso__actions" data-action-count={subject.actions.length}><span className="oi-eyebrow">Available actions</span><div className="oi-action-group">{subject.actions.map((action,index) => <button key={action.action_ref} type="button" className="oi-action" title={action.authority_requirement || "authority per caller"} onClick={() => onInvokeAction?.(subject.entities[0], action.action_ref)}>{`Action ${index+1}`}</button>)}</div></div>}
+          <details><summary>Identity and action details</summary><pre>{JSON.stringify(subject,null,2)}</pre></details>
         </article>)}
       </section>}
       {verso.relations.length > 0 && <section className="expression-verso__region" aria-label="Relation bindings" data-region="relations">
         <h4>Relations · {verso.relations.length}</h4>
         <ul className="expression-verso__relations">{verso.relations.map(relation => <li key={relation.binding_ref} data-binding-ref={relation.binding_ref} data-relation-ref={relation.relation.ref}>
-          <button type="button" className="oi-ref" onClick={() => onOpenRef?.(relation.relation.ref)}>{relation.relation.ref}</button>
-          <span>{relation.from_entity_ref} → {relation.to_entity_ref}{relation.relation.revision ? ` · ${relation.relation.revision}` : ""}</span>
+          <button type="button" className="oi-ref" onClick={() => onOpenRef?.(relation.relation.ref)}>{subjectLabel(versoDocument?.entities[relation.from_entity_ref],"Unnamed subject")} → {subjectLabel(versoDocument?.entities[relation.to_entity_ref],"Unnamed subject")}</button>
+          <details><summary>Source details</summary><pre>{JSON.stringify(relation,null,2)}</pre></details>
         </li>)}</ul>
       </section>}
       {verso.representations.length > 0 && <section className="expression-verso__region" aria-label="Available representations" data-region="representations">
         <h4>Representations · {verso.representations.length}</h4>
         <ul className="expression-verso__representations">{verso.representations.map(representation => <li key={`${representation.kind}:${representation.ref}`} data-representation-kind={representation.kind} data-availability={representation.availability}>
-          {representation.kind} · {representation.ref}{representation.revision ? ` · ${representation.revision}` : ""} · {representation.availability}
+          {representation.kind} · {representation.availability}<details><summary>Source details</summary><pre>{JSON.stringify(representation,null,2)}</pre></details>
         </li>)}</ul>
         <p className="oi-note">The live renderer presents on the front. Captures and pages render where their own renderers are admitted; availability is disclosed, never silently substituted.</p>
       </section>}
@@ -188,10 +191,8 @@ function AccountIdentity({account}: {account: NonNullable<Extract<VersoAccountRe
     data-world-root={identity.worldRoot} data-project={identity.projectName} data-wiki-space={identity.projectCentralWikiSpace}>
     <h4>World / Project</h4>
     <dl className="expression-verso__sources expression-verso__identity">
-      {identity.worldRoot && <div><dt>World root</dt><dd><span className="oi-ref">{identity.worldRoot}</span></dd></div>}
-      {identity.projectName && <div><dt>Project</dt><dd>{identity.projectName}{identity.projectPath ? <span className="oi-ref"> · {identity.projectPath}</span> : null}</dd></div>}
-      {identity.projectCentralWikiSpace && <div><dt>ProjectCentral wiki</dt><dd><span className="oi-ref">{identity.projectCentralWikiSpace}</span>{identity.projectCentralState ? ` · ${identity.projectCentralState}` : ""}</dd></div>}
-    </dl>
+      {identity.projectName && <div><dt>Project</dt><dd>{identity.projectName}</dd></div>}
+    </dl><details><summary>Source details</summary><pre>{JSON.stringify(identity,null,2)}</pre></details>
   </section>;
 }
 
@@ -203,13 +204,14 @@ function AccountWebPosition({account}: {account: NonNullable<Extract<VersoAccoun
   if (!hasAny) return null;
   return <section className="expression-verso__region" aria-label="Position in the web" data-region="web-position">
     <h4>Position in the web</h4>
-    <dl className="expression-verso__sources expression-verso__identity">
+    <p>{subjectLabel(account.subject,"Unnamed subject")}{web.sceneRef?` · ${subjectLabel(account.document?.scenes.find(scene=>scene.scene_ref===web.sceneRef),"Unnamed scene")}`:""}</p>
+    <details><summary>Position details</summary><dl className="expression-verso__sources expression-verso__identity">
       {web.registerKey && <div><dt>Register</dt><dd data-web-register={web.registerKey}>{web.registerKey}</dd></div>}
       {web.expressionRef && <div><dt>Web Expression</dt><dd><span className="oi-ref">{web.expressionRef}</span></dd></div>}
       {web.sceneRef && <div><dt>Scene</dt><dd><span className="oi-ref">{web.sceneRef}</span></dd></div>}
       {web.entityRef && <div><dt>Entity</dt><dd><span className="oi-ref">{web.entityRef}</span></dd></div>}
       {web.subjectRef && <div><dt>Subject</dt><dd data-web-subject={web.subjectRef}><span className="oi-ref">{web.subjectRef}</span></dd></div>}
-    </dl>
+    </dl></details>
   </section>;
 }
 
@@ -249,7 +251,7 @@ function AccountSaving({account, representations}: {
       <div data-saving-row="native-file">
         <dt>Native file</dt>
         <dd>{account.savedFile
-          ? <><span className="oi-ref">{account.savedFile.ref}</span> · revision {account.savedFile.revision}</>
+          ? <><span>Saved native file</span><details><summary>Source details</summary><pre>{JSON.stringify(account.savedFile,null,2)}</pre></details></>
           : "no native file destination is disclosed yet"}</dd>
       </div>
       {isExpression && <div data-saving-row="publication">
@@ -311,7 +313,7 @@ function AccountScenes({account}: {account: NonNullable<Extract<VersoAccountRead
           const entity = document.entities[ref];
           if (!entity) return null;
           return <li key={ref} data-entity-ref={ref} data-subject-ref={entity.subject?.subject_ref ?? undefined}>
-            {entity.title}{entity.subject ? <span className="oi-state"> · {entity.subject.subject_ref}</span> : null}
+            {subjectLabel(entity,"Unnamed entity")}{entity.subject ? <span className="oi-state"> · {entity.subject.presentation_role}</span> : null}
           </li>;
         })}</ul>
       </details>)}
@@ -349,7 +351,7 @@ function SceneGraph({document}: {document: ExpressionDocument}) {
         return <g key={entity.entity_ref} className="expression-verso__graph-node" data-entity-ref={entity.entity_ref}
           data-subject-ref={entity.subject?.subject_ref ?? undefined}
           data-text-block={lines ? "true" : undefined}>
-          <title>{entity.title}{entity.subject ? ` — ${entity.subject.subject_ref}` : ""}</title>
+          <title>{subjectLabel(entity,"Unnamed entity")}{entity.subject ? ` · ${entity.subject.presentation_role}` : ""}</title>
           <circle cx={position.x} cy={position.y} r={0.055}/>
           {lines
             ? <text className="expression-verso__graph-text" x={position.x + 0.075} y={position.y + 0.018} textAnchor="start">
@@ -386,27 +388,27 @@ function AccountSources({account, onOpenSourceRef}: {account: NonNullable<Extrac
   return <section className="expression-verso__region" aria-label="Exact sources" data-region="sources" data-source-count={sources.length}>
     <h4>Exact sources · {sources.length}</h4>
     {sources.length === 0 && <p className="oi-note">No exact source is disclosed for this subject.</p>}
-    <dl className="expression-verso__sources">{sources.map(source => <div key={source.ref} data-source-ref={source.ref} data-source-availability={source.availability ?? "available"}>
+    <details><summary>Inspect exact sources</summary><dl className="expression-verso__sources">{sources.map(source => <div key={source.ref} data-source-ref={source.ref} data-source-availability={source.availability ?? "available"}>
       <dt>{onOpenSourceRef
         ? <button type="button" className="oi-ref expression-verso__source-open" title={`Open ${source.ref} — resolved through the files seam before it opens`} onClick={() => onOpenSourceRef(source.ref)}>{source.ref}</button>
         : <code>{source.ref}</code>}</dt>
       <dd>{source.availability ?? "available"}{source.revision ? ` · ${source.revision}` : ""}</dd>
-    </div>)}</dl>
+    </div>)}</dl></details>
   </section>;
 }
 
-/** The actual page content through the knowledge client — verbatim, bounded,
- * with the provider/authority/revision the read discloses. */
+/** A formatted preview of the actual native page. Full owner bytes and facet
+ * remain paired in the account and its deliberate source disclosure. */
 function AccountPage({account, onOpenPage}: {account: NonNullable<Extract<VersoAccountReading, {state: "ready"}>["account"]>; onOpenPage?: (ref: string, title?: string) => void}) {
   const page = account.page;
   return <section className="expression-verso__region" aria-label="Page content" data-region="page" data-page-present={page ? "true" : "false"}>
     <h4>Page</h4>
     {page ? <>
-      <p className="oi-note">{page.provider} · {page.authority}{page.revision ? ` · ${page.revision}` : ""}</p>
       {page.content
-        ? <pre className="expression-verso__page-body">{page.content}</pre>
+        ? <><ReadingBody reading={page} previewOnly={Boolean(page.document)}/>{Boolean(page.document)&&<p className="oi-note">Formatted page preview. Open the page to read its full content and follow its links.</p>}</>
         : <p className="oi-note" data-page-content="absent">The read disclosed no page body — the resource exists but carries no content through this reading.</p>}
-      {onOpenPage && <button type="button" className="oi-action" onClick={() => onOpenPage(account.subject.ref, account.subject.title)}>Open the page in a centre surface</button>}
+      <details><summary>Source details</summary><pre>{JSON.stringify(page,null,2)}</pre></details>
+      {onOpenPage && <button type="button" className="oi-action" data-page-ref={account.subject.ref} onClick={() => onOpenPage(account.subject.ref, account.subject.title)}>Open the page in a centre surface</button>}
     </> : <p className="oi-note" data-page-present="absent">
       {account.subject.ref.startsWith("expression:")
         ? "The subject is an Expression, not a wiki page; its content lives in its document and its sources."
@@ -414,15 +416,23 @@ function AccountPage({account, onOpenPage}: {account: NonNullable<Extract<VersoA
   </section>;
 }
 
-/** The subject's exact source file, when the face carries one — actual
- * content, verbatim and bounded. */
-function AccountSourceFile({account}: {account: NonNullable<Extract<VersoAccountReading, {state: "ready"}>["account"]>}) {
+const SOURCE_FILE_PREVIEW_BUDGET = 4000;
+
+/** The subject's complete native file reading. Budget only the visible
+ * preview; the original content and identity remain available together. */
+function AccountSourceFile({account, onOpenSourceRef}: {account: NonNullable<Extract<VersoAccountReading, {state: "ready"}>["account"]>; onOpenSourceRef?: (ref: string) => void}) {
   const file = account.sourceFile;
+  const preview = file && file.content.length > SOURCE_FILE_PREVIEW_BUDGET;
   return <section className="expression-verso__region" aria-label="Source file" data-region="source-file" data-source-file-present={file ? "true" : "false"}>
     <h4>Source file</h4>
     {file ? <>
-      <p className="oi-note"><span className="oi-ref">{file.location.path ?? file.location.ref}</span> · revision {file.revision}</p>
-      <pre className="expression-verso__page-body">{file.content}</pre>
+      <pre className="expression-verso__page-body">{preview ? file.content.slice(0, SOURCE_FILE_PREVIEW_BUDGET) : file.content}</pre>
+      {preview && <p className="oi-note">Source file preview. Inspect the full source to read all content.</p>}
+      <details><summary>{preview ? "Inspect the full source file" : "Source file details"}</summary>
+        <p className="oi-note"><span className="oi-ref">{file.location.path ?? file.location.ref}</span> · revision {file.revision}</p>
+        {preview && <pre className="expression-verso__page-body">{file.content}</pre>}
+      </details>
+      {onOpenSourceRef && <button type="button" className="oi-action" data-source-ref={file.location.ref} onClick={() => onOpenSourceRef(file.location.ref)}>Open the source file</button>}
     </> : <p className="oi-note" data-source-file-present="absent">No exact source file stands under this subject.</p>}
   </section>;
 }

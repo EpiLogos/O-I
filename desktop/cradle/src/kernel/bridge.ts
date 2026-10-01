@@ -62,6 +62,13 @@ export interface KernelOpCall {
  * so every outcome carries its receipts array — an operation that changed
  * nothing honestly shows an empty list. */
 function normaliseOutcome(outcome: KernelOutcome): KernelOutcome {
+  if (outcome.result === "hosted_native") {
+    const native = outcome.outcome;
+    // Native cursor belongs to (World, owner generation). Keep it inspectable
+    // without feeding it into this body's independent kernel event stream.
+    return {...native,receipts:[],native_owner:{world_ref:outcome.source_world_ref,
+      owner_generation:outcome.owner_generation,receipts:native.receipts??[]}};
+  }
   return { ...outcome, receipts: outcome.receipts ?? [] };
 }
 
@@ -95,6 +102,7 @@ export async function kernelOp(
 export async function eventsSince(
   transport: KernelTransportStatus,
   sinceSeq: number,
+  signal?: AbortSignal,
 ): Promise<KernelReceipt[]> {
   try {
     if (transport.kind === "tauri") {
@@ -103,7 +111,7 @@ export async function eventsSince(
       });
     }
     if (transport.kind === "bridge") {
-      const response = await fetch(`${transport.url}/events?since=${sinceSeq}`);
+      const response = await fetch(`${transport.url}/events?since=${sinceSeq}`, { signal });
       const body = (await response.json()) as { ok: boolean; receipts?: KernelReceipt[] };
       return body.receipts ?? [];
     }
@@ -134,9 +142,16 @@ export async function subscribeTopic(
     if (transport.kind === "bridge") {
       let cursor = 0;
       let stopped = false;
+      let paused = false;
+      let generation = 0;
+      let controller: AbortController | undefined;
       const poll = async () => {
-        while (!stopped) {
-          const receipts = await eventsSince(transport, cursor + 1);
+        const ownGeneration = ++generation;
+        controller = new AbortController();
+        const signal = controller.signal;
+        while (!stopped && !paused && ownGeneration === generation) {
+          const receipts = await eventsSince(transport, cursor + 1, signal);
+          if (stopped || paused || ownGeneration !== generation) return;
           for (const receipt of receipts) {
             cursor = Math.max(cursor, receipt.seq);
             onReceipt(receipt);
@@ -144,8 +159,31 @@ export async function subscribeTopic(
           await new Promise((resolve) => setTimeout(resolve, 250));
         }
       };
+      const pause = () => {
+        paused = true;
+        generation++;
+        controller?.abort();
+      };
+      const resume = () => {
+        if (stopped || !paused) return;
+        paused = false;
+        void poll();
+      };
+      // Navigation cancels a live request before the document goes away.
+      // A restored page resumes at its retained native cursor.
+      if (typeof window !== "undefined") {
+        window.addEventListener("pagehide", pause);
+        window.addEventListener("pageshow", resume);
+      }
       void poll();
-      return { unsubscribe: () => { stopped = true; } };
+      return { unsubscribe: () => {
+        stopped = true;
+        pause();
+        if (typeof window !== "undefined") {
+          window.removeEventListener("pagehide", pause);
+          window.removeEventListener("pageshow", resume);
+        }
+      } };
     }
   } catch {
     // No topic, no subscription — the pull models still work.

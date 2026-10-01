@@ -1,0 +1,4 @@
+.lib-source-detail { white-space: normal; overflow-wrap: anywhere; max-width: 100%; }
+.lib-source-detail summary { cursor: pointer; color: var(--oi-muted-2); }
+.lib-source-detail dl { margin: 8px 0; }
+.lib-source-detail dd { min-width: 0; overflow-wrap: anywhere; }

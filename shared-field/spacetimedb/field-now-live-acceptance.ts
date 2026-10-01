@@ -58,27 +58,37 @@ function centralRoot(): string {
   // worktrees/env-2/o-i/shared-field/spacetimedb → ~/Central
   return join(here, '..', '..', '..', '..', '..');
 }
-const nowRecords: any[] = JSON.parse(execFileSync('ctrl', ['--json', 'action', 'run', 'central.now.list', '{}'], { cwd: centralRoot(), encoding: 'utf8', timeout: 30_000 })).data.records;
-const macRoot = nowRecords.find((r) => r.workcell_ref === 'workcell:mac' && r.horizon === 'workcell-root' && r.lifecycle === 'active');
+const localRoot = process.env.OI_ACCEPTANCE_CENTRAL_ROOT ?? centralRoot();
+function localRead(action: string): any {
+  const reply = JSON.parse(execFileSync('ctrl', ['--json', '--root', localRoot, 'action', 'run', action, '{}'], { cwd: localRoot, encoding: 'utf8', timeout: 30_000 }));
+  assert.equal(reply.ok, true, `native local ${action}: ${JSON.stringify(reply.error)}`);
+  return reply.data;
+}
+const nowRecords: any[] = localRead('central.now.list').records;
+const macRoot = nowRecords.find((r) => r.workcell_ref === 'workcell:mac' && (process.env.OI_ACCEPTANCE_MAC_ROOT_NOW ? r.now_ref === process.env.OI_ACCEPTANCE_MAC_ROOT_NOW : r.horizon === 'workcell-root') && !r.parent_now_ref && r.lifecycle === 'active');
 assert.ok(macRoot, 'the Mac Workcell root NOW is readable from Central');
 const macChild = nowRecords.find((r) => r.parent_now_ref === macRoot.now_ref && r.lifecycle === 'active');
 assert.ok(macChild, 'an active child NOW of the Mac root is readable from Central');
-const dayReading = JSON.parse(execFileSync('ctrl', ['--json', 'action', 'run', 'central.day.read', '{}'], { cwd: centralRoot(), encoding: 'utf8', timeout: 30_000 })).data;
+const dayReading = localRead('central.day.read');
 
-let omarchyRootRef = process.env.OI_OMARCHY_ROOT_NOW_REF;
-let omarchySource = omarchyRootRef ? 'env' : 'unread';
-if (!omarchyRootRef) {
-  try {
-    const out = execFileSync('ssh', ['-o', 'ConnectTimeout=6', '-o', 'BatchMode=yes', 'oi-omarchy', 'export PATH=$HOME/.local/bin:$PATH; cd ~/Central && ctrl --json action run central.now.list "{}"'], { encoding: 'utf8', timeout: 30_000 });
-    const root = JSON.parse(out).data.records.find((r: any) => r.workcell_ref === 'workcell:omarchy' && r.horizon === 'workcell-root' && r.lifecycle === 'active');
-    if (root) { omarchyRootRef = root.now_ref; omarchySource = 'omarchy central.now.list over the tailnet'; }
-  } catch { /* unreachable: fall through */ }
-}
-if (!omarchyRootRef) { omarchyRootRef = `central:now:control:root:omarchy-root-unread-${RUN}`; omarchySource = 'synthetic (Omarchy unreachable)'; }
-// No child NOW is allocated on Omarchy by this walk (that is an authenticated
-// Central lifecycle mutation on the other machine); the child ref is
-// acceptance-scoped under Omarchy's real root.
-const OMARCHY_CHILD = `central:now:control:root:field-now-acceptance-${RUN}`;
+// Acceptance requires the actual remote owner. A missing host/source is an
+// unavailable branch, never a synthetic root or child that can turn green.
+const shellQuote = (text: string) => `'${text.replaceAll("'", "'\\''")}'`;
+const remoteRoot = process.env.OI_ACCEPTANCE_OMARCHY_CENTRAL_ROOT ?? '/home/frank/Central';
+const omarchyRead = (action: string) => {
+  const reply = JSON.parse(execFileSync('ssh', ['-o', 'ConnectTimeout=6', '-o', 'BatchMode=yes', 'oi-omarchy', `PATH=/home/frank/.local/bin:$PATH oi central --json --root ${shellQuote(remoteRoot)} action run ${shellQuote(action)} '{}'`], { encoding: 'utf8', timeout: 30_000 }));
+  assert.equal(reply.ok, true, `native remote ${action}: ${JSON.stringify(reply.error)}`);
+  return reply.data;
+};
+const remoteRecords: any[] = omarchyRead('central.now.list').records;
+const omarchyRoot = remoteRecords.find((r) => r.workcell_ref === 'workcell:omarchy' && (process.env.OI_ACCEPTANCE_OMARCHY_ROOT_NOW ? r.now_ref === process.env.OI_ACCEPTANCE_OMARCHY_ROOT_NOW : r.horizon === 'workcell-root') && !r.parent_now_ref && r.lifecycle === 'active');
+assert.ok(omarchyRoot, 'the remote native Workcell root NOW is available');
+const omarchyChild = remoteRecords.find((r) => r.parent_now_ref === omarchyRoot.now_ref && r.lifecycle === 'active');
+assert.ok(omarchyChild, 'an actual remote native child NOW is available');
+const remoteDayReading = omarchyRead('central.day.read');
+const omarchyRootRef = omarchyRoot.now_ref;
+const omarchySource = 'registered native oi central over the tailnet';
+const OMARCHY_CHILD = omarchyChild.now_ref;
 
 /* ---------- identities ---------- */
 
@@ -144,11 +154,11 @@ steps.push('B projected its own Omarchy child NOW with expected_revision=1 → r
 /* Refusals. */
 const refusals: Record<string, string> = {};
 refusals.stale = await refused(() => rb.putFieldNow({ fieldRef: FIELD, actorParticipantRef: PB, expectedRevision: 1n, contractJson: JSON.stringify({ ...r2, revision: 2 }) }), 'stale expected_revision', /moved on: field is at revision 2, writer expected 1/);
-const rootByB = advanceFieldNow(r2, { expected_revision: 2, projected_by: PB, upsert_root_now_refs: [{ now_ref: omarchyRootRef, workcell_ref: 'workcell:omarchy', world_ref: 'control:root', revision: 'unknown' }] });
+const rootByB = advanceFieldNow(r2, { expected_revision: 2, projected_by: PB, upsert_root_now_refs: [{ now_ref: omarchyRootRef, workcell_ref: 'workcell:omarchy', world_ref: 'control:root', revision: omarchyRoot.revision.revision }] });
 refusals.contributor_root = await refused(() => rb.putFieldNow({ fieldRef: FIELD, actorParticipantRef: PB, expectedRevision: 2n, contractJson: JSON.stringify(rootByB) }), 'contributor projecting a root NOW', /Only the field owner may project or withdraw root NOW refs/);
 const hijack = advanceFieldNow(r2, { expected_revision: 2, projected_by: PB, withdraw_child_now_refs: [macChild.now_ref] });
 refusals.foreign_entry = await refused(() => rb.putFieldNow({ fieldRef: FIELD, actorParticipantRef: PB, expectedRevision: 2n, contractJson: JSON.stringify(hijack) }), 'contributor withdrawing another participant\'s child NOW', /may only project or withdraw its own entries/);
-const byC = advanceFieldNow(r2, { expected_revision: 2, projected_by: PB, upsert_child_now_refs: [{ now_ref: `central:now:control:root:c-${RUN}`, parent_now_ref: omarchyRootRef, workcell_ref: 'workcell:omarchy', state: 'active' }] });
+const byC = advanceFieldNow(r2, { expected_revision: 2, projected_by: PB, upsert_child_now_refs: [{ now_ref: OMARCHY_CHILD, parent_now_ref: omarchyRootRef, workcell_ref: 'workcell:omarchy', state: 'waiting' }] });
 refusals.non_participant_as_b = await refused(() => rc.putFieldNow({ fieldRef: FIELD, actorParticipantRef: PB, expectedRevision: 2n, contractJson: JSON.stringify(byC) }), 'non-participant impersonating B', /Caller is not bound to Participant/);
 refusals.non_participant_as_owner = await refused(() => rc.putFieldNow({ fieldRef: FIELD, actorParticipantRef: '', expectedRevision: 2n, contractJson: JSON.stringify(byC) }), 'non-participant as owner', /Caller is not owner/);
 // Bypass the client validator: the server itself refuses local-only material.
@@ -183,21 +193,31 @@ const interval = { start: `${civil}T00:00:00.000Z`, end: new Date(Date.parse(`${
 const d1 = advanceFieldDay(null, {
   expected_revision: 0, projected_by: PA, field_ref: FIELD, interval, audience: { visibility: 'restricted' },
   temporal_policy_provenance: { source_system: 'oi', ref: 'oi:field-time-policy:utc-day', revision: '1' },
-  upsert_source_day_refs: [{ day_ref: dayReading.day_ref, workcell_ref: 'workcell:mac' }],
+  upsert_source_day_refs: [{ day_ref: dayReading.day_ref, world_ref: `world:acceptance:${RUN}:a`, workcell_ref: 'workcell:mac' }],
   upsert_now_refs: [{ now_ref: macChild.now_ref }],
 });
 await ra.putFieldDay({ fieldRef: FIELD, actorParticipantRef: '', expectedRevision: 0n, contractJson: JSON.stringify(d1) });
 await waitUntil(() => Number(dayOf(b)?.revision) === 1, 'B to read FieldDay r1');
-const d2 = advanceFieldDay(JSON.parse(dayOf(b).contractJson), { expected_revision: 1, projected_by: PB, upsert_now_refs: [{ now_ref: OMARCHY_CHILD }] });
+const d2 = advanceFieldDay(JSON.parse(dayOf(b).contractJson), { expected_revision: 1, projected_by: PB, upsert_source_day_refs: [{ day_ref: remoteDayReading.day_ref, world_ref: `world:acceptance:${RUN}:b`, workcell_ref: 'workcell:omarchy' }], upsert_now_refs: [{ now_ref: OMARCHY_CHILD }] });
 await rb.putFieldDay({ fieldRef: FIELD, actorParticipantRef: PB, expectedRevision: 1n, contractJson: JSON.stringify(d2) });
 await waitUntil(() => Number(dayOf(a)?.revision) === 2, 'A to read FieldDay r2');
 const policyByB = advanceFieldDay(d2, { expected_revision: 2, projected_by: PB, temporal_policy_provenance: { source_system: 'oi', ref: 'oi:field-time-policy:b-local', revision: '1' } });
 refusals.day_policy_by_contributor = await refused(() => rb.putFieldDay({ fieldRef: FIELD, actorParticipantRef: PB, expectedRevision: 2n, contractJson: JSON.stringify(policyByB) }), 'contributor changing FieldDay policy', /Only the field owner may change/);
 refusals.day_stale = await refused(() => rb.putFieldDay({ fieldRef: FIELD, actorParticipantRef: PB, expectedRevision: 1n, contractJson: JSON.stringify(d2) }), 'stale FieldDay', /FieldDay moved on/);
+const foreignDay = JSON.parse(JSON.stringify(d2));
+foreignDay.revision = 3;
+foreignDay.projected_source_day_refs[0].projected_by = PB;
+refusals.day_foreign_tuple = await refused(() => rb.putFieldDay({ fieldRef: FIELD, actorParticipantRef: PB, expectedRevision: 2n, contractJson: JSON.stringify(foreignDay) }), 'changing another world’s personal Day attribution', /may only project or withdraw its own entries/);
+const duplicateDay = JSON.parse(JSON.stringify(d2));
+duplicateDay.revision = 3;
+duplicateDay.projected_source_day_refs.push({ ...duplicateDay.projected_source_day_refs[1] });
+refusals.day_duplicate_tuple = await refused(() => rb.putFieldDay({ fieldRef: FIELD, actorParticipantRef: PB, expectedRevision: 2n, contractJson: JSON.stringify(duplicateDay) }), 'duplicate qualified personal Day', /more than once/);
 const servedDay = JSON.parse(dayOf(a).contractJson);
+assert.equal(servedDay.projected_source_day_refs.length, 2, 'both native personal Days survive even when their bare references match');
+assert.equal(new Set(servedDay.projected_source_day_refs.map((entry: any) => entry.world_ref)).size, 2, 'personal Days retain their distinct worlds');
 assert.deepEqual(servedDay.interval, interval, 'FieldDay keeps its own aggregation interval');
 assert.equal(servedDay.projected_source_day_refs[0].day_ref, dayReading.day_ref, 'the local source Day ref stays intact');
-steps.push('FieldDay r1 (A: utc-day interval + real local Day ref) → r2 (B adds its own NOW ref); contributor policy change and stale write refused');
+steps.push('FieldDay r1 (A: interval + actual qualified local Day) → r2 (B adds actual qualified remote Day and NOW); foreign tuple, duplicate tuple, policy change and stale write refused');
 
 /* ---------- the desktop doorway (field.sh) reads the same revision ---------- */
 
@@ -286,8 +306,10 @@ const receipt = {
     mac_child_now_ref: macChild.now_ref,
     omarchy_root_now_ref: omarchyRootRef,
     omarchy_root_source: omarchySource,
-    omarchy_child_now_ref: `${OMARCHY_CHILD} (acceptance-scoped)`,
+    omarchy_child_now_ref: OMARCHY_CHILD,
     source_day_ref: dayReading.day_ref,
+    remote_source_day_ref: remoteDayReading.day_ref,
+    roots_explicit: { local: localRoot, remote: remoteRoot },
   },
   field_now_revisions: { owner_r1: 1, contributor_r2: 2, contributor_cli_r3: 3, revocation_r4: Number(nowOf(a).revision) },
   field_day_revisions: { owner_r1: 1, contributor_r2: 2, revocation: Number(dayOf(a).revision) },

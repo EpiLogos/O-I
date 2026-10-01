@@ -1,0 +1,979 @@
+{
+  "schema": "oi.native-expression-evidence-fixture/v1",
+  "database": "oi-shared-field",
+  "source_receipt": "episode-expression-publication.json",
+  "source_effects_replayed": false,
+  "composition": {
+    "schema": "oi.expression-composition/v1",
+    "expression_ref": "expression:shared-continuation-20260930",
+    "revision": 10,
+    "title": "Continue one shared undertaking",
+    "scenes": [
+      {
+        "scene_ref": "expression:shared-continuation-20260930:scene:main",
+        "revision": 8,
+        "title": "Main",
+        "entity_refs": [
+          "expression:shared-continuation-20260930:entity:role.self",
+          "expression:shared-continuation-20260930:entity:role.artifact",
+          "expression:shared-continuation-20260930:entity:role.goal",
+          "expression:shared-continuation-20260930:entity:m.fx-scene-work-passage.station-a",
+          "expression:shared-continuation-20260930:entity:m.fx-scene-work-passage.station-b",
+          "expression:shared-continuation-20260930:entity:ann",
+          "expression:shared-continuation-20260930:entity:bea",
+          "expression:shared-continuation-20260930:entity:bo",
+          "expression:shared-continuation-20260930:entity:check",
+          "expression:shared-continuation-20260930:entity:communication"
+        ],
+        "presentation": {
+          "schema": "oi.journey-scene/v1",
+          "scene": {
+            "automation": [],
+            "character": "Work moves from A to B: the object travels between stations while its bearer keeps pace.",
+            "composition": {
+              "carryStation": false,
+              "carryTint": true,
+              "focus": "travelling",
+              "focusDuration": 6,
+              "frequencyDriver": "manual",
+              "layout": "free",
+              "plane": "XY"
+            },
+            "duration": 12,
+            "engine": {
+              "paletteSource": "custom",
+              "grainProfile": true,
+              "backgroundMode": "vignette",
+              "resonatorMode": "resonator",
+              "focusOrder": "listed",
+              "dotShape": "circle",
+              "fontFamily": "system-ui, -apple-system, sans-serif",
+              "fontWeight": 900,
+              "resonanceEnabled": true,
+              "morphEnabled": true,
+              "trajectory": "vortexSpiral",
+              "driveShape": "sine",
+              "autoOscillate": true,
+              "relationalEnabled": false,
+              "relationalMode": "orbital",
+              "pointerMode": "repel",
+              "pointerClick": "pulse",
+              "pointerClickStrength": 2.2,
+              "pointerClickRadius": 0.45,
+              "colorMode": "linearGradient",
+              "colorEnabled": true,
+              "mediumPlane": "vertical",
+              "autoSweep": false,
+              "sweepDirection": "ascent",
+              "autoFitSizes": true,
+              "collisionEnabled": false,
+              "collisionMode": "obstacle",
+              "inkMode": "blackOnWhite",
+              "mediumDimension": "2D",
+              "mediumEnabled": false,
+              "pairwiseEnabled": false
+            },
+            "entities": [
+              {
+                "force": {
+                  "kind": "attract",
+                  "radius": 0.38,
+                  "spin": 0.05,
+                  "strength": 0.3
+                },
+                "id": "expression:shared-continuation-20260930:entity:role.self",
+                "kind": "formation",
+                "locked": false,
+                "name": "Ada \u00b7 Ann\u2019s native Direct agent",
+                "position": {
+                  "x": -0.85,
+                  "y": -0.22,
+                  "z": 0
+                },
+                "role": "self",
+                "rotation": 0,
+                "sequence": {
+                  "clock": "seconds",
+                  "enabled": false,
+                  "steps": [
+                    {
+                      "hold": 3,
+                      "id": "expression:fx-scene-work-passage:entity:self:rest",
+                      "position": null,
+                      "shape": "text",
+                      "text": "\u25ef",
+                      "transition": 1
+                    }
+                  ]
+                },
+                "shape": "text",
+                "share": 1,
+                "size": {
+                  "x": 0.62,
+                  "y": 0.72
+                },
+                "station": null,
+                "text": "a",
+                "tint": "#8a7f6c",
+                "tintWeight": 0.5
+              },
+              {
+                "force": {
+                  "kind": "attract",
+                  "radius": 0.45,
+                  "spin": 0,
+                  "strength": 0
+                },
+                "id": "expression:shared-continuation-20260930:entity:role.artifact",
+                "kind": "formation",
+                "locked": false,
+                "name": "Shared continuation guide",
+                "position": {
+                  "x": 0,
+                  "y": 0,
+                  "z": 0
+                },
+                "role": "artifact",
+                "rotation": 0,
+                "sequence": {
+                  "clock": "seconds",
+                  "easing": "smoothstep",
+                  "enabled": false,
+                  "order": "loop",
+                  "steps": [
+                    {
+                      "hold": 2,
+                      "id": "work-object-a",
+                      "objectState": {
+                        "force": {
+                          "kind": "attract",
+                          "radius": 0.3,
+                          "spin": 0,
+                          "strength": 0.3
+                        },
+                        "rotation": 0,
+                        "scale": 1,
+                        "size": {
+                          "x": 0.48,
+                          "y": 0.52
+                        },
+                        "tint": "#6f7d8c",
+                        "tintWeight": 0.7
+                      },
+                      "position": null,
+                      "shape": "text",
+                      "text": "\u25a4",
+                      "transition": 1.4
+                    },
+                    {
+                      "hold": 2,
+                      "id": "work-object-b",
+                      "name": "in progress",
+                      "objectState": {
+                        "force": {
+                          "kind": "vortex",
+                          "radius": 0.32,
+                          "spin": 0.3,
+                          "strength": 0.5
+                        },
+                        "rotation": 0,
+                        "scale": 1,
+                        "size": {
+                          "x": 0.52,
+                          "y": 0.56
+                        },
+                        "tint": "#6f7d8c",
+                        "tintWeight": 0.9
+                      },
+                      "position": null,
+                      "shape": "text",
+                      "text": "\u25a6",
+                      "transition": 1.4
+                    }
+                  ]
+                },
+                "shape": "text",
+                "share": 1,
+                "size": {
+                  "x": 0.48,
+                  "y": 0.52
+                },
+                "station": null,
+                "text": "\u25a4",
+                "tint": "#6f7d8c",
+                "tintWeight": 0.7
+              },
+              {
+                "force": {
+                  "kind": "attract",
+                  "radius": 0.45,
+                  "spin": 0,
+                  "strength": 0
+                },
+                "id": "expression:shared-continuation-20260930:entity:role.goal",
+                "kind": "formation",
+                "locked": false,
+                "name": "Continue without losing a proposal",
+                "position": {
+                  "x": 0,
+                  "y": 0.85,
+                  "z": 0
+                },
+                "role": "goal",
+                "rotation": 0,
+                "sequence": {
+                  "clock": "seconds",
+                  "enabled": false,
+                  "steps": [
+                    {
+                      "hold": 3,
+                      "id": "expression:fx-scene-work-passage:entity:goal:rest",
+                      "position": null,
+                      "shape": "text",
+                      "text": "\u25ce",
+                      "transition": 1
+                    }
+                  ]
+                },
+                "shape": "text",
+                "share": 0.5,
+                "size": {
+                  "x": 0.5,
+                  "y": 0.5
+                },
+                "station": null,
+                "text": "\u25ce",
+                "tint": "#c9a24e",
+                "tintWeight": 0.6
+              },
+              {
+                "force": {
+                  "kind": "attract",
+                  "radius": 0.3,
+                  "spin": 0,
+                  "strength": 0.8
+                },
+                "id": "expression:shared-continuation-20260930:entity:m.fx-scene-work-passage.station-a",
+                "kind": "pin",
+                "locked": false,
+                "name": "Station A",
+                "position": {
+                  "x": -0.9,
+                  "y": 0.12,
+                  "z": 0
+                },
+                "rotation": 0,
+                "sequence": {
+                  "clock": "seconds",
+                  "enabled": false,
+                  "steps": [
+                    {
+                      "hold": 3,
+                      "id": "step-09120b36-8010-4f89-90fb-6157a9a4fbb1",
+                      "position": null,
+                      "shape": "text",
+                      "text": "",
+                      "transition": 1
+                    }
+                  ]
+                },
+                "shape": "text",
+                "share": 0,
+                "size": {
+                  "x": 0.1,
+                  "y": 0.1
+                },
+                "station": null,
+                "text": "",
+                "tint": "#252720",
+                "tintWeight": 0
+              },
+              {
+                "force": {
+                  "kind": "attract",
+                  "radius": 0.3,
+                  "spin": 0,
+                  "strength": 0.8
+                },
+                "id": "expression:shared-continuation-20260930:entity:m.fx-scene-work-passage.station-b",
+                "kind": "pin",
+                "locked": false,
+                "name": "Station B",
+                "position": {
+                  "x": 0.9,
+                  "y": 0.12,
+                  "z": 0
+                },
+                "rotation": 0,
+                "sequence": {
+                  "clock": "seconds",
+                  "enabled": false,
+                  "steps": [
+                    {
+                      "hold": 3,
+                      "id": "step-482fca39-f3ff-4f63-9128-5218f0686a71",
+                      "position": null,
+                      "shape": "text",
+                      "text": "",
+                      "transition": 1
+                    }
+                  ]
+                },
+                "shape": "text",
+                "share": 0,
+                "size": {
+                  "x": 0.1,
+                  "y": 0.1
+                },
+                "station": null,
+                "text": "",
+                "tint": "#252720",
+                "tintWeight": 0
+              },
+              {
+                "force": {
+                  "kind": "attract",
+                  "radius": 0.38,
+                  "spin": 0.05,
+                  "strength": 0.3
+                },
+                "id": "expression:shared-continuation-20260930:entity:ann",
+                "kind": "formation",
+                "locked": false,
+                "name": "Ann \u00b7 Mac",
+                "position": {
+                  "x": -1.3,
+                  "y": 0.52,
+                  "z": 0
+                },
+                "role": "ann",
+                "rotation": 0,
+                "sequence": {
+                  "clock": "seconds",
+                  "enabled": false,
+                  "steps": [
+                    {
+                      "hold": 3,
+                      "id": "expression:shared-continuation-20260930:entity:ann:rest",
+                      "position": null,
+                      "shape": "text",
+                      "text": "\u25ef",
+                      "transition": 1
+                    }
+                  ]
+                },
+                "shape": "text",
+                "share": 1,
+                "size": {
+                  "x": 0.4,
+                  "y": 0.4
+                },
+                "station": null,
+                "text": "\u25ef",
+                "tint": "#536977",
+                "tintWeight": 0.5
+              },
+              {
+                "enabled": true,
+                "force": {
+                  "kind": "attract",
+                  "radius": 0.38,
+                  "spin": 0.05,
+                  "strength": 0.3
+                },
+                "id": "expression:shared-continuation-20260930:entity:bea",
+                "kind": "formation",
+                "locked": false,
+                "name": "Bea \u00b7 Omarchy",
+                "position": {
+                  "x": 1.3,
+                  "y": 0.52,
+                  "z": 0
+                },
+                "role": "bea",
+                "rotation": 0,
+                "sequence": {
+                  "clock": "seconds",
+                  "enabled": false,
+                  "steps": [
+                    {
+                      "hold": 3,
+                      "id": "expression:shared-continuation-20260930:entity:bea:rest",
+                      "position": null,
+                      "shape": "text",
+                      "text": "\u25ef",
+                      "transition": 1
+                    }
+                  ]
+                },
+                "shape": "text",
+                "share": 1,
+                "size": {
+                  "x": 0.4,
+                  "y": 0.4
+                },
+                "station": null,
+                "text": "\u25ef",
+                "tint": "#b0643c",
+                "tintWeight": 0.5
+              },
+              {
+                "force": {
+                  "kind": "attract",
+                  "radius": 0.38,
+                  "spin": 0.05,
+                  "strength": 0.3
+                },
+                "id": "expression:shared-continuation-20260930:entity:bo",
+                "kind": "formation",
+                "locked": false,
+                "name": "Bo \u00b7 Bea\u2019s native Direct agent",
+                "position": {
+                  "x": 0.85,
+                  "y": -0.22,
+                  "z": 0
+                },
+                "role": "bo",
+                "rotation": 0,
+                "sequence": {
+                  "clock": "seconds",
+                  "enabled": false,
+                  "steps": [
+                    {
+                      "hold": 3,
+                      "id": "expression:shared-continuation-20260930:entity:bo:rest",
+                      "position": null,
+                      "shape": "text",
+                      "text": "b",
+                      "transition": 1
+                    }
+                  ]
+                },
+                "shape": "text",
+                "share": 1,
+                "size": {
+                  "x": 0.4,
+                  "y": 0.4
+                },
+                "station": null,
+                "text": "b",
+                "tint": "#b0643c",
+                "tintWeight": 0.5
+              },
+              {
+                "force": {
+                  "kind": "attract",
+                  "radius": 0.38,
+                  "spin": 0.05,
+                  "strength": 0.3
+                },
+                "id": "expression:shared-continuation-20260930:entity:check",
+                "kind": "formation",
+                "locked": false,
+                "name": "Bo\u2019s concurrency check",
+                "position": {
+                  "x": 0.85,
+                  "y": -0.95,
+                  "z": 0
+                },
+                "role": "check",
+                "rotation": 0,
+                "sequence": {
+                  "clock": "seconds",
+                  "enabled": false,
+                  "steps": [
+                    {
+                      "hold": 3,
+                      "id": "expression:shared-continuation-20260930:entity:check:rest",
+                      "position": null,
+                      "shape": "text",
+                      "text": "\u2261",
+                      "transition": 1
+                    }
+                  ]
+                },
+                "shape": "text",
+                "share": 1,
+                "size": {
+                  "x": 0.4,
+                  "y": 0.4
+                },
+                "station": null,
+                "text": "\u2261",
+                "tint": "#536977",
+                "tintWeight": 0.5
+              },
+              {
+                "force": {
+                  "kind": "attract",
+                  "radius": 0.38,
+                  "spin": 0.05,
+                  "strength": 0.3
+                },
+                "id": "expression:shared-continuation-20260930:entity:communication",
+                "kind": "formation",
+                "locked": false,
+                "name": "Concurrent proposals",
+                "position": {
+                  "x": 0,
+                  "y": -0.6,
+                  "z": 0
+                },
+                "role": "communication",
+                "rotation": 0,
+                "sequence": {
+                  "clock": "seconds",
+                  "enabled": false,
+                  "steps": [
+                    {
+                      "hold": 3,
+                      "id": "expression:shared-continuation-20260930:entity:communication:rest",
+                      "position": null,
+                      "shape": "text",
+                      "text": "\u2194",
+                      "transition": 1
+                    }
+                  ]
+                },
+                "shape": "text",
+                "share": 1,
+                "size": {
+                  "x": 0.45,
+                  "y": 0.4
+                },
+                "station": null,
+                "text": "\u2194",
+                "tint": "#536977",
+                "tintWeight": 0.5
+              }
+            ],
+            "field": {
+              "background": "#ebe7dc",
+              "material": "print",
+              "palette": [
+                "#2a2d33",
+                "#6f7d8c",
+                "#b0643c"
+              ],
+              "params": {
+                "circulation": 1,
+                "contrast": 0.74,
+                "count": 40000,
+                "curlDepth": 0.2,
+                "densityPhase": 0.3,
+                "densityScale": 1,
+                "densityTether": 1,
+                "depth": 0.12,
+                "dispersion": 0.05,
+                "dominance": 0,
+                "edgeWeight": 0,
+                "elongation": 0.04,
+                "excitation": 0.6,
+                "frequency": 220,
+                "grain": 0.035,
+                "gravityFalloff": 2,
+                "gravitySoftening": 0.1,
+                "gravityX": 0,
+                "gravityY": 0,
+                "gravityZ": 0,
+                "halo": 0.13,
+                "irregularity": 0.35,
+                "opacity": 0.88,
+                "orientation": 0,
+                "pointerFalloff": 2,
+                "pointerRadius": 0.23,
+                "pointerStrength": 0.8,
+                "quadraticDrag": 0.2,
+                "recovery": 1.1,
+                "roundness": 0.3,
+                "size": 3.2,
+                "sizeBias": 1.6,
+                "snapRigidity": 1,
+                "softness": 0.15,
+                "speed": 0.5,
+                "speedLimit": 3,
+                "swirlRadius": 0.4,
+                "thermalJitter": 0,
+                "timeScale": 1,
+                "turbulence": 0.12,
+                "turbulenceScale": 1.2,
+                "vortexRadius": 0.4,
+                "zConfinement": 1
+              }
+            },
+            "id": "expression:shared-continuation-20260930:scene:main",
+            "morph": {
+              "depth": 1,
+              "dwell": 0.3,
+              "law": "theta",
+              "phiOffset": 0,
+              "phiRate": 0.13,
+              "thetaOffset": 0,
+              "thetaRate": 0.08
+            },
+            "name": "Main",
+            "text": [
+              {
+                "align": "left",
+                "body": "",
+                "id": "purpose",
+                "italic": "",
+                "kicker": "",
+                "role": "progressText",
+                "size": 19,
+                "title": "CONTINUE ONE SHARED UNDERTAKING",
+                "visible": true,
+                "width": 500,
+                "x": 0.26,
+                "y": 0.03
+              },
+              {
+                "align": "center",
+                "body": "",
+                "id": "ann-label",
+                "italic": "",
+                "kicker": "",
+                "role": "progressText",
+                "size": 16,
+                "title": "Ann \u00b7 Mac",
+                "visible": true,
+                "width": 200,
+                "x": 0.17,
+                "y": 0.22
+              },
+              {
+                "align": "center",
+                "body": "",
+                "id": "bea-label",
+                "italic": "",
+                "kicker": "",
+                "role": "progressText",
+                "size": 16,
+                "title": "Bea \u00b7 Omarchy",
+                "visible": true,
+                "width": 220,
+                "x": 0.6,
+                "y": 0.22
+              },
+              {
+                "align": "center",
+                "body": "",
+                "id": "ada-label",
+                "italic": "",
+                "kicker": "",
+                "role": "progressText",
+                "size": 16,
+                "title": "Ada \u2014 guide",
+                "visible": true,
+                "width": 250,
+                "x": 0.22,
+                "y": 0.65
+              },
+              {
+                "align": "center",
+                "body": "",
+                "id": "bo-label",
+                "italic": "",
+                "kicker": "",
+                "role": "progressText",
+                "size": 16,
+                "title": "Bo \u2014 concurrent edit",
+                "visible": true,
+                "width": 270,
+                "x": 0.49,
+                "y": 0.65
+              },
+              {
+                "align": "center",
+                "body": "",
+                "id": "artifact-label",
+                "italic": "",
+                "kicker": "",
+                "role": "progressText",
+                "size": 16,
+                "title": "Shared continuation guide",
+                "visible": true,
+                "width": 380,
+                "x": 0.29,
+                "y": 0.37
+              },
+              {
+                "align": "left",
+                "body": "",
+                "id": "status",
+                "italic": "",
+                "kicker": "",
+                "role": "progressText",
+                "size": 16,
+                "title": "Both returned \u00b7 Ada accepted \u00b7 Bo rebased and accepted",
+                "visible": true,
+                "width": 780,
+                "x": 0.12,
+                "y": 0.88
+              },
+              {
+                "align": "center",
+                "body": "",
+                "id": "goal-label",
+                "italic": "",
+                "kicker": "",
+                "role": "progressText",
+                "size": 15,
+                "title": "Keep every proposal attributable",
+                "visible": true,
+                "width": 400,
+                "x": 0.27,
+                "y": 0.14
+              },
+              {
+                "align": "center",
+                "body": "",
+                "id": "check-label",
+                "italic": "",
+                "kicker": "",
+                "role": "progressText",
+                "size": 15,
+                "title": "Bo\u2019s concurrency check",
+                "visible": true,
+                "width": 250,
+                "x": 0.52,
+                "y": 0.79
+              }
+            ],
+            "transition": 1.2,
+            "view": {
+              "mode": "2d",
+              "panX": 0,
+              "panY": 0,
+              "pitch": 0,
+              "yaw": 0,
+              "zoom": 1
+            }
+          }
+        }
+      }
+    ],
+    "entities": {
+      "expression:shared-continuation-20260930:entity:ann": {
+        "entity_ref": "expression:shared-continuation-20260930:entity:ann",
+        "revision": 3,
+        "title": "Ann \u00b7 Mac",
+        "subject": {
+          "subject_ref": "participant:shared-continuation:ann",
+          "native_owner": "central",
+          "presentation_role": "being",
+          "sources": []
+        },
+        "parameters": {
+          "glyph": {
+            "value": "O",
+            "automation": null
+          }
+        }
+      },
+      "expression:shared-continuation-20260930:entity:bea": {
+        "entity_ref": "expression:shared-continuation-20260930:entity:bea",
+        "revision": 3,
+        "title": "Bea \u00b7 Omarchy",
+        "subject": {
+          "subject_ref": "participant:shared-continuation:bea",
+          "native_owner": "central",
+          "presentation_role": "being",
+          "sources": []
+        },
+        "parameters": {
+          "glyph": {
+            "value": "O",
+            "automation": null
+          }
+        }
+      },
+      "expression:shared-continuation-20260930:entity:bo": {
+        "entity_ref": "expression:shared-continuation-20260930:entity:bo",
+        "revision": 3,
+        "title": "Bo \u00b7 Bea\u2019s native Direct agent",
+        "subject": {
+          "subject_ref": "world:shared-expression:bea/agent:expressed-9abe707e870547cc93e72a09d94ad142",
+          "native_owner": "central",
+          "presentation_role": "being",
+          "sources": []
+        },
+        "parameters": {
+          "glyph": {
+            "value": "O",
+            "automation": null
+          }
+        }
+      },
+      "expression:shared-continuation-20260930:entity:check": {
+        "entity_ref": "expression:shared-continuation-20260930:entity:check",
+        "revision": 3,
+        "title": "Bo\u2019s concurrency check",
+        "subject": {
+          "subject_ref": "world:shared-expression:bea/artifact:concurrency-check",
+          "native_owner": "central",
+          "presentation_role": "thing",
+          "sources": [
+            {
+              "ref": "central:source:control:root:Control/agents/now/flows/70c9700cf7cca7da292ac0c74b4dcac22ca490eaeff8acedc7b095c6c6a0b838.json",
+              "revision": "central.content-fnv1a64/v1:6207:34edfed2b1fb950b",
+              "availability": "available"
+            }
+          ]
+        },
+        "parameters": {
+          "glyph": {
+            "value": "O",
+            "automation": null
+          }
+        }
+      },
+      "expression:shared-continuation-20260930:entity:communication": {
+        "entity_ref": "expression:shared-continuation-20260930:entity:communication",
+        "revision": 8,
+        "title": "Concurrent proposals",
+        "subject": {
+          "subject_ref": "world:shared-expression:ann/artifact:shared-continuation-guide",
+          "native_owner": "central",
+          "presentation_role": "thing",
+          "sources": [
+            {
+              "ref": "central:source:control:root:Control/agents/now/flows/c654e76cad0c3f65bbab45c895996faeeb9bd95f70e9ff5a09511f05d24eef44.json",
+              "revision": "central.content-fnv1a64/v1:15878:582df44a1c361da9",
+              "availability": "available"
+            }
+          ]
+        },
+        "parameters": {
+          "glyph": {
+            "value": "O",
+            "automation": null
+          }
+        }
+      },
+      "expression:shared-continuation-20260930:entity:m.fx-scene-work-passage.station-a": {
+        "entity_ref": "expression:shared-continuation-20260930:entity:m.fx-scene-work-passage.station-a",
+        "revision": 2,
+        "title": "Station A",
+        "subject": null,
+        "parameters": {
+          "glyph": {
+            "value": "O",
+            "automation": null
+          }
+        }
+      },
+      "expression:shared-continuation-20260930:entity:m.fx-scene-work-passage.station-b": {
+        "entity_ref": "expression:shared-continuation-20260930:entity:m.fx-scene-work-passage.station-b",
+        "revision": 2,
+        "title": "Station B",
+        "subject": null,
+        "parameters": {
+          "glyph": {
+            "value": "O",
+            "automation": null
+          }
+        }
+      },
+      "expression:shared-continuation-20260930:entity:role.artifact": {
+        "entity_ref": "expression:shared-continuation-20260930:entity:role.artifact",
+        "revision": 8,
+        "title": "Shared continuation guide",
+        "subject": {
+          "subject_ref": "world:shared-expression:ann/artifact:shared-continuation-guide",
+          "native_owner": "central",
+          "presentation_role": "thing",
+          "sources": [
+            {
+              "ref": "central:source:control:root:Control/agents/now/flows/c654e76cad0c3f65bbab45c895996faeeb9bd95f70e9ff5a09511f05d24eef44.json",
+              "revision": "central.content-fnv1a64/v1:15878:582df44a1c361da9",
+              "availability": "available"
+            }
+          ]
+        },
+        "parameters": {
+          "glyph": {
+            "value": "O",
+            "automation": null
+          }
+        }
+      },
+      "expression:shared-continuation-20260930:entity:role.goal": {
+        "entity_ref": "expression:shared-continuation-20260930:entity:role.goal",
+        "revision": 3,
+        "title": "Continue without losing a proposal",
+        "subject": {
+          "subject_ref": "oi:field:shared-continuation-20260930",
+          "native_owner": "shared-field",
+          "presentation_role": "thing",
+          "sources": []
+        },
+        "parameters": {
+          "glyph": {
+            "value": "O",
+            "automation": null
+          }
+        }
+      },
+      "expression:shared-continuation-20260930:entity:role.self": {
+        "entity_ref": "expression:shared-continuation-20260930:entity:role.self",
+        "revision": 3,
+        "title": "Ada",
+        "subject": {
+          "subject_ref": "world:shared-expression:ann/agent:expressed-88d11962e8c34c2ea8209169c93f7012",
+          "native_owner": "central",
+          "presentation_role": "being",
+          "sources": []
+        },
+        "parameters": {
+          "glyph": {
+            "value": "O",
+            "automation": null
+          }
+        }
+      }
+    },
+    "relations": {
+      "expression:shared-continuation-20260930:relation:ada-guide": {
+        "binding_ref": "expression:shared-continuation-20260930:relation:ada-guide",
+        "relation": {
+          "ref": "central:return:control:root:6c06ed4b815f667dde995c7af6f6e7647b383dc9b791cfbc2351783b143a3127",
+          "revision": "central.content-fnv1a64/v1:10722:b938999c923a2e11",
+          "availability": "available"
+        },
+        "from_entity_ref": "expression:shared-continuation-20260930:entity:role.self",
+        "to_entity_ref": "expression:shared-continuation-20260930:entity:role.artifact",
+        "provenance": [
+          {
+            "ref": "central:return:control:root:6c06ed4b815f667dde995c7af6f6e7647b383dc9b791cfbc2351783b143a3127",
+            "revision": "central.content-fnv1a64/v1:10722:b938999c923a2e11",
+            "availability": "available"
+          }
+        ]
+      },
+      "expression:shared-continuation-20260930:relation:bo-rebased-guide": {
+        "binding_ref": "expression:shared-continuation-20260930:relation:bo-rebased-guide",
+        "relation": {
+          "ref": "central:return:control:root:0797c05a2f65c693308875f6a51fc55c00097cec8224130c8c429f6a41aed91e",
+          "revision": "central.content-fnv1a64/v1:12921:15078911df4181e2",
+          "availability": "available"
+        },
+        "from_entity_ref": "expression:shared-continuation-20260930:entity:bo",
+        "to_entity_ref": "expression:shared-continuation-20260930:entity:role.artifact",
+        "provenance": [
+          {
+            "ref": "central:return:control:root:0797c05a2f65c693308875f6a51fc55c00097cec8224130c8c429f6a41aed91e",
+            "revision": "central.content-fnv1a64/v1:12921:15078911df4181e2",
+            "availability": "available"
+          }
+        ]
+      }
+    },
+    "selection": {
+      "scene_ref": "expression:shared-continuation-20260930:scene:main",
+      "entity_ref": null
+    },
+    "provenance": [],
+    "representations": []
+  }
+}

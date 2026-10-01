@@ -222,6 +222,7 @@ export type KernelOp =
   | {op: "native_expression"; request: NativeExpressionRequest}
   | {op: "setup"; request: import("../configuration/adoptionController").AdoptionRequest}
   | {op:"being_encounter";request:Record<string,unknown>}
+  | {op:"hosted_native";source_world_ref:string;request:KernelOp}
   | {op:"expression";request:import("../expression/types").ExpressionRequest}
   | {op:"expression_recovery";request:import("../expressions/recoveryTypes").ExpressionRecoveryRequest}
   | {op:"graph";project?:string;query:string;options?:import("../knowledge/graph").GraphReadOptions}
@@ -368,6 +369,7 @@ export type KernelOp =
  * The Rust seam serialises `{ receipts, #[serde(flatten)] result }`, so on
  * the wire the tag and the payload sit flat beside `receipts`. */
 export type KernelOpResult =
+  | {result:"hosted_native";source_world_ref:string;owner_generation:string;outcome:KernelOutcome}
   | {result:"file_last_reading";recovery:RetainedFileRecovery}
   | {result:"dictation_reading";stipulation:DictationStipulation}
   | {result:"dictation_prepared";capture_ref:string;stipulation:DictationStipulation}
@@ -498,6 +500,7 @@ export type KernelOpResult =
  * (receipts are omitted on the wire when empty — an operation that
  * changed nothing). */
 export type KernelOutcome = KernelOpResult & {
+  native_owner?: {world_ref:string;owner_generation:string;receipts:KernelReceipt[]};
   receipts?: KernelReceipt[];
 };
 

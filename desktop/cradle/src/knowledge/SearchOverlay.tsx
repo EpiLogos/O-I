@@ -19,6 +19,8 @@ import {listFlowInstances} from "../flow/instances";
 import {readConversations} from "../workspace/left/ChatRows";
 import {nativeAgentOwner} from "../agency/nativeAgentClient";
 import {KnowledgeStatus} from "./KnowledgeStatus";
+import {NativeSearchHit,SearchReadingFailure,searchHitTitle,searchHitDescription,searchKindLabel,searchOwnerLabel} from "./searchPresentation";
+import {subjectLabel} from "../../../../shared-field/presentation-text.mjs";
 export {normalizeResolution} from "./searchProgress";
 
 /** The palette's typed tabs (10-SIDEBARS §3.1): All · Chats · Agents · Files
@@ -54,8 +56,7 @@ const message = (error: unknown) => error instanceof Error ? error.message : Str
 const evidenceSummary = (data: unknown): {name?: string; why?: string} => {
   if (!data || typeof data !== "object") return {};
   const reading = data as {resource?: unknown; provider?: unknown; authority?: unknown; evidence?: unknown; why_selected?: unknown};
-  const name = [reading.provider, reading.resource, reading.authority].filter((value): value is string => typeof value === "string").join(" · ")
-    + (Array.isArray(reading.evidence) ? ` · ${reading.evidence.length} ${reading.evidence.length === 1 ? "item" : "items"}` : "");
+  const name = Array.isArray(reading.evidence) ? `${reading.evidence.length} ${reading.evidence.length === 1 ? "item" : "items"}` : "";
   return {name: name || undefined, why: typeof reading.why_selected === "string" ? reading.why_selected : undefined};
 };
 
@@ -114,7 +115,7 @@ export function SearchOverlay({ project, onClose, onOpen, leader, onLeaderChange
     let live = true;
     void nativeAgentOwner(transport, project)({action: "roster"}).then(value => {
       const roster = value as {profiles?: {profile?: {ref?: string; name?: string; purpose?: string; agent_ref?: string}}[]};
-      if (live) setAgents({rows: (roster.profiles ?? []).map(entry => ({ref: entry.profile?.ref ?? entry.profile?.agent_ref ?? "", name: entry.profile?.name ?? entry.profile?.agent_ref ?? "Agent", purpose: entry.profile?.purpose ?? ""})).filter(row => row.ref)});
+      if (live) setAgents({rows: (roster.profiles ?? []).map((entry,index) => ({ref: entry.profile?.ref ?? entry.profile?.agent_ref ?? "", name: subjectLabel(entry.profile,`Unnamed agent ${index+1}`), purpose: entry.profile?.purpose ?? ""})).filter(row => row.ref)});
     }).catch(failure => { if (live) setAgents({error: `Couldn't read the agent roster: ${message(failure)}`}); });
     return () => { live = false; };
   }, [tab, transport, project]);
@@ -128,18 +129,19 @@ export function SearchOverlay({ project, onClose, onOpen, leader, onLeaderChange
   const needle = query.trim().toLowerCase();
   const matches = (...values: string[]) => !needle || values.some(value => value.toLowerCase().includes(needle));
   const isFileHit = (hit: KnowledgeHit) => hit.address.kind === "source" || /file|source|document/i.test(hit.kind);
-  const typedItems: TypedItem[] = tab === "chats" ? (chats.rows ?? []).filter(row => matches(row.title, row.project)).map(row => ({key: `${row.project}:${row.ref}`, label: row.title, detail: `Chat · ${row.project || "Central"}`, open: () => typed?.onOpenChat?.(row)}))
+  const typedItems: TypedItem[] = tab === "chats" ? (chats.rows ?? []).filter(row => matches(row.title, row.project)).map((row,index) => ({key: `${row.project}:${row.ref}`, label: subjectLabel(row,`Unnamed chat ${index+1}`), detail: `Chat · ${row.project || "Central"}`, open: () => typed?.onOpenChat?.(row)}))
     : tab === "agents" ? (agents.rows ?? []).filter(row => matches(row.name, row.purpose)).map(row => ({key: row.ref, label: row.name, detail: row.purpose || "Agent", open: () => typed?.onOpenAgents?.()}))
-    : tab === "files" ? hits.filter(isFileHit).map(hit => ({key: searchKeys([hit], [])[0], label: hit.label, detail: `${hit.kind} · ${hit.snippet}`, open: () => onOpen(hit.address, hit.label, project)}))
-    : tab === "flows" ? (flows.rows ?? []).filter(row => matches(row.name)).map(row => ({key: row.location.ref, label: row.name.replace(/\.html$/i, ""), detail: `Flow · ${row.location.path}`, open: () => typed?.onOpenFlow?.(row)}))
+    : tab === "files" ? hits.filter(isFileHit).map((hit,index) => ({key: searchKeys([hit], [])[0], label: searchHitTitle(hit,index), detail: searchHitDescription(hit), open: () => onOpen(hit.address, searchHitTitle(hit,index), project)}))
+    : tab === "flows" ? (flows.rows ?? []).filter(row => matches(row.name)).map((row,index) => ({key: row.location.ref, label: subjectLabel(row,`Unnamed flow ${index+1}`).replace(/\.html$/i, ""), detail: "Flow", open: () => typed?.onOpenFlow?.(row)}))
     : tab === "actions" ? [
         ...(typed?.actions ?? []).filter(action => matches(action.label, action.hint ?? "")).map(action => ({key: `app:${action.label}`, label: action.label, detail: action.hint ?? "Action", open: () => action.run()})),
-        ...rows.filter(row => row.actions.length > 0).map((row, index) => ({key: `${row.reference}:${index}`, label: row.label, detail: `${row.kind} · ${row.owner}`, open: () => openRow(row)})),
+        ...rows.filter(row => row.actions.length > 0).map((row, index) => ({key: `${row.reference}:${index}`, label: subjectLabel(row,`Unnamed resource ${index+1}`), detail: `${searchKindLabel(row.kind)} · ${searchOwnerLabel(row.owner)}`, open: () => openRow(row)})),
       ]
     : [];
-  const typedState = tab === "chats" ? (chats.error ?? (!chats.rows ? "Reading conversations…" : undefined))
-    : tab === "agents" ? (agents.error ?? (!agents.rows ? "Reading the agent roster…" : undefined))
-    : tab === "flows" ? (flows.error ?? (!flows.rows ? "Reading your flows…" : undefined))
+  const typedFailure=tab==="chats"?chats.error:tab==="agents"?agents.error:tab==="flows"?flows.error:undefined;
+  const typedState = tab === "chats" ? (!chats.rows&&!chats.error ? "Reading conversations…" : undefined)
+    : tab === "agents" ? (!agents.rows&&!agents.error ? "Reading the agent roster…" : undefined)
+    : tab === "flows" ? (!flows.rows&&!flows.error ? "Reading your flows…" : undefined)
     : (tab === "files" || tab === "actions") && busy ? "Searching…" : undefined;
   const openTyped = async (item: TypedItem | undefined) => {
     if (!item || opening.current) return;
@@ -250,14 +252,14 @@ export function SearchOverlay({ project, onClose, onOpen, leader, onLeaderChange
       ref: row.reference, kind: row.kind, label: row.label, native_owner: row.owner,
       provenance: { source: row.owner, detail: row.provenance }, actions: row.actions,
     });
-    if (!address) { setError(`No local address for ${row.reference}`); return; }
-    return openAddress(address, row.label);
+    if (!address) { setError("This resource has no local opening route. Inspect its owner details for the available actions."); return; }
+    return openAddress(address, subjectLabel(row,"Unnamed resource"));
   };
   const accept = () => {
     if (composition.current || opening.current || !count) return;
     const hit = hits[selected];
     const row = rows[selected - hits.length];
-    if (hit) void openAddress(hit.address, hit.label);
+    if (hit) void openAddress(hit.address, searchHitTitle(hit,selected));
     else if (row) void openRow(row);
   };
   const selectResult = (index: number) => {
@@ -303,9 +305,10 @@ export function SearchOverlay({ project, onClose, onOpen, leader, onLeaderChange
       {tabs.map(entry => <IconTab key={entry.id} label={entry.label} icon="search" selected={tab === entry.id} data-palette-tab={entry.id} onClick={() => setTab(entry.id)}/>)}
     </IconTabStrip>
     {tab !== "all" && <div className="search-scroll search-typed" role="tabpanel" aria-label={tabs.find(entry => entry.id === tab)?.label}>
-      {error && <p role="alert">{error}</p>}
+      {error && <SearchReadingFailure error={error}/>}
+      {typedFailure&&<SearchReadingFailure error={typedFailure} label={`${tabs.find(entry=>entry.id===tab)?.label??"This source"} unavailable`}/>}
       {typedState && !typedItems.length ? <p className="search-empty" role="status">{typedState}</p>
-        : !typedItems.length ? <p className="search-empty">{needle ? `No ${tabs.find(entry => entry.id === tab)?.label.toLowerCase()} match "${query.trim()}".` : `No ${tabs.find(entry => entry.id === tab)?.label.toLowerCase()} here yet.`}</p>
+        : !typedItems.length ? !typedFailure&&<p className="search-empty">{needle ? `No ${tabs.find(entry => entry.id === tab)?.label.toLowerCase()} match "${query.trim()}".` : `No ${tabs.find(entry => entry.id === tab)?.label.toLowerCase()} here yet.`}</p>
         : <ul aria-label={`${tabs.find(entry => entry.id === tab)?.label} results`}>{typedItems.map((item, index) => <li key={item.key} data-selected={typedSelected === index}>
             <button className="search-result" aria-current={typedSelected === index ? "true" : undefined} onFocus={() => setTypedSelected(index)} onPointerMove={() => setTypedSelected(index)} onClick={() => void openTyped(item)}>
               <span className="search-result-kind" aria-hidden="true">↗</span><span className="search-result-copy"><strong>{item.label}</strong><small>{item.detail}</small></span>
@@ -315,22 +318,18 @@ export function SearchOverlay({ project, onClose, onOpen, leader, onLeaderChange
     <div className="search-scroll" hidden={tab !== "all" || undefined}>
       <header className="search-context"><span title={project ?? "Central"}>{project ?? "Central"}</span><span role="status" aria-live="polite">{isOpening ? "Opening…" : composing ? "Composing…" : busy ? `${count ? `${count} results · ` : ""}${pendingProviders.length} ${pendingProviders.length === 1 ? "source" : "sources"} loading…` : `${count} ${count === 1 ? "result" : "results"}`}</span></header>
       {shortcutError && <p role="alert">{shortcutError}</p>}
-      {error && <p role="alert">{error}</p>}
+      {error && <SearchReadingFailure error={error}/>}
       <fieldset className="search-results-frame" disabled={isOpening || composing}>
         <div id="knowledge-search-results">
           <ul aria-label="Search results" aria-busy={busy}>{hits.map((hit, index) => <li key={searchKeys([hit], [])[0]} data-search-index={index} data-selected={selected === index}>
-            <button className="search-result" id={`knowledge-search-${index}`} aria-current={selected === index ? "true" : undefined}
-              onFocus={() => selectResult(index)} onPointerMove={() => selectResult(index)} onClick={() => void openAddress(hit.address, hit.label)}>
-              <span className="search-result-kind" aria-hidden="true">↗</span><span className="search-result-copy"><strong>{hit.label}</strong><small>{hit.kind} · {hit.snippet}</small></span>
-            </button>
-            <button className="search-row-more" aria-label={`Explain ${hit.label}`} onClick={() => void showDetail({ action: "explain", address: hit.address })}>Explain</button>
+            <NativeSearchHit hit={hit} index={index} selected={selected===index} onSelect={()=>selectResult(index)} onOpen={()=>void openAddress(hit.address,searchHitTitle(hit,index))} onExplain={()=>void showDetail({action:"explain",address:hit.address})}/>
           </li>)}</ul>
           {rows.length > 0 && <section aria-label="Owner resolution results"><header>Resources &amp; actions</header><div role="list">{rows.map((row, index) => <div role="listitem" className="search-resolution-row" key={`${row.reference}:${index}`} data-search-index={hits.length + index} data-selected={selected === hits.length + index}>
             <button className="search-result" id={`knowledge-search-${hits.length + index}`} aria-current={selected === hits.length + index ? "true" : undefined}
               onFocus={() => selectResult(hits.length + index)} onPointerMove={() => selectResult(hits.length + index)} onClick={() => void openRow(row)}>
-              <span className="search-result-kind" aria-hidden="true">↗</span><span className="search-result-copy"><strong>{row.label}</strong><small>{row.kind} · {row.owner}</small></span>
+              <span className="search-result-kind" aria-hidden="true">↗</span><span className="search-result-copy"><strong>{subjectLabel(row,`Unnamed resource ${index+1}`)}</strong><small>{searchKindLabel(row.kind)} · {searchOwnerLabel(row.owner)}</small></span>
             </button>
-            <details className="search-row-detail"><summary aria-label={`Actions and provenance for ${row.label}`}>Details</summary>
+            <details className="search-row-detail"><summary aria-label={`Actions and provenance for ${subjectLabel(row,`Unnamed resource ${index+1}`)}`}>Details</summary>
               <OwnerActions node={{ ref: row.reference, actions: row.actions }} transport={transport} project={project} onDispatched={() => { ++epoch.current; setBusy(true); setGeneration(value => value + 1); }} />
               <p>{row.reference}</p>{row.provenance.map((item, i) => <p key={i}>{item}</p>)}
             </details>

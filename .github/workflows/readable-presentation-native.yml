@@ -1,0 +1,136 @@
+name: Native readable presentation
+
+# These source and account checks require real AIKit/Central owners. They run
+# separately from the ownerless Node suite and fail if an owner is unavailable.
+on:
+  pull_request:
+    paths:
+      - 'desktop/cradle/**'
+      - 'packages/**'
+      - 'shared-field/**'
+      - 'cli/**'
+      - 'gates/manifest.json'
+      - '.github/workflows/readable-presentation-native.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: readable-presentation-native-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  native-readable:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    env:
+      CARGO_BUILD_JOBS: 2
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          persist-credentials: false
+      # Published owner cut verified through GitHub's exact commit API. The
+      # shared build helper resolves Cargo artifacts rather than guessed targets.
+      - uses: actions/checkout@v4
+        with:
+          repository: EpiLogos/ai-kit
+          ref: 64d4e1d12fd95a331db75e1f1df21f332aebab6f
+          path: .wiki-native-owner
+          persist-credentials: false
+      - uses: actions/checkout@v4
+        with:
+          repository: EpiLogos/Central
+          ref: 2a604574774c41921003ed99a2eed73b4c9f4266
+          path: .wiki-central-owner
+          persist-credentials: false
+      - name: Retain exact source and owner revisions
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/readable-native-evidence" "$RUNNER_TEMP/readable-native-work"
+          git rev-parse HEAD > "$RUNNER_TEMP/readable-native-evidence/O-I.revision"
+          git -C .wiki-native-owner rev-parse HEAD > "$RUNNER_TEMP/readable-native-evidence/ai-kit.revision"
+          git -C .wiki-central-owner rev-parse HEAD > "$RUNNER_TEMP/readable-native-evidence/Central.revision"
+          test "$(cat "$RUNNER_TEMP/readable-native-evidence/ai-kit.revision")" = 64d4e1d12fd95a331db75e1f1df21f332aebab6f
+          test "$(cat "$RUNNER_TEMP/readable-native-evidence/Central.revision")" = 2a604574774c41921003ed99a2eed73b4c9f4266
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2.9.2
+        with:
+          workspaces: |
+            .wiki-native-owner
+            .wiki-central-owner
+            desktop/cradle/kernel
+            cli
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: desktop/cradle/package-lock.json
+      - name: Build exact native owner executables
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 desktop/cradle/tests/wiki-native-binaries.py \
+            --receipt "$RUNNER_TEMP/readable-native-evidence/native-binaries.json" \
+            2>&1 | tee "$RUNNER_TEMP/readable-native-evidence/native-build.log"
+      - name: Put only the built native executables first on the test PATH
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/readable-native-bin"
+          cp "$OI_BIN" "$RUNNER_TEMP/readable-native-bin/oi"
+          cp "$OI_AIKIT_BIN" "$RUNNER_TEMP/readable-native-bin/aikit"
+          cp "$OI_CENTRAL_CTRL_BIN" "$RUNNER_TEMP/readable-native-bin/ctrl"
+          cp "$WIKI_KERNEL_BIN" "$RUNNER_TEMP/readable-native-bin/walk-bridge"
+          chmod +x "$RUNNER_TEMP/readable-native-bin/"*
+          sha256sum "$RUNNER_TEMP/readable-native-bin/"* > "$RUNNER_TEMP/readable-native-evidence/SHA256SUMS"
+          echo "$RUNNER_TEMP/readable-native-bin" >> "$GITHUB_PATH"
+          echo "OI_CTRL_BIN=$RUNNER_TEMP/readable-native-bin/ctrl" >> "$GITHUB_ENV"
+          echo "OI_WALK_BRIDGE=$RUNNER_TEMP/readable-native-bin/walk-bridge" >> "$GITHUB_ENV"
+      - name: Build the locked production frontend
+        shell: bash
+        run: |
+          set -euo pipefail
+          npm ci --prefix desktop/cradle --no-audit --no-fund \
+            2>&1 | tee "$RUNNER_TEMP/readable-native-evidence/frontend-dependencies.log"
+          # The design-system declares Three as a peer and has no separate lock.
+          # Supply that peer at its source resolution path from the cradle lock.
+          native_three_version=$(node -p "require('./desktop/cradle/package-lock.json').packages['node_modules/three'].version")
+          test "$native_three_version" = "$(node -p "require('./desktop/cradle/package.json').dependencies.three")"
+          npm install --prefix packages/oi-design-system --no-save --package-lock=false --no-audit --no-fund "three@$native_three_version" \
+            2>&1 | tee "$RUNNER_TEMP/readable-native-evidence/design-system-dependencies.log"
+          npm --prefix desktop/cradle run build \
+            2>&1 | tee "$RUNNER_TEMP/readable-native-evidence/frontend-build.log"
+      - name: Prove native source, library, context and account readability
+        working-directory: desktop/cradle
+        shell: bash
+        env:
+          TMPDIR: ${{ runner.temp }}/readable-native-work
+          OI_TEST_RUN_DIR: ${{ runner.temp }}/readable-native-work
+          CONTEXTUAL_TEST_DIRECTORY: ${{ runner.temp }}/readable-native-work
+          OI_NATIVE_TEST_DIRECTORY: ${{ runner.temp }}/readable-native-work
+          AIKIT_HOME: ${{ runner.temp }}/readable-native-work/aikit-home
+          OI_HOME: ${{ runner.temp }}/readable-native-work/oi-home
+          OI_PRESENTATION_EVIDENCE_DIR: ${{ runner.temp }}/readable-native-evidence
+        run: |
+          set -euo pipefail
+          mkdir -p "$AIKIT_HOME" "$OI_HOME"
+          native_failures=0
+          for native_suite in knowledge-readable-native.mjs library-search-readable-native.mjs contextual-readable-native.mjs verso-account-readable-native.mjs; do
+            if node --test "tests/$native_suite" 2>&1 | tee "$OI_PRESENTATION_EVIDENCE_DIR/$native_suite.log"; then
+              :
+            else
+              native_failures=$((native_failures + 1))
+            fi
+          done
+          test "$native_failures" -eq 0
+      - name: Retain native source provenance and all performed results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: readable-native-owners-${{ github.event.pull_request.head.sha || github.sha }}-${{ github.run_id }}
+          path: ${{ runner.temp }}/readable-native-evidence/
+          if-no-files-found: error
+          retention-days: 14

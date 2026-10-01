@@ -1,6 +1,6 @@
 /** Reversible registry projection. Factors convert authored stage units to native units. */
 import {PARAM_REGISTRY,entityParamDefs} from '../../src/engine/paramRegistry';
-import {DEFAULT_CONFIG} from '../../src/engine/PointCloudField';
+import {DEFAULT_CONFIG} from '../../src/engine/fieldDefaults';
 import {readPath} from '../../src/engine/automation';
 import {automationGroups} from './automationLinks';
 import type {Scene} from './model';

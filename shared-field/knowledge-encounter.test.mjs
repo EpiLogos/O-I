@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import {createKnowledgeEncounter} from './knowledge-encounter.mjs';
+import {createKnowledgeEncounter,isKnowledgeSubject} from './knowledge-encounter.mjs';
+import {readFileSync} from 'node:fs';
 
 const provenance = revision => [{kind:'wiki-relation',ref:`source:${revision}`,source_system:'central',revision}];
 const entry = (ref, revision) => ({schema:'oi.explore-entry/v1',ref,kind:'wiki-node',world_ref:'world:a',label:ref,revision,aliases:[],locators:[],provenance:provenance(revision)});
@@ -9,6 +10,19 @@ const reading = () => ({
   relations:{schema:'oi.explore-relation-view/v1',focus:'world:a/wiki:focus',depth:1,budget:24,truncated:false,nodes:[entry('world:a/wiki:focus','node-r7'),entry('world:a/wiki:near','node-r3')],edges:[{from:'world:a/wiki:focus',to:'world:a/wiki:near',relation:'ql.m0/contains',origin:'wiki',direction:'forward',provenance:provenance('relation-r11')}]},
   sources:{ref:'world:a/wiki:focus',revision:'node-r7',provenance:provenance('node-r7')},
   actions:['open','inspect','traverse'],
+});
+
+test('the retained native constellation opens its own admitted whole rather than its parent World', () => {
+  const captured=JSON.parse(readFileSync(new URL('./fixtures/shared-continuation-constellation.native.json',import.meta.url),'utf8'));
+  assert.equal(captured.evidence.database,'oi-shared-field');
+  assert.equal(isKnowledgeSubject(captured.entry),true);
+  const encounter=createKnowledgeEncounter(captured.neighbourhood);
+  assert.equal(encounter.state,'available');
+  assert.equal(encounter.focus,captured.entry.ref);
+  assert.notEqual(encounter.focus,captured.entry.world_ref);
+  assert.equal(encounter.resource.revision,captured.entry.revision);
+  assert.deepEqual(encounter.edges,captured.neighbourhood.relations.edges);
+  assert.ok(encounter.nodes.some(node=>node.ref==='world:shared-expression:ann/wiki:node:shared-continuation-ann'));
 });
 
 test('one exact relation state supplies every knowledge presentation', () => {

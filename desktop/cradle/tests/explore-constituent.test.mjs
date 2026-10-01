@@ -19,8 +19,9 @@ const relations = [
 test('an Agent Position reads as a Being with its Workcell and repertoire', () => {
   const reading = constituentReading(entries[0], relations, entries);
   assert.equal(reading.role, 'being');
-  assert.deepEqual(reading.facts.find((f) => f.label === 'Occupancy'), { label: 'Occupancy', value: 'occupied · generation #2 · workcell:mac' });
+  assert.deepEqual(reading.facts.find((f) => f.label === 'Occupancy'), { label: 'Occupancy', value: 'occupied · generation #2' });
   assert.deepEqual(reading.groups.map((g) => [g.title, g.items.map((i) => i.ref)]), [['Carried by', [entries[1].ref]], ['Practises', [entries[2].ref]]]);
+  assert.equal(reading.groups[0].items[0].label, entries[1].label);
   assert.equal(reading.groups[1].items[0].note, 'skill · inspectable');
 });
 
@@ -59,5 +60,6 @@ test('an activity reads liveness from its hosted producer, never from the public
   assert.equal(none.liveness, 'disconnected');
   const held = constituentReading(claimed, relations, entries, { now_ms: 1_000_000, activity_liveness: [{ activity_ref: claimed.ref, field_ref: 'oi:field:x', owner_state: 'running', owner_revision: 4, heartbeat_at_micros: String(999_000 * 1000), observed_at_micros: String(999_000 * 1000) }] });
   assert.equal(held.liveness, 'live', JSON.stringify(held.facts));
-  assert.match(held.facts.find((f) => f.label === 'Liveness').value, /running/);
+  assert.equal(held.facts.find((f) => f.label === 'Liveness').value, 'Live');
+  assert.equal(held.facts.find((f) => f.label === 'State').value, 'running');
 });
