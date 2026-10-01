@@ -32,6 +32,20 @@ const REMOTE = process.env.PF_REMOTE; // e.g. frank@100.92.62.101 — a second W
 const REMOTE_ROOT = process.env.PF_REMOTE_ROOT ?? "/home/frank/pf-lab";
 const REMOTE_BIN = process.env.PF_REMOTE_BIN ?? "/home/frank/pf-lab/bin";
 const INTERRUPT = join(S, "route-interrupted");
+// The agent body. Default: a real `pi` on the owner's test model. PF_FIXTURE names a
+// controlled ACP fixture (ai-kit tests/fixtures/conversation_provider.py): its replies
+// are protocol fixtures derived from the asked entry, never model output, so a run
+// proves the ROUTE and the owners without spending a model.
+const FIXTURE = process.env.PF_FIXTURE;
+const providerJson = (fixture, log, label) => FIXTURE
+  ? {protocol: "acp", id: "pi", label: `${label} (controlled fixture)`, argv: ["python3", fixture, "fixture", log]}
+  : {protocol: "pi-rpc", id: "pi", label, argv: [PI, "--mode", "rpc"]};
+// The route to another Workcell: `gateway` is the native one (the gateway carrier, one
+// negotiated route); `ssh` is the legacy route. PF_ROUTE=gateway also keeps ssh BROKEN
+// for the whole run, so a delivery that lands cannot have used it.
+const ROUTE = process.env.PF_ROUTE ?? "ssh";
+const REMOTE_GATEWAY_PORT = process.env.PF_REMOTE_GATEWAY_PORT ?? "7790";
+const REMOTE_HOST_IP = process.env.PF_REMOTE_HOST_IP; // the tailnet address the lab gateway binds
 const env = {
   ...process.env, AIKIT_HOME: dirs.home, CENTRAL_ROOT: dirs.central, AIKIT_CENTRAL_ROOT: dirs.central,
   CENTRAL_CTRL_BIN: CTRL, AIKIT_AGENCY_MINT_TEMPLATE: TEMPLATE,
@@ -101,6 +115,33 @@ function bringIn(name, initial, agentRef) {
   say(`${name}: minted=${mint.data?.standing ?? mint.standing} admitted=${JSON.stringify(admitted.data ?? admitted)} provider=${opened?.provider ?? "pi"} key=${key}`);
 }
 
+/** The native route: a controlled gateway service INSTANCE on the other Workcell, serving
+ * the lab world's own AIKit home on its own port (the real gateway there is untouched), and
+ * a declared remote for it in THIS world's AIKit home. The peer token is generated there and
+ * copied here to a 0600 file; neither is printed. */
+function gatewayRouteSetup(rsh) {
+  if (!REMOTE_HOST_IP) throw new Error("PF_REMOTE_HOST_IP (the other Workcell's tailnet address) is required for PF_ROUTE=gateway");
+  const peerFile = join(S, "omarchy-peer.token");
+  const script = `
+set -euo pipefail
+R=${REMOTE_ROOT}
+export PATH=${REMOTE_BIN}:/home/frank/.cargo/bin:/home/frank/.local/bin:/home/frank/.local/share/mise/shims:/usr/bin:/bin
+export AIKIT_HOME=$R/home CENTRAL_ROOT=$R/central AIKIT_CENTRAL_ROOT=$R/central CENTRAL_CTRL_BIN=$(command -v ctrl)
+umask 077
+[ -s $R/peer.token ] || head -c 32 /dev/urandom | od -An -tx1 | tr -d ' \n' > $R/peer.token
+[ -s $R/owner.token ] || head -c 32 /dev/urandom | od -An -tx1 | tr -d ' \n' > $R/owner.token
+export AIKIT_GATEWAY_SERVICE_INSTANCE=pflab
+aikit gateway uninstall-service >/dev/null 2>&1 || true
+aikit --json gateway install-service --workcell-ref workcell:omarchy --gateway-ref agency-gateway/omarchy-pflab \
+  --ws ${REMOTE_HOST_IP}:${REMOTE_GATEWAY_PORT} --ws-token-location file:$R/peer.token --ws-owner-token-location file:$R/owner.token
+`;
+  console.log(rsh("bash -s", script).trim().slice(0, 500));
+  writeFileSync(peerFile, rsh(`cat ${REMOTE_ROOT}/peer.token`).trim(), {mode: 0o600});
+  // Declared in THIS world's home; the probe refuses an endpoint that answers as another Workcell.
+  const added = sh(SS.replace(/aikit-session-space$/, "aikit"), ["--json", "gateway", "remote", "add", "--workcell", "workcell:omarchy", "--ws", `${REMOTE_HOST_IP}:${REMOTE_GATEWAY_PORT}`, "--token-location", `file:${peerFile}`]);
+  console.log("remote declared:", added.stdout.trim().slice(0, 400));
+}
+
 // ---------------------------------------------------------------- phases
 const phases = {
   async setup() {
@@ -133,7 +174,7 @@ const phases = {
     if (!policy.ok) throw new Error("civil-time policy not recognised: " + JSON.stringify(policy));
     state.timePolicyRevision = policy.data.revision;
     say("day boundary falls at", state.dayBoundaryAtUtc);
-    ss("encounter-configure", "--provider-json", JSON.stringify({protocol: "pi-rpc", id: "pi", label: "Pi (acceptance)", argv: [PI, "--mode", "rpc"]}));
+    ss("encounter-configure", "--provider-json", JSON.stringify(providerJson(FIXTURE, join(S, "provider.log"), "Pi (acceptance)")));
     // The transport to the other Workcell can be broken on demand by a flag file,
     // so a route interruption is real: the owner's own ssh fails and recovers.
     mkdirSync(dirs.shim, {recursive: true});
@@ -326,6 +367,7 @@ const phases = {
     rsh("bash -s", `pkill -f '${REMOTE_ROOT}/home' 2>/dev/null; rm -rf ${REMOTE_ROOT}/home ${REMOTE_ROOT}/project ${REMOTE_ROOT}/central; mkdir -p ${REMOTE_ROOT}/home ${REMOTE_ROOT}/project/docs ${REMOTE_ROOT}/central\n`);
     rsh(`cat > ${REMOTE_ROOT}/template.json`, readFileSync(TEMPLATE, "utf8"));
     rsh(`cat > ${REMOTE_ROOT}/project/docs/passage.md`, PASSAGE);
+    if (FIXTURE) rsh(`cat > ${REMOTE_ROOT}/conversation_provider.py`, readFileSync(FIXTURE, "utf8"));
     const session = "agent-session/pf-ash-o", space = "session-space/pf-ash-o", agentRef = "agent/ash-omarchy";
     const flowRef = flowLoc().ref;
     const script = `
@@ -336,7 +378,7 @@ export AIKIT_HOME=$R/home CENTRAL_ROOT=$R/central AIKIT_CENTRAL_ROOT=$R/central 
 SS="aikit-session-space -C $R/project"
 ctrl --json --root $R/central action run central.init '{}' >/dev/null
 aikit --json -C $R/project project bind flowlab-remote --directory $R/project --no-default-skill-sets >/dev/null
-$SS encounter-configure --provider-json '{"protocol":"pi-rpc","id":"pi","label":"Pi (remote acceptance)","argv":["/home/frank/.local/share/mise/shims/pi","--mode","rpc"]}' >/dev/null
+$SS encounter-configure --provider-json '${JSON.stringify(FIXTURE ? providerJson(`${REMOTE_ROOT}/conversation_provider.py`, `${REMOTE_ROOT}/provider.log`, "Pi (remote acceptance)") : {protocol: "pi-rpc", id: "pi", label: "Pi (remote acceptance)", argv: ["/home/frank/.local/share/mise/shims/pi", "--mode", "rpc"]})}' >/dev/null
 $SS encounter-start >/dev/null
 sleep 3
 apply() { $SS apply --preview-json "$1" >/dev/null; }
@@ -348,12 +390,13 @@ $SS encounter --request-json '{"action":"open","space":"${space}","agent_session
 $SS encounter-agency-admit --agent-session ${session} --sender human:${state.annKey} --source-ref '${flowRef}'
 `;
     console.log(rsh("bash -s", script).trim().slice(0, 600));
+    if (ROUTE === "gateway") gatewayRouteSetup(rsh);
     const basis = readFlow();
     let doc = addParticipant(basis.doc, {initial: "O", name: "Ash (Omarchy)", kind: "agent", binding: {owner: "central", ref: agentRef, basis: "declared"}}, new Date().toISOString());
     const key = doc.meta.participants.at(-1).key;
     doc = withSession(doc, key, session);
     writeFlow(basis, doc);
-    state.participants.AshO = {key, session, space, agentRef, workcell: "workcell:omarchy", route: {
+    state.participants.AshO = {key, session, space, agentRef, workcell: "workcell:omarchy", route: ROUTE === "gateway" ? {kind: "gateway", workcell: "workcell:omarchy"} : {
       kind: "ssh", target: REMOTE, cwd: `${REMOTE_ROOT}/project`, aikit: `${REMOTE_BIN}/aikit`, workcell: "workcell:omarchy",
       env: {AIKIT_HOME: `${REMOTE_ROOT}/home`, CENTRAL_ROOT: `${REMOTE_ROOT}/central`, AIKIT_CENTRAL_ROOT: `${REMOTE_ROOT}/central`, PATH: `${REMOTE_BIN}:/home/frank/.cargo/bin:/home/frank/.local/bin:/home/frank/.local/share/mise/shims:/usr/bin:/bin`}}};
     save();
@@ -370,14 +413,28 @@ $SS encounter-agency-admit --agent-session ${session} --sender human:${state.ann
         html: "<p>Please read <code>docs/passage.md</code> in your working directory. Ada: say in under 80 words which single premise the argument depends on. Ash: give one concrete numeric example that bears on that premise, in under 80 words. You are on different machines; answer from your own reading.</p>"},
       recipients: [{participant_key: Ada.key, agent_session: Ada.session}, {participant_key: AshO.key, agent_session: AshO.session, route: AshO.route, agent_ref: AshO.agentRef}],
     };
+    // On the gateway route ssh is broken BEFORE the entry is sent and stays broken until the
+    // reply is in the Flow: a delivery that lands did not use it.
+    if (ROUTE === "gateway") writeFileSync(INTERRUPT, "1");
     const sent = encounter({action: "conversation-send", request});
     say("sent:", JSON.stringify(sent.request.recipients.map(r => [r.participant_key.slice(-6), r.workcell ?? "local", r.state])));
-    // Break the route while the remote agent works, then restore it.
-    writeFileSync(INTERRUPT, "1");
-    say("  route interrupted for 30 s");
-    await sleep(30000);
-    rmSync(INTERRUPT, {force: true});
-    say("  route restored");
+    if (ROUTE === "gateway") {
+      // The route that IS used is interrupted instead: the other Workcell's gateway is
+      // stopped while the remote agent works, and started again.
+      spawnSync("ssh", ["-o", "BatchMode=yes", REMOTE, `systemctl --user stop aikit-gateway-pflab.service`], {encoding: "utf8"});
+      say("  the other Workcell's gateway stopped for 30 s (ssh is broken throughout)");
+      await sleep(30000);
+      const up = spawnSync("ssh", ["-o", "BatchMode=yes", REMOTE, `systemctl --user start aikit-gateway-pflab.service`], {encoding: "utf8"});
+      if (up.status !== 0) throw new Error("could not restart the lab gateway: " + up.stderr);
+      say("  the gateway is back");
+    } else {
+      // Break the route while the remote agent works, then restore it.
+      writeFileSync(INTERRUPT, "1");
+      say("  route interrupted for 30 s");
+      await sleep(30000);
+      rmSync(INTERRUPT, {force: true});
+      say("  route restored");
+    }
     await waitIncluded(request.request_ref, [Ada.key, AshO.key], 300000);
     state.remoteAsk = request.request_ref; save();
   },
