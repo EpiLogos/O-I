@@ -37,7 +37,7 @@ jobs:
       - name: Verify source, native publication and public browser build
         working-directory: site
         run: |
-          node --test library.test.mjs publication.test.mjs public-content.test.mjs ../shared-field/expression-projection.test.mjs
+          node --test library.test.mjs publication.test.mjs public-content.test.mjs quartz-staged-input.test.mjs ../shared-field/expression-projection.test.mjs
           npm run build:public
       - name: Exercise the actual native reader in Chromium
         working-directory: site

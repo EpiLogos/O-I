@@ -1,0 +1,272 @@
+{
+  "schema": "oi.public-excerpt-selection/v1",
+  "purpose": "Explicit public excerpts of five pinned source journeys; all native formations and members remain. Original sources stay unchanged and separately identified. Selected bytes exclude unadmitted targets and local/session references.",
+  "members": [
+    {
+      "member_id": "sp-aikit-fd-docs-p1",
+      "source_file": "aikit/sp-aikit-fd-docs-p1.journey.json",
+      "source_revision": "e875344c04c14228840665a91823edc42b078fb2",
+      "source_sha256": "aadcde39a06024e49d4d71e99a0576300b783c06ad0717ba8dc34f97396a78c6",
+      "fields": [
+        {
+          "pointer": "/scenes/7/text/0/body",
+          "source_sha256": "fc3669a84b624af04f0c9242a9f7a363bdef1280d8df9ae50803b3d7f82574fe",
+          "utf8_ranges": [
+            [
+              0,
+              225
+            ],
+            [
+              305,
+              308
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "member_id": "sp-aikit-fd-periphery",
+      "source_file": "aikit/sp-aikit-fd-periphery.journey.json",
+      "source_revision": "e875344c04c14228840665a91823edc42b078fb2",
+      "source_sha256": "081e776c0126c002bd238d929746428363a009bb291980c8280efeb2a7d911b7",
+      "fields": [
+        {
+          "pointer": "/scenes/2/character",
+          "source_sha256": "68525dad90687513495ab38f8588eebbf0365847eaf526435129abdeab79859b",
+          "utf8_ranges": [
+            [
+              0,
+              100
+            ]
+          ]
+        },
+        {
+          "pointer": "/scenes/2/text/0/body",
+          "source_sha256": "8fcb7a1f213978a16d8d146ca6b150e1e7106594e52ea7c3105a8b6eba96e246",
+          "utf8_ranges": [
+            [
+              0,
+              103
+            ],
+            [
+              215,
+              218
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "member_id": "sp-factory-fd-product-root",
+      "source_file": "factory/sp-factory-fd-product-root.journey.json",
+      "source_revision": "e875344c04c14228840665a91823edc42b078fb2",
+      "source_sha256": "5e0f7c9c85acf1ffae8dd8c76d8528f2b7ec1aee29a01b30ae3b2093f28ce9e1",
+      "fields": [
+        {
+          "pointer": "/scenes/2/character",
+          "source_sha256": "8b98e53db5ad9b150f1908f1fb3ee19d8ee438e9dfa7edaa0000dbc9f1d79942",
+          "utf8_ranges": [
+            [
+              1,
+              15
+            ],
+            [
+              27,
+              93
+            ],
+            [
+              94,
+              120
+            ],
+            [
+              135,
+              220
+            ]
+          ]
+        },
+        {
+          "pointer": "/scenes/2/text/0/body",
+          "source_sha256": "45ff00a8a85d49d7da433007c52a6e83cbce784da5a030da8fda09c4d5f36431",
+          "utf8_ranges": [
+            [
+              1,
+              15
+            ],
+            [
+              27,
+              93
+            ],
+            [
+              94,
+              120
+            ],
+            [
+              135,
+              227
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "member_id": "sp-factory-fd-inkwell-claude-front",
+      "source_file": "factory/sp-factory-fd-inkwell-claude-front.journey.json",
+      "source_revision": "e875344c04c14228840665a91823edc42b078fb2",
+      "source_sha256": "17f5778c830100d352393b509a4648b2c3edac62dcbce3c2b633a821c6dbbdc4",
+      "fields": [
+        {
+          "pointer": "/scenes/4/character",
+          "source_sha256": "44664fb9460cc2c16bcb4b3aaf558e6ed34b6464d2575420088cde7ee6a84a58",
+          "utf8_ranges": [
+            [
+              0,
+              17
+            ]
+          ]
+        },
+        {
+          "pointer": "/scenes/4/text/0/body",
+          "source_sha256": "fa97f3f92acf4a1263416d4f4c1be969f05fbe65611d4312ee9bf8a08fb08028",
+          "utf8_ranges": [
+            [
+              0,
+              17
+            ]
+          ]
+        },
+        {
+          "pointer": "/scenes/7/character",
+          "source_sha256": "622c276c6e01b4afe6892f77317eea3245dc13902103bde50863fe01d87fc8ef",
+          "utf8_ranges": [
+            [
+              0,
+              58
+            ],
+            [
+              131,
+              220
+            ]
+          ]
+        },
+        {
+          "pointer": "/scenes/7/text/0/body",
+          "source_sha256": "938ed9a5f2b063421161e0158335f1901bab9a128bed1b65c2e13b804aab53fd",
+          "utf8_ranges": [
+            [
+              0,
+              58
+            ],
+            [
+              131,
+              221
+            ]
+          ]
+        },
+        {
+          "pointer": "/scenes/11/character",
+          "source_sha256": "f7a5cdf3ee6d5c194e7ea9dd1d2b985b95abcaf6a6024d56dbb2109ba943e5ab",
+          "utf8_ranges": [
+            [
+              0,
+              101
+            ],
+            [
+              102,
+              105
+            ],
+            [
+              151,
+              200
+            ]
+          ]
+        },
+        {
+          "pointer": "/scenes/11/text/0/body",
+          "source_sha256": "0311e0fd84ec181ed6ad86d6851d4d6c549ea022c76b441e8bde1cdc221da3ba",
+          "utf8_ranges": [
+            [
+              0,
+              101
+            ],
+            [
+              102,
+              105
+            ],
+            [
+              151,
+              200
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "member_id": "sp-factory-fd-sites",
+      "source_file": "factory/sp-factory-fd-sites.journey.json",
+      "source_revision": "e875344c04c14228840665a91823edc42b078fb2",
+      "source_sha256": "a24026d07d5560566af7575b67b2f0be93c8c612b44b35c68fd6967f0991db40",
+      "fields": [
+        {
+          "pointer": "/scenes/2/character",
+          "source_sha256": "f333c5854c78fe94bb181ba4c51985c39c53d4c851d51a99d12349da07efdb91",
+          "utf8_ranges": [
+            [
+              5,
+              6
+            ],
+            [
+              7,
+              14
+            ],
+            [
+              18,
+              19
+            ],
+            [
+              20,
+              24
+            ],
+            [
+              32,
+              62
+            ],
+            [
+              63,
+              70
+            ]
+          ]
+        },
+        {
+          "pointer": "/scenes/2/text/0/body",
+          "source_sha256": "4a55f95b47d74952f6527c7b8d8d1b158bc920aba79ec478b9919407dec9905b",
+          "utf8_ranges": [
+            [
+              5,
+              6
+            ],
+            [
+              7,
+              14
+            ],
+            [
+              18,
+              19
+            ],
+            [
+              20,
+              24
+            ],
+            [
+              32,
+              62
+            ],
+            [
+              63,
+              70
+            ]
+          ]
+        }
+      ]
+    }
+  ]
+}

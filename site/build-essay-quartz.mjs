@@ -116,7 +116,12 @@ const { staged, frontmatterFixed } = await stageContent(essay);
 const vaultCommit = await gitCommitAt(essay);
 
 await rm(outDir, { recursive: true, force: true });
-await exec('npx', ['quartz', 'build', '-d', 'content', '-o', outDir], { cwd: quartzDir });
+const { stdout, stderr } = await exec(process.execPath, [resolve(quartzDir, 'quartz/bootstrap-cli.mjs'), 'build', '-d', 'content', '-o', outDir], {
+  cwd: quartzDir,
+  env: { ...process.env, OI_QUARTZ_STAGED_INPUTS: '1' },
+});
+if (stdout) process.stdout.write(stdout);
+if (stderr) process.stderr.write(stderr);
 if (!existsSync(resolve(outDir, 'index.html'))) throw new Error('Quartz build did not emit essay/index.html.');
 
 const stamp = {
