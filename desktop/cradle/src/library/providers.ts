@@ -18,6 +18,7 @@ import type {WorkspaceMode} from "../workspace/mode";
 import {collectionsProvider} from "./collectionsProvider";
 import {nativeExpressionsProvider} from "./nativeExpressionsProvider";
 import type {LibraryItem, LibraryCoverage, LibraryKind, LibraryQuery} from "./scope";
+import {entryLabel} from "../../../../shared-field/presentation-text.mjs";
 
 export interface LibraryProvider {
   id: string;
@@ -95,25 +96,25 @@ function sharedFieldProvider(transport: KernelTransportStatus): LibraryProvider 
       }
       if (signal.aborted) return {items: [], coverage: {provider: "shared-field", state: "unavailable", reason: "query cancelled"}};
       if (isUnavailable(snapshot)) return {items: [], coverage: {provider: "shared-field", state: "unavailable", reason: snapshot.detail}};
-      const myFieldRefs = new Set(snapshot.my_authority.filter(authority => !authority.revoked).map(authority => authority.field_ref));
-      const localOnly = query.scope !== "shared";
-      const items: LibraryItem[] = snapshot.entries
-        .map((entry): LibraryItem => {
-          const fieldRef = snapshot.entry_fields[entry.ref];
-          const isLocal = !!fieldRef && myFieldRefs.has(fieldRef);
-          return {
-            kind: "projected-object", ref: entry.ref, title: entry.label, summary: entry.summary,
-            owner: entry.world_ref || "shared field", scope: isLocal ? "local" : "shared",
-            revision: entry.revision, provider: "shared-field",
-          };
-        })
-        .filter(item => !localOnly || item.scope === "local");
+      const items=sharedLibraryItems(snapshot,query.scope);
       const coverage: LibraryCoverage = snapshot.relation_errors?.length
         ? {provider: "shared-field", state: "partial", reason: `${snapshot.relation_errors.length} shared relation(s) unavailable — their source record or endpoint could not be validated`}
         : {provider: "shared-field", state: "complete"};
       return {items, coverage};
     },
   };
+}
+
+/** The same admitted snapshot supplies both names and canonical identities. */
+export function sharedLibraryItems(snapshot:SharedFieldSnapshot,scope:LibraryQuery["scope"]):LibraryItem[] {
+ const myFieldRefs=new Set(snapshot.my_authority.filter(authority=>!authority.revoked).map(authority=>authority.field_ref));
+ return snapshot.entries.map((entry,index):LibraryItem=>{
+  const fieldRef=snapshot.entry_fields[entry.ref];
+  const isLocal=!!fieldRef&&myFieldRefs.has(fieldRef);
+  const owner=snapshot.entries.find(candidate=>candidate.ref===entry.world_ref);
+  return {kind:"projected-object",ref:entry.ref,title:entryLabel(entry,snapshot.projections,`Unnamed shared subject ${index+1}`),summary:entry.summary,
+   owner:owner?entryLabel(owner,snapshot.projections,"Shared world"):"Shared world",ownerRef:entry.world_ref,scope:isLocal?"local":"shared",revision:entry.revision,provider:"shared-field"};
+ }).filter(item=>scope==="shared"||item.scope==="local");
 }
 
 /** Pages: the wiki/knowledge search SearchOverlay uses —

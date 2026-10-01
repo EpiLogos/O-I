@@ -19,6 +19,7 @@
 
 import { createExploreSurfaceModelFromHostedSnapshot } from '../../../../shared-field/spacetimedb-explore-surface.mjs';
 import { createExploreApplication } from '../../../../shared-field/explore.mjs';
+import {entryLabel, subjectLabel} from '../../../../shared-field/presentation-text.mjs';
 
 const normalise = (value) => String(value ?? '').toLowerCase();
 
@@ -33,8 +34,8 @@ export function fieldReading(snapshot) {
     else world.entries.push(entry);
     byWorld.set(entry.world_ref, world);
   }
-  const worlds = [...byWorld.values()].map((world) => ({ ...world, label: world.root ? world.root.label : world.entries[0]?.label ?? world.world_ref }));
-  const beings = (Array.isArray(snapshot.participants) ? snapshot.participants : []).map((participant) => ({ ref: participant.participant_ref, kind: 'participant', label: participant.presentation?.chosen_name ?? participant.participant_ref, world_ref: participant.presentation?.world_ref ?? null, field_ref: participant.field_ref, identity: participant.identity, participant }));
+  const worlds = [...byWorld.values()].map((world,index) => ({ ...world, root:world.root?{...world.root,label:entryLabel(world.root,snapshot.projections,`Unnamed world ${index+1}`)}:null, label: world.root ? entryLabel(world.root,snapshot.projections,`Unnamed world ${index+1}`) : `Unnamed world ${index+1}`, entries:world.entries.map((entry,index)=>({...entry,label:entryLabel(entry,snapshot.projections,`Unnamed subject ${index+1}`)})) }));
+  const beings = (Array.isArray(snapshot.participants) ? snapshot.participants : []).map((participant,index) => ({ ref: participant.participant_ref, kind: 'participant', label: subjectLabel(participant.presentation,`Unnamed participant ${index+1}`), world_ref: participant.presentation?.world_ref ?? null, field_ref: participant.field_ref, identity: participant.identity, participant }));
   return { state: 'available', target: snapshot.target, status: snapshot.status, worlds, beings, fields: Array.isArray(snapshot.fields) ? snapshot.fields : [], relations: Array.isArray(snapshot.relations) ? snapshot.relations : [], counts: { entries: entries.length, worlds: worlds.length, beings: beings.length } };
 }
 
@@ -109,11 +110,11 @@ export function searchField(snapshot, query) {
     results.push({
       kind: 'entry',
       ref: result.ref,
-      label: result.label,
+      label: entryLabel(result,snapshot.projections,`Unnamed subject ${results.length+1}`),
       summary: result.summary,
       subject_kind: result.kind,
       world_ref: result.world_ref,
-      world_label: worldLabel.get(result.world_ref) ?? result.world_ref,
+      world_label: worldLabel.get(result.world_ref) ?? 'Unidentified world',
       ...(result.presentations ? { presentations: result.presentations } : {}),
       ...(result.field_refs ? { field_refs: result.field_refs } : {}),
       score: result.score,
@@ -121,11 +122,11 @@ export function searchField(snapshot, query) {
   }
   for (const being of reading.beings) {
     const s = score(query, [being.label, being.ref, being.identity?.ref, 'participant', 'being']);
-    if (s > 0) results.push({ kind: 'being', ref: being.ref, label: being.label, summary: `${being.identity?.kind ?? 'participant'} · ${being.field_ref}`, subject_kind: 'participant', world_ref: being.world_ref, world_label: being.world_ref ?? being.field_ref, being, score: s });
+    if (s > 0) results.push({ kind: 'being', ref: being.ref, label: being.label, summary: being.participant.presentation?.purpose ?? '', subject_kind: 'participant', world_ref: being.world_ref, world_label: worldLabel.get(being.world_ref) ?? 'Shared undertaking', being, score: s });
   }
   for (const field of reading.fields) {
     const s = score(query, [field.title, field.field_ref, field.kind, 'field', 'shared field']);
-    if (s > 0) results.push({ kind: 'field', ref: field.field_ref, label: field.title ?? field.field_ref, summary: `${field.kind} · ${field.visibility}`, subject_kind: 'shared-field', world_ref: null, world_label: 'SharedField', field, score: s });
+    if (s > 0) results.push({ kind: 'field', ref: field.field_ref, label: subjectLabel(field,`Unnamed undertaking ${results.length+1}`), summary: field.description ?? '', subject_kind: 'shared-field', world_ref: null, world_label: 'Shared undertaking', field, score: s });
   }
   return results.sort((a, b) => b.score - a.score || a.label.localeCompare(b.label));
 }

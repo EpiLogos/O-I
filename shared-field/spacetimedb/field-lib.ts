@@ -12,6 +12,7 @@ import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { homedir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import {createHash} from 'node:crypto';
 import { DbConnection } from './module_bindings/index';
 import { createExploreTransportLifecycle } from '../transport-lifecycle.mjs';
 import { createLiveExploreApplication, createSpacetimeExploreSource, rowsFromSpacetimeDb, hostedSnapshotFromRows } from '../spacetimedb.mjs';
@@ -92,10 +93,11 @@ export interface Client { conn: DbConnection; identity: any; token: string; life
 export async function connect(target: Target, token?: string): Promise<{ conn: DbConnection; identity: any; token: string; lifecycle: any }> {
   const lifecycle = createExploreTransportLifecycle();
   return new Promise((resolve, reject) => {
-    const timer = setTimeout(() => reject(new Error(`SharedField at ${target.uri}/${target.database} did not answer within ${TIMEOUT_MS} ms`)), TIMEOUT_MS);
+    let connection: DbConnection | undefined;
+    const timer = setTimeout(() => { connection?.disconnect(); reject(new Error(`SharedField at ${target.uri}/${target.database} did not answer within ${TIMEOUT_MS} ms`)); }, TIMEOUT_MS);
     let builder = DbConnection.builder().withUri(target.uri).withDatabaseName(target.database);
     if (token) builder = builder.withToken(token);
-    builder
+    connection = builder
       .onConnect((conn, identity, issued) => { clearTimeout(timer); lifecycle.connected(identity.toHexString()); resolve({ conn, identity, token: issued, lifecycle }); })
       .onConnectError((_ctx, error) => { clearTimeout(timer); lifecycle.connectError(error); reject(error); })
       .onDisconnect((_ctx, error) => lifecycle.disconnected(error))
@@ -124,7 +126,8 @@ export async function open(target: Target, label = 'owner'): Promise<Client> {
     mkdirSync(dirname(file), { recursive: true, mode: 0o700 });
     writeFileSync(file, opened.token, { mode: 0o600 });
   }
-  await subscribe(opened.conn, opened.lifecycle);
+  try { await subscribe(opened.conn, opened.lifecycle); }
+  catch (error) { opened.conn.disconnect(); throw error; }
   const live = createLiveExploreApplication(createSpacetimeExploreSource(opened.conn.db, opened.lifecycle));
   return { ...opened, live, target, identityHex: opened.identity.toHexString() };
 }
@@ -186,6 +189,51 @@ export function fieldSnapshot(client: Client) {
     projection_fields: Object.fromEntries(rows(db.projection).map((row: any) => [row.projectionRef, row.fieldRef])),
     relation_fields: Object.fromEntries(rows(db.exploreRelation).flatMap((row: any) => { const relation = parse(row.relationJson); return relation?.relation_ref ? [[relation.relation_ref, row.fieldRef]] : []; })),
   };
+}
+
+/** A content cursor over this credential's actual subscribed rows. Observed
+ * time and transport telemetry are not material revisions. Reconnection always
+ * takes a complete authorised snapshot; this cursor never grants access. */
+export function fieldCursor(client: Client): string {
+  const snapshot: any = fieldSnapshot(client);
+  delete snapshot.status;
+  return `sha256:${createHash('sha256').update(JSON.stringify(snapshot)).digest('hex')}`;
+}
+
+/** Bounded long observation through the native client. All subscribed tables
+ * matter, including contributions, NOW, presence and producer liveness. One
+ * transaction is read after its callbacks settle. A timeout returns a current
+ * reading so wall-clock liveness can expire even without a database mutation. */
+export async function observeField(client: Client, cursor?: string, ref?: string) {
+  if (cursor && cursor === fieldCursor(client)) {
+    await new Promise<void>(resolve => {
+      const removers: Array<() => void> = [];
+      let settled = false;
+      const finish = () => {
+        if (settled) return;
+        settled = true;
+        clearTimeout(timer);
+        for (const remove of removers) remove();
+        // SDK transaction callbacks complete before the next full reading.
+        setTimeout(resolve, 0);
+      };
+      const timer = setTimeout(finish, 10_000);
+      removers.push(client.lifecycle.subscribe(finish));
+      for (const name of ['sharedField', 'participant', 'projection', 'contribution', 'exploreEntry', 'exploreRelation', 'myFieldAuthority', 'myContributionReceipt', 'ownerPendingContribution', 'myWatch', 'myContact', 'sharedStage', 'myStageFollow', 'fieldPresence', 'activityLiveness', 'fieldNow', 'fieldDay']) {
+        const table = (client.conn.db as any)[name];
+        if (!table) { finish(); return; }
+        for (const event of ['Insert', 'Update', 'Delete']) {
+          const add = table[`on${event}`], remove = table[`removeOn${event}`];
+          if (typeof add === 'function') {
+            add.call(table, finish);
+            if (typeof remove === 'function') removers.push(() => remove.call(table, finish));
+          }
+        }
+      }
+      if (cursor !== fieldCursor(client)) finish();
+    });
+  }
+  return {schema: 'oi.shared-field.observation/v1', cursor: fieldCursor(client), snapshot: {state: 'hosted', ...fieldSnapshot(client)}, ...(ref ? {reading: readRef(client, ref)} : {})};
 }
 
 /** One activity-liveness row as the caller reads it, in the snake_case shape
@@ -268,14 +316,22 @@ export function stageView(client: Client, fieldRef: string) {
  * touch it, and the bounded neighbourhood the live application opens. */
 export function readRef(client: Client, ref: string) {
   const snapshot = fieldSnapshot(client);
-  const entry = snapshot.entries.find((candidate: any) => candidate.ref === ref || (candidate.aliases ?? []).includes(ref));
+  const matches = snapshot.entries.filter((candidate: any) => candidate.ref === ref || (candidate.aliases ?? []).includes(ref));
+  if (matches.length > 1) return {schema: 'oi.shared-field.reading/v1', state: 'unavailable', owner_operation: 'shared-field.resolve', detail: `Ambiguous shared address ${ref}: qualify its world before opening`};
+  const entry = matches[0];
   if (!entry) return { schema: 'oi.shared-field.reading/v1', ref, state: 'absent', target: snapshot.target };
-  const projections = snapshot.projections.filter((projection: any) => projection.subject?.ref === entry.ref || projection.subject?.ref === entry.world_ref || projection.projection_ref === ref);
-  const relations = snapshot.relations.filter((relation: any) => relation.from === entry.ref || relation.to === entry.ref);
+  const field_ref = snapshot.entry_fields[entry.ref] ?? null;
+  const namedProjection = entry.meta?.projection_ref ?? entry.projection_ref;
+  const projections = snapshot.projections.filter((projection: any) => snapshot.projection_fields[projection.projection_ref] === field_ref && (
+    projection.subject?.ref === entry.ref || projection.subject?.ref === entry.world_ref ||
+    // Retained editions used the artifact's local alias as subject. Resolve
+    // their explicitly named projection only within the attested source World.
+    (projection.projection_ref === namedProjection && projection.source?.world_ref === entry.world_ref)
+  ));
+  const relations = snapshot.relations.filter((relation: any) => snapshot.relation_fields[relation.relation_ref] === field_ref && (relation.from === entry.ref || relation.to === entry.ref));
   let neighbourhood: any = null;
   try { neighbourhood = client.live.open(entry.ref, { depth: 1, budget: 24 }); } catch (error: any) { neighbourhood = { error: error?.message ?? String(error) }; }
-  const contributions = contextualContributions(snapshot.contributions, [entry.ref, ...projections.map((projection: any) => projection.projection_ref)]);
-  const field_ref = snapshot.entry_fields[entry.ref] ?? null;
+  const contributions = contextualContributions(snapshot.contributions.filter((row: any) => row.field_ref === field_ref), [entry.ref, ...projections.map((projection: any) => projection.projection_ref)]);
   const relation_errors = snapshot.relation_errors.filter((row: any) => row.field_ref === field_ref || row.from === entry.ref || row.to === entry.ref);
   const my_authority = snapshot.my_authority.filter((row: any) => row.field_ref === field_ref);
   const participants = snapshot.participants.filter((row: any) => row.field_ref === field_ref);
@@ -290,18 +346,30 @@ export function readRef(client: Client, ref: string) {
 export async function publishArgs(client: Client, args: any) {
   const reducers: any = client.conn.reducers;
   const db: any = client.conn.db;
-  await reducers.putSharedField(args.putSharedField);
-  await reducers.putParticipant(args.putParticipant);
-  for (const participant of args.putParticipants ?? []) await reducers.putParticipant(participant);
+  const field = rows(db.sharedField).find((row: any) => row.fieldRef === args.putSharedField.fieldRef);
+  if (!field) await reducers.putSharedField(args.putSharedField);
+  else if (field.kind !== args.putSharedField.kind || field.visibility !== args.putSharedField.visibility) {
+    throw new Error('Publication cannot redefine the native field kind or visibility; change the field through its owner first');
+  }
+  // Membership has its own owner and revision. An artifact edition must not
+  // rewrite an admitted identity, profile or membership provenance.
+  for (const participant of [args.putParticipant, ...(args.putParticipants ?? [])]) {
+    const held = rows(db.participant).find((row: any) => row.participantRef === participant.participantRef);
+    if (!held) await reducers.putParticipant(participant);
+    else if (held.fieldRef !== participant.fieldRef || held.identityKind !== participant.identityKind || held.identityRef !== participant.identityRef) {
+      throw new Error('Publication cannot redefine an admitted participant identity or field');
+    }
+  }
   await waitUntil(() => (args.putParticipants ?? []).every((participant: any) => rows(db.participant).some((row: any) => row.participantRef === participant.participantRef && row.fieldRef === participant.fieldRef)), 'additional Participants in the caller-visible view');
   const granted = rows(db.myFieldAuthority).find((row: any) => row.fieldRef === args.putSharedField.fieldRef && row.participantRef === args.putParticipant.participantRef && row.role === 'contributor' && !row.revoked);
   if (!granted) await reducers.grantParticipantAuthority({ fieldRef: args.putSharedField.fieldRef, participantRef: args.putParticipant.participantRef, targetIdentity: client.identity, role: 'contributor', contactable: true, ttlSeconds: 0 });
   const already = rows(db.projection).find((row: any) => row.projectionKey === args.putProjection.projectionKey);
+  if (already && already.contractJson !== args.putProjection.contractJson) throw new Error('Projection revision conflict: the same immutable key already holds different material');
   if (!already) await reducers.putProjection(args.putProjection);
   for (const entry of args.putExploreEntries ?? []) await reducers.putExploreEntry(entry);
   for (const relation of args.putExploreRelations ?? []) await reducers.putExploreRelation(relation);
   const row = await waitUntil(() => rows(db.projection).find((candidate: any) => candidate.projectionKey === args.putProjection.projectionKey), `Projection ${args.putProjection.projectionKey} in the caller-visible view`);
-  await waitUntil(() => (args.putExploreEntries ?? []).every((entry: any) => rows(db.exploreEntry).some((candidate: any) => candidate.semanticRef === entry.semanticRef)), 'published entries in the caller-visible view');
+  await waitUntil(() => (args.putExploreEntries ?? []).every((entry: any) => rows(db.exploreEntry).some((candidate: any) => candidate.semanticRef === entry.semanticRef && candidate.worldRef === entry.worldRef && candidate.fieldRef === entry.fieldRef && candidate.entryJson === entry.entryJson)), 'exact published entries in the caller-visible view');
   return {
     schema: 'oi.shared-field.hosted-result/v1',
     target: { name: client.target.name, uri: client.target.uri, database: client.target.database },

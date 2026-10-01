@@ -21,7 +21,7 @@
  */
 import {kernelOp} from "../kernel/bridge";
 import type {KernelTransportStatus} from "../kernel/types";
-import type {Change,ReadingRef,ReuseAssociations,ReuseKind,ReuseRole,ReuseGesture} from "./types";
+import type {Change,ReadingRef,ReuseAssociations,ReuseKind,ReuseRole,ReuseGesture,ExpressionDocument} from "./types";
 
 /** Schema a desktop-socket body carries to route to the world seam. */
 export const WORLD_SCHEMA="oi.expression-world/v1";
@@ -34,7 +34,7 @@ export type ActPhase="running"|"held"|"completed"|"cancelled";
 /** @deprecated the act's field is `phase`; kept as an alias for readers. */
 export type ActState=ActPhase;
 export type ActMode="factory"|"expressions"|"techne";
-export type PassageKind="scene"|"state"|"gesture"|"text"|"operate"|"continue"|"return";
+export type PassageKind="edition"|"scene"|"state"|"gesture"|"text"|"operate"|"continue"|"return";
 
 export interface WorldSelection {subject_ref:string;kind:string;native_owner:string;revision?:string;origin:WorldOrigin;expression_ref?:string;entity_ref?:string;activity_ref?:string}
 export interface WorldPortal {portal_ref:string;target_ref:string;surface_id:string;surface_kind:string;placement:PortalPlacement;title:string;opened_by:string;activity_ref?:string}
@@ -54,7 +54,7 @@ export interface MaterialSelect {file_ref?:string;expression_ref?:string;revisio
 export interface ActMaterial {file_ref?:string;expression_ref?:string;revision?:string;scene_ref?:string}
 export interface Transition {duration?:number;easing?:string}
 export interface EventBasis {family:string;source:string;event_ref:string;occurrence?:string|number}
-export interface Passage {index:number;kind:PassageKind;file_ref?:string;/** material addressed as an open Expression */expression_ref?:string;revision?:string;scene_ref?:string;/** the live Expression/Scene performed into */target_ref?:string;target_scene_ref?:string;field?:string;state?:string;role?:string;gesture?:string;bindings?:ActBindings;captions?:Record<string,string>;transition?:Transition;event_basis?:EventBasis;operation?:string;native_ref?:string;text?:string;value?:number;summary?:string;mode:ActMode;at_unix_ms:number;/** later fills of the same text role absorbed in place */coalesced?:number}
+export interface Passage {index:number;kind:PassageKind;/** immutable native edition retained by act_perform; never current writable state */edition?:ExpressionDocument;file_ref?:string;/** material addressed as an open Expression */expression_ref?:string;revision?:string;scene_ref?:string;/** the live Expression/Scene performed into */target_ref?:string;target_scene_ref?:string;field?:string;state?:string;role?:string;gesture?:string;bindings?:ActBindings;captions?:Record<string,string>;transition?:Transition;event_basis?:EventBasis;operation?:string;native_ref?:string;text?:string;value?:number;summary?:string;mode:ActMode;at_unix_ms:number;/** later fills of the same text role absorbed in place */coalesced?:number}
 export interface Continuation {from:ActMode;to:ActMode;instrument_ref?:string;expression_ref?:string;at:number}
 export interface WorldAct {
  act_ref:string;expression_ref:string;summary:string;actor:string;activity_ref?:string;

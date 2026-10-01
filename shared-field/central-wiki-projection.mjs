@@ -606,7 +606,7 @@ export function projectCentralWikiWorld(input) {
       world_ref: worldRef,
       label: node.title,
       aliases: [ref],
-      summary: `${node.node_type ?? 'node'} · ${standing} · revision ${node.revision ?? 1}`,
+      ...(node.summary || node.description ? {summary:node.summary??node.description}: {}),
       revision: String(node.revision ?? 1),
       provenance: nodeProvenance(reading, node, disclose),
       locators: locator(hosted(ref)),
@@ -627,7 +627,7 @@ export function projectCentralWikiWorld(input) {
       world_ref: worldRef,
       label: construction.title,
       aliases: [ref],
-      summary: `constellation · ${selectedMembers.length} participation${selectedMembers.length === 1 ? '' : 's'} in this World · revision ${reading.frame.revision}`,
+      ...(construction.summary || construction.description ? {summary:construction.summary??construction.description}: {}),
       revision: String(reading.frame.revision),
       provenance: constellationProvenance(ref),
       locators: locator(hosted(ref)),
@@ -638,10 +638,10 @@ export function projectCentralWikiWorld(input) {
   const positionProvenance = (ref) => [{ kind: 'central-position', ref, source_system: 'central', revision: positionRows.get(ref).source.revision }];
   const positionText = (ref) => {
     const { record: position } = positionRows.get(ref);
-    const parts = [position.handle, position.role_ref].filter((part) => typeof part === 'string' && part);
+    const parts = [position.purpose, worksOnByRef.get(ref)?.outcome].filter((part) => typeof part === 'string' && part);
     const occupancy = occupancyByRef.get(ref)?.occupancy;
     if (occupancy) {
-      const where = [occupancy.generation_ordinal !== null ? `generation #${occupancy.generation_ordinal}` : undefined, occupancy.workcell_ref ?? undefined].filter(Boolean).join(', ');
+      const where = [occupancy.generation_ordinal !== null ? `generation #${occupancy.generation_ordinal}` : undefined, undefined].filter(Boolean).join(', ');
       parts.push(`${occupancy.state}${where ? ` (${where})` : ''}`);
     }
     return parts.join(' · ') || 'World Position';
@@ -656,7 +656,7 @@ export function projectCentralWikiWorld(input) {
       world_ref: worldRef,
       label: position.label,
       aliases: [ref, ...(typeof position.handle === 'string' && position.handle ? [position.handle] : [])],
-      summary: `World Position · ${positionText(ref)}`,
+      summary: positionText(ref),
       revision: position.revision,
       provenance: [
         ...positionProvenance(ref),
@@ -835,8 +835,8 @@ export function projectCentralWikiWorld(input) {
           component_ref: 'oi.presentation/wiki-reading/v1',
           portable_renderer: 'oi.presentation/wiki-reading/v1',
           subject_ref: hosted(ref),
-          props: { title: space.title, text: `${ref} · ${reading.register} register`, refs },
-          fallback: { title: space.title, text: ref },
+          props: { title: space.title, text: space.description??'', refs, items:refs.map(ref=>({ref,label:entries.find(entry=>entry.ref===ref)?.label})) },
+          fallback: { title: space.title },
         };
       }),
     },
@@ -855,10 +855,10 @@ export function projectCentralWikiWorld(input) {
           subject_ref: hosted(ref),
           props: {
             title: node.title,
-            text: `${node.node_type ?? 'node'} · ${standing}`,
-            refs: disclose ? clone(node.source_refs ?? []) : [],
+            text: node.summary??node.description??'Only the page name has been shared.',
+            source:disclose?{refs:clone(node.source_refs??[]),revision:node.revision,standing}:undefined,
           },
-          fallback: { title: node.title, text: `${node.node_type ?? 'node'} · ${standing}` },
+          fallback: { title: node.title, text: node.summary??node.description??'Only the page name has been shared.' },
         };
       }),
     },
@@ -870,7 +870,7 @@ export function projectCentralWikiWorld(input) {
         const reading = constellationByRef.get(ref);
         const title = (reading.construction ?? reading.frame[AIKIT_CONSTELLATION_SCHEMA]).title;
         const members = participationsOf(ref).filter((member) => selectedNodeRefs.includes(member.ref));
-        const text = `constellation · ${members.length} participation${members.length === 1 ? '' : 's'} in this World · revision ${reading.frame.revision}`;
+        const text = reading.construction?.summary??reading.construction?.description??'';
         return {
           schema: 'oi.presentation-binding/v1',
           provenance: constellationProvenance(ref),
@@ -878,7 +878,7 @@ export function projectCentralWikiWorld(input) {
           component_ref: 'oi.presentation/reference-card/v1',
           portable_renderer: 'oi.presentation/reference-card/v1',
           subject_ref: hosted(ref),
-          props: { title, text, refs: [...new Set(members.filter((member) => selectedNodeRefs.includes(member.ref)).map((member) => hosted(member.ref)))] },
+          props: { title, text, items:members.map(member=>({ref:hosted(member.ref),label:entries.find(entry=>entry.ref===hosted(member.ref))?.label})), refs: [...new Set(members.filter((member) => selectedNodeRefs.includes(member.ref)).map((member) => hosted(member.ref)))] },
           fallback: { title, text },
         };
       }),
@@ -898,7 +898,7 @@ export function projectCentralWikiWorld(input) {
           component_ref: 'oi.presentation/reference-card/v1',
           portable_renderer: 'oi.presentation/reference-card/v1',
           subject_ref: hosted(ref),
-          props: { title: position.label, text, refs: work ? [hosted(work.work_ref)] : [] },
+          props: { title: position.label, text, source:entries.find(entry=>entry.ref===hosted(ref))?.meta, refs: work ? [hosted(work.work_ref)] : [], items:work?[{ref:hosted(work.work_ref),label:entries.find(entry=>entry.ref===hosted(work.work_ref))?.label}]:[] },
           fallback: { title: position.label, text },
         };
       }),
@@ -923,7 +923,7 @@ export function projectCentralWikiWorld(input) {
     projection_revision: projectionRevision,
     state: 'published',
     subject: { kind: 'central-world', ref: worldRef },
-    source: { system: 'central', ref: subjectReading.source.ref, revision: sourceRevision },
+    source: { system: 'central', world_ref: worldRef, ref: subjectReading.source.ref, revision: sourceRevision },
     publisher_participant_ref: selection.publisher.participant_ref,
     published_at: publishedAt,
     audience: clone(selection.audience),

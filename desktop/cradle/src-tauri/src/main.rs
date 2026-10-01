@@ -22,6 +22,10 @@ use tauri::{AppHandle, Emitter, Manager};
 use tauri_plugin_dialog::{DialogExt, MessageDialogButtons};
 
 pub(crate) struct KernelHost(pub(crate) Mutex<Kernel>);
+#[cfg(unix)]
+struct NativeOwnerServer {
+    _server: Mutex<oi_cradle_kernel::expression_transport::Server>,
+}
 
 /// The one typed operation seam: apply a `KernelOp` and return its
 /// outcome; every receipt the operation produced is forwarded on the
@@ -203,6 +207,34 @@ fn main() {
                 Err(error) => eprintln!("Desktop appearance could not be restored: {error}"),
             }
             app.manage(KernelHost(Mutex::new(kernel)));
+            #[cfg(unix)]
+            if let Some((socket, owner)) =
+                oi_cradle_kernel::native_owner_transport::configured_offer()?
+            {
+                let handle = app.handle().clone();
+                let server = oi_cradle_kernel::expression_transport::serve_native_owner(
+                    &socket,
+                    move |request| {
+                        let host = handle.state::<KernelHost>();
+                        let value = owner.apply(
+                            &mut *host
+                                .0
+                                .lock()
+                                .map_err(|_| "native kernel lock unavailable")?,
+                            request,
+                        )?;
+                        if let Some(receipts) = value["outcome"]["receipts"].as_array() {
+                            for receipt in receipts {
+                                let _ = handle.emit(KERNEL_EVENT_TOPIC, receipt);
+                            }
+                        }
+                        Ok(value)
+                    },
+                )?;
+                app.manage(NativeOwnerServer {
+                    _server: Mutex::new(server),
+                });
+            }
             #[cfg(unix)]
             {
                 let path = oi_cradle_kernel::expression_transport::default_socket_path()?;

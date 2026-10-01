@@ -10,6 +10,7 @@ on:
     paths:
       - 'desktop/**'
       - 'packages/oi-design-system/**'
+      - 'shared-field/**'
       - '.github/workflows/desktop.yml'
   workflow_dispatch:
 
@@ -86,6 +87,12 @@ jobs:
       - name: Enforce desktop architecture conformance and bounded debt
         working-directory: desktop/cradle
         run: node --test tests/conformance/*.test.mjs
+      - name: Enforce the shell presentation rules and deliberate source disclosure
+        working-directory: desktop/cradle
+        run: node --test tests/cradle-shell-antipatterns.test.mjs
+      - name: Prove native Encounter material rendering and source offsets
+        working-directory: desktop/cradle
+        run: node --experimental-strip-types --import ./tests/ts-register.mjs --test tests/encounter-markdown.test.mjs tests/canvas-editor-contract.test.mjs
       - name: Prove Expression projection through the declared native engine
         working-directory: desktop/cradle
         run: node tests/expression-engine.mjs
@@ -122,12 +129,20 @@ jobs:
       - name: Prove search component and literal query transport (D)
         working-directory: desktop/cradle
         run: node tests/search-overlay.mjs
+      - name: Prove native composition names, disclosure and exact subject selection
+        working-directory: desktop/cradle
+        env:
+          OI_KERNEL_BRIDGE: http://127.0.0.1:4179
+          OI_PRESENTATION_EVIDENCE: tests/artifacts/readable-presentation
+        run: node tests/presentation-readable-native.mjs
       - name: Interact with the production Library on controlled owner protocol
         working-directory: desktop/cradle
         run: node tests/collection-browser.mjs
       - name: Prove Expression page placement and capture on one WebGL context
         working-directory: desktop/cradle
-        run: node tests/expression-stage-placement.mjs
+        run: |
+          node tests/expression-stage-placement.mjs
+          node tests/expression-stage-ascii.mjs
       - name: Prove shared Expression ownership and sleeping lifecycle
         working-directory: desktop/cradle
         env:
@@ -156,6 +171,13 @@ jobs:
         with:
           name: search-component-${{ github.sha }}
           path: desktop/cradle/tests/artifacts/search
+      - name: Retain native presentation browser and accessibility evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: readable-presentation-${{ github.sha }}
+          path: desktop/cradle/tests/artifacts/readable-presentation/
+          if-no-files-found: warn
       - name: Retain collection source-identity consumer evidence
         if: always()
         uses: actions/upload-artifact@v4

@@ -48,7 +48,7 @@ const FIELD_DAY_KEYS = new Set([
   'schema', 'field_ref', 'revision', 'interval', 'temporal_policy_provenance',
   'projected_source_day_refs', 'projected_now_refs', 'cursors', 'audience',
 ]);
-const DAY_REF_KEYS = new Set(['day_ref', 'workcell_ref', 'projected_by']);
+const DAY_REF_KEYS = new Set(['day_ref', 'world_ref', 'workcell_ref', 'projected_by']);
 const DAY_NOW_KEYS = new Set(['now_ref', 'projected_by']);
 const CURSOR_KEYS = new Set(['activity_cursor', 'contribution_cursor', 'encounter_cursor']);
 const FIELD_NOW_CURSORS = ['presence_cursor', 'activity_cursor', 'contribution_cursor'];
@@ -211,10 +211,11 @@ export function validateFieldNow(input) {
 }
 
 function upsertByRef(entries, updates, key, projectedBy) {
-  const next = new Map(entries.map((entry) => [entry[key], entry]));
+  const identity = typeof key === 'function' ? key : (entry) => entry[key];
+  const next = new Map(entries.map((entry) => [identity(entry), entry]));
   for (const update of updates ?? []) {
     record(update, 'upsert entry');
-    next.set(update[key], { ...update, projected_by: update.projected_by ?? projectedBy });
+    next.set(identity(update), { ...update, projected_by: update.projected_by ?? projectedBy });
   }
   return Array.from(next.values());
 }
@@ -267,15 +268,19 @@ export function advanceFieldNow(prior, change) {
 }
 
 function entryDelta(priorEntries, nextEntries, key) {
-  const prior = new Map(priorEntries.map((entry) => [entry[key], entry]));
-  const next = new Map(nextEntries.map((entry) => [entry[key], entry]));
+  const identity = typeof key === 'function' ? key : (entry) => entry[key];
+  const prior = new Map(priorEntries.map((entry) => [identity(entry), entry]));
+  const next = new Map(nextEntries.map((entry) => [identity(entry), entry]));
   const changed = [];
   for (const ref of new Set([...prior.keys(), ...next.keys()])) {
     const before = prior.get(ref);
     const after = next.get(ref);
     if (JSON.stringify(before) === JSON.stringify(after)) continue;
     const attributed = new Set([before?.projected_by, after?.projected_by].filter(Boolean));
-    changed.push({ ref, change: !before ? 'added' : !after ? 'withdrawn' : 'changed', projected_by: Array.from(attributed) });
+    const source = after ?? before;
+    const qualification = typeof key === 'function' && source.world_ref
+      ? { world_ref: source.world_ref, ...(source.workcell_ref ? { workcell_ref: source.workcell_ref } : {}) } : {};
+    changed.push({ ref: typeof key === 'function' ? source.day_ref : ref, ...qualification, change: !before ? 'added' : !after ? 'withdrawn' : 'changed', projected_by: Array.from(attributed) });
   }
   return changed;
 }
@@ -309,6 +314,30 @@ export function fieldDayKey(fieldDay) {
   return `${fieldDay.field_ref}|${fieldDay.interval.start}|${fieldDay.interval.end}`;
 }
 
+// Personal refs are local to their World, even when their spellings match.
+// Old unqualified readings remain readable; a colliding withdrawal cannot
+// guess which source the participant meant.
+function sourceDayKey(entry) {
+  return entry.world_ref || entry.workcell_ref
+    ? JSON.stringify([entry.world_ref ?? '', entry.workcell_ref ?? '', entry.day_ref])
+    : entry.day_ref;
+}
+
+function withdrawSourceDays(entries, refs = []) {
+  const drop = new Set();
+  for (const ref of refs) {
+    if (typeof ref === 'string') {
+      const matches = entries.filter((entry) => entry.day_ref === ref);
+      if (matches.length > 1) throw new TypeError('ambiguous personal Day withdrawal: provide world_ref, workcell_ref and day_ref');
+      for (const entry of matches) drop.add(sourceDayKey(entry));
+    } else {
+      record(ref, 'qualified personal Day withdrawal');
+      drop.add(sourceDayKey(ref));
+    }
+  }
+  return entries.filter((entry) => !drop.has(sourceDayKey(entry)));
+}
+
 /** Validate one `oi.field-day/v1` aggregation interval. Its own policy and
  * the source Day refs it composes remain distinct relations: a participant's
  * local civil Day is referenced, never rewritten into the field interval. */
@@ -335,10 +364,12 @@ export function validateFieldDay(input) {
     record(entry, name);
     exactKeys(entry, DAY_REF_KEYS, name, FIELD_DAY_SCHEMA);
     matching(entry.day_ref, DAY_REF_PATTERN, `${name}.day_ref`);
+    if (entry.world_ref !== undefined) text(entry.world_ref, `${name}.world_ref`);
     if (entry.workcell_ref !== undefined) matching(entry.workcell_ref, WORKCELL_REF_PATTERN, `${name}.workcell_ref`);
     text(entry.projected_by, `${name}.projected_by`);
-    if (seen.has(entry.day_ref)) throw new TypeError(`FieldDay projects ${entry.day_ref} more than once`);
-    seen.add(entry.day_ref);
+    const identity = sourceDayKey(entry);
+    if (seen.has(identity)) throw new TypeError(`FieldDay projects ${identity} more than once`);
+    seen.add(identity);
   });
   list(value.projected_now_refs, 'FieldDay.projected_now_refs', FIELD_NOW_LIMITS.now_refs).forEach((entry, index) => {
     const name = `FieldDay.projected_now_refs[${index}]`;
@@ -387,7 +418,7 @@ export function advanceFieldDay(prior, change) {
     revision: revision + 1,
     interval: base.interval,
     temporal_policy_provenance: change.temporal_policy_provenance ?? base.temporal_policy_provenance,
-    projected_source_day_refs: upsertByRef(withdrawByRef(base.projected_source_day_refs, change.withdraw_source_day_refs, 'day_ref'), change.upsert_source_day_refs, 'day_ref', change.projected_by),
+    projected_source_day_refs: upsertByRef(withdrawSourceDays(base.projected_source_day_refs, change.withdraw_source_day_refs), change.upsert_source_day_refs, sourceDayKey, change.projected_by),
     projected_now_refs: upsertByRef(withdrawByRef(base.projected_now_refs, change.withdraw_now_refs, 'now_ref'), change.upsert_now_refs, 'now_ref', change.projected_by),
     cursors,
     audience: change.audience ?? base.audience,
@@ -400,7 +431,7 @@ export function fieldDayDelta(prior, next) {
   const before = prior ?? { projected_source_day_refs: [], projected_now_refs: [] };
   return {
     entries: [
-      ...entryDelta(before.projected_source_day_refs, next.projected_source_day_refs, 'day_ref'),
+      ...entryDelta(before.projected_source_day_refs, next.projected_source_day_refs, sourceDayKey),
       ...entryDelta(before.projected_now_refs, next.projected_now_refs, 'now_ref'),
     ],
     envelope_changed: !prior

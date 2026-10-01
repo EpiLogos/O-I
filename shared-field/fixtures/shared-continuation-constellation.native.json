@@ -1,0 +1,248 @@
+{
+  "evidence": {
+    "grade": "controlled-user-real-hosted-reading",
+    "database": "oi-shared-field",
+    "native_capture": "O:I field-client read as independently admitted Ada",
+    "field_ref": "oi:field:shared-continuation-20260930"
+  },
+  "entry": {
+    "schema": "oi.explore-entry/v1",
+    "ref": "world:shared-expression:ann/wiki:frame:shared-continuation",
+    "kind": "constellation",
+    "world_ref": "world:shared-expression:ann",
+    "label": "Continue one shared undertaking",
+    "summary": "constellation \u00b7 1 participation in this World \u00b7 revision 1",
+    "revision": "1",
+    "aliases": [
+      "wiki:frame:shared-continuation"
+    ],
+    "provenance": [
+      {
+        "kind": "aikit-constellation",
+        "ref": "wiki:frame:shared-continuation",
+        "source_system": "ai-kit",
+        "revision": "1"
+      }
+    ],
+    "locators": [
+      {
+        "surface": "web",
+        "locator": "/explore.html?ref=world%3Ashared-expression%3Aann%2Fwiki%3Aframe%3Ashared-continuation"
+      }
+    ],
+    "projection_ref": "projection:shared-world:ann",
+    "meta": {
+      "standing": "aikit-constellation",
+      "native_owner": "ai-kit",
+      "local_ref": "wiki:frame:shared-continuation",
+      "participations": 1
+    }
+  },
+  "neighbourhood": {
+    "resource": {
+      "schema": "oi.explore-entry/v1",
+      "ref": "world:shared-expression:ann/wiki:frame:shared-continuation",
+      "kind": "constellation",
+      "world_ref": "world:shared-expression:ann",
+      "label": "Continue one shared undertaking",
+      "summary": "constellation \u00b7 1 participation in this World \u00b7 revision 1",
+      "revision": "1",
+      "aliases": [
+        "wiki:frame:shared-continuation"
+      ],
+      "provenance": [
+        {
+          "kind": "aikit-constellation",
+          "ref": "wiki:frame:shared-continuation",
+          "source_system": "ai-kit",
+          "revision": "1"
+        }
+      ],
+      "locators": [
+        {
+          "surface": "web",
+          "locator": "/explore.html?ref=world%3Ashared-expression%3Aann%2Fwiki%3Aframe%3Ashared-continuation"
+        }
+      ],
+      "projection_ref": "projection:shared-world:ann",
+      "meta": {
+        "standing": "aikit-constellation",
+        "native_owner": "ai-kit",
+        "local_ref": "wiki:frame:shared-continuation",
+        "participations": 1
+      }
+    },
+    "relations": {
+      "schema": "oi.explore-relation-view/v1",
+      "focus": "world:shared-expression:ann/wiki:frame:shared-continuation",
+      "depth": 1,
+      "budget": 24,
+      "nodes": [
+        {
+          "schema": "oi.explore-entry/v1",
+          "ref": "world:shared-expression:ann/wiki:frame:shared-continuation",
+          "kind": "constellation",
+          "world_ref": "world:shared-expression:ann",
+          "label": "Continue one shared undertaking",
+          "summary": "constellation \u00b7 1 participation in this World \u00b7 revision 1",
+          "revision": "1",
+          "aliases": [
+            "wiki:frame:shared-continuation"
+          ],
+          "provenance": [
+            {
+              "kind": "aikit-constellation",
+              "ref": "wiki:frame:shared-continuation",
+              "source_system": "ai-kit",
+              "revision": "1"
+            }
+          ],
+          "locators": [
+            {
+              "surface": "web",
+              "locator": "/explore.html?ref=world%3Ashared-expression%3Aann%2Fwiki%3Aframe%3Ashared-continuation"
+            }
+          ],
+          "projection_ref": "projection:shared-world:ann",
+          "meta": {
+            "standing": "aikit-constellation",
+            "native_owner": "ai-kit",
+            "local_ref": "wiki:frame:shared-continuation",
+            "participations": 1
+          }
+        },
+        {
+          "schema": "oi.explore-entry/v1",
+          "ref": "world:shared-expression:ann/wiki:node:shared-continuation-ann",
+          "kind": "wiki-node",
+          "world_ref": "world:shared-expression:ann",
+          "label": "Ada on shared continuation",
+          "summary": "learning \u00b7 agent-maintained \u00b7 revision 1",
+          "revision": "1",
+          "aliases": [
+            "wiki:node:shared-continuation-ann"
+          ],
+          "provenance": [
+            {
+              "kind": "agent-wiki",
+              "ref": "wiki:node:shared-continuation-ann",
+              "source_system": "central",
+              "revision": "central.content-fnv1a64/v1:3813:ff37aa09414b7d3a"
+            },
+            {
+              "kind": "agent-maintained-source",
+              "ref": "central:source:control:root:Control/agents/now/flows/dda78731d88799b19cc8d78777b2aebf52acd9f691e4ead91e6ab3bf00a55b57.json",
+              "source_system": "central",
+              "revision": "central.content-fnv1a64/v1:3813:ff37aa09414b7d3a"
+            },
+            {
+              "kind": "agent-maintained-source",
+              "ref": "ProjectCentral/agents/wiki/returns/shared-continuation.json",
+              "source_system": "central",
+              "revision": "central.content-fnv1a64/v1:3813:ff37aa09414b7d3a"
+            }
+          ],
+          "locators": [
+            {
+              "surface": "web",
+              "locator": "/explore.html?ref=world%3Ashared-expression%3Aann%2Fwiki%3Anode%3Ashared-continuation-ann"
+            }
+          ],
+          "projection_ref": "projection:shared-world:ann",
+          "meta": {
+            "register": "project",
+            "standing": "agent-maintained",
+            "node_type": "learning",
+            "local_ref": "wiki:node:shared-continuation-ann"
+          }
+        },
+        {
+          "schema": "oi.explore-entry/v1",
+          "ref": "world:shared-expression:ann",
+          "kind": "central-world",
+          "world_ref": "world:shared-expression:ann",
+          "label": "Ann \u00b7 Mac \u2014 continue one shared undertaking",
+          "revision": "oi.world-sources/v1:85d5c8d5d56e7fa4",
+          "aliases": [],
+          "provenance": [
+            {
+              "kind": "central-wiki-reading",
+              "ref": "central:source:control:root:Control/agents/wiki/wiki.json",
+              "source_system": "central",
+              "revision": "central.content-fnv1a64/v1:337:948e0a172bed4f7f"
+            },
+            {
+              "kind": "central-wiki-reading",
+              "ref": "central:source:project:shared-inquiry-ann:ProjectCentral/agents/wiki/wiki.json",
+              "source_system": "central",
+              "revision": "central.content-fnv1a64/v1:3813:ff37aa09414b7d3a"
+            },
+            {
+              "kind": "aikit-constellation",
+              "ref": "wiki:frame:shared-continuation",
+              "source_system": "ai-kit",
+              "revision": "1"
+            },
+            {
+              "kind": "workcell",
+              "ref": "workcell:mac",
+              "source_system": "workcell",
+              "revision": "workcell:a936b0740f80389d"
+            }
+          ],
+          "locators": [
+            {
+              "surface": "web",
+              "locator": "/explore.html?ref=world%3Ashared-expression%3Aann"
+            }
+          ],
+          "projection_ref": "projection:shared-world:ann",
+          "meta": {
+            "register": "project",
+            "standing": "projection",
+            "projection_ref": "projection:shared-world:ann"
+          }
+        }
+      ],
+      "edges": [
+        {
+          "relation_ref": "world:shared-expression:ann/wiki:frame:shared-continuation#aikit.constellation/participation#world:shared-expression:ann/wiki:node:shared-continuation-ann#participation:shared-continuation-ann",
+          "from": "world:shared-expression:ann/wiki:frame:shared-continuation",
+          "to": "world:shared-expression:ann/wiki:node:shared-continuation-ann",
+          "relation": "aikit.constellation/participation",
+          "origin": "aikit-knowledge",
+          "direction": "forward",
+          "provenance": [
+            {
+              "kind": "aikit-participation",
+              "ref": "participation:shared-continuation-ann",
+              "source_system": "ai-kit",
+              "revision": "1"
+            }
+          ]
+        },
+        {
+          "relation_ref": "world:shared-expression:ann#oi.world/constellation#world:shared-expression:ann/wiki:frame:shared-continuation",
+          "from": "world:shared-expression:ann",
+          "to": "world:shared-expression:ann/wiki:frame:shared-continuation",
+          "relation": "oi.world/constellation",
+          "origin": "projection",
+          "provenance": [
+            {
+              "kind": "projection-relation",
+              "ref": "world:shared-expression:ann#oi.world/constellation#world:shared-expression:ann/wiki:frame:shared-continuation",
+              "source_system": "o-i",
+              "revision": "projection:shared-world:ann@1"
+            }
+          ]
+        }
+      ],
+      "truncated": false
+    },
+    "actions": [
+      "open",
+      "inspect",
+      "traverse"
+    ]
+  }
+}

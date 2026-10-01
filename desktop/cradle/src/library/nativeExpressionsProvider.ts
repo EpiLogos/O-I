@@ -22,7 +22,9 @@ export function nativeExpressionsProvider(transport: KernelTransportStatus): Lib
         if (!row || typeof row.expression_ref !== "string" || !row.expression_ref.startsWith("expression:") || typeof row.revision !== "number" || !Number.isSafeInteger(row.revision) || row.revision < 1 || typeof row.title !== "string" || !Array.isArray(row.collections) || row.collections.some((c: unknown) => typeof c !== "string")) {
           errors.push("Native index contains an invalid Expression row"); continue;
         }
-        items.push({kind: "composition", ref: row.expression_ref, expressionRef: row.expression_ref, revision: String(row.revision), title: row.title, owner: "this instance", scope: "local", provider: "expressions", nativeCollections: row.collections, summary: row.collections.length ? `Collections: ${row.collections.join(", ")}` : "Native Expression — not assigned to a collection"});
+        // The current owner index carries collection identities, not names.
+        // Keep these exact bindings in source depth without inventing titles.
+        items.push({kind: "composition", ref: row.expression_ref, expressionRef: row.expression_ref, revision: String(row.revision), title: row.title, owner: "this instance", scope: "local", provider: "expressions", nativeCollections: row.collections, summary: row.collections.length ? `In ${row.collections.length} ${row.collections.length===1?"collection":"collections"}` : "Not assigned to a collection"});
       }
       return {items, coverage: {provider: "expressions", state: errors.length ? "partial" : "complete", reason: errors.length ? errors.join("; ") : undefined}};
     },

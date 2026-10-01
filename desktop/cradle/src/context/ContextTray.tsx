@@ -84,7 +84,7 @@ export function ContextTray({bindings,accompanying}:{bindings:Record<string,Surf
    }catch(error){if(!disposed&&operation===generation)setContextPreview({candidate:next,title:binding.title,error:String(error)});}
    finally{busy=false;}
   };
-  const changed=(event:Event)=>{const detail=(event as CustomEvent<{project:string;value:PreparedContext}>).detail;if(!detail?.value)return;const c=detail.value;
+  const changed=(event:Event)=>{const detail=(event as CustomEvent<{project:string;value:PreparedContext;sourceWorldRef?:string}>).detail;if(!detail?.value||detail.sourceWorldRef)return;const c=detail.value;
    const companion=latest.current.accompanying;
    if(c.scope.agent_session!==(companion?.ref??null)||companion&&detail.project!==companion.project)return;
    const scope=selectionScopeKey(detail.project,c.scope.agent_session??undefined);

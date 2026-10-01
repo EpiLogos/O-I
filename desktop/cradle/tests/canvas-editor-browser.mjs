@@ -2,9 +2,10 @@ import assert from 'node:assert/strict';
 import {createServer} from 'vite';
 import {chromium} from 'playwright';
 import {fileURLToPath} from 'node:url';
-import {readFileSync,mkdirSync,writeFileSync,existsSync} from 'node:fs';
+import {readFileSync,mkdirSync,mkdtempSync,rmSync,writeFileSync,existsSync} from 'node:fs';
 import {createHash} from 'node:crypto';
 const root=fileURLToPath(new URL('../',import.meta.url));
+const icon=readFileSync(new URL('../../../packages/oi-design-system/assets/oi-mark.svg',import.meta.url));
 const out=fileURLToPath(new URL('./artifacts/canvas-editor/',import.meta.url));mkdirSync(out,{recursive:true});
 const original='---\ncustom: retain exactly\n---\n\n# Source document\n\nFirst same 🙂 passage.\n\nSecond same 🙂 passage.\n\n| A | B |\n| --- | --- |\n| x | y |\n';
 let source=original,revision='r1',draft={revision:0,text:''},sent=[],contexts=new Map(),calls=[],failSend=false,dropContextHandler=false,delayedRead;
@@ -44,19 +45,24 @@ function execute(op){calls.push(op);
   if(r.operation==='adopt'){const p=getContext(op.project,null);assert.equal(c.revision,r.basis);assert.equal(p.revision,r.project_basis);c.items.push(...p.items);c.revision++;c.digest=digest(c.items);p.items=[];p.revision++;p.digest=digest([]);}
   data=c;
  }
- else if(req.action==='prompt-context'){const c=getContext(op.project,req.agent_session);assert.equal(req.context.digest,c.digest);assert.equal(req.context.revision,c.revision);assert.deepEqual(req.context.reviewed,c.items.map(x=>x.id));assert.equal(req.draft_revision,draft.revision);if(failSend)throw Error('Controlled provider transport failed');sent.push({text:draft.text,context:structuredClone(c)});c.items=[];c.revision++;c.digest=digest([]);draft={text:'',revision:draft.revision+1};data={accepted:true,draft};}
+ else if(req.action==='prompt-context'){const c=getContext(op.project,req.agent_session);assert.equal(req.context.digest,c.digest);assert.equal(req.context.revision,c.revision);assert.deepEqual(req.context.reviewed,c.items.map(x=>x.id));assert.equal(req.draft_revision,draft.revision);if(failSend)throw Error('Native admission refused before submission [encounter.context_conflict]');sent.push({text:draft.text,context:structuredClone(c)});c.items=[];c.revision++;c.digest=digest([]);draft={text:'',revision:draft.revision+1};data={accepted:true,draft};}
  else if(req.action==='prompt'){assert.equal(getContext(op.project,req.agent_session).items.length,0,'Legacy prompt must not drop structured context');sent.push({text:draft.text});draft={text:'',revision:draft.revision+1};data={accepted:true,draft};}
  else throw Error('Unknown controlled request '+req.action);
  return {result:'encounter_reading',data};
 }
-const server=await createServer({root,appType:'custom',server:{host:'127.0.0.1',port:0,strictPort:false},logLevel:'error'});
+const cacheDir=mkdtempSync(out+'vite-cache-');
+const server=await createServer({root,cacheDir,optimizeDeps:{noDiscovery:true,include:['react','react-dom/client','@xterm/xterm']},appType:'custom',server:{host:'127.0.0.1',port:0,strictPort:false},logLevel:'error'});
 server.middlewares.use('/op',(request,response)=>{let body='';request.on('data',chunk=>body+=chunk);request.on('end',()=>{response.setHeader('content-type','application/json');try{const op=JSON.parse(body);if(delayedRead&&op.request?.action==='context'&&op.request.request.operation==='read'){const hold=delayedRead;delayedRead=undefined;hold.response=()=>{const outcome=execute(op);response.end(JSON.stringify({ok:true,outcome:{...outcome,receipts:[]}}));};return;}const outcome=execute(op);response.end(JSON.stringify({ok:true,outcome:{...outcome,receipts:[]}}));}catch(e){response.end(JSON.stringify({ok:false,error:String(e)}));}});});
 server.middlewares.use('/events',(_q,res)=>{res.setHeader('content-type','application/json');res.end('{"ok":true,"receipts":[]}');});
-server.middlewares.use('/canvas-editor',async(_q,res)=>{res.setHeader('content-type','text/html');res.end(await server.transformIndexHtml('/canvas-editor','<body class="oi-desktop" style="margin:0"><script>window.__OI_KERNEL_BRIDGE__=location.origin</script><div id="root"></div><script type="module" src="/tests/canvas-editor-page.tsx"></script></body>'));});
+// Full Chromium requests a favicon; serve the actual design-system mark so the
+// controlled page has complete resources and the no-page-errors check stays strict.
+server.middlewares.use('/canvas-icon.svg',(_q,res)=>{res.setHeader('content-type','image/svg+xml');res.end(icon);});
+server.middlewares.use('/canvas-editor',async(_q,res)=>{res.setHeader('content-type','text/html');res.end(await server.transformIndexHtml('/canvas-editor','<!doctype html><html><head><link rel="icon" type="image/svg+xml" href="/canvas-icon.svg"></head><body class="oi-desktop" style="margin:0"><script>window.__OI_KERNEL_BRIDGE__=location.origin</script><div id="root"></div><script type="module" src="/tests/canvas-editor-page.tsx"></script></body></html>'));});
 await server.listen();const url=`http://127.0.0.1:${server.httpServer.address().port}/canvas-editor`;
 const browser=await chromium.launch({headless:true,...(process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE?{executablePath:process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE}:existsSync('/usr/bin/chromium')?{executablePath:'/usr/bin/chromium'}:{})});
-const page=await browser.newPage({viewport:{width:1280,height:820}});const requests=[];page.on('request',request=>requests.push(request.url()));const errors=[];page.on('pageerror',e=>errors.push(e.message));const checks=[];
+const page=await browser.newPage({viewport:{width:1280,height:820}});const requests=[];page.on('request',request=>requests.push(request.url()));const errors=[];page.on('pageerror',e=>errors.push(e.message));page.on('console',message=>{if(message.type()==='error')errors.push(`${message.text()}${message.location().url?` · ${message.location().url}`:''}`);});page.on('response',response=>{if(response.status()>=400)errors.push(`${response.status()} ${response.url()}`);});const checks=[];
 const check=(name,condition)=>{assert.ok(condition,name);checks.push(name);};
+const pending=new Map();page.on('request',request=>pending.set(request,Date.now()));page.on('requestfinished',request=>pending.delete(request));page.on('requestfailed',request=>{pending.delete(request);errors.push(`${request.failure()?.errorText} ${request.url()}`);});
 try{
  await page.goto(url);await page.getByRole('tab',{name:'Source',exact:true}).click();await page.getByRole('textbox',{name:'Editing sample.md'}).waitFor();await page.waitForFunction(()=>window.canvasTest);
  const start=original.lastIndexOf('same');await page.evaluate(start=>canvasTest.select(start,start+7),start);
@@ -80,7 +86,7 @@ try{
  let queued=getContext('demo','agent-session/test');check('queued exact second occurrence',queued.items[0].selection.anchor.start===start);check('Unicode range retained',queued.items[0].selection.text==='same 🙂');
  await page.waitForFunction(()=>document.querySelector('.context-prepared-highlight'));checks.push('prepared selection has a retained source cue');
  await page.evaluate(()=>canvasTest.change('Explain the selected passage'));await page.waitForFunction(()=>canvasTest.session()?.draft==='Explain the selected passage'&&!canvasTest.session().busy);
- failSend=true;await page.evaluate(()=>canvasTest.send());check('failed send keeps exact native prepared selection',getContext('demo','agent-session/test').items.length===1);check('failed send retains the instruction',draft.text==='Explain the selected passage');failSend=false;
+ failSend=true;await page.evaluate(()=>canvasTest.send());check('admission refusal keeps exact native prepared selection',getContext('demo','agent-session/test').items.length===1);check('admission refusal retains the instruction',draft.text==='Explain the selected passage');failSend=false;
  // Edit selected bytes after preparation; sending must be blocked BEFORE the native handler.
  await page.evaluate(start=>canvasTest.select(start,start+7),start);await page.getByRole('textbox',{name:'Editing sample.md'}).press('Backspace');const before=calls.filter(c=>c.request?.action==='prompt-context').length;await page.evaluate(()=>canvasTest.send());check('stale selection blocked before native dispatch',calls.filter(c=>c.request?.action==='prompt-context').length===before);
  await page.getByRole('button',{name:'Undo',exact:true}).click();await page.waitForFunction(doc=>canvasTest.document()===doc,original);await page.evaluate(()=>canvasTest.send());
@@ -135,4 +141,4 @@ try{
  check('no page errors',errors.length===0);
  writeFileSync(out+'receipt.json',JSON.stringify({standing:'controlled production-component/handler evidence; native store independently tested in Rust; not installed/provider/human proof',checks,errors,calls:calls.filter(c=>['context','prompt-context'].includes(c.request?.action)).map(c=>({op:c.op,action:c.request.action,project:c.project}))},null,2));
  console.log(JSON.stringify({passed:checks.length,checks,errors},null,2));
-}finally{if(errors.length)console.error(errors);await page.screenshot({path:out+'last-state.png'}).catch(()=>{});await browser.close();await server.close();}
+}finally{if(errors.length)console.error(errors);writeFileSync(out+'pending-requests.json',JSON.stringify([...pending].map(([request,start])=>({url:request.url(),elapsed_ms:Date.now()-start})),null,2));await page.screenshot({path:out+'last-state.png'}).catch(()=>{});await browser.close();await server.close();rmSync(cacheDir,{recursive:true,force:true});}

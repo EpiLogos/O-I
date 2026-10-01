@@ -65,6 +65,7 @@ function contributionContent(kind, input, basis) {
 function revisionBasis(input) {
   const basis = record(input, 'contribution body.basis');
   return {
+    ...(basis.source_world_ref ? { source_world_ref: text(basis.source_world_ref, 'contribution body.basis.source_world_ref') } : {}),
     source_ref: text(basis.source_ref, 'contribution body.basis.source_ref'),
     source_revision: text(basis.source_revision, 'contribution body.basis.source_revision'),
     projection_ref: text(basis.projection_ref, 'contribution body.basis.projection_ref'),
@@ -110,6 +111,7 @@ export function createAttachedContribution(input) {
     relation: clone(input.relation ?? { kind: input.target.kind === 'oi.contribution' ? 'responds_to' : 'proposes_difference_to' }),
     representation: { kind: CONTRIBUTION_BODY_SCHEMA, payload: body },
     provenance: clone(input.provenance),
+    ...(input.agency ? { agency: clone(input.agency) } : {}),
   });
   if (input.addressing) contribution = addressedContribution(contribution, validateParticipantAddress(input.addressing));
   return contribution;
@@ -158,6 +160,7 @@ export function inspectContributionBasis(contribution, current) {
   if (!body.basis) return { contribution_ref: value.contribution_ref, body, current: clone(current), stale: [{ kind: 'source_basis', expected: null, actual: null }], returnable: false };
   record(current, 'current owner revisions');
   const checks = [
+    ...(body.basis.source_world_ref === undefined ? [] : [['source_world_ref', body.basis.source_world_ref, current.source_world_ref]]),
     ['source_ref', body.basis.source_ref, current.source_ref],
     ['source_revision', body.basis.source_revision, current.source_revision],
     ['projection_ref', body.basis.projection_ref, current.projection_ref],
@@ -214,6 +217,7 @@ export function nativeReturnSubmission(contribution, owner, options = {}) {
           projection_ref: body.basis.projection_ref,
           projection_revision: body.basis.projection_revision,
           source_revision: body.basis.source_revision,
+          ...(body.basis.source_world_ref ? { source_world_ref: body.basis.source_world_ref } : {}),
           ...(body.basis.expression_ref ? { expression_ref: body.basis.expression_ref, expression_revision: body.basis.expression_revision } : {}),
           ...(body.basis.world_presentation_ref ? { world_presentation_ref: body.basis.world_presentation_ref, world_presentation_revision: body.basis.world_presentation_revision } : {}),
         },

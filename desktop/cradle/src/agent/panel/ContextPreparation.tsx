@@ -19,8 +19,8 @@ function usePreparedCount(project?:string,session?:string):{count?:number;error?
       .then(value=>{if(active)setReading({count:value.items.length});})
       .catch(reason=>{if(active)setReading({error:reason instanceof Error?reason.message:String(reason)});});
     const changed=(event:Event)=>{
-      const detail=(event as CustomEvent<{project:string;value:PreparedContext}>).detail;
-      if(detail?.project!==project||!detail.value)return;
+      const detail=(event as CustomEvent<{project:string;value:PreparedContext;sourceWorldRef?:string}>).detail;
+      if(detail?.sourceWorldRef||detail?.project!==project||!detail.value)return;
       if(detail.value.scope.agent_session===(session??null))setReading({count:detail.value.items.length});
     };
     window.addEventListener(PREPARED_CONTEXT_CHANGED,changed);

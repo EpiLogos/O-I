@@ -7,13 +7,15 @@
  * The desktop kernel speaks one protocol to the O:I-owned SharedField client
  * (field.ts, see field.sh) and to the A2A owner floor (a2a-runner.mjs). In a
  * source checkout those run through tsx and the repository's node_modules; an
- * installed application has neither. This bundles both doorways into single
+ * installed application has neither. This bundles the doorways and producer into single
  * ESM files with their dependencies, copies the non-secret hosting.json the
  * client resolves targets from, and writes a POSIX launcher that finds a node
  * runtime. Output (default shared-field/dist-client/):
  *
  *   field-client.mjs     field.ts + field-lib + SDK, one file
  *   a2a-runner.mjs       the A2A owner floor doorway, one file
+ *   field-lib.mjs        the caller-visible subscription owner, one file
+ *   expression-producer.mjs  native socket/Act reader with reconnect
  *   hosting.json         copy of spacetimedb/hosting.json
  *   field-client.sh      launcher: OI_NODE, PATH, then well-known node homes
  *   CLIENT.json          what was bundled, from which source revision
@@ -34,7 +36,8 @@ const out = resolve(outFlag > 0 ? process.argv[outFlag + 1] : join(here, '..', '
 // The directory itself stays (it is a declared Tauri resource and carries a
 // tracked README); only this builder's own outputs are replaced.
 mkdirSync(out, { recursive: true });
-for (const name of ['field-client.mjs', 'a2a-runner.mjs', 'hosting.json', 'field-client.sh', 'CLIENT.json']) rmSync(join(out, name), { force: true });
+const builtFiles=['field-client.mjs','a2a-runner.mjs','field-lib.mjs','expression-producer.mjs','hosting.json','field-client.sh'];
+for (const name of [...builtFiles,'CLIENT.json']) rmSync(join(out, name), { force: true });
 
 // Bundled output keeps `import.meta.url` pointing at the bundle's own
 // directory, so field-lib's `here` resolves hosting.json beside it.
@@ -52,6 +55,8 @@ const common = {
 };
 await build({ ...common, entryPoints: [join(here, 'field.ts')], outfile: join(out, 'field-client.mjs') });
 await build({ ...common, entryPoints: [join(here, '..', 'a2a-runner.mjs')], outfile: join(out, 'a2a-runner.mjs') });
+await build({ ...common, entryPoints: [join(here, 'field-lib.ts')], outfile: join(out, 'field-lib.mjs') });
+await build({ ...common, entryPoints: [join(here, '..', 'scripts', 'expression-activity-producer.mjs')], outfile: join(out, 'expression-producer.mjs') });
 copyFileSync(join(here, 'hosting.json'), join(out, 'hosting.json'));
 
 const launcher = `#!/bin/sh
@@ -76,12 +81,15 @@ chmodSync(join(out, 'field-client.sh'), 0o755);
 
 let sourceRevision = null;
 try { sourceRevision = execFileSync('git', ['-C', here, 'rev-parse', 'HEAD'], { encoding: 'utf8' }).trim(); } catch { /* not a checkout */ }
+let sourceWorkingTreeDirty = null;
+try { sourceWorkingTreeDirty = execFileSync('git', ['-C', here, 'status', '--porcelain', '--', '..'], {encoding:'utf8'}).trim().length>0; } catch { /* source standing unavailable */ }
 const digest = (name) => `sha256:${createHash('sha256').update(readFileSync(join(out, name))).digest('hex')}`;
 writeFileSync(join(out, 'CLIENT.json'), `${JSON.stringify({
   schema: 'oi.shared-field-client-bundle/v1',
   source_revision: sourceRevision,
-  entries: { field: 'field-client.mjs', a2a: 'a2a-runner.mjs' },
+  source_working_tree_dirty: sourceWorkingTreeDirty,
+  entries: { field: 'field-client.mjs', a2a: 'a2a-runner.mjs', library:'field-lib.mjs', expression_producer:'expression-producer.mjs' },
   launcher: 'field-client.sh',
-  files: Object.fromEntries(['field-client.mjs', 'a2a-runner.mjs', 'hosting.json', 'field-client.sh'].map((name) => [name, digest(name)])),
+  files: Object.fromEntries(builtFiles.map((name) => [name, digest(name)])),
 }, null, 2)}\n`);
 process.stdout.write(`shared-field client bundled into ${out}\n`);

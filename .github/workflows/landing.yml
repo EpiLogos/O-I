@@ -1,0 +1,73 @@
+name: Exact source landing
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: source-landing-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  landing:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: desktop/cradle/package-lock.json
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - uses: dtolnay/rust-toolchain@1.98.0
+        with:
+          components: rustfmt, clippy
+      - uses: Swatinem/rust-cache@v2.9.2
+        with:
+          workspaces: |
+            cli
+            desktop/cradle/kernel
+      - name: Install the browser engines used by the declared landing gates
+        run: |
+          npm ci --prefix desktop/cradle --no-audit --no-fund
+          cd desktop/cradle
+          npx playwright install --with-deps chromium webkit
+      - name: Run the complete native landing tier at the exact candidate
+        run: node gates/run.mjs landing --keep-going --json
+      - name: Confirm the receipt covers the complete clean candidate
+        run: |
+          node --input-type=module <<'JS'
+          import assert from 'node:assert/strict';
+          import { readFileSync } from 'node:fs';
+          import { execFileSync } from 'node:child_process';
+          const receipt = JSON.parse(readFileSync('gates/receipts/latest-landing.json'));
+          const manifest = JSON.parse(readFileSync('gates/manifest.json'));
+          assert.equal(receipt.head, execFileSync('git', ['rev-parse', 'HEAD'], {encoding:'utf8'}).trim());
+          assert.equal(receipt.dirty, false);
+          assert.equal(receipt.scope, 'full');
+          assert.equal(receipt.tier, 'landing');
+          assert.equal(receipt.pass, true);
+          assert.deepEqual(receipt.selected, manifest.gates.filter(g => g.tier === 'landing').map(g => g.name));
+          assert.ok(receipt.gates.every(g => g.ok));
+          JS
+      - name: Retain the native receipt and actual browser evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: source-landing-${{ github.event.pull_request.head.sha || github.sha }}
+          path: |
+            gates/receipts/
+            desktop/cradle/tests/artifacts/
+          retention-days: 14
+          if-no-files-found: error
