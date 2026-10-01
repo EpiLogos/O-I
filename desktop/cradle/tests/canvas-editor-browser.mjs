@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import {createServer} from 'vite';
 import {chromium} from 'playwright';
 import {fileURLToPath} from 'node:url';
-import {readFileSync,mkdirSync,writeFileSync,existsSync} from 'node:fs';
+import {readFileSync,mkdirSync,mkdtempSync,rmSync,writeFileSync,existsSync} from 'node:fs';
 import {createHash} from 'node:crypto';
 const root=fileURLToPath(new URL('../',import.meta.url));
 const out=fileURLToPath(new URL('./artifacts/canvas-editor/',import.meta.url));mkdirSync(out,{recursive:true});
@@ -49,7 +49,8 @@ function execute(op){calls.push(op);
  else throw Error('Unknown controlled request '+req.action);
  return {result:'encounter_reading',data};
 }
-const server=await createServer({root,cacheDir:out+'vite-cache',appType:'custom',server:{host:'127.0.0.1',port:0,strictPort:false},logLevel:'error'});
+const cacheDir=mkdtempSync(out+'vite-cache-');
+const server=await createServer({root,cacheDir,optimizeDeps:{noDiscovery:true,include:['react','react-dom/client','@xterm/xterm']},appType:'custom',server:{host:'127.0.0.1',port:0,strictPort:false},logLevel:'error'});
 server.middlewares.use('/op',(request,response)=>{let body='';request.on('data',chunk=>body+=chunk);request.on('end',()=>{response.setHeader('content-type','application/json');try{const op=JSON.parse(body);if(delayedRead&&op.request?.action==='context'&&op.request.request.operation==='read'){const hold=delayedRead;delayedRead=undefined;hold.response=()=>{const outcome=execute(op);response.end(JSON.stringify({ok:true,outcome:{...outcome,receipts:[]}}));};return;}const outcome=execute(op);response.end(JSON.stringify({ok:true,outcome:{...outcome,receipts:[]}}));}catch(e){response.end(JSON.stringify({ok:false,error:String(e)}));}});});
 server.middlewares.use('/events',(_q,res)=>{res.setHeader('content-type','application/json');res.end('{"ok":true,"receipts":[]}');});
 server.middlewares.use('/canvas-editor',async(_q,res)=>{res.setHeader('content-type','text/html');res.end(await server.transformIndexHtml('/canvas-editor','<body class="oi-desktop" style="margin:0"><script>window.__OI_KERNEL_BRIDGE__=location.origin</script><div id="root"></div><script type="module" src="/tests/canvas-editor-page.tsx"></script></body>'));});
@@ -57,6 +58,7 @@ await server.listen();const url=`http://127.0.0.1:${server.httpServer.address().
 const browser=await chromium.launch({headless:true,...(process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE?{executablePath:process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE}:existsSync('/usr/bin/chromium')?{executablePath:'/usr/bin/chromium'}:{})});
 const page=await browser.newPage({viewport:{width:1280,height:820}});const requests=[];page.on('request',request=>requests.push(request.url()));const errors=[];page.on('pageerror',e=>errors.push(e.message));page.on('console',message=>{if(message.type()==='error')errors.push(message.text());});page.on('response',response=>{if(response.status()>=400)errors.push(`${response.status()} ${response.url()}`);});const checks=[];
 const check=(name,condition)=>{assert.ok(condition,name);checks.push(name);};
+const pending=new Map();page.on('request',request=>pending.set(request,Date.now()));page.on('requestfinished',request=>pending.delete(request));page.on('requestfailed',request=>{pending.delete(request);errors.push(`${request.failure()?.errorText} ${request.url()}`);});
 try{
  await page.goto(url);await page.getByRole('tab',{name:'Source',exact:true}).click();await page.getByRole('textbox',{name:'Editing sample.md'}).waitFor();await page.waitForFunction(()=>window.canvasTest);
  const start=original.lastIndexOf('same');await page.evaluate(start=>canvasTest.select(start,start+7),start);
@@ -135,4 +137,4 @@ try{
  check('no page errors',errors.length===0);
  writeFileSync(out+'receipt.json',JSON.stringify({standing:'controlled production-component/handler evidence; native store independently tested in Rust; not installed/provider/human proof',checks,errors,calls:calls.filter(c=>['context','prompt-context'].includes(c.request?.action)).map(c=>({op:c.op,action:c.request.action,project:c.project}))},null,2));
  console.log(JSON.stringify({passed:checks.length,checks,errors},null,2));
-}finally{if(errors.length)console.error(errors);await page.screenshot({path:out+'last-state.png'}).catch(()=>{});await browser.close();await server.close();}
+}finally{if(errors.length)console.error(errors);writeFileSync(out+'pending-requests.json',JSON.stringify([...pending].map(([request,start])=>({url:request.url(),elapsed_ms:Date.now()-start})),null,2));await page.screenshot({path:out+'last-state.png'}).catch(()=>{});await browser.close();await server.close();rmSync(cacheDir,{recursive:true,force:true});}

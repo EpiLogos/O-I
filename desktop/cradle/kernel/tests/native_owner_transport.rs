@@ -51,7 +51,7 @@ fn qualified_owner_fences_restart_and_serialises_concurrent_native_edits() {
         let kernel = kernel.clone();
         let owner = NativeOwner::new("world:transport-native".into(), grant_path.clone()).unwrap();
         expression_transport::serve_native_owner(&socket, move |request| {
-            owner.apply(&mut *kernel.lock().unwrap(), request)
+            owner.apply(&mut kernel.lock().unwrap(), request)
         })
         .unwrap()
     };

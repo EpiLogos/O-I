@@ -412,7 +412,7 @@ export function projectExpression(input) {
     component_ref: 'oi.presentation/reference-card/v1',
     portable_renderer: 'oi.presentation/reference-card/v1',
     subject_ref: subject.ref,
-    props: { title, refs:[subject.ref], items:[{ref:subject.ref,label:title}], source:subject },
+    props: { title, refs:[subject.ref] },
     fallback: { title },
     provenance:[...provenance,...subject.sources.map(source=>({kind:'bound-subject-source',ref:source.ref,revision:source.revision,source_system:entity?.subject?.native_owner??'native'}))],
   });});
