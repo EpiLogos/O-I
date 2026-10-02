@@ -132,6 +132,11 @@ jobs:
           spacetime generate --lang typescript --out-dir shared-field/spacetimedb/module_bindings --module-path shared-field/spacetimedb -y
 
       - name: Package the desktop bundle (frontend, native shell, normalized archive)
+        # This hosted development artifact has no Apple certificate. Ask the
+        # native Tauri bundler to seal its complete app, including resources.
+        # Linker's executable-only signature is not an app-bundle signature.
+        env:
+          APPLE_SIGNING_IDENTITY: ${{ runner.os == 'macOS' && '-' || '' }}
         run: desktop/cradle/package-bundle.sh --out desktop/cradle/dist
 
       - name: Prove the emitted asset record matches the archive bytes
