@@ -203,6 +203,16 @@ pub fn validate(
             return Err("Retained Epi world has a different native instance, person, occasion or personal locus".into());
         }
         validate_epi_portable_basis(world, document)?;
+        if let Some(policy) = world.get("current_material_policy") {
+            let policy = object(policy, "Retained Epi material policy")?;
+            if policy.len() != 3 || policy.keys().any(|key| !["schema", "material", "standing"].contains(&key.as_str()))
+                || policy["schema"] != "oi.epi-current-material-policy/v1"
+                || policy["standing"] != "declared-material-policy: no source table fixes presentation scale, damping, strike amplitude or output gain (QL-MEF #135)"
+            {
+                return Err("Retained Epi material policy lost its exact declared standing".into());
+            }
+            crate::native_expression::validate_scene_material(&policy["material"])?;
+        }
         let locus = world["receiving"]["personal"]["locus_entity_ref"]
             .as_str()
             .ok_or("Retained Epi world has no personal locus occurrence")?;

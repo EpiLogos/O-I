@@ -9,6 +9,7 @@ import type {InstrumentIdentity,NaraInstrumentRequest,NaraInstrumentReply} from 
 import {requireRetainedSkyAdmission} from '../../../src/nara/nativeSkyInput.js';
 import type {NativeCurrentReading} from '../../../src/nara/nativeCurrent.js';
 import type {NativeWorldInput,NativeSky,NativeSkySnapshot} from './native-field/controller.js';
+import {SCENE_MATERIAL_STANDING,requireSceneMaterial,requireCurrentSceneMaterialPolicy,type CurrentSceneMaterialPolicy} from './native-field/material.js';
 import type {NativeTargetMap} from './native-field/projection.js';
 import type {Scene} from './model.js';
 import {toNativeConfig} from './nativeBridge.js';
@@ -32,6 +33,7 @@ export interface EpiWorldRecord {
  inventory:Awaited<ReturnType<typeof prepareEpiMaterialInputFromNative>>['inventory'];
  source_basis:EpiWorldMaterialPlan['source_basis'];profile_definitions:ExpressionRequest[];
  native_readback?:NativeSceneWorldReading['native_readback'];continuation_start?:Record<string,unknown>;
+ current_material_policy?:CurrentSceneMaterialPolicy;
 }
 export interface EpiProductionPort {
  expression:(request:ExpressionRequest)=>Promise<ExpressionResult>;
@@ -81,9 +83,19 @@ export function readEpiWorldRecord(document:ExpressionDocument):EpiWorldRecord|n
  if(runtime?.schema!=='oi.epi-native-runtime-buffers/v1'||runtime.policy!=='native-owner-recompose'||runtime.reading.ref!==record.native_source.world_ref.ref||runtime.reading.revision!==record.native_source.world_ref.revision||runtime.buffers?.length!==2||new Set(runtime.buffers.map(buffer=>buffer.key)).size!==2||runtime.buffers.some(buffer=>!['slots_a','slots_b'].includes(buffer.key)||!Number.isSafeInteger(buffer.values)||buffer.values<1||!/^[a-f0-9]{64}$/.test(buffer.json_sha256)))throw Error('This saved world lost its exact native runtime-buffer qualification.');
  const locus=document.entities[record.receiving.personal.locus_entity_ref];
  if(locus?.subject?.subject_ref!==record.receiving.personal.canonical_locus)throw Error('The saved personal locus is absent or belongs to another native branch.');
+ if(record.current_material_policy!==undefined)requireCurrentSceneMaterialPolicy(record.current_material_policy);
  if(record.native_readback!==undefined)requireEpiNativeReadback(record,record.native_readback,true);
  return record;
 }
+/** Retain the acknowledged instance adjustment beside immutable original world
+ * material. Returning to the original policy removes only this adjustment. */
+export function epiMaterialContinuation(record:EpiWorldRecord,material:unknown):Pick<EpiWorldRecord,'current_material_policy'> {
+ const current=requireSceneMaterial(material),host=record.world.binding.host as {material?:unknown}|undefined;
+ const original=requireSceneMaterial(host?.material);
+ if(sameSceneData(current,original))return{};
+ return{current_material_policy:{schema:'oi.epi-current-material-policy/v1',material:structuredClone(current),standing:SCENE_MATERIAL_STANDING}};
+}
+export function epiOpeningMaterial(record:EpiWorldRecord){return requireSceneMaterial((record.world.binding.host as {material?:unknown}|undefined)?.material);}
 export function requireEpiNativeReadback(record:EpiWorldRecord,value:unknown,retained:boolean){
  const n=value as NativeSceneWorldReading['native_readback'];
  const process=(n as unknown as Record<string,unknown>)?.form_process as {instance_ref?:string;process_subject_ref?:string;event_ref?:string;subject_ref?:string;canonical_subject_ref?:string;current_reading?:ReadingRef;reading?:{reading?:ReadingRef}}|undefined;

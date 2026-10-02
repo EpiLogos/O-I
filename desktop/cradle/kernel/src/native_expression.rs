@@ -820,7 +820,7 @@ impl Manager {
 
 /// Host operations a webview may relay. The K² determinant operations are
 /// the host's own; a supplied (non-K²) owner refuses them natively.
-const EXCHANGE_OPERATIONS: [&str; 8] = [
+const EXCHANGE_OPERATIONS: [&str; 9] = [
     "read",
     "inspect",
     "advance",
@@ -828,6 +828,7 @@ const EXCHANGE_OPERATIONS: [&str; 8] = [
     "replace",
     "m1-advance",
     "replace-event",
+    "set-damping",
     "influence",
 ];
 
@@ -853,8 +854,8 @@ enum Sky {
     Snapshot(Value),
 }
 
-/// The consumer's whole say in a composed binding. Geometry, material, field
-/// and every executable remain QL's or the installed suite's.
+/// The consumer may retain an explicitly declared D30 material policy.
+/// Geometry, field construction and executables remain native owners' authority.
 #[derive(Clone, Debug, PartialEq)]
 struct ComposeRequest {
     texture: [u32; 2],
@@ -863,6 +864,23 @@ struct ComposeRequest {
     event: Option<Value>,
     world: Option<Value>,
     snapshot_purpose: crate::nara_identity::SnapshotPurpose,
+}
+
+/// The same four-field Scene material contract used by the QL constructor.
+/// This validates a caller policy; QL validates it again before native admission.
+pub(crate) fn validate_scene_material(value: &Value) -> Result<(), String> {
+    let m = value.as_object().ok_or("Scene material must be an object")?;
+    if m.len() != 4 || m.keys().any(|key| !["damping_per_second", "strike_metres", "audio_gain_per_metre", "strike_on_event"].contains(&key.as_str())) {
+        return Err("Scene material requires exactly its four declared fields".into());
+    }
+    let number = |key: &str| m.get(key).and_then(Value::as_f64).filter(|v| v.is_finite()).ok_or_else(|| format!("Scene material {key} must be finite"));
+    let damping = number("damping_per_second")?;
+    let strike = number("strike_metres")?;
+    let gain = number("audio_gain_per_metre")?;
+    if !(0.0..=1e6).contains(&damping) || strike <= 0.0 || strike > 1.0 || gain.abs() > 1e6 || m["strike_on_event"].as_bool().is_none() {
+        return Err("Scene material is outside the native Scene policy contract".into());
+    }
+    Ok(())
 }
 
 fn compose_request(value: &Value) -> Result<ComposeRequest, String> {
@@ -959,7 +977,7 @@ fn compose_request(value: &Value) -> Result<ComposeRequest, String> {
         Some(Value::Object(world)) => {
             if let Some(key) = world
                 .keys()
-                .find(|key| !["instance_ref", "subject_ref", "start"].contains(&key.as_str()))
+                .find(|key| !["instance_ref", "subject_ref", "start", "material"].contains(&key.as_str()))
             {
                 return Err(fail(&format!("unknown world key {key}")));
             }
@@ -974,6 +992,9 @@ fn compose_request(value: &Value) -> Result<ComposeRequest, String> {
             reference("subject_ref")?;
             if world.get("start").is_some_and(|start| !start.is_object()) {
                 return Err(fail("world start must be an owner recipe object"));
+            }
+            if let Some(material) = world.get("material") {
+                validate_scene_material(material).map_err(|why| fail(&why))?;
             }
             Some(Value::Object(world.clone()))
         }
@@ -1302,6 +1323,9 @@ impl PreparedCompose {
             }
             if let Some(start) = world.get("start") {
                 request["start"] = start.clone();
+            }
+            if let Some(material) = world.get("material") {
+                request["material"] = material.clone();
             }
             request
         } else {
@@ -1995,6 +2019,23 @@ for line in sys.stdin: time.sleep(60)
             Request::Compose { request: valid() }
         );
         assert!(serde_json::from_value::<Request>(json!({"operation":"prepare_world","request":{"texture":[1,1],"units_per_metre":120,"sky_snapshot":{"schema":"ql.sky-snapshot/v1","snapshot_ref":"sha256:x"},"world":{"instance_ref":"expression:one","subject_ref":"identity:one"}}})).is_ok());
+    }
+
+    #[test]
+    fn declared_world_material_has_exact_native_fields_and_bounds() {
+        let material=json!({"damping_per_second":2.0,"strike_metres":0.001,"audio_gain_per_metre":100.0,"strike_on_event":true});
+        assert!(validate_scene_material(&material).is_ok());
+        for (key,value) in [("damping_per_second",json!(-1)),("damping_per_second",json!(1_000_001)),("strike_metres",json!(0)),("audio_gain_per_metre",json!(1_000_001)),("strike_on_event",json!(1))] {
+            let mut bad=material.clone();bad[key]=value;assert!(validate_scene_material(&bad).is_err());
+        }
+        let mut foreign=material.clone();foreign["source_numerical_law"]=json!(true);
+        assert!(validate_scene_material(&foreign).is_err());
+        let mut absent=material.clone();absent.as_object_mut().unwrap().remove("strike_on_event");
+        assert!(validate_scene_material(&absent).is_err());
+        let request=json!({"texture":[1,1],"units_per_metre":120,
+            "sky_snapshot":{"schema":"ql.sky-snapshot/v1","snapshot_ref":"sha256:controlled"},
+            "world":{"instance_ref":"expression:controlled","subject_ref":"identity:controlled","material":material}});
+        assert_eq!(compose_request(&request).unwrap().world.unwrap()["material"],request["world"]["material"]);
     }
     #[test]
     fn epochs_are_whole_second_calendar_instants() {

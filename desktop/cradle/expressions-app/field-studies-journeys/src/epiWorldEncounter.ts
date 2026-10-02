@@ -15,6 +15,7 @@ export interface EpiEncounterHost {
  navigate:(sceneRef:string,entityRef?:string)=>Promise<void>;
  step:()=>Promise<void>;sound:(enabled:boolean)=>void;quiet:(enabled:boolean)=>void;
  save:()=>Promise<void>;reset:()=>Promise<void>;
+ damping:()=>number;setDamping:(perSecond:number)=>Promise<void>;
 }
 export function installEpiWorldEncounter(host:EpiEncounterHost){
  const bar=document.createElement('nav');bar.className='epi-world-entrance';bar.setAttribute('aria-label','Epi world');document.body.append(bar);
@@ -76,10 +77,11 @@ export function installEpiWorldEncounter(host:EpiEncounterHost){
   const bodies=scenes.find(s=>s.scene_ref===host.scene())?.entity_refs.map(ref=>d!.entities[ref]).filter(Boolean)??[];
   const occasion=participant?.occasion_utc??(r?String((r.world.sky.request as {epoch?:string})?.epoch??r.world.event_ref):'');
   const identityTitle=participant?.natal_place_label?`Your saved identity · natal place: ${participant.natal_place_label}`:'Your saved personal identity';
+  const playOpen=bar.querySelector<HTMLDetailsElement>('.epi-play')?.open??false;
   bar.innerHTML=`<div class="epi-world-row epi-world-heading"><div class="epi-world-location"><span class="epi-world-brand">Epi-Logos</span><strong>${esc(r?participant?.name??'Your world':'A cosmic field, situated with you')}</strong>${r?'<small>Earth observer · location-independent sky</small>':''}</div>
    ${r?`<div class="epi-world-scenes">${scenes.map(s=>`<button type="button" data-epi-scene="${esc(s.scene_ref)}" ${busy?'disabled':''} aria-current="${host.scene()===s.scene_ref?'page':'false'}">${esc(s.title)}</button>`).join('')}</div><time class="epi-world-occasion" datetime="${esc(occasion)}">${participant?.occasion_standing==='saved-occasion'?'Saved occasion · ':''}${esc(occasion.replace('T',' · ').replace('Z',' UTC'))}</time>`:`<button type="button" data-epi="identity" ${busy?'disabled':''}>Enter your world</button>`}</div>
    ${r?`<div class="epi-world-row epi-world-tools"><label class="epi-body-choice"><span>Choose a body</span><select data-epi-body aria-label="Choose a native body in this scene" ${busy?'disabled':''}><option value="">Choose a body…</option>${bodies.map(body=>`<option value="${esc(body.entity_ref)}" ${host.selected()===body.entity_ref?'selected':''}>${esc(body.title)}</option>`).join('')}</select></label><button type="button" data-epi="identity" ${busy?'disabled':''} title="${esc(identityTitle)}">Your identity</button><button type="button" data-epi="source" ${busy?'disabled':''} title="${esc(selected?'Open the full Bimba source of '+selected.entity.title:'Explore the complete Bimba source')}">${selected?'Source · '+esc(selected.entity.title):'Explore Bimba'}</button><button type="button" data-epi="ask" ${!selected||busy?'disabled':''}>With Nara / Epii</button>
-   <details class="epi-play"><summary>Shape & play</summary><div><p>One native tick turns Clock A by 30°. Its form may change or remain invariant. The selected lens reading is retained.</p><button type="button" data-epi="step" ${busy?'disabled':''}>Advance one tick</button><button type="button" data-epi="sound" ${busy?'disabled':''} aria-pressed="${sound}">${sound?'Mute':'Hear the field'}</button><button type="button" data-epi="quiet" aria-pressed="${quiet}">${quiet?'Resume motion':'Quiet reading'}</button><button type="button" data-epi="reset" ${busy?'disabled':''}>Return to opening</button><button type="button" data-epi="save" ${busy?'disabled':''}>Save this world</button></div></details>
+   <details class="epi-play" ${playOpen?'open':''}><summary>Shape & play</summary><div><p>One native tick turns Clock A by 30°. Its form may change or remain invariant. The selected lens reading is retained.</p><label>Damping · decay (s⁻¹) <input type="number" min="0" max="1000000" step="any" data-epi-damping value="${esc(host.damping())}" ${busy?'disabled':''}></label><button type="button" data-epi="set-damping" ${busy?'disabled':''}>Apply damping</button><small>Declared material policy. Continues the resident voices without a strike or clock change.</small><button type="button" data-epi="step" ${busy?'disabled':''}>Advance one tick</button><button type="button" data-epi="sound" ${busy?'disabled':''} aria-pressed="${sound}">${sound?'Mute':'Hear the field'}</button><button type="button" data-epi="quiet" aria-pressed="${quiet}">${quiet?'Resume motion':'Quiet reading'}</button><button type="button" data-epi="reset" ${busy?'disabled':''}>Return to opening</button><button type="button" data-epi="save" ${busy?'disabled':''}>Save this world</button></div></details>
    ${busy||notice?`<span role="status">${esc(busy?'Receiving the native operation…':notice)}</span>`:''}</div>`:''}${failure?`<span role="alert">${esc(failure)}</span>`:''}`;
  }
  bar.addEventListener('click',e=>{
@@ -90,6 +92,7 @@ export function installEpiWorldEncounter(host:EpiEncounterHost){
    case 'source':void run(()=>source());break;
    case 'ask':void run(host.ask);break;
    case 'step':void run(host.step);break;
+   case 'set-damping':{const value=bar.querySelector<HTMLInputElement>('[data-epi-damping]')?.value.trim();const submitted=value?Number(value):NaN;void run(()=>host.setDamping(submitted));break;}
    case 'reset':void run(host.reset);break;
    case 'save':void run(host.save);break;
    case 'sound':try{host.sound(!sound);sound=!sound;render();}catch(e){failure=String(e);render();}break;

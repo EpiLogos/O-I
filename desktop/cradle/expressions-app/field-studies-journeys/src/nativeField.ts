@@ -53,6 +53,8 @@ export function installNativeField(engine:FieldEngineAdapter,onResumeApplication
   </section>
   <section class="ni-block" aria-label="Play">
    <h4>Play</h4>
+   <div class="ni-row"><label>Damping · decay (s⁻¹) <input type="number" min="0" max="1000000" step="any" data-ni-damping aria-describedby="ni-damping-standing"></label><button type="button" class="secondary" data-ni="set-damping">Apply damping</button></div>
+   <p class="control-note" id="ni-damping-standing">Declared material policy. Changes decay from the resident state; it does not strike the voices or turn either clock.</p>
    <div class="ni-row"><button type="button" class="secondary" data-ni="step">Step one tick</button><button type="button" class="secondary" data-ni="strike">Strike voices</button></div>
    ${seg('cadence',[{value:'hold',label:'Hold'},...CADENCES.map(c=>({value:String(c.ticks_per_second),label:c.label,title:c.source}))],'Tick cadence')}
    <p class="control-note" data-ni-v="cadence">Cadence held. 1 tick/s follows the M3/M4′ world clock; 12 ticks/s is PPS's user-facing tick.</p>
@@ -170,7 +172,9 @@ export function installNativeField(engine:FieldEngineAdapter,onResumeApplication
   // The stage overlay is the supplied-owner reading; the scene surface reads here.
   domainView.update(instrument?null:reading.domain,reading.presented_clock,reading.status,reading.native?.presented?.generation);
   const live=!!instrument&&(reading.status==='following'||reading.status==='held');
-  for(const b of panel.querySelectorAll<HTMLButtonElement>('[data-ni-set],[data-ni="step"],[data-ni="strike"],[data-ni="restore-opening"]'))b.disabled=!live||(busy&&b.dataset.niSet!=='cadence')||(reducedMotion&&b.dataset.niSet==='cadence'&&Number(b.dataset.value)>1);
+  const damping=query<HTMLInputElement>('[data-ni-damping]');damping.disabled=!live||busy;
+  if(document.activeElement!==damping&&instrument?.influence?.material)damping.value=String(instrument.influence.material.damping_per_second);
+  for(const b of panel.querySelectorAll<HTMLButtonElement>('[data-ni-set],[data-ni="step"],[data-ni="strike"],[data-ni="set-damping"],[data-ni="restore-opening"]'))b.disabled=!live||(busy&&b.dataset.niSet!=='cadence')||(reducedMotion&&b.dataset.niSet==='cadence'&&Number(b.dataset.value)>1);
   for(const b of panel.querySelectorAll<HTMLButtonElement>('[data-ni="sound"],[data-ni="hold"],[data-ni="resume"],[data-ni="checkpoint"],[data-ni="restore"],[data-ni="follow-scale"],[data-ni="raw"]'))b.disabled=!reading.lease||reading.status==='unavailable';
   query<HTMLButtonElement>('[data-ni="close"]').disabled=!reading.lease&&reading.status!=='unavailable';
   query<HTMLButtonElement>('[data-ni="restore-opening"]').disabled||=!instrument?.opening_event_available;
@@ -238,6 +242,7 @@ export function installNativeField(engine:FieldEngineAdapter,onResumeApplication
    if(op==='open-dated'){const epoch=query<HTMLInputElement>('[name="ni-epoch"]').value.trim();if(!epoch){controller.reason='Name a dated sky epoch first';update();return;}return open({epoch});}
    if(op==='step')return run(()=>controller.m1Advance(1));
    if(op==='strike')return run(()=>controller.strike());
+   if(op==='set-damping'){const value=query<HTMLInputElement>('[data-ni-damping]').value.trim();if(!value)return run(()=>Promise.reject(new Error('Enter a damping value first.')));const submitted=Number(value);return run(()=>controller.setDamping(submitted));}
    if(op==='restore-opening')return run(()=>controller.restoreOpening());
    if(op==='sound')return run(()=>controller.setMuted(!controller.reading.muted));
    if(op==='resume')return run(async()=>{await controller.resume();onResumeApplication();});

@@ -33,6 +33,7 @@ LOCUS = 'ql:m-coordinate:bimba:M4.4.4.4'
 OI_SCOPE = [
     'desktop/cradle/tests/epi-world-production-native.mjs',
     'desktop/cradle/tests/epi-personal-native-proof.mjs',
+    'desktop/cradle/tests/epi-scene-damping-native-proof.mjs',
     'desktop/cradle/tests/epi-world-portable-custody.mjs',
     'desktop/cradle/tests/build-portable-expectation.mjs',
     'desktop/cradle/tests/epi-world-hosted-native.py',
@@ -678,6 +679,10 @@ class Replay:
                 'All-five installer must start with an absent owned output tree')
         ql_env = {**self.env, 'CARGO_TARGET_DIR': str(ql_target)}
         installer = self.command('ql-all-five-source-install', ['sh', 'scripts/oi-source-install.sh'], self.ql, ql_env, timeout=1800)
+        # Existing configured real-worker gate. Ignored tests without this
+        # explicitly named actual companion never count as D30 native proof.
+        self.command('ql-scene-native-material-regression', ['cargo', 'test', '--locked', '-p', 'ql-mef', '--test', 'scene_instrument', '--', '--ignored', '--test-threads=1'], self.ql,
+                     {**ql_env, 'QL_FIELD_WORKER': str(ql_target / 'release/ql-field-worker')}, timeout=600)
         installer_log = self.out / 'ql-source-install.log'
         with installer_log.open('wb') as log:
             for key in ('stdout_ref', 'stderr_ref'):
@@ -817,6 +822,7 @@ class Replay:
         for name in ('personal_modal', 'personal_release', 'personal_cold_draft'):
             require(whole.get(name, {}).get('passed') is True, 'Full production driver omitted required personal gate: ' + name)
         require(whole.get('consumer_replays') is not None, 'Actual receiving discrimination cannot be skipped')
+        require(whole.get('scene_damping', {}).get('passed') is True, 'D30 actual Scene/native material gate cannot be skipped')
         observed = self.owned.evidence()
         require(not observed['errors'], 'Actual owned process observation failed')
         for role in ('ql-field-host', 'ql-field-worker'):
@@ -831,7 +837,7 @@ class Replay:
         require(selection['entity_ref'] == continuation['entity_ref'] and selection['scene_ref'] == continuation['scene_ref'],
                 'Restart must use actual acknowledged saved selection')
         expected = {key: continuation[key] for key in ('expression_ref', 'event_ref', 'person_ref', 'scene_ref', 'entity_ref')}
-        prior_saved_file_path = self.out / 'whole-production/person-a-after-save-next-file.json'
+        prior_saved_file_path = self.out / 'whole-production/d30-current-material-file.json'
         prior_saved_file = read_json(prior_saved_file_path)
         require(current_doc == prior_saved_file['document']
                 and hashlib.sha256(current_reading['content'].encode()).hexdigest() == prior_saved_file['content_sha256']
@@ -863,6 +869,7 @@ class Replay:
                     'reopen_acknowledgement_sha256': file_ref(acknowledgement_path)['sha256'],
                     'reopen_prior_native_generation': first['native_generation']})
         require(reopened.get('reopen_expected') == expected, 'Fresh browser did not execute exact saved continuation gate')
+        require(reopened.get('scene_damping_restart', {}).get('passed') is True, 'Fresh owned-kernel/browser material receiving gate cannot be skipped')
         self.stop_bridge()
         self.owned.evidence()
         for before in binaries:

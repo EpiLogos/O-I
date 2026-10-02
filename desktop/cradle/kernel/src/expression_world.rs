@@ -5506,7 +5506,7 @@ mod tests {
     /// authored through actual native edits; every other body is retained.
     fn full_world_text_fixture(scene_name: &str, capacity: usize) -> NativeTextFixture {
         use sha2::{Digest, Sha256};
-        let bytes = include_str!("../../tests/fixtures/epi-world-131.expression.json");
+        let bytes = include_str!("../tests/fixtures/epi-world-131.expression.json");
         assert_eq!(format!("{:x}", Sha256::digest(bytes.as_bytes())),
             "630ff9bd8392e273d8898df43e99137acad6ffe9369578fdad376e2ac420c8ec");
         let document = crate::expression_file::decode(bytes).unwrap();

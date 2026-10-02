@@ -1,3 +1,4 @@
+import {SCENE_MATERIAL_STANDING,type NativeSceneMaterial} from './material';
 import {projectNativeSources,editNativeBasis,NativeDomainReading,NativeBasisEdit} from './domain';
 import {InstrumentSession} from './ql/instrument-session.mjs';
 import {NativeProjection,type NativeTargetMap} from './projection';
@@ -17,7 +18,7 @@ export const EMBEDDED_NATIVE_PLAYBACK:Readonly<NativePlaybackPolicy>=Object.free
 export type NativeStatus='manual'|'opening'|'following'|'held'|'unavailable';
 export type NativeSky='none'|'now'|{epoch:string};
 export type NativeSkySnapshot=Readonly<{schema:'ql.sky-snapshot/v1';snapshot_ref:string;[key:string]:unknown}>;
-export type NativeWorldInput=Readonly<{instance_ref:string;subject_ref:string;start?:Readonly<Record<string,unknown>>}>;
+export type NativeWorldInput=Readonly<{instance_ref:string;subject_ref:string;start?:Readonly<Record<string,unknown>>;material?:Readonly<NativeSceneMaterial>}>;
 export type EntityTargetBindings=(input:Readonly<{world:unknown;partition:unknown}>)=>NativeTargetMap|Promise<NativeTargetMap>;
 /** Presentation, not source: the M1 torus (|x|,|y| ≤ 25/9 m at QL's declared
  * 1 m per torus unit) spans ±333 engine units — 0.83 of the 400-unit stage
@@ -102,7 +103,6 @@ export function copySceneMetadata(value:any,kind:keyof typeof SCENE_METADATA_KEY
  };
  visit(value,0);return structuredClone(value);
 }
-const SCENE_MATERIAL_STANDING='declared-material-policy: no source table fixes presentation scale, damping, strike amplitude or output gain (QL-MEF #135)';
 /** Read-only receiving checks against this native receipt. No pitch, phase,
  * geometry, clock, form or unavailable source quantity is computed here.
  * `domain`/`sources` may be supplied only by THIS operation's fresh Inspect. */
@@ -651,6 +651,11 @@ export class NativeFieldController {
  m1Advance(ticks=1){
   if(!Number.isInteger(ticks)||ticks<1||ticks>1_000_000)return Promise.reject(new Error('M1 advance must be 1..1000000 ticks'));
   return this.determinant('M1 advance',()=>({operation:'m1-advance',ticks}),false);
+ }
+ /** Explicit material policy on the same Scene owner; never a strike or reset. */
+ setDamping(perSecond:number){
+  if(!Number.isFinite(perSecond)||perSecond<0||perSecond>1e6)return Promise.reject(new Error('Damping must be finite and in 0..1000000 per second'));
+  return this.determinant('material damping',()=>({operation:'set-damping',per_second:perSecond}),false);
  }
  replaceEvent(event:unknown,strike:boolean){
   if(typeof strike!=='boolean')return Promise.reject(new Error('strike must be explicit'));

@@ -134,7 +134,7 @@ export class InstrumentSession {
         this.#sequence = next;
         return { refused: true, error: reply.error ?? 'native command refused' };
       }
-      const changing = command.operation === 'set-axis' || command.operation === 'replace';
+      const changing = command.operation === 'set-axis' || command.operation === 'replace' || command.operation === 'set-damping';
       // replace-event commits modes and, when required, shape. m1-advance
       // additionally commits inscription-axis alignment. Strike is a policy
       // within the modes commit, not another generation (scene_field.rs).
@@ -235,7 +235,7 @@ export class InstrumentSession {
    * It changes the existing native owner; no UI-local clock or second composer. */
   async operate(command) {
     need(!this.#busy && !this.#held && !this.#disposed &&
-      ['set-axis', 'replace', ...EVENT_OPERATIONS].includes(command?.operation), 'domain operation requires idle admitted owner');
+      ['set-axis', 'replace', 'set-damping', ...EVENT_OPERATIONS].includes(command?.operation), 'domain operation requires idle admitted owner');
     this.present();
     need(this.#queue.length < this.#maxBlocks &&
       this.#bytes + JSON.stringify(this.#native).length * 2 <= this.#maxBytes, 'wait for bounded presentation capacity');

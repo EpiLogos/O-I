@@ -56,7 +56,7 @@ import {installLensStudio,type LensId} from './lensStudio.js';
 import {installResearchInstruments} from './researchInstruments.js';
 import {installPalaceInstrument} from './palaceInstrument.js';
 import {installNaraInstrument} from './naraInstrument.js';
-import {createEpiWorldProduction,readEpiWorldRecord,requireEpiNativeReadback,epiTorusTargetMap,epiSceneReception,epiStationaryReception,epiAuthoredSceneSnapshot,type EpiWorldRecord} from './epiWorldProduction.js';
+import {epiMaterialContinuation,epiOpeningMaterial,createEpiWorldProduction,readEpiWorldRecord,requireEpiNativeReadback,epiTorusTargetMap,epiSceneReception,epiStationaryReception,epiAuthoredSceneSnapshot,type EpiWorldRecord} from './epiWorldProduction.js';
 import {installEpiWorldEncounter} from './epiWorldEncounter.js';
 import {naraInstrumentRequest} from './kernelExpressions.js';
 import type {InstrumentIdentity} from '../../../src/nara/instrumentProtocol';
@@ -1385,7 +1385,7 @@ async function playEpiWorld(){
  if(source?.world?.instance_ref!==record.world.instance_ref||!['following','held'].includes(controller.reading.status)){
   // Build the actual scene partition before the sparse native map is admitted.
   await receiveEpiCosmicPartition(record);
-  await controller.compose({world:{instance_ref:record.world.instance_ref,subject_ref:record.person_ref,...(record.continuation_start?{start:record.continuation_start}:{})},snapshotPurpose:'retained-occasion',skySnapshot:record.world.sky as unknown as import('./native-field/controller').NativeSkySnapshot,
+  await controller.compose({world:{instance_ref:record.world.instance_ref,subject_ref:record.person_ref,...(record.continuation_start?{start:record.continuation_start}:{}),...(record.current_material_policy?{material:record.current_material_policy.material}:{})},snapshotPurpose:'retained-occasion',skySnapshot:record.world.sky as unknown as import('./native-field/controller').NativeSkySnapshot,
    entityTargetBindings:({world,partition})=>epiTorusTargetMap(record,world,partition)});
  }
  return controller;
@@ -1405,6 +1405,10 @@ epiEncounter=installEpiWorldEncounter({
  ask:async()=>{await nativeWorkspace?.select(scene().id,selected[0]??null);naraInstrument.open('conversation');},
  navigate:async(ref,entityRef)=>{const view=nativeWorkspace?.nativeView(),binding=Object.entries(view?.bindings??{}).find(([,b])=>b.scene_ref===ref);if(!binding)throw Error('This Scene is not part of the open native world.');const index=store.document.scenes.findIndex(s=>s.id===binding[0]);if(index!==sceneIndex&&!await setScene(index))return;const occurrence=binding[1].occurrences.find(o=>o.entity_ref===entityRef);selected=occurrence?[occurrence.view_entity_id]:[];await nativeWorkspace?.select(scene().id,selected[0]??null);editing=false;contextKind='';inspectorOpen=false;renderAll();},
  step:async()=>{await (await playEpiWorld()).m1Advance(1);await retainEpiNativeReading();},
+ damping:()=>{const i=nativeField?.controller.reading.instrument?.influence,r=epiWorld;return r&&i?.instance_ref===r.world.instance_ref&&i.event_ref===r.world.event_ref&&i.subject_ref===r.person_ref?i.material.damping_per_second:r?.current_material_policy?.material.damping_per_second??(r?epiOpeningMaterial(r).damping_per_second:0);},
+ // The native edit keeps this lease alive. Save/departure retain its policy
+ // through the existing acknowledged continuation path, never an auto strike.
+ setDamping:async(perSecond)=>{if(!Number.isFinite(perSecond)||perSecond<0||perSecond>1e6)throw Error('Damping must be finite and in 0..1000000 per second');await (await playEpiWorld()).setDamping(perSecond);epiEncounter?.refresh();},
  sound:enabled=>{if(!nativeField||nativeField.controller.reading.status!=='following')throw Error('Advance the field once to open its native voices.');nativeField.controller.setMuted(!enabled);},
  quiet:enabled=>{fieldPaused=enabled;needsFrame=true;renderAll();},
  save:async()=>{await retainEpiNativeReading(false);await nativeWorkspace!.idle();const saved=await nativeWorkspace!.saveFile('Work/O-I/desktop/cradle/material/expressive-material/expression',`epi-world-${epiWorld!.world.instance_ref.slice('expression:epi-'.length)}.expression.json`);const state=nativeWorkspace!.inspect();if(!saved||!state.file)throw Error(state.notice||'The native material file was not acknowledged.');epiEncounter?.status('Saved and read back through the native material owner.');},
@@ -1420,7 +1424,7 @@ epiEncounter=installEpiWorldEncounter({
   const start=structuredClone(original) as Record<string,unknown>;
   const controller=await playEpiWorld();await controller.release(false);
   await receiveEpiCosmicPartition(record);
-  await controller.compose({world:{instance_ref:record.world.instance_ref,subject_ref:record.person_ref,start},
+  await controller.compose({world:{instance_ref:record.world.instance_ref,subject_ref:record.person_ref,start,material:epiOpeningMaterial(record)},
    snapshotPurpose:'retained-occasion',skySnapshot:record.world.sky as unknown as import('./native-field/controller').NativeSkySnapshot,
    entityTargetBindings:({world,partition})=>epiTorusTargetMap(record,world,partition)});
   await retainEpiNativeReading();
@@ -1429,7 +1433,8 @@ epiEncounter=installEpiWorldEncounter({
 async function retainEpiNativeReading(resume=true){
  const record=epiWorld,native=nativeField?.controller.reading.instrument?.influence?.native_readback;
  if(!record||!native)return;
- const key=JSON.stringify(native);if(key===epiNativeRevision)return;
+ const material=nativeField!.controller.reading.instrument!.influence.material;
+ const key=JSON.stringify([native,material]);if(key===epiNativeRevision)return;
  // The process, current glyph and qualified reading advance together through
  // the existing native Expression CAS. Every other entity keeps its subject.
  const process=(native as Record<string,unknown>).form_process as {process_subject_ref?:string;current_reading?:import('../../../src/expression/types').ReadingRef;hexagram_glyph?:string;triplet?:string;source_refs?:import('../../../src/expression/types').ReadingRef[]}|undefined;
@@ -1437,6 +1442,7 @@ async function retainEpiNativeReading(resume=true){
  const view=nativeWorkspace?.nativeView();if(!view)return;
  const continuation=(native as Record<string,unknown>).continuation_start;if(!continuation||typeof continuation!=='object'||Array.isArray(continuation))throw Error('The native owner omitted the actual continuation recipe.');
  const held={...record,native_readback:structuredClone(native) as EpiWorldRecord['native_readback'],continuation_start:structuredClone(continuation) as Record<string,unknown>};
+ delete held.current_material_policy;Object.assign(held,epiMaterialContinuation(record,material));
  const controller=nativeField!.controller;await controller.release(false);
  if(controller.reading.lifetime.close_error||controller.reading.reason?.startsWith('native release acknowledgement unknown:'))throw Error(controller.reading.reason??'The native close was not acknowledged.');
  const glyph=process.hexagram_glyph||process.triplet;if(!glyph)throw Error('The current native form has no actual symbolic material.');

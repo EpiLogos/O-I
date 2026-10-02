@@ -12,6 +12,7 @@ import {createServer} from 'vite';
 import react from '@vitejs/plugin-react';
 import {build} from 'esbuild';
 import {chromium} from 'playwright';
+import {runSceneDampingGate} from './epi-scene-damping-native-proof.mjs';
 import {runPersonalModalConsumerProof,runSavedPersonalReleaseGate,runColdPersonalDraftGate} from './epi-personal-native-proof.mjs';
 import {qualifyPortableNativeSourceExpectation,qualifyPortableRuntimeExecution,requalifyPortableCurrentCustody} from './epi-world-portable-custody.mjs';
 
@@ -58,7 +59,7 @@ const receipt={schema:'oi.epi-world-production-native-proof/v1',passed:false,
  verifier_projection_units:{owner:scaleSource,sha256:sha(readFileSync(scaleSource)),world_scale:WORLD_SCALE,meaning:'Resident GPU coordinates divided by the actual authored-stage WORLD_SCALE before production projectNative; QL torus presentation units remain distinct'},
  independent_source_expectations:(config.independent_expectation_files??[]).map(path=>({path:resolve(path),sha256:sha(readFileSync(resolve(path)))})),
  source:Object.fromEntries(['src/expressions/hostedApp.ts','src/expressions/nativeChannel.ts','src/expressions/naraChannel.ts','expressions-app/field-studies-journeys/src/app.ts','expressions-app/field-studies-journeys/src/epiWorldProduction.ts','expressions-app/field-studies-journeys/src/sceneWorkflow.ts','expressions-app/field-studies-journeys/src/sceneCorrespondence.ts','expressions-app/field-studies-journeys/src/native-field/channel.ts','expressions-app/field-studies-journeys/src/epiWorldMaterial.ts','expressions-app/field-studies-journeys/src/nativeWorkspace.ts','expressions-app/field-studies-journeys/src/naraEvidenceField.ts','expressions-app/field-studies-journeys/src/naraInstrument.tsx','expressions-app/field-studies-journeys/src/kernelDocumentBridge.ts','expressions-app/src/engine/fieldModel.ts','expressions-app/src/engine/PointCloudField.ts','expressions-app/src/engine/LocalizedResonanceBank.ts','expressions-app/src/engine/localizedResonanceProjection.ts'].map(p=>[p,sha(readFileSync(resolve(root,p)))]))};
-let server,browser,page,frame,phase='setup',heartbeat;const nativeComposes=[],nativePrepared=[],nativeFrames=[];
+let server,browser,page,frame,phase='setup',heartbeat;const nativeComposes=[],nativePrepared=[],nativeFrames=[],nativeInspections=[];
 const check=(value,label)=>{assert.ok(value,label);receipt.checks.push(label);console.log('PASS',label);json('receipt.json',receipt);};
 const artifact=(name,value)=>{json(name,value);receipt.artifacts.push(name);};
 const summarizeRequest=q=>({op:q?.op,operation:q?.request?.operation,expression_ref:q?.request?.expression_ref,coordinate_ref:q?.request?.coordinate_ref??q?.request?.request?.coordinate_ref});
@@ -340,6 +341,7 @@ async function recoverOriginalRuntimeBuffers(reading,original){
 }
 function captureNativeFrames(value,lease,request){
  if(!value||typeof value!=='object')return;
+ if(value.schema==='ql.field-host-receipt/v1'&&value.sources)nativeInspections.push({sources:value.sources,field:value.field,lease,request});
  if(value.schema==='ql.continuous-field/v1'){nativeFrames.push({field:value,lease,request});return;}
  for(const child of Object.values(value))if(child&&typeof child==='object'&&!Array.isArray(child))captureNativeFrames(child,lease,request);
 }
@@ -656,7 +658,22 @@ try{
  phase='actual native cosmic rest visual review';await new Promise(resolve=>setTimeout(resolve,config.pause_for_review_ms??45000));
 
  if(config.reopen_expected){const expected=config.reopen_expected,received=savedProcessArrival??a,receivedScene=received.document.scenes[received.state.sceneIndex];check(received.working.native_ref===expected.expression_ref&&received.record.world.event_ref===expected.event_ref&&received.record.person_ref===expected.person_ref&&receivedScene?.id===expected.scene_ref&&received.state.selected.includes(expected.entity_ref),'The restarted native file recovers its exact saved person, occasion, scene and selected subject');receipt.reopen_expected=expected;}
- if(config.stage==='entry'){receipt.passed=true;throw Object.assign(new Error('entry-only complete'),{intentionalStop:true});}
+ if(config.stage==='entry'){
+  if(config.reopen_acknowledgement_file){
+   const acknowledged=JSON.parse(readFileSync(resolve(config.reopen_acknowledgement_file),'utf8'));
+   const retained=acknowledged.document.scenes.find(scene=>scene.presentation?.scene?.epiWorld)?.presentation.scene.epiWorld;
+   if(retained?.current_material_policy){
+    assert.deepEqual(a.record.current_material_policy,retained.current_material_policy,'Fresh owner reads the exact prior acknowledged D30 policy');
+    await action('step');const dampingArrival=await snapshot('fresh-process-current-material-reception',true);
+    assert.deepEqual(dampingArrival.native.instrument.influence.material,retained.current_material_policy.material,'The ordinary fresh Scene owner consumes the durable native policy');
+    assert.equal(dampingArrival.native.instrument.influence.material_standing,retained.current_material_policy.standing);
+    await requireCurrentRuntime(dampingArrival,'fresh-process-material');
+    receipt.scene_damping_restart={passed:true,policy:retained.current_material_policy,prior_document_revision:acknowledged.document.revision,current_lease:dampingArrival.native.lease};
+    check(true,'A separate native process and fresh ordinary browser entry consume the exact previously saved D30 material policy');
+   }
+  }
+  receipt.passed=true;throw Object.assign(new Error('entry-only complete'),{intentionalStop:true});
+ }
 
  phase='complete register source disclosure through actual body selection';
  for(const [role,count] of Object.entries({degree:360,governor:24,decan:36,codon:64,skin:72,aperture:18})){
@@ -857,6 +874,9 @@ try{
  phase='actual cold personal admission versus pending draft';
  receipt.personal_cold_draft=await runColdPersonalDraftGate({browser,url,world:b,output:resolve(out,'personal-cold-draft'),qualification:config.binaries,observePage,onPhase:label=>{phase=label;}});
  json('receipt.json',receipt);
+ phase='D30 ordinary Scene material damping and saved continuation';
+ receipt.scene_damping=await runSceneDampingGate({frame,worldA:afterNext,snapshot,action,sceneNavigate,exposeNativePanel,nativeFrames,nativeInspections,nativeDocument,savedFile,artifact,check});
+ receipt.continuation={...receipt.continuation,file:receipt.scene_damping.saved_acknowledgement.working.file,scene_count:receipt.scene_damping.saved_acknowledgement.document.scenes.length};
  receipt.passed=true;
 }catch(error){
  if(!error.intentionalStop){receipt.failure={phase,message:error.stack??String(error)};console.error('FAIL',phase,error.stack??String(error));if(page)try{artifact('failure-launch-context.json',{host:await page.evaluate(()=>({url:location.href,ready:document.readyState,frame_src:document.querySelector('#world')?.getAttribute('src'),host_api:!!window.__EPI_REAL_HOST__,body:document.body.innerText})),app:frame?await frame.evaluate(()=>({url:location.href,ready:document.readyState,field_api:!!window.__FIELD_STUDIES__,kernel_api:!!window.__OI_KERNEL_EXPRESSIONS__,body:document.body.innerText.slice(0,32000)})):null});await page.screenshot({path:resolve(out,'failure-independent-screen.png')});receipt.artifacts.push('failure-independent-screen.png');}catch(e){receipt.failure.boot_context_error=String(e);}if(frame)try{await snapshot('failure-'+receipt.checks.length,true);}catch(e){receipt.failure.snapshot_error=String(e);} process.exitCode=1;}
