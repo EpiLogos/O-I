@@ -452,7 +452,9 @@ fn actual_future_automation_and_critical_release_or_panic_preserve_both_ids_and_
         let release = &prefix_recording.receipts()[1].application;
         assert_eq!(release.sequence, Counter(3));
         assert_eq!(release.applied_application_ordinal, Counter(2));
-        assert_eq!(release.admitted_sample, Counter(0));
+        assert_eq!(release.requested_sample, Some(Counter(0)));
+        assert_eq!(release.require_requested_sample().unwrap(), Counter(0));
+        assert_eq!(release.admitted_sample, Counter(128));
         assert_eq!(release.applied_sample, Counter(128));
         assert!(release.late_admitted);
         assert!(prefix_recording
@@ -1831,4 +1833,79 @@ fn genuine_recorded_passage_professional_edits_use_native_act_restore_file_and_c
         continuation.checkpoints[0].event_prefix_digest
     );
     std::fs::remove_dir_all(home).unwrap();
+}
+
+#[test]
+fn actual_original_requested_time_survives_late_resolution_and_legacy_absence_stays_unavailable() {
+    use oi_cradle_kernel::expression_performance_recording::NativeApplication;
+    let bindings = [ParameterBinding {
+        native_parameter: 4,
+        performance_parameter: 0,
+    }];
+    let (performance, checkpoint, applications, journal) = managed_order("release", false);
+    let state = NativeRecordState::from_checkpoint(&performance.bases[0], &checkpoint).unwrap();
+    let current = prepare_recording(
+        &performance,
+        admission(&state, &bindings),
+        &applications,
+        &journal,
+    )
+    .unwrap();
+    let release = &current.receipts()[1].application;
+    assert_eq!(release.requested_sample, Some(Counter(0)));
+    assert_eq!(release.admitted_sample, Counter(128));
+    assert_eq!(release.applied_sample, Counter(128));
+    for replacement in [json!("129"), json!(0), json!("00"), Value::Null] {
+        let mut changed = applications.clone();
+        changed[1]["requested_sample"] = replacement;
+        assert!(prepare_recording(
+            &performance,
+            admission(&state, &bindings),
+            &changed,
+            &journal
+        )
+        .is_err());
+    }
+    let mut changed = applications.clone();
+    changed[1]["late_admitted"] = json!(false);
+    assert!(prepare_recording(
+        &performance,
+        admission(&state, &bindings),
+        &changed,
+        &journal
+    )
+    .is_err());
+    let mut historical = applications.clone();
+    for value in &mut historical {
+        value.as_object_mut().unwrap().remove("requested_sample");
+    }
+    let old = prepare_recording(
+        &performance,
+        admission(&state, &bindings),
+        &historical,
+        &journal,
+    )
+    .unwrap();
+    assert_eq!(
+        old.prospective().events().collect::<Vec<_>>(),
+        current.prospective().events().collect::<Vec<_>>()
+    );
+    for (receipt, original) in old.receipts().iter().zip(&historical) {
+        assert_eq!(receipt.application.requested_sample, None);
+        assert!(receipt.application.require_requested_sample().is_err());
+        assert_eq!(
+            serde_json::to_value(&receipt.application).unwrap(),
+            *original
+        );
+    }
+    let present_zero: NativeApplication = serde_json::from_value(applications[1].clone()).unwrap();
+    assert_eq!(present_zero.require_requested_sample().unwrap(), Counter(0));
+    assert_eq!(serde_json::to_value(present_zero).unwrap(), applications[1]);
+    let (_, continued, all, _) = managed_order("release", true);
+    let future: NativeApplication = serde_json::from_value(all[2].clone()).unwrap();
+    assert_eq!(future.sequence, Counter(2));
+    assert_eq!(future.requested_sample, Some(Counter(48000)));
+    assert_eq!(future.admitted_sample, Counter(48000));
+    assert_eq!(future.applied_sample, Counter(48000));
+    assert_eq!(continued.sample, Counter(48128));
 }

@@ -173,8 +173,11 @@ def main() -> None:
                 raise RuntimeError("Management overtaking lost same source basis or distinct admission/commit identities")
             if any(e.get("schema")!="ql.performance-applied-event/v2" or e.get("applied") is not True for e in entries):
                 raise RuntimeError("Management overtaking did not commit actual application/v2 receipts")
-            if entries[1].get("admitted_sample")!="0" or entries[1].get("applied_sample")!="128" or entries[1].get("late_admitted") is not True or entries[2].get("applied_sample")!="48000":
-                raise RuntimeError("Management overtaking lost exact late release/future automation timing")
+            if ([e.get("requested_sample") for e in entries] != ["37", "0", "48000"]
+                    or [e.get("admitted_sample") for e in entries] != ["37", "128", "48000"]
+                    or [e.get("applied_sample") for e in entries] != ["37", "128", "48000"]
+                    or entries[1].get("late_admitted") is not True):
+                raise RuntimeError("Management overtaking lost original request, resolved admission or exact application timing")
             for wire,cursor,highwater in [(before,"256","2"),(after,"48128","3")]:
                 if wire.get("schema")!="ql.performance-management-checkpoint/v1" or wire["native_pair"]["audio"].get("schema")!="ql.performance-checkpoint/v2" or wire["native_pair"]["audio"].get("cursor")!=cursor or wire["native_pair"]["audio"].get("applied_application_ordinal")!=highwater:
                     raise RuntimeError("Management overtaking lost the exact stopped cursor/committed high-water")

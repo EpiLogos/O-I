@@ -66,6 +66,14 @@ pub struct NativeApplication {
     pub sequence: Counter,
     /// Native commit delivery order, distinct from admission operation ID.
     pub applied_application_ordinal: Counter,
+    /// Native original request, retained independently of the resolved queue time.
+    /// Absent historical provenance stays absent; zero is an available request.
+    #[serde(
+        default,
+        skip_serializing_if = "Option::is_none",
+        deserialize_with = "requested_sample"
+    )]
+    pub requested_sample: Option<Counter>,
     pub admitted_sample: Counter,
     pub applied_sample: Counter,
     pub committed_cursor: Counter,
@@ -82,6 +90,13 @@ pub struct NativeApplication {
     pub determination: Option<Value>,
     pub late_admitted: bool,
     pub physical_manifest: PhysicalManifest,
+}
+fn requested_sample<'de, D: serde::Deserializer<'de>>(
+    deserializer: D,
+) -> Result<Option<Counter>, D::Error> {
+    // Missing fields use the default; an explicitly present null cannot erase
+    // original timing provenance or acquire canonical native wire standing.
+    Counter::deserialize(deserializer).map(Some)
 }
 fn decimal(v: &Value) -> Result<Counter, String> {
     serde_json::from_value(v.clone()).map_err(|e| e.to_string())
@@ -107,6 +122,10 @@ fn operation(kind: u8) -> Result<&'static str, String> {
     .ok_or_else(|| "unknown native application kind".into())
 }
 impl NativeApplication {
+    pub fn require_requested_sample(&self) -> Result<Counter, String> {
+        self.requested_sample
+            .ok_or_else(|| "original native requested time unavailable".into())
+    }
     fn validate(&self, basis: &PerformanceBasis, state: &NativeRecordState) -> Result<(), String> {
         self.native_clock.validate()?;
         let identity = &basis.identity;
@@ -116,6 +135,10 @@ impl NativeApplication {
             || self.sequence.0 == 0
             || self.sequence > state.accepted_sequence
             || self.applied_application_ordinal.0 == 0
+            || self.requested_sample.is_some_and(|requested| {
+                requested > self.admitted_sample
+                    || (requested < self.admitted_sample && !self.late_admitted)
+            })
             || self.applied_sample < self.admitted_sample
             || (self.applied_sample > self.admitted_sample && !self.late_admitted)
             || self.applied_sample >= self.committed_cursor
