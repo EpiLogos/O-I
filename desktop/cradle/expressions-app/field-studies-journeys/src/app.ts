@@ -354,7 +354,7 @@ async function setScene(index:number,automatic=false){
  if(propertyTake)finishPropertyTake();trackPreview=false;pointer.active=false;
  if(scenePlaying&&store.document.scenes[index].transition>0&&engine.capabilities.kind==='preview'){const c=$<HTMLCanvasElement>('transition-canvas');c.width=engine.canvas.width;c.height=engine.canvas.height;c.getContext('2d')!.drawImage(engine.canvas,0,0);transitionBackground=scene().field.background;c.style.background=transitionBackground;c.style.opacity='1';c.hidden=false;transitionStart=simTime;transitionDuration=store.document.scenes[index].transition;transitionEasing='linear';transitionSceneId=store.document.scenes[index].id;}else{transitionDuration=0;$('transition-canvas').hidden=true;}
 
- sceneIndex=index;if(!automatic)journeyPlaying=false;applySceneView();sceneElapsed=0;selected=[];textId=scene().text[0]?.id??null;saveSession();placementStep=false;shapePickerOpen=false;if(!automatic)journeyPlaying=false;
+ engine?.releasePrivateSound?.();sceneIndex=index;if(!automatic)journeyPlaying=false;applySceneView();sceneElapsed=0;selected=[];textId=scene().text[0]?.id??null;saveSession();placementStep=false;shapePickerOpen=false;if(!automatic)journeyPlaying=false;
  if(epiWorld)await receiveEpiPersonal();renderAll();void researchInstruments?.refresh();return true;}
 function selectEntity(id:string,multi=false){cursorTool='select';pointer.active=false;railKey='select';railExpanded=true;if(multi){selected=selected.includes(id)?selected.filter(x=>x!==id):[...selected,id];}else selected=[id];editing=true;inspectorOpen=false;contextKind='objects';tab='objects';studioSection='formations';tool='select';shapePickerOpen=false;journeyPlaying=false;stepIndex=0;renderAll();}
 function semanticBindingFor(s:Scene,entityId:string):SemanticBinding|undefined{return s.semanticField?.bindings.find(b=>b.carriers.some(c=>c.kind==='entity'&&c.id===entityId));}
@@ -467,6 +467,7 @@ let privateEvidenceField:PrivateEvidenceField|null=null;
 // Private live presentation stays in this host closure; it is never exported,
 // persisted, or substituted for the native person/occasion basis.
 let privateEvidencePresentation:EvidencePresentation|null=null;
+function clearPrivateEvidence(){engine?.releasePrivateSound?.();privateEvidencePresentation=null;privateEvidenceField=null;}
 let privateFormReading:NativeM3Reading|null=null;
 let sceneBodies:ReturnType<typeof installSceneBodies>|undefined;
 let blueprintHUD:ReturnType<typeof installBlueprintHUD>|undefined;
@@ -497,7 +498,7 @@ async function loadJourney(j:Journey){
  // Keep the gate and departing work intact if backup or navigation fails.
  closeEntryGate();
 }
-function applyJourney(j:Journey,native=false){journeyNavigation++;if(!native){awaitingNativeBoot=false;void nativeWorkspace?.changed(j);}if(propertyTake)finishPropertyTake();trackPreview=false;rememberWork(j.id);studioOpen=false;j.scenes.forEach(checkNativeLimits);sessionExpressions.set(store.document.id,clone(store.document));sessionExpressions.set(j.id,clone(j));try{if(!deletedLibraryIds.has(store.document.id))saveToLibrary(store.document);}catch{toast('The previous expression is retained in Undo; browser storage is unavailable. Export it before closing this page.',6500);}store.replace(initialiseSceneSaves(initialiseBelts(j)));store.document.updatedAt=j.updatedAt;sceneIndex=0;selected=[];camera=defaultCamera();applySceneView();transitionDuration=0;$('transition-canvas').hidden=true;sceneElapsed=0;journeyPlaying=false;editing=false;inspectorOpen=false;timelineOpen=false;cursorTool='interact';tool='interact';railKey='interact';railExpanded=false;shapePickerOpen=false;closeDialogs();libraryOpen=false;modesOpen=false;try{history.replaceState(null,'',location.pathname+location.search);}catch{}markSaved();renderAll();}
+function applyJourney(j:Journey,native=false){engine?.releasePrivateSound?.();journeyNavigation++;if(!native){awaitingNativeBoot=false;void nativeWorkspace?.changed(j);}if(propertyTake)finishPropertyTake();trackPreview=false;rememberWork(j.id);studioOpen=false;j.scenes.forEach(checkNativeLimits);sessionExpressions.set(store.document.id,clone(store.document));sessionExpressions.set(j.id,clone(j));try{if(!deletedLibraryIds.has(store.document.id))saveToLibrary(store.document);}catch{toast('The previous expression is retained in Undo; browser storage is unavailable. Export it before closing this page.',6500);}store.replace(initialiseSceneSaves(initialiseBelts(j)));store.document.updatedAt=j.updatedAt;sceneIndex=0;selected=[];camera=defaultCamera();applySceneView();transitionDuration=0;$('transition-canvas').hidden=true;sceneElapsed=0;journeyPlaying=false;editing=false;inspectorOpen=false;timelineOpen=false;cursorTool='interact';tool='interact';railKey='interact';railExpanded=false;shapePickerOpen=false;closeDialogs();libraryOpen=false;modesOpen=false;try{history.replaceState(null,'',location.pathname+location.search);}catch{}markSaved();renderAll();}
 function openKeep(){captureOpen=!captureOpen;modesOpen=false;pointer.active=false;
  if(captureOpen){inspectorOpen=false;contextKind='';timelineOpen=false;beltPickerOpen=false;shapePickerOpen=false;}renderAll();}
 function renderImageSuite(){readCapture();if(!selectedEntity()){const e=scene().entities.find(e=>e.kind==='formation');if(e)selected=[e.id];} $('capture-panel').innerHTML=`<header><h3>Image suite</h3>${ib('capture-options','close','Close image suite')}</header>${imageSuiteHTML(scene(),selected[0],stepIndex)}<details class="image-output"><summary>Capture output settings</summary><div class="two-col"><label class="control"><span>Output size</span><select id="capture-width"><option value="1280">1280</option><option value="1440">1440</option><option value="1920">1920</option><option value="3840">3840 · PNG</option></select></label><label class="control"><span>Frame</span><select id="capture-aspect"><option value="stage">Current stage</option><option value="16:9">16:9</option><option value="1:1">1:1</option><option value="9:16">9:16</option></select></label></div><label class="toggle-row"><span>Include page text</span><input id="capture-text" type="checkbox" ${captureSettings.includeText?'checked':''}><i></i></label><label class="toggle-row"><span>Transparent PNG</span><input id="capture-transparent" type="checkbox" ${captureSettings.transparent?'checked':''}><i></i></label><p class="control-note">Clean artwork only. Aspect changes centre-crop the current view. Silent live video requests 30 fps; 2-minute / 128 MB limit.</p></details>`;
@@ -897,7 +898,7 @@ function frameData(delta:number):EngineFrame{const base=activeScene();
  let formationGeometryProjection:import('../../src/engine/formationGeometryProjection').FormationGeometryProjection|null=null;
  if(privateFormReading){try{formationGeometryProjection=naraFormGeometry(privateFormReading,nativeWorkspace?.nativeView(),base.id);}catch{privateFormReading=null;}}
  formationGeometryProjection=epi?.geometry??formationGeometryProjection;
- return {stationaryFormationAdmission:epiWorld?epiStationaryReception(current,epiWorld,admittedReading,nativeWorkspace?.nativeView()?.document as unknown as import('../../../src/expression/types').ExpressionDocument|undefined):undefined,formationGeometryProjection,localizedResonanceProjection:evidenceProjection?privateEvidenceField?.resonance:null,forceEmitterProjection:evidenceProjection,entitySoundProjection:evidenceProjection?privateEvidenceField?.sound:undefined,connections:nativeConnectionRows[base.id],selectedConnection:nativeSelectedRelation,connectionFocusIds:epiWorld?selected:undefined,sourceBodyPicking:!!epiWorld,connectionRestOpacity:epiWorld?.receiving.scene_ref===base.id?0.12:1,scene:current,scaffold:editing&&!presenting&&guidesVisible?current.view.nativeScaffold??'off':'off',simTime,delta,params:(()=>{const p=engine.capabilities.kind==='production'?current.field.params:evaluateParameters(current,simTime);return physisParticleCap&&p.count>physisParticleCap?{...p,count:physisParticleCap}:p;})(),camera,pointer,selectedIds:(editing&&!presenting&&guidesVisible)||!!epiWorld?selected:[],authoringRevision:store.revision*1e7+epiReceptionRevision*1e3+(tracksActive?1+Math.floor(sceneElapsed*60):0)};}
+ return {stationaryFormationAdmission:epiWorld?epiStationaryReception(current,epiWorld,admittedReading,nativeWorkspace?.nativeView()?.document as unknown as import('../../../src/expression/types').ExpressionDocument|undefined):undefined,formationGeometryProjection,localizedResonanceProjection:evidenceProjection?privateEvidenceField?.resonance:null,forceEmitterProjection:evidenceProjection,entitySoundPlan:evidenceProjection?privateEvidenceField?.sound:undefined,connections:nativeConnectionRows[base.id],selectedConnection:nativeSelectedRelation,connectionFocusIds:epiWorld?selected:undefined,sourceBodyPicking:!!epiWorld,connectionRestOpacity:epiWorld?.receiving.scene_ref===base.id?0.12:1,scene:current,scaffold:editing&&!presenting&&guidesVisible?current.view.nativeScaffold??'off':'off',simTime,delta,params:(()=>{const p=engine.capabilities.kind==='production'?current.field.params:evaluateParameters(current,simTime);return physisParticleCap&&p.count>physisParticleCap?{...p,count:physisParticleCap}:p;})(),camera,pointer,selectedIds:(editing&&!presenting&&guidesVisible)||!!epiWorld?selected:[],authoringRevision:store.revision*1e7+epiReceptionRevision*1e3+(tracksActive?1+Math.floor(sceneElapsed*60):0)};}
 function recordableTracks(){return workspace.entries.flatMap(entry=>{const subject=entry.scope==='selected'?(selectedEntity()??scene().entities.find(e=>e.kind==='formation')):scene().entities.find(e=>e.id===entry.entityId);const bind=entry.scope==='field'?PARAMETERS.find(p=>p.key===entry.key)?.bind:subject?entityTargets(scene()).find(t=>t.entityId===subject.id&&t.key===entry.key)?.bind:undefined;if(!bind)return [];const track:PropertyTrack={id:uid('track'),bind,entityId:entry.scope==='field'?undefined:subject?.id,points:[]};return isShared(store.document,scene(),bind)||readTrackValue(scene(),track)===undefined?[]:[track];});}
 function finishPropertyTake(){if(!propertyTake)return;const take=propertyTake;propertyTake=null;if(take.elapsed>0){const end=Math.min(3600,take.start+take.elapsed);for(const t of take.tracks){const value=readTrackValue(scene(),t);if(value!==undefined&&t.points.at(-1)?.time!==end)t.points.push({time:end,value});}changed(()=>{scene().propertyTakeRange={start:take.start,end};scene().propertyTracks=mergeTake(scene().propertyTracks??[],take.tracks,take.start,end);scene().duration=Math.max(scene().duration,end);});takeWindows.set(scene().id,{start:take.start,end});sceneElapsed=take.start;trackPreview=true;scenePlaying=false;toast('Property take recorded · save the scene to keep this version.');}renderAll();}
 function updatePropertyTake(now:number){const t=propertyTake;if(!t)return;if(t.sceneId!==scene().id){finishPropertyTake();return;}const remaining=Math.max(0,Math.ceil((t.armed-now)/1000));$('take-status').hidden=false;$('take-status').textContent=remaining?'Recording in '+remaining+'…':'Recording '+t.elapsed.toFixed(1)+'s · click record to stop';if(remaining)return;const elapsed=Math.min((now-t.armed)/1000,3600-t.start,t.limit??Infinity);t.elapsed=elapsed;sceneElapsed=t.start+elapsed;scenePlaying=true;if(elapsed-t.lastSample>=.05||t.lastSample<0){for(const track of t.tracks){const value=readTrackValue(scene(),track);if(value===undefined)continue;sampleTrack(track,t.start+elapsed,value,t.start+Math.max(0,t.lastSample));}t.lastSample=elapsed;}if(t.start+elapsed>=3600||t.limit!==undefined&&elapsed>=t.limit)finishPropertyTake();}
@@ -1209,7 +1210,7 @@ const naraInstrument=installNaraInstrument({enterWorld:async identity=>{if(world
   else if(epiNaraSelectPending>0&&epiPersonalAdmissionIntent===epiPersonalIntentGeneration)return false;
   else epiPersonalIntentGeneration++;
   if(epiWorld)epiReleasedPersonalBasis=epiPersonalBasisKey(epiWorld);
-  epiPersonalCurrentAdmission=null;privateEvidencePresentation=null;privateEvidenceField=null;
+  epiPersonalCurrentAdmission=null;clearPrivateEvidence();
   needsFrame=true;naraInstrument.refresh();return true;
  },
  acceptPersonalCurrent:current=>{
@@ -1218,7 +1219,18 @@ const naraInstrument=installNaraInstrument({enterWorld:async identity=>{if(world
   if(!record||!previous||epiReceiving||epiConstructing||epiReleasedPersonalBasis===epiPersonalBasisKey(record))throw Error('The saved personal basis is not admitted.');
   const admission:PersonalCurrentAdmission={...previous,current};
   if(!qualifyPersonalContext(record,epiIdentity,current,null,null,view,scene().id,admission))throw Error('The native current does not match the admitted saved person and cosmic occasion.');
+  const presentation=privateEvidencePresentation;
+  clearPrivateEvidence();
   epiPersonalCurrentAdmission=admission;
+  if(presentation){
+   try{
+    const input:EvidencePresentation={...presentation,current};
+    const field=createEvidenceField(input,view,scene().id);
+    if(!qualifyPersonalContext(record,input.identity,current,input,field,view,scene().id,admission))throw Error('The previous presentation no longer matches this admitted person and occasion.');
+    privateEvidencePresentation=input;privateEvidenceField=field;
+   }catch(error){epiEncounter?.fail('Current admitted; personal presentation unavailable: '+String(error));}
+  }
+  needsFrame=true;naraInstrument.refresh();
  },
  presentForm:reading=>{if(reading)naraFormGeometry(reading,nativeWorkspace?.nativeView(),scene().id);privateFormReading=reading;needsFrame=true;},
  presentEvidence:input=>{
@@ -1229,7 +1241,7 @@ const naraInstrument=installNaraInstrument({enterWorld:async identity=>{if(world
      ||!qualifyPersonalContext(record,input.identity,epiPersonalCurrentAdmission.current,input,field,view,scene().id,epiPersonalCurrentAdmission))
     throw Error('This personal presentation does not match the admitted saved person and cosmic occasion.');
   }
-  privateEvidencePresentation=input;privateEvidenceField=field;needsFrame=true;naraInstrument.refresh();
+  engine?.releasePrivateSound?.();privateEvidencePresentation=input;privateEvidenceField=field;needsFrame=true;naraInstrument.refresh();
  },
  acceptNativeDocument:async(document:unknown)=>{
   const native=document as {expression_ref?:unknown;revision?:unknown};
@@ -1269,14 +1281,15 @@ function admitEpiPersonalBasis(){
  // Only a completed actual selection/rebind calls this admission boundary.
  epiReleasedPersonalBasis=null;
 }
-async function enterEpiWorld(identity:InstrumentIdentity){
+async function enterEpiWorld(identity:InstrumentIdentity,retainedOpening?:import('./native-field/controller').NativeSkySnapshot){
  if(epiReceiving||epiConstructing)throw Error('The saved personal world is still receiving its native basis.');
+ if(retainedOpening&&epiWorld)throw Error('A loaded personal world already has its admitted occasion. Return to an empty world before selecting another retained opening.');
  if(epiWorld?.person_ref===identity.reading.person_ref){
   epiReceiving=true;epiPersonalAdmissionIntent=epiPersonalIntentGeneration;
   try{await leaveEpiNativeScene();const rebound=await epiProducer.rebind(epiWorld,identity);epiIdentity=identity;epiWorld=rebound.record;epiCurrent=rebound.current;epiPersonalKey=[epiWorld.world.instance_ref,epiWorld.person_ref,epiWorld.identity_source.revision,epiWorld.world.snapshot_ref].join('|');admitEpiPersonalBasis();await receiveEpiPersonal();epiEncounter?.refresh();}
   finally{epiReceiving=false;epiPersonalAdmissionIntent=null;naraInstrument.refresh();}return;
  }
- const sky=epiWorld?.world.sky as unknown as import('./native-field/controller').NativeSkySnapshot|undefined;
+ const sky=retainedOpening??epiWorld?.world.sky as unknown as import('./native-field/controller').NativeSkySnapshot|undefined;
  epiConstructing=true;epiPersonalAdmissionIntent=epiPersonalIntentGeneration;
  try{
   await leaveEpiNativeScene();requireEpiPersonalAdmission();
@@ -1289,17 +1302,17 @@ async function enterEpiWorld(identity:InstrumentIdentity){
 async function receiveEpiPersonal(){
  if(!epiWorld||!epiIdentity||!epiCurrent)return;
  if(epiReleasedPersonalBasis===epiPersonalBasisKey(epiWorld)){
-  privateEvidencePresentation=null;privateEvidenceField=null;needsFrame=true;naraInstrument.refresh();return;
+  clearPrivateEvidence();needsFrame=true;naraInstrument.refresh();return;
  }
  const currentView=nativeWorkspace?.nativeView(),currentScene=currentView?.journey.scenes.find(s=>s.id===scene().id);
  const centres=epiWorld.receiving.personal.centre_entity_refs;
- if(!currentScene||!centres.every(ref=>currentScene.entities.some(e=>e.id===ref))){privateEvidencePresentation=null;privateEvidenceField=null;needsFrame=true;naraInstrument.refresh();return;}
+ if(!currentScene||!centres.every(ref=>currentScene.entities.some(e=>e.id===ref))){clearPrivateEvidence();needsFrame=true;naraInstrument.refresh();return;}
  if(currentScene.id===`${epiWorld.world.instance_ref}:scene:personal`&&nativeField?.controller.reading.lease)throw Error('The cosmic owner must be retained and released before entering the personal scene.');
  // Reopening depth and repeated host reception keep the same live route and
  // resident modes. A changed native person or occasion requires admission.
  const admittedCurrent=epiPersonalCurrentAdmission?.current;
  if(!admittedCurrent||!qualifyPersonalContext(epiWorld,epiIdentity,admittedCurrent,null,null,currentView,scene().id,epiPersonalCurrentAdmission)){
-  privateEvidencePresentation=null;privateEvidenceField=null;needsFrame=true;naraInstrument.refresh();return;
+  clearPrivateEvidence();needsFrame=true;naraInstrument.refresh();return;
  }
  if(privateEvidencePresentation&&qualifyPersonalContext(epiWorld,epiIdentity,
    admittedCurrent,privateEvidencePresentation,privateEvidenceField,currentView,scene().id,epiPersonalCurrentAdmission)){
@@ -1308,9 +1321,9 @@ async function receiveEpiPersonal(){
  try{
   const input:EvidencePresentation={identity:epiIdentity,channel:'direct-planetary-resonance',current:admittedCurrent,waves:true};
   const field=createEvidenceField(input,currentView,scene().id);
-  privateEvidencePresentation=input;privateEvidenceField=field;needsFrame=true;naraInstrument.refresh();
+  engine?.releasePrivateSound?.();privateEvidencePresentation=input;privateEvidenceField=field;needsFrame=true;naraInstrument.refresh();
  }
- catch(e){privateEvidencePresentation=null;privateEvidenceField=null;epiEncounter?.fail('Personal reception: '+String(e));naraInstrument.refresh();}
+ catch(e){clearPrivateEvidence();epiEncounter?.fail('Personal reception: '+String(e));naraInstrument.refresh();}
 }
 async function receiveEpiWorld(explicitAdmission=false){
  if(epiReceiving||!epiWorld)return;
@@ -1327,7 +1340,7 @@ async function receiveEpiWorld(explicitAdmission=false){
   // act; quiet owner preparation and the protected personal pin need no audio.
   editing=false;inspectorOpen=false;contextKind='';timelineOpen=false;sequenceOpen=false;tool='select';cursorTool='select';railKey='select';renderAll();
  }catch(e){
-  epiReleasedPersonalBasis=epiPersonalBasisKey(record);epiPersonalCurrentAdmission=null;privateEvidencePresentation=null;privateEvidenceField=null;needsFrame=true;
+  epiReleasedPersonalBasis=epiPersonalBasisKey(record);epiPersonalCurrentAdmission=null;clearPrivateEvidence();needsFrame=true;
   if(intent!==epiPersonalIntentGeneration)epiEncounter?.status('Your pending identity edit was retained.');else epiEncounter?.fail(String(e));
  }finally{epiReceiving=false;epiPersonalAdmissionIntent=null;naraInstrument.refresh();}
 }

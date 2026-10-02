@@ -9,7 +9,8 @@ export interface EngineFrame {
  formationGeometryProjection?:import('../../src/engine/formationGeometryProjection').FormationGeometryProjection|null;
  localizedResonanceProjection?:import('../../src/engine/localizedResonanceProjection').LocalizedResonanceProjection|null;
  forceEmitterProjection?:import('../../src/engine/forceRuntime').ForceEmitterProjection|null;
- entitySoundProjection?:(scene:Readonly<Scene>)=>Readonly<Scene>;
+ /** Qualified, private voice plan; portable object sound remains on Scene. */
+ entitySoundPlan?:(scene:Readonly<Scene>)=>readonly import('./native-field/entitySound').EntityVoice[]|null;
  connections?:readonly ConnectionBinding[];selectedConnection?:string|null;
  /** Presentation emphasis retains every exact native relation and its hit path. */
  connectionFocusIds?:ReadonlyArray<string>;connectionRestOpacity?:number;
@@ -22,6 +23,8 @@ export interface EngineCapabilities {name:string;kind:'preview'|'production';par
 export type PointerEffectKind='pulse'|'implode'|'vortex'|'shove';
 export type EngineCommand={type:'reset-field'}|{type:'recover-context'}|{type:'reset-phases'}|{type:'disperse';strength:number}|{type:'fire-automation';id:string;delay?:number}|{type:'pointer-effect';kind:PointerEffectKind;strength:number;radius:number;x:number;y:number;z:number};
 export interface FieldEngineAdapter {
+ /** Release private voices without depending on a visible/renderable frame. */
+ releasePrivateSound?():void;
  hitEntity?(x:number,y:number):string|null;
  hitConnection?(x:number,y:number):ConnectionBinding|null;
  inspectConnections?():unknown;

@@ -237,7 +237,8 @@ if(config.identity_file||config.current_file){
  const sceneId=Object.entries(view.bindings).find(([,b])=>b.scene_ref===personalScene.scene_ref)[0];
  const presentation={identity,channel:'direct-planetary-resonance',waves:true,sound:true,current};
  const field=m.createEvidenceField(presentation,view,sceneId);
- assert.equal(field.resonance.drivers.length,7);assert.equal(field.expressionRef,document.expression_ref);
+ assert.equal(field.resonance.drivers.length,9);assert.equal(new Set(field.resonance.drivers.map(driver=>driver.entityId)).size,7);assert.equal(field.expressionRef,document.expression_ref);
+ const receivedSound=field.sound(view.journey.scenes.find(scene=>scene.id===sceneId));assert.equal(receivedSound.length,9);assert.equal(new Set(receivedSound.map(voice=>voice.voiceRef)).size,9);assert.equal(new Set(receivedSound.map(voice=>voice.entityId)).size,7);
  const selected=field.resonance.drivers[0],binding=view.bindings[sceneId].occurrences.find(o=>o.view_entity_id===selected.entityId),sourceRef=centreSubjects[0];
  // Preserve the current canonical coordinate/source and every control/body;
  // delete only the admitted numerical source stamp required by real consumer.

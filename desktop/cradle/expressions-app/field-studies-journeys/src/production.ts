@@ -13,7 +13,7 @@ import {summarizeAnalysis} from '../../src/engine/sourceSampling';
 import {NATIVE_BINDINGS,WORLD_SCALE} from './nativeParameters';
 import {basis,stageCentre,stageScale} from './camera';
 import type {EngineFrame,FieldEngineAdapter,EngineCommand} from './engine';
-import {EntitySoundBank,activeFromFocus} from './native-field/entitySound';
+import {EntitySoundBank,activeFromFocus,presentEntitySoundVoices} from './native-field/entitySound';
 
 const mix=(a:number,b:number,t:number)=>a+(b-a)*t;
 function color(a:string,b:string,t:number){return '#'+new Color(a).lerp(new Color(b),t).getHexString();}
@@ -48,7 +48,7 @@ class EmbeddedProductionAdapter implements FieldEngineAdapter {
  }
  private contextLost=false;private seedRecoveredSources=false;private restoredClock=false;private allocationRestSeed=false;
  private stationaryAdmissionKey='';
- private lost=(event:Event)=>{event.preventDefault();this.contextLost=true;this.dirty=true;};
+ private lost=(event:Event)=>{event.preventDefault();this.contextLost=true;this.dirty=true;this.entitySound.clear();this.privateSoundActive=false;};
  constructor(readonly canvas:HTMLCanvasElement){canvas.addEventListener('webglcontextlost',this.lost);}
 
  resize(width:number,height:number,pixelRatio:number){this.width=width;this.height=height;this.dpr=pixelRatio;}
@@ -144,15 +144,17 @@ class EmbeddedProductionAdapter implements FieldEngineAdapter {
   this.evaluated=this.engine.getEvaluation().config;
   this.followSound(frame);
  }
- private soundScene:EngineFrame['scene']|null=null;private soundAt=-1;
+ private soundScene:EngineFrame['scene']|null=null;private privateSoundActive=false;
+ releasePrivateSound(){if(this.privateSoundActive)this.entitySound.clear();this.privateSoundActive=false;}
  /** Object sound follows the present Scene and the engine's real focus
-  * (travelling compositions sound the focused entity only). ~10 Hz. */
+  * (travelling compositions sound every voice of the focused entity). The
+  * bank's signature skips unchanged plans; departures release on this frame. */
  private followSound(frame:EngineFrame){
-  const scene=frame.entitySoundProjection?frame.entitySoundProjection(frame.scene):this.soundScene;
-  if(!scene){if(this.soundAt!==-2){this.entitySound.sync({entities:[]});this.soundAt=-2;}return;}
-  const now=performance.now();if(this.soundAt>=0&&now-this.soundAt<100)return;this.soundAt=now;
-  const focus=scene.composition.focus==='travelling'?this.engine?.getCompositionTelemetry().focus:null;
-  this.entitySound.sync({entities:scene.entities,field:frame.scene.field},activeFromFocus(focus));
+  const plan=frame.entitySoundPlan?.(frame.scene);
+  const focus=frame.scene.composition.focus==='travelling'?this.engine?.getCompositionTelemetry().focus:null;
+  const active=activeFromFocus(focus);
+  if(plan!=null){this.privateSoundActive=true;this.entitySound.syncVoices(presentEntitySoundVoices(plan,frame.scene,active));}
+  else {this.releasePrivateSound();this.entitySound.sync(this.soundScene??{entities:[]},active);}
  }
  hitEntity(x:number,y:number){
   if(!this.sourceBodyPicking||!this.engine)return this.connections?.pickEntity(x,y)??null;

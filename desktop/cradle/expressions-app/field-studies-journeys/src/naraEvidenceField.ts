@@ -8,7 +8,7 @@ import type {KernelConversion} from './kernelDocumentBridge';
 import type {ForceEmitterProjection} from '../../src/engine/forceRuntime';
 import {NARA_EVIDENCE_FORCE_POLICY, projectNaraEvidenceForces} from '../../src/engine/naraEvidenceProjection';
 import type {Scene} from './model';
-import {DEFAULT_ENTITY_SOUND} from './native-field/entitySound';
+import {DEFAULT_ENTITY_SOUND,type EntityVoice} from './native-field/entitySound';
 
 // The retained template declares these typed chakra IDs. Display titles and
 // cymatic station indices are deliberately not correspondence inputs.
@@ -21,7 +21,8 @@ export interface PrivateEvidenceField {
   expressionRef:string;sceneRef:string;sourceRef:string;sourceRevision:string;
   resonance:LocalizedResonanceProjection|null;
   project:(view:KernelConversion|undefined,sceneId:string)=>ForceEmitterProjection|null;
-  sound:(scene:Readonly<Scene>)=>Readonly<Scene>;
+  /** Private receiving voices, never an authored/saved Scene transformation. */
+  sound:(scene:Readonly<Scene>)=>readonly EntityVoice[]|null;
 }
 /** Private host-to-aperture state, qualified against the actually loaded world.
  * This is neither a new identity selection nor portable Expression material. */
@@ -101,17 +102,18 @@ export interface NativePlanetaryResonanceDriver {driverRef:string;entityId:strin
 export function projectNativePlanetaryResonanceDrivers(natal:NatalComposition,partition:CentrePartition,
   bindings:readonly ResonanceBinding[],sourceRef:string):NativePlanetaryResonanceDriver[]{
   const rows=natal.planetary_contributions;
-  if(rows.length!==10||new Set(rows.map(row=>row.native_planet_id)).size!==10)throw Error('The native planetary driver basis must contain the ten distinct owner contributions.');
+  if(rows.length!==10||new Set(rows.map(row=>row.native_planet_id)).size!==10||rows.some(row=>!Number.isInteger(row.native_planet_id)||row.native_planet_id<0||row.native_planet_id>9))throw Error('The native planetary driver basis must contain the ten distinct owner contributions.');
   const denominator=rows.reduce((sum,row)=>sum+row.weighted_contribution,0);
   if(!Number.isFinite(denominator)||denominator<=0||rows.some(row=>!Number.isFinite(row.weighted_contribution)||row.weighted_contribution<0))throw Error('The native planetary driver denominator is invalid.');
   const drivers:NativePlanetaryResonanceDriver[]=[];
   for(const row of rows){
-    if(row.receiving_centre_ordinal==null){
-      if(row.body!=='Uranus')throw Error('Only the owner-unallocated Uranus contribution may lack a receiving centre.');
+    if(row.native_planet_id===7){
+      if(row.body!=='Uranus'||row.receiving_centre_ordinal!=null||row.planetary_chakra_route!=null)throw Error('The owner-unallocated Uranus contribution must remain unvoiced.');
       continue;
     }
+    if(row.receiving_centre_ordinal==null)throw Error('Only the owner-unallocated Uranus contribution may lack a receiving centre.');
     const binding=bindings.find(value=>value.ordinal===row.receiving_centre_ordinal);
-    if(!binding||!Number.isFinite(row.native_cousto_frequency_hz)||row.native_cousto_frequency_hz<=0)throw Error('A qualified planetary driver has no exact native target or frequency.');
+    if(!binding||!Number.isFinite(row.native_cousto_frequency_hz)||row.native_cousto_frequency_hz<1||row.native_cousto_frequency_hz>20000)throw Error('A qualified planetary driver has no exact native target or frequency.');
     drivers.push({driverRef:JSON.stringify([sourceRef,row.native_planet_id]),entityId:binding.entityId,
       frequencyHz:row.native_cousto_frequency_hz,driveShare:row.weighted_contribution/denominator});
   }
@@ -121,6 +123,19 @@ export function projectNativePlanetaryResonanceDrivers(natal:NatalComposition,pa
     if(!Number.isFinite(centre)||Math.abs(projected-centre!)>1e-10)throw Error('The native planetary drivers do not reconstruct their owner centre partition.');
   }
   return drivers;
+}
+
+/** Exact private audio receiving plan. No averaging, centre duplication,
+ * redistribution of Uranus, or mutation of the authored sound material. */
+export function projectNativePlanetarySoundVoices(drivers:readonly NativePlanetaryResonanceDriver[],scene:Readonly<Scene>,scope:string):EntityVoice[]{
+  return drivers.map(driver=>{
+    const entity=scene.entities.find(entity=>entity.id===driver.entityId);
+    if(!entity)throw Error('A native planetary voice has no receiving body.');
+    const sound={...DEFAULT_ENTITY_SOUND,...entity.sound};
+    return {voiceRef:JSON.stringify([scope,driver.driverRef]),entityId:driver.entityId,
+      frequencyHz:driver.frequencyHz,gain:sound.gain*driver.driveShare,waveform:sound.waveform,
+      attack:sound.attack,release:sound.release,pan:sound.pan};
+  });
 }
 
 /** A reversible presentation of an actual native evidence partition. This is
@@ -151,14 +166,13 @@ export function createEvidenceField(input:EvidencePresentation,view:KernelConver
   const projection={policy:NARA_EVIDENCE_FORCE_POLICY,channel,partition,bindings};
   projectNaraEvidenceForces([],projection); // Admission before any field effect.
   const transform:ForceEmitterProjection=emitters=>projectNaraEvidenceForces(emitters,projection);
-  const frequencies=new Map<number,number>();
-  if(input.sound)for(const b of bindings){
-    const rows=natal!.planetary_contributions.filter(row=>row.receiving_centre_ordinal===b.ordinal);
-    if(rows.length!==1||!Number.isFinite(rows[0].native_cousto_frequency_hz)||rows[0].native_cousto_frequency_hz<=0)throw Error('This centre has no unique native planetary frequency.');
-    frequencies.set(b.ordinal,rows[0].native_cousto_frequency_hz);
-  }
-  const resonanceDrivers=input.waves?projectNativePlanetaryResonanceDrivers(natal!,partition,bindings,source.source_ref):[];
+  if(input.sound&&channel!=='direct-planetary-resonance')throw Error('Sound needs the direct planetary resonance route; the native decanic partition has no qualified planetary voice weighting.');
+  const planetaryDrivers=input.waves||input.sound?projectNativePlanetaryResonanceDrivers(natal!,partition,bindings,source.source_ref):[];
   const expressionRef=view.document.expression_ref,sceneRef=binding.scene_ref;
+  // Voice identity retains person/source/input and the admitted occasion. The
+  // host independently qualifies current before giving this plan to the engine.
+  const soundScope=JSON.stringify([expressionRef,sceneRef,personalIdentityKey(identity),
+    input.current?personalCurrentKey(input.current):null]);
   let resonance:LocalizedResonanceProjection|null=null;
   if(input.waves){
     const current=input.current,reading=current?.reading;
@@ -177,17 +191,12 @@ export function createEvidenceField(input:EvidencePresentation,view:KernelConver
       ||activity.event_ref!==current.context.event_ref||activity.identity_source_ref!==source.source_ref||activity.identity_revision!==source.revision))
       throw Error('The activity contribution does not match this saved person and native occasion.');
     resonance={scope:JSON.stringify([source.source_ref,expressionRef]),orientation:reading.activity_status==='available'?reading.q_composed!:reading.q_identity_transit,
-      drivers:resonanceDrivers};
+      drivers:planetaryDrivers};
   }
   return {expressionRef,sceneRef,sourceRef:source.source_ref,sourceRevision:source.revision,resonance,
     sound(scene){
-      if(!input.sound)return scene;
-      return {...scene,entities:scene.entities.map(entity=>{
-        const b=bindings.find(b=>b.entityId===entity.id);if(!b)return entity;
-        const share=partition.centres.find(c=>c.ordinal===b.ordinal)!.mass_share_l1!;
-        return {...entity,sound:{...DEFAULT_ENTITY_SOUND,...entity.sound,enabled:share>0,followCymatic:false,
-          frequencyHz:frequencies.get(b.ordinal)!,gain:(entity.sound?.gain??DEFAULT_ENTITY_SOUND.gain)*share}};
-      })};
+      if(!input.sound||scene.id!==sceneId||bindings.some(b=>scene.entities.find(entity=>entity.id===b.entityId)?.native?.chakraId!==CENTRES[b.ordinal]))return null;
+      return projectNativePlanetarySoundVoices(planetaryDrivers,scene,soundScope);
     },
     project(current,currentSceneId){
       if(current?.document.expression_ref!==expressionRef||current.bindings[currentSceneId]?.scene_ref!==sceneRef)return null;
