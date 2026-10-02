@@ -212,3 +212,35 @@ The same activity then ran through the installed `aikit` (02395f05) and `ctrl` (
 
 Not shown: installed-app use by a person with real pointer and keyboard (MP17); two independent humans (MP14); facilitated/team exchange, budgets and cancellation (MP11); exact generation/required-Workcell/succession routing (MP10); timezone and Nara intake (MP15); a hosted SharedField projection; a Gateway-native remote transport.
 
+## 10. Gateway-native remote transport — 1 October 2026
+
+Supersedes the "not shown" of §8 and §9 for a Gateway-native remote transport. An
+Encounter request to a participant on another Workcell now rides the gateway
+carrier: [ai-kit#477](https://github.com/EpiLogos/ai-kit/pull/477) (`4f89f5c0`) adds
+`GatewayCommand::EncounterRelay` — exactly four actions cross (`agency-read`, `send`,
+`delivery`, `delivery-reply`), allowed to a peer token and nothing else — and a route
+decided **once** by negotiation (a declared remote that advertises
+`encounter-request-relay` → native; a peer known to lack the feature → the legacy ssh
+route, named; a declared peer that does not answer → held and retried; no declaration
+→ legacy). The ssh route is hardened (host validated, arguments quoted, 60 s bound).
+
+Run through `plural-flow-acceptance.mjs` with `PF_ROUTE=gateway` (this change adds the
+variant and `PF_FIXTURE`, a controlled ACP body that proves the route without spending a
+model), against the **installed** `6e452a600a4c` on the Mac (launchd) and Omarchy
+(systemd), real owners, real `ctrl` and Actuation mint. Omarchy ran a controlled gateway
+**instance** for the lab world's owner (the real gateway untouched); the Mac declared it
+as `workcell:omarchy`.
+
+| Activity | Result |
+|---|---|
+| ssh broken **before** each send, for the whole run | the entries were delivered and answered anyway: the route used was the gateway |
+| Two requests, each to one agent here and one on Omarchy | 2 `session/prompt` at the Omarchy body (one per request); every reply included once, attributed `verified` from its own session, `reply → <asked entry>@<revision>` |
+| The Omarchy gateway stopped for 30 s while the remote agent worked (real systemd `SIGTERM`: `drained for stop … stopped cleanly`), then started | the remote recipient held (`unknown` → `returned`) and was included once the gateway was back; nothing replayed |
+
+Evidence record: `docs/implementation/GATEWAY-OPERATIONS-ACCEPTANCE.md` in ai-kit.
+
+Not shown: a model body (the body here is a protocol fixture); the real Omarchy gateway
+as relay target; the reverse direction; installed-app use; MP10 exact generation /
+required-Workcell routing *across* this route (the exact-route tests are native and
+green, not re-run over the relay); the independent verifier's account (recorded in the
+acceptance record when it lands).

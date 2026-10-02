@@ -149,7 +149,7 @@ layer's `text`. An unbound role keeps its authored placeholder material.
   "bindings": {…}, "selection": "entity:…?",
   "position": 3,
   "sequence": [
-    {"index":0,"kind":"scene|state|gesture|text|operate|continue|return",
+    {"index":0,"kind":"scene|state|gesture|text|edition|operate|continue|return",
      "file_ref":"…","revision":"…","scene_ref":"…","role":"?","gesture":"?",
      "bindings":{…},"captions":{…},"transition":{"duration":1.2,"easing":"…"},
      "event_basis":{"family":"skill-invocation","source":"aikit-encounter|factory-attempt",
@@ -188,6 +188,19 @@ Expression-level state, it is a Scene change. `act_open` on an existing
 `act_ref` is an idempotent resume and may extend `cast` without duplication.
 
 Existing `act_perform/interrupt/checkpoint/restore` keep working.
+
+`act_perform` also retains the resulting native document as an immutable
+`edition` passage. Its `revision` pins that edition; the Act's `basis_revision`
+remains the edit's input basis. This history is not a second writable current
+document. Seek treats the edition as a whole-material starting point and uses
+the native document restore operation with a current revision check. Restoring
+advances the live document revision and retains subject, source, participant,
+relation and scene material. It invokes no provider, Action or tool. An
+`operate` passage remains an observation of an already performed operation;
+seeking across it never performs the operation again. Edition target, revision
+and document validity are checked before any replay edit, including when the
+caller accepts drift of other reusable material. Older Act records remain
+readable; their unrecorded edits cannot be reconstructed from a later label.
 The desktop socket (`oi desktop expression`) accepts world requests too: a JSON
 body whose `schema` is `oi.expression-world/v1` routes to `KernelOp::ExpressionWorld`.
 The hosted Expressions frame reaches them through the `kernel-expression-world`

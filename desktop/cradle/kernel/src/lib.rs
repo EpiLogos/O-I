@@ -83,6 +83,7 @@ mod nara_voice_constitution;
 mod nara_voice_transport;
 pub mod nara_world_readiness;
 pub mod native_expression;
+pub mod native_owner_transport;
 pub mod owner_read;
 pub mod presentation;
 /// Short-horizon read-through cache for the owner readings the UI re-reads
@@ -298,6 +299,13 @@ pub enum KernelOp {
     },
     BeingEncounter {
         request: being::Request,
+    },
+    /// A hosted subject's explicitly qualified native owner route. The host
+    /// binds its own published World address; the renderer cannot select a
+    /// root, credential, executable or fallback owner.
+    HostedNative {
+        source_world_ref: String,
+        request: Box<KernelOp>,
     },
     Expression {
         request: expression::Request,
@@ -916,6 +924,13 @@ pub struct KernelOpOutcome {
 #[derive(Clone, Debug, Deserialize, PartialEq, Serialize)]
 #[serde(tag = "result", rename_all = "snake_case")]
 pub enum KernelOpResult {
+    /// Remote receipts keep their owner's generation and cursor. They never
+    /// enter this kernel's independent ordered log or local event topic.
+    HostedNative {
+        source_world_ref: String,
+        owner_generation: String,
+        outcome: Box<KernelOpOutcome>,
+    },
     FileLastReading {
         recovery: retained_files::Recovery,
     },
@@ -2452,6 +2467,21 @@ impl Kernel {
                 })
             }
             KernelOp::ExpressionRecovery { request } => expression_recovery::execute(request),
+            KernelOp::HostedNative {
+                source_world_ref,
+                request,
+            } => {
+                if !native_owner_transport::admitted(&request) {
+                    return Err("This hosted route admits only native document, Expression and session operations".into());
+                }
+                let local = std::env::var("OI_SHARED_FIELD_LOCAL_WORLD_REF").map_err(|_| {
+                    "No hosted World address is bound to this native owner".to_owned()
+                })?;
+                if source_world_ref != local {
+                    return native_owner_transport::remote(&source_world_ref, &request);
+                }
+                self.apply(*request)
+            }
             KernelOp::Expression { request } => {
                 let selection_only = matches!(&request, expression::Request::Edit { changes, .. }
                     if !changes.is_empty() && changes.iter().all(|change| matches!(change,
@@ -3614,20 +3644,10 @@ impl Kernel {
                 project,
                 agent_session,
             } => {
-                // The standard project-disclosure gate and cwd resolution —
-                // the task record belongs to a session attached to THIS
-                // project's SessionSpaces, exactly like the encounter reads.
-                let root = self.world_map(false).map_err(|e| e.to_string())?;
-                let row = root["work"]["projects"]
-                    .as_array()
-                    .and_then(|rows| rows.iter().find(|r| r["name"].as_str() == Some(&project)))
-                    .ok_or("Project is outside Central's disclosed ground")?;
-                let cwd = std::path::Path::new(
-                    root["root"]
-                        .as_str()
-                        .ok_or("Central root location unavailable")?,
-                )
-                .join(row["path"].as_str().ok_or("Project location unavailable")?);
+                // Use the Encounter's native location law: an empty Project
+                // label selects the actual root; a named Project still passes
+                // the disclosure gate. A root task reading may lawfully be null.
+                let cwd = self.agent_location((!project.is_empty()).then_some(project.as_str()))?;
                 let data = self
                     .agency
                     .task_read(&cwd, &agent_session)

@@ -1,3 +1,4 @@
+import {subjectLabel} from '../../../../shared-field/presentation-text.mjs';
 import {createParticipantAddress} from '../../../../shared-field/addressing.mjs';
 import {validateActivity} from '../../../../shared-field/activity.mjs';
 import {validateExpressionComposition} from '../../../../shared-field/expression-projection.mjs';
@@ -13,7 +14,7 @@ const strings=value=>Array.isArray(value)?value.filter(item=>typeof item==='stri
 export function beingEncounter(snapshot,participantRef) {
   if(!snapshot||snapshot.state==='unavailable')return {state:'unavailable',reason:snapshot?.detail??'the SharedField is unavailable'};
   const participant=(snapshot.participants??[]).find(row=>row.participant_ref===participantRef);
-  if(!participant)return {state:'absent',reason:`The field holds no Being ${participantRef}.`};
+  if(!participant)return {state:'absent',reason:'This participant is not available in the current shared field.'};
   const presentation=record(participant.presentation);
   const activity=(()=>{try{return presentation.activity?validateActivity(presentation.activity):null;}catch{return null;}})();
   const relations=(snapshot.relations??[]).filter(row=>row.from===participantRef||row.to===participantRef).map(row=>({
@@ -33,7 +34,7 @@ export function beingEncounter(snapshot,participantRef) {
     address:typeof presentation.address==='string'&&/^@\S+$/.test(presentation.address)?presentation.address:`@${participant.participant_ref.replace(/^participant:/,'').replace(/[^A-Za-z0-9_.-]+/g,'-')}`,
   }],mentions:[]});
   return {
-    state:'available',participant,identity:participant.identity,label:presentation.chosen_name??participant.participant_ref,
+    state:'available',participant,identity:participant.identity,label:subjectLabel(presentation,"Unnamed participant"),
     profile:typeof presentation.summary==='string'?presentation.summary:null,
     presence:typeof presentation.presence==='string'?presentation.presence:null,
     activity,methods:strings(presentation.method_refs),relations,membership,reviewers,viewer,address,

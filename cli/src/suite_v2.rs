@@ -883,6 +883,30 @@ fn command_suite_v2_doctor(args: &[OsString]) -> Result<i32, String> {
             }
         }
     }
+    // Residents: the checks above prove the on-disk chain resolves. They cannot
+    // see that a long-lived process still executes an older image than the one
+    // just installed (2026-09-30: the gateway ran a build two days and several
+    // generations old while every receipt check passed). Each product reads its
+    // own resident; a stale one is the same class of failure as a drifted
+    // surface.
+    for resident in resident_readings() {
+        if resident.stale == Some(true) {
+            ok = false;
+            checks.push(json!({
+                "product": resident.product,
+                "ok": false,
+                "detail": format!(
+                    "resident {} runs {} but {} is installed; restart it on the new build: {}",
+                    resident.name,
+                    resident.running_revision.as_deref().map(short_rev).unwrap_or_else(|| "an unreported build".to_owned()),
+                    resident.installed_revision.as_deref().map(short_rev).unwrap_or_else(|| "a newer build".to_owned()),
+                    resident.restart_command.join(" "),
+                ),
+                "selected": true,
+                "scope_state": "resident-stale",
+            }));
+        }
+    }
     // Registered source surfaces: the managed-release checks above see only
     // recorded receipts. What this machine actually runs also includes
     // registered checkouts and whatever PATH resolves first. Found 2026-09-05:

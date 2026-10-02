@@ -115,6 +115,9 @@ export function KernelProvider(props: { children: ReactNode }) {
   const [listing, setListing] = useState<SourceListingState | null>(null);
   const [listingError, setListingError] = useState<string | null>(null);
   const listingGeneration = useRef(0);
+  // The mount owns each page lifetime. BFCache pause ends read ownership
+  // even though React remains mounted; Tauri completion is fenced, not cancelled.
+  const ownerReadLifetime = useRef<AbortController | null>(new AbortController());
   const [sourceErrors, setSourceErrors] = useState<Record<string, string>>({});
   const errorOperations = useRef<Record<string, string>>({});
   const [opError, setOpError] = useState<string | null>(null);
@@ -221,10 +224,15 @@ export function KernelProvider(props: { children: ReactNode }) {
     [merge, transport, reportOpError],
   );
 
-  const refreshListing = useCallback(async () => {
+  const refreshListing = useCallback(async (live = () => true, signal?: AbortSignal) => {
+    const lifetime = ownerReadLifetime.current;
+    if (!lifetime) return;
+    const current = () => ownerReadLifetime.current === lifetime && !lifetime.signal.aborted && live();
+    if (!current()) return;
     const generation = ++listingGeneration.current;
-    const call = await kernelOp(transport, { op: "sources_list" }, AbortSignal.timeout(10000));
-    if (generation !== listingGeneration.current) return;
+    const readSignal = AbortSignal.any([lifetime.signal, ...(signal ? [signal] : []), AbortSignal.timeout(10000)]);
+    const call = await kernelOp(transport, { op: "sources_list" }, readSignal);
+    if (!current() || generation !== listingGeneration.current) return;
     if (call.outcome && call.outcome.result === "sources_listed") {
       merge(call.outcome);
       setListingError(null);
@@ -233,34 +241,41 @@ export function KernelProvider(props: { children: ReactNode }) {
     }
   }, [merge, transport]);
 
+  const resetOwnerReadModels = useCallback(() => {
+    // Called only after the current lifetime has read real owner State.
+    // Last domain readings remain under their existing pending/drift contracts.
+    receiptWindow.current = [];
+    setReceipts([]);
+    invalidateFileReadings();
+    listings.invalidateAll();
+    invalidateWikiProjectionReadings(transport);
+    setReadModelEpoch(epoch => epoch + 1);
+  }, [transport]);
+
   const refreshOwnerModels = useCallback(async (lostReplay: boolean, live = () => true, signal?: AbortSignal) => {
+    const lifetime = ownerReadLifetime.current;
+    if (!lifetime) return;
+    const current = () => ownerReadLifetime.current === lifetime && !lifetime.signal.aborted && live();
+    const ownedSignal = AbortSignal.any([lifetime.signal, ...(signal ? [signal] : [])]);
     const run = applySerial.current.then(async () => {
-      if (!live()) return;
+      if (!current()) return;
       if (lostReplay) listingGeneration.current++;
-      const readSignal = signal ? AbortSignal.any([signal, AbortSignal.timeout(10000)]) : AbortSignal.timeout(10000);
-      const stateCall = await kernelOp(transport, {op: "state"}, readSignal);
-      // A retired provider must not publish an old read or invalidate the
-      // acquisitions belonging to its successor, including Tauri reads.
-      if (!live()) return;
+      const stateCall = await kernelOp(transport, {op: "state"}, AbortSignal.any([ownedSignal, AbortSignal.timeout(10000)]));
+      // A retired mount/page must not publish an old read or invalidate its
+      // successor's acquisitions, including a late uncancellable Tauri read.
+      if (!current()) return;
       if (stateCall.outcome?.result !== "state") {
         throw new Error(stateCall.error ?? "Current kernel state could not be read after event replay loss");
       }
       merge(stateCall.outcome);
       if (lostReplay) {
-        // Orphan stale acquisitions and reset their receipt cursors. Last
-        // readings stay visible under each existing pending/drift contract.
-        receiptWindow.current = [];
-        setReceipts([]);
-        invalidateFileReadings();
-        listings.invalidateAll();
-        invalidateWikiProjectionReadings(transport);
-        setReadModelEpoch(epoch => epoch + 1);
-        await refreshListing();
+        resetOwnerReadModels();
+        await refreshListing(current, ownedSignal);
       }
     });
     applySerial.current = run.then(() => undefined, () => undefined);
     await run;
-  }, [merge, refreshListing, transport]);
+  }, [merge, refreshListing, resetOwnerReadModels, transport]);
 
   const openSource = useCallback(
     async (sourceRef: SourceRef, surfaceId: string) => {
@@ -326,78 +341,135 @@ export function KernelProvider(props: { children: ReactNode }) {
     [apply],
   );
 
-  // The subscription establishes a generation-qualified cursor and handles
-  // the retained backlog. Its native pushes are invalidation hints only.
+  // Replay retains its native generation/cursor independently of owner reads.
+  // This effect also owns the mount/page lifetime of State and listings.
   useEffect(() => {
     let alive = true;
-    const reads = new AbortController();
+    let pageReads = ownerReadLifetime.current ?? new AbortController();
+    ownerReadLifetime.current = pageReads;
+    let bootFinished = false;
     let subscription: { unsubscribe: () => void } | null = null;
+    let subscriptionStarting = false;
     let resync: ReturnType<typeof setTimeout> | undefined;
+    const pageCurrent = (reads: AbortController) => () => alive
+      && ownerReadLifetime.current === reads && !reads.signal.aborted;
     const requestState = () => {
-      if (resync !== undefined || !alive) return;
+      const reads = ownerReadLifetime.current;
+      if (resync !== undefined || !alive || !reads) return;
+      const current = pageCurrent(reads);
       resync = setTimeout(() => {
         resync = undefined;
-        if (alive) void refreshOwnerModels(false, () => alive, reads.signal).catch(error => {if (alive) reportOpError(String(error));});
+        if (current()) void refreshOwnerModels(false, current, reads.signal)
+          .catch(error => {if (current()) reportOpError(String(error));});
       }, 200);
     };
-    void (async () => {
-      const initial = await kernelOp(transport, { op: "state" }, reads.signal);
-      if (!alive) return;
-      if (initial.outcome && initial.outcome.result === "state") {
-        merge(initial.outcome);
+    const ensureSubscription = async () => {
+      if (!alive || subscription || subscriptionStarting) return;
+      subscriptionStarting = true;
+      try {
+        const next = await subscribeTopic(transport, receipt => {
+          if (!alive || !ownerReadLifetime.current) return;
+          admitReceipts([receipt]);
+          requestState();
+        }, async (_page, replayLifetime) => {
+          const reads = ownerReadLifetime.current;
+          if (!reads) return;
+          const current = () => pageCurrent(reads)() && replayLifetime.isCurrent();
+          if (current()) await refreshOwnerModels(true, current,
+            AbortSignal.any([reads.signal, replayLifetime.signal]));
+        }, error => {if (alive && ownerReadLifetime.current) reportOpError(error);});
+        if (!alive) next?.unsubscribe();
+        else subscription = next;
+      } finally {
+        subscriptionStarting = false;
       }
+    };
+    const readBoot = async (reads: AbortController, restored: boolean) => {
+      const current = pageCurrent(reads);
+      if (!current()) return;
+      const read = (op: KernelOp) => kernelOp(transport, op,
+        AbortSignal.any([reads.signal, AbortSignal.timeout(10000)]));
+      const initial = await read({ op: "state" });
+      if (!current()) return;
+      if (initial.outcome?.result === "state") merge(initial.outcome);
       setStateSettled(true);
-      // BOOT-00/02/03/04: the boot phase, derived only from the transport,
-      // this first state read and the ground status op — never a probe of
-      // sockets, never an invented readiness signal.
+      // Boot is still derived from actual State and authored ground reads.
+      // A pause does not settle an unfinished boot or invent readiness.
       if (transport.kind === "unavailable") {
         // Already set from the initial useState above.
-      } else if (!initial.outcome || initial.outcome.result !== "state") {
+      } else if (initial.outcome?.result !== "state") {
         setBoot({ phase: "transport-unavailable", detail: initial.error ?? "The kernel state could not be read" });
       } else {
+        if (restored) {
+          listingGeneration.current++;
+          resetOwnerReadModels();
+        }
+        // Initial/StrictMode child reads may precede this effect. Complete
+        // native listing acquisition from the same admitted owner State.
+        await refreshListing(current, reads.signal);
+        if (!current()) return;
         setBoot({ phase: "starting", detail: "Checking Central ground…" });
-        const groundCall = await kernelOp(transport, { op: "ground", request: { action: "status" } });
-        if (alive) {
-          if (groundCall.error || groundCall.outcome?.result !== "ground_reading") {
-            setBoot({ phase: "ground-inaccessible", detail: groundCall.error ?? "Central's ground status could not be read" });
+        if (!current()) return;
+        const groundCall = await read({ op: "ground", request: { action: "status" } });
+        if (!current()) return;
+        if (groundCall.error || groundCall.outcome?.result !== "ground_reading") {
+          setBoot({ phase: "ground-inaccessible", detail: groundCall.error ?? "Central's ground status could not be read" });
+        } else {
+          const personalGround = (groundCall.outcome.reading as Record<string, unknown>).personal_ground;
+          if (typeof personalGround !== "string") {
+            setBoot({ phase: "ground-unrecognised", detail: "No default Central selected" });
           } else {
-            const personalGround = (groundCall.outcome.reading as Record<string, unknown>).personal_ground;
-            if (typeof personalGround !== "string") {
-              setBoot({ phase: "ground-unrecognised", detail: "No default Central selected" });
+            if (!current()) return;
+            const recognizeCall = await read({ op: "ground", request: { action: "recognize", path: personalGround } });
+            if (!current()) return;
+            const recognized = recognizeCall.outcome?.result === "ground_reading" ? (recognizeCall.outcome.reading as Record<string, unknown>) : undefined;
+            const access = recognized?.access as { readable?: boolean; searchable?: boolean } | undefined;
+            if (recognizeCall.error || !recognized || recognized.outcome !== "recognized" || !access?.readable || !access?.searchable) {
+              const reason = recognizeCall.error ?? (typeof recognized?.outcome === "string" ? `Central reports this ground as "${recognized.outcome}"` : "The default Central ground is not accessible");
+              setBoot({ phase: "ground-inaccessible", detail: reason });
             } else {
-              const recognizeCall = await kernelOp(transport, { op: "ground", request: { action: "recognize", path: personalGround } });
-              if (alive) {
-                const recognized = recognizeCall.outcome?.result === "ground_reading" ? (recognizeCall.outcome.reading as Record<string, unknown>) : undefined;
-                const access = recognized?.access as { readable?: boolean; searchable?: boolean } | undefined;
-                if (recognizeCall.error || !recognized || recognized.outcome !== "recognized" || !access?.readable || !access?.searchable) {
-                  const reason = recognizeCall.error ?? (typeof recognized?.outcome === "string" ? `Central reports this ground as "${recognized.outcome}"` : "The default Central ground is not accessible");
-                  setBoot({ phase: "ground-inaccessible", detail: reason });
-                } else {
-                  setBoot({ phase: "ready" });
-                }
-              }
+              setBoot({ phase: "ready" });
+              bootFinished = true;
             }
           }
         }
       }
-      if (!alive) return;
-      subscription = await subscribeTopic(transport, (receipt) => {
-        if (!alive) return;
-        admitReceipts([receipt]);
-        requestState();
-      }, async () => {
-        if (alive) await refreshOwnerModels(true, () => alive, reads.signal);
-      }, error => {if (alive) reportOpError(error);});
-      if (!alive) subscription?.unsubscribe();
-    })();
+      if (!current()) return;
+      await ensureSubscription();
+    };
+    const pause = () => {
+      pageReads.abort();
+      if (ownerReadLifetime.current === pageReads) ownerReadLifetime.current = null;
+      listingGeneration.current++;
+      if (resync !== undefined) {clearTimeout(resync); resync = undefined;}
+    };
+    const restore = () => {
+      if (!alive || ownerReadLifetime.current) return;
+      pageReads = new AbortController();
+      ownerReadLifetime.current = pageReads;
+      const reads = pageReads, current = pageCurrent(reads);
+      // State/listings must become current even if no later native event occurs.
+      const resumed = bootFinished
+        ? (async () => {await refreshOwnerModels(true, current, reads.signal); if (current()) await ensureSubscription();})()
+        : readBoot(reads, true);
+      void resumed.catch(error => {if (current()) reportOpError(String(error));});
+    };
+    if (typeof window !== "undefined") {
+      window.addEventListener("pagehide", pause);
+      window.addEventListener("pageshow", restore);
+    }
+    const initialReads = pageReads, initialCurrent = pageCurrent(initialReads);
+    void readBoot(initialReads, false).catch(error => {if (initialCurrent()) reportOpError(String(error));});
     return () => {
       alive = false;
-      reads.abort();
-      listingGeneration.current++;
-      if (resync !== undefined) clearTimeout(resync);
+      pause();
+      if (typeof window !== "undefined") {
+        window.removeEventListener("pagehide", pause);
+        window.removeEventListener("pageshow", restore);
+      }
       subscription?.unsubscribe();
     };
-  }, [admitReceipts, merge, transport, refreshOwnerModels, reportOpError]);
+  }, [admitReceipts, merge, transport, refreshOwnerModels, refreshListing, resetOwnerReadModels, reportOpError]);
 
   const api: KernelApi = useMemo(
     () => ({

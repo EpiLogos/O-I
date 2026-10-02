@@ -191,7 +191,7 @@ class EmbeddedProductionAdapter implements FieldEngineAdapter {
   // regardless of any transport state — a laminated body exists whether or not
   // its sequence plays.
   const requests=scene.entities.filter(e=>e.kind==='formation').flatMap(e=>[
-   ...(e.layers??[]).flatMap(l=>l.source?[{entityId:e.id,linkId:l.id,source:l.source}]:[]),
+   ...Array.from(new Map([...(e.layers??[]),...(e.sequence.enabled||e.sequence.manual?e.sequence.steps.flatMap(k=>k.layers??[]):[])].map(l=>[l.id,l])).values()).flatMap(l=>l.source?[{entityId:e.id,linkId:l.id,source:l.source}]:[]),
    ...(e.sequence.enabled||e.sequence.manual?e.sequence.steps.flatMap((k,i)=>{const source=stateSource(e,i);return source?[{entityId:e.id,linkId:k.id,source}]:[]}):e.source?[{entityId:e.id,linkId:e.id+'_base',source:e.source}]:[]),
   ]);
   const ids=new Set(requests.map(r=>JSON.stringify([r.entityId,r.linkId])));
@@ -210,6 +210,7 @@ class EmbeddedProductionAdapter implements FieldEngineAdapter {
  withCleanFrame<T>(copy:()=>T):T {this.assertCaptureReady();return this.engine?this.engine.withCleanFrame(copy):copy();}
  capture(width:number,height:number){this.assertCaptureReady();if(!this.engine)throw new Error('No rendered field yet');return this.engine.renderImage(width,height);}
  inspect(readParticles=false){return this.engine?.inspectState(readParticles);}
+ inspectResources(){return this.engine?.inspectResources();}
  projectNative(point:{x:number;y:number;z:number}){return this.engine?.projectWorldToScreen(point.x*WORLD_SCALE,point.y*WORLD_SCALE,point.z*WORLD_SCALE);}
  stations(){if(this.nativeDomain)return [];const current=this.engine?.getCymaticStations();if(current?.length)return current;const r=new CymaticResonator();r.configure({baseFrequency:this.target?.cymatics?.baseFrequency??40,plateSize:this.target?.cymatics?.plateSize??700});return r.getAnchors().map(a=>({id:a.id,index:a.index,name:`Mode ${a.m}:${a.n}`,frequencyHz:a.frequencyHz,m:a.m,n:a.n,color:'#888888'}));}
  command(command:EngineCommand){

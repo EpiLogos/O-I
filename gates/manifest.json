@@ -1,6 +1,6 @@
 {
   "schema": "oi.gate-manifest/v1",
-  "updated": "2026-09-27",
+  "updated": "2026-10-01",
   "law": "A change is landed when main contains it AND the landing-tier receipt is green at that exact tip. Installs, snapshots and physical acceptance are separate concerns and never gate a landing. Every gate here is derived from a GitHub Actions workflow, with provenance recorded: CI and local run the same commands, so a green landing receipt means no CI surprise in the covered surface.",
   "tiers": {
     "landing": "Run and pass at the exact tip before pushing toward main. Serialised, minutes, no runner-only infrastructure. The pre-push guard enforces a green receipt for HEAD.",
@@ -42,7 +42,7 @@
       "provenance": {
         "workflow": "desktop.yml",
         "job": "cradle",
-        "step": "Guard executable source — no unresolved markers, runner entry points parse"
+        "step": "Guard executable source \u2014 no unresolved markers, runner entry points parse"
       },
       "command": "if git grep -lnE '^(<<<<<<<|>>>>>>>|=======$)' -- '*.mjs' '*.ts' '*.tsx'; then echo 'unresolved conflict markers in executable source'; exit 1; fi\nfor f in $(git ls-files 'walk/*.mjs' 'walk/scenarios/*.mjs' 'tests/*.mjs'); do node --check \"$f\" || { echo \"syntax error in $f\"; exit 1; }; done\nnode --test tests/walk-runner.test.mjs"
     },
@@ -151,6 +151,30 @@
         "step": "Enforce desktop architecture conformance and bounded debt"
       },
       "command": "node --test tests/conformance/*.test.mjs"
+    },
+    {
+      "name": "cradle-shell-presentation",
+      "tier": "landing",
+      "area": "cradle",
+      "cwd": "desktop/cradle",
+      "provenance": {
+        "workflow": "desktop.yml",
+        "job": "cradle",
+        "step": "Enforce the shell presentation rules and deliberate source disclosure"
+      },
+      "command": "node --test tests/cradle-shell-antipatterns.test.mjs"
+    },
+    {
+      "name": "native-formation-regressions",
+      "tier": "landing",
+      "area": "browser",
+      "cwd": "desktop/cradle",
+      "provenance": {
+        "workflow": "desktop.yml",
+        "job": "cradle",
+        "step": "Prove native formation authoring and bounded particle candidate retention"
+      },
+      "command": "node tests/formation-native-regressions.mjs"
     },
     {
       "name": "cradle-appearance",
@@ -384,9 +408,9 @@
       "provenance": {
         "workflow": "site.yml",
         "job": "build",
-        "step": "Assemble curated publication → build:public → verify exact bytes → receiver browsers"
+        "step": "Assemble curated publication \u2192 build:public \u2192 verify exact bytes \u2192 receiver browsers"
       },
-      "why": "BLOCKED 2026-09-27: the curated Return-of-Zero envelope's essay source_bindings drifted from its declared corpus revision — the delivery lead must re-reconcile the owner-approved envelope before this gate can pass. Named in campaign-evidence/2026-09-27-full-convergence/CONVERGENCE-RECORD.md; the admission gate was deliberately not weakened."
+      "why": "BLOCKED 2026-09-27: the curated Return-of-Zero envelope's essay source_bindings drifted from its declared corpus revision \u2014 the delivery lead must re-reconcile the owner-approved envelope before this gate can pass. Named in campaign-evidence/2026-09-27-full-convergence/CONVERGENCE-RECORD.md; the admission gate was deliberately not weakened."
     },
     {
       "name": "ci-spacetimedb-explore-surface-unit",
@@ -397,6 +421,26 @@
         "step": "Verify shared-field contracts (spacetimedb-explore-surface.test.mjs member)"
       },
       "why": "needs the generated spacetimedb client bindings environment; excluded from the local site-contracts list for that reason"
+    },
+    {
+      "name": "ci-readable-native-presentation",
+      "tier": "ci-only",
+      "provenance": {
+        "workflow": "desktop.yml",
+        "job": "cradle",
+        "step": "Prove native composition names, disclosure and exact subject selection"
+      },
+      "why": "Requires the current native walk bridge and provisioned Chromium/WebKit; executes node tests/presentation-readable-native.mjs with OI_KERNEL_BRIDGE and retains accessibility/browser evidence."
+    },
+    {
+      "name": "ci-readable-native-owners",
+      "tier": "ci-only",
+      "provenance": {
+        "workflow": "readable-presentation-native.yml",
+        "job": "native-readable",
+        "step": "Prove native source, library, context and account readability"
+      },
+      "why": "Builds pinned AIKit/Central and the current O-I native walk bridge, then exercises real native knowledge, Library, context and complete verso account readings against production components."
     }
   ]
 }

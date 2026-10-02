@@ -1028,6 +1028,37 @@ pub(crate) fn parameter(key: &str, p: &Parameter) -> Result<(), String> {
     Ok(())
 }
 impl Document {
+    /// The same pure edit calculation used by commit and Act admission. This
+    /// lets the Act owner check retained-history capacity before mutating the
+    /// live document, without a second edit interpretation.
+    pub(crate) fn edited(&self, changes: Vec<Change>) -> Result<Self, String> {
+        let mut next = self.clone();
+        for change in changes {
+            next.change(change)?;
+        }
+        next.validate()?;
+        if &next != self {
+            next.revision = next.revision.checked_add(1).ok_or("Revision exhausted")?;
+            for entity in next.entities.values_mut() {
+                if self.entities.get(&entity.entity_ref) != Some(entity) {
+                    entity.revision = next.revision;
+                }
+            }
+            for scene in &mut next.scenes {
+                if self
+                    .scenes
+                    .iter()
+                    .find(|old| old.scene_ref == scene.scene_ref)
+                    != Some(scene)
+                {
+                    scene.revision = next.revision;
+                }
+            }
+            next.validate()?;
+        }
+        Ok(next)
+    }
+
     pub fn validate(&self) -> Result<(), String> {
         if serde_json::to_vec(self).map_err(|e| e.to_string())?.len() > DOCUMENT_BYTES {
             return Err("Expression document exceeds 8 MiB".into());
@@ -1968,29 +1999,8 @@ impl Application {
                     return Err("Edit budget exceeded".into());
                 }
                 let before = self.document(&expression_ref)?;
-                let mut d = before.clone();
-                for c in changes {
-                    d.change(c)?;
-                }
-                d.validate()?;
+                let d = before.edited(changes)?;
                 if &d != before {
-                    d.revision = d.revision.checked_add(1).ok_or("Revision exhausted")?;
-                    for e in d.entities.values_mut() {
-                        if before.entities.get(&e.entity_ref) != Some(e) {
-                            e.revision = d.revision;
-                        }
-                    }
-                    for s in &mut d.scenes {
-                        if before
-                            .scenes
-                            .iter()
-                            .find(|old| old.scene_ref == s.scene_ref)
-                            != Some(s)
-                        {
-                            s.revision = d.revision;
-                        }
-                    }
-                    d.validate()?;
                     changed = Some(Changed {
                         expression_ref: expression_ref.clone(),
                         revision: d.revision,

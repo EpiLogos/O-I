@@ -73,7 +73,7 @@ export function ChatComposer({reading,draft,pending,busy,error,editable,promptAl
   /** Who the message goes to (the chips and the Bypass line name it). */
   agentName?:string;
   /** The last Send's outcome (P8 not sent · P9 checking). */
-  sendState?:{phase:"checking"|"failed";error?:string};
+  sendState?:{phase:"checking"|"unknown"|"failed";error?:string};
   onRetry?:()=>void;
   /** The encounter owner is out of reach (P11): the panel says so once; the
    *  composer neither offers connections nor claims none are configured. */
@@ -113,6 +113,7 @@ export function ChatComposer({reading,draft,pending,busy,error,editable,promptAl
     {status?.error&&status.native_session_id&&<p className="oi-note" role="status">The owner still holds this conversation; restart the connection service to recover it.</p>}
     {draftFailed&&<button className="oi-action" onClick={onRecover}>Apply my typing to the current shared draft</button>}
     {sendState?.phase==="checking"&&<p className="chat-send-state oi-note" role="status">Checking whether your message was sent…</p>}
+    {sendState?.phase==="unknown"&&<p className="chat-send-state oi-note" role="status">Outcome unknown. Rechecking the native owner’s record.</p>}
     {sendState?.phase==="failed"&&<p className="chat-send-state" role="alert"><span>Message not sent.</span>{onRetry&&<button type="button" className="oi-action" onClick={onRetry}>Retry</button>}</p>}
     {drafting
       ?<div className="chat-connect" data-fact="new-chat">

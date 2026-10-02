@@ -1,7 +1,7 @@
 import {generatedWikiAppearance} from "../../../../packages/oi-design-system/expressions-engine/oi/wikiPresentation.mjs";
 import type {Entity, ExpressionDocument, Relation} from "./types";
 import {blankScene} from "@epilogos/oi-design-system/expressions-engine/shell/model.mjs";
-import {nativeExport} from "@epilogos/oi-design-system/expressions-engine/shell/nativeBridge.mjs";
+import {nativeExport,type StageScene} from "@epilogos/oi-design-system/expressions-engine/shell/nativeBridge.mjs";
 
 const material = nativeExport(blankScene()).config;
 export const FORMATION_BUDGET = 10;
@@ -36,6 +36,26 @@ export function expressionWindow(document:ExpressionDocument, start=0) {
   visible.push(...visiblePins);
   const shown=new Set(visible);
   return {scene,visible,hidden:scene.entity_refs.filter(ref=>!shown.has(ref)),total:scene.entity_refs.length};
+}
+
+/** An authored scene supplies its own material. Its native document still
+ * supplies correspondence: only enabled occurrences in this scene can bind.
+ * This is the same projection extension consumed by the existing stage. */
+export function expressionRenderConfig(document:ExpressionDocument, start=0):Record<string,unknown> {
+  const scene=document.scenes.find(s=>s.scene_ref===document.selection.scene_ref);
+  if(!scene)throw new Error("Expression scene unavailable");
+  if(!scene.presentation)return expressionConfig(document,start);
+  const config=nativeExport(scene.presentation.scene as unknown as StageScene).config;
+  if(!Array.isArray(config.entities))throw new Error("Native scene occurrences unavailable");
+  const membership=new Set(scene.entity_refs);
+  const occurrences=config.entities as {id:string;enabled?:boolean}[];
+  const visible=new Set(occurrences.filter(e=>e.enabled!==false&&membership.has(e.id)).map(e=>e.id));
+  const allRelations=Object.values(document.relations??{});
+  const relations=allRelations.filter(r=>visible.has(r.from_entity_ref)&&visible.has(r.to_entity_ref)&&r.relation.availability==="available");
+  return {...config,oiExpressionBindings:{schema:"oi.expression-render-bindings/v1",expression_ref:document.expression_ref,
+    scene_ref:scene.scene_ref,relations,
+    hidden_entity_refs:scene.entity_refs.filter(ref=>!visible.has(ref)),total_entities:scene.entity_refs.length,
+    unrendered_relation_refs:allRelations.filter(r=>!relations.includes(r)).map(r=>r.binding_ref),body:scene.body??null}};
 }
 
 /** Material projection, not another document or physics owner. Correspondence

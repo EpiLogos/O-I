@@ -1,5 +1,6 @@
-const MAX_FORCE_EMITTERS = 18;
-function compileEntityForceEmitters(entities, poses, legacyPoints = []) {
+import { MAX_FORCE_EMITTERS } from "./fieldModel.mjs";
+import { MAX_FORCE_EMITTERS as MAX_FORCE_EMITTERS2 } from "./fieldModel.mjs";
+function compileEntityForceEmitters(entities, poses, legacyPoints = [], formationMetric = "compositionPlane") {
   const poseById = new Map(poses.map((pose) => [pose.entityId, pose]));
   const emitters = [];
   const seen = new Set(entities.map((entity) => entity.id));
@@ -16,8 +17,10 @@ function compileEntityForceEmitters(entities, poses, legacyPoints = []) {
       strength: forces.mode === "none" ? 0 : forces.strength,
       radius: Math.max(5, forces.radius),
       spin: forces.spin,
-      // Preserve the existing laws exactly: formation forces are planar; pin forces are 3D.
-      metric: entity.kind === "pin" ? "world3d" : "compositionPlane",
+      // Formations inherit the caller's metric: planar for flat compositions,
+      // full 3D once the true-3D body law is on (their force then acts through
+      // the body). Pins are always full 3D.
+      metric: entity.kind === "pin" ? "world3d" : formationMetric,
       enabled: true
     });
   }
@@ -48,7 +51,7 @@ function relationalCarrierStates(positions, config) {
   }));
 }
 export {
-  MAX_FORCE_EMITTERS,
+  MAX_FORCE_EMITTERS2 as MAX_FORCE_EMITTERS,
   compileEntityForceEmitters,
   relationalCarrierStates
 };

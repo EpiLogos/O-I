@@ -2,6 +2,10 @@
  * @license
  * SPDX-License-Identifier: Apache-2.0
  */
+import {
+  buildDepthFieldsFromMask,
+  cellVolumeShape
+} from "./glyphVolume.mjs";
 const SOURCE_WORK_MAX = 512;
 const DEFAULT_SOURCE_THRESHOLD = 0.24;
 const CROP_MARGIN = 0.02;
@@ -186,6 +190,12 @@ function silhouetteInk(ink, w, h, threshold) {
   }
   return out;
 }
+function sourceVolume(shaped, w, h, threshold, volume) {
+  if (!volume || !volume.enabled || !(volume.depth > 0)) return null;
+  const mask = new Uint8Array(w * h);
+  for (let i = 0; i < w * h; i++) if (shaped[i] >= threshold) mask[i] = 1;
+  return { law: volume, fields: buildDepthFieldsFromMask(mask, w, h) };
+}
 function coverageOf(ink, w, h, crop, threshold) {
   const cw = crop.x1 - crop.x0 + 1, ch = crop.y1 - crop.y0 + 1;
   let inked = 0, total = 0;
@@ -206,6 +216,9 @@ function candidatesFromInkField(field, options) {
   let shaped = ink;
   if (mode === "edgeSobel") shaped = sobelInk(ink, w, h);
   else if (mode === "silhouette") shaped = silhouetteInk(ink, w, h, threshold);
+  const volume = sourceVolume(shaped, w, h, threshold, options.volume);
+  const law = volume?.law;
+  const fields = volume?.fields;
   const cw = crop.x1 - crop.x0 + 1, ch = crop.y1 - crop.y0 + 1;
   const cx = (crop.x0 + crop.x1 + 1) / 2;
   const cy = (crop.y0 + crop.y1 + 1) / 2;
@@ -217,11 +230,19 @@ function candidatesFromInkField(field, options) {
     for (let x = crop.x0 + row % stride * step; x <= crop.x1; x += step * stride) {
       const v = shaped[y * w + x];
       if (v < threshold) continue;
-      out.push({
+      const density = mode === "silhouette" ? 1 : mode === "edgeSobel" ? clamp01(v * 1.4) : clamp01(v);
+      const point = {
         x: (x + 0.5 - cx) * unit,
         y: -(y + 0.5 - cy) * unit,
-        density: mode === "silhouette" ? 1 : mode === "edgeSobel" ? clamp01(v * 1.4) : clamp01(v)
-      });
+        density
+      };
+      if (fields && law) {
+        const cell = y * w + x;
+        const shape = cellVolumeShape(fields.distInside[cell], fields.distToInk[cell], fields.referenceThickness, density, law);
+        point.hz = shape.half;
+        point.cw = shape.contourness;
+      }
+      out.push(point);
     }
   }
   return out;
@@ -276,7 +297,7 @@ function sampleImageSource(px, w, h, options = {}) {
 function sampleAlphaSource(px, w, h, options = {}) {
   const field = computeInkField(px, w, h, { ...options, mode: "alpha" });
   const threshold = 0.3;
-  const candidates = options.cell && options.cell.w >= 3 && options.cell.h >= 3 ? candidatesFromAlphaCells(field, options.cell, threshold, options.scale ?? 1) : candidatesFromInkField(field, { ...options, threshold, mode: "alpha" });
+  const candidates = candidatesFromInkField(field, { ...options, threshold, mode: "alpha" });
   const coverage = coverageOf(field.ink, w, h, field.crop, threshold);
   return {
     candidates,
@@ -294,45 +315,6 @@ function sampleAlphaSource(px, w, h, options = {}) {
       fallback: candidates.length === 0
     }
   };
-}
-function candidatesFromAlphaCells(field, cell, threshold, scale) {
-  const { width: w, height: h, ink, crop } = field;
-  const cw = crop.x1 - crop.x0 + 1, ch = crop.y1 - crop.y0 + 1;
-  const cx = (crop.x0 + crop.x1 + 1) / 2;
-  const cy = (crop.y0 + crop.y1 + 1) / 2;
-  const unit = 400 * scale / Math.max(cw, ch);
-  const out = Object.assign([], { norm: "stage400" });
-  const cols = Math.ceil(cw / cell.w);
-  for (let row = 0; row * cell.h < ch; row++) {
-    for (let col = 0; col < cols; col++) {
-      const x0 = crop.x0 + col * cell.w;
-      const y0 = crop.y0 + row * cell.h;
-      for (const [dx0, dx1] of [[0, 0.5], [0.5, 1]]) {
-        for (const [dy0, dy1] of [[0, 0.5], [0.5, 1]]) {
-          const qx0 = x0 + Math.floor(dx0 * cell.w);
-          const qx1 = Math.min(x0 + Math.ceil(dx1 * cell.w), crop.x1 + 1);
-          const qy0 = y0 + Math.floor(dy0 * cell.h);
-          const qy1 = Math.min(y0 + Math.ceil(dy1 * cell.h), crop.y1 + 1);
-          let sum = 0, count = 0;
-          for (let y = qy0; y < qy1; y++) {
-            for (let x = qx0; x < qx1; x++) {
-              sum += ink[y * w + x];
-              count++;
-            }
-          }
-          if (!count) continue;
-          const mean = sum / count;
-          if (mean < threshold) continue;
-          out.push({
-            x: ((qx0 + qx1) / 2 - cx) * unit,
-            y: -((qy0 + qy1) / 2 - cy) * unit,
-            density: clamp01(mean * 1.6)
-          });
-        }
-      }
-    }
-  }
-  return out;
 }
 const MODE_LABEL = {
   luminance: "Ink luminance",

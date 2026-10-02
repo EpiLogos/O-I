@@ -18,7 +18,7 @@ function resolveEntityPose(entity, simTime, drivePhase, manualMorph, holdRatio) 
       width: mix(sa?.extent?.width ?? entity.extent?.width ?? 400, sb?.extent?.width ?? entity.extent?.width ?? 400),
       height: mix(sa?.extent?.height ?? entity.extent?.height ?? 400, sb?.extent?.height ?? entity.extent?.height ?? 400),
       rotation: mix(sa?.extent?.rotation ?? entity.extent?.rotation ?? 0, sb?.extent?.rotation ?? entity.extent?.rotation ?? 0),
-      normalized: entity.extent?.normalized ?? true
+      normalized: (t < 0.5 ? sa?.extent?.normalized : sb?.extent?.normalized) ?? entity.extent?.normalized ?? !!entity.extent
     },
     tint: t < 0.5 ? sa?.tint ?? entity.tint : sb?.tint ?? entity.tint,
     tintWeight: mix(sa?.tintWeight ?? entity.tintWeight, sb?.tintWeight ?? entity.tintWeight),

@@ -17,6 +17,7 @@
  * related to a Wiki node; it does not become a Wiki page.
  */
 import { createHash } from 'node:crypto';
+import {subjectLabel} from './presentation-text.mjs';
 import { createProjection, validateProjection, createParticipant, reviseProjection } from './index.mjs';
 import { createSharedField } from './social.mjs';
 import { createExploreEntry, createExploreApplication } from './explore.mjs';
@@ -43,67 +44,8 @@ const slug = (value) => String(value).replace(/[^a-z0-9]+/gi, '-').replace(/^-+|
 // HTML: escape, sanitise (allowlist), and reduce to plain text
 // ---------------------------------------------------------------------------
 
-export function escapeHtml(value) {
-  return String(value).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
-}
-
-const ALLOWED_TAGS = new Set(['p', 'br', 'em', 'strong', 'i', 'b', 'u', 's', 'a', 'ul', 'ol', 'li', 'blockquote', 'code', 'pre', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'hr', 'span', 'mark', 'sup', 'sub']);
-const DROPPED_WITH_CONTENT = new Set(['script', 'style', 'iframe', 'object', 'embed', 'template', 'noscript', 'svg', 'math', 'form', 'input', 'button', 'textarea', 'select', 'link', 'meta', 'base', 'head', 'title']);
-
-/**
- * Allowlist sanitiser for authored entry HTML. Only the tags above survive,
- * with no attributes except `href` on `<a>` (http/https/mailto), which
- * gains rel="noopener noreferrer". Dangerous elements are removed with
- * their content; unknown elements are unwrapped (content kept, tag dropped).
- */
-export function sanitiseEntryHtml(html) {
-  let out = '';
-  let index = 0;
-  const source = String(html ?? '');
-  while (index < source.length) {
-    const open = source.indexOf('<', index);
-    if (open < 0) { out += source.slice(index); break; }
-    out += source.slice(index, open);
-    const close = source.indexOf('>', open);
-    if (close < 0) { out += escapeHtml(source.slice(open)); break; }
-    const tagText = source.slice(open + 1, close);
-    if (tagText.startsWith('!--')) { const end = source.indexOf('-->', open); index = end < 0 ? source.length : end + 3; continue; }
-    const match = /^\/?\s*([a-zA-Z][a-zA-Z0-9]*)/.exec(tagText);
-    if (!match) { out += escapeHtml(source.slice(open, close + 1)); index = close + 1; continue; }
-    const name = match[1].toLowerCase();
-    const closing = tagText.startsWith('/');
-    if (DROPPED_WITH_CONTENT.has(name)) {
-      if (!closing) {
-        const endTag = new RegExp(`</${name}\\s*>`, 'i');
-        endTag.lastIndex = 0;
-        const rest = source.slice(close + 1);
-        const found = endTag.exec(rest);
-        index = found ? close + 1 + found.index + found[0].length : source.length;
-      } else index = close + 1;
-      continue;
-    }
-    if (!ALLOWED_TAGS.has(name)) { index = close + 1; continue; }
-    if (closing) { out += name === 'br' || name === 'hr' ? '' : `</${name}>`; index = close + 1; continue; }
-    if (name === 'a') {
-      const href = /\shref\s*=\s*("([^"]*)"|'([^']*)'|([^\s>]+))/i.exec(tagText);
-      const raw = href ? (href[2] ?? href[3] ?? href[4] ?? '') : '';
-      const safe = /^(https?:|mailto:)/i.test(raw.trim()) ? raw.trim() : '';
-      out += safe ? `<a href="${escapeHtml(safe)}" rel="noopener noreferrer">` : '<a>';
-    } else if (name === 'br' || name === 'hr') out += `<${name}>`;
-    else out += `<${name}>`;
-    index = close + 1;
-  }
-  return out;
-}
-
-export function htmlToText(html) {
-  return String(html ?? '')
-    .replace(/<br\s*\/?>/gi, '\n').replace(/<\/p>/gi, '\n\n').replace(/<\/li>/gi, '\n')
-    .replace(/<script[\s\S]*?<\/script>/gi, '').replace(/<style[\s\S]*?<\/style>/gi, '')
-    .replace(/<[^>]*>/g, '')
-    .replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"').replace(/&#39;/g, "'").replace(/&nbsp;/g, ' ')
-    .replace(/\n{3,}/g, '\n\n').trim();
-}
+export {escapeHtml,sanitiseEntryHtml,htmlToText} from './html-material.mjs';
+import {escapeHtml,sanitiseEntryHtml,htmlToText} from './html-material.mjs';
 
 // ---------------------------------------------------------------------------
 // Artifact readers — the two carriers, one normalised artifact
@@ -148,17 +90,85 @@ export function curatedArtifactFromFlowInstance(html, source) {
 }
 
 /** Read a Central document (`central.document-reading/v1`): fields become
- * entries of kind `field`, entries stay entries; contributions and operations
- * are withheld. */
-export function curatedArtifactFromCentralDocument(reading) {
+ * entries of kind `field`, entries stay entries. Selected contribution bodies use the exact native
+ * export; unselected bodies and the operation journal remain withheld. */
+/** Take the exact owner's rendered fragments. The retained JSON in the export
+ * is private carrier state, never publication material. Parsing only these
+ * bounded fragments avoids inventing a second contribution compositor. */
+function nativeDocumentBodies(reading, exported) {
+  record(exported, 'native document export');
+  if (exported.schema !== 'central.document-export/v1'
+      || exported.snapshot?.source_ref !== reading.source?.ref
+      || exported.snapshot?.revision?.revision !== reading.revision?.revision
+      || exported.snapshot?.document?.document_id !== reading.document?.document_id) {
+    throw new TypeError('Native export must have the same document, source and revision basis as its reading');
+  }
+  const html = text(exported.html, 'native export.html');
+  if (Buffer.byteLength(html, 'utf8') > 4 * 1024 * 1024) throw new TypeError('Native export exceeds the bounded publication size');
+  const expected = new Map();
+  for (const entry of reading.document.entries ?? []) expected.set('entry:' + escapeHtml(entry.id), 'entry:' + entry.id);
+  for (const field of reading.document.fields ?? []) expected.set('field:' + escapeHtml(field.id), 'field:' + field.id);
+  const bodies = new Map();
+  let index = 0, active;
+  while (index < html.length) {
+    const open = html.indexOf('<', index);
+    if (open < 0) break;
+    if (html.startsWith('<!--', open)) {
+      const end = html.indexOf('-->', open + 4);
+      if (end < 0) throw new TypeError('Unclosed comment in native document export');
+      index = end + 3; continue;
+    }
+    let quote, close = open + 1;
+    for (; close < html.length; close += 1) {
+      const char = html[close];
+      if (quote) { if (char === quote) quote = undefined; }
+      else if (char === '"' || char === "'") quote = char;
+      else if (char === '>') break;
+    }
+    if (close === html.length) throw new TypeError('Unclosed tag in native document export');
+    const tag = html.slice(open + 1, close);
+    const match = /^\s*(\/?)\s*([a-zA-Z][a-zA-Z0-9]*)/.exec(tag);
+    index = close + 1;
+    if (!match) continue;
+    const closing = match[1] === '/', name = match[2].toLowerCase();
+    if (!closing && (name === 'script' || name === 'style')) {
+      if (active) throw new TypeError('Executable carrier state inside a native publication body');
+      const end = new RegExp('</' + name + '\\s*>', 'i').exec(html.slice(index));
+      if (!end) throw new TypeError('Unclosed raw carrier state in native document export');
+      index += end.index + end[0].length; continue;
+    }
+    const attribute = !closing && /\sdata-(entry|field)-id="([^"]*)"/.exec(tag);
+    if (attribute) {
+      const key = expected.get(attribute[1] + ':' + attribute[2]);
+      if (!key || active || bodies.has(key)) throw new TypeError('Unknown, nested or duplicate native publication body');
+      active = { key, name, start: index, depth: 1 };
+      continue;
+    }
+    if (active && name === active.name) {
+      if (closing) active.depth -= 1;
+      else if (!/\/\s*$/.test(tag)) active.depth += 1;
+      if (active.depth === 0) {
+        bodies.set(active.key, html.slice(active.start, open)); active = undefined;
+      }
+    }
+  }
+  if (active || bodies.size !== expected.size) throw new TypeError('Missing or unclosed native publication body');
+  return bodies;
+}
+
+export function curatedArtifactFromCentralDocument(reading, nativeExport) {
   record(reading, 'central document reading');
   if (reading.schema !== 'central.document-reading/v1') throw new TypeError(`unsupported document reading schema: ${reading.schema}`);
   const document = record(reading.document, 'document');
+  const nativeBodies = nativeExport ? nativeDocumentBodies(reading, nativeExport) : undefined;
+  if (!nativeBodies && (document.contributions ?? []).some((body) => !body.removed && (body.entry_id || body.field_id))) {
+    throw new TypeError('Native contribution material requires the source owner export at the same revision');
+  }
   const payload = document.template_payload ?? {};
   const pointer = (path) => String(path ?? '').split('/').filter(Boolean).reduce((value, key) => (value && typeof value === 'object' ? value[key] : undefined), payload);
   const entries = [
-    ...(document.fields ?? []).map((field) => ({ id: `field:${field.id}`, author: 'H', at: '', kind: 'field', label: field.label ?? field.id, html: `<p>${escapeHtml(String(pointer(field.template_pointer) ?? ''))}</p>` })),
-    ...(document.entries ?? []).map((entry) => ({ id: text(entry.id, 'entry.id'), author: entry.actor_kind === 'human' ? 'H' : 'A', at: entry.occurred_at_unix_seconds ? new Date(entry.occurred_at_unix_seconds * 1000).toISOString() : '', html: String(entry.html ?? ''), reply_to: entry.reply_to ?? null })),
+    ...(document.fields ?? []).map((field) => ({ id: `field:${field.id}`, author: 'H', at: '', kind: 'field', label: field.label ?? field.id, html: nativeBodies?.get('field:' + field.id) ?? `<p>${escapeHtml(String(pointer(field.template_pointer) ?? ''))}</p>` })),
+    ...(document.entries ?? []).map((entry) => ({ id: text(entry.id, 'entry.id'), author: entry.actor_kind === 'human' ? 'H' : 'A', at: entry.occurred_at_unix_seconds ? new Date(entry.occurred_at_unix_seconds * 1000).toISOString() : '', html: nativeBodies?.get('entry:' + entry.id) ?? String(entry.html ?? ''), reply_to: entry.reply_to ?? null })),
   ];
   return {
     schema: CURATED_ARTIFACT_SCHEMA,
@@ -288,7 +298,7 @@ export function projectCuratedArtifact(input) {
   }
   const meta = {};
   for (const field of selection.meta_fields) if (artifact[field] !== undefined && artifact[field] !== null) meta[field] = artifact[field];
-  const title = selection.title ?? artifact.title ?? selection.artifact_ref;
+  const title = subjectLabel(selection,subjectLabel(artifact,"Untitled shared document"));
   const standing = artifact.source.path ? sourceStanding(artifact.source.path) : 'human-authored';
   const provenance = [{ kind: 'curated-artifact-source', ref: artifact.source.ref, source_system: 'central', revision: sourceRevision }];
   const bindingProvenance = (ref) => [{ kind: 'curated-artifact-entry', ref, source_system: 'central', revision: sourceRevision }];
@@ -323,14 +333,14 @@ export function projectCuratedArtifact(input) {
     { region_ref: 'lede', role: 'lede', bindings: [{ schema: 'oi.presentation-binding/v1', binding_ref: 'lede', component_ref: 'oi.presentation/lede/v1', portable_renderer: 'oi.presentation/lede/v1', subject_ref: hostedArtifactRef, props: { title, ...(selection.summary ? { text: selection.summary } : {}) }, fallback: { title }, provenance }] },
     { region_ref: 'entries', role: 'reading', label: `Selected entries · ${selected.length} of ${artifact.entries.length}`, bindings: entryBindings },
     ...(includedBindings.length ? [{ region_ref: 'included', role: 'reading', label: 'Explicitly included collections', bindings: includedBindings }] : []),
-    ...(selection.replies.length ? [{ region_ref: 'replies', role: 'relation', label: 'Replies from other worlds (admitted)', bindings: selection.replies.map((reply) => ({ schema: 'oi.presentation-binding/v1', binding_ref: `reply:${slug(reply.contribution_ref)}`, component_ref: 'oi.presentation/reference-card/v1', portable_renderer: 'oi.presentation/reference-card/v1', subject_ref: reply.contribution_ref, props: { title: reply.label ?? 'Admitted reply', text: reply.summary ?? `from ${reply.contributor_participant_ref}`, refs: [reply.contribution_ref] }, fallback: { title: reply.label ?? 'Admitted reply' }, provenance: [{ kind: 'admitted-contribution', ref: reply.contribution_ref, source_system: 'o-i', ...(reply.source_revision ? { revision: reply.source_revision } : {}) }] })) }] : []),
-    ...(metaText ? [{ region_ref: 'meta', role: 'relation', label: 'Artifact', bindings: [{ schema: 'oi.presentation-binding/v1', binding_ref: 'meta', component_ref: 'oi.presentation/reference-card/v1', portable_renderer: 'oi.presentation/reference-card/v1', subject_ref: hostedArtifactRef, props: { title: 'Artifact identity', text: metaText, refs: selection.disclose_source_refs ? [artifact.source.ref] : [] }, fallback: { title: 'Artifact identity', text: metaText }, provenance }] }] : []),
+    ...(selection.replies.length ? [{ region_ref: 'replies', role: 'relation', label: 'Replies from other worlds (admitted)', bindings: selection.replies.map((reply) => ({ schema: 'oi.presentation-binding/v1', binding_ref: `reply:${slug(reply.contribution_ref)}`, component_ref: 'oi.presentation/reference-card/v1', portable_renderer: 'oi.presentation/reference-card/v1', subject_ref: reply.contribution_ref, props: { title: reply.label ?? 'Admitted reply', text: reply.summary ?? '', refs: [reply.contribution_ref] }, fallback: { title: reply.label ?? 'Admitted reply' }, provenance: [{ kind: 'admitted-contribution', ref: reply.contribution_ref, source_system: 'o-i', ...(reply.source_revision ? { revision: reply.source_revision } : {}) }] })) }] : []),
+    ...(metaText ? [{ region_ref: 'meta', role: 'relation', label: 'Artifact', bindings: [{ schema: 'oi.presentation-binding/v1', binding_ref: 'meta', component_ref: 'oi.presentation/reference-card/v1', portable_renderer: 'oi.presentation/reference-card/v1', subject_ref: hostedArtifactRef, props: { title: 'Source details', text: metaText, ...(selection.disclose_source_refs ? { refs: [artifact.source.ref] } : {}) }, fallback: { title: 'Source details' }, provenance }] }] : []),
   ].filter((region) => region.bindings.length > 0);
 
   const presentation = createWorldPresentation({
     schema: 'oi.world-presentation/v1',
     presentation_ref: selection.presentation_ref,
-    world_ref: selection.artifact_ref,
+    world_ref: hostedArtifactRef,
     revision: projectionRevision,
     title,
     ...(selection.summary ? { summary: selection.summary } : {}),
@@ -344,8 +354,8 @@ export function projectCuratedArtifact(input) {
       projection_ref: selection.projection_ref,
       projection_revision: projectionRevision,
       state: 'published',
-      subject: { kind: 'curated-artifact', ref: selection.artifact_ref },
-      source: { system: 'central', ref: artifact.source.ref, revision: sourceRevision },
+      subject: { kind: 'curated-artifact', ref: hostedArtifactRef },
+      source: { system: 'central', world_ref: worldRef, ref: artifact.source.ref, revision: sourceRevision },
       publisher_participant_ref: selection.publisher.participant_ref,
       published_at: publishedAt,
       audience: clone(selection.audience),
@@ -355,18 +365,19 @@ export function projectCuratedArtifact(input) {
 
   const locators = [{ surface: 'web', locator: `/explore.html?ref=${encodeURIComponent(hostedArtifactRef)}` }];
   if (input.edition_base) locators.push({ surface: 'edition', locator: `${input.edition_base}/index.html` }, { surface: 'edition-manifest', locator: `${input.edition_base}/manifest.json` });
-  const withheldSummary = Object.entries(artifact.withheld ?? {}).filter(([key, value]) => key !== 'meta_fields' && Number(value) > 0 && !included[key]).map(([key, value]) => `${value} ${key}`).join(', ');
-  const entry = createExploreEntry({
+    const entry = createExploreEntry({
     ref: hostedArtifactRef,
     kind: 'curated-artifact',
     world_ref: worldRef,
     label: title,
     aliases: [selection.artifact_ref],
-    summary: `curated HTML artifact (${artifact.carrier}) · ${selected.length} of ${artifact.entries.length} entries selected${withheldSummary ? ` · withheld: ${withheldSummary}` : ''}`,
+    summary: selection.summary ?? htmlToText(selected[0]?.html??'').replace(/\s+/g,' ').trim().slice(0,240),
     revision: sourceRevision,
     provenance: [...provenance, { kind: standing === 'human-authored' ? 'human-authored-source' : 'agent-maintained-source', ref: artifact.source.ref, source_system: 'central', revision: sourceRevision }],
     locators,
-    meta: { standing, carrier: artifact.carrier, projection_ref: selection.projection_ref, local_ref: selection.artifact_ref, ...(selection.disclose_source_refs ? { source_ref: artifact.source.ref } : {}) },
+    meta: { standing, carrier: artifact.carrier, projection_ref: selection.projection_ref, local_ref: selection.artifact_ref,
+      ...(artifact.carrier === 'central.document' && meta.document_id ? { document_id: meta.document_id } : {}),
+      ...(selection.disclose_source_refs ? { source_ref: artifact.source.ref } : {}) },
   });
 
   const relations = [];
@@ -411,9 +422,21 @@ export function projectCuratedArtifact(input) {
 }
 
 export function reprojectCuratedArtifact(previousBundle, input) {
-  const previous = validateProjection(record(previousBundle, 'previous publication').projection);
+  let previous = validateProjection(record(previousBundle, 'previous publication').projection);
   const next = projectCuratedArtifact({ ...input, projection_revision: previous.projection_revision + 1 });
   if (next.projection.projection_ref !== previous.projection_ref) throw new TypeError('re-projection must keep the Projection ref');
+  // Qualify a retained local alias only from its recorded owning World and
+  // canonical hosted address. Old editions remain immutable; the next edition
+  // records the correction instead of silently retargeting another artifact.
+  if (previous.subject.ref === input.selection.artifact_ref &&
+      previous.source.world_ref === input.selection.world_ref &&
+      previousBundle.hosted_ref === next.projection.subject.ref) {
+    previous = validateProjection({ ...previous,
+      subject: { ...previous.subject, ref: next.projection.subject.ref },
+      representation: { ...previous.representation, payload: { ...previous.representation.payload, world_ref: next.projection.subject.ref } },
+      provenance: [...previous.provenance, { kind: 'qualified-artifact-address', ref: next.projection.subject.ref, source_system: 'o-i', revision: previous.source.revision }],
+    });
+  }
   if (next.projection.subject.ref !== previous.subject.ref) throw new TypeError('re-projection must keep the subject artifact');
   const sourceMoved = next.projection.source.revision !== previous.source.revision;
   const projection = sourceMoved

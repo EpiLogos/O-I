@@ -36,8 +36,9 @@ export function mintDeliveryRef():string {
   const bytes=new Uint8Array(8);crypto.getRandomValues(bytes);
   return `delivery/desktop-${Array.from(bytes,b=>b.toString(16).padStart(2,"0")).join("")}`;
 }
-export async function encounter<T>(transport:KernelTransportStatus,project:string,request:EncounterRequest):Promise<T> {
-  const result=await kernelOp(transport,{op:"encounter",project,request});
+export async function encounter<T>(transport:KernelTransportStatus,project:string,request:EncounterRequest,sourceWorldRef?:string):Promise<T> {
+  const op={op:"encounter" as const,project,request};
+  const result=await kernelOp(transport,sourceWorldRef?{op:"hosted_native",source_world_ref:sourceWorldRef,request:op}:op);
   if(result.error || result.outcome?.result!=="encounter_reading")throw new Error(result.error??"AIKit did not return an encounter reading");
   return result.outcome.data as T;
 }
@@ -58,8 +59,9 @@ export async function encounterProvision(transport:KernelTransportStatus,project
  * owner's `encounter-task-read`. `null` is honest absence — no task is bound
  * to this session. Refusals surface the owner's own words. */
 export interface EncounterTaskReading {schema:"aikit.encounter-task/v1";revision:string;ready:boolean;request:{central:{task_ref:string;project?:string|null;purpose:string;participant_refs:string[];source_refs:string[]};cwd:string;authority_ref:string};allocation?:{request:unknown;allocation:{now_ref:string;revision:{revision:string};policy:{revision:string}}}|null;agency_revision?:string;[field:string]:unknown}
-export async function taskRead(transport:KernelTransportStatus,project:string,agent_session:string):Promise<EncounterTaskReading|null> {
-  const result=await kernelOp(transport,{op:"encounter_task_read",project,agent_session});
+export async function taskRead(transport:KernelTransportStatus,project:string,agent_session:string,sourceWorldRef?:string):Promise<EncounterTaskReading|null> {
+  const op={op:"encounter_task_read" as const,project,agent_session};
+  const result=await kernelOp(transport,sourceWorldRef?{op:"hosted_native",source_world_ref:sourceWorldRef,request:op}:op);
   if(result.error || result.outcome?.result!=="encounter_task_reading")throw new Error(result.error??"AIKit did not return a task reading");
   return (result.outcome.data ?? null) as EncounterTaskReading|null;
 }

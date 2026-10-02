@@ -16,7 +16,7 @@ import {isUnavailable,sharedField,slug,type HostedAuthority,type HostedEntry,typ
 // @ts-ignore -- the owner's Shared Stage contract composes and checks every revision.
 import {advanceSharedStage,closeSharedStage,createSharedStage} from "../../../../shared-field/shared-stage.mjs";
 
-export function SharedStagePanel({field_ref,entries,authority}:{field_ref:string;entries:HostedEntry[];authority:HostedAuthority[]}) {
+export function SharedStagePanel({field_ref,entries,authority,liveReading}:{field_ref:string;entries:HostedEntry[];authority:HostedAuthority[];liveReading?:SharedFieldStageReading}) {
   const {transport}=useKernel();
   const [reading,setReading]=useState<SharedFieldStageReading|SharedFieldUnavailable>();
   const [busy,setBusy]=useState(false);
@@ -24,7 +24,8 @@ export function SharedStagePanel({field_ref,entries,authority}:{field_ref:string
   const [focus,setFocus]=useState("");
   const mine=authority.find(a=>a.field_ref===field_ref&&!a.revoked&&a.participant_ref);
   const contributor=authority.some(a=>a.field_ref===field_ref&&!a.revoked&&a.role==="contributor");
-  const reading_=reading&&!isUnavailable(reading)?reading:undefined;
+  const current=liveReading??reading;
+  const reading_=current&&!isUnavailable(current)?current:undefined;
   const stage=reading_?.stage??undefined;
   const following=reading_?.my_follow?.following===true;
   const presence=reading_?.presence??[];
@@ -35,7 +36,7 @@ export function SharedStagePanel({field_ref,entries,authority}:{field_ref:string
     void sharedField<SharedFieldStageReading>(transport,{kind:"stage",field_ref}).then(r=>{if(active)setReading(r);}).catch(e=>{if(active)setReading({state:"unavailable",owner_operation:"shared-field.stage",detail:String(e instanceof Error?e.message:e)});}).finally(()=>{if(active)setBusy(false);});
     return()=>{active=false;};
   },[transport,field_ref]);
-  useEffect(()=>readStage(),[readStage]);
+  useEffect(()=>liveReading?undefined:readStage(),[readStage,!!liveReading]);
 
   const act=async(run:()=>Promise<unknown>)=>{
     setBusy(true);setError(undefined);

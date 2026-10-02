@@ -4,7 +4,7 @@
  * invented domain data, component mount or replacement material producer.
  * This is candidate browser/native evidence, not an installed Mac claim. */
 import assert from 'node:assert/strict';
-import {readFileSync,writeFileSync,mkdirSync} from 'node:fs';
+import {readFileSync,writeFileSync,mkdirSync,openSync,readSync,closeSync} from 'node:fs';
 import {resolve,dirname} from 'node:path';
 import {fileURLToPath} from 'node:url';
 import {createHash} from 'node:crypto';
@@ -30,6 +30,17 @@ const out=resolve(config.output);mkdirSync(out,{recursive:true});
 const entryPath=resolve(config.app_entry??resolve(app,'public/index.html'));
 const entry=readFileSync(entryPath,'utf8');
 const sha=value=>createHash('sha256').update(value).digest('hex');
+const nativeOwnerExpectationPath=config.native_owner_expectation_file?resolve(config.native_owner_expectation_file):null;
+const nativeOwnerExpectationBytes=nativeOwnerExpectationPath?readFileSync(nativeOwnerExpectationPath):null;
+const nativeOwnerExpectation=nativeOwnerExpectationBytes?JSON.parse(nativeOwnerExpectationBytes.toString('utf8')):null;
+const nativeOwnerExpectationSha256=nativeOwnerExpectationBytes?sha(nativeOwnerExpectationBytes):null;
+let nativeSourceQualification=null;
+if(nativeOwnerExpectation){
+ assert.equal(nativeOwnerExpectation.owner_cut,config.binaries?.quaternal_logic?.source_cut,'Current native owner expectations must name the independently qualified managed cut');
+ // Freeze and qualify predictions before any native request. Replies never supply expected values.
+ if(nativeOwnerExpectation.schema==='epi.native-world-source-expectation/v2')nativeSourceQualification=qualifyNativeSourceExpectation(nativeOwnerExpectation);
+ else assert.equal(nativeOwnerExpectation.semantic_metadata_transition,undefined,'Metadata transitions require the independently source-qualified v2 expectation');
+}
 const json=(name,value)=>writeFileSync(resolve(out,name),JSON.stringify(value,null,2)+'\n');
 const identities=(config.identity_files??[]).map(path=>JSON.parse(readFileSync(resolve(path),'utf8')));
 assert.equal(identities.length,2,'Two actual saved controlled identities are required');
@@ -161,6 +172,73 @@ function storedJsonNumbers(value,negativeZeroPaths=[],path='$'){
  if(value&&typeof value==='object')return Object.fromEntries(Object.entries(value).map(([k,v])=>{assert.notEqual(v,undefined,'Missing JSON value at '+path+'.'+k);return[k,storedJsonNumbers(v,negativeZeroPaths,path+'.'+k)];}));
  assert.notEqual(value,undefined,'Missing JSON value at '+path);return value;
 }
+// Hash actual qualified files in bounded chunks rather than allocating every companion image.
+function hashFileReadOnly(path){
+ const fd=openSync(path,'r'),hash=createHash('sha256'),chunk=Buffer.alloc(1024*1024);let bytes=0;
+ try{let n;while((n=readSync(fd,chunk,0,chunk.length,null))>0){hash.update(chunk.subarray(0,n));bytes+=n;}}finally{closeSync(fd);}
+ return{bytes,sha256:hash.digest('hex')};
+}
+function qualifiedJson(ref,label){
+ assert.ok(ref&&typeof ref.path==='string'&&resolve(ref.path)===ref.path,label+': exact absolute source path');
+ assert.match(ref.sha256,/^[0-9a-f]{64}$/,label+': exact content digest');
+ const bytes=readFileSync(ref.path);assert.equal(sha(bytes),ref.sha256,label+': qualified bytes remain unchanged');
+ if(ref.bytes!==undefined)assert.equal(bytes.length,ref.bytes,label+': exact byte count');
+ return JSON.parse(bytes.toString('utf8'));
+}
+function qualifyNativeSourceExpectation(expectation){
+ const names=['ql','ql-field-host','ql-field-worker','ql-focused-host','ql-sky'].sort();
+ const gate=qualifiedJson(expectation.managed_gate_ref,'Current managed build gate');
+ const managed=qualifiedJson(expectation.managed_manifest_ref,'Current all-five manifest');
+ const original=qualifiedJson(expectation.original_manifest_ref,'Original all-five manifest');
+ assert.equal(gate.schema,'oi.managed-update-gate/v1');assert.equal(gate.product,'quaternal-logic');
+ assert.equal(gate.provenance,'built');assert.equal(gate.result,'passed');assert.equal(gate.source_dirty,false);
+ assert.equal(gate.revision,expectation.owner_cut);assert.equal(gate.revision,expectation.managed_gate_ref.revision);
+ assert.match(gate.tree,/^[0-9a-f]{40}$/);assert.equal(gate.tree,expectation.managed_gate_ref.tree);
+ assert.equal(managed.schema,'epi.qualified-managed-native-cut/v1');assert.equal(managed.source_cut,expectation.owner_cut);
+ assert.equal(managed.gate,expectation.managed_gate_ref.path);assert.equal(managed.gate_sha256,expectation.managed_gate_ref.sha256);
+ assert.equal(original.schema,'ql.same-source-five-companion-cut/v1');assert.equal(original.source_head,expectation.original_owner_cut);
+ const allFive={};
+ for(const [label,declared,manifest,key] of [['current',expectation.managed_all_five,managed.all_five,'name'],['original',expectation.original_all_five,original.components,'role']]){
+  assert.ok(Array.isArray(declared)&&Array.isArray(manifest));
+  assert.deepEqual(declared.map(b=>b[key]).sort(),names,label+': exactly all five companions');
+  assert.deepEqual(manifest.map(b=>b[key]).sort(),names,label+': manifest covers the same five companions');
+  allFive[label]=declared.map(binary=>{
+   assert.equal(binary.read_only_bytes_verified,true,label+': independently qualified original bytes');
+   const row=manifest.find(b=>b[key]===binary[key]);
+   for(const field of ['path','sha256','bytes'])assert.equal(binary[field],row[field],label+': declaration/manifest '+field);
+   assert.equal(resolve(binary.path),binary.path);assert.match(binary.sha256,/^[0-9a-f]{64}$/);
+   const actual=hashFileReadOnly(binary.path);assert.deepEqual(actual,{bytes:binary.bytes,sha256:binary.sha256},label+': actual companion bytes');
+   if(label==='current'){
+    assert.equal(binary.sha256,binary.name==='ql'?gate.sha256:gate.companions[binary.name],binary.name+': same actual managed gate');
+    if(binary.name==='ql')assert.equal(binary.path,gate.managed);
+   }
+   return{name:binary[key],path:binary.path,...actual};
+  });
+ }
+ assert.equal(resolve(config.original_owner_world_file),expectation.original_world_ref.path,'Prediction retains the exact original native receipt');
+ assert.equal(hashFileReadOnly(expectation.original_world_ref.path).sha256,expectation.original_world_ref.sha256,'Original native receipt remains immutable');
+ const delta=expectation.semantic_metadata_transition;
+ assert.equal(delta?.schema,'epi.native-world-m2-ledger-transition/v1');
+ assert.deepEqual(delta.paths,['/basis/m2/ledger_revision','/binding/native_basis/m2/ledger_revision'],'Only two exact native world leaves are eligible');
+ assert.equal(delta.current_ledger.cut,expectation.owner_cut,'The ledger is qualified to the actual build cut, not an equivalent branch label');
+ const oldLedger=qualifiedJson(delta.original_ledger,'Original embedded ledger source');
+ const currentLedger=qualifiedJson(delta.current_ledger,'Current embedded ledger source');
+ assert.equal(oldLedger.schema,'ql.m-ledger/v1');assert.equal(currentLedger.schema,'ql.m-ledger/v1');
+ assert.equal(oldLedger.ledger_revision,delta.original_value);assert.equal(currentLedger.ledger_revision,delta.current_value);
+ assert.match(delta.original_value,/^[0-9a-f]{64}$/);assert.match(delta.current_value,/^[0-9a-f]{64}$/);assert.notEqual(delta.original_value,delta.current_value);
+ const requiredSources=['fixtures/kernel/m-ledger-v1.json','crates/ql-mef/src/m_ledger.rs','crates/ql-mef/src/m2_engine.rs','crates/ql-mef/src/scene.rs','crates/ql-mef/src/continuous/coupled.rs','crates/ql-mef/src/continuous/scene_field.rs'];
+ assert.deepEqual(delta.derivation_sources.map(s=>s.path).sort(),requiredSources.slice().sort(),'Complete ledger/embed/M2/world and implementation source chain');
+ const sources=delta.derivation_sources.map(source=>{
+  const candidates=expectation.source_qualification.filter(s=>s.cut===expectation.owner_cut&&s.path===source.path);assert.equal(candidates.length,1,source.path+': one exact committed source qualification');
+  const qualified=candidates[0];assert.equal(qualified.working_bytes_equal_cut,true);assert.equal(qualified.sha256,source.sha256);
+  const sourcePath=qualified.snapshot_path??resolve(qualified.repository,qualified.path);
+  const actual=hashFileReadOnly(sourcePath);assert.equal(actual.sha256,source.sha256,source.path+': actual qualified source bytes');
+  const buildRows=managed.source.filter(s=>s.path===source.path);assert.equal(buildRows.length,1,source.path+': actual managed source manifest includes the compiled dependency');assert.equal(buildRows[0].sha256,source.sha256);
+  if(source.path==='fixtures/kernel/m-ledger-v1.json')assert.equal(source.sha256,delta.current_ledger.sha256);
+  return{path:source.path,qualified_path:sourcePath,cut:qualified.cut,...actual};
+ });
+ return{all_five:allFive,gate:expectation.managed_gate_ref,manifest:expectation.managed_manifest_ref,sources,semantic_metadata_transition:delta,predictions_qualified_before_native_requests:true};
+}
 async function recoverOriginalRuntimeBuffers(reading,original){
  const before=await op({op:'expression',request:{operation:'inspect',expression_ref:reading.working.native_ref}});
  const request=structuredClone(original.request);
@@ -172,13 +250,76 @@ async function recoverOriginalRuntimeBuffers(reading,original){
  assert.ok(!actual.lease&&!actual.receipt,'Original quiet source recovery must create no playback lease or worker');
  const expected=structuredClone(reading.record.world);
  expected.schema='ql.scene-world/v1';expected.native_owner_sources=Object.fromEntries(expected.native_owner_sources.map(s=>[s.role,s.reading]));
- const keys=['instance_ref','subject_ref','event_ref','snapshot_ref','sky','event','basis','starting_recipe','current_form','native_readback','registers','scene','native_owner_sources','binding'];
+ assert.ok(nativeOwnerExpectation,'Retained occasion recovery requires independently source-derived original and current expectations');
+ const completeKeys=['basis','binding','current_form','event','event_ref','instance_ref','native_owner_sources','native_readback','registers','scene','schema','sky','sky_admission','snapshot_ref','starting_recipe','subject_ref'];
+ const keys=completeKeys.filter(key=>!['native_owner_sources','sky_admission'].includes(key));
+ assert.deepEqual(nativeOwnerExpectation.complete_world_keys,completeKeys,'Source qualification covers the complete world field set');
+ assert.deepEqual(nativeOwnerExpectation.semantic_world_keys,keys,'Every semantic field, including schema, is qualified');
+ const originalWorld=original.response?.outcome?.data?.source?.world;
+ assert.ok(originalWorld,'Original actual native response must accompany its request');
+ const currentExecutable=nativeOwnerExpectation.managed_all_five?.find(b=>b.name==='ql');
+ const originalExecutable=nativeOwnerExpectation.original_all_five?.find(b=>b.role==='ql');
+ assert.ok(currentExecutable?.read_only_bytes_verified&&originalExecutable?.read_only_bytes_verified,'Both actual executable expectations must be independently byte qualified');
+ const executionQualification={};
+ for(const [label,source,binary] of [['original',original.response.outcome.data.source,originalExecutable],['current',actual.source,currentExecutable]]){
+  assert.equal(source.ql_executable,binary.path,label+': actual native execution names the exact qualified executable path');
+  assert.equal(source.ql_executable_sha256,binary.sha256,label+': actual native execution names the exact qualified executable bytes');
+  assert.equal(hashFileReadOnly(binary.path).sha256,binary.sha256,label+': executable bytes still agree with the independent qualification');
+  executionQualification[label]={path:source.ql_executable,sha256:source.ql_executable_sha256,selection:source.ql_selection,reported_revision:source.ql_revision};
+ }
+ for(const [label,value] of [['current',world],['saved',expected],['original',originalWorld]])assert.deepEqual(Object.keys(value).sort(),completeKeys,label+': no world field may disappear or evade qualification');
  const sourceCopy=structuredClone(world);
  for(const key of ['slots_a','slots_b'])delete sourceCopy.binding.presentation[key];
+ const originalCopy=structuredClone(originalWorld);
+ for(const key of ['slots_a','slots_b'])delete originalCopy.binding.presentation[key];
+ const currentExpected=structuredClone(expected);
+ let semanticMetadataQualification=null;
+ if(nativeOwnerExpectation?.semantic_metadata_transition){
+  assert.ok(nativeSourceQualification?.predictions_qualified_before_native_requests,'Source-derived metadata must be qualified before native replies');
+  const delta=nativeOwnerExpectation.semantic_metadata_transition;
+  for(const parts of [['basis','m2','ledger_revision'],['binding','native_basis','m2','ledger_revision']]){
+   const get=value=>parts.reduce((parent,key)=>{assert.ok(parent&&Object.hasOwn(parent,key),'Required exact metadata leaf /'+parts.join('/'));return parent[key];},value);
+   assert.equal(get(originalCopy),delta.original_value,'Original native receipt retains its original compiled ledger');
+   assert.equal(get(expected),delta.original_value,'Saved129/131 provenance remains historical and unchanged');
+   assert.equal(get(sourceCopy),delta.current_value,'Actual successor returns the independently predicted compiled ledger');
+   const parent=parts.slice(0,-1).reduce((value,key)=>value[key],currentExpected);parent[parts.at(-1)]=delta.current_value;
+  }
+  assert.deepEqual(actual.binding,world.binding,'Outer prepared binding retains the entire actual qualified native world binding');
+  assert.deepEqual(world.basis,world.binding.native_basis,'Both complete actual native basis copies agree');
+  semanticMetadataQualification={paths:delta.paths,original_value:delta.original_value,current_value:delta.current_value,source_qualification:nativeSourceQualification,policy:'Compare all14 complete semantic fields to original saved values with only these two separately asserted source-derived expectation leaves; no actual or saved value is rewritten'};
+ }
  const nativeNegativeZeroPaths=[],storedNegativeZeroPaths=[];
- for(const key of keys)assert.deepEqual(storedJsonNumbers(sourceCopy[key],nativeNegativeZeroPaths,key),storedJsonNumbers(expected[key],storedNegativeZeroPaths,key),'Actual original source recovery preserves complete JSON numerical value of '+key);
+ for(const key of keys){
+  const saved=storedJsonNumbers(expected[key],storedNegativeZeroPaths,key);
+  assert.deepEqual(storedJsonNumbers(originalCopy[key],[],key),saved,'Saved material preserves the complete original native semantic '+key);
+  assert.deepEqual(storedJsonNumbers(sourceCopy[key],nativeNegativeZeroPaths,key),storedJsonNumbers(currentExpected[key],[],key),'Actual current source recovery preserves the complete source-qualified JSON semantic/numerical expectation of '+key);
+ }
+ // Original material keeps the original implementation receipt. Recomposition
+ // runs the current qualified owner; that owner must truthfully name its own
+ // exact source bytes. Never overwrite either receipt to force hash equality.
+ let ownerQualification;
+ if(nativeOwnerExpectation){
+  assert.deepEqual(originalWorld.native_owner_sources,nativeOwnerExpectation.expected_original_native_owner_sources,'Original implementation readings retain independently qualified original source bytes');
+  assert.deepEqual(expected.native_owner_sources,nativeOwnerExpectation.expected_original_native_owner_sources,'Saved implementation readings retain the original source cut');
+  assert.deepEqual(world.native_owner_sources,nativeOwnerExpectation.expected_native_owner_sources,'Every current native implementation reading must match independently qualified Git/build source');
+  assert.deepEqual(Object.keys(world.native_owner_sources).sort(),Object.keys(expected.native_owner_sources).sort(),'No original native source role may disappear');
+  for(const role of Object.keys(expected.native_owner_sources)){
+   assert.equal(world.native_owner_sources[role].ref,expected.native_owner_sources[role].ref,'Native source role preserves its source address');
+   assert.equal(world.native_owner_sources[role].availability,expected.native_owner_sources[role].availability,'Native source role preserves availability');
+  }
+  ownerQualification={original:expected.native_owner_sources,current:world.native_owner_sources,expected_source:{path:nativeOwnerExpectationPath,sha256:nativeOwnerExpectationSha256,owner_cut:nativeOwnerExpectation.owner_cut},policy:'All14 complete semantic fields and both buffers remain exact against source-derived expectations; only two independently asserted embedded-ledger metadata leaves may change, with original/current source receipts separately retained'};
+ }else{
+  assert.deepEqual(world.native_owner_sources,expected.native_owner_sources,'Same-cut original source recovery preserves every native implementation reading');
+  ownerQualification={original:expected.native_owner_sources,current:world.native_owner_sources,policy:'Same-cut exact source equality'};
+ }
+ assert.deepEqual(originalWorld.sky_admission,nativeOwnerExpectation.expected_original_sky_admission,'Original request admission retains exact original epoch, provider and freshness receipt');
+ assert.deepEqual(expected.sky_admission,nativeOwnerExpectation.expected_original_sky_admission,'Saved occasion retains original admission as historical provenance');
+ assert.deepEqual(world.sky_admission,nativeOwnerExpectation.expected_retained_sky_admission,'Current retained admission must match the exact source-derived validator, historical qualification and directed native Sun route');
+ assert.deepEqual(world.sky.source_binding,nativeOwnerExpectation.expected_exact_legacy_source_binding,'The immutable original snapshot retains its exact historical source binding');
+ assert.deepEqual(reading.record.runtime_buffers.buffers.map(b=>b.key).sort(),['slots_a','slots_b'],'Both complete runtime buffers are required');
  const buffers=reading.record.runtime_buffers.buffers.map(buffer=>{
   const values=world.binding.presentation[buffer.key];assert.ok(Array.isArray(values));
+  assert.deepEqual(values,originalWorld.binding.presentation[buffer.key],'Every runtime buffer value agrees with the actual original native output');
   assert.equal(values.length,buffer.values);assert.equal(sha(JSON.stringify(values)),buffer.json_sha256);
   assert.equal(values.length,request.request.request.texture[0]*request.request.request.texture[1]);
   for(let i=0;i<values.length;i++)assert.equal(values[i],i%4096,'Original complete native sample correspondence');
@@ -186,8 +327,8 @@ async function recoverOriginalRuntimeBuffers(reading,original){
  });
  const after=await op({op:'expression',request:{operation:'inspect',expression_ref:reading.working.native_ref}});
  assert.equal(before.result,'expression');assert.equal(after.result,'expression');assert.ok(before.data?.document&&before.data?.file);assert.deepEqual(after.data,before.data,'Complete native inspection including document, registration and saved revision remains unchanged');
- artifact('original-runtime-recovery.json',{request,buffers,complete_semantic_locks:keys,json_signed_zero:{native_negative_zero_paths:nativeNegativeZeroPaths,stored_negative_zero_paths:storedNegativeZeroPaths,policy:'Normalize only -0 to0 at JSON storage boundary; every nonzero value and every field remains exact; raw native HTTP retained'},document_unchanged:true,file_unchanged:true,worker_lease_created:false,scope:'Immutable original source recovery; current topology and GPU reception are separately tested'});
- check(true,'Actual quiet native recovery recreates both original qualified buffers and every semantic basis without changing the document, file or continuation');
+ artifact('original-runtime-recovery.json',{request,buffers,complete_world_keys:completeKeys,complete_semantic_locks:keys,semantic_metadata_qualification:semanticMetadataQualification,owner_qualification:ownerQualification,execution_qualification:executionQualification,sky_admission_qualification:{original:originalWorld.sky_admission,current:world.sky_admission,expected_source_sha256:nativeOwnerExpectationSha256,policy:'Immutable original sky and original admission retained; exact current source validates the dated occasion without fresh-current attestation'},json_signed_zero:{native_negative_zero_paths:nativeNegativeZeroPaths,stored_negative_zero_paths:storedNegativeZeroPaths,policy:'Normalize only -0 to0 at JSON storage boundary; every nonzero value and every field remains exact; raw native HTTP retained'},document_unchanged:true,file_unchanged:true,worker_lease_created:false,scope:'Current qualified owner reproduces retained semantic state and original buffers; original/current source and execution receipts remain distinct; current topology and GPU reception are separately tested'});
+ check(true,'Actual quiet current-qualified native recovery reproduces both original buffers and all14 complete semantic fields '+(semanticMetadataQualification?'against source-derived expectations with only two separately asserted ledger metadata leaves and qualified all-five/source/execution/admission':'with exact historical semantic values and separately qualified QL/source/admission')+', without changing the document, file or continuation');
 }
 function captureNativeFrames(value,lease,request){
  if(!value||typeof value!=='object')return;
@@ -410,6 +551,15 @@ try{
  phase='controlled person A ordinary construction';
  if(config.reopen_file){const opened=await frame.evaluate(path=>window.__FIELD_STUDIES__.openNativeFile(path),config.reopen_file);assert.equal(opened,true,'The actual native file open must be acknowledged before the world replay: '+JSON.stringify(await frame.evaluate(()=>window.__FIELD_STUDIES__.nativeWorking())));}else if(config.existing_expression_ref){await readyCurrent(identities[0].reading.person_ref);await action('save');}else await frame.evaluate(identity=>window.__FIELD_STUDIES__.enterEpiWorld(identity),identities[0]);
  await noAlert();await readyCurrent(identities[0].reading.person_ref);
+ // A saved Expression reopens its actual selected scene, including a reviewed
+ // personal coordinate adoption. Preserve that arrival, then use the ordinary
+ // world navigation before requiring the cosmic field's source consumers.
+ // Opening a different scene is not a native failure or a missing cosmic body.
+ if(config.reopen_file){
+  const arrival=await snapshot('00-reopened-saved-scene');
+  const cosmicRef=arrival.record.receiving.scene_ref;
+  if(arrival.document.scenes[arrival.state.sceneIndex]?.id!==cosmicRef)await sceneNavigate(cosmicRef);
+ }
  await frame.waitForFunction(()=>{const values=Object.values(window.__FIELD_STUDIES__.telemetry().sourceStatus);return values.length>=6&&values.every(value=>value.includes('source active'));},null,{timeout:30000});
  const a=await snapshot('01-person-a-cosmic-at-rest',true);
  check(a.record.world.subject_ref===identities[0].reading.person_ref&&a.record.receiving.personal.canonical_locus==='ql:m-coordinate:bimba:M4.4.4.4','The actual person is bound to the Personal Pratibimba locus in one native world instance');

@@ -15,29 +15,33 @@ import {ConstituentEncounter,constituentOf} from "./ConstituentEncounter";
 import type {HostedEntry} from "../knowledge/shared-field";
 // @ts-ignore -- language-neutral desktop reading over the field client's contracts.
 import {primaryProjection,relationsOf} from "./field.mjs";
+// @ts-ignore -- the shared knowledge subject grammar also owns constellation focus.
+import {isKnowledgeSubject} from "../../../../shared-field/knowledge-encounter.mjs";
+// @ts-ignore -- display names remain bound to the admitted owner reading.
+import {entryLabel,subjectLabel,subjectKind,relationLabel} from "../../../../shared-field/presentation-text.mjs";
 
 export interface WatchControl {available:boolean;watching?:boolean;reason?:string;busy:boolean;error?:string;onToggle:()=>void}
 export interface DepthState {relations?:boolean;source?:boolean}
 
-function SparseBody({projection}:{projection:HostedProjection}) {
+function SparseBody({projection,label}:{projection:HostedProjection;label:string}) {
   const payload=(projection.representation as {payload?:{title?:string;text?:string;meta?:{label:string;value:string}[]}}|undefined)?.payload;
   return <article className="world-presentation world-presentation--sparse" data-representation-kind={String((projection.representation as {kind:string}).kind)}>
-    <header className="world-presentation__masthead"><div><div className="world-component__eyebrow">Projected reading</div><h1>{payload?.title??String(projection.subject.ref)}</h1></div></header>
-    <section className="world-region"><div className="world-region__components"><article className="world-component world-component--text"><p>{payload?.text??"This Projection carries a sparse reading without text."}</p>{payload?.meta?.length?<dl className="world-component__meta">{payload.meta.map((row,i)=><div key={i}><dt>{row.label}</dt><dd>{row.value}</dd></div>)}</dl>:null}</article></div></section>
+    <header className="world-presentation__masthead"><div><h1>{subjectLabel(payload,label)}</h1></div></header>
+    <section className="world-region"><div className="world-region__components"><article className="world-component world-component--text"><p>{payload?.text??"No written reading has been shared."}</p>{payload?.meta?.length?<details><summary>Source details</summary><dl className="world-component__meta">{payload.meta.map((row,i)=><div key={i}><dt>{row.label}</dt><dd>{row.value}</dd></div>)}</dl></details>:null}</article></div></section>
   </article>;
 }
 
-function RepresentationFallback({projection}:{projection:HostedProjection}) {
+function RepresentationFallback({projection,label}:{projection:HostedProjection;label:string}) {
   const representation=projection.representation as {kind:string;ref?:string};
   return <article className="world-presentation world-presentation--fallback" data-representation-kind={representation.kind} data-renderer-state="fallback">
-    <header className="world-presentation__masthead"><div><div className="world-component__eyebrow">Projected subject</div><h1>{String(projection.subject.ref)}</h1></div></header>
-    <section className="world-region"><div className="world-region__components"><article className="world-component world-component--fallback"><div className="world-component__eyebrow">Portable fallback</div><h3>This desktop does not admit the representation kind</h3><p>{representation.kind}{representation.ref?` · ${representation.ref}`:""}. The Projection stays what it is; only this Surface's renderer is missing.</p></article></div></section>
+    <header className="world-presentation__masthead"><div><h1>{label}</h1></div></header>
+    <section className="world-region"><div className="world-region__components"><article className="world-component world-component--fallback"><h3>This shared format cannot be displayed here</h3><p>Open Source to inspect the original publication.</p></article></div></section>
   </article>;
 }
 
 export function PresentationBody({reading,relations,entries=[],activityLiveness=[],onOpenRef,depth,onDepth,watch,strip}:{reading:SharedFieldReading;relations:HostedRelation[];entries?:HostedEntry[];activityLiveness?:unknown[];onOpenRef:(ref:string)=>void;depth:DepthState;onDepth:(change:DepthState)=>void;watch?:WatchControl;strip?:ReactNode}) {
-  if(reading.state==="unavailable")return <section className="presentation-body" data-presentation-state="unavailable">{strip}<p role="status" className="explore-unavailable">{reading.owner_operation} is unavailable — {reading.detail}</p></section>;
-  if(reading.state==="absent")return <section className="presentation-body" data-presentation-state="absent">{strip}<p role="status" className="explore-absent">The field at {reading.target.uri}/{reading.target.database} holds no entry for <code>{reading.ref}</code>.</p></section>;
+  if(reading.state==="unavailable")return <section className="presentation-body" data-presentation-state="unavailable">{strip}<p role="status" className="explore-unavailable">This shared reading is unavailable. Try refreshing the field.</p><details><summary>Connection details</summary><p>{reading.owner_operation}: {reading.detail}</p></details></section>;
+  if(reading.state==="absent")return <section className="presentation-body" data-presentation-state="absent">{strip}<p role="status" className="explore-absent">This subject is not available in the current shared field.</p><details><summary>Source details</summary><p>{reading.target.uri}/{reading.target.database} · <code>{reading.ref}</code></p></details></section>;
   const projection=primaryProjection(reading) as HostedProjection|null;
   const current=projection?.state==="published"?projection:null;
   const representation=current?.representation as {kind:string;payload?:unknown}|undefined;
@@ -46,27 +50,30 @@ export function PresentationBody({reading,relations,entries=[],activityLiveness=
   const expressionReading=expression?.props.expression as {expression_ref:string;expression_revision:number}|undefined;
   const touching=relationsOf([...relations,...reading.relations.filter(relation=>!relations.some(known=>known.from===relation.from&&known.to===relation.to&&known.relation===relation.relation))],reading.entry.ref) as {relation:string;origin:string;direction:string;other:string}[];
   const neighbourhood=reading.neighbourhood as {resource?:unknown;relations?:{nodes?:{ref:string;label?:string;kind?:string}[];edges?:{from:string;to:string;relation:string}[]};actions?:string[];error?:string}|null;
-  const knowledge=reading.entry.kind==="wiki-node"||reading.entry.kind==="wiki-space";
+  const knowledge=isKnowledgeSubject(reading.entry);
+  const label=entryLabel(reading.entry,reading.projections);
+  const relatedSubjects=[...entries,reading.entry,...(neighbourhood?.relations?.nodes??[])];
   // A chosen world constituent is the primary material; its World page is
   // one step away, never a stand-in for it.
   const constituent=constituentOf(reading.entry,[...relations,...reading.relations],entries.length?entries:[reading.entry],activityLiveness);
   const worldLabel=entries.find(entry=>entry.ref===reading.entry.world_ref)?.label;
-  const primary=constituent?<ConstituentEncounter reading={constituent} worldLabel={worldLabel} onOpenRef={onOpenRef}/>:<>
-    {!projection&&<article className="world-presentation world-presentation--fallback" data-renderer-state="no-projection"><header className="world-presentation__masthead"><div><div className="world-component__eyebrow">Projected subject</div><h1>{reading.entry.label}</h1></div></header><section className="world-region"><div className="world-region__components"><article className="world-component world-component--text"><p>{reading.entry.summary??"No published Projection names this entry or its world yet."}</p></article></div></section></article>}
-    {projection&&projection.state!=="published"&&<article className="world-presentation world-presentation--fallback" data-renderer-state="withdrawn"><header className="world-presentation__masthead"><div><div className="world-component__eyebrow">Projection withdrawn</div><h1>{reading.entry.label}</h1></div></header><section className="world-region"><div className="world-region__components"><article className="world-component world-component--text"><p>This shared presentation is no longer available.</p></article></div></section></article>}
-    {current&&presentation&&<WorldPresentationView presentation={presentation} onOpenRef={onOpenRef}/>}
-    {current&&!presentation&&representation?.kind==="oi.sparse-representation/v1"&&<SparseBody projection={current}/>}
-    {current&&!presentation&&representation?.kind!=="oi.sparse-representation/v1"&&<RepresentationFallback projection={current}/>}
+  const primary=<>
+    {constituent&&<ConstituentEncounter reading={constituent} worldLabel={worldLabel} onOpenRef={onOpenRef}/>}
+    {!projection&&<article className="world-presentation world-presentation--fallback" data-renderer-state="no-projection"><header className="world-presentation__masthead"><div><div className="world-component__eyebrow">Projected subject</div><h1>{label}</h1></div></header><section className="world-region"><div className="world-region__components"><article className="world-component world-component--text"><p>{reading.entry.summary??"No published Projection names this entry or its world yet."}</p></article></div></section></article>}
+    {projection&&projection.state!=="published"&&<article className="world-presentation world-presentation--fallback" data-renderer-state="withdrawn"><header className="world-presentation__masthead"><div><div className="world-component__eyebrow">Projection withdrawn</div><h1>{label}</h1></div></header><section className="world-region"><div className="world-region__components"><article className="world-component world-component--text"><p>This shared presentation is no longer available.</p></article></div></section></article>}
+    {current&&presentation&&(!constituent||expressionReading)&&<WorldPresentationView presentation={presentation} onOpenRef={onOpenRef} subjects={relatedSubjects}/>}
+    {current&&!presentation&&representation?.kind==="oi.sparse-representation/v1"&&<SparseBody projection={current} label={label}/>}
+    {current&&!presentation&&representation?.kind!=="oi.sparse-representation/v1"&&<RepresentationFallback projection={current} label={label}/>}
   </>;
   return <section className="presentation-body" data-presentation-state="hosted" data-entry-ref={reading.entry.ref} data-entry-kind={reading.entry.kind} data-world-ref={reading.entry.world_ref} data-projection-ref={projection?.projection_ref} data-projection-revision={projection?.projection_revision} data-projection-state={projection?.state} data-source-system={projection?.source.system} data-source-ref={projection?.source.ref} data-source-revision={projection?.source.revision} data-presentation-ref={presentation?.presentation_ref} data-presentation-revision={presentation?.revision} data-expression-ref={expressionReading?.expression_ref} data-expression-revision={expressionReading?.expression_revision} data-depth-relations={Boolean(depth.relations)} data-depth-source={Boolean(depth.source)}>
     {strip}
     <div className="presentation-planes">
       {depth.relations&&<aside className="presentation-depth presentation-depth--relations" aria-label="Relations of this subject">
         <header><span>Relations</span><button type="button" aria-label="Dismiss relations" onClick={()=>onDepth({relations:false})}>×</button></header>
-        <ul className="presentation-relations">{touching.map((row,i)=><li key={i}><button type="button" onClick={()=>onOpenRef(row.other)}>{row.other}</button><small>{row.direction==="out"?"→":"←"} {row.relation} · {row.origin}</small></li>)}</ul>
+        <ul className="presentation-relations">{touching.map((row,i)=><li key={i}><button type="button" data-subject-ref={row.other} onClick={()=>onOpenRef(row.other)}>{subjectLabel(relatedSubjects.find(subject=>subject.ref===row.other),`Unnamed related subject ${i+1}`)}</button><small>{row.direction==="out"?"→":"←"} {relationLabel(row.relation)}</small></li>)}</ul>
         {!touching.length&&!reading.relation_errors?.length&&<p className="explore-muted">No hosted relation touches this subject.</p>}
-        {!!reading.relation_errors?.length&&<details open data-relation-errors={reading.relation_errors.length}><summary>Unavailable relations in this field</summary><ul>{reading.relation_errors.map((row,index)=><li key={index}><code>{row.relation_ref??"Unidentified source relation"}</code>: {row.detail}</li>)}</ul></details>}
-        {neighbourhood?.relations?.nodes?.length?<details><summary>Bounded neighbourhood · {neighbourhood.relations.nodes.length}</summary><ul className="presentation-relations">{neighbourhood.relations.nodes.filter(node=>node.ref!==reading.entry.ref).map(node=><li key={node.ref}><button type="button" onClick={()=>onOpenRef(node.ref)}>{node.label??node.ref}</button><small>{node.kind??""}</small></li>)}</ul></details>:neighbourhood?.error?<p className="explore-muted">Neighbourhood: {neighbourhood.error}</p>:null}
+        {!!reading.relation_errors?.length&&<details data-relation-errors={reading.relation_errors.length}><summary>Unavailable relation details</summary><ul>{reading.relation_errors.map((row,index)=><li key={index}><code>{row.relation_ref??"Unidentified source relation"}</code>: {row.detail}</li>)}</ul></details>}
+        {neighbourhood?.relations?.nodes?.length?<details><summary>Nearby subjects · {neighbourhood.relations.nodes.length}</summary><ul className="presentation-relations">{neighbourhood.relations.nodes.filter(node=>node.ref!==reading.entry.ref).map((node,index)=><li key={node.ref}><button type="button" data-subject-ref={node.ref} onClick={()=>onOpenRef(node.ref)}>{subjectLabel(node,`Unnamed related subject ${index+1}`)}</button><small>{subjectKind(node.kind)}</small></li>)}</ul></details>:neighbourhood?.error?<p className="explore-muted">Nearby subjects are unavailable.</p>:null}
       </aside>}
       <div className="presentation-main">
         {knowledge&&neighbourhood?<KnowledgeEncounter opened={{resource:neighbourhood.resource??reading.entry,relations:neighbourhood.relations??(neighbourhood.error?{error:neighbourhood.error}:undefined),actions:neighbourhood.actions??[],sources:{ref:reading.entry.ref,revision:reading.entry.revision,provenance:reading.entry.provenance}}} page={primary} onOpenRef={onOpenRef}/>:primary}

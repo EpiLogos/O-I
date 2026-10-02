@@ -65,6 +65,13 @@ export interface KernelOpCall {
  * so every outcome carries its receipts array — an operation that changed
  * nothing honestly shows an empty list. */
 function normaliseOutcome(outcome: KernelOutcome): KernelOutcome {
+  if (outcome.result === "hosted_native") {
+    const native = outcome.outcome;
+    // Native cursor belongs to (World, owner generation). Keep it inspectable
+    // without feeding it into this body's independent kernel event stream.
+    return {...native,receipts:[],native_owner:{world_ref:outcome.source_world_ref,
+      owner_generation:outcome.owner_generation,receipts:native.receipts??[]}};
+  }
   return { ...outcome, receipts: outcome.receipts ?? [] };
 }
 
@@ -207,11 +214,12 @@ export interface TopicSubscription {
 export async function subscribeTopic(
   transport: KernelTransportStatus,
   onReceipt: (receipt: KernelReceipt) => void,
-  onResync?: (page: KernelEventReplay) => Promise<void> | void,
+  onResync?: (page: KernelEventReplay, lifetime: {signal: AbortSignal; isCurrent: () => boolean}) => Promise<void> | void,
   onError?: (error: string) => void,
 ): Promise<TopicSubscription | null> {
   if (transport.kind === "unavailable") return null;
-  let cursor = 1, generation: string | undefined, stopped = false;
+  let cursor = 1, generation: string | undefined, stopped = false, paused = false;
+  let requestEpoch = 0;
   let timer: ReturnType<typeof setTimeout> | undefined;
   let active = false, requested = false;
   let retryDelay = 250;
@@ -219,31 +227,34 @@ export async function subscribeTopic(
   let unlisten: (() => void) | undefined;
   const schedule = (delay: number) => {
     requested = true;
-    if (stopped || active || timer !== undefined) return;
+    if (stopped || paused || active || timer !== undefined) return;
     timer = setTimeout(() => { timer = undefined; void drain(); }, delay);
   };
   const drain = async () => {
-    if (stopped || active) return;
+    if (stopped || paused || active) return;
+    const epoch = requestEpoch;
+    const current = () => !stopped && !paused && epoch === requestEpoch;
     active = true; requested = false;
     let failed = false;
     try {
       // Yield after a bounded batch; a continuously active kernel cannot
       // monopolise the window or accumulate an unbounded renderer queue.
-      for (let pages = 0; pages < 8 && !stopped; pages++) {
-        read = new AbortController();
-        const page = await eventReplay(transport, cursor, generation, 128, read.signal);
-        read = undefined;
-        if (stopped) return;
+      for (let pages = 0; pages < 8 && current(); pages++) {
+        const pageRead = new AbortController();
+        read = pageRead;
+        const page = await eventReplay(transport, cursor, generation, 128, pageRead.signal);
+        if (!current()) return;
         if (page.resync_required) {
           if (!onResync) throw new Error("Kernel replay requires current owner read models");
-          await onResync(page);
-          if (stopped) return;
+          await onResync(page, {signal: pageRead.signal, isCurrent: current});
+          if (!current()) return;
         } else {
           for (const receipt of page.receipts) {
-            if (stopped) return;
+            if (!current()) return;
             onReceipt(receipt);
           }
         }
+        read = undefined;
         generation = page.generation; cursor = page.next_seq;
         retryDelay = 250;
         if (!page.has_more) break;
@@ -251,20 +262,43 @@ export async function subscribeTopic(
       }
     } catch (error) {
       failed = true;
-      if (!stopped) onError?.(String(error));
+      if (current()) onError?.(String(error));
     } finally {
       read = undefined;
       active = false;
-      if (!stopped && failed) {
+      if (!stopped && !paused && epoch !== requestEpoch) {
+        // A restored page starts a fresh pull at the last qualified cursor.
+        schedule(0);
+      } else if (!stopped && !paused && failed) {
         // Keep the old qualified cursor. A failed owner resync cannot wait
         // forever for another native push or become a current empty view.
         schedule(retryDelay);
         retryDelay = Math.min(retryDelay * 2, 5000);
-      } else if (!stopped && (transport.kind === "bridge" || requested)) {
+      } else if (!stopped && !paused && (transport.kind === "bridge" || requested)) {
         schedule(transport.kind === "bridge" ? 250 : 50);
       }
     }
   };
+  const pause = () => {
+    paused = true; requestEpoch++;
+    read?.abort();
+    if (timer !== undefined) { clearTimeout(timer); timer = undefined; }
+  };
+  const resume = () => {
+    if (stopped || !paused) return;
+    paused = false; schedule(0);
+  };
+  const removeLifecycleListeners = () => {
+    if (typeof window === "undefined") return;
+    window.removeEventListener("pagehide", pause);
+    window.removeEventListener("pageshow", resume);
+  };
+  // Navigation cancels the owned HTTP pull. Late Tauri completion is fenced;
+  // pages restored from the cache keep their qualified native continuation.
+  if (typeof window !== "undefined") {
+    window.addEventListener("pagehide", pause);
+    window.addEventListener("pageshow", resume);
+  }
   try {
     if (transport.kind === "tauri") {
       const event = await import("@tauri-apps/api/event");
@@ -272,13 +306,11 @@ export async function subscribeTopic(
     }
     schedule(0);
     return { unsubscribe: () => {
-      stopped = true;
-      read?.abort();
-      if (timer !== undefined) clearTimeout(timer);
-      unlisten?.();
+      stopped = true; pause();
+      unlisten?.(); removeLifecycleListeners();
     } };
   } catch (error) {
-    stopped = true; unlisten?.();
+    stopped = true; pause(); unlisten?.(); removeLifecycleListeners();
     onError?.(String(error));
     return null;
   }

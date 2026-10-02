@@ -109,6 +109,7 @@ declare module "@epilogos/oi-design-system/expressions-engine/shell/engine.mjs" 
     telemetry?(): unknown;
     command?(command: EngineCommand): void;
     inspect?(readParticles?: boolean): unknown;
+    inspectResources?(): unknown;
     projectNative?(point: Vec3): unknown;
     dispose(): void;
   }
@@ -132,6 +133,7 @@ declare module "@epilogos/oi-design-system/expressions-engine/shell/production.m
     telemetry(): unknown;
     command(command: EngineCommand): void;
     inspect(readParticles?: boolean): unknown;
+    inspectResources(): unknown;
     projectNative(point: { x: number; y: number; z: number }): unknown;
     /** Clean-frame capture: renders one frame without edit overlays, then
      * reads back an offscreen canvas at the requested size. Throws honestly
@@ -173,6 +175,7 @@ declare module "@epilogos/oi-design-system/expressions-engine/oi/retained.mjs" {
     telemetry(): unknown;
     command(command: EngineCommand): void;
     inspect(readParticles?: boolean): unknown;
+    inspectResources(): unknown;
     projectNative(point: { x: number; y: number; z: number }): unknown;
     withCleanFrame<T>(copy: () => T): T;
     capture(width: number, height: number): HTMLCanvasElement;

@@ -54,10 +54,11 @@ export interface ReceivingPage {schema:"central.receiving-page/v1";returns:Retur
 export const isRequest=(row:Pick<ReturnRow,"kind">)=>row.kind==="request";
 export interface ReturnReading {schema:"central.receiving-reading/v1";return_ref:string;revision:string;record:ReturnRecord;included:boolean;source_changed_by_arrival_or_review:boolean;automatic_agent_or_model_invocation:boolean;document_result?:unknown}
 export interface DocumentReading {schema:"central.document-reading/v1";source:{ref:string;path:string};revision:{revision:string;byte_len?:number};document_id:string;document:{document_id:string;kind:string;title?:string;lifecycle?:string;contributions:{id:string;html:string;author_ref:string;actor_kind:string;display_role:string;entry_id?:string|null;field_id?:string|null;locked?:boolean;human_touched?:boolean;removed?:boolean;reviewed_by?:string|null}[]};unreviewed_external_revision:boolean;source_authority:string;automatic_agent_or_model_invocation:boolean}
-export async function receiving<T>(transport:KernelTransportStatus,project:string|null,request:ReceivingRequest):Promise<T> {
+export async function receiving<T>(transport:KernelTransportStatus,project:string|null,request:ReceivingRequest,sourceWorldRef?:string):Promise<T> {
   // Rust's native owner request is an externally tagged enum. Keep the
   // renderer API readable, then encode exactly one owner variant here.
-  const result=await kernelOp(transport,{op:"receiving",project,request:receivingWire(request)});
+  const op={op:"receiving" as const,project,request:receivingWire(request)};
+  const result=await kernelOp(transport,sourceWorldRef?{op:"hosted_native",source_world_ref:sourceWorldRef,request:op}:op);
   if(result.error || result.outcome?.result!=="receiving_reading")throw new Error(result.error??"Central receiving is unavailable");
   return result.outcome.data as T;
 }

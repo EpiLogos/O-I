@@ -2,21 +2,22 @@
 /**
  * vendor-expressions-engine.mjs
  *
- * Vendors the merged Expressions engine from EpiLogos/Point-Cloud-Demo into the
+ * Compiles the native Expressions source in this checkout into the
  * O-I design-system package as plain ES modules (.mjs).
  *
  * Usage:
  *   node scripts/vendor-expressions-engine.mjs [--source <dir>]
  *   node scripts/vendor-expressions-engine.mjs --verify
+ *   node scripts/vendor-expressions-engine.mjs --refresh-module src/engine/sourceSampling.ts
  *
  * Source layout -> output layout (flattened under the output root):
  *   src/engine/**                     -> engine/**
  *   field-studies-journeys/src/**     -> shell/**
  *
- * O:I-owned extensions live under oi/ and are NEVER written by this script:
- * the retained-field adapter (oi/retained.mjs) is authored in O:I and
- * subclasses the upstream production adapter, so an engine refresh cannot
- * silently drop it. engine/ and shell/ remain byte-pure upstream transforms.
+ * O:I-owned extensions and native compiler receipts are declared in
+ * PROVENANCE.json. Full upstream refresh refuses when retained engine/shell
+ * computation exists; named native module refresh retains its provenance.
+ * Extensions under oi/ are never rewritten by this script.
  *
  * Idempotent: same source tree => byte-identical output (PROVENANCE timestamp excepted).
  */
@@ -26,10 +27,11 @@ import path from 'node:path';
 import {execFileSync} from 'node:child_process';
 import {createRequire} from 'node:module';
 import {fileURLToPath} from 'node:url';
+import {createHash} from 'node:crypto';
 
 const scriptPath = fileURLToPath(import.meta.url);
 const worktreeRoot = path.resolve(path.dirname(scriptPath), '..');
-const DEFAULT_SOURCE = '/Users/admin/Central/Work/Point-Cloud-Demo';
+const DEFAULT_SOURCE = path.join(worktreeRoot, 'desktop/cradle/expressions-app');
 const OUT_ROOT = path.join(worktreeRoot, 'packages/oi-design-system/expressions-engine');
 
 const ENGINE_PREFIX = 'src/engine/';
@@ -128,7 +130,7 @@ function loadEsbuild() {
   ];
   for (const p of primaryPaths) {
     try {
-      return {esbuild: req(require.resolve('esbuild', {paths: [p]})), where: p};
+      return {esbuild: req(req.resolve('esbuild', {paths: [p]})), where: p};
     } catch { /* fall through */ }
   }
   // 3) any node_modules/esbuild under the worktree; 4) under the main checkout
@@ -150,13 +152,84 @@ function loadEsbuild() {
 /* ------------------------------- vendoring -------------------------------- */
 
 function parseArgs(argv) {
-  const args = {verify: false, source: DEFAULT_SOURCE};
+  const args = {verify: false, source: DEFAULT_SOURCE, modules: [], retainDependencies: false};
   for (let i = 0; i < argv.length; i++) {
     if (argv[i] === '--verify') args.verify = true;
     else if (argv[i] === '--source') args.source = path.resolve(argv[++i]);
+    else if (argv[i] === '--refresh-module') args.modules.push(argv[++i]);
+    else if (argv[i] === '--retain-dependencies') args.retainDependencies = true;
     else throw new Error(`unknown argument: ${argv[i]}`);
   }
   return args;
+}
+
+/** Refresh an explicitly selected native module and its emitted local imports.
+ * The existing engine carries O:I overlays; a bounded repair cannot overwrite
+ * those or describe the whole retained engine as a newly compiled source cut. */
+function resolveRefreshSpecifier(from, spec, sourceDir) {
+  const resolved = resolveSpecifier(from, spec);
+  if (resolved.kind !== 'unresolved' || !spec.endsWith('.mjs')) return resolved;
+  const absolute = path.resolve(sourceDir, path.dirname(from), spec);
+  const relative = path.relative(OUT_ROOT, absolute).split(path.sep).join('/');
+  // O:I overlays keep their own source and provenance; never compile or copy
+  // them as if they belonged to the native engine.
+  if (relative.startsWith('oi/') && !relative.split('/').includes('..') && fs.statSync(absolute, {throwIfNoEntry: false})?.isFile()) {
+    return {kind: 'overlay', spec, target: resolved.target, output: relative};
+  }
+  return resolved;
+}
+
+async function refreshModules(args) {
+  const {esbuild}=loadEsbuild(),provenancePath=path.join(OUT_ROOT,'PROVENANCE.json');
+  const provenance=JSON.parse(fs.readFileSync(provenancePath,'utf8'));
+  const outputs=new Map(),pending=[...args.modules],overlays=new Map(),sha256=bytes=>createHash('sha256').update(bytes).digest('hex');
+  const retained=new Map(Object.entries(provenance.files).map(([output,source])=>[source,output]));
+  while(pending.length){
+    const source=pending.pop();
+    if(outputs.has(source))continue;
+    if(!/^(src\/engine|field-studies-journeys\/src)\/[\w./-]+\.ts$/.test(source)||source.split('/').includes('..'))throw Error('Invalid native module source: '+source);
+    const raw=readSourceFile(args.source,source),dependencies={};
+    let transformed=await esbuild.transform(raw,{loader:'ts',format:'esm',target:'esnext'});
+    if(extractSpecifiers(transformed.code).some(spec=>spec.endsWith('.json'))){
+      // Native JSON contracts belong to their owner (including the kernel),
+      // rather than a hand-copied shell asset. Inline them with the compiler
+      // and pin every consumed file; leave other module imports external.
+      const bundled=await esbuild.build({stdin:{contents:raw,loader:'ts',resolveDir:path.dirname(path.join(args.source,source)),sourcefile:source},
+        bundle:true,write:false,format:'esm',platform:'browser',target:'esnext',plugins:[{name:'native-json-contracts',setup(builder){
+          builder.onResolve({filter:/.*/},request=>{
+            if(!request.path.endsWith('.json'))return{path:request.path,external:true};
+            const target=path.resolve(request.resolveDir,request.path);
+            if(!target.startsWith(worktreeRoot+path.sep))throw Error('Native JSON contract is outside this checkout: '+request.path);
+            const bytes=fs.readFileSync(target);JSON.parse(bytes.toString('utf8'));
+            dependencies[path.relative(worktreeRoot,target).split(path.sep).join('/')]=sha256(bytes);
+            return{path:target};
+          });
+        }}]});
+      transformed={code:bundled.outputFiles[0].text};
+    }
+    const local=[];
+    for(const spec of extractSpecifiers(transformed.code)){
+      const r=resolveRefreshSpecifier(source,spec,args.source);
+      if(r.kind==='overlay'){overlays.set(r.target,r.output);continue;}
+      if(r.kind==='unresolved')throw Error('Unresolved native module import: '+spec);
+      if(r.kind==='local'){const output=outputFor(r.target);
+        if(!args.retainDependencies||!retained.has(r.target)||!fs.existsSync(path.join(OUT_ROOT,output)))pending.push(r.target);
+        local.push(r.target);}
+    }
+    outputs.set(source,{raw,code:transformed.code,local,dependencies});
+  }
+  const mappings=new Map([...retained,...overlays,...[...outputs.keys()].map(source=>[source,outputFor(source)])]);
+  provenance.module_refreshes??={};
+  for(const [source,{raw,code,dependencies}] of outputs){
+    const output=outputFor(source),unresolved=[];
+    const generated=rewriteRelativeSpecifiers(code,output,mappings,unresolved,source,(from,spec)=>resolveRefreshSpecifier(from,spec,args.source));
+    if(unresolved.length)throw Error('Unresolved compiled native module: '+source);
+    const target=path.join(OUT_ROOT,output);fs.mkdirSync(path.dirname(target),{recursive:true});fs.writeFileSync(target,generated);
+    provenance.files[output]=source;
+    provenance.module_refreshes[output]={source:path.relative(worktreeRoot,path.join(args.source,source)).split(path.sep).join('/'),source_sha256:sha256(raw),output_sha256:sha256(generated),compiler:'esbuild@'+esbuild.version,...(Object.keys(dependencies).length?{dependency_sha256:dependencies}:{}),standing:'Bounded compiler output from the native source; other retained modules keep their existing provenance'};
+  }
+  fs.writeFileSync(provenancePath,JSON.stringify(provenance,null,2)+'\n');
+  console.log(JSON.stringify({refreshed:[...outputs.keys()].map(outputFor),retained_dependencies:args.retainDependencies,source:args.source}));
 }
 
 function gitHead(sourceDir) {
@@ -205,13 +278,13 @@ function engineSuperset(sourceDir, reachable) {
   return all.filter((f) => !reachable.has(f)).sort();
 }
 
-function rewriteRelativeSpecifiers(code, fromOutRel, sourceToOutput, unresolved, fromSrcRel) {
+function rewriteRelativeSpecifiers(code, fromOutRel, sourceToOutput, unresolved, fromSrcRel, resolver = resolveSpecifier) {
   return code.replace(SPEC_RE, (m, q1, s1, q2, s2) => {
     const q = q1 ?? q2;
     const spec = s1 ?? s2;
     if (typeof spec !== 'string' || !spec.startsWith('.')) return m;
-    const r = resolveSpecifier(fromSrcRel, spec);
-    if (r.kind !== 'local' || !sourceToOutput.has(r.target)) {
+    const r = resolver(fromSrcRel, spec);
+    if (!['local', 'overlay'].includes(r.kind) || !sourceToOutput.has(r.target)) {
       unresolved.push({from: fromSrcRel, spec, target: r.target ?? r.spec});
       return m;
     }
@@ -223,6 +296,19 @@ function rewriteRelativeSpecifiers(code, fromOutRel, sourceToOutput, unresolved,
 }
 
 async function vendor(args) {
+  const provenancePath = path.join(OUT_ROOT, 'PROVENANCE.json');
+  const previous = fs.existsSync(provenancePath)
+    ? JSON.parse(fs.readFileSync(provenancePath, 'utf8')) : null;
+  const protectedOutputs = new Set([
+    ...(previous?.oi_overlays ?? []).map(overlay => overlay.path)
+      .filter(output => typeof output === 'string' && /^(engine|shell)\//.test(output)),
+    ...Object.keys(previous?.module_refreshes ?? {}),
+  ]);
+  // Refuse before invoking the compiler or replacing any file. The upstream
+  // source cut cannot authorize dropping native computation or its receipts.
+  if (protectedOutputs.size) {
+    throw new Error(`Full refresh would replace retained native computation or provenance: ${[...protectedOutputs].sort().join(', ')}. Use --refresh-module for an explicitly owned native source change.`);
+  }
   const sourceDir = args.source;
   if (!fs.existsSync(path.join(sourceDir, 'src/engine/types.ts'))) {
     throw new Error(`source does not look like Point-Cloud-Demo: ${sourceDir}`);
@@ -271,9 +357,9 @@ async function vendor(args) {
   }
 
   const provenance = {
-    source: 'EpiLogos/Point-Cloud-Demo',
+    source: path.resolve(args.source) === path.resolve(DEFAULT_SOURCE) ? 'EpiLogos/O-I:desktop/cradle/expressions-app' : `explicit-source:${path.resolve(args.source)}`,
     sha,
-    oi_overlays: [
+    oi_overlays: previous?.oi_overlays ?? [
       {path: 'oi/retained.mjs', standing: 'O:I-authored retained-field extension of shell/production.mjs; not upstream, never rewritten by this script'},
     ],
     vendored_at: new Date().toISOString().replace(/\.\d{3}Z$/, 'Z'),
@@ -305,6 +391,17 @@ async function verify() {
   const errors = [];
   let checked = 0;
 
+  for(const [output,reading] of Object.entries(provenance.module_refreshes??{})){
+    const hash=bytes=>createHash('sha256').update(bytes).digest('hex');
+    const source=path.resolve(worktreeRoot,reading.source),generated=path.join(OUT_ROOT,output);
+    if(!source.startsWith(worktreeRoot+path.sep)||!fs.existsSync(source)||hash(fs.readFileSync(source))!==reading.source_sha256)errors.push(`${output}: native source changed; refresh this module before shipping`);
+    if(!fs.existsSync(generated)||hash(fs.readFileSync(generated))!==reading.output_sha256)errors.push(`${output}: compiled module differs from its native-source receipt`);
+    for(const [dependency,expected] of Object.entries(reading.dependency_sha256??{})){
+      const contract=path.resolve(worktreeRoot,dependency);
+      if(!contract.startsWith(worktreeRoot+path.sep)||!fs.existsSync(contract)||hash(fs.readFileSync(contract))!==expected)errors.push(`${output}: native contract ${dependency} changed; refresh this module before shipping`);
+    }
+  }
+
   for (const outRel of [...known].sort()) {
     const abs = path.join(OUT_ROOT, outRel);
     if (!fs.existsSync(abs)) { errors.push(`${outRel}: listed in PROVENANCE but missing on disk`); continue; }
@@ -320,7 +417,7 @@ async function verify() {
       if (!spec.startsWith('.')) continue; // bare (e.g. three) or absolute — out of scope
       if (!spec.endsWith('.mjs')) { errors.push(`${outRel}: relative specifier does not end in .mjs: '${spec}'`); continue; }
       const target = path.posix.normalize(path.posix.join(path.posix.dirname(outRel), spec));
-      if (!known.has(target)) errors.push(`${outRel}: '${spec}' -> ${target}: not in output tree`);
+      if (!known.has(target) && !(target.startsWith('oi/') && fs.existsSync(path.join(OUT_ROOT,target)))) errors.push(`${outRel}: '${spec}' -> ${target}: not in output tree`);
     }
     checked++;
   }
@@ -383,4 +480,5 @@ async function verify() {
 
 const args = parseArgs(process.argv.slice(2));
 if (args.verify) await verify();
+else if(args.modules.length) await refreshModules(args);
 else await vendor(args);

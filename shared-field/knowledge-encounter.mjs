@@ -2,6 +2,12 @@ import {createExploreEntry} from './explore.mjs';
 export const KNOWLEDGE_ENCOUNTER_SCHEMA = 'oi.knowledge-encounter/v1';
 export const KNOWLEDGE_PRESENTATIONS = Object.freeze(['graph', 'tree', 'list', 'page', 'expression']);
 
+/** Authored constellation membership has its own focus and relation reading,
+ * just as a wiki node or space does. Its World remains an adjacent subject. */
+export function isKnowledgeSubject(entry) {
+  return ['wiki-node', 'wiki-space', 'constellation'].includes(entry?.kind);
+}
+
 const clone = value => value === undefined ? undefined : structuredClone(value);
 const record = (value, name) => {
   if (value === null || typeof value !== 'object' || Array.isArray(value)) throw new TypeError(`${name} must be an object`);
@@ -57,7 +63,7 @@ export function createKnowledgeEncounter(opened) {
     for (const endpoint of [edge.from, edge.to]) {
       if (refs.has(endpoint)) continue;
       refs.add(endpoint);
-      nodes.push({ref:endpoint,kind:'unavailable',world_ref:resource.world_ref,label:endpoint,availability:'unavailable',aliases:[],locators:[],provenance:clone(edge.provenance)});
+      nodes.push({ref:endpoint,kind:'unavailable',world_ref:resource.world_ref,label:`Unavailable related subject ${nodes.filter(node=>node.availability==='unavailable').length+1}`,availability:'unavailable',aliases:[],locators:[],provenance:clone(edge.provenance)});
     }
     return [clone(edge)];
   });

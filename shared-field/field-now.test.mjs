@@ -97,6 +97,20 @@ test('cursors advance and clear; the first revision requires its envelope', () =
 const interval = { start: '2026-09-28T00:00:00.000Z', end: '2026-09-29T00:00:00.000Z', policy: 'utc-day' };
 const policy = { source_system: 'oi', ref: 'oi:field-time-policy:utc-day', revision: '1' };
 
+test('independent worlds retain the same personal Day ref; withdrawal requires its world', () => {
+  const day = 'central:day:control:root:2026-09-30';
+  const ann = { day_ref: day, world_ref: 'world:ann', workcell_ref: 'workcell:mac' };
+  const bea = { day_ref: day, world_ref: 'world:bea', workcell_ref: 'workcell:omarchy' };
+  const d1 = advanceFieldDay(null, { expected_revision: 0, projected_by: OWNER, field_ref: FIELD, interval, temporal_policy_provenance: policy, audience: { visibility: 'public' }, upsert_source_day_refs: [ann] });
+  const d2 = advanceFieldDay(d1, { expected_revision: 1, projected_by: B, upsert_source_day_refs: [bea] });
+  assert.equal(d2.projected_source_day_refs.length, 2);
+  assert.deepEqual(d2.projected_source_day_refs.map((held) => [held.world_ref, held.projected_by]), [['world:ann', OWNER], ['world:bea', B]]);
+  assert.deepEqual(fieldDayDelta(d1, d2).entries.map((entry) => entry.projected_by), [[B]], 'Bea does not touch Ann’s Day');
+  assert.throws(() => advanceFieldDay(d2, { expected_revision: 2, projected_by: B, withdraw_source_day_refs: [day] }), /ambiguous|qualified/i);
+  const d3 = advanceFieldDay(d2, { expected_revision: 2, projected_by: B, withdraw_source_day_refs: [bea] });
+  assert.deepEqual(d3.projected_source_day_refs, [{ ...ann, projected_by: OWNER }]);
+});
+
 test('FieldDay keeps its own aggregation policy while source Day refs stay intact and attributed', () => {
   const d1 = advanceFieldDay(null, {
     expected_revision: 0, projected_by: OWNER, field_ref: FIELD, interval, temporal_policy_provenance: policy, audience: { visibility: 'public' },

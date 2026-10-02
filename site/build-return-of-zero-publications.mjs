@@ -54,6 +54,7 @@ import { createWorldPresentation } from '../shared-field/presentation.mjs';
 import { createWorldPresentationProjection } from '../shared-field/presentation-projection.mjs';
 import { createExploreEntry } from '../shared-field/explore.mjs';
 import { projectExpression } from '../shared-field/expression-projection.mjs';
+import { selectPublicExcerpt, publicExcerptMemberIds, publicExcerptSelectionRef, publicExcerptSelectionRevision } from './public-excerpt-selection.mjs';
 
 const exec = promisify(execFile);
 const site = dirname(fileURLToPath(import.meta.url));
@@ -166,6 +167,8 @@ const expectedMembers = envelope.manifests.reduce((total, manifest) => total + m
 if (members.length !== expectedMembers) throw new Error(`Expected ${expectedMembers} envelope members, found ${members.length}.`);
 const declaredMembers = Number(envelope.expected_members ?? expectedMembers);
 if (!Number.isSafeInteger(declaredMembers) || declaredMembers < 1 || members.length !== declaredMembers) throw new Error(`Expected ${declaredMembers} selected publication members, found ${members.length}.`);
+const editionRevision = members.some(member => publicExcerptMemberIds.includes(member.id)) ? 2 : 1;
+if (editionRevision === 2) provenance.push({ kind: 'public-excerpt-selection', ref: publicExcerptSelectionRef, source_system: 'o-i', revision: publicExcerptSelectionRevision });
 
 // ---------------------------------------------------------------------------
 // 3. Reading bodies: the pinned section-room prose; the essay member carries
@@ -213,8 +216,7 @@ function sceneProseBody(journey) {
   }
   return lines.join('\n\n');
 }
-async function readingBody(member) {
-  const journey = JSON.parse(await readFile(memberFile(member), 'utf8'));
+async function readingBody(member, journey) {
   if (member.id === 'roz-essay-reading') {
     return { text: essayReadingBody(journey), sources: ['submission-package/essay/THE-RETURN-OF-ZERO.md'] };
   }
@@ -252,9 +254,18 @@ const corpusReceipt = { members: [], envelope: { title: envelope.title, exported
 for (const member of members) {
   const ref = `${WORLD}/wiki:${member.id}`;
   const memberRef = (suffix) => `expression:return-of-zero:${member.id}${suffix}`;
-  const rawJourney = await readFile(memberFile(member));
-  const journey = JSON.parse(rawJourney.toString('utf8'));
-  const body = await readingBody(member);
+  const originalJourney = await readFile(memberFile(member));
+  const excerpt = selectPublicExcerpt(member, originalJourney);
+  const rawJourney = excerpt?.bytes ?? originalJourney;
+  const journey = excerpt?.journey ?? JSON.parse(rawJourney.toString('utf8'));
+  const body = await readingBody(member, journey);
+  const expressionRevision = excerpt ? 2 : 1;
+  if (excerpt) {
+    const excerptDir = resolve(site, '.public-excerpt-inputs');
+    await mkdir(excerptDir, { recursive: true });
+    await writeFile(resolve(excerptDir, `${member.id}.journey.json`), rawJourney);
+    body.sources.push({ ref: excerpt.source_path, revision: excerpt.source_revision }, { ref: publicExcerptSelectionRef, revision: publicExcerptSelectionRevision });
+  }
   const memberRevision = manifestRevision(member) ?? MEMBER_REVISION;
   const bindings = memberBindings(member);
   const canonical = bindings.length ? canonicalLocator(member, bindings[0].path) : null;
@@ -314,13 +325,16 @@ for (const member of members) {
   const document = {
     schema: 'oi.expression/v1',
     expression_ref: expressionRef,
-    revision: 1,
+    revision: expressionRevision,
     title: member.name,
     scenes,
     entities,
     relations: {},
     selection: { scene_ref: scenes[0].scene_ref, entity_ref: scenes[0].entity_refs[0] },
-    provenance: [{ ref: member.file, revision: memberRevision, availability: 'available' }],
+    provenance: [{ ref: member.file, revision: memberRevision, availability: 'available' }, ...(excerpt ? [
+      { ref: excerpt.source_path, revision: excerpt.source_revision, availability: 'available' },
+      { ref: publicExcerptSelectionRef, revision: publicExcerptSelectionRevision, availability: 'available' },
+    ] : [])],
     representations: [],
   };
   const publication = projectExpression({
@@ -328,7 +342,7 @@ for (const member of members) {
     world_ref: WORLD,
     field_ref: `${EXPRESSION_FIELD}:${member.id}`,
     projection_ref: `projection:return-of-zero:${member.id}:expression`,
-    projection_revision: 1,
+    projection_revision: expressionRevision,
     audience: { visibility: 'public' },
     publisher: { identity_ref: publisherIdentity },
     published_at: publishedAt,
@@ -343,9 +357,9 @@ for (const member of members) {
     schema: 'oi.native-expression-body/v1',
     source_schema: 'oi.journey',
     expression_ref: expressionRef,
-    expression_revision: 1,
-    source_path: member.file,
-    source_revision: member.sourceRevision ?? envelope.corpus?.production_revision?.commit ?? sourceCommit,
+    expression_revision: expressionRevision,
+    source_path: excerpt?.source_path ?? member.file,
+    source_revision: excerpt?.source_revision ?? member.sourceRevision ?? envelope.corpus?.production_revision?.commit ?? sourceCommit,
     digest: { algorithm: 'sha256', value: sha(rawJourney) },
     scene_map: Object.fromEntries(journey.scenes.map((scene) => [`${expressionRef}:scene:${scene.id}`, scene.id])),
     entity_map: Object.fromEntries(journey.scenes.flatMap((scene) => scene.entities.map((entity) => [`${expressionRef}:scene:${scene.id}:${entity.id}`, entity.id]))),
@@ -358,6 +372,7 @@ for (const member of members) {
     reading_chars: body.text.length,
     expression_scenes: scenes.length, expression_entities: entityRefs.length,
     omissions: publication.omissions,
+    ...(excerpt ? { public_excerpt: excerpt.provenance, public_source_digest: publication.native_body.digest } : {}),
     ...(bindings.length ? { sources: bindings.map((binding) => ({ canonical: canonicalLocator(member, binding.path) })) } : {}),
   });
 }
@@ -370,7 +385,7 @@ const collectionBinding = {
   subject_ref: COLLECTION_REF,
   props: {
     title: envelope.title,
-    text: `The deliberately selected Return-of-Zero public collection: ${members.length} native members, each carrying its full disclosed reading and exact authored oi.journey body beside the bounded SharedField projection. Selection basis: ${envelope.standing}. Source revisions remain explicit per manifest; the public receiver does not substitute legacy/demo members or rebuild native fields.`,
+    text: `The deliberately selected Return-of-Zero public collection: ${members.length} native members, each carrying its published reading and exact native oi.journey body beside the bounded SharedField projection.${editionRevision === 2 ? ' Selected excerpts are identified in source details.' : ''} Selection basis: ${envelope.standing}. Source revisions remain explicit per manifest; the public receiver does not substitute legacy/demo members or rebuild native fields.`,
     refs: worldEntries.map((entry) => entry.ref),
   },
   fallback: { title: envelope.title },
@@ -380,7 +395,7 @@ const presentation = createWorldPresentation({
   schema: 'oi.world-presentation/v1',
   presentation_ref: 'presentation:return-of-zero:published-reading',
   world_ref: WORLD,
-  revision: 1,
+  revision: editionRevision,
   title: envelope.title,
   summary: `${members.length} selected native members across the authored Return-of-Zero field, each readable with its exact native Expression body and explicit source revision.`,
   theme: { tokens: {} },
@@ -391,7 +406,7 @@ const projection = createWorldPresentationProjection({
   presentation,
   projection: {
     projection_ref: 'projection:return-of-zero:published-reading',
-    projection_revision: 1,
+    projection_revision: editionRevision,
     state: 'published',
     subject: { kind: 'world', ref: WORLD },
     source: { system: 'o-i', ref: 'production/return-of-zero', revision: sourceCommit },

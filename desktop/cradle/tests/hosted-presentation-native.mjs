@@ -20,7 +20,7 @@ try {
     theme:{tokens:{surface:'#112233'}},provenance,
     regions:[{region_ref:'contract',role:'reading',bindings:[
       {binding_ref:'contract',component_ref:'oi.presentation/text/v1',subject_ref:'source:host-integration',props:{text:'Registration preserves the native subject reference.'},fallback:{title:'Contract'},provenance},
-      {binding_ref:'unavailable',component_ref:'owner.component/unavailable',subject_ref:'owner:subject/retained',props:{},fallback:{title:'Unavailable native component',text:'The source remains available.'},provenance},
+      {binding_ref:'unavailable',component_ref:'owner.component/unavailable',subject_ref:'owner:subject/retained',props:{composition:{entities:{unknown:null}}},fallback:{title:'Unavailable native component',text:'The source remains available.'},provenance},
     ]}],
   });
   const source=join(temporary,'presentation.json');

@@ -7,6 +7,12 @@ on:
       - 'desktop/cradle/src/expressions/**'
       - 'desktop/cradle/src/kernel/types.ts'
       - 'desktop/cradle/tests/native-expression*'
+      - 'desktop/cradle/tests/*formation*'
+      - 'desktop/cradle/tests/candidate-cache-native.mjs'
+      - 'packages/oi-design-system/expressions-engine/engine/**'
+      - 'packages/oi-design-system/expressions-engine/shell/**'
+      - 'packages/oi-design-system/expressions-engine/PROVENANCE.json'
+      - 'scripts/vendor-expressions-engine.mjs'
       - 'packages/oi-design-system/expressions-engine/oi/**'
       - '.github/workflows/native-expression-backcheck.yml'
   workflow_dispatch:
@@ -95,6 +101,13 @@ jobs:
           (cd desktop/cradle && node --test tests/native-expression.test.mjs) 2>&1 | tee /tmp/w5-checks/native-expression.log
           npm test --prefix desktop/cradle/expressions-app 2>&1 | tee /tmp/w5-checks/embedded.log
           node --test .native-owner/QL-MEF/adapters/retained-field/native-audio.test.mjs .native-owner/QL-MEF/adapters/retained-field/instrument-session.test.mjs 2>&1 | tee /tmp/w5-checks/native-clients.log
+      - name: Native formation authoring, emitted modules and bounded candidate retention
+        if: always()
+        run: |
+          set -o pipefail
+          cd desktop/cradle
+          node --test tests/emitted-formation-modules.test.mjs 2>&1 | tee /tmp/w5-checks/emitted-formation.log
+          node tests/formation-native-regressions.mjs 2>&1 | tee /tmp/w5-checks/formation-native.log
       - name: Actual embedded WebGL browser and relay
         if: always()
         env:

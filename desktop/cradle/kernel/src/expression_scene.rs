@@ -448,11 +448,9 @@ fn validate_research(value: &Value, ids: &BTreeSet<&str>) -> Result<(), String> 
             }
             validate_note(&blocks, 0)?;
         }
-        for key in ["caption"] {
-            if let Some(v) = c.get(key) {
-                if !bounded(v, 4096) {
-                    return Err("Research caption budget exceeded".into());
-                }
+        if let Some(v) = c.get("caption") {
+            if !bounded(v, 4096) {
+                return Err("Research caption budget exceeded".into());
             }
         }
         for key in ["color", "dotColour", "bgColour", "textColour"] {

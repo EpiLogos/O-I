@@ -75,7 +75,7 @@ export function AddressedComposer({disabled,dispatch,history,service,agentSessio
   return <section className="encounter-addressed" aria-label="Addressed request">
     <header><strong>Addressed request</strong><small>An explicit machine turn to this participant. It never reads or changes the shared draft above, and nothing is sent until you dispatch it.</small></header>
     <p className="encounter-addressed-service" role="status" data-service={service?(service.running?"running":"stopped"):"unknown"}>
-      {service?(service.running?`Native dispatch service is running (pid ${service.pid}).`:"Native dispatch service is not running — the encounter owner is started by its owner, not by this window."):"Checking the native dispatch service…"}
+      {service?(service.running?`Native dispatch service is running (pid ${service.pid}).`:"Native dispatch service is not running — the encounter owner is started by its owner, not by this window."):"Native dispatch availability has not been read."}
     </p>
     {task&&<div className="encounter-addressed-task" data-task-ref={task.request?.central?.task_ref} data-task-ready={task.ready?"ready":"preparing"}>
       <strong>Task bound to this session</strong>

@@ -311,6 +311,19 @@ const fieldPresence = table(
   }
 );
 
+// Connections are authority-qualified occupancy claims. The visible body is
+// one participant per field; a reader with the same credential owns no claim.
+// A separate backing table keeps the existing presence row/schema stable.
+const fieldPresenceConnection = table(
+  { name: 'field_presence_connection_backing', public: false },
+  {
+    claimKey: t.string().primaryKey(),
+    presenceKey: t.string().index('btree'),
+    connectionRef: t.string().index('btree'),
+    actorIdentity: t.identity(),
+  }
+);
+
 /*
  * Activity liveness: the owner-side producer's live account of one published
  * activity entry, held only while that producer stays connected.
@@ -570,6 +583,7 @@ const spacetimedb = schema({
   exploreRelationBacking,
   watch,
   fieldPresence,
+  fieldPresenceConnection,
   activityLivenessBacking,
   sharedStageBacking,
   stageFollower,
@@ -1192,7 +1206,9 @@ export const field_presence = spacetimedb.view(
   (ctx) => {
     const rows: any[] = [];
     for (const field of visibleFieldRows(ctx)) {
-      for (const row of ctx.db.fieldPresence.fieldRef.filter(field.fieldRef)) rows.push(row);
+      for (const row of ctx.db.fieldPresence.fieldRef.filter(field.fieldRef)) {
+        if (Array.from(ctx.db.fieldPresenceConnection.presenceKey.filter(row.presenceKey)).some((claim: any) => identityStillOwnsParticipant(ctx, row.fieldRef, row.participantRef, claim.actorIdentity))) rows.push(row);
+      }
     }
     return rows;
   }
@@ -1383,12 +1399,14 @@ function requireFieldDayShape(ctx: any, contract: Record<string, any>): void {
   if (!Array.isArray(nowRefs) || nowRefs.length > CONTRIBUTION_MAX_COLLECTION) fail('FieldDay projected_now_refs must be a bounded array');
   dayRefs.forEach((entry: any, index: number) => {
     const name = `FieldDay projected_source_day_refs[${index}]`;
-    requireExactKeysOf(entry, ['day_ref', 'workcell_ref', 'projected_by'], name);
+    requireExactKeysOf(entry, ['day_ref', 'world_ref', 'workcell_ref', 'projected_by'], name);
     const ref = requireRef(entry.day_ref, DAY_REF_PATTERN, `${name}.day_ref`);
+    if (entry.world_ref !== undefined) requireRef(entry.world_ref, WORLD_REF_PATTERN, `${name}.world_ref`);
     if (entry.workcell_ref !== undefined) requireRef(entry.workcell_ref, WORKCELL_REF_PATTERN, `${name}.workcell_ref`);
     requireString(String(entry.projected_by ?? ''), `${name}.projected_by`, 512);
-    if (seen.has(ref)) fail(`FieldDay projects ${ref} more than once`);
-    seen.add(ref);
+    const identity = sourceDayIdentity(entry);
+    if (seen.has(identity)) fail(`FieldDay projects ${identity} more than once`);
+    seen.add(identity);
   });
   nowRefs.forEach((entry: any, index: number) => {
     const name = `FieldDay projected_now_refs[${index}]`;
@@ -1405,9 +1423,16 @@ function requireFieldDayShape(ctx: any, contract: Record<string, any>): void {
 
 /* Every attributed entry a step added, withdrew or changed, with each
  * Participant it was attributed to before and after. */
-function attributedDelta(priorEntries: any[], nextEntries: any[], key: string): { ref: string; attributed: string[] }[] {
-  const prior = new Map(priorEntries.map((entry: any) => [String(entry[key]), entry]));
-  const next = new Map(nextEntries.map((entry: any) => [String(entry[key]), entry]));
+function sourceDayIdentity(entry: any): string {
+  return entry.world_ref || entry.workcell_ref
+    ? JSON.stringify([entry.world_ref ?? '', entry.workcell_ref ?? '', entry.day_ref])
+    : String(entry.day_ref);
+}
+
+function attributedDelta(priorEntries: any[], nextEntries: any[], key: string | ((entry: any) => string)): { ref: string; attributed: string[] }[] {
+  const identity = typeof key === 'function' ? key : (entry: any) => String(entry[key]);
+  const prior = new Map(priorEntries.map((entry: any) => [identity(entry), entry]));
+  const next = new Map(nextEntries.map((entry: any) => [identity(entry), entry]));
   const changed: { ref: string; attributed: string[] }[] = [];
   for (const ref of new Set([...prior.keys(), ...next.keys()])) {
     const before = prior.get(ref);
@@ -2052,6 +2077,9 @@ export const revoke_participant_authority = spacetimedb.reducer(
     terminateExchangeForParticipant(ctx, args.fieldRef, args.participantRef, 'revoked');
     const presence = ctx.db.fieldPresence.presenceKey.find(presenceKey(args.fieldRef, args.participantRef));
     if (presence) ctx.db.fieldPresence.presenceKey.delete(presence.presenceKey);
+    for (const claim of ctx.db.fieldPresenceConnection.presenceKey.filter(presenceKey(args.fieldRef, args.participantRef))) {
+      ctx.db.fieldPresenceConnection.claimKey.delete(claim.claimKey);
+    }
     for (const follow of ctx.db.stageFollower.followerParticipantRef.filter(args.participantRef)) {
       if (follow.fieldRef === args.fieldRef) ctx.db.stageFollower.followKey.delete(follow.followKey);
     }
@@ -2863,6 +2891,8 @@ export const enter_field = spacetimedb.reducer(
     if (!PRESENCE_STATES.has(state)) fail(`Unsupported presence state: ${state}`);
     requireParticipantInField(ctx, args.participantRef, args.fieldRef);
     requireParticipantAuthority(ctx, args.fieldRef, args.participantRef, ['observer', 'contact', 'contributor']);
+    const connectionRef = callerConnection(ctx);
+    if (!connectionRef) fail('Presence requires an actual connected body');
     const now = nowMicros(ctx);
     const row = {
       presenceKey: presenceKey(args.fieldRef, args.participantRef),
@@ -2876,6 +2906,8 @@ export const enter_field = spacetimedb.reducer(
     const existing = ctx.db.fieldPresence.presenceKey.find(row.presenceKey);
     if (existing) ctx.db.fieldPresence.presenceKey.update({ ...existing, state, actorIdentity: ctx.sender, updatedAtMicros: now });
     else ctx.db.fieldPresence.insert(row);
+    const claim = {claimKey: JSON.stringify([row.presenceKey, connectionRef]), presenceKey: row.presenceKey, connectionRef, actorIdentity: ctx.sender};
+    if (!ctx.db.fieldPresenceConnection.claimKey.find(claim.claimKey)) ctx.db.fieldPresenceConnection.insert(claim);
   }
 );
 
@@ -2887,6 +2919,9 @@ export const leave_field = spacetimedb.reducer(
     requireParticipantAuthority(ctx, args.fieldRef, args.participantRef, ['observer', 'contact', 'contributor']);
     const presence = ctx.db.fieldPresence.presenceKey.find(presenceKey(args.fieldRef, args.participantRef));
     if (presence) ctx.db.fieldPresence.presenceKey.delete(presence.presenceKey);
+    for (const claim of ctx.db.fieldPresenceConnection.presenceKey.filter(presenceKey(args.fieldRef, args.participantRef))) {
+      ctx.db.fieldPresenceConnection.claimKey.delete(claim.claimKey);
+    }
     for (const follow of ctx.db.stageFollower.followerParticipantRef.filter(args.participantRef)) {
       if (follow.fieldRef === args.fieldRef) ctx.db.stageFollower.followKey.delete(follow.followKey);
     }
@@ -2897,8 +2932,11 @@ export const leave_field = spacetimedb.reducer(
  * field. Stage follows persist so a reconnecting participant restores the
  * current stage without re-following. */
 export const client_disconnected = spacetimedb.clientDisconnected((ctx) => {
-  for (const row of ctx.db.fieldPresence.actorIdentity.filter(ctx.sender)) {
-    ctx.db.fieldPresence.presenceKey.delete(row.presenceKey);
+  for (const claim of ctx.db.fieldPresenceConnection.connectionRef.filter(callerConnection(ctx))) {
+    ctx.db.fieldPresenceConnection.claimKey.delete(claim.claimKey);
+    if (!Array.from(ctx.db.fieldPresenceConnection.presenceKey.filter(claim.presenceKey)).length) {
+      ctx.db.fieldPresence.presenceKey.delete(claim.presenceKey);
+    }
   }
   // Activity liveness belongs to the producing connection, not merely the
   // identity: an owner's one-shot reads under the same token must not clear a
@@ -3217,7 +3255,7 @@ export const put_field_day = spacetimedb.reducer(
     requireFieldDayShape(ctx, contract);
     const prior = current ? parseStoredJson(current.contractJson, 'FieldDay contractJson') : null;
     const entryDelta = [
-      ...attributedDelta(prior?.projected_source_day_refs ?? [], contract.projected_source_day_refs, 'day_ref'),
+      ...attributedDelta(prior?.projected_source_day_refs ?? [], contract.projected_source_day_refs, sourceDayIdentity),
       ...attributedDelta(prior?.projected_now_refs ?? [], contract.projected_now_refs, 'now_ref'),
     ];
     const envelopeChanged = !prior

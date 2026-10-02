@@ -221,6 +221,8 @@ pub enum ActMode {
 #[derive(Clone, Copy, Debug, Deserialize, Eq, PartialEq, Serialize)]
 #[serde(rename_all = "snake_case")]
 pub enum PassageKind {
+    /// An immutable native document edition produced by a bounded act edit.
+    Edition,
     Scene,
     State,
     Gesture,
@@ -411,6 +413,10 @@ fn optional_basis(value: &Option<EventBasis>) -> Result<(), String> {
 pub struct Passage {
     pub index: usize,
     pub kind: PassageKind,
+    /// Retained history, never a second writable current document. Replay
+    /// restores this edition through the native document CAS operation.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub edition: Option<Box<expression::Document>>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub file_ref: Option<String>,
     /// Material addressed as an open Expression (instead of a file).
@@ -468,6 +474,7 @@ impl Passage {
         Passage {
             index,
             kind,
+            edition: None,
             file_ref: None,
             expression_ref: None,
             revision: None,
@@ -494,12 +501,13 @@ impl Passage {
     }
     /// A passage that sets the whole Scene (not object-local).
     fn sets_scene(&self) -> bool {
-        self.scene_ref.is_some()
-            && self.role.is_none()
-            && matches!(
-                self.kind,
-                PassageKind::Scene | PassageKind::State | PassageKind::Return
-            )
+        self.kind == PassageKind::Edition
+            || (self.scene_ref.is_some()
+                && self.role.is_none()
+                && matches!(
+                    self.kind,
+                    PassageKind::Scene | PassageKind::State | PassageKind::Return
+                ))
     }
 }
 
@@ -1404,7 +1412,7 @@ pub fn capabilities() -> Value {
         "acts": {
             "phases": ["running", "held", "completed", "cancelled"],
             "modes": ["factory", "expressions", "techne"],
-            "passages": ["scene", "state", "gesture", "text", "operate", "continue", "return"],
+            "passages": ["edition", "scene", "state", "gesture", "text", "operate", "continue", "return"],
             "families": {"select_bind": ["act_open", "material_list"], "perform_transition": ["act_select", "act_gesture", "act_text"],
                 "operate": ["act_operate"], "compose_save": ["expression edit reuse_set", "expression save_as/save"],
                 "continue_replay": ["act_continue", "act_complete", "act_seek", "act_play", "act_inspect", "act_list", "act_archive"]},
@@ -1654,7 +1662,7 @@ impl Kernel {
                         )
                     });
                     let existing = self.world.acts.contains_key(&act_ref);
-                    self.act_precheck(&probe, 0, false, existing)?
+                    self.act_precheck(&probe, 1, false, existing)?
                 };
                 if let Some(refusal) = precheck {
                     return Ok(KernelOpOutcome {
@@ -1663,6 +1671,44 @@ impl Kernel {
                     });
                 }
                 let snapshot = self.act_snapshot(&expression_ref).ok();
+                if let Some(before) = &snapshot {
+                    if before.document.revision == expected_revision {
+                        let edition = before.document.edited(changes.clone())?;
+                        let mut prospective =
+                            self.world.acts.get(&act_ref).cloned().unwrap_or_else(|| {
+                                Act::new(
+                                    act_ref.clone(),
+                                    expression_ref.clone(),
+                                    summary.clone(),
+                                    actor.clone(),
+                                    ActMode::Expressions,
+                                )
+                            });
+                        let mut passage = Passage::new(
+                            prospective.sequence.len(),
+                            PassageKind::Edition,
+                            prospective.mode,
+                        );
+                        passage.target_ref = Some(expression_ref.clone());
+                        passage.revision = Some(edition.revision.to_string());
+                        passage.summary = Some(summary.clone());
+                        passage.edition = Some(Box::new(edition));
+                        prospective.position = Some(passage.index);
+                        prospective.sequence.push(passage);
+                        prospective.summary = summary.clone();
+                        prospective.actor = actor.clone();
+                        prospective.activity_ref =
+                            activity_ref.clone().or(prospective.activity_ref);
+                        prospective.basis_revision = expected_revision;
+                        prospective.phase = ActPhase::Running;
+                        prospective.revision = prospective
+                            .revision
+                            .checked_add(1)
+                            .ok_or("Act revision exhausted")?;
+                        prospective.updated_at_unix_ms = unix_ms();
+                        crate::expression_act_store::ActStore::encoded_record(&prospective)?;
+                    }
+                }
                 // The act's edit is an ordinary atomic Expression edit: exact
                 // subjects, exact expected revision, stale input refuses.
                 let (data, changed) = self.expressions.apply(
@@ -1688,6 +1734,7 @@ impl Kernel {
                         activity_ref: change.activity_ref,
                     }));
                 }
+                let edition = self.world_document(&expression_ref)?;
                 let previous = self.world.acts.get(&act_ref).cloned();
                 let previous_revision = previous.as_ref().map(|a| a.revision);
                 let mut act = previous.unwrap_or_else(|| {
@@ -1699,9 +1746,16 @@ impl Kernel {
                         ActMode::Expressions,
                     )
                 });
+                let mut passage = Passage::new(act.sequence.len(), PassageKind::Edition, act.mode);
+                passage.target_ref = Some(expression_ref.clone());
+                passage.revision = Some(edition.revision.to_string());
+                passage.summary = Some(summary.clone());
+                passage.edition = Some(Box::new(edition.clone()));
+                act.position = Some(passage.index);
+                act.sequence.push(passage);
                 act.summary = summary;
                 act.actor = actor;
-                act.activity_ref = activity_ref;
+                act.activity_ref = activity_ref.or(act.activity_ref);
                 act.phase = ActPhase::Running;
                 act.basis_revision = expected_revision;
                 let committed = self.act_commit(act, previous_revision);
@@ -2911,6 +2965,13 @@ impl Kernel {
     /// Drift of one recorded passage's material (Scene/state/gesture file
     /// and every bound character) against its current revisions.
     fn passage_drift(&mut self, passage: &Passage) -> Result<Option<Value>, String> {
+        if passage.kind == PassageKind::Edition {
+            // This is the exact retained edition, independent of subsequent
+            // changes to reusable material. Its own target/revision is checked
+            // again before the native restore.
+            Self::validate_retained_edition(passage)?;
+            return Ok(None);
+        }
         if passage.file_ref.is_some() || passage.expression_ref.is_some() {
             let current = self.world_material(
                 passage.file_ref.as_deref(),
@@ -2945,6 +3006,19 @@ impl Kernel {
         Ok(None)
     }
 
+    fn validate_retained_edition(passage: &Passage) -> Result<(), String> {
+        let edition = passage
+            .edition
+            .as_ref()
+            .ok_or("Edition passage has no retained document")?;
+        if passage.target_ref.as_deref() != Some(edition.expression_ref.as_str())
+            || passage.revision.as_deref() != Some(edition.revision.to_string().as_str())
+        {
+            return Err("Retained edition target or revision mismatch".into());
+        }
+        edition.validate()
+    }
+
     /// Re-perform one recorded passage into its recorded target.
     fn replay_passage(
         &mut self,
@@ -2959,6 +3033,54 @@ impl Kernel {
             .clone()
             .unwrap_or_else(|| act.expression_ref.clone());
         let target_scene = passage.target_scene_ref.as_deref();
+        if passage.kind == PassageKind::Edition {
+            let edition = passage
+                .edition
+                .as_ref()
+                .ok_or("Edition passage has no retained document")?;
+            if edition.expression_ref != target_ref
+                || passage.revision.as_deref() != Some(edition.revision.to_string().as_str())
+            {
+                return Err("Retained edition target or revision mismatch".into());
+            }
+            let current = self.world_document(&target_ref)?;
+            if expected.is_some_and(|revision| revision != current.revision) {
+                return Ok(Some(Performed::Refused(
+                    json!({"state":"revision_conflict","expression_ref":target_ref,"current_revision":current.revision,"expected_revision":expected}),
+                )));
+            }
+            // Restore is a presentation edit with a monotonically advancing
+            // document revision. No Action, provider or tool operation runs.
+            let (data, changed) = self.expressions.apply(
+                &self.client,
+                expression::Request::Restore {
+                    expression_ref: target_ref,
+                    expected_revision: current.revision,
+                    document: edition.clone(),
+                    actor: actor.to_owned(),
+                },
+            )?;
+            if data["state"] == "revision_conflict" {
+                return Ok(Some(Performed::Refused(data)));
+            }
+            if let Some(change) = changed {
+                receipts.push(self.log.record(KernelEvent::ExpressionChanged {
+                    expression_ref: change.expression_ref,
+                    revision: change.revision,
+                    actor: change.actor,
+                    activity_ref: change.activity_ref,
+                }));
+            }
+            return Ok(Some(Performed::Done {
+                revision: data["document"]["revision"]
+                    .as_u64()
+                    .ok_or("Native edition restore has no revision")?,
+                scene_ref: data["document"]["selection"]["scene_ref"]
+                    .as_str()
+                    .ok_or("Native edition restore has no Scene")?
+                    .to_owned(),
+            }));
+        }
         if passage.sets_scene() {
             let material = self.world_material(
                 passage.file_ref.as_deref(),
@@ -3656,6 +3778,7 @@ impl Kernel {
                     p.kind == PassageKind::Text
                         && p.role.as_deref() == Some(role.as_str())
                         && p.field.as_deref() == Some(field.as_str())
+                        && p.event_basis == event_basis
                         && act.position == Some(p.index)
                 });
                 precheck!(act, usize::from(!coalesce), false);
@@ -3928,6 +4051,11 @@ impl Kernel {
                 // Refuse drift before any edit (unless the caller accepts it).
                 let mut replay = replay;
                 for passage in &mut replay {
+                    // Edition integrity is never an optional material-drift
+                    // override, and is checked before any presentation edit.
+                    if passage.kind == PassageKind::Edition {
+                        Self::validate_retained_edition(passage)?;
+                    }
                     if accept_drift {
                         for binding in passage.bindings.values_mut() {
                             binding.character_revision = None;

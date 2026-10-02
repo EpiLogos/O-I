@@ -18,8 +18,10 @@ import {CanvasHUD} from "../workspace/primitives/CanvasHost";
  * Absence and unavailability arrive as explicit readings and render as such;
  * local work is never touched by any of it.
  */
-import {useCallback,useEffect,useMemo,useRef,useState} from "react";
+import {useEffect,useMemo,useRef,useState} from "react";
 import {useKernel} from "../kernel/KernelProvider";
+// @ts-ignore -- native names stay paired with exact navigation identities.
+import {subjectLabel,entryLabel,relationLabel} from "../../../../shared-field/presentation-text.mjs";
 import type {SurfaceBinding} from "../surface/types";
 import {Glyph} from "../workspace/Glyph";
 import {Loading} from "../shared/Loading";
@@ -79,19 +81,35 @@ export function ExploreSurface({binding,onOpenPresentation,onOpenExplore}:Explor
   },[pinned]);
   useEffect(()=>{if(pinned)return;const timer=setTimeout(()=>{if(!saveTravel(latest.current))setStorageError("Explore view state could not be saved on this device.");},200);return()=>clearTimeout(timer);},[travel,pinned]);
 
-  const refresh=useCallback(()=>{
-    let active=true;setBusy(true);
-    void sharedField<Snapshot>(transport,{kind:"snapshot"}).then(s=>{if(active)setSnapshot(s);}).catch(e=>{if(active)setSnapshot({state:"unavailable",owner_operation:"shared-field.projection",detail:String(e instanceof Error?e.message:e)});}).finally(()=>{if(active)setBusy(false);});
-    return()=>{active=false;};
-  },[transport]);
-  useEffect(()=>refresh(),[refresh,generation]);
   const selected=visit.selected;
   const isEntry=!!selected&&!selected.startsWith("participant:")&&!selected.startsWith("human:")&&!selected.startsWith("oi:field:")&&!selected.startsWith("relation:");
   useEffect(()=>{
-    if(!selected||!isEntry){setReading(undefined);return;}
-    let active=true;setReadBusy(true);setReading(undefined);setWatchError(undefined);
-    void sharedField<SharedFieldReading>(transport,{kind:"read",ref:selected}).then(r=>{if(active)setReading(r);}).catch(e=>{if(active)setReading({state:"unavailable",owner_operation:"shared-field.projection",detail:String(e instanceof Error?e.message:e)});}).finally(()=>{if(active)setReadBusy(false);});
-    return()=>{active=false;};
+    let active=true;let retry:ReturnType<typeof setTimeout>|undefined;
+    const observerRef=`explore:${crypto.randomUUID()}`;
+    let cursor:string|undefined;
+    setBusy(true);setReadBusy(Boolean(selected&&isEntry));setReading(undefined);setWatchError(undefined);
+    // A serial native observation: no overlapping snapshot/read requests can
+    // overwrite newer material. Reconnect rebuilds the caller's authorised
+    // rows, including withdrawal and producer liveness, before rendering.
+    const observe=async()=>{
+      try{
+        const next=await sharedField<{state?:string;cursor:string;snapshot:Snapshot;reading?:SharedFieldReading}>(transport,{kind:"observe",observer_ref:observerRef,...(selected&&isEntry?{ref:selected}:{})});
+        if(!active)return;
+        if(next.state==="observing"){retry=setTimeout(()=>void observe(),400);return;}
+        if(isUnavailable(next))throw new Error(next.detail);
+        if(cursor!==next.cursor){setSnapshot(next.snapshot);setReading(next.reading);cursor=next.cursor;}
+        setBusy(false);setReadBusy(false);
+        retry=setTimeout(()=>void observe(),500);
+      }catch(cause){
+        if(!active)return;
+        const unavailable={state:"unavailable" as const,owner_operation:"shared-field.observe",detail:String(cause instanceof Error?cause.message:cause)};
+        setSnapshot(unavailable);if(selected&&isEntry)setReading(unavailable);setBusy(false);setReadBusy(false);
+        cursor=undefined;
+        retry=setTimeout(()=>void observe(),2000);
+      }
+    };
+    void observe();
+    return()=>{active=false;if(retry)clearTimeout(retry);void sharedField(transport,{kind:"observe-stop",observer_ref:observerRef}).catch(()=>{});};
   },[selected,isEntry,transport,generation]);
   useEffect(()=>{if(!field.current)return;const observer=new ResizeObserver(entries=>{const {width,height}=entries[0].contentRect;if(width>0&&height>0)setExtent({width,height});});observer.observe(field.current);return()=>observer.disconnect();},[selected]);
 
@@ -125,19 +143,19 @@ export function ExploreSurface({binding,onOpenPresentation,onOpenExplore}:Explor
     const presentation=(projection?.representation as {kind:string;payload?:{presentation_ref?:string;revision?:number}}|undefined)?.kind==="oi.world-presentation/v1"?(projection!.representation as {payload:{presentation_ref:string;revision:number}}).payload:undefined;
     const expression=presentation?(projection!.representation as {payload:{regions:{bindings:{portable_renderer?:string;component_ref:string;props:{expression?:{expression_ref:string;expression_revision:number}}}[]}[]}}).payload.regions.flatMap(r=>r.bindings).find(b=>(b.portable_renderer??b.component_ref)==="oi.presentation/expression/v1")?.props.expression:undefined;
     setPromoteError(undefined);
-    try{await onOpenPresentation(reading.entry.ref,reading.entry.label,{world_ref:reading.entry.world_ref,field_ref:reading.field_ref??undefined,projection_ref:projection?.projection_ref,projection_revision:projection?.projection_revision,presentation_ref:presentation?.presentation_ref,presentation_revision:presentation?.revision,expression_ref:expression?.expression_ref,expression_revision:expression?.expression_revision});}
+    try{await onOpenPresentation(reading.entry.ref,entryLabel(reading.entry,reading.projections),{world_ref:reading.entry.world_ref,field_ref:reading.field_ref??undefined,projection_ref:projection?.projection_ref,projection_revision:projection?.projection_revision,presentation_ref:presentation?.presentation_ref,presentation_revision:presentation?.revision,expression_ref:expression?.expression_ref,expression_revision:expression?.expression_revision});}
     catch(e){setPromoteError(String(e instanceof Error?e.message:e));}
   };
 
   const selectedHit=selected?hits.find(hit=>hit.ref===selected)??(view.state==="available"?[...view.worlds.flatMap(w=>w.root?[w.root,...w.entries]:w.entries)].filter(e=>e.ref===selected).map(e=>({kind:"entry" as const,ref:e.ref,label:e.label,subject_kind:e.kind,world_ref:e.world_ref,world_label:e.world_ref}))[0]:undefined):undefined;
-  const subjectTitle=reading?.state==="hosted"?reading.entry.label:selectedHit?.label??selected;
+  const subjectTitle=reading?.state==="hosted"?entryLabel(reading.entry,reading.projections):subjectLabel(selectedHit,view.state==="available"?subjectLabel(view.beings.find(being=>being.ref===selected),subjectLabel(view.fields.find(field=>field.field_ref===selected),"Selected subject")):"Opening selected subject…");
   const availability=view.state==="available"?{label:view.target?.name??"field",healthy:view.status?.healthy!==false&&view.status?.transport?.state!=="unavailable"}:unavailable?{label:"unavailable",healthy:false}:{label:"reading…",healthy:true};
 
   const strip=<CanvasHUD className="explore-strip" aria-label="Explore">
     {!pinned&&<div className="explore-travel"><button type="button" aria-label="Back" title="Back" disabled={!canTravel(travel,-1)} onClick={()=>move(-1)}>←</button><button type="button" aria-label="Forward" title="Forward" disabled={!canTravel(travel,1)} onClick={()=>move(1)}>→</button></div>}
     {!pinned&&<form className="explore-aperture" role="search" onSubmit={e=>{e.preventDefault();commitQuery(query);}}><Glyph name="search" size={13}/><input type="search" autoCorrect="off" autoCapitalize="off" spellCheck={false} aria-label="Search the open field" placeholder="Search worlds, Beings, Things, fields…" value={query} onChange={e=>setQuery(e.target.value)} onBlur={()=>commitQuery(query)} onKeyDown={e=>{if(e.key==="Escape"){e.preventDefault();setQuery("");commitQuery("");}}}/></form>}
-    {selected&&<div className="explore-subject" data-selected-ref={selected}><span className="explore-subject-kind">{kindLabel(reading?.state==="hosted"?reading.entry.kind:selectedHit?.subject_kind??"subject")}</span><strong title={selected}>{subjectTitle}</strong>{!pinned&&<button type="button" aria-label="Return to the field" title="Return to the field" onClick={release}>×</button>}</div>}
-    <span className={`explore-availability${availability.healthy?"":" explore-availability--off"}`} data-availability={availability.healthy?"available":"unavailable"} title={unavailable?unavailable.detail:view.state==="available"?`${view.target?.uri}/${view.target?.database}`:undefined}><i aria-hidden="true"/>{availability.label}</span>
+    {selected&&<div className="explore-subject" data-selected-ref={selected}><span className="explore-subject-kind">{kindLabel(reading?.state==="hosted"?reading.entry.kind:selectedHit?.subject_kind??"subject")}</span><strong>{subjectTitle}</strong>{!pinned&&<button type="button" aria-label="Return to the field" title="Return to the field" onClick={release}>×</button>}</div>}
+    <span className={`explore-availability${availability.healthy?"":" explore-availability--off"}`} data-availability={availability.healthy?"available":"unavailable"}><i aria-hidden="true"/>{availability.label}</span>
     {selected&&isEntry&&<div className="explore-depths" role="group" aria-label="Contextual depth">
       <button type="button" aria-pressed={!!depth.relations} onClick={()=>setDepth({relations:!depth.relations})}>Relations</button>
       <button type="button" aria-pressed={!!depth.source} onClick={()=>setDepth({source:!depth.source})}>Source</button>
@@ -149,11 +167,11 @@ export function ExploreSurface({binding,onOpenPresentation,onOpenExplore}:Explor
   </CanvasHUD>;
 
   return <section className="explore-surface" aria-label={pinned?"Projected subject":"Explore"} data-explore-mode={pinned?"presentation":"explore"} data-selected-ref={selected??""} data-travel-index={travel.index} data-travel-length={travel.visits.length} aria-busy={busy||readBusy}>
-    {(watchError||promoteError||storageError)&&<p role="alert">{watchError??promoteError??storageError}</p>}
+    {(watchError||promoteError||storageError)&&<div role="alert"><p>The requested change could not be completed.</p><details><summary>Read details</summary><p>{watchError??promoteError??storageError}</p></details></div>}
     {snapshot&&!isUnavailable(snapshot)&&!!snapshot.relation_errors?.length&&<p role="status" className="explore-muted" data-relations-degraded={snapshot.relation_errors.length}>{snapshot.relation_errors.length} shared relation{snapshot.relation_errors.length===1?" is":"s are"} unavailable because its source record or endpoint could not be validated. Valid subjects remain available; refresh after the source is repaired.</p>}
     {!selected&&<>
       {strip}
-      {unavailable&&<div className="explore-unavailable-field" data-field-state="unavailable"><p role="status">The open field is unavailable — {unavailable.detail}</p><p className="explore-muted">Local work is untouched. Watched fields and local Projections stay where they are; the field returns when a hosting target is bound and reachable.</p></div>}
+      {unavailable&&<div className="explore-unavailable-field" data-field-state="unavailable"><p role="status">The open field is unavailable.</p><details><summary>Connection details</summary><p>{unavailable.detail}</p></details><p className="explore-muted">Local work is untouched. Watched fields and local Projections stay where they are; the field returns when a hosting target is bound and reachable.</p></div>}
       {busy&&!snapshot&&<Loading label="Reading the open field…" scope="inline"/>}
       {view.state==="available"&&<div className="explore-field" data-field-state="available" data-entries={view.counts.entries} data-worlds={view.counts.worlds} data-beings={view.counts.beings}>
         <div className="explore-constellation" ref={field}>
@@ -169,42 +187,62 @@ export function ExploreSurface({binding,onOpenPresentation,onOpenExplore}:Explor
         </ol>
       </div>}
     </>}
-    {selected&&isEntry&&(reading?<><PresentationBody reading={reading} relations={view.state==="available"?view.relations:[]} entries={snapshot&&!isUnavailable(snapshot)?snapshot.entries:[]} activityLiveness={snapshot&&!isUnavailable(snapshot)?((snapshot as unknown as {activity_liveness?:unknown[]}).activity_liveness??[]):[]} onOpenRef={select} depth={depth} onDepth={setDepth} watch={{available:standing.available,watching:standing.watching,reason:standing.reason,busy:watchBusy,error:watchError,onToggle:()=>void toggleWatch()}} strip={strip}/>{reading.state==="hosted"&&<ContributionPanel key={`${reading.entry.ref}@${(reading.projections.find(projection=>projection.projection_ref===(reading.entry.meta?.projection_ref as string|undefined))??reading.projections[0])?.projection_revision??0}`} transport={transport} reading={reading} onChanged={()=>setGeneration(n=>n+1)}/>}</>:<section className="presentation-body" data-presentation-state="reading">{strip}<Loading label="Reading the projected subject…" scope="inline"/></section>)}
+    {selected&&isEntry&&(reading?<><PresentationBody reading={reading} relations={view.state==="available"?view.relations:[]} entries={snapshot&&!isUnavailable(snapshot)?snapshot.entries:[]} activityLiveness={snapshot&&!isUnavailable(snapshot)?((snapshot as unknown as {activity_liveness?:unknown[]}).activity_liveness??[]):[]} onOpenRef={select} depth={depth} onDepth={setDepth} watch={{available:standing.available,watching:standing.watching,reason:standing.reason,busy:watchBusy,error:watchError,onToggle:()=>void toggleWatch()}} strip={strip}/>{reading.state==="hosted"&&<ContributionPanel key={`${reading.entry.ref}@${(reading.projections.find(projection=>projection.projection_ref===(reading.entry.meta?.projection_ref as string|undefined))??reading.projections[0])?.projection_revision??0}`} transport={transport} reading={reading} subjects={snapshot&&!isUnavailable(snapshot)?snapshot.entries:[]} onChanged={()=>setGeneration(n=>n+1)}/>}</>:<section className="presentation-body" data-presentation-state="reading">{strip}<Loading label="Reading the projected subject…" scope="inline"/></section>)}
     {selected&&!isEntry&&<section className="presentation-body" data-presentation-state="local">{strip}{selected.startsWith("oi:field:")?<FieldBody field_ref={selected} view={view} snapshot={snapshot} onOpenRef={select}/>:selected.startsWith("relation:")?<RelationBody ref_={selected} view={view}/>:snapshot&&!isUnavailable(snapshot)?<BeingEncounter participantRef={selected} snapshot={snapshot} onOpenRef={select}/>:<p role="status" className="explore-absent">The projected Being is unavailable.</p>}</section>}
-    {selected&&!isEntry&&snapshot&&!isUnavailable(snapshot)&&(()=>{const being=view.state==="available"?view.beings.find(b=>b.ref===selected):undefined;const relation=view.state==="available"?view.relations.find(r=>r.relation_ref===selected):undefined;const field_ref=selected.startsWith("oi:field:")?selected:being?.field_ref??snapshot.relation_fields[selected];return field_ref?<ContextContributionPanel key={selected} transport={transport} snapshot={snapshot} target={{kind:selected.startsWith("oi:field:")?"oi.shared-field":being?"oi.participant":"oi.relation",ref:selected,label:being?.label??relation?.relation??selected,field_ref}} onChanged={()=>setGeneration(n=>n+1)}/>:null;})()}
+    {selected&&!isEntry&&snapshot&&!isUnavailable(snapshot)&&(()=>{const being=view.state==="available"?view.beings.find(b=>b.ref===selected):undefined;const relation=view.state==="available"?view.relations.find(r=>r.relation_ref===selected):undefined;const field_ref=selected.startsWith("oi:field:")?selected:being?.field_ref??snapshot.relation_fields[selected];return field_ref?<ContextContributionPanel key={selected} transport={transport} snapshot={snapshot} target={{kind:selected.startsWith("oi:field:")?"oi.shared-field":being?"oi.participant":"oi.relation",ref:selected,label:being?.label??(relation?relationLabel(relation.relation):subjectLabel(snapshot.fields.find(field=>field.field_ref===selected),"Shared undertaking")),field_ref}} onChanged={()=>setGeneration(n=>n+1)}/>:null;})()}
   </section>;
 }
 
-function RelationBody({ref_,view}:{ref_:string;view:FieldView}) {const relation=view.state==="available"?view.relations.find(row=>row.relation_ref===ref_):undefined;return relation?<article className="world-presentation" data-relation-ref={ref_}><header className="world-presentation__masthead"><div><div className="world-component__eyebrow">Relation</div><h1>{relation.relation}</h1></div><div className="world-presentation__revision">{ref_}</div></header><p><code>{relation.from}</code> → <code>{relation.to}</code></p></article>:<p role="status">The field holds no relation <code>{ref_}</code>.</p>}
+function RelationBody({ref_,view}:{ref_:string;view:FieldView}) {
+ const relation=view.state==="available"?view.relations.find(row=>row.relation_ref===ref_):undefined;
+ if(!relation)return <p role="status">This relation is unavailable in the current field.</p>;
+ const subjects=view.state==="available"?view.worlds.flatMap(world=>[...(world.root?[world.root]:[]),...world.entries]):[];
+ const name=(ref:string)=>subjectLabel(subjects.find(subject=>subject.ref===ref),"Unavailable subject");
+ return <article className="world-presentation" data-relation-ref={ref_}><header className="world-presentation__masthead"><h1>{relationLabel(relation.relation)}</h1></header><p>{name(relation.from)} → {name(relation.to)}</p><details><summary>Source details</summary><pre>{JSON.stringify(relation,null,2)}</pre></details></article>;
+}
 /** A SharedField as an ordinary Surface body: identity, standing, its members, its entries, and the caller's own membership. */
 type FieldNow={field_ref:string;revision:number;workcells:{workcell_ref:string;root:{now_ref:string;world_ref:string;revision:string;projected_by:string}|null;children:{now_ref:string;parent_now_ref:string;state:string;purpose?:string;projected_by:string;under_root:boolean}[]}[]};
 /** The shared NOW this field stands in: each participating Workcell with its projected root and child NOWs, verbatim from the hosted FieldNow. */
-function FieldNowRegion({reading}:{reading:FieldNow|null}) {
+function FieldNowRegion({reading,subjects}:{reading:FieldNow|null;subjects:{ref:string;label:string;aliases?:string[]}[]}) {
   if(!reading)return <section className="world-region" data-region-role="field-now" data-field-now="none"><div className="world-region__label">Shared NOW</div><p className="explore-muted">No participant has projected a NOW into this field.</p></section>;
-  return <section className="world-region" data-region-role="field-now" data-field-now-revision={reading.revision}><div className="world-region__label">Shared NOW · revision {reading.revision}</div><div className="world-region__components">
-    {reading.workcells.map(cell=><article key={cell.workcell_ref} className="world-component world-component--text" data-workcell-ref={cell.workcell_ref}>
-      <div className="world-component__eyebrow">{cell.workcell_ref}</div>
+  return <section className="world-region" data-region-role="field-now" data-field-now-revision={reading.revision}><div className="world-region__label">Shared NOW</div><div className="world-region__components">
+    {reading.workcells.map((cell,index)=><article key={cell.workcell_ref} className="world-component world-component--text" data-workcell-ref={cell.workcell_ref}>
+      <h3>{subjectLabel(subjects.find(subject=>subject.ref===cell.workcell_ref||subject.aliases?.includes(cell.workcell_ref)),`Participating workcell ${index+1}`)}</h3>
       <dl className="world-component__meta">
-        <div><dt>Workcell NOW</dt><dd>{cell.root?<><code>{cell.root.now_ref}</code> · {cell.root.world_ref} · by {cell.root.projected_by}</>:"not projected into this field"}</dd></div>
-        {cell.children.map(child=><div key={child.now_ref} data-now-ref={child.now_ref}><dt>{child.state}</dt><dd>{child.purpose??<code>{child.now_ref}</code>}<br/><small><code>{child.now_ref}</code> · by {child.projected_by}{child.under_root?"":" · its Workcell NOW is not projected here"}</small></dd></div>)}
+        <div><dt>Workcell NOW</dt><dd>{cell.root?"Shared by this workcell":"not shared in this field"}</dd></div>
+        {cell.children.map(child=><div key={child.now_ref} data-now-ref={child.now_ref}><dt>{child.state}</dt><dd>{child.purpose??"Unnamed active concern"}{child.under_root?"":" · its workcell context is unavailable"}</dd></div>)}
       </dl>
     </article>)}
-  </div></section>;
+  </div><details><summary>Source details</summary><pre>{JSON.stringify(reading,null,2)}</pre></details></section>;
 }
 
 function FieldBody({field_ref,view,snapshot,onOpenRef}:{field_ref:string;view:FieldView;snapshot?:Snapshot;onOpenRef:(ref:string)=>void}) {
+  const {transport}=useKernel();
+  const [presenceBusy,setPresenceBusy]=useState(false);
+  const [presenceError,setPresenceError]=useState<string>();
   const field=view.state==="available"?view.fields.find(f=>f.field_ref===field_ref):undefined;
-  if(!field||!snapshot||isUnavailable(snapshot))return <p role="status" className="explore-absent">The field <code>{field_ref}</code> is not in the caller-visible reading.</p>;
+  if(!field||!snapshot||isUnavailable(snapshot))return <p role="status" className="explore-absent">This undertaking is unavailable in the current shared field.</p>;
   const members=snapshot.participants.filter(p=>p.field_ref===field_ref);
   const entries=snapshot.entries.filter(e=>snapshot.entry_fields?.[e.ref]===field_ref);
   const mine=snapshot.my_authority.filter(a=>a.field_ref===field_ref&&!a.revoked);
+  const participant=mine.find(a=>a.participant_ref)?.participant_ref;
+  const present=!!participant&&((snapshot as unknown as {presence?:{field_ref:string;participant_ref:string}[]}).presence??[]).some(p=>p.field_ref===field_ref&&p.participant_ref===participant);
+  const enterOrLeave=async()=>{
+    if(!participant)return;setPresenceBusy(true);setPresenceError(undefined);
+    try{await sharedField(transport,{kind:present?"leave":"enter",field_ref,participant_ref:participant});}
+    catch(cause){setPresenceError(String(cause instanceof Error?cause.message:cause));}
+    finally{setPresenceBusy(false);}
+  };
   return <article className="world-presentation world-presentation--field" data-field-ref={field_ref} data-field-visibility={field.visibility} data-membership={mine.length?mine.map(a=>a.role).join(","):"none"}>
-    <header className="world-presentation__masthead"><div><div className="world-component__eyebrow">SharedField · {field.kind} · {field.visibility}</div><h1>{field.title??field_ref}</h1></div><div className="world-presentation__revision">{mine.length?`you: ${mine.map(a=>`${a.participant_ref} (${a.role})`).join(", ")}`:"you: no membership"}</div></header>
-    <SharedStagePanel field_ref={field_ref} entries={entries} authority={mine}/>
-    <FieldNowRegion reading={fieldNowReading(snapshot,field_ref) as FieldNow|null}/>
-    <section className="world-region" data-region-role="members"><div className="world-region__label">Participants · {members.length}</div><div className="world-region__components"><div className="world-component__collection">{members.map(p=><button type="button" key={p.participant_ref} onClick={()=>onOpenRef(p.participant_ref)}><strong>{p.presentation?.chosen_name??p.participant_ref}</strong><span>{p.identity.kind} · {p.identity.ref}</span></button>)}</div></div></section>
-    <section className="world-region" data-region-role="relations"><div className="world-region__label">Relations · {view.relations.filter(r=>snapshot.relation_fields[r.relation_ref??""]===field_ref).length}</div><div className="world-region__components"><div className="world-component__collection">{view.relations.filter(r=>snapshot.relation_fields[r.relation_ref??""]===field_ref).map(r=><button type="button" key={r.relation_ref} onClick={()=>r.relation_ref&&onOpenRef(r.relation_ref)}><strong>{r.relation}</strong><span>{r.from} → {r.to}</span></button>)}</div></div></section>
-    <section className="world-region" data-region-role="entries"><div className="world-region__label">Projected subjects · {entries.length}</div><div className="world-region__components"><div className="world-component__collection">{entries.map(e=><button type="button" key={e.ref} onClick={()=>onOpenRef(e.ref)}><strong>{e.label}</strong><span>{kindLabel(e.kind)}</span></button>)}</div></div></section>
+    <header className="world-presentation__masthead"><div><div className="world-component__eyebrow">SharedField · {field.kind} · {field.visibility}</div><h1>{subjectLabel(field,"Unnamed shared undertaking")}</h1></div><div className="world-presentation__revision">{mine.length?`you: ${mine.map(a=>a.role).join(", ")}`:"you: no membership"}</div></header>
+    {participant&&<p><button type="button" disabled={presenceBusy} aria-pressed={present} onClick={()=>void enterOrLeave()}>{present?"Leave shared NOW":"Enter shared NOW"}</button> {present?"You are present in this undertaking.":"Enter deliberately to participate."}</p>}
+    {presenceError&&<p role="alert">{presenceError}</p>}
+    <SharedStagePanel field_ref={field_ref} entries={entries} authority={mine} liveReading={{schema:"oi.shared-field.stage-reading/v1",field_ref,stage:snapshot.stages?.find(stage=>stage.field_ref===field_ref)??null,my_follow:(()=>{const follow=snapshot.my_stage_follows?.find(follow=>follow.field_ref===field_ref);return follow?{...follow,following:true}:null;})(),presence:snapshot.presence?.filter(body=>body.field_ref===field_ref)??[]}}/>
+    <FieldNowRegion reading={fieldNowReading(snapshot,field_ref) as FieldNow|null} subjects={snapshot.entries}/>
+    <section className="world-region" data-region-role="members"><div className="world-region__label">Participants · {members.length}</div><div className="world-region__components"><div className="world-component__collection">{members.map(p=><button type="button" key={p.participant_ref} onClick={()=>onOpenRef(p.participant_ref)}><strong>{subjectLabel(p.presentation,`Unnamed participant ${members.indexOf(p)+1}`)}</strong><span>{p.identity.kind}</span></button>)}</div></div></section>
+    <section className="world-region" data-region-role="relations"><div className="world-region__label">Relations · {view.relations.filter(r=>snapshot.relation_fields[r.relation_ref??""]===field_ref).length}</div><div className="world-region__components"><div className="world-component__collection">{view.relations.filter(r=>snapshot.relation_fields[r.relation_ref??""]===field_ref).map(r=><button type="button" key={r.relation_ref} onClick={()=>r.relation_ref&&onOpenRef(r.relation_ref)}><strong>{relationLabel(r.relation)}</strong><span>{subjectLabel(entries.find(e=>e.ref===r.from),"Unavailable subject")} → {subjectLabel(entries.find(e=>e.ref===r.to),"Unavailable subject")}</span></button>)}</div></div></section>
+    <section className="world-region" data-region-role="entries"><div className="world-region__label">Projected subjects · {entries.length}</div><div className="world-region__components"><div className="world-component__collection">{entries.map(e=><button type="button" key={e.ref} onClick={()=>onOpenRef(e.ref)}><strong>{entryLabel(e,snapshot.projections)}</strong><span>{kindLabel(e.kind)}</span></button>)}</div></div></section>
+    <details><summary>Source and membership details</summary><pre>{JSON.stringify({field,membership:mine,participants:members,entries},null,2)}</pre></details>
     <p className="explore-muted">Join and Request access are not exposed by this desktop's field client yet; membership shown is the client's own authority reading.</p>
   </article>;
 }

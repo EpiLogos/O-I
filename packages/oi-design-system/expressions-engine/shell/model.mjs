@@ -1,8 +1,18 @@
+import { validateResearchMaterial } from "./researchMaterial.mjs";
+import { validateBlueprint } from "./blueprintGeometry.mjs";
 import { globalPath, POINTER_PATHS } from "./sharedSettings.mjs";
 import { validateAutomationLinks } from "./automationLinks.mjs";
 import { validateWorkspace, defaultWorkspace } from "./workspacePreferences.mjs";
 import { validateTracks } from "./propertyTracks.mjs";
-const DEFAULT_ENGINE_SETTINGS = { paletteSource: "custom", grainProfile: true, backgroundMode: "solid", resonatorMode: "resonator", focusOrder: "listed", dotShape: "circle", fontFamily: "system-ui, -apple-system, sans-serif", fontWeight: 900, resonanceEnabled: true, morphEnabled: false, trajectory: "toroidalHopf", driveShape: "sine", autoOscillate: true, relationalEnabled: false, relationalMode: "orbital", pointerMode: "repel", pointerClick: "pulse", pointerClickStrength: 2.2, pointerClickRadius: 0.45, colorMode: "linearGradient", colorEnabled: true, mediumPlane: "vertical", autoSweep: false, sweepDirection: "ascent" };
+const ROLE_NAME = /^[A-Za-z0-9_.-]{1,64}$/;
+function validateRoleSlot(value) {
+  if (value.role !== void 0 && !(typeof value.role === "string" && ROLE_NAME.test(value.role))) throw new Error("Invalid role name.");
+  if (value.overrides !== void 0) {
+    const o = value.overrides;
+    if (!o || typeof o !== "object" || Array.isArray(o) || Object.keys(o).length > 64 || ["id", "role", "overrides"].some((k) => k in o)) throw new Error("Invalid role overrides.");
+  }
+}
+const DEFAULT_ENGINE_SETTINGS = { paletteSource: "custom", grainProfile: true, backgroundMode: "solid", resonatorMode: "resonator", focusOrder: "listed", dotShape: "circle", autoFitSizes: true, mediumEnabled: false, collisionEnabled: false, collisionMode: "obstacle", pairwiseEnabled: false, fontFamily: "system-ui, -apple-system, sans-serif", fontWeight: 900, resonanceEnabled: true, morphEnabled: false, trajectory: "toroidalHopf", driveShape: "sine", autoOscillate: true, relationalEnabled: false, relationalMode: "orbital", pointerMode: "repel", pointerClick: "pulse", pointerClickStrength: 2.2, pointerClickRadius: 0.45, colorMode: "linearGradient", colorEnabled: true, mediumPlane: "vertical", mediumDimension: "2D", autoSweep: false, sweepDirection: "ascent" };
 const clone = (v) => typeof structuredClone === "function" ? structuredClone(v) : JSON.parse(JSON.stringify(v));
 const uid = (prefix = "id") => prefix + "-" + (globalThis.crypto?.randomUUID?.() ?? Math.random().toString(36).slice(2, 12));
 const clamp = (x, a, b) => Math.max(a, Math.min(b, x));
@@ -176,6 +186,51 @@ function fieldStudies() {
   });
   return { schema: "oi.journey", version: 1, id: "field-studies", name: "Field studies", description: "Eight states of a living material. An expression from ink to atmosphere.", loop: true, scenes, updatedAt: (/* @__PURE__ */ new Date()).toISOString() };
 }
+function oiMark() {
+  const mark = () => {
+    const s = blankScene();
+    const o = entity("O \u2014 opening", "O", { x: -0.22, y: 0.03, z: 0 });
+    o.id = "opening-o";
+    o.size = { x: 1.43, y: 1.63 };
+    o.rotation = -5;
+    o.share = 4;
+    const ii = entity("I \u2014 interval", "I", { x: 0.66, y: 0.015, z: 0 });
+    ii.id = "opening-i";
+    ii.size = { x: 0.28, y: 1.62 };
+    ii.share = 1;
+    s.entities = [o, ii];
+    return s;
+  };
+  const day = mark();
+  day.id = "mark-day";
+  day.name = "Day";
+  day.character = "The mark in ink on paper \u2014 the base O:I image, light.";
+  day.duration = 16;
+  const night = mark();
+  night.id = "mark-night";
+  night.name = "Night";
+  night.character = "The same mark, light collected in the dark \u2014 the base O:I image, dark.";
+  night.duration = 16;
+  night.field.background = "#1d231f";
+  night.field.palette = ["#eee9d9", "#a9b399"];
+  Object.assign(night.field.params, { opacity: 0.9, densityPhase: 1.9 });
+  return { schema: "oi.journey", version: 1, id: "oi-mark", name: "O:I \u2014 the mark", description: "One expression, two scenes: the base O:I image in day and night.", loop: true, scenes: [day, night], updatedAt: (/* @__PURE__ */ new Date()).toISOString() };
+}
+function rethemeMark(journey, theme) {
+  if (journey?.id !== "oi-mark" || !theme) return false;
+  const hex = (v) => typeof v === "string" && /^#[0-9a-fA-F]{6}$/.test(v);
+  if (![theme.ground, theme.ink, theme.inverseGround, theme.inverseInk].every(hex)) return false;
+  for (const s of journey.scenes) {
+    if (s.id === "mark-day") {
+      s.field.background = theme.ground;
+      s.field.palette = [theme.ink, theme.ink];
+    } else if (s.id === "mark-night") {
+      s.field.background = theme.inverseGround;
+      s.field.palette = [theme.inverseInk, theme.inverseInk];
+    }
+  }
+  return true;
+}
 function chakraEntities() {
   return ["Root", "Sacral", "Solar", "Heart", "Throat", "Brow", "Crown"].map((name, i) => {
     const e = entity(name, ["\u25B3", "\u25EF", "\u25B3", "\u2727", "\u25EF", "\u221E", "\u2727"][i], { x: 0.18, y: -0.82 + i * 0.274, z: 0 });
@@ -278,19 +333,36 @@ function validateJourney(value) {
       if (!e.position || !Object.values(e.position).every((n) => finite(n, -100, 100)) || !["x", "y", "z"].every((k) => finite(e.position[k], -100, 100)) || !e.size || !finite(e.size.x, 1e-3, 100) || !finite(e.size.y, 1e-3, 100) || !finite(e.rotation, -36e3, 36e3) || !finite(e.share, 0, 1e3) || !color(e.tint) || !finite(e.tintWeight, 0, 1) || typeof e.locked !== "boolean") throw new Error("Invalid entity transform or appearance.");
       if (!e.force || !["none", "attract", "repel", "vortex"].includes(e.force.kind) || !finite(e.force.strength, -1e3, 1e3) || !finite(e.force.radius, 1e-3, 125) || !finite(e.force.spin, -1e3, 1e3) || !(e.station === null || Number.isInteger(e.station) && e.station >= 0 && e.station < 7)) throw new Error("Invalid entity influence.");
       validateSource(e.source);
+      validateRoleSlot(e);
       if (!e.sequence || e.sequence.sourcesVersion !== void 0 && e.sequence.sourcesVersion !== 1 || typeof e.sequence.enabled !== "boolean" || !["seconds", "morph"].includes(e.sequence.clock) || !Array.isArray(e.sequence.steps) || e.sequence.steps.length > 32) throw new Error("Invalid sequence.");
+      for (const l of e.layers ?? []) if (typeof l.id !== "string" || !l.id || !finite(l.z, -100, 100) || l.scale !== void 0 && !finite(l.scale, 0.01, 10) || typeof l.text !== "string") throw new Error("Invalid layer.");
+      const baseLayerSources = new Map((e.layers ?? []).map((l) => [l.id, JSON.stringify(l.source)]));
+      for (const l of e.layers ?? []) validateSource(l.source);
+      const stateLayerIds = /* @__PURE__ */ new Set();
       for (const step of e.sequence.steps) {
+        if (step.layers !== void 0) {
+          if (!Array.isArray(step.layers) || step.layers.length > 6) throw new Error("Invalid state layers.");
+          const layerIds = /* @__PURE__ */ new Set();
+          for (const l of step.layers) {
+            if (!safeId(l.id) || baseLayerSources.has(l.id) && baseLayerSources.get(l.id) !== JSON.stringify(l.source) || (layerIds.has(l.id) || stateLayerIds.has(l.id)) || !finite(l.z, -100, 100) || l.scale !== void 0 && !finite(l.scale, 0.01, 10) || !str(l.text, 120)) throw new Error("Invalid state layer.");
+            layerIds.add(l.id);
+            stateLayerIds.add(l.id);
+            validateSource(l.source);
+          }
+        }
         validateSource(step.source);
         if (step.name !== void 0 && !str(step.name, 500)) throw new Error("Invalid state name");
         if (step.objectState) {
           const v = step.objectState;
-          if (!v.size || !finite(v.size.x, 1e-3, 100) || !finite(v.size.y, 1e-3, 100) || !finite(v.rotation, -36e3, 36e3) || v.scale !== void 0 && !finite(v.scale, 1e-3, 1e3) || !color(v.tint) || !finite(v.tintWeight, 0, 1) || !v.force || !["none", "attract", "repel", "vortex"].includes(v.force.kind) || !finite(v.force.radius, 1e-3, 125) || !finite(v.force.strength, -1e3, 1e3) || !finite(v.force.spin, -1e3, 1e3)) throw new Error("Invalid object state");
+          if (v.normalized !== void 0 && typeof v.normalized !== "boolean" || !v.size || !finite(v.size.x, 1e-3, 100) || !finite(v.size.y, 1e-3, 100) || !finite(v.rotation, -36e3, 36e3) || v.scale !== void 0 && !finite(v.scale, 1e-3, 1e3) || !color(v.tint) || !finite(v.tintWeight, 0, 1) || !v.force || !["none", "attract", "repel", "vortex"].includes(v.force.kind) || !finite(v.force.radius, 1e-3, 125) || !finite(v.force.strength, -1e3, 1e3) || !finite(v.force.spin, -1e3, 1e3)) throw new Error("Invalid object state");
         }
         if (!safeId(step.id) || !str(step.text, 120) || !["text", "ring", "disc", "square", "triangle", "yantra", "cymatic"].includes(step.shape) || !finite(step.hold, 0, 3600) || !finite(step.transition, 0, 3600) || step.position !== null && (!step.position || !["x", "y", "z"].every((k) => finite(step.position[k], -100, 100)))) throw new Error("Invalid sequence step.");
       }
     }
+    if (s.research !== void 0) validateResearchMaterial(s.research, eids);
     for (const t of s.text) {
       if (!safeId(t.id) || !str(t.kicker, 300) || !str(t.title, 300) || !str(t.italic, 300) || !str(t.body) || !finite(t.x, -0.5, 1.5) || !finite(t.y, -0.5, 1.5) || !finite(t.width, 60, 1e3) || !finite(t.size, 14, 150) || !["left", "center", "right"].includes(t.align) || typeof t.visible !== "boolean") throw new Error("Invalid page text.");
+      validateRoleSlot({ role: t.role });
     }
     if (s.semanticField) {
       const sf = s.semanticField;
@@ -322,6 +394,7 @@ function validateJourney(value) {
       if (d.kind === "sweep" && ([d.glideS, d.dwellS].some((v) => v !== void 0 && !finite(v, 0, 3600)) || d.direction !== void 0 && !["ascent", "descent", "pingpong"].includes(d.direction))) throw new Error("Invalid resonance sweep.");
     }
     if (!s.composition || !["XY", "XZ", "YZ"].includes(s.composition.plane) || !["parallel", "travelling"].includes(s.composition.focus) || !finite(s.composition.focusDuration, 0.01, 3600) || !["manual", "focus", "automation"].includes(s.composition.frequencyDriver)) throw new Error("Invalid composition.");
+    if (s.composition.blueprint) validateBlueprint(s.composition.blueprint);
     if (!s.morph || !["theta", "product", "sum", "beat"].includes(s.morph.law) || !finite(s.morph.thetaRate, -100, 100) || !finite(s.morph.phiRate, -100, 100) || !finite(s.morph.thetaOffset, -1e3, 1e3) || !finite(s.morph.phiOffset, -1e3, 1e3) || !finite(s.morph.depth, -10, 10) || !finite(s.morph.dwell, 0, 0.99)) throw new Error("Invalid morph clock.");
     validateAutomationLinks(s.automation);
     for (const a of s.automation) {
@@ -339,19 +412,93 @@ function validateJourney(value) {
   }
   return clone(j);
 }
+const COLLECTION_MANIFEST_SCHEMA = "oi.legacy-collections/v1";
+const COLLECTION_PROVENANCE_SCHEMA = "oi.collection-provenance/v1";
+function validateCollectionManifest(value) {
+  if (!value || typeof value !== "object" || Array.isArray(value)) throw new Error("Choose a collection manifest JSON document.");
+  const inspect = (v, depth = 0) => {
+    if (depth > 40) throw new Error("Document nesting is too deep.");
+    if (typeof v === "number" && !Number.isFinite(v)) throw new Error("Non-finite value.");
+    if (v && typeof v === "object") for (const [k, x] of Object.entries(v)) {
+      if (["__proto__", "constructor", "prototype"].includes(k)) throw new Error("Unsafe document key.");
+      inspect(x, depth + 1);
+    }
+  };
+  inspect(value);
+  const safeId = (s) => typeof s === "string" && /^[a-zA-Z0-9_.:-]{1,160}$/.test(s);
+  const str = (s, max = 5e3) => typeof s === "string" && s.length <= max;
+  const m = clone(value);
+  if (m.schema !== COLLECTION_MANIFEST_SCHEMA) throw new Error(`This is not a collection manifest this build understands (expected ${COLLECTION_MANIFEST_SCHEMA}, got ${String(m.schema)}).`);
+  const entry = (e, where) => {
+    if (!e || typeof e !== "object" || Array.isArray(e)) throw new Error(`Manifest ${where} entry is not an object.`);
+    const t = e;
+    if (!safeId(t.id)) throw new Error(`Manifest ${where} entry has an invalid id.`);
+    if (typeof t.file !== "string" || !t.file || t.file.startsWith("/") || t.file.split("/").some((seg) => seg === "..")) throw new Error(`Manifest entry ${t.id} names an unsafe member path.`);
+    if (t.name !== void 0 && !str(t.name, 300)) throw new Error(`Manifest entry ${t.id} has an invalid name.`);
+    if (t.group !== void 0 && !str(t.group, 120)) throw new Error(`Manifest entry ${t.id} has an invalid group.`);
+    return { id: t.id, name: typeof t.name === "string" && t.name ? t.name : t.id, file: t.file, ...t.group !== void 0 ? { group: t.group } : {} };
+  };
+  for (const key of ["featured", "starters"]) {
+    const list = m[key];
+    if (list === void 0) {
+      m[key] = [];
+      continue;
+    }
+    if (!Array.isArray(list)) throw new Error(`Manifest ${key} must be a list of member entries.`);
+    m[key] = list.map((e) => entry(e, key));
+  }
+  const ids = /* @__PURE__ */ new Set();
+  for (const e of [...m.featured, ...m.starters]) {
+    if (ids.has(e.id)) throw new Error(`Manifest names "${e.id}" more than once; membership would be ambiguous.`);
+    ids.add(e.id);
+  }
+  if (m.exported_at !== void 0 && !str(m.exported_at, 60)) throw new Error("Manifest exported_at is invalid.");
+  if (m.source !== void 0 && !str(m.source, 2e3)) throw new Error("Manifest source is invalid.");
+  if (m.retained_non_legacy !== void 0) {
+    if (!Array.isArray(m.retained_non_legacy)) throw new Error("Manifest retained_non_legacy must be a list.");
+    for (const r of m.retained_non_legacy) {
+      if (!r || typeof r !== "object" || !safeId(r.id) || !str(r.reason, 500)) throw new Error("Manifest retained_non_legacy entry is invalid.");
+    }
+  }
+  if (m.provenance !== void 0) {
+    if (!m.provenance || typeof m.provenance !== "object" || Array.isArray(m.provenance)) throw new Error("Collection provenance must be an object envelope.");
+    const p = m.provenance;
+    if (p.schema === COLLECTION_PROVENANCE_SCHEMA) {
+      for (const k of ["register", "root", "ground", "exported_at"]) {
+        const v = p[k];
+        if (typeof v !== "string" || !v) throw new Error(`Provenance envelope is missing its ${k}.`);
+      }
+      if (!Array.isArray(p.paths) || !p.paths.length || !p.paths.every((x) => typeof x === "string")) throw new Error("Provenance envelope is missing its paths.");
+      const g = p.generator;
+      if (!g || typeof g !== "object" || typeof g.name !== "string" || !g.name || typeof g.revision !== "string" || !g.revision) throw new Error("Provenance envelope is missing its generator and revision.");
+    }
+  }
+  return clone(m);
+}
+function collectionMembership(m) {
+  return [...(m.featured ?? []).map((e) => ({ ...e, group: e.group ?? "Featured" })), ...(m.starters ?? []).map((e) => ({ ...e, group: e.group ?? "Starters" }))];
+}
 export {
+  COLLECTION_MANIFEST_SCHEMA,
+  COLLECTION_PROVENANCE_SCHEMA,
   DEFAULT_ENGINE_SETTINGS,
   DEFAULT_PARAMS,
+  ROLE_NAME,
   blankJourney,
   blankScene,
   chakraEntities,
   clamp,
   clone,
+  collectionMembership,
   entity,
   fieldStudies,
+  oiMark,
   pin,
+  rethemeMark,
   sevenCentres,
   smallLanguage,
   uid,
-  validateJourney
+  validateCollectionManifest,
+  validateJourney,
+  validateRoleSlot
 };

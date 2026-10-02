@@ -110,6 +110,7 @@ jobs:
           OI_ESSAY_REPO: ${{ github.workspace }}/.publication-sources/Antykathera-Essay-Work
         run: |
           node build-return-of-zero-publications.mjs
+          node public-excerpt-selection.native.mjs
           printf 'OI_LIBRARY_PUBLICATIONS=%s\n' "$(node -e "const fs=require('fs');process.stdout.write(JSON.stringify(JSON.parse(fs.readFileSync('publications/return-of-zero-curated/inputs.json','utf8'))))")" >> "$GITHUB_ENV"
       - name: Build the admitted public reading edition for deployment
         # The deployment consumes only the curated revision-pinned native

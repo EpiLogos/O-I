@@ -22,6 +22,10 @@ use tauri::{AppHandle, Emitter, Manager};
 use tauri_plugin_dialog::{DialogExt, MessageDialogButtons};
 
 pub(crate) struct KernelHost(pub(crate) Mutex<Kernel>);
+#[cfg(unix)]
+struct NativeOwnerServer {
+    _server: Mutex<oi_cradle_kernel::expression_transport::Server>,
+}
 
 /// A bounded wake-up hint. Exact event payloads are pulled through native
 /// generation-qualified replay, rather than copied into every webview IPC.
@@ -32,7 +36,11 @@ pub(crate) struct KernelEventInvalidation {
 }
 
 pub(crate) fn kernel_event_hint(receipt: &oi_cradle_kernel::events::KernelEventReceipt) -> KernelEventInvalidation {
-    KernelEventInvalidation { schema: "oi.kernel-event-invalidation/v1", seq: receipt.seq }
+    kernel_event_hint_sequence(receipt.seq)
+}
+
+fn kernel_event_hint_sequence(seq: u64) -> KernelEventInvalidation {
+    KernelEventInvalidation { schema: "oi.kernel-event-invalidation/v1", seq }
 }
 
 /// The one typed operation seam: apply a `KernelOp` and return its
@@ -214,6 +222,39 @@ fn main() {
                 Err(error) => eprintln!("Desktop appearance could not be restored: {error}"),
             }
             app.manage(KernelHost(Mutex::new(kernel)));
+            #[cfg(unix)]
+            if let Some((socket, owner)) =
+                oi_cradle_kernel::native_owner_transport::configured_offer()?
+            {
+                let handle = app.handle().clone();
+                let server = oi_cradle_kernel::expression_transport::serve_native_owner(
+                    &socket,
+                    move |request| {
+                        let host = handle.state::<KernelHost>();
+                        let value = owner.apply(
+                            &mut *host
+                                .0
+                                .lock()
+                                .map_err(|_| "native kernel lock unavailable")?,
+                            request,
+                        )?;
+                        if let Some(receipts) = value["outcome"]["receipts"].as_array() {
+                            for receipt in receipts {
+                                // The native owner already recorded this exact receipt.
+                                // Push only its bounded invalidation hint; replay owns
+                                // payload delivery and explicit oversized gaps.
+                                let seq = receipt["seq"].as_u64()
+                                    .ok_or("Native owner receipt has no qualified sequence")?;
+                                let _ = handle.emit(KERNEL_EVENT_TOPIC, kernel_event_hint_sequence(seq));
+                            }
+                        }
+                        Ok(value)
+                    },
+                )?;
+                app.manage(NativeOwnerServer {
+                    _server: Mutex::new(server),
+                });
+            }
             #[cfg(unix)]
             {
                 let path = oi_cradle_kernel::expression_transport::default_socket_path()?;

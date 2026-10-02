@@ -22,6 +22,7 @@ import {
   cellVolumeShape,
   applyGlyphVolume,
   hashString,
+  mulberry32,
   DEFAULT_GLYPH_VOLUME,
   type GlyphDepthFields,
   type GlyphVolumeStats,
@@ -896,7 +897,8 @@ export class GlyphSampler {
     glyphType: SpatialChakraGlyphType = 'yantra',
     fontFamily: string = FALLBACK_FONT_STACK,
     fontWeight: string | number = 900,
-    variant: 'yantraA' | 'yantraB' = 'yantraA'
+    variant: 'yantraA' | 'yantraB' = 'yantraA',
+    seed?: number
   ): { candidates: SampleCandidate[] } {
     const w = this.canvas.width;
     const h = this.canvas.height;
@@ -977,9 +979,10 @@ export class GlyphSampler {
     }
 
     if (candidates.length === 0) {
+      const random = seed === undefined ? Math.random : mulberry32(seed);
       for (let i = 0; i < 500; i++) {
         const ang = (i / 500) * Math.PI * 2;
-        const rad = 100 + (Math.random() - 0.5) * 20;
+        const rad = 100 + (random() - 0.5) * 20;
         candidates.push({
           x: Math.cos(ang) * rad,
           y: Math.sin(ang) * rad,
@@ -993,14 +996,14 @@ export class GlyphSampler {
 
   /** Generic authored cymatic target. No chakra lookup or semantic correspondence. */
   public sampleCymaticTemplate(
-    spec:{frequencyHz:number;plateGeometry?:CymaticPlateGeometry;dimension?:CymaticDimension;m?:number;n?:number;l?:number;a?:number;b?:number;baseFrequency?:number},
+    spec:{frequencyHz:number;plateGeometry?:CymaticPlateGeometry;dimension?:CymaticDimension;m?:number;n?:number;l?:number;a?:number;b?:number;baseFrequency?:number;seed?:number},
     coherence:number=1,
     chaos:number=0
   ):{candidates:Array<{x:number;y:number;z?:number;density:number}>;is3D:boolean}{
     const derived=deriveCymaticTemplateModes(spec.frequencyHz,spec.baseFrequency??40);
     const m=spec.m??derived.m,n=spec.n??derived.n,l=spec.l??derived.l,a=spec.a??derived.a,b=spec.b??derived.b;
     const geometry=spec.plateGeometry??'square',dimension=spec.dimension??'2D';
-    if(dimension==='3D'||geometry==='volumetric3D'){return{candidates:sampleVolumetric3DNodalPoints(12000,l,m,n,coherence,chaos,280),is3D:true};}
+    if(dimension==='3D'||geometry==='volumetric3D'){return{candidates:sampleVolumetric3DNodalPoints(12000,l,m,n,coherence,chaos,280,spec.seed===undefined?Math.random:mulberry32(spec.seed)),is3D:true};}
     const w=this.canvas.width,h=this.canvas.height,ctx=this.ctx;
     renderChladniPlate(ctx,w,h,geometry,m,n,a,b,coherence,chaos);
     const pixels=ctx.getImageData(0,0,w,h).data,candidates:Array<{x:number;y:number;z?:number;density:number;hz?:number;cw?:number}>=[],cx=w/2,cy=h/2;

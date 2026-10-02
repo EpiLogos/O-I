@@ -15,6 +15,7 @@ import {useCallback,useEffect,useState,useSyncExternalStore} from "react";
 import {useKernel} from "../kernel/KernelProvider";
 import type {KernelTransportStatus} from "../kernel/types";
 import {nativeAgentOwner} from "./nativeAgentClient";
+import {subjectLabel} from "../../../../shared-field/presentation-text.mjs";
 
 export interface RosterAgent {
  /** The agent's identity (`agent/central-guardian`, `agent:expressed-…`). */
@@ -36,20 +37,15 @@ export interface RosterAgent {
 }
 export const isGuardian=(agent:Pick<RosterAgent,"role">)=>/(^|-)guardian$/.test(agent.role??"");
 
-/** Words from an agent ref when the profile carries no name:
- *  `agent/central-guardian` → "Central Guardian"; an expressed id stays plain. */
-export function nameFromRef(ref:string):string {
- const tail=ref.split(/[/:]/).pop()??ref;
- if(/^expressed-[0-9a-f]+$/i.test(tail))return "Unnamed agent";
- return tail.split(/[-_]/).filter(Boolean).map(word=>word==="aikit"?"AIKit":word==="oi"?"O:I":word==="ql"?"QL":word[0].toUpperCase()+word.slice(1)).join(" ");
-}
-
 type Obj=Record<string,unknown>;
 const obj=(value:unknown):value is Obj=>!!value&&typeof value==="object"&&!Array.isArray(value);
 const str=(value:unknown)=>typeof value==="string"&&value.trim()?value:undefined;
 const strings=(value:unknown)=>Array.isArray(value)?value.filter((item):item is string=>typeof item==="string"):[];
 
-export function rosterFromReading(value:unknown):RosterAgent[] {
+/** Missing authored names remain distinct in this reading. The offset keeps
+ *  these display labels distinct when root and project readings are joined;
+ *  the exact native refs continue to identify every agent. */
+export function rosterFromReading(value:unknown,ordinalOffset=0):RosterAgent[] {
  if(!obj(value)||value.schema!=="central.agent-profile-roster/v1"||!Array.isArray(value.profiles))throw new Error("Central returned an agent roster this desktop cannot read.");
  const agents:RosterAgent[]=[];
  for(const entry of value.profiles){
@@ -59,7 +55,7 @@ export function rosterFromReading(value:unknown):RosterAgent[] {
   if(!ref||!profileRef)continue;
   agents.push({
    ref,profileRef,revision:str(profile.revision),
-   name:str(profile.name)??nameFromRef(ref),
+   name:subjectLabel({name:profile.name,chosen_name:profile.chosen_name},`Unnamed agent ${ordinalOffset+agents.length+1}`),
    purpose:str(profile.purpose),role:str(profile.role),
    accepted:entry.accepted===true,scopeRef:str(value.scope_ref),
    skillRefs:strings(profile.skill_refs),governanceRefs:strings(profile.governance_refs),worldRef:str(profile.world_ref),
@@ -74,7 +70,7 @@ export function rosterFromReading(value:unknown):RosterAgent[] {
 export async function readRoster(transport:KernelTransportStatus,project?:string):Promise<RosterAgent[]> {
  const root=rosterFromReading(await nativeAgentOwner(transport,undefined)({action:"roster"}));
  if(!project)return root;
- const own=rosterFromReading(await nativeAgentOwner(transport,project)({action:"roster"}));
+ const own=rosterFromReading(await nativeAgentOwner(transport,project)({action:"roster"}),root.length);
  const seen=new Set(own.map(agent=>agent.ref));
  return [...own,...root.filter(agent=>!seen.has(agent.ref))];
 }

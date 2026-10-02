@@ -366,7 +366,9 @@ test('address mode carries the Position address and nothing of its occupancy; oc
   assert.deepEqual(Object.keys(anima.meta).sort(), ['communiques', 'current_work', 'disclosure', 'enclosing_world_ref', 'handle', 'inherited', 'label', 'local_ref', 'occupancy', 'role_ref', 'standing']);
   const card = bundle.presentation.regions.find((region) => region.region_ref === 'positions').bindings.find((binding) => binding.subject_ref === HOSTED(ANIMA));
   assert.equal(card.component_ref, 'oi.presentation/reference-card/v1');
-  assert.match(card.props.text, /occupied \(generation #2, workcell:omarchy\)/);
+  assert.match(card.props.text, /occupied \(generation #2\)/);
+  assert.ok(!card.props.text.includes("workcell:omarchy"));
+  assert.deepEqual(card.props.source.occupancy,anima.meta.occupancy,"exact native occupancy remains in deliberate source depth");
   // A gateway named by address is not a gateway ref; it is withheld, never published.
   const addressed = publishInhabited({}, [rootReading(), projectReading(), positionListing(), population({ observed: 'gateway:ws://100.64.0.7:7337' }), constellation()]);
   assert.deepEqual(addressed.entries.find((entry) => entry.ref === HOSTED(ANIMA)).meta.occupancy, { state: 'occupied', generation_ordinal: 2, workcell_ref: 'workcell:omarchy' });

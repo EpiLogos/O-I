@@ -1,5 +1,12 @@
 import { esc } from "./icons.mjs";
-import { clone } from "./model.mjs";
+import { clone, uid } from "./model.mjs";
+function preserveLayerStates(e) {
+  if (e.layers?.length) for (const step of e.sequence.steps) step.layers ??= e.layers.map((l) => ({ ...clone(l), id: uid("layer") }));
+}
+function useStateShape(e, index) {
+  preserveLayerStates(e);
+  if (e.sequence.steps[index]) e.sequence.steps[index].layers = [];
+}
 function stateSource(e, index) {
   return e.sequence.steps[index]?.source ?? (!e.sequence.sourcesVersion && index === 0 ? e.source : void 0);
 }
@@ -17,11 +24,15 @@ function initialiseSources(j) {
   return j;
 }
 function captureObjectState(e) {
-  return { id: "", name: e.name, text: e.text, shape: e.shape, source: e.source ? clone(e.source) : void 0, yantraId: e.yantraId, templateFrequency: e.templateFrequency, templateGeometry: e.templateGeometry, templateDimension: e.templateDimension, hold: e.sequence.hold ?? 3, transition: e.sequence.transition ?? 1, position: null, objectState: { size: clone(e.size), rotation: e.rotation, scale: e.scale ?? 1, tint: e.tint, tintWeight: e.tintWeight, force: clone(e.force) } };
+  return { id: "", name: e.name, text: e.text, shape: e.shape, source: e.source ? clone(e.source) : void 0, yantraId: e.yantraId, templateFrequency: e.templateFrequency, templateGeometry: e.templateGeometry, templateDimension: e.templateDimension, hold: e.sequence.hold ?? 3, transition: e.sequence.transition ?? 1, position: null, objectState: { normalized: e.native ? e.native.extent?.normalized ?? !!e.native.extent : true, size: clone(e.size), rotation: e.rotation, scale: e.scale ?? 1, tint: e.tint, tintWeight: e.tintWeight, force: clone(e.force) } };
 }
 function stateThumbnail(e, index) {
   const k = e.sequence.steps[index], source = stateSource(e, index);
-  return source ? `<img data-source-preview="${esc(e.id)}" data-source-step="${index}" alt="${esc(stateLabel({ ...k, source }))}">` : esc(k?.shape === "text" ? k.text : k?.shape ?? e.text);
+  return source ? `<img data-source-preview="${esc(e.id)}" data-source-step="${index}" alt="${esc(stateLabel({ ...k, source }))}">` : k?.shape && k.shape !== "text" ? shapeMark(k.shape) : esc(k?.shape === "text" ? k.text : e.text);
+}
+function shapeMark(shape) {
+  const d = { disc: '<circle cx="12" cy="12" r="8" fill="currentColor"/>', ring: '<circle cx="12" cy="12" r="7.5" fill="none" stroke="currentColor" stroke-width="2"/>', square: '<rect x="5" y="5" width="14" height="14" fill="currentColor"/>', triangle: '<path d="M12 4 20 19H4Z" fill="currentColor"/>', yantra: '<path d="M12 4 20 18H4Z M12 20 4 6h16Z" fill="none" stroke="currentColor" stroke-width="1.4"/>', cymatic: '<path d="M3 12c3-7 6-7 9 0s6 7 9 0" fill="none" stroke="currentColor" stroke-width="1.6"/>' };
+  return `<svg class="shape-mark" viewBox="0 0 24 24" aria-label="${esc(shape)}" role="img">${d[shape] ?? `<text x="12" y="16" text-anchor="middle" font-size="9" fill="currentColor">${esc(shape)}</text>`}</svg>`;
 }
 function setStateSource(e, index, source) {
   const k = e.sequence.steps[index];
@@ -48,9 +59,11 @@ function transformObjectStates(e, path, before, after) {
 export {
   captureObjectState,
   initialiseSources,
+  preserveLayerStates,
   setStateSource,
   stateLabel,
   stateSource,
   stateThumbnail,
-  transformObjectStates
+  transformObjectStates,
+  useStateShape
 };

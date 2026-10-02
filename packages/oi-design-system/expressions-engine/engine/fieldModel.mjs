@@ -3,8 +3,9 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 import { CANONICAL_CHAKRAS } from "./chakraSystem.mjs";
-const MAX_FORMATIONS = 10;
-const MAX_PINS = 8;
+const MAX_FORMATIONS = 64;
+const MAX_PINS = 64;
+const MAX_FORCE_EMITTERS = MAX_FORMATIONS + MAX_PINS;
 let idCounter = 0;
 const newId = (prefix) => `${prefix}_${Date.now().toString(36)}_${(idCounter++).toString(36)}${Math.random().toString(36).slice(2, 5)}`;
 const DEFAULT_SEQUENCE = {
@@ -51,6 +52,12 @@ const DEFAULT_CYMATIC_MEDIUM = {
 function makeLink(shape, pos) {
   return { id: newId("link"), shape: { ...shape }, ...pos || {} };
 }
+const makeLayer = (z, shape, overrides = {}) => ({
+  id: newId("layer"),
+  z,
+  shape: { ...shape },
+  ...overrides
+});
 function makeFormation(overrides = {}) {
   return {
     id: newId("ent"),
@@ -229,7 +236,7 @@ function nodeToShape(n) {
   if (n.shape === "cymatic") return { kind: "cymatic", frequencyHz: n.frequencyHz };
   return { kind: "yantra", yantraId: n.id };
 }
-function entityFromNode(n, index, chakraCount, influence, vortexPower) {
+function entityFromNode(n, index, _chakraCount, influence, vortexPower) {
   const canonIdx = CANONICAL_CHAKRAS.findIndex((c) => c.id === n.id);
   return makeFormation({
     id: `ent_${n.id}`,
@@ -420,6 +427,7 @@ export {
   DEFAULT_CYMATIC_MEDIUM,
   DEFAULT_FORCES,
   DEFAULT_SEQUENCE,
+  MAX_FORCE_EMITTERS,
   MAX_FORMATIONS,
   MAX_PINS,
   applyEasing,
@@ -428,6 +436,7 @@ export {
   layoutPartitions,
   makeChakraEntities,
   makeFormation,
+  makeLayer,
   makeLink,
   makePin,
   migrateLegacyFieldConfig,

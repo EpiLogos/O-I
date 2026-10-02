@@ -46,7 +46,7 @@
  *   grant-read    {field_ref, participant_ref}   owner: admit a persistently-authorised Participant to read a PRIVATE field
  *   revoke-read   {field_ref, participant_ref}   owner: withdraw that read admission
  */
-import { activityLivenessRow, bindingFile, close, fieldDayReading, fieldNowReading, fieldSnapshot, hostingTargets, open, publishArgs, readRef, resolveTarget, rows, stageReading, stageView, waitUntil } from './field-lib';
+import { activityLivenessRow, bindingFile, close, fieldDayReading, fieldNowReading, fieldSnapshot, hostingTargets, open, publishArgs, readRef, resolveTarget, rows, stageReading, stageView, waitUntil, observeField } from './field-lib';
 import { mkdirSync, rmSync, writeFileSync } from 'node:fs';
 import { dirname } from 'node:path';
 import { createProjection } from '../index.mjs';
@@ -69,6 +69,18 @@ async function emit(envelope: Envelope): Promise<never> {
     process.stdout.write(`${JSON.stringify(envelope)}\n`, error => error ? reject(error) : resolve());
   });
   process.exit(envelope.ok ? 0 : 1);
+}
+
+/** Native host lease: keep the entered connection itself alive. Losing the
+ * host, transport or explicit lease ends presence; no effect is replayed. */
+async function holdPresence(data: unknown): Promise<never> {
+  await new Promise<void>((resolve, reject) => process.stdout.write(`${JSON.stringify({ok: true, data})}\n`, (error) => error ? reject(error) : resolve()));
+  const parent = process.ppid;
+  const end = () => { if (client) close(client); process.exit(0); };
+  process.once('SIGTERM', end); process.once('SIGINT', end);
+  client!.lifecycle.subscribe((event: any) => { if (event.transport.state === 'offline') end(); });
+  setInterval(() => { if (process.ppid !== parent) end(); }, 1000);
+  return await new Promise<never>(() => {});
 }
 
 const raw = (await readStdin()).trim();
@@ -145,6 +157,9 @@ try {
       if (!receipt) await emit({ ok: false, error: { kind: 'refused', message: `no caller-visible receipt for ${request.contribution_ref}` } });
       await emit({ ok: true, data: { schema: 'oi.shared-field.contribution-result/v1', contribution_ref: receipt.contributionRef, ingress_ref: receipt.ingressRef, field_ref: receipt.fieldRef, state: receipt.state } });
     }
+    case 'observe':
+      await emit({ok: true, data: await observeField(client!, request.cursor, request.ref)});
+      break;
     case 'snapshot':
       await emit({ ok: true, data: fieldSnapshot(client!) });
     case 'read':
@@ -181,7 +196,7 @@ try {
     }
     case 'admit': {
       if (typeof request.ingress_ref !== 'string' || typeof request.reason !== 'string') await emit({ ok: false, error: { kind: 'malformed', message: 'admit requires `ingress_ref` and `reason`' } });
-      await reducers.admitContribution({ ingressRef: request.ingress_ref, admissionParticipantRef: request.admission_participant_ref ?? '', visibility: request.visibility ?? 'public', audienceRefsJson: JSON.stringify(request.audience_refs ?? []), reason: request.reason, evidenceJson: JSON.stringify(request.evidence ?? {}) });
+      await reducers.admitContribution({ ingressRef: request.ingress_ref, admissionParticipantRef: request.admission_participant_ref ?? '', visibility: request.visibility ?? rows(db.sharedField).find((row: any) => row.fieldRef === request.field_ref)?.visibility ?? 'private', audienceRefsJson: JSON.stringify(request.audience_refs ?? []), reason: request.reason, evidenceJson: JSON.stringify(request.evidence ?? {}) });
       if (request.index) await reducers.setContributionIndexEligibility({ ingressRef: request.ingress_ref, admissionParticipantRef: request.admission_participant_ref ?? '', eligible: true, reason: request.index_reason ?? request.reason, evidenceJson: JSON.stringify(request.evidence ?? {}) });
       const admitted = await waitUntil(() => rows(db.contribution).find((row: any) => row.ingressRef === request.ingress_ref || (request.contribution_ref && row.contributionRef === request.contribution_ref)), 'the admitted Contribution in the caller-visible view');
       if (request.entry) await reducers.putExploreEntry(request.entry);
@@ -220,6 +235,7 @@ try {
       if (typeof request.field_ref !== 'string' || typeof request.participant_ref !== 'string') await emit({ ok: false, error: { kind: 'malformed', message: 'enter requires `field_ref` and `participant_ref`' } });
       await reducers.enterField({ fieldRef: request.field_ref, participantRef: request.participant_ref, state: request.state ?? 'entered' });
       const row = await waitUntil(() => rows(db.fieldPresence).find((candidate: any) => candidate.fieldRef === request.field_ref && candidate.participantRef === request.participant_ref), 'the caller presence in the caller-visible view');
+      if (request.hold_presence === true) await holdPresence({ schema: 'oi.shared-field.presence-result/v1', field_ref: row.fieldRef, participant_ref: row.participantRef, state: row.state });
       await emit({ ok: true, data: { schema: 'oi.shared-field.presence-result/v1', field_ref: row.fieldRef, participant_ref: row.participantRef, state: row.state } });
     }
     case 'leave': {

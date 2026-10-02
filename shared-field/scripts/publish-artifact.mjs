@@ -79,7 +79,8 @@ if (args.flow) {
   artifact = curatedArtifactFromWikiSource(ctrlAction('projectcentral.wiki.source.read', { project: args.project, source_ref: args.wikiSource }, cwd));
 } else {
   const reading = ctrlAction('central.document.read', { ...(args.project ? { project: args.project } : {}), source_ref: args.document, document_id: args.documentId }, cwd);
-  artifact = curatedArtifactFromCentralDocument(reading);
+  const exported = ctrlAction('central.document.export', { ...(args.project ? { project: args.project } : {}), source_ref: args.document, document_id: args.documentId }, cwd);
+  artifact = curatedArtifactFromCentralDocument(reading, exported);
 }
 
 const publishedAt = args.publishedAt ?? new Date().toISOString();
