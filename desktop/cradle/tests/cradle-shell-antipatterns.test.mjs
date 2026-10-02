@@ -67,12 +67,12 @@ test('right panel presence opens Agents; it is not a roster picker', () => {
   assert.doesNotMatch(layer, /<AvatarMenu\b/);
 });
 
-test('Central mode Context is prepared-context, not a second pane canvas', () => {
+test('Central mode uses prepared context until an actual subject opens in the existing Context pane', () => {
   const bodies = src('workspace/modeBodies.tsx');
   assert.match(bodies, /export function PreparedContextMount/);
-  assert.match(bodies, /if \(mode === "base" \|\| mode === "epi-logos"\) \{\s*return \[\{id: "context", label: "Context", body: <PreparedContextMount/);
+  assert.match(bodies, /if \(mode === "base" \|\| mode === "epi-logos"\) \{\s*return \[\{id: "context", label: "Context", body: opens\?\.sideTabs\?\.length\s*\? <ContextPaneMount[\s\S]*?: <PreparedContextMount/);
   assert.match(bodies, /mode === "factory"[\s\S]*ContextPaneMount/);
-  assert.doesNotMatch(bodies, /mode === "base"[\s\S]{0,200}ContextPaneMount/);
+  assert.doesNotMatch(bodies, /body: <ContextPaneMount[^\n]*\/>\}\];\s*\}/);
 });
 
 test('Context canvas no longer advertises git status or Automations', () => {

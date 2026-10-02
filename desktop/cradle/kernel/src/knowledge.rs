@@ -268,7 +268,6 @@ mod tests {
             Path::new("/Central"),
             Path::new("/Central/Work/My Project"),
         ] {
-            fs::create_dir_all(&cwd).unwrap();
             for case in cases() {
                 for request in [
                     Request::Search {

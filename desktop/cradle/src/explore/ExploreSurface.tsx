@@ -95,11 +95,20 @@ export function ExploreSurface({binding,onView,onOpenPresentation,onOpenSubjectS
     // rows, including withdrawal and producer liveness, before rendering.
     const observe=async()=>{
       try{
-        const next=await sharedField<{state?:string;cursor:string;snapshot:Snapshot;reading?:SharedFieldReading}>(transport,{kind:"observe",observer_ref:observerRef,...(selected&&isEntry?{ref:selected}:{})});
+        const next=await sharedField<{state?:string;cursor:string;snapshot?:Snapshot;reading?:SharedFieldReading;status?:SharedFieldSnapshot["status"];reading_status?:unknown}>(transport,{kind:"observe",observer_ref:observerRef,...(cursor?{cursor}:{}),...(selected&&isEntry?{ref:selected}:{})});
         if(!active)return;
         if(next.state==="observing"){retry=setTimeout(()=>void observe(),400);return;}
         if(isUnavailable(next))throw new Error(next.detail);
-        if(cursor!==next.cursor){setSnapshot(next.snapshot);setReading(next.reading);cursor=next.cursor;}
+        if(next.state==="unchanged"){
+          if(!cursor||cursor!==next.cursor)throw new Error("The native observation requires a fresh reading");
+          // Transport status is not a material revision. Preserve the actual
+          // rows while receiving availability even when no row has changed.
+          setSnapshot(current=>current&&!isUnavailable(current)&&JSON.stringify(current.status)!==JSON.stringify(next.status)?{...current,status:next.status??current.status}:current);
+          setReading(current=>current?.state==="hosted"&&JSON.stringify(current.status)!==JSON.stringify(next.reading_status)?{...current,status:next.reading_status}:current);
+        }else{
+          if(!next.snapshot||!next.cursor)throw new Error("The native observation returned no complete reading");
+          setSnapshot(next.snapshot);setReading(next.reading);cursor=next.cursor;
+        }
         setBusy(false);setReadBusy(false);
         retry=setTimeout(()=>void observe(),500);
       }catch(cause){

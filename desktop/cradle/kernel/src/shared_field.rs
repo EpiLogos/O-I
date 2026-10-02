@@ -385,6 +385,32 @@ struct Observer {
 }
 static OBSERVERS: OnceLock<Mutex<HashMap<String, Arc<Observer>>>> = OnceLock::new();
 
+/// A matching cursor acknowledges only material already delivered by this
+/// subject-bound lease. Carry the current owner transport status separately:
+/// equal material must not conceal a disconnect or a failed reading.
+fn cached_observation_reading(
+    reading: Option<&Result<Value, CallError>>,
+    cursor: Option<&str>,
+) -> Result<Value, CallError> {
+    match reading {
+        Some(Ok(value))
+            if value["schema"] == "oi.shared-field.observation/v1"
+                && cursor.is_some_and(|cursor| {
+                    !cursor.is_empty() && value["cursor"].as_str() == Some(cursor)
+                }) =>
+        {
+            Ok(serde_json::json!({
+                "state": "unchanged",
+                "cursor": value["cursor"],
+                "status": value["snapshot"]["status"],
+                "reading_status": value["reading"]["status"]
+            }))
+        }
+        Some(reading) => reading.clone(),
+        None => Ok(serde_json::json!({"state":"observing"})),
+    }
+}
+
 /// The wait belongs outside the kernel's operation mutex. This worker holds
 /// only an expiring read cache of owner-produced, credential-filtered rows;
 /// it has no reducers, document store or identity authority. Clients explicitly
@@ -446,11 +472,7 @@ fn observer_reading(request: &Value) -> Result<Value, CallError> {
         return observer
             .reading
             .lock()
-            .map(|reading| {
-                reading
-                    .clone()
-                    .unwrap_or_else(|| Ok(serde_json::json!({"state":"observing"})))
-            })
+            .map(|reading| cached_observation_reading(reading.as_ref(), request["cursor"].as_str()))
             .map_err(|_| CallError::Unavailable {
                 detail: "Observation reading unavailable".into(),
             })?;
@@ -957,7 +979,10 @@ mod a2a_tests {
         let directory = std::env::temp_dir().join(format!(
             "oi-a2a-input-{}-{}",
             std::process::id(),
-            uuid::Uuid::new_v4()
+            std::time::SystemTime::now()
+                .duration_since(std::time::UNIX_EPOCH)
+                .unwrap()
+                .as_nanos()
         ));
         std::fs::create_dir(&directory).unwrap();
         let executable = directory.join("native-effect.sh");
@@ -1073,6 +1098,44 @@ mod a2a_tests {
 
 #[cfg(test)]
 mod tests {
+    #[test]
+    fn an_acknowledged_observation_does_not_copy_material_but_keeps_availability() {
+        // Exercise the production cache projection, including a large body.
+        // This checks IPC retention only; it grants no hosted authority and
+        // does not substitute for the actual subscription/producer gates.
+        let value = serde_json::json!({
+            "schema": "oi.shared-field.observation/v1",
+            "cursor": "delivered-material",
+            "snapshot": {
+                "status": {"healthy": false, "transport": {"state": "offline"}},
+                "body": "x".repeat(2 * 1024 * 1024)
+            },
+            "reading": {"status": {"healthy": false, "transport": {"state": "offline"}}}
+        });
+        let retained = Ok(value.clone());
+        for _ in 0..120 {
+            let next = cached_observation_reading(Some(&retained), Some("delivered-material")).unwrap();
+            assert_eq!(next["state"], "unchanged");
+            assert_eq!(next["status"], value["snapshot"]["status"]);
+            assert_eq!(next["reading_status"], value["reading"]["status"]);
+            assert!(next.to_string().len() < 512);
+            assert!(next.get("snapshot").is_none());
+        }
+        // Fresh bodies and changed material get the entire retained reading.
+        for cursor in [None, Some(""), Some("prior-material")] {
+            assert_eq!(cached_observation_reading(Some(&retained), cursor).unwrap(), value);
+        }
+    }
+
+    #[test]
+    fn a_cursor_never_suppresses_an_observation_failure_or_pending_read() {
+        let failure = CallError::Unavailable { detail: "The owned connection ended".into() };
+        assert_eq!(cached_observation_reading(Some(&Err(failure.clone())), Some("delivered-material")), Err(failure));
+        assert_eq!(cached_observation_reading(None, Some("delivered-material")).unwrap()["state"], "observing");
+        let unavailable = serde_json::json!({"state":"unavailable", "cursor":"delivered-material", "detail":"No native owner reading"});
+        assert_eq!(cached_observation_reading(Some(&Ok(unavailable.clone())), Some("delivered-material")).unwrap(), unavailable);
+    }
+
     #[test]
     fn an_installed_client_wins_over_the_checkout_and_a_release_has_no_checkout() {
         let home = std::path::Path::new("/Applications/O-I.app/Contents/Resources/shared-field");
@@ -1365,7 +1428,10 @@ mod tests {
         let directory = std::env::temp_dir().join(format!(
             "oi-shared-call-effect-{}-{}",
             std::process::id(),
-            uuid::Uuid::new_v4()
+            std::time::SystemTime::now()
+                .duration_since(std::time::UNIX_EPOCH)
+                .unwrap()
+                .as_nanos()
         ));
         std::fs::create_dir(&directory).unwrap();
         let marker = directory.join("effect");
