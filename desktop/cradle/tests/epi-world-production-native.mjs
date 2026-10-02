@@ -417,6 +417,17 @@ async function requireCurrentRuntime(reading,label){
  check(true,label+': current request, source basis and complete native sample domain reach the qualified torus target mapping at the exact current renderer texture size');
 }
 function requireOneWorld(document,ref,label){check(document.expression_ref===ref&&document.scenes.filter(s=>s.presentation?.scene?.epiWorld).length===1&&document.scenes.every(s=>!s.presentation?.saved?.epiWorld),label+': exactly one world continuation remains in the same native Expression');}
+async function requireAuthoredNativeHealth(label){
+ await frame.waitForFunction(()=>{const f=window.__FIELD_STUDIES__,n=f.native(),l=n.lifetime;return n.status==='manual'&&!n.lease&&!n.domain&&f.nativeTargets()===null&&!l.admission_pending&&!l.close_pending&&!l.operation_pending&&!l.close_error;},null,{timeout:30000});
+ await frame.evaluate(()=>new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve))));
+ const reading=await frame.evaluate(()=>({native:window.__FIELD_STUDIES__.native(),targets:window.__FIELD_STUDIES__.nativeTargets(),rendered:window.__FIELD_STUDIES__.inspect(),working:window.__FIELD_STUDIES__.nativeWorking(),scene:window.__FIELD_STUDIES__.getDocument().scenes[window.__FIELD_STUDIES__.getState().sceneIndex]}));
+ artifact(label+'-native-health.json',reading);
+ assert.ok(!reading.native.reason?.startsWith('native surface render failed:'),label+': the actual post-authoring scene must render without a retained native partition refusal');
+ assert.ok(!reading.working.failed,label+': the actual native owner must remain available');
+ requirePartitions(reading,reading.scene.entities.map(e=>e.id),label+' post-authoring');
+ assert.deepEqual(receipt.console.filter(row=>row.phase==='ordinary authored save/restore/save-next'&&row.type==='error'),[],label+': scene authoring must not conceal a real native render/close error');
+ check(true,label+': actual native departure is acknowledged and the authored scene remains rendered');
+}
 async function openSceneWorkflow(){if(!await frame.locator('#timeline-panel').isVisible())await frame.locator('#scene-picker').click();await frame.locator('#scene-save-name').waitFor();}
 function requirePersonalDrivers(reading,label){
  const rows=reading.current.reading.identity.natal_composition.planetary_contributions,denominator=rows.reduce((sum,row)=>sum+row.weighted_contribution,0),frames=reading.rendered.localizedResonance;
@@ -902,15 +913,39 @@ try{
  await action('step');await frame.evaluate(()=>window.__FIELD_STUDIES__.pause());const reopenedNative=await snapshot('10a-production-reopen-native-receiving',true);await requireCurrentRuntime(reopenedNative,'Production reopen native receiving');await action('reset');
 
  phase='ordinary authored save/restore/save-next';
- await sceneNavigate(cosmic.scene_ref);await openSceneWorkflow();
- await frame.locator('[data-action="save-scene"]').click();await action('save');
+  await sceneNavigate(cosmic.scene_ref);await openSceneWorkflow();
+  const directOpening=await snapshot('10aa-before-direct-duration'),directOriginal=directOpening.document.scenes[directOpening.state.sceneIndex].duration,directEdited=directOriginal<=3599?directOriginal+1:directOriginal-1;
+  assert.ok(directOpening.native.lease,'A direct scene-duration edit must begin with the real retained native field still attached');
+  assert.ok(await frame.evaluate(()=>window.__FIELD_STUDIES__.nativeTargets()),'The direct-duration gate must exercise the actual retained target partition');
+  await frame.locator('#timeline-panel [data-bind="duration"]').fill(String(directEdited));await frame.locator('#scene-save-name').click();
+  await frame.waitForFunction(value=>{const f=window.__FIELD_STUDIES__;return f.getDocument().scenes[f.getState().sceneIndex].duration===value;},directEdited,{timeout:30000});
+  await requireAuthoredNativeHealth('direct-duration');
+  const directAfter=await snapshot('10ab-after-direct-duration');
+  assert.equal(directAfter.working.native_ref,directOpening.working.native_ref);assert.equal(directAfter.record.world.instance_ref,directOpening.record.world.instance_ref);assert.equal(directAfter.record.person_ref,directOpening.record.person_ref);assert.equal(directAfter.record.world.event_ref,directOpening.record.world.event_ref);assert.equal(directAfter.record.world.snapshot_ref,directOpening.record.world.snapshot_ref);assert.deepEqual(directAfter.record.source_basis,directOpening.record.source_basis);
+  assert.equal(directAfter.document.scenes[directAfter.state.sceneIndex].id,cosmic.scene_ref);assert.deepEqual(directAfter.native.lifetime.last_close,{schema:'oi.native-expression-closed/v1',lease:directOpening.native.lease,closed:true});
+  assert.deepEqual(directAfter.record.native_readback??directAfter.record.world.native_readback,directOpening.native.instrument.influence.native_readback,'The direct duration departure must retain the exact acknowledged native clocks, form and continuation');
+  await frame.locator('[data-action="restore-scene"]').click();
+  await frame.waitForFunction(value=>{const f=window.__FIELD_STUDIES__;return f.getDocument().scenes[f.getState().sceneIndex].duration===value;},directOriginal,{timeout:30000});
+  await requireAuthoredNativeHealth('direct-duration-restore');await action('reset');await openSceneWorkflow();
+  const beforeSameKeySave=await snapshot('10ac-before-native-file-save');assert.ok(beforeSameKeySave.native.lease,'Epi Save must begin with the actual retained owner after its current readback was already saved');
+  await action('save');await requireAuthoredNativeHealth('epi-file-save');
+  const afterSameKeySave=await snapshot('10ad-after-native-file-save');assert.equal(afterSameKeySave.working.native_ref,beforeSameKeySave.working.native_ref);assert.equal(afterSameKeySave.record.world.event_ref,beforeSameKeySave.record.world.event_ref);assert.deepEqual(afterSameKeySave.record.native_readback??afterSameKeySave.record.world.native_readback,beforeSameKeySave.native.instrument.influence.native_readback);await savedFile(afterSameKeySave.working,'same-current-authored-file-save');
+  await action('reset');await openSceneWorkflow();
+  const beforeSceneSave=await snapshot('10ae-before-authored-scene-save');assert.ok(beforeSceneSave.native.lease,'Save scene must also begin with an actual retained native owner');
+  await frame.locator('[data-action="save-scene"]').click();await requireAuthoredNativeHealth('save-scene');await action('save');
  const beforeRestore=await snapshot('10b-before-authored-restore'),originalDuration=beforeRestore.document.scenes[beforeRestore.state.sceneIndex].duration;
- await openSceneWorkflow();await frame.locator('#timeline-panel [data-bind="duration"]').fill(String(originalDuration+1));await frame.locator('#scene-save-name').click();
- check(await frame.evaluate(()=>{const f=window.__FIELD_STUDIES__,j=f.getDocument();return j.scenes[f.getState().sceneIndex].duration;})===originalDuration+1,'A real scene-control edit changes the authored duration before Restore');
- await frame.locator('[data-action="restore-scene"]').click();await action('save');
+  const editedDuration=originalDuration<=3599?originalDuration+1:originalDuration-1;
+  await openSceneWorkflow();await frame.locator('#timeline-panel [data-bind="duration"]').fill(String(editedDuration));await frame.locator('#scene-save-name').click();
+  await frame.waitForFunction(value=>{const f=window.__FIELD_STUDIES__;return f.getDocument().scenes[f.getState().sceneIndex].duration===value;},editedDuration,{timeout:30000});
+  check(await frame.evaluate(()=>{const f=window.__FIELD_STUDIES__,j=f.getDocument();return j.scenes[f.getState().sceneIndex].duration;})===editedDuration,'A real scene-control edit changes the authored duration before Restore');
+  await frame.locator('[data-action="restore-scene"]').click();await requireAuthoredNativeHealth('restore-scene');await action('save');
  const restored=await snapshot('10c-after-authored-restore'),restoreDoc=await nativeDocument(a.working.native_ref);artifact('authored-restore-native-owner-document.json',restoreDoc);
  check(restored.record.world.event_ref===a.record.world.event_ref&&restored.document.scenes[restored.state.sceneIndex].duration===originalDuration,'Actual authored Restore recovers the saved scene and preserves its exact personal occasion');requireOneWorld(restoreDoc,a.working.native_ref,'Authored Restore');
- await openSceneWorkflow();await frame.locator('#timeline-panel .scene-save-row [data-action="save-next"]').click();await action('save');
+  await action('reset');const beforeToolbarSave=await snapshot('10ca-before-toolbar-native-save');assert.ok(beforeToolbarSave.native.lease,'The normal native Save control must begin with the actual retained native owner');
+  await frame.locator('#native-save').click();await requireAuthoredNativeHealth('toolbar-native-save');
+  await frame.waitForFunction(()=>{const w=window.__FIELD_STUDIES__.nativeWorking();return !w.busy&&!w.pending&&!w.failed;},null,{timeout:180000});
+  const toolbarSaved=await snapshot('10cb-after-toolbar-native-save');assert.equal(toolbarSaved.working.native_ref,beforeToolbarSave.working.native_ref);assert.equal(toolbarSaved.record.world.event_ref,beforeToolbarSave.record.world.event_ref);assert.deepEqual(toolbarSaved.record.native_readback??toolbarSaved.record.world.native_readback,beforeToolbarSave.native.instrument.influence.native_readback);await savedFile(toolbarSaved.working,'same-current-toolbar-native-save');
+  await action('reset');await openSceneWorkflow();await frame.locator('#timeline-panel .scene-save-row [data-action="save-next"]').click();await requireAuthoredNativeHealth('save-next');await action('save');
  const next=await snapshot('10d-authored-next-native-owner'),nextDoc=await nativeDocument(a.working.native_ref);artifact('authored-next-native-owner-document.json',nextDoc);
  const nextScene=nextDoc.scenes.find(s=>s.scene_ref===next.document.scenes[next.state.sceneIndex]?.id);
  assert.ok(nextScene&&nextScene.scene_ref!==cosmic.scene_ref,'The next authored presentation has its own native Scene identity');

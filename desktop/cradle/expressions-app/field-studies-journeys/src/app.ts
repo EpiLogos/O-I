@@ -362,6 +362,28 @@ async function leaveEpiNativeScene(){
  epiDeparture=departure;
  try{await departure;}finally{if(epiDeparture===departure)epiDeparture=null;}
 }
+
+/** Authored scene snapshots and timing commit only after the existing native
+ * partition acknowledges departure. Retention may replace the local Scene, so
+ * qualify its semantic address again and reacquire it before changing it. */
+function epiSceneAuthoringBasis(){
+ const record=epiWorld;
+ return {document:store.document.id,expression:nativeWorkspace?.nativeView()?.document.expression_ref,
+  scene:scene().id,navigation:sceneNavigationEpoch,journey:journeyNavigation,intent:nativeWorkspace?.intentGeneration(),
+  instance:record?.world.instance_ref,person:record?.person_ref,event:record?.world.event_ref,snapshot:record?.world.snapshot_ref,
+  identity:JSON.stringify([record?.identity_source,record?.identity_input_revision]),source:JSON.stringify(record?.source_basis)};
+}
+function requireEpiSceneAuthoring(basis:ReturnType<typeof epiSceneAuthoringBasis>):Scene{
+ if(JSON.stringify(epiSceneAuthoringBasis())!==JSON.stringify(basis))throw Error('The Expression, scene or personal occasion changed while its native field was closing. The submitted scene edit was not applied.');
+ const controller=nativeField?.controller;
+ if(epiWorld&&controller){const reading=controller.reading,lifetime=reading.lifetime;if(reading.status!=='manual'||reading.lease||reading.domain||controller.inspectTargets()||lifetime.admission_pending||lifetime.close_pending||lifetime.operation_pending||lifetime.close_error)throw Error('The cosmic native field became active again before the authored scene commit. The submitted scene edit was not applied.');}
+ return scene();
+}
+async function prepareEpiSceneAuthoring(basis:ReturnType<typeof epiSceneAuthoringBasis>){
+ if(epiWorld)await leaveEpiNativeScene();
+ requireEpiSceneAuthoring(basis);
+}
+let epiDurationCommit:Promise<void>|null=null,epiDurationRequest=0;
 async function setScene(index:number,automatic=false){
  const navigation=++sceneNavigationEpoch,documentId=store.document.id,instance=epiWorld?.world.instance_ref;
  if(index<0)index=store.document.scenes.length-1;if(index>=store.document.scenes.length)index=0;if(index===sceneIndex&&!automatic)return false;
@@ -404,6 +426,19 @@ function refitFormationsForFont(prev:FontRef,next:FontRef){
  for(const fe of s.entities)if(fe.kind==='formation'&&!fe.locked)refitFormationForFont(fe,prev,next);
 }
 function applyBinding(el:HTMLInputElement|HTMLSelectElement|HTMLTextAreaElement,continuous=false){
+ // A duration input can be the first edit while a held cosmic field still
+ // owns its target partition; the scene buttons are not its only entrance.
+ if(epiWorld&&el instanceof HTMLInputElement&&el.dataset.bind==='duration'){
+  if(el.dataset.cancelCommit)return;
+  const basis=epiSceneAuthoringBasis(),submitted=el.cloneNode(false) as HTMLInputElement,request=++epiDurationRequest;
+  submitted.value=el.value;
+  const commit=(async()=>{await prepareEpiSceneAuthoring(basis);if(request!==epiDurationRequest)return;requireEpiSceneAuthoring(basis);applyBindingNow(submitted,continuous);if(el.isConnected&&el.value===submitted.value)el.dataset.originalValue=submitted.value;})();
+  epiDurationCommit=commit;
+  void commit.catch(error).finally(()=>{if(epiDurationCommit===commit)epiDurationCommit=null;});return;
+ }
+ applyBindingNow(el,continuous);
+}
+function applyBindingNow(el:HTMLInputElement|HTMLSelectElement|HTMLTextAreaElement,continuous=false){
  if(el.dataset.cancelCommit)return;trackPreview=false;if(journeyPlaying){journeyPlaying=false;applySceneView();}const path=el.dataset.bind;if(!path)return;const subjectId=el.closest<HTMLElement>('[data-entity-id]')?.dataset.entityId;const subject=subjectId?scene().entities.find(e=>e.id===subjectId):selectedEntity();if(subjectId&&path.startsWith('step.'))selected=[subjectId];const {root,keys}=path.startsWith('entity.')?{root:subject,keys:path.slice(7).split('.')}:path.startsWith('step.')?{root:subject?.sequence.steps[stepIndex],keys:path.slice(5).split('.')}:pathTarget(path);if(!root||keys.some(k=>['__proto__','constructor','prototype'].includes(k)))return;
  if(subject&&blueprintMember(scene(),subject.id)&&(path.startsWith('entity.position')||path.startsWith('step.position'))){toast('Use Blueprint to move the whole shape, or release it to edit individual positions.');renderInspector();return;}
  if((path.startsWith('entity.')||path.startsWith('step.'))&&subject?.locked&&path!=='entity.locked'){toast('Unlock this entity to edit it. Its sequence is still running.');renderInspector();return;}
@@ -560,8 +595,22 @@ async function action(name:string,el:HTMLElement,event?:Event){const s=scene(),s
  case 'studio-section':studioSection=el.dataset.value!;instrumentOffered=true;tab=['formations','layout'].includes(studioSection)?'objects':['sequence','motion','focus','automation'].includes(studioSection)?'motion':['scene','text'].includes(studioSection)?'scene':'field';motionTab=studioSection==='automation'?'automation':studioSection==='motion'?'morph':studioSection==='focus'?'focus':'sequence';search='';$<HTMLInputElement>('control-search').value='';renderAll();$('inspector-content').scrollTop=0;break;
  case 'quick-guide':$<HTMLDialogElement>('guide-dialog').showModal();break;
  case 'sequence-panel':timelineOpen=false;beltPickerOpen=false;modesOpen=false;captureOpen=false;sequenceOpen=!sequenceOpen;if(sequenceOpen){inspectorOpen=false;contextKind='';}renderAll();break;
- case 'save-scene':case 'save-next':{if(propertyTake)finishPropertyTake();const name=$<HTMLInputElement>('scene-save-name').value;if(name.trim().length===0){toast('Give the scene a name first.');break;}if(el.dataset.action==='save-next'&&store.document.scenes.length>=64){toast('An expression can contain up to 64 scenes.');break;}changed(()=>{s.view={...s.view,mode:camera.mode,yaw:camera.yaw,pitch:camera.pitch,zoom:camera.zoom,panX:camera.panX/width,panY:camera.panY/height};delete s.view.nativeCamera;saveScene(store.document,s,name);sceneNames.delete(s.id);if(el.dataset.action==='save-next'){const next=nextSceneFrom(store.document,s);sceneIndex=store.document.scenes.indexOf(next);}});toast('Scene saved to your browser library'+(el.dataset.action==='save-next'?' · next draft ready.':'.'));break;}
- case 'restore-scene':sceneNames.delete(s.id);changed(()=>{restoreScene(store.document,s.id);});break;
+  case 'save-scene':case 'save-next':{
+   const basis=epiSceneAuthoringBasis(),name=$<HTMLInputElement>('scene-save-name').value,next=el.dataset.action==='save-next';
+   if(name.trim().length===0){toast('Give the scene a name first.');break;}
+   if(next&&store.document.scenes.length>=64){toast('An expression can contain up to 64 scenes.');break;}
+   if(epiDurationCommit)await epiDurationCommit;
+   await prepareEpiSceneAuthoring(basis);const authored=requireEpiSceneAuthoring(basis);
+   if(propertyTake)finishPropertyTake();
+   if(next&&store.document.scenes.length>=64)throw Error('An expression can contain up to 64 scenes.');
+   changed(()=>{authored.view={...authored.view,mode:camera.mode,yaw:camera.yaw,pitch:camera.pitch,zoom:camera.zoom,panX:camera.panX/width,panY:camera.panY/height};delete authored.view.nativeCamera;saveScene(store.document,authored,name);sceneNames.delete(authored.id);if(next){const following=nextSceneFrom(store.document,authored);sceneIndex=store.document.scenes.indexOf(following);}});
+   toast('Scene saved to your browser library'+(next?' · next draft ready.':'.'));break;
+  }
+  case 'restore-scene':{
+   const basis=epiSceneAuthoringBasis();if(epiDurationCommit)await epiDurationCommit;
+   await prepareEpiSceneAuthoring(basis);const authored=requireEpiSceneAuthoring(basis);
+   sceneNames.delete(authored.id);changed(()=>{restoreScene(store.document,authored.id);});break;
+  }
  case 'toolbelt':if(propertyTake)finishPropertyTake();beltOpen=!beltOpen;if(beltOpen){studioOpen=false;inspectorOpen=false;}renderAll();break;
  case 'browse-controls':pendingBelt.clear();beltPickerOpen=true;inspectorOpen=false;contextKind='';timelineOpen=false;modesOpen=false;captureOpen=false;renderAll();$('belt-search').focus();break;
  case 'close-belt-picker':beltPickerOpen=false;pendingBelt.clear();renderAll();break;
@@ -818,7 +867,7 @@ document.addEventListener('change',ev=>{const el=ev.target as HTMLInputElement|H
 });
 document.addEventListener('focusout',ev=>{const el=ev.target;if((el instanceof HTMLInputElement||el instanceof HTMLTextAreaElement)&&el.isConnected&&el.dataset.bind&&el.type!=='range'&&el.type!=='checkbox'){if(el.dataset.cancelCommit){delete el.dataset.cancelCommit;return;}if(el instanceof HTMLTextAreaElement||el.value!==el.dataset.originalValue)applyBinding(el);}});
 document.addEventListener('focusin',ev=>{const el=ev.target;if((el instanceof HTMLInputElement||el instanceof HTMLTextAreaElement)&&el.dataset.bind){el.dataset.originalValue=el.value;delete el.dataset.liveEditValue;delete el.dataset.cancelCommit;}});
-document.addEventListener('keydown',ev=>{if(ev.defaultPrevented)return;const el=ev.target as HTMLElement;const typing=el.closest('input,textarea,select,[contenteditable="true"]');if(researchInstruments?.active()){if(libraryOpen){if(ev.key==='Escape'&&!document.querySelector('dialog[open]')){ev.preventDefault();if(assignmentTarget||assignmentGroup){assignmentTarget='';assignmentGroup='';renderAll();}else closeLibrary();}return;}if(!typing&&!document.querySelector('dialog[open]')&&(ev.metaKey||ev.ctrlKey)&&ev.key.toLowerCase()==='z'){ev.preventDefault();void action(ev.shiftKey?'redo':'undo',el);}return;}if(typing){if(ev.key==='Escape'){if(assignmentTarget||assignmentGroup){assignmentTarget='';assignmentGroup='';renderAll();return;}if(el instanceof HTMLInputElement&&el.dataset.originalValue!==undefined){el.value=el.dataset.originalValue;el.dataset.cancelCommit='true';}el.blur();return;}if(ev.key==='Enter'&&!(el instanceof HTMLTextAreaElement)){ev.preventDefault();if(el instanceof HTMLInputElement&&el.dataset.bind)applyBinding(el);else el.blur();}return;}if(document.querySelector('dialog[open]'))return;if(libraryOpen){if(ev.key==='Escape'){if(assignmentTarget||assignmentGroup){assignmentTarget='';assignmentGroup='';renderAll();return;}ev.preventDefault();closeLibrary();}return;}if(ev.key==='Escape'&&(modesOpen||captureOpen)){ev.preventDefault();readCapture();modesOpen=false;captureOpen=false;renderAll();return;}
+document.addEventListener('keydown',ev=>{if(ev.defaultPrevented)return;const el=ev.target as HTMLElement;const typing=el.closest('input,textarea,select,[contenteditable="true"]');if(researchInstruments?.active()){if(libraryOpen){if(ev.key==='Escape'&&!document.querySelector('dialog[open]')){ev.preventDefault();if(assignmentTarget||assignmentGroup){assignmentTarget='';assignmentGroup='';renderAll();}else closeLibrary();}return;}if(!typing&&!document.querySelector('dialog[open]')&&(ev.metaKey||ev.ctrlKey)&&ev.key.toLowerCase()==='z'){ev.preventDefault();void action(ev.shiftKey?'redo':'undo',el);}return;}if(typing){if(ev.key==='Escape'){if(assignmentTarget||assignmentGroup){assignmentTarget='';assignmentGroup='';renderAll();return;}if(el instanceof HTMLInputElement&&el.dataset.originalValue!==undefined){if(el.dataset.bind==='duration')epiDurationRequest++;el.value=el.dataset.originalValue;el.dataset.cancelCommit='true';}el.blur();return;}if(ev.key==='Enter'&&!(el instanceof HTMLTextAreaElement)){ev.preventDefault();if(el instanceof HTMLInputElement&&el.dataset.bind)applyBinding(el);else el.blur();}return;}if(document.querySelector('dialog[open]'))return;if(libraryOpen){if(ev.key==='Escape'){if(assignmentTarget||assignmentGroup){assignmentTarget='';assignmentGroup='';renderAll();return;}ev.preventDefault();closeLibrary();}return;}if(ev.key==='Escape'&&(modesOpen||captureOpen)){ev.preventDefault();readCapture();modesOpen=false;captureOpen=false;renderAll();return;}
  if((ev.metaKey||ev.ctrlKey)&&ev.key.toLowerCase()==='z'){ev.preventDefault();void action(ev.shiftKey?'redo':'undo',el);return;}
  if((ev.metaKey||ev.ctrlKey)&&ev.key.toLowerCase()==='s'){ev.preventDefault();void action('native-save',el);return;}
  if(ev.metaKey||ev.ctrlKey||ev.altKey)return;
@@ -1474,7 +1523,7 @@ epiEncounter=installEpiWorldEncounter({
  setDamping:async(perSecond)=>{if(!Number.isFinite(perSecond)||perSecond<0||perSecond>1e6)throw Error('Damping must be finite and in 0..1000000 per second');await (await playEpiWorld()).setDamping(perSecond);epiEncounter?.refresh();},
  sound:enabled=>{if(!nativeField||nativeField.controller.reading.status!=='following')throw Error('Advance the field once to open its native voices.');nativeField.controller.setMuted(!enabled);},
  quiet:enabled=>{fieldPaused=enabled;needsFrame=true;renderAll();},
- save:async()=>{await retainEpiNativeReading(false);await nativeWorkspace!.idle();const saved=await nativeWorkspace!.saveFile('Work/O-I/desktop/cradle/material/expressive-material/expression',`epi-world-${epiWorld!.world.instance_ref.slice('expression:epi-'.length)}.expression.json`);const state=nativeWorkspace!.inspect();if(!saved||!state.file)throw Error(state.notice||'The native material file was not acknowledged.');epiEncounter?.status('Saved and read back through the native material owner.');},
+ save:async()=>{const basis=epiSceneAuthoringBasis();if(epiDurationCommit)await epiDurationCommit;await prepareEpiSceneAuthoring(basis);await nativeWorkspace!.idle();requireEpiSceneAuthoring(basis);if(propertyTake)finishPropertyTake();const saved=await nativeWorkspace!.saveFile('Work/O-I/desktop/cradle/material/expressive-material/expression',`epi-world-${epiWorld!.world.instance_ref.slice('expression:epi-'.length)}.expression.json`);const state=nativeWorkspace!.inspect();if(!saved||!state.file)throw Error(state.notice||'The native material file was not acknowledged.');epiEncounter?.status('Saved and read back through the native material owner.');},
  reset:async()=>{
   const record=epiWorld!;
   // Event replacement intentionally preserves the independent continuous
@@ -1548,7 +1597,7 @@ if(window.__START_PRESENTATION__||qs.has('present')){presenting=true;fieldPaused
 // composition to its native Expression (the same owner operation the former
 // native panel used); otherwise it keeps the draft in this browser.
 async function saveNative(){
- if(kernelExpressionsAvailable()&&nativeWorkspace){if(propertyTake)finishPropertyTake();const ok=await nativeWorkspace.commit();if(ok){closeEntryGate();toast('Saved.');}return;}
+ if(kernelExpressionsAvailable()&&nativeWorkspace){const basis=epiSceneAuthoringBasis();if(epiDurationCommit)await epiDurationCommit;await prepareEpiSceneAuthoring(basis);requireEpiSceneAuthoring(basis);if(propertyTake)finishPropertyTake();const ok=await nativeWorkspace.commit();if(ok){closeEntryGate();toast('Saved.');}return;}
  deletedLibraryIds.delete(store.document.id);saveToLibrary(store.document);if(libraryOpen)renderLibrary();toast('Saved in this browser.');
 }
 let nativeState:import('./nativeWorkspace.js').NativeStatus|null=null;
@@ -1582,7 +1631,7 @@ function openNativeFileDialog(){
  const dialog=$<HTMLDialogElement>('confirm-dialog');
  const current=nativeState?.file;
  dialog.innerHTML=`<form method="dialog" class="native-file-form"><h2>Save to a Central file</h2><p>${current?`Attached to ${esc(current.path)} · revision ${esc(String(current.revision))}`:'Writes this composition as a native Expression file and reads it back.'}</p><label>Folder<input name="folder" value="." ${current?'disabled':''}></label><label>Filename<input name="name" value="${esc(slug(store.document.name)||'expression')}.expression.json" ${current?'disabled':''}></label><footer><button value="cancel">Cancel</button><button value="save" class="primary">Save file</button></footer></form>`;
- dialog.onclose=()=>{if(dialog.returnValue!=='save')return;const form=dialog.querySelector('form')!;void nativeWorkspace?.saveFile((form.elements.namedItem('folder') as HTMLInputElement).value,(form.elements.namedItem('name') as HTMLInputElement).value).then(ok=>{if(ok)toast(nativeState?.text||'Saved to a Central file.',6000);});};
+ dialog.onclose=()=>{if(dialog.returnValue!=='save')return;const form=dialog.querySelector('form')!,folder=(form.elements.namedItem('folder') as HTMLInputElement).value,name=(form.elements.namedItem('name') as HTMLInputElement).value,basis=epiSceneAuthoringBasis();void (async()=>{if(epiDurationCommit)await epiDurationCommit;await prepareEpiSceneAuthoring(basis);requireEpiSceneAuthoring(basis);if(propertyTake)finishPropertyTake();const ok=await nativeWorkspace?.saveFile(folder,name);if(ok)toast(nativeState?.text||'Saved to a Central file.',6000);})().catch(error);};
  dialog.showModal();
 }
 async function startWorkspace(){
