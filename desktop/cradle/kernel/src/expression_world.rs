@@ -5339,12 +5339,17 @@ mod tests {
             fixture.fill(&body, &basis).unwrap();
             let before = fixture.document();
             let files = fixture.stored_bytes();
-            assert_eq!(files.len(), 1);
-            let path = fixture
-                .home
-                .join("desktop/expression-acts")
-                .join(&files[0].0);
-            let mut record: Value = serde_json::from_slice(&files[0].1).unwrap();
+            // The real durable store also owns its lock file. Select this
+            // exact native Act record rather than treating every file as JSON.
+            let (name, bytes) = files
+                .iter()
+                .find(|(_, bytes)| {
+                    serde_json::from_slice::<Value>(bytes)
+                        .is_ok_and(|record| record["act"]["act_ref"] == TEXT_ACT)
+                })
+                .expect("Actual native Act record required");
+            let path = fixture.home.join("desktop/expression-acts").join(name);
+            let mut record: Value = serde_json::from_slice(bytes).unwrap();
             let sequence = record["act"]["sequence"].as_array_mut().unwrap();
             match fault {
                 "source-bytes" => sequence[0]["text"] = json!(format!("{body} changed")),

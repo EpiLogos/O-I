@@ -136,6 +136,11 @@ try {
  const localAct='act:controlled-native-local-history';
  const localBindings=JSON.parse(JSON.stringify(bindings).split(initial.expression_ref).join(historicalRef));
  await world({operation:'act_open',act_ref:localAct,expression_ref:historicalRef,mode:'expressions',actor:'agent:controlled-native-replay',bindings:localBindings,cast:[{role:'bo',participant_ref:agentRef,character_ref:character.file_ref}]});
+ // A local character state follows an actual Scene which has established
+ // its participant occupant, matching the captured Direct activity order.
+ const historicalSceneOp=mapped.ops.find(op=>op.operation==='act_select'&&'scene' in op);assert.ok(historicalSceneOp);
+ const historicalSceneRequest=requestFor(historicalSceneOp,repertoire,cast,{actRef:localAct,actor:'agent:controlled-native-replay'}).request;
+ assert.ok(historicalSceneRequest);await performWithRetry(world,historicalSceneRequest,localAct);
  const localOp=mapped.ops.find(op=>op.operation==='act_select'&&op.state==='idle'&&op.role==='bo');
  assert.ok(localOp);
  const localRequest=requestFor(localOp,repertoire,cast,{actRef:localAct,actor:'agent:controlled-native-replay'}).request;
@@ -149,7 +154,7 @@ try {
  assert.notEqual(remapped.bindings.bo.agent_ref,agentRef);
  assert.equal(requestAccepted(remapped,retainedRequest(localRequest,localOp,cast,remapped)),true,'Historical state retains its original participant/role through an actual handoff');
  assert.throws(()=>retainedRequest(localRequest,localOp,[{...cast[0],agent_ref:other.subject_ref}],remapped),/qualified historical participant/);
- assert.equal(localPerformed.act.sequence[0].bindings.bo.agent_ref,agentRef);
+ assert.equal(localPerformed.act.sequence[localPerformed.act.sequence.length-1].bindings.bo.agent_ref,agentRef);
  report.checks.push('Actual native local-state receipt qualifies its historical participant after handoff role remapping; a different source agent refuses');
  const sceneOp=mapped.ops.find(op=>op.operation==='act_select'&&'scene' in op);assert.ok(sceneOp);
  const originalScene=requestFor(sceneOp,repertoire,cast,{actRef:localAct,actor:'agent:controlled-native-replay'}).request;
