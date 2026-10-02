@@ -197,7 +197,12 @@ retain the readable segments and their selections for ordinary Act seek and
 restart recovery. The first page's selection and Act position must agree.
 This does not hold the Act, invoke a provider, certify a Factory result, or
 use a renderer pagination store. Replaying an edition uses its retained
-document rather than grafting the complete binding into each page.
+document rather than grafting the complete binding into each page. Seeking the
+complete source passage is observation-only: it validates source target, native
+revision/Scene ancestry, contiguous Edition pages and their actual selected
+text bodies without replaying an earlier Scene or filling the complete text.
+Source/Edition integrity is mandatory even with an accepted drift override;
+the current target and Act revision guards still apply.
 
 The optional directive is strict and role-local. An absent directive keeps
 the existing single-fill behavior. Unknown or malformed policy, duplicate
@@ -270,6 +275,17 @@ material remains a refusal. An uncertain Factory delivery blocks subsequent
 operations and cursor advancement; each following pass must successfully read
 the native Act before any resend. An unreadable owner backs off while preserving
 the pending request. No alternate writable receipt or Redis source is introduced.
+Retained mapped occurrences stay available until exact prequalification against
+their owning Act, including earlier rollover Acts. Historical requests use their accepted material pin and character choice;
+a new repertoire applies to unperformed occurrences. Local state and gesture
+requests use the participant/role binding recorded with their passage,
+independently of the current Scene's occupants. New Scene requests also retain
+the semantic repertoire key in the existing native state field. Initial bounded catch-up ends only when its
+native skip receipts qualify; partial receipt recovery and fresh-body re-entry
+retain the same bounded tail. Skip observations retain complete source keys in
+the existing native `operate` payload, chunked to its 4096-byte bound. Legacy
+hash-only history remains readable and replayable but refuses live continuation
+that cannot qualify the exact skipped source identities.
 
 Repertoire resolution: explicit selection → workflow-associated Expression →
 task/SkillSet-associated material → generic Factory composition; skill

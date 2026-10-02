@@ -526,7 +526,7 @@ export interface EncounterScope {
   phaseScenes?: Partial<Record<CharacterState, RepertoireScene>>;
   worldRef?: string;
 }
-export function mapEventsWithCursor(readings: LiveReadings, journals: LiveJournals, cursor: CursorState = emptyCursor(), encounterScope?: EncounterScope): {ops: ActOp[]; sessions: Record<string, SessionCursor>} {
+export function mapEventsWithCursor(readings: LiveReadings, journals: LiveJournals, cursor: CursorState = emptyCursor(), encounterScope?: EncounterScope, includePerformed = false): {ops: ActOp[]; sessions: Record<string, SessionCursor>} {
   const sessions: Record<string, SessionCursor> = {...(cursor.sessions ?? {})};
   const cast = encounterScope ? [...encounterScope.cast] : castOf(readings);
   const lead = cast[0];
@@ -852,7 +852,7 @@ export function mapEventsWithCursor(readings: LiveReadings, journals: LiveJourna
   const performed = new Set(cursor.performed);
   // A scoped Direct journal is one native cursor sequence. Wall-clock rollback
   // must not move a turn's completion before its speech or produced text.
-  return {ops: out.sort((a, b) => encounterScope ? a.seq - b.seq : a.order - b.order || a.seq - b.seq).map(entry => entry.op).filter(op => !performed.has(opKey(op))), sessions};
+  return {ops: out.sort((a, b) => encounterScope ? a.seq - b.seq : a.order - b.order || a.seq - b.seq).map(entry => entry.op).filter(op => includePerformed || !performed.has(opKey(op))), sessions};
 }
 
 /** The part of a session's journal that is this Run's work. A session can

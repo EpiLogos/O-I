@@ -13,6 +13,7 @@ on:
       - 'desktop/cradle/src/stage/**'
       - 'desktop/cradle/tests/shared-direct*'
       - 'desktop/cradle/tests/factory-live-producer.test.mjs'
+      - 'desktop/cradle/tests/factory-live-native-path.mjs'
       - 'desktop/cradle/tests/fixtures/shared-direct-journal/**'
       - 'desktop/cradle/tests/fixtures/shared-native-expression/**'
       - 'desktop/cradle/tests/shared-expression-resource-native.mjs'

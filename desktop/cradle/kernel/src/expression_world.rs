@@ -3543,6 +3543,41 @@ impl Kernel {
         Ok(None)
     }
 
+    fn retained_text_source(passage: &Passage) -> bool {
+        passage.kind == PassageKind::Text
+            && passage
+                .native_ref
+                .as_deref()
+                .is_some_and(|reference| reference.starts_with("act-text:"))
+    }
+
+    /// A paged source is an observation; its Editions own the presentation.
+    /// Qualify the entire ancestry even when the caller accepts material drift.
+    fn validate_text_ancestry(act: &Act, passage: &Passage) -> Result<bool, String> {
+        if Self::retained_text_source(passage) {
+            Self::retained_text_pages(act, passage)?;
+            return Ok(true);
+        }
+        if passage.kind == PassageKind::Edition
+            && passage
+                .native_ref
+                .as_deref()
+                .is_some_and(|reference| reference.starts_with("act-text:"))
+        {
+            let mut sources = act.sequence.iter().filter(|source| {
+                Self::retained_text_source(source) && source.native_ref == passage.native_ref
+            });
+            let source = sources
+                .next()
+                .ok_or("Retained text edition has no source")?;
+            if sources.next().is_some() {
+                return Err("Retained text edition has ambiguous source ancestry".into());
+            }
+            Self::retained_text_pages(act, source)?;
+        }
+        Ok(false)
+    }
+
     fn validate_retained_edition(passage: &Passage) -> Result<(), String> {
         let edition = passage
             .edition
@@ -3574,6 +3609,18 @@ impl Kernel {
         if pages.is_empty() {
             return Err("Retained text source has no native page".into());
         }
+        if source.scene_ref != source.target_scene_ref {
+            return Err("Retained text source Scene or target Scene mismatch".into());
+        }
+        let source_revision = source
+            .revision
+            .as_deref()
+            .and_then(|revision| revision.parse::<u64>().ok())
+            .ok_or("Retained text source has no native revision")?;
+        let source_scene = source
+            .scene_ref
+            .as_deref()
+            .ok_or("Retained text source has no Scene")?;
         let mut complete = String::new();
         for (index, page) in pages.iter().enumerate() {
             Self::validate_retained_edition(page)?;
@@ -3591,6 +3638,35 @@ impl Kernel {
                     != page.scene_ref.as_deref()
             {
                 return Err("Retained text page does not match its source passage".into());
+            }
+            let edition = page.edition.as_ref().unwrap();
+            if source_revision.checked_add(index as u64 + 1) != Some(edition.revision)
+                || !edition
+                    .scenes
+                    .iter()
+                    .any(|scene| scene.scene_ref == source_scene)
+            {
+                return Err("Retained text edition has different native source ancestry".into());
+            }
+            let scene = edition
+                .scenes
+                .iter()
+                .find(|scene| scene.scene_ref == edition.selection.scene_ref)
+                .and_then(|scene| scene.presentation.as_ref())
+                .ok_or("Retained text edition has no selected presentation")?;
+            let mut layers = scene.scene["text"]
+                .as_array()
+                .ok_or("Retained text edition has no text layers")?
+                .iter()
+                .filter(|layer| layer["role"].as_str() == page.role.as_deref());
+            let layer = layers
+                .next()
+                .ok_or("Retained text edition has no source role")?;
+            if layers.next().is_some()
+                || page.field.as_deref() != Some("body")
+                || page.text.as_deref() != layer["body"].as_str()
+            {
+                return Err("Retained text edition presentation differs from its page".into());
             }
             complete.push_str(
                 page.text
@@ -4343,6 +4419,7 @@ impl Kernel {
                 passage.target_ref = Some(target_ref);
                 passage.target_scene_ref = Some(target_scene);
                 passage.native_ref = Some(occupant);
+                passage.bindings = next.bindings.clone();
                 passage.transition = transition;
                 passage.event_basis = event_basis;
                 next.basis_revision = revision;
@@ -4681,7 +4758,14 @@ impl Kernel {
                         false,
                     ),
                 };
-                let replay: Vec<Passage> = act.sequence[start..=position].to_vec();
+                // Seeking the source observation reads its retained ancestry;
+                // it never re-fills the complete reply or replays an older Scene.
+                let source_only = Self::retained_text_source(&act.sequence[position]);
+                let replay: Vec<Passage> = if source_only {
+                    vec![act.sequence[position].clone()]
+                } else {
+                    act.sequence[start..=position].to_vec()
+                };
                 // Refuse drift before any edit (unless the caller accepts it).
                 let mut replay = replay;
                 for passage in &mut replay {
@@ -4689,6 +4773,9 @@ impl Kernel {
                     // override, and is checked before any presentation edit.
                     if passage.kind == PassageKind::Edition {
                         Self::validate_retained_edition(passage)?;
+                    }
+                    if Self::validate_text_ancestry(&act, passage)? {
+                        continue;
                     }
                     if accept_drift {
                         for binding in passage.bindings.values_mut() {
@@ -5183,6 +5270,143 @@ mod tests {
             assert_eq!(selected_text(&shown), page["text"].as_str().unwrap());
             assert_eq!(replay["act"]["bindings"][TEXT_ROLE]["text"], body);
             assert_eq!(replay["act"]["sequence"], filled["act"]["sequence"]);
+        }
+    }
+
+    #[test]
+    fn native_paged_source_seek_is_observation_only_after_restart_and_checks_cas() {
+        let (body, basis) = retained_bo_text();
+        let mut fixture = NativeTextFixture::new(Some(authored_text_policy()));
+        let filled = fixture.fill(&body, &basis).unwrap();
+        for restart in [false, true] {
+            let before = fixture.document();
+            if restart {
+                let mut fresh = Kernel::new(crate::flow::CentralClient::discover());
+                fresh.attach_act_store(&fixture.home).unwrap();
+                native_text_expression(
+                    &mut fresh,
+                    json!({"operation":"open",
+                    "document":before,"actor":"agent:controlled-native-replay"}),
+                )
+                .unwrap();
+                fixture.kernel = fresh;
+            }
+            let act = fixture.act();
+            let result = native_text_world(
+                &mut fixture.kernel,
+                json!({"operation":"act_seek",
+                "act_ref":TEXT_ACT,"actor":"agent:controlled-native-replay","position":0,
+                "expected_revision":before["revision"],"expected_act_revision":act["revision"]}),
+            )
+            .unwrap();
+            assert_eq!(result["state"], "act_sought");
+            assert_eq!(
+                fixture.document(),
+                before,
+                "Source seek never fills or replays material"
+            );
+            assert_eq!(result["act"]["sequence"], filled["act"]["sequence"]);
+            assert_eq!(result["act"]["position"], 0);
+            let stored = fixture.stored_bytes();
+            let result = native_text_world(
+                &mut fixture.kernel,
+                json!({"operation":"act_seek",
+                "act_ref":TEXT_ACT,"actor":"agent:controlled-native-replay","position":0,
+                "expected_revision":before["revision"].as_u64().unwrap()-1,
+                "expected_act_revision":result["act"]["revision"]}),
+            )
+            .unwrap();
+            assert_eq!(result["state"], "revision_conflict");
+            assert_eq!(fixture.document(), before);
+            assert_eq!(fixture.stored_bytes(), stored);
+        }
+    }
+
+    #[test]
+    fn native_paged_source_and_edition_corruption_refuse_before_seek_edits() {
+        let (body, basis) = retained_bo_text();
+        for fault in [
+            "source-bytes",
+            "page-bytes",
+            "page-body",
+            "source-target",
+            "page-target",
+            "source-revision",
+            "source-scene",
+            "source-existing-scene",
+        ] {
+            let mut fixture = NativeTextFixture::new(Some(authored_text_policy()));
+            fixture.fill(&body, &basis).unwrap();
+            let before = fixture.document();
+            let files = fixture.stored_bytes();
+            assert_eq!(files.len(), 1);
+            let path = fixture
+                .home
+                .join("desktop/expression-acts")
+                .join(&files[0].0);
+            let mut record: Value = serde_json::from_slice(&files[0].1).unwrap();
+            let sequence = record["act"]["sequence"].as_array_mut().unwrap();
+            match fault {
+                "source-bytes" => sequence[0]["text"] = json!(format!("{body} changed")),
+                "source-revision" => sequence[0]["revision"] = json!("999999"),
+                "source-scene" => {
+                    sequence[0]["scene_ref"] = json!("expression:changed-source-scene")
+                }
+                "source-existing-scene" => {
+                    sequence[0]["scene_ref"] = sequence[1]["scene_ref"].clone()
+                }
+                "page-bytes" => sequence[1]["text"] = json!("Changed page bytes"),
+                "source-target" => {
+                    sequence[0]["expression_ref"] = json!("expression:changed-source-target")
+                }
+                "page-target" => {
+                    sequence[1]["target_ref"] = json!("expression:changed-page-target")
+                }
+                "page-body" => {
+                    let scene_ref = sequence[1]["edition"]["selection"]["scene_ref"].clone();
+                    let scene = sequence[1]["edition"]["scenes"]
+                        .as_array_mut()
+                        .unwrap()
+                        .iter_mut()
+                        .find(|scene| scene["scene_ref"] == scene_ref)
+                        .unwrap();
+                    let layer = scene["presentation"]["scene"]["text"]
+                        .as_array_mut()
+                        .unwrap()
+                        .iter_mut()
+                        .find(|layer| layer["role"] == TEXT_ROLE)
+                        .unwrap();
+                    layer["body"] = json!("Changed actual retained presentation");
+                }
+                _ => unreachable!(),
+            }
+            // Fault injection changes the actual durable record, never a
+            // fabricated owner response. A fresh native body must refuse it.
+            std::fs::write(&path, serde_json::to_vec_pretty(&record).unwrap()).unwrap();
+            let damaged = fixture.stored_bytes();
+            let mut fresh = Kernel::new(crate::flow::CentralClient::discover());
+            fresh.attach_act_store(&fixture.home).unwrap();
+            native_text_expression(
+                &mut fresh,
+                json!({"operation":"open",
+                "document":before,"actor":"agent:controlled-native-replay"}),
+            )
+            .unwrap();
+            fixture.kernel = fresh;
+            for position in [0, 1] {
+                let result = native_text_world(
+                    &mut fixture.kernel,
+                    json!({"operation":"act_seek",
+                    "act_ref":TEXT_ACT,"actor":"agent:controlled-native-replay","position":position,
+                    "accept_drift":true,"expected_revision":before["revision"]}),
+                );
+                assert!(
+                    result.is_err(),
+                    "{fault}: a drift override cannot accept damaged ancestry"
+                );
+                assert_eq!(fixture.document(), before);
+                assert_eq!(fixture.stored_bytes(), damaged);
+            }
         }
     }
 

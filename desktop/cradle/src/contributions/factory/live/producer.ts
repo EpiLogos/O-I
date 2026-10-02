@@ -144,7 +144,7 @@ export function requestFor(op: ActOp, repertoire: Repertoire, cast: LiveCastMemb
     // material while the current Scene continues (no scene_ref).
     return {material, request: {operation: "act_select", ...base, kind: "state", role: op.role, state: op.state, material: {file_ref: material.file_ref}, bindings, event_basis}};
   }
-  return {material, request: {operation: "act_select", ...base, kind: "scene", bindings, event_basis,
+  return {material, request: {operation: "act_select", ...base, kind: "scene", state: op.scene, bindings, event_basis,
     material: {file_ref: material.file_ref, ...(material.revision ? {revision: material.revision} : {}), ...(material.scene_ref ? {scene_ref: material.scene_ref} : {})}}};
 }
 
@@ -168,7 +168,16 @@ export const chainRef = (base: string, index: number) => index <= 1 ? base : `${
 export function requestAccepted(act: WorldAct | undefined, request: WorldRequest): boolean {
   if (!act || !("act_ref" in request) || act.act_ref !== request.act_ref || !("event_basis" in request) || !request.event_basis) return false;
   const basis = request.event_basis;
-  const subset = (expected: object | undefined, actual: object | undefined): boolean => !expected || !!actual && Object.entries(expected).every(([key, value]) => value === undefined || JSON.stringify((actual as Record<string, unknown>)[key]) === JSON.stringify(value));
+  const same = (expected: unknown, actual: unknown): boolean => {
+    if (expected === actual) return true;
+    if (!expected || !actual || typeof expected !== "object" || typeof actual !== "object") return false;
+    if (Array.isArray(expected) || Array.isArray(actual)) return Array.isArray(expected) && Array.isArray(actual)
+      && expected.length === actual.length && expected.every((value, index) => same(value, actual[index]));
+    const entries = Object.entries(expected);
+    return entries.length === Object.keys(actual).length && entries.every(([key, value]) => same(value, (actual as Record<string, unknown>)[key]));
+  };
+  const subset = (expected: object | undefined, actual: object | undefined): boolean => !expected || !!actual
+    && Object.entries(expected).every(([key, value]) => value === undefined || same(value, (actual as Record<string, unknown>)[key]));
   return act.sequence.some(passage => {
     if (!passage.target_ref || !subset(basis, passage.event_basis)) return false;
     if (request.operation === "act_text") return passage.kind === "text" && passage.role === request.role
@@ -192,6 +201,70 @@ export function requestAccepted(act: WorldAct | undefined, request: WorldRequest
   });
 }
 
+/** Qualify a local historical request using the participant binding that
+ * accompanied its native passage, independently of today's role occupants. */
+export function retainedRequest(request: WorldRequest, op: ActOp, cast: LiveCastMember[], owner: WorldAct): WorldRequest {
+  const key = opKey(op);
+  const passage = owner.sequence.find(passage => {
+    const basis = decodeBasis(passage.event_basis);
+    return basis && occurrenceKey(basis.event_ref, basis.occurrence) === key;
+  });
+  if (!passage) throw new Error("Retained occurrence has no original native passage");
+  if (request.operation !== "act_gesture" && request.operation !== "act_select") return request;
+  // Rendering choices belong to the accepted passage. A person's later
+  // repertoire/character selection applies to new work, not old receipts.
+  const material = {...(passage.file_ref ? {file_ref: passage.file_ref} : {}),
+    ...(passage.expression_ref ? {expression_ref: passage.expression_ref} : {}),
+    ...(passage.revision ? {revision: passage.revision} : {}), ...(passage.scene_ref ? {scene_ref: passage.scene_ref} : {})};
+  let qualified: WorldRequest = {...request, material};
+  if (request.operation === "act_select") {
+    const bindings = {...request.bindings};
+    for (const [role, binding] of Object.entries(bindings)) {
+      const original = passage.bindings?.[role];
+      if (binding.kind === "agent" && binding.agent_ref === original?.agent_ref
+        && !(op.bindings[role]?.kind === "agent" && (op.bindings[role] as Extract<Binding, {kind: "agent"}>).character_ref) && original?.character_ref)
+        bindings[role] = {...binding, character_ref: original.character_ref};
+    }
+    qualified = {...request, material, bindings,
+      ...(request.kind === "scene" && passage.state === undefined ? {state: undefined} : {})};
+  }
+  if (request.operation === "act_gesture" || request.operation === "act_select" && request.kind === "state") {
+    const sourceRole = (op as {role: string}).role;
+    const sourceBinding = op.bindings[sourceRole], selfBinding = op.bindings.self;
+    const roleAgent = sourceBinding?.kind === "agent" ? sourceBinding.agent_ref : undefined;
+    const selfAgent = selfBinding?.kind === "agent" ? selfBinding.agent_ref : undefined;
+    // Factory's local state/gesture grammar binds its acting participant as
+    // `self`; scoped Direct grammar uses the cast role. If both are authored,
+    // they must identify the same actor before a historical receipt qualifies.
+    if (roleAgent && selfAgent && roleAgent !== selfAgent)
+      throw new Error("Retained local occurrence has no qualified historical participant: conflicting role/self actors");
+    const sourceAgent = roleAgent ?? selfAgent;
+    const castAgent = cast.find(member => member.role === sourceRole)?.agent_ref;
+    const role = passage.role;
+    const binding = role && (passage.bindings?.[role] ?? owner.sequence.slice(0, passage.index).reverse()
+      .map(earlier => earlier.bindings?.[role]).find(binding => binding?.agent_ref));
+    if (!role || !sourceAgent || sourceAgent !== castAgent || !binding || binding.agent_ref !== sourceAgent)
+      throw new Error("Retained local occurrence has no qualified historical participant");
+    qualified = request.operation === "act_gesture"
+      ? {...qualified, operation:"act_gesture", role, ...(passage.native_ref ? {entity_ref: passage.native_ref} : {})} as WorldRequest
+      : {...qualified, role};
+  }
+  return qualified;
+}
+
+/** Rebuild semantic source fields without consulting today's repertoire. */
+export function requestForRetained(op: ActOp, cast: LiveCastMember[], config: Pick<LiveConfig, "actRef" | "actor">, owner: WorldAct): WorldRequest {
+  const base = {act_ref: config.actRef, actor: config.actor, event_basis: wireBasis(op.basis)};
+  if (op.operation === "act_text") return {...base, operation:"act_text", role:op.role, text:op.text};
+  const bindings = withCharacters(op.bindings, cast);
+  const request: WorldRequest = op.operation === "act_gesture"
+    ? {...base, operation:"act_gesture", role:op.role, gesture:op.gesture}
+    : "state" in op
+      ? {...base, operation:"act_select", kind:"state", role:op.role, state:op.state, bindings}
+      : {...base, operation:"act_select", kind:"scene", state:op.scene, bindings};
+  return retainedRequest(request, op, cast, owner);
+}
+
 /** Reconcile an uncertain request through the native owner before sending
  * anything further. An unreadable owner or conflicting retained payload is
  * unavailable work, never permission to resend. */
@@ -208,7 +281,7 @@ export async function reconcilePendingDelivery(world: WorldCall, request: WorldR
 export async function performWithRetry(world: WorldCall, request: WorldRequest, actRef: string): Promise<ActOutcome> {
   const eventBasis = "event_basis" in request ? decodeBasis(request.event_basis) : undefined;
   const accepted = (outcome: ActOutcome | undefined) => outcome?.act?.act_ref === actRef
-    && (!eventBasis || cursorFromAct(outcome.act).performed.includes(occurrenceKey(eventBasis.event_ref, eventBasis.occurrence)));
+    && (!eventBasis || requestAccepted(outcome.act, request));
   const admit = (outcome: ActOutcome): ActOutcome => {
     if (!accepted(outcome)) throw new Error(`${request.operation}: no native Act acceptance receipt`);
     return outcome;
@@ -241,7 +314,7 @@ export async function performWithRetry(world: WorldCall, request: WorldRequest, 
   return admit(second);
 }
 
-/** Stand-in hash for skipped keys recorded in the catch-up passage (FNV-1a). */
+/** Legacy FNV-1a identifier, retained only to refuse unqualified hash-only continuation. */
 export function keyHash(key: string): string {
   let hash = 0x811c9dc5;
   for (let i = 0; i < key.length; i++) { hash ^= key.charCodeAt(i); hash = Math.imul(hash, 0x01000193) >>> 0; }
@@ -260,7 +333,16 @@ export function cursorFromAct(act: WorldAct | undefined, base: CursorState = emp
   for (const {passage, basis} of decoded) {
     // The catch-up passages name (by hash) what the first follow deliberately
     // did not perform, so a resumed act never performs that history either.
-    if (passage.operation === CATCH_UP_KIND && passage.native_ref) for (const hash of passage.native_ref.split(":").pop()!.split(".")) if (hash) skipped.add(hash);
+    if (passage.operation === CATCH_UP_KIND && passage.native_ref) {
+      if (passage.native_ref.startsWith("live-catch-up-keys:")) {
+        const keys: unknown = JSON.parse(passage.native_ref.slice("live-catch-up-keys:".length));
+        if (!Array.isArray(keys) || !keys.length || !keys.every(key => typeof key === "string" && key.length))
+          throw new Error("Native catch-up receipt has invalid source identities");
+        for (const key of keys) skipped.add(key);
+      } else if (passage.native_ref.startsWith("live-catch-up:")) {
+        for (const hash of passage.native_ref.slice("live-catch-up:".length).split(".")) if (hash) skipped.add("legacy-hash:" + hash);
+      } else throw new Error("Native catch-up receipt has unknown source custody");
+    }
     if (!basis) continue;
     performed.add(occurrenceKey(basis.event_ref, basis.occurrence));
     const journal = basis.journal;
@@ -346,8 +428,7 @@ export class LiveProducer {
   /** The role (and live entity) presenting an agent now: a role the act's
    * current bindings give that agent and the kernel maps to an entity, else
    * the cast role pinned at open. */
-  private occupantOf(agentRef: string | undefined, fallbackRole: string): {role: string; entity_ref?: string} {
-    const act = this.state.act;
+  private occupantOf(agentRef: string | undefined, fallbackRole: string, act = this.state.act): {role: string; entity_ref?: string} {
     if (agentRef && act) {
       for (const [role, binding] of Object.entries(act.bindings ?? {})) {
         if (binding.agent_ref === agentRef && act.role_entities?.[role]) return {role, entity_ref: act.role_entities[role]};
@@ -356,6 +437,14 @@ export class LiveProducer {
       if (pinned) return {role: fallbackRole, entity_ref: pinned};
     }
     return {role: fallbackRole};
+  }
+
+  private localiseRequest(built: WorldRequest, op: ActOp, cast: LiveCastMember[], act = this.state.act): WorldRequest {
+    if (built.operation !== "act_gesture" && !(built.operation === "act_select" && built.kind === "state")) return built;
+    const role = (op as {role: string}).role;
+    const agentRef = cast.find(member => member.role === role)?.agent_ref;
+    const occupant = this.occupantOf(agentRef, role, act);
+    return built.operation === "act_gesture" ? {...built, role: occupant.role, ...(occupant.entity_ref ? {entity_ref: occupant.entity_ref} : {})} : {...built, role: occupant.role};
   }
 
   private castEntries(cast: LiveCastMember[]): CastMember[] {
@@ -437,7 +526,14 @@ export class LiveProducer {
       const cursor = combined, skipped = skippedAll;
       this.state.chain = chain;
       this.skipped = skipped;
-      this.firstFollow = !act?.sequence?.length && !chain.length && !this.state.cursor.performed.length;
+      // A partial catch-up can have durable skip receipts but no live passage.
+      // Re-entry must finish the same bounded initial catch-up in that case.
+      const retained = [...chain, ...(act ? [act] : [])];
+      const catchUpKeys = new Set(retained.flatMap(owner => owner.sequence.filter(passage => passage.operation === CATCH_UP_KIND)
+        .map(passage => decodeBasis(passage.event_basis)).filter((basis): basis is NonNullable<typeof basis> => !!basis)
+        .map(basis => occurrenceKey(basis.event_ref, basis.occurrence))));
+      this.firstFollow = retained.every(owner => owner.sequence.every(passage => passage.operation === CATCH_UP_KIND))
+        && this.state.cursor.performed.every(key => catchUpKeys.has(key));
       this.set({status: "following", cast, act, cursor, choices: material.filter(entry => entry.kind === "expression" || entry.kind === "scene").map(entry => ({file_ref: entry.file_ref, title: entry.title, kind: entry.kind}))});
     } catch (error) {
       this.set({status: "refused", cast, error: error instanceof Error ? error.message : String(error)});
@@ -510,8 +606,9 @@ export class LiveProducer {
       this.state.sources["expression-delivery"] = "unavailable";
       const fresh = await reconcilePendingDelivery(this.io.world, request);
       this.state.sources["expression-delivery"] = "read";
-      const retained = cursorFromAct(fresh.act).performed;
-      if (requestAccepted(fresh.act, request)) this.state.cursor = {...this.state.cursor, performed: [...new Set([...this.state.cursor.performed, ...retained])].slice(-4000)};
+      const recovered = cursorFromAct(fresh.act);
+      for (const hash of recovered.skipped) this.skipped.add(hash);
+      if (requestAccepted(fresh.act, request)) this.state.cursor = {...this.state.cursor, performed: [...new Set([...this.state.cursor.performed, ...recovered.performed])].slice(-4000)};
       if (pendingAct === this.current) this.state.act = fresh.act;
       this.pendingRequest = undefined;
     }
@@ -582,12 +679,35 @@ export class LiveProducer {
       if (events?.length) journals.encounter![session] = events;
     }
 
-    const mapped = mapEventsWithCursor(readings, journals, this.state.cursor);
+    const mapped = mapEventsWithCursor(readings, journals, this.state.cursor, undefined, true);
     let ops = mapped.ops;
+    // Retained occurrences are qualified against their exact native request
+    // before any source cursor or new mutation is allowed to advance. Earlier
+    // rollover Acts retain their own request and occupant identity.
+    const owners = new Map<string, WorldAct>();
+    for (const op of ops) {
+      const key = opKey(op);
+      if (this.skipped.has(key) || !this.state.cursor.performed.includes(key)) continue;
+      const retained = [...this.state.chain, ...(this.state.act ? [this.state.act] : [])]
+        .find(owner => cursorFromAct(owner).performed.includes(key));
+      if (!retained) throw new Error("Retained occurrence has no native Act owner");
+      let owner = owners.get(retained.act_ref);
+      if (!owner) {
+        owner = (await actInspect(this.io.world, retained.act_ref)).act;
+        if (!owner || owner.act_ref !== retained.act_ref) throw new Error("Retained occurrence owner remains unreadable");
+        owners.set(owner.act_ref, owner);
+      }
+      const qualified = requestForRetained(op, cast, {...this.config, actRef: owner.act_ref}, owner);
+      if (!requestAccepted(owner, qualified)) throw new Error("Retained occurrence has different native request material");
+    }
+    // Old hash-only receipts cannot prove which colliding source key they
+    // skipped. Preserve their native history and refuse ambiguous live input.
+    if (ops.some(op => this.skipped.has("legacy-hash:" + keyHash(opKey(op)))))
+      throw new Error("Legacy catch-up has no exact source identities; its retained Act is readable but cannot qualify this live continuation");
     const skipped: ActOp[] = [];
     if (this.firstFollow) {
-      const fresh = ops.filter(op => !this.state.cursor.performed.includes(opKey(op)) && !this.skipped.has(keyHash(opKey(op))));
-      if (fresh.length > CATCH_UP.fullHistory) {
+      const fresh = ops.filter(op => !this.state.cursor.performed.includes(opKey(op)) && !this.skipped.has(opKey(op)));
+      if (ops.length > CATCH_UP.fullHistory) {
         // A long history: its latest state per record, and each journal's
         // last few events only.
         const lastCursors = new Map<string, number>();
@@ -599,14 +719,13 @@ export class LiveProducer {
           const journal = op.basis.journal;
           return !!journal && journal.cursor >= (lastCursors.get(journal.session) ?? Infinity);
         };
-        const journalOps = ops.filter(op => op.basis.source === "aikit-encounter");
-        const {keep, skip} = catchUp(ops.filter(op => op.basis.source !== "aikit-encounter"));
+        const journalOps = fresh.filter(op => op.basis.source === "aikit-encounter");
+        const {keep, skip} = catchUp(fresh.filter(op => op.basis.source !== "aikit-encounter"));
         const keptSet = new Set([...keep, ...journalOps.filter(recentJournal)]);
         skipped.push(...skip, ...journalOps.filter(op => !recentJournal(op)));
-        ops = ops.filter(op => keptSet.has(op));
+        ops = fresh.filter(op => keptSet.has(op));
       }
       // Otherwise the whole (small) history is performed, in order.
-      this.firstFollow = false;
     }
 
     // Dedupe by event_ref + occurrence before any world request.
@@ -615,40 +734,47 @@ export class LiveProducer {
     const done: ActOp[] = [];
     let blocked = false;
     if (skipped.length) {
-      // Recorded passages stand for the history the catch-up skipped (their
-      // keys by hash in `native_ref`, chunked to the kernel's text bound).
-      const hashes = skipped.map(op => keyHash(opKey(op)));
-      for (let i = 0; i < hashes.length; i += 400) {
-        const chunk = hashes.slice(i, i + 400);
+      // Native passages retain complete source identities, chunked to the
+      // existing4096byte text bound. A hash is never writable skip authority.
+      const chunks: string[][] = [];
+      let chunk: string[] = [];
+      const fits = (keys: string[]) => new TextEncoder().encode("live-catch-up-keys:" + JSON.stringify(keys)).length <= 4096;
+      for (const op of skipped) {
+        const key = opKey(op);
+        if (!fits([key])) throw new Error("Source identity exceeds native catch-up capacity; no source cursor was consumed");
+        if (!fits([...chunk, key])) { chunks.push(chunk); chunk = []; }
+        chunk.push(key);
+      }
+      if (chunk.length) chunks.push(chunk);
+      for (const keys of chunks) {
+        const payload = JSON.stringify(keys);
         const request: WorldRequest = {operation: "act_operate", act_ref: this.current, actor: this.config.actor, mode: "factory", operation_kind: CATCH_UP_KIND,
-          native_ref: `live-catch-up:${chunk.join(".")}`, summary: `Caught up: ${skipped.length} earlier event${skipped.length === 1 ? "" : "s"} not performed`,
-          event_basis: {family: "activity", source: "factory-live", event_ref: this.config.runRef, occurrence: `catch-up:${i / 400}`}};
+          native_ref: "live-catch-up-keys:" + payload, summary: `Caught up: ${keys.length} earlier event${keys.length === 1 ? "" : "s"} not performed`,
+          event_basis: {family: "activity", source: "factory-live", event_ref: this.config.runRef, occurrence: "catch-up:" + payload}};
         try { await performWithRetry(this.io.world, request, this.current); }
         catch (error) { this.pendingRequest = request; throw error; }
-        for (const hash of chunk) this.skipped.add(hash);
+        for (const key of keys) this.skipped.add(key);
       }
       done.push(...skipped);
     }
+    // Initial catch-up custody ends only after every native skip receipt has
+    // qualified. A refusal/lost acknowledgement leaves this bounded path open.
+    this.firstFollow = false;
     for (const op of ops) {
       if (this.stopped) break;
       const key = opKey(op);
-      if (already.has(key) || this.skipped.has(keyHash(key))) continue;
+      if (already.has(key) || this.skipped.has(key)) continue;
       already.add(key);
       let {request, material, reason} = requestFor(op, this.repertoire, cast, {...this.config, actRef: this.current});
       if (!request) { performed.push({key, op, state: "unresolved", error: reason, at: Date.now()}); blocked = true; break; }
       // Object-local operations address the entity presenting that agent now.
-      const localise = (built: WorldRequest) => {
-        if (built.operation !== "act_gesture" && !(built.operation === "act_select" && built.state)) return built;
-        const agentRef = cast.find(member => member.role === (op as {role?: string}).role)?.agent_ref;
-        const occupant = this.occupantOf(agentRef, (op as {role: string}).role);
-        return built.operation === "act_gesture" ? {...built, role: occupant.role, ...(occupant.entity_ref ? {entity_ref: occupant.entity_ref} : {})} : {...built, role: occupant.role};
-      };
+      const localise = (built: WorldRequest) => this.localiseRequest(built, op, cast);
       request = localise(request);
       try {
         try {
           const outcome = await performWithRetry(this.io.world, request, this.current);
           if (outcome?.act) this.state.act = outcome.act;
-          else if (request.operation === "act_select" && !request.state) this.state.act = (await actInspect(this.io.world, this.current).catch(() => undefined))?.act ?? this.state.act;
+          else if (request.operation === "act_select" && request.kind === "scene") this.state.act = (await actInspect(this.io.world, this.current).catch(() => undefined))?.act ?? this.state.act;
         }
         catch (error) {
           if (!(error instanceof PassageLimit)) throw error;
@@ -684,11 +810,13 @@ export class LiveProducer {
       const pending = this.pendingRequest;
       const basis = pending && "event_basis" in pending ? decodeBasis(pending.event_basis) : undefined;
       const pendingKey = basis && occurrenceKey(basis.event_ref, basis.occurrence);
-      const confirmed = cursorFromAct(act).performed.filter(key => key !== pendingKey || requestAccepted(act, pending!));
+      const recovered = cursorFromAct(act);
+      for (const hash of recovered.skipped) this.skipped.add(hash);
+      const confirmed = recovered.performed.filter(key => key !== pendingKey || requestAccepted(act, pending!));
       cursor.performed = [...new Set([...cursor.performed, ...confirmed])].slice(-4000);
     } catch { /* keep the last reading; unconfirmed work stays pending */ }
     this.set({cast, cursor, act, performed: [...this.state.performed, ...performed].slice(-MAX_PERFORMED), lastPassAt: Date.now()});
-    if (blocked) throw new Error(performed.at(-1)?.error ?? "Native material remains unresolved");
+    if (blocked) throw new Error(performed[performed.length - 1]?.error ?? "Native material remains unresolved");
     return done.filter(op => !skipped.includes(op));
   }
 
