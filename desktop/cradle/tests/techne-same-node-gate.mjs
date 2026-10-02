@@ -111,6 +111,7 @@ async function openLiveThenSummon() {
 let releaseBootReply,heldBootReply,heldBootReady,heldBootDelivery,releaseFileReply,heldFileReply,heldFileReady,heldFileDelivery;
 let releaseRefusalReply,releaseNewReply,heldRefusalReady,heldRefusalDelivery,heldNewReady,heldNewDelivery,refusalBasis,heldRefusal,heldNew;
 let restoreCheckpointMember;
+let bootTarget;
 const probe = {};
 const digest=bytes=>createHash('sha256').update(bytes).digest('hex');
 const snapshot=f=>f.evaluate(()=>({document:window.__FIELD_STUDIES__.getDocument(),native:window.__FIELD_STUDIES__.nativeWorking(),state:window.__FIELD_STUDIES__.getState(),status:document.getElementById('native-status')?.textContent,timeOrigin:performance.timeOrigin,url:location.href}));
@@ -443,6 +444,21 @@ try {
     assert.equal(draft.data.state,'ready');assert.deepEqual(draft.data.record.value,target.document,'The actual last marker, persisted Journey and checkpoint agree before the refusal aperture');
     refusalBasis={target,request,checkpoint,draftRequest,draft,savedFile};writeFileSync(resolve(out,'acknowledged-refusal-basis.json'),JSON.stringify(refusalBasis,null,2)+'\n');
   }
+  // The presented real host, not the concealed warm source, owns restart.
+  const presented=await snapshot(frame);
+  await frame.waitForFunction(id=>localStorage.getItem('oi.field-studies.last')===id,presented.document.id);
+  const sessionBefore=await frame.evaluate(()=>({last:localStorage.getItem('oi.field-studies.last'),session:JSON.parse(localStorage.getItem('oi.expression-session.v1')??'null'),presence:window.__FIELD_STUDIES__.sessionPresence()}));
+  assert.equal(sessionBefore.last,presented.document.id);assert.equal(sessionBefore.session.journeyId,presented.document.id);assert.equal(sessionBefore.presence.visible,true);
+  assert.equal(await page.locator('[data-host="concealed"] .pcd-host-frame').count(),1,'The original production opening must retain its actual concealed peer');
+  const concealed=await frameOf('concealed');await ready(concealed);assert.notEqual(concealed,frame);
+  {
+    const start=await concealed.evaluate(()=>window.__FIELD_STUDIES__.sessionPresence());assert.equal(start.visible,false);
+    await concealed.waitForFunction(n=>window.__FIELD_STUDIES__.sessionPresence().intervalSuppressed>=n+2,start.intervalSuppressed);
+    const after=await frame.evaluate(()=>({last:localStorage.getItem('oi.field-studies.last'),session:JSON.parse(localStorage.getItem('oi.expression-session.v1')??'null')}));
+    assert.equal(after.last,presented.document.id);assert.equal(after.session.journeyId,presented.document.id);
+    probe.presentedContinuation={presented,sessionBefore,after,concealedPresence:await concealed.evaluate(()=>window.__FIELD_STUDIES__.sessionPresence()),scope:'Actual two suppressed hidden-host autosave cycles; no timer or synthetic visibility substitutes the native host observer'};
+  }
+  bootTarget=presented.document.id;
   bridge.kill('SIGTERM');
   await new Promise(r => setTimeout(r, 500));
   await startBridge();
@@ -464,11 +480,11 @@ try {
     await page.route('**/op', async route => {
      try{
       const request=route.request(),body=request.method()==='POST'?request.postDataJSON():null;
-      if (!selected && body?.op==='expression_recovery' && body.request?.operation==='read' && body.request.kind==='draft' && body.request.scope==='techne' && body.request.id==='source-twelve-faces') {
+      if (!selected && body?.op==='expression_recovery' && body.request?.operation==='read' && body.request.kind==='draft' && body.request.scope==='techne' && body.request.id===bootTarget) {
         selected=true;
         const response=await route.fetch(),raw=await response.body();
         assert.equal(response.status(),200);const actual=JSON.parse(raw.toString('utf8'));
-        assert.equal(actual.ok,true);assert.equal(actual.outcome?.result,'expression_recovery');assert.equal(actual.outcome.data.state,'ready');assert.equal(actual.outcome.data.record?.id,'source-twelve-faces');
+        assert.equal(actual.ok,true);assert.equal(actual.outcome?.result,'expression_recovery');assert.equal(actual.outcome.data.state,'ready');assert.equal(actual.outcome.data.record?.id,bootTarget);
         const artifact='held-real-boot-recovery-response.raw.json';writeFileSync(resolve(out,artifact),raw);
         heldBootReply={request:body,http_status:response.status(),native_record:actual.outcome.data.record,raw_response:{artifact,bytes:raw.length,sha256:createHash('sha256').update(raw).digest('hex')},scope:'Exactly one real native reply through the ordinary production HTTP relay; only the presented production host is mounted in this restart aperture'};
         readyHeld();await released;await route.fulfill({response,body:raw});heldBootReply.delivered_sha256=createHash('sha256').update(raw).digest('hex');delivered();
@@ -487,7 +503,7 @@ try {
   await gotoMode('techne',bootRace||checkpointRefusal);
   if(bootRace){
     check(await page.locator('[data-host="concealed"]').count()===0,'The controlled held-reply restart has exactly one actual production receiver; original multi-host replay remains separate');
-    await Promise.race([heldBootReady,frame.evaluate(()=>window.__FIELD_STUDIES__.workspaceReady()).then(()=>{throw new Error('Actual boot completed without the exact controlled source-twelve-faces recovery reply to hold.');})]);
+    await Promise.race([heldBootReady,frame.evaluate(()=>window.__FIELD_STUDIES__.workspaceReady()).then(()=>{throw new Error('Actual boot completed without the exact acknowledged presented-work recovery reply to hold.');})]);
   }
   const initialOpening=bootRace?await frame.evaluate(()=>({document:window.__FIELD_STUDIES__.getDocument(),native:window.__FIELD_STUDIES__.nativeWorking(),state:window.__FIELD_STUDIES__.getState()})):null;
   let opening;

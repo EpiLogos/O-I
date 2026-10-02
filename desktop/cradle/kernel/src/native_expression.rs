@@ -567,8 +567,15 @@ impl Manager {
                 if !nonempty(&path) || !nonempty(&expected_revision) {
                     return Err("explicit source path and revision required".into());
                 }
-                let (parent, name) = path.rsplit_once('/').unwrap_or((".", &path));
-                let dir = files::list(client, if parent.is_empty() { "/" } else { parent })?;
+                // Native Central's root is the empty relative path. Never
+                // reinterpret an absolute source as a binding in this World.
+                if !std::path::Path::new(&path).components()
+                    .all(|part| matches!(part, std::path::Component::Normal(_)))
+                {
+                    return Err("binding source requires a relative Central path".into());
+                }
+                let (parent, name) = path.rsplit_once('/').unwrap_or(("", &path));
+                let dir = files::list(client, parent)?;
                 let entry = dir
                     .entries
                     .iter()

@@ -435,9 +435,9 @@
     },
     "shell/model.mjs": {
       "source": "desktop/cradle/expressions-app/field-studies-journeys/src/model.ts",
-      "source_sha256": "281771572a568bd72d0458a29fe897fde247be0de0c019e4fde7e2fba78f23d9",
-      "output_sha256": "123f118924615ac10eb7a80c712ee8b51a9a2d26981a6a6b2fda3ab6e110ba4f",
-      "compiler": "esbuild@0.25.12",
+      "source_sha256": "ff32fd2f4a302dd0148ca39a153c486a0ecdaee8020259245fb68cf441268905",
+      "output_sha256": "2de1d58ec29bec6127feb26d657995f22cd921d41951f9f67e75c5d212ecab81",
+      "compiler": "esbuild@0.21.5",
       "standing": "Bounded compiler output from the native source; other retained modules keep their existing provenance"
     },
     "shell/researchMaterial.mjs": {
@@ -449,9 +449,9 @@
     },
     "shell/capture.mjs": {
       "source": "desktop/cradle/expressions-app/field-studies-journeys/src/capture.ts",
-      "source_sha256": "d48d62a5c3664c1632760c2a9175f02da56005673accf8a5e72722df37011679",
-      "output_sha256": "729eafc9c6ec8e357e2253589d61973edc084ddc307892813311596156076c04",
-      "compiler": "esbuild@0.25.12",
+      "source_sha256": "198484609658903f15693a6b950f102209062d0ea6557eac995407d9525f0a58",
+      "output_sha256": "40c20087149e60f17b5919fc148f07c7434b4d99e1f0df6d2c34ca435156debb",
+      "compiler": "esbuild@0.21.5",
       "standing": "Bounded compiler output from the native source; other retained modules keep their existing provenance"
     },
     "shell/paper.mjs": {
