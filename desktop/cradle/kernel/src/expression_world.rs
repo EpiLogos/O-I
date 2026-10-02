@@ -1681,52 +1681,73 @@ impl Kernel {
                     if existing.phase.ended() {
                         return Err("Act has ended; open a new act".into());
                     }
-                } else {
-                    self.act_make_room()?;
                 }
                 let (passages, act_revision, existing) = self.world.acts.get(&act_ref)
                     .map_or((0, 1, false), |a| (a.sequence.len(), a.revision, true));
-                let precheck = self.act_precheck_fields(&act_ref, passages, act_revision, 1, false, existing)?;
+                let precheck = self.act_precheck_fields_mode(&act_ref, passages, act_revision, 1, false, existing, false)?;
                 if let Some(refusal) = precheck {
                     return Ok(KernelOpOutcome {
                         receipts,
                         result: KernelOpResult::ExpressionWorld { data: refusal },
                     });
                 }
-                let snapshot = self.act_snapshot(&expression_ref).ok();
-                if let Some(before) = &snapshot {
-                    if before.document.revision == expected_revision {
-                        let edition = before.document.edited(changes.clone())?;
-                        let new_act = Act::new(act_ref.clone(), expression_ref.clone(), summary.clone(), actor.clone(), ActMode::Expressions);
-                        let previous = self.world.acts.get(&act_ref).unwrap_or(&new_act);
-                        let mut passage = Passage::new(
-                            previous.sequence.len(),
-                            PassageKind::Edition,
-                            previous.mode,
-                        );
-                        passage.target_ref = Some(expression_ref.clone());
-                        passage.revision = Some(edition.revision.to_string());
-                        passage.summary = Some(summary.clone());
-                        passage.edition = Some(Box::new(edition));
-                        let next_revision = if existing { act_revision.checked_add(1).ok_or("Act revision exhausted")? } else { 1 };
-                        let weight = crate::expression_act_storage::preflight_append(previous, &passage, &summary, &actor,
-                            activity_ref.as_deref(), expected_revision, next_revision)?;
-                        if weight > self.world.available_act_bytes(&act_ref)? {
-                            return Err("Live Acts exceed their 64 MiB expanded serialized-weight budget before history cloning or live edit".into());
-                        }
-                        let mut prospective = previous.clone();
-                        prospective.position = Some(passage.index);
-                        prospective.sequence.push(passage);
-                        prospective.summary = summary.clone();
-                        prospective.actor = actor.clone();
-                        prospective.activity_ref =
-                            activity_ref.clone().or(prospective.activity_ref);
-                        prospective.basis_revision = expected_revision;
-                        prospective.phase = ActPhase::Running;
-                        prospective.revision = next_revision;
-                        prospective.updated_at_unix_ms = unix_ms();
-                        crate::expression_act_store::ActStore::encoded_record(&prospective)?;
+                let before = self.act_snapshot(&expression_ref)?;
+                if before.document.revision != expected_revision {
+                    return Ok(KernelOpOutcome {
+                        receipts,
+                        result: KernelOpResult::ExpressionWorld { data: json!({
+                            "state":"revision_conflict","expression_ref":expression_ref,
+                            "expected_revision":expected_revision,"current_revision":before.document.revision,
+                        }) },
+                    });
+                }
+                let snapshot = Some(before);
+                // The ordinary native pure edit and complete retained-record
+                // preflight must qualify BEFORE count-driven archival. The
+                // existing capacity/store checks repeat after make-room; this
+                // preflight is not a reservation across other store writers.
+                {
+                    let edition = snapshot.as_ref().unwrap().document.edited(changes.clone())?;
+                    let new_act = Act::new(act_ref.clone(), expression_ref.clone(), summary.clone(), actor.clone(), ActMode::Expressions);
+                    let previous = self.world.acts.get(&act_ref).unwrap_or(&new_act);
+                    let mut passage = Passage::new(previous.sequence.len(), PassageKind::Edition, previous.mode);
+                    passage.target_ref = Some(expression_ref.clone());
+                    passage.revision = Some(edition.revision.to_string());
+                    passage.summary = Some(summary.clone());
+                    passage.edition = Some(Box::new(edition));
+                    let next_revision = if existing { act_revision.checked_add(1).ok_or("Act revision exhausted")? } else { 1 };
+                    let weight = crate::expression_act_storage::preflight_append(previous, &passage, &summary, &actor,
+                        activity_ref.as_deref(), expected_revision, next_revision)?;
+                    let mut available = self.world.available_act_bytes(&act_ref)?;
+                    if !existing && self.world.acts.len() >= MAX_ACTS {
+                        // Predict exactly the same ended concern make-room
+                        // will archive, without changing it or its file yet.
+                        let oldest = self.act_oldest_ended()?;
+                        available = available.checked_add(crate::expression_act_store::ActStore::expanded_bytes(oldest)?)
+                            .filter(|n| *n <= crate::expression_act_storage::LIVE_BYTES)
+                            .ok_or("Invalid expanded Act admission accounting")?;
                     }
+                    if weight > available {
+                        return Err("Live Acts exceed their 64 MiB expanded serialized-weight budget before history cloning or live edit".into());
+                    }
+                    let mut prospective = previous.clone();
+                    prospective.position = Some(passage.index);
+                    prospective.sequence.push(passage);
+                    prospective.summary = summary.clone();
+                    prospective.actor = actor.clone();
+                    prospective.activity_ref = activity_ref.clone().or(prospective.activity_ref);
+                    prospective.basis_revision = expected_revision;
+                    prospective.phase = ActPhase::Running;
+                    prospective.revision = next_revision;
+                    prospective.updated_at_unix_ms = unix_ms();
+                    crate::expression_act_store::ActStore::encoded_record(&prospective)?;
+                }
+                if !existing { self.act_make_room()?; }
+                if let Some(refusal) = self.act_precheck_fields(&act_ref, passages, act_revision, 1, false, existing)? {
+                    return Ok(KernelOpOutcome {
+                        receipts,
+                        result: KernelOpResult::ExpressionWorld { data: refusal },
+                    });
                 }
                 // The act's edit is an ordinary atomic Expression edit: exact
                 // subjects, exact expected revision, stale input refuses.
@@ -2409,6 +2430,13 @@ impl Kernel {
         &mut self, act_ref: &str, passages: usize, revision: u64,
         add: usize, returning: bool, stored: bool,
     ) -> Result<Option<Value>, String> {
+        self.act_precheck_fields_mode(act_ref, passages, revision, add, returning, stored, true)
+    }
+
+    fn act_precheck_fields_mode(
+        &mut self, act_ref: &str, passages: usize, revision: u64,
+        add: usize, returning: bool, stored: bool, capacity: bool,
+    ) -> Result<Option<Value>, String> {
         let limit = MAX_PASSAGES + usize::from(returning);
         if passages + add > limit {
             return Ok(Some(json!({
@@ -2420,7 +2448,9 @@ impl Kernel {
         if let Some(store) = &self.world.store {
             use crate::expression_act_store::Written;
             let expected = stored.then_some(revision);
-            if let Written::Conflict { current } = store.check(act_ref, expected)? {
+            let checked = if capacity { store.check(act_ref, expected)? }
+                else { store.check_before_capacity(act_ref, expected)? };
+            if let Written::Conflict { current } = checked {
                 // Adopt the stored act so a re-read sees the other writer's work.
                 let reload_error = self.act_reload_conflict(act_ref, current);
                 return Ok(Some(json!({
@@ -2583,26 +2613,22 @@ impl Kernel {
         if self.world.acts.len() < MAX_ACTS {
             return Ok(());
         }
-        let oldest = self
-            .world
-            .acts
-            .values()
-            .filter(|a| a.phase.ended())
-            .min_by(|a, b| {
-                a.updated_at_unix_ms
-                    .cmp(&b.updated_at_unix_ms)
-                    .then(a.act_ref.cmp(&b.act_ref))
-            })
-            .cloned()
-            .ok_or(format!(
-                "Live act budget exceeded ({MAX_ACTS} running/held acts)"
-            ))?;
+        let oldest = self.act_oldest_ended()?.clone();
         match self.act_archive_one(oldest)? {
             Ok(_) => Ok(()),
             Err(conflict) => Err(format!(
                 "Could not archive an ended act to make room: {conflict}"
             )),
         }
+    }
+
+    /// The shared source-defined count victim, borrowed before admission.
+    /// Reusing this ordering keeps successful automatic archival unchanged.
+    fn act_oldest_ended(&self) -> Result<&Act, String> {
+        self.world.acts.values().filter(|a| a.phase.ended())
+            .min_by(|a, b| a.updated_at_unix_ms.cmp(&b.updated_at_unix_ms)
+                .then(a.act_ref.cmp(&b.act_ref)))
+            .ok_or_else(|| format!("Live act budget exceeded ({MAX_ACTS} running/held acts)"))
     }
 
     /// An act by ref: memory, else lazily from the store (live register or

@@ -263,3 +263,167 @@ fn legacy_raw_native_act_records_stay_readable() {
     std::fs::write(home.record(&act.act_ref), serde_json::to_vec_pretty(&json!({"schema":"oi.expression-act/v1","act":act})).unwrap()).unwrap();
     assert_eq!(ActStore::at_home(&home.0).read(&act.act_ref).unwrap().unwrap(), act);
 }
+
+
+/// Capture actual owned ActStore filenames and bytes, including archive paths.
+/// This is filesystem evidence, not a fabricated WorldState register.
+fn admission_files(home: &Home) -> Vec<(PathBuf, Vec<u8>)> {
+    fn visit(root: &std::path::Path, directory: &std::path::Path, files: &mut Vec<(PathBuf, Vec<u8>)>) {
+        for entry in std::fs::read_dir(directory).unwrap() {
+            let path = entry.unwrap().path(); let metadata = std::fs::symlink_metadata(&path).unwrap();
+            assert!(!metadata.file_type().is_symlink());
+            if metadata.is_dir() { visit(root, &path, files); }
+            else { assert!(metadata.is_file()); files.push((path.strip_prefix(root).unwrap().to_owned(), std::fs::read(path).unwrap())); }
+        }
+    }
+    let root = ActStore::at_home(&home.0).root().to_owned(); let mut files = vec![];
+    visit(&root, &root, &mut files); files.sort_by(|a, b| a.0.cmp(&b.0)); files
+}
+
+#[test]
+fn full_native_act_register_validates_fresh_performance_before_archiving_another_concern() {
+    let home = Home::new(); let mut k = kernel(); k.attach_act_store(&home.0).unwrap(); open(&mut k);
+    // Real native completed concerns keep the durable live register at its
+    // actual256-record boundary. There is no direct WorldState insertion or
+    // copied/forged Act record, and no provider invocation.
+    let concern_target = "expression:controlled-admission-concerns";
+    expression(&mut k, json!({"operation":"create","expression_ref":concern_target,
+        "actor":"person:controlled-world-a","title":"Completed controlled concerns"})).unwrap();
+    for index in 0..oi_cradle_kernel::expression_act_store::MAX_RECORDS {
+        let reference = format!("act:controlled-admission-{index:03}");
+        let opened = world(&mut k, json!({"operation":"act_open","act_ref":reference,
+            "expression_ref":concern_target,"mode":"expressions","actor":"person:controlled-world-a"})).unwrap();
+        assert_eq!(opened["state"], "act_opened");
+        let completed = world(&mut k, json!({"operation":"act_complete","act_ref":reference,
+            "actor":"person:controlled-world-a"})).unwrap();
+        assert_eq!(completed["state"], "act_completed");
+    }
+    let before = document(&mut k);
+    let register = world(&mut k, json!({"operation":"act_list"})).unwrap();
+    assert_eq!(register["acts"].as_array().unwrap().len(), 256);
+    let stored = admission_files(&home);
+    assert_eq!(stored.iter().filter(|(p, _)| p.extension().is_some_and(|e| e == "json")).count(), 256);
+    assert!(!stored.iter().any(|(p, _)| p.starts_with("archive")));
+    let fresh_ref = "act:controlled-fresh-full-world";
+    let change = json!({"change":"focus","scene_ref":format!("{WORLD}:scene:personal"),
+        "entity_ref":format!("{WORLD}:entity:world-centre-1")});
+    let request = |revision: Value, changes: Value| json!({"operation":"act_perform","act_ref":fresh_ref,
+        "expression_ref":WORLD,"expected_revision":revision,"summary":"Keep this full world encounter",
+        "actor":"person:controlled-world-a","changes":changes});
+    let stale = world(&mut k, request(json!(before["revision"].as_u64().unwrap() - 1), json!([change.clone()]))).unwrap();
+    assert_eq!(stale, json!({"state":"revision_conflict","expression_ref":WORLD,
+        "expected_revision":before["revision"].as_u64().unwrap() - 1,"current_revision":before["revision"]}));
+    assert_eq!(document(&mut k), before); assert_eq!(admission_files(&home), stored);
+    assert_eq!(world(&mut k, json!({"operation":"act_list"})).unwrap(), register);
+    let invalid = world(&mut k, request(before["revision"].clone(), json!([
+        {"change":"scene_rename","scene_ref":format!("{WORLD}:scene:absent-controlled"),"title":"Absent"}]))).unwrap_err();
+    assert_eq!(invalid, "Scene is absent");
+    assert_eq!(document(&mut k), before); assert_eq!(admission_files(&home), stored);
+    assert_eq!(world(&mut k, json!({"operation":"act_list"})).unwrap(), register);
+    // Reuse complete real authored material/body/member refs in a deliberately
+    // overlarge native change request. No existing body is trimmed or replaced.
+    let source_scene = before["scenes"].as_array().unwrap().iter()
+        .max_by_key(|scene| serde_json::to_vec(scene).unwrap().len()).unwrap();
+    let mut oversize_changes = vec![];
+    for index in 0..4 {
+        let scene_ref = format!("{WORLD}:scene:controlled-overbudget-{index}");
+        oversize_changes.push(json!({"change":"scene_create","scene_ref":scene_ref,"title":"Controlled overbudget copy"}));
+        oversize_changes.push(json!({"change":"scene_compose","scene_ref":scene_ref,"entity_refs":source_scene["entity_refs"]}));
+        oversize_changes.push(json!({"change":"scene_material_set","scene_ref":scene_ref,"presentation":source_scene["presentation"]}));
+        oversize_changes.push(json!({"change":"scene_body_set","scene_ref":scene_ref,"body":source_scene["body"]}));
+    }
+    let oversize = world(&mut k, request(before["revision"].clone(), json!(oversize_changes))).unwrap_err();
+    assert_eq!(oversize, "Expression document exceeds 8 MiB");
+    assert_eq!(document(&mut k), before); assert_eq!(admission_files(&home), stored);
+    assert_eq!(world(&mut k, json!({"operation":"act_list"})).unwrap(), register);
+    assert_eq!(world(&mut k, json!({"operation":"act_inspect","act_ref":fresh_ref})).unwrap()["state"], "unknown_act");
+    assert_eq!(admission_files(&home), stored);
+    // Predict the accepted native oldest-ended policy from pre-operation
+    // metadata, before either the new record or its Edition exists.
+    let oldest = register["acts"].as_array().unwrap().iter().min_by(|a, b| {
+        a["updated_at_unix_ms"].as_u64().unwrap().cmp(&b["updated_at_unix_ms"].as_u64().unwrap())
+            .then(a["act_ref"].as_str().unwrap().cmp(b["act_ref"].as_str().unwrap()))
+    }).unwrap().clone();
+    let oldest_ref = oldest["act_ref"].as_str().unwrap();
+    let accepted = world(&mut k, request(before["revision"].clone(), json!([change]))).unwrap();
+    assert_eq!(accepted["state"], "act_running");
+    let mut predicted = before.clone(); predicted["revision"] = json!(132);
+    predicted["selection"]["entity_ref"] = json!(format!("{WORLD}:entity:world-centre-1"));
+    let after = document(&mut k); assert_eq!(after, predicted);
+    assert_eq!(accepted["act"]["sequence"][0]["edition"], after);
+    let after_register = world(&mut k, json!({"operation":"act_list"})).unwrap();
+    let rows = after_register["acts"].as_array().unwrap(); assert_eq!(rows.len(), 256);
+    assert!(rows.iter().any(|a| a["act_ref"] == fresh_ref)); assert!(!rows.iter().any(|a| a["act_ref"] == oldest_ref));
+    let after_files = admission_files(&home);
+    let removed = home.record(oldest_ref).file_name().unwrap().to_owned();
+    for (path, bytes) in &stored {
+        if path.file_name() != Some(removed.as_os_str()) { assert!(after_files.contains(&(path.clone(), bytes.clone()))); }
+    }
+    assert!(!home.record(oldest_ref).exists());
+    let archived_path = ActStore::at_home(&home.0).root().join("archive").join(&removed);
+    assert!(archived_path.is_file());
+    assert_eq!(after_files.iter().filter(|(p, _)| p.starts_with("archive") && p.extension().is_some_and(|e| e == "json")).count(), 1);
+    let archived = world(&mut k, json!({"operation":"act_inspect","act_ref":oldest_ref})).unwrap();
+    assert_eq!(archived["act"]["archived"], true); assert_eq!(archived["act"]["phase"], "completed");
+    assert_eq!(archived["act"]["revision"], oldest["revision"].as_u64().unwrap() + 1);
+    drop(k);
+    let mut fresh = kernel(); fresh.attach_act_store(&home.0).unwrap();
+    expression(&mut fresh, json!({"operation":"open","actor":"person:controlled-world-a","document":after})).unwrap();
+    let retained = world(&mut fresh, json!({"operation":"act_inspect","act_ref":fresh_ref})).unwrap();
+    assert_eq!(retained["act"], accepted["act"]);
+    assert_eq!(world(&mut fresh, json!({"operation":"act_list"})).unwrap()["acts"].as_array().unwrap().len(), 256);
+    let current = document(&mut fresh);
+    let sought = world(&mut fresh, json!({"operation":"act_seek","act_ref":fresh_ref,
+        "actor":"person:controlled-world-a","position":0,"expected_revision":current["revision"],
+        "expected_act_revision":retained["act"]["revision"]})).unwrap();
+    assert_eq!(sought["state"], "act_sought");
+    assert_edition(&document(&mut fresh), &accepted["act"]["sequence"][0]["edition"]);
+}
+
+
+#[test]
+fn full_native_register_aggregate_refusal_preserves_every_completed_concern() {
+    let home = Home::new(); let mut k = kernel(); k.attach_act_store(&home.0).unwrap(); open(&mut k);
+    // Eight actual native held concerns consume most of64MiB with two complete
+    // retained world Editions each, just as the existing native body gate.
+    // Neither records nor resident Acts are fabricated to reach the boundary.
+    for index in 0..8 {
+        let reference = format!("act:controlled-admission-full-world-{index}");
+        for centre in [1, 2] {
+            let before = document(&mut k);
+            let performed = world(&mut k, json!({"operation":"act_perform","act_ref":reference,
+                "expression_ref":WORLD,"expected_revision":before["revision"],
+                "summary":"Controlled full-world admission concern","actor":"person:controlled-world-a",
+                "changes":[{"change":"focus","scene_ref":format!("{WORLD}:scene:personal"),
+                    "entity_ref":format!("{WORLD}:entity:world-centre-{centre}")}]})).unwrap();
+            assert_eq!(performed["state"], "act_running");
+            world(&mut k, json!({"operation":"act_interrupt","act_ref":reference,
+                "actor":"person:controlled-world-a"})).unwrap();
+        }
+    }
+    let concern_target = "expression:controlled-admission-small-concerns";
+    expression(&mut k, json!({"operation":"create","expression_ref":concern_target,
+        "actor":"person:controlled-world-a","title":"Completed controlled concerns"})).unwrap();
+    for index in 0..248 {
+        let reference = format!("act:controlled-admission-small-{index:03}");
+        world(&mut k, json!({"operation":"act_open","act_ref":reference,"expression_ref":concern_target,
+            "mode":"expressions","actor":"person:controlled-world-a"})).unwrap();
+        assert_eq!(world(&mut k, json!({"operation":"act_complete","act_ref":reference,
+            "actor":"person:controlled-world-a"})).unwrap()["state"], "act_completed");
+    }
+    let before = document(&mut k); let register = world(&mut k, json!({"operation":"act_list"})).unwrap();
+    assert_eq!(register["acts"].as_array().unwrap().len(), 256);
+    assert_eq!(register["acts"].as_array().unwrap().iter().filter(|a| a["phase"] == "held").count(), 8);
+    assert_eq!(register["acts"].as_array().unwrap().iter().filter(|a| a["phase"] == "completed").count(), 248);
+    let stored = admission_files(&home); let reference = "act:controlled-admission-aggregate-overflow";
+    let refused = world(&mut k, json!({"operation":"act_perform","act_ref":reference,
+        "expression_ref":WORLD,"expected_revision":before["revision"],"actor":"person:controlled-world-a",
+        "summary":"One more complete world Edition",
+        "changes":[{"change":"focus","scene_ref":format!("{WORLD}:scene:personal"),
+            "entity_ref":format!("{WORLD}:entity:world-centre-3")}]})).unwrap_err();
+    assert_eq!(refused, "Live Acts exceed their 64 MiB expanded serialized-weight budget before history cloning or live edit");
+    assert_eq!(document(&mut k), before); assert_eq!(admission_files(&home), stored);
+    assert_eq!(world(&mut k, json!({"operation":"act_list"})).unwrap(), register);
+    assert_eq!(world(&mut k, json!({"operation":"act_inspect","act_ref":reference})).unwrap()["state"], "unknown_act");
+    assert_eq!(admission_files(&home), stored);
+}

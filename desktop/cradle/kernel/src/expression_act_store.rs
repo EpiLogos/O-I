@@ -236,13 +236,24 @@ impl ActStore {
     /// The compare-and-set precondition of a write, checked without writing:
     /// the store is lockable/writable and the record is at `expected`.
     pub fn check(&self, act_ref: &str, expected: Option<u64>) -> Result<Written, String> {
+        self.check_fields(act_ref, expected, true)
+    }
+
+    /// Qualify revision and writability before request validation can make
+    /// room in a full register. This does not reserve a slot: the ordinary
+    /// capacity check and CAS write must still run after qualified archival.
+    pub(crate) fn check_before_capacity(&self, act_ref: &str, expected: Option<u64>) -> Result<Written, String> {
+        self.check_fields(act_ref, expected, false)
+    }
+
+    fn check_fields(&self, act_ref: &str, expected: Option<u64>, capacity: bool) -> Result<Written, String> {
         let _lock = self.prepare()?;
         let path = self.locate(act_ref);
         let current = Self::read_path(&path, crate::expression_act_storage::EXPANDED_BYTES, path == self.archived_path(act_ref))?.map(|a| a.revision);
         if current != expected {
             return Ok(Written::Conflict { current });
         }
-        if current.is_none() && self.live_count()? >= MAX_RECORDS {
+        if capacity && current.is_none() && self.live_count()? >= MAX_RECORDS {
             return Err(format!(
                 "Act store holds {MAX_RECORDS} live acts; archive ended acts first"
             ));
