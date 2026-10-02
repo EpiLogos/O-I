@@ -343,8 +343,7 @@ export function readRef(client: Client, ref: string) {
 /** Push hosted reducer arguments (the `hostedPublicationArgs` shape) in
  * publish order under the caller's own authority, then wait until the
  * caller-visible view echoes the Projection row back. */
-export async function publishArgs(client: Client, args: any) {
-  const reducers: any = client.conn.reducers;
+export async function publishArgs(client: Client, args: any, reducers: any = client.conn.reducers) {
   const db: any = client.conn.db;
   const field = rows(db.sharedField).find((row: any) => row.fieldRef === args.putSharedField.fieldRef);
   if (!field) await reducers.putSharedField(args.putSharedField);

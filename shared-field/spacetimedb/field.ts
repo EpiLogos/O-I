@@ -45,10 +45,12 @@
  *   activity-liveness-clear {field_ref, activity_ref}   clear a liveness row (producer identity or field owner)
  *   grant-read    {field_ref, participant_ref}   owner: admit a persistently-authorised Participant to read a PRIVATE field
  *   revoke-read   {field_ref, participant_ref}   owner: withdraw that read admission
+ *   tuple-keys-reconcile {field_ref}   owner: atomically reconcile retained literal tuple keys
  */
 import { activityLivenessRow, bindingFile, close, fieldDayReading, fieldNowReading, fieldSnapshot, hostingTargets, open, publishArgs, readRef, resolveTarget, rows, stageReading, stageView, waitUntil, observeField } from './field-lib';
 import { mkdirSync, rmSync, writeFileSync } from 'node:fs';
 import { dirname } from 'node:path';
+import { SenderError } from 'spacetimedb';
 import { createProjection } from '../index.mjs';
 import { projectionStorageKey } from '../spacetimedb.mjs';
 import {createNaraPresenceConsent,projectNaraExpression,hostedNaraExpressionArgs,validateCanonicalNaraCues} from '../nara-expression-projection.mjs';
@@ -56,7 +58,22 @@ import {createNaraPresenceConsent,projectNaraExpression,hostedNaraExpressionArgs
 // stdout carries exactly one envelope; the SDK's own console chatter goes to stderr.
 for (const level of ['log', 'info', 'warn', 'debug', 'error'] as const) console[level] = (...parts: unknown[]) => { process.stderr.write(`${parts.map(String).join(' ')}\n`); };
 
-type Envelope = { ok: true; data: unknown } | { ok: false; error: { kind: 'unbound' | 'unavailable' | 'refused' | 'malformed'; message: string } };
+type Envelope = { ok: true; data: unknown } | { ok: false; error: { kind: 'unbound' | 'unavailable' | 'refused' | 'malformed' | 'outcome_unknown'; message: string; operation?: string; completion_observation?: {completed_reducers: number; pending_reducers: number; receipt_lost: boolean; last_reducer?: string} } };
+
+/** Called only after the generated SDK reducer resolves successfully. That
+ * completion grants no read rights: material comes from one actual current
+ * authorized row, while a withheld/ambiguous read returns completion alone. */
+function observeCompletedReducer<T>(reducer: 'enter_field' | 'put_activity_liveness', target: Record<string, string>, lookup: () => T[], material: (row: T) => unknown): unknown {
+  let observation: {state: 'unavailable'; basis: string; detail?: string};
+  try {
+    const matching = lookup();
+    if (matching.length === 1) return material(matching[0]);
+    observation = {state: 'unavailable', basis: matching.length ? 'ambiguous-authorized-rows' : 'no-matching-authorized-row'};
+  } catch (cause) {
+    observation = {state: 'unavailable', basis: 'authorized-read-failed', detail: String(cause instanceof Error ? cause.message : cause)};
+  }
+  return {schema: 'oi.shared-field.reducer-completion/v1', completion: {state: 'completed', reducer, basis: 'sdk-reducer-success'}, target, observation, connection_scoped: true};
+}
 
 async function readStdin(): Promise<string> {
   const chunks: Buffer[] = [];
@@ -109,6 +126,37 @@ const label = typeof request.token_label === 'string' && /^[a-z0-9-]+$/.test(req
   ? request.token_label
   : configuredLabel && /^[a-z0-9-]+$/.test(configuredLabel) ? configuredLabel : 'owner';
 let client: Awaited<ReturnType<typeof open>> | undefined;
+// One request's actual SDK completions, held only until its envelope is sent.
+// A successful earlier reducer makes a later failure a partial operation; a
+// lost reducer receipt does not establish rollback. No retry is performed.
+const completionObservation = {completed_reducers: 0, pending_reducers: 0, receipt_lost: false, last_reducer: undefined as string | undefined};
+function observedReducers<T extends object>(native: T): T {
+  const methods = new Map<PropertyKey, unknown>();
+  return new Proxy(native, {
+    get(target, key, receiver) {
+      const method = Reflect.get(target, key, receiver);
+      if (typeof method !== 'function') return method;
+      if (!methods.has(key)) methods.set(key, async (...args: unknown[]) => {
+        completionObservation.pending_reducers += 1;
+        completionObservation.last_reducer = String(key);
+        try {
+          const result = await Reflect.apply(method, target, args);
+          completionObservation.completed_reducers += 1;
+          return result;
+        } catch (error) {
+          // SDK2.8.1 SenderError is an actual graceful reducer rejection.
+          // Internal/transport/unknown failures may have lost the receipt.
+          if (!(error instanceof SenderError)) completionObservation.receipt_lost = true;
+          throw error;
+        } finally {
+          completionObservation.pending_reducers -= 1;
+        }
+      });
+      return methods.get(key);
+    },
+  });
+}
+
 try {
   client = await open(target, label);
 } catch (error: any) {
@@ -116,7 +164,7 @@ try {
 }
 
 try {
-  const reducers: any = client!.conn.reducers;
+  const reducers: any = observedReducers(client!.conn.reducers);
   const db: any = client!.conn.db;
   switch (request.kind) {
     // Reserved host seam: the native kernel supplies a freshly validated safe
@@ -146,11 +194,30 @@ try {
             throw new Error('Re-entry requires a fresh consent reference granted after the hosted withdrawal');
         }
       }
-      const publication=request.kind==='publish_nara'?await publishArgs(client!,hostedNaraExpressionArgs(bundle)):null;
+      const publication=request.kind==='publish_nara'?await publishArgs(client!,hostedNaraExpressionArgs(bundle),reducers):null;
       await emit({ok:true,data:{schema:'oi.nara-presence/v1',bundle,publication,private_state_exported:false}});
     }
     case 'identity':
       await emit({ ok: true, data: { schema: 'oi.shared-field.identity/v1', transport_identity: client!.identityHex } });
+    case 'tuple-keys-reconcile': {
+      if (typeof request.field_ref !== 'string' || !request.field_ref.trim()) {
+        await emit({ ok: false, error: { kind: 'malformed', message: 'tuple-keys-reconcile requires the exact owning field_ref' } });
+      }
+      if (typeof reducers.reconcileFieldTupleKeys !== 'function') {
+        await emit({ ok: false, error: { kind: 'unavailable', message: 'The selected SharedField binding does not expose reconcile_field_tuple_keys; qualify the paired module and regenerated bindings before cutover' } });
+      }
+      // The native owner reducer validates this actual caller, preflights the
+      // retained literal tuples and commits one atomic structural migration.
+      // Completion is not a fabricated material snapshot or migration count.
+      await reducers.reconcileFieldTupleKeys({ fieldRef: request.field_ref });
+      await emit({ ok: true, data: {
+        schema: 'oi.shared-field.reducer-completion/v1',
+        completion: { state: 'completed', reducer: 'reconcile_field_tuple_keys', basis: 'sdk-reducer-success' },
+        target: { field_ref: request.field_ref },
+        observation: { state: 'not-requested', basis: 'structural-owner-operation' },
+        connection_scoped: false,
+      } });
+    }
     case 'receipt': {
       if (typeof request.contribution_ref !== 'string' || !request.contribution_ref) await emit({ ok: false, error: { kind: 'malformed', message: 'receipt requires a contribution_ref' } });
       const receipt = rows(db.myContributionReceipt).find((row: any) => row.contributionRef === request.contribution_ref);
@@ -168,7 +235,7 @@ try {
     case 'publish': {
       const args = request.args;
       if (!args || typeof args !== 'object' || !args.putSharedField || !args.putParticipant || !args.putProjection) await emit({ ok: false, error: { kind: 'malformed', message: 'publish requires hosted reducer `args` (putSharedField, putParticipant, putProjection, putExploreEntries, putExploreRelations)' } });
-      await emit({ ok: true, data: await publishArgs(client!, args) });
+      await emit({ ok: true, data: await publishArgs(client!, args, reducers) });
     }
     case 'projection': {
       const projection = createProjection(request.projection);
@@ -234,9 +301,11 @@ try {
     case 'enter': {
       if (typeof request.field_ref !== 'string' || typeof request.participant_ref !== 'string') await emit({ ok: false, error: { kind: 'malformed', message: 'enter requires `field_ref` and `participant_ref`' } });
       await reducers.enterField({ fieldRef: request.field_ref, participantRef: request.participant_ref, state: request.state ?? 'entered' });
-      const row = await waitUntil(() => rows(db.fieldPresence).find((candidate: any) => candidate.fieldRef === request.field_ref && candidate.participantRef === request.participant_ref), 'the caller presence in the caller-visible view');
-      if (request.hold_presence === true) await holdPresence({ schema: 'oi.shared-field.presence-result/v1', field_ref: row.fieldRef, participant_ref: row.participantRef, state: row.state });
-      await emit({ ok: true, data: { schema: 'oi.shared-field.presence-result/v1', field_ref: row.fieldRef, participant_ref: row.participantRef, state: row.state } });
+      const data = observeCompletedReducer('enter_field', {field_ref: request.field_ref, participant_ref: request.participant_ref},
+        () => rows(db.fieldPresence).filter((candidate: any) => candidate.fieldRef === request.field_ref && candidate.participantRef === request.participant_ref),
+        (row: any) => ({schema: 'oi.shared-field.presence-result/v1', field_ref: row.fieldRef, participant_ref: row.participantRef, state: row.state}));
+      if (request.hold_presence === true) await holdPresence(data);
+      await emit({ ok: true, data });
     }
     case 'leave': {
       if (typeof request.field_ref !== 'string' || typeof request.participant_ref !== 'string') await emit({ ok: false, error: { kind: 'malformed', message: 'leave requires `field_ref` and `participant_ref`' } });
@@ -317,8 +386,10 @@ try {
     case 'activity-liveness-put': {
       if (typeof request.field_ref !== 'string' || typeof request.activity_ref !== 'string' || typeof request.owner_state !== 'string' || !Number.isSafeInteger(request.owner_revision)) await emit({ ok: false, error: { kind: 'malformed', message: 'activity-liveness-put requires `field_ref`, `activity_ref`, `owner_state` and integer `owner_revision`' } });
       await reducers.putActivityLiveness({ fieldRef: request.field_ref, activityRef: request.activity_ref, producerParticipantRef: request.producer_participant_ref ?? '', ownerState: request.owner_state, ownerRevision: BigInt(request.owner_revision) });
-      const row = await waitUntil(() => rows(db.activityLiveness).find((candidate: any) => candidate.fieldRef === request.field_ref && candidate.activityRef === request.activity_ref && Number(candidate.ownerRevision) === request.owner_revision), 'the activity liveness row in the caller-visible view');
-      await emit({ ok: true, data: { schema: 'oi.shared-field.activity-liveness-result/v1', ...activityLivenessRow(row), connection_scoped: true } });
+      const data = observeCompletedReducer('put_activity_liveness', {field_ref: request.field_ref, activity_ref: request.activity_ref},
+        () => rows(db.activityLiveness).filter((candidate: any) => candidate.fieldRef === request.field_ref && candidate.activityRef === request.activity_ref && Number(candidate.ownerRevision) === request.owner_revision),
+        (row: any) => ({schema: 'oi.shared-field.activity-liveness-result/v1', ...activityLivenessRow(row), connection_scoped: true}));
+      await emit({ ok: true, data });
     }
     case 'activity-liveness-clear': {
       if (typeof request.field_ref !== 'string' || typeof request.activity_ref !== 'string') await emit({ ok: false, error: { kind: 'malformed', message: 'activity-liveness-clear requires `field_ref` and `activity_ref`' } });
@@ -340,7 +411,13 @@ try {
       await emit({ ok: false, error: { kind: 'malformed', message: `unknown request kind: ${request.kind}` } });
   }
 } catch (error: any) {
-  await emit({ ok: false, error: { kind: 'refused', message: error?.message ?? String(error) } });
+  const outcomeUnknown = completionObservation.completed_reducers > 0 || completionObservation.pending_reducers > 0 || completionObservation.receipt_lost;
+  await emit({ ok: false, error: {
+    kind: outcomeUnknown ? 'outcome_unknown' : 'refused',
+    message: error?.message ?? String(error),
+    operation: request.kind,
+    completion_observation: {...completionObservation},
+  } });
 } finally {
   if (client) close(client);
 }

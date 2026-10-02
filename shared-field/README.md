@@ -105,6 +105,31 @@ The hosted content surface is audience-filtered server-side (OI-017 Phase 1, PR 
 
 SpaceTimeDB documents one-shot schedule tables for timed execution, but the exact pinned 2.8.1 standalone used by O:I CI did not reproduce a one-second scheduled authority-expiry event in repeated live fixtures. O:I therefore does not rely on that timer for private-read revocation. See `docs/ENCOUNTER-SECURITY-SPACETIMEDB-CONFORMANCE.md` for the provider finding and fail-closed consequence.
 
+The native owner command `tuple-keys-reconcile` selects one existing field by its
+literal `field_ref` and delegates to `reconcile_field_tuple_keys`. The reducer
+preflights stored literal identities and atomically updates their physical tuple
+keys; duplicate or ambiguous retained identities refuse the migration. It retains
+native refs, policies, revisions, payloads, histories and consumed grant budgets.
+The CLI returns the generated SDK's successful reducer completion, without
+inventing a row snapshot, migration count or ownership from an echoed request.
+
+This command requires a qualified paired module and regenerated 2.8.1 bindings.
+Before a retained-field cutover, drain competing writers, rehearse on an isolated
+retained-data copy, compare policy/history/budget values, prove restart and replay,
+then invoke through the existing owner credential route. Do not clear the selected
+database or replay native tool effects. This source addition carries no installed
+migration or runtime acceptance claim.
+
+```sh
+printf '%s\n' '{"kind":"tuple-keys-reconcile","field_ref":"FIELD_REF"}' |
+  OI_SHARED_FIELD_TARGET=TARGET shared-field/spacetimedb/field.sh
+```
+
+`npm --prefix shared-field/spacetimedb run test:primitive-contracts` selects the
+production tuple-codec and native Act publication guard tests through the pinned
+TypeScript runner. The existing CI selects this gate after installing its pinned
+dependencies; these checks do not replace live reducer or migration verification.
+
 See `docs/ENCOUNTER-SECURITY.md` for the six primitives and `docs/ENCOUNTER-SECURITY-IMPLEMENTATION.md` for the ES0 threat/responsibility matrix, primary-source lock and residual-risk ledger.
 
 ## Collective temporal projection (FieldNow / FieldDay)
