@@ -45,6 +45,7 @@ pub mod encounter;
 pub mod events;
 pub mod expression;
 pub mod expression_act_store;
+mod expression_act_storage;
 pub mod expression_asset;
 pub mod expression_blueprint;
 pub mod expression_carrier;

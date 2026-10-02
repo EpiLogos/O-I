@@ -12,10 +12,9 @@
 //! Ended acts leave it by archiving: the record moves to `archive/` and is
 //! never deleted; archived acts stay readable (and replayable) by ref.
 use crate::expression_world::Act;
-use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
 use std::fs;
-use std::io::Write;
+use std::io::{Read, Write};
 use std::path::{Path, PathBuf};
 use std::time::{Duration, Instant};
 
@@ -24,13 +23,6 @@ pub const SCHEMA: &str = "oi.expression-act/v1";
 pub const MAX_RECORD_BYTES: u64 = 4 * 1024 * 1024;
 pub const MAX_RECORDS: usize = 256;
 const ARCHIVE: &str = "archive";
-
-#[derive(Debug, Deserialize, Serialize)]
-#[serde(deny_unknown_fields)]
-struct Record {
-    schema: String,
-    act: Act,
-}
 
 /// The CAS outcome of a write.
 #[derive(Debug, PartialEq, Eq)]
@@ -49,15 +41,10 @@ pub struct ActStore {
 
 impl ActStore {
     pub(crate) fn encoded_record(act: &Act) -> Result<Vec<u8>, String> {
-        let bytes = serde_json::to_vec_pretty(&Record {
-            schema: SCHEMA.into(),
-            act: act.clone(),
-        })
-        .map_err(|e| e.to_string())?;
-        if bytes.len() as u64 > MAX_RECORD_BYTES {
-            return Err("Act record exceeds its 4 MiB bound; retain this Act and continue in a successor Act".into());
-        }
-        Ok(bytes)
+        crate::expression_act_storage::encode(act)
+    }
+    pub(crate) fn expanded_bytes(act: &Act) -> Result<usize, String> {
+        crate::expression_act_storage::measure(act, crate::expression_act_storage::EXPANDED_BYTES)
     }
     /// The store under an explicit O:I home (`<home>/desktop/expression-acts`).
     pub fn at_home(home: &Path) -> Self {
@@ -142,7 +129,7 @@ impl ActStore {
             .count())
     }
 
-    fn read_path(path: &Path) -> Result<Option<Act>, String> {
+    fn read_bytes(path: &Path) -> Result<Option<Vec<u8>>, String> {
         let meta = match fs::symlink_metadata(path) {
             Ok(meta) => meta,
             Err(error) if error.kind() == std::io::ErrorKind::NotFound => return Ok(None),
@@ -154,16 +141,28 @@ impl ActStore {
                 path.display()
             ));
         }
-        let bytes = fs::read(path).map_err(|e| e.to_string())?;
-        let record: Record = serde_json::from_slice(&bytes)
-            .map_err(|e| format!("Act record {} is unreadable: {e}", path.display()))?;
-        if record.schema != SCHEMA {
-            return Err(format!(
-                "Act record {} has an unsupported schema",
-                path.display()
-            ));
+        let mut bytes = Vec::new();
+        fs::File::open(path).map_err(|e| e.to_string())?.take(MAX_RECORD_BYTES + 1)
+            .read_to_end(&mut bytes).map_err(|e| e.to_string())?;
+        if bytes.len() as u64 > MAX_RECORD_BYTES {
+            return Err("Act record grew beyond its bounded read".into());
         }
-        Ok(Some(record.act))
+        Ok(Some(bytes))
+    }
+    fn read_path(path: &Path, available: usize, require_archived: bool) -> Result<Option<Act>, String> {
+        let Some(bytes) = Self::read_bytes(path)? else { return Ok(None); };
+        if require_archived {
+            let (_, ended, _, archived) = crate::expression_act_storage::header(&bytes)?;
+            if !ended || !archived {
+                return Err("An archive-path record must be ended and marked archived before transient body admission".into());
+            }
+        }
+        let act = crate::expression_act_storage::decode(&bytes, available)
+            .map_err(|e| format!("Act record {} is unreadable: {e}", path.display()))?;
+        if path.file_name().and_then(|s| s.to_str()) != Some(Self::name(&act.act_ref).as_str()) {
+            return Err("Act record is filed under another ref".into());
+        }
+        Ok(Some(act))
     }
 
     /// Every stored act, ordered by ref. Unreadable records are returned as
@@ -175,6 +174,8 @@ impl ActStore {
         let _lock = self.prepare()?;
         let mut acts = Vec::new();
         let mut errors = Vec::new();
+        let mut candidates = Vec::new();
+        let mut paths = Vec::new();
         let entries = fs::read_dir(&self.root).map_err(|e| e.to_string())?;
         for entry in entries {
             let entry = entry.map_err(|e| e.to_string())?;
@@ -187,15 +188,33 @@ impl ActStore {
             if path.extension().and_then(|e| e.to_str()) != Some("json") {
                 continue;
             }
-            match Self::read_path(&path) {
-                Ok(Some(act)) if self.path(&act.act_ref) == path => acts.push(act),
-                Ok(Some(act)) => errors.push(format!(
-                    "Act record {} is filed under another ref ({})",
-                    path.display(),
-                    act.act_ref
-                )),
+            paths.push(path);
+            if paths.len() > MAX_RECORDS {
+                return Ok((vec![], vec!["Act live register exceeds 256 records; all stay stored but unloaded until the register is reconciled".into()]));
+            }
+        }
+        paths.sort();
+        for path in paths {
+            match Self::read_bytes(&path).and_then(|bytes| bytes.map(|b| crate::expression_act_storage::header(&b)).transpose()) {
+                Ok(Some((reference, ended, updated, _))) if self.path(&reference) == path => candidates.push((ended, updated, reference, path)),
+                Ok(Some(_)) => errors.push(format!("Act record {} is filed under another ref", path.display())),
                 Ok(None) => {}
                 Err(error) => errors.push(error),
+            }
+        }
+        // Rank metadata before expanding bodies, using the same live ordering
+        // as WorldState::attach_store. Unloaded records remain on disk.
+        candidates.sort_by(|a, b| a.0.cmp(&b.0).then(b.1.cmp(&a.1)).then(a.2.cmp(&b.2)));
+        let mut available = crate::expression_act_storage::LIVE_BYTES;
+        for (_, _, _, path) in candidates {
+            match Self::read_path(&path, available, false) {
+                Ok(Some(act)) => {
+                    let weight = Self::expanded_bytes(&act)?;
+                    available = available.checked_sub(weight).ok_or("Act live byte budget exceeded")?;
+                    acts.push(act);
+                }
+                Ok(None) => {}
+                Err(error) => errors.push(format!("{error}; record stays stored but unloaded")),
             }
         }
         acts.sort_by(|a, b| a.act_ref.cmp(&b.act_ref));
@@ -204,8 +223,14 @@ impl ActStore {
 
     /// Read one act by ref from the live register or the archive.
     pub fn read(&self, act_ref: &str) -> Result<Option<Act>, String> {
+        self.read_with_budget(act_ref, crate::expression_act_storage::EXPANDED_BYTES)
+    }
+    pub(crate) fn read_with_budget(&self, act_ref: &str, available: usize) -> Result<Option<Act>, String> {
         let _lock = self.prepare()?;
-        Self::read_path(&self.locate(act_ref))
+        let path = self.locate(act_ref);
+        let archived = path == self.archived_path(act_ref);
+        let available = if archived { crate::expression_act_storage::EXPANDED_BYTES } else { available };
+        Self::read_path(&path, available, archived)
     }
 
     /// The compare-and-set precondition of a write, checked without writing:
@@ -213,7 +238,7 @@ impl ActStore {
     pub fn check(&self, act_ref: &str, expected: Option<u64>) -> Result<Written, String> {
         let _lock = self.prepare()?;
         let path = self.locate(act_ref);
-        let current = Self::read_path(&path)?.map(|a| a.revision);
+        let current = Self::read_path(&path, crate::expression_act_storage::EXPANDED_BYTES, path == self.archived_path(act_ref))?.map(|a| a.revision);
         if current != expected {
             return Ok(Written::Conflict { current });
         }
@@ -234,11 +259,13 @@ impl ActStore {
         let live = self.path(act_ref);
         if !live.exists() {
             return if self.archived_path(act_ref).exists() {
+                Self::read_path(&self.archived_path(act_ref), crate::expression_act_storage::EXPANDED_BYTES, true)?;
                 Ok(())
             } else {
                 Err("No stored act with this ref".into())
             };
         }
+        Self::read_path(&live, crate::expression_act_storage::EXPANDED_BYTES, true)?;
         let folder = self.root.join(ARCHIVE);
         fs::create_dir_all(&folder).map_err(|e| e.to_string())?;
         fs::rename(&live, self.archived_path(act_ref)).map_err(|e| e.to_string())?;
@@ -253,9 +280,13 @@ impl ActStore {
     pub fn write(&self, act: &Act, expected: Option<u64>) -> Result<Written, String> {
         let _lock = self.prepare()?;
         let path = self.locate(&act.act_ref);
-        let current = Self::read_path(&path)?.map(|a| a.revision);
+        let archived = path == self.archived_path(&act.act_ref);
+        let current = Self::read_path(&path, crate::expression_act_storage::EXPANDED_BYTES, archived)?.map(|a| a.revision);
         if current != expected {
             return Ok(Written::Conflict { current });
+        }
+        if archived && !act.archived {
+            return Err("An archive-path successor must remain marked archived".into());
         }
         if current.is_none() && self.live_count()? >= MAX_RECORDS {
             return Err(format!(

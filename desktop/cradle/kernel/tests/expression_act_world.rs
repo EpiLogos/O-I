@@ -131,6 +131,27 @@ fn actual_world_storage_refuses_corruption_amplification_and_wrong_file_identity
     let stored: Value = serde_json::from_slice(&bytes).unwrap();
     let store = ActStore::at_home(&home.0);
     let actual = store.read(ACT).unwrap().unwrap();
+    assert!(store.archive(ACT).unwrap_err().contains("marked archived"));
+    assert_eq!(std::fs::read(&path).unwrap(), bytes);
+    let archived_path = store.root().join("archive").join(path.file_name().unwrap());
+    std::fs::create_dir_all(archived_path.parent().unwrap()).unwrap();
+    std::fs::rename(&path, &archived_path).unwrap();
+    assert!(store.read(ACT).unwrap_err().contains("archive-path"));
+    assert!(store.check(ACT, Some(actual.revision)).unwrap_err().contains("archive-path"));
+    std::fs::rename(&archived_path, &path).unwrap();
+    // A correctly rehashed literal that omits a nested native default must
+    // not understate expanded weight and then regain that field at decode.
+    let mut defaulted = stored.clone();
+    let old_ref = defaulted["act"]["sequence"][0]["edition"]["fields"]["scenes"].as_str().unwrap().to_owned();
+    let part = defaulted["parts"].as_array_mut().unwrap().iter_mut().find(|p| p["ref"] == old_ref).unwrap();
+    assert_eq!(part["value"][0]["triggers"], json!([]));
+    part["value"][0].as_object_mut().unwrap().remove("triggers");
+    let new_ref = format!("sha256:{:x}", Sha256::digest(serde_json::to_vec(&part["value"]).unwrap()));
+    part["ref"] = json!(new_ref);
+    defaulted["act"]["sequence"][0]["edition"]["fields"]["scenes"] = json!(new_ref);
+    std::fs::write(&path, serde_json::to_vec(&defaulted).unwrap()).unwrap();
+    assert!(store.read(ACT).unwrap_err().contains("canonical native field"));
+    std::fs::write(&path, &bytes).unwrap();
     assert_eq!(store.write(&actual, Some(actual.revision + 1)).unwrap(), Written::Conflict { current: Some(actual.revision) });
     assert_eq!(std::fs::read(&path).unwrap(), bytes);
     let mut variants = Vec::new();
@@ -169,6 +190,7 @@ fn startup_accounts_for_all_retained_bodies_including_pending_archive_flags() {
     let home = Home::new();
     let mut k = kernel(); k.attach_act_store(&home.0).unwrap(); open(&mut k);
     perform(&mut k, 1).unwrap(); interrupt(&mut k); perform(&mut k, 2).unwrap();
+    world(&mut k, json!({"operation":"act_complete","act_ref":ACT,"actor":"person:controlled-world-a"})).unwrap();
     let store = ActStore::at_home(&home.0);
     let original = store.read(ACT).unwrap().unwrap();
     drop(k);
@@ -186,10 +208,57 @@ fn startup_accounts_for_all_retained_bodies_including_pending_archive_flags() {
 }
 
 #[test]
+fn a_stored_successor_that_cannot_fit_is_not_presented_as_current() {
+    let home = Home::new();
+    let mut initial = kernel(); initial.attach_act_store(&home.0).unwrap(); open(&mut initial);
+    perform(&mut initial, 1).unwrap(); interrupt(&mut initial);
+    let one = document(&mut initial);
+    let store = ActStore::at_home(&home.0);
+    let old = store.read(ACT).unwrap().unwrap();
+    // An actual second Kernel observes the old store before other concerns
+    // fill this first body's resident budget. It can legitimately advance CAS.
+    let mut other = kernel(); other.attach_act_store(&home.0).unwrap();
+    expression(&mut other, json!({"operation":"open","document":one,"actor":"person:controlled-world-a"})).unwrap();
+    for index in 0..15 {
+        let mut act = old.clone(); act.act_ref = format!("act:other-controlled-concern-{index}");
+        act.updated_at_unix_ms = index;
+        assert_eq!(store.write(&act, None).unwrap(), Written::Written);
+    }
+    drop(initial);
+    let mut resident = kernel(); resident.attach_act_store(&home.0).unwrap();
+    expression(&mut resident, json!({"operation":"open","document":one,"actor":"person:controlled-world-a"})).unwrap();
+    let before = document(&mut resident);
+    let advanced = perform(&mut other, 2).unwrap();
+    let last_good_store = std::fs::read(home.record(ACT)).unwrap();
+    let conflict = perform(&mut resident, 3).unwrap();
+    assert_eq!(conflict["state"], "act_revision_conflict");
+    assert_eq!(conflict["resident_revision"], old.revision);
+    assert_eq!(conflict["current_act_revision"], advanced["act"]["revision"]);
+    assert!(conflict["stored_reload_error"].as_str().unwrap().contains("budget"));
+    assert_eq!(document(&mut resident), before);
+    assert_eq!(std::fs::read(home.record(ACT)).unwrap(), last_good_store);
+    assert!(world(&mut resident, json!({"operation":"act_inspect","act_ref":ACT})).unwrap_err().contains("budget"));
+    let rows = world(&mut resident, json!({"operation":"act_list"})).unwrap();
+    let row = rows["acts"].as_array().unwrap().iter().find(|a| a["act_ref"] == ACT).unwrap();
+    assert_eq!(row["resident_currentness"], "stored_successor_unloaded");
+    // The other real writer can end and archive its successor. Archive reads
+    // are transient; a successful read must evict the noncurrent predecessor.
+    world(&mut other, json!({"operation":"act_complete","act_ref":ACT,"actor":"person:controlled-world-a"})).unwrap();
+    let archived = world(&mut other, json!({"operation":"act_archive","act_ref":ACT,"actor":"person:controlled-world-a"})).unwrap();
+    for _ in 0..2 {
+        let inspect = world(&mut resident, json!({"operation":"act_inspect","act_ref":ACT})).unwrap();
+        assert_eq!(inspect["act"], archived["act"]);
+        assert_eq!(inspect["act"]["archived"], true);
+    }
+    let rows = world(&mut resident, json!({"operation":"act_list"})).unwrap();
+    assert!(!rows["acts"].as_array().unwrap().iter().any(|a| a["act_ref"] == ACT));
+}
+
+#[test]
 fn legacy_raw_native_act_records_stay_readable() {
     let home = Home::new(); let mut k = kernel(); k.attach_act_store(&home.0).unwrap();
     expression(&mut k, json!({"operation":"create","expression_ref":WORLD,"actor":"person:controlled-world-a","title":"Legacy native Act"})).unwrap();
-    let response = world(&mut k, json!({"operation":"act_open","act_ref":"act:legacy-raw","expression_ref":WORLD,"actor":"person:controlled-world-a","summary":"Legacy native Act"})).unwrap();
+    let response = world(&mut k, json!({"operation":"act_open","act_ref":"act:legacy-raw","expression_ref":WORLD,"mode":"expressions","actor":"person:controlled-world-a","summary":"Legacy native Act"})).unwrap();
     let act: Act = serde_json::from_value(response["act"].clone()).unwrap();
     std::fs::write(home.record(&act.act_ref), serde_json::to_vec_pretty(&json!({"schema":"oi.expression-act/v1","act":act})).unwrap()).unwrap();
     assert_eq!(ActStore::at_home(&home.0).read(&act.act_ref).unwrap().unwrap(), act);

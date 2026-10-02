@@ -25,7 +25,10 @@ import time
 MAX_JSON = 64 * 1024 * 1024
 MAX_ERROR = 1024 * 1024
 TIMEOUT = 45
-PLANETS = ['Sun', 'Venus', 'Mercury', 'Moon', 'Saturn', 'Jupiter', 'Mars', 'Neptune', 'Pluto']
+# Exact native M2 references in scene_field::PLANETS scalar-degree order;
+# display names are separate source properties, not planet_ref identities.
+PLANETS = ['#2-5-0/1', '#2-5-2', '#2-5-3', '#2-5-4', '#2-5-5',
+           '#2-5-6', '#2-5-7', '#2-5-8', '#2-5-9']
 
 
 def require(condition, reason):
