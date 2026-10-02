@@ -140,6 +140,10 @@ def main() -> None:
         order_native=native_dir/"performance_managed_application_order_packet-test"
         workload_native=native_dir/"performance_retained_workload_packet-test"
         reservation_native=native_dir/"performance_score_reservation_packet-test"
+        # CPP's selected build directory is absolute, while its actual C owner
+        # library lives in c/build. Recursive make inherits command-line
+        # BUILD_DIR, so build the native C owner explicitly at its own path.
+        execute(["make", "-C", "c", "BUILD_DIR=build", "all"], "native-c-owner-build")
         execute(["make", "-C", "cpp", "BUILD_DIR=" + str(native_dir), str(native), str(management_native),str(order_native),str(workload_native),str(reservation_native)], "native-checkpoint-build")
         execute([str(native), str(rust_fixture)], "actual-native-play-checkpoint-replay", checkpoint_fixture)
         management_dir = run / "native-management"
