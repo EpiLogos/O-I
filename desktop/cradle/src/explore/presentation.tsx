@@ -28,8 +28,6 @@ import {LIVE_RENDERER_REF,validateExpressionComposition} from "../../../../share
 import {RunExpressionBody as FactoryRunExpression} from "../contributions/factory/RunExpressionBody";
 // @ts-ignore -- names resolve only against the supplied owner reading.
 import {subjectLabel,referenceLabels} from "../../../../shared-field/presentation-text.mjs";
-// @ts-ignore -- portable HTML helpers carry no owner process or node runtime.
-import {escapeHtml} from "../../../../shared-field/html-material.mjs";
 
 export interface PresentationBinding {binding_ref:string;component_ref:string;contribution_ref?:string;surface_ref?:string;projection_ref?:string;subject_ref?:string;portable_renderer?:string;props:Record<string,unknown>;fallback:Record<string,unknown>;provenance:Array<Record<string,unknown>>}
 export interface PresentationRegion {region_ref:string;role:string;label?:string;bindings:PresentationBinding[]}
@@ -277,15 +275,10 @@ function ExpressionBody({binding,presentationRef,hosting,onOpenRef}:RendererProp
   if(fallback){
     const href=safeMedia(fallback.href);
     const originalHtml=fallback.kind==="html"&&typeof fallback.html==="string"?fallback.html:undefined;
-    const generatedHeader=`<p>Frozen reading of ${escapeHtml(expression.expression_ref)} at revision ${expression.expression_revision}. The live Expression renders where the renderer is admitted.</p>`;
-    // Only this native producer's deterministic metadata header changes in
-    // retained editions. Authored inscriptions, prose and code stay verbatim,
-    // and the complete original publication remains available below.
-    const frozenHtml=originalHtml&&composition&&fallback.representation.ref===`${expression.expression_ref}:frozen:${expression.expression_revision}`&&originalHtml.includes(`<h1>${escapeHtml(composition.title)}</h1>${generatedHeader}`)?originalHtml.replace(generatedHeader,`<p>Saved presentation of ${escapeHtml(composition.title)}.</p>`):originalHtml;
     return <figure className="world-component world-component--expression" {...attributes} data-expression-state="fallback" data-fallback-kind={fallback.kind} data-fallback-ref={fallback.representation.ref}>
       {fallback.kind==="image"&&href&&<img src={href} alt={textProp(binding.fallback.title,"Expression capture")}/>}
       {fallback.kind==="video"&&href&&<video src={href} controls preload="metadata"/>}
-      {frozenHtml&&<iframe className="world-expression__frozen" title={subjectLabel(binding.fallback,"Saved Expression")} sandbox="" srcDoc={frozenHtml}/>}
+      {originalHtml&&<iframe className="world-expression__frozen" title={subjectLabel(binding.fallback,"Saved Expression")} sandbox="" srcDoc={originalHtml}/>}
       <figcaption><span>Saved Expression</span><details><summary>Presentation details</summary><p>{fallback.kind} · {fallback.representation.ref} · {fallback.representation.revision} · {reason}</p>{originalHtml&&<details><summary>Original published HTML</summary><pre>{originalHtml}</pre></details>}</details></figcaption>
     </figure>;
   }
