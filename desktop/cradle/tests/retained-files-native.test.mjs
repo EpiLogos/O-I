@@ -4,7 +4,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {spawn,execFileSync} from 'node:child_process';
 import {once} from 'node:events';
-import {mkdtemp,mkdir,writeFile,readFile as readSourceBytes,rm} from 'node:fs/promises';
+import {mkdtemp,mkdir,writeFile,readFile as readSourceBytes,readdir,rm} from 'node:fs/promises';
 import {join} from 'node:path';
 import {createServer} from 'node:http';
 import {kernelOp} from '../src/kernel/bridge.ts';
@@ -128,7 +128,31 @@ test('native retained readings survive restart and missing branches but never by
    const pageBytes=`<!doctype html><html><script type="application/json" id="ql-doc">${JSON.stringify(island)}</script></html>`;
    await writeFile(join(root,pagePath),pageBytes);
    const pageLocation=(await listFiles(transport,'Control/user',true)).entries.find(row=>row.name==='owner-save-proof.html').location;
+   const nativePage=()=>JSON.parse(execFileSync(process.env.OI_CENTRAL_CTRL_BIN,['--root',root,'--json','action','run','central.files.read',JSON.stringify({location:pageLocation})],{env,encoding:'utf8',timeout:20000,maxBuffer:1024*1024}));
+   const firstOwnerRead=nativePage();assert.equal(firstOwnerRead.ok,true);assert.ok(firstOwnerRead.data.source);
+   assert.deepEqual((await readFile(transport,pageLocation)).source,firstOwnerRead.data.source);
+   // Empty roles are a legal owner declaration, not a missing property.
+   // Make that declaration in this actual disposable native world and
+   // require its freshly produced reading to survive every consumer face.
+   const relationDirectory=join(root,'Control/relations'),relationPath=join(relationDirectory,'source-relations.json');
+   await mkdir(relationDirectory,{recursive:true});
+   const relationText=await readSourceBytes(relationPath,'utf8').catch(error=>{if(error.code==='ENOENT')return null;throw error;});
+   const relations=relationText?JSON.parse(relationText):{schema:'central.control.ground-relations/v1',project_id:'control:root',relations:[]};
+   assert.equal(relations.schema,'central.control.ground-relations/v1');assert.equal(relations.project_id,'control:root');assert.ok(Array.isArray(relations.relations));
+   const nativeSource=firstOwnerRead.data.source;
+   relations.relations=relations.relations.filter(row=>row.ref!==nativeSource.ref).concat({ref:nativeSource.ref,path:nativeSource.path,roles:[],provenance:nativeSource.provenance,standing:nativeSource.standing,treatment:nativeSource.treatment});
+   await writeFile(relationPath,JSON.stringify(relations));
+   const ownerRead=nativePage();
+   assert.equal(ownerRead.ok,true);assert.ok(ownerRead.data.source);
+   assert.deepEqual(ownerRead.data.source.roles,[],'the actual native declaration preserves an explicit empty role list');
+   assert.equal(Object.hasOwn(ownerRead.data.source,'exists'),false,'the actual owner does not assert this consumer-only fact');
    const page=await readFile(transport,pageLocation);
+   assert.deepEqual(page.source,ownerRead.data.source,'the actual kernel must preserve exactly the native source metadata');
+   const cliPage=JSON.parse(execFileSync(process.env.OI_BIN,['desktop','files','read',JSON.stringify(pageLocation)],{env,encoding:'utf8',timeout:20000,maxBuffer:1024*1024}));
+   assert.deepEqual(cliPage.source,ownerRead.data.source,'the actual native CLI must not add false source existence');
+   assert.equal(cliPage.content,ownerRead.data.content);assert.equal(cliPage.revision,ownerRead.data.revision);
+   assert.deepEqual((await acquireFileReading(stable,pageLocation)).source,ownerRead.data.source);
+   assert.deepEqual((await acquireFileBytes(stable,pageLocation)).source,ownerRead.data.source,'binary and text share the actual owner source binding');
    const recognized=await kernelOp(transport,{op:'ground',request:{action:'recognize',path:root}});
    assert.equal(recognized.outcome.result,'ground_reading');
    const pageOwner=qualifyDraftOwner(root,recognized.outcome.reading);assert.ok(pageOwner);let currentPageOwner=pageOwner;
@@ -142,6 +166,31 @@ test('native retained readings survive restart and missing branches but never by
    currentPageOwner=undefined;pageHeld.release();
    assert.equal((await interruptedSave).outcome.state,'refused');
    assert.equal(await readSourceBytes(join(root,pagePath),'utf8'),savedBytes,'the async qualification boundary prevents the real native document write');
+   // Exercise migration in the actual persisted native reading, rather
+   // than inventing a native owner response. Earlier O:I stored `exists:
+   // false` here; a fresh body must ignore that unsupported member while
+   // retaining the real identity, revision and read-only recovery standing.
+   const retainedDirectory=join(home,'desktop/retained-files');let legacyRecord;
+   for(const name of await readdir(retainedDirectory)){
+    if(!name.endsWith('.json'))continue;
+    const path=join(retainedDirectory,name),record=JSON.parse(await readSourceBytes(path,'utf8'));
+    if(record.retained.reading.location.ref===pageLocation.ref){legacyRecord={path,record};break;}
+   }
+   assert.ok(legacyRecord,'the real native reading was persisted');
+   assert.equal(legacyRecord.record.retained.reading.content,savedBytes);
+   legacyRecord.record.retained.reading.source.exists=false;
+   await writeFile(legacyRecord.path,JSON.stringify(legacyRecord.record));
+   await rm(join(root,pagePath));await stop();await start();
+   await assert.rejects(readFile(transport,pageLocation));
+   const historicalPage=await lastFileReading(transport,pageLocation);
+   assert.equal(historicalPage.migration_allowed,true);assert.ok(historicalPage.retained);
+   assert.deepEqual(historicalPage.retained.reading.source,ownerRead.data.source,'the fresh native recovery retires the unsupported legacy field');
+   assert.equal(historicalPage.retained.reading.content,savedBytes);
+   assert.equal(historicalPage.retained.reading.revision,pageBasis.revision);
+   assert.equal(historicalPage.retained.standing,'last-native-reading');
+   for(const operation of ['write','history','restore'])assert.equal(historicalPage.retained.reading.operations[operation].available,false);
+   await writeFile(join(root,pagePath),savedBytes);
+   assert.deepEqual((await readFile(transport,pageLocation)).source,ownerRead.data.source);
    const beforeReadCount=nativeRequests;
    let held=holdResponse();
    const first=acquireFileReading(stable,location),joined=acquireFileReading(stable,location);

@@ -1112,13 +1112,15 @@ pub struct SourceBinding {
     #[serde(rename = "ref")]
     pub source_ref: String,
     pub path: String,
-    #[serde(default)]
-    pub exists: bool,
+    // Central's Source binding has no `exists` property. Older O:I cache
+    // records may contain that consumer-invented field; Serde ignores it
+    // on input, and it must never be emitted as an owner fact. Availability
+    // remains the native read/refusal, separately from this source identity.
     #[serde(default)]
     pub provenance: String,
     #[serde(default)]
     pub standing: String,
-    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    #[serde(default)]
     pub roles: Vec<String>,
     #[serde(default)]
     pub treatment: String,
