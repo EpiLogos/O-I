@@ -235,13 +235,26 @@ try {
   await frame.locator('[data-action="research-preview"]').first().click();
 
   // Native commit, then kernel readback: A changed, B unchanged.
-  // Save is the app's own masthead act (no separate native panel): it commits
-  // the working composition and the Studio footer reports the saved revision.
-  const revisionBefore = (await kernelDoc()).revision;
-  await frame.waitForFunction(() => !document.getElementById('native-save')?.disabled);
+  // Save is the app's own masthead act. Qualify the actual current native
+  // work, selected occurrence and held file basis rather than a UI sentence.
+  await frame.waitForFunction(() => {const w=window.__FIELD_STUDIES__.nativeWorking();return w&&!w.busy&&!w.pending&&!w.failed&&!document.getElementById('native-save')?.disabled;});
+  const saveBefore = await kernelDoc(), revisionBefore = saveBefore.revision;
+  const saveBasis = await frame.evaluate(() => {
+    const w=window.__FIELD_STUDIES__.nativeWorking(),st=window.__FIELD_STUDIES__.getState(),scene=window.__FIELD_STUDIES__.getDocument().scenes[st.sceneIndex],binding=w.bindings?.[scene?.id];
+    const occurrence=binding?.occurrences.find(row=>row.view_entity_id===st.selected[0]);
+    return {native_ref:w.native_ref,revision:w.revision,file:w.file??null,scene_id:scene?.id,scene_ref:binding?.scene_ref,entity_ref:occurrence?.entity_ref,selected:[...st.selected]};
+  });
+  probe.saveBasis=saveBasis;
+  check(saveBasis.native_ref===expectedRef&&saveBasis.revision===revisionBefore&&saveBasis.entity_ref&&saveBefore.entities[saveBasis.entity_ref]&&saveBefore.scenes.some(scene=>scene.scene_ref===saveBasis.scene_ref&&scene.entity_refs.includes(saveBasis.entity_ref)), 'Save starts on the exact native Expression revision, Scene and selected occurrence');
   await frame.locator('#native-save').click();
-  await frame.waitForFunction(r => new RegExp('saved revision (\\d+)').test(document.getElementById('native-status')?.textContent ?? '') && Number(/saved revision (\d+)/.exec(document.getElementById('native-status').textContent)[1]) > r, revisionBefore, {timeout: 60000});
+  await frame.waitForFunction(basis => {
+    const w=window.__FIELD_STUDIES__.nativeWorking(),st=window.__FIELD_STUDIES__.getState(),scene=window.__FIELD_STUDIES__.getDocument().scenes[st.sceneIndex];
+    return w?.native_ref===basis.native_ref&&Number.isSafeInteger(w.revision)&&w.revision>basis.revision&&!w.busy&&!w.pending&&!w.failed&&scene?.id===basis.scene_id&&JSON.stringify(st.selected)===JSON.stringify(basis.selected);
+  }, saveBasis, {timeout:60000});
+  const saveAcknowledged=await frame.evaluate(()=>window.__FIELD_STUDIES__.nativeWorking());
   const committed = await kernelDoc();
+  probe.saveAcknowledged={native_ref:saveAcknowledged.native_ref,revision:saveAcknowledged.revision,file:saveAcknowledged.file??null,selection:committed.selection};
+  check(committed.expression_ref===expectedRef&&committed.revision===saveAcknowledged.revision&&committed.revision>revisionBefore&&committed.selection.scene_ref===saveBasis.scene_ref&&committed.selection.entity_ref===saveBasis.entity_ref&&JSON.stringify(saveAcknowledged.file??null)===JSON.stringify(saveBasis.file), 'Independent native Inspect confirms the acknowledged revision and exact selected occurrence without replacing the held file basis');
   probe.committed = {a: committed.entities[nodeA], b: committed.entities[nodeB], scenes: committed.scenes.map(sc => ({scene_ref: sc.scene_ref, keys: Object.keys(sc), presentationKeys: Object.keys(sc.presentation ?? {}), aForces: JSON.stringify(sc.presentation ?? {}).match(/"force":\{[^}]*\}/g)?.slice(0, 6), tints: JSON.stringify(sc.presentation ?? {}).match(/"tint":"#[0-9a-f]+"/gi)?.slice(0, 6)}))};
   // Expressive configuration (force, material, object states) is persisted in
   // the Scene's native working presentation; its 'saved' snapshot is the
