@@ -110,9 +110,14 @@ try{
    const result=scene.text.find(t=>t.role==='resultText');
    if(!result)throw new Error('Retained native page has no returned text');
    const layout=window.nativeModules.textLayout(result,innerWidth,innerHeight);
-   const canvas=document.querySelector('#inscriptions'),ctx=canvas.getContext('2d'),original=ctx.fillText.bind(ctx),draws=[];
+   const canvas=document.querySelector('#inscriptions'),ctx=canvas.getContext('2d'),original=ctx.fillText.bind(ctx),draws=[],inscriptions=[];
    ctx.clearRect(0,0,canvas.width,canvas.height);
-   ctx.fillText=(value,x,y)=>{if(ctx.font==='18px Arial')draws.push({text:value,x,y,width:ctx.measureText(value).width,font:ctx.font});original(value,x,y);};
+   ctx.fillText=(value,x,y)=>{
+    const m=ctx.measureText(value);
+    if(ctx.font==='18px Arial')draws.push({text:value,x,y,width:m.width,font:ctx.font});
+    if(value.trim())inscriptions.push({text:value,font:ctx.font,left:x-m.actualBoundingBoxLeft,right:x+m.actualBoundingBoxRight,top:y-m.actualBoundingBoxAscent,bottom:y+m.actualBoundingBoxDescent});
+    original(value,x,y);
+   };
    try{window.nativeModules.paintText(ctx,scene,innerWidth,innerHeight);}finally{ctx.fillText=original;}
    const pixels=ctx.getImageData(0,0,canvas.width,canvas.height).data;
    const lines=draws.map(draw=>{let ink=0;for(let y=Math.max(0,Math.floor(draw.y));y<Math.min(canvas.height,Math.ceil(draw.y+24));y++)for(let x=Math.max(0,Math.floor(draw.x));x<Math.min(canvas.width,Math.ceil(draw.x+draw.width));x++){const at=(y*canvas.width+x)*4;if(pixels[at+3]>30&&Math.min(pixels[at],pixels[at+1],pixels[at+2])<175)ink++;}return {...draw,ink_pixels:ink,inside_column:draw.width<=layout.width+1,inside_viewport:draw.x>=0&&draw.y>=0&&draw.x+draw.width<=innerWidth&&draw.y+18<=innerHeight};});
@@ -135,7 +140,12 @@ try{
    };
    const overlaps=[];
    for(const path of paths)for(const line of lines)if(line.text.trim()&&path.points.some((p,i)=>i&&intersects(path.points[i-1],p,line)))overlaps.push({binding_ref:path.binding_ref,text:line.text});
-   return {scene_ref:sceneRef,body:result.body,lines,expected_connections:cfg.oiExpressionBindings.relations.map(r=>r.binding_ref).sort(),rendered_connections:paths.map(p=>p.binding_ref).sort(),overlaps};
+   const inscription_overlaps=[];
+   for(let i=0;i<inscriptions.length;i++)for(let j=i+1;j<inscriptions.length;j++){
+    const a=inscriptions[i],b=inscriptions[j];
+    if(a.left<b.right&&a.right>b.left&&a.top<b.bottom&&a.bottom>b.top)inscription_overlaps.push({first:a.text,second:b.text});
+   }
+   return {scene_ref:sceneRef,body:result.body,lines,inscriptions,inscription_overlaps,expected_connections:cfg.oiExpressionBindings.relations.map(r=>r.binding_ref).sort(),rendered_connections:paths.map(p=>p.binding_ref).sort(),overlaps};
   },sceneRef);
   report.visual.retained_pages=[];
   const refs=report.native_return?.scene_refs??[composition.selection.scene_ref];
@@ -146,6 +156,8 @@ try{
    assert.ok(reading.lines.some(line=>line.text.trim()),'Each actual retained native page must have visible18px text');
    assert.equal(reading.lines.map(line=>line.text).join(''),reading.body.replace(/\n/g,''),'Actual native wrapping must paint every literal retained source character, including whitespace');
    assert.ok(reading.lines.filter(line=>line.text.trim()).every(line=>line.inside_column&&line.inside_viewport&&line.ink_pixels>3),`Native page must fit its readable column and viewport: ${JSON.stringify(reading)}`);
+   assert.ok(reading.inscriptions.every(line=>[line.left,line.right,line.top,line.bottom].every(Number.isFinite)&&line.left>=0&&line.right<=1440&&line.top>=0&&line.bottom<=900),'Every actual native inscription must remain inside the viewport');
+   assert.deepEqual(reading.inscription_overlaps,[],`Actual native inscriptions must not overlap: ${JSON.stringify(reading.inscription_overlaps)}`);
    assert.ok(reading.expected_connections.length,'This actual shared undertaking must retain its co-present native relations');
    assert.deepEqual(reading.rendered_connections,reading.expected_connections,'The actual co-present native connections must remain rendered');
    assert.deepEqual(reading.overlaps,[],`Native connections must not cross the returned text: ${ref}`);
