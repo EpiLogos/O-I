@@ -5,7 +5,9 @@ import {screenPoint,segmentVisible,zoomAt,type Camera} from './camera';
 interface Props {emphasis?:ReadonlyMap<string,{label:string;color:string}>;nodes:GraphNode[];positions:Point[];model?:GraphReading;camera:Camera;selected?:string;focused:Set<string>;contextual?:Set<string>;labels?:'automatic'|'all'|'focus';arrows?:boolean;minZoom:number;maxZoom:number;onCamera:(camera:Camera)=>void;onDragNode?:(ref:string|null,world?:{x:number;y:number})=>void;onOpen:(node:GraphNode)=>void;onClear:()=>void}
 /** One demand-driven drawing loop. Pointer/wheel updates never render React
  * or persist state per frame; dragging a subject asks the live layout world
- * to move it (the neighbourhood answers), dragging the ground pans. The
+ * to move it (the neighbourhood answers), dragging the ground pans. A press
+ * picks a subject (its neighbourhood stays emphasised); only a double-click
+ * opens it. The
  * accessibility subjects keep exact refs. */
 export const GraphCanvas=memo(function GraphCanvas(props:Props) {
   const [accessPage,setAccessPage]=useState(0);
@@ -14,7 +16,7 @@ export const GraphCanvas=memo(function GraphCanvas(props:Props) {
   useEffect(()=>{
     const el=canvas.current;if(!el)return;const ctx=el.getContext('2d',{alpha:true});if(!ctx)return;
     let width=0,height=0,ratio=1,frame=0,drag:{x:number;y:number;camera:Camera;node?:GraphNode;moved:boolean;mode:'camera'|'node';nodeWorld?:{x:number;y:number}}|undefined;
-    let hover:string|undefined,hoverNeighbours=new Set<string>();
+    let hover:string|undefined,hoverNeighbours=new Set<string>(),picked:string|undefined,lastTap:{ref:string;at:number}|undefined;
     let view={...current.current.camera},travel:{from:Camera;to:Camera;start:number}|undefined,wheelTimer:ReturnType<typeof setTimeout>|undefined;
     let gestureScale=1,nativeGesture=false,disposed=false;
     const reduced=matchMedia('(prefers-reduced-motion: reduce)');
@@ -67,18 +69,19 @@ export const GraphCanvas=memo(function GraphCanvas(props:Props) {
     }
     const pointer=(e:{clientX:number;clientY:number})=>{const bounds=el.getBoundingClientRect();return {x:e.clientX-bounds.left,y:e.clientY-bounds.top};};
     const hitNode=(x:number,y:number)=>{let best:GraphNode|undefined,distance=Infinity;for(const item of screen){const d=Math.hypot(x-item.x,y-item.y);if(d<=Math.max(hit*.65,item.r+3)&&d<distance){best=item.node;distance=d;}}return best;};
-    const down=(e:PointerEvent)=>{if(e.button!==0&&e.button!==1)return;e.preventDefault();const p=pointer(e);settle();const node=hitNode(p.x,p.y);const at=node?current.current.positions[current.current.nodes.findIndex(n=>n.ref===node.ref)]:undefined;drag={x:p.x,y:p.y,camera:{...view},node,moved:false,mode:node&&at?'node':'camera',nodeWorld:at?{x:at.x,y:at.y}:undefined};el.setPointerCapture(e.pointerId);el.focus({preventScroll:true});};
+    const down=(e:PointerEvent)=>{if(e.button!==0&&e.button!==1)return;e.preventDefault();const p=pointer(e);settle();const node=hitNode(p.x,p.y);const at=node?current.current.positions[current.current.nodes.findIndex(n=>n.ref===node.ref)]:undefined;drag={x:p.x,y:p.y,camera:{...view},node,moved:false,mode:node&&at?'node':'camera',nodeWorld:at?{x:at.x,y:at.y}:undefined};if(node){picked=node.ref;setHover(picked);schedule();}el.setPointerCapture(e.pointerId);el.focus({preventScroll:true});};
     const move=(e:PointerEvent)=>{const p=pointer(e);if(drag){const x=p.x-drag.x,y=p.y-drag.y;if(Math.hypot(x,y)>3)drag.moved=true;if(drag.moved){hover=undefined;el.style.cursor='grabbing';
         if(drag.mode==='node'&&drag.nodeWorld&&drag.node){const world={x:drag.nodeWorld.x+x/view.zoom,y:drag.nodeWorld.y+y/view.zoom};drag.nodeWorld=world;current.current.onDragNode?.(drag.node.ref,world);}
         else view={...drag.camera,x:drag.camera.x+x,y:drag.camera.y+y};
         schedule();}}
-      else{const next=hitNode(p.x,p.y)?.ref;if(next!==hover){setHover(next);el.style.cursor=hover?'pointer':'grab';schedule();}}};
+      else{const under=hitNode(p.x,p.y)?.ref,next=under??picked;if(next!==hover){setHover(next);schedule();}el.style.cursor=under?'pointer':'grab';}};
     const up=(e:PointerEvent)=>{const gesture=drag;drag=undefined;if(el.hasPointerCapture(e.pointerId))el.releasePointerCapture(e.pointerId);el.style.cursor=hover?'pointer':'grab';
-      if(gesture?.mode==='node'){current.current.onDragNode?.(null);if(!gesture.moved&&gesture.node)current.current.onOpen(gesture.node);}
-      else if(gesture&&!gesture.moved){if(gesture.node)current.current.onOpen(gesture.node);else current.current.onClear();}
+      if(picked&&hover!==picked){setHover(picked);schedule();}
+      if(gesture?.mode==='node'){current.current.onDragNode?.(null);if(!gesture.moved&&gesture.node){const now=performance.now();if(lastTap?.ref===gesture.node.ref&&now-lastTap.at<400){lastTap=undefined;current.current.onOpen(gesture.node);}else lastTap={ref:gesture.node.ref,at:now};}}
+      else if(gesture&&!gesture.moved){lastTap=undefined;picked=undefined;setHover(undefined);schedule();current.current.onClear();}
       else if(gesture)commit();};
     const cancel=()=>{if(drag){const mode=drag.mode;drag=undefined;if(mode==='node')current.current.onDragNode?.(null);else commit();}el.style.cursor='grab';};
-    const leave=()=>{if(!drag){setHover(undefined);schedule();}};
+    const leave=()=>{if(!drag){setHover(picked);schedule();}};
     const wheel=(e:WheelEvent)=>{e.preventDefault();if(nativeGesture)return;settle();setHover(undefined);const point=pointer(e),unit=e.deltaMode===1?font:e.deltaMode===2?height:1;const dx=e.deltaX*unit,dy=e.deltaY*unit;
       if(e.ctrlKey||e.metaKey||e.deltaMode!==0)view=zoomAt(view,Math.exp(-dy*.008),point.x-width/2,point.y-height/2,current.current.minZoom,current.current.maxZoom);
       else view={...view,x:view.x-dx,y:view.y-dy};
@@ -86,7 +89,7 @@ export const GraphCanvas=memo(function GraphCanvas(props:Props) {
     const gestureStart=(e:Event)=>{e.preventDefault();settle();nativeGesture=true;gestureScale=1;};
     const gestureChange=(e:Event)=>{e.preventDefault();const g=e as Event&{scale:number;clientX:number;clientY:number};if(!Number.isFinite(g.scale)||g.scale<=0)return;const point=pointer(g);view=zoomAt(view,g.scale/gestureScale,point.x-width/2,point.y-height/2,current.current.minZoom,current.current.maxZoom);gestureScale=g.scale;schedule();};
     const gestureEnd=()=>{nativeGesture=false;commit();};
-    const key=(e:KeyboardEvent)=>{if(e.key==='Escape'){e.preventDefault();current.current.onClear();return;}if(e.altKey||e.metaKey||e.ctrlKey)return;const pan={ArrowLeft:[40,0],ArrowRight:[-40,0],ArrowUp:[0,40],ArrowDown:[0,-40]}[e.key];if(pan){e.preventDefault();settle();view={...view,x:view.x+pan[0],y:view.y+pan[1]};schedule();commit();}else if(['+','=','-'].includes(e.key)){e.preventDefault();settle();view=zoomAt(view,e.key==='-'?1/1.2:1.2,0,0,current.current.minZoom,current.current.maxZoom);schedule();commit();}};
+    const key=(e:KeyboardEvent)=>{if(e.key==='Escape'){e.preventDefault();picked=undefined;lastTap=undefined;setHover(undefined);schedule();current.current.onClear();return;}if(e.altKey||e.metaKey||e.ctrlKey)return;const pan={ArrowLeft:[40,0],ArrowRight:[-40,0],ArrowUp:[0,40],ArrowDown:[0,-40]}[e.key];if(pan){e.preventDefault();settle();view={...view,x:view.x+pan[0],y:view.y+pan[1]};schedule();commit();}else if(['+','=','-'].includes(e.key)){e.preventDefault();settle();view=zoomAt(view,e.key==='-'?1/1.2:1.2,0,0,current.current.minZoom,current.current.maxZoom);schedule();commit();}};
     const resize=()=>{const r=el.getBoundingClientRect();width=r.width;height=r.height;ratio=Math.min(2,devicePixelRatio||1);el.width=Math.max(1,Math.round(width*ratio));el.height=Math.max(1,Math.round(height*ratio));schedule();};
     const observer=new ResizeObserver(resize);observer.observe(el);const themeObserver=new MutationObserver(schedule);themeObserver.observe(document.documentElement,{attributes:true,subtree:true,attributeFilter:['class','data-theme']});
     engine.current={target(camera){if(Math.abs(view.x-camera.x)+Math.abs(view.y-camera.y)+Math.abs(view.zoom-camera.zoom)<.0001)return;travel={from:{...view},to:camera,start:performance.now()};schedule();},redraw:schedule,focus(ref){setHover(ref);const i=current.current.nodes.findIndex(n=>n.ref===ref),point=current.current.positions[i];if(point){const s=screenPoint(point,view,width,height);if(s.x<24||s.y<24||s.x>width-24||s.y>height-24){view={...view,x:(400-point.x)*view.zoom,y:(260-point.y)*view.zoom};commit();}}schedule();}};
@@ -96,5 +99,5 @@ export const GraphCanvas=memo(function GraphCanvas(props:Props) {
   useEffect(()=>{engine.current?.target(props.camera);engine.current?.redraw();},[props.camera.x,props.camera.y,props.camera.zoom,props.nodes,props.positions,props.model,props.selected,props.focused,props.contextual,props.labels,props.arrows,props.emphasis]);
   // Keep every subject addressable while bounding hidden accessibility DOM.
   const lastPage=Math.max(0,Math.ceil(props.nodes.length/100)-1),page=Math.min(accessPage,lastPage);
-  return <><canvas ref={canvas} className="knowledge-canvas" tabIndex={0} aria-label="Knowledge graph. Drag a subject to move it and let its neighbourhood respond; drag the background or two-finger scroll to pan. Pinch or Control plus scroll to zoom. Arrow keys pan; plus and minus zoom."/><div className="knowledge-node-accessibility">{props.nodes.length>100&&<div role="group" aria-label="Graph subject pages"><button disabled={page===0} onClick={()=>setAccessPage(page-1)}>Previous subjects</button><span>Subjects {page*100+1}–{Math.min(props.nodes.length,(page+1)*100)} of {props.nodes.length}</span><button disabled={page===lastPage} onClick={()=>setAccessPage(page+1)}>Next subjects</button></div>}{props.nodes.slice(page*100,(page+1)*100).map(node=><button key={node.ref} data-knowledge-ref={node.ref} aria-label={props.emphasis?.has(node.ref)?`Open ${node.label} · emphasis ${props.emphasis.get(node.ref)!.label}`:undefined} aria-pressed={node.ref===props.selected} onFocus={()=>engine.current?.focus(node.ref)} onClick={()=>props.onOpen(node)}>Open {node.label}</button>)}</div></>;
+  return <><canvas ref={canvas} className="knowledge-canvas" tabIndex={0} aria-label="Knowledge graph. Drag a subject to move it and let its neighbourhood respond; click to pick it and double-click to open it; drag the background or two-finger scroll to pan. Pinch or Control plus scroll to zoom. Arrow keys pan; plus and minus zoom."/><div className="knowledge-node-accessibility">{props.nodes.length>100&&<div role="group" aria-label="Graph subject pages"><button disabled={page===0} onClick={()=>setAccessPage(page-1)}>Previous subjects</button><span>Subjects {page*100+1}–{Math.min(props.nodes.length,(page+1)*100)} of {props.nodes.length}</span><button disabled={page===lastPage} onClick={()=>setAccessPage(page+1)}>Next subjects</button></div>}{props.nodes.slice(page*100,(page+1)*100).map(node=><button key={node.ref} data-knowledge-ref={node.ref} aria-label={props.emphasis?.has(node.ref)?`Open ${node.label} · emphasis ${props.emphasis.get(node.ref)!.label}`:undefined} aria-pressed={node.ref===props.selected} onFocus={()=>engine.current?.focus(node.ref)} onClick={()=>props.onOpen(node)}>Open {node.label}</button>)}</div></>;
 });

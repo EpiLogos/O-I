@@ -49,7 +49,7 @@ export default async function run({page,baseUrl,check,metric,shot,channel,provis
   const reading=(await channel('invoke.kernel_op',[{op:'shared_field',request:{kind:'read',ref:wiki.ref}}])).data.outcome.data;
   const local=reading.neighbourhood.relations;
   check(await encounter.getAttribute('data-focus-ref')===wiki.ref&&Number(await encounter.getAttribute('data-node-count'))===local.nodes.length&&Number(await encounter.getAttribute('data-relation-count'))===local.edges.length,'Desktop renders the owner-returned bounded whole without adding nodes or relations',{focus:local.focus,nodes:local.nodes.length,relations:local.edges.length});
-  const graph=encounter.getByRole('img',{name:'Bounded typed knowledge constellation'});await graph.waitFor();
+  const graph=encounter.getByRole('group',{name:'Bounded typed knowledge constellation'});await graph.waitFor();
   const titles=await graph.locator('title').allTextContents();
   check(local.edges.every(edge=>titles.some(title=>title.includes(edge.relation)&&edge.provenance.every(row=>title.includes(row.ref)&&(!row.revision||title.includes(row.revision))))),'Graph labels preserve exact relation kinds and provenance revisions',{relations:local.edges.map(edge=>({relation:edge.relation,provenance:edge.provenance}))});
   await encounter.getByRole('button',{name:'list',exact:true}).click();
@@ -104,7 +104,8 @@ export default async function run({page,baseUrl,check,metric,shot,channel,provis
   await encounter.getByRole('button',{name:'Expression',exact:true}).click();
   let captureTimeout;
   try { await Promise.race([captured,new Promise((_,reject)=>{captureTimeout=setTimeout(()=>reject(new Error('Native inspect was not captured within 15 seconds')),15000);})]); } finally { clearTimeout(captureTimeout); }
-  await graph.locator(`[data-knowledge-ref=${JSON.stringify(neighbour.ref)}]`).click();
+  // A single press only selects; a deliberate double-click opens the subject.
+  await graph.locator(`[data-knowledge-ref=${JSON.stringify(neighbour.ref)}]`).dblclick();
   deliver();
   const deliveryError=await delivered;
   await page.unroute('**/op',delayNativeInspect);
