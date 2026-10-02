@@ -35,5 +35,9 @@ test('native retained readings survive restart and missing branches but never by
   assert.equal(peekFileBytes(neighbouring),undefined,'a matching ref cannot expose another root\'s retained bytes');
   await assert.rejects(acquireFileReading(transport,neighbouring),'text cache must not bypass the actual native root refusal');
   await assert.rejects(acquireFileBytes(transport,neighbouring),'byte cache must not bypass the actual native root refusal');
+  const unqualified={...location,root:''};
+  await assert.rejects(readFile(transport,unqualified),'the actual native owner requires its root qualification');
+  assert.equal(peekFileReading(unqualified),undefined,'an absent root is not a wildcard read');
+  assert.equal(peekFileBytes(unqualified),undefined,'an absent root is not a wildcard byte read');
  }finally{await stop();await rm(scratch,{recursive:true,force:true});}
 });

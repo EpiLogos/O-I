@@ -68,17 +68,21 @@ function transportEpoch(transport: KernelTransportStatus): string {
   return transport.kind === "bridge" ? `bridge:${transport.url}` : transport.kind;
 }
 
-/** The owner identity of one location: the canonical ref when the owner has
- * disclosed one, else the scoped path. Never the path alone. */
+/** Keep the native owner root beside its ref/path. A ref never discards
+ * the root qualification that the actual owner checks on every read. */
 function locationKey(location: CentralLocation): string {
-  return location.ref || `${location.root}:${location.path}`;
+  return JSON.stringify([location.root, location.ref || location.path]);
 }
 
 /** Whether two locations name the same owner subject: the canonical ref
  * when both carry one (or the same root+path beneath those refs), the path
  * when one side is a receipt's path-only name. */
-function sameSubject(a: CentralLocation | undefined, b: CentralLocation): boolean {
+function sameSubject(a: CentralLocation | undefined, b: CentralLocation, allowPathOnlyReceipt = false): boolean {
   if (!a) return false;
+  // A native path-only change receipt deliberately invalidates every scoped
+  // copy of that path. A qualified read/peek must match the owner root.
+  if (!b.root || !a.root) return allowPathOnlyReceipt && !b.root && !b.ref && a.path === b.path;
+  if (a.root !== b.root) return false;
   if (a.ref && b.ref) return a.ref === b.ref || (a.root === b.root && a.path === b.path);
   return a.path === b.path;
 }
@@ -136,7 +140,7 @@ export function invalidateFile(location: CentralLocation) {
   let dropped = false;
   for (const entries of [textEntries as Map<string, FileEntry<never>>, byteEntries as Map<string, FileEntry<never>>]) {
     for (const [key, held] of entries) {
-      if (!sameSubject(held.location, location)) continue;
+      if (!sameSubject(held.location, location, true)) continue;
       entries.set(key, {...held, status: "loading", generation: held.generation + 1, inflight: null});
       dropped = true;
     }
