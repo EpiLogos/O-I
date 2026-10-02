@@ -12,63 +12,30 @@ use std::{
     },
 };
 
-/// Keep native refusal detail without exposing a successful payload. A process
-/// killed before writing stderr must still disclose its operation and status.
-/// Run one owner command with a wall-clock bound. The owner's own stdout and
-/// stderr are kept exactly (callers read its diagnostics); a timeout kills
-/// the child and says whether the effect may already have happened.
+/// Bound the complete owner exchange, including both pipes and process-group
+/// cleanup. The native physical transport preserves output verbatim; a lost
+/// mutation response remains uncertain and is never automatically replayed.
 fn output_bounded(
-    command: &mut Command,
+    command: Command,
     timeout: std::time::Duration,
     operation: &str,
     mutating: bool,
 ) -> Result<std::process::Output, String> {
-    use std::io::Read;
-    command
-        .stdin(std::process::Stdio::null())
-        .stdout(std::process::Stdio::piped())
-        .stderr(std::process::Stdio::piped());
-    let mut child = command
-        .spawn()
-        .map_err(|error| format!("AIKit {operation} could not start: {error}"))?;
-    let mut stdout = child.stdout.take().expect("stdout is piped");
-    let mut stderr = child.stderr.take().expect("stderr is piped");
-    let out = std::thread::spawn(move || {
-        let mut bytes = Vec::new();
-        let _ = stdout.read_to_end(&mut bytes);
-        bytes
-    });
-    let err = std::thread::spawn(move || {
-        let mut bytes = Vec::new();
-        let _ = stderr.read_to_end(&mut bytes);
-        bytes
-    });
-    let deadline = std::time::Instant::now() + timeout;
-    let status = loop {
-        match child.try_wait() {
-            Ok(Some(status)) => break status,
-            Ok(None) if std::time::Instant::now() >= deadline => {
-                let _ = child.kill();
-                let _ = child.wait();
-                return Err(format!(
-                    "AIKit {operation} did not answer within {} s{}",
-                    timeout.as_secs(),
-                    if mutating {
-                        "; its effect is uncertain — read the owner's state before retrying"
-                    } else {
-                        ""
-                    }
-                ));
-            }
-            Ok(None) => std::thread::sleep(std::time::Duration::from_millis(20)),
-            Err(error) => return Err(format!("AIKit {operation} could not be observed: {error}")),
-        }
+    let effect = if mutating {
+        crate::flow::Effect::MayMutate
+    } else {
+        crate::flow::Effect::ReadOnly
     };
-    Ok(std::process::Output {
-        status,
-        stdout: out.join().unwrap_or_default(),
-        stderr: err.join().unwrap_or_default(),
-    })
+    crate::native_process::run(
+        command,
+        None,
+        crate::native_process::Limits {
+            timeout,
+            stdout_bytes: 32 * 1024 * 1024,
+            stderr_bytes: 64 * 1024,
+        },
+    )
+    .map_err(|error| format!("AIKit {operation}: {}", effect.physical_failure(error)))
 }
 
 fn owner_process_failure(operation: &str, output: &std::process::Output) -> String {
@@ -306,7 +273,7 @@ impl Client {
             command.env("CENTRAL_ROOT", root);
         }
         let output = output_bounded(
-            &mut command,
+            command,
             std::time::Duration::from_secs(120),
             operation,
             operation == "agent-session-prepare",
@@ -398,7 +365,7 @@ impl Client {
         command.arg("-C").arg(cwd);
         command.args(["encounter-task-read", "--agent-session", agent_session]);
         let output = output_bounded(
-            &mut command,
+            command,
             std::time::Duration::from_secs(20),
             "encounter-task-read",
             false,
@@ -452,12 +419,17 @@ fn read_project_with(
     if let Some(home) = home {
         command.env("AIKIT_HOME", home);
     }
-    let output = command
+    command
         .arg("-C")
         .arg(cwd)
-        .args(["discover", "--project", project_ref])
-        .output()
-        .map_err(|e| format!("AIKit SessionSpace is unavailable: {e}"))?;
+        .args(["discover", "--project", project_ref]);
+    let output = output_bounded(
+        command,
+        std::time::Duration::from_secs(20),
+        "discover",
+        false,
+    )
+    .map_err(|e| format!("AIKit SessionSpace is unavailable: {e}"))?;
     if !output.status.success() {
         return Err(owner_process_failure("discover", &output));
     }
@@ -775,9 +747,26 @@ impl Client {
                 .args(["encounter", "--request-json"])
                 .arg(body.to_string());
         }
-        let output = command
-            .output()
-            .map_err(|error| format!("AIKit encounter owner unavailable: {error}"))?;
+        let mutating = !matches!(
+            request,
+            EncounterRequest::Providers
+                | EncounterRequest::Health
+                | EncounterRequest::Read { .. }
+                | EncounterRequest::View { .. }
+                | EncounterRequest::Status { .. }
+                | EncounterRequest::ModelRead { .. }
+                | EncounterRequest::ModeRead { .. }
+                | EncounterRequest::Delivery { .. }
+                | EncounterRequest::ConversationRead { .. }
+                | EncounterRequest::ConversationList { .. }
+        );
+        let output = output_bounded(
+            command,
+            std::time::Duration::from_secs(120),
+            "encounter",
+            mutating,
+        )
+        .map_err(|error| format!("AIKit encounter owner unavailable: {error}"))?;
         if !output.status.success() {
             return Err(owner_process_failure("encounter", &output));
         }
@@ -1159,7 +1148,7 @@ impl Client {
             command.args(["--agent-ref", agent_ref]);
         }
         let output = output_bounded(
-            &mut command,
+            command,
             std::time::Duration::from_secs(60),
             "encounter-agency-mint",
             true,
@@ -1203,9 +1192,13 @@ impl Client {
             command.env("AIKIT_HOME", home);
         }
         command.args(["--json", "client", "status"]);
-        let output = command
-            .output()
-            .map_err(|error| format!("AIKit client status is unavailable: {error}"))?;
+        let output = output_bounded(
+            command,
+            std::time::Duration::from_secs(20),
+            "client status",
+            false,
+        )
+        .map_err(|error| format!("AIKit client status is unavailable: {error}"))?;
         if !output.status.success() {
             return Err(owner_process_failure("client status", &output));
         }
@@ -1233,9 +1226,13 @@ impl Client {
             command.env("AIKIT_HOME", home);
         }
         command.args(["model-catalogue", "show", "--json"]);
-        let output = command
-            .output()
-            .map_err(|error| format!("AIKit model catalogue is unavailable: {error}"))?;
+        let output = output_bounded(
+            command,
+            std::time::Duration::from_secs(20),
+            "model-catalogue show",
+            false,
+        )
+        .map_err(|error| format!("AIKit model catalogue is unavailable: {error}"))?;
         if !output.status.success() {
             return Err(owner_process_failure("model-catalogue show", &output));
         }
@@ -1303,9 +1300,15 @@ impl Client {
         }
         command.arg("-C").arg(cwd);
         command.args(args);
-        let output = command
-            .output()
-            .map_err(|error| format!("AIKit SessionSpace is unavailable: {error}"))?;
+        let operation = args.first().copied().unwrap_or("session-space");
+        let mutating = !matches!(operation, "project-context" | "list" | "discover");
+        let output = output_bounded(
+            command,
+            std::time::Duration::from_secs(60),
+            operation,
+            mutating,
+        )
+        .map_err(|error| format!("AIKit SessionSpace is unavailable: {error}"))?;
         if !output.status.success() {
             return Err(owner_process_failure(
                 args.first().copied().unwrap_or("session-space"),
@@ -1540,6 +1543,30 @@ fn with_temp_json<T>(json: &str, run: impl FnOnce(&str) -> Result<T, String>) ->
 
 #[cfg(test)]
 mod tests {
+    #[cfg(unix)]
+    #[test]
+    fn a_completed_agent_owner_with_an_inherited_pipe_has_a_finite_exchange() {
+        let mut command = Command::new("/bin/sh");
+        command.args(["-c", "sleep 30 & exit 0"]);
+        let started = std::time::Instant::now();
+        let error = output_bounded(
+            command,
+            std::time::Duration::from_millis(100),
+            "agent-session-prepare",
+            true,
+        )
+        .unwrap_err();
+        assert!(
+            started.elapsed() < std::time::Duration::from_secs(3),
+            "{error}"
+        );
+        assert!(error.contains("outcome unknown"), "{error}");
+        assert!(
+            error.contains("inspect the original native operation"),
+            "{error}"
+        );
+        assert!(!error.contains("could not start"), "{error}");
+    }
     #[cfg(unix)]
     #[test]
     fn killed_owner_process_keeps_a_nonempty_operation_and_signal_diagnostic() {

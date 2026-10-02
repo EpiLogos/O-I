@@ -449,8 +449,8 @@
     },
     "shell/capture.mjs": {
       "source": "desktop/cradle/expressions-app/field-studies-journeys/src/capture.ts",
-      "source_sha256": "d48d62a5c3664c1632760c2a9175f02da56005673accf8a5e72722df37011679",
-      "output_sha256": "729eafc9c6ec8e357e2253589d61973edc084ddc307892813311596156076c04",
+      "source_sha256": "5e82f62677324c9841bcbd84792d4a88774889e401ee83e474a412ac5798756e",
+      "output_sha256": "af9c9a852b8433bc7f28b66711c3e17cc052f0eb34034e9eb303d8e539b1bbc5",
       "compiler": "esbuild@0.25.12",
       "standing": "Bounded compiler output from the native source; other retained modules keep their existing provenance"
     },

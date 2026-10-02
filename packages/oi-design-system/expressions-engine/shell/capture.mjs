@@ -69,7 +69,7 @@ function paintText(ctx, s, w, h) {
     if ("letterSpacing" in ctx) ctx.letterSpacing = "0px";
     ctx.font = `${l.body}px Arial`;
     ctx.globalAlpha = 0.65;
-    for (const line of wrap(ctx, t.body, Math.min(l.width, 230))) {
+    for (const line of wrap(ctx, t.body, l.width)) {
       ctx.fillText(line, anchor, y);
       y += l.body * 1.85;
     }

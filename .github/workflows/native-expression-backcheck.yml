@@ -10,6 +10,7 @@ on:
       - 'desktop/cradle/tests/*formation*'
       - 'desktop/cradle/tests/candidate-cache-native.mjs'
       - 'desktop/cradle/tests/native-capture-compiler.py'
+      - 'desktop/cradle/tests/wiki-native-binaries.py'
       - 'packages/oi-design-system/expressions-engine/engine/**'
       - 'packages/oi-design-system/expressions-engine/shell/**'
       - 'packages/oi-design-system/expressions-engine/PROVENANCE.json'
@@ -25,7 +26,7 @@ concurrency:
 jobs:
   embedded:
     runs-on: ubuntu-latest
-    timeout-minutes: 25
+    timeout-minutes: 35
     steps:
       - uses: actions/checkout@v4
         with:
@@ -41,6 +42,12 @@ jobs:
           ref: ${{ steps.ql.outputs.revision }}
           path: .native-owner/QL-MEF
           persist-credentials: false
+      - uses: actions/checkout@v4
+        with:
+          repository: EpiLogos/Central
+          ref: 2a604574774c41921003ed99a2eed73b4c9f4266
+          path: .native-owner/Central
+          persist-credentials: false
       - uses: actions/setup-node@v4
         with:
           node-version: 22
@@ -51,6 +58,8 @@ jobs:
           workspaces: |
             desktop/cradle/kernel -> target
             .native-owner/QL-MEF -> target
+            .native-owner/Central -> target
+            cli -> target
       - name: Locked dependencies and actual embedded application build
         run: |
           mkdir -p /tmp/w5-checks
@@ -61,6 +70,17 @@ jobs:
           npm run build:journeys --prefix expressions-app
           expressions-app/node_modules/.bin/tsc --noEmit -p expressions-app/field-studies-journeys/tsconfig.json
           npx playwright install --with-deps chromium
+      - name: Build the exact native Central owner and suite route
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/w5-checks/native
+          git -C .native-owner/Central rev-parse HEAD > /tmp/w5-checks/native/Central.revision
+          test "$(cat /tmp/w5-checks/native/Central.revision)" = 2a604574774c41921003ed99a2eed73b4c9f4266
+          python3 desktop/cradle/tests/wiki-native-binaries.py \
+            --target OI_BIN cli/Cargo.toml oi \
+            --target OI_CENTRAL_CTRL_BIN .native-owner/Central/ctrl/Cargo.toml ctrl \
+            --receipt /tmp/w5-checks/native/central-binaries.json \
+            2>&1 | tee /tmp/w5-checks/native/central-build.log
       - name: Complete retained React shell lint
         if: always()
         run: |
@@ -77,6 +97,7 @@ jobs:
           (cd desktop/cradle && python3 tests/native-expression-local.test.py) 2>&1 | tee /tmp/w5-checks/local-packet.log
           (cd desktop/cradle && python3 tests/native-expression-receipt.test.py) 2>&1 | tee /tmp/w5-checks/local-receipt-admission.log
           (cd desktop/cradle && node --test tests/native-expression.test.mjs) 2>&1 | tee /tmp/w5-checks/native-expression.log
+          (cd desktop/cradle && node --test tests/native-expression-central.test.mjs) 2>&1 | tee /tmp/w5-checks/native-owner-cleanup.log
           npm test --prefix desktop/cradle/expressions-app 2>&1 | tee /tmp/w5-checks/embedded.log
           node --test .native-owner/QL-MEF/adapters/retained-field/native-audio.test.mjs .native-owner/QL-MEF/adapters/retained-field/instrument-session.test.mjs 2>&1 | tee /tmp/w5-checks/native-clients.log
       - name: Native formation authoring, emitted modules and bounded candidate retention

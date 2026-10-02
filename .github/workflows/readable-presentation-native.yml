@@ -97,6 +97,12 @@ jobs:
             cargo test --manifest-path desktop/cradle/kernel/Cargo.toml --lib "tests::$native_case" -- --exact --ignored --nocapture \
               2>&1 | tee "$RUNNER_TEMP/readable-native-evidence/$native_case.log"
           done
+      - name: Prove Agent definition, acceptance, preparation and later continuation through actual native owners
+        shell: bash
+        run: |
+          set -euo pipefail
+          cargo test --manifest-path desktop/cradle/kernel/Cargo.toml --test agent_definition_gate -- --ignored --nocapture \
+            2>&1 | tee "$RUNNER_TEMP/readable-native-evidence/agent-definition-native.log"
       - name: Build the locked production frontend
         shell: bash
         run: |

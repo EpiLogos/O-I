@@ -21,9 +21,13 @@ TARGETS = (
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--receipt", default="/tmp/wiki-native-binaries.json")
+    parser.add_argument("--target", nargs=3, action="append", metavar=("ENV_NAME", "MANIFEST", "BINARY"),
+                        help="Build only these explicit native targets instead of the default joined quartet")
     args = parser.parse_args()
     resolved = {}
-    for name, manifest, binary in TARGETS:
+    for name, manifest, binary in args.target or TARGETS:
+        if not name.isidentifier() or name in resolved:
+            raise ValueError(f"Invalid or repeated native executable binding: {name}")
         command = ["cargo", "build", "--locked", "--manifest-path", manifest,
                    "--bin", binary, "--message-format=json-render-diagnostics"]
         result = subprocess.run(command, check=True, stdout=subprocess.PIPE, text=True)

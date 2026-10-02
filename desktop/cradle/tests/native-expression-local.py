@@ -16,6 +16,7 @@ import shutil
 import signal
 import subprocess
 import sys
+import time
 
 
 def run(args, cwd=None, timeout=30):
@@ -32,13 +33,16 @@ def digest(path):
 
 
 
-def run_isolated(args, *, cwd, env, stdout, timeout=180):
+def run_isolated(args, *, cwd, env, stdout, timeout=180, cleanup=None):
     """Reap only this opt-in test's owned process group on timeout/interruption.
 
     Do not install persistent signal handlers or touch other suite processes.
-    Cleanup is bounded even when a child ignores the first termination request.
+    Retain the leader's PID until group signalling; leader completion alone
+    says nothing about inherited bridge/browser descendants.
     """
     process = None
+    if not hasattr(os, 'waitid') or not hasattr(os, 'WNOWAIT'):
+        raise RuntimeError('Isolated native acceptance requires unreaped-leader observation on this platform')
     previous = {sig: signal.getsignal(sig) for sig in (signal.SIGINT, signal.SIGTERM)}
 
     def interrupted(signum, _frame):
@@ -49,35 +53,58 @@ def run_isolated(args, *, cwd, env, stdout, timeout=180):
             signal.signal(sig, interrupted)
         process = subprocess.Popen(args, cwd=cwd, env=env, stdout=stdout,
                                    stderr=subprocess.STDOUT, start_new_session=True)
-        try:
-            process.wait(timeout=timeout)
-        except subprocess.TimeoutExpired as error:
-            raise RuntimeError('Isolated browser acceptance timed out') from error
-        return process.returncode
+        deadline = time.monotonic() + timeout
+        while True:
+            observed = os.waitid(os.P_PID, process.pid, os.WEXITED | os.WNOHANG | os.WNOWAIT)
+            if observed is not None:
+                return observed.si_status if observed.si_code == os.CLD_EXITED else -observed.si_status
+            if time.monotonic() >= deadline:
+                raise RuntimeError('Isolated browser acceptance timed out')
+            time.sleep(.005)
     finally:
         # A second Ctrl-C or SIGTERM must not interrupt the bounded reap itself.
         for sig in previous:
             signal.signal(sig, signal.SIG_IGN)
         try:
-            if process is not None and process.poll() is None:
+            if process is not None:
+                reading = {'owned_pid_and_pgid': process.pid, 'leader_kept_unreaped_until_group_signal': True}
                 try:
-                    os.killpg(process.pid, signal.SIGTERM)
+                    os.killpg(process.pid, signal.SIGKILL)
+                    reading['owned_group_signalled'] = 'SIGKILL'
                 except ProcessLookupError:
-                    pass  # The owned child exited between poll and termination.
+                    reading['owned_group_absent_before_reap'] = True
                 try:
-                    process.wait(timeout=10)
-                except subprocess.TimeoutExpired:
+                    reading['leader_exit_code'] = process.wait(timeout=1)
+                except subprocess.TimeoutExpired as error:
+                    reading['cleanup_unknown'] = 'The signalled owned leader did not exit within one second'
+                    raise RuntimeError(reading['cleanup_unknown']) from error
+                finally:
+                    if cleanup is not None:
+                        cleanup.update(reading)
+                # Observation only after reaping: never signal a possibly
+                # reused numeric group once the leader's PID fence is released.
+                deadline = time.monotonic() + .5
+                while True:
                     try:
-                        os.killpg(process.pid, signal.SIGKILL)
+                        os.killpg(process.pid, 0)
+                        reading['owned_group_absent_at_readback'] = False
                     except ProcessLookupError:
-                        pass
-                    process.wait(timeout=10)
+                        reading['owned_group_absent_at_readback'] = True
+                    if reading['owned_group_absent_at_readback'] or time.monotonic() >= deadline:
+                        break
+                    time.sleep(.005)
+                if cleanup is not None:
+                    cleanup.update(reading)
+                if not reading['owned_group_absent_at_readback']:
+                    reading['cleanup_unknown'] = 'Owned group disappearance was not observed after signalling and leader reap'
+                    if cleanup is not None:
+                        cleanup.update(reading)
         finally:
             for sig, handler in previous.items():
                 signal.signal(sig, handler)
 
 
-def verify_joined_receipt(path, files):
+def verify_joined_receipt(path, files, owners=None):
     """Bind a successful child result to its complete, exact input/binary record.
 
     This validates the result of the behavioural test; it is not independent
@@ -125,6 +152,12 @@ def verify_joined_receipt(path, files):
     for name, record in files.items():
         if digest(Path(record['path'])) != record['sha256']:
             raise ValueError(name + ' changed during browser acceptance')
+    if owners is not None:
+        if reading.get('native_owners') != owners:
+            raise ValueError('Browser receipt uses different native Central/suite owners')
+        for name, record in owners.items():
+            if digest(Path(record['path'])) != record['sha256']:
+                raise ValueError(name + ' owner changed during browser acceptance')
     return {'path': str(path), 'sha256': hashlib.sha256(raw).hexdigest(),
             'schema': reading['schema'], 'checks': len(checks),
             'standing': 'child behavioural result verified; not independent or installed acceptance'}
@@ -173,16 +206,27 @@ def main():
             raise ValueError('Node is unavailable; no runtime was installed')
         report['checks']['node'] = run([node, '--version'])
         if args.run_browser_join:
+            owners = {}
+            for name, binding in [('suite', 'OI_BIN'), ('central', 'OI_CENTRAL_CTRL_BIN')]:
+                path = Path(os.environ.get(binding, ''))
+                if not path.is_absolute() or not path.is_file() or not os.access(path, os.X_OK):
+                    raise ValueError(binding + ' requires its explicit absolute built native owner')
+                owners[name] = {'path': str(path), 'sha256': digest(path)}
+            report['native_owners'] = owners
             env = dict(os.environ, NATIVE_EXPRESSION_BRIDGE=str(args.bridge), OI_QL_FIELD_HOST_BIN=str(args.host), OI_QL_FIELD_WORKER_BIN=str(args.worker), NATIVE_EXPRESSION_INPUT=str(args.input), NATIVE_EXPRESSION_OUT=str(args.output.resolve() / 'browser'), NATIVE_EXPRESSION_GPU='hardware' if args.hardware_gpu else 'software')
             with (args.output / 'browser-run.log').open('w') as log:
+                cleanup = {}
+                report['checks']['owned_browser_cleanup'] = cleanup
                 returncode = run_isolated([node, 'tests/native-expression-native-browser.mjs'],
-                                          cwd=root / 'desktop/cradle', env=env, stdout=log)
+                                          cwd=root / 'desktop/cradle', env=env, stdout=log, cleanup=cleanup)
             report['checks']['browser_process'] = {'code': returncode}
-            report['claims']['controlled_central_disclosure'] = True
+            if cleanup.get('cleanup_unknown'):
+                raise ValueError(cleanup['cleanup_unknown'])
             if returncode != 0:
                 raise ValueError(f'Isolated browser acceptance exited with code {returncode}')
             report['checks']['browser_receipt'] = verify_joined_receipt(
-                args.output / 'browser/joined.json', report['files'])
+                args.output / 'browser/joined.json', report['files'], owners)
+            report['claims']['actual_native_central_disclosure'] = True
             # A valid result for a source changed while running is not this cut's proof.
             final_head = run(['git', 'rev-parse', 'HEAD'], root)
             final_dirty = run(['git', 'status', '--porcelain', '--untracked-files=no'], root)

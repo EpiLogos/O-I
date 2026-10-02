@@ -12,16 +12,17 @@
  * A/B baseline and lie nearer the new targets, pixels differ, and scheduled PCM
  * carries the sky's top voice at its held pitch. K2_DISCONNECT_TARGETS=1 cuts GPU target delivery
  * (test-only projection flag) before the determinant: that run must FAIL.
- * Only Central disclosure is controlled; no fake field, PCM, M1, M2 or M3. */
+ * Central is the actual initialized native owner in a private test World. */
 import assert from 'node:assert/strict';
 import {createServer} from 'node:http';
 import {spawn} from 'node:child_process';
-import {readFile,writeFile,mkdir,mkdtemp,rm,chmod} from 'node:fs/promises';
+import {readFile,writeFile,mkdir,mkdtemp,rm} from 'node:fs/promises';
 import {resolve,join} from 'node:path';
 import {tmpdir,platform,cpus} from 'node:os';
 import {createHash} from 'node:crypto';
 import {build} from '../expressions-app/node_modules/esbuild/lib/main.js';
 import {chromium} from 'playwright';
+import {nativeCentralWorld,retireNativeBrowserOwners} from './native-expression-central.mjs';
 const paths={bridge:process.env.NATIVE_EXPRESSION_BRIDGE,ql:process.env.OI_QL_BIN,host:process.env.OI_QL_FIELD_HOST_BIN,worker:process.env.OI_QL_FIELD_WORKER_BIN};
 for(const [name,path] of Object.entries(paths))assert.ok(path&&path.startsWith('/'),`Explicit absolute ${name} path required; no PATH or fixture fallback`);
 const disconnect=process.env.K2_DISCONNECT_TARGETS==='1';
@@ -29,40 +30,42 @@ const STEPS=Number(process.env.K2_PROBE_STEPS??120),DT=1/60;
 const out=resolve(process.env.NATIVE_EXPRESSION_OUT??'walk/artifacts/native-expression-scene');await mkdir(out,{recursive:true});
 const temp=await mkdtemp(join(tmpdir(),'native-expression-scene-'));
 const report={schema:'oi.native-expression-scene-trace/v1',mode:disconnect?'negative: GPU target delivery disconnected before the determinant':'positive',
- standing:'real QL compose, K8 C++ owner, O:I kernel relay and WebGL; controlled Central disclosure; sky none (QL default event); SwiftShader unless hardware requested; not installed-app, speaker or listening evidence',
+ standing:'real Central disclosure, QL compose, K8 C++ owner, O:I kernel relay and WebGL; private initialized World; sky none (QL default event); SwiftShader unless hardware requested; not installed-app, speaker or listening evidence',
  checks:[],failures:[],sources:{},machine:{platform:platform(),logical_cpus:cpus().length},probe:{steps:STEPS,dt:DT},pass:false};
 for(const [name,path] of Object.entries(paths))report.sources[name]={path,sha256:createHash('sha256').update(await readFile(path)).digest('hex')};
-const central=join(temp,'central.py');
-await writeFile(central,`#!/usr/bin/env python3
-import json,sys
-raise SystemExit(json.dumps({'ok':False,'error':'controlled Central: compose reads no Central file'}))
-`);await chmod(central,0o700);
+let bridge,browser,server,endpoint,activeLease=null;
+let bridgeLog='',bridgeErr='';
+const proxyAbort=new AbortController();
+try{
+const central=await nativeCentralWorld(temp);
+report.native_owners=central.sources;
+report.central_initialization=central.initialization;
 // sky none: the kernel never runs ql-sky; the override law names both or neither.
-const bridge=spawn(paths.bridge,['127.0.0.1:0'],{env:{...process.env,OI_BIN:central,OI_CENTRAL_ROOT:temp,OI_CENTRAL_PROJECT_QUERY:'',OI_QL_BIN:paths.ql,OI_QL_SKY_BIN:'/usr/bin/false',OI_QL_FIELD_HOST_BIN:paths.host,OI_QL_FIELD_WORKER_BIN:paths.worker},stdio:['ignore','pipe','pipe']});
-let bridgeLog='',bridgeErr='';bridge.stdout.on('data',x=>bridgeLog+=x);bridge.stderr.on('data',x=>bridgeErr+=x);
-const endpoint=await new Promise((resolve,reject)=>{const timer=setTimeout(()=>reject(new Error('kernel bridge startup timed out')),15000);bridge.once('error',reject);bridge.once('exit',code=>{clearTimeout(timer);reject(new Error(`bridge exited ${code}: ${bridgeErr}`));});bridge.stdout.on('data',()=>{const match=bridgeLog.match(/http:\/\/127\.0\.0\.1:\d+/);if(match){clearTimeout(timer);resolve(match[0]);}});});
+bridge=spawn(paths.bridge,['127.0.0.1:0'],{env:{...central.env,OI_QL_BIN:paths.ql,OI_QL_SKY_BIN:'/usr/bin/false',OI_QL_FIELD_HOST_BIN:paths.host,OI_QL_FIELD_WORKER_BIN:paths.worker},stdio:['ignore','pipe','pipe']});
+bridge.stdout.on('data',x=>bridgeLog+=x);bridge.stderr.on('data',x=>bridgeErr+=x);
+endpoint=await new Promise((resolve,reject)=>{const timer=setTimeout(()=>reject(new Error('kernel bridge startup timed out')),15000);bridge.once('error',error=>{clearTimeout(timer);reject(error);});bridge.once('exit',code=>{clearTimeout(timer);reject(new Error(`bridge exited ${code}: ${bridgeErr}`));});bridge.stdout.on('data',()=>{const match=bridgeLog.match(/http:\/\/127\.0\.0\.1:\d+/);if(match){clearTimeout(timer);resolve(match[0]);}});});
 let opens=0,closes=0;const wire=[];const timings=[];
 await build({stdin:{contents:`import {relayNativeChannel} from './src/expressions/nativeChannel.ts'; window.disposeRelay=relayNativeChannel(document.querySelector('iframe'),{kind:'bridge',url:location.origin});`,resolveDir:resolve('.')},bundle:true,platform:'browser',format:'esm',outfile:join(temp,'parent.js')});
 const html=await readFile('expressions-app/field-studies-journeys/public/index.html');
-const server=createServer(async(req,res)=>{try{
+server=createServer(async(req,res)=>{try{
  if(req.method==='POST'&&req.url==='/op'){
   const chunks=[];for await(const c of req)chunks.push(c);const bytes=Buffer.concat(chunks),op=JSON.parse(bytes);
   const operation=op.request?.request?.command?.operation??op.request?.operation??op.op,start=performance.now();
-  const response=await fetch(`${endpoint}/op`,{method:'POST',headers:{'content-type':'application/json'},body:bytes});const result=await response.json();
+  const response=await fetch(`${endpoint}/op`,{method:'POST',headers:{'content-type':'application/json'},body:bytes,signal:AbortSignal.any([proxyAbort.signal,AbortSignal.timeout(20000)])});const result=await response.json();
   timings.push({operation,elapsed:performance.now()-start});
   const data=result.outcome?.data;
-  if(data?.schema==='oi.native-expression-open/v1')opens++;
-  if(data?.schema==='oi.native-expression-closed/v1')closes++;
+  if(data?.schema==='oi.native-expression-open/v1'){opens++;activeLease=data.lease;}
+  if(data?.schema==='oi.native-expression-closed/v1'){closes++;activeLease=null;}
   if(data?.field&&['m1-advance','read'].includes(operation))wire.push({operation,generation:data.field.generation,targets:data.field.targets.map(t=>t.position)});
   if(wire.length>8)wire.shift();
   res.setHeader('content-type','application/json');res.end(JSON.stringify(result));return;
  }
  if(req.url==='/parent.js'){res.setHeader('content-type','text/javascript');res.end(await readFile(join(temp,'parent.js')));return;}
  res.setHeader('content-type','text/html');res.end(req.url?.startsWith('/app')?html:'<!doctype html><style>body{margin:0}iframe{border:0;width:100vw;height:100vh}</style><iframe src="/app?host=expressions"></iframe><script type="module" src="/parent.js"></script>');
- }catch(error){res.setHeader('content-type','application/json');res.end(JSON.stringify({ok:false,error:String(error)}));}});
+ }catch(error){if(!res.destroyed){res.setHeader('content-type','application/json');res.end(JSON.stringify({ok:false,error:String(error)}));}}});
 await new Promise(r=>server.listen(0,'127.0.0.1',r));
 const hardwareGPU=process.env.NATIVE_EXPRESSION_GPU==='hardware';
-const browser=await chromium.launch({headless:true,...(process.env.CHROMIUM_PATH?{executablePath:process.env.CHROMIUM_PATH}:{}),args:hardwareGPU?[]:['--no-sandbox','--use-angle=swiftshader','--enable-unsafe-swiftshader']});
+browser=await chromium.launch({headless:true,...(process.env.CHROMIUM_PATH?{executablePath:process.env.CHROMIUM_PATH}:{}),args:hardwareGPU?[]:['--no-sandbox','--use-angle=swiftshader','--enable-unsafe-swiftshader']});
 report.browser=browser.version();
 // Seeded particle initialisation and a record of every PCM block the page schedules.
 const probe=`(()=>{let s=0x2f6e2b1;Math.random=function(){s|=0;s=s+0x6D2B79F5|0;let t=Math.imul(s^s>>>15,1|s);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296;};
@@ -190,7 +193,6 @@ function meanDistance(positions,targets,count){let s=0;for(let p=0;p<count;p++){
 function moved(t0,t1,count){const d=Array.from({length:count},(_,p)=>{const i=p*4;return[p,Math.hypot(t1[i]-t0[i],t1[i+1]-t0[i+1],t1[i+2]-t0[i+2])];}).sort((a,b)=>b[1]-a[1]);return d.slice(0,Math.max(1,Math.floor(count/10))).map(x=>x[0]);}
 function meanDistanceAt(positions,targets,particles){let s=0;for(const p of particles){const i=p*4;s+=Math.hypot(positions[i]-targets[i],positions[i+1]-targets[i+1],positions[i+2]-targets[i+2]);}return s/particles.length;}
 function check(ok,text,detail){(ok?report.checks:report.failures).push(detail?{check:text,...detail}:text);}
-try{
  const a=await run('control-a',false),b=await run('control-b',false),v=await run('varied',true);
  const n=a.particles*4;
  // 1. Producer: the one owner's influence reading names the changed voices.
@@ -237,8 +239,14 @@ try{
  report.pass=report.failures.length===0;
  console.log(JSON.stringify(report,null,2));
  assert.deepEqual(report.failures,[],'every layer must carry the determinant');
-}catch(error){report.failure=String(error);throw error;}
+}catch(error){report.failure=String(error);report.pass=false;throw error;}
 finally{
+ try{if(activeLease&&endpoint){const response=await fetch(`${endpoint}/op`,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({op:'native_expression',request:{operation:'close',lease:activeLease}}),signal:AbortSignal.timeout(6000)});report.cleanup_close=await response.json();assert.equal(report.cleanup_close.ok,true);}}
+ catch(error){report.pass=false;report.cleanup_failure=String(error);}
+ report.owner_cleanup=await retireNativeBrowserOwners({bridge,browser,server,proxyAbort});
+ for(const [owner,result] of Object.entries(report.owner_cleanup))if(!result.ok){report.pass=false;report.cleanup_failure=`${owner}: ${result.error}`;}
+ report.bridge_cleanup=report.owner_cleanup.bridge.receipt;
  await writeFile(join(out,disconnect?'scene-trace-disconnected.json':'scene-trace.json'),JSON.stringify(report,null,2)+'\n');await writeFile(join(out,'kernel.log'),bridgeLog+'\n'+bridgeErr);
- await browser.close();await new Promise(r=>server.close(r));bridge.kill();await rm(temp,{recursive:true,force:true});
+ await rm(temp,{recursive:true,force:true});
+ if(report.cleanup_failure)throw new Error(report.cleanup_failure);
 }
