@@ -209,7 +209,8 @@ async function scenario() {
   const reducers: any = owner.conn.reducers;
   const mutate = async (operation: string, input: unknown) => {checkpoint(); await reducers[operation](input); checkpoint();};
   for (const [ref, visibility] of [[fieldRef, 'restricted'], [neighbourRef, 'private']] as const) {
-    const contract = createSharedField({field_ref: ref, visibility, title: 'Controlled presence acceptance'});
+    const contract = createSharedField({field_ref: ref, visibility, title: 'Controlled presence acceptance',
+      provenance: [{kind: 'authored', ref: source, source_system: 'acceptance', revision: sourceRevision}]});
     await mutate('putSharedField', {fieldRef: ref, kind: contract.kind, visibility, contractJson: JSON.stringify(contract)});
   }
   for (const [client, participantRef] of [[persistent, persistentRef], [finite, finiteRef]] as const) {
