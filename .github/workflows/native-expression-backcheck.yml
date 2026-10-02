@@ -10,6 +10,7 @@ on:
       - 'desktop/cradle/tests/*formation*'
       - 'desktop/cradle/tests/candidate-cache-native.mjs'
       - 'desktop/cradle/tests/native-capture-compiler.py'
+      - 'desktop/cradle/tests/native-text-authoring.test.mjs'
       - 'desktop/cradle/tests/wiki-native-binaries.py'
       - 'packages/oi-design-system/expressions-engine/engine/**'
       - 'packages/oi-design-system/expressions-engine/shell/**'
@@ -108,10 +109,17 @@ jobs:
           node --test tests/emitted-formation-modules.test.mjs 2>&1 | tee /tmp/w5-checks/emitted-formation.log
           node tests/formation-native-regressions.mjs 2>&1 | tee /tmp/w5-checks/formation-native.log
       - name: Compile the actual native text painter and require its exact shipped companion
+        id: native_capture
         if: always()
         env:
           OI_CAPTURE_COMPILE_OUT: /tmp/w5-checks/native-capture-compiler
         run: python3 desktop/cradle/tests/native-capture-compiler.py
+      - name: Authored native text sizing, legacy imports and malformed-size refusal
+        if: ${{ !cancelled() && steps.native_capture.outcome == 'success' }}
+        run: |
+          set -o pipefail
+          cd desktop/cradle
+          node --test tests/native-text-authoring.test.mjs 2>&1 | tee /tmp/w5-checks/native-text-authoring.log
       - name: Actual embedded WebGL browser and relay
         if: always()
         env:

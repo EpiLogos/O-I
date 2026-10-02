@@ -2,8 +2,14 @@ name: Adoption System ingress
 on:
   pull_request:
     paths:
-      - 'desktop/cradle/src/workspace/settings/v2/SystemHome.tsx'
+      - 'desktop/cradle/src/workspace/SystemPanel.tsx'
+      - 'desktop/cradle/src/workspace/settings/**'
       - 'desktop/cradle/src/configuration/**'
+      - 'desktop/cradle/kernel/src/setup.rs'
+      - 'desktop/cradle/kernel/src/native_process.rs'
+      - 'desktop/cradle/tests/native-expression-central.mjs'
+      - 'desktop/cradle/tests/wiki-native-binaries.py'
+      - 'cli/**'
       - 'desktop/cradle/walk/adoption-system.test.mjs'
       - '.github/workflows/adoption-ingress.yml'
 permissions:
@@ -11,11 +17,27 @@ permissions:
 jobs:
   system:
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 35
+    env:
+      CARGO_BUILD_JOBS: 2
     steps:
       - uses: actions/checkout@v4
         with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
           persist-credentials: false
+      - uses: actions/checkout@v4
+        with:
+          repository: EpiLogos/Central
+          ref: 2a604574774c41921003ed99a2eed73b4c9f4266
+          path: .native-owner/Central
+          persist-credentials: false
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: |
+            cli -> target
+            desktop/cradle/kernel -> target
+            .native-owner/Central -> target
       - uses: actions/setup-node@v4
         with:
           node-version: 22
@@ -23,6 +45,18 @@ jobs:
           cache-dependency-path: desktop/cradle/package-lock.json
       - run: npm ci --no-audit --no-fund
         working-directory: desktop/cradle
+      - name: Build the exact native setup, Central and kernel owners
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/adoption-system-native
+          git -C .native-owner/Central rev-parse HEAD > /tmp/adoption-system-native/Central.revision
+          test "$(cat /tmp/adoption-system-native/Central.revision)" = 2a604574774c41921003ed99a2eed73b4c9f4266
+          python3 desktop/cradle/tests/wiki-native-binaries.py \
+            --target OI_BIN cli/Cargo.toml oi \
+            --target OI_CENTRAL_CTRL_BIN .native-owner/Central/ctrl/Cargo.toml ctrl \
+            --target WIKI_KERNEL_BIN desktop/cradle/kernel/Cargo.toml walk-bridge \
+            --receipt /tmp/adoption-system-native/binaries.json \
+            2>&1 | tee /tmp/adoption-system-native/build.log
       - name: Whole desktop type check and production build
         working-directory: desktop/cradle
         run: |
@@ -36,7 +70,7 @@ jobs:
       - run: npx playwright install --with-deps chromium webkit
         working-directory: desktop/cradle
         if: always()
-      - name: Real System component and bridge interaction
+      - name: Actual Settings System component and native setup review
         working-directory: desktop/cradle
         if: always()
         run: node walk/adoption-system.test.mjs
@@ -47,4 +81,5 @@ jobs:
           path: |
             desktop/cradle/tests/artifacts/adoption-system
             /tmp/adoption-system-head.txt
+            /tmp/adoption-system-native
           retention-days: 5

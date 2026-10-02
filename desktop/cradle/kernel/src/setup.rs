@@ -1,9 +1,8 @@
 //! Thin adoption adapter. The installed `oi setup` owns plans, authority checks,
 //! journal durability, installation and readback. Nothing is retried here.
 use serde_json::Value;
-use std::io::Write;
 use std::path::{Path, PathBuf};
-use std::process::{Command, Stdio};
+use std::process::Command;
 
 pub struct Client {
     executable: PathBuf,
@@ -21,30 +20,38 @@ impl Client {
     }
     pub fn request(&self, cwd: &Path, request: &Value) -> Result<Value, String> {
         let bytes = encode_request(request)?;
-        let mut child = Command::new(&self.executable)
+        let mut command = Command::new(&self.executable);
+        command
             .args(["setup", "--request-file", "-", "--json"])
-            .current_dir(cwd)
-            .stdin(Stdio::piped())
-            .stdout(Stdio::piped())
-            .stderr(Stdio::piped())
-            .spawn()
-            .map_err(|_| {
-                "The installed O:I setup command could not start. No request was sent.".to_owned()
-            })?;
-        let mut stdin = child
-            .stdin
-            .take()
-            .ok_or("Native setup input was unavailable")?;
-        if stdin.write_all(&bytes).is_err() {
-            drop(stdin);
-            // Do not re-send or call a second installer. The owner may already
-            // have received enough input to begin; its journal decides recovery.
-            let _ = child.wait();
-            return Err("Native setup lost its input channel. Recheck its journal; do not replay the write.".into());
-        }
-        drop(stdin);
-        let output = child.wait_with_output().map_err(|_| {
-            "Native setup reply was lost. Recheck its journal; no write was retried.".to_owned()
+            .current_dir(cwd);
+        let action = request["action"].as_str().unwrap_or_default();
+        let effect = if matches!(action, "discover" | "status") {
+            crate::flow::Effect::ReadOnly
+        } else {
+            crate::flow::Effect::MayMutate
+        };
+        // Download/install work has a longer explicit budget than disclosure
+        // and planning. Neither a lost reply nor cleanup may trigger replay:
+        // the native setup journal remains the recovery authority.
+        let timeout = if matches!(action, "apply" | "prepare_desktop") {
+            std::time::Duration::from_secs(20 * 60)
+        } else {
+            std::time::Duration::from_secs(30)
+        };
+        let output = crate::native_process::run(
+            command,
+            Some(&bytes),
+            crate::native_process::Limits {
+                timeout,
+                stdout_bytes: 4 * 1024 * 1024,
+                stderr_bytes: 64 * 1024,
+            },
+        )
+        .map_err(|failure| {
+            format!(
+                "Native O:I setup: {}. Recheck its native journal; no request was replayed.",
+                effect.physical_failure(failure)
+            )
         })?;
         decode_reply(output.status.code(), &output.stdout)
     }

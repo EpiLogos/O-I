@@ -95,7 +95,7 @@ export function inspectorHTML(c:InspectorContext){const s=c.scene,e=s.entities.f
  ${group('Text layers',`
  <div class="text-layer-list">${s.text.map(t=>`<button data-action="select-text" data-id="${t.id}" class="layer-choice ${t.id===(c.textId??s.text[0]?.id)?'active':''}">${icon('text')} ${esc(t.title||'Text block')}${!t.visible?' · hidden':''}</button>`).join('')}</div>
  ${t?`${toggle('Show this text block','text.visible',t.visible)}${text('Small heading','text.kicker',t.kicker,'maxlength="300"')}${text('Title','text.title',t.title,'maxlength="300"')}${text('Italic line','text.italic',t.italic,'maxlength="300"')}${area('Supporting text','text.body',t.body,'maxlength="5000"')}
- <div class="two-col">${numeric('Type size','text.size',t.size,14,150,1)}${numeric('Block width','text.width',t.width,60,1000,5)}</div>
+ <div class="two-col">${numeric('Title size','text.size',t.size,14,150,1)}${numeric('Supporting text size','text.bodySize',t.bodySize??11,8,72,1)}</div><div class="two-col">${numeric('Block width','text.width',t.width,60,1000,5)}</div>
  ${select('Alignment','text.align',t.align,[['left','Left'],['center','Centre'],['right','Right']])}
  <div class="two-col">${numeric('Page X · 0–1','text.x',t.x,-.5,1.5,.01)}${numeric('Page Y · 0–1','text.y',t.y,-.5,1.5,.01)}</div>
  <div class="button-row">${button('move-text','Position on stage','pointer')}${button('delete-text','Remove','trash')}</div>`:''}
