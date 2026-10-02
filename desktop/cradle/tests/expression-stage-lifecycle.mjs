@@ -125,28 +125,77 @@ try{
  });
  check(!cancelledReady.resolved&&cancelledReady.message.includes('released')&&cancelledReady.frames===0&&!cancelledReady.scheduled,'Unpainted release rejects readiness and cancels its first frame');
 
- // Paused admission still paints the actual initial state, and a real
- // viewport resize reprojects once without advancing the simulation.
+ // Prove direct release/re-entry against the released field BEFORE a
+ // different held Scene is admitted. That later admission has its own
+ // source-defined initial-rest seed; it is not a continuation baseline.
+ await page.evaluate(()=>window.stageSurface.present('direct-reentry','oi.mark'));
+ await page.waitForFunction(()=>window.stageSurface.isScheduled);
+ state=await observe(20000,2);
+ check(state.rafFired>=2&&state.live&&state.dormant===false,`Direct re-entry resumes frames on the same surface: ${JSON.stringify(state)}`);
+ const directReentry=await page.evaluate(()=>{
+  const engine=stageSurface.adapter.engine,simulator=engine.simulator,actual=engine.inspectState();
+  return {engine:engine===beforeRelease.engine,simulator:simulator===beforeRelease.simulator,
+   seeds:actual.seeds===beforeRelease.resident.seeds,expectedSeeds:beforeRelease.resident.seeds,actualSeeds:actual.seeds,
+   particleCount:actual.particleCount,steps:actual.steps,simTime:actual.simTime,contextLost:stageSurface.isContextLost};
+ });
+ check(directReentry.engine&&directReentry.simulator&&directReentry.seeds&&!directReentry.contextLost,`Direct re-entry retains the actual engine, simulator and persistent seeds: ${JSON.stringify(directReentry)}`);
+ await page.evaluate(()=>stageSurface.release('direct-reentry'));
+
+ // A DIFFERENT held Scene is an initial-rest admission. The current native
+ // producer seeds its baked targets once, without a simulation step. A
+ // viewport-only resize must then retain that newly admitted resident basis.
  const pausedBefore=await page.evaluate(()=>{
   stageSurface.setPaused(true);
-  const before={frames:stageSurface.frameCount,steps:stageSurface.adapter.engine.inspectState().steps};
+  const engine=stageSurface.adapter.engine,simulator=engine.simulator,resident=engine.inspectState();
+  window.beforePausedAdmission={engine,simulator,resident,sceneId:stageSurface.adapter.sceneId};
+  const before={frames:stageSurface.frameCount,steps:resident.steps,seeds:resident.seeds,simTime:resident.simTime};
   stageSurface.present('paused-admission','oi.mark');return before;
  });
  await page.evaluate(()=>stageSurface.whenReady('paused-admission'));
  let pausedState=await page.evaluate(()=>({frames:stageSurface.frameCount,steps:stageSurface.adapter.engine.inspectState().steps,scheduled:stageSurface.isScheduled}));
  check(pausedState.frames>pausedBefore.frames&&pausedState.steps===pausedBefore.steps&&!pausedState.scheduled,'Paused admission resolves ready only after a real still frame, without simulation');
+ const pausedAdmission=await page.evaluate(()=>{
+  const before=beforePausedAdmission,engine=stageSurface.adapter.engine,simulator=engine.simulator,resident=engine.inspectState();
+  window.beforePausedResize={engine,simulator,resident,sceneId:stageSurface.adapter.sceneId,
+   buffers:[simulator.posTarget0,simulator.posTarget1,simulator.velTarget0,simulator.velTarget1]};
+  return {engine:engine===before.engine,simulator:simulator===before.simulator,
+   differentScene:stageSurface.adapter.sceneId!==before.sceneId,expectedSeeds:before.resident.seeds+1,actualSeeds:resident.seeds,
+   expectedSteps:before.resident.steps,actualSteps:resident.steps,expectedTime:before.resident.simTime,actualTime:resident.simTime,
+   sourceStatus:stageSurface.adapter.telemetry().sourceStatus,contextLost:stageSurface.isContextLost};
+ });
+ check(pausedAdmission.engine&&pausedAdmission.simulator&&pausedAdmission.differentScene&&!pausedAdmission.contextLost&&
+  pausedAdmission.actualSeeds===pausedAdmission.expectedSeeds&&pausedAdmission.actualSteps===pausedAdmission.expectedSteps&&
+  pausedAdmission.actualTime===pausedAdmission.expectedTime&&Object.keys(pausedAdmission.sourceStatus).length===0,
+  `The actual source-free mark has one new held-Scene target admission, without time or steps: ${JSON.stringify(pausedAdmission)}`);
+ console.log('Native held-Scene admission:',JSON.stringify(pausedAdmission));
  await page.setViewportSize({width:820,height:640});
  await page.waitForFunction(()=>stageSurface.canvas.width===820&&stageSurface.canvas.height===640);
- pausedState=await page.evaluate(()=>({frames:stageSurface.frameCount,steps:stageSurface.adapter.engine.inspectState().steps,scheduled:stageSurface.isScheduled}));
- check(pausedState.steps===pausedBefore.steps&&!pausedState.scheduled,'Paused viewport resize updates native backing dimensions without a simulation step');
+ pausedState=await page.evaluate(()=>{
+  const before=beforePausedResize,engine=stageSurface.adapter.engine,simulator=engine.simulator,resident=engine.inspectState();
+  return {frames:stageSurface.frameCount,steps:resident.steps,scheduled:stageSurface.isScheduled,
+   engine:engine===before.engine,simulator:simulator===before.simulator,seeds:resident.seeds===before.resident.seeds,
+   expectedSeeds:before.resident.seeds,actualSeeds:resident.seeds,simTime:resident.simTime===before.resident.simTime,
+   buffers:[simulator.posTarget0,simulator.posTarget1,simulator.velTarget0,simulator.velTarget1].every((buffer,index)=>buffer===before.buffers[index]),
+   scene:stageSurface.adapter.sceneId===before.sceneId,contextLost:stageSurface.isContextLost};
+ });
+ check(pausedState.steps===pausedBefore.steps&&!pausedState.scheduled&&pausedState.engine&&pausedState.simulator&&pausedState.seeds&&pausedState.simTime&&pausedState.buffers&&pausedState.scene&&!pausedState.contextLost,
+  `Paused viewport-only resize preserves the admitted native field, GPU buffers, seeds and clock: ${JSON.stringify(pausedState)}`);
  await page.evaluate(()=>{stageSurface.release('paused-admission');stageSurface.setPaused(false);});
 
- // re-entry: presenting again on the same surface resumes the clock.
+ // Replay the original post-resize re-entry, now fenced to its own admitted
+ // basis. Engine identity remains independently bound to the original field.
  await page.evaluate(()=>window.stageSurface.present('again','oi.mark'));
  await page.waitForFunction(()=>window.stageSurface.isScheduled);
  state=await observe(20000,2);
  check(state.rafFired>=2&&state.live&&state.dormant===false,`Re-entry resumes frames on the same surface: ${JSON.stringify(state)}`);
- check(await page.evaluate(()=>stageSurface.adapter.engine===beforeRelease.engine&&stageSurface.adapter.engine.simulator===beforeRelease.simulator&&stageSurface.adapter.engine.inspectState().seeds===beforeRelease.resident.seeds),'Re-entry retains the native engine, simulator and persistent seeds');
+ const afterReentry=await page.evaluate(()=>{
+  const engine=stageSurface.adapter.engine,simulator=engine.simulator,resident=engine.inspectState();
+  return {engine:engine===beforeRelease.engine,simulator:simulator===beforeRelease.simulator,
+   seeds:resident.seeds===beforePausedResize.resident.seeds,expectedSeeds:beforePausedResize.resident.seeds,actualSeeds:resident.seeds,
+   originalSeeds:beforeRelease.resident.seeds,particleCount:resident.particleCount,contextLost:stageSurface.isContextLost};
+ });
+ check(afterReentry.engine&&afterReentry.simulator&&afterReentry.seeds&&!afterReentry.contextLost,
+  `Post-admission re-entry retains the actual original engine/simulator and its current admitted seeds: ${JSON.stringify(afterReentry)}`);
 
  // hidden document: nothing is scheduled while hidden; visible resumes.
  const hiddenCancelled=await page.evaluate(()=>{Object.defineProperty(document,'hidden',{configurable:true,get:()=>true});document.dispatchEvent(new Event('visibilitychange'));return !window.stageSurface.isScheduled;});
