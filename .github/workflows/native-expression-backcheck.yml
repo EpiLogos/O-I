@@ -40,11 +40,37 @@ jobs:
         with:
           ref: ${{ github.event.pull_request.head.sha || github.sha }}
           persist-credentials: false
+      - name: Read the separately qualified retained performance test source
+        id: retained-performance-source
+        run: |
+          python3 - <<'PY_SOURCE'
+          import json, os, re
+          from pathlib import Path
+          value = json.loads(Path('desktop/cradle/tests/fixtures/retained-performance/source-owner.json').read_text())
+          assert value['schema'] == 'oi.retained-performance-test-source-owner/v1'
+          assert value['repository'] == 'EpiLogos/QL-MEF'
+          assert value['consumer'] == 'retained-performance-native-kernel-tests'
+          assert re.fullmatch(r'[0-9a-f]{40}', value['revision'])
+          with open(os.environ['GITHUB_OUTPUT'], 'a') as out:
+              out.write('revision=' + value['revision'] + '\n')
+          PY_SOURCE
+      - uses: actions/checkout@v4
+        with:
+          repository: EpiLogos/QL-MEF
+          ref: ${{ steps.retained-performance-source.outputs.revision }}
+          path: .native-owner/retained-performance/QL-MEF
+          persist-credentials: false
+      - name: Native retained performance codec dependency
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y libjson-c-dev
       - uses: dtolnay/rust-toolchain@stable
       - uses: Swatinem/rust-cache@v2
         with:
           cache-on-failure: true
-          workspaces: desktop/cradle/kernel -> target
+          workspaces: |
+            desktop/cradle/kernel -> target
+            .native-owner/retained-performance/QL-MEF -> target
       - name: Exact native regression source and toolchain receipt
         env:
           EXPECTED_OI_HEAD: ${{ github.event.pull_request.head.sha || github.sha }}
@@ -61,13 +87,28 @@ jobs:
           rustup which rustc > /tmp/w5-checks/rustc-path.txt
           rustup which cargo > /tmp/w5-checks/cargo-path.txt
           sha256sum "$(cat /tmp/w5-checks/rustc-path.txt)" "$(cat /tmp/w5-checks/cargo-path.txt)" > /tmp/w5-checks/toolchain.sha256
+      - name: Produce the actual retained source, Manager, full workload and native checkpoints
+        timeout-minutes: 15
+        run: |
+          set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/retained-performance"
+          python3 scripts/prepare-retained-performance-fixture.py \
+            --ql-source "$GITHUB_WORKSPACE/.native-owner/retained-performance/QL-MEF" \
+            --expected-ql-head "${{ steps.retained-performance-source.outputs.revision }}" \
+            --output "$RUNNER_TEMP/retained-performance" --timeout-seconds 900 \
+            > "$RUNNER_TEMP/retained-performance/result.json"
+          python3 scripts/retained-performance-ci-environment.py \
+            --result "$RUNNER_TEMP/retained-performance/result.json" \
+            --expected-ql-head "${{ steps.retained-performance-source.outputs.revision }}" \
+            --output-root "$RUNNER_TEMP/retained-performance" --github-env "$GITHUB_ENV"
       - name: Native kernel regressions
         if: always()
+        timeout-minutes: 15
         run: |
           set -euo pipefail
           mkdir -p /tmp/w5-checks
           cargo build --manifest-path desktop/cradle/kernel/Cargo.toml --bin walk-bridge 2>&1 | tee /tmp/w5-checks/kernel-build.log
-          cargo test --manifest-path desktop/cradle/kernel/Cargo.toml 2>&1 | tee /tmp/w5-checks/kernel.log
+          cargo test --manifest-path desktop/cradle/kernel/Cargo.toml --locked --all-targets --no-fail-fast 2>&1 | tee /tmp/w5-checks/kernel.log
       - name: Qualify the native regression source after all original tests
         if: always()
         env:
@@ -82,7 +123,9 @@ jobs:
         if: always()
         with:
           name: w5-native-kernel-regressions-${{ github.event.pull_request.head.sha || github.sha }}
-          path: /tmp/w5-checks
+          path: |
+            /tmp/w5-checks
+            ${{ runner.temp }}/retained-performance
           retention-days: 14
           if-no-files-found: error
 
